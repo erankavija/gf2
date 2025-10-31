@@ -1,0 +1,19 @@
+[package]
+name = "gf2"
+version = "0.1.0"
+edition = "2021"
+authors = ["copilot-swe-agent[bot] <198982749+Copilot@users.noreply.github.com>"]
+description = "High-performance bit string manipulation library with focus on GF(2) operations for coding theory"
+keywords = ["bitset", "gf2", "coding-theory", "bitvec", "galois-field"]
+categories = ["algorithms", "data-structures", "mathematics", "no-std"]
+rust-version = "1.74"
+
+[dependencies]
+
+[dev-dependencies]
+proptest = "1.0"
+criterion = "0.5"
+
+[[bench]]
+name = "bitvec"
+harness = false
