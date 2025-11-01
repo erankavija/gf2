@@ -103,12 +103,7 @@ fn test_identity_square() {
     for r in 0..4 {
         for c in 0..4 {
             if r != c {
-                assert!(
-                    !m.get(r, c),
-                    "off-diagonal ({}, {}) should be false",
-                    r,
-                    c
-                );
+                assert!(!m.get(r, c), "off-diagonal ({}, {}) should be false", r, c);
             }
         }
     }
