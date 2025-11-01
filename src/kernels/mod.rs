@@ -8,6 +8,7 @@
 //! - NEON kernels for AArch64
 //! - Runtime feature detection and dispatch
 
+pub mod ops;
 pub mod scalar;
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]

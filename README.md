@@ -9,6 +9,7 @@ A high-performance Rust library for bit string manipulation with a focus on GF(2
 `gf2` provides efficient dense bit vector operations optimized for:
 - Basic bitset operations (AND, OR, XOR, NOT)
 - Bit manipulation and queries
+- **GF(2) linear algebra**: Fast matrix operations over the binary field
 - Future: GF(2) polynomial arithmetic for coding theory
 - Future: SIMD acceleration on x86-64 (AVX2/AVX-512) and AArch64 (NEON)
 
@@ -16,6 +17,7 @@ A high-performance Rust library for bit string manipulation with a focus on GF(2
 
 - **Zero-cost abstractions**: Thin wrapper over `Vec<u64>` with no runtime overhead
 - **Memory efficient**: Dense storage with 64-bit words
+- **GF(2) matrices**: Bit-packed boolean matrices with M4RM multiplication and Gauss-Jordan inversion
 - **Well-tested**: Comprehensive unit tests and property-based testing with `proptest`
 - **Safe by default**: `#![deny(unsafe_code)]` at crate level
 - **MSRV**: Rust 1.74+
@@ -103,14 +105,63 @@ bv.shift_left(2);
 assert_eq!(bv.to_bytes_le(), vec![0b00111100]);
 ```
 
+### Matrix Operations over GF(2)
+
+```rust
+use gf2::matrix::BitMatrix;
+use gf2::alg::m4rm::multiply;
+use gf2::alg::gauss::invert;
+
+// Create a 3x3 matrix
+let mut a = BitMatrix::new_zero(3, 3);
+a.set(0, 0, true);
+a.set(0, 1, true);
+a.set(1, 1, true);
+a.set(2, 2, true);
+
+// Create identity matrix
+let i = BitMatrix::identity(3);
+
+// Matrix multiplication (using M4RM algorithm)
+let product = multiply(&a, &i);
+// product equals a
+
+// Matrix inversion (using Gauss-Jordan)
+let inv = invert(&i).unwrap();
+// inv equals i for identity matrix
+
+// Verify: a × a^(-1) = I
+let mut b = BitMatrix::new_zero(2, 2);
+b.set(0, 0, true);
+b.set(0, 1, true);
+b.set(1, 0, true);
+
+let b_inv = invert(&b).unwrap();
+let should_be_identity = multiply(&b, &b_inv);
+assert_eq!(should_be_identity.get(0, 0), true);
+assert_eq!(should_be_identity.get(1, 1), true);
+assert_eq!(should_be_identity.get(0, 1), false);
+```
+
 ## API Overview
 
-### Construction
+### BitVec
 - `BitVec::new()` - Create empty bit vector
 - `BitVec::with_capacity(bits)` - Pre-allocate capacity
 - `BitVec::from_bytes_le(&[u8])` - Create from byte slice
 
-### Basic Operations
+### BitMatrix
+- `BitMatrix::new_zero(rows, cols)` - Create zero matrix
+- `BitMatrix::identity(n)` - Create n×n identity matrix
+- `get(r, c)`, `set(r, c, val)` - Access individual bits
+- `swap_rows(r1, r2)` - Swap two rows
+- `transpose()` - Return transposed matrix
+
+### Matrix Algorithms (over GF(2))
+- `multiply(a, b)` - Matrix multiplication using M4RM (Method of the Four Russians)
+- `invert(m)` - Matrix inversion using Gauss-Jordan elimination (returns `Option<BitMatrix>`)
+
+### BitVec Operations
 - `len()`, `is_empty()` - Query size
 - `get(idx)`, `set(idx, bit)` - Access individual bits
 - `push_bit(bit)`, `pop_bit()` - Stack-like operations
@@ -141,31 +192,39 @@ assert_eq!(bv.to_bytes_le(), vec![0b00111100]);
 - Tight word-level loops with branch minimization
 - Optimized shifts with whole-word operations
 - Efficient bit scanning with `trailing_zeros`/`leading_zeros`
+- **GF(2) linear algebra**: M4RM multiplication, Gauss-Jordan inversion
 
-### Phase 2: Buffer Optimizations (Planned)
+### Phase 2: Matrix Optimizations (Planned)
+- Gray code construction for M4RM tables (currently uses simple loop)
+- Cache-oblivious blocking for large matrices
+- Optimized transpose with bit-level tricks
+- SIMD-accelerated row XOR operations
+
+### Phase 3: Buffer Optimizations (Planned)
 - Kernel-based dispatch for large buffers
 - Loop unrolling and prefetch hints
 - Cache-line aligned operations
 
-### Phase 3: SIMD Acceleration (Planned)
+### Phase 4: SIMD Acceleration (Planned)
 - **x86-64**: AVX2 (256-bit) and AVX-512 (512-bit) implementations
 - **AArch64**: NEON (128-bit) implementation
 - Runtime feature detection and dispatch
 - Vectorized shifts using shuffle instructions
+- VPCLMULQDQ-based row operations for matrices
 
-### Phase 4: Advanced Bit Operations (Planned)
+### Phase 5: Advanced Bit Operations (Planned)
 - Rank/select with superblock/block indexes
 - O(1) select using broadword techniques
 - Efficient bit scanning primitives
 
-### Phase 5: GF(2) Polynomial Arithmetic (Planned)
+### Phase 6: GF(2) Polynomial Arithmetic (Planned)
 - Carry-less multiplication (scalar baseline)
 - CLMUL/PCLMULQDQ acceleration on x86-64
 - VMULL.P64 on AArch64 with crypto extensions
 - Karatsuba and Toom-Cook algorithms
 - Convolution-based methods exploration
 
-### Phase 6: Coding Theory Algorithms (Future)
+### Phase 7: Coding Theory Algorithms (Future)
 - Generator and parity-check matrix operations
 - Syndrome computation
 - Decoding primitives
@@ -196,9 +255,13 @@ cargo bench
 ```
 
 Current benchmarks cover:
-- XOR operations (1 KiB, 64 KiB, 1 MiB)
-- Population count (1 KiB, 64 KiB, 1 MiB)
-- Left/right shifts (64 KiB with various shift amounts)
+- **BitVec operations**:
+  - XOR operations (1 KiB, 64 KiB, 1 MiB)
+  - Population count (1 KiB, 64 KiB, 1 MiB)
+  - Left/right shifts (64 KiB with various shift amounts)
+- **Matrix operations**:
+  - Square matrix multiplication (64×64 to 1024×1024)
+  - Rectangular matrix multiplication (various dimensions)
 
 ### Code Quality
 

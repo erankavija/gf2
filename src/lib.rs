@@ -6,6 +6,7 @@
 //! ## Core Types
 //!
 //! - [`BitVec`]: An owning, growable bit string backed by `Vec<u64>`.
+//! - [`matrix::BitMatrix`]: A row-major, bit-packed boolean matrix for GF(2) linear algebra.
 //!
 //! ## Design Invariants
 //!
@@ -32,7 +33,9 @@
 #![deny(unsafe_code)]
 #![warn(missing_docs)]
 
+pub mod alg;
 mod bitvec;
 pub mod kernels;
+pub mod matrix;
 
 pub use bitvec::BitVec;
