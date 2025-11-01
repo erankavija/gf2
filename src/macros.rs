@@ -84,6 +84,7 @@ macro_rules! bitmatrix {
                 r, row.len(), __ncols
             );
             for (c, &b) in row.iter().enumerate() {
+                // Only set true bits; new_zero() initializes all to false
                 if b { __m.set(r, c, true); }
             }
         }
@@ -108,6 +109,7 @@ macro_rules! bitmatrix {
                 r, row.len(), __ncols
             );
             for (c, &b) in row.iter().enumerate() {
+                // Only set true bits; new_zero() initializes all to false
                 if b { __m.set(r, c, true); }
             }
         }
