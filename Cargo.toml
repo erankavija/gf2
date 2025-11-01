@@ -13,6 +13,7 @@ rust-version = "1.74"
 [dev-dependencies]
 proptest = "1.0"
 criterion = "0.5"
+rand = "0.8"
 
 [[bench]]
 name = "bitvec"
