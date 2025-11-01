@@ -61,7 +61,7 @@ macro_rules! __gf2_bit {
 /// - Rows without brackets (nalgebra-like):
 ///   gf2::bitmatrix![ 1, 0, 1; 0, 1, 0 ];
 /// - Rows with brackets:
-///   gf2::bitmatrix![ [1,0,1], [0,1,0] ];
+///   gf2::bitmatrix![ \[1,0,1\], \[0,1,0\] ];
 #[macro_export]
 macro_rules! bitmatrix {
     // Bracketed rows: gf2::bitmatrix![ [1,0,1], [0,1,0] ];
