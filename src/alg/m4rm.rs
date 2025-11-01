@@ -22,21 +22,21 @@ use crate::matrix::BitMatrix;
 /// Block size k_block (typically 6-8)
 fn choose_k_block(k: usize, n: usize) -> usize {
     // Each table entry is a row of n bits, stored in stride_words u64s
-    let stride_words = if n == 0 { 0 } else { (n + 63) / 64 };
+    let stride_words = if n == 0 { 0 } else { n.div_ceil(64) };
     let bytes_per_entry = stride_words * 8;
-    
+
     // Try different block sizes and pick the largest that fits in cache
     const TARGET_TABLE_BYTES: usize = 64 * 1024; // 64 KiB target
-    
+
     for k_block in (1..=8).rev() {
         let table_entries = 1usize << k_block;
         let table_bytes = table_entries * bytes_per_entry;
-        
+
         if table_bytes <= TARGET_TABLE_BYTES && k_block <= k {
             return k_block;
         }
     }
-    
+
     // Fallback to smallest block size
     1.min(k)
 }
@@ -64,23 +64,23 @@ fn choose_k_block(k: usize, n: usize) -> usize {
 /// A vector of 2^k_block entries, indexed by binary representation
 fn build_gray_table(b: &BitMatrix, row_start: usize, k_block: usize, n: usize) -> Vec<Vec<u64>> {
     let table_size = 1usize << k_block;
-    let stride_words = if n == 0 { 0 } else { (n + 63) / 64 };
-    
+    let stride_words = if n == 0 { 0 } else { n.div_ceil(64) };
+
     let mut table = vec![vec![0u64; stride_words]; table_size];
-    
+
     // Build each table entry by XORing the rows indicated by the binary representation
-    for idx in 0..table_size {
+    for (idx, entry) in table.iter_mut().enumerate().take(table_size) {
         for bit in 0..k_block {
             if (idx & (1 << bit)) != 0 {
                 // Bit is set, so include this row
                 if row_start + bit < b.rows() {
                     let row_words = b.row_words(row_start + bit);
-                    xor_inplace(&mut table[idx], row_words);
+                    xor_inplace(entry, row_words);
                 }
             }
         }
     }
-    
+
     table
 }
 
@@ -90,14 +90,14 @@ fn build_gray_table(b: &BitMatrix, row_start: usize, k_block: usize, n: usize) -
 fn extract_bits(a: &BitMatrix, row: usize, col_start: usize, k_block: usize) -> usize {
     let mut result = 0usize;
     let max_col = a.cols();
-    
+
     for bit_idx in 0..k_block {
         let col = col_start + bit_idx;
         if col < max_col && a.get(row, col) {
             result |= 1usize << bit_idx;
         }
     }
-    
+
     result
 }
 
@@ -139,7 +139,7 @@ pub fn multiply(a: &BitMatrix, b: &BitMatrix) -> BitMatrix {
     let m = a.rows();
     let k = a.cols();
     let n = b.cols();
-    
+
     assert_eq!(
         k,
         b.rows(),
@@ -149,36 +149,36 @@ pub fn multiply(a: &BitMatrix, b: &BitMatrix) -> BitMatrix {
         b.rows(),
         n
     );
-    
+
     let mut c = BitMatrix::new_zero(m, n);
-    
+
     if m == 0 || k == 0 || n == 0 {
         return c;
     }
-    
+
     let k_block = choose_k_block(k, n);
-    
+
     // Process B in panels of k_block rows
     let mut panel_start = 0;
     while panel_start < k {
         let panel_size = k_block.min(k - panel_start);
-        
+
         // Build Gray code table for this panel
         let table = build_gray_table(b, panel_start, panel_size, n);
-        
+
         // For each row of A
         for i in 0..m {
             // Extract k_block bits from row i of A starting at panel_start
             let idx = extract_bits(a, i, panel_start, panel_size);
-            
+
             // XOR the corresponding table entry into row i of C
             let c_row = c.row_words_mut(i);
             xor_inplace(c_row, &table[idx]);
         }
-        
+
         panel_start += k_block;
     }
-    
+
     c
 }
 
@@ -190,8 +190,8 @@ mod tests {
     fn test_choose_k_block() {
         // Small dimensions should allow larger block sizes
         let k1 = choose_k_block(100, 100);
-        assert!(k1 >= 6 && k1 <= 8);
-        
+        assert!((6..=8).contains(&k1));
+
         // Very large output width should reduce block size
         let k2 = choose_k_block(100, 10000);
         assert!(k2 >= 1);
@@ -202,7 +202,7 @@ mod tests {
         let mut a = BitMatrix::new_zero(1, 8);
         a.set(0, 1, true);
         a.set(0, 3, true);
-        
+
         // Extract bits 0-3: should get binary 1010 = 10
         let bits = extract_bits(&a, 0, 0, 4);
         assert_eq!(bits, 0b1010);
@@ -213,7 +213,7 @@ mod tests {
         let a = BitMatrix::identity(4);
         let b = BitMatrix::identity(4);
         let c = multiply(&a, &b);
-        
+
         // I × I = I
         for i in 0..4 {
             for j in 0..4 {
@@ -227,16 +227,16 @@ mod tests {
         let mut a = BitMatrix::new_zero(2, 2);
         a.set(0, 0, true);
         a.set(1, 1, true);
-        
+
         let mut b = BitMatrix::new_zero(2, 2);
         b.set(0, 1, true);
         b.set(1, 0, true);
-        
+
         let c = multiply(&a, &b);
-        
-        assert_eq!(c.get(0, 1), true);
-        assert_eq!(c.get(1, 0), true);
-        assert_eq!(c.get(0, 0), false);
-        assert_eq!(c.get(1, 1), false);
+
+        assert!(c.get(0, 1));
+        assert!(c.get(1, 0));
+        assert!(!c.get(0, 0));
+        assert!(!c.get(1, 1));
     }
 }

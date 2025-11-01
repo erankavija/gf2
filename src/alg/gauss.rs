@@ -41,32 +41,32 @@ use crate::matrix::BitMatrix;
 /// ```
 pub fn invert(m: &BitMatrix) -> Option<BitMatrix> {
     let n = m.rows();
-    
+
     // Must be square
     if n != m.cols() {
         return None;
     }
-    
+
     if n == 0 {
         return Some(BitMatrix::new_zero(0, 0));
     }
-    
+
     // Create augmented matrix [A | I]
     // Each row has 2n columns
     let mut aug = BitMatrix::new_zero(n, 2 * n);
-    
+
     // Copy A into left half
     for r in 0..n {
         for c in 0..n {
             aug.set(r, c, m.get(r, c));
         }
     }
-    
+
     // Set right half to identity
     for i in 0..n {
         aug.set(i, n + i, true);
     }
-    
+
     // Gauss-Jordan elimination
     for col in 0..n {
         // Find pivot row (any row >= col with a 1 in column col)
@@ -77,17 +77,14 @@ pub fn invert(m: &BitMatrix) -> Option<BitMatrix> {
                 break;
             }
         }
-        
-        let pivot_row = match pivot_row {
-            Some(r) => r,
-            None => return None, // No pivot found, matrix is singular
-        };
-        
+
+        let pivot_row = pivot_row?; // Return None if no pivot found (singular matrix)
+
         // Swap pivot row with current row
         if pivot_row != col {
             aug.swap_rows(col, pivot_row);
         }
-        
+
         // Eliminate column col from all other rows
         for r in 0..n {
             if r != col && aug.get(r, col) {
@@ -99,7 +96,7 @@ pub fn invert(m: &BitMatrix) -> Option<BitMatrix> {
             }
         }
     }
-    
+
     // Extract right half (the inverse)
     let mut inv = BitMatrix::new_zero(n, n);
     for r in 0..n {
@@ -107,6 +104,6 @@ pub fn invert(m: &BitMatrix) -> Option<BitMatrix> {
             inv.set(r, c, aug.get(r, n + c));
         }
     }
-    
+
     Some(inv)
 }

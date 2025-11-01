@@ -33,8 +33,8 @@
 #![deny(unsafe_code)]
 #![warn(missing_docs)]
 
-mod bitvec;
 pub mod alg;
+mod bitvec;
 pub mod kernels;
 pub mod matrix;
 

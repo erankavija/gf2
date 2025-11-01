@@ -58,7 +58,7 @@ impl BitMatrix {
     /// assert_eq!(m.cols(), 20);
     /// ```
     pub fn new_zero(rows: usize, cols: usize) -> Self {
-        let stride_words = if cols == 0 { 0 } else { (cols + 63) / 64 };
+        let stride_words = if cols == 0 { 0 } else { cols.div_ceil(64) };
         let total_words = rows * stride_words;
         Self {
             data: vec![0u64; total_words],
@@ -127,9 +127,19 @@ impl BitMatrix {
     /// ```
     #[inline]
     pub fn get(&self, row: usize, col: usize) -> bool {
-        assert!(row < self.rows, "row index {} out of bounds (rows={})", row, self.rows);
-        assert!(col < self.cols, "col index {} out of bounds (cols={})", col, self.cols);
-        
+        assert!(
+            row < self.rows,
+            "row index {} out of bounds (rows={})",
+            row,
+            self.rows
+        );
+        assert!(
+            col < self.cols,
+            "col index {} out of bounds (cols={})",
+            col,
+            self.cols
+        );
+
         let word_idx = row * self.stride_words + (col / 64);
         let bit_offset = col % 64;
         (self.data[word_idx] & (1u64 << bit_offset)) != 0
@@ -152,13 +162,23 @@ impl BitMatrix {
     /// ```
     #[inline]
     pub fn set(&mut self, row: usize, col: usize, val: bool) {
-        assert!(row < self.rows, "row index {} out of bounds (rows={})", row, self.rows);
-        assert!(col < self.cols, "col index {} out of bounds (cols={})", col, self.cols);
-        
+        assert!(
+            row < self.rows,
+            "row index {} out of bounds (rows={})",
+            row,
+            self.rows
+        );
+        assert!(
+            col < self.cols,
+            "col index {} out of bounds (cols={})",
+            col,
+            self.cols
+        );
+
         let word_idx = row * self.stride_words + (col / 64);
         let bit_offset = col % 64;
         let mask = 1u64 << bit_offset;
-        
+
         if val {
             self.data[word_idx] |= mask;
         } else {
@@ -185,7 +205,12 @@ impl BitMatrix {
     /// ```
     #[inline]
     pub fn row_words(&self, row: usize) -> &[u64] {
-        assert!(row < self.rows, "row index {} out of bounds (rows={})", row, self.rows);
+        assert!(
+            row < self.rows,
+            "row index {} out of bounds (rows={})",
+            row,
+            self.rows
+        );
         let start = row * self.stride_words;
         &self.data[start..start + self.stride_words]
     }
@@ -211,7 +236,12 @@ impl BitMatrix {
     /// ```
     #[inline]
     pub fn row_words_mut(&mut self, row: usize) -> &mut [u64] {
-        assert!(row < self.rows, "row index {} out of bounds (rows={})", row, self.rows);
+        assert!(
+            row < self.rows,
+            "row index {} out of bounds (rows={})",
+            row,
+            self.rows
+        );
         let start = row * self.stride_words;
         &mut self.data[start..start + self.stride_words]
     }
@@ -236,16 +266,26 @@ impl BitMatrix {
     /// assert_eq!(m.get(1, 0), true);
     /// ```
     pub fn swap_rows(&mut self, r1: usize, r2: usize) {
-        assert!(r1 < self.rows, "row index {} out of bounds (rows={})", r1, self.rows);
-        assert!(r2 < self.rows, "row index {} out of bounds (rows={})", r2, self.rows);
-        
+        assert!(
+            r1 < self.rows,
+            "row index {} out of bounds (rows={})",
+            r1,
+            self.rows
+        );
+        assert!(
+            r2 < self.rows,
+            "row index {} out of bounds (rows={})",
+            r2,
+            self.rows
+        );
+
         if r1 == r2 {
             return;
         }
-        
+
         let start1 = r1 * self.stride_words;
         let start2 = r2 * self.stride_words;
-        
+
         // Swap words in the two rows
         for i in 0..self.stride_words {
             self.data.swap(start1 + i, start2 + i);
@@ -274,7 +314,7 @@ impl BitMatrix {
     /// ```
     pub fn transpose(&self) -> Self {
         let mut result = Self::new_zero(self.cols, self.rows);
-        
+
         for r in 0..self.rows {
             for c in 0..self.cols {
                 if self.get(r, c) {
@@ -282,7 +322,7 @@ impl BitMatrix {
                 }
             }
         }
-        
+
         result
     }
 }
@@ -302,21 +342,21 @@ mod tests {
     #[test]
     fn test_identity() {
         let m = BitMatrix::identity(3);
-        assert_eq!(m.get(0, 0), true);
-        assert_eq!(m.get(1, 1), true);
-        assert_eq!(m.get(2, 2), true);
-        assert_eq!(m.get(0, 1), false);
-        assert_eq!(m.get(1, 0), false);
+        assert!(m.get(0, 0));
+        assert!(m.get(1, 1));
+        assert!(m.get(2, 2));
+        assert!(!m.get(0, 1));
+        assert!(!m.get(1, 0));
     }
 
     #[test]
     fn test_get_set() {
         let mut m = BitMatrix::new_zero(2, 3);
         m.set(0, 1, true);
-        assert_eq!(m.get(0, 1), true);
-        assert_eq!(m.get(0, 0), false);
-        
+        assert!(m.get(0, 1));
+        assert!(!m.get(0, 0));
+
         m.set(0, 1, false);
-        assert_eq!(m.get(0, 1), false);
+        assert!(!m.get(0, 1));
     }
 }
