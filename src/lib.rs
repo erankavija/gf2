@@ -34,6 +34,7 @@
 #![warn(missing_docs)]
 
 mod bitvec;
+pub mod alg;
 pub mod kernels;
 pub mod matrix;
 
