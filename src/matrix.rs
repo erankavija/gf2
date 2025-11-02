@@ -382,6 +382,45 @@ impl fmt::Display for BitMatrix {
     }
 }
 
+// Implement Mul trait for infix matrix multiplication
+use std::ops::Mul;
+
+/// Matrix multiplication for owned matrices: `a * b`
+impl Mul<BitMatrix> for BitMatrix {
+    type Output = BitMatrix;
+
+    fn mul(self, rhs: BitMatrix) -> BitMatrix {
+        crate::alg::m4rm::multiply(&self, &rhs)
+    }
+}
+
+/// Matrix multiplication for owned × borrowed: `a * &b`
+impl Mul<&BitMatrix> for BitMatrix {
+    type Output = BitMatrix;
+
+    fn mul(self, rhs: &BitMatrix) -> BitMatrix {
+        crate::alg::m4rm::multiply(&self, rhs)
+    }
+}
+
+/// Matrix multiplication for borrowed × owned: `&a * b`
+impl Mul<BitMatrix> for &BitMatrix {
+    type Output = BitMatrix;
+
+    fn mul(self, rhs: BitMatrix) -> BitMatrix {
+        crate::alg::m4rm::multiply(self, &rhs)
+    }
+}
+
+/// Matrix multiplication for borrowed × borrowed: `&a * &b`
+impl Mul<&BitMatrix> for &BitMatrix {
+    type Output = BitMatrix;
+
+    fn mul(self, rhs: &BitMatrix) -> BitMatrix {
+        crate::alg::m4rm::multiply(self, rhs)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
