@@ -36,6 +36,7 @@
 pub mod alg;
 mod bitvec;
 pub mod kernels;
+mod macros;
 pub mod matrix;
 
 pub use bitvec::BitVec;
