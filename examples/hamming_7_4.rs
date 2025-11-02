@@ -133,19 +133,39 @@ fn decode(received: &BitVec, h: &BitMatrix) -> BitVec {
     decoded
 }
 
-/// Simulates a binary symmetric channel (BSC) with error probability p
-/// Each bit is flipped independently with probability p
+/// Simulates a binary symmetric channel (BSC) with error probability p.
+///
+/// Each bit in the codeword is flipped independently with probability `error_prob`.
+/// This models a noisy communication channel where transmission errors occur randomly.
+///
+/// # Arguments
+///
+/// * `codeword` - The bit vector to transmit through the channel
+/// * `error_prob` - Probability of bit flip (0.0 to 1.0)
+///
+/// # Returns
+///
+/// A new bit vector representing the received codeword after channel transmission
+///
+/// # Panics
+///
+/// Panics if `error_prob` is not in the range [0.0, 1.0]
 fn binary_symmetric_channel(codeword: &BitVec, error_prob: f64) -> BitVec {
+    assert!(
+        (0.0..=1.0).contains(&error_prob),
+        "error_prob must be between 0.0 and 1.0"
+    );
+
     let mut rng = rand::thread_rng();
     let mut received = codeword.clone();
-    
+
     for i in 0..received.len() {
         // Flip bit with probability error_prob
         if rng.gen::<f64>() < error_prob {
             received.set(i, !received.get(i));
         }
     }
-    
+
     received
 }
 
@@ -269,7 +289,6 @@ fn main() {
     } else {
         println!("Channel transmitted without errors");
     }
-
     let decoded5 = decode(&received5, &h);
     println!("Decoded:         {}", decoded5);
     if message5 == decoded5 {
