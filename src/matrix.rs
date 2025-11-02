@@ -4,6 +4,7 @@
 //! stored in a row-major layout with bits packed into u64 words.
 
 use std::fmt;
+use std::ops::Mul;
 
 /// A row-major, bit-packed boolean matrix.
 ///
@@ -381,9 +382,6 @@ impl fmt::Display for BitMatrix {
         write!(f, "  └{}┘", " ".repeat(border_width))
     }
 }
-
-// Implement Mul trait for infix matrix multiplication
-use std::ops::Mul;
 
 /// Matrix multiplication for owned matrices: `a * b`
 impl Mul<BitMatrix> for BitMatrix {
