@@ -112,7 +112,6 @@ assert_eq!(bv.to_bytes_le(), vec![0b00111100]);
 
 ```rust
 use gf2::matrix::BitMatrix;
-use gf2::alg::m4rm::multiply;
 use gf2::alg::gauss::invert;
 
 // Create a 3x3 matrix
@@ -125,8 +124,8 @@ a.set(2, 2, true);
 // Create identity matrix
 let i = BitMatrix::identity(3);
 
-// Matrix multiplication (using M4RM algorithm)
-let product = multiply(&a, &i);
+// Matrix multiplication using the * operator (M4RM algorithm)
+let product = &a * &i;
 // product equals a
 
 // Matrix inversion (using Gauss-Jordan)
@@ -140,7 +139,7 @@ b.set(0, 1, true);
 b.set(1, 0, true);
 
 let b_inv = invert(&b).unwrap();
-let should_be_identity = multiply(&b, &b_inv);
+let should_be_identity = &b * &b_inv;
 assert_eq!(should_be_identity.get(0, 0), true);
 assert_eq!(should_be_identity.get(1, 1), true);
 assert_eq!(should_be_identity.get(0, 1), false);
@@ -170,7 +169,8 @@ println!("{}", a);
 - `transpose()` - Return transposed matrix
 
 ### Matrix Algorithms (over GF(2))
-- `multiply(a, b)` - Matrix multiplication using M4RM (Method of the Four Russians)
+- `a * b` or `&a * &b` - Infix matrix multiplication using the `*` operator (M4RM algorithm)
+- `multiply(a, b)` - Matrix multiplication using M4RM (Method of the Four Russians) - also available via `*` operator
 - `invert(m)` - Matrix inversion using Gauss-Jordan elimination (returns `Option<BitMatrix>`)
 
 ### BitVec Operations

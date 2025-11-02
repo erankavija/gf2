@@ -4,6 +4,7 @@
 //! stored in a row-major layout with bits packed into u64 words.
 
 use std::fmt;
+use std::ops::Mul;
 
 /// A row-major, bit-packed boolean matrix.
 ///
@@ -382,6 +383,67 @@ impl fmt::Display for BitMatrix {
     }
 }
 
+// Implement Mul trait for matrix multiplication using the M4RM algorithm
+// This enables the infix `*` operator for matrix multiplication
+
+impl Mul<BitMatrix> for BitMatrix {
+    type Output = BitMatrix;
+
+    /// Matrix multiplication: `A * B`
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2::matrix::BitMatrix;
+    ///
+    /// let a = BitMatrix::identity(3);
+    /// let b = BitMatrix::identity(3);
+    /// let c = a * b;
+    /// assert_eq!(c, BitMatrix::identity(3));
+    /// ```
+    fn mul(self, rhs: BitMatrix) -> BitMatrix {
+        crate::alg::m4rm::multiply(&self, &rhs)
+    }
+}
+
+impl Mul<&BitMatrix> for BitMatrix {
+    type Output = BitMatrix;
+
+    /// Matrix multiplication: `A * &B`
+    fn mul(self, rhs: &BitMatrix) -> BitMatrix {
+        crate::alg::m4rm::multiply(&self, rhs)
+    }
+}
+
+impl Mul<BitMatrix> for &BitMatrix {
+    type Output = BitMatrix;
+
+    /// Matrix multiplication: `&A * B`
+    fn mul(self, rhs: BitMatrix) -> BitMatrix {
+        crate::alg::m4rm::multiply(self, &rhs)
+    }
+}
+
+impl Mul<&BitMatrix> for &BitMatrix {
+    type Output = BitMatrix;
+
+    /// Matrix multiplication: `&A * &B`
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2::matrix::BitMatrix;
+    ///
+    /// let a = BitMatrix::identity(3);
+    /// let b = BitMatrix::identity(3);
+    /// let c = &a * &b;
+    /// assert_eq!(c, BitMatrix::identity(3));
+    /// ```
+    fn mul(self, rhs: &BitMatrix) -> BitMatrix {
+        crate::alg::m4rm::multiply(self, rhs)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -413,5 +475,80 @@ mod tests {
 
         m.set(0, 1, false);
         assert!(!m.get(0, 1));
+    }
+
+    #[test]
+    fn test_mul_operator_identity() {
+        // Test A * I = A
+        let mut a = BitMatrix::new_zero(3, 4);
+        a.set(0, 1, true);
+        a.set(1, 2, true);
+        a.set(2, 3, true);
+
+        let i = BitMatrix::identity(4);
+        let c = &a * &i;
+
+        assert_eq!(c.rows(), 3);
+        assert_eq!(c.cols(), 4);
+        for r in 0..3 {
+            for col in 0..4 {
+                assert_eq!(c.get(r, col), a.get(r, col));
+            }
+        }
+    }
+
+    #[test]
+    fn test_mul_operator_owned() {
+        // Test owned values: A * B
+        let a = BitMatrix::identity(3);
+        let b = BitMatrix::identity(3);
+        let c = a * b;
+
+        assert_eq!(c, BitMatrix::identity(3));
+    }
+
+    #[test]
+    fn test_mul_operator_mixed_refs() {
+        // Test mixed references
+        let a = BitMatrix::identity(2);
+        let b = BitMatrix::identity(2);
+
+        // A * &B
+        let c1 = a.clone() * &b;
+        assert_eq!(c1, BitMatrix::identity(2));
+
+        // &A * B
+        let c2 = &a * b.clone();
+        assert_eq!(c2, BitMatrix::identity(2));
+
+        // &A * &B
+        let c3 = &a * &b;
+        assert_eq!(c3, BitMatrix::identity(2));
+    }
+
+    #[test]
+    fn test_mul_operator_rectangular() {
+        // Test 2x3 * 3x2 = 2x2
+        let mut a = BitMatrix::new_zero(2, 3);
+        a.set(0, 0, true);
+        a.set(0, 1, true);
+        a.set(1, 1, true);
+        a.set(1, 2, true);
+
+        let mut b = BitMatrix::new_zero(3, 2);
+        b.set(0, 0, true);
+        b.set(1, 1, true);
+        b.set(2, 0, true);
+
+        let c = &a * &b;
+
+        assert_eq!(c.rows(), 2);
+        assert_eq!(c.cols(), 2);
+
+        // Verify against expected result
+        assert!(c.get(0, 0));
+        assert!(c.get(0, 1));
+        assert!(c.get(1, 0));
+        assert!(c.get(1, 1));
     }
 }
