@@ -355,8 +355,11 @@ impl fmt::Display for BitMatrix {
             return write!(f, "[ ]");
         }
 
+        // Border width: each column takes 2 chars (digit + space), plus 1 for final space
+        let border_width = self.cols * 2 + 1;
+
         // Top border
-        writeln!(f, "  ┌{}┐", " ".repeat(self.cols * 2 + 1))?;
+        writeln!(f, "  ┌{}┐", " ".repeat(border_width))?;
 
         // Matrix rows
         for r in 0..self.rows {
@@ -375,7 +378,7 @@ impl fmt::Display for BitMatrix {
         }
 
         // Bottom border
-        write!(f, "  └{}┘", " ".repeat(self.cols * 2 + 1))
+        write!(f, "  └{}┘", " ".repeat(border_width))
     }
 }
 
