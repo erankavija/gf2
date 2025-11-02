@@ -26,7 +26,6 @@
 //!   └             ┘
 //! ```
 
-use gf2::alg::m4rm::multiply;
 use gf2::matrix::BitMatrix;
 use gf2::BitVec;
 
@@ -57,8 +56,8 @@ fn encode(message: &BitVec, g: &BitMatrix) -> BitVec {
         msg_matrix.set(0, i, message.get(i));
     }
 
-    // Multiply: codeword = message × G
-    let codeword_matrix = multiply(&msg_matrix, g);
+    // Multiply: codeword = message × G (using the * operator)
+    let codeword_matrix = &msg_matrix * g;
 
     // Extract result as BitVec
     let mut codeword = BitVec::new();
@@ -77,8 +76,8 @@ fn syndrome(received: &BitVec, h: &BitMatrix) -> BitVec {
         received_matrix.set(i, 0, received.get(i));
     }
 
-    // Compute syndrome: s = H × received^T
-    let syndrome_matrix = multiply(h, &received_matrix);
+    // Compute syndrome: s = H × received^T (using the * operator)
+    let syndrome_matrix = h * &received_matrix;
 
     // Extract syndrome as BitVec
     let mut s = BitVec::new();
