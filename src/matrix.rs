@@ -3,6 +3,8 @@
 //! This module provides a memory-efficient matrix type where each element is a single bit,
 //! stored in a row-major layout with bits packed into u64 words.
 
+use std::fmt;
+
 /// A row-major, bit-packed boolean matrix.
 ///
 /// # Storage Layout
@@ -324,6 +326,59 @@ impl BitMatrix {
         }
 
         result
+    }
+}
+
+impl fmt::Display for BitMatrix {
+    /// Formats the BitMatrix in nalgebra-like style.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2::matrix::BitMatrix;
+    ///
+    /// let mut m = BitMatrix::new_zero(3, 4);
+    /// m.set(0, 0, true);
+    /// m.set(0, 3, true);
+    /// m.set(1, 1, true);
+    /// m.set(2, 2, true);
+    /// println!("{}", m);
+    /// // Displays:
+    /// //   ┌       ┐
+    /// //   │ 1 0 0 1 │
+    /// //   │ 0 1 0 0 │
+    /// //   │ 0 0 1 0 │
+    /// //   └       ┘
+    /// ```
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if self.rows == 0 || self.cols == 0 {
+            return write!(f, "[ ]");
+        }
+
+        // Border width: each column takes 2 chars (digit + space), plus 1 for final space
+        let border_width = self.cols * 2 + 1;
+
+        // Top border
+        writeln!(f, "  ┌{}┐", " ".repeat(border_width))?;
+
+        // Matrix rows
+        for r in 0..self.rows {
+            write!(f, "  │ ")?;
+            for c in 0..self.cols {
+                if self.get(r, c) {
+                    write!(f, "1")?;
+                } else {
+                    write!(f, "0")?;
+                }
+                if c < self.cols - 1 {
+                    write!(f, " ")?;
+                }
+            }
+            writeln!(f, " │")?;
+        }
+
+        // Bottom border
+        write!(f, "  └{}┘", " ".repeat(border_width))
     }
 }
 

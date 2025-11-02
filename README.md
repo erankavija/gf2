@@ -64,6 +64,9 @@ let mut a = BitVec::from_bytes_le(&[0b11110000]);
 let b = BitVec::from_bytes_le(&[0b11001100]);
 a.bit_xor_into(&b);
 assert_eq!(a.to_bytes_le(), vec![0b00111100]);
+
+// Pretty printing (nalgebra-like display)
+println!("{}", bv);  // Displays: [ 1 0 1 ]
 ```
 
 ### Byte Conversion
@@ -141,6 +144,15 @@ let should_be_identity = multiply(&b, &b_inv);
 assert_eq!(should_be_identity.get(0, 0), true);
 assert_eq!(should_be_identity.get(1, 1), true);
 assert_eq!(should_be_identity.get(0, 1), false);
+
+// Pretty printing (nalgebra-like display)
+println!("{}", a);
+// Displays:
+//   ┌       ┐
+//   │ 1 1 0 │
+//   │ 0 1 0 │
+//   │ 0 0 1 │
+//   └       ┘
 ```
 
 ## API Overview
@@ -231,6 +243,20 @@ assert_eq!(should_be_identity.get(0, 1), false);
 - Separate crate or module organization
 
 ## Development
+
+### Examples
+
+Run the Hamming (7,4) error-correcting code example:
+
+```bash
+cargo run --example hamming_7_4
+```
+
+This example demonstrates:
+- Creating generator and parity-check matrices for Hamming (7,4) code
+- Encoding 4-bit messages into 7-bit codewords
+- Detecting and correcting single-bit errors
+- Pretty-printing of matrices and bit vectors using nalgebra-like display format
 
 ### Testing
 

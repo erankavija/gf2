@@ -1,5 +1,7 @@
 //! Core BitVec type for bit string manipulation.
 
+use std::fmt;
+
 /// An owning, growable bit string backed by `Vec<u64>`.
 ///
 /// ## Invariants
@@ -624,6 +626,37 @@ impl BitVec {
 impl Default for BitVec {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl fmt::Display for BitVec {
+    /// Formats the BitVec in nalgebra-like style as a row vector.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2::BitVec;
+    ///
+    /// let mut bv = BitVec::new();
+    /// bv.push_bit(true);
+    /// bv.push_bit(false);
+    /// bv.push_bit(true);
+    /// bv.push_bit(true);
+    /// println!("{}", bv);  // Displays: [ 1 0 1 1 ]
+    /// ```
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "[ ")?;
+        for i in 0..self.len_bits {
+            if self.get(i) {
+                write!(f, "1")?;
+            } else {
+                write!(f, "0")?;
+            }
+            if i < self.len_bits - 1 {
+                write!(f, " ")?;
+            }
+        }
+        write!(f, " ]")
     }
 }
 
