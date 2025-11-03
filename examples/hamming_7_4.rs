@@ -305,42 +305,54 @@ fn main() {
 
     let codeword6 = encode(&message6, &g);
     println!("Encoded:          {}", codeword6);
-    
+
     let mut successes = 0;
     let num_trials = 10;
-    println!("\nTransmitting {} times through BSC with p=0.15:", num_trials);
+    println!(
+        "\nTransmitting {} times through BSC with p=0.15:",
+        num_trials
+    );
     for trial in 1..=num_trials {
         let received = binary_symmetric_channel(&codeword6, 0.15);
         let decoded = decode(&received, &h);
-        
+
         let mut error_positions = Vec::new();
         for i in 0..7 {
             if codeword6.get(i) != received.get(i) {
                 error_positions.push(i);
             }
         }
-        
+
         let success = message6 == decoded;
         if success {
             successes += 1;
         }
-        
+
         print!("  Trial {:2}: ", trial);
         if error_positions.is_empty() {
             print!("No errors");
         } else if error_positions.len() == 1 {
             print!("1 error at pos {}", error_positions[0]);
         } else {
-            print!("{} errors at pos {:?}", error_positions.len(), error_positions);
+            print!(
+                "{} errors at pos {:?}",
+                error_positions.len(),
+                error_positions
+            );
         }
-        
+
         if success {
             println!(" → ✓ Decoded successfully");
         } else {
             println!(" → ✗ Decoding failed");
         }
     }
-    println!("\nSuccess rate: {}/{} ({:.1}%)\n", successes, num_trials, (successes as f64 / num_trials as f64) * 100.0);
+    println!(
+        "\nSuccess rate: {}/{} ({:.1}%)\n",
+        successes,
+        num_trials,
+        (successes as f64 / num_trials as f64) * 100.0
+    );
 
     println!("=== All examples completed successfully! ===");
 }
