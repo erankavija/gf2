@@ -451,20 +451,19 @@ impl SyndromeTableDecoder {
 
         let mut syndrome_table = HashMap::new();
 
-        // Zero syndrome corresponds to no error
-        let zero_syndrome = BitVec::new();
+        // Zero syndrome corresponds to no error (all zeros error pattern)
         let mut zero_error = BitVec::new();
-        for _ in 0..code.n {
-            zero_error.push_bit(false);
-        }
+        zero_error.resize(code.n, false);
+        
+        // Compute the actual zero syndrome (should be r bits all zero)
+        let zero_syndrome = code.syndrome(&zero_error).expect("Code must have H matrix");
         syndrome_table.insert(zero_syndrome, zero_error);
 
         // For each possible single-bit error position
         for err_pos in 0..code.n {
             let mut error_pattern = BitVec::new();
-            for i in 0..code.n {
-                error_pattern.push_bit(i == err_pos);
-            }
+            error_pattern.resize(code.n, false);
+            error_pattern.set(err_pos, true);
 
             // Compute syndrome for this error pattern
             if let Some(syndrome) = code.syndrome(&error_pattern) {
@@ -504,9 +503,7 @@ impl HardDecisionDecoder for SyndromeTableDecoder {
             .unwrap_or_else(|| {
                 // Unknown syndrome - return zero error pattern (no correction)
                 let mut zero_error = BitVec::new();
-                for _ in 0..self.code.n {
-                    zero_error.push_bit(false);
-                }
+                zero_error.resize(self.code.n, false);
                 zero_error
             });
 
