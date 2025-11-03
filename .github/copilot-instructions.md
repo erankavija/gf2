@@ -15,7 +15,7 @@ This document provides guidelines for GitHub Copilot when working on the `gf2` c
 
 ### 1. Functional Programming Paradigm
 
-**Prefer functional programming patterns:**
+**Prefer functional programming patterns for high-level code:**
 - Use immutability where practical; prefer returning new values over mutation
 - Leverage iterators and functional combinators (map, filter, fold) over explicit loops
 - Write pure functions without side effects whenever possible
@@ -23,6 +23,12 @@ This document provides guidelines for GitHub Copilot when working on the `gf2` c
 - Employ higher-order functions and closures for abstraction
 - Avoid mutable state; when mutation is necessary for performance, encapsulate it well
 - Use type-driven design with strong type safety
+
+**⚠️ Performance has absolute priority for low-level implementations:**
+- In `kernels/` and performance-critical paths, prioritize speed over functional style
+- Use imperative loops, mutation, and manual optimizations when benchmarks show benefits
+- Profile first, optimize second - measure before sacrificing functional style
+- Encapsulate low-level optimizations behind clean, functional high-level APIs
 
 **Examples of preferred patterns:**
 ```rust
@@ -105,10 +111,13 @@ mod tests {
 - Use conventional Rust naming: `snake_case` for functions/variables, `PascalCase` for types
 
 ### Performance Considerations
+- **Performance is the absolute priority for low-level code** (especially in `kernels/`)
 - Optimize hot paths with word-level operations over bit-level
 - Minimize branching in tight loops
 - Use appropriate data structures (Vec<u64> for dense storage)
-- Profile before optimizing; correctness comes first
+- Profile before optimizing; correctness comes first, then performance
+- Use imperative, mutating code in kernels when benchmarks show clear benefits
+- Encapsulate performance-critical code behind clean, functional high-level APIs
 - Document performance characteristics in doc comments
 
 ### GF(2) Domain-Specific Guidelines
@@ -119,10 +128,10 @@ mod tests {
 
 ## Module Structure
 
-- **bitvec.rs**: Core bit vector operations (get, set, push, pop, shifts, bitwise ops)
-- **matrix.rs**: Bit-packed boolean matrices for GF(2) linear algebra
-- **alg/**: Algorithms including M4RM multiplication and Gauss-Jordan inversion
-- **kernels/**: Low-level operation kernels with potential SIMD implementations
+- **bitvec.rs**: Core bit vector operations (get, set, push, pop, shifts, bitwise ops) - functional style preferred
+- **matrix.rs**: Bit-packed boolean matrices for GF(2) linear algebra - functional style preferred  
+- **alg/**: Algorithms including M4RM multiplication and Gauss-Jordan inversion - functional style preferred
+- **kernels/**: **Performance-critical** low-level operation kernels with potential SIMD implementations - **imperative style and mutation encouraged for speed**
 - **tests/**: Comprehensive test suites including property-based tests
 
 ## Testing Guidelines
