@@ -69,8 +69,8 @@ fn test_bit_count_empty_vector() {
 
 // Step 2: Implement minimal code to pass
 impl BitVec {
-    pub fn count_ones(&self) -> usize {
-        self.words.iter().map(|w| w.count_ones() as usize).sum()
+    pub fn count_ones(&self) -> u64 {
+        self.words.iter().map(|w| w.count_ones() as u64).sum()
     }
 }
 
@@ -83,7 +83,7 @@ mod tests {
         #[test]
         fn count_ones_matches_naive(bytes in prop::collection::vec(any::<u8>(), 0..100)) {
             let bv = BitVec::from_bytes_le(&bytes);
-            let expected = bytes.iter().map(|b| b.count_ones()).sum::<u32>() as usize;
+            let expected = bytes.iter().map(|b| b.count_ones()).sum::<u32>() as u64;
             assert_eq!(bv.count_ones(), expected);
         }
     }
@@ -240,7 +240,7 @@ let result = input.iter()
 
 ## MSRV and Dependencies
 
-- **Minimum Supported Rust Version (MSRV)**: 1.74+
+- **Minimum Supported Rust Version (MSRV)**: 1.74
 - Keep dependencies minimal
 - Use standard library features when possible
 - Dev dependencies: `proptest` for property tests, `criterion` for benchmarks
