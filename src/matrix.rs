@@ -383,9 +383,6 @@ impl fmt::Display for BitMatrix {
     }
 }
 
-// Implement Mul trait for matrix multiplication using the M4RM algorithm
-// This enables the infix `*` operator for matrix multiplication
-
 impl Mul<BitMatrix> for BitMatrix {
     type Output = BitMatrix;
 
@@ -409,7 +406,6 @@ impl Mul<BitMatrix> for BitMatrix {
 impl Mul<&BitMatrix> for BitMatrix {
     type Output = BitMatrix;
 
-    /// Matrix multiplication: `A * &B`
     fn mul(self, rhs: &BitMatrix) -> BitMatrix {
         crate::alg::m4rm::multiply(&self, rhs)
     }
@@ -418,7 +414,6 @@ impl Mul<&BitMatrix> for BitMatrix {
 impl Mul<BitMatrix> for &BitMatrix {
     type Output = BitMatrix;
 
-    /// Matrix multiplication: `&A * B`
     fn mul(self, rhs: BitMatrix) -> BitMatrix {
         crate::alg::m4rm::multiply(self, &rhs)
     }
@@ -427,18 +422,6 @@ impl Mul<BitMatrix> for &BitMatrix {
 impl Mul<&BitMatrix> for &BitMatrix {
     type Output = BitMatrix;
 
-    /// Matrix multiplication: `&A * &B`
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2::matrix::BitMatrix;
-    ///
-    /// let a = BitMatrix::identity(3);
-    /// let b = BitMatrix::identity(3);
-    /// let c = &a * &b;
-    /// assert_eq!(c, BitMatrix::identity(3));
-    /// ```
     fn mul(self, rhs: &BitMatrix) -> BitMatrix {
         crate::alg::m4rm::multiply(self, rhs)
     }
