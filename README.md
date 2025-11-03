@@ -1,6 +1,7 @@
 # gf2 - High-Performance Bit String Manipulation
 
 [![CI](https://github.com/erankavija/gf2/workflows/CI/badge.svg)](https://github.com/erankavija/gf2/actions)
+[![codecov](https://codecov.io/gh/erankavija/gf2/branch/main/graph/badge.svg)](https://codecov.io/gh/erankavija/gf2)
 
 A high-performance Rust library for bit string manipulation with a focus on GF(2) operations and coding theory applications.
 
