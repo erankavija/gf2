@@ -12,20 +12,15 @@ env:
 
 jobs:
   test:
-    name: Test - ${{ matrix.rust }}
+    name: Test
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        rust: [stable, nightly]
     
     steps:
     - uses: actions/checkout@v4
     
     - name: Install Rust toolchain
-      uses: dtolnay/rust-toolchain@master
+      uses: dtolnay/rust-toolchain@stable
       with:
-        toolchain: ${{ matrix.rust }}
         components: rustfmt, clippy
     
     - name: Cache cargo registry
@@ -47,7 +42,6 @@ jobs:
         key: ubuntu-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
     
     - name: Check formatting
-      if: matrix.rust == 'stable'
       run: cargo fmt -- --check
     
     - name: Run clippy
@@ -64,10 +58,6 @@ jobs:
     
     - name: Build benchmarks
       run: cargo build --benches
-    
-    - name: Test nightly build
-      if: matrix.rust == 'nightly'
-      run: cargo +nightly build --verbose
   
   coverage:
     name: Code Coverage
