@@ -3,9 +3,9 @@
 //! This module provides implementations of linear block codes, including systematic codes
 //! and syndrome-based decoding.
 
+use crate::coding::traits::{BlockEncoder, HardDecisionDecoder};
 use crate::matrix::BitMatrix;
 use crate::BitVec;
-use crate::coding::traits::{BlockEncoder, HardDecisionDecoder};
 use std::collections::HashMap;
 
 /// A linear block code defined by generator and parity-check matrices.
@@ -94,11 +94,7 @@ impl LinearBlockCode {
                 n,
                 "Parity-check matrix must have n columns"
             );
-            assert_eq!(
-                r,
-                n - k,
-                "Parity-check matrix must have r = n - k rows"
-            );
+            assert_eq!(r, n - k, "Parity-check matrix must have r = n - k rows");
         }
 
         // For systematic codes, assume message bits are in positions 0..k
@@ -296,7 +292,7 @@ impl LinearBlockCode {
         // Build parity-check matrix H (r × n)
         // H contains all non-zero binary r-tuples as columns
         let mut h = BitMatrix::new_zero(r, n);
-        
+
         // Fill columns with binary representations of 1 to n
         for col in 0..n {
             let value = col + 1; // Use 1-indexed values
@@ -310,14 +306,14 @@ impl LinearBlockCode {
         // Build generator matrix G (k × n) in systematic form [I_k | P]
         // For systematic form, we need G such that G * H^T = 0
         // We construct G = [I_k | P] where the first k columns form identity
-        
+
         let mut g = BitMatrix::new_zero(k, n);
-        
+
         // Identify which columns of H correspond to data bits (systematic positions)
         // We want columns that are not powers of 2 (parity bit positions are at indices 2^i - 1)
         let mut systematic_cols = Vec::new();
         let mut parity_cols = Vec::new();
-        
+
         for col in 0..n {
             let value = col + 1;
             // Check if value is a power of 2
@@ -327,8 +323,12 @@ impl LinearBlockCode {
                 systematic_cols.push(col);
             }
         }
-        
-        assert_eq!(systematic_cols.len(), k, "Should have k systematic positions");
+
+        assert_eq!(
+            systematic_cols.len(),
+            k,
+            "Should have k systematic positions"
+        );
         assert_eq!(parity_cols.len(), r, "Should have r parity positions");
 
         // Build G in systematic form
@@ -337,7 +337,7 @@ impl LinearBlockCode {
         for (msg_idx, &data_col) in systematic_cols.iter().enumerate() {
             // Set identity part: this message bit affects this data position
             g.set(msg_idx, data_col, true);
-            
+
             // Set parity part: for each parity position, check if this data position
             // contributes to it by checking the corresponding H entry
             for (parity_idx, &parity_col) in parity_cols.iter().enumerate() {
@@ -454,7 +454,7 @@ impl SyndromeTableDecoder {
         // Zero syndrome corresponds to no error (all zeros error pattern)
         let mut zero_error = BitVec::new();
         zero_error.resize(code.n, false);
-        
+
         // Compute the actual zero syndrome (should be r bits all zero)
         let zero_syndrome = code.syndrome(&zero_error).expect("Code must have H matrix");
         syndrome_table.insert(zero_syndrome, zero_error);
@@ -493,7 +493,10 @@ impl HardDecisionDecoder for SyndromeTableDecoder {
         );
 
         // Compute syndrome
-        let syndrome = self.code.syndrome(received).expect("Code must have H matrix");
+        let syndrome = self
+            .code
+            .syndrome(received)
+            .expect("Code must have H matrix");
 
         // Look up error pattern
         let error_pattern = self
@@ -555,7 +558,11 @@ mod tests {
         let codeword = code.encode(&msg);
 
         let syndrome = code.syndrome(&codeword).unwrap();
-        assert_eq!(syndrome.count_ones(), 0, "Valid codeword should have zero syndrome");
+        assert_eq!(
+            syndrome.count_ones(),
+            0,
+            "Valid codeword should have zero syndrome"
+        );
     }
 
     #[test]
@@ -573,7 +580,10 @@ mod tests {
         codeword.set(2, !codeword.get(2));
 
         let syndrome = code.syndrome(&codeword).unwrap();
-        assert!(syndrome.count_ones() > 0, "Corrupted codeword should have non-zero syndrome");
+        assert!(
+            syndrome.count_ones() > 0,
+            "Corrupted codeword should have non-zero syndrome"
+        );
     }
 
     #[test]
@@ -603,14 +613,18 @@ mod tests {
         }
 
         let received = decoder.code().encode(&msg);
-        
+
         // Test error correction at each position
         for err_pos in 0..7 {
             let mut corrupted = received.clone();
             corrupted.set(err_pos, !corrupted.get(err_pos));
-            
+
             let decoded = decoder.decode(&corrupted);
-            assert_eq!(decoded, msg, "Failed to correct error at position {}", err_pos);
+            assert_eq!(
+                decoded, msg,
+                "Failed to correct error at position {}",
+                err_pos
+            );
         }
     }
 
@@ -634,7 +648,7 @@ mod tests {
         for i in 0..11 {
             msg.push_bit(i % 2 == 0);
         }
-        
+
         let codeword = code.encode(&msg);
         assert_eq!(codeword.len(), 15);
 
@@ -655,7 +669,7 @@ mod tests {
         for i in 0..26 {
             msg.push_bit(i % 3 == 0);
         }
-        
+
         let codeword = code.encode(&msg);
         assert_eq!(codeword.len(), 31);
 
@@ -675,21 +689,25 @@ mod tests {
         }
 
         let codeword = decoder.code().encode(&msg);
-        
+
         // Test correction at a few positions
         for err_pos in [0, 5, 10, 14] {
             let mut corrupted = codeword.clone();
             corrupted.set(err_pos, !corrupted.get(err_pos));
-            
+
             let decoded = decoder.decode(&corrupted);
-            assert_eq!(decoded, msg, "Failed to correct error at position {}", err_pos);
+            assert_eq!(
+                decoded, msg,
+                "Failed to correct error at position {}",
+                err_pos
+            );
         }
     }
 
     #[test]
     fn test_project_message() {
         let code = LinearBlockCode::hamming_7_4();
-        
+
         let mut msg = BitVec::new();
         for bit in [true, true, false, true] {
             msg.push_bit(bit);
@@ -697,7 +715,7 @@ mod tests {
 
         let codeword = code.encode(&msg);
         let extracted = code.project_message(&codeword);
-        
+
         assert_eq!(extracted, msg);
     }
 }

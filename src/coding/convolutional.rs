@@ -3,7 +3,7 @@
 //! This module provides skeleton types for convolutional codes, which process
 //! bits in a streaming fashion while maintaining internal state.
 
-use crate::coding::traits::{StreamingEncoder, StreamingDecoder};
+use crate::coding::traits::{StreamingDecoder, StreamingEncoder};
 
 /// A convolutional encoder (skeleton).
 ///
@@ -74,7 +74,7 @@ impl StreamingEncoder for ConvolutionalEncoder {
     fn encode_bit(&mut self, input: bool) -> Vec<bool> {
         // Shift input into the register
         self.state = (self.state << 1) | (input as u32);
-        
+
         // Keep only constraint_length bits
         let mask = (1u32 << self.constraint_length) - 1;
         self.state &= mask;
@@ -168,7 +168,7 @@ mod tests {
         encoder.encode_bit(true);
         encoder.encode_bit(true);
         encoder.reset();
-        
+
         // After reset, state should be 0
         let output = encoder.encode_bit(false);
         assert_eq!(output.len(), 2);
@@ -178,17 +178,17 @@ mod tests {
     fn test_convolutional_encoder_basic() {
         let mut encoder = ConvolutionalEncoder::new(3, vec![0b111, 0b101]);
         encoder.reset();
-        
+
         // Encode a single bit
         let output = encoder.encode_bit(true);
         assert_eq!(output.len(), 2);
-        
+
         // Both generators should produce output
         // With state = 001 (binary), gen1 = 111, gen2 = 101
         // output1 = 001 & 111 = 001 -> XOR = 1
         // output2 = 001 & 101 = 001 -> XOR = 1
-        assert_eq!(output[0], true);
-        assert_eq!(output[1], true);
+        assert!(output[0]);
+        assert!(output[1]);
     }
 
     #[test]

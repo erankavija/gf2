@@ -633,13 +633,13 @@ impl std::hash::Hash for BitVec {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         // Hash the length
         self.len_bits.hash(state);
-        
+
         // Hash all complete words
         let complete_words = self.len_bits / 64;
         for i in 0..complete_words {
             self.data[i].hash(state);
         }
-        
+
         // Hash the remaining bits in the last word (if any)
         let remaining_bits = self.len_bits % 64;
         if remaining_bits > 0 {

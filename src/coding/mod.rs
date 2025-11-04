@@ -77,10 +77,10 @@
 //! assert_eq!(decoded, msg);
 //! ```
 
-pub mod traits;
-pub mod linear;
 pub mod convolutional;
+pub mod linear;
+pub mod traits;
 
 // Re-export main types
+pub use convolutional::{ConvolutionalDecoder, ConvolutionalEncoder};
 pub use linear::{LinearBlockCode, SyndromeTableDecoder};
-pub use convolutional::{ConvolutionalEncoder, ConvolutionalDecoder};
