@@ -23,35 +23,7 @@
 //!
 //! # Examples
 //!
-//! ## Using Hamming(7,4) code
-//!
-//! ```
-//! use gf2::coding::{LinearBlockCode, SyndromeTableDecoder};
-//! use gf2::coding::traits::{BlockEncoder, HardDecisionDecoder};
-//! use gf2::BitVec;
-//!
-//! // Create the code and decoder
-//! let code = LinearBlockCode::hamming_7_4();
-//! let decoder = SyndromeTableDecoder::new(code);
-//!
-//! // Encode a message
-//! let mut msg = BitVec::new();
-//! msg.push_bit(true);
-//! msg.push_bit(false);
-//! msg.push_bit(true);
-//! msg.push_bit(false);
-//! let codeword = decoder.code().encode(&msg);
-//!
-//! // Simulate an error
-//! let mut received = codeword.clone();
-//! received.set(2, !received.get(2)); // flip bit 2
-//!
-//! // Decode and correct
-//! let decoded = decoder.decode(&received);
-//! assert_eq!(decoded, msg);
-//! ```
-//!
-//! ## Using general Hamming codes
+//! ## Using Hamming codes
 //!
 //! ```
 //! use gf2::coding::{LinearBlockCode, SyndromeTableDecoder};
