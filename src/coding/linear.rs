@@ -22,7 +22,7 @@ use std::collections::HashMap;
 /// use gf2::BitVec;
 ///
 /// // Create a Hamming(7,4) code
-/// let code = LinearBlockCode::hamming_7_4();
+/// let code = LinearBlockCode::hamming(3);
 /// assert_eq!(code.k(), 4);
 /// assert_eq!(code.n(), 7);
 ///
@@ -201,56 +201,6 @@ impl LinearBlockCode {
         })
     }
 
-    /// Creates a standard Hamming(7,4) code.
-    ///
-    /// This is the most common Hamming code, encoding 4 data bits into 7 bits
-    /// with the ability to correct single-bit errors.
-    ///
-    /// Generator matrix G (4×7):
-    /// ```text
-    ///   ┌             ┐
-    ///   │ 1 0 0 0 1 1 0 │
-    ///   │ 0 1 0 0 1 0 1 │
-    ///   │ 0 0 1 0 0 1 1 │
-    ///   │ 0 0 0 1 1 1 1 │
-    ///   └             ┘
-    /// ```
-    ///
-    /// Parity-check matrix H (3×7):
-    /// ```text
-    ///   ┌             ┐
-    ///   │ 1 1 0 1 1 0 0 │
-    ///   │ 1 0 1 1 0 1 0 │
-    ///   │ 0 1 1 1 0 0 1 │
-    ///   └             ┘
-    /// ```
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2::coding::LinearBlockCode;
-    ///
-    /// let code = LinearBlockCode::hamming_7_4();
-    /// assert_eq!(code.k(), 4);
-    /// assert_eq!(code.n(), 7);
-    /// ```
-    pub fn hamming_7_4() -> Self {
-        let g = crate::bitmatrix![
-            1, 0, 0, 0, 1, 1, 0;
-            0, 1, 0, 0, 1, 0, 1;
-            0, 0, 1, 0, 0, 1, 1;
-            0, 0, 0, 1, 1, 1, 1;
-        ];
-
-        let h = crate::bitmatrix![
-            1, 1, 0, 1, 1, 0, 0;
-            1, 0, 1, 1, 0, 1, 0;
-            0, 1, 1, 1, 0, 0, 1;
-        ];
-
-        Self::new_systematic(g, Some(h))
-    }
-
     /// Creates a general Hamming code with parameter r.
     ///
     /// A Hamming code with parameter r has:
@@ -406,7 +356,7 @@ impl BlockEncoder for LinearBlockCode {
 /// use gf2::coding::traits::{BlockEncoder, HardDecisionDecoder};
 /// use gf2::BitVec;
 ///
-/// let code = LinearBlockCode::hamming_7_4();
+/// let code = LinearBlockCode::hamming(3);
 /// let decoder = SyndromeTableDecoder::new(code);
 ///
 /// // Encode a message
@@ -526,14 +476,14 @@ mod tests {
 
     #[test]
     fn test_hamming_7_4_parameters() {
-        let code = LinearBlockCode::hamming_7_4();
+        let code = LinearBlockCode::hamming(3);
         assert_eq!(code.k(), 4);
         assert_eq!(code.n(), 7);
     }
 
     #[test]
     fn test_hamming_7_4_encode() {
-        let code = LinearBlockCode::hamming_7_4();
+        let code = LinearBlockCode::hamming(3);
 
         // Test encoding [1,0,1,0]
         let mut msg = BitVec::new();
@@ -548,7 +498,7 @@ mod tests {
 
     #[test]
     fn test_hamming_7_4_syndrome_zero() {
-        let code = LinearBlockCode::hamming_7_4();
+        let code = LinearBlockCode::hamming(3);
 
         // Valid codeword should have zero syndrome
         let mut msg = BitVec::new();
@@ -567,7 +517,7 @@ mod tests {
 
     #[test]
     fn test_hamming_7_4_syndrome_nonzero() {
-        let code = LinearBlockCode::hamming_7_4();
+        let code = LinearBlockCode::hamming(3);
 
         // Create a codeword and introduce an error
         let mut msg = BitVec::new();
@@ -588,7 +538,7 @@ mod tests {
 
     #[test]
     fn test_syndrome_decoder_no_error() {
-        let code = LinearBlockCode::hamming_7_4();
+        let code = LinearBlockCode::hamming(3);
         let decoder = SyndromeTableDecoder::new(code);
 
         let mut msg = BitVec::new();
@@ -604,7 +554,7 @@ mod tests {
 
     #[test]
     fn test_syndrome_decoder_single_error() {
-        let code = LinearBlockCode::hamming_7_4();
+        let code = LinearBlockCode::hamming(3);
         let decoder = SyndromeTableDecoder::new(code);
 
         let mut msg = BitVec::new();
@@ -626,14 +576,6 @@ mod tests {
                 err_pos
             );
         }
-    }
-
-    #[test]
-    fn test_hamming_general_7_4() {
-        // Verify that hamming(3) produces a (7,4) code
-        let code = LinearBlockCode::hamming(3);
-        assert_eq!(code.n(), 7);
-        assert_eq!(code.k(), 4);
     }
 
     #[test]
@@ -706,7 +648,7 @@ mod tests {
 
     #[test]
     fn test_project_message() {
-        let code = LinearBlockCode::hamming_7_4();
+        let code = LinearBlockCode::hamming(3);
 
         let mut msg = BitVec::new();
         for bit in [true, true, false, true] {
