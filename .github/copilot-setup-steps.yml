@@ -3,29 +3,33 @@
 # See: https://docs.github.com/en/enterprise-cloud@latest/copilot/how-tos/use-copilot-agents/coding-agent/customize-the-agent-environment
 
 # Install Rust toolchain with required components
+# Using the official rustup installation script (standard method)
 - run: |
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --profile minimal
-    echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+    . "$HOME/.cargo/env"
   name: Install Rust toolchain
 
 # Verify Rust installation
 - run: |
+    . "$HOME/.cargo/env"
     rustc --version
     cargo --version
   name: Verify Rust installation
 
 # Install rustfmt and clippy components (required for linting/formatting)
-- run: rustup component add rustfmt clippy
+- run: |
+    . "$HOME/.cargo/env"
+    rustup component add rustfmt clippy
   name: Install Rust components
 
 # Fetch and compile dependencies to speed up subsequent builds
-- run: cargo fetch
+- run: |
+    . "$HOME/.cargo/env"
+    cargo fetch
   name: Fetch dependencies
 
-# Build the project to cache compiled dependencies
-- run: cargo build
-  name: Build project dependencies
-
-# Warm up cargo for faster subsequent operations
-- run: cargo check --all-targets
-  name: Check all targets
+# Build the project with all targets to cache compiled dependencies
+- run: |
+    . "$HOME/.cargo/env"
+    cargo build --all-targets
+  name: Build project and dependencies
