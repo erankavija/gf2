@@ -35,6 +35,7 @@
 
 pub mod alg;
 mod bitvec;
+pub mod coding;
 pub mod kernels;
 mod macros;
 pub mod matrix;
