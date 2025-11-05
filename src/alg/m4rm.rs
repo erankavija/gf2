@@ -126,7 +126,7 @@ fn extract_bits(a: &BitMatrix, row: usize, col_start: usize, k_block: usize) -> 
 /// use gf2::alg::m4rm::multiply;
 ///
 /// let a = BitMatrix::identity(3);
-/// let mut b = BitMatrix::new_zero(3, 4);
+/// let mut b = BitMatrix::zeros(3, 4);
 /// b.set(0, 1, true);
 /// b.set(1, 2, true);
 ///
@@ -150,7 +150,7 @@ pub fn multiply(a: &BitMatrix, b: &BitMatrix) -> BitMatrix {
         n
     );
 
-    let mut c = BitMatrix::new_zero(m, n);
+    let mut c = BitMatrix::zeros(m, n);
 
     if m == 0 || k == 0 || n == 0 {
         return c;
@@ -199,7 +199,7 @@ mod tests {
 
     #[test]
     fn test_extract_bits() {
-        let mut a = BitMatrix::new_zero(1, 8);
+        let mut a = BitMatrix::zeros(1, 8);
         a.set(0, 1, true);
         a.set(0, 3, true);
 
@@ -224,11 +224,11 @@ mod tests {
 
     #[test]
     fn test_multiply_simple() {
-        let mut a = BitMatrix::new_zero(2, 2);
+        let mut a = BitMatrix::zeros(2, 2);
         a.set(0, 0, true);
         a.set(1, 1, true);
 
-        let mut b = BitMatrix::new_zero(2, 2);
+        let mut b = BitMatrix::zeros(2, 2);
         b.set(0, 1, true);
         b.set(1, 0, true);
 

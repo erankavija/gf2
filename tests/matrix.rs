@@ -3,8 +3,8 @@
 use gf2::matrix::BitMatrix;
 
 #[test]
-fn test_new_zero_basic() {
-    let m = BitMatrix::new_zero(3, 4);
+fn test_zeros_basic() {
+    let m = BitMatrix::zeros(3, 4);
     assert_eq!(m.rows(), 3);
     assert_eq!(m.cols(), 4);
 
@@ -17,22 +17,22 @@ fn test_new_zero_basic() {
 }
 
 #[test]
-fn test_new_zero_empty() {
-    let m = BitMatrix::new_zero(0, 0);
+fn test_zeros_empty() {
+    let m = BitMatrix::zeros(0, 0);
     assert_eq!(m.rows(), 0);
     assert_eq!(m.cols(), 0);
 }
 
 #[test]
-fn test_new_zero_single_row() {
-    let m = BitMatrix::new_zero(1, 10);
+fn test_zeros_single_row() {
+    let m = BitMatrix::zeros(1, 10);
     assert_eq!(m.rows(), 1);
     assert_eq!(m.cols(), 10);
 }
 
 #[test]
-fn test_new_zero_single_col() {
-    let m = BitMatrix::new_zero(10, 1);
+fn test_zeros_single_col() {
+    let m = BitMatrix::zeros(10, 1);
     assert_eq!(m.rows(), 10);
     assert_eq!(m.cols(), 1);
 }
@@ -40,21 +40,21 @@ fn test_new_zero_single_col() {
 #[test]
 fn test_stride_words() {
     // 64 cols should be 1 word
-    let m1 = BitMatrix::new_zero(1, 64);
+    let m1 = BitMatrix::zeros(1, 64);
     assert_eq!(m1.stride_words(), 1);
 
     // 65 cols should be 2 words
-    let m2 = BitMatrix::new_zero(1, 65);
+    let m2 = BitMatrix::zeros(1, 65);
     assert_eq!(m2.stride_words(), 2);
 
     // 1 col should be 1 word
-    let m3 = BitMatrix::new_zero(1, 1);
+    let m3 = BitMatrix::zeros(1, 1);
     assert_eq!(m3.stride_words(), 1);
 }
 
 #[test]
 fn test_get_set_basic() {
-    let mut m = BitMatrix::new_zero(3, 4);
+    let mut m = BitMatrix::zeros(3, 4);
 
     // Set some bits
     m.set(0, 0, true);
@@ -74,7 +74,7 @@ fn test_get_set_basic() {
 
 #[test]
 fn test_get_set_large() {
-    let mut m = BitMatrix::new_zero(10, 128);
+    let mut m = BitMatrix::zeros(10, 128);
 
     // Set bits across multiple words
     m.set(5, 63, true); // Last bit of first word
@@ -119,7 +119,7 @@ fn test_identity_1x1() {
 
 #[test]
 fn test_swap_rows() {
-    let mut m = BitMatrix::new_zero(3, 4);
+    let mut m = BitMatrix::zeros(3, 4);
 
     // Set up row 0: [1, 0, 1, 0]
     m.set(0, 0, true);
@@ -147,7 +147,7 @@ fn test_swap_rows() {
 
 #[test]
 fn test_swap_rows_same_row() {
-    let mut m = BitMatrix::new_zero(3, 4);
+    let mut m = BitMatrix::zeros(3, 4);
     m.set(1, 1, true);
     m.set(1, 2, true);
 
@@ -161,7 +161,7 @@ fn test_swap_rows_same_row() {
 
 #[test]
 fn test_row_words() {
-    let mut m = BitMatrix::new_zero(2, 128);
+    let mut m = BitMatrix::zeros(2, 128);
 
     // Set some bits in row 0
     m.set(0, 0, true);
@@ -177,7 +177,7 @@ fn test_row_words() {
 
 #[test]
 fn test_row_words_mut() {
-    let mut m = BitMatrix::new_zero(2, 128);
+    let mut m = BitMatrix::zeros(2, 128);
 
     // Modify row directly via row_words_mut
     {
@@ -196,7 +196,7 @@ fn test_row_words_mut() {
 
 #[test]
 fn test_transpose_square() {
-    let mut m = BitMatrix::new_zero(3, 3);
+    let mut m = BitMatrix::zeros(3, 3);
 
     // Set up a non-symmetric matrix
     m.set(0, 1, true);
@@ -225,7 +225,7 @@ fn test_transpose_square() {
 
 #[test]
 fn test_transpose_rectangular() {
-    let mut m = BitMatrix::new_zero(2, 3);
+    let mut m = BitMatrix::zeros(2, 3);
 
     // Set up pattern
     m.set(0, 0, true);
@@ -261,27 +261,27 @@ fn test_transpose_identity() {
 #[test]
 #[should_panic]
 fn test_get_out_of_bounds_row() {
-    let m = BitMatrix::new_zero(3, 4);
+    let m = BitMatrix::zeros(3, 4);
     let _ = m.get(3, 0); // row 3 doesn't exist
 }
 
 #[test]
 #[should_panic]
 fn test_get_out_of_bounds_col() {
-    let m = BitMatrix::new_zero(3, 4);
+    let m = BitMatrix::zeros(3, 4);
     let _ = m.get(0, 4); // col 4 doesn't exist
 }
 
 #[test]
 #[should_panic]
 fn test_set_out_of_bounds_row() {
-    let mut m = BitMatrix::new_zero(3, 4);
+    let mut m = BitMatrix::zeros(3, 4);
     m.set(3, 0, true);
 }
 
 #[test]
 #[should_panic]
 fn test_set_out_of_bounds_col() {
-    let mut m = BitMatrix::new_zero(3, 4);
+    let mut m = BitMatrix::zeros(3, 4);
     m.set(0, 4, true);
 }

@@ -48,12 +48,12 @@ pub fn invert(m: &BitMatrix) -> Option<BitMatrix> {
     }
 
     if n == 0 {
-        return Some(BitMatrix::new_zero(0, 0));
+        return Some(BitMatrix::zeros(0, 0));
     }
 
     // Create augmented matrix [A | I]
     // Each row has 2n columns
-    let mut aug = BitMatrix::new_zero(n, 2 * n);
+    let mut aug = BitMatrix::zeros(n, 2 * n);
 
     // Copy A into left half
     for r in 0..n {
@@ -98,7 +98,7 @@ pub fn invert(m: &BitMatrix) -> Option<BitMatrix> {
     }
 
     // Extract right half (the inverse)
-    let mut inv = BitMatrix::new_zero(n, n);
+    let mut inv = BitMatrix::zeros(n, n);
     for r in 0..n {
         for c in 0..n {
             inv.set(r, c, aug.get(r, n + c));

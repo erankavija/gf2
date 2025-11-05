@@ -76,7 +76,7 @@ macro_rules! bitmatrix {
         ];
         let __nrows = __rows.len();
         let __ncols = if __nrows == 0 { 0 } else { __rows[0].len() };
-        let mut __m = $crate::matrix::BitMatrix::new_zero(__nrows, __ncols);
+        let mut __m = $crate::matrix::BitMatrix::zeros(__nrows, __ncols);
         for (r, row) in __rows.iter().enumerate() {
             assert_eq!(
                 row.len(), __ncols,
@@ -84,7 +84,7 @@ macro_rules! bitmatrix {
                 r, row.len(), __ncols
             );
             for (c, &b) in row.iter().enumerate() {
-                // Only set true bits; new_zero() initializes all to false
+                // Only set true bits; zeros() initializes all to false
                 if b { __m.set(r, c, true); }
             }
         }
@@ -101,7 +101,7 @@ macro_rules! bitmatrix {
         ];
         let __nrows = __rows.len();
         let __ncols = if __nrows == 0 { 0 } else { __rows[0].len() };
-        let mut __m = $crate::matrix::BitMatrix::new_zero(__nrows, __ncols);
+        let mut __m = $crate::matrix::BitMatrix::zeros(__nrows, __ncols);
         for (r, row) in __rows.iter().enumerate() {
             assert_eq!(
                 row.len(), __ncols,
@@ -109,7 +109,7 @@ macro_rules! bitmatrix {
                 r, row.len(), __ncols
             );
             for (c, &b) in row.iter().enumerate() {
-                // Only set true bits; new_zero() initializes all to false
+                // Only set true bits; zeros() initializes all to false
                 if b { __m.set(r, c, true); }
             }
         }
@@ -126,7 +126,7 @@ macro_rules! bitmatrix_bin {
         let __rows: &[&str] = &[$($row),+];
         let __nrows = __rows.len();
         let __ncols = if __nrows == 0 { 0 } else { __rows[0].len() };
-        let mut __m = $crate::matrix::BitMatrix::new_zero(__nrows, __ncols);
+        let mut __m = $crate::matrix::BitMatrix::zeros(__nrows, __ncols);
         for (r, s) in __rows.iter().enumerate() {
             assert_eq!(
                 s.len(), __ncols,

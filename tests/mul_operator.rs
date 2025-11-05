@@ -5,11 +5,11 @@ use gf2::matrix::BitMatrix;
 #[test]
 fn test_mul_operator_basic_square() {
     // Create two simple 2x2 matrices
-    let mut a = BitMatrix::new_zero(2, 2);
+    let mut a = BitMatrix::zeros(2, 2);
     a.set(0, 0, true);
     a.set(1, 1, true);
 
-    let mut b = BitMatrix::new_zero(2, 2);
+    let mut b = BitMatrix::zeros(2, 2);
     b.set(0, 1, true);
     b.set(1, 0, true);
 
@@ -28,7 +28,7 @@ fn test_mul_operator_basic_square() {
 #[test]
 fn test_mul_operator_identity_left() {
     // I * A = A
-    let mut a = BitMatrix::new_zero(3, 4);
+    let mut a = BitMatrix::zeros(3, 4);
     a.set(0, 1, true);
     a.set(1, 2, true);
     a.set(2, 3, true);
@@ -46,7 +46,7 @@ fn test_mul_operator_identity_left() {
 #[test]
 fn test_mul_operator_identity_right() {
     // A * I = A
-    let mut a = BitMatrix::new_zero(3, 4);
+    let mut a = BitMatrix::zeros(3, 4);
     a.set(0, 1, true);
     a.set(1, 2, true);
     a.set(2, 3, true);
@@ -99,13 +99,13 @@ fn test_mul_operator_mixed_refs_owned_rhs() {
 fn test_mul_operator_rectangular_matrix() {
     // Test multiplication of non-square matrices
     // 2x3 * 3x2 = 2x2
-    let mut a = BitMatrix::new_zero(2, 3);
+    let mut a = BitMatrix::zeros(2, 3);
     a.set(0, 0, true);
     a.set(0, 1, true);
     a.set(1, 1, true);
     a.set(1, 2, true);
 
-    let mut b = BitMatrix::new_zero(3, 2);
+    let mut b = BitMatrix::zeros(3, 2);
     b.set(0, 0, true);
     b.set(1, 1, true);
     b.set(2, 0, true);
@@ -145,14 +145,14 @@ fn test_mul_operator_chain() {
 fn test_mul_operator_matrix_vector_simulation() {
     // Simulate matrix-vector multiplication using a column vector (nx1 matrix)
     // This is similar to what's done in the Hamming code example
-    let mut a = BitMatrix::new_zero(3, 3);
+    let mut a = BitMatrix::zeros(3, 3);
     a.set(0, 0, true);
     a.set(0, 1, true);
     a.set(1, 1, true);
     a.set(2, 2, true);
 
     // Column vector [1, 1, 0]^T represented as 3x1 matrix
-    let mut v = BitMatrix::new_zero(3, 1);
+    let mut v = BitMatrix::zeros(3, 1);
     v.set(0, 0, true);
     v.set(1, 0, true);
 
@@ -171,8 +171,8 @@ fn test_mul_operator_matrix_vector_simulation() {
 #[test]
 fn test_mul_operator_zero_matrix() {
     // Test multiplication with zero matrices
-    let a = BitMatrix::new_zero(3, 4);
-    let b = BitMatrix::new_zero(4, 5);
+    let a = BitMatrix::zeros(3, 4);
+    let b = BitMatrix::zeros(4, 5);
 
     let c = &a * &b;
 
@@ -190,8 +190,8 @@ fn test_mul_operator_zero_matrix() {
 #[test]
 fn test_mul_operator_large_matrices() {
     // Test with larger matrices (crossing word boundaries)
-    let mut a = BitMatrix::new_zero(10, 65);
-    let mut b = BitMatrix::new_zero(65, 10);
+    let mut a = BitMatrix::zeros(10, 65);
+    let mut b = BitMatrix::zeros(65, 10);
 
     // Set some bits
     a.set(0, 0, true);

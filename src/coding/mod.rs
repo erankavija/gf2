@@ -10,7 +10,7 @@
 //! The main implementation is [`LinearBlockCode`], which supports:
 //! - Systematic encoding using generator matrices
 //! - Syndrome computation using parity-check matrices
-//! - Standard Hamming codes via [`LinearBlockCode::hamming_7_4()`] and [`LinearBlockCode::hamming()`]
+//! - Standard Hamming codes via [`LinearBlockCode::hamming()`]
 //!
 //! Decoding is provided by [`SyndromeTableDecoder`], which uses a precomputed
 //! syndrome table for efficient single-error correction.
