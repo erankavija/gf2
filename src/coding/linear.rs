@@ -183,7 +183,7 @@ impl LinearBlockCode {
 
         self.h.as_ref().map(|h| {
             // Convert codeword to column vector (n × 1 matrix)
-            let mut c_t = BitMatrix::new_zero(self.n, 1);
+            let mut c_t = BitMatrix::zeros(self.n, 1);
             for i in 0..self.n {
                 c_t.set(i, 0, codeword.get(i));
             }
@@ -241,7 +241,7 @@ impl LinearBlockCode {
 
         // Build parity-check matrix H (r × n)
         // H contains all non-zero binary r-tuples as columns
-        let mut h = BitMatrix::new_zero(r, n);
+        let mut h = BitMatrix::zeros(r, n);
 
         // Fill columns with binary representations of 1 to n
         for col in 0..n {
@@ -257,7 +257,7 @@ impl LinearBlockCode {
         // For systematic form, we need G such that G * H^T = 0
         // We construct G = [I_k | P] where the first k columns form identity
 
-        let mut g = BitMatrix::new_zero(k, n);
+        let mut g = BitMatrix::zeros(k, n);
 
         // Identify which columns of H correspond to data bits (systematic positions)
         // We want columns that are not powers of 2 (parity bit positions are at indices 2^i - 1)
@@ -327,7 +327,7 @@ impl BlockEncoder for LinearBlockCode {
         );
 
         // Convert message to 1 × k matrix
-        let mut msg_matrix = BitMatrix::new_zero(1, self.k);
+        let mut msg_matrix = BitMatrix::zeros(1, self.k);
         for i in 0..self.k {
             msg_matrix.set(0, i, message.get(i));
         }

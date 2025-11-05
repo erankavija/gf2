@@ -6,7 +6,7 @@ use rand::{Rng, SeedableRng};
 
 fn random_matrix(rows: usize, cols: usize, seed: u64) -> BitMatrix {
     let mut rng = StdRng::seed_from_u64(seed);
-    let mut m = BitMatrix::new_zero(rows, cols);
+    let mut m = BitMatrix::zeros(rows, cols);
 
     for r in 0..rows {
         for c in 0..cols {

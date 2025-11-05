@@ -23,7 +23,7 @@ use std::ops::Mul;
 /// use gf2::matrix::BitMatrix;
 ///
 /// // Create a 3x4 zero matrix
-/// let mut m = BitMatrix::new_zero(3, 4);
+/// let mut m = BitMatrix::zeros(3, 4);
 /// m.set(0, 0, true);
 /// m.set(1, 2, true);
 /// assert_eq!(m.get(0, 0), true);
@@ -56,11 +56,11 @@ impl BitMatrix {
     /// ```
     /// use gf2::matrix::BitMatrix;
     ///
-    /// let m = BitMatrix::new_zero(10, 20);
+    /// let m = BitMatrix::zeros(10, 20);
     /// assert_eq!(m.rows(), 10);
     /// assert_eq!(m.cols(), 20);
     /// ```
-    pub fn new_zero(rows: usize, cols: usize) -> Self {
+    pub fn zeros(rows: usize, cols: usize) -> Self {
         let stride_words = if cols == 0 { 0 } else { cols.div_ceil(64) };
         let total_words = rows * stride_words;
         Self {
@@ -88,7 +88,7 @@ impl BitMatrix {
     /// assert_eq!(id.get(0, 1), false);
     /// ```
     pub fn identity(n: usize) -> Self {
-        let mut m = Self::new_zero(n, n);
+        let mut m = Self::zeros(n, n);
         for i in 0..n {
             m.set(i, i, true);
         }
@@ -159,7 +159,7 @@ impl BitMatrix {
     /// ```
     /// use gf2::matrix::BitMatrix;
     ///
-    /// let mut m = BitMatrix::new_zero(3, 3);
+    /// let mut m = BitMatrix::zeros(3, 3);
     /// m.set(1, 2, true);
     /// assert_eq!(m.get(1, 2), true);
     /// ```
@@ -200,7 +200,7 @@ impl BitMatrix {
     /// ```
     /// use gf2::matrix::BitMatrix;
     ///
-    /// let mut m = BitMatrix::new_zero(2, 128);
+    /// let mut m = BitMatrix::zeros(2, 128);
     /// m.set(0, 64, true);
     /// let words = m.row_words(0);
     /// assert_eq!(words.len(), 2);
@@ -229,7 +229,7 @@ impl BitMatrix {
     /// ```
     /// use gf2::matrix::BitMatrix;
     ///
-    /// let mut m = BitMatrix::new_zero(2, 128);
+    /// let mut m = BitMatrix::zeros(2, 128);
     /// {
     ///     let words = m.row_words_mut(0);
     ///     words[0] = 0xFF;
@@ -260,7 +260,7 @@ impl BitMatrix {
     /// ```
     /// use gf2::matrix::BitMatrix;
     ///
-    /// let mut m = BitMatrix::new_zero(3, 3);
+    /// let mut m = BitMatrix::zeros(3, 3);
     /// m.set(0, 0, true);
     /// m.set(1, 1, true);
     /// m.swap_rows(0, 1);
@@ -305,7 +305,7 @@ impl BitMatrix {
     /// ```
     /// use gf2::matrix::BitMatrix;
     ///
-    /// let mut m = BitMatrix::new_zero(2, 3);
+    /// let mut m = BitMatrix::zeros(2, 3);
     /// m.set(0, 1, true);
     /// m.set(1, 2, true);
     ///
@@ -316,7 +316,7 @@ impl BitMatrix {
     /// assert_eq!(mt.get(2, 1), true);
     /// ```
     pub fn transpose(&self) -> Self {
-        let mut result = Self::new_zero(self.cols, self.rows);
+        let mut result = Self::zeros(self.cols, self.rows);
 
         for r in 0..self.rows {
             for c in 0..self.cols {
@@ -338,7 +338,7 @@ impl fmt::Display for BitMatrix {
     /// ```
     /// use gf2::matrix::BitMatrix;
     ///
-    /// let mut m = BitMatrix::new_zero(3, 4);
+    /// let mut m = BitMatrix::zeros(3, 4);
     /// m.set(0, 0, true);
     /// m.set(0, 3, true);
     /// m.set(1, 1, true);
@@ -432,8 +432,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_new_zero() {
-        let m = BitMatrix::new_zero(5, 10);
+    fn test_zeros() {
+        let m = BitMatrix::zeros(5, 10);
         assert_eq!(m.rows(), 5);
         assert_eq!(m.cols(), 10);
         assert_eq!(m.stride_words(), 1);
@@ -451,7 +451,7 @@ mod tests {
 
     #[test]
     fn test_get_set() {
-        let mut m = BitMatrix::new_zero(2, 3);
+        let mut m = BitMatrix::zeros(2, 3);
         m.set(0, 1, true);
         assert!(m.get(0, 1));
         assert!(!m.get(0, 0));
@@ -463,7 +463,7 @@ mod tests {
     #[test]
     fn test_mul_operator_identity() {
         // Test A * I = A
-        let mut a = BitMatrix::new_zero(3, 4);
+        let mut a = BitMatrix::zeros(3, 4);
         a.set(0, 1, true);
         a.set(1, 2, true);
         a.set(2, 3, true);
@@ -512,13 +512,13 @@ mod tests {
     #[test]
     fn test_mul_operator_rectangular() {
         // Test 2x3 * 3x2 = 2x2
-        let mut a = BitMatrix::new_zero(2, 3);
+        let mut a = BitMatrix::zeros(2, 3);
         a.set(0, 0, true);
         a.set(0, 1, true);
         a.set(1, 1, true);
         a.set(1, 2, true);
 
-        let mut b = BitMatrix::new_zero(3, 2);
+        let mut b = BitMatrix::zeros(3, 2);
         b.set(0, 0, true);
         b.set(1, 1, true);
         b.set(2, 0, true);

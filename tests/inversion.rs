@@ -31,7 +31,7 @@ fn test_invert_identity() {
 #[test]
 fn test_invert_singular_zero() {
     // All-zero matrix is singular
-    let m = BitMatrix::new_zero(3, 3);
+    let m = BitMatrix::zeros(3, 3);
     let inv = invert(&m);
 
     assert!(inv.is_none(), "zero matrix should not be invertible");
@@ -40,7 +40,7 @@ fn test_invert_singular_zero() {
 #[test]
 fn test_invert_singular_duplicate_rows() {
     // Matrix with duplicate rows is singular
-    let mut m = BitMatrix::new_zero(3, 3);
+    let mut m = BitMatrix::zeros(3, 3);
     m.set(0, 0, true);
     m.set(0, 1, true);
     m.set(1, 0, true);
@@ -58,7 +58,7 @@ fn test_invert_singular_duplicate_rows() {
 #[test]
 fn test_invert_simple_2x2() {
     // [[1, 1], [1, 0]]
-    let mut m = BitMatrix::new_zero(2, 2);
+    let mut m = BitMatrix::zeros(2, 2);
     m.set(0, 0, true);
     m.set(0, 1, true);
     m.set(1, 0, true);
@@ -86,7 +86,7 @@ fn test_invert_simple_2x2() {
 #[test]
 fn test_invert_and_verify_3x3() {
     // Create an invertible 3x3 matrix: [[1,1,1], [1,0,1], [1,1,0]]
-    let mut m = BitMatrix::new_zero(3, 3);
+    let mut m = BitMatrix::zeros(3, 3);
     m.set(0, 0, true);
     m.set(0, 1, true);
     m.set(0, 2, true);
@@ -197,7 +197,7 @@ fn test_invert_various_sizes() {
 #[test]
 fn test_invert_non_square() {
     // Non-square matrices cannot be inverted
-    let m = BitMatrix::new_zero(3, 4);
+    let m = BitMatrix::zeros(3, 4);
     let inv = invert(&m);
 
     assert!(inv.is_none(), "non-square matrix should not be invertible");
@@ -207,7 +207,7 @@ fn test_invert_non_square() {
 fn test_invert_property_double_inverse() {
     // (A^-1)^-1 = A
     // Use [[1,1,1], [1,0,1], [1,1,0]]
-    let mut m = BitMatrix::new_zero(3, 3);
+    let mut m = BitMatrix::zeros(3, 3);
     m.set(0, 0, true);
     m.set(0, 1, true);
     m.set(0, 2, true);
@@ -231,7 +231,7 @@ fn test_invert_property_double_inverse() {
 fn test_invert_permutation_matrix() {
     // Permutation matrices are always invertible
     // Create a simple permutation: swap rows 0 and 2
-    let mut m = BitMatrix::new_zero(3, 3);
+    let mut m = BitMatrix::zeros(3, 3);
     m.set(0, 2, true); // Row 0 -> position 2
     m.set(1, 1, true); // Row 1 -> position 1
     m.set(2, 0, true); // Row 2 -> position 0

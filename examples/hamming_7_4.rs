@@ -60,7 +60,7 @@ fn create_parity_check_matrix() -> BitMatrix {
 /// Encodes a 4-bit message using the generator matrix
 fn encode(message: &BitVec, g: &BitMatrix) -> BitVec {
     // Convert message to 1x4 matrix
-    let mut msg_matrix = BitMatrix::new_zero(1, 4);
+    let mut msg_matrix = BitMatrix::zeros(1, 4);
     for i in 0..4 {
         msg_matrix.set(0, i, message.get(i));
     }
@@ -79,7 +79,7 @@ fn encode(message: &BitVec, g: &BitMatrix) -> BitVec {
 /// Computes the syndrome of a received codeword
 fn syndrome(received: &BitVec, h: &BitMatrix) -> BitVec {
     // Convert received to 7x1 column vector (transposed)
-    let mut received_matrix = BitMatrix::new_zero(7, 1);
+    let mut received_matrix = BitMatrix::zeros(7, 1);
     for i in 0..7 {
         received_matrix.set(i, 0, received.get(i));
     }

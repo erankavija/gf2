@@ -116,7 +116,7 @@ use gf2::matrix::BitMatrix;
 use gf2::alg::gauss::invert;
 
 // Create a 3x3 matrix
-let mut a = BitMatrix::new_zero(3, 3);
+let mut a = BitMatrix::zeros(3, 3);
 a.set(0, 0, true);
 a.set(0, 1, true);
 a.set(1, 1, true);
@@ -134,7 +134,7 @@ let inv = invert(&i).unwrap();
 // inv equals i for identity matrix
 
 // Verify: a × a^(-1) = I
-let mut b = BitMatrix::new_zero(2, 2);
+let mut b = BitMatrix::zeros(2, 2);
 b.set(0, 0, true);
 b.set(0, 1, true);
 b.set(1, 0, true);
@@ -163,7 +163,7 @@ println!("{}", a);
 - `BitVec::from_bytes_le(&[u8])` - Create from byte slice
 
 ### BitMatrix
-- `BitMatrix::new_zero(rows, cols)` - Create zero matrix
+- `BitMatrix::zeros(rows, cols)` - Create zero matrix
 - `BitMatrix::identity(n)` - Create n×n identity matrix
 - `get(r, c)`, `set(r, c, val)` - Access individual bits
 - `swap_rows(r1, r2)` - Swap two rows
