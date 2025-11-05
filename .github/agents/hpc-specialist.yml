@@ -88,6 +88,7 @@ You are an HPC (High-Performance Computing) specialist agent for the gf2 library
   - Note cache behavior for large operations
   - Specify when SIMD is used and fallback behavior
   - Include benchmark results in documentation when relevant
+  - Use concise, short comments in performance-critical code to explain optimizations
 
   #### Testing Requirements
   - Unit tests for all methods
