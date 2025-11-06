@@ -1,6 +1,6 @@
 #[test]
 fn build_with_bitmatrix_macro() {
-    let m = gf2::bitmatrix![
+    let m = gf2_core::bitmatrix![
         1, 0, 1, 1;
         0, 1, 0, 1;
     ];
@@ -16,7 +16,7 @@ fn build_with_bitmatrix_macro() {
 
 #[test]
 fn build_with_bracketed_rows() {
-    let m = gf2::bitmatrix![[1, 0, 0], [0, 1, 1],];
+    let m = gf2_core::bitmatrix![[1, 0, 0], [0, 1, 1],];
     assert_eq!(m.rows(), 2);
     assert_eq!(m.cols(), 3);
     assert!(m.get(1, 2));
@@ -25,7 +25,7 @@ fn build_with_bracketed_rows() {
 
 #[test]
 fn build_with_bitmatrix_bin_macro() {
-    let m = gf2::bitmatrix_bin!["1011", "0101", "0000",];
+    let m = gf2_core::bitmatrix_bin!["1011", "0101", "0000",];
     assert_eq!(m.rows(), 3);
     assert_eq!(m.cols(), 4);
     assert!(m.get(0, 0));
@@ -40,7 +40,7 @@ fn build_with_bitmatrix_bin_macro() {
 #[test]
 #[should_panic]
 fn mismatched_row_lengths_panic() {
-    let _ = gf2::bitmatrix![
+    let _ = gf2_core::bitmatrix![
         1, 0, 1;
         0, 1;
     ];
@@ -49,5 +49,5 @@ fn mismatched_row_lengths_panic() {
 #[test]
 #[should_panic]
 fn invalid_char_in_bin_panic() {
-    let _ = gf2::bitmatrix_bin!["10x1"]; // invalid 'x'
+    let _ = gf2_core::bitmatrix_bin!["10x1"]; // invalid 'x'
 }

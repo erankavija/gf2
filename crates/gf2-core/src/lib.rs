@@ -1,7 +1,8 @@
-//! # gf2 - High-Performance Bit String Manipulation
+//! # gf2-core - High-Performance GF(2) Primitives
 //!
-//! This library provides efficient bit string operations with a focus on GF(2) arithmetic
-//! and coding theory applications.
+//! This crate provides efficient bit string and matrix operations with a focus on GF(2)
+//! arithmetic. It powers higher-level coding theory and compression tooling provided by
+//! the companion `gf2-coding` crate.
 //!
 //! ## Core Types
 //!
@@ -17,7 +18,7 @@
 //! ## Examples
 //!
 //! ```
-//! use gf2::BitVec;
+//! use gf2_core::BitVec;
 //!
 //! let mut bv = BitVec::new();
 //! bv.push_bit(true);
@@ -35,7 +36,6 @@
 
 pub mod alg;
 mod bitvec;
-pub mod coding;
 pub mod kernels;
 mod macros;
 pub mod matrix;

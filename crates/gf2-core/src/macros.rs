@@ -6,7 +6,7 @@
 //!
 //!   Example:
 //!   ```
-//!   let m = gf2::bitmatrix![
+//!   let m = gf2_core::bitmatrix![
 //!       1, 0, 1, 1;
 //!       0, 1, 0, 1;
 //!       1, 0, 0, 0;
@@ -23,7 +23,7 @@
 //!
 //!   Example:
 //!   ```
-//!   let m = gf2::bitmatrix_bin![
+//!   let m = gf2_core::bitmatrix_bin![
 //!       "1011",
 //!       "0101",
 //!   ];
@@ -59,12 +59,12 @@ macro_rules! __gf2_bit {
 ///
 /// Supports two forms:
 /// - Rows without brackets (nalgebra-like):
-///   gf2::bitmatrix![ 1, 0, 1; 0, 1, 0 ];
+///   gf2_core::bitmatrix![ 1, 0, 1; 0, 1, 0 ];
 /// - Rows with brackets:
-///   gf2::bitmatrix![ \[1,0,1\], \[0,1,0\] ];
+///   gf2_core::bitmatrix![ \[1,0,1\], \[0,1,0\] ];
 #[macro_export]
 macro_rules! bitmatrix {
-    // Bracketed rows: gf2::bitmatrix![ [1,0,1], [0,1,0] ];
+    // Bracketed rows: gf2_core::bitmatrix![ [1,0,1], [0,1,0] ];
     // This must come first to match more specific pattern
     ( $( [ $($val:tt),+ $(,)? ] ),+ $(,)? ) => {{
         let __rows: &[&[bool]] = &[

@@ -20,7 +20,7 @@ use std::ops::Mul;
 /// # Examples
 ///
 /// ```
-/// use gf2::matrix::BitMatrix;
+/// use gf2_core::matrix::BitMatrix;
 ///
 /// // Create a 3x4 zero matrix
 /// let mut m = BitMatrix::zeros(3, 4);
@@ -54,7 +54,7 @@ impl BitMatrix {
     /// # Examples
     ///
     /// ```
-    /// use gf2::matrix::BitMatrix;
+    /// use gf2_core::matrix::BitMatrix;
     ///
     /// let m = BitMatrix::zeros(10, 20);
     /// assert_eq!(m.rows(), 10);
@@ -80,7 +80,7 @@ impl BitMatrix {
     /// # Examples
     ///
     /// ```
-    /// use gf2::matrix::BitMatrix;
+    /// use gf2_core::matrix::BitMatrix;
     ///
     /// let id = BitMatrix::identity(3);
     /// assert_eq!(id.get(0, 0), true);
@@ -122,7 +122,7 @@ impl BitMatrix {
     /// # Examples
     ///
     /// ```
-    /// use gf2::matrix::BitMatrix;
+    /// use gf2_core::matrix::BitMatrix;
     ///
     /// let m = BitMatrix::identity(3);
     /// assert_eq!(m.get(0, 0), true);
@@ -157,7 +157,7 @@ impl BitMatrix {
     /// # Examples
     ///
     /// ```
-    /// use gf2::matrix::BitMatrix;
+    /// use gf2_core::matrix::BitMatrix;
     ///
     /// let mut m = BitMatrix::zeros(3, 3);
     /// m.set(1, 2, true);
@@ -198,7 +198,7 @@ impl BitMatrix {
     /// # Examples
     ///
     /// ```
-    /// use gf2::matrix::BitMatrix;
+    /// use gf2_core::matrix::BitMatrix;
     ///
     /// let mut m = BitMatrix::zeros(2, 128);
     /// m.set(0, 64, true);
@@ -227,7 +227,7 @@ impl BitMatrix {
     /// # Examples
     ///
     /// ```
-    /// use gf2::matrix::BitMatrix;
+    /// use gf2_core::matrix::BitMatrix;
     ///
     /// let mut m = BitMatrix::zeros(2, 128);
     /// {
@@ -258,7 +258,7 @@ impl BitMatrix {
     /// # Examples
     ///
     /// ```
-    /// use gf2::matrix::BitMatrix;
+    /// use gf2_core::matrix::BitMatrix;
     ///
     /// let mut m = BitMatrix::zeros(3, 3);
     /// m.set(0, 0, true);
@@ -303,7 +303,7 @@ impl BitMatrix {
     /// # Examples
     ///
     /// ```
-    /// use gf2::matrix::BitMatrix;
+    /// use gf2_core::matrix::BitMatrix;
     ///
     /// let mut m = BitMatrix::zeros(2, 3);
     /// m.set(0, 1, true);
@@ -336,7 +336,7 @@ impl fmt::Display for BitMatrix {
     /// # Examples
     ///
     /// ```
-    /// use gf2::matrix::BitMatrix;
+    /// use gf2_core::matrix::BitMatrix;
     ///
     /// let mut m = BitMatrix::zeros(3, 4);
     /// m.set(0, 0, true);
@@ -391,7 +391,7 @@ impl Mul<BitMatrix> for BitMatrix {
     /// # Examples
     ///
     /// ```
-    /// use gf2::matrix::BitMatrix;
+    /// use gf2_core::matrix::BitMatrix;
     ///
     /// let a = BitMatrix::identity(3);
     /// let b = BitMatrix::identity(3);

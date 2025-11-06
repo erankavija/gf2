@@ -34,13 +34,13 @@
 //!   └             ┘
 //! ```
 
-use gf2::matrix::BitMatrix;
-use gf2::BitVec;
+use gf2_core::matrix::BitMatrix;
+use gf2_core::BitVec;
 use rand::Rng;
 
 /// Creates the generator matrix G for Hamming (7,4) code
 fn create_generator_matrix() -> BitMatrix {
-    gf2::bitmatrix![
+    gf2_core::bitmatrix![
         1, 0, 0, 0, 1, 1, 0;
         0, 1, 0, 0, 1, 0, 1;
         0, 0, 1, 0, 0, 1, 1;
@@ -50,7 +50,7 @@ fn create_generator_matrix() -> BitMatrix {
 
 /// Creates the parity-check matrix H for Hamming (7,4) code
 fn create_parity_check_matrix() -> BitMatrix {
-    gf2::bitmatrix![
+    gf2_core::bitmatrix![
         1, 1, 0, 1, 1, 0, 0;
         1, 0, 1, 1, 0, 1, 0;
         0, 1, 1, 1, 0, 0, 1;

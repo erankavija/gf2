@@ -1,8 +1,8 @@
 //! Tests for matrix inversion over GF(2).
 
-use gf2::alg::gauss::invert;
-use gf2::alg::m4rm::multiply;
-use gf2::matrix::BitMatrix;
+use gf2_core::alg::gauss::invert;
+use gf2_core::alg::m4rm::multiply;
+use gf2_core::matrix::BitMatrix;
 
 #[test]
 fn test_invert_identity() {

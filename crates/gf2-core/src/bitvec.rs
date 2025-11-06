@@ -14,7 +14,7 @@ use std::fmt;
 /// ## Examples
 ///
 /// ```
-/// use gf2::BitVec;
+/// use gf2_core::BitVec;
 ///
 /// let mut bv = BitVec::new();
 /// bv.push_bit(true);
@@ -33,7 +33,7 @@ impl BitVec {
     /// # Examples
     ///
     /// ```
-    /// use gf2::BitVec;
+    /// use gf2_core::BitVec;
     ///
     /// let bv = BitVec::new();
     /// assert_eq!(bv.len(), 0);
@@ -51,7 +51,7 @@ impl BitVec {
     /// # Examples
     ///
     /// ```
-    /// use gf2::BitVec;
+    /// use gf2_core::BitVec;
     ///
     /// let bv = BitVec::with_capacity(100);
     /// assert_eq!(bv.len(), 0);
@@ -69,7 +69,7 @@ impl BitVec {
     /// # Examples
     ///
     /// ```
-    /// use gf2::BitVec;
+    /// use gf2_core::BitVec;
     ///
     /// let mut bv = BitVec::new();
     /// assert_eq!(bv.len(), 0);
@@ -86,7 +86,7 @@ impl BitVec {
     /// # Examples
     ///
     /// ```
-    /// use gf2::BitVec;
+    /// use gf2_core::BitVec;
     ///
     /// let mut bv = BitVec::new();
     /// assert!(bv.is_empty());
@@ -103,7 +103,7 @@ impl BitVec {
     /// # Examples
     ///
     /// ```
-    /// use gf2::BitVec;
+    /// use gf2_core::BitVec;
     ///
     /// let mut bv = BitVec::new();
     /// bv.push_bit(true);
@@ -130,7 +130,7 @@ impl BitVec {
     /// # Examples
     ///
     /// ```
-    /// use gf2::BitVec;
+    /// use gf2_core::BitVec;
     ///
     /// let mut bv = BitVec::new();
     /// bv.push_bit(true);
@@ -168,7 +168,7 @@ impl BitVec {
     /// # Examples
     ///
     /// ```
-    /// use gf2::BitVec;
+    /// use gf2_core::BitVec;
     ///
     /// let mut bv = BitVec::new();
     /// bv.push_bit(true);
@@ -193,7 +193,7 @@ impl BitVec {
     /// # Examples
     ///
     /// ```
-    /// use gf2::BitVec;
+    /// use gf2_core::BitVec;
     ///
     /// let mut bv = BitVec::new();
     /// bv.push_bit(false);
@@ -221,7 +221,7 @@ impl BitVec {
     /// # Examples
     ///
     /// ```
-    /// use gf2::BitVec;
+    /// use gf2_core::BitVec;
     ///
     /// let mut a = BitVec::from_bytes_le(&[0b11110000]);
     /// let b = BitVec::from_bytes_le(&[0b11001100]);
@@ -244,7 +244,7 @@ impl BitVec {
     /// # Examples
     ///
     /// ```
-    /// use gf2::BitVec;
+    /// use gf2_core::BitVec;
     ///
     /// let mut a = BitVec::from_bytes_le(&[0b11110000]);
     /// let b = BitVec::from_bytes_le(&[0b00001111]);
@@ -267,7 +267,7 @@ impl BitVec {
     /// # Examples
     ///
     /// ```
-    /// use gf2::BitVec;
+    /// use gf2_core::BitVec;
     ///
     /// let mut a = BitVec::from_bytes_le(&[0b11110000]);
     /// let b = BitVec::from_bytes_le(&[0b11001100]);
@@ -286,7 +286,7 @@ impl BitVec {
     /// # Examples
     ///
     /// ```
-    /// use gf2::BitVec;
+    /// use gf2_core::BitVec;
     ///
     /// let mut bv = BitVec::from_bytes_le(&[0b11110000]);
     /// bv.not_into();
@@ -304,7 +304,7 @@ impl BitVec {
     /// # Examples
     ///
     /// ```
-    /// use gf2::BitVec;
+    /// use gf2_core::BitVec;
     ///
     /// let mut bv = BitVec::from_bytes_le(&[0b00001111]);
     /// bv.shift_left(2);
@@ -357,7 +357,7 @@ impl BitVec {
     /// # Examples
     ///
     /// ```
-    /// use gf2::BitVec;
+    /// use gf2_core::BitVec;
     ///
     /// let mut bv = BitVec::from_bytes_le(&[0b11110000]);
     /// bv.shift_right(2);
@@ -412,7 +412,7 @@ impl BitVec {
     /// # Examples
     ///
     /// ```
-    /// use gf2::BitVec;
+    /// use gf2_core::BitVec;
     ///
     /// let mut bv = BitVec::new();
     /// bv.push_bit(true);
@@ -429,7 +429,7 @@ impl BitVec {
     /// # Examples
     ///
     /// ```
-    /// use gf2::BitVec;
+    /// use gf2_core::BitVec;
     ///
     /// let mut bv = BitVec::new();
     /// bv.push_bit(false);
@@ -455,7 +455,7 @@ impl BitVec {
     /// # Examples
     ///
     /// ```
-    /// use gf2::BitVec;
+    /// use gf2_core::BitVec;
     ///
     /// let mut bv = BitVec::new();
     /// bv.push_bit(true);
@@ -484,7 +484,7 @@ impl BitVec {
     /// # Examples
     ///
     /// ```
-    /// use gf2::BitVec;
+    /// use gf2_core::BitVec;
     ///
     /// let bv = BitVec::from_bytes_le(&[0b10101010, 0b11110000]);
     /// assert_eq!(bv.len(), 16);
@@ -511,7 +511,7 @@ impl BitVec {
     /// # Examples
     ///
     /// ```
-    /// use gf2::BitVec;
+    /// use gf2_core::BitVec;
     ///
     /// let mut bv = BitVec::new();
     /// bv.push_bit(false);
@@ -553,7 +553,7 @@ impl BitVec {
     /// # Examples
     ///
     /// ```
-    /// use gf2::BitVec;
+    /// use gf2_core::BitVec;
     ///
     /// let mut bv = BitVec::from_bytes_le(&[0xFF, 0xFF]);
     /// bv.clear();
@@ -570,7 +570,7 @@ impl BitVec {
     /// # Examples
     ///
     /// ```
-    /// use gf2::BitVec;
+    /// use gf2_core::BitVec;
     ///
     /// let mut bv = BitVec::new();
     /// bv.resize(5, true);
@@ -655,7 +655,7 @@ impl fmt::Display for BitVec {
     /// # Examples
     ///
     /// ```
-    /// use gf2::BitVec;
+    /// use gf2_core::BitVec;
     ///
     /// let mut bv = BitVec::new();
     /// bv.push_bit(true);

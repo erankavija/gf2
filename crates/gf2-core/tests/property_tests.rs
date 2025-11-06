@@ -1,6 +1,6 @@
 //! Property-based tests for BitVec using proptest.
 
-use gf2::BitVec;
+use gf2_core::BitVec;
 use proptest::prelude::*;
 
 /// A simple reference implementation using Vec<u8> to store individual bits.

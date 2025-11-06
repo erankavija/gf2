@@ -1,6 +1,6 @@
 //! Integration tests for the matrix multiplication operator (*).
 
-use gf2::matrix::BitMatrix;
+use gf2_core::matrix::BitMatrix;
 
 #[test]
 fn test_mul_operator_basic_square() {
