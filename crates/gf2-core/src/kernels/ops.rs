@@ -17,7 +17,7 @@
 /// # Examples
 ///
 /// ```
-/// use gf2::kernels::ops::xor_inplace;
+/// use gf2_core::kernels::ops::xor_inplace;
 ///
 /// let mut dst = vec![0xFF, 0x00];
 /// let src = vec![0x0F, 0xF0];

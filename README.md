@@ -1,18 +1,30 @@
-# gf2 - High-Performance Bit String Manipulation
+# gf2 Workspace - GF(2) Primitives and Coding Theory
 
 [![CI](https://github.com/erankavija/gf2/workflows/CI/badge.svg)](https://github.com/erankavija/gf2/actions)
 [![codecov](https://codecov.io/gh/erankavija/gf2/branch/main/graph/badge.svg)](https://codecov.io/gh/erankavija/gf2)
 
-A high-performance Rust library for bit string manipulation with a focus on GF(2) operations and coding theory applications.
+A high-performance Rust workspace that houses two complementary crates:
+
+- `gf2-core`: low-level, high-throughput primitives for bit manipulation and GF(2) linear algebra.
+- `gf2-coding`: research-oriented coding theory and compression algorithms built on `gf2-core`.
+
+The shared workspace keeps primitives and applications aligned while making their goals explicit.
+
+## Crates
+
+- **`gf2-core`** – dense `BitVec` and `BitMatrix` types, optimized kernels, and linear algebra algorithms over GF(2).
+- **`gf2-coding`** – higher-level encoders, decoders, and experiments that leverage the `gf2-core` building blocks.
 
 ## Overview
 
-`gf2` provides efficient dense bit vector operations optimized for:
+`gf2-core` provides efficient dense bit vector operations optimized for:
 - Basic bitset operations (AND, OR, XOR, NOT)
 - Bit manipulation and queries
 - **GF(2) linear algebra**: Fast matrix operations over the binary field
 - Future: GF(2) polynomial arithmetic for coding theory
 - Future: SIMD acceleration on x86-64 (AVX2/AVX-512) and AArch64 (NEON)
+
+The `gf2-coding` crate layers domain-specific constructions (e.g., Hamming codes, convolutional encoders) on top of these primitives, keeping experimental code separated from the performance-critical core.
 
 ## Features
 
@@ -38,17 +50,27 @@ Padding bits beyond `len_bits` in the last word are always zeroed. This invarian
 
 ## Usage
 
-Add this to your `Cargo.toml`:
+### Add dependencies
 
 ```toml
 [dependencies]
-gf2 = "0.1"
+gf2-core = "0.1"
+# Optional, for coding theory algorithms built on gf2-core:
+# gf2-coding = "0.1"
 ```
 
-### Basic Example
+When working inside this repository, prefer workspace-relative paths:
+
+```toml
+[dependencies]
+gf2-core = { path = "crates/gf2-core" }
+gf2-coding = { path = "crates/gf2-coding" }
+```
+
+### gf2-core: Basic example
 
 ```rust
-use gf2::BitVec;
+use gf2_core::BitVec;
 
 // Create and manipulate bit vectors
 let mut bv = BitVec::new();
@@ -70,10 +92,10 @@ assert_eq!(a.to_bytes_le(), vec![0b00111100]);
 println!("{}", bv);  // Displays: [ 1 0 1 ]
 ```
 
-### Byte Conversion
+### gf2-core: Byte conversion
 
 ```rust
-use gf2::BitVec;
+use gf2_core::BitVec;
 
 // Create from bytes (little-endian)
 let bv = BitVec::from_bytes_le(&[0xAA, 0x55]);
@@ -84,10 +106,10 @@ let bytes = bv.to_bytes_le();
 assert_eq!(bytes, vec![0xAA, 0x55]);
 ```
 
-### Bit Queries
+### gf2-core: Bit queries
 
 ```rust
-use gf2::BitVec;
+use gf2_core::BitVec;
 
 let bv = BitVec::from_bytes_le(&[0b00001100]);
 
@@ -99,21 +121,21 @@ assert_eq!(bv.find_last_set(), Some(3));
 assert_eq!(bv.count_ones(), 2);
 ```
 
-### Shifts
+### gf2-core: Shifts
 
 ```rust
-use gf2::BitVec;
+use gf2_core::BitVec;
 
 let mut bv = BitVec::from_bytes_le(&[0b00001111]);
 bv.shift_left(2);
 assert_eq!(bv.to_bytes_le(), vec![0b00111100]);
 ```
 
-### Matrix Operations over GF(2)
+### gf2-core: Matrix operations over GF(2)
 
 ```rust
-use gf2::matrix::BitMatrix;
-use gf2::alg::gauss::invert;
+use gf2_core::matrix::BitMatrix;
+use gf2_core::alg::gauss::invert;
 
 // Create a 3x3 matrix
 let mut a = BitMatrix::zeros(3, 3);
@@ -153,6 +175,33 @@ println!("{}", a);
 //   │ 0 1 0 │
 //   │ 0 0 1 │
 //   └       ┘
+```
+
+### gf2-coding: Hamming code workflow
+
+```rust
+use gf2_coding::{LinearBlockCode, SyndromeTableDecoder};
+use gf2_coding::traits::{BlockEncoder, HardDecisionDecoder};
+use gf2_core::BitVec;
+
+// Create the classic Hamming(15, 11) code.
+let code = LinearBlockCode::hamming(4);
+assert_eq!((code.k(), code.n()), (11, 15));
+
+let decoder = SyndromeTableDecoder::new(code.clone());
+
+// Encode a simple alternating pattern.
+let mut message = BitVec::new();
+for i in 0..code.k() {
+  message.push_bit(i % 2 == 0);
+}
+let codeword = code.encode(&message);
+
+// Inject a single-bit error and decode.
+let mut corrupted = codeword.clone();
+corrupted.set(3, !corrupted.get(3));
+let decoded = decoder.decode(&corrupted);
+assert_eq!(decoded, message);
 ```
 
 ## API Overview
@@ -247,10 +296,10 @@ println!("{}", a);
 
 ### Examples
 
-Run the Hamming (7,4) error-correcting code example:
+Run the Hamming (7,4) error-correcting code example from `gf2-coding`:
 
 ```bash
-cargo run --example hamming_7_4
+cargo run -p gf2-coding --example hamming_7_4
 ```
 
 This example demonstrates:
@@ -261,24 +310,24 @@ This example demonstrates:
 
 ### Testing
 
-Run the full test suite:
+Run the full workspace test suite:
 
 ```bash
-cargo test --all-features
+cargo test --workspace --all-features
 ```
 
-Run property-based tests:
+Run property-based tests for `gf2-core`:
 
 ```bash
-cargo test --test property_tests
+cargo test -p gf2-core --test property_tests
 ```
 
 ### Benchmarks
 
-Build and run benchmarks:
+Build and run benchmarks for `gf2-core`:
 
 ```bash
-cargo bench
+cargo bench -p gf2-core
 ```
 
 Current benchmarks cover:

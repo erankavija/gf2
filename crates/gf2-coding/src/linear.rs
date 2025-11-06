@@ -3,9 +3,9 @@
 //! This module provides implementations of linear block codes, including systematic codes
 //! and syndrome-based decoding.
 
-use crate::coding::traits::{BlockEncoder, HardDecisionDecoder};
-use crate::matrix::BitMatrix;
-use crate::BitVec;
+use crate::traits::{BlockEncoder, HardDecisionDecoder};
+use gf2_core::matrix::BitMatrix;
+use gf2_core::BitVec;
 use std::collections::HashMap;
 
 /// A linear block code defined by generator and parity-check matrices.
@@ -17,9 +17,9 @@ use std::collections::HashMap;
 /// # Examples
 ///
 /// ```
-/// use gf2::coding::LinearBlockCode;
-/// use gf2::coding::traits::BlockEncoder;
-/// use gf2::BitVec;
+/// use gf2_coding::LinearBlockCode;
+/// use gf2_coding::traits::BlockEncoder;
+/// use gf2_core::BitVec;
 ///
 /// // Create a Hamming(7,4) code
 /// let code = LinearBlockCode::hamming(3);
@@ -64,16 +64,16 @@ impl LinearBlockCode {
     /// # Examples
     ///
     /// ```
-    /// use gf2::coding::LinearBlockCode;
-    /// use gf2::bitmatrix;
+    /// use gf2_coding::LinearBlockCode;
+    /// use gf2_core::bitmatrix;
     ///
-    /// let g = bitmatrix![
+    /// let g = gf2_core::bitmatrix![
     ///     1, 0, 0, 0, 1, 1, 0;
     ///     0, 1, 0, 0, 1, 0, 1;
     ///     0, 0, 1, 0, 0, 1, 1;
     ///     0, 0, 0, 1, 1, 1, 1;
     /// ];
-    /// let h = bitmatrix![
+    /// let h = gf2_core::bitmatrix![
     ///     1, 1, 0, 1, 1, 0, 0;
     ///     1, 0, 1, 1, 0, 1, 0;
     ///     0, 1, 1, 1, 0, 0, 1;
@@ -221,7 +221,7 @@ impl LinearBlockCode {
     /// # Examples
     ///
     /// ```
-    /// use gf2::coding::LinearBlockCode;
+    /// use gf2_coding::LinearBlockCode;
     ///
     /// // Hamming(7,4) with r=3
     /// let code = LinearBlockCode::hamming(3);
@@ -352,9 +352,9 @@ impl BlockEncoder for LinearBlockCode {
 /// # Examples
 ///
 /// ```
-/// use gf2::coding::{LinearBlockCode, SyndromeTableDecoder};
-/// use gf2::coding::traits::{BlockEncoder, HardDecisionDecoder};
-/// use gf2::BitVec;
+/// use gf2_coding::{LinearBlockCode, SyndromeTableDecoder};
+/// use gf2_coding::traits::{BlockEncoder, HardDecisionDecoder};
+/// use gf2_core::BitVec;
 ///
 /// let code = LinearBlockCode::hamming(3);
 /// let decoder = SyndromeTableDecoder::new(code);
@@ -472,7 +472,7 @@ impl HardDecisionDecoder for SyndromeTableDecoder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::coding::traits::BlockEncoder;
+    use crate::traits::BlockEncoder;
 
     #[test]
     fn test_hamming_7_4_parameters() {

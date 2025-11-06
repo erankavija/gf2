@@ -1,7 +1,8 @@
-//! Error-correcting codes built on gf2 primitives.
+//! Error-correcting codes built on `gf2-core` primitives.
 //!
-//! This module provides implementations of error-correcting codes using the
-//! BitVec and BitMatrix types from the gf2 library. It includes both block codes
+//! This crate provides implementations of error-correcting codes using the
+//! [`BitVec`](gf2_core::BitVec) and [`BitMatrix`](gf2_core::matrix::BitMatrix) types from
+//! the `gf2-core` library. It includes both block codes
 //! and streaming (convolutional) codes.
 //!
 //! # Block Codes
@@ -26,9 +27,9 @@
 //! ## Using Hamming codes
 //!
 //! ```
-//! use gf2::coding::{LinearBlockCode, SyndromeTableDecoder};
-//! use gf2::coding::traits::{BlockEncoder, HardDecisionDecoder};
-//! use gf2::BitVec;
+//! use gf2_coding::{LinearBlockCode, SyndromeTableDecoder};
+//! use gf2_coding::traits::{BlockEncoder, HardDecisionDecoder};
+//! use gf2_core::BitVec;
 //!
 //! // Create a Hamming(15,11) code with r=4
 //! let code = LinearBlockCode::hamming(4);

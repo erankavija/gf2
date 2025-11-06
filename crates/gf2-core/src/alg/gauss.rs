@@ -32,8 +32,8 @@ use crate::matrix::BitMatrix;
 /// # Examples
 ///
 /// ```
-/// use gf2::matrix::BitMatrix;
-/// use gf2::alg::gauss::invert;
+/// use gf2_core::matrix::BitMatrix;
+/// use gf2_core::alg::gauss::invert;
 ///
 /// let id = BitMatrix::identity(3);
 /// let inv = invert(&id).unwrap();

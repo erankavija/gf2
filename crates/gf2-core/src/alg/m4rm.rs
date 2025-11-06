@@ -122,8 +122,8 @@ fn extract_bits(a: &BitMatrix, row: usize, col_start: usize, k_block: usize) -> 
 /// # Examples
 ///
 /// ```
-/// use gf2::matrix::BitMatrix;
-/// use gf2::alg::m4rm::multiply;
+/// use gf2_core::matrix::BitMatrix;
+/// use gf2_core::alg::m4rm::multiply;
 ///
 /// let a = BitMatrix::identity(3);
 /// let mut b = BitMatrix::zeros(3, 4);

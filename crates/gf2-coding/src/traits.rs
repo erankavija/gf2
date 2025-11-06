@@ -3,7 +3,7 @@
 //! This module defines the core traits for encoding and decoding operations
 //! in error-correcting codes, supporting both block codes and streaming codes.
 
-use crate::BitVec;
+use gf2_core::BitVec;
 
 /// Encoder for block codes.
 ///

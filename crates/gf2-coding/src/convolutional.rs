@@ -3,7 +3,7 @@
 //! This module provides skeleton types for convolutional codes, which process
 //! bits in a streaming fashion while maintaining internal state.
 
-use crate::coding::traits::{StreamingDecoder, StreamingEncoder};
+use crate::traits::{StreamingDecoder, StreamingEncoder};
 
 /// A convolutional encoder (skeleton).
 ///
@@ -18,8 +18,8 @@ use crate::coding::traits::{StreamingDecoder, StreamingEncoder};
 /// # Examples
 ///
 /// ```
-/// use gf2::coding::ConvolutionalEncoder;
-/// use gf2::coding::traits::StreamingEncoder;
+/// use gf2_coding::ConvolutionalEncoder;
+/// use gf2_coding::traits::StreamingEncoder;
 ///
 /// let mut encoder = ConvolutionalEncoder::new(3, vec![0b111, 0b101]);
 /// encoder.reset();
@@ -46,7 +46,7 @@ impl ConvolutionalEncoder {
     /// # Examples
     ///
     /// ```
-    /// use gf2::coding::ConvolutionalEncoder;
+    /// use gf2_coding::ConvolutionalEncoder;
     ///
     /// // Create a rate-1/2, K=3 encoder
     /// let encoder = ConvolutionalEncoder::new(3, vec![0b111, 0b101]);
@@ -109,8 +109,8 @@ impl StreamingEncoder for ConvolutionalEncoder {
 /// # Examples
 ///
 /// ```
-/// use gf2::coding::ConvolutionalDecoder;
-/// use gf2::coding::traits::StreamingDecoder;
+/// use gf2_coding::ConvolutionalDecoder;
+/// use gf2_coding::traits::StreamingDecoder;
 ///
 /// let mut decoder = ConvolutionalDecoder::new();
 /// decoder.reset();

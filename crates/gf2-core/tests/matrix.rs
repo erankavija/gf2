@@ -1,6 +1,6 @@
 //! Tests for BitMatrix core functionality.
 
-use gf2::matrix::BitMatrix;
+use gf2_core::matrix::BitMatrix;
 
 #[test]
 fn test_zeros_basic() {

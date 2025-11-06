@@ -1,0 +1,24 @@
+[package]
+name = "gf2-core"
+version = "0.1.0"
+edition = "2021"
+authors = ["copilot-swe-agent[bot] <198982749+Copilot@users.noreply.github.com>"]
+description = "High-performance bit string manipulation primitives over GF(2)"
+keywords = ["bitset", "gf2", "bitvec", "galois-field"]
+categories = ["algorithms", "data-structures", "mathematics", "no-std"]
+rust-version = "1.74"
+
+[dependencies]
+
+[dev-dependencies]
+criterion = { workspace = true }
+proptest = { workspace = true }
+rand = { workspace = true }
+
+[[bench]]
+name = "bitvec"
+harness = false
+
+[[bench]]
+name = "matmul"
+harness = false

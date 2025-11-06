@@ -1,6 +1,6 @@
 # Development Roadmap
 
-This document outlines the phased development plan for the `gf2` library, from the current scalar baseline to advanced GF(2) operations for coding theory.
+This document outlines the phased development plan for the `gf2` workspace. The early phases focus on the `gf2-core` primitives, while later phases inform the `gf2-coding` applications layer.
 
 ## Phase 1: Scalar BitVec Baseline ✅ (Current)
 

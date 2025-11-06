@@ -1,6 +1,6 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
-use gf2::alg::m4rm::multiply;
-use gf2::matrix::BitMatrix;
+use gf2_core::alg::m4rm::multiply;
+use gf2_core::matrix::BitMatrix;
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 

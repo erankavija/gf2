@@ -1,7 +1,7 @@
 //! Tests for matrix multiplication over GF(2).
 
-use gf2::alg::m4rm::multiply;
-use gf2::matrix::BitMatrix;
+use gf2_core::alg::m4rm::multiply;
+use gf2_core::matrix::BitMatrix;
 
 /// Naive reference matrix multiplication for testing.
 /// Computes C = A × B over GF(2) using dot products.
