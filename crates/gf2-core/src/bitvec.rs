@@ -230,9 +230,12 @@ impl BitVec {
     /// ```
     pub fn bit_and_into(&mut self, other: &BitVec) {
         assert_eq!(self.len_bits, other.len_bits, "BitVec lengths must match");
-        for (a, b) in self.data.iter_mut().zip(other.data.iter()) {
-            *a &= *b;
+        #[cfg(feature = "simd")]
+        if let Some(fns) = crate::simd::maybe_simd() {
+            (fns.and_fn)(&mut self.data, &other.data);
+            return;
         }
+        for (a, b) in self.data.iter_mut().zip(other.data.iter()) { *a &= *b; }
     }
 
     /// Performs bitwise OR with `other` and stores the result in `self`.
@@ -253,9 +256,12 @@ impl BitVec {
     /// ```
     pub fn bit_or_into(&mut self, other: &BitVec) {
         assert_eq!(self.len_bits, other.len_bits, "BitVec lengths must match");
-        for (a, b) in self.data.iter_mut().zip(other.data.iter()) {
-            *a |= *b;
+        #[cfg(feature = "simd")]
+        if let Some(fns) = crate::simd::maybe_simd() {
+            (fns.or_fn)(&mut self.data, &other.data);
+            return;
         }
+        for (a, b) in self.data.iter_mut().zip(other.data.iter()) { *a |= *b; }
     }
 
     /// Performs bitwise XOR with `other` and stores the result in `self`.
@@ -276,9 +282,12 @@ impl BitVec {
     /// ```
     pub fn bit_xor_into(&mut self, other: &BitVec) {
         assert_eq!(self.len_bits, other.len_bits, "BitVec lengths must match");
-        for (a, b) in self.data.iter_mut().zip(other.data.iter()) {
-            *a ^= *b;
+        #[cfg(feature = "simd")]
+        if let Some(fns) = crate::simd::maybe_simd() {
+            (fns.xor_fn)(&mut self.data, &other.data);
+            return;
         }
+        for (a, b) in self.data.iter_mut().zip(other.data.iter()) { *a ^= *b; }
     }
 
     /// Performs bitwise NOT on all bits in `self`.
@@ -293,9 +302,13 @@ impl BitVec {
     /// assert_eq!(bv.to_bytes_le(), vec![0b00001111]);
     /// ```
     pub fn not_into(&mut self) {
-        for word in self.data.iter_mut() {
-            *word = !*word;
+        #[cfg(feature = "simd")]
+        if let Some(fns) = crate::simd::maybe_simd() {
+            (fns.not_fn)(&mut self.data);
+            self.mask_tail();
+            return;
         }
+        for word in self.data.iter_mut() { *word = !*word; }
         self.mask_tail();
     }
 
@@ -421,6 +434,10 @@ impl BitVec {
     /// assert_eq!(bv.count_ones(), 2);
     /// ```
     pub fn count_ones(&self) -> u64 {
+        #[cfg(feature = "simd")]
+        if let Some(fns) = crate::simd::maybe_simd() {
+            return (fns.popcnt_fn)(&self.data);
+        }
         self.data.iter().map(|w| w.count_ones() as u64).sum()
     }
 
