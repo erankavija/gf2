@@ -14,8 +14,7 @@ This roadmap focuses on the high-performance primitives for GF(2): `BitVec`, `Bi
 - Measurable speedups on 64 KiB+ buffers
 
 ## Phase 3: SIMD Backends & Dispatch (Planned)
-- AVX2/AVX-512 backends on x86_64; NEON on AArch64
-- Runtime detection and safe dispatch to best kernel
+- AVX2 backend on x86_64 (AVX-512 backends or NEON on AArch64 possibly later)
 - Shift/scan kernels; vector popcount strategies
 
 ## Phase 4: Rank/Select & Scanning (Planned)

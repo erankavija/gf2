@@ -1,0 +1,16 @@
+[package]
+name = "gf2-kernels-simd"
+version = "0.1.0"
+edition = "2021"
+description = "SIMD-accelerated kernels for gf2-core (unsafe, optional)"
+license = "MIT OR Apache-2.0"
+
+[lib]
+name = "gf2_kernels_simd"
+crate-type = ["rlib"]
+
+[features]
+default = []
+# Feature toggles for building specific backends; detection is runtime.
+avx2 = []
+avx512 = []

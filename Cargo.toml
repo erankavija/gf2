@@ -2,6 +2,7 @@
 members = [
 	"crates/gf2-core",
 	"crates/gf2-coding",
+	"crates/gf2-kernels-simd",
 ]
 resolver = "2"
 

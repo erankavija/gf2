@@ -41,3 +41,25 @@ mod macros;
 pub mod matrix;
 
 pub use bitvec::BitVec;
+
+// Optional SIMD accessor: compiled only when the "simd" feature is enabled.
+// This module contains no unsafe code; unsafe is isolated in the separate
+// gf2-kernels-simd crate.
+#[cfg(feature = "simd")]
+pub(crate) mod simd {
+	use std::sync::OnceLock;
+	use gf2_kernels_simd::LogicalFns;
+
+	static FNS: OnceLock<Option<LogicalFns>> = OnceLock::new();
+
+	#[inline]
+	pub fn maybe_simd() -> Option<&'static LogicalFns> {
+		FNS.get_or_init(|| gf2_kernels_simd::detect()).as_ref()
+	}
+}
+
+#[cfg(not(feature = "simd"))]
+pub(crate) mod simd {
+	#[inline]
+	pub fn maybe_simd() -> Option<()> { None }
+}
