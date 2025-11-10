@@ -3,6 +3,9 @@
 //! This module implements fast matrix multiplication over GF(2) using the M4RM algorithm.
 //! The algorithm processes the multiplication in blocks, precomputing Gray code tables
 //! of linear combinations to reduce the number of row operations.
+//!
+//! When the `simd` feature is enabled, row XOR operations automatically use AVX2
+//! vectorization for large matrices, providing significant speedups.
 
 use crate::kernels::ops::xor_inplace;
 use crate::matrix::BitMatrix;
