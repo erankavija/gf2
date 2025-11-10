@@ -22,6 +22,11 @@
 //! skeleton implementations in [`ConvolutionalEncoder`] and [`ConvolutionalDecoder`]
 //! for future expansion.
 //!
+//! # Soft-Decision Decoding
+//!
+//! The [`llr`] module provides log-likelihood ratio (LLR) types for soft-decision
+//! decoding, enabling superior performance over AWGN channels.
+//!
 //! # Examples
 //!
 //! ## Using Hamming codes
@@ -50,10 +55,14 @@
 //! assert_eq!(decoded, msg);
 //! ```
 
+pub mod channel;
 pub mod convolutional;
 pub mod linear;
+pub mod llr;
 pub mod traits;
 
 // Re-export main types
+pub use channel::{AwgnChannel, BpskModulator};
 pub use convolutional::{ConvolutionalDecoder, ConvolutionalEncoder};
 pub use linear::{LinearBlockCode, SyndromeTableDecoder};
+pub use llr::Llr;
