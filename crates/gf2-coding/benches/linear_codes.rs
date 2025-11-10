@@ -26,12 +26,16 @@ fn bench_hamming_encode(c: &mut Criterion) {
         let msg = create_message(k, 0);
 
         group.throughput(Throughput::Bytes(k as u64 / 8));
-        group.bench_with_input(BenchmarkId::new("single", format!("({},{})", n, k)), &code, |b, code| {
-            b.iter(|| {
-                let codeword = code.encode(black_box(&msg));
-                black_box(codeword);
-            });
-        });
+        group.bench_with_input(
+            BenchmarkId::new("single", format!("({},{})", n, k)),
+            &code,
+            |b, code| {
+                b.iter(|| {
+                    let codeword = code.encode(black_box(&msg));
+                    black_box(codeword);
+                });
+            },
+        );
     }
 
     group.finish();
@@ -44,10 +48,8 @@ fn bench_hamming_encode_batch(c: &mut Criterion) {
         let code = LinearBlockCode::hamming(r);
         let n = code.n();
         let k = code.k();
-        
-        let messages: Vec<BitVec> = (0..batch_size)
-            .map(|i| create_message(k, i))
-            .collect();
+
+        let messages: Vec<BitVec> = (0..batch_size).map(|i| create_message(k, i)).collect();
 
         group.throughput(Throughput::Bytes((k * batch_size) as u64 / 8));
         group.bench_with_input(
@@ -124,7 +126,7 @@ fn bench_decode_no_error(c: &mut Criterion) {
         let decoder = SyndromeTableDecoder::new(code.clone());
         let n = code.n();
         let k = code.k();
-        
+
         let msg = create_message(k, 0);
         let codeword = code.encode(&msg);
 
@@ -152,10 +154,10 @@ fn bench_decode_with_error(c: &mut Criterion) {
         let decoder = SyndromeTableDecoder::new(code.clone());
         let n = code.n();
         let k = code.k();
-        
+
         let msg = create_message(k, 0);
         let mut corrupted = code.encode(&msg);
-        
+
         // Introduce error at middle position
         let error_pos = n / 2;
         corrupted.set(error_pos, !corrupted.get(error_pos));
@@ -184,18 +186,18 @@ fn bench_decode_batch(c: &mut Criterion) {
         let decoder = SyndromeTableDecoder::new(code.clone());
         let n = code.n();
         let k = code.k();
-        
+
         let codewords: Vec<BitVec> = (0..batch_size)
             .map(|i| {
                 let msg = create_message(k, i);
                 let mut codeword = code.encode(&msg);
-                
+
                 // Introduce error in half of them
                 if i % 2 == 0 {
                     let error_pos = (i * 7) % n;
                     codeword.set(error_pos, !codeword.get(error_pos));
                 }
-                
+
                 codeword
             })
             .collect();
@@ -226,7 +228,7 @@ fn bench_encode_decode_roundtrip(c: &mut Criterion) {
         let decoder = SyndromeTableDecoder::new(code.clone());
         let n = code.n();
         let k = code.k();
-        
+
         let msg = create_message(k, 42);
 
         group.throughput(Throughput::Bytes(k as u64 / 8));
@@ -253,7 +255,7 @@ fn bench_project_message(c: &mut Criterion) {
         let code = LinearBlockCode::hamming(r);
         let n = code.n();
         let k = code.k();
-        
+
         let msg = create_message(k, 0);
         let codeword = code.encode(&msg);
 

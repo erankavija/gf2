@@ -59,6 +59,11 @@ impl ConvolutionalEncoder {
         }
     }
 
+    /// Returns the current encoder state.
+    pub fn state(&self) -> u32 {
+        self.state
+    }
+
     /// Returns the constraint length.
     pub fn constraint_length(&self) -> usize {
         self.constraint_length
@@ -96,58 +101,188 @@ impl StreamingEncoder for ConvolutionalEncoder {
     }
 }
 
-/// A convolutional decoder (skeleton/stub).
+/// A Viterbi decoder for convolutional codes.
 ///
-/// Convolutional decoders typically use algorithms like Viterbi decoding
-/// to find the most likely transmitted sequence.
-///
-/// # Note
-///
-/// This is a stub implementation. Full decoding functionality (e.g., Viterbi algorithm)
-/// will be implemented in a future update.
+/// Implements the Viterbi algorithm for maximum-likelihood decoding of convolutional codes.
+/// Uses hard-decision decoding with Hamming distance metrics.
 ///
 /// # Examples
 ///
 /// ```
-/// use gf2_coding::ConvolutionalDecoder;
-/// use gf2_coding::traits::StreamingDecoder;
+/// use gf2_coding::{ConvolutionalEncoder, ConvolutionalDecoder};
+/// use gf2_coding::traits::{StreamingEncoder, StreamingDecoder};
 ///
-/// let mut decoder = ConvolutionalDecoder::new();
+/// let mut encoder = ConvolutionalEncoder::new(3, vec![0b111, 0b101]);
+/// let mut decoder = ConvolutionalDecoder::new(3, vec![0b111, 0b101]);
+///
+/// encoder.reset();
 /// decoder.reset();
+///
+/// let message = vec![true, false, true];
+/// let mut codeword = Vec::new();
+/// for &bit in &message {
+///     codeword.extend(encoder.encode_bit(bit));
+/// }
+///
+/// // Terminate
+/// for _ in 0..2 {
+///     codeword.extend(encoder.encode_bit(false));
+/// }
+///
+/// let decoded = decoder.decode_symbols(&codeword);
+/// // First 3 bits should match
+/// assert_eq!(&decoded[..3], &message[..]);
 /// ```
 #[derive(Debug, Clone)]
 pub struct ConvolutionalDecoder {
-    // Placeholder fields for future implementation
-    _placeholder: (),
+    constraint_length: usize,
+    generators: Vec<u32>,
+    num_states: usize,
+    /// Current path metrics
+    metrics: Vec<u32>,
+    /// Previous path metrics
+    prev_metrics: Vec<u32>,
+    /// Survivor paths: decisions[time][state] = (input_bit, prev_state)
+    decisions: Vec<Vec<(bool, usize)>>,
 }
 
 impl ConvolutionalDecoder {
-    /// Creates a new convolutional decoder.
+    /// Creates a new Viterbi decoder.
     ///
-    /// # Note
+    /// # Arguments
     ///
-    /// This is a stub. Parameters for encoder structure will be added
-    /// in future implementations.
-    pub fn new() -> Self {
-        Self { _placeholder: () }
+    /// * `constraint_length` - Must match encoder's K
+    /// * `generators` - Must match encoder's generator polynomials
+    ///
+    /// # Panics
+    ///
+    /// Panics if constraint_length is 0 or > 31.
+    pub fn new(constraint_length: usize, generators: Vec<u32>) -> Self {
+        assert!(constraint_length > 0 && constraint_length <= 31);
+
+        let num_states = 1 << (constraint_length - 1);
+        let mut metrics = vec![u32::MAX / 2; num_states];
+        metrics[0] = 0; // Start at state 0
+
+        Self {
+            constraint_length,
+            generators,
+            num_states,
+            metrics,
+            prev_metrics: vec![u32::MAX / 2; num_states],
+            decisions: Vec::new(),
+        }
+    }
+
+    /// Computes output for a transition from prev_state with input_bit.
+    fn compute_output(&self, prev_state: usize, input_bit: bool) -> Vec<bool> {
+        // Full register after shifting in input_bit
+        let full_state = (prev_state << 1) | (input_bit as usize);
+        let masked_state = full_state & ((1 << self.constraint_length) - 1);
+
+        self.generators
+            .iter()
+            .map(|&gen| {
+                let product = masked_state & (gen as usize);
+                product.count_ones() % 2 == 1
+            })
+            .collect()
+    }
+
+    /// Hamming distance between two bit vectors.
+    fn hamming_distance(a: &[bool], b: &[bool]) -> u32 {
+        a.iter().zip(b).filter(|(x, y)| x != y).count() as u32
+    }
+
+    /// One step of Viterbi forward pass.
+    fn viterbi_step(&mut self, received: &[bool]) {
+        std::mem::swap(&mut self.metrics, &mut self.prev_metrics);
+        self.metrics.fill(u32::MAX / 2);
+
+        let mut current_decisions = vec![(false, 0); self.num_states];
+
+        // For each possible next state
+        for next_state in 0..self.num_states {
+            let mut best_metric = u32::MAX / 2;
+            let mut best_input = false;
+            let mut best_prev = 0;
+
+            // Enumerate all possible (prev_state, input) pairs that lead to next_state
+            for prev_state in 0..self.num_states {
+                for input_bit in [false, true] {
+                    // Check if this transition leads to next_state
+                    let resulting_state = (prev_state << 1 | (input_bit as usize))
+                        & ((1 << (self.constraint_length - 1)) - 1);
+
+                    if resulting_state != next_state {
+                        continue;
+                    }
+
+                    // Valid transition
+                    let expected = self.compute_output(prev_state, input_bit);
+                    let branch_metric = Self::hamming_distance(&expected, received);
+                    let path_metric = self.prev_metrics[prev_state].saturating_add(branch_metric);
+
+                    if path_metric < best_metric {
+                        best_metric = path_metric;
+                        best_input = input_bit;
+                        best_prev = prev_state;
+                    }
+                }
+            }
+
+            self.metrics[next_state] = best_metric;
+            current_decisions[next_state] = (best_input, best_prev);
+        }
+
+        self.decisions.push(current_decisions);
+    }
+
+    /// Traceback to recover decoded sequence.
+    fn traceback(&self) -> Vec<bool> {
+        if self.decisions.is_empty() {
+            return Vec::new();
+        }
+
+        let mut decoded = Vec::with_capacity(self.decisions.len());
+        let mut state = 0usize; // End at state 0 (terminated)
+
+        // Traceback from end to start
+        for t in (0..self.decisions.len()).rev() {
+            let (input_bit, prev_state) = self.decisions[t][state];
+            decoded.push(input_bit);
+            state = prev_state;
+        }
+
+        decoded.reverse();
+        decoded
     }
 }
 
 impl Default for ConvolutionalDecoder {
     fn default() -> Self {
-        Self::new()
+        Self::new(3, vec![0b111, 0b101])
     }
 }
 
 impl StreamingDecoder for ConvolutionalDecoder {
-    fn decode_symbols(&mut self, _symbols: &[bool]) -> Vec<bool> {
-        // Stub: returns empty vector
-        // Future implementation will use Viterbi or other decoding algorithms
-        Vec::new()
+    fn decode_symbols(&mut self, symbols: &[bool]) -> Vec<bool> {
+        let n = self.generators.len();
+        assert_eq!(symbols.len() % n, 0, "Symbols must be multiple of {}", n);
+
+        // Process each n-bit chunk
+        for chunk in symbols.chunks(n) {
+            self.viterbi_step(chunk);
+        }
+
+        self.traceback()
     }
 
     fn reset(&mut self) {
-        // Stub: nothing to reset yet
+        self.metrics.fill(u32::MAX / 2);
+        self.metrics[0] = 0;
+        self.prev_metrics.fill(u32::MAX / 2);
+        self.decisions.clear();
     }
 }
 
@@ -193,16 +328,33 @@ mod tests {
 
     #[test]
     fn test_convolutional_decoder_creation() {
-        let decoder = ConvolutionalDecoder::new();
-        // Just verify it can be created
-        let _ = decoder;
+        let decoder = ConvolutionalDecoder::new(3, vec![0b111, 0b101]);
+        assert_eq!(decoder.num_states, 4);
     }
 
     #[test]
-    fn test_convolutional_decoder_stub() {
-        let mut decoder = ConvolutionalDecoder::new();
-        let result = decoder.decode_symbols(&[true, false, true]);
-        // Stub returns empty vector
-        assert_eq!(result.len(), 0);
+    fn test_encode_decode_roundtrip() {
+        let mut encoder = ConvolutionalEncoder::new(3, vec![0b111, 0b101]);
+        let mut decoder = ConvolutionalDecoder::new(3, vec![0b111, 0b101]);
+
+        encoder.reset();
+        decoder.reset();
+
+        let message = vec![true, false, true];
+        let mut codeword = Vec::new();
+
+        for &bit in &message {
+            codeword.extend(encoder.encode_bit(bit));
+        }
+
+        // Terminate with K-1 zeros
+        for _ in 0..2 {
+            codeword.extend(encoder.encode_bit(false));
+        }
+
+        let decoded = decoder.decode_symbols(&codeword);
+
+        // Should decode the message correctly
+        assert_eq!(&decoded[..message.len()], &message[..]);
     }
 }
