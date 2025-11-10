@@ -2,11 +2,13 @@
 
 This roadmap captures the higher-level coding theory and compression research layers built atop `gf2-core` primitives. It intentionally separates exploratory, algorithmic work from low-level performance engineering.
 
-## Phase C1: Foundational Block Codes (In Progress)
-- Linear block code abstraction (`LinearBlockCode`) with generator (G) & parity-check (H) matrices
-- Systematic encoding path; syndrome computation; simple Hamming construction helper
-- Deterministic tests for encode/decode roundtrips
-- Benchmarks: encoding throughput for varying (n,k)
+## Phase C1: Foundational Block Codes (Complete)
+- ✅ Linear block code abstraction (`LinearBlockCode`) with generator (G) & parity-check (H) matrices
+- ✅ Systematic encoding path; syndrome computation; simple Hamming construction helper
+- ✅ Deterministic tests for encode/decode roundtrips
+- ✅ Property-based tests with `proptest` (roundtrip, linearity, error correction, orthogonality)
+- ✅ Integration tests covering full workflows and edge cases
+- ✅ Benchmarks: encoding throughput, syndrome computation, decoding with/without errors, batch operations
 
 ## Phase C2: Convolutional Code Framework (Planned)
 - Shift-register based encoder/decoder scaffolding (current skeleton) → full implementation
