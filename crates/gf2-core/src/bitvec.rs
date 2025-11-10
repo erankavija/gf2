@@ -565,6 +565,49 @@ impl BitVec {
         bytes
     }
 
+    /// Returns an immutable `BitSlice` view for the given inclusive-exclusive range.
+    ///
+    /// Panics if the range is out of bounds.
+    pub fn bit_slice<R: std::ops::RangeBounds<usize>>(&self, range: R) -> crate::BitSlice<'_> {
+        let start = match range.start_bound() {
+            std::ops::Bound::Included(&s) => s,
+            std::ops::Bound::Excluded(&s) => s + 1,
+            std::ops::Bound::Unbounded => 0,
+        };
+        let end = match range.end_bound() {
+            std::ops::Bound::Included(&e) => e + 1,
+            std::ops::Bound::Excluded(&e) => e,
+            std::ops::Bound::Unbounded => self.len_bits,
+        };
+        assert!(end >= start && end <= self.len_bits, "BitSlice range out of bounds");
+        crate::BitSlice { words: &self.data, offset: start, len_bits: end - start }
+    }
+
+    /// Returns a mutable `BitSliceMut` view for the specified range.
+    /// Panics if out of bounds.
+    pub fn bit_slice_mut<R: std::ops::RangeBounds<usize>>(&mut self, range: R) -> crate::BitSliceMut<'_> {
+        let start = match range.start_bound() {
+            std::ops::Bound::Included(&s) => s,
+            std::ops::Bound::Excluded(&s) => s + 1,
+            std::ops::Bound::Unbounded => 0,
+        };
+        let end = match range.end_bound() {
+            std::ops::Bound::Included(&e) => e + 1,
+            std::ops::Bound::Excluded(&e) => e,
+            std::ops::Bound::Unbounded => self.len_bits,
+        };
+        assert!(end >= start && end <= self.len_bits, "BitSlice range out of bounds");
+        crate::BitSliceMut { words: &mut self.data, offset: start, len_bits: end - start }
+    }
+
+    /// Creates a new `BitVec` by copying bits from a `BitSlice` view.
+    pub fn from_bitslice(slice: crate::BitSlice) -> Self {
+        if slice.len_bits == 0 { return Self::new(); }
+        let mut out = BitVec::with_capacity(slice.len_bits);
+        for i in 0..slice.len_bits { out.push_bit(slice.get(i)); }
+        out
+    }
+
     /// Clears all bits, setting the length to zero.
     ///
     /// # Examples
@@ -1002,5 +1045,32 @@ mod tests {
         bv.not_into();
         // Verify that bits beyond len_bits are zero
         assert_eq!(bv.count_ones(), 0);
+    }
+
+    #[test]
+    fn test_bit_slice_basic() {
+        let bv = BitVec::from_bytes_le(&[0b1010_1100]); // 8 bits
+        let s = bv.bit_slice(2..6);
+        assert_eq!(s.len(), 4);
+        assert_eq!(s.get(0), true); // original bit 2
+        assert_eq!(s.get(3), true); // original bit 5
+        let round = BitVec::from_bitslice(s);
+        assert_eq!(round.len(), 4);
+        assert_eq!(round.get(0), true);
+    }
+
+    #[test]
+    fn test_bit_slice_boundaries() {
+        let mut bv = BitVec::with_capacity(65);
+        for i in 0..65 { bv.push_bit(i % 3 == 0); }
+        let s1 = bv.bit_slice(0..63);
+        let s2 = bv.bit_slice(0..64);
+        let s3 = bv.bit_slice(1..65);
+        assert_eq!(s1.len(), 63);
+        assert_eq!(s2.len(), 64);
+        assert_eq!(s3.len(), 64);
+        // Spot check a few bits
+        assert_eq!(s2.get(0), true);
+        assert_eq!(s3.get(0), bv.get(1));
     }
 }

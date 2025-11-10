@@ -61,6 +61,21 @@ fn bench_wide_logical(c: &mut Criterion) {
         });
     }
     group.finish();
+
+    // Count ones benchmark (unary throughput)
+    let mut group = c.benchmark_group("count_ones");
+    for &sz_bytes in &sizes {
+        let len_bits = sz_bytes * 8;
+        let a = make_bitvec_random(len_bits, 0xC0FF_EE00);
+        group.throughput(Throughput::Bytes(sz_bytes as u64));
+        group.bench_with_input(BenchmarkId::new("count_ones", sz_bytes), &sz_bytes, |bencher, _| {
+            bencher.iter(|| {
+                let cnt = a.count_ones();
+                black_box(cnt);
+            })
+        });
+    }
+    group.finish();
 }
 
 criterion_group!(benches, bench_wide_logical);

@@ -39,8 +39,10 @@ mod bitvec;
 pub mod kernels;
 mod macros;
 pub mod matrix;
+mod bitslice;
 
 pub use bitvec::BitVec;
+pub use bitslice::{BitSlice, BitSliceMut};
 
 // Optional SIMD accessor: compiled only when the "simd" feature is enabled.
 // This module contains no unsafe code; unsafe is isolated in the separate
@@ -60,6 +62,7 @@ pub(crate) mod simd {
 
 #[cfg(not(feature = "simd"))]
 pub(crate) mod simd {
+	#[allow(dead_code)]
 	#[inline]
 	pub fn maybe_simd() -> Option<()> { None }
 }
