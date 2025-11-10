@@ -35,34 +35,36 @@
 #![warn(missing_docs)]
 
 pub mod alg;
+mod bitslice;
 mod bitvec;
 pub mod kernels;
 mod macros;
 pub mod matrix;
-mod bitslice;
 
-pub use bitvec::BitVec;
 pub use bitslice::{BitSlice, BitSliceMut};
+pub use bitvec::BitVec;
 
 // Optional SIMD accessor: compiled only when the "simd" feature is enabled.
 // This module contains no unsafe code; unsafe is isolated in the separate
 // gf2-kernels-simd crate.
 #[cfg(feature = "simd")]
 pub(crate) mod simd {
-	use std::sync::OnceLock;
-	use gf2_kernels_simd::LogicalFns;
+    use gf2_kernels_simd::LogicalFns;
+    use std::sync::OnceLock;
 
-	static FNS: OnceLock<Option<LogicalFns>> = OnceLock::new();
+    static FNS: OnceLock<Option<LogicalFns>> = OnceLock::new();
 
-	#[inline]
-	pub fn maybe_simd() -> Option<&'static LogicalFns> {
-		FNS.get_or_init(|| gf2_kernels_simd::detect()).as_ref()
-	}
+    #[inline]
+    pub fn maybe_simd() -> Option<&'static LogicalFns> {
+        FNS.get_or_init(|| gf2_kernels_simd::detect()).as_ref()
+    }
 }
 
 #[cfg(not(feature = "simd"))]
 pub(crate) mod simd {
-	#[allow(dead_code)]
-	#[inline]
-	pub fn maybe_simd() -> Option<()> { None }
+    #[allow(dead_code)]
+    #[inline]
+    pub fn maybe_simd() -> Option<()> {
+        None
+    }
 }

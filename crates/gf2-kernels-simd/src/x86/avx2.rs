@@ -96,14 +96,16 @@ unsafe fn avx2_not_into(buf: &mut [u64]) {
 
 #[target_feature(enable = "avx2")]
 unsafe fn avx2_popcnt(buf: &[u64]) -> u64 {
-    if buf.is_empty() { return 0; }
+    if buf.is_empty() {
+        return 0;
+    }
     // Byte-wise popcount via nibble LUT + vpshufb, then widen-sum with vpsadbw.
     let ptr = buf.as_ptr() as *const u8;
     let nbytes = buf.len() * 8;
 
     let lut = _mm256_setr_epi8(
-        0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,
-        0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,
+        0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3,
+        3, 4,
     );
     let mask0f = _mm256_set1_epi8(0x0f);
     let mut acc = _mm256_setzero_si256();
@@ -145,7 +147,7 @@ unsafe fn avx2_popcnt(buf: &[u64]) -> u64 {
 }
 
 /// Finds the index of the first set bit using AVX2.
-/// 
+///
 /// Strategy: Compare each vector against zero, extract movemask,
 /// find first non-zero mask, then find trailing zeros within that mask.
 #[target_feature(enable = "avx2")]
@@ -153,11 +155,11 @@ unsafe fn avx2_find_first_one(buf: &[u64]) -> Option<usize> {
     if buf.is_empty() {
         return None;
     }
-    
+
     let ptr = buf.as_ptr() as *const u8;
     let nvec = buf.len() / 4; // 4 u64 per 256-bit vector
     let zero = _mm256_setzero_si256();
-    
+
     // Process full vectors
     for i in 0..nvec {
         let off = (i * 32) as isize;
@@ -165,7 +167,7 @@ unsafe fn avx2_find_first_one(buf: &[u64]) -> Option<usize> {
         // Compare for equality with zero
         let cmp = _mm256_cmpeq_epi64(v, zero);
         let mask = _mm256_movemask_epi8(cmp) as u32;
-        
+
         // If mask != 0xFFFFFFFF, then at least one u64 is non-zero
         if mask != 0xFFFFFFFF {
             // Check each of the 4 u64s in this vector
@@ -178,7 +180,7 @@ unsafe fn avx2_find_first_one(buf: &[u64]) -> Option<usize> {
             }
         }
     }
-    
+
     // Process tail
     for i in (nvec * 4)..buf.len() {
         if buf[i] != 0 {
@@ -186,23 +188,23 @@ unsafe fn avx2_find_first_one(buf: &[u64]) -> Option<usize> {
             return Some(i * 64 + bit_in_word);
         }
     }
-    
+
     None
 }
 
 /// Finds the index of the first clear bit using AVX2.
-/// 
+///
 /// Strategy: Similar to find_first_one but inverts the logic.
 #[target_feature(enable = "avx2")]
 unsafe fn avx2_find_first_zero(buf: &[u64]) -> Option<usize> {
     if buf.is_empty() {
         return None;
     }
-    
+
     let ptr = buf.as_ptr() as *const u8;
     let nvec = buf.len() / 4;
     let ones = _mm256_set1_epi64x(-1);
-    
+
     // Process full vectors
     for i in 0..nvec {
         let off = (i * 32) as isize;
@@ -210,7 +212,7 @@ unsafe fn avx2_find_first_zero(buf: &[u64]) -> Option<usize> {
         // Compare for equality with all ones
         let cmp = _mm256_cmpeq_epi64(v, ones);
         let mask = _mm256_movemask_epi8(cmp) as u32;
-        
+
         // If mask != 0xFFFFFFFF, then at least one u64 is not all ones
         if mask != 0xFFFFFFFF {
             // Check each of the 4 u64s in this vector
@@ -223,7 +225,7 @@ unsafe fn avx2_find_first_zero(buf: &[u64]) -> Option<usize> {
             }
         }
     }
-    
+
     // Process tail
     for i in (nvec * 4)..buf.len() {
         if buf[i] != !0u64 {
@@ -231,7 +233,7 @@ unsafe fn avx2_find_first_zero(buf: &[u64]) -> Option<usize> {
             return Some(i * 64 + bit_in_word);
         }
     }
-    
+
     None
 }
 
@@ -242,7 +244,7 @@ unsafe fn avx2_shift_left_words(buf: &mut [u64], word_shift: usize) {
     if word_shift == 0 || buf.is_empty() {
         return;
     }
-    
+
     if word_shift >= buf.len() {
         buf.fill(0);
         return;
@@ -255,7 +257,7 @@ unsafe fn avx2_shift_left_words(buf: &mut [u64], word_shift: usize) {
     // Process in reverse with vectors to avoid overwrites
     let num_to_move = len - word_shift;
     let nvec = num_to_move / 4;
-    
+
     // Copy full vectors from source to destination
     for i in (0..nvec).rev() {
         let src_idx = i * 4;
@@ -265,7 +267,7 @@ unsafe fn avx2_shift_left_words(buf: &mut [u64], word_shift: usize) {
         let v = loadu(ptr.offset(src_off));
         storeu(ptr.offset(dst_off), v);
     }
-    
+
     // Handle remaining words with scalar
     let vec_words = nvec * 4;
     for i in (vec_words..num_to_move).rev() {
@@ -277,7 +279,7 @@ unsafe fn avx2_shift_left_words(buf: &mut [u64], word_shift: usize) {
     for i in 0..zero_nvec {
         storeu(ptr.offset((i * 4 * 8) as isize), zero);
     }
-    
+
     // Zero fill remaining lower words
     for i in (zero_nvec * 4)..word_shift {
         buf[i] = 0;
@@ -291,7 +293,7 @@ unsafe fn avx2_shift_right_words(buf: &mut [u64], word_shift: usize) {
     if word_shift == 0 || buf.is_empty() {
         return;
     }
-    
+
     if word_shift >= buf.len() {
         buf.fill(0);
         return;
@@ -304,7 +306,7 @@ unsafe fn avx2_shift_right_words(buf: &mut [u64], word_shift: usize) {
     // Process forward with vectors (no overwrite concern)
     let num_to_move = len - word_shift;
     let nvec = num_to_move / 4;
-    
+
     // Copy full vectors from source to destination
     for i in 0..nvec {
         let src_idx = i * 4 + word_shift;
@@ -314,7 +316,7 @@ unsafe fn avx2_shift_right_words(buf: &mut [u64], word_shift: usize) {
         let v = loadu(ptr.offset(src_off));
         storeu(ptr.offset(dst_off), v);
     }
-    
+
     // Handle remaining words with scalar
     let vec_words = nvec * 4;
     for i in vec_words..num_to_move {
@@ -330,7 +332,7 @@ unsafe fn avx2_shift_right_words(buf: &mut [u64], word_shift: usize) {
             storeu(ptr.offset((idx * 8) as isize), zero);
         }
     }
-    
+
     // Zero fill remaining upper words
     let vec_zero_end = zero_start + zero_nvec * 4;
     for i in vec_zero_end..len {
@@ -341,19 +343,27 @@ unsafe fn avx2_shift_right_words(buf: &mut [u64], word_shift: usize) {
 pub(crate) fn fns() -> LogicalFns {
     // Provide safe wrappers that call into the unsafe AVX2 fns.
     fn and_fn(dst: &mut [u64], src: &[u64]) {
-        if dst.is_empty() { return; }
+        if dst.is_empty() {
+            return;
+        }
         unsafe { avx2_and_into(dst, src) }
     }
     fn or_fn(dst: &mut [u64], src: &[u64]) {
-        if dst.is_empty() { return; }
+        if dst.is_empty() {
+            return;
+        }
         unsafe { avx2_or_into(dst, src) }
     }
     fn xor_fn(dst: &mut [u64], src: &[u64]) {
-        if dst.is_empty() { return; }
+        if dst.is_empty() {
+            return;
+        }
         unsafe { avx2_xor_into(dst, src) }
     }
     fn not_fn(dst: &mut [u64]) {
-        if dst.is_empty() { return; }
+        if dst.is_empty() {
+            return;
+        }
         unsafe { avx2_not_into(dst) }
     }
     fn popcnt_fn(src: &[u64]) -> u64 {
@@ -366,18 +376,22 @@ pub(crate) fn fns() -> LogicalFns {
         unsafe { avx2_find_first_zero(src) }
     }
     fn shift_left_words_fn(buf: &mut [u64], word_shift: usize) {
-        if buf.is_empty() { return; }
+        if buf.is_empty() {
+            return;
+        }
         unsafe { avx2_shift_left_words(buf, word_shift) }
     }
     fn shift_right_words_fn(buf: &mut [u64], word_shift: usize) {
-        if buf.is_empty() { return; }
+        if buf.is_empty() {
+            return;
+        }
         unsafe { avx2_shift_right_words(buf, word_shift) }
     }
-    LogicalFns { 
-        and_fn, 
-        or_fn, 
-        xor_fn, 
-        not_fn, 
+    LogicalFns {
+        and_fn,
+        or_fn,
+        xor_fn,
+        not_fn,
         popcnt_fn,
         find_first_one_fn,
         find_first_zero_fn,

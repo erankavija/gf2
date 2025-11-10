@@ -13,7 +13,7 @@
 mod x86;
 
 /// Set of accelerated logical operations. Each function must have identical
-/// semantics to the scalar implementation (in-place dst modification, slice length min). 
+/// semantics to the scalar implementation (in-place dst modification, slice length min).
 pub struct LogicalFns {
     pub and_fn: fn(&mut [u64], &[u64]),
     pub or_fn: fn(&mut [u64], &[u64]),

@@ -14,7 +14,10 @@ fn bench_shift_left(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::from_parameter(shift), shift, |b, &s| {
             b.iter_batched(
                 || bv.clone(),
-                |mut v| { v.shift_left(s); black_box(v); },
+                |mut v| {
+                    v.shift_left(s);
+                    black_box(v);
+                },
                 criterion::BatchSize::SmallInput,
             );
         });
@@ -36,7 +39,10 @@ fn bench_shift_right(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::from_parameter(shift), shift, |b, &s| {
             b.iter_batched(
                 || bv.clone(),
-                |mut v| { v.shift_right(s); black_box(v); },
+                |mut v| {
+                    v.shift_right(s);
+                    black_box(v);
+                },
                 criterion::BatchSize::SmallInput,
             );
         });
