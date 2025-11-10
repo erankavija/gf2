@@ -10,10 +10,11 @@ This roadmap captures the higher-level coding theory and compression research la
 - ✅ Integration tests covering full workflows and edge cases
 - ✅ Benchmarks: encoding throughput, syndrome computation, decoding with/without errors, batch operations
 
-## Phase C2: Convolutional Code Framework (Planned)
-- Shift-register based encoder/decoder scaffolding (current skeleton) → full implementation
-- Polynomial representation for generator taps (re-uses future `GF2Poly`)
-- Streaming tests: bit error insertion, recovery latency, state reset correctness
+## Phase C2: Convolutional Code Framework (Complete)
+- ✅ Shift-register based encoder (full implementation)
+- ✅ Viterbi decoder with hard-decision decoding
+- ✅ Streaming encode/decode tests
+- ✅ Educational example with comprehensive documentation (`nasa_rate_half_k3`)
 
 ## Phase C3: Advanced Decoding Algorithms (Planned)
 - Syndrome table optimization (compressed mapping)

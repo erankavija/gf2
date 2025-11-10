@@ -20,11 +20,15 @@ The shared workspace keeps primitives and applications aligned while making thei
 `gf2-core` provides efficient dense bit vector operations optimized for:
 - Basic bitset operations (AND, OR, XOR, NOT)
 - Bit manipulation and queries
-- **GF(2) linear algebra**: Fast matrix operations over the binary field
+- **GF(2) linear algebra**: Fast matrix operations over the binary field (M4RM, Gauss-Jordan)
+- **SIMD acceleration**: Optional AVX2 support via `simd` feature
 - Future: GF(2) polynomial arithmetic for coding theory
-- Future: SIMD acceleration on x86-64 (AVX2/AVX-512) and AArch64 (NEON)
 
-The `gf2-coding` crate layers domain-specific constructions (e.g., Hamming codes, convolutional encoders) on top of these primitives, keeping experimental code separated from the performance-critical core.
+`gf2-coding` provides error-correcting codes and coding theory primitives:
+- **Linear block codes**: Hamming codes with syndrome decoding
+- **Convolutional codes**: Viterbi decoder for streaming applications
+- Comprehensive property-based tests ensuring correctness
+- Educational examples with mathematical documentation
 
 ## Features
 
@@ -228,6 +232,29 @@ let decoded = decoder.decode(&corrupted);
 assert_eq!(decoded, message);
 ```
 
+### gf2-coding: Convolutional encoder
+
+```rust
+use gf2_coding::ConvolutionalEncoder;
+use gf2_coding::traits::StreamingEncoder;
+
+// NASA rate-1/2, K=3 encoder
+let mut encoder = ConvolutionalEncoder::new(3, vec![0b111, 0b101]);
+encoder.reset();
+
+// Encode bits in streaming fashion
+let message = vec![true, false, true, true];
+let mut codeword = Vec::new();
+for &bit in &message {
+    codeword.extend(encoder.encode_bit(bit));
+}
+
+// Add termination to return to zero state
+for _ in 0..2 {
+    codeword.extend(encoder.encode_bit(false));
+}
+```
+
 ## API Overview
 
 ### BitVec
@@ -311,27 +338,33 @@ assert_eq!(decoded, message);
 - Karatsuba and Toom-Cook algorithms
 - Convolution-based methods exploration
 
-### Phase 7: Coding Theory Algorithms (Future)
-- Generator and parity-check matrix operations
-- Syndrome computation
-- Decoding primitives
-- Separate crate or module organization
+### Phase 7: Coding Theory Algorithms (Implemented in gf2-coding)
+- ✅ Generator and parity-check matrix operations
+- ✅ Syndrome computation and table-based decoding
+- ✅ Hamming codes with error correction
+- ✅ Convolutional codes with Viterbi decoding
+- Future: Soft-decision decoding, LDPC codes
 
 ## Development
 
 ### Examples
 
-Run the Hamming (7,4) error-correcting code example from `gf2-coding`:
+Run educational examples from `gf2-coding`:
 
 ```bash
+# Hamming(7,4) block code demonstration
 cargo run -p gf2-coding --example hamming_7_4
+
+# NASA convolutional code with Viterbi decoding
+cargo run -p gf2-coding --example nasa_rate_half_k3
 ```
 
-This example demonstrates:
-- Creating generator and parity-check matrices for Hamming (7,4) code
-- Encoding 4-bit messages into 7-bit codewords
-- Detecting and correcting single-bit errors
-- Pretty-printing of matrices and bit vectors using nalgebra-like display format
+The examples demonstrate:
+- Creating generator and parity-check matrices
+- Encoding messages into codewords
+- Error detection and correction
+- State transition diagrams and encoding traces
+- Pretty-printing matrices and bit vectors
 
 ### Testing
 

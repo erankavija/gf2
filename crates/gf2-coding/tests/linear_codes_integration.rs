@@ -206,7 +206,10 @@ fn test_systematic_encoding_verification() {
 
     // Extract systematic positions and verify they match the message
     let extracted = code.project_message(&codeword);
-    assert_eq!(extracted, msg, "Systematic encoding should preserve message bits at systematic positions");
+    assert_eq!(
+        extracted, msg,
+        "Systematic encoding should preserve message bits at systematic positions"
+    );
 }
 
 #[test]
@@ -279,7 +282,7 @@ fn test_decoder_table_construction() {
     // - Zero syndrome (no error)
     // - 7 single-bit error syndromes
     // Total: should have at least 8 entries (possibly more if syndromes collide)
-    
+
     // We can't access the table directly, but we can verify behavior
     let mut msg = BitVec::new();
     for bit in [true, false, true, false] {
@@ -297,7 +300,11 @@ fn test_decoder_table_construction() {
         let mut corrupted = codeword.clone();
         corrupted.set(err_pos, !corrupted.get(err_pos));
         let corrected = decoder.decode(&corrupted);
-        assert_eq!(corrected, msg, "Error at position {} should be corrected", err_pos);
+        assert_eq!(
+            corrected, msg,
+            "Error at position {} should be corrected",
+            err_pos
+        );
     }
 }
 
@@ -323,7 +330,10 @@ fn test_word_boundary_handling() {
     );
 
     let extracted = code.project_message(&codeword);
-    assert_eq!(extracted, msg, "Should correctly extract message across word boundaries");
+    assert_eq!(
+        extracted, msg,
+        "Should correctly extract message across word boundaries"
+    );
 }
 
 #[test]
