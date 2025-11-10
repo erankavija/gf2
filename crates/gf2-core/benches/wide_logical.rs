@@ -3,7 +3,7 @@ use gf2_core::BitVec;
 use rand::{Rng, SeedableRng};
 
 fn make_bitvec_random(len_bits: usize, seed: u64) -> BitVec {
-    let byte_len = (len_bits + 7) / 8;
+    let byte_len = len_bits.div_ceil(8);
     let mut bytes = vec![0u8; byte_len];
     let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
     for b in &mut bytes {

@@ -1177,11 +1177,11 @@ mod tests {
         let bv = BitVec::from_bytes_le(&[0b1010_1100]); // 8 bits
         let s = bv.bit_slice(2..6);
         assert_eq!(s.len(), 4);
-        assert_eq!(s.get(0), true); // original bit 2
-        assert_eq!(s.get(3), true); // original bit 5
+        assert!(s.get(0)); // original bit 2
+        assert!(s.get(3)); // original bit 5
         let round = BitVec::from_bitslice(s);
         assert_eq!(round.len(), 4);
-        assert_eq!(round.get(0), true);
+        assert!(round.get(0));
     }
 
     #[test]
@@ -1197,7 +1197,7 @@ mod tests {
         assert_eq!(s2.len(), 64);
         assert_eq!(s3.len(), 64);
         // Spot check a few bits
-        assert_eq!(s2.get(0), true);
+        assert!(s2.get(0));
         assert_eq!(s3.get(0), bv.get(1));
     }
 

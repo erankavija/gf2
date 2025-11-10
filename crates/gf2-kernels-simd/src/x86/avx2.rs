@@ -182,6 +182,7 @@ unsafe fn avx2_find_first_one(buf: &[u64]) -> Option<usize> {
     }
 
     // Process tail
+    #[allow(clippy::needless_range_loop)]
     for i in (nvec * 4)..buf.len() {
         if buf[i] != 0 {
             let bit_in_word = buf[i].trailing_zeros() as usize;
@@ -227,6 +228,7 @@ unsafe fn avx2_find_first_zero(buf: &[u64]) -> Option<usize> {
     }
 
     // Process tail
+    #[allow(clippy::needless_range_loop)]
     for i in (nvec * 4)..buf.len() {
         if buf[i] != !0u64 {
             let bit_in_word = (!buf[i]).trailing_zeros() as usize;
@@ -277,13 +279,14 @@ unsafe fn avx2_shift_left_words(buf: &mut [u64], word_shift: usize) {
     // Zero fill lower words with vectors where possible
     let zero_nvec = word_shift / 4;
     for i in 0..zero_nvec {
-        storeu(ptr.offset((i * 4 * 8) as isize), zero);
+        storeu(ptr.add(i * 4 * 8), zero);
     }
 
     // Zero fill remaining lower words
-    for i in (zero_nvec * 4)..word_shift {
-        buf[i] = 0;
-    }
+    buf.iter_mut()
+        .take(word_shift)
+        .skip(zero_nvec * 4)
+        .for_each(|x| *x = 0);
 }
 
 /// Word-aligned right shift: shifts entire u64 words right by `word_shift` positions.
@@ -329,15 +332,16 @@ unsafe fn avx2_shift_right_words(buf: &mut [u64], word_shift: usize) {
     for i in 0..zero_nvec {
         let idx = zero_start + i * 4;
         if idx + 4 <= len {
-            storeu(ptr.offset((idx * 8) as isize), zero);
+            storeu(ptr.add(idx * 8), zero);
         }
     }
 
     // Zero fill remaining upper words
     let vec_zero_end = zero_start + zero_nvec * 4;
-    for i in vec_zero_end..len {
-        buf[i] = 0;
-    }
+    buf.iter_mut()
+        .take(len)
+        .skip(vec_zero_end)
+        .for_each(|x| *x = 0);
 }
 
 pub(crate) fn fns() -> LogicalFns {
