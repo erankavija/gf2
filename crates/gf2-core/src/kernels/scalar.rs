@@ -16,32 +16,65 @@ impl Kernel for ScalarKernel {
     #[inline]
     fn and(&self, dst: &mut [u64], src: &[u64]) {
         let len = dst.len().min(src.len());
-        for i in 0..len {
+        let mut i = 0usize;
+        const UNROLL: usize = 4;
+        let limit = len - (len % UNROLL);
+        while i < limit {
             dst[i] &= src[i];
+            dst[i + 1] &= src[i + 1];
+            dst[i + 2] &= src[i + 2];
+            dst[i + 3] &= src[i + 3];
+            i += UNROLL;
         }
+        while i < len { dst[i] &= src[i]; i += 1; }
     }
 
     #[inline]
     fn or(&self, dst: &mut [u64], src: &[u64]) {
         let len = dst.len().min(src.len());
-        for i in 0..len {
+        let mut i = 0usize;
+        const UNROLL: usize = 4;
+        let limit = len - (len % UNROLL);
+        while i < limit {
             dst[i] |= src[i];
+            dst[i + 1] |= src[i + 1];
+            dst[i + 2] |= src[i + 2];
+            dst[i + 3] |= src[i + 3];
+            i += UNROLL;
         }
+        while i < len { dst[i] |= src[i]; i += 1; }
     }
 
     #[inline]
     fn xor(&self, dst: &mut [u64], src: &[u64]) {
         let len = dst.len().min(src.len());
-        for i in 0..len {
+        let mut i = 0usize;
+        const UNROLL: usize = 4;
+        let limit = len - (len % UNROLL);
+        while i < limit {
             dst[i] ^= src[i];
+            dst[i + 1] ^= src[i + 1];
+            dst[i + 2] ^= src[i + 2];
+            dst[i + 3] ^= src[i + 3];
+            i += UNROLL;
         }
+        while i < len { dst[i] ^= src[i]; i += 1; }
     }
 
     #[inline]
     fn not(&self, buf: &mut [u64]) {
-        for word in buf.iter_mut() {
-            *word = !*word;
+        let len = buf.len();
+        let mut i = 0usize;
+        const UNROLL: usize = 4;
+        let limit = len - (len % UNROLL);
+        while i < limit {
+            buf[i] = !buf[i];
+            buf[i + 1] = !buf[i + 1];
+            buf[i + 2] = !buf[i + 2];
+            buf[i + 3] = !buf[i + 3];
+            i += UNROLL;
         }
+        while i < len { buf[i] = !buf[i]; i += 1; }
     }
 
     #[inline]
