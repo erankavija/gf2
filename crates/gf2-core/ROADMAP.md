@@ -2,7 +2,7 @@
 
 This roadmap focuses on the high-performance primitives for GF(2): `BitVec`, `BitMatrix`, and low-level kernels. It is derived from the original project plan and scoped to the core crate.
 
-## Phase 1: Scalar Baseline ✅ (Complete)
+## Phase 1: Scalar Baseline ✅
 - Dense `BitVec` with tail masking and word-oriented internals
 - `BitMatrix` with zeros/identity, get/set, transpose, row ops
 - Algorithms: M4RM multiply, Gauss-Jordan inversion
@@ -13,9 +13,11 @@ This roadmap focuses on the high-performance primitives for GF(2): `BitVec`, `Bi
 - Unrolled scalar kernels for AND/OR/XOR/NOT; optional prefetching
 - Measurable speedups on 64 KiB+ buffers
 
-## Phase 3: SIMD Backends & Dispatch (Planned)
-- AVX2 backend on x86_64 (AVX-512 backends or NEON on AArch64 possibly later)
-- Shift/scan kernels; vector popcount strategies
+## Phase 3: SIMD Backends & Dispatch (In Progress)
+- ✅ AVX2 backend for AND/OR/XOR/NOT/popcount on x86_64
+- ✅ Runtime detection with `gf2-kernels-simd` crate
+- ✅ Feature-gated SIMD dispatch in `BitVec`
+- Shift/scan kernels; additional vector strategies
 
 ## Phase 4: Rank/Select & Scanning (Planned)
 - Rank/select with superblock/block indexes
