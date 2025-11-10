@@ -13,11 +13,12 @@ This roadmap focuses on the high-performance primitives for GF(2): `BitVec`, `Bi
 - Unrolled scalar kernels for AND/OR/XOR/NOT; optional prefetching
 - Measurable speedups on 64 KiB+ buffers
 
-## Phase 3: SIMD Backends & Dispatch (In Progress)
+## Phase 3: SIMD Backends & Dispatch ✅
 - ✅ AVX2 backend for AND/OR/XOR/NOT/popcount on x86_64
 - ✅ Runtime detection with `gf2-kernels-simd` crate
 - ✅ Feature-gated SIMD dispatch in `BitVec`
-- Shift/scan kernels; additional vector strategies
+- ✅ Scan kernels (`find_first_one`, `find_first_zero`)
+- Shift kernels; additional vector strategies (future work)
 
 ## Phase 4: Rank/Select & Scanning (Planned)
 - Rank/select with superblock/block indexes

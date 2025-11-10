@@ -144,6 +144,97 @@ unsafe fn avx2_popcnt(buf: &[u64]) -> u64 {
     total
 }
 
+/// Finds the index of the first set bit using AVX2.
+/// 
+/// Strategy: Compare each vector against zero, extract movemask,
+/// find first non-zero mask, then find trailing zeros within that mask.
+#[target_feature(enable = "avx2")]
+unsafe fn avx2_find_first_one(buf: &[u64]) -> Option<usize> {
+    if buf.is_empty() {
+        return None;
+    }
+    
+    let ptr = buf.as_ptr() as *const u8;
+    let nvec = buf.len() / 4; // 4 u64 per 256-bit vector
+    let zero = _mm256_setzero_si256();
+    
+    // Process full vectors
+    for i in 0..nvec {
+        let off = (i * 32) as isize;
+        let v = loadu(ptr.offset(off));
+        // Compare for equality with zero
+        let cmp = _mm256_cmpeq_epi64(v, zero);
+        let mask = _mm256_movemask_epi8(cmp) as u32;
+        
+        // If mask != 0xFFFFFFFF, then at least one u64 is non-zero
+        if mask != 0xFFFFFFFF {
+            // Check each of the 4 u64s in this vector
+            let words = &buf[i * 4..(i * 4 + 4)];
+            for (j, &word) in words.iter().enumerate() {
+                if word != 0 {
+                    let bit_in_word = word.trailing_zeros() as usize;
+                    return Some((i * 4 + j) * 64 + bit_in_word);
+                }
+            }
+        }
+    }
+    
+    // Process tail
+    for i in (nvec * 4)..buf.len() {
+        if buf[i] != 0 {
+            let bit_in_word = buf[i].trailing_zeros() as usize;
+            return Some(i * 64 + bit_in_word);
+        }
+    }
+    
+    None
+}
+
+/// Finds the index of the first clear bit using AVX2.
+/// 
+/// Strategy: Similar to find_first_one but inverts the logic.
+#[target_feature(enable = "avx2")]
+unsafe fn avx2_find_first_zero(buf: &[u64]) -> Option<usize> {
+    if buf.is_empty() {
+        return None;
+    }
+    
+    let ptr = buf.as_ptr() as *const u8;
+    let nvec = buf.len() / 4;
+    let ones = _mm256_set1_epi64x(-1);
+    
+    // Process full vectors
+    for i in 0..nvec {
+        let off = (i * 32) as isize;
+        let v = loadu(ptr.offset(off));
+        // Compare for equality with all ones
+        let cmp = _mm256_cmpeq_epi64(v, ones);
+        let mask = _mm256_movemask_epi8(cmp) as u32;
+        
+        // If mask != 0xFFFFFFFF, then at least one u64 is not all ones
+        if mask != 0xFFFFFFFF {
+            // Check each of the 4 u64s in this vector
+            let words = &buf[i * 4..(i * 4 + 4)];
+            for (j, &word) in words.iter().enumerate() {
+                if word != !0u64 {
+                    let bit_in_word = (!word).trailing_zeros() as usize;
+                    return Some((i * 4 + j) * 64 + bit_in_word);
+                }
+            }
+        }
+    }
+    
+    // Process tail
+    for i in (nvec * 4)..buf.len() {
+        if buf[i] != !0u64 {
+            let bit_in_word = (!buf[i]).trailing_zeros() as usize;
+            return Some(i * 64 + bit_in_word);
+        }
+    }
+    
+    None
+}
+
 pub(crate) fn fns() -> LogicalFns {
     // Provide safe wrappers that call into the unsafe AVX2 fns.
     fn and_fn(dst: &mut [u64], src: &[u64]) {
@@ -165,5 +256,19 @@ pub(crate) fn fns() -> LogicalFns {
     fn popcnt_fn(src: &[u64]) -> u64 {
         unsafe { avx2_popcnt(src) }
     }
-    LogicalFns { and_fn, or_fn, xor_fn, not_fn, popcnt_fn }
+    fn find_first_one_fn(src: &[u64]) -> Option<usize> {
+        unsafe { avx2_find_first_one(src) }
+    }
+    fn find_first_zero_fn(src: &[u64]) -> Option<usize> {
+        unsafe { avx2_find_first_zero(src) }
+    }
+    LogicalFns { 
+        and_fn, 
+        or_fn, 
+        xor_fn, 
+        not_fn, 
+        popcnt_fn,
+        find_first_one_fn,
+        find_first_zero_fn,
+    }
 }
