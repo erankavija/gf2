@@ -56,7 +56,7 @@ pub(crate) mod simd {
 
     #[inline]
     pub fn maybe_simd() -> Option<&'static LogicalFns> {
-        FNS.get_or_init(|| gf2_kernels_simd::detect()).as_ref()
+        FNS.get_or_init(gf2_kernels_simd::detect).as_ref()
     }
 }
 

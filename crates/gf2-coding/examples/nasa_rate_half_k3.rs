@@ -176,11 +176,20 @@ fn encode_with_trace(encoder: &mut ConvolutionalEncoder, message: &[bool]) -> Ve
     codeword
 }
 
-fn decode_message(decoder: &mut ConvolutionalDecoder, codeword: &[bool], message: &[bool]) -> Vec<bool> {
+fn decode_message(
+    decoder: &mut ConvolutionalDecoder,
+    codeword: &[bool],
+    message: &[bool],
+) -> Vec<bool> {
     decoder.reset();
     let decoded = decoder.decode_symbols(codeword);
 
-    print_decoding_result("without errors", codeword, &decoded[..message.len()], message);
+    print_decoding_result(
+        "without errors",
+        codeword,
+        &decoded[..message.len()],
+        message,
+    );
 
     decoded
 }
@@ -197,7 +206,13 @@ fn test_error_correction(decoder: &mut ConvolutionalDecoder, codeword: &[bool], 
         decoder.reset();
         let decoded = decoder.decode_symbols(&corrupted);
 
-        print_error_correction_result(&corrupted, &decoded[..message.len()], message, num_errors, &error_positions);
+        print_error_correction_result(
+            &corrupted,
+            &decoded[..message.len()],
+            message,
+            num_errors,
+            &error_positions,
+        );
     }
 }
 
@@ -278,10 +293,18 @@ fn print_codeword_info(codeword: &[bool], message_len: usize) {
 fn print_decoding_result(description: &str, received: &[bool], decoded: &[bool], message: &[bool]) {
     println!("Decoding {}:", description);
     println!("  Received: {}", bits_to_string(received));
-    println!("  Decoded:  {} (first {} bits)", bits_to_string(decoded), message.len());
+    println!(
+        "  Decoded:  {} (first {} bits)",
+        bits_to_string(decoded),
+        message.len()
+    );
     println!(
         "  Match: {}",
-        if decoded == message { "✓ Correct!" } else { "✗ Error" }
+        if decoded == message {
+            "✓ Correct!"
+        } else {
+            "✗ Error"
+        }
     );
     println!();
 }
@@ -295,9 +318,16 @@ fn print_error_correction_result(
 ) {
     let num_correct = decoded.iter().zip(message).filter(|(a, b)| a == b).count();
 
-    println!("Decoding with {} error(s) at position(s) {:?}:", num_errors, error_positions);
+    println!(
+        "Decoding with {} error(s) at position(s) {:?}:",
+        num_errors, error_positions
+    );
     println!("  Received: {}", bits_to_string(corrupted));
-    println!("  Decoded:  {} (first {} bits)", bits_to_string(decoded), message.len());
+    println!(
+        "  Decoded:  {} (first {} bits)",
+        bits_to_string(decoded),
+        message.len()
+    );
     println!(
         "  Correct bits: {}/{} ({:.1}%)",
         num_correct,
@@ -331,4 +361,3 @@ fn print_performance_summary() {
     println!("• Lin, S., & Costello, D. J. (2004). \"Error Control Coding\" (Chapter 11-12)");
     println!("• NASA/CCSDS TM Synchronization and Channel Coding (CCSDS 131.0-B-3)");
 }
-

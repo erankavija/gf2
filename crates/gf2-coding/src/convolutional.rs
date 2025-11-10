@@ -202,7 +202,7 @@ impl ConvolutionalDecoder {
         let mut current_decisions = vec![(false, 0); self.num_states];
 
         // For each possible next state
-        for next_state in 0..self.num_states {
+        for (next_state, decision) in current_decisions.iter_mut().enumerate() {
             let mut best_metric = u32::MAX / 2;
             let mut best_input = false;
             let mut best_prev = 0;
@@ -232,7 +232,7 @@ impl ConvolutionalDecoder {
             }
 
             self.metrics[next_state] = best_metric;
-            current_decisions[next_state] = (best_input, best_prev);
+            *decision = (best_input, best_prev);
         }
 
         self.decisions.push(current_decisions);
