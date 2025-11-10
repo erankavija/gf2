@@ -340,7 +340,15 @@ impl BitVec {
         let bit_shift = k % 64;
 
         if bit_shift == 0 {
-            // Word-aligned shift
+            // Word-aligned shift - can use SIMD
+            #[cfg(feature = "simd")]
+            if let Some(fns) = crate::simd::maybe_simd() {
+                (fns.shift_left_words_fn)(&mut self.data, word_shift);
+                self.mask_tail();
+                return;
+            }
+            
+            // Scalar fallback
             for i in (word_shift..self.data.len()).rev() {
                 self.data[i] = self.data[i - word_shift];
             }
@@ -393,7 +401,15 @@ impl BitVec {
         let bit_shift = k % 64;
 
         if bit_shift == 0 {
-            // Word-aligned shift
+            // Word-aligned shift - can use SIMD
+            #[cfg(feature = "simd")]
+            if let Some(fns) = crate::simd::maybe_simd() {
+                (fns.shift_right_words_fn)(&mut self.data, word_shift);
+                self.mask_tail();
+                return;
+            }
+            
+            // Scalar fallback
             for i in 0..(self.data.len() - word_shift) {
                 self.data[i] = self.data[i + word_shift];
             }

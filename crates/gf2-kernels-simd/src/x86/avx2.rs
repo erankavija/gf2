@@ -235,6 +235,109 @@ unsafe fn avx2_find_first_zero(buf: &[u64]) -> Option<usize> {
     None
 }
 
+/// Word-aligned left shift: shifts entire u64 words left by `word_shift` positions.
+/// Words shifted out on the left are lost; zeros fill from the right.
+#[target_feature(enable = "avx2")]
+unsafe fn avx2_shift_left_words(buf: &mut [u64], word_shift: usize) {
+    if word_shift == 0 || buf.is_empty() {
+        return;
+    }
+    
+    if word_shift >= buf.len() {
+        buf.fill(0);
+        return;
+    }
+
+    let len = buf.len();
+    let ptr = buf.as_mut_ptr() as *mut u8;
+    let zero = _mm256_setzero_si256();
+
+    // Process in reverse with vectors to avoid overwrites
+    let num_to_move = len - word_shift;
+    let nvec = num_to_move / 4;
+    
+    // Copy full vectors from source to destination
+    for i in (0..nvec).rev() {
+        let src_idx = i * 4;
+        let dst_idx = src_idx + word_shift;
+        let src_off = (src_idx * 8) as isize;
+        let dst_off = (dst_idx * 8) as isize;
+        let v = loadu(ptr.offset(src_off));
+        storeu(ptr.offset(dst_off), v);
+    }
+    
+    // Handle remaining words with scalar
+    let vec_words = nvec * 4;
+    for i in (vec_words..num_to_move).rev() {
+        buf[i + word_shift] = buf[i];
+    }
+
+    // Zero fill lower words with vectors where possible
+    let zero_nvec = word_shift / 4;
+    for i in 0..zero_nvec {
+        storeu(ptr.offset((i * 4 * 8) as isize), zero);
+    }
+    
+    // Zero fill remaining lower words
+    for i in (zero_nvec * 4)..word_shift {
+        buf[i] = 0;
+    }
+}
+
+/// Word-aligned right shift: shifts entire u64 words right by `word_shift` positions.
+/// Words shifted out on the right are lost; zeros fill from the left.
+#[target_feature(enable = "avx2")]
+unsafe fn avx2_shift_right_words(buf: &mut [u64], word_shift: usize) {
+    if word_shift == 0 || buf.is_empty() {
+        return;
+    }
+    
+    if word_shift >= buf.len() {
+        buf.fill(0);
+        return;
+    }
+
+    let len = buf.len();
+    let ptr = buf.as_mut_ptr() as *mut u8;
+    let zero = _mm256_setzero_si256();
+
+    // Process forward with vectors (no overwrite concern)
+    let num_to_move = len - word_shift;
+    let nvec = num_to_move / 4;
+    
+    // Copy full vectors from source to destination
+    for i in 0..nvec {
+        let src_idx = i * 4 + word_shift;
+        let dst_idx = i * 4;
+        let src_off = (src_idx * 8) as isize;
+        let dst_off = (dst_idx * 8) as isize;
+        let v = loadu(ptr.offset(src_off));
+        storeu(ptr.offset(dst_off), v);
+    }
+    
+    // Handle remaining words with scalar
+    let vec_words = nvec * 4;
+    for i in vec_words..num_to_move {
+        buf[i] = buf[i + word_shift];
+    }
+
+    // Zero fill upper words with vectors where possible
+    let zero_start = len - word_shift;
+    let zero_nvec = word_shift / 4;
+    for i in 0..zero_nvec {
+        let idx = zero_start + i * 4;
+        if idx + 4 <= len {
+            storeu(ptr.offset((idx * 8) as isize), zero);
+        }
+    }
+    
+    // Zero fill remaining upper words
+    let vec_zero_end = zero_start + zero_nvec * 4;
+    for i in vec_zero_end..len {
+        buf[i] = 0;
+    }
+}
+
 pub(crate) fn fns() -> LogicalFns {
     // Provide safe wrappers that call into the unsafe AVX2 fns.
     fn and_fn(dst: &mut [u64], src: &[u64]) {
@@ -262,6 +365,14 @@ pub(crate) fn fns() -> LogicalFns {
     fn find_first_zero_fn(src: &[u64]) -> Option<usize> {
         unsafe { avx2_find_first_zero(src) }
     }
+    fn shift_left_words_fn(buf: &mut [u64], word_shift: usize) {
+        if buf.is_empty() { return; }
+        unsafe { avx2_shift_left_words(buf, word_shift) }
+    }
+    fn shift_right_words_fn(buf: &mut [u64], word_shift: usize) {
+        if buf.is_empty() { return; }
+        unsafe { avx2_shift_right_words(buf, word_shift) }
+    }
     LogicalFns { 
         and_fn, 
         or_fn, 
@@ -270,5 +381,7 @@ pub(crate) fn fns() -> LogicalFns {
         popcnt_fn,
         find_first_one_fn,
         find_first_zero_fn,
+        shift_left_words_fn,
+        shift_right_words_fn,
     }
 }

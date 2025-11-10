@@ -18,7 +18,8 @@ This roadmap focuses on the high-performance primitives for GF(2): `BitVec`, `Bi
 - ✅ Runtime detection with `gf2-kernels-simd` crate
 - ✅ Feature-gated SIMD dispatch in `BitVec`
 - ✅ Scan kernels (`find_first_one`, `find_first_zero`)
-- Shift kernels; additional vector strategies (future work)
+- ✅ Word-aligned shift kernels (`shift_left/right` with k % 64 == 0)
+- Bit-level shift SIMD (future work if profiling shows benefit)
 
 ## Phase 4: Rank/Select & Scanning (Planned)
 - Rank/select with superblock/block indexes
