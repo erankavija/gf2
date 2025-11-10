@@ -235,7 +235,9 @@ impl BitVec {
             (fns.and_fn)(&mut self.data, &other.data);
             return;
         }
-        for (a, b) in self.data.iter_mut().zip(other.data.iter()) { *a &= *b; }
+        for (a, b) in self.data.iter_mut().zip(other.data.iter()) {
+            *a &= *b;
+        }
     }
 
     /// Performs bitwise OR with `other` and stores the result in `self`.
@@ -261,7 +263,9 @@ impl BitVec {
             (fns.or_fn)(&mut self.data, &other.data);
             return;
         }
-        for (a, b) in self.data.iter_mut().zip(other.data.iter()) { *a |= *b; }
+        for (a, b) in self.data.iter_mut().zip(other.data.iter()) {
+            *a |= *b;
+        }
     }
 
     /// Performs bitwise XOR with `other` and stores the result in `self`.
@@ -287,7 +291,9 @@ impl BitVec {
             (fns.xor_fn)(&mut self.data, &other.data);
             return;
         }
-        for (a, b) in self.data.iter_mut().zip(other.data.iter()) { *a ^= *b; }
+        for (a, b) in self.data.iter_mut().zip(other.data.iter()) {
+            *a ^= *b;
+        }
     }
 
     /// Performs bitwise NOT on all bits in `self`.
@@ -308,7 +314,9 @@ impl BitVec {
             self.mask_tail();
             return;
         }
-        for word in self.data.iter_mut() { *word = !*word; }
+        for word in self.data.iter_mut() {
+            *word = !*word;
+        }
         self.mask_tail();
     }
 
@@ -347,7 +355,7 @@ impl BitVec {
                 self.mask_tail();
                 return;
             }
-            
+
             // Scalar fallback
             for i in (word_shift..self.data.len()).rev() {
                 self.data[i] = self.data[i - word_shift];
@@ -408,7 +416,7 @@ impl BitVec {
                 self.mask_tail();
                 return;
             }
-            
+
             // Scalar fallback
             for i in 0..(self.data.len() - word_shift) {
                 self.data[i] = self.data[i + word_shift];
@@ -534,10 +542,9 @@ impl BitVec {
     pub fn find_first_one(&self) -> Option<usize> {
         #[cfg(feature = "simd")]
         if let Some(fns) = crate::simd::maybe_simd() {
-            return (fns.find_first_one_fn)(&self.data)
-                .filter(|&pos| pos < self.len_bits);
+            return (fns.find_first_one_fn)(&self.data).filter(|&pos| pos < self.len_bits);
         }
-        
+
         // Scalar fallback
         for (i, &word) in self.data.iter().enumerate() {
             if word != 0 {
@@ -575,10 +582,9 @@ impl BitVec {
     pub fn find_first_zero(&self) -> Option<usize> {
         #[cfg(feature = "simd")]
         if let Some(fns) = crate::simd::maybe_simd() {
-            return (fns.find_first_zero_fn)(&self.data)
-                .filter(|&pos| pos < self.len_bits);
+            return (fns.find_first_zero_fn)(&self.data).filter(|&pos| pos < self.len_bits);
         }
-        
+
         // Scalar fallback
         for (i, &word) in self.data.iter().enumerate() {
             if word != !0u64 {
@@ -677,13 +683,23 @@ impl BitVec {
             std::ops::Bound::Excluded(&e) => e,
             std::ops::Bound::Unbounded => self.len_bits,
         };
-        assert!(end >= start && end <= self.len_bits, "BitSlice range out of bounds");
-        crate::BitSlice { words: &self.data, offset: start, len_bits: end - start }
+        assert!(
+            end >= start && end <= self.len_bits,
+            "BitSlice range out of bounds"
+        );
+        crate::BitSlice {
+            words: &self.data,
+            offset: start,
+            len_bits: end - start,
+        }
     }
 
     /// Returns a mutable `BitSliceMut` view for the specified range.
     /// Panics if out of bounds.
-    pub fn bit_slice_mut<R: std::ops::RangeBounds<usize>>(&mut self, range: R) -> crate::BitSliceMut<'_> {
+    pub fn bit_slice_mut<R: std::ops::RangeBounds<usize>>(
+        &mut self,
+        range: R,
+    ) -> crate::BitSliceMut<'_> {
         let start = match range.start_bound() {
             std::ops::Bound::Included(&s) => s,
             std::ops::Bound::Excluded(&s) => s + 1,
@@ -694,15 +710,26 @@ impl BitVec {
             std::ops::Bound::Excluded(&e) => e,
             std::ops::Bound::Unbounded => self.len_bits,
         };
-        assert!(end >= start && end <= self.len_bits, "BitSlice range out of bounds");
-        crate::BitSliceMut { words: &mut self.data, offset: start, len_bits: end - start }
+        assert!(
+            end >= start && end <= self.len_bits,
+            "BitSlice range out of bounds"
+        );
+        crate::BitSliceMut {
+            words: &mut self.data,
+            offset: start,
+            len_bits: end - start,
+        }
     }
 
     /// Creates a new `BitVec` by copying bits from a `BitSlice` view.
     pub fn from_bitslice(slice: crate::BitSlice) -> Self {
-        if slice.len_bits == 0 { return Self::new(); }
+        if slice.len_bits == 0 {
+            return Self::new();
+        }
         let mut out = BitVec::with_capacity(slice.len_bits);
-        for i in 0..slice.len_bits { out.push_bit(slice.get(i)); }
+        for i in 0..slice.len_bits {
+            out.push_bit(slice.get(i));
+        }
         out
     }
 
@@ -1160,7 +1187,9 @@ mod tests {
     #[test]
     fn test_bit_slice_boundaries() {
         let mut bv = BitVec::with_capacity(65);
-        for i in 0..65 { bv.push_bit(i % 3 == 0); }
+        for i in 0..65 {
+            bv.push_bit(i % 3 == 0);
+        }
         let s1 = bv.bit_slice(0..63);
         let s2 = bv.bit_slice(0..64);
         let s3 = bv.bit_slice(1..65);

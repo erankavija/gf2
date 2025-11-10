@@ -9,18 +9,22 @@
 #[derive(Copy, Clone)]
 pub struct BitSlice<'a> {
     pub(crate) words: &'a [u64],
-    pub(crate) offset: usize,     // bit offset from the start of `words`
-    pub(crate) len_bits: usize,   // number of live bits in the view
+    pub(crate) offset: usize,   // bit offset from the start of `words`
+    pub(crate) len_bits: usize, // number of live bits in the view
 }
 
 impl<'a> BitSlice<'a> {
     /// Returns the number of bits in this slice.
     #[inline]
-    pub fn len(&self) -> usize { self.len_bits }
+    pub fn len(&self) -> usize {
+        self.len_bits
+    }
 
     /// Returns true if the slice is empty.
     #[inline]
-    pub fn is_empty(&self) -> bool { self.len_bits == 0 }
+    pub fn is_empty(&self) -> bool {
+        self.len_bits == 0
+    }
 
     /// Returns the bit at relative index `i` within the slice.
     /// Panics if out of bounds.
@@ -43,11 +47,15 @@ pub struct BitSliceMut<'a> {
 impl<'a> BitSliceMut<'a> {
     /// Returns the number of bits in this slice.
     #[inline]
-    pub fn len(&self) -> usize { self.len_bits }
+    pub fn len(&self) -> usize {
+        self.len_bits
+    }
 
     /// Returns true if the slice is empty.
     #[inline]
-    pub fn is_empty(&self) -> bool { self.len_bits == 0 }
+    pub fn is_empty(&self) -> bool {
+        self.len_bits == 0
+    }
 
     /// Reads the bit at relative index `i` within the slice.
     pub fn get(&self, i: usize) -> bool {
@@ -65,6 +73,10 @@ impl<'a> BitSliceMut<'a> {
         let w = abs >> 6;
         let b = abs & 63;
         let mask = 1u64 << b;
-        if bit { self.words[w] |= mask; } else { self.words[w] &= !mask; }
+        if bit {
+            self.words[w] |= mask;
+        } else {
+            self.words[w] &= !mask;
+        }
     }
 }

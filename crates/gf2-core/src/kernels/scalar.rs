@@ -26,7 +26,10 @@ impl Kernel for ScalarKernel {
             dst[i + 3] &= src[i + 3];
             i += UNROLL;
         }
-        while i < len { dst[i] &= src[i]; i += 1; }
+        while i < len {
+            dst[i] &= src[i];
+            i += 1;
+        }
     }
 
     #[inline]
@@ -42,7 +45,10 @@ impl Kernel for ScalarKernel {
             dst[i + 3] |= src[i + 3];
             i += UNROLL;
         }
-        while i < len { dst[i] |= src[i]; i += 1; }
+        while i < len {
+            dst[i] |= src[i];
+            i += 1;
+        }
     }
 
     #[inline]
@@ -58,7 +64,10 @@ impl Kernel for ScalarKernel {
             dst[i + 3] ^= src[i + 3];
             i += UNROLL;
         }
-        while i < len { dst[i] ^= src[i]; i += 1; }
+        while i < len {
+            dst[i] ^= src[i];
+            i += 1;
+        }
     }
 
     #[inline]
@@ -74,7 +83,10 @@ impl Kernel for ScalarKernel {
             buf[i + 3] = !buf[i + 3];
             i += UNROLL;
         }
-        while i < len { buf[i] = !buf[i]; i += 1; }
+        while i < len {
+            buf[i] = !buf[i];
+            i += 1;
+        }
     }
 
     #[inline]

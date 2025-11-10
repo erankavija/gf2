@@ -23,71 +23,87 @@ fn create_dense_bitvec(num_bits: usize, pos: usize) -> BitVec {
 
 fn bench_find_first_one_sparse(c: &mut Criterion) {
     let mut group = c.benchmark_group("find_first_one_sparse");
-    
+
     // Test different positions of the first set bit
-    for &(size_kb, bit_pos) in &[(1, 0), (1, 63), (1, 64), (64, 0), (64, 4096), (256, 0), (256, 16384)] {
+    for &(size_kb, bit_pos) in &[
+        (1, 0),
+        (1, 63),
+        (1, 64),
+        (64, 0),
+        (64, 4096),
+        (256, 0),
+        (256, 16384),
+    ] {
         let size_bits = size_kb * 1024 * 8;
         let bv = create_sparse_bitvec(size_bits, bit_pos);
         group.throughput(Throughput::Bytes((size_kb * 1024) as u64));
-        
+
         let id = format!("{}KB_pos{}", size_kb, bit_pos);
         group.bench_with_input(BenchmarkId::from_parameter(id), &bv, |b, bv| {
             b.iter(|| black_box(bv.find_first_one()));
         });
     }
-    
+
     group.finish();
 }
 
 fn bench_find_first_one_dense(c: &mut Criterion) {
     let mut group = c.benchmark_group("find_first_one_dense");
-    
+
     // Test with all bits set (worst case - none found)
     for &size_kb in &[1, 64, 256] {
         let size_bits = size_kb * 1024 * 8;
         let bv = create_sparse_bitvec(size_bits, size_bits); // No bit set
         group.throughput(Throughput::Bytes((size_kb * 1024) as u64));
-        
+
         group.bench_with_input(BenchmarkId::from_parameter(size_kb), &bv, |b, bv| {
             b.iter(|| black_box(bv.find_first_one()));
         });
     }
-    
+
     group.finish();
 }
 
 fn bench_find_first_zero_sparse(c: &mut Criterion) {
     let mut group = c.benchmark_group("find_first_zero_sparse");
-    
+
     // Test different positions of the first clear bit
-    for &(size_kb, bit_pos) in &[(1, 0), (1, 63), (1, 64), (64, 0), (64, 4096), (256, 0), (256, 16384)] {
+    for &(size_kb, bit_pos) in &[
+        (1, 0),
+        (1, 63),
+        (1, 64),
+        (64, 0),
+        (64, 4096),
+        (256, 0),
+        (256, 16384),
+    ] {
         let size_bits = size_kb * 1024 * 8;
         let bv = create_dense_bitvec(size_bits, bit_pos);
         group.throughput(Throughput::Bytes((size_kb * 1024) as u64));
-        
+
         let id = format!("{}KB_pos{}", size_kb, bit_pos);
         group.bench_with_input(BenchmarkId::from_parameter(id), &bv, |b, bv| {
             b.iter(|| black_box(bv.find_first_zero()));
         });
     }
-    
+
     group.finish();
 }
 
 fn bench_find_first_zero_dense(c: &mut Criterion) {
     let mut group = c.benchmark_group("find_first_zero_dense");
-    
+
     // Test with all bits clear (worst case - none found)
     for &size_kb in &[1, 64, 256] {
         let size_bits = size_kb * 1024 * 8;
         let bv = create_dense_bitvec(size_bits, size_bits); // No bit clear
         group.throughput(Throughput::Bytes((size_kb * 1024) as u64));
-        
+
         group.bench_with_input(BenchmarkId::from_parameter(size_kb), &bv, |b, bv| {
             b.iter(|| black_box(bv.find_first_zero()));
         });
     }
-    
+
     group.finish();
 }
 
