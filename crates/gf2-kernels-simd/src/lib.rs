@@ -22,6 +22,8 @@ pub struct LogicalFns {
     pub popcnt_fn: fn(&[u64]) -> u64,
     pub find_first_one_fn: fn(&[u64]) -> Option<usize>,
     pub find_first_zero_fn: fn(&[u64]) -> Option<usize>,
+    pub shift_left_words_fn: fn(&mut [u64], usize),
+    pub shift_right_words_fn: fn(&mut [u64], usize),
 }
 
 /// Detect and return the best available logical function bundle.

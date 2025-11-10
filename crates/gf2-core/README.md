@@ -6,8 +6,7 @@
 
 - Dense, tail-masked `BitVec` backed by `Vec<u64>`
 - Bit-packed `BitMatrix` with fast M4RM multiplication and Gauss-Jordan inversion
-- SIMD-accelerated operations (AVX2) with runtime feature detection
-- Scan operations: `find_first_one`, `find_first_zero`
+- SIMD-accelerated operations (AVX2): logical ops, popcount, scans, word-aligned shifts
 - Strict safety guarantees: `#![deny(unsafe_code)]`
 - Comprehensive tests and Criterion benchmarks
 
