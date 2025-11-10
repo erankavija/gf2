@@ -57,6 +57,9 @@ Padding bits beyond `len_bits` in the last word are always zeroed. This invarian
 gf2-core = "0.1"
 # Optional, for coding theory algorithms built on gf2-core:
 # gf2-coding = "0.1"
+
+# Optional: enable SIMD acceleration (AVX2/AVX-512 on x86-64)
+# gf2-core = { version = "0.1", features = ["simd"] }
 ```
 
 When working inside this repository, prefer workspace-relative paths:
@@ -65,7 +68,28 @@ When working inside this repository, prefer workspace-relative paths:
 [dependencies]
 gf2-core = { path = "crates/gf2-core" }
 gf2-coding = { path = "crates/gf2-coding" }
+
+# Optional: enable SIMD features
+# gf2-core = { path = "crates/gf2-core", features = ["simd"] }
+# gf2-coding = { path = "crates/gf2-coding", features = ["simd"] }
 ```
+
+### Enabling SIMD Acceleration
+
+SIMD acceleration is available as an optional feature:
+
+```bash
+# Build with SIMD enabled
+cargo build --features simd
+
+# Test with SIMD
+cargo test --features simd
+
+# Benchmark with SIMD
+cargo bench --features simd
+```
+
+SIMD provides runtime CPU detection and automatically uses AVX2/AVX-512 instructions when available, falling back to scalar code otherwise.
 
 ### gf2-core: Basic example
 
@@ -267,12 +291,13 @@ assert_eq!(decoded, message);
 - Loop unrolling and prefetch hints
 - Cache-line aligned operations
 
-### Phase 4: SIMD Acceleration (Planned)
-- **x86-64**: AVX2 (256-bit) and AVX-512 (512-bit) implementations
-- **AArch64**: NEON (128-bit) implementation
-- Runtime feature detection and dispatch
-- Vectorized shifts using shuffle instructions
-- VPCLMULQDQ-based row operations for matrices
+### Phase 4: SIMD Acceleration (Partial)
+- **x86-64**: AVX2 (256-bit) implementation available via `simd` feature
+- AVX-512 (512-bit) implementation (planned)
+- **AArch64**: NEON (128-bit) implementation (planned)
+- ✅ Runtime feature detection and dispatch
+- Vectorized shifts using shuffle instructions (planned)
+- VPCLMULQDQ-based row operations for matrices (planned)
 
 ### Phase 5: Advanced Bit Operations (Planned)
 - Rank/select with superblock/block indexes

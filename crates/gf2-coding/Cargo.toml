@@ -16,6 +16,10 @@ proptest = { workspace = true }
 rand = { workspace = true }
 criterion = { workspace = true }
 
+[features]
+default = []
+simd = ["gf2-core/simd"]
+
 [[bench]]
 name = "linear_codes"
 harness = false
