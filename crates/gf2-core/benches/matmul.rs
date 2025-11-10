@@ -22,7 +22,7 @@ fn random_matrix(rows: usize, cols: usize, seed: u64) -> BitMatrix {
 fn bench_matmul_square(c: &mut Criterion) {
     let mut group = c.benchmark_group("matmul_square");
 
-    for size in [64, 128, 256, 512, 1024].iter() {
+    for size in [64, 128, 256, 512, 1024, 2048, 4096].iter() {
         let a = random_matrix(*size, *size, 42);
         let b = random_matrix(*size, *size, 43);
 

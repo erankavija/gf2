@@ -5,6 +5,10 @@
 
 /// XORs source slice into destination slice in-place.
 ///
+/// This operation is used heavily in matrix algorithms (M4RM multiplication,
+/// Gauss-Jordan elimination) and benefits significantly from SIMD acceleration
+/// on large buffers.
+///
 /// # Arguments
 ///
 /// * `dst` - Destination slice to be modified
@@ -31,10 +35,20 @@ pub fn xor_inplace(dst: &mut [u64], src: &[u64]) {
         src.len(),
         "xor_inplace: dst and src must have same length"
     );
-    let len = dst.len().min(src.len());
-    for i in 0..len {
-        dst[i] ^= src[i];
+    
+    // SIMD is beneficial for buffers >= 8 words (512 bytes)
+    // Below this threshold, dispatch overhead dominates
+    #[cfg(feature = "simd")]
+    if dst.len() >= 8 {
+        if let Some(fns) = crate::simd::maybe_simd() {
+            (fns.xor_fn)(dst, src);
+            return;
+        }
     }
+    
+    // Scalar fallback: use the kernel trait for unrolled loop
+    use crate::kernels::Kernel;
+    crate::kernels::scalar::SCALAR_KERNEL.xor(dst, src);
 }
 
 #[cfg(test)]
