@@ -108,6 +108,14 @@ impl ReferenceBits {
         self.bits.iter().rposition(|&b| b != 0)
     }
 
+    fn find_first_one(&self) -> Option<usize> {
+        self.bits.iter().position(|&b| b != 0)
+    }
+
+    fn find_first_zero(&self) -> Option<usize> {
+        self.bits.iter().position(|&b| b == 0)
+    }
+
     fn resize(&mut self, new_len: usize, fill_bit: bool) {
         self.bits.resize(new_len, if fill_bit { 1 } else { 0 });
     }
@@ -262,6 +270,22 @@ proptest! {
         let rb = ReferenceBits::from_bytes_le(&bytes);
 
         prop_assert_eq!(bv.find_last_set(), rb.find_last_set());
+    }
+
+    #[test]
+    fn prop_find_first_one_equivalence(bytes in prop::collection::vec(any::<u8>(), 0..100)) {
+        let bv = BitVec::from_bytes_le(&bytes);
+        let rb = ReferenceBits::from_bytes_le(&bytes);
+
+        prop_assert_eq!(bv.find_first_one(), rb.find_first_one());
+    }
+
+    #[test]
+    fn prop_find_first_zero_equivalence(bytes in prop::collection::vec(any::<u8>(), 0..100)) {
+        let bv = BitVec::from_bytes_le(&bytes);
+        let rb = ReferenceBits::from_bytes_le(&bytes);
+
+        prop_assert_eq!(bv.find_first_zero(), rb.find_first_zero());
     }
 
     #[test]

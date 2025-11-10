@@ -494,6 +494,88 @@ impl BitVec {
         None
     }
 
+    /// Finds the index of the first set bit (1).
+    ///
+    /// Returns `None` if the bit vector is empty or contains only zeros.
+    /// This method can benefit from SIMD acceleration when the `simd` feature is enabled.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::BitVec;
+    ///
+    /// let bv = BitVec::from_bytes_le(&[0b0001_0000]); // bit 4 set
+    /// assert_eq!(bv.find_first_one(), Some(4));
+    ///
+    /// let empty = BitVec::new();
+    /// assert_eq!(empty.find_first_one(), None);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(n) where n is the number of words, but typically much faster due to early exit.
+    /// SIMD implementations can process multiple words in parallel.
+    pub fn find_first_one(&self) -> Option<usize> {
+        #[cfg(feature = "simd")]
+        if let Some(fns) = crate::simd::maybe_simd() {
+            return (fns.find_first_one_fn)(&self.data)
+                .filter(|&pos| pos < self.len_bits);
+        }
+        
+        // Scalar fallback
+        for (i, &word) in self.data.iter().enumerate() {
+            if word != 0 {
+                let bit_in_word = word.trailing_zeros() as usize;
+                let pos = i * 64 + bit_in_word;
+                if pos < self.len_bits {
+                    return Some(pos);
+                }
+            }
+        }
+        None
+    }
+
+    /// Finds the index of the first clear bit (0).
+    ///
+    /// Returns `None` if the bit vector is empty or contains only ones.
+    /// This method can benefit from SIMD acceleration when the `simd` feature is enabled.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::BitVec;
+    ///
+    /// let bv = BitVec::from_bytes_le(&[0b1110_1111]); // bit 4 clear
+    /// assert_eq!(bv.find_first_zero(), Some(4));
+    ///
+    /// let all_ones = BitVec::from_bytes_le(&[0xFF]);
+    /// assert_eq!(all_ones.find_first_zero(), None);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(n) where n is the number of words, but typically much faster due to early exit.
+    /// SIMD implementations can process multiple words in parallel.
+    pub fn find_first_zero(&self) -> Option<usize> {
+        #[cfg(feature = "simd")]
+        if let Some(fns) = crate::simd::maybe_simd() {
+            return (fns.find_first_zero_fn)(&self.data)
+                .filter(|&pos| pos < self.len_bits);
+        }
+        
+        // Scalar fallback
+        for (i, &word) in self.data.iter().enumerate() {
+            if word != !0u64 {
+                let bit_in_word = (!word).trailing_zeros() as usize;
+                let pos = i * 64 + bit_in_word;
+                if pos < self.len_bits {
+                    return Some(pos);
+                }
+            }
+        }
+        None
+    }
+
     /// Creates a `BitVec` from a byte slice in little-endian order.
     ///
     /// The length is set to `bytes.len() * 8`.
@@ -1072,5 +1154,105 @@ mod tests {
         // Spot check a few bits
         assert_eq!(s2.get(0), true);
         assert_eq!(s3.get(0), bv.get(1));
+    }
+
+    // Scan operation tests
+    #[test]
+    fn test_find_first_one_empty() {
+        let bv = BitVec::new();
+        assert_eq!(bv.find_first_one(), None);
+    }
+
+    #[test]
+    fn test_find_first_one_all_zeros() {
+        let bv = BitVec::from_bytes_le(&[0x00, 0x00, 0x00]);
+        assert_eq!(bv.find_first_one(), None);
+    }
+
+    #[test]
+    fn test_find_first_one_first_bit() {
+        let bv = BitVec::from_bytes_le(&[0x01]); // bit 0 set
+        assert_eq!(bv.find_first_one(), Some(0));
+    }
+
+    #[test]
+    fn test_find_first_one_last_bit_of_word() {
+        let mut bv = BitVec::new();
+        for _ in 0..63 {
+            bv.push_bit(false);
+        }
+        bv.push_bit(true); // bit 63 set
+        assert_eq!(bv.find_first_one(), Some(63));
+    }
+
+    #[test]
+    fn test_find_first_one_second_word() {
+        let mut bv = BitVec::new();
+        for _ in 0..64 {
+            bv.push_bit(false);
+        }
+        bv.push_bit(true); // bit 64 set
+        assert_eq!(bv.find_first_one(), Some(64));
+    }
+
+    #[test]
+    fn test_find_first_one_middle_bit() {
+        let bv = BitVec::from_bytes_le(&[0b0001_0000]); // bit 4 set
+        assert_eq!(bv.find_first_one(), Some(4));
+    }
+
+    #[test]
+    fn test_find_first_one_multiple_bits() {
+        let bv = BitVec::from_bytes_le(&[0b1111_1000]); // bits 3-7 set
+        assert_eq!(bv.find_first_one(), Some(3));
+    }
+
+    #[test]
+    fn test_find_first_one_respects_length() {
+        let bv = BitVec::from_bytes_le(&[0xFF]);
+        // BitVec length is 8 bits
+        assert_eq!(bv.len(), 8);
+        assert_eq!(bv.find_first_one(), Some(0));
+    }
+
+    #[test]
+    fn test_find_first_zero_empty() {
+        let bv = BitVec::new();
+        assert_eq!(bv.find_first_zero(), None);
+    }
+
+    #[test]
+    fn test_find_first_zero_all_ones() {
+        let bv = BitVec::from_bytes_le(&[0xFF, 0xFF, 0xFF]);
+        assert_eq!(bv.find_first_zero(), None);
+    }
+
+    #[test]
+    fn test_find_first_zero_first_bit() {
+        let bv = BitVec::from_bytes_le(&[0xFE]); // bit 0 clear
+        assert_eq!(bv.find_first_zero(), Some(0));
+    }
+
+    #[test]
+    fn test_find_first_zero_middle_bit() {
+        let bv = BitVec::from_bytes_le(&[0b1110_1111]); // bit 4 clear
+        assert_eq!(bv.find_first_zero(), Some(4));
+    }
+
+    #[test]
+    fn test_find_first_zero_second_word() {
+        let mut bv = BitVec::new();
+        for _ in 0..64 {
+            bv.push_bit(true);
+        }
+        bv.push_bit(false); // bit 64 clear
+        assert_eq!(bv.find_first_zero(), Some(64));
+    }
+
+    #[test]
+    fn test_find_first_zero_respects_length() {
+        let bv = BitVec::from_bytes_le(&[0x00]); // 8 bits, all zero
+        assert_eq!(bv.len(), 8);
+        assert_eq!(bv.find_first_zero(), Some(0));
     }
 }

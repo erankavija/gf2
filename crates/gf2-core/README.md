@@ -6,8 +6,15 @@
 
 - Dense, tail-masked `BitVec` backed by `Vec<u64>`
 - Bit-packed `BitMatrix` with fast M4RM multiplication and Gauss-Jordan inversion
+- SIMD-accelerated operations (AVX2) with runtime feature detection
+- Scan operations: `find_first_one`, `find_first_zero`
 - Strict safety guarantees: `#![deny(unsafe_code)]`
 - Comprehensive tests and Criterion benchmarks
+
+## Features
+
+- **default**: Scalar baseline implementations
+- **simd**: Enables AVX2-accelerated operations on x86_64 (opt-in)
 
 ## Usage
 
@@ -15,7 +22,7 @@ Add the crate to your project (from crates.io or via `git` path):
 
 ```toml
 [dependencies]
-gf2-core = "0.1"
+gf2-core = { version = "0.1", features = ["simd"] }
 ```
 
 Example:
@@ -27,6 +34,10 @@ let mut bits = BitVec::new();
 bits.push_bit(true);
 bits.push_bit(false);
 assert_eq!(bits.count_ones(), 1);
+
+// Scan operations
+let bv = BitVec::from_bytes_le(&[0b0001_0000]);
+assert_eq!(bv.find_first_one(), Some(4));
 ```
 
 For more details, see the workspace-level [README](../../README.md) and the inlined Rustdocs.
