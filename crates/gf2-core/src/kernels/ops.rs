@@ -35,7 +35,7 @@ pub fn xor_inplace(dst: &mut [u64], src: &[u64]) {
         src.len(),
         "xor_inplace: dst and src must have same length"
     );
-    
+
     // SIMD is beneficial for buffers >= 8 words (512 bytes)
     // Below this threshold, dispatch overhead dominates
     #[cfg(feature = "simd")]
@@ -45,7 +45,7 @@ pub fn xor_inplace(dst: &mut [u64], src: &[u64]) {
             return;
         }
     }
-    
+
     // Scalar fallback: use the kernel trait for unrolled loop
     use crate::kernels::Kernel;
     crate::kernels::scalar::SCALAR_KERNEL.xor(dst, src);
