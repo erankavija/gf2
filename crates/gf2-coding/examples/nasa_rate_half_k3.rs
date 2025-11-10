@@ -17,27 +17,27 @@
 //!
 //! For our K=3, rate-1/2 encoder:
 //! ```text
-//! G₁ = 111₂ = 7₈  (octal 7: all three taps)
-//! G₂ = 101₂ = 5₈  (octal 5: first and third taps)
+//! G_1 = 111_2 = 7_8  (octal 7: all three taps)
+//! G_2 = 101_2 = 5_8  (octal 5: first and third taps)
 //! ```
 //!
 //! ### Encoding Process
 //!
-//! The encoder maintains a 3-bit shift register [s₂, s₁, s₀]. For each input bit uₜ:
+//! The encoder maintains a 3-bit shift register `[s_2, s_1, s_0]`. For each input bit `u_t`:
 //!
-//! 1. Shift uₜ into the register: `[s₂, s₁, s₀] ← [s₁, s₀, uₜ]`
+//! 1. Shift `u_t` into the register: `[s_2, s_1, s_0] <- [s_1, s_0, u_t]`
 //! 2. Compute outputs:
 //!    ```text
-//!    v₁ = s₂ ⊕ s₁ ⊕ s₀  (G₁ = 111)
-//!    v₂ = s₂ ⊕ s₀       (G₂ = 101)
+//!    v_1 = s_2 XOR s_1 XOR s_0  (G_1 = 111)
+//!    v_2 = s_2 XOR s_0          (G_2 = 101)
 //!    ```
-//! 3. Output the symbol [v₁, v₂]
+//! 3. Output the symbol `[v_1, v_2]`
 //!
-//! where ⊕ denotes XOR (addition in GF(2)).
+//! where XOR denotes addition in GF(2).
 //!
 //! ### State Transition Diagram
 //!
-//! With K=3, there are 2^(K-1) = 4 states, labeled by [s₂, s₁]:
+//! With K=3, there are `2^(K-1) = 4` states, labeled by `[s_2, s_1]`:
 //!
 //! ```text
 //! State 00: ──0/00──> 00    ──1/11──> 10
@@ -45,7 +45,7 @@
 //! State 10: ──0/10──> 01    ──1/01──> 11
 //! State 11: ──0/01──> 01    ──1/10──> 11
 //!
-//! Notation: input/output₁output₂
+//! Notation: input/output_1 output_2
 //! ```
 //!
 //! ### Example Encoding Trace
@@ -66,7 +66,7 @@
 //!
 //! The Viterbi algorithm finds the most likely transmitted sequence by:
 //!
-//! 1. **Initialization**: Start with metric 0 for state 00, ∞ for all other states
+//! 1. **Initialization**: Start with metric 0 for state 00, infinity for all other states
 //! 2. **Forward Pass**: For each received symbol:
 //!    - For each state, compute metrics for both possible transitions
 //!    - Keep the path with lower accumulated Hamming distance
@@ -80,31 +80,31 @@
 //! branch_metric = d_H(received_symbol, expected_output(s', u))
 //! ```
 //!
-//! where d_H is Hamming distance.
+//! where `d_H` is Hamming distance.
 //!
 //! #### Path Metric Update
 //!
 //! ```text
-//! M[s, t] = min_{s'} { M[s', t-1] + branch_metric(s'→s) }
+//! M[s, t] = min_{s'} { M[s', t-1] + branch_metric(s' -> s) }
 //! ```
 //!
 //! ### Error Correction Capability
 //!
-//! The free distance of this code is d_free = 5, meaning:
-//! - Guaranteed correction of t = ⌊(d_free - 1)/2⌋ = 2 errors (per constraint length)
-//! - Can detect up to d_free - 1 = 4 errors
+//! The free distance of this code is `d_free = 5`, meaning:
+//! - Guaranteed correction of `t = floor((d_free - 1)/2) = 2` errors (per constraint length)
+//! - Can detect up to `d_free - 1 = 4` errors
 //!
 //! Performance improves with longer constraint lengths:
-//! - K=3: d_free = 5
-//! - K=5: d_free = 7
-//! - K=7: d_free = 10 (NASA standard)
+//! - K=3: `d_free = 5`
+//! - K=5: `d_free = 7`
+//! - K=7: `d_free = 10` (NASA standard)
 //!
 //! ## Practical Considerations
 //!
 //! ### Termination
 //!
 //! To ensure the encoder returns to state 00 (required for optimal Viterbi decoding),
-//! append K-1 = 2 zero bits to the message. This is called "tail-biting" or "termination".
+//! append `K-1 = 2` zero bits to the message. This is called "tail-biting" or "termination".
 //!
 //! ### Applications
 //!
@@ -122,165 +122,203 @@ use gf2_coding::traits::{StreamingDecoder, StreamingEncoder};
 use gf2_coding::{ConvolutionalDecoder, ConvolutionalEncoder};
 
 fn main() {
-    println!("=== NASA Rate-1/2, K=3 Convolutional Code Example ===\n");
-
     // Create encoder and decoder with generators [111, 101] (octal [7, 5])
     let mut encoder = ConvolutionalEncoder::new(3, vec![0b111, 0b101]);
     let mut decoder = ConvolutionalDecoder::new(3, vec![0b111, 0b101]);
 
-    println!("Encoder parameters:");
-    println!("  Constraint length K = {}", encoder.constraint_length());
-    println!("  Code rate = 1/{}", encoder.rate().1);
-    println!("  Generator polynomials:");
-    println!("    G₁ = 111₂ = 7₈ (octal)");
-    println!("    G₂ = 101₂ = 5₈ (octal)");
-    println!();
-
     // Example message
     let message = vec![true, false, true, true];
-    println!("Message to encode: {:?}", bits_to_string(&message));
-    println!("Message length: {} bits", message.len());
-    println!();
 
-    // Encode the message
+    // Encode with termination
+    let codeword = encode_with_trace(&mut encoder, &message);
+
+    // Decode without errors
+    let _decoded_clean = decode_message(&mut decoder, &codeword, &message);
+
+    // Test error correction with 1, 2, and 3 errors
+    test_error_correction(&mut decoder, &codeword, &message);
+
+    print_performance_summary();
+}
+
+fn encode_with_trace(encoder: &mut ConvolutionalEncoder, message: &[bool]) -> Vec<bool> {
     encoder.reset();
     let mut codeword = Vec::new();
 
-    println!("Encoding trace:");
-    println!("┌──────┬───────┬──────────┬──────────────┬────────┐");
-    println!("│ Time │ Input │  State   │   Register   │ Output │");
-    println!("├──────┼───────┼──────────┼──────────────┼────────┤");
+    print_encoder_header(encoder);
+    print_message_info(message);
+    print_encoding_table_header();
 
+    // Encode message bits
     for (t, &bit) in message.iter().enumerate() {
         let old_state = encoder.state();
         let output = encoder.encode_bit(bit);
         let new_state = encoder.state();
-
         codeword.extend(output.iter());
 
-        println!(
-            "│  {:2}  │   {}   │ {:02b} → {:02b} │ {:03b} ({:3}) │   {}{}   │",
-            t + 1,
-            if bit { '1' } else { '0' },
-            old_state >> 1, // Previous 2 MSBs
-            new_state >> 1, // Current 2 MSBs
-            new_state,
-            new_state,
-            if output[0] { '1' } else { '0' },
-            if output[1] { '1' } else { '0' },
-        );
+        print_encoding_step(t + 1, bit, old_state, new_state, &output);
     }
 
-    // Termination: Add K-1 zero bits to return to state 00
-    println!("├──────┼───────┼──────────┼──────────────┼────────┤");
+    // Termination: Add K-1 zero bits
+    print_encoding_separator();
     for t in 0..(encoder.constraint_length() - 1) {
         let old_state = encoder.state();
         let output = encoder.encode_bit(false);
         let new_state = encoder.state();
-
         codeword.extend(output.iter());
 
-        println!(
-            "│  {:2}  │   0   │ {:02b} → {:02b} │ {:03b} ({:3}) │   {}{}   │",
-            message.len() + t + 1,
-            old_state >> 1,
-            new_state >> 1,
-            new_state,
-            new_state,
-            if output[0] { '1' } else { '0' },
-            if output[1] { '1' } else { '0' },
-        );
+        print_encoding_step(message.len() + t + 1, false, old_state, new_state, &output);
     }
-    println!("└──────┴───────┴──────────┴──────────────┴────────┘");
-    println!();
 
-    println!("Encoded codeword: {}", bits_to_string(&codeword));
-    println!(
-        "Codeword length: {} bits (rate = {}/{})",
-        codeword.len(),
-        message.len(),
-        codeword.len(),
-    );
-    println!();
+    print_encoding_table_footer();
+    print_codeword_info(&codeword, message.len());
 
-    // Decode without errors
+    codeword
+}
+
+fn decode_message(decoder: &mut ConvolutionalDecoder, codeword: &[bool], message: &[bool]) -> Vec<bool> {
     decoder.reset();
-    let decoded_clean = decoder.decode_symbols(&codeword);
+    let decoded = decoder.decode_symbols(codeword);
 
-    println!("Decoding without errors:");
-    println!("  Received: {}", bits_to_string(&codeword));
-    println!(
-        "  Decoded:  {} (first {} bits)",
-        bits_to_string(&decoded_clean[..message.len()]),
-        message.len(),
-    );
-    println!(
-        "  Match: {}",
-        if decoded_clean[..message.len()] == message[..] {
-            "✓ Correct!"
-        } else {
-            "✗ Error"
-        }
-    );
-    println!();
+    print_decoding_result("without errors", codeword, &decoded[..message.len()], message);
 
-    // Introduce errors and test error correction
+    decoded
+}
+
+fn test_error_correction(decoder: &mut ConvolutionalDecoder, codeword: &[bool], message: &[bool]) {
     for num_errors in 1..=3 {
-        let mut corrupted = codeword.clone();
-
-        // Flip bits at positions 1, 5, and 9
         let error_positions: Vec<usize> = match num_errors {
             1 => vec![1],
             2 => vec![1, 5],
             _ => vec![1, 5, 9],
         };
 
-        for &pos in &error_positions {
-            if pos < corrupted.len() {
-                corrupted[pos] = !corrupted[pos];
-            }
-        }
-
+        let corrupted = introduce_errors(codeword, &error_positions);
         decoder.reset();
-        let decoded_corrupt = decoder.decode_symbols(&corrupted);
+        let decoded = decoder.decode_symbols(&corrupted);
 
-        let num_correct = decoded_corrupt
-            .iter()
-            .take(message.len())
-            .zip(&message)
-            .filter(|(a, b)| a == b)
-            .count();
-
-        println!(
-            "Decoding with {} error(s) at position(s) {:?}:",
-            num_errors, error_positions,
-        );
-        println!("  Received: {}", bits_to_string(&corrupted));
-        println!(
-            "  Decoded:  {} (first {} bits)",
-            bits_to_string(&decoded_corrupt[..message.len()]),
-            message.len(),
-        );
-        println!(
-            "  Correct bits: {}/{} ({:.1}%)",
-            num_correct,
-            message.len(),
-            100.0 * num_correct as f64 / message.len() as f64,
-        );
-        println!(
-            "  Status: {}",
-            if num_correct == message.len() {
-                "✓ All errors corrected!"
-            } else {
-                "⚠ Some errors remain"
-            }
-        );
-        println!();
+        print_error_correction_result(&corrupted, &decoded[..message.len()], message, num_errors, &error_positions);
     }
+}
 
+fn introduce_errors(codeword: &[bool], positions: &[usize]) -> Vec<bool> {
+    let mut corrupted = codeword.to_vec();
+    for &pos in positions {
+        if pos < corrupted.len() {
+            corrupted[pos] = !corrupted[pos];
+        }
+    }
+    corrupted
+}
+
+fn bits_to_string(bits: &[bool]) -> String {
+    bits.iter().map(|&b| if b { '1' } else { '0' }).collect()
+}
+
+// === Printing Functions ===
+
+fn print_encoder_header(encoder: &ConvolutionalEncoder) {
+    println!("=== NASA Rate-1/2, K=3 Convolutional Code Example ===\n");
+    println!("Encoder parameters:");
+    println!("  Constraint length K = {}", encoder.constraint_length());
+    println!("  Code rate = 1/{}", encoder.rate().1);
+    println!("  Generator polynomials:");
+    println!("    G_1 = 111_2 = 7_8 (octal)");
+    println!("    G_2 = 101_2 = 5_8 (octal)");
+    println!();
+}
+
+fn print_message_info(message: &[bool]) {
+    println!("Message to encode: {:?}", bits_to_string(message));
+    println!("Message length: {} bits", message.len());
+    println!();
+}
+
+fn print_encoding_table_header() {
+    println!("Encoding trace:");
+    println!("┌──────┬───────┬──────────┬──────────────┬────────┐");
+    println!("│ Time │ Input │  State   │   Register   │ Output │");
+    println!("├──────┼───────┼──────────┼──────────────┼────────┤");
+}
+
+fn print_encoding_step(time: usize, input: bool, old_state: u32, new_state: u32, output: &[bool]) {
+    println!(
+        "│  {:2}  │   {}   │ {:02b} → {:02b} │ {:03b} ({:3}) │   {}{}   │",
+        time,
+        if input { '1' } else { '0' },
+        old_state >> 1,
+        new_state >> 1,
+        new_state,
+        new_state,
+        if output[0] { '1' } else { '0' },
+        if output[1] { '1' } else { '0' },
+    );
+}
+
+fn print_encoding_separator() {
+    println!("├──────┼───────┼──────────┼──────────────┼────────┤");
+}
+
+fn print_encoding_table_footer() {
+    println!("└──────┴───────┴──────────┴──────────────┴────────┘");
+    println!();
+}
+
+fn print_codeword_info(codeword: &[bool], message_len: usize) {
+    println!("Encoded codeword: {}", bits_to_string(codeword));
+    println!(
+        "Codeword length: {} bits (rate = {}/{})",
+        codeword.len(),
+        message_len,
+        codeword.len(),
+    );
+    println!();
+}
+
+fn print_decoding_result(description: &str, received: &[bool], decoded: &[bool], message: &[bool]) {
+    println!("Decoding {}:", description);
+    println!("  Received: {}", bits_to_string(received));
+    println!("  Decoded:  {} (first {} bits)", bits_to_string(decoded), message.len());
+    println!(
+        "  Match: {}",
+        if decoded == message { "✓ Correct!" } else { "✗ Error" }
+    );
+    println!();
+}
+
+fn print_error_correction_result(
+    corrupted: &[bool],
+    decoded: &[bool],
+    message: &[bool],
+    num_errors: usize,
+    error_positions: &[usize],
+) {
+    let num_correct = decoded.iter().zip(message).filter(|(a, b)| a == b).count();
+
+    println!("Decoding with {} error(s) at position(s) {:?}:", num_errors, error_positions);
+    println!("  Received: {}", bits_to_string(corrupted));
+    println!("  Decoded:  {} (first {} bits)", bits_to_string(decoded), message.len());
+    println!(
+        "  Correct bits: {}/{} ({:.1}%)",
+        num_correct,
+        message.len(),
+        100.0 * num_correct as f64 / message.len() as f64,
+    );
+    println!(
+        "  Status: {}",
+        if num_correct == message.len() {
+            "✓ All errors corrected!"
+        } else {
+            "⚠ Some errors remain"
+        }
+    );
+    println!();
+}
+
+fn print_performance_summary() {
     println!("=== Performance Characteristics ===\n");
     println!("Free distance d_free ≈ 5 for K=3, rate-1/2");
-    println!("Guaranteed error correction: t = ⌊(d_free-1)/2⌋ = 2 errors");
+    println!("Guaranteed error correction: t = floor((d_free-1)/2) = 2 errors");
     println!("Error detection: up to d_free - 1 = 4 errors");
     println!();
     println!("For comparison with industry standards:");
@@ -294,6 +332,3 @@ fn main() {
     println!("• NASA/CCSDS TM Synchronization and Channel Coding (CCSDS 131.0-B-3)");
 }
 
-fn bits_to_string(bits: &[bool]) -> String {
-    bits.iter().map(|&b| if b { '1' } else { '0' }).collect()
-}
