@@ -14,3 +14,8 @@ gf2-core = { path = "../gf2-core" }
 [dev-dependencies]
 proptest = { workspace = true }
 rand = { workspace = true }
+criterion = { workspace = true }
+
+[[bench]]
+name = "linear_codes"
+harness = false

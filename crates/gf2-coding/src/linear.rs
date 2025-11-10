@@ -660,4 +660,373 @@ mod tests {
 
         assert_eq!(extracted, msg);
     }
+
+    #[test]
+    fn test_empty_message() {
+        // Edge case: if we had a code with k=0, encoding should produce consistent output
+        // For now, test that Hamming codes handle minimum sizes properly
+        let code = LinearBlockCode::hamming(2);
+        assert_eq!(code.k(), 1);
+        assert_eq!(code.n(), 3);
+
+        let mut msg = BitVec::new();
+        msg.push_bit(false);
+        let codeword = code.encode(&msg);
+        assert_eq!(codeword.len(), 3);
+    }
+
+    #[test]
+    fn test_all_zeros_message() {
+        let code = LinearBlockCode::hamming(3);
+        let mut msg = BitVec::new();
+        msg.resize(code.k(), false);
+
+        let codeword = code.encode(&msg);
+        let syndrome = code.syndrome(&codeword).unwrap();
+
+        assert_eq!(syndrome.count_ones(), 0, "All-zero message should encode to all-zero codeword with zero syndrome");
+        assert_eq!(codeword.count_ones(), 0, "All-zero message should produce all-zero codeword");
+    }
+
+    #[test]
+    fn test_all_ones_message() {
+        let code = LinearBlockCode::hamming(3);
+        let mut msg = BitVec::new();
+        msg.resize(code.k(), true);
+
+        let codeword = code.encode(&msg);
+        let syndrome = code.syndrome(&codeword).unwrap();
+
+        assert_eq!(syndrome.count_ones(), 0, "Valid codeword should have zero syndrome");
+    }
+
+    #[test]
+    fn test_systematic_positions_hamming() {
+        let code = LinearBlockCode::hamming(3);
+        
+        // For Hamming codes, systematic positions should be non-power-of-2 positions
+        assert_eq!(code.systematic_positions.len(), code.k());
+        
+        // Verify that encoding preserves message bits at systematic positions
+        let mut msg = BitVec::new();
+        for bit in [true, false, true, true] {
+            msg.push_bit(bit);
+        }
+        
+        let codeword = code.encode(&msg);
+        for (msg_bit_idx, &codeword_pos) in code.systematic_positions.iter().enumerate() {
+            assert_eq!(
+                msg.get(msg_bit_idx),
+                codeword.get(codeword_pos),
+                "Message bit {} should appear at systematic position {}",
+                msg_bit_idx,
+                codeword_pos
+            );
+        }
+    }
+
+    #[test]
+    fn test_word_boundary_message_sizes() {
+        // Test messages at word boundaries (63, 64, 65 bits)
+        // Hamming(127, 120) has r=7, k=120
+        let code = LinearBlockCode::hamming(7);
+        assert_eq!(code.k(), 120);
+        assert_eq!(code.n(), 127);
+
+        let mut msg = BitVec::new();
+        msg.resize(120, false);
+        msg.set(63, true);  // Set bit at word boundary
+        msg.set(64, true);  // Set bit just after word boundary
+
+        let codeword = code.encode(&msg);
+        assert_eq!(codeword.len(), 127);
+        
+        let syndrome = code.syndrome(&codeword).unwrap();
+        assert_eq!(syndrome.count_ones(), 0, "Valid codeword should have zero syndrome");
+    }
+
+    #[test]
+    #[should_panic(expected = "Message length must be k")]
+    fn test_encode_wrong_message_length() {
+        let code = LinearBlockCode::hamming(3);
+        let mut msg = BitVec::new();
+        msg.resize(5, false); // Wrong length (should be 4)
+        
+        code.encode(&msg);
+    }
+
+    #[test]
+    #[should_panic(expected = "Codeword length must be n")]
+    fn test_syndrome_wrong_codeword_length() {
+        let code = LinearBlockCode::hamming(3);
+        let mut codeword = BitVec::new();
+        codeword.resize(10, false); // Wrong length (should be 7)
+        
+        code.syndrome(&codeword);
+    }
+
+    #[test]
+    #[should_panic(expected = "Received vector length must be n")]
+    fn test_decode_wrong_codeword_length() {
+        let code = LinearBlockCode::hamming(3);
+        let decoder = SyndromeTableDecoder::new(code);
+        
+        let mut received = BitVec::new();
+        received.resize(5, false); // Wrong length (should be 7)
+        
+        decoder.decode(&received);
+    }
+
+    #[test]
+    fn test_multiple_hamming_sizes() {
+        // Test various Hamming code sizes
+        for r in 2..=6 {
+            let code = LinearBlockCode::hamming(r);
+            let n = (1 << r) - 1;
+            let k = n - r;
+            
+            assert_eq!(code.n(), n);
+            assert_eq!(code.k(), k);
+            
+            // Verify dimensions of matrices
+            assert_eq!(code.generator().rows(), k);
+            assert_eq!(code.generator().cols(), n);
+            
+            if let Some(h) = code.parity_check() {
+                assert_eq!(h.rows(), r);
+                assert_eq!(h.cols(), n);
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod proptests {
+    use super::*;
+    use crate::traits::BlockEncoder;
+    use proptest::prelude::*;
+
+    proptest! {
+        #[test]
+        fn prop_encode_decode_roundtrip_hamming_7_4(msg_bits in prop::collection::vec(any::<bool>(), 4)) {
+            let code = LinearBlockCode::hamming(3);
+            let decoder = SyndromeTableDecoder::new(code);
+
+            let mut msg = BitVec::new();
+            for bit in msg_bits {
+                msg.push_bit(bit);
+            }
+
+            let codeword = decoder.code().encode(&msg);
+            let decoded = decoder.decode(&codeword);
+
+            prop_assert_eq!(decoded, msg);
+        }
+
+        #[test]
+        fn prop_valid_codeword_has_zero_syndrome(msg_bits in prop::collection::vec(any::<bool>(), 4)) {
+            let code = LinearBlockCode::hamming(3);
+
+            let mut msg = BitVec::new();
+            for bit in msg_bits {
+                msg.push_bit(bit);
+            }
+
+            let codeword = code.encode(&msg);
+            let syndrome = code.syndrome(&codeword).unwrap();
+
+            prop_assert_eq!(syndrome.count_ones(), 0, "Valid codeword must have zero syndrome");
+        }
+
+        #[test]
+        fn prop_single_bit_error_correction_hamming_7_4(
+            msg_bits in prop::collection::vec(any::<bool>(), 4),
+            error_pos in 0usize..7
+        ) {
+            let code = LinearBlockCode::hamming(3);
+            let decoder = SyndromeTableDecoder::new(code);
+
+            let mut msg = BitVec::new();
+            for bit in msg_bits {
+                msg.push_bit(bit);
+            }
+
+            let mut received = decoder.code().encode(&msg);
+            received.set(error_pos, !received.get(error_pos));
+
+            let decoded = decoder.decode(&received);
+            prop_assert_eq!(decoded, msg, "Failed to correct error at position {}", error_pos);
+        }
+
+        #[test]
+        fn prop_syndrome_linearity(
+            msg1_bits in prop::collection::vec(any::<bool>(), 4),
+            msg2_bits in prop::collection::vec(any::<bool>(), 4)
+        ) {
+            let code = LinearBlockCode::hamming(3);
+
+            let mut msg1 = BitVec::new();
+            for bit in msg1_bits {
+                msg1.push_bit(bit);
+            }
+
+            let mut msg2 = BitVec::new();
+            for bit in msg2_bits {
+                msg2.push_bit(bit);
+            }
+
+            let c1 = code.encode(&msg1);
+            let c2 = code.encode(&msg2);
+
+            // XOR the codewords (addition in GF(2))
+            let mut c_sum = c1.clone();
+            c_sum.bit_xor_into(&c2);
+
+            // Syndrome should be zero since c_sum is also a valid codeword
+            let syndrome = code.syndrome(&c_sum).unwrap();
+            prop_assert_eq!(syndrome.count_ones(), 0, "Sum of valid codewords should be a valid codeword");
+        }
+
+        #[test]
+        fn prop_project_message_preserves_data(msg_bits in prop::collection::vec(any::<bool>(), 4)) {
+            let code = LinearBlockCode::hamming(3);
+
+            let mut msg = BitVec::new();
+            for bit in msg_bits {
+                msg.push_bit(bit);
+            }
+
+            let codeword = code.encode(&msg);
+            let extracted = code.project_message(&codeword);
+
+            prop_assert_eq!(extracted, msg);
+        }
+
+        #[test]
+        fn prop_encode_decode_roundtrip_hamming_15_11(msg_bits in prop::collection::vec(any::<bool>(), 11)) {
+            let code = LinearBlockCode::hamming(4);
+            let decoder = SyndromeTableDecoder::new(code);
+
+            let mut msg = BitVec::new();
+            for bit in msg_bits {
+                msg.push_bit(bit);
+            }
+
+            let codeword = decoder.code().encode(&msg);
+            let decoded = decoder.decode(&codeword);
+
+            prop_assert_eq!(decoded, msg);
+        }
+
+        #[test]
+        fn prop_single_bit_error_correction_hamming_15_11(
+            msg_bits in prop::collection::vec(any::<bool>(), 11),
+            error_pos in 0usize..15
+        ) {
+            let code = LinearBlockCode::hamming(4);
+            let decoder = SyndromeTableDecoder::new(code);
+
+            let mut msg = BitVec::new();
+            for bit in msg_bits {
+                msg.push_bit(bit);
+            }
+
+            let mut received = decoder.code().encode(&msg);
+            received.set(error_pos, !received.get(error_pos));
+
+            let decoded = decoder.decode(&received);
+            prop_assert_eq!(decoded, msg, "Failed to correct error at position {}", error_pos);
+        }
+
+        #[test]
+        fn prop_encode_decode_roundtrip_hamming_31_26(msg_bits in prop::collection::vec(any::<bool>(), 26)) {
+            let code = LinearBlockCode::hamming(5);
+            let decoder = SyndromeTableDecoder::new(code);
+
+            let mut msg = BitVec::new();
+            for bit in msg_bits {
+                msg.push_bit(bit);
+            }
+
+            let codeword = decoder.code().encode(&msg);
+            let decoded = decoder.decode(&codeword);
+
+            prop_assert_eq!(decoded, msg);
+        }
+
+        #[test]
+        fn prop_hamming_distance_property(
+            msg_bits in prop::collection::vec(any::<bool>(), 4),
+            error_pos1 in 0usize..7,
+            error_pos2 in 0usize..7
+        ) {
+            // Hamming codes have minimum distance 3, so they can correct 1 error
+            // but not necessarily 2 errors (unless they're at same position)
+            let code = LinearBlockCode::hamming(3);
+            let decoder = SyndromeTableDecoder::new(code);
+
+            let mut msg = BitVec::new();
+            for bit in msg_bits {
+                msg.push_bit(bit);
+            }
+
+            let mut received = decoder.code().encode(&msg);
+            
+            if error_pos1 == error_pos2 {
+                // Two errors at same position cancel out
+                let decoded = decoder.decode(&received);
+                prop_assert_eq!(decoded, msg);
+            } else {
+                // Two errors at different positions
+                received.set(error_pos1, !received.get(error_pos1));
+                received.set(error_pos2, !received.get(error_pos2));
+                
+                // Decoder may or may not correct correctly (distance 3 code)
+                // We just verify it doesn't panic
+                let _decoded = decoder.decode(&received);
+            }
+        }
+
+        #[test]
+        fn prop_systematic_encoding_preserves_message_bits(msg_bits in prop::collection::vec(any::<bool>(), 4)) {
+            let code = LinearBlockCode::hamming(3);
+
+            let mut msg = BitVec::new();
+            for bit in msg_bits {
+                msg.push_bit(bit);
+            }
+
+            let codeword = code.encode(&msg);
+
+            // Check that message bits appear at systematic positions
+            for (msg_idx, &sys_pos) in code.systematic_positions.iter().enumerate() {
+                prop_assert_eq!(
+                    msg.get(msg_idx),
+                    codeword.get(sys_pos),
+                    "Message bit {} must appear at systematic position {}",
+                    msg_idx,
+                    sys_pos
+                );
+            }
+        }
+
+        #[test]
+        fn prop_generator_parity_orthogonality(r in 2usize..7) {
+            // For any Hamming code, G * H^T should be zero
+            let code = LinearBlockCode::hamming(r);
+            
+            if let Some(h) = code.parity_check() {
+                let g = code.generator();
+                let h_t = h.transpose();
+                let product = g * &h_t;
+                
+                // Product should be all zeros (k × r zero matrix)
+                for row in 0..product.rows() {
+                    for col in 0..product.cols() {
+                        prop_assert!(!product.get(row, col), "G * H^T must be zero at ({}, {})", row, col);
+                    }
+                }
+            }
+        }
+    }
 }
