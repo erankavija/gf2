@@ -95,6 +95,192 @@ impl BitMatrix {
         m
     }
 
+    /// Creates a `BitMatrix` with random bits using the provided RNG.
+    ///
+    /// Each bit has probability 0.5 of being set. For custom probabilities,
+    /// use [`BitMatrix::random_with_probability`].
+    ///
+    /// # Arguments
+    ///
+    /// * `rows` - Number of rows
+    /// * `cols` - Number of columns
+    /// * `rng` - A mutable reference to a random number generator
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # #[cfg(feature = "rand")] {
+    /// use gf2_core::matrix::BitMatrix;
+    /// use rand::rngs::StdRng;
+    /// use rand::SeedableRng;
+    ///
+    /// let mut rng = StdRng::seed_from_u64(42);
+    /// let m = BitMatrix::random(10, 20, &mut rng);
+    /// assert_eq!(m.rows(), 10);
+    /// assert_eq!(m.cols(), 20);
+    /// # }
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(rows × stride_words) where stride_words = ⌈cols / 64⌉.
+    #[cfg(feature = "rand")]
+    pub fn random<R: rand::Rng>(rows: usize, cols: usize, rng: &mut R) -> Self {
+        let mut m = Self::zeros(rows, cols);
+        if !m.data.is_empty() {
+            rng.fill(&mut m.data[..]);
+            m.mask_padding_bits();
+        }
+        m
+    }
+
+    /// Creates a `BitMatrix` with random bits using a seeded RNG.
+    ///
+    /// This provides deterministic random generation - the same seed
+    /// will always produce the same matrix.
+    ///
+    /// # Arguments
+    ///
+    /// * `rows` - Number of rows
+    /// * `cols` - Number of columns
+    /// * `seed` - Seed value for the random number generator
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # #[cfg(feature = "rand")] {
+    /// use gf2_core::matrix::BitMatrix;
+    ///
+    /// let m1 = BitMatrix::random_seeded(10, 20, 0x1234);
+    /// let m2 = BitMatrix::random_seeded(10, 20, 0x1234);
+    /// assert_eq!(m1, m2); // Same seed produces same matrix
+    /// # }
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(rows × stride_words) where stride_words = ⌈cols / 64⌉.
+    #[cfg(feature = "rand")]
+    pub fn random_seeded(rows: usize, cols: usize, seed: u64) -> Self {
+        use rand::rngs::StdRng;
+        use rand::SeedableRng;
+
+        let mut rng = StdRng::seed_from_u64(seed);
+        Self::random(rows, cols, &mut rng)
+    }
+
+    /// Creates a `BitMatrix` with random bits where each bit is set with probability `p`.
+    ///
+    /// For `p = 0.5`, prefer [`BitMatrix::random`] which is optimized for the uniform case.
+    ///
+    /// # Arguments
+    ///
+    /// * `rows` - Number of rows
+    /// * `cols` - Number of columns
+    /// * `p` - Probability in [0.0, 1.0] that each bit is set to 1
+    /// * `rng` - A mutable reference to a random number generator
+    ///
+    /// # Panics
+    ///
+    /// Panics if `p` is not in the range [0.0, 1.0].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # #[cfg(feature = "rand")] {
+    /// use gf2_core::matrix::BitMatrix;
+    /// use rand::rngs::StdRng;
+    /// use rand::SeedableRng;
+    ///
+    /// let mut rng = StdRng::seed_from_u64(42);
+    /// // Create a sparse matrix (~10% ones)
+    /// let m = BitMatrix::random_with_probability(100, 100, 0.1, &mut rng);
+    /// assert_eq!(m.rows(), 100);
+    /// assert_eq!(m.cols(), 100);
+    /// # }
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(rows × cols). Note that this is slower than [`BitMatrix::random`]
+    /// for the default p=0.5 case.
+    #[cfg(feature = "rand")]
+    pub fn random_with_probability<R: rand::Rng>(
+        rows: usize,
+        cols: usize,
+        p: f64,
+        rng: &mut R,
+    ) -> Self {
+        assert!(
+            (0.0..=1.0).contains(&p),
+            "Probability must be in range [0.0, 1.0], got {}",
+            p
+        );
+
+        let mut m = Self::zeros(rows, cols);
+
+        // Fast paths for extreme probabilities
+        if p == 0.0 {
+            return m;
+        }
+        if p == 1.0 {
+            for word in &mut m.data {
+                *word = u64::MAX;
+            }
+            m.mask_padding_bits();
+            return m;
+        }
+
+        // For p=0.5, use optimized word-level generation
+        if (p - 0.5).abs() < 1e-10 {
+            return Self::random(rows, cols, rng);
+        }
+
+        // General case: generate bits individually
+        for r in 0..rows {
+            for c in 0..cols {
+                if rng.gen_bool(p) {
+                    m.set(r, c, true);
+                }
+            }
+        }
+        m
+    }
+
+    /// Fills this `BitMatrix` with random bits using the provided RNG.
+    ///
+    /// The dimensions of the matrix remain unchanged.
+    ///
+    /// # Arguments
+    ///
+    /// * `rng` - A mutable reference to a random number generator
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # #[cfg(feature = "rand")] {
+    /// use gf2_core::matrix::BitMatrix;
+    /// use rand::rngs::StdRng;
+    /// use rand::SeedableRng;
+    ///
+    /// let mut m = BitMatrix::zeros(10, 10);
+    /// let mut rng = StdRng::seed_from_u64(42);
+    /// m.fill_random(&mut rng);
+    /// // m now contains random bits
+    /// # }
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(rows × stride_words).
+    #[cfg(feature = "rand")]
+    pub fn fill_random<R: rand::Rng>(&mut self, rng: &mut R) {
+        if !self.data.is_empty() {
+            rng.fill(&mut self.data[..]);
+            self.mask_padding_bits();
+        }
+    }
+
     /// Returns the number of rows.
     #[inline]
     pub fn rows(&self) -> usize {
@@ -327,6 +513,29 @@ impl BitMatrix {
         }
 
         result
+    }
+
+    /// Masks padding bits in each row to zero.
+    ///
+    /// This maintains the invariant that bits beyond `cols` in each row
+    /// are always zero. Called internally after bulk operations.
+    fn mask_padding_bits(&mut self) {
+        if self.cols == 0 || self.stride_words == 0 {
+            return;
+        }
+
+        let used_bits_in_last_word = self.cols % 64;
+        if used_bits_in_last_word == 0 {
+            return; // No padding bits
+        }
+
+        let mask = (1u64 << used_bits_in_last_word) - 1;
+        let last_word_idx = self.stride_words - 1;
+
+        for row in 0..self.rows {
+            let offset = row * self.stride_words + last_word_idx;
+            self.data[offset] &= mask;
+        }
     }
 }
 

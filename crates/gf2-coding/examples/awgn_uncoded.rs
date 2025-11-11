@@ -9,12 +9,12 @@
 //! This serves as a baseline for comparing coded vs. uncoded transmission.
 
 use gf2_coding::{AwgnChannel, BpskModulator};
-use rand::Rng;
+use gf2_core::BitVec;
 
 fn main() {
     println!("=== Uncoded BPSK Transmission over AWGN ===\n");
 
-    let num_bits = 10_000;
+    let num_bits = 1_000_000;
     let eb_n0_range = vec![0.0, 3.0, 6.0, 9.0, 12.0]; // Eb/N0 in dB
 
     println!("Simulating {} bits per Eb/N0 point\n", num_bits);
@@ -43,11 +43,12 @@ fn simulate_transmission(num_bits: usize, eb_n0_db: f64) -> (f64, f64) {
     let mut rng = rand::thread_rng();
     let channel = AwgnChannel::from_eb_n0_db(eb_n0_db, 1.0); // Rate = 1.0 for uncoded
 
-    // Generate random bits
-    let bits: Vec<bool> = (0..num_bits).map(|_| rng.gen()).collect();
+    // Generate random bits using BitVec
+    let bits = BitVec::random(num_bits, &mut rng);
 
-    // Modulate to BPSK symbols
-    let symbols = BpskModulator::modulate_bits(&bits);
+    // Modulate to BPSK symbols (convert BitVec to bool iterator)
+    let bits_vec: Vec<bool> = (0..num_bits).map(|i| bits.get(i)).collect();
+    let symbols = BpskModulator::modulate_bits(&bits_vec);
 
     // Transmit through AWGN channel
     let received = channel.transmit_symbols(&symbols, &mut rng);
@@ -72,10 +73,8 @@ fn simulate_transmission(num_bits: usize, eb_n0_db: f64) -> (f64, f64) {
     (hard_ber, soft_ber)
 }
 
-fn count_errors(transmitted: &[bool], received: &[bool]) -> usize {
-    transmitted
-        .iter()
-        .zip(received)
-        .filter(|(t, r)| t != r)
+fn count_errors(transmitted: &BitVec, received: &[bool]) -> usize {
+    (0..transmitted.len())
+        .filter(|&i| transmitted.get(i) != received[i])
         .count()
 }
