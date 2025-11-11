@@ -10,6 +10,7 @@ rust-version = "1.74"
 
 [dependencies]
 gf2-kernels-simd = { path = "../gf2-kernels-simd", optional = true }
+rand = { workspace = true, optional = true }
 
 [dev-dependencies]
 criterion = { workspace = true }
@@ -17,9 +18,11 @@ proptest = { workspace = true }
 rand = { workspace = true }
 
 [features]
-default = []
+default = ["rand"]
 # Opt-in to SIMD accelerated kernels via optional crate.
 simd = ["gf2-kernels-simd"]
+# Random generation functions (enabled by default for testing/examples).
+rand = ["dep:rand"]
 
 [[bench]]
 name = "bitvec"
@@ -36,3 +39,8 @@ harness = false
 [[bench]]
 name = "scan"
 harness = false
+
+[[bench]]
+name = "random"
+harness = false
+required-features = ["rand"]

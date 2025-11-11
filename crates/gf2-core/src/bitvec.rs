@@ -733,6 +733,190 @@ impl BitVec {
         out
     }
 
+    /// Creates a `BitVec` with random bits using the provided RNG.
+    ///
+    /// Each bit has probability 0.5 of being set. For custom probabilities,
+    /// use [`BitVec::random_with_probability`].
+    ///
+    /// # Arguments
+    ///
+    /// * `len_bits` - The number of bits in the resulting vector
+    /// * `rng` - A mutable reference to a random number generator
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # #[cfg(feature = "rand")] {
+    /// use gf2_core::BitVec;
+    /// use rand::rngs::StdRng;
+    /// use rand::SeedableRng;
+    ///
+    /// let mut rng = StdRng::seed_from_u64(42);
+    /// let bv = BitVec::random(100, &mut rng);
+    /// assert_eq!(bv.len(), 100);
+    /// # }
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(n) where n is the number of words (`len_bits / 64`).
+    #[cfg(feature = "rand")]
+    pub fn random<R: rand::Rng>(len_bits: usize, rng: &mut R) -> Self {
+        if len_bits == 0 {
+            return Self::new();
+        }
+
+        let num_words = len_bits.div_ceil(64);
+        let mut data = vec![0u64; num_words];
+        rng.fill(&mut data[..]);
+
+        let mut bv = Self { data, len_bits };
+        bv.mask_tail();
+        bv
+    }
+
+    /// Creates a `BitVec` with random bits using a seeded RNG.
+    ///
+    /// This provides deterministic random generation - the same seed
+    /// will always produce the same bit vector.
+    ///
+    /// # Arguments
+    ///
+    /// * `len_bits` - The number of bits in the resulting vector
+    /// * `seed` - Seed value for the random number generator
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # #[cfg(feature = "rand")] {
+    /// use gf2_core::BitVec;
+    ///
+    /// let bv1 = BitVec::random_seeded(100, 0x1234);
+    /// let bv2 = BitVec::random_seeded(100, 0x1234);
+    /// assert_eq!(bv1, bv2); // Same seed produces same bits
+    /// # }
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(n) where n is the number of words (`len_bits / 64`).
+    #[cfg(feature = "rand")]
+    pub fn random_seeded(len_bits: usize, seed: u64) -> Self {
+        use rand::rngs::StdRng;
+        use rand::SeedableRng;
+
+        let mut rng = StdRng::seed_from_u64(seed);
+        Self::random(len_bits, &mut rng)
+    }
+
+    /// Creates a `BitVec` with random bits where each bit is set with probability `p`.
+    ///
+    /// For `p = 0.5`, prefer [`BitVec::random`] which is optimized for the uniform case.
+    ///
+    /// # Arguments
+    ///
+    /// * `len_bits` - The number of bits in the resulting vector
+    /// * `p` - Probability in [0.0, 1.0] that each bit is set to 1
+    /// * `rng` - A mutable reference to a random number generator
+    ///
+    /// # Panics
+    ///
+    /// Panics if `p` is not in the range [0.0, 1.0].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # #[cfg(feature = "rand")] {
+    /// use gf2_core::BitVec;
+    /// use rand::rngs::StdRng;
+    /// use rand::SeedableRng;
+    ///
+    /// let mut rng = StdRng::seed_from_u64(42);
+    /// // Create a sparse bit vector (~10% ones)
+    /// let bv = BitVec::random_with_probability(1000, 0.1, &mut rng);
+    /// assert_eq!(bv.len(), 1000);
+    /// # }
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(n) where n = `len_bits`. Note that this is slower than [`BitVec::random`]
+    /// for the default p=0.5 case.
+    #[cfg(feature = "rand")]
+    pub fn random_with_probability<R: rand::Rng>(len_bits: usize, p: f64, rng: &mut R) -> Self {
+        assert!(
+            (0.0..=1.0).contains(&p),
+            "Probability must be in range [0.0, 1.0], got {}",
+            p
+        );
+
+        if len_bits == 0 {
+            return Self::new();
+        }
+
+        // Fast paths for extreme probabilities
+        if p == 0.0 {
+            return Self {
+                data: vec![0u64; len_bits.div_ceil(64)],
+                len_bits,
+            };
+        }
+        if p == 1.0 {
+            let mut bv = Self {
+                data: vec![u64::MAX; len_bits.div_ceil(64)],
+                len_bits,
+            };
+            bv.mask_tail();
+            return bv;
+        }
+
+        // For p=0.5, use optimized word-level generation
+        if (p - 0.5).abs() < 1e-10 {
+            return Self::random(len_bits, rng);
+        }
+
+        // General case: generate bits individually
+        let mut bv = Self::with_capacity(len_bits);
+        for _ in 0..len_bits {
+            bv.push_bit(rng.gen_bool(p));
+        }
+        bv
+    }
+
+    /// Fills this `BitVec` with random bits using the provided RNG.
+    ///
+    /// The length of the bit vector remains unchanged.
+    ///
+    /// # Arguments
+    ///
+    /// * `rng` - A mutable reference to a random number generator
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # #[cfg(feature = "rand")] {
+    /// use gf2_core::BitVec;
+    /// use rand::rngs::StdRng;
+    /// use rand::SeedableRng;
+    ///
+    /// let mut bv = BitVec::from_bytes_le(&[0x00; 10]);
+    /// let mut rng = StdRng::seed_from_u64(42);
+    /// bv.fill_random(&mut rng);
+    /// // bv now contains random bits
+    /// # }
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(n) where n is the number of words.
+    #[cfg(feature = "rand")]
+    pub fn fill_random<R: rand::Rng>(&mut self, rng: &mut R) {
+        if !self.data.is_empty() {
+            rng.fill(&mut self.data[..]);
+            self.mask_tail();
+        }
+    }
+
     /// Clears all bits, setting the length to zero.
     ///
     /// # Examples
