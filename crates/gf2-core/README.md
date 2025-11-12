@@ -69,7 +69,7 @@ let bv = BitVec::random_seeded(500, 0x1234);
 ### Sparse Matrices
 
 ```rust
-use gf2_core::sparse::SparseMatrix;
+use gf2_core::sparse::{SparseMatrix, SparseMatrixDual};
 use gf2_core::BitVec;
 
 // Build from coordinate (COO) format
@@ -80,16 +80,27 @@ let sparse = SparseMatrix::from_coo(2, 5, &coo);
 let x = BitVec::random(5, &mut rng);
 let y = sparse.matvec(&x);
 
-// Row iteration for message passing
+// Row iteration
 for col in sparse.row_iter(0) {
     println!("Row 0 has nonzero at column {}", col);
 }
 
-// Column access via transpose
-let sparse_t = sparse.transpose();
-for row in sparse_t.row_iter(3) {
-    println!("Column 3 has nonzero at row {}", row);
+// For bidirectional access patterns, use dual representation
+let dual = SparseMatrixDual::from_coo(2, 5, &coo);
+
+// Fast row access (CSR)
+for col in dual.row_iter(0) {
+    println!("Row 0, column {}", col);
 }
+
+// Fast column access (CSC - no transpose!)
+for row in dual.col_iter(3) {
+    println!("Column 3, row {}", row);
+}
+
+// Both A×x and A^T×x are efficient
+let y = dual.matvec(&x);
+let yt = dual.matvec_transpose(&y);
 ```
 
 For more details, see the workspace-level [README](../../README.md) and the inlined Rustdocs.
