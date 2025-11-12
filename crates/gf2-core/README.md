@@ -6,6 +6,7 @@
 
 - Dense, tail-masked `BitVec` backed by `Vec<u64>`
 - Bit-packed `BitMatrix` with fast M4RM multiplication and Gauss-Jordan inversion
+- **Sparse matrices** in CSR format for low-density LDPC workloads (< 1% density)
 - SIMD-accelerated operations (AVX2): logical ops, popcount, scans, word-aligned shifts
 - Strict safety guarantees: `#![deny(unsafe_code)]`
 - Comprehensive tests and Criterion benchmarks
@@ -63,6 +64,32 @@ let sparse_matrix = BitMatrix::random_with_probability(100, 100, 0.1, &mut rng);
 
 // Deterministic random generation
 let bv = BitVec::random_seeded(500, 0x1234);
+```
+
+### Sparse Matrices
+
+```rust
+use gf2_core::sparse::SparseMatrix;
+use gf2_core::BitVec;
+
+// Build from coordinate (COO) format
+let coo = vec![(0, 1), (0, 3), (1, 2), (1, 4)];
+let sparse = SparseMatrix::from_coo(2, 5, &coo);
+
+// Matrix-vector multiply for syndrome computation
+let x = BitVec::random(5, &mut rng);
+let y = sparse.matvec(&x);
+
+// Row iteration for message passing
+for col in sparse.row_iter(0) {
+    println!("Row 0 has nonzero at column {}", col);
+}
+
+// Column access via transpose
+let sparse_t = sparse.transpose();
+for row in sparse_t.row_iter(3) {
+    println!("Column 3 has nonzero at row {}", row);
+}
 ```
 
 For more details, see the workspace-level [README](../../README.md) and the inlined Rustdocs.
