@@ -66,3 +66,4 @@ pub use channel::{AwgnChannel, BpskModulator};
 pub use convolutional::{ConvolutionalDecoder, ConvolutionalEncoder};
 pub use linear::{LinearBlockCode, SyndromeTableDecoder};
 pub use llr::Llr;
+pub use traits::DecoderResult;

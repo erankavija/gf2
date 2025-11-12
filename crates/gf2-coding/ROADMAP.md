@@ -24,9 +24,13 @@ This roadmap captures the higher-level coding theory and compression research la
 
 ### Soft-Decision Infrastructure
 - ✅ LLR (log-likelihood ratio) types and basic operations
-- [ ] Soft-decision decoder trait (`SoftDecoder`) with streaming API
+- ✅ Multi-operand box-plus for LDPC check nodes (exact tanh-based)
+- ✅ Min-sum approximation variants (standard, normalized, offset)
+- ✅ Numerical stability helpers (safe operations, finite checks)
+- ✅ Soft-decision decoder traits (`SoftDecoder`, `IterativeSoftDecoder`)
+- ✅ `DecoderResult` type with convergence tracking
 - ✅ Soft-input conversion utilities (symbol → LLR mapping)
-- [ ] Quantization strategies (floating-point vs. fixed-point LLRs)
+- [ ] Quantization strategies (floating-point vs. fixed-point LLRs) - deferred
 
 ### AWGN Channel Modeling
 - ✅ BPSK modulation (bit → symbol mapping)

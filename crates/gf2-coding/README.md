@@ -7,6 +7,8 @@
 - **Linear block codes** with generator/parity matrices and syndrome decoding
 - **Hamming codes** with efficient syndrome table decoder
 - **Convolutional codes** with shift-register encoder and Viterbi decoder
+- **Soft-decision LLR operations** for LDPC and turbo codes (exact and min-sum variants)
+- **AWGN channel simulation** with BPSK modulation for BER/FER analysis
 - **Streaming API** for both block and convolutional codes
 - **Property-based tests** ensuring correctness across random inputs
 - **Educational examples** with comprehensive documentation and mathematical formulas
@@ -24,6 +26,15 @@
 - Hard-decision Viterbi decoding
 - Termination support for trellis closure
 - Industry-standard generator polynomials (NASA/CCSDS)
+
+### Soft-Decision Decoding
+- Log-likelihood ratio (LLR) types with comprehensive operations
+- Multi-operand box-plus for LDPC check node updates
+- Min-sum approximations: standard, normalized (α), and offset (β)
+- Numerical stability helpers for iterative decoding
+- Soft-decision decoder traits for single-shot and iterative decoders
+- DecoderResult type with convergence and iteration tracking
+- AWGN channel model with configurable Eb/N0
 
 ## Usage
 
@@ -98,6 +109,12 @@ cargo run --example hamming_7_4
 
 # NASA convolutional code tutorial with error correction
 cargo run --example nasa_rate_half_k3
+
+# LLR operations for LDPC/turbo codes
+cargo run --example llr_operations
+
+# Uncoded AWGN transmission baseline
+cargo run --example awgn_uncoded
 ```
 
 ## Testing
