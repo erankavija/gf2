@@ -1,12 +1,14 @@
-//! Sparse matrix primitives for GF(2) with CSR/COO representations.
+//! Sparse matrix primitives for GF(2) with CSR/CSC representations.
 //!
 //! This module provides memory-efficient sparse matrix support for low-density
-//! matrices (< 1% density) over GF(2), optimized for LDPC code workloads.
+//! matrices (< 5% density) over GF(2).
 //!
 //! # Storage Formats
 //!
 //! - **CSR (Compressed Sparse Row)**: Row-major format optimized for row iteration
 //!   and matrix-vector multiply. All nonzero values are implicitly 1 in GF(2).
+//! - **Dual (CSR+CSC)**: Stores both row and column formats for efficient bidirectional
+//!   access patterns (e.g., alternating row/column sweeps in iterative algorithms).
 //!
 //! # Examples
 //!
@@ -37,13 +39,13 @@ use crate::{matrix::BitMatrix, BitVec};
 
 /// A row-major sparse matrix in Compressed Sparse Row (CSR) format over GF(2).
 ///
-/// Optimized for low-density matrices (< 1% nonzeros) typical in LDPC codes.
+/// Optimized for low-density matrices (< 5% nonzeros).
 /// All nonzero entries are implicitly 1; the values array is omitted for GF(2).
 ///
 /// # Storage Layout
 ///
 /// - `indptr`: Array of length `rows + 1`. Row r spans `indices[indptr[r]..indptr[r+1]]`.
-/// - `indices`: Packed array of column indices for nonzero entries.
+/// - `indices`: Packed array of column indices for nonzero entries (sorted per row).
 /// - Duplicate coordinates XOR (even count cancels) in COO construction.
 ///
 /// # Examples
@@ -295,6 +297,144 @@ impl SparseMatrix {
             let end = self.indptr[r + 1];
             for &c in &self.indices[start..end] {
                 acc ^= x.get(c);
+            }
+            y.push_bit(acc);
+        }
+        y
+    }
+}
+
+/// Dual representation storing both CSR and CSC formats for efficient bidirectional access.
+///
+/// This representation stores the same sparse matrix in both row-major (CSR) and
+/// column-major (CSC) formats, enabling O(nnz_in_row/col) access for both row and
+/// column iteration patterns without transposition overhead.
+///
+/// # Use Cases
+///
+/// - Algorithms requiring alternating row and column sweeps
+/// - Iterative methods with bidirectional access patterns
+/// - Applications where both A×x and A^T×x are frequently computed
+///
+/// # Memory Trade-off
+///
+/// Uses 2× memory of single CSR representation, but still typically < dense BitMatrix
+/// at densities below 3-5%.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::sparse::SparseMatrixDual;
+/// use gf2_core::matrix::BitMatrix;
+///
+/// let mut m = BitMatrix::zeros(3, 4);
+/// m.set(0, 1, true);
+/// m.set(1, 2, true);
+/// m.set(2, 0, true);
+///
+/// let dual = SparseMatrixDual::from_dense(&m);
+///
+/// // Fast row iteration (no transpose)
+/// let row_cols: Vec<_> = dual.row_iter(0).collect();
+/// assert_eq!(row_cols, vec![1]);
+///
+/// // Fast column iteration (no transpose)
+/// let col_rows: Vec<_> = dual.col_iter(1).collect();
+/// assert_eq!(col_rows, vec![0]);
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SparseMatrixDual {
+    csr: SparseMatrix,
+    csc: SparseMatrix,
+}
+
+impl SparseMatrixDual {
+    /// Creates a dual representation from a dense BitMatrix.
+    ///
+    /// Constructs both CSR and CSC formats in one pass.
+    pub fn from_dense(m: &BitMatrix) -> Self {
+        let csr = SparseMatrix::from_dense(m);
+        let csc = csr.transpose();
+        Self { csr, csc }
+    }
+
+    /// Creates a dual representation from COO coordinates.
+    pub fn from_coo(rows: usize, cols: usize, entries: &[(usize, usize)]) -> Self {
+        let csr = SparseMatrix::from_coo(rows, cols, entries);
+        let csc = csr.transpose();
+        Self { csr, csc }
+    }
+
+    /// Returns an iterator over set column indices in the given row.
+    ///
+    /// This uses the CSR representation for O(nnz_in_row) performance.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `row >= rows`.
+    #[inline]
+    pub fn row_iter(&self, row: usize) -> impl ExactSizeIterator<Item = usize> + '_ {
+        self.csr.row_iter(row)
+    }
+
+    /// Returns an iterator over set row indices in the given column.
+    ///
+    /// This uses the CSC representation for O(nnz_in_col) performance
+    /// without transposition overhead.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `col >= cols`.
+    #[inline]
+    pub fn col_iter(&self, col: usize) -> impl ExactSizeIterator<Item = usize> + '_ {
+        self.csc.row_iter(col) // CSC's rows are original columns
+    }
+
+    /// Converts to dense BitMatrix.
+    pub fn to_dense(&self) -> BitMatrix {
+        self.csr.to_dense()
+    }
+
+    /// Returns number of rows.
+    #[inline]
+    pub fn rows(&self) -> usize {
+        self.csr.rows()
+    }
+
+    /// Returns number of columns.
+    #[inline]
+    pub fn cols(&self) -> usize {
+        self.csr.cols()
+    }
+
+    /// Returns number of nonzeros.
+    #[inline]
+    pub fn nnz(&self) -> usize {
+        self.csr.nnz()
+    }
+
+    /// Matrix-vector product y = A · x over GF(2).
+    #[inline]
+    pub fn matvec(&self, x: &BitVec) -> BitVec {
+        self.csr.matvec(x)
+    }
+
+    /// Transpose-vector product y = A^T · x over GF(2).
+    ///
+    /// Uses the CSC representation to compute the transpose-vector product
+    /// efficiently without materializing the transpose.
+    pub fn matvec_transpose(&self, x: &BitVec) -> BitVec {
+        assert_eq!(
+            x.len(),
+            self.csr.rows(),
+            "input BitVec length must equal rows for transpose"
+        );
+        let mut y = BitVec::with_capacity(self.csr.cols());
+        // CSC's row iteration is the transpose's column iteration
+        for c in 0..self.csr.cols() {
+            let mut acc = false;
+            for r in self.col_iter(c) {
+                acc ^= x.get(r);
             }
             y.push_bit(acc);
         }
