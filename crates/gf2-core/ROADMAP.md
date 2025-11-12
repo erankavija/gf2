@@ -26,12 +26,36 @@ This roadmap focuses on the high-performance primitives for GF(2): `BitVec`, `Bi
 - Broadword/PDEP-PEXT strategies; density-aware paths
 - APIs: `rank(idx)`, `select(k)` with lazy indexing
 
-## Phase 5: GF(2) Polynomials (Planned)
+## Phase 5: Sparse Matrix Primitives (Planned)
+**Motivation**: LDPC codes (gf2-coding Phase C5) require sparse parity-check matrices with <1% density. Dense `BitMatrix` wastes memory and cycles on mostly-zero data.
+
+- `SparseMatrix` type with CSR (Compressed Sparse Row) / COO (Coordinate) formats
+- Efficient row/column iteration for belief propagation message passing (required by LDPC decoders)
+- Memory-efficient storage: bit-packed nonzero values with integer index arrays
+- Conversion APIs: `BitMatrix::to_sparse()`, `SparseMatrix::to_dense()` for interop
+- Sparse matrix-vector multiply (required for syndrome computation in LDPC)
+- Transpose and row/column access optimized for cache locality (critical for iterative decoders)
+- Benchmarks: memory footprint vs. density; multiply throughput vs. dense baseline
+- Property tests: equivalence with dense operations at low sparsity
+
+## Phase 6: Polar Transform Operations (Planned)
+**Motivation**: Polar codes (gf2-coding Phase C6) require fast recursive butterfly transforms for O(N log N) encoding/decoding, exploiting Kronecker product structure of polar generator matrix.
+
+- Fast Hadamard Transform over GF(2) with recursive butterfly operations
+- In-place polar encoding transform (G_N = [1 0; 1 1]^⊗n Kronecker power)
+- Bit-reversal permutation with cache-optimized access patterns (required for natural vs. bit-reversed order)
+- Block-based butterfly kernels prepared for SIMD optimization (AVX2 gather/scatter)
+- Integration with Phase 4 rank/select for bit-channel reliability sorting (frozen bit selection)
+- Benchmarks: transform throughput vs. naive matrix multiply (target 100x+ speedup for N=1024+)
+- Property tests: transform-inverse roundtrip, linearity preservation, equivalence to matrix form
+
+## Phase 7: GF(2) Polynomials (Planned)
 - `GF2Poly` wrapper over `BitVec`
 - Scalar schoolbook; CLMUL/VMULL.P64 acceleration
 - Karatsuba/Toom-Cook; division/mod; GCD; property tests
+- Note: CLMUL operations also accelerate polar transforms (Phase 6) due to recursive structure
 
-## Phase 6: Kernel Quality & Safety (Ongoing)
+## Phase 8: Kernel Quality & Safety (Ongoing)
 - Clear contracts for kernels (alignment, sizes)
 - Microbenchmarks; perf CI matrices; `unsafe` audit where applicable
 

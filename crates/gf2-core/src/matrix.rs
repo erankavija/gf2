@@ -515,6 +515,24 @@ impl BitMatrix {
         result
     }
 
+    /// Converts this dense matrix to a CSR SparseMatrix.
+    ///
+    /// This scans all bits and records set columns per row. Suitable for low-density matrices.
+    ///
+    /// # Examples
+    /// ```
+    /// use gf2_core::matrix::BitMatrix;
+    /// let mut m = BitMatrix::zeros(2, 3);
+    /// m.set(0, 1, true);
+    /// let s = m.to_sparse();
+    /// assert_eq!(s.rows(), 2);
+    /// assert_eq!(s.cols(), 3);
+    /// assert_eq!(s.nnz(), 1);
+    /// ```
+    pub fn to_sparse(&self) -> crate::sparse::SparseMatrix {
+        crate::sparse::SparseMatrix::from_dense(self)
+    }
+
     /// Masks padding bits in each row to zero.
     ///
     /// This maintains the invariant that bits beyond `cols` in each row

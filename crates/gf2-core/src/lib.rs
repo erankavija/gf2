@@ -40,6 +40,7 @@ mod bitvec;
 pub mod kernels;
 mod macros;
 pub mod matrix;
+pub mod sparse;
 
 pub use bitslice::{BitSlice, BitSliceMut};
 pub use bitvec::BitVec;
