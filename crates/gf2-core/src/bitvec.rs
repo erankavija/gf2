@@ -64,6 +64,25 @@ impl BitVec {
         }
     }
 
+    /// Creates a `BitVec` with `len` bits, all initialized to zero.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::BitVec;
+    ///
+    /// let bv = BitVec::zeros(10);
+    /// assert_eq!(bv.len(), 10);
+    /// assert_eq!(bv.count_ones(), 0);
+    /// ```
+    pub fn zeros(len: usize) -> Self {
+        let num_words = len.div_ceil(64);
+        Self {
+            data: vec![0u64; num_words],
+            len_bits: len,
+        }
+    }
+
     /// Returns the number of bits in the `BitVec`.
     ///
     /// # Examples
@@ -1065,6 +1084,37 @@ mod tests {
         let bv = BitVec::with_capacity(100);
         assert_eq!(bv.len(), 0);
         assert!(bv.is_empty());
+    }
+
+    #[test]
+    fn test_zeros() {
+        let bv = BitVec::zeros(10);
+        assert_eq!(bv.len(), 10);
+        assert_eq!(bv.count_ones(), 0);
+        for i in 0..10 {
+            assert!(!bv.get(i));
+        }
+    }
+
+    #[test]
+    fn test_zeros_empty() {
+        let bv = BitVec::zeros(0);
+        assert_eq!(bv.len(), 0);
+        assert!(bv.is_empty());
+    }
+
+    #[test]
+    fn test_zeros_word_boundary() {
+        let bv = BitVec::zeros(64);
+        assert_eq!(bv.len(), 64);
+        assert_eq!(bv.count_ones(), 0);
+    }
+
+    #[test]
+    fn test_zeros_cross_word() {
+        let bv = BitVec::zeros(130);
+        assert_eq!(bv.len(), 130);
+        assert_eq!(bv.count_ones(), 0);
     }
 
     #[test]
