@@ -6,7 +6,7 @@
 
 - Dense, tail-masked `BitVec` backed by `Vec<u64>`
 - Bit-packed `BitMatrix` with fast M4RM multiplication and Gauss-Jordan inversion
-- **Sparse matrices** in CSR format for low-density LDPC workloads (< 1% density)
+- **Sparse matrices** in CSR/CSC formats for low-density matrices (< 5% density)
 - SIMD-accelerated operations (AVX2): logical ops, popcount, scans, word-aligned shifts
 - Strict safety guarantees: `#![deny(unsafe_code)]`
 - Comprehensive tests and Criterion benchmarks
