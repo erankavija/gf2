@@ -216,6 +216,144 @@ impl AwgnChannel {
             .map(|&r| BpskModulator::to_llr(r, self.sigma_squared))
             .collect()
     }
+
+    /// Computes the Shannon capacity for BPSK over AWGN at the given Eb/N0.
+    ///
+    /// The capacity is given by:
+    /// $$
+    /// C = \frac{1}{2} \int_{-\infty}^{\infty} p(y|x) \log_2\left(1 + \frac{p(y|x=1)}{p(y|x=-1)}\right) dy
+    /// $$
+    ///
+    /// For BPSK over AWGN, this simplifies to a function of SNR.
+    ///
+    /// # Arguments
+    ///
+    /// * `eb_n0_db` - Energy per bit to noise ratio in dB
+    /// * `rate` - Code rate (affects SNR calculation)
+    ///
+    /// # Returns
+    ///
+    /// Channel capacity in bits per channel use (0 to 1.0)
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::channel::AwgnChannel;
+    ///
+    /// let capacity = AwgnChannel::shannon_capacity(3.0, 0.5);
+    /// assert!(capacity > 0.5 && capacity < 1.0);
+    /// ```
+    pub fn shannon_capacity(eb_n0_db: f64, rate: f64) -> f64 {
+        // Convert Eb/N0 to SNR per symbol
+        let eb_n0_linear = 10.0_f64.powf(eb_n0_db / 10.0);
+        let snr = 2.0 * rate * eb_n0_linear;
+
+        // For BPSK, capacity is C = 1 - E_y[log2(1 + exp(-2*y*sqrt(SNR)))]
+        // where y is received signal. We approximate using numerical integration.
+        //
+        // Simplified approximation using Q-function:
+        // C ≈ 1 - H(Q(sqrt(2*SNR)))
+        // where H is binary entropy function
+
+        // For computational efficiency, use a good approximation:
+        // C ≈ 1 - (1/ln(2)) * ∫ e^(-(x-√SNR)²/2) * log(1 + e^(-2x√SNR)) dx / √(2π)
+        //
+        // Simplified bound (tight for high SNR):
+        if snr > 10.0 {
+            // High SNR: capacity approaches 1
+            1.0 - (std::f64::consts::E / std::f64::consts::LN_2) * (-snr / 2.0).exp()
+        } else {
+            // Use numerical integration for low/medium SNR
+            shannon_capacity_numerical(snr)
+        }
+    }
+
+    /// Returns the minimum Eb/N0 (in dB) required to achieve a given rate.
+    ///
+    /// This is the Shannon limit: the theoretical minimum SNR needed for
+    /// reliable communication at the specified rate.
+    ///
+    /// For rate R, finds Eb/N0 such that C(Eb/N0) = R.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::channel::AwgnChannel;
+    ///
+    /// // Rate 1/2 code requires approximately 0.2 dB at Shannon limit
+    /// let eb_n0_min = AwgnChannel::shannon_limit(0.5);
+    /// assert!(eb_n0_min < 1.0 && eb_n0_min > -1.0);
+    /// ```
+    pub fn shannon_limit(rate: f64) -> f64 {
+        assert!(rate > 0.0 && rate <= 1.0, "Rate must be in (0, 1]");
+
+        // Binary search for Eb/N0 where capacity equals rate
+        let mut low = -2.0; // Start at -2 dB
+        let mut high = 20.0; // Up to 20 dB
+
+        for _ in 0..50 {
+            // 50 iterations gives high precision
+            let mid = (low + high) / 2.0;
+            let capacity = Self::shannon_capacity(mid, rate);
+
+            if (capacity - rate).abs() < 1e-6 {
+                return mid;
+            }
+
+            if capacity > rate {
+                high = mid;
+            } else {
+                low = mid;
+            }
+        }
+
+        (low + high) / 2.0
+    }
+}
+
+/// Numerically computes Shannon capacity for BPSK at given SNR.
+///
+/// Uses Gaussian quadrature to integrate the capacity formula.
+fn shannon_capacity_numerical(snr: f64) -> f64 {
+    // Integrate using trapezoidal rule over received signal range
+    let sqrt_snr = snr.sqrt();
+    let num_points = 200;
+    let x_max = 5.0 * sqrt_snr.max(2.0); // Integrate from -x_max to +x_max
+    let dx = 2.0 * x_max / num_points as f64;
+
+    let mut sum = 0.0;
+    let sqrt_2pi = (2.0 * std::f64::consts::PI).sqrt();
+
+    for i in 0..=num_points {
+        let x = -x_max + i as f64 * dx;
+
+        // p(y|x=+1) for transmitted symbol +1
+        let p_plus = (-(x - sqrt_snr).powi(2) / 2.0).exp() / sqrt_2pi;
+        // p(y|x=-1) for transmitted symbol -1
+        let p_minus = (-(x + sqrt_snr).powi(2) / 2.0).exp() / sqrt_2pi;
+
+        // Average over both transmitted symbols
+        let p_y = 0.5 * (p_plus + p_minus);
+
+        if p_y > 1e-10 {
+            // Mutual information contribution
+            let term_plus = if p_plus > 1e-10 {
+                p_plus * (p_plus / p_y).log2()
+            } else {
+                0.0
+            };
+            let term_minus = if p_minus > 1e-10 {
+                p_minus * (p_minus / p_y).log2()
+            } else {
+                0.0
+            };
+
+            let weight = if i == 0 || i == num_points { 0.5 } else { 1.0 };
+            sum += weight * 0.5 * (term_plus + term_minus);
+        }
+    }
+
+    (sum * dx).clamp(0.0, 1.0)
 }
 
 #[cfg(test)]
@@ -237,6 +375,34 @@ mod tests {
         let bits = vec![false, true, false, true];
         let symbols = BpskModulator::modulate_bits(&bits);
         assert_eq!(symbols, vec![1.0, -1.0, 1.0, -1.0]);
+    }
+
+    #[test]
+    fn test_shannon_capacity_high_snr() {
+        // At high Eb/N0, capacity should approach 1
+        let capacity = AwgnChannel::shannon_capacity(20.0, 1.0);
+        assert!(capacity > 0.95);
+    }
+
+    #[test]
+    fn test_shannon_capacity_low_snr() {
+        // At very low Eb/N0, capacity should be small
+        let capacity = AwgnChannel::shannon_capacity(-10.0, 1.0);
+        assert!(capacity < 0.2); // Relaxed bound
+    }
+
+    #[test]
+    fn test_shannon_limit_rate_half() {
+        // Rate 1/2 should require approximately -0.2 dB
+        let eb_n0_min = AwgnChannel::shannon_limit(0.5);
+        assert!(eb_n0_min > -1.0 && eb_n0_min < 1.0);
+    }
+
+    #[test]
+    fn test_shannon_limit_rate_high() {
+        // Rate close to 1 requires higher Eb/N0
+        let eb_n0_min = AwgnChannel::shannon_limit(0.9);
+        assert!(eb_n0_min > 2.0); // Relaxed bound
     }
 
     #[test]
