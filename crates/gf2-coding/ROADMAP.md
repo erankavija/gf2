@@ -51,27 +51,36 @@ This roadmap captures the higher-level coding theory and compression research la
 - Soft-input Viterbi Algorithm (SOVA) for convolutional codes
 
 ## Phase C5: Sparse & Graph-Based Codes (Critical for Primary Goal)
-**Target: LDPC codes with belief propagation decoding**
+**Target: LDPC codes with belief propagation decoding** ✅ **CORE COMPLETE**
 
 ### LDPC Code Construction
-- [ ] Sparse parity-check matrix format (CSR / bit-packed hybrid)
-- [ ] Regular LDPC code generation (column/row weight specified)
-- [ ] Irregular LDPC codes (degree distribution)
-- [ ] Tanner graph representation (bipartite graph abstraction)
+- ✅ Sparse parity-check matrix format (SparseMatrixDual from gf2-core)
+- ✅ Regular LDPC code generation (column/row weight specified)
+- [ ] Irregular LDPC codes (degree distribution) - future work
+- ✅ Tanner graph representation (implicit via sparse matrix)
 
 ### Belief Propagation Decoder
-- [ ] Sum-product algorithm (SPA) with LLR messages
-- [ ] Min-sum approximation for reduced complexity
-- [ ] Normalized/offset min-sum variants
-- [ ] Early stopping criteria (syndrome check, iteration limit)
-- [ ] Damping strategies for convergence
+- ✅ Sum-product algorithm (SPA) with LLR messages (implemented, using min-sum)
+- ✅ Min-sum approximation for reduced complexity
+- [ ] Normalized/offset min-sum variants - LLR functions exist, decoder integration needed
+- ✅ Early stopping criteria (syndrome check, iteration limit)
+- [ ] Damping strategies for convergence - future work
 
 ### Performance Analysis
-- [ ] BER/FER simulation over AWGN
-- [ ] Waterfall region characterization
-- [ ] Error floor analysis
+- ✅ BER/FER simulation over AWGN (example: ldpc_awgn.rs)
+- [ ] Waterfall region characterization - manual plotting from example output
+- [ ] Error floor analysis - requires longer simulations
 - [ ] Comparison with Shannon limit and turbo codes
 - [ ] Profiling: memory bandwidth vs. iteration count
+
+### Optional Enhancements (Future Work)
+- [ ] Systematic LDPC encoding (currently uses all-zero codewords)
+- [ ] Improved irregular LDPC construction algorithms (PEG, ACE optimization)
+- [ ] Sum-product algorithm option (exact tanh-based, currently min-sum only)
+- [ ] BER/FER curve plotting utilities
+- [ ] Parallel decoder implementations (multi-threaded message passing)
+- [ ] Layered scheduling for faster convergence
+- [ ] Quantized LLR decoder variants (fixed-point arithmetic)
 
 ## Phase C6: Polar & Modern Codes (Research)
 - Successive cancellation (SC) and SC-List decoder prototypes

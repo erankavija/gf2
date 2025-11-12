@@ -57,6 +57,7 @@
 
 pub mod channel;
 pub mod convolutional;
+pub mod ldpc;
 pub mod linear;
 pub mod llr;
 pub mod traits;
@@ -64,6 +65,7 @@ pub mod traits;
 // Re-export main types
 pub use channel::{AwgnChannel, BpskModulator};
 pub use convolutional::{ConvolutionalDecoder, ConvolutionalEncoder};
+pub use ldpc::{LdpcCode, LdpcDecoder};
 pub use linear::{LinearBlockCode, SyndromeTableDecoder};
 pub use llr::Llr;
 pub use traits::DecoderResult;

@@ -36,6 +36,13 @@
 - DecoderResult type with convergence and iteration tracking
 - AWGN channel model with configurable Eb/N0
 
+### LDPC Codes
+- Sparse parity-check matrix representation (using gf2-core SparseMatrixDual)
+- Regular LDPC code construction
+- Belief propagation decoder with min-sum approximation
+- Iterative soft-decision decoding with early stopping
+- Syndrome-based convergence detection
+
 ## Usage
 
 Add to your `Cargo.toml`:
@@ -112,6 +119,9 @@ cargo run --example nasa_rate_half_k3
 
 # LLR operations for LDPC/turbo codes
 cargo run --example llr_operations
+
+# LDPC-coded transmission over AWGN (belief propagation)
+cargo run --example ldpc_awgn --release
 
 # Uncoded AWGN transmission baseline
 cargo run --example awgn_uncoded
