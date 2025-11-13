@@ -3,7 +3,9 @@
 This roadmap captures the higher-level coding theory and compression research layers built atop `gf2-core` primitives. It intentionally separates exploratory, algorithmic work from low-level performance engineering.
 
 ## Primary Goal
-**Achieve the ability to simulate LDPC error rate performance over AWGN channels**. This guides prioritization toward soft-decision decoding infrastructure and channel modeling.
+**Simulate DVB-T2 FEC chain Frame Error Rate (FER) over AWGN channels**. This includes BCH outer codes, LDPC inner codes, bit interleaving, and bit-interleaved coded modulation (BICM).
+
+See [docs/DVB_T2_DESIGN.md](docs/DVB_T2_DESIGN.md) for detailed design and implementation plan.
 
 ## Phase C1: Foundational Block Codes (Complete)
 - ✅ Linear block code abstraction (`LinearBlockCode`) with generator (G) & parity-check (H) matrices
@@ -50,49 +52,77 @@ This roadmap captures the higher-level coding theory and compression research la
 - Chien search integration for root finding in GF(2^m)
 - Soft-input Viterbi Algorithm (SOVA) for convolutional codes
 
-## Phase C5: Sparse & Graph-Based Codes (Critical for Primary Goal)
-**Target: LDPC codes with belief propagation decoding** ✅ **CORE COMPLETE**
+## Phase C5: Sparse & Graph-Based Codes (Complete) ✅
+**LDPC codes with belief propagation decoding**
 
 ### LDPC Code Construction
 - ✅ Sparse parity-check matrix format (SparseMatrixDual from gf2-core)
 - ✅ Regular LDPC code generation (column/row weight specified)
-- [ ] Irregular LDPC codes (degree distribution) - future work
 - ✅ Tanner graph representation (implicit via sparse matrix)
+- [ ] Irregular LDPC codes (degree distribution) - deferred
+- [ ] DVB-T2 quasi-cyclic LDPC codes - Phase C10
 
 ### Belief Propagation Decoder
-- ✅ Sum-product algorithm (SPA) with LLR messages (implemented, using min-sum)
+- ✅ Sum-product algorithm (SPA) with LLR messages (min-sum implementation)
 - ✅ Min-sum approximation for reduced complexity
-- [ ] Normalized/offset min-sum variants - LLR functions exist, decoder integration needed
 - ✅ Early stopping criteria (syndrome check, iteration limit)
-- [ ] Damping strategies for convergence - future work
+- [ ] Normalized/offset min-sum with damping - optimization phase
+- [ ] Systematic LDPC encoding - future
 
 ### Performance Analysis
 - ✅ BER/FER simulation over AWGN (example: ldpc_awgn.rs)
-- [ ] Waterfall region characterization - manual plotting from example output
-- [ ] Error floor analysis - requires longer simulations
-- [ ] Comparison with Shannon limit and turbo codes
-- [ ] Profiling: memory bandwidth vs. iteration count
+- [ ] Waterfall and error floor characterization - manual from examples
+- [ ] Comparison with Shannon limit
+- [ ] Performance profiling
 
-### Optional Enhancements (Future Work)
-- [ ] Systematic LDPC encoding (currently uses all-zero codewords)
-- [ ] Improved irregular LDPC construction algorithms (PEG, ACE optimization)
-- [ ] Sum-product algorithm option (exact tanh-based, currently min-sum only)
-- [ ] BER/FER curve plotting utilities
-- [ ] Parallel decoder implementations (multi-threaded message passing)
-- [ ] Layered scheduling for faster convergence
-- [ ] Quantized LLR decoder variants (fixed-point arithmetic)
+## Phase C6: Advanced Decoding Algorithms (Planned)
+- Syndrome table optimization (compressed mapping)
+- Berlekamp–Massey for BCH-like codes (depends on GF(2^m) from gf2-core Phase 8)
+- Chien search integration for root finding
+- Soft-input Viterbi Algorithm (SOVA) for convolutional codes
 
-## Phase C6: Polar & Modern Codes (Research)
+## Phase C7: Polar & Modern Codes (Research)
 - Successive cancellation (SC) and SC-List decoder prototypes
 - Bit-channel reliability sorting; fast Hadamard-like transforms leveraging `BitMatrix`
 - Evaluate integration points with rank/select primitives
 
-## Phase C7: Compression Experiments (Exploratory)
+## Phase C8: Compression Experiments (Exploratory)
 - Bit-level transforms (run-length, delta, XOR chaining) using `BitVec` APIs
 - Entropy modeling playground (simple adaptive frequency coder over GF(2) residuals)
 - Comparative benchmarks: raw vs. transformed bitstreams
 
-## Phase C8: Performance & Ergonomics Polish (Ongoing)
+## Phase C9: BCH Codes (Planned) 🎯 **DVB-T2 DEPENDENCY**
+**Dependencies**: gf2-core Phase 8 (GF(2^m) arithmetic) ⚠️ **BLOCKING**
+
+- BCH code construction over GF(2^m)
+- Systematic encoding via generator polynomial
+- Algebraic decoding: syndrome computation, Berlekamp-Massey, Chien search
+- DVB-T2 standard BCH parameters (Normal/Long frames)
+- Integration with `BlockEncoder`/`HardDecisionDecoder` traits
+- Comprehensive tests including known answer tests from standards
+
+**Estimated effort**: 1-2 weeks (after gf2-core Phase 8)
+
+## Phase C10: DVB-T2 FEC Simulation (Planned) 🎯 **PRIMARY GOAL**
+**Simulate complete DVB-T2 FEC chain with FER performance analysis**
+
+### Components
+- **DVB-T2 LDPC**: Quasi-cyclic LDPC codes per ETSI EN 302 755 (all rates, both frame sizes)
+- **QAM Modulation**: QPSK, 16/64/256-QAM with Gray mapping and soft LLR demapping
+- **Bit Interleaving**: DVB-T2 column-row interleaver
+- **System Integration**: End-to-end transmit/receive chain
+- **FER Simulation**: Monte Carlo framework with configurable parameters
+
+### Deliverables
+- Complete DVB-T2 encoder/decoder for standard configurations
+- FER vs. Eb/N0 simulation framework
+- Performance comparison across code rates and modulations
+- Validation against Shannon limit and reference implementations
+- Comprehensive documentation and examples
+
+**Estimated effort**: 6-9 weeks (Phases C10-C15, see [docs/DVB_T2_DESIGN.md](docs/DVB_T2_DESIGN.md))
+
+## Phase C11: Performance & Ergonomics Polish (Ongoing)
 - Unified error handling and panic messages → shift towards `Result` where appropriate
 - Trait refinements: streaming vs. batch encode/decode unification
 - Doc examples with visual syndrome / decoding traces
