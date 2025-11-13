@@ -41,11 +41,11 @@ fn main() {
     println!("  (Theoretical limit for reliable communication)");
     println!();
 
-    let num_frames = 100; // Number of codewords to test per SNR point
+    let num_frames = 1000; // Number of codewords to test per SNR point
     let max_iterations = 50;
 
     // Eb/N0 range appropriate for rate-1/2 LDPC
-    let eb_n0_range = vec![0.0, 1.0, 2.0, 3.0, 4.0, 5.0];
+    let eb_n0_range = vec![0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0];
 
     println!("Simulating {} frames per Eb/N0 point", num_frames);
     println!("Max iterations: {}\n", max_iterations);
