@@ -265,6 +265,46 @@ pub trait SoftDecisionDecoder {
     fn decode_soft(&self, soft_bits: &[f64]) -> BitVec;
 }
 
+/// Streaming encoder for convolutional codes.
+///
+/// A streaming encoder processes bits one at a time, maintaining internal state
+/// across multiple encode operations. This is used for convolutional codes.
+pub trait StreamingEncoder {
+    /// Encodes a single input bit and returns the output symbol(s).
+    ///
+    /// # Arguments
+    ///
+    /// * `input` - The input bit to encode
+    ///
+    /// # Returns
+    ///
+    /// A vector of output bits (the encoded symbols)
+    fn encode_bit(&mut self, input: bool) -> Vec<bool>;
+
+    /// Resets the encoder state to initial conditions.
+    fn reset(&mut self);
+}
+
+/// Streaming decoder for convolutional codes.
+///
+/// A streaming decoder processes received symbols and maintains internal state
+/// across multiple decode operations.
+pub trait StreamingDecoder {
+    /// Decodes received symbol(s) and potentially outputs decoded bit(s).
+    ///
+    /// # Arguments
+    ///
+    /// * `symbols` - The received symbols to decode
+    ///
+    /// # Returns
+    ///
+    /// Decoded bits (may be empty if more symbols are needed)
+    fn decode_symbols(&mut self, symbols: &[bool]) -> Vec<bool>;
+
+    /// Resets the decoder state to initial conditions.
+    fn reset(&mut self);
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -492,44 +532,4 @@ mod tests {
         let llrs = vec![Llr::new(1.0); 5]; // Wrong length
         decoder.decode_soft(&llrs);
     }
-}
-
-/// Streaming encoder for convolutional codes.
-///
-/// A streaming encoder processes bits one at a time, maintaining internal state
-/// across multiple encode operations. This is used for convolutional codes.
-pub trait StreamingEncoder {
-    /// Encodes a single input bit and returns the output symbol(s).
-    ///
-    /// # Arguments
-    ///
-    /// * `input` - The input bit to encode
-    ///
-    /// # Returns
-    ///
-    /// A vector of output bits (the encoded symbols)
-    fn encode_bit(&mut self, input: bool) -> Vec<bool>;
-
-    /// Resets the encoder state to initial conditions.
-    fn reset(&mut self);
-}
-
-/// Streaming decoder for convolutional codes.
-///
-/// A streaming decoder processes received symbols and maintains internal state
-/// across multiple decode operations.
-pub trait StreamingDecoder {
-    /// Decodes received symbol(s) and potentially outputs decoded bit(s).
-    ///
-    /// # Arguments
-    ///
-    /// * `symbols` - The received symbols to decode
-    ///
-    /// # Returns
-    ///
-    /// Decoded bits (may be empty if more symbols are needed)
-    fn decode_symbols(&mut self, symbols: &[bool]) -> Vec<bool>;
-
-    /// Resets the decoder state to initial conditions.
-    fn reset(&mut self);
 }

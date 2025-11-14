@@ -7,8 +7,10 @@
 - **Linear block codes** with generator/parity matrices and syndrome decoding
 - **Hamming codes** with efficient syndrome table decoder
 - **Convolutional codes** with shift-register encoder and Viterbi decoder
+- **LDPC codes** with belief propagation decoding over sparse matrices
 - **Soft-decision LLR operations** for LDPC and turbo codes (exact and min-sum variants)
-- **AWGN channel simulation** with BPSK modulation for BER/FER analysis
+- **AWGN channel simulation** with BPSK modulation and Shannon capacity analysis
+- **Monte Carlo simulation framework** for BER/FER curve generation
 - **Streaming API** for both block and convolutional codes
 - **Property-based tests** ensuring correctness across random inputs
 - **Educational examples** with comprehensive documentation and mathematical formulas
@@ -34,7 +36,14 @@
 - Numerical stability helpers for iterative decoding
 - Soft-decision decoder traits for single-shot and iterative decoders
 - DecoderResult type with convergence and iteration tracking
-- AWGN channel model with configurable Eb/N0
+
+### Channel Modeling
+- AWGN channel with configurable Eb/N0
+- BPSK modulation and demodulation
+- Shannon capacity calculation for BPSK over AWGN
+- Shannon limit computation for target code rates
+- Monte Carlo simulation framework with CSV export
+- BER/FER curve generation utilities
 
 ### LDPC Codes
 - Sparse parity-check matrix representation (using gf2-core SparseMatrixDual)

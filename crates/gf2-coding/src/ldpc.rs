@@ -271,11 +271,11 @@ impl LdpcDecoder {
     fn variable_node_update(&mut self, channel_llrs: &[Llr]) {
         let h = self.code.parity_check_matrix();
 
-        for var in 0..self.code.n() {
+        for (var, &channel_llr) in channel_llrs.iter().enumerate().take(self.code.n()) {
             let neighbors: Vec<usize> = h.col_iter(var).collect();
 
             // Compute total belief: channel LLR + sum of incoming check messages
-            let mut belief = channel_llrs[var];
+            let mut belief = channel_llr;
             for (pos, &_check) in neighbors.iter().enumerate() {
                 belief = Llr::new(belief.value() + self.check_to_var_message(var, pos).value());
             }
@@ -349,9 +349,9 @@ impl IterativeSoftDecoder for LdpcDecoder {
         assert_eq!(llrs.len(), self.n(), "LLR length must equal n");
 
         // Initialize: variable-to-check messages = channel LLRs
-        for var in 0..self.code.n() {
+        for (var, &llr) in llrs.iter().enumerate().take(self.code.n()) {
             for pos in 0..self.var_to_check[var].len() {
-                self.var_to_check[var][pos] = llrs[var];
+                self.var_to_check[var][pos] = llr;
             }
         }
 

@@ -21,7 +21,7 @@ See [docs/DVB_T2_DESIGN.md](docs/DVB_T2_DESIGN.md) for detailed design and imple
 - ✅ Streaming encode/decode tests
 - ✅ Educational example with comprehensive documentation (`nasa_rate_half_k3`)
 
-## Phase C3: Soft-Decision Framework & Channel Modeling (In Progress)
+## Phase C3: Soft-Decision Framework & Channel Modeling (Complete) ✅
 **Goal: Enable LDPC simulation over AWGN channels**
 
 ### Soft-Decision Infrastructure
@@ -39,12 +39,16 @@ See [docs/DVB_T2_DESIGN.md](docs/DVB_T2_DESIGN.md) for detailed design and imple
 - ✅ AWGN noise generation (Box-Muller transform via Normal distribution)
 - ✅ Channel simulation framework (Eb/N0 → noise variance)
 - ✅ Batched transmission/reception for Monte Carlo trials
+- ✅ Shannon capacity calculation and verification
+- ✅ Shannon limit computation for target rates
 
 ### Integration & Testing
 - ✅ Property-based tests for LLR operations
-- [ ] Channel capacity verification against Shannon limit
-- [ ] BER/FER curve generation utilities
-- [ ] Baseline performance: uncoded transmission over AWGN
+- ✅ Channel capacity verification against Shannon limit
+- ✅ BER/FER curve generation utilities (`simulation` module)
+- ✅ Baseline performance: uncoded transmission over AWGN
+- ✅ Monte Carlo simulation framework with configurable parameters
+- ✅ CSV export for plotting results
 
 ## Phase C4: Advanced Decoding Algorithms (Planned)
 - Syndrome table optimization (compressed mapping)
