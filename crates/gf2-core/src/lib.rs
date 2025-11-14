@@ -37,6 +37,7 @@
 pub mod alg;
 mod bitslice;
 mod bitvec;
+pub mod gf2m;
 pub mod kernels;
 mod macros;
 pub mod matrix;

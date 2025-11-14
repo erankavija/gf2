@@ -57,22 +57,70 @@ This roadmap focuses on the high-performance primitives for GF(2): `BitVec`, `Bi
 - Karatsuba/Toom-Cook; division/mod; GCD; property tests
 - Note: CLMUL operations also accelerate polar transforms (Phase 6) due to recursive structure
 
-## Phase 8: Extension Field GF(2^m) Arithmetic (Planned) 🎯 **HIGH PRIORITY**
+## Phase 8: Extension Field GF(2^m) Arithmetic (In Progress) 🎯 **HIGH PRIORITY**
 **Motivation**: DVB-T2 BCH codes require extension field operations. Blocks gf2-coding DVB-T2 FEC simulation.
 
-- **Core**: Field elements, addition/multiplication/division over GF(2^m)
-- **Efficiency**: Log/antilog tables for m ≤ 16; shift-and-add for small m
-- **Polynomials**: `Gf2mPoly` with multiply, divide, GCD
-- **BCH Primitives**: Generator polynomial construction, syndrome computation, Chien search
-- **Standard Presets**: GF(2^8), GF(2^16) with standard primitive polynomials
-- **Testing**: Field axioms, property tests, known-answer tests from standards
-- **Documentation**: See [docs/GF2M_DESIGN.md](docs/GF2M_DESIGN.md) for detailed design
+**Status**: Phase 1 (Core Field Arithmetic) ✅ COMPLETE as of 2024-11-14
 
-**Estimated effort**: 2-3 weeks
+### Phase 1: Core Field Arithmetic ✅ COMPLETE
+- ✅ `Gf2mField` and `Gf2mElement` types with Rc-based field parameter sharing
+- ✅ Addition (XOR) and multiplication (schoolbook with reduction) operators
+- ✅ Standard presets: `gf256()` and `gf65536()`
+- ✅ Comprehensive field axiom tests (19 unit tests)
+- ✅ Educational documentation with GF(2^4) worked examples
+- ✅ All tests passing: 95 lib tests + 63 doc tests
+- ✅ Zero unsafe code, zero compiler warnings
+
+**Implementation Notes**:
+- Used `Rc<FieldParams>` instead of raw pointers to maintain `#![deny(unsafe_code)]`
+- Elements are not `Copy` due to `Rc`; use reference operators `&a + &b` or owned `a + b`
+- Multiplication uses schoolbook algorithm with modular reduction
+- File: `src/gf2m.rs` (529 lines including tests and docs)
+
+### Phase 2: Efficient Multiplication (Next - Planned)
+- [ ] Log/antilog table generation for m ≤ 16
+- [ ] Table-based O(1) multiplication: `a * b = exp[log[a] + log[b] mod (2^m - 1)]`
+- [ ] Benchmarks comparing table vs. schoolbook multiplication
+- [ ] Memory optimization: lazy table initialization
+- [ ] Property-based tests with `proptest`
+
+**Estimated effort**: 3-5 days
+
+### Phase 3: Polynomial Operations (Planned)
+- [ ] `Gf2mPoly` type with coefficient arithmetic
+- [ ] Polynomial multiply, divide, GCD
+- [ ] Evaluation at field elements
+
+**Estimated effort**: 3-4 days
+
+### Phase 4: BCH Primitives (Planned)
+- [ ] Minimal polynomial computation
+- [ ] Generator polynomial construction
+- [ ] Syndrome computation
+- [ ] Chien search for error locator roots
+- [ ] Integration tests with DVB-T2 standard parameters
+
+**Estimated effort**: 5-7 days
+
+**Overall effort**: 2-3 weeks total (Phase 1 complete, ~10-16 days remaining)
+
+**Note**: Binary field arithmetic (characteristic 2) enables specialized optimizations (XOR addition, CLMUL multiply) not applicable to general prime-characteristic fields. GF(2^m) requires independent implementation optimized for binary operations.
 
 ## Phase 9: Kernel Quality & Safety (Ongoing)
 - Clear contracts for kernels (alignment, sizes)
 - Microbenchmarks; perf CI matrices; `unsafe` audit where applicable
+
+## Phase 10: General Galois Fields GF(p^m) (Future Consideration)
+**Motivation**: Support for prime-characteristic fields (p ≠ 2) enables Reed-Solomon codes over GF(q), algebraic geometry codes, and broader algebraic coding theory applications.
+
+- **Scope**: Extension fields GF(p^m) for arbitrary prime p
+- **Arithmetic**: Modular addition/multiplication in characteristic p (not binary)
+- **Implementation**: Separate from GF(2^m) - no shared optimizations due to fundamentally different arithmetic
+- **Use cases**: Classical Reed-Solomon (GF(256) with p=256), prime-field crypto
+- **Complexity**: Requires modular arithmetic, Barrett/Montgomery reduction, different multiplication strategies
+- **Timeline**: Low priority - no immediate blocking requirements
+
+**Note**: This would likely belong in a separate crate (e.g., `gfpm-core`) or module to maintain clean separation from binary field optimizations.
 
 ## Principles
 - Deny `unsafe` at public API; encapsulate when kernel perf demands it
