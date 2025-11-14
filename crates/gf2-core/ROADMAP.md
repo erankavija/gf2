@@ -57,7 +57,20 @@ This roadmap focuses on the high-performance primitives for GF(2): `BitVec`, `Bi
 - Karatsuba/Toom-Cook; division/mod; GCD; property tests
 - Note: CLMUL operations also accelerate polar transforms (Phase 6) due to recursive structure
 
-## Phase 8: Kernel Quality & Safety (Ongoing)
+## Phase 8: Extension Field GF(2^m) Arithmetic (Planned) 🎯 **HIGH PRIORITY**
+**Motivation**: DVB-T2 BCH codes require extension field operations. Blocks gf2-coding DVB-T2 FEC simulation.
+
+- **Core**: Field elements, addition/multiplication/division over GF(2^m)
+- **Efficiency**: Log/antilog tables for m ≤ 16; shift-and-add for small m
+- **Polynomials**: `Gf2mPoly` with multiply, divide, GCD
+- **BCH Primitives**: Generator polynomial construction, syndrome computation, Chien search
+- **Standard Presets**: GF(2^8), GF(2^16) with standard primitive polynomials
+- **Testing**: Field axioms, property tests, known-answer tests from standards
+- **Documentation**: See [docs/GF2M_DESIGN.md](docs/GF2M_DESIGN.md) for detailed design
+
+**Estimated effort**: 2-3 weeks
+
+## Phase 9: Kernel Quality & Safety (Ongoing)
 - Clear contracts for kernels (alignment, sizes)
 - Microbenchmarks; perf CI matrices; `unsafe` audit where applicable
 
