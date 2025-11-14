@@ -157,7 +157,7 @@ fn test_ldpc_neighbor_iteration_performance() {
         col_neighbors += degree;
         // Most columns should have degree 3
         assert!(
-            degree >= 2 && degree <= 4,
+            (2..=4).contains(&degree),
             "Column {} has unexpected degree {}",
             c,
             degree

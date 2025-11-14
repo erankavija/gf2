@@ -58,7 +58,7 @@ fn main() {
         let (fer, avg_iter, uncoded_ber) =
             simulate_ldpc_transmission(&code, num_frames, eb_n0_db, max_iterations);
 
-        let capacity = AwgnChannel::shannon_capacity(eb_n0_db, code.rate());
+        let capacity = AwgnChannel::shannon_capacity(eb_n0_db);
 
         println!(
             "│   {:5.1}  │  {:6.4}  │   {:5.1}  │   {:8.6}   │  {:6.4}  │",

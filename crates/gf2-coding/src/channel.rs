@@ -219,17 +219,16 @@ impl AwgnChannel {
 
     /// Computes the Shannon capacity for BPSK over AWGN at the given Eb/N0.
     ///
-    /// The capacity is given by:
+    /// For BPSK modulation, the channel capacity in bits per channel use is:
     /// $$
-    /// C = \frac{1}{2} \int_{-\infty}^{\infty} p(y|x) \log_2\left(1 + \frac{p(y|x=1)}{p(y|x=-1)}\right) dy
+    /// C = 1 - \int_{-\infty}^{\infty} p(y) \log_2\left(\frac{1}{p(y|+1) + p(y|-1)}\right) dy
     /// $$
     ///
-    /// For BPSK over AWGN, this simplifies to a function of SNR.
+    /// where $p(y|x)$ is the Gaussian conditional density.
     ///
     /// # Arguments
     ///
-    /// * `eb_n0_db` - Energy per bit to noise ratio in dB
-    /// * `rate` - Code rate (affects SNR calculation)
+    /// * `eb_n0_db` - Energy per bit to noise ratio in dB (= Es/N0 for BPSK)
     ///
     /// # Returns
     ///
@@ -240,38 +239,23 @@ impl AwgnChannel {
     /// ```
     /// use gf2_coding::channel::AwgnChannel;
     ///
-    /// let capacity = AwgnChannel::shannon_capacity(3.0, 0.5);
-    /// assert!(capacity > 0.5 && capacity < 1.0);
+    /// let capacity = AwgnChannel::shannon_capacity(3.0);
+    /// assert!(capacity > 0.7 && capacity < 0.8);
     /// ```
-    pub fn shannon_capacity(eb_n0_db: f64, rate: f64) -> f64 {
-        // Convert Eb/N0 to SNR per symbol
-        let eb_n0_linear = 10.0_f64.powf(eb_n0_db / 10.0);
-        let snr = 2.0 * rate * eb_n0_linear;
+    pub fn shannon_capacity(eb_n0_db: f64) -> f64 {
+        // Convert Eb/N0 to linear scale
+        // For BPSK: Es/N0 = Eb/N0 (one bit per symbol)
+        let snr = 10.0_f64.powf(eb_n0_db / 10.0);
 
-        // For BPSK, capacity is C = 1 - E_y[log2(1 + exp(-2*y*sqrt(SNR)))]
-        // where y is received signal. We approximate using numerical integration.
-        //
-        // Simplified approximation using Q-function:
-        // C ≈ 1 - H(Q(sqrt(2*SNR)))
-        // where H is binary entropy function
-
-        // For computational efficiency, use a good approximation:
-        // C ≈ 1 - (1/ln(2)) * ∫ e^(-(x-√SNR)²/2) * log(1 + e^(-2x√SNR)) dx / √(2π)
-        //
-        // Simplified bound (tight for high SNR):
-        if snr > 10.0 {
-            // High SNR: capacity approaches 1
-            1.0 - (std::f64::consts::E / std::f64::consts::LN_2) * (-snr / 2.0).exp()
-        } else {
-            // Use numerical integration for low/medium SNR
-            shannon_capacity_numerical(snr)
-        }
+        // Use numerical integration for all cases for consistency
+        // The high SNR approximation was causing non-monotonic behavior
+        shannon_capacity_numerical(snr)
     }
 
     /// Returns the minimum Eb/N0 (in dB) required to achieve a given rate.
     ///
     /// This is the Shannon limit: the theoretical minimum SNR needed for
-    /// reliable communication at the specified rate.
+    /// reliable communication at the specified rate over a BPSK AWGN channel.
     ///
     /// For rate R, finds Eb/N0 such that C(Eb/N0) = R.
     ///
@@ -288,13 +272,13 @@ impl AwgnChannel {
         assert!(rate > 0.0 && rate <= 1.0, "Rate must be in (0, 1]");
 
         // Binary search for Eb/N0 where capacity equals rate
-        let mut low = -2.0; // Start at -2 dB
-        let mut high = 20.0; // Up to 20 dB
+        let mut low = -10.0; // Start at -10 dB for very low rates
+        let mut high = 25.0; // Up to 25 dB for rates near 1
 
-        for _ in 0..50 {
-            // 50 iterations gives high precision
+        for _ in 0..60 {
+            // 60 iterations for better precision
             let mid = (low + high) / 2.0;
-            let capacity = Self::shannon_capacity(mid, rate);
+            let capacity = Self::shannon_capacity(mid);
 
             if (capacity - rate).abs() < 1e-6 {
                 return mid;
@@ -311,49 +295,47 @@ impl AwgnChannel {
     }
 }
 
-/// Numerically computes Shannon capacity for BPSK at given SNR.
+/// Numerically computes Shannon capacity for BPSK at given SNR (Eb/N0).
 ///
-/// Uses Gaussian quadrature to integrate the capacity formula.
-fn shannon_capacity_numerical(snr: f64) -> f64 {
-    // Integrate using trapezoidal rule over received signal range
-    let sqrt_snr = snr.sqrt();
-    let num_points = 200;
-    let x_max = 5.0 * sqrt_snr.max(2.0); // Integrate from -x_max to +x_max
-    let dx = 2.0 * x_max / num_points as f64;
+/// For BPSK modulation over AWGN, the capacity is:
+/// C = 1 - integral_{-inf}^{inf} f(y) log2(1 + exp(-2*sqrt(SNR)*y)) dy
+/// where f(y) is N(sqrt(SNR), 1) distribution and SNR = Eb/N0
+fn shannon_capacity_numerical(eb_n0_linear: f64) -> f64 {
+    let sqrt_snr = eb_n0_linear.sqrt();
 
-    let mut sum = 0.0;
+    // Use numerical integration over the received signal
+    // For BPSK with transmitted symbol +/-sqrt(SNR), noise variance = 1
+    let num_points = 1000;
+    let y_max = sqrt_snr + 6.0; // Cover mean ± 6 standard deviations
+    let dy = 2.0 * y_max / num_points as f64;
+
     let sqrt_2pi = (2.0 * std::f64::consts::PI).sqrt();
+    let mut integral = 0.0;
 
     for i in 0..=num_points {
-        let x = -x_max + i as f64 * dx;
+        let y = -y_max + i as f64 * dy;
 
-        // p(y|x=+1) for transmitted symbol +1
-        let p_plus = (-(x - sqrt_snr).powi(2) / 2.0).exp() / sqrt_2pi;
-        // p(y|x=-1) for transmitted symbol -1
-        let p_minus = (-(x + sqrt_snr).powi(2) / 2.0).exp() / sqrt_2pi;
+        // PDF of received signal when sending +sqrt(SNR): N(sqrt(SNR), 1)
+        let f_y = (-(y - sqrt_snr).powi(2) / 2.0).exp() / sqrt_2pi;
 
-        // Average over both transmitted symbols
-        let p_y = 0.5 * (p_plus + p_minus);
+        // log2(1 + exp(-2*sqrt(SNR)*y))
+        let arg = -2.0 * sqrt_snr * y;
+        let log_term = if arg > 20.0 {
+            // For large positive arg, 1 + exp(arg) ≈ exp(arg)
+            arg / std::f64::consts::LN_2
+        } else if arg < -20.0 {
+            // For large negative arg, 1 + exp(arg) ≈ 1
+            0.0
+        } else {
+            (1.0 + arg.exp()).log2()
+        };
 
-        if p_y > 1e-10 {
-            // Mutual information contribution
-            let term_plus = if p_plus > 1e-10 {
-                p_plus * (p_plus / p_y).log2()
-            } else {
-                0.0
-            };
-            let term_minus = if p_minus > 1e-10 {
-                p_minus * (p_minus / p_y).log2()
-            } else {
-                0.0
-            };
-
-            let weight = if i == 0 || i == num_points { 0.5 } else { 1.0 };
-            sum += weight * 0.5 * (term_plus + term_minus);
-        }
+        let weight = if i == 0 || i == num_points { 0.5 } else { 1.0 };
+        integral += weight * f_y * log_term;
     }
 
-    (sum * dx).clamp(0.0, 1.0)
+    let capacity = 1.0 - integral * dy;
+    capacity.clamp(0.0, 1.0)
 }
 
 #[cfg(test)]
@@ -380,14 +362,14 @@ mod tests {
     #[test]
     fn test_shannon_capacity_high_snr() {
         // At high Eb/N0, capacity should approach 1
-        let capacity = AwgnChannel::shannon_capacity(20.0, 1.0);
+        let capacity = AwgnChannel::shannon_capacity(20.0);
         assert!(capacity > 0.95);
     }
 
     #[test]
     fn test_shannon_capacity_low_snr() {
         // At very low Eb/N0, capacity should be small
-        let capacity = AwgnChannel::shannon_capacity(-10.0, 1.0);
+        let capacity = AwgnChannel::shannon_capacity(-10.0);
         assert!(capacity < 0.2); // Relaxed bound
     }
 

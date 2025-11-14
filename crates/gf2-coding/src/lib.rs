@@ -60,6 +60,7 @@ pub mod convolutional;
 pub mod ldpc;
 pub mod linear;
 pub mod llr;
+pub mod simulation;
 pub mod traits;
 
 // Re-export main types
