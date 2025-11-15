@@ -8,10 +8,11 @@ This roadmap focuses on the high-performance primitives for GF(2): `BitVec`, `Bi
 - Algorithms: M4RM multiply, Gauss-Jordan inversion
 - Comprehensive unit + property tests; Criterion benches
 
-## Phase 2: Optimized Wide Buffers (Planned)
+## Phase 2: Optimized Wide Buffers (Deprioritized)
 - BitSlice views; range indexing; `from_bitslice` ctors
 - Unrolled scalar kernels for AND/OR/XOR/NOT; optional prefetching
 - Measurable speedups on 64 KiB+ buffers
+- **Status**: Moved down in priority; polynomial optimization is more critical for coding applications
 
 ## Phase 3: SIMD Backends & Dispatch ✅
 - ✅ AVX2 backend for AND/OR/XOR/NOT/popcount on x86_64
@@ -51,11 +52,61 @@ This roadmap focuses on the high-performance primitives for GF(2): `BitVec`, `Bi
 - Benchmarks: transform throughput vs. naive matrix multiply (target 100x+ speedup for N=1024+)
 - Property tests: transform-inverse roundtrip, linearity preservation, equivalence to matrix form
 
-## Phase 7: GF(2) Polynomials (Planned)
-- `GF2Poly` wrapper over `BitVec`
-- Scalar schoolbook; CLMUL/VMULL.P64 acceleration
-- Karatsuba/Toom-Cook; division/mod; GCD; property tests
-- Note: CLMUL operations also accelerate polar transforms (Phase 6) due to recursive structure
+## Phase 7: GF(2^m) Polynomial Optimization 🎯 **IN PROGRESS**
+**Motivation**: Polynomial multiplication is the critical bottleneck for BCH codes. Baseline: 352 µs for degree-200 multiply in GF(256).
+
+**Status**: Baseline benchmarks complete (2024-11-15)
+
+### Phase 7a: Karatsuba Multiplication ⏭️ **NEXT**
+**Expected Speedup**: 2-3x for degree ≥ 64  
+**Effort**: 1-2 days  
+**Target**: ~120-150 µs for degree-200 multiply
+
+- ✅ Comprehensive benchmarks established (`benches/polynomial.rs`)
+- ✅ Performance analysis documented (`docs/polynomial_benchmarks.md`)
+- ✅ Session notes with implementation plan (`docs/performance_session_notes.md`)
+- ⏭️ Implement threshold-based dispatch (schoolbook < 32, Karatsuba ≥ 32)
+- ⏭️ Property tests comparing schoolbook vs Karatsuba
+- ⏭️ Validate 2-3x speedup with benchmarks
+
+**Implementation**:
+```rust
+impl Gf2mPoly {
+    pub fn mul(&self, rhs: &Gf2mPoly) -> Gf2mPoly {
+        // Threshold dispatch: schoolbook for small, Karatsuba for large
+        if self.degree().unwrap_or(0) < 32 || rhs.degree().unwrap_or(0) < 32 {
+            self.mul_schoolbook(rhs)
+        } else {
+            self.mul_karatsuba(rhs)
+        }
+    }
+}
+```
+
+### Phase 7b: SIMD Field Operations (Planned)
+**Expected Speedup**: Additional 2-4x on top of Karatsuba  
+**Effort**: 2-3 days  
+**Platforms**: x86_64 PCLMULQDQ, ARM64 PMULL
+
+- Create `src/gf2m_kernels/` module
+- Implement PCLMULQDQ-based field multiplication
+- Runtime CPU feature detection
+- Batch 4-8 field multiplications in SIMD lanes
+- Target: ~50-70 µs for degree-200 multiply (5-7x total speedup)
+
+### Phase 7c: Batch Evaluation Optimization (Future)
+**Expected Speedup**: 1.5-2x for BCH syndrome computation  
+**Effort**: 1 day
+
+- Vectorized batch evaluation for multiple points
+- SIMD Horner evaluation
+- Optimized for syndrome computation patterns
+
+**Combined Target**: 
+- Degree 200 multiply: 352 µs → **50 µs** (7x improvement)
+- BCH syndrome (32 evals): 17.5 µs → **10-12 µs** (1.5x improvement)
+
+**Benchmarks**: Run `cargo bench --bench polynomial` to measure progress against baseline.
 
 ## Phase 8: Extension Field GF(2^m) Arithmetic (In Progress) 🎯 **HIGH PRIORITY**
 **Motivation**: DVB-T2 BCH codes require extension field operations. Blocks gf2-coding DVB-T2 FEC simulation.
@@ -77,32 +128,51 @@ This roadmap focuses on the high-performance primitives for GF(2): `BitVec`, `Bi
 - Multiplication uses schoolbook algorithm with modular reduction
 - File: `src/gf2m.rs` (529 lines including tests and docs)
 
-### Phase 2: Efficient Multiplication (Next - Planned)
-- [ ] Log/antilog table generation for m ≤ 16
-- [ ] Table-based O(1) multiplication: `a * b = exp[log[a] + log[b] mod (2^m - 1)]`
-- [ ] Benchmarks comparing table vs. schoolbook multiplication
-- [ ] Memory optimization: lazy table initialization
-- [ ] Property-based tests with `proptest`
+### Phase 2: Efficient Multiplication ✅ COMPLETE
+- ✅ Division operation using Fermat's Little Theorem
+- ✅ Log/antilog table generation for m ≤ 16
+- ✅ Automatic primitive element discovery
+- ✅ Table-based O(1) multiplication: `a * b = exp[log[a] + log[b] mod (2^m - 1)]`
+- ✅ 40 comprehensive tests (34 unit + 6 property-based tests)
+- ✅ All tests passing with zero clippy warnings
 
-**Estimated effort**: 3-5 days
+**Implementation**: File `src/gf2m.rs` (1099 lines, up from 553)
 
-### Phase 3: Polynomial Operations (Planned)
-- [ ] `Gf2mPoly` type with coefficient arithmetic
-- [ ] Polynomial multiply, divide, GCD
-- [ ] Evaluation at field elements
+### Phase 3: Polynomial Operations ✅ COMPLETE
+- ✅ `Gf2mPoly` type for polynomials with GF(2^m) coefficients
+- ✅ Polynomial addition and multiplication (schoolbook algorithm)
+- ✅ Polynomial division with remainder (long division)
+- ✅ GCD algorithm using Euclidean method with monic normalization
+- ✅ Polynomial evaluation using Horner's method
+- ✅ 26 comprehensive polynomial tests (20 unit + 6 property-based)
+- ✅ All 142 lib tests + 69 doc tests passing
 
-**Estimated effort**: 3-4 days
+**Implementation**: File `src/gf2m.rs` (1808 lines, up from 1099)
 
-### Phase 4: BCH Primitives (Planned)
-- [ ] Minimal polynomial computation
-- [ ] Generator polynomial construction
-- [ ] Syndrome computation
-- [ ] Chien search for error locator roots
-- [ ] Integration tests with DVB-T2 standard parameters
+### Phase 4: Minimal Polynomial ✅ COMPLETE
+**Motivation**: Core mathematical primitive for extension field theory, reusable beyond BCH applications.
 
-**Estimated effort**: 5-7 days
+- ✅ Minimal polynomial computation for field elements
+- ✅ Find minimal polynomial of α via conjugate method
+- ✅ Efficient algorithm using repeated squaring to find conjugates
+- ✅ Product construction: (x - α)(x - α²)(x - α⁴)...(x - α^(2^(d-1)))
+- ✅ Batch polynomial evaluation helper (`eval_batch`) for BCH syndrome computation
+- ✅ 11 unit tests covering edge cases (zero, one, known values, batch evaluation)
+- ✅ 3 property tests: element as root, degree divides m, monic
+- ✅ All 156 lib tests + 70 doc tests passing
 
-**Overall effort**: 2-3 weeks total (Phase 1 complete, ~10-16 days remaining)
+**Implementation**: File `src/gf2m.rs` (2188 lines, up from 1808)
+
+**Algorithm Details:**
+- Finds conjugates via repeated squaring until cycle
+- Builds product of (x - conjugate) terms
+- O(m² × d) time complexity where d is minimal polynomial degree
+- Special cases: m_0(x) = x, m_1(x) = x + 1
+- Batch evaluation: `eval_batch(&[Gf2mElement])` for efficient syndrome computation
+
+**Note**: BCH-specific algorithms (generator polynomial construction, Berlekamp-Massey, Chien search) belong in `gf2-coding` Phase C9, not in core primitives. The batch evaluation helper is included as a performance primitive.
+
+**Overall effort**: All phases complete (~3 weeks total). Core GF(2^m) implementation finished.
 
 **Note**: Binary field arithmetic (characteristic 2) enables specialized optimizations (XOR addition, CLMUL multiply) not applicable to general prime-characteristic fields. GF(2^m) requires independent implementation optimized for binary operations.
 

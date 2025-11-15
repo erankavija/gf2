@@ -83,6 +83,44 @@ impl BitVec {
         }
     }
 
+    /// Creates a `BitVec` with `len` bits, all initialized to one.
+    ///
+    /// Padding bits beyond `len` in the last word are set to zero,
+    /// maintaining the tail masking invariant.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::BitVec;
+    ///
+    /// let bv = BitVec::ones(10);
+    /// assert_eq!(bv.len(), 10);
+    /// assert_eq!(bv.count_ones(), 10);
+    /// ```
+    pub fn ones(len: usize) -> Self {
+        if len == 0 {
+            return Self {
+                data: Vec::new(),
+                len_bits: 0,
+            };
+        }
+
+        let num_words = len.div_ceil(64);
+        let mut data = vec![u64::MAX; num_words];
+
+        // Mask padding bits in the last word to maintain tail masking invariant
+        let used_bits = len % 64;
+        if used_bits != 0 {
+            let mask = (1u64 << used_bits) - 1;
+            data[num_words - 1] = mask;
+        }
+
+        Self {
+            data,
+            len_bits: len,
+        }
+    }
+
     /// Returns the number of bits in the `BitVec`.
     ///
     /// # Examples
@@ -1115,6 +1153,70 @@ mod tests {
         let bv = BitVec::zeros(130);
         assert_eq!(bv.len(), 130);
         assert_eq!(bv.count_ones(), 0);
+    }
+
+    #[test]
+    fn test_ones() {
+        let bv = BitVec::ones(10);
+        assert_eq!(bv.len(), 10);
+        assert_eq!(bv.count_ones(), 10);
+        for i in 0..10 {
+            assert!(bv.get(i));
+        }
+    }
+
+    #[test]
+    fn test_ones_empty() {
+        let bv = BitVec::ones(0);
+        assert_eq!(bv.len(), 0);
+        assert!(bv.is_empty());
+    }
+
+    #[test]
+    fn test_ones_word_boundary() {
+        let bv = BitVec::ones(64);
+        assert_eq!(bv.len(), 64);
+        assert_eq!(bv.count_ones(), 64);
+        for i in 0..64 {
+            assert!(bv.get(i));
+        }
+    }
+
+    #[test]
+    fn test_ones_cross_word() {
+        let bv = BitVec::ones(130);
+        assert_eq!(bv.len(), 130);
+        assert_eq!(bv.count_ones(), 130);
+        for i in 0..130 {
+            assert!(bv.get(i));
+        }
+    }
+
+    #[test]
+    fn test_ones_partial_word() {
+        let bv = BitVec::ones(65);
+        assert_eq!(bv.len(), 65);
+        assert_eq!(bv.count_ones(), 65);
+        // Check that padding bits are zero (tail masking invariant)
+        assert_eq!(bv.data[1], 0x1); // Only bit 0 of second word should be set
+    }
+
+    #[test]
+    fn test_ones_tail_masking() {
+        // Test that padding bits are properly masked for various lengths
+        for len in [1, 7, 63, 65, 127, 129] {
+            let bv = BitVec::ones(len);
+            assert_eq!(bv.len(), len);
+            assert_eq!(bv.count_ones(), len as u64);
+
+            // Verify tail masking: padding bits should be zero
+            if len % 64 != 0 {
+                let last_word = bv.data.last().unwrap();
+                let used_bits = len % 64;
+                let mask = (1u64 << used_bits) - 1;
+                assert_eq!(*last_word, mask);
+            }
+        }
     }
 
     #[test]

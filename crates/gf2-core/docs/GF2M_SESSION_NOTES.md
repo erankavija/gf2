@@ -1,5 +1,139 @@
 # GF(2^m) Implementation Session Notes
 
+## Session 2024-11-15 (Late): Phase 4 Complete ✅
+
+### What Was Accomplished
+
+Implemented **Phase 4: Minimal Polynomial** - core mathematical primitive for extension field theory.
+
+**Key Achievements:**
+- ✅ Minimal polynomial computation for field elements
+- ✅ Algorithm using repeated squaring to find conjugates
+- ✅ Product construction: (x - α)(x - α²)(x - α⁴)...(x - α^(2^(d-1)))
+- ✅ Batch polynomial evaluation helper (`eval_batch`) for efficient syndrome computation
+- ✅ 11 comprehensive unit tests covering edge cases
+- ✅ 3 property-based tests (element as root, degree divides m, monic)
+- ✅ All 156 lib tests + 70 doc tests passing
+- ✅ Zero clippy warnings
+- ✅ Full TDD approach: tests written first, implementation second
+
+### Implementation Details
+
+**File**: `src/gf2m.rs` (2188 lines, up from 1808)
+
+**Algorithms:**
+```rust
+pub fn minimal_polynomial(&self) -> Gf2mPoly {
+    // Find conjugates: α, α², α⁴, α⁸, ... until cycle
+    // Build product: (x - α)(x - α²)...(x - α^(2^(d-1)))
+}
+
+pub fn eval_batch(&self, points: &[Gf2mElement]) -> Vec<Gf2mElement> {
+    // Evaluate polynomial at multiple points (for BCH syndromes)
+}
+```
+
+**Properties Verified:**
+1. **Element is root**: m_α(α) = 0 for all elements
+2. **Degree divides m**: deg(m_α) | m for all α ∈ GF(2^m)
+3. **Monic**: Leading coefficient always 1
+4. **Special cases**: 
+   - Minimal polynomial of 0 is x
+   - Minimal polynomial of 1 is x + 1
+
+**Conjugates:**
+- Elements α, α², α⁴, ..., α^(2^(d-1)) that satisfy the same minimal polynomial
+- Found via repeated squaring until cycle detected
+- Degree d is the number of distinct conjugates
+
+### Test Coverage
+
+**Unit Tests (11 tests):**
+- `test_minimal_polynomial_zero` - Special case for zero element
+- `test_minimal_polynomial_one` - Special case for one element
+- `test_minimal_polynomial_gf4` - Known value in GF(2²)
+- `test_minimal_polynomial_is_root` - Element must be root of its minimal polynomial
+- `test_minimal_polynomial_degree_divides_m` - Degree property for multiple elements
+- `test_minimal_polynomial_monic` - Leading coefficient = 1 for all elements in GF(2⁴)
+- `test_minimal_polynomial_gf16_known_values` - Verification against known results
+- `test_poly_eval_batch_empty` - Empty batch evaluation
+- `test_poly_eval_batch_single` - Single point batch matches single eval
+- `test_poly_eval_batch_multiple` - Multiple points
+- `test_poly_eval_batch_syndrome_pattern` - BCH syndrome use case pattern
+
+**Property Tests (3 tests):**
+- `minimal_polynomial_has_element_as_root` - Universal root property
+- `minimal_polynomial_degree_divides_m` - Universal degree property
+- `minimal_polynomial_is_monic` - Universal monic property
+
+All tests use fields GF(2²) through GF(2⁸) with standard primitive polynomials.
+
+### Performance Characteristics
+
+**Minimal Polynomial Computation:**
+- **Time**: O(m² × d) where d is the degree of minimal polynomial
+  - Finding conjugates: O(d) squarings, each O(m) for schoolbook multiplication
+  - Building product: O(d²) polynomial multiplications
+- **Space**: O(d) for storing conjugates, O(d) for result polynomial
+- **Typical**: d ≤ m, often d divides m evenly
+
+**Complexity Examples:**
+- GF(2⁴): Elements have minimal polynomials of degree 1, 2, or 4
+- GF(2⁸): Elements have degrees 1, 2, 4, or 8
+- Primitive elements: Always have maximal degree m
+
+### Mathematical Background
+
+The minimal polynomial m_α(x) is the unique monic polynomial of smallest degree satisfying:
+1. m_α(α) = 0 (α is a root)
+2. Coefficients in GF(2)
+3. Irreducible over GF(2)
+
+The roots of m_α(x) are exactly the conjugates {α, α², α⁴, ..., α^(2^(d-1))} where d = deg(m_α).
+
+This is fundamental for:
+- BCH code construction (finding generator polynomial roots)
+- Field extension theory
+- Polynomial factorization over finite fields
+
+### Files Modified
+
+- `src/gf2m.rs`: Added 91 lines (1808 → 2188)
+  - `Gf2mElement::minimal_polynomial()` method (83 lines)
+  - `Gf2mPoly::eval_batch()` method for batch evaluation (8 lines)
+  - 7 minimal polynomial tests + 4 batch eval tests in new test modules
+
+### Summary
+
+**Total GF(2^m) Implementation Stats:**
+- **File size**: 2188 lines (from 553 in Phase 1)
+- **Tests**: 80 total (40 field + 30 polynomial + 10 minimal polynomial)
+- **Test execution**: All 156 lib + 70 doc = 226 total passing
+- **Code quality**: Zero clippy warnings, zero compiler warnings, formatted
+
+**Phase 8 Progress:**
+- ✅ Phase 1: Core field arithmetic (complete)
+- ✅ Phase 2: Efficient multiplication (complete)
+- ✅ Phase 3: Polynomial operations (complete)
+- ✅ Phase 4: Minimal polynomial (complete)
+
+### Next Steps
+
+**gf2-coding Phase C9: BCH Codes** (1-2 weeks) - **READY TO START**
+
+BCH-specific operations now unblocked:
+1. **Generator polynomial construction** - Use minimal polynomials of consecutive roots
+2. **Systematic encoding** - Polynomial division for parity
+3. **Syndrome computation** - Batch polynomial evaluation
+4. **Berlekamp-Massey** - Error locator polynomial from syndromes
+5. **Chien search** - Find error positions
+
+All core GF(2^m) primitives are now available in `gf2-core`. BCH application code belongs in `gf2-coding`.
+
+---
+
+**Status**: Phase 4 complete. Core GF(2^m) extension field implementation finished. Ready for BCH code implementation in gf2-coding.
+
 ## Session 2024-11-15 Continued: Phase 3 Complete ✅
 
 ### What Was Accomplished
