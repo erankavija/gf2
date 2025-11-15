@@ -504,6 +504,96 @@ impl Gf2mElement {
 
         Some(result)
     }
+
+    /// Computes the minimal polynomial of this field element over GF(2).
+    ///
+    /// The minimal polynomial is the monic polynomial of smallest degree that has
+    /// this element as a root. For an element α in GF(2^m), the minimal polynomial
+    /// has degree d where d divides m, and its roots are the conjugates of α:
+    /// {α, α^2, α^4, ..., α^(2^(d-1))}.
+    ///
+    /// # Properties
+    ///
+    /// - The minimal polynomial is always monic (leading coefficient = 1)
+    /// - Its degree divides the extension degree m
+    /// - The element is a root: m_α(α) = 0
+    /// - It's the product (x - α)(x - α^2)(x - α^4)...(x - α^(2^(d-1)))
+    ///
+    /// # Algorithm
+    ///
+    /// Uses repeated squaring to find conjugates, then builds the polynomial
+    /// as the product of (x - conjugate) for each unique conjugate.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use gf2_core::gf2m::Gf2mField;
+    ///
+    /// let field = Gf2mField::new(4, 0b10011);
+    /// let alpha = field.element(0b0010); // x
+    /// let min_poly = alpha.minimal_polynomial();
+    ///
+    /// // Verify alpha is a root
+    /// let result = min_poly.eval(&alpha);
+    /// assert!(result.is_zero());
+    /// ```
+    pub fn minimal_polynomial(&self) -> Gf2mPoly {
+        // Special case: minimal polynomial of 0 is x
+        if self.is_zero() {
+            return Gf2mPoly::new(vec![
+                Gf2mElement {
+                    value: 0,
+                    params: Rc::clone(&self.params),
+                },
+                Gf2mElement {
+                    value: 1,
+                    params: Rc::clone(&self.params),
+                },
+            ]);
+        }
+
+        // Find all conjugates: α, α^2, α^4, α^8, ... until we cycle back
+        let mut conjugates = Vec::new();
+        let mut current = self.clone();
+
+        loop {
+            // Check if we've seen this conjugate before
+            if conjugates
+                .iter()
+                .any(|c: &Gf2mElement| c.value == current.value)
+            {
+                break;
+            }
+            conjugates.push(current.clone());
+
+            // Square to get next conjugate: α^(2^i)
+            current = &current * &current;
+        }
+
+        // Build minimal polynomial as product of (x - conjugate) terms
+        // Start with polynomial 1
+        let one = Gf2mElement {
+            value: 1,
+            params: Rc::clone(&self.params),
+        };
+        let mut result = Gf2mPoly::constant(one);
+
+        for conjugate in conjugates {
+            // Build (x - conjugate) = x + conjugate (since -1 = 1 in GF(2))
+            let term = Gf2mPoly::new(vec![
+                conjugate,
+                Gf2mElement {
+                    value: 1,
+                    params: Rc::clone(&self.params),
+                },
+            ]);
+
+            // Multiply into result
+            result = &result * &term;
+        }
+
+        result
+    }
 }
 
 // Addition in GF(2^m) is XOR
@@ -1219,6 +1309,34 @@ impl Gf2mPoly {
         result
     }
 
+    /// Evaluates the polynomial at multiple points.
+    ///
+    /// This is useful for BCH syndrome computation where you need to evaluate
+    /// the same polynomial at multiple consecutive powers (α, α², α³, ...).
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use gf2_core::gf2m::{Gf2mField, Gf2mPoly};
+    ///
+    /// let field = Gf2mField::new(4, 0b10011);
+    /// let poly = Gf2mPoly::new(vec![
+    ///     field.element(1),
+    ///     field.element(2),
+    ///     field.element(3),
+    /// ]);
+    ///
+    /// // Evaluate at multiple points
+    /// let points = vec![field.element(1), field.element(2), field.element(5)];
+    /// let results = poly.eval_batch(&points);
+    ///
+    /// assert_eq!(results.len(), 3);
+    /// // Each result is p(points[i])
+    /// ```
+    pub fn eval_batch(&self, points: &[Gf2mElement]) -> Vec<Gf2mElement> {
+        points.iter().map(|x| self.eval(x)).collect()
+    }
+
     /// Divides this polynomial by another, returning (quotient, remainder).
     ///
     /// Ensures that: dividend = quotient * divisor + remainder
@@ -1655,6 +1773,69 @@ mod poly_tests {
         }
     }
 
+    #[test]
+    fn test_poly_eval_batch_empty() {
+        let field = Gf2mField::new(4, 0b10011);
+        let poly = Gf2mPoly::new(vec![field.element(1), field.element(2)]);
+        let points: Vec<Gf2mElement> = vec![];
+        let results = poly.eval_batch(&points);
+        assert!(results.is_empty());
+    }
+
+    #[test]
+    fn test_poly_eval_batch_single() {
+        let field = Gf2mField::new(4, 0b10011);
+        let poly = Gf2mPoly::new(vec![field.element(3), field.element(2)]);
+        let x = field.element(5);
+
+        let batch_result = poly.eval_batch(std::slice::from_ref(&x));
+        let single_result = poly.eval(&x);
+
+        assert_eq!(batch_result.len(), 1);
+        assert_eq!(batch_result[0], single_result);
+    }
+
+    #[test]
+    fn test_poly_eval_batch_multiple() {
+        let field = Gf2mField::new(4, 0b10011);
+        // p(x) = 1 + 2x + 3x^2
+        let poly = Gf2mPoly::new(vec![field.element(1), field.element(2), field.element(3)]);
+
+        let points = vec![field.element(0), field.element(1), field.element(5)];
+        let results = poly.eval_batch(&points);
+
+        assert_eq!(results.len(), 3);
+
+        // Verify each result matches single eval
+        for (point, result) in points.iter().zip(results.iter()) {
+            let expected = poly.eval(point);
+            assert_eq!(*result, expected);
+        }
+    }
+
+    #[test]
+    fn test_poly_eval_batch_syndrome_pattern() {
+        // BCH syndrome computation pattern: evaluate at consecutive powers
+        let field = Gf2mField::new(4, 0b10011);
+        let poly = Gf2mPoly::new(vec![field.element(5), field.element(3), field.element(7)]);
+
+        let alpha = field.element(2); // primitive element
+        let mut points = vec![alpha.clone()];
+        let mut current = alpha.clone();
+        for _ in 1..4 {
+            current = &current * &alpha;
+            points.push(current.clone());
+        }
+
+        let results = poly.eval_batch(&points);
+        assert_eq!(results.len(), 4);
+
+        // Each should match single eval
+        for (point, result) in points.iter().zip(results.iter()) {
+            assert_eq!(*result, poly.eval(point));
+        }
+    }
+
     // GCD tests
 
     #[test]
@@ -1802,6 +1983,205 @@ mod poly_tests {
 
                 prop_assert!(r1.is_zero() || r1.degree() == Some(0) && r1.coeff(0).is_zero());
                 prop_assert!(r2.is_zero() || r2.degree() == Some(0) && r2.coeff(0).is_zero());
+            }
+        }
+    }
+
+    // ===== Minimal Polynomial Tests =====
+
+    #[test]
+    fn test_minimal_polynomial_zero() {
+        let field = Gf2mField::new(4, 0b10011);
+        let zero = field.element(0);
+        let min_poly = zero.minimal_polynomial();
+
+        // Minimal polynomial of 0 is x
+        assert_eq!(min_poly.degree(), Some(1));
+        assert_eq!(min_poly.coeff(0).value(), 0); // Constant term is 0
+        assert_eq!(min_poly.coeff(1).value(), 1); // x^1 coefficient is 1
+    }
+
+    #[test]
+    fn test_minimal_polynomial_one() {
+        let field = Gf2mField::new(4, 0b10011);
+        let one = field.element(1);
+        let min_poly = one.minimal_polynomial();
+
+        // Minimal polynomial of 1 is x + 1
+        assert_eq!(min_poly.degree(), Some(1));
+        assert_eq!(min_poly.coeff(0).value(), 1); // Constant term is 1
+        assert_eq!(min_poly.coeff(1).value(), 1); // x^1 coefficient is 1
+    }
+
+    #[test]
+    fn test_minimal_polynomial_gf4() {
+        // GF(2^2) with primitive polynomial x^2 + x + 1
+        let field = Gf2mField::new(2, 0b111);
+
+        // α (primitive element) should have minimal polynomial x^2 + x + 1
+        let alpha = field.element(0b10); // α = x
+        let min_poly = alpha.minimal_polynomial();
+
+        assert_eq!(min_poly.degree(), Some(2));
+        assert_eq!(min_poly.coeff(0).value(), 1); // +1
+        assert_eq!(min_poly.coeff(1).value(), 1); // +x
+        assert_eq!(min_poly.coeff(2).value(), 1); // +x^2
+    }
+
+    #[test]
+    fn test_minimal_polynomial_is_root() {
+        // For any element α, α should be a root of its minimal polynomial
+        let field = Gf2mField::new(4, 0b10011);
+        let alpha = field.element(0b0110); // Some random element
+        let min_poly = alpha.minimal_polynomial();
+
+        // Evaluate min_poly at alpha, should give zero
+        let result = min_poly.eval(&alpha);
+        assert!(
+            result.is_zero(),
+            "Element should be a root of its minimal polynomial"
+        );
+    }
+
+    #[test]
+    fn test_minimal_polynomial_degree_divides_m() {
+        // The degree of minimal polynomial of any element in GF(2^m) divides m
+        let field = Gf2mField::gf256(); // m = 8
+
+        for value in [0x00, 0x01, 0x02, 0x53, 0xFF] {
+            let elem = field.element(value);
+            let min_poly = elem.minimal_polynomial();
+            if let Some(deg) = min_poly.degree() {
+                assert!(
+                    8 % deg == 0,
+                    "Minimal polynomial degree {} should divide m=8 for value 0x{:02x}",
+                    deg,
+                    value
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_minimal_polynomial_monic() {
+        // Minimal polynomial should be monic (leading coefficient = 1)
+        let field = Gf2mField::new(4, 0b10011);
+
+        for value in 0..16 {
+            let elem = field.element(value);
+            let min_poly = elem.minimal_polynomial();
+            if let Some(deg) = min_poly.degree() {
+                let leading = min_poly.coeff(deg);
+                assert_eq!(
+                    leading.value(),
+                    1,
+                    "Minimal polynomial should be monic for value {}",
+                    value
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_minimal_polynomial_gf16_known_values() {
+        // Test against known minimal polynomials in GF(2^4)
+        // Using primitive polynomial x^4 + x + 1
+        let field = Gf2mField::new(4, 0b10011);
+
+        // Elements in GF(2) have minimal polynomial x or x+1
+        let zero = field.element(0);
+        assert_eq!(zero.minimal_polynomial().degree(), Some(1));
+
+        let one = field.element(1);
+        let mp_one = one.minimal_polynomial();
+        assert_eq!(mp_one.degree(), Some(1));
+        assert_eq!(mp_one.coeff(0).value(), 1);
+        assert_eq!(mp_one.coeff(1).value(), 1);
+    }
+
+    #[cfg(test)]
+    mod minimal_polynomial_proptests {
+        use super::*;
+
+        proptest! {
+            #[test]
+            fn minimal_polynomial_has_element_as_root(m in 2u32..=8, value in 0u64..256) {
+                let field = match m {
+                    2 => Gf2mField::new(2, 0b111),
+                    3 => Gf2mField::new(3, 0b1011),
+                    4 => Gf2mField::new(4, 0b10011),
+                    5 => Gf2mField::new(5, 0b100101),
+                    6 => Gf2mField::new(6, 0b1000011),
+                    7 => Gf2mField::new(7, 0b10000011),
+                    8 => Gf2mField::gf256(),
+                    _ => return Ok(()),
+                };
+
+                let max_val = (1u64 << m) - 1;
+                if value > max_val {
+                    return Ok(());
+                }
+
+                let elem = field.element(value);
+                let min_poly = elem.minimal_polynomial();
+                let result = min_poly.eval(&elem);
+
+                prop_assert!(result.is_zero(),
+                    "Minimal polynomial must have element as root: m={}, value={}", m, value);
+            }
+
+            #[test]
+            fn minimal_polynomial_degree_divides_m(m in 2u32..=8, value in 0u64..256) {
+                let field = match m {
+                    2 => Gf2mField::new(2, 0b111),
+                    3 => Gf2mField::new(3, 0b1011),
+                    4 => Gf2mField::new(4, 0b10011),
+                    5 => Gf2mField::new(5, 0b100101),
+                    6 => Gf2mField::new(6, 0b1000011),
+                    7 => Gf2mField::new(7, 0b10000011),
+                    8 => Gf2mField::gf256(),
+                    _ => return Ok(()),
+                };
+
+                let max_val = (1u64 << m) - 1;
+                if value > max_val {
+                    return Ok(());
+                }
+
+                let elem = field.element(value);
+                let min_poly = elem.minimal_polynomial();
+
+                if let Some(deg) = min_poly.degree() {
+                    prop_assert!(m % (deg as u32) == 0,
+                        "Minimal polynomial degree {} must divide m={} for value={}",
+                        deg, m, value);
+                }
+            }
+
+            #[test]
+            fn minimal_polynomial_is_monic(m in 2u32..=6, value in 0u64..64) {
+                let field = match m {
+                    2 => Gf2mField::new(2, 0b111),
+                    3 => Gf2mField::new(3, 0b1011),
+                    4 => Gf2mField::new(4, 0b10011),
+                    5 => Gf2mField::new(5, 0b100101),
+                    6 => Gf2mField::new(6, 0b1000011),
+                    _ => return Ok(()),
+                };
+
+                let max_val = (1u64 << m) - 1;
+                if value > max_val {
+                    return Ok(());
+                }
+
+                let elem = field.element(value);
+                let min_poly = elem.minimal_polynomial();
+
+                if let Some(deg) = min_poly.degree() {
+                    let leading = min_poly.coeff(deg);
+                    prop_assert_eq!(leading.value(), 1,
+                        "Minimal polynomial must be monic (leading coeff = 1)");
+                }
             }
         }
     }

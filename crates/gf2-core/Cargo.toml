@@ -49,3 +49,11 @@ required-features = ["rand"]
 name = "sparse"
 harness = false
 required-features = ["rand"]
+
+[[bench]]
+name = "polynomial"
+harness = false
+
+[[bench]]
+name = "shifts"
+harness = false
