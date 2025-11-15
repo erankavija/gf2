@@ -6,6 +6,7 @@
 
 - **Linear block codes** with generator/parity matrices and syndrome decoding
 - **Hamming codes** with efficient syndrome table decoder
+- **BCH codes** with algebraic decoding over GF(2^m) for DVB-T2 ✅
 - **Convolutional codes** with shift-register encoder and Viterbi decoder
 - **LDPC codes** with belief propagation decoding over sparse matrices
 - **Soft-decision LLR operations** for LDPC and turbo codes (exact and min-sum variants)
@@ -22,6 +23,7 @@
 - Syndrome computation with parity-check matrix H
 - Maximum-likelihood decoding for Hamming codes
 - Support for Hamming(2^r-1, 2^r-r-1) codes up to r=10
+- **BCH codes**: Full algebraic encoder/decoder with Berlekamp-Massey and Chien search
 
 ### Convolutional Codes  
 - Configurable constraint length and code rate
