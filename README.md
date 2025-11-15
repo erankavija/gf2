@@ -21,23 +21,38 @@ The shared workspace keeps primitives and applications aligned while making thei
 - Basic bitset operations (AND, OR, XOR, NOT)
 - Bit manipulation and queries
 - **GF(2) linear algebra**: Fast matrix operations over the binary field (M4RM, Gauss-Jordan)
+- **Extension fields GF(2^m)**: Complete polynomial arithmetic over binary extension fields
 - **SIMD acceleration**: Optional AVX2 support via `simd` feature
-- Future: GF(2) polynomial arithmetic for coding theory
+- Sparse matrix primitives for low-density operations
 
 `gf2-coding` provides error-correcting codes and coding theory primitives:
 - **Linear block codes**: Hamming codes with syndrome decoding
+- **BCH codes**: Complete algebraic encoder/decoder for DVB-T2 (Berlekamp-Massey, Chien search)
 - **Convolutional codes**: Viterbi decoder for streaming applications
+- **LDPC codes**: Belief propagation decoder with min-sum approximations
 - Comprehensive property-based tests ensuring correctness
 - Educational examples with mathematical documentation
 
 ## Features
 
+### gf2-core
 - **Zero-cost abstractions**: Thin wrapper over `Vec<u64>` with no runtime overhead
 - **Memory efficient**: Dense storage with 64-bit words
 - **GF(2) matrices**: Bit-packed boolean matrices with M4RM multiplication and Gauss-Jordan inversion
-- **Well-tested**: Comprehensive unit tests and property-based testing with `proptest`
+- **Extension field arithmetic**: Complete GF(2^m) implementation with table-based multiplication for m ≤ 16
+- **Polynomial operations**: Addition, multiplication, division, GCD, minimal polynomials, and batch evaluation
+- **Sparse matrices**: CSR format with efficient iteration for low-density matrices
 - **Safe by default**: `#![deny(unsafe_code)]` at crate level
 - **MSRV**: Rust 1.74+
+
+### gf2-coding
+- **BCH codes**: Complete algebraic encoder/decoder with Berlekamp-Massey and Chien search
+- **LDPC codes**: Belief propagation decoder with min-sum variants
+- **Soft-decision decoding**: LLR operations for iterative decoders
+- **Channel models**: AWGN channel with BPSK/QAM modulation
+- **DVB-T2 support**: Standard-compliant BCH parameters for all code rates
+- **Well-tested**: Comprehensive unit tests and property-based testing with `proptest`
+- **Educational**: Extensive documentation with mathematical formulas and examples
 
 ## Design Invariants
 
@@ -205,6 +220,50 @@ println!("{}", a);
 //   └       ┘
 ```
 
+### gf2-core: Extension field GF(2^m) arithmetic
+
+```rust
+use gf2_core::gf2m::{Gf2mField, Gf2mPoly};
+
+// Create GF(256) field
+let field = Gf2mField::gf256();
+
+// Field element arithmetic
+let a = field.element(5);
+let b = field.element(7);
+let sum = &a + &b;      // Addition (XOR)
+let product = &a * &b;  // Multiplication with reduction
+
+// Table-based O(1) multiplication for small fields
+assert_eq!(product, field.element(35));
+
+// Polynomial operations over GF(256)
+let p1 = Gf2mPoly::new(vec![
+    field.element(1),  // constant term
+    field.element(2),  // x term
+    field.element(3),  // x^2 term
+]);
+
+let p2 = Gf2mPoly::new(vec![
+    field.element(4),
+    field.element(5),
+]);
+
+// Polynomial multiplication
+let product_poly = &p1 * &p2;
+
+// Polynomial division
+let (quotient, remainder) = p1.div_rem(&p2);
+
+// Evaluation at a point (Horner's method)
+let x = field.element(10);
+let result = p1.eval(&x);
+
+// Minimal polynomial of a field element
+let alpha = field.element(2);
+let min_poly = alpha.minimal_polynomial();
+```
+
 ### gf2-coding: Hamming code workflow
 
 ```rust
@@ -230,6 +289,37 @@ let mut corrupted = codeword.clone();
 corrupted.set(3, !corrupted.get(3));
 let decoded = decoder.decode(&corrupted);
 assert_eq!(decoded, message);
+```
+
+### gf2-coding: BCH code (DVB-T2)
+
+```rust
+use gf2_coding::bch::{BchCode, BchEncoder, BchDecoder, CodeRate};
+use gf2_coding::traits::{BlockEncoder, HardDecisionDecoder};
+use gf2_core::BitVec;
+
+// Create DVB-T2 BCH code for normal frames (rate 1/2)
+let code = BchCode::dvb_t2_normal(CodeRate::Rate1_2);
+let encoder = BchEncoder::new(code.clone());
+let decoder = BchDecoder::new(code);
+
+println!("DVB-T2 BCH: n={}, k={}, t={}", 
+         encoder.n(), encoder.k(), decoder.code.t());
+
+// Encode message (7200 bits)
+let message = BitVec::zeros(7200);
+let codeword = encoder.encode(&message);
+assert_eq!(codeword.len(), 16200);
+
+// Inject up to t=12 errors
+let mut received = codeword.clone();
+for i in 0..12 {
+    received.set(i * 1000, !received.get(i * 1000));
+}
+
+// Decode with algebraic error correction
+let decoded = decoder.decode(&received);
+assert_eq!(decoded, message);  // Errors corrected!
 ```
 
 ### gf2-coding: Convolutional encoder
@@ -301,49 +391,52 @@ for _ in 0..2 {
 
 ## Performance Roadmap
 
-### Phase 1: Scalar Baseline ✅ (Current)
+### Phase 1: Scalar Baseline ✅ (Complete)
 - Tight word-level loops with branch minimization
 - Optimized shifts with whole-word operations
 - Efficient bit scanning with `trailing_zeros`/`leading_zeros`
 - **GF(2) linear algebra**: M4RM multiplication, Gauss-Jordan inversion
 
-### Phase 2: Matrix Optimizations (Planned)
-- Gray code construction for M4RM tables (currently uses simple loop)
-- Cache-oblivious blocking for large matrices
-- Optimized transpose with bit-level tricks
-- SIMD-accelerated row XOR operations
-
-### Phase 3: Buffer Optimizations (Planned)
-- Kernel-based dispatch for large buffers
-- Loop unrolling and prefetch hints
-- Cache-line aligned operations
-
-### Phase 4: SIMD Acceleration (Partial)
+### Phase 2: SIMD Acceleration ✅ (Partial - x86_64 Complete)
 - **x86-64**: AVX2 (256-bit) implementation available via `simd` feature
+- ✅ Runtime feature detection and dispatch
+- ✅ Scan kernels and word-aligned shift operations
 - AVX-512 (512-bit) implementation (planned)
 - **AArch64**: NEON (128-bit) implementation (planned)
-- ✅ Runtime feature detection and dispatch
 - Vectorized shifts using shuffle instructions (planned)
 - VPCLMULQDQ-based row operations for matrices (planned)
 
-### Phase 5: Advanced Bit Operations (Planned)
+### Phase 3: Extension Field GF(2^m) ✅ (Complete)
+- ✅ Field element arithmetic with table-based multiplication for m ≤ 16
+- ✅ Polynomial addition, multiplication (schoolbook), division, GCD
+- ✅ Polynomial evaluation (Horner's method) and batch evaluation
+- ✅ Minimal polynomial computation
+- **Next**: Karatsuba multiplication for 2-3x speedup (benchmarks established)
+- **Future**: SIMD field operations using PCLMULQDQ
+
+### Phase 4: Sparse Matrix Primitives ✅ (Complete)
+- ✅ CSR format for low-density matrices (<5% nonzeros)
+- ✅ Sparse matrix-vector multiply
+- ✅ Dual format (CSR+CSC) for efficient bidirectional access
+- ✅ Conversion between dense and sparse representations
+
+### Phase 5: Polynomial Optimization (In Progress) 🎯
+- ✅ **Baseline established**: 352 µs for degree-200 multiply (GF256)
+- ⏭️ **Next**: Karatsuba algorithm (2-3x speedup expected)
+- 🔮 **Future**: SIMD field multiplication (additional 2-4x)
+- 🔮 **Future**: Batch evaluation optimizations for syndrome computation
+
+### Phase 6: Advanced Bit Operations (Planned)
 - Rank/select with superblock/block indexes
 - O(1) select using broadword techniques
 - Efficient bit scanning primitives
 
-### Phase 6: GF(2) Polynomial Arithmetic (Planned)
-- Carry-less multiplication (scalar baseline)
-- CLMUL/PCLMULQDQ acceleration on x86-64
-- VMULL.P64 on AArch64 with crypto extensions
-- Karatsuba and Toom-Cook algorithms
-- Convolution-based methods exploration
+### Phase 7: Buffer Optimizations (Deprioritized)
+- BitSlice views and range indexing
+- Unrolled scalar kernels for large buffers
+- Cache-line aligned operations
 
-### Phase 7: Coding Theory Algorithms (Implemented in gf2-coding)
-- ✅ Generator and parity-check matrix operations
-- ✅ Syndrome computation and table-based decoding
-- ✅ Hamming codes with error correction
-- ✅ Convolutional codes with Viterbi decoding
-- Future: Soft-decision decoding, LDPC codes
+See `crates/gf2-core/ROADMAP.md` and `crates/gf2-core/docs/performance_session_notes.md` for detailed phase plans and optimization targets.
 
 ## Development
 
@@ -393,9 +486,18 @@ Current benchmarks cover:
   - XOR operations (1 KiB, 64 KiB, 1 MiB)
   - Population count (1 KiB, 64 KiB, 1 MiB)
   - Left/right shifts (64 KiB with various shift amounts)
+  - Scan operations (find first one/zero)
 - **Matrix operations**:
   - Square matrix multiplication (64×64 to 1024×1024)
   - Rectangular matrix multiplication (various dimensions)
+  - Sparse matrix operations
+- **Polynomial arithmetic** (GF(2^m)):
+  - Addition, multiplication, division, GCD (various degrees)
+  - Polynomial evaluation (single and batch)
+  - Minimal polynomial computation
+  - BCH syndrome simulation patterns
+
+See `crates/gf2-core/docs/polynomial_benchmarks.md` for detailed performance analysis and optimization targets.
 
 ### Code Quality
 
