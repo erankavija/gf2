@@ -11,6 +11,29 @@ The detailed phase plans now live alongside each crate:
 
 This document provides a high-level index of strategic goals and cross-cutting concerns that span both crates.
 
+## Current Focus (2024-11-15)
+
+**gf2-core** polynomial arithmetic optimization complete:
+- ✅ **Complete**: GF(2^m) field arithmetic with table-based multiplication
+- ✅ **Complete**: Polynomial operations (add, multiply, divide, GCD, eval)
+- ✅ **Complete**: Minimal polynomial computation for BCH codes
+- ✅ **Complete**: Batch polynomial evaluation for syndrome computation
+- ✅ **Complete**: Comprehensive benchmarks establishing baseline performance
+- 🎯 **Next**: Karatsuba multiplication for 2-3x speedup (optional optimization)
+
+**gf2-coding** BCH implementation complete, ready for DVB-T2 LDPC:
+- ✅ **Complete**: BCH encoder/decoder with algebraic decoding
+- ✅ **Complete**: Berlekamp-Massey algorithm and Chien search
+- ✅ **Complete**: DVB-T2 BCH parameters (all code rates, both frame sizes)
+- ✅ **Complete**: 45 tests with comprehensive validation
+- 🎯 **In Progress**: DVB-T2 LDPC quasi-cyclic codes (Phase C10.1)
+- 🔮 **Next**: QAM modulation and FEC chain integration
+
+See `crates/gf2-core/docs/performance_session_notes.md` for optimization roadmap.
+See `crates/gf2-coding/ROADMAP.md` for DVB-T2 implementation timeline.
+
+---
+
 ## Strategic Pillars
 
 1. Performance & Correctness (gf2-core)
@@ -27,17 +50,18 @@ This document provides a high-level index of strategic goals and cross-cutting c
 - Polynomial arithmetic (core) is a dependency enabler for advanced decoding (coding).
 - Rank/select primitives (core) feed sparse graph and syndrome operations (coding).
 
-## Milestone Aggregation (Snapshot)
+## Milestone Aggregation (Current State)
 
-| Milestone | Core Focus | Coding Focus | Dependency |
-|-----------|------------|--------------|------------|
-| M1        | Scalar baseline complete | Hamming codes + basic decoder | ✅ |
-| M2        | Wide buffer optimizations | Convolutional encoder skeleton | Core M2 aids throughput |
-| M3        | SIMD backends & dispatch | Advanced decoding prototypes | Core SIMD for large parity checks |
-| M4        | Rank/select & scanning | LDPC sparse matrices | Rank/select required |
-| M5        | Polynomial arithmetic | BCH / Reed-Solomon prep | Polynomial ops required |
-| M6        | Kernel safety & audits | Soft-decision decoding hooks | Shared correctness |
-| M7        | N/A (support) | Compression transform research | Reuses BitVec APIs |
+| Milestone | Core Focus | Coding Focus | Status |
+|-----------|------------|--------------|--------|
+| M1        | Scalar baseline complete | Hamming codes + basic decoder | ✅ Complete |
+| M2        | SIMD backends (x86_64 AVX2) | Convolutional encoder | ✅ Core complete |
+| M3        | Extension field GF(2^m) arithmetic | BCH algebraic decoding | ✅ Complete |
+| M4        | Sparse matrix primitives | LDPC sparse matrices | ✅ Core complete |
+| M5        | Polynomial optimization (Karatsuba) | DVB-T2 LDPC construction | 🎯 Coding in progress |
+| M6        | Rank/select & scanning | DVB-T2 QAM modulation | Planned |
+| M7        | Polar transforms | DVB-T2 FEC simulation | Planned |
+| M8        | Kernel safety & audits | Production readiness | Ongoing |
 
 ## Open Research Questions (Workspace View)
 
