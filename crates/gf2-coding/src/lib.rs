@@ -55,6 +55,7 @@
 //! assert_eq!(decoded, msg);
 //! ```
 
+pub mod bch;
 pub mod channel;
 pub mod convolutional;
 pub mod ldpc;
@@ -64,6 +65,7 @@ pub mod simulation;
 pub mod traits;
 
 // Re-export main types
+pub use bch::{BchCode, BchDecoder, BchEncoder, CodeRate};
 pub use channel::{AwgnChannel, BpskModulator};
 pub use convolutional::{ConvolutionalDecoder, ConvolutionalEncoder};
 pub use ldpc::{LdpcCode, LdpcDecoder};
