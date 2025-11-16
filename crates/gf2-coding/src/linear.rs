@@ -375,6 +375,7 @@ impl BlockEncoder for LinearBlockCode {
 /// assert_eq!(decoded, msg);
 /// ```
 #[derive(Debug, Clone)]
+#[allow(clippy::mutable_key_type)] // BitVec interior mutability doesn't affect Hash/Eq
 pub struct SyndromeTableDecoder {
     code: LinearBlockCode,
     syndrome_table: HashMap<BitVec, BitVec>,
@@ -393,6 +394,7 @@ impl SyndromeTableDecoder {
     /// # Panics
     ///
     /// Panics if the code does not have a parity-check matrix
+    #[allow(clippy::mutable_key_type)] // BitVec interior mutability doesn't affect Hash/Eq
     pub fn new(code: LinearBlockCode) -> Self {
         assert!(
             code.h.is_some(),
