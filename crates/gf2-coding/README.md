@@ -50,6 +50,7 @@
 ### LDPC Codes
 - Sparse parity-check matrix representation (using gf2-core SparseMatrixDual)
 - Regular LDPC code construction
+- **Quasi-cyclic (QC) LDPC framework** for DVB-T2, 5G NR, WiFi standards ✅
 - Belief propagation decoder with min-sum approximation
 - Iterative soft-decision decoding with early stopping
 - Syndrome-based convergence detection
@@ -127,6 +128,9 @@ cargo run --example hamming_7_4
 
 # NASA convolutional code tutorial with error correction
 cargo run --example nasa_rate_half_k3
+
+# Quasi-cyclic LDPC codes (DVB-T2, 5G NR foundation)
+cargo run --example qc_ldpc_demo
 
 # LLR operations for LDPC/turbo codes
 cargo run --example llr_operations

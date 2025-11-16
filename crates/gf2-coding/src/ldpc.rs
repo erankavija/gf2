@@ -133,6 +133,374 @@ impl LdpcCode {
     pub(crate) fn parity_check_matrix(&self) -> &SparseMatrixDual {
         &self.h
     }
+
+    /// Creates an LDPC code from a quasi-cyclic structure.
+    ///
+    /// Quasi-cyclic (QC) LDPC codes have parity-check matrices composed of
+    /// circulant submatrices. This structure is used in standards like DVB-T2,
+    /// 5G NR, and WiFi 802.11n.
+    ///
+    /// # Arguments
+    ///
+    /// * `qc` - Quasi-cyclic structure with base matrix and expansion factor
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::ldpc::{LdpcCode, QuasiCyclicLdpc};
+    ///
+    /// // Simple 2×2 base matrix with 3×3 circulant blocks
+    /// let base_matrix = vec![vec![0, 1], vec![1, 0]];
+    /// let qc = QuasiCyclicLdpc::new(base_matrix, 3);
+    /// let code = LdpcCode::from_quasi_cyclic(&qc);
+    ///
+    /// assert_eq!(code.m(), 6); // 2 base rows × 3
+    /// assert_eq!(code.n(), 6); // 2 base cols × 3
+    /// ```
+    pub fn from_quasi_cyclic(qc: &QuasiCyclicLdpc) -> Self {
+        let edges = qc.to_edges();
+        let m = qc.expanded_rows();
+        let n = qc.expanded_cols();
+        Self::from_edges(m, n, &edges)
+    }
+}
+
+/// A circulant matrix for quasi-cyclic LDPC codes.
+///
+/// A circulant matrix is a square matrix where each row is a right-shifted
+/// version of the previous row. In QC-LDPC codes, circulants are used as
+/// building blocks for the parity-check matrix.
+///
+/// # Structure
+///
+/// For a Z×Z circulant with shift s, the first row has a single 1 in column s,
+/// and each subsequent row shifts right by one position (with wraparound).
+///
+/// # Examples
+///
+/// ```
+/// use gf2_coding::ldpc::CirculantMatrix;
+///
+/// // Identity circulant (shift 0, size 3):
+/// // [1 0 0]
+/// // [0 1 0]
+/// // [0 0 1]
+/// let identity = CirculantMatrix::new(0, 3);
+///
+/// // Shift-1 circulant:
+/// // [0 1 0]
+/// // [0 0 1]
+/// // [1 0 0]
+/// let shift1 = CirculantMatrix::new(1, 3);
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CirculantMatrix {
+    /// Right-shift amount (0 = identity)
+    shift: usize,
+    /// Size of the circulant (Z×Z)
+    size: usize,
+}
+
+impl CirculantMatrix {
+    /// Creates a new circulant matrix.
+    ///
+    /// # Arguments
+    ///
+    /// * `shift` - Right-shift amount (must be < size)
+    /// * `size` - Dimension of the square circulant matrix
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::ldpc::CirculantMatrix;
+    ///
+    /// let circ = CirculantMatrix::new(2, 5);
+    /// assert_eq!(circ.shift(), 2);
+    /// assert_eq!(circ.size(), 5);
+    /// ```
+    pub fn new(shift: usize, size: usize) -> Self {
+        Self { shift, size }
+    }
+
+    /// Returns the shift value.
+    pub fn shift(&self) -> usize {
+        self.shift
+    }
+
+    /// Returns the size of the circulant.
+    pub fn size(&self) -> usize {
+        self.size
+    }
+
+    /// Generates edges (row, col) for this circulant block in a larger matrix.
+    ///
+    /// # Arguments
+    ///
+    /// * `base_row` - Base row index in the base matrix
+    /// * `base_col` - Base column index in the base matrix
+    ///
+    /// # Returns
+    ///
+    /// Vector of (row, col) edges representing the circulant's 1-positions
+    pub fn to_edges(&self, base_row: usize, base_col: usize) -> Vec<(usize, usize)> {
+        let row_offset = base_row * self.size;
+        let col_offset = base_col * self.size;
+
+        (0..self.size)
+            .map(|i| {
+                let row = row_offset + i;
+                let col = col_offset + ((i + self.shift) % self.size);
+                (row, col)
+            })
+            .collect()
+    }
+}
+
+/// Quasi-cyclic LDPC code structure.
+///
+/// QC-LDPC codes have parity-check matrices composed of circulant submatrices
+/// arranged according to a base matrix. This structure enables efficient
+/// encoding/decoding and is used in modern communication standards.
+///
+/// # Structure
+///
+/// - **Base matrix**: mb × nb matrix of shift values
+/// - **Expansion factor** Z: Size of each circulant block
+/// - **Expanded matrix**: (mb·Z) × (nb·Z) parity-check matrix H
+///
+/// Each entry in the base matrix:
+/// - **-1**: Zero block (all zeros)
+/// - **0 to Z-1**: Circulant block with corresponding shift
+///
+/// # Examples
+///
+/// ```
+/// use gf2_coding::ldpc::{LdpcCode, QuasiCyclicLdpc};
+///
+/// // DVB-T2-like structure (simplified)
+/// let base_matrix = vec![
+///     vec![0, 1, 2],
+///     vec![1, 0, -1],  // -1 = zero block
+/// ];
+/// let expansion_factor = 360;
+///
+/// let qc = QuasiCyclicLdpc::new(base_matrix, expansion_factor);
+/// let code = LdpcCode::from_quasi_cyclic(&qc);
+///
+/// assert_eq!(code.m(), 2 * 360);
+/// assert_eq!(code.n(), 3 * 360);
+/// ```
+#[derive(Debug, Clone)]
+pub struct QuasiCyclicLdpc {
+    /// Base matrix with shift values (-1 = zero block, 0..Z-1 = circulant shift)
+    base_matrix: Vec<Vec<i32>>,
+    /// Expansion factor (circulant size)
+    expansion_factor: usize,
+}
+
+impl QuasiCyclicLdpc {
+    /// Creates a new quasi-cyclic LDPC structure.
+    ///
+    /// # Arguments
+    ///
+    /// * `base_matrix` - Matrix of shift values (-1 for zero blocks)
+    /// * `expansion_factor` - Size Z of each circulant block
+    ///
+    /// # Panics
+    ///
+    /// Panics if:
+    /// - Base matrix is empty
+    /// - Rows have inconsistent lengths
+    /// - Expansion factor is zero
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::ldpc::QuasiCyclicLdpc;
+    ///
+    /// let base_matrix = vec![
+    ///     vec![0, 1, -1],
+    ///     vec![2, -1, 0],
+    /// ];
+    /// let qc = QuasiCyclicLdpc::new(base_matrix, 4);
+    ///
+    /// assert_eq!(qc.base_rows(), 2);
+    /// assert_eq!(qc.base_cols(), 3);
+    /// assert_eq!(qc.expansion_factor(), 4);
+    /// ```
+    pub fn new(base_matrix: Vec<Vec<i32>>, expansion_factor: usize) -> Self {
+        assert!(
+            !base_matrix.is_empty(),
+            "Base matrix must have at least one row"
+        );
+        assert!(expansion_factor > 0, "Expansion factor must be positive");
+
+        let cols = base_matrix[0].len();
+        assert!(
+            base_matrix.iter().all(|row| row.len() == cols),
+            "All rows in base matrix must have the same length"
+        );
+
+        Self {
+            base_matrix,
+            expansion_factor,
+        }
+    }
+
+    /// Returns the number of rows in the base matrix.
+    pub fn base_rows(&self) -> usize {
+        self.base_matrix.len()
+    }
+
+    /// Returns the number of columns in the base matrix.
+    pub fn base_cols(&self) -> usize {
+        self.base_matrix[0].len()
+    }
+
+    /// Returns the expansion factor.
+    pub fn expansion_factor(&self) -> usize {
+        self.expansion_factor
+    }
+
+    /// Returns the number of rows in the expanded matrix.
+    pub fn expanded_rows(&self) -> usize {
+        self.base_rows() * self.expansion_factor
+    }
+
+    /// Returns the number of columns in the expanded matrix.
+    pub fn expanded_cols(&self) -> usize {
+        self.base_cols() * self.expansion_factor
+    }
+
+    /// Expands the quasi-cyclic structure to a list of edges.
+    ///
+    /// Converts the base matrix with circulant blocks into a sparse edge list
+    /// suitable for creating an LDPC code.
+    ///
+    /// # Returns
+    ///
+    /// Vector of (row, col) edges representing 1-positions in the expanded matrix
+    ///
+    /// # Panics
+    ///
+    /// Panics if any shift value is invalid (not -1 and not in range 0..Z)
+    pub fn to_edges(&self) -> Vec<(usize, usize)> {
+        let z = self.expansion_factor;
+        let mut edges = Vec::new();
+
+        for (base_row, row) in self.base_matrix.iter().enumerate() {
+            for (base_col, &shift) in row.iter().enumerate() {
+                if shift == -1 {
+                    // Zero block - no edges
+                    continue;
+                }
+
+                assert!(
+                    shift >= 0 && (shift as usize) < z,
+                    "Shift value {} at position ({},{}) must be -1 or in range [0,{})",
+                    shift,
+                    base_row,
+                    base_col,
+                    z
+                );
+
+                let circ = CirculantMatrix::new(shift as usize, z);
+                let block_edges = circ.to_edges(base_row, base_col);
+                edges.extend(block_edges);
+            }
+        }
+
+        edges
+    }
+
+    /// Creates a DVB-T2 short (normal) frame LDPC code.
+    ///
+    /// DVB-T2 short frames have 16200 bits with expansion factor Z=360.
+    /// This is a placeholder - actual base matrices from ETSI EN 302 755
+    /// should be added for production use.
+    ///
+    /// # Arguments
+    ///
+    /// * `rate` - Code rate (currently only 1/2 is implemented as example)
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::ldpc::{LdpcCode, QuasiCyclicLdpc};
+    /// use gf2_coding::CodeRate;
+    ///
+    /// let qc = QuasiCyclicLdpc::dvb_t2_normal(CodeRate::Rate1_2);
+    /// let code = LdpcCode::from_quasi_cyclic(&qc);
+    ///
+    /// assert_eq!(code.n(), 16200);
+    /// ```
+    ///
+    /// # Note
+    ///
+    /// This is a minimal example implementation. Full DVB-T2 support requires
+    /// entering the complete base matrices from the standard specification.
+    pub fn dvb_t2_normal(rate: crate::bch::CodeRate) -> Self {
+        // Placeholder: Simplified example base matrix
+        // Real DVB-T2 normal frame (n=16200, Z=360) has more complex structure
+        // TODO: Replace with actual ETSI EN 302 755 base matrices
+
+        let (base_matrix, expansion_factor) = match rate {
+            crate::bch::CodeRate::Rate1_2 => {
+                // Placeholder for DVB-T2 normal rate 1/2
+                // DVB-T2 normal: n=16200, Z=360 → need 45 columns
+                // Rate 1/2 → k=8100 → need ~22-23 check rows
+                // This is a minimal placeholder structure
+                let base = vec![
+                    vec![0; 45],  // First check: identity pattern (simplified)
+                ];
+                (base, 360)
+            }
+            _ => {
+                // Other rates need actual base matrices from standard
+                panic!(
+                    "DVB-T2 normal frame rate {:?} base matrix not yet implemented. \
+                     Contributions welcome!",
+                    rate
+                );
+            }
+        };
+
+        Self::new(base_matrix, expansion_factor)
+    }
+
+    /// Creates a DVB-T2 long frame LDPC code.
+    ///
+    /// DVB-T2 long frames have 64800 bits with expansion factor Z=1440 or Z=360
+    /// depending on the code rate.
+    ///
+    /// # Note
+    ///
+    /// This is a placeholder. Full implementation requires base matrices from
+    /// ETSI EN 302 755 standard.
+    pub fn dvb_t2_long(_rate: crate::bch::CodeRate) -> Self {
+        // TODO: Implement with actual DVB-T2 long frame base matrices
+        panic!(
+            "DVB-T2 long frame codes not yet implemented. See ETSI EN 302 755 for specifications."
+        );
+    }
+
+    /// Creates a 5G NR LDPC code.
+    ///
+    /// 5G NR uses two base graphs (BG1 and BG2) with variable expansion factors.
+    ///
+    /// # Arguments
+    ///
+    /// * `base_graph` - 1 or 2 (BG1 for higher rates, BG2 for lower rates)
+    /// * `lifting_factor` - Expansion factor Z (typically 2..384)
+    ///
+    /// # Note
+    ///
+    /// This is a placeholder. Full implementation requires base matrices from
+    /// 3GPP TS 38.212 specification.
+    pub fn nr_5g(_base_graph: u8, _lifting_factor: usize) -> Self {
+        // TODO: Implement with actual 5G NR base matrices from 3GPP TS 38.212
+        panic!("5G NR LDPC codes not yet implemented. See 3GPP TS 38.212 for specifications.");
+    }
 }
 
 /// Belief propagation decoder for LDPC codes.
