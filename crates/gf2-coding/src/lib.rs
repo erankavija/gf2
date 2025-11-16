@@ -68,7 +68,7 @@ pub mod traits;
 pub use bch::{BchCode, BchDecoder, BchEncoder, CodeRate};
 pub use channel::{AwgnChannel, BpskModulator};
 pub use convolutional::{ConvolutionalDecoder, ConvolutionalEncoder};
-pub use ldpc::{LdpcCode, LdpcDecoder};
+pub use ldpc::{CirculantMatrix, LdpcCode, LdpcDecoder, QuasiCyclicLdpc};
 pub use linear::{LinearBlockCode, SyndromeTableDecoder};
 pub use llr::Llr;
 pub use traits::DecoderResult;

@@ -63,8 +63,16 @@ See [docs/DVB_T2_DESIGN.md](docs/DVB_T2_DESIGN.md) for detailed design and imple
 - ✅ Sparse parity-check matrix format (SparseMatrixDual from gf2-core)
 - ✅ Regular LDPC code generation (column/row weight specified)
 - ✅ Tanner graph representation (implicit via sparse matrix)
+- ✅ **Quasi-cyclic LDPC framework** (Phase C10.1 complete)
+  - ✅ `CirculantMatrix` type for circulant submatrices
+  - ✅ `QuasiCyclicLdpc` structure with base matrix and expansion factor
+  - ✅ Automatic expansion to full parity-check matrix
+  - ✅ Generic design supporting DVB-T2, 5G NR, WiFi standards
+  - ✅ Factory methods with placeholders (`dvb_t2_normal`, `dvb_t2_long`, `nr_5g`)
+  - ✅ 19 comprehensive tests (construction, validation, edge cases)
+  - ✅ Example program: `examples/qc_ldpc_demo.rs`
 - [ ] Irregular LDPC codes (degree distribution) - deferred
-- [ ] DVB-T2 quasi-cyclic LDPC codes - Phase C10
+- [ ] DVB-T2 actual base matrices from ETSI EN 302 755 - Phase C10.2
 
 ### Belief Propagation Decoder
 - ✅ Sum-product algorithm (SPA) with LLR messages (min-sum implementation)
@@ -157,24 +165,56 @@ See [docs/DVB_T2_DESIGN.md](docs/DVB_T2_DESIGN.md) for detailed design and imple
 
 **Note**: Minimal polynomial computation is in gf2-core Phase 8.4. BCH-specific algorithms (generator polynomial from roots, Berlekamp-Massey, Chien search) belong here as application-level code.
 
-## Phase C10: DVB-T2 FEC Simulation (Planned) 🎯 **PRIMARY GOAL**
+## Phase C10: DVB-T2 FEC Simulation (In Progress) 🎯 **PRIMARY GOAL**
 **Simulate complete DVB-T2 FEC chain with FER performance analysis**
 
-### Components
-- **DVB-T2 LDPC**: Quasi-cyclic LDPC codes per ETSI EN 302 755 (all rates, both frame sizes)
+### Phase C10.1: Quasi-Cyclic LDPC Framework ✅ **COMPLETE**
+**Status**: Implemented with TDD (19 tests passing, 1 example)
+
+**Deliverables**:
+- ✅ `CirculantMatrix` type for circulant submatrices
+- ✅ `QuasiCyclicLdpc` structure with base matrix and expansion factor  
+- ✅ Automatic expansion to sparse edge list
+- ✅ Generic design supporting multiple standards (DVB-T2, 5G NR, WiFi)
+- ✅ Factory method placeholders: `dvb_t2_normal()`, `dvb_t2_long()`, `nr_5g()`
+- ✅ Integration with existing `LdpcCode` via `from_quasi_cyclic()`
+- ✅ Comprehensive tests: construction, validation, edge cases, panic conditions
+- ✅ Example: `examples/qc_ldpc_demo.rs`
+- ✅ Documentation with examples and design notes
+
+**Test Coverage**: 13 QC-LDPC tests + 6 DVB-T2 tests = 19 tests
+**Lines of Code**: ~250 lines in `src/ldpc.rs`
+**Completion Time**: 1 day (TDD approach)
+
+### Phase C10.2: DVB-T2 LDPC Base Matrices (Next)
+**Priority**: HIGH  
+**Estimated effort**: 3-5 days
+
+**Tasks**:
+- [ ] Enter base matrices from ETSI EN 302 755 Tables 6-8
+- [ ] Implement all 12 standard configurations:
+  - [ ] Normal frame (n=16200, Z=360): rates 1/2, 3/5, 2/3, 3/4, 4/5, 5/6
+  - [ ] Long frame (n=64800, Z=360): same 6 rates
+- [ ] Validation tests against standard
+- [ ] Known answer tests from reference implementations
+- [ ] Property tests for code structure
+- [ ] Update documentation with actual parameters
+
+### Components (Remaining)
 - **QAM Modulation**: QPSK, 16/64/256-QAM with Gray mapping and soft LLR demapping
 - **Bit Interleaving**: DVB-T2 column-row interleaver
 - **System Integration**: End-to-end transmit/receive chain
 - **FER Simulation**: Monte Carlo framework with configurable parameters
 
-### Deliverables
+### Final Deliverables
 - Complete DVB-T2 encoder/decoder for standard configurations
 - FER vs. Eb/N0 simulation framework
 - Performance comparison across code rates and modulations
 - Validation against Shannon limit and reference implementations
 - Comprehensive documentation and examples
 
-**Estimated effort**: 6-9 weeks (Phases C10-C15, see [docs/DVB_T2_DESIGN.md](docs/DVB_T2_DESIGN.md))
+**Total Estimated effort**: 6-9 weeks → **1 week complete**, 5-8 weeks remaining  
+**See**: [docs/DVB_T2_DESIGN.md](docs/DVB_T2_DESIGN.md) for detailed implementation plan
 
 ## Phase C11: Performance & Ergonomics Polish (Ongoing)
 - Unified error handling and panic messages → shift towards `Result` where appropriate
