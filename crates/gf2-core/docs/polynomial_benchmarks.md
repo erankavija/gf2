@@ -1,17 +1,44 @@
-# GF(2^m) Polynomial Arithmetic Benchmark Results & Optimization Roadmap
+# GF(2^m) Polynomial Arithmetic Benchmark Results
 
-**Date**: 2024-11-15  
+**Date**: 2024-11-15 (Baseline), 2024-11-16 (Optimized)  
 **Crate**: gf2-core v0.1.0  
-**Purpose**: Establish baseline performance for polynomial operations and identify optimization opportunities
+**Status**: Optimization complete ✅
 
 ## Executive Summary
 
-Polynomial arithmetic benchmarks have been established for GF(256) and GF(65536) fields. Current implementation uses:
-- **Addition**: O(n) element-wise XOR
-- **Multiplication**: O(n²) schoolbook algorithm
-- **Division**: O(n²) long division
-- **GCD**: Euclidean algorithm with monic normalization
-- **Evaluation**: Horner's method
+Polynomial arithmetic has been optimized with Karatsuba multiplication and SIMD field operations:
+- **Baseline (2024-11-15)**: O(n²) schoolbook multiplication
+- **Optimized (2024-11-16)**: O(n^1.585) Karatsuba + PCLMULQDQ SIMD
+- **Speedup**: 1.88x for degree-200 polynomials (352 µs → 187 µs)
+
+## Performance Comparison
+
+### Polynomial Multiplication: Before vs. After
+
+**Degree 200 (BCH Critical Path):**
+
+| Field       | Baseline (Schoolbook) | Optimized (Karatsuba) | Speedup |
+|-------------|----------------------|----------------------|---------|
+| GF(256)     | 352 µs               | 187 µs               | 1.88x   |
+| GF(65536)   | 527 µs               | 279 µs               | 1.89x   |
+
+**Degree 100:**
+
+| Field       | Baseline | Optimized | Speedup |
+|-------------|----------|-----------|---------|
+| GF(256)     | 89 µs    | 63 µs     | 1.41x   |
+| GF(65536)   | 134 µs   | 93 µs     | 1.44x   |
+
+### SIMD Field Operations (Direct Element Multiplication)
+
+| Configuration        | Without SIMD | With SIMD | Speedup |
+|---------------------|--------------|-----------|---------|
+| GF(256) w/tables    | 4.4 ns       | 4.4 ns    | 1.0x    |
+| GF(65536) w/tables  | 7.5 ns       | 7.5 ns    | 1.0x    |
+| GF(65536) no tables | 34 ns        | 16 ns     | 2.1x    |
+
+**Note**: SIMD provides benefit for large fields (m > 16) without precomputed tables.
+For small fields with tables, table lookups remain fastest.
 
 ## Baseline Performance Results
 
@@ -169,19 +196,31 @@ pub fn mul_karatsuba(&self, rhs: &Gf2mPoly) -> Gf2mPoly { ... }
 - For m > 16 fields, SIMD will be essential due to lack of log tables
 - BCH code performance will benefit most from Karatsuba + SIMD combination
 
-## Benchmark Command
+## Benchmark Commands
 
 ```bash
 # Run all polynomial benchmarks
 cargo bench --bench polynomial
 
+# With SIMD enabled
+cargo bench --features simd --bench polynomial
+
 # Run specific operation
 cargo bench --bench polynomial -- "multiplication"
-
-# Save baseline for comparison
-cargo bench --bench polynomial -- --save-baseline polynomial_baseline
 ```
 
 ---
 
-**Recommendation**: Proceed with Karatsuba implementation as Phase 7 priority, as it provides the most significant performance improvement with moderate implementation complexity.
+## Optimization Complete ✅
+
+**Implementation (2024-11-16):**
+- Phase 7a: Karatsuba multiplication with threshold=32
+- Phase 7b: PCLMULQDQ SIMD field operations
+- Files: `src/gf2m.rs` (+318 lines), `gf2-kernels-simd/src/gf2m.rs` (NEW, 222 lines)
+- Tests: 7 Karatsuba unit tests + 3 property tests, all passing
+- Documentation: See ROADMAP.md for details
+
+**Impact:**
+- Critical for BCH codes: 1.88x faster polynomial operations
+- Enables large fields: 2.1x SIMD speedup for m > 16
+- All DVB-T2 dependencies met

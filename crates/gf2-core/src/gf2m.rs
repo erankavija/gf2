@@ -108,6 +108,9 @@ use std::fmt;
 use std::ops::{Add, Div, Mul};
 use std::rc::Rc;
 
+#[cfg(feature = "simd")]
+use gf2_kernels_simd::gf2m as simd_gf2m;
+
 /// A binary extension field GF(2^m) with a specified primitive polynomial.
 ///
 /// This type defines the field structure and parameters. Individual field elements
@@ -124,6 +127,9 @@ struct FieldParams {
     // Log/antilog tables for fast multiplication (m ≤ 16)
     log_table: Option<Vec<u16>>, // log_table[α^i] = i
     exp_table: Option<Vec<u16>>, // exp_table[i] = α^i
+    // SIMD multiplication function (if available)
+    #[cfg(feature = "simd")]
+    simd_mul_fn: Option<simd_gf2m::Gf2mMulFn>,
 }
 
 impl PartialEq for FieldParams {
@@ -167,12 +173,18 @@ impl Gf2mField {
     pub fn new(m: usize, primitive_poly: u64) -> Self {
         assert!(m > 0, "Extension degree m must be positive");
         assert!(m <= 64, "Extension degree m > 64 not yet supported");
+
+        #[cfg(feature = "simd")]
+        let simd_mul_fn = simd_gf2m::detect().map(|fns| fns.mul_fn);
+
         Gf2mField {
             params: Rc::new(FieldParams {
                 m,
                 primitive_poly,
                 log_table: None,
                 exp_table: None,
+                #[cfg(feature = "simd")]
+                simd_mul_fn,
             }),
         }
     }
@@ -288,12 +300,17 @@ impl Gf2mField {
         let (log_table, exp_table) =
             Self::generate_tables(self.params.m, self.params.primitive_poly);
 
+        #[cfg(feature = "simd")]
+        let simd_mul_fn = self.params.simd_mul_fn;
+
         Gf2mField {
             params: Rc::new(FieldParams {
                 m: self.params.m,
                 primitive_poly: self.params.primitive_poly,
                 log_table: Some(log_table),
                 exp_table: Some(exp_table),
+                #[cfg(feature = "simd")]
+                simd_mul_fn,
             }),
         }
     }
@@ -637,7 +654,7 @@ impl Mul for &Gf2mElement {
             };
         }
 
-        // Use table-based multiplication if available
+        // Priority 1: Use table-based multiplication if available (fastest for small m)
         if let (Some(log_table), Some(exp_table)) = (
             self.params.log_table.as_ref(),
             self.params.exp_table.as_ref(),
@@ -653,7 +670,22 @@ impl Mul for &Gf2mElement {
             };
         }
 
-        // Fallback to schoolbook multiplication
+        // Priority 2: Use SIMD if available (faster than schoolbook for larger m)
+        #[cfg(feature = "simd")]
+        if let Some(simd_mul_fn) = self.params.simd_mul_fn {
+            let result = simd_mul_fn(
+                self.value,
+                rhs.value,
+                self.params.m,
+                self.params.primitive_poly,
+            );
+            return Gf2mElement {
+                value: result,
+                params: Rc::clone(&self.params),
+            };
+        }
+
+        // Priority 3: Fallback to schoolbook multiplication
         let m = self.params.m;
         let primitive_poly = self.params.primitive_poly;
 
@@ -1458,6 +1490,136 @@ impl Gf2mPoly {
 
         r0
     }
+
+    /// Multiplies two polynomials using schoolbook algorithm.
+    ///
+    /// This is the baseline O(n²) algorithm, used for small polynomials
+    /// and as a subroutine in Karatsuba multiplication.
+    fn mul_schoolbook(&self, rhs: &Gf2mPoly) -> Gf2mPoly {
+        if self.is_zero() || rhs.is_zero() {
+            return Gf2mPoly::zero(&Gf2mField {
+                params: self.coeffs[0].params.clone(),
+            });
+        }
+
+        let deg_self = self.degree().unwrap();
+        let deg_rhs = rhs.degree().unwrap();
+        let result_deg = deg_self + deg_rhs;
+
+        let field = Gf2mField {
+            params: self.coeffs[0].params.clone(),
+        };
+        let mut coeffs = vec![field.zero(); result_deg + 1];
+
+        for i in 0..=deg_self {
+            for j in 0..=deg_rhs {
+                let term = &self.coeffs[i] * &rhs.coeffs[j];
+                coeffs[i + j] = &coeffs[i + j] + &term;
+            }
+        }
+
+        Gf2mPoly::new(coeffs)
+    }
+
+    /// Multiplies two polynomials using Karatsuba algorithm.
+    ///
+    /// This recursive algorithm achieves O(n^1.585) complexity by splitting
+    /// polynomials and reducing the number of recursive multiplications from 4 to 3.
+    ///
+    /// For polynomials p(x) and q(x) of degree n:
+    /// 1. Split at midpoint m = n/2:
+    ///    - p(x) = p_hi(x)·x^m + p_lo(x)
+    ///    - q(x) = q_hi(x)·x^m + q_lo(x)
+    /// 2. Compute 3 products:
+    ///    - z₂ = p_hi · q_hi
+    ///    - z₀ = p_lo · q_lo
+    ///    - z₁ = (p_hi + p_lo) · (q_hi + q_lo) - z₂ - z₀
+    /// 3. Recombine: p·q = z₂·x^(2m) + z₁·x^m + z₀
+    fn mul_karatsuba(&self, rhs: &Gf2mPoly) -> Gf2mPoly {
+        const KARATSUBA_THRESHOLD: usize = 32;
+
+        if self.is_zero() || rhs.is_zero() {
+            return Gf2mPoly::zero(&Gf2mField {
+                params: self.coeffs[0].params.clone(),
+            });
+        }
+
+        let deg_self = self.degree().unwrap();
+        let deg_rhs = rhs.degree().unwrap();
+
+        // Use schoolbook for small polynomials
+        if deg_self < KARATSUBA_THRESHOLD || deg_rhs < KARATSUBA_THRESHOLD {
+            return self.mul_schoolbook(rhs);
+        }
+
+        // Split at midpoint
+        let m = deg_self.max(deg_rhs) / 2 + 1;
+
+        let field = Gf2mField {
+            params: self.coeffs[0].params.clone(),
+        };
+
+        // Split self into p_lo + p_hi * x^m
+        let p_lo_coeffs: Vec<_> = self.coeffs.iter().take(m).cloned().collect();
+        let p_hi_coeffs: Vec<_> = self.coeffs.iter().skip(m).cloned().collect();
+
+        let p_lo = if p_lo_coeffs.is_empty() {
+            Gf2mPoly::zero(&field)
+        } else {
+            Gf2mPoly::new(p_lo_coeffs)
+        };
+
+        let p_hi = if p_hi_coeffs.is_empty() {
+            Gf2mPoly::zero(&field)
+        } else {
+            Gf2mPoly::new(p_hi_coeffs)
+        };
+
+        // Split rhs into q_lo + q_hi * x^m
+        let q_lo_coeffs: Vec<_> = rhs.coeffs.iter().take(m).cloned().collect();
+        let q_hi_coeffs: Vec<_> = rhs.coeffs.iter().skip(m).cloned().collect();
+
+        let q_lo = if q_lo_coeffs.is_empty() {
+            Gf2mPoly::zero(&field)
+        } else {
+            Gf2mPoly::new(q_lo_coeffs)
+        };
+
+        let q_hi = if q_hi_coeffs.is_empty() {
+            Gf2mPoly::zero(&field)
+        } else {
+            Gf2mPoly::new(q_hi_coeffs)
+        };
+
+        // Three recursive multiplications
+        let z0 = p_lo.mul_karatsuba(&q_lo);
+        let z2 = p_hi.mul_karatsuba(&q_hi);
+
+        let p_sum = &p_hi + &p_lo;
+        let q_sum = &q_hi + &q_lo;
+        let z1_full = p_sum.mul_karatsuba(&q_sum);
+        let z1 = &(&z1_full + &z2) + &z0;
+
+        // Combine: z2 * x^(2m) + z1 * x^m + z0
+        let mut result_coeffs = vec![field.zero(); deg_self + deg_rhs + 1];
+
+        // Add z0 coefficients
+        for (i, coeff) in z0.coeffs.iter().enumerate() {
+            result_coeffs[i] = coeff.clone();
+        }
+
+        // Add z1 * x^m coefficients
+        for (i, coeff) in z1.coeffs.iter().enumerate() {
+            result_coeffs[i + m] = &result_coeffs[i + m] + coeff;
+        }
+
+        // Add z2 * x^(2m) coefficients
+        for (i, coeff) in z2.coeffs.iter().enumerate() {
+            result_coeffs[i + 2 * m] = &result_coeffs[i + 2 * m] + coeff;
+        }
+
+        Gf2mPoly::new(result_coeffs)
+    }
 }
 
 impl PartialEq for Gf2mPoly {
@@ -1505,30 +1667,8 @@ impl Mul for &Gf2mPoly {
     type Output = Gf2mPoly;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        if self.is_zero() || rhs.is_zero() {
-            return Gf2mPoly::zero(&Gf2mField {
-                params: self.coeffs[0].params.clone(),
-            });
-        }
-
-        let deg_self = self.degree().unwrap();
-        let deg_rhs = rhs.degree().unwrap();
-        let result_deg = deg_self + deg_rhs;
-
-        let field = Gf2mField {
-            params: self.coeffs[0].params.clone(),
-        };
-        let mut coeffs = vec![field.zero(); result_deg + 1];
-
-        // Schoolbook multiplication
-        for i in 0..=deg_self {
-            for j in 0..=deg_rhs {
-                let term = &self.coeffs[i] * &rhs.coeffs[j];
-                coeffs[i + j] = &coeffs[i + j] + &term;
-            }
-        }
-
-        Gf2mPoly::new(coeffs)
+        // Use Karatsuba for large polynomials, schoolbook for small
+        self.mul_karatsuba(rhs)
     }
 }
 
@@ -1642,6 +1782,123 @@ mod poly_tests {
         assert_eq!(product.coeff(1).value(), 1 ^ 2); // 1*1 + 1*2 = 3 in GF(2^4)
         assert_eq!(product.coeff(2).value(), 1); // 1*1
     }
+
+    // Karatsuba multiplication tests
+
+    #[test]
+    fn test_karatsuba_vs_schoolbook_small() {
+        // Test that Karatsuba matches schoolbook for polynomials below threshold
+        let field = Gf2mField::new(4, 0b10011);
+        let p1 = Gf2mPoly::new(vec![field.element(1), field.element(2), field.element(3)]);
+        let p2 = Gf2mPoly::new(vec![field.element(4), field.element(5)]);
+
+        let result_karatsuba = p1.mul_karatsuba(&p2);
+        let result_schoolbook = p1.mul_schoolbook(&p2);
+
+        assert_eq!(result_karatsuba, result_schoolbook);
+    }
+
+    #[test]
+    fn test_karatsuba_vs_schoolbook_at_threshold() {
+        // Test degree 32 (at threshold boundary)
+        let field = Gf2mField::gf256();
+        let coeffs1: Vec<_> = (0..33).map(|i| field.element((i % 256) as u64)).collect();
+        let coeffs2: Vec<_> = (0..33)
+            .map(|i| field.element(((i * 7) % 256) as u64))
+            .collect();
+
+        let p1 = Gf2mPoly::new(coeffs1);
+        let p2 = Gf2mPoly::new(coeffs2);
+
+        let result_karatsuba = p1.mul_karatsuba(&p2);
+        let result_schoolbook = p1.mul_schoolbook(&p2);
+
+        assert_eq!(result_karatsuba, result_schoolbook);
+    }
+
+    #[test]
+    fn test_karatsuba_vs_schoolbook_above_threshold() {
+        // Test degree 64 (well above threshold)
+        let field = Gf2mField::gf256();
+        let coeffs1: Vec<_> = (0..65).map(|i| field.element((i % 256) as u64)).collect();
+        let coeffs2: Vec<_> = (0..65)
+            .map(|i| field.element(((i * 13) % 256) as u64))
+            .collect();
+
+        let p1 = Gf2mPoly::new(coeffs1);
+        let p2 = Gf2mPoly::new(coeffs2);
+
+        let result_karatsuba = p1.mul_karatsuba(&p2);
+        let result_schoolbook = p1.mul_schoolbook(&p2);
+
+        assert_eq!(result_karatsuba, result_schoolbook);
+    }
+
+    #[test]
+    fn test_karatsuba_degree_100() {
+        // Test degree 100 polynomials (realistic BCH-like scenario)
+        let field = Gf2mField::gf256();
+        let coeffs1: Vec<_> = (0..101).map(|i| field.element((i % 256) as u64)).collect();
+        let coeffs2: Vec<_> = (0..101)
+            .map(|i| field.element(((i * 17) % 256) as u64))
+            .collect();
+
+        let p1 = Gf2mPoly::new(coeffs1);
+        let p2 = Gf2mPoly::new(coeffs2);
+
+        let result_karatsuba = p1.mul_karatsuba(&p2);
+        let result_schoolbook = p1.mul_schoolbook(&p2);
+
+        assert_eq!(result_karatsuba, result_schoolbook);
+        assert_eq!(result_karatsuba.degree(), Some(200)); // deg(p1) + deg(p2)
+    }
+
+    #[test]
+    fn test_karatsuba_degree_200() {
+        // Test degree 200 polynomials (critical BCH-255 benchmark)
+        let field = Gf2mField::gf256();
+        let coeffs1: Vec<_> = (0..201).map(|i| field.element((i % 256) as u64)).collect();
+        let coeffs2: Vec<_> = (0..201)
+            .map(|i| field.element(((i * 19) % 256) as u64))
+            .collect();
+
+        let p1 = Gf2mPoly::new(coeffs1);
+        let p2 = Gf2mPoly::new(coeffs2);
+
+        let result_karatsuba = p1.mul_karatsuba(&p2);
+        let result_schoolbook = p1.mul_schoolbook(&p2);
+
+        assert_eq!(result_karatsuba, result_schoolbook);
+        assert_eq!(result_karatsuba.degree(), Some(400));
+    }
+
+    #[test]
+    fn test_karatsuba_with_zero() {
+        let field = Gf2mField::gf256();
+        let p1 = Gf2mPoly::new(vec![field.element(1), field.element(2)]);
+        let zero = Gf2mPoly::zero(&field);
+
+        assert_eq!(p1.mul_karatsuba(&zero), zero);
+        assert_eq!(zero.mul_karatsuba(&p1), zero);
+    }
+
+    #[test]
+    fn test_karatsuba_different_degrees() {
+        // Test polynomials with very different degrees
+        let field = Gf2mField::gf256();
+        let p1_coeffs: Vec<_> = (0..100).map(|i| field.element((i % 256) as u64)).collect();
+        let p2_coeffs: Vec<_> = (0..10).map(|i| field.element((i % 256) as u64)).collect();
+
+        let p1 = Gf2mPoly::new(p1_coeffs);
+        let p2 = Gf2mPoly::new(p2_coeffs);
+
+        let result_karatsuba = p1.mul_karatsuba(&p2);
+        let result_schoolbook = p1.mul_schoolbook(&p2);
+
+        assert_eq!(result_karatsuba, result_schoolbook);
+    }
+
+    // Evaluation tests
 
     #[test]
     fn test_poly_eval_constant() {
@@ -1984,6 +2241,79 @@ mod poly_tests {
                 prop_assert!(r1.is_zero() || r1.degree() == Some(0) && r1.coeff(0).is_zero());
                 prop_assert!(r2.is_zero() || r2.degree() == Some(0) && r2.coeff(0).is_zero());
             }
+        }
+
+        // Karatsuba property tests
+        #[test]
+        fn prop_karatsuba_equals_schoolbook_small(
+            deg1 in 1usize..10,
+            deg2 in 1usize..10,
+            seed in 1u64..256
+        ) {
+            let field = Gf2mField::gf256();
+
+            let coeffs1: Vec<_> = (0..=deg1)
+                .map(|i| field.element((i as u64 * seed) % 256))
+                .collect();
+            let coeffs2: Vec<_> = (0..=deg2)
+                .map(|i| field.element((i as u64 * seed * 7) % 256))
+                .collect();
+
+            let p1 = Gf2mPoly::new(coeffs1);
+            let p2 = Gf2mPoly::new(coeffs2);
+
+            let result_karatsuba = p1.mul_karatsuba(&p2);
+            let result_schoolbook = p1.mul_schoolbook(&p2);
+
+            prop_assert_eq!(result_karatsuba, result_schoolbook);
+        }
+
+        #[test]
+        fn prop_karatsuba_equals_schoolbook_medium(
+            deg1 in 30usize..60,
+            deg2 in 30usize..60,
+            seed in 1u64..256
+        ) {
+            let field = Gf2mField::gf256();
+
+            let coeffs1: Vec<_> = (0..=deg1)
+                .map(|i| field.element((i as u64 * seed) % 256))
+                .collect();
+            let coeffs2: Vec<_> = (0..=deg2)
+                .map(|i| field.element((i as u64 * seed * 11) % 256))
+                .collect();
+
+            let p1 = Gf2mPoly::new(coeffs1);
+            let p2 = Gf2mPoly::new(coeffs2);
+
+            let result_karatsuba = p1.mul_karatsuba(&p2);
+            let result_schoolbook = p1.mul_schoolbook(&p2);
+
+            prop_assert_eq!(result_karatsuba, result_schoolbook);
+        }
+
+        #[test]
+        fn prop_karatsuba_equals_schoolbook_large(
+            deg1 in 100usize..150,
+            deg2 in 100usize..150,
+            seed in 1u64..256
+        ) {
+            let field = Gf2mField::gf256();
+
+            let coeffs1: Vec<_> = (0..=deg1)
+                .map(|i| field.element((i as u64 * seed) % 256))
+                .collect();
+            let coeffs2: Vec<_> = (0..=deg2)
+                .map(|i| field.element((i as u64 * seed * 13) % 256))
+                .collect();
+
+            let p1 = Gf2mPoly::new(coeffs1);
+            let p2 = Gf2mPoly::new(coeffs2);
+
+            let result_karatsuba = p1.mul_karatsuba(&p2);
+            let result_schoolbook = p1.mul_schoolbook(&p2);
+
+            prop_assert_eq!(result_karatsuba, result_schoolbook);
         }
     }
 
