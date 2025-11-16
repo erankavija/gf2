@@ -1,86 +1,111 @@
-# Development Roadmap
+# gf2 Workspace Roadmap
 
-This document outlines the phased development plan for the `gf2` workspace. The early phases focus on the `gf2-core` primitives, while later phases inform the `gf2-coding` applications layer.
+This document provides strategic direction for the gf2 workspace. For detailed implementation plans, see:
 
-## Overview
+- **[crates/gf2-core/ROADMAP.md](crates/gf2-core/ROADMAP.md)** - Performance primitives and optimization phases
+- **[crates/gf2-coding/ROADMAP.md](crates/gf2-coding/ROADMAP.md)** - Coding theory algorithms and DVB-T2 FEC
 
-The detailed phase plans now live alongside each crate:
+## Vision
 
-- Core primitives & performance engineering: `crates/gf2-core/ROADMAP.md`
-- Coding theory & compression research: `crates/gf2-coding/ROADMAP.md`
+A cohesive toolkit for high-performance binary field computing and coding theory, serving both production systems and research applications with clean, composable APIs that hide implementation complexity.
 
-This document provides a high-level index of strategic goals and cross-cutting concerns that span both crates.
+## Current Focus
 
-## Current Focus (2024-11-15)
+**gf2-core**: Polynomial optimization complete
+- ✅ GF(2^m) extension field arithmetic
+- ✅ Karatsuba multiplication (1.88x speedup)
+- ✅ SIMD field operations (2.1x for large fields)
+- ✅ Sparse matrix primitives (CSR/CSC)
+- 🔮 Rank/select operations (planned)
 
-**gf2-core** polynomial arithmetic optimization complete:
-- ✅ **Complete**: GF(2^m) field arithmetic with table-based multiplication
-- ✅ **Complete**: Polynomial operations (add, multiply, divide, GCD, eval)
-- ✅ **Complete**: Minimal polynomial computation for BCH codes
-- ✅ **Complete**: Batch polynomial evaluation for syndrome computation
-- ✅ **Complete**: Comprehensive benchmarks establishing baseline performance
-- 🎯 **Next**: Karatsuba multiplication for 2-3x speedup (optional optimization)
-
-**gf2-coding** BCH implementation complete, ready for DVB-T2 LDPC:
-- ✅ **Complete**: BCH encoder/decoder with algebraic decoding
-- ✅ **Complete**: Berlekamp-Massey algorithm and Chien search
-- ✅ **Complete**: DVB-T2 BCH parameters (all code rates, both frame sizes)
-- ✅ **Complete**: 45 tests with comprehensive validation
-- 🎯 **In Progress**: DVB-T2 LDPC quasi-cyclic codes (Phase C10.1)
-- 🔮 **Next**: QAM modulation and FEC chain integration
-
-See `crates/gf2-core/docs/performance_session_notes.md` for optimization roadmap.
-See `crates/gf2-coding/ROADMAP.md` for DVB-T2 implementation timeline.
-
----
+**gf2-coding**: DVB-T2 FEC simulation
+- ✅ BCH codes with algebraic decoding (45 tests passing)
+- ✅ Quasi-cyclic LDPC framework
+- 🎯 DVB-T2 LDPC base matrices (in progress)
+- 🔮 QAM modulation and FEC chain (planned)
 
 ## Strategic Pillars
 
-1. Performance & Correctness (gf2-core)
-2. Algorithmic Breadth & Education (gf2-coding)
-3. Composability & Clean APIs (workspace-wide)
-4. Documentation & Demonstrations (workspace-wide)
-5. Research Experimentation (gf2-coding)
+### 1. Performance & Correctness
+- **gf2-core focus**: Optimized kernels with SIMD acceleration
+- Word-level operations minimizing branching
+- Comprehensive testing with property-based validation
+- Tail masking invariant maintained rigorously
 
-## Cross-Cutting Themes
+### 2. Algorithmic Breadth & Education
+- **gf2-coding focus**: Error-correcting codes and channel models
+- Educational examples with mathematical documentation
+- DVB-T2 standard compliance
+- Research-oriented experimentation
 
-- Tail masking invariants remain foundational for all bit-level operations.
-- Runtime dispatch and potential SIMD acceleration in core unlock faster high-level algorithms.
-- Property-based tests validate both primitive and composite behaviors.
-- Polynomial arithmetic (core) is a dependency enabler for advanced decoding (coding).
-- Rank/select primitives (core) feed sparse graph and syndrome operations (coding).
+### 3. Composability & Clean APIs
+- Functional style at high level, imperative in kernels
+- Minimal dependencies, safe by default
+- Clear separation between primitives and applications
+- Runtime feature detection for SIMD
 
-## Milestone Aggregation (Current State)
+### 4. Documentation & Demonstrations
+- Comprehensive API documentation with examples
+- Working examples demonstrating coding theory concepts
+- Performance benchmarks establishing baselines
+- Design documentation for complex algorithms
 
-| Milestone | Core Focus | Coding Focus | Status |
-|-----------|------------|--------------|--------|
-| M1        | Scalar baseline complete | Hamming codes + basic decoder | ✅ Complete |
-| M2        | SIMD backends (x86_64 AVX2) | Convolutional encoder | ✅ Core complete |
-| M3        | Extension field GF(2^m) arithmetic | BCH algebraic decoding | ✅ Complete |
-| M4        | Sparse matrix primitives | LDPC sparse matrices | ✅ Core complete |
-| M5        | Polynomial optimization (Karatsuba) | DVB-T2 LDPC construction | 🎯 Coding in progress |
-| M6        | Rank/select & scanning | DVB-T2 QAM modulation | Planned |
-| M7        | Polar transforms | DVB-T2 FEC simulation | Planned |
-| M8        | Kernel safety & audits | Production readiness | Ongoing |
+## Key Dependencies
 
-## Open Research Questions (Workspace View)
+**Cross-crate dependencies enabling higher-level features:**
+- Extension field GF(2^m) (core) → BCH algebraic decoding (coding)
+- Sparse matrices (core) → LDPC belief propagation (coding)
+- Polynomial arithmetic (core) → BCH syndrome computation (coding)
+- Future: Rank/select (core) → Sparse graph operations (coding)
 
-- Balancing general abstractions with specialized fast paths: how much auto-dispatch at coding layer?
-- Interplay between transform-based compression and error correction ordering for pipeline design.
-- Feasibility of GPU or heterogeneous acceleration without fragmenting API ergonomics.
-- Standardizing polynomial representations across code families for reuse.
+## Completed Milestones
 
-## Contribution Guide (Summary)
+| Milestone | Description | Status |
+|-----------|-------------|--------|
+| **M1** | Scalar baseline: BitVec, BitMatrix, basic algorithms | ✅ Complete |
+| **M2** | SIMD acceleration: AVX2 kernels with runtime dispatch | ✅ Complete |
+| **M3** | Extension fields: GF(2^m) arithmetic and polynomials | ✅ Complete |
+| **M4** | Sparse matrices: CSR/CSC for low-density operations | ✅ Complete |
+| **M5** | Polynomial optimization: Karatsuba and SIMD | ✅ Complete |
+| **M6** | Block codes: Hamming and syndrome decoding | ✅ Complete |
+| **M7** | Convolutional codes: Viterbi decoder | ✅ Complete |
+| **M8** | BCH codes: Algebraic decoding for DVB-T2 | ✅ Complete |
+| **M9** | LDPC framework: Belief propagation and QC codes | ✅ Complete |
 
-See crate-specific roadmaps for granular tasks. High-impact areas:
+## Active Development
 
-- Benchmark coverage across diverse CPU microarchitectures.
-- Expanding educational examples (annotated decoding traces, syndrome walkthroughs).
-- Safety audits of future SIMD and `unsafe` blocks.
-- Research implementations documented with reproducible benchmarks.
+| Milestone | Description | Status |
+|-----------|-------------|--------|
+| **M10** | DVB-T2 LDPC: Standard base matrices | 🎯 In progress |
+| **M11** | QAM modulation: Soft-decision demapping | Planned |
+| **M12** | FEC simulation: End-to-end DVB-T2 chain | Planned |
 
-## Future Vision
+## Future Directions
 
-A cohesive toolkit where low-level bit operations, linear algebra, polynomial arithmetic, and rich code families interoperate seamlessly—serving production systems and research labs alike.
+| Area | Description | Priority |
+|------|-------------|----------|
+| **Rank/select** | Succinct bit operations for sparse graphs | Medium |
+| **Polar codes** | 5G NR polar encoding/decoding | Medium |
+| **AVX-512** | Extended SIMD support | Low |
+| **ARM NEON** | AArch64 SIMD kernels | Low |
 
-*For detailed tasks and timelines, consult the per-crate roadmap files. This overview remains intentionally concise and strategic.*
+## Research Questions
+
+- **Optimal sparse matrix representations**: When to use CSR vs. dual CSR+CSC?
+- **SIMD dispatch granularity**: Function-level vs. kernel-level dispatch?
+- **Quantization strategies**: Fixed-point LLRs for embedded systems?
+- **GPU acceleration**: Feasibility for LDPC iterations?
+
+## Contributing
+
+High-impact contribution areas:
+- **Performance**: Benchmarking on diverse CPU architectures
+- **Documentation**: Educational examples with decoding traces
+- **Testing**: Property-based tests for new algorithms
+- **Research**: Novel code constructions with validation
+
+See subproject roadmaps for detailed tasks.
+
+---
+
+*For implementation details, see [crates/gf2-core/ROADMAP.md](crates/gf2-core/ROADMAP.md) and [crates/gf2-coding/ROADMAP.md](crates/gf2-coding/ROADMAP.md).*

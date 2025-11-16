@@ -1,6 +1,5 @@
 # gf2-core Roadmap
 
-**Last Updated**: 2024-11-16  
 **Current Status**: GF(2^m) arithmetic and polynomial optimization complete
 
 This roadmap focuses on high-performance primitives for GF(2): `BitVec`, `BitMatrix`, GF(2^m) extension fields, and low-level kernels.
@@ -28,7 +27,7 @@ This roadmap focuses on high-performance primitives for GF(2): `BitVec`, `BitMat
 - Efficient row/column iteration, matrix-vector multiply
 - Conversion APIs, benchmarks, property tests
 
-### Phase 7: GF(2^m) Polynomial Optimization ✅ **COMPLETE (2024-11-16)**
+### Phase 7: GF(2^m) Polynomial Optimization ✅ **COMPLETE**
 
 **Phase 7a: Karatsuba Multiplication**
 - Recursive O(n^1.585) algorithm with threshold=32
@@ -47,7 +46,7 @@ This roadmap focuses on high-performance primitives for GF(2): `BitVec`, `BitMat
 - All 90 GF(2^m) tests passing
 - Documentation: `README.md` updated with benchmark instructions
 
-### Phase 8: Extension Field GF(2^m) Arithmetic ✅ **COMPLETE (2024-11-14)**
+### Phase 8: Extension Field GF(2^m) Arithmetic ✅ **COMPLETE**
 
 **Phase 8.1: Core Field Arithmetic**
 - `Gf2mField` and `Gf2mElement` types
@@ -189,7 +188,7 @@ struct RankSelectIndex {
 
 ## Roadmap Priorities
 
-**Near-term (Next 2-3 weeks):**
+**Near-term:**
 1. Phase 4: Rank/Select (if desired for optimization)
 2. Phase 6: Polar Transforms (if targeting 5G codes)
 

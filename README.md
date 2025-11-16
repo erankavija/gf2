@@ -1,551 +1,182 @@
-# gf2 Workspace - GF(2) Primitives and Coding Theory
+# gf2 - High-Performance GF(2) Computing
 
 [![CI](https://github.com/erankavija/gf2/workflows/CI/badge.svg)](https://github.com/erankavija/gf2/actions)
 [![codecov](https://codecov.io/gh/erankavija/gf2/branch/main/graph/badge.svg)](https://codecov.io/gh/erankavija/gf2)
 
-A high-performance Rust workspace that houses two complementary crates:
+A Rust workspace for high-performance binary field computing and coding theory, containing two complementary crates:
 
-- `gf2-core`: low-level, high-throughput primitives for bit manipulation and GF(2) linear algebra.
-- `gf2-coding`: research-oriented coding theory and compression algorithms built on `gf2-core`.
+- **`gf2-core`** - Bit manipulation primitives, GF(2) linear algebra, and extension field GF(2^m) arithmetic
+- **`gf2-coding`** - Error-correcting codes and coding theory algorithms built on gf2-core
 
-The shared workspace keeps primitives and applications aligned while making their goals explicit.
+## Project Goals
 
-## Crates
+- **Performance**: Optimized kernels with SIMD acceleration for throughput-critical operations
+- **Correctness**: Comprehensive testing including property-based tests and mathematical validation
+- **Education**: Clear documentation with examples demonstrating coding theory concepts
+- **Composability**: Clean, functional APIs that hide low-level complexity
 
-- **`gf2-core`** – dense `BitVec` and `BitMatrix` types, optimized kernels, and linear algebra algorithms over GF(2).
-- **`gf2-coding`** – higher-level encoders, decoders, and experiments that leverage the `gf2-core` building blocks.
+## Crate Overview
 
-## Overview
+### gf2-core - Performance Primitives
 
-`gf2-core` provides efficient dense bit vector operations optimized for:
-- Basic bitset operations (AND, OR, XOR, NOT)
-- Bit manipulation and queries
-- **GF(2) linear algebra**: Fast matrix operations over the binary field (M4RM, Gauss-Jordan)
-- **Extension fields GF(2^m)**: Complete polynomial arithmetic over binary extension fields
-- **SIMD acceleration**: Optional AVX2 support via `simd` feature
-- Sparse matrix primitives for low-density operations
+Low-level building blocks for binary field computing:
+- **BitVec/BitMatrix**: Dense bit storage with word-level operations
+- **GF(2) linear algebra**: M4RM multiplication, Gauss-Jordan inversion
+- **Extension fields GF(2^m)**: Polynomial arithmetic with table-based multiplication
+- **Sparse matrices**: CSR/CSC formats for low-density operations
+- **SIMD acceleration**: Optional AVX2 kernels via `simd` feature
 
-`gf2-coding` provides error-correcting codes and coding theory primitives:
-- **Linear block codes**: Hamming codes with syndrome decoding
-- **BCH codes**: Complete algebraic encoder/decoder for DVB-T2 (Berlekamp-Massey, Chien search)
-- **Convolutional codes**: Viterbi decoder for streaming applications
-- **LDPC codes**: Belief propagation decoder with min-sum approximations
-- Comprehensive property-based tests ensuring correctness
-- Educational examples with mathematical documentation
+See [crates/gf2-core/README.md](crates/gf2-core/README.md) for detailed features and usage.
 
-## Features
+### gf2-coding - Error-Correcting Codes
 
-### gf2-core
-- **Zero-cost abstractions**: Thin wrapper over `Vec<u64>` with no runtime overhead
-- **Memory efficient**: Dense storage with 64-bit words
-- **GF(2) matrices**: Bit-packed boolean matrices with M4RM multiplication and Gauss-Jordan inversion
-- **Extension field arithmetic**: Complete GF(2^m) implementation with table-based multiplication for m ≤ 16
-- **Polynomial operations**: Addition, multiplication, division, GCD, minimal polynomials, and batch evaluation
-- **Sparse matrices**: CSR format with efficient iteration for low-density matrices
+Coding theory algorithms for error correction:
+- **Block codes**: Hamming codes with syndrome decoding
+- **BCH codes**: Algebraic decoding (Berlekamp-Massey, Chien search)
+- **Convolutional codes**: Viterbi decoder
+- **LDPC codes**: Belief propagation with quasi-cyclic support
+- **DVB-T2 FEC**: Standard-compliant BCH and LDPC implementations
+- **Channel models**: AWGN simulation with soft-decision decoding
+
+See [crates/gf2-coding/README.md](crates/gf2-coding/README.md) for detailed features and examples.
+
+## Key Design Principles
+
+- **Functional style at API level**: Immutability and pure functions where practical
+- **Imperative kernels for performance**: Low-level code optimized for speed
+- **Tail masking invariant**: Padding bits always zeroed for correctness
+- **Test-driven development**: Comprehensive unit and property-based tests
 - **Safe by default**: `#![deny(unsafe_code)]` at crate level
 - **MSRV**: Rust 1.74+
 
-### gf2-coding
-- **BCH codes**: Complete algebraic encoder/decoder with Berlekamp-Massey and Chien search
-- **LDPC codes**: Belief propagation decoder with min-sum variants
-- **Soft-decision decoding**: LLR operations for iterative decoders
-- **Channel models**: AWGN channel with BPSK/QAM modulation
-- **DVB-T2 support**: Standard-compliant BCH parameters for all code rates
-- **Well-tested**: Comprehensive unit tests and property-based testing with `proptest`
-- **Educational**: Extensive documentation with mathematical formulas and examples
+## Quick Start
 
-## Design Invariants
-
-### Storage Model
-- Bits are stored in contiguous `Vec<u64>` words
-- Little-endian bit numbering within each word
-- Bit `i` maps to `word = i >> 6`, `mask = 1u64 << (i & 63)`
-
-### Tail Masking
-Padding bits beyond `len_bits` in the last word are always zeroed. This invariant is maintained by all mutating operations to ensure:
-- Consistent behavior across operations
-- Correct population counts
-- Proper equality comparisons
-
-## Usage
-
-### Add dependencies
+Add dependencies to your `Cargo.toml`:
 
 ```toml
 [dependencies]
 gf2-core = "0.1"
-# Optional, for coding theory algorithms built on gf2-core:
-# gf2-coding = "0.1"
+gf2-coding = "0.1"
 
-# Optional: enable SIMD acceleration (AVX2/AVX-512 on x86-64)
+# Optional: enable SIMD acceleration
 # gf2-core = { version = "0.1", features = ["simd"] }
 ```
 
-When working inside this repository, prefer workspace-relative paths:
-
-```toml
-[dependencies]
-gf2-core = { path = "crates/gf2-core" }
-gf2-coding = { path = "crates/gf2-coding" }
-
-# Optional: enable SIMD features
-# gf2-core = { path = "crates/gf2-core", features = ["simd"] }
-# gf2-coding = { path = "crates/gf2-coding", features = ["simd"] }
-```
-
-### Enabling SIMD Acceleration
-
-SIMD acceleration is available as an optional feature:
-
-```bash
-# Build with SIMD enabled
-cargo build --features simd
-
-# Test with SIMD
-cargo test --features simd
-
-# Benchmark with SIMD
-cargo bench --features simd
-```
-
-SIMD provides runtime CPU detection and automatically uses AVX2/AVX-512 instructions when available, falling back to scalar code otherwise.
-
-### gf2-core: Basic example
+### Basic Example
 
 ```rust
 use gf2_core::BitVec;
-
-// Create and manipulate bit vectors
-let mut bv = BitVec::new();
-bv.push_bit(true);
-bv.push_bit(false);
-bv.push_bit(true);
-
-assert_eq!(bv.len(), 3);
-assert_eq!(bv.get(0), true);
-assert_eq!(bv.count_ones(), 2);
-
-// Bitwise operations
-let mut a = BitVec::from_bytes_le(&[0b11110000]);
-let b = BitVec::from_bytes_le(&[0b11001100]);
-a.bit_xor_into(&b);
-assert_eq!(a.to_bytes_le(), vec![0b00111100]);
-
-// Pretty printing (nalgebra-like display)
-println!("{}", bv);  // Displays: [ 1 0 1 ]
-```
-
-### gf2-core: Byte conversion
-
-```rust
-use gf2_core::BitVec;
-
-// Create from bytes (little-endian)
-let bv = BitVec::from_bytes_le(&[0xAA, 0x55]);
-assert_eq!(bv.len(), 16);
-
-// Convert back to bytes
-let bytes = bv.to_bytes_le();
-assert_eq!(bytes, vec![0xAA, 0x55]);
-```
-
-### gf2-core: Bit queries
-
-```rust
-use gf2_core::BitVec;
-
-let bv = BitVec::from_bytes_le(&[0b00001100]);
-
-// Find set bits
-assert_eq!(bv.find_first_set(), Some(2));
-assert_eq!(bv.find_last_set(), Some(3));
-
-// Count set bits
-assert_eq!(bv.count_ones(), 2);
-```
-
-### gf2-core: Shifts
-
-```rust
-use gf2_core::BitVec;
-
-let mut bv = BitVec::from_bytes_le(&[0b00001111]);
-bv.shift_left(2);
-assert_eq!(bv.to_bytes_le(), vec![0b00111100]);
-```
-
-### gf2-core: Matrix operations over GF(2)
-
-```rust
 use gf2_core::matrix::BitMatrix;
-use gf2_core::alg::gauss::invert;
 
-// Create a 3x3 matrix
-let mut a = BitMatrix::zeros(3, 3);
-a.set(0, 0, true);
-a.set(0, 1, true);
-a.set(1, 1, true);
-a.set(2, 2, true);
+// Bit vector operations
+let mut bv = BitVec::from_bytes_le(&[0b11110000]);
+let b = BitVec::from_bytes_le(&[0b11001100]);
+bv.bit_xor_into(&b);
+assert_eq!(bv.count_ones(), 4);
 
-// Create identity matrix
-let i = BitMatrix::identity(3);
-
-// Matrix multiplication using the * operator (M4RM algorithm)
-let product = &a * &i;
-// product equals a
-
-// Matrix inversion (using Gauss-Jordan)
-let inv = invert(&i).unwrap();
-// inv equals i for identity matrix
-
-// Verify: a × a^(-1) = I
-let mut b = BitMatrix::zeros(2, 2);
-b.set(0, 0, true);
-b.set(0, 1, true);
-b.set(1, 0, true);
-
-let b_inv = invert(&b).unwrap();
-let should_be_identity = &b * &b_inv;
-assert_eq!(should_be_identity.get(0, 0), true);
-assert_eq!(should_be_identity.get(1, 1), true);
-assert_eq!(should_be_identity.get(0, 1), false);
-
-// Pretty printing (nalgebra-like display)
-println!("{}", a);
-// Displays:
-//   ┌       ┐
-//   │ 1 1 0 │
-//   │ 0 1 0 │
-//   │ 0 0 1 │
-//   └       ┘
+// Matrix operations over GF(2)
+let a = BitMatrix::identity(3);
+let b = BitMatrix::zeros(3, 3);
+let product = &a * &b;  // M4RM multiplication
 ```
 
-### gf2-core: Extension field GF(2^m) arithmetic
-
-```rust
-use gf2_core::gf2m::{Gf2mField, Gf2mPoly};
-
-// Create GF(256) field
-let field = Gf2mField::gf256();
-
-// Field element arithmetic
-let a = field.element(5);
-let b = field.element(7);
-let sum = &a + &b;      // Addition (XOR)
-let product = &a * &b;  // Multiplication with reduction
-
-// Table-based O(1) multiplication for small fields
-assert_eq!(product, field.element(35));
-
-// Polynomial operations over GF(256)
-let p1 = Gf2mPoly::new(vec![
-    field.element(1),  // constant term
-    field.element(2),  // x term
-    field.element(3),  // x^2 term
-]);
-
-let p2 = Gf2mPoly::new(vec![
-    field.element(4),
-    field.element(5),
-]);
-
-// Polynomial multiplication
-let product_poly = &p1 * &p2;
-
-// Polynomial division
-let (quotient, remainder) = p1.div_rem(&p2);
-
-// Evaluation at a point (Horner's method)
-let x = field.element(10);
-let result = p1.eval(&x);
-
-// Minimal polynomial of a field element
-let alpha = field.element(2);
-let min_poly = alpha.minimal_polynomial();
-```
-
-### gf2-coding: Hamming code workflow
+### Error-Correcting Codes
 
 ```rust
 use gf2_coding::{LinearBlockCode, SyndromeTableDecoder};
 use gf2_coding::traits::{BlockEncoder, HardDecisionDecoder};
-use gf2_core::BitVec;
 
-// Create the classic Hamming(15, 11) code.
-let code = LinearBlockCode::hamming(4);
-assert_eq!((code.k(), code.n()), (11, 15));
-
+// Hamming(7,4) code
+let code = LinearBlockCode::hamming(3);
 let decoder = SyndromeTableDecoder::new(code.clone());
 
-// Encode a simple alternating pattern.
-let mut message = BitVec::new();
-for i in 0..code.k() {
-  message.push_bit(i % 2 == 0);
-}
-let codeword = code.encode(&message);
+// Encode and inject error
+let message = BitVec::from_bytes_le(&[0b1011]);
+let mut codeword = code.encode(&message);
+codeword.set(2, !codeword.get(2));  // Flip bit
 
-// Inject a single-bit error and decode.
-let mut corrupted = codeword.clone();
-corrupted.set(3, !corrupted.get(3));
-let decoded = decoder.decode(&corrupted);
+// Decode with error correction
+let decoded = decoder.decode(&codeword);
 assert_eq!(decoded, message);
 ```
 
-### gf2-coding: BCH code (DVB-T2)
+For more examples, see the individual crate READMEs and the `examples/` directory.
 
-```rust
-use gf2_coding::bch::{BchCode, BchEncoder, BchDecoder, CodeRate};
-use gf2_coding::traits::{BlockEncoder, HardDecisionDecoder};
-use gf2_core::BitVec;
+## Documentation
 
-// Create DVB-T2 BCH code for normal frames (rate 1/2)
-let code = BchCode::dvb_t2_normal(CodeRate::Rate1_2);
-let encoder = BchEncoder::new(code.clone());
-let decoder = BchDecoder::new(code);
+- **gf2-core API**: [crates/gf2-core/README.md](crates/gf2-core/README.md)
+- **gf2-coding API**: [crates/gf2-coding/README.md](crates/gf2-coding/README.md)
+- **Development roadmap**: [ROADMAP.md](ROADMAP.md)
+- **Full API docs**: Run `cargo doc --no-deps --open`
 
-println!("DVB-T2 BCH: n={}, k={}, t={}", 
-         encoder.n(), encoder.k(), decoder.code.t());
+## Development Roadmap
 
-// Encode message (7200 bits)
-let message = BitVec::zeros(7200);
-let codeword = encoder.encode(&message);
-assert_eq!(codeword.len(), 16200);
+The project roadmap is divided into strategic goals (this document) and detailed implementation plans (subproject roadmaps):
 
-// Inject up to t=12 errors
-let mut received = codeword.clone();
-for i in 0..12 {
-    received.set(i * 1000, !received.get(i * 1000));
-}
+- **[ROADMAP.md](ROADMAP.md)** - Strategic overview and cross-cutting themes
+- **[crates/gf2-core/ROADMAP.md](crates/gf2-core/ROADMAP.md)** - Performance optimization phases
+- **[crates/gf2-coding/ROADMAP.md](crates/gf2-coding/ROADMAP.md)** - Coding theory implementations
 
-// Decode with algebraic error correction
-let decoded = decoder.decode(&received);
-assert_eq!(decoded, message);  // Errors corrected!
-```
+### Current Status
 
-### gf2-coding: Convolutional encoder
+**gf2-core**: Polynomial optimization complete
+- ✅ GF(2^m) extension field arithmetic
+- ✅ Karatsuba multiplication (1.88x speedup)
+- ✅ SIMD field operations (2.1x speedup for large fields)
+- ✅ Sparse matrix primitives (CSR/CSC)
 
-```rust
-use gf2_coding::ConvolutionalEncoder;
-use gf2_coding::traits::StreamingEncoder;
-
-// NASA rate-1/2, K=3 encoder
-let mut encoder = ConvolutionalEncoder::new(3, vec![0b111, 0b101]);
-encoder.reset();
-
-// Encode bits in streaming fashion
-let message = vec![true, false, true, true];
-let mut codeword = Vec::new();
-for &bit in &message {
-    codeword.extend(encoder.encode_bit(bit));
-}
-
-// Add termination to return to zero state
-for _ in 0..2 {
-    codeword.extend(encoder.encode_bit(false));
-}
-```
-
-## API Overview
-
-### BitVec
-- `BitVec::new()` - Create empty bit vector
-- `BitVec::with_capacity(bits)` - Pre-allocate capacity
-- `BitVec::from_bytes_le(&[u8])` - Create from byte slice
-
-### BitMatrix
-- `BitMatrix::zeros(rows, cols)` - Create zero matrix
-- `BitMatrix::identity(n)` - Create n×n identity matrix
-- `get(r, c)`, `set(r, c, val)` - Access individual bits
-- `swap_rows(r1, r2)` - Swap two rows
-- `transpose()` - Return transposed matrix
-
-### Matrix Algorithms (over GF(2))
-- `a * b` or `&a * &b` - Infix matrix multiplication using the `*` operator (M4RM algorithm)
-- `multiply(a, b)` - Matrix multiplication using M4RM (Method of the Four Russians) - also available via `*` operator
-- `invert(m)` - Matrix inversion using Gauss-Jordan elimination (returns `Option<BitMatrix>`)
-
-### BitVec Operations
-- `len()`, `is_empty()` - Query size
-- `get(idx)`, `set(idx, bit)` - Access individual bits
-- `push_bit(bit)`, `pop_bit()` - Stack-like operations
-
-### Bitwise Operations
-- `bit_and_into(&other)` - Bitwise AND
-- `bit_or_into(&other)` - Bitwise OR  
-- `bit_xor_into(&other)` - Bitwise XOR
-- `not_into()` - Bitwise NOT
-
-### Shifts
-- `shift_left(k)` - Logical left shift
-- `shift_right(k)` - Logical right shift
-
-### Queries
-- `count_ones()` - Population count (rank)
-- `find_first_set()` - Index of first set bit
-- `find_last_set()` - Index of last set bit
-
-### Utilities
-- `clear()` - Remove all bits
-- `resize(new_len, fill_bit)` - Resize with fill value
-- `to_bytes_le()` - Convert to byte vector
-
-## Performance Roadmap
-
-### Phase 1: Scalar Baseline ✅ (Complete)
-- Tight word-level loops with branch minimization
-- Optimized shifts with whole-word operations
-- Efficient bit scanning with `trailing_zeros`/`leading_zeros`
-- **GF(2) linear algebra**: M4RM multiplication, Gauss-Jordan inversion
-
-### Phase 2: SIMD Acceleration ✅ (Partial - x86_64 Complete)
-- **x86-64**: AVX2 (256-bit) implementation available via `simd` feature
-- ✅ Runtime feature detection and dispatch
-- ✅ Scan kernels and word-aligned shift operations
-- AVX-512 (512-bit) implementation (planned)
-- **AArch64**: NEON (128-bit) implementation (planned)
-- Vectorized shifts using shuffle instructions (planned)
-- VPCLMULQDQ-based row operations for matrices (planned)
-
-### Phase 3: Extension Field GF(2^m) ✅ (Complete)
-- ✅ Field element arithmetic with table-based multiplication for m ≤ 16
-- ✅ Polynomial addition, multiplication (schoolbook), division, GCD
-- ✅ Polynomial evaluation (Horner's method) and batch evaluation
-- ✅ Minimal polynomial computation
-- **Next**: Karatsuba multiplication for 2-3x speedup (benchmarks established)
-- **Future**: SIMD field operations using PCLMULQDQ
-
-### Phase 4: Sparse Matrix Primitives ✅ (Complete)
-- ✅ CSR format for low-density matrices (<5% nonzeros)
-- ✅ Sparse matrix-vector multiply
-- ✅ Dual format (CSR+CSC) for efficient bidirectional access
-- ✅ Conversion between dense and sparse representations
-
-### Phase 5: Polynomial Optimization (In Progress) 🎯
-- ✅ **Baseline established**: 352 µs for degree-200 multiply (GF256)
-- ⏭️ **Next**: Karatsuba algorithm (2-3x speedup expected)
-- 🔮 **Future**: SIMD field multiplication (additional 2-4x)
-- 🔮 **Future**: Batch evaluation optimizations for syndrome computation
-
-### Phase 6: Advanced Bit Operations (Planned)
-- Rank/select with superblock/block indexes
-- O(1) select using broadword techniques
-- Efficient bit scanning primitives
-
-### Phase 7: Buffer Optimizations (Deprioritized)
-- BitSlice views and range indexing
-- Unrolled scalar kernels for large buffers
-- Cache-line aligned operations
-
-See `crates/gf2-core/ROADMAP.md` and `crates/gf2-core/docs/performance_session_notes.md` for detailed phase plans and optimization targets.
+**gf2-coding**: DVB-T2 LDPC in progress
+- ✅ BCH codes with algebraic decoding
+- ✅ Quasi-cyclic LDPC framework
+- 🎯 DVB-T2 LDPC base matrices (in progress)
+- 🔮 QAM modulation and FEC simulation (planned)
 
 ## Development
 
-### Examples
-
-Run educational examples from `gf2-coding`:
+### Build and Test
 
 ```bash
-# Hamming(7,4) block code demonstration
-cargo run -p gf2-coding --example hamming_7_4
+# Build workspace
+cargo build --workspace
 
-# NASA convolutional code with Viterbi decoding
-cargo run -p gf2-coding --example nasa_rate_half_k3
-```
-
-The examples demonstrate:
-- Creating generator and parity-check matrices
-- Encoding messages into codewords
-- Error detection and correction
-- State transition diagrams and encoding traces
-- Pretty-printing matrices and bit vectors
-
-### Testing
-
-Run the full workspace test suite:
-
-```bash
+# Run all tests
 cargo test --workspace --all-features
-```
 
-Run property-based tests for `gf2-core`:
-
-```bash
-cargo test -p gf2-core --test property_tests
-```
-
-### Benchmarks
-
-Build and run benchmarks for `gf2-core`:
-
-```bash
+# Run benchmarks
 cargo bench -p gf2-core
-```
 
-Current benchmarks cover:
-- **BitVec operations**:
-  - XOR operations (1 KiB, 64 KiB, 1 MiB)
-  - Population count (1 KiB, 64 KiB, 1 MiB)
-  - Left/right shifts (64 KiB with various shift amounts)
-  - Scan operations (find first one/zero)
-- **Matrix operations**:
-  - Square matrix multiplication (64×64 to 1024×1024)
-  - Rectangular matrix multiplication (various dimensions)
-  - Sparse matrix operations
-- **Polynomial arithmetic** (GF(2^m)):
-  - Addition, multiplication, division, GCD (various degrees)
-  - Polynomial evaluation (single and batch)
-  - Minimal polynomial computation
-  - BCH syndrome simulation patterns
-
-See `crates/gf2-core/docs/polynomial_benchmarks.md` for detailed performance analysis and optimization targets.
-
-### Code Quality
-
-Format code:
-
-```bash
-cargo fmt
-```
-
-Run clippy:
-
-```bash
-cargo clippy --all-targets --all-features -- -D warnings
-```
-
-Build documentation:
-
-```bash
+# Build documentation
 cargo doc --no-deps --open
 ```
 
-## Test-Driven Development
+### Examples
 
-This library is developed using TDD principles:
-1. Write comprehensive tests first (unit, edge cases, property tests)
-2. Implement minimal code to pass tests
-3. Refactor while maintaining test coverage
-4. Validate with benchmarks
+Educational examples demonstrating coding theory concepts:
 
-Property-based testing ensures correctness against a simple reference implementation across:
-- Random inputs of varying lengths
-- Round-trip conversions (bytes ↔ bits)
-- Equivalence with naive implementations
-- Boundary conditions (0, 1, 63, 64, 65 bits, etc.)
+```bash
+# Block codes
+cargo run -p gf2-coding --example hamming_7_4
+
+# Convolutional codes with Viterbi decoding
+cargo run -p gf2-coding --example nasa_rate_half_k3
+
+# LDPC codes over AWGN
+cargo run -p gf2-coding --example ldpc_awgn --release
+
+# Quasi-cyclic LDPC construction
+cargo run -p gf2-coding --example qc_ldpc_demo
+```
 
 ## Contributing
 
-Contributions are welcome! Areas for contribution:
-- SIMD implementations (AVX2, AVX-512, NEON)
-- Additional bit operations (rank/select, etc.)
-- GF(2) polynomial arithmetic
+Contributions welcome in these areas:
+- SIMD implementations (AVX-512, NEON)
+- Coding theory algorithms
 - Performance optimizations
-- Documentation improvements
+- Documentation and examples
+
+See the roadmaps in [ROADMAP.md](ROADMAP.md) and the subproject directories for specific tasks.
 
 ## License
 
 To be determined. See repository for license information.
-
-## Roadmap
-
-See [ROADMAP.md](ROADMAP.md) for detailed development phases and planned features.
