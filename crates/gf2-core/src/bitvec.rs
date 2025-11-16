@@ -1,6 +1,22 @@
 //! Core BitVec type for bit string manipulation.
 
+use std::cell::RefCell;
 use std::fmt;
+
+/// Rank/Select index for efficient bit queries.
+///
+/// Uses a two-level index structure:
+/// - Superblocks: One entry per 512 bits (8 words), stores cumulative popcount
+/// - Blocks: One entry per 64 bits (1 word), stores popcount within superblock
+///
+/// This enables O(1) rank and O(log n) select queries.
+#[derive(Debug, Clone)]
+struct RankSelectIndex {
+    /// Cumulative popcount at each superblock (512-bit boundary)
+    superblocks: Vec<usize>,
+    /// Popcount within superblock for each block (64-bit boundary)
+    blocks: Vec<u16>,
+}
 
 /// An owning, growable bit string backed by `Vec<u64>`.
 ///
@@ -21,11 +37,21 @@ use std::fmt;
 /// assert_eq!(bv.len(), 1);
 /// assert_eq!(bv.get(0), true);
 /// ```
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct BitVec {
     data: Vec<u64>,
     len_bits: usize,
+    /// Lazy rank/select index (built on first query)
+    rank_select_index: RefCell<Option<RankSelectIndex>>,
 }
+
+impl PartialEq for BitVec {
+    fn eq(&self, other: &Self) -> bool {
+        self.len_bits == other.len_bits && self.data == other.data
+    }
+}
+
+impl Eq for BitVec {}
 
 impl BitVec {
     /// Creates an empty `BitVec`.
@@ -43,6 +69,7 @@ impl BitVec {
         Self {
             data: Vec::new(),
             len_bits: 0,
+            rank_select_index: RefCell::new(None),
         }
     }
 
@@ -61,6 +88,7 @@ impl BitVec {
         Self {
             data: Vec::with_capacity(words),
             len_bits: 0,
+            rank_select_index: RefCell::new(None),
         }
     }
 
@@ -80,6 +108,7 @@ impl BitVec {
         Self {
             data: vec![0u64; num_words],
             len_bits: len,
+            rank_select_index: RefCell::new(None),
         }
     }
 
@@ -102,6 +131,7 @@ impl BitVec {
             return Self {
                 data: Vec::new(),
                 len_bits: 0,
+                rank_select_index: RefCell::new(None),
             };
         }
 
@@ -118,6 +148,7 @@ impl BitVec {
         Self {
             data,
             len_bits: len,
+            rank_select_index: RefCell::new(None),
         }
     }
 
@@ -514,12 +545,207 @@ impl BitVec {
     /// bv.push_bit(true);
     /// assert_eq!(bv.count_ones(), 2);
     /// ```
-    pub fn count_ones(&self) -> u64 {
+    pub fn count_ones(&self) -> usize {
         #[cfg(feature = "simd")]
         if let Some(fns) = crate::simd::maybe_simd() {
-            return (fns.popcnt_fn)(&self.data);
+            return (fns.popcnt_fn)(&self.data) as usize;
         }
-        self.data.iter().map(|w| w.count_ones() as u64).sum()
+        self.data.iter().map(|w| w.count_ones() as usize).sum()
+    }
+
+    /// Builds the rank/select index if not already built.
+    fn ensure_index(&self) {
+        let mut index = self.rank_select_index.borrow_mut();
+        if index.is_some() {
+            return;
+        }
+
+        let num_words = self.data.len();
+        if num_words == 0 {
+            *index = Some(RankSelectIndex {
+                superblocks: Vec::new(),
+                blocks: Vec::new(),
+            });
+            return;
+        }
+
+        // One superblock per 8 words (512 bits)
+        let num_superblocks = num_words.div_ceil(8);
+        let mut superblocks = Vec::with_capacity(num_superblocks);
+        let mut blocks = Vec::with_capacity(num_words);
+
+        let mut cumulative = 0usize;
+
+        for sb_idx in 0..num_superblocks {
+            superblocks.push(cumulative);
+            let mut sb_count = 0u16;
+
+            let start_word = sb_idx * 8;
+            let end_word = ((sb_idx + 1) * 8).min(num_words);
+
+            for w_idx in start_word..end_word {
+                blocks.push(sb_count);
+                let word_count = self.data[w_idx].count_ones() as u16;
+                sb_count += word_count;
+            }
+
+            cumulative += sb_count as usize;
+        }
+
+        *index = Some(RankSelectIndex {
+            superblocks,
+            blocks,
+        });
+    }
+
+    /// Returns the number of set bits in the range `[0..=idx]`.
+    ///
+    /// This operation runs in O(1) time after the index is built (on first call).
+    /// The index is built lazily and cached for subsequent queries.
+    ///
+    /// # Arguments
+    ///
+    /// * `idx` - The bit position (0-indexed, inclusive)
+    ///
+    /// # Panics
+    ///
+    /// Panics if `idx >= self.len()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::BitVec;
+    ///
+    /// let bv = BitVec::from_bytes_le(&[0b00101101]); // bits: 10110100
+    /// assert_eq!(bv.rank(0), 1); // bit 0 is set
+    /// assert_eq!(bv.rank(2), 2); // bits 0, 2 are set
+    /// assert_eq!(bv.rank(5), 4); // bits 0, 2, 3, 5 are set
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1) after index is built. Index building is O(n) and happens lazily on first query.
+    pub fn rank(&self, idx: usize) -> usize {
+        assert!(idx < self.len_bits, "index out of bounds");
+
+        if self.len_bits == 0 {
+            return 0;
+        }
+
+        self.ensure_index();
+        let index = self.rank_select_index.borrow();
+        let index = index.as_ref().unwrap();
+
+        let word_idx = idx / 64;
+        let bit_idx = idx % 64;
+        let sb_idx = word_idx / 8;
+
+        // Count from superblock + block + bits within word
+        let mut count = index.superblocks[sb_idx];
+        count += index.blocks[word_idx] as usize;
+
+        // Count bits in the current word up to bit_idx (inclusive)
+        // Special case: if bit_idx == 63, we want all 64 bits
+        let mask = if bit_idx == 63 {
+            u64::MAX
+        } else {
+            (1u64 << (bit_idx + 1)) - 1
+        };
+        count += (self.data[word_idx] & mask).count_ones() as usize;
+
+        count
+    }
+
+    /// Returns the position of the k-th set bit (0-indexed).
+    ///
+    /// Returns `None` if there are fewer than `k + 1` set bits in the vector.
+    ///
+    /// # Arguments
+    ///
+    /// * `k` - The rank of the set bit to find (0-indexed)
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::BitVec;
+    ///
+    /// let bv = BitVec::from_bytes_le(&[0b00101101]); // bits: 10110100
+    /// assert_eq!(bv.select(0), Some(0)); // 1st set bit at position 0
+    /// assert_eq!(bv.select(1), Some(2)); // 2nd set bit at position 2
+    /// assert_eq!(bv.select(3), Some(5)); // 4th set bit at position 5
+    /// assert_eq!(bv.select(4), None);     // only 4 set bits total
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(log n) using binary search over the rank index, then O(1) for word-level selection.
+    pub fn select(&self, k: usize) -> Option<usize> {
+        if k >= self.count_ones() {
+            return None;
+        }
+
+        self.ensure_index();
+        let index = self.rank_select_index.borrow();
+        let index = index.as_ref().unwrap();
+
+        let target = k + 1; // We want the position where rank equals k+1
+
+        // Binary search to find the superblock containing the target
+        // superblocks[i] stores the cumulative count BEFORE superblock i
+        // If we get an exact match at i, the target bit is in superblock i-1
+        let sb_idx = match index.superblocks.binary_search(&target) {
+            Ok(i) => i.saturating_sub(1),
+            Err(i) => i.saturating_sub(1),
+        };
+
+        if sb_idx >= index.superblocks.len() {
+            return None;
+        }
+
+        // How many ones we've seen before this superblock
+        let sb_base = index.superblocks[sb_idx];
+
+        // Linear search within superblock to find the word
+        let start_word = sb_idx * 8;
+        let end_word = ((sb_idx + 1) * 8).min(self.data.len());
+
+        for word_idx in start_word..end_word {
+            // Total count up to (but not including) this word
+            let count_before_word = sb_base + index.blocks[word_idx] as usize;
+            // Total count up to and including this word
+            let count_after_word = count_before_word + self.data[word_idx].count_ones() as usize;
+
+            if target <= count_before_word {
+                // Target is in a previous word, shouldn't happen with correct logic
+                continue;
+            }
+
+            if target > count_after_word {
+                // Target is beyond this word, continue
+                continue;
+            }
+
+            // The target bit is in this word
+            // We need the (target - count_before_word)-th set bit in this word
+            let in_word_target = target - count_before_word;
+
+            // Find the in_word_target-th set bit within self.data[word_idx]
+            let mut word = self.data[word_idx];
+            let mut count = 0;
+
+            for bit_pos in 0..64 {
+                if word & 1 == 1 {
+                    count += 1;
+                    if count == in_word_target {
+                        let idx = word_idx * 64 + bit_pos;
+                        return if idx < self.len_bits { Some(idx) } else { None };
+                    }
+                }
+                word >>= 1;
+            }
+        }
+
+        None
     }
 
     /// Returns the index of the first set bit, or `None` if all bits are zero.
@@ -679,7 +905,11 @@ impl BitVec {
             data[word_idx] |= (byte as u64) << (byte_in_word * 8);
         }
 
-        Self { data, len_bits }
+        Self {
+            data,
+            len_bits,
+            rank_select_index: RefCell::new(None),
+        }
     }
 
     /// Converts the `BitVec` to a byte vector in little-endian order.
@@ -827,7 +1057,11 @@ impl BitVec {
         let mut data = vec![0u64; num_words];
         rng.fill(&mut data[..]);
 
-        let mut bv = Self { data, len_bits };
+        let mut bv = Self {
+            data,
+            len_bits,
+            rank_select_index: RefCell::new(None),
+        };
         bv.mask_tail();
         bv
     }
@@ -916,12 +1150,14 @@ impl BitVec {
             return Self {
                 data: vec![0u64; len_bits.div_ceil(64)],
                 len_bits,
+                rank_select_index: RefCell::new(None),
             };
         }
         if p == 1.0 {
             let mut bv = Self {
                 data: vec![u64::MAX; len_bits.div_ceil(64)],
                 len_bits,
+                rank_select_index: RefCell::new(None),
             };
             bv.mask_tail();
             return bv;
@@ -1207,7 +1443,7 @@ mod tests {
         for len in [1, 7, 63, 65, 127, 129] {
             let bv = BitVec::ones(len);
             assert_eq!(bv.len(), len);
-            assert_eq!(bv.count_ones(), len as u64);
+            assert_eq!(bv.count_ones(), len);
 
             // Verify tail masking: padding bits should be zero
             if len % 64 != 0 {
@@ -1635,5 +1871,307 @@ mod tests {
         let bv = BitVec::from_bytes_le(&[0x00]); // 8 bits, all zero
         assert_eq!(bv.len(), 8);
         assert_eq!(bv.find_first_zero(), Some(0));
+    }
+
+    // ========== Rank Tests ==========
+
+    #[test]
+    fn test_rank_empty() {
+        let bv = BitVec::new();
+        // Empty bitvec has no valid indices
+        assert_eq!(bv.len(), 0);
+    }
+
+    #[test]
+    fn test_rank_all_zeros() {
+        let bv = BitVec::zeros(100);
+        for i in 0..100 {
+            assert_eq!(bv.rank(i), 0);
+        }
+    }
+
+    #[test]
+    fn test_rank_all_ones() {
+        let bv = BitVec::ones(100);
+        for i in 0..100 {
+            assert_eq!(bv.rank(i), i + 1);
+        }
+    }
+
+    #[test]
+    fn test_rank_single_bit() {
+        let mut bv = BitVec::zeros(10);
+        bv.set(5, true);
+
+        assert_eq!(bv.rank(0), 0);
+        assert_eq!(bv.rank(4), 0);
+        assert_eq!(bv.rank(5), 1);
+        assert_eq!(bv.rank(6), 1);
+        assert_eq!(bv.rank(9), 1);
+    }
+
+    #[test]
+    fn test_rank_multiple_bits() {
+        // Pattern: 10110100
+        let bv = BitVec::from_bytes_le(&[0b00101101]);
+
+        assert_eq!(bv.rank(0), 1); // bit 0 is set
+        assert_eq!(bv.rank(1), 1); // bit 1 is clear
+        assert_eq!(bv.rank(2), 2); // bit 2 is set
+        assert_eq!(bv.rank(3), 3); // bit 3 is set
+        assert_eq!(bv.rank(4), 3); // bit 4 is clear
+        assert_eq!(bv.rank(5), 4); // bit 5 is set
+        assert_eq!(bv.rank(6), 4); // bit 6 is clear
+        assert_eq!(bv.rank(7), 4); // bit 7 is clear
+    }
+
+    #[test]
+    fn test_rank_word_boundary() {
+        let mut bv = BitVec::zeros(128);
+        bv.set(0, true);
+        bv.set(63, true);
+        bv.set(64, true);
+        bv.set(127, true);
+
+        assert_eq!(bv.rank(0), 1);
+        assert_eq!(bv.rank(63), 2);
+        assert_eq!(bv.rank(64), 3);
+        assert_eq!(bv.rank(127), 4);
+    }
+
+    #[test]
+    fn test_rank_large() {
+        let bytes: Vec<u8> = (0..1024).map(|i| (i % 256) as u8).collect();
+        let bv = BitVec::from_bytes_le(&bytes);
+
+        // Verify rank is cumulative count
+        let mut expected = 0;
+        for i in 0..bv.len() {
+            if bv.get(i) {
+                expected += 1;
+            }
+            assert_eq!(bv.rank(i), expected);
+        }
+    }
+
+    #[test]
+    #[allow(clippy::manual_div_ceil)]
+    fn test_rank_alternating_pattern() {
+        // Pattern: 01010101
+        let bv = BitVec::from_bytes_le(&[0b10101010]);
+
+        for i in 0..8 {
+            let expected = (i + 1) / 2;
+            assert_eq!(bv.rank(i), expected);
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "index out of bounds")]
+    fn test_rank_out_of_bounds() {
+        let bv = BitVec::zeros(10);
+        let _ = bv.rank(10);
+    }
+
+    // ========== Select Tests ==========
+
+    #[test]
+    fn test_select_empty() {
+        let bv = BitVec::new();
+        assert_eq!(bv.select(0), None);
+        assert_eq!(bv.select(1), None);
+    }
+
+    #[test]
+    fn test_select_all_zeros() {
+        let bv = BitVec::zeros(100);
+        assert_eq!(bv.select(0), None);
+        assert_eq!(bv.select(1), None);
+    }
+
+    #[test]
+    fn test_select_all_ones() {
+        let bv = BitVec::ones(100);
+        for i in 0..100 {
+            assert_eq!(bv.select(i), Some(i));
+        }
+        assert_eq!(bv.select(100), None);
+    }
+
+    #[test]
+    fn test_select_single_bit() {
+        let mut bv = BitVec::zeros(10);
+        bv.set(5, true);
+
+        assert_eq!(bv.select(0), Some(5));
+        assert_eq!(bv.select(1), None);
+    }
+
+    #[test]
+    fn test_select_multiple_bits() {
+        // Pattern: 10110100
+        let bv = BitVec::from_bytes_le(&[0b00101101]);
+
+        assert_eq!(bv.select(0), Some(0)); // 1st one at position 0
+        assert_eq!(bv.select(1), Some(2)); // 2nd one at position 2
+        assert_eq!(bv.select(2), Some(3)); // 3rd one at position 3
+        assert_eq!(bv.select(3), Some(5)); // 4th one at position 5
+        assert_eq!(bv.select(4), None); // no 5th one
+    }
+
+    #[test]
+    fn test_select_word_boundary() {
+        let mut bv = BitVec::zeros(128);
+        bv.set(0, true);
+        bv.set(63, true);
+        bv.set(64, true);
+        bv.set(127, true);
+
+        assert_eq!(bv.select(0), Some(0));
+        assert_eq!(bv.select(1), Some(63));
+        assert_eq!(bv.select(2), Some(64));
+        assert_eq!(bv.select(3), Some(127));
+        assert_eq!(bv.select(4), None);
+    }
+
+    #[test]
+    fn test_select_large() {
+        let bytes: Vec<u8> = (0..256).map(|i| i as u8).collect();
+        let bv = BitVec::from_bytes_le(&bytes);
+
+        // Build expected positions of set bits
+        let mut positions = Vec::new();
+        for i in 0..bv.len() {
+            if bv.get(i) {
+                positions.push(i);
+            }
+        }
+
+        // Verify select returns correct positions
+        for (k, &pos) in positions.iter().enumerate() {
+            assert_eq!(bv.select(k), Some(pos));
+        }
+        assert_eq!(bv.select(positions.len()), None);
+    }
+
+    #[test]
+    fn test_select_alternating_pattern() {
+        // Pattern: 01010101
+        let bv = BitVec::from_bytes_le(&[0b10101010]);
+
+        assert_eq!(bv.select(0), Some(1));
+        assert_eq!(bv.select(1), Some(3));
+        assert_eq!(bv.select(2), Some(5));
+        assert_eq!(bv.select(3), Some(7));
+        assert_eq!(bv.select(4), None);
+    }
+
+    // ========== Rank-Select Invariant Tests ==========
+
+    #[test]
+    fn test_rank_select_invariant() {
+        let bytes: Vec<u8> = (0..128).map(|i| (i % 256) as u8).collect();
+        let bv = BitVec::from_bytes_le(&bytes);
+
+        // For all k, if select(k) = i, then rank(i) = k + 1
+        for k in 0..bv.count_ones() {
+            if let Some(i) = bv.select(k) {
+                assert_eq!(bv.rank(i), k + 1);
+            }
+        }
+    }
+
+    #[test]
+    fn test_select_rank_roundtrip() {
+        let bytes: Vec<u8> = (0..128).map(|i| (i * 17) as u8).collect();
+        let bv = BitVec::from_bytes_le(&bytes);
+
+        // Build all set bit positions
+        let positions: Vec<usize> = (0..bv.len()).filter(|&i| bv.get(i)).collect();
+
+        // For each set bit position, select(rank(i) - 1) should equal i
+        for &pos in &positions {
+            let rank = bv.rank(pos);
+            assert_eq!(bv.select(rank - 1), Some(pos));
+        }
+    }
+
+    #[test]
+    fn test_rank_is_cumulative() {
+        let bv = BitVec::from_bytes_le(&[0b11010010, 0b00101101]);
+
+        // Rank should be monotonically increasing
+        for i in 0..bv.len() - 1 {
+            assert!(bv.rank(i) <= bv.rank(i + 1));
+            assert!(bv.rank(i + 1) - bv.rank(i) <= 1);
+        }
+    }
+}
+
+#[cfg(test)]
+mod select_edge_cases {
+    use super::*;
+
+    #[test]
+    fn test_select_at_superblock_boundary() {
+        // Regression test for select bug at superblock boundaries
+        // Create a bitvec where select(191) should return position 509
+        // This tests the case where the target equals a superblock boundary
+
+        let mut bv = BitVec::zeros(1024);
+
+        // Set the first 192 bits (positions 0..192)
+        // But position 509 should be the 192nd set bit (0-indexed: select(191))
+        // So we set bits 0..191 and bit 509
+
+        // Actually, let's create the exact scenario:
+        // Set bits at positions creating the boundary condition
+        // We want 191 ones before position 509, and position 509 to be set
+
+        // Set bits 0 through 190 (191 bits)
+        for i in 0..191 {
+            bv.set(i, true);
+        }
+
+        // Skip some bits, then set position 509
+        bv.set(509, true);
+
+        // Now we have:
+        // - 191 set bits at positions 0..191
+        // - 1 set bit at position 509
+        // Total: 192 set bits
+
+        // Verify rank
+        assert_eq!(bv.rank(509), 192, "rank(509) should be 192");
+        assert_eq!(bv.rank(508), 191, "rank(508) should be 191");
+
+        // Test select
+        assert_eq!(bv.select(190), Some(190), "select(190) should return 190");
+        assert_eq!(bv.select(191), Some(509), "select(191) should return 509");
+        assert_eq!(bv.select(192), None, "select(192) should return None");
+
+        // Additional edge case: set bit 518 to be the 193rd set bit
+        bv.set(518, true);
+        assert_eq!(bv.select(192), Some(518), "select(192) should return 518");
+    }
+
+    #[test]
+    fn test_select_exact_superblock_match() {
+        // Test when target exactly equals a superblock cumulative count
+        let mut bv = BitVec::zeros(1024);
+
+        // Set exactly 512 bits in the first superblock (words 0-7)
+        for i in 0..512 {
+            bv.set(i, true);
+        }
+
+        // select(511) should return 511 (the last bit of first superblock)
+        assert_eq!(bv.select(511), Some(511));
+
+        // Add one more bit at position 600
+        bv.set(600, true);
+
+        // select(512) should return 600 (first bit in second superblock)
+        assert_eq!(bv.select(512), Some(600));
     }
 }

@@ -388,7 +388,7 @@ proptest! {
     fn prop_bitvec_with_probability_respects_extremes_one(len in 0usize..1000) {
         let mut rng = StdRng::seed_from_u64(456);
         let bv = BitVec::random_with_probability(len, 1.0, &mut rng);
-        assert_eq!(bv.count_ones(), len as u64);
+        assert_eq!(bv.count_ones(), len);
     }
 
     #[test]

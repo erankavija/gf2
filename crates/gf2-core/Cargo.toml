@@ -57,3 +57,7 @@ harness = false
 [[bench]]
 name = "shifts"
 harness = false
+
+[[bench]]
+name = "rank_select"
+harness = false
