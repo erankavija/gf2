@@ -451,7 +451,7 @@ impl QuasiCyclicLdpc {
                 // Rate 1/2 → k=8100 → need ~22-23 check rows
                 // This is a minimal placeholder structure
                 let base = vec![
-                    vec![0; 45],  // First check: identity pattern (simplified)
+                    vec![0; 45], // First check: identity pattern (simplified)
                 ];
                 (base, 360)
             }
