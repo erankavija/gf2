@@ -12,18 +12,20 @@ fn main() {
     // Example 1: Manual QC-LDPC construction
     println!("1. Manual QC-LDPC Construction");
     println!("   Base matrix (3×4 with expansion factor Z=5):");
-    
+
     let base_matrix = vec![
-        vec![0, 1, 2, -1],  // -1 = zero block
+        vec![0, 1, 2, -1], // -1 = zero block
         vec![1, 0, -1, 3],
         vec![2, -1, 0, 1],
     ];
     let expansion_factor = 5;
-    
+
     for row in &base_matrix {
         print!("   [");
         for (i, &val) in row.iter().enumerate() {
-            if i > 0 { print!(", "); }
+            if i > 0 {
+                print!(", ");
+            }
             if val == -1 {
                 print!(" -");
             } else {
@@ -32,10 +34,10 @@ fn main() {
         }
         println!("]");
     }
-    
+
     let qc = QuasiCyclicLdpc::new(base_matrix, expansion_factor);
     let code = LdpcCode::from_quasi_cyclic(&qc);
-    
+
     println!("\n   Expanded dimensions:");
     println!("   - Base: {}×{}", qc.base_rows(), qc.base_cols());
     println!("   - Expansion factor: {}", qc.expansion_factor());
@@ -46,21 +48,21 @@ fn main() {
     // Example 2: Circulant matrix structure
     println!("2. Circulant Matrix Structure");
     println!("   A circulant with shift=2, size=5:");
-    
+
     let circ = CirculantMatrix::new(2, 5);
     let edges = circ.to_edges(0, 0);
-    
+
     println!("   First row has 1 at column {}", 2);
     println!("   Edges: {:?}", edges);
     println!("   Forms a right-shifted identity pattern\n");
 
     // Example 3: DVB-T2 placeholder
     println!("3. DVB-T2 LDPC Code (Placeholder)");
-    
+
     use gf2_coding::CodeRate;
     let dvb_qc = QuasiCyclicLdpc::dvb_t2_normal(CodeRate::Rate1_2);
     let dvb_code = LdpcCode::from_quasi_cyclic(&dvb_qc);
-    
+
     println!("   DVB-T2 Normal Frame, Rate 1/2:");
     println!("   - Codeword length: {}", dvb_code.n());
     println!("   - Expansion factor: {}", dvb_qc.expansion_factor());
@@ -70,29 +72,34 @@ fn main() {
 
     // Example 4: Code structure validation
     println!("4. Code Structure Validation");
-    
+
     // Use smaller code for demo
-    let demo_base = vec![
-        vec![0, 1, 2],
-        vec![1, 2, 0],
-    ];
+    let demo_base = vec![vec![0, 1, 2], vec![1, 2, 0]];
     let demo_qc = QuasiCyclicLdpc::new(demo_base, 3);
     let demo_code = LdpcCode::from_quasi_cyclic(&demo_qc);
-    
-    println!("   Code: {}×{}, rate {:.3}", demo_code.m(), demo_code.n(), demo_code.rate());
-    
+
+    println!(
+        "   Code: {}×{}, rate {:.3}",
+        demo_code.m(),
+        demo_code.n(),
+        demo_code.rate()
+    );
+
     // Verify all-zeros is valid codeword
     let all_zeros = BitVec::zeros(demo_code.n());
     assert!(demo_code.is_valid_codeword(&all_zeros));
     println!("   - All-zeros is valid codeword: ✓");
-    
+
     // Check syndrome for random invalid codeword
     let mut invalid = BitVec::zeros(demo_code.n());
     invalid.push_bit(true); // Has one bit set
     invalid.resize(demo_code.n(), false);
     let syndrome = demo_code.syndrome(&invalid);
-    println!("   - Invalid codeword creates non-zero syndrome: ✓ ({} ones)", syndrome.count_ones());
-    
+    println!(
+        "   - Invalid codeword creates non-zero syndrome: ✓ ({} ones)",
+        syndrome.count_ones()
+    );
+
     println!("\n=== End of Example ===");
     println!("\nNext Steps:");
     println!("  - Add actual DVB-T2 base matrices from ETSI EN 302 755");
