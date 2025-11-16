@@ -96,8 +96,8 @@ impl ReferenceBits {
         }
     }
 
-    fn count_ones(&self) -> u64 {
-        self.bits.iter().filter(|&&b| b != 0).count() as u64
+    fn count_ones(&self) -> usize {
+        self.bits.iter().filter(|&&b| b != 0).count()
     }
 
     fn find_first_set(&self) -> Option<usize> {
