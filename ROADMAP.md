@@ -11,12 +11,13 @@ A cohesive toolkit for high-performance binary field computing and coding theory
 
 ## Current Focus
 
-**gf2-core**: Polynomial optimization complete
+**gf2-core**: Core primitives mature and feature-complete
 - ✅ GF(2^m) extension field arithmetic
 - ✅ Karatsuba multiplication (1.88x speedup)
 - ✅ SIMD field operations (2.1x for large fields)
 - ✅ Sparse matrix primitives (CSR/CSC)
-- 🔮 Rank/select operations (planned)
+- ✅ Rank/select operations (lazy indexing)
+- ✅ Polar transforms (81x speedup vs naive)
 
 **gf2-coding**: DVB-T2 FEC simulation
 - ✅ BCH codes with algebraic decoding (45 tests passing)
@@ -56,7 +57,8 @@ A cohesive toolkit for high-performance binary field computing and coding theory
 - Extension field GF(2^m) (core) → BCH algebraic decoding (coding)
 - Sparse matrices (core) → LDPC belief propagation (coding)
 - Polynomial arithmetic (core) → BCH syndrome computation (coding)
-- Future: Rank/select (core) → Sparse graph operations (coding)
+- Rank/select (core) → Sparse graph operations (coding)
+- Polar transforms (core) → 5G polar code research (coding)
 
 ## Completed Milestones
 
@@ -71,21 +73,23 @@ A cohesive toolkit for high-performance binary field computing and coding theory
 | **M7** | Convolutional codes: Viterbi decoder | ✅ Complete |
 | **M8** | BCH codes: Algebraic decoding for DVB-T2 | ✅ Complete |
 | **M9** | LDPC framework: Belief propagation and QC codes | ✅ Complete |
+| **M10** | Rank/select: Succinct bit operations | ✅ Complete |
+| **M11** | Polar transforms: Fast Hadamard Transform | ✅ Complete |
 
 ## Active Development
 
 | Milestone | Description | Status |
 |-----------|-------------|--------|
-| **M10** | DVB-T2 LDPC: Standard base matrices | 🎯 In progress |
-| **M11** | QAM modulation: Soft-decision demapping | Planned |
-| **M12** | FEC simulation: End-to-end DVB-T2 chain | Planned |
+| **M12** | DVB-T2 LDPC: Standard base matrices | 🎯 In progress |
+| **M13** | QAM modulation: Soft-decision demapping | Planned |
+| **M14** | FEC simulation: End-to-end DVB-T2 chain | Planned |
 
 ## Future Directions
 
 | Area | Description | Priority |
 |------|-------------|----------|
-| **Rank/select** | Succinct bit operations for sparse graphs | Medium |
-| **Polar codes** | 5G NR polar encoding/decoding | Medium |
+| **SIMD polar transforms** | AVX2 optimization for polar codes | Low |
+| **5G polar codes** | Capacity-approaching codes research | Medium |
 | **AVX-512** | Extended SIMD support | Low |
 | **ARM NEON** | AArch64 SIMD kernels | Low |
 
