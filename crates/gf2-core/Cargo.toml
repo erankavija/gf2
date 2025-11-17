@@ -61,3 +61,7 @@ harness = false
 [[bench]]
 name = "rank_select"
 harness = false
+
+[[bench]]
+name = "polar"
+harness = false

@@ -5,11 +5,12 @@
 ## Highlights
 
 - Dense, tail-masked `BitVec` backed by `Vec<u64>`
-- Bit-packed `BitMatrix` with fast M4RM multiplication and Gauss-Jordan inversion
-- **Sparse matrices** in CSR/CSC formats for low-density matrices (< 5% density)
-- SIMD-accelerated operations (AVX2): logical ops, popcount, scans, word-aligned shifts
-- Strict safety guarantees: `#![deny(unsafe_code)]`
-- Comprehensive tests and Criterion benchmarks
+- Bit-packed `BitMatrix` with M4RM multiplication and Gauss-Jordan inversion
+- Polar transform operations for polar code encoding/decoding
+- Sparse matrices in CSR/CSC formats for low-density matrices
+- Extension field GF(2^m) arithmetic with optimized multiplication
+- SIMD-accelerated operations (AVX2) for supported platforms
+- Strict safety: `#![deny(unsafe_code)]`
 
 ## Features
 
@@ -25,22 +26,19 @@
 Run benchmarks to measure performance:
 
 ```bash
-# Polynomial multiplication (Karatsuba optimization)
+# Polar transform operations
+cargo bench --bench polar
+
+# Polynomial multiplication
 cargo bench --bench polynomial
 
-# SIMD field multiplication (for large fields without tables)
-# Note: GF(256)/GF(65536) use log/antilog tables (faster than SIMD)
-# SIMD provides 2-3x speedup for GF(2^m) where m > 16
-cargo bench --features simd --bench polynomial
+# Matrix operations
+cargo bench --bench matmul
+
+# Other benchmarks available: bitvec, wide_logical, scan, random, sparse, shifts, rank_select
 ```
 
-**Expected Results:**
-- **Karatsuba**: 1.88x speedup for degree-200 polynomials (352 µs → 187 µs)
-- **SIMD field ops**: 2.1x speedup for GF(65536) without tables (34 ns → 16 ns)
-- **Note**: Polynomial benchmarks use table-optimized fields, so SIMD shows minimal impact there
-
-**SIMD Value:** Primary benefit is for large fields (m > 16) where tables don't fit in memory,
-enabling practical use of GF(2^24), GF(2^32), etc.
+For detailed performance characteristics, see the Rustdoc API documentation.
 
 ## Usage
 
@@ -125,6 +123,34 @@ for row in dual.col_iter(3) {
 // Both A×x and A^T×x are efficient
 let y = dual.matvec(&x);
 let yt = dual.matvec_transpose(&y);
+```
+
+### Polar Transform Operations
+
+Fast Hadamard Transform for polar code encoding/decoding:
+
+```rust
+use gf2_core::BitVec;
+
+// Create information bits for polar encoding
+let mut info = BitVec::zeros(1024);
+info.set(0, true);
+info.set(512, true);
+
+// Apply polar transform G_N = [1 0; 1 1]^⊗log2(N)
+let encoded = info.polar_transform(1024);
+
+// Decode via inverse transform
+let decoded = encoded.polar_transform_inverse(1024);
+assert_eq!(decoded, info);
+
+// In-place operations for efficiency
+let mut bits = BitVec::from_bytes_le(&[0xFF, 0x00, 0xFF, 0x00]);
+bits.polar_transform_into(32);
+
+// Bit-reversal permutation (used in polar code construction)
+let mut bv = BitVec::from_bytes_le(&[0b11001010]);
+bv.bit_reverse_into(8);
 ```
 
 For more details, see the workspace-level [README](../../README.md) and the inlined Rustdocs.

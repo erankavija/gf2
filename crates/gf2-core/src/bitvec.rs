@@ -3,6 +3,24 @@
 use std::cell::RefCell;
 use std::fmt;
 
+/// Reverses the lowest `num_bits` bits of `x`.
+///
+/// # Examples
+///
+/// ```ignore
+/// assert_eq!(reverse_bits(0b001, 3), 0b100);
+/// assert_eq!(reverse_bits(0b1010, 4), 0b0101);
+/// ```
+#[inline]
+fn reverse_bits(mut x: usize, num_bits: usize) -> usize {
+    let mut result = 0;
+    for _ in 0..num_bits {
+        result = (result << 1) | (x & 1);
+        x >>= 1;
+    }
+    result
+}
+
 /// Rank/Select index for efficient bit queries.
 ///
 /// Uses a two-level index structure:
@@ -1282,6 +1300,278 @@ impl BitVec {
                 *last &= mask;
             }
         }
+    }
+
+    // =========================================================================
+    // Polar Transform Operations
+    // =========================================================================
+
+    /// Creates a bit-reversed copy of the first `n_bits`.
+    ///
+    /// Bit-reversal permutation reorders bits such that bit at position `i`
+    /// moves to position with binary representation reversed.
+    ///
+    /// # Arguments
+    ///
+    /// * `n_bits` - Number of bits to reverse (must be a power of 2)
+    ///
+    /// # Panics
+    ///
+    /// Panics if `n_bits` is not a power of 2 or if `n_bits > self.len()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::BitVec;
+    ///
+    /// let bv = BitVec::from_bytes_le(&[0b11001010]);
+    /// let reversed = bv.bit_reversed(8);
+    /// // 0b11001010 with bit-reversal permutation becomes 0b11011000
+    /// assert_eq!(reversed.to_bytes_le()[0], 216);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(n) where n is the number of bits.
+    pub fn bit_reversed(&self, n_bits: usize) -> BitVec {
+        assert!(
+            n_bits.is_power_of_two() || n_bits == 0,
+            "n_bits must be a power of 2"
+        );
+        assert!(n_bits <= self.len_bits, "n_bits exceeds BitVec length");
+
+        let mut result = self.clone();
+        result.bit_reverse_into(n_bits);
+        result
+    }
+
+    /// Bit-reverses the first `n_bits` in place.
+    ///
+    /// # Arguments
+    ///
+    /// * `n_bits` - Number of bits to reverse (must be a power of 2)
+    ///
+    /// # Panics
+    ///
+    /// Panics if `n_bits` is not a power of 2 or if `n_bits > self.len()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::BitVec;
+    ///
+    /// let mut bv = BitVec::from_bytes_le(&[0b11001010]);
+    /// bv.bit_reverse_into(8);
+    /// // 0b11001010 with bit-reversal permutation becomes 0b11011000
+    /// assert_eq!(bv.to_bytes_le()[0], 216);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(n) where n is the number of bits.
+    pub fn bit_reverse_into(&mut self, n_bits: usize) {
+        assert!(
+            n_bits.is_power_of_two() || n_bits == 0,
+            "n_bits must be a power of 2"
+        );
+        assert!(n_bits <= self.len_bits, "n_bits exceeds BitVec length");
+
+        if n_bits <= 1 {
+            return;
+        }
+
+        // Reverse bits by swapping pairs
+        // For n_bits, we reverse the bottom log2(n_bits) bits of the index
+        let num_bits_to_reverse = n_bits.trailing_zeros() as usize;
+
+        for i in 0..n_bits {
+            // Compute bit-reversed index
+            let j = reverse_bits(i, num_bits_to_reverse);
+
+            // Only swap if i < j to avoid double-swapping
+            if i < j {
+                let bit_i = self.get(i);
+                let bit_j = self.get(j);
+                self.set(i, bit_j);
+                self.set(j, bit_i);
+            }
+        }
+    }
+
+    /// Applies polar transform G_N = [1 0; 1 1]^⊗log2(n) to first `n` bits.
+    ///
+    /// The polar transform is a recursive butterfly operation used in polar
+    /// code encoding. It performs the Fast Hadamard Transform over GF(2).
+    ///
+    /// # Arguments
+    ///
+    /// * `n` - Transform size (must be a power of 2)
+    ///
+    /// # Panics
+    ///
+    /// Panics if `n` is not a power of 2 or if `n > self.len()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::BitVec;
+    ///
+    /// let mut bv = BitVec::new();
+    /// bv.push_bit(true);
+    /// bv.push_bit(false);
+    /// let transformed = bv.polar_transform(2);
+    /// // [1, 0] -> [1, 1 XOR 0] = [1, 1]
+    /// assert_eq!(transformed.get(0), true);
+    /// assert_eq!(transformed.get(1), true);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(n log n) where n is the transform size.
+    pub fn polar_transform(&self, n: usize) -> BitVec {
+        assert!(n.is_power_of_two(), "n must be a power of 2");
+        assert!(n <= self.len_bits, "n exceeds BitVec length");
+
+        let mut result = self.clone();
+        result.polar_transform_into(n);
+        result
+    }
+
+    /// Applies polar transform in place.
+    ///
+    /// # Arguments
+    ///
+    /// * `n` - Transform size (must be a power of 2)
+    ///
+    /// # Panics
+    ///
+    /// Panics if `n` is not a power of 2 or if `n > self.len()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::BitVec;
+    ///
+    /// let mut bv = BitVec::new();
+    /// bv.push_bit(true);
+    /// bv.push_bit(false);
+    /// bv.polar_transform_into(2);
+    /// // [1, 0] -> [1, 1 XOR 0] = [1, 1]
+    /// assert_eq!(bv.get(0), true);
+    /// assert_eq!(bv.get(1), true);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(n log n) where n is the transform size.
+    pub fn polar_transform_into(&mut self, n: usize) {
+        assert!(n.is_power_of_two(), "n must be a power of 2");
+        assert!(n <= self.len_bits, "n exceeds BitVec length");
+
+        if n <= 1 {
+            return;
+        }
+
+        // Fast Hadamard Transform (FHT) via recursive butterfly
+        // G_N = [1 0; 1 1]^⊗log2(N)
+        // Butterfly: (a, b) -> (a, a XOR b)
+
+        let mut stride = 1;
+        while stride < n {
+            let mut i = 0;
+            while i < n {
+                for j in 0..stride {
+                    let pos_low = i + j;
+                    let pos_high = i + j + stride;
+
+                    let bit_low = self.get(pos_low);
+                    let bit_high = self.get(pos_high);
+
+                    // Butterfly: (a, b) -> (a, a XOR b)
+                    // pos_low stays as bit_low
+                    self.set(pos_high, bit_low ^ bit_high);
+                }
+                i += 2 * stride;
+            }
+            stride *= 2;
+        }
+    }
+
+    /// Applies inverse polar transform to first `n` bits.
+    ///
+    /// Inverts the polar transform, recovering the original bit vector.
+    ///
+    /// # Arguments
+    ///
+    /// * `n` - Transform size (must be a power of 2)
+    ///
+    /// # Panics
+    ///
+    /// Panics if `n` is not a power of 2 or if `n > self.len()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::BitVec;
+    ///
+    /// let mut bv = BitVec::new();
+    /// bv.push_bit(true);
+    /// bv.push_bit(false);
+    /// let transformed = bv.polar_transform(2);
+    /// let recovered = transformed.polar_transform_inverse(2);
+    /// assert_eq!(recovered, bv);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(n log n) where n is the transform size.
+    pub fn polar_transform_inverse(&self, n: usize) -> BitVec {
+        assert!(n.is_power_of_two(), "n must be a power of 2");
+        assert!(n <= self.len_bits, "n exceeds BitVec length");
+
+        let mut result = self.clone();
+        result.polar_transform_inverse_into(n);
+        result
+    }
+
+    /// Applies inverse polar transform in place.
+    ///
+    /// # Arguments
+    ///
+    /// * `n` - Transform size (must be a power of 2)
+    ///
+    /// # Panics
+    ///
+    /// Panics if `n` is not a power of 2 or if `n > self.len()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::BitVec;
+    ///
+    /// let mut bv = BitVec::new();
+    /// bv.push_bit(true);
+    /// bv.push_bit(false);
+    /// let original = bv.clone();
+    /// bv.polar_transform_into(2);
+    /// bv.polar_transform_inverse_into(2);
+    /// assert_eq!(bv, original);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(n log n) where n is the transform size.
+    pub fn polar_transform_inverse_into(&mut self, n: usize) {
+        assert!(n.is_power_of_two(), "n must be a power of 2");
+        assert!(n <= self.len_bits, "n exceeds BitVec length");
+
+        if n <= 1 {
+            return;
+        }
+
+        // Inverse FHT - same as forward for GF(2) Hadamard transform
+        // The polar transform is self-inverse (involution)
+        self.polar_transform_into(n);
     }
 }
 
