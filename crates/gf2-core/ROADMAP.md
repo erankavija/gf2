@@ -1,8 +1,6 @@
 # gf2-core Roadmap
 
-**Current Status**: GF(2^m) arithmetic and polynomial optimization complete
-
-This roadmap focuses on high-performance primitives for GF(2): `BitVec`, `BitMatrix`, GF(2^m) extension fields, and low-level kernels.
+This roadmap focuses on high-performance primitives for GF(2): `BitVec`, `BitMatrix`, GF(2^m) extension fields, and low-level kernels. The mission is to push the boundaries of efficient binary field arithmetic and provide foundational support for all coding theory applications in gf2-coding.
 
 ---
 
@@ -46,6 +44,23 @@ This roadmap focuses on high-performance primitives for GF(2): `BitVec`, `BitMat
 - All 90 GF(2^m) tests passing
 - Documentation: `README.md` updated with benchmark instructions
 
+### Phase 4: Rank/Select & Scanning ✅ **COMPLETE**
+
+**Goal**: Efficient rank and select operations on bit vectors
+
+**Implementation:**
+- Rank: Count set bits up to position i → `rank(idx) -> usize` (O(1))
+- Select: Find position of k-th set bit → `select(k) -> Option<usize>` (O(log n))
+- Superblock/block index structure for fast queries
+- Lazy index building (built on first query)
+- `RankSelectIndex` with superblocks (512-bit) and blocks (64-bit)
+
+**Status**: Fully implemented in `src/bitvec.rs`
+- Public API: `BitVec::rank()`, `BitVec::select()`
+- Lazy index construction via `RefCell<Option<RankSelectIndex>>`
+- Comprehensive test coverage
+- Used by sparse matrix operations and bit-level search
+
 ### Phase 8: Extension Field GF(2^m) Arithmetic ✅ **COMPLETE**
 
 **Phase 8.1: Core Field Arithmetic**
@@ -67,77 +82,67 @@ This roadmap focuses on high-performance primitives for GF(2): `BitVec`, `BitMat
 - Minimal polynomial computation via conjugate method
 - Batch evaluation for BCH syndrome computation
 
-**Implementation:** `src/gf2m.rs` (2506 lines, 156 tests)
+**Implementation:** `src/gf2m.rs`
 
 ---
 
 ## Active & Planned Phases
 
-### Phase 4: Rank/Select & Scanning ⏭️ **NEXT**
-**Priority**: Medium (nice optimization, not blocking)  
-**Effort**: 1-2 weeks  
-**Status**: Planned
+### Phase 6: Polar Transform Operations ✅ **COMPLETE**
+**Priority**: HIGH (required for polar code capacity verification)  
+**Effort**: 1 day actual (1-2 weeks estimated)  
+**Status**: Complete - scalar baseline ready for production use
 
-**Goal**: Efficient rank and select operations on bit vectors
-
-**Implementation:**
-- Rank: Count set bits up to position i → `rank(idx) -> usize`
-- Select: Find position of k-th set bit → `select(k) -> Option<usize>`
-- Superblock/block index structure for O(1) queries
-- Lazy index building (build on first query)
-- Broadword/PDEP-PEXT strategies for x86_64
-
-**Data Structure:**
-```rust
-struct RankSelectIndex {
-    superblocks: Vec<u64>,  // 512-bit superblock counts
-    blocks: Vec<u16>,        // 64-bit block counts within superblock
-}
-```
-
-**Use Cases:**
-- Sparse matrix index lookups
-- Bit-level search operations
-- Succinct data structures
-
-**Testing:**
-- Property tests: `rank(select(k)) == k`
-- Boundary cases: empty, full, single bit
-- Benchmark vs. naive linear scan
-
-### Phase 6: Polar Transform Operations 🔮 **AFTER RANK/SELECT**
-**Priority**: Medium (5G polar codes, not DVB-T2)  
-**Effort**: 1-2 weeks  
-**Status**: Planned
-
-**Goal**: Fast recursive butterfly transforms for polar code encoding/decoding
-
-**Motivation**: Polar codes (5G NR, future standards) require O(N log N) transforms exploiting Kronecker product structure.
+**Goal**: Fast recursive butterfly transforms for polar code encoding/decoding and capacity verification
 
 **Implementation:**
-- Fast Hadamard Transform over GF(2)
-- Recursive butterfly operations: G_N = [1 0; 1 1]^⊗n
-- In-place polar encoding transform
-- Bit-reversal permutation with cache-optimized access
-- SIMD-ready block-based kernels (AVX2 gather/scatter)
 
-**Integration:**
-- Works with Phase 4 rank/select for bit-channel reliability sorting
-- Frozen bit selection for polar code construction
+#### Core Transform Operations ✅
+- ✅ Fast Hadamard Transform (FHT) over GF(2)
+- ✅ Iterative butterfly: G_N = [1 0; 1 1]^⊗n, O(N log N)
+- ✅ In-place polar encoding transform (`polar_transform_into`)
+- ✅ Out-of-place transform for immutable API (`polar_transform`)
+- ✅ Bit-reversal permutation (functional + `_into` variants)
 
-**Benchmarks:**
-- Transform throughput vs. naive matrix multiply
-- Target: 100x+ speedup for N=1024+
+#### Convenience Functions ✅
+- ✅ `BitVec::bit_reversed(n_bits)` - create bit-reversed copy
+- ✅ `BitVec::bit_reverse_into(n_bits)` - in-place bit reversal
+- ✅ `BitVec::polar_transform(n)` - apply G_N Kronecker transform
+- ✅ `BitVec::polar_transform_into(n)` - in-place transform
+- ✅ `BitVec::polar_transform_inverse(n)` - inverse transform
+- ✅ `BitVec::polar_transform_inverse_into(n)` - in-place inverse
+- ✅ Systematic `_into` naming convention
 
-**Testing:**
-- Transform-inverse roundtrip
-- Linearity preservation
-- Equivalence to matrix form
+#### Performance ✅
+- ✅ 81x speedup vs. naive matrix multiply @ N=1024
+- ✅ 76-105 Melem/s throughput for N=1024-16384
+- ✅ O(N log N) scaling confirmed via benchmarks
 
-**Use Cases:**
+**Testing:** ✅
+- ✅ 23 comprehensive tests (unit + property + integration)
+- ✅ Transform-inverse roundtrip (property test)
+- ✅ Linearity preservation
+- ✅ Equivalence to matrix form (N=2, N=4)
+- ✅ Bit-reversal involution
+- ✅ Functional vs `_into` equivalence
+
+**Benchmarks:** ✅
+- ✅ `benches/polar.rs` added with 4 benchmark groups
+- ✅ FHT vs naive comparison
+- ✅ Functional vs `_into` performance
+- ✅ Roundtrip encode/decode
+
+**Use Cases:** ✅ Ready
 - 5G NR polar codes
-- Successive cancellation decoder
+- Successive cancellation (SC) decoder
+- SC-List (SCL) decoder
 - Bit-channel capacity calculations
+- **Polar code FER simulation and capacity verification (gf2-coding Phase C7)**
+
+**Future Optimizations (Optional):**
+- SIMD butterfly operations (AVX2)
+- Cache-blocking for N > 8192
+- ARM NEON support
 
 ### Phase 7c: Batch Evaluation Optimization 🔮 **OPTIONAL**
 **Priority**: Low (minor improvement)  
@@ -188,21 +193,25 @@ struct RankSelectIndex {
 
 ## Roadmap Priorities
 
+**Completed:**
+1. ✅ Phase 6: Polar Transforms - Production-ready scalar baseline (81x speedup)
+
 **Near-term:**
-1. Phase 4: Rank/Select (if desired for optimization)
-2. Phase 6: Polar Transforms (if targeting 5G codes)
+1. Phase 2: Wide buffer optimizations (if profiling shows benefit)
 
 **Long-term:**
-- Phase 2: Wide buffer optimizations (if profiling shows benefit)
 - Phase 7c: Batch evaluation (minor optimization)
+- Phase 6b: SIMD polar transforms (AVX2, optional enhancement)
 - Phase 10: GF(p^m) (only if non-binary codes needed)
+- AVX-512 and ARM NEON SIMD backends
 
-**Note**: All dependencies for DVB-T2 FEC simulation (primary project goal) are complete. Further gf2-core work is optional optimization.
+**Note**: Core primitives for coding theory applications are mature. Phase 6 polar transforms complete and ready for gf2-coding Phase C7 capacity verification.
 
 ---
 
 ## Related Documentation
 
+- `docs/POLAR_IMPLEMENTATION_PLAN.md` - Phase 6 polar transforms implementation details
 - `docs/GF2M_SESSION_NOTES.md` - GF(2^m) implementation history
 - `docs/GF2M_DESIGN.md` - Design decisions and architecture
 - `docs/polynomial_benchmarks.md` - Performance baselines
