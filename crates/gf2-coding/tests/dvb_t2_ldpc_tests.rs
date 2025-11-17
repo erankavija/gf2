@@ -6,23 +6,24 @@
 use gf2_coding::ldpc::{LdpcCode, QuasiCyclicLdpc};
 use gf2_coding::CodeRate;
 
-/// Test DVB-T2 normal frame dimensions.
+/// Test DVB-T2 short frame dimensions.
 #[test]
-fn test_dvb_t2_normal_dimensions() {
-    let qc = QuasiCyclicLdpc::dvb_t2_normal(CodeRate::Rate1_2);
+fn test_dvb_t2_short_dimensions() {
+    let qc = QuasiCyclicLdpc::dvb_t2_short(CodeRate::Rate1_2);
     let code = LdpcCode::from_quasi_cyclic(&qc);
 
-    // DVB-T2 normal frame should have n=16200
+    // DVB-T2 short frame should have n=16200
     assert_eq!(code.n(), qc.expanded_cols());
+    assert_eq!(code.n(), 16200);
 
-    // Expansion factor for normal frame is 360
+    // Expansion factor is 360
     assert_eq!(qc.expansion_factor(), 360);
 }
 
-/// Test that DVB-T2 normal codes are valid QC-LDPC codes.
+/// Test that DVB-T2 short codes are valid QC-LDPC codes.
 #[test]
-fn test_dvb_t2_normal_validity() {
-    let qc = QuasiCyclicLdpc::dvb_t2_normal(CodeRate::Rate1_2);
+fn test_dvb_t2_short_validity() {
+    let qc = QuasiCyclicLdpc::dvb_t2_short(CodeRate::Rate1_2);
     let code = LdpcCode::from_quasi_cyclic(&qc);
 
     // All-zeros should be a valid codeword
@@ -37,7 +38,7 @@ fn test_dvb_t2_normal_validity() {
 /// Test that DVB-T2 structure is quasi-cyclic.
 #[test]
 fn test_dvb_t2_quasi_cyclic_structure() {
-    let qc = QuasiCyclicLdpc::dvb_t2_normal(CodeRate::Rate1_2);
+    let qc = QuasiCyclicLdpc::dvb_t2_short(CodeRate::Rate1_2);
 
     // Verify base matrix dimensions are reasonable
     assert!(qc.base_rows() > 0);
@@ -48,18 +49,30 @@ fn test_dvb_t2_quasi_cyclic_structure() {
     assert_eq!(qc.expanded_cols(), qc.base_cols() * qc.expansion_factor());
 }
 
-/// Test that other rates panic (not yet implemented).
+/// Test that DVB-T2 short rate 3/5 constructs properly (placeholder matrix).
 #[test]
-#[should_panic(expected = "not yet implemented")]
-fn test_dvb_t2_normal_rate_3_5_not_implemented() {
-    let _qc = QuasiCyclicLdpc::dvb_t2_normal(CodeRate::Rate3_5);
+fn test_dvb_t2_short_rate_3_5() {
+    let qc = QuasiCyclicLdpc::dvb_t2_short(CodeRate::Rate3_5);
+    let code = LdpcCode::from_quasi_cyclic(&qc);
+
+    // Should have n=16200 for short frame
+    assert_eq!(qc.expansion_factor(), 360);
+    assert_eq!(code.n(), 16200);
+
+    // NOTE: This uses a placeholder matrix until actual ETSI EN 302 755 Table 6b is entered
 }
 
-/// Test that DVB-T2 long frame panics (not yet implemented).
+/// Test that DVB-T2 normal frame constructs properly (placeholder matrix).
 #[test]
-#[should_panic(expected = "not yet implemented")]
-fn test_dvb_t2_long_not_implemented() {
-    let _qc = QuasiCyclicLdpc::dvb_t2_long(CodeRate::Rate1_2);
+fn test_dvb_t2_normal() {
+    let qc = QuasiCyclicLdpc::dvb_t2_normal(CodeRate::Rate1_2);
+    let code = LdpcCode::from_quasi_cyclic(&qc);
+
+    // Should have n=64800 for normal frame
+    assert_eq!(qc.expansion_factor(), 360);
+    assert_eq!(code.n(), 64800);
+
+    // NOTE: This uses a placeholder matrix until actual ETSI EN 302 755 Table 7a is entered
 }
 
 /// Test that 5G NR panics (not yet implemented).

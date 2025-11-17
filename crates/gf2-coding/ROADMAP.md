@@ -94,8 +94,30 @@ See [docs/DVB_T2_DESIGN.md](docs/DVB_T2_DESIGN.md) for detailed design and imple
 - Soft-input Viterbi Algorithm (SOVA) for convolutional codes
 
 ## Phase C7: Polar & Modern Codes (Research)
-- Successive cancellation (SC) and SC-List decoder prototypes
-- Bit-channel reliability sorting; fast Hadamard-like transforms leveraging `BitMatrix`
+**Long-term goal**: Verify polar codes are capacity-approaching via FER simulation
+
+### Polar Code Construction
+- Bit-channel reliability sorting using Bhattacharyya parameters
+- Information/frozen bit selection based on channel reliability
+- Rate-compatible polar code families
+- Fast Hadamard-like transforms leveraging `BitMatrix`
+
+### Polar Decoding
+- Successive cancellation (SC) decoder
+- SC-List (SCL) decoder with path metrics
+- CRC-aided SCL for improved performance
+- Efficient factor graph representation
+
+### Capacity Verification
+- FER simulation over AWGN channels (similar to LDPC framework)
+- Performance comparison with Shannon limit
+- Rate vs. Eb/N0 characterization
+- Verification of capacity-approaching behavior for various block lengths
+- Comparison with LDPC codes
+
+### Integration
+- Reuse AWGN channel and simulation framework from Phase C3
+- Leverage soft-decision infrastructure (LLR operations)
 - Evaluate integration points with rank/select primitives
 
 ## Phase C8: Compression Experiments (Exploratory)
