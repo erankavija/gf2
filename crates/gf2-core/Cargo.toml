@@ -11,6 +11,7 @@ rust-version = "1.74"
 [dependencies]
 gf2-kernels-simd = { path = "../gf2-kernels-simd", optional = true }
 rand = { workspace = true, optional = true }
+image = { version = "0.25", optional = true, default-features = false, features = ["png"] }
 
 [dev-dependencies]
 criterion = { workspace = true }
@@ -23,6 +24,8 @@ default = ["rand"]
 simd = ["gf2-kernels-simd"]
 # Random generation functions (enabled by default for testing/examples).
 rand = ["dep:rand"]
+# Matrix visualization to PNG images.
+visualization = ["image"]
 
 [[bench]]
 name = "bitvec"
