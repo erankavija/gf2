@@ -71,4 +71,4 @@ pub use convolutional::{ConvolutionalDecoder, ConvolutionalEncoder};
 pub use ldpc::{CirculantMatrix, LdpcCode, LdpcDecoder, QuasiCyclicLdpc};
 pub use linear::{LinearBlockCode, SyndromeTableDecoder};
 pub use llr::Llr;
-pub use traits::DecoderResult;
+pub use traits::{DecoderResult, GeneratorMatrixAccess};

@@ -4,7 +4,109 @@
 //! in error-correcting codes, supporting both block codes and streaming codes.
 
 use crate::llr::Llr;
+use gf2_core::matrix::BitMatrix;
 use gf2_core::BitVec;
+
+/// Access to the generator matrix of a linear block code.
+///
+/// This trait provides on-demand access to the generator matrix G (k×n)
+/// of a linear [n,k] code. The matrix satisfies:
+/// - For any message m (1×k), the codeword is c = m·G (1×n)
+/// - For systematic codes, G = [I_k | P] where I_k is the k×k identity
+///
+/// # Performance Considerations
+///
+/// Generator matrix access is intended for:
+/// - Code analysis and validation
+/// - Educational purposes
+/// - Debugging and testing
+/// - Non-performance-critical encoding
+///
+/// For high-performance encoding, use the `BlockEncoder` trait methods
+/// which leverage optimized representations (polynomial division for BCH,
+/// systematic H for LDPC, direct matrix for linear codes).
+///
+/// # Implementation Notes
+///
+/// Implementations may:
+/// - Compute the matrix lazily on first access
+/// - Cache the result for subsequent calls
+/// - Return a reference to pre-stored matrix (e.g., LinearBlockCode)
+///
+/// # Examples
+///
+/// ```
+/// use gf2_coding::LinearBlockCode;
+/// use gf2_coding::traits::GeneratorMatrixAccess;
+///
+/// let code = LinearBlockCode::hamming(3);
+/// let g = code.generator_matrix();
+/// assert_eq!(g.rows(), code.k());
+/// assert_eq!(g.cols(), code.n());
+/// ```
+pub trait GeneratorMatrixAccess {
+    /// Returns the number of message bits.
+    fn k(&self) -> usize;
+
+    /// Returns the number of codeword bits.
+    fn n(&self) -> usize;
+
+    /// Computes or retrieves the generator matrix G (k×n).
+    ///
+    /// This may be an expensive operation for large codes. The result
+    /// may be cached internally for subsequent calls.
+    ///
+    /// # Returns
+    ///
+    /// A `BitMatrix` of dimension k×n representing the generator matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::LinearBlockCode;
+    /// use gf2_coding::traits::GeneratorMatrixAccess;
+    ///
+    /// let code = LinearBlockCode::hamming(3);
+    /// let g = code.generator_matrix();
+    /// assert_eq!(g.rows(), 4);
+    /// assert_eq!(g.cols(), 7);
+    /// ```
+    fn generator_matrix(&self) -> BitMatrix;
+
+    /// Checks if the code is systematic.
+    ///
+    /// A systematic code has the property that the first k bits of
+    /// the codeword equal the message bits: G = [I_k | P].
+    ///
+    /// Default implementation checks if G[:k, :k] is the identity matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::LinearBlockCode;
+    /// use gf2_coding::traits::GeneratorMatrixAccess;
+    ///
+    /// let code = LinearBlockCode::hamming(3);
+    /// assert!(code.is_systematic());
+    /// ```
+    fn is_systematic(&self) -> bool {
+        let g = self.generator_matrix();
+        if g.rows() != self.k() || g.cols() < self.k() {
+            return false;
+        }
+
+        // Check if first k columns form identity
+        for i in 0..self.k() {
+            for j in 0..self.k() {
+                let expected = i == j;
+                if g.get(i, j) != expected {
+                    return false;
+                }
+            }
+        }
+        true
+    }
+}
 
 /// Result of a soft-decision decoding operation.
 ///
@@ -531,5 +633,68 @@ mod tests {
         let decoder = MockSoftDecoder { k: 4, n: 7 };
         let llrs = vec![Llr::new(1.0); 5]; // Wrong length
         decoder.decode_soft(&llrs);
+    }
+}
+
+#[cfg(test)]
+mod generator_matrix_tests {
+    use super::*;
+    use gf2_core::matrix::BitMatrix;
+
+    // Mock implementation for testing trait contract
+    struct MockLinearCode {
+        k: usize,
+        n: usize,
+        g: BitMatrix,
+    }
+
+    impl GeneratorMatrixAccess for MockLinearCode {
+        fn k(&self) -> usize {
+            self.k
+        }
+        fn n(&self) -> usize {
+            self.n
+        }
+        fn generator_matrix(&self) -> BitMatrix {
+            self.g.clone()
+        }
+    }
+
+    #[test]
+    fn test_generator_matrix_dimensions() {
+        let g = BitMatrix::zeros(4, 7);
+        let code = MockLinearCode { k: 4, n: 7, g };
+        let retrieved = code.generator_matrix();
+        assert_eq!(retrieved.rows(), 4);
+        assert_eq!(retrieved.cols(), 7);
+    }
+
+    #[test]
+    fn test_is_systematic_identity() {
+        let mut g = BitMatrix::zeros(3, 5);
+        // Set identity in first 3 columns
+        for i in 0..3 {
+            g.set(i, i, true);
+        }
+        let code = MockLinearCode { k: 3, n: 5, g };
+        assert!(code.is_systematic());
+    }
+
+    #[test]
+    fn test_is_systematic_non_systematic() {
+        let g = BitMatrix::zeros(3, 5);
+        let code = MockLinearCode { k: 3, n: 5, g };
+        assert!(!code.is_systematic());
+    }
+
+    #[test]
+    fn test_is_systematic_partial_identity() {
+        let mut g = BitMatrix::zeros(3, 5);
+        // Set partial identity (missing one)
+        g.set(0, 0, true);
+        g.set(1, 1, true);
+        // Missing g.set(2, 2, true);
+        let code = MockLinearCode { k: 3, n: 5, g };
+        assert!(!code.is_systematic());
     }
 }

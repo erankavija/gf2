@@ -21,6 +21,7 @@
 ### Block Codes
 - Systematic encoding with generator matrix G
 - Syndrome computation with parity-check matrix H
+- **Generator matrix access**: Unified `GeneratorMatrixAccess` trait for all linear codes (lazy, cached)
 - Maximum-likelihood decoding for Hamming codes
 - Support for Hamming(2^r-1, 2^r-r-1) codes up to r=10
 - **BCH codes**: Full algebraic encoder/decoder with Berlekamp-Massey and Chien search
@@ -87,6 +88,27 @@ codeword.set(2, !codeword.get(2));
 let decoded = decoder.decode(&codeword);
 assert_eq!(decoded, msg);
 ```
+
+### Generator Matrix Access Example
+
+All linear block codes (Hamming, BCH, LDPC) support unified generator matrix access:
+
+```rust
+use gf2_coding::LinearBlockCode;
+use gf2_coding::traits::GeneratorMatrixAccess;
+
+let code = LinearBlockCode::hamming(3);
+
+// Access generator matrix (computed lazily, cached)
+let g = code.generator_matrix();
+assert_eq!(g.rows(), code.k()); // 4
+assert_eq!(g.cols(), code.n()); // 7
+
+// Check if code is systematic
+assert!(code.is_systematic());
+```
+
+Same API works for BCH and LDPC codes. Generator matrices are computed on-demand and cached for subsequent calls, with zero impact on encoding/decoding performance.
 
 ### Convolutional Code Example
 
