@@ -20,6 +20,8 @@
   - PCLMULQDQ field multiplication for GF(2^m) when m > 16
 - **rand**: Random BitVec and BitMatrix generation (enabled by default)
   - To opt-out, use `default-features = false`
+- **visualization**: Save BitMatrix as PNG images (opt-in)
+  - Useful for debugging and visual inspection of matrix patterns
 
 ## Benchmarks
 
@@ -152,5 +154,29 @@ bits.polar_transform_into(32);
 let mut bv = BitVec::from_bytes_le(&[0b11001010]);
 bv.bit_reverse_into(8);
 ```
+
+### Matrix Visualization (Optional)
+
+Enable the `visualization` feature to save matrices as PNG images for debugging and inspection:
+
+```toml
+[dependencies]
+gf2-core = { version = "0.1", features = ["visualization"] }
+```
+
+```rust
+use gf2_core::matrix::BitMatrix;
+
+// Create and visualize an identity matrix
+let m = BitMatrix::identity(100);
+m.save_image("identity.png").unwrap();
+
+// Visualize matrix structure
+let h = BitMatrix::random_with_probability(50, 100, 0.2, &mut rng);
+h.save_image("parity_check_matrix.png").unwrap();
+```
+
+Each bit becomes a pixel: unset (0) → black, set (1) → white.  
+To change colors, edit the `ZERO_COLOR` and `ONE_COLOR` constants in `src/matrix.rs`.
 
 For more details, see the workspace-level [README](../../README.md) and the inlined Rustdocs.
