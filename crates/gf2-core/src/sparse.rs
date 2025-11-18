@@ -36,6 +36,7 @@
 //! ```
 
 use crate::{matrix::BitMatrix, BitVec};
+use std::fmt;
 
 /// A row-major sparse matrix in Compressed Sparse Row (CSR) format over GF(2).
 ///
@@ -439,5 +440,166 @@ impl SparseMatrixDual {
             y.push_bit(acc);
         }
         y
+    }
+}
+
+impl fmt::Display for SparseMatrix {
+    /// Formats the SparseMatrix in nalgebra-like style.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::sparse::SparseMatrix;
+    ///
+    /// let coo = vec![(0, 0), (0, 3), (1, 1), (2, 2)];
+    /// let s = SparseMatrix::from_coo(3, 4, &coo);
+    /// println!("{}", s);
+    /// // Displays:
+    /// //   ┌       ┐
+    /// //   │ 1 0 0 1 │
+    /// //   │ 0 1 0 0 │
+    /// //   │ 0 0 1 0 │
+    /// //   └       ┘
+    /// ```
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if self.rows == 0 || self.cols == 0 {
+            return write!(f, "[ ]");
+        }
+
+        let border_width = self.cols * 2 + 1;
+
+        writeln!(f, "  ┌{}┐", " ".repeat(border_width))?;
+
+        for r in 0..self.rows {
+            write!(f, "  │ ")?;
+            let row_cols: Vec<usize> = self.row_iter(r).collect();
+            for c in 0..self.cols {
+                if row_cols.contains(&c) {
+                    write!(f, "1")?;
+                } else {
+                    write!(f, "0")?;
+                }
+                if c < self.cols - 1 {
+                    write!(f, " ")?;
+                }
+            }
+            writeln!(f, " │")?;
+        }
+
+        write!(f, "  └{}┘", " ".repeat(border_width))
+    }
+}
+
+impl fmt::Display for SparseMatrixDual {
+    /// Formats the SparseMatrixDual in nalgebra-like style.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::sparse::SparseMatrixDual;
+    ///
+    /// let coo = vec![(0, 0), (0, 3), (1, 1), (2, 2)];
+    /// let s = SparseMatrixDual::from_coo(3, 4, &coo);
+    /// println!("{}", s);
+    /// // Displays:
+    /// //   ┌       ┐
+    /// //   │ 1 0 0 1 │
+    /// //   │ 0 1 0 0 │
+    /// //   │ 0 0 1 0 │
+    /// //   └       ┘
+    /// ```
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Display::fmt(&self.csr, f)
+    }
+}
+
+#[cfg(feature = "visualization")]
+impl SparseMatrix {
+    /// Saves the sparse matrix as a PNG image.
+    ///
+    /// Each bit is represented as a single pixel:
+    /// - Unset bits (0) → black (0, 0, 0)
+    /// - Set bits (1) → white (255, 255, 255)
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - Output file path (e.g., "matrix.png")
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_core::sparse::SparseMatrix;
+    ///
+    /// let s = SparseMatrix::identity(100);
+    /// s.save_image("identity.png").unwrap();
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// - File cannot be created
+    /// - PNG encoding fails
+    ///
+    /// # Note
+    ///
+    /// To modify colors, edit the hard-coded `ZERO_COLOR` and `ONE_COLOR` constants
+    /// in the implementation.
+    pub fn save_image(
+        &self,
+        path: impl AsRef<std::path::Path>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        use image::{ImageBuffer, Rgb};
+
+        const ZERO_COLOR: [u8; 3] = [0, 0, 0]; // black
+        const ONE_COLOR: [u8; 3] = [255, 255, 255]; // white
+
+        let mut img = ImageBuffer::new(self.cols as u32, self.rows as u32);
+
+        for row in 0..self.rows {
+            let row_cols: Vec<usize> = self.row_iter(row).collect();
+            for col in 0..self.cols {
+                let bit = row_cols.contains(&col);
+                let color = if bit { ONE_COLOR } else { ZERO_COLOR };
+                img.put_pixel(col as u32, row as u32, Rgb(color));
+            }
+        }
+
+        img.save(path)?;
+        Ok(())
+    }
+}
+
+#[cfg(feature = "visualization")]
+impl SparseMatrixDual {
+    /// Saves the sparse matrix as a PNG image.
+    ///
+    /// Each bit is represented as a single pixel:
+    /// - Unset bits (0) → black (0, 0, 0)
+    /// - Set bits (1) → white (255, 255, 255)
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - Output file path (e.g., "matrix.png")
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_core::sparse::SparseMatrixDual;
+    ///
+    /// let coo = vec![(0, 1), (1, 2)];
+    /// let sd = SparseMatrixDual::from_coo(3, 3, &coo);
+    /// sd.save_image("sparse_dual.png").unwrap();
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// - File cannot be created
+    /// - PNG encoding fails
+    pub fn save_image(
+        &self,
+        path: impl AsRef<std::path::Path>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        self.csr.save_image(path)
     }
 }
