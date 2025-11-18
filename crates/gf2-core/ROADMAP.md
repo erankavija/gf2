@@ -218,3 +218,27 @@ This roadmap focuses on high-performance primitives for GF(2): `BitVec`, `BitMat
 - `README.md` - Usage and benchmark instructions
 
 Refer to `crates/gf2-coding/ROADMAP.md` for higher-level coding theory phases.
+
+---
+
+## 📝 Potential API Additions
+
+**From gf2-coding BCH Implementation** (2025-11-18):
+
+During BCH generator matrix implementation, reusable helper methods were identified that could belong in core:
+
+1. **`Gf2mPoly::from_bitvec(bits: &BitVec, field: &Gf2mField) -> Self`**
+   - Converts BitVec to polynomial (binary coefficients → field elements)
+   - Currently duplicated 3x in BCH code
+   - See: `gf2-coding/docs/HELPERS_FOR_GF2_CORE.md`
+
+2. **`Gf2mPoly::to_bitvec(&self, len: usize) -> BitVec`**
+   - Converts polynomial to BitVec (extract binary coefficients)
+   - Currently duplicated 2x in BCH code
+   - Natural companion to `from_bitvec()`
+
+3. **`BitMatrix::row_as_bitvec(&self, row: usize) -> BitVec`** (check if exists)
+   - Extract matrix row as BitVec
+   - Common operation in linear algebra
+
+See `../gf2-coding/docs/HELPERS_FOR_GF2_CORE.md` for detailed specifications and usage examples.

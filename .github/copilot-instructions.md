@@ -103,6 +103,7 @@ mod tests {
 - **Validate all inputs**: Check preconditions and panic with clear messages
 - **Maintain invariants**: Always preserve tail masking (padding bits must be zero)
 - **Comprehensive documentation**: All public APIs must have doc comments with examples
+- **Push only valid states**: It is everyone's responsibility to fix failing tests and warnings immediately
 
 ### Naming Conventions
 - Use clear, descriptive names that convey intent

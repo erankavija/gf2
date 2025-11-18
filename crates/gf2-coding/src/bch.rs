@@ -105,6 +105,8 @@ pub struct BchCode {
     field: Gf2mField,         // Extension field GF(2^m)
     generator: Gf2mPoly,      // Generator polynomial g(x)
     designed_distance: usize, // δ = 2t + 1
+    #[allow(clippy::type_complexity)]
+    cached_generator: std::sync::Arc<std::sync::Mutex<Option<gf2_core::matrix::BitMatrix>>>,
 }
 
 impl BchCode {
@@ -156,6 +158,7 @@ impl BchCode {
             field,
             generator,
             designed_distance,
+            cached_generator: std::sync::Arc::new(std::sync::Mutex::new(None)),
         }
     }
 
@@ -290,6 +293,100 @@ impl BchCode {
     /// Returns a reference to the field.
     pub fn field(&self) -> &Gf2mField {
         &self.field
+    }
+
+    /// Computes the generator matrix by encoding each basis vector.
+    ///
+    /// For message m_i = [0,...,0,1,0,...,0] (1 at position i),
+    /// row i of G is the encoding of m_i.
+    ///
+    /// This is expensive for large codes and is cached after first computation.
+    fn compute_generator_matrix(&self) -> gf2_core::matrix::BitMatrix {
+        use gf2_core::BitVec;
+
+        let mut g = gf2_core::matrix::BitMatrix::zeros(self.k, self.n);
+
+        for i in 0..self.k {
+            // Create basis vector message
+            let mut msg = BitVec::new();
+            msg.resize(self.k, false);
+            msg.set(i, true);
+
+            // Encode using systematic encoding
+            let codeword = self.encode_systematic(&msg);
+
+            // Set row i of G
+            for j in 0..self.n {
+                g.set(i, j, codeword.get(j));
+            }
+        }
+
+        g
+    }
+
+    /// Systematic encoding (extracted from BchEncoder for reuse).
+    fn encode_systematic(&self, message: &BitVec) -> BitVec {
+        use gf2_core::BitVec;
+
+        let r = self.n - self.k;
+
+        // Convert message to polynomial m(x)
+        let m_coeffs: Vec<Gf2mElement> = (0..message.len())
+            .map(|i| {
+                if message.get(i) {
+                    self.field.one()
+                } else {
+                    self.field.zero()
+                }
+            })
+            .collect();
+        let m = Gf2mPoly::new(m_coeffs);
+
+        // Multiply by x^r to shift message left: x^r · m(x)
+        let mut m_shifted_coeffs = vec![self.field.zero(); r];
+        for i in 0..=m.degree().unwrap_or(0) {
+            m_shifted_coeffs.push(m.coeff(i));
+        }
+        let m_shifted = Gf2mPoly::new(m_shifted_coeffs);
+
+        // Compute parity: p(x) = remainder of (x^r · m(x)) / g(x)
+        let (_, parity) = m_shifted.div_rem(&self.generator);
+
+        // Codeword: c(x) = x^r · m(x) + p(x) = m_shifted + parity
+        let codeword_poly = &m_shifted + &parity;
+
+        // Convert polynomial to bitvec
+        let mut codeword = BitVec::new();
+        for i in 0..self.n {
+            let coeff = codeword_poly.coeff(i);
+            codeword.push_bit(coeff.is_one());
+        }
+        codeword
+    }
+}
+
+impl crate::traits::GeneratorMatrixAccess for BchCode {
+    fn k(&self) -> usize {
+        self.k
+    }
+
+    fn n(&self) -> usize {
+        self.n
+    }
+
+    fn generator_matrix(&self) -> gf2_core::matrix::BitMatrix {
+        let mut cache = self.cached_generator.lock().unwrap();
+        if let Some(ref g) = *cache {
+            g.clone()
+        } else {
+            let g = self.compute_generator_matrix();
+            *cache = Some(g.clone());
+            g
+        }
+    }
+
+    fn is_systematic(&self) -> bool {
+        true // BCH codes constructed here are always systematic
     }
 }
 
@@ -674,5 +771,113 @@ mod tests {
 
         // Generator should be non-zero and have reasonable degree
         assert!(code.generator().degree().is_some());
+    }
+}
+
+#[cfg(test)]
+mod generator_matrix_access_tests {
+    use super::*;
+    use crate::traits::{BlockEncoder, GeneratorMatrixAccess};
+    use gf2_core::matrix::BitMatrix;
+
+    #[test]
+    fn test_bch_generator_matrix_dimensions() {
+        let field = Gf2mField::new(4, 0b10011).with_tables();
+        let code = BchCode::new(15, 11, 1, field);
+        let g = code.generator_matrix();
+        assert_eq!(g.rows(), 11);
+        assert_eq!(g.cols(), 15);
+    }
+
+    #[test]
+    fn test_bch_generator_parity_orthogonality() {
+        let field = Gf2mField::new(4, 0b10011).with_tables();
+        let code = BchCode::new(15, 11, 1, field);
+        let g = code.generator_matrix();
+
+        // For BCH, verify each row of G is a valid codeword
+        // (divisible by generator polynomial)
+        for i in 0..code.k() {
+            let mut row = BitVec::new();
+            for j in 0..code.n() {
+                row.push_bit(g.get(i, j));
+            }
+
+            // Convert to polynomial and check divisibility
+            let row_coeffs: Vec<Gf2mElement> = (0..row.len())
+                .map(|idx| {
+                    if row.get(idx) {
+                        code.field().one()
+                    } else {
+                        code.field().zero()
+                    }
+                })
+                .collect();
+            let row_poly = Gf2mPoly::new(row_coeffs);
+            let (_, remainder) = row_poly.div_rem(code.generator());
+            assert!(remainder.is_zero(), "Row {} of G must be valid codeword", i);
+        }
+    }
+
+    #[test]
+    fn test_bch_is_systematic() {
+        let field = Gf2mField::new(4, 0b10011).with_tables();
+        let code = BchCode::new(15, 11, 1, field);
+        assert!(code.is_systematic());
+    }
+
+    #[test]
+    fn test_bch_encoding_via_generator_matches_polynomial() {
+        let field = Gf2mField::new(4, 0b10011).with_tables();
+        let code = BchCode::new(15, 7, 2, field);
+        let encoder = BchEncoder::new(code.clone());
+
+        // Test message
+        let mut msg = BitVec::new();
+        msg.resize(7, false);
+        msg.set(0, true);
+        msg.set(3, true);
+        msg.set(6, true);
+
+        // Encode via polynomial (existing path)
+        let codeword1 = encoder.encode(&msg);
+
+        // Encode via generator matrix
+        let g = code.generator_matrix();
+        let mut msg_matrix = BitMatrix::zeros(1, code.k());
+        for i in 0..code.k() {
+            msg_matrix.set(0, i, msg.get(i));
+        }
+        let codeword2_matrix = &msg_matrix * &g;
+        let mut codeword2 = BitVec::new();
+        for j in 0..code.n() {
+            codeword2.push_bit(codeword2_matrix.get(0, j));
+        }
+
+        assert_eq!(codeword1, codeword2);
+    }
+
+    #[test]
+    fn test_bch_generator_matrix_cached() {
+        let field = Gf2mField::new(4, 0b10011).with_tables();
+        let code = BchCode::new(15, 11, 1, field);
+
+        let g1 = code.generator_matrix();
+        let g2 = code.generator_matrix();
+
+        assert_eq!(g1, g2);
+        // Second call should be faster (cached)
+    }
+
+    #[test]
+    fn test_bch_small_code() {
+        // BCH(7,4,1) - smaller test
+        let field = Gf2mField::new(3, 0b1011).with_tables();
+        let code = BchCode::new(7, 4, 1, field);
+        let g = code.generator_matrix();
+
+        assert_eq!(g.rows(), 4);
+        assert_eq!(g.cols(), 7);
+        assert!(code.is_systematic());
     }
 }

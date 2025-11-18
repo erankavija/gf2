@@ -64,6 +64,9 @@ pub struct LdpcCode {
     n: usize,
     /// Number of check nodes (parity checks)
     m: usize,
+    /// Cached generator matrix (computed lazily)
+    #[allow(clippy::type_complexity)]
+    cached_generator: std::sync::Arc<std::sync::Mutex<Option<gf2_core::matrix::BitMatrix>>>,
 }
 
 impl LdpcCode {
@@ -92,7 +95,12 @@ impl LdpcCode {
     /// ```
     pub fn from_edges(m: usize, n: usize, edges: &[(usize, usize)]) -> Self {
         let h = SparseMatrixDual::from_coo(m, n, edges);
-        Self { h, n, m }
+        Self {
+            h,
+            n,
+            m,
+            cached_generator: std::sync::Arc::new(std::sync::Mutex::new(None)),
+        }
     }
 
     /// Returns the codeword length (number of variable nodes).
@@ -162,6 +170,124 @@ impl LdpcCode {
         let m = qc.expanded_rows();
         let n = qc.expanded_cols();
         Self::from_edges(m, n, &edges)
+    }
+
+    /// Computes the generator matrix from the parity-check matrix.
+    ///
+    /// Uses Gaussian elimination to convert H to systematic form [P^T | I_m],
+    /// then constructs G = [I_k | P] where k = n - m.
+    ///
+    /// This is expensive (O(m²·k)) and cached after first computation.
+    ///
+    /// Returns None if H is not full rank.
+    fn compute_generator_matrix(&self) -> Option<gf2_core::matrix::BitMatrix> {
+        use gf2_core::matrix::BitMatrix;
+
+        let k = self.k();
+        let m = self.m;
+
+        if k == 0 {
+            return Some(BitMatrix::zeros(0, self.n));
+        }
+
+        // Convert sparse H to dense for Gaussian elimination
+        let mut h_dense = self.h.to_dense();
+
+        // Perform Gaussian elimination to get H in systematic form
+        // We want to transform H to [P^T | I_m] form
+        // This requires column permutations to move linearly independent columns to the right
+
+        // Forward elimination with column selection
+        let mut col_permutation = Vec::with_capacity(self.n);
+        let mut used_cols = vec![false; self.n];
+
+        for row in 0..m {
+            // Find a pivot column (any unused column with 1 in this row)
+            let pivot_col = (0..self.n).find(|&col| !used_cols[col] && h_dense.get(row, col));
+
+            // No pivot found - matrix is rank deficient
+            let pivot_col = pivot_col?;
+            used_cols[pivot_col] = true;
+            col_permutation.push(pivot_col);
+
+            // Eliminate this column from all other rows
+            for other_row in 0..m {
+                if other_row != row && h_dense.get(other_row, pivot_col) {
+                    // XOR row into other_row
+                    for c in 0..self.n {
+                        let val = h_dense.get(row, c) ^ h_dense.get(other_row, c);
+                        h_dense.set(other_row, c, val);
+                    }
+                }
+            }
+        }
+
+        // H is now in row echelon form with col_permutation defining the systematic positions
+        // Extract systematic (information) bit positions (unused columns)
+        let systematic_positions: Vec<usize> = used_cols
+            .iter()
+            .enumerate()
+            .filter_map(|(col, &used)| if !used { Some(col) } else { None })
+            .collect();
+
+        assert_eq!(
+            systematic_positions.len(),
+            k,
+            "Should have k systematic positions"
+        );
+
+        // Build generator matrix G (k × n)
+        // For systematic codes: G = [I_k | P]
+        // where P is derived from the parity part of H
+        let mut g = BitMatrix::zeros(k, self.n);
+
+        // Set identity part (systematic positions)
+        for (i, &sys_col) in systematic_positions.iter().enumerate() {
+            g.set(i, sys_col, true);
+        }
+
+        // Set parity part
+        // For each systematic bit position, we need to find which parity checks it affects
+        for (msg_idx, &sys_col) in systematic_positions.iter().enumerate() {
+            for (check_idx, &parity_col) in col_permutation.iter().enumerate() {
+                if h_dense.get(check_idx, sys_col) {
+                    // This systematic bit affects this parity check
+                    g.set(msg_idx, parity_col, true);
+                }
+            }
+        }
+
+        Some(g)
+    }
+}
+
+impl crate::traits::GeneratorMatrixAccess for LdpcCode {
+    fn k(&self) -> usize {
+        self.k()
+    }
+
+    fn n(&self) -> usize {
+        self.n
+    }
+
+    fn generator_matrix(&self) -> gf2_core::matrix::BitMatrix {
+        let mut cache = self.cached_generator.lock().unwrap();
+        if let Some(ref g) = *cache {
+            g.clone()
+        } else {
+            let g = self
+                .compute_generator_matrix()
+                .expect("LDPC parity-check matrix is not full rank");
+            *cache = Some(g.clone());
+            g
+        }
+    }
+
+    fn is_systematic(&self) -> bool {
+        // LDPC codes are not naturally systematic unless specially constructed
+        // We'd need to analyze the generator matrix to determine this
+        // For now, return false conservatively
+        false
     }
 }
 
@@ -805,6 +931,173 @@ mod tests {
         for row in 0..4 {
             let weight = h.row_iter(row).count();
             assert_eq!(weight, 4, "Row {} should have weight 4", row);
+        }
+    }
+}
+
+#[cfg(test)]
+mod generator_matrix_access_tests {
+    use super::*;
+    use crate::traits::GeneratorMatrixAccess;
+
+    #[test]
+    fn test_ldpc_generator_matrix_dimensions() {
+        // Small Hamming(7,4) as LDPC
+        let edges = vec![
+            (0, 0),
+            (0, 1),
+            (0, 3),
+            (1, 0),
+            (1, 2),
+            (1, 4),
+            (2, 1),
+            (2, 2),
+            (2, 5),
+        ];
+        let code = LdpcCode::from_edges(3, 7, &edges);
+        let g = code.generator_matrix();
+        assert_eq!(g.rows(), 4); // k = n - m = 7 - 3
+        assert_eq!(g.cols(), 7);
+    }
+
+    #[test]
+    fn test_ldpc_generator_parity_orthogonality() {
+        // Small hand-constructed example with full-rank H
+        let edges = vec![(0, 0), (0, 1), (0, 2), (1, 1), (1, 2), (1, 3)];
+        let code = LdpcCode::from_edges(2, 4, &edges);
+        let g = code.generator_matrix();
+        let h = code.parity_check_matrix().to_dense();
+
+        // Verify G·H^T = 0
+        let h_t = h.transpose();
+        let product = &g * &h_t;
+
+        for i in 0..product.rows() {
+            for j in 0..product.cols() {
+                assert!(!product.get(i, j), "G·H^T must be zero at ({}, {})", i, j);
+            }
+        }
+    }
+
+    #[test]
+    fn test_ldpc_encoding_via_generator_produces_valid_codewords() {
+        let edges = vec![
+            (0, 0),
+            (0, 1),
+            (0, 3),
+            (1, 0),
+            (1, 2),
+            (1, 4),
+            (2, 1),
+            (2, 2),
+            (2, 5),
+        ];
+        let code = LdpcCode::from_edges(3, 7, &edges);
+        let g = code.generator_matrix();
+
+        // Each row of G should be a valid codeword
+        for i in 0..code.k() {
+            let mut row = BitVec::new();
+            for j in 0..code.n() {
+                row.push_bit(g.get(i, j));
+            }
+            assert!(
+                code.is_valid_codeword(&row),
+                "Row {} of G must be a valid codeword",
+                i
+            );
+        }
+    }
+
+    #[test]
+    fn test_ldpc_generator_cached() {
+        // Use a full-rank example
+        let edges = vec![
+            (0, 0),
+            (0, 1),
+            (0, 3),
+            (1, 0),
+            (1, 2),
+            (1, 4),
+            (2, 1),
+            (2, 2),
+            (2, 5),
+        ];
+        let code = LdpcCode::from_edges(3, 7, &edges);
+        let g1 = code.generator_matrix();
+        let g2 = code.generator_matrix();
+        assert_eq!(g1, g2);
+    }
+
+    #[test]
+    fn test_ldpc_small_identity_h() {
+        // Simple test with H = [I_2 | P]
+        // H = [1 0 | 1 1]
+        //     [0 1 | 1 0]
+        // Then G = [1 1 | 1 0]
+        //          [1 0 | 0 1]
+        let edges = vec![
+            (0, 0),
+            (0, 2),
+            (0, 3), // First check
+            (1, 1),
+            (1, 2), // Second check
+        ];
+        let code = LdpcCode::from_edges(2, 4, &edges);
+        let g = code.generator_matrix();
+
+        assert_eq!(g.rows(), 2); // k = 4 - 2 = 2
+        assert_eq!(g.cols(), 4);
+
+        // Verify it's a valid generator (all rows are codewords)
+        for i in 0..code.k() {
+            let mut row = BitVec::new();
+            for j in 0..code.n() {
+                row.push_bit(g.get(i, j));
+            }
+            assert!(code.is_valid_codeword(&row));
+        }
+    }
+
+    #[test]
+    fn test_ldpc_regular_3_6() {
+        // Regular (3,6) LDPC code - small version
+        let edges = vec![
+            // Each variable node connects to 3 checks
+            (0, 0),
+            (1, 0),
+            (2, 0), // v0
+            (0, 1),
+            (1, 1),
+            (3, 1), // v1
+            (0, 2),
+            (2, 2),
+            (3, 2), // v2
+            (1, 3),
+            (2, 3),
+            (3, 3), // v3
+            (0, 4),
+            (2, 4),
+            (3, 4), // v4
+            (1, 5),
+            (2, 5),
+            (3, 5), // v5
+        ];
+        let code = LdpcCode::from_edges(4, 6, &edges);
+        let g = code.generator_matrix();
+
+        assert_eq!(g.rows(), 2); // k = 6 - 4 = 2
+        assert_eq!(g.cols(), 6);
+
+        // Verify orthogonality
+        let h = code.parity_check_matrix().to_dense();
+        let h_t = h.transpose();
+        let product = &g * &h_t;
+
+        for i in 0..product.rows() {
+            for j in 0..product.cols() {
+                assert!(!product.get(i, j), "G·H^T must be zero");
+            }
         }
     }
 }

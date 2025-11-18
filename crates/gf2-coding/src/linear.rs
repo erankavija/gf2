@@ -309,6 +309,24 @@ impl LinearBlockCode {
     }
 }
 
+impl crate::traits::GeneratorMatrixAccess for LinearBlockCode {
+    fn k(&self) -> usize {
+        self.k
+    }
+
+    fn n(&self) -> usize {
+        self.n
+    }
+
+    fn generator_matrix(&self) -> BitMatrix {
+        self.g.clone()
+    }
+
+    fn is_systematic(&self) -> bool {
+        true // Hamming codes are always systematic
+    }
+}
+
 impl BlockEncoder for LinearBlockCode {
     fn k(&self) -> usize {
         self.k
@@ -1045,6 +1063,64 @@ mod proptests {
                     }
                 }
             }
+        }
+    }
+}
+
+#[cfg(test)]
+mod generator_matrix_access_tests {
+    use super::*;
+    use crate::traits::GeneratorMatrixAccess;
+
+    #[test]
+    fn test_linear_code_generator_matrix_dimensions() {
+        let code = LinearBlockCode::hamming(3);
+        let g = code.generator_matrix();
+        assert_eq!(g.rows(), code.k());
+        assert_eq!(g.cols(), code.n());
+    }
+
+    #[test]
+    fn test_linear_code_generator_equals_stored() {
+        let code = LinearBlockCode::hamming(3);
+        let g1 = code.generator();
+        let g2 = code.generator_matrix();
+        assert_eq!(g1, &g2);
+    }
+
+    #[test]
+    fn test_linear_code_is_systematic() {
+        let code = LinearBlockCode::hamming(3);
+        assert!(code.is_systematic());
+    }
+
+    #[test]
+    fn test_linear_code_generator_parity_orthogonality() {
+        let code = LinearBlockCode::hamming(3);
+        let g = code.generator_matrix();
+        let h = code.parity_check().unwrap();
+
+        // G·H^T = 0
+        let h_t = h.transpose();
+        let product = &g * &h_t;
+
+        // Verify all entries are zero
+        for i in 0..product.rows() {
+            for j in 0..product.cols() {
+                assert!(!product.get(i, j), "G·H^T must be zero at ({}, {})", i, j);
+            }
+        }
+    }
+
+    #[test]
+    fn test_linear_code_multiple_sizes() {
+        for r in 2..=5 {
+            let code = LinearBlockCode::hamming(r);
+            let g = code.generator_matrix();
+
+            assert_eq!(g.rows(), code.k());
+            assert_eq!(g.cols(), code.n());
+            assert!(code.is_systematic());
         }
     }
 }
