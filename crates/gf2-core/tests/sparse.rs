@@ -1,14 +1,14 @@
-use gf2_core::sparse::SparseMatrix;
+use gf2_core::sparse::SpBitMatrix;
 use gf2_core::{matrix::BitMatrix, BitVec};
 
 #[test]
 fn test_sparse_zeros_and_identity() {
-    let s0 = SparseMatrix::zeros(3, 4);
+    let s0 = SpBitMatrix::zeros(3, 4);
     assert_eq!(s0.rows(), 3);
     assert_eq!(s0.cols(), 4);
     assert_eq!(s0.nnz(), 0);
 
-    let si = SparseMatrix::identity(4);
+    let si = SpBitMatrix::identity(4);
     assert_eq!(si.rows(), 4);
     assert_eq!(si.cols(), 4);
     assert_eq!(si.nnz(), 4);
@@ -23,7 +23,7 @@ fn test_sparse_zeros_and_identity() {
 fn test_sparse_from_coo_dedup_xor() {
     // Two entries at same (r,c) cancel under XOR
     let coo = vec![(0, 1), (0, 1), (1, 2)];
-    let s = SparseMatrix::from_coo(3, 4, &coo);
+    let s = SpBitMatrix::from_coo(3, 4, &coo);
     assert_eq!(s.nnz(), 1);
     let d = s.to_dense();
     assert!(!d.get(0, 1));
@@ -37,7 +37,7 @@ fn test_sparse_from_dense_roundtrip() {
     m.set(0, 2, true);
     m.set(1, 1, true);
 
-    let s = SparseMatrix::from_dense(&m);
+    let s = SpBitMatrix::from_dense(&m);
     assert_eq!(s.nnz(), 3);
     let d = s.to_dense();
     assert_eq!(d, m);
@@ -51,7 +51,7 @@ fn test_sparse_matvec() {
     m.set(1, 0, true);
     m.set(1, 4, true);
     m.set(2, 2, true);
-    let s = SparseMatrix::from_dense(&m);
+    let s = SpBitMatrix::from_dense(&m);
 
     let mut x = BitVec::with_capacity(5);
     for b in [false, true, true, false, true] {

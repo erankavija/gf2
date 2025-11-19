@@ -1,4 +1,4 @@
-//! Example: Visualizing BitMatrix and SparseMatrix as PNG images
+//! Example: Visualizing BitMatrix and SpBitMatrix as PNG images
 //!
 //! Run with: cargo run --example visualize_matrix --features visualization
 
@@ -11,7 +11,7 @@ fn main() {
 #[cfg(feature = "visualization")]
 fn main() {
     use gf2_core::matrix::BitMatrix;
-    use gf2_core::sparse::{SparseMatrix, SparseMatrixDual};
+    use gf2_core::sparse::{SpBitMatrix, SpBitMatrixDual};
 
     // Example 1: Identity matrix (dense)
     println!("Creating 64×64 identity matrix (dense)...");
@@ -21,7 +21,7 @@ fn main() {
 
     // Example 2: Identity matrix (sparse)
     println!("Creating 64×64 identity matrix (sparse)...");
-    let id_sparse = SparseMatrix::identity(64);
+    let id_sparse = SpBitMatrix::identity(64);
     id_sparse
         .save_image("output_identity_64_sparse.png")
         .unwrap();
@@ -37,7 +37,7 @@ fn main() {
         println!("Saved: output_sparse_100.png");
 
         println!("Creating 100×100 random sparse matrix (from sparse format)...");
-        let s = SparseMatrix::from_dense(&m);
+        let s = SpBitMatrix::from_dense(&m);
         s.save_image("output_sparse_100_from_sparse.png").unwrap();
         println!("Saved: output_sparse_100_from_sparse.png");
     }
@@ -62,13 +62,13 @@ fn main() {
             }
         }
     }
-    let checkerboard = SparseMatrix::from_coo(32, 32, &coo);
+    let checkerboard = SpBitMatrix::from_coo(32, 32, &coo);
     checkerboard
         .save_image("output_checkerboard_sparse.png")
         .unwrap();
     println!("Saved: output_checkerboard_sparse.png");
 
-    // Example 6: SparseMatrixDual
+    // Example 6: SpBitMatrixDual
     println!("Creating 24×24 border pattern (sparse dual)...");
     let mut border_coo = Vec::new();
     for i in 0..24 {
@@ -77,7 +77,7 @@ fn main() {
         border_coo.push((i, 0)); // left
         border_coo.push((i, 23)); // right
     }
-    let border = SparseMatrixDual::from_coo(24, 24, &border_coo);
+    let border = SpBitMatrixDual::from_coo(24, 24, &border_coo);
     border.save_image("output_border_dual.png").unwrap();
     println!("Saved: output_border_dual.png");
 

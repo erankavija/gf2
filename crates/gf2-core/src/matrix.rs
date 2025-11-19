@@ -515,7 +515,7 @@ impl BitMatrix {
         result
     }
 
-    /// Converts this dense matrix to a CSR SparseMatrix.
+    /// Converts this dense matrix to a CSR SpBitMatrix.
     ///
     /// This scans all bits and records set columns per row. Suitable for low-density matrices.
     ///
@@ -529,8 +529,8 @@ impl BitMatrix {
     /// assert_eq!(s.cols(), 3);
     /// assert_eq!(s.nnz(), 1);
     /// ```
-    pub fn to_sparse(&self) -> crate::sparse::SparseMatrix {
-        crate::sparse::SparseMatrix::from_dense(self)
+    pub fn to_sparse(&self) -> crate::sparse::SpBitMatrix {
+        crate::sparse::SpBitMatrix::from_dense(self)
     }
 
     /// Masks padding bits in each row to zero.

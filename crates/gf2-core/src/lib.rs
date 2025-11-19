@@ -7,7 +7,8 @@
 //! ## Core Types
 //!
 //! - [`BitVec`]: An owning, growable bit string backed by `Vec<u64>`.
-//! - [`matrix::BitMatrix`]: A row-major, bit-packed boolean matrix for GF(2) linear algebra.
+//! - [`BitMatrix`]: A row-major, bit-packed boolean matrix for GF(2) linear algebra.
+//! - [`SpBitMatrix`]: A sparse matrix in CSR format for low-density matrices.
 //!
 //! ## Design Invariants
 //!
@@ -46,6 +47,7 @@ pub mod sparse;
 pub use bitslice::{BitSlice, BitSliceMut};
 pub use bitvec::BitVec;
 pub use matrix::BitMatrix;
+pub use sparse::SpBitMatrix;
 
 // Optional SIMD accessor: compiled only when the "simd" feature is enabled.
 // This module contains no unsafe code; unsafe is isolated in the separate

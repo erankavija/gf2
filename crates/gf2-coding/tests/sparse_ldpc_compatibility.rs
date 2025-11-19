@@ -1,6 +1,6 @@
 //! Test that gf2-core sparse matrix is suitable for LDPC code operations.
 
-use gf2_core::sparse::SparseMatrix;
+use gf2_core::sparse::SpBitMatrix;
 use gf2_core::BitVec;
 
 #[test]
@@ -45,7 +45,7 @@ fn test_ldpc_regular_code_structure() {
         (3, 7),
     ];
 
-    let h = SparseMatrix::from_coo(4, 8, &coo);
+    let h = SpBitMatrix::from_coo(4, 8, &coo);
 
     // Verify structure
     assert_eq!(h.rows(), 4); // Check nodes
@@ -81,7 +81,7 @@ fn test_ldpc_syndrome_computation() {
         (2, 5), // Check 2: c0 + c4 + c5 = 0
     ];
 
-    let h = SparseMatrix::from_coo(3, 6, &coo);
+    let h = SpBitMatrix::from_coo(3, 6, &coo);
 
     // Valid codeword: [0,0,0,0,0,0] should give zero syndrome
     let mut valid_codeword = BitVec::new();
@@ -135,7 +135,7 @@ fn test_ldpc_neighbor_iteration_performance() {
         coo.push((check3, col));
     }
 
-    let h = SparseMatrix::from_coo(500, 1000, &coo);
+    let h = SpBitMatrix::from_coo(500, 1000, &coo);
 
     // Should be very sparse
     let density = h.nnz() as f64 / (500.0 * 1000.0);
@@ -171,7 +171,7 @@ fn test_sparse_row_and_col_access() {
     // Small example to test both row and column iteration
     let coo = vec![(0, 1), (0, 3), (1, 2), (1, 3), (2, 0), (2, 1)];
 
-    let h = SparseMatrix::from_coo(3, 4, &coo);
+    let h = SpBitMatrix::from_coo(3, 4, &coo);
 
     // Test row iteration (check nodes in LDPC)
     let row0: Vec<_> = h.row_iter(0).collect();
