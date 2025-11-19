@@ -1,7 +1,7 @@
 #![cfg(feature = "visualization")]
 
 use gf2_core::matrix::BitMatrix;
-use gf2_core::sparse::SparseMatrix;
+use gf2_core::sparse::SpBitMatrix;
 use image::ImageReader;
 use std::fs;
 
@@ -14,7 +14,7 @@ fn test_sparse_and_dense_produce_identical_images() {
     m.set(4, 1, true);
     m.set(4, 5, true);
 
-    let s = SparseMatrix::from_dense(&m);
+    let s = SpBitMatrix::from_dense(&m);
 
     let dense_path = "test_dense_image.png";
     let sparse_path = "test_sparse_image.png";

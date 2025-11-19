@@ -46,7 +46,7 @@
 
 use crate::llr::Llr;
 use crate::traits::{DecoderResult, IterativeSoftDecoder, SoftDecoder};
-use gf2_core::sparse::SparseMatrixDual;
+use gf2_core::sparse::SpBitMatrixDual;
 use gf2_core::BitVec;
 
 /// An LDPC code defined by its sparse parity-check matrix.
@@ -59,7 +59,7 @@ use gf2_core::BitVec;
 #[derive(Debug, Clone)]
 pub struct LdpcCode {
     /// Sparse parity-check matrix in dual representation
-    h: SparseMatrixDual,
+    h: SpBitMatrixDual,
     /// Number of variable nodes (codeword length)
     n: usize,
     /// Number of check nodes (parity checks)
@@ -94,7 +94,7 @@ impl LdpcCode {
     /// assert_eq!(code.m(), 3);
     /// ```
     pub fn from_edges(m: usize, n: usize, edges: &[(usize, usize)]) -> Self {
-        let h = SparseMatrixDual::from_coo(m, n, edges);
+        let h = SpBitMatrixDual::from_coo(m, n, edges);
         Self {
             h,
             n,
@@ -138,7 +138,7 @@ impl LdpcCode {
     }
 
     /// Returns the parity-check matrix.
-    pub(crate) fn parity_check_matrix(&self) -> &SparseMatrixDual {
+    pub(crate) fn parity_check_matrix(&self) -> &SpBitMatrixDual {
         &self.h
     }
 

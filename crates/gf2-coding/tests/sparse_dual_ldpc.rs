@@ -1,6 +1,6 @@
-//! Test SparseMatrixDual for LDPC belief propagation efficiency.
+//! Test SpBitMatrixDual for LDPC belief propagation efficiency.
 
-use gf2_core::sparse::SparseMatrixDual;
+use gf2_core::sparse::SpBitMatrixDual;
 use gf2_core::BitVec;
 
 #[test]
@@ -34,7 +34,7 @@ fn test_dual_ldpc_regular_code() {
         (3, 7), // Column 7
     ];
 
-    let h = SparseMatrixDual::from_coo(4, 8, &coo);
+    let h = SpBitMatrixDual::from_coo(4, 8, &coo);
 
     // Verify both access patterns work efficiently
     assert_eq!(h.rows(), 4);
@@ -69,7 +69,7 @@ fn test_dual_bidirectional_neighbor_access() {
         (2, 5), // Check 2 neighbors: vars 0,3,5
     ];
 
-    let h = SparseMatrixDual::from_coo(3, 6, &coo);
+    let h = SpBitMatrixDual::from_coo(3, 6, &coo);
 
     // Check-to-variable (row iteration)
     let check0_neighbors: Vec<_> = h.row_iter(0).collect();
@@ -107,7 +107,7 @@ fn test_dual_syndrome_and_transpose() {
         (2, 5), // Check 2: x0 + x4 + x5 = 0
     ];
 
-    let h = SparseMatrixDual::from_coo(3, 6, &coo);
+    let h = SpBitMatrixDual::from_coo(3, 6, &coo);
 
     // Forward: syndrome = H × codeword
     let mut codeword = BitVec::new();
@@ -167,7 +167,7 @@ fn test_dual_ldpc_message_passing_pattern() {
         }
     }
 
-    let h = SparseMatrixDual::from_coo(n_checks, n_vars, &coo);
+    let h = SpBitMatrixDual::from_coo(n_checks, n_vars, &coo);
 
     // Simulate check-to-variable sweep (row-wise)
     let mut check_to_var_msgs = 0;
@@ -210,7 +210,7 @@ fn test_dual_memory_efficiency() {
         coo.push((check, var));
     }
 
-    let h = SparseMatrixDual::from_coo(n_checks, n_vars, &coo);
+    let h = SpBitMatrixDual::from_coo(n_checks, n_vars, &coo);
 
     let density = h.nnz() as f64 / (n_checks * n_vars) as f64;
     assert!(density < 0.01, "Should maintain low density");

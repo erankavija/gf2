@@ -1,9 +1,9 @@
-use gf2_core::sparse::{SparseMatrix, SparseMatrixDual};
+use gf2_core::sparse::{SpBitMatrix, SpBitMatrixDual};
 
 #[test]
 fn test_sparse_matrix_display_basic() {
     let coo = vec![(0, 0), (0, 3), (1, 1), (2, 2)];
-    let s = SparseMatrix::from_coo(3, 4, &coo);
+    let s = SpBitMatrix::from_coo(3, 4, &coo);
 
     let output = format!("{}", s);
     let lines: Vec<&str> = output.lines().collect();
@@ -20,28 +20,28 @@ fn test_sparse_matrix_display_basic() {
 
 #[test]
 fn test_sparse_matrix_display_empty() {
-    let s = SparseMatrix::zeros(0, 0);
+    let s = SpBitMatrix::zeros(0, 0);
     let output = format!("{}", s);
     assert_eq!(output, "[ ]");
 }
 
 #[test]
 fn test_sparse_matrix_display_zero_rows() {
-    let s = SparseMatrix::zeros(0, 5);
+    let s = SpBitMatrix::zeros(0, 5);
     let output = format!("{}", s);
     assert_eq!(output, "[ ]");
 }
 
 #[test]
 fn test_sparse_matrix_display_zero_cols() {
-    let s = SparseMatrix::zeros(3, 0);
+    let s = SpBitMatrix::zeros(3, 0);
     let output = format!("{}", s);
     assert_eq!(output, "[ ]");
 }
 
 #[test]
 fn test_sparse_matrix_display_identity() {
-    let s = SparseMatrix::identity(3);
+    let s = SpBitMatrix::identity(3);
     let output = format!("{}", s);
     let lines: Vec<&str> = output.lines().collect();
 
@@ -52,7 +52,7 @@ fn test_sparse_matrix_display_identity() {
 
 #[test]
 fn test_sparse_matrix_display_all_zeros() {
-    let s = SparseMatrix::zeros(2, 3);
+    let s = SpBitMatrix::zeros(2, 3);
     let output = format!("{}", s);
     let lines: Vec<&str> = output.lines().collect();
 
@@ -63,7 +63,7 @@ fn test_sparse_matrix_display_all_zeros() {
 #[test]
 fn test_sparse_matrix_dual_display() {
     let coo = vec![(0, 0), (0, 3), (1, 1), (2, 2)];
-    let s = SparseMatrixDual::from_coo(3, 4, &coo);
+    let s = SpBitMatrixDual::from_coo(3, 4, &coo);
 
     let output = format!("{}", s);
     let lines: Vec<&str> = output.lines().collect();

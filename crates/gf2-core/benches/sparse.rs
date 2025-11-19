@@ -1,6 +1,6 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use gf2_core::matrix::BitMatrix;
-use gf2_core::sparse::{SparseMatrix, SparseMatrixDual};
+use gf2_core::sparse::{SpBitMatrix, SpBitMatrixDual};
 use gf2_core::BitVec;
 use rand::SeedableRng;
 
@@ -11,7 +11,7 @@ fn bench_sparse_matvec(c: &mut Criterion) {
         for &size in &[100, 500, 1000] {
             let mut rng = rand::rngs::StdRng::seed_from_u64(42);
             let m = BitMatrix::random_with_probability(size, size, density, &mut rng);
-            let s = SparseMatrix::from_dense(&m);
+            let s = SpBitMatrix::from_dense(&m);
             let x = BitVec::random(size, &mut rng);
 
             group.bench_with_input(
@@ -31,7 +31,7 @@ fn bench_dense_vs_sparse(c: &mut Criterion) {
     let density = 0.01;
     let mut rng = rand::rngs::StdRng::seed_from_u64(42);
     let m = BitMatrix::random_with_probability(size, size, density, &mut rng);
-    let s = SparseMatrix::from_dense(&m);
+    let s = SpBitMatrix::from_dense(&m);
     let x = BitVec::random(size, &mut rng);
 
     group.bench_function("sparse_matvec", |b| b.iter(|| black_box(s.matvec(&x))));
@@ -63,7 +63,7 @@ fn bench_sparse_transpose(c: &mut Criterion) {
         for &size in &[100, 500, 1000] {
             let mut rng = rand::rngs::StdRng::seed_from_u64(42);
             let m = BitMatrix::random_with_probability(size, size, density, &mut rng);
-            let s = SparseMatrix::from_dense(&m);
+            let s = SpBitMatrix::from_dense(&m);
 
             group.bench_with_input(
                 BenchmarkId::new(format!("density_{:.2}", density), size),
@@ -83,8 +83,8 @@ fn bench_dual_col_iter_vs_transpose(c: &mut Criterion) {
     let mut rng = rand::rngs::StdRng::seed_from_u64(42);
     let m = BitMatrix::random_with_probability(size, size, density, &mut rng);
 
-    let single = SparseMatrix::from_dense(&m);
-    let dual = SparseMatrixDual::from_dense(&m);
+    let single = SpBitMatrix::from_dense(&m);
+    let dual = SpBitMatrixDual::from_dense(&m);
 
     // Single CSR: transpose on every column access
     group.bench_function("single_csr_transpose_per_col", |b| {
@@ -123,7 +123,7 @@ fn bench_bidirectional_sweep(c: &mut Criterion) {
     let mut rng = rand::rngs::StdRng::seed_from_u64(42);
     let m = BitMatrix::random_with_probability(size, size, density, &mut rng);
 
-    let dual = SparseMatrixDual::from_dense(&m);
+    let dual = SpBitMatrixDual::from_dense(&m);
 
     group.bench_function("alternating_row_col_sweeps", |b| {
         b.iter(|| {
@@ -155,7 +155,7 @@ fn bench_dual_matvec_transpose(c: &mut Criterion) {
     let mut rng = rand::rngs::StdRng::seed_from_u64(42);
     let m = BitMatrix::random_with_probability(size, size, density, &mut rng);
 
-    let dual = SparseMatrixDual::from_dense(&m);
+    let dual = SpBitMatrixDual::from_dense(&m);
     let x = BitVec::random(size, &mut rng);
 
     group.bench_function("matvec", |b| b.iter(|| black_box(dual.matvec(&x))));

@@ -13,12 +13,12 @@
 //! # Examples
 //!
 //! ```
-//! use gf2_core::sparse::SparseMatrix;
+//! use gf2_core::sparse::SpBitMatrix;
 //! use gf2_core::BitVec;
 //!
 //! // Build from COO (coordinate) format
 //! let coo = vec![(0, 1), (0, 3), (1, 2)];
-//! let s = SparseMatrix::from_coo(2, 4, &coo);
+//! let s = SpBitMatrix::from_coo(2, 4, &coo);
 //! assert_eq!(s.nnz(), 3);
 //!
 //! // Matrix-vector multiply: x = [0, 1, 0, 1]
@@ -52,9 +52,9 @@ use std::fmt;
 /// # Examples
 ///
 /// ```
-/// use gf2_core::sparse::SparseMatrix;
+/// use gf2_core::sparse::SpBitMatrix;
 ///
-/// let s = SparseMatrix::identity(3);
+/// let s = SpBitMatrix::identity(3);
 /// assert_eq!(s.rows(), 3);
 /// assert_eq!(s.cols(), 3);
 /// assert_eq!(s.nnz(), 3);
@@ -64,22 +64,22 @@ use std::fmt;
 /// assert_eq!(cols, vec![1]);
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct SparseMatrix {
+pub struct SpBitMatrix {
     rows: usize,
     cols: usize,
     indptr: Vec<usize>,
     indices: Vec<usize>,
 }
 
-impl SparseMatrix {
+impl SpBitMatrix {
     /// Creates an all-zero sparse matrix with given shape.
     ///
     /// # Examples
     ///
     /// ```
-    /// use gf2_core::sparse::SparseMatrix;
+    /// use gf2_core::sparse::SpBitMatrix;
     ///
-    /// let s = SparseMatrix::zeros(10, 20);
+    /// let s = SpBitMatrix::zeros(10, 20);
     /// assert_eq!(s.rows(), 10);
     /// assert_eq!(s.cols(), 20);
     /// assert_eq!(s.nnz(), 0);
@@ -102,10 +102,10 @@ impl SparseMatrix {
     /// # Examples
     ///
     /// ```
-    /// use gf2_core::sparse::SparseMatrix;
+    /// use gf2_core::sparse::SpBitMatrix;
     ///
     /// let coo = vec![(0, 2), (0, 5), (1, 3)];
-    /// let s = SparseMatrix::from_coo(2, 6, &coo);
+    /// let s = SpBitMatrix::from_coo(2, 6, &coo);
     ///
     /// let r0: Vec<_> = s.row_iter(0).collect();
     /// assert_eq!(r0, vec![2, 5]);
@@ -325,7 +325,7 @@ impl SparseMatrix {
 /// # Examples
 ///
 /// ```
-/// use gf2_core::sparse::SparseMatrixDual;
+/// use gf2_core::sparse::SpBitMatrixDual;
 /// use gf2_core::matrix::BitMatrix;
 ///
 /// let mut m = BitMatrix::zeros(3, 4);
@@ -333,7 +333,7 @@ impl SparseMatrix {
 /// m.set(1, 2, true);
 /// m.set(2, 0, true);
 ///
-/// let dual = SparseMatrixDual::from_dense(&m);
+/// let dual = SpBitMatrixDual::from_dense(&m);
 ///
 /// // Fast row iteration (no transpose)
 /// let row_cols: Vec<_> = dual.row_iter(0).collect();
@@ -344,24 +344,24 @@ impl SparseMatrix {
 /// assert_eq!(col_rows, vec![0]);
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct SparseMatrixDual {
-    csr: SparseMatrix,
-    csc: SparseMatrix,
+pub struct SpBitMatrixDual {
+    csr: SpBitMatrix,
+    csc: SpBitMatrix,
 }
 
-impl SparseMatrixDual {
+impl SpBitMatrixDual {
     /// Creates a dual representation from a dense BitMatrix.
     ///
     /// Constructs both CSR and CSC formats in one pass.
     pub fn from_dense(m: &BitMatrix) -> Self {
-        let csr = SparseMatrix::from_dense(m);
+        let csr = SpBitMatrix::from_dense(m);
         let csc = csr.transpose();
         Self { csr, csc }
     }
 
     /// Creates a dual representation from COO coordinates.
     pub fn from_coo(rows: usize, cols: usize, entries: &[(usize, usize)]) -> Self {
-        let csr = SparseMatrix::from_coo(rows, cols, entries);
+        let csr = SpBitMatrix::from_coo(rows, cols, entries);
         let csc = csr.transpose();
         Self { csr, csc }
     }
@@ -443,16 +443,16 @@ impl SparseMatrixDual {
     }
 }
 
-impl fmt::Display for SparseMatrix {
-    /// Formats the SparseMatrix in nalgebra-like style.
+impl fmt::Display for SpBitMatrix {
+    /// Formats the SpBitMatrix in nalgebra-like style.
     ///
     /// # Examples
     ///
     /// ```
-    /// use gf2_core::sparse::SparseMatrix;
+    /// use gf2_core::sparse::SpBitMatrix;
     ///
     /// let coo = vec![(0, 0), (0, 3), (1, 1), (2, 2)];
-    /// let s = SparseMatrix::from_coo(3, 4, &coo);
+    /// let s = SpBitMatrix::from_coo(3, 4, &coo);
     /// println!("{}", s);
     /// // Displays:
     /// //   ┌       ┐
@@ -490,16 +490,16 @@ impl fmt::Display for SparseMatrix {
     }
 }
 
-impl fmt::Display for SparseMatrixDual {
-    /// Formats the SparseMatrixDual in nalgebra-like style.
+impl fmt::Display for SpBitMatrixDual {
+    /// Formats the SpBitMatrixDual in nalgebra-like style.
     ///
     /// # Examples
     ///
     /// ```
-    /// use gf2_core::sparse::SparseMatrixDual;
+    /// use gf2_core::sparse::SpBitMatrixDual;
     ///
     /// let coo = vec![(0, 0), (0, 3), (1, 1), (2, 2)];
-    /// let s = SparseMatrixDual::from_coo(3, 4, &coo);
+    /// let s = SpBitMatrixDual::from_coo(3, 4, &coo);
     /// println!("{}", s);
     /// // Displays:
     /// //   ┌       ┐
@@ -514,7 +514,7 @@ impl fmt::Display for SparseMatrixDual {
 }
 
 #[cfg(feature = "visualization")]
-impl SparseMatrix {
+impl SpBitMatrix {
     /// Saves the sparse matrix as a PNG image.
     ///
     /// Each bit is represented as a single pixel:
@@ -528,9 +528,9 @@ impl SparseMatrix {
     /// # Examples
     ///
     /// ```no_run
-    /// use gf2_core::sparse::SparseMatrix;
+    /// use gf2_core::sparse::SpBitMatrix;
     ///
-    /// let s = SparseMatrix::identity(100);
+    /// let s = SpBitMatrix::identity(100);
     /// s.save_image("identity.png").unwrap();
     /// ```
     ///
@@ -570,7 +570,7 @@ impl SparseMatrix {
 }
 
 #[cfg(feature = "visualization")]
-impl SparseMatrixDual {
+impl SpBitMatrixDual {
     /// Saves the sparse matrix as a PNG image.
     ///
     /// Each bit is represented as a single pixel:
@@ -584,10 +584,10 @@ impl SparseMatrixDual {
     /// # Examples
     ///
     /// ```no_run
-    /// use gf2_core::sparse::SparseMatrixDual;
+    /// use gf2_core::sparse::SpBitMatrixDual;
     ///
     /// let coo = vec![(0, 1), (1, 2)];
-    /// let sd = SparseMatrixDual::from_coo(3, 3, &coo);
+    /// let sd = SpBitMatrixDual::from_coo(3, 3, &coo);
     /// sd.save_image("sparse_dual.png").unwrap();
     /// ```
     ///

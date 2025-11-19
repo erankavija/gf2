@@ -1,5 +1,5 @@
 use gf2_core::matrix::BitMatrix;
-use gf2_core::sparse::{SparseMatrix, SparseMatrixDual};
+use gf2_core::sparse::{SpBitMatrix, SpBitMatrixDual};
 use gf2_core::BitVec;
 
 #[test]
@@ -11,7 +11,7 @@ fn test_dual_from_dense_roundtrip() {
     m.set(2, 0, true);
     m.set(2, 4, true);
 
-    let dual = SparseMatrixDual::from_dense(&m);
+    let dual = SpBitMatrixDual::from_dense(&m);
     assert_eq!(dual.rows(), 3);
     assert_eq!(dual.cols(), 5);
     assert_eq!(dual.nnz(), 5);
@@ -23,8 +23,8 @@ fn test_dual_from_dense_roundtrip() {
 #[test]
 fn test_dual_row_iter_matches_csr() {
     let coo = vec![(0, 2), (0, 4), (1, 1), (2, 0), (2, 3)];
-    let dual = SparseMatrixDual::from_coo(3, 5, &coo);
-    let single = SparseMatrix::from_coo(3, 5, &coo);
+    let dual = SpBitMatrixDual::from_coo(3, 5, &coo);
+    let single = SpBitMatrix::from_coo(3, 5, &coo);
 
     for r in 0..3 {
         let dual_cols: Vec<_> = dual.row_iter(r).collect();
@@ -40,7 +40,7 @@ fn test_dual_col_iter_no_transpose() {
     m.set(2, 1, true);
     m.set(3, 2, true);
 
-    let dual = SparseMatrixDual::from_dense(&m);
+    let dual = SpBitMatrixDual::from_dense(&m);
 
     // Column 1 has rows [0, 2]
     let col1_rows: Vec<_> = dual.col_iter(1).collect();
@@ -58,8 +58,8 @@ fn test_dual_col_iter_no_transpose() {
 #[test]
 fn test_dual_matvec_matches_single() {
     let coo = vec![(0, 1), (0, 3), (1, 0), (1, 4), (2, 2)];
-    let dual = SparseMatrixDual::from_coo(3, 5, &coo);
-    let single = SparseMatrix::from_coo(3, 5, &coo);
+    let dual = SpBitMatrixDual::from_coo(3, 5, &coo);
+    let single = SpBitMatrix::from_coo(3, 5, &coo);
 
     let mut x = BitVec::new();
     for b in [false, true, true, false, true] {
@@ -80,7 +80,7 @@ fn test_dual_matvec_transpose() {
     m.set(1, 4, true);
     m.set(2, 2, true);
 
-    let dual = SparseMatrixDual::from_dense(&m);
+    let dual = SpBitMatrixDual::from_dense(&m);
 
     let mut x = BitVec::new();
     for _ in 0..3 {
@@ -92,7 +92,7 @@ fn test_dual_matvec_transpose() {
 
     // Check against manual transpose
     let mt = m.transpose();
-    let single_t = SparseMatrix::from_dense(&mt);
+    let single_t = SpBitMatrix::from_dense(&mt);
     let y_expected = single_t.matvec(&x);
     assert_eq!(y, y_expected);
 }
@@ -106,7 +106,7 @@ fn test_dual_bidirectional_sweep() {
     m.set(2, 3, true);
     m.set(3, 4, true);
 
-    let dual = SparseMatrixDual::from_dense(&m);
+    let dual = SpBitMatrixDual::from_dense(&m);
 
     // Row sweep
     let mut row_sum = 0;

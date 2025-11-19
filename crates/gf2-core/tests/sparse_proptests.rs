@@ -1,5 +1,5 @@
 use gf2_core::matrix::BitMatrix;
-use gf2_core::sparse::{SparseMatrix, SparseMatrixDual};
+use gf2_core::sparse::{SpBitMatrix, SpBitMatrixDual};
 use gf2_core::BitVec;
 use proptest::prelude::*;
 use rand::SeedableRng;
@@ -17,7 +17,7 @@ proptest! {
         let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
         let m = BitMatrix::random_with_probability(rows, cols, p, &mut rng);
 
-        let s = SparseMatrix::from_dense(&m);
+        let s = SpBitMatrix::from_dense(&m);
         let d = s.to_dense();
         prop_assert_eq!(d, m);
     }
@@ -32,7 +32,7 @@ proptest! {
         let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
         let m = BitMatrix::random_with_probability(rows, cols, p, &mut rng);
 
-        let dual = SparseMatrixDual::from_dense(&m);
+        let dual = SpBitMatrixDual::from_dense(&m);
         let d = dual.to_dense();
         prop_assert_eq!(d, m);
     }
@@ -47,8 +47,8 @@ proptest! {
         let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
         let m = BitMatrix::random_with_probability(rows, cols, p, &mut rng);
 
-        let dual = SparseMatrixDual::from_dense(&m);
-        let single = SparseMatrix::from_dense(&m);
+        let dual = SpBitMatrixDual::from_dense(&m);
+        let single = SpBitMatrix::from_dense(&m);
 
         // For each column, dual.col_iter should match single.col_iter (via transpose)
         for c in 0..cols {
@@ -69,12 +69,12 @@ proptest! {
         let m = BitMatrix::random_with_probability(rows, cols, p, &mut rng);
         let x = BitVec::random(rows, &mut rng);
 
-        let dual = SparseMatrixDual::from_dense(&m);
+        let dual = SpBitMatrixDual::from_dense(&m);
         let y_dual = dual.matvec_transpose(&x);
 
         // Compare with dense transpose
         let mt = m.transpose();
-        let st = SparseMatrix::from_dense(&mt);
+        let st = SpBitMatrix::from_dense(&mt);
         let y_expected = st.matvec(&x);
 
         prop_assert_eq!(y_dual, y_expected);
