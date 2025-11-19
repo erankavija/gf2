@@ -221,24 +221,34 @@ Refer to `crates/gf2-coding/ROADMAP.md` for higher-level coding theory phases.
 
 ---
 
-## 📝 Potential API Additions
+## ✅ Phase 9: BitVec Conversion Helpers (2025-11-19) **COMPLETE**
 
-**From gf2-coding BCH Implementation** (2025-11-18):
+**Priority**: HIGH (eliminates code duplication in gf2-coding)  
+**Effort**: 2 hours  
+**Status**: Complete
 
-During BCH generator matrix implementation, reusable helper methods were identified that could belong in core:
+**Goal**: Add convenience methods for BitVec ↔ Gf2mPoly and BitMatrix conversions
 
-1. **`Gf2mPoly::from_bitvec(bits: &BitVec, field: &Gf2mField) -> Self`**
-   - Converts BitVec to polynomial (binary coefficients → field elements)
-   - Currently duplicated 3x in BCH code
-   - See: `gf2-coding/docs/HELPERS_FOR_GF2_CORE.md`
+**Implementation:**
 
-2. **`Gf2mPoly::to_bitvec(&self, len: usize) -> BitVec`**
-   - Converts polynomial to BitVec (extract binary coefficients)
-   - Currently duplicated 2x in BCH code
-   - Natural companion to `from_bitvec()`
+#### Gf2mPoly Conversions ✅
+- ✅ `Gf2mPoly::from_bitvec(bits: &BitVec, field: &Gf2mField)` - BitVec to polynomial
+- ✅ `Gf2mPoly::to_bitvec(len: usize)` - Polynomial to BitVec (fixed length)
+- ✅ `Gf2mPoly::to_bitvec_minimal()` - Polynomial to BitVec (minimal length)
 
-3. **`BitMatrix::row_as_bitvec(&self, row: usize) -> BitVec`** (check if exists)
-   - Extract matrix row as BitVec
-   - Common operation in linear algebra
+#### BitMatrix Conversions ✅
+- ✅ `BitMatrix::row_as_bitvec(row: usize)` - Extract row as BitVec
+- ✅ `BitMatrix::col_as_bitvec(col: usize)` - Extract column as BitVec
 
-See `../gf2-coding/docs/HELPERS_FOR_GF2_CORE.md` for detailed specifications and usage examples.
+**Testing:** ✅
+- ✅ 10 unit tests for Gf2mPoly conversions
+- ✅ 10 unit tests for BitMatrix extractions
+- ✅ 3 property-based tests for round-trips and invariants
+- ✅ All 218 tests passing
+- ✅ Zero clippy warnings
+
+**Benefits:**
+- Eliminates 5 duplicated implementations in gf2-coding BCH code
+- Natural, discoverable API for coding theory applications
+- Comprehensive test coverage ensures correctness
+- Ready for use in BCH and LDPC implementations
