@@ -106,7 +106,7 @@ pub struct BchCode {
     generator: Gf2mPoly,      // Generator polynomial g(x)
     designed_distance: usize, // δ = 2t + 1
     #[allow(clippy::type_complexity)]
-    cached_generator: std::sync::Arc<std::sync::Mutex<Option<gf2_core::matrix::BitMatrix>>>,
+    cached_generator: std::sync::Arc<std::sync::Mutex<Option<gf2_core::BitMatrix>>>,
 }
 
 impl BchCode {
@@ -301,10 +301,10 @@ impl BchCode {
     /// row i of G is the encoding of m_i.
     ///
     /// This is expensive for large codes and is cached after first computation.
-    fn compute_generator_matrix(&self) -> gf2_core::matrix::BitMatrix {
+    fn compute_generator_matrix(&self) -> gf2_core::BitMatrix {
         use gf2_core::BitVec;
 
-        let mut g = gf2_core::matrix::BitMatrix::zeros(self.k, self.n);
+        let mut g = gf2_core::BitMatrix::zeros(self.k, self.n);
 
         for i in 0..self.k {
             // Create basis vector message
@@ -374,7 +374,7 @@ impl crate::traits::GeneratorMatrixAccess for BchCode {
         self.n
     }
 
-    fn generator_matrix(&self) -> gf2_core::matrix::BitMatrix {
+    fn generator_matrix(&self) -> gf2_core::BitMatrix {
         let mut cache = self.cached_generator.lock().unwrap();
         if let Some(ref g) = *cache {
             g.clone()
@@ -778,7 +778,7 @@ mod tests {
 mod generator_matrix_access_tests {
     use super::*;
     use crate::traits::{BlockEncoder, GeneratorMatrixAccess};
-    use gf2_core::matrix::BitMatrix;
+    use gf2_core::BitMatrix;
 
     #[test]
     fn test_bch_generator_matrix_dimensions() {

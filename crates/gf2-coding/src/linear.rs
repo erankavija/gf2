@@ -4,7 +4,7 @@
 //! and syndrome-based decoding.
 
 use crate::traits::{BlockEncoder, HardDecisionDecoder};
-use gf2_core::matrix::BitMatrix;
+use gf2_core::BitMatrix;
 use gf2_core::BitVec;
 use std::collections::HashMap;
 

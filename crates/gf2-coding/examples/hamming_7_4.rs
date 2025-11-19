@@ -34,7 +34,7 @@
 //!   └             ┘
 //! ```
 
-use gf2_core::matrix::BitMatrix;
+use gf2_core::BitMatrix;
 use gf2_core::BitVec;
 use rand::Rng;
 

@@ -654,6 +654,61 @@ impl Mul<&BitMatrix> for &BitMatrix {
     }
 }
 
+#[cfg(feature = "visualization")]
+impl BitMatrix {
+    /// Saves the matrix as a PNG image.
+    ///
+    /// Each bit is represented as a single pixel:
+    /// - Unset bits (0) → black (0, 0, 0)
+    /// - Set bits (1) → white (255, 255, 255)
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - Output file path (e.g., "matrix.png")
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_core::matrix::BitMatrix;
+    ///
+    /// let m = BitMatrix::identity(100);
+    /// m.save_image("identity.png").unwrap();
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// - File cannot be created
+    /// - PNG encoding fails
+    ///
+    /// # Note
+    ///
+    /// To modify colors, edit the hard-coded `ZERO_COLOR` and `ONE_COLOR` constants
+    /// in the implementation.
+    pub fn save_image(
+        &self,
+        path: impl AsRef<std::path::Path>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        use image::{ImageBuffer, Rgb};
+
+        const ZERO_COLOR: [u8; 3] = [0, 0, 0]; // black
+        const ONE_COLOR: [u8; 3] = [255, 255, 255]; // white
+
+        let mut img = ImageBuffer::new(self.cols as u32, self.rows as u32);
+
+        for row in 0..self.rows {
+            for col in 0..self.cols {
+                let bit = self.get(row, col);
+                let color = if bit { ONE_COLOR } else { ZERO_COLOR };
+                img.put_pixel(col as u32, row as u32, Rgb(color));
+            }
+        }
+
+        img.save(path)?;
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -760,60 +815,5 @@ mod tests {
         assert!(c.get(0, 1));
         assert!(c.get(1, 0));
         assert!(c.get(1, 1));
-    }
-}
-
-#[cfg(feature = "visualization")]
-impl BitMatrix {
-    /// Saves the matrix as a PNG image.
-    ///
-    /// Each bit is represented as a single pixel:
-    /// - Unset bits (0) → black (0, 0, 0)
-    /// - Set bits (1) → white (255, 255, 255)
-    ///
-    /// # Arguments
-    ///
-    /// * `path` - Output file path (e.g., "matrix.png")
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use gf2_core::matrix::BitMatrix;
-    ///
-    /// let m = BitMatrix::identity(100);
-    /// m.save_image("identity.png").unwrap();
-    /// ```
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if:
-    /// - File cannot be created
-    /// - PNG encoding fails
-    ///
-    /// # Note
-    ///
-    /// To modify colors, edit the hard-coded `ZERO_COLOR` and `ONE_COLOR` constants
-    /// in the implementation.
-    pub fn save_image(
-        &self,
-        path: impl AsRef<std::path::Path>,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        use image::{ImageBuffer, Rgb};
-
-        const ZERO_COLOR: [u8; 3] = [0, 0, 0]; // black
-        const ONE_COLOR: [u8; 3] = [255, 255, 255]; // white
-
-        let mut img = ImageBuffer::new(self.cols as u32, self.rows as u32);
-
-        for row in 0..self.rows {
-            for col in 0..self.cols {
-                let bit = self.get(row, col);
-                let color = if bit { ONE_COLOR } else { ZERO_COLOR };
-                img.put_pixel(col as u32, row as u32, Rgb(color));
-            }
-        }
-
-        img.save(path)?;
-        Ok(())
     }
 }

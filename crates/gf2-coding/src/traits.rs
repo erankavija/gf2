@@ -4,7 +4,7 @@
 //! in error-correcting codes, supporting both block codes and streaming codes.
 
 use crate::llr::Llr;
-use gf2_core::matrix::BitMatrix;
+use gf2_core::BitMatrix;
 use gf2_core::BitVec;
 
 /// Access to the generator matrix of a linear block code.
@@ -639,7 +639,7 @@ mod tests {
 #[cfg(test)]
 mod generator_matrix_tests {
     use super::*;
-    use gf2_core::matrix::BitMatrix;
+    use gf2_core::BitMatrix;
 
     // Mock implementation for testing trait contract
     struct MockLinearCode {
