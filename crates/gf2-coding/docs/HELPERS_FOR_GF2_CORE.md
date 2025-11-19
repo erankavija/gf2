@@ -227,7 +227,7 @@ for j in 0..self.n {
 
 **Proposed Core API** (if not already exists):
 ```rust
-// In gf2_core::matrix::BitMatrix
+// In gf2_core::BitMatrix
 
 impl BitMatrix {
     /// Extracts a row as a BitVec.
@@ -299,7 +299,7 @@ impl BitMatrix {
 3. **`BitMatrix::row_as_bitvec()` / `col_as_bitvec()`**
    - Check if already in `gf2-core`
    - If not, add for convenience
-   - Natural place: `gf2_core::matrix::BitMatrix`
+   - Natural place: `gf2_core::BitMatrix`
 
 4. **`BitMatrix::from_row_bitvec()`**
    - Convenience constructor

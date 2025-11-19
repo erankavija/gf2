@@ -66,7 +66,7 @@ pub struct LdpcCode {
     m: usize,
     /// Cached generator matrix (computed lazily)
     #[allow(clippy::type_complexity)]
-    cached_generator: std::sync::Arc<std::sync::Mutex<Option<gf2_core::matrix::BitMatrix>>>,
+    cached_generator: std::sync::Arc<std::sync::Mutex<Option<gf2_core::BitMatrix>>>,
 }
 
 impl LdpcCode {
@@ -180,8 +180,8 @@ impl LdpcCode {
     /// This is expensive (O(m²·k)) and cached after first computation.
     ///
     /// Returns None if H is not full rank.
-    fn compute_generator_matrix(&self) -> Option<gf2_core::matrix::BitMatrix> {
-        use gf2_core::matrix::BitMatrix;
+    fn compute_generator_matrix(&self) -> Option<gf2_core::BitMatrix> {
+        use gf2_core::BitMatrix;
 
         let k = self.k();
         let m = self.m;
@@ -270,7 +270,7 @@ impl crate::traits::GeneratorMatrixAccess for LdpcCode {
         self.n
     }
 
-    fn generator_matrix(&self) -> gf2_core::matrix::BitMatrix {
+    fn generator_matrix(&self) -> gf2_core::BitMatrix {
         let mut cache = self.cached_generator.lock().unwrap();
         if let Some(ref g) = *cache {
             g.clone()

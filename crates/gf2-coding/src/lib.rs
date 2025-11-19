@@ -1,7 +1,7 @@
 //! Error-correcting codes built on `gf2-core` primitives.
 //!
 //! This crate provides implementations of error-correcting codes using the
-//! [`BitVec`](gf2_core::BitVec) and [`BitMatrix`](gf2_core::matrix::BitMatrix) types from
+//! [`BitVec`](gf2_core::BitVec) and [`BitMatrix`](gf2_core::BitMatrix) types from
 //! the `gf2-core` library. It includes both block codes
 //! and streaming (convolutional) codes.
 //!
