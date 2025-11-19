@@ -191,13 +191,8 @@ impl LinearBlockCode {
             // Compute s = H * c^T
             let s_matrix = h * &c_t;
 
-            // Extract syndrome as BitVec
-            let r = h.rows();
-            let mut syndrome = BitVec::new();
-            for i in 0..r {
-                syndrome.push_bit(s_matrix.get(i, 0));
-            }
-            syndrome
+            // Extract syndrome as BitVec (column 0 of result matrix)
+            s_matrix.col_as_bitvec(0)
         })
     }
 
@@ -353,12 +348,8 @@ impl BlockEncoder for LinearBlockCode {
         // Compute codeword = message * G
         let codeword_matrix = &msg_matrix * &self.g;
 
-        // Extract codeword as BitVec
-        let mut codeword = BitVec::new();
-        for i in 0..self.n {
-            codeword.push_bit(codeword_matrix.get(0, i));
-        }
-        codeword
+        // Extract codeword as BitVec (row 0 of result matrix)
+        codeword_matrix.row_as_bitvec(0)
     }
 }
 

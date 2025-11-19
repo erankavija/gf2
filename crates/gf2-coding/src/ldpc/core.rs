@@ -997,10 +997,7 @@ mod generator_matrix_access_tests {
 
         // Each row of G should be a valid codeword
         for i in 0..code.k() {
-            let mut row = BitVec::new();
-            for j in 0..code.n() {
-                row.push_bit(g.get(i, j));
-            }
+            let row = g.row_as_bitvec(i);
             assert!(
                 code.is_valid_codeword(&row),
                 "Row {} of G must be a valid codeword",
@@ -1051,10 +1048,7 @@ mod generator_matrix_access_tests {
 
         // Verify it's a valid generator (all rows are codewords)
         for i in 0..code.k() {
-            let mut row = BitVec::new();
-            for j in 0..code.n() {
-                row.push_bit(g.get(i, j));
-            }
+            let row = g.row_as_bitvec(i);
             assert!(code.is_valid_codeword(&row));
         }
     }
