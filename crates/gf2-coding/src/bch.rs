@@ -408,37 +408,6 @@ impl BchEncoder {
     pub fn new(code: BchCode) -> Self {
         Self { code }
     }
-
-    /// Converts BitVec to polynomial over GF(2^m).
-    ///
-    /// Each bit becomes a coefficient (0 or 1) in the field.
-    fn bitvec_to_poly(&self, bits: &BitVec) -> Gf2mPoly {
-        let coeffs: Vec<Gf2mElement> = (0..bits.len())
-            .map(|i| {
-                if bits.get(i) {
-                    self.code.field.one()
-                } else {
-                    self.code.field.zero()
-                }
-            })
-            .collect();
-
-        Gf2mPoly::new(coeffs)
-    }
-
-    /// Converts polynomial to BitVec.
-    ///
-    /// Only works for polynomials with binary coefficients (0 or 1).
-    fn poly_to_bitvec(&self, poly: &Gf2mPoly, len: usize) -> BitVec {
-        let mut bits = BitVec::new();
-
-        for i in 0..len {
-            let coeff = poly.coeff(i);
-            bits.push_bit(coeff.is_one());
-        }
-
-        bits
-    }
 }
 
 impl BlockEncoder for BchEncoder {
@@ -469,7 +438,7 @@ impl BlockEncoder for BchEncoder {
         let r = self.code.n - self.code.k;
 
         // Convert message to polynomial m(x)
-        let m = self.bitvec_to_poly(message);
+        let m = Gf2mPoly::from_bitvec(message, &self.code.field);
 
         // Multiply by x^r to shift message left: x^r · m(x)
         let mut m_shifted_coeffs = vec![self.code.field.zero(); r];
@@ -485,7 +454,7 @@ impl BlockEncoder for BchEncoder {
         // Since we're in GF(2), addition is XOR
         let codeword_poly = &m_shifted + &parity;
 
-        self.poly_to_bitvec(&codeword_poly, self.code.n)
+        codeword_poly.to_bitvec(self.code.n)
     }
 }
 
@@ -524,7 +493,7 @@ impl BchDecoder {
         );
 
         // Convert received bits to polynomial
-        let r = self.bitvec_to_poly(received);
+        let r = Gf2mPoly::from_bitvec(received, &self.code.field);
 
         // Compute evaluation points α, α^2, ..., α^(2t)
         let alpha = self
@@ -543,21 +512,6 @@ impl BchDecoder {
 
         // Batch evaluate r(x) at all syndrome points
         r.eval_batch(&eval_points)
-    }
-
-    /// Converts BitVec to polynomial over GF(2^m).
-    fn bitvec_to_poly(&self, bits: &BitVec) -> Gf2mPoly {
-        let coeffs: Vec<Gf2mElement> = (0..bits.len())
-            .map(|i| {
-                if bits.get(i) {
-                    self.code.field.one()
-                } else {
-                    self.code.field.zero()
-                }
-            })
-            .collect();
-
-        Gf2mPoly::new(coeffs)
     }
 }
 
@@ -798,22 +752,10 @@ mod generator_matrix_access_tests {
         // For BCH, verify each row of G is a valid codeword
         // (divisible by generator polynomial)
         for i in 0..code.k() {
-            let mut row = BitVec::new();
-            for j in 0..code.n() {
-                row.push_bit(g.get(i, j));
-            }
+            let row = g.row_as_bitvec(i);
 
             // Convert to polynomial and check divisibility
-            let row_coeffs: Vec<Gf2mElement> = (0..row.len())
-                .map(|idx| {
-                    if row.get(idx) {
-                        code.field().one()
-                    } else {
-                        code.field().zero()
-                    }
-                })
-                .collect();
-            let row_poly = Gf2mPoly::new(row_coeffs);
+            let row_poly = Gf2mPoly::from_bitvec(&row, code.field());
             let (_, remainder) = row_poly.div_rem(code.generator());
             assert!(remainder.is_zero(), "Row {} of G must be valid codeword", i);
         }
@@ -849,10 +791,7 @@ mod generator_matrix_access_tests {
             msg_matrix.set(0, i, msg.get(i));
         }
         let codeword2_matrix = &msg_matrix * &g;
-        let mut codeword2 = BitVec::new();
-        for j in 0..code.n() {
-            codeword2.push_bit(codeword2_matrix.get(0, j));
-        }
+        let codeword2 = codeword2_matrix.row_as_bitvec(0);
 
         assert_eq!(codeword1, codeword2);
     }
