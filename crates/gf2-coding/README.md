@@ -162,6 +162,9 @@ cargo run --example ldpc_awgn --release
 
 # Uncoded AWGN transmission baseline
 cargo run --example awgn_uncoded
+
+# Visualize large generator matrices (>500 rows/cols) as PNG images
+cargo run --example visualize_large_matrices --features visualization
 ```
 
 ## Testing
