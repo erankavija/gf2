@@ -21,6 +21,7 @@ criterion = { workspace = true }
 [features]
 default = []
 simd = ["gf2-core/simd"]
+visualization = ["gf2-core/visualization"]
 
 [[bench]]
 name = "linear_codes"
