@@ -435,6 +435,100 @@ impl BitMatrix {
         &mut self.data[start..start + self.stride_words]
     }
 
+    /// Extracts a row as a BitVec.
+    ///
+    /// Creates a new BitVec containing all column values from the specified row.
+    ///
+    /// # Arguments
+    ///
+    /// * `row` - Row index (0-based)
+    ///
+    /// # Panics
+    ///
+    /// Panics if `row >= self.rows()`
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::BitMatrix;
+    ///
+    /// let mut m = BitMatrix::zeros(3, 4);
+    /// m.set(1, 0, true);
+    /// m.set(1, 2, true);
+    ///
+    /// let row = m.row_as_bitvec(1);
+    /// assert_eq!(row.len(), 4);
+    /// assert!(row.get(0));
+    /// assert!(!row.get(1));
+    /// assert!(row.get(2));
+    /// assert!(!row.get(3));
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(cols) - iterates through all columns in the row
+    pub fn row_as_bitvec(&self, row: usize) -> crate::BitVec {
+        assert!(
+            row < self.rows,
+            "Row index {} out of bounds (rows: {})",
+            row,
+            self.rows
+        );
+
+        let mut bits = crate::BitVec::new();
+        for col in 0..self.cols {
+            bits.push_bit(self.get(row, col));
+        }
+        bits
+    }
+
+    /// Extracts a column as a BitVec.
+    ///
+    /// Creates a new BitVec containing all row values from the specified column.
+    ///
+    /// # Arguments
+    ///
+    /// * `col` - Column index (0-based)
+    ///
+    /// # Panics
+    ///
+    /// Panics if `col >= self.cols()`
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::BitMatrix;
+    ///
+    /// let mut m = BitMatrix::zeros(4, 3);
+    /// m.set(0, 1, true);
+    /// m.set(2, 1, true);
+    ///
+    /// let col = m.col_as_bitvec(1);
+    /// assert_eq!(col.len(), 4);
+    /// assert!(col.get(0));
+    /// assert!(!col.get(1));
+    /// assert!(col.get(2));
+    /// assert!(!col.get(3));
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(rows) - iterates through all rows in the column
+    pub fn col_as_bitvec(&self, col: usize) -> crate::BitVec {
+        assert!(
+            col < self.cols,
+            "Column index {} out of bounds (cols: {})",
+            col,
+            self.cols
+        );
+
+        let mut bits = crate::BitVec::new();
+        for row in 0..self.rows {
+            bits.push_bit(self.get(row, col));
+        }
+        bits
+    }
+
     /// Swaps two rows in the matrix.
     ///
     /// # Panics
@@ -815,5 +909,192 @@ mod tests {
         assert!(c.get(0, 1));
         assert!(c.get(1, 0));
         assert!(c.get(1, 1));
+    }
+
+    // Row/column extraction tests
+
+    #[test]
+    fn test_row_as_bitvec_identity() {
+        let m = BitMatrix::identity(4);
+
+        let row0 = m.row_as_bitvec(0);
+        assert_eq!(row0.len(), 4);
+        assert!(row0.get(0));
+        assert!(!row0.get(1));
+        assert!(!row0.get(2));
+        assert!(!row0.get(3));
+
+        let row2 = m.row_as_bitvec(2);
+        assert_eq!(row2.len(), 4);
+        assert!(!row2.get(0));
+        assert!(!row2.get(1));
+        assert!(row2.get(2));
+        assert!(!row2.get(3));
+    }
+
+    #[test]
+    fn test_row_as_bitvec_zeros() {
+        let m = BitMatrix::zeros(3, 5);
+
+        let row = m.row_as_bitvec(1);
+        assert_eq!(row.len(), 5);
+        for i in 0..5 {
+            assert!(!row.get(i), "Bit {} should be false", i);
+        }
+    }
+
+    #[test]
+    fn test_row_as_bitvec_custom_pattern() {
+        let mut m = BitMatrix::zeros(3, 5);
+        m.set(1, 0, true);
+        m.set(1, 2, true);
+        m.set(1, 4, true);
+
+        let row = m.row_as_bitvec(1);
+        assert_eq!(row.len(), 5);
+        assert!(row.get(0));
+        assert!(!row.get(1));
+        assert!(row.get(2));
+        assert!(!row.get(3));
+        assert!(row.get(4));
+    }
+
+    #[test]
+    #[should_panic(expected = "out of bounds")]
+    fn test_row_as_bitvec_out_of_bounds() {
+        let m = BitMatrix::zeros(3, 4);
+        let _ = m.row_as_bitvec(3);
+    }
+
+    #[test]
+    fn test_col_as_bitvec_identity() {
+        let m = BitMatrix::identity(4);
+
+        let col0 = m.col_as_bitvec(0);
+        assert_eq!(col0.len(), 4);
+        assert!(col0.get(0));
+        assert!(!col0.get(1));
+        assert!(!col0.get(2));
+        assert!(!col0.get(3));
+
+        let col2 = m.col_as_bitvec(2);
+        assert_eq!(col2.len(), 4);
+        assert!(!col2.get(0));
+        assert!(!col2.get(1));
+        assert!(col2.get(2));
+        assert!(!col2.get(3));
+    }
+
+    #[test]
+    fn test_col_as_bitvec_zeros() {
+        let m = BitMatrix::zeros(5, 3);
+
+        let col = m.col_as_bitvec(1);
+        assert_eq!(col.len(), 5);
+        for i in 0..5 {
+            assert!(!col.get(i), "Bit {} should be false", i);
+        }
+    }
+
+    #[test]
+    fn test_col_as_bitvec_custom_pattern() {
+        let mut m = BitMatrix::zeros(5, 3);
+        m.set(0, 1, true);
+        m.set(2, 1, true);
+        m.set(4, 1, true);
+
+        let col = m.col_as_bitvec(1);
+        assert_eq!(col.len(), 5);
+        assert!(col.get(0));
+        assert!(!col.get(1));
+        assert!(col.get(2));
+        assert!(!col.get(3));
+        assert!(col.get(4));
+    }
+
+    #[test]
+    #[should_panic(expected = "out of bounds")]
+    fn test_col_as_bitvec_out_of_bounds() {
+        let m = BitMatrix::zeros(3, 4);
+        let _ = m.col_as_bitvec(4);
+    }
+
+    #[test]
+    fn test_row_col_extraction_consistency() {
+        let mut m = BitMatrix::zeros(4, 4);
+        m.set(0, 1, true);
+        m.set(1, 0, true);
+        m.set(2, 3, true);
+        m.set(3, 2, true);
+
+        // Extract all rows and verify against original
+        for r in 0..4 {
+            let row = m.row_as_bitvec(r);
+            for c in 0..4 {
+                assert_eq!(
+                    row.get(c),
+                    m.get(r, c),
+                    "Row extraction mismatch at ({}, {})",
+                    r,
+                    c
+                );
+            }
+        }
+
+        // Extract all columns and verify against original
+        for c in 0..4 {
+            let col = m.col_as_bitvec(c);
+            for r in 0..4 {
+                assert_eq!(
+                    col.get(r),
+                    m.get(r, c),
+                    "Column extraction mismatch at ({}, {})",
+                    r,
+                    c
+                );
+            }
+        }
+    }
+
+    use proptest::prelude::*;
+
+    proptest! {
+        #[test]
+        fn prop_row_extraction_preserves_values(
+            rows in 1..20usize,
+            cols in 1..20usize,
+            seed in any::<u64>()
+        ) {
+            let m = BitMatrix::random_seeded(rows, cols, seed);
+
+            for r in 0..rows {
+                let row_vec = m.row_as_bitvec(r);
+                assert_eq!(row_vec.len(), cols);
+
+                for c in 0..cols {
+                    assert_eq!(row_vec.get(c), m.get(r, c),
+                        "Mismatch at ({}, {})", r, c);
+                }
+            }
+        }
+
+        #[test]
+        fn prop_col_extraction_preserves_values(
+            rows in 1..20usize,
+            cols in 1..20usize,
+            seed in any::<u64>()
+        ) {
+            let m = BitMatrix::random_seeded(rows, cols, seed);
+
+            for c in 0..cols {
+                let col_vec = m.col_as_bitvec(c);
+                assert_eq!(col_vec.len(), rows);
+
+                for r in 0..rows {
+                    assert_eq!(col_vec.get(r), m.get(r, c),
+                        "Mismatch at ({}, {})", r, c);
+                }
+            }
+        }
     }
 }

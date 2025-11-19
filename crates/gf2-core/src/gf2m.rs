@@ -1307,6 +1307,125 @@ impl Gf2mPoly {
         }
     }
 
+    /// Constructs a polynomial from a BitVec over GF(2^m).
+    ///
+    /// Each bit in the BitVec is interpreted as a coefficient in GF(2^m):
+    /// - `false` (0) → field.zero()
+    /// - `true` (1) → field.one()
+    ///
+    /// The polynomial is in ascending degree order: bit i is the coefficient of x^i.
+    ///
+    /// # Arguments
+    ///
+    /// * `bits` - BitVec containing binary coefficients
+    /// * `field` - The field to use for creating elements
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::{BitVec, gf2m::{Gf2mField, Gf2mPoly}};
+    ///
+    /// let field = Gf2mField::new(4, 0b10011);
+    /// let mut bits = BitVec::new();
+    /// bits.push_bit(true);  // x^0 term
+    /// bits.push_bit(false); // x^1 term
+    /// bits.push_bit(true);  // x^2 term
+    ///
+    /// let poly = Gf2mPoly::from_bitvec(&bits, &field);
+    /// assert_eq!(poly.degree(), Some(2));
+    /// assert!(poly.coeff(0).is_one());
+    /// assert!(poly.coeff(1).is_zero());
+    /// assert!(poly.coeff(2).is_one());
+    /// ```
+    pub fn from_bitvec(bits: &crate::BitVec, field: &Gf2mField) -> Self {
+        if bits.is_empty() {
+            return Self::zero(field);
+        }
+
+        let coeffs: Vec<Gf2mElement> = (0..bits.len())
+            .map(|i| {
+                if bits.get(i) {
+                    field.one()
+                } else {
+                    field.zero()
+                }
+            })
+            .collect();
+
+        Self::new(coeffs)
+    }
+
+    /// Converts polynomial to BitVec, extracting binary coefficients.
+    ///
+    /// Only extracts the binary value of coefficients (0 or 1). Non-binary
+    /// coefficients in the field are treated as 1 (non-zero).
+    ///
+    /// # Arguments
+    ///
+    /// * `len` - Desired length of output BitVec (may exceed polynomial degree)
+    ///
+    /// # Returns
+    ///
+    /// BitVec where bit i = true iff coefficient of x^i is non-zero
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::{BitVec, gf2m::{Gf2mField, Gf2mPoly}};
+    ///
+    /// let field = Gf2mField::new(4, 0b10011);
+    /// let poly = Gf2mPoly::new(vec![
+    ///     field.one(),   // x^0
+    ///     field.zero(),  // x^1
+    ///     field.one(),   // x^2
+    /// ]);
+    ///
+    /// let bits = poly.to_bitvec(5);
+    /// assert_eq!(bits.len(), 5);
+    /// assert!(bits.get(0));   // x^0 term present
+    /// assert!(!bits.get(1));  // x^1 term absent
+    /// assert!(bits.get(2));   // x^2 term present
+    /// assert!(!bits.get(3));  // x^3 term absent (beyond degree)
+    /// assert!(!bits.get(4));  // x^4 term absent
+    /// ```
+    ///
+    /// # Notes
+    ///
+    /// Coefficients beyond the polynomial degree are treated as zero.
+    /// This is useful for BCH and other coding applications where
+    /// codewords have fixed length.
+    pub fn to_bitvec(&self, len: usize) -> crate::BitVec {
+        let mut bits = crate::BitVec::new();
+
+        for i in 0..len {
+            let coeff = self.coeff(i);
+            bits.push_bit(!coeff.is_zero());
+        }
+
+        bits
+    }
+
+    /// Converts polynomial to BitVec with minimal length (degree + 1).
+    ///
+    /// Convenience method equivalent to `to_bitvec(degree + 1)`.
+    /// For the zero polynomial, returns an empty BitVec.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::gf2m::{Gf2mField, Gf2mPoly};
+    ///
+    /// let field = Gf2mField::new(4, 0b10011);
+    /// let poly = Gf2mPoly::new(vec![field.one(), field.zero(), field.one()]);
+    ///
+    /// let bits = poly.to_bitvec_minimal();
+    /// assert_eq!(bits.len(), 3); // degree 2, so length 3
+    /// ```
+    pub fn to_bitvec_minimal(&self) -> crate::BitVec {
+        let len = self.degree().map(|d| d + 1).unwrap_or(0);
+        self.to_bitvec(len)
+    }
+
     /// Evaluates the polynomial at a given point using Horner's method.
     ///
     /// # Example
@@ -1683,6 +1802,7 @@ impl Mul for Gf2mPoly {
 #[cfg(test)]
 mod poly_tests {
     use super::*;
+    use crate::BitVec;
 
     #[test]
     fn test_poly_creation() {
@@ -2155,6 +2275,174 @@ mod poly_tests {
         assert_eq!(gcd.degree(), poly.degree());
     }
 
+    // BitVec conversion tests
+
+    #[test]
+    fn test_from_bitvec_empty() {
+        let field = Gf2mField::new(4, 0b10011);
+        let bits = BitVec::new();
+        let poly = Gf2mPoly::from_bitvec(&bits, &field);
+        assert!(poly.is_zero());
+    }
+
+    #[test]
+    fn test_from_bitvec_all_zeros() {
+        let field = Gf2mField::new(4, 0b10011);
+        let mut bits = BitVec::new();
+        bits.push_bit(false);
+        bits.push_bit(false);
+        bits.push_bit(false);
+        let poly = Gf2mPoly::from_bitvec(&bits, &field);
+        assert!(poly.is_zero());
+    }
+
+    #[test]
+    fn test_from_bitvec_simple() {
+        let field = Gf2mField::new(4, 0b10011);
+        let mut bits = BitVec::new();
+        bits.push_bit(true); // x^0
+        bits.push_bit(false); // x^1
+        bits.push_bit(true); // x^2
+
+        let poly = Gf2mPoly::from_bitvec(&bits, &field);
+        assert_eq!(poly.degree(), Some(2));
+        assert!(poly.coeff(0).is_one());
+        assert!(poly.coeff(1).is_zero());
+        assert!(poly.coeff(2).is_one());
+    }
+
+    #[test]
+    fn test_from_bitvec_all_ones() {
+        let field = Gf2mField::new(4, 0b10011);
+        let mut bits = BitVec::new();
+        for _ in 0..5 {
+            bits.push_bit(true);
+        }
+
+        let poly = Gf2mPoly::from_bitvec(&bits, &field);
+        assert_eq!(poly.degree(), Some(4));
+        for i in 0..5 {
+            assert!(poly.coeff(i).is_one(), "Coefficient {} should be one", i);
+        }
+    }
+
+    #[test]
+    fn test_to_bitvec_zero_polynomial() {
+        let field = Gf2mField::new(4, 0b10011);
+        let poly = Gf2mPoly::zero(&field);
+
+        let bits = poly.to_bitvec(5);
+        assert_eq!(bits.len(), 5);
+        for i in 0..5 {
+            assert!(!bits.get(i), "Bit {} should be zero", i);
+        }
+    }
+
+    #[test]
+    fn test_to_bitvec_simple() {
+        let field = Gf2mField::new(4, 0b10011);
+        let poly = Gf2mPoly::new(vec![
+            field.one(),  // x^0
+            field.zero(), // x^1
+            field.one(),  // x^2
+        ]);
+
+        let bits = poly.to_bitvec(5);
+        assert_eq!(bits.len(), 5);
+        assert!(bits.get(0)); // x^0 present
+        assert!(!bits.get(1)); // x^1 absent
+        assert!(bits.get(2)); // x^2 present
+        assert!(!bits.get(3)); // x^3 absent (beyond degree)
+        assert!(!bits.get(4)); // x^4 absent (beyond degree)
+    }
+
+    #[test]
+    fn test_to_bitvec_length_shorter_than_degree() {
+        let field = Gf2mField::new(4, 0b10011);
+        let poly = Gf2mPoly::new(vec![
+            field.one(),  // x^0
+            field.zero(), // x^1
+            field.one(),  // x^2
+            field.one(),  // x^3
+        ]);
+
+        let bits = poly.to_bitvec(2);
+        assert_eq!(bits.len(), 2);
+        assert!(bits.get(0));
+        assert!(!bits.get(1));
+    }
+
+    #[test]
+    fn test_to_bitvec_minimal_zero() {
+        let field = Gf2mField::new(4, 0b10011);
+        let poly = Gf2mPoly::zero(&field);
+
+        let bits = poly.to_bitvec_minimal();
+        assert_eq!(bits.len(), 0);
+    }
+
+    #[test]
+    fn test_to_bitvec_minimal_degree_two() {
+        let field = Gf2mField::new(4, 0b10011);
+        let poly = Gf2mPoly::new(vec![
+            field.one(),  // x^0
+            field.zero(), // x^1
+            field.one(),  // x^2
+        ]);
+
+        let bits = poly.to_bitvec_minimal();
+        assert_eq!(bits.len(), 3); // degree 2, so length 3
+        assert!(bits.get(0));
+        assert!(!bits.get(1));
+        assert!(bits.get(2));
+    }
+
+    #[test]
+    fn test_roundtrip_bitvec_to_poly_to_bitvec() {
+        let field = Gf2mField::new(4, 0b10011);
+        let mut original = BitVec::new();
+        original.push_bit(true);
+        original.push_bit(false);
+        original.push_bit(true);
+        original.push_bit(false);
+        original.push_bit(true);
+
+        let poly = Gf2mPoly::from_bitvec(&original, &field);
+        let recovered = poly.to_bitvec(original.len());
+
+        assert_eq!(original.len(), recovered.len());
+        for i in 0..original.len() {
+            assert_eq!(original.get(i), recovered.get(i), "Bit {} mismatch", i);
+        }
+    }
+
+    #[test]
+    fn test_roundtrip_poly_to_bitvec_to_poly() {
+        let field = Gf2mField::new(4, 0b10011);
+        let original = Gf2mPoly::new(vec![
+            field.element(1),
+            field.element(0),
+            field.element(1),
+            field.element(0),
+            field.element(1),
+        ]);
+
+        let bits = original.to_bitvec_minimal();
+        let recovered = Gf2mPoly::from_bitvec(&bits, &field);
+
+        assert_eq!(original.degree(), recovered.degree());
+        if let Some(deg) = original.degree() {
+            for i in 0..=deg {
+                assert_eq!(
+                    original.coeff(i).is_zero(),
+                    recovered.coeff(i).is_zero(),
+                    "Coefficient {} mismatch",
+                    i
+                );
+            }
+        }
+    }
+
     // Property-based tests for polynomials
 
     use proptest::prelude::*;
@@ -2511,6 +2799,38 @@ mod poly_tests {
                     let leading = min_poly.coeff(deg);
                     prop_assert_eq!(leading.value(), 1,
                         "Minimal polynomial must be monic (leading coeff = 1)");
+                }
+            }
+
+            #[test]
+            fn prop_roundtrip_bitvec_poly_bitvec(bits in prop::collection::vec(any::<bool>(), 0..100)) {
+                let mut bv = BitVec::new();
+                for bit in &bits {
+                    bv.push_bit(*bit);
+                }
+                let field = Gf2mField::new(8, 0b100011101);
+
+                let poly = Gf2mPoly::from_bitvec(&bv, &field);
+                let recovered = poly.to_bitvec(bv.len());
+
+                prop_assert_eq!(bv.len(), recovered.len());
+                for i in 0..bv.len() {
+                    prop_assert_eq!(bv.get(i), recovered.get(i), "Bit {} mismatch", i);
+                }
+            }
+
+            #[test]
+            fn prop_to_bitvec_minimal_has_correct_length(coeffs in prop::collection::vec(0u64..16, 1..20)) {
+                let field = Gf2mField::new(4, 0b10011);
+                let elements: Vec<_> = coeffs.iter().map(|&c| field.element(c)).collect();
+                let poly = Gf2mPoly::new(elements);
+
+                let bits = poly.to_bitvec_minimal();
+
+                if let Some(deg) = poly.degree() {
+                    prop_assert_eq!(bits.len(), deg + 1);
+                } else {
+                    prop_assert_eq!(bits.len(), 0);
                 }
             }
         }
