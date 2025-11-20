@@ -182,19 +182,14 @@ impl LdpcCode {
     ///
     /// # Examples
     ///
-    /// ```should_panic
+    /// ```
     /// use gf2_coding::ldpc::LdpcCode;
     /// use gf2_coding::CodeRate;
     ///
-    /// // Note: Short frame tables not yet implemented, will panic
     /// let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
     /// assert_eq!(code.n(), 16200);
     /// assert_eq!(code.k(), 7200);
     /// ```
-    ///
-    /// # Panics
-    ///
-    /// Panics if the table for the requested rate is not yet implemented.
     ///
     /// # References
     ///

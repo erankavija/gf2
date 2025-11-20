@@ -122,3 +122,102 @@ fn test_dual_bidirectional_sweep() {
     }
     assert_eq!(col_sum, 4);
 }
+
+// ============================================================================
+// Deduplication Tests for SpBitMatrixDual
+// ============================================================================
+
+#[test]
+fn test_dual_from_coo_deduplicated_basic() {
+    let edges = vec![(0, 0), (0, 1), (0, 1), (1, 2)];
+    let dual = SpBitMatrixDual::from_coo_deduplicated(2, 3, &edges);
+
+    let d = dual.to_dense();
+    assert!(d.get(0, 0));
+    assert!(d.get(0, 1));
+    assert!(d.get(1, 2));
+    assert_eq!(dual.nnz(), 3);
+}
+
+#[test]
+fn test_dual_from_coo_deduplicated_vs_xor() {
+    let edges = vec![(0, 1), (0, 1), (1, 2)];
+
+    let xor_dual = SpBitMatrixDual::from_coo(2, 3, &edges);
+    let xor_d = xor_dual.to_dense();
+    assert!(!xor_d.get(0, 1));
+    assert_eq!(xor_dual.nnz(), 1);
+
+    let dedup_dual = SpBitMatrixDual::from_coo_deduplicated(2, 3, &edges);
+    let dedup_d = dedup_dual.to_dense();
+    assert!(dedup_d.get(0, 1));
+    assert_eq!(dedup_dual.nnz(), 2);
+}
+
+#[test]
+fn test_dual_from_coo_deduplicated_row_col_consistency() {
+    // Test that both CSR and CSC views are consistent after deduplication
+    let edges = vec![
+        (0, 1),
+        (0, 1), // Row 0, col 1 (duplicate)
+        (0, 2), // Row 0, col 2
+        (1, 1),
+        (1, 1), // Row 1, col 1 (duplicate)
+        (2, 0), // Row 2, col 0
+    ];
+    let dual = SpBitMatrixDual::from_coo_deduplicated(3, 3, &edges);
+
+    // Check row iteration
+    let row0: Vec<_> = dual.row_iter(0).collect();
+    assert_eq!(row0, vec![1, 2]);
+
+    let row1: Vec<_> = dual.row_iter(1).collect();
+    assert_eq!(row1, vec![1]);
+
+    let row2: Vec<_> = dual.row_iter(2).collect();
+    assert_eq!(row2, vec![0]);
+
+    // Check column iteration
+    let col0: Vec<_> = dual.col_iter(0).collect();
+    assert_eq!(col0, vec![2]);
+
+    let col1: Vec<_> = dual.col_iter(1).collect();
+    assert_eq!(col1, vec![0, 1]);
+
+    let col2: Vec<_> = dual.col_iter(2).collect();
+    assert_eq!(col2, vec![0]);
+
+    assert_eq!(dual.nnz(), 4);
+}
+
+#[test]
+fn test_dual_from_coo_deduplicated_dvb_t2_scenario() {
+    // Realistic scenario: dual-diagonal parity overlaps with info connections
+    let edges = vec![
+        // Information connections
+        (0, 2),
+        (0, 5),
+        (1, 3),
+        (1, 4),
+        // Dual-diagonal parity structure
+        (0, 4), // P[0]
+        (1, 4), // P[1] = P[0] (dual-diagonal)
+        (1, 5), // P[2]
+        // Accidental duplicate from table expansion
+        (0, 2), // Duplicate of first entry
+    ];
+
+    let dual = SpBitMatrixDual::from_coo_deduplicated(2, 6, &edges);
+
+    // After deduplication: 6 unique edges
+    assert_eq!(dual.nnz(), 6);
+
+    // Verify structure
+    let d = dual.to_dense();
+    assert!(d.get(0, 2)); // Info
+    assert!(d.get(0, 5)); // Info
+    assert!(d.get(0, 4)); // Parity
+    assert!(d.get(1, 3)); // Info
+    assert!(d.get(1, 4)); // Parity (dual-diagonal)
+    assert!(d.get(1, 5)); // Parity
+}

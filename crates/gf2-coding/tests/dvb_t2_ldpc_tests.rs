@@ -25,67 +25,89 @@ fn test_dvb_t2_normal_rate_1_2_zero_codeword() {
 }
 
 #[test]
-#[should_panic(expected = "placeholder")]
-fn test_dvb_t2_normal_rate_3_5_panics() {
-    let _code = LdpcCode::dvb_t2_normal(CodeRate::Rate3_5);
+fn test_dvb_t2_normal_rate_3_5_construction() {
+    let code = LdpcCode::dvb_t2_normal(CodeRate::Rate3_5);
+    assert_eq!(code.n(), 64800);
+    assert_eq!(code.k(), 38880);
+    assert_eq!(code.m(), 25920);
 }
 
 #[test]
-#[should_panic(expected = "placeholder")]
-fn test_dvb_t2_normal_rate_2_3_panics() {
-    let _code = LdpcCode::dvb_t2_normal(CodeRate::Rate2_3);
+fn test_dvb_t2_normal_rate_2_3_construction() {
+    let code = LdpcCode::dvb_t2_normal(CodeRate::Rate2_3);
+    assert_eq!(code.n(), 64800);
+    assert_eq!(code.k(), 43200);
+    assert_eq!(code.m(), 21600);
 }
 
 #[test]
-#[should_panic(expected = "placeholder")]
-fn test_dvb_t2_normal_rate_3_4_panics() {
-    let _code = LdpcCode::dvb_t2_normal(CodeRate::Rate3_4);
+fn test_dvb_t2_normal_rate_3_4_construction() {
+    let code = LdpcCode::dvb_t2_normal(CodeRate::Rate3_4);
+    assert_eq!(code.n(), 64800);
+    assert_eq!(code.k(), 48600);
+    assert_eq!(code.m(), 16200);
 }
 
 #[test]
-#[should_panic(expected = "placeholder")]
-fn test_dvb_t2_normal_rate_4_5_panics() {
-    let _code = LdpcCode::dvb_t2_normal(CodeRate::Rate4_5);
+fn test_dvb_t2_normal_rate_4_5_construction() {
+    let code = LdpcCode::dvb_t2_normal(CodeRate::Rate4_5);
+    assert_eq!(code.n(), 64800);
+    assert_eq!(code.k(), 51840);
+    assert_eq!(code.m(), 12960);
 }
 
 #[test]
-#[should_panic(expected = "placeholder")]
-fn test_dvb_t2_normal_rate_5_6_panics() {
-    let _code = LdpcCode::dvb_t2_normal(CodeRate::Rate5_6);
+fn test_dvb_t2_normal_rate_5_6_construction() {
+    let code = LdpcCode::dvb_t2_normal(CodeRate::Rate5_6);
+    assert_eq!(code.n(), 64800);
+    assert_eq!(code.k(), 54000);
+    assert_eq!(code.m(), 10800);
 }
 
 #[test]
-#[should_panic(expected = "placeholder")]
-fn test_dvb_t2_short_rate_1_2_panics() {
-    let _code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
+fn test_dvb_t2_short_rate_1_2_construction() {
+    let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
+    assert_eq!(code.n(), 16200);
+    assert_eq!(code.k(), 7200);
+    assert_eq!(code.m(), 9000);
 }
 
 #[test]
-#[should_panic(expected = "placeholder")]
-fn test_dvb_t2_short_rate_3_5_panics() {
-    let _code = LdpcCode::dvb_t2_short(CodeRate::Rate3_5);
+fn test_dvb_t2_short_rate_3_5_construction() {
+    let code = LdpcCode::dvb_t2_short(CodeRate::Rate3_5);
+    assert_eq!(code.n(), 16200);
+    assert_eq!(code.k(), 9720);
+    assert_eq!(code.m(), 6480);
 }
 
 #[test]
-#[should_panic(expected = "placeholder")]
-fn test_dvb_t2_short_rate_2_3_panics() {
-    let _code = LdpcCode::dvb_t2_short(CodeRate::Rate2_3);
+fn test_dvb_t2_short_rate_2_3_construction() {
+    let code = LdpcCode::dvb_t2_short(CodeRate::Rate2_3);
+    assert_eq!(code.n(), 16200);
+    assert_eq!(code.k(), 10800);
+    assert_eq!(code.m(), 5400);
 }
 
 #[test]
-#[should_panic(expected = "placeholder")]
-fn test_dvb_t2_short_rate_3_4_panics() {
-    let _code = LdpcCode::dvb_t2_short(CodeRate::Rate3_4);
+fn test_dvb_t2_short_rate_3_4_construction() {
+    let code = LdpcCode::dvb_t2_short(CodeRate::Rate3_4);
+    assert_eq!(code.n(), 16200);
+    assert_eq!(code.k(), 11880);
+    assert_eq!(code.m(), 4320);
 }
 
 #[test]
-#[should_panic(expected = "placeholder")]
-fn test_dvb_t2_short_rate_4_5_panics() {
-    let _code = LdpcCode::dvb_t2_short(CodeRate::Rate4_5);
+fn test_dvb_t2_short_rate_4_5_construction() {
+    let code = LdpcCode::dvb_t2_short(CodeRate::Rate4_5);
+    assert_eq!(code.n(), 16200);
+    assert_eq!(code.k(), 12600);
+    assert_eq!(code.m(), 3600);
 }
 
 #[test]
-#[should_panic(expected = "placeholder")]
-fn test_dvb_t2_short_rate_5_6_panics() {
-    let _code = LdpcCode::dvb_t2_short(CodeRate::Rate5_6);
+fn test_dvb_t2_short_rate_5_6_construction() {
+    let code = LdpcCode::dvb_t2_short(CodeRate::Rate5_6);
+    assert_eq!(code.n(), 16200);
+    assert_eq!(code.k(), 13320);
+    assert_eq!(code.m(), 2880);
 }

@@ -67,3 +67,130 @@ fn test_sparse_matvec() {
     // Row 2: x2 = 1
     assert!(y.get(2));
 }
+
+// ============================================================================
+// Deduplication Tests (from_coo_deduplicated)
+// ============================================================================
+
+#[test]
+fn test_sparse_from_coo_deduplicated_basic() {
+    // Test from SPARSE_MATRIX_REQUIREMENTS.md
+    let edges = vec![(0, 0), (0, 1), (0, 1), (1, 2)];
+    let matrix = SpBitMatrix::from_coo_deduplicated(2, 3, &edges);
+
+    let d = matrix.to_dense();
+    assert!(d.get(0, 0));
+    assert!(d.get(0, 1)); // NOT false (dedup, not XOR)
+    assert!(d.get(1, 2));
+
+    // Total number of edges (after dedup) should be 3
+    assert_eq!(matrix.nnz(), 3);
+}
+
+#[test]
+fn test_sparse_from_coo_deduplicated_vs_xor() {
+    // Demonstrate difference between XOR and dedup semantics
+    let edges = vec![(0, 1), (0, 1), (1, 2)];
+
+    // XOR: duplicates cancel
+    let xor_matrix = SpBitMatrix::from_coo(2, 3, &edges);
+    let xor_dense = xor_matrix.to_dense();
+    assert!(!xor_dense.get(0, 1)); // Canceled
+    assert_eq!(xor_matrix.nnz(), 1);
+
+    // Dedup: duplicates ignored (first wins)
+    let dedup_matrix = SpBitMatrix::from_coo_deduplicated(2, 3, &edges);
+    let dedup_dense = dedup_matrix.to_dense();
+    assert!(dedup_dense.get(0, 1)); // Kept
+    assert_eq!(dedup_matrix.nnz(), 2);
+}
+
+#[test]
+fn test_sparse_from_coo_deduplicated_empty() {
+    let edges: Vec<(usize, usize)> = vec![];
+    let matrix = SpBitMatrix::from_coo_deduplicated(3, 4, &edges);
+
+    assert_eq!(matrix.rows(), 3);
+    assert_eq!(matrix.cols(), 4);
+    assert_eq!(matrix.nnz(), 0);
+}
+
+#[test]
+fn test_sparse_from_coo_deduplicated_all_duplicates() {
+    // All entries are duplicates of (0, 0)
+    let edges = vec![(0, 0), (0, 0), (0, 0), (0, 0)];
+    let matrix = SpBitMatrix::from_coo_deduplicated(2, 2, &edges);
+
+    let d = matrix.to_dense();
+    assert!(d.get(0, 0));
+    assert_eq!(matrix.nnz(), 1);
+}
+
+#[test]
+fn test_sparse_from_coo_deduplicated_mixed() {
+    // Mix of unique and duplicate entries
+    let edges = vec![
+        (0, 0),
+        (0, 1),
+        (0, 1),
+        (0, 1), // 0,1 appears 3 times
+        (1, 0),
+        (1, 1),
+        (2, 2),
+        (2, 2), // 2,2 appears 2 times
+    ];
+    let matrix = SpBitMatrix::from_coo_deduplicated(3, 3, &edges);
+
+    let d = matrix.to_dense();
+    assert!(d.get(0, 0));
+    assert!(d.get(0, 1));
+    assert!(d.get(1, 0));
+    assert!(d.get(1, 1));
+    assert!(d.get(2, 2));
+    assert_eq!(matrix.nnz(), 5);
+}
+
+#[test]
+fn test_sparse_from_coo_deduplicated_unsorted_input() {
+    // Input not sorted - should still deduplicate correctly
+    let edges = vec![
+        (1, 2),
+        (0, 1),
+        (0, 1), // Duplicate
+        (0, 0),
+        (1, 2), // Duplicate
+    ];
+    let matrix = SpBitMatrix::from_coo_deduplicated(2, 3, &edges);
+
+    let d = matrix.to_dense();
+    assert!(d.get(0, 0));
+    assert!(d.get(0, 1));
+    assert!(d.get(1, 2));
+    assert_eq!(matrix.nnz(), 3);
+}
+
+#[test]
+fn test_sparse_from_coo_deduplicated_roundtrip_dense() {
+    // Deduplication should produce same result as from_dense
+    let mut dense = BitMatrix::zeros(3, 4);
+    dense.set(0, 1, true);
+    dense.set(0, 3, true);
+    dense.set(1, 1, true);
+    dense.set(2, 0, true);
+
+    // Build COO with duplicates
+    let edges = vec![
+        (0, 1),
+        (0, 1), // Duplicate
+        (0, 3),
+        (1, 1),
+        (1, 1),
+        (1, 1), // Triple
+        (2, 0),
+    ];
+
+    let from_coo = SpBitMatrix::from_coo_deduplicated(3, 4, &edges);
+    let from_dense = SpBitMatrix::from_dense(&dense);
+
+    assert_eq!(from_coo.to_dense(), from_dense.to_dense());
+}
