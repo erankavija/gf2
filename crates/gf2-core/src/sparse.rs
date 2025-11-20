@@ -143,6 +143,26 @@ impl SpBitMatrix {
     }
 
     /// Builds a CSR matrix from COO coordinates. Duplicates toggle (XOR) semantics.
+    ///
+    /// In GF(2), duplicate entries at the same (row, col) position cancel each other:
+    /// - Even number of duplicates → bit is 0 (cleared)
+    /// - Odd number of duplicates → bit is 1 (set)
+    ///
+    /// For LDPC matrices where duplicates are construction artifacts, use
+    /// [`from_coo_deduplicated`](Self::from_coo_deduplicated) instead.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::sparse::SpBitMatrix;
+    ///
+    /// // Two duplicates cancel via XOR
+    /// let edges = vec![(0, 1), (0, 1), (1, 2)];
+    /// let m = SpBitMatrix::from_coo(2, 3, &edges);
+    /// let d = m.to_dense();
+    /// assert_eq!(d.get(0, 1), false); // Canceled
+    /// assert_eq!(m.nnz(), 1);
+    /// ```
     pub fn from_coo(rows: usize, cols: usize, entries: &[(usize, usize)]) -> Self {
         // Collect columns per row
         let mut per_row: Vec<Vec<usize>> = vec![Vec::new(); rows];
@@ -171,6 +191,61 @@ impl SpBitMatrix {
                     }
                     i += count;
                 }
+            }
+            indptr.push(indices.len());
+        }
+
+        Self {
+            rows,
+            cols,
+            indptr,
+            indices,
+        }
+    }
+
+    /// Builds a CSR matrix from COO coordinates with deduplication.
+    ///
+    /// Duplicate entries at the same (row, col) position are ignored (first occurrence wins).
+    /// This is appropriate for LDPC parity-check matrices where duplicates are typically
+    /// construction artifacts from combining information bit connections with parity structure.
+    ///
+    /// For GF(2) XOR semantics where duplicates cancel, use [`from_coo`](Self::from_coo).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::sparse::SpBitMatrix;
+    ///
+    /// // Duplicates are ignored (dedup, not XOR)
+    /// let edges = vec![(0, 0), (0, 1), (0, 1), (1, 2)];
+    /// let m = SpBitMatrix::from_coo_deduplicated(2, 3, &edges);
+    /// let d = m.to_dense();
+    /// assert_eq!(d.get(0, 0), true);
+    /// assert_eq!(d.get(0, 1), true); // NOT false
+    /// assert_eq!(d.get(1, 2), true);
+    /// assert_eq!(m.nnz(), 3);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(nnz log(nnz/rows)) where nnz is the total number of input entries.
+    pub fn from_coo_deduplicated(rows: usize, cols: usize, entries: &[(usize, usize)]) -> Self {
+        let mut per_row: Vec<Vec<usize>> = vec![Vec::new(); rows];
+        for &(r, c) in entries {
+            assert!(r < rows, "row index {} out of bounds (rows={})", r, rows);
+            assert!(c < cols, "col index {} out of bounds (cols={})", c, cols);
+            per_row[r].push(c);
+        }
+
+        let mut indptr = Vec::with_capacity(rows + 1);
+        let mut indices = Vec::new();
+        indptr.push(0);
+
+        for row in per_row.iter_mut() {
+            if !row.is_empty() {
+                row.sort_unstable();
+                row.dedup();
+                indices.extend_from_slice(row);
             }
             indptr.push(indices.len());
         }
@@ -359,9 +434,34 @@ impl SpBitMatrixDual {
         Self { csr, csc }
     }
 
-    /// Creates a dual representation from COO coordinates.
+    /// Creates a dual representation from COO coordinates with XOR semantics.
+    ///
+    /// Duplicates cancel (even count → 0, odd count → 1).
+    /// For deduplication semantics, use [`from_coo_deduplicated`](Self::from_coo_deduplicated).
     pub fn from_coo(rows: usize, cols: usize, entries: &[(usize, usize)]) -> Self {
         let csr = SpBitMatrix::from_coo(rows, cols, entries);
+        let csc = csr.transpose();
+        Self { csr, csc }
+    }
+
+    /// Creates a dual representation from COO coordinates with deduplication.
+    ///
+    /// Duplicate entries are ignored (first occurrence wins). This is appropriate for
+    /// LDPC matrices where duplicates are construction artifacts.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::sparse::SpBitMatrixDual;
+    ///
+    /// let edges = vec![(0, 1), (0, 1), (1, 2)];
+    /// let dual = SpBitMatrixDual::from_coo_deduplicated(2, 3, &edges);
+    /// let d = dual.to_dense();
+    /// assert_eq!(d.get(0, 1), true); // NOT false (dedup, not XOR)
+    /// assert_eq!(dual.nnz(), 2);
+    /// ```
+    pub fn from_coo_deduplicated(rows: usize, cols: usize, entries: &[(usize, usize)]) -> Self {
+        let csr = SpBitMatrix::from_coo_deduplicated(rows, cols, entries);
         let csc = csr.transpose();
         Self { csr, csc }
     }
