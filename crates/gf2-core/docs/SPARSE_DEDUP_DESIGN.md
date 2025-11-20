@@ -1,4 +1,10 @@
-# Sparse Matrix Requirements for gf2-coding
+# Sparse Matrix Deduplication - Design Decision Document
+
+**Status**: ✅ Implemented (2025-11-20)
+
+This document captures the design decision and implementation of duplicate edge 
+handling in sparse matrix COO construction. It serves as historical context for 
+the API design choices.
 
 ## Duplicate Edge Handling in SpBitMatrixDual::from_coo
 
@@ -37,15 +43,21 @@ construction artifacts rather than intentional. In DVB-T2:
 
 Deduplication ensures the final matrix represents the intended structure.
 
-### Current Status
+## Implementation Decision
 
-**IMPLEMENTED** (2025-11-20): Deduplication support added to gf2-core.
+**IMPLEMENTED** (2025-11-20): Dual API approach chosen.
 
-The implementation provides two distinct methods:
-- `from_coo()`: XOR semantics (duplicates cancel, even count → 0)
-- `from_coo_deduplicated()`: Deduplication semantics (duplicates ignored, first wins)
+Rather than choosing between XOR or deduplication, both are provided:
 
-Both methods are available for `SpBitMatrix` and `SpBitMatrixDual`.
+1. **`from_coo()`**: XOR semantics (duplicates cancel, even count → 0)
+   - Mathematically correct for GF(2) operations
+   - Backward compatible with existing code
+   
+2. **`from_coo_deduplicated()`**: Deduplication semantics (first occurrence wins)
+   - Appropriate for LDPC construction where duplicates are artifacts
+   - Matches scipy/Eigen default behavior
+
+Both methods available for `SpBitMatrix` and `SpBitMatrixDual`.
 
 ### Implementation
 
@@ -69,16 +81,25 @@ Comprehensive tests added:
 
 All tests passing: `cargo test sparse` (28 tests across 3 test files)
 
-### Priority
+## Design Rationale
 
-**COMPLETED** - Feature implemented and tested.
+### Why Two Methods?
 
-### Recommendation
+1. **XOR semantics (`from_coo()`)**: 
+   - Mathematically principled for GF(2) algebra
+   - Useful for applications where duplicates have meaning
+   - Existing behavior preserved for compatibility
 
-**Deduplication preferred** over XOR for LDPC applications. Duplicate edges in 
-parity-check matrix are typically construction artifacts, not intentional.
+2. **Deduplication (`from_coo_deduplicated()`)**: 
+   - Practical for LDPC/construction use cases
+   - Matches industry standard libraries (scipy, Eigen)
+   - Explicit naming makes intent clear
 
-Most sparse matrix libraries (scipy, Eigen) deduplicate COO input by default.
+### Usage Guidance
+
+- **Use `from_coo_deduplicated()`** for LDPC matrices where duplicates are 
+  construction artifacts (e.g., DVB-T2, 5G LDPC)
+- **Use `from_coo()`** for general GF(2) operations where XOR semantics are desired
 
 ### Impact
 
