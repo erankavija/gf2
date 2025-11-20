@@ -18,7 +18,7 @@ fn validate_table(table: &[&[usize]], params: &DvbParams) {
         table.len() > 1 || table[0].len() > 1,
         "DVB-T2 table not yet implemented (placeholder detected)"
     );
-    
+
     assert_eq!(
         table.len(),
         params.num_info_blocks,
@@ -26,7 +26,7 @@ fn validate_table(table: &[&[usize]], params: &DvbParams) {
         params.num_info_blocks,
         table.len()
     );
-    
+
     // Validate all parity indices in range
     for (row_idx, row) in table.iter().enumerate() {
         for &parity_idx in row.iter() {
@@ -47,16 +47,16 @@ fn validate_table(table: &[&[usize]], params: &DvbParams) {
 ///
 /// 1. Information bit connections (from table):
 ///    For each info block i (table row i):
-///      For each base parity index p in table[i]:
-///        For each bit position j in block (0..Z-1):
-///          info_bit = i * Z + j
-///          parity_bit = (p + j * q) mod m
-///          Add edge: (parity_bit, info_bit)
+///    - For each base parity index p in table[i]:
+///      - For each bit position j in block (0..Z-1):
+///        - info_bit = i * Z + j
+///        - parity_bit = (p + j * q) mod m
+///        - Add edge: (parity_bit, info_bit)
 ///
 /// 2. Dual-diagonal parity structure:
 ///    For each parity bit p in [0, m):
-///      Add edge (p, k + p)              // Diagonal
-///      Add edge ((p-1) mod m, k + p)    // Sub-diagonal (wraps at p=0)
+///    - Add edge (p, k + p)              // Diagonal
+///    - Add edge ((p-1) mod m, k + p)    // Sub-diagonal (wraps at p=0)
 ///
 /// # Arguments
 ///
@@ -73,13 +73,13 @@ fn validate_table(table: &[&[usize]], params: &DvbParams) {
 /// Panics if table validation fails (see validate_table).
 pub fn build_dvb_edges(table: &[&[usize]], params: &DvbParams) -> Vec<(usize, usize)> {
     validate_table(table, params);
-    
+
     let mut edges = Vec::new();
     let z = params.expansion_factor;
     let q = params.step_size;
     let m = params.m;
     let k = params.k;
-    
+
     // 1. Information bit connections from table
     for (block_idx, base_indices) in table.iter().enumerate() {
         for &base_parity in base_indices.iter() {
@@ -90,17 +90,17 @@ pub fn build_dvb_edges(table: &[&[usize]], params: &DvbParams) -> Vec<(usize, us
             }
         }
     }
-    
+
     // 2. Dual-diagonal parity structure
     for p in 0..m {
         // Diagonal: check p connected to variable k+p
         edges.push((p, k + p));
-        
+
         // Sub-diagonal: check (p-1) mod m connected to variable k+p
         let prev_check = if p == 0 { m - 1 } else { p - 1 };
         edges.push((prev_check, k + p));
     }
-    
+
     edges
 }
 
@@ -133,10 +133,9 @@ mod tests {
         // Create table with 20 rows but invalid parity index
         const BAD_ROW: &[usize] = &[10000]; // Way out of range (m = 9000)
         let table: &[&[usize]] = &[
-            BAD_ROW, BAD_ROW, BAD_ROW, BAD_ROW, BAD_ROW,
-            BAD_ROW, BAD_ROW, BAD_ROW, BAD_ROW, BAD_ROW,
-            BAD_ROW, BAD_ROW, BAD_ROW, BAD_ROW, BAD_ROW,
-            BAD_ROW, BAD_ROW, BAD_ROW, BAD_ROW, BAD_ROW,
+            BAD_ROW, BAD_ROW, BAD_ROW, BAD_ROW, BAD_ROW, BAD_ROW, BAD_ROW, BAD_ROW, BAD_ROW,
+            BAD_ROW, BAD_ROW, BAD_ROW, BAD_ROW, BAD_ROW, BAD_ROW, BAD_ROW, BAD_ROW, BAD_ROW,
+            BAD_ROW, BAD_ROW,
         ];
         validate_table(table, &params);
     }
@@ -151,7 +150,7 @@ mod tests {
             &[0, 2], // Block 0: bits 0,1,2
             &[1],    // Block 1: bits 3,4,5
         ];
-        
+
         let params = DvbParams {
             n: 9,
             k: 6,
@@ -160,9 +159,9 @@ mod tests {
             expansion_factor: 3,
             num_info_blocks: 2,
         };
-        
+
         let edges = build_dvb_edges(table, &params);
-        
+
         // Expected edges from info bits:
         // Block 0, base 0: (0+0*1)%3=0 -> (0,0), (0+1*1)%3=1 -> (1,1), (0+2*1)%3=2 -> (2,2)
         // Block 0, base 2: (2+0*1)%3=2 -> (2,0), (2+1*1)%3=0 -> (0,1), (2+2*1)%3=1 -> (1,2)
@@ -172,16 +171,16 @@ mod tests {
         // p=0: (0,6), (2,6)  [prev = (0-1)%3 = 2]
         // p=1: (1,7), (0,7)
         // p=2: (2,8), (1,8)
-        
+
         // Total: 9 info edges + 6 parity edges = 15 edges
         assert_eq!(edges.len(), 15);
-        
+
         // Check some specific info edges
         assert!(edges.contains(&(0, 0)));
         assert!(edges.contains(&(1, 1)));
         assert!(edges.contains(&(2, 2)));
         assert!(edges.contains(&(1, 3)));
-        
+
         // Check parity edges
         assert!(edges.contains(&(0, 6))); // Diagonal
         assert!(edges.contains(&(2, 6))); // Sub-diagonal wrap
@@ -190,28 +189,29 @@ mod tests {
     #[test]
     fn test_normal_rate_1_2_table() {
         use super::super::dvb_t2_matrices::NORMAL_RATE_1_2_TABLE;
-        
+
         let params = DvbParams::for_code(FrameSize::Normal, CodeRate::Rate1_2);
         let edges = build_dvb_edges(NORMAL_RATE_1_2_TABLE, &params);
-        
+
         // Verify we got edges
-        assert!(edges.len() > 0);
-        
+        assert!(!edges.is_empty());
+
         // Check all edges are in valid range
         for (check, var) in &edges {
             assert!(*check < params.m, "Check index {} out of range", check);
             assert!(*var < params.n, "Variable index {} out of range", var);
         }
-        
+
         // Expected edge count:
         // Info edges: sum of (row_length * Z) for all rows
         // Parity edges: 2 * m
-        let info_edge_count: usize = NORMAL_RATE_1_2_TABLE.iter()
+        let info_edge_count: usize = NORMAL_RATE_1_2_TABLE
+            .iter()
             .map(|row| row.len() * params.expansion_factor)
             .sum();
         let parity_edge_count = 2 * params.m;
         let expected_total = info_edge_count + parity_edge_count;
-        
+
         assert_eq!(edges.len(), expected_total);
     }
 
@@ -226,10 +226,10 @@ mod tests {
             expansion_factor: 1,
             num_info_blocks: 5,
         };
-        
+
         let table: &[&[usize]] = &[&[0], &[0], &[0], &[0], &[0]]; // Minimal info
         let edges = build_dvb_edges(table, &params);
-        
+
         // Check parity edges
         assert!(edges.contains(&(0, 5))); // Diagonal p=0
         assert!(edges.contains(&(2, 5))); // Sub-diagonal p=0, prev=(0-1)%3=2

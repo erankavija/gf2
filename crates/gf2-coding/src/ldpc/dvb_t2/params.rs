@@ -55,7 +55,7 @@ impl DvbParams {
     /// ```
     pub fn for_code(frame_size: FrameSize, rate: CodeRate) -> Self {
         let expansion_factor = 360;
-        
+
         let (n, k, step_size) = match (frame_size, rate) {
             (FrameSize::Normal, CodeRate::Rate1_2) => (64800, 32400, 90),
             (FrameSize::Normal, CodeRate::Rate3_5) => (64800, 38880, 96),
@@ -70,10 +70,10 @@ impl DvbParams {
             (FrameSize::Short, CodeRate::Rate4_5) => (16200, 12600, 9),
             (FrameSize::Short, CodeRate::Rate5_6) => (16200, 13320, 8),
         };
-        
+
         let m = n - k;
         let num_info_blocks = k / expansion_factor;
-        
+
         Self {
             n,
             k,
@@ -98,7 +98,7 @@ mod tests {
         assert_eq!(params.step_size, 90);
         assert_eq!(params.expansion_factor, 360);
         assert_eq!(params.num_info_blocks, 90);
-        
+
         // Verify invariants
         assert_eq!(params.n, params.k + params.m);
         assert_eq!(params.k, params.num_info_blocks * params.expansion_factor);
@@ -113,7 +113,7 @@ mod tests {
         assert_eq!(params.step_size, 96);
         assert_eq!(params.expansion_factor, 360);
         assert_eq!(params.num_info_blocks, 108);
-        
+
         assert_eq!(params.n, params.k + params.m);
         assert_eq!(params.k, params.num_info_blocks * params.expansion_factor);
     }
@@ -127,7 +127,7 @@ mod tests {
         assert_eq!(params.step_size, 60);
         assert_eq!(params.expansion_factor, 360);
         assert_eq!(params.num_info_blocks, 120);
-        
+
         assert_eq!(params.n, params.k + params.m);
         assert_eq!(params.k, params.num_info_blocks * params.expansion_factor);
     }
@@ -141,7 +141,7 @@ mod tests {
         assert_eq!(params.step_size, 45);
         assert_eq!(params.expansion_factor, 360);
         assert_eq!(params.num_info_blocks, 135);
-        
+
         assert_eq!(params.n, params.k + params.m);
         assert_eq!(params.k, params.num_info_blocks * params.expansion_factor);
     }
@@ -155,7 +155,7 @@ mod tests {
         assert_eq!(params.step_size, 36);
         assert_eq!(params.expansion_factor, 360);
         assert_eq!(params.num_info_blocks, 144);
-        
+
         assert_eq!(params.n, params.k + params.m);
         assert_eq!(params.k, params.num_info_blocks * params.expansion_factor);
     }
@@ -169,7 +169,7 @@ mod tests {
         assert_eq!(params.step_size, 30);
         assert_eq!(params.expansion_factor, 360);
         assert_eq!(params.num_info_blocks, 150);
-        
+
         assert_eq!(params.n, params.k + params.m);
         assert_eq!(params.k, params.num_info_blocks * params.expansion_factor);
     }
@@ -183,7 +183,7 @@ mod tests {
         assert_eq!(params.step_size, 25);
         assert_eq!(params.expansion_factor, 360);
         assert_eq!(params.num_info_blocks, 20);
-        
+
         assert_eq!(params.n, params.k + params.m);
         assert_eq!(params.k, params.num_info_blocks * params.expansion_factor);
     }
@@ -197,7 +197,7 @@ mod tests {
         assert_eq!(params.step_size, 27);
         assert_eq!(params.expansion_factor, 360);
         assert_eq!(params.num_info_blocks, 27);
-        
+
         assert_eq!(params.n, params.k + params.m);
         assert_eq!(params.k, params.num_info_blocks * params.expansion_factor);
     }
@@ -211,7 +211,7 @@ mod tests {
         assert_eq!(params.step_size, 15);
         assert_eq!(params.expansion_factor, 360);
         assert_eq!(params.num_info_blocks, 30);
-        
+
         assert_eq!(params.n, params.k + params.m);
         assert_eq!(params.k, params.num_info_blocks * params.expansion_factor);
     }
@@ -225,7 +225,7 @@ mod tests {
         assert_eq!(params.step_size, 12);
         assert_eq!(params.expansion_factor, 360);
         assert_eq!(params.num_info_blocks, 33);
-        
+
         assert_eq!(params.n, params.k + params.m);
         assert_eq!(params.k, params.num_info_blocks * params.expansion_factor);
     }
@@ -239,7 +239,7 @@ mod tests {
         assert_eq!(params.step_size, 9);
         assert_eq!(params.expansion_factor, 360);
         assert_eq!(params.num_info_blocks, 35);
-        
+
         assert_eq!(params.n, params.k + params.m);
         assert_eq!(params.k, params.num_info_blocks * params.expansion_factor);
     }
@@ -253,7 +253,7 @@ mod tests {
         assert_eq!(params.step_size, 8);
         assert_eq!(params.expansion_factor, 360);
         assert_eq!(params.num_info_blocks, 37);
-        
+
         assert_eq!(params.n, params.k + params.m);
         assert_eq!(params.k, params.num_info_blocks * params.expansion_factor);
     }

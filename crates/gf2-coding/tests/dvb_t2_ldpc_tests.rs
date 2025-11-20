@@ -9,7 +9,7 @@ use gf2_core::BitVec;
 #[test]
 fn test_dvb_t2_normal_rate_1_2_construction() {
     let code = LdpcCode::dvb_t2_normal(CodeRate::Rate1_2);
-    
+
     assert_eq!(code.n(), 64800);
     assert_eq!(code.m(), 32400);
     assert_eq!(code.k(), 32400);
@@ -20,7 +20,7 @@ fn test_dvb_t2_normal_rate_1_2_construction() {
 fn test_dvb_t2_normal_rate_1_2_zero_codeword() {
     let code = LdpcCode::dvb_t2_normal(CodeRate::Rate1_2);
     let zero_cw = BitVec::zeros(64800);
-    
+
     assert!(code.is_valid_codeword(&zero_cw));
 }
 

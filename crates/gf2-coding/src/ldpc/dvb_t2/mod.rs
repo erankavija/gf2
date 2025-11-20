@@ -20,8 +20,8 @@
 //! assert_eq!(code.n(), 64800);
 //! ```
 
-pub(crate) mod params;
 pub(crate) mod builder;
 pub(crate) mod dvb_t2_matrices;
+pub(crate) mod params;
 
 pub use params::{DvbParams, FrameSize};

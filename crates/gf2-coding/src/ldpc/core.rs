@@ -201,7 +201,7 @@ impl LdpcCode {
     /// ETSI EN 302 755 V1.4.1 (DVB-T2 standard)
     pub fn dvb_t2_short(rate: crate::bch::CodeRate) -> Self {
         use crate::ldpc::dvb_t2::{builder, dvb_t2_matrices, params};
-        
+
         let params = params::DvbParams::for_code(params::FrameSize::Short, rate);
         let table = match rate {
             crate::bch::CodeRate::Rate1_2 => dvb_t2_matrices::SHORT_RATE_1_2_TABLE,
@@ -211,11 +211,11 @@ impl LdpcCode {
             crate::bch::CodeRate::Rate4_5 => dvb_t2_matrices::SHORT_RATE_4_5_TABLE,
             crate::bch::CodeRate::Rate5_6 => dvb_t2_matrices::SHORT_RATE_5_6_TABLE,
         };
-        
+
         let edges = builder::build_dvb_edges(table, &params);
         Self::from_edges(params.m, params.n, &edges)
     }
-    
+
     /// Creates a DVB-T2 normal frame LDPC code.
     ///
     /// Normal frames have n=64800 bits with expansion factor Z=360.
@@ -244,7 +244,7 @@ impl LdpcCode {
     /// ETSI EN 302 755 V1.4.1 (DVB-T2 standard)
     pub fn dvb_t2_normal(rate: crate::bch::CodeRate) -> Self {
         use crate::ldpc::dvb_t2::{builder, dvb_t2_matrices, params};
-        
+
         let params = params::DvbParams::for_code(params::FrameSize::Normal, rate);
         let table = match rate {
             crate::bch::CodeRate::Rate1_2 => dvb_t2_matrices::NORMAL_RATE_1_2_TABLE,
@@ -254,7 +254,7 @@ impl LdpcCode {
             crate::bch::CodeRate::Rate4_5 => dvb_t2_matrices::NORMAL_RATE_4_5_TABLE,
             crate::bch::CodeRate::Rate5_6 => dvb_t2_matrices::NORMAL_RATE_5_6_TABLE,
         };
-        
+
         let edges = builder::build_dvb_edges(table, &params);
         Self::from_edges(params.m, params.n, &edges)
     }

@@ -22,7 +22,7 @@ fn main() {
 
 #[cfg(feature = "visualization")]
 fn main() {
-    use gf2_coding::ldpc::{LdpcCode, QuasiCyclicLdpc};
+    use gf2_coding::ldpc::LdpcCode;
     use gf2_coding::traits::GeneratorMatrixAccess;
     use gf2_coding::CodeRate;
 
@@ -31,8 +31,7 @@ fn main() {
 
     // Example 1: DVB-T2 Short Frame (Rate 1/2)
     println!("Example 1: DVB-T2 short frame LDPC code (rate 1/2)...");
-    let qc1 = QuasiCyclicLdpc::dvb_t2_short(CodeRate::Rate1_2);
-    let code1 = LdpcCode::from_quasi_cyclic(&qc1);
+    let code1 = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
 
     println!("  Code parameters:");
     println!("    n (codeword length):  {}", code1.n());
@@ -55,8 +54,7 @@ fn main() {
 
     // Example 2: DVB-T2 Short Frame (Rate 2/3)
     println!("Example 2: DVB-T2 short frame LDPC code (rate 2/3)...");
-    let qc2 = QuasiCyclicLdpc::dvb_t2_short(CodeRate::Rate2_3);
-    let code2 = LdpcCode::from_quasi_cyclic(&qc2);
+    let code2 = LdpcCode::dvb_t2_short(CodeRate::Rate2_3);
 
     println!("  Code parameters:");
     println!("    n (codeword length):  {}", code2.n());
@@ -79,8 +77,7 @@ fn main() {
 
     // Example 3: DVB-T2 Short Frame (Rate 3/4)
     println!("Example 3: DVB-T2 short frame LDPC code (rate 3/4)...");
-    let qc3 = QuasiCyclicLdpc::dvb_t2_short(CodeRate::Rate3_4);
-    let code3 = LdpcCode::from_quasi_cyclic(&qc3);
+    let code3 = LdpcCode::dvb_t2_short(CodeRate::Rate3_4);
 
     println!("  Code parameters:");
     println!("    n (codeword length):  {}", code3.n());
