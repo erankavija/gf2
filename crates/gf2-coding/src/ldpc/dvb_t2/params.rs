@@ -58,16 +58,16 @@ impl DvbParams {
 
         let (n, k, step_size) = match (frame_size, rate) {
             (FrameSize::Normal, CodeRate::Rate1_2) => (64800, 32400, 90),
-            (FrameSize::Normal, CodeRate::Rate3_5) => (64800, 38880, 96),
+            (FrameSize::Normal, CodeRate::Rate3_5) => (64800, 38880, 72),
             (FrameSize::Normal, CodeRate::Rate2_3) => (64800, 43200, 60),
             (FrameSize::Normal, CodeRate::Rate3_4) => (64800, 48600, 45),
             (FrameSize::Normal, CodeRate::Rate4_5) => (64800, 51840, 36),
             (FrameSize::Normal, CodeRate::Rate5_6) => (64800, 54000, 30),
             (FrameSize::Short, CodeRate::Rate1_2) => (16200, 7200, 25),
-            (FrameSize::Short, CodeRate::Rate3_5) => (16200, 9720, 27),
+            (FrameSize::Short, CodeRate::Rate3_5) => (16200, 9720, 18),
             (FrameSize::Short, CodeRate::Rate2_3) => (16200, 10800, 15),
             (FrameSize::Short, CodeRate::Rate3_4) => (16200, 11880, 12),
-            (FrameSize::Short, CodeRate::Rate4_5) => (16200, 12600, 9),
+            (FrameSize::Short, CodeRate::Rate4_5) => (16200, 12600, 10),
             (FrameSize::Short, CodeRate::Rate5_6) => (16200, 13320, 8),
         };
 
@@ -110,7 +110,7 @@ mod tests {
         assert_eq!(params.n, 64800);
         assert_eq!(params.k, 38880);
         assert_eq!(params.m, 25920);
-        assert_eq!(params.step_size, 96);
+        assert_eq!(params.step_size, 72);
         assert_eq!(params.expansion_factor, 360);
         assert_eq!(params.num_info_blocks, 108);
 
@@ -194,7 +194,7 @@ mod tests {
         assert_eq!(params.n, 16200);
         assert_eq!(params.k, 9720);
         assert_eq!(params.m, 6480);
-        assert_eq!(params.step_size, 27);
+        assert_eq!(params.step_size, 18);
         assert_eq!(params.expansion_factor, 360);
         assert_eq!(params.num_info_blocks, 27);
 
@@ -236,7 +236,7 @@ mod tests {
         assert_eq!(params.n, 16200);
         assert_eq!(params.k, 12600);
         assert_eq!(params.m, 3600);
-        assert_eq!(params.step_size, 9);
+        assert_eq!(params.step_size, 10);
         assert_eq!(params.expansion_factor, 360);
         assert_eq!(params.num_info_blocks, 35);
 

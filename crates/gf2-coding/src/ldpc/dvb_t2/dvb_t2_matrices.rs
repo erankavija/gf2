@@ -20,6 +20,7 @@
 //! # Code Rates
 //!
 //! Both frame types support 6 code rates: 1/2, 3/5, 2/3, 3/4, 4/5, 5/6
+//! Note that for short frames, the effective code rates are somewhat different.
 //!
 //! # References
 //!
@@ -51,7 +52,7 @@ pub const SHORT_RATE_1_2_TABLE: &[&[usize]] = &[
     &[14, 7411, 3450],
 ];
 
-/// DVB-T2 Short frame Rate 3/5 table (N=16200, K=9720, q=27, Z=360)
+/// DVB-T2 Short frame Rate 3/5 table (N=16200, K=9720, q=18, Z=360)
 #[rustfmt::skip]
 pub const SHORT_RATE_3_5_TABLE: &[&[usize]] = &[
     &[71, 1478, 1901, 2240, 2649, 2725, 3592, 3708, 3965, 4080, 5733, 6198],
@@ -156,7 +157,7 @@ pub const SHORT_RATE_3_4_TABLE: &[&[usize]] = &[
     &[11, 1415, 2808],
 ];
 
-/// DVB-T2 Short frame Rate 4/5 table (N=16200, K=12600, q=9, Z=360)
+/// DVB-T2 Short frame Rate 4/5 table (N=16200, K=12600, q=10, Z=360)
 pub const SHORT_RATE_4_5_TABLE: &[&[usize]] = &[
     &[5, 896, 1565],
     &[6, 2493, 184],
@@ -237,19 +238,7 @@ pub const SHORT_RATE_5_6_TABLE: &[&[usize]] = &[
     &[7, 2644, 1704],
 ];
 
-// Normal frames - n=64800, Z=360
-
 /// DVB-T2 Normal frame Rate 1/2 table (N=64800, K=32400, q=90, Z=360)
-///
-/// From ETSI EN 302 755 Table A.1.
-/// Contains 90 rows (one per 360-bit information block).
-/// Row i contains base parity indices for information block i.
-///
-/// For information bit at absolute position (i*360 + j) where j ∈ [0, 360):
-///   Parity connections are at: (base_index + j * q) mod m
-///   where q=90 and m=32400.
-///
-/// All indices must satisfy: 0 <= index < m (32400)
 pub const NORMAL_RATE_1_2_TABLE: &[&[usize]] = &[
     &[54, 9318, 14392, 27561, 26909, 10219, 2534, 8597],
     &[55, 7263, 4635, 2530, 28130, 3033, 23830, 3651],
@@ -343,7 +332,7 @@ pub const NORMAL_RATE_1_2_TABLE: &[&[usize]] = &[
     &[53, 19267, 20113],
 ];
 
-/// DVB-T2 Normal frame Rate 3/5 table (N=64800, K=38880, q=96, Z=360)
+/// DVB-T2 Normal frame Rate 3/5 table (N=64800, K=38880, q=72, Z=360)
 #[rustfmt::skip]
 pub const NORMAL_RATE_3_5_TABLE: &[&[usize]] = &[
     &[22422, 10282, 11626, 19997, 11161, 2922, 3122, 99, 5625, 17064, 8270, 179],
