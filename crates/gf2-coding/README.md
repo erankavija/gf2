@@ -51,7 +51,13 @@
 ### LDPC Codes
 - Sparse parity-check matrix representation (using gf2-core SparseMatrixDual)
 - Regular LDPC code construction
-- **Quasi-cyclic (QC) LDPC framework** for DVB-T2, 5G NR, WiFi standards ✅
+- **DVB-T2 LDPC codes** from ETSI EN 302 755 standard tables ✅
+  - Direct sparse construction (not pure quasi-cyclic)
+  - Dual-diagonal parity structure for efficient encoding
+  - Normal (n=64800) and Short (n=16200) frames
+  - All 6 code rates: 1/2, 3/5, 2/3, 3/4, 4/5, 5/6
+  - Rate 1/2 Normal frame fully implemented
+- **Quasi-cyclic (QC) LDPC framework** for 5G NR, WiFi standards ✅
 - Belief propagation decoder with min-sum approximation
 - Iterative soft-decision decoding with early stopping
 - Syndrome-based convergence detection
@@ -140,6 +146,26 @@ let decoded = decoder.decode_symbols(&codeword);
 assert_eq!(&decoded[..message.len()], &message[..]);
 ```
 
+### DVB-T2 LDPC Example
+
+```rust
+use gf2_coding::ldpc::LdpcCode;
+use gf2_coding::CodeRate;
+use gf2_core::BitVec;
+
+// Create DVB-T2 normal frame, rate 1/2 LDPC code
+let code = LdpcCode::dvb_t2_normal(CodeRate::Rate1_2);
+assert_eq!(code.n(), 64800);  // Codeword length
+assert_eq!(code.k(), 32400);  // Information bits
+assert_eq!(code.rate(), 0.5);
+
+// Verify zero codeword (all codes contain all-zeros)
+let zero = BitVec::zeros(64800);
+assert!(code.is_valid_codeword(&zero));
+```
+
+DVB-T2 codes are constructed directly from ETSI EN 302 755 standard tables with dual-diagonal parity structure. Currently, only Normal Rate 1/2 is fully implemented; other configurations require table data entry.
+
 ## Examples
 
 Run the educational examples:
@@ -151,7 +177,10 @@ cargo run --example hamming_7_4
 # NASA convolutional code tutorial with error correction
 cargo run --example nasa_rate_half_k3
 
-# Quasi-cyclic LDPC codes (DVB-T2, 5G NR foundation)
+# DVB-T2 LDPC codes from standard tables
+cargo run --example dvb_t2_ldpc_basic
+
+# Quasi-cyclic LDPC codes (5G NR foundation)
 cargo run --example qc_ldpc_demo
 
 # LLR operations for LDPC/turbo codes
