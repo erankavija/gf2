@@ -4,7 +4,7 @@
 //! for creating LDPC codes conforming to various industry standards.
 
 mod core;
-mod dvb_t2;
+pub mod dvb_t2;
 mod nr_5g;
 
 // Re-export core types and functions

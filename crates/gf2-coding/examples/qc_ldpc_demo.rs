@@ -57,17 +57,16 @@ fn main() {
     println!("   Forms a right-shifted identity pattern\n");
 
     // Example 3: DVB-T2 placeholder
-    println!("3. DVB-T2 LDPC Code (Placeholder)");
+    println!("3. DVB-T2 LDPC Code");
 
     use gf2_coding::CodeRate;
-    let dvb_qc = QuasiCyclicLdpc::dvb_t2_normal(CodeRate::Rate1_2);
-    let dvb_code = LdpcCode::from_quasi_cyclic(&dvb_qc);
+    let dvb_code = LdpcCode::dvb_t2_normal(CodeRate::Rate1_2);
 
     println!("   DVB-T2 Normal Frame, Rate 1/2:");
     println!("   - Codeword length: {}", dvb_code.n());
-    println!("   - Expansion factor: {}", dvb_qc.expansion_factor());
+    println!("   - Expansion factor: 360");
     println!("   - Code rate: {:.3}", dvb_code.rate());
-    println!("   Note: This is a placeholder. Full implementation requires");
+    println!("   Note: Built from ETSI EN 302 755 standard tables.");
     println!("         base matrices from ETSI EN 302 755.\n");
 
     // Example 4: Code structure validation
