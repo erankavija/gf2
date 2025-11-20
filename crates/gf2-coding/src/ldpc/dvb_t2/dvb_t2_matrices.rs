@@ -28,37 +28,37 @@
 //! television broadcasting system (DVB-T2)
 
 /// DVB-T2 Short frame Rate 1/2 table (N=16200, K=7200, q=25, Z=360)
-/// 
+///
 /// TODO: Add table from ETSI EN 302 755 (short frame tables)
 /// Expected: 20 rows (info blocks), varying column weights
 pub const SHORT_RATE_1_2_TABLE: &[&[usize]] = &[&[0]];
 
 /// DVB-T2 Short frame Rate 3/5 table (N=16200, K=9720, q=27, Z=360)
-/// 
+///
 /// TODO: Add table from ETSI EN 302 755 (short frame tables)
 /// Expected: 27 rows (info blocks), varying column weights
 pub const SHORT_RATE_3_5_TABLE: &[&[usize]] = &[&[0]];
 
 /// DVB-T2 Short frame Rate 2/3 table (N=16200, K=10800, q=15, Z=360)
-/// 
+///
 /// TODO: Add table from ETSI EN 302 755 (short frame tables)
 /// Expected: 30 rows (info blocks), varying column weights
 pub const SHORT_RATE_2_3_TABLE: &[&[usize]] = &[&[0]];
 
 /// DVB-T2 Short frame Rate 3/4 table (N=16200, K=11880, q=12, Z=360)
-/// 
+///
 /// TODO: Add table from ETSI EN 302 755 (short frame tables)
 /// Expected: 33 rows (info blocks), varying column weights
 pub const SHORT_RATE_3_4_TABLE: &[&[usize]] = &[&[0]];
 
 /// DVB-T2 Short frame Rate 4/5 table (N=16200, K=12600, q=9, Z=360)
-/// 
+///
 /// TODO: Add table from ETSI EN 302 755 (short frame tables)
 /// Expected: 35 rows (info blocks), varying column weights
 pub const SHORT_RATE_4_5_TABLE: &[&[usize]] = &[&[0]];
 
 /// DVB-T2 Short frame Rate 5/6 table (N=16200, K=13320, q=8, Z=360)
-/// 
+///
 /// TODO: Add table from ETSI EN 302 755 (short frame tables)
 /// Expected: 37 rows (info blocks), varying column weights
 pub const SHORT_RATE_5_6_TABLE: &[&[usize]] = &[&[0]];
@@ -66,15 +66,15 @@ pub const SHORT_RATE_5_6_TABLE: &[&[usize]] = &[&[0]];
 // Normal frames - n=64800, Z=360
 
 /// DVB-T2 Normal frame Rate 1/2 table (N=64800, K=32400, q=90, Z=360)
-/// 
+///
 /// From ETSI EN 302 755 Table A.1.
 /// Contains 90 rows (one per 360-bit information block).
 /// Row i contains base parity indices for information block i.
-/// 
+///
 /// For information bit at absolute position (i*360 + j) where j ∈ [0, 360):
 ///   Parity connections are at: (base_index + j * q) mod m
 ///   where q=90 and m=32400.
-/// 
+///
 /// All indices must satisfy: 0 <= index < m (32400)
 pub const NORMAL_RATE_1_2_TABLE: &[&[usize]] = &[
     &[54, 9318, 14392, 27561, 26909, 10219, 2534, 8597],
@@ -170,31 +170,31 @@ pub const NORMAL_RATE_1_2_TABLE: &[&[usize]] = &[
 ];
 
 /// DVB-T2 Normal frame Rate 3/5 table (N=64800, K=38880, q=96, Z=360)
-/// 
+///
 /// TODO: Add table from ETSI EN 302 755 Table A.2
 /// Expected: 108 rows (info blocks), varying column weights
 pub const NORMAL_RATE_3_5_TABLE: &[&[usize]] = &[&[0]];
 
 /// DVB-T2 Normal frame Rate 2/3 table (N=64800, K=43200, q=60, Z=360)
-/// 
+///
 /// TODO: Add table from ETSI EN 302 755 Table A.3
 /// Expected: 120 rows (info blocks), varying column weights
 pub const NORMAL_RATE_2_3_TABLE: &[&[usize]] = &[&[0]];
 
 /// DVB-T2 Normal frame Rate 3/4 table (N=64800, K=48600, q=45, Z=360)
-/// 
+///
 /// TODO: Add table from ETSI EN 302 755 Table A.4
 /// Expected: 135 rows (info blocks), varying column weights
 pub const NORMAL_RATE_3_4_TABLE: &[&[usize]] = &[&[0]];
 
 /// DVB-T2 Normal frame Rate 4/5 table (N=64800, K=51840, q=36, Z=360)
-/// 
+///
 /// TODO: Add table from ETSI EN 302 755 Table A.5
 /// Expected: 144 rows (info blocks), varying column weights
 pub const NORMAL_RATE_4_5_TABLE: &[&[usize]] = &[&[0]];
 
 /// DVB-T2 Normal frame Rate 5/6 table (N=64800, K=54000, q=30, Z=360)
-/// 
+///
 /// TODO: Add table from ETSI EN 302 755 Table A.6
 /// Expected: 150 rows (info blocks), varying column weights
 pub const NORMAL_RATE_5_6_TABLE: &[&[usize]] = &[&[0]];

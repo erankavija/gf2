@@ -10,7 +10,7 @@ use gf2_core::BitVec;
 fn main() {
     println!("DVB-T2 LDPC Code Examples\n");
     println!("=========================\n");
-    
+
     // Normal frame rate 1/2
     println!("Normal Frame Rate 1/2:");
     let code = LdpcCode::dvb_t2_normal(CodeRate::Rate1_2);
@@ -18,12 +18,12 @@ fn main() {
     println!("  Information bits k: {}", code.k());
     println!("  Parity bits m: {}", code.m());
     println!("  Code rate: {:.3}", code.rate());
-    
+
     // Verify zero codeword
     let zero_cw = BitVec::zeros(code.n());
     assert!(code.is_valid_codeword(&zero_cw));
     println!("  ✓ Zero codeword passes syndrome check\n");
-    
+
     // Show other configurations (placeholders)
     println!("Other DVB-T2 Configurations:");
     println!("  Normal Rate 3/5: n=64800, k=38880 (placeholder)");
