@@ -53,15 +53,15 @@ impl DvbBchParams {
     /// ```
     pub fn for_code(frame_size: FrameSize, rate: CodeRate) -> Self {
         let (n, k, t, field_m, primitive_poly) = match (frame_size, rate) {
-            // Short frames: GF(2^14), x^14 + x^5 + 1, t=12 for all rates
+            // Short frames: GF(2^14), x^14 + x^5 + x^3 + x + 1, t=12 for all rates
             // n = k_ldpc (BCH output = LDPC input), k = Kbch, m = BCH parity = 168
             // From ETSI EN 302 755 Table 6a
-            (FrameSize::Short, CodeRate::Rate1_2) => (7200, 7032, 12, 14, 0b100000000100001),
-            (FrameSize::Short, CodeRate::Rate3_5) => (9720, 9552, 12, 14, 0b100000000100001),
-            (FrameSize::Short, CodeRate::Rate2_3) => (10800, 10632, 12, 14, 0b100000000100001),
-            (FrameSize::Short, CodeRate::Rate3_4) => (11880, 11712, 12, 14, 0b100000000100001),
-            (FrameSize::Short, CodeRate::Rate4_5) => (12600, 12432, 12, 14, 0b100000000100001),
-            (FrameSize::Short, CodeRate::Rate5_6) => (13320, 13152, 12, 14, 0b100000000100001),
+            (FrameSize::Short, CodeRate::Rate1_2) => (7200, 7032, 12, 14, 0b100000000101011),
+            (FrameSize::Short, CodeRate::Rate3_5) => (9720, 9552, 12, 14, 0b100000000101011),
+            (FrameSize::Short, CodeRate::Rate2_3) => (10800, 10632, 12, 14, 0b100000000101011),
+            (FrameSize::Short, CodeRate::Rate3_4) => (11880, 11712, 12, 14, 0b100000000101011),
+            (FrameSize::Short, CodeRate::Rate4_5) => (12600, 12432, 12, 14, 0b100000000101011),
+            (FrameSize::Short, CodeRate::Rate5_6) => (13320, 13152, 12, 14, 0b100000000101011),
 
             // Normal frames: GF(2^16), x^16 + x^5 + x^3 + x^2 + 1, t=12 or t=10
             // n = k_ldpc (BCH output = LDPC input), k = Kbch, m = BCH parity = 192 or 160

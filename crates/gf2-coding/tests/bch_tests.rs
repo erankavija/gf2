@@ -1,5 +1,6 @@
 //! Integration tests for BCH codes.
 
+use gf2_coding::bch::dvb_t2::FrameSize;
 use gf2_coding::bch::{BchCode, BchDecoder, BchEncoder, CodeRate};
 use gf2_coding::traits::BlockEncoder;
 use gf2_core::gf2m::{Gf2mElement, Gf2mField, Gf2mPoly};
@@ -88,58 +89,56 @@ mod dvb_t2_parameter_tests {
     use super::*;
 
     #[test]
-    fn test_dvb_t2_normal_rate_half() {
-        let code = BchCode::dvb_t2_normal(CodeRate::Rate1_2);
+    fn test_dvb_t2_short_rate_half() {
+        let code = BchCode::dvb_t2(FrameSize::Short, CodeRate::Rate1_2);
 
-        assert_eq!(code.n(), 16200);
-        assert_eq!(code.k(), 7200);
+        assert_eq!(code.n(), 7200); // BCH output = LDPC k
+        assert_eq!(code.k(), 7032); // BCH input = Kbch
         assert_eq!(code.t(), 12);
     }
 
     #[test]
-    fn test_dvb_t2_normal_all_rates() {
+    fn test_dvb_t2_short_all_rates() {
         let rates = vec![
-            (CodeRate::Rate1_2, 7200),
-            (CodeRate::Rate3_5, 9720),
-            (CodeRate::Rate2_3, 10800),
-            (CodeRate::Rate3_4, 11880),
-            (CodeRate::Rate4_5, 12600),
-            (CodeRate::Rate5_6, 13320),
+            (CodeRate::Rate1_2, 7032),
+            (CodeRate::Rate3_5, 9552),
+            (CodeRate::Rate2_3, 10632),
+            (CodeRate::Rate3_4, 11712),
+            (CodeRate::Rate4_5, 12432),
+            (CodeRate::Rate5_6, 13152),
         ];
 
         for (rate, expected_k) in rates {
-            let code = BchCode::dvb_t2_normal(rate);
-            assert_eq!(code.n(), 16200);
+            let code = BchCode::dvb_t2(FrameSize::Short, rate);
             assert_eq!(code.k(), expected_k);
             assert_eq!(code.t(), 12);
         }
     }
 
     #[test]
-    fn test_dvb_t2_long_rate_half() {
-        let code = BchCode::dvb_t2_long(CodeRate::Rate1_2);
+    fn test_dvb_t2_normal_rate_half() {
+        let code = BchCode::dvb_t2(FrameSize::Normal, CodeRate::Rate1_2);
 
-        assert_eq!(code.n(), 64800);
-        assert_eq!(code.k(), 32400);
+        assert_eq!(code.n(), 32400); // BCH output = LDPC k
+        assert_eq!(code.k(), 32208); // BCH input = Kbch
         assert_eq!(code.t(), 12);
     }
 
     #[test]
-    fn test_dvb_t2_long_all_rates() {
+    fn test_dvb_t2_normal_all_rates() {
         let rates = vec![
-            (CodeRate::Rate1_2, 32400),
-            (CodeRate::Rate3_5, 38880),
-            (CodeRate::Rate2_3, 43200),
-            (CodeRate::Rate3_4, 48600),
-            (CodeRate::Rate4_5, 51840),
-            (CodeRate::Rate5_6, 54000),
+            (CodeRate::Rate1_2, 32208, 12),
+            (CodeRate::Rate3_5, 38688, 12),
+            (CodeRate::Rate2_3, 43040, 10), // t=10 for this rate
+            (CodeRate::Rate3_4, 48408, 12),
+            (CodeRate::Rate4_5, 51648, 12),
+            (CodeRate::Rate5_6, 53840, 10), // t=10 for this rate
         ];
 
-        for (rate, expected_k) in rates {
-            let code = BchCode::dvb_t2_long(rate);
-            assert_eq!(code.n(), 64800);
+        for (rate, expected_k, expected_t) in rates {
+            let code = BchCode::dvb_t2(FrameSize::Normal, rate);
             assert_eq!(code.k(), expected_k);
-            assert_eq!(code.t(), 12);
+            assert_eq!(code.t(), expected_t);
         }
     }
 }
@@ -842,67 +841,251 @@ mod dvb_t2_validation {
     use super::*;
     use gf2_coding::bch::CodeRate;
     use gf2_coding::traits::HardDecisionDecoder;
+    use rand::{Rng, SeedableRng};
 
-    /// Verify DVB-T2 parameters match ETSI EN 302 755 specification
+    /// Verify DVB-T2 Short frame parameters match ETSI EN 302 755 specification
     #[test]
-    fn test_dvb_t2_normal_parameters() {
+    fn test_dvb_t2_short_parameters() {
         let expected = vec![
-            (CodeRate::Rate1_2, 16200, 7200, 12),
-            (CodeRate::Rate3_5, 16200, 9720, 12),
-            (CodeRate::Rate2_3, 16200, 10800, 12),
-            (CodeRate::Rate3_4, 16200, 11880, 12),
-            (CodeRate::Rate4_5, 16200, 12600, 12),
-            (CodeRate::Rate5_6, 16200, 13320, 12),
+            (CodeRate::Rate1_2, 7200, 7032, 12),
+            (CodeRate::Rate3_5, 9720, 9552, 12),
+            (CodeRate::Rate2_3, 10800, 10632, 12),
+            (CodeRate::Rate3_4, 11880, 11712, 12),
+            (CodeRate::Rate4_5, 12600, 12432, 12),
+            (CodeRate::Rate5_6, 13320, 13152, 12),
         ];
 
         for (rate, n, k, t) in expected {
-            let code = BchCode::dvb_t2_normal(rate);
+            let code = BchCode::dvb_t2(FrameSize::Short, rate);
             assert_eq!(code.n(), n, "Wrong n for {:?}", rate);
             assert_eq!(code.k(), k, "Wrong k for {:?}", rate);
             assert_eq!(code.t(), t, "Wrong t for {:?}", rate);
 
-            // Verify generator polynomial degree is reasonable
-            // (actual degree depends on minimal polynomial LCM, not exactly n-k)
+            // Verify generator polynomial degree equals BCH parity bits
             let deg = code.generator().degree().unwrap();
-            assert!(
-                deg > 0 && deg <= n - k,
-                "Generator degree {} out of range for {:?}",
+            assert_eq!(
                 deg,
+                n - k,
+                "Generator degree {} should equal parity bits {} for {:?}",
+                deg,
+                n - k,
                 rate
             );
         }
     }
 
-    /// Test DVB-T2 normal frame encode/decode
+    /// Verify DVB-T2 Normal frame parameters match ETSI EN 302 755 specification
     #[test]
-    fn test_dvb_t2_normal_encode_decode() {
-        let code = BchCode::dvb_t2_normal(CodeRate::Rate1_2);
+    fn test_dvb_t2_normal_parameters() {
+        let expected = vec![
+            (CodeRate::Rate1_2, 32400, 32208, 12),
+            (CodeRate::Rate3_5, 38880, 38688, 12),
+            (CodeRate::Rate2_3, 43200, 43040, 10), // t=10 for rate 2/3
+            (CodeRate::Rate3_4, 48600, 48408, 12),
+            (CodeRate::Rate4_5, 51840, 51648, 12),
+            (CodeRate::Rate5_6, 54000, 53840, 10), // t=10 for rate 5/6
+        ];
+
+        for (rate, n, k, t) in expected {
+            let code = BchCode::dvb_t2(FrameSize::Normal, rate);
+            assert_eq!(code.n(), n, "Wrong n for {:?}", rate);
+            assert_eq!(code.k(), k, "Wrong k for {:?}", rate);
+            assert_eq!(code.t(), t, "Wrong t for {:?}", rate);
+
+            // Verify generator polynomial degree equals BCH parity bits
+            let deg = code.generator().degree().unwrap();
+            assert_eq!(
+                deg,
+                n - k,
+                "Generator degree {} should equal parity bits {} for {:?}",
+                deg,
+                n - k,
+                rate
+            );
+        }
+    }
+
+    /// Test DVB-T2 short frame encode/decode
+    #[test]
+    fn test_dvb_t2_short_encode_decode() {
+        let code = BchCode::dvb_t2(FrameSize::Short, CodeRate::Rate1_2);
         let encoder = BchEncoder::new(code.clone());
         let decoder = BchDecoder::new(code.clone());
 
         // Create test message (all zeros for simplicity)
-        let msg = BitVec::zeros(7200);
+        let msg = BitVec::zeros(code.k());
 
         // Encode
         let cw = encoder.encode(&msg);
-        assert_eq!(cw.len(), 16200);
+        assert_eq!(cw.len(), code.n());
 
         // Decode without errors
         let decoded = decoder.decode(&cw);
         assert_eq!(decoded, msg);
     }
 
-    /// Test DVB-T2 long frame parameters
+    /// Test DVB-T2 normal frame encode/decode
     #[test]
-    fn test_dvb_t2_long_parameters() {
-        let code = BchCode::dvb_t2_long(CodeRate::Rate1_2);
+    fn test_dvb_t2_normal_encode_decode() {
+        let code = BchCode::dvb_t2(FrameSize::Normal, CodeRate::Rate1_2);
+        let encoder = BchEncoder::new(code.clone());
+        let decoder = BchDecoder::new(code.clone());
 
-        assert_eq!(code.n(), 64800);
-        assert_eq!(code.k(), 32400);
-        assert_eq!(code.t(), 12);
+        // Create test message (all zeros for simplicity)
+        let msg = BitVec::zeros(code.k());
 
-        // Verify generator polynomial degree is reasonable
-        let deg = code.generator().degree().unwrap();
-        assert!(deg > 0 && deg <= 64800 - 32400);
+        // Encode
+        let cw = encoder.encode(&msg);
+        assert_eq!(cw.len(), code.n());
+
+        // Decode without errors
+        let decoded = decoder.decode(&cw);
+        assert_eq!(decoded, msg);
+    }
+
+    /// Test DVB-T2 short frame error correction capability
+    #[test]
+    fn test_dvb_t2_short_error_correction() {
+        let code = BchCode::dvb_t2(FrameSize::Short, CodeRate::Rate1_2);
+        let encoder = BchEncoder::new(code.clone());
+        let decoder = BchDecoder::new(code.clone());
+
+        let mut rng = rand::rngs::StdRng::seed_from_u64(54321);
+        let msg = BitVec::random(code.k(), &mut rng);
+        let cw = encoder.encode(&msg);
+
+        // Test correction of 1, t/2, and t errors
+        for num_errors in [1, code.t() / 2, code.t()] {
+            let mut corrupted = cw.clone();
+            let mut positions = Vec::new();
+
+            // Inject errors at random positions
+            for _ in 0..num_errors {
+                loop {
+                    let pos = rng.gen_range(0..code.n());
+                    if !positions.contains(&pos) {
+                        positions.push(pos);
+                        corrupted.set(pos, !corrupted.get(pos));
+                        break;
+                    }
+                }
+            }
+
+            let decoded = decoder.decode(&corrupted);
+            assert_eq!(
+                decoded,
+                msg,
+                "Failed to correct {} errors (t={})",
+                num_errors,
+                code.t()
+            );
+        }
+    }
+
+    /// Test DVB-T2 normal frame error correction capability
+    #[test]
+    fn test_dvb_t2_normal_error_correction() {
+        let code = BchCode::dvb_t2(FrameSize::Normal, CodeRate::Rate1_2);
+        let encoder = BchEncoder::new(code.clone());
+        let decoder = BchDecoder::new(code.clone());
+
+        let mut rng = rand::rngs::StdRng::seed_from_u64(98765);
+        let msg = BitVec::random(code.k(), &mut rng);
+        let cw = encoder.encode(&msg);
+
+        // Test correction of 1, t/2, and t errors
+        for num_errors in [1, code.t() / 2, code.t()] {
+            let mut corrupted = cw.clone();
+            let mut positions = Vec::new();
+
+            // Inject errors at random positions
+            for _ in 0..num_errors {
+                loop {
+                    let pos = rng.gen_range(0..code.n());
+                    if !positions.contains(&pos) {
+                        positions.push(pos);
+                        corrupted.set(pos, !corrupted.get(pos));
+                        break;
+                    }
+                }
+            }
+
+            let decoded = decoder.decode(&corrupted);
+            assert_eq!(
+                decoded,
+                msg,
+                "Failed to correct {} errors (t={})",
+                num_errors,
+                code.t()
+            );
+        }
+    }
+
+    /// Test DVB-T2 short frame - all code rates with error correction
+    #[test]
+    fn test_dvb_t2_short_all_rates_error_correction() {
+        let rates = [
+            CodeRate::Rate1_2,
+            CodeRate::Rate3_5,
+            CodeRate::Rate2_3,
+            CodeRate::Rate3_4,
+            CodeRate::Rate4_5,
+            CodeRate::Rate5_6,
+        ];
+
+        for rate in rates {
+            let code = BchCode::dvb_t2(FrameSize::Short, rate);
+            let encoder = BchEncoder::new(code.clone());
+            let decoder = BchDecoder::new(code.clone());
+
+            let mut rng = rand::rngs::StdRng::seed_from_u64(11111);
+            let msg = BitVec::random(code.k(), &mut rng);
+            let mut cw = encoder.encode(&msg);
+
+            // Test with single error
+            let error_pos = rng.gen_range(0..code.n());
+            cw.set(error_pos, !cw.get(error_pos));
+
+            let decoded = decoder.decode(&cw);
+            assert_eq!(
+                decoded, msg,
+                "Short frame rate {:?} failed single error correction",
+                rate
+            );
+        }
+    }
+
+    /// Test DVB-T2 normal frame - all code rates with error correction
+    #[test]
+    fn test_dvb_t2_normal_all_rates_error_correction() {
+        let rates = [
+            CodeRate::Rate1_2,
+            CodeRate::Rate3_5,
+            CodeRate::Rate2_3,
+            CodeRate::Rate3_4,
+            CodeRate::Rate4_5,
+            CodeRate::Rate5_6,
+        ];
+
+        for rate in rates {
+            let code = BchCode::dvb_t2(FrameSize::Normal, rate);
+            let encoder = BchEncoder::new(code.clone());
+            let decoder = BchDecoder::new(code.clone());
+
+            let mut rng = rand::rngs::StdRng::seed_from_u64(22222);
+            let msg = BitVec::random(code.k(), &mut rng);
+            let mut cw = encoder.encode(&msg);
+
+            // Test with single error
+            let error_pos = rng.gen_range(0..code.n());
+            cw.set(error_pos, !cw.get(error_pos));
+
+            let decoded = decoder.decode(&cw);
+            assert_eq!(
+                decoded, msg,
+                "Normal frame rate {:?} failed single error correction",
+                rate
+            );
+        }
     }
 }
