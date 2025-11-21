@@ -125,12 +125,12 @@ See [docs/DVB_T2_DESIGN.md](docs/DVB_T2_DESIGN.md) for detailed design and imple
 - Entropy modeling playground (simple adaptive frequency coder over GF(2) residuals)
 - Comparative benchmarks: raw vs. transformed bitstreams
 
-## Phase C9: BCH Codes ✅ **COMPLETE** 🎯 **DVB-T2 DEPENDENCY**
+## Phase C9: BCH Codes ⚠️ **COMPLETE (VERIFICATION PENDING)** 🎯 **DVB-T2 DEPENDENCY**
 **Dependencies**: gf2-core Phase 8 (GF(2^m) arithmetic) ✅ **COMPLETE**
 
-**Status**: ✅ Encoder and decoder complete (Phases 1-6 finished)
+**Status**: ✅ Core implementation complete, ⚠️ DVB-T2 requires verification with reference test vectors
 
-**Module**: `src/bch.rs` (536 lines)
+**Module**: `src/bch/` (~800 lines)
 
 ### BCH Code Construction ✅ COMPLETE
 - ✅ `BchCode` type with DVB-T2 parameter tables
@@ -156,9 +156,19 @@ See [docs/DVB_T2_DESIGN.md](docs/DVB_T2_DESIGN.md) for detailed design and imple
 - ✅ Integration with `HardDecisionDecoder` trait
 - ✅ 5 syndrome tests + 4 Berlekamp-Massey tests + 4 Chien search tests
 
+### DVB-T2 BCH Implementation ✅ COMPLETE
+- ✅ DVB-T2 generator polynomials (12 polynomials each for Short/Normal frames)
+- ✅ `poly_from_exponents()` utility for standard-provided generators
+- ✅ `product_of_generators()` for computing g(x) = g_1(x) × ... × g_t(x)
+- ✅ Factory method: `BchCode::dvb_t2(FrameSize, CodeRate)` for all 12 configurations
+- ✅ Corrected parameters: n = k_ldpc (BCH output), k = Kbch (BCH input)
+- ✅ Generator degree validation tests
+- ✅ All frame sizes and code rates supported
+
 ### Testing & Validation ✅ COMPLETE
 - ✅ Code construction tests (8 tests)
-- ✅ DVB-T2 parameter tests (4 tests)
+- ✅ DVB-T2 parameter tests (8 tests)
+- ✅ DVB-T2 generator polynomial tests (10 tests)
 - ✅ Systematic encoding tests (6 tests)
 - ✅ Syndrome computation tests (5 tests)
 - ✅ Berlekamp-Massey tests (4 tests)
@@ -171,19 +181,24 @@ See [docs/DVB_T2_DESIGN.md](docs/DVB_T2_DESIGN.md) for detailed design and imple
   - Systematic encoding validation
   - Codeword divisibility checks
   - DVB-T2 parameter validation
-- ✅ Total: **45 BCH tests passing**
+  - Generator polynomial degree verification
+- ✅ Total: **60+ BCH tests passing**
 - ✅ Full encode/decode roundtrips working
 - ✅ Error correction up to t=12 errors verified
 - ✅ Generator polynomial roots validated
 - ✅ Algebraic properties confirmed
-- [ ] Known answer tests from DVB-T2 standard (future - requires reference vectors)
+- ⚠️ **DVB-T2 specific verification pending** - requires reference test vectors from standard or independent implementation
 - [ ] Property tests with proptest (future)
 - [ ] Decoding throughput benchmarks (future)
 
-**Estimated effort**: 1-2 weeks → **Completed in 1 day (6 phases + validation)**
-- [ ] Decoding throughput benchmarks
+**Estimated effort**: 1-2 weeks → **Completed in 2 days (6 phases + DVB-T2 + validation)**
 
-**Estimated effort**: 1-2 weeks
+**Note**: DVB-T2 BCH implementation is complete but requires verification against:
+1. Reference test vectors from ETSI EN 302 755 (if available)
+2. Independent implementation (commercial DVB-T2 encoder/decoder)
+3. Hardware test equipment output
+
+Current tests verify mathematical correctness (polynomial properties, error correction capability, systematic encoding) but not DVB-T2 standard compliance.
 
 **Note**: Minimal polynomial computation is in gf2-core Phase 8.4. BCH-specific algorithms (generator polynomial from roots, Berlekamp-Massey, Chien search) belong here as application-level code.
 
@@ -232,8 +247,29 @@ Direct sparse construction used instead of QC expansion.
 
 **Remaining Work**:
 - [ ] Add 11 remaining table data files from ETSI EN 302 755
-- [ ] Validation with user-provided reference test vectors (copyrighted, not in repo)
+- ⚠️ **Validation with reference test vectors** (same issue as BCH - requires independent verification)
 - [ ] Verify gf2-core handles duplicate edges correctly
+
+### Phase C10.3: DVB-T2 BCH Outer Code Integration ✅ **COMPLETE (VERIFICATION PENDING)**
+**Status**: Implementation complete, requires independent verification
+**Completion Time**: 2 days
+
+**Deliverables**:
+- ✅ DVB-T2-specific BCH parameter tables (Short/Normal frames, all code rates)
+- ✅ Generator polynomial construction from ETSI EN 302 755 explicit tables
+- ✅ Factory method: `BchCode::dvb_t2(FrameSize, CodeRate)`
+- ✅ Systematic encoding with exact BCH parity bit counts (168, 192, 160)
+- ✅ Algebraic decoding (Berlekamp-Massey + Chien search)
+- ✅ Integration tests: encode/decode roundtrips for all configurations
+- ✅ Parameter validation: generator degree = n - k
+
+**Test Coverage**: 27 DVB-T2 BCH tests + 33 core BCH tests = 60 total tests
+**Code Structure**: `bch/dvb_t2/` module with `params.rs`, `generators.rs`, `mod.rs`
+
+**Verification Status**: ⚠️
+- ✅ Mathematical correctness verified (polynomial properties, error correction)
+- ⚠️ DVB-T2 standard compliance unverified (no reference test vectors available)
+- **Requires**: Test vectors from ETSI standard or independent DVB-T2 implementation
 
 ### Components (Remaining)
 - **QAM Modulation**: QPSK, 16/64/256-QAM with Gray mapping and soft LLR demapping
@@ -255,6 +291,9 @@ Direct sparse construction used instead of QC expansion.
 - Unified error handling and panic messages → shift towards `Result` where appropriate
 - Trait refinements: streaming vs. batch encode/decode unification
 - Doc examples with visual syndrome / decoding traces
+
+## Technical Debt & Refactoring
+- [ ] **Move `poly_from_exponents` to gf2-core**: Currently in `bch::dvb_t2::generators`, this utility for constructing `Gf2mPoly` from exponent lists should be a general method in `gf2_core::gf2m::Gf2mPoly` (e.g., `Gf2mPoly::from_exponents()`)
 
 ## Research Placeholders / Open Questions
 - Optimal data structures for extremely sparse parity-check matrices?

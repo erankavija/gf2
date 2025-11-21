@@ -25,6 +25,11 @@
 - Maximum-likelihood decoding for Hamming codes
 - Support for Hamming(2^r-1, 2^r-r-1) codes up to r=10
 - **BCH codes**: Full algebraic encoder/decoder with Berlekamp-Massey and Chien search
+- **DVB-T2 BCH codes** from ETSI EN 302 755 standard ⚠️ (implementation complete, requires verification)
+  - Short frames (n=7200-13320) over GF(2^14), t=12 error correction
+  - Normal frames (n=32400-54000) over GF(2^16), t=10 or t=12 error correction
+  - Generator polynomials from explicit standard tables
+  - All 6 code rates supported: 1/2, 3/5, 2/3, 3/4, 4/5, 5/6
 
 ### Convolutional Codes  
 - Configurable constraint length and code rate
@@ -176,6 +181,10 @@ cargo run --example hamming_7_4
 
 # NASA convolutional code tutorial with error correction
 cargo run --example nasa_rate_half_k3
+
+# DVB-T2 BCH outer codes (algebraic decoding)
+# (Note: Requires verification against reference implementation)
+cargo run --example dvb_t2_bch_demo
 
 # DVB-T2 LDPC codes from standard tables
 cargo run --example dvb_t2_ldpc_basic
