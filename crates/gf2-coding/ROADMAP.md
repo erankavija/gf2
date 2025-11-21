@@ -68,7 +68,7 @@ See [docs/DVB_T2_DESIGN.md](docs/DVB_T2_DESIGN.md) for detailed design and imple
   - ✅ `QuasiCyclicLdpc` structure with base matrix and expansion factor
   - ✅ Automatic expansion to full parity-check matrix
   - ✅ Generic design supporting DVB-T2, 5G NR, WiFi standards
-  - ✅ Factory methods with placeholders (`dvb_t2_normal`, `dvb_t2_long`, `nr_5g`)
+  - ✅ Factory methods with placeholders (`dvb_t2_short`, `dvb_t2_normal`, `nr_5g`)
   - ✅ 19 comprehensive tests (construction, validation, edge cases)
   - ✅ Example program: `examples/qc_ldpc_demo.rs`
 - [ ] Irregular LDPC codes (degree distribution) - deferred
@@ -135,7 +135,7 @@ See [docs/DVB_T2_DESIGN.md](docs/DVB_T2_DESIGN.md) for detailed design and imple
 ### BCH Code Construction ✅ COMPLETE
 - ✅ `BchCode` type with DVB-T2 parameter tables
 - ✅ Generator polynomial construction from consecutive roots (α, α², ..., α^(2t))
-- ✅ Factory methods: `BchCode::dvb_t2_normal(rate)`, `BchCode::dvb_t2_long(rate)`
+- ✅ Factory methods: `BchCode::dvb_t2(FrameSize::Short, rate)`, `BchCode::dvb_t2(FrameSize::Normal, rate)`
 - ✅ DVB-T2 standard parameters (t=12 error correction)
 - ✅ Automatic field table generation
 - ✅ 8 construction tests + 4 DVB-T2 parameter tests
@@ -213,7 +213,7 @@ Current tests verify mathematical correctness (polynomial properties, error corr
 - ✅ `QuasiCyclicLdpc` structure with base matrix and expansion factor  
 - ✅ Automatic expansion to sparse edge list
 - ✅ Generic design supporting multiple standards (DVB-T2, 5G NR, WiFi)
-- ✅ Factory method placeholders: `dvb_t2_normal()`, `dvb_t2_long()`, `nr_5g()`
+- ✅ Factory method placeholders: `dvb_t2_short()`, `dvb_t2_normal()`, `nr_5g()`
 - ✅ Integration with existing `LdpcCode` via `from_quasi_cyclic()`
 - ✅ Comprehensive tests: construction, validation, edge cases, panic conditions
 - ✅ Example: `examples/qc_ldpc_demo.rs`
