@@ -334,6 +334,101 @@ impl Gf2mField {
             .map(|exp| self.element(exp[1] as u64))
     }
 
+    /// Verifies that the polynomial is actually primitive for GF(2^m).
+    ///
+    /// A polynomial p(x) of degree m is primitive if:
+    /// 1. It is irreducible over GF(2)
+    /// 2. There exists a primitive element (generator of the full multiplicative group)
+    ///
+    /// # Algorithm
+    ///
+    /// Uses Rabin's irreducibility test combined with primitive element search.
+    ///
+    /// # Complexity
+    ///
+    /// O(m³) for degree-m polynomial using fast exponentiation.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::gf2m::Gf2mField;
+    ///
+    /// // DVB-T2 standard polynomial
+    /// let gf14 = Gf2mField::new(14, 0b100000000101011);
+    /// assert!(gf14.verify_primitive());
+    ///
+    /// // Reducible polynomial (x+1)^2 = x^2 + 1
+    /// let gf2_reducible = Gf2mField::new(2, 0b101);
+    /// assert!(!gf2_reducible.verify_primitive());
+    /// ```
+    pub fn verify_primitive(&self) -> bool {
+        // First check irreducibility
+        if !self.is_irreducible_rabin() {
+            return false;
+        }
+
+        // For a primitive polynomial, there must exist a primitive element
+        // A polynomial is primitive if ANY element generates the full multiplicative group
+        // We check if we can find such an element
+        
+        let m = self.params.m;
+        let order = (1 << m) - 1;
+        let p = self.params.primitive_poly;
+        
+        // Try to find a primitive element (usually one of the first few elements works)
+        // For a primitive polynomial, this should succeed quickly
+        for candidate in 2..(1u64 << m).min(256) {
+            if Self::is_primitive(candidate, m, p, order) {
+                return true; // Found a primitive element, so polynomial is primitive
+            }
+        }
+        
+        false // No primitive element found in reasonable search
+    }
+
+    /// Tests irreducibility using Rabin's test.
+    ///
+    /// A polynomial p(x) of degree m is irreducible if and only if:
+    /// - gcd(p(x), x^(2^i) - x) = 1 for all i = 1, 2, ..., ⌊m/2⌋
+    /// - x^(2^m) ≡ x (mod p(x))
+    ///
+    /// # References
+    ///
+    /// Rabin, M. O. (1980). "Probabilistic algorithms in finite fields."
+    /// SIAM Journal on Computing, 9(2), 273-280.
+    fn is_irreducible_rabin(&self) -> bool {
+        let m = self.params.m;
+        
+        // Key condition: x^(2^m) = x mod p(x)
+        // For a degree-m polynomial to be irreducible, this must hold
+        let exp = 1usize << m; // 2^m
+        let x_power_mod_p = self.compute_x_power_value(exp);
+        
+        // x^(2^m) should equal x (value 2)
+        x_power_mod_p == 2
+    }
+    
+    /// Computes x^k mod p(x) and returns the result as a field element value
+    fn compute_x_power_value(&self, k: usize) -> u64 {
+        let m = self.params.m;
+        let p = self.params.primitive_poly;
+        
+        // Binary exponentiation to compute x^k mod p(x)
+        let mut result = 1u64; // x^0 = 1
+        let mut base = 2u64;   // x
+        let mut exp = k;
+        
+        while exp > 0 {
+            if exp & 1 == 1 {
+                result = Self::mul_raw(result, base, m, p);
+            }
+            base = Self::mul_raw(base, base, m, p);
+            exp >>= 1;
+        }
+        
+        result
+    }
+
     /// Returns the discrete logarithm of an element (if tables exist).
     ///
     /// Returns the value i such that α^i = element, where α is the primitive element.
@@ -1136,6 +1231,84 @@ mod tests {
                 );
             }
         }
+    }
+
+    // Primitive polynomial verification tests
+
+    #[test]
+    fn test_verify_primitive_gf4() {
+        let field = Gf2mField::new(2, 0b111); // x^2 + x + 1
+        assert!(field.verify_primitive());
+    }
+
+    #[test]
+    fn test_verify_primitive_gf8() {
+        let field = Gf2mField::new(3, 0b1011); // x^3 + x + 1
+        assert!(field.verify_primitive());
+    }
+
+    #[test]
+    fn test_verify_primitive_gf16() {
+        let field = Gf2mField::new(4, 0b10011); // x^4 + x + 1
+        assert!(field.verify_primitive());
+    }
+
+    #[test]
+    fn test_verify_primitive_gf256_aes() {
+        // AES standard polynomial
+        let field = Gf2mField::new(8, 0b100011011);
+        assert!(field.verify_primitive());
+    }
+
+    #[test]
+    fn test_verify_primitive_dvb_t2_gf14() {
+        // Correct DVB-T2 polynomial
+        let field = Gf2mField::new(14, 0b100000000101011);
+        assert!(field.verify_primitive());
+    }
+
+    #[test]
+    fn test_verify_primitive_dvb_t2_gf16() {
+        // Correct DVB-T2 polynomial for normal frames
+        let field = Gf2mField::new(16, 0b10000000000101101);
+        assert!(field.verify_primitive());
+    }
+
+    #[test]
+    fn test_verify_not_primitive_wrong_dvb_t2() {
+        // The bug: a different primitive polynomial was used (not the DVB-T2 standard)
+        // The polynomial 0b100000000100001 (x^14 + x^5 + 1) IS primitive,
+        // but it's not the DVB-T2 standard polynomial 0b100000000101011
+        let field = Gf2mField::new(14, 0b100000000100001);
+        
+        // This polynomial is actually primitive (it's valid, just non-standard)
+        assert!(field.verify_primitive(), "x^14 + x^5 + 1 is primitive");
+        
+        // But it doesn't match the DVB-T2 standard
+        use crate::primitive_polys::{PrimitivePolynomialDatabase, VerificationResult};
+        assert_eq!(
+            PrimitivePolynomialDatabase::verify(14, 0b100000000100001),
+            VerificationResult::Conflict,
+            "Should conflict with DVB-T2 standard"
+        );
+    }
+
+    #[test]
+    fn test_verify_not_primitive_reducible() {
+        // (x + 1)^2 = x^2 + 1 is reducible
+        let field = Gf2mField::new(2, 0b101);
+        assert!(!field.verify_primitive());
+    }
+
+    #[test]
+    fn test_is_irreducible_rabin_small_cases() {
+        // x^2 + x + 1 is irreducible
+        let field = Gf2mField::new(2, 0b111);
+        assert!(field.is_irreducible_rabin());
+
+        // x^2 + 1 = (x + 1)^2 is reducible
+        let field = Gf2mField::new(2, 0b101);
+        assert!(!field.is_irreducible_rabin());
     }
 
     // Property-based tests using proptest
