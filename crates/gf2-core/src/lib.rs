@@ -39,6 +39,9 @@ pub mod alg;
 mod bitslice;
 mod bitvec;
 pub mod gf2m;
+
+// Primitive polynomial database submodule
+pub mod primitive_polys;
 pub mod kernels;
 mod macros;
 pub mod matrix;
