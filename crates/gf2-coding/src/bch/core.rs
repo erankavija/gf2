@@ -1,7 +1,4 @@
-//! BCH (Bose-Chaudhuri-Hocquenghem) codes.
-//!
-//! BCH codes are a family of cyclic error-correcting codes that can correct
-//! multiple random errors using algebraic decoding over extension fields GF(2^m).
+//! Core BCH code types and algorithms.
 //!
 //! # Mathematical Background
 //!
@@ -52,17 +49,6 @@
 //! // Decode and correct
 //! let decoded = decoder.decode(&received);
 //! assert_eq!(decoded, msg);
-//! ```
-//!
-//! # DVB-T2 Support
-//!
-//! Factory methods provide standard DVB-T2 BCH codes:
-//!
-//! ```
-//! use gf2_coding::bch::{BchCode, CodeRate};
-//!
-//! let code = BchCode::dvb_t2_normal(CodeRate::Rate1_2);
-//! println!("DVB-T2 BCH: n={}, k={}, t={}", code.n(), code.k(), code.t());
 //! ```
 
 use crate::traits::{BlockEncoder, HardDecisionDecoder};
@@ -149,6 +135,56 @@ impl BchCode {
         };
 
         let generator = Self::construct_generator(&field, t);
+        let designed_distance = 2 * t + 1;
+
+        Self {
+            n,
+            k,
+            t,
+            field,
+            generator,
+            designed_distance,
+            cached_generator: std::sync::Arc::new(std::sync::Mutex::new(None)),
+        }
+    }
+
+    /// Creates a BCH code from an explicit generator polynomial.
+    ///
+    /// This is useful when the generator polynomial is provided by a standard
+    /// (e.g., DVB-T2) rather than computed from minimal polynomials.
+    ///
+    /// # Arguments
+    ///
+    /// * `n` - Codeword length
+    /// * `k` - Message length  
+    /// * `t` - Error correction capability
+    /// * `field` - Extension field GF(2^m)
+    /// * `generator` - Pre-computed generator polynomial
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::gf2m::{Gf2mField, Gf2mPoly};
+    /// use gf2_coding::bch::BchCode;
+    ///
+    /// let field = Gf2mField::new(4, 0b10011).with_tables();
+    /// // Generator for BCH(15, 11, 1): x^4 + x + 1
+    /// let g = Gf2mPoly::new(vec![
+    ///     field.one(), field.one(), field.zero(), field.zero(), field.one()
+    /// ]);
+    /// let code = BchCode::from_generator(15, 11, 1, field, g);
+    /// ```
+    pub fn from_generator(
+        n: usize,
+        k: usize,
+        t: usize,
+        field: Gf2mField,
+        generator: Gf2mPoly,
+    ) -> Self {
+        assert!(n > k, "Codeword length must exceed message length");
+        assert!(n < field.order(), "n must divide 2^m - 1");
+        assert!(t > 0, "Error correction capability must be positive");
+
         let designed_distance = 2 * t + 1;
 
         Self {
