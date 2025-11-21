@@ -11,6 +11,13 @@ A cohesive toolkit for high-performance binary field computing and coding theory
 
 ## Current Focus
 
+**gf2-core**: Primitive polynomial verification (M12 - Phase 1)
+- 🎯 Primitivity testing algorithms (Rabin test)
+- 🎯 Standard polynomial database (DVB-T2, AES, 5G NR)
+- 🎯 Compile-time warnings for non-standard polynomials
+- 🎯 Prevent BCH bugs from wrong primitive polynomials
+- **Motivation**: DVB-T2 BCH failure from incorrect GF(2^14) polynomial
+
 **gf2-core**: Core primitives mature and feature-complete
 - ✅ GF(2^m) extension field arithmetic
 - ✅ Karatsuba multiplication (1.88x speedup)
@@ -22,7 +29,7 @@ A cohesive toolkit for high-performance binary field computing and coding theory
 **gf2-coding**: DVB-T2 FEC simulation
 - ✅ BCH codes with algebraic decoding (45 tests passing)
 - ✅ Quasi-cyclic LDPC framework
-- 🎯 DVB-T2 LDPC base matrices (in progress)
+- ⏸️ DVB-T2 LDPC base matrices (paused for M12)
 - 🔮 QAM modulation and FEC chain (planned)
 
 ## Strategic Pillars
@@ -55,6 +62,7 @@ A cohesive toolkit for high-performance binary field computing and coding theory
 
 **Cross-crate dependencies enabling higher-level features:**
 - Extension field GF(2^m) (core) → BCH algebraic decoding (coding)
+- **Primitive polynomials (core) → BCH field construction (coding)** ⬅️ **NEW**
 - Sparse matrices (core) → LDPC belief propagation (coding)
 - Polynomial arithmetic (core) → BCH syndrome computation (coding)
 - Rank/select (core) → Sparse graph operations (coding)
@@ -80,9 +88,10 @@ A cohesive toolkit for high-performance binary field computing and coding theory
 
 | Milestone | Description | Status |
 |-----------|-------------|--------|
-| **M12** | DVB-T2 LDPC: Standard base matrices | 🎯 In progress |
-| **M13** | QAM modulation: Soft-decision demapping | Planned |
-| **M14** | FEC simulation: End-to-end DVB-T2 chain | Planned |
+| **M12** | Primitive polynomials: Verification & generation (Phase 1) | 🎯 Starting |
+| **M13** | DVB-T2 LDPC: Standard base matrices | Planned |
+| **M14** | QAM modulation: Soft-decision demapping | Planned |
+| **M15** | FEC simulation: End-to-end DVB-T2 chain | Planned |
 
 ## Future Directions
 

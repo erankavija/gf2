@@ -7,6 +7,24 @@ This roadmap captures the higher-level coding theory and compression research la
 
 See [docs/DVB_T2_DESIGN.md](docs/DVB_T2_DESIGN.md) for detailed design and implementation plan.
 
+## Current Dependency: Primitive Polynomial Verification (gf2-core M12)
+
+**Status**: Development paused while gf2-core implements primitive polynomial verification.
+
+**Context**: A DVB-T2 BCH decoding failure was caused by using the wrong primitive polynomial for GF(2^14):
+- **Wrong**: `0b100000000100001` (x^14 + x^5 + 1) - not primitive
+- **Correct**: `0b100000000101011` (x^14 + x^5 + x^3 + x + 1) - ETSI standard
+
+**Impact**: This bug prevented correct BCH syndrome computation and decoding.
+
+**Solution**: gf2-core is implementing [Phase 9: Primitive Polynomial Verification](../gf2-core/docs/PRIMITIVE_POLYNOMIALS.md) to:
+1. Verify all field polynomials are actually primitive
+2. Provide a database of standard polynomials (DVB-T2, AES, 5G NR)
+3. Emit warnings when non-standard polynomials are used
+4. Prevent this class of bug permanently
+
+**Resume DVB-T2 development** once gf2-core Phase 9.1-9.3 are complete (~2-3 weeks).
+
 ## Phase C1: Foundational Block Codes (Complete)
 - ✅ Linear block code abstraction (`LinearBlockCode`) with generator (G) & parity-check (H) matrices
 - ✅ Systematic encoding path; syndrome computation; simple Hamming construction helper

@@ -144,6 +144,72 @@ This roadmap focuses on high-performance primitives for GF(2): `BitVec`, `BitMat
 - Cache-blocking for N > 8192
 - ARM NEON support
 
+### Phase 9: Primitive Polynomial Verification & Generation 🎯 **IN PROGRESS**
+**Priority**: HIGH (prevent BCH decoding bugs)  
+**Effort**: Phase 1: 2-3 weeks  
+**Status**: Phase 1 starting - TDD approach  
+**Motivation**: DVB-T2 BCH bug caused by wrong primitive polynomial for GF(2^14)
+
+**Phase 1 Goal**: Ensure we never use wrong primitive polynomials again
+
+#### Components (Phase 1)
+
+**9.1 Polynomial Primitivity Testing**
+- ✅ Design complete (see [docs/PRIMITIVE_POLYNOMIALS.md](docs/PRIMITIVE_POLYNOMIALS.md))
+- ⏳ `Gf2mField::verify_primitive()` - verify polynomial is actually primitive
+- ⏳ `Gf2mField::is_irreducible_rabin()` - Rabin irreducibility test
+- ⏳ Uses existing `Gf2mPoly::gcd()` and exponentiation by squaring
+- ⏳ Time complexity: O(m³) for degree-m polynomial
+
+**9.2 Standard Primitive Polynomial Database**
+- ✅ Design complete
+- ⏳ `PrimitivePolynomialDatabase` module in `src/gf2m/primitive_polys.rs`
+- ⏳ Database covering m = 2..32 from authoritative sources:
+  - Lidl & Niederreiter (1997) "Finite Fields"
+  - ETSI EN 302 755 (DVB-T2 standard)
+  - IEEE AES standard (GF(2^8))
+  - 3GPP 5G NR standard
+- ⏳ `standard(m)` - get standard polynomial for degree m
+- ⏳ `trinomials(m)` - get primitive trinomials (hardware-efficient)
+- ⏳ `verify(m, poly)` - check against database (returns Matches/Conflict/Unknown)
+
+**9.3 Compile-Time Verification & Warnings**
+- ✅ Design complete
+- ⏳ Modify `Gf2mField::new()` to check database and warn on conflicts
+- ⏳ Feature flag `verify-primitives` for runtime verification (test/debug only)
+- ⏳ Clear error messages citing standard sources
+- ⏳ Zero overhead for verified polynomials in release builds
+
+#### Testing (TDD - Tests First!)
+
+**Unit Tests** (⏳ To be written first):
+- Test all database polynomials verify as primitive
+- Test DVB-T2 polynomials (correct and incorrect)
+- Test AES standard polynomial
+- Test reducible polynomials fail verification
+- Test Rabin irreducibility on known cases
+
+**Integration Tests** (⏳ To be written first):
+- Verify all DVB-T2 BCH configurations use primitive polynomials
+- Ensure the bug case (0b100000000100001 for GF(2^14)) is detected
+- Test 5G NR and WiFi standard configurations
+
+**Property Tests** (⏳ To be written first):
+- All database entries verify as primitive
+- Reducible polynomials never verify as primitive
+
+**See**: [docs/PRIMITIVE_POLYNOMIALS.md](docs/PRIMITIVE_POLYNOMIALS.md) for complete design and test specifications
+
+#### Migration Path for gf2-coding
+- Replace hardcoded polynomials with database lookups
+- Add integration tests ensuring all codes use verified primitives
+- Document standard references in code
+
+**Future Phases** (after Phase 1):
+- **Phase 2**: Primitive polynomial generation (exhaustive & trinomial search)
+- **Phase 3**: Performance optimization (parallel, SIMD, compete with Magma/Sage)
+- **Phase 4**: State-of-the-art algorithms for m > 64
+
 ### Phase 7c: Batch Evaluation Optimization 🔮 **OPTIONAL**
 **Priority**: Low (minor improvement)  
 **Effort**: 1 day  
