@@ -259,8 +259,14 @@ unsafe fn avx2_shift_left_words(buf: &mut [u64], word_shift: usize) {
     // Process in reverse with vectors to avoid overwrites
     let num_to_move = len - word_shift;
     let nvec = num_to_move / 4;
+    let vec_words = nvec * 4;
 
-    // Copy full vectors from source to destination
+    // Handle remaining words with scalar FIRST (in reverse to avoid overwrites)
+    for i in (vec_words..num_to_move).rev() {
+        buf[i + word_shift] = buf[i];
+    }
+
+    // Copy full vectors from source to destination (in reverse)
     for i in (0..nvec).rev() {
         let src_idx = i * 4;
         let dst_idx = src_idx + word_shift;
@@ -270,12 +276,6 @@ unsafe fn avx2_shift_left_words(buf: &mut [u64], word_shift: usize) {
         storeu(ptr.offset(dst_off), v);
     }
 
-    // Handle remaining words with scalar
-    let vec_words = nvec * 4;
-    for i in (vec_words..num_to_move).rev() {
-        buf[i + word_shift] = buf[i];
-    }
-
     // Zero fill lower words with vectors where possible
     let zero_nvec = word_shift / 4;
     for i in 0..zero_nvec {
@@ -283,9 +283,11 @@ unsafe fn avx2_shift_left_words(buf: &mut [u64], word_shift: usize) {
     }
 
     // Zero fill remaining lower words
+    let scalar_start = zero_nvec * 4;
+    let scalar_count = word_shift.saturating_sub(scalar_start);
     buf.iter_mut()
-        .take(word_shift)
-        .skip(zero_nvec * 4)
+        .skip(scalar_start)
+        .take(scalar_count)
         .for_each(|x| *x = 0);
 }
 
