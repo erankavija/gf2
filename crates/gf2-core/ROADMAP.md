@@ -54,42 +54,71 @@ Fast Hadamard Transform, 81x speedup vs. naive, O(N log N) butterfly operations
 - `scripts/sage_benchmarks.py` - Sage comparison suite
 - Documentation: `docs/phase9_3*.md` with detailed analysis
 
-### Phase 9.4: Extended Performance Benchmarking
+### Phase 9.4: Extended Performance Benchmarking ✅ **COMPLETED**
 **Priority**: Medium  
 **Goal**: Benchmark against performance-oriented libraries beyond Sage
 
-**Targets**:
-- **Tier 1** (Essential): NTL (GF(2^m), polynomials), M4RI (matrices)
-- **Tier 2** (Important): FLINT (modern baseline), GF-Complete (hardware intrinsics)
-- **Tier 3** (Nice-to-have): Magma (if accessible), Catid libs (erasure codes)
+**Results**:
+- ✅ **NTL GF(2^m)**: We're **13-18x faster** for m ≤ 16, competitive for m=32, 2x slower for m=64
+- ✅ **M4RI matrices**: They're **5-7x faster** - identified as optimization priority
+- ✅ **FLINT**: Different domain (GF(2)[x] vs GF(2^m)[x]) - informative baseline
 
 **Deliverables**:
-- C/C++ benchmark harnesses for NTL, M4RI, FLINT, GF-Complete
-- Comparative analysis across operations: multiplication, GCD, primitivity, matrix ops
-- Documentation of performance characteristics vs. specialized libraries
+- `benchmarks-cpp/` - C/C++ harnesses for NTL, M4RI, FLINT
+- `docs/BENCHMARKS.md` - Consolidated performance analysis
+- Honest assessment of strengths and gaps
 
 ---
 
 ## Active Development
 
-### Phase 9.2: Primitive Polynomial Generation
+### Phase 9.2: Primitive Polynomial Generation ✅ **COMPLETED**
 **Priority**: Medium  
 **Goal**: Generate primitive polynomials for arbitrary m
 
-**Deliverables**:
-- Exhaustive search with optimizations (m ≤ 16)
-- Trinomial search (hardware-efficient, m > 16)
-- Parallel generation algorithms with rayon
-- **Target**: Compete with Magma/Sage performance
+**Results**:
+- ✅ Exhaustive search: **126-931x faster** than Sage for m=5..8
+- ✅ Trinomial search with Swan's theorem filtering
+- ✅ Parallel generation with rayon: 4-8x speedup
+- ✅ Validated against Sage for correctness
 
-**Expected Performance** (based on Phase 9.3):
-- m=16: ~12 µs/test → exhaustive search in ~13 minutes
-- m=32: ~150 µs/test → trinomial search practical
-- m=64: Focus on known constructions + verification
+**Deliverables**:
+- `src/gf2m/generation.rs` - Sequential and parallel generators
+- `benches/generation.rs` - Performance benchmarks
+- Practical up to m=12 (521 µs with parallelization)
 
 ---
 
 ## Planned Phases
+
+### Phase 11: Performance Gap Remediation
+**Priority**: High  
+**Goal**: Address identified performance gaps from Phase 9.4 benchmarking
+
+**Identified Gaps**:
+1. **M4RM Matrix Multiplication**: M4RI is 5-7x faster
+   - Profile gray code table generation
+   - Optimize cache blocking strategy
+   - Consider critical loop assembly optimizations
+   - **Target**: Within 2x of M4RI (currently 6.5x slower)
+
+2. **GF(2^64) Field Operations**: NTL is 2x faster
+   - Improve SIMD implementation for large fields
+   - Consider alternative reduction strategies
+   - **Target**: Match or exceed NTL performance
+
+3. **Missing Features**:
+   - Polynomial GCD over GF(2^m)[x]
+   - Matrix inversion benchmarks
+   - Gaussian elimination optimization
+
+**Estimated Timeline**: 4-6 weeks  
+**Success Criteria**:
+- M4RM within 2x of M4RI for 1024x1024 matrices
+- GF(2^64) multiplication competitive with NTL
+- Complete feature parity with benchmarked operations
+
+---
 
 ### Phase 2: Wide Buffer Optimization
 Unrolled scalar kernels, BitSlice views - deferred until profiling shows benefit
