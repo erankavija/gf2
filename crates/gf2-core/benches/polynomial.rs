@@ -291,10 +291,7 @@ fn bench_field_element_multiply(c: &mut Criterion) {
     group.sample_size(1000);
 
     // Test different field sizes
-    let test_fields = [
-        (8, "GF(256)"),
-        (16, "GF(65536)"),
-    ];
+    let test_fields = [(8, "GF(256)"), (16, "GF(65536)")];
 
     for (m, name) in test_fields {
         let field = if m == 8 {
@@ -312,9 +309,7 @@ fn bench_field_element_multiply(c: &mut Criterion) {
             BenchmarkId::new(name, "single"),
             &(&field, &a, &b),
             |bench, (_f, a, b)| {
-                bench.iter(|| {
-                    black_box(*a * *b)
-                });
+                bench.iter(|| black_box(*a * *b));
             },
         );
     }
@@ -329,10 +324,7 @@ fn bench_field_element_multiply(c: &mut Criterion) {
 fn bench_field_element_multiply_batch(c: &mut Criterion) {
     let mut group = c.benchmark_group("field_element_multiply_batch");
 
-    let test_fields = [
-        (8, "GF(256)"),
-        (16, "GF(65536)"),
-    ];
+    let test_fields = [(8, "GF(256)"), (16, "GF(65536)")];
 
     for (m, name) in test_fields {
         let field = if m == 8 {

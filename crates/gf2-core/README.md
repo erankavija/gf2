@@ -8,7 +8,8 @@
 - Bit-packed `BitMatrix` with M4RM multiplication and Gauss-Jordan inversion
 - Polar transform operations for polar code encoding/decoding
 - Sparse matrices in CSR/CSC formats for low-density matrices
-- Extension field GF(2^m) arithmetic with optimized multiplication
+- Extension field GF(2^m) arithmetic with table-based and SIMD multiplication
+- Primitive polynomial generation and verification (exhaustive, trinomial, parallel)
 - SIMD-accelerated operations (AVX2) for supported platforms
 - Strict safety: `#![deny(unsafe_code)]`
 
@@ -25,27 +26,9 @@
 
 ## Performance
 
-Validated against SageMath 10.7 (Nov 2024):
-- **3-340x faster** primitive polynomial testing
-- **4-127x faster** GF(2^m) polynomial operations  
-- **12-15x faster** sparse matrix operations
+Benchmarked against SageMath and specialized C/C++ libraries (NTL, M4RI, FLINT). Competitive to superior performance across most operations, with identified optimization opportunities.
 
-See `docs/phase9_3_complete.md` for detailed benchmarking methodology and results.
-
-### Benchmarks
-
-```bash
-# Primitive polynomial verification
-cargo bench --bench primitive_poly
-
-# GF(2^m) field operations
-cargo bench --bench polynomial
-
-# Sparse matrix operations
-cargo bench --bench sparse
-
-# Other: polar, matmul, bitvec, wide_logical, scan, random, shifts, rank_select
-```
+See **[`docs/BENCHMARKS.md`](docs/BENCHMARKS.md)** for comprehensive performance analysis and comparisons.
 
 ## Usage
 
@@ -183,5 +166,25 @@ h.save_image("parity_check_matrix.png").unwrap();
 
 Each bit becomes a pixel: unset (0) → black, set (1) → white.  
 To change colors, edit the `ZERO_COLOR` and `ONE_COLOR` constants in `src/matrix.rs`.
+
+## Benchmarking
+
+Run Rust benchmarks:
+```bash
+cargo bench --bench <name>
+# Examples: primitive_poly, generation, polynomial, matmul, sparse, polar
+```
+
+For C/C++ library comparisons (requires NTL, M4RI, FLINT):
+```bash
+cd benchmarks-cpp/build && cmake .. && make
+./bench_ntl_field
+./bench_m4ri_matrix  
+./bench_flint_poly
+```
+
+See [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md) for detailed performance analysis.
+
+---
 
 For more details, see the workspace-level [README](../../README.md) and the inlined Rustdocs.

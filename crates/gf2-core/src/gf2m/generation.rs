@@ -42,7 +42,7 @@ pub enum GenerationStrategy {
     /// Parallel exhaustive search with rayon (not yet implemented)
     ParallelExhaustive {
         /// Number of threads to use for parallel search
-        threads: usize
+        threads: usize,
     },
 }
 
@@ -337,8 +337,7 @@ mod tests {
     #[test]
     fn test_generate_m2_all() {
         // m=2 has exactly 1 primitive polynomial
-        let gen = PrimitiveGenerator::new(2)
-            .with_strategy(GenerationStrategy::Exhaustive);
+        let gen = PrimitiveGenerator::new(2).with_strategy(GenerationStrategy::Exhaustive);
         let all = gen.find_all();
         assert_eq!(all.len(), 1);
         assert_eq!(all[0], 0b111); // x^2 + x + 1
@@ -347,8 +346,7 @@ mod tests {
     #[test]
     fn test_generate_m3_all() {
         // m=3 has exactly 2 primitive polynomials
-        let gen = PrimitiveGenerator::new(3)
-            .with_strategy(GenerationStrategy::Exhaustive);
+        let gen = PrimitiveGenerator::new(3).with_strategy(GenerationStrategy::Exhaustive);
         let all = gen.find_all();
         assert_eq!(all.len(), 2);
         assert!(all.contains(&0b1011)); // x^3 + x + 1
@@ -358,8 +356,7 @@ mod tests {
     #[test]
     fn test_generate_m4_all() {
         // m=4 has exactly 2 primitive polynomials
-        let gen = PrimitiveGenerator::new(4)
-            .with_strategy(GenerationStrategy::Exhaustive);
+        let gen = PrimitiveGenerator::new(4).with_strategy(GenerationStrategy::Exhaustive);
         let all = gen.find_all();
         assert_eq!(all.len(), 2);
         assert!(all.contains(&0b10011)); // x^4 + x + 1
@@ -369,23 +366,25 @@ mod tests {
     #[test]
     fn test_generate_m5_all() {
         // m=5 has exactly 6 primitive polynomials (OEIS A011260)
-        let gen = PrimitiveGenerator::new(5)
-            .with_strategy(GenerationStrategy::Exhaustive);
+        let gen = PrimitiveGenerator::new(5).with_strategy(GenerationStrategy::Exhaustive);
         let all = gen.find_all();
         assert_eq!(all.len(), 6);
 
         // Verify all are actually primitive
         for &poly in &all {
             let field = Gf2mField::new(5, poly);
-            assert!(field.verify_primitive(), "polynomial {:#b} should be primitive", poly);
+            assert!(
+                field.verify_primitive(),
+                "polynomial {:#b} should be primitive",
+                poly
+            );
         }
     }
 
     #[test]
     fn test_trinomial_search_m3() {
         // x^3 + x + 1 is a primitive trinomial
-        let gen = PrimitiveGenerator::new(3)
-            .with_strategy(GenerationStrategy::Trinomial);
+        let gen = PrimitiveGenerator::new(3).with_strategy(GenerationStrategy::Trinomial);
         let poly = gen.find_first().unwrap();
         assert_eq!(poly.count_ones(), 3); // trinomial has 3 terms
         let field = Gf2mField::new(3, poly);
@@ -395,8 +394,7 @@ mod tests {
     #[test]
     fn test_trinomial_search_m5() {
         // x^5 + x^2 + 1 is a primitive trinomial
-        let gen = PrimitiveGenerator::new(5)
-            .with_strategy(GenerationStrategy::Trinomial);
+        let gen = PrimitiveGenerator::new(5).with_strategy(GenerationStrategy::Trinomial);
         let poly = gen.find_first().unwrap();
         assert_eq!(poly.count_ones(), 3);
         let field = Gf2mField::new(5, poly);
@@ -418,10 +416,10 @@ mod tests {
             .with_strategy(GenerationStrategy::ParallelExhaustive { threads: 2 });
         let all = gen.find_all();
         assert_eq!(all.len(), 6);
-        
+
         // Should match sequential results
-        let sequential_gen = PrimitiveGenerator::new(5)
-            .with_strategy(GenerationStrategy::Exhaustive);
+        let sequential_gen =
+            PrimitiveGenerator::new(5).with_strategy(GenerationStrategy::Exhaustive);
         let sequential_all = sequential_gen.find_all();
         assert_eq!(all, sequential_all);
     }
@@ -432,7 +430,7 @@ mod tests {
         let gen = PrimitiveGenerator::new(6)
             .with_strategy(GenerationStrategy::ParallelExhaustive { threads: 4 });
         let poly = gen.find_first().unwrap();
-        
+
         // Verify it's actually primitive
         let field = Gf2mField::new_unchecked(6, poly);
         assert!(field.verify_primitive());
