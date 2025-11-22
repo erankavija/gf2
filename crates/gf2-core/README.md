@@ -23,24 +23,29 @@
 - **visualization**: Save BitMatrix as PNG images (opt-in)
   - Useful for debugging and visual inspection of matrix patterns
 
-## Benchmarks
+## Performance
 
-Run benchmarks to measure performance:
+Validated against SageMath 10.7 (Nov 2024):
+- **3-340x faster** primitive polynomial testing
+- **4-127x faster** GF(2^m) polynomial operations  
+- **12-15x faster** sparse matrix operations
+
+See `docs/phase9_3_complete.md` for detailed benchmarking methodology and results.
+
+### Benchmarks
 
 ```bash
-# Polar transform operations
-cargo bench --bench polar
+# Primitive polynomial verification
+cargo bench --bench primitive_poly
 
-# Polynomial multiplication
+# GF(2^m) field operations
 cargo bench --bench polynomial
 
-# Matrix operations
-cargo bench --bench matmul
+# Sparse matrix operations
+cargo bench --bench sparse
 
-# Other benchmarks available: bitvec, wide_logical, scan, random, sparse, shifts, rank_select
+# Other: polar, matmul, bitvec, wide_logical, scan, random, shifts, rank_select
 ```
-
-For detailed performance characteristics, see the Rustdoc API documentation.
 
 ## Usage
 
