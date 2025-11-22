@@ -54,6 +54,20 @@ Fast Hadamard Transform, 81x speedup vs. naive, O(N log N) butterfly operations
 - `scripts/sage_benchmarks.py` - Sage comparison suite
 - Documentation: `docs/phase9_3*.md` with detailed analysis
 
+### Phase 9.4: Extended Performance Benchmarking
+**Priority**: Medium  
+**Goal**: Benchmark against performance-oriented libraries beyond Sage
+
+**Targets**:
+- **Tier 1** (Essential): NTL (GF(2^m), polynomials), M4RI (matrices)
+- **Tier 2** (Important): FLINT (modern baseline), GF-Complete (hardware intrinsics)
+- **Tier 3** (Nice-to-have): Magma (if accessible), Catid libs (erasure codes)
+
+**Deliverables**:
+- C/C++ benchmark harnesses for NTL, M4RI, FLINT, GF-Complete
+- Comparative analysis across operations: multiplication, GCD, primitivity, matrix ops
+- Documentation of performance characteristics vs. specialized libraries
+
 ---
 
 ## Active Development
