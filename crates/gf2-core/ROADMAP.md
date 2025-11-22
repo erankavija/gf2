@@ -29,63 +29,24 @@ Fast Hadamard Transform, 81x speedup vs. naive, O(N log N) butterfly operations
 ### Phase 8: Extension Field Arithmetic
 `Gf2mField` with table-based multiplication, polynomial operations (GCD, evaluation), minimal polynomial computation
 
-### Phase 9: Primitive Polynomial Verification ✅ **RECENTLY COMPLETED**
+### Phase 9: Primitive Polynomial Operations ✅ **COMPLETED**
+
+**Phase 9.1-9.3: Verification & Benchmarking**
 - Efficient primitivity testing: O(m³ log m) order-based algorithm
 - Enhanced Rabin irreducibility test with GCD
 - Standard polynomial database (m=2..16, DVB-T2 compliant)
-- Compile-time warnings for non-standard polynomials
+- **3-340x faster** than SageMath for verification
 - **Key finding**: AES polynomial (0x11B) is irreducible but NOT primitive
-- **See**: `docs/PRIMITIVE_POLYNOMIALS.md` for design details
 
----
+**Phase 9.2: Generation**
+- Exhaustive and trinomial search strategies
+- Parallel generation with rayon
+- **126-931x faster** than SageMath for m=5..8
 
-### Phase 9.3: Performance Benchmarking ✅ **COMPLETED 2024-11-22**
-**Priority**: High  
-**Goal**: Establish competitive baseline vs. Sage
-
-**Results**:
-- ✅ Primitivity testing: **3-340x faster** than Sage
-- ✅ GF(2^m) multiplication: **4-127x faster** than Sage  
-- ✅ Sparse matrix ops: **12-15x faster** than Sage
-- ✅ **All targets exceeded** - See `docs/phase9_3_complete.md`
-
-**Deliverables**:
-- `benches/primitive_poly.rs` - Comprehensive benchmarks
-- `scripts/sage_benchmarks.py` - Sage comparison suite
-- Documentation: `docs/phase9_3*.md` with detailed analysis
-
-### Phase 9.4: Extended Performance Benchmarking ✅ **COMPLETED**
-**Priority**: Medium  
-**Goal**: Benchmark against performance-oriented libraries beyond Sage
-
-**Results**:
-- ✅ **NTL GF(2^m)**: We're **13-18x faster** for m ≤ 16, competitive for m=32, 2x slower for m=64
-- ✅ **M4RI matrices**: They're **5-7x faster** - identified as optimization priority
-- ✅ **FLINT**: Different domain (GF(2)[x] vs GF(2^m)[x]) - informative baseline
-
-**Deliverables**:
-- `benchmarks-cpp/` - C/C++ harnesses for NTL, M4RI, FLINT
-- `docs/BENCHMARKS.md` - Consolidated performance analysis
-- Honest assessment of strengths and gaps
-
----
-
-## Active Development
-
-### Phase 9.2: Primitive Polynomial Generation ✅ **COMPLETED**
-**Priority**: Medium  
-**Goal**: Generate primitive polynomials for arbitrary m
-
-**Results**:
-- ✅ Exhaustive search: **126-931x faster** than Sage for m=5..8
-- ✅ Trinomial search with Swan's theorem filtering
-- ✅ Parallel generation with rayon: 4-8x speedup
-- ✅ Validated against Sage for correctness
-
-**Deliverables**:
-- `src/gf2m/generation.rs` - Sequential and parallel generators
-- `benches/generation.rs` - Performance benchmarks
-- Practical up to m=12 (521 µs with parallelization)
+**Phase 9.4: C/C++ Benchmarking**
+- **13-18x faster** than NTL for GF(2^m) multiplication (m ≤ 16)
+- Identified M4RI 5-7x gap in matrix operations (optimization target)
+- **See**: `docs/BENCHMARKS.md` for comprehensive analysis
 
 ---
 

@@ -26,15 +26,33 @@ const TEST_POLYNOMIALS: &[(usize, u64, bool, &str)] = &[
     (4, 0b10011, true, "GF(16): x^4 + x + 1"),
     (5, 0b100101, true, "GF(32): x^5 + x^2 + 1"),
     (8, 0b100011101, true, "GF(256): x^8 + x^4 + x^3 + x^2 + 1"),
-    
     // DVB-T2 standard polynomials (m=10,14,16)
     (10, 0b10000001001, true, "DVB-T2 GF(1024): x^10 + x^3 + 1"),
-    (14, 0b100000000101011, true, "DVB-T2 GF(16384): x^14 + x^5 + x^3 + x + 1"),
-    (16, 0b10000000000101101, true, "DVB-T2 GF(65536): x^16 + x^5 + x^3 + x^2 + 1"),
-    
+    (
+        14,
+        0b100000000101011,
+        true,
+        "DVB-T2 GF(16384): x^14 + x^5 + x^3 + x + 1",
+    ),
+    (
+        16,
+        0b10000000000101101,
+        true,
+        "DVB-T2 GF(65536): x^16 + x^5 + x^3 + x^2 + 1",
+    ),
     // Non-primitive but irreducible (for negative testing)
-    (8, 0b100011011, false, "AES polynomial (irreducible but NOT primitive)"),
-    (14, 0b100000000100001, false, "x^14 + x^5 + 1 (irreducible but NOT primitive)"),
+    (
+        8,
+        0b100011011,
+        false,
+        "AES polynomial (irreducible but NOT primitive)",
+    ),
+    (
+        14,
+        0b100000000100001,
+        false,
+        "x^14 + x^5 + 1 (irreducible but NOT primitive)",
+    ),
 ];
 
 /// Additional primitive polynomials for extended testing
@@ -45,11 +63,18 @@ const EXTENDED_PRIMITIVES: &[(usize, u64, &str)] = &[
     (13, 0b10000000011011, "x^13 + x^4 + x^3 + x + 1"),
     (15, 0b1000000000000011, "x^15 + x + 1"),
     (17, 0b100000000000001001, "x^17 + x^3 + 1"),
-    
     // Larger degrees for scaling tests
     (20, 0b100000000000000001001, "x^20 + x^3 + 1"),
-    (24, 0b1000000000000000000010000111, "x^24 + x^7 + x^2 + x + 1"),
-    (32, 0b100000000000000000000000001100011, "x^32 + x^7 + x^5 + x^3 + x^2 + x + 1"),
+    (
+        24,
+        0b1000000000000000000010000111,
+        "x^24 + x^7 + x^2 + x + 1",
+    ),
+    (
+        32,
+        0b100000000000000000000000001100011,
+        "x^32 + x^7 + x^5 + x^3 + x^2 + x + 1",
+    ),
 ];
 
 /// [SAGE_CMP] Benchmark full primitivity verification (irreducibility + order test)
@@ -65,7 +90,7 @@ fn bench_primitivity_verification(c: &mut Criterion) {
 
     for &(m, poly, _is_prim, desc) in TEST_POLYNOMIALS {
         let field = Gf2mField::new(m, poly);
-        
+
         group.bench_with_input(
             BenchmarkId::new(format!("m={}", m), desc),
             &field,
@@ -90,7 +115,7 @@ fn bench_irreducibility_only(c: &mut Criterion) {
 
     for &(m, poly, _, desc) in TEST_POLYNOMIALS {
         let field = Gf2mField::new(m, poly);
-        
+
         group.bench_with_input(
             BenchmarkId::new(format!("m={}", m), desc),
             &field,
@@ -116,14 +141,17 @@ fn bench_primitivity_scaling(c: &mut Criterion) {
         .filter(|(_, _, is_prim, _)| *is_prim)
         .map(|(m, poly, _, desc)| (*m, *poly, *desc))
         .collect();
-    
+
     all_tests.extend(EXTENDED_PRIMITIVES.iter().copied());
-    
+
     for (m, poly, desc) in all_tests {
         let field = Gf2mField::new(m, poly);
-        
+
         group.bench_with_input(
-            BenchmarkId::new("degree", format!("m={:02}_{}", m, desc.split(':').next().unwrap_or(""))),
+            BenchmarkId::new(
+                "degree",
+                format!("m={:02}_{}", m, desc.split(':').next().unwrap_or("")),
+            ),
             &field,
             |b, field| {
                 b.iter(|| black_box(field.verify_primitive()));
@@ -145,12 +173,12 @@ fn bench_irreducibility_scaling(c: &mut Criterion) {
         .iter()
         .map(|(m, poly, _, desc)| (*m, *poly, *desc))
         .collect();
-    
+
     all_tests.extend(EXTENDED_PRIMITIVES.iter().copied());
-    
+
     for (i, (m, poly, _desc)) in all_tests.iter().enumerate() {
         let field = Gf2mField::new(*m, *poly);
-        
+
         group.bench_with_input(
             BenchmarkId::new("degree", format!("m={:02}_poly{}", m, i)),
             &field,
@@ -178,7 +206,7 @@ fn bench_nonprimitive_detection(c: &mut Criterion) {
 
     for &(m, poly, _, desc) in non_primitives {
         let field = Gf2mField::new(m, poly);
-        
+
         group.bench_with_input(
             BenchmarkId::new(format!("m={}", m), desc),
             &field,

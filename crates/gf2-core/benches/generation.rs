@@ -7,8 +7,7 @@ fn bench_exhaustive_first(c: &mut Criterion) {
     for m in [2, 3, 4, 5, 6, 7, 8] {
         group.bench_with_input(BenchmarkId::from_parameter(m), &m, |b, &m| {
             b.iter(|| {
-                let gen = PrimitiveGenerator::new(m)
-                    .with_strategy(GenerationStrategy::Exhaustive);
+                let gen = PrimitiveGenerator::new(m).with_strategy(GenerationStrategy::Exhaustive);
                 black_box(gen.find_first())
             });
         });
@@ -23,8 +22,7 @@ fn bench_exhaustive_all(c: &mut Criterion) {
     for m in [2, 3, 4, 5, 6, 7, 8, 9, 10] {
         group.bench_with_input(BenchmarkId::from_parameter(m), &m, |b, &m| {
             b.iter(|| {
-                let gen = PrimitiveGenerator::new(m)
-                    .with_strategy(GenerationStrategy::Exhaustive);
+                let gen = PrimitiveGenerator::new(m).with_strategy(GenerationStrategy::Exhaustive);
                 black_box(gen.find_all())
             });
         });
@@ -56,8 +54,7 @@ fn bench_trinomial_search(c: &mut Criterion) {
     for m in [2, 3, 4, 5, 6, 7, 8, 9, 10] {
         group.bench_with_input(BenchmarkId::from_parameter(m), &m, |b, &m| {
             b.iter(|| {
-                let gen = PrimitiveGenerator::new(m)
-                    .with_strategy(GenerationStrategy::Trinomial);
+                let gen = PrimitiveGenerator::new(m).with_strategy(GenerationStrategy::Trinomial);
                 black_box(gen.find_first())
             });
         });
