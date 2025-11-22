@@ -68,3 +68,7 @@ harness = false
 [[bench]]
 name = "polar"
 harness = false
+
+[[bench]]
+name = "primitive_poly"
+harness = false

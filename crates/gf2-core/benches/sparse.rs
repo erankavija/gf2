@@ -1,9 +1,19 @@
+//! Benchmarks for sparse matrix operations over GF(2).
+//!
+//! # Sage Comparison
+//!
+//! Benchmarks marked with `[SAGE_CMP]` have equivalent implementations in
+//! `scripts/sage_benchmarks.py` for comparison with SageMath sparse matrices.
+
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use gf2_core::matrix::BitMatrix;
 use gf2_core::sparse::{SpBitMatrix, SpBitMatrixDual};
 use gf2_core::BitVec;
 use rand::SeedableRng;
 
+/// [SAGE_CMP] Benchmark sparse matrix-vector multiplication
+///
+/// Compare with Sage: `sparse_matrix * vector` over GF(2)
 fn bench_sparse_matvec(c: &mut Criterion) {
     let mut group = c.benchmark_group("sparse_matvec");
 
@@ -56,6 +66,9 @@ fn bench_dense_vs_sparse(c: &mut Criterion) {
     group.finish();
 }
 
+/// [SAGE_CMP] Benchmark sparse matrix transpose
+///
+/// Compare with Sage: `matrix.transpose()` for sparse GF(2) matrices
 fn bench_sparse_transpose(c: &mut Criterion) {
     let mut group = c.benchmark_group("sparse_transpose");
 

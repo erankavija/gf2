@@ -2,6 +2,11 @@
 //!
 //! These benchmarks measure the performance of polynomial operations over extension fields,
 //! which are critical for BCH codes and other error-correcting codes.
+//!
+//! # Sage Comparison
+//!
+//! Benchmarks marked with `[SAGE_CMP]` have equivalent implementations in
+//! `scripts/sage_benchmarks.py` for direct performance comparison against SageMath.
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use gf2_core::gf2m::{Gf2mField, Gf2mPoly};
@@ -46,6 +51,9 @@ fn bench_poly_addition(c: &mut Criterion) {
     group.finish();
 }
 
+/// [SAGE_CMP] Benchmark polynomial multiplication
+///
+/// Compare with Sage: `poly1 * poly2` in polynomial ring over GF(2^m)
 fn bench_poly_multiplication_schoolbook(c: &mut Criterion) {
     let mut group = c.benchmark_group("polynomial_multiplication_schoolbook");
 
@@ -274,6 +282,89 @@ fn bench_bch_syndrome_pattern(c: &mut Criterion) {
     group.finish();
 }
 
+/// [SAGE_CMP] Benchmark field element multiplication
+///
+/// Direct element-to-element multiplication in GF(2^m).
+/// Compare with Sage: `a * b` where a, b ∈ GF(2^m)
+fn bench_field_element_multiply(c: &mut Criterion) {
+    let mut group = c.benchmark_group("field_element_multiply");
+    group.sample_size(1000);
+
+    // Test different field sizes
+    let test_fields = [
+        (8, "GF(256)"),
+        (16, "GF(65536)"),
+    ];
+
+    for (m, name) in test_fields {
+        let field = if m == 8 {
+            Gf2mField::gf256()
+        } else {
+            Gf2mField::gf65536()
+        };
+
+        // Create test elements
+        let a = field.element(42);
+        let b = field.element(123);
+
+        group.throughput(Throughput::Elements(1));
+        group.bench_with_input(
+            BenchmarkId::new(name, "single"),
+            &(&field, &a, &b),
+            |bench, (_f, a, b)| {
+                bench.iter(|| {
+                    black_box(*a * *b)
+                });
+            },
+        );
+    }
+
+    group.finish();
+}
+
+/// [SAGE_CMP] Benchmark batch field element multiplications
+///
+/// Measures throughput of repeated element multiplications.
+/// Compare with Sage batch operations.
+fn bench_field_element_multiply_batch(c: &mut Criterion) {
+    let mut group = c.benchmark_group("field_element_multiply_batch");
+
+    let test_fields = [
+        (8, "GF(256)"),
+        (16, "GF(65536)"),
+    ];
+
+    for (m, name) in test_fields {
+        let field = if m == 8 {
+            Gf2mField::gf256()
+        } else {
+            Gf2mField::gf65536()
+        };
+
+        // Create arrays of elements
+        let count = 1000;
+        let elements_a: Vec<_> = (0..count).map(|i| field.element(i)).collect();
+        let elements_b: Vec<_> = (0..count).map(|i| field.element(i * 3 + 7)).collect();
+
+        group.throughput(Throughput::Elements(count));
+        group.bench_with_input(
+            BenchmarkId::new(name, format!("{}ops", count)),
+            &(&elements_a, &elements_b),
+            |bench, (a, b)| {
+                bench.iter(|| {
+                    let mut results = Vec::with_capacity(count as usize);
+                    for i in 0..count as usize {
+                        results.push(&a[i] * &b[i]);
+                    }
+                    black_box(results)
+                });
+            },
+        );
+    }
+
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_poly_addition,
@@ -284,5 +375,7 @@ criterion_group!(
     bench_poly_eval_batch,
     bench_minimal_polynomial,
     bench_bch_syndrome_pattern,
+    bench_field_element_multiply,
+    bench_field_element_multiply_batch,
 );
 criterion_main!(benches);
