@@ -177,3 +177,88 @@ Sage timings for exhaustive search:
 5. **SIMD acceleration**: 2-4x speedup for large field degrees (m > 16)
 
 **Next**: Phase 9.4 will benchmark against specialized C/C++ libraries (NTL, M4RI, FLINT, GF-Complete)
+
+---
+
+## Phase 9.4: C/C++ Library Comparison
+
+**Libraries**: NTL 11.6.0, M4RI 20250128, FLINT 3.3.1
+
+### NTL: GF(2^m) Field Operations
+
+| Field | NTL Multiplication | Our Multiplication | Ratio (Us/NTL) |
+|-------|-------------------|-------------------|----------------|
+| GF(2^4) | 43.0 ns/op | 2.42 ns/op | **18x faster** |
+| GF(2^8) | 46.0 ns/op | 2.70 ns/op | **17x faster** |
+| GF(2^16) | 55.7 ns/op | 4.41 ns/op | **13x faster** |
+| GF(2^32) | 98.7 ns/op | 52.2 ns/op | **1.9x faster** |
+| GF(2^64) | 103.1 ns/op | 204 ns/op | **0.5x (2x slower)** |
+
+**Analysis**: Our table-based multiplication (m ≤ 16) is 13-18x faster than NTL. For larger fields, NTL's optimizations catch up, and they're 2x faster at m=64.
+
+### M4RI: Matrix Operations
+
+| Operation | Size | M4RI | gf2-core | Ratio (M4RI/Us) |
+|-----------|------|------|----------|-----------------|
+| Multiplication | 256x256 | 0.09 ms | 0.576 ms | **0.16x (6.4x slower)** |
+| Multiplication | 512x512 | 0.29 ms | 1.78 ms | **0.16x (6.1x slower)** |
+| Multiplication | 1024x1024 | 1.21 ms | 6.47 ms | **0.19x (5.3x slower)** |
+| Multiplication | 2048x2048 | 4.02 ms | 26.9 ms | **0.15x (6.7x slower)** |
+| Gaussian Elim | 1024x1024 | 1.19 ms | - | - |
+| Inversion | 256x256 | 0.50 ms | - | - |
+| Inversion | 512x512 | 2.09 ms | - | - |
+| Inversion | 1024x1024 | 8.61 ms | - | - |
+
+**Analysis**: M4RI is 5-7x faster for matrix multiplication. This is expected - M4RI is the reference implementation with decades of optimization, and our M4RM is a relatively new implementation. Key differences:
+- M4RI uses optimized gray code tables
+- M4RI has hand-tuned cache blocking
+- M4RI uses assembly optimizations in critical paths
+
+**Opportunity**: Significant room for optimization in our M4RM implementation.
+
+### FLINT: Polynomial Operations
+
+**Note**: FLINT benchmarks are for polynomials over GF(2)[x] (binary coefficients), while ours are over GF(2^m)[x] (field element coefficients). These are fundamentally different operations.
+
+| Operation | Degree | FLINT GF(2)[x] | gf2-core GF(2^8)[x] | Notes |
+|-----------|--------|---------------|---------------------|-------|
+| Multiplication | 50 | 0.33 µs | ~20 µs | Different domains |
+| Multiplication | 100 | 0.33 µs | 63 µs | FLINT: binary ops only |
+| Multiplication | 200 | 1.43 µs | 187 µs | gf2-core: field element ops |
+| GCD | 100 | 2.04 µs | Not implemented | - |
+| GCD | 200 | 4.69 µs | Not implemented | - |
+| Evaluation | 100 | 2.02 ns | - | Horner's method |
+
+**Analysis**: 
+- **FLINT domain**: Polynomials with coefficients in {0, 1}, operations are simple XOR
+- **Our domain**: Polynomials with coefficients in GF(2^m), each operation requires field multiplication
+- **Complexity**: Our operations are O(degree × field_ops), FLINT is O(degree × XOR)
+- **Conclusion**: Not comparable - FLINT for different use case (binary polynomials vs field polynomials)
+
+---
+
+## Summary: Competitive Position
+
+### Where We Excel
+
+1. **GF(2^m) small fields (m ≤ 16)**: 13-18x faster than NTL
+2. **Sage comparison**: 100-1000x faster across all operations
+3. **Sparse matrices**: 12-15x faster than Sage
+4. **Primitive polynomial generation**: 126-931x faster than Sage
+
+### Where We're Competitive
+
+1. **GF(2^32)**: 1.9x faster than NTL
+2. **Overall field operations**: Within 2x of specialized C++ libraries
+
+### Where We Can Improve
+
+1. **GF(2^64)**: NTL is 2x faster - need better SIMD or algorithmic improvements
+2. **M4RM multiplication**: M4RI is 5-7x faster - significant optimization opportunity
+   - Profile and optimize gray code generation
+   - Improve cache blocking strategy  
+   - Consider assembly for critical loops
+3. **Polynomial GCD**: Not yet implemented
+4. **Matrix inversion**: Not yet benchmarked against M4RI
+
+**Conclusion**: gf2-core demonstrates **superior performance** vs NTL for small field operations (13-18x faster), competitive for medium fields, but lags behind M4RI's specialized matrix code (5-7x slower). Clear optimization priorities identified.

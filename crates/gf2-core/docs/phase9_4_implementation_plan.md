@@ -160,16 +160,16 @@ SageMath (Phase 9.3) is a general-purpose computer algebra system optimized for 
 
 ## Implementation Phases
 
-### Phase 9.4.1: Setup & Infrastructure (Week 1)
+### Phase 9.4.1: Setup & Infrastructure ✅ COMPLETE
 
 **Objective**: Install libraries, create build system, verify functionality
 
 **Tasks**:
-- [ ] Install NTL, M4RI, FLINT, GF-Complete
-- [ ] Create CMake/Makefile build system for C/C++ benchmarks
-- [ ] Write minimal test programs to verify installation
-- [ ] Document library versions and build flags
-- [ ] Create harness for calling C/C++ from comparison scripts
+- [x] Install NTL, M4RI, FLINT (GF-Complete deferred)
+- [x] Create CMake build system for C/C++ benchmarks
+- [x] Write benchmark programs
+- [x] Document library versions (NTL 11.6.0, M4RI 20250128, FLINT 3.3.1)
+- [x] Verify builds and execution
 
 **Deliverables**:
 - `scripts/setup_libraries.sh` - Install script
@@ -177,21 +177,23 @@ SageMath (Phase 9.3) is a general-purpose computer algebra system optimized for 
 - `benchmarks-cpp/CMakeLists.txt` - Build configuration
 - `benchmarks-cpp/test_*.cpp` - Verification tests
 
-### Phase 9.4.2: Micro-Benchmarks (Week 2)
+### Phase 9.4.2: Micro-Benchmarks ✅ COMPLETE
 
 **Objective**: Implement and run micro-benchmarks for basic operations
 
-**Operations**:
-- GF(2^m) multiplication
-- Polynomial multiplication
-- Matrix multiplication (small sizes)
+**Results**:
+- **NTL GF(2^m)**: We're 13-18x faster for m ≤ 16, 1.9x faster for m=32, 2x slower for m=64
+- **M4RI matrices**: They're 5-7x faster for multiplication - significant optimization opportunity identified
+- **FLINT polynomials**: Different domain (GF(2)[x] vs GF(2^m)[x]) - informative but not directly comparable
+- **M4RI inversion**: Successfully benchmarked (0.50ms for 256x256, 8.61ms for 1024x1024)
 
 **Tasks**:
-- [ ] Implement NTL benchmarks for GF(2^m) operations
-- [ ] Implement M4RI benchmarks for matrix operations
-- [ ] Implement FLINT benchmarks for polynomials
-- [ ] Run and collect timing data
-- [ ] Compare with our Phase 9.3 results
+- [x] Implement NTL benchmarks for GF(2^m) operations
+- [x] Implement M4RI benchmarks for matrix operations
+- [x] Implement FLINT benchmarks for polynomials
+- [x] Run and collect timing data
+- [x] Compare with our Phase 9.3 results
+- [x] Update BENCHMARKS.md with C/C++ comparisons
 
 **Deliverables**:
 - `benchmarks-cpp/bench_field_ops.cpp` - Field operation benchmarks
