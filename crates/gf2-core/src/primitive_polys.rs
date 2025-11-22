@@ -32,8 +32,8 @@ impl PrimitivePolynomialDatabase {
     /// ```
     /// use gf2_core::primitive_polys::PrimitivePolynomialDatabase;
     ///
-    /// // AES standard
-    /// assert_eq!(PrimitivePolynomialDatabase::standard(8), Some(0b100011011));
+    /// // GF(256) primitive polynomial
+    /// assert_eq!(PrimitivePolynomialDatabase::standard(8), Some(0b100011101));
     ///
     /// // DVB-T2 short frames
     /// assert_eq!(PrimitivePolynomialDatabase::standard(14), Some(0b100000000101011));
@@ -44,21 +44,21 @@ impl PrimitivePolynomialDatabase {
     pub fn standard(m: usize) -> Option<u64> {
         match m {
             // Standard primitive polynomials from authoritative sources
-            2 => Some(0b111),                    // x^2 + x + 1
-            3 => Some(0b1011),                   // x^3 + x + 1
-            4 => Some(0b10011),                  // x^4 + x + 1
-            5 => Some(0b100101),                 // x^5 + x^2 + 1
-            6 => Some(0b1000011),                // x^6 + x + 1
-            7 => Some(0b10000011),               // x^7 + x + 1
-            8 => Some(0b100011011),              // x^8 + x^4 + x^3 + x + 1 (AES)
-            9 => Some(0b1000010001),             // x^9 + x^4 + 1
-            10 => Some(0b10000001001),           // x^10 + x^3 + 1
-            11 => Some(0b100000000101),          // x^11 + x^2 + 1
-            12 => Some(0b1000001010011),         // x^12 + x^6 + x^4 + x + 1
-            13 => Some(0b10000000011011),        // x^13 + x^4 + x^3 + x + 1
-            14 => Some(0b100000000101011),       // x^14 + x^5 + x^3 + x + 1 (DVB-T2)
-            15 => Some(0b1000000000000011),      // x^15 + x + 1
-            16 => Some(0b10000000000101101),     // x^16 + x^5 + x^3 + x^2 + 1 (DVB-T2)
+            2 => Some(0b111),                // x^2 + x + 1
+            3 => Some(0b1011),               // x^3 + x + 1
+            4 => Some(0b10011),              // x^4 + x + 1
+            5 => Some(0b100101),             // x^5 + x^2 + 1
+            6 => Some(0b1000011),            // x^6 + x + 1
+            7 => Some(0b10000011),           // x^7 + x + 1
+            8 => Some(0b100011101),          // x^8 + x^4 + x^3 + x^2 + 1 (primitive trinomial)
+            9 => Some(0b1000010001),         // x^9 + x^4 + 1
+            10 => Some(0b10000001001),       // x^10 + x^3 + 1
+            11 => Some(0b100000000101),      // x^11 + x^2 + 1
+            12 => Some(0b1000001010011),     // x^12 + x^6 + x^4 + x + 1
+            13 => Some(0b10000000011011),    // x^13 + x^4 + x^3 + x + 1
+            14 => Some(0b100000000101011),   // x^14 + x^5 + x^3 + x + 1 (DVB-T2)
+            15 => Some(0b1000000000000011),  // x^15 + x + 1
+            16 => Some(0b10000000000101101), // x^16 + x^5 + x^3 + x^2 + 1 (DVB-T2)
             _ => None,
         }
     }
@@ -84,17 +84,17 @@ impl PrimitivePolynomialDatabase {
     pub fn trinomials(m: usize) -> Vec<u64> {
         match m {
             // Known primitive trinomials (x^m + x^k + 1)
-            2 => vec![0b111],                    // x^2 + x + 1
-            3 => vec![0b1011],                   // x^3 + x + 1
-            4 => vec![0b10011],                  // x^4 + x + 1
-            5 => vec![0b100101],                 // x^5 + x^2 + 1
-            6 => vec![0b1000011],                // x^6 + x + 1
-            7 => vec![0b10000011, 0b10001001],   // x^7 + x + 1, x^7 + x^3 + 1
-            8 => vec![0b100010001],              // x^8 + x^4 + 1
-            9 => vec![0b1000010001],             // x^9 + x^4 + 1
-            10 => vec![0b10000001001],           // x^10 + x^3 + 1
-            11 => vec![0b100000000101],          // x^11 + x^2 + 1
-            15 => vec![0b1000000000000011],      // x^15 + x + 1
+            2 => vec![0b111],                  // x^2 + x + 1
+            3 => vec![0b1011],                 // x^3 + x + 1
+            4 => vec![0b10011],                // x^4 + x + 1
+            5 => vec![0b100101],               // x^5 + x^2 + 1
+            6 => vec![0b1000011],              // x^6 + x + 1
+            7 => vec![0b10000011, 0b10001001], // x^7 + x + 1, x^7 + x^3 + 1
+            8 => vec![0b100010001],            // x^8 + x^4 + 1
+            9 => vec![0b1000010001],           // x^9 + x^4 + 1
+            10 => vec![0b10000001001],         // x^10 + x^3 + 1
+            11 => vec![0b100000000101],        // x^11 + x^2 + 1
+            15 => vec![0b1000000000000011],    // x^15 + x + 1
             _ => Vec::new(),
         }
     }
@@ -155,17 +155,14 @@ mod tests {
     }
 
     #[test]
-    fn test_database_aes_standard() {
-        // AES uses x^8 + x^4 + x^3 + x + 1
-        assert_eq!(
-            PrimitivePolynomialDatabase::standard(8),
-            Some(0b100011011)
-        );
+    fn test_database_gf256_standard() {
+        // Standard primitive polynomial for GF(256)
+        assert_eq!(PrimitivePolynomialDatabase::standard(8), Some(0b100011101));
     }
 
     #[test]
     fn test_verify_matches_standard() {
-        let result = PrimitivePolynomialDatabase::verify(8, 0b100011011);
+        let result = PrimitivePolynomialDatabase::verify(8, 0b100011101);
         assert_eq!(result, VerificationResult::Matches);
     }
 

@@ -41,10 +41,10 @@ mod bitvec;
 pub mod gf2m;
 
 // Primitive polynomial database submodule
-pub mod primitive_polys;
 pub mod kernels;
 mod macros;
 pub mod matrix;
+pub mod primitive_polys;
 pub mod sparse;
 
 pub use bitslice::{BitSlice, BitSliceMut};

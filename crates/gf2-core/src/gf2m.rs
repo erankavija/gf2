@@ -180,10 +180,10 @@ impl Gf2mField {
     pub fn new(m: usize, primitive_poly: u64) -> Self {
         assert!(m > 0, "Extension degree m must be positive");
         assert!(m <= 64, "Extension degree m > 64 not yet supported");
-        
+
         // Check against database and warn on conflicts
         use crate::primitive_polys::{PrimitivePolynomialDatabase, VerificationResult};
-        
+
         match PrimitivePolynomialDatabase::verify(m, primitive_poly) {
             VerificationResult::Matches => {
                 // All good - using standard polynomial
@@ -193,14 +193,17 @@ impl Gf2mField {
                 eprintln!("  Provided: {:#b}", primitive_poly);
                 if let Some(standard) = PrimitivePolynomialDatabase::standard(m) {
                     eprintln!("  Standard: {:#b}", standard);
-                    
+
                     // Provide helpful context for known standards
                     let source = match m {
                         8 => " (AES)",
                         14 | 16 => " (DVB-T2)",
                         _ => "",
                     };
-                    eprintln!("  Using non-standard polynomial may cause interoperability issues{}", source);
+                    eprintln!(
+                        "  Using non-standard polynomial may cause interoperability issues{}",
+                        source
+                    );
                 }
             }
             VerificationResult::Unknown => {
@@ -236,8 +239,8 @@ impl Gf2mField {
     /// assert_eq!(gf256.order(), 256);
     /// ```
     pub fn gf256() -> Self {
-        // x^8 + x^4 + x^3 + x + 1 = binary 100011011
-        Gf2mField::new(8, 0b100011011)
+        // x^8 + x^4 + x^3 + x^2 + 1 = binary 100011101 (primitive)
+        Gf2mField::new(8, 0b100011101)
     }
 
     /// Creates a GF(2^16) field with standard primitive polynomial x^16 + x^12 + x^3 + x + 1.
@@ -401,23 +404,39 @@ impl Gf2mField {
             return false;
         }
 
-        // For a primitive polynomial, there must exist a primitive element
-        // A polynomial is primitive if ANY element generates the full multiplicative group
-        // We check if we can find such an element
-        
+        // For a primitive polynomial p(x), the element x must be a primitive element
+        // (i.e., x must generate the full multiplicative group of order 2^m - 1)
+        //
+        // This is the KEY difference between primitive and merely irreducible polynomials:
+        // - Irreducible: cannot be factored, defines a valid field
+        // - Primitive: irreducible AND x generates the multiplicative group
+
         let m = self.params.m;
-        let order = (1 << m) - 1;
-        let p = self.params.primitive_poly;
-        
-        // Try to find a primitive element (usually one of the first few elements works)
-        // For a primitive polynomial, this should succeed quickly
-        for candidate in 2..(1u64 << m).min(256) {
-            if Self::is_primitive(candidate, m, p, order) {
-                return true; // Found a primitive element, so polynomial is primitive
+        let order = (1usize << m) - 1; // 2^m - 1
+
+        // Efficient primitivity test: check that x has order exactly 2^m-1
+        // Method: Verify x^(2^m-1) = 1 and x^((2^m-1)/q) ≠ 1 for prime factors q
+
+        // Step 1: Verify x^(2^m-1) = 1 (Fermat's little theorem)
+        let x_to_order = self.compute_x_power_value(order);
+        if x_to_order != 1 {
+            return false;
+        }
+
+        // Step 2: For each prime factor q of (2^m-1), verify x^((2^m-1)/q) ≠ 1
+        // This ensures x doesn't have a smaller order
+        let prime_factors = Self::prime_factors_of_order_static(m);
+
+        for q in prime_factors {
+            let exp = order / q as usize;
+            let result = self.compute_x_power_value(exp);
+            if result == 1 {
+                // x has order less than 2^m-1, so polynomial is not primitive
+                return false;
             }
         }
-        
-        false // No primitive element found in reasonable search
+
+        true
     }
 
     /// Tests irreducibility using Rabin's test.
@@ -430,28 +449,106 @@ impl Gf2mField {
     ///
     /// Rabin, M. O. (1980). "Probabilistic algorithms in finite fields."
     /// SIAM Journal on Computing, 9(2), 273-280.
-    fn is_irreducible_rabin(&self) -> bool {
+    pub fn is_irreducible_rabin(&self) -> bool {
         let m = self.params.m;
-        
-        // Key condition: x^(2^m) = x mod p(x)
-        // For a degree-m polynomial to be irreducible, this must hold
+        let p = self.params.primitive_poly;
+
+        // Convert primitive polynomial to Gf2mPoly for GCD computation
+        let p_poly = self.poly_from_binary(p, m);
+
+        // Test 1: gcd(p(x), x^(2^i) - x) = 1 for i = 1..m/2
+        for i in 1..=(m / 2) {
+            // Compute x^(2^i) mod p(x)
+            let exp = 1usize << i; // 2^i
+            let x_pow = self.compute_x_power_value(exp);
+
+            // x^(2^i) - x (in GF(2), subtraction is XOR)
+            let diff = x_pow ^ 2; // x^(2^i) XOR x
+
+            if diff == 0 {
+                // x^(2^i) = x, which shouldn't happen for i < m
+                return false;
+            }
+
+            // Convert to polynomial for GCD
+            let diff_poly = self.poly_from_binary(diff, m);
+
+            // Compute gcd(p(x), x^(2^i) - x)
+            let g = Gf2mPoly::gcd(&p_poly, &diff_poly);
+
+            // GCD should be 1 (constant polynomial)
+            if g.degree() != Some(0) || g.coeff(0).value() != 1 {
+                return false;
+            }
+        }
+
+        // Test 2: x^(2^m) ≡ x (mod p(x))
         let exp = 1usize << m; // 2^m
         let x_power_mod_p = self.compute_x_power_value(exp);
-        
+
         // x^(2^m) should equal x (value 2)
         x_power_mod_p == 2
     }
-    
+
+    /// Converts a binary representation to a Gf2mPoly over this field.
+    fn poly_from_binary(&self, binary: u64, max_degree: usize) -> Gf2mPoly {
+        let mut coeffs = Vec::new();
+        for i in 0..=max_degree {
+            if (binary >> i) & 1 == 1 {
+                coeffs.push(self.one());
+            } else {
+                coeffs.push(self.zero());
+            }
+        }
+        Gf2mPoly::new(coeffs)
+    }
+
+    /// Returns prime factors of 2^m - 1 (Mersenne number factorization).
+    ///
+    /// For small m, we use trial division with small primes.
+    /// This is sufficient for verification purposes up to m=16.
+    fn prime_factors_of_order_static(m: usize) -> Vec<u64> {
+        let order = (1u64 << m) - 1;
+        let mut factors = Vec::new();
+        let mut n = order;
+
+        // Trial division by small primes
+        let small_primes = [
+            2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83,
+            89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179,
+            181, 191, 193, 197, 199, 211, 223, 227, 229,
+        ];
+
+        for &p in &small_primes {
+            if p * p > n {
+                break;
+            }
+            if n % p == 0 {
+                factors.push(p);
+                while n % p == 0 {
+                    n /= p;
+                }
+            }
+        }
+
+        // Handle remaining factor if > 1 (it's prime)
+        if n > 1 {
+            factors.push(n);
+        }
+
+        factors
+    }
+
     /// Computes x^k mod p(x) and returns the result as a field element value
     fn compute_x_power_value(&self, k: usize) -> u64 {
         let m = self.params.m;
         let p = self.params.primitive_poly;
-        
+
         // Binary exponentiation to compute x^k mod p(x)
         let mut result = 1u64; // x^0 = 1
-        let mut base = 2u64;   // x
+        let mut base = 2u64; // x
         let mut exp = k;
-        
+
         while exp > 0 {
             if exp & 1 == 1 {
                 result = Self::mul_raw(result, base, m, p);
@@ -459,7 +556,7 @@ impl Gf2mField {
             base = Self::mul_raw(base, base, m, p);
             exp >>= 1;
         }
-        
+
         result
     }
 
@@ -1288,9 +1385,9 @@ mod tests {
     }
 
     #[test]
-    fn test_verify_primitive_gf256_aes() {
-        // AES standard polynomial
-        let field = Gf2mField::new(8, 0b100011011);
+    fn test_verify_primitive_gf256() {
+        // Standard primitive polynomial for GF(256)
+        let field = Gf2mField::new(8, 0b100011101);
         assert!(field.verify_primitive());
     }
 
@@ -1310,15 +1407,18 @@ mod tests {
 
     #[test]
     fn test_verify_not_primitive_wrong_dvb_t2() {
-        // The bug: a different primitive polynomial was used (not the DVB-T2 standard)
-        // The polynomial 0b100000000100001 (x^14 + x^5 + 1) IS primitive,
-        // but it's not the DVB-T2 standard polynomial 0b100000000101011
+        // The bug: wrong polynomial 0b100000000100001 (x^14 + x^5 + 1) was used
+        // This polynomial is irreducible but NOT primitive (x does not generate full group)
+        // The correct DVB-T2 standard is 0b100000000101011 (x^14 + x^5 + x^3 + x + 1)
         let field = Gf2mField::new(14, 0b100000000100001);
-        
-        // This polynomial is actually primitive (it's valid, just non-standard)
-        assert!(field.verify_primitive(), "x^14 + x^5 + 1 is primitive");
-        
-        // But it doesn't match the DVB-T2 standard
+
+        // This polynomial is NOT primitive - it caused BCH decoding failures
+        assert!(
+            !field.verify_primitive(),
+            "x^14 + x^5 + 1 is NOT primitive (caused the BCH bug)"
+        );
+
+        // And it doesn't match the DVB-T2 standard
         use crate::primitive_polys::{PrimitivePolynomialDatabase, VerificationResult};
         assert_eq!(
             PrimitivePolynomialDatabase::verify(14, 0b100000000100001),
@@ -3038,6 +3138,121 @@ mod poly_tests {
                     prop_assert_eq!(bits.len(), deg + 1);
                 } else {
                     prop_assert_eq!(bits.len(), 0);
+                }
+            }
+        }
+    }
+
+    // ========================================================================
+    // Primitive Polynomial Verification Tests (Phase 9 - TDD)
+    // ========================================================================
+
+    #[test]
+    fn test_verify_primitive_gf4() {
+        let field = Gf2mField::new(2, 0b111); // x^2 + x + 1
+        assert!(field.verify_primitive());
+    }
+
+    #[test]
+    fn test_verify_primitive_gf8() {
+        let field = Gf2mField::new(3, 0b1011); // x^3 + x + 1
+        assert!(field.verify_primitive());
+    }
+
+    #[test]
+    fn test_verify_primitive_gf16() {
+        let field = Gf2mField::new(4, 0b10011); // x^4 + x + 1
+        assert!(field.verify_primitive());
+    }
+
+    #[test]
+    fn test_verify_primitive_gf256() {
+        // Standard primitive polynomial for GF(256)
+        let field = Gf2mField::new(8, 0b100011101);
+        assert!(field.verify_primitive());
+    }
+
+    #[test]
+    fn test_verify_primitive_dvb_t2_gf14() {
+        // Correct DVB-T2 polynomial
+        let field = Gf2mField::new(14, 0b100000000101011);
+        assert!(field.verify_primitive());
+    }
+
+    #[test]
+    fn test_verify_primitive_dvb_t2_gf16() {
+        // Correct DVB-T2 polynomial for normal frames
+        let field = Gf2mField::new(16, 0b10000000000101101);
+        assert!(field.verify_primitive());
+    }
+
+    #[test]
+    fn test_verify_not_primitive_wrong_dvb_t2() {
+        // The bug: wrong polynomial used initially
+        let field = Gf2mField::new(14, 0b100000000100001);
+        assert!(
+            !field.verify_primitive(),
+            "This polynomial caused the BCH bug"
+        );
+    }
+
+    #[test]
+    fn test_verify_not_primitive_reducible() {
+        // (x + 1)^2 = x^2 + 1 is reducible
+        let field = Gf2mField::new(2, 0b101);
+        assert!(!field.verify_primitive());
+    }
+
+    #[test]
+    fn test_is_irreducible_rabin_small_cases() {
+        // x^2 + x + 1 is irreducible
+        let field = Gf2mField::new(2, 0b111);
+        assert!(field.is_irreducible_rabin());
+
+        // x^2 + 1 = (x + 1)^2 is reducible
+        let field = Gf2mField::new(2, 0b101);
+        assert!(!field.is_irreducible_rabin());
+    }
+
+    #[test]
+    fn test_is_irreducible_rabin_gf8() {
+        // x^3 + x + 1 is irreducible
+        let field = Gf2mField::new(3, 0b1011);
+        assert!(field.is_irreducible_rabin());
+
+        // x^3 + 1 = (x + 1)(x^2 + x + 1) is reducible
+        let field = Gf2mField::new(3, 0b1001);
+        assert!(!field.is_irreducible_rabin());
+    }
+
+    #[test]
+    fn test_all_database_entries_are_primitive() {
+        use crate::primitive_polys::PrimitivePolynomialDatabase;
+        // Every polynomial in the database must verify as primitive
+        for m in 2..=16 {
+            if let Some(poly) = PrimitivePolynomialDatabase::standard(m) {
+                let field = Gf2mField::new(m, poly);
+                assert!(
+                    field.verify_primitive(),
+                    "Database entry for m={} ({:#b}) is not primitive!",
+                    m,
+                    poly
+                );
+            }
+        }
+    }
+
+    #[cfg(test)]
+    mod primitive_verification_proptests {
+        use super::*;
+
+        proptest! {
+            #[test]
+            fn prop_all_database_entries_verify(m in 2u32..=16) {
+                use crate::primitive_polys::PrimitivePolynomialDatabase;
+                if let Some(poly) = PrimitivePolynomialDatabase::standard(m as usize) {
+                    let field = Gf2mField::new(m as usize, poly);
+                    prop_assert!(field.verify_primitive());
                 }
             }
         }
