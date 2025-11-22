@@ -153,6 +153,13 @@ pub struct Gf2mElement {
 impl Gf2mField {
     /// Creates a new GF(2^m) field with the specified primitive polynomial.
     ///
+    /// # Verification
+    ///
+    /// This constructor checks the provided polynomial against the standard database:
+    /// - If it **matches** a standard polynomial: no warning
+    /// - If it **conflicts** with a standard: prints warning to stderr
+    /// - If **unknown** (not in database): no warning
+    ///
     /// # Arguments
     ///
     /// * `m` - Extension degree (field has 2^m elements, currently limited to m ≤ 64)
@@ -173,6 +180,33 @@ impl Gf2mField {
     pub fn new(m: usize, primitive_poly: u64) -> Self {
         assert!(m > 0, "Extension degree m must be positive");
         assert!(m <= 64, "Extension degree m > 64 not yet supported");
+        
+        // Check against database and warn on conflicts
+        use crate::primitive_polys::{PrimitivePolynomialDatabase, VerificationResult};
+        
+        match PrimitivePolynomialDatabase::verify(m, primitive_poly) {
+            VerificationResult::Matches => {
+                // All good - using standard polynomial
+            }
+            VerificationResult::Conflict => {
+                eprintln!("WARNING: Non-standard primitive polynomial for GF(2^{})", m);
+                eprintln!("  Provided: {:#b}", primitive_poly);
+                if let Some(standard) = PrimitivePolynomialDatabase::standard(m) {
+                    eprintln!("  Standard: {:#b}", standard);
+                    
+                    // Provide helpful context for known standards
+                    let source = match m {
+                        8 => " (AES)",
+                        14 | 16 => " (DVB-T2)",
+                        _ => "",
+                    };
+                    eprintln!("  Using non-standard polynomial may cause interoperability issues{}", source);
+                }
+            }
+            VerificationResult::Unknown => {
+                // Not in database - could be valid, no warning
+            }
+        }
 
         #[cfg(feature = "simd")]
         let simd_mul_fn = simd_gf2m::detect().map(|fns| fns.mul_fn);
