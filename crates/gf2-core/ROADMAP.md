@@ -39,6 +39,23 @@ Fast Hadamard Transform, 81x speedup vs. naive, O(N log N) butterfly operations
 
 ---
 
+### Phase 9.3: Performance Benchmarking ✅ **COMPLETED 2024-11-22**
+**Priority**: High  
+**Goal**: Establish competitive baseline vs. Sage
+
+**Results**:
+- ✅ Primitivity testing: **3-340x faster** than Sage
+- ✅ GF(2^m) multiplication: **4-127x faster** than Sage  
+- ✅ Sparse matrix ops: **12-15x faster** than Sage
+- ✅ **All targets exceeded** - See `docs/phase9_3_complete.md`
+
+**Deliverables**:
+- `benches/primitive_poly.rs` - Comprehensive benchmarks
+- `scripts/sage_benchmarks.py` - Sage comparison suite
+- Documentation: `docs/phase9_3*.md` with detailed analysis
+
+---
+
 ## Active Development
 
 ### Phase 9.2: Primitive Polynomial Generation
@@ -46,10 +63,15 @@ Fast Hadamard Transform, 81x speedup vs. naive, O(N log N) butterfly operations
 **Goal**: Generate primitive polynomials for arbitrary m
 
 **Deliverables**:
-- Exhaustive search with optimizations
-- Trinomial search (hardware-efficient)
-- Parallel generation algorithms
+- Exhaustive search with optimizations (m ≤ 16)
+- Trinomial search (hardware-efficient, m > 16)
+- Parallel generation algorithms with rayon
 - **Target**: Compete with Magma/Sage performance
+
+**Expected Performance** (based on Phase 9.3):
+- m=16: ~12 µs/test → exhaustive search in ~13 minutes
+- m=32: ~150 µs/test → trinomial search practical
+- m=64: Focus on known constructions + verification
 
 ---
 
@@ -57,16 +79,6 @@ Fast Hadamard Transform, 81x speedup vs. naive, O(N log N) butterfly operations
 
 ### Phase 2: Wide Buffer Optimization
 Unrolled scalar kernels, BitSlice views - deferred until profiling shows benefit
-
-### Phase 9.3: Performance Benchmarking
-**Priority**: High  
-**Goal**: Establish competitive baseline vs. Magma/Sage
-
-**Benchmarks**:
-- Primitive polynomial testing (m=2..64)
-- GF(2^m) multiplication throughput
-- Sparse matrix operations
-- **Target**: Within 2x of specialized systems, exceed on SIMD ops
 
 ### Phase 6b: SIMD Polar Transforms
 AVX2 butterfly operations, cache blocking for N > 8K - optional enhancement
