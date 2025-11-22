@@ -178,36 +178,47 @@ impl Gf2mField {
     /// let field = Gf2mField::new(4, 0b10011);
     /// ```
     pub fn new(m: usize, primitive_poly: u64) -> Self {
+        Self::new_with_verification(m, primitive_poly, true)
+    }
+
+    /// Creates a field without database verification warnings (internal use).
+    pub(crate) fn new_unchecked(m: usize, primitive_poly: u64) -> Self {
+        Self::new_with_verification(m, primitive_poly, false)
+    }
+
+    fn new_with_verification(m: usize, primitive_poly: u64, verify: bool) -> Self {
         assert!(m > 0, "Extension degree m must be positive");
         assert!(m <= 64, "Extension degree m > 64 not yet supported");
 
-        // Check against database and warn on conflicts
-        use crate::primitive_polys::{PrimitivePolynomialDatabase, VerificationResult};
+        if verify {
+            // Check against database and warn on conflicts
+            use crate::primitive_polys::{PrimitivePolynomialDatabase, VerificationResult};
 
-        match PrimitivePolynomialDatabase::verify(m, primitive_poly) {
-            VerificationResult::Matches => {
-                // All good - using standard polynomial
-            }
-            VerificationResult::Conflict => {
-                eprintln!("WARNING: Non-standard primitive polynomial for GF(2^{})", m);
-                eprintln!("  Provided: {:#b}", primitive_poly);
-                if let Some(standard) = PrimitivePolynomialDatabase::standard(m) {
-                    eprintln!("  Standard: {:#b}", standard);
-
-                    // Provide helpful context for known standards
-                    let source = match m {
-                        8 => " (AES)",
-                        14 | 16 => " (DVB-T2)",
-                        _ => "",
-                    };
-                    eprintln!(
-                        "  Using non-standard polynomial may cause interoperability issues{}",
-                        source
-                    );
+            match PrimitivePolynomialDatabase::verify(m, primitive_poly) {
+                VerificationResult::Matches => {
+                    // All good - using standard polynomial
                 }
-            }
-            VerificationResult::Unknown => {
-                // Not in database - could be valid, no warning
+                VerificationResult::Conflict => {
+                    eprintln!("WARNING: Non-standard primitive polynomial for GF(2^{})", m);
+                    eprintln!("  Provided: {:#b}", primitive_poly);
+                    if let Some(standard) = PrimitivePolynomialDatabase::standard(m) {
+                        eprintln!("  Standard: {:#b}", standard);
+
+                        // Provide helpful context for known standards
+                        let source = match m {
+                            8 => " (AES)",
+                            14 | 16 => " (DVB-T2)",
+                            _ => "",
+                        };
+                        eprintln!(
+                            "  Using non-standard polynomial may cause interoperability issues{}",
+                            source
+                        );
+                    }
+                }
+                VerificationResult::Unknown => {
+                    // Not in database - could be valid, no warning
+                }
             }
         }
 
