@@ -11,30 +11,22 @@ A **research-grade** toolkit for high-performance binary field computing and cod
 
 **Philosophy**: Standards (DVB-T2, 5G NR) provide the foundation, but the ultimate goal is to **push beyond existing implementations** with novel algorithms, competitive performance, and open research.
 
-## Current Focus
-
-**Next**: DVB-T2 LDPC implementation (M13) and performance benchmarking (M16)
-
-**Recently Completed**: Primitive polynomial verification (M12 - Phase 1)
-- ✅ Primitivity testing algorithms (efficient order-based verification)
-- ✅ Enhanced Rabin irreducibility test with GCD
-- ✅ Standard polynomial database (m=2..16, DVB-T2 compliant)
-- ✅ Compile-time warnings for non-standard polynomials
-- ✅ Key finding: AES polynomial (0x11B) is irreducible but NOT primitive
-- **Impact**: Prevents BCH bugs from wrong primitive polynomials
+## Status Summary
 
 **gf2-core**: Core primitives mature and feature-complete
-- ✅ GF(2^m) extension field arithmetic
-- ✅ Karatsuba multiplication (1.88x speedup)
-- ✅ SIMD field operations (2.1x for large fields)
+- ✅ GF(2^m) extension field arithmetic with Karatsuba multiplication
+- ✅ SIMD field operations (AVX2, PCLMULQDQ)
+- ✅ Primitive polynomial verification and generation
 - ✅ Sparse matrix primitives (CSR/CSC)
 - ✅ Rank/select operations (lazy indexing)
-- ✅ Polar transforms (81x speedup vs naive)
+- ✅ Polar transforms (Fast Hadamard Transform)
+- ✅ Primitive polynomial database (m=2..16, DVB-T2 compliant)
 
-**gf2-coding**: DVB-T2 FEC simulation
-- ✅ BCH codes with algebraic decoding (45 tests passing)
+**gf2-coding**: DVB-T2 FEC implementation progressing
+- ✅ BCH codes with algebraic decoding (60+ tests passing)
+- ✅ DVB-T2 BCH outer codes (⚠️ verification pending)
 - ✅ Quasi-cyclic LDPC framework
-- ⏸️ DVB-T2 LDPC base matrices (paused for M12)
+- ✅ DVB-T2 LDPC Rate 1/2 Normal frame (⚠️ 11 tables pending, verification needed)
 - 🔮 QAM modulation and FEC chain (planned)
 
 ## Strategic Pillars
@@ -92,13 +84,18 @@ A **research-grade** toolkit for high-performance binary field computing and cod
 | **M9** | LDPC framework: Belief propagation and QC codes | ✅ Complete |
 | **M10** | Rank/select: Succinct bit operations | ✅ Complete |
 | **M11** | Polar transforms: Fast Hadamard Transform | ✅ Complete |
+| **M12** | Primitive polynomials: Verification & generation | ✅ Complete |
 
-## Active Development
+## In Progress
 
 | Milestone | Description | Status |
 |-----------|-------------|--------|
-| **M12** | Primitive polynomials: Verification & generation (Phase 1) | ✅ Complete |
-| **M13** | DVB-T2 LDPC: Standard base matrices | Planned |
+| **M13** | DVB-T2 LDPC: Standard base matrices | ⚠️ Partial (Rate 1/2 Normal) |
+
+## Planned
+
+| Milestone | Description | Status |
+|-----------|-------------|--------|
 | **M14** | QAM modulation: Soft-decision demapping | Planned |
 | **M15** | FEC simulation: End-to-end DVB-T2 chain | Planned |
 | **M16** | Performance benchmarking: Compete with Magma/Sage | Planned |
@@ -173,6 +170,19 @@ A **research-grade** toolkit for high-performance binary field computing and cod
 
 ## Milestone Details
 
+### M13: DVB-T2 LDPC Implementation
+
+**Status**: ⚠️ Partial implementation
+- ✅ Direct sparse matrix construction from ETSI EN 302 755 tables
+- ✅ Rate 1/2 Normal frame (64800 bits) fully implemented
+- ⚠️ 11 remaining rate/frame configurations need table data entry
+- ⚠️ Verification against reference implementation pending
+
+**Deliverables**:
+- Complete all 12 DVB-T2 LDPC configurations (Short/Normal × 6 rates)
+- Validate against DVB-T2 test vectors or reference decoder
+- Integration testing with BCH outer codes
+
 ### M16: Competitive Performance Benchmarking
 
 **Goal**: Establish gf2 as competitive with specialized computer algebra systems
@@ -188,8 +198,6 @@ A **research-grade** toolkit for high-performance binary field computing and cod
 - Performance report with profiling insights
 - Optimization roadmap for identified bottlenecks
 - Target: Within 2x of Magma/Sage, exceed on SIMD-friendly ops
-
-**Timeline**: After M15 (DVB-T2 baseline complete)
 
 ## Publication & Validation
 
