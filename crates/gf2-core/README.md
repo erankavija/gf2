@@ -24,6 +24,23 @@
 - **visualization**: Save BitMatrix as PNG images (opt-in)
   - Useful for debugging and visual inspection of matrix patterns
 
+## Architecture
+
+**Three-layer design** optimizes for both ergonomics and performance:
+
+1. **Public API** (`BitVec`, `BitMatrix`) - Functional, ergonomic operations
+2. **Kernel Ops** (`kernels::ops`) - Smart dispatch based on operation size
+3. **Backends** - Pluggable implementations:
+   - **Scalar**: Pure Rust baseline (always available)
+   - **SIMD**: AVX2/NEON acceleration (optional, runtime detected)
+   - **Future**: GPU/FPGA backends planned
+
+Operations automatically use the fastest backend available. Small operations (<512 bytes) use scalar code to avoid dispatch overhead. Large operations leverage SIMD when available (3.4-3.6x speedup validated).
+
+**Documentation:**
+- [`docs/KERNEL_OPTIMIZATION.md`](docs/KERNEL_OPTIMIZATION.md) - Complete kernel architecture guide
+- [`docs/BENCHMARK_RESULTS_SIMD_VS_SCALAR.md`](docs/BENCHMARK_RESULTS_SIMD_VS_SCALAR.md) - SIMD performance analysis
+
 ## Performance
 
 Benchmarked against SageMath and specialized C/C++ libraries (NTL, M4RI, FLINT). Competitive to superior performance across most operations, with identified optimization opportunities.
