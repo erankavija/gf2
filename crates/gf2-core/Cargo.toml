@@ -6,7 +6,7 @@ authors = ["copilot-swe-agent[bot] <198982749+Copilot@users.noreply.github.com>"
 description = "High-performance bit string manipulation primitives over GF(2)"
 keywords = ["bitset", "gf2", "bitvec", "galois-field"]
 categories = ["algorithms", "data-structures", "mathematics", "no-std"]
-rust-version = "1.74"
+rust-version = "1.80"
 
 [dependencies]
 gf2-kernels-simd = { path = "../gf2-kernels-simd", optional = true }
@@ -78,4 +78,8 @@ harness = false
 
 [[bench]]
 name = "generation"
+harness = false
+
+[[bench]]
+name = "simd_vs_scalar"
 harness = false

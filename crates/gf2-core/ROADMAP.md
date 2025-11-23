@@ -9,8 +9,15 @@
 ### Phase 1: Scalar Baseline
 Dense bit vectors, GF(2) matrix operations (M4RM, Gauss-Jordan), comprehensive testing
 
-### Phase 3: SIMD Acceleration  
+### Phase 3: SIMD Acceleration ✅ **ENHANCED**
 AVX2 kernels (AND/OR/XOR/popcount), runtime dispatch, word-aligned shifts
+
+**Recent improvements** (Nov 2025):
+- Smart backend selection with validated 8-word threshold
+- 3.4-3.6x speedup for large buffers (≥64 words)
+- Unified kernel architecture with pluggable backends
+- Comprehensive equivalence testing (344 tests)
+- See `docs/KERNEL_OPTIMIZATION.md` for details
 
 ### Phase 4: Rank/Select
 O(1) rank, O(log n) select with lazy indexing
@@ -134,7 +141,10 @@ Prime field arithmetic - deferred (no immediate use case)
 **For high-level strategy and research goals**, see [main workspace ROADMAP.md](../../ROADMAP.md)
 
 **For detailed design docs**, see:
+- `docs/KERNEL_OPTIMIZATION.md` - Kernel architecture and SIMD integration
+- `docs/BENCHMARK_RESULTS_SIMD_VS_SCALAR.md` - SIMD performance validation
 - `docs/PRIMITIVE_POLYNOMIALS.md` - Phase 9 design and algorithms
 - `docs/GF2M_DESIGN.md` - Extension field architecture
 - `docs/POLAR_IMPLEMENTATION_PLAN.md` - Phase 6 polar transforms
-- `README.md` - API usage and benchmarks
+- `docs/BENCHMARKS.md` - Performance comparisons vs SageMath/NTL/M4RI
+- `README.md` - API usage and examples

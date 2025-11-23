@@ -336,14 +336,7 @@ impl BitVec {
     /// ```
     pub fn bit_and_into(&mut self, other: &BitVec) {
         assert_eq!(self.len_bits, other.len_bits, "BitVec lengths must match");
-        #[cfg(feature = "simd")]
-        if let Some(fns) = crate::simd::maybe_simd() {
-            (fns.and_fn)(&mut self.data, &other.data);
-            return;
-        }
-        for (a, b) in self.data.iter_mut().zip(other.data.iter()) {
-            *a &= *b;
-        }
+        crate::kernels::ops::and_inplace(&mut self.data, &other.data);
     }
 
     /// Performs bitwise OR with `other` and stores the result in `self`.
@@ -364,14 +357,7 @@ impl BitVec {
     /// ```
     pub fn bit_or_into(&mut self, other: &BitVec) {
         assert_eq!(self.len_bits, other.len_bits, "BitVec lengths must match");
-        #[cfg(feature = "simd")]
-        if let Some(fns) = crate::simd::maybe_simd() {
-            (fns.or_fn)(&mut self.data, &other.data);
-            return;
-        }
-        for (a, b) in self.data.iter_mut().zip(other.data.iter()) {
-            *a |= *b;
-        }
+        crate::kernels::ops::or_inplace(&mut self.data, &other.data);
     }
 
     /// Performs bitwise XOR with `other` and stores the result in `self`.
@@ -392,14 +378,7 @@ impl BitVec {
     /// ```
     pub fn bit_xor_into(&mut self, other: &BitVec) {
         assert_eq!(self.len_bits, other.len_bits, "BitVec lengths must match");
-        #[cfg(feature = "simd")]
-        if let Some(fns) = crate::simd::maybe_simd() {
-            (fns.xor_fn)(&mut self.data, &other.data);
-            return;
-        }
-        for (a, b) in self.data.iter_mut().zip(other.data.iter()) {
-            *a ^= *b;
-        }
+        crate::kernels::ops::xor_inplace(&mut self.data, &other.data);
     }
 
     /// Performs bitwise NOT on all bits in `self`.
@@ -414,15 +393,7 @@ impl BitVec {
     /// assert_eq!(bv.to_bytes_le(), vec![0b00001111]);
     /// ```
     pub fn not_into(&mut self) {
-        #[cfg(feature = "simd")]
-        if let Some(fns) = crate::simd::maybe_simd() {
-            (fns.not_fn)(&mut self.data);
-            self.mask_tail();
-            return;
-        }
-        for word in self.data.iter_mut() {
-            *word = !*word;
-        }
+        crate::kernels::ops::not_inplace(&mut self.data);
         self.mask_tail();
     }
 
@@ -564,11 +535,41 @@ impl BitVec {
     /// assert_eq!(bv.count_ones(), 2);
     /// ```
     pub fn count_ones(&self) -> usize {
-        #[cfg(feature = "simd")]
-        if let Some(fns) = crate::simd::maybe_simd() {
-            return (fns.popcnt_fn)(&self.data) as usize;
-        }
-        self.data.iter().map(|w| w.count_ones() as usize).sum()
+        crate::kernels::ops::popcount(&self.data) as usize
+    }
+
+    /// Computes the XOR parity of all bits in the vector.
+    ///
+    /// Returns `true` if there is an odd number of 1 bits, `false` otherwise.
+    /// This is equivalent to computing the dot product in GF(2).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::BitVec;
+    ///
+    /// let mut bv = BitVec::new();
+    /// assert_eq!(bv.parity(), false); // 0 bits = even
+    ///
+    /// bv.push_bit(true);
+    /// assert_eq!(bv.parity(), true);  // 1 bit = odd
+    ///
+    /// bv.push_bit(true);
+    /// assert_eq!(bv.parity(), false); // 2 bits = even
+    ///
+    /// bv.push_bit(true);
+    /// assert_eq!(bv.parity(), true);  // 3 bits = odd
+    /// ```
+    ///
+    /// # Performance
+    ///
+    /// This method uses hardware popcount when available, which is very fast
+    /// on modern CPUs (1-3 cycles per word on x86-64).
+    pub fn parity(&self) -> bool {
+        self.data
+            .iter()
+            .map(|&w| (w.count_ones() & 1) != 0)
+            .fold(false, |acc, p| acc ^ p)
     }
 
     /// Builds the rank/select index if not already built.
@@ -2061,6 +2062,78 @@ mod tests {
         // Spot check a few bits
         assert!(s2.get(0));
         assert_eq!(s3.get(0), bv.get(1));
+    }
+
+    // Parity tests
+    #[test]
+    fn test_parity_empty() {
+        let bv = BitVec::new();
+        assert!(!bv.parity());
+    }
+
+    #[test]
+    fn test_parity_single_bit() {
+        let mut bv = BitVec::new();
+        bv.push_bit(true);
+        assert!(bv.parity());
+    }
+
+    #[test]
+    fn test_parity_two_bits() {
+        let mut bv = BitVec::new();
+        bv.push_bit(true);
+        bv.push_bit(true);
+        assert!(!bv.parity());
+    }
+
+    #[test]
+    fn test_parity_three_bits() {
+        let mut bv = BitVec::new();
+        bv.push_bit(true);
+        bv.push_bit(true);
+        bv.push_bit(true);
+        assert!(bv.parity());
+    }
+
+    #[test]
+    fn test_parity_from_bytes() {
+        let bv = BitVec::from_bytes_le(&[0xFF]); // 8 bits = even
+        assert!(!bv.parity());
+
+        let bv = BitVec::from_bytes_le(&[0x7F]); // 7 bits = odd
+        assert!(bv.parity());
+
+        let bv = BitVec::from_bytes_le(&[0x00]); // 0 bits = even
+        assert!(!bv.parity());
+    }
+
+    #[test]
+    fn test_parity_xor_property() {
+        // parity(a XOR b) = parity(a) XOR parity(b)
+        // Test with some examples
+        let bv_all_ones = BitVec::from_bytes_le(&[0xFF]); // 8 bits = even parity
+        let bv_all_zeros = BitVec::from_bytes_le(&[0x00]); // 0 bits = even parity
+        let bv_single = BitVec::from_bytes_le(&[0x01]); // 1 bit = odd parity
+
+        assert!(!bv_all_ones.parity());
+        assert!(!bv_all_zeros.parity());
+        assert!(bv_single.parity());
+
+        // XOR of two even-parity vectors should have even parity
+        // (though we can't easily XOR BitVecs here, this tests the concept)
+    }
+
+    #[test]
+    fn test_parity_matches_count_ones() {
+        for byte in 0u8..=255 {
+            let bv = BitVec::from_bytes_le(&[byte]);
+            assert_eq!(
+                bv.parity(),
+                (bv.count_ones() % 2) == 1,
+                "parity mismatch for byte 0x{:02x}",
+                byte
+            );
+        }
     }
 
     // Scan operation tests

@@ -1,18 +1,29 @@
-//! Scalar baseline kernel implementation.
+//! Scalar baseline backend implementation.
 //!
-//! This module provides a portable, scalar implementation of bulk operations
-//! that works on all platforms. It serves as the fallback when SIMD
-//! implementations are not available.
+//! This module provides a portable, pure Rust implementation of all kernel
+//! operations. It serves as the baseline for correctness testing and the
+//! fallback when specialized backends (SIMD, GPU, FPGA) are unavailable.
+//!
+//! # Design
+//!
+//! - **Safety**: No unsafe code
+//! - **Portability**: Works on all platforms
+//! - **Performance**: Hand-unrolled loops for bulk operations
+//! - **Correctness**: Reference implementation for testing
 
-use super::Kernel;
+use crate::kernels::Backend;
 
-/// Scalar kernel implementation using simple loops.
-pub struct ScalarKernel;
+/// Scalar backend using simple loops with manual unrolling.
+#[derive(Debug, Clone, Copy)]
+pub struct ScalarBackend;
 
-/// Global instance of the scalar kernel.
-pub static SCALAR_KERNEL: ScalarKernel = ScalarKernel;
+/// Global instance of the scalar backend.
+pub static SCALAR_BACKEND: ScalarBackend = ScalarBackend;
 
-impl Kernel for ScalarKernel {
+impl Backend for ScalarBackend {
+    fn name(&self) -> &'static str {
+        "scalar"
+    }
     #[inline]
     fn and(&self, dst: &mut [u64], src: &[u64]) {
         let len = dst.len().min(src.len());
@@ -103,7 +114,7 @@ mod tests {
     fn test_scalar_and() {
         let mut a = vec![0xFF, 0xFF];
         let b = vec![0x0F, 0xF0];
-        SCALAR_KERNEL.and(&mut a, &b);
+        SCALAR_BACKEND.and(&mut a, &b);
         assert_eq!(a, vec![0x0F, 0xF0]);
     }
 
@@ -111,7 +122,7 @@ mod tests {
     fn test_scalar_or() {
         let mut a = vec![0xF0, 0x0F];
         let b = vec![0x0F, 0xF0];
-        SCALAR_KERNEL.or(&mut a, &b);
+        SCALAR_BACKEND.or(&mut a, &b);
         assert_eq!(a, vec![0xFF, 0xFF]);
     }
 
@@ -119,21 +130,21 @@ mod tests {
     fn test_scalar_xor() {
         let mut a = vec![0xFF, 0xFF];
         let b = vec![0x0F, 0xF0];
-        SCALAR_KERNEL.xor(&mut a, &b);
+        SCALAR_BACKEND.xor(&mut a, &b);
         assert_eq!(a, vec![0xF0, 0x0F]);
     }
 
     #[test]
     fn test_scalar_not() {
         let mut a = vec![0xFFFFFFFFFFFFFFFFu64, 0x0000000000000000u64];
-        SCALAR_KERNEL.not(&mut a);
+        SCALAR_BACKEND.not(&mut a);
         assert_eq!(a, vec![0x0000000000000000u64, 0xFFFFFFFFFFFFFFFFu64]);
     }
 
     #[test]
     fn test_scalar_popcount() {
         let a = vec![0xFFu64, 0xF0F0F0F0F0F0F0F0u64];
-        let count = SCALAR_KERNEL.popcount(&a);
+        let count = SCALAR_BACKEND.popcount(&a);
         assert_eq!(count, 8 + 32);
     }
 }
