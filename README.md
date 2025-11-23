@@ -22,9 +22,13 @@ A Rust workspace for high-performance binary field computing and coding theory, 
 Low-level building blocks for binary field computing:
 - **BitVec/BitMatrix**: Dense bit storage with word-level operations
 - **GF(2) linear algebra**: M4RM multiplication, Gauss-Jordan inversion
-- **Extension fields GF(2^m)**: Polynomial arithmetic with table-based multiplication
+- **Extension fields GF(2^m)**: Polynomial arithmetic with Karatsuba and SIMD multiplication
+- **Primitive polynomials**: Verification, generation, and standard database (m=2..16)
 - **Sparse matrices**: CSR/CSC formats for low-density operations
+- **Rank/select**: O(1) rank, O(log n) select with lazy indexing
+- **Polar transforms**: Fast Hadamard Transform for polar codes
 - **SIMD acceleration**: Optional AVX2 kernels via `simd` feature
+- **Visualization**: Optional PNG export for matrices via `visualization` feature
 
 See [crates/gf2-core/README.md](crates/gf2-core/README.md) for detailed features and usage.
 
@@ -32,11 +36,14 @@ See [crates/gf2-core/README.md](crates/gf2-core/README.md) for detailed features
 
 Coding theory algorithms for error correction:
 - **Block codes**: Hamming codes with syndrome decoding
+- **Generator matrix access**: Unified trait for all linear codes (lazy, cached)
 - **BCH codes**: Algebraic decoding (Berlekamp-Massey, Chien search)
+- **DVB-T2 BCH**: Standard-compliant outer codes (⚠️ verification pending)
 - **Convolutional codes**: Viterbi decoder
 - **LDPC codes**: Belief propagation with quasi-cyclic support
-- **DVB-T2 FEC**: Standard-compliant BCH and LDPC implementations
-- **Channel models**: AWGN simulation with soft-decision decoding
+- **DVB-T2 LDPC**: Rate 1/2 Normal frame from ETSI EN 302 755 (⚠️ partial)
+- **Soft-decision LLR**: Operations for iterative decoding
+- **Channel models**: AWGN simulation with BPSK modulation
 
 See [crates/gf2-coding/README.md](crates/gf2-coding/README.md) for detailed features and examples.
 
@@ -119,16 +126,19 @@ The project roadmap is divided into strategic goals (this document) and detailed
 
 ### Current Status
 
-**gf2-core**: Polynomial optimization complete
+**gf2-core**: Core primitives feature-complete
 - ✅ GF(2^m) extension field arithmetic
-- ✅ Karatsuba multiplication (1.88x speedup)
-- ✅ SIMD field operations (2.1x speedup for large fields)
+- ✅ Karatsuba multiplication and SIMD operations
+- ✅ Primitive polynomial verification and generation
 - ✅ Sparse matrix primitives (CSR/CSC)
+- ✅ Rank/select operations (lazy indexing)
+- ✅ Polar transforms (Fast Hadamard Transform)
 
-**gf2-coding**: DVB-T2 LDPC in progress
-- ✅ BCH codes with algebraic decoding
+**gf2-coding**: DVB-T2 FEC implementation progressing
+- ✅ BCH codes with algebraic decoding (60+ tests)
+- ✅ DVB-T2 BCH outer codes (⚠️ verification pending)
 - ✅ Quasi-cyclic LDPC framework
-- 🎯 DVB-T2 LDPC base matrices (in progress)
+- ✅ DVB-T2 LDPC Rate 1/2 Normal (⚠️ 11 tables pending)
 - 🔮 QAM modulation and FEC simulation (planned)
 
 ## Development
@@ -160,11 +170,18 @@ cargo run -p gf2-coding --example hamming_7_4
 # Convolutional codes with Viterbi decoding
 cargo run -p gf2-coding --example nasa_rate_half_k3
 
-# LDPC codes over AWGN
-cargo run -p gf2-coding --example ldpc_awgn --release
+# DVB-T2 BCH outer codes (algebraic decoding)
+# Note: Verification against reference implementation pending
+cargo run -p gf2-coding --example dvb_t2_bch_demo
+
+# DVB-T2 LDPC codes from standard tables
+cargo run -p gf2-coding --example dvb_t2_ldpc_basic
 
 # Quasi-cyclic LDPC construction
 cargo run -p gf2-coding --example qc_ldpc_demo
+
+# LDPC codes over AWGN
+cargo run -p gf2-coding --example ldpc_awgn --release
 ```
 
 ## Contributing
