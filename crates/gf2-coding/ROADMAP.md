@@ -293,6 +293,48 @@ Direct sparse construction used instead of QC expansion.
 - Trait refinements: streaming vs. batch encode/decode unification
 - Doc examples with visual syndrome / decoding traces
 
+## Phase C12: SDR and DSP Framework Integration (Planned)
+**Goal**: Interface with GNU Radio, LuaRadio, and other SDR ecosystems
+
+See [docs/SDR_INTEGRATION.md](docs/SDR_INTEGRATION.md) for comprehensive design.
+
+### Phase C12.1: C FFI Layer (1-2 weeks)
+- [ ] Create `src/ffi.rs` module with C-compatible API
+- [ ] Expose LDPC decoder (create, decode, destroy functions)
+- [ ] Expose BCH decoder
+- [ ] Expose Viterbi decoder
+- [ ] Safety wrappers and error handling
+- [ ] C header file generation (`gf2_coding.h`)
+- [ ] Standalone C test program
+
+### Phase C12.2: GNU Radio OOT Module (2-3 weeks)
+- [ ] Initialize `gr-gf2` with `gr_modtool`
+- [ ] Implement `dvb_t2_ldpc_decoder` block
+- [ ] Implement `dvb_t2_bch_decoder` block
+- [ ] Implement `viterbi_decoder` block
+- [ ] GRC block definitions for visual programming
+- [ ] Example flowgraphs (DVB-T2 receiver chain)
+- [ ] Integration tests with simulated IQ data
+- [ ] Installation and usage documentation
+
+### Phase C12.3: Real-World Validation (2-4 weeks)
+- [ ] Test with DVB-T2 conformance test vectors
+- [ ] Benchmark vs GNU Radio's existing FEC blocks (target: 10-50x speedup)
+- [ ] Validate with RTL-SDR/HackRF captured signals
+- [ ] Generate BER/FER comparison curves
+
+### Phase C12.4: Extended SDR Support (Ongoing)
+- [ ] LuaRadio FFI blocks
+- [ ] SDRangel plugin
+- [ ] gr-satellites contributions (Viterbi/BCH for telemetry)
+- [ ] Python bindings via PyO3 (optional)
+
+**Key deliverables**:
+- High-performance FEC blocks for GNU Radio (10-50 Mbps LDPC decoding)
+- C API exposing LDPC, BCH, and Viterbi decoders
+- Example receiver chains for DVB-T2 and satellite telemetry
+- Performance benchmarks demonstrating 10-50x speedup over existing implementations
+
 ## Technical Debt & Refactoring
 - [ ] **Move `poly_from_exponents` to gf2-core**: Currently in `bch::dvb_t2::generators`, this utility for constructing `Gf2mPoly` from exponent lists should be a general method in `gf2_core::gf2m::Gf2mPoly` (e.g., `Gf2mPoly::from_exponents()`)
 
@@ -301,6 +343,7 @@ Direct sparse construction used instead of QC expansion.
 - When to switch from table-based to algebraic decoding for medium block lengths?
 - Feasibility of GPU offload (via future crates) for LDPC iterations?
 - Interplay between compression transforms and error correction ordering
+- SDR integration: float vs fixed-point LLRs for optimal performance/accuracy tradeoff?
 
 ## Principles
 - Keep experimental algorithms isolated—avoid regressing core performance
