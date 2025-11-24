@@ -206,6 +206,55 @@ Current tests verify mathematical correctness (polynomial properties, error corr
 ## Phase C10: DVB-T2 FEC Simulation (In Progress) 🎯 **PRIMARY GOAL**
 **Simulate complete DVB-T2 FEC chain with FER performance analysis**
 
+###Phase C10.0: Test Vector Parser & Infrastructure ✅ **COMPLETE**
+**Status**: Implemented with TDD (21 tests: 14 unit + 7 integration)
+**Completion Time**: 1 day
+
+**Deliverables**:
+- ✅ `TestVectorFile` parser for DVB binary string format
+- ✅ `DvbConfig` parser for VV reference names (code rate extraction)
+- ✅ `TestVectorSet` loader for multi-test-point configurations
+- ✅ Environment variable support (`DVB_TEST_VECTORS_PATH`)
+- ✅ Graceful test skipping with `require_test_vectors!()` macro
+- ✅ Successfully parses VV001-CR35 (4 frames, 202 blocks/frame, TP04/05/06/07a)
+- ✅ Validates structure: block counts, frame consistency, bit length progression
+- ✅ 649 lines of code in `tests/test_vectors/`
+- ✅ Full documentation and helper utilities
+
+**Test Coverage**: 21 tests passing
+- 8 parser unit tests (filename, markers, binary strings, error cases)
+- 5 config parser tests (code rate mappings, error handling)
+- 3 loader tests (consistency, structure validation)
+- 5 integration tests (end-to-end parsing, bit length validation)
+
+**Validation Results** (VV001-CR35):
+- TP04 (BCH input): 38,688 bits/block
+- TP05 (BCH output): 38,880 bits/block (+192 parity bits)
+- TP06 (LDPC output): 64,800 bits/block (full LDPC codeword)
+- All test points: 4 frames, 202 blocks/frame, consistent structure ✓
+
+### Phase C10.0.1: BCH Verification Harness 🔧 **BLOCKED**
+**Status**: Test infrastructure complete, BCH implementation bug discovered  
+**Completion**: Verification harness implemented, blocker identified
+
+**Deliverables**:
+- ✅ 5 comprehensive BCH verification tests
+- ✅ Diagnostic tools for investigating mismatches
+- ⚠️ **BLOCKER IDENTIFIED**: BCH encoder not producing systematic codewords
+  - DVB-T2 test vectors show systematic encoding (first k bits = message)
+  - Our BCH implementation produces non-systematic output
+  - Affects all 202 blocks in test frame
+  - Root cause: BCH systematic encoding implementation needs investigation
+
+**Tests Created**:
+- `test_bch_encoding_tp04_to_tp05` - Full frame encoding validation
+- `test_bch_decoding_tp05_to_tp04_error_free` - Error-free decoding
+- `test_bch_error_correction` - Error correction up to t=12
+- `test_bch_systematic_property` - Validates test vectors are systematic
+- `test_bch_encoding_sample` - Multi-frame spot checks
+
+**Next Steps**: Fix BCH systematic encoding before proceeding with full verification
+
 ### Phase C10.1: Quasi-Cyclic LDPC Framework ✅ **COMPLETE**
 **Status**: Implemented with TDD (19 tests passing, 1 example)
 
