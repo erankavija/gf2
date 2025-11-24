@@ -43,9 +43,11 @@ Operations automatically use the fastest backend available. Small operations (<5
 
 ## Performance
 
-Benchmarked against SageMath and specialized C/C++ libraries (NTL, M4RI, FLINT). Competitive to superior performance across most operations, with identified optimization opportunities.
+Benchmarked against SageMath and specialized C/C++ libraries (NTL, M4RI, FLINT). Competitive to superior performance across most operations, with continuous optimization efforts.
 
-See **[`docs/BENCHMARKS.md`](docs/BENCHMARKS.md)** for comprehensive performance analysis and comparisons.
+**Recent work**: M4RM matrix multiplication optimization (gray code ordering + flat buffer reuse) and comprehensive performance gap analysis.
+
+See **[`docs/BENCHMARKS.md`](docs/BENCHMARKS.md)** for comprehensive performance analysis, comparisons, and optimization details.
 
 ## Usage
 

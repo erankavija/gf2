@@ -83,3 +83,15 @@ harness = false
 [[bench]]
 name = "simd_vs_scalar"
 harness = false
+
+[[bench]]
+name = "matrix_inversion"
+harness = false
+
+[[bench]]
+name = "m4rm_profile"
+harness = false
+
+[[bench]]
+name = "m4rm_components"
+harness = false
