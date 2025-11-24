@@ -3,7 +3,7 @@
 use gf2_coding::bch::dvb_t2::FrameSize;
 use gf2_coding::bch::{BchCode, BchDecoder, BchEncoder, CodeRate};
 use gf2_coding::traits::BlockEncoder;
-use gf2_core::gf2m::{Gf2mElement, Gf2mField, Gf2mPoly};
+use gf2_core::gf2m::{Gf2mField, Gf2mPoly};
 use gf2_core::BitVec;
 
 #[cfg(test)]
@@ -174,14 +174,14 @@ mod encoding_tests {
         }
         let cw = encoder.encode(&msg);
 
-        // In systematic form, message appears in the last k positions
+        // In systematic form [message | parity], message appears in first k positions
         for i in 0..11 {
             assert_eq!(
-                cw.get(4 + i),
+                cw.get(i),
                 msg.get(i),
                 "Message bit {} not preserved at position {}",
                 i,
-                4 + i
+                i
             );
         }
     }
@@ -235,8 +235,8 @@ mod encoding_tests {
         msg.resize(11, false); // Trim to exactly 11 bits
         let cw = encoder.encode(&msg);
 
-        // Convert codeword to polynomial and check it's divisible by generator
-        let cw_poly = bitvec_to_poly(&cw, &field);
+        // Convert systematic codeword to polynomial
+        let cw_poly = systematic_codeword_to_poly(&cw, code.k(), code.n(), &field);
         let (_, remainder) = cw_poly.div_rem(code.generator());
 
         assert!(
@@ -246,18 +246,37 @@ mod encoding_tests {
     }
 }
 
-// Helper function for tests
+/// Helper: Convert systematic BCH codeword [message | parity] to polynomial c(x) = x^r·m(x) + p(x)
+/// Uses DVB-T2 convention: bit 0 is highest polynomial coefficient
+/// where r = n - k
 #[cfg(test)]
-fn bitvec_to_poly(bits: &BitVec, field: &Gf2mField) -> Gf2mPoly {
-    let coeffs: Vec<Gf2mElement> = (0..bits.len())
-        .map(|i| {
-            if bits.get(i) {
-                field.one()
-            } else {
-                field.zero()
-            }
-        })
-        .collect();
+fn systematic_codeword_to_poly(
+    codeword: &BitVec,
+    k: usize,
+    n: usize,
+    field: &Gf2mField,
+) -> Gf2mPoly {
+    let mut coeffs = Vec::new();
+
+    // Parity polynomial p(x): degrees 0..r-1
+    // Comes from codeword bits k..n (highest coefficient first)
+    for i in (k..n).rev() {
+        coeffs.push(if codeword.get(i) {
+            field.one()
+        } else {
+            field.zero()
+        });
+    }
+
+    // Message polynomial x^r·m(x): degrees r..n-1
+    // Comes from codeword bits 0..k (highest coefficient first)
+    for i in (0..k).rev() {
+        coeffs.push(if codeword.get(i) {
+            field.one()
+        } else {
+            field.zero()
+        });
+    }
 
     Gf2mPoly::new(coeffs)
 }
@@ -271,7 +290,7 @@ mod syndrome_tests {
         let field = Gf2mField::new(4, 0b10011);
         let code = BchCode::new(15, 11, 1, field);
         let encoder = BchEncoder::new(code.clone());
-        let decoder = BchDecoder::new(code);
+        let decoder = BchDecoder::new(code.clone());
 
         let mut msg = BitVec::zeros(11);
         for i in 0..11 {
@@ -296,7 +315,7 @@ mod syndrome_tests {
         let field = Gf2mField::new(4, 0b10011);
         let code = BchCode::new(15, 11, 1, field);
         let encoder = BchEncoder::new(code.clone());
-        let decoder = BchDecoder::new(code);
+        let decoder = BchDecoder::new(code.clone());
 
         let mut msg = BitVec::zeros(11);
         for i in 0..11 {
@@ -332,7 +351,7 @@ mod syndrome_tests {
         let field = Gf2mField::new(4, 0b10011);
         let code = BchCode::new(15, 7, 2, field);
         let encoder = BchEncoder::new(code.clone());
-        let decoder = BchDecoder::new(code);
+        let decoder = BchDecoder::new(code.clone());
 
         let msg = BitVec::zeros(7);
         let mut cw = encoder.encode(&msg);
@@ -353,7 +372,7 @@ mod syndrome_tests {
     fn test_syndrome_wrong_length_panics() {
         let field = Gf2mField::new(4, 0b10011);
         let code = BchCode::new(15, 11, 1, field);
-        let decoder = BchDecoder::new(code);
+        let decoder = BchDecoder::new(code.clone());
 
         let cw = BitVec::zeros(14); // Wrong length
         decoder.compute_syndromes(&cw);
@@ -368,7 +387,7 @@ mod berlekamp_massey_tests {
     fn test_berlekamp_massey_no_errors() {
         let field = Gf2mField::new(4, 0b10011);
         let code = BchCode::new(15, 11, 1, field.clone());
-        let decoder = BchDecoder::new(code);
+        let decoder = BchDecoder::new(code.clone());
 
         // All-zero syndromes (no errors)
         let syndromes = vec![field.zero(); 2];
@@ -384,7 +403,7 @@ mod berlekamp_massey_tests {
         let field = Gf2mField::new(4, 0b10011);
         let code = BchCode::new(15, 11, 1, field.clone());
         let encoder = BchEncoder::new(code.clone());
-        let decoder = BchDecoder::new(code);
+        let decoder = BchDecoder::new(code.clone());
 
         let msg = BitVec::ones(11);
         let mut cw = encoder.encode(&msg);
@@ -402,7 +421,7 @@ mod berlekamp_massey_tests {
         let field = Gf2mField::new(4, 0b10011);
         let code = BchCode::new(15, 7, 2, field.clone());
         let encoder = BchEncoder::new(code.clone());
-        let decoder = BchDecoder::new(code);
+        let decoder = BchDecoder::new(code.clone());
 
         let msg = BitVec::zeros(7);
         let mut cw = encoder.encode(&msg);
@@ -448,7 +467,7 @@ mod chien_search_tests {
     fn test_chien_search_no_errors() {
         let field = Gf2mField::new(4, 0b10011);
         let code = BchCode::new(15, 11, 1, field.clone());
-        let decoder = BchDecoder::new(code);
+        let decoder = BchDecoder::new(code.clone());
 
         // Lambda(x) = 1 means no errors
         let lambda = Gf2mPoly::constant(field.one());
@@ -462,20 +481,26 @@ mod chien_search_tests {
         let field = Gf2mField::new(4, 0b10011);
         let code = BchCode::new(15, 11, 1, field.clone());
         let encoder = BchEncoder::new(code.clone());
-        let decoder = BchDecoder::new(code);
+        let decoder = BchDecoder::new(code.clone());
 
         let msg = BitVec::ones(11);
         let mut cw = encoder.encode(&msg);
 
-        let error_pos = 5;
-        cw.set(error_pos, !cw.get(error_pos));
+        // Inject error at bitvec position 5
+        let bitvec_error_pos = 5;
+        cw.set(bitvec_error_pos, !cw.get(bitvec_error_pos));
 
         let syndromes = decoder.compute_syndromes(&cw);
         let lambda = decoder.berlekamp_massey(&syndromes);
-        let positions = decoder.chien_search(&lambda);
+        let poly_positions = decoder.chien_search(&lambda);
 
-        assert_eq!(positions.len(), 1);
-        assert_eq!(positions[0], error_pos);
+        // Chien search returns polynomial degree positions
+        // With DVB-T2 convention (bit 0 = highest coeff), need to map back
+        // Polynomial degree i → bitvec position (n-1-i)
+        let bitvec_positions: Vec<_> = poly_positions.iter().map(|&p| code.n() - 1 - p).collect();
+
+        assert_eq!(bitvec_positions.len(), 1);
+        assert_eq!(bitvec_positions[0], bitvec_error_pos);
     }
 
     #[test]
@@ -483,22 +508,29 @@ mod chien_search_tests {
         let field = Gf2mField::new(4, 0b10011);
         let code = BchCode::new(15, 7, 2, field.clone());
         let encoder = BchEncoder::new(code.clone());
-        let decoder = BchDecoder::new(code);
+        let decoder = BchDecoder::new(code.clone());
 
         let msg = BitVec::zeros(7);
         let mut cw = encoder.encode(&msg);
 
-        // Inject 2 errors
-        cw.set(3, !cw.get(3));
-        cw.set(10, !cw.get(10));
+        // Inject 2 errors at bitvec positions
+        let bitvec_errors = vec![3, 10];
+        for &pos in &bitvec_errors {
+            cw.set(pos, !cw.get(pos));
+        }
 
         let syndromes = decoder.compute_syndromes(&cw);
         let lambda = decoder.berlekamp_massey(&syndromes);
-        let mut positions = decoder.chien_search(&lambda);
-        positions.sort();
+        let poly_positions = decoder.chien_search(&lambda);
 
-        assert_eq!(positions.len(), 2);
-        assert_eq!(positions, vec![3, 10]);
+        // Chien search returns polynomial degree positions
+        // Map back to bitvec positions: polynomial degree i → bitvec position (n-1-i)
+        let mut bitvec_positions: Vec<_> =
+            poly_positions.iter().map(|&p| code.n() - 1 - p).collect();
+        bitvec_positions.sort();
+
+        assert_eq!(bitvec_positions.len(), 2);
+        assert_eq!(bitvec_positions, bitvec_errors);
     }
 
     #[test]
@@ -534,7 +566,7 @@ mod decoder_integration_tests {
         let field = Gf2mField::new(4, 0b10011);
         let code = BchCode::new(15, 11, 1, field);
         let encoder = BchEncoder::new(code.clone());
-        let decoder = BchDecoder::new(code);
+        let decoder = BchDecoder::new(code.clone());
 
         let msg = BitVec::ones(11);
         let cw = encoder.encode(&msg);
@@ -548,7 +580,7 @@ mod decoder_integration_tests {
         let field = Gf2mField::new(4, 0b10011);
         let code = BchCode::new(15, 11, 1, field);
         let encoder = BchEncoder::new(code.clone());
-        let decoder = BchDecoder::new(code);
+        let decoder = BchDecoder::new(code.clone());
 
         let mut msg = BitVec::zeros(11);
         for i in 0..11 {
@@ -568,7 +600,7 @@ mod decoder_integration_tests {
         let field = Gf2mField::new(4, 0b10011);
         let code = BchCode::new(15, 7, 2, field);
         let encoder = BchEncoder::new(code.clone());
-        let decoder = BchDecoder::new(code);
+        let decoder = BchDecoder::new(code.clone());
 
         let msg = BitVec::ones(7);
         let mut cw = encoder.encode(&msg);
@@ -586,7 +618,7 @@ mod decoder_integration_tests {
         let field = Gf2mField::new(4, 0b10011);
         let code = BchCode::new(15, 11, 1, field);
         let encoder = BchEncoder::new(code.clone());
-        let decoder = BchDecoder::new(code);
+        let decoder = BchDecoder::new(code.clone());
 
         // Test various message patterns
         let test_messages = vec![BitVec::zeros(11), BitVec::ones(11), {
@@ -676,7 +708,7 @@ mod known_bch_codes {
         let field = Gf2mField::new(4, 0b10011);
         let code = BchCode::new(15, 11, 1, field);
         let encoder = BchEncoder::new(code.clone());
-        let decoder = BchDecoder::new(code);
+        let decoder = BchDecoder::new(code.clone());
 
         // Encode two different messages
         let mut m1 = BitVec::zeros(11);
@@ -750,7 +782,7 @@ mod error_correction_limits {
         let field = Gf2mField::new(4, 0b10011);
         let code = BchCode::new(15, 11, 1, field);
         let encoder = BchEncoder::new(code.clone());
-        let decoder = BchDecoder::new(code);
+        let decoder = BchDecoder::new(code.clone());
 
         // Test 20 random single-error patterns
         for _ in 0..20 {
@@ -774,9 +806,8 @@ mod error_correction_limits {
 #[cfg(test)]
 mod systematic_encoding_validation {
     use super::*;
-    use gf2_core::gf2m::Gf2mPoly;
 
-    /// Verify systematic form: message appears in last k positions
+    /// Verify systematic form: message appears in first k positions
     #[test]
     fn test_systematic_form() {
         let field = Gf2mField::new(4, 0b10011);
@@ -790,11 +821,10 @@ mod systematic_encoding_validation {
 
         let cw = encoder.encode(&msg);
 
-        // Message should appear in positions [n-k, n)
-        let r = code.n() - code.k();
+        // Message should appear in positions [0, k) - systematic [message | parity] format
         for i in 0..11 {
             assert_eq!(
-                cw.get(r + i),
+                cw.get(i),
                 msg.get(i),
                 "Message bit {} not in systematic position",
                 i
@@ -818,12 +848,8 @@ mod systematic_encoding_validation {
 
             let cw = encoder.encode(&msg);
 
-            // Convert to polynomial
-            let mut coeffs = Vec::new();
-            for i in 0..15 {
-                coeffs.push(if cw.get(i) { field.one() } else { field.zero() });
-            }
-            let cw_poly = Gf2mPoly::new(coeffs);
+            // Convert systematic codeword to polynomial
+            let cw_poly = systematic_codeword_to_poly(&cw, code.k(), code.n(), &field);
 
             // Should be divisible by generator
             let (_, remainder) = cw_poly.div_rem(code.generator());
