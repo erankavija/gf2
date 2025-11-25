@@ -541,6 +541,50 @@ impl SpBitMatrixDual {
         }
         y
     }
+
+    /// Internal constructor from CSR and CSC data (for deserialization)
+    pub(crate) fn from_csr_csc(
+        rows: usize,
+        cols: usize,
+        row_offsets: Vec<usize>,
+        row_indices: Vec<usize>,
+        col_offsets: Vec<usize>,
+        col_indices: Vec<usize>,
+    ) -> Self {
+        let csr = SpBitMatrix {
+            rows,
+            cols,
+            indptr: row_offsets,
+            indices: row_indices,
+        };
+        let csc = SpBitMatrix {
+            rows: cols,
+            cols: rows,
+            indptr: col_offsets,
+            indices: col_indices,
+        };
+        Self { csr, csc }
+    }
+
+    /// Access row offsets (for serialization)
+    pub(crate) fn row_offsets(&self) -> &[usize] {
+        &self.csr.indptr
+    }
+
+    /// Access row indices (for serialization)
+    pub(crate) fn row_indices(&self) -> &[usize] {
+        &self.csr.indices
+    }
+
+    /// Access col offsets (for serialization)
+    pub(crate) fn col_offsets(&self) -> &[usize] {
+        &self.csc.indptr
+    }
+
+    /// Access col indices (for serialization)
+    pub(crate) fn col_indices(&self) -> &[usize] {
+        &self.csc.indices
+    }
 }
 
 impl fmt::Display for SpBitMatrix {

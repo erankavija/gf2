@@ -14,13 +14,18 @@ pub const HEADER_SIZE: usize = 32;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
 pub enum TypeTag {
+    /// BitVec type (tag = 1)
     BitVec = 1,
+    /// BitMatrix type (tag = 2)
     BitMatrix = 2,
+    /// SpBitMatrix type (tag = 3)
     SpBitMatrix = 3,
+    /// SpBitMatrixDual type (tag = 4)
     SpBitMatrixDual = 4,
 }
 
 impl TypeTag {
+    /// Convert a u8 to a TypeTag
     pub fn from_u8(value: u8) -> Option<Self> {
         match value {
             1 => Some(TypeTag::BitVec),
@@ -39,32 +44,39 @@ pub struct Flags {
 }
 
 impl Flags {
+    /// Create new flags with no bits set
     pub fn new() -> Self {
         Self { bits: 0 }
     }
 
+    /// Set compression flag
     pub fn with_compression(mut self) -> Self {
         self.bits |= 0x01;
         self
     }
 
+    /// Set checksum flag
     pub fn with_checksum(mut self) -> Self {
         self.bits |= 0x02;
         self
     }
 
+    /// Check if compression is enabled
     pub fn has_compression(&self) -> bool {
         self.bits & 0x01 != 0
     }
 
+    /// Check if checksum is enabled
     pub fn has_checksum(&self) -> bool {
         self.bits & 0x02 != 0
     }
 
+    /// Convert to u8
     pub fn to_u8(&self) -> u8 {
         self.bits
     }
 
+    /// Create from u8
     pub fn from_u8(bits: u8) -> Self {
         Self { bits }
     }
@@ -73,14 +85,20 @@ impl Flags {
 /// File header structure (32 bytes)
 #[derive(Debug, Clone)]
 pub struct Header {
+    /// Format version
     pub version: u16,
+    /// Data structure type
     pub type_tag: TypeTag,
+    /// Optional feature flags
     pub flags: Flags,
+    /// Length of JSON metadata in bytes
     pub metadata_len: u32,
+    /// Length of binary payload in bytes
     pub data_len: u64,
 }
 
 impl Header {
+    /// Create a new header with default flags
     pub fn new(type_tag: TypeTag, metadata_len: u32, data_len: u64) -> Self {
         Self {
             version: FORMAT_VERSION,
@@ -118,7 +136,12 @@ mod tests {
 
     #[test]
     fn test_type_tag_roundtrip() {
-        for tag in [TypeTag::BitVec, TypeTag::BitMatrix, TypeTag::SpBitMatrix, TypeTag::SpBitMatrixDual] {
+        for tag in [
+            TypeTag::BitVec,
+            TypeTag::BitMatrix,
+            TypeTag::SpBitMatrix,
+            TypeTag::SpBitMatrixDual,
+        ] {
             let byte = tag as u8;
             assert_eq!(TypeTag::from_u8(byte), Some(tag));
         }
@@ -168,7 +191,7 @@ mod tests {
         let original = Flags::new().with_compression().with_checksum();
         let byte = original.to_u8();
         let restored = Flags::from_u8(byte);
-        
+
         assert_eq!(original.has_compression(), restored.has_compression());
         assert_eq!(original.has_checksum(), restored.has_checksum());
     }
@@ -176,7 +199,7 @@ mod tests {
     #[test]
     fn test_header_creation() {
         let header = Header::new(TypeTag::BitVec, 100, 8000);
-        
+
         assert_eq!(header.version, FORMAT_VERSION);
         assert_eq!(header.type_tag, TypeTag::BitVec);
         assert_eq!(header.metadata_len, 100);

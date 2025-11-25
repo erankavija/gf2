@@ -7,19 +7,19 @@ use std::io;
 pub enum IoError {
     /// File does not start with correct magic bytes
     InvalidMagic,
-    
+
     /// File format version is not supported
     UnsupportedVersion(u16),
-    
+
     /// Unknown data type tag
     UnknownType(u8),
-    
+
     /// Checksum verification failed
     ChecksumMismatch,
-    
+
     /// Underlying I/O error
     Io(io::Error),
-    
+
     /// Data is malformed or invalid
     InvalidData(String),
 }
@@ -52,6 +52,7 @@ impl From<io::Error> for IoError {
     }
 }
 
+/// Result type alias for I/O operations
 pub type Result<T> = std::result::Result<T, IoError>;
 
 #[cfg(test)]
@@ -61,7 +62,10 @@ mod tests {
     #[test]
     fn test_error_display() {
         assert_eq!(IoError::InvalidMagic.to_string(), "Invalid magic bytes");
-        assert_eq!(IoError::UnsupportedVersion(99).to_string(), "Unsupported format version: 99");
+        assert_eq!(
+            IoError::UnsupportedVersion(99).to_string(),
+            "Unsupported format version: 99"
+        );
         assert_eq!(IoError::UnknownType(42).to_string(), "Unknown type tag: 42");
         assert_eq!(IoError::ChecksumMismatch.to_string(), "Checksum mismatch");
     }
@@ -70,7 +74,7 @@ mod tests {
     fn test_io_error_conversion() {
         let io_err = io::Error::new(io::ErrorKind::NotFound, "file not found");
         let err: IoError = io_err.into();
-        
+
         match err {
             IoError::Io(e) => assert_eq!(e.kind(), io::ErrorKind::NotFound),
             _ => panic!("Expected IoError::Io"),

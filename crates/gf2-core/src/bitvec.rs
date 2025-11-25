@@ -198,7 +198,7 @@ impl BitVec {
             required_words,
             data.len()
         );
-        
+
         Self {
             data,
             len_bits,

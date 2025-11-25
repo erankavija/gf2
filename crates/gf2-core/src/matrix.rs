@@ -375,6 +375,50 @@ impl BitMatrix {
         }
     }
 
+    /// Gets a word from the matrix at the specified row and word index.
+    ///
+    /// # Panics
+    ///
+    /// Panics if row >= rows or word_idx >= stride_words.
+    #[inline]
+    pub(crate) fn get_word(&self, row: usize, word_idx: usize) -> u64 {
+        assert!(
+            row < self.rows,
+            "row index {} out of bounds (rows={})",
+            row,
+            self.rows
+        );
+        assert!(
+            word_idx < self.stride_words,
+            "word_idx {} out of bounds (stride_words={})",
+            word_idx,
+            self.stride_words
+        );
+        self.data[row * self.stride_words + word_idx]
+    }
+
+    /// Sets a word in the matrix at the specified row and word index.
+    ///
+    /// # Panics
+    ///
+    /// Panics if row >= rows or word_idx >= stride_words.
+    #[inline]
+    pub(crate) fn set_word(&mut self, row: usize, word_idx: usize, word: u64) {
+        assert!(
+            row < self.rows,
+            "row index {} out of bounds (rows={})",
+            row,
+            self.rows
+        );
+        assert!(
+            word_idx < self.stride_words,
+            "word_idx {} out of bounds (stride_words={})",
+            word_idx,
+            self.stride_words
+        );
+        self.data[row * self.stride_words + word_idx] = word;
+    }
+
     /// Returns an immutable slice of the u64 words for the given row.
     ///
     /// # Panics

@@ -2790,15 +2790,15 @@ mod poly_tests {
         // BitVec: [bit0, bit1, bit2] -> Poly: bit0*x^2 + bit1*x^1 + bit2*x^0
         let field = Gf2mField::new(4, 0b10011);
         let mut bits = BitVec::new();
-        bits.push_bit(true);  // bit 0 -> x^2 (highest)
+        bits.push_bit(true); // bit 0 -> x^2 (highest)
         bits.push_bit(false); // bit 1 -> x^1
-        bits.push_bit(true);  // bit 2 -> x^0 (lowest)
+        bits.push_bit(true); // bit 2 -> x^0 (lowest)
 
         let poly = Gf2mPoly::from_bitvec_reversed(&bits, &field);
         assert_eq!(poly.degree(), Some(2));
-        assert!(poly.coeff(0).is_one());  // x^0 term
+        assert!(poly.coeff(0).is_one()); // x^0 term
         assert!(poly.coeff(1).is_zero()); // x^1 term
-        assert!(poly.coeff(2).is_one());  // x^2 term
+        assert!(poly.coeff(2).is_one()); // x^2 term
     }
 
     #[test]
@@ -2819,15 +2819,15 @@ mod poly_tests {
         let mut bits = BitVec::new();
         bits.push_bit(false); // bit 0 -> x^4 (would be highest, but zero)
         bits.push_bit(false); // bit 1 -> x^3
-        bits.push_bit(true);  // bit 2 -> x^2
+        bits.push_bit(true); // bit 2 -> x^2
         bits.push_bit(false); // bit 3 -> x^1
-        bits.push_bit(true);  // bit 4 -> x^0
+        bits.push_bit(true); // bit 4 -> x^0
 
         let poly = Gf2mPoly::from_bitvec_reversed(&bits, &field);
         assert_eq!(poly.degree(), Some(2));
-        assert!(poly.coeff(0).is_one());  // x^0
+        assert!(poly.coeff(0).is_one()); // x^0
         assert!(poly.coeff(1).is_zero()); // x^1
-        assert!(poly.coeff(2).is_one());  // x^2
+        assert!(poly.coeff(2).is_one()); // x^2
     }
 
     #[test]
@@ -2846,9 +2846,9 @@ mod poly_tests {
         assert_eq!(bits.len(), 5);
         assert!(!bits.get(0)); // x^4 absent
         assert!(!bits.get(1)); // x^3 absent
-        assert!(bits.get(2));  // x^2 present
+        assert!(bits.get(2)); // x^2 present
         assert!(!bits.get(3)); // x^1 absent
-        assert!(bits.get(4));  // x^0 present
+        assert!(bits.get(4)); // x^0 present
     }
 
     #[test]
@@ -2863,9 +2863,9 @@ mod poly_tests {
         // For len=3 (exactly degree+1): [x^2, x^1, x^0] = [1, 0, 1]
         let bits = poly.to_bitvec_reversed(3);
         assert_eq!(bits.len(), 3);
-        assert!(bits.get(0));  // x^2
+        assert!(bits.get(0)); // x^2
         assert!(!bits.get(1)); // x^1
-        assert!(bits.get(2));  // x^0
+        assert!(bits.get(2)); // x^0
     }
 
     #[test]
@@ -2894,7 +2894,7 @@ mod poly_tests {
         let bits = poly.to_bitvec_reversed(2);
         assert_eq!(bits.len(), 2);
         assert!(!bits.get(0)); // x^1 (highest in range)
-        assert!(bits.get(1));  // x^0 (lowest)
+        assert!(bits.get(1)); // x^0 (lowest)
     }
 
     #[test]
@@ -2912,12 +2912,7 @@ mod poly_tests {
 
         assert_eq!(original.len(), roundtrip.len());
         for i in 0..original.len() {
-            assert_eq!(
-                original.get(i),
-                roundtrip.get(i),
-                "Bit {} mismatch",
-                i
-            );
+            assert_eq!(original.get(i), roundtrip.get(i), "Bit {} mismatch", i);
         }
     }
 
@@ -2945,11 +2940,11 @@ mod poly_tests {
 
         // Verify structure: x^4 + x^2 + x^0
         assert_eq!(poly.degree(), Some(4));
-        assert!(poly.coeff(0).is_one());  // bit 4 -> x^0
+        assert!(poly.coeff(0).is_one()); // bit 4 -> x^0
         assert!(poly.coeff(1).is_zero()); // bit 3 -> x^1
-        assert!(poly.coeff(2).is_one());  // bit 2 -> x^2
+        assert!(poly.coeff(2).is_one()); // bit 2 -> x^2
         assert!(poly.coeff(3).is_zero()); // bit 1 -> x^3
-        assert!(poly.coeff(4).is_one());  // bit 0 -> x^4
+        assert!(poly.coeff(4).is_one()); // bit 0 -> x^4
     }
 
     #[test]
@@ -2957,9 +2952,9 @@ mod poly_tests {
         // Verify reversed is truly the reverse of standard conversion
         let field = Gf2mField::new(4, 0b10011);
         let mut bits = BitVec::new();
-        bits.push_bit(true);  // bit 0
+        bits.push_bit(true); // bit 0
         bits.push_bit(false); // bit 1
-        bits.push_bit(true);  // bit 2
+        bits.push_bit(true); // bit 2
 
         let poly_standard = Gf2mPoly::from_bitvec(&bits, &field);
         let poly_reversed = Gf2mPoly::from_bitvec_reversed(&bits, &field);
@@ -3244,7 +3239,7 @@ mod poly_tests {
                 seed in 0u64..256
             ) {
                 let field = Gf2mField::new(4, 0b10011);
-                
+
                 // Create asymmetric bit pattern
                 let mut bits = crate::BitVec::new();
                 for i in 0..len {
@@ -3272,14 +3267,14 @@ mod poly_tests {
             fn prop_reversed_preserves_degree_info(bytes in prop::collection::vec(any::<u8>(), 1..20)) {
                 let field = Gf2mField::new(4, 0b10011);
                 let bits = crate::BitVec::from_bytes_le(&bytes);
-                
+
                 // With reversed mapping: bit i → x^(len-1-i)
                 // So bit 0 → highest degree, bit (len-1) → x^0
                 // Lowest set bit index gives highest polynomial degree
                 let lowest_set = (0..bits.len()).find(|&i| bits.get(i));
-                
+
                 let poly = Gf2mPoly::from_bitvec_reversed(&bits, &field);
-                
+
                 if let Some(lowest) = lowest_set {
                     // Lowest set bit i maps to degree (len-1-i)
                     let expected_degree = bits.len() - 1 - lowest;
@@ -3295,7 +3290,7 @@ mod poly_tests {
                 seed in 1u64..256
             ) {
                 let field = Gf2mField::new(4, 0b10011);
-                
+
                 // Create polynomial
                 let coeffs: Vec<_> = (0..=deg)
                     .map(|i| {
@@ -3307,12 +3302,12 @@ mod poly_tests {
                     })
                     .collect();
                 let poly1 = Gf2mPoly::new(coeffs);
-                
+
                 // to_bitvec_reversed -> from_bitvec_reversed should be identity
                 let len = poly1.degree().map(|d| d + 1).unwrap_or(1);
                 let bits = poly1.to_bitvec_reversed(len);
                 let poly2 = Gf2mPoly::from_bitvec_reversed(&bits, &field);
-                
+
                 prop_assert_eq!(poly1.degree(), poly2.degree());
                 if let Some(d) = poly1.degree() {
                     for i in 0..=d {
@@ -3328,19 +3323,19 @@ mod poly_tests {
             ) {
                 let field = Gf2mField::new(4, 0b10011);
                 let bits = crate::BitVec::from_bytes_le(&bytes);
-                
+
                 let poly = Gf2mPoly::from_bitvec_reversed(&bits, &field);
                 let extended_len = bits.len() + extra_len;
                 let extended_bits = poly.to_bitvec_reversed(extended_len);
-                
+
                 prop_assert_eq!(extended_bits.len(), extended_len);
-                
+
                 // Leading bits (corresponding to high degrees) should be zero
                 for i in 0..extra_len {
-                    prop_assert!(!extended_bits.get(i), 
+                    prop_assert!(!extended_bits.get(i),
                         "Extended bit {} should be zero", i);
                 }
-                
+
                 // Original bits should match
                 for i in 0..bits.len() {
                     prop_assert_eq!(bits.get(i), extended_bits.get(extra_len + i),
@@ -3697,61 +3692,61 @@ mod poly_tests {
     }
 }
 
-    #[test]
-    fn test_matches_gf2_coding_workaround() {
-        // This test verifies that from_bitvec_reversed produces the same result
-        // as the manual workaround in gf2-coding/tests/bch_tests.rs
-        let field = Gf2mField::new(4, 0b10011);
-        let k = 3;
-        let r = 2;
-        let n = k + r;
-        
-        // Create a test codeword [message | parity]
-        let mut codeword = crate::BitVec::new();
-        codeword.push_bit(true);  // message bit 0
-        codeword.push_bit(false); // message bit 1
-        codeword.push_bit(true);  // message bit 2
-        codeword.push_bit(false); // parity bit 0
-        codeword.push_bit(true);  // parity bit 1
-        
-        // Method 1: Using new from_bitvec_reversed
-        let poly_new = Gf2mPoly::from_bitvec_reversed(&codeword, &field);
-        
-        // Method 2: Manual workaround (as in gf2-coding)
-        let mut coeffs_manual = Vec::new();
-        
-        // Parity polynomial p(x): degrees 0..r-1
-        // Comes from codeword bits k..n (highest coefficient first)
-        for i in (k..n).rev() {
-            coeffs_manual.push(if codeword.get(i) {
-                field.one()
-            } else {
-                field.zero()
-            });
-        }
-        
-        // Message polynomial x^r·m(x): degrees r..n-1
-        // Comes from codeword bits 0..k (highest coefficient first)
-        for i in (0..k).rev() {
-            coeffs_manual.push(if codeword.get(i) {
-                field.one()
-            } else {
-                field.zero()
-            });
-        }
-        
-        let poly_manual = Gf2mPoly::new(coeffs_manual);
-        
-        // Verify they're identical
-        assert_eq!(poly_new.degree(), poly_manual.degree());
-        if let Some(d) = poly_new.degree() {
-            for i in 0..=d {
-                assert_eq!(
-                    poly_new.coeff(i).value(),
-                    poly_manual.coeff(i).value(),
-                    "Coefficient mismatch at degree {}",
-                    i
-                );
-            }
+#[test]
+fn test_matches_gf2_coding_workaround() {
+    // This test verifies that from_bitvec_reversed produces the same result
+    // as the manual workaround in gf2-coding/tests/bch_tests.rs
+    let field = Gf2mField::new(4, 0b10011);
+    let k = 3;
+    let r = 2;
+    let n = k + r;
+
+    // Create a test codeword [message | parity]
+    let mut codeword = crate::BitVec::new();
+    codeword.push_bit(true); // message bit 0
+    codeword.push_bit(false); // message bit 1
+    codeword.push_bit(true); // message bit 2
+    codeword.push_bit(false); // parity bit 0
+    codeword.push_bit(true); // parity bit 1
+
+    // Method 1: Using new from_bitvec_reversed
+    let poly_new = Gf2mPoly::from_bitvec_reversed(&codeword, &field);
+
+    // Method 2: Manual workaround (as in gf2-coding)
+    let mut coeffs_manual = Vec::new();
+
+    // Parity polynomial p(x): degrees 0..r-1
+    // Comes from codeword bits k..n (highest coefficient first)
+    for i in (k..n).rev() {
+        coeffs_manual.push(if codeword.get(i) {
+            field.one()
+        } else {
+            field.zero()
+        });
+    }
+
+    // Message polynomial x^r·m(x): degrees r..n-1
+    // Comes from codeword bits 0..k (highest coefficient first)
+    for i in (0..k).rev() {
+        coeffs_manual.push(if codeword.get(i) {
+            field.one()
+        } else {
+            field.zero()
+        });
+    }
+
+    let poly_manual = Gf2mPoly::new(coeffs_manual);
+
+    // Verify they're identical
+    assert_eq!(poly_new.degree(), poly_manual.degree());
+    if let Some(d) = poly_new.degree() {
+        for i in 0..=d {
+            assert_eq!(
+                poly_new.coeff(i).value(),
+                poly_manual.coeff(i).value(),
+                "Coefficient mismatch at degree {}",
+                i
+            );
         }
     }
+}

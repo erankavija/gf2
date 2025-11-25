@@ -112,7 +112,9 @@ mod error;
 mod format;
 mod formats;
 mod header;
+mod matrix;
+mod sparse;
 
 pub use error::{IoError, Result};
-pub use format::{Flags, Header, TypeTag, HEADER_SIZE, MAGIC_BYTES, FORMAT_VERSION};
+pub use format::{Flags, Header, TypeTag, FORMAT_VERSION, HEADER_SIZE, MAGIC_BYTES};
 pub use formats::SerializationFormat;

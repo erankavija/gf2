@@ -122,19 +122,30 @@ Prime field arithmetic - deferred (no immediate use case)
 - **Safe by default**: `#![deny(unsafe_code)]` at crate level
 - **Compete with best**: Magma/Sage performance targets, rigorous benchmarking
 
-### Phase 12: File I/O ⏳ **IN PROGRESS**
+### Phase 12: File I/O ✅ **COMPLETE**
 
 **Goal**: Efficient binary serialization for GF(2) data structures
 
-**Status**: Phase 1 complete (BitVec I/O)
+**Status**: All phases complete (2024-11-25)
 - ✅ Format specification (32-byte header + JSON metadata + binary payload)
 - ✅ Error handling and validation
-- ✅ BitVec serialization/deserialization (37 tests, all passing)
+- ✅ BitVec serialization/deserialization (47 tests)
+- ✅ BitMatrix serialization/deserialization (18 tests)
+- ✅ SpBitMatrix serialization (COO format, 12 tests)
+- ✅ SpBitMatrixDual serialization (CSR+CSC format)
+- ✅ Multiple formats: Binary, Text (Hex for dense only)
+- ✅ Compression validation: >100× for sparse matrices
 - ✅ Optional `io` feature (enabled by default)
-- ⏳ BitMatrix serialization (Phase 2, next)
-- ⏳ Sparse matrix serialization (Phase 2)
-- ⏸️ Compression support (Phase 3, deferred)
-- ⏸️ Checksum verification (Phase 4, deferred)
+- ⏸️ Compression support (Phase 3, deferred - not needed)
+- ⏸️ Checksum verification (Phase 4, deferred - not needed)
+
+**Implementation Notes**:
+- Explicit format selection (no auto-detection complexity)
+- Binary COO format for sparse: `[(u32, u32); nnz]` edge list
+- Text format for debugging: edge list with dimensions header
+- Sparse compression: DVB-T2 simulations achieve 155×+ compression
+
+**Total Tests**: 76 I/O tests (413 total library tests)
 
 **Impact**: Enables pre-computed LDPC generator matrices (2 min → 10ms initialization)
 
