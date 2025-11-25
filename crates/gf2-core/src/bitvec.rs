@@ -170,6 +170,59 @@ impl BitVec {
         }
     }
 
+    /// Creates a `BitVec` from raw word data with specified bit length.
+    ///
+    /// The caller must ensure tail masking invariant: padding bits beyond
+    /// `len_bits` in the last word must be zero.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `words.len() * 64 < len_bits`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::BitVec;
+    ///
+    /// let words = vec![0b1010_u64];
+    /// let bv = BitVec::from_words(words, 4);
+    /// assert_eq!(bv.len(), 4);
+    /// assert!(bv.get(1));
+    /// assert!(bv.get(3));
+    /// ```
+    pub fn from_words(data: Vec<u64>, len_bits: usize) -> Self {
+        let required_words = len_bits.div_ceil(64);
+        assert!(
+            data.len() >= required_words,
+            "Insufficient words: need {}, got {}",
+            required_words,
+            data.len()
+        );
+        
+        Self {
+            data,
+            len_bits,
+            rank_select_index: RefCell::new(None),
+        }
+    }
+
+    /// Returns a slice of the underlying word storage.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::BitVec;
+    ///
+    /// let mut bv = BitVec::new();
+    /// bv.push_bit(true);
+    /// assert_eq!(bv.words().len(), 1);
+    /// assert_eq!(bv.words()[0], 1);
+    /// ```
+    #[inline]
+    pub fn words(&self) -> &[u64] {
+        &self.data
+    }
+
     /// Returns the number of bits in the `BitVec`.
     ///
     /// # Examples

@@ -40,6 +40,9 @@ mod bitslice;
 mod bitvec;
 pub mod gf2m;
 
+#[cfg(feature = "io")]
+pub mod io;
+
 // Primitive polynomial database submodule
 pub mod kernels;
 mod macros;

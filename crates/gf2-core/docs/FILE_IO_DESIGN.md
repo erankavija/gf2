@@ -1,5 +1,7 @@
 # GF(2) Data Structures File I/O Design
 
+**Status**: Phase 1 complete (BitVec I/O), Phase 2 in progress (Matrix I/O)
+
 ## Overview
 
 Design for efficient binary serialization/deserialization of `BitVec`, `BitMatrix`, and sparse matrices with optional compression.
@@ -227,41 +229,45 @@ pub mod io {
 }
 ```
 
+### Multiple Format Support ✅ **IMPLEMENTED**
+
+Three serialization formats are supported with automatic detection:
+
+```rust
+pub enum SerializationFormat {
+    Binary,  // Efficient binary format with header (default)
+    Text,    // Human-readable "0110101..." format
+    Hex,     // Hexadecimal word encoding
+}
+```
+
+**Format Detection**: Automatic based on file content
+- Binary: Magic bytes "GF2DATA\0"
+- Text: 70%+ characters are '0' or '1'  
+- Hex: Contains hex letters A-F
+
 ### BitVec API
 
 ```rust
 impl BitVec {
-    /// Save to file in binary format
-    pub fn save_to_file<P: AsRef<Path>>(
+    // Primary API (binary format, auto-detect on load)
+    pub fn save_to_file<P: AsRef<Path>>(&self, path: P) -> io::Result<()>;
+    pub fn load_from_file<P: AsRef<Path>>(path: P) -> io::Result<Self>;
+    pub fn write_to<W: Write>(&self, writer: &mut W) -> io::Result<()>;
+    pub fn read_from<R: Read>(reader: &mut R) -> io::Result<Self>;
+    
+    // Format selection API
+    pub fn save_to_file_with_format<P: AsRef<Path>>(
         &self,
         path: P,
-        options: &WriteOptions,
+        format: SerializationFormat,
     ) -> io::Result<()>;
     
-    /// Load from file
-    pub fn load_from_file<P: AsRef<Path>>(
-        path: P,
-        options: &ReadOptions,
-    ) -> io::Result<Self>;
-    
-    /// Serialize to writer
-    pub fn write_to<W: Write>(
+    pub fn write_to_with_format<W: Write>(
         &self,
         writer: &mut W,
-        options: &WriteOptions,
+        format: SerializationFormat,
     ) -> io::Result<()>;
-    
-    /// Deserialize from reader
-    pub fn read_from<R: Read>(
-        reader: &mut R,
-        options: &ReadOptions,
-    ) -> io::Result<Self>;
-    
-    /// Serialize to bytes (in-memory)
-    pub fn to_bytes(&self, options: &WriteOptions) -> io::Result<Vec<u8>>;
-    
-    /// Deserialize from bytes
-    pub fn from_bytes(bytes: &[u8], options: &ReadOptions) -> io::Result<Self>;
 }
 ```
 
@@ -327,43 +333,60 @@ Same pattern as SpBitMatrix.
 
 ## Implementation Plan
 
-### Phase 1: Core Infrastructure (2-3 hours)
+### Phase 1: Core Infrastructure ✅ **COMPLETE**
 
-**Goal**: Implement format, error types, and BitVec I/O
+**Status**: Completed 2024-11-25
 
-**Tasks**:
-1. Create `gf2-core/src/io/` module structure
-2. Define `IoError` with `thiserror`
-3. Implement binary format header reading/writing
-4. Implement `BitVec` serialization
-5. Write comprehensive tests for BitVec I/O
-6. Add optional `io` feature flag to `Cargo.toml`
+**Implemented**:
+- ✅ `gf2-core/src/io/` module structure
+- ✅ `IoError` type (without thiserror, using manual impl)
+- ✅ Binary format with 32-byte header (not 28 as originally planned)
+- ✅ Header serialization with full validation
+- ✅ BitVec serialization with JSON metadata
+- ✅ Optional `io` feature (enabled by default)
+- ✅ File I/O: `save_to_file()` / `load_from_file()`
+- ✅ Stream I/O: `write_to()` / `read_from()`
 
-**Deliverables**:
-- `io::format` module with constants
-- `io::error` with error types
-- `BitVec::{save_to_file, load_from_file}` working
-- 10+ tests covering edge cases
+**Tests**: 47 tests (unit + property + integration + format detection), all passing
 
-### Phase 2: Matrix I/O (2-3 hours)
+**Dependencies**: `serde` + `serde_json` (feature-gated)
+
+**Formats Supported**:
+- **Binary**: Efficient format with 32-byte header + JSON metadata + binary payload
+- **Text**: Human-readable ASCII "0110101..." format with length header
+- **Hex**: Hexadecimal word encoding (16 chars per word)
+- **Auto-detection**: Automatic format detection on load
+
+**Format Changes from Original Design**:
+- Header is 32 bytes (not 28) for natural alignment: 8 reserved bytes instead of 4
+- Removed `WriteOptions` / `ReadOptions` - keep it simple for now
+- Error handling without `thiserror` dependency
+- JSON metadata uses serde (not manual serialization)
+- **Added multi-format support**: Binary, Text, Hex with auto-detection (10 additional tests)
+
+### Phase 2: Matrix I/O ⏳ **NEXT**
 
 **Goal**: Implement dense and sparse matrix I/O
+
+**Estimated**: 2-3 hours
 
 **Tasks**:
 1. Implement `BitMatrix` serialization (row-major)
 2. Implement `SpBitMatrix` serialization (COO format)
 3. Implement `SpBitMatrixDual` serialization
 4. Property-based tests: roundtrip verification
-5. Performance tests: load time for DVB-T2 matrices
+5. Performance tests: verify load times
 
-**Deliverables**:
+**Target Deliverables**:
 - All matrix types support file I/O
-- Sparse format achieves 100× compression
-- Load DVB-T2 H matrix in <10ms
+- Sparse format achieves 100×+ compression
+- Dense matrices load efficiently
 
-### Phase 3: Compression Support (1-2 hours, optional)
+### Phase 3: Compression Support ⏸️ **DEFERRED**
 
 **Goal**: Add optional compression for large matrices
+
+**Note**: Deferred until core I/O is validated in production use
 
 **Tasks**:
 1. Add `compression` feature flag with `zstd` dependency
@@ -376,9 +399,11 @@ Same pattern as SpBitMatrix.
 - 2-5× additional compression for sparse matrices
 - <50ms load time with decompression
 
-### Phase 4: Checksum Support (1 hour)
+### Phase 4: Checksum Support ⏸️ **DEFERRED**
 
 **Goal**: Data integrity verification
+
+**Note**: Will implement custom checksum algorithm when needed
 
 **Tasks**:
 1. Add `blake3` dependency (fast cryptographic hash)
@@ -391,9 +416,11 @@ Same pattern as SpBitMatrix.
 - Corruption detection
 - Negligible performance impact
 
-### Phase 5: LDPC Integration (1-2 hours)
+### Phase 5: LDPC Integration ⏸️ **FUTURE**
 
 **Goal**: Use file I/O for LDPC generator matrices
+
+**Note**: Depends on Phase 2 completion (matrix serialization)
 
 **Tasks**:
 1. Add `save_to_file`/`load_from_file` to `RuEncodingMatrices`
@@ -435,59 +462,93 @@ cargo run --release --example generate_dvb_t2_matrices
 
 ## Usage Examples
 
-### Example 1: Save/Load BitVec
+### Example 1: Save/Load BitVec (Binary Format)
 
 ```rust
-use gf2_core::{BitVec, io::{WriteOptions, ReadOptions}};
+use gf2_core::BitVec;
 
-// Save
+// Save in binary format (default)
 let bv = BitVec::random(64800);
-bv.save_to_file("data.gf2vec", &WriteOptions::default())?;
+bv.save_to_file("data.gf2")?;
 
-// Load
-let loaded = BitVec::load_from_file("data.gf2vec", &ReadOptions::default())?;
+// Load with auto-detection
+let loaded = BitVec::load_from_file("data.gf2")?;
 assert_eq!(bv, loaded);
 ```
 
-### Example 2: Save/Load Sparse Matrix
+### Example 2: Human-Readable Text Format
 
 ```rust
-use gf2_core::{SpBitMatrix, io::WriteOptions};
+use gf2_core::{BitVec, io::SerializationFormat};
+
+let mut bv = BitVec::new();
+bv.push_bit(true);
+bv.push_bit(false);
+bv.push_bit(true);
+
+// Save as text
+bv.save_to_file_with_format("data.txt", SerializationFormat::Text)?;
+// File contains:
+// 3
+// 101
+
+// Load automatically detects format
+let loaded = BitVec::load_from_file("data.txt")?;
+assert_eq!(bv, loaded);
+```
+
+### Example 3: Hexadecimal Format
+
+```rust
+use gf2_core::{BitVec, io::SerializationFormat};
+
+let bv = BitVec::from_bytes_le(&[0xAA, 0x55]);
+
+// Save as hex
+bv.save_to_file_with_format("data.hex", SerializationFormat::Hex)?;
+// File contains:
+// 16
+// 000000000000AA55
+
+// Auto-detection works
+let loaded = BitVec::load_from_file("data.hex")?;
+assert_eq!(bv, loaded);
+```
+
+### Example 4: Save/Load Sparse Matrix (Future)
+
+```rust
+use gf2_core::SpBitMatrix;
 
 let h = SpBitMatrix::from_coo(32400, 64800, &edges);
 
-// Save (sparse format)
-h.save_to_file("dvb_t2_h.gf2mat", &WriteOptions::default())?;
+// Save (sparse COO format)
+h.save_to_file("matrix.gf2")?;
 // File size: ~1.5 MB instead of 255 MB!
 
 // Load
-let loaded = SpBitMatrix::load_from_file("dvb_t2_h.gf2mat", &ReadOptions::default())?;
+let loaded = SpBitMatrix::load_from_file("matrix.gf2")?;
 assert_eq!(h.rows(), loaded.rows());
 assert_eq!(h.cols(), loaded.cols());
 assert_eq!(h.nnz(), loaded.nnz());
 ```
 
-### Example 3: Compressed Generator Matrix
+### Example 5: Compressed Generator Matrix (Future)
 
 ```rust
-use gf2_core::{BitMatrix, io::WriteOptions};
+use gf2_core::BitMatrix;
 
 let g = compute_generator_matrix(&h);  // Expensive!
 
-// Save with compression
-let options = WriteOptions {
-    compress: true,
-    compression_level: 10,
-    checksum: true,
-};
-g.save_to_file("generator.gf2mat", &options)?;
+// Save (binary format, will support compression in Phase 3)
+g.save_to_file("generator.gf2")?;
 
 // Load (fast!)
-let loaded = BitMatrix::load_from_file("generator.gf2mat", &ReadOptions::default())?;
+let loaded = BitMatrix::load_from_file("generator.gf2")?;
 // Takes ~10ms instead of 2 minutes
 ```
 
-### Example 4: LDPC Encoder with Pre-Computed Matrices
+### Example 6: LDPC Encoder with Pre-Computed Matrices (Future - Phase 5)
 
 ```rust
 use gf2_coding::ldpc::{LdpcCode, LdpcEncoder};
@@ -504,6 +565,19 @@ let encoder = LdpcEncoder::with_cache(
 );
 // <10ms instead of 2 minutes!
 ```
+
+## Extensibility: Adding New Formats
+
+The design makes it straightforward to add new serialization formats:
+
+**Steps to add a new format**:
+1. Add variant to `SerializationFormat` enum
+2. Implement `write_FORMAT()` method in type impl
+3. Implement `read_FORMAT()` method in type impl  
+4. Add detection logic to `SerializationFormat::detect()`
+5. Add format-specific tests
+
+**Example**: Adding Base64 format would require ~100 lines of code and 5 tests.
 
 ## Performance Targets
 
@@ -575,13 +649,23 @@ let encoder = LdpcEncoder::with_cache(
 
 ## Success Criteria
 
-✅ All GF(2) data structures support file I/O  
-✅ Sparse matrices store in O(edges) space  
-✅ DVB-T2 encoder creation: <10ms (from minutes)  
-✅ Test suite uses pre-computed matrices  
-✅ Zero unsafe code  
-✅ Comprehensive test coverage  
-✅ Optional compression/checksums  
+**Phase 1 (Complete)**:
+- ✅ BitVec file I/O working
+- ✅ Format specification documented
+- ✅ Zero unsafe code
+- ✅ Comprehensive test coverage (47 tests)
+- ✅ Optional `io` feature
+- ✅ Multiple format support (Binary, Text, Hex)
+- ✅ Automatic format detection
+
+**Phase 2 (In Progress)**:
+- ⏳ All matrix types support file I/O
+- ⏳ Sparse matrices store in O(edges) space
+- ⏳ Roundtrip tests for all types
+
+**Future Phases**:
+- ⏸️ Optional compression/checksums (Phase 3-4)
+- ⏸️ LDPC integration with pre-computed matrices (Phase 5)  
 
 ## Conclusion
 

@@ -13,6 +13,8 @@ gf2-kernels-simd = { path = "../gf2-kernels-simd", optional = true }
 rand = { workspace = true, optional = true }
 rayon = { workspace = true, optional = true }
 image = { version = "0.25", optional = true, default-features = false, features = ["png"] }
+serde = { version = "1.0", features = ["derive"], optional = true }
+serde_json = { version = "1.0", optional = true }
 
 [dev-dependencies]
 criterion = { workspace = true }
@@ -20,7 +22,7 @@ proptest = { workspace = true }
 rand = { workspace = true }
 
 [features]
-default = ["rand"]
+default = ["rand", "io"]
 # Opt-in to SIMD accelerated kernels via optional crate.
 simd = ["gf2-kernels-simd"]
 # Random generation functions (enabled by default for testing/examples).
@@ -29,6 +31,8 @@ rand = ["dep:rand"]
 parallel = ["dep:rayon"]
 # Matrix visualization to PNG images.
 visualization = ["image"]
+# File I/O support
+io = ["dep:serde", "dep:serde_json"]
 
 [[bench]]
 name = "bitvec"
