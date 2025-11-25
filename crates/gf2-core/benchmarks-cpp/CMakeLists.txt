@@ -19,6 +19,9 @@ target_link_libraries(bench_ntl_field ${NTL_LIB} gmp pthread)
 add_executable(bench_m4ri_matrix bench_m4ri_matrix.cpp)
 target_link_libraries(bench_m4ri_matrix ${M4RI_LIB} m)
 
+add_executable(bench_m4ri_gauss bench_m4ri_gauss.cpp)
+target_link_libraries(bench_m4ri_gauss ${M4RI_LIB} m)
+
 # FLINT benchmarks
 add_executable(bench_flint_poly bench_flint_poly.cpp)
 target_link_libraries(bench_flint_poly ${FLINT_LIB} gmp mpfr)

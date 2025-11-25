@@ -99,3 +99,11 @@ harness = false
 [[bench]]
 name = "m4rm_components"
 harness = false
+
+[[bench]]
+name = "rref"
+harness = false
+
+[[bench]]
+name = "rref_profile"
+harness = false

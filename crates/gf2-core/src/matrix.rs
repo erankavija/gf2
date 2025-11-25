@@ -619,6 +619,64 @@ impl BitMatrix {
         }
     }
 
+    /// XOR row `src` into row `dst` (word-level operation).
+    ///
+    /// Performs: `dst_row ^= src_row` over GF(2).
+    ///
+    /// # Arguments
+    ///
+    /// * `dst` - Destination row index (will be modified)
+    /// * `src` - Source row index (will be XOR'd into dst)
+    ///
+    /// # Panics
+    ///
+    /// Panics if `dst` or `src` is out of bounds.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::matrix::BitMatrix;
+    ///
+    /// let mut m = BitMatrix::zeros(2, 3);
+    /// m.set(0, 0, true);
+    /// m.set(1, 1, true);
+    ///
+    /// m.row_xor(1, 0);  // row1 ^= row0
+    /// assert!(m.get(1, 0));  // Now row1 has bit 0 set
+    /// assert!(m.get(1, 1));  // And still has bit 1 set
+    /// ```
+    pub fn row_xor(&mut self, dst: usize, src: usize) {
+        assert!(
+            dst < self.rows,
+            "dst row index {} out of bounds (rows={})",
+            dst,
+            self.rows
+        );
+        assert!(
+            src < self.rows,
+            "src row index {} out of bounds (rows={})",
+            src,
+            self.rows
+        );
+
+        if dst == src {
+            // XOR'ing a row with itself yields all zeros - just clear the row
+            let start = dst * self.stride_words;
+            for i in 0..self.stride_words {
+                self.data[start + i] = 0;
+            }
+            return;
+        }
+
+        let start_dst = dst * self.stride_words;
+        let start_src = src * self.stride_words;
+
+        // XOR words from src into dst
+        for i in 0..self.stride_words {
+            self.data[start_dst + i] ^= self.data[start_src + i];
+        }
+    }
+
     /// Returns the transpose of this matrix.
     ///
     /// The transpose of an m×n matrix is an n×m matrix where element (i,j)
