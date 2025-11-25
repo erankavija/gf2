@@ -892,6 +892,76 @@ impl IterativeSoftDecoder for LdpcDecoder {
     }
 }
 
+/// LDPC encoder for systematic encoding.
+///
+/// Encodes messages into systematic LDPC codewords: [message | parity].
+/// Uses Richardson-Urbanke preprocessing for efficient encoding.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_coding::ldpc::{LdpcCode, LdpcEncoder};
+/// use gf2_coding::traits::BlockEncoder;
+/// use gf2_coding::CodeRate;
+/// use gf2_core::BitVec;
+///
+/// let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
+/// let encoder = LdpcEncoder::new(code);
+///
+/// let message = BitVec::zeros(encoder.k());
+/// let codeword = encoder.encode(&message);
+///
+/// assert_eq!(codeword.len(), encoder.n());
+/// ```
+pub struct LdpcEncoder {
+    code: LdpcCode,
+    encoding_matrices: std::sync::Arc<crate::ldpc::encoding::RuEncodingMatrices>,
+}
+
+impl LdpcEncoder {
+    /// Creates a new LDPC encoder for the given code.
+    ///
+    /// Preprocesses the parity-check matrix for efficient encoding.
+    /// This operation is expensive but done only once per encoder instance.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the parity-check matrix preprocessing fails.
+    pub fn new(code: LdpcCode) -> Self {
+        let encoding_matrices = crate::ldpc::encoding::RuEncodingMatrices::preprocess(
+            code.parity_check_matrix()
+        )
+        .expect("Failed to preprocess LDPC code for encoding");
+        
+        Self {
+            code,
+            encoding_matrices: std::sync::Arc::new(encoding_matrices),
+        }
+    }
+}
+
+impl crate::traits::BlockEncoder for LdpcEncoder {
+    fn k(&self) -> usize {
+        self.code.k()
+    }
+
+    fn n(&self) -> usize {
+        self.code.n()
+    }
+
+    fn encode(&self, message: &BitVec) -> BitVec {
+        assert_eq!(
+            message.len(),
+            self.k(),
+            "Message length {} must equal k = {}",
+            message.len(),
+            self.k()
+        );
+
+        self.encoding_matrices.encode(message)
+    }
+}
+
 #[cfg(test)]
 mod decoder_tests {
     use super::*;
