@@ -122,14 +122,29 @@ Prime field arithmetic - deferred (no immediate use case)
 - **Safe by default**: `#![deny(unsafe_code)]` at crate level
 - **Compete with best**: Magma/Sage performance targets, rigorous benchmarking
 
+### Phase 12: File I/O ⏳ **IN PROGRESS**
+
+**Goal**: Efficient binary serialization for GF(2) data structures
+
+**Status**: Phase 1 complete (BitVec I/O)
+- ✅ Format specification (32-byte header + JSON metadata + binary payload)
+- ✅ Error handling and validation
+- ✅ BitVec serialization/deserialization (37 tests, all passing)
+- ✅ Optional `io` feature (enabled by default)
+- ⏳ BitMatrix serialization (Phase 2, next)
+- ⏳ Sparse matrix serialization (Phase 2)
+- ⏸️ Compression support (Phase 3, deferred)
+- ⏸️ Checksum verification (Phase 4, deferred)
+
+**Impact**: Enables pre-computed LDPC generator matrices (2 min → 10ms initialization)
+
 ---
 
 ## Roadmap Priorities
 
-**Near-term**: Performance benchmarking (Phase 9.3) to establish baselines
+**Current**: File I/O Phase 2 (Matrix serialization) - estimated 2-3 hours
 
 **Long-term**: 
-- Primitive polynomial generation (Phase 9.2)
 - Extended SIMD support (AVX-512, ARM NEON)
 - Research algorithms as opportunities arise
 
