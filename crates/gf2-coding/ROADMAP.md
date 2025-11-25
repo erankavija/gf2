@@ -321,11 +321,103 @@ Direct sparse construction used instead of QC expansion.
 - ⚠️ DVB-T2 standard compliance unverified (no reference test vectors available)
 - **Requires**: Test vectors from ETSI standard or independent DVB-T2 implementation
 
-### Components (Remaining)
+### Phase C10.4: LDPC Validation Suite ✅ **COMPLETE**
+**Status**: Implemented with TDD (19 tests passing)
+**Completion Time**: 1 day
+
+**Deliverables**:
+- ✅ Code construction validation (5 tests)
+  - Zero codeword validity
+  - Syndrome dimensions
+  - Parameter relationships (n, m, k, rate)
+  - Matrix dimensions via syndrome
+- ✅ Mathematical property tests (4 tests)
+  - Syndrome linearity: H·(c₁⊕c₂) = H·c₁ ⊕ H·c₂
+  - Valid codeword zero syndrome
+  - Syndrome detects errors
+  - Codeword closure under XOR (linear code property)
+- ✅ DVB-T2 parameter validation (3 tests)
+  - Normal frame parameters (6 rates)
+  - Short frame parameters (6 rates)
+  - Standard codeword lengths
+- ✅ Decoder validation (4 tests)
+  - Decoder initialization
+  - All-zero channel decoding
+  - Convergence tracking
+  - Valid codeword production
+- ✅ Edge case validation (2 tests)
+  - Various syndrome patterns
+  - Validity check consistency
+- ✅ from_edges construction tests (2 tests)
+
+**Test Coverage**: 19 tests, all passing
+**Validation Approach**: Follows BCH validation pattern with [message | parity] convention
+**Lines of Code**: ~460 lines in `tests/ldpc_validation.rs`
+
+**Verified Properties**:
+- Linearity of syndrome computation
+- Zero syndrome ↔ valid codeword
+- Closure property (c₁ ⊕ c₂ is valid if c₁, c₂ are valid)
+- DVB-T2 standard parameter compliance (all 12 configurations)
+- Decoder convergence and validity
+
+**Note**: Systematic encoding validation deferred - DVB-T2 LDPC codes require specialized systematic encoder (not yet implemented). Current tests focus on parity-check matrix properties and hard-decision decoding.
+
+### Phase C10.5: LDPC Systematic Encoding 🔧 **DEFERRED**
+**Status**: Requires Richardson-Urbanke algorithm - deferred to Phase C10.6
+
+**Attempted Solutions**:
+1. **Iterative syndrome correction**: Valid codewords but wrong algorithm (0/10 test vectors match)
+2. **Generator matrix**: Correct but too slow (hangs on DVB-T2 Normal frames)
+
+**Decision**: Defer and prioritize proper implementation in Phase C10.6
+
+### Phase C10.6: LDPC Encoding/Decoding with DVB-T2 Validation 🎯 **NEXT PRIORITY**
+**Goal**: Complete LDPC implementation with proper systematic encoding and test vector validation
+
+**Objectives**:
+1. **Richardson-Urbanke Systematic Encoding**
+   - Implement preprocessing: Gaussian elimination to systematic form
+   - Cache preprocessing matrices (φ, ψ) per DVB-T2 configuration
+   - Fast encoding: O(edges) matrix-vector multiplications
+   - Target: <1ms per frame encoding
+
+2. **DVB-T2 Test Vector Validation**
+   - TP05 → TP06 encoding validation (202 blocks)
+   - TP06 → TP05 decoding validation (error-free)
+   - TP06 + errors → TP05 decoding (error correction)
+   - Target: 100% match with reference vectors
+
+3. **Encode/Decode Roundtrip Tests**
+   - Property-based tests: decode(encode(m)) = m
+   - Error injection tests: bounded error correction
+   - All DVB-T2 configurations (12 rates × 2 frame sizes)
+   - Integration with BCH outer code
+
+4. **Performance Validation**
+   - Encoding throughput: >10 Mbps (target: 50+ Mbps)
+   - Decoding throughput: >5 Mbps (target: 20+ Mbps)
+   - Memory usage profiling
+   - Comparison with baseline expectations
+
+**Estimated Effort**: 2-3 days
+- Day 1: Richardson-Urbanke implementation and optimization
+- Day 2: Test vector validation and roundtrip tests
+- Day 3: Performance tuning and DVB-T2 integration
+
+**Success Criteria**:
+- ✅ All DVB-T2 test vectors pass (TP05↔TP06)
+- ✅ Encode/decode roundtrips verified
+- ✅ Performance meets throughput targets
+- ✅ Integration with BCH outer code working
+
+### Phase C10.7: Full DVB-T2 FEC Chain (After LDPC complete)
+**Components**:
 - **QAM Modulation**: QPSK, 16/64/256-QAM with Gray mapping and soft LLR demapping
 - **Bit Interleaving**: DVB-T2 column-row interleaver
-- **System Integration**: End-to-end transmit/receive chain
+- **System Integration**: BCH + LDPC + QAM + Interleaving
 - **FER Simulation**: Monte Carlo framework with configurable parameters
+- **Full Test Vector Validation**: TP04 → TP05 → TP06 → TP07a complete chain
 
 ### Final Deliverables
 - Complete DVB-T2 encoder/decoder for standard configurations
