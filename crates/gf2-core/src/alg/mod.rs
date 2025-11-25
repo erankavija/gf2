@@ -4,3 +4,4 @@
 
 pub mod gauss;
 pub mod m4rm;
+pub mod rref;
