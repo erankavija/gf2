@@ -133,25 +133,6 @@ Prime field arithmetic - deferred (no immediate use case)
 - Extended SIMD support (AVX-512, ARM NEON)
 - Research algorithms as opportunities arise
 
-## Requirements from gf2-coding
-
-**Reversed BitVec-Polynomial Conversion** (Priority: Medium)
-
-The `gf2-coding` crate requires reversed bit-to-polynomial coefficient mapping for DVB-T2 compliance:
-- Standard: bit i → coefficient of x^i (lowest bit = x^0)
-- Required: bit 0 → highest coefficient, bit k-1 → x^0
-
-**Use case**: BCH systematic encoding where codewords are [message | parity] in bitvec form but need conversion to polynomial c(x) = x^r·m(x) + p(x) with bit 0 as highest coefficient.
-
-**Suggested API**:
-```rust
-// In Gf2mPoly
-pub fn from_bitvec_reversed(bits: &BitVec, field: &Gf2mField) -> Self;
-pub fn to_bitvec_reversed(&self, len: usize) -> BitVec;
-```
-
-**Current workaround**: Manual conversion in test code (see `gf2-coding/tests/bch_tests.rs::systematic_codeword_to_poly`)
-
 ---
 
 **For high-level strategy and research goals**, see [main workspace ROADMAP.md](../../ROADMAP.md)
