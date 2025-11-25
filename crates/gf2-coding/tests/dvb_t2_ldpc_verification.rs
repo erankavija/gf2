@@ -1,4 +1,25 @@
 //! DVB-T2 LDPC encoding verification using reference test vectors.
+//!
+//! **Status**: Requires Richardson-Urbanke systematic encoder (Phase C10.6)
+//!
+//! **Prerequisites**: 
+//! - ✅ gf2-core Phase 12 (File I/O) complete - enables pre-computed generator matrices
+//! - ⏳ Richardson-Urbanke systematic encoding implementation
+//! - ⏳ Generator matrix cache infrastructure
+//!
+//! **Performance Target**:
+//! - First-time computation: 2-3 minutes per configuration (one-time)
+//! - Cached load: <10ms using gf2-core SpBitMatrix binary format
+//! - Total speedup: 12,000×+
+//!
+//! **Usage Pattern**:
+//! ```rust,ignore
+//! let cache = EncodingCache::from_directory("data/ldpc/dvb_t2")?;
+//! let encoder = LdpcEncoder::with_cache(
+//!     LdpcCode::dvb_t2_normal(CodeRate::Rate3_5),
+//!     &cache  // Loads in <10ms
+//! );
+//! ```
 
 mod test_vectors;
 

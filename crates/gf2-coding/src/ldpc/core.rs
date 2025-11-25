@@ -919,14 +919,29 @@ pub struct LdpcEncoder {
 }
 
 impl LdpcEncoder {
-    /// Creates a new LDPC encoder for the given code.
+    /// Creates a new LDPC encoder WITHOUT cache.
     ///
     /// Preprocesses the parity-check matrix for efficient encoding.
-    /// This operation is expensive but done only once per encoder instance.
+    /// This operation is expensive (2-10 seconds for DVB-T2 codes) but
+    /// done only once per encoder instance.
+    ///
+    /// For faster encoder creation when working with multiple encoders
+    /// of the same configuration, use [`LdpcEncoder::with_cache`].
     ///
     /// # Panics
     ///
     /// Panics if the parity-check matrix preprocessing fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::ldpc::{LdpcCode, LdpcEncoder};
+    /// use gf2_coding::CodeRate;
+    ///
+    /// let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
+    /// let encoder = LdpcEncoder::new(code);
+    /// // Takes 2-3 seconds, but no cache needed
+    /// ```
     pub fn new(code: LdpcCode) -> Self {
         let encoding_matrices = crate::ldpc::encoding::RuEncodingMatrices::preprocess(
             code.parity_check_matrix()
@@ -936,6 +951,56 @@ impl LdpcEncoder {
         Self {
             code,
             encoding_matrices: std::sync::Arc::new(encoding_matrices),
+        }
+    }
+    
+    /// Creates a new LDPC encoder WITH cache (opt-in performance boost).
+    ///
+    /// Uses the provided cache to avoid expensive preprocessing when creating
+    /// multiple encoders for the same LDPC code configuration.
+    ///
+    /// - First call: preprocesses and caches (2-10 seconds)
+    /// - Subsequent calls: instant (<1μs)
+    ///
+    /// # Arguments
+    ///
+    /// * `code` - LDPC code to encode with
+    /// * `cache` - Encoding cache to use
+    ///
+    /// # Panics
+    ///
+    /// Panics if the parity-check matrix preprocessing fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::ldpc::{LdpcCode, LdpcEncoder};
+    /// use gf2_coding::ldpc::encoding::EncodingCache;
+    /// use gf2_coding::CodeRate;
+    ///
+    /// let cache = EncodingCache::new();
+    /// let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
+    ///
+    /// // First call: slow but caches
+    /// let enc1 = LdpcEncoder::with_cache(code.clone(), &cache);
+    ///
+    /// // Second call: instant
+    /// let enc2 = LdpcEncoder::with_cache(code, &cache);
+    /// ```
+    pub fn with_cache(code: LdpcCode, cache: &crate::ldpc::encoding::EncodingCache) -> Self {
+        let key = crate::ldpc::encoding::CacheKey::from_params(
+            code.n(),
+            code.k(),
+            code.parity_check_matrix(),
+        );
+        
+        let encoding_matrices = cache
+            .get_or_compute(key, code.parity_check_matrix())
+            .expect("Failed to preprocess LDPC code for encoding");
+        
+        Self {
+            code,
+            encoding_matrices,
         }
     }
 }

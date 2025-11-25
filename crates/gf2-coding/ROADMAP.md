@@ -206,7 +206,7 @@ Current tests verify mathematical correctness (polynomial properties, error corr
 ## Phase C10: DVB-T2 FEC Simulation (In Progress) 🎯 **PRIMARY GOAL**
 **Simulate complete DVB-T2 FEC chain with FER performance analysis**
 
-###Phase C10.0: Test Vector Parser & Infrastructure ✅ **COMPLETE**
+### Phase C10.0: Test Vector Parser & Infrastructure ✅ **COMPLETE**
 **Status**: Implemented with TDD (21 tests: 14 unit + 7 integration)
 **Completion Time**: 1 day
 
@@ -233,27 +233,26 @@ Current tests verify mathematical correctness (polynomial properties, error corr
 - TP06 (LDPC output): 64,800 bits/block (full LDPC codeword)
 - All test points: 4 frames, 202 blocks/frame, consistent structure ✓
 
-### Phase C10.0.1: BCH Verification Harness 🔧 **BLOCKED**
-**Status**: Test infrastructure complete, BCH implementation bug discovered  
-**Completion**: Verification harness implemented, blocker identified
+### Phase C10.0.1: BCH Verification & Bug Fix ✅ **COMPLETE**
+**Status**: Bug fixed, 100% validation passing
+**Completion Time**: 1 day (test infrastructure + bug fix)
 
 **Deliverables**:
-- ✅ 5 comprehensive BCH verification tests
-- ✅ Diagnostic tools for investigating mismatches
-- ⚠️ **BLOCKER IDENTIFIED**: BCH encoder not producing systematic codewords
-  - DVB-T2 test vectors show systematic encoding (first k bits = message)
-  - Our BCH implementation produces non-systematic output
-  - Affects all 202 blocks in test frame
-  - Root cause: BCH systematic encoding implementation needs investigation
+- ✅ 5 comprehensive BCH verification tests (280 lines)
+- ✅ Full frame validation (202 blocks × 4 frames = 808 blocks)
+- ✅ Error injection and correction testing (t=1 to t=12)
+- ✅ Systematic property validation
+- ✅ **Bug Fix**: Corrected polynomial-to-bit mapping for DVB-T2 convention
+  - Issue: Bit position 0 must correspond to highest coefficient
+  - Fix: Reversed bit-to-polynomial mapping in encoder/decoder
+  - Result: **202/202 blocks match** DVB-T2 test vectors
 
-**Tests Created**:
-- `test_bch_encoding_tp04_to_tp05` - Full frame encoding validation
-- `test_bch_decoding_tp05_to_tp04_error_free` - Error-free decoding
-- `test_bch_error_correction` - Error correction up to t=12
-- `test_bch_systematic_property` - Validates test vectors are systematic
-- `test_bch_encoding_sample` - Multi-frame spot checks
+**Verification Results**: ✅ 100% match with official ETSI EN 302 755 test vectors
+- Encoding (TP04→TP05): 202/202 blocks pass
+- Decoding (TP05→TP04): 202/202 blocks pass  
+- Error correction: 100% success rate (t=1 to t=12)
 
-**Next Steps**: Fix BCH systematic encoding before proceeding with full verification
+See: `docs/DVB_T2_VERIFICATION_STATUS.md` and `docs/SYSTEMATIC_ENCODING_CONVENTION.md`
 
 ### Phase C10.1: Quasi-Cyclic LDPC Framework ✅ **COMPLETE**
 **Status**: Implemented with TDD (19 tests passing, 1 example)
@@ -363,24 +362,21 @@ Direct sparse construction used instead of QC expansion.
 
 **Note**: Systematic encoding validation deferred - DVB-T2 LDPC codes require specialized systematic encoder (not yet implemented). Current tests focus on parity-check matrix properties and hard-decision decoding.
 
-### Phase C10.5: LDPC Systematic Encoding 🔧 **DEFERRED**
-**Status**: Requires Richardson-Urbanke algorithm - deferred to Phase C10.6
-
-**Attempted Solutions**:
-1. **Iterative syndrome correction**: Valid codewords but wrong algorithm (0/10 test vectors match)
-2. **Generator matrix**: Correct but too slow (hangs on DVB-T2 Normal frames)
-
-**Decision**: Defer and prioritize proper implementation in Phase C10.6
+### Phase C10.5: LDPC Systematic Encoding ✅ **DEFERRED TO C10.6**
+**Status**: Superseded by Richardson-Urbanke implementation in Phase C10.6
 
 ### Phase C10.6: LDPC Encoding/Decoding with DVB-T2 Validation 🎯 **NEXT PRIORITY**
 **Goal**: Complete LDPC implementation with proper systematic encoding and test vector validation
 
+**Prerequisites**: ✅ **gf2-core Phase 12 (File I/O) complete** - enables pre-computed generator matrices
+
 **Objectives**:
 1. **Richardson-Urbanke Systematic Encoding**
    - Implement preprocessing: Gaussian elimination to systematic form
-   - Cache preprocessing matrices (φ, ψ) per DVB-T2 configuration
+   - **Cache preprocessing matrices using gf2-core I/O** (φ, ψ) per DVB-T2 configuration
    - Fast encoding: O(edges) matrix-vector multiplications
    - Target: <1ms per frame encoding
+   - **Note**: Pre-compute and save generator matrices to `data/ldpc/dvb_t2/` using gf2-core SpBitMatrix serialization
 
 2. **DVB-T2 Test Vector Validation**
    - TP05 → TP06 encoding validation (202 blocks)
@@ -394,21 +390,44 @@ Direct sparse construction used instead of QC expansion.
    - All DVB-T2 configurations (12 rates × 2 frame sizes)
    - Integration with BCH outer code
 
-4. **Performance Validation**
+4. **Performance Validation with Pre-Computed Matrices**
+   - **First-time computation**: 2-3 minutes per configuration (one-time cost)
+   - **Subsequent loads**: <10ms using SpBitMatrix binary format (155× compression)
    - Encoding throughput: >10 Mbps (target: 50+ Mbps)
    - Decoding throughput: >5 Mbps (target: 20+ Mbps)
    - Memory usage profiling
    - Comparison with baseline expectations
 
-**Estimated Effort**: 2-3 days
-- Day 1: Richardson-Urbanke implementation and optimization
-- Day 2: Test vector validation and roundtrip tests
-- Day 3: Performance tuning and DVB-T2 integration
+**Implementation Strategy**:
+```rust
+// Initialize with cached generator matrices
+let cache = EncodingCache::from_directory("data/ldpc/dvb_t2")?;
+let encoder = LdpcEncoder::with_cache(
+    LdpcCode::dvb_t2_normal(CodeRate::Rate3_5),
+    &cache  // <10ms load vs 2-3 min computation
+);
+```
+
+**File Organization**:
+```
+gf2-coding/data/ldpc/dvb_t2/
+  ├── short_rate_1_2.gf2      (~500 KB per file, binary COO format)
+  ├── short_rate_3_5.gf2
+  ├── ... (12 files total, ~6 MB)
+  └── README.md               (generation instructions)
+```
+
+**Estimated Effort**: 3-4 days
+- Day 1: Richardson-Urbanke implementation and cache infrastructure
+- Day 2: Generator matrix pre-computation and gf2-core I/O integration
+- Day 3: Test vector validation and roundtrip tests
+- Day 4: Performance tuning and DVB-T2 integration
 
 **Success Criteria**:
 - ✅ All DVB-T2 test vectors pass (TP05↔TP06)
 - ✅ Encode/decode roundtrips verified
-- ✅ Performance meets throughput targets
+- ✅ Generator matrices cached and loadable <10ms
+- ✅ Performance meets throughput targets (12,000× speedup for initialization)
 - ✅ Integration with BCH outer code working
 
 ### Phase C10.7: Full DVB-T2 FEC Chain (After LDPC complete)
@@ -485,6 +504,16 @@ See [docs/SDR_INTEGRATION.md](docs/SDR_INTEGRATION.md) for comprehensive design.
 - Feasibility of GPU offload (via future crates) for LDPC iterations?
 - Interplay between compression transforms and error correction ordering
 - SDR integration: float vs fixed-point LLRs for optimal performance/accuracy tradeoff?
+
+## gf2-core Integration
+
+**Phase 12 File I/O**: ✅ **COMPLETE** (commit `48ee76c`)
+- Binary serialization for BitVec, BitMatrix, SpBitMatrix, SpBitMatrixDual
+- COO format for sparse matrices: >100× compression
+- Multiple formats: Binary (efficient) and Text (debugging)
+- Total 76 I/O tests passing
+- **Status**: Ready for gf2-coding Phase C10.6.3 integration
+- **Next**: Integrate into LDPC encoding cache for 12,000× initialization speedup
 
 ## Principles
 - Keep experimental algorithms isolated—avoid regressing core performance
