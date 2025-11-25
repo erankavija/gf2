@@ -103,10 +103,12 @@ fn test_ru_encoding_is_systematic() {
 // ============================================================================
 
 #[test]
-#[ignore = "DVB-T2 preprocessing is slow"]
 fn test_dvb_t2_preprocessing_all_configs() {
     use gf2_coding::bch::CodeRate;
-    use gf2_coding::ldpc::LdpcEncoder;
+    use gf2_coding::ldpc::{LdpcEncoder, encoding::EncodingCache};
+    
+    // Use cache to make this test fast
+    let cache = EncodingCache::new();
     
     let rates = [
         CodeRate::Rate1_2,
@@ -118,25 +120,25 @@ fn test_dvb_t2_preprocessing_all_configs() {
     ];
     
     for rate in &rates {
-        // Test short frames - encoder creation does preprocessing
+        // Test short frames with cache
         let code_short = LdpcCode::dvb_t2_short(*rate);
-        let _encoder = LdpcEncoder::new(code_short);
+        let _encoder = LdpcEncoder::with_cache(code_short, &cache);
         // If we get here, preprocessing succeeded
-        
-        // Test normal frames (skip for now - very large)
-        // Normal frames can be tested after basic implementation works
     }
+    
+    // Verify all 6 configs were cached
+    assert_eq!(cache.stats().entries, 6);
 }
 
 #[test]
-#[ignore = "DVB-T2 short frame preprocessing is slow"]
 fn test_ldpc_encoder_creation() {
     use gf2_coding::bch::CodeRate;
-    use gf2_coding::ldpc::LdpcEncoder;
+    use gf2_coding::ldpc::{LdpcEncoder, encoding::EncodingCache};
     use gf2_coding::traits::BlockEncoder;
     
+    let cache = EncodingCache::new();
     let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
-    let encoder = LdpcEncoder::new(code.clone());
+    let encoder = LdpcEncoder::with_cache(code.clone(), &cache);
     
     // Generate random message
     let mut message = BitVec::new();
@@ -160,14 +162,14 @@ fn test_ldpc_encoder_creation() {
 }
 
 #[test]
-#[ignore = "DVB-T2 short frame preprocessing is slow"]
 fn test_dvb_t2_encoded_codewords_valid() {
     use gf2_coding::bch::CodeRate;
-    use gf2_coding::ldpc::LdpcEncoder;
+    use gf2_coding::ldpc::{LdpcEncoder, encoding::EncodingCache};
     use gf2_coding::traits::BlockEncoder;
     
+    let cache = EncodingCache::new();
     let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
-    let encoder = LdpcEncoder::new(code.clone());
+    let encoder = LdpcEncoder::with_cache(code.clone(), &cache);
     
     // Test 10 random messages
     for _ in 0..10 {
@@ -185,15 +187,15 @@ fn test_dvb_t2_encoded_codewords_valid() {
 }
 
 #[test]
-#[ignore = "DVB-T2 short frames take time to preprocess"]
 fn test_ldpc_encode_decode_roundtrip_simple() {
     use gf2_coding::bch::CodeRate;
-    use gf2_coding::ldpc::{LdpcDecoder, LdpcEncoder};
+    use gf2_coding::ldpc::{LdpcDecoder, LdpcEncoder, encoding::EncodingCache};
     use gf2_coding::llr::Llr;
     use gf2_coding::traits::{BlockEncoder, IterativeSoftDecoder};
     
+    let cache = EncodingCache::new();
     let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
-    let encoder = LdpcEncoder::new(code.clone());
+    let encoder = LdpcEncoder::with_cache(code.clone(), &cache);
     let mut decoder = LdpcDecoder::new(code.clone());
     
     // Random message

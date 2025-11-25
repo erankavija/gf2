@@ -61,8 +61,8 @@ pub struct RuEncodingMatrices {
     /// Parity length r = n - k
     r: usize,
     /// Generator matrix in systematic form [I_k | P]
-    /// We store this temporarily for the simple implementation
-    generator: BitMatrix,
+    /// Stored as sparse matrix with dual indexing for efficient matvec_transpose
+    generator: SpBitMatrixDual,
 }
 
 impl RuEncodingMatrices {
@@ -138,7 +138,7 @@ impl RuEncodingMatrices {
         h: &BitMatrix,
         k: usize,
         n: usize,
-    ) -> Result<BitMatrix, PreprocessError> {
+    ) -> Result<SpBitMatrixDual, PreprocessError> {
         let m = h.rows();
         
         // Create working copy of H for Gaussian elimination
@@ -254,7 +254,20 @@ impl RuEncodingMatrices {
             }
         }
         
-        Ok(g)
+        // Convert dense G to sparse dual format for memory efficiency
+        // Use dual indexing to support efficient matvec_transpose
+        let mut edges = Vec::new();
+        for row in 0..k {
+            for col in 0..n {
+                if g.get(row, col) {
+                    edges.push((row, col));
+                }
+            }
+        }
+        
+        let g_sparse = SpBitMatrixDual::from_coo(k, n, &edges);
+        
+        Ok(g_sparse)
     }
     
     /// Encode a message into a systematic codeword.
@@ -285,17 +298,9 @@ impl RuEncodingMatrices {
             self.k
         );
         
-        // Convert message to 1 × k matrix
-        let mut msg_matrix = BitMatrix::zeros(1, self.k);
-        for i in 0..self.k {
-            msg_matrix.set(0, i, message.get(i));
-        }
-        
-        // Multiply message by generator matrix: c = m · G
-        let codeword_matrix = &msg_matrix * &self.generator;
-        
-        // Extract codeword as BitVec (row 0 of result)
-        codeword_matrix.row_as_bitvec(0)
+        // Use sparse matrix-vector multiply for efficient encoding
+        // codeword = G^T · message (since G is k×n, we need transpose)
+        self.generator.matvec_transpose(message)
     }
     
     /// Returns the codeword length n.
@@ -311,6 +316,43 @@ impl RuEncodingMatrices {
     /// Returns the parity length r = n - k.
     pub fn r(&self) -> usize {
         self.r
+    }
+    
+    /// Returns the number of non-zero entries in the generator matrix.
+    /// 
+    /// This is used to measure sparsity of the generator matrix.
+    pub fn generator_nnz(&self) -> usize {
+        self.generator.nnz()
+    }
+    
+    /// Returns a reference to the generator matrix.
+    ///
+    /// This is useful for saving the matrix to disk for caching.
+    pub fn generator(&self) -> &SpBitMatrixDual {
+        &self.generator
+    }
+    
+    /// Create encoding matrices from a pre-computed generator matrix.
+    ///
+    /// This is used when loading from cache - we already have the generator
+    /// matrix and just need to wrap it in the encoding matrices structure.
+    ///
+    /// # Arguments
+    ///
+    /// * `k` - Message dimension
+    /// * `n` - Codeword length
+    /// * `r` - Parity length (should equal n - k)
+    /// * `generator` - Pre-computed generator matrix
+    ///
+    /// # Panics
+    ///
+    /// Panics if r != n - k or generator dimensions don't match.
+    pub fn from_generator(k: usize, n: usize, r: usize, generator: SpBitMatrixDual) -> Self {
+        assert_eq!(r, n - k, "Parity length must equal n - k");
+        assert_eq!(generator.rows(), k, "Generator rows must equal k");
+        assert_eq!(generator.cols(), n, "Generator cols must equal n");
+        
+        Self { k, n, r, generator }
     }
 }
 
@@ -395,5 +437,65 @@ mod tests {
                 "Standard Hamming codeword must be valid"
             );
         }
+    }
+    
+    // TDD Tests for Sparse Generator Matrices
+    
+    #[test]
+    fn test_generator_is_sparse() {
+        // Test that generator matrix is stored as sparse
+        let h = simple_hamming_7_4_h();
+        let matrices = RuEncodingMatrices::preprocess(&h).unwrap();
+        
+        // For [7,4] Hamming code, generator should have exactly 16 ones
+        // (4 identity bits + 12 parity bits)
+        let nnz = matrices.generator_nnz();
+        assert!(nnz <= 20, "Generator should be sparse, got {} edges", nnz);
+        
+        // Density should be reasonable for a sparse code
+        let density = nnz as f64 / (matrices.k() * matrices.n()) as f64;
+        assert!(density < 0.7, "Generator density {:.2}% should be < 70%", density * 100.0);
+        
+        eprintln!("Generator matrix: {} edges, {:.1}% density", nnz, density * 100.0);
+    }
+    
+    #[test]
+    fn test_sparse_matvec_transpose() {
+        // Test that sparse matrix-vector multiply works correctly
+        let h = simple_hamming_7_4_h();
+        let matrices = RuEncodingMatrices::preprocess(&h).unwrap();
+        
+        // Test zero message
+        let zero_msg = BitVec::zeros(4);
+        let zero_codeword = matrices.encode(&zero_msg);
+        assert_eq!(zero_codeword.count_ones(), 0, "Zero message should produce zero codeword");
+        
+        // Test messages with single bit set
+        for bit_pos in 0..4 {
+            let mut message = BitVec::zeros(4);
+            message.set(bit_pos, true);
+            
+            let codeword = matrices.encode(&message);
+            
+            // Verify it's a valid codeword
+            let syndrome = h.matvec(&codeword);
+            assert_eq!(syndrome.count_ones(), 0, "Single-bit message must produce valid codeword");
+        }
+    }
+    
+    #[test]
+    fn test_sparse_encoding_performance() {
+        // Test that sparse encoding maintains good performance
+        // This is more of a documentation test - actual performance tested in benches
+        let h = simple_hamming_7_4_h();
+        let matrices = RuEncodingMatrices::preprocess(&h).unwrap();
+        
+        let mut message = BitVec::new();
+        for _ in 0..4 {
+            message.push_bit(true);
+        }
+        
+        // Just verify it works - benchmarks will test actual performance
+        let _codeword = matrices.encode(&message);
     }
 }
