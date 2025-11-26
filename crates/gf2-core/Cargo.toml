@@ -107,3 +107,8 @@ harness = false
 [[bench]]
 name = "rref_profile"
 harness = false
+
+[[bench]]
+name = "matrix_vector"
+harness = false
+required-features = ["rand"]
