@@ -66,6 +66,25 @@
 - Belief propagation decoder with min-sum approximation
 - Iterative soft-decision decoding with early stopping
 - Syndrome-based convergence detection
+- **High-performance preprocessing**: Uses gf2-core's RREF with word-level operations and SIMD acceleration (AVX2/AVX512)
+  - Generator matrix computation: 256-512× faster than bit-level Gaussian elimination
+  - SIMD enabled by default for optimal performance
+
+## Performance
+
+### SIMD Acceleration
+
+LDPC code preprocessing (generator matrix computation) uses gf2-core's optimized RREF implementation with:
+- **Word-level operations**: 64× faster than bit-level
+- **SIMD vectorization**: Additional 4-8× speedup with AVX2/AVX512
+- **Total speedup**: 256-512× faster than manual Gaussian elimination
+
+SIMD is **enabled by default** for best performance. To build without SIMD:
+```bash
+cargo build --no-default-features
+```
+
+For more details, see [SIMD_PERFORMANCE_GUIDE.md](SIMD_PERFORMANCE_GUIDE.md).
 
 ## Usage
 
@@ -203,6 +222,25 @@ cargo run --example awgn_uncoded
 
 # Visualize large generator matrices (>500 rows/cols) as PNG images
 cargo run --example visualize_large_matrices --features visualization
+```
+
+## Utility Binaries
+
+The crate includes utility binaries in `src/bin/`:
+
+```bash
+# Generate LDPC encoding cache files (DVB-T2)
+# Creates ~530 MB of pre-computed generator matrices
+# Run once, then load in <16ms (vs 13 minutes preprocessing)
+cargo run --release --bin generate_ldpc_cache all
+
+# Validate LDPC cache with error correction tests
+# Tests encoding/decoding with various error counts
+cargo run --release --bin validate_ldpc_cache
+
+# Quick encoding sanity check
+# Verifies encoder produces valid codewords
+cargo run --bin check_encoding
 ```
 
 ## Testing

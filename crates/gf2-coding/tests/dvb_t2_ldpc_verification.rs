@@ -2,7 +2,7 @@
 //!
 //! **Status**: Requires Richardson-Urbanke systematic encoder (Phase C10.6)
 //!
-//! **Prerequisites**: 
+//! **Prerequisites**:
 //! - ✅ gf2-core Phase 12 (File I/O) complete - enables pre-computed generator matrices
 //! - ⏳ Richardson-Urbanke systematic encoding implementation
 //! - ⏳ Generator matrix cache infrastructure
@@ -26,8 +26,6 @@ mod test_vectors;
 use gf2_coding::ldpc::{LdpcCode, LdpcEncoder};
 use gf2_coding::traits::BlockEncoder;
 use gf2_coding::CodeRate;
-use std::env;
-use std::path::PathBuf;
 
 #[test]
 #[ignore]
@@ -35,7 +33,7 @@ fn test_ldpc_encoding_tp05_to_tp06() {
     if !test_vectors::test_vectors_available() {
         return;
     }
-    
+
     let base_path = test_vectors::test_vectors_path();
 
     let vectors = test_vectors::TestVectorSet::load(&base_path, "VV001-CR35")
@@ -53,7 +51,7 @@ fn test_ldpc_encoding_tp05_to_tp06() {
     // Test first 10 blocks only (encoding is slow with iterative algorithm)
     let test_blocks = 10.min(tp05.frame(0).len());
     eprintln!("Testing LDPC encoding on {} blocks...", test_blocks);
-    
+
     for (block_idx, input_block) in tp05.frame(0).iter().take(test_blocks).enumerate() {
         let expected_output = &tp06.frame(0)[block_idx];
 

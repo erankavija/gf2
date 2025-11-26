@@ -21,10 +21,19 @@ tempfile = "3.8"
 thiserror = "1.0"
 
 [features]
-default = []
+default = ["simd"]
 simd = ["gf2-core/simd"]
 visualization = ["gf2-core/visualization"]
 
+# Binaries are auto-discovered in src/bin/
+# - generate_ldpc_cache: Generate DVB-T2 LDPC encoding cache files
+# - validate_ldpc_cache: Comprehensive LDPC validation with error correction
+# - check_encoding: Quick encoding sanity check
+
 [[bench]]
 name = "linear_codes"
+harness = false
+
+[[bench]]
+name = "sparse_preprocessing"
 harness = false

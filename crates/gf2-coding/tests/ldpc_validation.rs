@@ -10,8 +10,8 @@
 //! 4. Systematic encoding validation (when applicable)
 
 use gf2_coding::ldpc::{LdpcCode, LdpcDecoder};
-use gf2_coding::traits::{IterativeSoftDecoder, SoftDecoder};
 use gf2_coding::llr::Llr;
+use gf2_coding::traits::{IterativeSoftDecoder, SoftDecoder};
 use gf2_coding::CodeRate;
 use gf2_core::BitVec;
 
@@ -20,9 +20,15 @@ use gf2_core::BitVec;
 fn create_test_ldpc() -> LdpcCode {
     // Simple [7,4] Hamming-like code as LDPC
     let edges = vec![
-        (0, 0), (0, 1), (0, 3),
-        (1, 0), (1, 2), (1, 4),
-        (2, 1), (2, 2), (2, 5),
+        (0, 0),
+        (0, 1),
+        (0, 3),
+        (1, 0),
+        (1, 2),
+        (1, 4),
+        (2, 1),
+        (2, 2),
+        (2, 5),
     ];
     LdpcCode::from_edges(3, 7, &edges)
 }
@@ -69,7 +75,7 @@ mod code_construction_validation {
     #[test]
     fn test_code_parameter_relationships() {
         let code = create_test_ldpc();
-        
+
         assert_eq!(code.n(), 7, "n should match construction parameter");
         assert_eq!(code.m(), 3, "m should match construction parameter");
         assert_eq!(code.k(), 4, "k = n - m for full-rank H");
@@ -83,11 +89,11 @@ mod code_construction_validation {
     #[test]
     fn test_parity_check_matrix_dimensions_via_syndrome() {
         let code = create_test_ldpc();
-        
+
         // Syndrome dimensions tell us H dimensions: syndrome = H × codeword
         let codeword = BitVec::zeros(code.n());
         let syndrome = code.syndrome(&codeword);
-        
+
         assert_eq!(syndrome.len(), 3, "H should have 3 rows (m)");
         assert_eq!(codeword.len(), 7, "H should have 7 columns (n)");
     }
@@ -101,27 +107,27 @@ mod mathematical_property_validation {
     #[test]
     fn test_syndrome_linearity() {
         let code = LdpcCode::dvb_t2_normal(CodeRate::Rate1_2);
-        
+
         // Create two valid codewords (all zeros for simplicity)
         let c1 = BitVec::zeros(code.n());
         let c2 = BitVec::zeros(code.n());
-        
+
         let s1 = code.syndrome(&c1);
         let s2 = code.syndrome(&c2);
-        
+
         // XOR the codewords
         let mut c1_xor_c2 = c1.clone();
         for i in 0..code.n() {
             c1_xor_c2.set(i, c1.get(i) ^ c2.get(i));
         }
         let s_sum = code.syndrome(&c1_xor_c2);
-        
+
         // Compute s1 ⊕ s2
         let mut s1_xor_s2 = s1.clone();
         for i in 0..code.m() {
             s1_xor_s2.set(i, s1.get(i) ^ s2.get(i));
         }
-        
+
         assert_eq!(
             s_sum.to_bytes_le(),
             s1_xor_s2.to_bytes_le(),
@@ -133,11 +139,11 @@ mod mathematical_property_validation {
     #[test]
     fn test_valid_codeword_zero_syndrome() {
         let code = create_test_ldpc();
-        
+
         // All-zero is always a valid codeword
         let zero_cw = BitVec::zeros(code.n());
         let syndrome = code.syndrome(&zero_cw);
-        
+
         assert_eq!(
             syndrome.count_ones(),
             0,
@@ -153,13 +159,13 @@ mod mathematical_property_validation {
     #[test]
     fn test_syndrome_detects_errors() {
         let code = LdpcCode::dvb_t2_normal(CodeRate::Rate1_2);
-        
+
         // Start with valid codeword
         let mut corrupted = BitVec::zeros(code.n());
-        
+
         // Introduce single bit error
         corrupted.set(100, true);
-        
+
         let syndrome = code.syndrome(&corrupted);
         assert!(
             syndrome.count_ones() > 0,
@@ -175,20 +181,20 @@ mod mathematical_property_validation {
     #[test]
     fn test_codeword_closure_under_xor() {
         let code = create_test_ldpc();
-        
+
         // Two valid codewords
         let c1 = BitVec::zeros(code.n());
         let c2 = BitVec::zeros(code.n());
-        
+
         assert!(code.is_valid_codeword(&c1));
         assert!(code.is_valid_codeword(&c2));
-        
+
         // XOR them
         let mut c3 = c1.clone();
         for i in 0..code.n() {
             c3.set(i, c1.get(i) ^ c2.get(i));
         }
-        
+
         assert!(
             code.is_valid_codeword(&c3),
             "XOR of valid codewords must be valid (linear code property)"
@@ -214,11 +220,11 @@ mod dvb_t2_parameter_validation {
 
         for (rate, expected_n, expected_k, expected_m) in test_cases {
             let code = LdpcCode::dvb_t2_normal(rate);
-            
+
             assert_eq!(code.n(), expected_n, "Wrong n for {:?}", rate);
             assert_eq!(code.k(), expected_k, "Wrong k for {:?}", rate);
             assert_eq!(code.m(), expected_m, "Wrong m for {:?}", rate);
-            
+
             // Verify n = k + m
             assert_eq!(
                 code.n(),
@@ -226,7 +232,7 @@ mod dvb_t2_parameter_validation {
                 "n must equal k + m for {:?}",
                 rate
             );
-            
+
             // Verify rate calculation
             let calculated_rate = code.k() as f64 / code.n() as f64;
             let expected_rate = match rate {
@@ -261,11 +267,11 @@ mod dvb_t2_parameter_validation {
 
         for (rate, expected_n, expected_k, expected_m) in test_cases {
             let code = LdpcCode::dvb_t2_short(rate);
-            
+
             assert_eq!(code.n(), expected_n, "Wrong n for {:?}", rate);
             assert_eq!(code.k(), expected_k, "Wrong k for {:?}", rate);
             assert_eq!(code.m(), expected_m, "Wrong m for {:?}", rate);
-            
+
             assert_eq!(
                 code.n(),
                 code.k() + code.m(),
@@ -288,11 +294,7 @@ mod dvb_t2_parameter_validation {
 
         // Short frames: 16200 bits
         let short = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
-        assert_eq!(
-            short.n(),
-            16200,
-            "DVB-T2 Short frames must have 16200 bits"
-        );
+        assert_eq!(short.n(), 16200, "DVB-T2 Short frames must have 16200 bits");
     }
 }
 
@@ -304,7 +306,7 @@ mod from_edges_validation {
     #[test]
     fn test_from_edges_construction() {
         let code = create_test_ldpc();
-        
+
         assert_eq!(code.n(), 7);
         assert_eq!(code.m(), 3);
         assert_eq!(code.k(), 4);
@@ -321,16 +323,17 @@ mod from_edges_validation {
 
         for (m, n, edges) in test_cases {
             let code = LdpcCode::from_edges(m, n, &edges);
-            
+
             assert_eq!(code.m(), m);
             assert_eq!(code.n(), n);
-            
+
             // Zero codeword should always be valid
             let zero = BitVec::zeros(n);
             assert!(
                 code.is_valid_codeword(&zero),
                 "Zero codeword must be valid for m={}, n={}",
-                m, n
+                m,
+                n
             );
         }
     }
@@ -345,13 +348,16 @@ mod decoder_validation {
     fn test_decoder_initialization() {
         let code = LdpcCode::dvb_t2_normal(CodeRate::Rate1_2);
         let decoder = LdpcDecoder::new(code.clone());
-        
+
         // Decoder should be ready to use
         let llrs = vec![Llr::infinity(); code.n()]; // All bits certain to be 0
         let decoded = decoder.decode_soft(&llrs);
-        
+
         // Decoded output should be valid codeword
-        assert!(code.is_valid_codeword(&decoded), "Decoded message should be valid");
+        assert!(
+            code.is_valid_codeword(&decoded),
+            "Decoded message should be valid"
+        );
     }
 
     /// Test decoder handles all-zero input correctly
@@ -359,11 +365,11 @@ mod decoder_validation {
     fn test_decoder_all_zero_channel() {
         let code = create_test_ldpc();
         let decoder = LdpcDecoder::new(code.clone());
-        
+
         // LLR = +∞ means bit is certain to be 0
         let llrs = vec![Llr::infinity(); code.n()];
         let decoded = decoder.decode_soft(&llrs);
-        
+
         assert_eq!(
             decoded.count_ones(),
             0,
@@ -376,11 +382,11 @@ mod decoder_validation {
     fn test_decoder_convergence_tracking() {
         let code = create_test_ldpc();
         let mut decoder = LdpcDecoder::new(code.clone());
-        
+
         // Use moderate LLR values (not infinite)
         let llrs = vec![Llr::new(2.0); code.n()];
         let result = decoder.decode_iterative(&llrs, 50);
-        
+
         assert!(
             result.iterations > 0,
             "Decoder should track iteration count"
@@ -396,11 +402,11 @@ mod decoder_validation {
     fn test_decoder_produces_valid_codewords() {
         let code = LdpcCode::dvb_t2_normal(CodeRate::Rate1_2);
         let decoder = LdpcDecoder::new(code.clone());
-        
+
         // Perfect channel (all bits certain to be 0)
         let llrs = vec![Llr::infinity(); code.n()];
         let decoded = decoder.decode_soft(&llrs);
-        
+
         assert!(
             code.is_valid_codeword(&decoded),
             "Decoder must produce valid codeword for perfect channel"
@@ -417,7 +423,7 @@ mod edge_case_validation {
     fn test_syndrome_various_patterns() {
         let code = create_test_ldpc();
         let n = code.n();
-        
+
         // Test several patterns
         let patterns = vec![
             BitVec::zeros(n),
@@ -434,7 +440,7 @@ mod edge_case_validation {
                 bv
             },
         ];
-        
+
         for pattern in patterns {
             let syndrome = code.syndrome(&pattern);
             assert_eq!(
@@ -449,24 +455,20 @@ mod edge_case_validation {
     #[test]
     fn test_validity_check_consistency() {
         let code = LdpcCode::dvb_t2_normal(CodeRate::Rate1_2);
-        
-        let test_cases = vec![
-            BitVec::zeros(code.n()),
-            {
-                let mut bv = BitVec::zeros(code.n());
-                bv.set(100, true);
-                bv
-            },
-        ];
-        
+
+        let test_cases = vec![BitVec::zeros(code.n()), {
+            let mut bv = BitVec::zeros(code.n());
+            bv.set(100, true);
+            bv
+        }];
+
         for codeword in test_cases {
             let is_valid = code.is_valid_codeword(&codeword);
             let syndrome = code.syndrome(&codeword);
             let syndrome_zero = syndrome.count_ones() == 0;
-            
+
             assert_eq!(
-                is_valid,
-                syndrome_zero,
+                is_valid, syndrome_zero,
                 "is_valid_codeword must match (syndrome == 0)"
             );
         }
