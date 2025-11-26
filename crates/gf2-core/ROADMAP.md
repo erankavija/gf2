@@ -83,6 +83,28 @@ Fast Hadamard Transform, 81x speedup vs. naive, O(N log N) butterfly operations
 
 **Results**: Substantial performance improvement with clean, safe code. Remaining 3.9x gap is reasonable for pure Rust vs hand-optimized C. See `docs/PHASE11_IMPLEMENTATION_PLAN.md` for details.
 
+### Phase 12: RREF (Reduced Row Echelon Form) ✅ **COMPLETED**
+
+**Goal**: Implement high-performance Gaussian elimination for LDPC encoding
+
+**Status**: 
+- **304× speedup** vs naive (DVB-T2 Short: 553s → 1.82s)
+- Within **5-8× of M4RI** (excellent for safe Rust)
+- Ready for gf2-coding integration
+
+**Implementation**:
+1. **Phase 12.0-12.1**: Core TDD implementation with word-level ops
+2. **Phase 12.2**: Allocation optimization (32-40% improvement)
+3. **Phase 12.3**: Algorithmic optimizations (pivot search, unchecked access)
+4. **Phase 12.4**: AVX2 SIMD via existing kernels (22-64% improvement)
+
+**Results**:
+- 1024×1024: 6.1 ms (M4RI: 1.22 ms = 5.0× slower) ✅
+- DVB-T2 Short: 1.82 s (M4RI: 241 ms = 7.5× slower) ✅
+- Small matrices: 1.3-3.7× slower than M4RI ✅
+
+**Integration**: Migration plan exists in gf2-coding, ready for Phase 12.5
+
 ---
 
 ### Phase 2: Wide Buffer Optimization

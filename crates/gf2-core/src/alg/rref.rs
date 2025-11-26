@@ -109,16 +109,8 @@ pub fn rref(matrix: &BitMatrix, pivot_from_right: bool) -> RrefResult {
         {
 
         
-        // Find pivot row (first row >= current_row with 1 in this column)
-        let mut pivot_row = None;
-        for r in current_row..m {
-            if work.get(r, col) {
-                pivot_row = Some(r);
-                break;
-            }
-        }
-        
-        if let Some(pivot_row) = pivot_row {
+        // Find pivot row using optimized word-level search
+        if let Some(pivot_row) = work.find_pivot_row(col, current_row) {
             // Swap pivot row to current position
             if pivot_row != current_row {
                 work.swap_rows(current_row, pivot_row);
@@ -129,8 +121,9 @@ pub fn rref(matrix: &BitMatrix, pivot_from_right: bool) -> RrefResult {
             pivot_cols.push(col);
             
             // Eliminate this column from all OTHER rows (reduced form)
+            // Use unchecked access for inner loop performance
             for r in 0..m {
-                if r != current_row && work.get(r, col) {
+                if r != current_row && work.get_unchecked(r, col) {
                     // XOR current_row into row r using built-in method
                     work.row_xor(r, current_row);
                 }

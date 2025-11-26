@@ -671,10 +671,72 @@ impl BitMatrix {
         let start_dst = dst * self.stride_words;
         let start_src = src * self.stride_words;
 
-        // XOR words from src into dst
-        for i in 0..self.stride_words {
-            self.data[start_dst + i] ^= self.data[start_src + i];
+        // Use kernel xor_inplace which automatically dispatches to SIMD when available
+        use crate::kernels::ops::xor_inplace;
+        
+        // Use split_at_mut to get non-overlapping slices for borrow checker
+        if start_dst < start_src {
+            let (left, right) = self.data.split_at_mut(start_src);
+            xor_inplace(
+                &mut left[start_dst..start_dst + self.stride_words],
+                &right[..self.stride_words],
+            );
+        } else {
+            let (left, right) = self.data.split_at_mut(start_dst);
+            xor_inplace(
+                &mut right[..self.stride_words],
+                &left[start_src..start_src + self.stride_words],
+            );
         }
+    }
+
+    /// Find the first row >= start_row that has a 1 in the given column.
+    ///
+    /// Uses word-level access for better performance than repeated get() calls.
+    ///
+    /// # Arguments
+    ///
+    /// * `col` - Column index to search
+    /// * `start_row` - First row to check (inclusive)
+    ///
+    /// # Returns
+    ///
+    /// Row index if found, None if no such row exists.
+    pub fn find_pivot_row(&self, col: usize, start_row: usize) -> Option<usize> {
+        if col >= self.cols || start_row >= self.rows {
+            return None;
+        }
+        
+        let word_idx = col / 64;
+        let bit_mask = 1u64 << (col % 64);
+        
+        for r in start_row..self.rows {
+            let row_start = r * self.stride_words;
+            if self.data[row_start + word_idx] & bit_mask != 0 {
+                return Some(r);
+            }
+        }
+        
+        None
+    }
+    
+    /// Check if a specific bit is set using word-level access (no bounds checking).
+    ///
+    /// This is faster than get() for inner loops where bounds are already known.
+    ///
+    /// # Safety
+    ///
+    /// This is a safe function but panics in debug mode if indices are out of bounds.
+    /// In release mode, it performs no bounds checking for performance.
+    #[inline]
+    pub fn get_unchecked(&self, row: usize, col: usize) -> bool {
+        debug_assert!(row < self.rows, "row {} out of bounds", row);
+        debug_assert!(col < self.cols, "col {} out of bounds", col);
+        
+        let word_idx = row * self.stride_words + (col / 64);
+        let bit_mask = 1u64 << (col % 64);
+        
+        self.data[word_idx] & bit_mask != 0
     }
 
     /// Returns the transpose of this matrix.
