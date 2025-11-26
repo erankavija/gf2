@@ -256,13 +256,15 @@ impl LdpcCode {
 
     /// Computes the generator matrix from the parity-check matrix.
     ///
-    /// Uses Gaussian elimination to convert H to systematic form [P^T | I_m],
-    /// then constructs G = [I_k | P] where k = n - m.
+    /// Uses RREF (Reduced Row Echelon Form) from gf2-core to convert H to systematic
+    /// form [P^T | I_m], then constructs G = [I_k | P] where k = n - m.
     ///
-    /// This is expensive (O(m²·k)) and cached after first computation.
+    /// Uses optimized word-level operations with SIMD acceleration when available.
+    /// Cached after first computation.
     ///
     /// Returns None if H is not full rank.
     fn compute_generator_matrix(&self) -> Option<gf2_core::BitMatrix> {
+        use gf2_core::alg::rref::rref;
         use gf2_core::BitMatrix;
 
         let k = self.k();
@@ -272,44 +274,25 @@ impl LdpcCode {
             return Some(BitMatrix::zeros(0, self.n));
         }
 
-        // Convert sparse H to dense for Gaussian elimination
-        let mut h_dense = self.h.to_dense();
+        // Convert sparse H to dense for RREF
+        let h_dense = self.h.to_dense();
 
-        // Perform Gaussian elimination to get H in systematic form
-        // We want to transform H to [P^T | I_m] form
-        // This requires column permutations to move linearly independent columns to the right
+        // Use gf2-core's optimized RREF with word-level operations and SIMD acceleration
+        // pivot_from_right=false for left-to-right pivoting (standard order)
+        let rref_result = rref(&h_dense, false);
 
-        // Forward elimination with column selection
-        let mut col_permutation = Vec::with_capacity(self.n);
-        let mut used_cols = vec![false; self.n];
-
-        for row in 0..m {
-            // Find a pivot column (any unused column with 1 in this row)
-            let pivot_col = (0..self.n).find(|&col| !used_cols[col] && h_dense.get(row, col));
-
-            // No pivot found - matrix is rank deficient
-            let pivot_col = pivot_col?;
-            used_cols[pivot_col] = true;
-            col_permutation.push(pivot_col);
-
-            // Eliminate this column from all other rows
-            for other_row in 0..m {
-                if other_row != row && h_dense.get(other_row, pivot_col) {
-                    // XOR row into other_row
-                    for c in 0..self.n {
-                        let val = h_dense.get(row, c) ^ h_dense.get(other_row, c);
-                        h_dense.set(other_row, c, val);
-                    }
-                }
-            }
+        if rref_result.rank != m {
+            return None; // Matrix is rank deficient
         }
 
-        // H is now in row echelon form with col_permutation defining the systematic positions
-        // Extract systematic (information) bit positions (unused columns)
-        let systematic_positions: Vec<usize> = used_cols
-            .iter()
-            .enumerate()
-            .filter_map(|(col, &used)| if !used { Some(col) } else { None })
+        let h_dense = rref_result.reduced;
+        let col_permutation = rref_result.pivot_cols;
+
+        // Extract systematic (information) bit positions (non-pivot columns)
+        let all_cols: Vec<usize> = (0..self.n).collect();
+        let systematic_positions: Vec<usize> = all_cols
+            .into_iter()
+            .filter(|c| !col_permutation.contains(c))
             .collect();
 
         assert_eq!(
@@ -943,17 +926,16 @@ impl LdpcEncoder {
     /// // Takes 2-3 seconds, but no cache needed
     /// ```
     pub fn new(code: LdpcCode) -> Self {
-        let encoding_matrices = crate::ldpc::encoding::RuEncodingMatrices::preprocess(
-            code.parity_check_matrix()
-        )
-        .expect("Failed to preprocess LDPC code for encoding");
-        
+        let encoding_matrices =
+            crate::ldpc::encoding::RuEncodingMatrices::preprocess(code.parity_check_matrix())
+                .expect("Failed to preprocess LDPC code for encoding");
+
         Self {
             code,
             encoding_matrices: std::sync::Arc::new(encoding_matrices),
         }
     }
-    
+
     /// Creates a new LDPC encoder WITH cache (opt-in performance boost).
     ///
     /// Uses the provided cache to avoid expensive preprocessing when creating
@@ -993,11 +975,11 @@ impl LdpcEncoder {
             code.k(),
             code.parity_check_matrix(),
         );
-        
+
         let encoding_matrices = cache
             .get_or_compute(key, code.parity_check_matrix())
             .expect("Failed to preprocess LDPC code for encoding");
-        
+
         Self {
             code,
             encoding_matrices,

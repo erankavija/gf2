@@ -203,7 +203,7 @@ Current tests verify mathematical correctness (polynomial properties, error corr
 
 **Note**: Minimal polynomial computation is in gf2-core Phase 8.4. BCH-specific algorithms (generator polynomial from roots, Berlekamp-Massey, Chien search) belong here as application-level code.
 
-## Phase C10: DVB-T2 FEC Simulation (In Progress) 🎯 **PRIMARY GOAL**
+## Phase C10: DVB-T2 FEC Simulation 🔧 **IN PROGRESS**
 **Simulate complete DVB-T2 FEC chain with FER performance analysis**
 
 ### Phase C10.0: Test Vector Parser & Infrastructure ✅ **COMPLETE**
@@ -365,70 +365,53 @@ Direct sparse construction used instead of QC expansion.
 ### Phase C10.5: LDPC Systematic Encoding ✅ **DEFERRED TO C10.6**
 **Status**: Superseded by Richardson-Urbanke implementation in Phase C10.6
 
-### Phase C10.6: LDPC Encoding/Decoding with DVB-T2 Validation 🎯 **NEXT PRIORITY**
+### Phase C10.6: LDPC Encoding/Decoding with DVB-T2 Validation 🔧 **IN PROGRESS**
 **Goal**: Complete LDPC implementation with proper systematic encoding and test vector validation
 
-**Prerequisites**: ✅ **gf2-core Phase 12 (File I/O) complete** - enables pre-computed generator matrices
+**Prerequisites**: ✅ **gf2-core Phase 12 (File I/O) complete** + ✅ **Dense BitMatrix matvec_transpose**
 
-**Objectives**:
-1. **Richardson-Urbanke Systematic Encoding**
-   - Implement preprocessing: Gaussian elimination to systematic form
-   - **Cache preprocessing matrices using gf2-core I/O** (φ, ψ) per DVB-T2 configuration
-   - Fast encoding: O(edges) matrix-vector multiplications
-   - Target: <1ms per frame encoding
-   - **Note**: Pre-compute and save generator matrices to `data/ldpc/dvb_t2/` using gf2-core SpBitMatrix serialization
+#### Subphases Completed:
 
-2. **DVB-T2 Test Vector Validation**
+**C10.6.1: Richardson-Urbanke Core Algorithm** ✅ **COMPLETE**
+- Richardson-Urbanke preprocessing with RREF+SIMD (0.2-2s per Short frame)
+- Generator matrix computation with row reordering
+- 6 unit tests passing
+
+**C10.6.2: Dense Matrix Optimization** ✅ **COMPLETE** (2025-11-26)
+- Dense `BitMatrix` storage for 40-50% dense DVB-T2 parity matrices
+- All 12 DVB-T2 configs cached: 529 MB total (2.1× reduction vs sparse)
+- Cache loading: 16ms for all configs
+- `BitMatrix::matvec_transpose()` for fast encoding
+- `generate_ldpc_cache` binary in `src/bin/`
+
+**Performance**:
+- Preprocessing: 0.2-1.6s per Short frame, up to 6min per Normal frame (RREF+SIMD)
+- Total cache generation: 13 minutes for all 12 configs
+- File sizes: 5-8 MB (Short), 70-126 MB (Normal) per config
+
+#### Remaining Work:
+
+**C10.6.5: DVB-T2 Test Vector Validation** (Next)
    - TP05 → TP06 encoding validation (202 blocks)
    - TP06 → TP05 decoding validation (error-free)
    - TP06 + errors → TP05 decoding (error correction)
    - Target: 100% match with reference vectors
 
-3. **Encode/Decode Roundtrip Tests**
-   - Property-based tests: decode(encode(m)) = m
-   - Error injection tests: bounded error correction
-   - All DVB-T2 configurations (12 rates × 2 frame sizes)
-   - Integration with BCH outer code
-
-4. **Performance Validation with Pre-Computed Matrices**
-   - **First-time computation**: 2-3 minutes per configuration (one-time cost)
-   - **Subsequent loads**: <10ms using SpBitMatrix binary format (155× compression)
-   - Encoding throughput: >10 Mbps (target: 50+ Mbps)
-   - Decoding throughput: >5 Mbps (target: 20+ Mbps)
+**C10.6.6: Performance Benchmarks**
+   - Encoding throughput: Target >10 Mbps (baseline: 50+ Mbps)
+   - Decoding throughput: Target >5 Mbps (baseline: 20+ Mbps)
    - Memory usage profiling
-   - Comparison with baseline expectations
+   - Comparison with BCH outer code integration
 
-**Implementation Strategy**:
-```rust
-// Initialize with cached generator matrices
-let cache = EncodingCache::from_directory("data/ldpc/dvb_t2")?;
-let encoder = LdpcEncoder::with_cache(
-    LdpcCode::dvb_t2_normal(CodeRate::Rate3_5),
-    &cache  // <10ms load vs 2-3 min computation
-);
-```
-
-**File Organization**:
-```
-gf2-coding/data/ldpc/dvb_t2/
-  ├── short_rate_1_2.gf2      (~500 KB per file, binary COO format)
-  ├── short_rate_3_5.gf2
-  ├── ... (12 files total, ~6 MB)
-  └── README.md               (generation instructions)
-```
-
-**Estimated Effort**: 3-4 days
-- Day 1: Richardson-Urbanke implementation and cache infrastructure
-- Day 2: Generator matrix pre-computation and gf2-core I/O integration
-- Day 3: Test vector validation and roundtrip tests
-- Day 4: Performance tuning and DVB-T2 integration
+**Estimated Remaining Effort**: 2-3 days
 
 **Success Criteria**:
-- ✅ All DVB-T2 test vectors pass (TP05↔TP06)
-- ✅ Encode/decode roundtrips verified
-- ✅ Generator matrices cached and loadable <10ms
-- ✅ Performance meets throughput targets (12,000× speedup for initialization)
-- ✅ Integration with BCH outer code working
+- ✅ Generator matrices cached (all 12 configs)
+- ✅ Fast cache loading (<20ms)
+- ✅ Dense storage (2.1× reduction vs sparse)
+- [ ] All DVB-T2 test vectors pass (TP05↔TP06)
+- [ ] Encode/decode roundtrips verified
+- [ ] Integration with BCH outer code working
 
 ### Phase C10.7: Full DVB-T2 FEC Chain (After LDPC complete)
 **Components**:
@@ -445,7 +428,7 @@ gf2-coding/data/ldpc/dvb_t2/
 - Validation against Shannon limit and reference implementations
 - Comprehensive documentation and examples
 
-**Total Estimated effort**: 6-9 weeks → **1 week complete**, 5-8 weeks remaining  
+**Total Estimated effort**: 6-9 weeks → **C10.6.1-2 complete**, test vector validation remaining  
 **See**: [docs/DVB_T2_DESIGN.md](docs/DVB_T2_DESIGN.md) for detailed implementation plan
 
 ## Phase C11: Performance & Ergonomics Polish (Ongoing)
@@ -507,13 +490,10 @@ See [docs/SDR_INTEGRATION.md](docs/SDR_INTEGRATION.md) for comprehensive design.
 
 ## gf2-core Integration
 
-**Phase 12 File I/O**: ✅ **COMPLETE** (commit `48ee76c`)
-- Binary serialization for BitVec, BitMatrix, SpBitMatrix, SpBitMatrixDual
-- COO format for sparse matrices: >100× compression
-- Multiple formats: Binary (efficient) and Text (debugging)
-- Total 76 I/O tests passing
-- **Status**: Ready for gf2-coding Phase C10.6.3 integration
-- **Next**: Integrate into LDPC encoding cache for 12,000× initialization speedup
+**Phase 12 File I/O**: ✅ **COMPLETE** - Integrated into LDPC cache
+- Dense BitMatrix I/O used for LDPC parity matrices
+- 529 MB total cache for all 12 DVB-T2 configs
+- Cache loads in 16ms
 
 ## Principles
 - Keep experimental algorithms isolated—avoid regressing core performance
