@@ -447,22 +447,62 @@ These are the actual use case matrices that motivated this optimization:
 - Primary goal still achieved: **< 10s for DVB-T2, enabling practical LDPC development**
 - 32-40% improvement from eliminating per-operation allocations
 
+### Phase 12.3: Algorithmic Optimizations ✅
+
+**Changes**:
+- Word-level pivot search via `BitMatrix::find_pivot_row()`
+- Eliminated redundant `get()` calls using `get_unchecked()` in inner loops
+
+#### Results
+
+| Size | Phase 12.2 | Phase 12.3 | Improvement |
+|------|------------|------------|-------------|
+| 256×256 | 343 µs | 316 µs | 8% faster |
+| 1024×1024 | 8.37 ms | 7.86 ms | 6% faster |
+| 100×200 | 83.9 µs | 33.2 µs | **61% faster** |
+| DVB-T2 Short | 5.10 s | 5.05 s | 1% faster |
+
+**Impact**: Significant on small rectangular matrices, modest on large.
+
+### Phase 12.4: SIMD Acceleration ✅
+
+**Implementation**: Integrated existing AVX2 XOR kernel from `gf2-kernels-simd`
+- Updated `BitMatrix::row_xor()` to use `kernels::ops::xor_inplace`
+- Automatic SIMD dispatch when `--features simd` enabled
+- Runtime CPU detection ensures portability
+
+#### Results (AVX2)
+
+| Size | Without SIMD | With SIMD | Improvement | M4RI | Ratio vs M4RI |
+|------|--------------|-----------|-------------|------|---------------|
+| 1024×1024 | 7.86 ms | **6.10 ms** | **22% faster** | 1.22 ms | **5.0× slower** ✅ |
+| 2048×2048 | 47.07 ms | **29.56 ms** | **37% faster** | 3.97 ms | **7.4× slower** ✅ |
+| 1000×2000 | 11.00 ms | **6.86 ms** | **38% faster** | 1.17 ms | **5.9× slower** ✅ |
+| **DVB-T2 Short 3/5** | 2.62 s | **0.945 s** | **64% faster** | 142 ms | **6.7× slower** ✅ |
+| **DVB-T2 Short 1/2** | 5.05 s | **1.82 s** | **64% faster** | 241 ms | **7.5× slower** ✅ |
+
+**Impact**: Massive improvements on larger matrices - 22-64% faster!
+
 ### Implementation Status
 
 **Phase 12.0**: ✅ **COMPLETE** - Baseline established  
 **Phase 12.1**: ✅ **COMPLETE** - Core algorithm with word-level operations  
 **Phase 12.2**: ✅ **COMPLETE** - Allocation optimization (32-40% improvement)  
-**Phase 12.3**: 🔄 **IN PROGRESS** - Advanced optimizations needed for larger matrices  
-**Phase 12.4**: ⏳ **PLANNED** - SIMD acceleration (optional, in gf2-kernels-simd with unsafe)  
-**Phase 12.5**: ⏳ **PLANNED** - Integration with gf2-coding  
+**Phase 12.3**: ✅ **COMPLETE** - Algorithmic optimizations (6-61% improvement)  
+**Phase 12.4**: ✅ **COMPLETE** - SIMD acceleration (22-64% improvement)  
+**Phase 12.5**: 🔄 **READY** - Integration with gf2-coding (migration plan exists)  
 
-### Next Steps
+### Final Results Summary
 
-1. ✅ **Achieved**: Primary goal (< 10s for DVB-T2 Short) and competitive on small matrices
-2. **Investigate**: Why gap widens with matrix size (cache effects? algorithmic?)
-3. **Consider**: Further optimizations for medium/large matrices
-4. **Future**: SIMD row_xor in gf2-kernels-simd (unsafe allowed there)
-5. Integrate into gf2-coding and measure actual DVB-T2 speedup
+**Overall Speedup from Naive Baseline**:
+- DVB-T2 Short 1/2: **553s → 1.82s = 304× speedup** 🎉
+
+**Competitive Position vs M4RI**:
+- Small matrices: **1.3-3.7× slower** ✅ (excellent for safe Rust)
+- Medium matrices: **4.7-5.0× slower** ✅ (within target)
+- Large matrices: **5.9-7.5× slower** ✅ (acceptable)
+
+**Next**: Integrate into gf2-coding per existing migration plan
 
 ---
 
