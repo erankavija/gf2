@@ -474,3 +474,76 @@ mod edge_case_validation {
         }
     }
 }
+
+#[test]
+#[ignore]
+fn test_tp06_parity_construction() {
+    use std::path::PathBuf;
+    
+    let base_path = PathBuf::from(std::env::var("HOME").unwrap()).join("Projects/dvb_test_vectors");
+    
+    let vectors = crate::test_vectors::TestVectorSet::load(&base_path, "VV001-CR35")
+        .expect("Failed to load test vectors");
+    
+    let tp05 = vectors.tp05.as_ref().expect("TP05 not found");
+    let tp06 = vectors.tp06.as_ref().expect("TP06 not found");
+    
+    let code = LdpcCode::dvb_t2_normal(CodeRate::Rate3_5);
+    let k = code.k();
+    
+    println!("\nChecking first TP06 block parity construction:");
+    
+    let tp05_block = &tp05.frame(0)[0];
+    let tp06_block = &tp06.frame(0)[0];
+    
+    // The first k bits should match (systematic)
+    println!("Systematic check:");
+    let mut sys_match = true;
+    for i in 0..k {
+        if tp05_block.data.get(i) != tp06_block.data.get(i) {
+            println!("  Bit {} mismatch", i);
+            sys_match = false;
+            if !sys_match {
+                break;
+            }
+        }
+    }
+    
+    if sys_match {
+        println!("  ✓ First {} bits match (systematic)", k);
+    } else {
+        println!("  ✗ Systematic bits don't match!");
+    }
+    
+    // Now check if the parity bits in TP06 are what we'd compute
+    // Compute what p0 should be by XORing all info bits that connect to check 0
+    let mut computed_p0 = false;
+    
+    println!("\nComputing what p0 should be:");
+    for i in 0..k {
+        // Create unit vector
+        let mut unit = BitVec::zeros(code.n());
+        unit.set(i, true);
+        let syndrome = code.syndrome(&unit);
+        
+        // If this info bit connects to check 0
+        if syndrome.get(0) {
+            // XOR with the actual bit value from TP05
+            if tp05_block.data.get(i) {
+                computed_p0 ^= true;
+            }
+        }
+    }
+    
+    println!("  Computed p0 from info bits: {}", if computed_p0 { "1" } else { "0" });
+    
+    // What does TP06 say p0 is?
+    let tp06_p0 = tp06_block.data.get(k);  // First parity bit
+    println!("  TP06 p0 value: {}", if tp06_p0 { "1" } else { "0" });
+    
+    if computed_p0 == tp06_p0 {
+        println!("  ✓ p0 matches!");
+    } else {
+        println!("  ✗ p0 MISMATCH!");
+    }
+}
