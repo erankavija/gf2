@@ -140,34 +140,34 @@ pub fn rref(matrix: &BitMatrix, pivot_from_right: bool) -> RrefResult {
         // Create mapping: (row_index, pivot_col) and sort by pivot_col
         let mut col_to_row: Vec<(usize, usize)> = pivot_cols.iter().copied().enumerate().collect();
         col_to_row.sort_unstable_by_key(|(_, col)| *col);
-        
+
         // Check if reordering is actually needed
         let needs_reorder = col_to_row.iter().enumerate().any(|(i, &(row, _))| i != row);
-        
+
         if needs_reorder {
             let new_row_order: Vec<usize> = col_to_row.iter().map(|(row, _)| *row).collect();
             let sorted_pivot_cols: Vec<usize> = col_to_row.iter().map(|(_, col)| *col).collect();
-            
+
             // Build new matrix with reordered rows using word-level operations
             let mut new_work = BitMatrix::zeros(m, n);
-            
+
             // Copy reordered pivot rows word-by-word for performance
             for (new_row, &old_row) in new_row_order.iter().enumerate() {
                 let old_words = work.row_words(old_row);
                 let new_words = new_work.row_words_mut(new_row);
                 new_words.copy_from_slice(old_words);
             }
-            
+
             // Zero rows are already zero in new_work (no need to copy)
-            
+
             work = new_work;
-            
+
             // Update row_perm to reflect reordering
             let old_row_perm = row_perm.clone();
             for (new_row, &old_row) in new_row_order.iter().enumerate() {
                 row_perm[new_row] = old_row_perm[old_row];
             }
-            
+
             pivot_cols = sorted_pivot_cols;
         } else {
             // No reordering needed, just sort pivot_cols

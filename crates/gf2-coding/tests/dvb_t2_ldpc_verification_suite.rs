@@ -30,7 +30,7 @@ use test_vectors::{test_vectors_available, test_vectors_path, TestVectorSet};
 /// Helper: Load cache from standard location if available
 fn try_load_cache() -> Option<EncodingCache> {
     let cache_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("data/ldpc/dvb_t2");
-    
+
     if cache_dir.exists() {
         EncodingCache::from_directory(&cache_dir).ok()
     } else {
@@ -130,7 +130,7 @@ fn test_ldpc_encoding_tp05_to_tp06() {
         failures,
         elapsed.as_secs_f64()
     );
-    
+
     if successes > 0 {
         let throughput = (successes * 38880) as f64 / elapsed.as_secs_f64() / 1_000_000.0;
         println!("  Throughput: {:.2} Mbps", throughput);
@@ -206,13 +206,15 @@ fn test_ldpc_decoding_tp06_to_tp05_error_free() {
 
     let elapsed = start.elapsed();
     let avg_iterations = total_iterations as f64 / tp06.frame(0).len() as f64;
-    
+
     println!(
         "LDPC Decoding (Frame 1, error-free): {} successes, {} failures in {:.2}s",
-        successes, failures, elapsed.as_secs_f64()
+        successes,
+        failures,
+        elapsed.as_secs_f64()
     );
     println!("  Average iterations: {:.1}", avg_iterations);
-    
+
     if successes > 0 {
         let throughput = (successes * 38880) as f64 / elapsed.as_secs_f64() / 1_000_000.0;
         println!("  Throughput: {:.2} Mbps", throughput);
@@ -305,7 +307,7 @@ fn test_ldpc_error_correction() {
 
         let total = num_test_blocks * trials_per_block;
         let avg_iterations = total_iterations as f64 / total as f64;
-        
+
         println!(
             "  Error rate {:.3} ({} errors/block): {}/{} corrected ({:.1}%), {} failed, avg iter: {:.1}",
             error_rate,
@@ -502,7 +504,11 @@ fn test_ldpc_parity_check() {
             let syndrome = code.syndrome(&codeword.data);
             let weight = syndrome.count_ones();
             failures.push((block_idx + 1, weight));
-            println!("  Block {}: FAILED (syndrome weight = {})", block_idx + 1, weight);
+            println!(
+                "  Block {}: FAILED (syndrome weight = {})",
+                block_idx + 1,
+                weight
+            );
         } else {
             println!("  Block {}: PASS", block_idx + 1);
         }
@@ -512,7 +518,7 @@ fn test_ldpc_parity_check() {
         println!("\nFailed blocks: {:?}", failures);
         panic!("Parity check failed for {} blocks", failures.len());
     }
-    
+
     println!("✓ Parity check validated for {} blocks", num_test_blocks);
 }
 
@@ -570,9 +576,10 @@ fn test_ldpc_roundtrip() {
         }
     }
 
-    println!(
-        "Roundtrip: {} successes, {} failures",
-        successes, failures
+    println!("Roundtrip: {} successes, {} failures", successes, failures);
+    assert_eq!(
+        failures, 0,
+        "Roundtrip validation failed on {} blocks",
+        failures
     );
-    assert_eq!(failures, 0, "Roundtrip validation failed on {} blocks", failures);
 }
