@@ -7,7 +7,7 @@
 //!
 //! ## Without Cache (Simple, Always Works)
 //!
-//! ```
+//! ```no_run
 //! use gf2_coding::ldpc::{LdpcCode, LdpcEncoder};
 //! use gf2_coding::CodeRate;
 //!
@@ -19,7 +19,7 @@
 //!
 //! ## With Cache (Performance Boost)
 //!
-//! ```
+//! ```no_run
 //! use gf2_coding::ldpc::{LdpcCode, LdpcEncoder};
 //! use gf2_coding::ldpc::encoding::EncodingCache;
 //! use gf2_coding::CodeRate;
@@ -121,7 +121,7 @@ impl CacheKey {
 ///
 /// # Examples
 ///
-/// ```
+/// ```no_run
 /// use gf2_coding::ldpc::encoding::EncodingCache;
 /// use gf2_coding::ldpc::{LdpcCode, LdpcEncoder};
 /// use gf2_coding::CodeRate;

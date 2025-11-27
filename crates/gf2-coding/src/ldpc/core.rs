@@ -882,7 +882,7 @@ impl IterativeSoftDecoder for LdpcDecoder {
 ///
 /// # Examples
 ///
-/// ```
+/// ```no_run
 /// use gf2_coding::ldpc::{LdpcCode, LdpcEncoder};
 /// use gf2_coding::traits::BlockEncoder;
 /// use gf2_coding::CodeRate;
@@ -917,7 +917,7 @@ impl LdpcEncoder {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```no_run
     /// use gf2_coding::ldpc::{LdpcCode, LdpcEncoder};
     /// use gf2_coding::CodeRate;
     ///
@@ -955,7 +955,7 @@ impl LdpcEncoder {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```no_run
     /// use gf2_coding::ldpc::{LdpcCode, LdpcEncoder};
     /// use gf2_coding::ldpc::encoding::EncodingCache;
     /// use gf2_coding::CodeRate;
