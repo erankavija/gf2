@@ -9,10 +9,28 @@
 //! 3. Implement minimal code to make tests pass
 //! 4. Refactor while keeping tests green
 
-use gf2_coding::ldpc::LdpcCode;
+use gf2_coding::ldpc::encoding::EncodingCache;
+use gf2_coding::ldpc::{LdpcCode, LdpcEncoder};
 use gf2_coding::traits::BlockEncoder;
 use gf2_coding::CodeRate;
 use gf2_core::BitVec;
+use std::path::PathBuf;
+
+fn try_load_cache() -> Option<EncodingCache> {
+    let cache_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("data/ldpc/dvb_t2");
+    if cache_dir.exists() {
+        EncodingCache::from_directory(&cache_dir).ok()
+    } else {
+        None
+    }
+}
+
+fn create_encoder(code: LdpcCode, cache: Option<&EncodingCache>) -> LdpcEncoder {
+    match cache {
+        Some(c) => LdpcEncoder::with_cache(code, c),
+        None => LdpcEncoder::new(code)
+    }
+}
 
 #[cfg(test)]
 mod systematic_encoding_basic_tests {
@@ -23,7 +41,7 @@ mod systematic_encoding_basic_tests {
     #[ignore = "Slow: DVB-T2 preprocessing (~2 seconds)"]
     fn test_ldpc_encoder_construction() {
         let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
-        let encoder = gf2_coding::ldpc::LdpcEncoder::new(code);
+        let encoder = create_encoder(code, try_load_cache().as_ref());
 
         assert_eq!(encoder.k(), 7200);
         assert_eq!(encoder.n(), 16200);
@@ -34,7 +52,7 @@ mod systematic_encoding_basic_tests {
     #[ignore = "Slow: DVB-T2 preprocessing (~2 seconds)"]
     fn test_systematic_form() {
         let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
-        let encoder = gf2_coding::ldpc::LdpcEncoder::new(code.clone());
+        let encoder = create_encoder(code.clone(), try_load_cache().as_ref());
 
         // Create a simple message
         let mut message = BitVec::zeros(encoder.k());
@@ -63,7 +81,7 @@ mod systematic_encoding_basic_tests {
     #[ignore = "Slow: DVB-T2 preprocessing (~2 seconds)"]
     fn test_encoded_codeword_is_valid() {
         let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
-        let encoder = gf2_coding::ldpc::LdpcEncoder::new(code.clone());
+        let encoder = create_encoder(code.clone(), try_load_cache().as_ref());
 
         // Encode zero message
         let message = BitVec::zeros(encoder.k());
@@ -81,7 +99,7 @@ mod systematic_encoding_basic_tests {
     #[ignore = "Slow: DVB-T2 preprocessing (~2 seconds)"]
     fn test_encode_multiple_messages() {
         let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
-        let encoder = gf2_coding::ldpc::LdpcEncoder::new(code.clone());
+        let encoder = create_encoder(code.clone(), try_load_cache().as_ref());
 
         let test_messages = vec![
             BitVec::zeros(encoder.k()),
@@ -122,7 +140,7 @@ mod systematic_encoding_linearity_tests {
     #[ignore = "Slow: DVB-T2 preprocessing (~2 seconds)"]
     fn test_encoding_linearity() {
         let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
-        let encoder = gf2_coding::ldpc::LdpcEncoder::new(code);
+        let encoder = create_encoder(code, try_load_cache().as_ref());
 
         // Two messages
         let mut m1 = BitVec::zeros(encoder.k());
@@ -165,7 +183,7 @@ mod systematic_encoding_linearity_tests {
     #[ignore = "Slow: DVB-T2 preprocessing (~2 seconds)"]
     fn test_zero_message_encodes_to_zero() {
         let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
-        let encoder = gf2_coding::ldpc::LdpcEncoder::new(code);
+        let encoder = create_encoder(code, try_load_cache().as_ref());
 
         let zero_message = BitVec::zeros(encoder.k());
         let codeword = encoder.encode(&zero_message);
@@ -197,7 +215,7 @@ mod dvb_t2_encoding_tests {
 
         for rate in rates {
             let code = LdpcCode::dvb_t2_normal(rate);
-            let encoder = gf2_coding::ldpc::LdpcEncoder::new(code.clone());
+            let encoder = create_encoder(code.clone(), try_load_cache().as_ref());
 
             // Encode a simple message
             let message = BitVec::zeros(encoder.k());
@@ -224,7 +242,7 @@ mod dvb_t2_encoding_tests {
 
         for rate in rates {
             let code = LdpcCode::dvb_t2_short(rate);
-            let encoder = gf2_coding::ldpc::LdpcEncoder::new(code.clone());
+            let encoder = create_encoder(code.clone(), try_load_cache().as_ref());
 
             // Encode a simple message
             let message = BitVec::zeros(encoder.k());
@@ -246,7 +264,7 @@ mod parity_computation_tests {
     #[ignore = "Slow: DVB-T2 preprocessing (~2 seconds)"]
     fn test_parity_bits_computed() {
         let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
-        let encoder = gf2_coding::ldpc::LdpcEncoder::new(code);
+        let encoder = create_encoder(code, try_load_cache().as_ref());
 
         // Non-zero message
         let mut message = BitVec::zeros(encoder.k());
@@ -276,7 +294,7 @@ mod parity_computation_tests {
     #[ignore = "Slow: DVB-T2 preprocessing (~2 seconds)"]
     fn test_dvb_t2_parity_structure() {
         let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
-        let encoder = gf2_coding::ldpc::LdpcEncoder::new(code.clone());
+        let encoder = create_encoder(code.clone(), try_load_cache().as_ref());
 
         // Encode a message
         let mut message = BitVec::zeros(encoder.k());
@@ -302,7 +320,7 @@ mod edge_case_tests {
     #[ignore = "Slow: DVB-T2 preprocessing (~2 seconds)"]
     fn test_encode_exact_length() {
         let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
-        let encoder = gf2_coding::ldpc::LdpcEncoder::new(code);
+        let encoder = create_encoder(code, try_load_cache().as_ref());
 
         let message = BitVec::zeros(encoder.k());
         let codeword = encoder.encode(&message);
@@ -315,7 +333,7 @@ mod edge_case_tests {
     #[ignore = "Slow: DVB-T2 preprocessing (~2 seconds)"]
     fn test_all_message_bits_preserved() {
         let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
-        let encoder = gf2_coding::ldpc::LdpcEncoder::new(code);
+        let encoder = create_encoder(code, try_load_cache().as_ref());
 
         // Pattern with bits set throughout message
         let mut message = BitVec::zeros(encoder.k());

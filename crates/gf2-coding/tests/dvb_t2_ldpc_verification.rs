@@ -23,9 +23,30 @@
 
 mod test_vectors;
 
+use gf2_coding::ldpc::encoding::EncodingCache;
 use gf2_coding::ldpc::{LdpcCode, LdpcEncoder};
 use gf2_coding::traits::BlockEncoder;
 use gf2_coding::CodeRate;
+use std::path::PathBuf;
+
+fn try_load_cache() -> Option<EncodingCache> {
+    let cache_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("data/ldpc/dvb_t2");
+    if cache_dir.exists() {
+        EncodingCache::from_directory(&cache_dir).ok()
+    } else {
+        None
+    }
+}
+
+fn create_encoder(code: LdpcCode, cache: Option<&EncodingCache>) -> LdpcEncoder {
+    match cache {
+        Some(c) => LdpcEncoder::with_cache(code, c),
+        None => {
+            eprintln!("Creating encoder without cache (this may take time)...");
+            LdpcEncoder::new(code)
+        }
+    }
+}
 
 #[test]
 #[ignore]
@@ -42,8 +63,9 @@ fn test_ldpc_encoding_tp05_to_tp06() {
     let tp06 = vectors.tp06.as_ref().expect("TP06 not found");
 
     // DVB-T2 Normal, Rate 3/5
+    let cache = try_load_cache();
     let code = LdpcCode::dvb_t2_normal(CodeRate::Rate3_5);
-    let encoder = LdpcEncoder::new(code);
+    let encoder = create_encoder(code, cache.as_ref());
 
     let mut successes = 0;
     let mut failures = 0;
