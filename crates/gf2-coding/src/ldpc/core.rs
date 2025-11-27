@@ -846,10 +846,17 @@ impl IterativeSoftDecoder for LdpcDecoder {
         }
 
         self.last_iterations = iterations;
-        let decoded = self.hard_decode();
-        let syndrome_passed = self.code.is_valid_codeword(&decoded);
+        let decoded_codeword = self.hard_decode();
+        let syndrome_passed = self.code.is_valid_codeword(&decoded_codeword);
 
-        DecoderResult::new(decoded, iterations, converged, syndrome_passed)
+        // Extract message bits from systematic codeword [message | parity]
+        let k = self.code.k();
+        let mut message = BitVec::with_capacity(k);
+        for i in 0..k {
+            message.push_bit(decoded_codeword.get(i));
+        }
+
+        DecoderResult::new(message, iterations, converged, syndrome_passed)
     }
 
     fn last_iteration_count(&self) -> usize {
