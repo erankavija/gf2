@@ -28,7 +28,7 @@ fn try_load_cache() -> Option<EncodingCache> {
 fn create_encoder(code: LdpcCode, cache: Option<&EncodingCache>) -> LdpcEncoder {
     match cache {
         Some(c) => LdpcEncoder::with_cache(code, c),
-        None => LdpcEncoder::new(code)
+        None => LdpcEncoder::new(code),
     }
 }
 

@@ -107,7 +107,11 @@ fn same_row_space(a: &BitMatrix, b: &BitMatrix) -> bool {
 /// Compute H × G^T where H is m×n and G is k×n (so G^T is n×k).
 /// Returns an m×k matrix.
 fn matmul_with_transpose(h: &BitMatrix, g: &BitMatrix) -> BitMatrix {
-    assert_eq!(h.cols(), g.cols(), "Matrices must have same number of columns");
+    assert_eq!(
+        h.cols(),
+        g.cols(),
+        "Matrices must have same number of columns"
+    );
 
     let m = h.rows();
     let k = g.rows();

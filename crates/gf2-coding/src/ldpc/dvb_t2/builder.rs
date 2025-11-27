@@ -92,7 +92,7 @@ pub fn build_dvb_edges(table: &[&[usize]], params: &DvbParams) -> Vec<(usize, us
     }
 
     // 2. Dual-diagonal parity structure (DVB-T2 standard)
-    // 
+    //
     // DVB-T2 dual-diagonal B matrix (parity-on-parity):
     //   - Row 0: SINGLE 1 at column k+0 (diagonal only, NO sub-diagonal)
     //   - Row p (p>0): TWO 1s at columns k+p (diagonal) and k+(p-1) (sub-diagonal)
@@ -250,7 +250,7 @@ mod tests {
         assert!(edges.contains(&(0, 6))); // Sub-diagonal p=1
         assert!(edges.contains(&(2, 7))); // Diagonal p=2
         assert!(edges.contains(&(1, 7))); // Sub-diagonal p=2
-        
+
         // Verify p=0 has NO wrap
         assert!(!edges.contains(&(2, 5))); // Should NOT have sub-diagonal at p=0
     }
