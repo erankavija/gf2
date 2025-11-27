@@ -6,6 +6,7 @@
 
 - Dense, tail-masked `BitVec` backed by `Vec<u64>`
 - Bit-packed `BitMatrix` with M4RM multiplication and Gauss-Jordan inversion
+- RREF (Reduced Row Echelon Form) with configurable pivoting strategies
 - Polar transform operations for polar code encoding/decoding
 - Sparse matrices in CSR/CSC formats for low-density matrices
 - Extension field GF(2^m) arithmetic with table-based and SIMD multiplication
@@ -43,9 +44,12 @@ Operations automatically use the fastest backend available. Small operations (<5
 
 ## Performance
 
-Benchmarked against SageMath and specialized C/C++ libraries (NTL, M4RI, FLINT). Competitive to superior performance across most operations, with continuous optimization efforts.
+Benchmarked against SageMath and specialized C/C++ libraries (NTL, M4RI, FLINT). Competitive to superior performance across most operations:
 
-**Recent work**: M4RM matrix multiplication optimization (gray code ordering + flat buffer reuse) and comprehensive performance gap analysis.
+- **GF(2^m) multiplication**: 13-18× faster than NTL
+- **M4RM matrix multiply**: Within 4× of M4RI (hand-optimized C)
+- **RREF**: Within 8-10× of M4RI for large matrices (150-170× faster than naive)
+- **SIMD operations**: 3.4-3.6× speedup for large buffers (AVX2)
 
 See **[`docs/BENCHMARKS.md`](docs/BENCHMARKS.md)** for comprehensive performance analysis, comparisons, and optimization details.
 
