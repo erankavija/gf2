@@ -92,17 +92,25 @@ pub fn build_dvb_edges(table: &[&[usize]], params: &DvbParams) -> Vec<(usize, us
     }
 
     // 2. Dual-diagonal parity structure (DVB-T2 standard)
-    // For parity bit p_i:
-    //   - H[i, k+i] = 1 (diagonal)
-    //   - H[i-1, k+i] = 1 (sub-diagonal, only for i > 0)
+    // 
+    // DVB-T2 dual-diagonal B matrix (parity-on-parity):
+    //   - Row 0: SINGLE 1 at column k+0 (diagonal only, NO sub-diagonal)
+    //   - Row p (p>0): TWO 1s at columns k+p (diagonal) and k+(p-1) (sub-diagonal)
+    //
+    // In edge representation (check, variable):
+    //   - All rows p: diagonal edge (p, k+p)
+    //   - Rows p>0: sub-diagonal edge (p, k+p-1)
+    //
+    // This creates a staircase pattern where row p connects to columns k+p and k+p-1,
+    // allowing iterative solution: p[0] = s[0], p[i] = s[i] ⊕ p[i-1] for i>0
     for p in 0..m {
         // Diagonal: check p connected to variable k+p
         edges.push((p, k + p));
 
-        // Sub-diagonal: check (p-1) connected to variable k+p
-        // Note: NO wrap for p=0 (row 0 has only one 1)
+        // Sub-diagonal: check p connected to variable k+p-1 (ONLY for p > 0)
+        // Row 0 has NO sub-diagonal connection (single 1 only)
         if p > 0 {
-            edges.push((p - 1, k + p));
+            edges.push((p, k + p - 1));
         }
     }
 
