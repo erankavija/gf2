@@ -1,5 +1,29 @@
 # DVB-T2 Verification Status
 
+## Current Status Summary
+
+| Component | Status | Test Vectors | Details |
+|-----------|--------|--------------|---------|
+| **BCH Outer Code** | ✅ **VERIFIED** | 202/202 blocks match | Phase 2 complete |
+| **LDPC Encoding** | ✅ **VERIFIED** | 202/202 blocks match | Phase 3.6 complete |
+| **LDPC Decoding** | ✅ **VERIFIED** | 202/202 blocks match | Phase 3.6 complete |
+| **Test Infrastructure** | ✅ **COMPLETE** | Parser + cache | Phase 1 complete |
+| **Full FEC Chain** | ⏳ **READY** | - | BCH + LDPC both verified |
+
+**Last Updated**: 2025-11-27 19:12 UTC
+
+**Key Achievements**:
+- ✅ BCH: 100% match with ETSI EN 302 755 test vectors (202/202 blocks)
+- ✅ LDPC Encoding: 100% match with test vectors (202/202 blocks, 12.4s, 0.63 Mbps)
+- ✅ LDPC Decoding: 100% match with test vectors (202/202 blocks, 5.8s, 1.35 Mbps)
+- ✅ LDPC Math: H × G^T = 0 verified, systematic property confirmed
+- ✅ RREF bug discovered and fixed in gf2-core
+- ✅ Decoder bug fixed: Now correctly extracts message bits from systematic codewords
+
+**Next Step**: Performance optimization to achieve real-time DVB-T2 throughput (31-50 Mbps)
+
+---
+
 ## Overview
 
 Implementation progress for DVB-T2 BCH and LDPC verification using official DVB Project test vectors.
@@ -178,7 +202,7 @@ With the parser infrastructure complete, we can now proceed to:
 
 **Completion Date**: 2025-11-24  
 **Effort**: 1 day (test infrastructure + bug fix)
-**Status**: All verification tests passing (100%)
+**Status**: ✅ **100% validation passing** - All 202 blocks match ETSI EN 302 755 test vectors
 
 ### Implementation Summary
 
@@ -246,9 +270,9 @@ Created comprehensive BCH verification test suite in `tests/dvb_t2_bch_verificat
 - ✅ All warnings addressed
 - ✅ DVB-T2 standard compliance verified
 
-## Phase C10.6: LDPC Encoding Implementation 🔧 **IN PROGRESS**
+## Phase 3: LDPC Encoding Implementation 🔧 **IN PROGRESS**
 
-### Phase C10.6.1: Richardson-Urbanke Core Algorithm ✅ **COMPLETE**
+### Phase 3.1: Richardson-Urbanke Core Algorithm ✅ **COMPLETE**
 **Completion Date**: 2025-11-25  
 **Effort**: 2 hours  
 **Status**: Core algorithm working on small codes
@@ -263,7 +287,7 @@ Created comprehensive BCH verification test suite in `tests/dvb_t2_bch_verificat
 
 **Key Achievement**: Correct generator matrix computation via row reordering after Gaussian elimination.
 
-### Phase C10.6.2: Dense Matrix Optimization ✅ **COMPLETE**
+### Phase 3.2: Dense Matrix Optimization ✅ **COMPLETE**
 **Completion Date**: 2025-11-26  
 **Effort**: 4 hours total (initial sparse + dense migration)  
 **Status**: Dense parity matrices with 28× file size reduction
@@ -295,7 +319,112 @@ Created comprehensive BCH verification test suite in `tests/dvb_t2_bch_verificat
 
 **Key Achievement**: Dense matrix storage is optimal for DVB-T2's high-density parity matrices (40-50%), giving 28× smaller files vs sparse format while maintaining fast encoding via word-level operations.
 
-### Phase C10.6.3: File I/O Integration ✅ **COMPLETE**
+### Phase 3.5: LDPC Test Suite & Bug Fix ✅ **COMPLETE**
+
+**Completion Date**: 2025-11-27  
+**Effort**: 2 days (test infrastructure + bug discovery & fix)
+**Status**: ✅ Mathematical correctness verified, full test vector validation ready
+
+**Deliverables**:
+- ✅ Comprehensive test suite: 8 tests in `dvb_t2_ldpc_verification_suite.rs`
+  - `test_ldpc_encoding_tp05_to_tp06` - Encoding validation
+  - `test_ldpc_decoding_tp06_to_tp05_error_free` - Error-free decoding
+  - `test_ldpc_error_correction` - Error correction capability
+  - `test_ldpc_systematic_property` - Systematic form validation
+  - `test_ldpc_encoding_sample` - Multi-frame consistency
+  - `test_ldpc_parameter_validation` - DVB-T2 parameter compliance
+  - `test_ldpc_parity_check` - Parity check property (H·c = 0)
+  - `test_ldpc_roundtrip` - Full encode/decode roundtrip
+
+- ✅ Test infrastructure improvements
+  - Cache support with automatic fallback
+  - BitVec to LLR conversion helpers
+  - Multi-frame validation utilities
+  - Throughput measurement and reporting
+
+- ✅ **Bug Discovery & Fix** (Critical)
+  - **Issue Found**: Initial tests showed 80% encoding accuracy, parity check failures
+  - **Root Cause**: RREF right-pivoting bug in gf2-core (incorrect pivot column identification)
+  - **Fix**: Corrected row reordering in RREF algorithm (gf2-core commit 7963634)
+  - **Verification**: 22 property tests added validating H × G^T = 0
+  - **Result**: All 446 tests passing (40 LDPC + 406 gf2-core)
+
+- ✅ Diagnostic test suite
+  - `verify_cached_generator.rs` - Property test H × G^T = 0 for all basis vectors
+  - Tests validate mathematical correctness of Richardson-Urbanke encoding
+  - Confirms generator matrices are consistent with parity-check matrices
+
+**Test Coverage**:
+- 8 comprehensive validation tests (all ignored, ready to run with test vectors)
+- 3 diagnostic property tests (verify mathematical correctness)
+- 40 LDPC unit tests (all passing)
+- Documentation: `docs/LDPC_VERIFICATION_TESTS.md` (283 lines)
+- Issue tracking: `docs/LDPC_PARITY_CHECK_ISSUE.md` (173 lines)
+
+**Mathematical Verification**: ✅ **COMPLETE**
+- H × G^T = 0 verified for all standard basis vectors
+- Systematic property: G = [I_k | P] confirmed
+- Zero syndrome for all encoded messages verified
+- Linearity property validated
+
+**Next Step**: Phase 3.6
+
+### Phase 3.6: Test Vector Validation Results 🔧 **IN PROGRESS**
+
+**Completion Date**: 2025-11-27 (started)
+**Status**: Encoding verified, decoding requires fix
+**Effort**: <1 day (debugging decoder)
+
+**Prerequisites**:
+- ✅ Test vectors at `$DVB_TEST_VECTORS_PATH` (VV001-CR35)
+- ✅ Pre-computed LDPC cache at `data/ldpc/dvb_t2/` (optional but recommended)
+- ✅ Test suite implemented and debugged
+- ✅ Mathematical correctness verified
+
+**Test Results** (2025-11-27):
+
+✅ **Encoding Validation**: **PASSED**
+- Test: `test_ldpc_encoding_tp05_to_tp06`
+- Result: **202/202 blocks match** ETSI EN 302 755 test vectors
+- Time: 12.43 seconds (release build)
+- Throughput: 0.63 Mbps
+- **Status**: Same perfect match as BCH achieved! 🎉
+
+✅ **Systematic Property**: **PASSED**
+- Test: `test_ldpc_systematic_property`
+- Result: First k=38,880 bits match message exactly
+- Time: 1.03 seconds
+- **Status**: Verified ✓
+
+✅ **Parity Check Property**: **PASSED**
+- Test: `test_ldpc_parity_check`
+- Result: H·c = 0 for all 10 test blocks
+- Time: 1.04 seconds
+- **Status**: Mathematical correctness confirmed ✓
+
+✅ **Decoding Validation**: **PASSED** (after fix)
+- Test: `test_ldpc_decoding_tp06_to_tp05_error_free`
+- Result: **202/202 blocks match** ETSI EN 302 755 test vectors
+- Time: 5.84 seconds (release build)
+- Throughput: 1.35 Mbps
+- Convergence: All blocks converge in 1 iteration (expected for error-free)
+- **Status**: Perfect match! 🎉
+
+✅ **Roundtrip Validation**: **PASSED**
+- Test: `test_ldpc_roundtrip`
+- Result: 10/10 blocks pass encode → decode → message verification
+- Time: 2.14 seconds
+- **Status**: Full roundtrip works correctly ✓
+
+**Bug Found & Fixed** (2025-11-27):
+- **Issue**: Decoder returned full n-bit codeword instead of k-bit message
+- **Root Cause**: `decode_iterative()` didn't extract message from systematic codeword
+- **Fix**: Added message extraction logic (bits [0..k) from decoded codeword)
+- **Code**: `src/ldpc/core.rs` lines 848-858
+- **Convention**: Follows systematic `[message | parity]` format documented in `SYSTEMATIC_ENCODING_CONVENTION.md`
+- **Fix Time**: 30 minutes (diagnosis + implementation + validation)
+
+### Phase 3.3: File I/O Integration ✅ **COMPLETE**
 **Completion Time**: 4 hours (TDD)
 **Status**: File-based caching implemented and tested
 
@@ -335,7 +464,7 @@ Created comprehensive BCH verification test suite in `tests/dvb_t2_bch_verificat
 
 **Key Achievement**: Eliminated preprocessing bottleneck entirely by caching generator matrices to disk.
 
-### Phase C10.6.4: Cache Generation & Validation ✅ **COMPLETE**
+### Phase 3.4: Cache Generation & Validation ✅ **COMPLETE**
 **Completion Date**: 2025-11-26  
 **Status**: 6 Short frame caches generated, storage optimization completed
 
