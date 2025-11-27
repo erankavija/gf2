@@ -21,3 +21,4 @@ proptest-regressions/
 # Documentation build
 /doc/
 *.proptest-regressions
+*.gf2

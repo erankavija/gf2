@@ -56,7 +56,7 @@ fn validate_table(table: &[&[usize]], params: &DvbParams) {
 /// 2. Dual-diagonal parity structure:
 ///    For each parity bit p in [0, m):
 ///    - Add edge (p, k + p)              // Diagonal
-///    - Add edge ((p-1) mod m, k + p)    // Sub-diagonal (wraps at p=0)
+///    - Add edge (p-1, k + p) if p > 0   // Sub-diagonal (NO wrap at p=0)
 ///
 /// # Arguments
 ///
@@ -91,14 +91,19 @@ pub fn build_dvb_edges(table: &[&[usize]], params: &DvbParams) -> Vec<(usize, us
         }
     }
 
-    // 2. Dual-diagonal parity structure
+    // 2. Dual-diagonal parity structure (DVB-T2 standard)
+    // For parity bit p_i:
+    //   - H[i, k+i] = 1 (diagonal)
+    //   - H[i-1, k+i] = 1 (sub-diagonal, only for i > 0)
     for p in 0..m {
         // Diagonal: check p connected to variable k+p
         edges.push((p, k + p));
 
-        // Sub-diagonal: check (p-1) mod m connected to variable k+p
-        let prev_check = if p == 0 { m - 1 } else { p - 1 };
-        edges.push((prev_check, k + p));
+        // Sub-diagonal: check (p-1) connected to variable k+p
+        // Note: NO wrap for p=0 (row 0 has only one 1)
+        if p > 0 {
+            edges.push((p - 1, k + p));
+        }
     }
 
     edges
@@ -168,12 +173,12 @@ mod tests {
         // Block 1, base 1: (1+0*1)%3=1 -> (1,3), (1+1*1)%3=2 -> (2,4), (1+2*1)%3=0 -> (0,5)
         //
         // Dual-diagonal (k=6, m=3):
-        // p=0: (0,6), (2,6)  [prev = (0-1)%3 = 2]
-        // p=1: (1,7), (0,7)
-        // p=2: (2,8), (1,8)
+        // p=0: (0,6)         [no sub-diagonal]
+        // p=1: (1,7), (0,7)  [diagonal + sub-diagonal]
+        // p=2: (2,8), (1,8)  [diagonal + sub-diagonal]
 
-        // Total: 9 info edges + 6 parity edges = 15 edges
-        assert_eq!(edges.len(), 15);
+        // Total: 9 info edges + 5 parity edges = 14 edges (one less due to no wrap)
+        assert_eq!(edges.len(), 14);
 
         // Check some specific info edges
         assert!(edges.contains(&(0, 0)));
@@ -182,8 +187,9 @@ mod tests {
         assert!(edges.contains(&(1, 3)));
 
         // Check parity edges
-        assert!(edges.contains(&(0, 6))); // Diagonal
-        assert!(edges.contains(&(2, 6))); // Sub-diagonal wrap
+        assert!(edges.contains(&(0, 6))); // Diagonal (p=0, no sub-diagonal)
+        assert!(edges.contains(&(1, 7))); // Diagonal (p=1)
+        assert!(edges.contains(&(0, 7))); // Sub-diagonal (p=1)
     }
 
     #[test]
@@ -204,12 +210,12 @@ mod tests {
 
         // Expected edge count:
         // Info edges: sum of (row_length * Z) for all rows
-        // Parity edges: 2 * m
+        // Parity edges: m diagonal + (m-1) sub-diagonal = 2m-1 (no wrap at p=0)
         let info_edge_count: usize = NORMAL_RATE_1_2_TABLE
             .iter()
             .map(|row| row.len() * params.expansion_factor)
             .sum();
-        let parity_edge_count = 2 * params.m;
+        let parity_edge_count = 2 * params.m - 1;
         let expected_total = info_edge_count + parity_edge_count;
 
         assert_eq!(edges.len(), expected_total);
@@ -231,11 +237,13 @@ mod tests {
         let edges = build_dvb_edges(table, &params);
 
         // Check parity edges
-        assert!(edges.contains(&(0, 5))); // Diagonal p=0
-        assert!(edges.contains(&(2, 5))); // Sub-diagonal p=0, prev=(0-1)%3=2
+        assert!(edges.contains(&(0, 5))); // Diagonal p=0 (no sub-diagonal)
         assert!(edges.contains(&(1, 6))); // Diagonal p=1
         assert!(edges.contains(&(0, 6))); // Sub-diagonal p=1
         assert!(edges.contains(&(2, 7))); // Diagonal p=2
         assert!(edges.contains(&(1, 7))); // Sub-diagonal p=2
+        
+        // Verify p=0 has NO wrap
+        assert!(!edges.contains(&(2, 5))); // Should NOT have sub-diagonal at p=0
     }
 }
