@@ -11,53 +11,59 @@ A **research-grade** toolkit for high-performance binary field computing and cod
 
 **Philosophy**: Standards (DVB-T2, 5G NR) provide the foundation, but the ultimate goal is to **push beyond existing implementations** with novel algorithms, competitive performance, and open research.
 
-## Status Summary
+## Status Summary (2025-11-27)
 
-**gf2-core**: Core primitives mature and feature-complete
+**gf2-core**: Production-grade primitives with SIMD acceleration
 - ✅ GF(2^m) extension field arithmetic with Karatsuba multiplication
-- ✅ SIMD field operations (AVX2, PCLMULQDQ)
-- ✅ Primitive polynomial verification and generation
-- ✅ Sparse matrix primitives (CSR/CSC)
-- ✅ Rank/select operations (lazy indexing)
+- ✅ SIMD field operations (AVX2, PCLMULQDQ, ~178 SIMD instructions active)
+- ✅ Primitive polynomial verification and generation (m=2..16)
+- ✅ Dense and sparse matrix primitives (bit-packed + CSR/CSC dual format)
+- ✅ Rank/select operations with lazy indexing
 - ✅ Polar transforms (Fast Hadamard Transform)
-- ✅ Primitive polynomial database (m=2..16, DVB-T2 compliant)
+- ✅ File I/O for matrix serialization (529 MB DVB-T2 cache)
 
-**gf2-coding**: DVB-T2 FEC implementation progressing
-- ✅ BCH codes with algebraic decoding (60+ tests passing)
-- ✅ DVB-T2 BCH outer codes (⚠️ verification pending)
-- ✅ Quasi-cyclic LDPC framework
-- ✅ DVB-T2 LDPC Rate 1/2 Normal frame (⚠️ 11 tables pending, verification needed)
-- 🔮 QAM modulation and FEC chain (planned)
+**gf2-coding**: DVB-T2 validation complete, optimization phase active
+- ✅ BCH codes: 202/202 blocks match ETSI EN 302 755 test vectors
+- ✅ LDPC codes: 202/202 blocks match test vectors (encoding + decoding)
+- ✅ All 12 DVB-T2 LDPC configurations implemented
+- ✅ Richardson-Urbanke systematic encoding with dense matrix cache
+- ✅ Min-sum belief propagation decoder
+- 🔧 **Active**: Performance optimization (3.85 Mbps → 50-100 Mbps target)
+- 🔮 QAM modulation and full FEC chain (planned)
 
 ## Strategic Pillars
 
-### 1. Competitive Performance
-- **Target**: Match or exceed Magma/Sage on binary field operations
-- **gf2-core focus**: SIMD-accelerated kernels with rigorous benchmarking
-- Word-level operations minimizing branching
-- Comprehensive testing with property-based validation
-- Measurable goals: Within 2x of specialized systems, exceed on SIMD-favorable ops
+### 1. Research-Driven Development
+**Philosophy**: Standards provide validation, innovation drives value
+- Standards (DVB-T2, 5G NR) establish correctness baseline
+- Research focus: Novel algorithms, performance insights, open questions
+- Documentation emphasizes "why" and "what's unknown" over "how"
+- Experimental features behind feature flags for safe exploration
+- Publication-ready: All work reproducible with documented methodology
 
-### 2. Research & Innovation
-- **gf2-coding focus**: Beyond standards - novel decoding algorithms
-- Educational examples with mathematical documentation
-- Standards compliance (DVB-T2, 5G NR) as baseline validation
-- Experimental algorithms: GRAND, Neural BP, SC-LDPC
-- Open benchmarks for reproducible research
+### 2. Competitive Performance Through Understanding
+**Goal**: Match specialized systems by understanding bottlenecks
+- SIMD-first design with fallback scalar paths
+- Profile-guided optimization with documented hotspots
+- Measurable targets: Within 2× of Magma/Sage, exceed on SIMD ops
+- Research questions guide optimization priorities
+- Performance claims backed by rigorous profiling methodology
 
-### 3. Composability & Clean APIs
-- Functional style at high level, imperative in kernels
-- Minimal dependencies, safe by default
-- Clear separation between primitives and applications
-- Runtime feature detection for SIMD
-- Research code isolated via feature flags
+### 3. Composable, Functional APIs
+**Principle**: Clean abstractions that hide complexity
+- Functional programming at API level, imperative in kernels
+- Pure functions with immutability where practical
+- Type-driven design with strong compile-time guarantees
+- Performance critical paths clearly documented and profiled
+- Test-driven development with property-based validation
 
-### 4. Publication & Validation
-- Technical reports documenting novel work
-- Academic conference targets: ISIT, ICC, Globecom
-- Bit-exact validation against standards
-- Open-source benchmark suites
-- Performance claims backed by rigorous methodology
+### 4. Open Science & Academic Rigor
+**Commitment**: Reproducible research and open benchmarks
+- All performance claims with published profiling data
+- Bit-exact validation against official test vectors
+- Open-source benchmark suites for competitive analysis
+- Technical reports document novel insights
+- Target venues: ISIT, ICC, Globecom, IEEE Trans. IT
 
 ## Key Dependencies
 
@@ -71,34 +77,37 @@ A **research-grade** toolkit for high-performance binary field computing and cod
 
 ## Completed Milestones
 
-| Milestone | Description | Status |
-|-----------|-------------|--------|
-| **M1** | Scalar baseline: BitVec, BitMatrix, basic algorithms | ✅ Complete |
-| **M2** | SIMD acceleration: AVX2 kernels with runtime dispatch | ✅ Complete |
-| **M3** | Extension fields: GF(2^m) arithmetic and polynomials | ✅ Complete |
-| **M4** | Sparse matrices: CSR/CSC for low-density operations | ✅ Complete |
-| **M5** | Polynomial optimization: Karatsuba and SIMD | ✅ Complete |
-| **M6** | Block codes: Hamming and syndrome decoding | ✅ Complete |
-| **M7** | Convolutional codes: Viterbi decoder | ✅ Complete |
-| **M8** | BCH codes: Algebraic decoding for DVB-T2 | ✅ Complete |
-| **M9** | LDPC framework: Belief propagation and QC codes | ✅ Complete |
-| **M10** | Rank/select: Succinct bit operations | ✅ Complete |
-| **M11** | Polar transforms: Fast Hadamard Transform | ✅ Complete |
-| **M12** | Primitive polynomials: Verification & generation | ✅ Complete |
+| Milestone | Description | Completion |
+|-----------|-------------|------------|
+| **M1** | Scalar baseline: BitVec, BitMatrix, basic algorithms | 2024-Q4 |
+| **M2** | SIMD acceleration: AVX2 kernels with runtime dispatch | 2024-Q4 |
+| **M3** | Extension fields: GF(2^m) arithmetic and polynomials | 2024-Q4 |
+| **M4** | Sparse matrices: CSR/CSC for low-density operations | 2025-Q1 |
+| **M5** | Polynomial optimization: Karatsuba and SIMD | 2025-Q1 |
+| **M6** | Block codes: Hamming and syndrome decoding | 2024-Q4 |
+| **M7** | Convolutional codes: Viterbi decoder | 2025-Q1 |
+| **M8** | BCH codes: Algebraic decoding for DVB-T2 | 2025-Q4 |
+| **M9** | LDPC framework: Belief propagation and QC codes | 2025-Q4 |
+| **M10** | Rank/select: Succinct bit operations | 2025-Q1 |
+| **M11** | Polar transforms: Fast Hadamard Transform | 2025-Q1 |
+| **M12** | Primitive polynomials: Verification & generation | 2025-Q2 |
+| **M13** | DVB-T2 LDPC: All 12 configurations + validation | 2025-Q4 |
 
 ## In Progress
 
-| Milestone | Description | Status |
-|-----------|-------------|--------|
-| **M13** | DVB-T2 LDPC: Standard base matrices | ⚠️ Partial (Rate 1/2 Normal) |
+| Milestone | Description | Status | Timeline |
+|-----------|-------------|--------|----------|
+| **M14** | LDPC Performance: Real-time DVB-T2 decoding | 🔧 Active | 2025-11/12 |
 
 ## Planned
 
-| Milestone | Description | Status |
-|-----------|-------------|--------|
-| **M14** | QAM modulation: Soft-decision demapping | Planned |
-| **M15** | FEC simulation: End-to-end DVB-T2 chain | Planned |
-| **M16** | Performance benchmarking: Compete with Magma/Sage | Planned |
+| Milestone | Description | Priority | Research Focus |
+|-----------|-------------|----------|----------------|
+| **M15** | QAM modulation: Soft-decision demapping | Medium | Channel modeling |
+| **M16** | FEC simulation: End-to-end DVB-T2 chain | High | System integration |
+| **M17** | Performance benchmarking vs. specialized systems | High | Competitive analysis |
+| **M18** | GRAND decoding: Universal decoder for short codes | Research | Novel algorithms |
+| **M19** | Neural-aided BP: ML-enhanced LDPC decoding | Research | AI integration |
 
 ## Research Goals
 
@@ -123,81 +132,146 @@ A **research-grade** toolkit for high-performance binary field computing and cod
   - LDPC convergence speed benchmarks
   - Decoder complexity vs. performance tradeoffs
 
-## Future Directions
+## Research Directions
 
-| Area | Description | Priority |
-|------|-------------|----------|
-| **GRAND decoding** | Guessing Random Additive Noise Decoding for short codes | Medium |
-| **Neural BP** | Machine learning aided belief propagation for LDPC | Research |
-| **Spatially-coupled LDPC** | SC-LDPC with sliding window decoding | Medium |
-| **Raptor codes** | Fountain codes for erasure channels | Low |
-| **SIMD polar transforms** | AVX2 optimization for polar codes | Medium |
-| **5G polar codes** | Capacity-approaching codes with CRC-SCL | High |
-| **AVX-512** | Extended SIMD support (512-bit vectors) | Low |
-| **ARM NEON** | AArch64 SIMD kernels for embedded | Medium |
-| **GPU acceleration** | CUDA/ROCm for massive LDPC parallelism | Research |
+### Near-Term (2025-Q4 / 2026-Q1)
+| Topic | Focus | Justification |
+|-------|-------|---------------|
+| **LDPC Performance** | 50-100 Mbps real-time | Active bottleneck blocking DVB-T2 chain |
+| **QAM Integration** | Soft-decision demapping | Required for end-to-end FEC simulation |
+| **FER Curves** | AWGN channel validation | Establish baseline vs. Shannon limit |
 
-## Research Questions
+### Medium-Term (2026)
+| Topic | Focus | Justification |
+|-------|-------|---------------|
+| **GRAND Decoding** | Universal decoder for short codes | Alternative to algebraic methods; research novelty |
+| **5G Polar Codes** | CRC-aided SCL decoder | Modern capacity-approaching codes |
+| **Performance Benchmarking** | vs. Magma/Sage/AFF3CT | Competitive positioning and gap analysis |
+| **SDR Integration** | GNU Radio blocks | Practical validation with real signals |
 
-### Performance & Algorithms
-- Can Rust+SIMD match Magma/Sage for m > 32? What's the crossover point?
-- Optimal SIMD width for GF(2^m) operations: AVX2 (256-bit) vs AVX-512?
-- Parallelization strategies for primitive polynomial search (Phase 9.2)
-- Cache-efficient algorithms for large sparse matrices (N > 100K)
+### Exploratory (Research)
+| Topic | Focus | Research Question |
+|-------|-------|-------------------|
+| **Neural-Aided BP** | ML-enhanced LDPC | Can neural nets reduce iterations for fixed FER? |
+| **Spatially-Coupled LDPC** | SC-LDPC with sliding window | Threshold saturation gains over QC-LDPC? |
+| **GPU Acceleration** | CUDA/ROCm BP | Memory bandwidth vs. compute bottlenecks? |
+| **Quantized Arithmetic** | 3-5 bit LLRs | Performance/accuracy trade-off for embedded |
+| **Alternative Encodings** | Structured LDPC encoding | Avoid dense 529 MB generator matrix? |
 
-### Coding Theory
-- GRAND vs. algebraic decoding: crossover point for BCH codes?
-- Quantized LLR precision: 3-bit vs 5-bit for LDPC in DVB-T2?
-- Spatially-coupled LDPC gains over standard QC-LDPC for DVB-S2X?
-- Neural network architectures for BP: What's the sweet spot for complexity/gain?
-- Polar codes: How close can SCL decoders get to ML with practical list sizes?
+### Long-Term Vision
+- **Competitive CAS**: Establish gf2 as go-to for binary field research
+- **Novel Constructions**: Publication-worthy code designs and algorithms
+- **Open Benchmarks**: Industry-standard suite for FEC comparisons
+- **Educational Tool**: Research-grade toolkit with pedagogical examples
 
-### Sparse Representations
-- Optimal sparse matrix representations: When to use CSR vs. dual CSR+CSC?
-- SIMD dispatch granularity: Function-level vs. kernel-level dispatch?
-- Compressed sensing: Can binary field methods accelerate recovery?
+## Active Research Questions
 
-### Hardware Targets
-- GPU acceleration: Feasibility for LDPC iterations? Memory bandwidth bottlenecks?
-- FPGA mapping: Can functional Rust compile efficiently to HDL via HLS?
-- Embedded targets: ARM NEON + quantized arithmetic for IoT - power/performance?
-- Custom ASICs: Design space exploration for belief propagation
+### Performance & Architecture (M14 Focus)
+- **LDPC Decoding**: Can we achieve 50-100 Mbps with software-only BP?
+  - Measured: 69.8% time in BP loop, 17.7% sparse iteration, 4.9% malloc
+  - Hypothesis: SIMD LLR ops + batch parallelism → 10-25× speedup
+  - **Current**: 1.35 Mbps → **Target**: 50-100 Mbps (37× improvement needed)
+- **Encoding**: Is dense matvec (97.5% hotspot) the fundamental limit?
+  - SIMD enabled: 178 instructions active, but only 3.85 Mbps achieved
+  - Alternative: Structured encoding methods avoiding dense multiply?
+- **Memory hierarchy**: How do cache effects limit LDPC scaling?
+  - Generator matrix: 529 MB cache for DVB-T2 (loads in 16 ms)
+  - Belief propagation: Message passing patterns and cache locality?
 
-### Theoretical
-- How close can practical decoders get to Shannon limit with fixed latency?
-- Trade-offs in decoder complexity vs. FER performance for DVB standards
-- Finite-length performance: Gap between theory and practice for polar/LDPC
+### Algorithmic Trade-offs
+- **GRAND vs. Algebraic**: For short BCH codes, when is GRAND faster?
+  - BCH validated but slow for t=12 errors; GRAND complexity?
+- **Quantization**: LLR precision impact on DVB-T2 FER curves
+  - Current: f64, Target: 3-5 bit fixed-point for embedded
+- **Min-sum variants**: Normalized/offset min-sum gains over standard?
+  - Current: Standard min-sum; optimization potential?
+
+### System-Level Research
+- **DVB-T2 Chain**: What's the end-to-end latency budget?
+  - Deinterleaving + BCH + LDPC + QAM: 150 ms target feasible?
+- **SDR Integration**: Can Rust compete with GNU Radio C++ blocks?
+  - Target: 10-50× speedup over existing gr-dvbt2 blocks
+- **Real Signals**: Validation against captured RF (not just test vectors)
+
+### Computer Algebra Performance
+- **Crossover Point**: When does Rust+SIMD match Magma/Sage?
+  - Hypothesis: m > 32 favors SIMD, m < 16 favors specialized CAS
+  - Measurement needed: Controlled benchmark suite
+- **Polynomial Arithmetic**: Is Karatsuba optimal for all m?
+  - Current: Karatsuba for m ≥ 8; FFT-based for m > 64?
+
+### Hardware Acceleration
+- **GPU LDPC**: Is belief propagation memory-bound or compute-bound?
+  - 37× speedup needed; realistic GPU gain?
+  - Research: Profile memory bandwidth vs. FLOPs
+- **FPGA**: Can functional Rust map to efficient HDL?
+  - Experimental: Compile gf2-core to VHDL via HLS tools
+
+### Theoretical Foundations
+- **Shannon Gap**: How close are practical LDPC decoders?
+  - DVB-T2 LDPC: Measured FER curves vs. capacity
+- **Finite-Length Effects**: Polar vs LDPC for N < 10K
+  - Research: CRC-aided SCL competitive analysis
 
 ## Milestone Details
 
-### M13: DVB-T2 LDPC Implementation
+### M13: DVB-T2 LDPC Implementation ✅ COMPLETE
 
-**Status**: ⚠️ Partial implementation
-- ✅ Direct sparse matrix construction from ETSI EN 302 755 tables
-- ✅ Rate 1/2 Normal frame (64800 bits) fully implemented
-- ⚠️ 11 remaining rate/frame configurations need table data entry
-- ⚠️ Verification against reference implementation pending
+**Status**: Implementation and validation complete (2025-11-27)
+- ✅ All 12 DVB-T2 LDPC configurations (Short/Normal × 6 rates)
+- ✅ Validation: 202/202 blocks match ETSI EN 302 755 test vectors
+- ✅ Richardson-Urbanke systematic encoding with 529 MB dense cache
+- ✅ Min-sum belief propagation decoder
+- ✅ BCH outer code integration tested
+
+**Performance**: Baseline established, optimization in progress
+- Current: 3.85 Mbps encoding, 1.35 Mbps decoding
+- Target: 50-100 Mbps (real-time DVB-T2 reception)
+- Profiling: Hotspots identified (97.5% dense matvec, 69.8% BP loop)
+
+### M14: LDPC Performance Optimization 🔧 ACTIVE
+
+**Goal**: Achieve real-time DVB-T2 FEC decoding (50 Mbps minimum)
+
+**Phase 1 - Quick Wins** (Week 1, Target: 10-20 Mbps):
+- Pre-allocate decoder state (eliminate 4.9% malloc overhead)
+- Batch processing API for multi-core parallelism (4-8× speedup)
+- Thread-local decoder pool for parallel decoding
+
+**Phase 2 - SIMD** (Week 2, Target: 50-100 Mbps):
+- Vectorize LLR operations (min-sum, additions) with AVX2
+- Optimize sparse matrix iteration (CSR format investigation)
+- Profile belief propagation loop internals
+
+**Phase 3 - Advanced** (Research):
+- GPU-accelerated belief propagation (investigate CUDA/ROCm)
+- Alternative encoding methods (avoid dense matrix multiply)
+- Quantized LLR precision analysis (3-bit vs 5-bit)
+
+### M17: Competitive Performance Benchmarking
+
+**Goal**: Position gf2 competitively against specialized systems
+
+**Baseline Established**:
+- ✅ LDPC decoding profiled: Clear optimization targets identified
+- ✅ SIMD verification: 178 SIMD instructions active in binary
+- ✅ Correctness validated: 202/202 blocks match test vectors
+
+**Planned Comparisons**:
+- **Computer Algebra**: Primitive polynomial testing vs. Magma/Sage/NTL
+- **Numerical**: GF(2^m) multiplication vs. hand-optimized C libraries
+- **FEC Decoders**: LDPC throughput vs. AFF3CT, IT++, commercial SDR
+- **Memory Efficiency**: Sparse matrix representations vs. SciPy
+
+**Research Questions**:
+- What's the crossover point where Rust+SIMD matches Magma? (m > 32?)
+- Can we achieve 2× improvement over AFF3CT with better SIMD utilization?
+- GPU acceleration: Realistic speedup potential for LDPC BP?
 
 **Deliverables**:
-- Complete all 12 DVB-T2 LDPC configurations (Short/Normal × 6 rates)
-- Validate against DVB-T2 test vectors or reference decoder
-- Integration testing with BCH outer codes
-
-### M16: Competitive Performance Benchmarking
-
-**Goal**: Establish gf2 as competitive with specialized computer algebra systems
-
-**Benchmarks**:
-- Primitive polynomial testing (m = 2..64) vs. Magma/Sage/NTL
-- GF(2^m) multiplication throughput vs. hand-optimized libraries
-- Sparse matrix operations vs. NumPy/SciPy (binary field specialized)
-- LDPC decoding throughput vs. AFF3CT, IT++
-
-**Deliverables**:
-- Benchmark suite with automated comparison scripts
-- Performance report with profiling insights
-- Optimization roadmap for identified bottlenecks
-- Target: Within 2x of Magma/Sage, exceed on SIMD-friendly ops
+- Automated benchmark suite with reproducible results
+- Performance report with profiling methodology
+- Open-source comparison data for academic use
 
 ## Publication & Validation
 

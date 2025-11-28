@@ -151,19 +151,25 @@ See [docs/DVB_T2_DESIGN.md](docs/DVB_T2_DESIGN.md) for detailed design and imple
 - Current: 3.85 Mbps encoding (8.2× too slow), 1.35 Mbps decoding (37× too slow)
 - **We are 32× too slow for real-time DVB-T2 reception**
 
+**Profiling Complete** ✅ (2025-11-27):
+- ✅ Encoding: 97.5% in `BitMatrix::matvec_transpose` (gf2-core)
+- ✅ Decoding: 69.8% BP loop + 17.7% sparse iteration + 4.9% malloc
+- ✅ SIMD enabled: 178 SIMD instructions found in binary
+- See: [docs/LDPC_PROFILING_RESULTS.md](docs/LDPC_PROFILING_RESULTS.md)
+
 **Week 1 Goal**: 10-20 Mbps (Software Recording)
-- [ ] CPU profiling to identify hotspots
-- [ ] Implement batch processing (2-5× speedup)
-- [ ] Add block-level parallelism (4-8× speedup)
+- [ ] Pre-allocate decoder state (5% gain, 2-4 hours)
+- [ ] Implement batch processing (4-8× speedup, 4-8 hours)
+- [ ] Add block-level parallelism (4-8× speedup, 2-4 hours)
 - [ ] Target: 30-60% real-time (record with 2-3× delay)
 
 **Week 2 Goal**: 50-100 Mbps (Live Reception)
-- [ ] SIMD vectorization for LLRs (4-8× speedup)
-- [ ] Optimize matrix-vector multiply (2-4× speedup)
-- [ ] Memory layout optimization (1.5-2× speedup)
+- [ ] SIMD vectorization for LLRs (4-8× speedup, 1-2 days)
+- [ ] Optimize sparse iteration (2× speedup, 1-2 days)
+- [ ] Profile BP loop internals (1 day)
 - [ ] Target: 100-200% real-time (live DVB-T2 on PC)
 
-**See**: [docs/DVB_T2_THROUGHPUT_REQUIREMENTS.md](docs/DVB_T2_THROUGHPUT_REQUIREMENTS.md) for detailed analysis
+**See**: [docs/OPTIMIZATION_ACTION_PLAN.md](docs/OPTIMIZATION_ACTION_PLAN.md) for detailed plan
 
 ### Future Phases
 
