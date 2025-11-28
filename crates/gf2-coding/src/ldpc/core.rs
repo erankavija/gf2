@@ -673,10 +673,19 @@ impl LdpcDecoder {
         }
     }
 
-    /// Decodes multiple LLR blocks in batch.
+    /// Decodes multiple LLR blocks in batch (parallel).
     ///
-    /// Each block is decoded independently. This is more efficient than
-    /// decoding individually as it can be parallelized.
+    /// Each block is decoded independently using thread-local decoders.
+    /// Uses rayon for parallel decoding across CPU cores.
+    ///
+    /// # Performance
+    ///
+    /// Expected: 4-8× speedup on 8-core CPU for batches > 10 blocks.
+    ///
+    /// # Thread Safety
+    ///
+    /// Each parallel task creates its own decoder instance. The code parameter
+    /// is cloned (cheap - uses Arc internally for large matrices).
     ///
     /// # Examples
     ///
@@ -687,24 +696,25 @@ impl LdpcDecoder {
     /// let edges = vec![(0, 0), (0, 1), (0, 2)];
     /// let code = LdpcCode::from_edges(1, 3, &edges);
     ///
-    /// let llr_blocks = vec![
-    ///     vec![Llr::new(10.0), Llr::new(10.0), Llr::new(10.0)],
-    ///     vec![Llr::new(-10.0), Llr::new(-10.0), Llr::new(10.0)],
-    /// ];
+    /// let llr_blocks: Vec<Vec<Llr>> = (0..100)
+    ///     .map(|_| vec![Llr::new(10.0), Llr::new(10.0), Llr::new(10.0)])
+    ///     .collect();
     ///
     /// let results = LdpcDecoder::decode_batch(&code, &llr_blocks, 10);
-    /// assert_eq!(results.len(), 2);
+    /// assert_eq!(results.len(), 100);
     /// ```
     pub fn decode_batch(
         code: &LdpcCode,
         llr_blocks: &[Vec<Llr>],
         max_iterations: usize,
     ) -> Vec<DecoderResult> {
-        llr_blocks
-            .iter()
-            .map(|llrs| {
+        use rayon::prelude::*;
+
+        (0..llr_blocks.len())
+            .into_par_iter()
+            .map(|i| {
                 let mut decoder = Self::new(code.clone());
-                decoder.decode_iterative(llrs, max_iterations)
+                decoder.decode_iterative(&llr_blocks[i], max_iterations)
             })
             .collect()
     }
@@ -1040,8 +1050,7 @@ impl LdpcEncoder {
 impl LdpcEncoder {
     /// Encodes multiple messages in batch.
     ///
-    /// More efficient than encoding individually when processing many blocks.
-    /// Uses parallel processing when available.
+    /// Currently sequential. Parallel version coming soon once Sync bounds resolved.
     ///
     /// # Examples
     ///
@@ -1054,11 +1063,11 @@ impl LdpcEncoder {
     /// let code = LdpcCode::from_edges(1, 3, &edges);
     /// let encoder = LdpcEncoder::new(code);
     ///
-    /// let messages: Vec<BitVec> = (0..10)
+    /// let messages: Vec<BitVec> = (0..100)
     ///     .map(|_| BitVec::from_bytes_le(&[0b00]))
     ///     .collect();
     /// let codewords = encoder.encode_batch(&messages);
-    /// assert_eq!(codewords.len(), 10);
+    /// assert_eq!(codewords.len(), 100);
     /// ```
     pub fn encode_batch(&self, messages: &[BitVec]) -> Vec<BitVec> {
         use crate::traits::BlockEncoder;
