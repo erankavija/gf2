@@ -43,7 +43,7 @@ fn bench_ldpc_encode_single(c: &mut Criterion) {
     group.finish();
 }
 
-/// Benchmark LDPC encoding for multiple blocks
+/// Benchmark LDPC encoding for multiple blocks (sequential)
 fn bench_ldpc_encode_batch(c: &mut Criterion) {
     let code = LdpcCode::dvb_t2_normal(CodeRate::Rate3_5);
     let cache = load_cache();
@@ -65,9 +65,7 @@ fn bench_ldpc_encode_batch(c: &mut Criterion) {
             batch_size,
             |b, _| {
                 b.iter(|| {
-                    for msg in &messages {
-                        black_box(encoder.encode(black_box(msg)));
-                    }
+                    black_box(encoder.encode_batch(black_box(&messages)))
                 });
             },
         );
@@ -97,26 +95,28 @@ fn bench_ldpc_decode_single(c: &mut Criterion) {
     group.finish();
 }
 
-/// Benchmark LDPC decoding for multiple blocks
+/// Benchmark LDPC decoding for multiple blocks (parallel with rayon)
 fn bench_ldpc_decode_batch(c: &mut Criterion) {
     let code = LdpcCode::dvb_t2_normal(CodeRate::Rate3_5);
-    let mut decoder = LdpcDecoder::new(code.clone());
 
     let llrs: Vec<Llr> = (0..code.n()).map(|_| Llr::new(10.0)).collect();
 
     let mut group = c.benchmark_group("ldpc_decode_batch");
 
     for batch_size in [10, 50, 100, 202].iter() {
+        let llr_blocks: Vec<Vec<Llr>> = (0..*batch_size).map(|_| llrs.clone()).collect();
+
         group.throughput(Throughput::Bytes((code.k() * batch_size) as u64 / 8));
         group.bench_with_input(
             BenchmarkId::from_parameter(batch_size),
             batch_size,
             |b, _| {
                 b.iter(|| {
-                    for _ in 0..*batch_size {
-                        decoder.reset();
-                        black_box(decoder.decode_iterative(black_box(&llrs), 50));
-                    }
+                    black_box(LdpcDecoder::decode_batch(
+                        black_box(&code),
+                        black_box(&llr_blocks),
+                        50
+                    ))
                 });
             },
         );
