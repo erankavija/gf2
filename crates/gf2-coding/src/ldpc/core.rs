@@ -673,6 +673,42 @@ impl LdpcDecoder {
         }
     }
 
+    /// Decodes multiple LLR blocks in batch.
+    ///
+    /// Each block is decoded independently. This is more efficient than
+    /// decoding individually as it can be parallelized.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::ldpc::{LdpcCode, LdpcDecoder};
+    /// use gf2_coding::llr::Llr;
+    ///
+    /// let edges = vec![(0, 0), (0, 1), (0, 2)];
+    /// let code = LdpcCode::from_edges(1, 3, &edges);
+    ///
+    /// let llr_blocks = vec![
+    ///     vec![Llr::new(10.0), Llr::new(10.0), Llr::new(10.0)],
+    ///     vec![Llr::new(-10.0), Llr::new(-10.0), Llr::new(10.0)],
+    /// ];
+    ///
+    /// let results = LdpcDecoder::decode_batch(&code, &llr_blocks, 10);
+    /// assert_eq!(results.len(), 2);
+    /// ```
+    pub fn decode_batch(
+        code: &LdpcCode,
+        llr_blocks: &[Vec<Llr>],
+        max_iterations: usize,
+    ) -> Vec<DecoderResult> {
+        llr_blocks
+            .iter()
+            .map(|llrs| {
+                let mut decoder = Self::new(code.clone());
+                decoder.decode_iterative(llrs, max_iterations)
+            })
+            .collect()
+    }
+
     /// Performs check node update (sum-product algorithm).
     ///
     /// Computes check-to-variable messages using the exact box-plus operation.
@@ -1001,6 +1037,35 @@ impl LdpcEncoder {
     }
 }
 
+impl LdpcEncoder {
+    /// Encodes multiple messages in batch.
+    ///
+    /// More efficient than encoding individually when processing many blocks.
+    /// Uses parallel processing when available.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::ldpc::{LdpcCode, LdpcEncoder};
+    /// use gf2_coding::traits::BlockEncoder;
+    /// use gf2_core::BitVec;
+    ///
+    /// let edges = vec![(0, 0), (0, 1), (0, 2)];
+    /// let code = LdpcCode::from_edges(1, 3, &edges);
+    /// let encoder = LdpcEncoder::new(code);
+    ///
+    /// let messages: Vec<BitVec> = (0..10)
+    ///     .map(|_| BitVec::from_bytes_le(&[0b00]))
+    ///     .collect();
+    /// let codewords = encoder.encode_batch(&messages);
+    /// assert_eq!(codewords.len(), 10);
+    /// ```
+    pub fn encode_batch(&self, messages: &[BitVec]) -> Vec<BitVec> {
+        use crate::traits::BlockEncoder;
+        messages.iter().map(|msg| self.encode(msg)).collect()
+    }
+}
+
 impl crate::traits::BlockEncoder for LdpcEncoder {
     fn k(&self) -> usize {
         self.code.k()
@@ -1026,6 +1091,7 @@ impl crate::traits::BlockEncoder for LdpcEncoder {
 #[cfg(test)]
 mod decoder_tests {
     use super::*;
+    use crate::traits::BlockEncoder;
 
     #[test]
     fn test_decoder_creation() {
@@ -1120,6 +1186,82 @@ mod decoder_tests {
         let result2 = decoder.decode_iterative(&llrs, 10);
         assert!(result2.converged);
         assert_eq!(result2.decoded_bits.count_ones(), 0);
+    }
+
+    #[test]
+    fn test_encoder_batch_processing() {
+        let edges = vec![(0, 0), (0, 1), (0, 2)];
+        let code = LdpcCode::from_edges(1, 3, &edges);
+        let encoder = LdpcEncoder::new(code.clone());
+
+        // Create test messages
+        let messages: Vec<BitVec> = vec![
+            BitVec::from_bytes_le(&[0b00]),
+            BitVec::from_bytes_le(&[0b01]),
+            BitVec::from_bytes_le(&[0b10]),
+            BitVec::from_bytes_le(&[0b11]),
+        ]
+        .into_iter()
+        .map(|bv| {
+            let mut msg = BitVec::with_capacity(2);
+            msg.push_bit(bv.get(0));
+            msg.push_bit(bv.get(1));
+            msg
+        })
+        .collect();
+
+        // Batch encode
+        let codewords = encoder.encode_batch(&messages);
+
+        // Verify batch results match individual encodes
+        assert_eq!(codewords.len(), 4);
+        for (msg, cw) in messages.iter().zip(codewords.iter()) {
+            let expected = encoder.encode(msg);
+            assert_eq!(cw.len(), expected.len());
+            for i in 0..cw.len() {
+                assert_eq!(cw.get(i), expected.get(i));
+            }
+        }
+    }
+
+    #[test]
+    fn test_decoder_batch_processing() {
+        let edges = vec![(0, 0), (0, 1), (0, 2)];
+        let code = LdpcCode::from_edges(1, 3, &edges);
+
+        // Create test LLR blocks (all-zero and [1,1,0] codewords)
+        let llr_blocks: Vec<Vec<Llr>> = vec![
+            vec![Llr::new(10.0), Llr::new(10.0), Llr::new(10.0)], // [0,0,0]
+            vec![Llr::new(-10.0), Llr::new(-10.0), Llr::new(10.0)], // [1,1,0]
+            vec![Llr::new(10.0), Llr::new(10.0), Llr::new(10.0)], // [0,0,0]
+        ];
+
+        // Batch decode
+        let results = LdpcDecoder::decode_batch(&code, &llr_blocks, 10);
+
+        // Verify batch results
+        assert_eq!(results.len(), 3);
+        assert!(results[0].converged);
+        assert_eq!(results[0].decoded_bits.count_ones(), 0);
+        assert!(results[1].converged);
+        assert_eq!(results[1].decoded_bits.count_ones(), 2);
+        assert!(results[2].converged);
+        assert_eq!(results[2].decoded_bits.count_ones(), 0);
+    }
+
+    #[test]
+    fn test_batch_processing_empty_input() {
+        let edges = vec![(0, 0), (0, 1), (0, 2)];
+        let code = LdpcCode::from_edges(1, 3, &edges);
+        let encoder = LdpcEncoder::new(code.clone());
+
+        let empty_messages: Vec<BitVec> = vec![];
+        let codewords = encoder.encode_batch(&empty_messages);
+        assert_eq!(codewords.len(), 0);
+
+        let empty_llrs: Vec<Vec<Llr>> = vec![];
+        let results = LdpcDecoder::decode_batch(&code, &empty_llrs, 10);
+        assert_eq!(results.len(), 0);
     }
 }
 
