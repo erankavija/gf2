@@ -64,9 +64,7 @@ fn bench_ldpc_encode_batch(c: &mut Criterion) {
             BenchmarkId::from_parameter(batch_size),
             batch_size,
             |b, _| {
-                b.iter(|| {
-                    black_box(encoder.encode_batch(black_box(&messages)))
-                });
+                b.iter(|| black_box(encoder.encode_batch(black_box(&messages))));
             },
         );
     }
@@ -115,7 +113,7 @@ fn bench_ldpc_decode_batch(c: &mut Criterion) {
                     black_box(LdpcDecoder::decode_batch(
                         black_box(&code),
                         black_box(&llr_blocks),
-                        50
+                        50,
                     ))
                 });
             },
