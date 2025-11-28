@@ -12,6 +12,7 @@ rust-version = "1.74"
 gf2-core = { path = "../gf2-core" }
 rand = { workspace = true }
 rand_distr = "0.4"
+rayon = "1.8"
 
 [dev-dependencies]
 proptest = { workspace = true }
