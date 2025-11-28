@@ -19,9 +19,9 @@
 - LDPC decoding: 202/202 blocks match
 
 📊 **Current Performance**:
-- Encoding: 3.85 Mbps (9.87 ms/block)
-- Decoding: 1.35 Mbps (~30 ms/block, error-free)
-- **Gap to real-time**: 8.2× (encoding), 37× (decoding)
+- Encoding: 3.85 Mbps (sequential, 9.87 ms/block)
+- Decoding: 8.29 Mbps (parallel batch of 202, 4.57 ms/block)
+- **Gap to real-time**: 8.2× (encoding), 6.0× (decoding)
 
 🎯 **Target Performance**:
 - Week 1: 10-20 Mbps (software recording, 30-60% real-time)

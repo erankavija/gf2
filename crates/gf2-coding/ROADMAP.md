@@ -148,8 +148,8 @@ See [docs/DVB_T2_DESIGN.md](docs/DVB_T2_DESIGN.md) for detailed design and imple
 **C10.6.8: Performance Optimization** (1-2 weeks) - **REAL-TIME TARGET**
 
 **Real-Time Requirement**: DVB-T2 8 MHz mode requires **31.4 Mbps encoding / 50 Mbps decoding**
-- Current: 3.85 Mbps encoding (8.2× too slow), 1.35 Mbps decoding (37× too slow)
-- **We are 32× too slow for real-time DVB-T2 reception**
+- Current: 3.85 Mbps encoding (8.2× too slow), 8.29 Mbps decoding (6.0× too slow)
+- Parallel batch decoding: **6.7× speedup achieved** (24-core CPU)
 
 **Profiling Complete** ✅ (2025-11-27):
 - ✅ Encoding: 97.5% in `BitMatrix::matvec_transpose` (gf2-core)
@@ -157,11 +157,12 @@ See [docs/DVB_T2_DESIGN.md](docs/DVB_T2_DESIGN.md) for detailed design and imple
 - ✅ SIMD enabled: 178 SIMD instructions found in binary
 - See: [docs/LDPC_PROFILING_RESULTS.md](docs/LDPC_PROFILING_RESULTS.md)
 
-**Week 1 Goal**: 10-20 Mbps (Software Recording)
-- [ ] Pre-allocate decoder state (5% gain, 2-4 hours)
-- [ ] Implement batch processing (4-8× speedup, 4-8 hours)
-- [ ] Add block-level parallelism (4-8× speedup, 2-4 hours)
-- [ ] Target: 30-60% real-time (record with 2-3× delay)
+**Week 1 Goal**: 10-20 Mbps (Software Recording) ✅ PARTIAL
+- ✅ Pre-allocate decoder state (buffers already pre-allocated)
+- ✅ Implement batch processing (sequential for encoder, parallel for decoder)
+- ✅ Add block-level parallelism (6.7× speedup with rayon on 24-core)
+- ✅ Achieved: 8.29 Mbps decoding (16% real-time, batch of 202)
+- ⚠️ Encoder: 3.85 Mbps (sequential, Sync bounds need resolution)
 
 **Week 2 Goal**: 50-100 Mbps (Live Reception)
 - [ ] SIMD vectorization for LLRs (4-8× speedup, 1-2 days)
