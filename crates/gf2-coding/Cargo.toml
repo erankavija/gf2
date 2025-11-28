@@ -41,3 +41,11 @@ harness = false
 [[bench]]
 name = "ldpc_throughput"
 harness = false
+
+[[bench]]
+name = "profile_ldpc_encode"
+harness = false
+
+[[bench]]
+name = "profile_ldpc_decode"
+harness = false

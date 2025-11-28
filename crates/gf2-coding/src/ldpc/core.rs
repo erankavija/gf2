@@ -818,6 +818,13 @@ impl IterativeSoftDecoder for LdpcDecoder {
     fn decode_iterative(&mut self, llrs: &[Llr], max_iterations: usize) -> DecoderResult {
         assert_eq!(llrs.len(), self.n(), "LLR length must equal n");
 
+        // Reset all messages to ensure clean state
+        for check_msgs in &mut self.check_to_var {
+            for msg in check_msgs {
+                *msg = Llr::zero();
+            }
+        }
+
         // Initialize: variable-to-check messages = channel LLRs
         for (var, &llr) in llrs.iter().enumerate().take(self.code.n()) {
             for pos in 0..self.var_to_check[var].len() {
@@ -1065,6 +1072,54 @@ mod decoder_tests {
             // Should decode to [1, 1, 0] which has even parity
             assert_eq!(result.decoded_bits.count_ones(), 2);
         }
+    }
+
+    #[test]
+    fn test_consecutive_decodes_no_state_leakage() {
+        let edges = vec![(0, 0), (0, 1), (0, 2)];
+        let code = LdpcCode::from_edges(1, 3, &edges);
+        let mut decoder = LdpcDecoder::new(code);
+
+        // First decode: all-zero codeword (even parity: 0+0+0=0)
+        let llrs1 = vec![Llr::new(10.0), Llr::new(10.0), Llr::new(10.0)];
+        let result1 = decoder.decode_iterative(&llrs1, 10);
+        assert!(result1.converged);
+        assert!(result1.syndrome_check_passed);
+        assert_eq!(result1.decoded_bits.count_ones(), 0);
+
+        // Second decode: [1,1,0] codeword (even parity: 1+1+0=0)
+        let llrs2 = vec![Llr::new(-10.0), Llr::new(-10.0), Llr::new(10.0)];
+        let result2 = decoder.decode_iterative(&llrs2, 10);
+        assert!(result2.converged);
+        assert!(result2.syndrome_check_passed);
+        assert_eq!(result2.decoded_bits.count_ones(), 2);
+
+        // Third decode: back to all-zero
+        let result3 = decoder.decode_iterative(&llrs1, 10);
+        assert!(result3.converged);
+        assert!(result3.syndrome_check_passed);
+        assert_eq!(result3.decoded_bits.count_ones(), 0);
+    }
+
+    #[test]
+    fn test_decoder_reset_clears_state() {
+        let edges = vec![(0, 0), (0, 1), (0, 2)];
+        let code = LdpcCode::from_edges(1, 3, &edges);
+        let mut decoder = LdpcDecoder::new(code);
+
+        // Decode once
+        let llrs = vec![Llr::new(10.0), Llr::new(10.0), Llr::new(10.0)];
+        let result1 = decoder.decode_iterative(&llrs, 10);
+        assert!(result1.iterations > 0);
+
+        // Reset should clear iteration count
+        decoder.reset();
+        assert_eq!(decoder.last_iteration_count(), 0);
+
+        // Decode again - should work correctly
+        let result2 = decoder.decode_iterative(&llrs, 10);
+        assert!(result2.converged);
+        assert_eq!(result2.decoded_bits.count_ones(), 0);
     }
 }
 
