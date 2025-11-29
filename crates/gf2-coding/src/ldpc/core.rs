@@ -776,12 +776,13 @@ impl LdpcDecoder {
                     // Try SIMD-accelerated min-sum if available
                     #[cfg(feature = "simd")]
                     if let Some(fns) = crate::simd::maybe_llr_simd() {
-                        let llr_values: Vec<f32> = inputs.iter().map(|l| l.value() as f32).collect();
+                        let llr_values: Vec<f32> =
+                            inputs.iter().map(|l| l.value() as f32).collect();
                         Llr::new((fns.minsum_fn)(&llr_values) as f64)
                     } else {
                         Llr::boxplus_minsum_n(&inputs)
                     }
-                    
+
                     #[cfg(not(feature = "simd"))]
                     Llr::boxplus_minsum_n(&inputs)
                 };
@@ -1058,9 +1059,10 @@ impl LdpcEncoder {
 }
 
 impl LdpcEncoder {
-    /// Encodes multiple messages in batch.
+    /// Encodes multiple messages in batch using ComputeBackend.
     ///
-    /// Currently sequential. Parallel version coming soon once Sync bounds resolved.
+    /// Uses the default CpuBackend which automatically selects SIMD kernels
+    /// and parallel processing when the `parallel` feature is enabled.
     ///
     /// # Examples
     ///
@@ -1077,7 +1079,7 @@ impl LdpcEncoder {
     /// let mut msg1 = BitVec::new();
     /// msg1.push_bit(false);
     /// msg1.push_bit(false);
-    /// 
+    ///
     /// let mut msg2 = BitVec::new();
     /// msg2.push_bit(true);
     /// msg2.push_bit(true);
@@ -1088,8 +1090,9 @@ impl LdpcEncoder {
     /// assert_eq!(codewords[0].len(), code.n());
     /// ```
     pub fn encode_batch(&self, messages: &[BitVec]) -> Vec<BitVec> {
-        use crate::traits::BlockEncoder;
-        messages.iter().map(|msg| self.encode(msg)).collect()
+        // Use default CpuBackend for batch operations
+        let backend = gf2_core::compute::CpuBackend::new();
+        self.encoding_matrices.encode_batch(messages, &backend)
     }
 }
 

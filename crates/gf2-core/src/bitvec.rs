@@ -1,7 +1,7 @@
 //! Core BitVec type for bit string manipulation.
 
-use std::sync::Mutex;
 use std::fmt;
+use std::sync::Mutex;
 
 /// Reverses the lowest `num_bits` bits of `x`.
 ///

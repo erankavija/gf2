@@ -4,7 +4,6 @@
 //! the SIMD feature enabled.
 
 use gf2_core::kernels::backend::select_backend_for_size;
-use gf2_core::kernels::Backend;
 
 #[test]
 fn test_backend_selection_small_buffers() {
@@ -56,6 +55,7 @@ fn test_backend_selection_large_buffers() {
 #[cfg(feature = "simd")]
 fn test_simd_backend_availability() {
     use gf2_core::kernels::simd::maybe_simd;
+    use gf2_core::kernels::Backend;
 
     // Test that we can query SIMD availability
     // This may be None on CPUs without AVX2/NEON

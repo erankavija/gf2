@@ -51,3 +51,7 @@ harness = false
 [[bench]]
 name = "profile_ldpc_decode"
 harness = false
+
+[[bench]]
+name = "batch_operations"
+harness = false

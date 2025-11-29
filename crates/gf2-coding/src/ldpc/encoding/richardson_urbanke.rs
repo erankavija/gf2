@@ -288,6 +288,62 @@ impl RuEncodingMatrices {
         codeword
     }
 
+    /// Encodes multiple messages using ComputeBackend for parallelization.
+    ///
+    /// This method leverages the ComputeBackend's batch_matvec_transpose operation
+    /// to efficiently encode multiple messages, potentially in parallel.
+    ///
+    /// # Arguments
+    ///
+    /// * `messages` - Slice of messages to encode (each must have length k)
+    /// * `backend` - Compute backend to use for matrix operations
+    ///
+    /// # Returns
+    ///
+    /// Vector of codewords (each of length n)
+    ///
+    /// # Panics
+    ///
+    /// Panics if any message length doesn't equal k.
+    pub fn encode_batch(
+        &self,
+        messages: &[BitVec],
+        backend: &dyn gf2_core::compute::ComputeBackend,
+    ) -> Vec<BitVec> {
+        // Validate all message lengths
+        for msg in messages {
+            assert_eq!(msg.len(), self.k, "Message length must be k = {}", self.k);
+        }
+
+        if messages.is_empty() {
+            return vec![];
+        }
+
+        // Compute all parity bits in parallel: parity_i = P^T × message_i
+        let parities = backend.batch_matvec_transpose(&self.parity_matrix, messages);
+
+        // Build codewords by placing message and parity bits
+        messages
+            .iter()
+            .zip(parities.iter())
+            .map(|(message, parity)| {
+                let mut codeword = BitVec::zeros(self.n);
+
+                // Place message bits in systematic positions
+                for (i, &col) in self.systematic_cols.iter().enumerate() {
+                    codeword.set(col, message.get(i));
+                }
+
+                // Place parity bits in parity positions
+                for (j, &col) in self.parity_cols.iter().enumerate() {
+                    codeword.set(col, parity.get(j));
+                }
+
+                codeword
+            })
+            .collect()
+    }
+
     /// Returns the codeword length n.
     pub fn n(&self) -> usize {
         self.n

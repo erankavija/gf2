@@ -88,24 +88,24 @@ unsafe fn minsum_avx2(inputs: &[f32]) -> f32 {
     }
 
     let n = inputs.len();
-    
+
     // Sign mask: 0x80000000 in each lane (sign bit of f32)
     let sign_mask = _mm256_set1_ps(-0.0f32);
-    
+
     // Initialize accumulators
     let mut vec_min = _mm256_set1_ps(f32::INFINITY);
     let mut vec_sign = _mm256_setzero_ps(); // Accumulate XOR of sign bits
-    
+
     // Process 8 floats at a time
     let chunks = n / 8;
     for i in 0..chunks {
         let ptr = inputs.as_ptr().add(i * 8);
         let vals = _mm256_loadu_ps(ptr);
-        
+
         // Extract absolute values: vals & ~sign_mask
         let abs_vals = _mm256_andnot_ps(sign_mask, vals);
         vec_min = _mm256_min_ps(vec_min, abs_vals);
-        
+
         // Extract sign bits and XOR accumulate
         let signs = _mm256_and_ps(vals, sign_mask);
         vec_sign = _mm256_xor_ps(vec_sign, signs);
@@ -347,7 +347,9 @@ mod tests {
 
         let fns = detect().unwrap();
         // Test with > 8 elements to exercise AVX2 vector path + remainder
-        let inputs: Vec<f32> = (1..=20).map(|i| if i % 3 == 0 { -(i as f32) } else { i as f32 }).collect();
+        let inputs: Vec<f32> = (1..=20)
+            .map(|i| if i % 3 == 0 { -(i as f32) } else { i as f32 })
+            .collect();
         let result = (fns.minsum_fn)(&inputs);
         let expected = scalar_minsum(&inputs);
         assert_eq!(result, expected, "Large vector (20 elements)");
@@ -420,7 +422,9 @@ mod tests {
         }
 
         let fns = detect().unwrap();
-        let inputs: Vec<f32> = (1..=25).map(|i| if i == 17 { 100.0 } else { i as f32 }).collect();
+        let inputs: Vec<f32> = (1..=25)
+            .map(|i| if i == 17 { 100.0 } else { i as f32 })
+            .collect();
         let result = (fns.maxabs_fn)(&inputs);
         let expected = scalar_maxabs(&inputs);
         assert_eq!(result, expected, "Max should be 100.0");
@@ -435,13 +439,15 @@ mod tests {
         }
 
         let fns = detect().unwrap();
-        
+
         // Test multiple random-ish patterns
         let test_cases = vec![
             vec![1.5, -2.3, 4.7, -0.8, 9.2],
             vec![-1.1, -2.2, -3.3, -4.4, -5.5, -6.6],
             vec![0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
-            (1..=30).map(|i| (i as f32) * if i % 2 == 0 { -1.0 } else { 1.0 }).collect(),
+            (1..=30)
+                .map(|i| (i as f32) * if i % 2 == 0 { -1.0 } else { 1.0 })
+                .collect(),
         ];
 
         for inputs in test_cases {
@@ -450,7 +456,9 @@ mod tests {
             assert!(
                 (result - expected).abs() < 1e-6,
                 "SIMD result {} differs from scalar {} for inputs {:?}",
-                result, expected, inputs
+                result,
+                expected,
+                inputs
             );
         }
     }
@@ -464,7 +472,7 @@ mod tests {
         }
 
         let fns = detect().unwrap();
-        
+
         let test_cases = vec![
             vec![1.5, -2.3, 4.7, -0.8, 9.2],
             vec![-10.5, 3.2, -7.8, 2.1],
@@ -477,7 +485,9 @@ mod tests {
             assert!(
                 (result - expected).abs() < 1e-6,
                 "SIMD result {} differs from scalar {} for inputs {:?}",
-                result, expected, inputs
+                result,
+                expected,
+                inputs
             );
         }
     }

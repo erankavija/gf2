@@ -95,6 +95,57 @@ impl BitMatrix {
         m
     }
 
+    /// Creates a matrix with all bits set to 1.
+    ///
+    /// # Arguments
+    ///
+    /// * `rows` - Number of rows
+    /// * `cols` - Number of columns
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::matrix::BitMatrix;
+    ///
+    /// let m = BitMatrix::ones(3, 4);
+    /// assert_eq!(m.rows(), 3);
+    /// assert_eq!(m.cols(), 4);
+    /// assert!(m.get(0, 0));
+    /// assert!(m.get(2, 3));
+    /// ```
+    pub fn ones(rows: usize, cols: usize) -> Self {
+        let stride_words = if cols == 0 { 0 } else { cols.div_ceil(64) };
+        let total_words = rows * stride_words;
+
+        if total_words == 0 {
+            return Self {
+                data: vec![],
+                rows,
+                cols,
+                stride_words,
+            };
+        }
+
+        let mut data = vec![!0u64; total_words];
+
+        // Mask padding bits in last word of each row
+        if cols % 64 != 0 {
+            let used_bits = cols % 64;
+            let mask = (1u64 << used_bits) - 1;
+            for row in 0..rows {
+                let last_word_idx = row * stride_words + stride_words - 1;
+                data[last_word_idx] &= mask;
+            }
+        }
+
+        Self {
+            data,
+            rows,
+            cols,
+            stride_words,
+        }
+    }
+
     /// Creates a `BitMatrix` with random bits using the provided RNG.
     ///
     /// Each bit has probability 0.5 of being set. For custom probabilities,
@@ -1149,6 +1200,35 @@ mod tests {
         assert!(m.get(2, 2));
         assert!(!m.get(0, 1));
         assert!(!m.get(1, 0));
+    }
+
+    #[test]
+    fn test_ones() {
+        let m = BitMatrix::ones(3, 4);
+        assert_eq!(m.rows(), 3);
+        assert_eq!(m.cols(), 4);
+        // All bits should be set
+        for r in 0..3 {
+            for c in 0..4 {
+                assert!(m.get(r, c), "Bit at ({}, {}) should be 1", r, c);
+            }
+        }
+    }
+
+    #[test]
+    fn test_ones_edge_cases() {
+        // Single element
+        let m = BitMatrix::ones(1, 1);
+        assert!(m.get(0, 0));
+
+        // Non-word-aligned columns
+        let m = BitMatrix::ones(2, 65);
+        assert!(m.get(1, 64));
+
+        // Empty matrix
+        let m = BitMatrix::ones(0, 0);
+        assert_eq!(m.rows(), 0);
+        assert_eq!(m.cols(), 0);
     }
 
     #[test]

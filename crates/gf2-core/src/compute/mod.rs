@@ -39,8 +39,8 @@
 //! use gf2_core::{BitMatrix, compute::{ComputeBackend, CpuBackend}};
 //!
 //! let backend = CpuBackend::new();
-//! let a = BitMatrix::random(100, 100);
-//! let b = BitMatrix::random(100, 100);
+//! let a = BitMatrix::identity(10);
+//! let b = BitMatrix::identity(10);
 //! let c = backend.matmul(&a, &b);
 //! ```
 //!
@@ -52,11 +52,11 @@
 //! ```
 //!
 //! ```
-//! use gf2_core::{BitMatrix, compute::CpuBackend};
+//! use gf2_core::{BitMatrix, compute::{ComputeBackend, CpuBackend}};
 //!
 //! // CpuBackend automatically uses rayon when parallel feature is enabled
 //! let backend = CpuBackend::new();
-//! let large_matrix = BitMatrix::random(1000, 1000);
+//! let large_matrix = BitMatrix::identity(100);
 //! let result = backend.rref(&large_matrix, false);
 //! ```
 

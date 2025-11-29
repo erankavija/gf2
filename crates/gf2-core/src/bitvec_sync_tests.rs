@@ -24,12 +24,12 @@ mod tests {
     fn test_bitvec_arc_sharing() {
         let bv = Arc::new(BitVec::ones(100));
         let bv_clone = Arc::clone(&bv);
-        
+
         let handle = std::thread::spawn(move || {
             assert_eq!(bv_clone.len(), 100);
             assert_eq!(bv_clone.count_ones(), 100);
         });
-        
+
         handle.join().unwrap();
     }
 
@@ -37,7 +37,7 @@ mod tests {
     #[test]
     fn test_rank_across_threads() {
         let bv = Arc::new(BitVec::from_bytes_le(&[0b10101010, 0b11110000]));
-        
+
         let handles: Vec<_> = (0..4)
             .map(|_| {
                 let bv = Arc::clone(&bv);
@@ -48,7 +48,7 @@ mod tests {
                 })
             })
             .collect();
-        
+
         for handle in handles {
             handle.join().unwrap();
         }
@@ -58,7 +58,7 @@ mod tests {
     #[test]
     fn test_select_across_threads() {
         let bv = Arc::new(BitVec::from_bytes_le(&[0b11111111, 0b00000000]));
-        
+
         let handles: Vec<_> = (0..4)
             .map(|i| {
                 let bv = Arc::clone(&bv);
@@ -68,7 +68,7 @@ mod tests {
                 })
             })
             .collect();
-        
+
         for handle in handles {
             handle.join().unwrap();
         }
@@ -79,9 +79,9 @@ mod tests {
     #[cfg(feature = "parallel")]
     fn test_concurrent_rank_select_stress() {
         use rayon::prelude::*;
-        
+
         let bv = Arc::new(BitVec::from_bytes_le(&vec![0xFF; 1000]));
-        
+
         // 1000 concurrent rank queries
         let results: Vec<_> = (0..1000)
             .into_par_iter()
@@ -94,7 +94,7 @@ mod tests {
                 (i, r)
             })
             .collect();
-        
+
         // Verify correctness
         for (i, r) in results {
             let idx = i * 8;

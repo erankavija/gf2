@@ -23,14 +23,14 @@
 //! use gf2_core::{BitMatrix, compute::{ComputeBackend, CpuBackend}};
 //!
 //! let backend = CpuBackend::new();
-//! let a = BitMatrix::random(100, 100);
-//! let b = BitMatrix::random(100, 100);
+//! let a = BitMatrix::identity(10);
+//! let b = BitMatrix::identity(10);
 //! let c = backend.matmul(&a, &b);
-//! assert_eq!(c.rows(), 100);
-//! assert_eq!(c.cols(), 100);
+//! assert_eq!(c.rows(), 10);
+//! assert_eq!(c.cols(), 10);
 //! ```
 
-use crate::{BitMatrix, BitVec, alg::rref::RrefResult};
+use crate::{alg::rref::RrefResult, BitMatrix, BitVec};
 
 /// Compute backend for algorithm-level operations.
 ///
@@ -114,7 +114,7 @@ pub trait ComputeBackend: Send + Sync {
     /// use gf2_core::{BitMatrix, compute::{ComputeBackend, CpuBackend}};
     ///
     /// let backend = CpuBackend::new();
-    /// let matrix = BitMatrix::random(5, 10);
+    /// let matrix = BitMatrix::identity(5);
     /// let result = backend.rref(&matrix, false);
     /// assert!(result.rank <= matrix.rows().min(matrix.cols()));
     /// ```
@@ -237,15 +237,15 @@ mod tests {
     fn test_matmul_with_identity() {
         use rand::thread_rng;
         let backend = crate::compute::CpuBackend::new();
-        
+
         let mut rng = thread_rng();
         let a = BitMatrix::random(5, 5, &mut rng);
         let identity = BitMatrix::identity(5);
-        
+
         // A × I = A
         let result = backend.matmul(&a, &identity);
         assert_eq!(result, a, "A × I should equal A");
-        
+
         // I × A = A
         let result = backend.matmul(&identity, &a);
         assert_eq!(result, a, "I × A should equal A");
@@ -255,10 +255,10 @@ mod tests {
     #[test]
     fn test_matmul_dimensions() {
         let backend = crate::compute::CpuBackend::new();
-        
+
         let a = BitMatrix::zeros(3, 5);
         let b = BitMatrix::zeros(5, 7);
-        
+
         let c = backend.matmul(&a, &b);
         assert_eq!(c.rows(), 3, "Result should have left matrix rows");
         assert_eq!(c.cols(), 7, "Result should have right matrix cols");
@@ -270,35 +270,42 @@ mod tests {
     fn test_matmul_with_zeros() {
         use rand::thread_rng;
         let backend = crate::compute::CpuBackend::new();
-        
+
         let mut rng = thread_rng();
         let a = BitMatrix::random(4, 6, &mut rng);
         let zero = BitMatrix::zeros(6, 8);
-        
+
         let result = backend.matmul(&a, &zero);
-        assert_eq!(result, BitMatrix::zeros(4, 8), "A × 0 should be zero matrix");
+        assert_eq!(
+            result,
+            BitMatrix::zeros(4, 8),
+            "A × 0 should be zero matrix"
+        );
     }
 
     /// Test RREF with identity matrix
     #[test]
     fn test_rref_identity() {
         let backend = crate::compute::CpuBackend::new();
-        
+
         let identity = BitMatrix::identity(5);
         let result = backend.rref(&identity, false);
-        
+
         assert_eq!(result.rank, 5, "Identity matrix should have full rank");
-        assert_eq!(result.reduced, identity, "Identity matrix is already in RREF");
+        assert_eq!(
+            result.reduced, identity,
+            "Identity matrix is already in RREF"
+        );
     }
 
     /// Test RREF with zero matrix
     #[test]
     fn test_rref_zeros() {
         let backend = crate::compute::CpuBackend::new();
-        
+
         let zero = BitMatrix::zeros(3, 5);
         let result = backend.rref(&zero, false);
-        
+
         assert_eq!(result.rank, 0, "Zero matrix should have rank 0");
         assert_eq!(result.reduced, zero, "Zero matrix stays zero");
     }
@@ -309,11 +316,11 @@ mod tests {
     fn test_rref_rank_invariant() {
         use rand::thread_rng;
         let backend = crate::compute::CpuBackend::new();
-        
+
         let mut rng = thread_rng();
         let matrix = BitMatrix::random(6, 10, &mut rng);
         let result = backend.rref(&matrix, false);
-        
+
         assert!(result.rank <= matrix.rows(), "Rank cannot exceed rows");
         assert!(result.rank <= matrix.cols(), "Rank cannot exceed cols");
     }
@@ -324,15 +331,17 @@ mod tests {
     fn test_rref_pivot_directions() {
         use rand::thread_rng;
         let backend = crate::compute::CpuBackend::new();
-        
+
         let mut rng = thread_rng();
         let matrix = BitMatrix::random(5, 10, &mut rng);
-        
+
         let left_result = backend.rref(&matrix, false);
         let right_result = backend.rref(&matrix, true);
-        
+
         // Both should give same rank
-        assert_eq!(left_result.rank, right_result.rank, 
-                   "Pivot direction should not change rank");
+        assert_eq!(
+            left_result.rank, right_result.rank,
+            "Pivot direction should not change rank"
+        );
     }
 }

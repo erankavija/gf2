@@ -72,9 +72,7 @@ pub(crate) mod simd {
 
     #[inline]
     pub fn maybe_llr_simd() -> Option<&'static LlrFns> {
-        LLR_FNS
-            .get_or_init(gf2_kernels_simd::llr::detect)
-            .as_ref()
+        LLR_FNS.get_or_init(gf2_kernels_simd::llr::detect).as_ref()
     }
 }
 pub mod simulation;
