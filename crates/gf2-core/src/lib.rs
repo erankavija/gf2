@@ -80,3 +80,6 @@ pub(crate) mod simd {
         None
     }
 }
+
+#[cfg(test)]
+mod bitvec_sync_tests;
