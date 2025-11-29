@@ -97,17 +97,18 @@ A **research-grade** toolkit for high-performance binary field computing and cod
 
 | Milestone | Description | Status | Timeline |
 |-----------|-------------|--------|----------|
-| **M14** | LDPC Performance: Real-time DVB-T2 decoding | 🔧 Active | 2025-11/12 |
+| **M14** | LDPC Performance: Profiling & baseline (3.85 Mbps) | ✅ Done | 2025-11 |
+| **M15** | Parallel Computing Framework: CPU/GPU/FPGA | 🔧 Active | 2025-11 → 2026 |
 
 ## Planned
 
 | Milestone | Description | Priority | Research Focus |
 |-----------|-------------|----------|----------------|
-| **M15** | QAM modulation: Soft-decision demapping | Medium | Channel modeling |
-| **M16** | FEC simulation: End-to-end DVB-T2 chain | High | System integration |
-| **M17** | Performance benchmarking vs. specialized systems | High | Competitive analysis |
-| **M18** | GRAND decoding: Universal decoder for short codes | Research | Novel algorithms |
-| **M19** | Neural-aided BP: ML-enhanced LDPC decoding | Research | AI integration |
+| **M16** | QAM modulation: Soft-decision demapping | Medium | Channel modeling |
+| **M17** | FEC simulation: End-to-end DVB-T2 chain | High | System integration |
+| **M18** | Performance benchmarking vs. specialized systems | High | Competitive analysis |
+| **M19** | GRAND decoding: Universal decoder for short codes | Research | Novel algorithms |
+| **M20** | Neural-aided BP: ML-enhanced LDPC decoding | Research | AI integration |
 
 ## Research Goals
 

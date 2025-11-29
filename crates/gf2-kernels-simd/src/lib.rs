@@ -13,6 +13,7 @@
 mod x86;
 
 pub mod gf2m;
+pub mod llr;
 
 /// Set of accelerated logical operations. Each function must have identical
 /// semantics to the scalar implementation (in-place dst modification, slice length min).
