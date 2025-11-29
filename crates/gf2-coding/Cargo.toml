@@ -10,6 +10,7 @@ rust-version = "1.74"
 
 [dependencies]
 gf2-core = { path = "../gf2-core" }
+gf2-kernels-simd = { path = "../gf2-kernels-simd", optional = true }
 rand = { workspace = true }
 rand_distr = "0.4"
 rayon = "1.8"
@@ -23,7 +24,7 @@ thiserror = "1.0"
 
 [features]
 default = ["simd"]
-simd = ["gf2-core/simd"]
+simd = ["gf2-core/simd", "gf2-kernels-simd"]
 visualization = ["gf2-core/visualization"]
 
 # Binaries are auto-discovered in src/bin/

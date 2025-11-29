@@ -270,7 +270,6 @@ cargo build --no-default-features
 
 ## See Also
 
-- [GAUSS_ELIMINATION_MIGRATION_PLAN.md](GAUSS_ELIMINATION_MIGRATION_PLAN.md) - Full migration plan
 - gf2-core RREF implementation: `crates/gf2-core/src/alg/rref.rs`
 - gf2-kernels-simd: `crates/gf2-kernels-simd/`
 - Benchmarks: `crates/gf2-core/benches/rref.rs`

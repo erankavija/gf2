@@ -248,37 +248,14 @@ mod encoding_tests {
 
 /// Helper: Convert systematic BCH codeword [message | parity] to polynomial c(x) = x^r·m(x) + p(x)
 /// Uses DVB-T2 convention: bit 0 is highest polynomial coefficient
-/// where r = n - k
 #[cfg(test)]
 fn systematic_codeword_to_poly(
     codeword: &BitVec,
-    k: usize,
-    n: usize,
+    _k: usize,
+    _n: usize,
     field: &Gf2mField,
 ) -> Gf2mPoly {
-    let mut coeffs = Vec::new();
-
-    // Parity polynomial p(x): degrees 0..r-1
-    // Comes from codeword bits k..n (highest coefficient first)
-    for i in (k..n).rev() {
-        coeffs.push(if codeword.get(i) {
-            field.one()
-        } else {
-            field.zero()
-        });
-    }
-
-    // Message polynomial x^r·m(x): degrees r..n-1
-    // Comes from codeword bits 0..k (highest coefficient first)
-    for i in (0..k).rev() {
-        coeffs.push(if codeword.get(i) {
-            field.one()
-        } else {
-            field.zero()
-        });
-    }
-
-    Gf2mPoly::new(coeffs)
+    Gf2mPoly::from_bitvec_reversed(codeword, field)
 }
 
 #[cfg(test)]
