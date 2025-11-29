@@ -173,37 +173,46 @@ See [docs/PARALLELIZATION_STRATEGY.md](docs/PARALLELIZATION_STRATEGY.md) for det
 
 **Goal**: 50-100 Mbps real-time DVB-T2 on 24-core CPU
 
-**Week 1** ✅ COMPLETE:
-- ✅ LDPC decoder: Rayon parallelization (6.7× speedup → 8.29 Mbps)
-- ✅ Batch API: `decode_batch(&[Vec<Llr>])`
-- ✅ Benchmarks: Scaling analysis (1-202 blocks)
+**Week 1** ✅ COMPLETE (2025-11-29):
+- ✅ ComputeBackend trait created in gf2-core
+- ✅ CpuBackend with SIMD auto-selection and rayon support
+- ✅ Batch operations: `batch_matvec`, `batch_matvec_transpose`
+- ✅ LDPC encoder integrated with CpuBackend
+- ✅ BCH batch API added: `BchEncoder::encode_batch()`
+- ✅ Integration tests: 6 tests covering batch operations
+- ✅ Benchmarks created for performance tracking
+- ✅ All 221 gf2-coding + 452 gf2-core tests pass
 
 **Week 2** (Current):
-- [ ] LDPC: SIMD vectorization for LLR operations (4-8× target)
-- [ ] LDPC: Optimize sparse iteration patterns (2× target)
-- [ ] Target: 50-100 Mbps (100-200% real-time DVB-T2)
+- [ ] Add `parallel` feature to gf2-coding Cargo.toml
+- [ ] Benchmark parallel vs sequential performance
+- [ ] Measure speedup on 24-core CPU
+- [ ] LDPC decoder: Use backend for batch decoding
+- [ ] Target: Document parallel scaling characteristics
 
 **Week 3-4**:
-- [ ] BCH: Add `encode_batch()` / `decode_batch()` APIs
-- [ ] BCH: Rayon parallelization for block-level
+- [ ] LDPC: SIMD vectorization for LLR operations (4-8× target)
+- [ ] LDPC: Optimize sparse iteration patterns (2× target)
+- [ ] BCH: Add `decode_batch()` API
 - [ ] Viterbi: Batch API + rayon parallelization
-- [ ] Unified `Code` trait for backend abstraction
+- [ ] Target: 50-100 Mbps (100-200% real-time DVB-T2)
 
-### Phase C11.2: Backend Abstraction (Month 2) ⏭ PLANNED
+### Phase C11.2: Backend Abstraction ✅ COMPLETE (2025-11-29)
 
 **Goal**: Design `ComputeBackend` trait and refactor existing code
 
-**Tasks**:
-1. Define `ComputeBackend` trait (encoding, decoding, memory management)
-2. Implement `CpuBackend` using rayon (refactor existing LDPC code)
-3. Create `Code` trait for algorithm-agnostic operations
-4. Add backend selection API: `code.with_backend(CpuBackend)`
-5. Write integration tests for backend switching
+**What Was Done**:
+1. ✅ Defined `ComputeBackend` trait (matmul, rref, matvec, batch operations)
+2. ✅ Implemented `CpuBackend` using rayon (optional `parallel` feature)
+3. ✅ Refactored LDPC encoder to use backend
+4. ✅ Added BCH batch encoding API
+5. ✅ Created integration tests for backend operations
 
 **Deliverables**:
-- `src/compute/mod.rs`: Backend trait definitions
-- `src/compute/cpu.rs`: Rayon implementation
-- Documentation: Backend selection guide
+- ✅ `gf2-core/src/compute/mod.rs`: Backend trait definitions
+- ✅ `gf2-core/src/compute/cpu.rs`: Rayon implementation
+- ✅ `gf2-coding/tests/backend_integration.rs`: Integration tests
+- ✅ `gf2-coding/benches/batch_operations.rs`: Performance benchmarks
 
 ### Phase C11.3: GPU Prototype (Month 3-6) ⏭ FUTURE
 

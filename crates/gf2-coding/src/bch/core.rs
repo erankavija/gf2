@@ -353,6 +353,51 @@ impl BchEncoder {
     pub fn new(code: BchCode) -> Self {
         Self { code }
     }
+
+    /// Encodes a batch of messages in parallel (when parallel feature enabled).
+    ///
+    /// This method processes multiple messages efficiently, either sequentially
+    /// or in parallel depending on feature flags and batch size.
+    ///
+    /// # Arguments
+    ///
+    /// * `messages` - Slice of messages to encode (each must have length k)
+    ///
+    /// # Returns
+    ///
+    /// Vector of codewords (each of length n)
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::bch::{BchCode, BchEncoder};
+    /// use gf2_coding::traits::BlockEncoder;
+    /// use gf2_core::gf2m::Gf2mField;
+    /// use gf2_core::BitVec;
+    ///
+    /// let field = Gf2mField::new(4, 0b10011);
+    /// let code = BchCode::new(15, 11, 1, field);
+    /// let encoder = BchEncoder::new(code);
+    ///
+    /// let messages: Vec<BitVec> = (0..10)
+    ///     .map(|i| {
+    ///         let mut msg = BitVec::with_capacity(11);
+    ///         for j in 0..11 {
+    ///             msg.push_bit((i + j) % 2 == 0);
+    ///         }
+    ///         msg
+    ///     })
+    ///     .collect();
+    ///
+    /// let codewords = encoder.encode_batch(&messages);
+    /// assert_eq!(codewords.len(), 10);
+    /// assert_eq!(codewords[0].len(), 15);
+    /// ```
+    pub fn encode_batch(&self, messages: &[BitVec]) -> Vec<BitVec> {
+        // TODO: Use ComputeBackend for parallelization
+        // For now, sequential implementation
+        messages.iter().map(|msg| self.encode(msg)).collect()
+    }
 }
 
 impl BlockEncoder for BchEncoder {

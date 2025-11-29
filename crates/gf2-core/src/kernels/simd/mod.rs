@@ -13,6 +13,7 @@ use std::sync::LazyLock;
 ///
 /// This backend wraps function pointers from `gf2-kernels-simd` which uses
 /// unsafe intrinsics but exposes a safe API.
+#[derive(Copy, Clone)]
 pub struct SimdBackend {
     fns: gf2_kernels_simd::LogicalFns,
     name: &'static str,

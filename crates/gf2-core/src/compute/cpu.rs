@@ -4,8 +4,8 @@
 //! Automatically selects the best kernel backend (Scalar or SIMD) based on CPU
 //! capabilities.
 
-use crate::{BitMatrix, BitVec, alg::rref::RrefResult, kernels::Backend};
 use super::backend::ComputeBackend;
+use crate::{alg::rref::RrefResult, kernels::Backend, BitMatrix, BitVec};
 
 /// CPU compute backend with optional parallel execution.
 ///
@@ -40,7 +40,7 @@ impl CpuBackend {
     /// # Examples
     ///
     /// ```
-    /// use gf2_core::compute::CpuBackend;
+    /// use gf2_core::compute::{ComputeBackend, CpuBackend};
     ///
     /// let backend = CpuBackend::new();
     /// assert!(backend.name().contains("CPU"));
@@ -50,20 +50,20 @@ impl CpuBackend {
         #[cfg(feature = "simd")]
         let kernel: Box<dyn Backend> = {
             if let Some(simd) = crate::kernels::simd::maybe_simd() {
-                Box::new(simd)
+                Box::new(*simd)
             } else {
                 Box::new(crate::kernels::scalar::SCALAR_BACKEND)
             }
         };
-        
+
         #[cfg(not(feature = "simd"))]
         let kernel: Box<dyn Backend> = Box::new(crate::kernels::scalar::SCALAR_BACKEND);
-        
+
         #[cfg(feature = "parallel")]
         let _thread_pool = rayon::ThreadPoolBuilder::new()
             .build()
             .expect("Failed to create rayon thread pool");
-        
+
         Self {
             kernel,
             #[cfg(feature = "parallel")]
@@ -82,13 +82,13 @@ impl ComputeBackend for CpuBackend {
     fn name(&self) -> &str {
         #[cfg(all(feature = "parallel", feature = "simd"))]
         return "CPU (rayon + SIMD)";
-        
+
         #[cfg(all(feature = "parallel", not(feature = "simd")))]
         return "CPU (rayon)";
-        
+
         #[cfg(all(not(feature = "parallel"), feature = "simd"))]
         return "CPU (SIMD)";
-        
+
         #[cfg(all(not(feature = "parallel"), not(feature = "simd")))]
         return "CPU (scalar)";
     }
@@ -217,7 +217,7 @@ mod tests {
     fn test_kernel_backend_works() {
         let backend = CpuBackend::new();
         let kernel = backend.kernel_backend();
-        
+
         // Test that kernel backend can perform XOR
         let mut dst = vec![0xFF, 0x00];
         let src = vec![0x0F, 0xF0];
@@ -228,18 +228,18 @@ mod tests {
     #[test]
     fn test_matmul_correctness() {
         let backend = CpuBackend::new();
-        
+
         // Test with known result: Identity × Matrix = Matrix
         let identity = BitMatrix::identity(2);
-        
+
         let mut b = BitMatrix::zeros(2, 2);
         b.set(0, 0, true);
         b.set(0, 1, true);
         b.set(1, 0, true);
         b.set(1, 1, true);
-        
+
         let c = backend.matmul(&identity, &b);
-        
+
         assert_eq!(c, b, "I × B = B");
     }
 
@@ -248,23 +248,23 @@ mod tests {
     fn test_matmul_associativity() {
         use rand::thread_rng;
         let backend = CpuBackend::new();
-        
+
         let mut rng = thread_rng();
         let a = BitMatrix::random(3, 4, &mut rng);
         let b = BitMatrix::random(4, 5, &mut rng);
         let c = BitMatrix::random(5, 6, &mut rng);
-        
+
         // (A × B) × C = A × (B × C)
         let left = backend.matmul(&backend.matmul(&a, &b), &c);
         let right = backend.matmul(&a, &backend.matmul(&b, &c));
-        
+
         assert_eq!(left, right, "Matrix multiplication should be associative");
     }
 
     #[test]
     fn test_rref_simple_matrix() {
         let backend = CpuBackend::new();
-        
+
         // [1 0 1]
         // [0 1 1]
         // [1 1 0]
@@ -276,17 +276,20 @@ mod tests {
         m.set(1, 2, true);
         m.set(2, 0, true);
         m.set(2, 1, true);
-        
+
         let result = backend.rref(&m, false);
-        
+
         // Matrix is rank deficient
-        assert_eq!(result.rank, 2, "Matrix has rank 2 (row 2 = row 0 XOR row 1)");
+        assert_eq!(
+            result.rank, 2,
+            "Matrix has rank 2 (row 2 = row 0 XOR row 1)"
+        );
     }
 
     #[test]
     fn test_rref_rank_deficient() {
         let backend = CpuBackend::new();
-        
+
         // [1 0 1]
         // [0 1 0]  <- Linearly dependent (row 0 + row 1 = row 2)
         // [1 1 1]
@@ -297,9 +300,9 @@ mod tests {
         m.set(2, 0, true);
         m.set(2, 1, true);
         m.set(2, 2, true);
-        
+
         let result = backend.rref(&m, false);
-        
+
         assert!(result.rank < 3, "Matrix should be rank deficient");
     }
 
@@ -308,16 +311,16 @@ mod tests {
     fn test_rref_with_both_pivot_directions() {
         use rand::thread_rng;
         let backend = CpuBackend::new();
-        
+
         let mut rng = thread_rng();
         let m = BitMatrix::random(5, 8, &mut rng);
-        
+
         let left_pivot = backend.rref(&m, false);
         let right_pivot = backend.rref(&m, true);
-        
+
         // Same rank regardless of pivot direction
         assert_eq!(left_pivot.rank, right_pivot.rank);
-        
+
         // Both results should be in RREF form
         assert!(left_pivot.reduced.rows() == m.rows());
         assert!(right_pivot.reduced.rows() == m.rows());
