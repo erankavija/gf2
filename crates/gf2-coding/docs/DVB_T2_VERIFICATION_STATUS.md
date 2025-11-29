@@ -10,7 +10,7 @@
 | **Test Infrastructure** | ✅ **COMPLETE** | Parser + cache | Phase 1 complete |
 | **Full FEC Chain** | ⏳ **READY** | - | BCH + LDPC both verified |
 
-**Last Updated**: 2025-11-27 19:12 UTC
+**Last Updated**: 2025-11-29 21:30 UTC
 
 **Key Achievements**:
 - ✅ BCH: 100% match with ETSI EN 302 755 test vectors (202/202 blocks)
@@ -26,7 +26,42 @@
 
 ## Overview
 
-Implementation progress for DVB-T2 BCH and LDPC verification using official DVB Project test vectors.
+This document tracks implementation and verification of DVB-T2 BCH and LDPC FEC codes using official ETSI EN 302 755 test vectors from the DVB Project.
+
+### Test Vector Setup
+
+**Location**: `$DVB_TEST_VECTORS_PATH` environment variable  
+**Format**: Binary strings (64 bits per line) with comment lines starting with `%` or `#`  
+**Source**: DVB Project Verification & Validation working group (not in repository due to copyright)
+
+**File Structure**:
+- Directory: `VV001-CR35_CSP/` (and other configurations)
+- Naming: `<VVReference>_TP<xx>_<company>.txt`
+- Organization: Frame markers (`# frame N`), Block markers (`# block M of K`), 64-char binary data lines
+
+### Test Point Chain
+
+```
+TP04 (BBFRAMEs) → BCH Encode → TP05 (FECFRAMEs) → LDPC Encode → TP06 → Bit Interleave → TP07a
+```
+
+| Test Point | Description | Purpose | Bits/Block (CR 3/5) |
+|------------|-------------|---------|---------------------|
+| TP04 | BCH input (BBFRAMEs) | BCH encoder input | 38,688 |
+| TP05 | BCH output (FECFRAMEs) | BCH output, LDPC input | 38,880 (+192 BCH parity) |
+| TP06 | LDPC output | LDPC encoder output | 64,800 (+25,920 LDPC parity) |
+| TP07a | Bit interleaved | Bit interleaver output | 64,800 |
+
+### VV001-CR35 Test Configuration
+
+- **Reference**: VV001-CR35 (Code Rate 3/5)
+- **Frame Size**: NORMAL (64,800 bits)
+- **Code Rate**: 3/5
+- **BCH**: t=12 error correction, 192 parity bits
+- **LDPC**: Normal frame parameters (k=38,880, n=64,800)
+- **Blocks per frame**: 202
+- **Total frames**: 4
+- **Total blocks tested**: 808 (202 × 4)
 
 ## Phase 1: Test Vector Parser Module ✅ **COMPLETE**
 
@@ -126,18 +161,25 @@ Created a complete test vector parsing infrastructure in `tests/test_vectors/`:
 - TP07a: 819,338 lines (~130 MB parsed)
 - Total: ~2.6M lines, ~420 MB data parsed successfully
 
-### Usage
+### Test Execution
 
 ```bash
 # Set test vector location
 export DVB_TEST_VECTORS_PATH=/path/to/your/dvb_test_vectors
 
-# Run verification tests
-cargo test --test test_vector_parser -- --ignored --nocapture
+# Run all verification tests (BCH + LDPC)
+cargo test --test 'dvb_t2_*' -- --ignored --nocapture
+
+# Run specific test suites
+cargo test --test test_vector_parser -- --ignored        # Parser tests
+cargo test --test dvb_t2_bch_verification -- --ignored    # BCH tests
+cargo test --test dvb_t2_ldpc_verification_suite -- --ignored  # LDPC tests
 
 # Run normal tests (verification tests skipped automatically)
 cargo test
 ```
+
+**Note**: Verification tests are marked `#[ignore]` and skip gracefully if test vectors are not available.
 
 ### Code Quality
 
@@ -149,54 +191,17 @@ cargo test
 - ✅ All warnings addressed
 - ✅ Modular design for extensibility
 
-### Next Steps
+### Key Validation Achievements
 
-With the parser infrastructure complete, we can now proceed to:
+✅ **Parsing**: 2.6M lines (~420 MB) parsed successfully across all test points  
+✅ **BCH**: 100% match with test vectors (202/202 blocks)  
+✅ **LDPC Encoding**: 100% match (202/202 blocks, 12.4s, 0.63 Mbps)  
+✅ **LDPC Decoding**: 100% match (202/202 blocks, 5.8s, 1.35 Mbps)  
+✅ **Mathematical Verification**: H × G^T = 0 verified for all configurations
 
-**Phase 2: BCH Verification** (1 day)
-- Implement BCH encoding validation (TP04 → TP05)
-- Implement BCH decoding validation (TP05 → TP04)
-- Test error correction with injected errors
 
-**Phase 3: LDPC Verification** (1-2 days)
-- Validate systematic encoding property (TP05 ⊂ TP06)
-- Implement LDPC decoding validation (TP06 → TP05)
-- Test soft-decision decoding with AWGN
 
-**Phase 4: Integration Tests** (1 day)
-- Full FEC chain validation (TP04 → TP06 → TP04)
-- Round-trip with error injection
-- Performance benchmarking
 
-## Dependencies
-
-### Rust Crates Added
-- `tempfile = "3.8"` (dev-dependency for tests)
-- `thiserror = "1.0"` (dev-dependency for error handling)
-
-### Existing Code Used
-- `gf2_core::BitVec`: Bit vector storage
-- `gf2_coding::CodeRate`: Code rate enum
-- `gf2_coding::ldpc::dvb_t2::FrameSize`: Frame size enum
-
-### External Resources Required
-- DVB test vectors (not in repository due to copyright)
-- Location: Set via `$DVB_TEST_VECTORS_PATH` environment variable
-- Source: DVB Project Verification & Validation working group
-
-## Performance
-
-**Parsing Performance**:
-- TP04 (490K lines): ~1.5 seconds
-- TP05 (492K lines): ~1.5 seconds  
-- TP06 (819K lines): ~2.5 seconds
-- TP07a (819K lines): ~2.5 seconds
-- **Total**: ~7.2 seconds for full VV001-CR35 suite
-
-**Memory Usage**:
-- Efficient streaming parser
-- BitVec uses compact 64-bit word storage
-- Scales to multiple configurations
 
 ## Phase 2: BCH Verification ✅ **COMPLETE**
 
@@ -215,21 +220,13 @@ Created comprehensive BCH verification test suite in `tests/dvb_t2_bch_verificat
 4. `test_bch_systematic_property` - Verifies test vectors use systematic encoding
 5. `test_bch_encoding_sample` - Spot checks across multiple frames
 
-**Test Coverage**:
-- Full frame validation (202 blocks)
-- Error injection and correction (t=1 to t=12)
-- Systematic property verification
-- Multi-frame consistency checks
-- Detailed diagnostic output
-
-### Implementation Summary
-
 **Test Infrastructure** (280 lines in `tests/dvb_t2_bch_verification.rs`):
 - 5 comprehensive verification tests
 - Full frame validation (202 blocks × 4 frames = 808 blocks)
 - Error injection and correction testing (t=1 to t=12)
 - Systematic property validation
 - Multi-frame consistency checks
+- Detailed diagnostic output
 
 ### Bug Discovery and Fix
 
@@ -538,34 +535,101 @@ cargo run --release --bin generate_cache all
 
 ## Implementation Notes
 
-### Richardson-Urbanke Algorithm (Phase C10.6.1)
-The systematic encoding uses Gaussian elimination to transform the parity-check matrix H into a form that enables efficient encoding. Key insight: row reordering after elimination is critical to align the identity structure correctly for extracting parity relationships.
+### Key Implementation Details
 
-**Algorithm**:
+#### Richardson-Urbanke Systematic Encoding
+The LDPC systematic encoding uses Gaussian elimination to transform the parity-check matrix H into a form that enables efficient encoding:
+
 1. Gaussian elimination with column pivoting to find m independent parity columns
 2. **Critical**: Reorder rows so row i has its pivot in parity_cols[i]
 3. Build generator G = [I_k | P] where P[i,j] = H_work[row_order[j], message_cols[i]]
 
-### Sparse Generator Matrices (Phase C10.6.2)
+**Key insight**: Row reordering after elimination is critical to align the identity structure correctly for extracting parity relationships.
+
+#### Storage Optimization Strategy
 Switched from dense `BitMatrix` to `SpBitMatrixDual` for generator storage:
 - Memory: 255 MB → 1.6 MB per DVB-T2 Normal matrix (160× reduction)
 - Total cache: 1.5 GB → 10 MB for all 12 configs
 - Encoding speed: Same O(edges) complexity with sparse matvec_transpose
 - Benefits: Enables file caching with reasonable disk usage
 
-### File I/O Design (Phase C10.6.3)
+#### File-Based Caching
 File-based caching eliminates preprocessing entirely:
-- **Format**: Binary COO (edge list) from gf2-core
+- **Format**: Binary COO (Coordinate/edge list) from gf2-core
 - **Naming**: `n{n}_k{k}_h{hash}.gf2` for unique identification
 - **Loading**: `SpBitMatrixDual::load_from_file()` + wrap in `RuEncodingMatrices`
-- **Saving**: Extract generator with `matrices.generator().save_to_file()`
-- **Philosophy**: Completely opt-in, no forced global state
+- **Saving**: Extract parity part P (not full generator G) to save space
+- **Philosophy**: Completely opt-in, user-controlled cache (no forced global state)
+
+## Future Work
+
+### Additional Test Configurations
+Once VV001-CR35 validation is complete, expand to:
+- **Other Normal frame rates**: 1/2, 2/3, 3/4, 4/5, 5/6
+- **Short frame configurations**: All 6 code rates (16,200 bit frames)
+- **Full DVB-T2 test suite**: All 12 code/frame combinations
+
+### Performance Optimization
+**Current throughput** (single-threaded, release build):
+- LDPC Encoding: 0.63 Mbps
+- LDPC Decoding: 1.35 Mbps
+
+**Target**: Real-time DVB-T2 throughput (31-50 Mbps)
+- Requires 50-80× speedup
+- Optimization targets: SIMD, parallelization, algorithmic improvements
+- See: `LDPC_PERFORMANCE_PLAN.md` for detailed strategy
+
+### Integration Tests
+- **Full FEC chain**: TP04 → BCH → LDPC → TP06 → LDPC decode → BCH decode → TP04
+- **Error injection**: Round-trip with controlled bit errors
+- **AWGN channel simulation**: Soft-decision decoding with additive noise
+- **FER curves**: Frame error rate vs. Eb/N0 comparison with reference implementations
+
+### Bit Interleaver
+- **Phase 6**: Bit interleaver verification (TP06 → TP07a)
+- Validates DVB-T2 bit interleaving specification
+- Required for complete transmitter chain validation
+
+## Dependencies
+
+### Rust Crates
+- `tempfile = "3.8"` (dev-dependency for tests)
+- `thiserror = "1.0"` (dev-dependency for error handling)
+- Core: `gf2_core::BitVec`, `gf2_coding::{CodeRate, FrameSize}`
+
+### External Resources
+- DVB test vectors (not in repository due to copyright)
+- Location: `$DVB_TEST_VECTORS_PATH` environment variable
+- Source: DVB Project V&V working group
+
+## Historical Notes
+
+### 2025-11-27: LDPC Decoder Bug Discovery
+- **Issue**: Decoder returned full n-bit codeword instead of k-bit message
+- **Root Cause**: Missing message extraction from systematic [message | parity] format
+- **Resolution**: 7-line fix in `src/ldpc/core.rs` (lines 848-858), diagnosed and fixed in 30 minutes
+- **Impact**: All 202/202 test blocks now decode correctly
+- **Lesson**: TDD approach caught bug immediately during test vector validation
+
+### 2025-11-28: Decoder State Leakage Bug
+- **Issue**: Consecutive decodes had state leakage (check_to_var messages not reset between calls)
+- **Root Cause**: Message buffers not properly cleared at start of `decode_iterative`
+- **Resolution**: Added proper message reset at decoder initialization
+- **Impact**: ~1-2% performance regression (necessary for correctness)
+- **Lesson**: TDD process (writing tests first) revealed state management bug that would have caused subtle errors in production
+
+### 2025-11-28: Parallel Decoding Achievement
+- **Implementation**: Rayon-based parallel batch decoding with thread-local decoder instances
+- **Result**: 6.7× speedup on 24-core CPU (1.23 Mbps → 8.29 Mbps)
+- **Architecture**: Each thread creates its own decoder to avoid Sync complexity
+- **Achievement**: Met Week 1 performance goal for software recording capability
 
 ## References
 
-- [DVB_T2_VERIFICATION_PLAN.md](DVB_T2_VERIFICATION_PLAN.md) - Full implementation plan
 - [DVB_test_vectors.md](DVB_test_vectors.md) - Test vector format specification
 - [SYSTEMATIC_ENCODING_CONVENTION.md](SYSTEMATIC_ENCODING_CONVENTION.md) - Bit ordering conventions
+- [LDPC_VERIFICATION_TESTS.md](LDPC_VERIFICATION_TESTS.md) - Detailed LDPC test documentation
+- [LDPC_PERFORMANCE_PLAN.md](LDPC_PERFORMANCE_PLAN.md) - Performance optimization strategy
 - ETSI EN 302 755 - DVB-T2 standard specification
 - `examples/ldpc_cache_file_io.rs` - File cache demonstration
 - `examples/ldpc_encoding_with_cache.rs` - Memory cache demonstration

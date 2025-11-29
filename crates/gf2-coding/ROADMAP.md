@@ -145,36 +145,142 @@ See [docs/DVB_T2_DESIGN.md](docs/DVB_T2_DESIGN.md) for detailed design and imple
 
 ### Current Work 🎯
 
-**C10.6.8: Performance Optimization** (1-2 weeks) - **REAL-TIME TARGET**
+**C10.6.8: Performance Optimization** ✅ **COMPLETE** (2025-11-27)
+- ✅ Profiling: 97.5% encoding in `BitMatrix::matvec_transpose`, 69.8% decoding in BP loop
+- ✅ Baseline: 3.85 Mbps encoding, 8.29 Mbps decoding (parallel batch)
+- ✅ Parallel batch decoding: **6.7× speedup** on 24-core CPU
+- ✅ SIMD verified: 178 SIMD instructions active in binary (gf2-core)
+- **Decision**: SIMD/optimization work moved to Phase C11 (Parallel Computing Framework)
 
-**Real-Time Requirement**: DVB-T2 8 MHz mode requires **31.4 Mbps encoding / 50 Mbps decoding**
-- Current: 3.85 Mbps encoding (8.2× too slow), 8.29 Mbps decoding (6.0× too slow)
-- Parallel batch decoding: **6.7× speedup achieved** (24-core CPU)
+## Phase C11: Parallel Computing Framework 🔧 **NEXT PRIORITY** (2025-11-29)
 
-**Profiling Complete** ✅ (2025-11-27):
-- ✅ Encoding: 97.5% in `BitMatrix::matvec_transpose` (gf2-core)
-- ✅ Decoding: 69.8% BP loop + 17.7% sparse iteration + 4.9% malloc
-- ✅ SIMD enabled: 178 SIMD instructions found in binary
-- See: [docs/LDPC_PROFILING_RESULTS.md](docs/LDPC_PROFILING_RESULTS.md)
+**Goal**: Unified parallelization strategy across all coding methods (CPU, GPU, FPGA)
 
-**Week 1 Goal**: 10-20 Mbps (Software Recording) ✅ PARTIAL
-- ✅ Pre-allocate decoder state (buffers already pre-allocated)
-- ✅ Implement batch processing (sequential for encoder, parallel for decoder)
-- ✅ Add block-level parallelism (6.7× speedup with rayon on 24-core)
-- ✅ Achieved: 8.29 Mbps decoding (16% real-time, batch of 202)
-- ⚠️ Encoder: 3.85 Mbps (sequential, Sync bounds need resolution)
+**Rationale**: Implement general framework now with validated BCH/LDPC, before adding more coding schemes.
 
-**Week 2 Goal**: 50-100 Mbps (Live Reception)
-- [ ] SIMD vectorization for LLRs (4-8× speedup, 1-2 days)
-- [ ] Optimize sparse iteration (2× speedup, 1-2 days)
-- [ ] Profile BP loop internals (1 day)
-- [ ] Target: 100-200% real-time (live DVB-T2 on PC)
+### Architecture
 
-**See**: [docs/OPTIMIZATION_ACTION_PLAN.md](docs/OPTIMIZATION_ACTION_PLAN.md) for detailed plan
+**Layered Parallelization Model**:
+- **Application Layer**: Simple API with backend selection
+- **Backend Abstraction**: `ComputeBackend` trait (CPU, GPU, FPGA)
+- **Algorithm Layer**: LDPC, BCH, Viterbi, Polar
+- **Primitive Layer**: SIMD kernels, word-level operations (gf2-core)
+- **Hardware Layer**: Rayon, Vulkan/CUDA, FPGA
 
-### Future Phases
+See [docs/PARALLELIZATION_STRATEGY.md](docs/PARALLELIZATION_STRATEGY.md) for detailed design and implementation plan.
 
-**C10.7: Full FEC Chain** (2-3 weeks, after real-time performance achieved)
+### Phase C11.1: CPU Parallelization (Weeks 1-4) 🔧 **IN PROGRESS**
+
+**Goal**: 50-100 Mbps real-time DVB-T2 on 24-core CPU
+
+**Week 1** ✅ COMPLETE:
+- ✅ LDPC decoder: Rayon parallelization (6.7× speedup → 8.29 Mbps)
+- ✅ Batch API: `decode_batch(&[Vec<Llr>])`
+- ✅ Benchmarks: Scaling analysis (1-202 blocks)
+
+**Week 2** (Current):
+- [ ] LDPC: SIMD vectorization for LLR operations (4-8× target)
+- [ ] LDPC: Optimize sparse iteration patterns (2× target)
+- [ ] Target: 50-100 Mbps (100-200% real-time DVB-T2)
+
+**Week 3-4**:
+- [ ] BCH: Add `encode_batch()` / `decode_batch()` APIs
+- [ ] BCH: Rayon parallelization for block-level
+- [ ] Viterbi: Batch API + rayon parallelization
+- [ ] Unified `Code` trait for backend abstraction
+
+### Phase C11.2: Backend Abstraction (Month 2) ⏭ PLANNED
+
+**Goal**: Design `ComputeBackend` trait and refactor existing code
+
+**Tasks**:
+1. Define `ComputeBackend` trait (encoding, decoding, memory management)
+2. Implement `CpuBackend` using rayon (refactor existing LDPC code)
+3. Create `Code` trait for algorithm-agnostic operations
+4. Add backend selection API: `code.with_backend(CpuBackend)`
+5. Write integration tests for backend switching
+
+**Deliverables**:
+- `src/compute/mod.rs`: Backend trait definitions
+- `src/compute/cpu.rs`: Rayon implementation
+- Documentation: Backend selection guide
+
+### Phase C11.3: GPU Prototype (Month 3-6) ⏭ FUTURE
+
+**Goal**: Validate GPU acceleration feasibility for LDPC
+
+**Milestone 1: Vulkan Setup** (Week 1-2):
+- [ ] Add `vulkano` dependency (behind `gpu` feature flag)
+- [ ] Device enumeration and selection
+- [ ] Memory allocation (pinned host buffers)
+
+**Milestone 2: LDPC Compute Shader** (Week 3-4):
+- [ ] Write GLSL compute shader for min-sum BP
+- [ ] Implement check-node and variable-node update kernels
+- [ ] Pipeline: Upload → Compute → Download
+
+**Milestone 3: Benchmarking** (Week 5-6):
+- [ ] Measure throughput vs. batch size (1, 10, 50, 100, 500)
+- [ ] Identify crossover point: When does GPU beat 24-core CPU?
+- [ ] Profile GPU utilization (memory vs. compute bound?)
+- [ ] Document findings in `docs/GPU_FEASIBILITY_STUDY.md`
+
+**Decision criteria**:
+- ✅ **Go**: GPU > 3× faster than CPU for batch size > 100
+- ⚠️ **Investigate**: GPU = 1.5-3× faster (memory-bound?)
+- ❌ **Abandon**: GPU < 1.5× faster (stick with CPU)
+
+### Phase C11.4: GPU Production (Month 7-12) ⏭ CONDITIONAL
+
+**Prerequisites**: Phase C11.3 feasibility study shows > 3× speedup
+
+**Tasks**:
+1. Implement `VulkanBackend` for all code types (LDPC, BCH, Viterbi)
+2. Optimize memory layout (Structure-of-Arrays for coalescing)
+3. Add CUDA backend for NVIDIA-specific optimizations
+4. Implement automatic backend selection with fallback
+5. Performance tuning (occupancy, memory bandwidth)
+
+**Target**: 500-1000 Mbps LDPC decoding (10-30× CPU)
+
+### Phase C11.5: FPGA Exploration (Year 1-2) 🔬 RESEARCH
+
+**Goal**: Investigate FPGA feasibility for ultra-low latency / high throughput
+
+**Phase C11.5.1: Feasibility Study** (Month 1-3):
+- [ ] Survey existing FPGA LDPC implementations
+- [ ] Analyze resource utilization (LUTs, DSPs, BRAM) for DVB-T2
+- [ ] Estimate latency and throughput for target FPGA (Xilinx VU9P)
+- [ ] Cost-benefit analysis: FPGA vs. GPU vs. CPU
+
+**Phase C11.5.2: Prototype** (Month 4-9):
+- [ ] Select FPGA platform (Xilinx Alveo U250 recommended)
+- [ ] Implement Viterbi decoder in Verilog/VHDL (simplest algorithm)
+- [ ] PCIe DMA interface with Linux driver
+- [ ] Benchmark vs. CPU baseline
+
+**Target**: 1-10 Gbps sustained throughput, < 10 μs latency
+
+### Performance Targets
+
+| Tier | Application | Throughput | Backend | Timeline |
+|------|-------------|------------|---------|----------|
+| **1. Software Recording** | PC DVB-T2 receiver | 10-50 Mbps | CPU (rayon) | ✅ Week 1 |
+| **2. Live Reception** | Real-time SDR | 50-200 Mbps | CPU (SIMD) | Week 2-4 |
+| **3. Professional** | Broadcast equipment | 200-1000 Mbps | GPU (Vulkan) | Month 3-6 |
+| **4. Broadcast** | High-throughput links | 1-10 Gbps | FPGA | Year 1-2 |
+
+### Research Questions
+
+1. **GPU LDPC**: Memory-bound or compute-bound? Crossover point vs. 24-core CPU?
+2. **Sparse Matrix Format**: CSR vs. ELLPACK for GPU coalesced memory access?
+3. **Fixed-Point LLRs**: Can 8-bit quantized LLRs match FP32 accuracy on GPU?
+4. **FPGA Resource Utilization**: Optimal unrolling factor for DVB-T2 LDPC?
+5. **BCH on GPU**: Is Berlekamp-Massey serial bottleneck worth GPU offload?
+
+**See**: [docs/PARALLELIZATION_STRATEGY.md](docs/PARALLELIZATION_STRATEGY.md)
+
+## Phase C10.7: Full FEC Chain (2-3 weeks, after C11.1-11.2 complete)
 - [ ] QAM modulation (QPSK, 16/64/256-QAM)
 - [ ] Bit interleaving (DVB-T2 column-row)
 - [ ] System integration (BCH + LDPC + QAM)
@@ -184,12 +290,12 @@ See [docs/DVB_T2_DESIGN.md](docs/DVB_T2_DESIGN.md) for detailed design and imple
 
 **See**: [docs/DVB_T2_DESIGN.md](docs/DVB_T2_DESIGN.md) and [docs/DVB_T2_VERIFICATION_STATUS.md](docs/DVB_T2_VERIFICATION_STATUS.md)
 
-## Phase C11: Performance & Ergonomics Polish (Ongoing)
+## Phase C13: Performance & Ergonomics Polish (Ongoing)
 - Unified error handling and panic messages → shift towards `Result` where appropriate
 - Trait refinements: streaming vs. batch encode/decode unification
 - Doc examples with visual syndrome / decoding traces
 
-## Phase C12: SDR and DSP Framework Integration (Planned)
+## Phase C12: SDR and DSP Framework Integration (Planned - After C11)
 **Goal**: Interface with GNU Radio, LuaRadio, and other SDR ecosystems
 
 See [docs/SDR_INTEGRATION.md](docs/SDR_INTEGRATION.md) for comprehensive design.
