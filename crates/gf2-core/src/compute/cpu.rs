@@ -146,13 +146,12 @@ impl ComputeBackend for CpuBackend {
         #[cfg(feature = "parallel")]
         {
             use rayon::prelude::*;
-            // Clone matrix and vectors for parallel processing
-            // BitMatrix and BitVec clones are relatively cheap (copy-on-write semantics)
-            let matrix = matrix.clone();
-            let vectors: Vec<BitVec> = vectors.to_vec();
-            vectors
+            use std::sync::Arc;
+            // Share matrix across threads (now that BitMatrix is Sync)
+            let matrix = Arc::new(matrix);
+            (0..vectors.len())
                 .into_par_iter()
-                .map(|v| matrix.matvec(&v))
+                .map(|i| matrix.matvec(&vectors[i]))
                 .collect()
         }
 
@@ -178,12 +177,12 @@ impl ComputeBackend for CpuBackend {
         #[cfg(feature = "parallel")]
         {
             use rayon::prelude::*;
-            // Clone matrix and vectors for parallel processing
-            let matrix = matrix.clone();
-            let vectors: Vec<BitVec> = vectors.to_vec();
-            vectors
+            use std::sync::Arc;
+            // Share matrix across threads (now that BitMatrix is Sync)
+            let matrix = Arc::new(matrix);
+            (0..vectors.len())
                 .into_par_iter()
-                .map(|v| matrix.matvec_transpose(&v))
+                .map(|i| matrix.matvec_transpose(&vectors[i]))
                 .collect()
         }
 

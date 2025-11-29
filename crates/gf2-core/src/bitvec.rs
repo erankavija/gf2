@@ -1,6 +1,6 @@
 //! Core BitVec type for bit string manipulation.
 
-use std::cell::RefCell;
+use std::sync::Mutex;
 use std::fmt;
 
 /// Reverses the lowest `num_bits` bits of `x`.
@@ -55,12 +55,23 @@ struct RankSelectIndex {
 /// assert_eq!(bv.len(), 1);
 /// assert_eq!(bv.get(0), true);
 /// ```
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct BitVec {
     data: Vec<u64>,
     len_bits: usize,
-    /// Lazy rank/select index (built on first query)
-    rank_select_index: RefCell<Option<RankSelectIndex>>,
+    /// Lazy rank/select index (built on first query, thread-safe)
+    rank_select_index: Mutex<Option<RankSelectIndex>>,
+}
+
+impl Clone for BitVec {
+    fn clone(&self) -> Self {
+        Self {
+            data: self.data.clone(),
+            len_bits: self.len_bits,
+            // Don't clone the index - let it be built lazily in the clone
+            rank_select_index: Mutex::new(None),
+        }
+    }
 }
 
 impl PartialEq for BitVec {
@@ -87,7 +98,7 @@ impl BitVec {
         Self {
             data: Vec::new(),
             len_bits: 0,
-            rank_select_index: RefCell::new(None),
+            rank_select_index: Mutex::new(None),
         }
     }
 
@@ -106,7 +117,7 @@ impl BitVec {
         Self {
             data: Vec::with_capacity(words),
             len_bits: 0,
-            rank_select_index: RefCell::new(None),
+            rank_select_index: Mutex::new(None),
         }
     }
 
@@ -126,7 +137,7 @@ impl BitVec {
         Self {
             data: vec![0u64; num_words],
             len_bits: len,
-            rank_select_index: RefCell::new(None),
+            rank_select_index: Mutex::new(None),
         }
     }
 
@@ -149,7 +160,7 @@ impl BitVec {
             return Self {
                 data: Vec::new(),
                 len_bits: 0,
-                rank_select_index: RefCell::new(None),
+                rank_select_index: Mutex::new(None),
             };
         }
 
@@ -166,7 +177,7 @@ impl BitVec {
         Self {
             data,
             len_bits: len,
-            rank_select_index: RefCell::new(None),
+            rank_select_index: Mutex::new(None),
         }
     }
 
@@ -202,7 +213,7 @@ impl BitVec {
         Self {
             data,
             len_bits,
-            rank_select_index: RefCell::new(None),
+            rank_select_index: Mutex::new(None),
         }
     }
 
@@ -627,7 +638,7 @@ impl BitVec {
 
     /// Builds the rank/select index if not already built.
     fn ensure_index(&self) {
-        let mut index = self.rank_select_index.borrow_mut();
+        let mut index = self.rank_select_index.lock().unwrap();
         if index.is_some() {
             return;
         }
@@ -705,7 +716,7 @@ impl BitVec {
         }
 
         self.ensure_index();
-        let index = self.rank_select_index.borrow();
+        let index = self.rank_select_index.lock().unwrap();
         let index = index.as_ref().unwrap();
 
         let word_idx = idx / 64;
@@ -757,7 +768,7 @@ impl BitVec {
         }
 
         self.ensure_index();
-        let index = self.rank_select_index.borrow();
+        let index = self.rank_select_index.lock().unwrap();
         let index = index.as_ref().unwrap();
 
         let target = k + 1; // We want the position where rank equals k+1
@@ -980,7 +991,7 @@ impl BitVec {
         Self {
             data,
             len_bits,
-            rank_select_index: RefCell::new(None),
+            rank_select_index: Mutex::new(None),
         }
     }
 
@@ -1132,7 +1143,7 @@ impl BitVec {
         let mut bv = Self {
             data,
             len_bits,
-            rank_select_index: RefCell::new(None),
+            rank_select_index: Mutex::new(None),
         };
         bv.mask_tail();
         bv
@@ -1222,14 +1233,14 @@ impl BitVec {
             return Self {
                 data: vec![0u64; len_bits.div_ceil(64)],
                 len_bits,
-                rank_select_index: RefCell::new(None),
+                rank_select_index: Mutex::new(None),
             };
         }
         if p == 1.0 {
             let mut bv = Self {
                 data: vec![u64::MAX; len_bits.div_ceil(64)],
                 len_bits,
-                rank_select_index: RefCell::new(None),
+                rank_select_index: Mutex::new(None),
             };
             bv.mask_tail();
             return bv;
