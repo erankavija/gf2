@@ -38,6 +38,7 @@
 pub mod alg;
 mod bitslice;
 mod bitvec;
+pub mod compute;
 pub mod gf2m;
 
 #[cfg(feature = "io")]

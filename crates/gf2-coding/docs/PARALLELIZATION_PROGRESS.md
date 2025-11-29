@@ -33,26 +33,25 @@
 
 ## Next Steps (Immediate)
 
-### ⏭ Phase 2: Integrate with gf2-coding (Weeks 2-3)
+### 🔧 Phase 2: Integrate with gf2-coding (IN PROGRESS - Week 1)
 
 **Goal**: Use gf2-core's ComputeBackend in gf2-coding algorithms
 
-**Tasks**:
-1. Add batch operations to `ComputeBackend` trait:
-   ```rust
-   fn encode_batch(&self, encoder: &dyn Encodable, msgs: &[BitVec]) -> Vec<BitVec>;
-   fn decode_batch(&self, decoder: &dyn Decodable, llrs: &[Vec<Llr>]) -> Vec<Result>;
-   ```
+**Completed** (2025-11-29):
+- ✅ Added batch operations to `ComputeBackend` trait:
+  - `matvec()` / `matvec_transpose()` for single vectors
+  - `batch_matvec()` / `batch_matvec_transpose()` for multiple vectors
+- ✅ Implemented in `CpuBackend` with parallel support (rayon)
+- ✅ 13 comprehensive tests including parallel speedup validation
+- ✅ All 450 gf2-core tests still pass (zero breaking changes)
 
-2. Refactor `LdpcDecoder::decode_batch()` to use `CpuBackend`
+**Remaining Tasks**:
+1. Refactor `LdpcDecoder::decode_batch()` to use `CpuBackend`
+2. Add `BchEncoder::encode_batch()` using ComputeBackend  
+3. Document backend usage in gf2-coding README
+4. Integration tests in gf2-coding
 
-3. Add `BchEncoder::encode_batch()` using ComputeBackend
-
-4. Implement parallel matmul in `CpuBackend` (when `parallel` feature enabled)
-
-5. Document backend usage in gf2-coding README
-
-**Estimated Effort**: 2-3 weeks
+**Estimated Effort**: 1-2 more weeks
 
 ---
 
@@ -107,11 +106,11 @@
 - [x] 17 tests passing
 - [x] Zero breaking changes (441/441 tests pass)
 
-### Phase 2 (⏭ Next)
-- [ ] Batch operations in ComputeBackend
+### Phase 2 (🔧 In Progress)
+- [x] Batch operations in ComputeBackend (matvec, batch_matvec, transpose variants)
+- [x] Parallel matmul implemented (via rayon when `parallel` feature enabled)
 - [ ] LDPC uses backend
 - [ ] BCH uses backend
-- [ ] Parallel matmul implemented
 - [ ] Documentation updated
 
 ### Phase 3 (🔬 Research)
