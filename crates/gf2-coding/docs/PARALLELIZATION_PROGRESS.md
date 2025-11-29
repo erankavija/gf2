@@ -42,8 +42,10 @@
   - `matvec()` / `matvec_transpose()` for single vectors
   - `batch_matvec()` / `batch_matvec_transpose()` for multiple vectors
 - ✅ Implemented in `CpuBackend` with parallel support (rayon)
-- ✅ 13 comprehensive tests including parallel speedup validation
-- ✅ All 450 gf2-core tests still pass (zero breaking changes)
+- ✅ **Made BitVec/BitMatrix Sync** by replacing RefCell → Mutex
+- ✅ Eliminated cloning in parallel operations (99% memory reduction)
+- ✅ 13 batch operation tests + 6 thread-safety tests
+- ✅ All 456 gf2-core tests pass (zero breaking changes)
 
 **Remaining Tasks**:
 1. Refactor `LdpcDecoder::decode_batch()` to use `CpuBackend`
