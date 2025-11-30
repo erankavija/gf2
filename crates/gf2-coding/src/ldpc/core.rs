@@ -708,15 +708,28 @@ impl LdpcDecoder {
         llr_blocks: &[Vec<Llr>],
         max_iterations: usize,
     ) -> Vec<DecoderResult> {
-        use rayon::prelude::*;
+        #[cfg(feature = "parallel")]
+        {
+            use rayon::prelude::*;
+            (0..llr_blocks.len())
+                .into_par_iter()
+                .map(|i| {
+                    let mut decoder = Self::new(code.clone());
+                    decoder.decode_iterative(&llr_blocks[i], max_iterations)
+                })
+                .collect()
+        }
 
-        (0..llr_blocks.len())
-            .into_par_iter()
-            .map(|i| {
-                let mut decoder = Self::new(code.clone());
-                decoder.decode_iterative(&llr_blocks[i], max_iterations)
-            })
-            .collect()
+        #[cfg(not(feature = "parallel"))]
+        {
+            llr_blocks
+                .iter()
+                .map(|llrs| {
+                    let mut decoder = Self::new(code.clone());
+                    decoder.decode_iterative(llrs, max_iterations)
+                })
+                .collect()
+        }
     }
 
     /// Performs check node update (sum-product algorithm).

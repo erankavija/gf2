@@ -13,7 +13,7 @@ gf2-core = { path = "../gf2-core" }
 gf2-kernels-simd = { path = "../gf2-kernels-simd", optional = true }
 rand = { workspace = true }
 rand_distr = "0.4"
-rayon = "1.8"
+rayon = { workspace = true, optional = true }
 
 [dev-dependencies]
 proptest = { workspace = true }
@@ -21,10 +21,12 @@ rand = { workspace = true }
 criterion = { workspace = true }
 tempfile = "3.8"
 thiserror = "1.0"
+num_cpus = "1.17.0"
 
 [features]
 default = ["simd"]
 simd = ["gf2-core/simd", "gf2-kernels-simd"]
+parallel = ["dep:rayon", "gf2-core/parallel"]
 visualization = ["gf2-core/visualization"]
 
 # Binaries are auto-discovered in src/bin/
@@ -54,4 +56,8 @@ harness = false
 
 [[bench]]
 name = "batch_operations"
+harness = false
+
+[[bench]]
+name = "parallel_scaling"
 harness = false

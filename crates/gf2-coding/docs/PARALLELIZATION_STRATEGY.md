@@ -1,7 +1,7 @@
 # Parallelization Strategy for gf2-coding
 
-**Date**: 2025-11-29  
-**Status**: Phase 1 Complete (CPU Parallelism), Planning for GPU/FPGA  
+**Date**: 2025-11-30  
+**Status**: Week 2 Complete (Feature Flag & Benchmarking), Phase 1 In Progress  
 **Goal**: Unified parallelization framework across all coding methods targeting 10 Mbps (SDR) to 1 Gbps (broadcast)
 
 ---
@@ -441,10 +441,20 @@ let c = backend.matmul(&a, &b);  // Uses optimized kernel backend
 
 ### 2. BCH Codes (Medium Priority)
 
+**Status**: ⏸️ **BLOCKED** - Requires gf2-core Phase 15 (GF(2^m) Thread Safety)
+
+**Current Blocker**: `Gf2mField` uses `Rc<FieldParams>` which is not `Send + Sync`
+- See: [gf2-core Phase 15 Roadmap](../../gf2-core/ROADMAP.md#phase-15-gf2m-thread-safety)
+- See: [GF2M Thread Safety Requirements](../../gf2-core/docs/GF2M_THREAD_SAFETY_REQUIREMENTS.md)
+- **Timeline**: 5 days (Week 1 implementation)
+- **After fix**: 8× speedup for BCH batch decoding on 12-core CPU
+
 **Encoding**: Embarrassingly parallel (independent polynomial division)
 ```rust
 impl BchEncoder {
     pub fn encode_batch(&self, messages: &[BitVec]) -> Vec<BitVec> {
+        // ❌ Currently blocked: Gf2mField not Send+Sync
+        // ✅ After Phase 15: Will use rayon parallelism
         messages.par_iter().map(|m| self.encode(m)).collect()
     }
 }
@@ -703,21 +713,29 @@ void viterbi_butterfly(
 4. ✅ Feature flag: `parallel` for rayon (opt-in)
 5. ✅ All 441 gf2-core tests pass (backward compatible)
 
-**gf2-coding LDPC Parallelism** ✅ COMPLETE (2025-11-28):
-1. ✅ Add rayon dependency to `gf2-coding`
-2. ⚠️ Implement parallel `encode_batch()` - sequential (Sync bounds TODO)
+**gf2-coding LDPC Parallelism** ✅ Week 1 Complete (2025-11-28):
 1. ✅ Add rayon dependency to `gf2-coding`
 2. ⚠️ Implement parallel `encode_batch()` - sequential (Sync bounds TODO)
 3. ✅ Implement parallel `decode_batch()` with rayon - **6.7× speedup**
 4. ✅ Benchmark 1, 10, 50, 100, 202 block batches
 5. ✅ Validate throughput: 1.23 Mbps → 8.29 Mbps (batch of 202)
 
-**Short-Term** ⏭ NEXT (2-4 Weeks):
-6. ⏭ Vectorize LDPC LLR operations (SIMD horizontal min/sum)
-7. ⏭ Optimize memory layout for cache efficiency (Structure-of-Arrays)
-8. ⏭ Add parallel BCH batch APIs (`BchEncoder::encode_batch()`)
-9. ⏭ Document thread safety guarantees in public API
-10. ⏭ Profile scaling on NUMA systems (multi-socket)
+**Week 2: Feature Flag & Benchmarking** ✅ COMPLETE (2025-11-30):
+6. ✅ Added `parallel` feature flag (opt-in, matches gf2-core)
+7. ✅ Made rayon optional dependency with conditional compilation
+8. ✅ Created `benches/parallel_scaling.rs` with thread control
+9. ✅ Created `benchmark_threads.sh` automation script
+10. ✅ Comprehensive user guide: `PARALLEL_BENCHMARKING.md`
+11. ✅ All 221 tests pass with/without parallel feature
+12. ⏭ Full thread scaling measurements pending
+
+**Short-Term** ⏭ NEXT (Weeks 3-4):
+13. ⏭ Complete thread scaling benchmarks (1, 2, 4, 8, 12, 24 threads)
+14. ⏭ Document parallel scaling characteristics and optimal config
+15. ⏭ Vectorize LDPC LLR operations (SIMD horizontal min/sum)
+16. ⏭ Optimize memory layout for cache efficiency (Structure-of-Arrays)
+17. ⏭ Add parallel BCH batch APIs (`BchEncoder::encode_batch()`)
+18. ⏭ Document thread safety guarantees in public API
 
 ### Phase 2: Integrate with gf2-coding (Weeks 2-3) ⏭ NEXT
 

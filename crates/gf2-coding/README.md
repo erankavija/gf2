@@ -86,6 +86,23 @@ cargo build --no-default-features
 
 For more details, see [SIMD_PERFORMANCE_GUIDE.md](SIMD_PERFORMANCE_GUIDE.md).
 
+### Parallel Processing
+
+Opt-in parallel processing with rayon:
+
+```bash
+# Enable parallel batch operations
+cargo build --features parallel
+
+# Benchmark parallel scaling
+cargo bench --bench parallel_scaling --features parallel
+
+# Run comprehensive overnight benchmarks
+./run_overnight_benchmarks.sh
+```
+
+See [docs/PARALLEL_BENCHMARKING.md](docs/PARALLEL_BENCHMARKING.md) for thread configuration and performance analysis.
+
 ## Usage
 
 Add to your `Cargo.toml`:
