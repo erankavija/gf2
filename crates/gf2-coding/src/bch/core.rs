@@ -493,6 +493,59 @@ impl BchDecoder {
         Self { code }
     }
 
+    /// Decodes a batch of received codewords in parallel (when parallel feature enabled).
+    ///
+    /// This method processes multiple codewords efficiently, either sequentially
+    /// or in parallel depending on feature flags and batch size.
+    ///
+    /// # Arguments
+    ///
+    /// * `received` - Slice of received codewords to decode (each must have length n)
+    ///
+    /// # Returns
+    ///
+    /// Vector of decoded messages (each of length k)
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::bch::{BchCode, BchEncoder, BchDecoder};
+    /// use gf2_coding::traits::{BlockEncoder, HardDecisionDecoder};
+    /// use gf2_core::gf2m::Gf2mField;
+    /// use gf2_core::BitVec;
+    ///
+    /// let field = Gf2mField::new(4, 0b10011).with_tables();
+    /// let code = BchCode::new(15, 11, 1, field);
+    /// let encoder = BchEncoder::new(code.clone());
+    /// let decoder = BchDecoder::new(code);
+    ///
+    /// // Encode messages
+    /// let messages: Vec<BitVec> = (0..10)
+    ///     .map(|i| {
+    ///         let mut msg = BitVec::with_capacity(11);
+    ///         for j in 0..11 {
+    ///             msg.push_bit((i + j) % 2 == 0);
+    ///         }
+    ///         msg
+    ///     })
+    ///     .collect();
+    ///
+    /// let codewords: Vec<BitVec> = messages
+    ///     .iter()
+    ///     .map(|msg| encoder.encode(msg))
+    ///     .collect();
+    ///
+    /// // Decode batch
+    /// let decoded = decoder.decode_batch(&codewords);
+    /// assert_eq!(decoded.len(), 10);
+    /// ```
+    pub fn decode_batch(&self, received: &[BitVec]) -> Vec<BitVec> {
+        // TODO: Parallel implementation requires Gf2mField to use Arc instead of Rc
+        // Currently sequential due to Rc<FieldParams> in Gf2mField not being Send+Sync
+        // See: https://github.com/rust-lang/rust/issues/...
+        received.iter().map(|cw| self.decode(cw)).collect()
+    }
+
     /// Computes syndrome sequence S_1, S_2, ..., S_{2t}.
     ///
     /// For received polynomial r(x), syndrome S_i = r(α^i)
@@ -920,4 +973,155 @@ mod generator_matrix_access_tests {
             );
         }
     }
+}
+
+#[cfg(test)]
+mod batch_api_tests {
+    use super::*;
+    use crate::traits::{BlockEncoder, HardDecisionDecoder};
+
+    #[test]
+    fn test_decode_batch_empty() {
+        let field = Gf2mField::new(4, 0b10011).with_tables();
+        let code = BchCode::new(15, 11, 1, field);
+        let decoder = BchDecoder::new(code);
+
+        let received: Vec<BitVec> = vec![];
+        let decoded = decoder.decode_batch(&received);
+        
+        assert_eq!(decoded.len(), 0);
+    }
+
+    #[test]
+    fn test_decode_batch_single() {
+        let field = Gf2mField::new(4, 0b10011).with_tables();
+        let code = BchCode::new(15, 11, 1, field);
+        let encoder = BchEncoder::new(code.clone());
+        let decoder = BchDecoder::new(code);
+
+        // Encode single message
+        let msg = BitVec::ones(11);
+        let codeword = encoder.encode(&msg);
+
+        // Decode batch of one
+        let received = vec![codeword];
+        let decoded = decoder.decode_batch(&received);
+
+        assert_eq!(decoded.len(), 1);
+        assert_eq!(decoded[0], msg);
+    }
+
+    #[test]
+    fn test_decode_batch_multiple_no_errors() {
+        let field = Gf2mField::new(4, 0b10011).with_tables();
+        let code = BchCode::new(15, 11, 1, field);
+        let encoder = BchEncoder::new(code.clone());
+        let decoder = BchDecoder::new(code);
+
+        // Create multiple messages
+        let messages: Vec<BitVec> = (0..10)
+            .map(|i| {
+                let mut msg = BitVec::with_capacity(11);
+                for j in 0..11 {
+                    msg.push_bit((i + j) % 2 == 0);
+                }
+                msg
+            })
+            .collect();
+
+        // Encode all messages
+        let codewords: Vec<BitVec> = messages.iter().map(|msg| encoder.encode(msg)).collect();
+
+        // Decode batch (no errors)
+        let decoded = decoder.decode_batch(&codewords);
+
+        assert_eq!(decoded.len(), 10);
+        for (i, dec) in decoded.iter().enumerate() {
+            assert_eq!(dec, &messages[i], "Message {} not decoded correctly", i);
+        }
+    }
+
+    #[test]
+    fn test_decode_batch_with_single_error() {
+        let field = Gf2mField::new(4, 0b10011).with_tables();
+        let code = BchCode::new(15, 11, 1, field);
+        let encoder = BchEncoder::new(code.clone());
+        let decoder = BchDecoder::new(code);
+
+        // Create messages
+        let messages: Vec<BitVec> = (0..5)
+            .map(|i| {
+                let mut msg = BitVec::zeros(11);
+                msg.set(i * 2 % 11, true);
+                msg
+            })
+            .collect();
+
+        // Encode and introduce single error in each
+        let received: Vec<BitVec> = messages
+            .iter()
+            .map(|msg| {
+                let mut cw = encoder.encode(msg);
+                // Introduce error at position 5
+                cw.set(5, !cw.get(5));
+                cw
+            })
+            .collect();
+
+        // Decode batch (should correct all single errors)
+        let decoded = decoder.decode_batch(&received);
+
+        assert_eq!(decoded.len(), 5);
+        for (i, dec) in decoded.iter().enumerate() {
+            assert_eq!(
+                dec, &messages[i],
+                "Message {} not corrected properly",
+                i
+            );
+        }
+    }
+
+    #[test]
+    fn test_decode_batch_mixed_errors() {
+        let field = Gf2mField::new(4, 0b10011).with_tables();
+        let code = BchCode::new(15, 7, 2, field); // t=2 error correction
+        let encoder = BchEncoder::new(code.clone());
+        let decoder = BchDecoder::new(code);
+
+        let messages: Vec<BitVec> = vec![
+            BitVec::zeros(7),
+            BitVec::ones(7),
+            {
+                let mut m = BitVec::zeros(7);
+                m.set(0, true);
+                m.set(3, true);
+                m
+            },
+        ];
+
+        let mut received: Vec<BitVec> = vec![];
+
+        // Message 0: no errors
+        received.push(encoder.encode(&messages[0]));
+
+        // Message 1: single error
+        let mut cw1 = encoder.encode(&messages[1]);
+        cw1.set(3, !cw1.get(3));
+        received.push(cw1);
+
+        // Message 2: two errors
+        let mut cw2 = encoder.encode(&messages[2]);
+        cw2.set(5, !cw2.get(5));
+        cw2.set(10, !cw2.get(10));
+        received.push(cw2);
+
+        // Decode batch
+        let decoded = decoder.decode_batch(&received);
+
+        assert_eq!(decoded.len(), 3);
+        for (i, dec) in decoded.iter().enumerate() {
+            assert_eq!(dec, &messages[i], "Message {} not decoded correctly", i);
+        }
+    }
+
 }

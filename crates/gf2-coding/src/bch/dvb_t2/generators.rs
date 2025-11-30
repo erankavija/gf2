@@ -45,31 +45,7 @@ pub const NORMAL_GENERATORS: &[&[usize]] = &[
     &[0, 1, 5, 6, 7, 9, 11, 12, 16],
 ];
 
-/// Constructs a polynomial from exponent list.
-///
-/// Creates a polynomial with terms at the specified exponents.
-/// For example, `[0, 2, 5]` represents `1 + x^2 + x^5`.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::gf2m::Gf2mField;
-/// use gf2_coding::bch::dvb_t2::generators::poly_from_exponents;
-///
-/// let field = Gf2mField::new(4, 0b10011);
-/// let poly = poly_from_exponents(&field, &[0, 1, 4]);  // 1 + x + x^4
-/// assert_eq!(poly.degree(), Some(4));
-/// ```
-pub fn poly_from_exponents(field: &Gf2mField, exponents: &[usize]) -> Gf2mPoly {
-    let max_exp = exponents.iter().copied().max().unwrap_or(0);
-    let mut coeffs = vec![field.zero(); max_exp + 1];
 
-    for &exp in exponents {
-        coeffs[exp] = field.one();
-    }
-
-    Gf2mPoly::new(coeffs)
-}
 
 /// Computes the product of the first t DVB-T2 generator polynomials.
 ///
@@ -93,10 +69,10 @@ pub fn product_of_generators(field: &Gf2mField, generators: &[&[usize]], t: usiz
     assert!(t > 0, "t must be positive");
     assert!(t <= generators.len(), "t exceeds available generators");
 
-    let mut g = poly_from_exponents(field, generators[0]);
+    let mut g = Gf2mPoly::from_exponents(field, generators[0]);
 
     for gen in generators.iter().take(t).skip(1) {
-        let g_i = poly_from_exponents(field, gen);
+        let g_i = Gf2mPoly::from_exponents(field, gen);
         g = &g * &g_i;
     }
 
@@ -110,7 +86,7 @@ mod tests {
     #[test]
     fn test_poly_from_exponents_simple() {
         let field = Gf2mField::new(4, 0b10011);
-        let poly = poly_from_exponents(&field, &[0, 1, 4]); // 1 + x + x^4
+        let poly = Gf2mPoly::from_exponents(&field, &[0, 1, 4]); // 1 + x + x^4
 
         assert_eq!(poly.degree(), Some(4));
         assert_eq!(poly.coeff(0), field.one());
@@ -123,7 +99,7 @@ mod tests {
     #[test]
     fn test_poly_from_exponents_short_g1() {
         let field = Gf2mField::new(14, 0b100000000100001);
-        let poly = poly_from_exponents(&field, SHORT_GENERATORS[0]);
+        let poly = Gf2mPoly::from_exponents(&field, SHORT_GENERATORS[0]);
 
         // g_1(x) = 1 + x + x^3 + x^5 + x^14
         assert_eq!(poly.degree(), Some(14));
@@ -140,7 +116,7 @@ mod tests {
     fn test_product_single_polynomial() {
         let field = Gf2mField::new(14, 0b100000000100001);
         let g = product_of_generators(&field, SHORT_GENERATORS, 1);
-        let g1 = poly_from_exponents(&field, SHORT_GENERATORS[0]);
+        let g1 = Gf2mPoly::from_exponents(&field, SHORT_GENERATORS[0]);
 
         assert_eq!(g, g1);
     }
@@ -151,8 +127,8 @@ mod tests {
         let g = product_of_generators(&field, SHORT_GENERATORS, 2);
 
         // Should equal g_1 × g_2
-        let g1 = poly_from_exponents(&field, SHORT_GENERATORS[0]);
-        let g2 = poly_from_exponents(&field, SHORT_GENERATORS[1]);
+        let g1 = Gf2mPoly::from_exponents(&field, SHORT_GENERATORS[0]);
+        let g2 = Gf2mPoly::from_exponents(&field, SHORT_GENERATORS[1]);
         let expected = &g1 * &g2;
 
         assert_eq!(g, expected);

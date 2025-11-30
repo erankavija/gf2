@@ -89,6 +89,36 @@
 
 ---
 
+## ⏸️ Phase 2.2: GF(2^m) Thread Safety (Prerequisite for BCH/RS)
+
+**Status**: ⏸️ BLOCKED (gf2-core dependency)  
+**Blocker**: gf2-core Phase 15 must complete first  
+**Priority**: HIGH (blocks all GF(2^m)-based code parallelism)
+
+**Problem**: `Gf2mField` uses `Rc<FieldParams>` which is not `Send + Sync`
+
+**Impact**:
+- ❌ BCH batch operations cannot use rayon
+- ❌ Reed-Solomon batch operations blocked
+- ❌ Any GF(2^m)-based code cannot parallelize
+
+**Solution**: Replace `Rc` with `Arc` in gf2-core
+- See: [gf2-core Phase 15](../../gf2-core/ROADMAP.md#phase-15-gf2m-thread-safety)
+- See: [GF2M Thread Safety Requirements](../../gf2-core/docs/GF2M_THREAD_SAFETY_REQUIREMENTS.md)
+
+**After Phase 15 completes**:
+1. Enable BCH `encode_batch()` and `decode_batch()` with rayon
+2. Benchmark parallel speedup (expect 6-8× on 12-core CPU)
+3. Add parallel consistency tests
+4. Document BCH parallel performance
+
+**Estimated Timeline**: 
+- gf2-core changes: 3 days
+- gf2-coding integration: 2 days
+- Total: 5 days (1 week)
+
+---
+
 ## Future Phases
 
 ### 🔬 Phase 3: GPU Prototype (Months 3-6)
