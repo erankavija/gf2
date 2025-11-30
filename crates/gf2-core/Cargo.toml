@@ -112,3 +112,7 @@ harness = false
 name = "matrix_vector"
 harness = false
 required-features = ["rand"]
+
+[[bench]]
+name = "field_clone"
+harness = false

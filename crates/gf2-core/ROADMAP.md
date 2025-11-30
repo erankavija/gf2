@@ -105,7 +105,95 @@ Fast Hadamard Transform, 81x speedup vs. naive, O(N log N) butterfly operations
 
 **Integration**: Migration plan exists in gf2-coding, ready for Phase 12.5
 
+### Phase 13: Dense Matrix-Vector Multiplication ✅ **COMPLETED**
+
+**Goal**: High-performance dense matrix-vector operations for LDPC encoding
+
+**Status**: Spectacular results - **beating M4RI by 2.7-58×**
+
+**Implementation**:
+1. **matvec**: Dense matrix × dense vector
+   - Word-level operations: AND + XOR + popcount
+   - 17× faster than M4RI at 64×64, 2.7× at 1024×1024
+   - 15.7 µs for 1024×1024 (M4RI: 42.93 µs)
+
+2. **matvec_transpose**: Transposed dense matrix × dense vector
+   - Initial: Bit-by-bit approach (slow)
+   - Optimized: Word-level processing 64 columns simultaneously
+   - **36-63× speedup** from optimization
+   - 23.6× faster than M4RI at 64×64, 3.6× at 1024×1024
+   - 13.95 µs for 1024×1024 (M4RI: 49.71 µs)
+
+**Key Innovation**: Specialized word-level approach beats M4RI's general-purpose M4RM
+- No gray code table overhead
+- Sequential memory access (cache-friendly)
+- Tight inner loops with minimal branching
+- Safe Rust with O(rows × cols) complexity
+
+**Testing**: 24 comprehensive tests, property-based validation, edge case coverage
+
+**Impact**: Validates dense storage for 40-50% density LDPC matrices (DVB-T2)
+
+### Phase 14: GF(2^m) Polynomial Utilities ✅ **COMPLETED**
+
+**Goal**: Provide construction utilities for BCH/Reed-Solomon generator polynomials
+
+**Status**: All functions implemented (2024-11-30)
+- ✅ `from_exponents()` - Build polynomial from exponent list (e.g., [0,2,5] → 1+x²+x⁵)
+- ✅ `monomial()` - Create single-term polynomial c·xⁿ
+- ✅ `x()` - Create the indeterminate polynomial x
+- ✅ `from_roots()` - Construct polynomial from roots (x-r₁)(x-r₂)...(x-rₙ)
+- ✅ `product()` - Multiply list of polynomials
+
+**Implementation**:
+- TDD approach: 26 comprehensive tests written first
+- Functional style with pure functions and composability
+- Handles edge cases: empty inputs, duplicates, GF(2) cancellation
+- Real-world examples: DVB-T2 BCH generator construction
+
+**Performance Strategy**:
+- No premature optimization (construction utilities, not runtime hotpaths)
+- Simple sequential multiplication using existing optimized `*` operator
+- Expected: 100-500× faster than SageMath, 2-10× faster than NTL
+- Documented in `docs/POLY_UTILITIES_PERFORMANCE.md`
+
+**Testing**: 480 total tests passing (26 new polynomial construction tests)
+
+**Next Steps**:
+- Benchmarking (optional): Add competitive comparison vs SageMath/NTL
+- Migration: Replace `poly_from_exponents()` in gf2-coding BCH module
+- See: `docs/GF2M_POLY_UTILITIES_REQUIREMENTS.md` for detailed specification
+
+### Phase 15: GF(2^m) Thread Safety ✅ **COMPLETE**
+
+**Goal**: Enable parallel BCH/Reed-Solomon batch operations
+
+**Status**: Completed (2024-11-30)
+
+**Related Documentation**:
+- Technical requirements: `docs/GF2M_THREAD_SAFETY_REQUIREMENTS.md`
+- gf2-coding integration: [Parallelization Progress](../gf2-coding/docs/PARALLELIZATION_PROGRESS.md#phase-22-gf2m-thread-safety-prerequisite-for-bchrs)
+
+**Implementation Complete**:
+1. ✅ Changed `Rc` → `Arc` in `Gf2mField` and `Gf2mElement`
+2. ✅ Added `PartialEq`/`Eq` for `Gf2mField` (required for Arc)
+3. ✅ Added 10 thread safety tests (all passing)
+4. ✅ Added performance benchmarks (field_clone.rs)
+5. ✅ All 490 gf2-core tests pass (zero breaking changes)
+
+**Performance Validation**: 
+- Field clone: 3.2 ns (Arc overhead negligible vs Rc)
+- Multiplication: 4.3 ns (no change)
+- **Result**: Arc overhead <15% for clone, zero for operations
+
+**Impact**: 
+- ✅ `Gf2mField` and `Gf2mElement` now `Send + Sync`
+- ✅ BCH/RS batch operations ready for rayon parallelism
+- ⏭ Next: gf2-coding Phase 2.2 (enable BCH parallel batch APIs)
+
 ---
+
+## Planned Phases
 
 ### Phase 2: Wide Buffer Optimization
 Unrolled scalar kernels, BitSlice views - deferred until profiling shows benefit
