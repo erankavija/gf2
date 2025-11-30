@@ -138,7 +138,7 @@ Fast Hadamard Transform, 81x speedup vs. naive, O(N log N) butterfly operations
 
 **Goal**: Provide construction utilities for BCH/Reed-Solomon generator polynomials
 
-**Status**: All functions implemented (2024-11-30)
+**Status**: All functions implemented
 - ✅ `from_exponents()` - Build polynomial from exponent list (e.g., [0,2,5] → 1+x²+x⁵)
 - ✅ `monomial()` - Create single-term polynomial c·xⁿ
 - ✅ `x()` - Create the indeterminate polynomial x
@@ -168,7 +168,7 @@ Fast Hadamard Transform, 81x speedup vs. naive, O(N log N) butterfly operations
 
 **Goal**: Enable parallel BCH/Reed-Solomon batch operations
 
-**Status**: Completed (2024-11-30)
+**Status**: Completed
 
 **Related Documentation**:
 - Technical requirements: `docs/GF2M_THREAD_SAFETY_REQUIREMENTS.md`
@@ -236,7 +236,7 @@ Prime field arithmetic - deferred (no immediate use case)
 
 **Goal**: Efficient binary serialization for GF(2) data structures
 
-**Status**: All phases complete (2024-11-25)
+**Status**: All phases complete
 - ✅ Format specification (32-byte header + JSON metadata + binary payload)
 - ✅ Error handling and validation
 - ✅ BitVec serialization/deserialization (47 tests)
