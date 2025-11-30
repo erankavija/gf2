@@ -1820,6 +1820,295 @@ impl Gf2mPoly {
         bits
     }
 
+    /// Creates a polynomial from a list of exponents.
+    ///
+    /// Each exponent in the list corresponds to a term with coefficient 1.
+    /// For example, `[0, 2, 5]` represents `1 + x² + x⁵`.
+    ///
+    /// This is particularly useful for constructing generator polynomials
+    /// from standard tables (e.g., BCH, Goppa codes) where polynomials are
+    /// often specified as lists of exponents.
+    ///
+    /// # Arguments
+    ///
+    /// * `field` - The field over which the polynomial is defined
+    /// * `exponents` - Slice of exponents where coefficients are 1
+    ///
+    /// # Duplicate Exponents
+    ///
+    /// Duplicate exponents are handled correctly via GF(2) addition:
+    /// - Even occurrences cancel out: `x² + x² = 0`
+    /// - Odd occurrences remain: `x² + x² + x² = x²`
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::gf2m::{Gf2mField, Gf2mPoly};
+    ///
+    /// let field = Gf2mField::new(4, 0b10011);
+    ///
+    /// // Create polynomial: 1 + x + x^4
+    /// let poly = Gf2mPoly::from_exponents(&field, &[0, 1, 4]);
+    ///
+    /// assert_eq!(poly.degree(), Some(4));
+    /// assert_eq!(poly.coeff(0), field.one());
+    /// assert_eq!(poly.coeff(1), field.one());
+    /// assert_eq!(poly.coeff(2), field.zero());
+    /// assert_eq!(poly.coeff(3), field.zero());
+    /// assert_eq!(poly.coeff(4), field.one());
+    /// ```
+    ///
+    /// # Real-World Example: DVB-T2 BCH Generator
+    ///
+    /// ```
+    /// use gf2_core::gf2m::{Gf2mField, Gf2mPoly};
+    ///
+    /// // DVB-T2 short frame uses GF(2^14)
+    /// let field = Gf2mField::new(14, 0b100000000100001);
+    ///
+    /// // g_1(x) from ETSI EN 302 755
+    /// let g1 = Gf2mPoly::from_exponents(&field, &[0, 1, 3, 5, 14]);
+    /// assert_eq!(g1.degree(), Some(14));
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(max_exp) where max_exp is the largest exponent in the list.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `exponents` is empty.
+    pub fn from_exponents(field: &Gf2mField, exponents: &[usize]) -> Self {
+        assert!(!exponents.is_empty(), "exponents cannot be empty");
+
+        let max_exp = exponents.iter().copied().max().unwrap();
+        let mut coeffs = vec![field.zero(); max_exp + 1];
+
+        // Add 1 to each specified exponent
+        // In GF(2), repeated additions cancel: a + a = 0
+        for &exp in exponents {
+            coeffs[exp] = &coeffs[exp] + &field.one();
+        }
+
+        Self::new(coeffs)
+    }
+
+    /// Creates a monomial: `c·xⁿ`.
+    ///
+    /// A monomial is a polynomial with a single term.
+    ///
+    /// # Arguments
+    ///
+    /// * `coeff` - The coefficient (may be any field element)
+    /// * `degree` - The exponent of x
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::gf2m::{Gf2mField, Gf2mPoly};
+    ///
+    /// let field = Gf2mField::new(4, 0b10011);
+    /// let alpha = field.element(0b0010); // α
+    ///
+    /// // Create α·x³
+    /// let poly = Gf2mPoly::monomial(alpha.clone(), 3);
+    ///
+    /// assert_eq!(poly.degree(), Some(3));
+    /// assert_eq!(poly.coeff(0), field.zero());
+    /// assert_eq!(poly.coeff(3), alpha);
+    /// ```
+    ///
+    /// # Special Cases
+    ///
+    /// - `monomial(c, 0)` returns constant polynomial `c`
+    /// - `monomial(0, n)` returns zero polynomial regardless of n
+    ///
+    /// # Complexity
+    ///
+    /// O(degree) for coefficient vector allocation.
+    pub fn monomial(coeff: Gf2mElement, degree: usize) -> Self {
+        if coeff.is_zero() {
+            return Self::zero(&Gf2mField {
+                params: coeff.params.clone(),
+            });
+        }
+
+        let field = Gf2mField {
+            params: coeff.params.clone(),
+        };
+        let mut coeffs = vec![field.zero(); degree + 1];
+        coeffs[degree] = coeff;
+
+        Self::new(coeffs)
+    }
+
+    /// Creates the polynomial `x` (the indeterminate).
+    ///
+    /// This is equivalent to `monomial(field.one(), 1)` and is provided
+    /// as a convenience for building polynomials programmatically.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::gf2m::{Gf2mField, Gf2mPoly};
+    ///
+    /// let field = Gf2mField::new(4, 0b10011);
+    /// let x = Gf2mPoly::x(&field);
+    ///
+    /// assert_eq!(x.degree(), Some(1));
+    /// assert_eq!(x.coeff(0), field.zero());
+    /// assert_eq!(x.coeff(1), field.one());
+    ///
+    /// // Use x to build polynomials
+    /// let p = Gf2mPoly::from_exponents(&field, &[0, 2]); // 1 + x²
+    /// let result = &p * &x; // (1 + x²) * x = x + x³
+    /// ```
+    pub fn x(field: &Gf2mField) -> Self {
+        Self::monomial(field.one(), 1)
+    }
+
+    /// Creates a polynomial from its roots.
+    ///
+    /// Constructs the polynomial `(x - r₁)(x - r₂)...(x - rₙ)` where
+    /// `rᵢ` are the roots.
+    ///
+    /// This is fundamental for BCH and Reed-Solomon code construction,
+    /// where generator polynomials are defined by consecutive roots
+    /// (powers of a primitive element).
+    ///
+    /// # Arguments
+    ///
+    /// * `roots` - Slice of field elements that are roots of the polynomial
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::gf2m::{Gf2mField, Gf2mPoly};
+    ///
+    /// let field = Gf2mField::gf256().with_tables();
+    /// let alpha = field.primitive_element().unwrap();
+    ///
+    /// // BCH generator: g(x) = (x - α)(x - α²)
+    /// let alpha2 = &alpha * &alpha;
+    /// let g = Gf2mPoly::from_roots(&[alpha.clone(), alpha2.clone()]);
+    ///
+    /// // Verify roots
+    /// assert!(g.eval(&alpha).is_zero());
+    /// assert!(g.eval(&alpha2).is_zero());
+    /// ```
+    ///
+    /// # Real-World Example: DVB-T2 BCH Code
+    ///
+    /// ```
+    /// use gf2_core::gf2m::{Gf2mField, Gf2mPoly};
+    ///
+    /// let field = Gf2mField::gf256().with_tables();
+    /// let alpha = field.primitive_element().unwrap();
+    ///
+    /// // t=3 BCH code: consecutive roots α, α², α³, α⁴, α⁵, α⁶
+    /// let mut roots = Vec::new();
+    /// let mut power = alpha.clone();
+    /// for _ in 0..6 {
+    ///     roots.push(power.clone());
+    ///     power = &power * &alpha;
+    /// }
+    ///
+    /// let generator = Gf2mPoly::from_roots(&roots);
+    /// assert_eq!(generator.degree(), Some(6));
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(n²) where n is the number of roots (sequential multiplication).
+    /// Uses existing optimized polynomial multiplication which switches
+    /// to Karatsuba for large degrees.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `roots` is empty.
+    pub fn from_roots(roots: &[Gf2mElement]) -> Self {
+        assert!(!roots.is_empty(), "roots cannot be empty");
+
+        // Get field from first root
+        let field = Gf2mField {
+            params: roots[0].params.clone(),
+        };
+
+        // Start with (x - r₀)
+        // Note: In GF(2^m), -r = r, so x - r = x + r
+        let mut result = Self::new(vec![
+            roots[0].clone(), // constant term
+            field.one(),      // x coefficient
+        ]);
+
+        // Multiply by (x - rᵢ) for remaining roots
+        for root in &roots[1..] {
+            let factor = Self::new(vec![root.clone(), field.one()]);
+            result = &result * &factor;
+        }
+
+        result
+    }
+
+    /// Computes the product of multiple polynomials.
+    ///
+    /// Returns `p₁(x) · p₂(x) · ... · pₙ(x)`.
+    ///
+    /// # Arguments
+    ///
+    /// * `polys` - Slice of polynomials to multiply
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::gf2m::{Gf2mField, Gf2mPoly};
+    ///
+    /// let field = Gf2mField::new(4, 0b10011);
+    /// let p1 = Gf2mPoly::from_exponents(&field, &[0, 1]);    // 1 + x
+    /// let p2 = Gf2mPoly::from_exponents(&field, &[0, 2]);    // 1 + x²
+    /// let p3 = Gf2mPoly::from_exponents(&field, &[0, 1, 2]); // 1 + x + x²
+    ///
+    /// let product = Gf2mPoly::product(&[p1, p2, p3]);
+    /// // (1 + x)(1 + x²)(1 + x + x²)
+    /// ```
+    ///
+    /// # Real-World Example: DVB-T2 BCH Generator
+    ///
+    /// ```
+    /// use gf2_core::gf2m::{Gf2mField, Gf2mPoly};
+    ///
+    /// let field = Gf2mField::new(14, 0b100000000100001);
+    ///
+    /// // DVB-T2 t=3: g(x) = g_1(x) · g_2(x) · g_3(x)
+    /// let g1 = Gf2mPoly::from_exponents(&field, &[0, 1, 3, 5, 14]);
+    /// let g2 = Gf2mPoly::from_exponents(&field, &[0, 6, 8, 11, 14]);
+    /// let g3 = Gf2mPoly::from_exponents(&field, &[0, 1, 2, 6, 9, 10, 14]);
+    ///
+    /// let generator = Gf2mPoly::product(&[g1, g2, g3]);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(n · d²) where n is number of polynomials and d is average degree.
+    /// Uses existing optimized polynomial multiplication.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `polys` is empty.
+    pub fn product(polys: &[Gf2mPoly]) -> Self {
+        assert!(!polys.is_empty(), "cannot compute product of empty list");
+
+        if polys.len() == 1 {
+            return polys[0].clone();
+        }
+
+        // Sequential multiplication using existing optimized * operator
+        polys
+            .iter()
+            .skip(1)
+            .fold(polys[0].clone(), |acc, p| &acc * p)
+    }
+
     /// Evaluates the polynomial at a given point using Horner's method.
     ///
     /// # Example
@@ -3689,6 +3978,379 @@ mod poly_tests {
                 }
             }
         }
+    }
+}
+
+/// Tests for polynomial construction utilities
+#[cfg(test)]
+mod poly_construction_tests {
+    use super::*;
+
+    #[test]
+    fn test_from_exponents_simple() {
+        let field = Gf2mField::new(4, 0b10011);
+
+        // Create polynomial: 1 + x + x^4
+        let poly = Gf2mPoly::from_exponents(&field, &[0, 1, 4]);
+
+        assert_eq!(poly.degree(), Some(4));
+        assert_eq!(poly.coeff(0), field.one());
+        assert_eq!(poly.coeff(1), field.one());
+        assert_eq!(poly.coeff(2), field.zero());
+        assert_eq!(poly.coeff(3), field.zero());
+        assert_eq!(poly.coeff(4), field.one());
+    }
+
+    #[test]
+    fn test_from_exponents_single() {
+        let field = Gf2mField::new(4, 0b10011);
+
+        // Create monomial: x^5
+        let poly = Gf2mPoly::from_exponents(&field, &[5]);
+
+        assert_eq!(poly.degree(), Some(5));
+        assert_eq!(poly.coeff(0), field.zero());
+        assert_eq!(poly.coeff(5), field.one());
+    }
+
+    #[test]
+    fn test_from_exponents_duplicates() {
+        let field = Gf2mField::new(4, 0b10011);
+
+        // x^2 + x^2 = 0 in GF(2)
+        let poly = Gf2mPoly::from_exponents(&field, &[2, 2]);
+
+        // Should result in zero polynomial after normalization
+        assert!(poly.is_zero());
+        assert_eq!(poly.degree(), None);
+    }
+
+    #[test]
+    fn test_from_exponents_duplicates_odd_count() {
+        let field = Gf2mField::new(4, 0b10011);
+
+        // 1 + x^2 + x^2 + x^2 = 1 + x^2 in GF(2)
+        let poly = Gf2mPoly::from_exponents(&field, &[0, 2, 2, 2]);
+
+        assert_eq!(poly.degree(), Some(2));
+        assert_eq!(poly.coeff(0), field.one());
+        assert_eq!(poly.coeff(1), field.zero());
+        assert_eq!(poly.coeff(2), field.one());
+    }
+
+    #[test]
+    fn test_from_exponents_unsorted() {
+        let field = Gf2mField::new(4, 0b10011);
+
+        // Order shouldn't matter: x^5 + x + x^3
+        let poly = Gf2mPoly::from_exponents(&field, &[5, 1, 3]);
+
+        assert_eq!(poly.degree(), Some(5));
+        assert_eq!(poly.coeff(0), field.zero());
+        assert_eq!(poly.coeff(1), field.one());
+        assert_eq!(poly.coeff(2), field.zero());
+        assert_eq!(poly.coeff(3), field.one());
+        assert_eq!(poly.coeff(4), field.zero());
+        assert_eq!(poly.coeff(5), field.one());
+    }
+
+    #[test]
+    #[should_panic(expected = "exponents cannot be empty")]
+    fn test_from_exponents_empty() {
+        let field = Gf2mField::new(4, 0b10011);
+        let _poly = Gf2mPoly::from_exponents(&field, &[]);
+    }
+
+    #[test]
+    fn test_from_exponents_dvb_t2_g1() {
+        // Real-world example: DVB-T2 short frame g_1(x)
+        let field = Gf2mField::new(14, 0b100000000100001);
+
+        let g1 = Gf2mPoly::from_exponents(&field, &[0, 1, 3, 5, 14]);
+
+        assert_eq!(g1.degree(), Some(14));
+        assert_eq!(g1.coeff(0), field.one());
+        assert_eq!(g1.coeff(1), field.one());
+        assert_eq!(g1.coeff(2), field.zero());
+        assert_eq!(g1.coeff(3), field.one());
+        assert_eq!(g1.coeff(4), field.zero());
+        assert_eq!(g1.coeff(5), field.one());
+        for i in 6..14 {
+            assert_eq!(g1.coeff(i), field.zero());
+        }
+        assert_eq!(g1.coeff(14), field.one());
+    }
+
+    #[test]
+    fn test_from_exponents_constant() {
+        let field = Gf2mField::new(4, 0b10011);
+
+        // Just the constant term: 1
+        let poly = Gf2mPoly::from_exponents(&field, &[0]);
+
+        assert_eq!(poly.degree(), Some(0));
+        assert_eq!(poly.coeff(0), field.one());
+    }
+
+    #[test]
+    fn test_from_exponents_large_sparse() {
+        let field = Gf2mField::new(8, 0b100011101);
+
+        // Sparse polynomial: 1 + x^10 + x^100 + x^1000
+        let poly = Gf2mPoly::from_exponents(&field, &[0, 10, 100, 1000]);
+
+        assert_eq!(poly.degree(), Some(1000));
+        assert_eq!(poly.coeff(0), field.one());
+        assert_eq!(poly.coeff(10), field.one());
+        assert_eq!(poly.coeff(100), field.one());
+        assert_eq!(poly.coeff(1000), field.one());
+
+        // Verify sparsity - check a few random intermediate points
+        assert_eq!(poly.coeff(5), field.zero());
+        assert_eq!(poly.coeff(50), field.zero());
+        assert_eq!(poly.coeff(500), field.zero());
+    }
+
+    // Tests for monomial()
+    #[test]
+    fn test_monomial_zero_degree() {
+        let field = Gf2mField::new(4, 0b10011);
+        let alpha = field.element(0b0010);
+
+        // c·x^0 = c (constant polynomial)
+        let poly = Gf2mPoly::monomial(alpha.clone(), 0);
+
+        assert_eq!(poly.degree(), Some(0));
+        assert_eq!(poly.coeff(0), alpha);
+    }
+
+    #[test]
+    fn test_monomial_zero_coeff() {
+        let field = Gf2mField::new(4, 0b10011);
+
+        // 0·x^5 = 0 (zero polynomial)
+        let poly = Gf2mPoly::monomial(field.zero(), 5);
+
+        assert!(poly.is_zero());
+        assert_eq!(poly.degree(), None);
+    }
+
+    #[test]
+    fn test_monomial_general() {
+        let field = Gf2mField::new(4, 0b10011);
+        let alpha = field.element(0b0010);
+
+        // α·x^3
+        let poly = Gf2mPoly::monomial(alpha.clone(), 3);
+
+        assert_eq!(poly.degree(), Some(3));
+        assert_eq!(poly.coeff(0), field.zero());
+        assert_eq!(poly.coeff(1), field.zero());
+        assert_eq!(poly.coeff(2), field.zero());
+        assert_eq!(poly.coeff(3), alpha);
+    }
+
+    #[test]
+    fn test_monomial_one_coefficient() {
+        let field = Gf2mField::new(8, 0b100011101);
+
+        // 1·x^10 = x^10
+        let poly = Gf2mPoly::monomial(field.one(), 10);
+
+        assert_eq!(poly.degree(), Some(10));
+        assert_eq!(poly.coeff(10), field.one());
+    }
+
+    // Tests for x()
+    #[test]
+    fn test_x_basic() {
+        let field = Gf2mField::new(4, 0b10011);
+
+        // x should be the polynomial with degree 1
+        let x = Gf2mPoly::x(&field);
+
+        assert_eq!(x.degree(), Some(1));
+        assert_eq!(x.coeff(0), field.zero());
+        assert_eq!(x.coeff(1), field.one());
+    }
+
+    #[test]
+    fn test_x_multiply() {
+        let field = Gf2mField::new(4, 0b10011);
+
+        // Multiplying by x should shift polynomial
+        let p = Gf2mPoly::from_exponents(&field, &[0, 2]); // 1 + x^2
+        let x = Gf2mPoly::x(&field);
+        let result = &p * &x;
+
+        // (1 + x^2) * x = x + x^3
+        assert_eq!(result.degree(), Some(3));
+        assert_eq!(result.coeff(0), field.zero());
+        assert_eq!(result.coeff(1), field.one());
+        assert_eq!(result.coeff(2), field.zero());
+        assert_eq!(result.coeff(3), field.one());
+    }
+
+    // Tests for from_roots()
+    #[test]
+    fn test_from_roots_single() {
+        let field = Gf2mField::gf256().with_tables();
+        let alpha = field.primitive_element().unwrap();
+
+        // (x - α) should have degree 1
+        let poly = Gf2mPoly::from_roots(std::slice::from_ref(&alpha));
+
+        assert_eq!(poly.degree(), Some(1));
+
+        // Verify root: p(α) = 0
+        assert!(poly.eval(&alpha).is_zero());
+    }
+
+    #[test]
+    fn test_from_roots_two() {
+        let field = Gf2mField::gf256().with_tables();
+        let alpha = field.primitive_element().unwrap();
+        let alpha2 = &alpha * &alpha;
+
+        // (x - α)(x - α²)
+        let poly = Gf2mPoly::from_roots(&[alpha.clone(), alpha2.clone()]);
+
+        assert_eq!(poly.degree(), Some(2));
+
+        // Verify roots
+        assert!(poly.eval(&alpha).is_zero());
+        assert!(poly.eval(&alpha2).is_zero());
+    }
+
+    #[test]
+    fn test_from_roots_bch() {
+        let field = Gf2mField::gf256().with_tables();
+        let alpha = field.primitive_element().unwrap();
+
+        // BCH generator with consecutive powers: (x - α)(x - α²)(x - α³)
+        let alpha2 = &alpha * &alpha;
+        let alpha3 = &alpha2 * &alpha;
+
+        let poly = Gf2mPoly::from_roots(&[alpha.clone(), alpha2.clone(), alpha3.clone()]);
+
+        assert_eq!(poly.degree(), Some(3));
+
+        // Verify all roots
+        assert!(poly.eval(&alpha).is_zero());
+        assert!(poly.eval(&alpha2).is_zero());
+        assert!(poly.eval(&alpha3).is_zero());
+    }
+
+    #[test]
+    fn test_from_roots_duplicate() {
+        let field = Gf2mField::gf256().with_tables();
+        let alpha = field.primitive_element().unwrap();
+
+        // (x - α)² - double root
+        let poly = Gf2mPoly::from_roots(&[alpha.clone(), alpha.clone()]);
+
+        assert_eq!(poly.degree(), Some(2));
+
+        // Should still be a root
+        assert!(poly.eval(&alpha).is_zero());
+    }
+
+    #[test]
+    #[should_panic(expected = "roots cannot be empty")]
+    fn test_from_roots_empty() {
+        let roots: Vec<Gf2mElement> = vec![];
+        let _poly = Gf2mPoly::from_roots(&roots);
+    }
+
+    #[test]
+    fn test_from_roots_large() {
+        let field = Gf2mField::gf256().with_tables();
+        let alpha = field.primitive_element().unwrap();
+
+        // Create polynomial with 12 consecutive roots (DVB-T2 t=12 worst case)
+        let mut roots = Vec::new();
+        let mut power = alpha.clone();
+        for _ in 0..12 {
+            roots.push(power.clone());
+            power = &power * &alpha;
+        }
+
+        let poly = Gf2mPoly::from_roots(&roots);
+
+        assert_eq!(poly.degree(), Some(12));
+
+        // Verify all roots
+        for root in &roots {
+            assert!(poly.eval(root).is_zero());
+        }
+    }
+
+    // Tests for product()
+    #[test]
+    fn test_product_single() {
+        let field = Gf2mField::new(4, 0b10011);
+        let p = Gf2mPoly::from_exponents(&field, &[0, 1, 2]);
+
+        // Product of single polynomial should return clone
+        let result = Gf2mPoly::product(std::slice::from_ref(&p));
+
+        assert_eq!(result.degree(), p.degree());
+        if let Some(d) = result.degree() {
+            for i in 0..=d {
+                assert_eq!(result.coeff(i), p.coeff(i));
+            }
+        }
+    }
+
+    #[test]
+    fn test_product_two() {
+        let field = Gf2mField::new(4, 0b10011);
+        let p1 = Gf2mPoly::from_exponents(&field, &[0, 1]); // 1 + x
+        let p2 = Gf2mPoly::from_exponents(&field, &[0, 2]); // 1 + x²
+
+        // (1 + x)(1 + x²) = 1 + x + x² + x³
+        let result = Gf2mPoly::product(&[p1.clone(), p2.clone()]);
+
+        assert_eq!(result.degree(), Some(3));
+        assert_eq!(result.coeff(0), field.one());
+        assert_eq!(result.coeff(1), field.one());
+        assert_eq!(result.coeff(2), field.one());
+        assert_eq!(result.coeff(3), field.one());
+    }
+
+    #[test]
+    fn test_product_three() {
+        let field = Gf2mField::new(4, 0b10011);
+        let p1 = Gf2mPoly::from_exponents(&field, &[0, 1]); // 1 + x
+        let p2 = Gf2mPoly::from_exponents(&field, &[0, 2]); // 1 + x²
+        let p3 = Gf2mPoly::from_exponents(&field, &[0, 1, 2]); // 1 + x + x²
+
+        let result = Gf2mPoly::product(&[p1, p2, p3]);
+
+        // Should have degree 5 (1+2+2)
+        assert_eq!(result.degree(), Some(5));
+    }
+
+    #[test]
+    fn test_product_dvb_t2_simulation() {
+        let field = Gf2mField::new(14, 0b100000000100001);
+
+        // Simulate DVB-T2 BCH t=3: multiply first 3 generator polynomials
+        let g1 = Gf2mPoly::from_exponents(&field, &[0, 1, 3, 5, 14]);
+        let g2 = Gf2mPoly::from_exponents(&field, &[0, 6, 8, 11, 14]);
+        let g3 = Gf2mPoly::from_exponents(&field, &[0, 1, 2, 6, 9, 10, 14]);
+
+        let product = Gf2mPoly::product(&[g1, g2, g3]);
+
+        // Product should have degree = sum of degrees = 14 + 14 + 14 = 42
+        assert_eq!(product.degree(), Some(42));
+    }
+
+    #[test]
+    #[should_panic(expected = "cannot compute product of empty list")]
+    fn test_product_empty() {
+        let polys: Vec<Gf2mPoly> = vec![];
+        let _result = Gf2mPoly::product(&polys);
     }
 }
 
