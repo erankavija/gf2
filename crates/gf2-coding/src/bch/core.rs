@@ -540,10 +540,15 @@ impl BchDecoder {
     /// assert_eq!(decoded.len(), 10);
     /// ```
     pub fn decode_batch(&self, received: &[BitVec]) -> Vec<BitVec> {
-        // TODO: Parallel implementation requires Gf2mField to use Arc instead of Rc
-        // Currently sequential due to Rc<FieldParams> in Gf2mField not being Send+Sync
-        // See: https://github.com/rust-lang/rust/issues/...
-        received.iter().map(|cw| self.decode(cw)).collect()
+        #[cfg(feature = "parallel")]
+        {
+            use rayon::prelude::*;
+            received.par_iter().map(|cw| self.decode(cw)).collect()
+        }
+        #[cfg(not(feature = "parallel"))]
+        {
+            received.iter().map(|cw| self.decode(cw)).collect()
+        }
     }
 
     /// Computes syndrome sequence S_1, S_2, ..., S_{2t}.

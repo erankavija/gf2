@@ -4,5 +4,6 @@
 
 mod field;
 pub mod generation;
+mod thread_safety_tests;
 
 pub use field::*;

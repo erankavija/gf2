@@ -106,7 +106,7 @@
 
 use std::fmt;
 use std::ops::{Add, Div, Mul};
-use std::rc::Rc;
+use std::sync::Arc;
 
 #[cfg(feature = "simd")]
 use gf2_kernels_simd::gf2m as simd_gf2m;
@@ -117,8 +117,17 @@ use gf2_kernels_simd::gf2m as simd_gf2m;
 /// are created via [`Gf2mField::element`].
 #[derive(Clone, Debug)]
 pub struct Gf2mField {
-    params: Rc<FieldParams>,
+    params: Arc<FieldParams>,
 }
+
+impl PartialEq for Gf2mField {
+    fn eq(&self, other: &Self) -> bool {
+        // Fields are equal if they have the same m and primitive polynomial
+        *self.params == *other.params
+    }
+}
+
+impl Eq for Gf2mField {}
 
 #[derive(Debug)]
 struct FieldParams {
@@ -147,7 +156,7 @@ impl Eq for FieldParams {}
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Gf2mElement {
     value: u64,
-    params: Rc<FieldParams>,
+    params: Arc<FieldParams>,
 }
 
 impl Gf2mField {
@@ -226,7 +235,7 @@ impl Gf2mField {
         let simd_mul_fn = simd_gf2m::detect().map(|fns| fns.mul_fn);
 
         Gf2mField {
-            params: Rc::new(FieldParams {
+            params: Arc::new(FieldParams {
                 m,
                 primitive_poly,
                 log_table: None,
@@ -313,7 +322,7 @@ impl Gf2mField {
         );
         Gf2mElement {
             value,
-            params: Rc::clone(&self.params),
+            params: Arc::clone(&self.params),
         }
     }
 
@@ -352,7 +361,7 @@ impl Gf2mField {
         let simd_mul_fn = self.params.simd_mul_fn;
 
         Gf2mField {
-            params: Rc::new(FieldParams {
+            params: Arc::new(FieldParams {
                 m: self.params.m,
                 primitive_poly: self.params.primitive_poly,
                 log_table: Some(log_table),
@@ -730,7 +739,7 @@ impl Gf2mElement {
         if self.is_one() {
             return Some(Gf2mElement {
                 value: 1,
-                params: Rc::clone(&self.params),
+                params: Arc::clone(&self.params),
             });
         }
 
@@ -742,7 +751,7 @@ impl Gf2mElement {
 
         let mut result = Gf2mElement {
             value: 1,
-            params: Rc::clone(&self.params),
+            params: Arc::clone(&self.params),
         };
         let mut base = self.clone();
         let mut e = exp;
@@ -797,11 +806,11 @@ impl Gf2mElement {
             return Gf2mPoly::new(vec![
                 Gf2mElement {
                     value: 0,
-                    params: Rc::clone(&self.params),
+                    params: Arc::clone(&self.params),
                 },
                 Gf2mElement {
                     value: 1,
-                    params: Rc::clone(&self.params),
+                    params: Arc::clone(&self.params),
                 },
             ]);
         }
@@ -828,7 +837,7 @@ impl Gf2mElement {
         // Start with polynomial 1
         let one = Gf2mElement {
             value: 1,
-            params: Rc::clone(&self.params),
+            params: Arc::clone(&self.params),
         };
         let mut result = Gf2mPoly::constant(one);
 
@@ -838,7 +847,7 @@ impl Gf2mElement {
                 conjugate,
                 Gf2mElement {
                     value: 1,
-                    params: Rc::clone(&self.params),
+                    params: Arc::clone(&self.params),
                 },
             ]);
 
@@ -856,12 +865,12 @@ impl Add for &Gf2mElement {
 
     fn add(self, rhs: Self) -> Self::Output {
         assert!(
-            Rc::ptr_eq(&self.params, &rhs.params),
+            Arc::ptr_eq(&self.params, &rhs.params),
             "Cannot add elements from different fields"
         );
         Gf2mElement {
             value: self.value ^ rhs.value,
-            params: Rc::clone(&self.params),
+            params: Arc::clone(&self.params),
         }
     }
 }
@@ -880,14 +889,14 @@ impl Mul for &Gf2mElement {
 
     fn mul(self, rhs: Self) -> Self::Output {
         assert!(
-            Rc::ptr_eq(&self.params, &rhs.params),
+            Arc::ptr_eq(&self.params, &rhs.params),
             "Cannot multiply elements from different fields"
         );
 
         if self.value == 0 || rhs.value == 0 {
             return Gf2mElement {
                 value: 0,
-                params: Rc::clone(&self.params),
+                params: Arc::clone(&self.params),
             };
         }
 
@@ -903,7 +912,7 @@ impl Mul for &Gf2mElement {
 
             return Gf2mElement {
                 value: exp_table[log_result] as u64,
-                params: Rc::clone(&self.params),
+                params: Arc::clone(&self.params),
             };
         }
 
@@ -918,7 +927,7 @@ impl Mul for &Gf2mElement {
             );
             return Gf2mElement {
                 value: result,
-                params: Rc::clone(&self.params),
+                params: Arc::clone(&self.params),
             };
         }
 
@@ -944,7 +953,7 @@ impl Mul for &Gf2mElement {
 
         Gf2mElement {
             value: result & ((1u64 << m) - 1),
-            params: Rc::clone(&self.params),
+            params: Arc::clone(&self.params),
         }
     }
 }
@@ -963,7 +972,7 @@ impl Div for &Gf2mElement {
 
     fn div(self, rhs: Self) -> Self::Output {
         assert!(
-            Rc::ptr_eq(&self.params, &rhs.params),
+            Arc::ptr_eq(&self.params, &rhs.params),
             "Cannot divide elements from different fields"
         );
 

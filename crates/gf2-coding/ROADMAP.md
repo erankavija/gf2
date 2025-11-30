@@ -350,8 +350,8 @@ See [docs/SDR_INTEGRATION.md](docs/SDR_INTEGRATION.md) for comprehensive design.
 
 ## Technical Debt & Refactoring
 - [x] **Move `poly_from_exponents` to gf2-core**: ✅ **COMPLETED** (2025-11-30) - Migrated to `Gf2mPoly::from_exponents()` in gf2-core Phase 14. All usages updated and tests passing.
+- [x] **Replace Rc with Arc in Gf2mField**: ✅ **COMPLETED** (2025-11-30) - gf2-core Phase 15 complete. `Gf2mField` and `Gf2mElement` are now `Send + Sync`. Unblocks BCH/RS parallel batch operations with 6-8× expected speedup.
 - [ ] **Consolidate doctests for expensive operations**: Currently 6 LDPC encoding doctests are marked `no_run` because they take 2-10 seconds each. These should be consolidated into a single comprehensive example or moved to integration tests to enable proper doctest validation.
-- [ ] **Replace Rc with Arc in Gf2mField**: Blocks BCH/RS parallel batch operations. See `gf2-core/docs/GF2M_THREAD_SAFETY_REQUIREMENTS.md`
 
 ## Research Placeholders / Open Questions
 - Optimal data structures for extremely sparse parity-check matrices?
