@@ -983,7 +983,7 @@ mod generator_matrix_access_tests {
 #[cfg(test)]
 mod batch_api_tests {
     use super::*;
-    use crate::traits::{BlockEncoder, HardDecisionDecoder};
+    use crate::traits::BlockEncoder;
 
     #[test]
     fn test_decode_batch_empty() {
@@ -993,7 +993,7 @@ mod batch_api_tests {
 
         let received: Vec<BitVec> = vec![];
         let decoded = decoder.decode_batch(&received);
-        
+
         assert_eq!(decoded.len(), 0);
     }
 
@@ -1078,11 +1078,7 @@ mod batch_api_tests {
 
         assert_eq!(decoded.len(), 5);
         for (i, dec) in decoded.iter().enumerate() {
-            assert_eq!(
-                dec, &messages[i],
-                "Message {} not corrected properly",
-                i
-            );
+            assert_eq!(dec, &messages[i], "Message {} not corrected properly", i);
         }
     }
 
@@ -1093,16 +1089,12 @@ mod batch_api_tests {
         let encoder = BchEncoder::new(code.clone());
         let decoder = BchDecoder::new(code);
 
-        let messages: Vec<BitVec> = vec![
-            BitVec::zeros(7),
-            BitVec::ones(7),
-            {
-                let mut m = BitVec::zeros(7);
-                m.set(0, true);
-                m.set(3, true);
-                m
-            },
-        ];
+        let messages: Vec<BitVec> = vec![BitVec::zeros(7), BitVec::ones(7), {
+            let mut m = BitVec::zeros(7);
+            m.set(0, true);
+            m.set(3, true);
+            m
+        }];
 
         let mut received: Vec<BitVec> = vec![];
 
@@ -1128,5 +1120,4 @@ mod batch_api_tests {
             assert_eq!(dec, &messages[i], "Message {} not decoded correctly", i);
         }
     }
-
 }

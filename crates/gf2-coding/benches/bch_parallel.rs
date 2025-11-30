@@ -94,5 +94,9 @@ fn benchmark_bch_single_vs_batch(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(benches, benchmark_bch_batch_decode, benchmark_bch_single_vs_batch);
+criterion_group!(
+    benches,
+    benchmark_bch_batch_decode,
+    benchmark_bch_single_vs_batch
+);
 criterion_main!(benches);
