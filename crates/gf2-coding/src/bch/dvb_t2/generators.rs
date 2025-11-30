@@ -45,8 +45,6 @@ pub const NORMAL_GENERATORS: &[&[usize]] = &[
     &[0, 1, 5, 6, 7, 9, 11, 12, 16],
 ];
 
-
-
 /// Computes the product of the first t DVB-T2 generator polynomials.
 ///
 /// # Arguments

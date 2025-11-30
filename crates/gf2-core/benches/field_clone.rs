@@ -8,9 +8,7 @@ use gf2_core::gf2m::Gf2mField;
 fn bench_field_clone(c: &mut Criterion) {
     let field = Gf2mField::gf256();
 
-    c.bench_function("field_clone_gf256", |b| {
-        b.iter(|| black_box(field.clone()))
-    });
+    c.bench_function("field_clone_gf256", |b| b.iter(|| black_box(field.clone())));
 }
 
 fn bench_field_clone_with_tables(c: &mut Criterion) {
@@ -25,10 +23,7 @@ fn bench_field_element_creation(c: &mut Criterion) {
     let field = Gf2mField::gf256().with_tables();
 
     c.bench_function("element_creation_gf256", |b| {
-        b.iter(|| {
-            let a = black_box(field.element(42));
-            a
-        })
+        b.iter(|| black_box(field.element(42)))
     });
 }
 

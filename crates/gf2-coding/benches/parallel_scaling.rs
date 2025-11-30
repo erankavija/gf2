@@ -57,7 +57,7 @@ fn bench_ldpc_decode_thread_scaling(c: &mut Criterion) {
 
     // Get number of physical cores (not including hyperthreading)
     let physical_cores = num_cpus::get_physical();
-    
+
     // Benchmark with different thread counts: 1, 2, 4, 8, physical_cores, all
     let thread_counts: Vec<usize> = vec![1, 2, 4, 8]
         .into_iter()
@@ -68,7 +68,7 @@ fn bench_ldpc_decode_thread_scaling(c: &mut Criterion) {
 
     for num_threads in thread_counts {
         configure_threads(num_threads);
-        
+
         group.bench_with_input(
             BenchmarkId::from_parameter(format!("{}_threads", num_threads)),
             &num_threads,
@@ -114,7 +114,7 @@ fn bench_ldpc_encode_thread_scaling(c: &mut Criterion) {
 
     for num_threads in thread_counts {
         configure_threads(num_threads);
-        
+
         group.bench_with_input(
             BenchmarkId::from_parameter(format!("{}_threads", num_threads)),
             &num_threads,
