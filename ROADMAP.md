@@ -11,7 +11,7 @@ A **research-grade** toolkit for high-performance binary field computing and cod
 
 **Philosophy**: Standards (DVB-T2, 5G NR) provide the foundation, but the ultimate goal is to **push beyond existing implementations** with novel algorithms, competitive performance, and open research.
 
-## Status Summary (2025-11-27)
+## Status Summary
 
 **gf2-core**: Production-grade primitives with SIMD acceleration
 - ✅ GF(2^m) extension field arithmetic with Karatsuba multiplication
@@ -22,14 +22,15 @@ A **research-grade** toolkit for high-performance binary field computing and cod
 - ✅ Polar transforms (Fast Hadamard Transform)
 - ✅ File I/O for matrix serialization (529 MB DVB-T2 cache)
 
-**gf2-coding**: DVB-T2 validation complete, optimization phase active
+**gf2-coding**: DVB-T2 validation complete, parallel computing framework active
 - ✅ BCH codes: 202/202 blocks match ETSI EN 302 755 test vectors
 - ✅ LDPC codes: 202/202 blocks match test vectors (encoding + decoding)
 - ✅ All 12 DVB-T2 LDPC configurations implemented
 - ✅ Richardson-Urbanke systematic encoding with dense matrix cache
 - ✅ Min-sum belief propagation decoder
-- 🔧 **Active**: Performance optimization (3.85 Mbps → 50-100 Mbps target)
-- 🔮 QAM modulation and full FEC chain (planned)
+- ✅ BCH/LDPC parallel batch operations with rayon
+- 🔧 **Active**: CPU parallelization for real-time DVB-T2 (50-100 Mbps target)
+- 🔮 GPU/FPGA acceleration, QAM modulation, full FEC chain (planned)
 
 ## Strategic Pillars
 
@@ -95,10 +96,10 @@ A **research-grade** toolkit for high-performance binary field computing and cod
 
 ## In Progress
 
-| Milestone | Description | Status | Timeline |
-|-----------|-------------|--------|----------|
-| **M14** | LDPC Performance: Profiling & baseline (3.85 Mbps) | ✅ Done | 2025-11 |
-| **M15** | Parallel Computing Framework: CPU/GPU/FPGA | 🔧 Active | 2025-11 → 2026 |
+| Milestone | Description | Status |
+|-----------|-------------|--------|
+| **M14** | LDPC Performance: Profiling & baseline | ✅ Done |
+| **M15** | Parallel Computing Framework: CPU/GPU/FPGA | 🔧 Active |
 
 ## Planned
 
@@ -218,15 +219,16 @@ A **research-grade** toolkit for high-performance binary field computing and cod
 
 ### M13: DVB-T2 LDPC Implementation ✅ COMPLETE
 
-**Status**: Implementation and validation complete (2025-11-27)
+**Status**: Implementation and validation complete
 - ✅ All 12 DVB-T2 LDPC configurations (Short/Normal × 6 rates)
 - ✅ Validation: 202/202 blocks match ETSI EN 302 755 test vectors
 - ✅ Richardson-Urbanke systematic encoding with 529 MB dense cache
 - ✅ Min-sum belief propagation decoder
 - ✅ BCH outer code integration tested
 
-**Performance**: Baseline established, optimization in progress
-- Current: 3.85 Mbps encoding, 1.35 Mbps decoding
+**Performance**: Baseline established, parallel implementation complete
+- Sequential baseline: 3.85 Mbps encoding, 1.35 Mbps decoding
+- Parallel batch operations: BCH and LDPC with rayon support
 - Target: 50-100 Mbps (real-time DVB-T2 reception)
 - Profiling: Hotspots identified (97.5% dense matvec, 69.8% BP loop)
 

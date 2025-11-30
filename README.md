@@ -38,10 +38,11 @@ Coding theory algorithms for error correction:
 - **Block codes**: Hamming codes with syndrome decoding
 - **Generator matrix access**: Unified trait for all linear codes (lazy, cached)
 - **BCH codes**: Algebraic decoding (Berlekamp-Massey, Chien search)
-- **DVB-T2 BCH**: Standard-compliant outer codes (⚠️ verification pending)
+- **DVB-T2 BCH**: All 12 configurations validated (202/202 blocks match ETSI EN 302 755)
 - **Convolutional codes**: Viterbi decoder
 - **LDPC codes**: Belief propagation with quasi-cyclic support
-- **DVB-T2 LDPC**: Rate 1/2 Normal frame from ETSI EN 302 755 (⚠️ partial)
+- **DVB-T2 LDPC**: All 12 configurations validated (202/202 blocks match test vectors)
+- **Parallel batch operations**: BCH and LDPC with rayon support
 - **Soft-decision LLR**: Operations for iterative decoding
 - **Channel models**: AWGN simulation with BPSK modulation
 
@@ -134,12 +135,12 @@ The project roadmap is divided into strategic goals (this document) and detailed
 - ✅ Rank/select operations (lazy indexing)
 - ✅ Polar transforms (Fast Hadamard Transform)
 
-**gf2-coding**: DVB-T2 FEC implementation progressing
-- ✅ BCH codes with algebraic decoding (60+ tests)
-- ✅ DVB-T2 BCH outer codes (⚠️ verification pending)
-- ✅ Quasi-cyclic LDPC framework
-- ✅ DVB-T2 LDPC Rate 1/2 Normal (⚠️ 11 tables pending)
-- 🔮 QAM modulation and FEC simulation (planned)
+**gf2-coding**: DVB-T2 FEC validation complete, parallelization active
+- ✅ BCH codes: 202/202 blocks validated against ETSI EN 302 755
+- ✅ LDPC codes: All 12 configurations validated
+- ✅ Parallel batch operations with rayon
+- 🔧 CPU parallelization for real-time decoding (50-100 Mbps target)
+- 🔮 QAM modulation and full FEC chain (planned)
 
 ## Development
 

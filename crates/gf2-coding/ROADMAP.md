@@ -127,7 +127,7 @@ See [docs/DVB_T2_DESIGN.md](docs/DVB_T2_DESIGN.md) for detailed design and imple
 
 ### Current Work 🔧
 
-**C10.6.6: Test Vector Validation** ✅ **COMPLETE** (2025-11-27)
+**C10.6.6: Test Vector Validation** ✅ **COMPLETE**
 - ✅ **Encoding validated**: TP05 → TP06 **202/202 blocks match** (12.4s, 0.63 Mbps)
 - ✅ **Decoding validated**: TP06 → TP05 **202/202 blocks match** (5.8s, 1.35 Mbps)
 - ✅ **Systematic property**: Verified (first k bits match message)
@@ -135,7 +135,7 @@ See [docs/DVB_T2_DESIGN.md](docs/DVB_T2_DESIGN.md) for detailed design and imple
 - ✅ **Roundtrip**: Encode → decode → message verified
 - 🐛 **Bug fixed**: Decoder was returning full codeword instead of extracting message bits
 
-**C10.6.7: Performance Benchmarks & Baseline** ✅ **COMPLETE** (2025-11-27)
+**C10.6.7: Performance Benchmarks & Baseline** ✅ **COMPLETE**
 - ✅ Criterion benchmark suite created (`benches/ldpc_throughput.rs`)
 - ✅ Baseline measured: **3.85 Mbps encoding** (9.87 ms/block)
 - ✅ Key finding: No batching optimization (constant throughput across batch sizes)
@@ -145,14 +145,14 @@ See [docs/DVB_T2_DESIGN.md](docs/DVB_T2_DESIGN.md) for detailed design and imple
 
 ### Current Work 🎯
 
-**C10.6.8: Performance Optimization** ✅ **COMPLETE** (2025-11-27)
+**C10.6.8: Performance Optimization** ✅ **COMPLETE**
 - ✅ Profiling: 97.5% encoding in `BitMatrix::matvec_transpose`, 69.8% decoding in BP loop
 - ✅ Baseline: 3.85 Mbps encoding, 8.29 Mbps decoding (parallel batch)
 - ✅ Parallel batch decoding: **6.7× speedup** on 24-core CPU
 - ✅ SIMD verified: 178 SIMD instructions active in binary (gf2-core)
 - **Decision**: SIMD/optimization work moved to Phase C11 (Parallel Computing Framework)
 
-## Phase C11: Parallel Computing Framework 🔧 **NEXT PRIORITY** (2025-11-29)
+## Phase C11: Parallel Computing Framework 🔧 **NEXT PRIORITY**
 
 **Goal**: Unified parallelization strategy across all coding methods (CPU, GPU, FPGA)
 
@@ -173,7 +173,7 @@ See [docs/PARALLELIZATION_STRATEGY.md](docs/PARALLELIZATION_STRATEGY.md) for det
 
 **Goal**: 50-100 Mbps real-time DVB-T2 on 24-core CPU
 
-**Week 1** ✅ COMPLETE (2025-11-29):
+**Week 1** ✅ COMPLETE:
 - ✅ ComputeBackend trait created in gf2-core
 - ✅ CpuBackend with SIMD auto-selection and rayon support
 - ✅ Batch operations: `batch_matvec`, `batch_matvec_transpose`
@@ -183,7 +183,7 @@ See [docs/PARALLELIZATION_STRATEGY.md](docs/PARALLELIZATION_STRATEGY.md) for det
 - ✅ Benchmarks created for performance tracking
 - ✅ All 221 gf2-coding + 452 gf2-core tests pass
 
-**Week 2** ✅ COMPLETE (2025-11-30):
+**Week 2** ✅ COMPLETE:
 - ✅ Added `parallel` feature to gf2-coding Cargo.toml (opt-in, matches gf2-core)
 - ✅ Made rayon optional dependency with conditional compilation
 - ✅ Created parallel_scaling benchmark with thread control
@@ -192,14 +192,16 @@ See [docs/PARALLELIZATION_STRATEGY.md](docs/PARALLELIZATION_STRATEGY.md) for det
 - ✅ All 221 tests pass with/without parallel feature
 - ⏭ Full thread scaling measurements (1, 2, 4, 8, 12, 24 threads) - in progress
 
-**Week 3-4**:
-- ✅ BCH: Add `decode_batch()` API (sequential, blocked on Rc→Arc in gf2-core)
+**Week 3-4** 🔧 **IN PROGRESS**:
+- ✅ BCH: Add `decode_batch()` API with parallel rayon support - unblocked by gf2-core Phase 15
+- ✅ BCH: Parallel batch decoding benchmark created (benches/bch_parallel.rs)
+- [ ] BCH: Performance validation (target 6-8× speedup on multi-core)
 - [ ] LDPC: SIMD vectorization for LLR operations (4-8× target)
 - [ ] LDPC: Optimize sparse iteration patterns (2× target)
 - [ ] Viterbi: Batch API + rayon parallelization
 - [ ] Target: 50-100 Mbps (100-200% real-time DVB-T2)
 
-### Phase C11.2: Backend Abstraction ✅ COMPLETE (2025-11-29)
+### Phase C11.2: Backend Abstraction ✅ COMPLETE
 
 **Goal**: Design `ComputeBackend` trait and refactor existing code
 
@@ -349,8 +351,8 @@ See [docs/SDR_INTEGRATION.md](docs/SDR_INTEGRATION.md) for comprehensive design.
 - Performance benchmarks demonstrating 10-50x speedup over existing implementations
 
 ## Technical Debt & Refactoring
-- [x] **Move `poly_from_exponents` to gf2-core**: ✅ **COMPLETED** (2025-11-30) - Migrated to `Gf2mPoly::from_exponents()` in gf2-core Phase 14. All usages updated and tests passing.
-- [x] **Replace Rc with Arc in Gf2mField**: ✅ **COMPLETED** (2025-11-30) - gf2-core Phase 15 complete. `Gf2mField` and `Gf2mElement` are now `Send + Sync`. Unblocks BCH/RS parallel batch operations with 6-8× expected speedup.
+- [x] **Move `poly_from_exponents` to gf2-core**: ✅ **COMPLETED** - Migrated to `Gf2mPoly::from_exponents()` in gf2-core Phase 14. All usages updated and tests passing.
+- [x] **Replace Rc with Arc in Gf2mField**: ✅ **COMPLETED** - gf2-core Phase 15 complete. `Gf2mField` and `Gf2mElement` are now `Send + Sync`. Unblocks BCH/RS parallel batch operations with 6-8× expected speedup.
 - [ ] **Consolidate doctests for expensive operations**: Currently 6 LDPC encoding doctests are marked `no_run` because they take 2-10 seconds each. These should be consolidated into a single comprehensive example or moved to integration tests to enable proper doctest validation.
 
 ## Research Placeholders / Open Questions
