@@ -30,7 +30,7 @@ This document establishes the parallelization strategy for `gf2-coding`, coverin
 └─────────────────────────────────────────────────────────────────┘
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│ Backend Abstraction (gf2-coding/compute)                        │
+│ Backend Abstraction (gf2-core/compute)                          │
 │ - Trait: ComputeBackend                                         │
 │ - Implementations: CpuBackend, VulkanBackend, FpgaBackend       │
 │ - Batch processing: Always operate on batches (size ≥ 1)       │
@@ -46,10 +46,13 @@ This document establishes the parallelization strategy for `gf2-coding`, coverin
 └─────────────────────────────────────────────────────────────────┘
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│ Primitive Layer (gf2-core)                                      │
-│ - SIMD kernels: AVX2/AVX-512/NEON for CPU                      │
+│ Primitive Layer (gf2-core + gf2-kernels-simd)                  │
+│ - gf2-core: Safe abstractions, runtime dispatch                │
+│ - gf2-kernels-simd: Unsafe SIMD implementations (isolated)     │
+│   * Bit ops: XOR, AND, popcount (AVX2/AVX-512/NEON)            │
+│   * LLR ops: horizontal min-sum, max-abs for LDPC              │
+│   * GF(2^m) ops: field arithmetic with SIMD (future)           │
 │ - Memory layout: Structure-of-Arrays for GPU coalescing        │
-│ - Bit operations: Word-level (64-bit) for cache efficiency     │
 └─────────────────────────────────────────────────────────────────┘
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
@@ -79,10 +82,13 @@ This document establishes the parallelization strategy for `gf2-coding`, coverin
 - Scales well up to ~200 blocks (6.7× on 24 cores, likely memory bandwidth bound)
 - State leakage bug fixed during TDD implementation (message reset on decode start)
 
-**SIMD Primitives** (gf2-core):
-- AVX2 kernels in `gf2-kernels-simd` (178 SIMD instructions active)
-- Word-level bit operations (64-bit words)
-- BitMatrix RREF operations with SIMD (256-512× speedup vs bit-level)
+**SIMD Primitives**:
+- **gf2-kernels-simd**: Separate crate for unsafe, architecture-specific SIMD code
+  - Bit operations: AVX2 kernels for XOR, AND, popcount (178 SIMD instructions active)
+  - LLR operations: AVX2 horizontal min-sum, max-abs for belief propagation
+  - Word-level operations: 64-bit words for cache efficiency
+- **gf2-core integration**: Runtime CPU detection, safe wrappers
+- **Performance**: BitMatrix RREF operations with SIMD (256-512× speedup vs bit-level)
 
 **Other Codes** (❌ Serial - planned for Phase 2):
 - BCH: Sequential encoding/decoding (no batch API yet)
@@ -112,6 +118,113 @@ This document establishes the parallelization strategy for `gf2-coding`, coverin
 - **Vulkan Compute** (recommended): Cross-platform, modern API
 - **CUDA**: NVIDIA-only, mature ecosystem
 - **FPGA**: Xilinx HLS for rapid prototyping
+
+---
+
+## SIMD Kernel Implementation Strategy
+
+### Architecture: gf2-kernels-simd (Separate Crate)
+
+**Why a separate crate?**
+- Isolates **unsafe code** from safe abstractions
+- Enables **optional dependency** (feature-gated in gf2-core/gf2-coding)
+- Allows **architecture-specific compilation** without polluting main crates
+- Provides **clean separation** of concerns: safe high-level API vs unsafe low-level kernels
+
+### Module Organization
+
+```
+gf2-kernels-simd/
+├── src/
+│   ├── lib.rs              # Detection, safe wrappers
+│   ├── llr.rs              # LLR operations (min-sum, max-abs, saturate)
+│   ├── gf2m.rs             # GF(2^m) field arithmetic (future)
+│   └── x86/
+│       ├── mod.rs          # x86-64 detection
+│       ├── avx2.rs         # AVX2 implementations
+│       └── avx512.rs       # AVX-512 implementations (future)
+```
+
+### LLR Operations in gf2-kernels-simd/src/llr.rs
+
+**Current Implementation** (✅ Exists):
+- `minsum_avx2(inputs: &[f32]) -> f32`: Sign-preserving horizontal min
+- `maxabs_avx2(inputs: &[f32]) -> f32`: Maximum absolute value
+
+**Needed Extensions** (⏭ Next):
+1. **f64 support**: Current uses f32, but gf2-coding::Llr uses f64
+   - Options: Convert f64↔f32 at boundary, or implement f64 SIMD variants
+   - Trade-off: f32 = 2× SIMD width (8 lanes AVX2), f64 = higher precision (4 lanes)
+2. **saturate_batch()**: Clip LLRs to [-max, +max] range
+3. **hard_decision_batch()**: Vec<Llr> → BitVec conversion
+
+### Integration Pattern
+
+**Step 1: Detection in gf2-kernels-simd**
+```rust
+// gf2-kernels-simd/src/llr.rs
+pub struct LlrFns {
+    pub minsum_fn: fn(&[f32]) -> f32,
+    pub saturate_fn: fn(&mut [f32], f32),
+    pub hard_decision_fn: fn(&[f32]) -> Vec<bool>,
+}
+
+pub fn detect() -> Option<LlrFns> {
+    #[cfg(target_arch = "x86_64")]
+    if is_x86_feature_detected!("avx2") {
+        return Some(LlrFns {
+            minsum_fn: minsum_avx2_safe,
+            saturate_fn: saturate_avx2_safe,
+            hard_decision_fn: hard_decision_avx2_safe,
+        });
+    }
+    None  // No SIMD available, fallback to scalar
+}
+```
+
+**Step 2: Runtime Selection in gf2-coding**
+```rust
+// gf2-coding/src/llr.rs
+impl Llr {
+    pub fn boxplus_minsum_n(llrs: &[Llr]) -> Llr {
+        #[cfg(feature = "simd")]
+        {
+            // Lazy static: detect once at startup
+            static LLR_SIMD: once_cell::sync::Lazy<Option<gf2_kernels_simd::llr::LlrFns>> =
+                once_cell::sync::Lazy::new(gf2_kernels_simd::llr::detect);
+            
+            if let Some(ref fns) = *LLR_SIMD {
+                let values: Vec<f32> = llrs.iter().map(|l| l.value() as f32).collect();
+                return Llr::new((fns.minsum_fn)(&values) as f64);
+            }
+        }
+        
+        // Fallback: scalar implementation (always available)
+        Self::boxplus_minsum_n_scalar(llrs)
+    }
+}
+```
+
+### Performance Expectations
+
+| Operation | Scalar | AVX2 (f32) | AVX2 (f64) | Speedup |
+|-----------|--------|------------|------------|---------|
+| `boxplus_minsum_n` (8 LLRs) | 8 ops | 1 vector op | 2 vector ops | 4-8× |
+| `saturate` (1024 LLRs) | 1024 clamps | 128 vector clamps | 256 vector clamps | 4-8× |
+| `hard_decision` (1024 LLRs) | 1024 compares | 128 vector compares + pack | 256 vector compares + pack | 4-8× |
+
+**Impact on LDPC Decoding**:
+- Belief propagation spends **69.8%** of time in LLR operations
+- Target speedup: **4-8×** on vectorized operations
+- Overall LDPC decoding improvement: **2-4×** (Amdahl's law: 0.698 × 4 + 0.302 × 1 ≈ 3.1×)
+
+### Design Principles
+
+1. **Safety First**: All public APIs in gf2-kernels-simd are safe wrappers
+2. **Runtime Detection**: Never assume CPU features, always check at runtime
+3. **Scalar Fallback**: Every SIMD operation must have scalar equivalent
+4. **Type Conversion**: Handle f32 ↔ f64 conversion at boundary, not in hot loop
+5. **Testing**: Property-based tests verify SIMD matches scalar exactly
 
 ---
 
@@ -167,14 +280,28 @@ impl LdpcDecoder {
 
 **Target**: Vectorize hot loops within single block operations
 
-**LDPC Belief Propagation**:
+**LDPC Belief Propagation** (⏭ Next Priority):
 ```rust
-// Current: Scalar LLR operations
+// Current: Scalar LLR operations in gf2-coding/src/llr.rs
 let min_val = inputs.iter().map(|llr| llr.abs()).min();
 
-// Target: SIMD horizontal min across 8 LLRs at once
-use std::arch::x86_64::*;
-let mins = simd_horizontal_min_f32x8(&inputs);
+// Target: SIMD horizontal min in gf2-kernels-simd/src/llr.rs
+// Implementation location: gf2-kernels-simd/src/llr.rs (extend existing module)
+use gf2_kernels_simd::llr;
+let llr_fns = llr::detect().unwrap_or_else(|| fallback_to_scalar());
+let result = llr_fns.minsum_fn(&inputs);  // AVX2: 8 floats at once
+
+// Integration in gf2-coding/src/llr.rs
+impl Llr {
+    pub fn boxplus_minsum_n(llrs: &[Llr]) -> Llr {
+        #[cfg(feature = "simd")]
+        if let Some(simd_fns) = gf2_kernels_simd::llr::detect() {
+            return Llr::new((simd_fns.minsum_fn)(llrs_as_f32_slice(llrs)));
+        }
+        // Fallback to scalar
+        scalar_boxplus_minsum_n(llrs)
+    }
+}
 ```
 
 **Sparse Matrix Operations**:
@@ -435,7 +562,10 @@ let c = backend.matmul(&a, &b);  // Uses optimized kernel backend
 - Target (GPU): 50-100 Mbps (research needed)
 
 **Next Steps**:
-- ⏭ Vectorize LLR operations (SIMD horizontal min/sum)
+- ⏭ **SIMD LLR operations** (gf2-kernels-simd): Extend existing `llr.rs` module
+  - Add f64 support (current: f32 only)
+  - Add saturate, batch hard decisions
+  - Integrate into gf2-coding/src/llr.rs with runtime detection
 - 🔬 GPU prototype (Vulkan compute shaders)
 - 🔬 Measure memory-bound vs compute-bound on GPU
 
@@ -684,8 +814,9 @@ void viterbi_butterfly(
 - **Achieved**: Software recording tier (~10 Mbps) ✓
 
 **Phase 2: SIMD Optimization** ⏭ NEXT (2-4 weeks)
+- **Implementation location**: `gf2-kernels-simd/src/llr.rs` (extend existing module)
 - Encoding: 50-100 Mbps (vectorization + parallelism)
-- Decoding: 20-100 Mbps (SIMD horizontal min/sum in BP)
+- Decoding: 20-100 Mbps (SIMD horizontal min/sum in BP - 69.8% of decode time)
 - **Target**: Real-time DVB-T2 reception on PC
 
 **Phase 3: GPU Prototype** 🔬 RESEARCH (3-6 months)
@@ -733,7 +864,12 @@ void viterbi_butterfly(
 **Short-Term** 🔧 IN PROGRESS (Weeks 3-4):
 14. ✅ Thread scaling benchmarks complete (1, 2, 4, 8, 12 threads)
 15. ✅ Parallel scaling documented: 3.9× on 8 threads (good efficiency)
-16. ⏭ **NEXT**: Vectorize LDPC LLR operations (SIMD horizontal min/sum) - 69.8% of decode time
+16. ⏭ **NEXT**: Vectorize LDPC LLR operations in **gf2-kernels-simd/src/llr.rs**
+    - Extend existing AVX2 min-sum implementation (currently f32, need f64)
+    - Add saturate() SIMD implementation
+    - Add batch hard_decision() for Vec<Llr> → BitVec conversion
+    - Integrate into gf2-coding/src/llr.rs with runtime detection
+    - **Target**: 69.8% of decode time spent in LLR operations
 17. ⏭ Optimize sparse iteration patterns (17.7% of decode time)
 18. ⏭ Optimize memory layout for cache efficiency (Structure-of-Arrays)
 19. ✅ Parallel BCH batch APIs implemented (`BchEncoder::encode_batch()`, `BchDecoder::decode_batch()`)
