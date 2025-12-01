@@ -720,22 +720,24 @@ void viterbi_butterfly(
 4. ✅ Benchmark 1, 10, 50, 100, 202 block batches
 5. ✅ Validate throughput: 1.23 Mbps → 8.29 Mbps (batch of 202)
 
-**Week 2: Feature Flag & Benchmarking** ✅ COMPLETE (2025-11-30):
+**Week 2: Feature Flag & Benchmarking** ✅ COMPLETE (2025-12-01):
 6. ✅ Added `parallel` feature flag (opt-in, matches gf2-core)
 7. ✅ Made rayon optional dependency with conditional compilation
-8. ✅ Created `benches/parallel_scaling.rs` with thread control
-9. ✅ Created `benchmark_threads.sh` automation script
-10. ✅ Comprehensive user guide: `PARALLEL_BENCHMARKING.md`
-11. ✅ All 221 tests pass with/without parallel feature
-12. ⏭ Full thread scaling measurements pending
+8. ✅ Fixed `CpuBackend` to use global rayon pool (respects `RAYON_NUM_THREADS`)
+9. ✅ Created `benches/quick_parallel.rs` with fast iteration (~2 min)
+10. ✅ Created `benchmark_quick.sh` automation script (~5 min)
+11. ✅ Verified parallel scaling: 3.9× speedup on 8 threads
+12. ✅ Comprehensive user guide: `PARALLEL_BENCHMARKING.md`
+13. ✅ All 226 tests pass with/without parallel feature
 
-**Short-Term** ⏭ NEXT (Weeks 3-4):
-13. ⏭ Complete thread scaling benchmarks (1, 2, 4, 8, 12, 24 threads)
-14. ⏭ Document parallel scaling characteristics and optimal config
-15. ⏭ Vectorize LDPC LLR operations (SIMD horizontal min/sum)
-16. ⏭ Optimize memory layout for cache efficiency (Structure-of-Arrays)
-17. ⏭ Add parallel BCH batch APIs (`BchEncoder::encode_batch()`)
-18. ⏭ Document thread safety guarantees in public API
+**Short-Term** 🔧 IN PROGRESS (Weeks 3-4):
+14. ✅ Thread scaling benchmarks complete (1, 2, 4, 8, 12 threads)
+15. ✅ Parallel scaling documented: 3.9× on 8 threads (good efficiency)
+16. ⏭ **NEXT**: Vectorize LDPC LLR operations (SIMD horizontal min/sum) - 69.8% of decode time
+17. ⏭ Optimize sparse iteration patterns (17.7% of decode time)
+18. ⏭ Optimize memory layout for cache efficiency (Structure-of-Arrays)
+19. ✅ Parallel BCH batch APIs implemented (`BchEncoder::encode_batch()`, `BchDecoder::decode_batch()`)
+20. ✅ Thread safety: All public APIs use Arc/global pool, documented in code
 
 ### Phase 2: Integrate with gf2-coding (Weeks 2-3) ⏭ NEXT
 

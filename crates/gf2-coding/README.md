@@ -88,20 +88,18 @@ For more details, see [SIMD_PERFORMANCE_GUIDE.md](SIMD_PERFORMANCE_GUIDE.md).
 
 ### Parallel Processing
 
-Opt-in parallel processing with rayon:
+Opt-in parallel batch operations with rayon (control via `RAYON_NUM_THREADS`):
 
 ```bash
-# Enable parallel batch operations
-cargo build --features parallel
+# Quick benchmark (~2 min)
+RAYON_NUM_THREADS=1 cargo bench --bench quick_parallel --features parallel
+RAYON_NUM_THREADS=8 cargo bench --bench quick_parallel --features parallel
 
-# Benchmark parallel scaling
-cargo bench --bench parallel_scaling --features parallel
-
-# Run comprehensive overnight benchmarks
-./run_overnight_benchmarks.sh
+# Automated thread scaling test (~5 min)
+./benchmark_quick.sh
 ```
 
-See [docs/PARALLEL_BENCHMARKING.md](docs/PARALLEL_BENCHMARKING.md) for thread configuration and performance analysis.
+See [docs/PARALLEL_BENCHMARKING.md](docs/PARALLEL_BENCHMARKING.md) for details.
 
 ## Usage
 

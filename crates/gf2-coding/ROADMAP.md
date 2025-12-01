@@ -183,22 +183,23 @@ See [docs/PARALLELIZATION_STRATEGY.md](docs/PARALLELIZATION_STRATEGY.md) for det
 - ✅ Benchmarks created for performance tracking
 - ✅ All 221 gf2-coding + 452 gf2-core tests pass
 
-**Week 2** ✅ COMPLETE:
+**Week 2** ✅ COMPLETE (2025-12-01):
 - ✅ Added `parallel` feature to gf2-coding Cargo.toml (opt-in, matches gf2-core)
 - ✅ Made rayon optional dependency with conditional compilation
-- ✅ Created parallel_scaling benchmark with thread control
-- ✅ Created benchmark_threads.sh automation script
+- ✅ Fixed `CpuBackend` to use global rayon thread pool (respects `RAYON_NUM_THREADS`)
+- ✅ Created `quick_parallel` benchmark with small batches (~2 min runtime)
+- ✅ Created `benchmark_quick.sh` automation script (~5 min for 1/2/4/8/12 threads)
+- ✅ Verified parallel scaling: 3.9× speedup on 8 threads
 - ✅ Comprehensive benchmarking guide (PARALLEL_BENCHMARKING.md)
-- ✅ All 221 tests pass with/without parallel feature
-- ⏭ Full thread scaling measurements (1, 2, 4, 8, 12, 24 threads) - in progress
+- ✅ All 226 tests pass with/without parallel feature
 
 **Week 3-4** 🔧 **IN PROGRESS**:
 - ✅ BCH: Add `decode_batch()` API with parallel rayon support - unblocked by gf2-core Phase 15
 - ✅ BCH: Parallel batch decoding benchmark created (benches/bch_parallel.rs)
+- ✅ Parallel infrastructure fixed and validated (3.9× speedup confirmed)
+- ⏭ **NEXT**: LDPC LLR SIMD vectorization (4-8× target, 69.8% of decode time)
+- [ ] LDPC: Optimize sparse iteration patterns (2× target, 17.7% of decode time)
 - [ ] BCH: Performance validation (target 6-8× speedup on multi-core)
-- [ ] LDPC: SIMD vectorization for LLR operations (4-8× target)
-- [ ] LDPC: Optimize sparse iteration patterns (2× target)
-- [ ] Viterbi: Batch API + rayon parallelization
 - [ ] Target: 50-100 Mbps (100-200% real-time DVB-T2)
 
 ### Phase C11.2: Backend Abstraction ✅ COMPLETE

@@ -59,5 +59,9 @@ name = "batch_operations"
 harness = false
 
 [[bench]]
-name = "parallel_scaling"
+name = "quick_parallel"
+harness = false
+
+[[bench]]
+name = "bch_parallel"
 harness = false

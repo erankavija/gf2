@@ -13,6 +13,9 @@ use crate::{alg::rref::RrefResult, kernels::Backend, BitMatrix, BitVec};
 /// and optionally leverages rayon for parallel matrix operations when the
 /// `parallel` feature is enabled.
 ///
+/// Uses rayon's global thread pool, which can be controlled via the
+/// `RAYON_NUM_THREADS` environment variable.
+///
 /// # Examples
 ///
 /// ```
@@ -26,8 +29,6 @@ use crate::{alg::rref::RrefResult, kernels::Backend, BitMatrix, BitVec};
 /// ```
 pub struct CpuBackend {
     kernel: Box<dyn Backend>,
-    #[cfg(feature = "parallel")]
-    _thread_pool: rayon::ThreadPool,
 }
 
 impl CpuBackend {
@@ -35,7 +36,14 @@ impl CpuBackend {
     ///
     /// Automatically selects:
     /// - Best kernel backend (SIMD if available, otherwise scalar)
-    /// - Rayon thread pool (if `parallel` feature enabled)
+    /// - Uses rayon's global thread pool (respects RAYON_NUM_THREADS env var)
+    ///
+    /// # Thread Control
+    ///
+    /// Set `RAYON_NUM_THREADS` environment variable to control parallelism:
+    /// ```bash
+    /// RAYON_NUM_THREADS=8 cargo bench
+    /// ```
     ///
     /// # Examples
     ///
@@ -59,16 +67,7 @@ impl CpuBackend {
         #[cfg(not(feature = "simd"))]
         let kernel: Box<dyn Backend> = Box::new(crate::kernels::scalar::SCALAR_BACKEND);
 
-        #[cfg(feature = "parallel")]
-        let _thread_pool = rayon::ThreadPoolBuilder::new()
-            .build()
-            .expect("Failed to create rayon thread pool");
-
-        Self {
-            kernel,
-            #[cfg(feature = "parallel")]
-            _thread_pool,
-        }
+        Self { kernel }
     }
 }
 
