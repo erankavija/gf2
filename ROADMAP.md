@@ -11,27 +11,6 @@ A **research-grade** toolkit for high-performance binary field computing and cod
 
 **Philosophy**: Standards (DVB-T2, 5G NR) provide the foundation, but the ultimate goal is to **push beyond existing implementations** with novel algorithms, competitive performance, and open research.
 
-## Status Summary
-
-**gf2-core**: Production-grade primitives with SIMD acceleration
-- ✅ GF(2^m) extension field arithmetic with Karatsuba multiplication
-- ✅ SIMD field operations (AVX2, PCLMULQDQ, ~178 SIMD instructions active)
-- ✅ Primitive polynomial verification and generation (m=2..16)
-- ✅ Dense and sparse matrix primitives (bit-packed + CSR/CSC dual format)
-- ✅ Rank/select operations with lazy indexing
-- ✅ Polar transforms (Fast Hadamard Transform)
-- ✅ File I/O for matrix serialization (529 MB DVB-T2 cache)
-
-**gf2-coding**: DVB-T2 validation complete, parallel computing framework active
-- ✅ BCH codes: 202/202 blocks match ETSI EN 302 755 test vectors
-- ✅ LDPC codes: 202/202 blocks match test vectors (encoding + decoding)
-- ✅ All 12 DVB-T2 LDPC configurations implemented
-- ✅ Richardson-Urbanke systematic encoding with dense matrix cache
-- ✅ Min-sum belief propagation decoder
-- ✅ BCH/LDPC parallel batch operations with rayon
-- 🔧 **Active**: CPU parallelization for real-time DVB-T2 (50-100 Mbps target)
-- 🔮 GPU/FPGA acceleration, QAM modulation, full FEC chain (planned)
-
 ## Strategic Pillars
 
 ### 1. Research-Driven Development
@@ -93,23 +72,26 @@ A **research-grade** toolkit for high-performance binary field computing and cod
 | **M11** | Polar transforms: Fast Hadamard Transform | 2025-Q1 |
 | **M12** | Primitive polynomials: Verification & generation | 2025-Q2 |
 | **M13** | DVB-T2 LDPC: All 12 configurations + validation | 2025-Q4 |
+| **M14** | LDPC Performance: Profiling & baseline | 2025-Q4 |
+| **M15** | Parallel Computing Framework: CPU backend | 2025-Q4 |
 
 ## In Progress
 
 | Milestone | Description | Status |
 |-----------|-------------|--------|
-| **M14** | LDPC Performance: Profiling & baseline | ✅ Done |
-| **M15** | Parallel Computing Framework: CPU/GPU/FPGA | 🔧 Active |
 
 ## Planned
 
 | Milestone | Description | Priority | Research Focus |
 |-----------|-------------|----------|----------------|
-| **M16** | QAM modulation: Soft-decision demapping | Medium | Channel modeling |
-| **M17** | FEC simulation: End-to-end DVB-T2 chain | High | System integration |
-| **M18** | Performance benchmarking vs. specialized systems | High | Competitive analysis |
-| **M19** | GRAND decoding: Universal decoder for short codes | Research | Novel algorithms |
-| **M20** | Neural-aided BP: ML-enhanced LDPC decoding | Research | AI integration |
+| **M16** | GPU/FPGA acceleration: Belief propagation prototypes | High | Hardware acceleration, memory vs compute bottlenecks |
+| **M17** | QAM modulation: Soft-decision demapping for FEC chain | High | Channel modeling, LLR integration |
+| **M18** | End-to-end DVB-T2: Full FEC + BICM simulation | High | System integration, FER curves vs Shannon limit |
+| **M19** | Competitive benchmarking: vs Magma/Sage/AFF3CT | High | Performance positioning, gap analysis |
+| **M20** | GRAND decoding: Universal decoder for short codes | Research | Alternative to algebraic methods |
+| **M21** | 5G polar codes: CRC-aided SCL decoder | Research | Modern capacity-approaching codes |
+| **M22** | Neural-aided BP: ML-enhanced LDPC decoding | Research | Iteration reduction for fixed FER |
+| **M23** | SDR integration: GNU Radio blocks for real signals | Research | Practical validation, throughput |
 
 ## Research Goals
 
@@ -130,151 +112,42 @@ A **research-grade** toolkit for high-performance binary field computing and cod
 - **Novel constructions**: Document and validate new code designs
 - **Performance analysis**: Rigorous FER curves vs. theoretical bounds
 - **Open benchmarks**: Reproducible results for academic comparison
-  - DVB-T2 baseline for 5G NR comparisons
-  - LDPC convergence speed benchmarks
-  - Decoder complexity vs. performance tradeoffs
 
-## Research Directions
-
-### Near-Term (2025-Q4 / 2026-Q1)
-| Topic | Focus | Justification |
-|-------|-------|---------------|
-| **LDPC Performance** | 50-100 Mbps real-time | Active bottleneck blocking DVB-T2 chain |
-| **QAM Integration** | Soft-decision demapping | Required for end-to-end FEC simulation |
-| **FER Curves** | AWGN channel validation | Establish baseline vs. Shannon limit |
-
-### Medium-Term (2026)
-| Topic | Focus | Justification |
-|-------|-------|---------------|
-| **GRAND Decoding** | Universal decoder for short codes | Alternative to algebraic methods; research novelty |
-| **5G Polar Codes** | CRC-aided SCL decoder | Modern capacity-approaching codes |
-| **Performance Benchmarking** | vs. Magma/Sage/AFF3CT | Competitive positioning and gap analysis |
-| **SDR Integration** | GNU Radio blocks | Practical validation with real signals |
-
-### Exploratory (Research)
-| Topic | Focus | Research Question |
-|-------|-------|-------------------|
-| **Neural-Aided BP** | ML-enhanced LDPC | Can neural nets reduce iterations for fixed FER? |
-| **Spatially-Coupled LDPC** | SC-LDPC with sliding window | Threshold saturation gains over QC-LDPC? |
-| **GPU Acceleration** | CUDA/ROCm BP | Memory bandwidth vs. compute bottlenecks? |
-| **Quantized Arithmetic** | 3-5 bit LLRs | Performance/accuracy trade-off for embedded |
-| **Alternative Encodings** | Structured LDPC encoding | Avoid dense 529 MB generator matrix? |
-
-### Long-Term Vision
-- **Competitive CAS**: Establish gf2 as go-to for binary field research
-- **Novel Constructions**: Publication-worthy code designs and algorithms
-- **Open Benchmarks**: Industry-standard suite for FEC comparisons
-- **Educational Tool**: Research-grade toolkit with pedagogical examples
-
-## Active Research Questions
-
-### Performance & Architecture (M14 Focus)
-- **LDPC Decoding**: Can we achieve 50-100 Mbps with software-only BP?
-  - Measured: 69.8% time in BP loop, 17.7% sparse iteration, 4.9% malloc
-  - Hypothesis: SIMD LLR ops + batch parallelism → 10-25× speedup
-  - **Current**: 1.35 Mbps → **Target**: 50-100 Mbps (37× improvement needed)
-- **Encoding**: Is dense matvec (97.5% hotspot) the fundamental limit?
-  - SIMD enabled: 178 instructions active, but only 3.85 Mbps achieved
-  - Alternative: Structured encoding methods avoiding dense multiply?
-- **Memory hierarchy**: How do cache effects limit LDPC scaling?
-  - Generator matrix: 529 MB cache for DVB-T2 (loads in 16 ms)
-  - Belief propagation: Message passing patterns and cache locality?
-
-### Algorithmic Trade-offs
-- **GRAND vs. Algebraic**: For short BCH codes, when is GRAND faster?
-  - BCH validated but slow for t=12 errors; GRAND complexity?
-- **Quantization**: LLR precision impact on DVB-T2 FER curves
-  - Current: f64, Target: 3-5 bit fixed-point for embedded
-- **Min-sum variants**: Normalized/offset min-sum gains over standard?
-  - Current: Standard min-sum; optimization potential?
-
-### System-Level Research
-- **DVB-T2 Chain**: What's the end-to-end latency budget?
-  - Deinterleaving + BCH + LDPC + QAM: 150 ms target feasible?
-- **SDR Integration**: Can Rust compete with GNU Radio C++ blocks?
-  - Target: 10-50× speedup over existing gr-dvbt2 blocks
-- **Real Signals**: Validation against captured RF (not just test vectors)
-
-### Computer Algebra Performance
-- **Crossover Point**: When does Rust+SIMD match Magma/Sage?
-  - Hypothesis: m > 32 favors SIMD, m < 16 favors specialized CAS
-  - Measurement needed: Controlled benchmark suite
-- **Polynomial Arithmetic**: Is Karatsuba optimal for all m?
-  - Current: Karatsuba for m ≥ 8; FFT-based for m > 64?
+## Open Research Questions
 
 ### Hardware Acceleration
 - **GPU LDPC**: Is belief propagation memory-bound or compute-bound?
-  - 37× speedup needed; realistic GPU gain?
-  - Research: Profile memory bandwidth vs. FLOPs
-- **FPGA**: Can functional Rust map to efficient HDL?
-  - Experimental: Compile gf2-core to VHDL via HLS tools
+- **FPGA feasibility**: Can functional Rust map to efficient HDL?
+- **Crossover points**: When does GPU beat multi-core CPU for LDPC?
 
-### Theoretical Foundations
-- **Shannon Gap**: How close are practical LDPC decoders?
-  - DVB-T2 LDPC: Measured FER curves vs. capacity
-- **Finite-Length Effects**: Polar vs LDPC for N < 10K
-  - Research: CRC-aided SCL competitive analysis
+### Algorithm Development
+- **GRAND vs. Algebraic**: When is GRAND faster for short codes?
+- **Min-sum variants**: Normalized/offset gains over standard min-sum?
+- **Quantized LLRs**: 3-8 bit precision vs accuracy tradeoff for embedded
+- **Alternative encodings**: Structured LDPC avoiding dense matrices?
+- **Neural-aided BP**: Can ML reduce iterations while maintaining FER?
 
-## Milestone Details
+### System Integration
+- **End-to-end DVB-T2**: Latency budget for deinterleave + BCH + LDPC + QAM?
+- **SDR performance**: Can Rust match/exceed GNU Radio C++ throughput?
+- **Real signal validation**: Performance on captured RF vs test vectors
 
-### M13: DVB-T2 LDPC Implementation ✅ COMPLETE
+### Performance Comparison
+- **Computer algebra**: Rust+SIMD vs Magma/Sage crossover point (m > 32?)
+- **FEC decoders**: How close to AFF3CT/IT++ can we get?
+- **Polynomial arithmetic**: Is Karatsuba optimal, or FFT-based for m > 64?
 
-**Status**: Implementation and validation complete
-- ✅ All 12 DVB-T2 LDPC configurations (Short/Normal × 6 rates)
-- ✅ Validation: 202/202 blocks match ETSI EN 302 755 test vectors
-- ✅ Richardson-Urbanke systematic encoding with 529 MB dense cache
-- ✅ Min-sum belief propagation decoder
-- ✅ BCH outer code integration tested
+### Theoretical Analysis
+- **Shannon gap**: How close are practical LDPC decoders to capacity?
+- **Finite-length effects**: Polar vs LDPC competitive analysis for N < 10K
+- **Spatially-coupled LDPC**: Threshold saturation gains over QC-LDPC?
 
-**Performance**: Baseline established, parallel implementation complete
-- Sequential baseline: 3.85 Mbps encoding, 1.35 Mbps decoding
-- Parallel batch operations: BCH and LDPC with rayon support
-- Target: 50-100 Mbps (real-time DVB-T2 reception)
-- Profiling: Hotspots identified (97.5% dense matvec, 69.8% BP loop)
+## Long-Term Vision
 
-### M14: LDPC Performance Optimization 🔧 ACTIVE
-
-**Goal**: Achieve real-time DVB-T2 FEC decoding (50 Mbps minimum)
-
-**Phase 1 - Quick Wins** (Week 1, Target: 10-20 Mbps):
-- Pre-allocate decoder state (eliminate 4.9% malloc overhead)
-- Batch processing API for multi-core parallelism (4-8× speedup)
-- Thread-local decoder pool for parallel decoding
-
-**Phase 2 - SIMD** (Week 2, Target: 50-100 Mbps):
-- Vectorize LLR operations (min-sum, additions) with AVX2
-- Optimize sparse matrix iteration (CSR format investigation)
-- Profile belief propagation loop internals
-
-**Phase 3 - Advanced** (Research):
-- GPU-accelerated belief propagation (investigate CUDA/ROCm)
-- Alternative encoding methods (avoid dense matrix multiply)
-- Quantized LLR precision analysis (3-bit vs 5-bit)
-
-### M17: Competitive Performance Benchmarking
-
-**Goal**: Position gf2 competitively against specialized systems
-
-**Baseline Established**:
-- ✅ LDPC decoding profiled: Clear optimization targets identified
-- ✅ SIMD verification: 178 SIMD instructions active in binary
-- ✅ Correctness validated: 202/202 blocks match test vectors
-
-**Planned Comparisons**:
-- **Computer Algebra**: Primitive polynomial testing vs. Magma/Sage/NTL
-- **Numerical**: GF(2^m) multiplication vs. hand-optimized C libraries
-- **FEC Decoders**: LDPC throughput vs. AFF3CT, IT++, commercial SDR
-- **Memory Efficiency**: Sparse matrix representations vs. SciPy
-
-**Research Questions**:
-- What's the crossover point where Rust+SIMD matches Magma? (m > 32?)
-- Can we achieve 2× improvement over AFF3CT with better SIMD utilization?
-- GPU acceleration: Realistic speedup potential for LDPC BP?
-
-**Deliverables**:
-- Automated benchmark suite with reproducible results
-- Performance report with profiling methodology
-- Open-source comparison data for academic use
+- **Competitive CAS**: Establish gf2 as go-to for binary field research
+- **Novel constructions**: Publication-worthy code designs and algorithms
+- **Open benchmarks**: Industry-standard suite for FEC comparisons
+- **Educational tool**: Research-grade toolkit with pedagogical examples
 
 ## Publication & Validation
 

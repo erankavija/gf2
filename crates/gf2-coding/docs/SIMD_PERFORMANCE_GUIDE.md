@@ -1,103 +1,183 @@
-# SIMD Performance Guide for gf2-coding
+# SIMD Performance Guide
 
-## TL;DR
+---
 
-**Enable SIMD for 4-8× faster LDPC encoding preprocessing:**
+## Overview
+
+SIMD (Single Instruction Multiple Data) acceleration is enabled by default through the `gf2-kernels-simd` crate, providing 4-8× speedups for critical operations.
+
+---
+
+## Automatic SIMD Selection
+
+The library automatically detects and uses the best available SIMD instructions at runtime:
+
+- **AVX-512**: 8× parallelism (Intel Skylake-X 2017+, AMD Zen 4 2022+)
+- **AVX2**: 4× parallelism (Intel Haswell 2013+, AMD Excavator 2015+)  
+- **Scalar**: Baseline fallback for older CPUs
+
+No configuration needed—optimal performance is automatic.
+
+---
+
+## What Gets Accelerated
+
+### Bit Matrix Operations (gf2-core)
+
+**RREF (Gaussian Elimination)**:
+- XOR operations on matrix rows
+- Critical for LDPC encoding preprocessing
+- Speedup: 256-512× vs bit-level operations
+
+**Matrix-Vector Multiply**:
+- Used in LDPC encoding
+- Word-level operations with SIMD
+- Currently 97.5% of encoding time
+
+### LLR Operations (gf2-kernels-simd)
+
+**Check Node Updates** (min-sum):
+- Horizontal minimum with sign preservation
+- Used in LDPC belief propagation
+- AVX2 implementation: `minsum_avx2`
+
+**Variable Node Updates** (max-abs):
+- Maximum absolute value
+- Message passing in LDPC decoder
+- AVX2 implementation: `maxabs_avx2`
+
+---
+
+## Performance Impact
+
+### LDPC Preprocessing
+
+| Operation | Without SIMD | With SIMD | Speedup |
+|-----------|--------------|-----------|---------|
+| RREF (DVB-T2 Short) | 5-10 seconds | 1-2 seconds | 4-8× |
+| Cache generation (6 configs) | 60-120 seconds | 16 seconds | 4-8× |
+
+### Runtime Operations
+
+| Operation | Status | Impact |
+|-----------|--------|--------|
+| Encoding (matvec) | ✅ Active | 97.5% of encoding time |
+| Decoding (LLR ops) | ✅ Active | Used in belief propagation |
+| f32 LLRs | ✅ Active | 2× wider vectors (8 lanes vs 4) |
+
+---
+
+## Usage
+
+### Building with SIMD
+
+SIMD is enabled by default. Build normally:
 
 ```bash
-cargo build --release --features simd
+# Standard release build (SIMD included)
+cargo build --release
+
+# Run tests
+cargo test --release
+
+# Generate LDPC caches
+cargo run --release --bin generate_ldpc_cache short
 ```
 
-Or make it default in `Cargo.toml`:
-```toml
-[features]
-default = ["simd"]
-```
+### Disabling SIMD
 
----
-
-## Why SIMD Matters for LDPC Codes
-
-LDPC encoding preprocessing involves Gaussian elimination on large parity-check matrices. This is the bottleneck in the encoding pipeline.
-
-### Performance Impact
-
-| Operation | Method | Time (DVB-T2 Short) |
-|-----------|--------|---------------------|
-| Gauss Elimination (manual bit-level) | Current | ~5-10 minutes |
-| Gauss Elimination (scalar RREF) | After migration | ~5-10 seconds |
-| Gauss Elimination (SIMD RREF) | After migration + SIMD | **~1-2 seconds** |
-
-**Speedup Summary**:
-- Manual → Scalar RREF: **64× faster**
-- Manual → SIMD RREF: **256-512× faster**
-- Scalar RREF → SIMD RREF: **4-8× faster**
-
----
-
-## How SIMD Acceleration Works
-
-### The RREF Algorithm
-
-Gaussian elimination (RREF) performs row operations on matrices:
-1. Find pivot row
-2. **XOR pivot row into other rows** ← This is the hot loop
-3. Repeat for all columns
-
-Step 2 dominates runtime for large matrices.
-
-### SIMD Optimization
-
-Without SIMD (scalar):
-```
-for each 64-bit word:
-    dst[i] ^= src[i]     // 1 word per cycle
-```
-
-With AVX2 SIMD:
-```
-for each 256-bit chunk (4 words):
-    dst[i:i+3] ^= src[i:i+3]  // 4 words per cycle
-```
-
-With AVX512 SIMD:
-```
-for each 512-bit chunk (8 words):
-    dst[i:i+7] ^= src[i:i+7]  // 8 words per cycle
-```
-
-### Automatic CPU Detection
-
-The SIMD backend automatically detects CPU capabilities at runtime:
-- **AVX512**: 8× parallelism (Intel Skylake-X 2017+, AMD Zen 4 2022+)
-- **AVX2**: 4× parallelism (Intel Haswell 2013+, AMD Excavator 2015+)
-- **Scalar**: 1× baseline (fallback for older CPUs)
-
-No code changes needed—just enable the `simd` feature.
-
----
-
-## Enabling SIMD
-
-### Option 1: Feature Flag (Recommended for now)
+To build without SIMD (not recommended):
 
 ```bash
-# Build with SIMD
-cargo build --release --features simd
-
-# Test with SIMD
-cargo test --features simd
-
-# Benchmark with SIMD
-cargo bench --features simd
-
-# Generate LDPC caches with SIMD
-cargo run --bin generate_cache --release --features simd
+cargo build --release --no-default-features
 ```
 
-### Option 2: Default Feature (Recommended after migration)
+---
 
-Edit `Cargo.toml`:
+## Verification
+
+Check if SIMD is active:
+
+```bash
+# Look for SIMD instructions in binary
+objdump -d target/release/libgf2_core.so | grep -E 'vpxor|vpminu|vpadd' | wc -l
+
+# Should see 100+ SIMD instructions if enabled
+```
+
+Verify at runtime:
+
+```rust
+use gf2_kernels_simd::llr;
+
+if let Some(simd_fns) = llr::detect() {
+    println!("SIMD active: {:?}", simd_fns);
+} else {
+    println!("Using scalar fallback");
+}
+```
+
+---
+
+## Architecture Details
+
+### gf2-kernels-simd Crate
+
+Separate crate for unsafe SIMD implementations:
+
+```
+gf2-kernels-simd/
+├── src/
+│   ├── lib.rs              # Detection and safe wrappers
+│   ├── llr.rs              # LLR operations (min-sum, max-abs)
+│   └── x86/
+│       ├── avx2.rs         # AVX2 implementations
+│       └── avx512.rs       # AVX-512 (future)
+```
+
+**Benefits**:
+- Isolates unsafe code
+- Clean separation of concerns
+- Architecture-specific compilation
+- Optional feature gating
+
+### Runtime Detection
+
+```rust
+// Lazy static initialization (once at startup)
+static LLR_SIMD: Lazy<Option<LlrFns>> = 
+    Lazy::new(gf2_kernels_simd::llr::detect);
+
+// Use in hot path
+if let Some(ref fns) = *LLR_SIMD {
+    (fns.minsum_fn)(&values)  // SIMD path
+} else {
+    scalar_minsum(&values)     // Fallback
+}
+```
+
+---
+
+## Next Optimizations
+
+### Stack Allocation (In Progress)
+
+**Problem**: Small LLR slices allocate on heap  
+**Solution**: Use stack arrays for <16 elements  
+**Expected**: 2-4× additional speedup
+
+### Wider Vectors (Future)
+
+**AVX-512 support**: 8-lane f32 operations (vs 4-lane AVX2)  
+**Expected**: 1.5-2× additional speedup on supported CPUs
+
+---
+
+## References
+
+- [LDPC_PERFORMANCE.md](LDPC_PERFORMANCE.md) - Performance optimization plan
+- [PARALLELIZATION.md](PARALLELIZATION.md) - Overall parallelization strategy
+- `gf2-kernels-simd/` - SIMD implementation source
 ```toml
 [features]
 default = ["simd"]  # Enable SIMD by default

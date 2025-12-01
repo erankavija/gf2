@@ -81,7 +81,7 @@ Fast Hadamard Transform, 81x speedup vs. naive, O(N log N) butterfly operations
    - Eliminated 33.5 MB allocation churn
    - All tests passing (7 new M4RM tests added)
 
-**Results**: Substantial performance improvement with clean, safe code. Remaining 3.9x gap is reasonable for pure Rust vs hand-optimized C. See `docs/PHASE11_IMPLEMENTATION_PLAN.md` for details.
+**Results**: Substantial performance improvement with clean, safe code. Remaining 3.9x gap is reasonable for pure Rust vs hand-optimized C. See `docs/BENCHMARKS.md` (Phase 11 section) for details.
 
 ### Phase 12: RREF (Reduced Row Echelon Form) ✅ **COMPLETED**
 
@@ -162,7 +162,7 @@ Fast Hadamard Transform, 81x speedup vs. naive, O(N log N) butterfly operations
 **Next Steps**:
 - Benchmarking (optional): Add competitive comparison vs SageMath/NTL
 - Migration: Replace `poly_from_exponents()` in gf2-coding BCH module
-- See: `docs/GF2M_POLY_UTILITIES_REQUIREMENTS.md` for detailed specification
+- See: `docs/GF2M.md` for API guide and `docs/POLY_UTILITIES_PERFORMANCE.md` for performance strategy
 
 ### Phase 15: GF(2^m) Thread Safety ✅ **COMPLETE**
 
@@ -171,7 +171,7 @@ Fast Hadamard Transform, 81x speedup vs. naive, O(N log N) butterfly operations
 **Status**: Completed
 
 **Related Documentation**:
-- Technical requirements: `docs/GF2M_THREAD_SAFETY_REQUIREMENTS.md`
+- Architecture: `docs/GF2M.md` (Thread Safety section)
 - gf2-coding integration: [Parallelization Progress](../gf2-coding/docs/PARALLELIZATION_PROGRESS.md#phase-22-gf2m-thread-safety-prerequisite-for-bchrs)
 
 **Implementation Complete**:
@@ -301,9 +301,9 @@ Prime field arithmetic - deferred (no immediate use case)
 
 **For detailed design docs**, see:
 - `docs/KERNEL_OPTIMIZATION.md` - Kernel architecture and SIMD integration
-- `docs/BENCHMARK_RESULTS_SIMD_VS_SCALAR.md` - SIMD performance validation
-- `docs/PRIMITIVE_POLYNOMIALS.md` - Phase 9 design and algorithms
-- `docs/GF2M_DESIGN.md` - Extension field architecture
-- `docs/POLAR_IMPLEMENTATION_PLAN.md` - Phase 6 polar transforms
+- `docs/GF2M.md` - Extension field architecture and usage guide
 - `docs/BENCHMARKS.md` - Performance comparisons vs SageMath/NTL/M4RI
+- `docs/PRIMITIVE_POLYNOMIALS.md` - Primitive polynomial generation
+- `docs/POLAR_IMPLEMENTATION_PLAN.md` - Polar transforms and fast Hadamard
+- `docs/RREF_DESIGN_PLAN.md` - RREF for LDPC encoding
 - `README.md` - API usage and examples

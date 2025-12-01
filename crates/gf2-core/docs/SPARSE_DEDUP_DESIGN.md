@@ -1,6 +1,6 @@
 # Sparse Matrix Deduplication - Design Decision Document
 
-**Status**: ✅ Implemented (2025-11-20)
+**Status**: ✅ Implemented
 
 This document captures the design decision and implementation of duplicate edge 
 handling in sparse matrix COO construction. It serves as historical context for 
@@ -45,7 +45,7 @@ Deduplication ensures the final matrix represents the intended structure.
 
 ## Implementation Decision
 
-**IMPLEMENTED** (2025-11-20): Dual API approach chosen.
+**IMPLEMENTED**: Dual API approach chosen.
 
 Rather than choosing between XOR or deduplication, both are provided:
 

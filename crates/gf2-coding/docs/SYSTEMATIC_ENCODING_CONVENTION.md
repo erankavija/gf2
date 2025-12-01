@@ -72,4 +72,4 @@ No action required for code using the public API - the change is internal.
 ## References
 
 - ETSI EN 302 755: DVB-T2 Standard
-- `docs/DVB_T2_VERIFICATION_STATUS.md`: Complete verification results and bug fix details
+- [DVB_T2.md](DVB_T2.md): DVB-T2 implementation and verification status

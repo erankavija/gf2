@@ -1,7 +1,5 @@
 # Kernel Architecture & Optimization
 
-**Last Updated**: 2025-11-23
-
 ## Overview
 
 This document describes the kernel architecture in gf2-core and tracks optimization work for primitive operations and SIMD acceleration.
@@ -191,7 +189,7 @@ pub fn next_power_of_2(v: u64) -> u64 {
 - ✅ Measured actual speedups: 3.4-3.6x for large buffers (≥64 words)
 - ✅ Confirmed scalar faster for small buffers (<8 words) due to dispatch overhead
 - ✅ Peak SIMD throughput: 97 GiB/s vs 28 GiB/s scalar
-- ✅ Results documented in BENCHMARK_RESULTS_SIMD_VS_SCALAR.md
+- ✅ Results documented in BENCHMARKS.md (Phase 3 section)
 - ✅ Benchmark suite: `benches/simd_vs_scalar.rs`
 
 **Phase 5 Completed:**
@@ -322,7 +320,7 @@ All equivalence tests added to `src/kernels/simd/mod.rs` tests module:
 - ✅ SIMD 3.4-3.6x faster for large buffers
 - ✅ Predictions matched: threshold accurate, speedups as expected
 
-**Results:** See `docs/BENCHMARK_RESULTS_SIMD_VS_SCALAR.md` for detailed analysis
+**Results:** See `BENCHMARKS.md` (Phase 3: SIMD Backend Performance) for detailed analysis
 
 ### Phase 5 - Migration & Cleanup ✅ COMPLETE
 
@@ -631,7 +629,7 @@ When optimizing an operation:
 
 ## Changelog
 
-**2025-11-23**: Phase 5 Complete - Migration & Cleanup
+**Phase 5 Complete** - Migration & Cleanup
 - ✅ Migrated 5 core operations to use unified `kernels::ops` API
 - ✅ Replaced direct SIMD calls in: AND, OR, XOR, NOT, popcount
 - ✅ Reduced code complexity - simpler function bodies
@@ -639,7 +637,7 @@ When optimizing an operation:
 - ✅ All 344 tests passing, zero regressions
 - ✅ Code formatted and linted
 
-**2025-11-23**: Phase 4 Complete - Performance Benchmarking
+**Phase 4 Complete** - Performance Benchmarking
 - ✅ Created comprehensive SIMD vs Scalar benchmark suite
 - ✅ Tested 12 buffer sizes from 1 to 4096 words
 - ✅ **8-word threshold VALIDATED** - optimal crossover confirmed
@@ -647,9 +645,9 @@ When optimizing an operation:
 - ✅ Confirmed scalar faster for small buffers (<8 words, 0.64-0.91x)
 - ✅ Peak throughput: SIMD 97 GiB/s vs Scalar 28 GiB/s
 - ✅ Dispatch overhead measured: ~0.8ns
-- Results: `docs/BENCHMARK_RESULTS_SIMD_VS_SCALAR.md`
+- Results: `BENCHMARKS.md` (Phase 3: SIMD Backend Performance)
 
-**2025-11-23**: Phase 3 Complete - SIMD/Scalar Equivalence Testing
+**Phase 3 Complete** - SIMD/Scalar Equivalence Testing
 - ✅ Added 23 comprehensive SIMD vs Scalar equivalence tests
 - ✅ Tests cover 18 different buffer sizes (1 to 1024 words)
 - ✅ Misalignment testing for non-4-word-aligned buffers
@@ -659,7 +657,7 @@ When optimizing an operation:
 - ✅ All 344 tests passing with SIMD, 319 without
 - Validated: SIMD produces bit-identical results to scalar
 
-**2025-11-23**: Phase 2 Complete - Backend Selection & Dispatch
+**Phase 2 Complete** - Backend Selection & Dispatch
 - ✅ Implemented smart backend selection with 8-word threshold
 - ✅ Added 5 kernel operations with automatic dispatch: XOR, AND, OR, NOT, popcount
 - ✅ Comprehensive backend selection tests (empty, small, threshold, large)
@@ -667,7 +665,7 @@ When optimizing an operation:
 - ✅ All 321 tests passing with SIMD, 319 without
 - TDD methodology: Tests written first, then implementation
 
-**2025-11-23**: Initial comprehensive documentation
+**Initial Phase** - Architecture & Documentation
 - Documented kernel architecture
 - Completed primitive operations (5 operations)
 - SIMD Phase 1 complete (backend wrapper)

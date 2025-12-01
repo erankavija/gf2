@@ -4,7 +4,7 @@
 
 This document consolidates all benchmark results for gf2-core.
 
-**Latest Update**: Phase 13 (Matrix-Vector Multiplication) completed with spectacular results - beating M4RI by 2.7-58× for `matvec` and 3.6-23.6× for `matvec_transpose`. Word-level optimization achieved 36-63× speedup over initial implementation.
+**Latest**: Phase 13 (Matrix-Vector Multiplication) completed with spectacular results - beating M4RI by 2.7-58× for `matvec` and 3.6-23.6× for `matvec_transpose`. Word-level optimization achieved 36-63× speedup over initial implementation.
 
 ---
 
@@ -336,7 +336,6 @@ Sage timings for exhaustive search:
 
 ## Phase 12: RREF (Reduced Row Echelon Form) / Gaussian Elimination
 
-**Date**: 2025-11-25  
 **Purpose**: Establish baseline for RREF implementation to replace naive Gaussian elimination in gf2-coding  
 **Use Case**: LDPC generator matrix computation (Richardson-Urbanke algorithm)
 
@@ -506,29 +505,77 @@ These are the actual use case matrices that motivated this optimization:
 
 ---
 
-## Summary: Current Status (Updated)
+## Phase 4: Rank/Select Operations
 
-### Performance Gaps Identified
+**Hardware**: Standard development machine  
+**Implementation**: O(1) rank, O(log n) select with lazy two-level indexing
 
-| Operation | Size | Current | Best-in-Class | Gap | Status |
+### Rank Operations (64 KB data)
+
+| Implementation | Position | Time | Speedup vs Naive |
+|---------------|----------|------|------------------|
+| Optimized | middle | **30.8 ns** | **1,020× faster** |
+| Optimized | end | **30.9 ns** | **2,040× faster** |
+
+**Result**: True O(1) performance - constant time regardless of data size
+
+### Select Operations (64 KB data)
+
+| Implementation | Position | Time | Speedup vs Naive |
+|---------------|----------|------|------------------|
+| Optimized | middle | **3.23 µs** | **58× faster** |
+| Optimized | end | **3.25 µs** | **115× faster** |
+
+**Memory Overhead**: 4.7% (two-level index structure)
+
+---
+
+## Phase 3: SIMD Backend Performance
+
+**Hardware**: x86_64 with AVX2 support  
+**Comparison**: Scalar vs SIMD XOR operations
+
+### Threshold Validation
+
+| Size (words) | Scalar (ns) | SIMD (ns) | Speedup |
+|--------------|-------------|-----------|---------|
+| 7 | 2.70 | 3.50 | 0.77× (scalar faster) |
+| **8** | **4.00** | **2.68** | **1.49×** ✅ |
+| 64 | 17.58 | 5.13 | **3.43×** |
+| 256 | 71.60 | 20.10 | **3.56×** |
+| 1024 | 270.42 | 78.82 | **3.43×** |
+
+**Key Finding**: 8-word threshold is optimal - SIMD slower for <8 words (dispatch overhead), 3-4× faster for larger buffers.
+
+**Peak Throughput**: Scalar ~28 GiB/s, SIMD ~97 GiB/s (3.46× improvement)
+
+---
+
+## Summary: Current Status
+
+### Performance vs Competition
+
+| Operation | Size | gf2-core | Best-in-Class | Gap | Status |
 |-----------|------|---------|---------------|-----|--------|
 | **Matrix-Vector (matvec)** | **1024×1024** | **15.7 µs** | **M4RI: 42.9 µs** | **2.7× faster** | **✅ BEATS M4RI** |
 | **Matrix-Vector (transpose)** | **1024×1024** | **13.95 µs** | **M4RI: 49.7 µs** | **3.6× faster** | **✅ BEATS M4RI** |
+| RREF / Gaussian Elim | 9K×16K | 1.82 s (SIMD) | M4RI: 0.24s | **7.5× slower** | ✅ Acceptable |
+| Rank Operations | 64 KB | 30.8 ns | N/A | **1,020-2,040× vs naive** | ✅ Excellent |
 | M4RM Multiplication | 1024×1024 | 6.47 ms | M4RI: 1.21 ms | **5.3× slower** | 🟡 Medium |
 | Matrix Inversion | 1024×1024 | 22.12 ms | M4RI: 8.61 ms | **2.6× slower** | 🟢 Low |
-| RREF / Gaussian Elim | 9K×16K | 1.82 s (SIMD) | M4RI: 0.24s | **7.5× slower** | ✅ Acceptable |
 | GF(2^64) Multiplication | 1M ops | 204 ms | NTL: 103 ms | **2.0× slower** | 🟢 Low |
 
-**Recent Completions**:
-- ✅ **Phase 13 (Matrix-Vector)**: Beat M4RI by 2.7-23.6× across all operations
-- ✅ **Phase 12 (RREF)**: 304× speedup over naive, within 7.5× of M4RI with SIMD
-- ✅ **Phase 11 (M4RM)**: 46% improvement with optimizations
+### Key Achievements
+- ✅ **Matrix-Vector**: Beat M4RI by 2.7-23.6×
+- ✅ **RREF**: 304× speedup over naive, practical for DVB-T2 LDPC
+- ✅ **Rank/Select**: 58-2,040× speedup, enables succinct data structures
+- ✅ **SIMD**: 3.4× speedup with AVX2, optimal threshold validated
+- ✅ **GF(2^m)**: 13-18× faster than NTL for small fields, 100-1000× faster than SageMath
 
 ---
 
 ## Phase 13: Dense Matrix-Vector Multiplication
 
-**Date**: 2025-11-26  
 **Purpose**: Implement and optimize dense BitMatrix matrix-vector multiplication  
 **Use Case**: DVB-T2 LDPC encoding (40-50% dense parity matrices)
 

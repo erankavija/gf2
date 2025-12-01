@@ -1,6 +1,5 @@
 # ComputeBackend Design and Implementation
 
-**Date**: 2025-11-29  
 **Status**: Phase 1 Complete  
 **Location**: `gf2-core/src/compute/`
 

@@ -40,7 +40,7 @@ Operations automatically use the fastest backend available. Small operations (<5
 
 **Documentation:**
 - [`docs/KERNEL_OPTIMIZATION.md`](docs/KERNEL_OPTIMIZATION.md) - Complete kernel architecture guide
-- [`docs/BENCHMARK_RESULTS_SIMD_VS_SCALAR.md`](docs/BENCHMARK_RESULTS_SIMD_VS_SCALAR.md) - SIMD performance analysis
+- [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md) - Performance analysis including SIMD validation
 
 ## Performance
 
