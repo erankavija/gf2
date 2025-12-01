@@ -803,9 +803,9 @@ void viterbi_butterfly(
 |--------------|---------------------|--------|---------|--------|
 | Serial baseline (f64) | 1.00 Mbps (30.0 ms) | Single-threaded | 1.0× | Baseline |
 | Serial (f32) | 1.05 Mbps (28.5 ms) | f32 precision | 1.05× | ✅ Complete |
-| Allocation optimized | 1.14 Mbps (28.3 ms) | Cached neighbors + temp buffer | 1.14× | ✅ Complete |
-| Rayon (24 cores) | 8.29 Mbps (batch) | Block-level parallelism | 6.7× (batch) | ✅ Complete |
-| Target (next opt) | ~1.5-2.0 Mbps | Further profiling-driven | ~1.5-2× | ⏭ Next |
+| + Neighbor caching | 1.43 Mbps (20.9 ms) | Check + var neighbors cached | 1.43× | ✅ Complete |
+| Rayon (24 cores) | 8.29 Mbps (batch) | Block-level parallelism | 8× (batch) | ✅ Complete |
+| Target (algorithmic) | ~2-3 Mbps | Min-sum variants, early term | ~2-3× | ⏭ Possible |
 | Target (+ GPU) | ~100 Mbps | + Vulkan compute | ~100× | 🔬 Research |
 
 ### Roadmap by Phase
@@ -822,32 +822,53 @@ void viterbi_butterfly(
 - Enables 2× wider SIMD vectors (8 lanes vs 4 in AVX2)
 
 **Phase 2b: Allocation Elimination** ✅ COMPLETE (2025-12-01)
-- **Goal**: Remove allocation overhead identified in profiling
-- **Implementation**: Pre-cached neighbors (17.9%) + temp buffer (5.2%)
-- **Result**: 9.0% speedup (31.1 ms → 28.3 ms per block)
-- **Finding**: Original "SIMD stack allocation" hypothesis was incorrect
-  - Real win was eliminating row_iter().collect() via caching
-  - DVB-T2 check degree = 11 (not 3-10 as assumed)
-  - Simple pre-computation was more effective than complex stack allocation
-- **Memory cost**: +2.3 MB per decoder (negligible)
-- **Evidence**: See ALLOCATION_PROFILING_REPORT.md
-- **Achievement**: Cleaner architecture, baseline faster
 
-**Phase 2: LLR Precision & SIMD Foundation** ✅ COMPLETE (2025-12-01)
-- **Completed**: Changed Llr from f64 to f32
-  - Eliminates conversion overhead (f64↔f32)
-  - 5% baseline improvement from reduced memory bandwidth
-  - Enables 2× wider SIMD vectors (8 lanes vs 4 in AVX2)
-- **SIMD Status**: Integrated but Vec allocation overhead dominates
-  - Current bottleneck: Heap allocation in hot path (check node updates)
-  - Typical check node degree: 3-10 elements (below efficient SIMD threshold)
-  
-**Phase 2b: SIMD Stack Allocation** ⏭ NEXT (1-2 weeks)
-- **Goal**: Eliminate Vec allocation overhead
-- **Implementation**: Stack arrays for small slices (< 16 elements)
-- **Target**: 2-4× speedup on LDPC decoding (10-15 Mbps → 40-60 Mbps)
+**Goal**: Remove allocation overhead blocking SIMD visibility
 
-**Phase 3: GPU Prototype** 🔬 RESEARCH (3-6 months)
+**Profiling Analysis**:
+- Initial profiling found 23.1% overhead in allocations
+  - 17.9% in `row_iter().collect()` (check node neighbors)
+  - 5.2% in malloc/free
+- Evidence-driven TDD approach with comprehensive profiling
+
+**Implementation (3 iterations)**:
+1. **Check neighbor caching**: Pre-compute at construction (9% gain)
+2. **Temp buffer reuse**: Eliminate repeated allocations (3% gain)
+3. **Variable neighbor caching**: Discovered via re-profiling (26% gain)
+
+**Results**:
+- Combined: **30% faster** (30.0 ms → 20.9 ms per block, 228 KiB/s)
+- Allocation: Reduced 78% (23.1% → 5.1%)
+- SIMD: Now visible at 12.9% (was hidden by allocation noise)
+- Memory cost: +4.5 MB per decoder (negligible)
+
+**Key Learnings**:
+- Original "SIMD stack allocation" hypothesis was incorrect
+- Real bottleneck: Multiple row_iter()/col_iter() calls per iteration
+- Re-profiling after each step revealed additional opportunities
+- Simple caching > complex stack allocation schemes
+
+**Post-Optimization Profile** (20.9 ms per block):
+- 70.6% in belief propagation computation (expected/optimal)
+- 12.9% in SIMD min-sum (AVX2, now visible)
+- 5.1% remaining allocation (acceptable)
+- 2.7% syndrome check
+- **Verdict**: Now compute-bound, which is ideal
+
+**Phase 3: Next Optimization Options** ⏭ DECISION POINT
+
+**Current State**: Compute-bound at 70.6% belief propagation
+- Single-thread: 1.43 Mbps (20.9 ms per block)
+- Multi-thread: 8.29 Mbps (24-core rayon)
+- Allocation eliminated, SIMD working
+
+**Option A: Algorithmic Improvements** (2-3 weeks)
+- Normalized/offset min-sum (better convergence)
+- Early termination optimization
+- Layered decoding schedules
+- Expected: 1.2-1.5× gain (algorithmic efficiency)
+
+**Option B: GPU Prototype** 🔬 RESEARCH (3-6 months)
 - Encoding: 200-500 Mbps (large batches >100 blocks)
 - Decoding: 500-1000 Mbps (Vulkan compute shaders)
 - **Target**: Professional broadcast equipment performance

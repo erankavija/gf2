@@ -205,18 +205,29 @@ See [docs/PARALLELIZATION_STRATEGY.md](docs/PARALLELIZATION_STRATEGY.md) for det
   - See: [LDPC_LLR_F32_MIGRATION.md](docs/LDPC_LLR_F32_MIGRATION.md)
 
 **Week 5-6** ✅ **COMPLETE** (2025-12-01):
-- ✅ **Allocation Elimination**: Pre-cached neighbors + buffer reuse
-  - Profiling identified 23.1% overhead (17.9% row_iter, 5.2% malloc/free)
-  - Implementation: Cached check node neighbors + temp buffer in decoder struct
-  - **Result**: 9.0% speedup (31.1 ms → 28.3 ms per block, 167 KiB/s)
-  - Memory cost: +2.3 MB per decoder (negligible)
-  - Evidence-based TDD approach with comprehensive profiling
-  - See: [ALLOCATION_PROFILING_REPORT.md](docs/ALLOCATION_PROFILING_REPORT.md)
-  - Note: "SIMD stack allocation" hypothesis was incorrect - caching was the real win
-- ⏭ **Next**: Re-profile to identify remaining bottlenecks (allocation no longer dominant)
-- [ ] LDPC: Optimize sparse iteration patterns if still significant
-- [ ] BCH: Performance validation (target 6-8× speedup on multi-core)
-- [ ] Target: 50-100 Mbps (100-200% real-time DVB-T2)
+- ✅ **Allocation Elimination**: Three-phase optimization with re-profiling
+  - Phase 1: Check neighbor caching (9% gain)
+  - Phase 2: Temp buffer reuse (3% gain)
+  - Phase 3: Variable neighbor caching (26% gain, found via re-profiling)
+  - **Combined Result**: 30% speedup (30.0 ms → 20.9 ms, 228 KiB/s)
+  - Allocation reduced 78% (23.1% → 5.1%)
+  - SIMD now visible at 12.9% (was hidden by allocation)
+  - Memory cost: +4.5 MB per decoder (negligible)
+  - See: [PARALLELIZATION_STRATEGY.md Phase 2b](docs/PARALLELIZATION_STRATEGY.md)
+
+**Week 7** ✅ **COMPLETE** (2025-12-01):
+- ✅ **Re-profiling**: Post-optimization analysis confirms compute-bound
+  - 70.6% in belief propagation computation (expected/optimal)
+  - 12.9% in SIMD min-sum operations (AVX2 working)
+  - 5.1% remaining allocation (acceptable, diminishing returns)
+  - **Verdict**: Successfully compute-bound, single-thread optimizations exhausted
+  
+**Week 8+** ⏭ **DECISION POINT**:
+- Current: 1.43 Mbps (single), 8.29 Mbps (24-core batch)
+- Target: 50-100 Mbps for real-time DVB-T2
+- [ ] **Option A**: Algorithmic improvements (normalized min-sum, early termination)
+- [ ] **Option B**: GPU prototype (70% BP loop is data-parallel)
+- [ ] **Option C**: Focus on full FEC chain integration (Phase C10.7)
 
 ### Phase C11.2: Backend Abstraction ✅ COMPLETE
 
