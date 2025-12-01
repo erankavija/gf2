@@ -640,6 +640,8 @@ pub struct LdpcDecoder {
     var_to_check: Vec<Vec<Llr>>,
     /// Cached check node neighbors (pre-computed at construction)
     check_neighbors: Vec<Vec<usize>>,
+    /// Cached variable node neighbors (pre-computed at construction)
+    var_neighbors: Vec<Vec<usize>>,
     /// Temporary buffer for check node computations (reused to avoid allocations)
     temp_inputs: Vec<Llr>,
     /// Number of iterations in last decode
@@ -656,6 +658,9 @@ impl LdpcDecoder {
         // Pre-compute check node neighbors (cached for hot path optimization)
         let check_neighbors: Vec<Vec<usize>> =
             (0..m).map(|check| h.row_iter(check).collect()).collect();
+
+        // Pre-compute variable node neighbors (cached for hot path optimization)
+        let var_neighbors: Vec<Vec<usize>> = (0..n).map(|var| h.col_iter(var).collect()).collect();
 
         // Find maximum check node degree for temp buffer sizing
         let max_check_degree = check_neighbors
@@ -685,6 +690,7 @@ impl LdpcDecoder {
             check_to_var,
             var_to_check,
             check_neighbors,
+            var_neighbors,
             temp_inputs: Vec::with_capacity(max_check_degree),
             last_iterations: 0,
         }
@@ -811,10 +817,8 @@ impl LdpcDecoder {
     ///
     /// Updates beliefs and variable-to-check messages.
     fn variable_node_update(&mut self, channel_llrs: &[Llr]) {
-        let h = self.code.parity_check_matrix();
-
         for (var, &channel_llr) in channel_llrs.iter().enumerate().take(self.code.n()) {
-            let neighbors: Vec<usize> = h.col_iter(var).collect();
+            let neighbors = &self.var_neighbors[var];
 
             // Compute total belief: channel LLR + sum of incoming check messages
             let mut belief = channel_llr;
@@ -835,23 +839,18 @@ impl LdpcDecoder {
 
     /// Helper: Find the position of check in variable's neighbor list.
     fn find_check_position(&self, var: usize, target_check: usize) -> usize {
-        let h = self.code.parity_check_matrix();
-        h.col_iter(var)
-            .enumerate()
-            .find(|(_, check)| *check == target_check)
-            .map(|(pos, _)| pos)
+        self.var_neighbors[var]
+            .iter()
+            .position(|&check| check == target_check)
             .expect("Check not found in variable's neighbors")
     }
 
     /// Helper: Get check-to-variable message.
     fn check_to_var_message(&self, var: usize, var_check_pos: usize) -> Llr {
-        let h = self.code.parity_check_matrix();
-        let check = h.col_iter(var).nth(var_check_pos).unwrap();
-        let check_var_pos = h
-            .row_iter(check)
-            .enumerate()
-            .find(|(_, v)| *v == var)
-            .map(|(pos, _)| pos)
+        let check = self.var_neighbors[var][var_check_pos];
+        let check_var_pos = self.check_neighbors[check]
+            .iter()
+            .position(|&v| v == var)
             .unwrap();
         self.check_to_var[check][check_var_pos]
     }
