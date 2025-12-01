@@ -34,11 +34,14 @@
 ///
 /// Positive values indicate bit 0 is more likely, negative values indicate bit 1.
 /// The magnitude represents confidence.
+///
+/// **Precision**: Uses `f32` for efficient SIMD operations. This is sufficient
+/// for LDPC decoding where even 6-8 bit fixed-point LLRs work well in practice.
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Llr(f64);
+pub struct Llr(f32);
 
 impl Llr {
-    /// Creates a new LLR from a raw f64 value.
+    /// Creates a new LLR from a raw f32 value.
     ///
     /// # Examples
     ///
@@ -47,12 +50,12 @@ impl Llr {
     ///
     /// let llr = Llr::new(3.5);  // High confidence in bit 0
     /// ```
-    pub fn new(value: f64) -> Self {
+    pub fn new(value: f32) -> Self {
         Llr(value)
     }
 
     /// Returns the raw LLR value.
-    pub fn value(self) -> f64 {
+    pub fn value(self) -> f32 {
         self.0
     }
 
@@ -81,18 +84,18 @@ impl Llr {
     /// assert_eq!(Llr::new(3.5).magnitude(), 3.5);
     /// assert_eq!(Llr::new(-2.0).magnitude(), 2.0);
     /// ```
-    pub fn magnitude(self) -> f64 {
+    pub fn magnitude(self) -> f32 {
         self.0.abs()
     }
 
     /// Creates an LLR representing infinite confidence in bit 0.
     pub fn infinity() -> Self {
-        Llr(f64::INFINITY)
+        Llr(f32::INFINITY)
     }
 
     /// Creates an LLR representing infinite confidence in bit 1.
     pub fn neg_infinity() -> Self {
-        Llr(f64::NEG_INFINITY)
+        Llr(f32::NEG_INFINITY)
     }
 
     /// Creates an LLR representing complete uncertainty (equal probability).
@@ -111,7 +114,7 @@ impl Llr {
     /// assert_eq!(Llr::new(-100.0).saturate(10.0).value(), -10.0);
     /// assert_eq!(Llr::new(5.0).saturate(10.0).value(), 5.0);
     /// ```
-    pub fn saturate(self, max: f64) -> Self {
+    pub fn saturate(self, max: f32) -> Self {
         Llr(self.0.clamp(-max, max))
     }
 
@@ -207,7 +210,7 @@ impl Llr {
     pub fn boxplus_n(llrs: &[Llr]) -> Llr {
         assert!(!llrs.is_empty(), "Cannot compute boxplus_n of empty slice");
 
-        let product: f64 = llrs.iter().map(|llr| (llr.0 / 2.0).tanh()).product();
+        let product: f32 = llrs.iter().map(|llr| (llr.0 / 2.0).tanh()).product();
         Llr(2.0 * product.atanh())
     }
 
@@ -246,7 +249,7 @@ impl Llr {
             "Cannot compute boxplus_minsum_n of empty slice"
         );
 
-        // Try SIMD path first (f64 -> f32 conversion, 2× wider SIMD)
+        // Try SIMD path (no conversion needed - Llr is f32)
         #[cfg(feature = "simd")]
         {
             use once_cell::sync::Lazy;
@@ -254,10 +257,10 @@ impl Llr {
                 Lazy::new(gf2_kernels_simd::llr::detect);
 
             if let Some(ref fns) = *SIMD_FNS {
-                // Convert f64 to f32 for SIMD (2× wider vectors)
-                let f32_vals: Vec<f32> = llrs.iter().map(|l| l.0 as f32).collect();
-                let result_f32 = (fns.minsum_fn)(&f32_vals);
-                return Llr(result_f32 as f64);
+                // Direct f32 slice - no conversion!
+                let f32_vals: Vec<f32> = llrs.iter().map(|l| l.0).collect();
+                let result = (fns.minsum_fn)(&f32_vals);
+                return Llr(result);
             }
         }
 
@@ -267,7 +270,7 @@ impl Llr {
 
     /// Scalar implementation of boxplus_minsum_n (always available).
     fn boxplus_minsum_n_scalar(llrs: &[Llr]) -> Llr {
-        let sign_product: f64 = llrs
+        let sign_product: f32 = llrs
             .iter()
             .map(|llr| if llr.0 >= 0.0 { 1.0 } else { -1.0 })
             .product();
@@ -275,7 +278,7 @@ impl Llr {
         let min_magnitude = llrs
             .iter()
             .map(|llr| llr.0.abs())
-            .fold(f64::INFINITY, f64::min);
+            .fold(f32::INFINITY, f32::min);
 
         Llr(sign_product * min_magnitude)
     }
@@ -295,7 +298,7 @@ impl Llr {
     /// assert_eq!(saturated[1].value(), -10.0);
     /// assert_eq!(saturated[2].value(), 5.0);
     /// ```
-    pub fn saturate_batch(llrs: &[Llr], max: f64) -> Vec<Llr> {
+    pub fn saturate_batch(llrs: &[Llr], max: f32) -> Vec<Llr> {
         // TODO: Add SIMD implementation in gf2-kernels-simd
         // For now, use scalar
         llrs.iter().map(|llr| llr.saturate(max)).collect()
@@ -346,7 +349,7 @@ impl Llr {
     /// let result = Llr::boxplus_normalized_minsum_n(&llrs, 0.875);
     /// assert_eq!(result.value(), 0.875 * 4.0);
     /// ```
-    pub fn boxplus_normalized_minsum_n(llrs: &[Llr], alpha: f64) -> Llr {
+    pub fn boxplus_normalized_minsum_n(llrs: &[Llr], alpha: f32) -> Llr {
         let minsum = Self::boxplus_minsum_n(llrs);
         Llr(alpha * minsum.0)
     }
@@ -375,13 +378,13 @@ impl Llr {
     /// let result = Llr::boxplus_offset_minsum_n(&llrs, 0.5);
     /// assert_eq!(result.value(), 3.5);
     /// ```
-    pub fn boxplus_offset_minsum_n(llrs: &[Llr], beta: f64) -> Llr {
+    pub fn boxplus_offset_minsum_n(llrs: &[Llr], beta: f32) -> Llr {
         assert!(
             !llrs.is_empty(),
             "Cannot compute boxplus_offset_minsum_n of empty slice"
         );
 
-        let sign_product: f64 = llrs
+        let sign_product: f32 = llrs
             .iter()
             .map(|llr| if llr.0 >= 0.0 { 1.0 } else { -1.0 })
             .product();
@@ -389,7 +392,7 @@ impl Llr {
         let min_magnitude = llrs
             .iter()
             .map(|llr| llr.0.abs())
-            .fold(f64::INFINITY, f64::min);
+            .fold(f32::INFINITY, f32::min);
         let offset_magnitude = (min_magnitude - beta).max(0.0);
 
         Llr(sign_product * offset_magnitude)
@@ -613,7 +616,7 @@ mod tests {
         let llrs = vec![Llr::new(3.0), Llr::new(2.0)];
         let result_n = Llr::boxplus_n(&llrs);
         let result_binary = Llr::new(3.0).boxplus(Llr::new(2.0));
-        assert!((result_n.value() - result_binary.value()).abs() < 1e-10);
+        assert!((result_n.value() - result_binary.value()).abs() < 1e-6);
     }
 
     #[test]
@@ -730,7 +733,7 @@ mod tests {
 
     #[test]
     fn test_is_finite_nan() {
-        let nan_llr = Llr::new(f64::NAN);
+        let nan_llr = Llr::new(f32::NAN);
         assert!(!nan_llr.is_finite());
     }
 
@@ -740,7 +743,7 @@ mod tests {
         let b = Llr::new(2.0);
         let result = a.safe_boxplus(b);
         assert!(result.is_finite());
-        assert!((result.value() - a.boxplus(b).value()).abs() < 1e-10);
+        assert!((result.value() - a.boxplus(b).value()).abs() < 1e-6);
     }
 
     #[test]
@@ -761,25 +764,25 @@ mod property_tests {
 
     proptest! {
         #[test]
-        fn hard_decision_consistent_with_sign(value in -100.0..100.0) {
+        fn hard_decision_consistent_with_sign(value in -100.0f32..100.0f32) {
             let llr = Llr::new(value);
             assert_eq!(llr.hard_decision(), value < 0.0);
         }
 
         #[test]
-        fn magnitude_always_non_negative(value in -100.0..100.0) {
+        fn magnitude_always_non_negative(value in -100.0f32..100.0f32) {
             let llr = Llr::new(value);
             assert!(llr.magnitude() >= 0.0);
         }
 
         #[test]
-        fn saturate_stays_within_bounds(value in -1000.0..1000.0, max in 1.0..100.0) {
+        fn saturate_stays_within_bounds(value in -1000.0f32..1000.0f32, max in 1.0f32..100.0f32) {
             let saturated = Llr::new(value).saturate(max);
             assert!(saturated.value().abs() <= max);
         }
 
         #[test]
-        fn boxplus_minsum_symmetric(a in -10.0..10.0, b in -10.0..10.0) {
+        fn boxplus_minsum_symmetric(a in -10.0f32..10.0f32, b in -10.0f32..10.0f32) {
             let llr_a = Llr::new(a);
             let llr_b = Llr::new(b);
             assert_eq!(
@@ -789,16 +792,16 @@ mod property_tests {
         }
 
         #[test]
-        fn boxplus_symmetric(a in -10.0..10.0, b in -10.0..10.0) {
+        fn boxplus_symmetric(a in -10.0f32..10.0f32, b in -10.0f32..10.0f32) {
             let llr_a = Llr::new(a);
             let llr_b = Llr::new(b);
             let ab = llr_a.boxplus(llr_b).value();
             let ba = llr_b.boxplus(llr_a).value();
-            prop_assert!((ab - ba).abs() < 1e-10);
+            prop_assert!((ab - ba).abs() < 1e-6);
         }
 
         #[test]
-        fn boxplus_magnitude_bounded(a in -10.0..10.0, b in -10.0..10.0) {
+        fn boxplus_magnitude_bounded(a in -10.0f32..10.0f32, b in -10.0f32..10.0f32) {
             let result = Llr::new(a).boxplus(Llr::new(b));
             // Box-plus result magnitude should not exceed max of inputs
             assert!(result.magnitude() <= a.abs().max(b.abs()) + 1e-6);
@@ -806,7 +809,7 @@ mod property_tests {
 
         #[test]
         fn boxplus_n_commutative(
-            values in prop::collection::vec(-10.0..10.0, 2..6)
+            values in prop::collection::vec(-10.0f32..10.0f32, 2..6)
         ) {
             let llrs: Vec<Llr> = values.iter().map(|&v| Llr::new(v)).collect();
             let mut shuffled = llrs.clone();
@@ -815,13 +818,13 @@ mod property_tests {
             let result1 = Llr::boxplus_n(&llrs);
             let result2 = Llr::boxplus_n(&shuffled);
 
-            // Results should be close (numerical precision tolerance)
-            prop_assert!((result1.value() - result2.value()).abs() < 1e-8);
+            // Relaxed tolerance for f32 precision
+            prop_assert!((result1.value() - result2.value()).abs() < 2e-4);
         }
 
         #[test]
         fn boxplus_minsum_n_commutative(
-            values in prop::collection::vec(-10.0..10.0, 2..6)
+            values in prop::collection::vec(-10.0f32..10.0f32, 2..6)
         ) {
             let llrs: Vec<Llr> = values.iter().map(|&v| Llr::new(v)).collect();
             let mut shuffled = llrs.clone();
@@ -835,13 +838,13 @@ mod property_tests {
 
         #[test]
         fn boxplus_minsum_n_magnitude_is_minimum(
-            values in prop::collection::vec(-10.0..10.0, 1..6)
+            values in prop::collection::vec(-10.0f32..10.0f32, 1..6)
         ) {
             let llrs: Vec<Llr> = values.iter().map(|&v| Llr::new(v)).collect();
             let result = Llr::boxplus_minsum_n(&llrs);
-            let min_magnitude = values.iter().map(|v| v.abs()).fold(f64::INFINITY, f64::min);
+            let min_magnitude = values.iter().map(|v| v.abs()).fold(f32::INFINITY, f32::min);
 
-            // Allow small tolerance due to f32 SIMD conversion (f64->f32->f64)
+            // Allow small tolerance due to f32 SIMD conversion (f32->f32->f32)
             let diff = (result.magnitude() - min_magnitude).abs();
             prop_assert!(diff < 1e-6, "magnitude {} differs from expected {} by {}",
                 result.magnitude(), min_magnitude, diff);
@@ -849,20 +852,20 @@ mod property_tests {
 
         #[test]
         fn boxplus_normalized_minsum_scales_result(
-            values in prop::collection::vec(-10.0..10.0, 2..5),
-            alpha in 0.5..1.0
+            values in prop::collection::vec(-10.0f32..10.0f32, 2..5),
+            alpha in 0.5f32..1.0f32
         ) {
             let llrs: Vec<Llr> = values.iter().map(|&v| Llr::new(v)).collect();
             let minsum = Llr::boxplus_minsum_n(&llrs);
             let normalized = Llr::boxplus_normalized_minsum_n(&llrs, alpha);
 
-            prop_assert!((normalized.value() - alpha * minsum.value()).abs() < 1e-10);
+            prop_assert!((normalized.value() - alpha * minsum.value()).abs() < 1e-6);
         }
 
         #[test]
         fn boxplus_offset_minsum_reduces_magnitude(
-            values in prop::collection::vec(-10.0..10.0, 2..5),
-            beta in 0.1..1.0
+            values in prop::collection::vec(-10.0f32..10.0f32, 2..5),
+            beta in 0.1f32..1.0f32
         ) {
             let llrs: Vec<Llr> = values.iter().map(|&v| Llr::new(v)).collect();
             let minsum = Llr::boxplus_minsum_n(&llrs);
@@ -874,19 +877,19 @@ mod property_tests {
 
         #[test]
         fn boxplus_n_matches_binary_for_two_elements(
-            a in -10.0..10.0,
-            b in -10.0..10.0
+            a in -10.0f32..10.0f32,
+            b in -10.0f32..10.0f32
         ) {
             let llrs = vec![Llr::new(a), Llr::new(b)];
             let result_n = Llr::boxplus_n(&llrs);
             let result_binary = Llr::new(a).boxplus(Llr::new(b));
 
-            prop_assert!((result_n.value() - result_binary.value()).abs() < 1e-8);
+            prop_assert!((result_n.value() - result_binary.value()).abs() < 1e-6);
         }
 
         #[test]
         fn boxplus_minsum_approximates_boxplus(
-            values in prop::collection::vec(1.0..10.0, 2..5)
+            values in prop::collection::vec(1.0f32..10.0f32, 2..5)
         ) {
             let llrs: Vec<Llr> = values.iter().map(|&v| Llr::new(v)).collect();
             let exact = Llr::boxplus_n(&llrs);
@@ -903,13 +906,13 @@ mod property_tests {
         }
 
         #[test]
-        fn safe_boxplus_always_finite(a in -100.0..100.0, b in -100.0..100.0) {
+        fn safe_boxplus_always_finite(a in -100.0f32..100.0f32, b in -100.0f32..100.0f32) {
             let result = Llr::new(a).safe_boxplus(Llr::new(b));
             prop_assert!(result.is_finite());
         }
 
         #[test]
-        fn is_finite_correct_for_normal_values(value in -1000.0..1000.0) {
+        fn is_finite_correct_for_normal_values(value: f32) {
             prop_assert!(Llr::new(value).is_finite());
         }
     }
