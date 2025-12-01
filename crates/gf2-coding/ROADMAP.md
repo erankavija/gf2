@@ -198,6 +198,11 @@ See [docs/PARALLELIZATION_STRATEGY.md](docs/PARALLELIZATION_STRATEGY.md) for det
 - ✅ BCH: Parallel batch decoding benchmark created (benches/bch_parallel.rs)
 - ✅ Parallel infrastructure fixed and validated (3.9× speedup confirmed)
 - ⏭ **NEXT**: LDPC LLR SIMD vectorization (4-8× target, 69.8% of decode time)
+  - **Implementation location**: `gf2-kernels-simd/src/llr.rs` (extend existing module)
+  - Add f64 support (current: f32 only)
+  - Add `saturate_batch()`, `hard_decision_batch()` SIMD implementations
+  - Integrate into `gf2-coding/src/llr.rs` with runtime detection
+  - See: [PARALLELIZATION_STRATEGY.md](docs/PARALLELIZATION_STRATEGY.md#simd-kernel-implementation-strategy)
 - [ ] LDPC: Optimize sparse iteration patterns (2× target, 17.7% of decode time)
 - [ ] BCH: Performance validation (target 6-8× speedup on multi-core)
 - [ ] Target: 50-100 Mbps (100-200% real-time DVB-T2)

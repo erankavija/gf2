@@ -14,6 +14,7 @@ gf2-kernels-simd = { path = "../gf2-kernels-simd", optional = true }
 rand = { workspace = true }
 rand_distr = "0.4"
 rayon = { workspace = true, optional = true }
+once_cell = "1.19"
 
 [dev-dependencies]
 proptest = { workspace = true }
@@ -64,4 +65,8 @@ harness = false
 
 [[bench]]
 name = "bch_parallel"
+harness = false
+
+[[bench]]
+name = "llr_simd"
 harness = false
