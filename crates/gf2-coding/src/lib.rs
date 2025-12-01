@@ -4,6 +4,8 @@
 //! [`BitVec`](gf2_core::BitVec) and [`BitMatrix`](gf2_core::BitMatrix) types from
 //! the `gf2-core` library. It includes both block codes
 //! and streaming (convolutional) codes.
+
+#![deny(unsafe_code)]
 //!
 //! # Block Codes
 //!

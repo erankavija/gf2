@@ -13,25 +13,25 @@ pub trait Backend: Send + Sync {
     /// Returns a human-readable name for this backend.
     fn name(&self) -> &'static str;
 
-    /// Performs bitwise AND: dst[i] &= src[i] for all i.
+    /// Performs bitwise AND: dst\[i\] &= src\[i\] for all i.
     ///
     /// # Panics
     /// May panic if dst.len() != src.len() in debug builds.
     fn and(&self, dst: &mut [u64], src: &[u64]);
 
-    /// Performs bitwise OR: dst[i] |= src[i] for all i.
+    /// Performs bitwise OR: dst\[i\] |= src\[i\] for all i.
     ///
     /// # Panics
     /// May panic if dst.len() != src.len() in debug builds.
     fn or(&self, dst: &mut [u64], src: &[u64]);
 
-    /// Performs bitwise XOR: dst[i] ^= src[i] for all i.
+    /// Performs bitwise XOR: dst\[i\] ^= src\[i\] for all i.
     ///
     /// # Panics
     /// May panic if dst.len() != src.len() in debug builds.
     fn xor(&self, dst: &mut [u64], src: &[u64]);
 
-    /// Performs bitwise NOT: buf[i] = !buf[i] for all i.
+    /// Performs bitwise NOT: buf\[i\] = !buf\[i\] for all i.
     fn not(&self, buf: &mut [u64]);
 
     /// Counts the number of set bits across all words.

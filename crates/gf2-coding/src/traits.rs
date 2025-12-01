@@ -10,7 +10,7 @@ use gf2_core::BitVec;
 /// Access to the generator matrix of a linear block code.
 ///
 /// This trait provides on-demand access to the generator matrix G (k×n)
-/// of a linear [n,k] code. The matrix satisfies:
+/// of a linear (n,k) code. The matrix satisfies:
 /// - For any message m (1×k), the codeword is c = m·G (1×n)
 /// - For systematic codes, G = [I_k | P] where I_k is the k×k identity
 ///

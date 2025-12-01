@@ -543,6 +543,7 @@ impl SpBitMatrixDual {
     }
 
     /// Internal constructor from CSR and CSC data (for deserialization)
+    #[cfg(feature = "io")]
     pub(crate) fn from_csr_csc(
         rows: usize,
         cols: usize,
@@ -567,21 +568,25 @@ impl SpBitMatrixDual {
     }
 
     /// Access row offsets (for serialization)
+    #[cfg(feature = "io")]
     pub(crate) fn row_offsets(&self) -> &[usize] {
         &self.csr.indptr
     }
 
     /// Access row indices (for serialization)
+    #[cfg(feature = "io")]
     pub(crate) fn row_indices(&self) -> &[usize] {
         &self.csr.indices
     }
 
     /// Access col offsets (for serialization)
+    #[cfg(feature = "io")]
     pub(crate) fn col_offsets(&self) -> &[usize] {
         &self.csc.indptr
     }
 
     /// Access col indices (for serialization)
+    #[cfg(feature = "io")]
     pub(crate) fn col_indices(&self) -> &[usize] {
         &self.csc.indices
     }

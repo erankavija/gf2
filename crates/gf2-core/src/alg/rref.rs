@@ -14,7 +14,7 @@ pub struct RrefResult {
     /// Indices of pivot columns (in order found during reduction)
     pub pivot_cols: Vec<usize>,
 
-    /// Row permutation applied: reduced_row[i] = input_row[row_perm[i]]
+    /// Row permutation applied: reduced_row\[i\] = input_row\[row_perm\[i\]\]
     pub row_perm: Vec<usize>,
 
     /// Rank of the matrix (number of linearly independent rows)

@@ -4,9 +4,10 @@ version = "0.1.0"
 edition = "2021"
 authors = ["copilot-swe-agent[bot] <198982749+Copilot@users.noreply.github.com>"]
 description = "Error-correcting code constructions and compression research built on gf2-core"
+license = "MIT OR Apache-2.0"
 keywords = ["coding-theory", "compression", "gf2"]
 categories = ["algorithms", "encoding", "mathematics"]
-rust-version = "1.74"
+rust-version = "1.80"
 
 [dependencies]
 gf2-core = { path = "../gf2-core" }
