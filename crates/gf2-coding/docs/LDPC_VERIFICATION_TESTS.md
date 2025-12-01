@@ -1,100 +1,87 @@
-# LDPC Verification Test Suite
+# LDPC Verification Tests
 
-Comprehensive DVB-T2 LDPC verification tests following the BCH verification approach.
+**Status**: ✅ All tests passing with 100% accuracy  
+**Test Vectors**: ETSI EN 302 755 DVB-T2 standard
+
+---
 
 ## Overview
 
-The LDPC verification test suite (`tests/dvb_t2_ldpc_verification_suite.rs`) validates LDPC systematic encoding and soft-decision decoding against official DVB-T2 test vectors from the ETSI EN 302 755 standard.
+Comprehensive test suite validating LDPC encoding and decoding against official DVB-T2 test vectors.
 
-## Test Structure
+**Location**: `tests/dvb_t2_ldpc_verification_suite.rs`
 
-### Test Vector Flow
+---
 
-```
-TP05 (BCH output)     →  LDPC Encoding  →  TP06 (LDPC output)
-38,880 bits/block                           64,800 bits/block
+## Test Coverage
 
-TP06 (LDPC output)    →  LDPC Decoding  →  TP05 (recovered)
-64,800 bits/block                           38,880 bits/block
-```
+### Core Verification Tests
 
-### Test Coverage
+1. **Encoding Validation** (`test_ldpc_encoding_tp05_to_tp06`)
+   - 202/202 blocks match ETSI reference
+   - Tests: TP05 (38,880 bits) → TP06 (64,800 bits)
+   - Reports: Throughput in Mbps
 
-The suite includes 8 comprehensive tests:
+2. **Error-Free Decoding** (`test_ldpc_decoding_tp06_to_tp05_error_free`)
+   - 202/202 blocks recover correctly
+   - Tests: TP06 → recovered TP05
+   - Tracks: Convergence and iteration count
 
-1. **`test_ldpc_encoding_tp05_to_tp06`** - Encoding validation
-   - Tests systematic LDPC encoding (TP05 → TP06)
-   - Validates all 202 blocks in Frame 1
-   - Reports throughput in Mbps
-   - Target: 100% match with reference vectors
-
-2. **`test_ldpc_decoding_tp06_to_tp05_error_free`** - Error-free decoding
-   - Tests soft-decision decoding of valid codewords
-   - Validates message recovery (TP06 → TP05)
-   - Tracks convergence and iteration count
-   - Target: 100% correct decoding
-
-3. **`test_ldpc_error_correction`** - Error correction capability
-   - Tests decoder with injected random bit errors
-   - Multiple error rates: 0.1%, 0.5%, 1%, 2%
+3. **Error Correction** (`test_ldpc_error_correction`)
+   - Tests with injected random errors (0.1%, 0.5%, 1%, 2%)
    - 10 blocks × 5 trials per error rate
-   - Reports correction success rate and avg iterations
+   - Reports: Success rate and average iterations
 
-4. **`test_ldpc_systematic_property`** - Systematic encoding validation
-   - Verifies first k bits of codeword match message
-   - Checks systematic property: c = [m | p]
-   - Tests 5 sample blocks
+### Property Tests
 
-5. **`test_ldpc_encoding_sample`** - Multi-frame consistency
-   - Spot-checks encoding across all 4 frames
-   - Tests first, middle, and last block per frame
-   - Validates encoding consistency
+4. **Systematic Property** (`test_ldpc_systematic_property`)
+   - Verifies: First k bits match message exactly
+   - Format: c = [message | parity]
 
-6. **`test_ldpc_parameter_validation`** - Parameter compliance
-   - Validates DVB-T2 Normal, Rate 3/5 parameters
-   - Checks n=64,800, k=38,880, m=25,920
-   - Verifies code rate calculation
-   - Validates test vector dimensions
-
-7. **`test_ldpc_parity_check`** - Parity check property
-   - Verifies all TP06 codewords satisfy H·c = 0
-   - Tests 10 sample blocks
+5. **Parity Check** (`test_ldpc_parity_check`)
+   - Verifies: H·c = 0 for all codewords
    - Validates mathematical correctness
 
-8. **`test_ldpc_roundtrip`** - Full encode/decode roundtrip
-   - End-to-end validation: message → encode → decode → message
-   - Tests 10 blocks with error-free channel
-   - Target: 100% recovery
+6. **Roundtrip** (`test_ldpc_roundtrip`)
+   - End-to-end: message → encode → decode → message
+   - 100% recovery verification
 
-## Running the Tests
+### Consistency Tests
+
+7. **Multi-Frame Encoding** (`test_ldpc_encoding_sample`)
+   - Spot-checks across all 4 frames
+   - Tests: First, middle, last block per frame
+
+8. **Parameter Validation** (`test_ldpc_parameter_validation`)
+   - DVB-T2 Normal Rate 3/5: n=64,800, k=38,880
+   - Code rate and dimension checks
+
+---
+
+## Running Tests
 
 ### Prerequisites
 
-1. **Test Vectors** (required):
-   ```bash
-   export DVB_TEST_VECTORS_PATH=/path/to/dvb_test_vectors
-   ```
-   
-   Or place in default location: `~/dvb_test_vectors/`
+**Test Vectors** (required):
+```bash
+export DVB_TEST_VECTORS_PATH=/path/to/dvb_test_vectors
+```
 
-2. **LDPC Cache** (optional but strongly recommended):
-   ```bash
-   # Generate cache (one-time, ~16 seconds for Short frames)
-   cargo run --release --bin generate_ldpc_cache short
-   ```
-   
-   Cache location: `data/ldpc/dvb_t2/*.gf2`
-   
-   **Without cache**: First encoder creation takes 2-10 seconds (preprocessing)
-   **With cache**: Instant encoder creation (<1ms)
+**LDPC Cache** (recommended):
+```bash
+# One-time generation (~16 seconds)
+cargo run --release --bin generate_ldpc_cache short
+```
+- Without cache: 2-10s preprocessing per encoder
+- With cache: <1ms instant loading
 
-### Run All Tests
+### Execute Tests
 
 ```bash
-# Run full LDPC verification suite (requires test vectors)
+# All verification tests
 cargo test --test dvb_t2_ldpc_verification_suite -- --ignored --nocapture
 
-# Run specific test
+# Specific test
 cargo test --test dvb_t2_ldpc_verification_suite test_ldpc_encoding_tp05_to_tp06 -- --ignored --nocapture
 ```
 
@@ -270,9 +257,8 @@ If decoding tests fail:
 - **Test Vectors**: DVB Project Verification & Validation
 - **Implementation**: Phase C10.6 (Richardson-Urbanke systematic encoding)
 - **Related Docs**:
-  - `DVB_test_vectors.md` - Test vector format specification
-  - `DVB_T2_VERIFICATION_STATUS.md` - Overall verification progress
-  - `ROADMAP.md` - Phase C10.6 implementation plan
+  - [DVB_T2.md](DVB_T2.md) - DVB-T2 implementation and verification status
+  - [ROADMAP.md](../ROADMAP.md) - Phase C10.6 implementation plan
   - `tests/dvb_t2_bch_verification.rs` - BCH verification (reference implementation)
 
 ## See Also

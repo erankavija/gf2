@@ -84,7 +84,7 @@ SIMD is **enabled by default** for best performance. To build without SIMD:
 cargo build --no-default-features
 ```
 
-For more details, see [SIMD_PERFORMANCE_GUIDE.md](SIMD_PERFORMANCE_GUIDE.md).
+For more details, see [docs/SIMD_PERFORMANCE_GUIDE.md](docs/SIMD_PERFORMANCE_GUIDE.md).
 
 ### Parallel Processing
 
@@ -99,7 +99,7 @@ RAYON_NUM_THREADS=8 cargo bench --bench quick_parallel --features parallel
 ./benchmark_quick.sh
 ```
 
-See [docs/PARALLEL_BENCHMARKING.md](docs/PARALLEL_BENCHMARKING.md) for details.
+See [docs/PARALLELIZATION.md](docs/PARALLELIZATION.md) for details.
 
 ## Usage
 

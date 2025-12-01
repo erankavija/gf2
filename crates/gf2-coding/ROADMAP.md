@@ -5,7 +5,7 @@ This roadmap captures the higher-level coding theory and compression research la
 ## Primary Goal
 **Simulate DVB-T2 FEC chain Frame Error Rate (FER) over AWGN channels**. This includes BCH outer codes, LDPC inner codes, bit interleaving, and bit-interleaved coded modulation (BICM).
 
-See [docs/DVB_T2_DESIGN.md](docs/DVB_T2_DESIGN.md) for detailed design and implementation plan.
+See [docs/DVB_T2.md](docs/DVB_T2.md) for implementation status and verification results.
 
 
 ## Phase C1: Foundational Block Codes (Complete)
@@ -139,7 +139,7 @@ See [docs/DVB_T2_DESIGN.md](docs/DVB_T2_DESIGN.md) for detailed design and imple
 - ✅ Criterion benchmark suite created (`benches/ldpc_throughput.rs`)
 - ✅ Baseline measured: **3.85 Mbps encoding** (9.87 ms/block)
 - ✅ Key finding: No batching optimization (constant throughput across batch sizes)
-- ✅ Performance plan documented (`docs/LDPC_PERFORMANCE_PLAN.md`)
+- ✅ Performance plan documented (`docs/LDPC_PERFORMANCE.md`)
 - **Gap**: 2.6-13× slower than 10-50 Mbps target
 - **Next**: CPU profiling to identify hotspots
 
@@ -167,7 +167,7 @@ See [docs/DVB_T2_DESIGN.md](docs/DVB_T2_DESIGN.md) for detailed design and imple
 - **Primitive Layer**: SIMD kernels, word-level operations (gf2-core)
 - **Hardware Layer**: Rayon, Vulkan/CUDA, FPGA
 
-See [docs/PARALLELIZATION_STRATEGY.md](docs/PARALLELIZATION_STRATEGY.md) for detailed design and implementation plan.
+See [docs/PARALLELIZATION.md](docs/PARALLELIZATION.md) for detailed design and implementation plan.
 
 ### Phase C11.1: CPU Parallelization (Weeks 1-4) 🔧 **IN PROGRESS**
 
@@ -190,7 +190,7 @@ See [docs/PARALLELIZATION_STRATEGY.md](docs/PARALLELIZATION_STRATEGY.md) for det
 - ✅ Created `quick_parallel` benchmark with small batches (~2 min runtime)
 - ✅ Created `benchmark_quick.sh` automation script (~5 min for 1/2/4/8/12 threads)
 - ✅ Verified parallel scaling: 3.9× speedup on 8 threads
-- ✅ Comprehensive benchmarking guide (PARALLEL_BENCHMARKING.md)
+- ✅ Comprehensive benchmarking guide ([docs/PARALLELIZATION.md](docs/PARALLELIZATION.md))
 - ✅ All 226 tests pass with/without parallel feature
 
 **Week 3-4** ✅ **COMPLETE** (2025-12-01):
@@ -202,7 +202,7 @@ See [docs/PARALLELIZATION_STRATEGY.md](docs/PARALLELIZATION_STRATEGY.md) for det
   - Removes f64↔f32 conversion overhead completely
   - **Result**: 5% performance improvement from reduced memory bandwidth
   - SIMD integration validated but Vec allocation overhead dominates
-  - See: [LDPC_LLR_F32_MIGRATION.md](docs/LDPC_LLR_F32_MIGRATION.md)
+  - See: [docs/LDPC_PERFORMANCE.md](docs/LDPC_PERFORMANCE.md)
 
 **Week 5-6** ✅ **COMPLETE** (2025-12-01):
 - ✅ **Allocation Elimination**: Three-phase optimization with re-profiling
@@ -213,7 +213,7 @@ See [docs/PARALLELIZATION_STRATEGY.md](docs/PARALLELIZATION_STRATEGY.md) for det
   - Allocation reduced 78% (23.1% → 5.1%)
   - SIMD now visible at 12.9% (was hidden by allocation)
   - Memory cost: +4.5 MB per decoder (negligible)
-  - See: [PARALLELIZATION_STRATEGY.md Phase 2b](docs/PARALLELIZATION_STRATEGY.md)
+  - See: [docs/PARALLELIZATION.md](docs/PARALLELIZATION.md)
 
 **Week 7** ✅ **COMPLETE** (2025-12-01):
 - ✅ **Re-profiling**: Post-optimization analysis confirms compute-bound
@@ -319,7 +319,7 @@ See [docs/PARALLELIZATION_STRATEGY.md](docs/PARALLELIZATION_STRATEGY.md) for det
 4. **FPGA Resource Utilization**: Optimal unrolling factor for DVB-T2 LDPC?
 5. **BCH on GPU**: Is Berlekamp-Massey serial bottleneck worth GPU offload?
 
-**See**: [docs/PARALLELIZATION_STRATEGY.md](docs/PARALLELIZATION_STRATEGY.md)
+**See**: [docs/PARALLELIZATION.md](docs/PARALLELIZATION.md)
 
 ## Phase C10.7: Full FEC Chain (2-3 weeks, after C11.1-11.2 complete)
 - [ ] QAM modulation (QPSK, 16/64/256-QAM)
@@ -329,7 +329,7 @@ See [docs/PARALLELIZATION_STRATEGY.md](docs/PARALLELIZATION_STRATEGY.md) for det
 - [ ] Full TP04 → TP05 → TP06 → TP07a validation
 - [ ] Live DVB-T2 reception demo with SDR hardware
 
-**See**: [docs/DVB_T2_DESIGN.md](docs/DVB_T2_DESIGN.md) and [docs/DVB_T2_VERIFICATION_STATUS.md](docs/DVB_T2_VERIFICATION_STATUS.md)
+**See**: [docs/DVB_T2.md](docs/DVB_T2.md) for implementation and verification status
 
 ## Phase C13: Performance & Ergonomics Polish (Ongoing)
 - Unified error handling and panic messages → shift towards `Result` where appropriate

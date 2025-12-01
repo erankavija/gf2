@@ -1,50 +1,55 @@
 # gf2-core Documentation
 
-This directory contains design documents, implementation notes, and performance analysis for the gf2-core crate.
+High-performance Rust library for bit string manipulation with focus on GF(2) operations and coding theory.
 
-## Active Documentation
+## Core Documentation
 
-### Design & Architecture
-- **[Kernel Optimization](KERNEL_OPTIMIZATION.md)** - SIMD backend architecture and optimization strategy
-- **[GF(2^m) Design](GF2M_DESIGN.md)** - Extension field architecture and design decisions
-- **[Sparse Matrix Deduplication](SPARSE_DEDUP_DESIGN.md)** - Design notes for CSR/CSC deduplication
+### Architecture & Design
+- **[KERNEL_OPTIMIZATION.md](KERNEL_OPTIMIZATION.md)** - SIMD backend architecture and optimization strategy
+- **[GF2M.md](GF2M.md)** - Extension field GF(2^m) arithmetic (BCH, Reed-Solomon codes)
+- **[RREF_DESIGN_PLAN.md](RREF_DESIGN_PLAN.md)** - Reduced row echelon form for LDPC encoding
+- **[COMPUTE_BACKEND_DESIGN.md](COMPUTE_BACKEND_DESIGN.md)** - Runtime CPU detection and backend selection
+- **[SYNC_SOLUTION_COMPARISON.md](SYNC_SOLUTION_COMPARISON.md)** - Thread safety approaches
 
-### Implementation Plans
-- **[Phase 11: Performance Gap Remediation](PHASE11_IMPLEMENTATION_PLAN.md)** - M4RM optimization (gray code + flat buffer)
-- **[Polar Transform Implementation](POLAR_IMPLEMENTATION_PLAN.md)** - Fast Hadamard transform implementation
-- **[Primitive Polynomials](PRIMITIVE_POLYNOMIALS.md)** - Generation and verification methodology
+### Implementation Guides
+- **[POLAR_IMPLEMENTATION_PLAN.md](POLAR_IMPLEMENTATION_PLAN.md)** - Fast Hadamard transform for polar codes
+- **[PRIMITIVE_POLYNOMIALS.md](PRIMITIVE_POLYNOMIALS.md)** - Generation and verification methodology
+- **[POLY_UTILITIES_PERFORMANCE.md](POLY_UTILITIES_PERFORMANCE.md)** - Polynomial construction performance strategy
+- **[SPARSE_DEDUP_DESIGN.md](SPARSE_DEDUP_DESIGN.md)** - CSR/CSC sparse matrix deduplication
 
-### Performance & Benchmarks
-- **[Benchmarks](BENCHMARKS.md)** - Comprehensive performance comparisons vs SageMath/NTL/M4RI/FLINT
-- **[SIMD vs Scalar Results](BENCHMARK_RESULTS_SIMD_VS_SCALAR.md)** - AVX2 acceleration analysis
-- **[Rank/Select Performance](rank_select_performance.md)** - Lazy indexing performance analysis
-
-### Historical Notes
-- **[GF(2^m) Session Notes](GF2M_SESSION_NOTES.md)** - Complete development history
-- **[Phase 9.2 Plan](phase9_2_implementation_plan.md)** - Primitive polynomial generation methodology
-- **[Phase 9.4 Plan](phase9_4_implementation_plan.md)** - C/C++ benchmarking that led to Phase 11
+### Performance Analysis
+- **[BENCHMARKS.md](BENCHMARKS.md)** - Comprehensive performance vs SageMath/NTL/M4RI/FLINT
 
 ## Feature Status
 
-### Completed ✅
-- **M4RM Optimization** (Phase 11): 46% faster, gray code + flat buffer reuse
-- **Primitive Polynomials** (Phase 9): 100-1000x faster than SageMath
-- **Polar Transforms** (Phase 6): 81x speedup vs naive @ N=1024
-- **GF(2^m) Arithmetic** (Phase 8): Table-based for m ≤ 16, SIMD for m > 16
-- **SIMD Kernels** (Phase 3): 3.4x speedup with AVX2, smart backend selection
-- **Sparse Matrices** (Phase 5): CSR/CSC formats with bidirectional access
-- **Rank/Select** (Phase 4): O(1) rank, O(log n) select with lazy indexing
+### Production Ready ✅
+- **Matrix-Vector Operations**: 2.7-23.6× faster than M4RI
+- **RREF/Gaussian Elimination**: 304× speedup over naive, practical for DVB-T2 LDPC
+- **Rank/Select**: 58-2,040× speedup, O(1) rank, O(log n) select
+- **GF(2^m) Arithmetic**: 13-18× faster than NTL (m ≤ 16), 100-1000× faster than SageMath
+- **SIMD Kernels**: 3.4× speedup with AVX2, optimal 8-word threshold
+- **Primitive Polynomials**: 126-931× faster than SageMath
+- **Polar Transforms**: 81× speedup vs naive @ N=1024
+- **Sparse Matrices**: CSR/CSC formats with bidirectional access
 
-### Planned
-- Wide buffer optimizations (Phase 2)
-- SIMD polar transforms (Phase 6b)
+### In Development
+- Wide buffer optimizations
+- SIMD polar transforms
+- GF(2^m) polynomial utilities
 
 ## Quick Navigation
 
-**Understanding SIMD kernels?** → See [KERNEL_OPTIMIZATION.md](KERNEL_OPTIMIZATION.md)  
-**Implementing polar codes?** → See [POLAR_IMPLEMENTATION_PLAN.md](POLAR_IMPLEMENTATION_PLAN.md)  
-**Understanding GF(2^m) internals?** → See [GF2M_DESIGN.md](GF2M_DESIGN.md)  
-**Benchmarking performance?** → See [BENCHMARKS.md](BENCHMARKS.md) or run `cargo bench`  
-**Recent optimizations?** → See [PHASE11_IMPLEMENTATION_PLAN.md](PHASE11_IMPLEMENTATION_PLAN.md)
+| Task | Document |
+|------|----------|
+| Understanding SIMD acceleration | [KERNEL_OPTIMIZATION.md](KERNEL_OPTIMIZATION.md) |
+| Implementing BCH/Reed-Solomon | [GF2M.md](GF2M.md) |
+| LDPC encoding with RREF | [RREF_DESIGN_PLAN.md](RREF_DESIGN_PLAN.md) |
+| Polar code construction | [POLAR_IMPLEMENTATION_PLAN.md](POLAR_IMPLEMENTATION_PLAN.md) |
+| Performance comparisons | [BENCHMARKS.md](BENCHMARKS.md) |
+| Thread-safe design | [SYNC_SOLUTION_COMPARISON.md](SYNC_SOLUTION_COMPARISON.md) |
 
-See the main [ROADMAP.md](../ROADMAP.md) for the complete development timeline.
+## Archive
+
+Historical implementation plans and detailed session notes are preserved in `archive/` for reference.
+
+See [../ROADMAP.md](../ROADMAP.md) for the complete development timeline and future plans.
