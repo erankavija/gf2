@@ -1,112 +1,65 @@
 # Parallel Performance Benchmarking Guide
 
-This guide explains how to benchmark parallel performance with different thread configurations.
+Quick benchmarks for fast feedback on parallel performance scaling.
 
-## Quick Start
+## Quick Benchmark (~2 minutes)
 
-### Run all parallel scaling benchmarks
+Fast benchmark with small batch sizes for rapid iteration:
+
 ```bash
-cargo bench --bench parallel_scaling --features parallel
+# Test with 1 thread (baseline)
+RAYON_NUM_THREADS=1 cargo bench --bench quick_parallel --features parallel
+
+# Test with 8 threads
+RAYON_NUM_THREADS=8 cargo bench --bench quick_parallel --features parallel
+
+# Test with all available cores (default)
+cargo bench --bench quick_parallel --features parallel
 ```
 
-### Run with specific thread count
+## Automated Thread Scaling (~5 minutes)
+
+Run quick benchmark across multiple thread counts:
+
 ```bash
-RAYON_NUM_THREADS=8 cargo bench --bench parallel_scaling --features parallel
+./benchmark_quick.sh
 ```
 
-### Run automated thread scaling test
-```bash
-./benchmark_threads.sh
-```
+This tests: 1, 2, 4, 8, and physical_cores threads.
 
-### Run overnight benchmark suite (recommended)
-```bash
-./run_overnight_benchmarks.sh
-```
-
-## Running Complete Benchmark Suite (Overnight)
-
-To collect comprehensive performance data across all thread counts and save results:
-
-### Option 1: Full benchmark suite with Criterion
-```bash
-# Run all benchmarks and save results to target/criterion/
-cargo bench --features parallel 2>&1 | tee benchmark_results_$(date +%Y%m%d_%H%M%S).log
-
-# This will take 2-4 hours and produce:
-# - HTML reports in target/criterion/
-# - Raw data in target/criterion/<bench_name>/base/
-# - Console output saved to log file
-```
-
-### Option 2: Thread scaling analysis only
-```bash
-# Run parallel_scaling benchmark (fastest, ~30-60 minutes)
-cargo bench --bench parallel_scaling --features parallel 2>&1 | \
-  tee parallel_scaling_$(date +%Y%m%d_%H%M%S).log
-
-# Results saved to target/criterion/parallel_scaling/
-```
-
-### Option 3: Automated script with multiple thread counts
-```bash
-# Run benchmark_threads.sh and save output
-./benchmark_threads.sh 2>&1 | tee thread_scaling_$(date +%Y%m%d_%H%M%S).log
-
-# This tests: 1, 2, 4, 8, 12 (physical), 24 (all) threads
-# Estimated time: 1-2 hours
-```
-
-### Results Location
-
-After benchmarking completes:
+## Results Location
 
 ```bash
 # View HTML reports
-open target/criterion/report/index.html  # macOS
 xdg-open target/criterion/report/index.html  # Linux
-
-# Raw CSV data (for analysis)
-ls target/criterion/*/base/*.csv
-
-# Compare against baseline
-cargo bench --features parallel -- --baseline <name>
-```
-
-### Recommended: Save baseline before changes
-```bash
-# Save current performance as baseline
-cargo bench --features parallel -- --save-baseline before_optimization
-
-# After making changes, compare:
-cargo bench --features parallel -- --baseline before_optimization
+open target/criterion/report/index.html      # macOS
 ```
 
 ## Available Benchmarks
 
-### 1. `parallel_scaling.rs` - Thread Scaling Analysis
-Measures performance across different thread counts to find optimal parallelization.
+### `quick_parallel.rs` - Fast Iteration (Recommended)
+Quick benchmark with small batches (10-20 blocks) for rapid feedback.
 
-**Benchmarks included:**
-- `ldpc_decode_thread_scaling`: Decode 100 blocks with 1, 2, 4, 8, physical, and all cores
-- `ldpc_encode_thread_scaling`: Encode 100 blocks with varying thread counts
-- `parallel_vs_sequential`: Compare parallel vs sequential for batch sizes 10, 50, 100, 202
-- `optimal_threads`: Test with physical cores only (recommended configuration)
+**Benchmarks:**
+- `ldpc_encode_quick`: Encode 10 blocks
+- `ldpc_decode_quick`: Decode 10 blocks (20 iterations)
+- `batch_size_scaling`: Compare batch sizes 1, 5, 10, 20
 
-**Run specific benchmark:**
+**Usage:**
 ```bash
-cargo bench --bench parallel_scaling --features parallel -- ldpc_decode_thread_scaling
+RAYON_NUM_THREADS=1 cargo bench --bench quick_parallel --features parallel
+RAYON_NUM_THREADS=8 cargo bench --bench quick_parallel --features parallel
 ```
 
-### 2. `ldpc_throughput.rs` - Overall Throughput
-Existing benchmark for single and batch operations (uses all available threads).
+### `ldpc_throughput.rs` - Full Throughput Baseline
+Comprehensive throughput measurement (slower, more accurate).
 
 ```bash
 cargo bench --bench ldpc_throughput --features parallel
 ```
 
-### 3. `batch_operations.rs` - Backend Comparison
-Tests LDPC and BCH batch operations with different batch sizes.
+### `batch_operations.rs` - Backend Comparison
+Tests LDPC and BCH batch operations with various sizes.
 
 ```bash
 cargo bench --bench batch_operations --features parallel
@@ -130,7 +83,7 @@ RAYON_NUM_THREADS=$(lscpu -p | grep -v '^#' | sort -u -t, -k 2,4 | wc -l) \
 ```
 
 ### Programmatic Control
-The `parallel_scaling` benchmark automatically tests multiple thread counts.
+The `quick_parallel` benchmark tests different batch sizes with the configured thread count.
 
 ## Understanding Results
 
@@ -143,132 +96,56 @@ For DVB-T2 Normal Rate 3/5:
 
 **Example output:**
 ```
-ldpc_decode_thread_scaling/1_threads
-                        time:   [12.50 s 12.52 s 12.54 s]
-                        thrpt:  [38.78 KiB/s 38.84 KiB/s 38.90 KiB/s]
+batch_size_scaling/10 (1 thread)
+                        time:   [323.77 ms 323.51 ms 324.36 ms]
+                        thrpt:  [146.32 KiB/s 146.71 KiB/s 147.04 KiB/s]
 
-ldpc_decode_thread_scaling/8_threads
-                        time:   [1.870 s 1.875 s 1.880 s]
-                        thrpt:  [258.5 KiB/s 259.4 KiB/s 260.3 KiB/s]
+batch_size_scaling/10 (8 threads)
+                        time:   [82.216 ms 82.686 ms 83.145 ms]
+                        thrpt:  [570.82 KiB/s 573.99 KiB/s 577.27 KiB/s]
 ```
 
-**Speedup**: 12.52s / 1.875s = **6.68×** with 8 threads
+**Speedup**: 323.51ms / 82.686ms = **3.9×** with 8 threads
 
 ### Parallel Efficiency
 Efficiency = (Speedup / Num Threads) × 100%
 
 **Example with 8 threads:**
-- Speedup: 6.68×
-- Efficiency: (6.68 / 8) × 100% = **83.5%**
+- Speedup: 3.9×
+- Efficiency: (3.9 / 8) × 100% = **49%**
 
-Good parallel efficiency: >80%  
-Excellent efficiency: >90%
+Good parallel efficiency: >70%  
+Excellent efficiency: >85%
 
-### Interpreting Scaling Behavior
+**Note**: Current 49% efficiency suggests room for optimization (SIMD LLR operations next)
 
-**Linear scaling** (ideal):
-- 2 threads → 2× speedup
-- 4 threads → 4× speedup
-- 8 threads → 8× speedup
+## Thread Configuration
 
-**Sub-linear scaling** (typical):
-- 2 threads → 1.8× speedup (90% efficiency)
-- 4 threads → 3.2× speedup (80% efficiency)
-- 8 threads → 5.6× speedup (70% efficiency)
+Control thread count via `RAYON_NUM_THREADS`:
+
+```bash
+# Sequential baseline
+RAYON_NUM_THREADS=1 cargo bench --bench quick_parallel --features parallel
+
+# Physical cores (recommended)
+RAYON_NUM_THREADS=12 cargo bench --bench quick_parallel --features parallel
+
+# All cores (with hyperthreading)
+cargo bench --bench quick_parallel --features parallel
+```
+
+## Interpreting Results
+
+**Speedup** = Time(1 thread) / Time(N threads)  
+**Efficiency** = Speedup / N × 100%
+
+Good parallel efficiency: >70%  
+Excellent efficiency: >85%
 
 **Common bottlenecks:**
-- Memory bandwidth (dominant at high core counts)
-- Cache contention
-- Synchronization overhead
-- Hyperthreading (SMT) diminishing returns
-
-## Recommended Configurations
-
-### Development/Testing
-```bash
-# Fast iteration with single thread
-cargo bench --features parallel -- --quick
-
-# Quick scaling test (1, 2, 4, 8 threads)
-RAYON_NUM_THREADS=1 cargo bench --bench parallel_scaling --features parallel -- optimal
-RAYON_NUM_THREADS=8 cargo bench --bench parallel_scaling --features parallel -- optimal
-```
-
-### Performance Analysis
-```bash
-# Full thread scaling analysis
-cargo bench --bench parallel_scaling --features parallel
-
-# Compare against sequential baseline
-cargo bench --bench parallel_scaling --features parallel -- parallel_vs_sequential
-```
-
-### Production Tuning
-```bash
-# Test physical cores only (avoids hyperthreading overhead)
-./benchmark_threads.sh
-
-# Profile specific thread count
-RAYON_NUM_THREADS=12 cargo bench --bench ldpc_throughput --features parallel
-```
-
-## Expected Performance (DVB-T2 Normal Rate 3/5)
-
-| Configuration | Throughput | Speedup | Efficiency |
-|--------------|------------|---------|------------|
-| 1 thread (sequential) | 1.2 Mbps | 1.0× | 100% |
-| 2 threads | 2.2 Mbps | 1.8× | 90% |
-| 4 threads | 4.0 Mbps | 3.3× | 83% |
-| 8 threads | 6.8 Mbps | 5.7× | 71% |
-| 12 threads (physical) | 8.3 Mbps | 6.9× | 58% |
-| 24 threads (all) | 8.3 Mbps | 6.9× | 29% |
-
-**Note**: Hyperthreading (12 → 24 threads) provides minimal benefit due to memory bandwidth saturation.
-
-## Comparing Configurations
-
-### Sequential vs Parallel
-```bash
-# Without parallel feature (sequential only)
-cargo bench --bench ldpc_throughput
-
-# With parallel feature
-cargo bench --bench ldpc_throughput --features parallel
-```
-
-### Different Batch Sizes
-Small batches (< 10) may not benefit from parallelization due to overhead.
-
-```bash
-cargo bench --bench parallel_scaling --features parallel -- parallel_vs_sequential
-```
-
-## Profiling Integration
-
-For detailed performance analysis, combine with profiling tools:
-
-```bash
-# Profile with perf
-RAYON_NUM_THREADS=8 cargo flamegraph --bench ldpc_throughput --features parallel
-
-# Profile with cachegrind
-RAYON_NUM_THREADS=8 cargo bench --bench parallel_scaling --features parallel -- \
-  --profile-time=10
-```
-
-## Tips for Optimal Performance
-
-1. **Use physical cores only**: Hyperthreading provides minimal benefit for memory-bound workloads
-   ```bash
-   RAYON_NUM_THREADS=$(lscpu -p | grep -v '^#' | sort -u -t, -k 2,4 | wc -l)
-   ```
-
-2. **Batch size matters**: Aim for batch_size ≥ 2× num_threads to avoid idle threads
-   ```rust
-   let batch_size = num_cpus::get_physical() * 2;
-   ```
-
-3. **Disable turbo boost for consistent results**:
+- Memory bandwidth saturation at high core counts
+- Small batch sizes (overhead dominates)
+- Hyperthreading diminishing returns
    ```bash
    echo 1 | sudo tee /sys/devices/system/cpu/intel_pstate/no_turbo
    ```
