@@ -2,7 +2,7 @@
 name = "gf2-coding"
 version = "0.1.0"
 edition = "2021"
-authors = ["copilot-swe-agent[bot] <198982749+Copilot@users.noreply.github.com>"]
+authors = ["Vesa Kaskivuo <vesa.kaskivuo@iki.fi>"]
 description = "Error-correcting code constructions and compression research built on gf2-core"
 license = "MIT OR Apache-2.0"
 keywords = ["coding-theory", "compression", "gf2"]
