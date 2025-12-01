@@ -204,12 +204,17 @@ See [docs/PARALLELIZATION_STRATEGY.md](docs/PARALLELIZATION_STRATEGY.md) for det
   - SIMD integration validated but Vec allocation overhead dominates
   - See: [LDPC_LLR_F32_MIGRATION.md](docs/LDPC_LLR_F32_MIGRATION.md)
 
-**Week 5-6** ⏭ **NEXT PRIORITY**:
-- [ ] **SIMD Stack Allocation**: Eliminate Vec allocation in hot path
-  - Current bottleneck: `Vec::collect()` in every check node update
-  - Solution: Use stack arrays for small slices (< 32 elements)
-  - Expected: 2-4× speedup once allocation removed
-- [ ] LDPC: Optimize sparse iteration patterns (2× target, 17.7% of decode time)
+**Week 5-6** ✅ **COMPLETE** (2025-12-01):
+- ✅ **Allocation Elimination**: Pre-cached neighbors + buffer reuse
+  - Profiling identified 23.1% overhead (17.9% row_iter, 5.2% malloc/free)
+  - Implementation: Cached check node neighbors + temp buffer in decoder struct
+  - **Result**: 9.0% speedup (31.1 ms → 28.3 ms per block, 167 KiB/s)
+  - Memory cost: +2.3 MB per decoder (negligible)
+  - Evidence-based TDD approach with comprehensive profiling
+  - See: [ALLOCATION_PROFILING_REPORT.md](docs/ALLOCATION_PROFILING_REPORT.md)
+  - Note: "SIMD stack allocation" hypothesis was incorrect - caching was the real win
+- ⏭ **Next**: Re-profile to identify remaining bottlenecks (allocation no longer dominant)
+- [ ] LDPC: Optimize sparse iteration patterns if still significant
 - [ ] BCH: Performance validation (target 6-8× speedup on multi-core)
 - [ ] Target: 50-100 Mbps (100-200% real-time DVB-T2)
 

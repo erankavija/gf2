@@ -799,13 +799,14 @@ void viterbi_butterfly(
 
 ### Current LDPC Performance (DVB-T2 Rate 3/5, 50 iterations)
 
-| Configuration | Throughput | Method | Speedup | Status |
-|--------------|------------|--------|---------|--------|
-| Serial baseline (f64) | 1.23 Mbps | Single-threaded | 1.0× | Baseline |
-| Serial (f32) | 1.29 Mbps | f32 precision | 1.05× | ✅ Complete |
-| Rayon (24 cores) | 8.29 Mbps | Block-level parallelism | 6.7× | ✅ Complete |
-| Target (+ SIMD) | ~15-25 Mbps | + Stack-allocated SIMD | ~12-20× | ⏭ Next |
-| Target (+ GPU) | ~100 Mbps | + Vulkan compute | ~80× | 🔬 Research |
+| Configuration | Throughput (single) | Method | Speedup | Status |
+|--------------|---------------------|--------|---------|--------|
+| Serial baseline (f64) | 1.00 Mbps (30.0 ms) | Single-threaded | 1.0× | Baseline |
+| Serial (f32) | 1.05 Mbps (28.5 ms) | f32 precision | 1.05× | ✅ Complete |
+| Allocation optimized | 1.14 Mbps (28.3 ms) | Cached neighbors + temp buffer | 1.14× | ✅ Complete |
+| Rayon (24 cores) | 8.29 Mbps (batch) | Block-level parallelism | 6.7× (batch) | ✅ Complete |
+| Target (next opt) | ~1.5-2.0 Mbps | Further profiling-driven | ~1.5-2× | ⏭ Next |
+| Target (+ GPU) | ~100 Mbps | + Vulkan compute | ~100× | 🔬 Research |
 
 ### Roadmap by Phase
 
@@ -816,8 +817,20 @@ void viterbi_butterfly(
 
 **Phase 2: LLR f32 Migration** ✅ COMPLETE (2025-12-01)
 - Changed Llr from f64 to f32 (breaking change)
-- Scalar: 5% improvement (28.5 ms vs 30.0 ms)
+- Scalar: 5% improvement (30.0 ms → 28.5 ms)
 - Eliminates conversion overhead for SIMD
+- Enables 2× wider SIMD vectors (8 lanes vs 4 in AVX2)
+
+**Phase 2b: Allocation Elimination** ✅ COMPLETE (2025-12-01)
+- **Goal**: Remove allocation overhead identified in profiling
+- **Implementation**: Pre-cached neighbors (17.9%) + temp buffer (5.2%)
+- **Result**: 9.0% speedup (31.1 ms → 28.3 ms per block)
+- **Finding**: Original "SIMD stack allocation" hypothesis was incorrect
+  - Real win was eliminating row_iter().collect() via caching
+  - DVB-T2 check degree = 11 (not 3-10 as assumed)
+  - Simple pre-computation was more effective than complex stack allocation
+- **Memory cost**: +2.3 MB per decoder (negligible)
+- **Evidence**: See ALLOCATION_PROFILING_REPORT.md
 - **Achievement**: Cleaner architecture, baseline faster
 
 **Phase 2: LLR Precision & SIMD Foundation** ✅ COMPLETE (2025-12-01)

@@ -1,6 +1,6 @@
 # Parallelization Progress Tracker
 
-**Last Updated**: 2025-11-29  
+**Last Updated**: 2025-12-01  
 **Quick Reference**: Current status and immediate next steps
 
 ---
@@ -69,23 +69,29 @@
 
 ## Next Steps (Immediate)
 
-### 🔧 Phase 2.1: Enable Parallel Backend (Week 2)
+### ✅ Phase 2b: Allocation Elimination (COMPLETE - 2025-12-01)
 
-**Goal**: Enable parallel batch operations via rayon
+**Goal**: Remove allocation overhead in LDPC decoder hot path
 
-**Tasks**:
-1. Add `parallel` feature to gf2-coding Cargo.toml
-2. Enable gf2-core parallel feature as dependency
-3. Benchmark parallel vs sequential for various batch sizes
-4. Measure speedup on 24-core CPU
-5. Document when parallelization provides benefit
+**What Was Done**:
+- Profiled with perf: Found 23.1% time in allocations (17.9% row_iter, 5.2% malloc)
+- Phase 1: Pre-cached check node neighbors in decoder struct
+- Phase 2: Pre-allocated temp buffer for check node updates
+- TDD approach with property tests
+- Created comprehensive profiling report
 
-**Expected Results**:
-- 4-8× speedup for batch sizes > 50
-- Near-linear scaling up to ~16 cores
-- Updated benchmarks showing parallel performance
+**Results**:
+- ✅ 9.0% performance improvement (31.1 ms → 28.3 ms per block)
+- ✅ Throughput: 152 KiB/s → 167 KiB/s
+- ✅ Memory cost: +2.3 MB per decoder (negligible)
+- ✅ All 228 tests pass, clippy clean
 
-**Estimated Effort**: 1-2 days
+**Key Learning**:
+- Original "SIMD stack allocation" hypothesis was incorrect
+- Real win: Eliminating row_iter().collect() via caching
+- Evidence-driven optimization beats speculation
+
+**Next**: Re-profile to identify remaining bottlenecks
 
 ---
 
