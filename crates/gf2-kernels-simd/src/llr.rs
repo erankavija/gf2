@@ -12,72 +12,111 @@
 //! - Negative LLR → likely bit=1
 //! - Magnitude = confidence
 
-/// LLR operation function bundle.
-pub struct LlrFns {
+/// LLR operation function bundle for f32.
+pub struct LlrFnsF32 {
     /// Compute sign-preserving horizontal minimum: sign_product * min(|inputs|)
-    ///
-    /// This is the min-sum approximation of the box-plus operation used in
-    /// LDPC belief propagation check node updates.
     pub minsum_fn: fn(&[f32]) -> f32,
-
     /// Compute maximum of absolute values.
     pub maxabs_fn: fn(&[f32]) -> f32,
 }
 
-/// Detect and return the best available LLR function bundle.
-///
-/// Returns `None` if no accelerated implementation is available for this platform.
-pub fn detect() -> Option<LlrFns> {
+/// LLR operation function bundle for f64.
+pub struct LlrFnsF64 {
+    /// Compute sign-preserving horizontal minimum: sign_product * min(|inputs|)
+    pub minsum_fn: fn(&[f64]) -> f64,
+    /// Compute maximum of absolute values.
+    pub maxabs_fn: fn(&[f64]) -> f64,
+}
+
+// Legacy type alias for backward compatibility
+pub type LlrFns = LlrFnsF32;
+
+/// Detect and return the best available f32 LLR function bundle.
+pub fn detect_f32() -> Option<LlrFnsF32> {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     {
-        return detect_x86();
+        return detect_x86_f32();
     }
     #[allow(unreachable_code)]
     None
 }
 
+/// Detect and return the best available f64 LLR function bundle.
+pub fn detect_f64() -> Option<LlrFnsF64> {
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    {
+        return detect_x86_f64();
+    }
+    #[allow(unreachable_code)]
+    None
+}
+
+/// Legacy detect function (returns f32 version).
+pub fn detect() -> Option<LlrFns> {
+    detect_f32()
+}
+
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-fn detect_x86() -> Option<LlrFns> {
+fn detect_x86_f32() -> Option<LlrFnsF32> {
     use std::arch::is_x86_feature_detected;
 
     if is_x86_feature_detected!("avx2") {
-        Some(LlrFns {
-            minsum_fn: minsum_avx2_safe,
-            maxabs_fn: maxabs_avx2_safe,
+        Some(LlrFnsF32 {
+            minsum_fn: minsum_avx2_f32_safe,
+            maxabs_fn: maxabs_avx2_f32_safe,
         })
     } else {
         None
     }
 }
 
-/// Safe wrapper for AVX2 min-sum.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-fn minsum_avx2_safe(inputs: &[f32]) -> f32 {
-    unsafe { minsum_avx2(inputs) }
+fn detect_x86_f64() -> Option<LlrFnsF64> {
+    use std::arch::is_x86_feature_detected;
+
+    if is_x86_feature_detected!("avx2") {
+        Some(LlrFnsF64 {
+            minsum_fn: minsum_avx2_f64_safe,
+            maxabs_fn: maxabs_avx2_f64_safe,
+        })
+    } else {
+        None
+    }
 }
 
-/// Safe wrapper for AVX2 max absolute value.
+/// Safe wrapper for AVX2 min-sum (f32).
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-fn maxabs_avx2_safe(inputs: &[f32]) -> f32 {
-    unsafe { maxabs_avx2(inputs) }
+fn minsum_avx2_f32_safe(inputs: &[f32]) -> f32 {
+    unsafe { minsum_avx2_f32(inputs) }
 }
 
-/// Compute sign-preserving horizontal minimum using AVX2.
+/// Safe wrapper for AVX2 max absolute value (f32).
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+fn maxabs_avx2_f32_safe(inputs: &[f32]) -> f32 {
+    unsafe { maxabs_avx2_f32(inputs) }
+}
+
+/// Safe wrapper for AVX2 min-sum (f64).
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+fn minsum_avx2_f64_safe(inputs: &[f64]) -> f64 {
+    unsafe { minsum_avx2_f64(inputs) }
+}
+
+/// Safe wrapper for AVX2 max absolute value (f64).
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+fn maxabs_avx2_f64_safe(inputs: &[f64]) -> f64 {
+    unsafe { maxabs_avx2_f64(inputs) }
+}
+
+/// Compute sign-preserving horizontal minimum using AVX2 (f32).
 ///
 /// Returns: sign_product * min(|inputs|)
-///
-/// # Algorithm
-/// 1. Process 8 floats at a time with AVX2
-/// 2. Compute absolute values via bitwise AND with ~sign_mask
-/// 3. Accumulate minimum via horizontal min
-/// 4. Track sign product via XOR of sign bits
-/// 5. Handle remainder scalarly
 ///
 /// # Safety
 /// Requires AVX2 CPU feature.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 #[target_feature(enable = "avx2")]
-unsafe fn minsum_avx2(inputs: &[f32]) -> f32 {
+unsafe fn minsum_avx2_f32(inputs: &[f32]) -> f32 {
     #[cfg(target_arch = "x86")]
     use std::arch::x86::*;
     #[cfg(target_arch = "x86_64")]
@@ -140,19 +179,13 @@ unsafe fn minsum_avx2(inputs: &[f32]) -> f32 {
     sign_product * min_abs
 }
 
-/// Compute maximum absolute value using AVX2.
-///
-/// # Algorithm
-/// 1. Process 8 floats at a time
-/// 2. Compute absolute values via bitwise AND with ~sign_mask
-/// 3. Accumulate maximum via horizontal max
-/// 4. Handle remainder scalarly
+/// Compute maximum absolute value using AVX2 (f32).
 ///
 /// # Safety
 /// Requires AVX2 CPU feature.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 #[target_feature(enable = "avx2")]
-unsafe fn maxabs_avx2(inputs: &[f32]) -> f32 {
+unsafe fn maxabs_avx2_f32(inputs: &[f32]) -> f32 {
     #[cfg(target_arch = "x86")]
     use std::arch::x86::*;
     #[cfg(target_arch = "x86_64")]
@@ -491,4 +524,107 @@ mod tests {
             );
         }
     }
+}
+
+/// Compute sign-preserving horizontal minimum using AVX2 (f64).
+///
+/// Returns: sign_product * min(|inputs|)
+///
+/// # Safety
+/// Requires AVX2 CPU feature.
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[target_feature(enable = "avx2")]
+unsafe fn minsum_avx2_f64(inputs: &[f64]) -> f64 {
+    #[cfg(target_arch = "x86")]
+    use std::arch::x86::*;
+    #[cfg(target_arch = "x86_64")]
+    use std::arch::x86_64::*;
+
+    if inputs.is_empty() {
+        return 0.0;
+    }
+
+    let n = inputs.len();
+    let sign_mask = _mm256_set1_pd(-0.0f64);
+    let mut vec_min = _mm256_set1_pd(f64::INFINITY);
+    let mut vec_sign = _mm256_setzero_pd();
+
+    // Process 4 f64 at a time with AVX2
+    let chunks = n / 4;
+    for i in 0..chunks {
+        let ptr = inputs.as_ptr().add(i * 4);
+        let vals = _mm256_loadu_pd(ptr);
+        let abs_vals = _mm256_andnot_pd(sign_mask, vals);
+        vec_min = _mm256_min_pd(vec_min, abs_vals);
+        let signs = _mm256_and_pd(vals, sign_mask);
+        vec_sign = _mm256_xor_pd(vec_sign, signs);
+    }
+
+    // Horizontal reduction
+    let mut temp = [0.0f64; 4];
+    _mm256_storeu_pd(temp.as_mut_ptr(), vec_min);
+    let mut min_abs = f64::INFINITY;
+    for &val in &temp {
+        min_abs = min_abs.min(val);
+    }
+
+    _mm256_storeu_pd(temp.as_mut_ptr(), vec_sign);
+    let mut sign_product = 1.0f64;
+    for &s in &temp {
+        if s.to_bits() & 0x8000_0000_0000_0000 != 0 {
+            sign_product = -sign_product;
+        }
+    }
+
+    // Handle remainder
+    for &val in &inputs[chunks * 4..] {
+        min_abs = min_abs.min(val.abs());
+        if val < 0.0 {
+            sign_product = -sign_product;
+        }
+    }
+
+    sign_product * min_abs
+}
+
+/// Compute maximum absolute value using AVX2 (f64).
+///
+/// # Safety
+/// Requires AVX2 CPU feature.
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[target_feature(enable = "avx2")]
+unsafe fn maxabs_avx2_f64(inputs: &[f64]) -> f64 {
+    #[cfg(target_arch = "x86")]
+    use std::arch::x86::*;
+    #[cfg(target_arch = "x86_64")]
+    use std::arch::x86_64::*;
+
+    if inputs.is_empty() {
+        return 0.0;
+    }
+
+    let n = inputs.len();
+    let sign_mask = _mm256_set1_pd(-0.0f64);
+    let mut vec_max = _mm256_setzero_pd();
+
+    let chunks = n / 4;
+    for i in 0..chunks {
+        let ptr = inputs.as_ptr().add(i * 4);
+        let vals = _mm256_loadu_pd(ptr);
+        let abs_vals = _mm256_andnot_pd(sign_mask, vals);
+        vec_max = _mm256_max_pd(vec_max, abs_vals);
+    }
+
+    let mut temp = [0.0f64; 4];
+    _mm256_storeu_pd(temp.as_mut_ptr(), vec_max);
+    let mut max_val = 0.0f64;
+    for &val in &temp {
+        max_val = max_val.max(val);
+    }
+
+    for &val in &inputs[chunks * 4..] {
+        max_val = max_val.max(val.abs());
+    }
+
+    max_val
 }
