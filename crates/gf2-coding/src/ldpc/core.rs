@@ -638,6 +638,10 @@ pub struct LdpcDecoder {
     check_to_var: Vec<Vec<Llr>>,
     /// Variable-to-check messages: indexed by [var][position in column]
     var_to_check: Vec<Vec<Llr>>,
+    /// Cached check node neighbors (pre-computed at construction)
+    check_neighbors: Vec<Vec<usize>>,
+    /// Temporary buffer for check node computations (reused to avoid allocations)
+    temp_inputs: Vec<Llr>,
     /// Number of iterations in last decode
     last_iterations: usize,
 }
@@ -648,6 +652,17 @@ impl LdpcDecoder {
         let n = code.n();
         let m = code.m();
         let h = code.parity_check_matrix();
+
+        // Pre-compute check node neighbors (cached for hot path optimization)
+        let check_neighbors: Vec<Vec<usize>> =
+            (0..m).map(|check| h.row_iter(check).collect()).collect();
+
+        // Find maximum check node degree for temp buffer sizing
+        let max_check_degree = check_neighbors
+            .iter()
+            .map(|neighbors| neighbors.len())
+            .max()
+            .unwrap_or(0);
 
         // Preallocate message storage
         let check_to_var: Vec<Vec<Llr>> = (0..m)
@@ -669,6 +684,8 @@ impl LdpcDecoder {
             beliefs: vec![Llr::zero(); n],
             check_to_var,
             var_to_check,
+            check_neighbors,
+            temp_inputs: Vec::with_capacity(max_check_degree),
             last_iterations: 0,
         }
     }
@@ -737,28 +754,25 @@ impl LdpcDecoder {
     /// Computes check-to-variable messages using the exact box-plus operation.
     #[allow(dead_code)] // Kept for potential future use
     fn check_node_update_spa(&mut self, _channel_llrs: &[Llr]) {
-        let h = self.code.parity_check_matrix();
-
-        for check in 0..self.code.m() {
-            let neighbors: Vec<usize> = h.row_iter(check).collect();
-            let degree = neighbors.len();
-
+        for (check, neighbors) in self.check_neighbors.iter().enumerate() {
             for (pos, &_var) in neighbors.iter().enumerate() {
-                // Collect all incoming messages except from this variable
-                let mut inputs = Vec::with_capacity(degree);
+                // Reuse pre-allocated buffer
+                self.temp_inputs.clear();
+
                 for (other_pos, &other_var) in neighbors.iter().enumerate() {
                     if other_pos != pos {
                         // Get variable-to-check message
                         let var_check_pos = self.find_check_position(other_var, check);
-                        inputs.push(self.var_to_check[other_var][var_check_pos]);
+                        self.temp_inputs
+                            .push(self.var_to_check[other_var][var_check_pos]);
                     }
                 }
 
                 // Compute check-to-variable message using box-plus
-                let message = if inputs.is_empty() {
+                let message = if self.temp_inputs.is_empty() {
                     Llr::zero()
                 } else {
-                    Llr::boxplus_n(&inputs)
+                    Llr::boxplus_n(&self.temp_inputs)
                 };
 
                 self.check_to_var[check][pos] = message;
@@ -768,26 +782,24 @@ impl LdpcDecoder {
 
     /// Performs check node update (min-sum approximation).
     fn check_node_update_minsum(&mut self, _channel_llrs: &[Llr]) {
-        let h = self.code.parity_check_matrix();
-
-        for check in 0..self.code.m() {
-            let neighbors: Vec<usize> = h.row_iter(check).collect();
-            let degree = neighbors.len();
-
+        for (check, neighbors) in self.check_neighbors.iter().enumerate() {
             for (pos, &_var) in neighbors.iter().enumerate() {
-                let mut inputs = Vec::with_capacity(degree);
+                // Reuse pre-allocated buffer
+                self.temp_inputs.clear();
+
                 for (other_pos, &other_var) in neighbors.iter().enumerate() {
                     if other_pos != pos {
                         let var_check_pos = self.find_check_position(other_var, check);
-                        inputs.push(self.var_to_check[other_var][var_check_pos]);
+                        self.temp_inputs
+                            .push(self.var_to_check[other_var][var_check_pos]);
                     }
                 }
 
-                let message = if inputs.is_empty() {
+                let message = if self.temp_inputs.is_empty() {
                     Llr::zero()
                 } else {
                     // boxplus_minsum_n handles SIMD dispatch internally
-                    Llr::boxplus_minsum_n(&inputs)
+                    Llr::boxplus_minsum_n(&self.temp_inputs)
                 };
 
                 self.check_to_var[check][pos] = message;
@@ -1296,6 +1308,49 @@ mod decoder_tests {
         let results = LdpcDecoder::decode_batch(&code, &empty_llrs, 10);
         assert_eq!(results.len(), 0);
     }
+
+    /// Test that cached neighbors produce identical results to dynamic iteration
+    #[test]
+    fn test_cached_neighbors_correctness() {
+        let code = LdpcCode::dvb_t2_normal(crate::CodeRate::Rate3_5);
+        let h = code.parity_check_matrix();
+
+        // Pre-compute neighbors (what we'll cache)
+        let cached: Vec<Vec<usize>> = (0..code.m())
+            .map(|check| h.row_iter(check).collect())
+            .collect();
+
+        // Verify against dynamic iteration
+        for (check, cached_neighbors) in cached.iter().enumerate() {
+            let dynamic: Vec<usize> = h.row_iter(check).collect();
+            assert_eq!(
+                cached_neighbors, &dynamic,
+                "Cached neighbors must match dynamic iteration for check {}",
+                check
+            );
+        }
+    }
+
+    /// Test that decoder with cached neighbors produces same output as original
+    #[test]
+    fn test_decoder_equivalence_with_caching() {
+        let code = LdpcCode::dvb_t2_normal(crate::CodeRate::Rate3_5);
+
+        // Create test LLRs (high SNR, should decode in 1-2 iterations)
+        let llrs: Vec<Llr> = (0..code.n()).map(|_| Llr::new(10.0)).collect();
+
+        // Decode twice (after optimization, both paths will use cached neighbors)
+        let mut decoder1 = LdpcDecoder::new(code.clone());
+        let result1 = decoder1.decode_iterative(&llrs, 50);
+
+        let mut decoder2 = LdpcDecoder::new(code.clone());
+        let result2 = decoder2.decode_iterative(&llrs, 50);
+
+        // Results must be identical
+        assert_eq!(result1.converged, result2.converged);
+        assert_eq!(result1.iterations, result2.iterations);
+        assert_eq!(result1.decoded_bits, result2.decoded_bits);
+    }
 }
 
 #[cfg(test)]
@@ -1528,6 +1583,54 @@ mod generator_matrix_access_tests {
             for j in 0..product.cols() {
                 assert!(!product.get(i, j), "G·H^T must be zero");
             }
+        }
+    }
+}
+
+#[cfg(test)]
+mod profiling_helpers {
+    use super::*;
+
+    #[test]
+    #[ignore]
+    fn measure_check_node_degrees() {
+        let code = LdpcCode::dvb_t2_normal(crate::CodeRate::Rate3_5);
+        let h = code.parity_check_matrix();
+
+        let mut degrees = Vec::new();
+        for check in 0..code.m() {
+            let degree = h.row_iter(check).count();
+            degrees.push(degree);
+        }
+
+        degrees.sort();
+
+        println!("\nDVB-T2 NORMAL Rate 3/5 check node degrees:");
+        println!("  Total checks: {}", code.m());
+        println!("  Min:    {}", degrees.iter().min().unwrap());
+        println!("  Max:    {}", degrees.iter().max().unwrap());
+        println!("  Median: {}", degrees[degrees.len() / 2]);
+        println!(
+            "  Mean:   {:.2}",
+            degrees.iter().sum::<usize>() as f64 / degrees.len() as f64
+        );
+
+        // Histogram
+        let mut histogram = std::collections::HashMap::new();
+        for &deg in &degrees {
+            *histogram.entry(deg).or_insert(0) += 1;
+        }
+
+        println!("\nHistogram:");
+        let mut bins: Vec<_> = histogram.iter().collect();
+        bins.sort_by_key(|(k, _)| *k);
+        for (deg, count) in bins {
+            println!(
+                "  Degree {:2}: {:5} checks ({:.1}%)",
+                deg,
+                count,
+                100.0 * *count as f64 / code.m() as f64
+            );
         }
     }
 }

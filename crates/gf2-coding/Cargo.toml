@@ -72,3 +72,7 @@ harness = false
 [[bench]]
 name = "llr_simd"
 harness = false
+
+[[bench]]
+name = "allocation_optimization"
+harness = false
