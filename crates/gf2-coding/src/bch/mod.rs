@@ -5,7 +5,7 @@
 //!
 //! # Organization
 //!
-//! - [`core`]: Core BCH types and algorithms
+//! - `core`: Core BCH types and algorithms
 //! - [`dvb_t2`]: DVB-T2 standard BCH outer codes
 //!
 //! # Examples

@@ -55,7 +55,7 @@ pub fn xor_inplace(dst: &mut [u64], src: &[u64]) {
     }
 }
 
-/// Performs bitwise AND: dst[i] &= src[i] for all i.
+/// Performs bitwise AND: dst\[i\] &= src\[i\] for all i.
 ///
 /// Automatically selects the best backend based on buffer size.
 ///
@@ -92,7 +92,7 @@ pub fn and_inplace(dst: &mut [u64], src: &[u64]) {
     }
 }
 
-/// Performs bitwise OR: dst[i] |= src[i] for all i.
+/// Performs bitwise OR: dst\[i\] |= src\[i\] for all i.
 ///
 /// Automatically selects the best backend based on buffer size.
 ///
@@ -129,7 +129,7 @@ pub fn or_inplace(dst: &mut [u64], src: &[u64]) {
     }
 }
 
-/// Performs bitwise NOT: buf[i] = !buf[i] for all i.
+/// Performs bitwise NOT: buf\[i\] = !buf\[i\] for all i.
 ///
 /// Automatically selects the best backend based on buffer size.
 #[inline]
