@@ -386,7 +386,7 @@ mod decoder_validation {
         let mut decoder = LdpcDecoder::new(code.clone());
 
         // Use moderate LLR values (not infinite)
-        let llrs = vec![Llr::new(2.0); code.n()];
+        let llrs = vec![Llr::new(2.0f32); code.n()];
         let result = decoder.decode_iterative(&llrs, 50);
 
         assert!(

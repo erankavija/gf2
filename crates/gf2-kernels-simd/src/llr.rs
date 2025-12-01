@@ -224,6 +224,108 @@ unsafe fn maxabs_avx2_f32(inputs: &[f32]) -> f32 {
     max_val
 }
 
+/// Compute sign-preserving horizontal minimum using AVX2 (f64).
+///
+/// Returns: sign_product * min(|inputs|)
+///
+/// # Safety
+/// Requires AVX2 CPU feature.
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[target_feature(enable = "avx2")]
+unsafe fn minsum_avx2_f64(inputs: &[f64]) -> f64 {
+    #[cfg(target_arch = "x86")]
+    use std::arch::x86::*;
+    #[cfg(target_arch = "x86_64")]
+    use std::arch::x86_64::*;
+
+    if inputs.is_empty() {
+        return 0.0;
+    }
+
+    let n = inputs.len();
+    let sign_mask = _mm256_set1_pd(-0.0f64);
+    let mut vec_min = _mm256_set1_pd(f64::INFINITY);
+    let mut vec_sign = _mm256_setzero_pd();
+
+    // Process 4 f64 at a time with AVX2
+    let chunks = n / 4;
+    for i in 0..chunks {
+        let ptr = inputs.as_ptr().add(i * 4);
+        let vals = _mm256_loadu_pd(ptr);
+        let abs_vals = _mm256_andnot_pd(sign_mask, vals);
+        vec_min = _mm256_min_pd(vec_min, abs_vals);
+        let signs = _mm256_and_pd(vals, sign_mask);
+        vec_sign = _mm256_xor_pd(vec_sign, signs);
+    }
+
+    // Horizontal reduction
+    let mut temp = [0.0f64; 4];
+    _mm256_storeu_pd(temp.as_mut_ptr(), vec_min);
+    let mut min_abs = f64::INFINITY;
+    for &val in &temp {
+        min_abs = min_abs.min(val);
+    }
+
+    _mm256_storeu_pd(temp.as_mut_ptr(), vec_sign);
+    let mut sign_product = 1.0f64;
+    for &s in &temp {
+        if s.to_bits() & 0x8000_0000_0000_0000 != 0 {
+            sign_product = -sign_product;
+        }
+    }
+
+    // Handle remainder
+    for &val in &inputs[chunks * 4..] {
+        min_abs = min_abs.min(val.abs());
+        if val < 0.0 {
+            sign_product = -sign_product;
+        }
+    }
+
+    sign_product * min_abs
+}
+
+/// Compute maximum absolute value using AVX2 (f64).
+///
+/// # Safety
+/// Requires AVX2 CPU feature.
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[target_feature(enable = "avx2")]
+unsafe fn maxabs_avx2_f64(inputs: &[f64]) -> f64 {
+    #[cfg(target_arch = "x86")]
+    use std::arch::x86::*;
+    #[cfg(target_arch = "x86_64")]
+    use std::arch::x86_64::*;
+
+    if inputs.is_empty() {
+        return 0.0;
+    }
+
+    let n = inputs.len();
+    let sign_mask = _mm256_set1_pd(-0.0f64);
+    let mut vec_max = _mm256_setzero_pd();
+
+    let chunks = n / 4;
+    for i in 0..chunks {
+        let ptr = inputs.as_ptr().add(i * 4);
+        let vals = _mm256_loadu_pd(ptr);
+        let abs_vals = _mm256_andnot_pd(sign_mask, vals);
+        vec_max = _mm256_max_pd(vec_max, abs_vals);
+    }
+
+    let mut temp = [0.0f64; 4];
+    _mm256_storeu_pd(temp.as_mut_ptr(), vec_max);
+    let mut max_val = 0.0f64;
+    for &val in &temp {
+        max_val = max_val.max(val);
+    }
+
+    for &val in &inputs[chunks * 4..] {
+        max_val = max_val.max(val.abs());
+    }
+
+    max_val
+}
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -524,107 +626,4 @@ mod tests {
             );
         }
     }
-}
-
-/// Compute sign-preserving horizontal minimum using AVX2 (f64).
-///
-/// Returns: sign_product * min(|inputs|)
-///
-/// # Safety
-/// Requires AVX2 CPU feature.
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-#[target_feature(enable = "avx2")]
-unsafe fn minsum_avx2_f64(inputs: &[f64]) -> f64 {
-    #[cfg(target_arch = "x86")]
-    use std::arch::x86::*;
-    #[cfg(target_arch = "x86_64")]
-    use std::arch::x86_64::*;
-
-    if inputs.is_empty() {
-        return 0.0;
-    }
-
-    let n = inputs.len();
-    let sign_mask = _mm256_set1_pd(-0.0f64);
-    let mut vec_min = _mm256_set1_pd(f64::INFINITY);
-    let mut vec_sign = _mm256_setzero_pd();
-
-    // Process 4 f64 at a time with AVX2
-    let chunks = n / 4;
-    for i in 0..chunks {
-        let ptr = inputs.as_ptr().add(i * 4);
-        let vals = _mm256_loadu_pd(ptr);
-        let abs_vals = _mm256_andnot_pd(sign_mask, vals);
-        vec_min = _mm256_min_pd(vec_min, abs_vals);
-        let signs = _mm256_and_pd(vals, sign_mask);
-        vec_sign = _mm256_xor_pd(vec_sign, signs);
-    }
-
-    // Horizontal reduction
-    let mut temp = [0.0f64; 4];
-    _mm256_storeu_pd(temp.as_mut_ptr(), vec_min);
-    let mut min_abs = f64::INFINITY;
-    for &val in &temp {
-        min_abs = min_abs.min(val);
-    }
-
-    _mm256_storeu_pd(temp.as_mut_ptr(), vec_sign);
-    let mut sign_product = 1.0f64;
-    for &s in &temp {
-        if s.to_bits() & 0x8000_0000_0000_0000 != 0 {
-            sign_product = -sign_product;
-        }
-    }
-
-    // Handle remainder
-    for &val in &inputs[chunks * 4..] {
-        min_abs = min_abs.min(val.abs());
-        if val < 0.0 {
-            sign_product = -sign_product;
-        }
-    }
-
-    sign_product * min_abs
-}
-
-/// Compute maximum absolute value using AVX2 (f64).
-///
-/// # Safety
-/// Requires AVX2 CPU feature.
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-#[target_feature(enable = "avx2")]
-unsafe fn maxabs_avx2_f64(inputs: &[f64]) -> f64 {
-    #[cfg(target_arch = "x86")]
-    use std::arch::x86::*;
-    #[cfg(target_arch = "x86_64")]
-    use std::arch::x86_64::*;
-
-    if inputs.is_empty() {
-        return 0.0;
-    }
-
-    let n = inputs.len();
-    let sign_mask = _mm256_set1_pd(-0.0f64);
-    let mut vec_max = _mm256_setzero_pd();
-
-    let chunks = n / 4;
-    for i in 0..chunks {
-        let ptr = inputs.as_ptr().add(i * 4);
-        let vals = _mm256_loadu_pd(ptr);
-        let abs_vals = _mm256_andnot_pd(sign_mask, vals);
-        vec_max = _mm256_max_pd(vec_max, abs_vals);
-    }
-
-    let mut temp = [0.0f64; 4];
-    _mm256_storeu_pd(temp.as_mut_ptr(), vec_max);
-    let mut max_val = 0.0f64;
-    for &val in &temp {
-        max_val = max_val.max(val);
-    }
-
-    for &val in &inputs[chunks * 4..] {
-        max_val = max_val.max(val.abs());
-    }
-
-    max_val
 }

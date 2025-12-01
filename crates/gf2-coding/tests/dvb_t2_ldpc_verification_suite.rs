@@ -180,9 +180,9 @@ fn test_ldpc_decoding_tp06_to_tp05_error_free() {
         for i in 0..codeword.data.len() {
             let bit = codeword.data.get(i);
             llrs.push(if bit {
-                Llr::new(-10.0) // Strong belief in bit 1
+                Llr::new(-10.0f32) // Strong belief in bit 1
             } else {
-                Llr::new(10.0) // Strong belief in bit 0
+                Llr::new(10.0f32) // Strong belief in bit 0
             });
         }
 
@@ -286,9 +286,9 @@ fn test_ldpc_error_correction() {
                 for i in 0..corrupted.len() {
                     let bit = corrupted.get(i);
                     llrs.push(if bit {
-                        Llr::new(-3.0) // Moderate belief in bit 1
+                        Llr::new(-3.0f32) // Moderate belief in bit 1
                     } else {
-                        Llr::new(3.0) // Moderate belief in bit 0
+                        Llr::new(3.0f32) // Moderate belief in bit 0
                     });
                 }
 
@@ -558,9 +558,9 @@ fn test_ldpc_roundtrip() {
         for i in 0..codeword.len() {
             let bit = codeword.get(i);
             llrs.push(if bit {
-                Llr::new(-10.0) // Strong belief in bit 1
+                Llr::new(-10.0f32) // Strong belief in bit 1
             } else {
-                Llr::new(10.0) // Strong belief in bit 0
+                Llr::new(10.0f32) // Strong belief in bit 0
             });
         }
 

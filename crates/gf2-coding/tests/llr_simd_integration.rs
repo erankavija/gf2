@@ -9,18 +9,23 @@ use gf2_coding::llr::Llr;
 fn test_boxplus_minsum_n_scalar_matches_simd() {
     // Test that SIMD and scalar implementations give same results
     let test_cases = vec![
-        vec![Llr::new(1.0), Llr::new(2.0), Llr::new(3.0)],
-        vec![Llr::new(-1.0), Llr::new(-2.0), Llr::new(-3.0)],
-        vec![Llr::new(1.5), Llr::new(-2.3), Llr::new(4.7), Llr::new(-0.8)],
-        vec![Llr::new(3.0), Llr::new(-2.0), Llr::new(1.0)],
+        vec![Llr::new(1.0f32), Llr::new(2.0f32), Llr::new(3.0f32)],
+        vec![Llr::new(-1.0f32), Llr::new(-2.0f32), Llr::new(-3.0f32)],
+        vec![
+            Llr::new(1.5f32),
+            Llr::new(-2.3f32),
+            Llr::new(4.7f32),
+            Llr::new(-0.8f32),
+        ],
+        vec![Llr::new(3.0f32), Llr::new(-2.0f32), Llr::new(1.0f32)],
     ];
 
     for llrs in test_cases {
         let result = Llr::boxplus_minsum_n(&llrs);
 
         // Compute expected with scalar implementation
-        let mut min_abs = f64::INFINITY;
-        let mut sign_product = 1.0f64;
+        let mut min_abs = f32::INFINITY;
+        let mut sign_product = 1.0f32;
         for llr in &llrs {
             let val = llr.value();
             min_abs = min_abs.min(val.abs());
@@ -44,10 +49,10 @@ fn test_boxplus_minsum_n_scalar_matches_simd() {
 #[test]
 fn test_saturate_batch() {
     let llrs = vec![
-        Llr::new(100.0),
-        Llr::new(-100.0),
-        Llr::new(5.0),
-        Llr::new(-5.0),
+        Llr::new(100.0f32),
+        Llr::new(-100.0f32),
+        Llr::new(5.0f32),
+        Llr::new(-5.0f32),
     ];
 
     let saturated = Llr::saturate_batch(&llrs, 10.0);
@@ -61,11 +66,11 @@ fn test_saturate_batch() {
 #[test]
 fn test_hard_decision_batch() {
     let llrs = vec![
-        Llr::new(3.0),  // bit 0
-        Llr::new(-2.0), // bit 1
-        Llr::new(0.5),  // bit 0
-        Llr::new(-0.1), // bit 1
-        Llr::new(0.0),  // bit 0 (tie)
+        Llr::new(3.0f32),  // bit 0
+        Llr::new(-2.0f32), // bit 1
+        Llr::new(0.5f32),  // bit 0
+        Llr::new(-0.1f32), // bit 1
+        Llr::new(0.0f32),  // bit 0 (tie)
     ];
 
     let bits = Llr::hard_decision_batch(&llrs);
@@ -78,7 +83,7 @@ fn test_large_batch_performance() {
     // Create a large batch to test SIMD efficiency
     let llrs: Vec<Llr> = (0..1000)
         .map(|i| {
-            let val = (i as f64) * 0.1;
+            let val = (i as f32) * 0.1;
             if i % 3 == 0 {
                 Llr::new(-val)
             } else {
@@ -103,6 +108,6 @@ fn test_large_batch_performance() {
 fn test_simd_detection() {
     // Just verify that SIMD detection doesn't panic
     // Actual detection happens internally in gf2-kernels-simd
-    let llrs = vec![Llr::new(1.0), Llr::new(2.0)];
+    let llrs = vec![Llr::new(1.0f32), Llr::new(2.0f32)];
     let _ = Llr::boxplus_minsum_n(&llrs);
 }

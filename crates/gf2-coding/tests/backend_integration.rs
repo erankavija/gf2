@@ -51,9 +51,9 @@ fn test_ldpc_decoder_uses_backend_for_batch() {
     let llr_blocks: Vec<Vec<Llr>> = (0..50)
         .map(|i| {
             if i % 2 == 0 {
-                vec![Llr::new(10.0), Llr::new(10.0), Llr::new(10.0)]
+                vec![Llr::new(10.0f32), Llr::new(10.0f32), Llr::new(10.0f32)]
             } else {
-                vec![Llr::new(-10.0), Llr::new(-10.0), Llr::new(10.0)]
+                vec![Llr::new(-10.0f32), Llr::new(-10.0f32), Llr::new(10.0f32)]
             }
         })
         .collect();

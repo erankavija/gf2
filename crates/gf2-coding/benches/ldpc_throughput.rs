@@ -78,7 +78,7 @@ fn bench_ldpc_decode_single(c: &mut Criterion) {
     let mut decoder = LdpcDecoder::new(code.clone());
 
     // Create high-confidence LLRs (error-free channel)
-    let llrs: Vec<Llr> = (0..code.n()).map(|_| Llr::new(10.0)).collect();
+    let llrs: Vec<Llr> = (0..code.n()).map(|_| Llr::new(10.0f32)).collect();
 
     let mut group = c.benchmark_group("ldpc_decode_single");
     group.throughput(Throughput::Bytes(code.k() as u64 / 8));
@@ -97,7 +97,7 @@ fn bench_ldpc_decode_single(c: &mut Criterion) {
 fn bench_ldpc_decode_batch(c: &mut Criterion) {
     let code = LdpcCode::dvb_t2_normal(CodeRate::Rate3_5);
 
-    let llrs: Vec<Llr> = (0..code.n()).map(|_| Llr::new(10.0)).collect();
+    let llrs: Vec<Llr> = (0..code.n()).map(|_| Llr::new(10.0f32)).collect();
 
     let mut group = c.benchmark_group("ldpc_decode_batch");
 

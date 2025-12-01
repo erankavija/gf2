@@ -64,7 +64,7 @@ fn bench_ldpc_encode_quick(c: &mut Criterion) {
 #[cfg(feature = "parallel")]
 fn bench_ldpc_decode_quick(c: &mut Criterion) {
     let code = LdpcCode::dvb_t2_normal(CodeRate::Rate3_5);
-    let llrs: Vec<Llr> = (0..code.n()).map(|_| Llr::new(10.0)).collect();
+    let llrs: Vec<Llr> = (0..code.n()).map(|_| Llr::new(10.0f32)).collect();
     let batch_size = 10; // Small batch for quick runs
     let llr_blocks: Vec<Vec<Llr>> = (0..batch_size).map(|_| llrs.clone()).collect();
 
@@ -88,7 +88,7 @@ fn bench_ldpc_decode_quick(c: &mut Criterion) {
 #[cfg(feature = "parallel")]
 fn bench_batch_sizes(c: &mut Criterion) {
     let code = LdpcCode::dvb_t2_normal(CodeRate::Rate3_5);
-    let llrs: Vec<Llr> = (0..code.n()).map(|_| Llr::new(10.0)).collect();
+    let llrs: Vec<Llr> = (0..code.n()).map(|_| Llr::new(10.0f32)).collect();
 
     let mut group = c.benchmark_group("batch_size_scaling");
 
@@ -122,7 +122,7 @@ fn print_config(c: &mut Criterion) {
     let num_threads = env::var("RAYON_NUM_THREADS")
         .ok()
         .and_then(|s| s.parse::<usize>().ok())
-        .unwrap_or_else(|| num_cpus::get());
+        .unwrap_or_else(num_cpus::get);
 
     c.bench_function("_print_config", |b| {
         eprintln!("\n=== Benchmark Configuration ===");

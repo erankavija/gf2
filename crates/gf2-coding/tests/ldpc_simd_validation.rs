@@ -32,7 +32,7 @@ fn test_ldpc_decode_with_simd() {
     let mut decoder = LdpcDecoder::new(code.clone());
 
     // Create channel LLRs (all-ones codeword with high confidence)
-    let llrs: Vec<Llr> = (0..code.n()).map(|_| Llr::new(5.0)).collect();
+    let llrs: Vec<Llr> = (0..code.n()).map(|_| Llr::new(5.0f32)).collect();
 
     // Decode
     let result = decoder.decode_iterative(&llrs, 10);
@@ -61,7 +61,7 @@ fn test_simd_vs_scalar_consistency() {
     ];
 
     for llr_values in test_cases {
-        let llrs: Vec<Llr> = llr_values.iter().map(|&v| Llr::new(v)).collect();
+        let llrs: Vec<Llr> = llr_values.iter().map(|&v| Llr::new(v as f32)).collect();
 
         let mut decoder1 = LdpcDecoder::new(code.clone());
         let result1 = decoder1.decode_iterative(&llrs, 5);

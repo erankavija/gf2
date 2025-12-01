@@ -195,8 +195,31 @@ Fast Hadamard Transform, 81x speedup vs. naive, O(N log N) butterfly operations
 
 ## Planned Phases
 
-### Phase 2: Wide Buffer Optimization
-Unrolled scalar kernels, BitSlice views - deferred until profiling shows benefit
+### Phase 2: Wide Buffer Optimization ⏸️ **INVESTIGATION NEEDED**
+
+**Goal**: Optimize mid-range buffer operations (8-64 words)
+
+**Current Status**: 
+- ✅ BitSlice views implemented (`BitSlice` and `BitSliceMut`)
+- ✅ 4x loop unrolling in scalar kernels
+- ✅ Smart SIMD/scalar dispatch (8-word threshold)
+- ⏸️ Higher unrolling factors (8x/16x) - not tested
+- ⏸️ BitSlice zero-copy operations - limited API
+- ⏸️ Specialized mid-range kernels - no 8-64 word optimization
+
+**Current Performance** (wide_logical benchmark, Dec 2025):
+- Small (1KB): ~90ns, 10 GiB/s (scalar)
+- Medium (4-64KB): 350ns-5µs, 10-12 GiB/s (transition zone)
+- Large (1MB): ~85µs, 11 GiB/s (SIMD)
+- **Observation**: Already well-optimized, flat 10-12 GiB/s across all sizes
+
+**Profiling Plan** (6 hours):
+1. Profile real workloads (perf record on LDPC/BCH examples)
+2. Microbenchmark unroll factors (1x/2x/4x/8x/16x)
+3. Test BitSlice zero-copy operations
+4. **Decision**: Proceed only if >15% speedup on real workloads
+
+**Recommendation**: Profile first before implementation. Current performance suggests diminishing returns.
 
 ### Phase 6b: SIMD Polar Transforms
 AVX2 butterfly operations, cache blocking for N > 8K - optional enhancement
@@ -263,11 +286,14 @@ Prime field arithmetic - deferred (no immediate use case)
 
 ## Roadmap Priorities
 
-**Current**: File I/O Phase 2 (Matrix serialization) - estimated 2-3 hours
+**Current Status (Dec 2025)**: All major functional phases complete (Phases 1-15) ✅
 
-**Long-term**: 
-- Extended SIMD support (AVX-512, ARM NEON)
-- Research algorithms as opportunities arise
+**Next Considerations**:
+1. **Phase 2 profiling** - Determine if wide buffer optimization is worthwhile (6 hours investigation)
+2. **Extended SIMD** - AVX-512, ARM NEON for mobile/embedded
+3. **Research algorithms** - As opportunities arise based on downstream usage
+
+**Recommendation**: Monitor gf2-coding usage patterns to identify actual bottlenecks before further optimization.
 
 ---
 
