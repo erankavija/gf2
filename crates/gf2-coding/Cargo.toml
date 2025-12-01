@@ -29,6 +29,8 @@ default = ["simd"]
 simd = ["gf2-core/simd", "gf2-kernels-simd"]
 parallel = ["dep:rayon", "gf2-core/parallel"]
 visualization = ["gf2-core/visualization"]
+# Use f64 precision for LLRs instead of f32 (slower, for research/comparison)
+llr-f64 = []
 
 # Binaries are auto-discovered in src/bin/
 # - generate_ldpc_cache: Generate DVB-T2 LDPC encoding cache files

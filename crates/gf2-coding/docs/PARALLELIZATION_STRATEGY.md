@@ -799,12 +799,13 @@ void viterbi_butterfly(
 
 ### Current LDPC Performance (DVB-T2 Rate 3/5, 50 iterations)
 
-| Configuration | Throughput | Method | Speedup |
-|--------------|------------|--------|---------|
-| Serial baseline | 1.23 Mbps | Single-threaded | 1.0× |
-| Rayon (24 cores) | 8.29 Mbps | Block-level parallelism | 6.7× |
-| Target (+ SIMD) | ~20 Mbps | + Vectorized LLR ops | ~16× |
-| Target (+ GPU) | ~100 Mbps | + Vulkan compute | ~80× |
+| Configuration | Throughput | Method | Speedup | Status |
+|--------------|------------|--------|---------|--------|
+| Serial baseline (f64) | 1.23 Mbps | Single-threaded | 1.0× | Baseline |
+| Serial (f32) | 1.29 Mbps | f32 precision | 1.05× | ✅ Complete |
+| Rayon (24 cores) | 8.29 Mbps | Block-level parallelism | 6.7× | ✅ Complete |
+| Target (+ SIMD) | ~15-25 Mbps | + Stack-allocated SIMD | ~12-20× | ⏭ Next |
+| Target (+ GPU) | ~100 Mbps | + Vulkan compute | ~80× | 🔬 Research |
 
 ### Roadmap by Phase
 
@@ -813,11 +814,25 @@ void viterbi_butterfly(
 - Decoding: **8.29 Mbps** (batch of 202, **6.7× speedup**, 24-core CPU)
 - **Achieved**: Software recording tier (~10 Mbps) ✓
 
-**Phase 2: SIMD Optimization** ⏭ NEXT (2-4 weeks)
-- **Implementation location**: `gf2-kernels-simd/src/llr.rs` (extend existing module)
-- Encoding: 50-100 Mbps (vectorization + parallelism)
-- Decoding: 20-100 Mbps (SIMD horizontal min/sum in BP - 69.8% of decode time)
-- **Target**: Real-time DVB-T2 reception on PC
+**Phase 2: LLR f32 Migration** ✅ COMPLETE (2025-12-01)
+- Changed Llr from f64 to f32 (breaking change)
+- Scalar: 5% improvement (28.5 ms vs 30.0 ms)
+- Eliminates conversion overhead for SIMD
+- **Achievement**: Cleaner architecture, baseline faster
+
+**Phase 2: LLR Precision & SIMD Foundation** ✅ COMPLETE (2025-12-01)
+- **Completed**: Changed Llr from f64 to f32
+  - Eliminates conversion overhead (f64↔f32)
+  - 5% baseline improvement from reduced memory bandwidth
+  - Enables 2× wider SIMD vectors (8 lanes vs 4 in AVX2)
+- **SIMD Status**: Integrated but Vec allocation overhead dominates
+  - Current bottleneck: Heap allocation in hot path (check node updates)
+  - Typical check node degree: 3-10 elements (below efficient SIMD threshold)
+  
+**Phase 2b: SIMD Stack Allocation** ⏭ NEXT (1-2 weeks)
+- **Goal**: Eliminate Vec allocation overhead
+- **Implementation**: Stack arrays for small slices (< 16 elements)
+- **Target**: 2-4× speedup on LDPC decoding (10-15 Mbps → 40-60 Mbps)
 
 **Phase 3: GPU Prototype** 🔬 RESEARCH (3-6 months)
 - Encoding: 200-500 Mbps (large batches >100 blocks)

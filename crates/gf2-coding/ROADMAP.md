@@ -193,16 +193,22 @@ See [docs/PARALLELIZATION_STRATEGY.md](docs/PARALLELIZATION_STRATEGY.md) for det
 - ✅ Comprehensive benchmarking guide (PARALLEL_BENCHMARKING.md)
 - ✅ All 226 tests pass with/without parallel feature
 
-**Week 3-4** 🔧 **IN PROGRESS**:
+**Week 3-4** ✅ **COMPLETE** (2025-12-01):
 - ✅ BCH: Add `decode_batch()` API with parallel rayon support - unblocked by gf2-core Phase 15
 - ✅ BCH: Parallel batch decoding benchmark created (benches/bch_parallel.rs)
 - ✅ Parallel infrastructure fixed and validated (3.9× speedup confirmed)
-- ⏭ **NEXT**: LDPC LLR SIMD vectorization (4-8× target, 69.8% of decode time)
-  - **Implementation location**: `gf2-kernels-simd/src/llr.rs` (extend existing module)
-  - Add f64 support (current: f32 only)
-  - Add `saturate_batch()`, `hard_decision_batch()` SIMD implementations
-  - Integrate into `gf2-coding/src/llr.rs` with runtime detection
-  - See: [PARALLELIZATION_STRATEGY.md](docs/PARALLELIZATION_STRATEGY.md#simd-kernel-implementation-strategy)
+- ✅ **COMPLETED**: LDPC LLR precision optimization
+  - Changed `Llr` from f64 to f32 (breaking change, justified pre-release)
+  - Removes f64↔f32 conversion overhead completely
+  - **Result**: 5% performance improvement from reduced memory bandwidth
+  - SIMD integration validated but Vec allocation overhead dominates
+  - See: [LDPC_LLR_F32_MIGRATION.md](docs/LDPC_LLR_F32_MIGRATION.md)
+
+**Week 5-6** ⏭ **NEXT PRIORITY**:
+- [ ] **SIMD Stack Allocation**: Eliminate Vec allocation in hot path
+  - Current bottleneck: `Vec::collect()` in every check node update
+  - Solution: Use stack arrays for small slices (< 32 elements)
+  - Expected: 2-4× speedup once allocation removed
 - [ ] LDPC: Optimize sparse iteration patterns (2× target, 17.7% of decode time)
 - [ ] BCH: Performance validation (target 6-8× speedup on multi-core)
 - [ ] Target: 50-100 Mbps (100-200% real-time DVB-T2)
