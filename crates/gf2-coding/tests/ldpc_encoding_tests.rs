@@ -223,9 +223,9 @@ fn test_ldpc_encode_decode_roundtrip_simple() {
     for i in 0..codeword.len() {
         let bit = codeword.get(i);
         llrs.push(if bit {
-            Llr::new(10.0) // Strong belief in '1'
+            Llr::new(10.0f32) // Strong belief in '1'
         } else {
-            Llr::new(-10.0) // Strong belief in '0'
+            Llr::new(-10.0f32) // Strong belief in '0'
         });
     }
 

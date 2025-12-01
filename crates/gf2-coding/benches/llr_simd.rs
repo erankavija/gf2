@@ -14,7 +14,7 @@ fn bench_boxplus_minsum_n(c: &mut Criterion) {
     for size in [8, 16, 32, 64, 128, 256] {
         let llrs: Vec<Llr> = (0..size)
             .map(|i| {
-                let val = (i as f64) * 0.1;
+                let val = (i as f32) * 0.1;
                 if i % 3 == 0 {
                     Llr::new(-val)
                 } else {
@@ -36,7 +36,7 @@ fn bench_saturate_batch(c: &mut Criterion) {
 
     for size in [64, 256, 1024, 4096] {
         let llrs: Vec<Llr> = (0..size)
-            .map(|i| Llr::new((i as f64) * 0.5 - 100.0))
+            .map(|i| Llr::new((i as f32) * 0.5 - 100.0))
             .collect();
 
         group.bench_with_input(BenchmarkId::from_parameter(size), &llrs, |b, llrs| {
@@ -53,7 +53,7 @@ fn bench_hard_decision_batch(c: &mut Criterion) {
     for size in [64, 256, 1024, 4096] {
         let llrs: Vec<Llr> = (0..size)
             .map(|i| {
-                let val = (i as f64) * 0.1 - 50.0;
+                let val = (i as f32) * 0.1 - 50.0;
                 Llr::new(val)
             })
             .collect();

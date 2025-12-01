@@ -15,9 +15,9 @@ fn main() {
     let llrs: Vec<Llr> = (0..n)
         .map(|i| {
             if codeword.get(i) {
-                Llr::new(-10.0)
+                Llr::new(-10.0f32)
             } else {
-                Llr::new(10.0)
+                Llr::new(10.0f32)
             }
         })
         .collect();

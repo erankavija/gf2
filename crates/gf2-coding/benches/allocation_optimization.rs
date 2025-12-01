@@ -8,7 +8,7 @@ fn bench_decode_cached_neighbors(c: &mut Criterion) {
     let code = LdpcCode::dvb_t2_normal(CodeRate::Rate3_5);
 
     // High SNR LLRs (should converge quickly in 1-2 iterations)
-    let llrs: Vec<Llr> = (0..code.n()).map(|_| Llr::new(5.0)).collect();
+    let llrs: Vec<Llr> = (0..code.n()).map(|_| Llr::new(5.0f32)).collect();
 
     c.bench_function("ldpc_decode_with_cached_neighbors", |b| {
         b.iter(|| {
@@ -22,7 +22,7 @@ fn bench_decode_batch(c: &mut Criterion) {
     let code = LdpcCode::dvb_t2_normal(CodeRate::Rate3_5);
 
     // Create small batch
-    let llrs: Vec<Llr> = (0..code.n()).map(|_| Llr::new(5.0)).collect();
+    let llrs: Vec<Llr> = (0..code.n()).map(|_| Llr::new(5.0f32)).collect();
     let batch: Vec<Vec<Llr>> = vec![llrs; 10];
 
     c.bench_function("ldpc_decode_batch_10", |b| {
