@@ -786,17 +786,7 @@ impl LdpcDecoder {
                 let message = if inputs.is_empty() {
                     Llr::zero()
                 } else {
-                    // Try SIMD-accelerated min-sum if available
-                    #[cfg(feature = "simd")]
-                    if let Some(fns) = crate::simd::maybe_llr_simd() {
-                        let llr_values: Vec<f32> =
-                            inputs.iter().map(|l| l.value() as f32).collect();
-                        Llr::new((fns.minsum_fn)(&llr_values) as f64)
-                    } else {
-                        Llr::boxplus_minsum_n(&inputs)
-                    }
-
-                    #[cfg(not(feature = "simd"))]
+                    // boxplus_minsum_n handles SIMD dispatch internally
                     Llr::boxplus_minsum_n(&inputs)
                 };
 

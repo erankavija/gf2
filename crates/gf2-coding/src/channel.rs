@@ -98,7 +98,7 @@ impl BpskModulator {
     /// assert!(llr.value() > 0.0); // Positive symbol suggests bit 0
     /// ```
     pub fn to_llr(received: f64, sigma_squared: f64) -> Llr {
-        Llr::new(2.0 * received / sigma_squared)
+        Llr::new((2.0 * received / sigma_squared) as f32)
     }
 }
 
@@ -506,7 +506,7 @@ mod property_tests {
         }
 
         #[test]
-        fn awgn_variance_correct(eb_n0_db in 0.0..20.0, rate in 0.1..1.0) {
+        fn awgn_variance_correct(eb_n0_db in 0.0f64..20.0f64, rate in 0.1f64..1.0f64) {
             let channel = AwgnChannel::from_eb_n0_db(eb_n0_db, rate);
             let eb_n0_linear = 10.0_f64.powf(eb_n0_db / 10.0);
             let expected = 1.0 / (2.0 * rate * eb_n0_linear);
@@ -514,7 +514,7 @@ mod property_tests {
         }
 
         #[test]
-        fn llr_sign_matches_symbol_sign(received in -10.0..10.0, sigma_sq in 0.1..10.0) {
+        fn llr_sign_matches_symbol_sign(received in -10.0f64..10.0f64, sigma_sq in 0.1f64..10.0f64) {
             let llr = BpskModulator::to_llr(received, sigma_sq);
             if received > 0.0 {
                 prop_assert!(llr.value() > 0.0);
@@ -524,7 +524,7 @@ mod property_tests {
         }
 
         #[test]
-        fn llr_magnitude_increases_with_signal(sigma_sq in 0.1..10.0) {
+        fn llr_magnitude_increases_with_signal(sigma_sq in 0.1f64..10.0f64) {
             let llr_weak = BpskModulator::to_llr(0.5, sigma_sq);
             let llr_strong = BpskModulator::to_llr(1.0, sigma_sq);
             prop_assert!(llr_strong.magnitude() > llr_weak.magnitude());

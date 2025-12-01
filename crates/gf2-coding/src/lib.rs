@@ -62,19 +62,7 @@ pub mod ldpc;
 pub mod linear;
 pub mod llr;
 
-// Optional SIMD accessor for LLR operations
-#[cfg(feature = "simd")]
-pub(crate) mod simd {
-    use gf2_kernels_simd::llr::LlrFns;
-    use std::sync::OnceLock;
-
-    static LLR_FNS: OnceLock<Option<LlrFns>> = OnceLock::new();
-
-    #[inline]
-    pub fn maybe_llr_simd() -> Option<&'static LlrFns> {
-        LLR_FNS.get_or_init(gf2_kernels_simd::llr::detect).as_ref()
-    }
-}
+// SIMD detection is now handled internally in llr.rs via once_cell::Lazy
 pub mod simulation;
 pub mod traits;
 
