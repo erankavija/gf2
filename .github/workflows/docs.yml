@@ -28,19 +28,19 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cargo/registry
-          key: ubuntu-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-nightly-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Cache cargo index
         uses: actions/cache@v4
         with:
           path: ~/.cargo/git
-          key: ubuntu-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-nightly-cargo-index-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Cache cargo build
         uses: actions/cache@v4
         with:
           path: target
-          key: ubuntu-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-nightly-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Build documentation
         run: cargo doc --workspace --no-deps --all-features
@@ -49,7 +49,7 @@ jobs:
 
       - name: Add redirect to gf2_core
         run: |
-          # Only add redirect if no index.html was generated
+          # Add redirect to gf2_core (the primary user-facing crate) if no index.html was generated
           if [ ! -f target/doc/index.html ]; then
             echo '<meta http-equiv="refresh" content="0; url=gf2_core/index.html">' > target/doc/index.html
           fi
