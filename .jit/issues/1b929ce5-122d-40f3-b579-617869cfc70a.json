@@ -1,0 +1,19 @@
+{
+  "id": "1b929ce5-122d-40f3-b579-617869cfc70a",
+  "title": "Unify error handling across gf2-coding to use Result types",
+  "description": "Shift from panic-based error handling to Result-based error handling where appropriate. Part of ongoing ergonomics polish. Includes unified error types and meaningful error messages.",
+  "state": "ready",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:story",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-02-21T19:35:51.718481029+00:00",
+  "updated_at": "2026-02-21T19:49:04.315159509+00:00"
+}

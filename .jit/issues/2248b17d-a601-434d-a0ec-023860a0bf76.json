@@ -1,0 +1,22 @@
+{
+  "id": "2248b17d-a601-434d-a0ec-023860a0bf76",
+  "title": "Implement property-based tests for all finite field operations",
+  "description": "Create comprehensive property-based test suite using proptest for all finite field implementations. Test mathematical invariants: associativity, distributivity, inverse properties. Cross-verify naive vs SIMD-optimized implementations.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "bfe0ba7b-e36b-45e3-a219-dc2acfe88957"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "component:gf2-kernels-simd"
+  ],
+  "created_at": "2026-02-21T19:35:51.847368329+00:00",
+  "updated_at": "2026-02-21T19:35:52.043180369+00:00"
+}

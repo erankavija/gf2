@@ -1,0 +1,19 @@
+{
+  "id": "0056e853-0be7-48ec-8407-ea16bcc45392",
+  "title": "Deploy new README for gf2-coding with learning path structure",
+  "description": "Deploy README_NEW.md as README.md for the gf2-coding crate. The new README (528 lines) features a code-first approach, 19 tested Rust code blocks, difficulty-categorized examples, and a clear learning path.",
+  "state": "ready",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-02-21T19:35:51.753369284+00:00",
+  "updated_at": "2026-02-21T19:49:04.407877164+00:00"
+}

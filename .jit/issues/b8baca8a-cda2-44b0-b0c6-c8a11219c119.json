@@ -1,0 +1,21 @@
+{
+  "id": "b8baca8a-cda2-44b0-b0c6-c8a11219c119",
+  "title": "Build GNU Radio OOT module with DVB-T2 decoder blocks",
+  "description": "Initialize gr-gf2 with gr_modtool. Implement dvb_t2_ldpc_decoder, dvb_t2_bch_decoder, and viterbi_decoder blocks. Create GRC block definitions for visual programming. Build example flowgraphs. Write integration tests and installation documentation.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "56467231-6070-48bb-a73d-485aca08ce75"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:story",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-02-21T19:35:51.808121165+00:00",
+  "updated_at": "2026-02-21T19:35:51.972838380+00:00"
+}

@@ -1,0 +1,20 @@
+{
+  "id": "b3766524-f893-48b5-b380-ce38a8bf5467",
+  "title": "Implement SIMD-accelerated polar transforms",
+  "description": "Add AVX2 butterfly operations and cache blocking for polar transforms with N > 8K. Optional enhancement to the existing Fast Hadamard Transform implementation which already achieves 81x speedup vs naive.",
+  "state": "ready",
+  "priority": "low",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:story",
+    "component:gf2-core",
+    "component:gf2-kernels-simd"
+  ],
+  "created_at": "2026-02-21T19:35:51.683560715+00:00",
+  "updated_at": "2026-02-21T19:49:04.221991483+00:00"
+}

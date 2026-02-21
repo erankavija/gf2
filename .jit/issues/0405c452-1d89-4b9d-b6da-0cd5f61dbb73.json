@@ -1,0 +1,20 @@
+{
+  "id": "0405c452-1d89-4b9d-b6da-0cd5f61dbb73",
+  "title": "Explore bit-level compression transforms",
+  "description": "Exploratory phase investigating bit-level transforms (run-length, delta, XOR chaining) using BitVec APIs. Build an entropy modeling playground with simple adaptive frequency coder over GF(2) residuals. Create comparative benchmarks: raw vs transformed bitstreams.",
+  "state": "ready",
+  "priority": "low",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:story",
+    "component:gf2-coding",
+    "component:gf2-core"
+  ],
+  "created_at": "2026-02-21T19:35:51.713529390+00:00",
+  "updated_at": "2026-02-21T19:49:04.301776331+00:00"
+}

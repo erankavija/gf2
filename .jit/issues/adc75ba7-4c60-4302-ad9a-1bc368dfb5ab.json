@@ -1,0 +1,20 @@
+{
+  "id": "adc75ba7-4c60-4302-ad9a-1bc368dfb5ab",
+  "title": "Investigate FPGA feasibility for ultra-low latency FEC",
+  "description": "Research phase to evaluate FPGA acceleration for FEC decoding. Phase 1 (feasibility study): Survey existing FPGA LDPC implementations, analyze resource utilization (LUTs, DSPs, BRAM) for DVB-T2, estimate latency/throughput for target FPGA (Xilinx VU9P), cost-benefit vs GPU vs CPU. Phase 2 (prototype): Implement Viterbi decoder in Verilog/VHDL on Xilinx Alveo U250, PCIe DMA interface, benchmark vs CPU. Target: 1-10 Gbps sustained, <10us latency.",
+  "state": "ready",
+  "priority": "low",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:epic",
+    "component:gf2-coding",
+    "component:gf2-kernels-simd"
+  ],
+  "created_at": "2026-02-21T19:35:51.594053638+00:00",
+  "updated_at": "2026-02-21T19:35:51.594059088+00:00"
+}

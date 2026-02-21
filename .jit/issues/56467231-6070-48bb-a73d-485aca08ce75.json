@@ -1,0 +1,19 @@
+{
+  "id": "56467231-6070-48bb-a73d-485aca08ce75",
+  "title": "Create C FFI layer exposing LDPC, BCH, and Viterbi decoders",
+  "description": "Create src/ffi.rs module with C-compatible API. Expose LDPC decoder (create, decode, destroy functions), BCH decoder, and Viterbi decoder. Implement safety wrappers and error handling. Generate C header file (gf2_coding.h). Create standalone C test program for validation.",
+  "state": "ready",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:story",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-02-21T19:35:51.658449208+00:00",
+  "updated_at": "2026-02-21T19:49:04.129060378+00:00"
+}

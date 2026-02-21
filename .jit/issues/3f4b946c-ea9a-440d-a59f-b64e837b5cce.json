@@ -1,0 +1,21 @@
+{
+  "id": "3f4b946c-ea9a-440d-a59f-b64e837b5cce",
+  "title": "Implement tower extension field architecture for GF(p^n)",
+  "description": "Implement recursive tower extension fields for GF(p^n). Construct e.g. GF(p^12) as GF(p) -> GF(p^2) -> GF(p^6) -> GF(p^12) using Karatsuba multiplication for degree-2 and Toom-Cook for degree-3 extensions. Use wide accumulators with lazy/delayed reduction.",
+  "state": "backlog",
+  "priority": "low",
+  "assignee": null,
+  "dependencies": [
+    "8ce6f8aa-9252-4ae6-ab5c-e702e961d460"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:story",
+    "component:gf2-core"
+  ],
+  "created_at": "2026-02-21T19:35:51.862089277+00:00",
+  "updated_at": "2026-02-21T19:35:52.025545622+00:00"
+}

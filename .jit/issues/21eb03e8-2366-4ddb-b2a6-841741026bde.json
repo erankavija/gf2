@@ -1,0 +1,21 @@
+{
+  "id": "21eb03e8-2366-4ddb-b2a6-841741026bde",
+  "title": "Run polar code FER simulations and compare with Shannon limit",
+  "description": "FER simulation campaign for polar codes over AWGN channels. Compare performance with Shannon limit, characterize rate vs Eb/N0, verify capacity-approaching behavior for various block lengths, and compare with LDPC codes.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "b94e2821-211d-4bbb-9a20-59a94495ee25"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:simulation",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-02-21T19:35:51.822973303+00:00",
+  "updated_at": "2026-02-21T19:35:51.959266552+00:00"
+}

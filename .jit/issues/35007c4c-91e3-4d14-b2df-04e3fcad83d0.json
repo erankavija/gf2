@@ -1,0 +1,19 @@
+{
+  "id": "35007c4c-91e3-4d14-b2df-04e3fcad83d0",
+  "title": "Add standardized headers to all existing gf2-coding examples",
+  "description": "Apply standardized header template (difficulty level, prerequisites, learning objectives, estimated reading time) to all existing examples. Currently only the 2 new examples have standardized headers. 12 existing examples need updating.",
+  "state": "ready",
+  "priority": "low",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-02-21T19:35:51.758311673+00:00",
+  "updated_at": "2026-02-21T19:49:04.421109102+00:00"
+}

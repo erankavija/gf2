@@ -1,0 +1,19 @@
+{
+  "id": "5f3d0ff9-801a-4747-9a71-9f0a75024c4a",
+  "title": "Create soft vs hard decoding comparison example",
+  "description": "Create an intermediate-level example (80-120 lines) comparing soft-decision and hard-decision decoding on the same code over AWGN at various SNR points. Display BER comparison and explain when to use each approach.",
+  "state": "ready",
+  "priority": "low",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-02-21T19:35:51.763206972+00:00",
+  "updated_at": "2026-02-21T19:49:04.434807350+00:00"
+}

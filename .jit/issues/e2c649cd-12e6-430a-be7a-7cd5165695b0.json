@@ -1,0 +1,19 @@
+{
+  "id": "e2c649cd-12e6-430a-be7a-7cd5165695b0",
+  "title": "Add rustdoc cross-references to example file headers",
+  "description": "Add links to relevant rustdoc sections in example file headers so readers can easily navigate from examples to API documentation.",
+  "state": "ready",
+  "priority": "low",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-02-21T19:35:51.768082191+00:00",
+  "updated_at": "2026-02-21T19:49:04.448083398+00:00"
+}

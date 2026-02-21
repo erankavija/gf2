@@ -1,0 +1,22 @@
+{
+  "id": "806eb14e-dc3d-4a1c-b4bf-5f30b9cfa923",
+  "title": "Prototype GPU acceleration for belief propagation",
+  "description": "Investigate GPU acceleration for LDPC belief propagation decoding. The BP loop is 70% of decoding time and highly data-parallel, making it a strong candidate for GPU offload. Key research questions: Is BP memory-bound or compute-bound on GPU? What is the crossover point vs 24-core CPU? Decision criteria: Go if GPU >3x faster than CPU for batch size >100, Investigate if 1.5-3x, Abandon if <1.5x.",
+  "state": "backlog",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [
+    "92acd7b5-fb62-4721-bb7d-a0ac553831f9"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:epic",
+    "component:gf2-coding",
+    "component:gf2-kernels-simd"
+  ],
+  "created_at": "2026-02-21T19:35:51.589062719+00:00",
+  "updated_at": "2026-02-21T19:49:04.468324015+00:00"
+}

@@ -1,0 +1,19 @@
+{
+  "id": "6ed3c78b-9d54-4764-babb-753351767aa0",
+  "title": "Implement irregular LDPC codes with degree distribution optimization",
+  "description": "Implement irregular LDPC code construction with configurable variable and check node degree distributions. Irregular codes can approach capacity more closely than regular codes through optimized degree distributions.",
+  "state": "ready",
+  "priority": "low",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:story",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-02-21T19:35:51.698652012+00:00",
+  "updated_at": "2026-02-21T19:49:04.261351377+00:00"
+}

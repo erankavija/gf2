@@ -1,0 +1,22 @@
+{
+  "id": "055bda14-7351-4245-b81a-350e749e547b",
+  "title": "Implement carry-less multiplication SIMD kernels for GF(2^m)",
+  "description": "Implement PCLMULQDQ-based carry-less multiplication kernels for x86_64 and PMULL for ARM in the gf2-kernels-simd crate. Include Barrett reduction for efficient modular reduction. Wrap intrinsics in safe interfaces.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "bfe0ba7b-e36b-45e3-a219-dc2acfe88957"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:story",
+    "component:gf2-kernels-simd",
+    "component:gf2-core"
+  ],
+  "created_at": "2026-02-21T19:35:51.837508971+00:00",
+  "updated_at": "2026-02-21T19:35:52.005643125+00:00"
+}

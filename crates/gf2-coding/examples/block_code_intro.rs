@@ -131,7 +131,8 @@ fn main() {
     println!("   Block codes process data in fixed-size chunks");
     println!("   For long messages, split into {}-bit blocks", code.k());
 
-    let messages = [{
+    let messages = [
+        {
             let mut bv = BitVec::from_bytes_le(&[0b0000]);
             bv.resize(4, false);
             bv
@@ -145,7 +146,8 @@ fn main() {
             let mut bv = BitVec::from_bytes_le(&[0b1010]);
             bv.resize(4, false);
             bv
-        }];
+        },
+    ];
 
     println!("\n   Example: Encoding 3 blocks (12 bits total)");
     for (i, msg) in messages.iter().enumerate() {

@@ -1,0 +1,19 @@
+{
+  "id": "6efb756b-bee0-4dc1-9ee6-a1a0a61034d4",
+  "title": "Implement GRAND (Guessing Random Additive Noise Decoding)",
+  "description": "Implement the GRAND universal decoder for short block codes. GRAND works by guessing the noise pattern rather than the codeword, making it applicable to any linear code. Research focus: compare GRAND vs algebraic decoding (Berlekamp-Massey) for short codes to determine crossover points.",
+  "state": "ready",
+  "priority": "low",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:epic",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-02-21T19:35:51.613833285+00:00",
+  "updated_at": "2026-02-21T19:35:51.613838285+00:00"
+}

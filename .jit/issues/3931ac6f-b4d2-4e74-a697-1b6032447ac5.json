@@ -1,0 +1,19 @@
+{
+  "id": "3931ac6f-b4d2-4e74-a697-1b6032447ac5",
+  "title": "Unify streaming and batch encode/decode trait interfaces",
+  "description": "Refine trait system to provide clean unification between streaming and batch encode/decode operations. Currently these are somewhat separate APIs. Part of ongoing ergonomics polish.",
+  "state": "ready",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:story",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-02-21T19:35:51.723398998+00:00",
+  "updated_at": "2026-02-21T19:49:04.328440227+00:00"
+}

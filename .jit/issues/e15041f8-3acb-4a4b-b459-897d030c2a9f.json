@@ -1,0 +1,19 @@
+{
+  "id": "e15041f8-3acb-4a4b-b459-897d030c2a9f",
+  "title": "Implement Soft-Input Viterbi Algorithm (SOVA)",
+  "description": "Implement SOVA for convolutional codes, enabling soft-output decoding. This extends the existing hard-decision Viterbi decoder to produce reliability information, which is needed for turbo-like iterative decoding schemes.",
+  "state": "ready",
+  "priority": "low",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:story",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-02-21T19:35:51.703681171+00:00",
+  "updated_at": "2026-02-21T19:49:04.274890825+00:00"
+}

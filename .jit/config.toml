@@ -1,0 +1,107 @@
+# JIT Configuration File
+#
+# Created by `jit init`. Customize as needed.
+# All settings are optional — JIT uses sensible defaults without this file.
+
+[version]
+schema = 2
+
+[type_hierarchy]
+# Issue types and their hierarchy level (lower number = more strategic).
+types = { milestone = 1, epic = 2, simulation = 2, story = 3, task = 4, bug = 4 }
+
+# Types shown by `jit query strategic`.
+strategic_types = ["milestone", "epic", "simulation"]
+
+# Maps each parent type to its membership label namespace.
+# E.g. issues belonging to an epic carry an "epic:<name>" label.
+[type_hierarchy.label_associations]
+milestone = "milestone"
+epic = "epic"
+story = "story"
+
+# Icon preset for the web UI: "simple" | "navigation" | "minimal" | "construction"
+[type_hierarchy.icons]
+preset = "construction"
+custom = { simulation = "🧪", bug = "🐛" }
+
+[validation]
+# How strictly JIT enforces rules:
+#   strict      — fail on any violation; suitable for CI and automated pipelines.
+#   loose       — warn but allow operations; good for everyday development (default).
+#   permissive  — minimal checks; useful during imports or migrations.
+strictness = "loose"
+
+# Auto-assign this type when creating issues without a type:* label.
+default_type = "task"
+
+# Require exactly one type:* label per issue.
+require_type_label = false
+
+# Warning toggles (both enabled by default; set to false to silence):
+# warn_orphaned_leaves = true       # tasks that carry no parent epic/story label
+# warn_strategic_consistency = true # hierarchy inconsistencies across issues
+
+# Label format enforcement (default: warn only):
+# label_regex = '^[a-z][a-z0-9-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*$'
+# reject_malformed_labels = false   # set true to block instead of warn
+# enforce_namespace_registry = false # set true to reject undeclared namespaces
+
+# =============================================================================
+# NAMESPACE REGISTRY (optional)
+# =============================================================================
+# Define label namespaces for documentation and optional enforcement.
+
+[namespaces.type]
+description = "Issue type (hierarchical). Exactly one per issue."
+unique = true
+examples = ["type:task", "type:bug", "type:epic", "type:simulation"]
+
+[namespaces.component]
+description = "Technical area or subsystem affected."
+unique = false
+examples = ["component:gf2-core", "component:gf2-coding"]
+
+[namespaces.resolution]
+description = "Reason for issue closure (used with rejected state)."
+unique = true
+examples = ["resolution:wont-fix", "resolution:duplicate", "resolution:obsolete"]
+
+# =============================================================================
+# ADVANCED (uncomment to enable)
+# =============================================================================
+
+# Worktree isolation and lease enforcement for parallel/agent work.
+# [worktree]
+# mode = "auto"              # "auto" | "on" | "off"
+# enforce_leases = "strict"  # "strict" | "warn" | "off"
+
+# Multi-agent lease coordination.
+# [coordination]
+# default_ttl_secs = 600              # claim TTL before expiry
+# heartbeat_interval_secs = 30        # renewal interval for indefinite leases
+# stale_threshold_secs = 3600         # age at which a TTL=0 lease is considered stale
+# max_indefinite_leases_per_agent = 2
+# max_indefinite_leases_per_repo = 10
+# auto_renew_leases = false
+
+# Development document lifecycle (design docs, session notes, etc.).
+# [documentation]
+# development_root = "dev"
+# managed_paths = ["dev/active", "dev/sessions"]
+# permanent_paths = ["docs/"]         # never archived
+# archive_root = "dev/archive"
+# [documentation.categories]          # doc-type → archive subdirectory
+# design = "features"
+# session = "sessions"
+
+# Branches permitted to modify global config (default: ["main"]).
+# [global_operations]
+# require_main_history = true
+# allowed_branches = ["main"]
+
+# Low-level tuning (rarely needed):
+# [locks]
+# max_age_secs = 3600       # stale lock file threshold
+# [events]
+# enable_sequences = true   # sequence numbers in event log

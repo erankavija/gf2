@@ -1,0 +1,20 @@
+{
+  "id": "2037941f-852c-4d94-9d49-ad06a364dca8",
+  "title": "Profile and optimize mid-range buffer operations (8-64 words)",
+  "description": "Investigate whether mid-range buffer operations (8-64 words) can be further optimized. Current performance is already 10-12 GiB/s across all sizes. Profiling plan: 1) Profile real workloads, 2) Microbenchmark unroll factors, 3) Test BitSlice zero-copy operations. Decision: proceed only if >15% speedup on real workloads.",
+  "state": "ready",
+  "priority": "low",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:story",
+    "component:gf2-core",
+    "component:gf2-kernels-simd"
+  ],
+  "created_at": "2026-02-21T19:35:51.678433895+00:00",
+  "updated_at": "2026-02-21T19:49:04.209019075+00:00"
+}

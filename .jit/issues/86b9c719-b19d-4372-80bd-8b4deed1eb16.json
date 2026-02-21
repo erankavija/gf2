@@ -1,0 +1,32 @@
+{
+  "id": "86b9c719-b19d-4372-80bd-8b4deed1eb16",
+  "title": "Quality, documentation, and tech debt",
+  "description": "API ergonomics polish, documentation improvements, example restructuring, and technical debt cleanup across the workspace.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "5f3d0ff9-801a-4747-9a71-9f0a75024c4a",
+    "be331e20-11a0-40d0-a36f-a56467f6cbde",
+    "35007c4c-91e3-4d14-b2df-04e3fcad83d0",
+    "9b3452e9-2a34-43ea-8ba7-d80acdb8e2fd",
+    "88ca7d2f-5045-4356-8ee3-e4e26876847d",
+    "3931ac6f-b4d2-4e74-a697-1b6032447ac5",
+    "cef2e631-0109-4889-b560-2191ea1a1d20",
+    "1b929ce5-122d-40f3-b579-617869cfc70a",
+    "0056e853-0be7-48ec-8407-ea16bcc45392",
+    "e2c649cd-12e6-430a-be7a-7cd5165695b0",
+    "315f4de5-4681-4981-86de-3e2189dacdfb"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:epic",
+    "component:gf2-coding",
+    "component:gf2-core"
+  ],
+  "created_at": "2026-02-21T19:35:51.583905100+00:00",
+  "updated_at": "2026-02-21T19:49:04.455175867+00:00"
+}

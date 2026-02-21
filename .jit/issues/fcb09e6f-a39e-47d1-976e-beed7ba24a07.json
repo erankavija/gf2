@@ -1,0 +1,21 @@
+{
+  "id": "fcb09e6f-a39e-47d1-976e-beed7ba24a07",
+  "title": "Build live DVB-T2 reception demo with SDR hardware",
+  "description": "Create a demonstration of live DVB-T2 signal reception using SDR hardware (RTL-SDR or HackRF). This validates the complete FEC chain with real-world RF signals rather than simulated AWGN.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "003e4088-d24d-4b58-961f-d82df215ff7c"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:story",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-02-21T19:35:51.797961207+00:00",
+  "updated_at": "2026-02-21T19:35:51.939159375+00:00"
+}

@@ -1,0 +1,19 @@
+{
+  "id": "315f4de5-4681-4981-86de-3e2189dacdfb",
+  "title": "Add visual syndrome and decoding trace examples",
+  "description": "Create documentation examples that show visual syndrome computation and step-by-step decoding traces. These help users understand the internal operation of decoders.",
+  "state": "ready",
+  "priority": "low",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-02-21T19:35:51.728432838+00:00",
+  "updated_at": "2026-02-21T19:49:04.341866575+00:00"
+}

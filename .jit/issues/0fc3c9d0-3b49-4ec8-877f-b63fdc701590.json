@@ -1,0 +1,26 @@
+{
+  "id": "0fc3c9d0-3b49-4ec8-877f-b63fdc701590",
+  "title": "Decoder algorithmic improvements",
+  "description": "Algorithmic improvements to FEC decoders: normalized/offset min-sum LDPC, quantized LLR, irregular LDPC construction, SOVA, spatially-coupled LDPC, and bit-level compression transforms.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "0405c452-1d89-4b9d-b6da-0cd5f61dbb73",
+    "c3ea6855-9c42-4412-ae98-7a172ec9be28",
+    "5f4afdf5-3c08-4808-85b9-981f99682cc6",
+    "6ed3c78b-9d54-4764-babb-753351767aa0",
+    "e15041f8-3acb-4a4b-b459-897d030c2a9f",
+    "d69b964e-5226-44c6-a604-b22b2ee29373"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:epic",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-02-21T19:35:51.578771951+00:00",
+  "updated_at": "2026-02-21T19:49:04.308754540+00:00"
+}

@@ -1,0 +1,19 @@
+{
+  "id": "886cebf9-a434-4efd-bdb2-9883545878a0",
+  "title": "Add Vulkan device enumeration and memory allocation",
+  "description": "Set up Vulkan compute infrastructure behind a 'gpu' feature flag. Add vulkano dependency, implement device enumeration and selection, and set up pinned host buffer memory allocation. This is the foundation for GPU-accelerated belief propagation.",
+  "state": "ready",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-02-21T19:35:51.643501801+00:00",
+  "updated_at": "2026-02-21T19:49:04.101984162+00:00"
+}

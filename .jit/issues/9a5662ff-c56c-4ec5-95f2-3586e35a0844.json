@@ -1,0 +1,19 @@
+{
+  "id": "9a5662ff-c56c-4ec5-95f2-3586e35a0844",
+  "title": "Research neural-aided belief propagation for LDPC",
+  "description": "Investigate ML-enhanced LDPC decoding where neural networks learn optimal message-passing weights to reduce iteration count while maintaining target FER. Research question: Can ML reduce iterations while maintaining FER? This is an exploratory research item.",
+  "state": "ready",
+  "priority": "low",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:epic",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-02-21T19:35:51.623621124+00:00",
+  "updated_at": "2026-02-21T19:35:51.623626154+00:00"
+}

@@ -1,0 +1,19 @@
+{
+  "id": "5f4afdf5-3c08-4808-85b9-981f99682cc6",
+  "title": "Research spatially-coupled LDPC codes with sliding window decoding",
+  "description": "Investigate spatially-coupled LDPC codes which achieve threshold saturation - their BP threshold approaches the MAP threshold of the underlying ensemble. Implement sliding window decoding for practical implementation. Research question: What are the gains over standard QC-LDPC for DVB-T2 block lengths?",
+  "state": "ready",
+  "priority": "low",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:story",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-02-21T19:35:51.708750701+00:00",
+  "updated_at": "2026-02-21T19:49:04.288039963+00:00"
+}

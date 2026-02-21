@@ -1,0 +1,19 @@
+{
+  "id": "87a2402f-f076-4775-a265-294271b29944",
+  "title": "Implement DVB-T2 bit interleaving (column-row)",
+  "description": "Implement DVB-T2 bit interleaving as specified in ETSI EN 302 755. This uses a column-row interleaving scheme that is part of the BICM (Bit-Interleaved Coded Modulation) chain between LDPC encoding and QAM mapping.",
+  "state": "ready",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-02-21T19:35:51.603861387+00:00",
+  "updated_at": "2026-02-21T19:35:51.603866297+00:00"
+}

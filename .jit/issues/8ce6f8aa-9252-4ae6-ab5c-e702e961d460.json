@@ -1,0 +1,21 @@
+{
+  "id": "8ce6f8aa-9252-4ae6-ab5c-e702e961d460",
+  "title": "Implement Montgomery multiplication for GF(p) prime fields",
+  "description": "Implement Montgomery multiplication backend for prime field GF(p) arithmetic. Precompute R^2 mod P and mu = -P^{-1} mod 2^64 at compile time using const fn. Includes specializations for Mersenne primes and Proth primes.",
+  "state": "backlog",
+  "priority": "low",
+  "assignee": null,
+  "dependencies": [
+    "bfe0ba7b-e36b-45e3-a219-dc2acfe88957"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:story",
+    "component:gf2-core"
+  ],
+  "created_at": "2026-02-21T19:35:51.842498530+00:00",
+  "updated_at": "2026-02-21T19:35:52.019157833+00:00"
+}

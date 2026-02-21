@@ -1,0 +1,20 @@
+{
+  "id": "d77176e5-eff3-4212-b24d-d475328b1090",
+  "title": "Competitive benchmarking against Magma/Sage/AFF3CT",
+  "description": "Conduct rigorous performance benchmarking of gf2 against established systems: Magma and Sage for binary field operations and polynomial arithmetic, AFF3CT and IT++ for FEC decoder performance. Document methodology, publish results, and identify optimization targets. Goal: within 2x of Magma/Sage, exceed on SIMD operations.",
+  "state": "ready",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:epic",
+    "component:gf2-core",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-02-21T19:35:51.608825706+00:00",
+  "updated_at": "2026-02-21T19:35:51.608830716+00:00"
+}

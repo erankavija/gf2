@@ -1,0 +1,19 @@
+{
+  "id": "bdf95060-2d01-49fa-bb10-ae13da01bf14",
+  "title": "Implement batch polynomial operations for extension fields",
+  "description": "Implement batch/vectorized polynomial operations over GF(2^m) for improved throughput. This includes batch evaluation, batch GCD, and batch multiplication.",
+  "state": "ready",
+  "priority": "low",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:story",
+    "component:gf2-core"
+  ],
+  "created_at": "2026-02-21T19:35:51.773062501+00:00",
+  "updated_at": "2026-02-21T19:49:04.155951203+00:00"
+}

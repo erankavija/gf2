@@ -1,0 +1,21 @@
+{
+  "id": "24c11004-18e1-4ceb-a0ec-946a16716d57",
+  "title": "Benchmark GPU LDPC decoding and determine feasibility",
+  "description": "Measure GPU LDPC decoding throughput vs batch size (1, 10, 50, 100, 500). Identify crossover point where GPU beats 24-core CPU. Profile GPU utilization to determine if memory-bound or compute-bound. Document findings. Decision: Go (>3x), Investigate (1.5-3x), or Abandon (<1.5x).",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "46fe1108-3b33-4596-92d9-33e1364fa00d"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-02-21T19:35:51.817771984+00:00",
+  "updated_at": "2026-02-21T19:35:51.901197111+00:00"
+}

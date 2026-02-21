@@ -1,0 +1,25 @@
+{
+  "id": "7f809931-11e3-40ab-b9ab-6b1e38c12712",
+  "title": "SIMD and platform expansion",
+  "description": "Expand SIMD backend support and optimize platform-specific kernels. Covers AVX-512, ARM NEON, buffer optimizations, and SIMD-accelerated polar transforms.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "b3766524-f893-48b5-b380-ce38a8bf5467",
+    "194b902a-5fcb-4b37-bb19-8d5c80d5c279",
+    "4b5d8948-79ab-47f3-a90a-104317840f17",
+    "2037941f-852c-4d94-9d49-ad06a364dca8"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:epic",
+    "component:gf2-core",
+    "component:gf2-kernels-simd"
+  ],
+  "created_at": "2026-02-21T19:35:51.570386512+00:00",
+  "updated_at": "2026-02-21T19:49:04.228367062+00:00"
+}

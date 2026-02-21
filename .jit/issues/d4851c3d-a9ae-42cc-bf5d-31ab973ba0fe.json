@@ -1,0 +1,19 @@
+{
+  "id": "d4851c3d-a9ae-42cc-bf5d-31ab973ba0fe",
+  "title": "Implement QAM modulation with soft-decision demapping",
+  "description": "Implement QAM modulation (QPSK, 16/64/256-QAM) with soft-decision demapping for the FEC chain. This includes LLR computation from constellation points and integration with the existing channel simulation framework. Required for end-to-end DVB-T2 BICM simulation.",
+  "state": "ready",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:epic",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-02-21T19:35:51.598964928+00:00",
+  "updated_at": "2026-02-21T19:35:51.598969878+00:00"
+}

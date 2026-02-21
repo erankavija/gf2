@@ -1,0 +1,22 @@
+{
+  "id": "21922c59-9f44-427e-b2b8-e96bcb2ad456",
+  "title": "Integrate with GNU Radio for real-signal validation",
+  "description": "Create GNU Radio out-of-tree (OOT) module exposing gf2-coding decoders as processing blocks. Includes C FFI layer, GNU Radio blocks for LDPC/BCH/Viterbi, GRC visual programming definitions, example flowgraphs, and validation with captured RF signals. Target: 10-50x speedup over existing GNU Radio FEC blocks.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "dd153981-c2c4-4672-9bee-8a68e5695c4f",
+    "dfca71b8-f185-412a-88b9-5be38c61d7d9"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:epic",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-02-21T19:35:51.628734263+00:00",
+  "updated_at": "2026-02-21T19:49:04.499186030+00:00"
+}

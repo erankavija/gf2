@@ -1,0 +1,21 @@
+{
+  "id": "4cdaf1c5-0d93-4320-bc41-7485e18f94a3",
+  "title": "Validate full TP04 -> TP05 -> TP06 -> TP07a DVB-T2 chain",
+  "description": "Validate the complete DVB-T2 FEC chain against official ETSI test vectors covering the full processing path from TP04 through TP07a. This ensures bit-exact compliance with the DVB-T2 standard across all processing stages.",
+  "state": "backlog",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [
+    "003e4088-d24d-4b58-961f-d82df215ff7c"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-02-21T19:35:51.792877398+00:00",
+  "updated_at": "2026-02-21T19:35:51.932611156+00:00"
+}

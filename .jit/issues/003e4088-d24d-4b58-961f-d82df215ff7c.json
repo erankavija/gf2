@@ -1,0 +1,22 @@
+{
+  "id": "003e4088-d24d-4b58-961f-d82df215ff7c",
+  "title": "Integrate BCH + LDPC + interleaver + QAM into unified FEC chain",
+  "description": "Build the complete DVB-T2 FEC processing chain combining BCH outer coding, LDPC inner coding, bit interleaving, and QAM modulation. Implement the full pipeline with proper interfaces between stages.",
+  "state": "backlog",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [
+    "d4851c3d-a9ae-42cc-bf5d-31ab973ba0fe",
+    "87a2402f-f076-4775-a265-294271b29944"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:story",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-02-21T19:35:51.648467440+00:00",
+  "updated_at": "2026-02-21T19:35:51.919419598+00:00"
+}

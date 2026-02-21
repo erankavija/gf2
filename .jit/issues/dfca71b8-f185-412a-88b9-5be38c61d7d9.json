@@ -1,0 +1,21 @@
+{
+  "id": "dfca71b8-f185-412a-88b9-5be38c61d7d9",
+  "title": "Validate SDR integration with real-world signals",
+  "description": "Test GNU Radio integration with DVB-T2 conformance test vectors. Benchmark vs GNU Radio's existing FEC blocks (target: 10-50x speedup). Validate with RTL-SDR/HackRF captured signals. Generate BER/FER comparison curves.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "b8baca8a-cda2-44b0-b0c6-c8a11219c119"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:story",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-02-21T19:35:51.827851962+00:00",
+  "updated_at": "2026-02-21T19:35:51.979450599+00:00"
+}

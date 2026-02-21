@@ -1,0 +1,19 @@
+{
+  "id": "88ca7d2f-5045-4356-8ee3-e4e26876847d",
+  "title": "Add BCH encoding/decoding throughput benchmarks",
+  "description": "Create Criterion benchmark suite for BCH encoding and decoding throughput. Important for performance tracking and competitive benchmarking.",
+  "state": "ready",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-02-21T19:35:51.733318957+00:00",
+  "updated_at": "2026-02-21T19:49:04.354539843+00:00"
+}

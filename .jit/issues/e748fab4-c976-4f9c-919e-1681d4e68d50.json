@@ -1,0 +1,20 @@
+{
+  "id": "e748fab4-c976-4f9c-919e-1681d4e68d50",
+  "title": "Implement polar code construction with bit-channel reliability",
+  "description": "Implement polar code construction: bit-channel reliability sorting using Bhattacharyya parameters, information and frozen bit selection based on channel reliability, rate-compatible polar code families, and fast Hadamard-like transforms leveraging BitMatrix from gf2-core.",
+  "state": "ready",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:story",
+    "component:gf2-coding",
+    "component:gf2-core"
+  ],
+  "created_at": "2026-02-21T19:35:51.653536989+00:00",
+  "updated_at": "2026-02-21T19:49:04.115312960+00:00"
+}
