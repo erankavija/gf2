@@ -43,7 +43,7 @@ fn main() {
     let mut message = BitVec::zeros(4);
     message.set(0, true); // Set bit 0
     message.set(2, true); // Set bit 2
-    // Result: 1010 in binary
+                          // Result: 1010 in binary
     print!("\n📤 Original message: [");
     for i in 0..message.len() {
         print!("{}", if message.get(i) { "1" } else { "0" });
