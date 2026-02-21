@@ -1,0 +1,21 @@
+{
+  "id": "1f2f8371-c585-45a6-ab33-22834bf22b6d",
+  "title": "Implement specialized prime field types (Mersenne, Proth primes)",
+  "description": "Implement optimized structs for primes with fast reduction via bit-hacks. Mersenne primes (2^n - 1): reduction via bitwise AND + ADD (e.g., 2^31-1). Proth primes (k*2^n + 1): reduction via shifts and subtracts, useful for NTT/FFT. Goldilocks primes (e.g., 2^64 - 2^32 + 1): reduction via shifts and subtracts.",
+  "state": "backlog",
+  "priority": "low",
+  "assignee": null,
+  "dependencies": [
+    "8ce6f8aa-9252-4ae6-ab5c-e702e961d460"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "component:gf2-core",
+    "type:task"
+  ],
+  "created_at": "2026-02-21T23:11:08.953312368+00:00",
+  "updated_at": "2026-02-21T23:11:26.324676156+00:00"
+}

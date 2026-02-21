@@ -1,0 +1,21 @@
+{
+  "id": "0458fa04-0055-416f-b36a-71d764af1d8e",
+  "title": "Implement Barrett reduction for GF(2^m) polynomial arithmetic",
+  "description": "Implement Barrett reduction for reducing polynomial products modulo an irreducible polynomial in GF(2^m). Precompute the reciprocal of the field polynomial to replace expensive polynomial division with multiplication and bit-shifts. This is the reduction complement to carry-less multiplication (PCLMULQDQ/PMULL).",
+  "state": "backlog",
+  "priority": "low",
+  "assignee": null,
+  "dependencies": [
+    "bfe0ba7b-e36b-45e3-a219-dc2acfe88957"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "component:gf2-core",
+    "type:task"
+  ],
+  "created_at": "2026-02-21T23:11:07.235907264+00:00",
+  "updated_at": "2026-02-21T23:11:24.461724185+00:00"
+}

@@ -6,7 +6,8 @@
   "priority": "normal",
   "assignee": null,
   "dependencies": [
-    "055bda14-7351-4245-b81a-350e749e547b"
+    "055bda14-7351-4245-b81a-350e749e547b",
+    "a8cdcfe3-b0f2-4bad-b428-f11d81f12e62"
   ],
   "gates_required": [],
   "gates_status": {},
@@ -18,5 +19,5 @@
     "component:gf2-kernels-simd"
   ],
   "created_at": "2026-02-21T19:35:51.857178518+00:00",
-  "updated_at": "2026-02-21T19:35:52.012393784+00:00"
+  "updated_at": "2026-02-21T23:11:27.851623799+00:00"
 }

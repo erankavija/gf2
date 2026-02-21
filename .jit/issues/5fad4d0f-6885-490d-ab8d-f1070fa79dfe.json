@@ -1,0 +1,21 @@
+{
+  "id": "5fad4d0f-6885-490d-ab8d-f1070fa79dfe",
+  "title": "Implement SoA (Structure of Arrays) batch layout for GF(p^n) SIMD",
+  "description": "Implement vertical SIMD batch processing for GF(p^n) using Structure of Arrays layout. Instead of Vec<GfPn>, store coefficients separately (c0: Vec<u64>, c1: Vec<u64>, ...) so SIMD lanes process multiple independent field elements in parallel. The polynomial logic operates at the high level while coefficient arithmetic is vectorized across lanes.",
+  "state": "backlog",
+  "priority": "low",
+  "assignee": null,
+  "dependencies": [
+    "3f4b946c-ea9a-440d-a59f-b64e837b5cce"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "component:gf2-core",
+    "type:task"
+  ],
+  "created_at": "2026-02-21T23:11:13.023723357+00:00",
+  "updated_at": "2026-02-21T23:11:26.469100484+00:00"
+}
