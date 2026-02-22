@@ -1,0 +1,20 @@
+{
+  "id": "dd22a099-6bdf-42eb-a012-8109da9c0b00",
+  "title": "Implement 5G NR LDPC code construction from 3GPP TS 38.212",
+  "description": "Replace the stub in `ldpc/nr_5g.rs` with a full 5G NR LDPC code construction from 3GPP TS 38.212.\n\n## What to Implement\n\n1. **Base matrices** — BG1 (46×68) and BG2 (42×52) from 3GPP TS 38.212 Tables 5.3.2-2 and 5.3.2-3. These are large tables of shift values defining the quasi-cyclic structure.\n2. **Lifting size table** — `i_LS` to Z mapping from Table 5.3.2-1. Valid lifting sizes: Z ∈ {2,3,…,16} × {1,2,4,8,16,32,64,128,192,256,384} (with constraints).\n3. **Factory method** — `QuasiCyclicLdpc::nr_5g(base_graph, lifting_factor)` that constructs the parity-check matrix.\n4. **Rate matching** — systematic bit selection for a target (n,k) from the mother code, including shortening and puncturing.\n5. **Filler bit handling** — when K doesn't fill an integer number of lifting groups.\n\n## Target Codes\n\nNeeded by downstream simulations:\n\n| (n, k) | Rate | BG |\n|---|---|---|\n| (256, 121) | 0.473 | BG2 |\n| (256, 49) | 0.191 | BG2 |\n| (625, 225) | 0.360 | BG2 |\n| (1024, 441) | 0.431 | BG2 |\n| (1024, 640) | 0.625 | BG1 or BG2 |\n| (4096, 3249) | 0.793 | BG1 |\n\n## Acceptance Criteria\n\n- `nr_5g(1, z)` and `nr_5g(2, z)` produce valid LDPC codes for all standard Z values.\n- Rate matching produces codes matching the target (n,k) dimensions above.\n- BP decoding on constructed codes achieves expected BER/BLER performance.\n- All existing LDPC tests continue to pass.\n- The paper's exact construction parameters (Z, shortening/puncturing) are documented per target code, noting any ambiguities.\n\n## Location\n\n`crates/gf2-coding/src/ldpc/nr_5g.rs` (replace existing stub).",
+  "state": "ready",
+  "priority": "critical",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:story",
+    "epic:grand",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-02-22T21:14:10.050005471+00:00",
+  "updated_at": "2026-02-22T22:29:39.288645625+00:00"
+}

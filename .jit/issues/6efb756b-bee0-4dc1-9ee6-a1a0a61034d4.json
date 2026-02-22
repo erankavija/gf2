@@ -1,19 +1,33 @@
 {
   "id": "6efb756b-bee0-4dc1-9ee6-a1a0a61034d4",
   "title": "Implement GRAND (Guessing Random Additive Noise Decoding)",
-  "description": "Implement the GRAND universal decoder for short block codes. GRAND works by guessing the noise pattern rather than the codeword, making it applicable to any linear code. Research focus: compare GRAND vs algebraic decoding (Berlekamp-Massey) for short codes to determine crossover points.",
-  "state": "ready",
+  "description": "Implement the GRAND (Guessing Random Additive Noise Decoding) family of decoders and reproduce the key simulation results from Yuan, Médard, Galligan & Duffy, *\"Soft-output (SO) GRAND and Iterative Decoding to Outperform LDPCs\"*.\n\n## Goal\n\nIndependently verify that simple product codes decoded with SOGRAND can outperform 5G NR LDPC codes (BP/min-sum) in AWGN and fading channels.\n\n## Key Components\n\n1. **5G NR LDPC codes** — BG1/BG2 base matrices from 3GPP TS 38.212, lifting factor selection, rate matching. Currently a stub in `ldpc/nr_5g.rs`.\n2. **ORBGRAND decoder** — Ordered Reliability Bits GRAND with logistic-weight noise pattern ordering, syndrome-based codebook membership test, list decoding mode, even-code parity optimization.\n3. **SOGRAND soft-output** — Per-block APP computation (Corollary 1): accurate estimate of decoding correctness including \"not found\" probability term `(2^k-1)/(2^n-1)`. Per-bit LLR output (eq. 17) as weighted mixture of list + channel fallback.\n4. **Product code turbo decoder** — Block turbo decoding with SISO-SOGRAND component decoder, extrinsic LLR scaling (α=0.5), max 20 iterations, early termination on valid product codeword.\n5. **Component codes** — eBCH(16,11), eBCH(16,7), eBCH(32,26), eBCH(64,57), dRM(32,21), CRC(25,15) as short block codes for GRAND decoding.\n6. **Simulation infrastructure** — Coded BER/FER simulation harness, fading channels (Rician), QPSK modulation.\n\n## Target Simulations\n\n- AWGN: (256,121), (256,49), (625,225), (1024,441), (4096,3249) product codes vs 5G NR LDPC\n- AWGN: (1024,640) QC-GLDPC vs 5G NR LDPC\n- Fading: (1024,441), (1024,676), (4096,3249) product codes vs 5G NR LDPC with Rician fading + QPSK\n\n## Validation\n\nReference data extracted from paper's pgfplots `.tex` files in `~/Projects/so-grand/img_PY/`. Our LDPC BP baseline should match paper's curves within ~0.1 dB.\n\nSee spec: `dev/plans/grand_5gnr_ldpc_comparison.md`",
+  "state": "backlog",
   "priority": "low",
   "assignee": null,
-  "dependencies": [],
+  "dependencies": [
+    "d9db86e6-8328-4270-bf91-441874762b58",
+    "45649554-b0dd-4a83-a54c-3693a3100345",
+    "3ce1cd12-d0d6-421b-b005-3cfb6d448f07",
+    "831bfc4a-3677-496f-92ca-fa0ecf539e4b"
+  ],
   "gates_required": [],
   "gates_status": {},
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/plans/grand_5gnr_ldpc_comparison.md",
+      "commit": null,
+      "label": "GRAND vs 5G NR LDPC Simulation Plan",
+      "doc_type": "design",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:epic",
-    "component:gf2-coding"
+    "component:gf2-coding",
+    "epic:grand"
   ],
   "created_at": "2026-02-21T19:35:51.613833285+00:00",
-  "updated_at": "2026-02-21T19:35:51.613838285+00:00"
+  "updated_at": "2026-02-22T22:28:40.934406239+00:00"
 }

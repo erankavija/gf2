@@ -1,0 +1,24 @@
+{
+  "id": "3ce1cd12-d0d6-421b-b005-3cfb6d448f07",
+  "title": "Run Phase 3 AWGN simulation: Fig 7 GLDPC vs 5G NR LDPC",
+  "description": "Run the GLDPC vs 5G NR LDPC simulation from Figure 7.\n\n## Figure 7: (1024, 640) QC-GLDPC vs 5G NR LDPC\n\n- GLDPC: QC structure with eBCH check nodes, BP + SOGRAND\n- LDPC: 5G NR, BP (I_max=50)\n- Metrics: BLER, BER, queries/bit, iterations\n- Eb/N0 range: 0–4 dB\n\n## Acceptance Criteria\n\n- Simulation runs to completion with sufficient statistics.\n- Results compared against paper's reference data.\n- GLDPC performance is documented relative to 5G NR LDPC.\n- Results saved in CSV/JSON format.\n\n## Location\n\nExtend simulation runners.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "d0e2af0c-8d51-4dbd-bbde-04da9947313c",
+    "dd22a099-6bdf-42eb-a012-8109da9c0b00",
+    "290b4fa0-aad1-4480-b9d1-9a1ddf460f1c"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:story",
+    "epic:grand",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-02-22T21:16:05.912701895+00:00",
+  "updated_at": "2026-02-22T22:29:39.295257154+00:00"
+}

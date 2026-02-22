@@ -1,0 +1,26 @@
+{
+  "id": "92086311-4dcc-4d04-9c26-a88034ffd894",
+  "title": "Run Phase 1 AWGN simulations: Fig 1 and Fig 3 product codes vs 5G NR LDPC",
+  "description": "Run the headline AWGN simulations from the paper (Figures 1 and 3) and validate results against reference data.\n\n## Figure 1: (1024, 441) product code vs 5G NR LDPC\n\n- Component: dRM(32,21) — `[(32,21)² dRM]` product code\n- Decoder: turbo-SOGRAND (I_max=20, alpha=0.5, L≤4)\n- LDPC: 5G NR with BP and normalized min-sum (I_max=50)\n- Metric: BLER, Eb/N0 range 0–2.5 dB\n\n## Figure 3: (256, 121) product code vs 5G NR LDPC + CA-Polar\n\n- Component: eBCH(16,11) — `[(16,11)² eBCH]` product code\n- Metrics: BLER, BER, queries/bit, iterations, Eb/N0 range 0–4 dB\n- Note: CA-Polar is reference only, not our target to implement\n\n## Validation\n\n- Reference data from pgfplots `.tex` files in `~/Projects/so-grand/img_PY/`\n- LDPC BP baseline must match paper's LDPC curves within ~0.1 dB\n- Product code turbo-SOGRAND curves should match paper's product code curves\n- Document any discrepancies with analysis\n\n## Acceptance Criteria\n\n- Both simulations run to completion with sufficient statistics (≥100 frame errors per SNR point).\n- LDPC baseline matches paper within ~0.1 dB.\n- Product code results are qualitatively consistent with paper (product code outperforms LDPC at target BLERs).\n- Results saved in CSV/JSON format with all metrics.\n- Comparison plots or data tables are produced.\n\n## Location\n\nExample or binary in `crates/gf2-coding/examples/` or a dedicated simulation runner.",
+  "state": "backlog",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [
+    "f326ff2f-f10e-4b8b-9fa3-00971cb5e146",
+    "290b4fa0-aad1-4480-b9d1-9a1ddf460f1c",
+    "dd22a099-6bdf-42eb-a012-8109da9c0b00",
+    "1474a3ca-aba1-475a-a5a0-f26f8435cc36",
+    "c3ea6855-9c42-4412-ae98-7a172ec9be28"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:story",
+    "epic:grand",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-02-22T21:15:55.572874888+00:00",
+  "updated_at": "2026-02-22T22:29:39.292395575+00:00"
+}

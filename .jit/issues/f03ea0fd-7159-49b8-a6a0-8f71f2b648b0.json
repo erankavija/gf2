@@ -1,0 +1,22 @@
+{
+  "id": "f03ea0fd-7159-49b8-a6a0-8f71f2b648b0",
+  "title": "Implement SOGRAND soft-output computation",
+  "description": "Implement the SOGRAND (Soft-Output GRAND) layer on top of ORBGRAND, providing per-block APP and per-bit LLR outputs.\n\n## Per-Block APP Computation\n\nPer Theorem 1 / Corollary 1, for each codeword found at query position `q_i` with noise pattern `z^{n,q_i}`:\n\n- Compute noise probability `p(z^{n,q_i} | r^n)`\n- Track cumulative noise probability: `sum_{j=1}^{q_L} p(z^{n,j} | r^n)`\n- APP for i-th list element: `P(correct=i) = p_i / (sum_list + (1 - sum_cumulative) * (2^k - 1)/(2^n - 1))`\n- Probability correct codeword is NOT in list: `P(C\\L | r^n) = ((1 - sum_cumulative) * (2^k-1)/(2^n-1)) / denominator`\n\n## Per-Bit APP LLR Output\n\nPer eq. 17:\n\n```\nL'_{APP,i} = log(\n  (sum of P(c) where c_i=0 in list + P(C\\L)*p(X_i=0|r_i)) /\n  (sum of P(c) where c_i=1 in list + P(C\\L)*p(X_i=1|r_i))\n)\n```\n\nThe \"not found\" term `P(C\\L)` is the key innovation — it allows accurate soft-output even with list size L=1.\n\n## SISO Interface\n\nTakes `(L_Ch + L_A)` as input LLRs, returns `L_APP` and extrinsic `L_E = L_APP - L_A - L_Ch`. Required by the product code turbo decoder.\n\n## Acceptance Criteria\n\n- Soft-output LLRs are computed correctly according to eq. 17.\n- The \"not found\" probability term is correctly included.\n- Can reproduce Fig 2 from the paper (predicted vs empirical list-BLER) to validate the APP formula.\n- SISO interface correctly computes extrinsic information.\n- Works with list sizes L=1, 2, 4.\n- Numerical stability: handle log-domain computation to avoid underflow with large n.\n\n## Location\n\nExtend the `grand` module.",
+  "state": "backlog",
+  "priority": "critical",
+  "assignee": null,
+  "dependencies": [
+    "d5dc78e8-bd07-486f-8cbd-90c04909416f"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:story",
+    "epic:grand",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-02-22T21:15:18.601426767+00:00",
+  "updated_at": "2026-02-22T22:28:40.937212748+00:00"
+}

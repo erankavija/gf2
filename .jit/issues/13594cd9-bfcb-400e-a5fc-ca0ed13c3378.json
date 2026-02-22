@@ -1,0 +1,22 @@
+{
+  "id": "13594cd9-bfcb-400e-a5fc-ca0ed13c3378",
+  "title": "Implement Rician fading channel and QPSK modulation",
+  "description": "Implement the fading channel model and QPSK modulation needed for Phase 4 simulations.\n\n## Block Rician Fading Model\n\n```\nH_Ri = sqrt(K/(K+1)) + sqrt(1/(K+1)) * H_Ra\n```\n\nwhere `H_Ra ~ CN(0, 2·σ²)` with `σ² = 0.5`, so `E[|H_Ri|²] = 1`.\n\n- Parameters: Rician K-factor, coherence block size N_c, number of taps t.\n- Coherence block structure: `N = 2 · t · N_c` bits per frame.\n- Required configurations (from the paper):\n  - K=5, N_c=128, t=4 (Fig 8)\n  - K=8, N_c=256, t=2 (Fig 9)\n  - K=6, N_c=256, t=8 (Fig 10)\n\n## QPSK Modulation with Gray Labeling\n\nConstellation: `X = {±Δ ± Δj}` with Gray mapping.\n\nLLR computation with channel estimate `h_hat`:\n```\nL_1 = 2·Δ·Re(y · conj(h_hat)) / σ²\nL_2 = 2·Δ·Im(y · conj(h_hat)) / σ²\n```\n\nSNR definition: `Es/N0 = Δ² · E[|H|²] / σ²`.\n\n## Random Interleaver\n\nPermute coded bits before symbol mapping, de-interleave LLRs before decoding.\n\n## Acceptance Criteria\n\n- Rician fading channel produces correct statistical properties (verify `E[|H|²] = 1`).\n- QPSK modulation/demodulation works correctly (verify BER in uncoded AWGN matches theory).\n- LLR computation is correct for fading channels.\n- Interleaver/de-interleaver are inverse operations.\n- All three fading configurations from the paper are supported.\n\n## Location\n\nExtend `crates/gf2-coding/src/channel.rs` or create a new module.",
+  "state": "backlog",
+  "priority": "low",
+  "assignee": null,
+  "dependencies": [
+    "d4851c3d-a9ae-42cc-bf5d-31ab973ba0fe"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:story",
+    "epic:grand",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-02-22T21:14:54.611545645+00:00",
+  "updated_at": "2026-02-22T22:29:39.298319214+00:00"
+}

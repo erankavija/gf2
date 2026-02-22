@@ -6,7 +6,8 @@
   "priority": "normal",
   "assignee": null,
   "dependencies": [
-    "b94e2821-211d-4bbb-9a20-59a94495ee25"
+    "b94e2821-211d-4bbb-9a20-59a94495ee25",
+    "290b4fa0-aad1-4480-b9d1-9a1ddf460f1c"
   ],
   "gates_required": [],
   "gates_status": {},
@@ -17,5 +18,5 @@
     "component:gf2-coding"
   ],
   "created_at": "2026-02-21T19:35:51.822973303+00:00",
-  "updated_at": "2026-02-21T19:35:51.959266552+00:00"
+  "updated_at": "2026-02-22T21:29:11.301612172+00:00"
 }

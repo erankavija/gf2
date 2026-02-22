@@ -1,0 +1,20 @@
+{
+  "id": "1474a3ca-aba1-475a-a5a0-f26f8435cc36",
+  "title": "Implement component codes: eBCH, dRM, and CRC for GRAND decoding",
+  "description": "Implement the short component codes needed as building blocks for product codes decoded by SOGRAND.\n\n## Extended BCH Codes (eBCH)\n\nStandard BCH codes extended by one overall parity-check bit, making all codewords even-weight. The existing BCH infrastructure in `gf2-coding/src/bch/` can be leveraged.\n\n| Code | Construction | t |\n|---|---|---|\n| eBCH(16,11) | BCH(15,11) + 1 parity bit | 1 |\n| eBCH(16,7) | BCH(15,7) + 1 parity bit | 2 |\n| eBCH(32,26) | BCH(31,26) + 1 parity bit | 1 |\n| eBCH(64,57) | BCH(63,57) + 1 parity bit | 1 |\n\nEach needs: generator matrix G, parity-check matrix H, encoder, and the `is_even = true` flag for GRAND optimization.\n\n## Decreasing Reed-Muller Code dRM(32,21)\n\nCode family from Camion-Poli (2021). Research the construction and produce the generator matrix. GRAND handles decoding; only G and H are needed.\n\n## CRC as Linear Block Code CRC(25,15)\n\nCRC with polynomial `0x2b9` used as a (25,15) linear block code for error correction. Construct the systematic generator matrix from the CRC polynomial. Verify polynomial against the paper.\n\n## Acceptance Criteria\n\n- All codes produce correct (n,k) generator and parity-check matrices.\n- `H * G^T = 0` for all codes.\n- eBCH codes are confirmed even (all codewords have even weight).\n- Encoding works correctly (syndrome of any codeword = 0).\n- Each code's minimum distance matches the theoretical value.\n- All codes expose the interface required by ORBGRAND/SOGRAND: H matrix, n, k, `is_even` flag.\n\n## Location\n\nExtended BCH in `crates/gf2-coding/src/bch/` (extend existing). dRM and CRC as new modules.",
+  "state": "ready",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:story",
+    "epic:grand",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-02-22T21:14:35.603870341+00:00",
+  "updated_at": "2026-02-22T22:28:40.940405868+00:00"
+}

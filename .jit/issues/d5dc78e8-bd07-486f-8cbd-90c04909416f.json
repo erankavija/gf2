@@ -1,0 +1,20 @@
+{
+  "id": "d5dc78e8-bd07-486f-8cbd-90c04909416f",
+  "title": "Implement ORBGRAND decoder with logistic-weight noise pattern ordering",
+  "description": "Implement the Ordered Reliability Bits GRAND (ORBGRAND) decoder as a new module in `gf2-coding`.\n\n## Algorithm\n\n1. Accept soft-input LLR vector and a parity-check matrix H.\n2. Sort received bits by reliability (|LLR|), producing a permutation.\n3. Generate noise patterns in decreasing likelihood order using the *logistic weight* ordering: weight-1 patterns on least reliable bits first, then weight-2, etc., with tie-breaking by logistic weight sum.\n4. For each noise pattern z, test codebook membership via syndrome check: `H(y XOR z) = 0`.\n5. Return the first valid codeword found (this is ML decoding for the code).\n6. **List mode**: continue generating patterns after the first hit to collect up to L codewords, tracking each pattern's noise probability `p(z|r)` and the cumulative probability sum of all tested patterns.\n7. **Even code optimization**: if the code is even (all codewords have even weight), skip noise patterns whose weight parity doesn't match the parity of the hard-decision vector. This halves the query space.\n8. Track and expose: noise pattern probability `p(z^n | r^n)` and cumulative probability sum for SOGRAND's use.\n\n## Interface\n\n- `OrbGrand::new(parity_check_matrix, config)` where `config` includes `max_queries`, `list_size`, `even_code` flag.\n- `decode(&self, llrs: &[Llr]) -> OrbGrandResult` returning hard decision, list of codewords with probabilities, query count, cumulative probability.\n- Must implement a trait compatible with the existing decoder trait hierarchy.\n\n## Acceptance Criteria\n\n- Correct ML decoding on known short codes (e.g., Hamming(7,4), eBCH(16,11)).\n- List mode returns multiple codewords ordered by likelihood.\n- Even code optimization reduces query count by ~2x on even codes.\n- Noise pattern ordering matches the logistic weight definition.\n- Query count and probability tracking are accurate.\n\n## Location\n\nNew module `crates/gf2-coding/src/grand/` or `crates/gf2-coding/src/grand.rs`.",
+  "state": "ready",
+  "priority": "critical",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:story",
+    "epic:grand",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-02-22T21:14:21.530302862+00:00",
+  "updated_at": "2026-02-22T22:28:40.936150988+00:00"
+}

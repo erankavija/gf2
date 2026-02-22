@@ -1,0 +1,20 @@
+{
+  "id": "290b4fa0-aad1-4480-b9d1-9a1ddf460f1c",
+  "title": "Upgrade simulation harness for coded BER/FER sweeps",
+  "description": "Upgrade the existing simulation infrastructure (currently uncoded-only in `gf2-coding/src/simulation.rs`) to support full coded simulation campaigns.\n\n## Required Capabilities\n\n1. **Generic coded simulation loop**: encode → modulate → channel → demodulate → decode → count errors. Must be generic over encoder/decoder types.\n2. **Per-SNR-point statistics**: BLER (block error rate), BER (bit error rate), average iterations, average queries/bit.\n3. **Parallel SNR sweeps**: each SNR point is independent and can run on a separate thread (rayon).\n4. **Output formats**: CSV and/or JSON for plotting, including all statistics per SNR point.\n5. **Progress reporting**: important for long runs at low BLER (10⁻⁷ may require 10⁹ frames).\n6. **Early termination per SNR point**: stop when `min_errors` (e.g., 100 frame errors) reached or `max_frames` exceeded.\n7. **Monte Carlo parameters**: configurable min frame errors (~100), step size (0.25 or 0.5 dB), SNR range.\n\n## Interface\n\n- `SimulationConfig` struct with SNR range, `min_errors`, `max_frames`, output path.\n- `SimulationRunner::run_coded(encoder, decoder, channel, config) -> SimulationResults`\n- Results must be serializable and plottable.\n\n## Acceptance Criteria\n\n- Can run a complete BER/BLER sweep for any encoder+decoder pair.\n- Parallel execution across SNR points works correctly.\n- Statistics match hand-calculated values on simple test cases.\n- CSV/JSON output is produced and parseable.\n- Progress reporting works (at minimum logging, ideally with ETA).\n- Early termination correctly triggers at `min_errors` threshold.\n\n## Location\n\nExtend `crates/gf2-coding/src/simulation.rs`.",
+  "state": "ready",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:story",
+    "epic:grand",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-02-22T21:14:47.737812660+00:00",
+  "updated_at": "2026-02-22T22:28:40.941283357+00:00"
+}

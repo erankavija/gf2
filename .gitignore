@@ -22,3 +22,6 @@ proptest-regressions/
 /doc/
 *.proptest-regressions
 *.gf2
+
+# JIT artifacts
+.jit/**/*.lock
