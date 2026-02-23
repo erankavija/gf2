@@ -1,13 +1,14 @@
 {
   "id": "0fb99491-2b53-4bee-811a-ff40e32e6890",
-  "title": "Implement FieldVec with vectorized dot product and delayed reduction",
-  "description": "Introduce FieldVec<T: FiniteField> as the vector container for extension field elements (analogous to BitVec for GF(2)). Implement SIMD dot product with delayed reduction - perform polynomial multiplication and XOR accumulation, reducing modulo P(x) only at the end.",
+  "title": "Implement SIMD-accelerated FieldVec operations with delayed reduction",
+  "description": "Add SIMD-accelerated operations to the generic FieldVec<F: FiniteField> container (54a60c90). Implement vectorized dot product with delayed reduction — perform polynomial multiplication and XOR/addition accumulation, reducing modulo P(x) only at the end. This is the SIMD optimization layer on top of the scalar generic container.\n\nDepends on generic FieldVec (54a60c90) and carry-less multiplication SIMD kernels (055bda14).",
   "state": "backlog",
   "priority": "normal",
   "assignee": null,
   "dependencies": [
     "055bda14-7351-4245-b81a-350e749e547b",
-    "a8cdcfe3-b0f2-4bad-b428-f11d81f12e62"
+    "a8cdcfe3-b0f2-4bad-b428-f11d81f12e62",
+    "54a60c90-2972-42c3-ab1a-4f4f2ae1c22b"
   ],
   "gates_required": [],
   "gates_status": {},
@@ -19,5 +20,5 @@
     "component:gf2-kernels-simd"
   ],
   "created_at": "2026-02-21T19:35:51.857178518+00:00",
-  "updated_at": "2026-02-21T23:11:27.851623799+00:00"
+  "updated_at": "2026-02-22T23:54:25.125008383+00:00"
 }

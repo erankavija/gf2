@@ -2,12 +2,10 @@
   "id": "a8cdcfe3-b0f2-4bad-b428-f11d81f12e62",
   "title": "Implement ARM PMULL carry-less multiplication kernels for GF(2^m)",
   "description": "Implement carry-less multiplication kernels for GF(2^m) using ARM PMULL/PMULL2 instructions (AArch64 equivalent of x86 PCLMULQDQ). This is the ARM counterpart to the x86 carry-less multiplication kernels (055bda14).",
-  "state": "backlog",
+  "state": "ready",
   "priority": "low",
   "assignee": null,
-  "dependencies": [
-    "bfe0ba7b-e36b-45e3-a219-dc2acfe88957"
-  ],
+  "dependencies": [],
   "gates_required": [],
   "gates_status": {},
   "context": {},
@@ -17,5 +15,5 @@
     "type:task"
   ],
   "created_at": "2026-02-21T23:11:16.329956805+00:00",
-  "updated_at": "2026-02-21T23:11:27.838635201+00:00"
+  "updated_at": "2026-02-22T23:54:48.688975881+00:00"
 }

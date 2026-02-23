@@ -1,12 +1,12 @@
 {
   "id": "bfe0ba7b-e36b-45e3-a219-dc2acfe88957",
   "title": "Design and implement FiniteField trait for generic field arithmetic",
-  "description": "Define a trait-based system for generic finite field operations using type-driven development. The FiniteField trait should provide: add (XOR for char-2), mul (polynomial mul + reduction), inv (multiplicative inverse). Design for monomorphization so the compiler can specialize to optimized SIMD kernels.",
+  "description": "Define a two-tier trait system for generic finite field operations:\n\n1. `FiniteField` — core trait for all field elements (const-generic and runtime-parameterized). Provides: Add, Sub, Mul, Div, Neg operators, inv(), is_zero(), is_one(), zero_like(&self), one_like(&self), characteristic() as associated type, extension_degree(). Requires Hash in supertraits.\n\n2. `ConstField: FiniteField + Copy` — subtrait for compile-time-known fields. Adds: zero() -> Self, one() -> Self, order() -> u64. Only for const-generic types (Fp<P>, Gf2_8, etc.), not for runtime-parameterized types (Gf2mElement).\n\n3. `FiniteFieldExt` — blanket-implemented extension trait with default impls for square(), pow(), frobenius().\n\nDesign for monomorphization so the compiler can specialize to zero-cost machine code for const-generic types. See dev/plans/gfpn_groundwork_analysis.md section 4.1 for full specification.",
   "state": "backlog",
   "priority": "normal",
   "assignee": null,
   "dependencies": [
-    "9effa2e2-1075-4bfa-bc83-354107597063"
+    "07d0a50e-8678-4893-b488-51af7fd48625"
   ],
   "gates_required": [],
   "gates_status": {},
@@ -17,5 +17,5 @@
     "component:gf2-core"
   ],
   "created_at": "2026-02-21T19:35:51.812921984+00:00",
-  "updated_at": "2026-02-21T19:35:51.999021146+00:00"
+  "updated_at": "2026-02-22T23:54:23.552074676+00:00"
 }

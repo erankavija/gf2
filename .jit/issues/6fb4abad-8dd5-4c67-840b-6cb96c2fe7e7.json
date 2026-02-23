@@ -2,10 +2,12 @@
   "id": "6fb4abad-8dd5-4c67-840b-6cb96c2fe7e7",
   "title": "Support extended field degrees m > 64 in GF(2^m)",
   "description": "Extend GF(2^m) arithmetic to support field degrees beyond 64 bits. Currently limited by the u64 representation. Requires multi-word polynomial representation and corresponding arithmetic operations. Research question: Is Karatsuba optimal for m > 64, or should FFT-based multiplication be used?",
-  "state": "ready",
+  "state": "backlog",
   "priority": "low",
   "assignee": null,
-  "dependencies": [],
+  "dependencies": [
+    "2248b17d-a601-434d-a0ec-023860a0bf76"
+  ],
   "gates_required": [],
   "gates_status": {},
   "context": {},
@@ -15,5 +17,5 @@
     "component:gf2-core"
   ],
   "created_at": "2026-02-21T19:35:51.777989720+00:00",
-  "updated_at": "2026-02-21T19:49:04.168756071+00:00"
+  "updated_at": "2026-02-22T23:52:16.045994876+00:00"
 }
