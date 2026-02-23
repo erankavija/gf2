@@ -1,0 +1,21 @@
+{
+  "id": "c3f8c1cb-eda4-4af9-8ccf-2ceb5eb87876",
+  "title": "Implement generic Gaussian elimination and RREF over FiniteField",
+  "description": "Row echelon form, reduced row echelon form, rank computation, nullspace basis, LU decomposition with partial pivoting.\n\nGeneric over `F: FiniteField`, with specialized kernels dispatched via `FieldBackend` for performance-critical inner loops.\n\n## Operations\n\n```rust\nimpl<F: FiniteField> FieldMatrix<F> {\n    pub fn rref(&self) -> (FieldMatrix<F>, Vec<usize>);\n    pub fn rank(&self) -> usize;\n    pub fn nullspace(&self) -> Vec<FieldVec<F>>;\n    pub fn lu(&self) -> (FieldMatrix<F>, FieldMatrix<F>, Vec<usize>);\n}\n```\n\n- `rref` — RREF with pivot columns\n- `rank` — via RREF or LU\n- `nullspace` — basis vectors of the kernel\n- `lu` — PA = LU decomposition with partial pivoting\n\n## Dependencies\n\n- FieldMatrix dense type (ab791e27)",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "ab791e27-49c5-428f-8029-d19752a7bf61"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "component:gf2-core",
+    "type:story"
+  ],
+  "created_at": "2026-02-23T19:20:28.213415862+00:00",
+  "updated_at": "2026-02-23T21:51:22.539879464+00:00"
+}

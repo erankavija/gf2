@@ -1,0 +1,21 @@
+{
+  "id": "d48a3cfd-3187-41c3-b4a5-78c4c6f8a967",
+  "title": "Implement matrix multiplication with delayed-reduction kernels",
+  "description": "Blocked matrix multiplication using `FieldVec::dot_product` as the inner kernel. Bounds-aware reduction scheduling via `FiniteField::Wide` and `max_unreduced_additions()`, following fflas-ffpack's `MMHelper` pattern.\n\n## Algorithms\n\n- **Classical blocked**: Block size tuned for L1/L2 cache, each block uses vectorized dot product\n- **Winograd**: $O(n^{2.807})$ for large matrices, with conservative bounds propagation through sub-problems. Gated by matrix size threshold (configurable `WINO_THRESHOLD`)\n- **SIMD dispatch**: Route to `FieldBackend` kernels for supported field types\n\n## Success criteria\n\n- Within 2x of fflas-ffpack `fgemm` for GF(p) with p < 2^32\n- **Exceed** fflas-ffpack for GF(2^m) via direct PCLMULQDQ kernels\n\n## Dependencies\n\n- FieldMatrix dense type (ab791e27)\n- SIMD-accelerated FieldVec (0fb99491)",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "ab791e27-49c5-428f-8029-d19752a7bf61"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "component:gf2-core",
+    "type:story"
+  ],
+  "created_at": "2026-02-23T19:20:28.213716712+00:00",
+  "updated_at": "2026-02-23T21:51:29.852039651+00:00"
+}

@@ -1,7 +1,7 @@
 {
   "id": "0fb99491-2b53-4bee-811a-ff40e32e6890",
   "title": "Implement SIMD-accelerated FieldVec operations with delayed reduction",
-  "description": "Add SIMD-accelerated operations to the generic FieldVec<F: FiniteField> container (54a60c90). Implement vectorized dot product with delayed reduction — perform polynomial multiplication and XOR/addition accumulation, reducing modulo P(x) only at the end. This is the SIMD optimization layer on top of the scalar generic container.\n\nDepends on generic FieldVec (54a60c90) and carry-less multiplication SIMD kernels (055bda14).",
+  "description": "Add SIMD-accelerated operations to the generic `FieldVec<F: FiniteField>` container (54a60c90). This is the performance-critical kernel layer that downstream `FieldMatrix` multiplication depends on.\n\n## Core: vectorized dot product with delayed reduction\n\nPerform polynomial multiplication and XOR/addition accumulation, reducing modulo the field polynomial only when overflow is imminent. Uses the `FiniteField::Wide` accumulator type and bounds-aware scheduling inspired by fflas-ffpack's `MMHelper` pattern:\n\n```rust\n// Compute kmax = Wide::MAX / (p-1)^2 for GF(p)\n// Accumulate kmax multiply-adds in Wide before reducing\nlet kmax = F::max_unreduced_additions();\nfor chunk in pairs.chunks(kmax) {\n    acc += chunk.iter().map(|(a, b)| a.mul_to_wide(b)).sum();\n    // reduce only at chunk boundary\n}\n```\n\n## SIMD dispatch targets\n\n- **GF(2^m)**: `PCLMULQDQ` / `VPCLMULQDQ` carry-less multiplication with XOR accumulation\n- **GF(p)**: AVX-512 IFMA (`VPMADD52HUQ`/`VPMADD52LUQ`) for 52-bit multiply-add\n- **ARM**: `PMULL`/`PMULL2` for carry-less multiplication\n\n## Dependencies\n\n- Generic `FieldVec` scalar container (54a60c90)\n- Carry-less multiplication SIMD kernels (055bda14)\n- ARM PMULL kernels (a8cdcfe3)\n\n## Success criteria\n\n- Dot product throughput within 2× of fflas-ffpack's `fdot` for equivalent prime field sizes\n- GF(2^m) dot product **exceeds** fflas-ffpack via direct PCLMULQDQ (no float conversion overhead)\n- Bounds-aware reduction scheduling: zero unnecessary reductions in dot product and matrix-multiply workloads",
   "state": "backlog",
   "priority": "normal",
   "assignee": null,
@@ -20,5 +20,5 @@
     "component:gf2-kernels-simd"
   ],
   "created_at": "2026-02-21T19:35:51.857178518+00:00",
-  "updated_at": "2026-02-22T23:54:25.125008383+00:00"
+  "updated_at": "2026-02-23T19:18:58.595767680+00:00"
 }

@@ -1,0 +1,41 @@
+{
+  "id": "bb85c68a-f88e-46fb-b0ab-cddc3487cbc9",
+  "title": "Implement generic finite field linear algebra (FieldMatrix)",
+  "description": "Generic dense and sparse linear algebra over arbitrary finite fields, built on `FieldVec<F: FiniteField>` from the GF(p^n) epic (e095a100).\n\n## Primary goals\n\n1. **UX ergonomics**: Clean, composable API that hides implementation complexity. Operator overloads (`*`, `+`), builder patterns, ergonomic indexing. Competing with Sage/Magma usability.\n2. **Performance**: Delayed-reduction kernels, SIMD dispatch, blocked algorithms. Benchmark target: within 2× of fflas-ffpack for GF(p), exceed for GF(2^m).\n\n## Scope\n\n- `FieldMatrix<F: FiniteField>` dense matrix type (row-major over `FieldVec<F>`)\n- Gaussian elimination, RREF, LU decomposition\n- Matrix multiplication with delayed-reduction and Winograd for large matrices\n- Matrix inversion, linear system solving (`Ax = b`)\n- Sparse `FieldMatrix` (CSR/CSC) with SpMV\n- Performance benchmarking against fflas-ffpack (mandatory gate)\n\n## Architecture\n\n- Lives in `crates/gf2-core/src/field/matrix.rs` (dense) and `field/sparse_matrix.rs` (sparse)\n- `BitMatrix` remains the specialized GF(2) path — no changes to existing binary linear algebra\n- Matrix multiply dispatches to `FieldVec::dot_product` as the inner kernel; SIMD and delayed reduction happen at that layer\n- Blocked factorizations (LU → fgemm) follow the fflas-ffpack pattern for cache efficiency\n\n## Non-goals\n\n- Eigenvalue decomposition (not meaningful over finite fields)\n- Floating-point BLAS integration (we use direct SIMD kernels)\n- Replacing `BitMatrix` for GF(2) operations\n\n## References\n\n- [fflas-ffpack analysis](dev/plans/fflas_ffpack_analysis.md) — design patterns and benchmark methodology",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "8a90882e-5eec-4943-8482-7f08a5bc5492",
+    "64c88ae4-4569-42f4-93b7-20a5fad1b1c9",
+    "ae1d1e88-c3cc-4cbf-9d52-e65940b1efe0"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [
+    {
+      "path": "dev/plans/fflas_ffpack_analysis.md",
+      "commit": null,
+      "label": "fflas-ffpack analysis and benchmark targets",
+      "doc_type": "design",
+      "format": "markdown",
+      "assets": [
+        {
+          "original_path": "https://github.com/linbox-team/fflas-ffpack",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        }
+      ]
+    }
+  ],
+  "labels": [
+    "type:epic",
+    "component:gf2-core"
+  ],
+  "created_at": "2026-02-23T19:19:40.625724847+00:00",
+  "updated_at": "2026-02-23T21:53:18.688516444+00:00"
+}

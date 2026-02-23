@@ -1,7 +1,7 @@
 {
   "id": "d77176e5-eff3-4212-b24d-d475328b1090",
   "title": "Competitive benchmarking against Magma/Sage/AFF3CT",
-  "description": "Conduct rigorous performance benchmarking of gf2 against established systems: Magma and Sage for binary field operations and polynomial arithmetic, AFF3CT and IT++ for FEC decoder performance. Document methodology, publish results, and identify optimization targets. Goal: within 2x of Magma/Sage, exceed on SIMD operations.",
+  "description": "Conduct rigorous performance benchmarking of gf2 against established systems:\n\n## Benchmark targets\n\n| System | Domain | Comparison areas |\n|--------|--------|-----------------|\n| **Magma / Sage** | Binary field operations, polynomial arithmetic | GF(2^m) element arithmetic, polynomial operations |\n| **AFF3CT / IT++** | FEC decoder performance | LDPC, BCH, polar code throughput |\n| **fflas-ffpack** | Finite field linear algebra | Matrix multiply, Gaussian elimination, inversion, linear solve over GF(p) and GF(2^m) |\n\n## Methodology\n\n- Criterion.rs benchmarks with statistical rigor\n- Competitors built with optimal flags (`-O3 -march=native`, OpenBLAS for fflas-ffpack)\n- Same hardware, same input data, median of 100+ iterations\n- Published results with full methodology documentation\n\n## Goals\n\n- Within 2× of Magma/Sage for field arithmetic; exceed on SIMD operations\n- Within 2× of fflas-ffpack for GF(p) linear algebra; **exceed** for GF(2^m) (direct PCLMULQDQ vs float-BLAS detour)\n- Competitive with AFF3CT for FEC decoder throughput\n- Identify optimization targets from any gaps",
   "state": "ready",
   "priority": "high",
   "assignee": null,
@@ -16,5 +16,5 @@
     "component:gf2-coding"
   ],
   "created_at": "2026-02-21T19:35:51.608825706+00:00",
-  "updated_at": "2026-02-21T19:35:51.608830716+00:00"
+  "updated_at": "2026-02-23T19:20:51.883553654+00:00"
 }

@@ -1,7 +1,7 @@
 {
   "id": "54a60c90-2972-42c3-ab1a-4f4f2ae1c22b",
   "title": "Implement generic FieldVec<F: FiniteField> container (scalar)",
-  "description": "Implement the generic vector container for finite field elements, analogous to BitVec for GF(2) but over arbitrary fields.\n\n```rust\npub struct FieldVec<F: FiniteField> {\n    data: Vec<F>,\n}\n```\n\nBasic operations (all scalar, no SIMD):\n- Element access (index, get, set)\n- Dot product: sum of element-wise products\n- Map and fold operations\n- Length, is_empty, iter\n- From/Into Vec<F>\n\nThis is the generic container only. SIMD-accelerated specializations (delayed reduction, vectorized dot product) are tracked separately in 0fb99491.\n\nNo dependency on SIMD kernels — the generic container is useful before SIMD is available.\n\nLocation: crates/gf2-core/src/field/vec.rs (new file in the field module)",
+  "description": "Implement the generic vector container for finite field elements, analogous to `BitVec` for GF(2) but over arbitrary fields.\n\n```rust\npub struct FieldVec<F: FiniteField> {\n    data: Vec<F>,\n}\n```\n\n## Core operations (all scalar, no SIMD)\n\n- Element access: `index`, `get`, `set`\n- Arithmetic: `dot_product`, element-wise `add`, `sub`, `mul`, `scale`\n- Functional: `map`, `fold`, `iter`, `zip_with`\n- Conversion: `From<Vec<F>>`, `Into<Vec<F>>`\n- Construction: `zeros(n, &F)` / `zeros(n)` (for `ConstField`)\n\n## Linear-algebra-aware API design\n\nThe API must support efficient matrix operations in the downstream `FieldMatrix`:\n\n- **Row-slice views**: `&FieldVec<F>` slices that reference contiguous row data without copying\n- **Strided access**: Iterator adapters for column access in row-major matrices\n- **Dot product signature**: Return `F::Wide` (unreduced accumulator) to allow the caller (matrix multiply kernel) to manage reduction scheduling across multiple dot products\n- **Batch operations**: `axpy` (a*x + y) as a first-class operation — the fundamental BLAS-1 building block\n\n## Location\n\n`crates/gf2-core/src/field/vec.rs` (new file in the field module)\n\n## Dependencies\n\n- `FiniteField` trait (bfe0ba7b)\n\nSIMD-accelerated specializations (delayed reduction, vectorized dot product) are tracked separately in 0fb99491.",
   "state": "backlog",
   "priority": "normal",
   "assignee": null,
@@ -17,5 +17,5 @@
     "component:gf2-core"
   ],
   "created_at": "2026-02-22T23:52:35.753280982+00:00",
-  "updated_at": "2026-02-22T23:52:47.954760381+00:00"
+  "updated_at": "2026-02-23T19:19:20.277091980+00:00"
 }

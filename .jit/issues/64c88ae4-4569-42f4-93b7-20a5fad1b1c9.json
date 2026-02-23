@@ -1,0 +1,22 @@
+{
+  "id": "64c88ae4-4569-42f4-93b7-20a5fad1b1c9",
+  "title": "Benchmark finite field linear algebra against fflas-ffpack",
+  "description": "Rigorous performance benchmarking of gf2 finite field linear algebra against fflas-ffpack. **This is a mandatory completion gate for the linear algebra epic.**\n\n## Benchmark suite\n\n| Operation | Sizes |\n|-----------|-------|\n| Matrix multiply (`fgemm`) | 64x64, 256x256, 1024x1024, 4096x4096 |\n| Gaussian elimination | 64x64, 256x256, 1024x1024, 4096x4096 |\n| Matrix inversion | 64x64, 256x256, 1024x1024 |\n| Linear solve (`Ax = b`) | 64x64, 256x256, 1024x1024, 4096x4096 |\n\n## Field coverage\n\n- Small GF(p): p = 7, 31, 251, 65521\n- Medium GF(p): p = 2^31 - 1 (Mersenne), large 32-bit primes\n- GF(2^m): m = 8, 16, 32\n\n## Targets\n\n- **GF(p)**: Within 2x of fflas-ffpack throughput\n- **GF(2^m)**: **Exceed** fflas-ffpack (we have direct PCLMULQDQ; they route through float BLAS)\n\n## Methodology\n\n- Criterion.rs benchmarks with statistical rigor\n- fflas-ffpack built with OpenBLAS, `-O3 -march=native`\n- Same hardware, same matrix data, median of 100+ iterations\n- Published results with full methodology documentation\n\n## Dependencies\n\n- Matrix multiplication kernels (d48a3cfd)\n- Gaussian elimination (c3f8c1cb)",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "d48a3cfd-3187-41c3-b4a5-78c4c6f8a967",
+    "c3f8c1cb-eda4-4af9-8ccf-2ceb5eb87876"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "component:gf2-core",
+    "type:story"
+  ],
+  "created_at": "2026-02-23T19:20:28.214456832+00:00",
+  "updated_at": "2026-02-23T21:51:50.743182553+00:00"
+}

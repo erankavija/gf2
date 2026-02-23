@@ -1,7 +1,7 @@
 {
   "id": "e095a100-d028-4bbb-a175-a6886137df61",
   "title": "Implement general Galois field GF(p^m) arithmetic",
-  "description": "Implement prime field arithmetic for GF(p) and general extension fields GF(p^m). Currently deferred as there is no immediate use case within the coding theory stack, but this would expand the library's algebraic capabilities significantly. See the GF(p^n) planning session for detailed architecture.",
+  "description": "Implement prime field arithmetic for GF(p) and general extension fields GF(p^m). This is the foundational algebraic expansion from GF(2)/GF(2^m) to a general-purpose finite field toolkit.\n\nSee linked design documents for detailed architecture.\n\n## Success Criteria\n\n- **Trait hierarchy**: `FiniteField` + `ConstField` + `FiniteFieldExt` implemented and proven across `Gf2mElement`, `Fp<P>`, `Gf2_8`/`Gf2_16`, and `QuadraticExt<F>`\n- **Wide accumulator**: Associated `Wide` type on `FiniteField` for bounds-aware delayed reduction, enabling generic matrix kernels to accumulate without field-specific code (inspired by fflas-ffpack's `MMHelper` pattern)\n- **FieldVec**: Generic `FieldVec<F>` with scalar and SIMD-accelerated operations, including delayed-reduction dot product with bounds-aware scheduling\n- **Axiom tests**: All trait implementations pass property-based field axiom test harness (associativity, commutativity, distributivity, characteristic, inverse, hash consistency)\n- **Linear algebra readiness**: Trait expressiveness and kernel performance proven sufficient to support generic `FieldMatrix` linear algebra — the downstream linear algebra epic can build directly on this foundation without trait changes\n- **Performance**: Zero-overhead abstraction for const-generic types; competitive with fflas-ffpack element-level throughput for prime field arithmetic\n\n## References\n\n- [fflas-ffpack analysis](dev/plans/fflas_ffpack_analysis.md) — design patterns and benchmark targets\n- [GF(p^n) groundwork analysis](dev/plans/gfpn_groundwork_analysis.md) — trait hierarchy and build order\n- [GF(p^n) planning session](dev/plans/gfpn_planning_session.md) — architecture exploration",
   "state": "backlog",
   "priority": "low",
   "assignee": null,
@@ -32,6 +32,23 @@
       "label": "GF(p^n) groundwork architecture analysis",
       "doc_type": "design",
       "format": "markdown"
+    },
+    {
+      "path": "dev/plans/fflas_ffpack_analysis.md",
+      "commit": null,
+      "label": "fflas-ffpack analysis and applicability",
+      "doc_type": "design",
+      "format": "markdown",
+      "assets": [
+        {
+          "original_path": "https://github.com/linbox-team/fflas-ffpack",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        }
+      ]
     }
   ],
   "labels": [
@@ -39,5 +56,5 @@
     "component:gf2-core"
   ],
   "created_at": "2026-02-21T19:35:51.633739852+00:00",
-  "updated_at": "2026-02-23T00:03:03.312615868+00:00"
+  "updated_at": "2026-02-23T19:18:26.360811076+00:00"
 }

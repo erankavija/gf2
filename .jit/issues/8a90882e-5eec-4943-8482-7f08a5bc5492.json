@@ -1,0 +1,21 @@
+{
+  "id": "8a90882e-5eec-4943-8482-7f08a5bc5492",
+  "title": "Implement sparse FieldMatrix (CSR/CSC) over FiniteField",
+  "description": "Generic sparse matrix analogous to `SpBitMatrix`/`SpBitMatrixDual` but for arbitrary finite fields.\n\n## Formats\n\n- **CSR** (Compressed Sparse Row): efficient row access and SpMV\n- **CSC** (Compressed Sparse Column): efficient column access\n- Conversion between CSR/CSC and dense `FieldMatrix`\n\n## Operations\n\n- SpMV: `sparse * FieldVec<F> -> FieldVec<F>`\n- SpMM: `sparse * FieldMatrix<F> -> FieldMatrix<F>` (sparse x dense)\n- Element access, row/col iterators\n- Construction from triplets `(row, col, value)`\n\n## Location\n\n`crates/gf2-core/src/field/sparse_matrix.rs`\n\n## Dependencies\n\n- FieldMatrix dense type (ab791e27)\n- FieldVec scalar container (54a60c90)",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "ab791e27-49c5-428f-8029-d19752a7bf61"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "component:gf2-core",
+    "type:story"
+  ],
+  "created_at": "2026-02-23T19:20:28.214212942+00:00",
+  "updated_at": "2026-02-23T21:51:42.770929689+00:00"
+}

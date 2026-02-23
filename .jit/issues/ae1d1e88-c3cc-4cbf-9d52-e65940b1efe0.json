@@ -1,0 +1,21 @@
+{
+  "id": "ae1d1e88-c3cc-4cbf-9d52-e65940b1efe0",
+  "title": "Implement matrix inversion and linear system solving",
+  "description": "Matrix inversion via LU decomposition, linear system solving for `Ax = b`, batch solve for multiple right-hand sides.\n\n## Operations\n\n```rust\nimpl<F: FiniteField> FieldMatrix<F> {\n    pub fn inv(&self) -> Option<FieldMatrix<F>>;\n    pub fn solve(&self, b: &FieldVec<F>) -> Option<FieldVec<F>>;\n    pub fn solve_batch(&self, b: &FieldMatrix<F>) -> Option<FieldMatrix<F>>;\n    pub fn det(&self) -> F;\n}\n```\n\n- `inv` — matrix inversion via LU, returns `None` for singular matrices\n- `solve` — solve `Ax = b` for a single right-hand side\n- `solve_batch` — solve `AX = B` for multiple right-hand sides simultaneously\n- `det` — determinant via LU decomposition\n\n## Dependencies\n\n- Gaussian elimination and LU decomposition (c3f8c1cb)",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "c3f8c1cb-eda4-4af9-8ccf-2ceb5eb87876"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "component:gf2-core",
+    "type:story"
+  ],
+  "created_at": "2026-02-23T19:20:28.213969022+00:00",
+  "updated_at": "2026-02-23T21:51:39.966523824+00:00"
+}

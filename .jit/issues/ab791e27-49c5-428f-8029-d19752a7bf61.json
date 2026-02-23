@@ -1,0 +1,21 @@
+{
+  "id": "ab791e27-49c5-428f-8029-d19752a7bf61",
+  "title": "Design FieldMatrix<F: FiniteField> dense matrix type",
+  "description": "Row-major dense matrix over `FieldVec<F>`. Core API: construct, index, row/col slices, transpose, dimensions. Ergonomic operator overloads (`Mul`, `Add`, `Index`). Must NOT touch `BitMatrix` (remains GF(2)-specialized).\n\n## API sketch\n\n```rust\npub struct FieldMatrix<F: FiniteField> {\n    rows: usize,\n    cols: usize,\n    data: FieldVec<F>,\n}\n\nimpl<F: FiniteField> FieldMatrix<F> {\n    pub fn new(rows: usize, cols: usize) -> Self;\n    pub fn from_rows(rows: Vec<FieldVec<F>>) -> Self;\n    pub fn row(&self, i: usize) -> &[F];\n    pub fn col_iter(&self, j: usize) -> impl Iterator<Item = &F>;\n    pub fn transpose(&self) -> Self;\n    pub fn identity(n: usize) -> Self where F: ConstField;\n}\n```\n\n## Location\n\n`crates/gf2-core/src/field/matrix.rs`\n\n## Dependencies\n\n- `FieldVec` scalar container (54a60c90)",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "e095a100-d028-4bbb-a175-a6886137df61"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "component:gf2-core",
+    "type:story"
+  ],
+  "created_at": "2026-02-23T19:20:28.213036572+00:00",
+  "updated_at": "2026-02-23T21:51:17.945410896+00:00"
+}

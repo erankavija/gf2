@@ -6,18 +6,18 @@
   "priority": "high",
   "assignee": null,
   "dependencies": [
-    "21922c59-9f44-427e-b2b8-e96bcb2ad456",
     "806eb14e-dc3d-4a1c-b4bf-5f30b9cfa923",
-    "6efb756b-bee0-4dc1-9ee6-a1a0a61034d4",
-    "7f809931-11e3-40ab-b9ab-6b1e38c12712",
+    "21922c59-9f44-427e-b2b8-e96bcb2ad456",
     "f0448e55-2460-4d83-875e-8cd39ab692a5",
-    "86b9c719-b19d-4372-80bd-8b4deed1eb16",
     "b81c239c-952c-4017-85fb-629dc8965410",
     "9a5662ff-c56c-4ec5-95f2-3586e35a0844",
-    "0fc3c9d0-3b49-4ec8-877f-b63fdc701590",
-    "e095a100-d028-4bbb-a175-a6886137df61",
+    "6efb756b-bee0-4dc1-9ee6-a1a0a61034d4",
     "adc75ba7-4c60-4302-ad9a-1bc368dfb5ab",
-    "d77176e5-eff3-4212-b24d-d475328b1090"
+    "0fc3c9d0-3b49-4ec8-877f-b63fdc701590",
+    "d77176e5-eff3-4212-b24d-d475328b1090",
+    "bb85c68a-f88e-46fb-b0ab-cddc3487cbc9",
+    "86b9c719-b19d-4372-80bd-8b4deed1eb16",
+    "7f809931-11e3-40ab-b9ab-6b1e38c12712"
   ],
   "gates_required": [],
   "gates_status": {},
@@ -30,5 +30,5 @@
     "component:gf2-kernels-simd"
   ],
   "created_at": "2026-02-21T19:35:51.871988085+00:00",
-  "updated_at": "2026-02-21T19:35:52.251250107+00:00"
+  "updated_at": "2026-02-23T19:20:44.347061052+00:00"
 }
