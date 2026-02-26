@@ -146,7 +146,7 @@ pub trait ConstField: FiniteField + Copy {
     fn one() -> Self;
 
     /// Returns the number of elements in the field.
-    fn order() -> u64;
+    fn order() -> u128;
 }
 
 /// Blanket-implemented convenience methods for all [`FiniteField`] types.
