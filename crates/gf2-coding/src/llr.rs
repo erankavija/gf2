@@ -818,8 +818,9 @@ mod property_tests {
             let result1 = Llr::boxplus_n(&llrs);
             let result2 = Llr::boxplus_n(&shuffled);
 
-            // Relaxed tolerance for f32 precision
-            prop_assert!((result1.value() - result2.value()).abs() < 2e-4);
+            // f32 precision near saturation (|LLR| ~10) causes atanh amplification
+            // of ~1/(2*exp(-10)) ≈ 11000x, so per-ULP error reaches ~1e-3.
+            prop_assert!((result1.value() - result2.value()).abs() < 1e-2);
         }
 
         #[test]
