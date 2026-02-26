@@ -105,7 +105,8 @@
 //! ```
 
 use std::fmt;
-use std::ops::{Add, Div, Mul};
+use std::hash::{Hash, Hasher};
+use std::ops::{Add, AddAssign, Div, Mul, Neg, Sub};
 use std::sync::Arc;
 
 #[cfg(feature = "simd")]
@@ -995,6 +996,168 @@ impl fmt::Display for Gf2mElement {
     }
 }
 
+// Hash only the element value, not the field context. Two elements with the
+// same value hash identically regardless of which Gf2mField created them.
+impl Hash for Gf2mElement {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.value.hash(state);
+    }
+}
+
+// Negation in GF(2^m): -a = a (every element is its own additive inverse)
+impl Neg for &Gf2mElement {
+    type Output = Gf2mElement;
+
+    fn neg(self) -> Self::Output {
+        self.clone()
+    }
+}
+
+impl Neg for Gf2mElement {
+    type Output = Gf2mElement;
+
+    fn neg(self) -> Self::Output {
+        self
+    }
+}
+
+// Subtraction in GF(2^m) equals addition: a - b = a + b = a XOR b
+#[allow(clippy::suspicious_arithmetic_impl)]
+impl Sub for &Gf2mElement {
+    type Output = Gf2mElement;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        self + rhs
+    }
+}
+
+#[allow(clippy::suspicious_arithmetic_impl)]
+impl Sub for Gf2mElement {
+    type Output = Gf2mElement;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        &self - &rhs
+    }
+}
+
+// Mixed-receiver operators: owned + &ref
+impl Add<&Gf2mElement> for Gf2mElement {
+    type Output = Gf2mElement;
+
+    fn add(self, rhs: &Gf2mElement) -> Self::Output {
+        &self + rhs
+    }
+}
+
+#[allow(clippy::suspicious_arithmetic_impl)]
+impl Sub<&Gf2mElement> for Gf2mElement {
+    type Output = Gf2mElement;
+
+    fn sub(self, rhs: &Gf2mElement) -> Self::Output {
+        &self - rhs
+    }
+}
+
+impl Mul<&Gf2mElement> for Gf2mElement {
+    type Output = Gf2mElement;
+
+    fn mul(self, rhs: &Gf2mElement) -> Self::Output {
+        &self * rhs
+    }
+}
+
+impl Div<&Gf2mElement> for Gf2mElement {
+    type Output = Gf2mElement;
+
+    fn div(self, rhs: &Gf2mElement) -> Self::Output {
+        &self / rhs
+    }
+}
+
+// AddAssign — required by FiniteField trait (and Wide: AddAssign bound)
+impl AddAssign for Gf2mElement {
+    fn add_assign(&mut self, rhs: Self) {
+        assert!(
+            Arc::ptr_eq(&self.params, &rhs.params),
+            "Cannot add elements from different fields"
+        );
+        self.value ^= rhs.value;
+    }
+}
+
+impl AddAssign<&Gf2mElement> for Gf2mElement {
+    fn add_assign(&mut self, rhs: &Gf2mElement) {
+        assert!(
+            Arc::ptr_eq(&self.params, &rhs.params),
+            "Cannot add elements from different fields"
+        );
+        self.value ^= rhs.value;
+    }
+}
+
+// FiniteField trait implementation for GF(2^m)
+impl crate::field::FiniteField for Gf2mElement {
+    type Characteristic = u64;
+
+    // XOR addition never overflows, so Wide = Self is correct for binary fields.
+    type Wide = Self;
+
+    fn characteristic(&self) -> u64 {
+        2
+    }
+
+    /// Returns the extension degree m.
+    ///
+    /// # Panics
+    ///
+    /// Never panics for `Gf2mElement` — the degree is stored at construction time.
+    fn extension_degree(&self) -> usize {
+        self.params.m
+    }
+
+    fn is_zero(&self) -> bool {
+        self.value == 0
+    }
+
+    fn is_one(&self) -> bool {
+        self.value == 1
+    }
+
+    fn inv(&self) -> Option<Self> {
+        self.inverse()
+    }
+
+    fn zero_like(&self) -> Self {
+        Gf2mElement {
+            value: 0,
+            params: Arc::clone(&self.params),
+        }
+    }
+
+    fn one_like(&self) -> Self {
+        Gf2mElement {
+            value: 1,
+            params: Arc::clone(&self.params),
+        }
+    }
+
+    fn to_wide(&self) -> Self::Wide {
+        self.clone()
+    }
+
+    fn mul_to_wide(&self, rhs: &Self) -> Self::Wide {
+        self.clone() * rhs
+    }
+
+    fn reduce_wide(wide: &Self::Wide) -> Self {
+        wide.clone()
+    }
+
+    fn max_unreduced_additions() -> usize {
+        usize::MAX
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1465,6 +1628,113 @@ mod tests {
         assert!(!field.is_irreducible_rabin());
     }
 
+    // --- Hash tests ---
+
+    #[test]
+    fn test_hash_equal_elements_have_equal_hash() {
+        use std::hash::{DefaultHasher, Hash, Hasher};
+        let field = Gf2mField::new(4, 0b10011);
+        let a = field.element(5);
+        let b = field.element(5);
+
+        let mut ha = DefaultHasher::new();
+        let mut hb = DefaultHasher::new();
+        a.hash(&mut ha);
+        b.hash(&mut hb);
+        assert_eq!(ha.finish(), hb.finish());
+    }
+
+    #[test]
+    fn test_hash_different_values_have_different_hash() {
+        use std::hash::{DefaultHasher, Hash, Hasher};
+        let field = Gf2mField::gf256();
+        let a = field.element(0x53);
+        let b = field.element(0xCA);
+
+        let mut ha = DefaultHasher::new();
+        let mut hb = DefaultHasher::new();
+        a.hash(&mut ha);
+        b.hash(&mut hb);
+        assert_ne!(ha.finish(), hb.finish());
+    }
+
+    #[test]
+    fn test_hash_ignores_field_context() {
+        use std::hash::{DefaultHasher, Hash, Hasher};
+        // Two independently-constructed GF(2^8) fields
+        let field1 = Gf2mField::gf256();
+        let field2 = Gf2mField::gf256();
+        let a = field1.element(42);
+        let b = field2.element(42);
+
+        let mut ha = DefaultHasher::new();
+        let mut hb = DefaultHasher::new();
+        a.hash(&mut ha);
+        b.hash(&mut hb);
+        assert_eq!(ha.finish(), hb.finish());
+    }
+
+    // --- Sub tests ---
+
+    #[test]
+    fn test_subtraction_equals_addition() {
+        let field = Gf2mField::new(4, 0b10011);
+        for a_val in 0..16u64 {
+            for b_val in 0..16u64 {
+                let a = field.element(a_val);
+                let b = field.element(b_val);
+                assert_eq!(&a - &b, &a + &b);
+            }
+        }
+    }
+
+    #[test]
+    fn test_subtraction_self_is_zero() {
+        let field = Gf2mField::new(4, 0b10011);
+        let zero = field.zero();
+        for val in 0..16u64 {
+            let a = field.element(val);
+            assert_eq!(&a - &a, zero);
+        }
+    }
+
+    #[test]
+    fn test_subtraction_identity() {
+        let field = Gf2mField::new(4, 0b10011);
+        let zero = field.zero();
+        for val in 0..16u64 {
+            let a = field.element(val);
+            assert_eq!(&a - &zero, a);
+        }
+    }
+
+    // --- Neg tests ---
+
+    #[test]
+    fn test_negation_is_identity() {
+        let field = Gf2mField::new(4, 0b10011);
+        for val in 0..16u64 {
+            let a = field.element(val);
+            assert_eq!(-&a, a);
+        }
+    }
+
+    #[test]
+    fn test_negation_zero() {
+        let field = Gf2mField::new(4, 0b10011);
+        let zero = field.zero();
+        assert_eq!(-&zero, zero);
+    }
+
+    #[test]
+    fn test_double_negation() {
+        let field = Gf2mField::new(4, 0b10011);
+        for val in 0..16u64 {
+            let a = field.element(val);
+            assert_eq!(-(-&a), a);
+        }
+    }
+
     // Property-based tests using proptest
 
     use proptest::prelude::*;
@@ -1543,6 +1813,23 @@ mod tests {
             let right = &(&elem_a * &elem_b) + &(&elem_a * &elem_c);
 
             prop_assert_eq!(left, right);
+        }
+
+        #[test]
+        fn prop_sub_equals_add(a in 0u64..16, b in 0u64..16) {
+            let field = Gf2mField::new(4, 0b10011);
+            let elem_a = field.element(a);
+            let elem_b = field.element(b);
+
+            prop_assert_eq!(&elem_a - &elem_b, &elem_a + &elem_b);
+        }
+
+        #[test]
+        fn prop_neg_is_identity(a in 0u64..16) {
+            let field = Gf2mField::new(4, 0b10011);
+            let elem = field.element(a);
+
+            prop_assert_eq!(-&elem, elem);
         }
     }
 }
