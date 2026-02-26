@@ -1,0 +1,21 @@
+{
+  "id": "8d2863e6-9e38-424f-918a-55d3c2fda5ee",
+  "title": "Implement QuadraticExt<F> with Karatsuba multiplication",
+  "description": "Core type: struct QuadraticExt&lt;F&gt; { c0: F, c1: F }. Implement FiniteField trait. Karatsuba multiplication: 3 base-field muls instead of 4. Implement ConstField when F: ConstField + Copy. Location: crates/gf2-core/src/gfpn/tower.rs. Must pass axiom test harness (2248b17d).",
+  "state": "backlog",
+  "priority": "low",
+  "assignee": null,
+  "dependencies": [
+    "0203bebd-2d60-45af-9ce0-6c99a9be0f8c"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "component:gf2-core",
+    "type:task"
+  ],
+  "created_at": "2026-02-26T00:09:07.113726109+00:00",
+  "updated_at": "2026-02-26T00:15:48.023127280+00:00"
+}

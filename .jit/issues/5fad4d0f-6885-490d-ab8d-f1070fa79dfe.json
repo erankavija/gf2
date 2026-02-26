@@ -1,15 +1,53 @@
 {
   "id": "5fad4d0f-6885-490d-ab8d-f1070fa79dfe",
   "title": "Implement SoA (Structure of Arrays) batch layout for GF(p^n) SIMD",
-  "description": "Implement vertical SIMD batch processing for GF(p^n) using Structure of Arrays layout. Instead of Vec<GfPn>, store coefficients separately (c0: Vec<u64>, c1: Vec<u64>, ...) so SIMD lanes process multiple independent field elements in parallel. The polynomial logic operates at the high level while coefficient arithmetic is vectorized across lanes.",
+  "description": "Implement Structure of Arrays (SoA) batch layout for GF(p^n) extension field elements, enabling vertical SIMD processing where each SIMD lane handles the same coefficient position across multiple independent field elements.\n\n## Motivation\n\nStandard Array of Structures (AoS) layout for GF(p^n) elements:\n```\n[{c0, c1, c2, c3}, {c0, c1, c2, c3}, {c0, c1, c2, c3}, ...]\n```\n\nThis layout makes SIMD difficult because polynomial multiplication has cross-lane dependencies between coefficients. The SoA layout transposes the data:\n\n```\nc0: [elem0.c0, elem1.c0, elem2.c0, elem3.c0, ...]  ← one SIMD vector\nc1: [elem0.c1, elem1.c1, elem2.c1, elem3.c1, ...]  ← one SIMD vector\nc2: [elem0.c2, elem1.c2, elem2.c2, elem3.c2, ...]  ← one SIMD vector\nc3: [elem0.c3, elem1.c3, elem2.c3, elem3.c3, ...]  ← one SIMD vector\n```\n\nNow the polynomial logic operates at the high level (combining coefficient vectors according to the extension field multiplication formula), while the coefficient arithmetic (GF(p) multiply, add) is vectorized across SIMD lanes — processing 4 or 8 independent elements simultaneously.\n\n## Core type\n\n```rust\n/// Batch of GF(p^n) elements stored in Structure of Arrays layout\n/// for SIMD-friendly access.\npub struct BatchExtField<F: FiniteField, const N: usize> {\n    /// coeffs[i] contains the i-th coefficient of all elements in the batch.\n    /// All vectors have the same length (the batch size).\n    coeffs: [Vec<F>; N],\n}\n\nimpl<F: FiniteField, const N: usize> BatchExtField<F, N> {\n    /// Number of elements in the batch.\n    fn len(&self) -> usize;\n\n    /// Convert from AoS (slice of extension field elements) to SoA.\n    fn from_elements(elements: &[impl ExtensionField<BaseField = F>]) -> Self;\n\n    /// Convert back from SoA to AoS.\n    fn to_elements(&self) -> Vec<impl ExtensionField<BaseField = F>>;\n\n    /// Element-wise multiplication of two batches (SIMD-accelerated).\n    fn batch_mul(&self, other: &Self) -> Self;\n\n    /// Element-wise addition of two batches (SIMD-accelerated).\n    fn batch_add(&self, other: &Self) -> Self;\n}\n```\n\n## SIMD execution model\n\nFor `BatchExtField<Fp<P>, 2>` (batch of GF(p^2) quadratic extension elements), Karatsuba multiplication becomes:\n\n```\n// Each operation is a SIMD vector operation on all batch elements simultaneously\nv0 = simd_mul(self.coeffs[0], other.coeffs[0])   // 8 parallel Fp multiplications\nv1 = simd_mul(self.coeffs[1], other.coeffs[1])   // 8 parallel Fp multiplications\nsum_a = simd_add(self.coeffs[0], self.coeffs[1])  // 8 parallel Fp additions\nsum_b = simd_add(other.coeffs[0], other.coeffs[1])\nv2 = simd_mul(sum_a, sum_b)                       // 8 parallel Fp multiplications\n// Combine results...\n```\n\n3 SIMD multiplications process 8 GF(p^2) multiplications simultaneously.\n\n## Conversion cost\n\nAoS↔SoA conversion involves a transpose operation. For small batches this overhead may dominate; SoA is beneficial when:\n- Processing large vectors/matrices of extension field elements\n- The data originates in SoA layout (e.g., from `FieldMatrix` column storage)\n- Multiple operations are performed before converting back\n\n## Location\n\n`crates/gf2-core/src/gfpn/batch.rs` (new file in the gfpn module)\n\n## Dependencies\n\n- 3f4b946c (tower extension field architecture) — the scalar extension field types must exist before we can batch them\n\n## Success criteria\n\n- `BatchExtField::batch_mul` produces identical results to element-wise scalar multiplication.\n- AoS→SoA→AoS round-trip preserves all elements exactly.\n- Benchmark: SoA batch multiplication of 1000 GF(p^2) elements is ≥3× faster than sequential scalar multiplication.\n- Integration with SIMD `FieldVec` operations (0fb99491) for the coefficient-level arithmetic.",
   "state": "backlog",
   "priority": "low",
   "assignee": null,
   "dependencies": [
     "3f4b946c-ea9a-440d-a59f-b64e837b5cce"
   ],
-  "gates_required": [],
-  "gates_status": {},
+  "gates_required": [
+    "tdd-reminder",
+    "tests",
+    "clippy",
+    "fmt",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "tests": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:58.987173013Z"
+    },
+    "tdd-reminder": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:58.987157403Z"
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:58.987211083Z"
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:58.987201663Z"
+    },
+    "clippy": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:58.987182843Z"
+    },
+    "fmt": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:58.987192103Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -17,5 +55,5 @@
     "type:task"
   ],
   "created_at": "2026-02-21T23:11:13.023723357+00:00",
-  "updated_at": "2026-02-21T23:11:26.469100484+00:00"
+  "updated_at": "2026-02-25T22:47:58.987220473+00:00"
 }

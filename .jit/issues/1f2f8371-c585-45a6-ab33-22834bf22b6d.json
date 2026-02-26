@@ -1,15 +1,53 @@
 {
   "id": "1f2f8371-c585-45a6-ab33-22834bf22b6d",
   "title": "Implement specialized prime field types (Mersenne, Proth primes)",
-  "description": "Implement optimized structs for primes with fast reduction via bit-hacks. Mersenne primes (2^n - 1): reduction via bitwise AND + ADD (e.g., 2^31-1). Proth primes (k*2^n + 1): reduction via shifts and subtracts, useful for NTT/FFT. Goldilocks primes (e.g., 2^64 - 2^32 + 1): reduction via shifts and subtracts.",
+  "description": "Implement optimized prime field types for primes with special algebraic structure that permits fast modular reduction via bit manipulation, avoiding the general-purpose Montgomery multiplication overhead.\n\n## Target prime families\n\n### Mersenne primes (2^n - 1)\n\nReduction is a single AND + ADD:\n```rust\nfn reduce_mersenne<const N: u32>(x: u128) -> u64 {\n    let mask = (1u64 << N) - 1;\n    let lo = (x as u64) & mask;\n    let hi = (x >> N) as u64;\n    let sum = lo + hi;\n    // One more correction if sum >= 2^n - 1\n    if sum >= mask { sum - mask } else { sum }\n}\n```\n\nUseful Mersenne primes: 2^31-1 (hash functions, PRNG), 2^61-1 (large prime within u64), 2^127-1 (requires multi-word but still fast).\n\n### Proth primes (k·2^n + 1)\n\nReduction via shifts and subtracts. Particularly useful for Number Theoretic Transforms (NTT/FFT) because the multiplicative group has a large power-of-2 subgroup (enabling radix-2 FFT butterflies).\n\nExamples: 2^32 · 3 + 1 = 12884901889 (used in Plonky2-style proofs).\n\n### Goldilocks primes\n\nExample: `2^64 - 2^32 + 1`. Reduction via:\n```rust\nfn reduce_goldilocks(x: u128) -> u64 {\n    let lo = x as u64;\n    let hi = (x >> 64) as u64;\n    // hi * 2^64 ≡ hi * (2^32 - 1) mod p\n    let (t, carry) = lo.overflowing_sub(hi);\n    let result = t.wrapping_add(carry as u64 * 0xFFFFFFFF);\n    // Final correction\n    if result >= P { result - P } else { result }\n}\n```\n\n## Implementation approach\n\nThese can be implemented as:\n\n1. **Specialized `Fp<P>` internals**: Detect the prime shape at compile time (const fn) and select the optimal reduction. The `Fp<P>` type and `FiniteField`/`ConstField` trait implementations remain unchanged.\n\n2. **Dedicated types**: `MersenneFp<const N: u32>`, `ProthFp<const K: u64, const N: u32>` for maximum ergonomics and documentation. These implement the same traits as `Fp<P>`.\n\n**Recommended**: Option 1 (compile-time detection within `Fp<P>`) for primes that can be auto-detected, with Option 2 as explicit types for documentation and type-safety when the user wants to express the prime shape in the type system.\n\n## Location\n\n`crates/gf2-core/src/gfp/specialized.rs` (new file alongside `montgomery.rs`)\n\n## Dependencies\n\n- 8ce6f8aa (Montgomery multiplication for GF(p)) — Montgomery is the general-purpose fallback; specialized reductions replace it for applicable primes\n\n## Success criteria\n\n- All specialized types pass the field axiom test harness (2248b17d).\n- Cross-verification: specialized reduction produces identical results to naive `%` and Montgomery for all operations.\n- Benchmark: Mersenne reduction ≥2× faster than Montgomery for Fp<2^31-1> multiplication.\n- Benchmark: Goldilocks reduction ≥1.5× faster than Montgomery for multiplication.\n- Compile-time detection correctly identifies Mersenne primes, Proth primes, and Goldilocks primes.",
   "state": "backlog",
   "priority": "low",
   "assignee": null,
   "dependencies": [
     "8ce6f8aa-9252-4ae6-ab5c-e702e961d460"
   ],
-  "gates_required": [],
-  "gates_status": {},
+  "gates_required": [
+    "tdd-reminder",
+    "tests",
+    "clippy",
+    "fmt",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "tests": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:59.023098088Z"
+    },
+    "fmt": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:59.023120138Z"
+    },
+    "clippy": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:59.023109398Z"
+    },
+    "tdd-reminder": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:59.023077808Z"
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:59.023142058Z"
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:59.023131138Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -17,5 +55,5 @@
     "type:task"
   ],
   "created_at": "2026-02-21T23:11:08.953312368+00:00",
-  "updated_at": "2026-02-21T23:11:26.324676156+00:00"
+  "updated_at": "2026-02-25T22:47:59.023152858+00:00"
 }

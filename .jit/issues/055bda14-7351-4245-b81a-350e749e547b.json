@@ -1,7 +1,7 @@
 {
   "id": "055bda14-7351-4245-b81a-350e749e547b",
   "title": "Implement carry-less multiplication SIMD kernels for GF(2^m)",
-  "description": "Implement PCLMULQDQ-based carry-less multiplication kernels for x86_64 and PMULL for ARM in the gf2-kernels-simd crate. Include Barrett reduction for efficient modular reduction. Wrap intrinsics in safe interfaces.",
+  "description": "Implement SIMD carry-less multiplication kernels for GF(2^m) in the `gf2-kernels-simd` crate. These kernels perform the core polynomial multiplication operation using dedicated CPU instructions, replacing the current scalar Karatsuba implementation for supported platforms.\n\n## Target instructions\n\n| Platform | Instruction | Width | Notes |\n|----------|-------------|-------|-------|\n| x86_64 | `PCLMULQDQ` | 64×64→128 bit | Available since Westmere (2010). Carry-less multiply of two 64-bit operands. |\n| x86_64 | `VPCLMULQDQ` | 4×(64×64→128) bit | AVX-512 vectorized variant. Requires AVX512VL + VPCLMULQDQ. 4 independent carry-less multiplies per instruction. |\n| x86_64 | `GF2P8AFFINEQB` | 64×(8→8) bit | AVX-512 GFNI. Galois Field affine transformation over GF(2^8). Specialized for GF(2^8) batch operations. |\n\nARM `PMULL`/`PMULL2` is tracked separately in a8cdcfe3.\n\n## Kernel API\n\n```rust\n// In gf2-kernels-simd\n/// Carry-less multiplication of two 64-bit polynomials.\n/// Returns the full 128-bit product (no reduction).\npub unsafe fn clmul_u64(a: u64, b: u64) -> u128;\n\n/// Carry-less multiplication + Barrett reduction for GF(2^m).\n/// Returns the reduced m-bit result.\npub unsafe fn clmul_reduce_u64(a: u64, b: u64, reducer: &BarrettReducer) -> u64;\n\n/// Batch carry-less multiplication of aligned slices.\n/// Uses VPCLMULQDQ when available for 4× throughput.\npub unsafe fn clmul_batch(a: &[u64], b: &[u64], out: &mut [u128]);\n```\n\n## Safe wrapper in gf2-core\n\nThe kernels are exposed to `gf2-core` through the existing runtime-dispatch mechanism (`OnceLock` + feature detection in `gf2-core/src/lib.rs`). The safe interface in `gf2-core` selects between scalar Karatsuba (current) and SIMD carry-less multiplication at runtime.\n\n## Implementation plan\n\n1. **Single-element `PCLMULQDQ` kernel**: `_mm_clmulepi64_si128` intrinsic, producing a 128-bit product.\n2. **Barrett reduction kernel**: Combine `PCLMULQDQ` product with Barrett reduction (0458fa04) for full multiply-and-reduce.\n3. **Batch `VPCLMULQDQ` kernel**: Process 4 multiplications per AVX-512 instruction. Requires runtime detection of `VPCLMULQDQ` support.\n4. **`GF2P8AFFINEQB` specialization**: For GF(2^8) batch operations, use the dedicated affine transformation instruction when available.\n5. **Safe dispatch integration**: Register kernels in the `gf2-core` runtime dispatch, alongside existing scalar fallback.\n\n## Location\n\n- Kernels: `crates/gf2-kernels-simd/src/x86/clmul.rs` (new file)\n- Safe wrappers: `crates/gf2-core/src/gf2m/` integration with existing multiplication path\n\n## Dependencies\n\n- 9effa2e2 (benchmarks) — informs which strategies to prioritize\n- 0458fa04 (Barrett reduction) — needed for the reduce step after carry-less multiply\n\n## Success criteria\n\n- `PCLMULQDQ` kernel produces identical results to scalar Karatsuba for all m=2..16.\n- Batch kernel (`VPCLMULQDQ`) produces identical results to sequential single-element kernel.\n- Throughput improvement: ≥3× over scalar Karatsuba for GF(2^8) single multiplication, ≥10× for batch dot products on AVX-512 hardware.",
   "state": "backlog",
   "priority": "normal",
   "assignee": null,
@@ -9,8 +9,46 @@
     "9effa2e2-1075-4bfa-bc83-354107597063",
     "0458fa04-0055-416f-b36a-71d764af1d8e"
   ],
-  "gates_required": [],
-  "gates_status": {},
+  "gates_required": [
+    "tdd-reminder",
+    "tests",
+    "clippy",
+    "fmt",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "fmt": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:59.030256736Z"
+    },
+    "clippy": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:59.030245896Z"
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:59.030267866Z"
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:59.030278796Z"
+    },
+    "tests": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:59.030234906Z"
+    },
+    "tdd-reminder": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:59.030215266Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -19,5 +57,5 @@
     "component:gf2-core"
   ],
   "created_at": "2026-02-21T19:35:51.837508971+00:00",
-  "updated_at": "2026-02-23T00:02:57.829689548+00:00"
+  "updated_at": "2026-02-25T22:47:59.030289936+00:00"
 }

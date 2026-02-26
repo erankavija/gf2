@@ -1,0 +1,21 @@
+{
+  "id": "3f3d6c23-d75d-44a6-99cf-5b93db609acd",
+  "title": "Implement CubicExt<F> with Toom-Cook multiplication",
+  "description": "Core type: struct CubicExt&lt;F&gt; { c0: F, c1: F, c2: F }. Implement FiniteField trait. Toom-Cook multiplication: 5 base-field muls instead of 9. Chung-Hasan SQR variant for squaring. Location: crates/gf2-core/src/gfpn/tower.rs. Must pass axiom test harness.",
+  "state": "backlog",
+  "priority": "low",
+  "assignee": null,
+  "dependencies": [
+    "0203bebd-2d60-45af-9ce0-6c99a9be0f8c"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "component:gf2-core",
+    "type:task"
+  ],
+  "created_at": "2026-02-26T00:09:07.133453836+00:00",
+  "updated_at": "2026-02-26T00:15:48.635029065+00:00"
+}

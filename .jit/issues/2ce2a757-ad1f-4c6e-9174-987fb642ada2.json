@@ -1,0 +1,22 @@
+{
+  "id": "2ce2a757-ad1f-4c6e-9174-987fb642ada2",
+  "title": "Karatsuba vs naive cross-verification with property-based tests",
+  "description": "Property-based tests confirming Karatsuba and Toom-Cook produce identical results to naive polynomial multiplication for 10000+ random element pairs. Verify performance: QuadraticExt&lt;Fp&lt;P&gt;&gt; multiplication in ≤10 base-field muls.",
+  "state": "backlog",
+  "priority": "low",
+  "assignee": null,
+  "dependencies": [
+    "8d2863e6-9e38-424f-918a-55d3c2fda5ee",
+    "3f3d6c23-d75d-44a6-99cf-5b93db609acd"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "component:gf2-core",
+    "type:task"
+  ],
+  "created_at": "2026-02-26T00:09:07.544270603+00:00",
+  "updated_at": "2026-02-26T00:15:51.169217692+00:00"
+}

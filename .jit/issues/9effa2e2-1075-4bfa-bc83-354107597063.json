@@ -1,13 +1,51 @@
 {
   "id": "9effa2e2-1075-4bfa-bc83-354107597063",
   "title": "Benchmark GF(2^m) multiplication strategies for gfq expansion",
-  "description": "Establish performance baselines for different GF(2^m) multiplication approaches: naive shift-and-add, lookup tables (LUT), log/exp tables, and carry-less multiplication (PCLMULQDQ). Focus on GF(2^8), GF(2^16), and GF(2^64). Determine crossover points between table-based and instruction-based approaches. Use Criterion benchmarks with runtime backend selection.",
+  "description": "Establish performance baselines for different GF(2^m) multiplication approaches to inform implementation choices for the carry-less multiplication kernels (055bda14) and field backend dispatch.\n\n## Benchmark targets\n\nFour multiplication strategies across three field sizes:\n\n| Strategy | GF(2^8) | GF(2^16) | GF(2^64) |\n|----------|---------|----------|----------|\n| **Naive shift-and-add** | Baseline reference | Baseline reference | Baseline reference |\n| **Lookup tables (LUT)** | 256×256 direct table (64 KB) | Too large for L1; test partial tables | N/A |\n| **Log/exp tables** | 2×256 entries | 2×65536 entries | N/A (field too large) |\n| **Carry-less multiplication** | `PCLMULQDQ` + Barrett reduction | `PCLMULQDQ` + Barrett reduction | `PCLMULQDQ` + Barrett reduction |\n\n## Key questions to answer\n\n1. **Crossover point**: At what field size does `PCLMULQDQ` become faster than table lookups? Expected: around GF(2^16), where tables no longer fit in L1.\n2. **Throughput vs latency**: Table lookups have low latency but are limited by cache bandwidth. `PCLMULQDQ` has higher latency but better throughput under pipelining.\n3. **Batch performance**: How do the strategies compare for vectorized dot products (multiply-accumulate loops) vs single multiplications?\n4. **Backend selection**: Should the runtime dispatch in `gf2-core/src/lib.rs` select the multiplication strategy per field size, or use a single strategy?\n\n## Implementation\n\n- Use `criterion` benchmarks in `crates/gf2-core/benches/`.\n- Include both single-element and batch (1000-element dot product) benchmarks.\n- Test with and without the `simd` feature to isolate SIMD contribution.\n- Report cycles/multiplication using `criterion`'s throughput mode.\n- Benchmark the existing `Gf2mField` Karatsuba multiplication as the current-implementation reference.\n\n## Location\n\n`crates/gf2-core/benches/gf2m_mul_strategies.rs` (new benchmark file)\n\n## Dependencies\n\nNone — this is a leaf task that informs subsequent implementation choices.",
   "state": "ready",
   "priority": "normal",
   "assignee": null,
   "dependencies": [],
-  "gates_required": [],
-  "gates_status": {},
+  "gates_required": [
+    "tdd-reminder",
+    "tests",
+    "clippy",
+    "fmt",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "clippy": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:59.087603888Z"
+    },
+    "fmt": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:59.087619418Z"
+    },
+    "tests": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:59.087592448Z"
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:59.087642288Z"
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:59.087631078Z"
+    },
+    "tdd-reminder": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:59.087572418Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -16,5 +54,5 @@
     "component:gf2-kernels-simd"
   ],
   "created_at": "2026-02-21T19:35:51.663478888+00:00",
-  "updated_at": "2026-02-21T19:49:04.142572895+00:00"
+  "updated_at": "2026-02-25T22:47:59.087653648+00:00"
 }

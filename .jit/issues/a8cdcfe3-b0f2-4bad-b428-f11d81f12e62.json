@@ -1,13 +1,51 @@
 {
   "id": "a8cdcfe3-b0f2-4bad-b428-f11d81f12e62",
   "title": "Implement ARM PMULL carry-less multiplication kernels for GF(2^m)",
-  "description": "Implement carry-less multiplication kernels for GF(2^m) using ARM PMULL/PMULL2 instructions (AArch64 equivalent of x86 PCLMULQDQ). This is the ARM counterpart to the x86 carry-less multiplication kernels (055bda14).",
+  "description": "Implement carry-less multiplication kernels for GF(2^m) using ARM NEON `PMULL`/`PMULL2` instructions. This is the AArch64 counterpart to the x86 `PCLMULQDQ` kernels (055bda14).\n\n## Target instructions\n\n| Instruction | Operation | Width |\n|-------------|-----------|-------|\n| `PMULL` | Polynomial multiply (lower 64 bits) | 64×64→128 bit |\n| `PMULL2` | Polynomial multiply (upper 64 bits) | 64×64→128 bit |\n\nThese are available on all ARMv8-A (AArch64) processors with the Crypto extensions, which includes virtually all modern ARM chips (Apple Silicon, Cortex-A53+, Graviton).\n\n## Kernel API\n\n```rust\n// In gf2-kernels-simd\n/// Carry-less multiplication of two 64-bit polynomials using ARM PMULL.\npub unsafe fn clmul_u64_neon(a: u64, b: u64) -> u128;\n\n/// Carry-less multiplication + Barrett reduction for GF(2^m).\npub unsafe fn clmul_reduce_u64_neon(a: u64, b: u64, reducer: &BarrettReducer) -> u64;\n\n/// Batch carry-less multiplication using PMULL/PMULL2 interleaving.\npub unsafe fn clmul_batch_neon(a: &[u64], b: &[u64], out: &mut [u128]);\n```\n\n## Implementation notes\n\n- Use `vmull_p64` / `vmull_high_p64` intrinsics from `core::arch::aarch64`.\n- The PMULL instruction has the same semantics as x86 `PCLMULQDQ` (carry-less multiply of two 64-bit values producing a 128-bit result), so the Barrett reduction logic from 0458fa04 applies identically.\n- For batch operations, interleave `PMULL` and `PMULL2` to process two multiplications per NEON register pair.\n- Runtime detection via `std::arch::is_aarch64_feature_detected!(\"pmull\")`.\n\n## Location\n\n`crates/gf2-kernels-simd/src/arm/clmul.rs` (new file, new `arm/` module)\n\n## Dependencies\n\nNone — this is a leaf task. Barrett reduction (0458fa04) is shared but developed independently.\n\n## Success criteria\n\n- Produces identical results to scalar Karatsuba for all m=2..16.\n- Throughput improvement: ≥3× over scalar for single GF(2^8) multiplication on Apple M-series or Graviton.\n- CI cross-compilation passes (may need `cross` or QEMU for testing on x86 CI runners).",
   "state": "ready",
   "priority": "low",
   "assignee": null,
   "dependencies": [],
-  "gates_required": [],
-  "gates_status": {},
+  "gates_required": [
+    "tdd-reminder",
+    "tests",
+    "clippy",
+    "fmt",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "tdd-reminder": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:59.037615635Z"
+    },
+    "fmt": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:59.037660765Z"
+    },
+    "clippy": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:59.037650635Z"
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:59.037671425Z"
+    },
+    "tests": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:59.037639695Z"
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:59.037681655Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -15,5 +53,5 @@
     "type:task"
   ],
   "created_at": "2026-02-21T23:11:16.329956805+00:00",
-  "updated_at": "2026-02-22T23:54:48.688975881+00:00"
+  "updated_at": "2026-02-25T22:47:59.037691935+00:00"
 }

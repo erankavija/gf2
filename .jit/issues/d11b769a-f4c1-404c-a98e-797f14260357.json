@@ -1,0 +1,22 @@
+{
+  "id": "d11b769a-f4c1-404c-a98e-797f14260357",
+  "title": "Wide accumulator integration for tower types",
+  "description": "Tower levels propagate Wide from the base field. QuadraticExt&lt;Fp&lt;P&gt;&gt; accumulates in (u128, u128) — two wide components. Reduction happens at Fp level only. max_unreduced_additions() inherits base field's bound. Enables delayed-reduction dot products in FieldVec/FieldMatrix.",
+  "state": "backlog",
+  "priority": "low",
+  "assignee": null,
+  "dependencies": [
+    "3f3d6c23-d75d-44a6-99cf-5b93db609acd",
+    "8d2863e6-9e38-424f-918a-55d3c2fda5ee"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "component:gf2-core",
+    "type:task"
+  ],
+  "created_at": "2026-02-26T00:09:07.515531647+00:00",
+  "updated_at": "2026-02-26T00:15:50.329046462+00:00"
+}

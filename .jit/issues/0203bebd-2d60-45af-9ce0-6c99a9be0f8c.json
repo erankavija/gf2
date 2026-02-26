@@ -1,0 +1,21 @@
+{
+  "id": "0203bebd-2d60-45af-9ce0-6c99a9be0f8c",
+  "title": "Design non-residue specification pattern for tower extensions",
+  "description": "Define how QuadraticExt and CubicExt know which irreducible polynomial to use at each tower level. Design decision: config trait (arkworks-style) vs const-generic vs runtime. Output: crates/gf2-core/src/gfpn/non_residue.rs with trait definitions.",
+  "state": "backlog",
+  "priority": "low",
+  "assignee": null,
+  "dependencies": [
+    "8ce6f8aa-9252-4ae6-ab5c-e702e961d460"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "component:gf2-core",
+    "type:task"
+  ],
+  "created_at": "2026-02-26T00:09:06.971401251+00:00",
+  "updated_at": "2026-02-26T00:09:07.646737637+00:00"
+}

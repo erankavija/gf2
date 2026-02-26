@@ -1,13 +1,51 @@
 {
   "id": "0458fa04-0055-416f-b36a-71d764af1d8e",
   "title": "Implement Barrett reduction for GF(2^m) polynomial arithmetic",
-  "description": "Implement Barrett reduction for reducing polynomial products modulo an irreducible polynomial in GF(2^m). Precompute the reciprocal of the field polynomial to replace expensive polynomial division with multiplication and bit-shifts. This is the reduction complement to carry-less multiplication (PCLMULQDQ/PMULL).",
+  "description": "Implement Barrett reduction for efficient modular reduction of polynomial products in GF(2^m). This replaces expensive polynomial long division with precomputed-reciprocal multiplication, and is the reduction complement to carry-less multiplication (`PCLMULQDQ`/`PMULL`).\n\n## Background\n\nWhen multiplying two elements in GF(2^m), the raw product is a polynomial of degree up to 2(m-1), which must be reduced modulo the irreducible field polynomial P(x). The naive approach uses polynomial long division. Barrett reduction precomputes the reciprocal of P(x) and turns division into two multiplications and bit-shifts.\n\n## Algorithm\n\nGiven irreducible polynomial P(x) of degree m:\n\n1. **Precompute**: `mu = x^(2m) / P(x)` (the Barrett constant, a polynomial of degree m)\n2. **Reduce product c(x)** of degree ≤ 2m-2:\n   - `q = (c(x) >> m) * mu >> m` (estimate quotient via multiplication by reciprocal)\n   - `r = c(x) XOR (q * P(x))` (subtract quotient × modulus)\n   - If `deg(r) >= m`, subtract P(x) once more (at most one correction)\n\nAll operations are carry-less (XOR for addition, `PCLMULQDQ` for multiplication), so this pairs naturally with the SIMD carry-less multiplication kernels.\n\n## API design\n\n```rust\n/// Precomputed Barrett reduction constants for a specific irreducible polynomial.\npub struct BarrettReducer {\n    /// The irreducible polynomial P(x), degree m.\n    modulus: u128,\n    /// The Barrett constant mu = x^(2m) / P(x).\n    mu: u128,\n    /// The field degree m.\n    degree: u32,\n}\n\nimpl BarrettReducer {\n    /// Precompute Barrett constants for the given irreducible polynomial.\n    pub fn new(irreducible_poly: u128, degree: u32) -> Self;\n\n    /// Reduce a 2m-bit product to an m-bit field element.\n    pub fn reduce(&self, product: u128) -> u64;\n}\n```\n\n## Integration points\n\n- Used by `Gf2mField` as an alternative to the current shift-and-XOR reduction in `gf2m/field.rs`.\n- Used by the carry-less multiplication SIMD kernels (055bda14) — the SIMD path computes the raw product via `PCLMULQDQ`, then Barrett-reduces.\n- The `BarrettReducer` can be precomputed once per field and reused for all multiplications.\n\n## Location\n\n`crates/gf2-core/src/gf2m/barrett.rs` (new file in the gf2m module)\n\n## Success criteria\n\n- Barrett reduction produces identical results to the current polynomial long division for all primitive polynomials m=2..16 in `primitive_polys.rs`.\n- Property test: for random a, b in GF(2^m), `barrett_reduce(clmul(a, b)) == naive_reduce(clmul(a, b))`.\n- Benchmark shows measurable speedup over naive reduction for m ≥ 8 when paired with `PCLMULQDQ`.",
   "state": "ready",
   "priority": "low",
   "assignee": null,
   "dependencies": [],
-  "gates_required": [],
-  "gates_status": {},
+  "gates_required": [
+    "tdd-reminder",
+    "tests",
+    "clippy",
+    "fmt",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "clippy": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:59.094729386Z"
+    },
+    "tests": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:59.094716856Z"
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:59.094753816Z"
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:59.094765866Z"
+    },
+    "tdd-reminder": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:59.094697326Z"
+    },
+    "fmt": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:59.094741186Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -15,5 +53,5 @@
     "type:task"
   ],
   "created_at": "2026-02-21T23:11:07.235907264+00:00",
-  "updated_at": "2026-02-22T23:54:41.474979699+00:00"
+  "updated_at": "2026-02-25T22:47:59.094777866+00:00"
 }

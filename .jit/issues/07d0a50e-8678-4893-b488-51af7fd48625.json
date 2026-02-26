@@ -2,12 +2,50 @@
   "id": "07d0a50e-8678-4893-b488-51af7fd48625",
   "title": "Add Hash, Sub, Neg impls to Gf2mElement",
   "description": "Add missing trait implementations to Gf2mElement required for FiniteField conformance:\n\n- `Hash`: hash only `self.value` (field identity is a precondition enforced by Arc::ptr_eq at arithmetic time, not part of the hash).\n- `Sub for Gf2mElement` and `Sub for &Gf2mElement`: delegate to Add (characteristic 2: subtraction = addition = XOR).\n- `Neg for Gf2mElement` and `Neg for &Gf2mElement`: return self.clone() (characteristic 2: negation is identity).\n\nThese are prerequisites for implementing FiniteField on Gf2mElement.\n\nLocation: crates/gf2-core/src/gf2m/field.rs",
-  "state": "ready",
+  "state": "done",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [],
-  "gates_required": [],
-  "gates_status": {},
+  "gates_required": [
+    "tdd-reminder",
+    "tests",
+    "clippy",
+    "fmt",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "fmt": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-02-25T23:31:22.635597660Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:claude",
+      "updated_at": "2026-02-25T23:31:49.214897511Z"
+    },
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_by": "agent:claude",
+      "updated_at": "2026-02-25T22:53:26.257883965Z"
+    },
+    "clippy": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-02-25T23:31:21.831599235Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "agent:claude",
+      "updated_at": "2026-02-25T23:32:19.350082061Z"
+    },
+    "tests": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-02-25T23:31:11.914789202Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -15,5 +53,5 @@
     "component:gf2-core"
   ],
   "created_at": "2026-02-22T23:52:24.359407408+00:00",
-  "updated_at": "2026-02-22T23:52:24.359414118+00:00"
+  "updated_at": "2026-02-25T23:32:21.402658763+00:00"
 }

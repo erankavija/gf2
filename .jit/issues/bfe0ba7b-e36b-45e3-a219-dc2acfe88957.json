@@ -2,14 +2,52 @@
   "id": "bfe0ba7b-e36b-45e3-a219-dc2acfe88957",
   "title": "Design and implement FiniteField trait for generic field arithmetic",
   "description": "Define a two-tier trait system for generic finite field operations.\n\n## Tier 1: `FiniteField` (universal)\n\nCore trait for all field elements (const-generic and runtime-parameterized):\n\n- Supertraits: `Clone + PartialEq + Eq + Hash + Debug` + all arithmetic ops (`Add`, `Sub`, `Mul`, `Div`, `Neg`) with both owned and borrowed receivers\n- Identity: `is_zero()`, `is_one()`, `zero_like(&self)`, `one_like(&self)` — no freestanding constructors (runtime types cannot construct without field context)\n- Field info: `characteristic()` via associated type `Characteristic` (defaults to `u64`, extensible to `BigUint`), `extension_degree()`\n- Inversion: `inv() -> Self`\n\n### `Wide` associated type for delayed reduction\n\nInspired by fflas-ffpack's `MMHelper` bounds-tracking pattern. Enables generic matrix/vector kernels to accumulate multiply-add operations in a wider type and reduce only when overflow is imminent:\n\n```rust\ntype Wide: Clone + Add<Output = Self::Wide> + AddAssign;\nfn to_wide(&self) -> Self::Wide;\nfn mul_to_wide(&self, rhs: &Self) -> Self::Wide;\nfn reduce_wide(w: Self::Wide) -> Self;\nfn max_unreduced_additions() -> usize;\n```\n\nFor `Fp<P>` with `Wide = u128`: `max_unreduced_additions = (2^128 - 1) / (P - 1)^2`. For `Gf2_8` with `Wide = u16`: accumulate XORs without reduction (XOR never overflows). This is the critical enabler for performant `FieldVec::dot_product` and downstream `FieldMatrix` multiplication.\n\n## Tier 2: `ConstField: FiniteField + Copy`\n\nSubtrait for compile-time-known fields only:\n\n- Adds freestanding `zero() -> Self`, `one() -> Self`, `order() -> u64`\n- Only for const-generic types (`Fp<P>`, `Gf2_8`, etc.), not runtime-parameterized (`Gf2mElement`)\n\n## Tier 3: `FiniteFieldExt` (blanket extension)\n\nDefault-implemented convenience methods: `square()`, `pow()`, `frobenius()`.\n\nSee `dev/plans/gfpn_groundwork_analysis.md` section 4.1 for full specification.",
-  "state": "backlog",
+  "state": "done",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [
     "07d0a50e-8678-4893-b488-51af7fd48625"
   ],
-  "gates_required": [],
-  "gates_status": {},
+  "gates_required": [
+    "tdd-reminder",
+    "tests",
+    "clippy",
+    "fmt",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "fmt": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-02-26T00:08:40.401062109Z"
+    },
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_by": "agent:claude",
+      "updated_at": "2026-02-26T00:10:54.164058630Z"
+    },
+    "tests": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-02-26T00:08:25.674639581Z"
+    },
+    "clippy": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-02-26T00:08:38.596552189Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:claude",
+      "updated_at": "2026-02-26T00:10:55.332027289Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "agent:claude",
+      "updated_at": "2026-02-26T00:10:56.055390256Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -17,5 +55,5 @@
     "component:gf2-core"
   ],
   "created_at": "2026-02-21T19:35:51.812921984+00:00",
-  "updated_at": "2026-02-23T19:18:48.306006495+00:00"
+  "updated_at": "2026-02-26T00:10:58.979013693+00:00"
 }

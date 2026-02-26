@@ -1,0 +1,69 @@
+{
+  "name": "rust-tdd-docs",
+  "description": "Custom preset created from issue c6687a01",
+  "gates": [
+    {
+      "key": "tdd-reminder",
+      "title": "Write tests first (TDD)",
+      "description": "Reminder to write failing tests before implementation",
+      "stage": "precheck",
+      "mode": "manual"
+    },
+    {
+      "key": "tests",
+      "title": "All tests pass",
+      "description": "cargo test must pass",
+      "stage": "postcheck",
+      "mode": "auto",
+      "checker": {
+        "type": "exec",
+        "command": "cargo test",
+        "timeout_seconds": 300,
+        "working_dir": null,
+        "env": {}
+      }
+    },
+    {
+      "key": "clippy",
+      "title": "Clippy lints pass",
+      "description": "No clippy warnings allowed",
+      "stage": "postcheck",
+      "mode": "auto",
+      "checker": {
+        "type": "exec",
+        "command": "cargo clippy --all-targets -- -D warnings",
+        "timeout_seconds": 120,
+        "working_dir": null,
+        "env": {}
+      }
+    },
+    {
+      "key": "fmt",
+      "title": "Code formatted",
+      "description": "Code must be formatted with cargo fmt",
+      "stage": "postcheck",
+      "mode": "auto",
+      "checker": {
+        "type": "exec",
+        "command": "cargo fmt --check",
+        "timeout_seconds": 30,
+        "working_dir": null,
+        "env": {}
+      }
+    },
+    {
+      "key": "code-review",
+      "title": "Code review completed",
+      "description": "Another developer reviewed the code",
+      "stage": "postcheck",
+      "mode": "manual"
+    },
+    {
+      "key": "doc-review",
+      "title": "Documentation review completed",
+      "description": "Confirm that necessary documentation updates were made: doc comments on public APIs (description, arguments, examples, panics, complexity), relevant design docs updated, and CLAUDE.md module map reflects any new modules.",
+      "stage": "postcheck",
+      "mode": "manual"
+    }
+  ]
+}

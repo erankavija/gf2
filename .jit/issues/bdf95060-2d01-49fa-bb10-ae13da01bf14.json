@@ -1,15 +1,53 @@
 {
   "id": "bdf95060-2d01-49fa-bb10-ae13da01bf14",
   "title": "Implement batch polynomial operations for extension fields",
-  "description": "Implement batch/vectorized polynomial operations over GF(2^m) for improved throughput. This includes batch evaluation, batch GCD, and batch multiplication.",
-  "state": "backlog",
+  "description": "Implement batch and vectorized polynomial operations over arbitrary `FiniteField` types, extending the algebraic toolkit beyond single-element arithmetic to efficient polynomial-level computations.\n\n## Scope\n\n### Core polynomial type\n\n```rust\n/// A univariate polynomial over a finite field.\n/// Coefficients are stored in ascending degree order: [c₀, c₁, ..., cₙ]\n/// represents c₀ + c₁·x + c₂·x² + ... + cₙ·xⁿ.\npub struct FieldPoly<F: FiniteField> {\n    coeffs: Vec<F>,\n}\n```\n\n### Operations\n\n| Operation | Description | Complexity |\n|-----------|-------------|------------|\n| `evaluate(&self, point: &F)` | Horner's method evaluation | O(n) multiplications |\n| `batch_evaluate(&self, points: &[F])` | Evaluate at multiple points | O(n·k) or O(n log² n) with subproduct tree |\n| `mul(&self, other: &Self)` | Polynomial multiplication | O(n²) schoolbook, O(n log n) FFT |\n| `batch_mul(polys: &[Self])` | Product of multiple polynomials | O(n log n · log k) via binary tree |\n| `gcd(&self, other: &Self)` | Polynomial GCD (Euclidean algorithm) | O(n²) |\n| `batch_gcd(polys: &[Self])` | GCD of multiple polynomials | Pairwise reduction |\n| `interpolate(points: &[(F, F)])` | Lagrange interpolation | O(n²) or O(n log² n) |\n\n### Batch evaluation via subproduct tree\n\nFor evaluating a degree-n polynomial at k points, the subproduct tree method achieves O(n log² n) using:\n\n1. Build a binary tree of subproducts: `M_i = (x - x_i)` at leaves, products at internal nodes.\n2. Top-down remainder computation: reduce the polynomial modulo each subproduct.\n3. Leaf values are the evaluations.\n\nThis is critical for BCH/Reed-Solomon decoding where a single error-locator polynomial must be evaluated at all field elements.\n\n### NTT-based multiplication (for suitable fields)\n\nWhen the field supports efficient NTT (Number Theoretic Transform) — specifically when the multiplicative group order has a large power-of-2 factor — polynomial multiplication can use:\n\n1. NTT of both polynomials (O(n log n))\n2. Pointwise multiplication (O(n))\n3. Inverse NTT (O(n log n))\n\nThis requires Proth primes (k·2^n + 1) or fields with primitive roots of unity of sufficient order.\n\n## Integration with existing code\n\nThe current `gf2m/` module has polynomial operations hardcoded for `Gf2mElement`. This new module provides generic versions:\n- `Gf2mPoly` operations can delegate to `FieldPoly<Gf2mElement>` (or remain specialized for performance)\n- BCH decoding in `gf2-coding` can eventually use generic polynomial operations\n\n## Location\n\n`crates/gf2-core/src/field/poly.rs` (new file in the field module)\n\n## Dependencies\n\n- bfe0ba7b (FiniteField trait) — all polynomial operations are generic over `F: FiniteField`\n\n## Success criteria\n\n- Polynomial multiplication is correct: `(a·b)(x) == a(x)·b(x)` for all x (property test).\n- Horner evaluation matches naive sum-of-terms evaluation.\n- Batch evaluation via subproduct tree produces identical results to individual Horner evaluations.\n- Interpolation round-trips: `interpolate(points).evaluate(x_i) == y_i` for all input points.\n- Benchmark: subproduct-tree batch evaluation is faster than k individual Horner evaluations for k ≥ 16, n ≥ 16.",
+  "state": "ready",
   "priority": "low",
   "assignee": null,
   "dependencies": [
     "bfe0ba7b-e36b-45e3-a219-dc2acfe88957"
   ],
-  "gates_required": [],
-  "gates_status": {},
+  "gates_required": [
+    "tdd-reminder",
+    "tests",
+    "clippy",
+    "fmt",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "fmt": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:58.994441212Z"
+    },
+    "tests": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:58.994410312Z"
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:58.994472552Z"
+    },
+    "tdd-reminder": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:58.994380332Z"
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:58.994456962Z"
+    },
+    "clippy": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:58.994426392Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -17,5 +55,5 @@
     "component:gf2-core"
   ],
   "created_at": "2026-02-21T19:35:51.773062501+00:00",
-  "updated_at": "2026-02-22T23:52:15.975624007+00:00"
+  "updated_at": "2026-02-26T00:10:56.111279668+00:00"
 }

@@ -1,7 +1,7 @@
 {
   "id": "b59fa661-ef1f-4e04-8d96-c95f2160b306",
   "title": "Implement AVX-512 IFMA kernels for prime field batch operations",
-  "description": "Implement AVX-512 IFMA (Integer Fused Multiply-Add) kernels using VPMA52HUQ/VPMA52LUQ instructions for GF(p) batch operations. Map GF(p) operations to 52-bit limbs for 8 parallel field multiplications.",
+  "description": "Implement AVX-512 IFMA (Integer Fused Multiply-Add) kernels for GF(p) batch arithmetic using `VPMADD52HUQ`/`VPMADD52LUQ` instructions. These instructions perform `(a × b) + c` on packed 52-bit integers, enabling 8 parallel field multiplications per instruction.\n\n## Background\n\nAVX-512 IFMA (available on Intel Ice Lake+ and AMD Zen 4+) provides fused multiply-add on 52-bit integer operands packed in 512-bit registers. This is the optimal instruction for modular arithmetic on primes that fit in 52 bits, which covers the vast majority of practical prime fields (p < 2^52).\n\n## Target instructions\n\n| Instruction | Operation | Throughput |\n|-------------|-----------|------------|\n| `VPMADD52LUQ` | Low half: `(a[51:0] × b[51:0])[51:0] + c` | 8 parallel ops/instruction |\n| `VPMADD52HUQ` | High half: `(a[51:0] × b[51:0])[103:52] + c` | 8 parallel ops/instruction |\n\nTogether, these compute an exact 104-bit product + 64-bit accumulator for 8 independent field elements simultaneously.\n\n## Kernel operations\n\n### Batch Montgomery multiplication\n```rust\n/// Multiply 8 GF(p) elements in parallel using IFMA + Montgomery reduction.\n/// Inputs and outputs are in Montgomery form.\npub unsafe fn batch_mul_mont_ifma(\n    a: &[u64; 8],\n    b: &[u64; 8],\n    p: u64,\n    p_inv: u64,\n) -> [u64; 8];\n```\n\n### Batch modular addition/subtraction\n```rust\n/// Branchless modular addition of 8 elements.\n/// result = (a + b) - P if (a + b) >= P, else (a + b)\n/// Uses AVX-512 mask comparison to avoid branches.\npub unsafe fn batch_add_mod_ifma(a: &[u64; 8], b: &[u64; 8], p: u64) -> [u64; 8];\n```\n\n### Batch dot product with delayed reduction\n```rust\n/// Compute dot product of two FieldVec slices using IFMA.\n/// Accumulates multiply-adds in wide (104-bit) registers, reducing\n/// only when overflow is imminent (kmax scheduling).\npub unsafe fn batch_dot_product_ifma(\n    a: &[u64],\n    b: &[u64],\n    p: u64,\n    p_inv: u64,\n    kmax: usize,\n) -> u64;\n```\n\n## Limb decomposition for p > 52 bits\n\nFor primes 52 < p < 64 bits, a single IFMA multiply doesn't suffice. Two approaches:\n\n1. **Two-limb decomposition**: Split each 64-bit element into two 52-bit limbs. Multiplication becomes 3 IFMA instructions (Karatsuba on the limbs) + reduction.\n2. **Fallback to scalar Montgomery**: For primes near 2^64, scalar may be faster than the limb overhead.\n\nBenchmark both and select via the runtime dispatch mechanism.\n\n## Location\n\n- Kernels: `crates/gf2-kernels-simd/src/x86/ifma.rs` (new file)\n- Safe wrappers: Integration with `FieldBackend` dispatch in `gf2-core`\n\n## Dependencies\n\n- 4b5d8948 (AVX-512 SIMD backend) — the AVX-512 infrastructure and runtime detection must exist\n- 8ce6f8aa (Montgomery multiplication for GF(p)) — scalar Montgomery must exist as the reference implementation and fallback\n\n## Success criteria\n\n- Batch multiplication produces identical results to scalar Montgomery for all tested primes.\n- Throughput: ≥4× improvement over scalar Montgomery for Fp<65537> batch multiplications.\n- Dot product: within 2× of fflas-ffpack's `fdot` for equivalent prime field sizes.\n- Runtime detection: gracefully falls back to scalar on CPUs without IFMA support.",
   "state": "backlog",
   "priority": "low",
   "assignee": null,
@@ -9,8 +9,46 @@
     "4b5d8948-79ab-47f3-a90a-104317840f17",
     "8ce6f8aa-9252-4ae6-ab5c-e702e961d460"
   ],
-  "gates_required": [],
-  "gates_status": {},
+  "gates_required": [
+    "tdd-reminder",
+    "tests",
+    "clippy",
+    "fmt",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "tests": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:58.980514774Z"
+    },
+    "tdd-reminder": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:58.980494494Z"
+    },
+    "fmt": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:58.980542874Z"
+    },
+    "clippy": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:58.980529104Z"
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:58.980560504Z"
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:58.980572504Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -18,5 +56,5 @@
     "component:gf2-kernels-simd"
   ],
   "created_at": "2026-02-21T19:35:51.866968126+00:00",
-  "updated_at": "2026-02-21T19:35:52.036382010+00:00"
+  "updated_at": "2026-02-25T22:47:58.980584294+00:00"
 }

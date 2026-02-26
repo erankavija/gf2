@@ -10,8 +10,46 @@
     "a8cdcfe3-b0f2-4bad-b428-f11d81f12e62",
     "54a60c90-2972-42c3-ab1a-4f4f2ae1c22b"
   ],
-  "gates_required": [],
-  "gates_status": {},
+  "gates_required": [
+    "tdd-reminder",
+    "tests",
+    "clippy",
+    "fmt",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "tdd-reminder": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:58.973630865Z"
+    },
+    "fmt": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:58.973679725Z"
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:58.973693875Z"
+    },
+    "clippy": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:58.973665725Z"
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:58.973707875Z"
+    },
+    "tests": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:58.973651485Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -20,5 +58,5 @@
     "component:gf2-kernels-simd"
   ],
   "created_at": "2026-02-21T19:35:51.857178518+00:00",
-  "updated_at": "2026-02-23T19:18:58.595767680+00:00"
+  "updated_at": "2026-02-25T22:47:58.973721805+00:00"
 }
