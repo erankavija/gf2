@@ -11,4 +11,7 @@
 
 mod traits;
 
+#[cfg(test)]
+mod axiom_tests;
+
 pub use traits::{ConstField, FiniteField, FiniteFieldExt};
