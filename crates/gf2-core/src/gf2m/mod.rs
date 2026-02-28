@@ -5,5 +5,7 @@
 mod field;
 pub mod generation;
 mod thread_safety_tests;
+pub mod uint_ext;
 
 pub use field::*;
+pub use uint_ext::UintExt;

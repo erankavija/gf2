@@ -124,7 +124,7 @@ impl BchCode {
     /// ```
     pub fn new(n: usize, k: usize, t: usize, field: Gf2mField) -> Self {
         assert!(n > k, "Codeword length must exceed message length");
-        assert!(n < field.order(), "n must divide 2^m - 1");
+        assert!((n as u64) < field.order(), "n must divide 2^m - 1");
         assert!(t > 0, "Error correction capability must be positive");
 
         // Ensure field has tables (needed for primitive element)
@@ -182,7 +182,7 @@ impl BchCode {
         generator: Gf2mPoly,
     ) -> Self {
         assert!(n > k, "Codeword length must exceed message length");
-        assert!(n < field.order(), "n must divide 2^m - 1");
+        assert!((n as u64) < field.order(), "n must divide 2^m - 1");
         assert!(t > 0, "Error correction capability must be positive");
 
         let designed_distance = 2 * t + 1;
