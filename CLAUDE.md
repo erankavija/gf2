@@ -58,15 +58,16 @@ This is a Cargo workspace with three crates:
 
 | Module | Purpose |
 |--------|---------|
-| `bitvec` / `bitslice` | `BitVec` (owning) and `BitSlice`/`BitSliceMut` (borrowed) — dense bit storage in `Vec<u64>`, little-endian bit order |
+| `bitvec` / `bitslice` | Dense bit storage in `Vec<u64>`, little-endian bit order |
 | `matrix` | `BitMatrix` — row-major bit-packed matrix |
-| `sparse` | `SpBitMatrix` / `SpBitMatrixDual` — CSR/CSC sparse matrices |
+| `sparse` | CSR/CSC sparse matrices |
 | `alg/` | M4RM multiplication, Gauss-Jordan inversion, RREF |
-| `gf2m/` | Extension field GF(2^m) arithmetic (Karatsuba, SIMD), primitive polynomial generation |
+| `field/` | `FiniteField` / `ConstField` trait hierarchy and axiom test harness |
+| `gf2m/` | GF(2^m) arithmetic, generic over storage width via sealed `UintExt` trait |
 | `primitive_polys` | Static database of primitive polynomials for m=2..16 |
-| `kernels/` | Runtime dispatch to scalar or SIMD backends; imperative/mutation-heavy by design |
+| `kernels/` | Runtime dispatch to scalar or SIMD backends |
 | `compute/` | Parallel batch operations (rayon backend) |
-| `io/` | Serde-based serialization for BitVec and matrices (feature-gated) |
+| `io/` | Serde-based serialization (feature-gated) |
 
 ### gf2-coding module map
 

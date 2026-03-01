@@ -55,7 +55,7 @@ See [crates/gf2-coding/README.md](crates/gf2-coding/README.md) for detailed feat
 - **Tail masking invariant**: Padding bits always zeroed for correctness
 - **Test-driven development**: Comprehensive unit and property-based tests
 - **Safe by default**: `#![deny(unsafe_code)]` at crate level
-- **MSRV**: Rust 1.74+
+- **MSRV**: Rust 1.80+
 
 ## Quick Start
 

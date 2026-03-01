@@ -195,14 +195,16 @@ for col in sparse.row_iter(0) {
 Fast multiplication, division, and inversion in binary extension fields:
 
 ```rust
-use gf2_core::gf2m::{Gf2mField, Gf2mPoly};
+use gf2_core::gf2m::Gf2mField;
 
 // GF(2^8) with primitive polynomial x^8 + x^4 + x^3 + x + 1
-let field = Gf2mField::new(8, 0b100011011);
-let a = Gf2mPoly::from_int(0x53);
-let b = Gf2mPoly::from_int(0xCA);
-let product = field.mul(&a, &b);
+let field = Gf2mField::new(8, 0b100011101).with_tables();
+let a = field.element(0x53);
+let b = field.element(0xCA);
+let product = &a * &b;  // O(1) via log/antilog tables
 ```
+
+All field elements implement the generic `FiniteField` trait (see `field` module).
 
 [→ Full GF(2^m) documentation](docs/GF2M.md)
 

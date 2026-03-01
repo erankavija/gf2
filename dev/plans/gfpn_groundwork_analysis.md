@@ -1,4 +1,4 @@
-# GF(p^n) Groundwork: Architectural Analysis (v2)
+# GF(p^n) Groundwork: Architectural Analysis (v3)
 
 > Analysis for epic e095a100 — "Implement general Galois field GF(p^m) arithmetic"
 >
@@ -9,6 +9,12 @@
 > v2: Revised after critical review. Addresses trait design issues for runtime-parameterized
 > types, characteristic representation, missing `Fp<P>` groundwork, dependency graph
 > corrections, and `Hash`/`Ord` considerations.
+>
+> v3: Updated to reflect completed work. `FiniteField` + `ConstField` traits implemented.
+> `Gf2mElement` generified to `Gf2mElement_<V: UintExt>` with sealed trait for `u8`..`u128`.
+> Trait uses instance methods (`&self`) for `characteristic()` and `extension_degree()`,
+> resolving the static-method tension described in v2 §4.1.3. `Hash`, `Sub`, `Neg`, `AddAssign`
+> added to `Gf2mElement`. Property-based axiom test harness implemented.
 
 ## 1. Scope and Constraints
 
@@ -26,11 +32,13 @@ GF(p), GF(2^n), and GF(p^n). Four non-negotiable constraints govern the design:
 
 ## 2. Current Architecture
 
+> **v3 note**: Section updated to reflect implemented state.
+
 | Layer | Design | Limitation for GF(p^n) |
 |-------|--------|------------------------|
-| **Field types** | `Gf2mElement { value: u64, params: Arc<FieldParams> }` | Runtime-parameterized. Arc clone on every arithmetic result. No type-level encoding. |
-| **Traits** | None for fields. Coding traits (`BlockEncoder` etc.) hardcoded to `BitVec`. | Cannot write generic algorithms over arbitrary fields. |
-| **Kernels** | `Backend` trait = bitwise ops (AND/OR/XOR/NOT/popcount). | No modular arithmetic, no PCLMULQDQ dispatch, no integer SIMD. |
+| **Field types** | `Gf2mElement_<V: UintExt>` with `value: V, params: Arc<FieldParams_<V>>`. Generic over `u8`..`u128` via sealed `UintExt` trait. Type alias `Gf2mElement = Gf2mElement_<u64>`. | Runtime-parameterized. Arc clone on every arithmetic result. No type-level encoding of field parameters. |
+| **Traits** | `FiniteField` + `ConstField` + `FiniteFieldExt` in `field/traits.rs`. `Gf2mElement_<V>` implements `FiniteField`. Coding traits still hardcoded to `BitVec`. | Coding traits not yet generic over `FiniteField`. |
+| **Kernels** | `Backend` trait = bitwise ops (AND/OR/XOR/NOT/popcount). | No modular arithmetic, no integer SIMD for GF(p). |
 | **SIMD crate** | `gf2-kernels-simd` = logical ops + GF(2^m) carryless mul. | No GF(p) modular reduction kernels. |
 | **Binary field API** | `BitVec`, `BitMatrix`, M4RM, Gauss-Jordan — mature, ergonomic. | Must remain untouched. |
 
@@ -41,8 +49,8 @@ Elements are always created through a field handle, never standalone:
 ```rust
 let field = Gf2mField::gf256().with_tables();
 let a = field.element(42);   // Arc::clone of field's params
-let z = field.zero();        // Arc::clone → Gf2mElement { value: 0, params: ... }
-let o = field.one();         // Arc::clone → Gf2mElement { value: 1, params: ... }
+let z = field.zero();        // Arc::clone → Gf2mElement_<u64> { value: 0, params: ... }
+let o = field.one();         // Arc::clone → Gf2mElement_<u64> { value: 1, params: ... }
 ```
 
 There is no `Gf2mElement::new()` — elements cannot exist without a field context. Every
@@ -50,8 +58,9 @@ arithmetic result (`a + b`, `a * b`) also clones the Arc. Field identity is chec
 `Arc::ptr_eq`, so two independently-constructed `Gf2mField::gf256()` instances produce
 elements that cannot be mixed, even though mathematically they are the same field.
 
-Current trait impls on `Gf2mElement`: `Clone`, `Debug`, `PartialEq`, `Eq`, `Add`, `Mul`,
-`Div`, `Display`. **Not** implemented: `Sub`, `Neg`, `Hash`, `Ord`, `Copy`.
+Trait impls on `Gf2mElement_<V>`: `Clone`, `Debug`, `PartialEq`, `Eq`, `Hash`, `Add`,
+`Sub`, `Neg`, `Mul`, `Div`, `AddAssign`, `Display`, `FiniteField`. **Not** implemented:
+`Ord`, `Copy`, `ConstField`.
 
 ## 3. The Central Design Tension
 
@@ -85,17 +94,17 @@ resolution is to split the concern.
 
 ### 4.1 Trait Hierarchy: Two Tiers
 
+> **v3 note**: This section now reflects the implemented trait signatures in
+> `crates/gf2-core/src/field/traits.rs`. Key differences from the v2 proposal:
+> `characteristic()` and `extension_degree()` take `&self` (instance methods, not static),
+> resolving the runtime-type tension. `Wide` accumulator type added. `AddAssign` in
+> supertraits. `ConstField::order()` returns `u128`.
+
 The design uses two trait tiers: `FiniteField` for all field elements (including
 runtime-parameterized), and `ConstField` for compile-time-known fields where zero-cost
 identity construction is possible.
 
 ```rust
-/// A finite field element. Covers both const-generic and runtime-parameterized fields.
-///
-/// The trait does NOT include `zero()` or `one()` as associated functions because
-/// runtime-parameterized types cannot construct identity elements without field context.
-/// Use `is_zero()` / `is_one()` for testing, and `ConstField::zero()` / `one()` for
-/// construction when the field is known at compile time.
 pub trait FiniteField:
     Sized + Clone + PartialEq + Eq + Hash + Debug
     + Add<Output = Self> + Sub<Output = Self>
@@ -105,51 +114,35 @@ pub trait FiniteField:
     + for<'a> Sub<&'a Self, Output = Self>
     + for<'a> Mul<&'a Self, Output = Self>
     + for<'a> Div<&'a Self, Output = Self>
+    + AddAssign + for<'a> AddAssign<&'a Self>
 {
-    /// The type used to represent the field characteristic.
-    /// `u64` for small fields, `[u64; N]` or a bigint for cryptographic fields.
     type Characteristic: Clone + Debug + PartialEq + Eq;
+    type Wide: Clone + Add<Output = Self::Wide> + AddAssign;
 
-    /// Field characteristic (2 for binary fields, p for GF(p^n)).
-    fn characteristic() -> Self::Characteristic;
-
-    /// Extension degree (1 for prime fields, m for GF(p^m)).
-    fn extension_degree() -> usize;
-
-    /// Test for the additive identity.
+    fn characteristic(&self) -> Self::Characteristic;
+    fn extension_degree(&self) -> usize;
     fn is_zero(&self) -> bool;
-
-    /// Test for the multiplicative identity.
     fn is_one(&self) -> bool;
-
-    /// Multiplicative inverse. Returns `None` for zero.
     fn inv(&self) -> Option<Self>;
-
-    /// Additive identity, constructed relative to an existing element's field context.
-    /// For const-generic types this ignores the argument; for runtime types it clones
-    /// the field context.
     fn zero_like(&self) -> Self;
-
-    /// Multiplicative identity, constructed relative to an existing element's field context.
     fn one_like(&self) -> Self;
+
+    // Wide accumulator for delayed-reduction dot products
+    fn to_wide(&self) -> Self::Wide;
+    fn mul_to_wide(&self, rhs: &Self) -> Self::Wide;
+    fn reduce_wide(wide: &Self::Wide) -> Self;
+    fn max_unreduced_additions() -> usize;
 }
 
-/// A finite field where the field itself is fully determined at compile time.
-/// Enables zero-cost identity construction and `Copy` semantics.
-///
-/// All const-generic field types (`Fp<P>`, `Gf2_8`, `Gf2_16`) implement this.
-/// Runtime-parameterized types (`Gf2mElement`) do NOT.
 pub trait ConstField: FiniteField + Copy {
-    /// The additive identity. Zero-cost for const-generic types.
     fn zero() -> Self;
-
-    /// The multiplicative identity. Zero-cost for const-generic types.
     fn one() -> Self;
-
-    /// Field order (number of elements). `p^m`.
-    fn order() -> u64;
+    fn order() -> u128;
 }
 ```
+
+See `field/traits.rs` for full doc comments and `field/axiom_tests.rs` for the
+property-based verification harness.
 
 **Design rationale**:
 
@@ -232,56 +225,42 @@ impl<T: FiniteField> FiniteFieldExt for T {}
 
 ### 4.1.2 How `Gf2mElement` Implements the Trait
 
-The existing `Gf2mElement` implements `FiniteField` but **not** `ConstField`:
+> **v3 note**: Implemented. All trait impls in place including `Hash`, `Sub`, `Neg`,
+> `AddAssign`. The `&self` receiver for `characteristic()` and `extension_degree()`
+> resolved the static-method problem cleanly.
+
+`Gf2mElement_<V: UintExt>` implements `FiniteField` but **not** `ConstField`:
 
 ```rust
-impl FiniteField for Gf2mElement {
+impl<V: UintExt> FiniteField for Gf2mElement_<V> {
     type Characteristic = u64;
+    type Wide = Self;  // XOR never overflows
 
-    fn characteristic() -> u64 { 2 }
-    fn extension_degree() -> usize {
-        // Problem: m is not known at the type level.
-        // This method cannot be implemented correctly as a static method
-        // for runtime-parameterized types. See section 4.1.3.
-        panic!("Gf2mElement::extension_degree() requires an instance; use instance methods")
-    }
-
-    fn is_zero(&self) -> bool { self.value == 0 }
-    fn is_one(&self) -> bool { self.value == 1 }
+    fn characteristic(&self) -> u64 { 2 }
+    fn extension_degree(&self) -> usize { self.params.m }
+    fn is_zero(&self) -> bool { self.value == V::ZERO }
+    fn is_one(&self) -> bool { self.value == V::ONE }
     fn inv(&self) -> Option<Self> { self.inverse() }
 
     fn zero_like(&self) -> Self {
-        Gf2mElement { value: 0, params: Arc::clone(&self.params) }
+        Gf2mElement_ { value: V::ZERO, params: Arc::clone(&self.params) }
     }
     fn one_like(&self) -> Self {
-        Gf2mElement { value: 1, params: Arc::clone(&self.params) }
+        Gf2mElement_ { value: V::ONE, params: Arc::clone(&self.params) }
     }
+
+    fn to_wide(&self) -> Self { self.clone() }
+    fn mul_to_wide(&self, rhs: &Self) -> Self { self.clone() * rhs }
+    fn reduce_wide(wide: &Self) -> Self { wide.clone() }
+    fn max_unreduced_additions() -> usize { usize::MAX }
 }
 ```
 
-New trait impls that must be added to `Gf2mElement`:
-- `Hash`: hash `self.value` only (field identity is a precondition, not part of the hash).
-- `Sub`: delegate to `Add` (char 2: subtraction = addition).
-- `Neg`: return `self.clone()` (char 2: negation is identity).
-- `Div`: already implemented.
+### 4.1.3 The `extension_degree()` Problem — RESOLVED
 
-### 4.1.3 The `extension_degree()` Problem
-
-`extension_degree()` is declared as `fn extension_degree() -> usize` (no `&self`). This
-is correct for const-generic types where `m` is part of the type. But `Gf2mElement` has
-a single Rust type for all values of `m` — there is no type-level distinction between
-GF(2^8) and GF(2^16).
-
-**Resolution**: `extension_degree()` is a *static* property of the field. For
-runtime-parameterized types it returns a sentinel or panics. Runtime code that needs `m`
-uses the existing `Gf2mField::degree()` method. Generic algorithms that need
-`extension_degree()` should bound on `ConstField` where the value is meaningful.
-
-This is acceptable because:
-1. The primary path is const-generic types where `extension_degree()` is correct.
-2. `Gf2mElement` is the compatibility layer, not the primary target.
-3. Algorithms that truly need the degree at compile time (e.g., for fixed-size arrays)
-   must use `ConstField` anyway.
+> **v3 note**: Resolved by making `characteristic()` and `extension_degree()` instance
+> methods (`&self` receiver) rather than static methods. `Gf2mElement_<V>` returns
+> `self.params.m` — no panic, no sentinel. This is simpler and works for all types.
 
 ### 4.2 Naming and Crate Structure: Plan for the Rename
 
@@ -359,29 +338,18 @@ unacceptable for inner-loop performance (matrix multiplication, polynomial evalu
 
 The groundwork items, in dependency order:
 
-### Phase 1: The Trait Foundation (immediate)
+### Phase 1: The Trait Foundation ✅ COMPLETE
 
-1. **`FiniteField` + `ConstField` + `FiniteFieldExt` trait definitions** — The `field/`
-   module with the core traits as specified in section 4.1. No dependencies on benchmarks
-   or SIMD — this is a pure algebraic abstraction.
+1. ✅ **`FiniteField` + `ConstField` + `FiniteFieldExt` trait definitions** —
+   Implemented in `field/traits.rs`. Includes `Wide` accumulator type for delayed reduction.
 
-2. **Generic property-based field axiom test harness** — A test harness parameterized over
-   `T: FiniteField` that verifies:
-   - Additive group: associativity, commutativity, identity (`zero_like`), inverse (`neg`)
-   - Multiplicative group: associativity, commutativity, identity (`one_like`), inverse (`inv`)
-   - Distributivity: `a * (b + c) = a * b + a * c`
-   - Characteristic: `sum of p ones = zero`
-   - Division: `a / b = a * b.inv()` for non-zero `b`
-   - Subtraction: `a - b + b = a`
-   - `Hash` consistency: `a == b → hash(a) == hash(b)`
+2. ✅ **Generic property-based field axiom test harness** — Implemented in
+   `field/axiom_tests.rs`. 1000 cases per axiom. Also tests `Wide` roundtrip, `square()`,
+   `pow()`, `frobenius()`, Freshman's Dream.
 
-   Every future field type plugs into this harness automatically. **This harness gates all
-   subsequent field implementations** — no field type is considered correct without passing
-   the axiom tests.
-
-3. **`Gf2mElement` implements `FiniteField`** — Validates the trait against existing code.
-   Adds `Hash`, `Sub`, `Neg` impls. No behavioral changes to `Gf2mElement` arithmetic.
-   Runs the axiom test harness against GF(2^4), GF(2^8), GF(2^16).
+3. ✅ **`Gf2mElement_<V>` implements `FiniteField`** — Generic over `V: UintExt`.
+   `Hash`, `Sub`, `Neg`, `AddAssign` added. Axiom tests pass for GF(2^4), GF(2^8), GF(2^16).
+   Also: storage generified from fixed `u64` to `V: UintExt` sealed trait (`u8`..`u128`).
 
 4. **`Fp<const P: u64>` naive prime field implementation** — A minimal const-generic
    prime field type using simple `%` reduction. Implements both `FiniteField` and
@@ -403,13 +371,13 @@ The groundwork items, in dependency order:
    impl<const P: u64> ConstField for Fp<P> {
        fn zero() -> Self { Fp(0) }
        fn one() -> Self { Fp(1) }
-       fn order() -> u64 { P }
+       fn order() -> u128 { P as u128 }
    }
 
    impl<const P: u64> FiniteField for Fp<P> {
        type Characteristic = u64;
-       fn characteristic() -> u64 { P }
-       fn extension_degree() -> usize { 1 }
+       fn characteristic(&self) -> u64 { P }
+       fn extension_degree(&self) -> usize { 1 }
        fn is_zero(&self) -> bool { self.0 == 0 }
        fn is_one(&self) -> bool { self.0 == 1 }
        fn inv(&self) -> Option<Self> {
@@ -513,18 +481,22 @@ The following changes to the JIT issue graph are required to match this build or
 
 ### Issues to create
 
-| Title | Type | Priority | Depends on | Blocks |
-|-------|------|----------|------------|--------|
-| Implement naive `Fp<P>` prime field with `FiniteField` + `ConstField` | task | normal | bfe0ba7b (trait), 2248b17d (axiom tests) | 8ce6f8aa (Montgomery), 1f2f8371 (specialized primes) |
-| Add `Hash`, `Sub`, `Neg` impls to `Gf2mElement` | task | normal | — | bfe0ba7b (trait impl for Gf2mElement) |
-| Implement generic `FieldVec<F: FiniteField>` container (scalar) | task | normal | bfe0ba7b (trait) | 0fb99491 (SIMD FieldVec) |
+> **v3 note**: All three issues below have been created in JIT.
+
+| Title | Type | Priority | Depends on | Blocks | Status |
+|-------|------|----------|------------|--------|--------|
+| Implement naive `Fp<P>` prime field (350bff7f) | task | normal | 2248b17d (axiom tests) | 8ce6f8aa (Montgomery) | backlog |
+| ~~Add `Hash`, `Sub`, `Neg` impls to `Gf2mElement`~~ | task | normal | — | bfe0ba7b | ✅ done (folded into bfe0ba7b) |
+| Implement generic `FieldVec<F>` container (54a60c90) | task | normal | bfe0ba7b (trait) | 0fb99491 (SIMD FieldVec) | ready |
 
 ### Issues to modify
 
-| Issue | Change |
-|-------|--------|
-| 0fb99491 (FieldVec with SIMD) | Rename to "SIMD-accelerated FieldVec operations". Add dependency on new generic FieldVec task. This issue becomes the SIMD *optimization* of the generic container, not the container itself. |
-| bfe0ba7b (FiniteField trait) | Remove dependency on 9effa2e2. Update description to reflect the two-tier trait design (`FiniteField` + `ConstField`). Move to `ready` state. |
+> **v3 note**: Both modifications have been applied.
+
+| Issue | Change | Status |
+|-------|--------|--------|
+| 0fb99491 (FieldVec with SIMD) | Renamed to "SIMD-accelerated FieldVec operations". Depends on 54a60c90. | ✅ done |
+| bfe0ba7b (FiniteField trait) | Dependency on 9effa2e2 removed. State: **done**. | ✅ done |
 
 ## 9. Risks and Mitigations
 
