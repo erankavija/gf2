@@ -1,5 +1,49 @@
 {
   "gates": {
+    "tdd-reminder": {
+      "version": 1,
+      "key": "tdd-reminder",
+      "title": "Write tests first (TDD)",
+      "description": "Reminder to write failing tests before implementation",
+      "stage": "precheck",
+      "mode": "manual",
+      "reserved": {},
+      "auto": false,
+      "example_integration": null
+    },
+    "doc-review": {
+      "version": 1,
+      "key": "doc-review",
+      "title": "Documentation review completed",
+      "description": "Confirm that necessary documentation updates were made: doc comments on public APIs (description, arguments, examples, panics, complexity), relevant design docs updated, and CLAUDE.md module map reflects any new modules.",
+      "stage": "postcheck",
+      "mode": "manual",
+      "reserved": {},
+      "auto": false,
+      "example_integration": null
+    },
+    "code-review": {
+      "version": 1,
+      "key": "code-review",
+      "title": "Code Review",
+      "description": "AI-powered code review against gf2 project standards",
+      "stage": "postcheck",
+      "mode": "auto",
+      "checker": {
+        "type": "exec",
+        "command": "./scripts/ai-review.sh",
+        "timeout_seconds": 120,
+        "working_dir": null,
+        "env": {
+          "REVIEWER_AGENT": "copilot -s --model gpt-5.3-codex"
+        },
+        "pass_context": true,
+        "prompt_file": "scripts/code-review-prompt.md"
+      },
+      "reserved": {},
+      "auto": true,
+      "example_integration": null
+    },
     "clippy": {
       "version": 1,
       "key": "clippy",
@@ -12,32 +56,11 @@
         "command": "cargo clippy --all-targets -- -D warnings",
         "timeout_seconds": 120,
         "working_dir": null,
-        "env": {}
+        "env": {},
+        "pass_context": false
       },
       "reserved": {},
       "auto": true,
-      "example_integration": null
-    },
-    "tdd-reminder": {
-      "version": 1,
-      "key": "tdd-reminder",
-      "title": "Write tests first (TDD)",
-      "description": "Reminder to write failing tests before implementation",
-      "stage": "precheck",
-      "mode": "manual",
-      "reserved": {},
-      "auto": false,
-      "example_integration": null
-    },
-    "code-review": {
-      "version": 1,
-      "key": "code-review",
-      "title": "Code review completed",
-      "description": "Another developer reviewed the code",
-      "stage": "postcheck",
-      "mode": "manual",
-      "reserved": {},
-      "auto": false,
       "example_integration": null
     },
     "fmt": {
@@ -52,7 +75,8 @@
         "command": "cargo fmt --check",
         "timeout_seconds": 30,
         "working_dir": null,
-        "env": {}
+        "env": {},
+        "pass_context": false
       },
       "reserved": {},
       "auto": true,
@@ -70,21 +94,11 @@
         "command": "cargo test",
         "timeout_seconds": 300,
         "working_dir": null,
-        "env": {}
+        "env": {},
+        "pass_context": false
       },
       "reserved": {},
       "auto": true,
-      "example_integration": null
-    },
-    "doc-review": {
-      "version": 1,
-      "key": "doc-review",
-      "title": "Documentation review completed",
-      "description": "Confirm that necessary documentation updates were made: doc comments on public APIs (description, arguments, examples, panics, complexity), relevant design docs updated, and CLAUDE.md module map reflects any new modules.",
-      "stage": "postcheck",
-      "mode": "manual",
-      "reserved": {},
-      "auto": false,
       "example_integration": null
     }
   }

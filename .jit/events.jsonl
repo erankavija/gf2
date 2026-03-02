@@ -414,3 +414,6 @@
 {"type":"issue_state_changed","id":"05e6bba2-1d05-4f4d-88d4-b50a567e21c6","issue_id":"350bff7f-d3dc-499c-8145-c8ec74a6ebb8","timestamp":"2026-03-02T18:13:55.814228622Z","from":"in_progress","to":"done"}
 {"type":"issue_completed","id":"d16de861-3983-4ba2-b621-8c53ec36d867","issue_id":"350bff7f-d3dc-499c-8145-c8ec74a6ebb8","timestamp":"2026-03-02T18:13:55.814258092Z"}
 {"type":"issue_state_changed","id":"e6049424-0f3d-4b75-829a-5c4703ebb284","issue_id":"8ce6f8aa-9252-4ae6-ab5c-e702e961d460","timestamp":"2026-03-02T18:13:55.990911744Z","from":"backlog","to":"ready"}
+{"type":"issue_created","id":"92ebc556-3ad4-4829-9e37-698b7e7a47b1","issue_id":"b99e475d-078e-47c9-a7b7-33093354c343","timestamp":"2026-03-02T22:18:28.227455117Z","title":"Test code-review gate","priority":"normal"}
+{"type":"gate_failed","id":"3e8a37ba-8248-4fb7-bfab-e8659be9b928","issue_id":"b99e475d-078e-47c9-a7b7-33093354c343","timestamp":"2026-03-02T22:20:35.102809175Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"434675e4-3680-4fd0-8588-fa6af76866a0","issue_id":"b99e475d-078e-47c9-a7b7-33093354c343","timestamp":"2026-03-02T22:21:17.833373463Z","gate_key":"code-review","updated_by":"auto:executor"}
