@@ -1,7 +1,7 @@
 {
   "id": "6fb4abad-8dd5-4c67-840b-6cb96c2fe7e7",
-  "title": "Support extended field degrees m > 64 in GF(2^m)",
-  "description": "Extend GF(2^m) arithmetic to support field degrees beyond 64 bits, which is the current limit of the single-`u64` representation in `Gf2mElement`. This requires multi-word polynomial representation and corresponding arithmetic operations.\n\n## Motivation\n\nThe current `Gf2mElement` stores field elements as `u64`, limiting GF(2^m) to m ≤ 64. Several applications need larger fields:\n- **AES-GCM / GHASH**: GF(2^128) for authenticated encryption\n- **Coding theory**: Some algebraic geometry codes use GF(2^m) with m > 64\n- **Cryptographic pairings**: Binary-field curves may use large extensions\n\n## Representation options\n\n### Option A: Fixed-size arrays via const generics\n\n```rust\n/// GF(2^m) element for m > 64, using N 64-bit words.\n/// N = ceil(m / 64).\npub struct Gf2mWide<const N: usize> {\n    words: [u64; N],\n    // Field parameters stored separately (const or Arc)\n}\n```\n\nPros: Stack-allocated, `Copy` when small, const-generic monomorphization.\nCons: Each N is a different type; need wrapper for runtime N.\n\n### Option B: Vec-backed for arbitrary m\n\n```rust\npub struct Gf2mBig {\n    words: Vec<u64>,\n    params: Arc<FieldParamsBig>,\n}\n```\n\nPros: Any m at runtime.\nCons: Heap allocation, no `Copy`, follows the `Gf2mElement` runtime pattern.\n\n**Recommended**: Start with Option A for GF(2^128) and GF(2^256) as `Gf2mWide<2>` and `Gf2mWide<4>`. Add Option B later if needed for research flexibility.\n\n## Multiplication algorithm selection\n\nFor multi-word polynomial multiplication, several algorithms apply:\n\n| Algorithm | Complexity | Best for |\n|-----------|-----------|----------|\n| **Schoolbook** | O(N^2) | N ≤ 4 words |\n| **Karatsuba** | O(N^1.585) | N = 4..16 words |\n| **Toom-Cook-3** | O(N^1.465) | N = 8..64 words |\n| **FFT-based** | O(N log N log log N) | N > 64 words |\n\nResearch question: What are the actual crossover points in practice with carry-less multiplication SIMD? The Karatsuba approach already exists in the current `gf2m` module for m ≤ 64 and can be extended recursively.\n\n## Reduction for m > 64\n\nBarrett reduction (0458fa04) generalizes naturally to multi-word polynomials. The Barrett constant `mu` becomes a multi-word polynomial, and the reduction uses multi-word carry-less multiplication.\n\nFor specific well-known polynomials (e.g., `x^128 + x^7 + x^2 + x + 1` for AES-GCM), hardcoded fast reduction using the sparse structure of the irreducible polynomial is preferred.\n\n## Location\n\n`crates/gf2-core/src/gf2m/wide.rs` (new file alongside existing `gf2m/`)\n\n## Dependencies\n\n- 2248b17d (property-based tests) — multi-word implementations must pass the full field axiom test harness\n\n## Success criteria\n\n- `Gf2mWide<2>` (GF(2^128)) passes the full field axiom test harness.\n- Multiplication is correct for the AES-GCM irreducible polynomial `x^128 + x^7 + x^2 + x + 1`.\n- `Gf2mWide<2>` implements `FiniteField` + `ConstField` (stack-allocated, `Copy`).\n- Performance: GF(2^128) multiplication within 2× of a handwritten `PCLMULQDQ`-based implementation (which is the eventual SIMD optimization target).",
+  "title": "Support multi-word GF(2^m) for field degrees m > 128",
+  "description": "Extend GF(2^m) arithmetic to support field degrees beyond what a single native integer can hold. With the generic `Gf2mElement_<V: UintExt>` storage (where V ∈ {u8, u16, u32, u64, u128}), the maximum field degree is now m ≤ bits(V), reaching up to m = 127 with `V = u128`. This issue covers multi-word representation for m beyond the u128 limit.\n\n## Motivation\n\nThe current `Gf2mElement_<V>` stores field elements as a single `V: UintExt`, with the largest supported backing type being `u128` (m ≤ 127). Several applications need larger fields:\n- **Coding theory**: Some algebraic geometry codes use GF(2^m) with m > 128\n- **Cryptographic pairings**: Binary-field curves may use large extensions\n\nNote: GF(2^128) for AES-GCM/GHASH is now reachable via `Gf2mElement_<u128>` without multi-word arithmetic.\n\n## Representation options\n\n### Option A: Fixed-size arrays via const generics\n\n```rust\n/// GF(2^m) element for m beyond u128, using N 64-bit words.\n/// N = ceil(m / 64).\npub struct Gf2mWide<const N: usize> {\n    words: [u64; N],\n    // Field parameters stored separately (const or Arc)\n}\n```\n\nPros: Stack-allocated, `Copy` when small, const-generic monomorphization.\nCons: Each N is a different type; need wrapper for runtime N.\n\n### Option B: Vec-backed for arbitrary m\n\n```rust\npub struct Gf2mBig {\n    words: Vec<u64>,\n    params: Arc<FieldParamsBig>,\n}\n```\n\nPros: Any m at runtime.\nCons: Heap allocation, no `Copy`, follows the `Gf2mElement_` runtime pattern.\n\n**Recommended**: Start with Option A for GF(2^256) and GF(2^512) as `Gf2mWide<4>` and `Gf2mWide<8>`. Add Option B later if needed for research flexibility.\n\n## Multiplication algorithm selection\n\nFor multi-word polynomial multiplication, several algorithms apply:\n\n| Algorithm | Complexity | Best for |\n|-----------|-----------|----------|\n| **Schoolbook** | O(N^2) | N ≤ 4 words |\n| **Karatsuba** | O(N^1.585) | N = 4..16 words |\n| **Toom-Cook-3** | O(N^1.465) | N = 8..64 words |\n| **FFT-based** | O(N log N log log N) | N > 64 words |\n\nResearch question: What are the actual crossover points in practice with carry-less multiplication SIMD?\n\n## Reduction for large m\n\nBarrett reduction (0458fa04) generalizes naturally to multi-word polynomials. For specific well-known polynomials, hardcoded fast reduction using the sparse structure of the irreducible polynomial is preferred.\n\n## Location\n\n`crates/gf2-core/src/gf2m/wide.rs` (new file alongside existing `gf2m/`)\n\n## Dependencies\n\n- 2248b17d (property-based tests) — multi-word implementations must pass the full field axiom test harness\n\n## Success criteria\n\n- `Gf2mWide<4>` (GF(2^256)) passes the full field axiom test harness.\n- `Gf2mWide<N>` implements `FiniteField` + `ConstField` (stack-allocated, `Copy`).\n- Performance: GF(2^256) multiplication within 2× of a handwritten SIMD implementation.",
   "state": "ready",
   "priority": "low",
   "assignee": null,
@@ -22,30 +22,30 @@
       "updated_by": null,
       "updated_at": "2026-02-25T22:47:59.015637389Z"
     },
+    "code-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:59.015626599Z"
+    },
     "tests": {
       "status": "pending",
       "updated_by": null,
       "updated_at": "2026-02-25T22:47:59.015593459Z"
     },
-    "clippy": {
+    "tdd-reminder": {
       "status": "pending",
       "updated_by": null,
-      "updated_at": "2026-02-25T22:47:59.015604659Z"
-    },
-    "code-review": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-02-25T22:47:59.015626599Z"
+      "updated_at": "2026-02-25T22:47:59.015571149Z"
     },
     "fmt": {
       "status": "pending",
       "updated_by": null,
       "updated_at": "2026-02-25T22:47:59.015615479Z"
     },
-    "tdd-reminder": {
+    "clippy": {
       "status": "pending",
       "updated_by": null,
-      "updated_at": "2026-02-25T22:47:59.015571149Z"
+      "updated_at": "2026-02-25T22:47:59.015604659Z"
     }
   },
   "context": {},
@@ -55,5 +55,5 @@
     "component:gf2-core"
   ],
   "created_at": "2026-02-21T19:35:51.777989720+00:00",
-  "updated_at": "2026-03-01T19:02:18.939701308+00:00"
+  "updated_at": "2026-03-01T19:09:34.491336269+00:00"
 }

@@ -41,6 +41,7 @@ mod bitvec;
 pub mod compute;
 pub mod field;
 pub mod gf2m;
+pub mod gfp;
 
 #[cfg(feature = "io")]
 pub mod io;

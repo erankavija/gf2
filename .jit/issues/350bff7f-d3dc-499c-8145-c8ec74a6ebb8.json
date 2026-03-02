@@ -2,9 +2,9 @@
   "id": "350bff7f-d3dc-499c-8145-c8ec74a6ebb8",
   "title": "Implement naive Fp<P> prime field with FiniteField + ConstField",
   "description": "Implement a minimal const-generic prime field type Fp<const P: u64> using simple % reduction. This is the second concrete implementation of the FiniteField trait (after Gf2mElement) and the first for characteristic != 2.\n\nImplements both FiniteField and ConstField traits. Validates that:\n- The trait generalizes beyond GF(2^m)\n- Sub and Neg work correctly for odd characteristic\n- zero() / one() work as freestanding associated functions via ConstField\n- The axiom test harness works for prime fields\n\nThe naive implementation is intentionally unoptimized — Montgomery multiplication (8ce6f8aa) replaces the internals later without changing the public API.\n\n```rust\n#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]\npub struct Fp<const P: u64>(u64);\n```\n\nInverse via Fermat's little theorem: a^(P-2) mod P.\nAdd: (a + b) % P with branchless correction.\nSub: (a + P - b) % P.\nMul: ((a as u128) * (b as u128) % (P as u128)) as u64.\n\nMust pass the generic field axiom test harness for at least Fp<2>, Fp<3>, Fp<5>, Fp<7>, Fp<65537>, Fp<(2^61 - 1)>.\n\nLocation: crates/gf2-core/src/gfp/mod.rs (new module)",
-  "state": "ready",
+  "state": "done",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [
     "2248b17d-a601-434d-a0ec-023860a0bf76"
   ],
@@ -17,35 +17,35 @@
     "doc-review"
   ],
   "gates_status": {
-    "tdd-reminder": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-02-25T22:47:59.102019775Z"
-    },
     "tests": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-02-25T22:47:59.102038555Z"
-    },
-    "code-review": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-02-25T22:47:59.102074065Z"
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-03-02T18:13:25.620444781Z"
     },
     "doc-review": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-02-25T22:47:59.102085735Z"
+      "status": "passed",
+      "updated_by": "agent:claude",
+      "updated_at": "2026-03-02T18:13:51.138280136Z"
     },
     "clippy": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-02-25T22:47:59.102050635Z"
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-03-02T18:13:36.237151546Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "agent:claude",
+      "updated_at": "2026-03-02T18:13:47.655906716Z"
     },
     "fmt": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-02-25T22:47:59.102062175Z"
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-03-02T18:13:37.643523078Z"
+    },
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_by": "agent:claude",
+      "updated_at": "2026-03-01T23:38:30.693969178Z"
     }
   },
   "context": {},
@@ -55,5 +55,5 @@
     "component:gf2-core"
   ],
   "created_at": "2026-02-22T23:52:30.801053260+00:00",
-  "updated_at": "2026-03-01T19:02:19.147187676+00:00"
+  "updated_at": "2026-03-02T18:13:55.814269692+00:00"
 }
