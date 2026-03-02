@@ -21,6 +21,7 @@ use proptest::test_runner::{Config as ProptestConfig, TestRunner};
 
 use crate::field::{ConstField, FiniteField, FiniteFieldExt};
 use crate::gf2m::{Gf2mElement, Gf2mField};
+use crate::gfp::Fp;
 
 /// Number of random test cases per axiom.
 const CASES_PER_AXIOM: u32 = 1000;
@@ -90,7 +91,6 @@ where
 }
 
 /// Run axiom tests for a [`ConstField`] implementation (superset of [`test_field_axioms`]).
-#[allow(dead_code)]
 pub fn test_const_field_axioms<F: ConstField + Debug>(
     strategy: BoxedStrategy<F>,
     characteristic: u64,
@@ -543,4 +543,43 @@ fn test_gf2_8_field_axioms() {
 fn test_gf2_16_field_axioms() {
     let field = Gf2mField::gf65536();
     test_field_axioms(gf2m_strategy(&field), 2);
+}
+
+// ---------------------------------------------------------------------------
+// Strategies and concrete tests for Fp<P>
+// ---------------------------------------------------------------------------
+
+/// Strategy that generates uniformly random `Fp<P>` values (including zero).
+fn fp_strategy<const P: u64>() -> BoxedStrategy<Fp<P>> {
+    (0..P).prop_map(Fp::<P>::new).boxed()
+}
+
+#[test]
+fn test_fp2_const_field_axioms() {
+    test_const_field_axioms(fp_strategy::<2>(), 2);
+}
+
+#[test]
+fn test_fp3_const_field_axioms() {
+    test_const_field_axioms(fp_strategy::<3>(), 3);
+}
+
+#[test]
+fn test_fp5_const_field_axioms() {
+    test_const_field_axioms(fp_strategy::<5>(), 5);
+}
+
+#[test]
+fn test_fp7_const_field_axioms() {
+    test_const_field_axioms(fp_strategy::<7>(), 7);
+}
+
+#[test]
+fn test_fp65537_const_field_axioms() {
+    test_const_field_axioms(fp_strategy::<65537>(), 65537);
+}
+
+#[test]
+fn test_fp_mersenne61_const_field_axioms() {
+    test_const_field_axioms(fp_strategy::<2305843009213693951>(), 2305843009213693951);
 }
