@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "174cf82c-efa6-40d3-b7f4-ce3b4264968f",
+  "gate_key": "code-review",
+  "stage": "postcheck",
+  "issue_id": "8ce6f8aa-9252-4ae6-ab5c-e702e961d460",
+  "commit": "61c9a2c0d05a7a82013181ea8387779b9d8e6b5e",
+  "branch": "main",
+  "status": "failed",
+  "started_at": "2026-03-03T17:28:30.339307135Z",
+  "completed_at": "2026-03-03T17:31:14.738077248Z",
+  "duration_ms": 164398,
+  "exit_code": 1,
+  "stdout": "## Success criteria from issue description\n- ✅ Montgomery internals and API preservation are implemented: `Fp<P>` stores Montgomery form and converts at API boundaries (`crates/gf2-core/src/gfp/mod.rs:35,105-113,126-131,173-190`; `crates/gf2-core/src/gfp/montgomery.rs:74-103`).\n- ⚠️ Cross-verification is strong but not exact to the stated criterion: exhaustive checks for `Fp<3>` exist (`mod.rs:629-639`), and 2000-case proptests cover `Fp<65537>` and `Fp<2^61-1>` (`mod.rs:690-758`), but there is no explicit **10,000+ random-ops harness including `Fp<3>`**.\n- ❌ Benchmark acceptance is not evidenced/enforced: naive `%` baselines exist (`benches/fp_montgomery.rs:117-201`) but there is no in-repo threshold check/report proving `>=1.5x` mul and `>=2x` add/sub/inv speedups.\n\n## Separation of concerns\n- ✅ Changes are confined to `gf2-core` (`src/gfp/*`, `benches/fp_montgomery.rs`), and there is no `gf2-core -> gf2-coding` dependency introduced.\n\n## Functional paradigm and performance\n- ✅ High-level API remains clean and trait-based; low-level Montgomery code uses efficient bit/word arithmetic.\n- ✅ Hot arithmetic paths are branchless in Montgomery helpers (`montgomery.rs:74-83,111-127`), aligning with constant-time intent.\n\n## Correctness\n- ✅ REDC constants and conversions are validated (`montgomery.rs:163-270`), and arithmetic/inversion behavior is broadly cross-checked (`mod.rs:629-760`, `montgomery.rs:276-425`).\n- ✅ BitVec tail-masking/bit-numbering invariants are unaffected (no touched `bitvec` mutation paths).\n\n## Testing\n- ✅ Substantial unit/exhaustive/property coverage exists for the new arithmetic (`mod.rs` and `montgomery.rs` tests).\n- ✅ Current gate artifacts show green fmt/clippy/tests on this commit (`.jit/gate-runs/700bc089...: status passed`, `9151b333...: status passed`, `51e46ef0...: status passed`).\n- ❌ Success-criterion-specific benchmark proof is missing, so test/validation acceptance is incomplete for this issue.\n\n## Unsafe isolation\n- ✅ No new `unsafe` in touched `gf2-core` files; unsafe remains isolated outside this area.\n\n## Documentation\n- ✅ Public `Fp<P>` docs and examples were updated for Montgomery semantics (`mod.rs:1-31,42-71,90-132`).\n- ⚠️ No benchmark-result documentation or threshold evidence was added, leaving acceptance evidence debt.\n\n## Prior review feedback for this issue\n- ✅ Naive add/sub baselines were added since earlier feedback (`benches/fp_montgomery.rs:139-169`).\n- ❌ The key unresolved item remains: required speedup thresholds are still not demonstrated/enforced in-repo.\n\n## Jit issue dependencies\n- ✅ Prerequisite `350bff7f` is marked `done` and this implementation builds on that baseline.\n\nVERDICT: FAIL\n---\nGate result: FAILED\n",
+  "stderr": "",
+  "command": "./scripts/ai-review.sh",
+  "by": "auto:executor",
+  "message": null
+}
