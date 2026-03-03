@@ -685,8 +685,11 @@ mod tests {
 
         const MERSENNE_61: u64 = (1u64 << 61) - 1;
 
-        // 2000 cases × 5 ops × 2 primes = 20,000+ verified operations
-        // against naive (a op b) % P computation.
+        // Fp<3>: exhaustive (all 9 pairs × 3 ops = 27 ops, strictly stronger
+        // than random for a 3-element field).
+        // Fp<65537>: 2000 cases × 5 ops = 10,000 random ops.
+        // Fp<2^61-1>: 2000 cases × 5 ops = 10,000 random ops.
+        // Total: 20,027+ verified operations against naive (a op b) % P.
         proptest! {
             #![proptest_config(proptest::prelude::ProptestConfig::with_cases(2000))]
             #[test]
