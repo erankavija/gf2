@@ -64,6 +64,7 @@ This is a Cargo workspace with three crates:
 | `alg/` | M4RM multiplication, Gauss-Jordan inversion, RREF |
 | `field/` | `FiniteField` / `ConstField` trait hierarchy and axiom test harness |
 | `gf2m/` | GF(2^m) arithmetic, generic over storage width via sealed `UintExt` trait |
+| `gfp/` | GF(p) prime field `Fp<P>` with Montgomery multiplication internals |
 | `primitive_polys` | Static database of primitive polynomials for m=2..16 |
 | `kernels/` | Runtime dispatch to scalar or SIMD backends |
 | `compute/` | Parallel batch operations (rayon backend) |
