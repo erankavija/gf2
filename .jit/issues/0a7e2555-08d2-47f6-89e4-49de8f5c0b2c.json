@@ -2,7 +2,7 @@
   "id": "0a7e2555-08d2-47f6-89e4-49de8f5c0b2c",
   "title": "Research RNS (Residue Number System) representation for large prime fields",
   "description": "Research and prototype Residue Number System (RNS) representation for GF(p) with very large primes or high extension degrees.\n\n## Concept\n\nRepresent a large integer X as a tuple of residues: `X ≡ (r₁, r₂, …, rₙ)` where `rᵢ = X mod mᵢ` and each `mᵢ` is a small double-compatible prime (~50 bits). Addition and multiplication become fully parallelizable (no carry chain) — each SIMD lane handles a specific small modulus.\n\n## Reference implementation: fflas-ffpack `rns-double`\n\nfflas-ffpack's `rns-double` module (`field/rns-double.h`, `field/rns-double.inl`) is a proven production implementation. Key architectural insight: **the CRT basis changes are themselves matrix multiplications**:\n\n- **Integer → RNS**: Split integer into base-2^16 chunks, then `Arns = CRT_in × A_beta^T` via BLAS\n- **RNS → Integer**: `A_beta = Arns^T × CRT_out` via BLAS, then reconstruct from chunks\n\nThis means RNS conversion cost is amortized over batch operations — converting a matrix is a matrix multiply against precomputed CRT constants.\n\n## Key design questions\n\n1. Should RNS elements implement `FiniteField` directly, or be an internal representation behind `Fp<P>`?\n2. What is the crossover point where RNS outperforms direct multi-word Montgomery?\n3. Can we use our own SIMD kernels instead of BLAS for the CRT basis changes?\n\n## Dependencies\n\n- Montgomery multiplication for GF(p) (8ce6f8aa) — needed as the baseline to benchmark against",
-  "state": "backlog",
+  "state": "ready",
   "priority": "low",
   "assignee": null,
   "dependencies": [
@@ -17,15 +17,15 @@
     "doc-review"
   ],
   "gates_status": {
-    "tdd-reminder": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-02-25T22:47:59.008412510Z"
-    },
     "tests": {
       "status": "pending",
       "updated_by": null,
       "updated_at": "2026-02-25T22:47:59.008432840Z"
+    },
+    "tdd-reminder": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:59.008412510Z"
     },
     "clippy": {
       "status": "pending",
@@ -55,5 +55,5 @@
     "type:task"
   ],
   "created_at": "2026-02-21T23:11:13.942471295+00:00",
-  "updated_at": "2026-02-25T22:47:59.008492260+00:00"
+  "updated_at": "2026-03-03T17:59:03.476599730+00:00"
 }
