@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "5f4822ae-9cfb-4934-b752-401e0d95314a",
+  "gate_key": "code-review",
+  "stage": "postcheck",
+  "issue_id": "8ce6f8aa-9252-4ae6-ab5c-e702e961d460",
+  "commit": "35bd5ffb4742525b7ad85923409b05ca32d443d1",
+  "branch": "main",
+  "status": "failed",
+  "started_at": "2026-03-02T23:47:49.300147440Z",
+  "completed_at": "2026-03-02T23:47:49.402607734Z",
+  "duration_ms": 102,
+  "exit_code": 1,
+  "stdout": "",
+  "stderr": "ERROR: JIT_CONTEXT_FILE not set. This gate requires --pass-context.\n",
+  "command": "./scripts/ai-review.sh",
+  "by": "auto:executor",
+  "message": null
+}

@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "ebb6afe6-44a1-4fa5-a022-9f58e60a3bd9",
+  "gate_key": "code-review",
+  "stage": "postcheck",
+  "issue_id": "8ce6f8aa-9252-4ae6-ab5c-e702e961d460",
+  "commit": "35bd5ffb4742525b7ad85923409b05ca32d443d1",
+  "branch": "main",
+  "status": "failed",
+  "started_at": "2026-03-03T00:13:50.589733624Z",
+  "completed_at": "2026-03-03T00:17:10.297452305Z",
+  "duration_ms": 199707,
+  "exit_code": 1,
+  "stdout": "## Success criteria from issue description\n- ✅ Montgomery internals are implemented and API-preserving: `Fp<P>` now stores Montgomery form internally while `new()`/`value()` convert at boundaries (`crates/gf2-core/src/gfp/mod.rs:33-35, 105-113, 126-131, 173-190`).\n- ✅ Cross-verification coverage is substantially improved: exhaustive checks for small primes and proptests for `Fp<65537>` and `Fp<2^61-1>` with 2000 cases each (`mod.rs:629-760`), plus Montgomery helper-level checks (`montgomery.rs:276-425`).\n- ❌ Benchmark acceptance criteria are still not fully satisfied: benchmarks add naive `%` baselines for multiplication/inversion/chain (`benches/fp_montgomery.rs:117-165`) but do **not** include naive add/sub baselines and do not demonstrate or enforce the required `>=3x` (mul) / `>=2x` (add/sub) thresholds.\n\n## Separation of concerns\n- ✅ Changes are confined to `gf2-core` (`crates/gf2-core/src/gfp/*`, `crates/gf2-core/benches/*`, `crates/gf2-core/Cargo.toml`), and `gf2-core` dependency direction remains clean with no `gf2-coding` dependency (`Cargo.toml:12-19`).\n\n## Functional paradigm and performance\n- ✅ High-level API remains clean/immutable in use; low-level Montgomery code uses efficient word arithmetic and branchless correction in hot ops (`montgomery.rs:74-83, 111-127`).\n- ⚠️ Performance intent is good, but acceptance-level performance proof is incomplete for add/sub.\n\n## Correctness\n- ✅ Bit/field arithmetic core appears correct: REDC and Montgomery conversion constants are validated (`montgomery.rs:163-216`), and operation-level checks cover add/sub/mul/inv behavior across primes (`mod.rs:629-760`, `montgomery.rs:276-425`).\n- ✅ Tail-masking and bit-numbering invariants for `BitVec` are unaffected by this change set (no related code touched).\n- ✅ No obvious regression in field axioms from inspected implementation/tests.\n\n## Testing\n- ✅ Strong unit + property-style coverage was added for `Fp` and Montgomery helpers.\n- ⚠️ I could not re-run `cargo fmt/clippy/test` locally due environment permission denial for `cargo`; context gate status shows `fmt`, `clippy`, and `tests` passed in latest recorded runs, but benchmark threshold verification remains missing.\n\n## Unsafe isolation\n- ✅ No new `unsafe` appears in these changes (`crates/gf2-core/src/gfp/*`), preserving unsafe isolation policy.\n\n## Documentation\n- ✅ Public `Fp<P>` docs were updated to describe Montgomery representation and usage examples (`mod.rs:1-31, 42-71`).\n- ⚠️ Documentation does not provide benchmark-result evidence for the required speedup targets.\n\n## Prior review feedback for this issue\n- ✅ Prior complaint about lacking cross-verification depth was addressed by new exhaustive/proptest coverage (`mod.rs:629-760`).\n- ❌ Prior benchmark gap is only partially addressed; required add/sub baseline and explicit threshold satisfaction are still unresolved (`benches/fp_montgomery.rs`).\n\n## Jit issue dependencies\n- ✅ Dependency `350bff7f` is marked done in provided context, and this work correctly builds on that `Fp<P>` baseline.\n\nVERDICT: FAIL\n---\nGate result: FAILED\n",
+  "stderr": "",
+  "command": "./scripts/ai-review.sh",
+  "by": "auto:executor",
+  "message": null
+}

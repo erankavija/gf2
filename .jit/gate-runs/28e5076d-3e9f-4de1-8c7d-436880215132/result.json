@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "28e5076d-3e9f-4de1-8c7d-436880215132",
+  "gate_key": "code-review",
+  "stage": "postcheck",
+  "issue_id": "8ce6f8aa-9252-4ae6-ab5c-e702e961d460",
+  "commit": "35bd5ffb4742525b7ad85923409b05ca32d443d1",
+  "branch": "main",
+  "status": "failed",
+  "started_at": "2026-03-03T00:19:14.876127089Z",
+  "completed_at": "2026-03-03T00:22:03.349548950Z",
+  "duration_ms": 168473,
+  "exit_code": 1,
+  "stdout": "## Success criteria from issue description\n- ✅ **Montgomery internals + API preservation** are implemented (`crates/gf2-core/src/gfp/mod.rs:33-35, 105-113, 126-131, 173-190`; `crates/gf2-core/src/gfp/montgomery.rs`).\n- ⚠️ **Cross-verification** is strong but not exact to spec wording: exhaustive checks for `Fp<3>` and 2000-case proptests for `Fp<65537>`/`Fp<2^61-1>` are present (`mod.rs:629-760`), but there is no explicit “10,000+ random ops including Fp<3>” harness.\n- ❌ **Benchmark acceptance criterion is not met as evidenced in-repo**: benchmarks include naive baselines (including add/sub) (`benches/fp_montgomery.rs:139-215`), but there is no committed result/evidence or threshold enforcement for `>=3x` mul and `>=2x` add/sub speedups.\n- ✅ **Constant-time hot-path style** (add/sub/mul reduction) is branchless in Montgomery helpers (`montgomery.rs:74-83, 111-127`), with only compile-time-constant modulus specialization in `mul` (`mod.rs:184-189`).\n\n## Separation of concerns\n- ✅ Changes are confined to `gf2-core` (`crates/gf2-core/src/gfp/*`, `crates/gf2-core/benches/fp_montgomery.rs`, `crates/gf2-core/Cargo.toml`), with no `gf2-core -> gf2-coding` dependency introduced (`Cargo.toml` has no `gf2-coding` entry).\n\n## Functional paradigm and performance\n- ✅ High-level API remains clean; low-level Montgomery path uses efficient bit/word arithmetic and reduction.\n- ⚠️ Performance intent is good, but required benchmark outcome proof is missing, leaving acceptance incomplete.\n\n## Correctness\n- ✅ Montgomery constants and REDC behavior are well-tested (`montgomery.rs:163-425`), and field ops align with modular arithmetic checks (`mod.rs:629-760`).\n- ✅ BitVec tail-masking/bit numbering invariants are unaffected by this change set (no touched `bitvec` mutation logic).\n\n## Testing\n- ✅ Substantial tests exist (unit + exhaustive + proptest), including edge primes and inversion checks.\n- ⚠️ I could not rerun cargo commands in this environment due permission denial for `cargo`; relying on provided gate status where `fmt/clippy/tests` are marked passed in context.\n- ❌ Acceptance still fails because benchmark success thresholds are not demonstrated.\n\n## Unsafe isolation\n- ✅ No `unsafe` introduced in touched `gfp` files; unsafe isolation policy is preserved.\n\n## Documentation\n- ✅ Public `Fp<P>` docs were updated to describe Montgomery representation and examples (`mod.rs:1-31, 42-71`).\n- ⚠️ Documentation/repo artifacts do not provide the required benchmark speedup evidence.\n\n## Prior review feedback for this issue\n- ✅ Previously missing naive add/sub baseline appears addressed (`benches/fp_montgomery.rs:151-165, 210-214`).\n- ❌ Most recent substantive failure remains unresolved: required speedup thresholds are still not evidenced/enforced.\n\n## Jit issue dependencies\n- ✅ Prerequisite `350bff7f` is marked `done` in provided context, and this work builds on that implementation.\n\nVERDICT: FAIL\n---\nGate result: FAILED\n",
+  "stderr": "",
+  "command": "./scripts/ai-review.sh",
+  "by": "auto:executor",
+  "message": null
+}

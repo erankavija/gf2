@@ -1,16 +1,5 @@
 {
   "gates": {
-    "tdd-reminder": {
-      "version": 1,
-      "key": "tdd-reminder",
-      "title": "Write tests first (TDD)",
-      "description": "Reminder to write failing tests before implementation",
-      "stage": "precheck",
-      "mode": "manual",
-      "reserved": {},
-      "auto": false,
-      "example_integration": null
-    },
     "doc-review": {
       "version": 1,
       "key": "doc-review",
@@ -32,13 +21,13 @@
       "checker": {
         "type": "exec",
         "command": "./scripts/ai-review.sh",
-        "timeout_seconds": 120,
+        "timeout_seconds": 600,
         "working_dir": null,
         "env": {
           "REVIEWER_AGENT": "copilot -s --model gpt-5.3-codex"
         },
         "pass_context": true,
-        "prompt_file": "scripts/code-review-prompt.md"
+        "prompt_file": "./scripts/code-review-prompt.md"
       },
       "reserved": {},
       "auto": true,
@@ -99,6 +88,17 @@
       },
       "reserved": {},
       "auto": true,
+      "example_integration": null
+    },
+    "tdd-reminder": {
+      "version": 1,
+      "key": "tdd-reminder",
+      "title": "Write tests first (TDD)",
+      "description": "Reminder to write failing tests before implementation",
+      "stage": "precheck",
+      "mode": "manual",
+      "reserved": {},
+      "auto": false,
       "example_integration": null
     }
   }
