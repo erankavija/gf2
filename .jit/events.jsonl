@@ -431,3 +431,4 @@
 {"type":"gate_passed","id":"ffd10b40-e755-4cb7-b8c8-b78c7ced1e18","issue_id":"8ce6f8aa-9252-4ae6-ab5c-e702e961d460","timestamp":"2026-03-03T17:28:23.551834607Z","gate_key":"clippy","updated_by":"auto:executor"}
 {"type":"gate_passed","id":"d2787254-fac2-4d39-9cc5-41cf959b439f","issue_id":"8ce6f8aa-9252-4ae6-ab5c-e702e961d460","timestamp":"2026-03-03T17:28:26.209848595Z","gate_key":"fmt","updated_by":"auto:executor"}
 {"type":"gate_failed","id":"55a7aa6c-9b11-4d94-8ffd-4cc36aab7b50","issue_id":"8ce6f8aa-9252-4ae6-ab5c-e702e961d460","timestamp":"2026-03-03T17:31:14.738425308Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"06a173f3-79ba-4914-a72a-43fe20ba4925","issue_id":"8ce6f8aa-9252-4ae6-ab5c-e702e961d460","timestamp":"2026-03-03T17:47:33.979600572Z","gate_key":"code-review","updated_by":"auto:executor"}

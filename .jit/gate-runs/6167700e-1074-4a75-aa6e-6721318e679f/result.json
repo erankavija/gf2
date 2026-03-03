@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "6167700e-1074-4a75-aa6e-6721318e679f",
+  "gate_key": "code-review",
+  "stage": "postcheck",
+  "issue_id": "8ce6f8aa-9252-4ae6-ab5c-e702e961d460",
+  "commit": "a1539e8d10a299a7129d8a8f5a3f75b333e959d0",
+  "branch": "main",
+  "status": "failed",
+  "started_at": "2026-03-03T17:43:31.058405018Z",
+  "completed_at": "2026-03-03T17:47:33.979242613Z",
+  "duration_ms": 242920,
+  "exit_code": 1,
+  "stdout": "## Success criteria from issue description\n- **Montgomery internals + API preservation:** Met (`crates/gf2-core/src/gfp/mod.rs:35,105-113,126-131,173-190`; `crates/gf2-core/src/gfp/montgomery.rs:74-103`).\n- **Constant-time hot path (add/sub/mul):** Met in implementation style; `mont_add`, `mont_sub`, and `redc` are branchless w.r.t. element data (`montgomery.rs:74-83,111-127`), and `mul` dispatch is only on compile-time modulus shape (`mod.rs:184-189`).\n- **Cross-verification requirement:** **Not fully met as written**; `Fp<65537>` and `Fp<2^61-1>` provide 10k random ops each via proptest (`mod.rs:694-761`), but `Fp<3>` uses exhaustive checks instead of a 10k random harness (`mod.rs:629-639,688-693`).\n- **Benchmark threshold evidence:** Partially addressed via `crates/gf2-core/benches/BENCHMARK_RESULTS.md:1-30` and naive baselines with `black_box(p)` in bench code (`benches/fp_montgomery.rs:151-186`), but evidence is a static markdown artifact (measured on older commit per line 3) rather than enforced/verified at gate time.\n\n## Separation of concerns\n- Pass: changes are in `gf2-core` surfaces (`crates/gf2-core/src/gfp/*`, `crates/gf2-core/benches/*`), and `gf2-core` has no dependency on `gf2-coding` (`crates/gf2-core/Cargo.toml:12-19`).\n\n## Functional paradigm and performance\n- Pass with caveat: high-level API remains trait-driven and clean (`mod.rs`), low-level arithmetic is efficient word-level code (`montgomery.rs`), and GF(p) ops are implemented with bitwise/wrapping arithmetic where appropriate.\n- Caveat: performance acceptance relies on manually committed benchmark results rather than reproducible pass/fail checks.\n\n## Correctness\n- Pass for reviewed arithmetic: const computations and REDC are well-covered (`montgomery.rs:163-425`), and cross-checks against naive modular formulas exist across small and large primes (`mod.rs:629-761`).\n- `BitVec` tail masking / bit numbering invariants are unaffected by this change set (no touched `bitvec` mutation paths).\n\n## Testing\n- Available gate artifacts show green fmt/clippy/tests for this issue’s latest validated code-review baseline commit (`.jit/gate-runs/700bc089...`, `9151b333...`, `51e46ef0...` all `status: passed`).\n- Fail on issue acceptance strictness: required cross-verification wording (“10,000+ random operations across Fp<3>, Fp<65537>, Fp<2^61-1>”) is not satisfied literally for `Fp<3>`.\n\n## Unsafe isolation\n- Pass: no new `unsafe` in touched `gf2-core` files; unsafe isolation policy remains intact.\n\n## Documentation\n- Public `Fp<P>` docs are present and updated for Montgomery representation (`mod.rs:1-71,90-132`).\n- Benchmark evidence documentation was added (`benches/BENCHMARK_RESULTS.md`), but it introduces review debt because acceptance is documented, not machine-validated.\n\n## Prior review feedback for this issue\n- **Addressed:** missing benchmark evidence now has an explicit results document (`BENCHMARK_RESULTS.md`).\n- **Still unresolved:** latest prior feedback’s core point about explicit 10k random coverage including `Fp<3>` remains unmet in literal form (still exhaustive there, not random).\n\n## Jit issue dependencies\n- Pass: prerequisite issue `350bff7f` is marked done and this work builds on that baseline.\n\nVERDICT: FAIL\n---\nGate result: FAILED\n",
+  "stderr": "",
+  "command": "./scripts/ai-review.sh",
+  "by": "auto:executor",
+  "message": null
+}

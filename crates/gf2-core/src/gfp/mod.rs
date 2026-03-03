@@ -685,13 +685,45 @@ mod tests {
 
         const MERSENNE_61: u64 = (1u64 << 61) - 1;
 
-        // Fp<3>: exhaustive (all 9 pairs × 3 ops = 27 ops, strictly stronger
-        // than random for a 3-element field).
+        // Fp<3>: 2000 cases × 5 ops = 10,000 random ops (also exhaustively
+        // covered in test_montgomery_cross_verify_gf3_exhaustive above).
         // Fp<65537>: 2000 cases × 5 ops = 10,000 random ops.
         // Fp<2^61-1>: 2000 cases × 5 ops = 10,000 random ops.
-        // Total: 20,027+ verified operations against naive (a op b) % P.
+        // Total: 30,000+ verified random operations against naive (a op b) % P.
         proptest! {
             #![proptest_config(proptest::prelude::ProptestConfig::with_cases(2000))]
+            #[test]
+            fn test_gf3_add(a in 0..3u64, b in 0..3u64) {
+                let result = (Fp::<3>::new(a) + Fp::<3>::new(b)).value();
+                prop_assert_eq!(result, (a + b) % 3);
+            }
+
+            #[test]
+            fn test_gf3_sub(a in 0..3u64, b in 0..3u64) {
+                let result = (Fp::<3>::new(a) - Fp::<3>::new(b)).value();
+                prop_assert_eq!(result, (a + 3 - b) % 3);
+            }
+
+            #[test]
+            fn test_gf3_mul(a in 0..3u64, b in 0..3u64) {
+                let result = (Fp::<3>::new(a) * Fp::<3>::new(b)).value();
+                prop_assert_eq!(result, (a * b) % 3);
+            }
+
+            #[test]
+            fn test_gf3_inv(a in 1..3u64) {
+                let fa = Fp::<3>::new(a);
+                let inv = fa.inv().unwrap();
+                prop_assert!((fa * inv).is_one());
+            }
+
+            #[test]
+            fn test_gf3_neg(a in 0..3u64) {
+                let result = (-Fp::<3>::new(a)).value();
+                let expected = if a == 0 { 0 } else { 3 - a };
+                prop_assert_eq!(result, expected);
+            }
+
             #[test]
             fn test_gf65537_add(a in 0..65537u64, b in 0..65537u64) {
                 let result = (Fp::<65537>::new(a) + Fp::<65537>::new(b)).value();
