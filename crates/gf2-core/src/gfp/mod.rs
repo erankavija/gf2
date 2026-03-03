@@ -1,7 +1,12 @@
 //! GF(p) — Prime Field Arithmetic
 //!
 //! Arithmetic over prime fields GF(p) using a const-generic representation.
-//! Elements are integers modulo a prime `P`, with standard modular arithmetic.
+//! Internally, elements are stored in Montgomery form (`aR mod P` where `R = 2^64`)
+//! for efficient multiplication without expensive division. The public API is
+//! unchanged — `new()` converts in, `value()` converts out.
+//!
+//! `P = 2` is handled specially with naive arithmetic since Montgomery form
+//! requires odd modulus (`gcd(P, R) = 1`).
 //!
 //! # Examples
 //!
@@ -25,20 +30,24 @@
 //! assert!(Fp::<7>::one().is_one());
 //! ```
 
+mod montgomery;
+
+use montgomery::{from_mont, mod_pow_mont, mont_add, mont_sub, redc, to_mont, MontConsts};
+
 use std::fmt;
-use std::hash::Hash;
 use std::ops::{Add, AddAssign, Div, Mul, Neg, Sub};
 
 use crate::field::{ConstField, FiniteField};
 
 /// An element of the prime field GF(P) for a compile-time-known prime `P`.
 ///
-/// Elements are integers in `[0, P)` with arithmetic modulo `P`. The type
-/// parameter `P` must be prime with `1 < P <= 2^63`; primality is not checked
-/// at compile time but is required for correctness.
+/// Elements are stored internally in Montgomery form (`aR mod P` where `R = 2^64`)
+/// for efficient multiplication. The public API operates on canonical values in
+/// `[0, P)`. For `P = 2`, naive arithmetic is used since Montgomery form requires
+/// an odd modulus.
 ///
-/// This implementation uses naive modular reduction (`%`). Montgomery
-/// multiplication provides faster arithmetic and is tracked separately.
+/// The type parameter `P` must be prime with `1 < P <= 2^63`; primality is not
+/// checked at compile time but is required for correctness.
 ///
 /// # Examples
 ///
@@ -59,8 +68,14 @@ use crate::field::{ConstField, FiniteField};
 /// # Panics
 ///
 /// Construction panics (via const assertion) if `P < 2` or `P > 2^63`.
-#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Fp<const P: u64>(u64);
+
+impl<const P: u64> fmt::Debug for Fp<P> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Fp<{}>({})", P, self.value())
+    }
+}
 
 impl<const P: u64> Fp<P> {
     /// Compile-time validation that P is valid.
@@ -90,7 +105,12 @@ impl<const P: u64> Fp<P> {
     pub fn new(value: u64) -> Self {
         #[allow(clippy::let_unit_value)]
         let _ = Self::VALIDATED;
-        Self(value % P)
+        let reduced = value % P;
+        if P == 2 {
+            Self(reduced)
+        } else {
+            Self(to_mont::<P>(reduced))
+        }
     }
 
     /// Returns the inner representative value in `[0, P)`.
@@ -104,13 +124,17 @@ impl<const P: u64> Fp<P> {
     /// ```
     #[inline]
     pub fn value(self) -> u64 {
-        self.0
+        if P == 2 {
+            self.0
+        } else {
+            from_mont::<P>(self.0)
+        }
     }
 }
 
 impl<const P: u64> fmt::Display for Fp<P> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{}", self.value())
     }
 }
 
@@ -121,51 +145,48 @@ impl<const P: u64> fmt::Display for Fp<P> {
 impl<const P: u64> Add for Fp<P> {
     type Output = Self;
 
-    /// Modular addition with conditional correction.
+    /// Branchless modular addition.
     ///
     /// # Complexity
     ///
     /// O(1).
     #[inline]
     fn add(self, rhs: Self) -> Self {
-        let sum = self.0 + rhs.0;
-        if sum >= P {
-            Self(sum - P)
-        } else {
-            Self(sum)
-        }
+        Self(mont_add::<P>(self.0, rhs.0))
     }
 }
 
 impl<const P: u64> Sub for Fp<P> {
     type Output = Self;
 
-    /// Modular subtraction.
+    /// Branchless modular subtraction.
     ///
     /// # Complexity
     ///
     /// O(1).
     #[inline]
     fn sub(self, rhs: Self) -> Self {
-        if self.0 >= rhs.0 {
-            Self(self.0 - rhs.0)
-        } else {
-            Self(self.0 + P - rhs.0)
-        }
+        Self(mont_sub::<P>(self.0, rhs.0))
     }
 }
 
 impl<const P: u64> Mul for Fp<P> {
     type Output = Self;
 
-    /// Modular multiplication using u128 intermediate.
+    /// Montgomery multiplication via REDC.
+    ///
+    /// For `P = 2`, uses bitwise AND (GF(2) multiplication).
     ///
     /// # Complexity
     ///
     /// O(1).
     #[inline]
     fn mul(self, rhs: Self) -> Self {
-        Self(((self.0 as u128 * rhs.0 as u128) % P as u128) as u64)
+        if P == 2 {
+            Self(self.0 & rhs.0)
+        } else {
+            Self(redc::<P>(self.0 as u128 * rhs.0 as u128))
+        }
     }
 }
 
@@ -173,6 +194,8 @@ impl<const P: u64> Neg for Fp<P> {
     type Output = Self;
 
     /// Additive inverse: `-a = P - a` for non-zero, `0` for zero.
+    ///
+    /// Works identically for both Montgomery and canonical representations.
     ///
     /// # Complexity
     ///
@@ -185,29 +208,6 @@ impl<const P: u64> Neg for Fp<P> {
             Self(P - self.0)
         }
     }
-}
-
-/// Modular exponentiation via square-and-multiply.
-///
-/// # Complexity
-///
-/// O(log exp) multiplications.
-fn mod_pow(mut base: u64, mut exp: u64, modulus: u64) -> u64 {
-    if modulus == 1 {
-        return 0;
-    }
-    let mut result = 1u64;
-    base %= modulus;
-    while exp > 0 {
-        if exp & 1 == 1 {
-            result = ((result as u128 * base as u128) % modulus as u128) as u64;
-        }
-        exp >>= 1;
-        if exp > 0 {
-            base = ((base as u128 * base as u128) % modulus as u128) as u64;
-        }
-    }
-    result
 }
 
 impl<const P: u64> Div for Fp<P> {
@@ -348,7 +348,11 @@ impl<const P: u64> FiniteField for Fp<P> {
 
     #[inline]
     fn is_one(&self) -> bool {
-        self.0 == 1
+        if P == 2 {
+            self.0 == 1
+        } else {
+            self.0 == MontConsts::<P>::R_MOD_P
+        }
     }
 
     /// Multiplicative inverse via Fermat's little theorem: `a^(P-2) mod P`.
@@ -359,8 +363,10 @@ impl<const P: u64> FiniteField for Fp<P> {
     fn inv(&self) -> Option<Self> {
         if self.0 == 0 {
             None
+        } else if P == 2 {
+            Some(Self(1))
         } else {
-            Some(Self(mod_pow(self.0, P - 2, P)))
+            Some(Self(mod_pow_mont::<P>(self.0, P - 2)))
         }
     }
 
@@ -371,22 +377,26 @@ impl<const P: u64> FiniteField for Fp<P> {
 
     #[inline]
     fn one_like(&self) -> Self {
-        Self(1)
+        if P == 2 {
+            Self(1)
+        } else {
+            Self(MontConsts::<P>::R_MOD_P)
+        }
     }
 
     #[inline]
     fn to_wide(&self) -> u128 {
-        self.0 as u128
+        self.value() as u128
     }
 
     #[inline]
     fn mul_to_wide(&self, rhs: &Self) -> u128 {
-        self.0 as u128 * rhs.0 as u128
+        self.value() as u128 * rhs.value() as u128
     }
 
     #[inline]
     fn reduce_wide(wide: &u128) -> Self {
-        Self((*wide % P as u128) as u64)
+        Self::new((*wide % P as u128) as u64)
     }
 
     fn max_unreduced_additions() -> usize {
@@ -419,7 +429,11 @@ impl<const P: u64> ConstField for Fp<P> {
     fn one() -> Self {
         #[allow(clippy::let_unit_value)]
         let _ = Self::VALIDATED;
-        Self(1)
+        if P == 2 {
+            Self(1)
+        } else {
+            Self(MontConsts::<P>::R_MOD_P)
+        }
     }
 
     #[inline]
@@ -501,14 +515,6 @@ mod tests {
     }
 
     // --- Step 3: Inversion + division ---
-
-    #[test]
-    fn test_mod_pow() {
-        assert_eq!(mod_pow(3, 0, 7), 1);
-        assert_eq!(mod_pow(3, 1, 7), 3);
-        assert_eq!(mod_pow(3, 5, 7), 5); // 243 mod 7 = 5
-        assert_eq!(mod_pow(2, 10, 1000), 24); // 1024 mod 1000
-    }
 
     #[test]
     fn test_inv_gf7() {
@@ -615,5 +621,141 @@ mod tests {
     fn test_const_field_order() {
         assert_eq!(Fp::<7>::order(), 7u128);
         assert_eq!(Fp::<65537>::order(), 65537u128);
+    }
+
+    // --- Cross-verification: exhaustive for small primes ---
+
+    #[test]
+    fn test_montgomery_cross_verify_gf3_exhaustive() {
+        for a in 0..3u64 {
+            for b in 0..3u64 {
+                let fa = Fp::<3>::new(a);
+                let fb = Fp::<3>::new(b);
+                assert_eq!((fa + fb).value(), (a + b) % 3, "3: {a}+{b}");
+                assert_eq!((fa - fb).value(), (a + 3 - b) % 3, "3: {a}-{b}");
+                assert_eq!((fa * fb).value(), (a * b) % 3, "3: {a}*{b}");
+            }
+        }
+    }
+
+    #[test]
+    fn test_montgomery_cross_verify_gf5_exhaustive() {
+        for a in 0..5u64 {
+            for b in 0..5u64 {
+                let fa = Fp::<5>::new(a);
+                let fb = Fp::<5>::new(b);
+                assert_eq!((fa + fb).value(), (a + b) % 5, "5: {a}+{b}");
+                assert_eq!((fa - fb).value(), (a + 5 - b) % 5, "5: {a}-{b}");
+                assert_eq!((fa * fb).value(), (a * b) % 5, "5: {a}*{b}");
+            }
+            if a > 0 {
+                let inv = Fp::<5>::new(a).inv().unwrap();
+                assert!((Fp::<5>::new(a) * inv).is_one(), "5: inv({a})");
+            }
+        }
+    }
+
+    #[test]
+    fn test_montgomery_cross_verify_gf7_exhaustive() {
+        for a in 0..7u64 {
+            for b in 0..7u64 {
+                let fa = Fp::<7>::new(a);
+                let fb = Fp::<7>::new(b);
+                assert_eq!((fa + fb).value(), (a + b) % 7, "7: {a}+{b}");
+                assert_eq!((fa - fb).value(), (a + 7 - b) % 7, "7: {a}-{b}");
+                assert_eq!(
+                    (fa * fb).value(),
+                    ((a as u128 * b as u128) % 7) as u64,
+                    "7: {a}*{b}"
+                );
+            }
+            if a > 0 {
+                let inv = Fp::<7>::new(a).inv().unwrap();
+                assert!((Fp::<7>::new(a) * inv).is_one(), "7: inv({a})");
+                assert_eq!((-Fp::<7>::new(a)).value(), 7 - a, "7: neg({a})");
+            }
+        }
+    }
+
+    // --- Cross-verification: proptest for large primes ---
+
+    mod proptest_cross_verify {
+        use super::*;
+        use proptest::prelude::*;
+
+        const MERSENNE_61: u64 = (1u64 << 61) - 1;
+
+        // 2000 cases × 5 ops × 2 primes = 20,000+ verified operations
+        // against naive (a op b) % P computation.
+        proptest! {
+            #![proptest_config(proptest::prelude::ProptestConfig::with_cases(2000))]
+            #[test]
+            fn test_gf65537_add(a in 0..65537u64, b in 0..65537u64) {
+                let result = (Fp::<65537>::new(a) + Fp::<65537>::new(b)).value();
+                prop_assert_eq!(result, (a + b) % 65537);
+            }
+
+            #[test]
+            fn test_gf65537_sub(a in 0..65537u64, b in 0..65537u64) {
+                let result = (Fp::<65537>::new(a) - Fp::<65537>::new(b)).value();
+                prop_assert_eq!(result, (a + 65537 - b) % 65537);
+            }
+
+            #[test]
+            fn test_gf65537_mul(a in 0..65537u64, b in 0..65537u64) {
+                let result = (Fp::<65537>::new(a) * Fp::<65537>::new(b)).value();
+                let expected = ((a as u128 * b as u128) % 65537) as u64;
+                prop_assert_eq!(result, expected);
+            }
+
+            #[test]
+            fn test_gf65537_inv(a in 1..65537u64) {
+                let fa = Fp::<65537>::new(a);
+                let inv = fa.inv().unwrap();
+                prop_assert!((fa * inv).is_one());
+            }
+
+            #[test]
+            fn test_gf65537_neg(a in 0..65537u64) {
+                let result = (-Fp::<65537>::new(a)).value();
+                let expected = if a == 0 { 0 } else { 65537 - a };
+                prop_assert_eq!(result, expected);
+            }
+
+            #[test]
+            fn test_mersenne61_add(a in 0..MERSENNE_61, b in 0..MERSENNE_61) {
+                let result = (Fp::<MERSENNE_61>::new(a) + Fp::<MERSENNE_61>::new(b)).value();
+                let expected = ((a as u128 + b as u128) % MERSENNE_61 as u128) as u64;
+                prop_assert_eq!(result, expected);
+            }
+
+            #[test]
+            fn test_mersenne61_sub(a in 0..MERSENNE_61, b in 0..MERSENNE_61) {
+                let result = (Fp::<MERSENNE_61>::new(a) - Fp::<MERSENNE_61>::new(b)).value();
+                let expected = ((a as u128 + MERSENNE_61 as u128 - b as u128) % MERSENNE_61 as u128) as u64;
+                prop_assert_eq!(result, expected);
+            }
+
+            #[test]
+            fn test_mersenne61_mul(a in 0..MERSENNE_61, b in 0..MERSENNE_61) {
+                let result = (Fp::<MERSENNE_61>::new(a) * Fp::<MERSENNE_61>::new(b)).value();
+                let expected = ((a as u128 * b as u128) % MERSENNE_61 as u128) as u64;
+                prop_assert_eq!(result, expected);
+            }
+
+            #[test]
+            fn test_mersenne61_inv(a in 1..MERSENNE_61) {
+                let fa = Fp::<MERSENNE_61>::new(a);
+                let inv = fa.inv().unwrap();
+                prop_assert!((fa * inv).is_one());
+            }
+
+            #[test]
+            fn test_mersenne61_neg(a in 0..MERSENNE_61) {
+                let result = (-Fp::<MERSENNE_61>::new(a)).value();
+                let expected = if a == 0 { 0 } else { MERSENNE_61 - a };
+                prop_assert_eq!(result, expected);
+            }
+        }
     }
 }

@@ -117,3 +117,7 @@ required-features = ["rand"]
 [[bench]]
 name = "field_clone"
 harness = false
+
+[[bench]]
+name = "fp_montgomery"
+harness = false
