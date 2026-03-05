@@ -102,7 +102,7 @@ impl<const P: u64> Fp<P> {
     /// assert_eq!(a.value(), 3);
     /// ```
     #[inline]
-    pub fn new(value: u64) -> Self {
+    pub const fn new(value: u64) -> Self {
         #[allow(clippy::let_unit_value)]
         let _ = Self::VALIDATED;
         let reduced = value % P;
@@ -123,7 +123,7 @@ impl<const P: u64> Fp<P> {
     /// assert_eq!(Fp::<7>::new(3).value(), 3);
     /// ```
     #[inline]
-    pub fn value(self) -> u64 {
+    pub const fn value(self) -> u64 {
         if P == 2 {
             self.0
         } else {

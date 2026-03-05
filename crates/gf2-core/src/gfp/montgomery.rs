@@ -71,7 +71,7 @@ const fn compute_p_inv(p: u64) -> u64 {
 ///
 /// O(1).
 #[inline]
-pub(super) fn redc<const P: u64>(t: u128) -> u64 {
+pub(super) const fn redc<const P: u64>(t: u128) -> u64 {
     let t_lo = t as u64;
     let m = t_lo.wrapping_mul(MontConsts::<P>::P_INV);
     let mp = m as u128 * P as u128;
@@ -88,7 +88,7 @@ pub(super) fn redc<const P: u64>(t: u128) -> u64 {
 ///
 /// O(1).
 #[inline]
-pub(super) fn to_mont<const P: u64>(a: u64) -> u64 {
+pub(super) const fn to_mont<const P: u64>(a: u64) -> u64 {
     redc::<P>(a as u128 * MontConsts::<P>::R2_MOD_P as u128)
 }
 
@@ -98,7 +98,7 @@ pub(super) fn to_mont<const P: u64>(a: u64) -> u64 {
 ///
 /// O(1).
 #[inline]
-pub(super) fn from_mont<const P: u64>(a: u64) -> u64 {
+pub(super) const fn from_mont<const P: u64>(a: u64) -> u64 {
     redc::<P>(a as u128)
 }
 

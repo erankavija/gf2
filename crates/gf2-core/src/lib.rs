@@ -42,6 +42,7 @@ pub mod compute;
 pub mod field;
 pub mod gf2m;
 pub mod gfp;
+pub mod gfpn;
 
 #[cfg(feature = "io")]
 pub mod io;
