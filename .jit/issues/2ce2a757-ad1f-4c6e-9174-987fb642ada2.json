@@ -9,8 +9,46 @@
     "8d2863e6-9e38-424f-918a-55d3c2fda5ee",
     "3f3d6c23-d75d-44a6-99cf-5b93db609acd"
   ],
-  "gates_required": [],
-  "gates_status": {},
+  "gates_required": [
+    "tdd-reminder",
+    "tests",
+    "clippy",
+    "fmt",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "fmt": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-03-05T20:29:17.390674488Z"
+    },
+    "clippy": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-03-05T20:29:17.390663558Z"
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-03-05T20:29:17.390686058Z"
+    },
+    "tdd-reminder": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-03-05T20:29:17.390604258Z"
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-03-05T20:29:17.390697088Z"
+    },
+    "tests": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-03-05T20:29:17.390652118Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -18,5 +56,5 @@
     "type:task"
   ],
   "created_at": "2026-02-26T00:09:07.544270603+00:00",
-  "updated_at": "2026-02-26T00:15:51.169217692+00:00"
+  "updated_at": "2026-03-05T20:29:17.390708048+00:00"
 }
