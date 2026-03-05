@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "41ee0c03-0ae8-4f2d-868f-c98f7992b09c",
+  "gate_key": "code-review",
+  "stage": "postcheck",
+  "issue_id": "0203bebd-2d60-45af-9ce0-6c99a9be0f8c",
+  "commit": "363164f93fc9c26af2fcb205a67cd7d16b553ab9",
+  "branch": "main",
+  "status": "passed",
+  "started_at": "2026-03-05T21:57:56.582367892Z",
+  "completed_at": "2026-03-05T22:02:02.531302477Z",
+  "duration_ms": 245948,
+  "exit_code": 0,
+  "stdout": "## Success criteria vs. issue deliverable\n- ✅ `ExtConfig` now matches the approved API: `type BaseField: ConstField`, `const NON_RESIDUE: Self::BaseField`, and default `mul_by_non_residue` (`crates/gf2-core/src/gfpn/ext_config.rs:57-79`).\n- ✅ Concrete `Fp<7>` config with β = -1 compiles and is tested (`ext_config.rs:94-102`, `126-128`).\n- ✅ Default `mul_by_non_residue` is checked against manual multiplication (`ext_config.rs:152-164`), and override behavior is also checked (`167-179`).\n- ✅ Zero-sized config/no runtime overhead is explicitly tested (`ext_config.rs:195-200`).\n- ✅ Trait shape does not preclude nested towers (`BaseField: ConstField` plus associated const; no runtime storage in trait).\n\n## Separation of concerns\n- ✅ Changes are confined to `gf2-core` (`gfpn` module export and supporting const-enablement in `gfp`), with no dependency from `gf2-core` to `gf2-coding`.\n- ✅ Dependency direction remains correct; `gf2-core/src/lib.rs` only adds `pub mod gfpn;` (`crates/gf2-core/src/lib.rs:45`).\n\n## Functional paradigm and performance\n- ✅ High-level API uses static dispatch and zero-sized config markers (`ExtConfig` trait + associated const), preserving zero-cost abstraction.\n- ✅ Performance-oriented const changes in `Fp`/Montgomery helpers (`gfp/mod.rs`, `gfp/montgomery.rs`) support compile-time non-residue constants without adding runtime overhead.\n\n## Correctness\n- ✅ Prior critical API mismatch is fixed: associated const `NON_RESIDUE` is present (old `non_residue()` drift removed).\n- ✅ Arithmetic correctness for non-residue multiplication is verified over full small fields (`GF(7)`, `GF(13)`) via exhaustive loops (`ext_config.rs:152-189`).\n- ✅ No `BitVec` mutation paths were touched; tail-masking/bit-numbering invariants are unaffected by this change.\n\n## Testing\n- ✅ New unit tests cover API contract, default/override behavior, const usage, zero-sized configs, and generic dispatch (`ext_config.rs` test module).\n- ✅ Lint/format/tests for this issue commit are passing in recorded gate runs:\n  - tests: `7ec11db3-1571-4ae8-9b1b-822f2d7411e8` (status `passed`, exit 0, commit `363164f...`)\n  - clippy: `d269edcc-acc8-482c-a2eb-5760184dba34` (status `passed`, exit 0)\n  - fmt: `82484590-d769-4d04-a12d-a985ac52bd44` (status `passed`, exit 0)\n\n## Unsafe isolation\n- ✅ No new `unsafe` introduced in changed files (`gfpn/ext_config.rs`, `gfpn/mod.rs`, `gfp/mod.rs`, `gfp/montgomery.rs`, `lib.rs`).\n- ✅ `gf2-core` still enforces `#![deny(unsafe_code)]` (`crates/gf2-core/src/lib.rs:35`).\n\n## Documentation\n- ✅ Public-facing docs were added for module and trait with examples (`gfpn/mod.rs`, `gfpn/ext_config.rs`).\n- ✅ The docs now align with the accepted deliverable (associated const `NON_RESIDUE` and default multiplication hook).\n\n## Prior review feedback\n- ✅ Addressed: previous fail cited missing `const NON_RESIDUE` and API drift; current implementation restores the exact specified contract (`ext_config.rs:65`).\n- ✅ No unresolved items from the most recent failed run remain.\n\n## Jit issue dependencies\n- ✅ Dependency `8ce6f8aa-9252-4ae6-ab5c-e702e961d460` is in `done` state (`.jit/issues/8ce6f8aa-9252-4ae6-ab5c-e702e961d460.json:5`), so prerequisite work is satisfied.\n\nVERDICT: PASS\n---\nGate result: PASSED\n",
+  "stderr": "",
+  "command": "./scripts/ai-review.sh",
+  "by": "auto:executor",
+  "message": null
+}

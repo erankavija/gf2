@@ -2,7 +2,7 @@
   "id": "3f3d6c23-d75d-44a6-99cf-5b93db609acd",
   "title": "Implement CubicExt<F> with Toom-Cook multiplication",
   "description": "Core type: struct CubicExt&lt;F&gt; { c0: F, c1: F, c2: F }. Implement FiniteField trait. Toom-Cook multiplication: 5 base-field muls instead of 9. Chung-Hasan SQR variant for squaring. Location: crates/gf2-core/src/gfpn/tower.rs. Must pass axiom test harness.",
-  "state": "backlog",
+  "state": "ready",
   "priority": "low",
   "assignee": null,
   "dependencies": [
@@ -17,20 +17,15 @@
     "doc-review"
   ],
   "gates_status": {
-    "tests": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-03-05T20:29:17.239896582Z"
-    },
     "code-review": {
       "status": "pending",
       "updated_by": null,
       "updated_at": "2026-03-05T20:29:17.239934692Z"
     },
-    "doc-review": {
+    "tests": {
       "status": "pending",
       "updated_by": null,
-      "updated_at": "2026-03-05T20:29:17.239944322Z"
+      "updated_at": "2026-03-05T20:29:17.239896582Z"
     },
     "tdd-reminder": {
       "status": "pending",
@@ -41,6 +36,11 @@
       "status": "pending",
       "updated_by": null,
       "updated_at": "2026-03-05T20:29:17.239924652Z"
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-03-05T20:29:17.239944322Z"
     },
     "clippy": {
       "status": "pending",
@@ -55,5 +55,5 @@
     "type:task"
   ],
   "created_at": "2026-02-26T00:09:07.133453836+00:00",
-  "updated_at": "2026-03-05T20:29:17.239953782+00:00"
+  "updated_at": "2026-03-05T22:39:20.999786886+00:00"
 }

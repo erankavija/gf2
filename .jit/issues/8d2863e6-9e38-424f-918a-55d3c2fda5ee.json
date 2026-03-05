@@ -2,7 +2,7 @@
   "id": "8d2863e6-9e38-424f-918a-55d3c2fda5ee",
   "title": "Implement QuadraticExt<F> with Karatsuba multiplication",
   "description": "Core type: struct QuadraticExt&lt;F&gt; { c0: F, c1: F }. Implement FiniteField trait. Karatsuba multiplication: 3 base-field muls instead of 4. Implement ConstField when F: ConstField + Copy. Location: crates/gf2-core/src/gfpn/tower.rs. Must pass axiom test harness (2248b17d).",
-  "state": "backlog",
+  "state": "ready",
   "priority": "low",
   "assignee": null,
   "dependencies": [
@@ -17,6 +17,11 @@
     "doc-review"
   ],
   "gates_status": {
+    "fmt": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-03-05T20:29:17.186610580Z"
+    },
     "clippy": {
       "status": "pending",
       "updated_by": null,
@@ -27,6 +32,11 @@
       "updated_by": null,
       "updated_at": "2026-03-05T20:29:17.186624730Z"
     },
+    "tests": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-03-05T20:29:17.186575350Z"
+    },
     "tdd-reminder": {
       "status": "pending",
       "updated_by": null,
@@ -36,16 +46,6 @@
       "status": "pending",
       "updated_by": null,
       "updated_at": "2026-03-05T20:29:17.186639330Z"
-    },
-    "tests": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-03-05T20:29:17.186575350Z"
-    },
-    "fmt": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-03-05T20:29:17.186610580Z"
     }
   },
   "context": {},
@@ -55,5 +55,5 @@
     "type:task"
   ],
   "created_at": "2026-02-26T00:09:07.113726109+00:00",
-  "updated_at": "2026-03-05T20:29:17.186653280+00:00"
+  "updated_at": "2026-03-05T22:39:20.915900779+00:00"
 }

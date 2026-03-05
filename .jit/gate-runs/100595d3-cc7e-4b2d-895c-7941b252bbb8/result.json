@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "100595d3-cc7e-4b2d-895c-7941b252bbb8",
+  "gate_key": "code-review",
+  "stage": "postcheck",
+  "issue_id": "0203bebd-2d60-45af-9ce0-6c99a9be0f8c",
+  "commit": "da9a72a26c550b88e514afb8d13586f8ec5eadc4",
+  "branch": "main",
+  "status": "failed",
+  "started_at": "2026-03-05T21:11:37.877803464Z",
+  "completed_at": "2026-03-05T21:13:52.724437406Z",
+  "duration_ms": 134846,
+  "exit_code": 1,
+  "stdout": "## Success criteria vs. issue deliverable\n- ❌ **Not fully met**: issue requires `ExtConfig` to define `const NON_RESIDUE: Self::BaseField`, but implementation uses `fn non_residue() -> Self::BaseField` (`crates/gf2-core/src/gfpn/ext_config.rs:69`), so the approved API contract is not implemented.\n- ✅ `type BaseField: ConstField` is present (`ext_config.rs:63`), default `mul_by_non_residue` matches manual multiplication by tests (`ext_config.rs:164-177`), and ZST/no-state config behavior is tested (`ext_config.rs:211-215`).\n- ❌ This API drift is technical debt relative to the accepted issue spec and design decision text.\n\n## Separation of concerns\n- ✅ Changes are confined to `gf2-core` (`gfpn` module and `lib.rs` export), with no dependency flow from `gf2-core` to `gf2-coding`.\n\n## Functional paradigm and performance\n- ✅ Trait-based static dispatch with marker config types is clean and composable; override hook for fast paths is provided (`ext_config.rs:80-82`, `107-109`).\n- ⚠️ Replacing associated const with function weakens the zero-cost/const-expression model promised by the issue (even if often inlined in practice).\n\n## Correctness\n- ✅ Arithmetic behavior for `mul_by_non_residue` is validated against manual multiplication across full small fields (`GF(7)`, `GF(13)`).\n- ✅ No `BitVec`/tail-masking/bit-numbering code touched; no regression evidence in those invariants from this diff.\n\n## Testing\n- ✅ New unit tests exist and naming is consistent (`test_<operation>_<scenario>` style).\n- ✅ Gate records show `fmt`, `clippy`, and `tests` passed for this issue state.\n- ⚠️ No property-based tests were added for this new trait behavior.\n\n## Unsafe isolation\n- ✅ No new `unsafe` introduced; changes remain in safe code paths.\n\n## Documentation\n- ✅ Module and trait have descriptive docs and examples.\n- ❌ Public API docs do not match required deliverable (`NON_RESIDUE` const absent), and method-level docs are lighter than the project’s stated doc standard for public items.\n\n## Prior review feedback\n- ✅ `run_history` is empty; no prior review items to reconcile.\n\n## Jit issue dependencies\n- ✅ Prerequisite dependency `8ce6f8aa` is `done`; dependency condition is satisfied.\n\nVERDICT: FAIL\n---\nGate result: FAILED\n",
+  "stderr": "",
+  "command": "./scripts/ai-review.sh",
+  "by": "auto:executor",
+  "message": null
+}
