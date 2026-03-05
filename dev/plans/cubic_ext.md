@@ -191,14 +191,12 @@ is `Copy`. Share the macro if one was created for QuadraticExt.
 ## FiniteField implementation
 
 ```rust
-impl<C: ExtConfig> FiniteField for CubicExt<C>
-where
-    C::BaseField: FiniteField<Characteristic = u64>,
-{
-    type Characteristic = u64;
+impl<C: ExtConfig> FiniteField for CubicExt<C> {
+    // Inherit characteristic type from base field — no u64 assumption.
+    type Characteristic = <C::BaseField as FiniteField>::Characteristic;
     type Wide = Self;  // identity, deferred to d11b769a
 
-    fn characteristic(&self) -> u64 { self.c0.characteristic() }
+    fn characteristic(&self) -> Self::Characteristic { self.c0.characteristic() }
     fn extension_degree(&self) -> usize { 3 * self.c0.extension_degree() }
     fn is_zero(&self) -> bool {
         self.c0.is_zero() && self.c1.is_zero() && self.c2.is_zero()
@@ -227,10 +225,7 @@ where
 ## ConstField implementation
 
 ```rust
-impl<C: ExtConfig> ConstField for CubicExt<C>
-where
-    C::BaseField: ConstField<Characteristic = u64>,
-{
+impl<C: ExtConfig> ConstField for CubicExt<C> {
     fn zero() -> Self {
         Self::new(C::BaseField::zero(), C::BaseField::zero(), C::BaseField::zero())
     }
