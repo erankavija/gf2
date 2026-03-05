@@ -126,10 +126,11 @@ Every public item must have a doc comment with: description, `# Arguments`, `# E
 type(scope): brief description
 
 Longer explanation if needed.
-
-Fixes #123
 ```
-Valid types: `feat`, `fix`, `docs`, `test`, `refactor`, `perf`, `chore`.
+
+* Valid types: `feat`, `fix`, `docs`, `test`, `refactor`, `perf`, `chore`.
+* Reference the jit issue short ID in the scope prefixed with jit: (e.g., `feat(jit:8ce6f8aa): ...`)
+* First line under 72 chars.
 
 ## Adding a new error-correcting code
 
