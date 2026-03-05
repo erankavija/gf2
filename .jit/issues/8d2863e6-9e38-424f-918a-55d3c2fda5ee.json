@@ -1,7 +1,7 @@
 {
   "id": "8d2863e6-9e38-424f-918a-55d3c2fda5ee",
-  "title": "Implement QuadraticExt<F> with Karatsuba multiplication",
-  "description": "Core type: struct QuadraticExt&lt;F&gt; { c0: F, c1: F }. Implement FiniteField trait. Karatsuba multiplication: 3 base-field muls instead of 4. Implement ConstField when F: ConstField + Copy. Location: crates/gf2-core/src/gfpn/tower.rs. Must pass axiom test harness (2248b17d).",
+  "title": "Implement QuadraticExt<C> with Karatsuba multiplication",
+  "description": "Implement `QuadraticExt<C>`, the quadratic extension field type where elements are `c0 + c1·u` with `u² = β` (non-residue from `C: ExtConfig`).\n\n## Deliverable\n\n`crates/gf2-core/src/gfpn/quadratic.rs` containing:\n\n- `QuadraticExt<C: ExtConfig>` struct with `c0`, `c1` components.\n- Karatsuba multiplication: 3 base-field muls instead of 4.\n- Norm-based inversion: `a⁻¹ = conjugate(a) / norm(a)` where `norm = a0² − β·a1²`.\n- `FiniteField` implementation with `type Characteristic = u64`, `type Wide = Self` (placeholder — proper wide accumulator in d11b769a).\n- `ConstField` implementation: `zero = (0, 0)`, `one = (1, 0)`, `order = base_order²`.\n- All ref-forwarding operators (`Add<&Self>`, `&Self + &Self`, etc.) and `AddAssign`.\n- `From<BaseField>` embedding: `a ↦ (a, 0)`.\n- `Display`: `\"3 + 5·u\"` format. `Debug`: `\"QuadraticExt(3, 5)\"`.\n- Constructors: `new(c0, c1)`, accessors: `c0()`, `c1()`, plus `conjugate()` and `norm()`.\n\nSee design plan: `dev/plans/quadratic_ext.md`\n\n## Success criteria\n\n- Passes the field axiom test harness (`test_const_field_axioms`) for `QuadraticExt<Fq2Config>` over GF(7) with β = −1 (= 6 mod 7), using `proptest` strategy over all 49 elements.\n- Exhaustive cross-verification: Karatsuba multiplication matches naive polynomial multiplication mod (u² − β) for all 49 × 49 element pairs in GF(7²).\n- Inversion round-trip: `a * a.inv() == one` for all 48 non-zero elements of GF(7²).\n- `extension_degree() == 2`, `order() == 49`, `characteristic() == 7`.\n- Embedding: `Fq2::from(Fp::new(k))` equals `Fq2::new(Fp::new(k), Fp::zero())` for all k.\n- No runtime overhead: `QuadraticExt<C>` is `Copy` and `size_of::<QuadraticExt<C>>() == 2 * size_of::<C::BaseField>()`.",
   "state": "ready",
   "priority": "low",
   "assignee": null,
@@ -17,26 +17,6 @@
     "doc-review"
   ],
   "gates_status": {
-    "fmt": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-03-05T20:29:17.186610580Z"
-    },
-    "clippy": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-03-05T20:29:17.186596960Z"
-    },
-    "code-review": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-03-05T20:29:17.186624730Z"
-    },
-    "tests": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-03-05T20:29:17.186575350Z"
-    },
     "tdd-reminder": {
       "status": "pending",
       "updated_by": null,
@@ -46,14 +26,42 @@
       "status": "pending",
       "updated_by": null,
       "updated_at": "2026-03-05T20:29:17.186639330Z"
+    },
+    "clippy": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-03-05T20:29:17.186596960Z"
+    },
+    "fmt": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-03-05T20:29:17.186610580Z"
+    },
+    "tests": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-03-05T20:29:17.186575350Z"
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-03-05T20:29:17.186624730Z"
     }
   },
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/plans/quadratic_ext.md",
+      "commit": null,
+      "label": "QuadraticExt implementation plan",
+      "doc_type": "design",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "component:gf2-core",
     "type:task"
   ],
   "created_at": "2026-02-26T00:09:07.113726109+00:00",
-  "updated_at": "2026-03-05T22:39:20.915900779+00:00"
+  "updated_at": "2026-03-05T23:03:14.869031977+00:00"
 }
