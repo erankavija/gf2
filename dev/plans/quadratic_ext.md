@@ -168,17 +168,15 @@ but is optional — manual impls are fine for two types.
 ## FiniteField implementation
 
 ```rust
-impl<C: ExtConfig> FiniteField for QuadraticExt<C>
-where
-    C::BaseField: FiniteField<Characteristic = u64>,
-{
-    type Characteristic = u64;
+impl<C: ExtConfig> FiniteField for QuadraticExt<C> {
+    // Inherit characteristic type from base field — no u64 assumption.
+    type Characteristic = <C::BaseField as FiniteField>::Characteristic;
 
     // Wide = Self for now (identity, no lazy reduction).
     // Proper wide accumulator deferred to issue d11b769a.
     type Wide = Self;
 
-    fn characteristic(&self) -> u64 { self.c0.characteristic() }
+    fn characteristic(&self) -> Self::Characteristic { self.c0.characteristic() }
     fn extension_degree(&self) -> usize { 2 * self.c0.extension_degree() }
     fn is_zero(&self) -> bool { self.c0.is_zero() && self.c1.is_zero() }
     fn is_one(&self) -> bool { self.c0.is_one() && self.c1.is_zero() }
@@ -203,10 +201,7 @@ where
 ## ConstField implementation
 
 ```rust
-impl<C: ExtConfig> ConstField for QuadraticExt<C>
-where
-    C::BaseField: ConstField<Characteristic = u64>,
-{
+impl<C: ExtConfig> ConstField for QuadraticExt<C> {
     fn zero() -> Self {
         Self::new(C::BaseField::zero(), C::BaseField::zero())
     }
