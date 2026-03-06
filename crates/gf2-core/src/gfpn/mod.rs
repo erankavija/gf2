@@ -9,7 +9,7 @@
 //!
 //! - [`ExtConfig`]: Trait specifying the non-residue β for each extension level.
 //! - [`QuadraticExt<C>`]: Elements c₀ + c₁·u where u² = β.
-//! - `CubicExt<C>`: Elements c₀ + c₁·v + c₂·v² where v³ = β (future).
+//! - [`CubicExt<C>`]: Elements c₀ + c₁·v + c₂·v² where v³ = β.
 //!
 //! # Examples
 //!
@@ -33,8 +33,10 @@
 //! assert_eq!(Fq2Config::mul_by_non_residue(x).value(), 5); // 4*3 mod 7 = 5
 //! ```
 
+mod cubic;
 mod ext_config;
 mod quadratic;
 
+pub use cubic::CubicExt;
 pub use ext_config::ExtConfig;
 pub use quadratic::QuadraticExt;

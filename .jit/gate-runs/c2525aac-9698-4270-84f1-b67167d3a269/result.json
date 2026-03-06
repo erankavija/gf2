@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "c2525aac-9698-4270-84f1-b67167d3a269",
+  "gate_key": "code-review",
+  "stage": "postcheck",
+  "issue_id": "3f3d6c23-d75d-44a6-99cf-5b93db609acd",
+  "commit": "9c871e46e980964bbebd03858c5995758f918a13",
+  "branch": "main",
+  "status": "failed",
+  "started_at": "2026-03-06T23:08:01.375603011Z",
+  "completed_at": "2026-03-06T23:11:07.549611619Z",
+  "duration_ms": 186174,
+  "exit_code": 1,
+  "stdout": "## Success criteria from issue description\n- ✅ `CubicExt<C>` with `c0/c1/c2`, constructors/accessors, `norm()`, Karatsuba 6-mul multiply, adjugate/norm inversion, `ConstField`, ref-forwarded ops, `AddAssign`, `Display`, `Debug`, and `Copy` size check are present (`crates/gf2-core/src/gfpn/cubic.rs`, e.g. `93-206`, `328-357`, `473-573`, `379-467`, `647-685`, `877-879`).\n- ✅ Required behavioral tests are present: field axiom harness over `(0..7)^3` strategy (`604-609`), multiplication cross-check (`773-815`), inversion round-trip (`821-837`), defining relation `v^3 = β` (`711-716`), and degree/order/characteristic (`691-704`).\n- ❌ **Embedding success criterion is not met as written**: issue requires `Fq3::from(Fp::new(k)) == ...`, but there is no `From<BaseField>` impl for `CubicExt` (no `impl From<...> for CubicExt<...>` found), and tests use `from_base(...)` instead (`635-640`, `715`), so the specified API contract is unmet.\n\n## Separation of concerns\n- ✅ Changes are confined to `gf2-core` (`crates/gf2-core/src/gfpn/cubic.rs` plus `gfpn/mod.rs` export), with no upward dependency violation into `gf2-coding`.\n\n## Functional paradigm and performance\n- ✅ High-level arithmetic is clean and compositional (value-returning ops, minimal mutation), while multiplication uses the intended Karatsuba-style 6-mul formula (`328-357`), matching the performance-oriented design goal for extension arithmetic.\n\n## Correctness\n- ✅ Algebraic correctness is strongly exercised by exhaustive/representative tests and inversion checks.\n- ℹ️ BitVec-specific invariants (tail masking, bit numbering) are not touched by this change set, so no new risk introduced there.\n\n## Testing\n- ✅ Comprehensive local tests for this feature are included (axioms, multiplication equivalence, inversion, embedding helper, formatting, operator forwarding, size/layout).\n- ✅ Gate metadata for this issue shows `tests`, `clippy`, and `fmt` all passed in the latest run.\n- ❌ Despite green gates, review fails due unmet embedding API criterion (`From<BaseField>`).\n\n## Unsafe isolation\n- ✅ No `unsafe` introduced in the new cubic extension implementation; unsafe isolation policy remains intact.\n\n## Documentation\n- ✅ Public type and major APIs include doc comments and examples; non-trivial operations document complexity/panics where appropriate.\n- ⚠️ The documented/implemented embedding API is `from_base`, which diverges from the issue’s explicit `From<BaseField>` deliverable.\n\n## Prior review feedback\n- ✅ `run_history` is empty, so there are no prior unresolved review items to re-check.\n\n## Jit issue dependencies\n- ✅ Declared prerequisite `0203bebd` is in `done` state and this work builds on its `ExtConfig` pattern.\n\nVERDICT: FAIL\n---\nGate result: FAILED\n",
+  "stderr": "",
+  "command": "./scripts/ai-review.sh",
+  "by": "auto:executor",
+  "message": null
+}

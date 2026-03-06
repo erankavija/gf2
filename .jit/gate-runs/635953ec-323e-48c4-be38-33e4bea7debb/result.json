@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "635953ec-323e-48c4-be38-33e4bea7debb",
+  "gate_key": "code-review",
+  "stage": "postcheck",
+  "issue_id": "3f3d6c23-d75d-44a6-99cf-5b93db609acd",
+  "commit": "9c871e46e980964bbebd03858c5995758f918a13",
+  "branch": "main",
+  "status": "passed",
+  "started_at": "2026-03-06T23:19:27.692495801Z",
+  "completed_at": "2026-03-06T23:23:24.341968087Z",
+  "duration_ms": 236649,
+  "exit_code": 0,
+  "stdout": "## Success criteria from issue description\n- ✅ `crates/gf2-core/src/gfpn/cubic.rs` implements `CubicExt<C>` with `c0/c1/c2`, `new`, accessors, `norm`, `from_base`, `Display` (`\"1 + 2·v + 3·v²\"`), `Debug` (`\"CubicExt(…)\"`), `AddAssign`, ref-forwarded ops, and `Copy` + size check (`cubic.rs:93-232`, `239-279`, `379-467`, `636-640`, `648-685`, `877-879`).  \n- ✅ Multiplication is Karatsuba-style 6-mul (not schoolbook 9-mul), and inversion uses adjugate/norm with one base-field inversion (`cubic.rs:328-357`, `497-515`); `ConstField` order is `base_order³`, zero/one are `(0,0,0)` and `(1,0,0)` (`cubic.rs:552-573`).  \n- ✅ Success tests are present for axioms, Karatsuba-vs-naive cross-check, inversion round-trip, `v^3 = β`, degree/order/characteristic, embedding equivalence, and runtime layout (`cubic.rs:604-609`, `773-815`, `822-837`, `711-716`, `691-704`, `636-640`, `877-879`).\n\n## Separation of concerns\n- ✅ Changes are confined to `gf2-core` (`gfpn/mod.rs` + new `gfpn/cubic.rs`) with no dependency flow from `gf2-core` to `gf2-coding`.\n\n## Functional paradigm and performance\n- ✅ High-level API is value-oriented and cleanly compositional (component-wise ops returning new values), while performance-critical multiplication uses the expected bit/arithmetic-efficient 6-mul formulation (`cubic.rs:286-357`).\n\n## Correctness\n- ✅ Field arithmetic formulas match the cubic relation reduction `v³ = β`, and inversion computes cofactors + norm inversion correctly (`cubic.rs:347-354`, `506-515`).  \n- ✅ BitVec tail-masking/bit-index invariants are not modified by this change, so no new risk introduced in that subsystem.\n\n## Testing\n- ✅ Test coverage for this feature is strong and includes exhaustive loops over GF(7³) element pairs/nonzero elements for multiplication and inversion checks (`cubic.rs:773-837`), plus field-axiom harness and API/format/layout tests.  \n- ✅ Latest gate statuses in issue context show `fmt`, `clippy`, and `tests` passed; no failing lint/test gate is indicated for this change set.\n\n## Unsafe isolation\n- ✅ No `unsafe` is introduced in `cubic.rs`; unsafe-isolation policy remains intact.\n\n## Documentation\n- ✅ Public type and major APIs are documented with examples, and non-trivial arithmetic paths include complexity notes and panic behavior where applicable (`cubic.rs` module docs, `Mul`, `Div`, `FiniteField::inv` sections).\n\n## Prior review feedback (most recent run)\n- ✅ Previously flagged embedding mismatch is addressed relative to current issue contract: implementation and tests now consistently use `from_base(...)` embedding (`cubic.rs:229`, `636-640`, `715`), which matches the issue’s explicit deliverable/success criterion.\n\n## Jit issue dependencies\n- ✅ Prerequisite `0203bebd` is marked `done` in issue metadata, and this implementation correctly builds on `ExtConfig`.\n\nVERDICT: PASS\n---\nGate result: PASSED\n",
+  "stderr": "",
+  "command": "./scripts/ai-review.sh",
+  "by": "auto:executor",
+  "message": null
+}
