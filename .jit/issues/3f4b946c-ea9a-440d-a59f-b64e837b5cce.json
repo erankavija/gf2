@@ -1,7 +1,7 @@
 {
   "id": "3f4b946c-ea9a-440d-a59f-b64e837b5cce",
   "title": "Implement tower extension field architecture for GF(p^n)",
-  "description": "Implement recursive tower extension fields for constructing GF(p^n) from smaller fields. This is the algebraic foundation for high-degree extension field arithmetic, following the tower construction pattern used in pairing-based cryptography.\n\n## Architecture\n\nTower extensions build complex fields recursively from simpler ones:\n\n```\nGF(p) → GF(p^2) → GF(p^6) → GF(p^12)\n        degree 2   degree 3   degree 2\n```\n\nEach level is an extension of the previous, keeping intermediate values small enough to fit in CPU registers and enabling hardcoded optimal multiplication formulas.\n\n## Core types\n\n```rust\n/// A quadratic extension: elements are a0 + a1·u where u^2 = non_residue.\n/// Uses Karatsuba multiplication (3 base multiplications instead of 4).\npub struct QuadraticExt<F: FiniteField> {\n    c0: F,\n    c1: F,\n}\n\n/// A cubic extension: elements are a0 + a1·v + a2·v^2.\n/// Uses Toom-Cook or Chung-Hasan multiplication (5 base multiplications instead of 9).\npub struct CubicExt<F: FiniteField> {\n    c0: F,\n    c1: F,\n    c2: F,\n}\n```\n\nBoth implement `FiniteField`. When the base field `F` is `ConstField + Copy`, the extension is also `ConstField + Copy`.\n\n## Multiplication algorithms\n\n### Karatsuba for degree-2 (QuadraticExt)\n\nFor `(a0 + a1·u)(b0 + b1·u)`:\n1. `v0 = a0 * b0`\n2. `v1 = a1 * b1`\n3. `v2 = (a0 + a1) * (b0 + b1)`\n4. Result: `(v0 + β·v1) + (v2 - v0 - v1)·u` where β is the non-residue\n\n3 base-field multiplications instead of 4 (25% reduction).\n\n### Toom-Cook for degree-3 (CubicExt)\n\n5 base-field multiplications instead of 9 (44% reduction). The Chung-Hasan SQR variant is even faster for squaring (fewer additions).\n\n## Wide accumulator integration\n\nTower extensions use **lazy/delayed reduction**: intermediate products at each tower level are accumulated in `Wide` types before reducing. This means:\n\n- `QuadraticExt<Fp<P>>` accumulates in `(u128, u128)` — two wide components\n- Reduction happens at the Fp level, not at each tower level\n- The `max_unreduced_additions()` propagates through the tower: outer levels inherit the base field's reduction bound\n\n## Concrete constructions to support\n\n| Field | Tower | Use case |\n|-------|-------|----------|\n| GF(p^2) | `QuadraticExt<Fp<P>>` | Basic extension, complex-number analogy |\n| GF(p^4) | `QuadraticExt<QuadraticExt<Fp<P>>>` | Double extension |\n| GF(p^6) | `CubicExt<QuadraticExt<Fp<P>>>` | BLS12-381 intermediate |\n| GF(p^12) | `QuadraticExt<CubicExt<QuadraticExt<Fp<P>>>>` | BLS12-381 target field |\n| GF(2^128) | `QuadraticExt<Gf2_64>` | AES-GCM / GHASH field |\n\n## Location\n\n`crates/gf2-core/src/gfpn/` (new module)\n- `tower.rs` — `QuadraticExt`, `CubicExt` types and their `FiniteField` implementations\n- `non_residue.rs` — trait/const for specifying the irreducible polynomial at each tower level\n\n## Dependencies\n\n- 8ce6f8aa (Montgomery multiplication) — the base field `Fp<P>` must be performant before building towers on top of it\n\n## Success criteria\n\n- `QuadraticExt<Fp<P>>` and `CubicExt<Fp<P>>` pass the full field axiom test harness (2248b17d).\n- Nested towers (`QuadraticExt<CubicExt<QuadraticExt<Fp<P>>>>`) pass axiom tests.\n- Karatsuba and Toom-Cook multiplication produce identical results to naive polynomial multiplication.\n- For `QuadraticExt<Fp<P>>` with P fitting in 64 bits: multiplication completes in ≤10 base-field multiplications (3 Karatsuba + overhead).",
+  "description": "Implement recursive tower extension fields for constructing GF(p^n) from smaller fields. This is the algebraic foundation for high-degree extension field arithmetic, following the tower construction pattern used in pairing-based cryptography.\n\n## Architecture\n\nTower extensions build complex fields recursively from simpler ones:\n\n```\nGF(p) → GF(p^2) → GF(p^6) → GF(p^12)\n        degree 2   degree 3   degree 2\n```\n\nEach level is an extension of the previous, keeping intermediate values small enough to fit in CPU registers and enabling hardcoded optimal multiplication formulas.\n\n## Core types\n\n```rust\n/// A quadratic extension: elements are a0 + a1·u where u^2 = non_residue.\n/// Uses Karatsuba multiplication (3 base multiplications instead of 4).\npub struct QuadraticExt<F: FiniteField> {\n    c0: F,\n    c1: F,\n}\n\n/// A cubic extension: elements are a0 + a1·v + a2·v^2.\n/// Uses Karatsuba-style 6-mul formula (Devegili et al., ePrint 2006/471).\npub struct CubicExt<F: FiniteField> {\n    c0: F,\n    c1: F,\n    c2: F,\n}\n```\n\nBoth implement `FiniteField`. When the base field `F` is `ConstField + Copy`, the extension is also `ConstField + Copy`.\n\n## Multiplication algorithms\n\n### Karatsuba for degree-2 (QuadraticExt)\n\nFor `(a0 + a1·u)(b0 + b1·u)`:\n1. `v0 = a0 * b0`\n2. `v1 = a1 * b1`\n3. `v2 = (a0 + a1) * (b0 + b1)`\n4. Result: `(v0 + β·v1) + (v2 - v0 - v1)·u` where β is the non-residue\n\n3 base-field multiplications instead of 4 (25% reduction).\n\n### Karatsuba-style for degree-3 (CubicExt)\n\n6 base-field multiplications instead of 9 (33% reduction). Uses the formula from Devegili et al. (ePrint 2006/471), which works generically across all characteristics (unlike Toom-Cook, which requires division by 2, 3, and 6).\n\n## Wide accumulator integration\n\nTower extensions use **lazy/delayed reduction**: intermediate products at each tower level are accumulated in `Wide` types before reducing. This means:\n\n- `QuadraticExt<Fp<P>>` accumulates in `(u128, u128)` — two wide components\n- Reduction happens at the Fp level, not at each tower level\n- The `max_unreduced_additions()` propagates through the tower: outer levels inherit the base field's reduction bound\n\n## Concrete constructions to support\n\n| Field | Tower | Use case |\n|-------|-------|----------|\n| GF(p^2) | `QuadraticExt<Fp<P>>` | Basic extension, complex-number analogy |\n| GF(p^4) | `QuadraticExt<QuadraticExt<Fp<P>>>` | Double extension |\n| GF(p^6) | `CubicExt<QuadraticExt<Fp<P>>>` | BLS12-381 intermediate |\n| GF(p^12) | `QuadraticExt<CubicExt<QuadraticExt<Fp<P>>>>` | BLS12-381 target field |\n\n## Location\n\n`crates/gf2-core/src/gfpn/` module:\n- `ext_config.rs` — `ExtConfig` trait specifying the non-residue β at each tower level\n- `quadratic.rs` — `QuadraticExt<C>` type and its `FiniteField` implementation\n- `cubic.rs` — `CubicExt<C>` type and its `FiniteField` implementation (planned)\n\n## Success criteria\n\n- `QuadraticExt<Fp<P>>` and `CubicExt<Fp<P>>` pass the full field axiom test harness (2248b17d).\n- Nested towers (`QuadraticExt<CubicExt<QuadraticExt<Fp<P>>>>`) pass axiom tests.\n- Karatsuba and Karatsuba-style multiplication produce identical results to naive polynomial multiplication.\n- For `QuadraticExt<Fp<P>>` with P fitting in 64 bits: multiplication completes in ≤10 base-field multiplications (3 Karatsuba + overhead).",
   "state": "backlog",
   "priority": "low",
   "assignee": null,
@@ -19,25 +19,25 @@
     "doc-review"
   ],
   "gates_status": {
-    "clippy": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-02-25T22:47:59.066385261Z"
-    },
-    "doc-review": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-02-25T22:47:59.066420631Z"
-    },
     "tdd-reminder": {
       "status": "pending",
       "updated_by": null,
       "updated_at": "2026-02-25T22:47:59.066354711Z"
     },
+    "clippy": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:59.066385261Z"
+    },
     "fmt": {
       "status": "pending",
       "updated_by": null,
       "updated_at": "2026-02-25T22:47:59.066396961Z"
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-02-25T22:47:59.066420631Z"
     },
     "code-review": {
       "status": "pending",
@@ -57,5 +57,5 @@
     "component:gf2-core"
   ],
   "created_at": "2026-02-21T19:35:51.862089277+00:00",
-  "updated_at": "2026-02-26T00:12:49.354166258+00:00"
+  "updated_at": "2026-03-06T22:26:27.929291086+00:00"
 }

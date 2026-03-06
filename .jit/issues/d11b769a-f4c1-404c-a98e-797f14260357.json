@@ -1,7 +1,7 @@
 {
   "id": "d11b769a-f4c1-404c-a98e-797f14260357",
   "title": "Wide accumulator integration for tower types",
-  "description": "Tower levels propagate Wide from the base field. QuadraticExt&lt;Fp&lt;P&gt;&gt; accumulates in (u128, u128) — two wide components. Reduction happens at Fp level only. max_unreduced_additions() inherits base field's bound. Enables delayed-reduction dot products in FieldVec/FieldMatrix.",
+  "description": "Implement proper Wide accumulator types for tower extension fields, replacing the current `type Wide = Self` placeholder.\n\n## Problem\n\n`QuadraticExt<C>` and `CubicExt<C>` currently use `Wide = Self`, making `mul_to_wide`/`reduce_wide` identity operations and `max_unreduced_additions()` return `usize::MAX`. This defeats delayed-reduction dot products.\n\n## Deliverable\n\n- `QuadraticExtWide<W>` — a `(W, W)` struct implementing `Clone + Add + AddAssign`, where `W` is the base field's wide type.\n- `CubicExtWide<W>` — a `(W, W, W)` struct with the same trait impls.\n- Updated `FiniteField` impls: `type Wide = QuadraticExtWide<BaseField::Wide>` (and cubic equivalent).\n- `to_wide`: component-wise `to_wide` on base field elements.\n- `mul_to_wide`: full Karatsuba multiplication, then `to_wide` on the result (Option 1 — see plan).\n- `reduce_wide`: component-wise `reduce_wide` from base field.\n- `max_unreduced_additions`: delegates to `C::BaseField::max_unreduced_additions()`.\n\nSee design plan: `dev/plans/wide_accumulator_tower.md`\n\n## Success criteria\n\n- Passes axiom test harness (Wide roundtrip + mul_to_wide consistency) for `QuadraticExt` over GF(7).\n- `max_unreduced_additions()` returns base field's bound, not `usize::MAX`.\n- Dot-product accumulation test: N products accumulated in wide, reduced once, matches element-wise result.\n- Nested tower wide type propagates correctly (`QuadraticExtWide<QuadraticExtWide<u128>>` for GF(p^4)).",
   "state": "backlog",
   "priority": "low",
   "assignee": null,
@@ -23,6 +23,11 @@
       "updated_by": null,
       "updated_at": "2026-03-05T20:29:17.290176014Z"
     },
+    "fmt": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-03-05T20:29:17.290163994Z"
+    },
     "tdd-reminder": {
       "status": "pending",
       "updated_by": null,
@@ -42,19 +47,22 @@
       "status": "pending",
       "updated_by": null,
       "updated_at": "2026-03-05T20:29:17.290140024Z"
-    },
-    "fmt": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-03-05T20:29:17.290163994Z"
     }
   },
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/plans/wide_accumulator_tower.md",
+      "commit": null,
+      "label": "Wide accumulator tower design plan",
+      "doc_type": "design",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "component:gf2-core",
     "type:task"
   ],
   "created_at": "2026-02-26T00:09:07.515531647+00:00",
-  "updated_at": "2026-03-05T20:29:17.290199614+00:00"
+  "updated_at": "2026-03-06T22:28:13.281965929+00:00"
 }
