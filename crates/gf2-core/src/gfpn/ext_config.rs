@@ -31,6 +31,8 @@
 //! }
 //! ```
 
+use std::fmt;
+
 use crate::field::ConstField;
 
 /// Configuration specifying the irreducible polynomial for a field extension.
@@ -56,7 +58,7 @@ use crate::field::ConstField;
 /// - β from a lower tower level: exploit structure
 pub trait ExtConfig: 'static {
     /// The base field being extended.
-    type BaseField: ConstField;
+    type BaseField: ConstField + fmt::Display;
 
     /// The non-residue β defining the extension polynomial.
     ///

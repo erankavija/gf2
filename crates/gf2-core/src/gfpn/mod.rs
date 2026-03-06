@@ -8,7 +8,7 @@
 //! # Architecture
 //!
 //! - [`ExtConfig`]: Trait specifying the non-residue β for each extension level.
-//! - `QuadraticExt<C>`: Elements c₀ + c₁·u where u² = β (future).
+//! - [`QuadraticExt<C>`]: Elements c₀ + c₁·u where u² = β.
 //! - `CubicExt<C>`: Elements c₀ + c₁·v + c₂·v² where v³ = β (future).
 //!
 //! # Examples
@@ -34,5 +34,7 @@
 //! ```
 
 mod ext_config;
+mod quadratic;
 
 pub use ext_config::ExtConfig;
+pub use quadratic::QuadraticExt;
