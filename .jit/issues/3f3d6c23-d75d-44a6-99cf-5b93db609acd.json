@@ -2,7 +2,7 @@
   "id": "3f3d6c23-d75d-44a6-99cf-5b93db609acd",
   "title": "Implement CubicExt<C> with Karatsuba-style multiplication",
   "description": "Implement `CubicExt<C>`, the cubic extension field type where elements are `c0 + c1·v + c2·v²` with `v³ = β` (non-residue from `C: ExtConfig`).\n\n**Algorithm note**: Uses the Karatsuba-style 6-mul formula from Devegili et al. (ePrint 2006/471), not Toom-Cook. Toom-Cook requires division by 2, 3, and 6 in the base field, which fails for characteristic 2 and 3. The 6-mul approach works generically and is what arkworks, blstrs, and constantine use.\n\n## Deliverable\n\n`crates/gf2-core/src/gfpn/cubic.rs` containing:\n\n- `CubicExt<C: ExtConfig>` struct with `c0`, `c1`, `c2` components.\n- Karatsuba-style multiplication: 6 base-field muls instead of 9 (schoolbook).\n- Adjugate/norm inversion: cofactor matrix method with single base-field inversion.\n- `FiniteField` implementation with `type Characteristic = u64`, `type Wide = Self` (placeholder — proper wide accumulator in d11b769a).\n- `ConstField` implementation: `zero = (0, 0, 0)`, `one = (1, 0, 0)`, `order = base_order³`.\n- All ref-forwarding operators and `AddAssign`.\n- `from_base()` embedding: `a ↦ (a, 0, 0)`. Note: a generic `From<C::BaseField>` impl is impossible due to Rust's coherence rules — it conflicts with the blanket `impl<T> From<T> for T` because the compiler cannot prove `C::BaseField != CubicExt<C>`. This is the same limitation as QuadraticExt (see 8d2863e6). The named method `from_base()` provides equivalent functionality.\n- `Display`: `\"1 + 2·v + 3·v²\"` format. `Debug`: `\"CubicExt(1, 2, 3)\"`.\n- Constructors: `new(c0, c1, c2)`, accessors: `c0()`, `c1()`, `c2()`, plus `norm()`.\n\nSee design plan: `dev/plans/cubic_ext.md`\n\n## Success criteria\n\n- Passes the field axiom test harness (`test_const_field_axioms`) for `CubicExt<Fq3Config>` over GF(7) with β = 3 (a cubic non-residue mod 7), using `proptest` strategy over all 343 elements.\n- Multiplication cross-verification: Karatsuba-style result matches naive schoolbook polynomial multiplication mod (v³ − β) for a representative subset of GF(7³) element pairs.\n- Inversion round-trip: `a * a.inv() == one` for a representative set of non-zero elements.\n- `v * v * v == CubicExt::from_base(Fp::new(β))` — verifying the defining relation v³ = β.\n- `extension_degree() == 3`, `order() == 343`, `characteristic() == 7`.\n- Embedding: `Fq3::from_base(Fp::new(k))` equals `Fq3::new(Fp::new(k), Fp::zero(), Fp::zero())`.\n- No runtime overhead: `CubicExt<C>` is `Copy` and `size_of::<CubicExt<C>>() == 3 * size_of::<C::BaseField>()`.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "low",
   "assignee": "agent:claude",
   "dependencies": [
@@ -17,20 +17,20 @@
     "doc-review"
   ],
   "gates_status": {
-    "clippy": {
+    "fmt": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-03-06T23:04:58.553649363Z"
+      "updated_at": "2026-03-06T23:05:05.162902959Z"
     },
     "doc-review": {
       "status": "passed",
       "updated_by": "agent:claude",
       "updated_at": "2026-03-06T23:15:14.889500388Z"
     },
-    "code-review": {
+    "clippy": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-03-06T23:19:27.692495801Z"
+      "updated_at": "2026-03-06T23:04:58.553649363Z"
     },
     "tdd-reminder": {
       "status": "passed",
@@ -42,10 +42,10 @@
       "updated_by": "auto:executor",
       "updated_at": "2026-03-06T23:04:37.536884150Z"
     },
-    "fmt": {
+    "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-03-06T23:05:05.162902959Z"
+      "updated_at": "2026-03-06T23:19:27.692495801Z"
     }
   },
   "context": {},
@@ -63,5 +63,5 @@
     "type:task"
   ],
   "created_at": "2026-02-26T00:09:07.133453836+00:00",
-  "updated_at": "2026-03-06T23:23:24.342145037+00:00"
+  "updated_at": "2026-03-06T23:25:07.316629019+00:00"
 }
