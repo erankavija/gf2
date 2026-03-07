@@ -44,6 +44,12 @@ cargo bench -p gf2-coding
 cargo run -p gf2-coding --example hamming_7_4
 cargo run -p gf2-coding --example dvb_t2_ldpc_basic
 cargo run -p gf2-coding --example ldpc_awgn --release
+
+# Lean4 verification pipeline (requires charon + aeneas + elan)
+./scripts/verify-lean.sh
+
+# Just build the committed Lean files (requires elan only)
+cd proofs && lake build
 ```
 
 ## Architecture
@@ -53,6 +59,7 @@ This is a Cargo workspace with three crates:
 - **`gf2-core`** (`crates/gf2-core/`) — Low-level primitives. No dependencies on the other workspace crates. All purely mathematical operations, data structures, and algorithms go here.
 - **`gf2-coding`** (`crates/gf2-coding/`) — Error-correcting codes; depends on `gf2-core`.
 - **`gf2-kernels-simd`** (`crates/gf2-kernels-simd/`) — Isolated unsafe SIMD kernels (AVX2/AVX512/AARCH64). This is the only crate allowed to contain `unsafe` code; everything else uses `#![deny(unsafe_code)]`.
+- **`proofs/`** — Lean4 formal verification of `gfp/` field arithmetic, auto-generated via Charon/Aeneas. See `proofs/README.md`. Currently covers `Fp<P>` (Montgomery arithmetic); `gfpn/` blocked on upstream HRTB support.
 
 ### gf2-core module map
 
@@ -65,6 +72,7 @@ This is a Cargo workspace with three crates:
 | `field/` | `FiniteField` / `ConstField` trait hierarchy and axiom test harness |
 | `gf2m/` | GF(2^m) arithmetic, generic over storage width via sealed `UintExt` trait |
 | `gfp/` | GF(p) prime field `Fp<P>` with Montgomery multiplication internals |
+| `gfpn/` | Tower extensions: `QuadraticExt<C>`, `CubicExt<C>` over `ExtConfig` trait |
 | `primitive_polys` | Static database of primitive polynomials for m=2..16 |
 | `kernels/` | Runtime dispatch to scalar or SIMD backends |
 | `compute/` | Parallel batch operations (rayon backend) |
