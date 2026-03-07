@@ -1,0 +1,39 @@
+{
+  "id": "9509d8cc-db28-4952-bd90-f13e9209ed99",
+  "title": "Formal verification of field arithmetic (Aeneas + Kani)",
+  "description": "Two-track formal verification for field arithmetic in `gfp/` and `gfpn/`:\n\n- **Track 1 (Aeneas)**: Translate Rust→Lean4 via Charon/Aeneas, prove field axioms and algorithm correctness against Mathlib typeclasses. Universal proofs for any prime P.\n- **Track 2 (Kani)**: Bounded model checking for machine-arithmetic edge cases (overflow, representation bounds, bit manipulation).\n\nSee `dev/plans/formal_verification.md` for full rationale and detailed plans.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "f9819a76-c249-4a25-8b77-60805a849b2e",
+    "b0a092bc-9bad-4b8e-b515-bddae8241a55",
+    "751f359c-c9af-4df5-a63b-032b1def7930"
+  ],
+  "gates_required": [
+    "tdd-reminder",
+    "tests",
+    "clippy",
+    "fmt",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [
+    {
+      "path": "dev/plans/formal_verification.md",
+      "commit": null,
+      "label": "Formal verification design plan (Aeneas + Kani)",
+      "doc_type": "design",
+      "format": "markdown"
+    }
+  ],
+  "labels": [
+    "type:story",
+    "component:gf2-core",
+    "epic:e095a100"
+  ],
+  "created_at": "2026-03-07T18:06:00.720467707+00:00",
+  "updated_at": "2026-03-07T18:06:33.202463824+00:00"
+}

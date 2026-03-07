@@ -1,0 +1,22 @@
+{
+  "id": "751f359c-c9af-4df5-a63b-032b1def7930",
+  "title": "Prove Fp field axioms and Montgomery correctness in Lean4",
+  "description": "Prove Fp satisfies Mathlib CommRing/Field typeclass for any prime P. Prove Montgomery roundtrip and redc correctness. Proofs in proofs/GF2Core/Proofs/FpField.lean and MontgomeryRoundtrip.lean. Success criteria: lake build compiles all proofs.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "886af072-ecdf-477a-9fc7-685a88d7abf5"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "story:9509d8cc"
+  ],
+  "created_at": "2026-03-07T18:06:21.572508166+00:00",
+  "updated_at": "2026-03-07T18:06:29.444954686+00:00"
+}

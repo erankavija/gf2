@@ -1,0 +1,22 @@
+{
+  "id": "b0a092bc-9bad-4b8e-b515-bddae8241a55",
+  "title": "Prove extension field axioms and Karatsuba equivalence in Lean4",
+  "description": "Prove QuadraticExt and CubicExt satisfy CommRing/Field. Prove Karatsuba equals schoolbook multiplication. Prove norm-based inversion and order formulas. Proofs in proofs/GF2Core/Proofs/KaratsubaEquiv.lean and ExtFieldAxioms.lean. Success criteria: lake build compiles all extension field proofs.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "886af072-ecdf-477a-9fc7-685a88d7abf5"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "story:9509d8cc"
+  ],
+  "created_at": "2026-03-07T18:06:23.441813586+00:00",
+  "updated_at": "2026-03-07T18:06:29.831965956+00:00"
+}
