@@ -40,17 +40,26 @@ Aeneas gives us universal algebraic guarantees (field axioms hold for *any* prim
 
 ## Track 1: Aeneas/Lean4 Proofs
 
-### Infrastructure (Task 1)
+### Infrastructure (Task 1) — COMPLETED
 
-1. Install Aeneas/Charon as external dev toolchain (not cargo dep)
-2. Create `proofs/` directory with `lakefile.lean`, `lean-toolchain`, Mathlib dependency
-3. Run Charon extraction: `charon --crate gf2-core` → LLBC JSON
-4. Run Aeneas translation: `aeneas --backend lean` → `proofs/GF2Core/*.lean`
-5. Verify translation succeeds for `gfp/` and `gfpn/` modules
-6. Document any const-generic or trait workarounds needed
-7. Add CI job: `charon && aeneas && lake build`
+1. ✅ Charon v0.1.173 (rev `1a659e67`) + Aeneas (rev `c23de93`) installed as external tools
+2. ✅ `proofs/` directory with `lakefile.lean`, `lean-toolchain` (v4.28.0-rc1), Aeneas Lean library
+3. ✅ Charon extraction: `charon cargo --preset aeneas` → `target/charon/gf2_core.llbc`
+4. ✅ Aeneas translation: `aeneas -backend lean -split-files` → `proofs/Gf2Core/*.lean`
+5. ✅ Translation succeeds for `gfp/` module; `gfpn/` blocked by HRTB trait bounds (see below)
+6. ✅ Workarounds documented in `proofs/WORKAROUNDS.md`
+7. ✅ CI job: `lake build` on committed Lean files
+8. ✅ `lake build` compiles all generated Lean code without errors
 
-**Risk gate**: If Charon cannot handle `Fp<const P: u64>`, document the blocker and fall back to monomorphized wrappers for specific primes.
+**Const generics**: `Fp<const P: u64>` extracts correctly — no monomorphization needed.
+
+**HRTB blocker for gfpn/**: `ExtConfig` inherits `ConstField` → `FiniteField` which has
+`for<'a> Add<&'a Self>` bounds. Charon produces type errors on these. The `gfp/` module
+works because `Fp<P>` implements but does not *use* the HRTB bounds internally. Extracting
+`gfpn/` requires either upstream Charon HRTB support or restructuring the trait hierarchy.
+
+**Duplicate field name workaround**: Aeneas generates duplicate field names when traits
+have bounds on multiple associated types. Fixed by `scripts/fix-aeneas-dupes.py`.
 
 ### Fp<P> Field Proofs (Task 2)
 
