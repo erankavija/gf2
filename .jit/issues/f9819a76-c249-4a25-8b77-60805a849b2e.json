@@ -1,0 +1,20 @@
+{
+  "id": "f9819a76-c249-4a25-8b77-60805a849b2e",
+  "title": "Kani bounded verification for machine arithmetic",
+  "description": "Add kani as feature-gated dev dependency. Add cfg(kani) proof harnesses for Montgomery bounds, redc no-overflow, Karatsuba-naive equivalence on small fields, and bitvec tail masking. Add CI job: cargo kani. Success criteria: cargo kani passes all harnesses.",
+  "state": "ready",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "story:9509d8cc"
+  ],
+  "created_at": "2026-03-07T18:06:24.953466752+00:00",
+  "updated_at": "2026-03-07T18:06:24.953473702+00:00"
+}
