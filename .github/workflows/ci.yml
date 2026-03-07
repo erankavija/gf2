@@ -107,3 +107,26 @@ jobs:
         git config user.email "github-actions[bot]@users.noreply.github.com"
         git commit -m "Update coverage badges [skip ci]"
         git push --force "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" badges
+
+  lean-verify:
+    name: Lean Verification
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Lean4 (elan)
+      run: |
+        curl -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none
+        echo "$HOME/.elan/bin" >> $GITHUB_PATH
+
+    - name: Cache Lake build
+      uses: actions/cache@v4
+      with:
+        path: proofs/.lake
+        key: lean-lake-${{ hashFiles('proofs/lean-toolchain', 'proofs/lakefile.lean') }}
+
+    - name: Build Lean proofs
+      run: cd proofs && lake build
