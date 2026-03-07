@@ -122,11 +122,51 @@ jobs:
         curl -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none
         echo "$HOME/.elan/bin" >> $GITHUB_PATH
 
+    - name: Install Rust nightly (for Charon)
+      uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: nightly-2026-02-07
+        components: rustc-dev, llvm-tools-preview, rust-src
+
+    - name: Cache Charon binary
+      id: cache-charon
+      uses: actions/cache@v4
+      with:
+        path: ~/.cargo/bin/charon*
+        key: charon-v0.1.173-nightly-2026-02-07
+
+    - name: Install Charon
+      if: steps.cache-charon.outputs.cache-hit != 'true'
+      run: |
+        cargo +nightly-2026-02-07 install --git https://github.com/AeneasVerif/charon \
+          --rev 1a659e67b982e18da872dea26d4a7b3764dfe0c3 charon --locked
+
+    - name: Install OCaml and Aeneas
+      run: |
+        sudo apt-get update && sudo apt-get install -y opam
+        opam init --disable-sandboxing --no-setup --auto-setup --yes
+        eval $(opam env)
+        opam install ppx_deriving visitors easy_logging zarith yojson core_unix \
+          odoc ocamlgraph menhir unionFind zarith progress domainslib dune --yes
+        git clone --depth 1 https://github.com/AeneasVerif/aeneas.git /tmp/aeneas
+        cd /tmp/aeneas && make setup-charon && make build-dev
+        cp /tmp/aeneas/bin/aeneas ~/.cargo/bin/
+
     - name: Cache Lake build
       uses: actions/cache@v4
       with:
         path: proofs/.lake
         key: lean-lake-${{ hashFiles('proofs/lean-toolchain', 'proofs/lakefile.lean') }}
 
-    - name: Build Lean proofs
-      run: cd proofs && lake build
+    - name: Run verification pipeline
+      run: |
+        eval $(opam env)
+        ./scripts/verify-lean.sh
+
+    - name: Verify generated files are up to date
+      run: |
+        git diff --exit-code proofs/Gf2Core/ || {
+          echo "ERROR: Generated Lean files are out of date."
+          echo "Run ./scripts/verify-lean.sh locally and commit the updated files."
+          exit 1
+        }
