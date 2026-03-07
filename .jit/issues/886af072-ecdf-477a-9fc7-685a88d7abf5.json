@@ -2,9 +2,9 @@
   "id": "886af072-ecdf-477a-9fc7-685a88d7abf5",
   "title": "Set up Aeneas/Charon to Lean4 verification infrastructure",
   "description": "- Install Aeneas/Charon as external dev toolchain (not cargo dep)\n- Create `proofs/` directory: `lakefile.lean`, `lean-toolchain`, Mathlib dependency\n- Run Charon extraction: `charon --crate gf2-core` → LLBC JSON\n- Run Aeneas translation: `aeneas --backend lean` → `proofs/GF2Core/*.lean`\n- Verify translation succeeds for `gfp/` and `gfpn/` modules\n- Document any const-generic or trait workarounds needed\n- Add CI job: `charon && aeneas && lake build`\n- **Risk gate**: If Charon cannot handle `Fp<const P: u64>`, document the blocker and fall back to monomorphized wrappers for specific primes\n\n**Success criteria**: `lake build` compiles the auto-generated Lean code without errors",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "claude",
   "dependencies": [],
   "gates_required": [
     "code-review",
@@ -12,11 +12,6 @@
     "lake-build"
   ],
   "gates_status": {
-    "doc-review": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-03-07T18:18:00.765014271Z"
-    },
     "lake-build": {
       "status": "pending",
       "updated_by": null,
@@ -26,6 +21,11 @@
       "status": "pending",
       "updated_by": null,
       "updated_at": "2026-03-07T18:18:00.764976631Z"
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-03-07T18:18:00.765014271Z"
     }
   },
   "context": {},
@@ -36,5 +36,5 @@
     "story:9509d8cc"
   ],
   "created_at": "2026-03-07T18:06:19.780699034+00:00",
-  "updated_at": "2026-03-07T18:18:00.765042411+00:00"
+  "updated_at": "2026-03-07T18:52:31.524945971+00:00"
 }
