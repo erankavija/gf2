@@ -8,8 +8,28 @@
   "dependencies": [
     "886af072-ecdf-477a-9fc7-685a88d7abf5"
   ],
-  "gates_required": [],
-  "gates_status": {},
+  "gates_required": [
+    "code-review",
+    "doc-review",
+    "lake-build"
+  ],
+  "gates_status": {
+    "lake-build": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-03-07T18:18:02.117129481Z"
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-03-07T18:18:02.117116661Z"
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-03-07T18:18:02.117080181Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -18,5 +38,5 @@
     "story:9509d8cc"
   ],
   "created_at": "2026-03-07T18:06:23.441813586+00:00",
-  "updated_at": "2026-03-07T18:09:53.164956485+00:00"
+  "updated_at": "2026-03-07T18:18:02.117141281+00:00"
 }

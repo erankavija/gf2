@@ -2,7 +2,7 @@
   "id": "86b3dc7d-8920-4227-abd0-2cac0925c57b",
   "title": "Verify nested tower compositions (GF(p^4), GF(p^6), GF(p^12))",
   "description": "Test concrete tower chains: QuadraticExt&lt;QuadraticExt&lt;Fp&lt;P&gt;&gt;&gt; = GF(p^4), CubicExt&lt;QuadraticExt&lt;Fp&lt;P&gt;&gt;&gt; = GF(p^6), QuadraticExt&lt;CubicExt&lt;QuadraticExt&lt;Fp&lt;P&gt;&gt;&gt;&gt; = GF(p^12). All must pass axiom tests. Cross-verify against SageMath for specific primes.",
-  "state": "backlog",
+  "state": "ready",
   "priority": "low",
   "assignee": null,
   "dependencies": [
@@ -28,6 +28,11 @@
       "updated_by": null,
       "updated_at": "2026-03-05T20:29:17.340616636Z"
     },
+    "fmt": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-03-05T20:29:17.340628556Z"
+    },
     "tests": {
       "status": "pending",
       "updated_by": null,
@@ -37,11 +42,6 @@
       "status": "pending",
       "updated_by": null,
       "updated_at": "2026-03-05T20:29:17.340640746Z"
-    },
-    "fmt": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-03-05T20:29:17.340628556Z"
     },
     "doc-review": {
       "status": "pending",
@@ -56,5 +56,5 @@
     "type:task"
   ],
   "created_at": "2026-02-26T00:09:07.241838149+00:00",
-  "updated_at": "2026-03-05T20:29:17.340664756+00:00"
+  "updated_at": "2026-03-06T23:25:07.380339929+00:00"
 }

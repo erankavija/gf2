@@ -2,7 +2,7 @@
   "id": "2ce2a757-ad1f-4c6e-9174-987fb642ada2",
   "title": "Karatsuba vs naive cross-verification with property-based tests",
   "description": "Property-based tests confirming Karatsuba (QuadraticExt, 3M) and Karatsuba-style (CubicExt, 6M) multiplication produce identical results to naive schoolbook polynomial multiplication.\n\n## Deliverable\n\nA single integration test file `crates/gf2-core/tests/karatsuba_cross_verify.rs` containing:\n\n- Standalone naive reference implementations (4M schoolbook for quadratic, 9M schoolbook for cubic) that are visibly independent of the optimized code.\n- Proptest-based cross-verification with 10000 random element pairs per configuration.\n- Multiple field sizes and non-residue choices:\n  - QuadraticExt: Fp<7>/β=−1, Fp<7>/β=3, Fp<101>/β=−2, Fp<65537>/β=3\n  - CubicExt: Fp<7>/β=3, Fp<31>/β=11, Fp<101>/β=2\n- Squaring consistency: `a.square() == naive_mul(a, a)` for each config.\n\nNo library code changes. Operation counts documented on existing `mul` impls.\n\nSee design plan: `dev/plans/karatsuba_cross_verification.md`\n\n## Success criteria\n\n- 10000+ proptest cases per configuration, all passing.\n- Both QuadraticExt and CubicExt covered across multiple primes and non-residues.\n- Naive implementations use schoolbook (4M / 9M), not Karatsuba.",
-  "state": "backlog",
+  "state": "ready",
   "priority": "low",
   "assignee": null,
   "dependencies": [
@@ -18,35 +18,35 @@
     "doc-review"
   ],
   "gates_status": {
-    "doc-review": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-03-05T20:29:17.390697088Z"
-    },
     "tdd-reminder": {
       "status": "pending",
       "updated_by": null,
       "updated_at": "2026-03-05T20:29:17.390604258Z"
-    },
-    "fmt": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-03-05T20:29:17.390674488Z"
-    },
-    "clippy": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-03-05T20:29:17.390663558Z"
     },
     "code-review": {
       "status": "pending",
       "updated_by": null,
       "updated_at": "2026-03-05T20:29:17.390686058Z"
     },
+    "fmt": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-03-05T20:29:17.390674488Z"
+    },
     "tests": {
       "status": "pending",
       "updated_by": null,
       "updated_at": "2026-03-05T20:29:17.390652118Z"
+    },
+    "clippy": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-03-05T20:29:17.390663558Z"
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-03-05T20:29:17.390697088Z"
     }
   },
   "context": {},
@@ -64,5 +64,5 @@
     "type:task"
   ],
   "created_at": "2026-02-26T00:09:07.544270603+00:00",
-  "updated_at": "2026-03-06T22:33:13.385693961+00:00"
+  "updated_at": "2026-03-06T23:25:07.415205893+00:00"
 }
