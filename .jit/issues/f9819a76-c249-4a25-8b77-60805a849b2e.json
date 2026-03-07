@@ -1,7 +1,7 @@
 {
   "id": "f9819a76-c249-4a25-8b77-60805a849b2e",
   "title": "Kani bounded verification for machine arithmetic",
-  "description": "Add kani as feature-gated dev dependency. Add cfg(kani) proof harnesses for Montgomery bounds, redc no-overflow, Karatsuba-naive equivalence on small fields, and bitvec tail masking. Add CI job: cargo kani. Success criteria: cargo kani passes all harnesses.",
+  "description": "- Add `kani` as feature-gated dev dependency\n- Add `#[cfg(kani)]` proof harnesses in existing source files:\n  - `gfp/mod.rs`: Montgomery representation bounds (intermediates fit in `u128`), `max_unreduced_additions` overflow safety\n  - `gfp/montgomery.rs`: `redc` no-overflow, roundtrip for all values mod small primes\n  - `gfpn/quadratic.rs`: Karatsuba == naive for all elements of GF(7²)\n  - `bitvec.rs`: Tail masking invariant for all lengths 0..128\n- Add CI job: `cargo kani`\n\n**Success criteria**: `cargo kani` passes all harnesses",
   "state": "ready",
   "priority": "normal",
   "assignee": null,
@@ -16,5 +16,5 @@
     "story:9509d8cc"
   ],
   "created_at": "2026-03-07T18:06:24.953466752+00:00",
-  "updated_at": "2026-03-07T18:06:24.953473702+00:00"
+  "updated_at": "2026-03-07T18:10:05.781685070+00:00"
 }

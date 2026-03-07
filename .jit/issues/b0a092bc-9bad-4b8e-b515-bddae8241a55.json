@@ -1,7 +1,7 @@
 {
   "id": "b0a092bc-9bad-4b8e-b515-bddae8241a55",
   "title": "Prove extension field axioms and Karatsuba equivalence in Lean4",
-  "description": "Prove QuadraticExt and CubicExt satisfy CommRing/Field. Prove Karatsuba equals schoolbook multiplication. Prove norm-based inversion and order formulas. Proofs in proofs/GF2Core/Proofs/KaratsubaEquiv.lean and ExtFieldAxioms.lean. Success criteria: lake build compiles all extension field proofs.",
+  "description": "- Prove `QuadraticExt<C>` satisfies `CommRing` / `Field`\n- Prove Karatsuba multiplication equals schoolbook multiplication (likely solvable by `ring` tactic)\n- Prove norm-based inversion correctness: `a * inv(a) = 1` for non-zero `a`\n- Prove `CubicExt<C>` field axioms and Karatsuba-style 6-mul equivalence similarly\n- Prove `order() = base_order^degree` for both extension types\n- Proofs in `proofs/GF2Core/Proofs/KaratsubaEquiv.lean` and `ExtFieldAxioms.lean`\n\n**Success criteria**: `lake build` compiles all extension field proofs",
   "state": "backlog",
   "priority": "normal",
   "assignee": null,
@@ -18,5 +18,5 @@
     "story:9509d8cc"
   ],
   "created_at": "2026-03-07T18:06:23.441813586+00:00",
-  "updated_at": "2026-03-07T18:06:29.831965956+00:00"
+  "updated_at": "2026-03-07T18:09:53.164956485+00:00"
 }
