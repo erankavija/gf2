@@ -59,7 +59,7 @@ This is a Cargo workspace with three crates:
 - **`gf2-core`** (`crates/gf2-core/`) — Low-level primitives. No dependencies on the other workspace crates. All purely mathematical operations, data structures, and algorithms go here.
 - **`gf2-coding`** (`crates/gf2-coding/`) — Error-correcting codes; depends on `gf2-core`.
 - **`gf2-kernels-simd`** (`crates/gf2-kernels-simd/`) — Isolated unsafe SIMD kernels (AVX2/AVX512/AARCH64). This is the only crate allowed to contain `unsafe` code; everything else uses `#![deny(unsafe_code)]`.
-- **`proofs/`** — Lean4 formal verification of `gfp/` field arithmetic, auto-generated via Charon/Aeneas. See `proofs/README.md`. Currently covers `Fp<P>` (Montgomery arithmetic); `gfpn/` blocked on upstream HRTB support.
+- **`proofs/`** — Lean4 formal verification of `gfp/` and `gfpn/` field arithmetic, auto-generated via Charon/Aeneas. See `proofs/README.md`. Covers `Fp<P>` (Montgomery arithmetic), `QuadraticExt`, and `CubicExt` (tower extensions).
 
 ### gf2-core module map
 
