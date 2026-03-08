@@ -12,29 +12,47 @@
     "lake-build"
   ],
   "gates_status": {
-    "lake-build": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-03-07T18:18:00.765028771Z"
-    },
-    "code-review": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-03-07T18:18:00.764976631Z"
-    },
     "doc-review": {
       "status": "pending",
       "updated_by": null,
       "updated_at": "2026-03-07T18:18:00.765014271Z"
+    },
+    "lake-build": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-03-07T19:47:57.027255291Z"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-03-07T19:49:45.612708853Z"
     }
   },
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/lean4-verification-pipeline.md",
+      "commit": null,
+      "label": "Lean4 verification pipeline documentation",
+      "doc_type": "implementation",
+      "format": "markdown",
+      "assets": [
+        {
+          "original_path": "https://github.com/leanprover/elan",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        }
+      ]
+    }
+  ],
   "labels": [
     "type:task",
     "component:gf2-core",
     "story:9509d8cc"
   ],
   "created_at": "2026-03-07T18:06:19.780699034+00:00",
-  "updated_at": "2026-03-07T18:52:31.524945971+00:00"
+  "updated_at": "2026-03-08T13:06:21.211498021+00:00"
 }

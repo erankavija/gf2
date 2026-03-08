@@ -549,3 +549,5 @@
 {"type":"gate_added","id":"589135fd-5bd2-47cb-be68-6c3d80499cce","issue_id":"f9819a76-c249-4a25-8b77-60805a849b2e","timestamp":"2026-03-07T18:18:02.584381049Z","gate_key":"cargo-kani"}
 {"type":"issue_state_changed","id":"2e869c43-830e-4986-98a5-c696b264e4b5","issue_id":"886af072-ecdf-477a-9fc7-685a88d7abf5","timestamp":"2026-03-07T18:52:31.524898351Z","from":"ready","to":"in_progress"}
 {"type":"issue_claimed","id":"f8932fc7-d9ca-4300-a9a1-bc6d528f7f46","issue_id":"886af072-ecdf-477a-9fc7-685a88d7abf5","timestamp":"2026-03-07T18:52:31.527765400Z","assignee":"claude"}
+{"type":"gate_passed","id":"602960af-b037-4f97-870e-ae6ca6d3b8f9","issue_id":"886af072-ecdf-477a-9fc7-685a88d7abf5","timestamp":"2026-03-07T19:47:58.033913325Z","gate_key":"lake-build","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"72b0ccd2-26f2-437d-9a90-41dbab646da5","issue_id":"886af072-ecdf-477a-9fc7-685a88d7abf5","timestamp":"2026-03-07T19:53:41.637521876Z","gate_key":"code-review","updated_by":"auto:executor"}

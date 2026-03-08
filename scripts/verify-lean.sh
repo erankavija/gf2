@@ -25,7 +25,6 @@ charon cargo \
   --preset aeneas \
   --opaque 'gf2_core::field' \
   --opaque 'gf2_core::gf2m' \
-  --opaque 'gf2_core::gfpn' \
   --opaque 'gf2_core::bitvec' \
   --opaque 'gf2_core::bitslice' \
   --opaque 'gf2_core::matrix' \
@@ -65,10 +64,8 @@ echo "=== Step 3: Post-processing ==="
 # See proofs/WORKAROUNDS.md for details.
 python3 "$REPO_ROOT/scripts/fix-aeneas-dupes.py" "$LEAN_DIR/Types.lean" "$LEAN_DIR/Funs.lean"
 
-# Create FunsExternal.lean from template if it doesn't exist
-if [ ! -f "$LEAN_DIR/FunsExternal.lean" ]; then
-  cp "$LEAN_DIR/FunsExternal_Template.lean" "$LEAN_DIR/FunsExternal.lean"
-fi
+# Always regenerate FunsExternal.lean from template (all entries are axioms)
+cp "$LEAN_DIR/FunsExternal_Template.lean" "$LEAN_DIR/FunsExternal.lean"
 
 echo "Post-processing done"
 
