@@ -22,7 +22,7 @@ they are outside the verification scope or cause extraction issues:
 |--------|--------|
 | `gf2_core::field` | HRTB `for<'a>` bounds on `FiniteField` trait |
 | `gf2_core::gf2m` | Runtime field parameters, `Vec<u64>` storage |
-| `gf2_core::gfpn` | Depends on `ExtConfig` which inherits `FiniteField` HRTBs |
+| `gf2_core::gfpn` | Now extracted (was opaque before Charon HRTB patches) |
 | `gf2_core::bitvec` | Out of scope (bit manipulation, not field arithmetic) |
 | `gf2_core::bitslice` | Out of scope |
 | `gf2_core::matrix` | Out of scope |
@@ -37,12 +37,18 @@ they are outside the verification scope or cause extraction issues:
 The `field::traits::FiniteField` and `ConstField` trait *declarations* are still
 extracted (needed for the `Fp` impl), but their bodies are opaque.
 
-## gfpn/ not yet extracted
+## gfpn/ extraction and verification
 
-The `gfpn/` module (`QuadraticExt`, `CubicExt`) is currently opaque because
-`ExtConfig` inherits `ConstField` → `FiniteField` HRTB bounds, causing Charon
-type errors. This will be addressed in a follow-up task once upstream Charon
-improves HRTB handling or we restructure the trait hierarchy.
+The `gfpn/` module (`QuadraticExt`, `CubicExt`) is now fully extracted and
+verified. This required three patches to our local Charon build (HRTB erase,
+SelfClause/Local unification, implied clause constraint propagation) and the
+post-processing workarounds described above. See
+`dev/lean4-verification-pipeline.md` for full details.
+
+Charon emits 13 benign "Type error after transformations" warnings about
+mismatched generic arg counts for `CubicExt`/`QuadraticExt` (expected 4, got 7).
+These are harmless — Aeneas handles them correctly via Lean4 implicit argument
+inference.
 
 ## Const generics work
 
