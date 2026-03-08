@@ -19,7 +19,7 @@ LLBC_FILE="$REPO_ROOT/target/charon/gf2_core.llbc"
 echo "=== Step 1: Charon extraction ==="
 mkdir -p "$(dirname "$LLBC_FILE")"
 
-# Extract gf2-core with only gfp/ transparent; everything else opaque or excluded.
+# Extract gf2-core with gfp/ and gfpn/ transparent; everything else opaque or excluded.
 # Using --preset aeneas for Aeneas-compatible output.
 charon cargo \
   --preset aeneas \
