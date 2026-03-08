@@ -128,6 +128,25 @@
       "auto": true,
       "example_integration": null
     },
+    "cargo-ci": {
+      "version": 1,
+      "key": "cargo-ci",
+      "title": "Rust CI checks pass",
+      "description": "Full Rust workspace CI: build, test, clippy, fmt",
+      "stage": "postcheck",
+      "mode": "auto",
+      "checker": {
+        "type": "exec",
+        "command": "cargo check --workspace --all-features && cargo test --workspace --all-features && cargo clippy --workspace --all-targets --all-features -- -D warnings && cargo fmt --all -- --check",
+        "timeout_seconds": 300,
+        "working_dir": null,
+        "env": {},
+        "pass_context": false
+      },
+      "reserved": {},
+      "auto": true,
+      "example_integration": null
+    },
     "tdd-reminder": {
       "version": 1,
       "key": "tdd-reminder",
