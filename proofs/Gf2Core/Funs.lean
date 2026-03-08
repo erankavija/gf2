@@ -2178,20 +2178,20 @@ def
   coreopsarithAddAssignSelfSharedSelfInst :=
     gfpn.cubic.CubicExt.Insts.CoreOpsArithAddAssignShared0CubicExt
     ext_configExtConfigInst
-  corecloneCloneInst :=
-    ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.corecloneCloneInst
-  corefmtDebugInst :=
-    ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.corefmtDebugInst
-  corecmpPartialEqInst :=
-    ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.corecmpPartialEqInst
-  corecmpEqInst :=
-    ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.corecmpEqInst
-  corecloneCloneInst := gfpn.cubic.CubicExt.Insts.CoreCloneClone
+  corecloneCloneCharacteristicInst := 
+    ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.corecloneCloneCharacteristicInst
+  corefmtDebugCharacteristicInst := 
+    ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.corefmtDebugCharacteristicInst
+  corecmpPartialEqCharacteristicInst := 
+    ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.corecmpPartialEqCharacteristicInst
+  corecmpEqCharacteristicInst := 
+    ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.corecmpEqCharacteristicInst
+  corecloneCloneWideInst := gfpn.cubic.CubicExt.Insts.CoreCloneClone
     ext_configExtConfigInst
-  coreopsarithAddInst :=
+  coreopsarithAddWideInst := 
     gfpn.cubic.CubicExt.Insts.CoreOpsArithAddCubicExtCubicExt
     ext_configExtConfigInst
-  coreopsarithAddAssignInst :=
+  coreopsarithAddAssignWideInst := 
     gfpn.cubic.CubicExt.Insts.CoreOpsArithAddAssignCubicExt
     ext_configExtConfigInst
   characteristic :=
@@ -3430,20 +3430,20 @@ def
   coreopsarithAddAssignSelfSharedSelfInst :=
     gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithAddAssignShared0QuadraticExt
     ext_configExtConfigInst
-  corecloneCloneInst :=
-    ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.corecloneCloneInst
-  corefmtDebugInst :=
-    ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.corefmtDebugInst
-  corecmpPartialEqInst :=
-    ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.corecmpPartialEqInst
-  corecmpEqInst :=
-    ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.corecmpEqInst
-  corecloneCloneInst := gfpn.quadratic.QuadraticExt.Insts.CoreCloneClone
+  corecloneCloneCharacteristicInst := 
+    ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.corecloneCloneCharacteristicInst
+  corefmtDebugCharacteristicInst := 
+    ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.corefmtDebugCharacteristicInst
+  corecmpPartialEqCharacteristicInst := 
+    ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.corecmpPartialEqCharacteristicInst
+  corecmpEqCharacteristicInst := 
+    ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.corecmpEqCharacteristicInst
+  corecloneCloneWideInst := gfpn.quadratic.QuadraticExt.Insts.CoreCloneClone
     ext_configExtConfigInst
-  coreopsarithAddInst :=
+  coreopsarithAddWideInst := 
     gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithAddQuadraticExtQuadraticExt
     ext_configExtConfigInst
-  coreopsarithAddAssignInst :=
+  coreopsarithAddAssignWideInst := 
     gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithAddAssignQuadraticExt
     ext_configExtConfigInst
   characteristic :=
