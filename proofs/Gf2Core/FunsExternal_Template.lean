@@ -60,3 +60,51 @@ axiom U128.Insts.CoreOpsArithAddAssignU128.add_assign
 @[rust_fun "core::option::{core::option::Option<@T>}::expect"]
 axiom core.option.Option.expect {T : Type} : Option T → Str → Result T
 
+/- [core::option::{core::option::Option<T>}::map]:
+   Source: '/rustc/library/core/src/option.rs', lines 1160:4-1162:53
+   Name pattern: [core::option::{core::option::Option<@T>}::map] -/
+@[rust_fun "core::option::{core::option::Option<@T>}::map"]
+axiom core.option.Option.map
+  {T : Type} {U : Type} {F : Type} (opsfunctionFnOnceFTupleTUInst :
+  core.ops.function.FnOnce F T U) :
+  Option T → F → Result (Option U)
+
+/- [core::result::{core::ops::try_trait::Try<T, core::result::Result<core::convert::Infallible, E>> for core::result::Result<T, E>}::branch]:
+   Source: '/rustc/library/core/src/result.rs', lines 2172:4-2172:64
+   Name pattern: [core::result::{core::ops::try_trait::Try<core::result::Result<@T, @E>, @T, core::result::Result<core::convert::Infallible, @E>>}::branch] -/
+@[rust_fun
+  "core::result::{core::ops::try_trait::Try<core::result::Result<@T, @E>, @T, core::result::Result<core::convert::Infallible, @E>>}::branch"]
+axiom core.result.Result.Insts.CoreOpsTry_traitTryTResultInfallibleE.branch
+  {T : Type} {E : Type} :
+  core.result.Result T E → Result (core.ops.control_flow.ControlFlow
+    (core.result.Result core.convert.Infallible E) T)
+
+/- [core::result::{core::ops::try_trait::FromResidual<core::result::Result<core::convert::Infallible, E>> for core::result::Result<T, F>}::from_residual]:
+   Source: '/rustc/library/core/src/result.rs', lines 2187:4-2187:70
+   Name pattern: [core::result::{core::ops::try_trait::FromResidual<core::result::Result<@T, @F>, core::result::Result<core::convert::Infallible, @E>>}::from_residual] -/
+@[rust_fun
+  "core::result::{core::ops::try_trait::FromResidual<core::result::Result<@T, @F>, core::result::Result<core::convert::Infallible, @E>>}::from_residual"]
+axiom
+  core.result.Result.Insts.CoreOpsTry_traitFromResidualResultInfallibleE.from_residual
+  (T : Type) {E : Type} {F : Type} (convertFromInst : core.convert.From F E) :
+  core.result.Result core.convert.Infallible E → Result (core.result.Result T
+    F)
+
+/- [gf2_core::gfpn::cubic::{core::cmp::Eq for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::assert_receiver_is_total_eq]:
+   Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 118:0-118:40 -/
+axiom gfpn.cubic.CubicExt.Insts.CoreCmpEq.assert_receiver_is_total_eq
+  {C : Type} {Clause0_BaseField : Type} {Clause0_Clause0_Clause0_Characteristic
+  : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
+  gfpn.ext_config.ExtConfig C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  gfpn.cubic.CubicExt ext_configExtConfigInst → Result Unit
+
+/- [gf2_core::gfpn::quadratic::{core::cmp::Eq for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::assert_receiver_is_total_eq]:
+   Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 109:0-109:44 -/
+axiom gfpn.quadratic.QuadraticExt.Insts.CoreCmpEq.assert_receiver_is_total_eq
+  {C : Type} {Clause0_BaseField : Type} {Clause0_Clause0_Clause0_Characteristic
+  : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
+  gfpn.ext_config.ExtConfig C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  gfpn.quadratic.QuadraticExt ext_configExtConfigInst → Result Unit
+
