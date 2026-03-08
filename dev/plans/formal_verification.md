@@ -42,24 +42,24 @@ Aeneas gives us universal algebraic guarantees (field axioms hold for *any* prim
 
 ### Infrastructure (Task 1) — COMPLETED
 
-1. ✅ Charon v0.1.173 (rev `1a659e67`) + Aeneas (rev `c23de93`) installed as external tools
-2. ✅ `proofs/` directory with `lakefile.lean`, `lean-toolchain` (v4.28.0-rc1), Aeneas Lean library
+1. ✅ Patched Charon (base `24a17b5e` + 3 HRTB/associated-type fixes) + Aeneas (rev `c23de93`) installed
+2. ✅ `proofs/` directory with `lakefile.lean`, `lean-toolchain` (v4.28.0-rc1), Aeneas + Mathlib deps
 3. ✅ Charon extraction: `charon cargo --preset aeneas` → `target/charon/gf2_core.llbc`
 4. ✅ Aeneas translation: `aeneas -backend lean -split-files` → `proofs/Gf2Core/*.lean`
-5. ✅ Translation succeeds for `gfp/` module; `gfpn/` blocked by HRTB trait bounds (see below)
+5. ✅ Translation succeeds for both `gfp/` and `gfpn/` modules
 6. ✅ Workarounds documented in `proofs/WORKAROUNDS.md`
-7. ✅ CI job: `lake build` on committed Lean files
+7. ✅ CI job: full Charon→Aeneas→`lake build` pipeline with patched Charon and drift check
 8. ✅ `lake build` compiles all generated Lean code without errors
 
 **Const generics**: `Fp<const P: u64>` extracts correctly — no monomorphization needed.
 
-**HRTB blocker for gfpn/**: `ExtConfig` inherits `ConstField` → `FiniteField` which has
-`for<'a> Add<&'a Self>` bounds. Charon produces type errors on these. The `gfp/` module
-works because `Fp<P>` implements but does not *use* the HRTB bounds internally. Extracting
-`gfpn/` requires either upstream Charon HRTB support or restructuring the trait hierarchy.
+**HRTB (resolved)**: Three Charon patches fix HRTB-related extraction failures for `gfpn/`.
+Patches exported to `patches/charon-hrtb-assoc-types.patch` and applied in CI.
+See `dev/lean4-verification-pipeline.md` for details.
 
 **Duplicate field name workaround**: Aeneas generates duplicate field names when traits
-have bounds on multiple associated types. Fixed by `scripts/fix-aeneas-dupes.py`.
+have bounds on multiple associated types. Fixed by `scripts/fix-aeneas-dupes.py` (includes
+multi-line block detection for gfpn and projection path fixup).
 
 ### Fp<P> Field Proofs (Task 2)
 

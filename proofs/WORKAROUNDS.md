@@ -22,7 +22,7 @@ they are outside the verification scope or cause extraction issues:
 |--------|--------|
 | `gf2_core::field` | HRTB `for<'a>` bounds on `FiniteField` trait |
 | `gf2_core::gf2m` | Runtime field parameters, `Vec<u64>` storage |
-| `gf2_core::gfpn` | Now extracted (was opaque before Charon HRTB patches) |
+| ~~`gf2_core::gfpn`~~ | Now transparent (was opaque before Charon HRTB patches) |
 | `gf2_core::bitvec` | Out of scope (bit manipulation, not field arithmetic) |
 | `gf2_core::bitslice` | Out of scope |
 | `gf2_core::matrix` | Out of scope |
