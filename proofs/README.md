@@ -22,13 +22,15 @@ post-processing workarounds and what's excluded.
    curl -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh
    ```
 
-2. **Charon** (requires `nightly-2026-02-07`):
+2. **Charon** (local patched build, requires `nightly-2026-02-07`):
    ```
    rustup toolchain install nightly-2026-02-07
    rustup component add rustc-dev llvm-tools-preview rust-src --toolchain nightly-2026-02-07
-   cargo +nightly-2026-02-07 install --git https://github.com/AeneasVerif/charon \
-     --rev 1a659e67b982e18da872dea26d4a7b3764dfe0c3 charon --locked
    ```
+   Our pipeline uses a patched Charon built from `/data/aeneas-build/charon/`
+   (upstream base `24a17b5e` + 3 local HRTB/associated-type fixes).
+   See `dev/lean4-verification-pipeline.md` for full details and rebuild
+   instructions.
 
 3. **Aeneas** (requires OCaml 5 via opam):
    ```
@@ -55,7 +57,7 @@ cd proofs && lake build
 
 ## Regenerating
 
-If Rust source in `gfp/` changes, regenerate and commit:
+If Rust source in `gfp/` or `gfpn/` changes, regenerate and commit:
 
 ```bash
 ./scripts/verify-lean.sh

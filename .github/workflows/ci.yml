@@ -133,13 +133,17 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ~/.cargo/bin/charon*
-        key: charon-v0.1.173-nightly-2026-02-07
+        key: charon-patched-24a17b5e-${{ hashFiles('patches/charon-hrtb-assoc-types.patch') }}
 
-    - name: Install Charon
+    - name: Install Charon (patched)
       if: steps.cache-charon.outputs.cache-hit != 'true'
       run: |
-        cargo +nightly-2026-02-07 install --git https://github.com/AeneasVerif/charon \
-          --rev 1a659e67b982e18da872dea26d4a7b3764dfe0c3 charon --locked
+        git clone https://github.com/AeneasVerif/charon.git /tmp/charon
+        cd /tmp/charon
+        git checkout 24a17b5ef42de4633537bc6e99213c8bbef4298c
+        git apply $GITHUB_WORKSPACE/patches/charon-hrtb-assoc-types.patch
+        cd charon
+        cargo +nightly-2026-02-07 install --path . --locked
 
     - name: Install OCaml and Aeneas
       run: |
