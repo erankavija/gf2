@@ -60,7 +60,7 @@ wrappers were needed.
 
 | Tool | Version | Pin |
 |------|---------|-----|
-| Charon | v0.1.173 | git rev `1a659e67b982e18da872dea26d4a7b3764dfe0c3` |
+| Charon | v0.1.173 | local patched build, base `24a17b5e` + 3 fixes (see `dev/lean4-verification-pipeline.md`) |
 | Aeneas | latest | git rev `c23de9324fbe4d3630fc532e5216a0568b9beb5c` |
 | Lean4 | v4.28.0-rc1 | via `proofs/lean-toolchain` |
 | Rust nightly | nightly-2026-02-07 | required by Charon for rustc internals |
