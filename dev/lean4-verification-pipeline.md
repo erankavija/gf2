@@ -52,10 +52,12 @@ RUSTUP_TOOLCHAIN=nightly-2026-02-07 cargo install --path charon
 
 ### Aeneas
 
+- **Location**: `/data/aeneas-build/` (also the work tree for the local build)
 - **Binary**: `~/.cargo/bin/aeneas`
 - **Upstream**: `https://github.com/AeneasVerif/aeneas`
-- **Build rev**: `c23de9324fbe4d3630fc532e5216a0568b9beb5c`
-- **Unpatched** — no local modifications
+- **Base rev**: `c23de9324fbe4d3630fc532e5216a0568b9beb5c`
+- **Local change**: `charon-pin` updated from `1a659e67` → `24a17b5e` to match
+  our patched Charon base. No source code modifications.
 
 ### Lean4
 
