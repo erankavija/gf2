@@ -28,9 +28,11 @@ proptest-regressions/
 # Lean4 build artifacts
 proofs/build/
 proofs/.lake/
+proofs/scratch/
 
 # Charon intermediate output
 target/charon/
+*.llbc
 
 # JIT artifacts
 .jit/**/*.lock
