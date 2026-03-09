@@ -2,9 +2,9 @@
   "id": "751f359c-c9af-4df5-a63b-032b1def7930",
   "title": "Prove Fp field axioms and Montgomery correctness in Lean4",
   "description": "- Prove `Fp<P>` satisfies Mathlib `CommRing` / `Field` typeclass (all field axioms for any prime P)\n- Prove Montgomery roundtrip: `from_mont(to_mont(a)) = a` for arbitrary P\n- Prove `redc` correctly computes `t · R⁻¹ mod P`\n- Proofs live in `proofs/GF2Core/Proofs/FpField.lean` and `MontgomeryRoundtrip.lean`\n\n**Success criteria**: `lake build` compiles all proofs; Fp is a verified field implementation",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [
     "886af072-ecdf-477a-9fc7-685a88d7abf5"
   ],
@@ -15,10 +15,10 @@
     "cargo-ci"
   ],
   "gates_status": {
-    "lake-build": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-03-07T18:18:01.217096811Z"
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-03-09T19:02:39.821121243Z"
     },
     "doc-review": {
       "status": "pending",
@@ -26,14 +26,14 @@
       "updated_at": "2026-03-07T18:18:01.217082381Z"
     },
     "code-review": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-03-07T18:18:01.217043071Z"
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-03-09T18:58:24.071452858Z"
     },
-    "cargo-ci": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-03-08T22:49:07.690525032Z"
+    "lake-build": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-03-09T19:02:38.817325019Z"
     }
   },
   "context": {},
@@ -44,5 +44,5 @@
     "story:9509d8cc"
   ],
   "created_at": "2026-03-07T18:06:21.572508166+00:00",
-  "updated_at": "2026-03-08T22:49:07.690570012+00:00"
+  "updated_at": "2026-03-09T19:03:06.685772850+00:00"
 }
