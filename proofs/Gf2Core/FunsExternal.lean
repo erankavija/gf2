@@ -28,31 +28,36 @@ axiom U64.Insts.CoreHashHash.hash
 
 /- [core::num::{u64}::wrapping_neg]:
    Source: '/rustc/library/core/src/num/uint_macros.rs', lines 2606:8-2606:47
-   Name pattern: [core::num::{u64}::wrapping_neg] -/
+   Name pattern: [core::num::{u64}::wrapping_neg]
+   Defined: wrapping_neg(x) = 0 -ᵤ x (two's complement negation) -/
 @[rust_fun "core::num::{u64}::wrapping_neg"]
-axiom core.num.U64.wrapping_neg : Std.U64 → Result Std.U64
+def core.num.U64.wrapping_neg (x : Std.U64) : Result Std.U64 :=
+  ok (UScalar.wrapping_sub (⟨0#64⟩ : Std.U64) x)
 
 /- [core::num::{u64}::overflowing_sub]:
    Source: '/rustc/library/core/src/num/uint_macros.rs', lines 2868:8-2868:69
-   Name pattern: [core::num::{u64}::overflowing_sub] -/
+   Name pattern: [core::num::{u64}::overflowing_sub]
+   Defined: mirrors overflowing_add pattern from Aeneas stdlib -/
 @[rust_fun "core::num::{u64}::overflowing_sub"]
-axiom core.num.U64.overflowing_sub
-  : Std.U64 → Std.U64 → Result (Std.U64 × Bool)
+def core.num.U64.overflowing_sub (x y : Std.U64) : Result (Std.U64 × Bool) :=
+  ok (⟨x.bv - y.bv⟩, decide (x.val < y.val))
 
 /- [core::ops::arith::{core::ops::arith::Add<u128, u128> for u128}::add]:
    Source: '/rustc/library/core/src/ops/arith.rs', lines 105:12-105:41
-   Name pattern: [core::ops::arith::{core::ops::arith::Add<u128, u128, u128>}::add] -/
+   Name pattern: [core::ops::arith::{core::ops::arith::Add<u128, u128, u128>}::add]
+   Defined: checked addition (panics on overflow in Rust, fails in Aeneas) -/
 @[rust_fun "core::ops::arith::{core::ops::arith::Add<u128, u128, u128>}::add"]
-axiom U128.Insts.CoreOpsArithAddU128U128.add
-  : Std.U128 → Std.U128 → Result Std.U128
+def U128.Insts.CoreOpsArithAddU128U128.add (x y : Std.U128) : Result Std.U128 :=
+  UScalar.add x y
 
 /- [core::ops::arith::{core::ops::arith::AddAssign<u128> for u128}::add_assign]:
    Source: '/rustc/library/core/src/ops/arith.rs', lines 791:12-791:47
-   Name pattern: [core::ops::arith::{core::ops::arith::AddAssign<u128, u128>}::add_assign] -/
+   Name pattern: [core::ops::arith::{core::ops::arith::AddAssign<u128, u128>}::add_assign]
+   Defined: same as checked add (returns new value) -/
 @[rust_fun
   "core::ops::arith::{core::ops::arith::AddAssign<u128, u128>}::add_assign"]
-axiom U128.Insts.CoreOpsArithAddAssignU128.add_assign
-  : Std.U128 → Std.U128 → Result Std.U128
+def U128.Insts.CoreOpsArithAddAssignU128.add_assign (x y : Std.U128) : Result Std.U128 :=
+  UScalar.add x y
 
 /- [core::option::{core::option::Option<T>}::expect]:
    Source: '/rustc/library/core/src/option.rs', lines 968:4-968:45

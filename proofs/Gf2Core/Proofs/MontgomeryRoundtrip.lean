@@ -1,0 +1,567 @@
+/-
+  Gf2Core.Proofs.MontgomeryRoundtrip — Flagship roundtrip theorem
+
+  Proves that the *actual Rust code* (via Aeneas extraction) correctly
+  roundtrips through Montgomery form: from_mont(to_mont(a)) = a.
+
+  Architecture:
+  - `p_inv_value_spec` (sorry) is the single key lemma — it states that the
+    Newton iteration computes pinv * P ≡ -1 (mod 2^64).
+  - `redc_value_spec` is fully proved from `p_inv_value_spec`, establishing
+    that REDC satisfies r · R ≡ t (mod P).
+  - `compute_r_mod_p_value`, `compute_r2_mod_p_value`, `r2_mod_p_value` track
+    the R² computation values through the monadic chain.
+  - `from_mont_value`, `to_mont_value` are fully proved from `redc_value_spec`.
+  - `montgomery_roundtrip` chains the above and cancels R² via coprimality.
+-/
+import Aeneas
+import Gf2Core.Funs
+import Gf2Core.Proofs.Defs
+import Gf2Core.Proofs.Progress
+import Gf2Core.Proofs.ModArith
+
+open Aeneas Aeneas.Std Result ControlFlow Error Aeneas.Std.WP
+open gf2_core
+
+set_option maxHeartbeats 1600000
+
+noncomputable section
+
+namespace MontRoundtrip
+
+/-- a * (b % n) % n = a * b % n -/
+private lemma mul_mod_mod_right (a b n : ℕ) : a * (b % n) % n = a * b % n := by
+  conv_lhs => rw [Nat.mul_mod, Nat.mod_mod]; rw [← Nat.mul_mod]
+
+/-- (a % n) * b % n = a * b % n -/
+private lemma mod_mul_left (a b n : ℕ) : (a % n) * b % n = a * b % n := by
+  rw [Nat.mul_mod (a % n) b n, Nat.mod_mod_of_dvd _ (dvd_refl n), ← Nat.mul_mod]
+
+/-! ## Value-level lemmas for R² computation -/
+
+/-- compute_r_mod_p returns 2^64 mod P -/
+private theorem compute_r_mod_p_value {P : Std.U64} (hP : ValidPrime P) :
+    ∃ r, gfp.montgomery.compute_r_mod_p P = ok r ∧ r.val = 2 ^ 64 % P.val := by
+  have hspec : gfp.montgomery.compute_r_mod_p P ⦃ r => r.val = 2 ^ 64 % P.val ⦄ := by
+    unfold gfp.montgomery.compute_r_mod_p
+    progress as ⟨i, hi⟩
+    progress as ⟨i1, hi1⟩
+    progress as ⟨i2, hi2⟩
+    · have : i1.val = P.val := by rw [hi1]; exact U64.cast_U128_val_eq P
+      have : 1 < P.val := hP.2.1; omega
+    have hi_val : i.val = 2 ^ 64 := by rw [hi]; native_decide
+    have hi1_val : i1.val = P.val := by rw [hi1]; exact U64.cast_U128_val_eq P
+    have hi2_val : i2.val = 2 ^ 64 % P.val := by rw [hi2, hi_val, hi1_val]
+    have hP_pos : 0 < P.val := by linarith [hP.2.1]
+    have hi2_lt : i2.val < P.val := by rw [hi2_val]; exact Nat.mod_lt _ hP_pos
+    have : (UScalar.cast .U64 i2).val = i2.val :=
+      UScalar.cast_val_mod_pow_of_inBounds_eq .U64 i2 (by
+        have : UScalarTy.U64.numBits = 64 := by decide
+        rw [this]; nlinarith [hP.2.2])
+    rw [this]; exact hi2_val
+  exact spec_imp_exists hspec
+
+/-- compute_r2_mod_p returns (2^64)² mod P -/
+private theorem compute_r2_mod_p_value {P : Std.U64} (hP : ValidPrime P) :
+    ∃ r, gfp.montgomery.compute_r2_mod_p P = ok r ∧ r.val = (2 ^ 64) ^ 2 % P.val := by
+  obtain ⟨rmod, hrmod_eq, hrmod_val⟩ := compute_r_mod_p_value hP
+  have hP_pos : 0 < P.val := by linarith [hP.2.1]
+  have hrmod_lt : rmod.val < P.val := by rw [hrmod_val]; exact Nat.mod_lt _ hP_pos
+  unfold gfp.montgomery.compute_r2_mod_p
+  simp only [hrmod_eq, bind_tc_ok, lift]
+  apply spec_imp_exists
+  have hrmod128 : (UScalar.cast .U128 rmod : Std.U128).val = rmod.val := U64.cast_U128_val_eq rmod
+  have hP128 : (UScalar.cast .U128 P : Std.U128).val = P.val := U64.cast_U128_val_eq P
+  progress as ⟨sq, hsq⟩
+  progress as ⟨rem, hrem⟩
+  have hsq_val : sq.val = rmod.val * rmod.val := by rw [hsq, hrmod128]
+  have hrem_val : rem.val = rmod.val * rmod.val % P.val := by rw [hrem, hsq_val, hP128]
+  have hrem_lt : rem.val < P.val := by rw [hrem_val]; exact Nat.mod_lt _ hP_pos
+  have hcast : (UScalar.cast .U64 rem).val = rem.val :=
+    UScalar.cast_val_mod_pow_of_inBounds_eq .U64 rem (by
+      have : UScalarTy.U64.numBits = 64 := by decide
+      rw [this]; nlinarith [hP.2.2])
+  rw [hcast, hrem_val, hrmod_val]
+  have : ((2:ℕ)^64)^2 = (2:ℕ)^64 * (2:ℕ)^64 := by ring
+  rw [this]; symm; exact Nat.mul_mod _ _ _
+
+/-- R2_MOD_P returns (2^64)² mod P -/
+private theorem r2_mod_p_value {P : Std.U64} (hP : ValidPrime P) :
+    ∃ r, gfp.montgomery.MontConsts.R2_MOD_P P = ok r ∧ r.val = (2 ^ 64) ^ 2 % P.val := by
+  obtain ⟨r, hr_eq, hr_val⟩ := compute_r2_mod_p_value hP
+  refine ⟨r, ?_, hr_val⟩
+  simp only [gfp.montgomery.MontConsts.R2_MOD_P]
+  exact hr_eq
+
+/-! ## P_INV value specification
+
+The single sorry in this file.  Proving it requires showing that the
+`compute_p_inv` Newton iteration computes P⁻¹ mod 2⁶⁴. -/
+
+/-- The P_INV computation produces pinv satisfying pinv * P ≡ -1 (mod 2^64).
+    This is the sole remaining sorry in the Montgomery arithmetic formalization.
+    Proving it requires formalizing the Newton iteration loop invariant:
+    after k iterations, P * inv ≡ 1 (mod 2^(2^k)). -/
+private theorem p_inv_value_spec {P : Std.U64} (hP : ValidPrime P) (hP2 : P.val ≠ 2) :
+    ∃ pinv, gfp.montgomery.MontConsts.P_INV P = ok pinv ∧
+      pinv.val * P.val % 2 ^ 64 = 2 ^ 64 - 1 := by
+  sorry
+
+/-! ## Conditional subtraction value preservation -/
+
+/-- The branchless conditional subtraction preserves the value mod P.
+    Given x < 2P, cond_sub(x, P) ≡ x (mod P). -/
+private theorem cond_sub_mod_eq (x P : Std.U64) (hx : x.val < 2 * P.val) (hP : 0 < P.val) :
+    let result : Std.U64 := ⟨x.bv - P.bv⟩
+    let borrow : Bool := decide (x.val < P.val)
+    let i : Std.U64 := UScalar.cast_fromBool .U64 borrow
+    let neg_i : Std.U64 := UScalar.wrapping_sub ⟨0#64⟩ i
+    let correction : Std.U64 := neg_i &&& P
+    (UScalar.wrapping_add result correction).val % P.val = x.val % P.val := by
+  simp only
+  by_cases h : x.val < P.val
+  · -- borrow = true, correction = P, wrapping_add restores x
+    simp only [h, decide_true]
+    have : UScalar.cast_fromBool .U64 true = (⟨1#64⟩ : Std.U64) := by native_decide
+    rw [this]
+    have : UScalar.wrapping_sub (⟨0#64⟩ : Std.U64) (⟨1#64⟩ : Std.U64) =
+           ⟨BitVec.allOnes 64⟩ := by native_decide
+    rw [this]
+    have : ((⟨BitVec.allOnes 64⟩ : Std.U64) &&& P) = P := by
+      show (⟨BitVec.allOnes 64 &&& P.bv⟩ : UScalar .U64) = P
+      congr 1; exact FpProgress.bv_allOnes_and P.bv
+    rw [this]
+    suffices (UScalar.wrapping_add (⟨x.bv - P.bv⟩ : Std.U64) P).val = x.val by rw [this]
+    show (UScalar.wrapping_add (⟨x.bv - P.bv⟩ : Std.U64) P).bv.toNat = x.bv.toNat
+    congr 1; change (x.bv - P.bv) + P.bv = x.bv; bv_omega
+  · -- borrow = false, correction = 0, result = x - P
+    push_neg at h
+    simp only [show ¬(x.val < P.val) from not_lt.mpr h, decide_false]
+    have : UScalar.cast_fromBool .U64 false = (⟨0#64⟩ : Std.U64) := by native_decide
+    rw [this]
+    have : UScalar.wrapping_sub (⟨0#64⟩ : Std.U64) (⟨0#64⟩ : Std.U64) = (⟨0#64⟩ : Std.U64) := by
+      native_decide
+    rw [this]
+    have : ((⟨0#64⟩ : Std.U64) &&& P) = (⟨0#64⟩ : Std.U64) := by
+      show (⟨(0 : BitVec 64) &&& P.bv⟩ : UScalar .U64) = ⟨0#64⟩
+      congr 1; exact FpProgress.bv_zero_and P.bv
+    rw [this, FpProgress.wrapping_add_zero_val, FpProgress.bv_sub_toNat x P h]
+    conv_rhs => rw [show x.val = (x.val - P.val) + P.val from by omega]
+    rw [Nat.add_mod_right]
+
+/-! ## REDC value specification -/
+
+/-- REDC computes t · R⁻¹ mod P, expressed as: r · R ≡ t (mod P).
+    This is the fundamental correctness property of Montgomery reduction.
+    Proved from `p_inv_value_spec` by tracing through the REDC computation. -/
+theorem redc_value_spec {P : Std.U64} {t : Std.U128}
+    (hP : ValidPrime P) (hP2 : P.val ≠ 2) (ht : t.val < P.val * 2 ^ 64) :
+    ∃ r, gfp.montgomery.redc P t = ok r ∧
+      r.val < P.val ∧ r.val * 2 ^ 64 % P.val = t.val % P.val := by
+  obtain ⟨pinv, hpinv_eq, hpinv_val⟩ := p_inv_value_spec hP hP2
+  have hP_pos : 0 < P.val := by linarith [hP.2.1]
+  -- Get P_INV equation for compute_p_inv
+  have hpinv_eq' : gfp.montgomery.compute_p_inv P = ok pinv := by
+    simp only [gfp.montgomery.MontConsts.P_INV] at hpinv_eq; exact hpinv_eq
+  -- Comprehensive WP spec: trace through REDC with value tracking
+  have hspec : gfp.montgomery.redc P t ⦃ r =>
+      r.val < P.val ∧ r.val * 2 ^ 64 % P.val = t.val % P.val ⦄ := by
+    unfold gfp.montgomery.redc
+    progress as ⟨t_lo, ht_lo⟩       -- cast U64 t
+    -- P_INV: substitute ok pinv and simplify bind, keeping spec wrapper
+    simp only [gfp.montgomery.MontConsts.P_INV, hpinv_eq', bind_tc_ok]
+    -- Now pinv is substituted; remaining computation uses pinv
+    progress as ⟨m, hm⟩             -- wrapping_mul t_lo pinv
+    progress as ⟨i1, hi1⟩           -- cast U128 m
+    progress as ⟨i2, hi2⟩           -- cast U128 P
+    progress as ⟨mp, hmp⟩           -- checked U128 mul: i1 * i2
+    progress as ⟨i3, hi3⟩           -- checked U128 add: t + mp
+    · -- U128 add overflow bound
+      have : U128.max = 2^128 - 1 := by native_decide
+      rw [this]
+      have h_i1_val : i1.val = m.val := by rw [hi1]; exact U64.cast_U128_val_eq m
+      have h_i2_val : i2.val = P.val := by rw [hi2]; exact U64.cast_U128_val_eq P
+      have : m.val < 2^64 := m.hBounds
+      have : mp.val ≤ (2^64 - 1) * 2^63 := by
+        rw [hmp, h_i1_val, h_i2_val]
+        exact Nat.mul_le_mul (by omega) hP.2.2
+      have : t.val < 2^63 * 2^64 := by
+        calc t.val < P.val * 2^64 := ht
+          _ ≤ 2^63 * 2^64 := Nat.mul_le_mul_right _ hP.2.2
+      have : (2^64 - 1) * (2:ℕ)^63 + 2^63 * 2^64 ≤ 2^128 := by norm_num
+      omega
+    progress as ⟨i4, hi4⟩           -- i3 >>> 64
+    progress as ⟨u, hu⟩             -- cast U64 i4
+    progress as ⟨discr, hdiscr1, hdiscr2⟩  -- overflowing_sub u P
+    progress as ⟨i5, hi5⟩           -- cast_fromBool
+    progress as ⟨neg_i, hneg_i⟩     -- wrapping_neg
+    progress as ⟨correction, hcorrection⟩  -- AND
+    -- Establish intermediate value equalities
+    have h_i1_val : i1.val = m.val := by rw [hi1]; exact U64.cast_U128_val_eq m
+    have h_i2_val : i2.val = P.val := by rw [hi2]; exact U64.cast_U128_val_eq P
+    have hmp_val : mp.val = m.val * P.val := by rw [hmp, h_i1_val, h_i2_val]
+    have hi3_val : i3.val = t.val + m.val * P.val := by rw [hi3, hmp_val]
+    -- Bounds for conditional subtraction
+    have hmp_lt : mp.val < 2^64 * P.val := by
+      rw [hmp_val]; exact Nat.mul_lt_mul_of_pos_right m.hBounds hP_pos
+    have hi3_lt : i3.val < 2 * P.val * 2^64 := by rw [hi3_val]; omega
+    have hi4_lt : i4.val < 2 * P.val := by
+      rw [hi4, Nat.shiftRight_eq_div_pow]
+      exact Nat.div_lt_of_lt_mul (by ring_nf; linarith)
+    have hu_val_eq : u.val = i4.val := by
+      rw [hu]; exact UScalar.cast_val_mod_pow_of_inBounds_eq .U64 i4 (by
+        have := hP.2.2; scalar_tac)
+    have hu_lt_2P : u.val < 2 * P.val := by rw [hu_val_eq]; exact hi4_lt
+    -- Rewrite to match cond_sub pattern
+    have h_result_eq : discr.1 = (⟨u.bv - P.bv⟩ : Std.U64) := by
+      apply UScalar.val_eq_imp
+      show discr.1.bv.toNat = (u.bv - P.bv).toNat; rw [hdiscr1]
+    have h_corr_struct : correction = neg_i &&& P := by
+      apply UScalar.val_eq_imp; exact hcorrection
+    have cast_fromBool_val : ∀ (b : Bool),
+        (UScalar.cast_fromBool .U64 b).val = b.toNat := by
+      intro b; cases b <;> native_decide
+    have h_i5_eq : i5 = UScalar.cast_fromBool .U64 discr.2 := by
+      apply UScalar.val_eq_imp
+      rw [hi5, cast_fromBool_val]
+    rw [h_result_eq, h_corr_struct, hneg_i, h_i5_eq, hdiscr2]
+    constructor
+    · -- Part 1: bounds
+      exact FpProgress.cond_sub_val u P hu_lt_2P
+    · -- Part 2: value equation
+      -- Step A: divisibility — (t + m*P) is divisible by 2^64
+      have ht_lo_val : t_lo.val = t.val % 2 ^ 64 := by
+        rw [ht_lo]; exact UScalar.cast_val_eq .U64 t
+      have hm_val : m.val = (t_lo.val * pinv.val) % 2 ^ 64 := by
+        rw [hm]
+        have h := core.num.U64.wrapping_mul_val_eq t_lo pinv
+        simp only [UScalar.size_UScalarTyU64, U64.size_eq] at h
+        convert h using 1
+      have h_mP_mod : (m.val * P.val) % 2 ^ 64 =
+          (t_lo.val * pinv.val * P.val) % 2 ^ 64 := by
+        rw [hm_val]; exact mod_mul_left (t_lo.val * pinv.val) P.val (2 ^ 64)
+      have hdiv : i3.val % 2 ^ 64 = 0 := by
+        rw [hi3_val, Nat.add_mod, ← ht_lo_val, h_mP_mod]
+        -- Goal: (↑t_lo + (↑t_lo * ↑pinv * ↑P) % 2^64) % 2^64 = 0
+        -- Reduce (a + b%n) % n to (a + b) % n
+        rw [Nat.add_mod t_lo.val, Nat.mod_mod_of_dvd _ (dvd_refl _), ← Nat.add_mod]
+        -- Goal: (↑t_lo + ↑t_lo * ↑pinv * ↑P) % 2^64 = 0
+        have h_ring : t_lo.val + t_lo.val * pinv.val * P.val =
+            t_lo.val * (pinv.val * P.val + 1) := by ring
+        rw [h_ring, Nat.mul_mod]
+        have h_pinv_p1 : (pinv.val * P.val + 1) % 2 ^ 64 = 0 := by
+          rw [Nat.add_mod, hpinv_val]; norm_num
+        rw [h_pinv_p1, Nat.mul_zero, Nat.zero_mod]
+      -- Step B: u * 2^64 = i3 (exact division)
+      have hu_mul_R : u.val * 2 ^ 64 = i3.val := by
+        rw [hu_val_eq, hi4, Nat.shiftRight_eq_div_pow]
+        exact Nat.div_mul_cancel (Nat.dvd_of_mod_eq_zero hdiv)
+      -- Step C: i3 ≡ t (mod P), since i3 = t + m*P
+      have hi3_mod_P : i3.val % P.val = t.val % P.val := by
+        rw [hi3_val, Nat.add_mod, Nat.mul_comm m.val P.val, Nat.mul_mod_right,
+            Nat.add_zero, Nat.mod_mod_of_dvd _ (dvd_refl P.val)]
+      -- Step D: conditional sub preserves mod P
+      have hfinal_mod := cond_sub_mod_eq u P hu_lt_2P hP_pos
+      dsimp only at hfinal_mod
+      -- Chain: final * R % P = u * R % P = i3 % P = t % P
+      simp only [core.num.U64.wrapping_add]
+      conv_lhs => rw [Nat.mul_mod, hfinal_mod, ← Nat.mul_mod]
+      rw [hu_mul_R, hi3_mod_P]
+  exact spec_imp_exists hspec
+
+/-! ## from_mont value specification -/
+
+/-- from_mont unfolds to redc (cast U128 a) -/
+private theorem from_mont_unfold (P a : Std.U64) :
+    gfp.montgomery.from_mont P a = gfp.montgomery.redc P (UScalar.cast .U128 a) := by
+  unfold gfp.montgomery.from_mont; rfl
+
+/-- from_mont satisfies: result · R ≡ input (mod P) -/
+theorem from_mont_value {P : Std.U64} {a : Std.U64}
+    (hP : ValidPrime P) (hP2 : P.val ≠ 2) (ha : a.val < P.val) :
+    ∃ r, gfp.montgomery.from_mont P a = ok r ∧
+      r.val < P.val ∧ r.val * 2 ^ 64 % P.val = a.val := by
+  have hcast : (UScalar.cast .U128 a : Std.U128).val = a.val := U64.cast_U128_val_eq a
+  have hbound : (UScalar.cast .U128 a : Std.U128).val < P.val * 2 ^ 64 := by
+    rw [hcast]; nlinarith [hP.2.1]
+  obtain ⟨r, hr_eq, hr_lt, hr_val⟩ := redc_value_spec hP hP2 hbound
+  refine ⟨r, ?_, hr_lt, ?_⟩
+  · rw [from_mont_unfold]; exact hr_eq
+  · rw [hr_val, hcast, Nat.mod_eq_of_lt ha]
+
+/-! ## to_mont value specification -/
+
+/-- to_mont satisfies: result ≡ a · R (mod P), expressed as
+    result · R ≡ a · R² (mod P) -/
+theorem to_mont_value {P : Std.U64} {a : Std.U64}
+    (hP : ValidPrime P) (hP2 : P.val ≠ 2) (ha : a.val < P.val) :
+    ∃ m, gfp.montgomery.to_mont P a = ok m ∧
+      m.val < P.val ∧
+      m.val * 2 ^ 64 % P.val = a.val * ((2 ^ 64) ^ 2 % P.val) % P.val := by
+  -- Get R2_MOD_P value
+  obtain ⟨r2, hr2_eq, hr2_val⟩ := r2_mod_p_value hP
+  have hP_pos : 0 < P.val := by linarith [hP.2.1]
+  have hr2_lt : r2.val < P.val := by rw [hr2_val]; exact Nat.mod_lt _ hP_pos
+  -- Cast values
+  have ha128 : (UScalar.cast .U128 a : Std.U128).val = a.val := U64.cast_U128_val_eq a
+  have hr2_128 : (UScalar.cast .U128 r2 : Std.U128).val = r2.val := U64.cast_U128_val_eq r2
+  -- Product bound for REDC
+  have hprod_bound : a.val * r2.val < P.val * 2 ^ 64 := by
+    calc a.val * r2.val < P.val * P.val := Nat.mul_lt_mul_of_lt_of_lt ha hr2_lt
+      _ ≤ P.val * 2 ^ 63 := Nat.mul_le_mul_left _ hP.2.2
+      _ < P.val * 2 ^ 64 := by linarith [hP.2.1]
+  -- Unfold to_mont and simplify the monadic chain
+  unfold gfp.montgomery.to_mont
+  simp only [lift, bind_tc_ok, hr2_eq]
+  -- Goal: ∃ m, (cast a * cast r2) >>= redc P ⦃ ... ⦄
+  apply spec_imp_exists
+  progress as ⟨prod, hprod⟩  -- checked U128 mul: cast a * cast r2
+  -- REDC step
+  have hprod_val : prod.val = a.val * r2.val := by rw [hprod, ha128, hr2_128]
+  have hprod_lt : prod.val < P.val * 2 ^ 64 := by rw [hprod_val]; exact hprod_bound
+  obtain ⟨m, hm_eq, hm_lt, hm_val⟩ := redc_value_spec hP hP2 hprod_lt
+  rw [show spec = theta from rfl]
+  simp only [theta, hm_eq, wp_return]
+  exact ⟨hm_lt, by rw [hm_val, hprod_val, hr2_val]⟩
+
+/-! ## Montgomery roundtrip -/
+
+/-- **Flagship theorem**: The Rust Montgomery conversion roundtrips correctly.
+
+    For any valid prime P > 2 and any value a < P, converting to Montgomery
+    form and back yields the original value. This is proved about the
+    *actual extracted Rust code*, not a mathematical model.
+
+    ```rust
+    let m = to_mont(P, a);
+    let r = from_mont(P, m);
+    assert_eq!(r, a);
+    ```
+
+    **Proof structure**: from the REDC value spec (r · R ≡ t mod P):
+    - to_mont(a): m · R ≡ a · R²   (mod P)
+    - from_mont(m): r · R ≡ m       (mod P)
+    - Chain: r · R² ≡ a · R²        (mod P)
+    - Cancel R² (coprime to P): r ≡ a (mod P)
+    - Both < P, so r = a.
+-/
+theorem montgomery_roundtrip {P : Std.U64} {a : Std.U64}
+    (hP : ValidPrime P) (hP2 : P.val ≠ 2) (ha : a.val < P.val) :
+    ∃ r, (do
+      let m ← gfp.montgomery.to_mont P a
+      gfp.montgomery.from_mont P m) = ok r ∧ r.val = a.val := by
+  -- Step 1: to_mont succeeds with value spec
+  obtain ⟨m, hm_eq, hm_lt, hm_val⟩ := to_mont_value hP hP2 ha
+  -- Step 2: from_mont succeeds with value spec
+  obtain ⟨r, hr_eq, hr_lt, hr_val⟩ := from_mont_value hP hP2 hm_lt
+  refine ⟨r, ?_, ?_⟩
+  · -- Monadic chaining
+    simp only [hm_eq]; exact hr_eq
+  · -- Value: r = a
+    -- hr_val: r * R % P = m (since m < P)
+    -- hm_val: m * R % P = a * R² mod P % P
+    -- Chain: r * R * R % P = m * R % P = a * R² mod P % P
+    have h1 : r.val * 2 ^ 64 * 2 ^ 64 % P.val = m.val * 2 ^ 64 % P.val := by
+      conv_lhs => rw [Nat.mul_mod (r.val * 2 ^ 64) (2 ^ 64) P.val, hr_val]
+      exact mul_mod_mod_right m.val (2 ^ 64) P.val
+    -- r * R² % P = a * R² % P
+    have h2 : r.val * (2 ^ 64) ^ 2 % P.val = a.val * (2 ^ 64) ^ 2 % P.val := by
+      have : r.val * (2 ^ 64) ^ 2 = r.val * 2 ^ 64 * 2 ^ 64 := by ring
+      rw [this, h1, hm_val]
+      exact mul_mod_mod_right a.val ((2 ^ 64) ^ 2) P.val
+    -- Cancel R² using coprimality
+    have hcop : Nat.Coprime ((2 ^ 64) ^ 2) P.val := by
+      change Nat.Coprime (MontArith.R ^ 2) P.val
+      exact (MontArith.R_coprime_P hP hP2).pow_left 2
+    have h3 : Nat.ModEq P.val r.val a.val :=
+      Nat.ModEq.cancel_right_of_coprime hcop.symm h2
+    rwa [Nat.ModEq, Nat.mod_eq_of_lt hr_lt, Nat.mod_eq_of_lt ha] at h3
+
+/-! ## Fp.new / Fp.value roundtrip -/
+
+/-- Constructing an Fp value and reading it back gives the reduced input. -/
+theorem fp_new_value_roundtrip {P : Std.U64}
+    (hP : ValidPrime P) (hP2 : P.val ≠ 2) (v : Std.U64) :
+    ∃ r, (do
+      let fp ← gfp.Fp.new P v
+      gfp.Fp.value fp) = ok r ∧ r.val = v.val % P.val := by
+  have hne : ¬(P = 2#u64) := by intro h; exact hP2 (by subst h; native_decide)
+  have hP_pos : 0 < P.val := by have := hP.2.1; omega
+  have hspec : (do let fp ← gfp.Fp.new P v; gfp.Fp.value fp) ⦃ r =>
+      r.val = v.val % P.val ⦄ := by
+    unfold gfp.Fp.new
+    progress   -- VALIDATED P
+    progress as ⟨reduced, hreduced⟩  -- v % P
+    simp only [hne, ite_false]
+    unfold gfp.Fp.value
+    simp only [hne, ite_false, bind_assoc_eq, bind_tc_ok]
+    -- Goal: spec (do let m ← to_mont P reduced; from_mont P m) (fun r => r.val = v.val % P.val)
+    have hred_lt : reduced.val < P.val := by
+      rw [hreduced]; exact Nat.mod_lt _ hP_pos
+    obtain ⟨r, hr_eq, hr_val⟩ := montgomery_roundtrip hP hP2 hred_lt
+    rw [show spec = theta from rfl, hr_eq]
+    simp only [theta, wp_return]
+    rw [hr_val, hreduced]
+  exact spec_imp_exists hspec
+
+/-! ## Arithmetic consistency -/
+
+/-- mont_add preserves value modulo P: result ≡ a + b (mod P). -/
+private theorem mont_add_value_spec {P : Std.U64} {a b : Std.U64}
+    (hP : ValidPrime P) (ha : a.val < P.val) (hb : b.val < P.val) :
+    ∃ r, gfp.montgomery.mont_add P a b = ok r ∧
+      r.val < P.val ∧ r.val % P.val = (a.val + b.val) % P.val := by
+  have hP_pos : 0 < P.val := by have := hP.2.1; omega
+  have hspec : gfp.montgomery.mont_add P a b ⦃ r =>
+      r.val < P.val ∧ r.val % P.val = (a.val + b.val) % P.val ⦄ := by
+    unfold gfp.montgomery.mont_add
+    progress as ⟨sum, hsum⟩
+    · have := hP.2.2; scalar_tac
+    progress as ⟨discr, hdiscr1, hdiscr2⟩
+    progress as ⟨i, hi⟩
+    progress as ⟨neg_i, hneg_i⟩
+    progress as ⟨correction, hcorrection⟩
+    have hsum_lt : sum.val < 2 * P.val := by omega
+    have h_result_eq : discr.1 = (⟨sum.bv - P.bv⟩ : Std.U64) := by
+      apply UScalar.val_eq_imp
+      show discr.1.bv.toNat = (sum.bv - P.bv).toNat; rw [hdiscr1]
+    have h_corr_struct : correction = neg_i &&& P := by
+      apply UScalar.val_eq_imp; exact hcorrection
+    have cast_fromBool_val : ∀ (b : Bool),
+        (UScalar.cast_fromBool .U64 b).val = b.toNat := by
+      intro b; cases b <;> native_decide
+    have h_i_eq : i = UScalar.cast_fromBool .U64 discr.2 := by
+      apply UScalar.val_eq_imp
+      rw [hi, cast_fromBool_val]
+    rw [h_result_eq, h_corr_struct, hneg_i, h_i_eq, hdiscr2]
+    constructor
+    · exact FpProgress.cond_sub_val sum P hsum_lt
+    · have hfinal_mod := cond_sub_mod_eq sum P hsum_lt hP_pos
+      dsimp only at hfinal_mod
+      simp only [core.num.U64.wrapping_add]
+      rw [hfinal_mod, hsum]
+  exact spec_imp_exists hspec
+
+/-- Addition in Fp matches modular addition of canonical values. -/
+theorem fp_add_correct {P : Std.U64} {a b : Std.U64}
+    (hP : ValidPrime P) (hP2 : P.val ≠ 2)
+    (ha : a.val < P.val) (hb : b.val < P.val) :
+    ∃ r, (do
+      let sum ← gfp.montgomery.mont_add P a b
+      gfp.montgomery.from_mont P sum) = ok r ∧
+    ∃ va vb, gfp.montgomery.from_mont P a = ok va ∧
+             gfp.montgomery.from_mont P b = ok vb ∧
+             r.val = (va.val + vb.val) % P.val := by
+  have hP_pos : 0 < P.val := by have := hP.2.1; omega
+  -- Get the from_mont values for a and b
+  obtain ⟨va, hva_eq, hva_lt, hva_val⟩ := from_mont_value hP hP2 ha
+  obtain ⟨vb, hvb_eq, hvb_lt, hvb_val⟩ := from_mont_value hP hP2 hb
+  -- Get the mont_add result
+  obtain ⟨sum, hsum_eq, hsum_lt, hsum_mod⟩ := mont_add_value_spec hP ha hb
+  -- Get from_mont of the sum
+  obtain ⟨r, hr_eq, hr_lt, hr_val⟩ := from_mont_value hP hP2 hsum_lt
+  refine ⟨r, ?_, va, vb, hva_eq, hvb_eq, ?_⟩
+  · -- Computation succeeds
+    simp only [hsum_eq]; exact hr_eq
+  · -- r.val = (va.val + vb.val) % P.val
+    -- We have: r * R ≡ sum (mod P), sum ≡ a + b (mod P)
+    -- va * R ≡ a (mod P), vb * R ≡ b (mod P)
+    -- So r * R ≡ a + b ≡ va * R + vb * R ≡ (va + vb) * R (mod P)
+    -- Cancel R: r ≡ va + vb (mod P). Since r < P: r = (va + vb) % P.
+    have h1 : r.val * 2 ^ 64 % P.val = sum.val % P.val := by
+      rw [hr_val]; exact (Nat.mod_eq_of_lt hsum_lt).symm
+    have h2 : sum.val % P.val = (a.val + b.val) % P.val := hsum_mod
+    have h3 : a.val % P.val = (va.val * 2 ^ 64) % P.val := by
+      rw [Nat.mod_eq_of_lt ha, ← hva_val]
+    have h4 : b.val % P.val = (vb.val * 2 ^ 64) % P.val := by
+      rw [Nat.mod_eq_of_lt hb, ← hvb_val]
+    -- r * R ≡ (va + vb) * R (mod P)
+    have h5 : r.val * 2 ^ 64 % P.val = (va.val + vb.val) * 2 ^ 64 % P.val := by
+      rw [h1, h2, add_mul,
+          Nat.add_mod (va.val * 2 ^ 64) (vb.val * 2 ^ 64) P.val,
+          ← h3, ← h4, ← Nat.add_mod]
+    -- Cancel R (coprime)
+    have hcop : Nat.Coprime (2 ^ 64) P.val := by
+      change Nat.Coprime MontArith.R P.val
+      exact MontArith.R_coprime_P hP hP2
+    have h6 : Nat.ModEq P.val r.val (va.val + vb.val) :=
+      Nat.ModEq.cancel_right_of_coprime hcop.symm h5
+    rwa [Nat.ModEq, Nat.mod_eq_of_lt hr_lt] at h6
+
+/-- The Fp mul function computes redc(a*b) with value spec r·R ≡ a·b (mod P). -/
+private theorem mul_value_spec {P : Std.U64} {a b : Std.U64}
+    (hP : ValidPrime P) (hP2 : P.val ≠ 2)
+    (ha : a.val < P.val) (hb : b.val < P.val) :
+    ∃ r, gfp.Fp.Insts.CoreOpsArithMulFpFp.mul (P := P) a b = ok r ∧
+      r.val < P.val ∧ r.val * 2 ^ 64 % P.val = (a.val * b.val) % P.val := by
+  have hne : ¬(P = 2#u64) := by intro h; exact hP2 (by subst h; native_decide)
+  have hspec : gfp.Fp.Insts.CoreOpsArithMulFpFp.mul (P := P) a b ⦃ r =>
+      r.val < P.val ∧ r.val * 2 ^ 64 % P.val = (a.val * b.val) % P.val ⦄ := by
+    unfold gfp.Fp.Insts.CoreOpsArithMulFpFp.mul
+    simp only [hne, ite_false]
+    progress as ⟨i, hi⟩       -- cast U128 a
+    progress as ⟨i1, hi1⟩     -- cast U128 b
+    progress as ⟨i2, hi2⟩     -- i * i1 (checked U128 mul)
+    have hi_val : i.val = a.val := by rw [hi]; exact U64.cast_U128_val_eq a
+    have hi1_val : i1.val = b.val := by rw [hi1]; exact U64.cast_U128_val_eq b
+    have hi2_val : i2.val = a.val * b.val := by rw [hi2, hi_val, hi1_val]
+    have hbound : i2.val < P.val * 2 ^ 64 := by
+      rw [hi2_val]
+      calc a.val * b.val < P.val * P.val :=
+              Nat.mul_lt_mul_of_lt_of_lt ha hb
+        _ ≤ P.val * 2 ^ 63 := Nat.mul_le_mul_left _ hP.2.2
+        _ < P.val * 2 ^ 64 := by have := hP.2.1; omega
+    -- Now need redc P i2 with value spec
+    obtain ⟨r, hr_eq, hr_lt, hr_val⟩ := redc_value_spec hP hP2 hbound
+    rw [show spec = theta from rfl, hr_eq]
+    simp only [theta, wp_return, bind_tc_ok]
+    exact ⟨hr_lt, by rw [hr_val, hi2_val]⟩
+  exact spec_imp_exists hspec
+
+/-- Multiplication in Fp matches modular multiplication of canonical values. -/
+theorem fp_mul_correct {P : Std.U64} {a b : Std.U64}
+    (hP : ValidPrime P) (hP2 : P.val ≠ 2)
+    (ha : a.val < P.val) (hb : b.val < P.val) :
+    ∃ r, (do
+      let prod ← gfp.Fp.Insts.CoreOpsArithMulFpFp.mul (P := P) a b
+      gfp.montgomery.from_mont P prod) = ok r ∧
+    ∃ va vb, gfp.montgomery.from_mont P a = ok va ∧
+             gfp.montgomery.from_mont P b = ok vb ∧
+             r.val = (va.val * vb.val) % P.val := by
+  have hP_pos : 0 < P.val := by have := hP.2.1; omega
+  -- Get from_mont values
+  obtain ⟨va, hva_eq, hva_lt, hva_val⟩ := from_mont_value hP hP2 ha
+  obtain ⟨vb, hvb_eq, hvb_lt, hvb_val⟩ := from_mont_value hP hP2 hb
+  -- Get mul result with value spec
+  obtain ⟨prod, hprod_eq, hprod_lt, hprod_val⟩ := mul_value_spec hP hP2 ha hb
+  -- Get from_mont of prod
+  obtain ⟨r, hr_eq, hr_lt, hr_val⟩ := from_mont_value hP hP2 hprod_lt
+  refine ⟨r, ?_, va, vb, hva_eq, hvb_eq, ?_⟩
+  · simp only [hprod_eq]; exact hr_eq
+  · -- Chain: r·R² ≡ prod·R ≡ a·b ≡ va·R·vb·R ≡ va·vb·R² (mod P)
+    -- Cancel R²: r ≡ va·vb (mod P)
+    have h1 : r.val * 2 ^ 64 * 2 ^ 64 % P.val = prod.val * 2 ^ 64 % P.val := by
+      conv_lhs => rw [Nat.mul_mod (r.val * 2 ^ 64) (2 ^ 64) P.val, hr_val]
+      exact mul_mod_mod_right prod.val (2 ^ 64) P.val
+    have h2 : r.val * (2 ^ 64) ^ 2 % P.val = (a.val * b.val) % P.val := by
+      have : r.val * (2 ^ 64) ^ 2 = r.val * 2 ^ 64 * 2 ^ 64 := by ring
+      rw [this, h1, hprod_val]
+    -- va·vb·R² ≡ a·b (mod P)
+    have h3 : (va.val * vb.val) * (2 ^ 64) ^ 2 % P.val = (a.val * b.val) % P.val := by
+      have : (va.val * vb.val) * (2 ^ 64) ^ 2 =
+          (va.val * 2 ^ 64) * (vb.val * 2 ^ 64) := by ring
+      rw [this, Nat.mul_mod, hva_val, hvb_val]
+    -- r·R² ≡ va·vb·R² (mod P)
+    have h4 : r.val * (2 ^ 64) ^ 2 % P.val =
+        (va.val * vb.val) * (2 ^ 64) ^ 2 % P.val := by rw [h2, h3]
+    -- Cancel R² (coprime)
+    have hcop : Nat.Coprime ((2 ^ 64) ^ 2) P.val := by
+      change Nat.Coprime (MontArith.R ^ 2) P.val
+      exact (MontArith.R_coprime_P hP hP2).pow_left 2
+    have h5 : Nat.ModEq P.val r.val (va.val * vb.val) :=
+      Nat.ModEq.cancel_right_of_coprime hcop.symm h4
+    rwa [Nat.ModEq, Nat.mod_eq_of_lt hr_lt] at h5
+
+end MontRoundtrip
+
+end
