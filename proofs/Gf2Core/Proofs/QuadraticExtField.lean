@@ -85,6 +85,13 @@ theorem inv_correct (hv : ValidExtConfig inst)
         r.c1 = -(self.c1 * (self.c0 ^ 2 - hv.getNonResidue * self.c1 ^ 2)⁻¹)) :=
   Aeneas.Std.WP.spec_imp_exists (QExtProgress.qinv_progress hv self)
 
+/-- The order of QuadraticExt equals base_order² (assuming no U128 overflow). -/
+theorem order_eq_base_squared (bo : Std.U128)
+    (h_ord : inst.fieldtraitsConstFieldInst.order = ok bo)
+    (h_max : bo.val * bo.val ≤ Std.U128.max) :
+    ∃ r, ExtAbbrev.QOrder inst = ok r ∧ r.val = bo.val * bo.val :=
+  Aeneas.Std.WP.spec_imp_exists (QExtProgress.qorder_progress bo h_ord h_max)
+
 end QuadraticExtField
 
 end

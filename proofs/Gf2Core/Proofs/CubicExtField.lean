@@ -94,6 +94,14 @@ theorem inv_correct (hv : ValidCubicExtConfig inst)
         r.c2 = s2 * norm_val⁻¹) :=
   Aeneas.Std.WP.spec_imp_exists (CExtProgress.cinv_progress hv.toValidExtConfig self)
 
+/-- The order of CubicExt equals base_order³ (assuming no U128 overflow). -/
+theorem order_eq_base_cubed (bo : Std.U128)
+    (h_ord : inst.fieldtraitsConstFieldInst.order = ok bo)
+    (h_sq : bo.val * bo.val ≤ Std.U128.max)
+    (h_cube : bo.val * bo.val * bo.val ≤ Std.U128.max) :
+    ∃ r, ExtAbbrev.COrder inst = ok r ∧ r.val = bo.val * bo.val * bo.val :=
+  Aeneas.Std.WP.spec_imp_exists (CExtProgress.corder_progress bo h_ord h_sq h_cube)
+
 end CubicExtField
 
 end

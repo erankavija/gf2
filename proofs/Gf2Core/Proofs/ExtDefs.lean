@@ -41,6 +41,9 @@ abbrev QNorm := gfpn.quadratic.QuadraticExt.norm inst
 abbrev QNew := gfpn.quadratic.QuadraticExt.new inst
 abbrev QConj := gfpn.quadratic.QuadraticExt.conjugate inst
 
+-- QuadraticExt order
+abbrev QOrder := gfpn.quadratic.QuadraticExt.Insts.Gf2_coreFieldTraitsConstFieldClause0_Clause0_Clause0_CharacteristicQuadraticExt.order inst
+
 -- CubicExt operations
 abbrev CAdd := gfpn.cubic.CubicExt.Insts.CoreOpsArithAddCubicExtCubicExt.add inst
 abbrev CSub := gfpn.cubic.CubicExt.Insts.CoreOpsArithSubCubicExtCubicExt.sub inst
@@ -49,6 +52,9 @@ abbrev CNeg := gfpn.cubic.CubicExt.Insts.CoreOpsArithNegCubicExt.neg inst
 abbrev CInv := gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicCubicExt.inv inst
 abbrev CNorm := gfpn.cubic.CubicExt.norm inst
 abbrev CNew := gfpn.cubic.CubicExt.new inst
+
+-- CubicExt order
+abbrev COrder := gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsConstFieldClause0_Clause0_Clause0_CharacteristicCubicExt.order inst
 
 end ExtAbbrev
 
