@@ -5,7 +5,7 @@
   roundtrips through Montgomery form: from_mont(to_mont(a)) = a.
 
   Architecture:
-  - `p_inv_value_spec` (sorry) is the single key lemma — it states that the
+  - `p_inv_value_spec` is the single key lemma — it states that the
     Newton iteration computes pinv * P ≡ -1 (mod 2^64).
   - `redc_value_spec` is fully proved from `p_inv_value_spec`, establishing
     that REDC satisfies r · R ≡ t (mod P).
@@ -93,19 +93,236 @@ private theorem r2_mod_p_value {P : Std.U64} (hP : ValidPrime P) :
   simp only [gfp.montgomery.MontConsts.R2_MOD_P]
   exact hr_eq
 
-/-! ## P_INV value specification
+/-! ## P_INV value specification -/
 
-The single sorry in this file.  Proving it requires showing that the
-`compute_p_inv` Newton iteration computes P⁻¹ mod 2⁶⁴. -/
+/-- Newton step on ℤ: if 2^k ∣ P·inv - 1, then 2^(2k) ∣ P·inv·(2 - P·inv) - 1. -/
+private lemma newton_step_int (P inv : ℤ) (k : ℕ)
+    (h : (2 : ℤ) ^ k ∣ P * inv - 1) :
+    (2 : ℤ) ^ (2 * k) ∣ P * inv * (2 - P * inv) - 1 := by
+  obtain ⟨m, hm⟩ := h
+  exact ⟨-(m ^ 2), by rw [show P * inv = 1 + m * 2 ^ k from by linarith]; ring⟩
 
-/-- The P_INV computation produces pinv satisfying pinv * P ≡ -1 (mod 2^64).
-    This is the sole remaining sorry in the Montgomery arithmetic formalization.
-    Proving it requires formalizing the Newton iteration loop invariant:
-    after k iterations, P * inv ≡ 1 (mod 2^(2^k)). -/
+/-- If a ≡ 1 (mod 2^k) on ℕ, then 2^k | a - 1 on ℤ. -/
+private lemma nat_mod_to_int_dvd (a : ℕ) (k : ℕ) (h : a % 2 ^ k = 1) :
+    (2 : ℤ) ^ k ∣ (↑a : ℤ) - 1 := by
+  have hd := Nat.div_add_mod a (2 ^ k)
+  rw [h] at hd
+  set q := a / 2 ^ k
+  exact ⟨↑q, by rw [show a = 2 ^ k * q + 1 from by linarith]; push_cast; ring⟩
+
+/-- If 2^k | a - 1 on ℤ, then a*(2-a) ≡ 1 (mod 2^(2k)). -/
+private lemma newton_step_mod_eq (a : ℤ) (k : ℕ) (hk_pos : 0 < k)
+    (h : (2 : ℤ) ^ k ∣ a - 1) : a * (2 - a) % (2 : ℤ) ^ (2 * k) = 1 := by
+  obtain ⟨m, hm⟩ := h
+  have hkey : a * (2 - a) = 1 + (2 : ℤ) ^ (2 * k) * (-(m ^ 2)) := by
+    rw [show a = 1 + m * 2 ^ k from by linarith]; ring
+  rw [hkey, Int.add_mul_emod_self_left]
+  apply Int.emod_eq_of_lt (by omega)
+  have : (2 : ℕ) ^ 1 ≤ (2 : ℕ) ^ (2 * k) := Nat.pow_le_pow_right (by omega) (by omega)
+  exact_mod_cast by linarith
+
+/-- Decompose a*(2+M-b) into a*(2-a) + M-divisible part on ℤ. -/
+private lemma newton_step_decomp (a b M : ℤ) (k : ℕ) (hk_le : 2 * k ≤ 64)
+    (hb : b = a % M) (hM : M = (2 : ℤ) ^ 64) :
+    a * (2 + M - b) % (2 : ℤ) ^ (2 * k) = a * (2 - a) % (2 : ℤ) ^ (2 * k) := by
+  have hdvd : (2 : ℤ) ^ (2 * k) ∣ M := by rw [hM]; exact_mod_cast Nat.pow_dvd_pow 2 hk_le
+  have hdecomp : a * (2 + M - b) = a * (2 - a) + a * (M + a - b) := by ring
+  rw [hdecomp]
+  have hM_dvd_extra : (2 : ℤ) ^ (2 * k) ∣ a * (M + a - b) := by
+    rw [hb]
+    have hediv : M + a - a % M = (1 + a / M) * M := by
+      have := Int.mul_ediv_add_emod a M; linarith
+    rw [hediv, show a * ((1 + a / M) * M) = a * (1 + a / M) * M from by ring]
+    exact dvd_mul_of_dvd_right hdvd _
+  obtain ⟨q, hq⟩ := hM_dvd_extra
+  rw [hq, Int.add_mul_emod_self_left]
+
+/-- Cast the ℕ Newton expression to ℤ and reduce to a*(2-a) form. -/
+private lemma newton_step_cast_reduce (P inv : ℕ) (M : ℕ) (k : ℕ)
+    (hk_le : 2 * k ≤ 64) (hM : M = 2 ^ 64) :
+    (↑(P * (inv * (2 + M - P * inv % M))) : ℤ) % (2 : ℤ) ^ (2 * k) =
+      (↑(P * inv) : ℤ) * (2 - ↑(P * inv)) % (2 : ℤ) ^ (2 * k) := by
+  set a := (↑(P * inv) : ℤ)
+  set b := (↑(P * inv % M) : ℤ)
+  have hb_eq : b = a % ↑M := by simp [a, b, Int.natCast_emod]
+  have hmod_le : P * inv % M ≤ 2 + M := by
+    have : P * inv % M < M := Nat.mod_lt _ (by rw [hM]; positivity); omega
+  have hsub : (↑(2 + M - P * inv % M) : ℤ) = 2 + ↑M - b := by
+    rw [Nat.cast_sub hmod_le, Nat.cast_add]; push_cast; simp [b]
+  have hcast : (↑(P * (inv * (2 + M - P * inv % M))) : ℤ) = a * (2 + ↑M - b) := by
+    simp only [Nat.cast_mul, hsub, a]; ring
+  rw [hcast]
+  rw [newton_step_decomp a b ↑M k hk_le hb_eq (by push_cast [hM])]
+
+/-- ℤ-based Newton step: if P*inv ≡ 1 (mod 2^k) then
+    P*(inv*(2+2^64-P*inv%2^64)) ≡ 1 (mod 2^(2k)). -/
+private lemma newton_step_int_mod (P inv k : ℕ) (hk_pos : 0 < k) (hk_le : 2 * k ≤ 64)
+    (h : P * inv % 2 ^ k = 1) :
+    P * (inv * (2 + 2 ^ 64 - P * inv % 2 ^ 64)) % 2 ^ (2 * k) = 1 := by
+  set M := (2 : ℕ) ^ 64 with hM_def
+  suffices hsuff : (↑(P * (inv * (2 + M - P * inv % M))) : ℤ) % (↑(2 ^ (2 * k)) : ℤ) = 1 by
+    have h1 : (↑(P * (inv * (2 + M - P * inv % M)) % 2 ^ (2 * k)) : ℤ) = 1 := by
+      rw [Int.natCast_emod]; exact hsuff
+    exact_mod_cast h1
+  rw [show (↑(2 ^ (2 * k)) : ℤ) = (2 : ℤ) ^ (2 * k) from by push_cast; ring,
+      newton_step_cast_reduce P inv M k hk_le hM_def]
+  exact newton_step_mod_eq (↑(P * inv)) k hk_pos (nat_mod_to_int_dvd (P * inv) k h)
+
+/-- Wrapping Newton step on ℕ: if P·inv % 2^k = 1 with 2k ≤ 64, then
+    P · (inv · (2 - P·inv) mod 2^64) % 2^(2k) = 1.
+    All intermediate values use mod 2^64 (wrapping U64 arithmetic). -/
+private lemma compute_p_inv_newton_step (P inv : ℕ) (k : ℕ)
+    (hk_pos : 0 < k) (hk_le : 2 * k ≤ 64) (h : P * inv % 2 ^ k = 1) :
+    let M := 2 ^ 64
+    P * (inv * ((2 + M - P * inv % M) % M) % M) % 2 ^ (2 * k) = 1 := by
+  simp only
+  have hdvd : 2 ^ (2 * k) ∣ 2 ^ 64 := Nat.pow_dvd_pow 2 hk_le
+  -- Strip nested % 2^64 since 2^(2k) | 2^64
+  suffices hsuff : P * (inv * (2 + 2 ^ 64 - P * inv % 2 ^ 64)) % 2 ^ (2 * k) = 1 by
+    calc P * (inv * ((2 + 2 ^ 64 - P * inv % 2 ^ 64) % 2 ^ 64) % 2 ^ 64) % 2 ^ (2 * k)
+        = P * (inv * (2 + 2 ^ 64 - P * inv % 2 ^ 64)) % 2 ^ (2 * k) := by
+          conv_lhs =>
+            rw [Nat.mul_mod P _ (2 ^ (2 * k)),
+                Nat.mod_mod_of_dvd (inv * ((2 + 2 ^ 64 - P * inv % 2 ^ 64) % 2 ^ 64)) hdvd,
+                ← Nat.mul_mod P]
+            rw [show P * (inv * ((2 + 2 ^ 64 - P * inv % 2 ^ 64) % 2 ^ 64)) =
+                     P * inv * ((2 + 2 ^ 64 - P * inv % 2 ^ 64) % 2 ^ 64) from by ring]
+            rw [Nat.mul_mod (P * inv) _ (2 ^ (2 * k)),
+                Nat.mod_mod_of_dvd _ hdvd, ← Nat.mul_mod]
+            rw [show P * inv * (2 + 2 ^ 64 - P * inv % 2 ^ 64) =
+                     P * (inv * (2 + 2 ^ 64 - P * inv % 2 ^ 64)) from by ring]
+      _ = 1 := hsuff
+  exact newton_step_int_mod P inv k hk_pos hk_le h
+
+/-- P is odd for valid primes P ≠ 2. -/
+private lemma validPrime_odd {P : Std.U64} (hP : ValidPrime P) (hP2 : P.val ≠ 2) :
+    P.val % 2 = 1 := by
+  have hp := hP.1
+  by_contra heven
+  have h0 : P.val % 2 = 0 := by omega
+  have h2dvd : 2 ∣ P.val := Nat.dvd_of_mod_eq_zero h0
+  cases hp.eq_one_or_self_of_dvd 2 h2dvd with
+  | inl h => omega
+  | inr h => exact hP2 h.symm
+
+/-- The compute_p_inv loop returns inv with P * inv ≡ 1 (mod 2^64). -/
+private theorem compute_p_inv_loop_value_spec {P : Std.U64}
+    (hP : ValidPrime P) (hP2 : P.val ≠ 2)
+    (inv : Std.U64) (i : Std.I32)
+    (hi_ge : 0 ≤ i.val) (hi_le : i.val ≤ 6)
+    (hinv : P.val * inv.val % 2 ^ (2 ^ i.val.toNat) = 1) :
+    ∃ r, gfp.montgomery.compute_p_inv_loop P inv i = ok r ∧
+      P.val * r.val % 2 ^ 64 = 1 := by
+  unfold gfp.montgomery.compute_p_inv_loop
+  apply spec_imp_exists
+  apply loop.spec
+    (measure := fun ((_, i1) : Std.U64 × Std.I32) => (6 - i1.val).toNat)
+    (inv := fun ((inv1, i1) : Std.U64 × Std.I32) =>
+      0 ≤ i1.val ∧ i1.val ≤ 6 ∧ P.val * inv1.val % 2 ^ (2 ^ i1.val.toNat) = 1)
+  · intro ⟨inv1, i1⟩ ⟨hi1_ge, hi1_le, hinv1⟩
+    dsimp only
+    by_cases hlt : i1 < 6#i32
+    · simp only [hlt, ite_true]
+      progress as ⟨i2, hi2⟩       -- wrapping_mul P inv1
+      progress as ⟨i3, hi3⟩       -- wrapping_sub 2 i2
+      progress as ⟨inv2, hinv2⟩   -- wrapping_mul inv1 i3
+      progress as ⟨i4, hi4⟩       -- i1 + 1
+      have hi1_lt : i1.val < 6 := by scalar_tac
+      refine ⟨by omega, by omega, ?_, ?_⟩
+      · -- Need: P.val * inv2.val % 2^(2^i4.val.toNat) = 1
+        have hi4_eq : i4.val.toNat = i1.val.toNat + 1 := by omega
+        rw [hi4_eq, show 2 ^ (i1.val.toNat + 1) = 2 * 2 ^ i1.val.toNat from by ring]
+        -- inv2 = wrapping_mul inv1 i3, i3 = wrapping_sub 2 i2, i2 = wrapping_mul P inv1
+        have hinv2_val : inv2.val = (inv1.val * i3.val) % 2 ^ 64 := by
+          have h := core.num.U64.wrapping_mul_val_eq inv1 i3
+          simp only [UScalar.size_UScalarTyU64, U64.size_eq] at h; rw [hinv2]; exact h
+        have hi3_val : i3.val = (2 + 2 ^ 64 - i2.val) % 2 ^ 64 := by
+          have h := core.num.U64.wrapping_sub_val_eq (2#u64) i2
+          simp only [UScalar.size_UScalarTyU64, U64.size_eq] at h
+          have h2val : (2#u64 : Std.U64).val = 2 := by native_decide
+          have hi2_lt : i2.val < 18446744073709551616 := by
+            have := i2.hBounds
+            simp only [UScalar.size_UScalarTyU64, U64.size_eq] at this; exact this
+          have hval : i3.val =
+              (2 + 18446744073709551616 - i2.val) % 18446744073709551616 := by
+            rw [hi3, h, h2val]
+            conv_rhs => rw [Nat.add_sub_assoc (le_of_lt hi2_lt)]
+          rw [hval, show (18446744073709551616 : ℕ) = 2 ^ 64 from by norm_num]
+        have hi2_val : i2.val = (P.val * inv1.val) % 2 ^ 64 := by
+          have h := core.num.U64.wrapping_mul_val_eq P inv1
+          simp only [UScalar.size_UScalarTyU64, U64.size_eq] at h; rw [hi2]; exact h
+        rw [show P.val * inv2.val = P.val * (inv1.val * i3.val % 2 ^ 64) from by rw [hinv2_val]]
+        rw [hi3_val, hi2_val]
+        exact compute_p_inv_newton_step P.val inv1.val (2 ^ i1.val.toNat)
+          (by positivity)
+          (by have : i1.val.toNat ≤ 5 := by omega
+              calc 2 * 2 ^ i1.val.toNat ≤ 2 * 2 ^ 5 :=
+                    Nat.mul_le_mul_left _ (Nat.pow_le_pow_right (by norm_num) this)
+                _ = 64 := by norm_num) hinv1
+      · -- Measure decreases
+        change (6 - i4.val).toNat < (6 - i1.val).toNat; omega
+    · simp only [hlt, ite_false, spec, theta, wp_return]
+      have : i1.val = 6 := by scalar_tac
+      have : i1.val.toNat = 6 := by omega
+      rw [this, show (2 : ℕ) ^ (2 ^ 6) = 2 ^ 64 from by norm_num] at hinv1
+      exact hinv1
+  · exact ⟨hi_ge, hi_le, hinv⟩
+
+/-- The P_INV computation produces pinv satisfying pinv * P ≡ -1 (mod 2^64). -/
 private theorem p_inv_value_spec {P : Std.U64} (hP : ValidPrime P) (hP2 : P.val ≠ 2) :
     ∃ pinv, gfp.montgomery.MontConsts.P_INV P = ok pinv ∧
       pinv.val * P.val % 2 ^ 64 = 2 ^ 64 - 1 := by
-  sorry
+  simp only [gfp.montgomery.MontConsts.P_INV]
+  unfold gfp.montgomery.compute_p_inv
+  -- Base case: P * 1 % 2^1 = 1 (P is odd)
+  have h1val : (1#u64 : Std.U64).val = 1 := by native_decide
+  have h0val : (0#i32 : Std.I32).val.toNat = 0 := by native_decide
+  have hbase : P.val * (1#u64 : Std.U64).val % 2 ^ (2 ^ (0#i32 : Std.I32).val.toNat) = 1 := by
+    rw [h0val, h1val]; simp; exact validPrime_odd hP hP2
+  -- Loop gives inv with P * inv % 2^64 = 1
+  obtain ⟨inv, hinv_eq, hinv_mod⟩ := compute_p_inv_loop_value_spec hP hP2
+    1#u64 0#i32 (by native_decide) (by native_decide) hbase
+  simp only [hinv_eq, bind_tc_ok]
+  -- wrapping_neg(inv) gives pinv = (2^64 - inv.val) % 2^64
+  show ∃ pinv, core.num.U64.wrapping_neg inv = ok pinv ∧ pinv.val * P.val % 2 ^ 64 = 2 ^ 64 - 1
+  refine ⟨UScalar.wrapping_sub ⟨0#64⟩ inv, rfl, ?_⟩
+  have hpinv_val : (UScalar.wrapping_sub (⟨0#64⟩ : Std.U64) inv).val =
+      (2 ^ 64 - inv.val) % 2 ^ 64 := by
+    rw [UScalar.wrapping_sub_val_eq]
+    simp only [UScalar.size_UScalarTyU64, U64.size_eq]
+    show (0 + (18446744073709551616 - inv.val)) % 18446744073709551616 =
+         (2 ^ 64 - inv.val) % 2 ^ 64
+    norm_num
+  rw [hpinv_val]
+  -- From P * inv % 2^64 = 1, derive (2^64 - inv) * P % 2^64 = 2^64 - 1
+  have hinv_pos : 0 < inv.val := by
+    by_contra h; push_neg at h
+    simp [show inv.val = 0 from by omega] at hinv_mod
+  have hinv_lt : inv.val < 2 ^ 64 := inv.hBounds
+  rw [Nat.mod_eq_of_lt (by omega : 2 ^ 64 - inv.val < 2 ^ 64)]
+  -- inv * P ≡ 1 (mod 2^64), express as inv * P = q * 2^64 + 1
+  have hinv_comm : inv.val * P.val % 2 ^ 64 = 1 := by rwa [Nat.mul_comm] at hinv_mod
+  set q := inv.val * P.val / 2 ^ 64
+  have hqM : inv.val * P.val = q * 2 ^ 64 + 1 := by
+    have := Nat.div_add_mod (inv.val * P.val) (2 ^ 64)
+    omega
+  -- q < P (since inv < 2^64 and inv * P = q * 2^64 + 1)
+  have hq_lt_P : q < P.val := by
+    by_contra h_ge; push_neg at h_ge
+    have : P.val * 2 ^ 64 ≤ P.val * inv.val := by nlinarith [Nat.mul_comm inv.val P.val]
+    have := Nat.le_of_mul_le_mul_left this (by linarith [hP.2.1])
+    omega
+  -- Key identity: (2^64 - inv) * P + 1 = 2^64 * (P - q)
+  -- This directly gives (2^64 - inv) * P % 2^64 = 2^64 - 1
+  suffices hkey : (2 ^ 64 - inv.val) * P.val + 1 = 2 ^ 64 * (P.val - q) by
+    have hdvd : ((2 ^ 64 - inv.val) * P.val + 1) % 2 ^ 64 = 0 := by
+      rw [hkey, Nat.mul_mod_right]
+    omega
+  have h1 : (2 ^ 64 - inv.val) * P.val = 2 ^ 64 * P.val - inv.val * P.val :=
+    Nat.sub_mul _ _ _
+  rw [h1, hqM]
+  have hle : q * 2 ^ 64 + 1 ≤ 2 ^ 64 * P.val := by nlinarith
+  omega
 
 /-! ## Conditional subtraction value preservation -/
 

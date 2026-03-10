@@ -50,6 +50,17 @@ Coding theory algorithms for error correction:
 
 See [crates/gf2-coding/README.md](crates/gf2-coding/README.md) for detailed features and examples.
 
+### Formal Verification
+
+Machine-checked proofs of field arithmetic correctness in Lean4, extracted from the
+actual Rust source via [Charon](https://github.com/AeneasVerif/charon)/[Aeneas](https://github.com/AeneasVerif/aeneas):
+
+- **Scope**: `Fp<P>` Montgomery arithmetic (`gfp/`) and tower extensions (`gfpn/`)
+- **Proofs**: Montgomery roundtrip, REDC, Newton iteration, `CommRing`/`Field` instances
+- **Build**: `cd proofs && lake build` (requires [elan](https://github.com/leanprover/elan))
+
+See [proofs/README.md](proofs/README.md) for the full pipeline and prerequisites.
+
 ## Key Design Principles
 
 - **Functional style at API level**: Immutability and pure functions where practical
@@ -116,6 +127,7 @@ For more examples, see the individual crate READMEs and the `examples/` director
 
 - **gf2-core API**: [crates/gf2-core/README.md](crates/gf2-core/README.md)
 - **gf2-coding API**: [crates/gf2-coding/README.md](crates/gf2-coding/README.md)
+- **Formal verification**: [proofs/README.md](proofs/README.md)
 - **Development roadmap**: [ROADMAP.md](ROADMAP.md)
 - **Full API docs**: Run `cargo doc --no-deps --open`
 
@@ -194,8 +206,10 @@ Contributions welcome in these areas:
 - Coding theory algorithms
 - Performance optimizations
 - Documentation and examples
+- Formal verification proofs
 
 See the roadmaps in [ROADMAP.md](ROADMAP.md) and the subproject directories for specific tasks.
+Work items are tracked with [jit](https://github.com/ArcadeLabsInc/jit) (`.jit/` directory).
 
 ## License
 
