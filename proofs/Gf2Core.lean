@@ -6,3 +6,8 @@ import Gf2Core.Proofs.Progress
 import Gf2Core.Proofs.ModArith
 import Gf2Core.Proofs.FpField
 import Gf2Core.Proofs.MontgomeryRoundtrip
+import Gf2Core.Proofs.ExtDefs
+import Gf2Core.Proofs.ExtAlgebra
+import Gf2Core.Proofs.ExtProgress
+import Gf2Core.Proofs.QuadraticExtField
+import Gf2Core.Proofs.CubicExtField
