@@ -67,12 +67,15 @@ axiom core.option.Option.expect {T : Type} : Option T → Str → Result T
 
 /- [core::option::{core::option::Option<T>}::map]:
    Source: '/rustc/library/core/src/option.rs', lines 1160:4-1162:53
-   Name pattern: [core::option::{core::option::Option<@T>}::map] -/
+   Name pattern: [core::option::{core::option::Option<@T>}::map]
+   Defined: concrete implementation matching Rust's Option::map semantics -/
 @[rust_fun "core::option::{core::option::Option<@T>}::map"]
-axiom core.option.Option.map
+def core.option.Option.map
   {T : Type} {U : Type} {F : Type} (opsfunctionFnOnceFTupleTUInst :
   core.ops.function.FnOnce F T U) :
   Option T → F → Result (Option U)
+  | some t, f => do let r ← opsfunctionFnOnceFTupleTUInst.call_once f t; ok (some r)
+  | none, _ => ok none
 
 /- [core::result::{core::ops::try_trait::Try<T, core::result::Result<core::convert::Infallible, E>> for core::result::Result<T, E>}::branch]:
    Source: '/rustc/library/core/src/result.rs', lines 2172:4-2172:64
