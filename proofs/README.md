@@ -15,6 +15,21 @@ multiplication) and **`gfpn/`** (tower extensions `QuadraticExt`, `CubicExt`
 over the `ExtConfig` trait). See [WORKAROUNDS.md](WORKAROUNDS.md) for
 post-processing workarounds and what's excluded.
 
+## Proofs
+
+Hand-written proofs live in `Gf2Core/Proofs/`:
+
+| File | Contents |
+|------|----------|
+| `Defs.lean` | `ValidPrime P` predicate, `FpVal P` wrapper type |
+| `Progress.lean` | Result elimination lemmas for every `gfp` function |
+| `ModArith.lean` | Pure modular arithmetic: roundtrip, addition, multiplication, negation specs |
+| `MontgomeryRoundtrip.lean` | Headline theorems about the actual Rust code: `p_inv_value_spec` (Newton iteration), `redc_value_spec` (REDC correctness), `montgomery_roundtrip` (`from_mont(to_mont(a)) = a`), `fp_add_correct`, `fp_mul_correct` |
+| `FpField.lean` | `CommRing` and `Field` instances for `FpVal P` via equivalence with `ZMod P.val` |
+
+All proofs apply to `ValidPrime P` (odd prime P with P &le; 2^63). The P &ne; 2
+restriction is inherent to Montgomery arithmetic (R = 2^64 requires gcd(R, P) = 1).
+
 ## Prerequisites
 
 1. **Lean4** via [elan](https://github.com/leanprover/elan):
