@@ -149,6 +149,16 @@ theorem qinv_progress (hv : ValidExtConfig inst)
     · intro ⟨hc0, hc1⟩; exfalso; apply hn; rw [hnorm_def, hc0, hc1]; ring
     · intro _; exact ⟨_, rfl, by rw [hr_val, hnorm_sq], by rw [hr_val, hnorm_sq]⟩
 
+/-- QuadraticExt.order = base_order² (given base order succeeds and no U128 overflow) -/
+theorem qorder_progress (bo : Std.U128)
+    (h_ord : inst.fieldtraitsConstFieldInst.order = ok bo)
+    (h_max : bo.val * bo.val ≤ Std.U128.max) :
+    ExtAbbrev.QOrder inst ⦃ fun r => r.val = bo.val * bo.val ⦄ := by
+  simp only [ExtAbbrev.QOrder,
+    gfpn.quadratic.QuadraticExt.Insts.Gf2_coreFieldTraitsConstFieldClause0_Clause0_Clause0_CharacteristicQuadraticExt.order,
+    h_ord, bind_tc_ok]
+  exact Std.U128.mul_spec h_max
+
 end QExtProgress
 
 /-! ## CubicExt progress lemmas -/
@@ -273,5 +283,20 @@ theorem cinv_progress (hv : ValidExtConfig inst)
       rw [eq_comm]; exact inv_eq_of_mul_eq_one_right (by rwa [mul_comm])
     exact ⟨fun hn' => absurd hn' hn,
       fun _ => ⟨_, rfl, by rw [hr_val], by rw [hr_val], by rw [hr_val]⟩⟩
+
+/-- CubicExt.order = base_order³ (given base order succeeds and no U128 overflow) -/
+theorem corder_progress (bo : Std.U128)
+    (h_ord : inst.fieldtraitsConstFieldInst.order = ok bo)
+    (h_sq : bo.val * bo.val ≤ Std.U128.max)
+    (h_cube : bo.val * bo.val * bo.val ≤ Std.U128.max) :
+    ExtAbbrev.COrder inst ⦃ fun r => r.val = bo.val * bo.val * bo.val ⦄ := by
+  simp only [ExtAbbrev.COrder,
+    gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsConstFieldClause0_Clause0_Clause0_CharacteristicCubicExt.order,
+    h_ord, bind_tc_ok]
+  -- Two multiplications: first bo*bo, then result*bo
+  progress as ⟨sq, hsq⟩
+  have h2 : sq.val * bo.val ≤ Std.U128.max := by rw [hsq]; exact h_cube
+  progress as ⟨r, hr⟩
+  simp only [hr, hsq]
 
 end CExtProgress
