@@ -55,15 +55,19 @@ RUSTUP_TOOLCHAIN=nightly-2026-02-07 cargo install --path charon
 - **Location**: `/data/aeneas-build/` (also the work tree for the local build)
 - **Binary**: `~/.cargo/bin/aeneas`
 - **Upstream**: `https://github.com/AeneasVerif/aeneas`
-- **Base rev**: `c23de9324fbe4d3630fc532e5216a0568b9beb5c`
-- **Local change**: `charon-pin` updated from `1a659e67` → `24a17b5e` to match
-  our patched Charon base. No source code modifications.
+- **Base rev**: `61db79841bbcead08e6e3f9bce72b8b5e89dfca3` (after PRs #819, #820, #823, #825)
+- **Local change**: `charon-pin` updated to match our patched Charon base.
+  No Aeneas source code modifications.
+- **Notable upstream changes** (since `c23de932`):
+  - PR #825: Loop body refactoring (auxiliary functions, `rust_loop`/`rust_loop_body` simp attrs)
+  - PR #823: Array range indexing progress specs
+  - PR #819: Fix `leadingZeros` implementation
 
 ### Lean4
 
 - **Version**: v4.28.0-rc1 (pinned in `proofs/lean-toolchain`)
 - **Installed via**: [elan](https://github.com/leanprover/elan)
-- **Dependencies**: Aeneas stdlib, Mathlib (via `proofs/lakefile.lean`)
+- **Dependencies**: Aeneas stdlib (local path), Mathlib (via `proofs/lakefile.lean`)
 
 ## Pipeline Stages
 
@@ -164,10 +168,13 @@ value line is also updated to `.FiniteFieldInst.corecloneCloneCharacteristicInst
 cp proofs/Gf2Core/FunsExternal_Template.lean proofs/Gf2Core/FunsExternal.lean
 ```
 
-Always unconditionally copied from the template. All entries are axioms for
-external functions (std library ops like `Option.map`, `Try.branch`,
-`FromResidual.from_residual`, `assert_receiver_is_total_eq`). No custom
-implementations to preserve.
+Copied from the template, then customized. Current customizations:
+- `core.option.Option.map`: Replaced axiom with a concrete `def` matching
+  Rust's `Option::map` semantics (`some t, f => call f t; ok (some r)` /
+  `none, _ => ok none`). Required for extension field inversion proofs.
+
+Remaining axioms: `Option.expect`, `Try.branch`, `FromResidual.from_residual`,
+`assert_receiver_is_total_eq`.
 
 ### Stage 4: Lake Build
 
@@ -175,8 +182,32 @@ implementations to preserve.
 cd proofs && lake build
 ```
 
-Type-checks all generated Lean4 code (1574 build jobs). Only expected warnings
+Type-checks all generated Lean4 code (~1594 build jobs). Only expected warnings
 are `sorry` in the Aeneas standard library (upstream).
+
+## Proof Files
+
+Human-written proofs live in `proofs/Gf2Core/Proofs/`. Zero sorrys.
+
+### Fp (prime field) proofs
+
+| File | Contents |
+|------|----------|
+| `Defs.lean` | `ValidPrime P` predicate, `FpVal P` wrapper type |
+| `Progress.lean` | Result elimination lemmas for all `gfp` functions |
+| `ModArith.lean` | Pure modular arithmetic (roundtrip, add_spec, mul_spec) |
+| `FpField.lean` | `CommRing`/`Field` instance via `FpVal P ≃+* ZMod P.val` |
+| `MontgomeryRoundtrip.lean` | Headline theorems linking actual Rust code to specs |
+
+### Extension field proofs
+
+| File | Contents |
+|------|----------|
+| `ExtDefs.lean` | `ValidExtConfig`/`ValidCubicExtConfig` predicates, name abbreviations |
+| `ExtAlgebra.lean` | Pure `CommRing`/`Field` for `QExt F β` and `CExt F β` pair/triple types |
+| `ExtProgress.lean` | `@[progress]` lemmas for all `QuadraticExt`/`CubicExt` operations |
+| `QuadraticExtField.lean` | `CommRing`/`Field` for Aeneas `QuadraticExt`, Karatsuba/inv/order theorems |
+| `CubicExtField.lean` | `CommRing`/`Field` for Aeneas `CubicExt`, Karatsuba/inv/order theorems |
 
 ## Charon Patches
 
