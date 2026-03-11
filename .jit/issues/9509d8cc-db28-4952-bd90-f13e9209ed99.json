@@ -6,6 +6,7 @@
   "priority": "normal",
   "assignee": null,
   "dependencies": [
+    "13aad888-164f-4d55-9d00-4b83f47bdc33",
     "f9819a76-c249-4a25-8b77-60805a849b2e",
     "b0a092bc-9bad-4b8e-b515-bddae8241a55",
     "751f359c-c9af-4df5-a63b-032b1def7930"
@@ -35,5 +36,5 @@
     "epic:e095a100"
   ],
   "created_at": "2026-03-07T18:06:00.720467707+00:00",
-  "updated_at": "2026-03-07T18:06:33.202463824+00:00"
+  "updated_at": "2026-03-10T23:04:59.576720910+00:00"
 }
