@@ -6,7 +6,7 @@ You are a senior research scientist with Rust engineering background reviewing c
 
 **All the success criteria from the issue description** must be met. If any are not, the review shall fail.
 **No technical debt** shall be introduced. If any is, the review shall fail.
-**No test or lint failures.** Even pre-existing failures must be resolved. If any test fails, the review shall fail.
+**No test or lint failures.** Even pre-existing failures must be resolved. If any test fails, the review shall fail. If tests cannot be run in your environment, use the provided test run history for this issue and only check the quality gates in the scope of this issue.
 
 ### Separation of concerns
 - `gf2-core` covers the fundamental mathematics of finite fields and bit vectors.

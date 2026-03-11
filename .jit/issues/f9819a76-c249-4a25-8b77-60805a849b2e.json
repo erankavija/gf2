@@ -2,7 +2,7 @@
   "id": "f9819a76-c249-4a25-8b77-60805a849b2e",
   "title": "Kani bounded verification for bitvec tail masking",
   "description": "Scope narrowed: montgomery/gfp/quadratic harnesses are redundant with Lean4 proofs. `max_unreduced_additions` is a natural Lean4 target (separate follow-up issue).\n\nThis issue covers only `bitvec.rs` Kani harnesses + CI job:\n\n- Add `#[cfg(kani)]` proof harnesses in `bitvec.rs`:\n  - Pure-logic: `mask_tail_zeros_padding`, `mask_tail_preserves_valid_bits`, `ones_constructor_tail_clean`\n  - Struct-level (if Kani supports Mutex/Vec): `shift_left_preserves_invariant`, `not_into_preserves_invariant`, `bit_xor_into_preserves_invariant`\n- Add CI job: `cargo kani -p gf2-core`\n\n**Success criteria**: `cargo kani -p gf2-core` passes all harnesses",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:claude",
   "dependencies": [],
@@ -16,40 +16,40 @@
     "cargo-kani"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-03-07T18:18:02.584300179Z"
+    "fmt": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-03-10T23:51:26.992089386Z"
+    },
+    "clippy": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-03-10T23:51:28.746131668Z"
     },
     "cargo-kani": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-03-10T23:56:02.833022295Z"
     },
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:claude",
-      "updated_at": "2026-03-10T23:55:51.032737969Z"
-    },
-    "fmt": {
+    "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-03-10T23:51:26.992089386Z"
-    },
-    "tests": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-03-10T23:51:33.009093307Z"
+      "updated_at": "2026-03-11T00:07:47.915521100Z"
     },
     "tdd-reminder": {
       "status": "passed",
       "updated_by": "agent:claude",
       "updated_at": "2026-03-10T23:04:39.165053610Z"
     },
-    "clippy": {
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:claude",
+      "updated_at": "2026-03-10T23:55:51.032737969Z"
+    },
+    "tests": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-03-10T23:51:28.746131668Z"
+      "updated_at": "2026-03-10T23:51:33.009093307Z"
     }
   },
   "context": {},
@@ -60,5 +60,5 @@
     "story:9509d8cc"
   ],
   "created_at": "2026-03-07T18:06:24.953466752+00:00",
-  "updated_at": "2026-03-10T23:58:41.671260569+00:00"
+  "updated_at": "2026-03-11T00:09:26.092219809+00:00"
 }

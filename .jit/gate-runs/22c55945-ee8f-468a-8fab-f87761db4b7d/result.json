@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "22c55945-ee8f-468a-8fab-f87761db4b7d",
+  "gate_key": "lake-build",
+  "stage": "postcheck",
+  "issue_id": "886af072-ecdf-477a-9fc7-685a88d7abf5",
+  "commit": "03d026393fa1ab99c7d8f32d3ab2df26de6cf32b",
+  "branch": "main",
+  "status": "passed",
+  "started_at": "2026-03-07T19:47:57.027255291Z",
+  "completed_at": "2026-03-07T19:47:58.030026785Z",
+  "duration_ms": 1002,
+  "exit_code": 0,
+  "stdout": "⚠ [1491/1574] Replayed Aeneas.Std.Slice\nwarning: Aeneas/Std/Slice.lean:243:4: declaration uses `sorry`\nwarning: Aeneas/Std/Slice.lean:464:8: declaration uses `sorry`\n⚠ [1499/1574] Replayed Aeneas.Std.String\nwarning: Aeneas/Std/String.lean:9:4: declaration uses `sorry`\n⚠ [1501/1574] Replayed Aeneas.Std.Core.Iter\nwarning: Aeneas/Std/Core/Iter.lean:67:4: declaration uses `sorry`\nwarning: Aeneas/Std/Core/Iter.lean:76:4: declaration uses `sorry`\nwarning: Aeneas/Std/Core/Iter.lean:85:4: declaration uses `sorry`\nwarning: Aeneas/Std/Core/Iter.lean:94:4: declaration uses `sorry`\nwarning: Aeneas/Std/Core/Iter.lean:134:4: declaration uses `sorry`\n⚠ [1507/1574] Replayed Aeneas.Std.SliceIter\nwarning: Aeneas/Std/SliceIter.lean:76:4: declaration uses `sorry`\nwarning: Aeneas/Std/SliceIter.lean:118:4: declaration uses `sorry`\nwarning: Aeneas/Std/SliceIter.lean:140:4: declaration uses `sorry`\n⚠ [1510/1574] Replayed Aeneas.Std.StringIter\nwarning: Aeneas/Std/StringIter.lean:13:4: declaration uses `sorry`\nwarning: Aeneas/Std/StringIter.lean:19:4: declaration uses `sorry`\n⚠ [1512/1574] Replayed Aeneas.Std.VecIter\nwarning: Aeneas/Std/VecIter.lean:30:4: declaration uses `sorry`\nwarning: Aeneas/Std/VecIter.lean:37:4: declaration uses `sorry`\nwarning: Aeneas/Std/VecIter.lean:69:4: declaration uses `sorry`\nwarning: Aeneas/Std/VecIter.lean:85:4: declaration uses `sorry`\nBuild completed successfully (1574 jobs).\n",
+  "stderr": "",
+  "command": "lake build",
+  "by": "auto:executor",
+  "message": null
+}

@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "9a0bd812-e69e-44a1-b554-1304aaa95037",
+  "gate_key": "code-review",
+  "stage": "postcheck",
+  "issue_id": "886af072-ecdf-477a-9fc7-685a88d7abf5",
+  "commit": "71c47eb99b2be72c4e51d62b6b69a79cb7f5a328",
+  "branch": "formal-verification",
+  "status": "failed",
+  "started_at": "2026-03-08T13:25:08.797755747Z",
+  "completed_at": "2026-03-08T13:29:22.056820078Z",
+  "duration_ms": 253259,
+  "exit_code": 1,
+  "stdout": "## Issue success criteria\n- ⚠️ **Partially met**: `proofs/` scaffolding exists (`proofs/lean-toolchain`, `proofs/lakefile.lean`, generated Lean files, `scripts/verify-lean.sh`), and CI now runs full pipeline (`.github/workflows/ci.yml` includes `./scripts/verify-lean.sh` + generated-file drift check at lines 152–163).\n- ❌ **Mathlib dependency is still not explicitly declared in `lakefile.lean`**; it only declares `require aeneas` and comments that Mathlib is transitive (`proofs/lakefile.lean` lines 5–7), which does not fully resolve the prior finding.\n- ❌ **“translation succeeds for `gfp/` and `gfpn/`” is not cleanly evidenced**: generated files clearly contain `gfpn` symbols (e.g., `proofs/Gf2Core/Types.lean` and `Funs.lean`), but project docs are internally contradictory (`dev/lean4-verification-pipeline.md` says `gfpn` verified, while `proofs/WORKAROUNDS.md` lines 40–45 says `gfpn` not extracted, and `proofs/README.md` lines 13–14 says only `gfp/`).\n\n## No technical debt\n- ❌ **Introduced/remaining doc debt**: verification scope is inconsistent across authoritative docs (`dev/lean4-verification-pipeline.md` vs `proofs/README.md`/`proofs/WORKAROUNDS.md`), which is operationally risky for contributors reproducing the pipeline.\n\n## Separation of concerns\n- ✅ No dependency inversion introduced; no evidence of `gf2-core` depending on `gf2-coding` in this change set.\n\n## Functional paradigm and performance\n- ✅ No Rust algorithmic/hot-path changes observed; this work is infrastructure/docs/generated Lean and does not regress GF(2) performance patterns.\n\n## Correctness\n- ✅ No `BitVec`/GF(2) core mutator changes in Rust, so tail-masking and bit-indexing invariants were not directly altered.\n- ⚠️ Formal-verification scope claims for `gfpn` are inconsistent across docs, so correctness coverage claims are not yet reliable.\n\n## Testing\n- ❌ Required validation could not be completed in this environment: attempts to run `cargo fmt`, `cargo clippy`, `cargo test`, and `lake build` failed with **“Permission denied and could not request permission from user.”**\n- ❌ No replacement CI evidence for the reviewed HEAD: commit `71c47eb...` is not found on remote (`get_commit` returned 422), so pass/fail status for lint/tests on this exact revision is unavailable.\n\n## Unsafe isolation\n- ✅ No new Rust `unsafe` usage introduced outside the SIMD-isolated crate; changed files are workflow/scripts/docs/generated Lean.\n\n## Documentation\n- ❌ Documentation quality bar not met due conflicting statements on verification scope (`gfpn` verified vs not extracted), and missing explicit Mathlib declaration in `lakefile.lean` despite issue criteria.\n\n## Prior review feedback\n- ✅ Fixed: CI now runs end-to-end regeneration/build path.\n- ✅ Likely fixed: `gfpn` is no longer opaque in extraction script and appears in generated Lean.\n- ❌ Unresolved: explicit Mathlib dependency in `proofs/lakefile.lean`.\n- ❌ New/unresolved: contradictory docs about `gfpn` status.\n\n## Jit issue dependencies\n- ✅ `issue.dependencies` is empty; no prerequisite blockage detected.\n\nVERDICT: FAIL\n---\nGate result: FAILED\n",
+  "stderr": "",
+  "command": "./scripts/ai-review.sh",
+  "by": "auto:executor",
+  "message": null
+}

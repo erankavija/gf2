@@ -613,3 +613,11 @@
 {"type":"gate_passed","id":"df712ca6-67e2-45c0-93c8-101c4af667fe","issue_id":"f9819a76-c249-4a25-8b77-60805a849b2e","timestamp":"2026-03-10T23:55:51.032933949Z","gate_key":"doc-review","updated_by":"agent:claude"}
 {"type":"gate_passed","id":"f9f98a09-8ebf-4884-9736-fec15e7619ca","issue_id":"f9819a76-c249-4a25-8b77-60805a849b2e","timestamp":"2026-03-10T23:56:01.438950116Z","gate_key":"cargo-kani","updated_by":"auto:executor"}
 {"type":"gate_passed","id":"4ab859d0-98fd-4e56-aa63-d985669f819f","issue_id":"f9819a76-c249-4a25-8b77-60805a849b2e","timestamp":"2026-03-10T23:58:41.671440389Z","gate_key":"cargo-kani","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"20637241-a1c6-4f6d-9901-91c0f4a266d5","issue_id":"f9819a76-c249-4a25-8b77-60805a849b2e","timestamp":"2026-03-11T00:09:22.970313446Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"issue_state_changed","id":"e0037b94-e109-468c-8ea9-a728f6113bd9","issue_id":"f9819a76-c249-4a25-8b77-60805a849b2e","timestamp":"2026-03-11T00:09:26.092172269Z","from":"in_progress","to":"done"}
+{"type":"issue_completed","id":"f850acd3-195e-4421-8a2a-092b05df15c8","issue_id":"f9819a76-c249-4a25-8b77-60805a849b2e","timestamp":"2026-03-11T00:09:26.092204169Z"}
+{"type":"gate_added","id":"9e9ca98a-ecf3-4817-b605-2fbe2d552a04","issue_id":"13aad888-164f-4d55-9d00-4b83f47bdc33","timestamp":"2026-03-11T00:39:37.254220936Z","gate_key":"lake-build"}
+{"type":"gate_added","id":"290e9f15-079f-46ff-9b8b-eb6067de7499","issue_id":"13aad888-164f-4d55-9d00-4b83f47bdc33","timestamp":"2026-03-11T00:39:37.254265916Z","gate_key":"code-review"}
+{"type":"gate_added","id":"a6d26dd8-e66f-4643-965d-7d062c4a4803","issue_id":"13aad888-164f-4d55-9d00-4b83f47bdc33","timestamp":"2026-03-11T00:39:37.254285386Z","gate_key":"doc-review"}
+{"type":"issue_state_changed","id":"2d3b81b7-3ecc-41d0-bbc1-20849b713352","issue_id":"13aad888-164f-4d55-9d00-4b83f47bdc33","timestamp":"2026-03-11T00:39:41.193446163Z","from":"ready","to":"in_progress"}
+{"type":"issue_claimed","id":"127ad08f-cc6a-4222-9e61-50b97b864f7a","issue_id":"13aad888-164f-4d55-9d00-4b83f47bdc33","timestamp":"2026-03-11T00:39:41.193637593Z","assignee":"agent:claude-code"}

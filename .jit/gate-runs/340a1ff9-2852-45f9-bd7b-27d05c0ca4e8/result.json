@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "340a1ff9-2852-45f9-bd7b-27d05c0ca4e8",
+  "gate_key": "code-review",
+  "stage": "postcheck",
+  "issue_id": "751f359c-c9af-4df5-a63b-032b1def7930",
+  "commit": "045e8c152238660c2ea2c65b7db1b5336611602e",
+  "branch": "formal-verification",
+  "status": "failed",
+  "started_at": "2026-03-09T18:58:24.071452858Z",
+  "completed_at": "2026-03-09T19:02:38.816835669Z",
+  "duration_ms": 254745,
+  "exit_code": 1,
+  "stdout": "## Issue success criteria\n- ❌ **Not met**: `Fp<P>` field axioms are not fully proved; `proofs/Gf2Core/Proofs/FpField.lean` still contains `sorry` in core deliverables (`FpVal.instCommRing` L70-72, `fromZMod` L83-85, `fpValRingEquiv` L92-97, `FpVal.instField` L103-105)  \n- ❌ **Not met**: Montgomery core lemma remains unproved; `proofs/Gf2Core/Proofs/MontgomeryRoundtrip.lean` has `p_inv_value_spec` ending in `sorry` (L105-108), and downstream theorems (`redc_value_spec`, `from_mont_value`, `to_mont_value`, `montgomery_roundtrip`) depend on it  \n- ⚠️ `proofs/Gf2Core.lean` correctly imports the requested modules (L7-8), but this is wiring only, not completion of proofs\n\n## No technical debt\n- ❌ Introduced/remaining proof debt: explicit unresolved placeholders in production proof artifacts (`sorry`) and comments acknowledging unfinished proof work (“single sorry” in `MontgomeryRoundtrip.lean` L98-103)\n\n## Separation of concerns\n- ✅ No evidence of `gf2-core` depending on `gf2-coding`; changes are confined to Lean proof files and proof entry imports\n\n## Functional paradigm and performance\n- ✅ No Rust kernel/high-level algorithm changes; no regression found against functional/performance guidance in the code touched\n\n## Correctness\n- ❌ Core correctness obligations are not fully discharged because REDC correctness hinges on unproven `p_inv_value_spec` (`MontgomeryRoundtrip.lean` L157 onward depends on L105-108 `sorry`)  \n- ❌ “Fp is a verified field implementation” is not established while `CommRing`/`Field` constructions are placeholders in `FpField.lean`\n\n## Testing\n- ❌ Requirement “no test or lint failures” is unsatisfied for this review: issue gates in provided context remain pending (`cargo-ci`, `lake-build`), and local execution of `cargo`/`lake` was not possible in this environment (permission denied), so no passing CI-equivalent evidence for this change set  \n- ❌ Proof-completion quality check fails independently due unresolved `sorry` in required proof files\n\n## Unsafe isolation\n- ✅ No new Rust `unsafe` introduced outside `gf2-kernels-simd`; reviewed deltas are Lean-side\n\n## Documentation\n- ❌ Documentation/proof narrative overstates completion: file headers describe proved flagship results while required lemmas/instances remain `sorry`, creating mismatch between claims and verification state\n\n## Prior review feedback\n- ✅ `run_history` is empty, so no prior unresolved review comments to re-check\n\n## Jit issue dependencies\n- ✅ Dependency `886af072` is marked `done`; prerequisite status is satisfied\n\nVERDICT: FAIL\n---\nGate result: FAILED\n",
+  "stderr": "",
+  "command": "./scripts/ai-review.sh",
+  "by": "auto:executor",
+  "message": null
+}
