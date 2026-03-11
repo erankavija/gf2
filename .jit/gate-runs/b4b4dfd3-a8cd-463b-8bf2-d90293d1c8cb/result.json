@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "b4b4dfd3-a8cd-463b-8bf2-d90293d1c8cb",
+  "gate_key": "code-review",
+  "stage": "postcheck",
+  "issue_id": "f9819a76-c249-4a25-8b77-60805a849b2e",
+  "commit": "29bb05626807b39d4a165af7265d8536c492e8c9",
+  "branch": "formal-verification",
+  "status": "passed",
+  "started_at": "2026-03-11T00:07:47.915521100Z",
+  "completed_at": "2026-03-11T00:09:22.969905116Z",
+  "duration_ms": 95054,
+  "exit_code": 0,
+  "stdout": "I found the relevant commit and target files (`bitvec.rs`, `.github/workflows/ci.yml`). Next I’ll inspect the exact changes and then run the quality gates locally.\n\n## Success criteria / issue scope\nImplemented exactly the requested scope in `gf2-core`: six `#[cfg(kani)]` harnesses in `crates/gf2-core/src/bitvec.rs` (`mask_tail_zeros_padding`, `mask_tail_preserves_valid_bits`, `ones_constructor_tail_clean`, `shift_left_preserves_invariant`, `not_into_preserves_invariant`, `bit_xor_into_preserves_invariant`) and CI job in `.github/workflows/ci.yml` running `cargo kani -p gf2-core`.\n\n## Separation of concerns\nChanges are confined to `gf2-core` + CI config. No `gf2-core -> gf2-coding` dependency inversion introduced.\n\n## Functional paradigm and performance\nNo hot-path algorithm changes. Harnesses are verification-only under `cfg(kani)` and do not affect runtime performance.\n\n## Correctness\nTail-masking invariant is explicitly checked in all relevant harnesses; struct-level harnesses exercise `shift_left`, `not_into`, `bit_xor_into`. Bit numbering invariant is unchanged in production code.\n\n## Testing\nTDD intent is satisfied for this verification feature (new proof harnesses added).  \nI could not run cargo commands in this environment due permission restrictions, so I relied on provided gate history: `fmt`, `clippy`, `tests`, and `cargo-kani` all marked **passed** for this issue.\n\n## Unsafe isolation\nNo new `unsafe` introduced; `gf2-core` remains `#![deny(unsafe_code)]`.\n\n## Documentation\nNo new public API was added; existing doc requirements are unaffected.\n\n## Prior review feedback\n`run_history` is empty; no unresolved prior review findings.\n\n## Issue dependencies\n`issue.dependencies` is empty; no prerequisite blockage.\n\nVERDICT: PASS\n---\nGate result: PASSED\n",
+  "stderr": "",
+  "command": "./scripts/ai-review.sh",
+  "by": "auto:executor",
+  "message": null
+}

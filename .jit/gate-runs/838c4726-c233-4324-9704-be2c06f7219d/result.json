@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "838c4726-c233-4324-9704-be2c06f7219d",
+  "gate_key": "code-review",
+  "stage": "postcheck",
+  "issue_id": "886af072-ecdf-477a-9fc7-685a88d7abf5",
+  "commit": "03d026393fa1ab99c7d8f32d3ab2df26de6cf32b",
+  "branch": "main",
+  "status": "failed",
+  "started_at": "2026-03-07T19:49:45.612708853Z",
+  "completed_at": "2026-03-07T19:53:41.637209306Z",
+  "duration_ms": 236024,
+  "exit_code": 1,
+  "stdout": "## Issue success criteria (from description)\n- ✅ External-toolchain setup and `proofs/` scaffolding exist (`proofs/lean-toolchain`, `proofs/lakefile.lean`, `scripts/verify-lean.sh`).\n- ❌ `Mathlib` dependency is not present in `proofs/lakefile.lean` (only `aeneas` is required at lines 5–6), despite the issue asking for Mathlib dependency setup.\n- ❌ Translation is **not** succeeding for both `gfp/` and `gfpn/`: `scripts/verify-lean.sh` marks `gf2_core::gfpn` opaque (line 28), and `proofs/WORKAROUNDS.md` states `gfpn/` is blocked (lines 42–45).\n- ❌ CI does not run `charon && aeneas && lake build`; `.github/workflows/ci.yml` Lean job only runs `cd proofs && lake build` (line 123).\n- ✅ Risk gate on const generics is addressed/documented: `Fp<const P: u64>` extraction is documented as working (`proofs/WORKAROUNDS.md` lines 47–51; generated param in `proofs/Gf2Core/Types.lean` line 114).\n- ✅ The explicit success criterion “`lake build` compiles generated Lean code” appears satisfied by gate context (`lake-build: passed`) and committed generated Lean files.\n\n## No technical debt\n- ❌ New CI design permits stale generated Lean artifacts to pass (because regeneration is not enforced in CI), which introduces process debt relative to the requested end-to-end pipeline.\n\n## Separation of concerns\n- ✅ No evidence of forbidden dependency direction; this change does not modify crate dependency wiring between `gf2-core` and `gf2-coding`.\n\n## Functional paradigm and performance\n- ✅ No Rust algorithmic hot-path changes were introduced; no regressions observed against functional/performance guidance.\n\n## Correctness (tail masking, bit numbering, field axioms)\n- ✅ No `BitVec` mutator or GF arithmetic implementation was modified in this issue, so core invariants are not directly impacted by this diff.\n- ⚠️ `gfpn/` verification scope remains unachieved due opaque extraction, so correctness coverage is incomplete vs planned scope.\n\n## Testing\n- ❌ Requirement “no test or lint failures” is not satisfied for this reviewed head: these commits are ahead of `origin/main` (11 commits), and there is no corresponding CI evidence for SHAs `e8c2b15` / `03d0263`; additionally, requested end-to-end Lean regeneration is not run in CI.\n\n## Unsafe isolation\n- ✅ No new unsafe Rust code introduced outside `gf2-kernels-simd`.\n\n## Documentation\n- ✅ Workarounds are documented clearly (`proofs/WORKAROUNDS.md`), and developer-facing commands were updated (`CLAUDE.md`).\n- ⚠️ Documentation/planning claims support for `gfpn/` are now explicitly contradicted by current extraction reality (documented blocker), leaving scope partially incomplete.\n\n## Prior review feedback\n- ✅ `run_history` is empty; no prior unresolved review items to carry forward.\n\n## Jit issue dependencies\n- ✅ `issue.dependencies` is empty; no prerequisite blockage.\n\nVERDICT: FAIL\n---\nGate result: FAILED\n",
+  "stderr": "",
+  "command": "./scripts/ai-review.sh",
+  "by": "auto:executor",
+  "message": null
+}

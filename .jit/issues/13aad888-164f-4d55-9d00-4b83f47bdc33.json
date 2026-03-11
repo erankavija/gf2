@@ -2,12 +2,32 @@
   "id": "13aad888-164f-4d55-9d00-4b83f47bdc33",
   "title": "Lean4 proof of max_unreduced_additions overflow safety",
   "description": "Prove in Lean4 that `max_unreduced_additions` (gfp/mod.rs:402) correctly computes the maximum k such that k * (P-1)² ≤ u128::MAX.\n\nThe function is already extracted to `proofs/Gf2Core/Funs.lean` via Charon/Aeneas. Needs a theorem in the existing proof infrastructure.\n\nProperty: `k = u128::MAX / (P-1)²` and `k * (P-1)² ≤ u128::MAX` for all ValidPrime P.\n\nThis was originally scoped under the Kani issue (f9819a76) but is a natural Lean4 proof target since it's pure const-generic arithmetic with no heap allocation.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude-code",
   "dependencies": [],
-  "gates_required": [],
-  "gates_status": {},
+  "gates_required": [
+    "lake-build",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "lake-build": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-03-11T00:39:37.254205806Z"
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-03-11T00:39:37.254265526Z"
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-03-11T00:39:37.254285166Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -16,5 +36,5 @@
     "story:9509d8cc"
   ],
   "created_at": "2026-03-10T23:04:55.319986802+00:00",
-  "updated_at": "2026-03-10T23:04:55.319999232+00:00"
+  "updated_at": "2026-03-11T00:39:41.193508063+00:00"
 }

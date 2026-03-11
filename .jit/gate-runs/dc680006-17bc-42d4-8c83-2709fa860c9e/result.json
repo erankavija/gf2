@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "dc680006-17bc-42d4-8c83-2709fa860c9e",
+  "gate_key": "code-review",
+  "stage": "postcheck",
+  "issue_id": "886af072-ecdf-477a-9fc7-685a88d7abf5",
+  "commit": "22135f48daf56c581e86161baa8550ef75f46741",
+  "branch": "formal-verification",
+  "status": "failed",
+  "started_at": "2026-03-08T16:38:07.970777938Z",
+  "completed_at": "2026-03-08T16:43:55.538994404Z",
+  "duration_ms": 347568,
+  "exit_code": 1,
+  "stdout": "## Issue success criteria\n- ✅ `proofs/` scaffolding and Lean pins exist (`proofs/lean-toolchain`, `proofs/lakefile.lean`), including explicit Mathlib (`proofs/lakefile.lean:8-10`).\n- ✅ CI now runs end-to-end regeneration (`.github/workflows/ci.yml:156-160`) and checks generated-file drift (`:161-167`).\n- ✅ Evidence of both `gfp` and `gfpn` in generated Lean (`proofs/Gf2Core/Types.lean:114, 132-156`) and const-generic handling documented (`proofs/WORKAROUNDS.md:55-57`).\n- ⚠️ Success criterion \"`lake build` compiles generated code\" is evidenced for prior commit `86d24c...` (`.jit/gate-runs/78148024.../result.json:7-10,16`) but not re-verified on current HEAD `22135f4...`.\n\n## No technical debt\n- ✅ Latest previously flagged inconsistency is fixed: Charon source-of-truth now aligns across CI (`ci.yml:127,134`), docs (`proofs/README.md:30-33`, `proofs/WORKAROUNDS.md:63`), and script commentary (`scripts/verify-lean.sh:22`).\n- ❌ Validation debt remains unresolved for this reviewed HEAD: no local lint/test/build evidence could be produced in this environment, and no remote CI run exists for this commit.\n\n## Separation of concerns\n- ✅ Dependency direction is correct: `gf2-core` does not depend on `gf2-coding` (`crates/gf2-core/Cargo.toml:12-19`), while `gf2-coding` depends on `gf2-core` (`crates/gf2-coding/Cargo.toml:13`).\n\n## Functional paradigm and performance\n- ✅ Reviewed delta is infra/docs/CI/patch plumbing; no Rust hot-path GF(2) algorithm changes were introduced.\n\n## Correctness (tail masking, bit numbering, field axioms)\n- ✅ No `BitVec`/GF(2) mutator code changed in this delta, so tail-masking and bit-index invariants are not newly at risk.\n- ✅ Verification scope claims for `gfp`/`gfpn` are now consistent in primary verification docs and generated artifacts.\n\n## Testing\n- ❌ Required checks could not be executed locally: `cargo fmt`, `cargo clippy`, `cargo test`, and `lake build` all returned **\"Permission denied and could not request permission from user\"**.\n- ❌ No substitute CI evidence for this exact HEAD: branch `formal-verification` has zero workflow runs, and commit `22135f48...` is not present on remote (`No commit found for SHA`).\n\n## Unsafe isolation\n- ✅ `#![deny(unsafe_code)]` remains in `gf2-core` and `gf2-coding` (`crates/gf2-core/src/lib.rs:35`, `crates/gf2-coding/src/lib.rs:8`), and no new non-SIMD unsafe usage was detected in reviewed sources.\n\n## Documentation\n- ✅ Mathlib dependency and patched-Charon workflow are now clearly documented (`proofs/lakefile.lean`, `proofs/README.md`, `proofs/WORKAROUNDS.md`, `dev/lean4-verification-pipeline.md`).\n- ⚠️ Secondary planning doc still contains stale historical statements (`dev/plans/formal_verification.md:45,49,56`), which can mislead readers even if implementation docs are corrected.\n\n## Prior review feedback (most recent run)\n- ✅ Addressed: Charon pin/source consistency and `verify-lean.sh` comment mismatch.\n- ❌ Unresolved: inability to certify clean lint/test/build status for the currently reviewed HEAD.\n\n## Jit issue dependencies\n- ✅ `issue.dependencies` is empty; no prerequisite blockage.\n\nVERDICT: FAIL\n---\nGate result: FAILED\n",
+  "stderr": "",
+  "command": "./scripts/ai-review.sh",
+  "by": "auto:executor",
+  "message": null
+}

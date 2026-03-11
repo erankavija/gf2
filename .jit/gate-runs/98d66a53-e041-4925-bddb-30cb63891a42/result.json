@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "98d66a53-e041-4925-bddb-30cb63891a42",
+  "gate_key": "code-review",
+  "stage": "postcheck",
+  "issue_id": "886af072-ecdf-477a-9fc7-685a88d7abf5",
+  "commit": "22135f48daf56c581e86161baa8550ef75f46741",
+  "branch": "formal-verification",
+  "status": "failed",
+  "started_at": "2026-03-08T18:09:05.741789306Z",
+  "completed_at": "2026-03-08T18:13:55.613160414Z",
+  "duration_ms": 289871,
+  "exit_code": 1,
+  "stdout": "## Issue success criteria\n- ✅ External toolchain + Lean scaffolding are present (`proofs/lean-toolchain`, `proofs/lakefile.lean`, `scripts/verify-lean.sh`), with explicit Mathlib in `proofs/lakefile.lean:8-10`.\n- ✅ End-to-end CI wiring exists: Lean job runs `./scripts/verify-lean.sh` (Charon + Aeneas + Lake) and generated-file drift check (`.github/workflows/ci.yml:156-167`).\n- ✅ `gfp` and `gfpn` extraction/translation are evidenced in generated Lean (`proofs/Gf2Core/Types.lean:114,132-160` and many `gfpn.*` defs in `proofs/Gf2Core/Funs.lean`).\n- ✅ Const-generic risk gate is addressed and documented (`proofs/WORKAROUNDS.md:55-57`), and `lake build` for the reviewed commit passed (`.jit/gate-runs/4be1917d-b8ea-4c10-b55b-0548f4fee2e2/result.json`).\n\n## No technical debt\n- ❌ Documentation debt remains: `CLAUDE.md:62` still says `gfpn/` is blocked, contradicting the current verified status in `proofs/README.md:13-15` and `dev/lean4-verification-pipeline.md:22-25`.\n- ❌ `proofs/WORKAROUNDS.md` has an internal contradiction: `gf2_core::gfpn` is listed in the **Opaque modules** table (`line 25`) while also declared “now fully extracted/verified” (`lines 40-46`).\n\n## No test or lint failures\n- ✅ Rust CI gate passed on the exact reviewed commit `22135f48...` (`.jit/gate-runs/bb46ddd4-e122-4aab-ab94-e4bb1b45846a/result.json`), running: `cargo check`, `cargo test`, `cargo clippy -D warnings`, `cargo fmt --check`.\n- ✅ Lean build gate also passed on the same commit (`.jit/gate-runs/4be1917d-b8ea-4c10-b55b-0548f4fee2e2/result.json`).\n\n## Separation of concerns\n- ✅ Dependency direction is correct: `gf2-core` has no dependency on `gf2-coding` (`crates/gf2-core/Cargo.toml:12-19`), while `gf2-coding` depends on `gf2-core` (`crates/gf2-coding/Cargo.toml:13`).\n\n## Functional paradigm and performance\n- ✅ Reviewed changes are infra/docs/proofs/CI-oriented; no new hot-path Rust kernel logic was introduced, and no regressions were found against the functional/performance split.\n\n## Correctness (tail masking, bit numbering, field axioms)\n- ✅ No `BitVec` mutator or GF(2) arithmetic implementation changes were introduced in this delta; core invariants are not directly modified.\n- ✅ Formal pipeline scope now includes both `gfp` and `gfpn` in generated Lean artifacts.\n\n## Testing\n- ✅ Automated evidence exists for lint/test/build on the reviewed commit (cargo-ci + lake-build passed).\n- ⚠️ No new Rust feature logic was added here, so TDD/property-test expansion is not directly applicable to this change set.\n\n## Unsafe isolation\n- ✅ `#![deny(unsafe_code)]` remains in `gf2-core` (`src/lib.rs:35`) and `gf2-coding` (`src/lib.rs:8`), with unsafe still isolated to SIMD crate design.\n\n## Documentation\n- ❌ Documentation consistency requirement is not met due contradictions noted above (`CLAUDE.md:62`, `proofs/WORKAROUNDS.md:25` vs `40-46`).\n\n## Prior review feedback (most recent run)\n- ✅ Addressed: inability to certify test/lint/build status is now resolved by fresh passing gate runs on commit `22135f48...`.\n- ❌ Unresolved/newly visible quality issue: docs are still internally inconsistent about `gfpn` verification status.\n\n## Jit issue dependencies\n- ✅ `issue.dependencies` is empty; no prerequisite work is blocking this issue.\n\nVERDICT: FAIL\n---\nGate result: FAILED\n",
+  "stderr": "",
+  "command": "./scripts/ai-review.sh",
+  "by": "auto:executor",
+  "message": null
+}

@@ -36,3 +36,5 @@ target/charon/
 
 # JIT artifacts
 .jit/**/*.lock
+.jit/server.log
+.jit/server.pid.json
