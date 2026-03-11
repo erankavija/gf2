@@ -108,6 +108,20 @@ jobs:
         git commit -m "Update coverage badges [skip ci]"
         git push --force "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" badges
 
+  kani:
+    name: Kani Verification
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Kani verification
+      uses: model-checking/kani-verifier-action@v1
+      with:
+        command: cargo kani -p gf2-core
+
   lean-verify:
     name: Lean Verification
     runs-on: ubuntu-latest

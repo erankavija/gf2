@@ -9,6 +9,9 @@ keywords = ["bitset", "gf2", "bitvec", "galois-field"]
 categories = ["algorithms", "data-structures", "mathematics", "no-std"]
 rust-version = "1.80"
 
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(kani)'] }
+
 [dependencies]
 gf2-kernels-simd = { path = "../gf2-kernels-simd", optional = true }
 rand = { workspace = true, optional = true }
