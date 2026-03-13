@@ -2806,4 +2806,359 @@ mod kani_proofs {
             }
         }
     }
+
+    /// Verify that shift_right preserves the tail masking invariant (single word).
+    ///
+    /// Right-shifting moves bits toward LSB and zeros fill from the left,
+    /// so padding bits should remain clean after shift.
+    #[kani::proof]
+    #[kani::unwind(2)]
+    fn shift_right_preserves_invariant() {
+        let len: usize = kani::any();
+        kani::assume(len >= 1 && len <= 64);
+        let k: usize = kani::any();
+        kani::assume(k <= 64);
+
+        let word: u64 = kani::any();
+        let bits_in_last = len % 64;
+        let masked_word = if bits_in_last != 0 {
+            word & ((1u64 << bits_in_last) - 1)
+        } else {
+            word
+        };
+
+        let mut bv = BitVec {
+            data: vec![masked_word],
+            len_bits: len,
+            rank_select_index: Mutex::new(None),
+        };
+
+        bv.shift_right(k);
+
+        // Verify tail invariant after shift
+        let bits_after = bv.len_bits % 64;
+        if bits_after != 0 {
+            if let Some(&last) = bv.data.last() {
+                assert!(last >> bits_after == 0);
+            }
+        }
+    }
+
+    /// Verify that bit_and_into preserves the tail masking invariant.
+    ///
+    /// AND of two clean-tail words produces a clean tail (0 AND x = 0 in padding),
+    /// so this holds without explicit mask_tail.
+    #[kani::proof]
+    #[kani::unwind(3)]
+    fn bit_and_into_preserves_invariant() {
+        let len: usize = kani::any();
+        kani::assume(len >= 1 && len <= 128);
+
+        let num_words = len.div_ceil(64);
+        let bits_in_last = len % 64;
+
+        let mut data_a = vec![0u64; num_words];
+        let mut data_b = vec![0u64; num_words];
+        for w in data_a.iter_mut() {
+            *w = kani::any();
+        }
+        for w in data_b.iter_mut() {
+            *w = kani::any();
+        }
+
+        // Pre-mask both to establish invariant
+        if bits_in_last != 0 {
+            let mask = (1u64 << bits_in_last) - 1;
+            data_a[num_words - 1] &= mask;
+            data_b[num_words - 1] &= mask;
+        }
+
+        let mut a = BitVec {
+            data: data_a,
+            len_bits: len,
+            rank_select_index: Mutex::new(None),
+        };
+        let b = BitVec {
+            data: data_b,
+            len_bits: len,
+            rank_select_index: Mutex::new(None),
+        };
+
+        a.bit_and_into(&b);
+
+        // Verify tail invariant
+        if bits_in_last != 0 {
+            if let Some(&last) = a.data.last() {
+                assert!(last >> bits_in_last == 0);
+            }
+        }
+    }
+
+    /// Verify that bit_or_into preserves the tail masking invariant.
+    ///
+    /// OR of two clean-tail words produces a clean tail (0 OR 0 = 0 in padding),
+    /// so this holds without explicit mask_tail.
+    #[kani::proof]
+    #[kani::unwind(3)]
+    fn bit_or_into_preserves_invariant() {
+        let len: usize = kani::any();
+        kani::assume(len >= 1 && len <= 128);
+
+        let num_words = len.div_ceil(64);
+        let bits_in_last = len % 64;
+
+        let mut data_a = vec![0u64; num_words];
+        let mut data_b = vec![0u64; num_words];
+        for w in data_a.iter_mut() {
+            *w = kani::any();
+        }
+        for w in data_b.iter_mut() {
+            *w = kani::any();
+        }
+
+        // Pre-mask both to establish invariant
+        if bits_in_last != 0 {
+            let mask = (1u64 << bits_in_last) - 1;
+            data_a[num_words - 1] &= mask;
+            data_b[num_words - 1] &= mask;
+        }
+
+        let mut a = BitVec {
+            data: data_a,
+            len_bits: len,
+            rank_select_index: Mutex::new(None),
+        };
+        let b = BitVec {
+            data: data_b,
+            len_bits: len,
+            rank_select_index: Mutex::new(None),
+        };
+
+        a.bit_or_into(&b);
+
+        // Verify tail invariant
+        if bits_in_last != 0 {
+            if let Some(&last) = a.data.last() {
+                assert!(last >> bits_in_last == 0);
+            }
+        }
+    }
+
+    /// Verify that set preserves the tail masking invariant.
+    ///
+    /// Setting a bit at a valid index (< len_bits) should never affect padding bits.
+    #[kani::proof]
+    fn set_preserves_invariant() {
+        let len: usize = kani::any();
+        kani::assume(len >= 1 && len <= 64);
+
+        let word: u64 = kani::any();
+        let bits_in_last = len % 64;
+        let masked_word = if bits_in_last != 0 {
+            word & ((1u64 << bits_in_last) - 1)
+        } else {
+            word
+        };
+
+        let mut bv = BitVec {
+            data: vec![masked_word],
+            len_bits: len,
+            rank_select_index: Mutex::new(None),
+        };
+
+        let idx: usize = kani::any();
+        kani::assume(idx < len);
+        let bit: bool = kani::any();
+
+        bv.set(idx, bit);
+
+        // Verify tail invariant
+        let bits_after = bv.len_bits % 64;
+        if bits_after != 0 {
+            if let Some(&last) = bv.data.last() {
+                assert!(last >> bits_after == 0);
+            }
+        }
+    }
+
+    /// Verify that push_bit preserves the tail masking invariant.
+    ///
+    /// Appending a bit may cross a word boundary (push at bit 64 allocates a new word).
+    /// The tail must remain clean regardless.
+    #[kani::proof]
+    #[kani::unwind(3)]
+    fn push_bit_preserves_invariant() {
+        let len: usize = kani::any();
+        kani::assume(len >= 1 && len <= 127);
+
+        let num_words = len.div_ceil(64);
+        let bits_in_last = len % 64;
+
+        let mut data = vec![0u64; num_words];
+        for w in data.iter_mut() {
+            *w = kani::any();
+        }
+
+        // Pre-mask to establish invariant
+        if bits_in_last != 0 {
+            let mask = (1u64 << bits_in_last) - 1;
+            data[num_words - 1] &= mask;
+        }
+
+        let mut bv = BitVec {
+            data,
+            len_bits: len,
+            rank_select_index: Mutex::new(None),
+        };
+
+        let bit: bool = kani::any();
+        bv.push_bit(bit);
+
+        // Verify tail invariant after push
+        let new_bits_in_last = bv.len_bits % 64;
+        if new_bits_in_last != 0 {
+            if let Some(&last) = bv.data.last() {
+                assert!(last >> new_bits_in_last == 0);
+            }
+        }
+    }
+
+    /// Verify that resize (shrink) preserves the tail masking invariant.
+    ///
+    /// Shrinking changes len_bits; verify tail masking is correct at new boundary.
+    #[kani::proof]
+    #[kani::unwind(2)]
+    fn resize_shrink_preserves_invariant() {
+        let len: usize = kani::any();
+        kani::assume(len >= 2 && len <= 64);
+
+        let word: u64 = kani::any();
+        let bits_in_last = len % 64;
+        let masked_word = if bits_in_last != 0 {
+            word & ((1u64 << bits_in_last) - 1)
+        } else {
+            word
+        };
+
+        let mut bv = BitVec {
+            data: vec![masked_word],
+            len_bits: len,
+            rank_select_index: Mutex::new(None),
+        };
+
+        let new_len: usize = kani::any();
+        kani::assume(new_len >= 1 && new_len < len);
+
+        bv.resize(new_len, false);
+
+        // Verify tail invariant after resize
+        let bits_after = bv.len_bits % 64;
+        if bits_after != 0 {
+            if let Some(&last) = bv.data.last() {
+                assert!(last >> bits_after == 0);
+            }
+        }
+    }
+
+    /// Verify that resize (grow with fill=false) preserves the tail masking invariant.
+    ///
+    /// Growing with zero fill should produce clean padding.
+    #[kani::proof]
+    #[kani::unwind(2)]
+    fn resize_grow_zero_preserves_invariant() {
+        let len: usize = kani::any();
+        kani::assume(len >= 1 && len <= 32);
+
+        let word: u64 = kani::any();
+        let bits_in_last = len % 64;
+        let masked_word = if bits_in_last != 0 {
+            word & ((1u64 << bits_in_last) - 1)
+        } else {
+            word
+        };
+
+        let mut bv = BitVec {
+            data: vec![masked_word],
+            len_bits: len,
+            rank_select_index: Mutex::new(None),
+        };
+
+        let new_len: usize = kani::any();
+        kani::assume(new_len > len && new_len <= 64);
+
+        bv.resize(new_len, false);
+
+        // Verify tail invariant after resize
+        let bits_after = bv.len_bits % 64;
+        if bits_after != 0 {
+            if let Some(&last) = bv.data.last() {
+                assert!(last >> bits_after == 0);
+            }
+        }
+    }
+
+    /// Verify that resize (grow with fill=true) preserves the tail masking invariant.
+    ///
+    /// Growing with fill=true sets bits from old_len..new_len, then mask_tail cleans up.
+    /// Keep small to avoid OOM from set() loop.
+    #[kani::proof]
+    #[kani::unwind(5)]
+    fn resize_grow_fill_preserves_invariant() {
+        let len: usize = kani::any();
+        kani::assume(len >= 1 && len <= 2);
+
+        let word: u64 = kani::any();
+        let bits_in_last = len % 64;
+        let masked_word = if bits_in_last != 0 {
+            word & ((1u64 << bits_in_last) - 1)
+        } else {
+            word
+        };
+
+        let mut bv = BitVec {
+            data: vec![masked_word],
+            len_bits: len,
+            rank_select_index: Mutex::new(None),
+        };
+
+        let new_len: usize = kani::any();
+        kani::assume(new_len > len && new_len <= 4);
+
+        bv.resize(new_len, true);
+
+        // Verify tail invariant after resize
+        let bits_after = bv.len_bits % 64;
+        if bits_after != 0 {
+            if let Some(&last) = bv.data.last() {
+                assert!(last >> bits_after == 0);
+            }
+        }
+    }
+
+    /// Verify that clear produces a valid empty BitVec.
+    ///
+    /// After clear, len_bits must be 0 and data must be empty.
+    #[kani::proof]
+    #[kani::unwind(3)]
+    fn clear_preserves_invariant() {
+        let len: usize = kani::any();
+        kani::assume(len >= 1 && len <= 128);
+
+        let num_words = len.div_ceil(64);
+        let mut data = vec![0u64; num_words];
+        for w in data.iter_mut() {
+            *w = kani::any();
+        }
+
+        let mut bv = BitVec {
+            data,
+            len_bits: len,
+            rank_select_index: Mutex::new(None),
+        };
+
+        bv.clear();
+
+        assert!(bv.len_bits == 0);
+        assert!(bv.data.is_empty());
+    }
 }
