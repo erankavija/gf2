@@ -1,0 +1,30 @@
+{
+  "id": "467d835e-6afd-4638-a0e6-5e5c1ae54904",
+  "title": "GF(2^m) Charon/Aeneas extraction and mul_raw correctness proof",
+  "description": "Assess and implement Lean4 formal verification for the GF(2^m) schoolbook multiplication (`mul_raw`) and core element arithmetic.\n\n## Phase 1: Extraction feasibility assessment\n\nAttempt Charon/Aeneas extraction of the `gf2m/` module:\n- Extract with `--no-default-features` to avoid SIMD paths\n- Assess handling of `UintExt` sealed trait (5 monomorphic impls via macro)\n- Assess `Arc<FieldParams>` extraction (immutable interior, no RefCell)\n- Document blockers and workarounds needed\n\nIf extraction fails, document why and close this issue with findings for future reference.\n\n## Phase 2: Schoolbook multiplication proof (if extraction succeeds)\n\nProve `mul_raw(a, b, m, poly)` correctly computes polynomial multiplication modulo the irreducible polynomial in GF(2^m).\n\n### Rust implementation (gf2m/mod.rs)\nSchoolbook multiplication: iterate over bits of `b`, XOR shifted `a` into result when bit is set, reduce modulo `poly` when result exceeds degree m.\n\n### Loop invariant\nAt iteration k: `result = a * (b mod 2^k) mod poly` (polynomial arithmetic over GF(2)).\n\n### Proof strategy\n1. Define polynomial multiplication over GF(2) in Lean4\n2. Prove loop invariant by induction on bit position\n3. Prove final masking produces element < 2^m\n4. Connect to Mathlib's polynomial ring over `ZMod 2` if feasible\n\n## Phase 3: Inverse and basic operations (if Phase 2 succeeds)\n\n- Prove `inverse()` via square-and-multiply (reuses pow pattern from gfp)\n- Prove XOR-based addition is correct (trivial: GF(2) addition = XOR)\n\n## Why Lean4 (not Kani)\n`mul_raw` is pure arithmetic with no dynamic allocation, no tables, no SIMD — squarely in the Aeneas-compatible subset. A Lean4 proof gives universal correctness for all field degrees m, not just bounded instances.\n\n## Difficulty\nMedium-High — the extraction feasibility is the main risk. If it works, the proofs follow standard patterns from the gfp work.",
+  "state": "ready",
+  "priority": "low",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [
+    "lake-build",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "doc-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-03-12T22:19:39.165973127Z"
+    }
+  },
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "story:8889e712"
+  ],
+  "created_at": "2026-03-11T21:08:30.903152716+00:00",
+  "updated_at": "2026-03-12T22:19:39.166370587+00:00"
+}

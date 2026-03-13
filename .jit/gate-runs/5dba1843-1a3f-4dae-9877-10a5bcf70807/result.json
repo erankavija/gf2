@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "5dba1843-1a3f-4dae-9877-10a5bcf70807",
+  "gate_key": "code-review",
+  "stage": "postcheck",
+  "issue_id": "3f6bb7ee-a178-4c8e-9f5d-d978802543c7",
+  "commit": "6e14b660487da6cb6f0e1ad30706ef47f8ca02f6",
+  "branch": "formal-verification",
+  "status": "failed",
+  "started_at": "2026-03-13T18:43:16.994871740Z",
+  "completed_at": "2026-03-13T18:45:05.003839502Z",
+  "duration_ms": 108008,
+  "exit_code": 1,
+  "stdout": "I’ll inspect the current changes and relevant `BitVec`/Kani files, then run the required checks to determine whether all issue success criteria and quality gates are actually satisfied.\n\nI’ve identified the new Kani harness block; next I’m running fmt, clippy, and tests to validate the “no failures” requirement before final verdict.\n\n## Success criteria (issue description)\n\n- Added harnesses exist in `crates/gf2-core/src/bitvec.rs`:  \n  `shift_right_preserves_invariant` (L2816), `bit_and_into_preserves_invariant` (L2853), `bit_or_into_preserves_invariant` (L2903), `set_preserves_invariant` (L2951), `push_bit_preserves_invariant` (L2990), `clear_preserves_invariant` (L3143), plus resize variants (L3031, L3068, L3106).\n- **Not fully met**:\n  - `set` panic path is not proven: `set_preserves_invariant` assumes `idx < len` (L2970), so invalid-index panic is never checked.\n  - Requested bounds “lengths 1–128” are not consistently used (`shift_right`/`set` capped at 64; resize grow-fill capped at 2).\n\n## Separation of concerns\n\n- Scope is in `gf2-core` (`bitvec.rs`), no `gf2-core -> gf2-coding` dependency violation observed.\n\n## Functional paradigm and performance\n\n- Proof harnesses are straightforward and acceptable; no kernel-path regressions noted.\n\n## Correctness\n\n- Tail-mask invariant checks are present after each operation (`assert!(last >> bits_after == 0)` pattern).\n- Bit numbering logic unchanged by this patch.\n\n## Testing and quality gates\n\n- Could not execute local cargo commands due environment permission denial; used provided gate context.\n- In provided gate status: `cargo-kani`, `clippy`, `fmt` are passed; `doc-review` is still pending.\n- No run_history items to reconcile.\n\n## Unsafe isolation\n\n- No new `unsafe` introduced in reviewed scope.\n\n## Documentation\n\n- New proof functions are documented; no new public API requiring rustdoc examples.\n\nVERDICT: FAIL\n---\nGate result: FAILED\n",
+  "stderr": "",
+  "command": "./scripts/ai-review.sh",
+  "by": "auto:executor",
+  "message": null
+}

@@ -1,0 +1,60 @@
+{
+  "id": "8889e712-da96-4565-ac1d-e75036f61e7f",
+  "title": "Extended formal verification: complete gfp proofs and expand to gf2m",
+  "description": "Complete the remaining gaps in gfp/ formal verification and expand coverage to gf2m/ arithmetic.\n\n## Scope\n\n**gfp/ completion (Lean4):**\n- Eliminate the sole remaining sorry (`p_inv_value_spec`) by proving the Newton iteration loop invariant\n- Prove binary exponentiation (`mod_pow_mont`) correctness\n- Prove `inv()` via Fermat's little theorem, completing the full Fp arithmetic chain\n- After this, every Fp operation (new, value, add, sub, mul, neg, inv, div, pow) has a machine-checked proof\n\n**bitvec/ expanded coverage (Kani):**\n- Add Kani harnesses for remaining mutating operations (shift_right, bit_and_into, bit_or_into, set, clear)\n- Lean4 not feasible for bitvec (Vec-backed array indexing)\n\n**gf2m/ new coverage:**\n- Assess Charon/Aeneas extraction feasibility for the gf2m module (UintExt sealed trait, Arc params)\n- Prove schoolbook multiplication (`mul_raw`) and inverse correctness in Lean4 if extraction works\n- Kani harnesses for table-based operations (log/exp table validity) where Lean4 is not feasible\n\n## Principles\n\n- Kani only when Lean4 is not feasible (array indexing, dynamic allocation, SIMD)\n- No duplication: gfp Montgomery bounds, extension field Karatsuba, and gfpn arithmetic are already universally proven in Lean4 — no redundant Kani harnesses for those\n- All proofs track the actual Rust code via Charon/Aeneas extraction or inline `#[cfg(kani)]` harnesses",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "104a46c2-0c49-4f66-8fcb-e84416b9b0ce",
+    "3f6bb7ee-a178-4c8e-9f5d-d978802543c7",
+    "467d835e-6afd-4638-a0e6-5e5c1ae54904",
+    "ec0743e1-819d-4efc-bc5c-f900e569130d",
+    "60c9d605-a5e1-46e7-93d2-8eef441ab35a"
+  ],
+  "gates_required": [
+    "lake-build",
+    "code-review",
+    "tdd-reminder",
+    "tests",
+    "clippy",
+    "fmt",
+    "doc-review"
+  ],
+  "gates_status": {
+    "fmt": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-03-12T22:19:37.373321034Z"
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-03-12T22:19:37.373338874Z"
+    },
+    "tdd-reminder": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-03-12T22:19:37.373237214Z"
+    },
+    "clippy": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-03-12T22:19:37.373301954Z"
+    },
+    "tests": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-03-12T22:19:37.373275804Z"
+    }
+  },
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:story",
+    "component:gf2-core",
+    "epic:e095a100"
+  ],
+  "created_at": "2026-03-11T21:07:15.911783041+00:00",
+  "updated_at": "2026-03-12T22:19:37.373781674+00:00"
+}

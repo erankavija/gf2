@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "813911ef-ba4b-4a26-8e77-84099e13ff5f",
+  "gate_key": "code-review",
+  "stage": "postcheck",
+  "issue_id": "13aad888-164f-4d55-9d00-4b83f47bdc33",
+  "commit": "6e14b660487da6cb6f0e1ad30706ef47f8ca02f6",
+  "branch": "formal-verification",
+  "status": "failed",
+  "started_at": "2026-03-11T12:38:17.996549576Z",
+  "completed_at": "2026-03-11T12:41:00.134388204Z",
+  "duration_ms": 162137,
+  "exit_code": 1,
+  "stdout": "I’ve identified the proof-related changes and now I’ll validate them by running the relevant checks (`lake build`, workspace tests, and clippy) to enforce the gate criteria.\n\n## Success criteria vs issue description\nThe issue asks to prove both: `k = u128::MAX / (P-1)^2` and `k*(P-1)^2 ≤ u128::MAX` for all `ValidPrime P`.  \nCurrent theorem `max_unreduced_additions_spec` in `proofs/Gf2Core/Proofs/MontgomeryRoundtrip.lean:791` proves only existence + overflow bound for returned `usize` (`∃ k, ... ∧ bound`). It does **not** prove the stated equality property.\n\n## Separation of concerns\nChanges are confined to Lean proofs (`proofs/...`), no `gf2-core`/`gf2-coding` dependency inversion introduced.\n\n## Functional paradigm & performance\nNo performance-kernel changes. Pure proof-layer edits only.\n\n## Correctness\nGood: added lemma `p_minus_one_sq_le_u128_max` (`ModArith.lean:139`).  \nGap: required equality claim is missing at theorem level.\n\n## Testing\n`lake-build` gate is marked passed in issue context.  \nIn this environment, executing `cargo`/`lake` commands was permission-blocked; no additional local test/lint evidence collected.\n\n## Unsafe isolation\nNo Rust unsafe changes introduced.\n\n## Documentation\nProof comments are present and clear; however, theorem statement does not fully encode the issue’s required property.\n\n## Prior run feedback\n`run_history` is empty; nothing to reconcile.\n\n## Dependency check\n`issue.dependencies` is empty; no prerequisite blocking.\n\nVERDICT: FAIL\n---\nGate result: FAILED\n",
+  "stderr": "",
+  "command": "./scripts/ai-review.sh",
+  "by": "auto:executor",
+  "message": null
+}

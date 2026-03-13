@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "2d933a93-893f-435a-bcf6-065d6bf40412",
+  "gate_key": "code-review",
+  "stage": "postcheck",
+  "issue_id": "13aad888-164f-4d55-9d00-4b83f47bdc33",
+  "commit": "6e14b660487da6cb6f0e1ad30706ef47f8ca02f6",
+  "branch": "formal-verification",
+  "status": "failed",
+  "started_at": "2026-03-11T12:49:29.945814932Z",
+  "completed_at": "2026-03-11T12:50:53.845138526Z",
+  "duration_ms": 83899,
+  "exit_code": 1,
+  "stdout": "I’ll inspect the current proof changes and rerun the relevant checks so I can review against every gate criterion with concrete evidence.\n\n## Success criteria from issue description\n\nThe issue requires proving, for all `ValidPrime P`, that returned `k` satisfies both:\n\n- `k = u128::MAX / (P-1)^2`\n- `k * (P-1)^2 ≤ u128::MAX`\n\nCurrent proofs add:\n\n- `max_unreduced_additions_spec` (overflow bound): `k.val * (P.val-1)^2 ≤ U128.MAX` in `proofs/Gf2Core/Proofs/MontgomeryRoundtrip.lean:791`.\n- `max_unreduced_additions_value`: `k.val = min(U128.MAX / ((P-1)^2), Usize.MAX)` at `:875`.\n\nThis is not the exact required equality criterion (unclamped division), so criteria are not fully met.\n\n## Separation of concerns\n\nChanges are confined to Lean proof files under `proofs/` (`ModArith.lean`, `MontgomeryRoundtrip.lean`, `Progress.lean`). No `gf2-core`↔`gf2-coding` dependency violations introduced.\n\n## Functional paradigm and performance\n\nNo runtime Rust algorithm/kernel changes. Proof-layer additions only; no performance regressions or style concerns in critical kernels.\n\n## Correctness\n\nPositive:\n\n- New bound lemma `p_minus_one_sq_le_u128_max` in `ModArith.lean:140`.\n- Progress theorem added for `max_unreduced_additions` in `Progress.lean:480`.\n- Overflow inequality proof is explicit and mathematically sound.\n\nBlocking:\n\n- The issue’s exact equality property is still not proved in theorem form as stated; it is replaced by clamped `min(...)` equality.\n\n## Testing\n\nCould not execute `cargo test`, `clippy`, or `lake build` locally due permission denial in this environment. Using provided history: `lake-build` gate is `passed`; prior code-review run failed. No new local evidence to overturn that failure.\n\n## Unsafe isolation\n\nNo Rust `unsafe` introduced; proof-only edits.\n\n## Documentation\n\nThe new theorems include explanatory doc comments. However, documentation does not compensate for the unmet exact success criterion.\n\n## Prior review feedback (most recent run)\n\nPreviously flagged: missing theorem-level equality property. This is only partially addressed (`min(...)` theorem added), but exact required equality remains unresolved.\n\n## Jit issue dependencies\n\n`issue.dependencies` is empty; no prerequisite blockers.\n\nVERDICT: FAIL\n---\nGate result: FAILED\n",
+  "stderr": "",
+  "command": "./scripts/ai-review.sh",
+  "by": "auto:executor",
+  "message": null
+}

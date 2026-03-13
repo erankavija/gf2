@@ -1,0 +1,52 @@
+{
+  "id": "3f6bb7ee-a178-4c8e-9f5d-d978802543c7",
+  "title": "Complete bitvec Kani tail invariant coverage for remaining operations",
+  "description": "Add Kani proof harnesses for all remaining BitVec mutating operations that could violate the tail masking invariant. Lean4 is not feasible for bitvec (Vec-backed dynamic array with indexing).\n\n## Already covered (6 harnesses)\n- `mask_tail_zeros_padding`, `mask_tail_preserves_valid_bits`\n- `ones_constructor_tail_clean`\n- `shift_left_preserves_invariant`\n- `not_into_preserves_invariant`\n- `bit_xor_into_preserves_invariant`\n\n## New harnesses needed\n\n1. **`shift_right_preserves_invariant`** — Symmetric with shift_left. Right-shifting should maintain clean padding since it shifts toward LSB.\n\n2. **`bit_and_into_preserves_invariant`** — AND of two clean-tail words produces clean tail (0 AND x = 0 in padding). Verify for lengths 1-128.\n\n3. **`bit_or_into_preserves_invariant`** — OR of two clean-tail words produces clean tail (0 OR 0 = 0 in padding). Verify for lengths 1-128.\n\n4. **`set_preserves_invariant`** — Setting a bit at a valid index (< len_bits) should not affect padding. Setting at invalid index should panic.\n\n5. **`clear_preserves_invariant`** — Zeroing all words trivially maintains the invariant since all bits including padding are 0.\n\n6. **`push_bit_preserves_invariant`** — Appending a bit may cross word boundaries. Verify tail is clean after push.\n\n7. **`resize_preserves_invariant`** — Growing/shrinking changes `len_bits`; verify tail masking is correct at new boundary.\n\n## Bounds\n- Lengths 1-128 bits (2 words), shift amounts 0-64\n- Use `kani::any()` for arbitrary word contents and lengths within bounds\n- Appropriate `#[kani::unwind(N)]` annotations per harness\n\n## Kani resource constraints (accepted trade-offs)\n\n- **`set_preserves_invariant`**: Harness assumes `idx < len` (valid index only). The panic path for invalid indices is already tested by `#[should_panic]` unit tests; Kani's value is proving the tail invariant holds for all valid operations, not re-checking panic guards.\n- **`shift_right` and `set` capped at 64 bits** (1 word) instead of 128: These operations have no cross-word interactions that differ from the 2-word case — the tail mask only affects the last word. The 1-word bound keeps Kani within memory limits.\n- **`resize_grow_fill` capped at len 1-2 → 4**: The `resize(new_len, true)` path calls `set()` in a loop, which causes combinatorial explosion in CBMC. The small bounds still cover the critical edge cases (word boundary, partial fill).\n- **ops equivalence harnesses capped at len 1-2**: The dispatch functions (`xor_inplace`, etc.) pull in the full backend selection infrastructure, which is expensive for CBMC. At len ≤ 2 these always take the scalar path; SIMD equivalence is covered by sampling-based tests in `kernels/simd/mod.rs`.\n\n## Why not Lean4\nBitVec uses `Vec<u64>` with dynamic allocation, `push`/`pop`, and runtime bounds checking — outside Charon/Aeneas supported subset.",
+  "state": "done",
+  "priority": "normal",
+  "assignee": "agent:claude",
+  "dependencies": [],
+  "gates_required": [
+    "cargo-kani",
+    "code-review",
+    "clippy",
+    "fmt",
+    "doc-review"
+  ],
+  "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-03-13T18:52:13.859230689Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:claude",
+      "updated_at": "2026-03-13T18:48:41.922152943Z"
+    },
+    "fmt": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-03-13T17:57:45.443423948Z"
+    },
+    "clippy": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-03-13T17:57:47.038872974Z"
+    },
+    "cargo-kani": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-03-13T18:20:34.117970648Z"
+    }
+  },
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "story:8889e712"
+  ],
+  "created_at": "2026-03-11T21:08:16.334484538+00:00",
+  "updated_at": "2026-03-13T19:05:52.235717078+00:00"
+}

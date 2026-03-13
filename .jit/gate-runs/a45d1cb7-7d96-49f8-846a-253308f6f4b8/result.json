@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "a45d1cb7-7d96-49f8-846a-253308f6f4b8",
+  "gate_key": "clippy",
+  "stage": "postcheck",
+  "issue_id": "9509d8cc-db28-4952-bd90-f13e9209ed99",
+  "commit": "6e14b660487da6cb6f0e1ad30706ef47f8ca02f6",
+  "branch": "formal-verification",
+  "status": "passed",
+  "started_at": "2026-03-11T21:12:17.968162190Z",
+  "completed_at": "2026-03-11T21:12:18.170657148Z",
+  "duration_ms": 202,
+  "exit_code": 0,
+  "stdout": "",
+  "stderr": "    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.07s\n",
+  "command": "cargo clippy --all-targets -- -D warnings",
+  "by": "auto:executor",
+  "message": null
+}

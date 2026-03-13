@@ -330,3 +330,119 @@ mod tests {
         assert_eq!(count, 0);
     }
 }
+
+#[cfg(kani)]
+mod kani_proofs {
+    use super::*;
+
+    /// Verify that xor_inplace matches naive word-by-word XOR.
+    ///
+    /// For symbolic data of length 1-2, the dispatch function must produce
+    /// the same result as simple `dst[i] ^= src[i]`.
+    #[kani::proof]
+    #[kani::unwind(3)]
+    fn xor_equivalence() {
+        let len: usize = kani::any();
+        kani::assume(len >= 1 && len <= 2);
+
+        let mut dst = vec![0u64; len];
+        let mut expected = vec![0u64; len];
+        let mut src = vec![0u64; len];
+
+        for i in 0..len {
+            dst[i] = kani::any();
+            expected[i] = dst[i];
+            src[i] = kani::any();
+        }
+
+        // Naive reference
+        for i in 0..len {
+            expected[i] ^= src[i];
+        }
+
+        xor_inplace(&mut dst, &src);
+
+        for i in 0..len {
+            assert!(dst[i] == expected[i]);
+        }
+    }
+
+    /// Verify that and_inplace matches naive word-by-word AND.
+    #[kani::proof]
+    #[kani::unwind(3)]
+    fn and_equivalence() {
+        let len: usize = kani::any();
+        kani::assume(len >= 1 && len <= 2);
+
+        let mut dst = vec![0u64; len];
+        let mut expected = vec![0u64; len];
+        let mut src = vec![0u64; len];
+
+        for i in 0..len {
+            dst[i] = kani::any();
+            expected[i] = dst[i];
+            src[i] = kani::any();
+        }
+
+        for i in 0..len {
+            expected[i] &= src[i];
+        }
+
+        and_inplace(&mut dst, &src);
+
+        for i in 0..len {
+            assert!(dst[i] == expected[i]);
+        }
+    }
+
+    /// Verify that or_inplace matches naive word-by-word OR.
+    #[kani::proof]
+    #[kani::unwind(3)]
+    fn or_equivalence() {
+        let len: usize = kani::any();
+        kani::assume(len >= 1 && len <= 2);
+
+        let mut dst = vec![0u64; len];
+        let mut expected = vec![0u64; len];
+        let mut src = vec![0u64; len];
+
+        for i in 0..len {
+            dst[i] = kani::any();
+            expected[i] = dst[i];
+            src[i] = kani::any();
+        }
+
+        for i in 0..len {
+            expected[i] |= src[i];
+        }
+
+        or_inplace(&mut dst, &src);
+
+        for i in 0..len {
+            assert!(dst[i] == expected[i]);
+        }
+    }
+
+    /// Verify that not_inplace matches naive word-by-word NOT.
+    #[kani::proof]
+    #[kani::unwind(3)]
+    fn not_equivalence() {
+        let len: usize = kani::any();
+        kani::assume(len >= 1 && len <= 2);
+
+        let mut buf = vec![0u64; len];
+        let mut expected = vec![0u64; len];
+
+        for i in 0..len {
+            let v: u64 = kani::any();
+            buf[i] = v;
+            expected[i] = !v;
+        }
+
+        not_inplace(&mut buf);
+
+        for i in 0..len {
+            assert!(buf[i] == expected[i]);
+        }
+    }
+}

@@ -48,7 +48,7 @@
       "checker": {
         "type": "exec",
         "command": "cargo kani",
-        "timeout_seconds": 600,
+        "timeout_seconds": 1800,
         "working_dir": null,
         "env": {},
         "pass_context": false

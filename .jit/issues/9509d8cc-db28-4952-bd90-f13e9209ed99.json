@@ -2,9 +2,9 @@
   "id": "9509d8cc-db28-4952-bd90-f13e9209ed99",
   "title": "Formal verification of field arithmetic (Aeneas + Kani)",
   "description": "Two-track formal verification for field arithmetic in `gfp/` and `gfpn/`:\n\n- **Track 1 (Aeneas)**: Translate Rust→Lean4 via Charon/Aeneas, prove field axioms and algorithm correctness against Mathlib typeclasses. Universal proofs for any prime P.\n- **Track 2 (Kani)**: Bounded model checking for machine-arithmetic edge cases (overflow, representation bounds, bit manipulation).\n\nSee `dev/plans/formal_verification.md` for full rationale and detailed plans.",
-  "state": "backlog",
+  "state": "done",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude-code",
   "dependencies": [
     "13aad888-164f-4d55-9d00-4b83f47bdc33",
     "f9819a76-c249-4a25-8b77-60805a849b2e",
@@ -19,7 +19,38 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_by": "agent:claude-code",
+      "updated_at": "2026-03-11T16:33:04.513986210Z"
+    },
+    "clippy": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-03-11T21:12:17.968162190Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-03-11T21:12:18.580341475Z"
+    },
+    "tests": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-03-11T21:12:08.944483789Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:claude-code",
+      "updated_at": "2026-03-11T21:25:32.541475159Z"
+    },
+    "fmt": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-03-11T21:12:18.171135508Z"
+    }
+  },
   "context": {},
   "documents": [
     {
@@ -36,5 +67,5 @@
     "epic:e095a100"
   ],
   "created_at": "2026-03-07T18:06:00.720467707+00:00",
-  "updated_at": "2026-03-10T23:04:59.576720910+00:00"
+  "updated_at": "2026-03-11T21:25:36.093337696+00:00"
 }

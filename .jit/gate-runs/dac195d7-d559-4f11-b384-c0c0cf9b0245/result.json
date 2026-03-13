@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "dac195d7-d559-4f11-b384-c0c0cf9b0245",
+  "gate_key": "code-review",
+  "stage": "postcheck",
+  "issue_id": "13aad888-164f-4d55-9d00-4b83f47bdc33",
+  "commit": "6e14b660487da6cb6f0e1ad30706ef47f8ca02f6",
+  "branch": "formal-verification",
+  "status": "failed",
+  "started_at": "2026-03-11T12:55:46.157018897Z",
+  "completed_at": "2026-03-11T12:57:47.058107327Z",
+  "duration_ms": 120901,
+  "exit_code": 1,
+  "stdout": "I’ll inspect the current branch changes and proof artifacts, then verify whether the required theorem is present and supported by available checks.\n\nI found the key new theorem fragments; next I’ll run the available checks to validate gate expectations and confirm whether prior feedback is truly resolved.\n\n## Success criteria from issue description\n\nNot met. `max_unreduced_additions_spec` proves returned `k` satisfies overflow bound (`k.val * (P.val - 1)^2 ≤ U128.MAX`) at `MontgomeryRoundtrip.lean:791-865`.  \n`max_unreduced_additions_value` proves `k.val = min(U128.MAX / ((P-1)^2), Usize.MAX)` at `:875-938`, not the required exact equality `k = U128.MAX / (P-1)^2` for the returned value.  \n`max_unreduced_additions_div_bound` (`:945-951`) proves only arithmetic bound for unclamped division, not function output equality.\n\n## Separation of concerns\n\nPass. Changes are confined to `proofs/` (`ModArith.lean`, `MontgomeryRoundtrip.lean`, `Progress.lean`). No `gf2-core`→`gf2-coding` dependency violation.\n\n## Functional paradigm and performance\n\nPass. Proof-layer-only changes; no runtime kernels or performance-sensitive Rust paths modified.\n\n## Correctness\n\nPartially improved, still incomplete for issue target.  \nPositive: `p_minus_one_sq_le_u128_max` (`ModArith.lean:140-145`) and progress theorem (`Progress.lean:480+`).  \nBlocking: required theorem tying **returned** `k` to exact division is still absent.\n\n## Testing\n\nLocal `lake/cargo` execution was permission-blocked here. Using provided run history/gates in scope: `lake-build` passed (`7f4b47fc...`), `code-review` currently failed, `doc-review` pending. No evidence that failure cause was resolved.\n\n## Unsafe isolation\n\nPass. No new Rust `unsafe`; proof files only.\n\n## Documentation\n\nTechnical debt introduced: docstring at `MontgomeryRoundtrip.lean:940-944` claims “property stated in issue specification,” but theorem `max_unreduced_additions_div_bound` does not establish returned-value equality.\n\n## Prior review feedback\n\nUnresolved. Most recent failures flagged missing theorem-level exact equality; current additions still stop at `min(...)` equality plus standalone bound.\n\n## Jit issue dependencies\n\n`issue.dependencies` is empty; no prerequisite blockers.\n\nVERDICT: FAIL\n---\nGate result: FAILED\n",
+  "stderr": "",
+  "command": "./scripts/ai-review.sh",
+  "by": "auto:executor",
+  "message": null
+}
