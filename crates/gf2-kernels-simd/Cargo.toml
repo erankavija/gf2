@@ -9,6 +9,9 @@ license = "MIT"
 name = "gf2_kernels_simd"
 crate-type = ["rlib"]
 
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(kani)'] }
+
 [features]
 default = []
 # Feature toggles for building specific backends; detection is runtime.

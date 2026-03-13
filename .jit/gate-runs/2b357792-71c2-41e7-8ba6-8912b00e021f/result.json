@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "2b357792-71c2-41e7-8ba6-8912b00e021f",
+  "gate_key": "code-review",
+  "stage": "postcheck",
+  "issue_id": "13aad888-164f-4d55-9d00-4b83f47bdc33",
+  "commit": "6e14b660487da6cb6f0e1ad30706ef47f8ca02f6",
+  "branch": "formal-verification",
+  "status": "passed",
+  "started_at": "2026-03-11T16:26:17.463173342Z",
+  "completed_at": "2026-03-11T16:27:23.277533241Z",
+  "duration_ms": 65814,
+  "exit_code": 0,
+  "stdout": "I found updated proof files on this branch; next I’ll inspect the exact theorem statements/diffs and then validate with the relevant build/test command for the proof scope.\n\n## Success criteria from issue description\n- **Met**.  \n`proofs/Gf2Core/Proofs/MontgomeryRoundtrip.lean` now contains:\n  - `max_unreduced_additions_spec` (overflow bound): `k.val * (P.val-1)^2 ≤ U128.MAX` (lines ~791+).\n  - `max_unreduced_additions_value` (clamped equality): `k.val = min(U128.MAX / (P-1)^2, Usize.MAX)` (lines ~875+).\n  - `max_unreduced_additions_div_bound` (unclamped division bound): `(MAX/mp)*mp ≤ MAX` with `0 < mp` (lines ~944+).\n\n## Separation of concerns\n- **Pass**. Changes are confined to Lean proof files under `proofs/`; no `gf2-core`/`gf2-coding` dependency inversion introduced.\n\n## Functional paradigm and performance\n- **Pass**. Proof-layer additions only; no runtime GF(2) kernels or performance-critical Rust paths were altered.\n\n## Correctness\n- **Pass**.  \n  - Supporting bound lemma added in `ModArith.lean`: `p_minus_one_sq_le_u128_max` (line ~140).  \n  - Proofs correctly use `P` validity (`P > 1`) to establish positive divisor and avoid zero-division branch misuse.  \n  - Rust implementation at `crates/gf2-core/src/gfp/mod.rs:402-412` matches proved clamped semantics.\n\n## Testing / linting\n- Local `lake/cargo` execution is permission-blocked in this environment.  \n- Using provided run history/gates for scoped checks: `lake-build` is **passed** for this issue, and proof files are the only touched area.\n\n## Unsafe isolation\n- **Pass**. No new Rust `unsafe` introduced; edits are Lean-only.\n\n## Documentation quality\n- **Pass**. The previous overclaim is fixed: `max_unreduced_additions_div_bound` docstring now describes only unclamped division bound and its relation to the other two theorems, avoiding mismatch.\n\n## Prior review feedback status\n- **Addressed**. Earlier failures flagged missing/overclaimed theorem alignment. Current theorems and comments now align with the issue’s 3 required properties.\n\n## Jit issue dependencies\n- `issue.dependencies` is empty; no prerequisite blockers.\n\nVERDICT: PASS\n---\nGate result: PASSED\n",
+  "stderr": "",
+  "command": "./scripts/ai-review.sh",
+  "by": "auto:executor",
+  "message": null
+}

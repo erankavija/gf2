@@ -1,0 +1,32 @@
+{
+  "id": "104a46c2-0c49-4f66-8fcb-e84416b9b0ce",
+  "title": "Prove Fp::inv() and Fp::div() via Fermat's little theorem in Lean4",
+  "description": "Prove that `Fp::inv()` correctly computes multiplicative inverse using Fermat's little theorem: `a^(P-2) mod P = a⁻¹ mod P` for nonzero `a`.\n\n## What to prove\n1. `inv(a)` returns `a^(P-2) mod P` — follows from `mod_pow_mont` correctness\n2. `a * inv(a) ≡ 1 (mod P)` for `a ≠ 0` — follows from Fermat's little theorem (available in Mathlib as `ZMod.pow_card_sub_one_eq_one`)\n3. `div(a, b) = a * inv(b)` — structural, follows from the implementation\n\n## Implementation\n- `inv()` calls `mod_pow_mont(self.value, P - 2)` (gfp/mod.rs)\n- `div()` calls `self * other.inv()` (operator overload)\n\n## Proof strategy\n1. Use `mod_pow_mont` correctness (from dependency) to get `inv(a).val = a^(P-2) mod P`\n2. Apply Mathlib's `ZMod.pow_card_sub_one_eq_one` or `ZMod.units_pow_card_sub_two_eq_one` to get `a^(P-2) * a ≡ 1 (mod P)`\n3. Transfer through the `FpVal P ≃+* ZMod P.val` ring isomorphism (already in FpField.lean)\n\nThis completes the full Fp arithmetic chain: every operation (new, value, add, sub, mul, neg, inv, div, pow) will have a machine-checked correctness proof.\n\n## Difficulty\nLow-Medium — mostly connecting existing pieces. The Mathlib integration through the ring isomorphism is the main work.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "0e7cb099-c901-4323-95e7-b7ba9d7853b8"
+  ],
+  "gates_required": [
+    "lake-build",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "doc-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-03-12T22:19:38.725304021Z"
+    }
+  },
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "story:8889e712"
+  ],
+  "created_at": "2026-03-11T21:08:02.623480296+00:00",
+  "updated_at": "2026-03-12T22:19:38.725738581+00:00"
+}

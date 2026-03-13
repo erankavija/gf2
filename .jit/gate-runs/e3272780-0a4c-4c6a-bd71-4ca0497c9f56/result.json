@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "e3272780-0a4c-4c6a-bd71-4ca0497c9f56",
+  "gate_key": "code-review",
+  "stage": "postcheck",
+  "issue_id": "3f6bb7ee-a178-4c8e-9f5d-d978802543c7",
+  "commit": "6e14b660487da6cb6f0e1ad30706ef47f8ca02f6",
+  "branch": "formal-verification",
+  "status": "passed",
+  "started_at": "2026-03-13T18:52:13.859230689Z",
+  "completed_at": "2026-03-13T18:54:33.714217731Z",
+  "duration_ms": 139854,
+  "exit_code": 0,
+  "stdout": "I found the harness block locations; next I’ll inspect those implementations and run targeted checks to confirm whether prior feedback is now resolved.\n\n## Success criteria (issue scope)\n\nAll requested new Kani harnesses are present in `crates/gf2-core/src/bitvec.rs`: `shift_right_preserves_invariant`, `bit_and_into_preserves_invariant`, `bit_or_into_preserves_invariant`, `set_preserves_invariant`, `clear_preserves_invariant`, `push_bit_preserves_invariant`, and resize coverage via `resize_shrink_preserves_invariant`, `resize_grow_zero_preserves_invariant`, `resize_grow_fill_preserves_invariant` (lines ~2816–3143).  \nBounds/trade-offs in code match the issue’s accepted Kani constraints.\n\n## Separation of concerns\n\nChanges are confined to `gf2-core` (`bitvec.rs`, `kernels/ops.rs` Kani modules).  \nNo `gf2-core -> gf2-coding` dependency violation observed.\n\n## Functional paradigm and performance\n\nHigh-level logic remains idiomatic and unchanged in critical behavior.  \nKernel ops proofs in `kernels/ops.rs` are bounded (`len <= 2`) as documented to avoid backend-dispatch CBMC blow-up.\n\n## Correctness\n\nTail-invariant checks are explicit after each targeted mutator in harnesses (`assert!(last >> bits_after == 0)`).  \nBit indexing in mutators remains canonical (`idx/64`, `idx%64`).  \nSet panic path is validated by unit test `test_set_out_of_bounds` (~1862), while Kani harness intentionally focuses valid-index invariant behavior per issue trade-off.\n\n## Testing\n\nCould not run local cargo checks in this environment (permission denial), so I used provided gate history as required.  \nIn-scope gates show `cargo-kani`, `clippy`, `fmt`, and `doc-review` passed; no unresolved lint/test failures are indicated for this issue scope.\n\n## Unsafe isolation\n\nNo new `unsafe` in `gf2-core`; repository search in `crates/gf2-core/src` found none.  \nUnsafe isolation requirement remains satisfied.\n\n## Documentation\n\nNo new public API introduced; additions are internal Kani proof harnesses with explanatory comments.  \nExisting public API docs remain intact.\n\n## Prior review feedback resolution\n\nMost recent failed run flagged:  \n- missing set panic proof path, and  \n- nonuniform 1..128 bounds.\n\nThese are now explicitly addressed by the issue’s accepted Kani resource trade-offs, and code matches those constraints (`set` valid-index harness, single-word caps for `shift_right`/`set`, bounded `resize_grow_fill`, bounded ops-equivalence proofs).\n\n## Jit dependencies\n\n`issue.dependencies` is empty, so there are no prerequisite blockers.\n\nVERDICT: PASS\n---\nGate result: PASSED\n",
+  "stderr": "",
+  "command": "./scripts/ai-review.sh",
+  "by": "auto:executor",
+  "message": null
+}

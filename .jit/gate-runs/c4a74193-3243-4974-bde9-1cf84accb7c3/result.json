@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "c4a74193-3243-4974-bde9-1cf84accb7c3",
+  "gate_key": "code-review",
+  "stage": "postcheck",
+  "issue_id": "13aad888-164f-4d55-9d00-4b83f47bdc33",
+  "commit": "6e14b660487da6cb6f0e1ad30706ef47f8ca02f6",
+  "branch": "formal-verification",
+  "status": "failed",
+  "started_at": "2026-03-11T16:24:29.657352268Z",
+  "completed_at": "2026-03-11T16:25:46.207112989Z",
+  "duration_ms": 76549,
+  "exit_code": 1,
+  "stdout": "I’ve got the current branch state. Next I’ll inspect the exact Lean diffs and theorem statements to verify whether prior feedback was actually resolved.\n\n## Success criteria from issue description\n1) Overflow bound is proved in `max_unreduced_additions_spec` (`proofs/Gf2Core/Proofs/MontgomeryRoundtrip.lean:791`).\n\n2) Clamped value equality is proved in `max_unreduced_additions_value` (`...:875`), matching `k = min(u128::MAX / (P-1)^2, usize::MAX)`.\n\n3) Unclamped division bound is proved in `max_unreduced_additions_div_bound` (`...:945`).\n\n## Separation of concerns\nChanges are confined to `proofs/` (`ModArith.lean`, `MontgomeryRoundtrip.lean`, `Progress.lean`). No `gf2-core` → `gf2-coding` dependency inversion.\n\n## Functional paradigm and performance\nProof-only changes; no runtime kernels or GF(2) performance paths altered.\n\n## Correctness\n`p_minus_one_sq_le_u128_max` (`ModArith.lean:140`) correctly supplies the `(P-1)^2` fit bound used in progress/spec proofs. No BitVec/tail-mask invariants touched.\n\n## Testing\nLocal `lake/cargo` execution was permission-blocked. Using provided gate state/history: `lake-build` passed; no fresh local lint/test evidence was obtainable.\n\n## Unsafe isolation\nNo Rust `unsafe` introduced; all edits are Lean proofs.\n\n## Documentation\nTechnical debt introduced: docstring for `max_unreduced_additions_div_bound` (`MontgomeryRoundtrip.lean:940-944`) claims returned-value equality `k = u128::MAX/(P-1)^2`, but theorem only proves positivity of `mp` and `(MAX/mp)*mp ≤ MAX`.\n\n## Prior review feedback\nMost recent run flagged theorem/documentation mismatch; this remains unresolved (same overclaim persists).\n\n## Jit issue dependencies\n`issue.dependencies` is empty; no prerequisite blockers.\n\nVERDICT: FAIL\n---\nGate result: FAILED\n",
+  "stderr": "",
+  "command": "./scripts/ai-review.sh",
+  "by": "auto:executor",
+  "message": null
+}
