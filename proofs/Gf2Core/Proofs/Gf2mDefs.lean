@@ -53,16 +53,22 @@ def mul_raw_spec (a b m poly : ℕ) : ℕ :=
 /-- The mathematical specification of GF(2^m) addition: bitwise XOR. -/
 def add_raw_spec (a b : ℕ) : ℕ := a ^^^ b
 
-/-- The mathematical specification of GF(2^m) exponentiation (square-and-multiply). -/
-def pow_raw_spec (base exp m poly : ℕ) : ℕ :=
-  if exp = 0 then 1
+/-- The specification of the pow_raw loop, mirroring the Aeneas loop structure.
+    Processes exp bits from LSB to MSB, accumulating result via square-and-multiply. -/
+def pow_loop_spec (base exp result m poly : ℕ) : ℕ :=
+  if exp = 0 then result
   else
-    let result := pow_raw_spec base (exp / 2) m poly
-    let squared := mul_raw_spec result result m poly
-    if exp % 2 = 1 then mul_raw_spec squared base m poly
-    else squared
+    let result' := if exp % 2 = 1 then mul_raw_spec result base m poly else result
+    let exp' := exp / 2
+    let base' := if exp' > 0 then mul_raw_spec base base m poly else base
+    pow_loop_spec base' exp' result' m poly
 termination_by exp
 decreasing_by omega
+
+/-- The mathematical specification of GF(2^m) exponentiation.
+    Computes base^exp using repeated squaring (LSB-first traversal). -/
+def pow_raw_spec (base exp m poly : ℕ) : ℕ :=
+  pow_loop_spec base exp 1 m poly
 
 /-- The mathematical specification of GF(2^m) multiplicative inverse.
     Returns 0 for zero input. For nonzero a, computes a^(2^m - 2). -/
