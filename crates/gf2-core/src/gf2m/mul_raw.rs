@@ -270,6 +270,13 @@ mod tests {
     }
 
     #[test]
+    #[should_panic]
+    fn test_gf2m_mul_raw_m65_panics() {
+        // m = 65 is invalid: 1u64 << 65 overflows
+        gf2m_mul_raw(1, 1, 65, 0);
+    }
+
+    #[test]
     fn test_gf2m_add_raw_basic() {
         // Commutativity
         assert_eq!(gf2m_add_raw(0b1010, 0b0110), gf2m_add_raw(0b0110, 0b1010));
