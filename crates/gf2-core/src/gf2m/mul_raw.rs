@@ -12,7 +12,9 @@
 ///
 /// # Panics
 ///
-/// Does not panic for valid inputs. Behavior is unspecified if `m > 63`.
+/// Does not panic for valid inputs (m in 1..=63). If `m ≥ 64`, the shift
+/// `1u64 << m` overflows, causing a panic in debug mode and undefined
+/// behavior in release mode.
 ///
 /// # Complexity
 ///
@@ -52,6 +54,116 @@ pub fn gf2m_mul_raw(a: u64, b: u64, m: usize, primitive_poly: u64) -> u64 {
     }
 
     result & ((1u64 << m) - 1)
+}
+
+/// GF(2^m) addition: `a + b` in GF(2^m) is simply bitwise XOR.
+///
+/// In fields of characteristic 2, addition is XOR. No reduction is needed:
+/// XOR of two m-bit values is at most m bits.
+///
+/// # Arguments
+///
+/// * `a` - First operand
+/// * `b` - Second operand
+///
+/// # Complexity
+///
+/// O(1) — single XOR instruction.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::gf2m::mul_raw::gf2m_add_raw;
+///
+/// // In GF(2^m), addition is XOR regardless of m
+/// assert_eq!(gf2m_add_raw(0b1010, 0b0110), 0b1100);
+/// assert_eq!(gf2m_add_raw(0b1111, 0b1111), 0); // a + a = 0
+/// ```
+pub fn gf2m_add_raw(a: u64, b: u64) -> u64 {
+    a ^ b
+}
+
+/// Square-and-multiply exponentiation in GF(2^m).
+///
+/// Computes `base^exp mod primitive_poly` using repeated squaring.
+///
+/// # Arguments
+///
+/// * `base` - Base element, must be < 2^m
+/// * `exp` - Exponent (arbitrary u64)
+/// * `m` - Extension degree (1..=63)
+/// * `primitive_poly` - The primitive polynomial (degree-m term included)
+///
+/// # Panics
+///
+/// Panics if `m ≥ 64` (delegated to `gf2m_mul_raw`).
+///
+/// # Complexity
+///
+/// O(m · log(exp)) bitwise operations.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::gf2m::mul_raw::gf2m_pow_raw;
+///
+/// // GF(2^4) with p(x) = x^4 + x + 1
+/// let alpha = 0b0010; // x (primitive element)
+/// assert_eq!(gf2m_pow_raw(alpha, 0, 4, 0b10011), 1); // x^0 = 1
+/// assert_eq!(gf2m_pow_raw(alpha, 1, 4, 0b10011), alpha); // x^1 = x
+/// assert_eq!(gf2m_pow_raw(alpha, 15, 4, 0b10011), 1); // x^15 = 1 (order of GF(16)*)
+/// ```
+pub fn gf2m_pow_raw(mut base: u64, mut exp: u64, m: usize, primitive_poly: u64) -> u64 {
+    let mut result: u64 = 1;
+    while exp > 0 {
+        if exp & 1 != 0 {
+            result = gf2m_mul_raw(result, base, m, primitive_poly);
+        }
+        exp >>= 1;
+        if exp > 0 {
+            base = gf2m_mul_raw(base, base, m, primitive_poly);
+        }
+    }
+    result
+}
+
+/// Multiplicative inverse in GF(2^m) via Fermat's little theorem.
+///
+/// Computes `a^(-1) = a^(2^m - 2)` since `a^(2^m - 1) = 1` for all
+/// nonzero elements of GF(2^m). Returns 0 for zero input (which has
+/// no multiplicative inverse).
+///
+/// # Arguments
+///
+/// * `a` - Element to invert, must be < 2^m
+/// * `m` - Extension degree (1..=63)
+/// * `primitive_poly` - The primitive polynomial (degree-m term included)
+///
+/// # Panics
+///
+/// Panics if `m ≥ 64` (delegated to `gf2m_pow_raw`).
+///
+/// # Complexity
+///
+/// O(m³) bitwise operations (m squarings of O(m) each, times O(m) per mul).
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::gf2m::mul_raw::{gf2m_inverse_raw, gf2m_mul_raw};
+///
+/// // GF(2^4) with p(x) = x^4 + x + 1
+/// let a = 0b0011; // x + 1
+/// let inv = gf2m_inverse_raw(a, 4, 0b10011);
+/// assert_eq!(gf2m_mul_raw(a, inv, 4, 0b10011), 1); // a * a^(-1) = 1
+/// ```
+pub fn gf2m_inverse_raw(a: u64, m: usize, primitive_poly: u64) -> u64 {
+    if a == 0 {
+        return 0;
+    }
+    // a^(-1) = a^(2^m - 2) by Fermat's little theorem in GF(2^m)
+    let exp = ((1u64 << m) - 1) ^ 1; // = 2^m - 2
+    gf2m_pow_raw(a, exp, m, primitive_poly)
 }
 
 #[cfg(test)]
@@ -148,5 +260,125 @@ mod tests {
         let b = (1u64 << 61) | 0b11;
         let result = gf2m_mul_raw(a, b, 63, poly);
         assert!(result < (1u64 << 63), "result {result} should be < 2^63");
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_gf2m_mul_raw_m64_panics() {
+        // m = 64 is invalid: 1u64 << 64 overflows
+        gf2m_mul_raw(1, 1, 64, 0);
+    }
+
+    #[test]
+    fn test_gf2m_add_raw_basic() {
+        // Commutativity
+        assert_eq!(gf2m_add_raw(0b1010, 0b0110), gf2m_add_raw(0b0110, 0b1010));
+        // a + a = 0 in GF(2)
+        assert_eq!(gf2m_add_raw(0b1111, 0b1111), 0);
+        // a + 0 = a
+        assert_eq!(gf2m_add_raw(0b1010, 0), 0b1010);
+        // 0 + a = a
+        assert_eq!(gf2m_add_raw(0, 0b0101), 0b0101);
+        // 0 + 0 = 0
+        assert_eq!(gf2m_add_raw(0, 0), 0);
+    }
+
+    #[test]
+    fn test_gf2m_add_raw_associative() {
+        let a = 0b1101u64;
+        let b = 0b1011u64;
+        let c = 0b0110u64;
+        assert_eq!(
+            gf2m_add_raw(gf2m_add_raw(a, b), c),
+            gf2m_add_raw(a, gf2m_add_raw(b, c))
+        );
+    }
+
+    #[test]
+    fn test_gf2m_pow_raw_basic() {
+        // GF(2^4) with p(x) = x^4 + x + 1 = 0b10011
+        let poly = 0b10011u64;
+        let alpha = 0b0010u64; // x (primitive element)
+
+        // a^0 = 1
+        assert_eq!(gf2m_pow_raw(alpha, 0, 4, poly), 1);
+        // a^1 = a
+        assert_eq!(gf2m_pow_raw(alpha, 1, 4, poly), alpha);
+        // x^2 = 0b0100
+        assert_eq!(gf2m_pow_raw(alpha, 2, 4, poly), 0b0100);
+        // x^4 = x + 1 = 0b0011 (reduced by p(x))
+        assert_eq!(gf2m_pow_raw(alpha, 4, 4, poly), 0b0011);
+        // x^15 = 1 (order of GF(2^4)*)
+        assert_eq!(gf2m_pow_raw(alpha, 15, 4, poly), 1);
+        // 1^anything = 1
+        assert_eq!(gf2m_pow_raw(1, 42, 4, poly), 1);
+        // 0^0 = 1 by convention (loop doesn't execute)
+        assert_eq!(gf2m_pow_raw(0, 0, 4, poly), 1);
+        // 0^n = 0 for n > 0
+        assert_eq!(gf2m_pow_raw(0, 5, 4, poly), 0);
+    }
+
+    #[test]
+    fn test_gf2m_pow_raw_exhaustive_gf16_order() {
+        // Every nonzero element of GF(2^4) has multiplicative order dividing 15
+        let poly = 0b10011u64;
+        for a in 1..16u64 {
+            assert_eq!(gf2m_pow_raw(a, 15, 4, poly), 1, "a^15 != 1 for a={a}");
+        }
+    }
+
+    #[test]
+    fn test_gf2m_inverse_raw_zero() {
+        assert_eq!(gf2m_inverse_raw(0, 4, 0b10011), 0);
+    }
+
+    #[test]
+    fn test_gf2m_inverse_raw_exhaustive_gf16() {
+        // For all nonzero in GF(2^4): a * inverse(a) = 1
+        let poly = 0b10011u64;
+        for a in 1..16u64 {
+            let inv = gf2m_inverse_raw(a, 4, poly);
+            assert!(
+                inv > 0 && inv < 16,
+                "inverse not in field for a={a}: inv={inv}"
+            );
+            assert_eq!(
+                gf2m_mul_raw(a, inv, 4, poly),
+                1,
+                "a * inverse(a) != 1 for a={a}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_gf2m_inverse_raw_involution() {
+        // inverse(inverse(a)) = a for all nonzero in GF(2^4)
+        let poly = 0b10011u64;
+        for a in 1..16u64 {
+            let inv = gf2m_inverse_raw(a, 4, poly);
+            let inv_inv = gf2m_inverse_raw(inv, 4, poly);
+            assert_eq!(inv_inv, a, "inverse(inverse({a})) != {a}");
+        }
+    }
+
+    #[test]
+    fn test_gf2m_inverse_raw_gf8() {
+        // GF(2^3) with p(x) = x^3 + x + 1 = 0b1011
+        let poly = 0b1011u64;
+        for a in 1..8u64 {
+            let inv = gf2m_inverse_raw(a, 3, poly);
+            assert_eq!(
+                gf2m_mul_raw(a, inv, 3, poly),
+                1,
+                "inverse failed in GF(8) for a={a}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_gf2m_inverse_raw_m1() {
+        // GF(2): only nonzero element is 1, inverse(1) = 1
+        assert_eq!(gf2m_inverse_raw(1, 1, 0b11), 1);
+        assert_eq!(gf2m_inverse_raw(0, 1, 0b11), 0);
     }
 }

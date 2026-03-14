@@ -1,8 +1,9 @@
 /-
-  Gf2Core.Proofs.Gf2mProgress — Progress lemmas for gf2m_mul_raw
+  Gf2Core.Proofs.Gf2mProgress — Progress lemmas for GF(2^m) operations
 
-  Proves that the Aeneas-generated gf2m_mul_raw and its loop terminate
-  (return `ok`, not `fail`) when inputs satisfy ValidGf2mParams.
+  Proves that the Aeneas-generated gf2m_mul_raw, gf2m_add_raw, gf2m_pow_raw,
+  and gf2m_inverse_raw terminate (return `ok`, not `fail`) when inputs
+  satisfy ValidGf2mParams.
 -/
 import Aeneas
 import Gf2Core.Funs
@@ -99,5 +100,94 @@ theorem gf2m_mul_raw_progress
       obtain ⟨mask, hmask_eq, _⟩ := spec_imp_exists h_sub_spec
       simp only [hmask_eq, bind_tc_ok]
       exact ⟨_, rfl⟩
+
+/-- gf2m_add_raw always terminates (pure XOR). -/
+theorem gf2m_add_raw_progress
+    (a b : Std.U64) :
+    ∃ r, gf2m.mul_raw.gf2m_add_raw a b = ok r := by
+  unfold gf2m.mul_raw.gf2m_add_raw
+  exact ⟨_, rfl⟩
+
+/-- The pow_raw loop terminates for valid parameters.
+    Measure: exp strictly decreases via right-shift. -/
+@[progress]
+theorem gf2m_pow_raw_loop_progress
+    (base exp : Std.U64) (m : Std.Usize) (primitive_poly : Std.U64)
+    (result : Std.U64)
+    (hparams : ValidGf2mParams m primitive_poly) :
+    gf2m.mul_raw.gf2m_pow_raw_loop base exp m primitive_poly result
+    ⦃ fun _ => True ⦄ := by
+  unfold gf2m.mul_raw.gf2m_pow_raw_loop
+  apply loop.spec (γ := ℕ)
+    (measure := fun ((_, exp1, _) : Std.U64 × Std.U64 × Std.U64) => exp1.val)
+    (inv := fun _ => True)
+  · intro ⟨base1, exp1, result1⟩ _
+    dsimp only
+    by_cases hgt : exp1 > 0#u64
+    · simp only [hgt, ite_true]
+      simp only [Std.lift, bind_tc_ok]
+      -- Split on if (exp & 1) != 0: result conditional
+      -- Both branches share the same tail proof.
+      split <;> (
+        -- Handle the result mul_raw call if present (true branch), skip if not
+        try (
+          have hmul := gf2m_mul_raw_progress result1 base1 m primitive_poly hparams
+          obtain ⟨r, hr⟩ := hmul
+          simp only [hr, bind_tc_ok])
+        -- exp >>> 1
+        progress as ⟨exp2, hexp2_val, _⟩
+        have hexp2_lt : exp2.val < exp1.val := by
+          rw [hexp2_val, Nat.shiftRight_eq_div_pow]; simp
+          exact Nat.div_lt_self (by scalar_tac) (by norm_num)
+        -- Split on exp2 > 0 (square base or not)
+        split <;> (
+          -- Handle the base mul_raw call if present (true branch)
+          try (
+            have hsq := gf2m_mul_raw_progress base1 base1 m primitive_poly hparams
+            obtain ⟨r2, hr2⟩ := hsq
+            simp only [hr2, bind_tc_ok])
+          -- Goal is now exp2.val < exp1.val (True ∧ was simplified away)
+          show exp2.val < exp1.val
+          exact hexp2_lt))
+    · simp only [hgt, ite_false, spec, theta, wp_return]
+  · trivial
+
+/-- The top-level gf2m_pow_raw terminates for valid parameters. -/
+theorem gf2m_pow_raw_progress
+    (base exp : Std.U64) (m : Std.Usize) (primitive_poly : Std.U64)
+    (hparams : ValidGf2mParams m primitive_poly) :
+    ∃ r, gf2m.mul_raw.gf2m_pow_raw base exp m primitive_poly = ok r := by
+  unfold gf2m.mul_raw.gf2m_pow_raw
+  have h := gf2m_pow_raw_loop_progress base exp m primitive_poly 1#u64 hparams
+  obtain ⟨r, hr, _⟩ := spec_imp_exists h
+  exact ⟨r, hr⟩
+
+/-- gf2m_inverse_raw terminates for valid parameters. -/
+theorem gf2m_inverse_raw_progress
+    (a : Std.U64) (m : Std.Usize) (primitive_poly : Std.U64)
+    (hparams : ValidGf2mParams m primitive_poly) :
+    ∃ r, gf2m.mul_raw.gf2m_inverse_raw a m primitive_poly = ok r := by
+  unfold gf2m.mul_raw.gf2m_inverse_raw
+  by_cases ha0 : a = 0#u64
+  · subst ha0; exact ⟨_, rfl⟩
+  · simp only [ha0, ite_false]
+    have hm_lt_64 : m.val < 64 := by have := hparams.m_le; omega
+    -- 1 <<< m
+    have h_shl : (1#u64 <<< m) ⦃ r => r.val ≥ 1 ⦄ := by
+      progress as ⟨r, hr_val, _⟩
+      simp only [Nat.shiftLeft_eq, one_mul] at hr_val
+      have h2pm_lt : 2 ^ m.val < Std.U64.size := by
+        calc 2 ^ m.val ≤ 2 ^ 63 := Nat.pow_le_pow_right (by norm_num) hparams.m_le
+          _ < Std.U64.size := by native_decide
+      rw [Nat.mod_eq_of_lt h2pm_lt] at hr_val
+      rw [hr_val]; exact Nat.one_le_two_pow
+    obtain ⟨mask_base, hmb_eq, hmb_ge⟩ := spec_imp_exists h_shl
+    simp only [hmb_eq, bind_tc_ok]
+    -- mask_base - 1
+    have h_sub : (mask_base - 1#u64) ⦃ fun _ => True ⦄ := by progress
+    obtain ⟨mask_sub, hmask_eq, _⟩ := spec_imp_exists h_sub
+    simp only [hmask_eq, bind_tc_ok, Std.lift]
+    -- pow_raw
+    exact gf2m_pow_raw_progress a _ m primitive_poly hparams
 
 end Gf2mProgress

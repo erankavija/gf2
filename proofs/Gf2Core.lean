@@ -14,3 +14,5 @@ import Gf2Core.Proofs.CubicExtField
 import Gf2Core.Proofs.Gf2mDefs
 import Gf2Core.Proofs.Gf2mProgress
 import Gf2Core.Proofs.Gf2mMulRaw
+import Gf2Core.Proofs.Gf2mAddition
+import Gf2Core.Proofs.Gf2mInverse

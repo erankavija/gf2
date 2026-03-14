@@ -779,6 +779,176 @@ theorem fp_mul_correct {P : Std.U64} {a b : Std.U64}
       Nat.ModEq.cancel_right_of_coprime hcop.symm h4
     rwa [Nat.ModEq, Nat.mod_eq_of_lt hr_lt] at h5
 
+/-! ## max_unreduced_additions overflow safety -/
+
+/-- The `max_unreduced_additions` function returns `ok k` with
+    `k * (P-1)² ≤ u128::MAX`, proving that `k` unreduced additions
+    of products bounded by `(P-1)²` cannot overflow a `u128` accumulator.
+
+    The function computes `k = u128::MAX / (P-1)²` (integer division),
+    clamped to `usize::MAX`. The overflow safety follows from
+    `Nat.div_mul_le_self`: `(a / b) * b ≤ a`. -/
+theorem max_unreduced_additions_spec {P : Std.U64} (hP : ValidPrime P) :
+    ∃ k, gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.max_unreduced_additions P = ok k
+    ∧ k.val * (P.val - 1) * (P.val - 1) ≤ core.num.U128.MAX.val := by
+  have hspec :
+      gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.max_unreduced_additions P
+      ⦃ k => k.val * (P.val - 1) * (P.val - 1) ≤ core.num.U128.MAX.val ⦄ := by
+    unfold gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.max_unreduced_additions
+    progress as ⟨i, hi⟩          -- cast U128 P
+    have hi_val : i.val = P.val := by rw [hi]; exact U64.cast_U128_val_eq P
+    progress as ⟨i1, hi1, _⟩     -- i - 1#u128
+    · have := hP.2.1; have := hi_val; scalar_tac
+    progress as ⟨i2, hi2⟩        -- cast U128 P
+    have hi2_val : i2.val = P.val := by rw [hi2]; exact U64.cast_U128_val_eq P
+    progress as ⟨i3, hi3, _⟩     -- i2 - 1#u128; auto-closed
+    progress as ⟨max_product, hmp⟩  -- i1 * i3
+    · -- (P-1) * (P-1) ≤ U128.max
+      have hi1_val : i1.val = P.val - 1 := by
+        have := hi1; have := hi_val; scalar_tac
+      have hi3_val : i3.val = P.val - 1 := by
+        have := hi3; have := hi2_val; scalar_tac
+      rw [hi1_val, hi3_val]
+      exact MontArith.p_minus_one_sq_le_u128_max hP
+    -- Establish value equalities
+    have hi1_val : i1.val = P.val - 1 := by
+      have := hi1; have := hi_val; scalar_tac
+    have hi3_val : i3.val = P.val - 1 := by
+      have := hi3; have := hi2_val; scalar_tac
+    have hmp_val : max_product.val = (P.val - 1) * (P.val - 1) := by
+      rw [hmp, hi1_val, hi3_val]
+    by_cases hmp0 : max_product = 0#u128
+    · -- max_product = 0, impossible for ValidPrime (P ≥ 2 ⟹ (P-1)² ≥ 1)
+      exfalso
+      have hmv : max_product.val = 0 := by
+        have := congrArg UScalar.val hmp0; simpa using this
+      rw [hmp_val] at hmv
+      have : 0 < P.val - 1 := by have := hP.2.1; omega
+      have := Nat.mul_pos this this
+      omega
+    · simp only [show ¬(max_product = 0#u128) from hmp0, ite_false]
+      progress as ⟨k, hk⟩       -- U128.MAX / max_product
+      progress as ⟨i4, hi4⟩     -- cast U128 Usize.MAX
+      -- Key bound: k * (P-1)² ≤ U128.MAX (from integer division property)
+      have hk_mp_bound : k.val * max_product.val ≤ core.num.U128.MAX.val := by
+        rw [hk]; exact Nat.div_mul_le_self _ _
+      by_cases hgt : k > i4
+      · -- k > i4: return Usize.MAX
+        simp only [hgt, ite_true, spec, theta, wp_return]
+        have hi4_val : i4.val = core.num.Usize.MAX.val := by
+          rw [hi4]; exact UScalar.cast_val_mod_pow_greater_numBits_eq .U128
+            core.num.Usize.MAX (by cases System.Platform.numBits_eq <;> simp [*])
+        have husize_le_k : core.num.Usize.MAX.val ≤ k.val := by
+          have : i4.val < k.val := hgt; omega
+        calc core.num.Usize.MAX.val * (P.val - 1) * (P.val - 1)
+            = core.num.Usize.MAX.val * ((P.val - 1) * (P.val - 1)) := by ring
+          _ ≤ k.val * ((P.val - 1) * (P.val - 1)) :=
+              Nat.mul_le_mul_right _ husize_le_k
+          _ = k.val * max_product.val := by rw [← hmp_val]
+          _ ≤ core.num.U128.MAX.val := hk_mp_bound
+      · -- ¬(k > i4): return cast .Usize k
+        simp only [hgt, ite_false, spec, theta, wp_return]
+        have hi4_val : i4.val = core.num.Usize.MAX.val := by
+          rw [hi4]; exact UScalar.cast_val_mod_pow_greater_numBits_eq .U128
+            core.num.Usize.MAX (by cases System.Platform.numBits_eq <;> simp [*])
+        have hk_le : k.val ≤ core.num.Usize.MAX.val := by
+          have : ¬(i4.val < k.val) := hgt; omega
+        have hcast_val : (UScalar.cast .Usize k).val = k.val :=
+          UScalar.cast_val_mod_pow_of_inBounds_eq .Usize k (by
+            have : core.num.Usize.MAX.val < 2 ^ UScalarTy.Usize.numBits := by scalar_tac
+            omega)
+        rw [hcast_val]
+        calc k.val * (P.val - 1) * (P.val - 1)
+            = k.val * ((P.val - 1) * (P.val - 1)) := by ring
+          _ = k.val * max_product.val := by rw [← hmp_val]
+          _ ≤ core.num.U128.MAX.val := hk_mp_bound
+  exact spec_imp_exists hspec
+
+/-- The `max_unreduced_additions` function computes exactly
+    `min(u128::MAX / (P-1)², usize::MAX)`, which is the largest value
+    representable as `usize` such that accumulating that many `(P-1)²`
+    products stays within `u128`.
+
+    Together with `max_unreduced_additions_spec`, this gives the full
+    correctness specification: the returned value equals the mathematical
+    formula AND satisfies the overflow safety bound. -/
+theorem max_unreduced_additions_value {P : Std.U64} (hP : ValidPrime P) :
+    ∃ k, gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.max_unreduced_additions P = ok k
+    ∧ k.val = min (core.num.U128.MAX.val / ((P.val - 1) * (P.val - 1)))
+                  core.num.Usize.MAX.val := by
+  have hspec :
+      gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.max_unreduced_additions P
+      ⦃ k => k.val = min (core.num.U128.MAX.val / ((P.val - 1) * (P.val - 1)))
+                         core.num.Usize.MAX.val ⦄ := by
+    unfold gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.max_unreduced_additions
+    progress as ⟨i, hi⟩
+    have hi_val : i.val = P.val := by rw [hi]; exact U64.cast_U128_val_eq P
+    progress as ⟨i1, hi1, _⟩
+    · have := hP.2.1; have := hi_val; scalar_tac
+    progress as ⟨i2, hi2⟩
+    have hi2_val : i2.val = P.val := by rw [hi2]; exact U64.cast_U128_val_eq P
+    progress as ⟨i3, hi3, _⟩     -- auto-closed
+    progress as ⟨max_product, hmp⟩
+    · have hi1_val : i1.val = P.val - 1 := by
+        have := hi1; have := hi_val; scalar_tac
+      have hi3_val : i3.val = P.val - 1 := by
+        have := hi3; have := hi2_val; scalar_tac
+      rw [hi1_val, hi3_val]
+      exact MontArith.p_minus_one_sq_le_u128_max hP
+    have hi1_val : i1.val = P.val - 1 := by
+      have := hi1; have := hi_val; scalar_tac
+    have hi3_val : i3.val = P.val - 1 := by
+      have := hi3; have := hi2_val; scalar_tac
+    have hmp_val : max_product.val = (P.val - 1) * (P.val - 1) := by
+      rw [hmp, hi1_val, hi3_val]
+    by_cases hmp0 : max_product = 0#u128
+    · exfalso
+      have hmv : max_product.val = 0 := by
+        have := congrArg UScalar.val hmp0; simpa using this
+      rw [hmp_val] at hmv
+      have : 0 < P.val - 1 := by have := hP.2.1; omega
+      have := Nat.mul_pos this this; omega
+    · simp only [show ¬(max_product = 0#u128) from hmp0, ite_false]
+      progress as ⟨k, hk⟩
+      progress as ⟨i4, hi4⟩
+      have hi4_val : i4.val = core.num.Usize.MAX.val := by
+        rw [hi4]; exact UScalar.cast_val_mod_pow_greater_numBits_eq .U128
+          core.num.Usize.MAX (by cases System.Platform.numBits_eq <;> simp [*])
+      have hk_val : k.val = core.num.U128.MAX.val / max_product.val := hk
+      -- Connect k.val to the mathematical formula
+      have hk_eq : k.val = core.num.U128.MAX.val / ((P.val - 1) * (P.val - 1)) := by
+        rw [hk_val, hmp_val]
+      by_cases hgt : k > i4
+      · -- k > usize_max: return usize_max = min(k, usize_max)
+        simp only [hgt, ite_true, spec, theta, wp_return]
+        have husize_le : core.num.Usize.MAX.val ≤
+            core.num.U128.MAX.val / ((P.val - 1) * (P.val - 1)) := by
+          rw [← hk_eq]; have : i4.val < k.val := hgt; omega
+        symm; exact Nat.min_eq_right husize_le
+      · -- k ≤ usize_max: return k = min(k, usize_max)
+        simp only [hgt, ite_false, spec, theta, wp_return]
+        have hk_le : k.val ≤ core.num.Usize.MAX.val := by
+          have : ¬(i4.val < k.val) := hgt; omega
+        have hcast_val : (UScalar.cast .Usize k).val = k.val :=
+          UScalar.cast_val_mod_pow_of_inBounds_eq .Usize k (by
+            have : core.num.Usize.MAX.val < 2 ^ UScalarTy.Usize.numBits := by scalar_tac
+            omega)
+        rw [hcast_val, hk_eq]
+        symm; exact Nat.min_eq_left (by rw [← hk_eq]; exact hk_le)
+  exact spec_imp_exists hspec
+
+/-- The unclamped division `u128::MAX / (P-1)²` is well-defined (positive divisor)
+    and its product with `(P-1)²` does not exceed `u128::MAX`.
+    Complements `max_unreduced_additions_value` (clamped value equality) and
+    `max_unreduced_additions_spec` (overflow bound on the returned value). -/
+theorem max_unreduced_additions_div_bound {P : Std.U64} (hP : ValidPrime P) :
+    let mp := (P.val - 1) * (P.val - 1)
+    0 < mp
+    ∧ core.num.U128.MAX.val / mp * mp ≤ core.num.U128.MAX.val := by
+  constructor
+  · have := hP.2.1; exact Nat.mul_pos (by omega) (by omega)
+  · exact Nat.div_mul_le_self _ _
+
 end MontRoundtrip
 
 end
