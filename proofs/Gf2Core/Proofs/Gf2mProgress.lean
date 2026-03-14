@@ -173,20 +173,22 @@ theorem gf2m_inverse_raw_progress
   · simp only [ha0, ite_false]
     have hm_lt_64 : m.val < 64 := by have := hparams.m_le; omega
     -- 1 <<< m
-    have h_shl : (1#u64 <<< m) ⦃ r => r.val ≥ 1 ⦄ := by
+    have h_shl : (1#u64 <<< m) ⦃ r => r.val ≥ 2 ⦄ := by
       progress as ⟨r, hr_val, _⟩
       simp only [Nat.shiftLeft_eq, one_mul] at hr_val
       have h2pm_lt : 2 ^ m.val < Std.U64.size := by
         calc 2 ^ m.val ≤ 2 ^ 63 := Nat.pow_le_pow_right (by norm_num) hparams.m_le
           _ < Std.U64.size := by native_decide
       rw [Nat.mod_eq_of_lt h2pm_lt] at hr_val
-      rw [hr_val]; exact Nat.one_le_two_pow
-    obtain ⟨mask_base, hmb_eq, hmb_ge⟩ := spec_imp_exists h_shl
-    simp only [hmb_eq, bind_tc_ok]
-    -- mask_base - 1
-    have h_sub : (mask_base - 1#u64) ⦃ fun _ => True ⦄ := by progress
-    obtain ⟨mask_sub, hmask_eq, _⟩ := spec_imp_exists h_sub
-    simp only [hmask_eq, bind_tc_ok, Std.lift]
+      rw [hr_val]
+      calc 2 = 2 ^ 1 := by norm_num
+        _ ≤ 2 ^ m.val := Nat.pow_le_pow_right (by norm_num) hparams.m_pos
+    obtain ⟨shl_r, hshl_eq, hshl_ge⟩ := spec_imp_exists h_shl
+    simp only [hshl_eq, bind_tc_ok]
+    -- shl_r - 2
+    have h_sub : (shl_r - 2#u64) ⦃ fun _ => True ⦄ := by progress
+    obtain ⟨exp, hexp_eq, _⟩ := spec_imp_exists h_sub
+    simp only [hexp_eq, bind_tc_ok]
     -- pow_raw
     exact gf2m_pow_raw_progress a _ m primitive_poly hparams
 
