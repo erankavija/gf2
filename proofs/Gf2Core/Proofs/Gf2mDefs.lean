@@ -34,23 +34,20 @@ def shift_reduce (temp m poly : ℕ) : ℕ :=
   let shifted := temp * 2
   if will_overflow then Nat.xor shifted poly else shifted
 
-/-- One iteration body: accumulate bit i of b into result, then shift-reduce temp.
-    Returns (result', temp'). The proof argument is needed for Nat.fold compatibility. -/
-def step (b m poly : ℕ) (i : ℕ) (_ : i < m) (state : ℕ × ℕ) : ℕ × ℕ :=
-  let (result, temp) := state
-  let bit_set := b / 2 ^ i % 2 = 1
-  let result' := if bit_set then Nat.xor result temp else result
-  let temp' := shift_reduce temp m poly
-  (result', temp')
+/-- The specification loop, mirroring the Aeneas loop structure.
+    Iterates from index `i` to `m-1`, accumulating GF(2^m) product. -/
+def specLoop (b m poly i result temp : ℕ) : ℕ × ℕ :=
+    if i ≥ m then (result, temp)
+    else
+      let bit_set := b / 2 ^ i % 2 = 1
+      let result' := if bit_set then Nat.xor result temp else result
+      let temp' := shift_reduce temp m poly
+      specLoop b m poly (i + 1) result' temp'
+  termination_by m - i
 
-/-- step is proof-irrelevant: the bound argument is unused. -/
-theorem step_proof_irrel (b m poly i : ℕ) (h1 h2 : i < m) (state : ℕ × ℕ) :
-    step b m poly i h1 state = step b m poly i h2 state := rfl
-
-/-- The mathematical specification: fold `step` over indices 0..m-1,
-    starting from (result=0, temp=a), then mask the result to m bits. -/
+/-- The mathematical specification of GF(2^m) multiplication.
+    Runs the spec loop from i=0 with result=0, temp=a, then masks to m bits. -/
 def mul_raw_spec (a b m poly : ℕ) : ℕ :=
-  let final := Nat.fold m (step b m poly) (0, a)
-  final.1 % 2 ^ m
+  (specLoop b m poly 0 0 a).1 % 2 ^ m
 
 end Gf2mSpec
