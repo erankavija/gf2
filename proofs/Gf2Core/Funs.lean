@@ -42,6 +42,55 @@ def U128.Insts.CoreOpsArithAddAssignU128 : core.ops.arith.AddAssign Std.U128
   add_assign := U128.Insts.CoreOpsArithAddAssignU128.add_assign
 }
 
+/- [gf2_core::gf2m::mul_raw::gf2m_mul_raw]: loop 0:
+   Source: 'crates/gf2-core/src/gf2m/mul_raw.rs', lines 39:4-52:5 -/
+def gf2m.mul_raw.gf2m_mul_raw_loop
+  (b : Std.U64) (m : Std.Usize) (primitive_poly : Std.U64) (result : Std.U64)
+  (temp : Std.U64) (i : Std.Usize) :
+  Result Std.U64
+  := do
+  loop
+    (fun (result1, temp1, i1) =>
+      if i1 < m
+      then
+        do
+        let i2 ← b >>> i1
+        let i3 ← lift (i2 &&& 1#u64)
+        let result2 ←
+          if i3 != 0#u64
+          then ok (result1 ^^^ temp1)
+          else ok result1
+        let i4 ← m - 1#usize
+        let i5 ← temp1 >>> i4
+        let i6 ← lift (i5 &&& 1#u64)
+        let temp2 ← temp1 <<< 1#i32
+        let temp3 ←
+          if i6 != 0#u64
+          then ok (temp2 ^^^ primitive_poly)
+          else ok temp2
+        let i7 ← i1 + 1#usize
+        ok (cont (result2, temp3, i7))
+      else ok (done result1))
+    (result, temp, i)
+
+/- [gf2_core::gf2m::mul_raw::gf2m_mul_raw]:
+   Source: 'crates/gf2-core/src/gf2m/mul_raw.rs', lines 30:0-55:1 -/
+def gf2m.mul_raw.gf2m_mul_raw
+  (a : Std.U64) (b : Std.U64) (m : Std.Usize) (primitive_poly : Std.U64) :
+  Result Std.U64
+  := do
+  if a = 0#u64
+  then ok 0#u64
+  else
+    if b = 0#u64
+    then ok 0#u64
+    else
+      let result ←
+        gf2m.mul_raw.gf2m_mul_raw_loop b m primitive_poly 0#u64 a 0#usize
+      let i ← 1#u64 <<< m
+      let i1 ← i - 1#u64
+      ok (result &&& i1)
+
 /- [gf2_core::gfp::{core::clone::Clone for gf2_core::gfp::Fp<P>}::clone]:
    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 71:9-71:14 -/
 def gfp.Fp.Insts.CoreCloneClone.clone

@@ -4,6 +4,8 @@
 
 mod field;
 pub mod generation;
+/// Monomorphized u64 GF(2^m) multiplication for formal verification via Charon/Aeneas.
+pub mod mul_raw;
 mod thread_safety_tests;
 pub mod uint_ext;
 

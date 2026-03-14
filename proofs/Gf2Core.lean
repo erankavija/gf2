@@ -11,3 +11,6 @@ import Gf2Core.Proofs.ExtAlgebra
 import Gf2Core.Proofs.ExtProgress
 import Gf2Core.Proofs.QuadraticExtField
 import Gf2Core.Proofs.CubicExtField
+import Gf2Core.Proofs.Gf2mDefs
+import Gf2Core.Proofs.Gf2mProgress
+import Gf2Core.Proofs.Gf2mMulRaw
