@@ -142,8 +142,7 @@ def gf2m.mul_raw.gf2m_inverse_raw
   then ok 0#u64
   else
     let i ← 1#u64 <<< m
-    let i1 ← i - 1#u64
-    let exp ← lift (i1 ^^^ 1#u64)
+    let exp ← i - 2#u64
     gf2m.mul_raw.gf2m_pow_raw a exp m primitive_poly
 
 /- [gf2_core::gfp::{core::clone::Clone for gf2_core::gfp::Fp<P>}::clone]:

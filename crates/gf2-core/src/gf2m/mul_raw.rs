@@ -162,7 +162,7 @@ pub fn gf2m_inverse_raw(a: u64, m: usize, primitive_poly: u64) -> u64 {
         return 0;
     }
     // a^(-1) = a^(2^m - 2) by Fermat's little theorem in GF(2^m)
-    let exp = ((1u64 << m) - 1) ^ 1; // = 2^m - 2
+    let exp = (1u64 << m) - 2;
     gf2m_pow_raw(a, exp, m, primitive_poly)
 }
 
