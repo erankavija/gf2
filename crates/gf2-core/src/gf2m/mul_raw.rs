@@ -12,9 +12,9 @@
 ///
 /// # Panics
 ///
-/// Does not panic for valid inputs (m in 1..=63). If `m ≥ 64`, the shift
-/// `1u64 << m` overflows, causing a panic in debug mode and undefined
-/// behavior in release mode.
+/// Panics in debug mode if `m ≥ 64` due to overflow in `1u64 << m`.
+/// In release mode with overflow checks disabled, `m ≥ 64` silently
+/// produces incorrect results. Valid range: `m` in `1..=63`.
 ///
 /// # Complexity
 ///
