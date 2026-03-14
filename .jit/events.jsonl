@@ -678,3 +678,12 @@
 {"type":"gate_passed","id":"0b747788-bb5b-4981-8290-0b33439ad49f","issue_id":"3f6bb7ee-a178-4c8e-9f5d-d978802543c7","timestamp":"2026-03-13T18:54:33.714582201Z","gate_key":"code-review","updated_by":"auto:executor"}
 {"type":"issue_state_changed","id":"ffc4e7c0-4ff4-481f-84ee-2103aebf72e0","issue_id":"3f6bb7ee-a178-4c8e-9f5d-d978802543c7","timestamp":"2026-03-13T19:05:52.235662278Z","from":"in_progress","to":"done"}
 {"type":"issue_completed","id":"fb39b8ca-eba6-42bd-bf0d-f89510793b46","issue_id":"3f6bb7ee-a178-4c8e-9f5d-d978802543c7","timestamp":"2026-03-13T19:05:52.235698818Z"}
+{"type":"issue_state_changed","id":"58ae045e-d441-4a17-a7b8-440764b60349","issue_id":"467d835e-6afd-4638-a0e6-5e5c1ae54904","timestamp":"2026-03-13T23:51:24.061330881Z","from":"ready","to":"in_progress"}
+{"type":"gate_passed","id":"0c04d467-fb63-4305-abd5-90e5909c3286","issue_id":"467d835e-6afd-4638-a0e6-5e5c1ae54904","timestamp":"2026-03-14T00:24:10.995756355Z","gate_key":"lake-build","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"31e4c0aa-9a09-4903-b0f6-30616749cf38","issue_id":"467d835e-6afd-4638-a0e6-5e5c1ae54904","timestamp":"2026-03-14T00:27:54.991921151Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"77c3d290-47ab-45b7-a407-0661ad90fe34","issue_id":"467d835e-6afd-4638-a0e6-5e5c1ae54904","timestamp":"2026-03-14T00:28:52.553063710Z","gate_key":"lake-build","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"7106f74c-683e-4d11-b08d-178e22f258e7","issue_id":"467d835e-6afd-4638-a0e6-5e5c1ae54904","timestamp":"2026-03-14T00:30:20.498377331Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"aa4f9035-f143-48d6-919a-6c362291f868","issue_id":"467d835e-6afd-4638-a0e6-5e5c1ae54904","timestamp":"2026-03-14T11:02:38.712335598Z","gate_key":"lake-build","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"3df56543-cbdb-494a-ae2f-55507924a219","issue_id":"467d835e-6afd-4638-a0e6-5e5c1ae54904","timestamp":"2026-03-14T11:04:07.985809439Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"09fc5aa8-dbce-4ef7-bb6e-d841ca90619b","issue_id":"467d835e-6afd-4638-a0e6-5e5c1ae54904","timestamp":"2026-03-14T11:42:53.999094627Z","gate_key":"lake-build","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"271f10e9-f410-47c5-bd1f-45f1cb86f73e","issue_id":"467d835e-6afd-4638-a0e6-5e5c1ae54904","timestamp":"2026-03-14T11:45:22.843062021Z","gate_key":"code-review","updated_by":"auto:executor"}

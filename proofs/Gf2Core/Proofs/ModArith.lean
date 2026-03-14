@@ -136,4 +136,12 @@ theorem neg_spec {P : ℕ} (hP : 0 < P) (Rinv : ℕ)
   have hxa := unique_mul_in_range P _ a hP (Nat.mod_lt _ hP) ha ha0 hmod_sum
   omega
 
+/-- (P-1)² fits in u128 for ValidPrime P -/
+theorem p_minus_one_sq_le_u128_max {P : Std.U64} (hP : ValidPrime P) :
+    (P.val - 1) * (P.val - 1) ≤ U128.max := by
+  have hp1 : P.val - 1 ≤ 2 ^ 63 - 1 := by have := hP.2.2; omega
+  calc (P.val - 1) * (P.val - 1)
+      ≤ (2 ^ 63 - 1) * (2 ^ 63 - 1) := Nat.mul_le_mul hp1 hp1
+    _ ≤ U128.max := by rw [U128.max_eq]; norm_num
+
 end MontArith

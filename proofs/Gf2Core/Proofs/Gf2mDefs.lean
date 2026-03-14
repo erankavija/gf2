@@ -50,4 +50,24 @@ def specLoop (b m poly i result temp : ℕ) : ℕ × ℕ :=
 def mul_raw_spec (a b m poly : ℕ) : ℕ :=
   (specLoop b m poly 0 0 a).1 % 2 ^ m
 
+/-- The mathematical specification of GF(2^m) addition: bitwise XOR. -/
+def add_raw_spec (a b : ℕ) : ℕ := a ^^^ b
+
+/-- The mathematical specification of GF(2^m) exponentiation (square-and-multiply). -/
+def pow_raw_spec (base exp m poly : ℕ) : ℕ :=
+  if exp = 0 then 1
+  else
+    let result := pow_raw_spec base (exp / 2) m poly
+    let squared := mul_raw_spec result result m poly
+    if exp % 2 = 1 then mul_raw_spec squared base m poly
+    else squared
+termination_by exp
+decreasing_by omega
+
+/-- The mathematical specification of GF(2^m) multiplicative inverse.
+    Returns 0 for zero input. For nonzero a, computes a^(2^m - 2). -/
+def inverse_raw_spec (a m poly : ℕ) : ℕ :=
+  if a = 0 then 0
+  else pow_raw_spec a (2 ^ m - 2) m poly
+
 end Gf2mSpec
