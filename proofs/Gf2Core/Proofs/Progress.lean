@@ -8,6 +8,7 @@
 import Aeneas
 import Gf2Core.Funs
 import Gf2Core.Proofs.Defs
+import Gf2Core.Proofs.ModArith
 
 open Aeneas Aeneas.Std Result ControlFlow Error Aeneas.Std.WP
 open gf2_core
@@ -472,6 +473,36 @@ theorem fp_value_progress {P : Std.U64} {a : Std.U64}
     case isTrue h => exfalso; exact hP2 (by subst h; native_decide)
     case isFalse h => exact from_mont_progress hP ha
   exact spec_imp_exists hspec
+
+/-! ## max_unreduced_additions progress -/
+
+@[progress]
+theorem max_unreduced_additions_progress {P : Std.U64} (hP : ValidPrime P) :
+    gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.max_unreduced_additions P
+    ⦃ fun _ => True ⦄ := by
+  unfold gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.max_unreduced_additions
+  progress as ⟨i, hi⟩          -- cast U128 P
+  have hi_val : i.val = P.val := by rw [hi]; exact U64.cast_U128_val_eq P
+  progress as ⟨i1, hi1, _⟩     -- i - 1#u128
+  · have := hP.2.1; have := hi_val; scalar_tac
+  progress as ⟨i2, hi2⟩        -- cast U128 P
+  have hi2_val : i2.val = P.val := by rw [hi2]; exact U64.cast_U128_val_eq P
+  progress as ⟨i3, hi3, _⟩     -- i2 - 1#u128; auto-closed
+  progress as ⟨max_product, hmp⟩  -- i1 * i3
+  · -- (P-1) * (P-1) ≤ U128.max
+    have h1val : (1#u128 : Std.U128).val = 1 := by native_decide
+    have hi1_val : i1.val = P.val - 1 := by omega
+    have hi3_val : i3.val = P.val - 1 := by omega
+    rw [hi1_val, hi3_val]
+    exact MontArith.p_minus_one_sq_le_u128_max hP
+  by_cases hmp0 : max_product = 0#u128
+  · simp [hmp0, spec, theta, wp_return]
+  · simp only [show ¬(max_product = 0#u128) from hmp0, ite_false]
+    progress as ⟨k, hk⟩       -- U128.MAX / max_product
+    progress as ⟨i4, hi4⟩     -- cast U128 Usize.MAX
+    by_cases hgt : k > i4
+    · simp [hgt, spec, theta, wp_return]
+    · simp [hgt, spec, theta, wp_return]
 
 end FpProgress
 
