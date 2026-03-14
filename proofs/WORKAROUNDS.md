@@ -13,6 +13,13 @@ fields all named `corecloneCloneInst`, etc.
 `Characteristic` and `Wide` suffixes (e.g., `corecloneCloneCharacteristicInst`).
 This runs automatically as Step 3 of `scripts/verify-lean.sh`.
 
+## FunsExternal.lean hand-edited definitions
+
+`FunsExternal.lean` replaces Aeneas axioms with concrete definitions for
+`wrapping_neg`, `overflowing_sub`, and U128 `add`/`add_assign`. The
+`verify-lean.sh` script only seeds from the template on first run; it never
+overwrites the hand-edited file.
+
 ## Opaque modules
 
 The following modules are marked `--opaque` during Charon extraction because
@@ -21,7 +28,10 @@ they are outside the verification scope or cause extraction issues:
 | Module | Reason |
 |--------|--------|
 | `gf2_core::field` | HRTB `for<'a>` bounds on `FiniteField` trait |
-| `gf2_core::gf2m` | Runtime field parameters, `Vec<u64>` storage |
+| `gf2_core::gf2m::field` | Runtime field parameters, `Arc<FieldParams>`, `Vec<u64>` storage |
+| `gf2_core::gf2m::generation` | Uses `gf2m::field` types |
+| `gf2_core::gf2m::uint_ext` | Sealed trait, out of scope |
+| `gf2_core::gf2m::thread_safety_tests` | Test module |
 | ~~`gf2_core::gfpn`~~ | Now transparent (was opaque before Charon HRTB patches) |
 | `gf2_core::bitvec` | Out of scope (bit manipulation, not field arithmetic) |
 | `gf2_core::bitslice` | Out of scope |
@@ -49,6 +59,23 @@ Charon emits 13 benign "Type error after transformations" warnings about
 mismatched generic arg counts for `CubicExt`/`QuadraticExt` (expected 4, got 7).
 These are harmless — Aeneas handles them correctly via Lean4 implicit argument
 inference.
+
+## gf2m/ selective extraction
+
+The `gf2m` module was originally fully opaque due to `Arc<FieldParams>` and
+`Option<Vec<u16>>` in `Gf2mField_<V>`. To verify `mul_raw` (schoolbook GF(2^m)
+multiplication), a monomorphized u64 free function `gf2m_mul_raw` was extracted
+into `gf2m/mul_raw.rs`.
+
+**Key**: Charon's `--opaque gf2_core::gf2m` prevents exploring the module
+entirely, so `--include gf2_core::gf2m::mul_raw` within it has no effect.
+The solution is to make individual submodules opaque (`gf2m::field`,
+`gf2m::generation`, `gf2m::uint_ext`, `gf2m::thread_safety_tests`) while
+leaving `gf2m::mul_raw` transparent.
+
+The extracted loop uses Aeneas's `loop` combinator with `(result, temp, i)`
+state. The Rust `while i < m` loop (replacing `for i in 0..m` which has a
+runtime bound) extracts cleanly.
 
 ## Const generics work
 
