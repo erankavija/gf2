@@ -12,9 +12,9 @@
 ///
 /// # Panics
 ///
-/// Panics in debug mode if `m ≥ 64` due to overflow in `1u64 << m`.
-/// In release mode with overflow checks disabled, `m ≥ 64` silently
-/// produces incorrect results. Valid range: `m` in `1..=63`.
+/// Panics if `m = 0` (subtraction underflow on `m - 1`) or
+/// `m ≥ 64` (shift overflow on `1u64 << m`). These overflow panics
+/// serve as runtime guards enforcing the valid range `1..=63`.
 ///
 /// # Complexity
 ///
