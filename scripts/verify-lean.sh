@@ -24,7 +24,10 @@ mkdir -p "$(dirname "$LLBC_FILE")"
 charon cargo \
   --preset aeneas \
   --opaque 'gf2_core::field' \
-  --opaque 'gf2_core::gf2m' \
+  --opaque 'gf2_core::gf2m::field' \
+  --opaque 'gf2_core::gf2m::generation' \
+  --opaque 'gf2_core::gf2m::uint_ext' \
+  --opaque 'gf2_core::gf2m::thread_safety_tests' \
   --opaque 'gf2_core::bitvec' \
   --opaque 'gf2_core::bitslice' \
   --opaque 'gf2_core::matrix' \
@@ -64,8 +67,13 @@ echo "=== Step 3: Post-processing ==="
 # See proofs/WORKAROUNDS.md for details.
 python3 "$REPO_ROOT/scripts/fix-aeneas-dupes.py" "$LEAN_DIR/Types.lean" "$LEAN_DIR/Funs.lean"
 
-# Always regenerate FunsExternal.lean from template (all entries are axioms)
-cp "$LEAN_DIR/FunsExternal_Template.lean" "$LEAN_DIR/FunsExternal.lean"
+# FunsExternal.lean contains hand-edited concrete definitions (wrapping_neg,
+# overflowing_sub, U128 add/add_assign) that replace Aeneas axioms.
+# Only seed from template on first run; never overwrite existing file.
+if [ ! -f "$LEAN_DIR/FunsExternal.lean" ]; then
+  cp "$LEAN_DIR/FunsExternal_Template.lean" "$LEAN_DIR/FunsExternal.lean"
+  echo "NOTE: FunsExternal.lean seeded from template — fill in concrete defs"
+fi
 
 echo "Post-processing done"
 
