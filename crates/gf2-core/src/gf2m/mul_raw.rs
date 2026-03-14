@@ -118,4 +118,35 @@ mod tests {
         // (x+1) * (x+1) = x^2 + 1
         assert_eq!(gf2m_mul_raw(0b011, 0b011, 3, 0b1011), 0b101);
     }
+
+    #[test]
+    fn test_gf2m_mul_raw_m1() {
+        // GF(2^1) = GF(2) with p(x) = x + 1 = 0b11 (m=1, word boundary)
+        assert_eq!(gf2m_mul_raw(0, 0, 1, 0b11), 0);
+        assert_eq!(gf2m_mul_raw(0, 1, 1, 0b11), 0);
+        assert_eq!(gf2m_mul_raw(1, 0, 1, 0b11), 0);
+        assert_eq!(gf2m_mul_raw(1, 1, 1, 0b11), 1); // 1 * 1 = 1 in GF(2)
+    }
+
+    #[test]
+    fn test_gf2m_mul_raw_m63() {
+        // m = 63 (maximum valid extension degree for u64)
+        // p(x) = x^63 + x + 1 (a known primitive polynomial)
+        let poly: u64 = (1u64 << 63) | 0b11;
+        // 1 * 1 = 1
+        assert_eq!(gf2m_mul_raw(1, 1, 63, poly), 1);
+        // x * 1 = x
+        assert_eq!(gf2m_mul_raw(2, 1, 63, poly), 2);
+        // 1 * x = x
+        assert_eq!(gf2m_mul_raw(1, 2, 63, poly), 2);
+        // x * x = x^2
+        assert_eq!(gf2m_mul_raw(2, 2, 63, poly), 4);
+        // 0 * anything = 0
+        assert_eq!(gf2m_mul_raw(0, (1u64 << 62) | 1, 63, poly), 0);
+        // Result is always < 2^63
+        let a = (1u64 << 62) | 0b101;
+        let b = (1u64 << 61) | 0b11;
+        let result = gf2m_mul_raw(a, b, 63, poly);
+        assert!(result < (1u64 << 63), "result {result} should be < 2^63");
+    }
 }
