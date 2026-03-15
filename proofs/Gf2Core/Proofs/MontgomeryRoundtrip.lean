@@ -949,6 +949,252 @@ theorem max_unreduced_additions_div_bound {P : Std.U64} (hP : ValidPrime P) :
   · have := hP.2.1; exact Nat.mul_pos (by omega) (by omega)
   · exact Nat.div_mul_le_self _ _
 
+/-! ## mod_pow_mont correctness -/
+
+/-- Montgomery multiplication at the ℕ level: a * b * Rinv mod P.
+    This is what redc(a * b as u128) computes for a, b < P. -/
+private noncomputable def mont_mul_nat (Rinv P a b : ℕ) : ℕ := a * b * Rinv % P
+
+/-- Specification of the mod_pow_mont loop. Mirrors the code structure exactly,
+    with mont_mul_nat as the multiplication primitive. -/
+private noncomputable def mont_pow_loop_spec (Rinv P base exp result : ℕ) : ℕ :=
+  if exp = 0 then result
+  else
+    let result' := if exp % 2 = 1 then mont_mul_nat Rinv P result base else result
+    let exp' := exp / 2
+    let base' := if exp' > 0 then mont_mul_nat Rinv P base base else base
+    mont_pow_loop_spec Rinv P base' exp' result'
+termination_by exp
+decreasing_by omega
+
+private lemma mont_pow_loop_spec_step (Rinv P base exp result : ℕ) (hexp : 0 < exp) :
+    mont_pow_loop_spec Rinv P base exp result =
+      let result' := if exp % 2 = 1 then mont_mul_nat Rinv P result base else result
+      let exp' := exp / 2
+      let base' := if exp' > 0 then mont_mul_nat Rinv P base base else base
+      mont_pow_loop_spec Rinv P base' exp' result' := by
+  rw [mont_pow_loop_spec]; simp [show ¬(exp = 0) from by omega]
+
+private lemma mont_pow_loop_spec_zero (Rinv P base result : ℕ) :
+    mont_pow_loop_spec Rinv P base 0 result = result := by
+  rw [mont_pow_loop_spec]; simp
+
+/-- The pow loop invariant: values match the spec at every iteration. -/
+private def MontPowLoopInv (Rinv P_val init_base init_exp init_result : ℕ)
+    (state : Std.U64 × Std.U64 × Std.U64) : Prop :=
+  let (base, exp, result) := state
+  result.val < P_val ∧
+  base.val < P_val ∧
+  mont_pow_loop_spec Rinv P_val base.val exp.val result.val =
+    mont_pow_loop_spec Rinv P_val init_base init_exp init_result
+
+/-- Connecting redc to mont_mul_nat: redc(a*b) produces a*b*Rinv % P.
+    Follows from redc_value_spec (r * R ≡ a*b mod P) and uniqueness of
+    the modular inverse solution in [0, P). -/
+private lemma redc_eq_mont_mul (P_val : ℕ) (hP_gt1 : 1 < P_val)
+    (a_val b_val : ℕ)
+    (Rinv : ℕ) (hRinv : MontArith.R * Rinv % P_val = 1 % P_val)
+    (r_val : ℕ) (hr_lt : r_val < P_val)
+    (hr_eq : r_val * 2 ^ 64 % P_val = (a_val * b_val) % P_val) :
+    r_val = mont_mul_nat Rinv P_val a_val b_val := by
+  unfold mont_mul_nat
+  have hP_pos : 0 < P_val := by omega
+  have hRinv1 : MontArith.R * Rinv % P_val = 1 := by
+    rw [hRinv, Nat.mod_eq_of_lt hP_gt1]
+  -- r * R * Rinv ≡ r (since R * Rinv ≡ 1 mod P)
+  have hlhs : r_val * MontArith.R * Rinv % P_val = r_val % P_val := by
+    have : r_val * MontArith.R * Rinv = r_val * (MontArith.R * Rinv) := by ring
+    rw [this, Nat.mul_mod, hRinv1, mul_one, Nat.mod_mod_of_dvd _ (dvd_refl _)]
+  -- r * R * Rinv ≡ a*b * Rinv (since r*R ≡ a*b mod P)
+  have hrhs : r_val * MontArith.R * Rinv % P_val = a_val * b_val * Rinv % P_val := by
+    conv_lhs => rw [Nat.mul_mod (r_val * MontArith.R) Rinv P_val,
+                     show MontArith.R = 2 ^ 64 from rfl, hr_eq, ← Nat.mul_mod]
+  -- Combine: r % P = a*b*Rinv % P, and r < P, so r = a*b*Rinv % P
+  rw [Nat.mod_eq_of_lt hr_lt] at hlhs
+  linarith [hlhs, hrhs]
+
+/-- Helper: obtain redc result with value equation from the mul chain.
+    Proves the monadic chain (lift cast, lift cast, mul, redc) returns
+    ok r with r < P and r = mont_mul_nat Rinv P a b. -/
+private lemma mont_mul_chain_value {P : Std.U64} (a b : Std.U64)
+    (hP : ValidPrime P) (hP2 : P.val ≠ 2)
+    (ha : a.val < P.val) (hb : b.val < P.val)
+    (Rinv : ℕ) (hRinv : MontArith.R * Rinv % P.val = 1 % P.val) :
+    ∃ r, (do let i1 ← lift (UScalar.cast .U128 a)
+             let i2 ← lift (UScalar.cast .U128 b)
+             let i3 ← i1 * i2
+             gfp.montgomery.redc P i3) = ok r ∧
+    r.val < P.val ∧ r.val = mont_mul_nat Rinv P.val a.val b.val := by
+  have hspec : (do let i1 ← lift (UScalar.cast .U128 a)
+                   let i2 ← lift (UScalar.cast .U128 b)
+                   let i3 ← i1 * i2
+                   gfp.montgomery.redc P i3)
+      ⦃ r => r.val < P.val ∧ r.val = mont_mul_nat Rinv P.val a.val b.val ⦄ := by
+    progress as ⟨i1, hi1⟩
+    progress as ⟨i2, hi2⟩
+    progress as ⟨i3, hi3⟩
+    have hi1_val : i1.val = a.val := by rw [hi1]; exact U64.cast_U128_val_eq a
+    have hi2_val : i2.val = b.val := by rw [hi2]; exact U64.cast_U128_val_eq b
+    have hi3_val : i3.val = a.val * b.val := by rw [hi3, hi1_val, hi2_val]
+    have hbound : i3.val < P.val * 2 ^ 64 :=
+      FpProgress.redc_precond hP ha hb hi3_val
+    obtain ⟨r, hr_eq, hr_lt, hr_val⟩ := redc_value_spec hP hP2 hbound
+    rw [show spec = theta from rfl, hr_eq]
+    simp only [theta, wp_return]
+    exact ⟨hr_lt, redc_eq_mont_mul P.val (by have := hP.2.1; omega)
+      a.val b.val Rinv hRinv r.val hr_lt (by rw [hr_val, hi3_val])⟩
+  exact spec_imp_exists hspec
+
+/-- The mod_pow_mont loop computes mont_pow_loop_spec. -/
+private theorem mont_pow_loop_correct {P : Std.U64}
+    (hP : ValidPrime P) (hP2 : P.val ≠ 2)
+    (Rinv : ℕ) (hRinv : MontArith.R * Rinv % P.val = 1 % P.val)
+    (base exp result : Std.U64)
+    (hinv : MontPowLoopInv Rinv P.val base.val exp.val result.val (base, exp, result)) :
+    gfp.montgomery.mod_pow_mont_loop P base exp result
+    ⦃ r => r.val = mont_pow_loop_spec Rinv P.val base.val exp.val result.val ∧
+            r.val < P.val ⦄ := by
+  obtain ⟨hr_bound, hb_bound, hstate⟩ := hinv
+  unfold gfp.montgomery.mod_pow_mont_loop
+  apply loop.spec (γ := ℕ)
+    (measure := fun ((_, exp1, _) : Std.U64 × Std.U64 × Std.U64) => exp1.val)
+    (inv := MontPowLoopInv Rinv P.val base.val exp.val result.val)
+  · intro ⟨base1, exp1, result1⟩ ⟨hr1, hb1, hst1⟩
+    dsimp only
+    by_cases hgt : exp1 > 0#u64
+    · simp only [hgt, ite_true, Std.lift, bind_tc_ok]
+      have hexp1_pos : 0 < exp1.val := by scalar_tac
+      -- Split on if (exp1 &&& 1) = 1
+      split
+      · -- Odd: multiply result by base
+        rename_i h_bit
+        have h_bit_mod : exp1.val % 2 = 1 := by
+          have h1 : (exp1 &&& 1#u64).val = exp1.val % 2 := by
+            rw [UScalar.val_and]; simp [Nat.and_one_is_mod]
+          have h2 : (exp1 &&& 1#u64) = 1#u64 := h_bit
+          have h3 : (1#u64 : Std.U64).val = 1 := by native_decide
+          have h4 : (exp1 &&& 1#u64).val = 1 := by rw [h2, h3]
+          linarith [h1, h4]
+        -- Progress through the U128 multiply
+        progress as ⟨prod, hprod⟩  -- U128 mul
+        -- Use redc_value_spec directly (to get both bound and value equation)
+        have hprod_val : prod.val = result1.val * base1.val := by
+          rw [hprod, U64.cast_U128_val_eq result1, U64.cast_U128_val_eq base1]
+        have hbound : prod.val < P.val * 2 ^ 64 :=
+          FpProgress.redc_precond hP hr1 hb1 hprod_val
+        obtain ⟨result2, hresult2_eq, hresult2, hresult2_rval⟩ :=
+          redc_value_spec hP hP2 hbound
+        simp only [hresult2_eq, bind_tc_ok]
+        -- Value equation for result2
+        have hresult2_val : result2.val =
+            mont_mul_nat Rinv P.val result1.val base1.val :=
+          redc_eq_mont_mul P.val hP.2.1 result1.val base1.val Rinv hRinv
+            result2.val hresult2 (by rw [hresult2_rval, hprod_val])
+        -- Continue: exp shift
+        progress as ⟨exp2, hexp2_val, _⟩
+        have hexp2_eq : exp2.val = exp1.val / 2 := by
+          simp [hexp2_val, Nat.shiftRight_eq_div_pow]
+        have hexp2_lt : exp2.val < exp1.val := by
+          rw [hexp2_eq]; exact Nat.div_lt_self hexp1_pos (by norm_num)
+        split
+        · -- exp2 > 0: square base
+          progress as ⟨sq, hsq⟩
+          -- Use redc_value_spec directly for squaring
+          have hsq_val : sq.val = base1.val * base1.val := by
+            rw [hsq, U64.cast_U128_val_eq base1]
+          have hbound_sq : sq.val < P.val * 2 ^ 64 :=
+            FpProgress.redc_precond hP hb1 hb1 hsq_val
+          obtain ⟨base2, hbase2_eq, hbase2, hbase2_rval⟩ :=
+            redc_value_spec hP hP2 hbound_sq
+          simp only [hbase2_eq, bind_tc_ok]
+          have hbase2_val : base2.val =
+              mont_mul_nat Rinv P.val base1.val base1.val :=
+            redc_eq_mont_mul P.val hP.2.1 base1.val base1.val Rinv hRinv
+              base2.val hbase2 (by rw [hbase2_rval, hsq_val])
+          refine And.intro ⟨hresult2, hbase2, ?_⟩ hexp2_lt
+          rw [← hst1, mont_pow_loop_spec_step _ _ _ _ _ hexp1_pos]
+          simp only [h_bit_mod, ite_true, hexp2_eq,
+            show exp1.val / 2 > 0 from by scalar_tac, ite_true]
+          congr 1 <;> assumption
+        · -- exp2 = 0: don't square
+          refine And.intro ⟨hresult2, hb1, ?_⟩ hexp2_lt
+          rw [← hst1, mont_pow_loop_spec_step _ _ _ _ _ hexp1_pos]
+          simp only [h_bit_mod, ite_true, hexp2_eq,
+            show ¬(exp1.val / 2 > 0) from by scalar_tac, ite_false, hresult2_val]
+      · -- Even: result unchanged
+        rename_i h_bit
+        have h_bit_mod : ¬(exp1.val % 2 = 1) := by
+          have h1 : (exp1 &&& 1#u64).val = exp1.val % 2 := by
+            rw [UScalar.val_and]; simp [Nat.and_one_is_mod]
+          have h2 : ¬((exp1 &&& 1#u64) = 1#u64) := h_bit
+          intro h3
+          apply h2
+          apply UScalar.val_eq_imp
+          have h4 : (1#u64 : Std.U64).val = 1 := by native_decide
+          rw [h1, h4, h3]
+        progress as ⟨exp2, hexp2_val, _⟩
+        have hexp2_eq : exp2.val = exp1.val / 2 := by
+          simp [hexp2_val, Nat.shiftRight_eq_div_pow]
+        have hexp2_lt : exp2.val < exp1.val := by
+          rw [hexp2_eq]; exact Nat.div_lt_self hexp1_pos (by norm_num)
+        split
+        · -- exp2 > 0: square base
+          progress as ⟨sq, hsq⟩
+          -- Use redc_value_spec directly for squaring
+          have hsq_val : sq.val = base1.val * base1.val := by
+            rw [hsq, U64.cast_U128_val_eq base1]
+          have hbound_sq : sq.val < P.val * 2 ^ 64 :=
+            FpProgress.redc_precond hP hb1 hb1 hsq_val
+          obtain ⟨base2, hbase2_eq, hbase2, hbase2_rval⟩ :=
+            redc_value_spec hP hP2 hbound_sq
+          simp only [hbase2_eq, bind_tc_ok]
+          have hbase2_val : base2.val =
+              mont_mul_nat Rinv P.val base1.val base1.val :=
+            redc_eq_mont_mul P.val hP.2.1 base1.val base1.val Rinv hRinv
+              base2.val hbase2 (by rw [hbase2_rval, hsq_val])
+          refine And.intro ⟨hr1, hbase2, ?_⟩ hexp2_lt
+          rw [← hst1, mont_pow_loop_spec_step _ _ _ _ _ hexp1_pos]
+          simp only [h_bit_mod, ite_false, hexp2_eq,
+            show exp1.val / 2 > 0 from by scalar_tac, ite_true, hbase2_val]
+        · -- exp2 = 0: don't square
+          refine And.intro ⟨hr1, hb1, ?_⟩ hexp2_lt
+          rw [← hst1, mont_pow_loop_spec_step _ _ _ _ _ hexp1_pos]
+          simp only [h_bit_mod, ite_false, hexp2_eq,
+            show ¬(exp1.val / 2 > 0) from by scalar_tac, ite_false]
+    · -- exp = 0: done
+      simp only [hgt, ite_false, spec, theta, wp_return]
+      have hexp0 : exp1.val = 0 := by scalar_tac
+      constructor
+      · rw [← hst1, hexp0, mont_pow_loop_spec_zero]
+      · exact hr1
+  · exact ⟨hr_bound, hb_bound, hstate⟩
+
+/-- mont_mul_nat produces values less than P. -/
+private lemma mont_mul_nat_lt (Rinv P a b : ℕ) (hP : 0 < P) :
+    mont_mul_nat Rinv P a b < P := by
+  exact Nat.mod_lt _ hP
+
+/-- mod_pow_mont correctly computes mont_pow_loop_spec and produces a valid field element. -/
+theorem mod_pow_mont_correct {P : Std.U64}
+    (hP : ValidPrime P) (hP2 : P.val ≠ 2)
+    (base exp : Std.U64) (hb : base.val < P.val) :
+    ∃ r Rinv, MontArith.R * Rinv % P.val = 1 % P.val ∧
+    gfp.montgomery.mod_pow_mont P base exp = ok r ∧
+    r.val = mont_pow_loop_spec Rinv P.val base.val exp.val (2 ^ 64 % P.val) ∧
+    r.val < P.val := by
+  obtain ⟨Rinv, hRinv⟩ := MontArith.R_inv_exists hP hP2
+  unfold gfp.montgomery.mod_pow_mont
+  simp only [gfp.montgomery.MontConsts.R_MOD_P]
+  obtain ⟨rmod, hrmod_eq, hrmod_val⟩ := compute_r_mod_p_value hP
+  simp only [hrmod_eq, bind_tc_ok]
+  have hrmod_lt : rmod.val < P.val := by
+    rw [hrmod_val]; exact Nat.mod_lt _ (by have := hP.2.1; omega)
+  have hinv : MontPowLoopInv Rinv P.val base.val exp.val rmod.val (base, exp, rmod) :=
+    ⟨hrmod_lt, hb, rfl⟩
+  have h := mont_pow_loop_correct hP hP2 Rinv hRinv base exp rmod hinv
+  obtain ⟨r, hr_eq, hr_val, hr_lt⟩ := spec_imp_exists h
+  exact ⟨r, Rinv, hRinv, hr_eq, by rw [hr_val, hrmod_val], hr_lt⟩
+
 end MontRoundtrip
 
 end

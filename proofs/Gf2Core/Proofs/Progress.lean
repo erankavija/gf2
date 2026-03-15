@@ -504,6 +504,88 @@ theorem max_unreduced_additions_progress {P : Std.U64} (hP : ValidPrime P) :
     · simp [hgt, spec, theta, wp_return]
     · simp [hgt, spec, theta, wp_return]
 
+/-! ## mod_pow_mont progress -/
+
+/-- Helper: the redc precondition holds for products of values less than P. -/
+lemma redc_precond {P : Std.U64} {i3 : Std.U128} {a b : Std.U64}
+    (hP : ValidPrime P) (ha : a.val < P.val) (hb : b.val < P.val)
+    (hi3 : i3.val = a.val * b.val) :
+    i3.val < P.val * 2 ^ 64 := by
+  rw [hi3]
+  calc a.val * b.val < P.val * P.val :=
+          Nat.mul_lt_mul_of_lt_of_lt ha hb
+    _ ≤ P.val * 2 ^ 63 := Nat.mul_le_mul_left _ hP.2.2
+    _ < P.val * 2 ^ 64 := by have := hP.2.1; omega
+
+@[progress]
+theorem mod_pow_mont_loop_progress {P : Std.U64}
+    (hP : ValidPrime P)
+    (base exp result : Std.U64)
+    (hb : base.val < P.val) (hr : result.val < P.val) :
+    gfp.montgomery.mod_pow_mont_loop P base exp result
+    ⦃ r => r.val < P.val ⦄ := by
+  unfold gfp.montgomery.mod_pow_mont_loop
+  apply loop.spec (γ := ℕ)
+    (measure := fun ((_, exp1, _) : Std.U64 × Std.U64 × Std.U64) => exp1.val)
+    (inv := fun ((base1, _, result1) : Std.U64 × Std.U64 × Std.U64) =>
+      base1.val < P.val ∧ result1.val < P.val)
+  · intro ⟨base1, exp1, result1⟩ ⟨hb1, hr1⟩
+    dsimp only
+    by_cases hgt : exp1 > 0#u64
+    · simp only [hgt, ite_true, Std.lift, bind_tc_ok]
+      have hexp1_pos : 0 < exp1.val := by scalar_tac
+      -- Split on if (exp1 &&& 1) = 1
+      split
+      · -- Odd: multiply result by base
+        progress as ⟨prod, hprod⟩  -- checked U128 mul
+        progress as ⟨result2, hresult2⟩  -- redc P prod
+        · -- redc precondition: prod.val < P.val * 2^64
+          have h1 := U64.cast_U128_val_eq result1
+          have h2 := U64.cast_U128_val_eq base1
+          exact redc_precond hP hr1 hb1 (by simp only [hprod, h1, h2])
+        progress as ⟨exp2, hexp2_val, _⟩  -- shift
+        have hexp2_lt : exp2.val < exp1.val := by
+          simp [hexp2_val, Nat.shiftRight_eq_div_pow]
+          exact Nat.div_lt_self hexp1_pos (by norm_num)
+        split
+        · -- exp2 > 0: square base
+          progress as ⟨sq, hsq⟩
+          progress as ⟨base2, hbase2⟩
+          · have hv := U64.cast_U128_val_eq base1
+            exact redc_precond hP hb1 hb1 (by simp only [hsq, hv])
+          exact ⟨hbase2, hresult2, hexp2_lt⟩
+        · -- exp2 = 0: base unchanged
+          exact ⟨hb1, hresult2, hexp2_lt⟩
+      · -- Even: result unchanged
+        progress as ⟨exp2, hexp2_val, _⟩  -- shift
+        have hexp2_lt : exp2.val < exp1.val := by
+          simp [hexp2_val, Nat.shiftRight_eq_div_pow]
+          exact Nat.div_lt_self hexp1_pos (by norm_num)
+        split
+        · -- exp2 > 0: square base
+          progress as ⟨sq, hsq⟩
+          progress as ⟨base2, hbase2⟩
+          · have hv := U64.cast_U128_val_eq base1
+            exact redc_precond hP hb1 hb1 (by simp only [hsq, hv])
+          exact ⟨hbase2, hr1, hexp2_lt⟩
+        · -- exp2 = 0: base unchanged
+          exact ⟨hb1, hr1, hexp2_lt⟩
+    · -- exp = 0: done
+      simp only [hgt, ite_false, spec, theta, wp_return]
+      exact hr1
+  · exact ⟨hb, hr⟩
+
+theorem mod_pow_mont_progress {P : Std.U64}
+    (hP : ValidPrime P)
+    (base exp : Std.U64) (hb : base.val < P.val) :
+    ∃ r, gfp.montgomery.mod_pow_mont P base exp = ok r ∧ r.val < P.val := by
+  have hspec : gfp.montgomery.mod_pow_mont P base exp ⦃ r => r.val < P.val ⦄ := by
+    unfold gfp.montgomery.mod_pow_mont
+    simp only [gfp.montgomery.MontConsts.R_MOD_P]
+    progress as ⟨rmod, hrmod⟩  -- compute_r_mod_p
+    exact mod_pow_mont_loop_progress hP base exp rmod hb hrmod
+  exact spec_imp_exists hspec
+
 end FpProgress
 
 end
