@@ -16,6 +16,14 @@ noncomputable section
 
 namespace gf2_core
 
+/- Trait implementation: [core::fmt::num::imp::{core::fmt::Display for usize}]
+   Source: '/rustc/library/core/src/fmt/num.rs', lines 134:8-134:39
+   Name pattern: [core::fmt::Display<usize>] -/
+@[reducible, rust_trait_impl "core::fmt::Display<usize>"]
+def Usize.Insts.CoreFmtDisplay : core.fmt.Display Std.Usize := {
+  fmt := core.fmt.num.imp.DisplayUsize.fmt
+}
+
 /- Trait implementation: [core::fmt::num::imp::{core::fmt::Display for u64}]
    Source: '/rustc/library/core/src/fmt/num.rs', lines 134:8-134:39
    Name pattern: [core::fmt::Display<u64>] -/
@@ -74,22 +82,50 @@ def gf2m.mul_raw.gf2m_mul_raw_loop
     (result, temp, i)
 
 /- [gf2_core::gf2m::mul_raw::gf2m_mul_raw]:
-   Source: 'crates/gf2-core/src/gf2m/mul_raw.rs', lines 32:0-57:1 -/
+   Source: 'crates/gf2-core/src/gf2m/mul_raw.rs', lines 30:0-57:1 -/
 def gf2m.mul_raw.gf2m_mul_raw
   (a : Std.U64) (b : Std.U64) (m : Std.Usize) (primitive_poly : Std.U64) :
   Result Std.U64
   := do
-  if a = 0#u64
-  then ok 0#u64
-  else
-    if b = 0#u64
-    then ok 0#u64
+  if m >= 1#usize
+  then
+    if m <= 63#usize
+    then
+      if a = 0#u64
+      then ok 0#u64
+      else
+        if b = 0#u64
+        then ok 0#u64
+        else
+          let result ←
+            gf2m.mul_raw.gf2m_mul_raw_loop b m primitive_poly 0#u64 a 0#usize
+          let i ← 1#u64 <<< m
+          let i1 ← i - 1#u64
+          ok (result &&& i1)
     else
-      let result ←
-        gf2m.mul_raw.gf2m_mul_raw_loop b m primitive_poly 0#u64 a 0#usize
-      let i ← 1#u64 <<< m
-      let i1 ← i - 1#u64
-      ok (result &&& i1)
+      let a1 ← core.fmt.rt.Argument.new_display Usize.Insts.CoreFmtDisplay m
+      let _ ←
+        core.fmt.Arguments.new
+          (Array.make 38#usize [
+            35#u8, 103#u8, 102#u8, 50#u8, 109#u8, 95#u8, 109#u8, 117#u8,
+            108#u8, 95#u8, 114#u8, 97#u8, 119#u8, 58#u8, 32#u8, 109#u8, 32#u8,
+            109#u8, 117#u8, 115#u8, 116#u8, 32#u8, 98#u8, 101#u8, 32#u8, 60#u8,
+            61#u8, 32#u8, 54#u8, 51#u8, 44#u8, 32#u8, 103#u8, 111#u8, 116#u8,
+            32#u8, 192#u8, 0#u8
+            ]) (Array.make 1#usize [ a1 ])
+      fail panic
+  else
+    let a1 ← core.fmt.rt.Argument.new_display Usize.Insts.CoreFmtDisplay m
+    let _ ←
+      core.fmt.Arguments.new
+        (Array.make 37#usize [
+          34#u8, 103#u8, 102#u8, 50#u8, 109#u8, 95#u8, 109#u8, 117#u8, 108#u8,
+          95#u8, 114#u8, 97#u8, 119#u8, 58#u8, 32#u8, 109#u8, 32#u8, 109#u8,
+          117#u8, 115#u8, 116#u8, 32#u8, 98#u8, 101#u8, 32#u8, 62#u8, 61#u8,
+          32#u8, 49#u8, 44#u8, 32#u8, 103#u8, 111#u8, 116#u8, 32#u8, 192#u8,
+          0#u8
+          ]) (Array.make 1#usize [ a1 ])
+    fail panic
 
 /- [gf2_core::gf2m::mul_raw::gf2m_add_raw]:
    Source: 'crates/gf2-core/src/gf2m/mul_raw.rs', lines 82:0-84:1 -/

@@ -12,9 +12,7 @@
 ///
 /// # Panics
 ///
-/// Panics if `m = 0` (subtraction underflow on `m - 1`) or
-/// `m ≥ 64` (shift overflow on `1u64 << m`). These overflow panics
-/// serve as runtime guards enforcing the valid range `1..=63`.
+/// Panics if `m` is outside the valid range `1..=63`.
 ///
 /// # Complexity
 ///
@@ -30,6 +28,8 @@
 /// assert_eq!(result, 0b1111); // (x+1) * (x^2+1) = x^3+x^2+x+1 in GF(2^4)
 /// ```
 pub fn gf2m_mul_raw(a: u64, b: u64, m: usize, primitive_poly: u64) -> u64 {
+    assert!(m >= 1, "gf2m_mul_raw: m must be >= 1, got {m}");
+    assert!(m <= 63, "gf2m_mul_raw: m must be <= 63, got {m}");
     if a == 0 || b == 0 {
         return 0;
     }

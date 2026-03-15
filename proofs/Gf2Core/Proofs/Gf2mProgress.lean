@@ -71,6 +71,10 @@ theorem gf2m_mul_raw_progress
     (hparams : ValidGf2mParams m primitive_poly) :
     ∃ r, gf2m.mul_raw.gf2m_mul_raw a b m primitive_poly = ok r := by
   unfold gf2m.mul_raw.gf2m_mul_raw
+  -- Discharge assert! guards: m >= 1 and m <= 63
+  have hm_ge1 : m ≥ 1#usize := by have := hparams.m_pos; scalar_tac
+  have hm_le63 : m ≤ 63#usize := by have := hparams.m_le; scalar_tac
+  simp only [hm_ge1, ite_true, hm_le63]
   by_cases ha0 : a = 0#u64
   · subst ha0; exact ⟨_, rfl⟩
   · simp only [ha0, ite_false]
