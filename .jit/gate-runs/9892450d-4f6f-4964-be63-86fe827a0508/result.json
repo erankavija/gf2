@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "9892450d-4f6f-4964-be63-86fe827a0508",
+  "gate_key": "code-review",
+  "stage": "postcheck",
+  "issue_id": "467d835e-6afd-4638-a0e6-5e5c1ae54904",
+  "commit": "93026ecafe6738fabc4b1dcabfc03d4425383501",
+  "branch": "formal-verification",
+  "status": "failed",
+  "started_at": "2026-03-14T23:06:58.339615093Z",
+  "completed_at": "2026-03-14T23:09:15.768524432Z",
+  "duration_ms": 137428,
+  "exit_code": 1,
+  "stdout": "I’ll audit the latest branch state against the issue criteria and prior failed feedback, then verify test/lint evidence before issuing a strict pass/fail verdict.\n\nI’ve confirmed the new proof artifacts; next I’m validating current quality gates directly (`fmt`, `clippy`, tests) and checking whether the prior contract-debt concern is truly resolved.\n\n## Success criteria from issue description\n\nPhase 1 is met: extraction script uses `--no-default-features` and `gf2m` selective opacity (`scripts/verify-lean.sh:24-43`), with blockers/workarounds documented (`proofs/WORKAROUNDS.md`).\n\nPhase 2 is met: `mul_raw` proof exists without `sorry/axiom` (`proofs/Gf2Core/Proofs/Gf2mMulRaw.lean`).\n\nPhase 3 is met in spec-equivalence form: addition and inverse proofs are present and imported (`Gf2mAddition.lean`, `Gf2mInverse.lean`, `proofs/Gf2Core.lean:17-18`).\n\n## Separation of concerns\n\nPass. `gf2-core` has no dependency on `gf2-coding` (`crates/gf2-core/Cargo.toml`), while `gf2-coding` depends on `gf2-core` (`crates/gf2-coding/Cargo.toml:13`).\n\n## Functional paradigm and performance\n\nPass. GF(2) arithmetic uses bitwise XOR/shift schoolbook operations (`crates/gf2-core/src/gf2m/mul_raw.rs:41-56`), appropriate for performance-critical code.\n\n## Correctness\n\nFail. The latest commit changes only docs, asserting overflow panics are “runtime guards” (`mul_raw.rs` docs; commit `93026ec`), but there is still no explicit runtime validation for `m` in `gf2m_mul_raw` (`mul_raw.rs:32-57`). This leaves contract ambiguity/technical debt for invalid `m` handling.\n\n## Testing\n\nBoundary tests include `m=1,63,64,65` and exhaustive GF(16) checks (`mul_raw.rs` tests).  \nHowever, I could not run `cargo fmt/clippy/test` in this environment (execution permission denied), and there is no new in-scope evidence of full Rust lint/test pass for HEAD; only `lake-build` is recorded as passed for `93026ec` (`.jit/gate-runs/ad8e.../result.json`).\n\n## Unsafe isolation\n\nPass. `gf2-core` still has `#![deny(unsafe_code)]` (`src/lib.rs:35`), and no new unsafe blocks are introduced.\n\n## Documentation\n\nMixed. Public API docs are comprehensive, but the new panic text claims enforcement not implemented in code (doc/behavior mismatch in `mul_raw`).\n\n## Prior review feedback and dependencies\n\n`issue.dependencies` is empty.  \nMost recent feedback on missing inverse proof substance is resolved.  \nMost recent feedback on `m`-contract debt remains unresolved in implementation.\n\nVERDICT: FAIL\n---\nGate result: FAILED\n",
+  "stderr": "",
+  "command": "./scripts/ai-review.sh",
+  "by": "auto:executor",
+  "message": null
+}

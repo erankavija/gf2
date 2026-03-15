@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "d2403a7c-3e27-4a87-ad48-210ff585a6f4",
+  "gate_key": "code-review",
+  "stage": "postcheck",
+  "issue_id": "467d835e-6afd-4638-a0e6-5e5c1ae54904",
+  "commit": "990df90be5f4871c32f23b34da26cf5b55baf397",
+  "branch": "formal-verification",
+  "status": "failed",
+  "started_at": "2026-03-14T19:40:33.961353255Z",
+  "completed_at": "2026-03-14T19:41:59.693552544Z",
+  "duration_ms": 85732,
+  "exit_code": 1,
+  "stdout": "I’m now validating the remaining criteria (phase coverage, dependencies, unsafe isolation, and test evidence) from concrete files and gate history.\n\n## Success criteria from issue description\n\n- **Phase 1 (extraction feasibility):** Met. `scripts/verify-lean.sh` uses `--no-default-features` and selective `--opaque` on problematic `gf2m` submodules; `proofs/WORKAROUNDS.md` documents blockers/workarounds (`UintExt`, `Arc<FieldParams>`, module opacity strategy).\n- **Phase 2 (`mul_raw` proof):** Met. `proofs/Gf2Core/Proofs/Gf2mMulRaw.lean` provides concrete correctness/bound theorems (no `sorry`).\n- **Phase 3 (inverse + addition proofs):** **Not fully met.** Addition proof exists (`Gf2mAddition.lean`), but inverse algebraic correctness relies on an axiom (`axiom fermat_little_gf2m` in `Gf2mInverse.lean:201`) instead of a formal proof.\n\n## Separation of concerns\n\n- Pass: `gf2-core` has no dependency on `gf2-coding` (`crates/gf2-core/Cargo.toml`), while `gf2-coding` depends on `gf2-core`.\n\n## Functional paradigm and performance\n\n- Pass: GF(2) operations are implemented via XOR/shift/bit-tests (`gf2m/mul_raw.rs`), with imperative loop style in a performance-critical path.\n\n## Correctness\n\n- `mul_raw` proof and bound reasoning are present.\n- **Technical debt remains:** `gf2m_mul_raw` docs admit silent incorrect behavior for `m >= 64` in release (`mul_raw.rs:15-17`) rather than enforcing contract robustly.\n\n## Testing\n\n- Added deterministic boundary/property-like tests include `m=1,63,64,65`, GF(16) exhaustive products, inverse identities.\n- I could not execute local shell commands in this environment (permission denied), so I used provided gate history: latest `lake-build` passed.\n\n## Unsafe isolation\n\n- Pass: no new unsafe in reviewed scope; `gf2-core` still enforces `#![deny(unsafe_code)]`.\n\n## Documentation\n\n- Public APIs in `mul_raw.rs` include `Arguments/Examples/Panics/Complexity`.\n- Lean inverse module header claims full inverse correctness, but core algebraic fact is axiomatized, not proved.\n\n## Prior review feedback and dependencies\n\n- Resolved since prior runs: `m=65` test coverage added; no `sorry` in inverse file.\n- **Unresolved blocker from latest run:** inverse correctness still depends on an axiom, so Phase 3 remains incomplete.\n- `issue.dependencies` is empty.\n\nVERDICT: FAIL\n---\nGate result: FAILED\n",
+  "stderr": "",
+  "command": "./scripts/ai-review.sh",
+  "by": "auto:executor",
+  "message": null
+}

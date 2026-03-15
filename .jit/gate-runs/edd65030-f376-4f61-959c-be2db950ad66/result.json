@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "edd65030-f376-4f61-959c-be2db950ad66",
+  "gate_key": "code-review",
+  "stage": "postcheck",
+  "issue_id": "467d835e-6afd-4638-a0e6-5e5c1ae54904",
+  "commit": "9f8d14a8fd5782104caeb030ed4906fd97b73bb7",
+  "branch": "formal-verification",
+  "status": "passed",
+  "started_at": "2026-03-15T07:52:23.183369591Z",
+  "completed_at": "2026-03-15T07:54:50.752328201Z",
+  "duration_ms": 147568,
+  "exit_code": 0,
+  "stdout": "I’ll quickly inspect the current proof and `mul_raw` sources for the exact blockers from prior failed runs (axioms/sorries, `m` contract handling, and tests at boundaries).\n\n## Success criteria from issue description\n\n- **Phase 1 (extraction feasibility): PASS.** `scripts/verify-lean.sh` uses `--no-default-features` and selective `--opaque` handling for `gf2m` submodules (`scripts/verify-lean.sh:24-43`), and blockers/workarounds are documented (`proofs/WORKAROUNDS.md`, including `UintExt` and `Arc<FieldParams>`).\n- **Phase 2 (`mul_raw` proof): PASS.** `proofs/Gf2Core/Proofs/Gf2mMulRaw.lean` contains completed correctness/bound theorems with no `sorry`/`axiom`.\n- **Phase 3 (inverse + XOR-add): PASS.** `Gf2mInverse.lean` and `Gf2mAddition.lean` are present, imported by `proofs/Gf2Core.lean`, and contain no `sorry`/`axiom`.\n\n## Separation of concerns\n\n- PASS. `gf2-core` does not depend on `gf2-coding` (`crates/gf2-core/Cargo.toml`), while `gf2-coding` depends upward on `gf2-core` (`crates/gf2-coding/Cargo.toml:13`).\n\n## Functional paradigm and performance\n\n- PASS. `gf2m_mul_raw` uses XOR/shift schoolbook arithmetic in a tight imperative loop (`mul_raw.rs:41-56`), appropriate for GF(2) performance-critical code.\n\n## Correctness\n\n- PASS. `gf2m_mul_raw` now enforces `m` bounds at runtime (`assert!(m >= 1)` and `assert!(m <= 63)` at `mul_raw.rs:31-32`), resolving the prior contract-debt concern.\n- Tail-masking/bit-numbering invariants were not modified in BitVec scope.\n\n## Testing\n\n- Added boundary and algebraic tests exist (`m=1,63,64,65`, exhaustive GF(16), inverse/add/pow checks in `mul_raw.rs` test module).\n- I could not execute local shell-based Rust gates in this environment; per instruction I used provided in-scope gate history. Latest in-scope `lake-build` for this issue is **passed** (`.jit/gate-runs/ab215523-.../result.json`).\n\n## Unsafe isolation\n\n- PASS. No new unsafe in reviewed scope; `gf2-core` retains `#![deny(unsafe_code)]`.\n\n## Documentation\n\n- PASS. Public APIs in `mul_raw.rs` include description, arguments, examples, panics, and complexity sections.\n\n## Prior review feedback resolution\n\n- Most recent blocker (“`m` contract debt in `gf2m_mul_raw`”) is resolved by explicit runtime guards (`mul_raw.rs:31-32`).\n- Earlier blocker (“inverse proof assumed/axiomatized”) is resolved; no `axiom`/`sorry` in `Gf2mInverse.lean`.\n\n## Jit issue dependencies\n\n- `issue.dependencies` is empty; no prerequisite blockers.\n\nVERDICT: PASS\n---\nGate result: PASSED\n",
+  "stderr": "",
+  "command": "./scripts/ai-review.sh",
+  "by": "auto:executor",
+  "message": null
+}

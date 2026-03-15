@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "6f622dfc-5f64-4875-afbc-fe08a0c61695",
+  "gate_key": "code-review",
+  "stage": "postcheck",
+  "issue_id": "467d835e-6afd-4638-a0e6-5e5c1ae54904",
+  "commit": "dd53b73e57206f41c0d9ad095eda1d3620c388b1",
+  "branch": "formal-verification",
+  "status": "failed",
+  "started_at": "2026-03-14T19:05:45.295373103Z",
+  "completed_at": "2026-03-14T19:07:54.436349781Z",
+  "duration_ms": 129140,
+  "exit_code": 1,
+  "stdout": "I found new Phase 3 proof modules in the current branch, so I’m now validating whether they actually satisfy the issue criteria and project gates.\n\n## Success criteria from issue\n- **Phase 1**: Met (`scripts/verify-lean.sh` uses `--no-default-features`; `proofs/WORKAROUNDS.md` documents extraction blockers/workarounds).\n- **Phase 2**: Met (`Gf2mMulRaw.lean` has `gf2m_mul_raw_correct` and no `sorry` in gf2m proof files).\n- **Phase 3**: **Partially met**. `Gf2mAddition.lean` proves XOR-add correctness, but `Gf2mInverse.lean` proves termination/bounds only; it does **not** prove inverse correctness (`a ≠ 0 -> inverse(a) * a = 1`) nor equivalence to `inverse_raw_spec`.\n\n## Separation of concerns\n- No `gf2-core -> gf2-coding` dependency violation (`crates/gf2-core/Cargo.toml` has no `gf2-coding`; `gf2-coding` depends on `gf2-core`).\n\n## Functional paradigm and performance\n- GF(2) arithmetic uses XOR/shift/bit tests in `gf2m_mul_raw`; appropriate for performance-critical path.\n- Style is acceptable for low-level arithmetic kernels.\n\n## Correctness\n- `mul_raw` loop/spec proof exists and compiles under `lake-build`.\n- API contract debt remains: `gf2m_mul_raw` still lacks explicit runtime validation for `m` bounds and documents “undefined behavior in release mode” for `m >= 64`, which is an imprecise/suspect contract for a public API.\n\n## Testing\n- Added deterministic tests cover zero/identity/commutativity/exhaustive GF(16), plus `m=1`, `m=63`, and `m=64` panic.\n- Missing explicit `m=65` boundary coverage and no property-based (`proptest`) tests for new arithmetic invariants.\n- Local test/lint execution was permission-denied; used issue gate history. Latest in-scope gate evidence: `lake-build` passed for commit `dd53b73`.\n\n## Unsafe isolation\n- No new `unsafe` introduced in reviewed scope; no violation observed.\n\n## Documentation\n- New public functions have docs with examples and complexity notes.\n- Documentation/implementation mismatch in inverse proof module header claims algebraic inverse theorem, but file currently contains bound/termination proofs only.\n\n## Prior review feedback and dependencies\n- Most recent prior failures flagged missing Phase 3 and contract ambiguity.\n- Addition proof was added, but inverse correctness proof remains unresolved; precondition ambiguity remains.\n- `issue.dependencies` is empty (no prerequisite blockers).\n\nVERDICT: FAIL\n---\nGate result: FAILED\n",
+  "stderr": "",
+  "command": "./scripts/ai-review.sh",
+  "by": "auto:executor",
+  "message": null
+}

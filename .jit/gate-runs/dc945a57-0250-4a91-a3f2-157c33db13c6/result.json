@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "dc945a57-0250-4a91-a3f2-157c33db13c6",
+  "gate_key": "code-review",
+  "stage": "postcheck",
+  "issue_id": "467d835e-6afd-4638-a0e6-5e5c1ae54904",
+  "commit": "20534158f9878df4d2978eca404c763e4598a56a",
+  "branch": "formal-verification",
+  "status": "failed",
+  "started_at": "2026-03-14T19:10:41.704558307Z",
+  "completed_at": "2026-03-14T19:12:21.252476888Z",
+  "duration_ms": 99547,
+  "exit_code": 1,
+  "stdout": "I can’t execute shell commands here, so I’m doing a full file-level audit of the relevant Rust and Lean sources plus gate history evidence.\n\n\n### Success criteria + prior feedback + dependencies\n- `issue.dependencies` is empty, so no prerequisite blockers.\n- Phase 1 appears met (`scripts/verify-lean.sh` uses `--no-default-features`; `proofs/WORKAROUNDS.md` documents blockers/workarounds).\n- Phase 2 (`mul_raw`) is largely present (`proofs/Gf2Core/Proofs/Gf2mMulRaw.lean`).\n- **Phase 3 is not met**: `proofs/Gf2Core/Proofs/Gf2mInverse.lean:167` still contains `sorry`, so inverse correctness is unfinished.\n- Most recent prior feedback remains unresolved: inverse proof incompleteness, API contract ambiguity, missing `m=65`/property coverage.\n\n### Separation of concerns\n- `gf2-core` has no dependency on `gf2-coding` (`crates/gf2-core/Cargo.toml`), while `gf2-coding` depends on `gf2-core` (`crates/gf2-coding/Cargo.toml:13`).  \n- No upward dependency violation found.\n\n### Functional paradigm and performance\n- `gf2m_mul_raw` uses XOR/shift schoolbook arithmetic (`crates/gf2-core/src/gf2m/mul_raw.rs:41-56`), appropriate for GF(2) performance paths.\n- Imperative loop style is acceptable here.\n\n### Correctness\n- Inverse correctness theorem is incomplete due to `sorry` (`Gf2mInverse.lean:167`), so formal correctness is not established end-to-end.\n- Public API contract debt remains: docs admit “release mode silently produces incorrect results” for `m ≥ 64` (`mul_raw.rs:15-17`) instead of enforcing/preventing invalid inputs.\n- No new `BitVec` mutators were changed; tail-masking invariant was not impacted in this scope.\n\n### Testing\n- Added deterministic unit tests exist (zero/identity/commutativity, exhaustive GF(16), `m=1`, `m=63`, `m=64` panic).\n- Missing explicit `m=65` boundary test.\n- No `proptest`-based tests for the new `mul_raw`/inverse arithmetic invariants in this file.\n- I could not execute local `cargo fmt/clippy/test` (shell permission denied); per provided history, `lake-build` passed, but code-review issues remain.\n\n### Unsafe isolation\n- `gf2-core` keeps `#![deny(unsafe_code)]` (`src/lib.rs:35`).\n- No new unsafe blocks found in `gf2-core`; unsafe remains isolated to `gf2-kernels-simd`.\n\n### Documentation\n- Rust APIs include `Arguments/Examples/Panics/Complexity`.\n- Documentation/implementation mismatch exists in `Gf2mInverse.lean` header claims versus unfinished proof (`sorry`), which is technical debt in formal-verification scope.\n\nVERDICT: FAIL\n---\nGate result: FAILED\n",
+  "stderr": "",
+  "command": "./scripts/ai-review.sh",
+  "by": "auto:executor",
+  "message": null
+}

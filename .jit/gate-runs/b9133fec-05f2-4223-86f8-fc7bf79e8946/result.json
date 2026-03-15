@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "b9133fec-05f2-4223-86f8-fc7bf79e8946",
+  "gate_key": "code-review",
+  "stage": "postcheck",
+  "issue_id": "467d835e-6afd-4638-a0e6-5e5c1ae54904",
+  "commit": "0e9b42fa77c345933912ef52249d269f428c435d",
+  "branch": "formal-verification",
+  "status": "failed",
+  "started_at": "2026-03-14T11:02:38.722878381Z",
+  "completed_at": "2026-03-14T11:04:07.985478239Z",
+  "duration_ms": 89262,
+  "exit_code": 1,
+  "stdout": "I can’t execute shell commands in this environment (permission denied), so I’ll do a file-level review directly from the repo and rely on provided run history for gate execution evidence.\n\n## Success criteria from issue description\n\n- **Phase 1 (extraction feasibility):** Met. `scripts/verify-lean.sh` uses `--no-default-features` and selective `--opaque` entries for `gf2m` submodules; `proofs/WORKAROUNDS.md` documents `UintExt` and `Arc<FieldParams>` extraction blockers/workarounds.\n- **Phase 2 (mul_raw proof):** Largely met. `proofs/Gf2Core/Proofs/Gf2mMulRaw.lean` now contains full theorems (`gf2m_mul_raw_bound`, `gf2m_mul_raw_correct`) with no `sorry`.\n- **Phase 3 (inverse + XOR-add correctness):** **Not met.** No corresponding `gf2m` inverse/addition proof artifacts are present in `proofs/`.\n\n## Separation of concerns\n\n- No `gf2-core -> gf2-coding` dependency violation observed (`gf2-coding` depends on `gf2-core`; reverse is absent).\n\n## Functional paradigm and performance\n\n- `gf2m_mul_raw` uses bitwise XOR/shift schoolbook logic (appropriate for GF(2) and performance-critical arithmetic).\n- Imperative loop style is justified here.\n\n## Correctness\n\n- Lean loop invariant machinery is present and used in `loop_correct`.\n- Rust function has implicit preconditions (`m` used as `m - 1`), but no explicit runtime validation; contract clarity is partial.\n\n## Testing\n\n- Added unit coverage includes zero/identity/commutativity and exhaustive GF(16) cross-check.\n- Missing explicit word-boundary tests for `m = 1, 63` and invalid-boundary behavior (`64/65`).\n- I could not execute shell commands in this environment; relied on provided gate history (`lake-build` passed).\n\n## Unsafe isolation\n\n- No new `unsafe` observed in reviewed scope; no isolation breach detected.\n\n## Documentation\n\n- `gf2m_mul_raw` has doc sections (`Arguments`, `Panics`, `Complexity`, `Examples`).\n- `Panics`/precondition docs are not fully precise for all invalid `m` cases.\n\n## Prior review feedback and dependencies\n\n- Prior blocker (`sorry` placeholders) appears resolved.\n- `issue.dependencies` is empty.\n- Remaining unresolved item versus issue scope: missing **Phase 3** formal proofs.\n\nVERDICT: FAIL\n---\nGate result: FAILED\n",
+  "stderr": "",
+  "command": "./scripts/ai-review.sh",
+  "by": "auto:executor",
+  "message": null
+}

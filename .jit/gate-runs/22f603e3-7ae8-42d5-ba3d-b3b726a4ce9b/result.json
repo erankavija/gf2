@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "22f603e3-7ae8-42d5-ba3d-b3b726a4ce9b",
+  "gate_key": "code-review",
+  "stage": "postcheck",
+  "issue_id": "467d835e-6afd-4638-a0e6-5e5c1ae54904",
+  "commit": "f04c884576b94d1842dc22f4b2bbb64c16744997",
+  "branch": "formal-verification",
+  "status": "failed",
+  "started_at": "2026-03-14T00:24:52.084810221Z",
+  "completed_at": "2026-03-14T00:27:54.991572521Z",
+  "duration_ms": 182906,
+  "exit_code": 1,
+  "stdout": "I’m going to inspect the exact diff for this issue and then run the project quality gates (`fmt`, `clippy`, `test`, and Lean build) to make a pass/fail call grounded in evidence.\n\n## Success criteria from issue\n- **Phase 1 (extraction feasibility):** Mostly met. `scripts/verify-lean.sh` now uses `--no-default-features` and selective `gf2m` opacity; `proofs/WORKAROUNDS.md` documents blockers/workarounds.\n- **Phase 2 (mul_raw correctness proof):** **Not met.** `proofs/Gf2Core/Proofs/Gf2mMulRaw.lean` still contains two `sorry` placeholders (lines 49, 52), so correctness and bound are unproved.\n- **Phase 3:** contingent on Phase 2; not reached.\n\n## Prior run feedback / dependencies\n- `run_history`: empty.\n- `issue.dependencies`: empty (no prerequisite blocking).\n\n## Separation of concerns\n- No `gf2-core -> gf2-coding` dependency violation observed.\n- Changes are localized to `gf2-core`, `proofs`, scripts, JIT metadata.\n\n## Functional paradigm & performance\n- `gf2m_mul_raw` uses bitwise XOR/shift schoolbook logic appropriately for GF(2).\n- However, public API lacks explicit input validation (`m` bounds), creating behavior ambiguity for invalid inputs.\n\n## Correctness\n- Core proof obligation remains unfinished (`sorry`), so mathematical correctness is not established.\n- No `BitVec` tail-masking risk introduced in this diff.\n\n## Testing\n- Added unit tests in `crates/gf2-core/src/gf2m/mul_raw.rs` are useful (zero/identity/commutativity/exhaustive GF(16)).\n- Missing stronger/property-style coverage and boundary-focused checks for high `m` limits.\n- I could not execute `cargo fmt/clippy/test` or `lake build` due environment binary-execution permission denial; only provided gate evidence shows `lake-build: passed`.\n\n## Unsafe isolation\n- No new `unsafe` introduced; no isolation violations found.\n\n## Documentation\n- New Rust API has doc comments with Arguments/Examples/Panics/Complexity.\n- But the stated theorem is documented as pending and still incomplete, which is technical debt in formal verification scope.\n\nVERDICT: FAIL\n---\nGate result: FAILED\n",
+  "stderr": "",
+  "command": "./scripts/ai-review.sh",
+  "by": "auto:executor",
+  "message": null
+}
