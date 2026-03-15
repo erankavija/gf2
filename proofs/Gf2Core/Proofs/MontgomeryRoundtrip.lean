@@ -1195,6 +1195,195 @@ theorem mod_pow_mont_correct {P : Std.U64}
   obtain ⟨r, hr_eq, hr_val, hr_lt⟩ := spec_imp_exists h
   exact ⟨r, Rinv, hRinv, hr_eq, by rw [hr_val, hrmod_val], hr_lt⟩
 
+/-! ## fp_pow_correct — connecting mod_pow_mont to mathematical exponentiation -/
+
+/-- Pure ℕ from_mont: multiply by R⁻¹ and reduce mod P. -/
+private noncomputable def from_mont_nat (Rinv P x : ℕ) : ℕ := x * Rinv % P
+
+/-- Base case: from_mont_nat of R_MOD_P = 1, when R * Rinv ≡ 1 (mod P). -/
+private lemma from_mont_r_mod_p {P : ℕ} (Rinv : ℕ) (hP : 0 < P)
+    (hRinv : MontArith.R * Rinv % P = 1 % P) :
+    from_mont_nat Rinv P (2 ^ 64 % P) = 1 % P := by
+  unfold from_mont_nat
+  rw [Nat.mod_mul_mod]
+  show 2 ^ 64 * Rinv % P = 1 % P
+  exact hRinv
+
+/-- Inductive step: from_mont_nat distributes over mont_mul_nat.
+    from_mont(a * b * Rinv % P) = from_mont(a) * from_mont(b) % P -/
+private lemma from_mont_mont_mul {P : ℕ} (Rinv a b : ℕ) (hP : 0 < P)
+    (hRinv : MontArith.R * Rinv % P = 1 % P) :
+    from_mont_nat Rinv P (mont_mul_nat Rinv P a b) =
+      from_mont_nat Rinv P a * from_mont_nat Rinv P b % P := by
+  unfold from_mont_nat mont_mul_nat
+  -- LHS = (a * b * Rinv % P) * Rinv % P
+  -- RHS = (a * Rinv % P) * (b * Rinv % P) % P
+  -- Both equal a * b * Rinv * Rinv % P
+  conv_lhs => rw [Nat.mod_mul_mod]
+  -- LHS = a * b * Rinv * Rinv % P
+  conv_rhs =>
+    rw [Nat.mul_mod (a * Rinv % P) (b * Rinv % P) P,
+        Nat.mod_mod, Nat.mod_mod, ← Nat.mul_mod (a * Rinv) (b * Rinv) P]
+  -- RHS = (a * Rinv) * (b * Rinv) % P = a * b * Rinv * Rinv % P
+  congr 1; ring
+
+/-- Generalized loop invariant: from_mont of the loop result equals
+    from_mont(result) * from_mont(base)^exp % P. -/
+private lemma mont_pow_loop_from_mont_gen {P : ℕ} (Rinv base exp result : ℕ)
+    (hP : 0 < P) (hRinv : MontArith.R * Rinv % P = 1 % P) :
+    from_mont_nat Rinv P (mont_pow_loop_spec Rinv P base exp result) =
+      from_mont_nat Rinv P result * (from_mont_nat Rinv P base) ^ exp % P := by
+  induction exp using Nat.strongRecOn generalizing base result with
+  | _ exp ih =>
+  by_cases hexp : exp = 0
+  · -- Base case: exp = 0
+    rw [hexp, mont_pow_loop_spec_zero, pow_zero, Nat.mul_one]
+    exact (Nat.mod_eq_of_lt (Nat.mod_lt _ hP)).symm
+  · -- Inductive case: exp > 0
+    rw [mont_pow_loop_spec_step _ _ _ _ _ (by omega)]
+    -- Inline the let bindings manually
+    show from_mont_nat Rinv P (mont_pow_loop_spec Rinv P
+      (if exp / 2 > 0 then mont_mul_nat Rinv P base base else base)
+      (exp / 2)
+      (if exp % 2 = 1 then mont_mul_nat Rinv P result base else result)) =
+      from_mont_nat Rinv P result * from_mont_nat Rinv P base ^ exp % P
+    -- Apply IH
+    have hexp'_lt : exp / 2 < exp := Nat.div_lt_self (by omega) (by norm_num)
+    rw [ih (exp / 2) hexp'_lt]
+    -- Goal: from_mont(result') * from_mont(base')^(exp/2) % P
+    --     = from_mont(result) * from_mont(base)^exp % P
+    set fb := from_mont_nat Rinv P base
+    set fr := from_mont_nat Rinv P result
+    -- Key identity: from_mont(result')
+    have hresult' : from_mont_nat Rinv P
+        (if exp % 2 = 1 then mont_mul_nat Rinv P result base else result) % P =
+        fr * fb ^ (exp % 2) % P := by
+      split
+      · rename_i h_odd
+        rw [h_odd, pow_one, from_mont_mont_mul _ _ _ hP hRinv, Nat.mod_mod_of_dvd _ (dvd_refl P)]
+      · rename_i h_even
+        have : exp % 2 = 0 := by omega
+        rw [this, pow_zero, Nat.mul_one]
+    -- Key identity: from_mont(base')^(exp/2)
+    have hbase' : (from_mont_nat Rinv P
+        (if exp / 2 > 0 then mont_mul_nat Rinv P base base else base)) ^ (exp / 2) % P =
+        fb ^ (2 * (exp / 2)) % P := by
+      split
+      · rw [from_mont_mont_mul _ _ _ hP hRinv]
+        rw [Nat.pow_mod (fb * fb % P) (exp / 2) P,
+            Nat.mod_mod_of_dvd _ (dvd_refl P),
+            ← Nat.pow_mod (fb * fb) (exp / 2) P,
+            ← sq, ← pow_mul]
+      · rename_i h
+        push_neg at h
+        have hez : exp / 2 = 0 := by omega
+        simp only [hez, Nat.mul_zero, pow_zero]
+    -- Combine
+    have hexp_eq : exp = 2 * (exp / 2) + exp % 2 := by omega
+    -- LHS = from_mont(result') * from_mont(base')^(exp/2) % P
+    -- = (from_mont(result') % P) * (from_mont(base')^(exp/2) % P) % P
+    rw [Nat.mul_mod, hresult', hbase', ← Nat.mul_mod]
+    -- Goal: fr * fb^(exp%2) * fb^(2*(exp/2)) % P = fr * fb^exp % P
+    -- Rewrite only the RHS occurrence of exp in fb^exp
+    conv_rhs => rw [show exp = exp % 2 + 2 * (exp / 2) from by omega, pow_add]
+    ring_nf
+
+/-- Instantiation: from_mont of the full power computation equals from_mont(base)^exp % P. -/
+private lemma mont_pow_loop_from_mont {P : ℕ} (Rinv base exp : ℕ)
+    (hP : 1 < P) (hRinv : MontArith.R * Rinv % P = 1 % P) :
+    from_mont_nat Rinv P (mont_pow_loop_spec Rinv P base exp (2 ^ 64 % P)) =
+      (from_mont_nat Rinv P base) ^ exp % P := by
+  rw [mont_pow_loop_from_mont_gen _ _ _ _ (by omega) hRinv,
+      from_mont_r_mod_p _ (by omega) hRinv, Nat.mod_eq_of_lt hP, one_mul]
+
+/-- from_mont on actual Rust code matches from_mont_nat on the ℕ spec.
+    If r.val < P.val and from_mont P r = ok v, then v.val = from_mont_nat Rinv P r.val. -/
+private lemma from_mont_val_eq_nat {P : Std.U64} {r : Std.U64}
+    (hP : ValidPrime P) (hP2 : P.val ≠ 2)
+    (hr_lt : r.val < P.val)
+    (Rinv : ℕ) (hRinv : MontArith.R * Rinv % P.val = 1 % P.val) :
+    ∃ v, gfp.montgomery.from_mont P r = ok v ∧
+      v.val = from_mont_nat Rinv P.val r.val := by
+  obtain ⟨v, hv_eq, hv_lt, hv_val⟩ := from_mont_value hP hP2 hr_lt
+  refine ⟨v, hv_eq, ?_⟩
+  -- hv_val: v.val * 2^64 % P.val = r.val
+  -- Need: v.val = r.val * Rinv % P.val
+  -- From v.val * R ≡ r.val (mod P) and R * Rinv ≡ 1 (mod P):
+  -- v.val * R * Rinv ≡ r.val * Rinv (mod P)
+  -- v.val ≡ r.val * Rinv (mod P)
+  -- Both sides < P, so equal.
+  unfold from_mont_nat
+  have hP_pos : 0 < P.val := by have := hP.2.1; omega
+  have hRinv1 : MontArith.R * Rinv % P.val = 1 := by
+    rw [hRinv, Nat.mod_eq_of_lt hP.2.1]
+  -- v * R * Rinv % P = v % P = v (since v < P)
+  have h1 : v.val * MontArith.R * Rinv % P.val = v.val := by
+    have : v.val * MontArith.R * Rinv = v.val * (MontArith.R * Rinv) := by ring
+    rw [this, Nat.mul_mod, hRinv1, mul_one, Nat.mod_mod_of_dvd _ (dvd_refl _),
+        Nat.mod_eq_of_lt hv_lt]
+  -- v * R * Rinv % P = r * Rinv % P (since v*R ≡ r mod P)
+  have h2 : v.val * MontArith.R * Rinv % P.val = r.val * Rinv % P.val := by
+    have : v.val * MontArith.R * Rinv % P.val =
+        (v.val * 2 ^ 64 % P.val) * Rinv % P.val := by
+      rw [show v.val * MontArith.R * Rinv = v.val * 2 ^ 64 * Rinv from rfl]
+      exact (mod_mul_left (v.val * 2 ^ 64) Rinv P.val).symm
+    rw [this, hv_val]
+  linarith
+
+/-- **fp_pow_correct**: Exponentiation in Montgomery form matches mathematical
+    exponentiation of the canonical value.
+
+    For any valid prime P > 2, base < P, and exponent exp:
+    ```rust
+    let pow_result = mod_pow_mont(P, base, exp);
+    let r = from_mont(P, pow_result);
+    // r = from_mont(base)^exp % P
+    ```
+-/
+theorem fp_pow_correct {P : Std.U64}
+    (hP : ValidPrime P) (hP2 : P.val ≠ 2)
+    (base exp : Std.U64) (hb : base.val < P.val) :
+    ∃ r, (do
+      let pow_result ← gfp.montgomery.mod_pow_mont P base exp
+      gfp.montgomery.from_mont P pow_result) = ok r ∧
+    ∃ vb, gfp.montgomery.from_mont P base = ok vb ∧
+          r.val = vb.val ^ exp.val % P.val := by
+  have hP_pos : 0 < P.val := by have := hP.2.1; omega
+  -- Get mod_pow_mont result
+  obtain ⟨pow_result, Rinv, hRinv, hpow_eq, hpow_val, hpow_lt⟩ :=
+    mod_pow_mont_correct hP hP2 base exp hb
+  -- Get from_mont of pow_result
+  obtain ⟨r, hr_eq, hr_lt, hr_val⟩ := from_mont_value hP hP2 hpow_lt
+  -- Get from_mont of base
+  obtain ⟨vb, hvb_eq, hvb_lt, hvb_val⟩ := from_mont_value hP hP2 hb
+  refine ⟨r, ?_, vb, hvb_eq, ?_⟩
+  · -- Computation succeeds
+    simp only [hpow_eq]; exact hr_eq
+  · -- Value equation: r.val = vb.val ^ exp.val % P.val
+    -- r = from_mont_nat(pow_result) (on ℕ level)
+    -- pow_result = mont_pow_loop_spec Rinv P base exp (R%P)
+    -- from_mont_nat(mont_pow_loop_spec ...) = from_mont_nat(base)^exp % P
+    -- from_mont_nat(base) = vb.val
+
+    -- Step 1: r.val = from_mont_nat Rinv P pow_result.val
+    obtain ⟨r', hr'_eq, hr'_val⟩ := from_mont_val_eq_nat hP hP2 hpow_lt Rinv hRinv
+    have hr_uniq : r = r' := by
+      have : gfp.montgomery.from_mont P pow_result = ok r := hr_eq
+      rw [this] at hr'_eq; exact ok.inj hr'_eq
+    rw [hr_uniq] at *; clear hr_uniq
+
+    -- Step 2: vb.val = from_mont_nat Rinv P base.val
+    obtain ⟨vb', hvb'_eq, hvb'_val⟩ := from_mont_val_eq_nat hP hP2 hb Rinv hRinv
+    have hvb_uniq : vb = vb' := by
+      rw [hvb_eq] at hvb'_eq; exact ok.inj hvb'_eq
+    rw [hvb_uniq] at *; clear hvb_uniq
+
+    -- Step 3: from_mont_nat(mont_pow_loop_spec ...) = from_mont_nat(base)^exp % P
+    have hkey := mont_pow_loop_from_mont Rinv base.val exp.val hP.2.1 hRinv
+
+    -- Step 4: chain
+    rw [hr'_val, hpow_val, hkey, hvb'_val]
+
 end MontRoundtrip
 
 end
