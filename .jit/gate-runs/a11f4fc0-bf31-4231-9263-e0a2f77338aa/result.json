@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "a11f4fc0-bf31-4231-9263-e0a2f77338aa",
+  "gate_key": "code-review",
+  "stage": "postcheck",
+  "issue_id": "467d835e-6afd-4638-a0e6-5e5c1ae54904",
+  "commit": "c60a150379b4224f8b19129b5f97182a253f674b",
+  "branch": "formal-verification",
+  "status": "failed",
+  "started_at": "2026-03-14T19:20:13.572169909Z",
+  "completed_at": "2026-03-14T19:22:15.147368322Z",
+  "duration_ms": 121575,
+  "exit_code": 1,
+  "stdout": "I found a new commit after the prior failed reviews; I’m now checking whether it truly fixes the blockers or just masks them, then I’ll run the quality gates.\n\n## Success criteria from issue\n- **Phase 1:** Met (`scripts/verify-lean.sh` and `proofs/WORKAROUNDS.md` exist and align with extraction assessment).\n- **Phase 2:** Met (`Gf2mMulRaw.lean` contains a real `gf2m_mul_raw_correct` theorem, no `sorry` there).\n- **Phase 3:** **Not met.** `proofs/Gf2Core/Proofs/Gf2mInverse.lean:147` introduces `axiom gf2m_inverse_is_inverse` instead of proving inverse correctness via square-and-multiply.\n\n## Separation of concerns\n- No `gf2-core -> gf2-coding` dependency violation observed.\n\n## Functional paradigm and performance\n- GF(2) arithmetic uses XOR/shift paths (`mul_raw.rs`), performance-appropriate.\n\n## Correctness\n- `gf2m_mul_raw` still lacks explicit runtime guard for `m` and documents silent wrong results in release for `m ≥ 64` (`mul_raw.rs:15-17`), which is contract debt.\n\n## Testing\n- Added useful boundary/unit tests (`m=1,63,64,65`, inverse/add/pow cases).\n- I could not run cargo checks/tests in this environment (permission denied); relied on gate history. Latest in-scope `lake-build` passed.\n\n## Unsafe isolation\n- No new unsafe in reviewed scope; isolation remains intact.\n\n## Documentation\n- Public Rust APIs include docs with `Arguments/Examples/Panics/Complexity`.\n- `Gf2mInverse.lean` header claims proof of inverse correctness, but core claim is axiomatized, not proved.\n\n## Prior review feedback\n- `m=65` test gap is addressed.\n- Main blocker remains unresolved in substance: inverse correctness is assumed via axiom, not formally proved.\n\n## Jit issue dependencies\n- `issue.dependencies` is empty; no prerequisite blocking.\n\nVERDICT: FAIL\n---\nGate result: FAILED\n",
+  "stderr": "",
+  "command": "./scripts/ai-review.sh",
+  "by": "auto:executor",
+  "message": null
+}

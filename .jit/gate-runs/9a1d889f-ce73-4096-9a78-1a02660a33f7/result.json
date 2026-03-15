@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "9a1d889f-ce73-4096-9a78-1a02660a33f7",
+  "gate_key": "code-review",
+  "stage": "postcheck",
+  "issue_id": "467d835e-6afd-4638-a0e6-5e5c1ae54904",
+  "commit": "05e6280a801ef091b99daa1e111e774dabae3d96",
+  "branch": "formal-verification",
+  "status": "failed",
+  "started_at": "2026-03-14T19:51:12.698110609Z",
+  "completed_at": "2026-03-14T19:54:36.605527388Z",
+  "duration_ms": 203907,
+  "exit_code": 1,
+  "stdout": "I found the latest proof files and now I’m validating quality gates and unresolved prior blockers (especially inverse proof substance and `m`-bound contract behavior).\n\n## Success criteria from issue description\n\n- **Phase 1 (extraction feasibility):** Met. `scripts/verify-lean.sh` uses `--no-default-features` and selective `--opaque` for problematic `gf2m` submodules; `proofs/WORKAROUNDS.md` documents `UintExt`/`Arc<FieldParams>` blockers and workaround strategy.\n- **Phase 2 (`mul_raw` proof):** Met. `proofs/Gf2Core/Proofs/Gf2mMulRaw.lean` contains completed theorems with no `sorry`/`axiom`.\n- **Phase 3 (inverse + XOR add):** Met in implementation-proofs form. `Gf2mAddition.lean` proves XOR-add spec; `Gf2mInverse.lean` proves `gf2m_pow_raw` and `gf2m_inverse_raw` correctness against specs without axioms/sorries.\n\n## Separation of concerns\n\n- Pass. `gf2-core` does not depend on `gf2-coding` (`crates/gf2-core/Cargo.toml`), while `gf2-coding` depends on `gf2-core` (`crates/gf2-coding/Cargo.toml:13`).\n\n## Functional paradigm and performance\n\n- Pass. `gf2m_mul_raw` uses GF(2)-appropriate bitwise XOR/shift schoolbook operations (`crates/gf2-core/src/gf2m/mul_raw.rs:41-56`).\n- Imperative loops are acceptable here (performance-critical arithmetic path).\n\n## Correctness\n\n- Positive: proof artifacts for `mul_raw`, `pow_raw`, and `inverse_raw` exist and compile in latest `lake-build` gate for HEAD (`run b11b1ef6...`, commit `05e6280...`).\n- **Failing concern (technical debt):** public API contract for `m` remains weak/unsafe: docs still state debug-only panic and release-mode silent wrong results for `m ≥ 64` (`mul_raw.rs:15-17`), with no explicit runtime guard in `gf2m_mul_raw` (`mul_raw.rs:32-57`). This is unresolved from prior feedback and violates the “no technical debt introduced” criterion.\n\n## Testing\n\n- Added tests are strong for deterministic coverage: GF(16) exhaustive multiplication cross-check, boundary tests `m=1/63/64/65`, inverse checks, and XOR-add checks (`mul_raw.rs` test module).\n- I could not execute `cargo fmt/clippy/test` due environment permission restrictions. Per instruction, I relied on provided gate history; in-scope gate evidence shows `lake-build` passing on current commit.\n- No new evidence of full workspace lint/test pass was available in this environment.\n\n## Unsafe isolation\n\n- Pass. `gf2-core` still enforces `#![deny(unsafe_code)]` (`crates/gf2-core/src/lib.rs:35`), and reviewed changes introduce no `unsafe`.\n\n## Documentation\n\n- New/updated public APIs have descriptive docs and examples.\n- **Issue remains:** panic/validity contract is documented as “silent incorrect results in release” for invalid `m` rather than being prevented/guarded (`mul_raw.rs:15-17`), which is documentation of a known footgun rather than a robust contract.\n\n## Prior review feedback (most recent run) resolution check\n\n- Resolved: inverse proof no longer relies on the prior Fermat axiom; `Gf2mInverse.lean` has no `axiom`/`sorry`.\n- Unresolved: `m`-bound contract debt in `gf2m_mul_raw` remains (same concern previously flagged).\n\n## Jit issue dependencies\n\n- `issue.dependencies` is empty; no prerequisite blockers.\n\nVERDICT: FAIL\n---\nGate result: FAILED\n",
+  "stderr": "",
+  "command": "./scripts/ai-review.sh",
+  "by": "auto:executor",
+  "message": null
+}

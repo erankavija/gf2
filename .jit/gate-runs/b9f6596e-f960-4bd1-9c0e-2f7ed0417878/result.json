@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "b9f6596e-f960-4bd1-9c0e-2f7ed0417878",
+  "gate_key": "code-review",
+  "stage": "postcheck",
+  "issue_id": "467d835e-6afd-4638-a0e6-5e5c1ae54904",
+  "commit": "f04c884576b94d1842dc22f4b2bbb64c16744997",
+  "branch": "formal-verification",
+  "status": "failed",
+  "started_at": "2026-03-14T00:28:52.564262063Z",
+  "completed_at": "2026-03-14T00:30:20.498043451Z",
+  "duration_ms": 87933,
+  "exit_code": 1,
+  "stdout": "I’ll inspect the current diff and proof status, then run the project quality gates to make a strict pass/fail call against the issue criteria.\n\nI found the proof file and confirmed its current status; next I’m running formatting, lint, tests, and Lean build to ground the verdict in gate evidence.\n\n## Success criteria from issue description\n\nPhase 1 is partially met: `scripts/verify-lean.sh` uses `--no-default-features` and selective `gf2m` opacity; `proofs/WORKAROUNDS.md` documents extraction blockers/workarounds.\n\nPhase 2 is **not met**: `proofs/Gf2Core/Proofs/Gf2mMulRaw.lean` still contains unresolved `sorry` placeholders (lines 49, 52), so the required `mul_raw` correctness and bound proofs are incomplete.\n\nPhase 3 is not started (contingent on Phase 2).\n\n\n## Separation of concerns\n\nNo `gf2-core -> gf2-coding` dependency violation observed. Changes are in `gf2-core`, `proofs`, and scripts.\n\n\n## Functional paradigm and performance\n\n`gf2m_mul_raw` is implemented with XOR/shift bitwise operations and loop structure appropriate for GF(2) performance.\n\nHowever, the new public function lacks explicit parameter validation (`m` constraints), while docs say behavior is “unspecified if `m > 63`”, introducing avoidable API ambiguity.\n\n\n## Correctness\n\nMost critical issue: formal correctness theorem remains unfinished (`sorry`), so mathematical correctness is not established.\n\nAdditionally, `gf2m_mul_raw` can panic for invalid `m` (e.g., `m = 0` at `m - 1`) without explicit precondition enforcement.\n\n\n## Testing\n\nNew unit tests exist (`zero`, `identity`, `commutative`, `GF(8/16)`, exhaustive GF(16) cross-check), which is good.\n\nBut required boundary emphasis is incomplete: no explicit `m` edge tests around `1, 63, 64, 65`, and no property-based tests for invariants.\n\nI could not execute `cargo fmt/clippy/test` in this environment (binary execution denied), so I relied on gate history for this issue. `lake-build` passed but reports `Gf2mMulRaw` still “declaration uses `sorry`.”\n\n\n## Unsafe isolation\n\nNo new `unsafe` introduced; no unsafe-isolation violations found.\n\n\n## Documentation\n\n`gf2m_mul_raw` has doc sections (`Arguments`, `Examples`, `Panics`, `Complexity`), but the formal proof file itself explicitly records pending proof debt, and the theorem remains incomplete.\n\n\n## Prior review feedback and issue dependencies\n\nPrior failed review flagged unresolved `sorry` in `Gf2mMulRaw.lean`; this remains unresolved.\n\n`issue.dependencies` is empty, so no prerequisite blocking.\n\nVERDICT: FAIL\n---\nGate result: FAILED\n",
+  "stderr": "",
+  "command": "./scripts/ai-review.sh",
+  "by": "auto:executor",
+  "message": null
+}

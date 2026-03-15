@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "b851e259-83c9-463d-923d-2d742a9db4b8",
+  "gate_key": "code-review",
+  "stage": "postcheck",
+  "issue_id": "467d835e-6afd-4638-a0e6-5e5c1ae54904",
+  "commit": "0879079df6051c6c8c0cfd3a65cf55b8764f85b4",
+  "branch": "formal-verification",
+  "status": "failed",
+  "started_at": "2026-03-14T11:42:54.010362730Z",
+  "completed_at": "2026-03-14T11:45:22.842695411Z",
+  "duration_ms": 148832,
+  "exit_code": 1,
+  "stdout": "I’m gathering concrete evidence from the actual diff and proof artifacts, then I’ll run the project gates and map findings to each review criterion.\n\n## Success criteria from issue\nPhase 1 is met (`scripts/verify-lean.sh` uses `--no-default-features`; `proofs/WORKAROUNDS.md` documents extraction blockers/workarounds).  \nPhase 2 is met (`proofs/Gf2Core/Proofs/Gf2mMulRaw.lean` now has `gf2m_mul_raw_correct` and no `sorry` in that file).  \nPhase 3 is **not met**: no Lean proofs for GF(2^m) `inverse()` or XOR-add correctness (no matching modules/imports beyond `Gf2mDefs/Gf2mProgress/Gf2mMulRaw` in `proofs/Gf2Core.lean`).\n\n## Separation of concerns\nNo `gf2-core -> gf2-coding` dependency violation observed (no `gf2-coding` reference in `crates/gf2-core/Cargo.toml`).\n\n## Functional paradigm and performance\n`gf2m_mul_raw` uses bitwise XOR/shift schoolbook multiplication appropriately for GF(2) hot-path arithmetic.\n\n## Correctness\nCore `mul_raw` proof artifact exists and compiles in lake gate history.  \nHowever, `gf2m_mul_raw` still has unguarded preconditions (`m` documented as `1..=63`, but no runtime enforcement; docs still say “unspecified if `m > 63`), leaving API-contract debt.\n\n## Testing\nNew boundary tests for `m=1` and `m=63` were added (`test_gf2m_mul_raw_m1`, `test_gf2m_mul_raw_m63`).  \nNo explicit `m=64/65` invalid-boundary tests.  \nI could not run local cargo/lint/test (permission denied); relied on provided gate artifacts.\n\n## Unsafe isolation\nNo new `unsafe` introduced; no isolation breach detected.\n\n## Documentation\n`gf2m_mul_raw` has required doc sections (`Arguments`, `Panics`, `Complexity`, `Examples`), but precondition/panic behavior remains imprecise.\n\n## Prior feedback + dependencies\nMost recent feedback’s `sorry` blocker is resolved; missing Phase 3 remains unresolved.  \n`issue.dependencies` is empty (no prerequisite blocker).\n\nVERDICT: FAIL\n---\nGate result: FAILED\n",
+  "stderr": "",
+  "command": "./scripts/ai-review.sh",
+  "by": "auto:executor",
+  "message": null
+}
