@@ -129,6 +129,9 @@ theorem gf2m_mul_raw_bound (a b : Std.U64) (m : Std.Usize) (poly : Std.U64)
     ∃ r, gf2m.mul_raw.gf2m_mul_raw a b m poly = ok r ∧
       r.val < 2 ^ m.val := by
   unfold gf2m.mul_raw.gf2m_mul_raw
+  have hm_ge1 : m ≥ 1#usize := by have := hparams.m_pos; scalar_tac
+  have hm_le63 : m ≤ 63#usize := by have := hparams.m_le; scalar_tac
+  simp only [hm_ge1, ite_true, hm_le63]
   by_cases ha0 : a = 0#u64
   · subst ha0; refine ⟨_, rfl, ?_⟩; positivity
   · simp only [ha0, ite_false]
@@ -349,6 +352,9 @@ theorem gf2m_mul_raw_correct (a b : Std.U64) (m : Std.Usize) (poly : Std.U64)
       r.val = mul_raw_spec a.val b.val m.val poly.val ∧
       r.val < 2 ^ m.val := by
   unfold gf2m.mul_raw.gf2m_mul_raw
+  have hm_ge1 : m ≥ 1#usize := by have := hparams.m_pos; scalar_tac
+  have hm_le63 : m ≤ 63#usize := by have := hparams.m_le; scalar_tac
+  simp only [hm_ge1, ite_true, hm_le63]
   by_cases ha0 : a = 0#u64
   · subst ha0; refine ⟨_, rfl, ?_, by positivity⟩
     show (0#u64 : Std.U64).val = mul_raw_spec (0#u64 : Std.U64).val b.val m.val poly.val
