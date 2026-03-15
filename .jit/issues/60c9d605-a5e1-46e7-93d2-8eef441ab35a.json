@@ -2,9 +2,9 @@
   "id": "60c9d605-a5e1-46e7-93d2-8eef441ab35a",
   "title": "Prove compute_p_inv Newton iteration correctness — eliminate sole sorry",
   "description": "Eliminate the sole remaining `sorry` in the Lean4 proof infrastructure by proving `p_inv_value_spec`: the Newton-Schulz iteration in `compute_p_inv` (montgomery.rs:52-61) correctly computes `P_INV` such that `P * P_INV ≡ -1 (mod 2^64)`.\n\n## Rust implementation (montgomery.rs:52-61)\n```rust\nlet mut inv = 1u64;\nfor i in 0..6 {\n    inv = inv.wrapping_mul(2u64.wrapping_sub(p.wrapping_mul(inv)));\n}\nwrapping_neg(inv)\n```\n\n## Aeneas extraction\nAlready extracted to `proofs/Gf2Core/Funs.lean:122-135` as a `loop` combinator with state `(inv, i)`.\n\n## Loop invariant\nAfter k iterations: `P * inv ≡ 1 (mod 2^(2^k))`.\n- Base case: k=0, inv=1, P*1 ≡ 1 (mod 2^1) since P is odd\n- Inductive step: if P*inv ≡ 1 (mod 2^(2^k)), then P*(inv*(2 - P*inv)) ≡ 1 (mod 2^(2^(k+1)))\n- After 6 iterations: P*inv ≡ 1 (mod 2^64)\n- Final wrapping_neg: P_INV = -inv, so P*P_INV ≡ -1 (mod 2^64)\n\n## Proof strategy\n1. Define loop invariant as `∀ k ≤ 6, P.val * inv_k % 2^(2^k) = 1`\n2. Prove inductive step using Newton's method quadratic convergence\n3. Specialize at k=6 to get `P * inv % 2^64 = 1`\n4. Connect wrapping_neg to get final `P * P_INV % 2^64 = 2^64 - 1`\n\n## Existing infrastructure\n- Progress lemmas already exist: `compute_p_inv_loop_progress` and `compute_p_inv_progress` (Progress.lean:163-201)\n- `p_inv_progress` returns `ok` (Progress.lean:197)\n- The sorry is in `MontgomeryRoundtrip.lean` as `p_inv_value_spec`\n\n## Difficulty\nHard — wrapping arithmetic on BitVec/u64 with quadratic convergence proof. May need `bv_omega` or manual BitVec reasoning for the inductive step.",
-  "state": "ready",
+  "state": "done",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [],
   "gates_required": [
     "lake-build",
@@ -13,9 +13,19 @@
   ],
   "gates_status": {
     "doc-review": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-03-12T22:19:37.825390284Z"
+      "status": "passed",
+      "updated_by": "agent:claude",
+      "updated_at": "2026-03-15T08:09:02.661955384Z"
+    },
+    "lake-build": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-03-15T08:06:02.739422058Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-03-15T08:06:03.753839518Z"
     }
   },
   "context": {},
@@ -26,5 +36,5 @@
     "story:8889e712"
   ],
   "created_at": "2026-03-11T21:07:39.403544692+00:00",
-  "updated_at": "2026-03-12T22:19:37.825830014+00:00"
+  "updated_at": "2026-03-15T08:09:06.637560731+00:00"
 }
