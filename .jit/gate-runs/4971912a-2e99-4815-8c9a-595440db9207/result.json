@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "4971912a-2e99-4815-8c9a-595440db9207",
+  "gate_key": "code-review",
+  "stage": "postcheck",
+  "issue_id": "0e7cb099-c901-4323-95e7-b7ba9d7853b8",
+  "commit": "b04d72e29332c86eab2930dce4f43db9dd127e98",
+  "branch": "formal-verification",
+  "status": "failed",
+  "started_at": "2026-03-15T09:16:34.498632343Z",
+  "completed_at": "2026-03-15T09:18:26.600912916Z",
+  "duration_ms": 112102,
+  "exit_code": 1,
+  "stdout": "I’ll review the actual patch and run the relevant quality checks (tests/lints/build), then map findings directly to each required criterion.\n\nI found substantial proof additions in `Progress.lean` and `MontgomeryRoundtrip.lean`; next I’ll validate by building/tests and then assess whether they fully satisfy the issue’s exact success claim (`base^exp` in Montgomery form).\n\n## Success criteria from issue\nThe core criterion is **not fully met**.  \n`mod_pow_mont_correct` proves equality to a new recursive helper `mont_pow_loop_spec` (`MontgomeryRoundtrip.lean:1178-1184`), but I found no theorem connecting that spec to `base^exp * R (mod P)` (or equivalent Montgomery exponent semantics). `mont_pow_loop_spec` is only referenced internally (`...:960-1184`), so the requested end-to-end statement is missing.\n\n## Separation of concerns\nPass. Changes are confined to `proofs/` (`Progress.lean`, `MontgomeryRoundtrip.lean`), with no `gf2-core` ↔ `gf2-coding` layering violation.\n\n## Functional paradigm and performance\nPass for scope. Proof-side additions mirror algorithm structure and use existing specs; no kernel/perf regressions introduced.\n\n## Correctness\nPartial. Loop/progress reasoning is strong (`@[progress] mod_pow_mont_loop_progress`, `Progress.lean:520+`; loop invariant machinery at `MontgomeryRoundtrip.lean:982+`), including the `if exp2 > 0` squaring guard.  \nBut final mathematical target (`base^exp` in Montgomery form) is not proven.\n\n## Testing / linting\nCould not execute `cargo`/`lake` commands in this environment (permission denied). Available gate evidence: `lake-build` is passed; `doc-review` remains pending in issue metadata. No run_history items to verify.\n\n## Unsafe isolation\nPass. No new unsafe code; changes are Lean proofs only.\n\n## Documentation\nMixed. Proof comments are present, but no final theorem documenting/establishing the explicit `base^exp` Montgomery semantic statement requested by the issue.\n\n## Prior review feedback\n`run_history` is empty; nothing to reconcile.\n\n## Issue dependencies\nNo dependencies listed; nothing blocked upstream.\n\nVERDICT: FAIL\n---\nGate result: FAILED\n",
+  "stderr": "",
+  "command": "./scripts/ai-review.sh",
+  "by": "auto:executor",
+  "message": null
+}
