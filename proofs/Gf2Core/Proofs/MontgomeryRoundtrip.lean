@@ -19,6 +19,7 @@ import Gf2Core.Funs
 import Gf2Core.Proofs.Defs
 import Gf2Core.Proofs.Progress
 import Gf2Core.Proofs.ModArith
+import Mathlib.FieldTheory.Finite.Basic
 
 open Aeneas Aeneas.Std Result ControlFlow Error Aeneas.Std.WP
 open gf2_core
@@ -1383,6 +1384,169 @@ theorem fp_pow_correct {P : Std.U64}
 
     -- Step 4: chain
     rw [hr'_val, hpow_val, hkey, hvb'_val]
+
+/-! ## Fermat's little theorem at ℕ level -/
+
+/-- Fermat's little theorem at the ℕ level: a^(P-2) * a ≡ 1 (mod P) for 0 < a < P, P prime.
+    Follows from a^(P-1) ≡ 1 (mod P) and a^(P-1) = a^(P-2) * a. -/
+private lemma fermat_inv_nat {P : ℕ} (hP : Nat.Prime P) (a : ℕ)
+    (ha_pos : 0 < a) (ha_lt : a < P) :
+    a ^ (P - 2) * a % P = 1 := by
+  have hP2 : 2 ≤ P := hP.two_le
+  -- a^(P-1) = a^(P-2) * a
+  have hpow : a ^ (P - 1) = a ^ (P - 2) * a := by
+    rw [show P - 1 = (P - 2) + 1 from by omega, pow_succ]
+  -- Fermat in ZMod: (a : ZMod P)^(P-1) = 1
+  haveI : Fact (Nat.Prime P) := ⟨hP⟩
+  have ha_ne : (a : ZMod P) ≠ 0 := by
+    rw [Ne, ZMod.natCast_eq_zero_iff]
+    exact fun h => by have := Nat.le_of_dvd ha_pos h; omega
+  have hfermat := ZMod.pow_card_sub_one_eq_one ha_ne
+  -- Transfer to ℕ: a^(P-1) % P = 1
+  have hfermat_nat : a ^ (P - 1) % P = 1 := by
+    -- Transfer: (↑a : ZMod P)^(P-1) = 1 → a^(P-1) % P = 1
+    have h1 : (↑(a ^ (P - 1)) : ZMod P) = ↑(1 : ℕ) := by
+      push_cast; exact hfermat
+    rw [ZMod.natCast_eq_natCast_iff] at h1
+    -- h1 : a ^ (P - 1) ≡ 1 [MOD P], i.e., a^(P-1) % P = 1 % P
+    rwa [Nat.ModEq, Nat.mod_eq_of_lt hP.one_lt] at h1
+  rw [← hpow]; exact hfermat_nat
+
+/-- from_mont of a nonzero Montgomery element is nonzero mod P. -/
+private lemma from_mont_val_nonzero {P : Std.U64} {a : Std.U64}
+    (hP : ValidPrime P) (hP2 : P.val ≠ 2) (ha : a.val < P.val) (hne : a.val ≠ 0) :
+    ∃ r, gfp.montgomery.from_mont P a = ok r ∧ r.val < P.val ∧ r.val ≠ 0 := by
+  obtain ⟨r, hr_eq, hr_lt, hr_val⟩ := from_mont_value hP hP2 ha
+  refine ⟨r, hr_eq, hr_lt, ?_⟩
+  -- If r = 0 then r * R % P = 0, but hr_val says r * R % P = a, and a ≠ 0
+  intro h0
+  rw [h0, Nat.zero_mul, Nat.zero_mod] at hr_val
+  exact hne hr_val.symm
+
+/-! ## fp_inv_correct -/
+
+/-- **fp_inv_correct**: The inv function correctly computes the multiplicative inverse
+    via Fermat's little theorem.
+
+    For any valid prime P > 2, nonzero element self < P:
+    inv(self) returns `some r` where from_mont(r) * from_mont(self) ≡ 1 (mod P). -/
+theorem fp_inv_correct {P : Std.U64} {self : Std.U64}
+    (hP : ValidPrime P) (hP2 : P.val ≠ 2) (hself : self.val < P.val) (hne : self.val ≠ 0) :
+    ∃ inv_r, gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.inv (P := P) self
+      = ok (some inv_r) ∧ inv_r.val < P.val ∧
+    ∃ vi vs, gfp.montgomery.from_mont P inv_r = ok vi ∧
+             gfp.montgomery.from_mont P self = ok vs ∧
+             vi.val * vs.val % P.val = 1 := by
+  have hP_pos : 0 < P.val := by have := hP.2.1; omega
+  have h0 : ¬(self = 0#u64) := by
+    intro h; apply hne; have := congrArg UScalar.val h; simpa using this
+  have hP2u : ¬(P = 2#u64) := by
+    intro h; exact hP2 (by subst h; native_decide)
+  have hP_ge3 : 3 ≤ P.val := by
+    rcases Nat.Prime.eq_two_or_odd hP.1 with h2 | hodd
+    · exact absurd h2 hP2
+    · omega
+  -- P - 2 succeeds
+  have hP_ge_2u : ¬(P.val < (2#u64 : Std.U64).val) := by
+    have h2val : (2#u64 : Std.U64).val = 2 := by native_decide
+    rw [h2val]; omega
+  have hsub : ∃ e, P - (2#u64 : Std.U64) = ok e := by
+    simp only [HSub.hSub, Sub.sub, UScalar.sub, hP_ge_2u, ite_false]; exact ⟨_, rfl⟩
+  obtain ⟨e, he_eq⟩ := hsub
+  -- mod_pow_mont succeeds
+  obtain ⟨inv_r, hpow_eq, hpow_lt⟩ := FpProgress.mod_pow_mont_progress hP self e hself
+  -- inv = ok (some inv_r) via the above
+  have hinv_eq : gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.inv (P := P) self
+      = ok (some inv_r) := by
+    unfold gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.inv
+    simp only [h0, ite_false, hP2u, he_eq, bind_tc_ok, hpow_eq, bind_tc_ok]
+  -- e.val = P.val - 2
+  have he_val : e.val = P.val - 2 := by
+    have h2val : (2#u64 : Std.U64).val = 2 := by native_decide
+    have : e.val = P.val - (2#u64 : Std.U64).val := by
+      have hspec : P - (2#u64 : Std.U64) ⦃ r => r.val = P.val - (2#u64 : Std.U64).val ⦄ := by
+        progress; scalar_tac
+      obtain ⟨e', he'_eq, he'_val⟩ := spec_imp_exists hspec
+      have : e = e' := by rw [he_eq] at he'_eq; exact ok.inj he'_eq
+      rw [this]; exact he'_val
+    rw [this, h2val]
+  -- fp_pow_correct for mathematical meaning
+  obtain ⟨r, hr_do, vb, hvb_eq, hr_val⟩ := fp_pow_correct hP hP2 self e hself
+  -- Extract from_mont inv_r = ok r from hr_do
+  have hr_split : gfp.montgomery.from_mont P inv_r = ok r := by
+    have : (do let pow_result ← gfp.montgomery.mod_pow_mont P self e
+               gfp.montgomery.from_mont P pow_result) = ok r := hr_do
+    simp only [hpow_eq, bind_tc_ok] at this; exact this
+  -- from_mont self
+  obtain ⟨vs, hvs_eq, hvs_lt, _⟩ := from_mont_value hP hP2 hself
+  have hvb_vs : vb = vs := by rw [hvb_eq] at hvs_eq; exact ok.inj hvs_eq
+  rw [hvb_vs] at hr_val
+  -- from_mont self is nonzero
+  obtain ⟨vs', hvs'_eq, _, hvs'_ne⟩ := from_mont_val_nonzero hP hP2 hself hne
+  have : vs = vs' := by rw [hvs_eq] at hvs'_eq; exact ok.inj hvs'_eq
+  subst this
+  refine ⟨inv_r, hinv_eq, hpow_lt, r, vs, hr_split, hvs_eq, ?_⟩
+  -- r.val = vs.val ^ e.val % P.val = vs.val ^ (P-2) % P.val
+  rw [hr_val, he_val]
+  -- vs.val ^ (P-2) % P * vs.val % P = 1
+  rw [Nat.mul_mod, Nat.mod_mod_of_dvd _ (dvd_refl _), ← Nat.mul_mod]
+  exact fermat_inv_nat hP.1 vs.val (by omega) hvs_lt
+
+/-! ## fp_div_correct -/
+
+/-- **fp_div_correct**: Division in Fp correctly computes a * b⁻¹.
+
+    For any valid prime P > 2, a, b < P with b ≠ 0:
+    div(a, b) returns r where from_mont(r) * from_mont(b) ≡ from_mont(a) (mod P). -/
+theorem fp_div_correct {P : Std.U64} {a b : Std.U64}
+    (hP : ValidPrime P) (hP2 : P.val ≠ 2)
+    (ha : a.val < P.val) (hb : b.val < P.val) (hbne : b.val ≠ 0) :
+    ∃ r, (do
+      let d ← gfp.Fp.Insts.CoreOpsArithDivFpFp.div (P := P) a b
+      gfp.montgomery.from_mont P d) = ok r ∧
+    ∃ va vb, gfp.montgomery.from_mont P a = ok va ∧
+             gfp.montgomery.from_mont P b = ok vb ∧
+             vb.val ≠ 0 ∧
+             r.val * vb.val % P.val = va.val % P.val := by
+  have hP_pos : 0 < P.val := by have := hP.2.1; omega
+  -- Step 1: inv(b) succeeds and gives mathematical inverse
+  obtain ⟨inv_r, hinv_eq, hinv_lt, vi, vs, hvi_eq, hvs_eq, hvi_vs⟩ :=
+    fp_inv_correct hP hP2 hb hbne
+  -- Step 2: mul(a, inv_r) followed by from_mont gives value equation
+  obtain ⟨r, hr_eq, va, va_inv, hva_eq, hva_inv_eq, hr_val⟩ :=
+    fp_mul_correct hP hP2 ha hinv_lt
+  -- va_inv = vi (both from_mont P inv_r)
+  have hva_inv_vi : va_inv = vi := by rw [hva_inv_eq] at hvi_eq; exact ok.inj hvi_eq
+  rw [hva_inv_vi] at hr_val
+  -- from_mont P b
+  obtain ⟨vb, hvb_eq, hvb_lt, _⟩ := from_mont_value hP hP2 hb
+  have hvb_vs : vb = vs := by rw [hvb_eq] at hvs_eq; exact ok.inj hvs_eq
+  -- vs is nonzero
+  obtain ⟨_, hvs_ne_eq, _, hvs_ne⟩ := from_mont_val_nonzero hP hP2 hb hbne
+  have hvs_ne' : vs.val ≠ 0 := by
+    rw [hvs_eq] at hvs_ne_eq; exact (ok.inj hvs_ne_eq) ▸ hvs_ne
+  -- Assemble the computation
+  have hdiv_eq : (do
+      let d ← gfp.Fp.Insts.CoreOpsArithDivFpFp.div (P := P) a b
+      gfp.montgomery.from_mont P d) = ok r := by
+    show (do
+      let d ← (do
+        let o ← gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.inv b
+        let f ← core.option.Option.expect o (toStr "division by zero in Fp")
+        gfp.Fp.Insts.CoreOpsArithMulFpFp.mul a f)
+      gfp.montgomery.from_mont P d) = ok r
+    simp only [hinv_eq, bind_tc_ok, core.option.Option.expect, bind_tc_ok]
+    exact hr_eq
+  refine ⟨r, hdiv_eq, va, vb, hva_eq, hvb_eq, ?_, ?_⟩
+  · rw [hvb_vs]; exact hvs_ne'
+  · -- r.val = (va.val * vi.val) % P.val, vi * vs % P = 1
+    -- Need: r.val * vb.val % P.val = va.val % P.val
+    rw [hvb_vs, hr_val]
+    rw [Nat.mul_mod ((va.val * vi.val) % P.val) vs.val P.val,
+        Nat.mod_mod_of_dvd _ (dvd_refl _), ← Nat.mul_mod]
+    have : va.val * vi.val * vs.val = va.val * (vi.val * vs.val) := by ring
+    rw [this, Nat.mul_mod va.val (vi.val * vs.val) P.val, hvi_vs, mul_one,
+        Nat.mod_mod_of_dvd _ (dvd_refl _)]
 
 end MontRoundtrip
 

@@ -586,6 +586,53 @@ theorem mod_pow_mont_progress {P : Std.U64}
     exact mod_pow_mont_loop_progress hP base exp rmod hb hrmod
   exact spec_imp_exists hspec
 
+/-! ## Option.expect progress -/
+
+@[progress]
+theorem option_expect_some_progress {T : Type} (x : T) (msg : Str) :
+    core.option.Option.expect (some x) msg ⦃ r => r = x ⦄ := by
+  simp only [core.option.Option.expect, spec, theta, wp_return]
+
+/-! ## inv / div progress -/
+
+theorem inv_progress {P : Std.U64} {self : Std.U64}
+    (hP : ValidPrime P) (hP2 : P.val ≠ 2) (hself : self.val < P.val) (hne : self.val ≠ 0) :
+    ∃ r, gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.inv (P := P) self
+      = ok (some r) ∧ r.val < P.val := by
+  unfold gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.inv
+  have h0 : ¬(self = 0#u64) := by
+    intro h; apply hne; have := congrArg UScalar.val h; simpa using this
+  have hP2u : ¬(P = 2#u64) := by
+    intro h; exact hP2 (by subst h; native_decide)
+  simp only [h0, ite_false, hP2u]
+  -- P - 2 succeeds (P ≥ 3)
+  have hP_ge3 : (2#u64 : Std.U64).val ≤ P.val := by
+    have h2val : (2#u64 : Std.U64).val = 2 := by native_decide
+    rcases Nat.Prime.eq_two_or_odd hP.1 with h2 | hodd
+    · exact absurd h2 hP2
+    · rw [h2val]; omega
+  have hsub : ∃ e, P - (2#u64 : Std.U64) = ok e := by
+    simp only [HSub.hSub, Sub.sub, UScalar.sub, show ¬(P.val < (2#u64 : Std.U64).val) from by omega, ite_false]
+    exact ⟨_, rfl⟩
+  obtain ⟨e, he_eq⟩ := hsub
+  simp only [he_eq, bind_tc_ok]
+  -- mod_pow_mont returns ok with result < P
+  obtain ⟨r, hr_eq, hr_lt⟩ := mod_pow_mont_progress hP self e hself
+  simp only [hr_eq, bind_tc_ok]
+  exact ⟨r, rfl, hr_lt⟩
+
+theorem div_progress {P : Std.U64} {self rhs : Std.U64}
+    (hP : ValidPrime P) (hP2 : P.val ≠ 2)
+    (hself : self.val < P.val) (hrhs : rhs.val < P.val) (hne : rhs.val ≠ 0) :
+    ∃ r, gfp.Fp.Insts.CoreOpsArithDivFpFp.div (P := P) self rhs = ok r ∧ r.val < P.val := by
+  unfold gfp.Fp.Insts.CoreOpsArithDivFpFp.div
+  obtain ⟨inv_r, hinv_eq, hinv_lt⟩ := inv_progress hP hP2 hrhs hne
+  simp only [hinv_eq, bind_tc_ok]
+  -- Option.expect (some inv_r)
+  simp only [core.option.Option.expect, bind_tc_ok]
+  -- mul
+  exact mul_progress hP hself hinv_lt hP2
+
 end FpProgress
 
 end

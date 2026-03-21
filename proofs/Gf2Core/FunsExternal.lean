@@ -61,9 +61,12 @@ def U128.Insts.CoreOpsArithAddAssignU128.add_assign (x y : Std.U128) : Result St
 
 /- [core::option::{core::option::Option<T>}::expect]:
    Source: '/rustc/library/core/src/option.rs', lines 968:4-968:45
-   Name pattern: [core::option::{core::option::Option<@T>}::expect] -/
+   Name pattern: [core::option::{core::option::Option<@T>}::expect]
+   Defined: Some → value, None → panic (matches Rust semantics) -/
 @[rust_fun "core::option::{core::option::Option<@T>}::expect"]
-axiom core.option.Option.expect {T : Type} : Option T → Str → Result T
+def core.option.Option.expect {T : Type} : Option T → Str → Result T
+  | some x, _ => ok x
+  | none, _ => fail .panic
 
 /- [core::option::{core::option::Option<T>}::map]:
    Source: '/rustc/library/core/src/option.rs', lines 1160:4-1162:53
