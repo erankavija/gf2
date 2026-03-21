@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "e79863a8-7a98-4f7f-ab98-270bf5a0997e",
+  "gate_key": "code-review",
+  "stage": "postcheck",
+  "issue_id": "104a46c2-0c49-4f66-8fcb-e84416b9b0ce",
+  "commit": "b15e3ae9dd746a8c38b42b692900b0fda15d62ca",
+  "branch": "formal-verification",
+  "status": "passed",
+  "started_at": "2026-03-18T23:03:49.111742843Z",
+  "completed_at": "2026-03-18T23:05:34.900964029Z",
+  "duration_ms": 105789,
+  "exit_code": 0,
+  "stdout": "I found local changes in `proofs/` plus JIT metadata. Next I’ll inspect the exact Lean diffs and then run relevant proof/build checks before scoring each review criterion.\n\n## Issue Success Criteria\n\nImplemented and evidenced in `proofs/Gf2Core/Proofs/MontgomeryRoundtrip.lean`:\n\n- `inv(a)` path is tied to exponentiation via `mod_pow_mont` (`fp_inv_correct`, around `L1457-L1479`).\n- Fermat-based inverse property is proven with `ZMod.pow_card_sub_one_eq_one` transfer (`fermat_inv_nat`, `L1392-L1413`) and used to conclude `vi.val * vs.val % P.val = 1` (`L1492-L1493`).\n- Division structure is proven by unfolding `div` and showing it is `mul` with `inv` (`fp_div_correct`, especially `L1529-L1539`).\n\n## Separation of Concerns\n\nChanges are confined to `proofs/` Lean files and JIT metadata; no `gf2-core`↔`gf2-coding` dependency boundary changes.\n\n## Functional Paradigm and Performance\n\nNo runtime Rust kernel changes; only theorem/progress definitions. No performance regressions introduced.\n\n## Correctness\n\nNo `BitVec` mutators were changed, so tail-masking/bit-index invariants are unaffected.\n\n## Testing\n\nI could not run `lake/cargo` locally due environment permission denial. Used issue gate evidence: `lake-build` is `passed` (`.jit/issues/104a46c2-...json`, `L22-L25`). No run-history feedback items were provided.\n\n## Unsafe Isolation\n\nNo Rust `unsafe` changes; scope is Lean proofs only.\n\n## Documentation\n\nAdded focused theorem docs for `fp_inv_correct` and `fp_div_correct`; also replaced `Option.expect` axiom with executable semantics in `FunsExternal.lean` (`L62-L69`), reducing proof debt.\n\n## Prior Review Feedback\n\n`run_history` is empty; no unresolved prior findings.\n\n## Dependency Check\n\nPrerequisite issue `0e7cb099` is `done` with required gates passed; current proofs build directly on `mod_pow_mont` correctness.\n\nVERDICT: PASS\n---\nGate result: PASSED\n",
+  "stderr": "",
+  "command": "./scripts/ai-review.sh",
+  "by": "auto:executor",
+  "message": null
+}
