@@ -167,8 +167,10 @@ jobs:
         eval $(opam env)
         opam install ppx_deriving visitors easy_logging zarith yojson core_unix \
           odoc ocamlgraph menhir unionFind zarith progress domainslib dune --yes
-        git clone --depth 1 https://github.com/AeneasVerif/aeneas.git /tmp/aeneas
-        cd /tmp/aeneas && make setup-charon && make build-dev
+        git clone https://github.com/AeneasVerif/aeneas.git /tmp/aeneas
+        cd /tmp/aeneas
+        git checkout 1180be60c7a0
+        make setup-charon && make build-dev
         cp /tmp/aeneas/bin/aeneas ~/.cargo/bin/
 
     - name: Cache Lake build
@@ -180,7 +182,7 @@ jobs:
     - name: Run verification pipeline
       run: |
         eval $(opam env)
-        ./scripts/verify-lean.sh
+        AENEAS_LEAN_DIR=/tmp/aeneas/backends/lean ./scripts/verify-lean.sh
 
     - name: Verify generated files are up to date
       run: |
