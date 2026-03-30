@@ -36,30 +36,52 @@ All patches are in `expand_associated_types.rs`:
 - Aeneas translation: produces Types.lean, Funs.lean, FunsExternal_Template.lean (partial — 16 gfpn function body errors, same as before)
 - `verify-lean.sh` updated to tolerate Aeneas exit code 1 when output files are present
 
+## Reproducing Phase 1
+
+The new patch file is checked in at `patches/charon-419f53b6-assoc-type-fixes.patch`. To rebuild the toolchain from scratch:
+
+```bash
+# Charon
+git clone https://github.com/AeneasVerif/charon.git /tmp/charon
+cd /tmp/charon && git checkout 419f53b6
+git apply /path/to/gf2/patches/charon-419f53b6-assoc-type-fixes.patch
+cd charon && RUSTUP_TOOLCHAIN=nightly-2026-02-07 cargo install --path . --locked
+
+# Aeneas (needs opam with OCaml 5.2.1)
+git clone https://github.com/AeneasVerif/aeneas.git /tmp/aeneas
+cd /tmp/aeneas && git checkout 1180be60c7a0
+eval $(opam env) && make setup-charon && make build-dev
+cp bin/aeneas ~/.cargo/bin/
+
+# Run pipeline
+AENEAS_LEAN_DIR=/tmp/aeneas/backends/lean ./scripts/verify-lean.sh
+```
+
 ## Remaining (Phase 2)
 
 ### 1. Fix Lean proof breakage
 
-`lake build` fails in 3 files:
-- `Proofs/Defs.lean`
-- `Proofs/ExtProgress.lean`
-- `Proofs/Gf2mProgress.lean`
+`lake build` fails in 3 files. The root cause is that the new Aeneas generates slightly different names/structures in `Types.lean` and `Funs.lean`:
+- `Proofs/Defs.lean` — likely references renamed struct fields or changed type signatures
+- `Proofs/ExtProgress.lean` — progress lemmas for gfpn functions whose generated bodies changed
+- `Proofs/Gf2mProgress.lean` — progress lemmas for gf2m functions
 
-**Approach**: diff generated files against `proofs/Gf2Core.bak/` to identify what changed, then update proofs in import-chain order:
+**Diagnosis approach**:
+```bash
+diff proofs/Gf2Core/Types.lean proofs/Gf2Core.bak/Types.lean
+diff proofs/Gf2Core/Funs.lean proofs/Gf2Core.bak/Funs.lean
+diff proofs/Gf2Core/FunsExternal_Template.lean proofs/Gf2Core.bak/FunsExternal_Template.lean
+```
+
+**Fix order** (import chain):
 1. `Types.lean` → `FunsExternal.lean` (check template signature changes) → `Funs.lean`
 2. `Proofs/Defs.lean` → `Progress.lean` → `MontgomeryRoundtrip.lean` → `FpField.lean`
 3. `Proofs/ExtDefs.lean` → `ExtProgress.lean` → `QuadraticExtField.lean` → `CubicExtField.lean`
 4. `Proofs/Gf2mDefs.lean` → `Gf2mProgress.lean` → `Gf2mInverse.lean`
 
-### 2. Generate new patch file
+### 2. Swap patch files
 
-```bash
-cd /data/aeneas-build/charon
-git diff 419f53b6 -- charon/src/transform/normalize/expand_associated_types.rs \
-  > /path/to/gf2/patches/charon-419f53b6-assoc-type-fixes.patch
-```
-
-Delete old `patches/charon-hrtb-assoc-types.patch`.
+The new patch is at `patches/charon-419f53b6-assoc-type-fixes.patch`. Delete old `patches/charon-hrtb-assoc-types.patch`.
 
 ### 3. Update CI
 

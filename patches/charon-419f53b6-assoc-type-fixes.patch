@@ -1,0 +1,64 @@
+diff --git a/charon/src/transform/normalize/expand_associated_types.rs b/charon/src/transform/normalize/expand_associated_types.rs
+index 6b3e370c..c6df0b80 100644
+--- a/charon/src/transform/normalize/expand_associated_types.rs
++++ b/charon/src/transform/normalize/expand_associated_types.rs
+@@ -752,7 +752,23 @@ impl<'a> ComputeItemModifications<'a> {
+                         .iter()
+                         .any(|pat| pat.matches(&self.ctx.translated, &tr.item_meta.name));
+                 let remove_assoc_types = !is_self_referential && remove_assoc_type;
+-                let type_constraints = self.compute_constraint_set(&tr.generics);
++                let mut type_constraints = self.compute_constraint_set(&tr.generics);
++                // Propagate type constraints from implied (parent/supertrait) clauses.
++                // Without this, constraints like `Mul::Output = Self` on a supertrait are
++                // invisible to child traits referencing grandparent associated types.
++                for clause in &tr.implied_clauses {
++                    let pred = clause.trait_.clone().erase();
++                    if let Some(trait_mods) = self
++                        .compute_trait_modifications(pred.id)
++                        .as_processed()
++                    {
++                        let base_path = TraitRefPath::parent_clause(clause.clause_id);
++                        for (path, ty) in trait_mods.type_constraints.iter_self_paths() {
++                            let path = path.on_tref(&base_path);
++                            type_constraints.insert_path(&path, ty);
++                        }
++                    }
++                }
+                 let mut modifications =
+                     ItemModifications::from_constraint_set(type_constraints, remove_assoc_types);
+                 if modifications.add_type_params {
+@@ -829,7 +845,7 @@ impl<'a> ComputeItemModifications<'a> {
+                 for (clause_id, tref) in timpl.implied_trait_refs.iter_indexed() {
+                     let clause_path = TraitRefPath::parent_clause(clause_id);
+                     let pred = &tref.trait_decl_ref;
+-                    if let Some(pred) = pred.skip_binder.clone().move_from_under_binder()
++                    if let Some(pred) = Some(pred.clone().erase())
+                             // This takes a `&mut self`, so we reborrow it shared below.
+                             && let _ = self.compute_trait_modifications(pred.id)
+                             && let Some(trait_mods) = self.trait_modifications[pred.id].as_processed()
+@@ -893,7 +909,24 @@ impl UpdateItemBody<'_> {
+             }
+             _ => self.type_replacements.depth(),
+         };
+-        let ty = self.type_replacements[dbid].find(&path)?;
++        // Try the primary lookup first, then try the alternate base clause
++        // (SelfClause ↔ Local(Bound(0, 0))) as fallback.
++        let ty = self.type_replacements[dbid].find(&path).or_else(|| {
++            let mut alt = path.clone();
++            match &alt.tref.base {
++                BaseClause::SelfClause => {
++                    alt.tref.base =
++                        BaseClause::Local(DeBruijnVar::Bound(DeBruijnId::zero(), TraitClauseId::ZERO));
++                }
++                BaseClause::Local(DeBruijnVar::Bound(dbid, id))
++                    if dbid.index == 0 && id.index() == 0 =>
++                {
++                    alt.tref.base = BaseClause::SelfClause;
++                }
++                _ => return None,
++            }
++            self.type_replacements[dbid].find(&alt)
++        })?;
+         let mut ty = ty.clone().move_under_binders(dbid);
+         if let TyKind::TraitType(tref, name) = ty.kind() {
+             let path = TraitRefPath::self_ref().with_assoc_type(*name);
