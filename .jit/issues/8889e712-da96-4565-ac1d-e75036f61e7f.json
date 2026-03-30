@@ -6,11 +6,12 @@
   "priority": "normal",
   "assignee": null,
   "dependencies": [
-    "104a46c2-0c49-4f66-8fcb-e84416b9b0ce",
-    "3f6bb7ee-a178-4c8e-9f5d-d978802543c7",
-    "467d835e-6afd-4638-a0e6-5e5c1ae54904",
+    "60c9d605-a5e1-46e7-93d2-8eef441ab35a",
     "ec0743e1-819d-4efc-bc5c-f900e569130d",
-    "60c9d605-a5e1-46e7-93d2-8eef441ab35a"
+    "467d835e-6afd-4638-a0e6-5e5c1ae54904",
+    "104a46c2-0c49-4f66-8fcb-e84416b9b0ce",
+    "afc7bdaf-0dcc-4a25-a110-1d8a5af3731d",
+    "3f6bb7ee-a178-4c8e-9f5d-d978802543c7"
   ],
   "gates_required": [
     "lake-build",
@@ -22,25 +23,25 @@
     "doc-review"
   ],
   "gates_status": {
-    "fmt": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-03-12T22:19:37.373321034Z"
-    },
     "doc-review": {
       "status": "pending",
       "updated_by": null,
       "updated_at": "2026-03-12T22:19:37.373338874Z"
     },
-    "tdd-reminder": {
+    "fmt": {
       "status": "pending",
       "updated_by": null,
-      "updated_at": "2026-03-12T22:19:37.373237214Z"
+      "updated_at": "2026-03-12T22:19:37.373321034Z"
     },
     "clippy": {
       "status": "pending",
       "updated_by": null,
       "updated_at": "2026-03-12T22:19:37.373301954Z"
+    },
+    "tdd-reminder": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-03-12T22:19:37.373237214Z"
     },
     "tests": {
       "status": "pending",
@@ -56,5 +57,5 @@
     "epic:e095a100"
   ],
   "created_at": "2026-03-11T21:07:15.911783041+00:00",
-  "updated_at": "2026-03-12T22:19:37.373781674+00:00"
+  "updated_at": "2026-03-30T23:49:29.345018225+00:00"
 }

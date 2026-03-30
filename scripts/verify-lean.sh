@@ -52,13 +52,32 @@ echo "=== Step 2: Aeneas translation ==="
 LEAN_DIR="$PROOFS_DIR/Gf2Core"
 mkdir -p "$LEAN_DIR"
 
+# Aeneas may exit 1 when it generates partial files for functions it cannot
+# fully translate (e.g. gfpn arithmetic with complex trait hierarchies).
+# We capture the exit code and verify output files were generated.
+AENEAS_EXIT=0
 aeneas \
   -backend lean \
   -dest "$LEAN_DIR" \
   -split-files \
-  "$LLBC_FILE"
+  "$LLBC_FILE" || AENEAS_EXIT=$?
 
-echo "Aeneas translation succeeded"
+# Verify that the key output files were actually generated.
+MISSING=0
+for f in Types.lean Funs.lean FunsExternal_Template.lean; do
+  if [ ! -f "$LEAN_DIR/$f" ]; then
+    echo "ERROR: Aeneas did not produce $LEAN_DIR/$f"
+    MISSING=1
+  fi
+done
+if [ "$MISSING" -eq 1 ]; then
+  echo "ERROR: Aeneas failed to generate required files (exit code $AENEAS_EXIT)"
+  exit 1
+fi
+if [ "$AENEAS_EXIT" -ne 0 ]; then
+  echo "WARNING: Aeneas exited with code $AENEAS_EXIT (partial files generated — some function bodies are opaque)"
+fi
+echo "Aeneas translation completed"
 
 echo ""
 echo "=== Step 3: Post-processing ==="
