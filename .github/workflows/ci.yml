@@ -118,9 +118,9 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Kani verification
-      uses: model-checking/kani-verifier-action@v1
+      uses: model-checking/kani-github-action@v1
       with:
-        command: cargo kani -p gf2-core
+        args: -p gf2-core
 
   lean-verify:
     name: Lean Verification
@@ -163,6 +163,7 @@ jobs:
       run: |
         sudo apt-get update && sudo apt-get install -y opam
         opam init --disable-sandboxing --no-setup --auto-setup --yes
+        opam switch create 5.2.1
         eval $(opam env)
         opam install ppx_deriving visitors easy_logging zarith yojson core_unix \
           odoc ocamlgraph menhir unionFind zarith progress domainslib dune --yes
