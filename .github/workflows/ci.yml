@@ -62,39 +62,48 @@ jobs:
       run: cargo build --workspace --benches
   
   coverage:
-    name: Code Coverage
+    name: Coverage Badges
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
-      contents: read
-    
+      contents: write
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Install Rust toolchain
       uses: dtolnay/rust-toolchain@stable
       with:
         components: llvm-tools-preview
-    
+
     - name: Cache cargo registry
       uses: actions/cache@v4
       with:
         path: ~/.cargo/registry
         key: ubuntu-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-    
+
     - name: Cache cargo index
       uses: actions/cache@v4
       with:
         path: ~/.cargo/git
         key: ubuntu-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-    
+
     - name: Install cargo-llvm-cov
       uses: taiki-e/install-action@cargo-llvm-cov
-    
-    - name: Generate code coverage
-      run: cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
-    
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
-      with:
-        files: lcov.info
-        fail_ci_if_error: false
+
+    - name: Generate coverage data
+      run: cargo llvm-cov --all-features --workspace --json --summary-only --output-path coverage.json
+
+    - name: Generate coverage badges
+      run: bash scripts/generate-coverage-badges.sh coverage.json badges
+
+    - name: Deploy badges to badges branch
+      run: |
+        cd badges
+        git init
+        git checkout -b badges
+        git add -A
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git commit -m "Update coverage badges [skip ci]"
+        git push --force "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" badges

@@ -1,7 +1,9 @@
 # gf2 - High-Performance GF(2) Computing
 
 [![CI](https://github.com/erankavija/gf2/workflows/CI/badge.svg)](https://github.com/erankavija/gf2/actions)
-[![codecov](https://codecov.io/gh/erankavija/gf2/branch/main/graph/badge.svg)](https://codecov.io/gh/erankavija/gf2)
+[![gf2-core coverage](https://raw.githubusercontent.com/erankavija/gf2/badges/gf2-core.svg)](https://github.com/erankavija/gf2/actions)
+[![gf2-coding coverage](https://raw.githubusercontent.com/erankavija/gf2/badges/gf2-coding.svg)](https://github.com/erankavija/gf2/actions)
+[![workspace coverage](https://raw.githubusercontent.com/erankavija/gf2/badges/workspace.svg)](https://github.com/erankavija/gf2/actions)
 
 A Rust workspace for high-performance binary field computing and coding theory, containing two complementary crates:
 
