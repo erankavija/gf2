@@ -43,7 +43,7 @@ restriction is inherent to Montgomery arithmetic (R = 2^64 requires gcd(R, P) = 
    rustup component add rustc-dev llvm-tools-preview rust-src --toolchain nightly-2026-02-07
    ```
    Our pipeline uses a patched Charon built from `/data/aeneas-build/charon/`
-   (upstream base `24a17b5e` + 3 local HRTB/associated-type fixes).
+   (upstream base `419f53b6` + 3 local HRTB/associated-type fixes).
    See `dev/lean4-verification-pipeline.md` for full details and rebuild
    instructions.
 

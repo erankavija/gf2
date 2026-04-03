@@ -48,8 +48,6 @@ private theorem compute_r_mod_p_value {P : Std.U64} (hP : ValidPrime P) :
     progress as ⟨i, hi⟩
     progress as ⟨i1, hi1⟩
     progress as ⟨i2, hi2⟩
-    · have : i1.val = P.val := by rw [hi1]; exact U64.cast_U128_val_eq P
-      have : 1 < P.val := hP.2.1; omega
     have hi_val : i.val = 2 ^ 64 := by rw [hi]; native_decide
     have hi1_val : i1.val = P.val := by rw [hi1]; exact U64.cast_U128_val_eq P
     have hi2_val : i2.val = 2 ^ 64 % P.val := by rw [hi2, hi_val, hi1_val]
@@ -222,6 +220,7 @@ private theorem compute_p_inv_loop_value_spec {P : Std.U64}
       0 ≤ i1.val ∧ i1.val ≤ 6 ∧ P.val * inv1.val % 2 ^ (2 ^ i1.val.toNat) = 1)
   · intro ⟨inv1, i1⟩ ⟨hi1_ge, hi1_le, hinv1⟩
     dsimp only
+    simp only [gfp.montgomery.compute_p_inv_loop.body]
     by_cases hlt : i1 < 6#i32
     · simp only [hlt, ite_true]
       progress as ⟨i2, hi2⟩       -- wrapping_mul P inv1
@@ -394,20 +393,6 @@ theorem redc_value_spec {P : Std.U64} {t : Std.U128}
     progress as ⟨i2, hi2⟩           -- cast U128 P
     progress as ⟨mp, hmp⟩           -- checked U128 mul: i1 * i2
     progress as ⟨i3, hi3⟩           -- checked U128 add: t + mp
-    · -- U128 add overflow bound
-      have : U128.max = 2^128 - 1 := by native_decide
-      rw [this]
-      have h_i1_val : i1.val = m.val := by rw [hi1]; exact U64.cast_U128_val_eq m
-      have h_i2_val : i2.val = P.val := by rw [hi2]; exact U64.cast_U128_val_eq P
-      have : m.val < 2^64 := m.hBounds
-      have : mp.val ≤ (2^64 - 1) * 2^63 := by
-        rw [hmp, h_i1_val, h_i2_val]
-        exact Nat.mul_le_mul (by omega) hP.2.2
-      have : t.val < 2^63 * 2^64 := by
-        calc t.val < P.val * 2^64 := ht
-          _ ≤ 2^63 * 2^64 := Nat.mul_le_mul_right _ hP.2.2
-      have : (2^64 - 1) * (2:ℕ)^63 + 2^63 * 2^64 ≤ 2^128 := by norm_num
-      omega
     progress as ⟨i4, hi4⟩           -- i3 >>> 64
     progress as ⟨u, hu⟩             -- cast U64 i4
     progress as ⟨discr, hdiscr1, hdiscr2⟩  -- overflowing_sub u P
@@ -634,7 +619,6 @@ private theorem mont_add_value_spec {P : Std.U64} {a b : Std.U64}
       r.val < P.val ∧ r.val % P.val = (a.val + b.val) % P.val ⦄ := by
     unfold gfp.montgomery.mont_add
     progress as ⟨sum, hsum⟩
-    · have := hP.2.2; scalar_tac
     progress as ⟨discr, hdiscr1, hdiscr2⟩
     progress as ⟨i, hi⟩
     progress as ⟨neg_i, hneg_i⟩
@@ -799,7 +783,6 @@ theorem max_unreduced_additions_spec {P : Std.U64} (hP : ValidPrime P) :
     progress as ⟨i, hi⟩          -- cast U128 P
     have hi_val : i.val = P.val := by rw [hi]; exact U64.cast_U128_val_eq P
     progress as ⟨i1, hi1, _⟩     -- i - 1#u128
-    · have := hP.2.1; have := hi_val; scalar_tac
     progress as ⟨i2, hi2⟩        -- cast U128 P
     have hi2_val : i2.val = P.val := by rw [hi2]; exact U64.cast_U128_val_eq P
     progress as ⟨i3, hi3, _⟩     -- i2 - 1#u128; auto-closed
@@ -885,7 +868,6 @@ theorem max_unreduced_additions_value {P : Std.U64} (hP : ValidPrime P) :
     progress as ⟨i, hi⟩
     have hi_val : i.val = P.val := by rw [hi]; exact U64.cast_U128_val_eq P
     progress as ⟨i1, hi1, _⟩
-    · have := hP.2.1; have := hi_val; scalar_tac
     progress as ⟨i2, hi2⟩
     have hi2_val : i2.val = P.val := by rw [hi2]; exact U64.cast_U128_val_eq P
     progress as ⟨i3, hi3, _⟩     -- auto-closed
@@ -1062,6 +1044,7 @@ private theorem mont_pow_loop_correct {P : Std.U64}
     (inv := MontPowLoopInv Rinv P.val base.val exp.val result.val)
   · intro ⟨base1, exp1, result1⟩ ⟨hr1, hb1, hst1⟩
     dsimp only
+    simp only [gfp.montgomery.mod_pow_mont_loop.body]
     by_cases hgt : exp1 > 0#u64
     · simp only [hgt, ite_true, Std.lift, bind_tc_ok]
       have hexp1_pos : 0 < exp1.val := by scalar_tac

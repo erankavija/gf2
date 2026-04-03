@@ -6,7 +6,7 @@
 #
 # Prerequisites:
 #   - charon (v0.1.173, pinned to Aeneas compatibility)
-#   - aeneas (built from c23de93)
+#   - aeneas (built from 1180be60)
 #   - elan / lean / lake
 #
 # Usage: ./scripts/verify-lean.sh
@@ -85,6 +85,11 @@ echo "=== Step 3: Post-processing ==="
 # when a trait has bounds on multiple associated types (Self, Characteristic, Wide).
 # See proofs/WORKAROUNDS.md for details.
 python3 "$REPO_ROOT/scripts/fix-aeneas-dupes.py" "$LEAN_DIR/Types.lean" "$LEAN_DIR/Funs.lean"
+
+# Workaround: Aeneas (1180be60) cannot translate 16 gfpn function bodies from
+# Charon (419f53b6+) LLBC. Restore known-good implementations from previous
+# working extraction. See fix-aeneas-sorrys.py docstring for details.
+python3 "$REPO_ROOT/scripts/fix-aeneas-sorrys.py" "$LEAN_DIR/Funs.lean"
 
 # FunsExternal.lean contains hand-edited concrete definitions (wrapping_neg,
 # overflowing_sub, U128 add/add_assign) that replace Aeneas axioms.

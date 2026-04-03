@@ -12,69 +12,68 @@ set_option linter.unusedVariables false
 set_option maxHeartbeats 1000000
 open gf2_core
 
-/- [core::cmp::impls::{core::cmp::Eq for u64}::assert_receiver_is_total_eq]:
-   Source: '/rustc/library/core/src/cmp.rs', lines 1898:12-1898:32
-   Name pattern: [core::cmp::impls::{core::cmp::Eq<u64>}::assert_receiver_is_total_eq] -/
+/-- [core::cmp::impls::{core::cmp::Eq for u64}::assert_receiver_is_total_eq]:
+    Source: '/rustc/library/core/src/cmp.rs', lines 1898:12-1898:32
+    Name pattern: [core::cmp::impls::{core::cmp::Eq<u64>}::assert_receiver_is_total_eq]
+    Visibility: public -/
 @[rust_fun
   "core::cmp::impls::{core::cmp::Eq<u64>}::assert_receiver_is_total_eq"]
 axiom U64.Insts.CoreCmpEq.assert_receiver_is_total_eq : Std.U64 → Result Unit
 
-/- [core::hash::impls::{core::hash::Hash for u64}::hash]:
-   Source: '/rustc/library/core/src/hash/mod.rs', lines 812:16-812:56
-   Name pattern: [core::hash::impls::{core::hash::Hash<u64>}::hash] -/
+/-- [core::hash::impls::{core::hash::Hash for u64}::hash]:
+    Source: '/rustc/library/core/src/hash/mod.rs', lines 812:16-812:56
+    Name pattern: [core::hash::impls::{core::hash::Hash<u64>}::hash]
+    Visibility: public -/
 @[rust_fun "core::hash::impls::{core::hash::Hash<u64>}::hash"]
 axiom U64.Insts.CoreHashHash.hash
   {H : Type} (HasherInst : core.hash.Hasher H) : Std.U64 → H → Result H
 
-/- [core::num::{u64}::wrapping_neg]:
-   Source: '/rustc/library/core/src/num/uint_macros.rs', lines 2606:8-2606:47
-   Name pattern: [core::num::{u64}::wrapping_neg] -/
+/-- [core::num::{u64}::wrapping_neg]:
+    Source: '/rustc/library/core/src/num/uint_macros.rs', lines 2606:8-2606:47
+    Name pattern: [core::num::{u64}::wrapping_neg]
+    Visibility: public -/
 @[rust_fun "core::num::{u64}::wrapping_neg"]
 axiom core.num.U64.wrapping_neg : Std.U64 → Result Std.U64
 
-/- [core::num::{u64}::overflowing_sub]:
-   Source: '/rustc/library/core/src/num/uint_macros.rs', lines 2868:8-2868:69
-   Name pattern: [core::num::{u64}::overflowing_sub] -/
+/-- [core::num::{u64}::overflowing_sub]:
+    Source: '/rustc/library/core/src/num/uint_macros.rs', lines 2868:8-2868:69
+    Name pattern: [core::num::{u64}::overflowing_sub]
+    Visibility: public -/
 @[rust_fun "core::num::{u64}::overflowing_sub"]
 axiom core.num.U64.overflowing_sub
   : Std.U64 → Std.U64 → Result (Std.U64 × Bool)
 
-/- [core::ops::arith::{core::ops::arith::Add<u128, u128> for u128}::add]:
-   Source: '/rustc/library/core/src/ops/arith.rs', lines 105:12-105:41
-   Name pattern: [core::ops::arith::{core::ops::arith::Add<u128, u128, u128>}::add] -/
+/-- [core::ops::arith::{core::ops::arith::Add<u128, u128> for u128}::add]:
+    Source: '/rustc/library/core/src/ops/arith.rs', lines 105:12-105:41
+    Name pattern: [core::ops::arith::{core::ops::arith::Add<u128, u128, u128>}::add]
+    Visibility: public -/
 @[rust_fun "core::ops::arith::{core::ops::arith::Add<u128, u128, u128>}::add"]
 axiom U128.Insts.CoreOpsArithAddU128U128.add
   : Std.U128 → Std.U128 → Result Std.U128
 
-/- [core::ops::arith::{core::ops::arith::AddAssign<u128> for u128}::add_assign]:
-   Source: '/rustc/library/core/src/ops/arith.rs', lines 791:12-791:47
-   Name pattern: [core::ops::arith::{core::ops::arith::AddAssign<u128, u128>}::add_assign] -/
+/-- [core::ops::arith::{core::ops::arith::AddAssign<u128> for u128}::add_assign]:
+    Source: '/rustc/library/core/src/ops/arith.rs', lines 791:12-791:47
+    Name pattern: [core::ops::arith::{core::ops::arith::AddAssign<u128, u128>}::add_assign]
+    Visibility: public -/
 @[rust_fun
   "core::ops::arith::{core::ops::arith::AddAssign<u128, u128>}::add_assign"]
 axiom U128.Insts.CoreOpsArithAddAssignU128.add_assign
   : Std.U128 → Std.U128 → Result Std.U128
 
-/- [core::option::{core::option::Option<T>}::expect]:
-   Source: '/rustc/library/core/src/option.rs', lines 968:4-968:45
-   Name pattern: [core::option::{core::option::Option<@T>}::expect]
-   Defined: Some → value, None → panic (matches Rust semantics) -/
-@[rust_fun "core::option::{core::option::Option<@T>}::expect"]
-def core.option.Option.expect {T : Type} : Option T → Str → Result T
-  | some x, _ => ok x
-  | none, _ => fail .panic
-
-/- [core::option::{core::option::Option<T>}::map]:
-   Source: '/rustc/library/core/src/option.rs', lines 1160:4-1162:53
-   Name pattern: [core::option::{core::option::Option<@T>}::map] -/
+/-- [core::option::{core::option::Option<T>}::map]:
+    Source: '/rustc/library/core/src/option.rs', lines 1160:4-1162:53
+    Name pattern: [core::option::{core::option::Option<@T>}::map]
+    Visibility: public -/
 @[rust_fun "core::option::{core::option::Option<@T>}::map"]
 axiom core.option.Option.map
   {T : Type} {U : Type} {F : Type} (opsfunctionFnOnceFTupleTUInst :
   core.ops.function.FnOnce F T U) :
   Option T → F → Result (Option U)
 
-/- [core::result::{core::ops::try_trait::Try<T, core::result::Result<core::convert::Infallible, E>> for core::result::Result<T, E>}::branch]:
-   Source: '/rustc/library/core/src/result.rs', lines 2172:4-2172:64
-   Name pattern: [core::result::{core::ops::try_trait::Try<core::result::Result<@T, @E>, @T, core::result::Result<core::convert::Infallible, @E>>}::branch] -/
+/-- [core::result::{core::ops::try_trait::Try<T, core::result::Result<core::convert::Infallible, E>> for core::result::Result<T, E>}::branch]:
+    Source: '/rustc/library/core/src/result.rs', lines 2172:4-2172:64
+    Name pattern: [core::result::{core::ops::try_trait::Try<core::result::Result<@T, @E>, @T, core::result::Result<core::convert::Infallible, @E>>}::branch]
+    Visibility: public -/
 @[rust_fun
   "core::result::{core::ops::try_trait::Try<core::result::Result<@T, @E>, @T, core::result::Result<core::convert::Infallible, @E>>}::branch"]
 axiom core.result.Result.Insts.CoreOpsTry_traitTryTResultInfallibleE.branch
@@ -82,9 +81,10 @@ axiom core.result.Result.Insts.CoreOpsTry_traitTryTResultInfallibleE.branch
   core.result.Result T E → Result (core.ops.control_flow.ControlFlow
     (core.result.Result core.convert.Infallible E) T)
 
-/- [core::result::{core::ops::try_trait::FromResidual<core::result::Result<core::convert::Infallible, E>> for core::result::Result<T, F>}::from_residual]:
-   Source: '/rustc/library/core/src/result.rs', lines 2187:4-2187:70
-   Name pattern: [core::result::{core::ops::try_trait::FromResidual<core::result::Result<@T, @F>, core::result::Result<core::convert::Infallible, @E>>}::from_residual] -/
+/-- [core::result::{core::ops::try_trait::FromResidual<core::result::Result<core::convert::Infallible, E>> for core::result::Result<T, F>}::from_residual]:
+    Source: '/rustc/library/core/src/result.rs', lines 2187:4-2187:70
+    Name pattern: [core::result::{core::ops::try_trait::FromResidual<core::result::Result<@T, @F>, core::result::Result<core::convert::Infallible, @E>>}::from_residual]
+    Visibility: public -/
 @[rust_fun
   "core::result::{core::ops::try_trait::FromResidual<core::result::Result<@T, @F>, core::result::Result<core::convert::Infallible, @E>>}::from_residual"]
 axiom
@@ -93,8 +93,9 @@ axiom
   core.result.Result core.convert.Infallible E → Result (core.result.Result T
     F)
 
-/- [gf2_core::gfpn::cubic::{core::cmp::Eq for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::assert_receiver_is_total_eq]:
-   Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 118:0-118:40 -/
+/-- [gf2_core::gfpn::cubic::{core::cmp::Eq for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::assert_receiver_is_total_eq]:
+    Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 118:0-118:40
+    Visibility: public -/
 axiom gfpn.cubic.CubicExt.Insts.CoreCmpEq.assert_receiver_is_total_eq
   {C : Type} {Clause0_BaseField : Type} {Clause0_Clause0_Clause0_Characteristic
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
@@ -102,8 +103,9 @@ axiom gfpn.cubic.CubicExt.Insts.CoreCmpEq.assert_receiver_is_total_eq
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
   gfpn.cubic.CubicExt ext_configExtConfigInst → Result Unit
 
-/- [gf2_core::gfpn::quadratic::{core::cmp::Eq for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::assert_receiver_is_total_eq]:
-   Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 109:0-109:44 -/
+/-- [gf2_core::gfpn::quadratic::{core::cmp::Eq for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::assert_receiver_is_total_eq]:
+    Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 109:0-109:44
+    Visibility: public -/
 axiom gfpn.quadratic.QuadraticExt.Insts.CoreCmpEq.assert_receiver_is_total_eq
   {C : Type} {Clause0_BaseField : Type} {Clause0_Clause0_Clause0_Characteristic
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :

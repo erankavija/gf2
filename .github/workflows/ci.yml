@@ -147,15 +147,15 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ~/.cargo/bin/charon*
-        key: charon-patched-24a17b5e-${{ hashFiles('patches/charon-hrtb-assoc-types.patch') }}
+        key: charon-patched-419f53b6-${{ hashFiles('patches/charon-419f53b6-assoc-type-fixes.patch') }}
 
     - name: Install Charon (patched)
       if: steps.cache-charon.outputs.cache-hit != 'true'
       run: |
         git clone https://github.com/AeneasVerif/charon.git /tmp/charon
         cd /tmp/charon
-        git checkout 24a17b5ef42de4633537bc6e99213c8bbef4298c
-        git apply $GITHUB_WORKSPACE/patches/charon-hrtb-assoc-types.patch
+        git checkout 419f53b6
+        git apply $GITHUB_WORKSPACE/patches/charon-419f53b6-assoc-type-fixes.patch
         cd charon
         cargo +nightly-2026-02-07 install --path . --locked
 
