@@ -210,6 +210,7 @@ theorem loop_correct
   · -- Body preserves invariant
     intro ⟨result1, temp1, i1⟩ ⟨hinv_i, hinv_r, hinv_t, hinv_state⟩
     dsimp only
+    simp only [gf2m.mul_raw.gf2m_mul_raw_loop.body]
     by_cases hlt : i1 < m
     · simp only [hlt, ite_true]
       have hm_pos := hparams.m_pos

@@ -171,6 +171,7 @@ theorem compute_p_inv_loop_progress (p inv : Std.U64) (i : Std.I32)
     · intro ⟨inv1, i1⟩ hinv
       simp only at hinv
       dsimp only
+      simp only [gfp.montgomery.compute_p_inv_loop.body]
       by_cases hlt : i1 < 6#i32
       · simp only [hlt, ite_true]
         progress as ⟨i2, hi2⟩
@@ -216,20 +217,6 @@ theorem redc_progress {P : Std.U64} {t : Std.U128}
   progress as ⟨i2, hi2⟩
   progress as ⟨mp, hmp⟩
   progress as ⟨i3, hi3⟩
-  · -- U128 add overflow: t + mp ≤ U128.max
-    have : U128.max = 2^128 - 1 := by native_decide
-    rw [this]
-    have h_i1_val : i1.val = m.val := by rw [hi1]; exact U64.cast_U128_val_eq m
-    have h_i2_val : i2.val = P.val := by rw [hi2]; exact U64.cast_U128_val_eq P
-    have : m.val < 2^64 := m.hBounds
-    have : mp.val ≤ (2^64 - 1) * 2^63 := by
-      rw [hmp, h_i1_val, h_i2_val]
-      exact Nat.mul_le_mul (by omega) hP.2.2
-    have : t.val < 2^63 * 2^64 := by
-      calc t.val < P.val * 2^64 := ht
-        _ ≤ 2^63 * 2^64 := Nat.mul_le_mul_right _ hP.2.2
-    have : (2^64 - 1) * (2:ℕ)^63 + 2^63 * 2^64 ≤ 2^128 := by norm_num
-    omega
   progress as ⟨i4, hi4⟩
   progress as ⟨u, hu⟩
   progress as ⟨discr, hdiscr1, hdiscr2⟩
@@ -274,11 +261,7 @@ theorem compute_r_mod_p_progress {P : Std.U64} (hP : ValidPrime P) :
   unfold gfp.montgomery.compute_r_mod_p
   progress as ⟨i, hi⟩         -- 1 <<< 64
   progress as ⟨i1, hi1⟩       -- cast U128 P
-  progress as ⟨i2, hi2⟩       -- i % i1 (checked rem)
-  · -- divisor nonzero: i1.val ≠ 0
-    have : i1.val = P.val := by rw [hi1]; exact U64.cast_U128_val_eq P
-    have : 1 < P.val := hP.2.1
-    omega
+  progress as ⟨i2, hi2⟩       -- i % i1 (checked rem, divisor nonzero auto-resolved)
   have hi_val : i.val = 2^64 := by rw [hi]; native_decide
   have hi1_val : i1.val = P.val := by rw [hi1]; exact U64.cast_U128_val_eq P
   have hi2_val : i2.val = 2^64 % P.val := by rw [hi2, hi_val, hi1_val]
@@ -333,15 +316,7 @@ theorem to_mont_progress {P : Std.U64} {a : Std.U64}
   progress as ⟨i1, hi1⟩       -- R2_MOD_P P: i1.val < P.val
   progress as ⟨i2, hi2⟩       -- cast U128 i1
   progress as ⟨i3, hi3⟩       -- i * i2 (checked U128 mul)
-  progress                     -- redc P i3
-  · -- redc precondition: i3.val < P.val * 2^64
-    have hi_val : i.val = a.val := by rw [hi]; exact U64.cast_U128_val_eq a
-    have hi2_val : i2.val = i1.val := by rw [hi2]; exact U64.cast_U128_val_eq i1
-    rw [hi3, hi_val, hi2_val]
-    calc a.val * i1.val < P.val * P.val :=
-            Nat.mul_lt_mul_of_lt_of_lt ha hi1
-      _ ≤ P.val * 2^63 := Nat.mul_le_mul_left _ hP.2.2
-      _ < P.val * 2^64 := by have := hP.2.1; omega
+  progress                     -- redc P i3 (precondition auto-resolved)
   assumption
 
 /-! ## Arithmetic operation progress -/
@@ -352,7 +327,6 @@ theorem mont_add_progress {P : Std.U64} {a b : Std.U64}
   have hspec : gfp.montgomery.mont_add P a b ⦃ r => r.val < P.val ⦄ := by
     unfold gfp.montgomery.mont_add
     progress as ⟨sum, hsum⟩
-    · have := hP.2.2; scalar_tac
     progress as ⟨discr, hdiscr1, hdiscr2⟩
     progress as ⟨i, hi⟩
     progress as ⟨neg_i, hneg_i⟩
@@ -411,15 +385,7 @@ theorem mul_progress {P : Std.U64} {a b : Std.U64}
       progress as ⟨i, hi⟩       -- cast U128 a
       progress as ⟨i1, hi1⟩     -- cast U128 b
       progress as ⟨i2, hi2⟩     -- i * i1 (checked U128 mul)
-      progress as ⟨i3, hi3⟩     -- redc P i2
-      · -- redc precondition: i2.val < P.val * 2^64
-        have hi_val : i.val = a.val := by rw [hi]; exact U64.cast_U128_val_eq a
-        have hi1_val : i1.val = b.val := by rw [hi1]; exact U64.cast_U128_val_eq b
-        rw [hi2, hi_val, hi1_val]
-        calc a.val * b.val < P.val * P.val :=
-                Nat.mul_lt_mul_of_lt_of_lt ha hb
-          _ ≤ P.val * 2^63 := Nat.mul_le_mul_left _ hP.2.2
-          _ < P.val * 2^64 := by have := hP.2.1; omega
+      progress as ⟨i3, hi3⟩     -- redc P i2 (precondition auto-resolved)
       exact hi3
   exact spec_imp_exists hspec
 
@@ -454,13 +420,11 @@ theorem fp_new_progress {P : Std.U64}
   have hspec : gfp.Fp.new P v ⦃ r => r.val < P.val ⦄ := by
     unfold gfp.Fp.new
     progress   -- VALIDATED P
-    progress as ⟨reduced, hreduced⟩  -- v % P
-    · have := hP.2.1; omega
+    progress as ⟨reduced, hreduced⟩  -- v % P (side condition auto-resolved)
     have hne : ¬(P = 2#u64) := by
       intro h; exact hP2 (by subst h; native_decide)
     simp only [hne, ite_false]
-    progress  -- to_mont P reduced
-    · rw [hreduced]; exact Nat.mod_lt _ (by have := hP.2.1; omega)
+    progress  -- to_mont P reduced (precondition auto-resolved)
     assumption
   exact spec_imp_exists hspec
 
@@ -483,14 +447,12 @@ theorem max_unreduced_additions_progress {P : Std.U64} (hP : ValidPrime P) :
   unfold gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.max_unreduced_additions
   progress as ⟨i, hi⟩          -- cast U128 P
   have hi_val : i.val = P.val := by rw [hi]; exact U64.cast_U128_val_eq P
-  progress as ⟨i1, hi1, _⟩     -- i - 1#u128
-  · have := hP.2.1; have := hi_val; scalar_tac
+  progress as ⟨i1, hi1, _⟩     -- i - 1#u128 (side condition auto-resolved)
   progress as ⟨i2, hi2⟩        -- cast U128 P
   have hi2_val : i2.val = P.val := by rw [hi2]; exact U64.cast_U128_val_eq P
   progress as ⟨i3, hi3, _⟩     -- i2 - 1#u128; auto-closed
   progress as ⟨max_product, hmp⟩  -- i1 * i3
   · -- (P-1) * (P-1) ≤ U128.max
-    have h1val : (1#u128 : Std.U128).val = 1 := by native_decide
     have hi1_val : i1.val = P.val - 1 := by omega
     have hi3_val : i3.val = P.val - 1 := by omega
     rw [hi1_val, hi3_val]
@@ -531,6 +493,7 @@ theorem mod_pow_mont_loop_progress {P : Std.U64}
       base1.val < P.val ∧ result1.val < P.val)
   · intro ⟨base1, exp1, result1⟩ ⟨hb1, hr1⟩
     dsimp only
+    simp only [gfp.montgomery.mod_pow_mont_loop.body]
     by_cases hgt : exp1 > 0#u64
     · simp only [hgt, ite_true, Std.lift, bind_tc_ok]
       have hexp1_pos : 0 < exp1.val := by scalar_tac
@@ -538,11 +501,7 @@ theorem mod_pow_mont_loop_progress {P : Std.U64}
       split
       · -- Odd: multiply result by base
         progress as ⟨prod, hprod⟩  -- checked U128 mul
-        progress as ⟨result2, hresult2⟩  -- redc P prod
-        · -- redc precondition: prod.val < P.val * 2^64
-          have h1 := U64.cast_U128_val_eq result1
-          have h2 := U64.cast_U128_val_eq base1
-          exact redc_precond hP hr1 hb1 (by simp only [hprod, h1, h2])
+        progress as ⟨result2, hresult2⟩  -- redc P prod (precondition auto-resolved)
         progress as ⟨exp2, hexp2_val, _⟩  -- shift
         have hexp2_lt : exp2.val < exp1.val := by
           simp [hexp2_val, Nat.shiftRight_eq_div_pow]
@@ -550,9 +509,7 @@ theorem mod_pow_mont_loop_progress {P : Std.U64}
         split
         · -- exp2 > 0: square base
           progress as ⟨sq, hsq⟩
-          progress as ⟨base2, hbase2⟩
-          · have hv := U64.cast_U128_val_eq base1
-            exact redc_precond hP hb1 hb1 (by simp only [hsq, hv])
+          progress as ⟨base2, hbase2⟩  -- redc (precondition auto-resolved)
           exact ⟨hbase2, hresult2, hexp2_lt⟩
         · -- exp2 = 0: base unchanged
           exact ⟨hb1, hresult2, hexp2_lt⟩
@@ -564,9 +521,7 @@ theorem mod_pow_mont_loop_progress {P : Std.U64}
         split
         · -- exp2 > 0: square base
           progress as ⟨sq, hsq⟩
-          progress as ⟨base2, hbase2⟩
-          · have hv := U64.cast_U128_val_eq base1
-            exact redc_precond hP hb1 hb1 (by simp only [hsq, hv])
+          progress as ⟨base2, hbase2⟩  -- redc (precondition auto-resolved)
           exact ⟨hbase2, hr1, hexp2_lt⟩
         · -- exp2 = 0: base unchanged
           exact ⟨hb1, hr1, hexp2_lt⟩

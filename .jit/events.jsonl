@@ -731,3 +731,5 @@
 {"type":"issue_state_changed","id":"fe7257e3-ccf1-4df4-95d4-2ac4927a633d","issue_id":"104a46c2-0c49-4f66-8fcb-e84416b9b0ce","timestamp":"2026-03-21T00:21:44.197372207Z","from":"in_progress","to":"done"}
 {"type":"issue_completed","id":"857b0833-4ca3-4440-8935-38053033354c","issue_id":"104a46c2-0c49-4f66-8fcb-e84416b9b0ce","timestamp":"2026-03-21T00:21:44.197403057Z"}
 {"type":"issue_created","id":"561e24c4-217d-4325-abb9-a2ae6979c94d","issue_id":"afc7bdaf-0dcc-4a25-a110-1d8a5af3731d","timestamp":"2026-03-30T23:48:30.601920228Z","title":"Update Charon to 419f53b6 and Aeneas to 1180be60 (upstream sync)","priority":"normal"}
+{"type":"issue_state_changed","id":"72e4f720-5225-4a8d-bab7-0bcf46f90de0","issue_id":"afc7bdaf-0dcc-4a25-a110-1d8a5af3731d","timestamp":"2026-04-02T23:13:45.719445794Z","from":"ready","to":"in_progress"}
+{"type":"issue_claimed","id":"389f1e40-5190-4179-856d-b5969003f2d7","issue_id":"afc7bdaf-0dcc-4a25-a110-1d8a5af3731d","timestamp":"2026-04-02T23:13:45.719691224Z","assignee":"agent:claude"}
