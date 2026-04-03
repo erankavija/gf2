@@ -184,7 +184,11 @@ jobs:
         eval $(opam env)
         AENEAS_LEAN_DIR=/tmp/aeneas/backends/lean ./scripts/verify-lean.sh
 
-    - name: Show generated file changes (informational)
-      if: always()
+    - name: Verify hand-written proof files are up to date
       run: |
-        git diff --stat proofs/Gf2Core/ || true
+        git diff --exit-code proofs/Gf2Core/Proofs/ proofs/Gf2Core/FunsExternal.lean || {
+          echo "ERROR: Hand-written proof files were modified by the pipeline."
+          echo "This means committed proofs don't match the generated code."
+          echo "Run ./scripts/verify-lean.sh locally and commit the updated files."
+          exit 1
+        }
