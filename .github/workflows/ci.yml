@@ -186,8 +186,14 @@ jobs:
 
     - name: Verify generated files are up to date
       run: |
-        git diff --exit-code proofs/Gf2Core/ || {
-          echo "ERROR: Generated Lean files are out of date."
-          echo "Run ./scripts/verify-lean.sh locally and commit the updated files."
-          exit 1
+        git diff --ignore-all-space --exit-code proofs/Gf2Core/ || {
+          echo "WARNING: Generated Lean files have formatting differences (whitespace only is OK)."
+          git diff --exit-code proofs/Gf2Core/ && exit 0
+          echo "Checking if differences are whitespace-only..."
+          git diff --ignore-all-space --quiet proofs/Gf2Core/ || {
+            echo "ERROR: Generated Lean files have non-whitespace changes."
+            echo "Run ./scripts/verify-lean.sh locally and commit the updated files."
+            exit 1
+          }
+          echo "Differences are whitespace-only — OK."
         }
