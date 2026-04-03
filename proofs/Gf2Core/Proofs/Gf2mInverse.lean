@@ -65,6 +65,7 @@ theorem pow_loop_correct
     (inv := PowLoopInv init_base.val exp.val m.val poly.val)
   · intro ⟨base1, exp1, result1⟩ ⟨hr1, hb1, hst1⟩
     dsimp only
+    simp only [gf2m.mul_raw.gf2m_pow_raw_loop.body]
     by_cases hgt : exp1 > 0#u64
     · simp only [hgt, ite_true, Std.lift, bind_tc_ok]
       have hexp1_pos : 0 < exp1.val := by scalar_tac

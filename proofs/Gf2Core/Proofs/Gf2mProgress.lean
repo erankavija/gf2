@@ -34,6 +34,7 @@ theorem gf2m_mul_raw_loop_progress
   · intro ⟨result1, temp1, i1⟩ hinv
     simp only at hinv
     dsimp only
+    simp only [gf2m.mul_raw.gf2m_mul_raw_loop.body]
     by_cases hlt : i1 < m
     · simp only [hlt, ite_true]
       progress as ⟨shifted_b, _, _⟩
@@ -127,6 +128,7 @@ theorem gf2m_pow_raw_loop_progress
     (inv := fun _ => True)
   · intro ⟨base1, exp1, result1⟩ _
     dsimp only
+    simp only [gf2m.mul_raw.gf2m_pow_raw_loop.body]
     by_cases hgt : exp1 > 0#u64
     · simp only [hgt, ite_true]
       simp only [Std.lift, bind_tc_ok]

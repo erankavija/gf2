@@ -2,9 +2,9 @@
   "id": "afc7bdaf-0dcc-4a25-a110-1d8a5af3731d",
   "title": "Update Charon to 419f53b6 and Aeneas to 1180be60 (upstream sync)",
   "description": "Update the Charon/Aeneas verification toolchain from our current pin (Charon 24a17b5e + 3 local patches) to Charon 419f53b6 + Aeneas 1180be60.\n\nPhase 1 (done): Built Charon at 419f53b6 with ported patches (#1b erase, #2b lookup fallback, #3 implied clause propagation). Pipeline runs through Charon extraction and Aeneas translation successfully. Zero \"Could not compute\" warnings.\n\nPhase 2 (remaining): Fix Lean proof breakage in Defs.lean, ExtProgress.lean, and Gf2mProgress.lean caused by changes in generated code. Update CI, patch file, and docs.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [],
   "gates_required": [
     "tests",
@@ -28,5 +28,5 @@
     "story:8889e712"
   ],
   "created_at": "2026-03-30T23:48:30.601313588+00:00",
-  "updated_at": "2026-03-30T23:49:12.443205644+00:00"
+  "updated_at": "2026-04-02T23:13:45.719600794+00:00"
 }

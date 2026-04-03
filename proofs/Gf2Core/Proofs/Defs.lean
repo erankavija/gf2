@@ -48,12 +48,8 @@ theorem validPrime_pos {P : Std.U64} (hP : ValidPrime P) : 0 < P.val := by
 theorem validated_progress {P : Std.U64} (hP : ValidPrime P) :
     gfp.Fp.VALIDATED P ⦃ fun _ => True ⦄ := by
   simp only [gfp.Fp.VALIDATED]
-  progress
-  · have := hP.2.1; scalar_tac
-  progress as ⟨i, hi⟩
-  progress
-  · have := hP.2.2
-    have : i.val = 2^63 := by rw [hi]; native_decide
-    scalar_tac
+  step <;> try (have := hP.2.1; scalar_tac)
+  step as ⟨i, hi⟩
+  step <;> (have := hP.2.2; have : i.val = 2^63 := by rw [hi]; native_decide; scalar_tac)
 
 end FpVal
