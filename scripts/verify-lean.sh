@@ -105,10 +105,12 @@ echo ""
 echo "=== Step 4: Lake build ==="
 cd "$PROOFS_DIR"
 
-# If AENEAS_LEAN_DIR is set (e.g. in CI), patch lakefile.lean to point there.
+# If AENEAS_LEAN_DIR is set (e.g. in CI), patch lakefile.lean to point there
+# and clear the cached aeneas package so Lake resolves the new path.
 if [ -n "${AENEAS_LEAN_DIR:-}" ]; then
   echo "Patching lakefile.lean: aeneas backend → $AENEAS_LEAN_DIR"
   sed -i "s|require aeneas from .*|require aeneas from \"$AENEAS_LEAN_DIR\"|" lakefile.lean
+  rm -rf .lake/packages/aeneas
 fi
 
 lake build
