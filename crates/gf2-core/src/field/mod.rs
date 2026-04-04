@@ -10,8 +10,10 @@
 //! - [`FiniteFieldExt`] — Blanket convenience methods: `square`, `pow`, `frobenius`.
 
 mod traits;
+pub mod vec;
 
 #[cfg(test)]
 pub(crate) mod axiom_tests;
 
 pub use traits::{ConstField, FiniteField, FiniteFieldExt};
+pub use vec::{FieldVec, StridedIter};
