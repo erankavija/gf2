@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "96036204-714a-47e9-88f2-956e1f8156f2",
+  "gate_key": "clippy",
+  "stage": "postcheck",
+  "issue_id": "afc7bdaf-0dcc-4a25-a110-1d8a5af3731d",
+  "commit": "8a6d1c0cc3f2c1bed3d4fd113879828325c9acda",
+  "branch": "main",
+  "status": "passed",
+  "started_at": "2026-04-04T22:38:22.493832216Z",
+  "completed_at": "2026-04-04T22:38:24.299420159Z",
+  "duration_ms": 1805,
+  "exit_code": 0,
+  "stdout": "",
+  "stderr": "    Checking gf2-core v0.1.0 (/home/vkaskivuo/Projects/gf2/crates/gf2-core)\n    Checking gf2-coding v0.1.0 (/home/vkaskivuo/Projects/gf2/crates/gf2-coding)\n    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.69s\n",
+  "command": "cargo clippy --all-targets -- -D warnings",
+  "by": "auto:executor",
+  "message": null
+}
