@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "b36c97d1-6e4f-47cc-94e7-c5a87d95402d",
+  "gate_key": "code-review",
+  "stage": "postcheck",
+  "issue_id": "54a60c90-2972-42c3-ab1a-4f4f2ae1c22b",
+  "commit": "c333bd253785bc1e6f6c651a5bdfefc545a7b61f",
+  "branch": "main",
+  "status": "failed",
+  "started_at": "2026-04-04T22:13:18.097220015Z",
+  "completed_at": "2026-04-04T22:14:46.461458961Z",
+  "duration_ms": 88364,
+  "exit_code": 1,
+  "stdout": "I’m now validating the workspace quality gates directly so the verdict reflects the actual current tree, not only prior run metadata.\n\n## Success criteria from issue description\n- **Not fully met.** `FieldVec` is implemented at the required location (`crates/gf2-core/src/field/vec.rs`) with core scalar ops (`get/set/index`, `dot_product`, elementwise ops, `scale`, `map/fold/iter/zip_with`, conversions, `axpy`, and `StridedIter`).\n- **Gap:** required `zeros(n)` for `ConstField` is still missing; implementation provides `zeros_const(n)` instead (`vec.rs:122`).\n- **Gap:** row-slice view API as specified is not explicitly present; current API exposes raw slices (`as_slice`, `as_mut_slice`) but no dedicated row-view abstraction for downstream matrix row access.\n\n## Separation of concerns\n- **Pass.** Changes are in `gf2-core` field module (`field/mod.rs`, `field/vec.rs`), with no observed `gf2-core -> gf2-coding` dependency violation.\n\n## Functional paradigm and performance\n- **Mostly pass.** High-level API is iterator/combinator oriented (`map`, `fold`, `zip_with`, iterator-based elementwise ops), and scope is scalar (no unintended SIMD coupling).\n- Dot product correctly returns `F::Wide` (`vec.rs:398`), matching reduction-scheduling requirement.\n\n## Correctness\n- **Fail (technical debt introduced/unresolved).** `StridedIter::new` accepts `stride == 0` without guard (`vec.rs:756`), and `next()` then never advances (`pos += 0`, `vec.rs:771`), allowing non-terminating iteration.\n- BitVec tail-masking and bit-numbering invariants are not directly modified by this change.\n\n## Testing\n- Unit tests are extensive and mostly well named (`test_*`), including panic paths and functional/arithmetic behavior (`vec.rs` test module).\n- **Gap:** no `proptest`-based invariant/property tests for the new mathematical container.\n- I could not execute tests/lints locally due environment permission denial; relied on provided gate history (`tests`, `clippy`, `fmt` are marked passed for this issue run).\n\n## Unsafe isolation\n- **Pass.** No `unsafe` usage introduced in this change (`vec.rs` has no `unsafe`).\n\n## Documentation\n- Public API has broad doc coverage with examples.\n- **Gap:** `StridedIter::new` does not document/panic on invalid `stride` contract, despite correctness-sensitive behavior.\n- Required docs are largely present, but missing edge-condition contract leaves an API hole.\n\n## Prior review feedback (most recent run)\nMost recent code-review run (`16d53dd7-...`) flagged:\n1. Missing `zeros(n)` for `ConstField` (still unresolved).\n2. Missing explicit row-slice view API (still unresolved).\n3. `stride == 0` infinite-iteration risk (still unresolved).\n4. Missing property-based tests (still unresolved).\n\n## Jit issue dependencies\n- Dependency `bfe0ba7b` (FiniteField trait work) is marked **done** and this implementation builds on it correctly.\n\nVERDICT: FAIL\n---\nGate result: FAILED\n",
+  "stderr": "",
+  "command": "./scripts/ai-review.sh",
+  "by": "auto:executor",
+  "message": null
+}

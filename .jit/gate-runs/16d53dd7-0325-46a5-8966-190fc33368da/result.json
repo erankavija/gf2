@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "16d53dd7-0325-46a5-8966-190fc33368da",
+  "gate_key": "code-review",
+  "stage": "postcheck",
+  "issue_id": "54a60c90-2972-42c3-ab1a-4f4f2ae1c22b",
+  "commit": "c333bd253785bc1e6f6c651a5bdfefc545a7b61f",
+  "branch": "main",
+  "status": "failed",
+  "started_at": "2026-04-04T22:11:52.708182792Z",
+  "completed_at": "2026-04-04T22:13:02.153478441Z",
+  "duration_ms": 69445,
+  "exit_code": 1,
+  "stdout": "I’ll inspect the actual code changes and test/lint state for this issue, then map findings against each requested review criterion.\n\nI’ve found a few likely gaps against the issue criteria; I’ll quickly validate with a focused test run before finalizing the review verdict.\n\n## Success criteria vs issue description\n\n- Implemented in correct location: `crates/gf2-core/src/field/vec.rs`.\n- Core ops present: `index/get/set`, arithmetic (`dot_product`, `add_vec/sub_vec/mul_vec`, `scale`), functional (`map/fold/iter/zip_with`), conversions (`From<Vec<F>>`, `From<FieldVec<F>> for Vec<F>`), `axpy`, and `StridedIter`.\n- **Gap:** required `zeros(n)` for `ConstField` is not present; API added is `zeros_const(n)` instead.\n- **Gap:** explicit row-slice view API (`&FieldVec<F>` row slices) is not provided.\n\n## Prior review feedback\n\n- `run_history` is empty, so no prior unresolved review items to validate.\n\n## Jit dependency check\n\n- Prerequisite `bfe0ba7b` is `done`; this change correctly builds on `FiniteField`.\n\n## Separation of concerns\n\n- Changes are confined to `gf2-core`; no `gf2-core -> gf2-coding` dependency violation observed.\n\n## Functional paradigm and performance\n\n- High-level API uses iterator combinators and immutable-returning methods appropriately.\n- Scalar implementation (no SIMD) matches issue scope.\n\n## Correctness\n\n- **Bug/technical debt:** `StridedIter::new(..., stride=0)` can create a non-advancing iterator (`next` never increments), i.e., potential infinite iteration path.\n- BitVec tail-masking/bit-numbering criteria are not directly impacted by this change.\n\n## Testing\n\n- Many unit tests added (`test_*` naming mostly compliant).\n- **Gap:** no `proptest` property-based tests for invariants in this new math container.\n- Could not re-run tests locally due permissions; relied on provided gate history (`tests/clippy/fmt` marked passed).\n\n## Unsafe isolation\n\n- No `unsafe` added in this change; requirement satisfied.\n\n## Documentation\n\n- Substantial doc coverage and examples added.\n- Some API contract details are missing for edge conditions (notably `stride == 0` behavior/panics).\n\nVERDICT: FAIL\n---\nGate result: FAILED\n",
+  "stderr": "",
+  "command": "./scripts/ai-review.sh",
+  "by": "auto:executor",
+  "message": null
+}

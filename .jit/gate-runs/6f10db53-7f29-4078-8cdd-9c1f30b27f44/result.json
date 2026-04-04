@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "6f10db53-7f29-4078-8cdd-9c1f30b27f44",
+  "gate_key": "code-review",
+  "stage": "postcheck",
+  "issue_id": "54a60c90-2972-42c3-ab1a-4f4f2ae1c22b",
+  "commit": "c333bd253785bc1e6f6c651a5bdfefc545a7b61f",
+  "branch": "main",
+  "status": "failed",
+  "started_at": "2026-04-04T22:16:15.379723930Z",
+  "completed_at": "2026-04-04T22:17:34.133418508Z",
+  "duration_ms": 78753,
+  "exit_code": 1,
+  "stdout": "I’m reviewing the current `FieldVec` implementation directly against the issue criteria and prior failed review points, then I’ll issue a strict pass/fail verdict.\n\nI can’t execute local cargo commands in this environment due permission restrictions, so I’m validating strictly from the checked-in code and the provided gate/run metadata.\n\n## Success criteria from issue description\n\n**Not all criteria are met.**\n\nImplemented and present in `crates/gf2-core/src/field/vec.rs`:\n- `FieldVec<F: FiniteField>` container and scalar ops (`get/set/index`, `dot_product`, `add_vec/sub_vec/mul_vec`, `scale`, `axpy`)\n- Functional ops (`map`, `fold`, `iter`, `zip_with`)\n- Conversions (`From<Vec<F>>`, `From<FieldVec<F>> for Vec<F>`)\n- Strided iterator (`StridedIter`) and `dot_product -> F::Wide` (`vec.rs:398`)\n\nMissing/mismatched vs issue:\n- Required `zeros(n)` for `ConstField` is not implemented; API is `zeros_const(n)` (`vec.rs:98-126`).\n- Required row-slice view API (`&FieldVec<F>`-style row views without copy) is not provided; only raw slices `as_slice/as_mut_slice` exist (`vec.rs:224-243`).\n\n## Separation of concerns\n\n**Pass.**  \nChange is in `gf2-core` field module (`field/mod.rs`, `field/vec.rs`). `gf2-core` has no dependency on `gf2-coding` (`crates/gf2-core/Cargo.toml`), while `gf2-coding` depends on `gf2-core` as expected.\n\n## Functional paradigm and performance\n\n**Mostly pass.**  \nImplementation uses iterator combinators and immutable-returning methods in high-level code (`map`, `zip_with`, elementwise ops), and remains scalar per scope. `axpy` is present as first-class BLAS-1 primitive (`vec.rs:473`).\n\n## Correctness\n\n**Fail.**\n- `StridedIter::new` accepts `stride=0` with no guard (`vec.rs:756-760`), and `next()` advances by `self.stride` (`vec.rs:771`), creating a non-advancing iterator and potential non-termination path.\n- BitVec tail-masking/bit-numbering invariants are not directly modified by this issue.\n\n## Testing\n\n**Fail (coverage expectations not met for this issue scope).**\n- Unit tests exist and cover many nominal/panic cases (`vec.rs` test module).\n- No `proptest` property-based tests added for FieldVec invariants.\n- No tests covering the `stride=0` edge case.\n- Most recent gate metadata shows `tests/clippy/fmt` passed, but code-review-specific gaps above remain.\n\n## Unsafe isolation\n\n**Pass.**  \nNo new `unsafe` in this change; `gf2-core` continues with `#![deny(unsafe_code)]`, unsafe remains isolated to SIMD crate/module boundaries.\n\n## Documentation\n\n**Fail.**\n- Public docs are broadly present, but contract is incomplete for correctness-sensitive behavior: `StridedIter::new` does not document or reject invalid `stride=0` despite the iterator-progress invariant.\n- Issue-required API shape (`zeros(n)` for `ConstField`, row-slice view API) is not documented because it is not implemented.\n\n## Prior review feedback (most recent run) resolution check\n\nMost recent failed run items remain unresolved:\n1. Missing `zeros(n)` for `ConstField` (still `zeros_const` only).\n2. Missing explicit row-slice view API.\n3. `stride==0` non-termination risk in `StridedIter`.\n4. Missing property-based tests.\n\n## Jit issue dependencies\n\n**Pass.**  \nDependency `bfe0ba7b` is done; this work correctly builds on `FiniteField`/`ConstField`.\n\nVERDICT: FAIL\n---\nGate result: FAILED\n",
+  "stderr": "",
+  "command": "./scripts/ai-review.sh",
+  "by": "auto:executor",
+  "message": null
+}
