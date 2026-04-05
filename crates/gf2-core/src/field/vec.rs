@@ -834,6 +834,127 @@ impl<'a, F> Iterator for StridedIter<'a, F> {
     }
 }
 
+// ── GF(2^m)-specific SIMD-accelerated dot product ───────────────────────────
+
+use crate::gf2m::Gf2mElement;
+
+impl FieldVec<Gf2mElement> {
+    /// SIMD-accelerated dot product for GF(2^m) using PCLMULQDQ batch kernel.
+    ///
+    /// Uses `clmul_batch` to perform all carry-less multiplications in a single
+    /// vectorised pass (VPCLMULQDQ when available, sequential PCLMULQDQ otherwise),
+    /// XORs all 128-bit products into one accumulator, then Barrett-reduces once.
+    ///
+    /// Falls back to the generic [`dot_product`](FieldVec::dot_product) when
+    /// PCLMULQDQ is not available at runtime.
+    ///
+    /// # Arguments
+    ///
+    /// * `rhs` - Right-hand operand; must have the same length as `self`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the vectors have different lengths or are empty.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::FieldVec;
+    /// use gf2_core::gf2m::Gf2mField;
+    ///
+    /// let field = Gf2mField::new(8, 0x11B);
+    /// let a = FieldVec::from(vec![field.element(0x53), field.element(0xCA)]);
+    /// let b = FieldVec::from(vec![field.element(0x12), field.element(0x34)]);
+    /// let simd_result = a.simd_dot_product(&b);
+    /// assert_eq!(simd_result, a.dot_product(&b));
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(n) carry-less multiplications (batched) + O(n) XOR accumulation +
+    /// O(1) Barrett reduction.
+    pub fn simd_dot_product(&self, rhs: &Self) -> Gf2mElement {
+        assert_eq!(
+            self.len(),
+            rhs.len(),
+            "simd_dot_product: length mismatch ({} vs {})",
+            self.len(),
+            rhs.len()
+        );
+        assert!(
+            !self.is_empty(),
+            "simd_dot_product: vectors must not be empty"
+        );
+
+        self.try_simd_dot_product(rhs)
+            .unwrap_or_else(|| self.dot_product(rhs))
+    }
+
+    /// Attempts the SIMD batch path. Returns `None` when hardware support is
+    /// unavailable, so the caller can fall back.
+    ///
+    /// Processes the vectors in fixed-size chunks to keep scratch buffers on the
+    /// stack and avoid per-call heap allocations.
+    #[cfg(feature = "simd")]
+    fn try_simd_dot_product(&self, rhs: &Self) -> Option<Gf2mElement> {
+        // Grab SIMD function pointers from the first element's field params.
+        let sample = &self.data[0];
+        let batch_fn = sample.clmul_batch_fn()?;
+        let clmul_fn = sample.clmul_fn()?;
+        let reducer = sample.barrett_reducer()?;
+
+        // Process in chunks that fit comfortably on the stack.
+        // 256 elements = 256*8 (a) + 256*8 (b) + 256*16 (products) = 8 KiB.
+        const CHUNK: usize = 256;
+        let mut a_buf = [0u64; CHUNK];
+        let mut b_buf = [0u64; CHUNK];
+        let mut p_buf = [0u128; CHUNK];
+
+        let mut acc: u128 = 0;
+        let mut offset = 0;
+        let n = self.len();
+
+        while offset < n {
+            let end = (offset + CHUNK).min(n);
+            let chunk_len = end - offset;
+
+            // Extract raw u64 values into stack buffers.
+            for (i, (a, b)) in self.data[offset..end]
+                .iter()
+                .zip(&rhs.data[offset..end])
+                .enumerate()
+            {
+                a_buf[i] = a.value();
+                b_buf[i] = b.value();
+            }
+
+            // Batch carry-less multiply (VPCLMULQDQ when available).
+            batch_fn(
+                &a_buf[..chunk_len],
+                &b_buf[..chunk_len],
+                &mut p_buf[..chunk_len],
+            );
+
+            // XOR-accumulate the 128-bit products.
+            for &p in &p_buf[..chunk_len] {
+                acc ^= p;
+            }
+
+            offset = end;
+        }
+
+        // Single Barrett reduction at the very end.
+        let result = reducer.reduce_with_clmul(acc, clmul_fn);
+
+        Some(sample.with_raw_value(result))
+    }
+
+    #[cfg(not(feature = "simd"))]
+    fn try_simd_dot_product(&self, _rhs: &Self) -> Option<Gf2mElement> {
+        None
+    }
+}
+
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
@@ -1452,5 +1573,122 @@ mod tests {
             let rhs = a.add_vec(&b.add_vec(&c));
             proptest::prop_assert_eq!(lhs, rhs);
         }
+
+        /// simd_dot_product commutativity for random GF(2^8) vectors.
+        #[test]
+        fn prop_simd_dot_product_commutative_gf256(
+            xs in proptest::collection::vec(0u64..256, 1..16),
+            ys in proptest::collection::vec(0u64..256, 1..16),
+        ) {
+            let f = Gf2mField::gf256();
+            let len = xs.len().min(ys.len());
+            let a: FieldVec<Gf2mElement> = xs[..len].iter().map(|&v| f.element(v)).collect();
+            let b: FieldVec<Gf2mElement> = ys[..len].iter().map(|&v| f.element(v)).collect();
+            proptest::prop_assert_eq!(a.simd_dot_product(&b), b.simd_dot_product(&a));
+        }
+    }
+
+    // ── SIMD dot product tests ──────────────────────────────────────────────
+
+    #[test]
+    fn test_simd_dot_product_matches_scalar_all_m() {
+        use crate::primitive_polys::PrimitivePolynomialDatabase;
+
+        for m in 2..=16usize {
+            let poly = PrimitivePolynomialDatabase::standard(m).unwrap();
+            let f = Gf2mField::new(m, poly);
+            let order = 1u64 << m;
+
+            // Build vectors of length 100 with pseudo-random elements
+            let a_vals: Vec<Gf2mElement> =
+                (0..100).map(|i| f.element((i * 37 + 13) % order)).collect();
+            let b_vals: Vec<Gf2mElement> =
+                (0..100).map(|i| f.element((i * 53 + 7) % order)).collect();
+
+            let a = FieldVec::from(a_vals);
+            let b = FieldVec::from(b_vals);
+
+            let scalar = a.dot_product(&b);
+            let simd = a.simd_dot_product(&b);
+            assert_eq!(
+                scalar, simd,
+                "SIMD/scalar mismatch for GF(2^{m}): scalar={:?}, simd={:?}",
+                scalar, simd
+            );
+        }
+    }
+
+    #[test]
+    fn test_simd_dot_product_matches_scalar_gf256_1000() {
+        let f = Gf2mField::gf256();
+        let a_vals: Vec<Gf2mElement> = (0..1000).map(|i| f.element((i * 37 + 13) % 256)).collect();
+        let b_vals: Vec<Gf2mElement> = (0..1000).map(|i| f.element((i * 53 + 7) % 256)).collect();
+
+        let a = FieldVec::from(a_vals);
+        let b = FieldVec::from(b_vals);
+
+        assert_eq!(a.dot_product(&b), a.simd_dot_product(&b));
+    }
+
+    #[test]
+    fn test_simd_dot_product_length_one() {
+        let f = Gf2mField::gf256();
+        let a = FieldVec::from(vec![f.element(0x53)]);
+        let b = FieldVec::from(vec![f.element(0xCA)]);
+        assert_eq!(a.dot_product(&b), a.simd_dot_product(&b));
+    }
+
+    #[test]
+    fn test_simd_dot_product_length_two() {
+        let f = Gf2mField::gf256();
+        let a = FieldVec::from(vec![f.element(0x53), f.element(0xCA)]);
+        let b = FieldVec::from(vec![f.element(0x12), f.element(0x34)]);
+        assert_eq!(a.dot_product(&b), a.simd_dot_product(&b));
+    }
+
+    /// Verifies the `simd_dot_product` fallback path returns the correct scalar
+    /// result. When the `simd` feature is disabled, `try_simd_dot_product` always
+    /// returns `None` and `simd_dot_product` falls back to `dot_product`. When the
+    /// `simd` feature is enabled but PCLMULQDQ is unavailable at runtime, the same
+    /// fallback triggers because `clmul_batch_fn()` returns `None`.
+    ///
+    /// This test runs on both feature configurations: with `simd` it validates the
+    /// end-to-end result (SIMD or fallback, whichever the hardware picks), without
+    /// `simd` it exercises the fallback path directly.
+    #[test]
+    fn test_simd_dot_product_fallback_correctness() {
+        let f = Gf2mField::new(4, 0b10011); // GF(2^4), x^4 + x + 1
+        let a = FieldVec::from(vec![
+            f.element(0x3),
+            f.element(0x7),
+            f.element(0xA),
+            f.element(0xF),
+        ]);
+        let b = FieldVec::from(vec![
+            f.element(0x5),
+            f.element(0x2),
+            f.element(0xC),
+            f.element(0x1),
+        ]);
+
+        let scalar = a.dot_product(&b);
+        let simd = a.simd_dot_product(&b);
+
+        assert_eq!(
+            scalar, simd,
+            "simd_dot_product must match dot_product (fallback or SIMD): \
+             scalar={scalar:?}, simd={simd:?}"
+        );
+
+        // Also verify against a manually computed value to ensure the scalar
+        // path itself is correct: sum of pairwise GF(2^4) products.
+        let expected = f.element(0x3) * f.element(0x5)
+            + f.element(0x7) * f.element(0x2)
+            + f.element(0xA) * f.element(0xC)
+            + f.element(0xF) * f.element(0x1);
+        assert_eq!(
+            scalar, expected,
+            "dot_product must match hand-computed result: scalar={scalar:?}, expected={expected:?}"
+        );
     }
 }

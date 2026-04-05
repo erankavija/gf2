@@ -763,6 +763,35 @@ impl<V: UintExt> Gf2mElement_<V> {
         self.value
     }
 
+    /// Returns the Barrett reducer, if available (crate-internal).
+    #[cfg(feature = "simd")]
+    pub(crate) fn barrett_reducer(&self) -> Option<&BarrettReducer> {
+        self.params.barrett_reducer.as_ref()
+    }
+
+    /// Returns the SIMD batch carry-less multiplication function, if available (crate-internal).
+    #[cfg(feature = "simd")]
+    pub(crate) fn clmul_batch_fn(&self) -> Option<simd_gf2m::ClmulBatchFn> {
+        crate::simd::maybe_gf2m().and_then(|f| f.clmul_batch_fn)
+    }
+
+    /// Returns the SIMD single carry-less multiplication function, if available (crate-internal).
+    #[cfg(feature = "simd")]
+    pub(crate) fn clmul_fn(&self) -> Option<simd_gf2m::ClmulFn> {
+        self.params.clmul_fn
+    }
+
+    /// Creates an element with the given raw value in the same field as `self` (crate-internal).
+    ///
+    /// The caller must ensure `value` is already reduced (fits in m bits).
+    #[cfg(feature = "simd")]
+    pub(crate) fn with_raw_value(&self, value: V) -> Self {
+        Gf2mElement_ {
+            value,
+            params: Arc::clone(&self.params),
+        }
+    }
+
     /// Returns true if this is the zero element.
     pub fn is_zero(&self) -> bool {
         self.value == V::ZERO
