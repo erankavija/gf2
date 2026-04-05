@@ -64,14 +64,27 @@ pub use sparse::{SpBitMatrix, SpBitMatrixDual};
 // gf2-kernels-simd crate.
 #[cfg(feature = "simd")]
 pub(crate) mod simd {
+    use gf2_kernels_simd::gf2m::Gf2mFns;
     use gf2_kernels_simd::LogicalFns;
     use std::sync::OnceLock;
 
     static FNS: OnceLock<Option<LogicalFns>> = OnceLock::new();
+    static GF2M_FNS: OnceLock<Option<Gf2mFns>> = OnceLock::new();
 
     #[inline]
     pub fn maybe_simd() -> Option<&'static LogicalFns> {
         FNS.get_or_init(gf2_kernels_simd::detect).as_ref()
+    }
+
+    /// Returns the best available GF(2^m) SIMD function bundle, if any.
+    ///
+    /// This includes raw carry-less multiplication kernels (PCLMULQDQ/VPCLMULQDQ)
+    /// as well as the legacy combined multiply+reduce function.
+    #[inline]
+    pub fn maybe_gf2m() -> Option<&'static Gf2mFns> {
+        GF2M_FNS
+            .get_or_init(gf2_kernels_simd::gf2m::detect)
+            .as_ref()
     }
 }
 
