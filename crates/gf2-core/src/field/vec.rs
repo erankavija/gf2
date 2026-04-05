@@ -1242,6 +1242,29 @@ mod tests {
     }
 
     #[test]
+    fn test_dot_product_fp65521_boundary_lengths() {
+        use crate::gfp::Fp;
+        for n in [1, 2, 100, 1000] {
+            let a: FieldVec<Fp<65521>> = FieldVec::from(
+                (0..n)
+                    .map(|i| Fp::<65521>::new((i as u64 * 7 + 3) % 65521))
+                    .collect::<Vec<_>>(),
+            );
+            let b: FieldVec<Fp<65521>> = FieldVec::from(
+                (0..n)
+                    .map(|i| Fp::<65521>::new((i as u64 * 13 + 11) % 65521))
+                    .collect::<Vec<_>>(),
+            );
+            let result = a.dot_product(&b);
+            let expected: Fp<65521> = a
+                .iter()
+                .zip(b.iter())
+                .fold(Fp::<65521>::zero(), |acc, (ai, bi)| acc + (*ai * *bi));
+            assert_eq!(result, expected, "Fp<65521> dot product mismatch at n={n}");
+        }
+    }
+
+    #[test]
     fn test_dot_product_large_prime_no_overflow() {
         use crate::gfp::Fp;
         // P near 2^63: kmax = u128::MAX / (P-1)^2 ≈ 4, so chunking kicks in
@@ -1258,6 +1281,30 @@ mod tests {
             .map(|i| Fp::<P>::new(i + 1) * Fp::<P>::new(i + 100))
             .fold(Fp::<P>::new(0), |acc, x| acc + x);
         assert_eq!(dot, manual);
+    }
+
+    #[test]
+    fn test_dot_product_large_prime_boundary_lengths() {
+        use crate::gfp::Fp;
+        const P: u64 = 9_223_372_036_854_775_783;
+        for n in [1, 2, 1000] {
+            let a: FieldVec<Fp<P>> = FieldVec::from(
+                (0..n)
+                    .map(|i| Fp::<P>::new((i as u64 * 7 + 3) % P))
+                    .collect::<Vec<_>>(),
+            );
+            let b: FieldVec<Fp<P>> = FieldVec::from(
+                (0..n)
+                    .map(|i| Fp::<P>::new((i as u64 * 13 + 11) % P))
+                    .collect::<Vec<_>>(),
+            );
+            let result = a.dot_product(&b);
+            let expected: Fp<P> = a
+                .iter()
+                .zip(b.iter())
+                .fold(Fp::<P>::zero(), |acc, (ai, bi)| acc + (*ai * *bi));
+            assert_eq!(result, expected, "Fp<{P}> dot product mismatch at n={n}");
+        }
     }
 
     #[test]
@@ -1388,6 +1435,28 @@ mod tests {
         assert_eq!(result, expected);
     }
 
+    #[test]
+    fn test_dot_product_gf2m_long_vector() {
+        let field = Gf2mField::new(8, 0x11B);
+        let n = 10000;
+        let a: FieldVec<Gf2mElement> = FieldVec::from(
+            (0..n)
+                .map(|i| field.element((i * 7 + 3) as u64 % 256))
+                .collect::<Vec<_>>(),
+        );
+        let b: FieldVec<Gf2mElement> = FieldVec::from(
+            (0..n)
+                .map(|i| field.element((i * 13 + 11) as u64 % 256))
+                .collect::<Vec<_>>(),
+        );
+        let result = a.dot_product(&b);
+        let expected = a
+            .iter()
+            .zip(b.iter())
+            .fold(field.zero(), |acc, (ai, bi)| acc + (ai.clone() * bi));
+        assert_eq!(result, expected);
+    }
+
     // ── Property-based tests ──────────────────────────────────────────────────
 
     proptest::proptest! {
@@ -1395,8 +1464,8 @@ mod tests {
         #[test]
         fn prop_dot_product_scale_linear(
             raw_a in 1u32..15,
-            xs in proptest::collection::vec(1u32..15, 1..8),
-            ys in proptest::collection::vec(1u32..15, 1..8),
+            xs in proptest::collection::vec(1u32..15, 2..500),
+            ys in proptest::collection::vec(1u32..15, 2..500),
         ) {
             // Restrict to equal lengths
             let len = xs.len().min(ys.len());
@@ -1416,9 +1485,9 @@ mod tests {
         /// a · (b + c) == a · b + a · c.
         #[test]
         fn prop_dot_product_additive_linear_fp7(
-            xs in proptest::collection::vec(0u64..7, 1..16),
-            ys in proptest::collection::vec(0u64..7, 1..16),
-            zs in proptest::collection::vec(0u64..7, 1..16),
+            xs in proptest::collection::vec(0u64..7, 2..500),
+            ys in proptest::collection::vec(0u64..7, 2..500),
+            zs in proptest::collection::vec(0u64..7, 2..500),
         ) {
             use crate::gfp::Fp;
             let len = xs.len().min(ys.len()).min(zs.len());
@@ -1437,8 +1506,8 @@ mod tests {
         #[test]
         fn prop_dot_product_scale_linear_fp7(
             k_raw in 0u64..7,
-            xs in proptest::collection::vec(0u64..7, 1..16),
-            ys in proptest::collection::vec(0u64..7, 1..16),
+            xs in proptest::collection::vec(0u64..7, 2..500),
+            ys in proptest::collection::vec(0u64..7, 2..500),
         ) {
             use crate::gfp::Fp;
             let len = xs.len().min(ys.len());
@@ -1455,9 +1524,9 @@ mod tests {
         /// a · (b + c) == a · b + a · c.
         #[test]
         fn prop_dot_product_additive_linear_fp65521(
-            xs in proptest::collection::vec(0u64..65521, 1..16),
-            ys in proptest::collection::vec(0u64..65521, 1..16),
-            zs in proptest::collection::vec(0u64..65521, 1..16),
+            xs in proptest::collection::vec(0u64..65521, 2..500),
+            ys in proptest::collection::vec(0u64..65521, 2..500),
+            zs in proptest::collection::vec(0u64..65521, 2..500),
         ) {
             use crate::gfp::Fp;
             let len = xs.len().min(ys.len()).min(zs.len());
@@ -1476,8 +1545,8 @@ mod tests {
         #[test]
         fn prop_dot_product_scale_linear_fp65521(
             k_raw in 0u64..65521,
-            xs in proptest::collection::vec(0u64..65521, 1..16),
-            ys in proptest::collection::vec(0u64..65521, 1..16),
+            xs in proptest::collection::vec(0u64..65521, 2..500),
+            ys in proptest::collection::vec(0u64..65521, 2..500),
         ) {
             use crate::gfp::Fp;
             let len = xs.len().min(ys.len());
@@ -1493,8 +1562,8 @@ mod tests {
         /// dot_product commutativity for Fp<7>: a · b == b · a.
         #[test]
         fn prop_dot_product_commutative_fp7(
-            xs in proptest::collection::vec(0u64..7, 1..16),
-            ys in proptest::collection::vec(0u64..7, 1..16),
+            xs in proptest::collection::vec(0u64..7, 2..500),
+            ys in proptest::collection::vec(0u64..7, 2..500),
         ) {
             use crate::gfp::Fp;
             let len = xs.len().min(ys.len());
@@ -1506,8 +1575,8 @@ mod tests {
         /// dot_product commutativity for Fp<65521>: a · b == b · a.
         #[test]
         fn prop_dot_product_commutative_fp65521(
-            xs in proptest::collection::vec(0u64..65521, 1..16),
-            ys in proptest::collection::vec(0u64..65521, 1..16),
+            xs in proptest::collection::vec(0u64..65521, 2..500),
+            ys in proptest::collection::vec(0u64..65521, 2..500),
         ) {
             use crate::gfp::Fp;
             let len = xs.len().min(ys.len());
@@ -1519,7 +1588,7 @@ mod tests {
         /// dot_product commutativity for a large prime near 2^63.
         #[test]
         fn prop_dot_product_commutative_large_prime(
-            vals_a in proptest::collection::vec(0u64..9_223_372_036_854_775_783u64, 2..50),
+            vals_a in proptest::collection::vec(0u64..9_223_372_036_854_775_783u64, 2..500),
         ) {
             use crate::gfp::Fp;
             const P: u64 = 9_223_372_036_854_775_783;
@@ -1533,12 +1602,55 @@ mod tests {
             proptest::prop_assert_eq!(a.dot_product(&b), b.dot_product(&a));
         }
 
+        /// dot_product additive bilinearity for a large prime near 2^63:
+        /// a · (b + c) == a · b + a · c.
+        #[test]
+        fn prop_dot_product_additive_linear_large_prime(
+            vals_a in proptest::collection::vec(0u64..100u64, 2..500),
+            vals_b in proptest::collection::vec(0u64..100u64, 2..500),
+            vals_c in proptest::collection::vec(0u64..100u64, 2..500),
+        ) {
+            use crate::gfp::Fp;
+            const P: u64 = 9_223_372_036_854_775_783;
+            let n = vals_a.len().min(vals_b.len()).min(vals_c.len());
+            let a: FieldVec<Fp<P>> = FieldVec::from(vals_a[..n].iter().map(|&v| Fp::<P>::new(v)).collect::<Vec<_>>());
+            let b: FieldVec<Fp<P>> = FieldVec::from(vals_b[..n].iter().map(|&v| Fp::<P>::new(v)).collect::<Vec<_>>());
+            let c: FieldVec<Fp<P>> = FieldVec::from(vals_c[..n].iter().map(|&v| Fp::<P>::new(v)).collect::<Vec<_>>());
+            // b + c element-wise
+            let bc: FieldVec<Fp<P>> = FieldVec::from(
+                b.iter().zip(c.iter()).map(|(bi, ci)| *bi + *ci).collect::<Vec<_>>()
+            );
+            let lhs = a.dot_product(&bc);
+            let rhs = a.dot_product(&b) + a.dot_product(&c);
+            proptest::prop_assert_eq!(lhs, rhs);
+        }
+
+        /// dot_product scalar bilinearity for a large prime near 2^63:
+        /// (k * a) · b == k * (a · b).
+        #[test]
+        fn prop_dot_product_scale_linear_large_prime(
+            k_raw in 0u64..100u64,
+            xs in proptest::collection::vec(0u64..100u64, 2..500),
+            ys in proptest::collection::vec(0u64..100u64, 2..500),
+        ) {
+            use crate::gfp::Fp;
+            const P: u64 = 9_223_372_036_854_775_783;
+            let len = xs.len().min(ys.len());
+            let k = Fp::<P>::new(k_raw);
+            let a: FieldVec<Fp<P>> = xs[..len].iter().map(|&v| Fp::<P>::new(v)).collect();
+            let b: FieldVec<Fp<P>> = ys[..len].iter().map(|&v| Fp::<P>::new(v)).collect();
+
+            let lhs = a.scale(&k).dot_product(&b);
+            let rhs = k * a.dot_product(&b);
+            proptest::prop_assert_eq!(lhs, rhs);
+        }
+
         /// axpy correctness: y after axpy equals element-wise y[i] + a*x[i].
         #[test]
         fn prop_axpy_matches_manual(
             raw_a in 0u32..15,
-            xs in proptest::collection::vec(0u32..15, 1..8),
-            ys in proptest::collection::vec(0u32..15, 1..8),
+            xs in proptest::collection::vec(0u32..15, 2..500),
+            ys in proptest::collection::vec(0u32..15, 2..500),
         ) {
             let len = xs.len().min(ys.len());
             let f = Gf2mField::new(4, 0b10011);
@@ -1557,7 +1669,7 @@ mod tests {
         /// add_vec associativity: (a + b) + c == a + (b + c).
         #[test]
         fn prop_add_vec_associative(
-            elems in proptest::collection::vec(0u32..15, 3..9),
+            elems in proptest::collection::vec(0u32..15, 3..500),
         ) {
             let n = elems.len() / 3;
             if n == 0 { return Ok(()); }
@@ -1577,8 +1689,8 @@ mod tests {
         /// simd_dot_product commutativity for random GF(2^8) vectors.
         #[test]
         fn prop_simd_dot_product_commutative_gf256(
-            xs in proptest::collection::vec(0u64..256, 1..16),
-            ys in proptest::collection::vec(0u64..256, 1..16),
+            xs in proptest::collection::vec(0u64..256, 2..500),
+            ys in proptest::collection::vec(0u64..256, 2..500),
         ) {
             let f = Gf2mField::gf256();
             let len = xs.len().min(ys.len());
@@ -1599,22 +1711,23 @@ mod tests {
             let f = Gf2mField::new(m, poly);
             let order = 1u64 << m;
 
-            // Build vectors of length 100 with pseudo-random elements
-            let a_vals: Vec<Gf2mElement> =
-                (0..100).map(|i| f.element((i * 37 + 13) % order)).collect();
-            let b_vals: Vec<Gf2mElement> =
-                (0..100).map(|i| f.element((i * 53 + 7) % order)).collect();
+            for &n in &[1, 2, 100, 1000] {
+                let a_vals: Vec<Gf2mElement> =
+                    (0..n).map(|i| f.element((i * 37 + 13) % order)).collect();
+                let b_vals: Vec<Gf2mElement> =
+                    (0..n).map(|i| f.element((i * 53 + 7) % order)).collect();
 
-            let a = FieldVec::from(a_vals);
-            let b = FieldVec::from(b_vals);
+                let a = FieldVec::from(a_vals);
+                let b = FieldVec::from(b_vals);
 
-            let scalar = a.dot_product(&b);
-            let simd = a.simd_dot_product(&b);
-            assert_eq!(
-                scalar, simd,
-                "SIMD/scalar mismatch for GF(2^{m}): scalar={:?}, simd={:?}",
-                scalar, simd
-            );
+                let scalar = a.dot_product(&b);
+                let simd = a.simd_dot_product(&b);
+                assert_eq!(
+                    scalar, simd,
+                    "SIMD/scalar mismatch for GF(2^{m}) at n={n}: scalar={:?}, simd={:?}",
+                    scalar, simd
+                );
+            }
         }
     }
 
