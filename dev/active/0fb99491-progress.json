@@ -1,0 +1,54 @@
+{
+  "epic_id": "0fb99491-2b53-4bee-811a-ff40e32e6890",
+  "epic_short_id": "0fb99491",
+  "current_wave": 1,
+  "waves": [
+    {
+      "wave_number": 1,
+      "issues": [
+        {
+          "id": "0458fa04-0055-416f-b36a-71d764af1d8e",
+          "short_id": "0458fa04",
+          "title": "Implement Barrett reduction for GF(2^m) polynomial arithmetic",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "9effa2e2-1075-4bfa-bc83-354107597063",
+          "short_id": "9effa2e2",
+          "title": "Benchmark GF(2^m) multiplication strategies for gfq expansion",
+          "classification": "research",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 2,
+      "issues": [
+        {
+          "id": "055bda14-7351-4245-b81a-350e749e547b",
+          "short_id": "055bda14",
+          "title": "Implement carry-less multiplication SIMD kernels for GF(2^m)",
+          "classification": "implementation",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 3,
+      "issues": [
+        {
+          "id": "0fb99491-2b53-4bee-811a-ff40e32e6890",
+          "short_id": "0fb99491",
+          "title": "Implement SIMD-accelerated FieldVec operations with delayed reduction",
+          "classification": "implementation",
+          "status": "pending"
+        }
+      ]
+    }
+  ],
+  "created_during_execution": [],
+  "escalations": [],
+  "rework_counts": {},
+  "started_at": "2026-04-05T00:00:00Z"
+}
