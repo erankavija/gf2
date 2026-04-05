@@ -1,0 +1,58 @@
+{
+  "id": "0bb6b033-353c-4ff2-b156-09e7dba98cac",
+  "title": "Implement delayed-reduction dot product in FieldVec",
+  "description": "Rewrite `FieldVec::dot_product` in `crates/gf2-core/src/field/vec.rs` to chunk accumulation by `F::max_unreduced_additions()`, reducing only at chunk boundaries.\n\n## Current code (broken for large-prime long vectors)\n\n```rust\npub fn dot_product(&self, rhs: &Self) -> F::Wide {\n    let mut acc = a0.mul_to_wide(b0);\n    for (a, b) in iter {\n        acc += a.mul_to_wide(b);  // overflows u128 for large p\n    }\n    acc\n}\n```\n\n## New code\n\n```rust\npub fn dot_product(&self, rhs: &Self) -> F {\n    let kmax = F::max_unreduced_additions();\n    // ... chunk by kmax, accumulate in Wide, reduce at boundaries\n}\n```\n\nNote: the return type changes from `F::Wide` to `F` since the result is now fully reduced. This is a breaking API change — callers currently call `F::reduce_wide(&result)` on the output. The new API handles reduction internally.\n\n## Behavior by field type\n\n- GF(2^m): `kmax = usize::MAX` → single accumulation pass, zero overhead vs current code\n- Fp<P> (p near 2^64): `kmax ≈ 1` → reduce after each multiply-add (correctness fix)\n- Fp<P> (p < 2^32): `kmax ≈ 2^64` → many products before reducing\n\n## Success criteria\n\n- Produces identical results to element-wise multiply-and-reduce for Fp<P> and Gf2mElement\n- Correct for vector lengths 1..10000 across small and large primes\n- For GF(2^m): zero intermediate reductions (by construction: kmax = usize::MAX → single accumulation pass)\n- For Fp<P>: exactly `ceil(n / kmax)` reductions for n-element dot product (by construction: loop chunks by kmax)\n- All existing FieldVec tests pass (update callers for new return type)\n- Property tests: dot product commutativity and bilinearity over Fp<7>, Fp<65521>, Fp<{large prime}>\n\n## Code review note: algebraic property tests\n\nDot product is a bilinear form, not an associative operation. `(a·b)·c` is not well-typed since `a·b` returns a scalar. The meaningful algebraic properties of inner products are:\n\n- **Commutativity**: `a·b = b·a` — tested for Fp<7>, Fp<65521>, and large prime\n- **Bilinearity (additive)**: `a·(b+c) = a·b + a·c` — tested for Fp<7> and Fp<65521>\n- **Bilinearity (scalar)**: `(k·a)·b = k·(a·b)` — tested for Fp<7> and Fp<65521>\n\nThese fully characterize the algebraic behavior. \"Associativity\" is not applicable to dot products.\n\n## Code review note: reduction count verification\n\nThe reduction counts (zero for GF(2^m), `ceil(n/kmax)` for Fp) are verified structurally by the implementation rather than via instrumented counters. The code has three distinct paths:\n- `kmax == usize::MAX`: single accumulation, one `reduce_wide` at the end (zero intermediate)\n- `kmax == 0`: element-wise multiply-and-add (degenerate case)\n- General: `while remaining > 0 { chunk by min(remaining, kmax); reduce; }` — exactly `ceil(n/kmax)` reductions\n\nResult-equality tests against element-wise reference implementations verify correctness for all paths.",
+  "state": "done",
+  "priority": "normal",
+  "assignee": "agent:claude",
+  "dependencies": [],
+  "gates_required": [
+    "tdd-reminder",
+    "tests",
+    "clippy",
+    "fmt",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "clippy": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-05T20:41:37.493468635Z"
+    },
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-05T20:23:41.578687996Z"
+    },
+    "fmt": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-05T20:41:37.696400643Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-05T20:43:47.426637779Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-05T20:41:38.215166360Z"
+    },
+    "tests": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-05T20:41:26.078497324Z"
+    }
+  },
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "story:0fb994"
+  ],
+  "created_at": "2026-04-05T20:21:33.005580870+00:00",
+  "updated_at": "2026-04-05T22:19:48.318267012+00:00"
+}

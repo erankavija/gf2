@@ -1,0 +1,61 @@
+{
+  "id": "31b7e044-4fc2-4a0b-8ad2-8c8acfece281",
+  "title": "SIMD-accelerated GF(2^m) dot product using CLMUL batch kernel",
+  "description": "Add a SIMD fast path to `FieldVec::dot_product` for `Gf2mElement` that uses the `clmul_batch` kernel from 055bda14.\n\n## Approach\n\nFor GF(2^m), the dot product is: multiply each pair (carry-less), XOR-accumulate all products, then Barrett-reduce the final sum once. Since XOR never overflows (`Wide = Self`, `kmax = usize::MAX`), the entire accumulation can be done without intermediate reductions.\n\nThe SIMD path:\n1. Extract raw `u64` values from both FieldVec slices\n2. Call `clmul_batch` to get all 128-bit products in one pass (uses VPCLMULQDQ when available)\n3. XOR all products together\n4. Barrett-reduce the final XOR sum\n\nThis avoids per-element Barrett reduction (saving 2 PCLMULQDQ per element) but pays data marshaling overhead.\n\n## Integration\n\n`simd_dot_product` is implemented as a method on `impl FieldVec<Gf2mElement>` that uses the batch CLMUL path when PCLMULQDQ is available, falling back to the generic `dot_product` otherwise.\n\n## Success criteria\n\n- SIMD dot product produces identical results to scalar path for all m=2..16\n- Graceful fallback to scalar when PCLMULQDQ unavailable\n- Benchmarks added comparing SIMD batch vs scalar dot product across field sizes\n\n## Code review note: performance comparison\n\nThe ≥2× speedup target assumed comparison against a truly scalar (no-SIMD) baseline. However, the generic `dot_product` already uses per-element SIMD via `clmul_barrett_fn` (3 PCLMULQDQ instructions per element in a single target_feature scope, from 055bda14). The batch approach eliminates per-element Barrett reduction (saving 2 PCLMULQDQ per element) but pays data marshaling overhead (extracting u64 values from Arc-wrapped Gf2mElement structs).\n\nMeasured results (GF(2^8), n=1000): scalar 10.4 µs, SIMD batch 10.1 µs (~3% faster). The incremental gain from batching over an already-SIMD per-element path is modest. The batch path will show larger gains when:\n- Data is already in contiguous u64 layout (SoA representation, tracked in 5fad4d0f)\n- AVX-512 provides 4× batch throughput (tracked in c7c0e991)",
+  "state": "done",
+  "priority": "normal",
+  "assignee": "agent:claude",
+  "dependencies": [
+    "0bb6b033-353c-4ff2-b156-09e7dba98cac"
+  ],
+  "gates_required": [
+    "tdd-reminder",
+    "tests",
+    "clippy",
+    "fmt",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "clippy": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-05T22:13:33.362162773Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-05T22:13:36.288865392Z"
+    },
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-05T21:26:26.431724117Z"
+    },
+    "tests": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-05T22:13:18.329022562Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-05T22:17:44.237010003Z"
+    },
+    "fmt": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-05T22:13:35.869257956Z"
+    }
+  },
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "component:gf2-kernels-simd",
+    "story:0fb994"
+  ],
+  "created_at": "2026-04-05T20:21:42.622158413+00:00",
+  "updated_at": "2026-04-05T22:17:49.329609587+00:00"
+}

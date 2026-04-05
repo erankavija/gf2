@@ -9,8 +9,34 @@
     "13594cd9-bfcb-400e-a5fc-ca0ed13c3378",
     "92086311-4dcc-4d04-9c26-a88034ffd894"
   ],
-  "gates_required": [],
-  "gates_status": {},
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review",
+    "tdd-reminder"
+  ],
+  "gates_status": {
+    "code-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-04-05T23:09:16.528122244Z"
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-04-05T23:09:16.528141484Z"
+    },
+    "tdd-reminder": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-04-05T23:09:16.528159944Z"
+    },
+    "cargo-ci": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-04-05T23:09:16.528079304Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -19,5 +45,5 @@
     "component:gf2-coding"
   ],
   "created_at": "2026-02-22T21:16:11.471663274+00:00",
-  "updated_at": "2026-02-22T22:29:39.296200404+00:00"
+  "updated_at": "2026-04-05T23:09:16.528178394+00:00"
 }

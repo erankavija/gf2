@@ -6,8 +6,34 @@
   "priority": "critical",
   "assignee": null,
   "dependencies": [],
-  "gates_required": [],
-  "gates_status": {},
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review",
+    "tdd-reminder"
+  ],
+  "gates_status": {
+    "cargo-ci": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-04-05T23:09:09.368182787Z"
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-04-05T23:09:09.368227757Z"
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-04-05T23:09:09.368247747Z"
+    },
+    "tdd-reminder": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-04-05T23:09:09.368266077Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -16,5 +42,5 @@
     "component:gf2-coding"
   ],
   "created_at": "2026-02-22T21:14:10.050005471+00:00",
-  "updated_at": "2026-02-22T22:29:39.288645625+00:00"
+  "updated_at": "2026-04-05T23:09:09.368284737+00:00"
 }

@@ -1,0 +1,60 @@
+{
+  "id": "9e5c2eb6-dec9-47d8-937c-c13aca490d86",
+  "title": "Benchmark FieldVec dot product against fflas-ffpack fdot for GF(p)",
+  "description": "Install fflas-ffpack and benchmark our delayed-reduction `FieldVec::dot_product` for Fp<P> against fflas-ffpack's `fdot` for equivalent prime field sizes.\n\n## Setup\n\n- fflas-ffpack and givaro are installed system-wide\n- C++ benchmark harness: `benches/fflas_fdot_bench.cpp`\n- Build script: `benches/build_fflas_bench.sh`\n- Rust benchmarks: `crates/gf2-core/benches/fieldvec_dot_product.rs`\n\n## Measured results (n=1000)\n\n| Prime | gf2-core (ns/elem) | fflas int64 (ns/elem) | fflas double (ns/elem) | Ratio vs int64 |\n|-------|--------------------|-----------------------|------------------------|----------------|\n| p=65521 | 1.72 | 0.49 | 0.11 (BLAS) | 3.5× |\n| p=2^31-1 | 1.77 | 1.11 | n/a | 1.6× |\n| p~2^62 | 2.72 | **not supported** | n/a | gf2-core only |\n\n## Analysis\n\n- **Medium primes (p ~ 2^31)**: Within 2× of fflas-ffpack (1.6× ratio). Our Montgomery + delayed reduction is competitive.\n- **Small primes (p < 2^16)**: 3.5× slower than fflas-ffpack's `Modular<int64_t>` path. fflas-ffpack uses simpler modular arithmetic (no Montgomery) and benefits from compiler autovectorization. The `Modular<double>` BLAS path (~0.11 ns/elem) uses hardware SIMD FMA, which we can't match without floating-point conversion.\n- **Large primes (p ~ 2^62)**: fflas-ffpack cannot handle primes this large (Modular<int64_t> max cardinality ~2^31). gf2-core is the only option in this regime.\n\n## Success criteria\n\n- Dot product throughput within 2× of fflas-ffpack's `fdot` for medium primes (p ~ 2^31): **met** (1.6×)\n- Large primes (p ~ 2^62): fflas-ffpack unsupported, gf2-core uniquely serves this regime\n- Small primes (p < 2^16): 3.5× gap due to fflas-ffpack's simpler modular arithmetic and BLAS paths. Closing this gap requires floating-point conversion or specialized small-prime kernels (future optimization)\n- Benchmark results documented as committed evidence in benchmark file doc comments\n- C++ fflas-ffpack harness is reproducible via `benches/build_fflas_bench.sh`",
+  "state": "done",
+  "priority": "normal",
+  "assignee": "agent:claude",
+  "dependencies": [
+    "0bb6b033-353c-4ff2-b156-09e7dba98cac"
+  ],
+  "gates_required": [
+    "tdd-reminder",
+    "tests",
+    "clippy",
+    "fmt",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "fmt": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-05T22:14:50.318555184Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-05T22:17:44.628561348Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-05T22:14:50.837925122Z"
+    },
+    "clippy": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-05T22:14:50.115487936Z"
+    },
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-05T21:26:26.949068103Z"
+    },
+    "tests": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-05T22:14:38.088151060Z"
+    }
+  },
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "story:0fb994"
+  ],
+  "created_at": "2026-04-05T20:21:50.508670198+00:00",
+  "updated_at": "2026-04-05T22:17:49.713665726+00:00"
+}
