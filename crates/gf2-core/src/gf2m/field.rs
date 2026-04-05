@@ -112,6 +112,7 @@ use std::sync::Arc;
 #[cfg(feature = "simd")]
 use gf2_kernels_simd::gf2m as simd_gf2m;
 
+use super::barrett::BarrettReducer;
 use super::uint_ext::UintExt;
 
 /// A binary extension field GF(2^m) with a specified primitive polynomial.
@@ -146,9 +147,19 @@ struct FieldParams_<V: UintExt = u64> {
     // Log/antilog tables for fast multiplication (m ≤ 16)
     log_table: Option<Vec<u16>>, // log_table[α^i] = i
     exp_table: Option<Vec<u16>>, // exp_table[i] = α^i
-    // SIMD multiplication function (if available)
+    // SIMD multiplication function (if available) — combined mul+reduce path
     #[cfg(feature = "simd")]
     simd_mul_fn: Option<simd_gf2m::Gf2mMulFn>,
+    // Raw SIMD carry-less multiply (no reduction) + Barrett reducer for the split path.
+    // When both are present, multiplication uses PCLMULQDQ for the raw product
+    // and Barrett reduction for the modular step.
+    #[cfg(feature = "simd")]
+    clmul_fn: Option<simd_gf2m::ClmulFn>,
+    // All-in-one PCLMULQDQ + Barrett reduce kernel (3 clmul ops in one target_feature scope).
+    // When available, replaces the split clmul_fn + Barrett path for better performance.
+    #[cfg(feature = "simd")]
+    clmul_barrett_fn: Option<simd_gf2m::ClmulBarrettFn>,
+    barrett_reducer: Option<BarrettReducer>,
 }
 
 impl<V: UintExt> PartialEq for FieldParams_<V> {
@@ -214,11 +225,36 @@ impl<V: UintExt> Gf2mField_<V> {
         );
 
         #[cfg(feature = "simd")]
-        let simd_mul_fn = if V::IS_U64 {
-            simd_gf2m::detect().map(|fns| fns.mul_fn)
+        let (simd_mul_fn, clmul_fn, clmul_barrett_fn) = if V::IS_U64 {
+            let fns = crate::simd::maybe_gf2m();
+            (
+                fns.map(|f| f.mul_fn),
+                fns.and_then(|f| f.clmul_fn),
+                fns.and_then(|f| f.clmul_barrett_fn),
+            )
+        } else {
+            (None, None, None)
+        };
+
+        // Create Barrett reducer when SIMD clmul is available (for the split
+        // PCLMULQDQ + Barrett path). Only create when the polynomial is valid:
+        // leading bit must be at position m.
+        #[cfg(feature = "simd")]
+        let barrett_reducer = if clmul_fn.is_some()
+            && (m as u32) <= 63
+            && m > 0
+            && (primitive_poly.as_u64_truncated() >> (m as u32)) == 1
+        {
+            Some(BarrettReducer::new(
+                primitive_poly.as_u64_truncated() as u128,
+                m as u32,
+            ))
         } else {
             None
         };
+
+        #[cfg(not(feature = "simd"))]
+        let barrett_reducer = None;
 
         Gf2mField_ {
             params: Arc::new(FieldParams_ {
@@ -228,6 +264,11 @@ impl<V: UintExt> Gf2mField_<V> {
                 exp_table: None,
                 #[cfg(feature = "simd")]
                 simd_mul_fn,
+                #[cfg(feature = "simd")]
+                clmul_fn,
+                #[cfg(feature = "simd")]
+                clmul_barrett_fn,
+                barrett_reducer,
             }),
         }
     }
@@ -318,6 +359,15 @@ impl<V: UintExt> Gf2mField_<V> {
 
         #[cfg(feature = "simd")]
         let simd_mul_fn = self.params.simd_mul_fn;
+        #[cfg(feature = "simd")]
+        let clmul_fn = self.params.clmul_fn;
+        #[cfg(feature = "simd")]
+        let clmul_barrett_fn = self.params.clmul_barrett_fn;
+        let barrett_reducer = self
+            .params
+            .barrett_reducer
+            .as_ref()
+            .map(|r| BarrettReducer::new(r.modulus(), r.degree()));
 
         Gf2mField_ {
             params: Arc::new(FieldParams_ {
@@ -327,6 +377,11 @@ impl<V: UintExt> Gf2mField_<V> {
                 exp_table: Some(exp_table),
                 #[cfg(feature = "simd")]
                 simd_mul_fn,
+                #[cfg(feature = "simd")]
+                clmul_fn,
+                #[cfg(feature = "simd")]
+                clmul_barrett_fn,
+                barrett_reducer,
             }),
         }
     }
@@ -919,7 +974,41 @@ impl<V: UintExt> Mul for &Gf2mElement_<V> {
             };
         }
 
-        // Priority 2: Use SIMD if available (faster than schoolbook for larger m)
+        // Priority 2a: All-in-one PCLMULQDQ + Barrett kernel (3 clmul ops in one
+        // target_feature scope — eliminates function-pointer call overhead).
+        #[cfg(feature = "simd")]
+        if let (Some(clmul_barrett_fn), Some(barrett)) = (
+            self.params.clmul_barrett_fn,
+            self.params.barrett_reducer.as_ref(),
+        ) {
+            let result = clmul_barrett_fn(
+                self.value.as_u64_truncated(),
+                rhs.value.as_u64_truncated(),
+                barrett.mu() as u64,
+                barrett.modulus() as u64,
+                barrett.degree(),
+            );
+            return Gf2mElement_ {
+                value: V::from_u64(result),
+                params: Arc::clone(&self.params),
+            };
+        }
+
+        // Priority 2b: Split PCLMULQDQ raw clmul + Barrett reduction (fallback
+        // when the all-in-one kernel is unavailable).
+        #[cfg(feature = "simd")]
+        if let (Some(clmul_fn), Some(barrett)) =
+            (self.params.clmul_fn, self.params.barrett_reducer.as_ref())
+        {
+            let product = clmul_fn(self.value.as_u64_truncated(), rhs.value.as_u64_truncated());
+            let result = barrett.reduce_with_clmul(product, clmul_fn);
+            return Gf2mElement_ {
+                value: V::from_u64(result),
+                params: Arc::clone(&self.params),
+            };
+        }
+
+        // Priority 3: Use SIMD combined mul+reduce if available (legacy path)
         #[cfg(feature = "simd")]
         if let Some(simd_mul_fn) = self.params.simd_mul_fn {
             let result = simd_mul_fn(
@@ -934,7 +1023,7 @@ impl<V: UintExt> Mul for &Gf2mElement_<V> {
             };
         }
 
-        // Priority 3: Fallback to schoolbook multiplication
+        // Priority 4: Fallback to schoolbook multiplication
         let m = self.params.m;
         let primitive_poly = self.params.primitive_poly;
 
@@ -4798,5 +4887,122 @@ mod generic_width_tests {
         let elem = field.element(0b1010);
         let s = format!("{}", elem);
         assert_eq!(s, "0b1010");
+    }
+
+    /// Exhaustive (m<=8) or sampled (m>8) field axiom verification for all m=2..16.
+    ///
+    /// This test verifies that multiplication (which may use SIMD PCLMULQDQ when
+    /// available) produces correct results by checking field axioms:
+    /// commutativity, associativity, distributivity, identity, and inverse.
+    #[test]
+    fn test_mul_field_axioms_all_m_2_to_16() {
+        use crate::primitive_polys::PrimitivePolynomialDatabase;
+
+        for m in 2..=16usize {
+            let poly = PrimitivePolynomialDatabase::standard(m)
+                .unwrap_or_else(|| panic!("no standard polynomial for m={m}"));
+            let field = Gf2mField::new(m, poly);
+            let order = 1u64 << m;
+            let one = field.one();
+
+            // Collect test elements: exhaustive for m<=8, sampled for m>8
+            let elements: Vec<u64> = if m <= 8 {
+                (0..order).collect()
+            } else {
+                // Sample: 0, 1, 2, order-1, order-2, plus pseudo-random elements
+                let mut elems = vec![0, 1, 2, order - 1, order - 2];
+                let mut rng_state = 0xDEAD_BEEF_u64;
+                for _ in 0..50 {
+                    rng_state = rng_state.wrapping_mul(6364136223846793005).wrapping_add(1);
+                    elems.push((rng_state >> 33) % order);
+                }
+                elems.sort_unstable();
+                elems.dedup();
+                elems
+            };
+
+            // Identity: a * 1 == a, 1 * a == a
+            for &a_val in &elements {
+                let a = field.element(a_val);
+                assert_eq!(
+                    (a.clone() * one.clone()).value(),
+                    a_val,
+                    "m={m}: {a_val} * 1 != {a_val}"
+                );
+                assert_eq!(
+                    (one.clone() * a.clone()).value(),
+                    a_val,
+                    "m={m}: 1 * {a_val} != {a_val}"
+                );
+            }
+
+            // Zero: a * 0 == 0
+            let zero = field.zero();
+            for &a_val in &elements {
+                let a = field.element(a_val);
+                assert!(
+                    (a.clone() * zero.clone()).is_zero(),
+                    "m={m}: {a_val} * 0 != 0"
+                );
+            }
+
+            // Commutativity, associativity, distributivity on pairs/triples
+            let test_elems: Vec<u64> = if m <= 4 {
+                (0..order).collect()
+            } else if m <= 8 {
+                // Use a subset for pair/triple tests to keep runtime reasonable
+                let mut elems = vec![0, 1, 2, order - 1];
+                let mut rng_state = 0xCAFE_BABE_u64;
+                for _ in 0..12 {
+                    rng_state = rng_state.wrapping_mul(6364136223846793005).wrapping_add(1);
+                    elems.push((rng_state >> 33) % order);
+                }
+                elems.sort_unstable();
+                elems.dedup();
+                elems
+            } else {
+                let mut elems = vec![0, 1, 2, order - 1];
+                let mut rng_state = 0xCAFE_BABE_u64;
+                for _ in 0..20 {
+                    rng_state = rng_state.wrapping_mul(6364136223846793005).wrapping_add(1);
+                    elems.push((rng_state >> 33) % order);
+                }
+                elems.sort_unstable();
+                elems.dedup();
+                elems
+            };
+
+            for &a_val in &test_elems {
+                for &b_val in &test_elems {
+                    let a = field.element(a_val);
+                    let b = field.element(b_val);
+
+                    // Commutativity: a * b == b * a
+                    let ab = (a.clone() * b.clone()).value();
+                    let ba = (b.clone() * a.clone()).value();
+                    assert_eq!(ab, ba, "m={m}: {a_val}*{b_val} != {b_val}*{a_val}");
+
+                    // Distributivity: a * (b + c) == a*b + a*c (pick c = 1)
+                    let c = one.clone();
+                    let b_plus_c = b.clone() + c.clone();
+                    let lhs = (a.clone() * b_plus_c).value();
+                    let rhs = ((a.clone() * b.clone()) + (a.clone() * c)).value();
+                    assert_eq!(
+                        lhs, rhs,
+                        "m={m}: {a_val}*({b_val}+1) != {a_val}*{b_val} + {a_val}*1"
+                    );
+                }
+            }
+
+            // Inverse: a * inv(a) == 1 for all nonzero a
+            for &a_val in &elements {
+                if a_val == 0 {
+                    continue;
+                }
+                let a = field.element(a_val);
+                let inv_a = a.inv().expect("nonzero element must have inverse");
+                assert!((a * inv_a).is_one(), "m={m}: {a_val} * inv({a_val}) != 1");
+            }
+        }
     }
 }

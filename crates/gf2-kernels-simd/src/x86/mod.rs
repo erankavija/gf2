@@ -6,6 +6,8 @@ use crate::LogicalFns;
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 mod avx2;
 
+pub(crate) mod clmul;
+
 #[allow(dead_code)]
 pub(crate) fn detect_x86() -> Option<LogicalFns> {
     // Prefer AVX2; add AVX-512F later when kernels are ready.

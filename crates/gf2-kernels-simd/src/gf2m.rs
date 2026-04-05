@@ -18,10 +18,60 @@
 /// Product a * b reduced modulo primitive_poly
 pub type Gf2mMulFn = fn(u64, u64, usize, u64) -> u64;
 
+/// Raw carry-less multiplication function (no reduction).
+///
+/// Computes the full 128-bit carry-less product of two 64-bit polynomials.
+///
+/// # Arguments
+/// * `a` - First polynomial (up to 64 bits)
+/// * `b` - Second polynomial (up to 64 bits)
+///
+/// # Returns
+/// The 128-bit carry-less product `a(x) * b(x)`.
+pub type ClmulFn = fn(u64, u64) -> u128;
+
+/// Batch carry-less multiplication function (no reduction).
+///
+/// Computes `out[i] = a[i] * b[i]` (carry-less, no reduction) for each index.
+///
+/// # Arguments
+/// * `a` - First operand slice
+/// * `b` - Second operand slice (same length as `a`)
+/// * `out` - Output slice (same length as `a`)
+///
+/// # Panics
+/// Panics if slices have different lengths.
+pub type ClmulBatchFn = fn(&[u64], &[u64], &mut [u128]);
+
+/// All-in-one carry-less multiply + Barrett reduce function.
+///
+/// Performs `a * b mod P(x)` using three PCLMULQDQ instructions in a single
+/// `#[target_feature]` scope, avoiding function-pointer call overhead.
+///
+/// # Arguments
+/// * `a` - First field element (m bits)
+/// * `b` - Second field element (m bits)
+/// * `mu` - Barrett constant `x^(2m) / P(x)`, fits in `u64` for `m <= 63`
+/// * `modulus` - Irreducible polynomial `P(x)`, fits in `u64` for `m <= 63`
+/// * `degree` - Field degree m
+///
+/// # Returns
+/// The reduced product, fitting in m bits.
+pub type ClmulBarrettFn = fn(u64, u64, u64, u64, u32) -> u64;
+
 /// Bundle of GF(2^m) multiplication functions for different field sizes.
 pub struct Gf2mFns {
-    /// General multiplication for any m ≤ 64
+    /// General multiplication for any m ≤ 64 (PCLMULQDQ + shift-and-XOR reduction)
     pub mul_fn: Gf2mMulFn,
+    /// Raw carry-less multiply (no reduction). Available when PCLMULQDQ is present.
+    pub clmul_fn: Option<ClmulFn>,
+    /// Batch carry-less multiply (no reduction). Uses VPCLMULQDQ when available,
+    /// falls back to sequential PCLMULQDQ otherwise. `None` if no PCLMULQDQ.
+    pub clmul_batch_fn: Option<ClmulBatchFn>,
+    /// All-in-one carry-less multiply + Barrett reduce. Uses three PCLMULQDQ
+    /// instructions in one `#[target_feature]` scope, eliminating function-pointer
+    /// call overhead. `None` if no PCLMULQDQ.
+    pub clmul_barrett_fn: Option<ClmulBarrettFn>,
 }
 
 /// Detect and return the best available GF(2^m) function bundle.
@@ -41,10 +91,31 @@ fn detect_x86() -> Option<Gf2mFns> {
     if is_x86_feature_detected!("pclmulqdq") {
         Some(Gf2mFns {
             mul_fn: gf2m_mul_pclmul_safe,
+            clmul_fn: Some(clmul_u64_safe),
+            clmul_batch_fn: Some(clmul_batch_safe),
+            clmul_barrett_fn: Some(clmul_barrett_reduce_safe),
         })
     } else {
         None
     }
+}
+
+/// Safe wrapper for raw carry-less multiplication.
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+fn clmul_u64_safe(a: u64, b: u64) -> u128 {
+    unsafe { crate::x86::clmul::clmul_u64(a, b) }
+}
+
+/// Safe wrapper for batch carry-less multiplication.
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+fn clmul_batch_safe(a: &[u64], b: &[u64], out: &mut [u128]) {
+    unsafe { crate::x86::clmul::clmul_batch(a, b, out) }
+}
+
+/// Safe wrapper for all-in-one carry-less multiply + Barrett reduce.
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+fn clmul_barrett_reduce_safe(a: u64, b: u64, mu: u64, modulus: u64, degree: u32) -> u64 {
+    unsafe { crate::x86::clmul::clmul_barrett_reduce(a, b, mu, modulus, degree) }
 }
 
 /// Safe wrapper for PCLMULQDQ multiplication
