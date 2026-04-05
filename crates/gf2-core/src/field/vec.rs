@@ -367,11 +367,13 @@ impl<F: FiniteField> From<FieldVec<F>> for Vec<F> {
 // ── Arithmetic ────────────────────────────────────────────────────────────────
 
 impl<F: FiniteField> FieldVec<F> {
-    /// Computes `∑ self[i] * rhs[i]` in the wide accumulator type.
+    /// Computes `∑ self[i] * rhs[i]` with delayed reduction.
     ///
-    /// The accumulator is seeded from the first pair via [`FiniteField::mul_to_wide`],
-    /// then subsequent products are accumulated with `+=`.
-    /// Call [`FiniteField::reduce_wide`] on the result to obtain a field element.
+    /// Uses [`FiniteField::max_unreduced_additions`] to determine how many wide
+    /// multiply-add accumulations can be performed before reduction is needed to
+    /// avoid overflow. This is both a correctness requirement (prevents `u128`
+    /// overflow for large primes) and a performance optimisation (minimises
+    /// expensive Montgomery reductions).
     ///
     /// # Arguments
     ///
@@ -383,7 +385,8 @@ impl<F: FiniteField> FieldVec<F> {
     ///
     /// # Complexity
     ///
-    /// O(n) multiplications.
+    /// O(n) multiplications and `⌈n / kmax⌉` reductions, where
+    /// `kmax = F::max_unreduced_additions()`.
     ///
     /// # Examples
     ///
@@ -394,12 +397,21 @@ impl<F: FiniteField> FieldVec<F> {
     /// let field = Gf2mField::new(4, 0b10011);
     /// let a = FieldVec::from(vec![field.element(3), field.element(5)]);
     /// let b = FieldVec::from(vec![field.element(2), field.element(1)]);
-    /// let wide = a.dot_product(&b);
-    /// let result = <Gf2mElement as FiniteField>::reduce_wide(&wide);
+    /// let result = a.dot_product(&b);
     /// // 3*2 XOR 5*1 = 6 XOR 5 = 3 in GF(16)
     /// assert_eq!(result, field.element(3));
     /// ```
-    pub fn dot_product(&self, rhs: &Self) -> F::Wide {
+    ///
+    /// ```
+    /// use gf2_core::field::{FieldVec, ConstField};
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let a = FieldVec::from(vec![Fp::<7>::new(3), Fp::<7>::new(5)]);
+    /// let b = FieldVec::from(vec![Fp::<7>::new(2), Fp::<7>::new(4)]);
+    /// // 3*2 + 5*4 = 6 + 20 = 26 ≡ 5 (mod 7)
+    /// assert_eq!(a.dot_product(&b), Fp::<7>::new(5));
+    /// ```
+    pub fn dot_product(&self, rhs: &Self) -> F {
         assert_eq!(
             self.len(),
             rhs.len(),
@@ -409,13 +421,50 @@ impl<F: FiniteField> FieldVec<F> {
         );
         assert!(!self.is_empty(), "dot_product: vectors must not be empty");
 
-        let mut iter = self.data.iter().zip(rhs.data.iter());
-        let (a0, b0) = iter.next().unwrap();
-        let mut acc = a0.mul_to_wide(b0);
-        for (a, b) in iter {
-            acc += a.mul_to_wide(b);
+        let kmax = F::max_unreduced_additions();
+
+        if kmax == usize::MAX {
+            // Fast path: no overflow possible (e.g., GF(2^m) where Wide = Self)
+            let mut acc = self.data[0].mul_to_wide(&rhs.data[0]);
+            for (a, b) in self.data[1..].iter().zip(rhs.data[1..].iter()) {
+                acc += a.mul_to_wide(b);
+            }
+            F::reduce_wide(&acc)
+        } else if kmax == 0 {
+            // Degenerate case: must reduce after every single multiply
+            let mut acc = self.data[0].clone() * rhs.data[0].clone();
+            for (a, b) in self.data[1..].iter().zip(rhs.data[1..].iter()) {
+                acc += &(a.clone() * b);
+            }
+            acc
+        } else {
+            // General case: chunk by kmax, accumulate in Wide, reduce at boundaries
+            let pairs = self.data.iter().zip(rhs.data.iter());
+            let mut result = self.data[0].zero_like(); // field zero
+
+            let mut chunk_iter = pairs;
+            let mut remaining = self.len();
+
+            while remaining > 0 {
+                let chunk_size = remaining.min(kmax); // kmax products can be summed safely
+                let mut acc: Option<F::Wide> = None;
+
+                for (a, b) in chunk_iter.by_ref().take(chunk_size) {
+                    match acc {
+                        None => acc = Some(a.mul_to_wide(b)),
+                        Some(ref mut w) => *w += a.mul_to_wide(b),
+                    }
+                }
+
+                if let Some(w) = acc {
+                    result += &F::reduce_wide(&w);
+                }
+
+                remaining -= chunk_size;
+            }
+
+            result
         }
-        acc
     }
 
     /// Returns a new `FieldVec` with each element multiplied by scalar `a`.
@@ -790,7 +839,6 @@ impl<'a, F> Iterator for StridedIter<'a, F> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::field::FiniteField;
     use crate::gf2m::{Gf2mElement, Gf2mField};
 
     #[test]
@@ -855,8 +903,7 @@ mod tests {
         let f = Gf2mField::new(4, 0b10011);
         let a = FieldVec::from(vec![f.element(3), f.element(5)]);
         let b = FieldVec::from(vec![f.element(2), f.element(1)]);
-        let wide = a.dot_product(&b);
-        let result = <Gf2mElement as FiniteField>::reduce_wide(&wide);
+        let result = a.dot_product(&b);
         assert_eq!(result, f.element(3));
     }
 
@@ -866,8 +913,7 @@ mod tests {
         let f = Gf2mField::new(4, 0b10011);
         let a = FieldVec::from(vec![f.one(), f.zero()]);
         let b = FieldVec::from(vec![f.zero(), f.one()]);
-        let wide = a.dot_product(&b);
-        let result = <Gf2mElement as FiniteField>::reduce_wide(&wide);
+        let result = a.dot_product(&b);
         assert!(result.is_zero());
     }
 
@@ -1036,6 +1082,191 @@ mod tests {
         assert_ne!(v, x);
     }
 
+    // ── Fp dot product tests ──────────────────────────────────────────────────
+
+    #[test]
+    fn test_dot_product_fp7_matches_elementwise() {
+        use crate::gfp::Fp;
+        // [3, 5, 6] · [2, 4, 1] = 3*2 + 5*4 + 6*1 = 6 + 20 + 6 = 32 ≡ 4 (mod 7)
+        let a = FieldVec::from(vec![Fp::<7>::new(3), Fp::<7>::new(5), Fp::<7>::new(6)]);
+        let b = FieldVec::from(vec![Fp::<7>::new(2), Fp::<7>::new(4), Fp::<7>::new(1)]);
+        let dot = a.dot_product(&b);
+
+        // Element-wise reference
+        let manual = Fp::<7>::new(3) * Fp::<7>::new(2)
+            + Fp::<7>::new(5) * Fp::<7>::new(4)
+            + Fp::<7>::new(6) * Fp::<7>::new(1);
+        assert_eq!(dot, manual);
+        assert_eq!(dot, Fp::<7>::new(4));
+    }
+
+    #[test]
+    fn test_dot_product_fp65521_matches_elementwise() {
+        use crate::gfp::Fp;
+        let vals_a: Vec<u64> = vec![100, 200, 300, 400, 500];
+        let vals_b: Vec<u64> = vec![600, 700, 800, 900, 1000];
+        let a: FieldVec<Fp<65521>> = vals_a.iter().map(|&v| Fp::<65521>::new(v)).collect();
+        let b: FieldVec<Fp<65521>> = vals_b.iter().map(|&v| Fp::<65521>::new(v)).collect();
+        let dot = a.dot_product(&b);
+
+        // Manual: 100*600 + 200*700 + 300*800 + 400*900 + 500*1000
+        //       = 60000 + 140000 + 240000 + 360000 + 500000 = 1300000
+        // 1300000 mod 65521 = 1300000 - 19*65521 = 1300000 - 1244899 = 55101
+        let manual: Fp<65521> = vals_a
+            .iter()
+            .zip(vals_b.iter())
+            .map(|(&ai, &bi)| Fp::<65521>::new(ai) * Fp::<65521>::new(bi))
+            .fold(Fp::<65521>::new(0), |acc, x| acc + x);
+        assert_eq!(dot, manual);
+    }
+
+    #[test]
+    fn test_dot_product_large_prime_no_overflow() {
+        use crate::gfp::Fp;
+        // P near 2^63: kmax = u128::MAX / (P-1)^2 ≈ 4, so chunking kicks in
+        // for vectors longer than ~5 elements. The old code would accumulate
+        // without chunking and could overflow u128 for long vectors.
+        const P: u64 = 9_223_372_036_854_775_783; // largest prime <= 2^63
+        let n = 100;
+        let a: FieldVec<Fp<P>> = (0..n).map(|i| Fp::<P>::new(i + 1)).collect();
+        let b: FieldVec<Fp<P>> = (0..n).map(|i| Fp::<P>::new(i + 100)).collect();
+        let dot = a.dot_product(&b);
+
+        // Verify against element-wise computation (which reduces per multiply)
+        let manual: Fp<P> = (0..n)
+            .map(|i| Fp::<P>::new(i + 1) * Fp::<P>::new(i + 100))
+            .fold(Fp::<P>::new(0), |acc, x| acc + x);
+        assert_eq!(dot, manual);
+    }
+
+    #[test]
+    fn test_dot_product_gf2m_unchanged() {
+        // GF(2^8) dot product should match element-wise XOR of products
+        let f = Gf2mField::gf256();
+        let a = FieldVec::from(vec![
+            f.element(0x53),
+            f.element(0xCA),
+            f.element(0x01),
+            f.element(0xFF),
+        ]);
+        let b = FieldVec::from(vec![
+            f.element(0x12),
+            f.element(0x34),
+            f.element(0x56),
+            f.element(0x78),
+        ]);
+        let dot = a.dot_product(&b);
+
+        // Reference: element-wise multiply and XOR
+        let manual = (f.element(0x53) * f.element(0x12))
+            + (f.element(0xCA) * f.element(0x34))
+            + (f.element(0x01) * f.element(0x56))
+            + (f.element(0xFF) * f.element(0x78));
+        assert_eq!(dot, manual);
+    }
+
+    #[test]
+    fn test_dot_product_fp7_fast_path() {
+        use crate::gfp::Fp;
+        // For Fp<7>, kmax = u128::MAX / 36 ≈ 9.4e36 — effectively no chunking needed
+        // for short vectors. This exercises the general-case path but with a huge kmax.
+        let a = FieldVec::from(vec![Fp::<7>::new(6), Fp::<7>::new(6)]);
+        let b = FieldVec::from(vec![Fp::<7>::new(6), Fp::<7>::new(6)]);
+        // 6*6 + 6*6 = 36 + 36 = 72 ≡ 2 (mod 7)
+        assert_eq!(a.dot_product(&b), Fp::<7>::new(2));
+    }
+
+    #[test]
+    fn test_dot_product_length_one() {
+        use crate::gfp::Fp;
+        let a = FieldVec::from(vec![Fp::<7>::new(5)]);
+        let b = FieldVec::from(vec![Fp::<7>::new(3)]);
+        // 5*3 = 15 ≡ 1 (mod 7)
+        assert_eq!(a.dot_product(&b), Fp::<7>::new(1));
+    }
+
+    #[test]
+    fn test_dot_product_length_two() {
+        use crate::gfp::Fp;
+        let a = FieldVec::from(vec![Fp::<7>::new(3), Fp::<7>::new(4)]);
+        let b = FieldVec::from(vec![Fp::<7>::new(2), Fp::<7>::new(5)]);
+        // 3*2 + 4*5 = 6 + 20 = 26 ≡ 5 (mod 7)
+        assert_eq!(a.dot_product(&b), Fp::<7>::new(5));
+    }
+
+    #[test]
+    #[should_panic(expected = "vectors must not be empty")]
+    fn test_dot_product_empty_fp_panics() {
+        use crate::gfp::Fp;
+        let a = FieldVec::<Fp<7>>::new();
+        let b = FieldVec::<Fp<7>>::new();
+        let _ = a.dot_product(&b);
+    }
+
+    #[test]
+    fn test_dot_product_large_prime_max_residues() {
+        use crate::gfp::Fp;
+        // P near 2^63, use values close to P-1
+        const P: u64 = 9_223_372_036_854_775_783;
+        let p_minus_1 = Fp::<P>::new(P - 1);
+        // Create vectors where all elements are P-1 (worst case for overflow)
+        let a = FieldVec::from(vec![p_minus_1; 100]);
+        let b = FieldVec::from(vec![p_minus_1; 100]);
+
+        let result = a.dot_product(&b);
+
+        // Verify against element-wise computation
+        let expected: Fp<P> = (0..100).fold(Fp::<P>::zero(), |acc, _| acc + p_minus_1 * p_minus_1);
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_dot_product_fp65521_long_vector() {
+        use crate::gfp::Fp;
+        let n = 10000;
+        let a: FieldVec<Fp<65521>> = FieldVec::from(
+            (1..=n)
+                .map(|i| Fp::<65521>::new(i as u64 % 65521))
+                .collect::<Vec<_>>(),
+        );
+        let b: FieldVec<Fp<65521>> = FieldVec::from(
+            (1..=n)
+                .map(|i| Fp::<65521>::new((i * 3 + 7) as u64 % 65521))
+                .collect::<Vec<_>>(),
+        );
+        let result = a.dot_product(&b);
+        // Verify against element-wise
+        let expected: Fp<65521> = a
+            .iter()
+            .zip(b.iter())
+            .fold(Fp::<65521>::zero(), |acc, (ai, bi)| acc + (*ai * *bi));
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_dot_product_large_prime_long_vector() {
+        use crate::gfp::Fp;
+        const P: u64 = 9_223_372_036_854_775_783;
+        let n = 10000usize;
+        let a: FieldVec<Fp<P>> = FieldVec::from(
+            (0..n)
+                .map(|i| Fp::<P>::new((i as u64 * 7 + 3) % P))
+                .collect::<Vec<_>>(),
+        );
+        let b: FieldVec<Fp<P>> = FieldVec::from(
+            (0..n)
+                .map(|i| Fp::<P>::new((i as u64 * 13 + 11) % P))
+                .collect::<Vec<_>>(),
+        );
+        let result = a.dot_product(&b);
+        // Verify against element-wise
+        let expected: Fp<P> = a
+            .iter()
+            .zip(b.iter())
+            .fold(Fp::<P>::zero(), |acc, (ai, bi)| acc + (*ai * *bi));
+        assert_eq!(result, expected);
+    }
+
     // ── Property-based tests ──────────────────────────────────────────────────
 
     proptest::proptest! {
@@ -1055,9 +1286,130 @@ mod tests {
 
             // (a*x) · y == a * (x · y)  — bilinearity
             let ax = x.scale(&a);
-            let lhs = <Gf2mElement as FiniteField>::reduce_wide(&ax.dot_product(&y));
-            let rhs = a.clone() * <Gf2mElement as FiniteField>::reduce_wide(&x.dot_product(&y));
+            let lhs = ax.dot_product(&y);
+            let rhs = a.clone() * x.dot_product(&y);
             proptest::prop_assert_eq!(lhs, rhs);
+        }
+
+        /// dot_product distributes over addition for Fp<7>:
+        /// a · (b + c) == a · b + a · c.
+        #[test]
+        fn prop_dot_product_additive_linear_fp7(
+            xs in proptest::collection::vec(0u64..7, 1..16),
+            ys in proptest::collection::vec(0u64..7, 1..16),
+            zs in proptest::collection::vec(0u64..7, 1..16),
+        ) {
+            use crate::gfp::Fp;
+            let len = xs.len().min(ys.len()).min(zs.len());
+            let a: FieldVec<Fp<7>> = xs[..len].iter().map(|&v| Fp::<7>::new(v)).collect();
+            let b: FieldVec<Fp<7>> = ys[..len].iter().map(|&v| Fp::<7>::new(v)).collect();
+            let c: FieldVec<Fp<7>> = zs[..len].iter().map(|&v| Fp::<7>::new(v)).collect();
+
+            let b_plus_c = b.add_vec(&c);
+            let lhs = a.dot_product(&b_plus_c);
+            let rhs = a.dot_product(&b) + a.dot_product(&c);
+            proptest::prop_assert_eq!(lhs, rhs);
+        }
+
+        /// dot_product scalar linearity for Fp<7>:
+        /// (k * a) · b == k * (a · b).
+        #[test]
+        fn prop_dot_product_scale_linear_fp7(
+            k_raw in 0u64..7,
+            xs in proptest::collection::vec(0u64..7, 1..16),
+            ys in proptest::collection::vec(0u64..7, 1..16),
+        ) {
+            use crate::gfp::Fp;
+            let len = xs.len().min(ys.len());
+            let k = Fp::<7>::new(k_raw);
+            let a: FieldVec<Fp<7>> = xs[..len].iter().map(|&v| Fp::<7>::new(v)).collect();
+            let b: FieldVec<Fp<7>> = ys[..len].iter().map(|&v| Fp::<7>::new(v)).collect();
+
+            let lhs = a.scale(&k).dot_product(&b);
+            let rhs = k * a.dot_product(&b);
+            proptest::prop_assert_eq!(lhs, rhs);
+        }
+
+        /// dot_product distributes over addition for Fp<65521>:
+        /// a · (b + c) == a · b + a · c.
+        #[test]
+        fn prop_dot_product_additive_linear_fp65521(
+            xs in proptest::collection::vec(0u64..65521, 1..16),
+            ys in proptest::collection::vec(0u64..65521, 1..16),
+            zs in proptest::collection::vec(0u64..65521, 1..16),
+        ) {
+            use crate::gfp::Fp;
+            let len = xs.len().min(ys.len()).min(zs.len());
+            let a: FieldVec<Fp<65521>> = xs[..len].iter().map(|&v| Fp::<65521>::new(v)).collect();
+            let b: FieldVec<Fp<65521>> = ys[..len].iter().map(|&v| Fp::<65521>::new(v)).collect();
+            let c: FieldVec<Fp<65521>> = zs[..len].iter().map(|&v| Fp::<65521>::new(v)).collect();
+
+            let b_plus_c = b.add_vec(&c);
+            let lhs = a.dot_product(&b_plus_c);
+            let rhs = a.dot_product(&b) + a.dot_product(&c);
+            proptest::prop_assert_eq!(lhs, rhs);
+        }
+
+        /// dot_product scalar linearity for Fp<65521>:
+        /// (k * a) · b == k * (a · b).
+        #[test]
+        fn prop_dot_product_scale_linear_fp65521(
+            k_raw in 0u64..65521,
+            xs in proptest::collection::vec(0u64..65521, 1..16),
+            ys in proptest::collection::vec(0u64..65521, 1..16),
+        ) {
+            use crate::gfp::Fp;
+            let len = xs.len().min(ys.len());
+            let k = Fp::<65521>::new(k_raw);
+            let a: FieldVec<Fp<65521>> = xs[..len].iter().map(|&v| Fp::<65521>::new(v)).collect();
+            let b: FieldVec<Fp<65521>> = ys[..len].iter().map(|&v| Fp::<65521>::new(v)).collect();
+
+            let lhs = a.scale(&k).dot_product(&b);
+            let rhs = k * a.dot_product(&b);
+            proptest::prop_assert_eq!(lhs, rhs);
+        }
+
+        /// dot_product commutativity for Fp<7>: a · b == b · a.
+        #[test]
+        fn prop_dot_product_commutative_fp7(
+            xs in proptest::collection::vec(0u64..7, 1..16),
+            ys in proptest::collection::vec(0u64..7, 1..16),
+        ) {
+            use crate::gfp::Fp;
+            let len = xs.len().min(ys.len());
+            let a: FieldVec<Fp<7>> = xs[..len].iter().map(|&v| Fp::<7>::new(v)).collect();
+            let b: FieldVec<Fp<7>> = ys[..len].iter().map(|&v| Fp::<7>::new(v)).collect();
+            proptest::prop_assert_eq!(a.dot_product(&b), b.dot_product(&a));
+        }
+
+        /// dot_product commutativity for Fp<65521>: a · b == b · a.
+        #[test]
+        fn prop_dot_product_commutative_fp65521(
+            xs in proptest::collection::vec(0u64..65521, 1..16),
+            ys in proptest::collection::vec(0u64..65521, 1..16),
+        ) {
+            use crate::gfp::Fp;
+            let len = xs.len().min(ys.len());
+            let a: FieldVec<Fp<65521>> = xs[..len].iter().map(|&v| Fp::<65521>::new(v)).collect();
+            let b: FieldVec<Fp<65521>> = ys[..len].iter().map(|&v| Fp::<65521>::new(v)).collect();
+            proptest::prop_assert_eq!(a.dot_product(&b), b.dot_product(&a));
+        }
+
+        /// dot_product commutativity for a large prime near 2^63.
+        #[test]
+        fn prop_dot_product_commutative_large_prime(
+            vals_a in proptest::collection::vec(0u64..9_223_372_036_854_775_783u64, 2..50),
+        ) {
+            use crate::gfp::Fp;
+            const P: u64 = 9_223_372_036_854_775_783;
+            let a: FieldVec<Fp<P>> = FieldVec::from(
+                vals_a.iter().map(|&v| Fp::<P>::new(v)).collect::<Vec<_>>(),
+            );
+            // Use reversed values for b to get different vectors
+            let b: FieldVec<Fp<P>> = FieldVec::from(
+                vals_a.iter().rev().map(|&v| Fp::<P>::new(v)).collect::<Vec<_>>(),
+            );
+            proptest::prop_assert_eq!(a.dot_product(&b), b.dot_product(&a));
         }
 
         /// axpy correctness: y after axpy equals element-wise y[i] + a*x[i].
