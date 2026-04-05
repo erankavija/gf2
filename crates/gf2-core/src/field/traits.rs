@@ -120,17 +120,140 @@ pub trait FiniteField:
     fn one_like(&self) -> Self;
 
     /// Converts this element to the wide accumulator type.
+    ///
+    /// For binary extension fields GF(2^m), `Wide = Self` so this is a clone.
+    /// For prime fields GF(p), this widens to a double-width integer (e.g., `u64` → `u128`)
+    /// to leave headroom for accumulating sums of products without overflow.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::FiniteField;
+    /// use gf2_core::gf2m::Gf2mField;
+    ///
+    /// // GF(2^4): Wide = Self, so to_wide is identity
+    /// let field = Gf2mField::new(4, 0b10011);
+    /// let a = field.element(7);
+    /// let wide = a.to_wide();
+    /// let back = <gf2_core::gf2m::Gf2mElement as FiniteField>::reduce_wide(&wide);
+    /// assert_eq!(back, a);
+    /// ```
+    ///
+    /// ```
+    /// use gf2_core::field::FiniteField;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// // Fp<7>: Wide = u128, so to_wide widens the canonical value
+    /// let a = Fp::<7>::new(5);
+    /// let wide: u128 = a.to_wide();
+    /// assert_eq!(wide, 5u128);
+    /// ```
     fn to_wide(&self) -> Self::Wide;
 
     /// Multiplies two elements and returns the result in the wide type (before reduction).
+    ///
+    /// The product is stored in `Wide` so that many such products can be summed
+    /// (up to [`max_unreduced_additions`](Self::max_unreduced_additions) times)
+    /// before a single [`reduce_wide`](Self::reduce_wide) call brings the accumulator
+    /// back into the field.
+    ///
+    /// # Arguments
+    ///
+    /// * `rhs` — The right-hand multiplicand.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::FiniteField;
+    /// use gf2_core::gf2m::Gf2mField;
+    ///
+    /// let field = Gf2mField::new(4, 0b10011);
+    /// let a = field.element(5);
+    /// let b = field.element(3);
+    /// let wide = a.mul_to_wide(&b);
+    /// let reduced = <gf2_core::gf2m::Gf2mElement as FiniteField>::reduce_wide(&wide);
+    /// assert_eq!(reduced, a * b);
+    /// ```
+    ///
+    /// ```
+    /// use gf2_core::field::FiniteField;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let a = Fp::<7>::new(5);
+    /// let b = Fp::<7>::new(4);
+    /// let wide: u128 = a.mul_to_wide(&b);
+    /// // 5 * 4 = 20 stored unreduced in u128
+    /// assert_eq!(wide, 20u128);
+    /// assert_eq!(Fp::<7>::reduce_wide(&wide), Fp::<7>::new(6)); // 20 mod 7 = 6
+    /// ```
     fn mul_to_wide(&self, rhs: &Self) -> Self::Wide;
 
     /// Reduces a wide accumulator back to a field element.
+    ///
+    /// After accumulating up to [`max_unreduced_additions`](Self::max_unreduced_additions)
+    /// wide products, call this to obtain the canonical field element.
+    ///
+    /// # Arguments
+    ///
+    /// * `wide` — The accumulated wide value to reduce.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::FiniteField;
+    /// use gf2_core::gf2m::Gf2mField;
+    ///
+    /// let field = Gf2mField::new(4, 0b10011);
+    /// let a = field.element(5);
+    /// let wide = a.to_wide();
+    /// let back = <gf2_core::gf2m::Gf2mElement as FiniteField>::reduce_wide(&wide);
+    /// assert_eq!(back, a);
+    /// ```
+    ///
+    /// ```
+    /// use gf2_core::field::FiniteField;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// // Accumulate two products in u128, then reduce once
+    /// let a = Fp::<7>::new(5);
+    /// let b = Fp::<7>::new(4);
+    /// let c = Fp::<7>::new(3);
+    /// let d = Fp::<7>::new(6);
+    /// let wide = a.mul_to_wide(&b) + c.mul_to_wide(&d);
+    /// // 5*4 + 3*6 = 20 + 18 = 38 → 38 mod 7 = 3
+    /// assert_eq!(Fp::<7>::reduce_wide(&wide), Fp::<7>::new(3));
+    /// ```
     fn reduce_wide(wide: &Self::Wide) -> Self;
 
     /// Maximum number of wide-type additions before reduction is required to avoid overflow.
     ///
     /// Returns `usize::MAX` if overflow is impossible (e.g., binary fields where addition is XOR).
+    /// For prime fields, this is computed as `floor(u128::MAX / (P-1)^2)` — the number of
+    /// unreduced `mul_to_wide` products that can be safely summed in a `u128` accumulator
+    /// without wrapping. Dot-product implementations use this to chunk their work.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::FiniteField;
+    /// use gf2_core::gf2m::Gf2mElement;
+    ///
+    /// // GF(2^m): XOR never overflows, so no reduction limit
+    /// assert_eq!(<Gf2mElement as FiniteField>::max_unreduced_additions(), usize::MAX);
+    /// ```
+    ///
+    /// ```
+    /// use gf2_core::field::FiniteField;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// // Small prime: many products fit in u128
+    /// let k = <Fp<7> as FiniteField>::max_unreduced_additions();
+    /// assert!(k > 1_000_000);
+    ///
+    /// // Large prime near 2^63: only a handful of products fit
+    /// let k2 = <Fp<9_223_372_036_854_775_783> as FiniteField>::max_unreduced_additions();
+    /// assert!(k2 >= 1 && k2 < 100);
+    /// ```
     fn max_unreduced_additions() -> usize;
 }
 
