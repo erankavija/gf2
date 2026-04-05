@@ -1,0 +1,31 @@
+{
+  "id": "c488ed29-df70-46ef-94c0-2a9f0d61b2f0",
+  "title": "Generalize Gf2mElement storage beyond u64 to support m=64+",
+  "description": "Currently `Gf2mElement` uses `u64` storage via the `UintExt` sealed trait, which caps field size at m=63 (the primitive polynomial for m=64 has a leading bit at position 64, which doesn't fit in `u64`). This limits GF(2^m) operations to fields smaller than GF(2^64).\n\n## Goal\n\nExtend `Gf2mElement_<V: UintExt>` to support `u128` (and potentially wider) storage, enabling GF(2^64) through GF(2^127).\n\n## Scope\n\n- Add `UintExt` impl for `u128`\n- Ensure `BarrettReducer` works for m=64+ (it already uses `u128` internally, but verify edge cases)\n- Update `primitive_polys.rs` with standard primitive polynomials for m=64\n- Update benchmarks in `gf2m_mul_strategies.rs` to include true GF(2^64) once supported\n- Verify PCLMULQDQ kernels handle the wider storage correctly (the intrinsic produces 128-bit output, so m=64 fits naturally)\n\n## Success criteria\n\n- `Gf2mElement_<u128>` passes the same field axiom tests as `Gf2mElement_<u64>`\n- GF(2^64) multiplication produces correct results verified against known test vectors\n- Benchmarks updated to include GF(2^64) alongside GF(2^63) for comparison",
+  "state": "ready",
+  "priority": "low",
+  "assignee": null,
+  "dependencies": [
+    "0458fa04-0055-416f-b36a-71d764af1d8e"
+  ],
+  "gates_required": [
+    "code-review",
+    "doc-review",
+    "cargo-ci"
+  ],
+  "gates_status": {
+    "cargo-ci": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-04-05T19:51:48.647678978Z"
+    }
+  },
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core"
+  ],
+  "created_at": "2026-04-05T11:58:00.309773139+00:00",
+  "updated_at": "2026-04-05T19:53:04.293676536+00:00"
+}

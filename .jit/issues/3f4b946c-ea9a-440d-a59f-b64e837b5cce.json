@@ -11,43 +11,25 @@
     "2ce2a757-ad1f-4c6e-9174-987fb642ada2"
   ],
   "gates_required": [
-    "tdd-reminder",
-    "tests",
-    "clippy",
-    "fmt",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "cargo-ci"
   ],
   "gates_status": {
-    "tdd-reminder": {
+    "code-review": {
       "status": "pending",
       "updated_by": null,
-      "updated_at": "2026-02-25T22:47:59.066354711Z"
-    },
-    "clippy": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-02-25T22:47:59.066385261Z"
-    },
-    "fmt": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-02-25T22:47:59.066396961Z"
+      "updated_at": "2026-02-25T22:47:59.066408851Z"
     },
     "doc-review": {
       "status": "pending",
       "updated_by": null,
       "updated_at": "2026-02-25T22:47:59.066420631Z"
     },
-    "code-review": {
+    "cargo-ci": {
       "status": "pending",
       "updated_by": null,
-      "updated_at": "2026-02-25T22:47:59.066408851Z"
-    },
-    "tests": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-02-25T22:47:59.066373091Z"
+      "updated_at": "2026-04-05T19:51:48.594200179Z"
     }
   },
   "context": {},
@@ -57,5 +39,5 @@
     "component:gf2-core"
   ],
   "created_at": "2026-02-21T19:35:51.862089277+00:00",
-  "updated_at": "2026-03-06T22:26:27.929291086+00:00"
+  "updated_at": "2026-04-05T19:53:03.910668447+00:00"
 }

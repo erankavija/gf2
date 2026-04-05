@@ -10,38 +10,20 @@
     "3f3d6c23-d75d-44a6-99cf-5b93db609acd"
   ],
   "gates_required": [
-    "tdd-reminder",
-    "tests",
-    "clippy",
-    "fmt",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "cargo-ci"
   ],
   "gates_status": {
-    "tdd-reminder": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-03-05T20:29:17.390604258Z"
-    },
     "code-review": {
       "status": "pending",
       "updated_by": null,
       "updated_at": "2026-03-05T20:29:17.390686058Z"
     },
-    "fmt": {
+    "cargo-ci": {
       "status": "pending",
       "updated_by": null,
-      "updated_at": "2026-03-05T20:29:17.390674488Z"
-    },
-    "tests": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-03-05T20:29:17.390652118Z"
-    },
-    "clippy": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-03-05T20:29:17.390663558Z"
+      "updated_at": "2026-04-05T19:51:56.903724351Z"
     },
     "doc-review": {
       "status": "pending",
@@ -64,5 +46,5 @@
     "type:task"
   ],
   "created_at": "2026-02-26T00:09:07.544270603+00:00",
-  "updated_at": "2026-03-06T23:25:07.415205893+00:00"
+  "updated_at": "2026-04-05T19:53:09.855683330+00:00"
 }

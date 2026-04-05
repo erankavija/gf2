@@ -38,3 +38,4 @@ target/charon/
 .jit/**/*.lock
 .jit/server.log
 .jit/server.pid.json
+.jit/gate-runs/

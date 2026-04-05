@@ -16,11 +16,8 @@
   "gates_required": [
     "lake-build",
     "code-review",
-    "tdd-reminder",
-    "tests",
-    "clippy",
-    "fmt",
-    "doc-review"
+    "doc-review",
+    "cargo-ci"
   ],
   "gates_status": {
     "doc-review": {
@@ -28,25 +25,10 @@
       "updated_by": null,
       "updated_at": "2026-03-12T22:19:37.373338874Z"
     },
-    "fmt": {
+    "cargo-ci": {
       "status": "pending",
       "updated_by": null,
-      "updated_at": "2026-03-12T22:19:37.373321034Z"
-    },
-    "clippy": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-03-12T22:19:37.373301954Z"
-    },
-    "tdd-reminder": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-03-12T22:19:37.373237214Z"
-    },
-    "tests": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-03-12T22:19:37.373275804Z"
+      "updated_at": "2026-04-05T19:51:52.377786990Z"
     }
   },
   "context": {},
@@ -57,5 +39,5 @@
     "epic:e095a100"
   ],
   "created_at": "2026-03-11T21:07:15.911783041+00:00",
-  "updated_at": "2026-03-30T23:49:29.345018225+00:00"
+  "updated_at": "2026-04-05T19:53:07.520436222+00:00"
 }

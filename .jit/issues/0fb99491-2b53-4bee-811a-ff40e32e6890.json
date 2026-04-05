@@ -2,52 +2,34 @@
   "id": "0fb99491-2b53-4bee-811a-ff40e32e6890",
   "title": "Implement SIMD-accelerated FieldVec operations with delayed reduction",
   "description": "Add SIMD-accelerated operations to the generic `FieldVec<F: FiniteField>` container (54a60c90). This is the performance-critical kernel layer that downstream `FieldMatrix` multiplication depends on.\n\n## Core: vectorized dot product with delayed reduction\n\nPerform polynomial multiplication and XOR/addition accumulation, reducing modulo the field polynomial only when overflow is imminent. Uses the `FiniteField::Wide` accumulator type and bounds-aware scheduling inspired by fflas-ffpack's `MMHelper` pattern:\n\n```rust\n// Compute kmax = Wide::MAX / (p-1)^2 for GF(p)\n// Accumulate kmax multiply-adds in Wide before reducing\nlet kmax = F::max_unreduced_additions();\nfor chunk in pairs.chunks(kmax) {\n    acc += chunk.iter().map(|(a, b)| a.mul_to_wide(b)).sum();\n    // reduce only at chunk boundary\n}\n```\n\n## SIMD dispatch targets\n\n- **GF(2^m)**: `PCLMULQDQ` / `VPCLMULQDQ` carry-less multiplication with XOR accumulation\n- **GF(p)**: AVX-512 IFMA (`VPMADD52HUQ`/`VPMADD52LUQ`) for 52-bit multiply-add\n- **ARM**: `PMULL`/`PMULL2` for carry-less multiplication\n\n## Dependencies\n\n- Generic `FieldVec` scalar container (54a60c90)\n- Carry-less multiplication SIMD kernels (055bda14)\n- ARM PMULL kernels (a8cdcfe3)\n\n## Success criteria\n\n- Dot product throughput within 2× of fflas-ffpack's `fdot` for equivalent prime field sizes\n- GF(2^m) dot product **exceeds** fflas-ffpack via direct PCLMULQDQ (no float conversion overhead)\n- Bounds-aware reduction scheduling: zero unnecessary reductions in dot product and matrix-multiply workloads",
-  "state": "backlog",
+  "state": "ready",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:project-lead",
   "dependencies": [
     "055bda14-7351-4245-b81a-350e749e547b",
     "a8cdcfe3-b0f2-4bad-b428-f11d81f12e62",
     "54a60c90-2972-42c3-ab1a-4f4f2ae1c22b"
   ],
   "gates_required": [
-    "tdd-reminder",
-    "tests",
-    "clippy",
-    "fmt",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "cargo-ci"
   ],
   "gates_status": {
-    "tdd-reminder": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-02-25T22:47:58.973630865Z"
-    },
-    "fmt": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-02-25T22:47:58.973679725Z"
-    },
     "code-review": {
       "status": "pending",
       "updated_by": null,
       "updated_at": "2026-02-25T22:47:58.973693875Z"
     },
-    "clippy": {
+    "cargo-ci": {
       "status": "pending",
       "updated_by": null,
-      "updated_at": "2026-02-25T22:47:58.973665725Z"
+      "updated_at": "2026-04-05T19:51:50.119744638Z"
     },
     "doc-review": {
       "status": "pending",
       "updated_by": null,
       "updated_at": "2026-02-25T22:47:58.973707875Z"
-    },
-    "tests": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-02-25T22:47:58.973651485Z"
     }
   },
   "context": {},
@@ -58,5 +40,5 @@
     "component:gf2-kernels-simd"
   ],
   "created_at": "2026-02-21T19:35:51.857178518+00:00",
-  "updated_at": "2026-02-25T22:47:58.973721805+00:00"
+  "updated_at": "2026-04-05T19:53:05.506307418+00:00"
 }
