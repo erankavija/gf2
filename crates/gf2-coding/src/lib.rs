@@ -64,10 +64,10 @@ pub mod crc;
 pub mod drm;
 pub mod fading;
 pub mod grand;
-pub mod modulation;
 pub mod ldpc;
 pub mod linear;
 pub mod llr;
+pub mod modulation;
 
 // SIMD detection is now handled internally in llr.rs via once_cell::Lazy
 pub mod simulation;
@@ -77,7 +77,9 @@ pub mod traits;
 pub use bch::{BchCode, BchDecoder, BchEncoder, CodeRate};
 pub use channel::{AwgnChannel, BpskModulator};
 pub use convolutional::{ConvolutionalDecoder, ConvolutionalEncoder};
-pub use ldpc::{CirculantMatrix, DecoderAlgorithm, DecoderConfig, LdpcCode, LdpcDecoder, QuasiCyclicLdpc};
+pub use ldpc::{
+    CirculantMatrix, DecoderAlgorithm, DecoderConfig, LdpcCode, LdpcDecoder, QuasiCyclicLdpc,
+};
 pub use linear::{LinearBlockCode, SyndromeTableDecoder};
 pub use llr::Llr;
 pub use traits::{DecoderResult, GeneratorMatrixAccess};
