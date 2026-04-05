@@ -60,6 +60,8 @@
 pub mod bch;
 pub mod channel;
 pub mod convolutional;
+pub mod crc;
+pub mod drm;
 pub mod grand;
 pub mod ldpc;
 pub mod linear;
