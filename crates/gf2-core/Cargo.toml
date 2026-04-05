@@ -129,3 +129,7 @@ harness = false
 [[bench]]
 name = "gf2m_mul_strategies"
 harness = false
+
+[[bench]]
+name = "fieldvec_dot_product"
+harness = false
