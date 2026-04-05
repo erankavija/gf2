@@ -481,7 +481,7 @@ impl OrbGrand {
             // H*(y XOR z) = H*y XOR H*z = base_syndrome XOR (XOR of H columns for flipped bits)
             let mut syndrome = base_syndrome.clone();
             for &pos in &bit_positions {
-                syndrome.bit_xor_into(&syndrome_cols[pos].clone());
+                syndrome.bit_xor_into(&syndrome_cols[pos]);
             }
 
             // Check if syndrome is zero (valid codeword)
@@ -533,7 +533,13 @@ impl SoftDecoder for OrbGrand {
 
     /// Decodes using soft information (LLRs) and returns message bits.
     ///
-    /// For systematic codes, returns the first `k` bits of the best codeword.
+    /// # Note
+    ///
+    /// Assumes the code is **systematic** — extracts the first `k` bits of
+    /// the best codeword as the decoded message. For non-systematic codes,
+    /// use [`OrbGrand::decode`] directly and apply the appropriate
+    /// message extraction.
+    ///
     /// Falls back to hard decision if no codeword is found.
     fn decode_soft(&self, llrs: &[Llr]) -> BitVec {
         let result = self.decode(llrs);
@@ -1424,6 +1430,67 @@ mod tests {
                     best.codeword.get(i),
                     codeword.get(i),
                     "Bit {} mismatch with error at position {}",
+                    i,
+                    error_pos
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_decode_ebch_16_11_single_error() {
+        use crate::bch::extended::ExtendedBchCode;
+        use crate::traits::BlockEncoder;
+
+        let ebch = ExtendedBchCode::ebch_16_11();
+        let h = ebch.h().clone();
+
+        let config = OrbGrandConfig {
+            max_queries: 10_000,
+            list_size: 1,
+            even_code: true,
+        };
+        let decoder = OrbGrand::new(h, config);
+
+        // Encode the all-zero message
+        let msg = BitVec::zeros(11);
+        let codeword = ebch.encode(&msg);
+
+        // Introduce a single error at each position
+        for error_pos in 0..16 {
+            let mut received = codeword.clone();
+            let bit = received.get(error_pos);
+            received.set(error_pos, !bit);
+
+            let llrs: Vec<Llr> = (0..16)
+                .map(|i| {
+                    if i == error_pos {
+                        if received.get(i) {
+                            Llr::new(-0.5)
+                        } else {
+                            Llr::new(0.5)
+                        }
+                    } else if received.get(i) {
+                        Llr::new(-5.0)
+                    } else {
+                        Llr::new(5.0)
+                    }
+                })
+                .collect();
+
+            let result = decoder.decode(&llrs);
+            assert!(
+                result.success(),
+                "eBCH(16,11) failed with error at position {}",
+                error_pos
+            );
+
+            let best = result.best_codeword().unwrap();
+            for i in 0..16 {
+                assert_eq!(
+                    best.codeword.get(i),
+                    codeword.get(i),
+                    "eBCH(16,11) bit {} mismatch with error at position {}",
                     i,
                     error_pos
                 );
