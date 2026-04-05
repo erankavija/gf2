@@ -30,6 +30,9 @@ proofs/build/
 proofs/.lake/
 proofs/scratch/
 
+# Compiled C++ benchmarks
+benches/fflas_fdot_bench
+
 # Charon intermediate output
 target/charon/
 *.llbc
