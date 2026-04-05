@@ -1,0 +1,91 @@
+figure,metric,eb_n0_db,value,decoder,code_params,legend_full,style_color,style_dashed
+fig_prod_ebch_256x49,BLER_or_BER,0.0,0.56604,LDPC_BP,,"LDPC, BP",black,False
+fig_prod_ebch_256x49,BLER_or_BER,0.5,0.28846,LDPC_BP,,"LDPC, BP",black,False
+fig_prod_ebch_256x49,BLER_or_BER,1.0,0.12821,LDPC_BP,,"LDPC, BP",black,False
+fig_prod_ebch_256x49,BLER_or_BER,1.5,0.054945,LDPC_BP,,"LDPC, BP",black,False
+fig_prod_ebch_256x49,BLER_or_BER,2.0,0.024135,LDPC_BP,,"LDPC, BP",black,False
+fig_prod_ebch_256x49,BLER_or_BER,2.5,0.0066167,LDPC_BP,,"LDPC, BP",black,False
+fig_prod_ebch_256x49,BLER_or_BER,3.0,0.00099295,LDPC_BP,,"LDPC, BP",black,False
+fig_prod_ebch_256x49,BLER_or_BER,3.5,0.00011574,LDPC_BP,,"LDPC, BP",black,False
+fig_prod_ebch_256x49,BLER_or_BER,4.0,1.6494e-05,LDPC_BP,,"LDPC, BP",black,False
+fig_prod_ebch_256x49,BLER_or_BER,0.0,0.78947,CA-SCL_polar,,"polar, SCL",blue,False
+fig_prod_ebch_256x49,BLER_or_BER,0.5,0.625,CA-SCL_polar,,"polar, SCL",blue,False
+fig_prod_ebch_256x49,BLER_or_BER,1.0,0.375,CA-SCL_polar,,"polar, SCL",blue,False
+fig_prod_ebch_256x49,BLER_or_BER,1.5,0.19481,CA-SCL_polar,,"polar, SCL",blue,False
+fig_prod_ebch_256x49,BLER_or_BER,2.0,0.10345,CA-SCL_polar,,"polar, SCL",blue,False
+fig_prod_ebch_256x49,BLER_or_BER,2.5,0.027959,CA-SCL_polar,,"polar, SCL",blue,False
+fig_prod_ebch_256x49,BLER_or_BER,3.0,0.0057837,CA-SCL_polar,,"polar, SCL",blue,False
+fig_prod_ebch_256x49,BLER_or_BER,3.5,0.0008394,CA-SCL_polar,,"polar, SCL",blue,False
+fig_prod_ebch_256x49,BLER_or_BER,4.0,4.5241e-05,CA-SCL_polar,,"polar, SCL",blue,False
+fig_prod_ebch_256x49,BLER_or_BER,0.0,0.26549,eBCH_prod_SOGRAND,,eBCH prod.,red,False
+fig_prod_ebch_256x49,BLER_or_BER,0.5,0.17442,eBCH_prod_SOGRAND,,eBCH prod.,red,False
+fig_prod_ebch_256x49,BLER_or_BER,1.0,0.080429,eBCH_prod_SOGRAND,,eBCH prod.,red,False
+fig_prod_ebch_256x49,BLER_or_BER,1.5,0.025862,eBCH_prod_SOGRAND,,eBCH prod.,red,False
+fig_prod_ebch_256x49,BLER_or_BER,2.0,0.011966,eBCH_prod_SOGRAND,,eBCH prod.,red,False
+fig_prod_ebch_256x49,BLER_or_BER,2.5,0.0025875,eBCH_prod_SOGRAND,,eBCH prod.,red,False
+fig_prod_ebch_256x49,BLER_or_BER,3.0,0.00043492,eBCH_prod_SOGRAND,,eBCH prod.,red,False
+fig_prod_ebch_256x49,BLER_or_BER,3.5,7.5891e-05,eBCH_prod_SOGRAND,,eBCH prod.,red,False
+fig_prod_ebch_256x49,BLER_or_BER,4.0,8.1967e-06,eBCH_prod_SOGRAND,,eBCH prod.,red,False
+fig_prod_ebch_256x49,BLER_or_BER,0.0,0.12707,,,,black,True
+fig_prod_ebch_256x49,BLER_or_BER,0.5,0.067111,,,,black,True
+fig_prod_ebch_256x49,BLER_or_BER,1.0,0.031136,,,,black,True
+fig_prod_ebch_256x49,BLER_or_BER,1.5,0.012335,,,,black,True
+fig_prod_ebch_256x49,BLER_or_BER,2.0,0.0056315,,,,black,True
+fig_prod_ebch_256x49,BLER_or_BER,2.5,0.0015574,,,,black,True
+fig_prod_ebch_256x49,BLER_or_BER,3.0,0.00021345,,,,black,True
+fig_prod_ebch_256x49,BLER_or_BER,3.5,2.1888e-05,,,,black,True
+fig_prod_ebch_256x49,BLER_or_BER,4.0,3.2461e-06,,,,black,True
+fig_prod_ebch_256x49,BLER_or_BER,0.0,0.3898,,,,blue,True
+fig_prod_ebch_256x49,BLER_or_BER,0.5,0.3112,,,,blue,True
+fig_prod_ebch_256x49,BLER_or_BER,1.0,0.18652,,,,blue,True
+fig_prod_ebch_256x49,BLER_or_BER,1.5,0.097098,,,,blue,True
+fig_prod_ebch_256x49,BLER_or_BER,2.0,0.052425,,,,blue,True
+fig_prod_ebch_256x49,BLER_or_BER,2.5,0.013994,,,,blue,True
+fig_prod_ebch_256x49,BLER_or_BER,3.0,0.0028858,,,,blue,True
+fig_prod_ebch_256x49,BLER_or_BER,3.5,0.00042757,,,,blue,True
+fig_prod_ebch_256x49,BLER_or_BER,4.0,2.2691e-05,,,,blue,True
+fig_prod_ebch_256x49,BLER_or_BER,0.0,0.063261,,,,red,True
+fig_prod_ebch_256x49,BLER_or_BER,0.5,0.038336,,,,red,True
+fig_prod_ebch_256x49,BLER_or_BER,1.0,0.014431,,,,red,True
+fig_prod_ebch_256x49,BLER_or_BER,1.5,0.0047751,,,,red,True
+fig_prod_ebch_256x49,BLER_or_BER,2.0,0.0019695,,,,red,True
+fig_prod_ebch_256x49,BLER_or_BER,2.5,0.0004043,,,,red,True
+fig_prod_ebch_256x49,BLER_or_BER,3.0,6.4557e-05,,,,red,True
+fig_prod_ebch_256x49,BLER_or_BER,3.5,1.0329e-05,,,,red,True
+fig_prod_ebch_256x49,BLER_or_BER,4.0,1.1211e-06,,,,red,True
+fig_prod_ebch_256x49,avg_guesses,0.0,454.96,eBCH_prod_SOGRAND,,eBCH prod.,red,False
+fig_prod_ebch_256x49,avg_guesses,0.5,381.35,eBCH_prod_SOGRAND,,eBCH prod.,red,False
+fig_prod_ebch_256x49,avg_guesses,1.0,308.62,eBCH_prod_SOGRAND,,eBCH prod.,red,False
+fig_prod_ebch_256x49,avg_guesses,1.5,258.74,eBCH_prod_SOGRAND,,eBCH prod.,red,False
+fig_prod_ebch_256x49,avg_guesses,2.0,224.15,eBCH_prod_SOGRAND,,eBCH prod.,red,False
+fig_prod_ebch_256x49,avg_guesses,2.5,197.92,eBCH_prod_SOGRAND,,eBCH prod.,red,False
+fig_prod_ebch_256x49,avg_guesses,3.0,174.8816,eBCH_prod_SOGRAND,,eBCH prod.,red,False
+fig_prod_ebch_256x49,avg_guesses,3.5,159.0196,eBCH_prod_SOGRAND,,eBCH prod.,red,False
+fig_prod_ebch_256x49,avg_guesses,4.0,143.2864,eBCH_prod_SOGRAND,,eBCH prod.,red,False
+fig_prod_ebch_256x49,avg_guesses,0.0,48.79,eBCH_prod_SOGRAND,,"eBCH prod., parall.",red,True
+fig_prod_ebch_256x49,avg_guesses,0.5,40.456,eBCH_prod_SOGRAND,,"eBCH prod., parall.",red,True
+fig_prod_ebch_256x49,avg_guesses,1.0,32.451,eBCH_prod_SOGRAND,,"eBCH prod., parall.",red,True
+fig_prod_ebch_256x49,avg_guesses,1.5,27.098,eBCH_prod_SOGRAND,,"eBCH prod., parall.",red,True
+fig_prod_ebch_256x49,avg_guesses,2.0,23.407,eBCH_prod_SOGRAND,,"eBCH prod., parall.",red,True
+fig_prod_ebch_256x49,avg_guesses,2.5,20.646,eBCH_prod_SOGRAND,,"eBCH prod., parall.",red,True
+fig_prod_ebch_256x49,avg_guesses,3.0,18.2302,eBCH_prod_SOGRAND,,"eBCH prod., parall.",red,True
+fig_prod_ebch_256x49,avg_guesses,3.5,16.54,eBCH_prod_SOGRAND,,"eBCH prod., parall.",red,True
+fig_prod_ebch_256x49,avg_guesses,4.0,15.0449,eBCH_prod_SOGRAND,,"eBCH prod., parall.",red,True
+fig_prod_ebch_256x49,avg_iterations,0.0,33.679,LDPC_BP,,"LDPC, BP",black,False
+fig_prod_ebch_256x49,avg_iterations,0.5,22.317,LDPC_BP,,"LDPC, BP",black,False
+fig_prod_ebch_256x49,avg_iterations,1.0,14.684,LDPC_BP,,"LDPC, BP",black,False
+fig_prod_ebch_256x49,avg_iterations,1.5,10.701,LDPC_BP,,"LDPC, BP",black,False
+fig_prod_ebch_256x49,avg_iterations,2.0,8.2647,LDPC_BP,,"LDPC, BP",black,False
+fig_prod_ebch_256x49,avg_iterations,2.5,6.4618,LDPC_BP,,"LDPC, BP",black,False
+fig_prod_ebch_256x49,avg_iterations,3.0,5.5573,LDPC_BP,,"LDPC, BP",black,False
+fig_prod_ebch_256x49,avg_iterations,3.5,4.9888,LDPC_BP,,"LDPC, BP",black,False
+fig_prod_ebch_256x49,avg_iterations,4.0,4.5823,LDPC_BP,,"LDPC, BP",black,False
+fig_prod_ebch_256x49,avg_iterations,0.0,3.5362,eBCH_prod_SOGRAND,,eBCH prod.,red,False
+fig_prod_ebch_256x49,avg_iterations,0.5,2.9099,eBCH_prod_SOGRAND,,eBCH prod.,red,False
+fig_prod_ebch_256x49,avg_iterations,1.0,2.3045,eBCH_prod_SOGRAND,,eBCH prod.,red,False
+fig_prod_ebch_256x49,avg_iterations,1.5,1.9036,eBCH_prod_SOGRAND,,eBCH prod.,red,False
+fig_prod_ebch_256x49,avg_iterations,2.0,1.632,eBCH_prod_SOGRAND,,eBCH prod.,red,False
+fig_prod_ebch_256x49,avg_iterations,2.5,1.4355,eBCH_prod_SOGRAND,,eBCH prod.,red,False
+fig_prod_ebch_256x49,avg_iterations,3.0,1.2563,eBCH_prod_SOGRAND,,eBCH prod.,red,False
+fig_prod_ebch_256x49,avg_iterations,3.5,1.1442,eBCH_prod_SOGRAND,,eBCH prod.,red,False
+fig_prod_ebch_256x49,avg_iterations,4.0,1.0438,eBCH_prod_SOGRAND,,eBCH prod.,red,False

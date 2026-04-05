@@ -1,0 +1,65 @@
+figure,metric,eb_n0_db,value,decoder,code_params,legend_full,style_color,style_dashed
+fig_bler_uer_orbgrand_polar_rev,BLER,2.0,0.48021,CA-SCL,,"CA-SCL, L=8",red,False
+fig_bler_uer_orbgrand_polar_rev,BLER,2.5,0.31561,CA-SCL,,"CA-SCL, L=8",red,False
+fig_bler_uer_orbgrand_polar_rev,BLER,3.0,0.18246,CA-SCL,,"CA-SCL, L=8",red,False
+fig_bler_uer_orbgrand_polar_rev,BLER,3.5,0.085634,CA-SCL,,"CA-SCL, L=8",red,False
+fig_bler_uer_orbgrand_polar_rev,BLER,4.0,0.034092,CA-SCL,,"CA-SCL, L=8",red,False
+fig_bler_uer_orbgrand_polar_rev,BLER,4.5,0.010282,CA-SCL,,"CA-SCL, L=8",red,False
+fig_bler_uer_orbgrand_polar_rev,BLER,5.0,0.0023203,CA-SCL,,"CA-SCL, L=8",red,False
+fig_bler_uer_orbgrand_polar_rev,BLER,5.5,0.00048931,CA-SCL,,"CA-SCL, L=8",red,False
+fig_bler_uer_orbgrand_polar_rev,BLER,2.0,0.57125,ORBGRAND,,"ORBGRAND, =0.15",blue,False
+fig_bler_uer_orbgrand_polar_rev,BLER,2.5,0.36492,ORBGRAND,,"ORBGRAND, =0.15",blue,False
+fig_bler_uer_orbgrand_polar_rev,BLER,3.0,0.19309,ORBGRAND,,"ORBGRAND, =0.15",blue,False
+fig_bler_uer_orbgrand_polar_rev,BLER,3.5,0.077915,ORBGRAND,,"ORBGRAND, =0.15",blue,False
+fig_bler_uer_orbgrand_polar_rev,BLER,4.0,0.024714,ORBGRAND,,"ORBGRAND, =0.15",blue,False
+fig_bler_uer_orbgrand_polar_rev,BLER,4.5,0.00723,ORBGRAND,,"ORBGRAND, =0.15",blue,False
+fig_bler_uer_orbgrand_polar_rev,BLER,5.0,0.0015633,ORBGRAND,,"ORBGRAND, =0.15",blue,False
+fig_bler_uer_orbgrand_polar_rev,BLER,5.5,0.00026,ORBGRAND,,"ORBGRAND, =0.15",blue,False
+fig_bler_uer_orbgrand_polar_rev,BLER,2.0,0.47147,ORBGRAND,,"ORBGRAND, =0.3",brown,False
+fig_bler_uer_orbgrand_polar_rev,BLER,2.5,0.26636,ORBGRAND,,"ORBGRAND, =0.3",brown,False
+fig_bler_uer_orbgrand_polar_rev,BLER,3.0,0.12791,ORBGRAND,,"ORBGRAND, =0.3",brown,False
+fig_bler_uer_orbgrand_polar_rev,BLER,3.5,0.050477,ORBGRAND,,"ORBGRAND, =0.3",brown,False
+fig_bler_uer_orbgrand_polar_rev,BLER,4.0,0.016106,ORBGRAND,,"ORBGRAND, =0.3",brown,False
+fig_bler_uer_orbgrand_polar_rev,BLER,4.5,0.0041062,ORBGRAND,,"ORBGRAND, =0.3",brown,False
+fig_bler_uer_orbgrand_polar_rev,BLER,5.0,0.00088874,ORBGRAND,,"ORBGRAND, =0.3",brown,False
+fig_bler_uer_orbgrand_polar_rev,BLER,5.5,0.000194,ORBGRAND,,"ORBGRAND, =0.3",brown,False
+fig_bler_uer_orbgrand_polar_rev,BLER,2.0,0.34494,ORBGRAND,,"ORBGRAND, =0.6",black,False
+fig_bler_uer_orbgrand_polar_rev,BLER,2.5,0.18747,ORBGRAND,,"ORBGRAND, =0.6",black,False
+fig_bler_uer_orbgrand_polar_rev,BLER,3.0,0.089186,ORBGRAND,,"ORBGRAND, =0.6",black,False
+fig_bler_uer_orbgrand_polar_rev,BLER,3.5,0.036138,ORBGRAND,,"ORBGRAND, =0.6",black,False
+fig_bler_uer_orbgrand_polar_rev,BLER,4.0,0.011396,ORBGRAND,,"ORBGRAND, =0.6",black,False
+fig_bler_uer_orbgrand_polar_rev,BLER,4.5,0.0032351,ORBGRAND,,"ORBGRAND, =0.6",black,False
+fig_bler_uer_orbgrand_polar_rev,BLER,5.0,0.00072,ORBGRAND,,"ORBGRAND, =0.6",black,False
+fig_bler_uer_orbgrand_polar_rev,BLER,5.5,0.000164,ORBGRAND,,"ORBGRAND, =0.6",black,False
+fig_bler_uer_orbgrand_polar_rev,BLER,2.0,0.01278,,,,blue,True
+fig_bler_uer_orbgrand_polar_rev,BLER,2.5,0.012213,,,,blue,True
+fig_bler_uer_orbgrand_polar_rev,BLER,3.0,0.010104,,,,blue,True
+fig_bler_uer_orbgrand_polar_rev,BLER,3.5,0.0060259,,,,blue,True
+fig_bler_uer_orbgrand_polar_rev,BLER,4.0,0.0027644,,,,blue,True
+fig_bler_uer_orbgrand_polar_rev,BLER,4.5,0.0010183,,,,blue,True
+fig_bler_uer_orbgrand_polar_rev,BLER,5.0,0.00028736,,,,blue,True
+fig_bler_uer_orbgrand_polar_rev,BLER,5.5,4.9e-05,,,,blue,True
+fig_bler_uer_orbgrand_polar_rev,BLER,2.0,0.039817,,,,brown,True
+fig_bler_uer_orbgrand_polar_rev,BLER,2.5,0.033974,,,,brown,True
+fig_bler_uer_orbgrand_polar_rev,BLER,3.0,0.024635,,,,brown,True
+fig_bler_uer_orbgrand_polar_rev,BLER,3.5,0.01335,,,,brown,True
+fig_bler_uer_orbgrand_polar_rev,BLER,4.0,0.0049254,,,,brown,True
+fig_bler_uer_orbgrand_polar_rev,BLER,4.5,0.0017181,,,,brown,True
+fig_bler_uer_orbgrand_polar_rev,BLER,5.0,0.00038143,,,,brown,True
+fig_bler_uer_orbgrand_polar_rev,BLER,5.5,6.6e-05,,,,brown,True
+fig_bler_uer_orbgrand_polar_rev,BLER,2.0,0.12074,,,,black,True
+fig_bler_uer_orbgrand_polar_rev,BLER,2.5,0.090216,,,,black,True
+fig_bler_uer_orbgrand_polar_rev,BLER,3.0,0.051792,,,,black,True
+fig_bler_uer_orbgrand_polar_rev,BLER,3.5,0.023972,,,,black,True
+fig_bler_uer_orbgrand_polar_rev,BLER,4.0,0.0080455,,,,black,True
+fig_bler_uer_orbgrand_polar_rev,BLER,4.5,0.0022734,,,,black,True
+fig_bler_uer_orbgrand_polar_rev,BLER,5.0,0.000485,,,,black,True
+fig_bler_uer_orbgrand_polar_rev,BLER,5.5,9e-05,,,,black,True
+fig_bler_uer_orbgrand_polar_rev,BLER,2.0,0.064346,,,,red,True
+fig_bler_uer_orbgrand_polar_rev,BLER,2.5,0.045863,,,,red,True
+fig_bler_uer_orbgrand_polar_rev,BLER,3.0,0.027254,,,,red,True
+fig_bler_uer_orbgrand_polar_rev,BLER,3.5,0.014787,,,,red,True
+fig_bler_uer_orbgrand_polar_rev,BLER,4.0,0.0065436,,,,red,True
+fig_bler_uer_orbgrand_polar_rev,BLER,4.5,0.0024193,,,,red,True
+fig_bler_uer_orbgrand_polar_rev,BLER,5.0,0.0007509,,,,red,True
+fig_bler_uer_orbgrand_polar_rev,BLER,5.5,0.00018605,,,,red,True

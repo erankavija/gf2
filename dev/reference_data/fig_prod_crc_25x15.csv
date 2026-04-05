@@ -1,0 +1,57 @@
+figure,metric,eb_n0_db,value,decoder,code_params,legend_full,style_color,style_dashed
+fig_prod_crc_25x15,BLER_or_BER,0.0,0.67568,LDPC_BP,,"LDPC, BP",black,False
+fig_prod_crc_25x15,BLER_or_BER,0.5,0.35842,LDPC_BP,,"LDPC, BP",black,False
+fig_prod_crc_25x15,BLER_or_BER,1.0,0.068166,LDPC_BP,,"LDPC, BP",black,False
+fig_prod_crc_25x15,BLER_or_BER,1.5,0.011058,LDPC_BP,,"LDPC, BP",black,False
+fig_prod_crc_25x15,BLER_or_BER,2.0,0.0012219,LDPC_BP,,"LDPC, BP",black,False
+fig_prod_crc_25x15,BLER_or_BER,2.5,8.5235e-05,LDPC_BP,,"LDPC, BP",black,False
+fig_prod_crc_25x15,BLER_or_BER,3.0,1.0756e-05,LDPC_BP,,"LDPC, BP",black,False
+fig_prod_crc_25x15,BLER_or_BER,0.0,0.78556,CRC_prod_SOGRAND,,CRC prod.,red,False
+fig_prod_crc_25x15,BLER_or_BER,0.5,0.40945,CRC_prod_SOGRAND,,CRC prod.,red,False
+fig_prod_crc_25x15,BLER_or_BER,1.0,0.056128,CRC_prod_SOGRAND,,CRC prod.,red,False
+fig_prod_crc_25x15,BLER_or_BER,1.5,0.0077405,CRC_prod_SOGRAND,,CRC prod.,red,False
+fig_prod_crc_25x15,BLER_or_BER,2.0,0.00086483,CRC_prod_SOGRAND,,CRC prod.,red,False
+fig_prod_crc_25x15,BLER_or_BER,2.5,7.8374e-05,CRC_prod_SOGRAND,,CRC prod.,red,False
+fig_prod_crc_25x15,BLER_or_BER,3.0,7.1442e-06,CRC_prod_SOGRAND,,CRC prod.,red,False
+fig_prod_crc_25x15,BLER_or_BER,0.0,0.12072,,,,black,True
+fig_prod_crc_25x15,BLER_or_BER,0.5,0.056615,,,,black,True
+fig_prod_crc_25x15,BLER_or_BER,1.0,0.0090222,,,,black,True
+fig_prod_crc_25x15,BLER_or_BER,1.5,0.0013427,,,,black,True
+fig_prod_crc_25x15,BLER_or_BER,2.0,9.9438e-05,,,,black,True
+fig_prod_crc_25x15,BLER_or_BER,2.5,5.1444e-06,,,,black,True
+fig_prod_crc_25x15,BLER_or_BER,3.0,4.9088e-07,,,,black,True
+fig_prod_crc_25x15,BLER_or_BER,0.0,0.13234,,,,red,True
+fig_prod_crc_25x15,BLER_or_BER,0.5,0.064752,,,,red,True
+fig_prod_crc_25x15,BLER_or_BER,1.0,0.0065473,,,,red,True
+fig_prod_crc_25x15,BLER_or_BER,1.5,0.00056472,,,,red,True
+fig_prod_crc_25x15,BLER_or_BER,2.0,4.9737e-05,,,,red,True
+fig_prod_crc_25x15,BLER_or_BER,2.5,2.4345e-06,,,,red,True
+fig_prod_crc_25x15,BLER_or_BER,3.0,2.8763e-07,,,,red,True
+fig_prod_crc_25x15,avg_guesses,0.0,4335.9,CRC_prod_SOGRAND,,CRC prod.,red,False
+fig_prod_crc_25x15,avg_guesses,0.5,2541.7,CRC_prod_SOGRAND,,CRC prod.,red,False
+fig_prod_crc_25x15,avg_guesses,1.0,1148.8,CRC_prod_SOGRAND,,CRC prod.,red,False
+fig_prod_crc_25x15,avg_guesses,1.5,758.33,CRC_prod_SOGRAND,,CRC prod.,red,False
+fig_prod_crc_25x15,avg_guesses,2.0,579.5702,CRC_prod_SOGRAND,,CRC prod.,red,False
+fig_prod_crc_25x15,avg_guesses,2.5,479.2741,CRC_prod_SOGRAND,,CRC prod.,red,False
+fig_prod_crc_25x15,avg_guesses,3.0,400.126,CRC_prod_SOGRAND,,CRC prod.,red,False
+fig_prod_crc_25x15,avg_guesses,0.0,352.87,CRC_prod_SOGRAND,,"CRC prod., parall.",red,True
+fig_prod_crc_25x15,avg_guesses,0.5,204.52,CRC_prod_SOGRAND,,"CRC prod., parall.",red,True
+fig_prod_crc_25x15,avg_guesses,1.0,93.396,CRC_prod_SOGRAND,,"CRC prod., parall.",red,True
+fig_prod_crc_25x15,avg_guesses,1.5,61.019,CRC_prod_SOGRAND,,"CRC prod., parall.",red,True
+fig_prod_crc_25x15,avg_guesses,2.0,46.6607,CRC_prod_SOGRAND,,"CRC prod., parall.",red,True
+fig_prod_crc_25x15,avg_guesses,2.5,38.7546,CRC_prod_SOGRAND,,"CRC prod., parall.",red,True
+fig_prod_crc_25x15,avg_guesses,3.0,32.9464,CRC_prod_SOGRAND,,"CRC prod., parall.",red,True
+fig_prod_crc_25x15,avg_iterations,0.0,38.125,LDPC_BP,,"LDPC, BP",black,False
+fig_prod_crc_25x15,avg_iterations,0.5,29.688,LDPC_BP,,"LDPC, BP",black,False
+fig_prod_crc_25x15,avg_iterations,1.0,20.243,LDPC_BP,,"LDPC, BP",black,False
+fig_prod_crc_25x15,avg_iterations,1.5,12.95,LDPC_BP,,"LDPC, BP",black,False
+fig_prod_crc_25x15,avg_iterations,2.0,8.3332,LDPC_BP,,"LDPC, BP",black,False
+fig_prod_crc_25x15,avg_iterations,2.5,6.9155,LDPC_BP,,"LDPC, BP",black,False
+fig_prod_crc_25x15,avg_iterations,3.0,5.9874,LDPC_BP,,"LDPC, BP",black,False
+fig_prod_crc_25x15,avg_iterations,0.0,14.135,CRC_prod_SOGRAND,,CRC prod.,red,False
+fig_prod_crc_25x15,avg_iterations,0.5,8.3235,CRC_prod_SOGRAND,,CRC prod.,red,False
+fig_prod_crc_25x15,avg_iterations,1.0,3.6235,CRC_prod_SOGRAND,,CRC prod.,red,False
+fig_prod_crc_25x15,avg_iterations,1.5,2.3328,CRC_prod_SOGRAND,,CRC prod.,red,False
+fig_prod_crc_25x15,avg_iterations,2.0,1.7802,CRC_prod_SOGRAND,,CRC prod.,red,False
+fig_prod_crc_25x15,avg_iterations,2.5,1.4766,CRC_prod_SOGRAND,,CRC prod.,red,False
+fig_prod_crc_25x15,avg_iterations,3.0,1.2321,CRC_prod_SOGRAND,,CRC prod.,red,False

@@ -1,0 +1,64 @@
+figure,metric,eb_n0_db,value,decoder,code_params,legend_full,style_color,style_dashed
+fig_uer_evaluation3,simulated_vs_predicted,0.48444,0.47774,,,,red,False
+fig_uer_evaluation3,simulated_vs_predicted,0.19769,0.15429,,,,red,False
+fig_uer_evaluation3,simulated_vs_predicted,0.060947,0.044024,,,,red,False
+fig_uer_evaluation3,simulated_vs_predicted,0.019148,0.014657,,,,red,False
+fig_uer_evaluation3,simulated_vs_predicted,0.0061495,0.0041318,,,,red,False
+fig_uer_evaluation3,simulated_vs_predicted,0.0019995,0.0017953,,,,red,False
+fig_uer_evaluation3,simulated_vs_predicted,0.00053992,0.00039809,,,,red,False
+fig_uer_evaluation3,simulated_vs_predicted,0.4907,0.50591,ORBGRAND,"(32,26)","(32,26) eBCH, ORBGRAND",red,True
+fig_uer_evaluation3,simulated_vs_predicted,0.15262,0.14783,ORBGRAND,"(32,26)","(32,26) eBCH, ORBGRAND",red,True
+fig_uer_evaluation3,simulated_vs_predicted,0.038665,0.032763,ORBGRAND,"(32,26)","(32,26) eBCH, ORBGRAND",red,True
+fig_uer_evaluation3,simulated_vs_predicted,0.013382,0.011089,ORBGRAND,"(32,26)","(32,26) eBCH, ORBGRAND",red,True
+fig_uer_evaluation3,simulated_vs_predicted,0.0027797,0.0024653,ORBGRAND,"(32,26)","(32,26) eBCH, ORBGRAND",red,True
+fig_uer_evaluation3,simulated_vs_predicted,0.001729,0.0015594,ORBGRAND,"(32,26)","(32,26) eBCH, ORBGRAND",red,True
+fig_uer_evaluation3,simulated_vs_predicted,0.0001768,0.00016142,ORBGRAND,"(32,26)","(32,26) eBCH, ORBGRAND",red,True
+fig_uer_evaluation3,simulated_vs_predicted,0.00015543,0.00013488,ORBGRAND,"(32,26)","(32,26) eBCH, ORBGRAND",red,True
+fig_uer_evaluation3,simulated_vs_predicted,0.16123,0.32222,,,,blue,False
+fig_uer_evaluation3,simulated_vs_predicted,0.086748,0.23407,,,,blue,False
+fig_uer_evaluation3,simulated_vs_predicted,0.030041,0.12689,,,,blue,False
+fig_uer_evaluation3,simulated_vs_predicted,0.0095728,0.057656,,,,blue,False
+fig_uer_evaluation3,simulated_vs_predicted,0.0030272,0.021478,,,,blue,False
+fig_uer_evaluation3,simulated_vs_predicted,0.00096095,0.0072591,,,,blue,False
+fig_uer_evaluation3,simulated_vs_predicted,0.00030596,0.0028916,,,,blue,False
+fig_uer_evaluation3,simulated_vs_predicted,9.8087e-05,0.00115429,,,,blue,False
+fig_uer_evaluation3,simulated_vs_predicted,3.1272e-05,0.00043253,,,,blue,False
+fig_uer_evaluation3,simulated_vs_predicted,0.16091,0.25,Forney,"(32,26)","(32,26) eBCH, Forney",blue,True
+fig_uer_evaluation3,simulated_vs_predicted,0.083639,0.16238,Forney,"(32,26)","(32,26) eBCH, Forney",blue,True
+fig_uer_evaluation3,simulated_vs_predicted,0.02835,0.076923,Forney,"(32,26)","(32,26) eBCH, Forney",blue,True
+fig_uer_evaluation3,simulated_vs_predicted,0.0089644,0.028866,Forney,"(32,26)","(32,26) eBCH, Forney",blue,True
+fig_uer_evaluation3,simulated_vs_predicted,0.0028542,0.0094828,Forney,"(32,26)","(32,26) eBCH, Forney",blue,True
+fig_uer_evaluation3,simulated_vs_predicted,0.00091216,0.0044767,Forney,"(32,26)","(32,26) eBCH, Forney",blue,True
+fig_uer_evaluation3,simulated_vs_predicted,0.00028965,0.0017079,Forney,"(32,26)","(32,26) eBCH, Forney",blue,True
+fig_uer_evaluation3,simulated_vs_predicted,9.2627e-05,0.00065752,Forney,"(32,26)","(32,26) eBCH, Forney",blue,True
+fig_uer_evaluation3,simulated_vs_predicted,2.9287e-05,0.00022492,Forney,"(32,26)","(32,26) eBCH, Forney",blue,True
+fig_uer_evaluation3,simulated_vs_predicted,0.61501,0.60683,,,,cyan,False
+fig_uer_evaluation3,simulated_vs_predicted,0.20871,0.17869,,,,cyan,False
+fig_uer_evaluation3,simulated_vs_predicted,0.063562,0.054147,,,,cyan,False
+fig_uer_evaluation3,simulated_vs_predicted,0.015501,0.013638,,,,cyan,False
+fig_uer_evaluation3,simulated_vs_predicted,0.0036134,0.0027422,,,,cyan,False
+fig_uer_evaluation3,simulated_vs_predicted,0.46371,0.46138,ORBGRAND,"(63,56)","(63,56) CRC, ORBGRAND",cyan,True
+fig_uer_evaluation3,simulated_vs_predicted,0.18104,0.16603,ORBGRAND,"(63,56)","(63,56) CRC, ORBGRAND",cyan,True
+fig_uer_evaluation3,simulated_vs_predicted,0.059317,0.04106,ORBGRAND,"(63,56)","(63,56) CRC, ORBGRAND",cyan,True
+fig_uer_evaluation3,simulated_vs_predicted,0.013557,0.010668,ORBGRAND,"(63,56)","(63,56) CRC, ORBGRAND",cyan,True
+fig_uer_evaluation3,simulated_vs_predicted,0.0058803,0.004174,ORBGRAND,"(63,56)","(63,56) CRC, ORBGRAND",cyan,True
+fig_uer_evaluation3,simulated_vs_predicted,0.0008487,0.0006879,ORBGRAND,"(63,56)","(63,56) CRC, ORBGRAND",cyan,True
+fig_uer_evaluation3,simulated_vs_predicted,0.00059847,0.00052886,ORBGRAND,"(63,56)","(63,56) CRC, ORBGRAND",cyan,True
+fig_uer_evaluation3,simulated_vs_predicted,0.16082,0.41168,,,,brown,False
+fig_uer_evaluation3,simulated_vs_predicted,0.091499,0.33317,,,,brown,False
+fig_uer_evaluation3,simulated_vs_predicted,0.031793,0.21112,,,,brown,False
+fig_uer_evaluation3,simulated_vs_predicted,0.0099534,0.097861,,,,brown,False
+fig_uer_evaluation3,simulated_vs_predicted,0.0031297,0.042574,,,,brown,False
+fig_uer_evaluation3,simulated_vs_predicted,0.0010028,0.016415,,,,brown,False
+fig_uer_evaluation3,simulated_vs_predicted,0.00031809,0.006978,,,,brown,False
+fig_uer_evaluation3,simulated_vs_predicted,0.00010209,0.0029762,,,,brown,False
+fig_uer_evaluation3,simulated_vs_predicted,3.2522e-05,0.0018797,,,,brown,False
+fig_uer_evaluation3,simulated_vs_predicted,0.16064,0.4,Forney,"(63,56)","(63,56) CRC, Forney",brown,True
+fig_uer_evaluation3,simulated_vs_predicted,0.08314,0.19175,Forney,"(63,56)","(63,56) CRC, Forney",brown,True
+fig_uer_evaluation3,simulated_vs_predicted,0.028786,0.10116,Forney,"(63,56)","(63,56) CRC, Forney",brown,True
+fig_uer_evaluation3,simulated_vs_predicted,0.0091428,0.04263,Forney,"(63,56)","(63,56) CRC, Forney",brown,True
+fig_uer_evaluation3,simulated_vs_predicted,0.0028918,0.016656,Forney,"(63,56)","(63,56) CRC, Forney",brown,True
+fig_uer_evaluation3,simulated_vs_predicted,0.00092857,0.006599,Forney,"(63,56)","(63,56) CRC, Forney",brown,True
+fig_uer_evaluation3,simulated_vs_predicted,0.00029424,0.0029234,Forney,"(63,56)","(63,56) CRC, Forney",brown,True
+fig_uer_evaluation3,simulated_vs_predicted,9.4018e-05,0.00095264,Forney,"(63,56)","(63,56) CRC, Forney",brown,True
+fig_uer_evaluation3,simulated_vs_predicted,2.9887e-05,0.00046404,Forney,"(63,56)","(63,56) CRC, Forney",brown,True

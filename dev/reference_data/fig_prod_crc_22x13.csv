@@ -1,0 +1,38 @@
+figure,metric,eb_n0_db,value,decoder,code_params,legend_full,style_color,style_dashed
+fig_prod_crc_22x13,BLER_or_BER,0.0,0.64935,LDPC,"(484,169)","(484,169) 5G LDPC, I_max=50",black,False
+fig_prod_crc_22x13,BLER_or_BER,0.5,0.2907,LDPC,"(484,169)","(484,169) 5G LDPC, I_max=50",black,False
+fig_prod_crc_22x13,BLER_or_BER,1.0,0.11669,LDPC,"(484,169)","(484,169) 5G LDPC, I_max=50",black,False
+fig_prod_crc_22x13,BLER_or_BER,1.5,0.025,LDPC,"(484,169)","(484,169) 5G LDPC, I_max=50",black,False
+fig_prod_crc_22x13,BLER_or_BER,2.0,0.0029949,LDPC,"(484,169)","(484,169) 5G LDPC, I_max=50",black,False
+fig_prod_crc_22x13,BLER_or_BER,2.5,0.00029016,LDPC,"(484,169)","(484,169) 5G LDPC, I_max=50",black,False
+fig_prod_crc_22x13,BLER_or_BER,3.0,3.6318e-05,LDPC,"(484,169)","(484,169) 5G LDPC, I_max=50",black,False
+fig_prod_crc_22x13,BLER_or_BER,3.5,4.4699e-06,LDPC,"(484,169)","(484,169) 5G LDPC, I_max=50",black,False
+fig_prod_crc_22x13,BLER_or_BER,0.0,0.57471,SOGRAND,"(22,13)","(22,13)^2 CRC SOGRAND, I_max=20",red,False
+fig_prod_crc_22x13,BLER_or_BER,0.5,0.23148,SOGRAND,"(22,13)","(22,13)^2 CRC SOGRAND, I_max=20",red,False
+fig_prod_crc_22x13,BLER_or_BER,1.0,0.057471,SOGRAND,"(22,13)","(22,13)^2 CRC SOGRAND, I_max=20",red,False
+fig_prod_crc_22x13,BLER_or_BER,1.5,0.010707,SOGRAND,"(22,13)","(22,13)^2 CRC SOGRAND, I_max=20",red,False
+fig_prod_crc_22x13,BLER_or_BER,2.0,0.0012384,SOGRAND,"(22,13)","(22,13)^2 CRC SOGRAND, I_max=20",red,False
+fig_prod_crc_22x13,BLER_or_BER,2.5,0.00019144,SOGRAND,"(22,13)","(22,13)^2 CRC SOGRAND, I_max=20",red,False
+fig_prod_crc_22x13,BLER_or_BER,3.0,1.7484e-05,SOGRAND,"(22,13)","(22,13)^2 CRC SOGRAND, I_max=20",red,False
+fig_prod_crc_22x13,BLER_or_BER,0.0,0.097441,LDPC,,"5G LDPC, BER",black,True
+fig_prod_crc_22x13,BLER_or_BER,0.5,0.038702,LDPC,,"5G LDPC, BER",black,True
+fig_prod_crc_22x13,BLER_or_BER,1.0,0.013409,LDPC,,"5G LDPC, BER",black,True
+fig_prod_crc_22x13,BLER_or_BER,1.5,0.0028772,LDPC,,"5G LDPC, BER",black,True
+fig_prod_crc_22x13,BLER_or_BER,2.0,0.00025377,LDPC,,"5G LDPC, BER",black,True
+fig_prod_crc_22x13,BLER_or_BER,2.5,1.504e-05,LDPC,,"5G LDPC, BER",black,True
+fig_prod_crc_22x13,BLER_or_BER,3.0,1.313e-06,LDPC,,"5G LDPC, BER",black,True
+fig_prod_crc_22x13,BLER_or_BER,3.5,1.7007e-07,LDPC,,"5G LDPC, BER",black,True
+fig_prod_crc_22x13,BLER_or_BER,0.0,0.10338,SOGRAND,,"SOGRAND, BER",red,True
+fig_prod_crc_22x13,BLER_or_BER,0.5,0.035832,SOGRAND,,"SOGRAND, BER",red,True
+fig_prod_crc_22x13,BLER_or_BER,1.0,0.0082092,SOGRAND,,"SOGRAND, BER",red,True
+fig_prod_crc_22x13,BLER_or_BER,1.5,0.00098831,SOGRAND,,"SOGRAND, BER",red,True
+fig_prod_crc_22x13,BLER_or_BER,2.0,7.7965e-05,SOGRAND,,"SOGRAND, BER",red,True
+fig_prod_crc_22x13,BLER_or_BER,2.5,1.0988e-05,SOGRAND,,"SOGRAND, BER",red,True
+fig_prod_crc_22x13,BLER_or_BER,3.0,1.3579e-06,SOGRAND,,"SOGRAND, BER",red,True
+fig_prod_crc_22x13,avg_guesses,0.0,1059600.0,SOGRAND,"(22,13)","(22,13)^2 CRC SOGRAND",red,False
+fig_prod_crc_22x13,avg_guesses,0.5,538960.0,SOGRAND,"(22,13)","(22,13)^2 CRC SOGRAND",red,False
+fig_prod_crc_22x13,avg_guesses,1.0,286450.0,SOGRAND,"(22,13)","(22,13)^2 CRC SOGRAND",red,False
+fig_prod_crc_22x13,avg_guesses,1.5,186970.0,SOGRAND,"(22,13)","(22,13)^2 CRC SOGRAND",red,False
+fig_prod_crc_22x13,avg_guesses,2.0,141280.0,SOGRAND,"(22,13)","(22,13)^2 CRC SOGRAND",red,False
+fig_prod_crc_22x13,avg_guesses,2.5,114070.0,SOGRAND,"(22,13)","(22,13)^2 CRC SOGRAND",red,False
+fig_prod_crc_22x13,avg_guesses,3.0,93755.0,SOGRAND,"(22,13)","(22,13)^2 CRC SOGRAND",red,False
