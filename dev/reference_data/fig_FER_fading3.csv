@@ -1,0 +1,92 @@
+figure,metric,eb_n0_db,value,decoder,code_params,legend_full,style_color,style_dashed
+fig_FER_fading3,BLER_or_BER,0.0,1.0,LDPC_BP,,"LDPC, BP",black,False
+fig_FER_fading3,BLER_or_BER,2.0,0.89286,LDPC_BP,,"LDPC, BP",black,False
+fig_FER_fading3,BLER_or_BER,4.0,0.21459,LDPC_BP,,"LDPC, BP",black,False
+fig_FER_fading3,BLER_or_BER,6.0,0.022894,LDPC_BP,,"LDPC, BP",black,False
+fig_FER_fading3,BLER_or_BER,8.0,0.0011978,LDPC_BP,,"LDPC, BP",black,False
+fig_FER_fading3,BLER_or_BER,10.0,9.5809e-05,LDPC_BP,,"LDPC, BP",black,False
+fig_FER_fading3,BLER_or_BER,12.0,2.1119e-05,LDPC_BP,,"LDPC, BP",black,False
+fig_FER_fading3,BLER_or_BER,0.0,1.0,ORBGRAND_Pyndiah,,"eBCH prod., ORBGRAND Pyndiah",blue,False
+fig_FER_fading3,BLER_or_BER,2.0,1.0,ORBGRAND_Pyndiah,,"eBCH prod., ORBGRAND Pyndiah",blue,False
+fig_FER_fading3,BLER_or_BER,4.0,0.4878,ORBGRAND_Pyndiah,,"eBCH prod., ORBGRAND Pyndiah",blue,False
+fig_FER_fading3,BLER_or_BER,6.0,0.10811,ORBGRAND_Pyndiah,,"eBCH prod., ORBGRAND Pyndiah",blue,False
+fig_FER_fading3,BLER_or_BER,8.0,0.022173,ORBGRAND_Pyndiah,,"eBCH prod., ORBGRAND Pyndiah",blue,False
+fig_FER_fading3,BLER_or_BER,10.0,0.0059154,ORBGRAND_Pyndiah,,"eBCH prod., ORBGRAND Pyndiah",blue,False
+fig_FER_fading3,BLER_or_BER,12.0,0.0019635,ORBGRAND_Pyndiah,,"eBCH prod., ORBGRAND Pyndiah",blue,False
+fig_FER_fading3,BLER_or_BER,0.0,1.0,SOGRAND,,"eBCH prod., SOGRAND",red,False
+fig_FER_fading3,BLER_or_BER,2.0,0.90909,SOGRAND,,"eBCH prod., SOGRAND",red,False
+fig_FER_fading3,BLER_or_BER,4.0,0.27174,SOGRAND,,"eBCH prod., SOGRAND",red,False
+fig_FER_fading3,BLER_or_BER,6.0,0.027056,SOGRAND,,"eBCH prod., SOGRAND",red,False
+fig_FER_fading3,BLER_or_BER,8.0,0.0011023,SOGRAND,,"eBCH prod., SOGRAND",red,False
+fig_FER_fading3,BLER_or_BER,10.0,7.3113e-05,SOGRAND,,"eBCH prod., SOGRAND",red,False
+fig_FER_fading3,BLER_or_BER,12.0,1.4564e-05,SOGRAND,,"eBCH prod., SOGRAND",red,False
+fig_FER_fading3,BLER_or_BER,0.0,0.15579,,,,black,True
+fig_FER_fading3,BLER_or_BER,2.0,0.085477,,,,black,True
+fig_FER_fading3,BLER_or_BER,4.0,0.013175,,,,black,True
+fig_FER_fading3,BLER_or_BER,6.0,0.0014079,,,,black,True
+fig_FER_fading3,BLER_or_BER,8.0,6.3166e-05,,,,black,True
+fig_FER_fading3,BLER_or_BER,10.0,6.3637e-06,,,,black,True
+fig_FER_fading3,BLER_or_BER,12.0,1.1726e-06,,,,black,True
+fig_FER_fading3,BLER_or_BER,0.0,0.16577,,,,blue,True
+fig_FER_fading3,BLER_or_BER,2.0,0.12944,,,,blue,True
+fig_FER_fading3,BLER_or_BER,4.0,0.059523,,,,blue,True
+fig_FER_fading3,BLER_or_BER,6.0,0.013374,,,,blue,True
+fig_FER_fading3,BLER_or_BER,8.0,0.0028182,,,,blue,True
+fig_FER_fading3,BLER_or_BER,10.0,0.00074737,,,,blue,True
+fig_FER_fading3,BLER_or_BER,12.0,0.00024424,,,,blue,True
+fig_FER_fading3,BLER_or_BER,0.0,0.12437,,,,red,True
+fig_FER_fading3,BLER_or_BER,2.0,0.068173,,,,red,True
+fig_FER_fading3,BLER_or_BER,4.0,0.013351,,,,red,True
+fig_FER_fading3,BLER_or_BER,6.0,0.0013603,,,,red,True
+fig_FER_fading3,BLER_or_BER,8.0,4.7962e-05,,,,red,True
+fig_FER_fading3,BLER_or_BER,10.0,4.682e-06,,,,red,True
+fig_FER_fading3,BLER_or_BER,12.0,7.4334e-07,,,,red,True
+fig_FER_fading3,avg_guesses,0.0,153.58,SOGRAND,,"eBCH prod., SOGRAND",red,False
+fig_FER_fading3,avg_guesses,2.0,144.32,SOGRAND,,"eBCH prod., SOGRAND",red,False
+fig_FER_fading3,avg_guesses,4.0,66.925,SOGRAND,,"eBCH prod., SOGRAND",red,False
+fig_FER_fading3,avg_guesses,6.0,14.754,SOGRAND,,"eBCH prod., SOGRAND",red,False
+fig_FER_fading3,avg_guesses,8.0,3.7788,SOGRAND,,"eBCH prod., SOGRAND",red,False
+fig_FER_fading3,avg_guesses,10.0,1.2767,SOGRAND,,"eBCH prod., SOGRAND",red,False
+fig_FER_fading3,avg_guesses,12.0,0.43314,SOGRAND,,"eBCH prod., SOGRAND",red,False
+fig_FER_fading3,avg_guesses,0.0,5.3619,SOGRAND,,"eBCH prod., SOGRAND, parall.",red,True
+fig_FER_fading3,avg_guesses,2.0,5.1663,SOGRAND,,"eBCH prod., SOGRAND, parall.",red,True
+fig_FER_fading3,avg_guesses,4.0,2.4483,SOGRAND,,"eBCH prod., SOGRAND, parall.",red,True
+fig_FER_fading3,avg_guesses,6.0,0.55934,SOGRAND,,"eBCH prod., SOGRAND, parall.",red,True
+fig_FER_fading3,avg_guesses,8.0,0.16844,SOGRAND,,"eBCH prod., SOGRAND, parall.",red,True
+fig_FER_fading3,avg_guesses,10.0,0.082142,SOGRAND,,"eBCH prod., SOGRAND, parall.",red,True
+fig_FER_fading3,avg_guesses,12.0,0.03634,SOGRAND,,"eBCH prod., SOGRAND, parall.",red,True
+fig_FER_fading3,avg_guesses,0.0,152.24,ORBGRAND_Pyndiah,,"eBCH prod., ORBGRAND Pyndiah",blue,False
+fig_FER_fading3,avg_guesses,2.0,152.36,ORBGRAND_Pyndiah,,"eBCH prod., ORBGRAND Pyndiah",blue,False
+fig_FER_fading3,avg_guesses,4.0,89.327,ORBGRAND_Pyndiah,,"eBCH prod., ORBGRAND Pyndiah",blue,False
+fig_FER_fading3,avg_guesses,6.0,29.393,ORBGRAND_Pyndiah,,"eBCH prod., ORBGRAND Pyndiah",blue,False
+fig_FER_fading3,avg_guesses,8.0,11.109,ORBGRAND_Pyndiah,,"eBCH prod., ORBGRAND Pyndiah",blue,False
+fig_FER_fading3,avg_guesses,10.0,8.7744,ORBGRAND_Pyndiah,,"eBCH prod., ORBGRAND Pyndiah",blue,False
+fig_FER_fading3,avg_guesses,12.0,9.8997,ORBGRAND_Pyndiah,,"eBCH prod., ORBGRAND Pyndiah",blue,False
+fig_FER_fading3,avg_guesses,0.0,5.5368,ORBGRAND_Pyndiah,,"eBCH prod., ORBGRAND Pyndiah, parall.",blue,True
+fig_FER_fading3,avg_guesses,2.0,5.5264,ORBGRAND_Pyndiah,,"eBCH prod., ORBGRAND Pyndiah, parall.",blue,True
+fig_FER_fading3,avg_guesses,4.0,3.3215,ORBGRAND_Pyndiah,,"eBCH prod., ORBGRAND Pyndiah, parall.",blue,True
+fig_FER_fading3,avg_guesses,6.0,1.0864,ORBGRAND_Pyndiah,,"eBCH prod., ORBGRAND Pyndiah, parall.",blue,True
+fig_FER_fading3,avg_guesses,8.0,0.41249,ORBGRAND_Pyndiah,,"eBCH prod., ORBGRAND Pyndiah, parall.",blue,True
+fig_FER_fading3,avg_guesses,10.0,0.30893,ORBGRAND_Pyndiah,,"eBCH prod., ORBGRAND Pyndiah, parall.",blue,True
+fig_FER_fading3,avg_guesses,12.0,0.31702,ORBGRAND_Pyndiah,,"eBCH prod., ORBGRAND Pyndiah, parall.",blue,True
+fig_FER_fading3,avg_iterations,0.0,50.0,LDPC_BP,,"LDPC, BP",black,False
+fig_FER_fading3,avg_iterations,2.0,50.0,LDPC_BP,,"LDPC, BP",black,False
+fig_FER_fading3,avg_iterations,4.0,21.227,LDPC_BP,,"LDPC, BP",black,False
+fig_FER_fading3,avg_iterations,6.0,7.4852,LDPC_BP,,"LDPC, BP",black,False
+fig_FER_fading3,avg_iterations,8.0,4.4503,LDPC_BP,,"LDPC, BP",black,False
+fig_FER_fading3,avg_iterations,10.0,3.5489,LDPC_BP,,"LDPC, BP",black,False
+fig_FER_fading3,avg_iterations,12.0,3.2044,LDPC_BP,,"LDPC, BP",black,False
+fig_FER_fading3,avg_iterations,0.0,20.0,SOGRAND,,"eBCH prod., SOGRAND",red,False
+fig_FER_fading3,avg_iterations,2.0,19.333,SOGRAND,,"eBCH prod., SOGRAND",red,False
+fig_FER_fading3,avg_iterations,4.0,8.9355,SOGRAND,,"eBCH prod., SOGRAND",red,False
+fig_FER_fading3,avg_iterations,6.0,2.0685,SOGRAND,,"eBCH prod., SOGRAND",red,False
+fig_FER_fading3,avg_iterations,8.0,0.76482,SOGRAND,,"eBCH prod., SOGRAND",red,False
+fig_FER_fading3,avg_iterations,10.0,0.56362,SOGRAND,,"eBCH prod., SOGRAND",red,False
+fig_FER_fading3,avg_iterations,12.0,0.51951,SOGRAND,,"eBCH prod., SOGRAND",red,False
+fig_FER_fading3,avg_iterations,0.0,20.0,ORBGRAND_Pyndiah,,"eBCH prod., ORBGRAND Pyndiah",blue,False
+fig_FER_fading3,avg_iterations,2.0,20.0,ORBGRAND_Pyndiah,,"eBCH prod., ORBGRAND Pyndiah",blue,False
+fig_FER_fading3,avg_iterations,4.0,11.526,ORBGRAND_Pyndiah,,"eBCH prod., ORBGRAND Pyndiah",blue,False
+fig_FER_fading3,avg_iterations,6.0,3.5559,ORBGRAND_Pyndiah,,"eBCH prod., ORBGRAND Pyndiah",blue,False
+fig_FER_fading3,avg_iterations,8.0,1.1,ORBGRAND_Pyndiah,,"eBCH prod., ORBGRAND Pyndiah",blue,False
+fig_FER_fading3,avg_iterations,10.0,0.65973,ORBGRAND_Pyndiah,,"eBCH prod., ORBGRAND Pyndiah",blue,False
+fig_FER_fading3,avg_iterations,12.0,0.57074,ORBGRAND_Pyndiah,,"eBCH prod., ORBGRAND Pyndiah",blue,False

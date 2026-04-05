@@ -1,0 +1,81 @@
+figure,metric,eb_n0_db,value,decoder,code_params,legend_full,style_color,style_dashed
+fig_ber_evaluation2,simulated_vs_predicted,0.0068844,0.013542,eBCH_SOGRAND,"(32,26)","(32,26) eBCH, proposed",red,False
+fig_ber_evaluation2,simulated_vs_predicted,0.071459,0.10756,eBCH_SOGRAND,"(32,26)","(32,26) eBCH, proposed",red,False
+fig_ber_evaluation2,simulated_vs_predicted,0.12313,0.16349,eBCH_SOGRAND,"(32,26)","(32,26) eBCH, proposed",red,False
+fig_ber_evaluation2,simulated_vs_predicted,0.17391,0.21434,eBCH_SOGRAND,"(32,26)","(32,26) eBCH, proposed",red,False
+fig_ber_evaluation2,simulated_vs_predicted,0.22409,0.26094,eBCH_SOGRAND,"(32,26)","(32,26) eBCH, proposed",red,False
+fig_ber_evaluation2,simulated_vs_predicted,0.27421,0.30305,eBCH_SOGRAND,"(32,26)","(32,26) eBCH, proposed",red,False
+fig_ber_evaluation2,simulated_vs_predicted,0.32427,0.34641,eBCH_SOGRAND,"(32,26)","(32,26) eBCH, proposed",red,False
+fig_ber_evaluation2,simulated_vs_predicted,0.37453,0.39716,eBCH_SOGRAND,"(32,26)","(32,26) eBCH, proposed",red,False
+fig_ber_evaluation2,simulated_vs_predicted,0.42452,0.4363,eBCH_SOGRAND,"(32,26)","(32,26) eBCH, proposed",red,False
+fig_ber_evaluation2,simulated_vs_predicted,0.47424,0.48485,eBCH_SOGRAND,"(32,26)","(32,26) eBCH, proposed",red,False
+fig_ber_evaluation2,simulated_vs_predicted,0.52394,0.53073,eBCH_SOGRAND,"(32,26)","(32,26) eBCH, proposed",red,False
+fig_ber_evaluation2,simulated_vs_predicted,0.57428,0.58125,eBCH_SOGRAND,"(32,26)","(32,26) eBCH, proposed",red,False
+fig_ber_evaluation2,simulated_vs_predicted,0.62453,0.61876,eBCH_SOGRAND,"(32,26)","(32,26) eBCH, proposed",red,False
+fig_ber_evaluation2,simulated_vs_predicted,0.6744,0.67209,eBCH_SOGRAND,"(32,26)","(32,26) eBCH, proposed",red,False
+fig_ber_evaluation2,simulated_vs_predicted,0.72457,0.72232,eBCH_SOGRAND,"(32,26)","(32,26) eBCH, proposed",red,False
+fig_ber_evaluation2,simulated_vs_predicted,0.77446,0.77375,eBCH_SOGRAND,"(32,26)","(32,26) eBCH, proposed",red,False
+fig_ber_evaluation2,simulated_vs_predicted,0.82458,0.82841,eBCH_SOGRAND,"(32,26)","(32,26) eBCH, proposed",red,False
+fig_ber_evaluation2,simulated_vs_predicted,0.8747,0.87397,eBCH_SOGRAND,"(32,26)","(32,26) eBCH, proposed",red,False
+fig_ber_evaluation2,simulated_vs_predicted,0.92496,0.93007,eBCH_SOGRAND,"(32,26)","(32,26) eBCH, proposed",red,False
+fig_ber_evaluation2,simulated_vs_predicted,0.9723,0.97955,eBCH_SOGRAND,"(32,26)","(32,26) eBCH, proposed",red,False
+fig_ber_evaluation2,simulated_vs_predicted,0.00045065,0.03259,Pyndiah,"(32,26)","(32,26) eBCH, Pyndiah",blue,False
+fig_ber_evaluation2,simulated_vs_predicted,0.073197,0.12506,Pyndiah,"(32,26)","(32,26) eBCH, Pyndiah",blue,False
+fig_ber_evaluation2,simulated_vs_predicted,0.12441,0.17096,Pyndiah,"(32,26)","(32,26) eBCH, Pyndiah",blue,False
+fig_ber_evaluation2,simulated_vs_predicted,0.17454,0.20965,Pyndiah,"(32,26)","(32,26) eBCH, Pyndiah",blue,False
+fig_ber_evaluation2,simulated_vs_predicted,0.22478,0.24661,Pyndiah,"(32,26)","(32,26) eBCH, Pyndiah",blue,False
+fig_ber_evaluation2,simulated_vs_predicted,0.27481,0.26782,Pyndiah,"(32,26)","(32,26) eBCH, Pyndiah",blue,False
+fig_ber_evaluation2,simulated_vs_predicted,0.32533,0.30135,Pyndiah,"(32,26)","(32,26) eBCH, Pyndiah",blue,False
+fig_ber_evaluation2,simulated_vs_predicted,0.37486,0.31248,Pyndiah,"(32,26)","(32,26) eBCH, Pyndiah",blue,False
+fig_ber_evaluation2,simulated_vs_predicted,0.42496,0.33957,Pyndiah,"(32,26)","(32,26) eBCH, Pyndiah",blue,False
+fig_ber_evaluation2,simulated_vs_predicted,0.47509,0.35423,Pyndiah,"(32,26)","(32,26) eBCH, Pyndiah",blue,False
+fig_ber_evaluation2,simulated_vs_predicted,0.5247,0.38251,Pyndiah,"(32,26)","(32,26) eBCH, Pyndiah",blue,False
+fig_ber_evaluation2,simulated_vs_predicted,0.57492,0.40804,Pyndiah,"(32,26)","(32,26) eBCH, Pyndiah",blue,False
+fig_ber_evaluation2,simulated_vs_predicted,0.62499,0.43747,Pyndiah,"(32,26)","(32,26) eBCH, Pyndiah",blue,False
+fig_ber_evaluation2,simulated_vs_predicted,0.67467,0.45824,Pyndiah,"(32,26)","(32,26) eBCH, Pyndiah",blue,False
+fig_ber_evaluation2,simulated_vs_predicted,0.72499,0.50535,Pyndiah,"(32,26)","(32,26) eBCH, Pyndiah",blue,False
+fig_ber_evaluation2,simulated_vs_predicted,0.77503,0.54835,Pyndiah,"(32,26)","(32,26) eBCH, Pyndiah",blue,False
+fig_ber_evaluation2,simulated_vs_predicted,0.82504,0.59297,Pyndiah,"(32,26)","(32,26) eBCH, Pyndiah",blue,False
+fig_ber_evaluation2,simulated_vs_predicted,0.87504,0.67233,Pyndiah,"(32,26)","(32,26) eBCH, Pyndiah",blue,False
+fig_ber_evaluation2,simulated_vs_predicted,0.92579,0.75915,Pyndiah,"(32,26)","(32,26) eBCH, Pyndiah",blue,False
+fig_ber_evaluation2,simulated_vs_predicted,0.9897,0.76519,Pyndiah,"(32,26)","(32,26) eBCH, Pyndiah",blue,False
+fig_ber_evaluation2,simulated_vs_predicted,0.0085315,0.011333,"(63,56) CRC, proposed","(63,56)","(63,56) CRC, proposed",cyan,False
+fig_ber_evaluation2,simulated_vs_predicted,0.071678,0.087827,"(63,56) CRC, proposed","(63,56)","(63,56) CRC, proposed",cyan,False
+fig_ber_evaluation2,simulated_vs_predicted,0.12321,0.14376,"(63,56) CRC, proposed","(63,56)","(63,56) CRC, proposed",cyan,False
+fig_ber_evaluation2,simulated_vs_predicted,0.17391,0.19464,"(63,56) CRC, proposed","(63,56)","(63,56) CRC, proposed",cyan,False
+fig_ber_evaluation2,simulated_vs_predicted,0.22431,0.24533,"(63,56) CRC, proposed","(63,56)","(63,56) CRC, proposed",cyan,False
+fig_ber_evaluation2,simulated_vs_predicted,0.27436,0.29239,"(63,56) CRC, proposed","(63,56)","(63,56) CRC, proposed",cyan,False
+fig_ber_evaluation2,simulated_vs_predicted,0.32445,0.34334,"(63,56) CRC, proposed","(63,56)","(63,56) CRC, proposed",cyan,False
+fig_ber_evaluation2,simulated_vs_predicted,0.37445,0.3846,"(63,56) CRC, proposed","(63,56)","(63,56) CRC, proposed",cyan,False
+fig_ber_evaluation2,simulated_vs_predicted,0.42431,0.43169,"(63,56) CRC, proposed","(63,56)","(63,56) CRC, proposed",cyan,False
+fig_ber_evaluation2,simulated_vs_predicted,0.47333,0.47515,"(63,56) CRC, proposed","(63,56)","(63,56) CRC, proposed",cyan,False
+fig_ber_evaluation2,simulated_vs_predicted,0.52146,0.51661,"(63,56) CRC, proposed","(63,56)","(63,56) CRC, proposed",cyan,False
+fig_ber_evaluation2,simulated_vs_predicted,0.57248,0.55807,"(63,56) CRC, proposed","(63,56)","(63,56) CRC, proposed",cyan,False
+fig_ber_evaluation2,simulated_vs_predicted,0.623,0.61951,"(63,56) CRC, proposed","(63,56)","(63,56) CRC, proposed",cyan,False
+fig_ber_evaluation2,simulated_vs_predicted,0.67319,0.65018,"(63,56) CRC, proposed","(63,56)","(63,56) CRC, proposed",cyan,False
+fig_ber_evaluation2,simulated_vs_predicted,0.723,0.72362,"(63,56) CRC, proposed","(63,56)","(63,56) CRC, proposed",cyan,False
+fig_ber_evaluation2,simulated_vs_predicted,0.77359,0.77304,"(63,56) CRC, proposed","(63,56)","(63,56) CRC, proposed",cyan,False
+fig_ber_evaluation2,simulated_vs_predicted,0.82295,0.80633,"(63,56) CRC, proposed","(63,56)","(63,56) CRC, proposed",cyan,False
+fig_ber_evaluation2,simulated_vs_predicted,0.87318,0.88901,"(63,56) CRC, proposed","(63,56)","(63,56) CRC, proposed",cyan,False
+fig_ber_evaluation2,simulated_vs_predicted,0.92297,0.93849,"(63,56) CRC, proposed","(63,56)","(63,56) CRC, proposed",cyan,False
+fig_ber_evaluation2,simulated_vs_predicted,0.96328,0.98667,"(63,56) CRC, proposed","(63,56)","(63,56) CRC, proposed",cyan,False
+fig_ber_evaluation2,simulated_vs_predicted,6.2002e-05,0.043377,Pyndiah,"(63,56)","(63,56) CRC, Pyndiah",brown,False
+fig_ber_evaluation2,simulated_vs_predicted,0.075331,0.18196,Pyndiah,"(63,56)","(63,56) CRC, Pyndiah",brown,False
+fig_ber_evaluation2,simulated_vs_predicted,0.12548,0.22342,Pyndiah,"(63,56)","(63,56) CRC, Pyndiah",brown,False
+fig_ber_evaluation2,simulated_vs_predicted,0.17578,0.25505,Pyndiah,"(63,56)","(63,56) CRC, Pyndiah",brown,False
+fig_ber_evaluation2,simulated_vs_predicted,0.22547,0.27253,Pyndiah,"(63,56)","(63,56) CRC, Pyndiah",brown,False
+fig_ber_evaluation2,simulated_vs_predicted,0.27547,0.29167,Pyndiah,"(63,56)","(63,56) CRC, Pyndiah",brown,False
+fig_ber_evaluation2,simulated_vs_predicted,0.32547,0.29775,Pyndiah,"(63,56)","(63,56) CRC, Pyndiah",brown,False
+fig_ber_evaluation2,simulated_vs_predicted,0.37558,0.31436,Pyndiah,"(63,56)","(63,56) CRC, Pyndiah",brown,False
+fig_ber_evaluation2,simulated_vs_predicted,0.42551,0.32306,Pyndiah,"(63,56)","(63,56) CRC, Pyndiah",brown,False
+fig_ber_evaluation2,simulated_vs_predicted,0.47527,0.33544,Pyndiah,"(63,56)","(63,56) CRC, Pyndiah",brown,False
+fig_ber_evaluation2,simulated_vs_predicted,0.52456,0.34399,Pyndiah,"(63,56)","(63,56) CRC, Pyndiah",brown,False
+fig_ber_evaluation2,simulated_vs_predicted,0.5745,0.36021,Pyndiah,"(63,56)","(63,56) CRC, Pyndiah",brown,False
+fig_ber_evaluation2,simulated_vs_predicted,0.62418,0.36941,Pyndiah,"(63,56)","(63,56) CRC, Pyndiah",brown,False
+fig_ber_evaluation2,simulated_vs_predicted,0.67437,0.39073,Pyndiah,"(63,56)","(63,56) CRC, Pyndiah",brown,False
+fig_ber_evaluation2,simulated_vs_predicted,0.72431,0.41337,Pyndiah,"(63,56)","(63,56) CRC, Pyndiah",brown,False
+fig_ber_evaluation2,simulated_vs_predicted,0.77425,0.43428,Pyndiah,"(63,56)","(63,56) CRC, Pyndiah",brown,False
+fig_ber_evaluation2,simulated_vs_predicted,0.82355,0.47918,Pyndiah,"(63,56)","(63,56) CRC, Pyndiah",brown,False
+fig_ber_evaluation2,simulated_vs_predicted,0.87377,0.53335,Pyndiah,"(63,56)","(63,56) CRC, Pyndiah",brown,False
+fig_ber_evaluation2,simulated_vs_predicted,0.9234,0.61768,Pyndiah,"(63,56)","(63,56) CRC, Pyndiah",brown,False
+fig_ber_evaluation2,simulated_vs_predicted,0.99791,0.50927,Pyndiah,"(63,56)","(63,56) CRC, Pyndiah",brown,False

@@ -1,0 +1,56 @@
+figure,metric,eb_n0_db,value,decoder,code_params,legend_full,style_color,style_dashed
+fig_ber_bcjr_orbgrand_pyndiah,BER,3.0,0.011562,BCJR,,BCJR,black,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,3.2,0.0091788,BCJR,,BCJR,black,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,3.4,0.0070859,BCJR,,BCJR,black,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,3.6,0.0051608,BCJR,,BCJR,black,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,3.8,0.0037797,BCJR,,BCJR,black,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,4.0,0.0027631,BCJR,,BCJR,black,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,4.2,0.0019426,BCJR,,BCJR,black,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,4.4,0.0013659,BCJR,,BCJR,black,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,4.6,0.00086417,BCJR,,BCJR,black,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,4.8,0.00057463,BCJR,,BCJR,black,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,5.0,0.00037276,BCJR,,BCJR,black,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,3.0,0.012332,ORBGRAND,,"ORBGRAND eq. , L=1",red,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,3.2,0.009922,ORBGRAND,,"ORBGRAND eq. , L=1",red,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,3.4,0.0077191,ORBGRAND,,"ORBGRAND eq. , L=1",red,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,3.6,0.005818,ORBGRAND,,"ORBGRAND eq. , L=1",red,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,3.8,0.004218,ORBGRAND,,"ORBGRAND eq. , L=1",red,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,4.0,0.0031869,ORBGRAND,,"ORBGRAND eq. , L=1",red,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,4.2,0.0022426,ORBGRAND,,"ORBGRAND eq. , L=1",red,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,4.4,0.0016041,ORBGRAND,,"ORBGRAND eq. , L=1",red,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,4.6,0.0010564,ORBGRAND,,"ORBGRAND eq. , L=1",red,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,4.8,0.00068901,ORBGRAND,,"ORBGRAND eq. , L=1",red,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,5.0,0.00046943,ORBGRAND,,"ORBGRAND eq. , L=1",red,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,3.0,0.011773,ORBGRAND,,"ORBGRAND eq. , L=2",red,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,3.2,0.0093336,ORBGRAND,,"ORBGRAND eq. , L=2",red,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,3.4,0.0071727,ORBGRAND,,"ORBGRAND eq. , L=2",red,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,3.6,0.0052801,ORBGRAND,,"ORBGRAND eq. , L=2",red,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,3.8,0.0038935,ORBGRAND,,"ORBGRAND eq. , L=2",red,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,4.0,0.0028191,ORBGRAND,,"ORBGRAND eq. , L=2",red,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,4.2,0.0019841,ORBGRAND,,"ORBGRAND eq. , L=2",red,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,4.4,0.0013898,ORBGRAND,,"ORBGRAND eq. , L=2",red,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,4.6,0.00089128,ORBGRAND,,"ORBGRAND eq. , L=2",red,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,4.8,0.00058511,ORBGRAND,,"ORBGRAND eq. , L=2",red,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,5.0,0.0003811,ORBGRAND,,"ORBGRAND eq. , L=2",red,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,3.0,0.012961,Pyndiah,,"Pyndiah, L=1",blue,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,3.2,0.010331,Pyndiah,,"Pyndiah, L=1",blue,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,3.4,0.0080848,Pyndiah,,"Pyndiah, L=1",blue,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,3.6,0.0060741,Pyndiah,,"Pyndiah, L=1",blue,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,3.8,0.0043866,Pyndiah,,"Pyndiah, L=1",blue,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,4.0,0.0033126,Pyndiah,,"Pyndiah, L=1",blue,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,4.2,0.0023433,Pyndiah,,"Pyndiah, L=1",blue,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,4.4,0.0016753,Pyndiah,,"Pyndiah, L=1",blue,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,4.6,0.0010985,Pyndiah,,"Pyndiah, L=1",blue,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,4.8,0.0007229,Pyndiah,,"Pyndiah, L=1",blue,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,5.0,0.00048779,Pyndiah,,"Pyndiah, L=1",blue,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,3.0,0.012019,Pyndiah,,"Pyndiah, L=2",blue,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,3.2,0.0095217,Pyndiah,,"Pyndiah, L=2",blue,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,3.4,0.0073711,Pyndiah,,"Pyndiah, L=2",blue,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,3.6,0.0054407,Pyndiah,,"Pyndiah, L=2",blue,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,3.8,0.003988,Pyndiah,,"Pyndiah, L=2",blue,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,4.0,0.0028774,Pyndiah,,"Pyndiah, L=2",blue,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,4.2,0.002021,Pyndiah,,"Pyndiah, L=2",blue,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,4.4,0.001424,Pyndiah,,"Pyndiah, L=2",blue,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,4.6,0.00090197,Pyndiah,,"Pyndiah, L=2",blue,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,4.8,0.00059093,Pyndiah,,"Pyndiah, L=2",blue,False
+fig_ber_bcjr_orbgrand_pyndiah,BER,5.0,0.00038781,Pyndiah,,"Pyndiah, L=2",blue,False
