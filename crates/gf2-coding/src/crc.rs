@@ -24,7 +24,10 @@
 //!
 //! # Example: CRC(25,15)
 //!
-//! The CRC(25,15) code uses the degree-10 polynomial `0x6b9`:
+//! The CRC(25,15) code uses the degree-10 polynomial `0x6b9`, matching the
+//! "CRC-0x2b9" notation in Yuan, Médard, Galligan & Duffy, "Soft-output
+//! (SO) GRAND and Iterative Decoding to Outperform LDPCs" (the paper uses
+//! the truncated `0x2b9` convention without the leading x^10 bit):
 //!
 //! ```text
 //! g(x) = x^10 + x^9 + x^7 + x^5 + x^4 + x^3 + 1
