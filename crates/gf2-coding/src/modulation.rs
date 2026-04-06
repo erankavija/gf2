@@ -43,6 +43,11 @@ pub struct Complex {
 impl Complex {
     /// Creates a new complex number.
     ///
+    /// # Arguments
+    ///
+    /// * `re` - Real part of the complex number
+    /// * `im` - Imaginary part of the complex number
+    ///
     /// # Examples
     ///
     /// ```
@@ -68,6 +73,10 @@ impl Complex {
     /// assert_eq!(conj.re, 1.0);
     /// assert_eq!(conj.im, 2.0);
     /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
     pub fn conj(self) -> Self {
         Complex {
             re: self.re,
@@ -85,6 +94,10 @@ impl Complex {
     /// let c = Complex::new(3.0, 4.0);
     /// assert!((c.norm_sq() - 25.0).abs() < 1e-12);
     /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
     pub fn norm_sq(self) -> f64 {
         self.re * self.re + self.im * self.im
     }
@@ -99,11 +112,19 @@ impl Complex {
     /// let c = Complex::new(3.0, 4.0);
     /// assert!((c.norm() - 5.0).abs() < 1e-12);
     /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
     pub fn norm(self) -> f64 {
         self.norm_sq().sqrt()
     }
 
     /// Scales the complex number by a real scalar.
+    ///
+    /// # Arguments
+    ///
+    /// * `s` - Real scalar to multiply by
     ///
     /// # Examples
     ///
@@ -114,6 +135,10 @@ impl Complex {
     /// assert_eq!(c.re, 3.0);
     /// assert_eq!(c.im, -6.0);
     /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
     pub fn scale(self, s: f64) -> Self {
         Complex {
             re: self.re * s,
@@ -238,6 +263,10 @@ impl QpskModulator {
     /// assert!((s.re - 1.0).abs() < 1e-12);
     /// assert!((s.im - 1.0).abs() < 1e-12);
     /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
     pub fn modulate(&self, b1: bool, b2: bool) -> Complex {
         let re = if b1 { -self.delta } else { self.delta };
         let im = if b2 { -self.delta } else { self.delta };
@@ -268,6 +297,10 @@ impl QpskModulator {
     /// assert!((symbols[0].re - 1.0).abs() < 1e-12);
     /// assert!((symbols[1].re + 1.0).abs() < 1e-12);
     /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(n) where n is the number of bits.
     pub fn modulate_bits(&self, bits: &[bool]) -> Vec<Complex> {
         assert_eq!(
             bits.len() % 2,
@@ -312,6 +345,10 @@ impl QpskModulator {
     /// assert!(l1.value() > 0.0); // b1=0 → positive LLR
     /// assert!(l2.value() > 0.0); // b2=0 → positive LLR
     /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
     pub fn soft_llrs(&self, y: Complex, h_hat: Complex, sigma_squared: f64) -> (Llr, Llr) {
         let z = y * h_hat.conj();
         let scale = 2.0 * self.delta / sigma_squared;
@@ -375,6 +412,10 @@ impl QpskModulator {
     ///
     /// Signs of real and imaginary parts determine the hard decisions.
     ///
+    /// # Arguments
+    ///
+    /// * `y` - Received complex symbol
+    ///
     /// # Examples
     ///
     /// ```
@@ -385,6 +426,10 @@ impl QpskModulator {
     /// assert_eq!(b1, false); // re > 0 → b1 = 0
     /// assert_eq!(b2, true);  // im < 0 → b2 = 1
     /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
     pub fn demodulate_hard(&self, y: Complex) -> (bool, bool) {
         let b1 = y.re < 0.0;
         let b2 = y.im < 0.0;
@@ -561,8 +606,6 @@ mod tests {
         let sigma_sq = 1.0;
 
         let (l1, l2) = qpsk.soft_llrs(y, h, sigma_sq);
-        // y * conj(h) = (1.5 - 0.5j)(0.8 - 0.3j) = 1.5*0.8 - 1.5*0.3j - 0.5*0.8*j + 0.5*0.3*j^2*(-1)
-        // = 1.2 - 0.45j - 0.4j - 0.15 = 1.05 - 0.85j
         let z = y.mul(h.conj());
         let expected_l1 = (2.0 * delta * z.re / sigma_sq) as f32;
         let expected_l2 = (2.0 * delta * z.im / sigma_sq) as f32;
@@ -611,6 +654,197 @@ mod tests {
         let s10 = qpsk.modulate(true, false);
         assert!((s00.im - s10.im).abs() < 1e-12);
         assert!((s00.re - s10.re).abs() > 1e-6);
+    }
+
+    // ---- QPSK BER vs theory in uncoded AWGN ----
+
+    #[test]
+    fn test_qpsk_uncoded_ber_matches_theory() {
+        // Theoretical QPSK BER over AWGN: BER = erfc(sqrt(Eb/N0)) / 2
+        // For QPSK with Gray labeling, each bit sees an effective BPSK channel,
+        // so the BER formula is the same as BPSK: Q(sqrt(2*Eb/N0)) = erfc(sqrt(Eb/N0))/2.
+        //
+        // We test at several Eb/N0 points with enough samples for statistical reliability.
+        use rand::Rng;
+        use rand::SeedableRng;
+        use rand_distr::{Distribution, Normal};
+
+        let mut rng = rand::rngs::StdRng::seed_from_u64(0xCAFE);
+
+        // QPSK with unit energy per symbol: Es = 2*delta^2 = 1, so delta = 1/sqrt(2)
+        // For QPSK, Eb = Es / 2 (2 bits per symbol), so Eb = 0.5
+        // sigma^2 = N0/2 = Eb/(2*Eb/N0_linear) ... we use the relation directly.
+        //
+        // More precisely: for Eb/N0 = gamma, noise variance per complex dim is
+        // sigma^2 = Es / (2 * log2(M) * gamma) = 1 / (2*2*gamma) for M=4
+        // But since Es = 2*delta^2 and Eb = Es/log2(M) = Es/2:
+        //   sigma^2 = Eb / gamma = 0.5 / gamma  (per complex dimension, real+imag)
+        //
+        // Actually for QPSK: sigma^2_per_dim = N0/2. And Eb/N0 = gamma means N0 = Eb/gamma.
+        // With delta = 1/sqrt(2), Es = 2*delta^2 = 1, Eb = Es/2 = 0.5.
+        // N0 = Eb/gamma = 0.5/gamma, sigma^2_per_dim = N0/2 = 0.25/gamma.
+        // Total complex noise variance = N0 = 0.5/gamma.
+
+        let delta = 1.0_f64 / 2.0_f64.sqrt();
+        let qpsk = QpskModulator::new(delta);
+
+        // Test points: (Eb/N0 in dB, theoretical BER)
+        let test_points: Vec<(f64, f64)> = vec![
+            (0.0, theoretical_qpsk_ber(0.0)),
+            (2.0, theoretical_qpsk_ber(2.0)),
+            (4.0, theoretical_qpsk_ber(4.0)),
+            (6.0, theoretical_qpsk_ber(6.0)),
+            (8.0, theoretical_qpsk_ber(8.0)),
+        ];
+
+        for (eb_n0_db, expected_ber) in &test_points {
+            let eb_n0_linear = 10.0_f64.powf(eb_n0_db / 10.0);
+
+            // Noise variance: per real/imag component
+            // sigma_component^2 = N0/2 = Eb/(2*gamma) = 0.5/(2*gamma) = 0.25/gamma
+            let sigma_component = (0.25 / eb_n0_linear).sqrt();
+            let noise_dist = Normal::new(0.0, sigma_component).unwrap();
+
+            // Number of bits to transmit: enough for statistical reliability
+            // At high SNR, BER is small, so we need more bits
+            let num_bits = if *eb_n0_db >= 6.0 { 2_000_000 } else { 500_000 };
+            // Must be even for QPSK
+            let num_bits = num_bits + (num_bits % 2);
+
+            let mut total_errors = 0usize;
+            let mut total_bits = 0usize;
+
+            // Process in chunks
+            let chunk_size = 1000; // bits per chunk (must be even)
+            let mut bits_remaining = num_bits;
+
+            while bits_remaining > 0 {
+                let this_chunk = chunk_size.min(bits_remaining);
+                let bits: Vec<bool> = (0..this_chunk).map(|_| rng.gen()).collect();
+                let symbols = qpsk.modulate_bits(&bits);
+
+                // Transmit through AWGN (h=1, no fading)
+                let received: Vec<Complex> = symbols
+                    .iter()
+                    .map(|&s| {
+                        Complex::new(
+                            s.re + noise_dist.sample(&mut rng),
+                            s.im + noise_dist.sample(&mut rng),
+                        )
+                    })
+                    .collect();
+
+                // Hard demodulate
+                for (i, &y) in received.iter().enumerate() {
+                    let (d1, d2) = qpsk.demodulate_hard(y);
+                    if d1 != bits[2 * i] {
+                        total_errors += 1;
+                    }
+                    if d2 != bits[2 * i + 1] {
+                        total_errors += 1;
+                    }
+                }
+
+                total_bits += this_chunk;
+                bits_remaining -= this_chunk;
+            }
+
+            let measured_ber = total_errors as f64 / total_bits as f64;
+            let tolerance = 0.15; // 15% relative tolerance
+
+            // For very low BER, use absolute tolerance instead
+            if *expected_ber < 1e-5 {
+                assert!(
+                    measured_ber < 1e-4,
+                    "At Eb/N0={eb_n0_db} dB: measured BER {measured_ber:.6} too high \
+                     (expected ~{expected_ber:.6})"
+                );
+            } else {
+                let ratio = measured_ber / expected_ber;
+                assert!(
+                    (1.0 - tolerance..=1.0 + tolerance).contains(&ratio),
+                    "At Eb/N0={eb_n0_db} dB: measured BER {measured_ber:.6} vs \
+                     theoretical {expected_ber:.6} (ratio {ratio:.3}, tolerance {tolerance})"
+                );
+            }
+        }
+    }
+
+    /// Theoretical QPSK BER: BER = erfc(sqrt(Eb/N0)) / 2
+    fn theoretical_qpsk_ber(eb_n0_db: f64) -> f64 {
+        let eb_n0_linear = 10.0_f64.powf(eb_n0_db / 10.0);
+        erfc(eb_n0_linear.sqrt()) / 2.0
+    }
+
+    /// Complementary error function approximation (Abramowitz & Stegun 7.1.26).
+    fn erfc(x: f64) -> f64 {
+        // For negative x: erfc(-x) = 2 - erfc(x)
+        if x < 0.0 {
+            return 2.0 - erfc(-x);
+        }
+        let t = 1.0 / (1.0 + 0.3275911 * x);
+        let poly = t
+            * (0.254829592
+                + t * (-0.284496736 + t * (1.421413741 + t * (-1.453152027 + t * 1.061405429))));
+        poly * (-x * x).exp()
+    }
+
+    // ---- Simulation surface integration: QPSK + fading channel decode loop ----
+
+    #[test]
+    fn test_qpsk_fading_channel_decode_loop() {
+        // Demonstrates that QPSK modulation + Rician fading channel can feed
+        // into a decode loop, verifying the integration surface between the
+        // modulation/fading modules and the simulation harness.
+        use crate::fading::{BitInterleaver, RicianChannel, RicianConfig};
+        use rand::Rng;
+        use rand::SeedableRng;
+
+        let mut rng = rand::rngs::StdRng::seed_from_u64(0xBEEF);
+        let cfg = RicianConfig::fig8(); // K=5, N_c=128, t=4 → 1024 bits
+        let channel = RicianChannel::new(cfg);
+        let delta = 1.0_f64 / 2.0_f64.sqrt();
+        let qpsk = QpskModulator::new(delta);
+        let interleaver = BitInterleaver::new(cfg.frame_bits(), 42);
+
+        let eb_n0_db = 10.0;
+        let eb_n0_linear = 10.0_f64.powf(eb_n0_db / 10.0);
+        // sigma^2 = Eb / gamma = 0.5 / gamma (for unit-energy QPSK)
+        let sigma_sq = 0.5 / eb_n0_linear;
+
+        // Generate random data bits
+        let tx_bits: Vec<bool> = (0..cfg.frame_bits()).map(|_| rng.gen()).collect();
+
+        // Interleave
+        let interleaved = interleaver.interleave(&tx_bits);
+
+        // QPSK modulate
+        let symbols = qpsk.modulate_bits(&interleaved);
+
+        // Pass through Rician fading channel
+        let gains = channel.generate_frame_gains(&mut rng);
+        let received = channel.transmit(&symbols, &gains, sigma_sq, &mut rng);
+
+        // Compute LLRs with channel estimates (perfect CSI)
+        let llrs = qpsk.symbols_to_llrs(&received, &gains, sigma_sq);
+
+        // De-interleave LLRs
+        let deinterleaved_llrs = interleaver.deinterleave_llrs(&llrs);
+
+        // Hard decisions from LLRs (simulate a trivial "decoder")
+        let decoded_bits: Vec<bool> = deinterleaved_llrs.iter().map(|l| l.value() < 0.0).collect();
+
+        // At 10 dB with Rician fading (K=5), most bits should be correct
+        let errors: usize = tx_bits
+            .iter()
+            .zip(decoded_bits.iter())
+            .filter(|(&a, &b)| a != b)
+            .count();
+        let ber = errors as f64 / cfg.frame_bits() as f64;
+        assert!(
+            ber < 0.05,
+            "BER {ber:.4} too high for 10 dB Rician K=5 channel"
+        );
     }
 }
 
