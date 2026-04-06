@@ -26,7 +26,7 @@
 //!
 //! ORBGRAND supports list decoding: after finding the first valid codeword,
 //! it can continue to find up to `L` codewords. Each codeword is annotated
-//! with its noise pattern probability `p(z|r)`.
+//! with its noise pattern log-probability `ln p(z|r)`.
 //!
 //! # Even Code Optimization
 //!
@@ -111,7 +111,7 @@ impl Default for OrbGrandConfig {
     }
 }
 
-/// A codeword found during ORBGRAND decoding, annotated with its noise probability.
+/// A codeword found during ORBGRAND decoding, annotated with its noise log-probability.
 ///
 /// # Examples
 ///
@@ -143,17 +143,20 @@ pub struct ScoredCodeword {
 
 /// Result of an ORBGRAND decoding operation.
 ///
-/// Contains the list of found codewords, the number of queries performed,
-/// and cumulative probability information.
+/// Contains the hard-decision vector, the list of found codewords (ordered by
+/// decreasing noise log-probability), the number of queries performed, and
+/// cumulative log-probability information.
 ///
 /// # Examples
 ///
 /// ```
 /// use gf2_coding::grand::{OrbGrand, OrbGrandConfig, OrbGrandResult};
 /// use gf2_coding::llr::Llr;
+/// use gf2_core::BitVec;
 ///
 /// // See OrbGrand::decode for full usage examples.
 /// let result = OrbGrandResult {
+///     hard_decision: BitVec::zeros(7),
 ///     codewords: vec![],
 ///     query_count: 0,
 ///     cumulative_log_probability: f64::NEG_INFINITY,
@@ -162,7 +165,12 @@ pub struct ScoredCodeword {
 /// ```
 #[derive(Debug, Clone)]
 pub struct OrbGrandResult {
-    /// List of codewords found, ordered by decreasing likelihood.
+    /// Hard-decision vector `y` derived from input LLRs (length n).
+    /// Bit `i` is 1 when `LLR_i < 0`, and 0 otherwise.
+    pub hard_decision: BitVec,
+
+    /// List of codewords found, ordered by decreasing noise log-probability
+    /// (most likely noise pattern first).
     pub codewords: Vec<ScoredCodeword>,
 
     /// Total number of noise patterns tested (queries).
@@ -180,8 +188,10 @@ impl OrbGrandResult {
     ///
     /// ```
     /// use gf2_coding::grand::OrbGrandResult;
+    /// use gf2_core::BitVec;
     ///
     /// let result = OrbGrandResult {
+    ///     hard_decision: BitVec::zeros(7),
     ///     codewords: vec![],
     ///     query_count: 100,
     ///     cumulative_log_probability: f64::NEG_INFINITY,
@@ -198,8 +208,10 @@ impl OrbGrandResult {
     ///
     /// ```
     /// use gf2_coding::grand::OrbGrandResult;
+    /// use gf2_core::BitVec;
     ///
     /// let result = OrbGrandResult {
+    ///     hard_decision: BitVec::zeros(7),
     ///     codewords: vec![],
     ///     query_count: 0,
     ///     cumulative_log_probability: f64::NEG_INFINITY,
@@ -214,8 +226,8 @@ impl OrbGrandResult {
 /// Ordered Reliability Bits GRAND (ORBGRAND) decoder.
 ///
 /// A universal soft-input decoder for linear block codes that achieves
-/// maximum-likelihood decoding by testing noise patterns in order of
-/// decreasing likelihood, using the logistic-weight ordering.
+/// near-maximum-likelihood decoding by testing noise patterns in weight-tiered
+/// logistic-weight order, using soft reliability information from LLRs.
 ///
 /// # Arguments
 ///
@@ -345,8 +357,9 @@ impl OrbGrand {
     ///
     /// # Returns
     ///
-    /// An [`OrbGrandResult`] containing the list of found codewords (up to `list_size`),
-    /// the total query count, and cumulative probability.
+    /// An [`OrbGrandResult`] containing the hard-decision vector, the list of
+    /// found codewords (up to `list_size`) sorted by decreasing noise
+    /// log-probability, the total query count, and cumulative log-probability.
     ///
     /// # Panics
     ///
@@ -514,7 +527,15 @@ impl OrbGrand {
             }
         }
 
+        // Sort codewords by noise_log_probability descending (most likely first)
+        codewords.sort_by(|a, b| {
+            b.noise_log_probability
+                .partial_cmp(&a.noise_log_probability)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+
         OrbGrandResult {
+            hard_decision: hard,
             codewords,
             query_count,
             cumulative_log_probability: cumulative_log_prob,
@@ -625,25 +646,31 @@ fn compute_noise_log_prob(
     log_prob
 }
 
-/// Iterator that generates noise patterns in logistic-weight order.
+/// Iterator that generates noise patterns in **weight-tiered** logistic-weight order.
 ///
-/// The logistic weight of a pattern `{i_1, ..., i_w}` (where indices are 0-based
-/// positions in the reliability-sorted order) is `sum(i_j + 1)` (1-based sum).
+/// Patterns are grouped by Hamming weight and enumerated tier by tier:
 ///
-/// Patterns are generated in order of non-decreasing logistic weight:
-/// - Weight 0: {} (the empty pattern, logistic weight 0)
-/// - Weight 1: {0} (LW=1), {1} (LW=2), {2} (LW=3), ...
-/// - Weight 2: {0,1} (LW=3), {0,2} (LW=4), {1,2} (LW=5), {0,3} (LW=5), ...
+/// 1. **Weight 0**: the empty pattern `{}`.
+/// 2. **Weight 1**: single-bit patterns `{i}`, ordered by reliability index
+///    (least reliable first, i.e., ascending `i`).
+/// 3. **Weight 2**: two-bit patterns `{i, j}`, ordered by the sum of their
+///    1-based reliability indices (logistic weight), with ties broken
+///    lexicographically.
+/// 4. And so on for higher Hamming weights.
 ///
-/// And so on for higher weights.
+/// Within each weight tier, the logistic weight of a pattern `{i_1, ..., i_w}`
+/// (0-based indices into the reliability-sorted order) is
+/// `(i_1 + 1) + ... + (i_w + 1)`.
 ///
-/// We enumerate all integer partitions of each logistic weight W into distinct
-/// parts from {1, 2, ..., n}, generating patterns with LW = 1, 2, 3, ...
+/// This ordering ensures that all weight-`w` patterns are enumerated before
+/// any weight-`(w+1)` pattern, matching the standard 1-line ORBGRAND definition.
 struct LogisticWeightPatternIter {
     n: usize,
-    /// Current logistic weight being enumerated.
+    /// Current Hamming weight tier being enumerated.
+    current_weight: usize,
+    /// Current logistic weight within the current Hamming weight tier.
     current_lw: usize,
-    /// Buffer of patterns at the current logistic weight, to be yielded.
+    /// Buffer of patterns at the current (weight, lw), to be yielded.
     buffer: Vec<Vec<usize>>,
     /// Index into the buffer.
     buffer_idx: usize,
@@ -651,51 +678,100 @@ struct LogisticWeightPatternIter {
 
 impl LogisticWeightPatternIter {
     fn new(n: usize) -> Self {
-        // Start with logistic weight 0: the empty pattern
+        // Start with Hamming weight 0, logistic weight 0: the empty pattern
         Self {
             n,
+            current_weight: 0,
             current_lw: 0,
             buffer: vec![vec![]],
             buffer_idx: 0,
         }
     }
 
-    /// Generate all patterns (as sorted 0-based index vectors) with the given
-    /// logistic weight. Logistic weight uses 1-based indices, so a pattern
-    /// flipping 0-based positions {a, b, c} has LW = (a+1) + (b+1) + (c+1).
-    fn generate_patterns_for_lw(n: usize, lw: usize) -> Vec<Vec<usize>> {
+    /// Minimum logistic weight for a pattern of Hamming weight `w` over `n` positions.
+    /// Choosing the `w` smallest 1-based indices: 1 + 2 + ... + w = w*(w+1)/2.
+    fn min_lw_for_weight(w: usize) -> usize {
+        w * (w + 1) / 2
+    }
+
+    /// Maximum logistic weight for a pattern of Hamming weight `w` over `n` positions.
+    /// Choosing the `w` largest 1-based indices: (n-w+1) + ... + n.
+    fn max_lw_for_weight(n: usize, w: usize) -> usize {
+        if w == 0 {
+            return 0;
+        }
+        // sum from (n-w+1) to n = w*n - w*(w-1)/2
+        w * n - w * (w - 1) / 2
+    }
+
+    /// Generate all patterns of exactly Hamming weight `w` (as sorted 0-based
+    /// index vectors) with the given logistic weight `lw`.
+    ///
+    /// Logistic weight uses 1-based indices, so a pattern flipping 0-based
+    /// positions `{a, b, c}` has LW = `(a+1) + (b+1) + (c+1)`.
+    fn generate_patterns_for_weight_and_lw(n: usize, w: usize, lw: usize) -> Vec<Vec<usize>> {
         let mut result = Vec::new();
-        if lw == 0 {
-            result.push(vec![]);
+        if w == 0 {
+            if lw == 0 {
+                result.push(vec![]);
+            }
             return result;
         }
-        // Enumerate all subsets of {1..n} (1-based) that sum to `lw`.
-        // Use recursive generation: choose elements in increasing order.
-        Self::enumerate_subsets(n, lw, 1, &mut vec![], &mut result);
+        Self::enumerate_subsets_exact(n, w, lw, 1, &mut vec![], &mut result);
         result
     }
 
-    /// Recursively enumerate subsets of {min_val..n} (1-based) that sum to `remaining`.
+    /// Recursively enumerate subsets of exactly `remaining_count` elements
+    /// from `{min_val..=n}` (1-based) that sum to `remaining_sum`.
     /// `current` accumulates the chosen 0-based indices.
-    fn enumerate_subsets(
+    fn enumerate_subsets_exact(
         n: usize,
-        remaining: usize,
+        remaining_count: usize,
+        remaining_sum: usize,
         min_val: usize,
         current: &mut Vec<usize>,
         result: &mut Vec<Vec<usize>>,
     ) {
-        if remaining == 0 {
-            result.push(current.clone());
+        if remaining_count == 0 {
+            if remaining_sum == 0 {
+                result.push(current.clone());
+            }
             return;
         }
-        // The minimum possible next element is min_val.
-        // We need remaining >= min_val to continue.
-        if min_val > remaining || min_val > n {
+        if min_val > n {
             return;
         }
-        for val in min_val..=remaining.min(n) {
+        // Pruning: minimum possible sum with `remaining_count` elements starting at `min_val`
+        // is min_val + (min_val+1) + ... + (min_val + remaining_count - 1)
+        let min_possible = remaining_count * min_val + remaining_count * (remaining_count - 1) / 2;
+        if min_possible > remaining_sum {
+            return;
+        }
+        // Maximum possible sum with `remaining_count` elements ending at `n`
+        // is n + (n-1) + ... + (n - remaining_count + 1)
+        let max_possible = remaining_count * n - remaining_count * (remaining_count - 1) / 2;
+        if max_possible < remaining_sum {
+            return;
+        }
+
+        // Upper bound for the current element
+        let max_val = remaining_sum
+            .saturating_sub(remaining_count * (remaining_count - 1) / 2)
+            .min(n);
+        for val in min_val..=max_val {
+            // Check remaining can still be satisfied
+            let new_remaining = remaining_sum - val;
+            let new_count = remaining_count - 1;
+            if new_count > 0 {
+                let min_next = new_count * (val + 1) + new_count * (new_count - 1) / 2;
+                if min_next > new_remaining {
+                    break;
+                }
+            } else if new_remaining != 0 {
+                continue;
+            }
             current.push(val - 1); // Convert to 0-based
-            Self::enumerate_subsets(n, remaining - val, val + 1, current, result);
+            Self::enumerate_subsets_exact(n, new_count, new_remaining, val + 1, current, result);
             current.pop();
         }
     }
@@ -706,25 +782,33 @@ impl Iterator for LogisticWeightPatternIter {
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
+            // Yield buffered patterns at current (weight, lw)
             if self.buffer_idx < self.buffer.len() {
                 let pattern = self.buffer[self.buffer_idx].clone();
                 self.buffer_idx += 1;
                 return Some(pattern);
             }
 
-            // Move to next logistic weight
+            // Advance within the current weight tier
             self.current_lw += 1;
 
-            // Maximum possible logistic weight for n bits:
-            // sum of {1, 2, ..., n} = n*(n+1)/2
-            let max_lw = self.n * (self.n + 1) / 2;
+            let max_lw = Self::max_lw_for_weight(self.n, self.current_weight);
             if self.current_lw > max_lw {
-                return None;
+                // Move to next weight tier
+                self.current_weight += 1;
+                if self.current_weight > self.n {
+                    return None;
+                }
+                self.current_lw = Self::min_lw_for_weight(self.current_weight);
             }
 
-            self.buffer = Self::generate_patterns_for_lw(self.n, self.current_lw);
+            self.buffer = Self::generate_patterns_for_weight_and_lw(
+                self.n,
+                self.current_weight,
+                self.current_lw,
+            );
             self.buffer_idx = 0;
-            // If this LW has no patterns, loop to next LW
+            // If this (weight, lw) has no patterns, loop to next lw
         }
     }
 }
@@ -759,51 +843,77 @@ mod tests {
     fn test_logistic_weight_iter_weight_1_patterns() {
         // For n=4, weight-1 patterns in LW order:
         // LW=1: {0}, LW=2: {1}, LW=3: {2}, LW=4: {3}
+        // All weight-1 patterns come before any weight-2 pattern.
         let mut iter = LogisticWeightPatternIter::new(4);
         let _ = iter.next(); // Skip empty pattern (LW=0)
 
         assert_eq!(iter.next().unwrap(), vec![0]); // LW=1
         assert_eq!(iter.next().unwrap(), vec![1]); // LW=2
+        assert_eq!(iter.next().unwrap(), vec![2]); // LW=3
+        assert_eq!(iter.next().unwrap(), vec![3]); // LW=4
 
-        // LW=3 has two patterns: {2} and {0,1}
-        let lw3 = iter.next().unwrap();
-        assert!(lw3 == vec![2] || lw3 == vec![0, 1]);
+        // Next should be weight-2 patterns, starting with {0,1} (LW=3)
+        assert_eq!(iter.next().unwrap(), vec![0, 1]); // LW=3
     }
 
     #[test]
     fn test_logistic_weight_iter_all_patterns_n3() {
-        // For n=3, all possible patterns and their logistic weights:
-        // {} → 0
-        // {0} → 1, {1} → 2, {0,1} → 3, {2} → 3
-        // {0,2} → 4, {1,2} → 5, {0,1,2} → 6
+        // For n=3, weight-tiered order:
+        // Weight 0: {} (LW=0)
+        // Weight 1: {0} (LW=1), {1} (LW=2), {2} (LW=3)
+        // Weight 2: {0,1} (LW=3), {0,2} (LW=4), {1,2} (LW=5)
+        // Weight 3: {0,1,2} (LW=6)
         let iter = LogisticWeightPatternIter::new(3);
         let patterns: Vec<Vec<usize>> = iter.collect();
 
         assert_eq!(patterns.len(), 8); // 2^3 = 8 patterns total
 
-        // Check ordering by logistic weight
+        // Check weight-tiered ordering: Hamming weight must be non-decreasing
         for i in 1..patterns.len() {
-            let lw_prev: usize = patterns[i - 1].iter().map(|&x| x + 1).sum();
-            let lw_curr: usize = patterns[i].iter().map(|&x| x + 1).sum();
+            let w_prev = patterns[i - 1].len();
+            let w_curr = patterns[i].len();
             assert!(
-                lw_prev <= lw_curr,
-                "Patterns must be in non-decreasing LW order: {} vs {}",
-                lw_prev,
-                lw_curr
+                w_prev <= w_curr,
+                "Patterns must be in non-decreasing Hamming weight order: {} vs {}",
+                w_prev,
+                w_curr
             );
+        }
+
+        // Within each weight tier, logistic weight must be non-decreasing
+        let mut i = 0;
+        while i < patterns.len() {
+            let w = patterns[i].len();
+            let start = i;
+            while i < patterns.len() && patterns[i].len() == w {
+                i += 1;
+            }
+            // Check LW ordering within this tier
+            for j in (start + 1)..i {
+                let lw_prev: usize = patterns[j - 1].iter().map(|&x| x + 1).sum();
+                let lw_curr: usize = patterns[j].iter().map(|&x| x + 1).sum();
+                assert!(
+                    lw_prev <= lw_curr,
+                    "Within weight {}, LW must be non-decreasing: {} vs {}",
+                    w,
+                    lw_prev,
+                    lw_curr
+                );
+            }
         }
     }
 
     #[test]
-    fn test_logistic_weight_patterns_at_lw3() {
-        // LW=3 with n>=3: subsets of {1,2,...,n} summing to 3
-        // {3} (0-based: {2}) and {1,2} (0-based: {0,1})
-        let patterns = LogisticWeightPatternIter::generate_patterns_for_lw(4, 3);
-        assert_eq!(patterns.len(), 2);
+    fn test_logistic_weight_patterns_at_weight_and_lw() {
+        // Weight 1, LW=3 with n=4: single-bit pattern {2} (1-based: {3})
+        let patterns_w1 = LogisticWeightPatternIter::generate_patterns_for_weight_and_lw(4, 1, 3);
+        assert_eq!(patterns_w1.len(), 1);
+        assert_eq!(patterns_w1[0], vec![2]);
 
-        let set: Vec<Vec<usize>> = patterns.into_iter().collect();
-        assert!(set.contains(&vec![2])); // {3} 1-based → {2} 0-based
-        assert!(set.contains(&vec![0, 1])); // {1,2} 1-based → {0,1} 0-based
+        // Weight 2, LW=3 with n=4: two-bit pattern {0,1} (1-based: {1,2})
+        let patterns_w2 = LogisticWeightPatternIter::generate_patterns_for_weight_and_lw(4, 2, 3);
+        assert_eq!(patterns_w2.len(), 1);
+        assert_eq!(patterns_w2[0], vec![0, 1]);
     }
 
     #[test]
@@ -1053,47 +1163,56 @@ mod tests {
             1, 1, 1, 1, 1, 1, 1, 1
         ];
 
-        // Without even_code optimization
+        // Use list mode with all 16 codewords so that both decoders
+        // enumerate the full search space, making the query ratio
+        // converge to approximately 0.5.
         let config_normal = OrbGrandConfig {
             max_queries: 1_000_000,
-            list_size: 1,
+            list_size: 16,
             even_code: false,
         };
         let decoder_normal = OrbGrand::new(h_ext.clone(), config_normal);
 
-        // With even_code optimization
         let config_even = OrbGrandConfig {
             max_queries: 1_000_000,
-            list_size: 1,
+            list_size: 16,
             even_code: true,
         };
         let decoder_even = OrbGrand::new(h_ext, config_even);
 
-        // Use LLRs where hard decision produces a non-codeword
+        // Use LLRs with varied reliabilities so patterns span many weights
         let llrs = vec![
-            Llr::new(-0.3), // least reliable bits
+            Llr::new(-0.3),
             Llr::new(0.4),
             Llr::new(-0.5),
             Llr::new(0.6),
-            Llr::new(5.0),
-            Llr::new(5.0),
-            Llr::new(5.0),
-            Llr::new(5.0),
+            Llr::new(1.0),
+            Llr::new(1.2),
+            Llr::new(1.5),
+            Llr::new(2.0),
         ];
 
         let result_normal = decoder_normal.decode(&llrs);
         let result_even = decoder_even.decode(&llrs);
 
-        // Both should find the same codeword
-        assert!(result_normal.success() && result_even.success());
+        // Both should find all 16 codewords
+        assert_eq!(result_normal.codewords.len(), 16);
+        assert_eq!(result_even.codewords.len(), 16);
 
-        // Even code optimization should use fewer queries
+        // Even code optimization should roughly halve the number of queries
         // (it skips patterns with wrong parity)
         assert!(
-            result_even.query_count <= result_normal.query_count,
-            "Even code optimization should not increase query count: even={} normal={}",
+            result_even.query_count > 0 && result_normal.query_count > 0,
+            "Both decoders should perform at least one query"
+        );
+        let ratio = result_even.query_count as f64 / result_normal.query_count as f64;
+        assert!(
+            (0.40..=0.60).contains(&ratio),
+            "Even code optimization should approximately halve queries: \
+             even={} normal={} ratio={:.3} (expected 0.40..0.60)",
             result_even.query_count,
-            result_normal.query_count
+            result_normal.query_count,
+            ratio
         );
     }
 
@@ -1433,6 +1552,76 @@ mod tests {
                     i,
                     error_pos
                 );
+            }
+        }
+    }
+
+    // =====================================================================
+    // Property-based tests
+    // =====================================================================
+
+    mod prop_tests {
+        use super::*;
+        use proptest::prelude::*;
+        use std::collections::HashSet;
+
+        proptest! {
+            /// For small n (3-5), the iterator produces ALL 2^n patterns exactly once.
+            #[test]
+            fn test_iterator_produces_all_patterns_exactly_once(n in 3usize..=5) {
+                let iter = LogisticWeightPatternIter::new(n);
+                let patterns: Vec<Vec<usize>> = iter.collect();
+
+                // Should produce exactly 2^n patterns
+                let expected_count = 1usize << n;
+                prop_assert_eq!(patterns.len(), expected_count,
+                    "Expected {} patterns, got {}", expected_count, patterns.len());
+
+                // Convert to sets for uniqueness check
+                let mut seen = HashSet::new();
+                for pattern in &patterns {
+                    let key: Vec<usize> = pattern.clone();
+                    prop_assert!(seen.insert(key),
+                        "Duplicate pattern found: {:?}", pattern);
+                }
+
+                // Verify every subset of {0..n-1} appears
+                for mask in 0..(1u32 << n) {
+                    let expected: Vec<usize> = (0..n).filter(|&i| mask & (1 << i) != 0).collect();
+                    prop_assert!(seen.contains(&expected),
+                        "Missing pattern: {:?}", expected);
+                }
+            }
+
+            /// For small n (3-5), within each weight class patterns are ordered by
+            /// logistic weight sum (non-decreasing).
+            #[test]
+            fn test_weight_tiered_ordering(n in 3usize..=5) {
+                let iter = LogisticWeightPatternIter::new(n);
+                let patterns: Vec<Vec<usize>> = iter.collect();
+
+                // Group patterns by Hamming weight and verify ordering
+                let mut prev_weight = 0usize;
+                let mut prev_lw = 0usize;
+
+                for pattern in &patterns {
+                    let weight = pattern.len();
+                    let lw: usize = pattern.iter().map(|&x| x + 1).sum();
+
+                    if weight == prev_weight {
+                        // Within same weight: LW must be non-decreasing
+                        prop_assert!(lw >= prev_lw,
+                            "Within weight {}, LW decreased: {} -> {} for pattern {:?}",
+                            weight, prev_lw, lw, pattern);
+                    } else {
+                        // Weight must increase (never decrease)
+                        prop_assert!(weight > prev_weight,
+                            "Weight decreased: {} -> {} for pattern {:?}",
+                            prev_weight, weight, pattern);
+                    }
+                    prev_weight = weight;
+                    prev_lw = lw;
+                }
             }
         }
     }
