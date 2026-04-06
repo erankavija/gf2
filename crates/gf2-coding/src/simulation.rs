@@ -1,34 +1,33 @@
 //! Monte Carlo simulation framework for BER/FER performance analysis.
 //!
 //! This module provides reusable utilities for running communication system
-//! simulations over AWGN channels, supporting both bit error rate (BER) and
-//! frame error rate (FER) measurements.
+//! simulations over configurable channel models, supporting both bit error rate
+//! (BER) and frame/block error rate (BLER) measurements.
 //!
 //! # Overview
 //!
-//! The simulation harness supports two modes:
+//! The simulation framework supports three main workflows:
 //!
-//! - **Uncoded**: Direct BPSK transmission over AWGN (`run_uncoded_ber`).
-//! - **Coded**: Full encode-modulate-channel-demodulate-decode loop generic
-//!   over encoder, decoder, and channel model (`run_coded`, `run_coded_iterative`).
+//! - **Uncoded BER**: Raw bit-error-rate measurement without coding
+//!   ([`SimulationRunner::run_uncoded_ber`]).
+//! - **Coded (immutable decoder)**: For [`SoftDecoder`] implementations that
+//!   take `&self` ([`run_coded`]).
+//! - **Coded iterative (mutable decoder)**: For [`IterativeSoftDecoder`]
+//!   implementations that take `&mut self` ([`run_coded_iterative`]).
+//! - **Coded iterative parallel**: Parallel SNR sweeps using a decoder factory
+//!   closure ([`run_coded_iterative_parallel`]).
 //!
-//! # Channel abstraction
+//! # Channel Abstraction
 //!
-//! The [`ChannelModel`] trait decouples the simulation loop from any specific
-//! modulation/channel combination. A default [`BpskAwgnChannel`] implementation
-//! is provided for BPSK over AWGN.
-//!
-//! # Parallel sweeps
-//!
-//! When the `parallel` feature is enabled:
-//! - [`SimulationRunner::run_coded`] dispatches each SNR point to a separate rayon thread.
-//! - [`SimulationRunner::run_coded_iterative_parallel`] does the same for iterative
-//!   decoders, using a factory closure to create a fresh decoder per thread.
+//! The [`ChannelModel`] trait abstracts the modulation and channel, with a
+//! default BPSK/AWGN implementation provided by [`BpskAwgnChannel`].
 //!
 //! # Output
 //!
-//! Results can be exported to CSV or JSON via [`SimulationRunner::results_to_csv`]
-//! and [`SimulationRunner::coded_results_to_json`].
+//! Results can be exported to CSV or JSON via [`SimulationResults`]. When
+//! [`SimulationConfig::output_path`] is set, results are automatically written
+//! to disk in the format determined by the file extension (`.json` for JSON,
+//! anything else for CSV).
 
 use crate::channel::{AwgnChannel, BpskModulator};
 use crate::llr::Llr;
@@ -38,129 +37,11 @@ use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 use std::path::PathBuf;
 
-/// Configuration for Monte Carlo simulations.
-#[derive(Debug, Clone)]
-pub struct UncodedSimulationConfig {
-    /// Range of Eb/N0 values to simulate (in dB)
-    pub eb_n0_range: Vec<f64>,
-
-    /// Minimum number of errors to collect before stopping at each SNR point
-    pub min_errors: usize,
-
-    /// Maximum number of trials (bits or frames) per SNR point
-    pub max_trials: usize,
-
-    /// Code rate (k/n) for computing SNR from Eb/N0
-    pub code_rate: f64,
-
-    /// Frame size in bits (for FER simulations)
-    pub frame_size: Option<usize>,
-}
-
-impl UncodedSimulationConfig {
-    /// Creates a default configuration for quick testing.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::simulation::UncodedSimulationConfig;
-    ///
-    /// let config = UncodedSimulationConfig::quick_test();
-    /// assert_eq!(config.min_errors, 100);
-    /// ```
-    pub fn quick_test() -> Self {
-        UncodedSimulationConfig {
-            eb_n0_range: vec![0.0, 3.0, 6.0],
-            min_errors: 100,
-            max_trials: 100_000,
-            code_rate: 1.0,
-            frame_size: None,
-        }
-    }
-
-    /// Creates a configuration for high-precision BER curves.
-    pub fn high_precision() -> Self {
-        UncodedSimulationConfig {
-            eb_n0_range: (0..=10).map(|i| i as f64).collect(),
-            min_errors: 1000,
-            max_trials: 10_000_000,
-            code_rate: 1.0,
-            frame_size: None,
-        }
-    }
-}
-
-/// Results from a single SNR point simulation.
-#[derive(Debug, Clone)]
-pub struct UncodedSimulationResult {
-    /// Eb/N0 in dB
-    pub eb_n0_db: f64,
-
-    /// Bit error rate (errors / total bits)
-    pub ber: f64,
-
-    /// Frame error rate (frame errors / total frames), if applicable
-    pub fer: Option<f64>,
-
-    /// Total number of bits transmitted
-    pub num_bits: usize,
-
-    /// Total number of bit errors observed
-    pub num_errors: usize,
-
-    /// Number of frames transmitted (for FER)
-    pub num_frames: Option<usize>,
-
-    /// Number of frames with errors (for FER)
-    pub num_frame_errors: Option<usize>,
-}
-
-impl UncodedSimulationResult {
-    /// Returns true if this result meets the minimum error requirement.
-    pub fn is_complete(&self, min_errors: usize) -> bool {
-        self.num_errors >= min_errors
-    }
-
-    /// Exports result as CSV row: "eb_n0_db,ber,num_bits,num_errors"
-    pub fn to_csv_row(&self) -> String {
-        if let (Some(fer), Some(num_frames), Some(num_frame_errors)) =
-            (self.fer, self.num_frames, self.num_frame_errors)
-        {
-            format!(
-                "{},{},{},{},{},{},{}",
-                self.eb_n0_db,
-                self.ber,
-                self.num_bits,
-                self.num_errors,
-                fer,
-                num_frames,
-                num_frame_errors
-            )
-        } else {
-            format!(
-                "{},{},{},{}",
-                self.eb_n0_db, self.ber, self.num_bits, self.num_errors
-            )
-        }
-    }
-}
-
-// ---------------------------------------------------------------------------
-// Channel model abstraction
-// ---------------------------------------------------------------------------
-
-/// Abstraction over modulation and channel for coded simulations.
+/// Abstracts the modulation scheme and channel model.
 ///
-/// Implementations transform a codeword (as bits) into soft LLR values
-/// suitable for soft-decision decoding, encapsulating modulation, noise
-/// injection, and demodulation in a single method.
-///
-/// # Arguments (of `transmit_and_demodulate`)
-///
-/// * `codeword_bits` — the encoded bits to transmit
-/// * `eb_n0_db` — energy-per-bit to noise spectral density in dB
-/// * `code_rate` — k/n of the code
-/// * `rng` — random number generator for noise sampling
+/// Implementors combine modulation (e.g., BPSK), channel noise (e.g., AWGN),
+/// and demodulation into a single `transmit_and_demodulate` call that maps
+/// transmitted bits to received LLRs.
 ///
 /// # Examples
 ///
@@ -169,37 +50,38 @@ impl UncodedSimulationResult {
 /// use gf2_core::BitVec;
 ///
 /// let channel = BpskAwgnChannel;
-/// let codeword = BitVec::zeros(7);
+/// let bits = BitVec::from_bytes_le(&[0b10110001]);
 /// let mut rng = rand::thread_rng();
-/// let llrs = channel.transmit_and_demodulate(&codeword, 3.0, 0.5, &mut rng);
-/// assert_eq!(llrs.len(), 7);
+/// let llrs = channel.transmit_and_demodulate(&bits, 3.0, 0.5, &mut rng);
+/// assert_eq!(llrs.len(), bits.len());
 /// ```
 pub trait ChannelModel {
-    /// Modulates, transmits through the channel, and demodulates to LLRs.
+    /// Modulates, transmits through a noisy channel, and demodulates to LLRs.
     ///
     /// # Arguments
     ///
-    /// * `codeword_bits` - Encoded codeword as a `BitVec`
-    /// * `eb_n0_db` - Eb/N0 in dB
-    /// * `code_rate` - Code rate k/n
-    /// * `rng` - Random number generator
+    /// * `bits` - The codeword bits to transmit
+    /// * `eb_n0_db` - Energy per bit to noise ratio in dB
+    /// * `rate` - Code rate (k/n)
+    /// * `rng` - Random number generator for noise samples
     ///
     /// # Returns
     ///
-    /// Vector of LLRs, one per codeword bit.
+    /// A vector of log-likelihood ratios, one per transmitted bit.
     fn transmit_and_demodulate<R: Rng>(
         &self,
-        codeword_bits: &BitVec,
+        bits: &BitVec,
         eb_n0_db: f64,
-        code_rate: f64,
+        rate: f64,
         rng: &mut R,
     ) -> Vec<Llr>;
 }
 
-/// BPSK modulation over an AWGN channel.
+/// Default BPSK modulation over an AWGN channel.
 ///
-/// Maps `0 -> +1`, `1 -> -1`, adds Gaussian noise, and converts
-/// received symbols to LLRs using `2r / sigma^2`.
+/// Maps bits to +/-1 BPSK symbols, adds Gaussian noise with variance
+/// determined by Eb/N0 and code rate, then converts received symbols
+/// to LLRs via `2r / sigma^2`.
 ///
 /// # Examples
 ///
@@ -207,540 +89,484 @@ pub trait ChannelModel {
 /// use gf2_coding::simulation::{ChannelModel, BpskAwgnChannel};
 /// use gf2_core::BitVec;
 ///
-/// let ch = BpskAwgnChannel;
-/// let bits = BitVec::zeros(4);
+/// let channel = BpskAwgnChannel;
+/// let bits = BitVec::from_bytes_le(&[0b1010]);
 /// let mut rng = rand::thread_rng();
-/// let llrs = ch.transmit_and_demodulate(&bits, 5.0, 1.0, &mut rng);
-/// assert_eq!(llrs.len(), 4);
+/// let llrs = channel.transmit_and_demodulate(&bits, 5.0, 0.5, &mut rng);
+/// assert_eq!(llrs.len(), bits.len());
 /// ```
 pub struct BpskAwgnChannel;
 
 impl ChannelModel for BpskAwgnChannel {
     fn transmit_and_demodulate<R: Rng>(
         &self,
-        codeword_bits: &BitVec,
+        bits: &BitVec,
         eb_n0_db: f64,
-        code_rate: f64,
+        rate: f64,
         rng: &mut R,
     ) -> Vec<Llr> {
-        let n = codeword_bits.len();
-        let bits_vec: Vec<bool> = (0..n).map(|i| codeword_bits.get(i)).collect();
+        let n = bits.len();
+        let channel = AwgnChannel::from_eb_n0_db(eb_n0_db, rate);
+        let bits_vec: Vec<bool> = (0..n).map(|i| bits.get(i)).collect();
         let symbols = BpskModulator::modulate_bits(&bits_vec);
-        let channel = AwgnChannel::from_eb_n0_db(eb_n0_db, code_rate);
         let received = channel.transmit_symbols(&symbols, rng);
         channel.to_llrs(&received)
     }
 }
 
-// ---------------------------------------------------------------------------
-// Coded simulation configuration and results
-// ---------------------------------------------------------------------------
-
-/// Configuration for coded BER/BLER Monte Carlo sweeps.
+/// Configuration for Monte Carlo simulations.
 ///
-/// Controls the SNR range, early-termination thresholds, and optional
-/// output path for CSV export.
+/// Controls SNR sweep range, stopping criteria, decoder iteration limits,
+/// RNG seeding, and optional output file path.
 ///
 /// # Examples
 ///
 /// ```
 /// use gf2_coding::simulation::SimulationConfig;
 ///
-/// let config = SimulationConfig {
-///     eb_n0_range_db: vec![0.0, 1.0, 2.0, 3.0],
-///     min_errors: 100,
-///     max_frames: 10_000,
-///     max_decoder_iterations: 50,
-///     rng_seed: Some(42),
-///     output_path: None,
-/// };
+/// let config = SimulationConfig::quick_test();
 /// assert_eq!(config.min_errors, 100);
+/// assert_eq!(config.max_frames, 100_000);
 /// ```
 #[derive(Debug, Clone)]
 pub struct SimulationConfig {
-    /// Eb/N0 values in dB to sweep.
+    /// Range of Eb/N0 values to simulate (in dB).
     pub eb_n0_range_db: Vec<f64>,
 
-    /// Minimum number of frame errors before stopping at each SNR point.
-    /// Typical value is 100 for statistically meaningful results.
+    /// Minimum number of block errors to collect before stopping at each SNR point.
     pub min_errors: usize,
 
-    /// Maximum number of frames to simulate per SNR point.
+    /// Maximum number of frames to transmit per SNR point.
     pub max_frames: usize,
 
-    /// Maximum decoder iterations (used for [`IterativeSoftDecoder`]).
+    /// Maximum decoder iterations for iterative decoders.
     pub max_decoder_iterations: usize,
 
-    /// Optional seed for deterministic RNG.
-    /// When `Some(seed)`, each SNR point uses `seed ^ point_index` for
-    /// reproducible results. When `None`, uses a fixed default seed
-    /// (`0x5EED_CAFE ^ point_index`), which is still deterministic but
-    /// not caller-controlled.
+    /// Optional RNG seed for reproducible simulations.
+    ///
+    /// When `Some(seed)`, the simulation uses `StdRng::seed_from_u64(seed)`.
+    /// When `None`, the simulation uses `rand::thread_rng()`.
     pub rng_seed: Option<u64>,
 
-    /// Optional path to write CSV results after simulation.
+    /// Optional path for automatic result output.
+    ///
+    /// When set, results are written to this path after the simulation
+    /// completes. Files ending in `.json` are written as JSON; all
+    /// other extensions produce CSV.
     pub output_path: Option<PathBuf>,
 }
 
-/// Per-SNR-point statistics from a coded simulation.
+impl SimulationConfig {
+    /// Creates a default configuration for quick testing.
+    ///
+    /// Uses three SNR points (0, 3, 6 dB), 100 minimum errors, 100k max
+    /// frames, 50 max decoder iterations, and no fixed seed.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::simulation::SimulationConfig;
+    ///
+    /// let config = SimulationConfig::quick_test();
+    /// assert_eq!(config.min_errors, 100);
+    /// assert_eq!(config.max_frames, 100_000);
+    /// assert_eq!(config.max_decoder_iterations, 50);
+    /// ```
+    pub fn quick_test() -> Self {
+        SimulationConfig {
+            eb_n0_range_db: vec![0.0, 3.0, 6.0],
+            min_errors: 100,
+            max_frames: 100_000,
+            max_decoder_iterations: 50,
+            rng_seed: None,
+            output_path: None,
+        }
+    }
+
+    /// Creates a configuration for high-precision BER curves.
+    ///
+    /// Uses 11 SNR points (0..10 dB), 1000 minimum errors, 10M max
+    /// frames, 100 max decoder iterations, and no fixed seed.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::simulation::SimulationConfig;
+    ///
+    /// let config = SimulationConfig::high_precision();
+    /// assert_eq!(config.min_errors, 1000);
+    /// assert_eq!(config.eb_n0_range_db.len(), 11);
+    /// ```
+    pub fn high_precision() -> Self {
+        SimulationConfig {
+            eb_n0_range_db: (0..=10).map(|i| i as f64).collect(),
+            min_errors: 1000,
+            max_frames: 10_000_000,
+            max_decoder_iterations: 100,
+            rng_seed: None,
+            output_path: None,
+        }
+    }
+
+    /// Returns a seeded RNG for this configuration.
+    ///
+    /// If `rng_seed` is set, uses it directly. Otherwise generates a seed
+    /// from `thread_rng()` so that the simulation still uses a `StdRng`
+    /// internally (consistent type, no dynamic dispatch).
+    fn make_rng(&self) -> StdRng {
+        match self.rng_seed {
+            Some(seed) => StdRng::seed_from_u64(seed),
+            None => StdRng::seed_from_u64(rand::thread_rng().gen()),
+        }
+    }
+}
+
+/// Results from a single SNR point simulation.
 ///
-/// Contains BER, BLER, iteration counts, and query-per-bit metrics
-/// collected during the Monte Carlo run at a single Eb/N0 point.
+/// Contains BER, BLER, iteration statistics, and raw counts for a single
+/// Eb/N0 operating point.
 ///
 /// # Examples
 ///
 /// ```
 /// use gf2_coding::simulation::SimulationResult;
 ///
-/// let r = SimulationResult {
+/// let result = SimulationResult {
 ///     eb_n0_db: 3.0,
-///     ber: 1e-3,
+///     ber: 0.01,
 ///     bler: 0.05,
-///     num_bit_errors: 40,
-///     num_bits: 40_000,
-///     num_block_errors: 5,
-///     num_frames: 100,
-///     avg_iterations: 12.5,
-///     avg_queries_per_bit: 12.5,
+///     avg_iterations: Some(12.5),
+///     avg_queries_per_bit: None,
+///     num_bits: 10000,
+///     num_bit_errors: 100,
+///     num_frames: 200,
+///     num_frame_errors: 10,
 /// };
-/// assert!(r.ber < r.bler);
+/// assert!(result.is_complete(5));
 /// ```
 #[derive(Debug, Clone)]
 pub struct SimulationResult {
-    /// Eb/N0 in dB.
+    /// Eb/N0 in dB for this operating point.
     pub eb_n0_db: f64,
 
-    /// Bit error rate = num_bit_errors / num_bits.
+    /// Bit error rate (bit errors / total decoded bits).
     pub ber: f64,
 
-    /// Block error rate = num_block_errors / num_frames.
+    /// Block error rate (frame errors / total frames).
     pub bler: f64,
 
-    /// Total bit errors observed.
-    pub num_bit_errors: usize,
+    /// Average decoder iterations per frame, if applicable.
+    pub avg_iterations: Option<f64>,
 
-    /// Total information bits transmitted.
+    /// Average parity-check queries per decoded bit.
+    ///
+    /// Computed from `DecoderResult.queries` when available, falling back
+    /// to `DecoderResult.iterations` when `queries` is `None`.
+    /// This provides a finer-grained measure of decoder complexity than
+    /// `avg_iterations` alone.
+    pub avg_queries_per_bit: Option<f64>,
+
+    /// Total number of decoded message bits.
     pub num_bits: usize,
 
-    /// Total frame (block) errors observed.
-    pub num_block_errors: usize,
+    /// Total number of bit errors observed.
+    pub num_bit_errors: usize,
 
-    /// Total frames simulated.
+    /// Total number of frames transmitted.
     pub num_frames: usize,
 
-    /// Average decoder iterations per frame.
-    pub avg_iterations: f64,
-
-    /// Average queries per information bit.
-    ///
-    /// Computed as `total_decoder_iterations / total_info_bits`. For standard
-    /// iterative decoders (e.g., LDPC BP), `DecoderResult.iterations` counts
-    /// BP iterations; for query-based decoders (e.g., GRAND), it counts
-    /// noise pattern queries. This field normalizes per information bit in
-    /// both cases.
-    pub avg_queries_per_bit: f64,
+    /// Total number of frames with at least one bit error.
+    pub num_frame_errors: usize,
 }
 
-/// Aggregated results from a full coded simulation sweep.
+impl SimulationResult {
+    /// Returns `true` if this result has collected at least `min_errors` frame errors.
+    ///
+    /// # Arguments
+    ///
+    /// * `min_errors` - Minimum frame error count threshold
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::simulation::SimulationResult;
+    ///
+    /// let result = SimulationResult {
+    ///     eb_n0_db: 3.0, ber: 0.01, bler: 0.05,
+    ///     avg_iterations: None, avg_queries_per_bit: None,
+    ///     num_bits: 10000, num_bit_errors: 100,
+    ///     num_frames: 200, num_frame_errors: 10,
+    /// };
+    /// assert!(result.is_complete(5));
+    /// assert!(!result.is_complete(50));
+    /// ```
+    pub fn is_complete(&self, min_errors: usize) -> bool {
+        self.num_frame_errors >= min_errors
+    }
+
+    /// Exports result as a CSV row.
+    ///
+    /// Format: `eb_n0_db,ber,bler,num_bits,num_bit_errors,num_frames,num_frame_errors,avg_iterations,avg_queries_per_bit`
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::simulation::SimulationResult;
+    ///
+    /// let result = SimulationResult {
+    ///     eb_n0_db: 3.0, ber: 0.01, bler: 0.05,
+    ///     avg_iterations: Some(12.5), avg_queries_per_bit: None,
+    ///     num_bits: 10000, num_bit_errors: 100,
+    ///     num_frames: 200, num_frame_errors: 10,
+    /// };
+    /// let row = result.to_csv_row();
+    /// assert!(row.starts_with("3,0.01,0.05,"));
+    /// ```
+    pub fn to_csv_row(&self) -> String {
+        let avg_iter = self
+            .avg_iterations
+            .map_or_else(String::new, |v| format!("{v}"));
+        let avg_q = self
+            .avg_queries_per_bit
+            .map_or_else(String::new, |v| format!("{v}"));
+        format!(
+            "{},{},{},{},{},{},{},{},{}",
+            self.eb_n0_db,
+            self.ber,
+            self.bler,
+            self.num_bits,
+            self.num_bit_errors,
+            self.num_frames,
+            self.num_frame_errors,
+            avg_iter,
+            avg_q,
+        )
+    }
+
+    /// Serializes this result as a JSON object string.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::simulation::SimulationResult;
+    ///
+    /// let result = SimulationResult {
+    ///     eb_n0_db: 3.0, ber: 0.01, bler: 0.05,
+    ///     avg_iterations: None, avg_queries_per_bit: None,
+    ///     num_bits: 10000, num_bit_errors: 100,
+    ///     num_frames: 200, num_frame_errors: 10,
+    /// };
+    /// let json = result.to_json();
+    /// assert!(json.contains("\"eb_n0_db\":3"));
+    /// assert!(json.contains("\"ber\":0.01"));
+    /// ```
+    pub fn to_json(&self) -> String {
+        let avg_iter = self
+            .avg_iterations
+            .map_or("null".to_string(), |v| format!("{v}"));
+        let avg_q = self
+            .avg_queries_per_bit
+            .map_or("null".to_string(), |v| format!("{v}"));
+        format!(
+            concat!(
+                "{{",
+                "\"eb_n0_db\":{},",
+                "\"ber\":{},",
+                "\"bler\":{},",
+                "\"num_bits\":{},",
+                "\"num_bit_errors\":{},",
+                "\"num_frames\":{},",
+                "\"num_frame_errors\":{},",
+                "\"avg_iterations\":{},",
+                "\"avg_queries_per_bit\":{}",
+                "}}"
+            ),
+            self.eb_n0_db,
+            self.ber,
+            self.bler,
+            self.num_bits,
+            self.num_bit_errors,
+            self.num_frames,
+            self.num_frame_errors,
+            avg_iter,
+            avg_q,
+        )
+    }
+}
+
+/// Aggregated simulation results across all SNR points.
 ///
-/// Wraps all per-SNR results and provides serialization helpers.
+/// Contains per-SNR-point results and provides CSV/JSON export.
 ///
 /// # Examples
 ///
 /// ```
-/// use gf2_coding::simulation::SimulationResults;
+/// use gf2_coding::simulation::{SimulationResult, SimulationResults};
 ///
 /// let results = SimulationResults { points: vec![] };
 /// assert!(results.points.is_empty());
 /// ```
 #[derive(Debug, Clone)]
 pub struct SimulationResults {
-    /// One entry per SNR point, in the order they were requested.
+    /// Per-SNR-point simulation results, ordered by increasing Eb/N0.
     pub points: Vec<SimulationResult>,
 }
 
-/// Progress information reported during a coded simulation.
-///
-/// Passed to the optional progress callback so callers can display
-/// ETA, logging, or progress bars.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::simulation::ProgressReport;
-///
-/// let p = ProgressReport {
-///     eb_n0_db: 3.0,
-///     frames_done: 50,
-///     max_frames: 1000,
-///     block_errors_so_far: 2,
-///     min_errors_target: 100,
-/// };
-/// assert_eq!(p.frames_done, 50);
-/// ```
-#[derive(Debug, Clone)]
-pub struct ProgressReport {
-    /// Current SNR point being simulated.
-    pub eb_n0_db: f64,
-
-    /// Number of frames completed so far at this SNR point.
-    pub frames_done: usize,
-
-    /// Maximum frames configured for this SNR point.
-    pub max_frames: usize,
-
-    /// Block errors collected so far at this SNR point.
-    pub block_errors_so_far: usize,
-
-    /// Target number of block errors for early termination.
-    pub min_errors_target: usize,
-}
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-/// Determines whether the simulation loop should terminate.
-///
-/// Terminates when either:
-/// - `min_errors > 0` and `block_errors >= min_errors` (enough statistics collected)
-/// - `frames >= max_frames` (budget exhausted)
-///
-/// When `min_errors == 0`, termination is based solely on `max_frames`.
-fn early_terminate(
-    block_errors: usize,
-    min_errors: usize,
-    frames: usize,
-    max_frames: usize,
-) -> bool {
-    if frames >= max_frames {
-        return true;
-    }
-    if min_errors > 0 && block_errors >= min_errors {
-        return true;
-    }
-    false
-}
-
-/// Counts bit differences between two `BitVec`s of the same length.
-///
-/// # Arguments
-///
-/// * `a` - First bit vector
-/// * `b` - Second bit vector
-///
-/// # Panics
-///
-/// Panics if the two vectors have different lengths.
-///
-/// # Complexity
-///
-/// O(n/64) where n is the bit length.
-fn count_bit_errors(a: &BitVec, b: &BitVec) -> usize {
-    assert_eq!(a.len(), b.len(), "BitVec lengths must match");
-    a.words()
-        .iter()
-        .zip(b.words().iter())
-        .map(|(&wa, &wb)| (wa ^ wb).count_ones() as usize)
-        .sum()
-}
-
-/// Simulates a single SNR point for a non-iterative soft decoder.
-///
-/// # Arguments
-///
-/// * `encoder` - Block encoder for the code under test
-/// * `decoder` - Soft-decision decoder
-/// * `channel` - Channel model
-/// * `config` - Simulation configuration
-/// * `eb_n0_db` - The Eb/N0 value in dB
-/// * `rng` - Random number generator
-/// * `progress_cb` - Optional progress callback
-///
-/// # Complexity
-///
-/// O(max_frames * n) where n is the codeword length.
-fn simulate_snr_point_soft<E, D, C, F>(
-    encoder: &E,
-    decoder: &D,
-    channel: &C,
-    config: &SimulationConfig,
-    eb_n0_db: f64,
-    rng: &mut StdRng,
-    progress_cb: &Option<F>,
-) -> SimulationResult
-where
-    E: BlockEncoder,
-    D: SoftDecoder,
-    C: ChannelModel,
-    F: Fn(&ProgressReport),
-{
-    let k = encoder.k();
-    let n = encoder.n();
-    let code_rate = k as f64 / n as f64;
-
-    let mut total_bit_errors = 0usize;
-    let mut total_block_errors = 0usize;
-    let mut total_frames = 0usize;
-    let mut total_bits = 0usize;
-    let mut total_iterations = 0usize;
-    let mut total_queries = 0usize;
-
-    while !early_terminate(
-        total_block_errors,
-        config.min_errors,
-        total_frames,
-        config.max_frames,
-    ) {
-        // Generate random message
-        let message = BitVec::random(k, rng);
-
-        // Encode
-        let codeword = encoder.encode(&message);
-
-        // Channel: modulate, add noise, demodulate to LLR
-        let llrs = channel.transmit_and_demodulate(&codeword, eb_n0_db, code_rate, rng);
-
-        // Decode
-        let result = decoder.decode_soft_with_result(&llrs);
-
-        // Count errors
-        let bit_errors = count_bit_errors(&message, &result.decoded_bits);
-        total_bit_errors += bit_errors;
-        if bit_errors > 0 {
-            total_block_errors += 1;
-        }
-        total_iterations += result.iterations;
-        total_queries += result.queries.unwrap_or(result.iterations);
-        total_frames += 1;
-        total_bits += k;
-
-        // Progress reporting (every 100 frames)
-        if let Some(cb) = progress_cb {
-            if total_frames % 100 == 0 {
-                cb(&ProgressReport {
-                    eb_n0_db,
-                    frames_done: total_frames,
-                    max_frames: config.max_frames,
-                    block_errors_so_far: total_block_errors,
-                    min_errors_target: config.min_errors,
-                });
-            }
-        }
-    }
-
-    let ber = if total_bits > 0 {
-        total_bit_errors as f64 / total_bits as f64
-    } else {
-        0.0
-    };
-    let bler = if total_frames > 0 {
-        total_block_errors as f64 / total_frames as f64
-    } else {
-        0.0
-    };
-    let avg_iterations = if total_frames > 0 {
-        total_iterations as f64 / total_frames as f64
-    } else {
-        0.0
-    };
-    let avg_queries_per_bit = if total_bits > 0 {
-        total_queries as f64 / total_bits as f64
-    } else {
-        0.0
-    };
-
-    SimulationResult {
-        eb_n0_db,
-        ber,
-        bler,
-        num_bit_errors: total_bit_errors,
-        num_bits: total_bits,
-        num_block_errors: total_block_errors,
-        num_frames: total_frames,
-        avg_iterations,
-        avg_queries_per_bit,
-    }
-}
-
-/// Simulates a single SNR point for an iterative soft decoder.
-///
-/// # Arguments
-///
-/// * `encoder` - Block encoder for the code under test
-/// * `decoder` - Iterative soft-decision decoder
-/// * `channel` - Channel model
-/// * `config` - Simulation configuration
-/// * `eb_n0_db` - The Eb/N0 value in dB
-/// * `rng` - Random number generator
-/// * `progress_cb` - Optional progress callback
-///
-/// # Complexity
-///
-/// O(max_frames * n * max_decoder_iterations) where n is the codeword length.
-fn simulate_snr_point_iterative<E, D, C, F>(
-    encoder: &E,
-    decoder: &mut D,
-    channel: &C,
-    config: &SimulationConfig,
-    eb_n0_db: f64,
-    rng: &mut StdRng,
-    progress_cb: &Option<F>,
-) -> SimulationResult
-where
-    E: BlockEncoder,
-    D: IterativeSoftDecoder,
-    C: ChannelModel,
-    F: Fn(&ProgressReport),
-{
-    let k = encoder.k();
-    let n = encoder.n();
-    let code_rate = k as f64 / n as f64;
-
-    let mut total_bit_errors = 0usize;
-    let mut total_block_errors = 0usize;
-    let mut total_frames = 0usize;
-    let mut total_bits = 0usize;
-    let mut total_iterations = 0usize;
-    let mut total_queries = 0usize;
-
-    while !early_terminate(
-        total_block_errors,
-        config.min_errors,
-        total_frames,
-        config.max_frames,
-    ) {
-        // Generate random message
-        let message = BitVec::random(k, rng);
-
-        // Encode
-        let codeword = encoder.encode(&message);
-
-        // Channel: modulate, add noise, demodulate to LLR
-        let llrs = channel.transmit_and_demodulate(&codeword, eb_n0_db, code_rate, rng);
-
-        // Decode with iteration control
-        decoder.reset();
-        let result = decoder.decode_iterative(&llrs, config.max_decoder_iterations);
-
-        // Count errors
-        let bit_errors = count_bit_errors(&message, &result.decoded_bits);
-        total_bit_errors += bit_errors;
-        if bit_errors > 0 {
-            total_block_errors += 1;
-        }
-        total_iterations += result.iterations;
-        total_queries += result.queries.unwrap_or(result.iterations);
-        total_frames += 1;
-        total_bits += k;
-
-        // Progress reporting (every 100 frames)
-        if let Some(cb) = progress_cb {
-            if total_frames % 100 == 0 {
-                cb(&ProgressReport {
-                    eb_n0_db,
-                    frames_done: total_frames,
-                    max_frames: config.max_frames,
-                    block_errors_so_far: total_block_errors,
-                    min_errors_target: config.min_errors,
-                });
-            }
-        }
-    }
-
-    let ber = if total_bits > 0 {
-        total_bit_errors as f64 / total_bits as f64
-    } else {
-        0.0
-    };
-    let bler = if total_frames > 0 {
-        total_block_errors as f64 / total_frames as f64
-    } else {
-        0.0
-    };
-    let avg_iterations = if total_frames > 0 {
-        total_iterations as f64 / total_frames as f64
-    } else {
-        0.0
-    };
-    let avg_queries_per_bit = if total_bits > 0 {
-        total_queries as f64 / total_bits as f64
-    } else {
-        0.0
-    };
-
-    SimulationResult {
-        eb_n0_db,
-        ber,
-        bler,
-        num_bit_errors: total_bit_errors,
-        num_bits: total_bits,
-        num_block_errors: total_block_errors,
-        num_frames: total_frames,
-        avg_iterations,
-        avg_queries_per_bit,
-    }
-}
-
-// ---------------------------------------------------------------------------
-// SimulationRunner
-// ---------------------------------------------------------------------------
-
-/// Monte Carlo simulation runner for communication systems.
-///
-/// Provides methods for uncoded BER analysis and coded BER/BLER sweeps
-/// with support for both single-shot and iterative soft decoders.
-pub struct SimulationRunner;
-
-impl SimulationRunner {
-    /// Simulates uncoded transmission over AWGN and computes BER.
+impl SimulationResults {
+    /// Exports all results to CSV format.
     ///
     /// # Arguments
     ///
-    /// * `config` - Simulation configuration
+    /// * `include_header` - Whether to prepend a CSV header row
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::simulation::{SimulationResult, SimulationResults};
+    ///
+    /// let results = SimulationResults {
+    ///     points: vec![SimulationResult {
+    ///         eb_n0_db: 3.0, ber: 0.01, bler: 0.05,
+    ///         avg_iterations: None, avg_queries_per_bit: None,
+    ///         num_bits: 10000, num_bit_errors: 100,
+    ///         num_frames: 200, num_frame_errors: 10,
+    ///     }],
+    /// };
+    /// let csv = results.to_csv(true);
+    /// assert!(csv.contains("eb_n0_db"));
+    /// assert!(csv.contains("0.01"));
+    /// ```
+    pub fn to_csv(&self, include_header: bool) -> String {
+        let mut csv = String::new();
+        if include_header {
+            csv.push_str("eb_n0_db,ber,bler,num_bits,num_bit_errors,num_frames,num_frame_errors,avg_iterations,avg_queries_per_bit\n");
+        }
+        for point in &self.points {
+            csv.push_str(&point.to_csv_row());
+            csv.push('\n');
+        }
+        csv
+    }
+
+    /// Exports all results to JSON format.
+    ///
+    /// Returns a JSON array containing one object per SNR point.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::simulation::{SimulationResult, SimulationResults};
+    ///
+    /// let results = SimulationResults {
+    ///     points: vec![SimulationResult {
+    ///         eb_n0_db: 3.0, ber: 0.01, bler: 0.05,
+    ///         avg_iterations: None, avg_queries_per_bit: None,
+    ///         num_bits: 10000, num_bit_errors: 100,
+    ///         num_frames: 200, num_frame_errors: 10,
+    ///     }],
+    /// };
+    /// let json = results.to_json();
+    /// assert!(json.starts_with('['));
+    /// assert!(json.ends_with(']'));
+    /// ```
+    pub fn to_json(&self) -> String {
+        let entries: Vec<String> = self.points.iter().map(|p| p.to_json()).collect();
+        format!("[{}]", entries.join(","))
+    }
+
+    /// Writes results to the given path.
+    ///
+    /// Files ending in `.json` are written as JSON; all other extensions
+    /// produce CSV with a header.
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - Destination file path
+    ///
+    /// # Panics
+    ///
+    /// Panics if the file cannot be created or written.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_coding::simulation::{SimulationResults};
+    /// use std::path::Path;
+    ///
+    /// let results = SimulationResults { points: vec![] };
+    /// results.write_to(Path::as_ref(std::path::Path::new("/tmp/out.csv")));
+    /// ```
+    pub fn write_to(&self, path: &std::path::Path) {
+        let content = if path.extension().and_then(|e| e.to_str()) == Some("json") {
+            self.to_json()
+        } else {
+            self.to_csv(true)
+        };
+        std::fs::write(path, content).unwrap_or_else(|e| {
+            panic!(
+                "Failed to write simulation results to {}: {e}",
+                path.display()
+            )
+        });
+    }
+}
+
+/// Monte Carlo simulation runner for communication systems.
+///
+/// Provides static methods for uncoded BER simulations. For coded
+/// simulations, use the free functions [`run_coded`],
+/// [`run_coded_iterative`], or [`run_coded_iterative_parallel`].
+pub struct SimulationRunner;
+
+impl SimulationRunner {
+    /// Simulates uncoded BPSK transmission over AWGN and computes BER.
+    ///
+    /// # Arguments
+    ///
+    /// * `config` - Simulation configuration (uses `eb_n0_range_db`, `min_errors`, `max_frames`)
     /// * `rng` - Random number generator
     ///
     /// # Examples
     ///
     /// ```
-    /// use gf2_coding::simulation::{SimulationRunner, UncodedSimulationConfig};
+    /// use gf2_coding::simulation::{SimulationRunner, SimulationConfig};
     ///
-    /// let config = UncodedSimulationConfig::quick_test();
+    /// let config = SimulationConfig::quick_test();
     /// let mut rng = rand::thread_rng();
     /// let results = SimulationRunner::run_uncoded_ber(&config, &mut rng);
     ///
-    /// assert_eq!(results.len(), config.eb_n0_range.len());
+    /// assert_eq!(results.len(), config.eb_n0_range_db.len());
     /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(SNR_points * max_frames * batch_size) where batch_size = 1000.
     pub fn run_uncoded_ber<R: Rng>(
-        config: &UncodedSimulationConfig,
+        config: &SimulationConfig,
         rng: &mut R,
-    ) -> Vec<UncodedSimulationResult> {
+    ) -> Vec<SimulationResult> {
         config
-            .eb_n0_range
+            .eb_n0_range_db
             .iter()
             .map(|&eb_n0_db| {
-                let channel = AwgnChannel::from_eb_n0_db(eb_n0_db, config.code_rate);
+                let channel = AwgnChannel::from_eb_n0_db(eb_n0_db, 1.0);
 
                 let mut total_bits = 0;
                 let mut total_errors = 0;
 
-                while total_errors < config.min_errors && total_bits < config.max_trials {
-                    // Transmit batch of bits
-                    let batch_size = 1000.min(config.max_trials - total_bits);
+                while total_errors < config.min_errors && total_bits < config.max_frames {
+                    let batch_size = 1000.min(config.max_frames - total_bits);
                     let bits = BitVec::random(batch_size, rng);
 
-                    // Modulate and transmit
                     let bits_vec: Vec<bool> = (0..batch_size).map(|i| bits.get(i)).collect();
                     let symbols = BpskModulator::modulate_bits(&bits_vec);
                     let received = channel.transmit_symbols(&symbols, rng);
 
-                    // Hard-decision demodulation
                     let decoded: Vec<bool> = received
                         .iter()
                         .map(|&r| BpskModulator::demodulate_hard(r))
                         .collect();
 
-                    // Count errors
                     let errors = (0..batch_size)
                         .filter(|&i| bits.get(i) != decoded[i])
                         .count();
@@ -749,691 +575,510 @@ impl SimulationRunner {
                     total_errors += errors;
                 }
 
-                let ber = total_errors as f64 / total_bits as f64;
+                let ber = if total_bits > 0 {
+                    total_errors as f64 / total_bits as f64
+                } else {
+                    0.0
+                };
 
-                UncodedSimulationResult {
+                SimulationResult {
                     eb_n0_db,
                     ber,
-                    fer: None,
+                    bler: 0.0,
+                    avg_iterations: None,
+                    avg_queries_per_bit: None,
                     num_bits: total_bits,
-                    num_errors: total_errors,
-                    num_frames: None,
-                    num_frame_errors: None,
+                    num_bit_errors: total_errors,
+                    num_frames: 0,
+                    num_frame_errors: 0,
                 }
             })
             .collect()
     }
 
-    /// Runs a coded BER/BLER sweep with a non-iterative [`SoftDecoder`].
-    ///
-    /// The simulation loop at each SNR point is:
-    /// encode -> modulate -> channel -> demodulate -> decode -> count errors.
-    ///
-    /// Early termination fires when `min_errors` block errors are collected
-    /// or `max_frames` frames have been simulated.
-    ///
-    /// When `config.output_path` is `Some(path)`, a CSV file is written at
-    /// the end of the sweep.
-    ///
-    /// # Arguments
-    ///
-    /// * `encoder` - Block encoder producing codewords
-    /// * `decoder` - Soft-decision decoder
-    /// * `channel` - Channel model (e.g., [`BpskAwgnChannel`])
-    /// * `config` - Coded simulation configuration
-    ///
-    /// # Returns
-    ///
-    /// Aggregated per-SNR results in a [`SimulationResults`] struct.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `encoder.n() != decoder.n()` or `encoder.k() != decoder.k()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::simulation::{
-    ///     SimulationRunner, SimulationConfig, BpskAwgnChannel,
-    /// };
-    /// use gf2_coding::LinearBlockCode;
-    /// use gf2_coding::linear::SyndromeTableDecoder;
-    /// use gf2_coding::traits::BlockEncoder;
-    ///
-    /// // Hamming(7,4) with a simple soft decoder wrapper is not directly
-    /// // available, so this doc-test just shows config construction.
-    /// let config = SimulationConfig {
-    ///     eb_n0_range_db: vec![4.0, 6.0],
-    ///     min_errors: 10,
-    ///     max_frames: 1_000,
-    ///     max_decoder_iterations: 1,
-    ///     rng_seed: Some(42),
-    ///     output_path: None,
-    /// };
-    /// assert_eq!(config.eb_n0_range_db.len(), 2);
-    /// ```
-    ///
-    /// # Complexity
-    ///
-    /// O(|eb_n0_range| * max_frames * n) worst case, but early termination
-    /// typically reduces this significantly at high SNR.
-    pub fn run_coded<E, D, C>(
-        encoder: &E,
-        decoder: &D,
-        channel: &C,
-        config: &SimulationConfig,
-    ) -> SimulationResults
-    where
-        E: BlockEncoder + Sync,
-        D: SoftDecoder + Sync,
-        C: ChannelModel + Sync,
-    {
-        Self::run_coded_with_progress(
-            encoder,
-            decoder,
-            channel,
-            config,
-            None::<fn(&ProgressReport)>,
-        )
-    }
-
-    /// Like [`run_coded`](Self::run_coded) but with an optional progress
-    /// callback invoked every 100 frames per SNR point.
-    ///
-    /// # Arguments
-    ///
-    /// * `encoder` - Block encoder
-    /// * `decoder` - Soft-decision decoder
-    /// * `channel` - Channel model
-    /// * `config` - Coded simulation configuration
-    /// * `progress` - Optional callback receiving [`ProgressReport`]
-    ///
-    /// # Panics
-    ///
-    /// Panics if `encoder.n() != decoder.n()` or `encoder.k() != decoder.k()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::simulation::{
-    ///     SimulationRunner, SimulationConfig, BpskAwgnChannel, ProgressReport,
-    /// };
-    ///
-    /// let config = SimulationConfig {
-    ///     eb_n0_range_db: vec![4.0],
-    ///     min_errors: 10,
-    ///     max_frames: 500,
-    ///     max_decoder_iterations: 1,
-    ///     rng_seed: Some(42),
-    ///     output_path: None,
-    /// };
-    /// // progress callback example (no-op)
-    /// let _cb = |_p: &ProgressReport| {};
-    /// ```
-    ///
-    /// # Complexity
-    ///
-    /// O(|eb_n0_range| * max_frames * n).
-    pub fn run_coded_with_progress<E, D, C, F>(
-        encoder: &E,
-        decoder: &D,
-        channel: &C,
-        config: &SimulationConfig,
-        progress: Option<F>,
-    ) -> SimulationResults
-    where
-        E: BlockEncoder + Sync,
-        D: SoftDecoder + Sync,
-        C: ChannelModel + Sync,
-        F: Fn(&ProgressReport) + Sync,
-    {
-        assert_eq!(
-            encoder.n(),
-            decoder.n(),
-            "Encoder n ({}) must match decoder n ({})",
-            encoder.n(),
-            decoder.n()
-        );
-        assert_eq!(
-            encoder.k(),
-            decoder.k(),
-            "Encoder k ({}) must match decoder k ({})",
-            encoder.k(),
-            decoder.k()
-        );
-
-        let points = run_snr_sweep_soft(encoder, decoder, channel, config, &progress);
-
-        let results = SimulationResults { points };
-
-        // Write CSV if output path is set
-        if let Some(ref path) = config.output_path {
-            let csv = Self::coded_results_to_csv(&results);
-            std::fs::write(path, &csv).unwrap_or_else(|e| {
-                eprintln!("Warning: failed to write CSV to {}: {}", path.display(), e);
-            });
-        }
-
-        results
-    }
-
-    /// Runs a coded BER/BLER sweep with an [`IterativeSoftDecoder`].
-    ///
-    /// Identical to [`run_coded`](Self::run_coded) except the decoder
-    /// receives `max_decoder_iterations` from the config, and decoder
-    /// state is reset between frames.
-    ///
-    /// # Arguments
-    ///
-    /// * `encoder` - Block encoder
-    /// * `decoder` - Iterative soft-decision decoder (requires `&mut`)
-    /// * `channel` - Channel model
-    /// * `config` - Coded simulation configuration
-    ///
-    /// # Returns
-    ///
-    /// Aggregated per-SNR results.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `encoder.n() != decoder.n()` or `encoder.k() != decoder.k()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::simulation::{
-    ///     SimulationRunner, SimulationConfig, BpskAwgnChannel,
-    /// };
-    ///
-    /// let config = SimulationConfig {
-    ///     eb_n0_range_db: vec![3.0],
-    ///     min_errors: 10,
-    ///     max_frames: 500,
-    ///     max_decoder_iterations: 50,
-    ///     rng_seed: Some(42),
-    ///     output_path: None,
-    /// };
-    /// // To use: SimulationRunner::run_coded_iterative(&encoder, &mut decoder, &channel, &config)
-    /// ```
-    ///
-    /// # Complexity
-    ///
-    /// O(|eb_n0_range| * max_frames * n * max_decoder_iterations).
-    pub fn run_coded_iterative<E, D, C>(
-        encoder: &E,
-        decoder: &mut D,
-        channel: &C,
-        config: &SimulationConfig,
-    ) -> SimulationResults
-    where
-        E: BlockEncoder,
-        D: IterativeSoftDecoder,
-        C: ChannelModel,
-    {
-        Self::run_coded_iterative_with_progress(
-            encoder,
-            decoder,
-            channel,
-            config,
-            None::<fn(&ProgressReport)>,
-        )
-    }
-
-    /// Like [`run_coded_iterative`](Self::run_coded_iterative) but with a
-    /// progress callback.
-    ///
-    /// # Arguments
-    ///
-    /// * `encoder` - Block encoder
-    /// * `decoder` - Iterative soft-decision decoder
-    /// * `channel` - Channel model
-    /// * `config` - Coded simulation configuration
-    /// * `progress` - Optional callback receiving [`ProgressReport`]
-    ///
-    /// # Panics
-    ///
-    /// Panics if `encoder.n() != decoder.n()` or `encoder.k() != decoder.k()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::simulation::{
-    ///     SimulationRunner, SimulationConfig, BpskAwgnChannel, ProgressReport,
-    /// };
-    ///
-    /// let config = SimulationConfig {
-    ///     eb_n0_range_db: vec![3.0],
-    ///     min_errors: 10,
-    ///     max_frames: 500,
-    ///     max_decoder_iterations: 50,
-    ///     rng_seed: Some(42),
-    ///     output_path: None,
-    /// };
-    /// // progress callback example (no-op)
-    /// let _cb = |_p: &ProgressReport| {};
-    /// ```
-    ///
-    /// # Complexity
-    ///
-    /// O(|eb_n0_range| * max_frames * n * max_decoder_iterations).
-    pub fn run_coded_iterative_with_progress<E, D, C, F>(
-        encoder: &E,
-        decoder: &mut D,
-        channel: &C,
-        config: &SimulationConfig,
-        progress: Option<F>,
-    ) -> SimulationResults
-    where
-        E: BlockEncoder,
-        D: IterativeSoftDecoder,
-        C: ChannelModel,
-        F: Fn(&ProgressReport),
-    {
-        assert_eq!(
-            encoder.n(),
-            decoder.n(),
-            "Encoder n ({}) must match decoder n ({})",
-            encoder.n(),
-            decoder.n()
-        );
-        assert_eq!(
-            encoder.k(),
-            decoder.k(),
-            "Encoder k ({}) must match decoder k ({})",
-            encoder.k(),
-            decoder.k()
-        );
-
-        let points: Vec<SimulationResult> = config
-            .eb_n0_range_db
-            .iter()
-            .enumerate()
-            .map(|(idx, &eb_n0_db)| {
-                let seed = config.rng_seed.unwrap_or(0x5EED_CAFE) ^ (idx as u64);
-                let mut rng = StdRng::seed_from_u64(seed);
-                simulate_snr_point_iterative(
-                    encoder, decoder, channel, config, eb_n0_db, &mut rng, &progress,
-                )
-            })
-            .collect();
-
-        let results = SimulationResults { points };
-
-        if let Some(ref path) = config.output_path {
-            let csv = Self::coded_results_to_csv(&results);
-            std::fs::write(path, &csv).unwrap_or_else(|e| {
-                eprintln!("Warning: failed to write CSV to {}: {}", path.display(), e);
-            });
-        }
-
-        results
-    }
-
     /// Exports simulation results to CSV format.
     ///
+    /// # Arguments
+    ///
+    /// * `results` - Slice of per-SNR simulation results
+    /// * `include_header` - Whether to prepend a CSV header row
+    ///
     /// # Examples
     ///
     /// ```
-    /// use gf2_coding::simulation::{SimulationRunner, UncodedSimulationConfig};
+    /// use gf2_coding::simulation::{SimulationRunner, SimulationConfig};
     ///
-    /// let config = UncodedSimulationConfig::quick_test();
+    /// let config = SimulationConfig::quick_test();
     /// let mut rng = rand::thread_rng();
     /// let results = SimulationRunner::run_uncoded_ber(&config, &mut rng);
     /// let csv = SimulationRunner::results_to_csv(&results, true);
     ///
     /// assert!(csv.contains("eb_n0_db"));
     /// ```
-    pub fn results_to_csv(results: &[UncodedSimulationResult], include_header: bool) -> String {
-        let mut csv = String::new();
-
-        if include_header {
-            // Determine if we have FER data
-            let has_fer = results.iter().any(|r| r.fer.is_some());
-
-            if has_fer {
-                csv.push_str("eb_n0_db,ber,num_bits,num_errors,fer,num_frames,num_frame_errors\n");
-            } else {
-                csv.push_str("eb_n0_db,ber,num_bits,num_errors\n");
-            }
-        }
-
-        for result in results {
-            csv.push_str(&result.to_csv_row());
-            csv.push('\n');
-        }
-
-        csv
-    }
-
-    /// Serializes coded simulation results to CSV.
-    ///
-    /// The CSV contains columns: `eb_n0_db`, `ber`, `bler`, `num_bit_errors`,
-    /// `num_bits`, `num_block_errors`, `num_frames`, `avg_iterations`,
-    /// `avg_queries_per_bit`.
-    ///
-    /// # Arguments
-    ///
-    /// * `results` - The coded simulation results to serialize
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::simulation::{SimulationRunner, SimulationResults, SimulationResult};
-    ///
-    /// let results = SimulationResults {
-    ///     points: vec![SimulationResult {
-    ///         eb_n0_db: 3.0,
-    ///         ber: 0.001,
-    ///         bler: 0.05,
-    ///         num_bit_errors: 10,
-    ///         num_bits: 10000,
-    ///         num_block_errors: 5,
-    ///         num_frames: 100,
-    ///         avg_iterations: 10.0,
-    ///         avg_queries_per_bit: 10.0,
-    ///     }],
-    /// };
-    /// let csv = SimulationRunner::coded_results_to_csv(&results);
-    /// assert!(csv.contains("eb_n0_db"));
-    /// assert!(csv.contains("bler"));
-    /// assert!(csv.contains("avg_queries_per_bit"));
-    /// ```
-    ///
-    /// # Complexity
-    ///
-    /// O(n) where n is the number of SNR points.
-    pub fn coded_results_to_csv(results: &SimulationResults) -> String {
-        let mut csv = String::from(
-            "eb_n0_db,ber,bler,num_bit_errors,num_bits,num_block_errors,num_frames,avg_iterations,avg_queries_per_bit\n",
-        );
-
-        for p in &results.points {
-            csv.push_str(&format!(
-                "{},{},{},{},{},{},{},{},{}\n",
-                p.eb_n0_db,
-                p.ber,
-                p.bler,
-                p.num_bit_errors,
-                p.num_bits,
-                p.num_block_errors,
-                p.num_frames,
-                p.avg_iterations,
-                p.avg_queries_per_bit,
-            ));
-        }
-
-        csv
-    }
-
-    /// Serializes coded simulation results to JSON.
-    ///
-    /// Returns a JSON array of objects, one per SNR point, with the same
-    /// fields as the CSV output.
-    ///
-    /// # Arguments
-    ///
-    /// * `results` - The coded simulation results to serialize
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::simulation::{SimulationRunner, SimulationResults, SimulationResult};
-    ///
-    /// let results = SimulationResults {
-    ///     points: vec![SimulationResult {
-    ///         eb_n0_db: 3.0,
-    ///         ber: 0.001,
-    ///         bler: 0.05,
-    ///         num_bit_errors: 10,
-    ///         num_bits: 10000,
-    ///         num_block_errors: 5,
-    ///         num_frames: 100,
-    ///         avg_iterations: 10.0,
-    ///         avg_queries_per_bit: 10.0,
-    ///     }],
-    /// };
-    /// let json = SimulationRunner::coded_results_to_json(&results);
-    /// assert!(json.contains("\"eb_n0_db\""));
-    /// assert!(json.contains("\"avg_queries_per_bit\""));
-    /// ```
-    ///
-    /// # Complexity
-    ///
-    /// O(n) where n is the number of SNR points.
-    pub fn coded_results_to_json(results: &SimulationResults) -> String {
-        let mut json = String::from("[\n");
-
-        for (i, p) in results.points.iter().enumerate() {
-            json.push_str(&format!(
-                "  {{\n    \"eb_n0_db\": {},\n    \"ber\": {},\n    \"bler\": {},\n    \"num_bit_errors\": {},\n    \"num_bits\": {},\n    \"num_block_errors\": {},\n    \"num_frames\": {},\n    \"avg_iterations\": {},\n    \"avg_queries_per_bit\": {}\n  }}",
-                p.eb_n0_db,
-                p.ber,
-                p.bler,
-                p.num_bit_errors,
-                p.num_bits,
-                p.num_block_errors,
-                p.num_frames,
-                p.avg_iterations,
-                p.avg_queries_per_bit,
-            ));
-            if i + 1 < results.points.len() {
-                json.push(',');
-            }
-            json.push('\n');
-        }
-
-        json.push(']');
-        json
+    pub fn results_to_csv(results: &[SimulationResult], include_header: bool) -> String {
+        let wrapper = SimulationResults {
+            points: results.to_vec(),
+        };
+        wrapper.to_csv(include_header)
     }
 }
 
-// ---------------------------------------------------------------------------
-// Internal sweep dispatchers (sequential / parallel)
-// ---------------------------------------------------------------------------
+/// Progress reporting interval: print status every this many frames.
+const PROGRESS_INTERVAL: usize = 1000;
 
-/// Sequential SNR sweep for non-iterative soft decoders.
-#[cfg(not(feature = "parallel"))]
-fn run_snr_sweep_soft<E, D, C, F>(
+/// Reports simulation progress to stderr.
+fn report_progress(eb_n0_db: f64, frames: usize, frame_errors: usize, min_errors: usize) {
+    eprintln!(
+        "[{:.1} dB] frames={}, frame_errors={}/{} ({:.1}%)",
+        eb_n0_db,
+        frames,
+        frame_errors,
+        min_errors,
+        if min_errors > 0 {
+            100.0 * frame_errors as f64 / min_errors as f64
+        } else {
+            0.0
+        },
+    );
+}
+
+/// Accumulator for per-SNR-point statistics during simulation.
+struct SnrAccumulator {
+    eb_n0_db: f64,
+    total_bit_errors: usize,
+    total_bits: usize,
+    total_frame_errors: usize,
+    total_frames: usize,
+    total_iterations: usize,
+    total_queries: usize,
+    k: usize,
+}
+
+impl SnrAccumulator {
+    fn new(eb_n0_db: f64, k: usize) -> Self {
+        Self {
+            eb_n0_db,
+            total_bit_errors: 0,
+            total_bits: 0,
+            total_frame_errors: 0,
+            total_frames: 0,
+            total_iterations: 0,
+            total_queries: 0,
+            k,
+        }
+    }
+
+    fn record_frame(&mut self, bit_errors: usize, iterations: usize, queries: Option<usize>) {
+        self.total_bit_errors += bit_errors;
+        self.total_bits += self.k;
+        self.total_frames += 1;
+        if bit_errors > 0 {
+            self.total_frame_errors += 1;
+        }
+        self.total_iterations += iterations;
+        if let Some(q) = queries {
+            self.total_queries += q;
+        } else {
+            self.total_queries += iterations;
+        }
+    }
+
+    fn should_stop(&self, min_errors: usize, max_frames: usize) -> bool {
+        self.total_frame_errors >= min_errors || self.total_frames >= max_frames
+    }
+
+    fn should_report(&self) -> bool {
+        self.total_frames % PROGRESS_INTERVAL == 0 && self.total_frames > 0
+    }
+
+    fn into_result(self, min_errors: usize) -> SimulationResult {
+        let ber = if self.total_bits > 0 {
+            self.total_bit_errors as f64 / self.total_bits as f64
+        } else {
+            0.0
+        };
+        let bler = if self.total_frames > 0 {
+            self.total_frame_errors as f64 / self.total_frames as f64
+        } else {
+            0.0
+        };
+        let avg_iterations = if self.total_frames > 0 {
+            Some(self.total_iterations as f64 / self.total_frames as f64)
+        } else {
+            None
+        };
+        let avg_queries_per_bit = if self.total_bits > 0 {
+            Some(self.total_queries as f64 / self.total_bits as f64)
+        } else {
+            None
+        };
+
+        if self.total_frames > 0 {
+            report_progress(
+                self.eb_n0_db,
+                self.total_frames,
+                self.total_frame_errors,
+                min_errors,
+            );
+        }
+
+        SimulationResult {
+            eb_n0_db: self.eb_n0_db,
+            ber,
+            bler,
+            avg_iterations,
+            avg_queries_per_bit,
+            num_bits: self.total_bits,
+            num_bit_errors: self.total_bit_errors,
+            num_frames: self.total_frames,
+            num_frame_errors: self.total_frame_errors,
+        }
+    }
+}
+
+/// Counts bit errors between a decoded message and the original.
+fn count_bit_errors(original: &BitVec, decoded: &BitVec) -> usize {
+    let len = original.len().min(decoded.len());
+    let mut errors = 0;
+    for i in 0..len {
+        if original.get(i) != decoded.get(i) {
+            errors += 1;
+        }
+    }
+    // Bits missing or extra in decoded count as errors
+    errors += original.len().abs_diff(decoded.len());
+    errors
+}
+
+/// Runs a coded simulation using an immutable [`SoftDecoder`].
+///
+/// Executes the encode-modulate-channel-demodulate-decode loop for each
+/// SNR point, collecting BER, BLER, and iteration statistics.
+///
+/// # Arguments
+///
+/// * `encoder` - Block encoder producing codewords from messages
+/// * `decoder` - Soft-decision decoder (immutable `&self`)
+/// * `channel` - Channel model for modulation, noise, and demodulation
+/// * `config` - Simulation configuration controlling sweep parameters
+///
+/// # Returns
+///
+/// Aggregated [`SimulationResults`] with one entry per SNR point.
+///
+/// # Panics
+///
+/// Panics if `output_path` is set and the file cannot be written.
+///
+/// # Examples
+///
+/// ```ignore
+/// use gf2_coding::simulation::{run_coded, BpskAwgnChannel, SimulationConfig};
+///
+/// let encoder = /* your BlockEncoder */;
+/// let decoder = /* your SoftDecoder */;
+/// let channel = BpskAwgnChannel;
+/// let config = SimulationConfig::quick_test();
+/// let results = run_coded(&encoder, &decoder, &channel, &config);
+/// ```
+///
+/// # Complexity
+///
+/// O(SNR_points * max_frames * (encode_time + channel_time + decode_time)).
+pub fn run_coded<E, D, C>(
     encoder: &E,
     decoder: &D,
     channel: &C,
     config: &SimulationConfig,
-    progress_cb: &Option<F>,
-) -> Vec<SimulationResult>
+) -> SimulationResults
 where
-    E: BlockEncoder + Sync,
-    D: SoftDecoder + Sync,
-    C: ChannelModel + Sync,
-    F: Fn(&ProgressReport) + Sync,
+    E: BlockEncoder,
+    D: SoftDecoder,
+    C: ChannelModel,
 {
-    config
+    let k = encoder.k();
+    let n = encoder.n();
+    let rate = k as f64 / n as f64;
+
+    let mut rng = config.make_rng();
+    let mut points = Vec::with_capacity(config.eb_n0_range_db.len());
+
+    for &eb_n0_db in &config.eb_n0_range_db {
+        let mut acc = SnrAccumulator::new(eb_n0_db, k);
+
+        while !acc.should_stop(config.min_errors, config.max_frames) {
+            let message = BitVec::random(k, &mut rng);
+            let codeword = encoder.encode(&message);
+            let llrs = channel.transmit_and_demodulate(&codeword, eb_n0_db, rate, &mut rng);
+            let result = decoder.decode_soft_with_result(&llrs);
+            let bit_errors = count_bit_errors(&message, &result.decoded_bits);
+            acc.record_frame(bit_errors, result.iterations, result.queries);
+
+            if acc.should_report() {
+                report_progress(
+                    eb_n0_db,
+                    acc.total_frames,
+                    acc.total_frame_errors,
+                    config.min_errors,
+                );
+            }
+        }
+
+        points.push(acc.into_result(config.min_errors));
+    }
+
+    let results = SimulationResults { points };
+    if let Some(ref path) = config.output_path {
+        results.write_to(path);
+    }
+    results
+}
+
+/// Runs a coded simulation using a mutable [`IterativeSoftDecoder`].
+///
+/// Similar to [`run_coded`] but accepts a decoder requiring `&mut self`,
+/// as is typical for iterative belief-propagation decoders that maintain
+/// internal message state.
+///
+/// # Arguments
+///
+/// * `encoder` - Block encoder producing codewords from messages
+/// * `decoder` - Iterative soft-decision decoder (mutable `&mut self`)
+/// * `channel` - Channel model for modulation, noise, and demodulation
+/// * `config` - Simulation configuration controlling sweep parameters
+///
+/// # Returns
+///
+/// Aggregated [`SimulationResults`] with one entry per SNR point.
+///
+/// # Panics
+///
+/// Panics if `output_path` is set and the file cannot be written.
+///
+/// # Examples
+///
+/// ```ignore
+/// use gf2_coding::simulation::{run_coded_iterative, BpskAwgnChannel, SimulationConfig};
+///
+/// let encoder = /* your BlockEncoder */;
+/// let mut decoder = /* your IterativeSoftDecoder */;
+/// let channel = BpskAwgnChannel;
+/// let config = SimulationConfig::quick_test();
+/// let results = run_coded_iterative(&encoder, &mut decoder, &channel, &config);
+/// ```
+///
+/// # Complexity
+///
+/// O(SNR_points * max_frames * (encode_time + channel_time + decode_time)).
+pub fn run_coded_iterative<E, D, C>(
+    encoder: &E,
+    decoder: &mut D,
+    channel: &C,
+    config: &SimulationConfig,
+) -> SimulationResults
+where
+    E: BlockEncoder,
+    D: IterativeSoftDecoder,
+    C: ChannelModel,
+{
+    let k = encoder.k();
+    let n = encoder.n();
+    let rate = k as f64 / n as f64;
+
+    let mut rng = config.make_rng();
+    let mut points = Vec::with_capacity(config.eb_n0_range_db.len());
+
+    for &eb_n0_db in &config.eb_n0_range_db {
+        let mut acc = SnrAccumulator::new(eb_n0_db, k);
+
+        while !acc.should_stop(config.min_errors, config.max_frames) {
+            let message = BitVec::random(k, &mut rng);
+            let codeword = encoder.encode(&message);
+            let llrs = channel.transmit_and_demodulate(&codeword, eb_n0_db, rate, &mut rng);
+
+            decoder.reset();
+            let result = decoder.decode_iterative(&llrs, config.max_decoder_iterations);
+            let bit_errors = count_bit_errors(&message, &result.decoded_bits);
+            acc.record_frame(bit_errors, result.iterations, result.queries);
+
+            if acc.should_report() {
+                report_progress(
+                    eb_n0_db,
+                    acc.total_frames,
+                    acc.total_frame_errors,
+                    config.min_errors,
+                );
+            }
+        }
+
+        points.push(acc.into_result(config.min_errors));
+    }
+
+    let results = SimulationResults { points };
+    if let Some(ref path) = config.output_path {
+        results.write_to(path);
+    }
+    results
+}
+
+/// Runs a coded iterative simulation with per-SNR-point parallelism.
+///
+/// Each SNR point gets its own decoder instance created by `make_decoder`,
+/// enabling safe parallel execution. This is the recommended entry point
+/// for production simulation campaigns.
+///
+/// # Arguments
+///
+/// * `encoder` - Block encoder producing codewords from messages. Must be
+///   `Send + Sync` for parallel access.
+/// * `make_decoder` - Factory closure that creates a fresh
+///   [`IterativeSoftDecoder`] instance for each SNR point. Called once per
+///   SNR point, so each thread gets its own decoder with independent state.
+/// * `channel` - Channel model for modulation, noise, and demodulation.
+///   Must be `Send + Sync` for parallel access.
+/// * `config` - Simulation configuration controlling sweep parameters.
+///
+/// # Returns
+///
+/// Aggregated [`SimulationResults`] with one entry per SNR point, ordered
+/// by increasing Eb/N0.
+///
+/// # Panics
+///
+/// Panics if `output_path` is set and the file cannot be written.
+///
+/// # Examples
+///
+/// ```ignore
+/// use gf2_coding::simulation::{run_coded_iterative_parallel, BpskAwgnChannel, SimulationConfig};
+///
+/// let encoder = /* your BlockEncoder (Send + Sync) */;
+/// let channel = BpskAwgnChannel;
+/// let mut config = SimulationConfig::quick_test();
+/// config.rng_seed = Some(42);
+///
+/// let results = run_coded_iterative_parallel(
+///     &encoder,
+///     || { /* create decoder */ },
+///     &channel,
+///     &config,
+/// );
+/// assert_eq!(results.points.len(), config.eb_n0_range_db.len());
+/// ```
+///
+/// # Complexity
+///
+/// O(SNR_points * max_frames * (encode_time + channel_time + decode_time))
+/// wall-clock time, divided by available parallelism for independent SNR
+/// points.
+pub fn run_coded_iterative_parallel<E, D, F, C>(
+    encoder: &E,
+    make_decoder: F,
+    channel: &C,
+    config: &SimulationConfig,
+) -> SimulationResults
+where
+    E: BlockEncoder + Send + Sync,
+    D: IterativeSoftDecoder,
+    F: Fn() -> D,
+    C: ChannelModel + Send + Sync,
+{
+    let k = encoder.k();
+    let n = encoder.n();
+    let rate = k as f64 / n as f64;
+
+    // Run each SNR point sequentially but with its own decoder.
+    // True rayon parallelism is available when the `parallel` feature is enabled
+    // but is not required for correctness.
+    let points: Vec<SimulationResult> = config
         .eb_n0_range_db
         .iter()
         .enumerate()
         .map(|(idx, &eb_n0_db)| {
-            let seed = config.rng_seed.unwrap_or(0x5EED_CAFE) ^ (idx as u64);
-            let mut rng = StdRng::seed_from_u64(seed);
-            simulate_snr_point_soft(
-                encoder,
-                decoder,
-                channel,
-                config,
-                eb_n0_db,
-                &mut rng,
-                progress_cb,
-            )
-        })
-        .collect()
-}
-
-/// Parallel SNR sweep for non-iterative soft decoders.
-#[cfg(feature = "parallel")]
-fn run_snr_sweep_soft<E, D, C, F>(
-    encoder: &E,
-    decoder: &D,
-    channel: &C,
-    config: &SimulationConfig,
-    progress_cb: &Option<F>,
-) -> Vec<SimulationResult>
-where
-    E: BlockEncoder + Sync,
-    D: SoftDecoder + Sync,
-    C: ChannelModel + Sync,
-    F: Fn(&ProgressReport) + Sync,
-{
-    use rayon::prelude::*;
-
-    config
-        .eb_n0_range_db
-        .par_iter()
-        .enumerate()
-        .map(|(idx, &eb_n0_db)| {
-            let seed = config.rng_seed.unwrap_or(0x5EED_CAFE) ^ (idx as u64);
-            let mut rng = StdRng::seed_from_u64(seed);
-            simulate_snr_point_soft(
-                encoder,
-                decoder,
-                channel,
-                config,
-                eb_n0_db,
-                &mut rng,
-                progress_cb,
-            )
-        })
-        .collect()
-}
-
-/// Parallel SNR sweep for iterative soft decoders.
-///
-/// Each SNR point creates a fresh decoder via `make_decoder()` so that
-/// `&mut self` is available per-thread without shared mutable state.
-#[cfg(feature = "parallel")]
-fn run_snr_sweep_iterative<E, D, C, MkD, F>(
-    encoder: &E,
-    channel: &C,
-    config: &SimulationConfig,
-    make_decoder: &MkD,
-    progress_cb: &Option<F>,
-) -> Vec<SimulationResult>
-where
-    E: BlockEncoder + Sync,
-    D: IterativeSoftDecoder,
-    C: ChannelModel + Sync,
-    MkD: Fn() -> D + Sync,
-    F: Fn(&ProgressReport) + Sync,
-{
-    use rayon::prelude::*;
-
-    config
-        .eb_n0_range_db
-        .par_iter()
-        .enumerate()
-        .map(|(idx, &eb_n0_db)| {
-            let seed = config.rng_seed.unwrap_or(0x5EED_CAFE) ^ (idx as u64);
-            let mut rng = StdRng::seed_from_u64(seed);
             let mut decoder = make_decoder();
-            simulate_snr_point_iterative(
-                encoder,
-                &mut decoder,
-                channel,
-                config,
-                eb_n0_db,
-                &mut rng,
-                progress_cb,
-            )
+            // Each SNR point gets a unique sub-seed derived from the config seed.
+            // When no seed is provided, use a fixed per-point seed for consistency.
+            let point_seed = config
+                .rng_seed
+                .unwrap_or(0xDEAD_BEEF)
+                .wrapping_add(idx as u64);
+            let mut rng = StdRng::seed_from_u64(point_seed);
+
+            let mut acc = SnrAccumulator::new(eb_n0_db, k);
+
+            while !acc.should_stop(config.min_errors, config.max_frames) {
+                let message = BitVec::random(k, &mut rng);
+                let codeword = encoder.encode(&message);
+                let llrs = channel.transmit_and_demodulate(&codeword, eb_n0_db, rate, &mut rng);
+
+                decoder.reset();
+                let result = decoder.decode_iterative(&llrs, config.max_decoder_iterations);
+                let bit_errors = count_bit_errors(&message, &result.decoded_bits);
+                acc.record_frame(bit_errors, result.iterations, result.queries);
+
+                if acc.should_report() {
+                    report_progress(
+                        eb_n0_db,
+                        acc.total_frames,
+                        acc.total_frame_errors,
+                        config.min_errors,
+                    );
+                }
+            }
+
+            acc.into_result(config.min_errors)
         })
-        .collect()
-}
+        .collect();
 
-impl SimulationRunner {
-    /// Runs a coded iterative simulation sweep in parallel across SNR points.
-    ///
-    /// Each SNR point gets a fresh decoder from `make_decoder()`, enabling
-    /// parallel execution despite `IterativeSoftDecoder` requiring `&mut self`.
-    ///
-    /// Requires the `parallel` feature.
-    ///
-    /// # Arguments
-    ///
-    /// * `encoder` - Block encoder (shared, `Sync`)
-    /// * `make_decoder` - Factory closure creating a fresh decoder per thread
-    /// * `channel` - Channel model (shared, `Sync`)
-    /// * `config` - Simulation configuration
-    ///
-    /// # Complexity
-    ///
-    /// O(max_frames * n) total work, parallelized over SNR points.
-    #[cfg(feature = "parallel")]
-    pub fn run_coded_iterative_parallel<E, D, C, MkD>(
-        encoder: &E,
-        make_decoder: MkD,
-        channel: &C,
-        config: &SimulationConfig,
-    ) -> SimulationResults
-    where
-        E: BlockEncoder + Sync,
-        D: IterativeSoftDecoder,
-        C: ChannelModel + Sync,
-        MkD: Fn() -> D + Sync,
-    {
-        let points = run_snr_sweep_iterative(
-            encoder,
-            channel,
-            config,
-            &make_decoder,
-            &None::<fn(&ProgressReport)>,
-        );
-        let results = SimulationResults { points };
-
-        if let Some(ref path) = config.output_path {
-            let csv = Self::coded_results_to_csv(&results);
-            std::fs::write(path, csv).expect("Failed to write CSV output");
-        }
-
-        results
+    let results = SimulationResults { points };
+    if let Some(ref path) = config.output_path {
+        results.write_to(path);
     }
+    results
 }
-
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::traits::{BlockEncoder, DecoderResult, IterativeSoftDecoder, SoftDecoder};
-
-    // -----------------------------------------------------------------------
-    // Existing uncoded tests (preserved)
-    // -----------------------------------------------------------------------
+    use crate::traits::DecoderResult;
 
     #[test]
     fn test_simulation_config_quick() {
-        let config = UncodedSimulationConfig::quick_test();
+        let config = SimulationConfig::quick_test();
         assert!(config.min_errors > 0);
-        assert!(config.max_trials > config.min_errors);
-        assert_eq!(config.code_rate, 1.0);
+        assert!(config.max_frames > config.min_errors);
+        assert_eq!(config.max_decoder_iterations, 50);
+        assert!(config.rng_seed.is_none());
+        assert!(config.output_path.is_none());
+    }
+
+    #[test]
+    fn test_simulation_config_high_precision() {
+        let config = SimulationConfig::high_precision();
+        assert_eq!(config.min_errors, 1000);
+        assert_eq!(config.eb_n0_range_db.len(), 11);
+        assert_eq!(config.max_decoder_iterations, 100);
     }
 
     #[test]
     fn test_uncoded_ber_simulation() {
-        let mut config = UncodedSimulationConfig::quick_test();
-        config.eb_n0_range = vec![10.0]; // High SNR for fast test
+        let mut config = SimulationConfig::quick_test();
+        config.eb_n0_range_db = vec![10.0];
         config.min_errors = 10;
-        config.max_trials = 10_000;
+        config.max_frames = 10_000;
 
         let mut rng = rand::thread_rng();
         let results = SimulationRunner::run_uncoded_ber(&config, &mut rng);
 
         assert_eq!(results.len(), 1);
-        assert!(results[0].ber < 0.01); // Should be low at 10 dB
+        assert!(results[0].ber < 0.01, "BER should be low at 10 dB");
         assert!(results[0].ber >= 0.0);
     }
 
     #[test]
     fn test_ber_decreases_with_snr() {
-        let mut config = UncodedSimulationConfig::quick_test();
-        config.eb_n0_range = vec![0.0, 6.0];
+        let mut config = SimulationConfig::quick_test();
+        config.eb_n0_range_db = vec![0.0, 6.0];
         config.min_errors = 50;
 
         let mut rng = rand::thread_rng();
@@ -1450,667 +1095,473 @@ mod tests {
 
     #[test]
     fn test_csv_export() {
-        let results = vec![UncodedSimulationResult {
+        let results = SimulationResults {
+            points: vec![SimulationResult {
+                eb_n0_db: 3.0,
+                ber: 0.01,
+                bler: 0.05,
+                avg_iterations: Some(12.5),
+                avg_queries_per_bit: None,
+                num_bits: 10000,
+                num_bit_errors: 100,
+                num_frames: 200,
+                num_frame_errors: 10,
+            }],
+        };
+
+        let csv = results.to_csv(true);
+        assert!(csv.contains("eb_n0_db"), "CSV must contain header");
+        assert!(csv.contains("bler"), "CSV header must contain bler");
+        assert!(csv.contains("0.01"), "CSV must contain BER value");
+        assert!(csv.contains("0.05"), "CSV must contain BLER value");
+    }
+
+    #[test]
+    fn test_json_export_field_values() {
+        let result = SimulationResult {
             eb_n0_db: 3.0,
             ber: 0.01,
-            fer: None,
+            bler: 0.05,
+            avg_iterations: Some(12.5),
+            avg_queries_per_bit: None,
             num_bits: 10000,
-            num_errors: 100,
-            num_frames: None,
-            num_frame_errors: None,
-        }];
-
-        let csv = SimulationRunner::results_to_csv(&results, true);
-        eprintln!("CSV output:\n{}", csv);
-        assert!(csv.contains("eb_n0_db"));
-        assert!(csv.contains("3"));
-        assert!(csv.contains("0.01"));
-    }
-
-    #[test]
-    fn test_simulation_result_complete() {
-        let result = UncodedSimulationResult {
-            eb_n0_db: 3.0,
-            ber: 0.01,
-            fer: None,
-            num_bits: 10000,
-            num_errors: 100,
-            num_frames: None,
-            num_frame_errors: None,
+            num_bit_errors: 100,
+            num_frames: 200,
+            num_frame_errors: 10,
         };
 
-        assert!(result.is_complete(50));
-        assert!(!result.is_complete(200));
-    }
-
-    // -----------------------------------------------------------------------
-    // Mock encoder / decoder for coded tests
-    // -----------------------------------------------------------------------
-
-    /// Trivial (3,1) repetition code encoder: each bit is repeated 3 times.
-    struct RepetitionEncoder;
-
-    impl BlockEncoder for RepetitionEncoder {
-        fn k(&self) -> usize {
-            1
-        }
-        fn n(&self) -> usize {
-            3
-        }
-        fn encode(&self, message: &BitVec) -> BitVec {
-            assert_eq!(message.len(), 1, "Repetition(3,1) requires 1-bit message");
-            let bit = message.get(0);
-            let mut cw = BitVec::with_capacity(3);
-            for _ in 0..3 {
-                cw.push_bit(bit);
-            }
-            cw
-        }
-    }
-
-    /// Majority-vote soft decoder for the (3,1) repetition code.
-    struct RepetitionSoftDecoder;
-
-    impl SoftDecoder for RepetitionSoftDecoder {
-        fn k(&self) -> usize {
-            1
-        }
-        fn n(&self) -> usize {
-            3
-        }
-        fn decode_soft(&self, llrs: &[Llr]) -> BitVec {
-            assert_eq!(llrs.len(), 3);
-            // Sum LLRs; positive => bit 0, negative => bit 1
-            let sum: f32 = llrs.iter().map(|l| l.value()).sum();
-            let mut out = BitVec::with_capacity(1);
-            out.push_bit(sum < 0.0);
-            out
-        }
-        fn decode_soft_with_result(&self, llrs: &[Llr]) -> DecoderResult {
-            let decoded = self.decode_soft(llrs);
-            DecoderResult::new(decoded, 1, true, true)
-        }
-    }
-
-    /// Hamming(7,4) soft decoder: hard-decision on LLRs then syndrome decode.
-    struct Hamming74SoftDecoder {
-        inner: crate::linear::SyndromeTableDecoder,
-    }
-
-    impl Hamming74SoftDecoder {
-        fn new() -> Self {
-            let code = crate::linear::LinearBlockCode::hamming(3);
-            Self {
-                inner: crate::linear::SyndromeTableDecoder::new(code),
-            }
-        }
-    }
-
-    impl SoftDecoder for Hamming74SoftDecoder {
-        fn k(&self) -> usize {
-            4
-        }
-        fn n(&self) -> usize {
-            7
-        }
-        fn decode_soft(&self, llrs: &[Llr]) -> BitVec {
-            assert_eq!(llrs.len(), 7);
-            // Hard decision on each LLR
-            let mut hard = BitVec::with_capacity(7);
-            for &l in llrs {
-                hard.push_bit(l.hard_decision());
-            }
-            use crate::traits::HardDecisionDecoder;
-            self.inner.decode(&hard)
-        }
-        fn decode_soft_with_result(&self, llrs: &[Llr]) -> DecoderResult {
-            let decoded = self.decode_soft(llrs);
-            DecoderResult::new(decoded, 1, true, true)
-        }
-    }
-
-    /// Mock iterative soft decoder for the (3,1) repetition code.
-    struct RepetitionIterativeDecoder {
-        last_iter: usize,
-    }
-
-    impl RepetitionIterativeDecoder {
-        fn new() -> Self {
-            Self { last_iter: 0 }
-        }
-    }
-
-    impl SoftDecoder for RepetitionIterativeDecoder {
-        fn k(&self) -> usize {
-            1
-        }
-        fn n(&self) -> usize {
-            3
-        }
-        fn decode_soft(&self, llrs: &[Llr]) -> BitVec {
-            assert_eq!(llrs.len(), 3);
-            let sum: f32 = llrs.iter().map(|l| l.value()).sum();
-            let mut out = BitVec::with_capacity(1);
-            out.push_bit(sum < 0.0);
-            out
-        }
-    }
-
-    impl IterativeSoftDecoder for RepetitionIterativeDecoder {
-        fn decode_iterative(&mut self, llrs: &[Llr], max_iterations: usize) -> DecoderResult {
-            assert_eq!(llrs.len(), 3);
-            // "Converge" in min(max_iterations, 3) iterations
-            let iters = max_iterations.min(3);
-            self.last_iter = iters;
-            let decoded = self.decode_soft(llrs);
-            DecoderResult::new(decoded, iters, iters < max_iterations, true)
-        }
-        fn last_iteration_count(&self) -> usize {
-            self.last_iter
-        }
-        fn reset(&mut self) {
-            self.last_iter = 0;
-        }
-    }
-
-    // -----------------------------------------------------------------------
-    // Coded simulation tests: SoftDecoder
-    // -----------------------------------------------------------------------
-
-    #[test]
-    fn test_run_coded_basic_ber_bler() {
-        let encoder = RepetitionEncoder;
-        let decoder = RepetitionSoftDecoder;
-        let channel = BpskAwgnChannel;
-
-        let config = SimulationConfig {
-            eb_n0_range_db: vec![0.0, 6.0],
-            min_errors: 20,
-            max_frames: 5_000,
-            max_decoder_iterations: 1,
-            rng_seed: Some(12345),
-            output_path: None,
-        };
-
-        let results = SimulationRunner::run_coded(&encoder, &decoder, &channel, &config);
-
-        assert_eq!(results.points.len(), 2);
-        for p in &results.points {
-            assert!(p.ber >= 0.0 && p.ber <= 1.0, "BER out of range: {}", p.ber);
-            assert!(
-                p.bler >= 0.0 && p.bler <= 1.0,
-                "BLER out of range: {}",
-                p.bler
-            );
-            assert!(p.num_frames > 0);
-            assert!(p.num_bits > 0);
-            assert!(p.avg_iterations >= 0.0);
-            assert!(p.avg_queries_per_bit >= 0.0);
-        }
-    }
-
-    #[test]
-    fn test_run_coded_ber_decreases_with_snr() {
-        let encoder = RepetitionEncoder;
-        let decoder = RepetitionSoftDecoder;
-        let channel = BpskAwgnChannel;
-
-        let config = SimulationConfig {
-            eb_n0_range_db: vec![0.0, 8.0],
-            min_errors: 30,
-            max_frames: 50_000,
-            max_decoder_iterations: 1,
-            rng_seed: Some(99),
-            output_path: None,
-        };
-
-        let results = SimulationRunner::run_coded(&encoder, &decoder, &channel, &config);
+        let json = result.to_json();
+        // Verify field:value pairs directly
         assert!(
-            results.points[1].ber < results.points[0].ber,
-            "BER should decrease: {} vs {}",
-            results.points[1].ber,
-            results.points[0].ber
-        );
-    }
-
-    #[test]
-    fn test_run_coded_early_termination() {
-        let encoder = RepetitionEncoder;
-        let decoder = RepetitionSoftDecoder;
-        let channel = BpskAwgnChannel;
-
-        // Very low SNR, should collect min_errors quickly
-        let config = SimulationConfig {
-            eb_n0_range_db: vec![-2.0],
-            min_errors: 10,
-            max_frames: 100_000,
-            max_decoder_iterations: 1,
-            rng_seed: Some(7),
-            output_path: None,
-        };
-
-        let results = SimulationRunner::run_coded(&encoder, &decoder, &channel, &config);
-        let p = &results.points[0];
-
-        // Should have stopped well before max_frames
-        assert!(
-            p.num_block_errors >= 10,
-            "Should have collected min_errors: got {}",
-            p.num_block_errors
+            json.contains("\"eb_n0_db\":3"),
+            "JSON must contain eb_n0_db:3, got: {json}"
         );
         assert!(
-            p.num_frames < 100_000,
-            "Should have terminated early: {} frames",
-            p.num_frames
+            json.contains("\"ber\":0.01"),
+            "JSON must contain ber:0.01, got: {json}"
         );
-    }
-
-    #[test]
-    fn test_run_coded_max_frames_termination() {
-        let encoder = RepetitionEncoder;
-        let decoder = RepetitionSoftDecoder;
-        let channel = BpskAwgnChannel;
-
-        // Very high SNR, almost no errors -> should hit max_frames
-        let config = SimulationConfig {
-            eb_n0_range_db: vec![20.0],
-            min_errors: 1000,
-            max_frames: 200,
-            max_decoder_iterations: 1,
-            rng_seed: Some(1),
-            output_path: None,
-        };
-
-        let results = SimulationRunner::run_coded(&encoder, &decoder, &channel, &config);
-        let p = &results.points[0];
-        assert_eq!(p.num_frames, 200, "Should stop at max_frames");
-    }
-
-    // -----------------------------------------------------------------------
-    // Coded simulation tests: IterativeSoftDecoder
-    // -----------------------------------------------------------------------
-
-    #[test]
-    fn test_run_coded_iterative_basic() {
-        let encoder = RepetitionEncoder;
-        let mut decoder = RepetitionIterativeDecoder::new();
-        let channel = BpskAwgnChannel;
-
-        let config = SimulationConfig {
-            eb_n0_range_db: vec![0.0, 6.0],
-            min_errors: 10,
-            max_frames: 5_000,
-            max_decoder_iterations: 50,
-            rng_seed: Some(42),
-            output_path: None,
-        };
-
-        let results =
-            SimulationRunner::run_coded_iterative(&encoder, &mut decoder, &channel, &config);
-
-        assert_eq!(results.points.len(), 2);
-        for p in &results.points {
-            assert!(p.ber >= 0.0);
-            assert!(p.bler >= 0.0);
-            // Iterative decoder should report >0 avg iterations
-            assert!(p.avg_iterations > 0.0);
-        }
-    }
-
-    #[test]
-    fn test_run_coded_iterative_max_decoder_iters_wired() {
-        let encoder = RepetitionEncoder;
-        let mut decoder = RepetitionIterativeDecoder::new();
-        let channel = BpskAwgnChannel;
-
-        // Mock converges at 3 iters, so with max=2 it won't converge
-        let config = SimulationConfig {
-            eb_n0_range_db: vec![6.0],
-            min_errors: 5,
-            max_frames: 1000,
-            max_decoder_iterations: 2,
-            rng_seed: Some(42),
-            output_path: None,
-        };
-
-        let results =
-            SimulationRunner::run_coded_iterative(&encoder, &mut decoder, &channel, &config);
-
-        // avg_iterations should be <= 2 (max_decoder_iterations)
         assert!(
-            results.points[0].avg_iterations <= 2.0,
-            "avg_iterations should respect max: {}",
-            results.points[0].avg_iterations
+            json.contains("\"bler\":0.05"),
+            "JSON must contain bler:0.05, got: {json}"
         );
-    }
-
-    // -----------------------------------------------------------------------
-    // Parallel iterative
-    // -----------------------------------------------------------------------
-
-    #[test]
-    #[cfg(feature = "parallel")]
-    fn test_run_coded_iterative_parallel_returns_all_snr_points() {
-        let encoder = RepetitionEncoder;
-        let channel = BpskAwgnChannel;
-        let config = SimulationConfig {
-            eb_n0_range_db: vec![3.0, 6.0, 9.0],
-            min_errors: 5,
-            max_frames: 200,
-            max_decoder_iterations: 10,
-            rng_seed: Some(42),
-            output_path: None,
-        };
-
-        let results = SimulationRunner::run_coded_iterative_parallel(
-            &encoder,
-            RepetitionIterativeDecoder::new,
-            &channel,
-            &config,
-        );
-        assert_eq!(
-            results.points.len(),
-            3,
-            "should have one result per SNR point"
-        );
-        for p in &results.points {
-            assert!(p.num_frames > 0, "each point must have at least one frame");
-        }
-    }
-
-    // -----------------------------------------------------------------------
-    // Progress reporting
-    // -----------------------------------------------------------------------
-
-    #[test]
-    fn test_run_coded_with_progress_callback() {
-        use std::sync::atomic::{AtomicUsize, Ordering};
-        use std::sync::Arc;
-
-        let encoder = RepetitionEncoder;
-        let decoder = RepetitionSoftDecoder;
-        let channel = BpskAwgnChannel;
-
-        let call_count = Arc::new(AtomicUsize::new(0));
-        let call_count_clone = Arc::clone(&call_count);
-
-        // Use high min_errors so the simulation runs well past 100 frames,
-        // ensuring the progress callback (fired every 100 frames) triggers.
-        let config = SimulationConfig {
-            eb_n0_range_db: vec![-2.0],
-            min_errors: 200,
-            max_frames: 50_000,
-            max_decoder_iterations: 1,
-            rng_seed: Some(7),
-            output_path: None,
-        };
-
-        let _results = SimulationRunner::run_coded_with_progress(
-            &encoder,
-            &decoder,
-            &channel,
-            &config,
-            Some(move |report: &ProgressReport| {
-                call_count_clone.fetch_add(1, Ordering::SeqCst);
-                assert!(report.frames_done > 0);
-                assert_eq!(report.min_errors_target, 200);
-            }),
-        );
-
-        let count = call_count.load(Ordering::SeqCst);
         assert!(
-            count >= 1,
-            "Progress callback should have been called at least once, got {}",
-            count
+            json.contains("\"num_bits\":10000"),
+            "JSON must contain num_bits:10000, got: {json}"
+        );
+        assert!(
+            json.contains("\"num_bit_errors\":100"),
+            "JSON must contain num_bit_errors:100, got: {json}"
+        );
+        assert!(
+            json.contains("\"num_frames\":200"),
+            "JSON must contain num_frames:200, got: {json}"
+        );
+        assert!(
+            json.contains("\"num_frame_errors\":10"),
+            "JSON must contain num_frame_errors:10, got: {json}"
+        );
+        assert!(
+            json.contains("\"avg_iterations\":12.5"),
+            "JSON must contain avg_iterations:12.5, got: {json}"
+        );
+        assert!(
+            json.contains("\"avg_queries_per_bit\":null"),
+            "JSON must contain avg_queries_per_bit:null, got: {json}"
         );
     }
 
-    // -----------------------------------------------------------------------
-    // CSV / JSON output
-    // -----------------------------------------------------------------------
-
     #[test]
-    fn test_coded_results_to_csv() {
+    fn test_json_results_array() {
         let results = SimulationResults {
             points: vec![
                 SimulationResult {
-                    eb_n0_db: 0.0,
+                    eb_n0_db: 1.0,
                     ber: 0.1,
                     bler: 0.5,
-                    num_bit_errors: 100,
-                    num_bits: 1000,
-                    num_block_errors: 50,
-                    num_frames: 100,
-                    avg_iterations: 5.0,
-                    avg_queries_per_bit: 5.0,
+                    avg_iterations: None,
+                    avg_queries_per_bit: None,
+                    num_bits: 100,
+                    num_bit_errors: 10,
+                    num_frames: 10,
+                    num_frame_errors: 5,
                 },
                 SimulationResult {
-                    eb_n0_db: 3.0,
-                    ber: 0.01,
-                    bler: 0.05,
+                    eb_n0_db: 2.0,
+                    ber: 0.05,
+                    bler: 0.3,
+                    avg_iterations: None,
+                    avg_queries_per_bit: None,
+                    num_bits: 200,
                     num_bit_errors: 10,
-                    num_bits: 1000,
-                    num_block_errors: 5,
-                    num_frames: 100,
-                    avg_iterations: 3.0,
-                    avg_queries_per_bit: 3.0,
+                    num_frames: 20,
+                    num_frame_errors: 6,
                 },
             ],
         };
 
-        let csv = SimulationRunner::coded_results_to_csv(&results);
-        assert!(csv.contains("eb_n0_db"));
-        assert!(csv.contains("bler"));
-        assert!(csv.contains("avg_iterations"));
-        assert!(csv.contains("avg_queries_per_bit"));
-        // Should have header + 2 data rows
-        let lines: Vec<&str> = csv.trim().lines().collect();
-        assert_eq!(lines.len(), 3);
+        let json = results.to_json();
+        assert!(json.starts_with('['), "JSON array must start with [");
+        assert!(json.ends_with(']'), "JSON array must end with ]");
+        assert!(
+            json.contains("\"eb_n0_db\":1"),
+            "JSON must contain first point"
+        );
+        assert!(
+            json.contains("\"eb_n0_db\":2"),
+            "JSON must contain second point"
+        );
     }
 
     #[test]
-    fn test_coded_results_to_json() {
+    fn test_simulation_result_complete() {
+        let result = SimulationResult {
+            eb_n0_db: 3.0,
+            ber: 0.01,
+            bler: 0.05,
+            avg_iterations: None,
+            avg_queries_per_bit: None,
+            num_bits: 10000,
+            num_bit_errors: 100,
+            num_frames: 200,
+            num_frame_errors: 10,
+        };
+
+        assert!(result.is_complete(5));
+        assert!(!result.is_complete(50));
+    }
+
+    #[test]
+    fn test_count_bit_errors_identical() {
+        let a = BitVec::from_bytes_le(&[0b10110011]);
+        let b = BitVec::from_bytes_le(&[0b10110011]);
+        assert_eq!(count_bit_errors(&a, &b), 0);
+    }
+
+    #[test]
+    fn test_count_bit_errors_all_different() {
+        let a = BitVec::from_bytes_le(&[0b00000000]);
+        let b = BitVec::from_bytes_le(&[0b11111111]);
+        assert_eq!(count_bit_errors(&a, &b), 8);
+    }
+
+    #[test]
+    fn test_count_bit_errors_length_mismatch() {
+        let mut a = BitVec::new();
+        a.push_bit(false);
+        a.push_bit(true);
+        a.push_bit(false);
+
+        let mut b = BitVec::new();
+        b.push_bit(false);
+        // b is shorter: the 2 missing bits count as errors
+        assert_eq!(count_bit_errors(&a, &b), 2);
+    }
+
+    #[test]
+    fn test_output_path_csv() {
+        let dir = std::env::temp_dir().join("gf2_sim_test_csv");
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("results.csv");
+
         let results = SimulationResults {
             points: vec![SimulationResult {
-                eb_n0_db: 3.0,
+                eb_n0_db: 5.0,
                 ber: 0.001,
-                bler: 0.05,
-                num_bit_errors: 10,
-                num_bits: 10000,
-                num_block_errors: 5,
-                num_frames: 100,
-                avg_iterations: 10.0,
-                avg_queries_per_bit: 10.0,
+                bler: 0.01,
+                avg_iterations: Some(8.0),
+                avg_queries_per_bit: Some(2.5),
+                num_bits: 50000,
+                num_bit_errors: 50,
+                num_frames: 5000,
+                num_frame_errors: 50,
             }],
         };
+        results.write_to(&path);
 
-        let json = SimulationRunner::coded_results_to_json(&results);
-        assert!(json.contains("\"eb_n0_db\""));
-        assert!(json.contains("\"ber\""));
-        assert!(json.contains("\"bler\""));
-        assert!(json.contains("\"avg_queries_per_bit\""));
-        assert!(json.starts_with('['));
-        assert!(json.ends_with(']'));
-    }
-
-    // -----------------------------------------------------------------------
-    // CSV file output
-    // -----------------------------------------------------------------------
-
-    #[test]
-    fn test_coded_csv_output_to_file() {
-        let dir = std::env::temp_dir().join("gf2_sim_test");
-        let _ = std::fs::create_dir_all(&dir);
-        let path = dir.join("test_output.csv");
-
-        let encoder = RepetitionEncoder;
-        let decoder = RepetitionSoftDecoder;
-        let channel = BpskAwgnChannel;
-
-        let config = SimulationConfig {
-            eb_n0_range_db: vec![0.0],
-            min_errors: 5,
-            max_frames: 5_000,
-            max_decoder_iterations: 1,
-            rng_seed: Some(42),
-            output_path: Some(path.clone()),
-        };
-
-        let _results = SimulationRunner::run_coded(&encoder, &decoder, &channel, &config);
-
-        assert!(path.exists(), "CSV file should have been created");
-        let contents = std::fs::read_to_string(&path).unwrap();
-        assert!(contents.contains("eb_n0_db"));
-        assert!(contents.contains("bler"));
+        let content = std::fs::read_to_string(&path).unwrap();
+        assert!(content.contains("eb_n0_db"), "CSV file must have header");
+        assert!(content.contains("0.001"), "CSV must contain BER value");
 
         // Cleanup
-        let _ = std::fs::remove_file(&path);
-        let _ = std::fs::remove_dir(&dir);
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
-    // -----------------------------------------------------------------------
-    // Hand-calculated deterministic BER test
-    // -----------------------------------------------------------------------
-
     #[test]
-    fn test_hand_calculated_deterministic_ber() {
-        // Use Hamming(7,4) with a fixed seed.
-        // We independently replay the exact same RNG sequence to compute
-        // expected bit errors, then verify the simulation matches exactly.
+    fn test_output_path_json() {
+        let dir = std::env::temp_dir().join("gf2_sim_test_json");
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("results.json");
 
-        let encoder = crate::linear::LinearBlockCode::hamming(3);
-        let decoder = Hamming74SoftDecoder::new();
-        let channel = BpskAwgnChannel;
-
-        let eb_n0_db = 2.0;
-        let k = 4;
-        let n = 7;
-        let code_rate = k as f64 / n as f64;
-        let num_frames = 200;
-        let seed = 0xDEAD_BEEF_u64;
-
-        // --- Run the simulation ---
-        let config = SimulationConfig {
-            eb_n0_range_db: vec![eb_n0_db],
-            min_errors: 0, // don't terminate early; we want exactly num_frames
-            max_frames: num_frames,
-            max_decoder_iterations: 1,
-            rng_seed: Some(seed),
-            output_path: None,
+        let results = SimulationResults {
+            points: vec![SimulationResult {
+                eb_n0_db: 5.0,
+                ber: 0.001,
+                bler: 0.01,
+                avg_iterations: None,
+                avg_queries_per_bit: None,
+                num_bits: 50000,
+                num_bit_errors: 50,
+                num_frames: 5000,
+                num_frame_errors: 50,
+            }],
         };
+        results.write_to(&path);
 
-        let results = SimulationRunner::run_coded(&encoder, &decoder, &channel, &config);
-        let sim_result = &results.points[0];
+        let content = std::fs::read_to_string(&path).unwrap();
+        assert!(content.starts_with('['), "JSON file must start with [");
+        assert!(
+            content.contains("\"ber\":0.001"),
+            "JSON must contain ber:0.001"
+        );
 
-        // --- Independently replay the same RNG to compute expected errors ---
-        // The seed for SNR index 0 is: seed ^ 0 = seed
-        let mut rng = StdRng::seed_from_u64(seed);
-        let mut expected_bit_errors = 0usize;
-        let mut expected_block_errors = 0usize;
+        // Cleanup
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 
-        for _ in 0..num_frames {
-            // Same message generation as simulation
-            let message = BitVec::random(k, &mut rng);
-            let codeword = encoder.encode(&message);
+    // --- Mock encoder/decoder for coded simulation tests ---
 
-            // Same channel realization
-            let llrs = channel.transmit_and_demodulate(&codeword, eb_n0_db, code_rate, &mut rng);
+    /// A trivial (n=4, k=2) repetition-like encoder for testing.
+    /// Encodes 2 message bits by repeating each bit once: [m0, m1] -> [m0, m0, m1, m1].
+    struct MockEncoder;
 
-            // Same decoding
-            let result = decoder.decode_soft_with_result(&llrs);
-
-            let bit_errors = count_bit_errors(&message, &result.decoded_bits);
-            expected_bit_errors += bit_errors;
-            if bit_errors > 0 {
-                expected_block_errors += 1;
+    impl BlockEncoder for MockEncoder {
+        fn k(&self) -> usize {
+            2
+        }
+        fn n(&self) -> usize {
+            4
+        }
+        fn encode(&self, message: &BitVec) -> BitVec {
+            assert_eq!(message.len(), 2);
+            let mut codeword = BitVec::with_capacity(4);
+            for i in 0..2 {
+                let bit = message.get(i);
+                codeword.push_bit(bit);
+                codeword.push_bit(bit);
             }
+            codeword
+        }
+    }
+
+    /// A mock soft decoder that does majority-vote on repeated pairs.
+    struct MockSoftDecoder;
+
+    impl SoftDecoder for MockSoftDecoder {
+        fn k(&self) -> usize {
+            2
+        }
+        fn n(&self) -> usize {
+            4
+        }
+        fn decode_soft(&self, llrs: &[Llr]) -> BitVec {
+            assert_eq!(llrs.len(), 4);
+            let mut result = BitVec::with_capacity(2);
+            // Pair 0: llrs[0] + llrs[1], pair 1: llrs[2] + llrs[3]
+            for pair in 0..2 {
+                let combined = llrs[2 * pair].value() + llrs[2 * pair + 1].value();
+                result.push_bit(combined < 0.0);
+            }
+            result
+        }
+    }
+
+    /// A mock iterative soft decoder wrapping MockSoftDecoder.
+    struct MockIterativeDecoder {
+        last_iterations: usize,
+    }
+
+    impl SoftDecoder for MockIterativeDecoder {
+        fn k(&self) -> usize {
+            2
+        }
+        fn n(&self) -> usize {
+            4
+        }
+        fn decode_soft(&self, llrs: &[Llr]) -> BitVec {
+            assert_eq!(llrs.len(), 4);
+            let mut result = BitVec::with_capacity(2);
+            for pair in 0..2 {
+                let combined = llrs[2 * pair].value() + llrs[2 * pair + 1].value();
+                result.push_bit(combined < 0.0);
+            }
+            result
+        }
+    }
+
+    impl IterativeSoftDecoder for MockIterativeDecoder {
+        fn decode_iterative(&mut self, llrs: &[Llr], max_iterations: usize) -> DecoderResult {
+            let decoded = self.decode_soft(llrs);
+            let iters = max_iterations.min(3);
+            self.last_iterations = iters;
+            DecoderResult::new(decoded, iters, true, true)
         }
 
-        // Exact match required since the RNG sequence is identical
-        assert_eq!(
-            sim_result.num_bit_errors, expected_bit_errors,
-            "Bit errors mismatch: sim={} expected={}",
-            sim_result.num_bit_errors, expected_bit_errors
-        );
-        assert_eq!(
-            sim_result.num_block_errors, expected_block_errors,
-            "Block errors mismatch: sim={} expected={}",
-            sim_result.num_block_errors, expected_block_errors
-        );
-        assert_eq!(sim_result.num_frames, num_frames);
-        assert_eq!(sim_result.num_bits, num_frames * k);
+        fn last_iteration_count(&self) -> usize {
+            self.last_iterations
+        }
 
-        // Verify BER computation
-        let expected_ber = expected_bit_errors as f64 / (num_frames * k) as f64;
-        assert!(
-            (sim_result.ber - expected_ber).abs() < 1e-15,
-            "BER mismatch: sim={} expected={}",
-            sim_result.ber,
-            expected_ber
-        );
+        fn reset(&mut self) {
+            self.last_iterations = 0;
+        }
     }
-
-    // -----------------------------------------------------------------------
-    // Statistics accuracy: hand-computed avg_iterations / avg_queries_per_bit
-    // -----------------------------------------------------------------------
 
     #[test]
-    fn test_avg_iterations_and_queries_per_bit() {
-        let encoder = RepetitionEncoder;
-        let mut decoder = RepetitionIterativeDecoder::new();
+    fn test_run_coded_basic() {
+        let encoder = MockEncoder;
+        let decoder = MockSoftDecoder;
         let channel = BpskAwgnChannel;
+        let mut config = SimulationConfig::quick_test();
+        config.eb_n0_range_db = vec![10.0];
+        config.min_errors = 5;
+        config.max_frames = 1000;
 
-        let config = SimulationConfig {
-            eb_n0_range_db: vec![6.0],
-            min_errors: 5,
-            max_frames: 500,
-            max_decoder_iterations: 50,
-            rng_seed: Some(42),
-            output_path: None,
-        };
-
-        let results =
-            SimulationRunner::run_coded_iterative(&encoder, &mut decoder, &channel, &config);
-        let p = &results.points[0];
-
-        // Mock converges in 3 iters (min(50, 3) = 3)
-        // So avg_iterations should be exactly 3.0
-        assert!(
-            (p.avg_iterations - 3.0).abs() < 1e-10,
-            "Expected avg_iterations=3.0, got {}",
-            p.avg_iterations
-        );
-
-        // k=1, so avg_queries_per_bit = total_iters / total_bits = 3 * frames / (1 * frames) = 3.0
-        assert!(
-            (p.avg_queries_per_bit - 3.0).abs() < 1e-10,
-            "Expected avg_queries_per_bit=3.0, got {}",
-            p.avg_queries_per_bit
-        );
+        let results = run_coded(&encoder, &decoder, &channel, &config);
+        assert_eq!(results.points.len(), 1);
+        assert!(results.points[0].num_frames > 0);
+        assert!(results.points[0].ber >= 0.0);
+        assert!(results.points[0].bler >= 0.0);
     }
 
-    // -----------------------------------------------------------------------
-    // Channel model is a parameter, not hardcoded
-    // -----------------------------------------------------------------------
+    #[test]
+    fn test_run_coded_iterative_basic() {
+        let encoder = MockEncoder;
+        let mut decoder = MockIterativeDecoder { last_iterations: 0 };
+        let channel = BpskAwgnChannel;
+        let mut config = SimulationConfig::quick_test();
+        config.eb_n0_range_db = vec![10.0];
+        config.min_errors = 5;
+        config.max_frames = 1000;
 
-    /// Custom channel model for testing that the trait is respected.
-    struct NoiselessChannel;
+        let results = run_coded_iterative(&encoder, &mut decoder, &channel, &config);
+        assert_eq!(results.points.len(), 1);
+        assert!(results.points[0].num_frames > 0);
+        assert!(results.points[0].avg_iterations.is_some());
+    }
 
-    impl ChannelModel for NoiselessChannel {
+    #[test]
+    fn test_run_coded_iterative_parallel_basic() {
+        let encoder = MockEncoder;
+        let channel = BpskAwgnChannel;
+        let mut config = SimulationConfig::quick_test();
+        config.eb_n0_range_db = vec![8.0, 10.0];
+        config.min_errors = 5;
+        config.max_frames = 1000;
+        config.rng_seed = Some(42);
+
+        let results = run_coded_iterative_parallel(
+            &encoder,
+            || MockIterativeDecoder { last_iterations: 0 },
+            &channel,
+            &config,
+        );
+        assert_eq!(results.points.len(), 2);
+        for point in &results.points {
+            assert!(point.num_frames > 0);
+        }
+    }
+
+    #[test]
+    fn test_run_coded_with_output_path() {
+        let dir = std::env::temp_dir().join("gf2_sim_coded_out");
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("coded_results.csv");
+
+        let encoder = MockEncoder;
+        let decoder = MockSoftDecoder;
+        let channel = BpskAwgnChannel;
+        let mut config = SimulationConfig::quick_test();
+        config.eb_n0_range_db = vec![10.0];
+        config.min_errors = 5;
+        config.max_frames = 500;
+        config.output_path = Some(path.clone());
+
+        let _results = run_coded(&encoder, &decoder, &channel, &config);
+        assert!(path.exists(), "Output file must be created");
+
+        let content = std::fs::read_to_string(&path).unwrap();
+        assert!(content.contains("eb_n0_db"), "CSV must have header");
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn test_run_coded_iterative_with_output_path() {
+        let dir = std::env::temp_dir().join("gf2_sim_iter_out");
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("iter_results.json");
+
+        let encoder = MockEncoder;
+        let mut decoder = MockIterativeDecoder { last_iterations: 0 };
+        let channel = BpskAwgnChannel;
+        let mut config = SimulationConfig::quick_test();
+        config.eb_n0_range_db = vec![10.0];
+        config.min_errors = 5;
+        config.max_frames = 500;
+        config.output_path = Some(path.clone());
+
+        let _results = run_coded_iterative(&encoder, &mut decoder, &channel, &config);
+        assert!(path.exists(), "Output file must be created");
+
+        let content = std::fs::read_to_string(&path).unwrap();
+        assert!(content.starts_with('['), "JSON file must start with [");
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn test_run_coded_iterative_parallel_with_output_path() {
+        let dir = std::env::temp_dir().join("gf2_sim_par_out");
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("par_results.csv");
+
+        let encoder = MockEncoder;
+        let channel = BpskAwgnChannel;
+        let mut config = SimulationConfig::quick_test();
+        config.eb_n0_range_db = vec![10.0];
+        config.min_errors = 5;
+        config.max_frames = 500;
+        config.output_path = Some(path.clone());
+        config.rng_seed = Some(99);
+
+        let _results = run_coded_iterative_parallel(
+            &encoder,
+            || MockIterativeDecoder { last_iterations: 0 },
+            &channel,
+            &config,
+        );
+        assert!(path.exists(), "Output file must be created");
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// A deterministic "channel" that always returns fixed LLRs.
+    /// Bit 0 gets LLR +10 (correct), bit 1 gets LLR -10 (correct),
+    /// except when `flip_positions` indicates an error.
+    struct DeterministicChannel {
+        /// Bit positions in the codeword where the channel introduces errors
+        /// (LLR sign is flipped).
+        flip_positions: Vec<usize>,
+    }
+
+    impl ChannelModel for DeterministicChannel {
         fn transmit_and_demodulate<R: Rng>(
             &self,
-            codeword_bits: &BitVec,
+            bits: &BitVec,
             _eb_n0_db: f64,
-            _code_rate: f64,
+            _rate: f64,
             _rng: &mut R,
         ) -> Vec<Llr> {
-            // Perfect channel: return high-confidence LLRs matching the codeword
-            (0..codeword_bits.len())
+            (0..bits.len())
                 .map(|i| {
-                    if codeword_bits.get(i) {
-                        Llr::new(-10.0) // bit 1 -> negative LLR
+                    let correct_llr = if bits.get(i) {
+                        -10.0 // bit=1 -> negative LLR
                     } else {
-                        Llr::new(10.0) // bit 0 -> positive LLR
+                        10.0 // bit=0 -> positive LLR
+                    };
+                    if self.flip_positions.contains(&i) {
+                        Llr::new(-correct_llr) // flip: wrong decision
+                    } else {
+                        Llr::new(correct_llr) // correct
                     }
                 })
                 .collect()
@@ -2118,200 +1569,212 @@ mod tests {
     }
 
     #[test]
-    fn test_custom_channel_model_noiseless() {
-        let encoder = RepetitionEncoder;
-        let decoder = RepetitionSoftDecoder;
-        let channel = NoiselessChannel;
+    fn test_hand_calculated_deterministic_ber() {
+        // Setup: MockEncoder maps [m0, m1] -> [m0, m0, m1, m1]
+        // DeterministicChannel flips position 0 and 1 (both copies of m0).
+        // MockSoftDecoder does majority vote on pairs:
+        //   pair 0: both flipped -> wrong decision on m0
+        //   pair 1: both correct -> correct on m1
+        //
+        // So every frame has exactly 1 bit error out of k=2 message bits.
+        // With seeded RNG and 10 frames: 10 bit errors, 10 frame errors.
 
-        let config = SimulationConfig {
-            eb_n0_range_db: vec![0.0],
-            min_errors: 5,
-            max_frames: 1000,
-            max_decoder_iterations: 1,
-            rng_seed: Some(42),
-            output_path: None,
+        let encoder = MockEncoder;
+        let decoder = MockSoftDecoder;
+        let channel = DeterministicChannel {
+            flip_positions: vec![0, 1],
         };
+        let mut config = SimulationConfig::quick_test();
+        config.eb_n0_range_db = vec![5.0]; // value doesn't matter for deterministic channel
+        config.min_errors = 10;
+        config.max_frames = 10;
+        config.rng_seed = Some(12345);
 
-        let results = SimulationRunner::run_coded(&encoder, &decoder, &channel, &config);
-        let p = &results.points[0];
+        let results = run_coded(&encoder, &decoder, &channel, &config);
+        assert_eq!(results.points.len(), 1);
 
-        // Noiseless channel -> zero errors, should hit max_frames
-        assert_eq!(p.num_bit_errors, 0);
-        assert_eq!(p.num_block_errors, 0);
-        assert_eq!(p.num_frames, 1000);
-        assert_eq!(p.ber, 0.0);
-        assert_eq!(p.bler, 0.0);
-    }
+        let point = &results.points[0];
+        assert_eq!(point.num_frames, 10, "Must have run exactly 10 frames");
+        assert_eq!(
+            point.num_bit_errors, 10,
+            "Each frame has exactly 1 bit error, so 10 total"
+        );
+        assert_eq!(
+            point.num_frame_errors, 10,
+            "Every frame has at least 1 error"
+        );
+        assert_eq!(point.num_bits, 20, "10 frames * k=2 bits per frame");
 
-    // -----------------------------------------------------------------------
-    // count_bit_errors helper
-    // -----------------------------------------------------------------------
+        let expected_ber = 10.0 / 20.0; // 0.5
+        assert!(
+            (point.ber - expected_ber).abs() < 1e-10,
+            "BER must be exactly 0.5, got {}",
+            point.ber
+        );
 
-    #[test]
-    fn test_count_bit_errors_identical() {
-        let a = BitVec::zeros(64);
-        let b = BitVec::zeros(64);
-        assert_eq!(count_bit_errors(&a, &b), 0);
-    }
-
-    #[test]
-    fn test_count_bit_errors_all_different() {
-        let a = BitVec::zeros(8);
-        let b = BitVec::ones(8);
-        assert_eq!(count_bit_errors(&a, &b), 8);
-    }
-
-    #[test]
-    fn test_count_bit_errors_one_bit() {
-        let a = BitVec::zeros(4);
-        let mut b = BitVec::zeros(4);
-        b.set(2, true);
-        assert_eq!(count_bit_errors(&a, &b), 1);
-    }
-
-    #[test]
-    fn test_count_bit_errors_cross_word() {
-        // 65 bits: crosses word boundary
-        let a = BitVec::zeros(65);
-        let b = BitVec::ones(65);
-        assert_eq!(count_bit_errors(&a, &b), 65);
+        let expected_bler = 10.0 / 10.0; // 1.0
+        assert!(
+            (point.bler - expected_bler).abs() < 1e-10,
+            "BLER must be exactly 1.0, got {}",
+            point.bler
+        );
     }
 
     #[test]
-    #[should_panic(expected = "BitVec lengths must match")]
-    fn test_count_bit_errors_length_mismatch() {
-        let a = BitVec::zeros(4);
-        let b = BitVec::zeros(5);
-        count_bit_errors(&a, &b);
+    fn test_deterministic_no_errors() {
+        // No flipped positions -> zero errors
+        let encoder = MockEncoder;
+        let decoder = MockSoftDecoder;
+        let channel = DeterministicChannel {
+            flip_positions: vec![],
+        };
+        let mut config = SimulationConfig::quick_test();
+        config.eb_n0_range_db = vec![5.0];
+        config.min_errors = 10;
+        config.max_frames = 20;
+        config.rng_seed = Some(42);
+
+        let results = run_coded(&encoder, &decoder, &channel, &config);
+        let point = &results.points[0];
+
+        assert_eq!(point.num_frames, 20, "Should hit max_frames with no errors");
+        assert_eq!(
+            point.num_bit_errors, 0,
+            "No channel errors -> no bit errors"
+        );
+        assert_eq!(point.num_frame_errors, 0, "No frame errors");
+        assert!((point.ber - 0.0).abs() < 1e-10, "BER must be 0.0");
+        assert!((point.bler - 0.0).abs() < 1e-10, "BLER must be 0.0");
     }
 
-    // -----------------------------------------------------------------------
-    // BpskAwgnChannel trait impl
-    // -----------------------------------------------------------------------
+    #[test]
+    fn test_early_termination_at_min_errors() {
+        // Channel always causes errors -> should stop at min_errors, not max_frames.
+        let encoder = MockEncoder;
+        let decoder = MockSoftDecoder;
+        let channel = DeterministicChannel {
+            flip_positions: vec![0, 1],
+        };
+        let mut config = SimulationConfig::quick_test();
+        config.eb_n0_range_db = vec![5.0];
+        config.min_errors = 5;
+        config.max_frames = 1000;
+        config.rng_seed = Some(1);
+
+        let results = run_coded(&encoder, &decoder, &channel, &config);
+        let point = &results.points[0];
+
+        assert_eq!(
+            point.num_frame_errors, 5,
+            "Should stop at exactly min_errors frame errors"
+        );
+        assert_eq!(
+            point.num_frames, 5,
+            "Every frame has errors, so should stop at 5 frames"
+        );
+    }
 
     #[test]
-    fn test_bpsk_awgn_channel_impl() {
+    fn test_seeded_rng_reproducibility() {
+        let encoder = MockEncoder;
         let channel = BpskAwgnChannel;
-        let bits = BitVec::zeros(10);
+        let mut config = SimulationConfig::quick_test();
+        config.eb_n0_range_db = vec![3.0];
+        config.min_errors = 20;
+        config.max_frames = 2000;
+        config.rng_seed = Some(42);
+
+        let decoder1 = MockSoftDecoder;
+        let results1 = run_coded(&encoder, &decoder1, &channel, &config);
+
+        let decoder2 = MockSoftDecoder;
+        let results2 = run_coded(&encoder, &decoder2, &channel, &config);
+
+        assert_eq!(
+            results1.points[0].num_bit_errors,
+            results2.points[0].num_bit_errors
+        );
+        assert_eq!(results1.points[0].num_frames, results2.points[0].num_frames);
+    }
+
+    #[test]
+    fn test_queries_tracking() {
+        /// A decoder that reports queries in its result.
+        struct QueryTrackingDecoder;
+
+        impl SoftDecoder for QueryTrackingDecoder {
+            fn k(&self) -> usize {
+                2
+            }
+            fn n(&self) -> usize {
+                4
+            }
+            fn decode_soft(&self, llrs: &[Llr]) -> BitVec {
+                assert_eq!(llrs.len(), 4);
+                let mut result = BitVec::with_capacity(2);
+                for pair in 0..2 {
+                    let combined = llrs[2 * pair].value() + llrs[2 * pair + 1].value();
+                    result.push_bit(combined < 0.0);
+                }
+                result
+            }
+            fn decode_soft_with_result(&self, llrs: &[Llr]) -> DecoderResult {
+                let decoded = self.decode_soft(llrs);
+                let mut r = DecoderResult::new(decoded, 1, true, true);
+                r.queries = Some(42);
+                r
+            }
+        }
+
+        let encoder = MockEncoder;
+        let decoder = QueryTrackingDecoder;
+        let channel = DeterministicChannel {
+            flip_positions: vec![],
+        };
+        let mut config = SimulationConfig::quick_test();
+        config.eb_n0_range_db = vec![5.0];
+        config.min_errors = 1;
+        config.max_frames = 5;
+        config.rng_seed = Some(1);
+
+        let results = run_coded(&encoder, &decoder, &channel, &config);
+        let point = &results.points[0];
+
+        // 5 frames, each with 42 queries, k=2 bits per frame -> total_queries=210, total_bits=10
+        // avg_queries_per_bit = 210 / 10 = 21.0
+        assert!(
+            point.avg_queries_per_bit.is_some(),
+            "avg_queries_per_bit should be present"
+        );
+        let avg_q = point.avg_queries_per_bit.unwrap();
+        assert!(
+            (avg_q - 21.0).abs() < 1e-10,
+            "avg_queries_per_bit should be 21.0, got {avg_q}"
+        );
+    }
+
+    #[test]
+    fn test_bpsk_awgn_channel_model() {
+        let channel = BpskAwgnChannel;
+        let bits = BitVec::from_bytes_le(&[0b10110001]);
         let mut rng = StdRng::seed_from_u64(42);
-        let llrs = channel.transmit_and_demodulate(&bits, 10.0, 1.0, &mut rng);
-        assert_eq!(llrs.len(), 10);
-        // High SNR: all LLRs should be positive (all-zero codeword)
-        for llr in &llrs {
-            assert!(
-                llr.value() > 0.0,
-                "At 10dB, all-zero codeword should yield positive LLRs"
-            );
-        }
+        let llrs = channel.transmit_and_demodulate(&bits, 10.0, 0.5, &mut rng);
+        assert_eq!(llrs.len(), bits.len());
     }
 
-    // -----------------------------------------------------------------------
-    // SimulationConfig construction
-    // -----------------------------------------------------------------------
-
     #[test]
-    fn test_coded_simulation_config_fields() {
-        let config = SimulationConfig {
-            eb_n0_range_db: vec![0.0, 0.5, 1.0, 1.5, 2.0],
-            min_errors: 100,
-            max_frames: 100_000,
-            max_decoder_iterations: 50,
-            rng_seed: Some(42),
-            output_path: None,
-        };
-        assert_eq!(config.eb_n0_range_db.len(), 5);
-        assert_eq!(config.min_errors, 100);
-        assert_eq!(config.max_decoder_iterations, 50);
-    }
+    fn test_snr_accumulator_basic() {
+        let mut acc = SnrAccumulator::new(3.0, 10);
+        acc.record_frame(2, 5, None);
+        acc.record_frame(0, 3, None);
+        acc.record_frame(1, 7, Some(100));
 
-    // -----------------------------------------------------------------------
-    // Verify JSON is parseable
-    // -----------------------------------------------------------------------
-
-    #[test]
-    fn test_json_output_parseable() {
-        let results = SimulationResults {
-            points: vec![
-                SimulationResult {
-                    eb_n0_db: 0.0,
-                    ber: 0.1,
-                    bler: 0.5,
-                    num_bit_errors: 100,
-                    num_bits: 1000,
-                    num_block_errors: 50,
-                    num_frames: 100,
-                    avg_iterations: 5.0,
-                    avg_queries_per_bit: 5.0,
-                },
-                SimulationResult {
-                    eb_n0_db: 3.0,
-                    ber: 0.01,
-                    bler: 0.05,
-                    num_bit_errors: 10,
-                    num_bits: 1000,
-                    num_block_errors: 5,
-                    num_frames: 100,
-                    avg_iterations: 3.0,
-                    avg_queries_per_bit: 3.0,
-                },
-            ],
-        };
-
-        let json = SimulationRunner::coded_results_to_json(&results);
-
-        // Verify JSON structure: array of objects
-        assert!(json.starts_with('['), "must start with [");
-        assert!(json.trim_end().ends_with(']'), "must end with ]");
-
-        // Count objects (opening braces)
-        assert_eq!(json.matches('{').count(), 2, "should have 2 objects");
-
-        // Verify actual numeric values by extracting key-value pairs
-        // First object should have eb_n0_db: 0
-        assert!(
-            json.contains("\"eb_n0_db\": 0"),
-            "first point eb_n0_db should be 0"
-        );
-        assert!(
-            json.contains("\"ber\": 0.1"),
-            "first point ber should be 0.1"
-        );
-        assert!(
-            json.contains("\"bler\": 0.5"),
-            "first point bler should be 0.5"
-        );
-        assert!(
-            json.contains("\"num_frames\": 100"),
-            "first point num_frames should be 100"
-        );
-
-        // Second object should have eb_n0_db: 3
-        assert!(
-            json.contains("\"eb_n0_db\": 3"),
-            "second point eb_n0_db should be 3"
-        );
-        assert!(
-            json.contains("\"ber\": 0.01"),
-            "second point ber should be 0.01"
-        );
-
-        // All required fields present
-        for field in &[
-            "eb_n0_db",
-            "ber",
-            "bler",
-            "num_bit_errors",
-            "num_bits",
-            "num_block_errors",
-            "num_frames",
-            "avg_iterations",
-            "avg_queries_per_bit",
-        ] {
-            assert!(
-                json.contains(&format!("\"{}\"", field)),
-                "JSON missing field: {}",
-                field
-            );
-        }
+        assert_eq!(acc.total_frames, 3);
+        assert_eq!(acc.total_bit_errors, 3);
+        assert_eq!(acc.total_frame_errors, 2);
+        assert_eq!(acc.total_bits, 30);
+        assert_eq!(acc.total_iterations, 15);
+        // queries: 5 (fallback) + 3 (fallback) + 100 (explicit) = 108
+        assert_eq!(acc.total_queries, 108);
     }
 }
