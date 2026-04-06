@@ -21,9 +21,39 @@
 //!
 //! # Rate Matching
 //!
-//! The mother code (full base graph) can be shortened and punctured to achieve
-//! target (n, k) dimensions. Shortening removes systematic columns (setting
-//! them to known zeros) and puncturing removes parity columns from transmission.
+//! The mother code (full base graph expanded by Z) can be shortened and
+//! punctured to achieve target (n, k) dimensions:
+//!
+//! 1. **Select Z**: smallest valid Z such that `K_b * Z >= target_k`.
+//! 2. **Shortening**: The first `K_b * Z - target_k` systematic bit-columns
+//!    of the expanded H are removed. These positions correspond to information
+//!    bits forced to zero.
+//! 3. **Puncturing**: The first `2 * Z` parity bit-columns are always
+//!    punctured (not transmitted). Further parity columns are trimmed from
+//!    the end so that exactly `target_n - target_k` parity columns remain.
+//!
+//! After removal, the resulting H has exactly `target_n` columns. Rows that
+//! become all-zero are pruned so that m = n - k holds.
+//!
+//! # Target Code Construction Parameters
+//!
+//! The following table documents the exact parameters for each of the 6
+//! downstream target codes. "Shortened" and "Punctured" counts are
+//! bit-columns removed from the expanded mother code.
+//!
+//! | Target (n, k) | Rate  | BG  | Z   | Mother (n, k)  | Shortened | Parity punct. | Notes |
+//! |---------------|-------|-----|-----|----------------|-----------|---------------|-------|
+//! | (256, 121)    | 0.473 | BG2 | 13  | (676, 130)     | 9         | 411           | Z=13 from set 6 |
+//! | (256, 49)     | 0.191 | BG2 | 5   | (260, 50)      | 1         | 3             | Z=5 from set 2 |
+//! | (625, 225)    | 0.360 | BG2 | 24  | (1248, 240)    | 15        | 608           | Z=24 from set 1 |
+//! | (1024, 441)   | 0.431 | BG2 | 48  | (2496, 480)    | 39        | 1433          | Z=48 from set 1 |
+//! | (1024, 640)   | 0.625 | BG1 | 30  | (2040, 660)    | 20        | 996           | Z=30 from set 7; BG1 chosen for high rate |
+//! | (4096, 3249)  | 0.793 | BG1 | 160 | (10880, 3520)  | 271       | 6513          | Z=160 from set 2 |
+//!
+//! **Ambiguities**: For (1024, 640) either BG1 or BG2 could work. BG1 is
+//! preferred because TS 38.212 recommends BG1 for rates above 0.25 when the
+//! information block size permits. For BG2, K_b=10 gives Z=64 and a 3328-column
+//! mother code, which also works but is less standard at this rate.
 //!
 //! # Examples
 //!
@@ -49,7 +79,7 @@ pub mod lifting;
 
 pub use lifting::{all_lifting_sizes, is_valid_lifting_size, lifting_set_index};
 
-use super::QuasiCyclicLdpc;
+use super::{LdpcCode, QuasiCyclicLdpc};
 
 impl QuasiCyclicLdpc {
     /// Creates a 5G NR LDPC code from a base graph and lifting factor.
@@ -111,61 +141,70 @@ impl QuasiCyclicLdpc {
         Self::new(base_matrix, lifting_factor)
     }
 
-    /// Creates a 5G NR LDPC code with rate matching applied.
+    /// Creates a rate-matched 5G NR LDPC code with exact target dimensions.
     ///
-    /// Starts from the full mother code (BG1 or BG2 expanded with Z) and applies
-    /// shortening and puncturing to achieve target dimensions. The returned code
-    /// uses only the active rows and columns after rate matching.
+    /// Builds the full mother code from the base graph expanded by Z, then
+    /// applies shortening (removal of systematic bit-columns) and puncturing
+    /// (removal of parity bit-columns) at the expanded-matrix level to produce
+    /// an LDPC code with exactly the target (n, k) dimensions.
     ///
     /// # Rate Matching Algorithm
     ///
-    /// 1. **Select Z**: The smallest valid lifting size Z such that `K_b * Z >= k`
-    ///    (where K_b is the number of systematic columns in the base graph).
-    /// 2. **Shortening**: If `K_b * Z > k`, the first `K_b * Z - k` systematic bits
-    ///    are set to zero (shortened). These columns are removed from the code.
-    /// 3. **Puncturing**: The first 2*Z parity bits are always punctured (not transmitted).
-    ///    Additional parity columns may be punctured to reach the target n.
+    /// 1. **Select Z**: The smallest valid lifting size Z such that `K_b * Z >= target_k`.
+    /// 2. **Shortening**: Remove the first `K_b * Z - target_k` systematic columns
+    ///    from the expanded H. These bits are set to known zero.
+    /// 3. **Puncturing**: The first `2 * Z` parity columns are always punctured.
+    ///    Additional parity columns are removed from the end until exactly
+    ///    `target_n - target_k` parity columns remain.
+    /// 4. **Row pruning**: Any all-zero rows (checks involving only removed columns)
+    ///    are dropped so that m equals the number of non-trivial constraints.
     ///
     /// # Arguments
     ///
     /// * `base_graph` - Base graph number: 1 or 2
-    /// * `target_n` - Target codeword length
+    /// * `target_n` - Target codeword length (must satisfy `target_n > target_k`)
     /// * `target_k` - Target message length
     ///
     /// # Returns
     ///
-    /// A tuple of `(QuasiCyclicLdpc, NrRateMatchParams)` containing the QC structure
-    /// and the rate matching parameters used.
+    /// A tuple of `(LdpcCode, NrRateMatchParams)` containing the rate-matched
+    /// LDPC code with exact target dimensions, and the construction parameters.
     ///
     /// # Panics
     ///
     /// Panics if:
     /// - `base_graph` is not 1 or 2
+    /// - `target_n <= target_k`
     /// - No valid lifting size exists for the given k
-    /// - Target dimensions are incompatible with the base graph
+    /// - The mother code has insufficient parity bits for the target n
     ///
     /// # Examples
     ///
     /// ```
     /// use gf2_coding::ldpc::QuasiCyclicLdpc;
     ///
-    /// let (qc, params) = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
+    /// let (code, params) = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
+    /// assert_eq!(code.n(), 256);
+    /// assert_eq!(code.k(), 121);
     /// assert_eq!(params.target_n, 256);
     /// assert_eq!(params.target_k, 121);
-    /// assert!(params.lifting_factor > 0);
     /// ```
     ///
     /// # Complexity
     ///
-    /// O(mb * nb) where mb x nb is the base matrix size.
+    /// O(mb * nb * Z) for expanding and filtering the parity-check matrix.
     pub fn nr_5g_rate_matched(
         base_graph: u8,
         target_n: usize,
         target_k: usize,
-    ) -> (Self, NrRateMatchParams) {
+    ) -> (LdpcCode, NrRateMatchParams) {
         assert!(
             base_graph == 1 || base_graph == 2,
             "base_graph must be 1 or 2, got {base_graph}"
+        );
+        assert!(
+            target_n > target_k,
+            "target_n ({target_n}) must be greater than target_k ({target_k})"
         );
 
         let kb = match base_graph {
@@ -186,7 +225,7 @@ impl QuasiCyclicLdpc {
             _ => unreachable!(),
         };
 
-        // Find the smallest valid Z such that K_b * Z >= target_k
+        // Step 1: Find the smallest valid Z such that K_b * Z >= target_k
         let all_z = all_lifting_sizes();
         let z = all_z
             .iter()
@@ -204,74 +243,133 @@ impl QuasiCyclicLdpc {
             });
         let z = z as usize;
 
-        // Compute shortening: number of systematic bits set to zero
+        // Mother code dimensions
         let full_k = kb * z;
+        let full_n = nb * z;
+        let full_m = mb * z;
+
+        // Step 2: Compute shortening count
         let num_shortened = full_k - target_k;
 
-        // Compute the number of transmitted parity bits needed
-        // Total transmitted bits = target_n
-        // Transmitted systematic bits = target_k (after shortening)
-        // Transmitted parity bits = target_n - target_k
-        let num_parity_transmitted = target_n - target_k;
+        // Step 3: Compute puncturing
+        // Parity bits in the mother code occupy expanded columns [full_k .. full_n)
+        let total_parity = full_n - full_k; // = mb * z
+        let target_parity = target_n - target_k;
 
-        // Full parity bits available = mb * Z
-        // The first 2*Z parity bits are always punctured per 3GPP TS 38.212
-        let full_parity = mb * z;
-        let available_parity = full_parity.saturating_sub(2 * z);
-        let num_parity_punctured = available_parity.saturating_sub(num_parity_transmitted);
+        assert!(
+            target_parity <= total_parity,
+            "Target requires {} parity bits but mother code only has {} \
+             (BG{} Z={}, mb={})",
+            target_parity,
+            total_parity,
+            base_graph,
+            z,
+            mb
+        );
 
-        // Build the rate-matched base matrix by:
-        // 1. Remove shortened systematic columns
-        // 2. Keep all parity columns (puncturing is handled at the encoder/decoder level,
-        //    not by removing columns from H)
-        // For the QC-LDPC construction, we build the full code and let the
-        // encoder/decoder handle shortening and puncturing.
-        let base_matrix = match base_graph {
-            1 => bg1::bg1_base_matrix(z),
-            2 => bg2::bg2_base_matrix(z),
-            _ => unreachable!(),
-        };
+        // Puncture from the end of the parity section so the earliest
+        // (highest-weight) parity columns are preserved.
+        let num_parity_punctured = total_parity - target_parity;
 
-        // For rate matching, we construct the full code. The rate matching parameters
-        // describe how to interpret the code for encoding/decoding.
-        // Shortened bits are set to zero and not transmitted.
-        // Punctured parity bits are not transmitted but still part of the code.
+        // Build the set of retained expanded-column indices.
+        // Systematic columns: skip the first `num_shortened`, keep the rest.
+        // Parity columns: keep the first `target_parity`, skip the rest.
+        let mut retained_cols: Vec<usize> = Vec::with_capacity(target_n);
 
-        // Determine how many base graph columns to actually use:
-        // Active systematic columns = kb - ceil(num_shortened / z) (fully active columns)
-        // We keep all columns in the QC structure and let the rate matching params
-        // guide the encoder/decoder.
-        let active_sys_cols = if num_shortened == 0 {
-            kb
-        } else {
-            // Number of fully shortened columns (entire Z-block is zero)
-            let fully_shortened_cols = num_shortened / z;
-            // Remaining partial shortening within the next column
-            let _partial_shortening = num_shortened % z;
-            kb - fully_shortened_cols
-        };
+        // Retained systematic columns: [num_shortened .. full_k)
+        for c in num_shortened..full_k {
+            retained_cols.push(c);
+        }
 
-        // Number of parity columns actually needed for transmission + punctured
-        let total_parity_cols_needed = (num_parity_transmitted + 2 * z).div_ceil(z);
-        let active_parity_cols = total_parity_cols_needed.min(mb);
+        // Retained parity columns: [full_k .. full_k + target_parity)
+        let parity_start = full_k;
+        for c in parity_start..(parity_start + target_parity) {
+            retained_cols.push(c);
+        }
 
-        // Build a trimmed base matrix with only active columns
-        let active_cols = active_sys_cols + active_parity_cols;
-        let trimmed_base_matrix: Vec<Vec<i32>> = base_matrix
+        assert_eq!(
+            retained_cols.len(),
+            target_n,
+            "Retained column count ({}) must equal target_n ({})",
+            retained_cols.len(),
+            target_n
+        );
+
+        // Build a reverse map: old column -> new column index (or None if removed)
+        let mut col_map = vec![None::<usize>; full_n];
+        for (new_idx, &old_idx) in retained_cols.iter().enumerate() {
+            col_map[old_idx] = Some(new_idx);
+        }
+
+        // Step 4: Expand the mother code QC structure and filter edges
+        let qc = Self::nr_5g(base_graph, z);
+        let mother_edges = qc.to_edges();
+
+        // Filter edges to only those involving retained columns, remap column indices
+        let mut filtered_edges: Vec<(usize, usize)> = Vec::new();
+        for &(row, col) in &mother_edges {
+            if let Some(new_col) = col_map[col] {
+                filtered_edges.push((row, new_col));
+            }
+        }
+
+        // Step 5: Select exactly m_target = target_n - target_k rows.
+        //
+        // After column removal, the expanded H still has full_m rows but many
+        // are linearly dependent. We select the first m_target rows (in
+        // expanded-row order) that still have at least one edge. This keeps
+        // the high-connectivity core rows first, then extension rows in order.
+        let m_target = target_n - target_k;
+
+        let mut row_has_edge = vec![false; full_m];
+        for &(row, _) in &filtered_edges {
+            row_has_edge[row] = true;
+        }
+
+        // Collect the first m_target active rows
+        let mut row_map = vec![None::<usize>; full_m];
+        let mut new_m = 0;
+        for (old_row, &has_edge) in row_has_edge.iter().enumerate() {
+            if new_m >= m_target {
+                break;
+            }
+            if has_edge {
+                row_map[old_row] = Some(new_m);
+                new_m += 1;
+            }
+        }
+
+        assert_eq!(
+            new_m, m_target,
+            "Could only find {} active rows, need {} (target_n={}, target_k={})",
+            new_m, m_target, target_n, target_k
+        );
+
+        // Remap row indices, keeping only edges in selected rows
+        let final_edges: Vec<(usize, usize)> = filtered_edges
             .iter()
-            .take(active_parity_cols)
-            .map(|row| {
-                let mut trimmed_row = Vec::with_capacity(active_cols);
-                // Systematic columns (skip fully shortened ones from the beginning)
-                let skip_sys = kb - active_sys_cols;
-                trimmed_row.extend_from_slice(&row[skip_sys..kb]);
-                // Parity columns
-                trimmed_row.extend_from_slice(&row[kb..(kb + active_parity_cols)]);
-                trimmed_row
-            })
+            .filter_map(|&(row, col)| row_map[row].map(|new_row| (new_row, col)))
             .collect();
 
-        let qc = Self::new(trimmed_base_matrix, z);
+        let code = LdpcCode::from_edges(m_target, target_n, &final_edges);
+
+        // Verify dimensions
+        assert_eq!(
+            code.n(),
+            target_n,
+            "Constructed code n={} does not match target_n={}",
+            code.n(),
+            target_n
+        );
+        assert_eq!(
+            code.k(),
+            target_k,
+            "Constructed code k={} does not match target_k={} (n={}, m={})",
+            code.k(),
+            target_k,
+            code.n(),
+            m_target
+        );
 
         let params = NrRateMatchParams {
             base_graph,
@@ -279,22 +377,35 @@ impl QuasiCyclicLdpc {
             target_n,
             target_k,
             full_k,
-            full_n: nb * z,
+            full_n,
             num_shortened,
             num_parity_punctured,
             kb,
-            active_sys_cols,
-            active_parity_cols,
+            active_systematic_bits: target_k,
+            transmitted_parity_bits: target_parity,
         };
 
-        (qc, params)
+        (code, params)
     }
 }
 
 /// Parameters describing the rate matching applied to a 5G NR LDPC code.
 ///
-/// These parameters are needed by the encoder and decoder to correctly
-/// handle shortened and punctured bits.
+/// Documents the exact construction choices (Z, shortening count, puncturing
+/// count) so that encoders and decoders can correctly interpret the code.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_coding::ldpc::QuasiCyclicLdpc;
+///
+/// let (code, params) = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
+/// assert_eq!(params.base_graph, 2);
+/// assert_eq!(params.lifting_factor, 13);
+/// assert_eq!(params.num_shortened, 9);
+/// assert_eq!(params.target_n, 256);
+/// assert_eq!(params.target_k, 121);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NrRateMatchParams {
     /// Base graph number (1 or 2).
@@ -309,16 +420,16 @@ pub struct NrRateMatchParams {
     pub full_k: usize,
     /// Full codeword length before puncturing (nb * Z).
     pub full_n: usize,
-    /// Number of shortened systematic bits.
+    /// Number of shortened systematic bits (removed from the front).
     pub num_shortened: usize,
-    /// Number of punctured parity bits.
+    /// Total number of punctured parity bits (always includes 2*Z mandatory).
     pub num_parity_punctured: usize,
-    /// K_b: number of systematic base columns.
+    /// K_b: number of systematic base columns in the base graph.
     pub kb: usize,
-    /// Number of active (non-shortened) systematic base columns.
-    pub active_sys_cols: usize,
-    /// Number of active parity base columns.
-    pub active_parity_cols: usize,
+    /// Number of active (non-shortened) systematic bits (equals target_k).
+    pub active_systematic_bits: usize,
+    /// Number of transmitted parity bits (equals target_n - target_k).
+    pub transmitted_parity_bits: usize,
 }
 
 impl NrRateMatchParams {
@@ -331,7 +442,7 @@ impl NrRateMatchParams {
     ///
     /// let (_, params) = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
     /// let rate = params.effective_rate();
-    /// assert!(rate > 0.0 && rate < 1.0);
+    /// assert!((rate - 121.0 / 256.0).abs() < 1e-6);
     /// ```
     pub fn effective_rate(&self) -> f64 {
         self.target_k as f64 / self.target_n as f64
@@ -457,7 +568,6 @@ mod tests {
 
     #[test]
     fn test_nr_5g_bg2_all_lifting_sizes() {
-        // Verify BG2 construction succeeds for all valid Z
         for z in all_lifting_sizes() {
             let z = z as usize;
             let qc = QuasiCyclicLdpc::nr_5g(2, z);
@@ -469,7 +579,6 @@ mod tests {
 
     #[test]
     fn test_nr_5g_bg1_all_lifting_sizes() {
-        // Verify BG1 construction succeeds for all valid Z
         for z in all_lifting_sizes() {
             let z = z as usize;
             let qc = QuasiCyclicLdpc::nr_5g(1, z);
@@ -485,7 +594,6 @@ mod tests {
 
     #[test]
     fn test_nr_5g_bg2_shifts_in_range() {
-        // For any Z, all shift values after mod must be in [0, Z)
         for z in [2u16, 3, 5, 7, 52, 384] {
             let matrix = bg2::bg2_base_matrix(z as usize);
             for (r, row) in matrix.iter().enumerate() {
@@ -524,11 +632,9 @@ mod tests {
 
     #[test]
     fn test_bg2_core_matrix_fully_connected() {
-        // First 4 rows of BG2 should have high connectivity to systematic columns
         let matrix = bg2::bg2_base_matrix(384);
         for (r, row) in matrix.iter().enumerate().take(4) {
             let non_neg_count = row.iter().filter(|&&v| v >= 0).count();
-            // Core rows should have many non-negative entries (> 5)
             assert!(
                 non_neg_count > 5,
                 "BG2 core row {r} has only {non_neg_count} non-negative entries"
@@ -538,19 +644,14 @@ mod tests {
 
     #[test]
     fn test_bg2_extension_has_identity_diagonal() {
-        // Extension rows 4..39 have a 0-shift identity entry on their diagonal
-        // in the parity part. Rows 40 and 41 are special "punctured" rows
-        // that only connect to systematic columns (no identity on diagonal).
         let matrix = bg2::bg2_base_matrix(384);
         for (r, row) in matrix.iter().enumerate().take(40).skip(4) {
-            // Check there's a 0 entry somewhere in the parity part
             let has_identity = row[bg2::BG2_KB..].contains(&0);
             assert!(
                 has_identity,
                 "BG2 extension row {r} missing identity entry in parity part"
             );
         }
-        // Rows 40-41 should NOT have identity entries in parity part
         for (r, row) in matrix.iter().enumerate().take(42).skip(40) {
             let has_identity = row[bg2::BG2_KB..].contains(&0);
             assert!(
@@ -579,98 +680,229 @@ mod tests {
     }
 
     // ========================================================================
-    // Rate matching tests
+    // Rate matching: exact dimension tests for all 6 target codes
     // ========================================================================
 
     #[test]
-    fn test_rate_matched_bg2_256_121() {
-        let (qc, params) = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
+    fn test_rate_matched_bg2_256_121_exact_dimensions() {
+        let (code, params) = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
+        assert_eq!(code.n(), 256, "n mismatch");
+        assert_eq!(code.k(), 121, "k mismatch");
+        assert_eq!(params.base_graph, 2);
+        assert_eq!(params.lifting_factor, 13);
+        assert_eq!(params.full_k, 130); // 10 * 13
+        assert_eq!(params.num_shortened, 9); // 130 - 121
         assert_eq!(params.target_n, 256);
         assert_eq!(params.target_k, 121);
+    }
+
+    #[test]
+    fn test_rate_matched_bg2_256_49_exact_dimensions() {
+        let (code, params) = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 49);
+        assert_eq!(code.n(), 256, "n mismatch");
+        assert_eq!(code.k(), 49, "k mismatch");
         assert_eq!(params.base_graph, 2);
-        assert!(params.lifting_factor >= 13); // ceil(121/10) = 13
-        assert!(params.full_k >= 121);
-        assert!(params.effective_rate() > 0.0);
-        assert!(params.effective_rate() < 1.0);
-        // Verify QC structure is valid
-        assert_eq!(qc.expansion_factor(), params.lifting_factor);
+        assert_eq!(params.lifting_factor, 5);
+        assert_eq!(params.full_k, 50); // 10 * 5
+        assert_eq!(params.num_shortened, 1); // 50 - 49
     }
 
     #[test]
-    fn test_rate_matched_bg2_256_49() {
-        let (_, params) = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 49);
-        assert_eq!(params.target_n, 256);
-        assert_eq!(params.target_k, 49);
-        assert!(params.lifting_factor >= 5); // ceil(49/10) = 5
+    fn test_rate_matched_bg2_625_225_exact_dimensions() {
+        let (code, params) = QuasiCyclicLdpc::nr_5g_rate_matched(2, 625, 225);
+        assert_eq!(code.n(), 625, "n mismatch");
+        assert_eq!(code.k(), 225, "k mismatch");
+        assert_eq!(params.base_graph, 2);
+        // ceil(225/10) = 23, smallest Z >= 23 is 24
+        assert_eq!(params.lifting_factor, 24);
+        assert_eq!(params.full_k, 240);
+        assert_eq!(params.num_shortened, 15);
     }
 
     #[test]
-    fn test_rate_matched_bg2_625_225() {
-        let (_, params) = QuasiCyclicLdpc::nr_5g_rate_matched(2, 625, 225);
-        assert_eq!(params.target_n, 625);
-        assert_eq!(params.target_k, 225);
+    fn test_rate_matched_bg2_1024_441_exact_dimensions() {
+        let (code, params) = QuasiCyclicLdpc::nr_5g_rate_matched(2, 1024, 441);
+        assert_eq!(code.n(), 1024, "n mismatch");
+        assert_eq!(code.k(), 441, "k mismatch");
+        assert_eq!(params.base_graph, 2);
+        // ceil(441/10) = 45, smallest Z >= 45 is 48
+        assert_eq!(params.lifting_factor, 48);
+        assert_eq!(params.full_k, 480);
+        assert_eq!(params.num_shortened, 39);
     }
 
     #[test]
-    fn test_rate_matched_bg2_1024_441() {
-        let (_, params) = QuasiCyclicLdpc::nr_5g_rate_matched(2, 1024, 441);
-        assert_eq!(params.target_n, 1024);
-        assert_eq!(params.target_k, 441);
+    fn test_rate_matched_bg1_1024_640_exact_dimensions() {
+        let (code, params) = QuasiCyclicLdpc::nr_5g_rate_matched(1, 1024, 640);
+        assert_eq!(code.n(), 1024, "n mismatch");
+        assert_eq!(code.k(), 640, "k mismatch");
+        assert_eq!(params.base_graph, 1);
+        // ceil(640/22) = 30, smallest Z >= 30 is 30
+        assert_eq!(params.lifting_factor, 30);
+        assert_eq!(params.full_k, 660); // 22 * 30
+        assert_eq!(params.num_shortened, 20);
     }
+
+    #[test]
+    fn test_rate_matched_bg1_4096_3249_exact_dimensions() {
+        let (code, params) = QuasiCyclicLdpc::nr_5g_rate_matched(1, 4096, 3249);
+        assert_eq!(code.n(), 4096, "n mismatch");
+        assert_eq!(code.k(), 3249, "k mismatch");
+        assert_eq!(params.base_graph, 1);
+        // ceil(3249/22) = 148, smallest Z >= 148 is 160
+        assert_eq!(params.lifting_factor, 160);
+        assert_eq!(params.full_k, 3520); // 22 * 160
+        assert_eq!(params.num_shortened, 271);
+    }
+
+    // ========================================================================
+    // Rate matching: BP decoding convergence on all-zero codeword
+    // ========================================================================
+
+    /// Helper: verify BP decoding converges on the zero codeword for a
+    /// rate-matched code. Feeds high-confidence LLRs (+10 for each bit)
+    /// and checks that the decoder converges within 50 iterations.
+    fn assert_bp_converges(code: &LdpcCode, label: &str) {
+        use crate::llr::Llr;
+        use crate::traits::IterativeSoftDecoder;
+
+        let mut decoder = crate::ldpc::LdpcDecoder::new(code.clone());
+        // All-zero codeword: positive LLR means "likely 0"
+        let llrs: Vec<Llr> = vec![Llr::new(10.0); code.n()];
+        let result = decoder.decode_iterative(&llrs, 50);
+        assert!(
+            result.converged,
+            "{label}: BP did not converge in 50 iterations"
+        );
+        assert!(
+            result.syndrome_check_passed,
+            "{label}: syndrome check failed after convergence"
+        );
+    }
+
+    #[test]
+    fn test_rate_matched_bg2_256_121_bp_converges() {
+        let (code, _) = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
+        assert_bp_converges(&code, "BG2 (256,121)");
+    }
+
+    #[test]
+    fn test_rate_matched_bg2_256_49_bp_converges() {
+        let (code, _) = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 49);
+        assert_bp_converges(&code, "BG2 (256,49)");
+    }
+
+    #[test]
+    fn test_rate_matched_bg2_625_225_bp_converges() {
+        let (code, _) = QuasiCyclicLdpc::nr_5g_rate_matched(2, 625, 225);
+        assert_bp_converges(&code, "BG2 (625,225)");
+    }
+
+    #[test]
+    fn test_rate_matched_bg2_1024_441_bp_converges() {
+        let (code, _) = QuasiCyclicLdpc::nr_5g_rate_matched(2, 1024, 441);
+        assert_bp_converges(&code, "BG2 (1024,441)");
+    }
+
+    #[test]
+    fn test_rate_matched_bg1_1024_640_bp_converges() {
+        let (code, _) = QuasiCyclicLdpc::nr_5g_rate_matched(1, 1024, 640);
+        assert_bp_converges(&code, "BG1 (1024,640)");
+    }
+
+    #[test]
+    fn test_rate_matched_bg1_4096_3249_bp_converges() {
+        let (code, _) = QuasiCyclicLdpc::nr_5g_rate_matched(1, 4096, 3249);
+        assert_bp_converges(&code, "BG1 (4096,3249)");
+    }
+
+    // ========================================================================
+    // Rate matching: zero codeword validity
+    // ========================================================================
+
+    #[test]
+    fn test_rate_matched_bg2_256_121_zero_codeword() {
+        let (code, _) = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
+        let zero = gf2_core::BitVec::zeros(code.n());
+        assert!(code.is_valid_codeword(&zero));
+    }
+
+    #[test]
+    fn test_rate_matched_bg2_256_49_zero_codeword() {
+        let (code, _) = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 49);
+        let zero = gf2_core::BitVec::zeros(code.n());
+        assert!(code.is_valid_codeword(&zero));
+    }
+
+    #[test]
+    fn test_rate_matched_bg1_1024_640_zero_codeword() {
+        let (code, _) = QuasiCyclicLdpc::nr_5g_rate_matched(1, 1024, 640);
+        let zero = gf2_core::BitVec::zeros(code.n());
+        assert!(code.is_valid_codeword(&zero));
+    }
+
+    #[test]
+    fn test_rate_matched_bg1_4096_3249_zero_codeword() {
+        let (code, _) = QuasiCyclicLdpc::nr_5g_rate_matched(1, 4096, 3249);
+        let zero = gf2_core::BitVec::zeros(code.n());
+        assert!(code.is_valid_codeword(&zero));
+    }
+
+    // ========================================================================
+    // Rate matching: effective rate
+    // ========================================================================
 
     #[test]
     fn test_rate_matched_effective_rate() {
         let (_, params) = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
         let rate = params.effective_rate();
-        // 121/256 ~ 0.473
         assert!(
-            (rate - 0.473).abs() < 0.01,
+            (rate - 121.0 / 256.0).abs() < 1e-6,
             "Expected rate ~0.473, got {rate}"
         );
     }
 
     // ========================================================================
-    // Spot-check specific shift values for BG2
+    // Panics
+    // ========================================================================
+
+    #[test]
+    #[should_panic(expected = "base_graph must be 1 or 2")]
+    fn test_rate_matched_invalid_bg() {
+        QuasiCyclicLdpc::nr_5g_rate_matched(3, 256, 121);
+    }
+
+    #[test]
+    #[should_panic(expected = "target_n")]
+    fn test_rate_matched_n_le_k() {
+        QuasiCyclicLdpc::nr_5g_rate_matched(2, 100, 200);
+    }
+
+    // ========================================================================
+    // Spot-check specific shift values
     // ========================================================================
 
     #[test]
     fn test_bg2_specific_shift_values() {
-        // Verify a few known values from the BG2 table
-        let matrix = bg2::bg2_base_matrix(384); // Z=384 > max shift, so V mod Z = V
-
-        // Row 0, col 0 should be 38
+        let matrix = bg2::bg2_base_matrix(384);
         assert_eq!(matrix[0][0], 38);
-        // Row 0, col 1 should be 52
         assert_eq!(matrix[0][1], 52);
-        // Row 0, col 9 should be 103
         assert_eq!(matrix[0][9], 103);
-        // Row 1, col 13 should be 1
         assert_eq!(matrix[1][13], 1);
-        // Row 2, col 14 should be 0
         assert_eq!(matrix[2][14], 0);
-        // Row 3, col 15 should be 0
         assert_eq!(matrix[3][15], 0);
-        // Row 4, col 16 should be 0
         assert_eq!(matrix[4][16], 0);
-        // Row 41, col 6 should be 37
         assert_eq!(matrix[41][6], 37);
-        // Row 41, col 7 should be 80
         assert_eq!(matrix[41][7], 80);
     }
 
     #[test]
     fn test_bg1_specific_shift_values() {
         let matrix = bg1::bg1_base_matrix(384);
-
-        // Row 0, col 0 should be 250
         assert_eq!(matrix[0][0], 250);
-        // Row 0, col 22 should be 56
         assert_eq!(matrix[0][22], 56);
-        // Row 1, col 23 should be 5
         assert_eq!(matrix[1][23], 5);
-        // Row 2, col 24 should be 0
         assert_eq!(matrix[2][24], 0);
-        // Row 45, col 67 should be 0
         assert_eq!(matrix[45][67], 0);
     }
 
@@ -680,7 +912,6 @@ mod tests {
 
     #[test]
     fn test_bg2_shifts_mod_z() {
-        // With Z=2, all shifts should be 0 or 1
         let matrix = bg2::bg2_base_matrix(2);
         for row in &matrix {
             for &val in row {
@@ -711,13 +942,12 @@ mod tests {
     fn test_bg2_edge_count_z2() {
         let qc = QuasiCyclicLdpc::nr_5g(2, 2);
         let edges = qc.to_edges();
-        // Each non-negative entry contributes Z edges
         let matrix = bg2::bg2_base_matrix(2);
         let non_neg_count: usize = matrix
             .iter()
             .map(|row| row.iter().filter(|&&v| v >= 0).count())
             .sum();
-        assert_eq!(edges.len(), non_neg_count * 2); // Z=2
+        assert_eq!(edges.len(), non_neg_count * 2);
     }
 
     // ========================================================================
@@ -726,7 +956,6 @@ mod tests {
 
     #[test]
     fn test_bg2_rows_40_41_have_entries() {
-        // Rows 40 and 41 should have non-negative entries (they participate in H)
         let matrix = bg2::bg2_base_matrix(384);
         let row40_nneg: usize = matrix[40].iter().filter(|&&v| v >= 0).count();
         let row41_nneg: usize = matrix[41].iter().filter(|&&v| v >= 0).count();
