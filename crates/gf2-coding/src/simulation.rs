@@ -6,19 +6,21 @@
 //!
 //! # Coded Simulation
 //!
-//! Use [`SimulationRunner::run_coded`] for end-to-end coded simulations:
+//! Use [`SimulationRunner::run_coded`] for end-to-end coded simulations with
+//! non-iterative soft decoders, or [`SimulationRunner::run_coded_iterative`]
+//! for iterative decoders (e.g., LDPC belief propagation):
 //! encode → modulate → channel → demodulate → decode → count errors.
-//! Results include BLER, BER, average decoder iterations, and average queries
-//! per information bit.
+//! Results include BLER, BER, and average decoder iterations.
 //!
 //! # Parallel Execution
 //!
 //! With the `parallel` feature enabled, [`SimulationRunner::run_coded_parallel`]
-//! dispatches each SNR point to a separate rayon thread pool worker.
+//! and [`SimulationRunner::run_coded_iterative_parallel`] dispatch each SNR
+//! point to a separate rayon thread pool worker.
 
 use crate::channel::{AwgnChannel, BpskModulator};
 use crate::llr::Llr;
-use crate::traits::{BlockEncoder, SoftDecoder};
+use crate::traits::{BlockEncoder, IterativeSoftDecoder, SoftDecoder};
 use gf2_core::BitVec;
 use rand::Rng;
 
@@ -606,6 +608,184 @@ impl SimulationRunner {
             .collect()
     }
 
+    /// Runs a coded BER/BLER simulation sweep for iterative decoders.
+    ///
+    /// Identical to [`run_coded`](Self::run_coded) except:
+    /// - Accepts `&mut D` where `D: IterativeSoftDecoder` instead of `&D: SoftDecoder`.
+    /// - Calls [`IterativeSoftDecoder::decode_iterative`] with
+    ///   `config.max_decoder_iterations`, so the iteration count is controlled
+    ///   by the configuration and reported in `avg_iterations`.
+    ///
+    /// # Arguments
+    ///
+    /// * `encoder` - A [`BlockEncoder`] that maps k-bit messages to n-bit codewords.
+    /// * `decoder` - An [`IterativeSoftDecoder`] that decodes n LLRs to k message bits.
+    /// * `config`  - Simulation parameters (SNR range, stopping criteria, max iterations).
+    /// * `rng`     - Source of randomness.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `encoder.k() != decoder.k()` or `encoder.n() != decoder.n()`.
+    ///
+    /// # Complexity
+    ///
+    /// O(max_frames * n * max_decoder_iterations) per SNR point.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::simulation::{SimulationRunner, CodedSimulationConfig};
+    /// use gf2_coding::traits::{BlockEncoder, SoftDecoder, IterativeSoftDecoder, DecoderResult};
+    /// use gf2_core::BitVec;
+    /// use gf2_coding::llr::Llr;
+    ///
+    /// struct MockIterCode { last_iters: usize }
+    /// impl BlockEncoder for MockIterCode {
+    ///     fn k(&self) -> usize { 4 }
+    ///     fn n(&self) -> usize { 4 }
+    ///     fn encode(&self, msg: &BitVec) -> BitVec { msg.clone() }
+    /// }
+    /// impl SoftDecoder for MockIterCode {
+    ///     fn k(&self) -> usize { 4 }
+    ///     fn n(&self) -> usize { 4 }
+    ///     fn decode_soft(&self, llrs: &[Llr]) -> BitVec {
+    ///         let mut out = BitVec::new();
+    ///         for &l in llrs { out.push_bit(l.hard_decision()); }
+    ///         out
+    ///     }
+    /// }
+    /// impl IterativeSoftDecoder for MockIterCode {
+    ///     fn decode_iterative(&mut self, llrs: &[Llr], max_iterations: usize) -> DecoderResult {
+    ///         let decoded = self.decode_soft(llrs);
+    ///         let iters = max_iterations.min(3);
+    ///         self.last_iters = iters;
+    ///         DecoderResult::new(decoded, iters, true, true)
+    ///     }
+    ///     fn last_iteration_count(&self) -> usize { self.last_iters }
+    ///     fn reset(&mut self) { self.last_iters = 0; }
+    /// }
+    ///
+    /// let mut config = CodedSimulationConfig::quick_test();
+    /// config.eb_n0_range = vec![10.0];
+    /// config.min_block_errors = 5;
+    /// config.max_frames = 200;
+    /// config.max_decoder_iterations = 10;
+    ///
+    /// let encoder = MockIterCode { last_iters: 0 };
+    /// let mut decoder = MockIterCode { last_iters: 0 };
+    /// let mut rng = rand::thread_rng();
+    /// let results = SimulationRunner::run_coded_iterative(
+    ///     &encoder, &mut decoder, &config, &mut rng,
+    /// );
+    /// assert_eq!(results.len(), 1);
+    /// assert!(results[0].avg_iterations > 1.0);
+    /// ```
+    pub fn run_coded_iterative<E, D, R>(
+        encoder: &E,
+        decoder: &mut D,
+        config: &CodedSimulationConfig,
+        rng: &mut R,
+    ) -> Vec<CodedSimulationResult>
+    where
+        E: BlockEncoder,
+        D: IterativeSoftDecoder,
+        R: Rng,
+    {
+        assert_eq!(
+            encoder.k(),
+            decoder.k(),
+            "encoder.k() must equal decoder.k()"
+        );
+        assert_eq!(
+            encoder.n(),
+            decoder.n(),
+            "encoder.n() must equal decoder.n()"
+        );
+
+        let k = encoder.k();
+        let n = encoder.n();
+        let code_rate = k as f64 / n as f64;
+
+        config
+            .eb_n0_range
+            .iter()
+            .map(|&eb_n0_db| {
+                let channel = AwgnChannel::from_eb_n0_db(eb_n0_db, code_rate);
+
+                let mut num_frames: usize = 0;
+                let mut num_block_errors: usize = 0;
+                let mut num_bits: usize = 0;
+                let mut num_bit_errors: usize = 0;
+                let mut total_iterations: usize = 0;
+
+                while num_block_errors < config.min_block_errors && num_frames < config.max_frames {
+                    if num_frames > 0 && num_frames % 1_000 == 0 {
+                        eprintln!(
+                            "[sim] Eb/N0={:.2} dB  frames={}  block_errors={}",
+                            eb_n0_db, num_frames, num_block_errors
+                        );
+                    }
+
+                    let message = BitVec::random(k, rng);
+                    let codeword = encoder.encode(&message);
+
+                    let symbols: Vec<f64> = (0..n)
+                        .map(|i| BpskModulator::modulate(codeword.get(i)))
+                        .collect();
+
+                    let received = channel.transmit_symbols(&symbols, rng);
+                    let llrs: Vec<Llr> = channel.to_llrs(&received);
+
+                    // Use iterative decoding with configured max iterations
+                    decoder.reset();
+                    let result = decoder.decode_iterative(&llrs, config.max_decoder_iterations);
+                    let decoded = &result.decoded_bits;
+                    total_iterations += result.iterations;
+
+                    let block_has_error = (0..k).any(|i| decoded.get(i) != message.get(i));
+                    let frame_bit_errors =
+                        (0..k).filter(|&i| decoded.get(i) != message.get(i)).count();
+
+                    num_frames += 1;
+                    num_bits += k;
+                    num_bit_errors += frame_bit_errors;
+                    if block_has_error {
+                        num_block_errors += 1;
+                    }
+                }
+
+                let ber = if num_bits > 0 {
+                    num_bit_errors as f64 / num_bits as f64
+                } else {
+                    0.0
+                };
+                let bler = if num_frames > 0 {
+                    num_block_errors as f64 / num_frames as f64
+                } else {
+                    0.0
+                };
+                let avg_iterations = if num_frames > 0 {
+                    total_iterations as f64 / num_frames as f64
+                } else {
+                    0.0
+                };
+                let reached_target = num_block_errors >= config.min_block_errors;
+
+                CodedSimulationResult {
+                    eb_n0_db,
+                    ber,
+                    bler,
+                    num_bits,
+                    num_bit_errors,
+                    num_frames,
+                    num_block_errors,
+                    avg_iterations,
+                    reached_target,
+                }
+            })
+            .collect()
+    }
+
     /// Runs a coded simulation sweep in parallel across all SNR points.
     ///
     /// Each SNR point is processed by an independent rayon task with its own
@@ -696,6 +876,126 @@ impl SimulationRunner {
 
                 let mut results =
                     SimulationRunner::run_coded(encoder, decoder, &single_config, &mut rng);
+                results.remove(0)
+            })
+            .collect()
+    }
+
+    /// Runs an iterative-decoder coded simulation sweep in parallel.
+    ///
+    /// Each SNR point is processed by an independent rayon task with its own
+    /// decoder instance (created by `make_decoder`) and seeded RNG.
+    /// Results are fully reproducible given the same `base_seed`.
+    ///
+    /// Because [`IterativeSoftDecoder::decode_iterative`] requires `&mut self`,
+    /// each rayon task needs its own decoder. The `make_decoder` closure is
+    /// called once per SNR point to construct a fresh decoder.
+    ///
+    /// Requires the `parallel` feature.
+    ///
+    /// # Arguments
+    ///
+    /// * `encoder`      - [`BlockEncoder`] shared across threads (must be `Sync`).
+    /// * `make_decoder` - Factory closure that creates a fresh decoder per thread.
+    /// * `config`       - Simulation parameters.
+    /// * `base_seed`    - Seed for deterministic per-SNR-point RNG derivation.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `encoder.k() != decoder.k()` or `encoder.n() != decoder.n()`
+    /// for any decoder returned by `make_decoder`.
+    ///
+    /// # Complexity
+    ///
+    /// O(max_frames * n * max_decoder_iterations) total work, parallelised over SNR points.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::simulation::{SimulationRunner, CodedSimulationConfig};
+    /// use gf2_coding::traits::{BlockEncoder, SoftDecoder, IterativeSoftDecoder, DecoderResult};
+    /// use gf2_core::BitVec;
+    /// use gf2_coding::llr::Llr;
+    ///
+    /// struct MockIterCode { last_iters: usize }
+    /// impl BlockEncoder for MockIterCode {
+    ///     fn k(&self) -> usize { 4 }
+    ///     fn n(&self) -> usize { 4 }
+    ///     fn encode(&self, msg: &BitVec) -> BitVec { msg.clone() }
+    /// }
+    /// impl SoftDecoder for MockIterCode {
+    ///     fn k(&self) -> usize { 4 }
+    ///     fn n(&self) -> usize { 4 }
+    ///     fn decode_soft(&self, llrs: &[Llr]) -> BitVec {
+    ///         let mut out = BitVec::new();
+    ///         for &l in llrs { out.push_bit(l.hard_decision()); }
+    ///         out
+    ///     }
+    /// }
+    /// impl IterativeSoftDecoder for MockIterCode {
+    ///     fn decode_iterative(&mut self, llrs: &[Llr], max_iterations: usize) -> DecoderResult {
+    ///         let decoded = self.decode_soft(llrs);
+    ///         let iters = max_iterations.min(3);
+    ///         self.last_iters = iters;
+    ///         DecoderResult::new(decoded, iters, true, true)
+    ///     }
+    ///     fn last_iteration_count(&self) -> usize { self.last_iters }
+    ///     fn reset(&mut self) { self.last_iters = 0; }
+    /// }
+    ///
+    /// let mut config = CodedSimulationConfig::quick_test();
+    /// config.eb_n0_range = vec![6.0, 9.0];
+    /// config.min_block_errors = 5;
+    /// config.max_frames = 200;
+    /// config.max_decoder_iterations = 10;
+    ///
+    /// let encoder = MockIterCode { last_iters: 0 };
+    /// let results = SimulationRunner::run_coded_iterative_parallel(
+    ///     &encoder,
+    ///     || MockIterCode { last_iters: 0 },
+    ///     &config,
+    ///     42,
+    /// );
+    /// assert_eq!(results.len(), 2);
+    /// ```
+    #[cfg(feature = "parallel")]
+    pub fn run_coded_iterative_parallel<E, D, F>(
+        encoder: &E,
+        make_decoder: F,
+        config: &CodedSimulationConfig,
+        base_seed: u64,
+    ) -> Vec<CodedSimulationResult>
+    where
+        E: BlockEncoder + Sync,
+        D: IterativeSoftDecoder,
+        F: Fn() -> D + Sync,
+    {
+        use rand::rngs::StdRng;
+        use rand::SeedableRng;
+        use rayon::prelude::*;
+
+        config
+            .eb_n0_range
+            .par_iter()
+            .enumerate()
+            .map(|(idx, &eb_n0_db)| {
+                let seed = base_seed.wrapping_add(idx as u64 * 6_364_136_223_846_793_005);
+                let mut rng = StdRng::seed_from_u64(seed);
+                let mut decoder = make_decoder();
+
+                let single_config = CodedSimulationConfig {
+                    eb_n0_range: vec![eb_n0_db],
+                    min_block_errors: config.min_block_errors,
+                    max_frames: config.max_frames,
+                    max_decoder_iterations: config.max_decoder_iterations,
+                };
+
+                let mut results = SimulationRunner::run_coded_iterative(
+                    encoder,
+                    &mut decoder,
+                    &single_config,
+                    &mut rng,
+                );
                 results.remove(0)
             })
             .collect()
@@ -888,7 +1188,7 @@ mod tests {
     // -------------------------------------------------------------------------
 
     use crate::llr::Llr;
-    use crate::traits::{BlockEncoder, SoftDecoder};
+    use crate::traits::{BlockEncoder, DecoderResult, IterativeSoftDecoder, SoftDecoder};
 
     /// Rate-1 pass-through encoder/decoder for unit testing.
     struct IdentityCode {
@@ -920,6 +1220,63 @@ mod tests {
                 out.push_bit(l.hard_decision());
             }
             out
+        }
+    }
+
+    /// Mock iterative decoder that simulates convergence after a fixed number
+    /// of iterations. Used to test that `run_coded_iterative` passes through
+    /// `max_decoder_iterations` and accumulates `avg_iterations` correctly.
+    struct MockIterativeDecoder {
+        k: usize,
+        /// Number of iterations to "converge" at. decode_iterative returns
+        /// min(max_iterations, converge_at) iterations.
+        converge_at: usize,
+        last_iterations: usize,
+    }
+
+    impl BlockEncoder for MockIterativeDecoder {
+        fn k(&self) -> usize {
+            self.k
+        }
+        fn n(&self) -> usize {
+            self.k
+        }
+        fn encode(&self, msg: &BitVec) -> BitVec {
+            msg.clone()
+        }
+    }
+
+    impl SoftDecoder for MockIterativeDecoder {
+        fn k(&self) -> usize {
+            self.k
+        }
+        fn n(&self) -> usize {
+            self.k
+        }
+        fn decode_soft(&self, llrs: &[Llr]) -> BitVec {
+            let mut out = BitVec::new();
+            for &l in llrs {
+                out.push_bit(l.hard_decision());
+            }
+            out
+        }
+    }
+
+    impl IterativeSoftDecoder for MockIterativeDecoder {
+        fn decode_iterative(&mut self, llrs: &[Llr], max_iterations: usize) -> DecoderResult {
+            let iters = max_iterations.min(self.converge_at);
+            self.last_iterations = iters;
+            let decoded = self.decode_soft(llrs);
+            let converged = iters < max_iterations;
+            DecoderResult::new(decoded, iters, converged, converged)
+        }
+
+        fn last_iteration_count(&self) -> usize {
+            self.last_iterations
+        }
+
+        fn reset(&mut self) {
+            self.last_iterations = 0;
         }
     }
 
@@ -1200,6 +1557,158 @@ mod tests {
     }
 
     // -------------------------------------------------------------------------
+    // run_coded_iterative tests
+    // -------------------------------------------------------------------------
+
+    #[test]
+    fn test_run_coded_iterative_reports_avg_iterations_above_one() {
+        // The mock converges at 7 iterations. With max_decoder_iterations=50,
+        // every frame should report 7 iterations, so avg_iterations == 7.0.
+        let mut config = CodedSimulationConfig::quick_test();
+        config.eb_n0_range = vec![0.0]; // low SNR ensures some frames run
+        config.min_block_errors = 3;
+        config.max_frames = 200;
+        config.max_decoder_iterations = 50;
+
+        let encoder = MockIterativeDecoder {
+            k: 8,
+            converge_at: 7,
+            last_iterations: 0,
+        };
+        let mut decoder = MockIterativeDecoder {
+            k: 8,
+            converge_at: 7,
+            last_iterations: 0,
+        };
+        let mut rng = rand::thread_rng();
+
+        let results =
+            SimulationRunner::run_coded_iterative(&encoder, &mut decoder, &config, &mut rng);
+        let r = &results[0];
+
+        assert!(
+            (r.avg_iterations - 7.0).abs() < f64::EPSILON,
+            "expected avg_iterations == 7.0, got {}",
+            r.avg_iterations
+        );
+    }
+
+    #[test]
+    fn test_run_coded_iterative_max_iterations_passed_through() {
+        // The mock converges at 100, but max_decoder_iterations is 5.
+        // Every frame should use exactly 5 iterations.
+        let mut config = CodedSimulationConfig::quick_test();
+        config.eb_n0_range = vec![0.0];
+        config.min_block_errors = 3;
+        config.max_frames = 200;
+        config.max_decoder_iterations = 5;
+
+        let encoder = MockIterativeDecoder {
+            k: 8,
+            converge_at: 100,
+            last_iterations: 0,
+        };
+        let mut decoder = MockIterativeDecoder {
+            k: 8,
+            converge_at: 100,
+            last_iterations: 0,
+        };
+        let mut rng = rand::thread_rng();
+
+        let results =
+            SimulationRunner::run_coded_iterative(&encoder, &mut decoder, &config, &mut rng);
+        let r = &results[0];
+
+        assert!(
+            (r.avg_iterations - 5.0).abs() < f64::EPSILON,
+            "expected avg_iterations == 5.0 (capped by max_decoder_iterations), got {}",
+            r.avg_iterations
+        );
+    }
+
+    #[test]
+    fn test_run_coded_iterative_deterministic_with_seeded_rng() {
+        // Using a seeded RNG, two runs should produce identical results.
+        use rand::rngs::StdRng;
+        use rand::SeedableRng;
+
+        let config = CodedSimulationConfig {
+            eb_n0_range: vec![3.0],
+            min_block_errors: 5,
+            max_frames: 500,
+            max_decoder_iterations: 10,
+        };
+
+        let encoder1 = MockIterativeDecoder {
+            k: 16,
+            converge_at: 4,
+            last_iterations: 0,
+        };
+        let mut decoder1 = MockIterativeDecoder {
+            k: 16,
+            converge_at: 4,
+            last_iterations: 0,
+        };
+        let mut rng1 = StdRng::seed_from_u64(42);
+
+        let encoder2 = MockIterativeDecoder {
+            k: 16,
+            converge_at: 4,
+            last_iterations: 0,
+        };
+        let mut decoder2 = MockIterativeDecoder {
+            k: 16,
+            converge_at: 4,
+            last_iterations: 0,
+        };
+        let mut rng2 = StdRng::seed_from_u64(42);
+
+        let r1 =
+            SimulationRunner::run_coded_iterative(&encoder1, &mut decoder1, &config, &mut rng1);
+        let r2 =
+            SimulationRunner::run_coded_iterative(&encoder2, &mut decoder2, &config, &mut rng2);
+
+        assert_eq!(r1[0].num_frames, r2[0].num_frames);
+        assert_eq!(r1[0].num_bit_errors, r2[0].num_bit_errors);
+        assert_eq!(r1[0].num_block_errors, r2[0].num_block_errors);
+    }
+
+    #[test]
+    fn test_run_coded_iterative_frame_counts_consistent() {
+        let k = 16usize;
+        let mut config = CodedSimulationConfig::quick_test();
+        config.eb_n0_range = vec![5.0];
+        config.min_block_errors = 3;
+        config.max_frames = 300;
+        config.max_decoder_iterations = 20;
+
+        let encoder = MockIterativeDecoder {
+            k,
+            converge_at: 8,
+            last_iterations: 0,
+        };
+        let mut decoder = MockIterativeDecoder {
+            k,
+            converge_at: 8,
+            last_iterations: 0,
+        };
+        let mut rng = rand::thread_rng();
+
+        let results =
+            SimulationRunner::run_coded_iterative(&encoder, &mut decoder, &config, &mut rng);
+        let r = &results[0];
+
+        assert_eq!(
+            r.num_bits,
+            r.num_frames * k,
+            "num_bits = num_frames * k invariant violated"
+        );
+        assert!(r.num_bit_errors <= r.num_bits);
+        assert!(r.num_block_errors <= r.num_frames);
+        assert!(r.avg_iterations > 0.0);
+    }
+
+    // -------------------------------------------------------------------------
     // CSV / JSON export tests
     // -------------------------------------------------------------------------
 
@@ -1309,6 +1818,63 @@ mod tests {
                 "parallel runs with same seed must produce identical frame counts"
             );
             assert_eq!(r1[0].num_bit_errors, r2[0].num_bit_errors);
+        }
+
+        #[test]
+        fn test_run_coded_iterative_parallel_result_count() {
+            let mut config = CodedSimulationConfig::quick_test();
+            config.eb_n0_range = vec![3.0, 6.0, 9.0];
+            config.min_block_errors = 3;
+            config.max_frames = 200;
+            config.max_decoder_iterations = 10;
+
+            let encoder = MockIterativeDecoder {
+                k: 8,
+                converge_at: 5,
+                last_iterations: 0,
+            };
+            let results = SimulationRunner::run_coded_iterative_parallel(
+                &encoder,
+                || MockIterativeDecoder {
+                    k: 8,
+                    converge_at: 5,
+                    last_iterations: 0,
+                },
+                &config,
+                42,
+            );
+            assert_eq!(results.len(), 3, "one result per SNR point");
+        }
+
+        #[test]
+        fn test_run_coded_iterative_parallel_avg_iterations() {
+            let mut config = CodedSimulationConfig::quick_test();
+            config.eb_n0_range = vec![0.0];
+            config.min_block_errors = 3;
+            config.max_frames = 200;
+            config.max_decoder_iterations = 50;
+
+            let encoder = MockIterativeDecoder {
+                k: 8,
+                converge_at: 7,
+                last_iterations: 0,
+            };
+            let results = SimulationRunner::run_coded_iterative_parallel(
+                &encoder,
+                || MockIterativeDecoder {
+                    k: 8,
+                    converge_at: 7,
+                    last_iterations: 0,
+                },
+                &config,
+                42,
+            );
+            let r = &results[0];
+            assert!(
+                (r.avg_iterations - 7.0).abs() < f64::EPSILON,
+                "expected avg_iterations == 7.0, got {}",
+                r.avg_iterations
+            );
         }
     }
 }
