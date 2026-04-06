@@ -200,6 +200,35 @@ impl DrmCode {
             .expect("dRM code always has H matrix")
     }
 
+    /// Returns whether all codewords have even Hamming weight.
+    ///
+    /// Used by ORBGRAND's even-code optimization to skip half the
+    /// noise pattern search space.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::drm::DrmCode;
+    ///
+    /// let code = DrmCode::drm_32_21();
+    /// let _is_even = code.is_even();
+    /// ```
+    pub fn is_even(&self) -> bool {
+        let g = self.inner.generator_matrix();
+        for i in 0..self.inner.k() {
+            let mut weight = 0;
+            for j in 0..self.inner.n() {
+                if g.get(i, j) {
+                    weight += 1;
+                }
+            }
+            if weight % 2 != 0 {
+                return false;
+            }
+        }
+        true
+    }
+
     /// Returns the inner [`LinearBlockCode`].
     ///
     /// # Examples
