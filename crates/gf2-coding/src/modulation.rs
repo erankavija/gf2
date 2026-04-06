@@ -350,6 +350,10 @@ impl QpskModulator {
     ///
     /// O(1).
     pub fn soft_llrs(&self, y: Complex, h_hat: Complex, sigma_squared: f64) -> (Llr, Llr) {
+        assert!(
+            sigma_squared > 0.0 && sigma_squared.is_finite(),
+            "sigma_squared must be positive and finite, got {sigma_squared}"
+        );
         let z = y * h_hat.conj();
         let scale = 2.0 * self.delta / sigma_squared;
         let l1 = Llr::new((scale * z.re) as f32);
