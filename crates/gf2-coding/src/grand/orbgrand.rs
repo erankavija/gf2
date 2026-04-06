@@ -26,7 +26,8 @@
 //!
 //! ORBGRAND supports list decoding: after finding the first valid codeword,
 //! it can continue to find up to `L` codewords. Each codeword is annotated
-//! with its noise pattern log-probability `ln p(z|r)`.
+//! with its noise pattern log-probability `ln p(z|r)`. Use
+//! [`ScoredCodeword::noise_probability()`] for the linear-domain value `p(z|r)`.
 //!
 //! # Even Code Optimization
 //!
@@ -84,6 +85,7 @@ use gf2_core::BitVec;
 ///     max_queries: 10_000,
 ///     list_size: 5,
 ///     even_code: true,
+///     systematic: true,
 /// };
 /// ```
 #[derive(Debug, Clone)]
@@ -99,6 +101,15 @@ pub struct OrbGrandConfig {
     /// When `true`, noise patterns whose weight parity does not match
     /// the received word's parity are skipped, halving the search space.
     pub even_code: bool,
+
+    /// Whether the code is systematic (information bits are the first `k`
+    /// bits of the codeword). Required for the [`SoftDecoder`] trait
+    /// implementation, which extracts message bits as `codeword[0..k]`.
+    ///
+    /// When `false`, the [`SoftDecoder`] trait implementation will panic.
+    /// Use [`OrbGrand::decode`] directly for non-systematic codes and
+    /// extract message bits according to the code's structure.
+    pub systematic: bool,
 }
 
 impl Default for OrbGrandConfig {
@@ -107,6 +118,7 @@ impl Default for OrbGrandConfig {
             max_queries: 1_000_000,
             list_size: 1,
             even_code: false,
+            systematic: true,
         }
     }
 }
@@ -139,6 +151,30 @@ pub struct ScoredCodeword {
 
     /// Hamming weight of the noise pattern.
     pub noise_weight: usize,
+}
+
+impl ScoredCodeword {
+    /// Returns the noise probability in the linear domain: `exp(noise_log_probability)`.
+    ///
+    /// This is `p(z | r)`, the probability of the noise pattern that produced
+    /// this codeword given the received signal.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::grand::ScoredCodeword;
+    /// use gf2_core::BitVec;
+    ///
+    /// let cw = ScoredCodeword {
+    ///     codeword: BitVec::zeros(7),
+    ///     noise_log_probability: 0.0,
+    ///     noise_weight: 0,
+    /// };
+    /// assert!((cw.noise_probability() - 1.0).abs() < 1e-10);
+    /// ```
+    pub fn noise_probability(&self) -> f64 {
+        self.noise_log_probability.exp()
+    }
 }
 
 /// Result of an ORBGRAND decoding operation.
@@ -554,15 +590,18 @@ impl SoftDecoder for OrbGrand {
 
     /// Decodes using soft information (LLRs) and returns message bits.
     ///
-    /// # Note
+    /// Extracts the first `k` bits of the best codeword as the decoded message.
     ///
-    /// Assumes the code is **systematic** — extracts the first `k` bits of
-    /// the best codeword as the decoded message. For non-systematic codes,
-    /// use [`OrbGrand::decode`] directly and apply the appropriate
-    /// message extraction.
+    /// # Panics
     ///
-    /// Falls back to hard decision if no codeword is found.
+    /// Panics if the decoder was configured with `systematic: false`.
+    /// Use [`OrbGrand::decode`] directly for non-systematic codes.
     fn decode_soft(&self, llrs: &[Llr]) -> BitVec {
+        assert!(
+            self.config.systematic,
+            "SoftDecoder::decode_soft requires systematic=true in OrbGrandConfig. \
+             Use OrbGrand::decode() directly for non-systematic codes."
+        );
         let result = self.decode(llrs);
         if let Some(best) = result.best_codeword() {
             // Extract first k bits (assumes systematic code)
@@ -1045,6 +1084,7 @@ mod tests {
             max_queries: 5,
             list_size: 1,
             even_code: false,
+            systematic: true,
         };
         let decoder = OrbGrand::new(h, config);
 
@@ -1074,6 +1114,7 @@ mod tests {
             max_queries: 100_000,
             list_size: 3,
             even_code: false,
+            systematic: true,
         };
         let decoder = OrbGrand::new(h, config);
 
@@ -1108,6 +1149,7 @@ mod tests {
             max_queries: 1_000_000,
             list_size: 16, // All codewords for Hamming(7,4)
             even_code: false,
+            systematic: true,
         };
         let decoder = OrbGrand::new(h, config);
 
@@ -1170,6 +1212,7 @@ mod tests {
             max_queries: 1_000_000,
             list_size: 16,
             even_code: false,
+            systematic: true,
         };
         let decoder_normal = OrbGrand::new(h_ext.clone(), config_normal);
 
@@ -1177,6 +1220,7 @@ mod tests {
             max_queries: 1_000_000,
             list_size: 16,
             even_code: true,
+            systematic: true,
         };
         let decoder_even = OrbGrand::new(h_ext, config_even);
 
@@ -1252,6 +1296,7 @@ mod tests {
             max_queries: 100,
             list_size: 1,
             even_code: false,
+            systematic: true,
         };
         let decoder = OrbGrand::new(h, config);
 
@@ -1331,6 +1376,7 @@ mod tests {
             max_queries: 100,
             list_size: 0,
             even_code: false,
+            systematic: true,
         };
         OrbGrand::new(h, config);
     }
@@ -1638,6 +1684,7 @@ mod tests {
             max_queries: 10_000,
             list_size: 1,
             even_code: true,
+            systematic: true,
         };
         let decoder = OrbGrand::new(h, config);
 
