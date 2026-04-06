@@ -1303,6 +1303,97 @@ where
         .collect()
 }
 
+/// Parallel SNR sweep for iterative soft decoders.
+///
+/// Each SNR point creates a fresh decoder via `make_decoder()` so that
+/// `&mut self` is available per-thread without shared mutable state.
+#[cfg(feature = "parallel")]
+fn run_snr_sweep_iterative<E, D, C, MkD, F>(
+    encoder: &E,
+    channel: &C,
+    config: &CodedSimulationConfig,
+    make_decoder: &MkD,
+    progress_cb: &Option<F>,
+) -> Vec<CodedSimulationResult>
+where
+    E: BlockEncoder + Sync,
+    D: IterativeSoftDecoder,
+    C: ChannelModel + Sync,
+    MkD: Fn() -> D + Sync,
+    F: Fn(&ProgressReport) + Sync,
+{
+    use rayon::prelude::*;
+
+    config
+        .eb_n0_range_db
+        .par_iter()
+        .enumerate()
+        .map(|(idx, &eb_n0_db)| {
+            let seed = config.rng_seed.unwrap_or(0x5EED_CAFE) ^ (idx as u64);
+            let mut rng = StdRng::seed_from_u64(seed);
+            let mut decoder = make_decoder();
+            simulate_snr_point_iterative(
+                encoder,
+                &mut decoder,
+                channel,
+                config,
+                eb_n0_db,
+                &mut rng,
+                progress_cb,
+            )
+        })
+        .collect()
+}
+
+impl SimulationRunner {
+    /// Runs a coded iterative simulation sweep in parallel across SNR points.
+    ///
+    /// Each SNR point gets a fresh decoder from `make_decoder()`, enabling
+    /// parallel execution despite `IterativeSoftDecoder` requiring `&mut self`.
+    ///
+    /// Requires the `parallel` feature.
+    ///
+    /// # Arguments
+    ///
+    /// * `encoder` - Block encoder (shared, `Sync`)
+    /// * `make_decoder` - Factory closure creating a fresh decoder per thread
+    /// * `channel` - Channel model (shared, `Sync`)
+    /// * `config` - Simulation configuration
+    ///
+    /// # Complexity
+    ///
+    /// O(max_frames * n) total work, parallelized over SNR points.
+    #[cfg(feature = "parallel")]
+    pub fn run_coded_iterative_parallel<E, D, C, MkD>(
+        encoder: &E,
+        make_decoder: MkD,
+        channel: &C,
+        config: &CodedSimulationConfig,
+    ) -> CodedSimulationResults
+    where
+        E: BlockEncoder + Sync,
+        D: IterativeSoftDecoder,
+        C: ChannelModel + Sync,
+        MkD: Fn() -> D + Sync,
+    {
+        let points = run_snr_sweep_iterative(
+            encoder,
+            channel,
+            config,
+            &make_decoder,
+            &None::<fn(&ProgressReport)>,
+        );
+        let results = CodedSimulationResults { points };
+
+        if let Some(ref path) = config.output_path {
+            let csv = Self::coded_results_to_csv(&results);
+            std::fs::write(path, csv).expect("Failed to write CSV output");
+        }
+
+        results
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
