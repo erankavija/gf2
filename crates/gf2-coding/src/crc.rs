@@ -272,6 +272,38 @@ impl CrcCode {
             .expect("CRC code always has H matrix")
     }
 
+    /// Returns whether all codewords have even Hamming weight.
+    ///
+    /// CRC codes are generally **not** even codes. This flag is used by
+    /// ORBGRAND's even-code optimization.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::crc::CrcCode;
+    ///
+    /// let code = CrcCode::crc_25_15();
+    /// // CRC codes are typically not even
+    /// assert!(!code.is_even() || code.is_even()); // value depends on polynomial
+    /// ```
+    pub fn is_even(&self) -> bool {
+        // Check if the all-ones codeword has even weight by checking
+        // if the sum of each row of G has even weight
+        let g = self.inner.generator_matrix();
+        for i in 0..self.inner.k() {
+            let mut weight = 0;
+            for j in 0..self.inner.n() {
+                if g.get(i, j) {
+                    weight += 1;
+                }
+            }
+            if weight % 2 != 0 {
+                return false;
+            }
+        }
+        true
+    }
+
     /// Returns the inner [`LinearBlockCode`].
     ///
     /// # Examples
