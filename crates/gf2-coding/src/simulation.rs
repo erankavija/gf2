@@ -1394,6 +1394,16 @@ impl SimulationRunner {
     }
 }
 
+/// Type alias matching the issue-requested interface name.
+///
+/// Equivalent to [`CodedSimulationConfig`].
+pub type SimulationConfigCoded = CodedSimulationConfig;
+
+/// Type alias matching the issue-requested interface name.
+///
+/// Equivalent to [`CodedSimulationResults`].
+pub type SimulationResultsCoded = CodedSimulationResults;
+
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
@@ -2259,15 +2269,43 @@ mod tests {
 
         let json = SimulationRunner::coded_results_to_json(&results);
 
-        // Basic structural validation
-        assert!(json.starts_with('['));
-        assert!(json.trim_end().ends_with(']'));
+        // Verify JSON structure: array of objects
+        assert!(json.starts_with('['), "must start with [");
+        assert!(json.trim_end().ends_with(']'), "must end with ]");
 
-        // Count opening braces to verify we have 2 objects
-        let brace_count = json.matches('{').count();
-        assert_eq!(brace_count, 2);
+        // Count objects (opening braces)
+        assert_eq!(json.matches('{').count(), 2, "should have 2 objects");
 
-        // All fields present
+        // Verify actual numeric values by extracting key-value pairs
+        // First object should have eb_n0_db: 0
+        assert!(
+            json.contains("\"eb_n0_db\": 0"),
+            "first point eb_n0_db should be 0"
+        );
+        assert!(
+            json.contains("\"ber\": 0.1"),
+            "first point ber should be 0.1"
+        );
+        assert!(
+            json.contains("\"bler\": 0.5"),
+            "first point bler should be 0.5"
+        );
+        assert!(
+            json.contains("\"num_frames\": 100"),
+            "first point num_frames should be 100"
+        );
+
+        // Second object should have eb_n0_db: 3
+        assert!(
+            json.contains("\"eb_n0_db\": 3"),
+            "second point eb_n0_db should be 3"
+        );
+        assert!(
+            json.contains("\"ber\": 0.01"),
+            "second point ber should be 0.01"
+        );
+
+        // All required fields present
         for field in &[
             "eb_n0_db",
             "ber",
