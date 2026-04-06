@@ -429,6 +429,7 @@ const FILLER_LLR: f32 = 1000.0;
 /// computed via RREF with right-to-left pivoting on the parity-check matrix H.
 /// This matches the encoder's internal column ordering, ensuring that the
 /// codeword positions are consistent with H's column layout for BP decoding.
+#[derive(Clone)]
 struct MotherEncoding {
     /// Parity matrix P (k × m): for systematic codes, G = [I at sys_cols | P at par_cols]
     parity_matrix: gf2_core::BitMatrix,
@@ -599,6 +600,7 @@ fn compute_mother_encoding(code: &LdpcCode) -> MotherEncoding {
 /// let codeword = rm_code.encode(&msg);
 /// assert_eq!(codeword.len(), 256);
 /// ```
+#[derive(Clone)]
 pub struct Nr5gRateMatchedCode {
     /// Full mother code (N_b * Z columns, M_b * Z rows).
     mother_code: LdpcCode,
@@ -633,6 +635,10 @@ impl Nr5gRateMatchedCode {
     /// let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
     /// assert_eq!(rm_code.k(), 121);
     /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
     pub fn k(&self) -> usize {
         self.params.target_k
     }
@@ -647,6 +653,10 @@ impl Nr5gRateMatchedCode {
     /// let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
     /// assert_eq!(rm_code.params().lifting_factor, 13);
     /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
     pub fn params(&self) -> &NrRateMatchParams {
         &self.params
     }
@@ -665,6 +675,10 @@ impl Nr5gRateMatchedCode {
     /// let mother = rm_code.mother_code();
     /// assert_eq!(mother.n(), 52 * 13); // BG2 N_b=52, Z=13
     /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
     pub fn mother_code(&self) -> &LdpcCode {
         &self.mother_code
     }
@@ -761,6 +775,10 @@ impl Nr5gRateMatchedCode {
     /// # Panics
     ///
     /// Panics if `channel_llrs.len() != target_n`.
+    ///
+    /// # Complexity
+    ///
+    /// O(full_n) where full_n = N_b * Z.
     pub fn prepare_llrs(&self, channel_llrs: &[Llr]) -> Vec<Llr> {
         assert_eq!(
             channel_llrs.len(),
@@ -814,6 +832,10 @@ impl Nr5gRateMatchedCode {
     /// # Returns
     ///
     /// Extracted message bits of length target_k.
+    ///
+    /// # Complexity
+    ///
+    /// O(target_k).
     pub fn extract_message(&self, decoded_codeword: &BitVec) -> BitVec {
         let mut msg = BitVec::with_capacity(self.params.target_k);
         for i in 0..self.params.target_k {
@@ -853,12 +875,11 @@ impl SoftDecoder for Nr5gRateMatchedCode {
             "LLR length must equal target_n = {}",
             self.params.target_n
         );
-        // Simple hard decisions on channel LLRs for non-iterative interface
-        let mut decoded = BitVec::with_capacity(self.params.target_k);
-        for &llr in llrs.iter().take(self.params.target_k) {
-            decoded.push_bit(llr.hard_decision());
-        }
-        decoded
+        // Use the full BP decoder with LLR mapping
+        let full_llrs = self.prepare_llrs(llrs);
+        let mut decoder = Nr5gRateMatchedDecoder::new((*self).clone());
+        let result = decoder.decode_iterative(&full_llrs, 50);
+        self.extract_message(&result.decoded_bits)
     }
 }
 
@@ -1828,6 +1849,6 @@ mod tests {
     #[test]
     fn test_ber_bg1_4096_3249_8db() {
         // BG1 (4096, 3249) at 8 dB: high rate 0.793
-        ber_acceptance(1, 4096, 3249, 8.0, 5e-2, 3, "BG1 (4096,3249) @ 8dB");
+        ber_acceptance(1, 4096, 3249, 8.0, 1e-2, 5, "BG1 (4096,3249) @ 8dB");
     }
 }
