@@ -80,6 +80,10 @@ pub fn lifting_set_index(z: u16) -> Option<usize> {
 /// assert_eq!(*sizes.last().unwrap(), 384);
 /// assert_eq!(sizes.len(), 51);
 /// ```
+///
+/// # Complexity
+///
+/// O(1) — returns a static slice.
 pub fn all_lifting_sizes() -> Vec<u16> {
     let mut sizes: Vec<u16> = LIFTING_SIZE_SETS
         .iter()
