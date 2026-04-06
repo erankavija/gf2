@@ -771,7 +771,7 @@ mod tests {
     }
 }
 
-/// Helper: generate all k-combinations from a slice.
+#[cfg(test)]
 fn combinations(items: &[usize], k: usize) -> Vec<Vec<usize>> {
     if k == 0 {
         return vec![vec![]];
