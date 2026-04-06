@@ -1001,6 +1001,18 @@ use crate::simulation::ChannelModel;
 /// Implements [`ChannelModel`] for integration with the simulation harness.
 /// The pipeline: bits → interleave → QPSK modulate → fading channel → soft LLR → de-interleave.
 ///
+/// # Constraints
+///
+/// The codeword passed to [`ChannelModel::transmit_and_demodulate`] must satisfy:
+/// - **Even length**: QPSK maps 2 bits per symbol.
+/// - **Length ≤ frame capacity**: The codeword must fit within the Rician
+///   channel's frame structure (`config.frame_bits()`). For example,
+///   [`RicianConfig::fig8`] supports up to 1024 bits.
+///
+/// # Panics
+///
+/// Panics if the codeword length is odd or exceeds the frame capacity.
+///
 /// # Examples
 ///
 /// ```no_run
@@ -1009,6 +1021,7 @@ use crate::simulation::ChannelModel;
 ///
 /// let channel = QpskRicianChannelModel::new(RicianConfig::fig8());
 /// // Use with SimulationRunner::run_coded(&encoder, &decoder, &channel, &config)
+/// // Codeword length must be even and ≤ 1024 for fig8 config
 /// ```
 pub struct QpskRicianChannelModel {
     config: RicianConfig,
@@ -1037,6 +1050,12 @@ impl ChannelModel for QpskRicianChannelModel {
         use rand_distr::{Distribution, Normal};
 
         let n = codeword.len();
+        assert!(n % 2 == 0, "QPSK requires even codeword length, got {n}");
+        assert!(
+            n <= self.config.frame_bits(),
+            "codeword length {n} exceeds frame capacity {} for this Rician config",
+            self.config.frame_bits()
+        );
         let qpsk = QpskModulator::new(1.0);
 
         // Compute noise variance from Eb/N0
@@ -1078,5 +1097,54 @@ impl ChannelModel for QpskRicianChannelModel {
         // Compute LLRs and de-interleave
         let llrs = qpsk.symbols_to_llrs(&received, &gains, sigma_squared);
         interleaver.deinterleave_llrs(&llrs)
+    }
+}
+
+#[cfg(test)]
+mod channel_model_tests {
+    use super::*;
+    use crate::grand::{OrbGrand, OrbGrandConfig};
+    use crate::simulation::{SimulationConfig, SimulationRunner};
+
+    #[test]
+    fn test_qpsk_rician_channel_model_preconditions() {
+        let channel = QpskRicianChannelModel::new(RicianConfig::fig8());
+        // fig8 frame_bits = 2 * 4 * 128 = 1024
+        assert_eq!(channel.config.frame_bits(), 1024);
+    }
+
+    #[test]
+    #[should_panic(expected = "even codeword length")]
+    fn test_qpsk_rician_rejects_odd_length() {
+        let channel = QpskRicianChannelModel::new(RicianConfig::fig8());
+        let bits = gf2_core::BitVec::zeros(7); // odd
+        let mut rng = rand::thread_rng();
+        channel.transmit_and_demodulate(&bits, 6.0, 0.5, &mut rng);
+    }
+
+    #[test]
+    fn test_qpsk_rician_through_simulation_runner() {
+        // Use Hamming(7,4) extended to (8,4) so codeword length is even
+        // Actually, use a small systematic code with even n.
+        // Hamming(15,11) has n=15 (odd). Let's use eBCH(16,11) with ORBGRAND.
+        use crate::bch::extended::ExtendedBchCode;
+
+        let ebch = ExtendedBchCode::ebch_16_11();
+        let h = ebch.parity_check().clone();
+        let decoder = OrbGrand::new(h, OrbGrandConfig::default());
+
+        // fig9 has frame_bits = 2 * 2 * 256 = 1024, n=16 fits
+        let channel = QpskRicianChannelModel::new(RicianConfig::fig9());
+
+        let mut config = SimulationConfig::quick_test();
+        config.eb_n0_range_db = vec![10.0]; // High SNR for reliable decode
+        config.max_frames = 20;
+        config.min_errors = 1;
+
+        let results = SimulationRunner::run_coded(&ebch, &decoder, &channel, &config);
+        assert_eq!(results.points.len(), 1);
+        assert!(results.points[0].num_frames > 0);
+        // At 10 dB with short code, BER should be reasonable
+        assert!(results.points[0].ber < 0.5, "BER too high at 10 dB");
     }
 }
