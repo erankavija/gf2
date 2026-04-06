@@ -316,7 +316,8 @@ impl RicianChannel {
     ///
     /// # Panics
     ///
-    /// Panics if `symbols` and `channel_gains` have different lengths.
+    /// Panics if `symbols` and `channel_gains` have different lengths,
+    /// or if `sigma_squared` is not positive and finite.
     ///
     /// # Complexity
     ///
@@ -348,6 +349,10 @@ impl RicianChannel {
             symbols.len(),
             channel_gains.len(),
             "symbols and channel_gains must have equal length"
+        );
+        assert!(
+            sigma_squared > 0.0 && sigma_squared.is_finite(),
+            "sigma_squared must be positive and finite, got {sigma_squared}"
         );
         // Each complex noise sample has variance sigma^2/2 per component
         let noise_std = (sigma_squared / 2.0).sqrt();
