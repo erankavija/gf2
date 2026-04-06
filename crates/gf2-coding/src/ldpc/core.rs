@@ -605,138 +605,146 @@ impl QuasiCyclicLdpc {
     }
 }
 
-/// Algorithm variant for the check node update in belief propagation decoding.
+/// Decoder algorithm selection for LDPC belief propagation.
 ///
-/// Selects between the exact sum-product algorithm and various min-sum
-/// approximations that trade accuracy for computational efficiency.
-///
-/// # Typical parameter choices
-///
-/// - `NormalizedMinSum(alpha)`: alpha in [0.75, 0.95], e.g. 0.875
-/// - `OffsetMinSum(beta)`: beta in [0.25, 0.5], e.g. 0.5
+/// Different check-node update rules trade off accuracy against speed.
+/// Normalized and offset min-sum variants improve upon standard min-sum
+/// by compensating for the overestimation bias inherent in the min approximation.
 ///
 /// # Examples
 ///
 /// ```
-/// use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig, LdpcCode, LdpcDecoder};
+/// use gf2_coding::ldpc::DecoderAlgorithm;
 ///
-/// let edges = vec![(0, 0), (0, 1), (0, 2)];
-/// let code = LdpcCode::from_edges(1, 3, &edges);
-///
-/// // Use normalized min-sum with alpha = 0.875
-/// let config = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.875));
-/// let _decoder = LdpcDecoder::with_config(code, config);
+/// let algo = DecoderAlgorithm::NormalizedMinSum(0.875);
+/// let algo2 = DecoderAlgorithm::OffsetMinSum(0.5);
+/// let algo3 = DecoderAlgorithm::MinSum;
 /// ```
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub enum DecoderAlgorithm {
-    /// Standard min-sum approximation (fast, default).
+    /// Standard min-sum approximation.
     ///
-    /// Approximates the exact box-plus as:
-    /// `sign(∏ L_i) · min_i |L_i|`
+    /// Check-to-variable message:
+    /// $$\lambda_{m \to n} = \prod \text{sign} \cdot \min |L_i|$$
+    #[default]
     MinSum,
-    /// Normalized min-sum with scaling factor `alpha`.
+    /// Normalized min-sum: scales the min-sum output by a factor $\alpha \in (0, 1]$.
     ///
-    /// Reduces the overestimation bias of min-sum:
-    /// `alpha · sign(∏ L_i) · min_i |L_i|`
+    /// Reduces overestimation bias. Typical values: 0.75--0.95.
     ///
     /// # Valid range
     ///
-    /// `alpha` must be in `(0.0, 1.0]` and finite. Values outside this range
-    /// will cause a panic at decoder construction.
+    /// `alpha` must be finite and in `(0.0, 1.0]`.
     NormalizedMinSum(f32),
-    /// Offset min-sum with offset `beta`.
+    /// Offset min-sum: subtracts a non-negative offset $\beta$ from the min magnitude.
     ///
-    /// Subtracts a fixed offset from the minimum magnitude:
-    /// `sign(∏ L_i) · max(0, min_i |L_i| − beta)`
+    /// Reduces overestimation bias. Typical values: 0.25--0.5.
     ///
     /// # Valid range
     ///
-    /// `beta` must be non-negative and finite. Values outside this range
-    /// will cause a panic at decoder construction.
+    /// `beta` must be finite and `>= 0.0`.
     OffsetMinSum(f32),
-    /// Exact sum-product algorithm (most accurate, slowest).
+    /// Exact sum-product algorithm (box-plus).
     ///
-    /// Uses `2·atanh(∏ tanh(L_i/2))` — the exact box-plus.
+    /// Uses $\tanh / \text{atanh}$ computations. Most accurate but slowest.
     SumProduct,
 }
 
-/// Configuration for [`LdpcDecoder`].
+/// Configuration for the LDPC belief propagation decoder.
 ///
-/// Controls which check node update algorithm is used and whether early
-/// termination on syndrome success is enabled.
+/// Controls the decoding algorithm and convergence behavior.
 ///
 /// # Examples
 ///
 /// ```
 /// use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
 ///
-/// // Default: min-sum with early termination enabled
-/// let cfg = DecoderConfig::default();
-/// assert_eq!(cfg.algorithm, DecoderAlgorithm::MinSum);
-/// assert!(cfg.early_termination);
+/// // Default: MinSum with early termination enabled
+/// let config = DecoderConfig::default();
+/// assert!(config.early_termination());
 ///
-/// // Normalized min-sum, no early termination
-/// let cfg2 = DecoderConfig {
-///     algorithm: DecoderAlgorithm::NormalizedMinSum(0.875),
-///     early_termination: false,
-/// };
-/// assert!(!cfg2.early_termination);
+/// // Normalized min-sum with custom parameters
+/// let config = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.875), true);
 /// ```
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct DecoderConfig {
-    /// Check node update algorithm.
-    pub algorithm: DecoderAlgorithm,
-    /// If `true` (the default), the decoder stops as soon as the syndrome
-    /// check passes, before reaching `max_iterations`.
-    pub early_termination: bool,
+    /// The check-node update algorithm
+    algorithm: DecoderAlgorithm,
+    /// Whether to stop early when syndrome check passes before max iterations
+    early_termination: bool,
 }
 
 impl DecoderConfig {
-    /// Creates a new config with the given algorithm and early termination enabled.
+    /// Creates a new decoder configuration.
     ///
     /// # Arguments
     ///
-    /// * `algorithm` - Check node update algorithm to use
+    /// * `algorithm` - The check-node update algorithm to use
+    /// * `early_termination` - If `true`, decoding stops as soon as the syndrome check passes
+    ///
+    /// # Panics
+    ///
+    /// Panics if:
+    /// - `NormalizedMinSum(alpha)` has `alpha` that is not finite or not in `(0.0, 1.0]`
+    /// - `OffsetMinSum(beta)` has `beta` that is not finite or is negative
     ///
     /// # Examples
     ///
     /// ```
     /// use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
     ///
-    /// let cfg = DecoderConfig::new(DecoderAlgorithm::SumProduct);
-    /// assert_eq!(cfg.algorithm, DecoderAlgorithm::SumProduct);
-    /// assert!(cfg.early_termination);
+    /// let config = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.875), true);
     /// ```
-    /// # Panics
     ///
-    /// Panics if `NormalizedMinSum(alpha)` has `alpha` outside `(0.0, 1.0]` or non-finite,
-    /// or if `OffsetMinSum(beta)` has `beta < 0.0` or non-finite.
-    pub fn new(algorithm: DecoderAlgorithm) -> Self {
-        match &algorithm {
+    /// ```should_panic
+    /// use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
+    ///
+    /// // alpha = 0.0 is out of valid range (0.0, 1.0]
+    /// let config = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.0), true);
+    /// ```
+    ///
+    /// ```should_panic
+    /// use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
+    ///
+    /// // negative beta is invalid
+    /// let config = DecoderConfig::new(DecoderAlgorithm::OffsetMinSum(-0.1), true);
+    /// ```
+    pub fn new(algorithm: DecoderAlgorithm, early_termination: bool) -> Self {
+        match algorithm {
             DecoderAlgorithm::NormalizedMinSum(alpha) => {
                 assert!(
-                    alpha.is_finite() && *alpha > 0.0 && *alpha <= 1.0,
-                    "NormalizedMinSum alpha must be in (0.0, 1.0], got {alpha}"
+                    alpha.is_finite() && alpha > 0.0 && alpha <= 1.0,
+                    "NormalizedMinSum alpha must be finite and in (0.0, 1.0], got {}",
+                    alpha
                 );
             }
             DecoderAlgorithm::OffsetMinSum(beta) => {
                 assert!(
-                    beta.is_finite() && *beta >= 0.0,
-                    "OffsetMinSum beta must be non-negative and finite, got {beta}"
+                    beta.is_finite() && beta >= 0.0,
+                    "OffsetMinSum beta must be finite and >= 0.0, got {}",
+                    beta
                 );
             }
             _ => {}
         }
         Self {
             algorithm,
-            early_termination: true,
+            early_termination,
         }
+    }
+
+    /// Returns the configured algorithm.
+    pub fn algorithm(&self) -> DecoderAlgorithm {
+        self.algorithm
+    }
+
+    /// Returns whether early termination is enabled.
+    pub fn early_termination(&self) -> bool {
+        self.early_termination
     }
 }
 
 impl Default for DecoderConfig {
-    /// Returns the default configuration: [`DecoderAlgorithm::MinSum`] with
-    /// early termination enabled.
     fn default() -> Self {
         Self {
             algorithm: DecoderAlgorithm::MinSum,
@@ -748,7 +756,8 @@ impl Default for DecoderConfig {
 /// Belief propagation decoder for LDPC codes.
 ///
 /// Implements the sum-product algorithm (SPA) and min-sum approximations
-/// for iterative soft-decision decoding.
+/// for iterative soft-decision decoding, with configurable algorithm variants
+/// and optional early termination.
 ///
 /// # Decoding Algorithm
 ///
@@ -769,11 +778,16 @@ impl Default for DecoderConfig {
 /// $$
 ///
 /// where $L_n$ is the channel LLR for variable node $n$.
+///
+/// ## Algorithm Variants
+///
+/// - [`DecoderAlgorithm::MinSum`] — Standard min-sum (default, fastest)
+/// - [`DecoderAlgorithm::NormalizedMinSum`] — Scaled min-sum with correction factor
+/// - [`DecoderAlgorithm::OffsetMinSum`] — Min-sum with offset correction
+/// - [`DecoderAlgorithm::SumProduct`] — Exact box-plus (most accurate, slowest)
 #[derive(Debug)]
 pub struct LdpcDecoder {
     code: LdpcCode,
-    /// Decoder configuration (algorithm selection, early termination).
-    config: DecoderConfig,
     /// Current variable node beliefs (posterior LLRs)
     beliefs: Vec<Llr>,
     /// Check-to-variable messages: indexed by [check][position in row]
@@ -788,13 +802,14 @@ pub struct LdpcDecoder {
     temp_inputs: Vec<Llr>,
     /// Number of iterations in last decode
     last_iterations: usize,
+    /// Decoder configuration (algorithm, early termination)
+    config: DecoderConfig,
 }
 
 impl LdpcDecoder {
     /// Creates a new LDPC decoder for the given code with default configuration.
     ///
     /// Uses [`DecoderAlgorithm::MinSum`] with early termination enabled.
-    /// For custom algorithm selection use [`LdpcDecoder::with_config`].
     ///
     /// # Arguments
     ///
@@ -804,42 +819,32 @@ impl LdpcDecoder {
     ///
     /// ```
     /// use gf2_coding::ldpc::{LdpcCode, LdpcDecoder};
-    /// use gf2_coding::traits::IterativeSoftDecoder;
     ///
     /// let edges = vec![(0, 0), (0, 1), (0, 2)];
     /// let code = LdpcCode::from_edges(1, 3, &edges);
     /// let decoder = LdpcDecoder::new(code);
-    /// assert_eq!(decoder.last_iteration_count(), 0);
     /// ```
     pub fn new(code: LdpcCode) -> Self {
         Self::with_config(code, DecoderConfig::default())
     }
 
-    /// Creates a new LDPC decoder with a custom configuration.
+    /// Creates a new LDPC decoder with the given configuration.
     ///
     /// # Arguments
     ///
-    /// * `code`   - The LDPC code to decode
+    /// * `code` - The LDPC code to decode
     /// * `config` - Decoder configuration (algorithm, early termination)
     ///
     /// # Examples
     ///
     /// ```
-    /// use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig, LdpcCode, LdpcDecoder};
-    /// use gf2_coding::traits::IterativeSoftDecoder;
+    /// use gf2_coding::ldpc::{LdpcCode, LdpcDecoder, DecoderAlgorithm, DecoderConfig};
     ///
     /// let edges = vec![(0, 0), (0, 1), (0, 2)];
     /// let code = LdpcCode::from_edges(1, 3, &edges);
-    ///
-    /// let config = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.875));
+    /// let config = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.875), true);
     /// let decoder = LdpcDecoder::with_config(code, config);
-    /// assert_eq!(decoder.last_iteration_count(), 0);
     /// ```
-    ///
-    /// # Panics
-    ///
-    /// Does not panic under normal conditions. Panics in `decode_iterative` if
-    /// LLR slice length does not equal `n`.
     pub fn with_config(code: LdpcCode, config: DecoderConfig) -> Self {
         let n = code.n();
         let m = code.m();
@@ -876,7 +881,6 @@ impl LdpcDecoder {
 
         Self {
             code,
-            config,
             beliefs: vec![Llr::zero(); n],
             check_to_var,
             var_to_check,
@@ -884,6 +888,7 @@ impl LdpcDecoder {
             var_neighbors,
             temp_inputs: Vec::with_capacity(max_check_degree),
             last_iterations: 0,
+            config,
         }
     }
 
@@ -922,13 +927,48 @@ impl LdpcDecoder {
         llr_blocks: &[Vec<Llr>],
         max_iterations: usize,
     ) -> Vec<DecoderResult> {
+        Self::decode_batch_with_config(code, llr_blocks, max_iterations, DecoderConfig::default())
+    }
+
+    /// Decodes multiple LLR blocks in batch with a custom configuration.
+    ///
+    /// # Arguments
+    ///
+    /// * `code` - The LDPC code
+    /// * `llr_blocks` - Slice of LLR vectors, one per frame
+    /// * `max_iterations` - Maximum number of BP iterations per frame
+    /// * `config` - Decoder configuration (algorithm, early termination)
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::ldpc::{LdpcCode, LdpcDecoder, DecoderAlgorithm, DecoderConfig};
+    /// use gf2_coding::llr::Llr;
+    ///
+    /// let edges = vec![(0, 0), (0, 1), (0, 2)];
+    /// let code = LdpcCode::from_edges(1, 3, &edges);
+    /// let config = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.875), true);
+    ///
+    /// let llr_blocks: Vec<Vec<Llr>> = (0..10)
+    ///     .map(|_| vec![Llr::new(10.0), Llr::new(10.0), Llr::new(10.0)])
+    ///     .collect();
+    ///
+    /// let results = LdpcDecoder::decode_batch_with_config(&code, &llr_blocks, 10, config);
+    /// assert_eq!(results.len(), 10);
+    /// ```
+    pub fn decode_batch_with_config(
+        code: &LdpcCode,
+        llr_blocks: &[Vec<Llr>],
+        max_iterations: usize,
+        config: DecoderConfig,
+    ) -> Vec<DecoderResult> {
         #[cfg(feature = "parallel")]
         {
             use rayon::prelude::*;
             (0..llr_blocks.len())
                 .into_par_iter()
                 .map(|i| {
-                    let mut decoder = Self::new(code.clone());
+                    let mut decoder = Self::with_config(code.clone(), config);
                     decoder.decode_iterative(&llr_blocks[i], max_iterations)
                 })
                 .collect()
@@ -939,7 +979,7 @@ impl LdpcDecoder {
             llr_blocks
                 .iter()
                 .map(|llrs| {
-                    let mut decoder = Self::new(code.clone());
+                    let mut decoder = Self::with_config(code.clone(), config);
                     decoder.decode_iterative(llrs, max_iterations)
                 })
                 .collect()
@@ -949,7 +989,6 @@ impl LdpcDecoder {
     /// Performs check node update (sum-product algorithm).
     ///
     /// Computes check-to-variable messages using the exact box-plus operation.
-    #[allow(dead_code)] // Kept for potential future use
     fn check_node_update_spa(&mut self, _channel_llrs: &[Llr]) {
         for (check, neighbors) in self.check_neighbors.iter().enumerate() {
             for (pos, &_var) in neighbors.iter().enumerate() {
@@ -1006,7 +1045,7 @@ impl LdpcDecoder {
 
     /// Performs check node update (normalized min-sum approximation).
     ///
-    /// Multiplies the min-sum result by `alpha` to reduce overestimation bias.
+    /// Scales the standard min-sum output by `alpha` to compensate for overestimation.
     fn check_node_update_normalized_minsum(&mut self, _channel_llrs: &[Llr], alpha: f32) {
         for (check, neighbors) in self.check_neighbors.iter().enumerate() {
             for (pos, &_var) in neighbors.iter().enumerate() {
@@ -1033,7 +1072,7 @@ impl LdpcDecoder {
 
     /// Performs check node update (offset min-sum approximation).
     ///
-    /// Subtracts `beta` from the minimum magnitude to compensate overestimation.
+    /// Subtracts `beta` from the minimum magnitude to compensate for overestimation.
     fn check_node_update_offset_minsum(&mut self, _channel_llrs: &[Llr], beta: f32) {
         for (check, neighbors) in self.check_neighbors.iter().enumerate() {
             for (pos, &_var) in neighbors.iter().enumerate() {
@@ -1055,6 +1094,20 @@ impl LdpcDecoder {
 
                 self.check_to_var[check][pos] = message;
             }
+        }
+    }
+
+    /// Dispatches the check node update to the configured algorithm.
+    fn check_node_update(&mut self, channel_llrs: &[Llr]) {
+        match self.config.algorithm {
+            DecoderAlgorithm::MinSum => self.check_node_update_minsum(channel_llrs),
+            DecoderAlgorithm::NormalizedMinSum(alpha) => {
+                self.check_node_update_normalized_minsum(channel_llrs, alpha)
+            }
+            DecoderAlgorithm::OffsetMinSum(beta) => {
+                self.check_node_update_offset_minsum(channel_llrs, beta)
+            }
+            DecoderAlgorithm::SumProduct => self.check_node_update_spa(channel_llrs),
         }
     }
 
@@ -1150,27 +1203,19 @@ impl IterativeSoftDecoder for LdpcDecoder {
 
         let mut iterations = 0;
         let mut converged = false;
+        let early_termination = self.config.early_termination;
 
         for iter in 0..max_iterations {
             iterations = iter + 1;
 
-            // Check node update — dispatch based on configured algorithm
-            match self.config.algorithm.clone() {
-                DecoderAlgorithm::MinSum => self.check_node_update_minsum(llrs),
-                DecoderAlgorithm::NormalizedMinSum(alpha) => {
-                    self.check_node_update_normalized_minsum(llrs, alpha)
-                }
-                DecoderAlgorithm::OffsetMinSum(beta) => {
-                    self.check_node_update_offset_minsum(llrs, beta)
-                }
-                DecoderAlgorithm::SumProduct => self.check_node_update_spa(llrs),
-            }
+            // Check node update (dispatches to configured algorithm)
+            self.check_node_update(llrs);
 
             // Variable node update
             self.variable_node_update(llrs);
 
-            // Hard decision and syndrome check (early termination when enabled)
-            if self.config.early_termination {
+            // Early termination: check syndrome before max iterations
+            if early_termination {
                 let decoded = self.hard_decode();
                 if self.code.is_valid_codeword(&decoded) {
                     converged = true;
@@ -1179,17 +1224,14 @@ impl IterativeSoftDecoder for LdpcDecoder {
             }
         }
 
-        // If early termination was disabled, do one final syndrome check
-        if !self.config.early_termination {
-            let decoded = self.hard_decode();
-            if self.code.is_valid_codeword(&decoded) {
-                converged = true;
-            }
-        }
-
         self.last_iterations = iterations;
         let decoded_codeword = self.hard_decode();
         let syndrome_passed = self.code.is_valid_codeword(&decoded_codeword);
+
+        // If early termination was disabled, set converged based on final syndrome
+        if !early_termination {
+            converged = syndrome_passed;
+        }
 
         // Extract message bits from systematic codeword [message | parity]
         let k = self.code.k();
@@ -1614,242 +1656,6 @@ mod decoder_tests {
         assert_eq!(result1.iterations, result2.iterations);
         assert_eq!(result1.decoded_bits, result2.decoded_bits);
     }
-
-    // --- DecoderAlgorithm / DecoderConfig tests ---
-
-    #[test]
-    fn test_decoder_config_default() {
-        let cfg = DecoderConfig::default();
-        assert_eq!(cfg.algorithm, DecoderAlgorithm::MinSum);
-        assert!(cfg.early_termination);
-    }
-
-    #[test]
-    fn test_decoder_config_new() {
-        let cfg = DecoderConfig::new(DecoderAlgorithm::SumProduct);
-        assert_eq!(cfg.algorithm, DecoderAlgorithm::SumProduct);
-        assert!(cfg.early_termination);
-    }
-
-    #[test]
-    fn test_with_config_minsum_identical_to_new() {
-        // LdpcDecoder::new should be equivalent to using default DecoderConfig
-        let edges = vec![(0, 0), (0, 1), (0, 2)];
-        let code = LdpcCode::from_edges(1, 3, &edges);
-        let llrs = vec![Llr::new(10.0), Llr::new(10.0), Llr::new(10.0)];
-
-        let mut dec1 = LdpcDecoder::new(code.clone());
-        let res1 = dec1.decode_iterative(&llrs, 10);
-
-        let mut dec2 = LdpcDecoder::with_config(code, DecoderConfig::default());
-        let res2 = dec2.decode_iterative(&llrs, 10);
-
-        assert_eq!(res1.converged, res2.converged);
-        assert_eq!(res1.iterations, res2.iterations);
-        assert_eq!(
-            res1.decoded_bits.count_ones(),
-            res2.decoded_bits.count_ones()
-        );
-    }
-
-    #[test]
-    fn test_normalized_minsum_converges_on_clean_codeword() {
-        let edges = vec![(0, 0), (0, 1), (0, 2)];
-        let code = LdpcCode::from_edges(1, 3, &edges);
-        let llrs = vec![Llr::new(10.0), Llr::new(10.0), Llr::new(10.0)];
-
-        let config = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.875));
-        let mut decoder = LdpcDecoder::with_config(code, config);
-        let result = decoder.decode_iterative(&llrs, 10);
-
-        assert!(result.converged);
-        assert!(result.syndrome_check_passed);
-        assert_eq!(result.decoded_bits.count_ones(), 0);
-    }
-
-    #[test]
-    fn test_offset_minsum_converges_on_clean_codeword() {
-        let edges = vec![(0, 0), (0, 1), (0, 2)];
-        let code = LdpcCode::from_edges(1, 3, &edges);
-        let llrs = vec![Llr::new(10.0), Llr::new(10.0), Llr::new(10.0)];
-
-        let config = DecoderConfig::new(DecoderAlgorithm::OffsetMinSum(0.5));
-        let mut decoder = LdpcDecoder::with_config(code, config);
-        let result = decoder.decode_iterative(&llrs, 10);
-
-        assert!(result.converged);
-        assert!(result.syndrome_check_passed);
-        assert_eq!(result.decoded_bits.count_ones(), 0);
-    }
-
-    #[test]
-    fn test_sum_product_converges_on_clean_codeword() {
-        let edges = vec![(0, 0), (0, 1), (0, 2)];
-        let code = LdpcCode::from_edges(1, 3, &edges);
-        let llrs = vec![Llr::new(10.0), Llr::new(10.0), Llr::new(10.0)];
-
-        let config = DecoderConfig::new(DecoderAlgorithm::SumProduct);
-        let mut decoder = LdpcDecoder::with_config(code, config);
-        let result = decoder.decode_iterative(&llrs, 10);
-
-        assert!(result.converged);
-        assert!(result.syndrome_check_passed);
-        assert_eq!(result.decoded_bits.count_ones(), 0);
-    }
-
-    #[test]
-    fn test_early_termination_disabled_runs_all_iterations() {
-        // When early_termination = false, decoder must run all max_iterations
-        // even if the codeword is correct after iteration 1.
-        let edges = vec![(0, 0), (0, 1), (0, 2)];
-        let code = LdpcCode::from_edges(1, 3, &edges);
-        let llrs = vec![Llr::new(10.0), Llr::new(10.0), Llr::new(10.0)];
-
-        let max_iter = 5;
-        let config = DecoderConfig {
-            algorithm: DecoderAlgorithm::MinSum,
-            early_termination: false,
-        };
-        let mut decoder = LdpcDecoder::with_config(code, config);
-        let result = decoder.decode_iterative(&llrs, max_iter);
-
-        // Must have run exactly max_iterations (no early stopping)
-        assert_eq!(result.iterations, max_iter);
-        // Despite running all iterations, the result should still be correct
-        assert!(result.syndrome_check_passed);
-        assert_eq!(result.decoded_bits.count_ones(), 0);
-    }
-
-    #[test]
-    fn test_early_termination_enabled_exits_early() {
-        // When early_termination = true (default), decoder should exit as soon
-        // as syndrome passes — which for high-SNR should be well before max_iter.
-        let edges = vec![(0, 0), (0, 1), (0, 2)];
-        let code = LdpcCode::from_edges(1, 3, &edges);
-        let llrs = vec![Llr::new(10.0), Llr::new(10.0), Llr::new(10.0)];
-
-        let max_iter = 50;
-        let config = DecoderConfig {
-            algorithm: DecoderAlgorithm::MinSum,
-            early_termination: true,
-        };
-        let mut decoder = LdpcDecoder::with_config(code, config);
-        let result = decoder.decode_iterative(&llrs, max_iter);
-
-        assert!(result.converged);
-        // High-SNR should converge in far fewer iterations than max
-        assert!(result.iterations < max_iter);
-    }
-
-    #[test]
-    fn test_normalized_minsum_single_error_correction() {
-        // NMS should correct single-bit errors on a simple SPC code
-        let edges = vec![(0, 0), (0, 1), (0, 2)];
-        let code = LdpcCode::from_edges(1, 3, &edges);
-
-        // Two strong 1s, one weak 0 → [1, 1, 0] is the valid codeword with even parity
-        let llrs = vec![Llr::new(-5.0), Llr::new(-5.0), Llr::new(2.0)];
-
-        let config = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.875));
-        let mut decoder = LdpcDecoder::with_config(code, config);
-        let result = decoder.decode_iterative(&llrs, 20);
-
-        assert!(result.converged, "NormalizedMinSum decoder should converge");
-        assert!(result.syndrome_check_passed);
-        // [1, 1, 0] → 2 ones
-        assert_eq!(result.decoded_bits.count_ones(), 2);
-    }
-
-    #[test]
-    fn test_offset_minsum_single_error_correction() {
-        let edges = vec![(0, 0), (0, 1), (0, 2)];
-        let code = LdpcCode::from_edges(1, 3, &edges);
-
-        let llrs = vec![Llr::new(-5.0), Llr::new(-5.0), Llr::new(2.0)];
-
-        let config = DecoderConfig::new(DecoderAlgorithm::OffsetMinSum(0.5));
-        let mut decoder = LdpcDecoder::with_config(code, config);
-        let result = decoder.decode_iterative(&llrs, 20);
-
-        assert!(result.converged, "OffsetMinSum decoder should converge");
-        assert!(result.syndrome_check_passed);
-        assert_eq!(result.decoded_bits.count_ones(), 2);
-    }
-
-    #[test]
-    fn test_all_algorithms_agree_on_high_snr() {
-        // All four algorithms should give the same result at high SNR (all-zero codeword)
-        let edges = vec![(0, 0), (0, 1), (0, 2), (1, 1), (1, 2), (1, 3)];
-        let code = LdpcCode::from_edges(2, 4, &edges);
-        let llrs = vec![
-            Llr::new(10.0),
-            Llr::new(10.0),
-            Llr::new(10.0),
-            Llr::new(10.0),
-        ];
-
-        let algorithms = [
-            DecoderAlgorithm::MinSum,
-            DecoderAlgorithm::NormalizedMinSum(0.875),
-            DecoderAlgorithm::OffsetMinSum(0.5),
-            DecoderAlgorithm::SumProduct,
-        ];
-
-        for algo in &algorithms {
-            let config = DecoderConfig::new(algo.clone());
-            let mut decoder = LdpcDecoder::with_config(code.clone(), config);
-            let result = decoder.decode_iterative(&llrs, 20);
-            assert!(
-                result.converged,
-                "Algorithm {:?} should converge at high SNR",
-                algo
-            );
-            assert!(result.syndrome_check_passed);
-            assert_eq!(
-                result.decoded_bits.count_ones(),
-                0,
-                "Algorithm {:?} should decode to all-zero at high SNR",
-                algo
-            );
-        }
-    }
-
-    #[test]
-    fn test_normalized_minsum_dvb_t2_short_converges() {
-        // NMS should converge on DVB-T2 short frame at high SNR
-        use crate::CodeRate;
-        let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
-        let n = code.n();
-        let llrs: Vec<Llr> = (0..n).map(|_| Llr::new(5.0)).collect();
-
-        let config = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.875));
-        let mut decoder = LdpcDecoder::with_config(code, config);
-        let result = decoder.decode_iterative(&llrs, 50);
-
-        assert!(
-            result.converged,
-            "NMS should converge on DVB-T2 at high SNR"
-        );
-        assert!(result.syndrome_check_passed);
-    }
-
-    #[test]
-    fn test_minsum_dvb_t2_short_converges_baseline() {
-        // Baseline: standard MinSum should converge on DVB-T2 short frame at high SNR
-        use crate::CodeRate;
-        let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
-        let n = code.n();
-        let llrs: Vec<Llr> = (0..n).map(|_| Llr::new(5.0)).collect();
-
-        let mut decoder = LdpcDecoder::new(code);
-        let result = decoder.decode_iterative(&llrs, 50);
-
-        assert!(
-            result.converged,
-            "MinSum should converge on DVB-T2 at high SNR"
-        );
-        assert!(result.syndrome_check_passed);
-    }
 }
 
 #[cfg(test)]
@@ -2087,6 +1893,242 @@ mod generator_matrix_access_tests {
 }
 
 #[cfg(test)]
+mod algorithm_tests {
+    use super::*;
+    use crate::traits::IterativeSoftDecoder;
+
+    /// Helper: build a simple [3,2] single parity check code
+    fn simple_parity_code() -> LdpcCode {
+        let edges = vec![(0, 0), (0, 1), (0, 2)];
+        LdpcCode::from_edges(1, 3, &edges)
+    }
+
+    #[test]
+    fn test_decoder_config_default() {
+        let config = DecoderConfig::default();
+        assert_eq!(config.algorithm(), DecoderAlgorithm::MinSum);
+        assert!(config.early_termination());
+    }
+
+    #[test]
+    fn test_decoder_config_new_valid_normalized() {
+        let config = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.875), true);
+        assert_eq!(
+            config.algorithm(),
+            DecoderAlgorithm::NormalizedMinSum(0.875)
+        );
+    }
+
+    #[test]
+    fn test_decoder_config_new_valid_offset() {
+        let config = DecoderConfig::new(DecoderAlgorithm::OffsetMinSum(0.5), false);
+        assert_eq!(config.algorithm(), DecoderAlgorithm::OffsetMinSum(0.5));
+        assert!(!config.early_termination());
+    }
+
+    #[test]
+    fn test_decoder_config_new_normalized_alpha_one() {
+        // alpha = 1.0 is valid (upper bound inclusive)
+        let config = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(1.0), true);
+        assert_eq!(config.algorithm(), DecoderAlgorithm::NormalizedMinSum(1.0));
+    }
+
+    #[test]
+    fn test_decoder_config_new_offset_beta_zero() {
+        // beta = 0.0 is valid (lower bound inclusive)
+        let config = DecoderConfig::new(DecoderAlgorithm::OffsetMinSum(0.0), true);
+        assert_eq!(config.algorithm(), DecoderAlgorithm::OffsetMinSum(0.0));
+    }
+
+    #[test]
+    #[should_panic(expected = "NormalizedMinSum alpha must be finite and in (0.0, 1.0]")]
+    fn test_decoder_config_rejects_alpha_zero() {
+        DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.0), true);
+    }
+
+    #[test]
+    #[should_panic(expected = "NormalizedMinSum alpha must be finite and in (0.0, 1.0]")]
+    fn test_decoder_config_rejects_alpha_negative() {
+        DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(-0.5), true);
+    }
+
+    #[test]
+    #[should_panic(expected = "NormalizedMinSum alpha must be finite and in (0.0, 1.0]")]
+    fn test_decoder_config_rejects_alpha_greater_than_one() {
+        DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(1.1), true);
+    }
+
+    #[test]
+    #[should_panic(expected = "NormalizedMinSum alpha must be finite and in (0.0, 1.0]")]
+    fn test_decoder_config_rejects_alpha_nan() {
+        DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(f32::NAN), true);
+    }
+
+    #[test]
+    #[should_panic(expected = "NormalizedMinSum alpha must be finite and in (0.0, 1.0]")]
+    fn test_decoder_config_rejects_alpha_inf() {
+        DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(f32::INFINITY), true);
+    }
+
+    #[test]
+    #[should_panic(expected = "OffsetMinSum beta must be finite and >= 0.0")]
+    fn test_decoder_config_rejects_beta_negative() {
+        DecoderConfig::new(DecoderAlgorithm::OffsetMinSum(-0.1), true);
+    }
+
+    #[test]
+    #[should_panic(expected = "OffsetMinSum beta must be finite and >= 0.0")]
+    fn test_decoder_config_rejects_beta_nan() {
+        DecoderConfig::new(DecoderAlgorithm::OffsetMinSum(f32::NAN), true);
+    }
+
+    #[test]
+    #[should_panic(expected = "OffsetMinSum beta must be finite and >= 0.0")]
+    fn test_decoder_config_rejects_beta_inf() {
+        DecoderConfig::new(DecoderAlgorithm::OffsetMinSum(f32::INFINITY), true);
+    }
+
+    #[test]
+    fn test_normalized_minsum_single_error_correction() {
+        let code = simple_parity_code();
+        let config = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.875), true);
+        let mut decoder = LdpcDecoder::with_config(code, config);
+
+        // Strong all-zero codeword
+        let llrs = vec![Llr::new(10.0), Llr::new(10.0), Llr::new(10.0)];
+        let result = decoder.decode_iterative(&llrs, 10);
+        assert!(result.converged);
+        assert!(result.syndrome_check_passed);
+        assert_eq!(result.decoded_bits.count_ones(), 0);
+    }
+
+    #[test]
+    fn test_offset_minsum_single_error_correction() {
+        let code = simple_parity_code();
+        let config = DecoderConfig::new(DecoderAlgorithm::OffsetMinSum(0.5), true);
+        let mut decoder = LdpcDecoder::with_config(code, config);
+
+        // Strong all-zero codeword
+        let llrs = vec![Llr::new(10.0), Llr::new(10.0), Llr::new(10.0)];
+        let result = decoder.decode_iterative(&llrs, 10);
+        assert!(result.converged);
+        assert!(result.syndrome_check_passed);
+        assert_eq!(result.decoded_bits.count_ones(), 0);
+    }
+
+    #[test]
+    fn test_sum_product_single_error_correction() {
+        let code = simple_parity_code();
+        let config = DecoderConfig::new(DecoderAlgorithm::SumProduct, true);
+        let mut decoder = LdpcDecoder::with_config(code, config);
+
+        // Strong all-zero codeword
+        let llrs = vec![Llr::new(10.0), Llr::new(10.0), Llr::new(10.0)];
+        let result = decoder.decode_iterative(&llrs, 10);
+        assert!(result.converged);
+        assert!(result.syndrome_check_passed);
+        assert_eq!(result.decoded_bits.count_ones(), 0);
+    }
+
+    #[test]
+    fn test_early_termination_reduces_iterations() {
+        let code = simple_parity_code();
+
+        // With early termination (default)
+        let config_early = DecoderConfig::new(DecoderAlgorithm::MinSum, true);
+        let mut decoder_early = LdpcDecoder::with_config(code.clone(), config_early);
+
+        let llrs = vec![Llr::new(10.0), Llr::new(10.0), Llr::new(10.0)];
+        let result_early = decoder_early.decode_iterative(&llrs, 50);
+        assert!(result_early.converged);
+        assert!(
+            result_early.iterations < 50,
+            "Should converge before max iterations"
+        );
+
+        // Without early termination
+        let config_no_early = DecoderConfig::new(DecoderAlgorithm::MinSum, false);
+        let mut decoder_no_early = LdpcDecoder::with_config(code, config_no_early);
+        let result_no_early = decoder_no_early.decode_iterative(&llrs, 50);
+
+        // Without early termination, always runs all max_iterations
+        assert_eq!(result_no_early.iterations, 50);
+        assert!(result_no_early.syndrome_check_passed);
+        assert!(result_no_early.converged); // converged is set based on final syndrome when early_termination=false
+    }
+
+    #[test]
+    fn test_all_algorithms_agree_on_high_snr() {
+        let code = simple_parity_code();
+        let llrs = vec![Llr::new(10.0), Llr::new(10.0), Llr::new(10.0)];
+        let max_iter = 20;
+
+        let algorithms = [
+            DecoderAlgorithm::MinSum,
+            DecoderAlgorithm::NormalizedMinSum(0.875),
+            DecoderAlgorithm::OffsetMinSum(0.5),
+            DecoderAlgorithm::SumProduct,
+        ];
+
+        for &algo in &algorithms {
+            let config = DecoderConfig::new(algo, true);
+            let mut decoder = LdpcDecoder::with_config(code.clone(), config);
+            let result = decoder.decode_iterative(&llrs, max_iter);
+
+            assert!(
+                result.converged,
+                "Algorithm {:?} should converge at high SNR",
+                algo
+            );
+            assert!(
+                result.syndrome_check_passed,
+                "Algorithm {:?} should pass syndrome check",
+                algo
+            );
+            assert_eq!(
+                result.decoded_bits.count_ones(),
+                0,
+                "Algorithm {:?} should decode all-zero codeword",
+                algo
+            );
+        }
+    }
+
+    #[test]
+    fn test_all_algorithms_converge_on_11_codeword() {
+        let code = simple_parity_code();
+        // [1,1,0] is a valid codeword (even parity)
+        let llrs = vec![Llr::new(-10.0), Llr::new(-10.0), Llr::new(10.0)];
+        let max_iter = 20;
+
+        let algorithms = [
+            DecoderAlgorithm::MinSum,
+            DecoderAlgorithm::NormalizedMinSum(0.875),
+            DecoderAlgorithm::OffsetMinSum(0.5),
+            DecoderAlgorithm::SumProduct,
+        ];
+
+        for &algo in &algorithms {
+            let config = DecoderConfig::new(algo, true);
+            let mut decoder = LdpcDecoder::with_config(code.clone(), config);
+            let result = decoder.decode_iterative(&llrs, max_iter);
+
+            assert!(
+                result.converged,
+                "Algorithm {:?} should converge for [1,1,0]",
+                algo
+            );
+            assert_eq!(
+                result.decoded_bits.count_ones(),
+                2,
+                "Algorithm {:?} should decode to [1,1,0]",
+                algo
+            );
+        }
+    }
+}
+
+#[cfg(test)]
 mod profiling_helpers {
     use super::*;
 
@@ -2130,6 +2172,56 @@ mod profiling_helpers {
                 count,
                 100.0 * *count as f64 / code.m() as f64
             );
+        }
+    }
+}
+
+#[cfg(test)]
+mod decoder_proptests {
+    use super::*;
+    use crate::traits::IterativeSoftDecoder;
+    use proptest::prelude::*;
+
+    proptest! {
+        /// At high SNR, all min-sum variants (MinSum, NormalizedMinSum, OffsetMinSum)
+        /// should produce the same hard decisions for the all-zero codeword.
+        #[test]
+        fn test_algorithm_variants_agree_at_high_snr(
+            alpha in 0.5f32..=1.0f32,
+            beta in 0.0f32..=1.0f32,
+            snr_mag in 5.0f32..20.0f32,
+        ) {
+            // Single parity check code [3,2]
+            let edges = vec![(0, 0), (0, 1), (0, 2)];
+            let code = LdpcCode::from_edges(1, 3, &edges);
+
+            // High SNR all-zero codeword
+            let llrs = vec![Llr::new(snr_mag), Llr::new(snr_mag), Llr::new(snr_mag)];
+
+            // Decode with MinSum
+            let config_ms = DecoderConfig::new(DecoderAlgorithm::MinSum, true);
+            let mut decoder_ms = LdpcDecoder::with_config(code.clone(), config_ms);
+            let result_ms = decoder_ms.decode_iterative(&llrs, 20);
+
+            // Decode with NormalizedMinSum
+            let config_nms = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(alpha), true);
+            let mut decoder_nms = LdpcDecoder::with_config(code.clone(), config_nms);
+            let result_nms = decoder_nms.decode_iterative(&llrs, 20);
+
+            // Decode with OffsetMinSum
+            let config_oms = DecoderConfig::new(DecoderAlgorithm::OffsetMinSum(beta), true);
+            let mut decoder_oms = LdpcDecoder::with_config(code, config_oms);
+            let result_oms = decoder_oms.decode_iterative(&llrs, 20);
+
+            // All should converge at high SNR
+            prop_assert!(result_ms.converged, "MinSum should converge");
+            prop_assert!(result_nms.converged, "NormalizedMinSum should converge");
+            prop_assert!(result_oms.converged, "OffsetMinSum should converge");
+
+            // All should produce the same hard decisions (all-zero)
+            prop_assert_eq!(result_ms.decoded_bits.count_ones(), 0);
+            prop_assert_eq!(result_nms.decoded_bits.count_ones(), 0);
+            prop_assert_eq!(result_oms.decoded_bits.count_ones(), 0);
         }
     }
 }

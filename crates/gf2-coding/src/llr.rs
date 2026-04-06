@@ -342,7 +342,7 @@ impl Llr {
     ///
     /// # Panics
     ///
-    /// Panics if `llrs` is empty.
+    /// Panics if `llrs` is empty (delegates to [`Llr::boxplus_minsum_n`]).
     ///
     /// # Complexity
     ///
