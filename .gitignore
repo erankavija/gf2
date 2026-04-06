@@ -42,3 +42,4 @@ target/charon/
 .jit/server.log
 .jit/server.pid.json
 .jit/gate-runs/
+.claude/worktrees/
