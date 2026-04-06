@@ -120,16 +120,20 @@ pub struct DecoderResult {
     /// Number of iterations performed (for iterative decoders)
     pub iterations: usize,
 
-    /// Number of noise pattern queries tested (for GRAND-family decoders).
-    /// When `Some`, this is distinct from `iterations`; the simulation harness
-    /// uses this for `avg_queries_per_bit` when available.
-    pub queries: Option<usize>,
-
     /// Whether the decoder converged to a valid codeword
     pub converged: bool,
 
     /// Whether the syndrome check passed (for linear codes)
     pub syndrome_check_passed: bool,
+
+    /// Number of parity-check queries performed during decoding.
+    ///
+    /// This is a finer-grained measure of decoder work than iterations.
+    /// For belief-propagation decoders, this counts the total number of
+    /// check-node or variable-node messages exchanged.
+    /// When `None`, the simulation harness falls back to `iterations`
+    /// for computing `avg_queries_per_bit`.
+    pub queries: Option<usize>,
 }
 
 impl DecoderResult {
@@ -155,9 +159,9 @@ impl DecoderResult {
         Self {
             decoded_bits,
             iterations,
-            queries: None,
             converged,
             syndrome_check_passed,
+            queries: None,
         }
     }
 
@@ -166,9 +170,9 @@ impl DecoderResult {
         Self {
             decoded_bits,
             iterations: 1,
-            queries: None,
             converged: true,
             syndrome_check_passed: true,
+            queries: None,
         }
     }
 
@@ -177,9 +181,9 @@ impl DecoderResult {
         Self {
             decoded_bits,
             iterations,
-            queries: None,
             converged: false,
             syndrome_check_passed: false,
+            queries: None,
         }
     }
 }

@@ -9,28 +9,31 @@
 //!
 //! This serves as a baseline for comparing coded vs. uncoded transmission.
 
-use gf2_coding::simulation::{SimulationRunner, UncodedSimulationConfig};
+use gf2_coding::simulation::{SimulationConfig, SimulationRunner};
 use gf2_coding::AwgnChannel;
 
 fn main() {
     println!("=== Uncoded BPSK Transmission over AWGN ===\n");
 
-    let config = UncodedSimulationConfig {
-        eb_n0_range: vec![0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0],
+    let config = SimulationConfig {
+        eb_n0_range_db: vec![0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0],
         min_errors: 500,
-        max_trials: 1_000_000,
-        code_rate: 1.0,
-        frame_size: None,
+        max_frames: 1_000_000,
+        max_decoder_iterations: 1,
+        rng_seed: None,
+        output_path: None,
     };
 
     println!(
-        "Simulating {} bits minimum per Eb/N0 point",
+        "Simulating {} errors minimum per Eb/N0 point",
         config.min_errors
     );
-    println!("Maximum {} trials per point\n", config.max_trials);
+    println!("Maximum {} frames per point\n", config.max_frames);
 
     let mut rng = rand::thread_rng();
     let results = SimulationRunner::run_uncoded_ber(&config, &mut rng);
+
+    let code_rate = 1.0; // uncoded
 
     println!("┌──────────┬─────────────┬────────────────┬────────────┐");
     println!("│ Eb/N0 dB │     BER     │  Shannon Limit │  Gap (dB)  │");
@@ -38,7 +41,7 @@ fn main() {
 
     for result in &results {
         let capacity = AwgnChannel::shannon_capacity(result.eb_n0_db);
-        let shannon_limit = AwgnChannel::shannon_limit(config.code_rate);
+        let shannon_limit = AwgnChannel::shannon_limit(code_rate);
         let gap = result.eb_n0_db - shannon_limit;
 
         println!(
@@ -57,8 +60,8 @@ fn main() {
     println!("\nNotes:");
     println!(
         "- Shannon limit for rate {} is {:.2} dB",
-        config.code_rate,
-        AwgnChannel::shannon_limit(config.code_rate)
+        code_rate,
+        AwgnChannel::shannon_limit(code_rate)
     );
     println!("- At Shannon limit, capacity = rate (reliable communication theoretically possible)");
     println!("- Gap shows how far uncoded transmission is from the Shannon limit");
