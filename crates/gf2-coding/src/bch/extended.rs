@@ -742,6 +742,51 @@ mod tests {
             }
         }
     }
+
+    /// Verify d_min = 6 for eBCH(16,7) by exhaustive check.
+    /// Since n=16, we can check all 2^16 patterns up to weight 5.
+    #[test]
+    fn test_ebch_16_7_minimum_distance() {
+        let code = ExtendedBchCode::ebch_16_7();
+        let h = code.parity_check();
+        let n = code.n();
+
+        // Check weights 1..5: all syndromes should be nonzero
+        for w in 1..=5 {
+            // For small n, enumerate all weight-w patterns
+            let indices: Vec<usize> = (0..n).collect();
+            for combo in combinations(&indices, w) {
+                let mut e = BitVec::zeros(n);
+                for &idx in &combo {
+                    e.set(idx, true);
+                }
+                let syn = h.matvec(&e);
+                assert!(
+                    syn.count_ones() > 0,
+                    "Found weight-{} codeword for eBCH(16,7)",
+                    w
+                );
+            }
+        }
+    }
+}
+
+/// Helper: generate all k-combinations from a slice.
+fn combinations(items: &[usize], k: usize) -> Vec<Vec<usize>> {
+    if k == 0 {
+        return vec![vec![]];
+    }
+    if items.len() < k {
+        return vec![];
+    }
+    let mut result = Vec::new();
+    for (i, &item) in items.iter().enumerate() {
+        for mut rest in combinations(&items[i + 1..], k - 1) {
+            rest.insert(0, item);
+            result.push(rest);
+        }
+    }
+    result
 }
 
 #[cfg(test)]

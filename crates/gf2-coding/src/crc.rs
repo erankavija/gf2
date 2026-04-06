@@ -486,16 +486,11 @@ mod tests {
             }
         }
 
-        // CRC(25,15) should have d_min >= 3 (it's a CRC with a degree-10 polynomial)
-        assert!(
-            min_weight_found >= 3,
-            "d_min must be at least 3, found {}",
-            min_weight_found
-        );
-        // Record the actual d_min for documentation
-        assert!(
-            min_weight_found <= 6,
-            "d_min should be reasonable, found {}",
+        // CRC(25,15) with polynomial 0x6b9 has d_min = 4
+        // (verified by exhaustive search up to weight 4 above)
+        assert_eq!(
+            min_weight_found, 4,
+            "CRC(25,15) d_min should be exactly 4, found {}",
             min_weight_found
         );
     }
