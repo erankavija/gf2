@@ -214,10 +214,18 @@ pub struct OrbGrandResult {
 
     /// Log of the cumulative probability of all tested noise patterns.
     /// This is `ln(sum_z p(z|r))` summed over all tested patterns `z`.
+    /// Use [`cumulative_probability()`](Self::cumulative_probability) for the linear-domain value.
     pub cumulative_log_probability: f64,
 }
 
 impl OrbGrandResult {
+    /// Returns the cumulative probability in the linear domain: `exp(cumulative_log_probability)`.
+    ///
+    /// This is `sum_z p(z|r)` over all tested noise patterns.
+    pub fn cumulative_probability(&self) -> f64 {
+        self.cumulative_log_probability.exp()
+    }
+
     /// Returns `true` if at least one valid codeword was found.
     ///
     /// # Examples
@@ -622,6 +630,11 @@ impl SoftDecoder for OrbGrand {
     }
 
     fn decode_soft_with_result(&self, llrs: &[Llr]) -> DecoderResult {
+        assert!(
+            self.config.systematic,
+            "SoftDecoder::decode_soft_with_result requires systematic=true in OrbGrandConfig. \
+             Use OrbGrand::decode() directly for non-systematic codes."
+        );
         let result = self.decode(llrs);
         if result.success() {
             let decoded = {
