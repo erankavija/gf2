@@ -20,10 +20,10 @@
 //!
 //! # Parallel sweeps
 //!
-//! When the `parallel` feature is enabled, the non-iterative `run_coded` path
-//! dispatches each SNR point to a separate rayon thread. The iterative path
-//! (`run_coded_iterative`) requires `&mut self` on the decoder, so parallel
-//! execution requires a decoder factory closure (see `run_coded_iterative`).
+//! When the `parallel` feature is enabled:
+//! - [`SimulationRunner::run_coded`] dispatches each SNR point to a separate rayon thread.
+//! - [`SimulationRunner::run_coded_iterative_parallel`] does the same for iterative
+//!   decoders, using a factory closure to create a fresh decoder per thread.
 //!
 //! # Output
 //!
@@ -1782,6 +1782,40 @@ mod tests {
             "avg_iterations should respect max: {}",
             results.points[0].avg_iterations
         );
+    }
+
+    // -----------------------------------------------------------------------
+    // Parallel iterative
+    // -----------------------------------------------------------------------
+
+    #[test]
+    #[cfg(feature = "parallel")]
+    fn test_run_coded_iterative_parallel_returns_all_snr_points() {
+        let encoder = RepetitionEncoder;
+        let channel = BpskAwgnChannel;
+        let config = CodedSimulationConfig {
+            eb_n0_range_db: vec![3.0, 6.0, 9.0],
+            min_errors: 5,
+            max_frames: 200,
+            max_decoder_iterations: 10,
+            rng_seed: Some(42),
+            output_path: None,
+        };
+
+        let results = SimulationRunner::run_coded_iterative_parallel(
+            &encoder,
+            RepetitionIterativeDecoder::new,
+            &channel,
+            &config,
+        );
+        assert_eq!(
+            results.points.len(),
+            3,
+            "should have one result per SNR point"
+        );
+        for p in &results.points {
+            assert!(p.num_frames > 0, "each point must have at least one frame");
+        }
     }
 
     // -----------------------------------------------------------------------
