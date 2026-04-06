@@ -1216,3 +1216,10 @@
 {"type":"gate_failed","id":"d588be2e-9af1-46ab-8ae5-a906a90102e1","issue_id":"13594cd9-bfcb-400e-a5fc-ca0ed13c3378","timestamp":"2026-04-06T14:52:52.525454636Z","gate_key":"code-review","updated_by":"auto:executor"}
 {"type":"gate_passed","id":"43a8111c-8f79-4102-961f-5d8a7835b09e","issue_id":"13594cd9-bfcb-400e-a5fc-ca0ed13c3378","timestamp":"2026-04-06T15:25:50.322943473Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
 {"type":"gate_failed","id":"5c034c98-f179-4008-8eb2-26c3b0cbefd6","issue_id":"13594cd9-bfcb-400e-a5fc-ca0ed13c3378","timestamp":"2026-04-06T15:28:53.593483723Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"3d36e236-c84b-4cc1-a953-68413036fc71","issue_id":"13594cd9-bfcb-400e-a5fc-ca0ed13c3378","timestamp":"2026-04-06T16:10:44.515452086Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"a3944fc8-f4ec-4233-af80-2105bdbd5000","issue_id":"13594cd9-bfcb-400e-a5fc-ca0ed13c3378","timestamp":"2026-04-06T16:12:25.139229737Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"efce8a38-aa76-469a-8559-cc6a631ddf7f","issue_id":"13594cd9-bfcb-400e-a5fc-ca0ed13c3378","timestamp":"2026-04-06T16:25:44.969705335Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"7a275435-a072-4e8f-8afe-e25e158d708c","issue_id":"13594cd9-bfcb-400e-a5fc-ca0ed13c3378","timestamp":"2026-04-06T16:27:43.089516948Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"2738cda1-c20b-4a41-a10e-921ab50ea676","issue_id":"13594cd9-bfcb-400e-a5fc-ca0ed13c3378","timestamp":"2026-04-06T16:27:57.699935173Z","gate_key":"doc-review","updated_by":"agent:project-lead"}
+{"type":"issue_state_changed","id":"9a1425ec-58d6-4aa2-a95f-1022fa4ea793","issue_id":"13594cd9-bfcb-400e-a5fc-ca0ed13c3378","timestamp":"2026-04-06T16:27:57.702885335Z","from":"gated","to":"done"}
+{"type":"issue_completed","id":"9709424e-7450-44ac-8d30-5a2a1be37033","issue_id":"13594cd9-bfcb-400e-a5fc-ca0ed13c3378","timestamp":"2026-04-06T16:27:57.702912415Z"}
