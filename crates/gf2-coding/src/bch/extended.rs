@@ -101,6 +101,10 @@ impl ExtendedBchCode {
     /// assert_eq!(ext.n(), 16);
     /// assert_eq!(ext.k(), 11);
     /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(k * n) where k and n are the BCH code parameters.
     pub fn from_bch(base: &BchCode) -> Self {
         let bch_g = base.generator_matrix(); // k x n
         let k = base.k();
