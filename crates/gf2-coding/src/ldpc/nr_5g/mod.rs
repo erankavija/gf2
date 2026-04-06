@@ -472,6 +472,10 @@ impl NrRateMatchParams {
     /// let rate = params.effective_rate();
     /// assert!((rate - 121.0 / 256.0).abs() < 1e-6);
     /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
     pub fn effective_rate(&self) -> f64 {
         self.target_k as f64 / self.target_n as f64
     }
@@ -487,6 +491,10 @@ impl NrRateMatchParams {
     /// let (_, params) = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
     /// assert_eq!(params.active_systematic_bits(), 130 - 9 - 26);
     /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
     pub fn active_systematic_bits(&self) -> usize {
         self.full_k - self.num_shortened - self.num_punctured_systematic
     }
@@ -501,6 +509,10 @@ impl NrRateMatchParams {
     /// let (_, params) = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
     /// assert_eq!(params.transmitted_parity_bits(), 256 - 95);
     /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
     pub fn transmitted_parity_bits(&self) -> usize {
         self.target_n - self.active_systematic_bits()
     }
@@ -1186,5 +1198,23 @@ mod tests {
     fn test_ber_bg2_1024_441_6db() {
         // BG2 (1024, 441) at 6 dB: moderate rate 0.43 with larger block
         ber_acceptance(2, 1024, 441, 6.0, 1e-3, 10, "BG2 (1024,441) @ 6dB");
+    }
+
+    #[test]
+    fn test_ber_bg2_625_225_6db() {
+        // BG2 (625, 225) at 6 dB: rate 0.36
+        ber_acceptance(2, 625, 225, 6.0, 1e-3, 10, "BG2 (625,225) @ 6dB");
+    }
+
+    #[test]
+    fn test_ber_bg1_1024_640_8db() {
+        // BG1 (1024, 640) at 8 dB: rate 0.625, needs higher SNR
+        ber_acceptance(1, 1024, 640, 8.0, 5e-2, 3, "BG1 (1024,640) @ 8dB");
+    }
+
+    #[test]
+    fn test_ber_bg1_4096_3249_8db() {
+        // BG1 (4096, 3249) at 8 dB: high rate 0.793, needs higher SNR
+        ber_acceptance(1, 4096, 3249, 8.0, 5e-2, 2, "BG1 (4096,3249) @ 8dB");
     }
 }
