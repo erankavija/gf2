@@ -792,6 +792,23 @@ impl Nr5gRateMatchedCode {
     ///
     /// Panics if `channel_llrs.len() != target_n`.
     ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::ldpc::QuasiCyclicLdpc;
+    /// use gf2_coding::llr::Llr;
+    ///
+    /// let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
+    /// let target_n = rm_code.params().target_n;
+    /// let full_n = rm_code.params().full_n;
+    ///
+    /// // Simulate target_n channel LLRs (all strongly positive = likely zero bits)
+    /// let channel_llrs: Vec<Llr> = (0..target_n).map(|_| Llr::new(3.0)).collect();
+    /// let full_llrs = rm_code.prepare_llrs(&channel_llrs);
+    ///
+    /// assert_eq!(full_llrs.len(), full_n);
+    /// ```
+    ///
     /// # Complexity
     ///
     /// O(full_n) where full_n = N_b * Z.
@@ -848,6 +865,28 @@ impl Nr5gRateMatchedCode {
     /// # Returns
     ///
     /// Extracted message bits of length target_k.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `decoded_codeword.len() < full_n` (the codeword is shorter than
+    /// the full mother code length, so systematic column indices may be out of bounds).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::ldpc::QuasiCyclicLdpc;
+    /// use gf2_core::BitVec;
+    ///
+    /// let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
+    /// let full_n = rm_code.params().full_n;
+    /// let target_k = rm_code.params().target_k;
+    ///
+    /// // Simulate a decoded all-zero codeword of full mother-code length
+    /// let decoded = BitVec::zeros(full_n);
+    /// let message = rm_code.extract_message(&decoded);
+    ///
+    /// assert_eq!(message.len(), target_k);
+    /// ```
     ///
     /// # Complexity
     ///
@@ -986,21 +1025,82 @@ impl Nr5gRateMatchedDecoder {
     }
 
     /// Returns the target codeword length.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::ldpc::QuasiCyclicLdpc;
+    /// use gf2_coding::ldpc::nr_5g::Nr5gRateMatchedDecoder;
+    ///
+    /// let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
+    /// let decoder = Nr5gRateMatchedDecoder::new(rm_code);
+    /// assert_eq!(decoder.n(), 256);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
     pub fn n(&self) -> usize {
         self.rm_code.n()
     }
 
     /// Returns the target message length.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::ldpc::QuasiCyclicLdpc;
+    /// use gf2_coding::ldpc::nr_5g::Nr5gRateMatchedDecoder;
+    ///
+    /// let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
+    /// let decoder = Nr5gRateMatchedDecoder::new(rm_code);
+    /// assert_eq!(decoder.k(), 121);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
     pub fn k(&self) -> usize {
         self.rm_code.k()
     }
 
     /// Returns a reference to the rate matching parameters.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::ldpc::QuasiCyclicLdpc;
+    /// use gf2_coding::ldpc::nr_5g::Nr5gRateMatchedDecoder;
+    ///
+    /// let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
+    /// let decoder = Nr5gRateMatchedDecoder::new(rm_code);
+    /// assert_eq!(decoder.params().target_n, 256);
+    /// assert_eq!(decoder.params().target_k, 121);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
     pub fn params(&self) -> &NrRateMatchParams {
         self.rm_code.params()
     }
 
     /// Returns a reference to the underlying rate-matched code.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::ldpc::QuasiCyclicLdpc;
+    /// use gf2_coding::ldpc::nr_5g::Nr5gRateMatchedDecoder;
+    ///
+    /// let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
+    /// let decoder = Nr5gRateMatchedDecoder::new(rm_code);
+    /// assert_eq!(decoder.code().n(), 256);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
     pub fn code(&self) -> &Nr5gRateMatchedCode {
         &self.rm_code
     }
