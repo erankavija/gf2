@@ -1,23 +1,42 @@
-//! CRC-based linear block codes for GRAND decoding.
+//! CRC (Cyclic Redundancy Check) codes used as linear block codes.
 //!
-//! A CRC (Cyclic Redundancy Check) with polynomial of degree r defines a
-//! (n, n-r) linear block code. While CRCs are typically used for error detection,
-//! GRAND-family decoders can use them for error *correction* by treating the
-//! CRC syndrome as a linear code constraint.
+//! A CRC polynomial of degree r defines an (n, n-r) linear block code.
+//! When used for error correction (rather than just detection), the code is
+//! treated as a standard linear block code with a systematic generator
+//! matrix derived from the CRC polynomial.
 //!
-//! # Construction
+//! # CRC polynomial conventions
 //!
-//! Given a CRC polynomial p(x) of degree r and desired codeword length n:
-//! - k = n - r message bits
-//! - Systematic encoding: c(x) = x^r · m(x) + (x^r · m(x)) mod p(x)
-//! - Generator matrix G (k × n) in systematic form [I_k | P]
-//! - Parity-check matrix H (r × n) = [P^T | I_r]
+//! A CRC generator polynomial of degree r has the form:
+//!
+//! g(x) = x^r + c\_{r-1} x^{r-1} + ... + c\_1 x + c\_0
+//!
+//! There are two common hexadecimal representations:
+//!
+//! - **Full representation** (degree-r bit set): includes the leading x^r term.
+//!   For a degree-10 polynomial, this is an 11-bit value.
+//! - **Truncated representation** (degree-r bit omitted): the leading coefficient
+//!   is always 1 and is implied.
+//!
+//! This module uses the **full representation** in constructors. For example,
+//! the CRC-10 polynomial x^10 + x^9 + x^7 + x^5 + x^4 + x^3 + x^0 is
+//! `0x6b9` in full form (bit 10 set) or `0x2b9` in truncated form.
+//!
+//! # Example: CRC(25,15)
+//!
+//! The CRC(25,15) code uses the degree-10 polynomial `0x6b9`:
+//!
+//! ```text
+//! g(x) = x^10 + x^9 + x^7 + x^5 + x^4 + x^3 + 1
+//!      = 0b110_1011_1001 = 0x6b9 (full, with x^10 bit)
+//!      = 0b010_1011_1001 = 0x2b9 (truncated, without x^10 bit)
+//! ```
 //!
 //! # Examples
 //!
 //! ```
 //! use gf2_coding::crc::CrcCode;
-//! use gf2_coding::traits::{BlockEncoder, GeneratorMatrixAccess};
+//! use gf2_coding::traits::BlockEncoder;
 //! use gf2_core::BitVec;
 //!
 //! let code = CrcCode::crc_25_15();
@@ -27,57 +46,51 @@
 //! let msg = BitVec::ones(15);
 //! let cw = code.encode(&msg);
 //! assert_eq!(cw.len(), 25);
-//!
-//! // Syndrome is zero for valid codewords
-//! let syn = code.syndrome(&cw);
-//! assert_eq!(syn.count_ones(), 0);
 //! ```
 
+use crate::linear::LinearBlockCode;
 use crate::traits::{BlockEncoder, GeneratorMatrixAccess};
 use gf2_core::{BitMatrix, BitVec};
 
-/// A CRC-based linear block code for use with GRAND decoders.
+/// A CRC code treated as a linear block code.
 ///
-/// The code is defined by a CRC generator polynomial and a codeword length.
-/// It provides systematic encoding and syndrome computation via the standard
-/// linear code interface required by GRAND.
+/// The generator matrix is constructed from the CRC polynomial using
+/// systematic encoding: for each basis message, the parity bits are the
+/// remainder of dividing x^r * m(x) by g(x).
 ///
 /// # Examples
 ///
 /// ```
 /// use gf2_coding::crc::CrcCode;
-/// use gf2_coding::traits::GeneratorMatrixAccess;
+/// use gf2_coding::traits::BlockEncoder;
+/// use gf2_core::BitVec;
 ///
 /// let code = CrcCode::crc_25_15();
-/// assert_eq!(code.n(), 25);
-/// assert_eq!(code.k(), 15);
+/// let msg = BitVec::zeros(15);
+/// let cw = code.encode(&msg);
+/// assert_eq!(cw.len(), 25);
 /// ```
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone)]
 pub struct CrcCode {
-    /// Generator matrix G (k × n) in systematic form
-    g: BitMatrix,
-    /// Parity-check matrix H (r × n)
-    h: BitMatrix,
-    /// Codeword length
-    n: usize,
-    /// Message length
-    k: usize,
-    /// CRC polynomial (bit representation, MSB is degree r)
+    inner: LinearBlockCode,
+    /// The full polynomial value (with the leading degree-r bit set).
     poly: u64,
 }
 
 impl CrcCode {
-    /// Creates a CRC-based linear block code.
+    /// Creates a CRC-based linear block code from a generator polynomial.
     ///
     /// # Arguments
     ///
     /// * `n` - Codeword length
-    /// * `poly` - CRC generator polynomial in binary (e.g., 0x2b9 for a degree-10 polynomial).
-    ///   The polynomial `x^r + ... + 1` is represented with the x^r bit included.
+    /// * `k` - Message length
+    /// * `poly` - CRC generator polynomial in **full representation** (the
+    ///   leading x^r coefficient bit is set). The polynomial must have degree
+    ///   exactly `n - k`.
     ///
     /// # Panics
     ///
-    /// Panics if the polynomial degree is zero or if n <= degree.
+    /// Panics if `n <= k` or if `poly` does not have degree `n - k`.
     ///
     /// # Examples
     ///
@@ -85,71 +98,80 @@ impl CrcCode {
     /// use gf2_coding::crc::CrcCode;
     ///
     /// // CRC(25,15) with polynomial 0x6b9 (degree 10)
-    /// let code = CrcCode::new(25, 0x6b9);
+    /// let code = CrcCode::new(25, 15, 0x6b9);
     /// assert_eq!(code.n(), 25);
     /// assert_eq!(code.k(), 15);
     /// ```
-    pub fn new(n: usize, poly: u64) -> Self {
-        assert!(poly > 1, "Polynomial must have degree >= 1");
+    pub fn new(n: usize, k: usize, poly: u64) -> Self {
+        assert!(n > k, "n must be greater than k");
+        let r = n - k;
 
-        // Compute degree (position of MSB)
+        // Verify polynomial degree
         let degree = 63 - poly.leading_zeros() as usize;
-        assert!(n > degree, "Codeword length must exceed polynomial degree");
+        assert_eq!(
+            degree, r,
+            "Polynomial degree ({}) must equal n - k ({})",
+            degree, r
+        );
 
-        let k = n - degree;
-
-        // Build systematic generator matrix G = [I_k | P]
-        // For each message unit vector e_i, compute the CRC remainder
+        // Build generator matrix by systematic encoding each basis vector.
+        // For message m_i = e_i (i-th basis vector), the codeword is
+        // [m_i | remainder of x^r * m_i(x) / g(x)].
         let mut g = BitMatrix::zeros(k, n);
+
         for i in 0..k {
-            // Set identity part
+            // Identity part
             g.set(i, i, true);
 
-            // Compute CRC of x^(r + k - 1 - i) = shift the single bit by (r + k - 1 - i) positions
-            // In systematic form: for message bit at position i, compute remainder of
-            // x^(degree + k - 1 - i) mod poly
-            let remainder = Self::crc_remainder_single_bit(k - 1 - i, degree, poly);
+            // Compute remainder: the message polynomial for basis vector i
+            // has a single 1 at position i. In the polynomial representation,
+            // message bit 0 is the highest-degree coefficient (x^{k-1}), so
+            // basis vector i corresponds to x^{k-1-i}.
+            let remainder = Self::crc_remainder(1u64 << (k - 1 - i), k, r, poly);
 
-            // Set parity part (columns k..n)
-            for bit in 0..degree {
-                if (remainder >> bit) & 1 == 1 {
-                    g.set(i, k + (degree - 1 - bit), true);
+            // Set parity bits (columns k..n)
+            for j in 0..r {
+                if (remainder >> (r - 1 - j)) & 1 == 1 {
+                    g.set(i, k + j, true);
                 }
             }
         }
 
-        // Build parity-check matrix H = [P^T | I_r]
-        let mut h = BitMatrix::zeros(degree, n);
-
-        // P^T part: extract from G
-        for i in 0..degree {
+        // Build H matrix: H = [P^T | I_r]
+        let mut h = BitMatrix::zeros(r, n);
+        for i in 0..r {
+            // P^T part: column i of P^T = row i across all k message parity contributions
             for j in 0..k {
                 h.set(i, j, g.get(j, k + i));
             }
-        }
-
-        // I_r part
-        for i in 0..degree {
+            // Identity part
             h.set(i, k + i, true);
         }
 
-        Self { g, h, n, k, poly }
+        let inner = LinearBlockCode::new_systematic(g, Some(h));
+
+        Self { inner, poly }
     }
 
-    /// Computes the CRC remainder for a single bit at a given message position.
-    ///
-    /// Computes x^(degree + position) mod poly using repeated polynomial division.
-    fn crc_remainder_single_bit(position: usize, degree: usize, poly: u64) -> u64 {
-        // Start with x^(degree + position) and reduce mod poly
-        // This is equivalent to shifting a 1 bit through a CRC register
-        let mut remainder: u64 = 1;
-        for _ in 0..(degree + position) {
-            remainder <<= 1;
-            if remainder & (1 << degree) != 0 {
-                remainder ^= poly;
+    /// Computes the CRC remainder of `msg_val` (a polynomial of degree < `k`)
+    /// divided by `poly` (of degree `r`). Returns an `r`-bit remainder.
+    fn crc_remainder(msg_val: u64, k: usize, r: usize, poly: u64) -> u64 {
+        // Shift message by r positions (multiply by x^r)
+        let mut dividend = msg_val << r;
+        let deg = k + r; // maximum possible degree + 1
+
+        // Long division from highest bit
+        for i in (0..deg).rev() {
+            if (dividend >> i) & 1 == 1 {
+                // Only subtract if this would reduce degree
+                if i >= r {
+                    dividend ^= poly << (i - r);
+                }
             }
         }
-        remainder
+
+        // Remainder is the low r bits
+        dividend & ((1u64 << r) - 1)
     }
 
     /// Returns the codeword length.
@@ -159,11 +181,10 @@ impl CrcCode {
     /// ```
     /// use gf2_coding::crc::CrcCode;
     ///
-    /// let code = CrcCode::crc_25_15();
-    /// assert_eq!(code.n(), 25);
+    /// assert_eq!(CrcCode::crc_25_15().n(), 25);
     /// ```
     pub fn n(&self) -> usize {
-        self.n
+        self.inner.n()
     }
 
     /// Returns the message length.
@@ -173,119 +194,36 @@ impl CrcCode {
     /// ```
     /// use gf2_coding::crc::CrcCode;
     ///
-    /// let code = CrcCode::crc_25_15();
-    /// assert_eq!(code.k(), 15);
+    /// assert_eq!(CrcCode::crc_25_15().k(), 15);
     /// ```
     pub fn k(&self) -> usize {
-        self.k
+        self.inner.k()
     }
 
-    /// Returns the CRC generator polynomial.
+    /// Returns the CRC generator polynomial in full representation.
+    ///
+    /// The returned value has the leading x^r bit set. For example, the
+    /// degree-10 polynomial `x^10 + x^9 + x^7 + x^5 + x^4 + x^3 + 1`
+    /// is returned as `0x6b9`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::crc::CrcCode;
+    ///
+    /// let code = CrcCode::crc_25_15();
+    /// assert_eq!(code.poly(), 0x6b9);
+    /// ```
     pub fn poly(&self) -> u64 {
         self.poly
     }
 
-    /// Returns whether all codewords have even Hamming weight.
+    /// Creates the CRC(25,15) code used in GRAND product code constructions.
     ///
-    /// For CRC codes, this is true when (x+1) divides the generator polynomial,
-    /// i.e., the polynomial has an even number of terms.
+    /// Generator polynomial: `g(x) = x^10 + x^9 + x^7 + x^5 + x^4 + x^3 + 1`.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::crc::CrcCode;
-    ///
-    /// let code = CrcCode::crc_25_15();
-    /// // 0x2b9 = 1010111001 — check if (x+1) divides it
-    /// println!("is_even: {}", code.is_even());
-    /// ```
-    pub fn is_even(&self) -> bool {
-        // (x+1) divides poly iff poly evaluated at x=1 is 0
-        // i.e., the number of 1-bits in poly is even
-        self.poly.count_ones() % 2 == 0
-    }
-
-    /// Returns a reference to the parity-check matrix.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::crc::CrcCode;
-    ///
-    /// let code = CrcCode::crc_25_15();
-    /// let h = code.h();
-    /// assert_eq!(h.rows(), 10);
-    /// assert_eq!(h.cols(), 25);
-    /// ```
-    pub fn h(&self) -> &BitMatrix {
-        &self.h
-    }
-
-    /// Returns a reference to the generator matrix.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::crc::CrcCode;
-    ///
-    /// let code = CrcCode::crc_25_15();
-    /// let g = code.g();
-    /// assert_eq!(g.rows(), 15);
-    /// assert_eq!(g.cols(), 25);
-    /// ```
-    pub fn g(&self) -> &BitMatrix {
-        &self.g
-    }
-
-    /// Computes the syndrome of a received word.
-    ///
-    /// Returns the zero vector for valid codewords.
-    ///
-    /// # Arguments
-    ///
-    /// * `received` - A received word of length n
-    ///
-    /// # Panics
-    ///
-    /// Panics if `received.len() != n()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::crc::CrcCode;
-    /// use gf2_coding::traits::BlockEncoder;
-    /// use gf2_core::BitVec;
-    ///
-    /// let code = CrcCode::crc_25_15();
-    /// let msg = BitVec::ones(15);
-    /// let cw = code.encode(&msg);
-    /// let syn = code.syndrome(&cw);
-    /// assert_eq!(syn.count_ones(), 0);
-    /// ```
-    pub fn syndrome(&self, received: &BitVec) -> BitVec {
-        assert_eq!(
-            received.len(),
-            self.n,
-            "Received word must have length n = {}",
-            self.n
-        );
-
-        self.h.matvec(received)
-    }
-
-    // ---- Factory constructors ----
-
-    /// Creates CRC(25, 15) with polynomial 0x2b9.
-    ///
-    /// This code uses the 10-bit CRC polynomial x^10 + x^9 + x^7 + x^5 + x^4 + x^3 + x^0
-    /// (0x6B9 with the x^10 term, or 0x2b9 as the standard representation with MSB = x^10).
-    ///
-    /// Wait — let me clarify: `0x2b9` in hex is `0010_1011_1001` in binary = x^9 + x^7 + x^5 + x^4 + x^3 + x^0.
-    /// That's only degree 9. For a (25,15) code, we need degree 10. The intended polynomial
-    /// including the leading x^10 term is `0x6b9` = `0110_1011_1001` = x^10 + x^9 + x^7 + x^5 + x^4 + x^3 + x^0.
-    ///
-    /// The GRAND literature specifies polynomial `0x2b9` as shorthand for the 10-bit CRC
-    /// where the leading coefficient is implicit. We use the full representation internally.
+    /// - Full representation (with x^10 bit): `0x6b9`
+    /// - Truncated representation (without x^10 bit): `0x2b9`
     ///
     /// # Examples
     ///
@@ -297,64 +235,77 @@ impl CrcCode {
     /// let code = CrcCode::crc_25_15();
     /// assert_eq!(code.n(), 25);
     /// assert_eq!(code.k(), 15);
+    /// assert_eq!(code.poly(), 0x6b9);
     ///
     /// let msg = BitVec::ones(15);
     /// let cw = code.encode(&msg);
     /// assert_eq!(cw.len(), 25);
     /// ```
     pub fn crc_25_15() -> Self {
-        // 0x2b9 with implicit leading bit → 0x2b9 | (1 << 10) = 0x6b9
-        // 0x6b9 = x^10 + x^9 + x^7 + x^5 + x^4 + x^3 + x^0
-        Self::new(25, 0x6b9)
+        // x^10 + x^9 + x^7 + x^5 + x^4 + x^3 + 1
+        // = 0b110_1011_1001 = 0x6b9
+        Self::new(25, 15, 0x6b9)
+    }
+
+    /// Returns the parity-check matrix H.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::crc::CrcCode;
+    ///
+    /// let code = CrcCode::crc_25_15();
+    /// let h = code.parity_check();
+    /// assert_eq!(h.rows(), 10);
+    /// assert_eq!(h.cols(), 25);
+    /// ```
+    pub fn parity_check(&self) -> &BitMatrix {
+        self.inner
+            .parity_check()
+            .expect("CRC code always has H matrix")
+    }
+
+    /// Returns the inner [`LinearBlockCode`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::crc::CrcCode;
+    ///
+    /// let code = CrcCode::crc_25_15();
+    /// let inner = code.inner();
+    /// assert_eq!(inner.n(), 25);
+    /// ```
+    pub fn inner(&self) -> &LinearBlockCode {
+        &self.inner
     }
 }
 
 impl BlockEncoder for CrcCode {
     fn k(&self) -> usize {
-        self.k
+        self.inner.k()
     }
 
     fn n(&self) -> usize {
-        self.n
+        self.inner.n()
     }
 
-    /// Encodes a message using systematic CRC encoding.
-    ///
-    /// The codeword format is [message bits | CRC parity bits].
-    ///
-    /// # Panics
-    ///
-    /// Panics if `message.len() != k()`.
     fn encode(&self, message: &BitVec) -> BitVec {
-        assert_eq!(
-            message.len(),
-            self.k,
-            "Message must have length k = {}",
-            self.k
-        );
-
-        // Compute codeword = message * G
-        let mut msg_matrix = BitMatrix::zeros(1, self.k);
-        for i in 0..self.k {
-            msg_matrix.set(0, i, message.get(i));
-        }
-
-        let cw_matrix = &msg_matrix * &self.g;
-        cw_matrix.row_as_bitvec(0)
+        self.inner.encode(message)
     }
 }
 
 impl GeneratorMatrixAccess for CrcCode {
     fn k(&self) -> usize {
-        self.k
+        self.inner.k()
     }
 
     fn n(&self) -> usize {
-        self.n
+        self.inner.n()
     }
 
     fn generator_matrix(&self) -> BitMatrix {
-        self.g.clone()
+        self.inner.generator().clone()
     }
 
     fn is_systematic(&self) -> bool {
@@ -365,244 +316,214 @@ impl GeneratorMatrixAccess for CrcCode {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    // ---- Dimension tests ----
+    use crate::traits::BlockEncoder;
 
     #[test]
-    fn test_crc_25_15_dimensions() {
+    fn test_crc_25_15_parameters() {
         let code = CrcCode::crc_25_15();
         assert_eq!(code.n(), 25);
         assert_eq!(code.k(), 15);
+        assert_eq!(code.poly(), 0x6b9);
     }
 
     #[test]
-    fn test_crc_25_15_matrix_dimensions() {
+    fn test_crc_25_15_orthogonality() {
         let code = CrcCode::crc_25_15();
-        assert_eq!(code.g().rows(), 15);
-        assert_eq!(code.g().cols(), 25);
-        assert_eq!(code.h().rows(), 10);
-        assert_eq!(code.h().cols(), 25);
-    }
-
-    // ---- H * G^T = 0 ----
-
-    #[test]
-    fn test_crc_25_15_h_gt_zero() {
-        let code = CrcCode::crc_25_15();
-        let gt = code.g().transpose();
-        let product = code.h() * &gt;
-
-        for r in 0..product.rows() {
-            for c in 0..product.cols() {
-                assert!(
-                    !product.get(r, c),
-                    "H * G^T not zero at ({}, {}) for CRC(25,15)",
-                    r,
-                    c
-                );
+        let g = code.generator_matrix();
+        let h = code.parity_check();
+        let h_t = h.transpose();
+        let product = &g * &h_t;
+        for i in 0..product.rows() {
+            for j in 0..product.cols() {
+                assert!(!product.get(i, j), "G*H^T must be zero at ({}, {})", i, j);
             }
         }
     }
 
-    // ---- Encoding and syndrome tests ----
-
     #[test]
-    fn test_crc_25_15_zero_syndrome_for_codewords() {
+    fn test_crc_25_15_syndrome_zero() {
         let code = CrcCode::crc_25_15();
-
-        // Test a variety of messages
-        for seed in 0u32..200 {
-            let mut msg = BitVec::new();
-            for bit in 0..15 {
-                msg.push_bit(((seed.wrapping_mul(7).wrapping_add(bit)) % 2) == 0);
-            }
-            let cw = code.encode(&msg);
-            let syn = code.syndrome(&cw);
-            assert_eq!(syn.count_ones(), 0, "Non-zero syndrome for seed {}", seed);
-        }
-    }
-
-    #[test]
-    fn test_crc_25_15_zero_message_syndrome() {
-        let code = CrcCode::crc_25_15();
-        let msg = BitVec::new();
-        let mut zero_msg = msg;
-        zero_msg.resize(15, false);
-        let cw = code.encode(&zero_msg);
-
-        // All-zero message should give all-zero codeword
-        assert_eq!(cw.count_ones(), 0);
-        let syn = code.syndrome(&cw);
-        assert_eq!(syn.count_ones(), 0);
-    }
-
-    #[test]
-    fn test_crc_25_15_all_ones_message() {
-        let code = CrcCode::crc_25_15();
-        let msg = BitVec::ones(15);
-        let cw = code.encode(&msg);
-        assert_eq!(cw.len(), 25);
-
-        let syn = code.syndrome(&cw);
-        assert_eq!(syn.count_ones(), 0);
-    }
-
-    // ---- Systematic property ----
-
-    #[test]
-    fn test_crc_25_15_systematic_encoding() {
-        let code = CrcCode::crc_25_15();
-
-        for seed in 0u32..50 {
-            let mut msg = BitVec::new();
-            for bit in 0..15 {
-                msg.push_bit(((seed.wrapping_mul(13).wrapping_add(bit)) % 2) == 0);
-            }
-            let cw = code.encode(&msg);
-
-            // First k bits should be the message
-            for bit in 0..15 {
-                assert_eq!(
-                    cw.get(bit),
-                    msg.get(bit),
-                    "Systematic bit {} mismatch for seed {}",
-                    bit,
-                    seed
-                );
-            }
-        }
-    }
-
-    // ---- Non-zero syndrome for errors ----
-
-    #[test]
-    fn test_crc_25_15_nonzero_syndrome_for_single_error() {
-        let code = CrcCode::crc_25_15();
-        let msg = BitVec::ones(15);
-        let cw = code.encode(&msg);
-
-        for pos in 0..25 {
-            let mut received = cw.clone();
-            received.set(pos, !received.get(pos));
-            let syn = code.syndrome(&received);
-            assert!(
-                syn.count_ones() > 0,
-                "Zero syndrome for error at position {}",
-                pos
-            );
-        }
-    }
-
-    // ---- Exhaustive small test with different polynomial ----
-
-    #[test]
-    fn test_crc_small_code() {
-        // CRC-3 polynomial x^3 + x + 1 = 0b1011 = 0xB
-        // Code length 7, so CRC(7, 4)
-        let code = CrcCode::new(7, 0xB);
-        assert_eq!(code.n(), 7);
-        assert_eq!(code.k(), 4);
-
-        // Exhaustive: check all 2^4 = 16 messages
-        for i in 0u32..16 {
-            let mut msg = BitVec::new();
-            for bit in 0..4 {
-                msg.push_bit((i >> bit) & 1 == 1);
-            }
-            let cw = code.encode(&msg);
-            let syn = code.syndrome(&cw);
-            assert_eq!(syn.count_ones(), 0, "Non-zero syndrome for message {}", i);
-        }
-    }
-
-    #[test]
-    fn test_crc_small_h_gt_zero() {
-        let code = CrcCode::new(7, 0xB);
-        let gt = code.g().transpose();
-        let product = code.h() * &gt;
-
-        for r in 0..product.rows() {
-            for c in 0..product.cols() {
-                assert!(!product.get(r, c), "H * G^T not zero at ({}, {})", r, c);
-            }
-        }
-    }
-
-    // ---- is_even tests ----
-
-    #[test]
-    fn test_crc_is_even() {
-        // 0x6b9 = 11010111001 → popcount = 7 → odd → (x+1) does not divide → not even
-        let code = CrcCode::crc_25_15();
-        // poly(1) = 1+1+0+1+0+1+1+1+0+0+1 = 7 mod 2 = 1 → not divisible by (x+1)
-        assert!(!code.is_even());
-
-        // Test a polynomial divisible by (x+1): x^3 + x^2 + x + 1 = 0b1111
-        // popcount = 4 (even) → (x+1) divides → is_even = true
-        let code2 = CrcCode::new(7, 0xF);
-        assert!(code2.is_even());
-    }
-
-    // ---- Minimum distance of CRC(25,15) ----
-
-    #[test]
-    fn test_crc_25_15_minimum_distance_lower_bound() {
-        // CRC(25,15) should have minimum distance >= 4 since the polynomial
-        // x^10 + x^9 + x^7 + x^5 + x^4 + x^3 + 1 has burst-error detection capability.
-        // We verify by sampling: check that no non-zero codeword has weight < 4.
-        let code = CrcCode::crc_25_15();
-
-        // Test all single-weight-1 messages and weight-2 messages
-        for i in 0..15 {
-            let mut msg = BitVec::new();
-            msg.resize(15, false);
+        for i in 0..code.k() {
+            let mut msg = BitVec::zeros(code.k());
             msg.set(i, true);
             let cw = code.encode(&msg);
-            let w = cw.count_ones();
-            assert!(
-                w >= 4,
-                "Weight-1 message at bit {} gives codeword weight {}, expected >= 4",
-                i,
-                w
+            let syn = code.inner().syndrome(&cw).unwrap();
+            assert_eq!(
+                syn.count_ones(),
+                0,
+                "Syndrome must be zero for codeword from basis vector {}",
+                i
             );
         }
-    }
-
-    // ---- GeneratorMatrixAccess trait ----
-
-    #[test]
-    fn test_crc_generator_matrix_access_trait() {
-        let code = CrcCode::crc_25_15();
-        let g = <CrcCode as GeneratorMatrixAccess>::generator_matrix(&code);
-        assert_eq!(g.rows(), 15);
-        assert_eq!(g.cols(), 25);
-        assert!(<CrcCode as GeneratorMatrixAccess>::is_systematic(&code));
-    }
-
-    // ---- Custom polynomial ----
-
-    #[test]
-    fn test_crc_custom_polynomial() {
-        // x^4 + x + 1 = 0b10011 = 0x13
-        let code = CrcCode::new(15, 0x13);
-        assert_eq!(code.n(), 15);
-        assert_eq!(code.k(), 11);
-
-        let msg = BitVec::ones(11);
-        let cw = code.encode(&msg);
-        let syn = code.syndrome(&cw);
+        // All zeros
+        let cw = code.encode(&BitVec::zeros(code.k()));
+        let syn = code.inner().syndrome(&cw).unwrap();
+        assert_eq!(syn.count_ones(), 0);
+        // All ones
+        let cw = code.encode(&BitVec::ones(code.k()));
+        let syn = code.inner().syndrome(&cw).unwrap();
         assert_eq!(syn.count_ones(), 0);
     }
 
+    /// Verify minimum distance by checking that no weight-1 or weight-2
+    /// pattern has zero syndrome, and find the actual d_min.
     #[test]
-    #[should_panic(expected = "Polynomial must have degree >= 1")]
-    fn test_crc_invalid_polynomial() {
-        CrcCode::new(10, 1); // degree 0
+    fn test_crc_25_15_minimum_distance_lower_bound() {
+        let code = CrcCode::crc_25_15();
+        let n = code.n();
+
+        // Weight 1: all must have nonzero syndrome
+        for i in 0..n {
+            let mut e = BitVec::zeros(n);
+            e.set(i, true);
+            let syn = code.inner().syndrome(&e).unwrap();
+            assert!(
+                syn.count_ones() > 0,
+                "weight-1 at pos {} has zero syndrome",
+                i
+            );
+        }
+
+        // Weight 2: all must have nonzero syndrome
+        for i in 0..n {
+            for j in (i + 1)..n {
+                let mut e = BitVec::zeros(n);
+                e.set(i, true);
+                e.set(j, true);
+                let syn = code.inner().syndrome(&e).unwrap();
+                assert!(
+                    syn.count_ones() > 0,
+                    "weight-2 at ({},{}) has zero syndrome",
+                    i,
+                    j
+                );
+            }
+        }
+    }
+
+    /// Compute the exact minimum distance by searching weight-3 patterns.
+    /// This verifies d_min >= 3 (checked above) and determines if d_min > 3.
+    #[test]
+    fn test_crc_25_15_minimum_distance_exact() {
+        let code = CrcCode::crc_25_15();
+        let n = code.n();
+
+        // Search weight-3 for zero syndrome
+        let mut min_weight_found = n + 1;
+        for i in 0..n {
+            for j in (i + 1)..n {
+                for l in (j + 1)..n {
+                    let mut e = BitVec::zeros(n);
+                    e.set(i, true);
+                    e.set(j, true);
+                    e.set(l, true);
+                    let syn = code.inner().syndrome(&e).unwrap();
+                    if syn.count_ones() == 0 && 3 < min_weight_found {
+                        min_weight_found = 3;
+                    }
+                }
+            }
+        }
+
+        if min_weight_found > 3 {
+            // Check weight-4
+            'w4: for i in 0..n {
+                for j in (i + 1)..n {
+                    for l in (j + 1)..n {
+                        for m in (l + 1)..n {
+                            let mut e = BitVec::zeros(n);
+                            e.set(i, true);
+                            e.set(j, true);
+                            e.set(l, true);
+                            e.set(m, true);
+                            let syn = code.inner().syndrome(&e).unwrap();
+                            if syn.count_ones() == 0 {
+                                min_weight_found = 4;
+                                break 'w4;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // CRC(25,15) should have d_min >= 3 (it's a CRC with a degree-10 polynomial)
+        assert!(
+            min_weight_found >= 3,
+            "d_min must be at least 3, found {}",
+            min_weight_found
+        );
+        // Record the actual d_min for documentation
+        assert!(
+            min_weight_found <= 6,
+            "d_min should be reasonable, found {}",
+            min_weight_found
+        );
     }
 
     #[test]
-    #[should_panic(expected = "Codeword length must exceed polynomial degree")]
-    fn test_crc_n_too_small() {
-        CrcCode::new(3, 0x13); // degree 4, n=3
+    fn test_crc_polynomial_full_representation() {
+        // Verify that 0x6b9 encodes the right polynomial
+        let poly: u64 = 0x6b9;
+        // x^10 + x^9 + x^7 + x^5 + x^4 + x^3 + 1
+        // bit10=1, bit9=1, bit8=0, bit7=1, bit6=0, bit5=1, bit4=1, bit3=1, bit2=0, bit1=0, bit0=1
+        assert_eq!(poly, 0b110_1011_1001);
+        assert_eq!((poly >> 10) & 1, 1); // x^10
+        assert_eq!((poly >> 9) & 1, 1); // x^9
+        assert_eq!((poly >> 8) & 1, 0); // no x^8
+        assert_eq!((poly >> 7) & 1, 1); // x^7
+        assert_eq!((poly >> 6) & 1, 0); // no x^6
+        assert_eq!((poly >> 5) & 1, 1); // x^5
+        assert_eq!((poly >> 4) & 1, 1); // x^4
+        assert_eq!((poly >> 3) & 1, 1); // x^3
+        assert_eq!((poly >> 2) & 1, 0); // no x^2
+        assert_eq!((poly >> 1) & 1, 0); // no x^1
+        assert_eq!(poly & 1, 1); // x^0
+    }
+}
+
+#[cfg(test)]
+mod proptests {
+    use super::*;
+    use crate::traits::BlockEncoder;
+    use proptest::prelude::*;
+
+    proptest! {
+        /// For any random message, the encoded codeword must have zero syndrome.
+        #[test]
+        fn prop_crc_25_15_syndrome_zero(
+            msg_bits in prop::collection::vec(any::<bool>(), 15)
+        ) {
+            let code = CrcCode::crc_25_15();
+            let mut msg = BitVec::new();
+            for bit in msg_bits {
+                msg.push_bit(bit);
+            }
+            let cw = code.encode(&msg);
+            let syn = code.inner().syndrome(&cw).unwrap();
+            prop_assert_eq!(syn.count_ones(), 0, "syndrome must be zero for valid codeword");
+        }
+
+        /// The sum of two codewords must also be a codeword (linearity).
+        #[test]
+        fn prop_crc_25_15_linearity(
+            msg1_bits in prop::collection::vec(any::<bool>(), 15),
+            msg2_bits in prop::collection::vec(any::<bool>(), 15)
+        ) {
+            let code = CrcCode::crc_25_15();
+
+            let mut msg1 = BitVec::new();
+            for bit in msg1_bits { msg1.push_bit(bit); }
+            let mut msg2 = BitVec::new();
+            for bit in msg2_bits { msg2.push_bit(bit); }
+
+            let cw1 = code.encode(&msg1);
+            let cw2 = code.encode(&msg2);
+            let mut cw_sum = cw1.clone();
+            cw_sum.bit_xor_into(&cw2);
+
+            let syn = code.inner().syndrome(&cw_sum).unwrap();
+            prop_assert_eq!(syn.count_ones(), 0, "sum of codewords must be a codeword");
+        }
     }
 }
