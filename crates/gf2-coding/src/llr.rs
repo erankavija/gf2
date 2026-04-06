@@ -369,6 +369,10 @@ impl Llr {
     /// * `llrs` - Slice of LLRs to combine
     /// * `beta` - Offset value (typically 0.25-0.5)
     ///
+    /// # Panics
+    ///
+    /// Panics if `llrs` is empty.
+    ///
     /// # Examples
     ///
     /// ```

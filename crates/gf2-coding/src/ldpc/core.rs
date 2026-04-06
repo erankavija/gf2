@@ -639,14 +639,20 @@ pub enum DecoderAlgorithm {
     /// Reduces the overestimation bias of min-sum:
     /// `alpha · sign(∏ L_i) · min_i |L_i|`
     ///
-    /// Typical: alpha ∈ [0.75, 0.95].
+    /// # Valid range
+    ///
+    /// `alpha` must be in `(0.0, 1.0]` and finite. Values outside this range
+    /// will cause a panic at decoder construction.
     NormalizedMinSum(f32),
     /// Offset min-sum with offset `beta`.
     ///
     /// Subtracts a fixed offset from the minimum magnitude:
     /// `sign(∏ L_i) · max(0, min_i |L_i| − beta)`
     ///
-    /// Typical: beta ∈ [0.25, 0.5].
+    /// # Valid range
+    ///
+    /// `beta` must be non-negative and finite. Values outside this range
+    /// will cause a panic at decoder construction.
     OffsetMinSum(f32),
     /// Exact sum-product algorithm (most accurate, slowest).
     ///
@@ -701,7 +707,26 @@ impl DecoderConfig {
     /// assert_eq!(cfg.algorithm, DecoderAlgorithm::SumProduct);
     /// assert!(cfg.early_termination);
     /// ```
+    /// # Panics
+    ///
+    /// Panics if `NormalizedMinSum(alpha)` has `alpha` outside `(0.0, 1.0]` or non-finite,
+    /// or if `OffsetMinSum(beta)` has `beta < 0.0` or non-finite.
     pub fn new(algorithm: DecoderAlgorithm) -> Self {
+        match &algorithm {
+            DecoderAlgorithm::NormalizedMinSum(alpha) => {
+                assert!(
+                    alpha.is_finite() && *alpha > 0.0 && *alpha <= 1.0,
+                    "NormalizedMinSum alpha must be in (0.0, 1.0], got {alpha}"
+                );
+            }
+            DecoderAlgorithm::OffsetMinSum(beta) => {
+                assert!(
+                    beta.is_finite() && *beta >= 0.0,
+                    "OffsetMinSum beta must be non-negative and finite, got {beta}"
+                );
+            }
+            _ => {}
+        }
         Self {
             algorithm,
             early_termination: true,
@@ -1729,11 +1754,10 @@ mod decoder_tests {
         let mut decoder = LdpcDecoder::with_config(code, config);
         let result = decoder.decode_iterative(&llrs, 20);
 
-        if result.converged {
-            assert!(result.syndrome_check_passed);
-            // [1, 1, 0] → 2 ones
-            assert_eq!(result.decoded_bits.count_ones(), 2);
-        }
+        assert!(result.converged, "NormalizedMinSum decoder should converge");
+        assert!(result.syndrome_check_passed);
+        // [1, 1, 0] → 2 ones
+        assert_eq!(result.decoded_bits.count_ones(), 2);
     }
 
     #[test]
@@ -1747,10 +1771,9 @@ mod decoder_tests {
         let mut decoder = LdpcDecoder::with_config(code, config);
         let result = decoder.decode_iterative(&llrs, 20);
 
-        if result.converged {
-            assert!(result.syndrome_check_passed);
-            assert_eq!(result.decoded_bits.count_ones(), 2);
-        }
+        assert!(result.converged, "OffsetMinSum decoder should converge");
+        assert!(result.syndrome_check_passed);
+        assert_eq!(result.decoded_bits.count_ones(), 2);
     }
 
     #[test]
