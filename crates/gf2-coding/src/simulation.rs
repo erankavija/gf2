@@ -1031,7 +1031,7 @@ where
             .eb_n0_range_db
             .par_iter()
             .enumerate()
-            .map(|pair| simulate_point(pair))
+            .map(simulate_point)
             .collect()
     };
     #[cfg(not(feature = "parallel"))]
@@ -1039,7 +1039,7 @@ where
         .eb_n0_range_db
         .iter()
         .enumerate()
-        .map(|pair| simulate_point(pair))
+        .map(simulate_point)
         .collect();
 
     let results = SimulationResults { points };
