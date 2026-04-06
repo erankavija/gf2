@@ -1168,3 +1168,160 @@ mod tests {
         }
     }
 }
+
+#[cfg(test)]
+mod fig2_validation {
+    //! Fig. 2 reproduction: compare predicted vs empirical list-BLER.
+    use super::*;
+    use crate::grand::orbgrand::{OrbGrand, OrbGrandConfig};
+    use crate::linear::LinearBlockCode;
+    use crate::traits::BlockEncoder;
+    use gf2_core::BitVec;
+    use rand::rngs::StdRng;
+    use rand::{Rng, SeedableRng};
+    use rand_distr;
+
+    /// Run many frames, compute empirical list-BLER (fraction where correct
+    /// codeword is NOT in list), compare with average predicted list-BLER.
+    #[test]
+    fn test_predicted_vs_empirical_list_bler() {
+        let code = LinearBlockCode::hamming(3); // (7,4)
+        let h = code.parity_check().unwrap().clone();
+        let n = code.n();
+        let k = code.k();
+
+        let config = OrbGrandConfig {
+            max_queries: 5000,
+            list_size: 2,
+            even_code: false,
+            systematic: true,
+        };
+        let sogrand = SoGrand::new(OrbGrand::new(h, config));
+
+        let mut rng = StdRng::seed_from_u64(42);
+        let num_frames = 200;
+        let sigma = 0.7; // moderate noise
+        let mut empirical_misses = 0;
+        let mut total_predicted_bler = 0.0;
+
+        for _ in 0..num_frames {
+            // Random message
+            let mut msg = BitVec::zeros(k);
+            for i in 0..k {
+                if rng.gen_bool(0.5) {
+                    msg.set(i, true);
+                }
+            }
+            let codeword = code.encode(&msg);
+
+            // BPSK + AWGN
+            let llrs: Vec<Llr> = (0..n)
+                .map(|i| {
+                    let symbol = if codeword.get(i) { -1.0 } else { 1.0 };
+                    let noise: f64 = sigma * rng.sample::<f64, _>(rand_distr::StandardNormal);
+                    let received = symbol + noise;
+                    Llr::new((2.0 * received / (sigma * sigma)) as f32)
+                })
+                .collect();
+
+            let result = sogrand.decode_siso(&llrs);
+            total_predicted_bler += result.list_bler_prediction;
+
+            // Check if correct codeword is in list (via ORBGRAND decode)
+            let orb_result = OrbGrand::new(
+                code.parity_check().unwrap().clone(),
+                OrbGrandConfig {
+                    max_queries: 5000,
+                    list_size: 2,
+                    even_code: false,
+                    systematic: true,
+                },
+            )
+            .decode(&llrs);
+
+            let correct_in_list = orb_result
+                .codewords
+                .iter()
+                .any(|sc| (0..n).all(|i| sc.codeword.get(i) == codeword.get(i)));
+            if !correct_in_list {
+                empirical_misses += 1;
+            }
+        }
+
+        let empirical_bler = empirical_misses as f64 / num_frames as f64;
+        let avg_predicted_bler = total_predicted_bler / num_frames as f64;
+
+        // Predicted and empirical should be in the same ballpark
+        // Allow generous tolerance since this is a Monte Carlo comparison
+        let ratio = if empirical_bler > 0.0 {
+            avg_predicted_bler / empirical_bler
+        } else {
+            // Both should be near zero
+            assert!(
+                avg_predicted_bler < 0.1,
+                "Predicted BLER {avg_predicted_bler:.3} too high when empirical is 0"
+            );
+            return;
+        };
+
+        assert!(
+            ratio > 0.2 && ratio < 5.0,
+            "Predicted ({avg_predicted_bler:.4}) and empirical ({empirical_bler:.4}) \
+             list-BLER differ by more than 5x (ratio={ratio:.2})"
+        );
+    }
+
+    /// Word-boundary test: exercise SOGRAND with code length near 64 bits.
+    #[test]
+    fn test_sogrand_near_64_bit_boundary() {
+        use crate::bch::extended::ExtendedBchCode;
+
+        let ebch = ExtendedBchCode::ebch_64_57();
+        let h = ebch.parity_check().clone();
+
+        let config = OrbGrandConfig {
+            max_queries: 50_000,
+            list_size: 2,
+            even_code: true,
+            systematic: true,
+        };
+        let sogrand = SoGrand::new(OrbGrand::new(h, config));
+
+        // Noiseless LLRs for all-zero codeword
+        let llrs: Vec<Llr> = vec![Llr::new(5.0); 64];
+        let result = sogrand.decode_siso(&llrs);
+
+        assert_eq!(result.app_llrs.len(), 64);
+        assert_eq!(result.extrinsic_llrs.len(), 64);
+        // All APP LLRs should favor bit 0 (positive)
+        for i in 0..64 {
+            assert!(
+                result.app_llrs[i].value() > 0.0,
+                "APP LLR at bit {} should be positive for all-zero codeword",
+                i
+            );
+        }
+    }
+
+    /// Validate log_codebook_ratio approximation for moderate n.
+    #[test]
+    fn test_log_codebook_ratio_approximation_accuracy() {
+        // For small n/k, compare exact vs our implementation
+        for (n, k) in &[(7, 4), (15, 11), (16, 11), (31, 26), (32, 26)] {
+            let result = log_codebook_ratio(*n, *k);
+            // (2^k - 1) / (2^n - 1) should be a positive ratio < 1
+            // In log domain, this should be negative
+            assert!(
+                result < 0.0,
+                "log_codebook_ratio({n},{k}) = {result} should be negative"
+            );
+            // Rough check: result should be approximately (k-n)*ln(2)
+            let approx = (*k as f64 - *n as f64) * 2.0_f64.ln();
+            let error = (result - approx).abs();
+            assert!(
+                error < 1.0,
+                "log_codebook_ratio({n},{k}) = {result:.4}, approx = {approx:.4}, error = {error:.4}"
+            );
+        }
+    }
+}
