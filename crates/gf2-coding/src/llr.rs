@@ -340,6 +340,14 @@ impl Llr {
     /// * `llrs` - Slice of LLRs to combine
     /// * `alpha` - Normalization factor (typically 0.75-0.95)
     ///
+    /// # Panics
+    ///
+    /// Panics if `llrs` is empty.
+    ///
+    /// # Complexity
+    ///
+    /// O(n) where n = `llrs.len()`.
+    ///
     /// # Examples
     ///
     /// ```
@@ -372,6 +380,10 @@ impl Llr {
     /// # Panics
     ///
     /// Panics if `llrs` is empty.
+    ///
+    /// # Complexity
+    ///
+    /// O(n) where n = `llrs.len()`.
     ///
     /// # Examples
     ///
