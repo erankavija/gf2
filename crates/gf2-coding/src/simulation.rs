@@ -23,69 +23,6 @@ use crate::llr::Llr;
 use crate::traits::{BlockEncoder, IterativeSoftDecoder, SoftDecoder};
 use gf2_core::BitVec;
 use rand::Rng;
-use std::path::PathBuf;
-
-/// Trait abstracting a channel model for coded simulations.
-///
-/// A `ChannelModel` takes encoded codeword bits, transmits them through a
-/// channel, and returns LLRs for soft-decision decoding. This allows the
-/// simulation loop to be generic over the modulation scheme and channel type.
-///
-/// # Examples
-///
-/// The default BPSK/AWGN channel is provided by [`DefaultBpskAwgnChannel`].
-/// Custom channels (e.g., fading, QAM, etc.) can be implemented by providing
-/// a type that implements this trait.
-pub trait ChannelModel {
-    /// Transmits a codeword through the channel and returns LLRs.
-    ///
-    /// # Arguments
-    ///
-    /// * `codeword_bits` - Iterator of bools representing the codeword bits
-    /// * `n` - Number of codeword bits
-    /// * `rng` - Random number generator for noise
-    ///
-    /// # Returns
-    ///
-    /// A vector of LLRs, one per codeword bit position.
-    fn transmit_and_demodulate<R: Rng>(&self, codeword_bits: &[bool], rng: &mut R) -> Vec<Llr>;
-}
-
-/// Default BPSK modulation over AWGN channel.
-///
-/// This is the channel model used internally by [`SimulationRunner::run_coded`]
-/// and [`SimulationRunner::run_coded_iterative`].
-pub struct DefaultBpskAwgnChannel {
-    channel: AwgnChannel,
-}
-
-impl DefaultBpskAwgnChannel {
-    /// Creates a new BPSK/AWGN channel from Eb/N0 (in dB) and code rate.
-    pub fn new(eb_n0_db: f64, code_rate: f64) -> Self {
-        Self {
-            channel: AwgnChannel::from_eb_n0_db(eb_n0_db, code_rate),
-        }
-    }
-}
-
-impl ChannelModel for DefaultBpskAwgnChannel {
-    fn transmit_and_demodulate<R: Rng>(&self, codeword_bits: &[bool], rng: &mut R) -> Vec<Llr> {
-        let symbols: Vec<f64> = codeword_bits
-            .iter()
-            .map(|&b| BpskModulator::modulate(b))
-            .collect();
-        let received = self.channel.transmit_symbols(&symbols, rng);
-        self.channel.to_llrs(&received)
-    }
-}
-
-/// Factory function type for creating a channel model for a given Eb/N0.
-///
-/// The simulation loop calls this once per SNR point to create a fresh channel.
-/// The default factory creates a [`DefaultBpskAwgnChannel`].
-fn default_channel_factory(eb_n0_db: f64, code_rate: f64) -> DefaultBpskAwgnChannel {
-    DefaultBpskAwgnChannel::new(eb_n0_db, code_rate)
-}
 
 /// Configuration for Monte Carlo simulations.
 #[derive(Debug, Clone)]
@@ -213,12 +150,6 @@ pub struct CodedSimulationConfig {
     /// Maximum iterations for iterative decoders (e.g., LDPC belief propagation).
     /// Non-iterative decoders ignore this value.
     pub max_decoder_iterations: usize,
-
-    /// Optional path to write CSV results after simulation completes.
-    /// When `Some`, `run_coded` and `run_coded_iterative` (and their `_with_channel`
-    /// and `_parallel` variants) write a CSV file at the given path.
-    /// When `None`, no file I/O is performed.
-    pub output_path: Option<PathBuf>,
 }
 
 impl CodedSimulationConfig {
@@ -241,7 +172,6 @@ impl CodedSimulationConfig {
             min_block_errors: 10,
             max_frames: 1_000,
             max_decoder_iterations: 50,
-            output_path: None,
         }
     }
 
@@ -263,7 +193,6 @@ impl CodedSimulationConfig {
             min_block_errors: 100,
             max_frames: 1_000_000,
             max_decoder_iterations: 50,
-            output_path: None,
         }
     }
 }
@@ -576,95 +505,6 @@ impl SimulationRunner {
         D: SoftDecoder,
         R: Rng,
     {
-        let code_rate = encoder.k() as f64 / encoder.n() as f64;
-        Self::run_coded_with_channel(
-            encoder,
-            decoder,
-            config,
-            |eb_n0_db| default_channel_factory(eb_n0_db, code_rate),
-            rng,
-        )
-    }
-
-    /// Runs a coded BER/BLER simulation sweep with a caller-supplied channel.
-    ///
-    /// Like [`run_coded`](Self::run_coded) but the channel is not hardcoded to
-    /// BPSK/AWGN. Instead, the caller provides a factory closure that creates a
-    /// [`ChannelModel`] for each Eb/N0 point.
-    ///
-    /// # Arguments
-    ///
-    /// * `encoder`         - A [`BlockEncoder`] that maps k-bit messages to n-bit codewords.
-    /// * `decoder`         - A [`SoftDecoder`] that maps n LLRs to k decoded message bits.
-    /// * `config`          - Simulation parameters (SNR range, stopping criteria, etc.).
-    /// * `channel_factory` - Closure that takes `eb_n0_db` and returns a [`ChannelModel`].
-    /// * `rng`             - Source of randomness.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `encoder.k() != decoder.k()` or `encoder.n() != decoder.n()`.
-    ///
-    /// # Complexity
-    ///
-    /// O(max_frames * n) per SNR point.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::simulation::{
-    ///     SimulationRunner, CodedSimulationConfig, DefaultBpskAwgnChannel,
-    /// };
-    /// use gf2_coding::traits::{BlockEncoder, SoftDecoder, DecoderResult};
-    /// use gf2_core::BitVec;
-    /// use gf2_coding::llr::Llr;
-    ///
-    /// struct IdentityCode;
-    /// impl BlockEncoder for IdentityCode {
-    ///     fn k(&self) -> usize { 4 }
-    ///     fn n(&self) -> usize { 4 }
-    ///     fn encode(&self, msg: &BitVec) -> BitVec { msg.clone() }
-    /// }
-    /// impl SoftDecoder for IdentityCode {
-    ///     fn k(&self) -> usize { 4 }
-    ///     fn n(&self) -> usize { 4 }
-    ///     fn decode_soft(&self, llrs: &[Llr]) -> BitVec {
-    ///         let mut out = BitVec::new();
-    ///         for &l in llrs { out.push_bit(l.hard_decision()); }
-    ///         out
-    ///     }
-    /// }
-    ///
-    /// let mut config = CodedSimulationConfig::quick_test();
-    /// config.eb_n0_range = vec![10.0];
-    /// config.min_block_errors = 5;
-    /// config.max_frames = 200;
-    ///
-    /// let encoder = IdentityCode;
-    /// let decoder = IdentityCode;
-    /// let mut rng = rand::thread_rng();
-    ///
-    /// // Use a custom channel factory (here, still BPSK/AWGN but at rate 1.0)
-    /// let results = SimulationRunner::run_coded_with_channel(
-    ///     &encoder, &decoder, &config,
-    ///     |eb_n0_db| DefaultBpskAwgnChannel::new(eb_n0_db, 1.0),
-    ///     &mut rng,
-    /// );
-    /// assert_eq!(results.len(), 1);
-    /// ```
-    pub fn run_coded_with_channel<E, D, C, F, R>(
-        encoder: &E,
-        decoder: &D,
-        config: &CodedSimulationConfig,
-        channel_factory: F,
-        rng: &mut R,
-    ) -> Vec<CodedSimulationResult>
-    where
-        E: BlockEncoder,
-        D: SoftDecoder,
-        C: ChannelModel,
-        F: Fn(f64) -> C,
-        R: Rng,
-    {
         assert_eq!(
             encoder.k(),
             decoder.k(),
@@ -678,12 +518,13 @@ impl SimulationRunner {
 
         let k = encoder.k();
         let n = encoder.n();
+        let code_rate = k as f64 / n as f64;
 
-        let results: Vec<CodedSimulationResult> = config
+        config
             .eb_n0_range
             .iter()
             .map(|&eb_n0_db| {
-                let channel = channel_factory(eb_n0_db);
+                let channel = AwgnChannel::from_eb_n0_db(eb_n0_db, code_rate);
 
                 let mut num_frames: usize = 0;
                 let mut num_block_errors: usize = 0;
@@ -706,9 +547,16 @@ impl SimulationRunner {
                     // 2. Encode
                     let codeword = encoder.encode(&message);
 
-                    // 3-5. Channel: modulate, add noise, compute LLRs
-                    let codeword_bits: Vec<bool> = (0..n).map(|i| codeword.get(i)).collect();
-                    let llrs = channel.transmit_and_demodulate(&codeword_bits, rng);
+                    // 3. Modulate (BPSK): false→+1, true→−1
+                    let symbols: Vec<f64> = (0..n)
+                        .map(|i| BpskModulator::modulate(codeword.get(i)))
+                        .collect();
+
+                    // 4. AWGN channel
+                    let received = channel.transmit_symbols(&symbols, rng);
+
+                    // 5. LLRs
+                    let llrs: Vec<Llr> = channel.to_llrs(&received);
 
                     // 6. Decode
                     let result = decoder.decode_soft_with_result(&llrs);
@@ -757,15 +605,7 @@ impl SimulationRunner {
                     reached_target,
                 }
             })
-            .collect();
-
-        // Write CSV to output_path if configured
-        if let Some(ref path) = config.output_path {
-            let csv = Self::coded_results_to_csv(&results, true);
-            std::fs::write(path, csv).expect("failed to write simulation results CSV");
-        }
-
-        results
+            .collect()
     }
 
     /// Runs a coded BER/BLER simulation sweep for iterative decoders.
@@ -851,51 +691,6 @@ impl SimulationRunner {
         D: IterativeSoftDecoder,
         R: Rng,
     {
-        let code_rate = encoder.k() as f64 / encoder.n() as f64;
-        Self::run_coded_iterative_with_channel(
-            encoder,
-            decoder,
-            config,
-            |eb_n0_db| default_channel_factory(eb_n0_db, code_rate),
-            rng,
-        )
-    }
-
-    /// Runs a coded BER/BLER simulation sweep for iterative decoders with a
-    /// caller-supplied channel.
-    ///
-    /// Like [`run_coded_iterative`](Self::run_coded_iterative) but with a
-    /// generic channel model instead of hardcoded BPSK/AWGN.
-    ///
-    /// # Arguments
-    ///
-    /// * `encoder`         - A [`BlockEncoder`] that maps k-bit messages to n-bit codewords.
-    /// * `decoder`         - An [`IterativeSoftDecoder`] that decodes n LLRs to k message bits.
-    /// * `config`          - Simulation parameters (SNR range, stopping criteria, max iterations).
-    /// * `channel_factory` - Closure that takes `eb_n0_db` and returns a [`ChannelModel`].
-    /// * `rng`             - Source of randomness.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `encoder.k() != decoder.k()` or `encoder.n() != decoder.n()`.
-    ///
-    /// # Complexity
-    ///
-    /// O(max_frames * n * max_decoder_iterations) per SNR point.
-    pub fn run_coded_iterative_with_channel<E, D, C, F, R>(
-        encoder: &E,
-        decoder: &mut D,
-        config: &CodedSimulationConfig,
-        channel_factory: F,
-        rng: &mut R,
-    ) -> Vec<CodedSimulationResult>
-    where
-        E: BlockEncoder,
-        D: IterativeSoftDecoder,
-        C: ChannelModel,
-        F: Fn(f64) -> C,
-        R: Rng,
-    {
         assert_eq!(
             encoder.k(),
             decoder.k(),
@@ -909,12 +704,13 @@ impl SimulationRunner {
 
         let k = encoder.k();
         let n = encoder.n();
+        let code_rate = k as f64 / n as f64;
 
-        let results: Vec<CodedSimulationResult> = config
+        config
             .eb_n0_range
             .iter()
             .map(|&eb_n0_db| {
-                let channel = channel_factory(eb_n0_db);
+                let channel = AwgnChannel::from_eb_n0_db(eb_n0_db, code_rate);
 
                 let mut num_frames: usize = 0;
                 let mut num_block_errors: usize = 0;
@@ -933,8 +729,12 @@ impl SimulationRunner {
                     let message = BitVec::random(k, rng);
                     let codeword = encoder.encode(&message);
 
-                    let codeword_bits: Vec<bool> = (0..n).map(|i| codeword.get(i)).collect();
-                    let llrs = channel.transmit_and_demodulate(&codeword_bits, rng);
+                    let symbols: Vec<f64> = (0..n)
+                        .map(|i| BpskModulator::modulate(codeword.get(i)))
+                        .collect();
+
+                    let received = channel.transmit_symbols(&symbols, rng);
+                    let llrs: Vec<Llr> = channel.to_llrs(&received);
 
                     // Use iterative decoding with configured max iterations
                     decoder.reset();
@@ -983,15 +783,7 @@ impl SimulationRunner {
                     reached_target,
                 }
             })
-            .collect();
-
-        // Write CSV to output_path if configured
-        if let Some(ref path) = config.output_path {
-            let csv = Self::coded_results_to_csv(&results, true);
-            std::fs::write(path, csv).expect("failed to write simulation results CSV");
-        }
-
-        results
+            .collect()
     }
 
     /// Runs a coded simulation sweep in parallel across all SNR points.
@@ -1065,7 +857,7 @@ impl SimulationRunner {
         use rand::SeedableRng;
         use rayon::prelude::*;
 
-        let results: Vec<CodedSimulationResult> = config
+        config
             .eb_n0_range
             .par_iter()
             .enumerate()
@@ -1080,92 +872,13 @@ impl SimulationRunner {
                     min_block_errors: config.min_block_errors,
                     max_frames: config.max_frames,
                     max_decoder_iterations: config.max_decoder_iterations,
-                    output_path: None, // No per-point file I/O in parallel
                 };
 
                 let mut results =
                     SimulationRunner::run_coded(encoder, decoder, &single_config, &mut rng);
                 results.remove(0)
             })
-            .collect();
-
-        // Write CSV to output_path if configured
-        if let Some(ref path) = config.output_path {
-            let csv = Self::coded_results_to_csv(&results, true);
-            std::fs::write(path, csv).expect("failed to write simulation results CSV");
-        }
-
-        results
-    }
-
-    /// Runs a coded simulation sweep in parallel with a caller-supplied channel.
-    ///
-    /// Like [`run_coded_parallel`](Self::run_coded_parallel) but with a generic
-    /// channel model. The `channel_factory` closure takes `eb_n0_db` and returns
-    /// a [`ChannelModel`] instance for that SNR point.
-    ///
-    /// # Arguments
-    ///
-    /// * `encoder`         - [`BlockEncoder`] shared across threads (must be `Sync`).
-    /// * `decoder`         - [`SoftDecoder`] shared across threads (must be `Sync`).
-    /// * `config`          - Simulation parameters.
-    /// * `channel_factory` - Closure that takes `eb_n0_db` and returns a [`ChannelModel`].
-    /// * `base_seed`       - Seed for deterministic per-SNR-point RNG derivation.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `encoder.k() != decoder.k()` or `encoder.n() != decoder.n()`.
-    #[cfg(feature = "parallel")]
-    pub fn run_coded_parallel_with_channel<E, D, C, CF>(
-        encoder: &E,
-        decoder: &D,
-        config: &CodedSimulationConfig,
-        channel_factory: CF,
-        base_seed: u64,
-    ) -> Vec<CodedSimulationResult>
-    where
-        E: BlockEncoder + Sync,
-        D: SoftDecoder + Sync,
-        C: ChannelModel,
-        CF: Fn(f64) -> C + Sync,
-    {
-        use rand::rngs::StdRng;
-        use rand::SeedableRng;
-        use rayon::prelude::*;
-
-        let results: Vec<CodedSimulationResult> = config
-            .eb_n0_range
-            .par_iter()
-            .enumerate()
-            .map(|(idx, &eb_n0_db)| {
-                let seed = base_seed.wrapping_add(idx as u64 * 6_364_136_223_846_793_005);
-                let mut rng = StdRng::seed_from_u64(seed);
-
-                let single_config = CodedSimulationConfig {
-                    eb_n0_range: vec![eb_n0_db],
-                    min_block_errors: config.min_block_errors,
-                    max_frames: config.max_frames,
-                    max_decoder_iterations: config.max_decoder_iterations,
-                    output_path: None,
-                };
-
-                let mut results = SimulationRunner::run_coded_with_channel(
-                    encoder,
-                    decoder,
-                    &single_config,
-                    &channel_factory,
-                    &mut rng,
-                );
-                results.remove(0)
-            })
-            .collect();
-
-        if let Some(ref path) = config.output_path {
-            let csv = Self::coded_results_to_csv(&results, true);
-            std::fs::write(path, csv).expect("failed to write simulation results CSV");
-        }
-
-        results
+            .collect()
     }
 
     /// Runs an iterative-decoder coded simulation sweep in parallel.
@@ -1261,7 +974,7 @@ impl SimulationRunner {
         use rand::SeedableRng;
         use rayon::prelude::*;
 
-        let results: Vec<CodedSimulationResult> = config
+        config
             .eb_n0_range
             .par_iter()
             .enumerate()
@@ -1275,7 +988,6 @@ impl SimulationRunner {
                     min_block_errors: config.min_block_errors,
                     max_frames: config.max_frames,
                     max_decoder_iterations: config.max_decoder_iterations,
-                    output_path: None, // No per-point file I/O in parallel
                 };
 
                 let mut results = SimulationRunner::run_coded_iterative(
@@ -1286,88 +998,7 @@ impl SimulationRunner {
                 );
                 results.remove(0)
             })
-            .collect();
-
-        // Write CSV to output_path if configured
-        if let Some(ref path) = config.output_path {
-            let csv = Self::coded_results_to_csv(&results, true);
-            std::fs::write(path, csv).expect("failed to write simulation results CSV");
-        }
-
-        results
-    }
-
-    /// Runs an iterative-decoder coded simulation sweep in parallel with a
-    /// caller-supplied channel.
-    ///
-    /// Like [`run_coded_iterative_parallel`](Self::run_coded_iterative_parallel)
-    /// but with a generic channel model.
-    ///
-    /// # Arguments
-    ///
-    /// * `encoder`         - [`BlockEncoder`] shared across threads (must be `Sync`).
-    /// * `make_decoder`    - Factory closure that creates a fresh decoder per thread.
-    /// * `config`          - Simulation parameters.
-    /// * `channel_factory` - Closure that takes `eb_n0_db` and returns a [`ChannelModel`].
-    /// * `base_seed`       - Seed for deterministic per-SNR-point RNG derivation.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `encoder.k() != decoder.k()` or `encoder.n() != decoder.n()`
-    /// for any decoder returned by `make_decoder`.
-    #[cfg(feature = "parallel")]
-    pub fn run_coded_iterative_parallel_with_channel<E, D, DF, C, CF>(
-        encoder: &E,
-        make_decoder: DF,
-        config: &CodedSimulationConfig,
-        channel_factory: CF,
-        base_seed: u64,
-    ) -> Vec<CodedSimulationResult>
-    where
-        E: BlockEncoder + Sync,
-        D: IterativeSoftDecoder,
-        DF: Fn() -> D + Sync,
-        C: ChannelModel,
-        CF: Fn(f64) -> C + Sync,
-    {
-        use rand::rngs::StdRng;
-        use rand::SeedableRng;
-        use rayon::prelude::*;
-
-        let results: Vec<CodedSimulationResult> = config
-            .eb_n0_range
-            .par_iter()
-            .enumerate()
-            .map(|(idx, &eb_n0_db)| {
-                let seed = base_seed.wrapping_add(idx as u64 * 6_364_136_223_846_793_005);
-                let mut rng = StdRng::seed_from_u64(seed);
-                let mut decoder = make_decoder();
-
-                let single_config = CodedSimulationConfig {
-                    eb_n0_range: vec![eb_n0_db],
-                    min_block_errors: config.min_block_errors,
-                    max_frames: config.max_frames,
-                    max_decoder_iterations: config.max_decoder_iterations,
-                    output_path: None,
-                };
-
-                let mut results = SimulationRunner::run_coded_iterative_with_channel(
-                    encoder,
-                    &mut decoder,
-                    &single_config,
-                    &channel_factory,
-                    &mut rng,
-                );
-                results.remove(0)
-            })
-            .collect();
-
-        if let Some(ref path) = config.output_path {
-            let csv = Self::coded_results_to_csv(&results, true);
-            std::fs::write(path, csv).expect("failed to write simulation results CSV");
-        }
-
-        results
+            .collect()
     }
 
     /// Exports coded simulation results to CSV format.
@@ -2006,7 +1637,6 @@ mod tests {
             min_block_errors: 5,
             max_frames: 500,
             max_decoder_iterations: 10,
-            output_path: None,
         };
 
         let encoder1 = MockIterativeDecoder {
@@ -2131,227 +1761,6 @@ mod tests {
         assert!(csv.contains("eb_n0_db"));
         let lines: Vec<&str> = csv.trim().lines().collect();
         assert_eq!(lines.len(), 1, "only header line for empty results");
-    }
-
-    // -------------------------------------------------------------------------
-    // Generic channel tests
-    // -------------------------------------------------------------------------
-
-    #[test]
-    fn test_run_coded_with_channel_custom_factory() {
-        use crate::simulation::DefaultBpskAwgnChannel;
-
-        let mut config = CodedSimulationConfig::quick_test();
-        config.eb_n0_range = vec![8.0];
-        config.min_block_errors = 3;
-        config.max_frames = 300;
-
-        let code = IdentityCode { k: 16 };
-        let decoder = IdentityCode { k: 16 };
-        let mut rng = rand::thread_rng();
-
-        // Use the explicit channel factory
-        let results = SimulationRunner::run_coded_with_channel(
-            &code,
-            &decoder,
-            &config,
-            |eb_n0_db| DefaultBpskAwgnChannel::new(eb_n0_db, 1.0),
-            &mut rng,
-        );
-
-        assert_eq!(results.len(), 1);
-        assert!(results[0].ber >= 0.0);
-        assert!(results[0].bler >= 0.0);
-    }
-
-    #[test]
-    fn test_output_path_writes_csv() {
-        let dir = std::env::temp_dir().join("gf2_sim_test");
-        let _ = std::fs::create_dir_all(&dir);
-        let csv_path = dir.join("test_output.csv");
-
-        // Clean up if leftover from a previous run
-        let _ = std::fs::remove_file(&csv_path);
-
-        let config = CodedSimulationConfig {
-            eb_n0_range: vec![6.0],
-            min_block_errors: 3,
-            max_frames: 200,
-            max_decoder_iterations: 50,
-            output_path: Some(csv_path.clone()),
-        };
-
-        let code = IdentityCode { k: 8 };
-        let decoder = IdentityCode { k: 8 };
-        let mut rng = rand::thread_rng();
-
-        let _results = SimulationRunner::run_coded(&code, &decoder, &config, &mut rng);
-
-        // Verify CSV was written
-        assert!(csv_path.exists(), "output CSV should have been created");
-        let contents = std::fs::read_to_string(&csv_path).unwrap();
-        assert!(
-            contents.contains("eb_n0_db"),
-            "CSV should have a header: {contents}"
-        );
-        assert!(
-            contents.contains("6"),
-            "CSV should contain the Eb/N0 value: {contents}"
-        );
-        // At least header + 1 data row
-        let lines: Vec<&str> = contents.trim().lines().collect();
-        assert!(
-            lines.len() >= 2,
-            "expected header + data rows, got {} lines",
-            lines.len()
-        );
-
-        // Clean up
-        let _ = std::fs::remove_file(&csv_path);
-        let _ = std::fs::remove_dir(&dir);
-    }
-
-    // -------------------------------------------------------------------------
-    // Deterministic hand-calculated BER test
-    // -------------------------------------------------------------------------
-
-    /// A simple rate-1/3 repetition encoder: each message bit is repeated 3 times.
-    struct RepetitionEncoder;
-
-    impl BlockEncoder for RepetitionEncoder {
-        fn k(&self) -> usize {
-            1
-        }
-        fn n(&self) -> usize {
-            3
-        }
-        fn encode(&self, msg: &BitVec) -> BitVec {
-            assert_eq!(msg.len(), 1);
-            let bit = msg.get(0);
-            let mut cw = BitVec::new();
-            cw.push_bit(bit);
-            cw.push_bit(bit);
-            cw.push_bit(bit);
-            cw
-        }
-    }
-
-    /// Majority-vote soft decoder for the rate-1/3 repetition code.
-    /// Sums the 3 LLRs and makes a hard decision on the sum.
-    struct RepetitionDecoder;
-
-    impl SoftDecoder for RepetitionDecoder {
-        fn k(&self) -> usize {
-            1
-        }
-        fn n(&self) -> usize {
-            3
-        }
-        fn decode_soft(&self, llrs: &[Llr]) -> BitVec {
-            assert_eq!(llrs.len(), 3);
-            let sum: f32 = llrs.iter().map(|l| l.value()).sum();
-            let mut out = BitVec::new();
-            out.push_bit(sum < 0.0); // negative sum -> bit 1
-            out
-        }
-    }
-
-    #[test]
-    fn test_deterministic_ber_repetition_code() {
-        // Run a repetition (1,3) code simulation with a deterministic seed.
-        // We replay the exact same RNG sequence to independently compute
-        // the expected bit errors and block errors.
-        use crate::channel::{AwgnChannel, BpskModulator};
-        use rand::rngs::StdRng;
-        use rand::SeedableRng;
-
-        let seed: u64 = 0xDEAD_BEEF_CAFE_1234;
-        let eb_n0_db = 2.0;
-        let num_frames = 50;
-
-        // -- Run the simulation --
-        let config = CodedSimulationConfig {
-            eb_n0_range: vec![eb_n0_db],
-            min_block_errors: usize::MAX, // ensure we run all max_frames
-            max_frames: num_frames,
-            max_decoder_iterations: 1,
-            output_path: None,
-        };
-
-        let encoder = RepetitionEncoder;
-        let decoder = RepetitionDecoder;
-        let mut rng = StdRng::seed_from_u64(seed);
-        let results = SimulationRunner::run_coded(&encoder, &decoder, &config, &mut rng);
-
-        // -- Independently replay the same RNG to hand-compute expected errors --
-        let k = 1usize;
-        let n = 3usize;
-        let code_rate = k as f64 / n as f64;
-        let channel = AwgnChannel::from_eb_n0_db(eb_n0_db, code_rate);
-
-        let mut replay_rng = StdRng::seed_from_u64(seed);
-        let mut expected_bit_errors = 0usize;
-        let mut expected_block_errors = 0usize;
-
-        for _ in 0..num_frames {
-            // 1. Random message (same RNG)
-            let message = BitVec::random(k, &mut replay_rng);
-            let msg_bit = message.get(0);
-
-            // 2. Encode: repeat 3 times
-            let cw_bits: Vec<bool> = vec![msg_bit, msg_bit, msg_bit];
-
-            // 3. Modulate
-            let symbols: Vec<f64> = cw_bits
-                .iter()
-                .map(|&b| BpskModulator::modulate(b))
-                .collect();
-
-            // 4. AWGN channel (same RNG)
-            let received = channel.transmit_symbols(&symbols, &mut replay_rng);
-
-            // 5. LLRs
-            let llrs = channel.to_llrs(&received);
-
-            // 6. Decode: majority vote on LLR sum
-            let sum: f32 = llrs.iter().map(|l| l.value()).sum();
-            let decoded_bit = sum < 0.0;
-
-            // 7. Count errors
-            if decoded_bit != msg_bit {
-                expected_bit_errors += 1;
-                expected_block_errors += 1;
-            }
-        }
-
-        let r = &results[0];
-        assert_eq!(
-            r.num_frames, num_frames,
-            "frame count mismatch: got {}, expected {}",
-            r.num_frames, num_frames
-        );
-        assert_eq!(
-            r.num_bit_errors, expected_bit_errors,
-            "bit error count mismatch: simulation={}, hand-calculated={}",
-            r.num_bit_errors, expected_bit_errors
-        );
-        assert_eq!(
-            r.num_block_errors, expected_block_errors,
-            "block error count mismatch: simulation={}, hand-calculated={}",
-            r.num_block_errors, expected_block_errors
-        );
-
-        let expected_ber = if num_frames > 0 {
-            expected_bit_errors as f64 / (num_frames * k) as f64
-        } else {
-            0.0
-        };
-        assert!(
-            (r.ber - expected_ber).abs() < f64::EPSILON,
-            "BER mismatch: simulation={}, hand-calculated={}",
-            r.ber,
-            expected_ber
-        );
     }
 
     // -------------------------------------------------------------------------
