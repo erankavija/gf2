@@ -484,6 +484,7 @@ where
     let mut total_frames = 0usize;
     let mut total_bits = 0usize;
     let mut total_iterations = 0usize;
+    let mut total_queries = 0usize;
 
     while !early_terminate(
         total_block_errors,
@@ -510,6 +511,7 @@ where
             total_block_errors += 1;
         }
         total_iterations += result.iterations;
+        total_queries += result.queries.unwrap_or(result.iterations);
         total_frames += 1;
         total_bits += k;
 
@@ -543,7 +545,7 @@ where
         0.0
     };
     let avg_queries_per_bit = if total_bits > 0 {
-        total_iterations as f64 / total_bits as f64
+        total_queries as f64 / total_bits as f64
     } else {
         0.0
     };
@@ -600,6 +602,7 @@ where
     let mut total_frames = 0usize;
     let mut total_bits = 0usize;
     let mut total_iterations = 0usize;
+    let mut total_queries = 0usize;
 
     while !early_terminate(
         total_block_errors,
@@ -627,6 +630,7 @@ where
             total_block_errors += 1;
         }
         total_iterations += result.iterations;
+        total_queries += result.queries.unwrap_or(result.iterations);
         total_frames += 1;
         total_bits += k;
 
@@ -660,7 +664,7 @@ where
         0.0
     };
     let avg_queries_per_bit = if total_bits > 0 {
-        total_iterations as f64 / total_bits as f64
+        total_queries as f64 / total_bits as f64
     } else {
         0.0
     };
