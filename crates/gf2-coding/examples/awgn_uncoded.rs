@@ -9,13 +9,13 @@
 //!
 //! This serves as a baseline for comparing coded vs. uncoded transmission.
 
-use gf2_coding::simulation::{SimulationConfig, SimulationRunner};
+use gf2_coding::simulation::{SimulationRunner, UncodedSimulationConfig};
 use gf2_coding::AwgnChannel;
 
 fn main() {
     println!("=== Uncoded BPSK Transmission over AWGN ===\n");
 
-    let config = SimulationConfig {
+    let config = UncodedSimulationConfig {
         eb_n0_range: vec![0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0],
         min_errors: 500,
         max_trials: 1_000_000,

@@ -49,6 +49,6 @@
     {"type": "cross_epic_dep", "issue": "c3ea6855", "resolution": "Included in Wave 1, user approved"},
     {"type": "cross_epic_dep", "issue": "d4851c3d", "resolution": "QPSK-only within epic, dep edge removed, user approved"}
   ],
-  "rework_counts": {},
+  "rework_counts": {"290b4fa0": 0, "c3ea6855": 0},
   "started_at": "2026-04-06T00:00:00Z"
 }
