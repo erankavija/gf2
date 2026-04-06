@@ -10,6 +10,8 @@
 //!
 //! - [`OrbGrand`]: Ordered Reliability Bits GRAND — uses soft information (LLRs)
 //!   to order noise pattern queries by logistic weight, achieving near-ML performance.
+//! - [`SoGrand`]: Soft-Output GRAND — wraps ORBGRAND to produce per-bit APP LLRs
+//!   and extrinsic information for turbo decoding.
 //!
 //! # References
 //!
@@ -17,7 +19,11 @@
 //!   Additive Noise Decoding." *IEEE Trans. Inform. Theory*.
 //! - Solomon, A., Duffy, K.R., Medard, M. (2020). "Soft Maximum Likelihood Decoding
 //!   using GRAND." *IEEE ISIT*.
+//! - Condo, C., et al. (2022). "Fixed Complexity Soft-Output GRAND." *IEEE Trans.
+//!   Commun.*
 
-mod orbgrand;
+pub(crate) mod orbgrand;
+mod sogrand;
 
 pub use orbgrand::{OrbGrand, OrbGrandConfig, OrbGrandResult, ScoredCodeword};
+pub use sogrand::{SisoResult, SoGrand};

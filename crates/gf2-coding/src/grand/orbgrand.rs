@@ -662,7 +662,7 @@ impl SoftDecoder for OrbGrand {
 }
 
 /// Compute `ln(1 + exp(x))` numerically stably.
-fn ln_1_plus_exp(x: f64) -> f64 {
+pub fn ln_1_plus_exp(x: f64) -> f64 {
     if x > 30.0 {
         x // For large x, ln(1+exp(x)) ≈ x
     } else if x < -30.0 {
@@ -673,7 +673,7 @@ fn ln_1_plus_exp(x: f64) -> f64 {
 }
 
 /// Compute `ln(exp(a) + exp(b))` numerically stably.
-fn log_sum_exp(a: f64, b: f64) -> f64 {
+pub fn log_sum_exp(a: f64, b: f64) -> f64 {
     if a == f64::NEG_INFINITY {
         return b;
     }
