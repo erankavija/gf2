@@ -797,6 +797,21 @@ mod tests {
                 );
             }
         }
+
+        // Prove d_min = exactly 6 by finding a weight-6 codeword
+        use crate::traits::BlockEncoder;
+        let k = code.k();
+        let mut found_weight_6 = false;
+        for bit in 0..k {
+            let mut msg = BitVec::zeros(k);
+            msg.set(bit, true);
+            let cw = code.encode(&msg);
+            if cw.count_ones() == 6 {
+                found_weight_6 = true;
+                break;
+            }
+        }
+        assert!(found_weight_6, "eBCH(16,7) d_min should be exactly 6");
     }
 }
 
