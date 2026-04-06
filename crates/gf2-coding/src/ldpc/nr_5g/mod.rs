@@ -1849,4 +1849,69 @@ mod tests {
         // BG1 (4096, 3249) at 8 dB: high rate 0.793
         ber_acceptance(1, 4096, 3249, 8.0, 1e-2, 5, "BG1 (4096,3249) @ 8dB");
     }
+
+    // -----------------------------------------------------------------------
+    // SoftDecoder regression test
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn test_soft_decoder_trait_roundtrip() {
+        use crate::traits::{BlockEncoder, SoftDecoder};
+
+        let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
+        let msg = gf2_core::BitVec::zeros(121);
+        let cw = rm_code.encode(&msg);
+
+        // Create noiseless LLRs: bit 0 → +5.0, bit 1 → -5.0
+        let llrs: Vec<Llr> = (0..256)
+            .map(|i| {
+                if cw.get(i) {
+                    Llr::new(-5.0)
+                } else {
+                    Llr::new(5.0)
+                }
+            })
+            .collect();
+
+        let decoded = rm_code.decode_soft(&llrs);
+        assert_eq!(decoded.len(), 121);
+        for i in 0..121 {
+            assert_eq!(decoded.get(i), msg.get(i), "bit {} mismatch", i);
+        }
+    }
+}
+
+#[cfg(test)]
+mod proptests {
+    use super::*;
+    use crate::traits::BlockEncoder;
+    use proptest::prelude::*;
+
+    proptest! {
+        #[test]
+        fn prop_encode_produces_correct_length(bg in 1u8..=2, seed in 0u64..100) {
+            // Use a fixed target per BG to keep the test fast
+            let (target_n, target_k) = if bg == 1 { (1024, 640) } else { (256, 121) };
+            let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(bg, target_n, target_k);
+
+            // Generate a deterministic random message
+            use rand::rngs::StdRng;
+            use rand::SeedableRng;
+            let mut rng = StdRng::seed_from_u64(seed);
+            let msg = gf2_core::BitVec::random(target_k, &mut rng);
+
+            let cw = rm_code.encode(&msg);
+            prop_assert_eq!(cw.len(), target_n, "codeword length must be target_n");
+        }
+
+        #[test]
+        fn prop_prepare_llrs_correct_length(bg in 1u8..=2) {
+            let (target_n, target_k) = if bg == 1 { (1024, 640) } else { (256, 121) };
+            let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(bg, target_n, target_k);
+
+            let channel_llrs: Vec<Llr> = vec![Llr::new(1.0); target_n];
+            let full_llrs = rm_code.prepare_llrs(&channel_llrs);
+            prop_assert_eq!(full_llrs.len(), rm_code.mother_code().n());
+        }
+    }
 }
