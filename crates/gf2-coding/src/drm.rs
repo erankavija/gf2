@@ -24,6 +24,15 @@
 //!
 //! This gives exactly 1 + 5 + 10 + 5 = 21 rows.
 //!
+//! # Systematic form
+//!
+//! After evaluating the monomials, the constructor applies Gaussian
+//! elimination with column permutation to produce a systematic generator
+//! matrix G = [I_k | P]. The parity-check matrix is H = [P^T | I_r].
+//! As a result, the column ordering of the code differs from the raw
+//! evaluation-matrix ordering — this is standard practice for GRAND
+//! decoding, which only needs G and H with the orthogonality property.
+//!
 //! # Examples
 //!
 //! ```
@@ -90,6 +99,11 @@ impl DrmCode {
     /// assert_eq!(code.n(), 32);
     /// assert_eq!(code.k(), 16);
     /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(k * 2^m) for monomial evaluation, plus O(k^2 * n) for Gaussian
+    /// elimination to produce the systematic generator matrix.
     pub fn new(m: usize, k: usize) -> Self {
         assert!(m > 0, "m must be positive");
         let n = 1usize << m;

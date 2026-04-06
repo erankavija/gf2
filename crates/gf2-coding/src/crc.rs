@@ -102,6 +102,10 @@ impl CrcCode {
     /// assert_eq!(code.n(), 25);
     /// assert_eq!(code.k(), 15);
     /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(k * n) for constructing the systematic generator matrix.
     pub fn new(n: usize, k: usize, poly: u64) -> Self {
         assert!(n > k, "n must be greater than k");
         let r = n - k;
