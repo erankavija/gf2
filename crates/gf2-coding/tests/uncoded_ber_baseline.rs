@@ -4,12 +4,12 @@
 //! over AWGN channels, serving as a baseline for comparing coded systems.
 
 use gf2_coding::channel::AwgnChannel;
-use gf2_coding::simulation::{SimulationConfig, SimulationRunner};
+use gf2_coding::simulation::{SimulationRunner, UncodedSimulationConfig};
 
 #[test]
 fn test_uncoded_ber_at_high_snr() {
     // At high SNR (10 dB), BER should be very low
-    let mut config = SimulationConfig::quick_test();
+    let mut config = UncodedSimulationConfig::quick_test();
     config.eb_n0_range = vec![10.0];
     config.min_errors = 10;
     config.max_trials = 100_000;
@@ -28,7 +28,7 @@ fn test_uncoded_ber_at_high_snr() {
 #[test]
 fn test_uncoded_ber_decreases_monotonically() {
     // BER should decrease as Eb/N0 increases
-    let mut config = SimulationConfig::quick_test();
+    let mut config = UncodedSimulationConfig::quick_test();
     config.eb_n0_range = vec![0.0, 3.0, 6.0];
     config.min_errors = 100;
     config.max_trials = 100_000;
@@ -55,7 +55,7 @@ fn test_uncoded_ber_decreases_monotonically() {
 fn test_uncoded_ber_reasonable_values() {
     // Check that BER values are in expected ranges for uncoded BPSK
     // These are approximate bounds based on Q-function
-    let mut config = SimulationConfig::quick_test();
+    let mut config = UncodedSimulationConfig::quick_test();
     config.eb_n0_range = vec![3.0, 6.0];
     config.min_errors = 200;
     config.max_trials = 500_000;
@@ -86,7 +86,7 @@ fn test_ber_far_from_shannon_limit() {
     // At Shannon limit for rate 1.0, we'd need infinite SNR
     // At practical SNRs, there's a significant gap
 
-    let mut config = SimulationConfig::quick_test();
+    let mut config = UncodedSimulationConfig::quick_test();
     config.eb_n0_range = vec![3.0];
     config.min_errors = 100;
     config.max_trials = 100_000;
@@ -112,7 +112,7 @@ fn test_ber_far_from_shannon_limit() {
 
 #[test]
 fn test_csv_export_format() {
-    let mut config = SimulationConfig::quick_test();
+    let mut config = UncodedSimulationConfig::quick_test();
     config.eb_n0_range = vec![3.0];
     config.min_errors = 50;
 
@@ -141,7 +141,7 @@ mod property_tests {
         #[test]
         fn ber_bounded_by_half(eb_n0_db in -5.0..20.0) {
             // BER for BPSK should always be <= 0.5 (worst case is random guessing)
-            let mut config = SimulationConfig::quick_test();
+            let mut config = UncodedSimulationConfig::quick_test();
             config.eb_n0_range = vec![eb_n0_db];
             config.min_errors = 10;
             config.max_trials = 10_000;

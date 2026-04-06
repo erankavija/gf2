@@ -40,7 +40,7 @@ use std::path::PathBuf;
 
 /// Configuration for Monte Carlo simulations.
 #[derive(Debug, Clone)]
-pub struct SimulationConfig {
+pub struct UncodedSimulationConfig {
     /// Range of Eb/N0 values to simulate (in dB)
     pub eb_n0_range: Vec<f64>,
 
@@ -57,19 +57,19 @@ pub struct SimulationConfig {
     pub frame_size: Option<usize>,
 }
 
-impl SimulationConfig {
+impl UncodedSimulationConfig {
     /// Creates a default configuration for quick testing.
     ///
     /// # Examples
     ///
     /// ```
-    /// use gf2_coding::simulation::SimulationConfig;
+    /// use gf2_coding::simulation::UncodedSimulationConfig;
     ///
-    /// let config = SimulationConfig::quick_test();
+    /// let config = UncodedSimulationConfig::quick_test();
     /// assert_eq!(config.min_errors, 100);
     /// ```
     pub fn quick_test() -> Self {
-        SimulationConfig {
+        UncodedSimulationConfig {
             eb_n0_range: vec![0.0, 3.0, 6.0],
             min_errors: 100,
             max_trials: 100_000,
@@ -80,7 +80,7 @@ impl SimulationConfig {
 
     /// Creates a configuration for high-precision BER curves.
     pub fn high_precision() -> Self {
-        SimulationConfig {
+        UncodedSimulationConfig {
             eb_n0_range: (0..=10).map(|i| i as f64).collect(),
             min_errors: 1000,
             max_trials: 10_000_000,
@@ -92,7 +92,7 @@ impl SimulationConfig {
 
 /// Results from a single SNR point simulation.
 #[derive(Debug, Clone)]
-pub struct SimulationResult {
+pub struct UncodedSimulationResult {
     /// Eb/N0 in dB
     pub eb_n0_db: f64,
 
@@ -115,7 +115,7 @@ pub struct SimulationResult {
     pub num_frame_errors: Option<usize>,
 }
 
-impl SimulationResult {
+impl UncodedSimulationResult {
     /// Returns true if this result meets the minimum error requirement.
     pub fn is_complete(&self, min_errors: usize) -> bool {
         self.num_errors >= min_errors
@@ -244,9 +244,9 @@ impl ChannelModel for BpskAwgnChannel {
 /// # Examples
 ///
 /// ```
-/// use gf2_coding::simulation::CodedSimulationConfig;
+/// use gf2_coding::simulation::SimulationConfig;
 ///
-/// let config = CodedSimulationConfig {
+/// let config = SimulationConfig {
 ///     eb_n0_range_db: vec![0.0, 1.0, 2.0, 3.0],
 ///     min_errors: 100,
 ///     max_frames: 10_000,
@@ -257,7 +257,7 @@ impl ChannelModel for BpskAwgnChannel {
 /// assert_eq!(config.min_errors, 100);
 /// ```
 #[derive(Debug, Clone)]
-pub struct CodedSimulationConfig {
+pub struct SimulationConfig {
     /// Eb/N0 values in dB to sweep.
     pub eb_n0_range_db: Vec<f64>,
 
@@ -290,9 +290,9 @@ pub struct CodedSimulationConfig {
 /// # Examples
 ///
 /// ```
-/// use gf2_coding::simulation::CodedSimulationResult;
+/// use gf2_coding::simulation::SimulationResult;
 ///
-/// let r = CodedSimulationResult {
+/// let r = SimulationResult {
 ///     eb_n0_db: 3.0,
 ///     ber: 1e-3,
 ///     bler: 0.05,
@@ -306,7 +306,7 @@ pub struct CodedSimulationConfig {
 /// assert!(r.ber < r.bler);
 /// ```
 #[derive(Debug, Clone)]
-pub struct CodedSimulationResult {
+pub struct SimulationResult {
     /// Eb/N0 in dB.
     pub eb_n0_db: f64,
 
@@ -348,15 +348,15 @@ pub struct CodedSimulationResult {
 /// # Examples
 ///
 /// ```
-/// use gf2_coding::simulation::CodedSimulationResults;
+/// use gf2_coding::simulation::SimulationResults;
 ///
-/// let results = CodedSimulationResults { points: vec![] };
+/// let results = SimulationResults { points: vec![] };
 /// assert!(results.points.is_empty());
 /// ```
 #[derive(Debug, Clone)]
-pub struct CodedSimulationResults {
+pub struct SimulationResults {
     /// One entry per SNR point, in the order they were requested.
-    pub points: Vec<CodedSimulationResult>,
+    pub points: Vec<SimulationResult>,
 }
 
 /// Progress information reported during a coded simulation.
@@ -464,11 +464,11 @@ fn simulate_snr_point_soft<E, D, C, F>(
     encoder: &E,
     decoder: &D,
     channel: &C,
-    config: &CodedSimulationConfig,
+    config: &SimulationConfig,
     eb_n0_db: f64,
     rng: &mut StdRng,
     progress_cb: &Option<F>,
-) -> CodedSimulationResult
+) -> SimulationResult
 where
     E: BlockEncoder,
     D: SoftDecoder,
@@ -550,7 +550,7 @@ where
         0.0
     };
 
-    CodedSimulationResult {
+    SimulationResult {
         eb_n0_db,
         ber,
         bler,
@@ -582,11 +582,11 @@ fn simulate_snr_point_iterative<E, D, C, F>(
     encoder: &E,
     decoder: &mut D,
     channel: &C,
-    config: &CodedSimulationConfig,
+    config: &SimulationConfig,
     eb_n0_db: f64,
     rng: &mut StdRng,
     progress_cb: &Option<F>,
-) -> CodedSimulationResult
+) -> SimulationResult
 where
     E: BlockEncoder,
     D: IterativeSoftDecoder,
@@ -669,7 +669,7 @@ where
         0.0
     };
 
-    CodedSimulationResult {
+    SimulationResult {
         eb_n0_db,
         ber,
         bler,
@@ -703,18 +703,18 @@ impl SimulationRunner {
     /// # Examples
     ///
     /// ```
-    /// use gf2_coding::simulation::{SimulationRunner, SimulationConfig};
+    /// use gf2_coding::simulation::{SimulationRunner, UncodedSimulationConfig};
     ///
-    /// let config = SimulationConfig::quick_test();
+    /// let config = UncodedSimulationConfig::quick_test();
     /// let mut rng = rand::thread_rng();
     /// let results = SimulationRunner::run_uncoded_ber(&config, &mut rng);
     ///
     /// assert_eq!(results.len(), config.eb_n0_range.len());
     /// ```
     pub fn run_uncoded_ber<R: Rng>(
-        config: &SimulationConfig,
+        config: &UncodedSimulationConfig,
         rng: &mut R,
-    ) -> Vec<SimulationResult> {
+    ) -> Vec<UncodedSimulationResult> {
         config
             .eb_n0_range
             .iter()
@@ -751,7 +751,7 @@ impl SimulationRunner {
 
                 let ber = total_errors as f64 / total_bits as f64;
 
-                SimulationResult {
+                UncodedSimulationResult {
                     eb_n0_db,
                     ber,
                     fer: None,
@@ -784,7 +784,7 @@ impl SimulationRunner {
     ///
     /// # Returns
     ///
-    /// Aggregated per-SNR results in a [`CodedSimulationResults`] struct.
+    /// Aggregated per-SNR results in a [`SimulationResults`] struct.
     ///
     /// # Panics
     ///
@@ -794,7 +794,7 @@ impl SimulationRunner {
     ///
     /// ```
     /// use gf2_coding::simulation::{
-    ///     SimulationRunner, CodedSimulationConfig, BpskAwgnChannel,
+    ///     SimulationRunner, SimulationConfig, BpskAwgnChannel,
     /// };
     /// use gf2_coding::LinearBlockCode;
     /// use gf2_coding::linear::SyndromeTableDecoder;
@@ -802,7 +802,7 @@ impl SimulationRunner {
     ///
     /// // Hamming(7,4) with a simple soft decoder wrapper is not directly
     /// // available, so this doc-test just shows config construction.
-    /// let config = CodedSimulationConfig {
+    /// let config = SimulationConfig {
     ///     eb_n0_range_db: vec![4.0, 6.0],
     ///     min_errors: 10,
     ///     max_frames: 1_000,
@@ -821,8 +821,8 @@ impl SimulationRunner {
         encoder: &E,
         decoder: &D,
         channel: &C,
-        config: &CodedSimulationConfig,
-    ) -> CodedSimulationResults
+        config: &SimulationConfig,
+    ) -> SimulationResults
     where
         E: BlockEncoder + Sync,
         D: SoftDecoder + Sync,
@@ -856,10 +856,10 @@ impl SimulationRunner {
     ///
     /// ```
     /// use gf2_coding::simulation::{
-    ///     SimulationRunner, CodedSimulationConfig, BpskAwgnChannel, ProgressReport,
+    ///     SimulationRunner, SimulationConfig, BpskAwgnChannel, ProgressReport,
     /// };
     ///
-    /// let config = CodedSimulationConfig {
+    /// let config = SimulationConfig {
     ///     eb_n0_range_db: vec![4.0],
     ///     min_errors: 10,
     ///     max_frames: 500,
@@ -878,9 +878,9 @@ impl SimulationRunner {
         encoder: &E,
         decoder: &D,
         channel: &C,
-        config: &CodedSimulationConfig,
+        config: &SimulationConfig,
         progress: Option<F>,
-    ) -> CodedSimulationResults
+    ) -> SimulationResults
     where
         E: BlockEncoder + Sync,
         D: SoftDecoder + Sync,
@@ -904,7 +904,7 @@ impl SimulationRunner {
 
         let points = run_snr_sweep_soft(encoder, decoder, channel, config, &progress);
 
-        let results = CodedSimulationResults { points };
+        let results = SimulationResults { points };
 
         // Write CSV if output path is set
         if let Some(ref path) = config.output_path {
@@ -942,10 +942,10 @@ impl SimulationRunner {
     ///
     /// ```
     /// use gf2_coding::simulation::{
-    ///     SimulationRunner, CodedSimulationConfig, BpskAwgnChannel,
+    ///     SimulationRunner, SimulationConfig, BpskAwgnChannel,
     /// };
     ///
-    /// let config = CodedSimulationConfig {
+    /// let config = SimulationConfig {
     ///     eb_n0_range_db: vec![3.0],
     ///     min_errors: 10,
     ///     max_frames: 500,
@@ -963,8 +963,8 @@ impl SimulationRunner {
         encoder: &E,
         decoder: &mut D,
         channel: &C,
-        config: &CodedSimulationConfig,
-    ) -> CodedSimulationResults
+        config: &SimulationConfig,
+    ) -> SimulationResults
     where
         E: BlockEncoder,
         D: IterativeSoftDecoder,
@@ -998,10 +998,10 @@ impl SimulationRunner {
     ///
     /// ```
     /// use gf2_coding::simulation::{
-    ///     SimulationRunner, CodedSimulationConfig, BpskAwgnChannel, ProgressReport,
+    ///     SimulationRunner, SimulationConfig, BpskAwgnChannel, ProgressReport,
     /// };
     ///
-    /// let config = CodedSimulationConfig {
+    /// let config = SimulationConfig {
     ///     eb_n0_range_db: vec![3.0],
     ///     min_errors: 10,
     ///     max_frames: 500,
@@ -1020,9 +1020,9 @@ impl SimulationRunner {
         encoder: &E,
         decoder: &mut D,
         channel: &C,
-        config: &CodedSimulationConfig,
+        config: &SimulationConfig,
         progress: Option<F>,
-    ) -> CodedSimulationResults
+    ) -> SimulationResults
     where
         E: BlockEncoder,
         D: IterativeSoftDecoder,
@@ -1044,7 +1044,7 @@ impl SimulationRunner {
             decoder.k()
         );
 
-        let points: Vec<CodedSimulationResult> = config
+        let points: Vec<SimulationResult> = config
             .eb_n0_range_db
             .iter()
             .enumerate()
@@ -1057,7 +1057,7 @@ impl SimulationRunner {
             })
             .collect();
 
-        let results = CodedSimulationResults { points };
+        let results = SimulationResults { points };
 
         if let Some(ref path) = config.output_path {
             let csv = Self::coded_results_to_csv(&results);
@@ -1074,16 +1074,16 @@ impl SimulationRunner {
     /// # Examples
     ///
     /// ```
-    /// use gf2_coding::simulation::{SimulationRunner, SimulationConfig};
+    /// use gf2_coding::simulation::{SimulationRunner, UncodedSimulationConfig};
     ///
-    /// let config = SimulationConfig::quick_test();
+    /// let config = UncodedSimulationConfig::quick_test();
     /// let mut rng = rand::thread_rng();
     /// let results = SimulationRunner::run_uncoded_ber(&config, &mut rng);
     /// let csv = SimulationRunner::results_to_csv(&results, true);
     ///
     /// assert!(csv.contains("eb_n0_db"));
     /// ```
-    pub fn results_to_csv(results: &[SimulationResult], include_header: bool) -> String {
+    pub fn results_to_csv(results: &[UncodedSimulationResult], include_header: bool) -> String {
         let mut csv = String::new();
 
         if include_header {
@@ -1118,10 +1118,10 @@ impl SimulationRunner {
     /// # Examples
     ///
     /// ```
-    /// use gf2_coding::simulation::{SimulationRunner, CodedSimulationResults, CodedSimulationResult};
+    /// use gf2_coding::simulation::{SimulationRunner, SimulationResults, SimulationResult};
     ///
-    /// let results = CodedSimulationResults {
-    ///     points: vec![CodedSimulationResult {
+    /// let results = SimulationResults {
+    ///     points: vec![SimulationResult {
     ///         eb_n0_db: 3.0,
     ///         ber: 0.001,
     ///         bler: 0.05,
@@ -1142,7 +1142,7 @@ impl SimulationRunner {
     /// # Complexity
     ///
     /// O(n) where n is the number of SNR points.
-    pub fn coded_results_to_csv(results: &CodedSimulationResults) -> String {
+    pub fn coded_results_to_csv(results: &SimulationResults) -> String {
         let mut csv = String::from(
             "eb_n0_db,ber,bler,num_bit_errors,num_bits,num_block_errors,num_frames,avg_iterations,avg_queries_per_bit\n",
         );
@@ -1177,10 +1177,10 @@ impl SimulationRunner {
     /// # Examples
     ///
     /// ```
-    /// use gf2_coding::simulation::{SimulationRunner, CodedSimulationResults, CodedSimulationResult};
+    /// use gf2_coding::simulation::{SimulationRunner, SimulationResults, SimulationResult};
     ///
-    /// let results = CodedSimulationResults {
-    ///     points: vec![CodedSimulationResult {
+    /// let results = SimulationResults {
+    ///     points: vec![SimulationResult {
     ///         eb_n0_db: 3.0,
     ///         ber: 0.001,
     ///         bler: 0.05,
@@ -1200,7 +1200,7 @@ impl SimulationRunner {
     /// # Complexity
     ///
     /// O(n) where n is the number of SNR points.
-    pub fn coded_results_to_json(results: &CodedSimulationResults) -> String {
+    pub fn coded_results_to_json(results: &SimulationResults) -> String {
         let mut json = String::from("[\n");
 
         for (i, p) in results.points.iter().enumerate() {
@@ -1237,9 +1237,9 @@ fn run_snr_sweep_soft<E, D, C, F>(
     encoder: &E,
     decoder: &D,
     channel: &C,
-    config: &CodedSimulationConfig,
+    config: &SimulationConfig,
     progress_cb: &Option<F>,
-) -> Vec<CodedSimulationResult>
+) -> Vec<SimulationResult>
 where
     E: BlockEncoder + Sync,
     D: SoftDecoder + Sync,
@@ -1272,9 +1272,9 @@ fn run_snr_sweep_soft<E, D, C, F>(
     encoder: &E,
     decoder: &D,
     channel: &C,
-    config: &CodedSimulationConfig,
+    config: &SimulationConfig,
     progress_cb: &Option<F>,
-) -> Vec<CodedSimulationResult>
+) -> Vec<SimulationResult>
 where
     E: BlockEncoder + Sync,
     D: SoftDecoder + Sync,
@@ -1311,10 +1311,10 @@ where
 fn run_snr_sweep_iterative<E, D, C, MkD, F>(
     encoder: &E,
     channel: &C,
-    config: &CodedSimulationConfig,
+    config: &SimulationConfig,
     make_decoder: &MkD,
     progress_cb: &Option<F>,
-) -> Vec<CodedSimulationResult>
+) -> Vec<SimulationResult>
 where
     E: BlockEncoder + Sync,
     D: IterativeSoftDecoder,
@@ -1368,8 +1368,8 @@ impl SimulationRunner {
         encoder: &E,
         make_decoder: MkD,
         channel: &C,
-        config: &CodedSimulationConfig,
-    ) -> CodedSimulationResults
+        config: &SimulationConfig,
+    ) -> SimulationResults
     where
         E: BlockEncoder + Sync,
         D: IterativeSoftDecoder,
@@ -1383,7 +1383,7 @@ impl SimulationRunner {
             &make_decoder,
             &None::<fn(&ProgressReport)>,
         );
-        let results = CodedSimulationResults { points };
+        let results = SimulationResults { points };
 
         if let Some(ref path) = config.output_path {
             let csv = Self::coded_results_to_csv(&results);
@@ -1393,16 +1393,6 @@ impl SimulationRunner {
         results
     }
 }
-
-/// Type alias matching the issue-requested interface name.
-///
-/// Equivalent to [`CodedSimulationConfig`].
-pub type SimulationConfigCoded = CodedSimulationConfig;
-
-/// Type alias matching the issue-requested interface name.
-///
-/// Equivalent to [`CodedSimulationResults`].
-pub type SimulationResultsCoded = CodedSimulationResults;
 
 // ---------------------------------------------------------------------------
 // Tests
@@ -1419,7 +1409,7 @@ mod tests {
 
     #[test]
     fn test_simulation_config_quick() {
-        let config = SimulationConfig::quick_test();
+        let config = UncodedSimulationConfig::quick_test();
         assert!(config.min_errors > 0);
         assert!(config.max_trials > config.min_errors);
         assert_eq!(config.code_rate, 1.0);
@@ -1427,7 +1417,7 @@ mod tests {
 
     #[test]
     fn test_uncoded_ber_simulation() {
-        let mut config = SimulationConfig::quick_test();
+        let mut config = UncodedSimulationConfig::quick_test();
         config.eb_n0_range = vec![10.0]; // High SNR for fast test
         config.min_errors = 10;
         config.max_trials = 10_000;
@@ -1442,7 +1432,7 @@ mod tests {
 
     #[test]
     fn test_ber_decreases_with_snr() {
-        let mut config = SimulationConfig::quick_test();
+        let mut config = UncodedSimulationConfig::quick_test();
         config.eb_n0_range = vec![0.0, 6.0];
         config.min_errors = 50;
 
@@ -1460,7 +1450,7 @@ mod tests {
 
     #[test]
     fn test_csv_export() {
-        let results = vec![SimulationResult {
+        let results = vec![UncodedSimulationResult {
             eb_n0_db: 3.0,
             ber: 0.01,
             fer: None,
@@ -1479,7 +1469,7 @@ mod tests {
 
     #[test]
     fn test_simulation_result_complete() {
-        let result = SimulationResult {
+        let result = UncodedSimulationResult {
             eb_n0_db: 3.0,
             ber: 0.01,
             fer: None,
@@ -1633,7 +1623,7 @@ mod tests {
         let decoder = RepetitionSoftDecoder;
         let channel = BpskAwgnChannel;
 
-        let config = CodedSimulationConfig {
+        let config = SimulationConfig {
             eb_n0_range_db: vec![0.0, 6.0],
             min_errors: 20,
             max_frames: 5_000,
@@ -1665,7 +1655,7 @@ mod tests {
         let decoder = RepetitionSoftDecoder;
         let channel = BpskAwgnChannel;
 
-        let config = CodedSimulationConfig {
+        let config = SimulationConfig {
             eb_n0_range_db: vec![0.0, 8.0],
             min_errors: 30,
             max_frames: 50_000,
@@ -1690,7 +1680,7 @@ mod tests {
         let channel = BpskAwgnChannel;
 
         // Very low SNR, should collect min_errors quickly
-        let config = CodedSimulationConfig {
+        let config = SimulationConfig {
             eb_n0_range_db: vec![-2.0],
             min_errors: 10,
             max_frames: 100_000,
@@ -1722,7 +1712,7 @@ mod tests {
         let channel = BpskAwgnChannel;
 
         // Very high SNR, almost no errors -> should hit max_frames
-        let config = CodedSimulationConfig {
+        let config = SimulationConfig {
             eb_n0_range_db: vec![20.0],
             min_errors: 1000,
             max_frames: 200,
@@ -1746,7 +1736,7 @@ mod tests {
         let mut decoder = RepetitionIterativeDecoder::new();
         let channel = BpskAwgnChannel;
 
-        let config = CodedSimulationConfig {
+        let config = SimulationConfig {
             eb_n0_range_db: vec![0.0, 6.0],
             min_errors: 10,
             max_frames: 5_000,
@@ -1774,7 +1764,7 @@ mod tests {
         let channel = BpskAwgnChannel;
 
         // Mock converges at 3 iters, so with max=2 it won't converge
-        let config = CodedSimulationConfig {
+        let config = SimulationConfig {
             eb_n0_range_db: vec![6.0],
             min_errors: 5,
             max_frames: 1000,
@@ -1803,7 +1793,7 @@ mod tests {
     fn test_run_coded_iterative_parallel_returns_all_snr_points() {
         let encoder = RepetitionEncoder;
         let channel = BpskAwgnChannel;
-        let config = CodedSimulationConfig {
+        let config = SimulationConfig {
             eb_n0_range_db: vec![3.0, 6.0, 9.0],
             min_errors: 5,
             max_frames: 200,
@@ -1846,7 +1836,7 @@ mod tests {
 
         // Use high min_errors so the simulation runs well past 100 frames,
         // ensuring the progress callback (fired every 100 frames) triggers.
-        let config = CodedSimulationConfig {
+        let config = SimulationConfig {
             eb_n0_range_db: vec![-2.0],
             min_errors: 200,
             max_frames: 50_000,
@@ -1881,9 +1871,9 @@ mod tests {
 
     #[test]
     fn test_coded_results_to_csv() {
-        let results = CodedSimulationResults {
+        let results = SimulationResults {
             points: vec![
-                CodedSimulationResult {
+                SimulationResult {
                     eb_n0_db: 0.0,
                     ber: 0.1,
                     bler: 0.5,
@@ -1894,7 +1884,7 @@ mod tests {
                     avg_iterations: 5.0,
                     avg_queries_per_bit: 5.0,
                 },
-                CodedSimulationResult {
+                SimulationResult {
                     eb_n0_db: 3.0,
                     ber: 0.01,
                     bler: 0.05,
@@ -1920,8 +1910,8 @@ mod tests {
 
     #[test]
     fn test_coded_results_to_json() {
-        let results = CodedSimulationResults {
-            points: vec![CodedSimulationResult {
+        let results = SimulationResults {
+            points: vec![SimulationResult {
                 eb_n0_db: 3.0,
                 ber: 0.001,
                 bler: 0.05,
@@ -1957,7 +1947,7 @@ mod tests {
         let decoder = RepetitionSoftDecoder;
         let channel = BpskAwgnChannel;
 
-        let config = CodedSimulationConfig {
+        let config = SimulationConfig {
             eb_n0_range_db: vec![0.0],
             min_errors: 5,
             max_frames: 5_000,
@@ -2000,7 +1990,7 @@ mod tests {
         let seed = 0xDEAD_BEEF_u64;
 
         // --- Run the simulation ---
-        let config = CodedSimulationConfig {
+        let config = SimulationConfig {
             eb_n0_range_db: vec![eb_n0_db],
             min_errors: 0, // don't terminate early; we want exactly num_frames
             max_frames: num_frames,
@@ -2070,7 +2060,7 @@ mod tests {
         let mut decoder = RepetitionIterativeDecoder::new();
         let channel = BpskAwgnChannel;
 
-        let config = CodedSimulationConfig {
+        let config = SimulationConfig {
             eb_n0_range_db: vec![6.0],
             min_errors: 5,
             max_frames: 500,
@@ -2133,7 +2123,7 @@ mod tests {
         let decoder = RepetitionSoftDecoder;
         let channel = NoiselessChannel;
 
-        let config = CodedSimulationConfig {
+        let config = SimulationConfig {
             eb_n0_range_db: vec![0.0],
             min_errors: 5,
             max_frames: 1000,
@@ -2216,12 +2206,12 @@ mod tests {
     }
 
     // -----------------------------------------------------------------------
-    // CodedSimulationConfig construction
+    // SimulationConfig construction
     // -----------------------------------------------------------------------
 
     #[test]
     fn test_coded_simulation_config_fields() {
-        let config = CodedSimulationConfig {
+        let config = SimulationConfig {
             eb_n0_range_db: vec![0.0, 0.5, 1.0, 1.5, 2.0],
             min_errors: 100,
             max_frames: 100_000,
@@ -2240,9 +2230,9 @@ mod tests {
 
     #[test]
     fn test_json_output_parseable() {
-        let results = CodedSimulationResults {
+        let results = SimulationResults {
             points: vec![
-                CodedSimulationResult {
+                SimulationResult {
                     eb_n0_db: 0.0,
                     ber: 0.1,
                     bler: 0.5,
@@ -2253,7 +2243,7 @@ mod tests {
                     avg_iterations: 5.0,
                     avg_queries_per_bit: 5.0,
                 },
-                CodedSimulationResult {
+                SimulationResult {
                     eb_n0_db: 3.0,
                     ber: 0.01,
                     bler: 0.05,
