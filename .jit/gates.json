@@ -137,7 +137,7 @@
       "mode": "auto",
       "checker": {
         "type": "exec",
-        "command": "cargo check --workspace --all-features && cargo test --workspace --all-features && cargo clippy --workspace --all-targets --all-features -- -D warnings && cargo fmt --all -- --check",
+        "command": "./scripts/cargo-ci.sh",
         "timeout_seconds": 300,
         "working_dir": null,
         "env": {},
