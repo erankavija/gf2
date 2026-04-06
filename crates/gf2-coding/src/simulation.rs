@@ -514,9 +514,12 @@ impl SimulationResults {
 
 /// Monte Carlo simulation runner for communication systems.
 ///
-/// Provides static methods for uncoded BER simulations. For coded
-/// simulations, use the free functions [`run_coded`],
-/// [`run_coded_iterative`], or [`run_coded_iterative_parallel`].
+/// Provides static methods for both uncoded and coded simulations:
+///
+/// - [`SimulationRunner::run_uncoded_ber`] — uncoded BPSK over AWGN
+/// - [`SimulationRunner::run_coded`] — coded with immutable [`SoftDecoder`]
+/// - [`SimulationRunner::run_coded_iterative`] — coded with [`IterativeSoftDecoder`]
+/// - [`SimulationRunner::run_coded_iterative_parallel`] — parallel iterative with decoder factory
 pub struct SimulationRunner;
 
 impl SimulationRunner {
