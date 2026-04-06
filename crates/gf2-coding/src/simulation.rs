@@ -774,14 +774,21 @@ impl SimulationRunner {
     ///
     /// # Examples
     ///
-    /// ```ignore
-    /// use gf2_coding::simulation::{run_coded, BpskAwgnChannel, SimulationConfig};
+    /// ```
+    /// use gf2_coding::simulation::{SimulationRunner, BpskAwgnChannel, SimulationConfig};
+    /// use gf2_coding::grand::{OrbGrand, OrbGrandConfig};
+    /// use gf2_coding::linear::LinearBlockCode;
+    /// use gf2_coding::traits::GeneratorMatrixAccess;
     ///
-    /// let encoder = /* your BlockEncoder */;
-    /// let decoder = /* your SoftDecoder */;
+    /// let code = LinearBlockCode::hamming(3);
+    /// let h = code.parity_check().unwrap().clone();
+    /// let decoder = OrbGrand::new(h, OrbGrandConfig::default());
     /// let channel = BpskAwgnChannel;
-    /// let config = SimulationConfig::quick_test();
-    /// let results = SimulationRunner::run_coded(&encoder, &decoder, &channel, &config);
+    /// let mut config = SimulationConfig::quick_test();
+    /// config.eb_n0_range_db = vec![6.0];
+    /// config.max_frames = 50;
+    /// let results = SimulationRunner::run_coded(&code, &decoder, &channel, &config);
+    /// assert_eq!(results.points.len(), 1);
     /// ```
     ///
     /// # Complexity
@@ -859,14 +866,20 @@ impl SimulationRunner {
     ///
     /// # Examples
     ///
-    /// ```ignore
-    /// use gf2_coding::simulation::{run_coded_iterative, BpskAwgnChannel, SimulationConfig};
+    /// ```no_run
+    /// use gf2_coding::simulation::{SimulationRunner, BpskAwgnChannel, SimulationConfig};
+    /// use gf2_coding::{LdpcCode, LdpcDecoder, CodeRate};
+    /// use gf2_coding::ldpc::LdpcEncoder;
     ///
-    /// let encoder = /* your BlockEncoder */;
-    /// let mut decoder = /* your IterativeSoftDecoder */;
+    /// let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
+    /// let encoder = LdpcEncoder::new(code.clone());
+    /// let mut decoder = LdpcDecoder::new(code);
     /// let channel = BpskAwgnChannel;
-    /// let config = SimulationConfig::quick_test();
+    /// let mut config = SimulationConfig::quick_test();
+    /// config.eb_n0_range_db = vec![4.0];
+    /// config.max_frames = 10;
     /// let results = SimulationRunner::run_coded_iterative(&encoder, &mut decoder, &channel, &config);
+    /// assert_eq!(results.points.len(), 1);
     /// ```
     ///
     /// # Complexity
@@ -952,21 +965,25 @@ impl SimulationRunner {
     ///
     /// # Examples
     ///
-    /// ```ignore
-    /// use gf2_coding::simulation::{run_coded_iterative_parallel, BpskAwgnChannel, SimulationConfig};
+    /// ```no_run
+    /// use gf2_coding::simulation::{SimulationRunner, BpskAwgnChannel, SimulationConfig};
+    /// use gf2_coding::{LdpcCode, LdpcDecoder, CodeRate};
+    /// use gf2_coding::ldpc::LdpcEncoder;
     ///
-    /// let encoder = /* your BlockEncoder (Send + Sync) */;
+    /// let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
+    /// let encoder = LdpcEncoder::new(code);
     /// let channel = BpskAwgnChannel;
     /// let mut config = SimulationConfig::quick_test();
-    /// config.rng_seed = Some(42);
+    /// config.eb_n0_range_db = vec![4.0];
+    /// config.max_frames = 10;
     ///
     /// let results = SimulationRunner::run_coded_iterative_parallel(
     ///     &encoder,
-    ///     || { /* create decoder */ },
+    ///     || LdpcDecoder::new(LdpcCode::dvb_t2_short(CodeRate::Rate1_2)),
     ///     &channel,
     ///     &config,
     /// );
-    /// assert_eq!(results.points.len(), config.eb_n0_range_db.len());
+    /// assert_eq!(results.points.len(), 1);
     /// ```
     ///
     /// # Complexity
