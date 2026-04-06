@@ -13,11 +13,6 @@
     "tdd-reminder"
   ],
   "gates_status": {
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-06T09:09:05.016771334Z"
-    },
     "tdd-reminder": {
       "status": "passed",
       "updated_by": "agent:project-lead",
@@ -28,10 +23,15 @@
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-05T23:55:49.567140215Z"
     },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-06T11:14:50.032950200Z"
+    },
     "code-review": {
       "status": "failed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-04-06T09:09:23.105329358Z"
+      "updated_at": "2026-04-06T11:15:10.034985055Z"
     }
   },
   "context": {},
@@ -42,5 +42,5 @@
     "component:gf2-coding"
   ],
   "created_at": "2026-02-22T21:14:54.611545645+00:00",
-  "updated_at": "2026-04-06T09:11:59.521699330+00:00"
+  "updated_at": "2026-04-06T11:18:15.768862896+00:00"
 }
