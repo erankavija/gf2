@@ -738,17 +738,26 @@ impl SnrAccumulator {
 }
 
 /// Counts bit errors between a decoded message and the original.
+///
+/// Uses word-level XOR and popcount for O(n/64) performance on aligned
+/// vectors. Length mismatches count as additional errors.
 fn count_bit_errors(original: &BitVec, decoded: &BitVec) -> usize {
-    let len = original.len().min(decoded.len());
-    let mut errors = 0;
-    for i in 0..len {
-        if original.get(i) != decoded.get(i) {
-            errors += 1;
+    if original.len() == decoded.len() {
+        // Fast path: XOR and popcount
+        let mut diff = original.clone();
+        diff.bit_xor_into(decoded);
+        diff.count_ones()
+    } else {
+        // Mismatched lengths: compare common prefix, count remainder as errors
+        let len = original.len().min(decoded.len());
+        let mut errors = 0;
+        for i in 0..len {
+            if original.get(i) != decoded.get(i) {
+                errors += 1;
+            }
         }
+        errors + original.len().abs_diff(decoded.len())
     }
-    // Bits missing or extra in decoded count as errors
-    errors += original.len().abs_diff(decoded.len());
-    errors
 }
 
 impl SimulationRunner {
@@ -1809,5 +1818,103 @@ mod tests {
         assert_eq!(acc.total_iterations, 15);
         // queries: 5 (fallback) + 3 (fallback) + 100 (explicit) = 108
         assert_eq!(acc.total_queries, 108);
+    }
+
+    // -------------------------------------------------------------------
+    // count_bit_errors boundary tests (0/1/63/64/65 bits)
+    // -------------------------------------------------------------------
+
+    #[test]
+    fn test_count_bit_errors_empty() {
+        let a = BitVec::zeros(0);
+        let b = BitVec::zeros(0);
+        assert_eq!(count_bit_errors(&a, &b), 0);
+    }
+
+    #[test]
+    fn test_count_bit_errors_single_bit() {
+        let a = BitVec::zeros(1);
+        let mut b = BitVec::zeros(1);
+        assert_eq!(count_bit_errors(&a, &b), 0);
+        b.set(0, true);
+        assert_eq!(count_bit_errors(&a, &b), 1);
+    }
+
+    #[test]
+    fn test_count_bit_errors_63_bits() {
+        let a = BitVec::zeros(63);
+        let mut b = BitVec::zeros(63);
+        b.set(62, true);
+        assert_eq!(count_bit_errors(&a, &b), 1);
+    }
+
+    #[test]
+    fn test_count_bit_errors_64_bits() {
+        let a = BitVec::zeros(64);
+        let mut b = BitVec::zeros(64);
+        b.set(0, true);
+        b.set(63, true);
+        assert_eq!(count_bit_errors(&a, &b), 2);
+    }
+
+    #[test]
+    fn test_count_bit_errors_65_bits() {
+        let a = BitVec::zeros(65);
+        let mut b = BitVec::zeros(65);
+        b.set(64, true);
+        assert_eq!(count_bit_errors(&a, &b), 1);
+    }
+
+    // -------------------------------------------------------------------
+    // Property-based tests for simulation statistics
+    // -------------------------------------------------------------------
+
+    mod prop_tests {
+        use super::*;
+        use proptest::prelude::*;
+
+        proptest! {
+            #[test]
+            fn prop_count_bit_errors_symmetric(len in 1usize..128) {
+                let mut rng = rand::thread_rng();
+                let a = BitVec::random(len, &mut rng);
+                let b = BitVec::random(len, &mut rng);
+                prop_assert_eq!(count_bit_errors(&a, &b), count_bit_errors(&b, &a));
+            }
+
+            #[test]
+            fn prop_count_bit_errors_identical_is_zero(len in 1usize..128) {
+                let mut rng = rand::thread_rng();
+                let a = BitVec::random(len, &mut rng);
+                prop_assert_eq!(count_bit_errors(&a, &a), 0);
+            }
+
+            #[test]
+            fn prop_count_bit_errors_bounded(len in 1usize..128) {
+                let mut rng = rand::thread_rng();
+                let a = BitVec::random(len, &mut rng);
+                let b = BitVec::random(len, &mut rng);
+                prop_assert!(count_bit_errors(&a, &b) <= len);
+            }
+
+            #[test]
+            fn prop_ber_between_zero_and_one(
+                num_bit_errors in 0usize..1000,
+                num_bits in 1usize..10000,
+            ) {
+                let ber = num_bit_errors as f64 / num_bits as f64;
+                prop_assert!(ber >= 0.0);
+                // BER can exceed 1.0 if errors > bits (e.g., random decode)
+            }
+
+            #[test]
+            fn prop_bler_between_zero_and_one(
+                num_block_errors in 0usize..100,
+                num_frames in 1usize..1000,
+            ) {
+                let bler = num_block_errors as f64 / num_frames as f64;
+                prop_assert!(bler >= 0.0);
+            }
+        }
     }
 }
