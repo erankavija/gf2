@@ -6,7 +6,7 @@
 mod core;
 pub mod dvb_t2;
 pub mod encoding;
-mod nr_5g;
+pub mod nr_5g;
 
 // Re-export core types and functions
 pub use core::*;
