@@ -989,3 +989,94 @@ mod property_tests {
         }
     }
 }
+
+// ---------------------------------------------------------------------------
+// Simulation harness integration: ChannelModel for QPSK + Rician fading
+// ---------------------------------------------------------------------------
+
+use crate::simulation::ChannelModel;
+
+/// QPSK modulation over a Rician fading channel with interleaving.
+///
+/// Implements [`ChannelModel`] for integration with the simulation harness.
+/// The pipeline: bits → interleave → QPSK modulate → fading channel → soft LLR → de-interleave.
+///
+/// # Examples
+///
+/// ```no_run
+/// use gf2_coding::fading::{QpskRicianChannelModel, RicianConfig};
+/// use gf2_coding::simulation::{SimulationRunner, SimulationConfig};
+///
+/// let channel = QpskRicianChannelModel::new(RicianConfig::fig8());
+/// // Use with SimulationRunner::run_coded(&encoder, &decoder, &channel, &config)
+/// ```
+pub struct QpskRicianChannelModel {
+    config: RicianConfig,
+}
+
+impl QpskRicianChannelModel {
+    /// Creates a new QPSK + Rician fading channel model.
+    ///
+    /// # Arguments
+    ///
+    /// * `config` - Rician fading channel configuration
+    pub fn new(config: RicianConfig) -> Self {
+        Self { config }
+    }
+}
+
+impl ChannelModel for QpskRicianChannelModel {
+    fn transmit_and_demodulate<R: rand::Rng>(
+        &self,
+        codeword: &gf2_core::BitVec,
+        eb_n0_db: f64,
+        code_rate: f64,
+        rng: &mut R,
+    ) -> Vec<crate::llr::Llr> {
+        use crate::modulation::{Complex, QpskModulator};
+        use rand_distr::{Distribution, Normal};
+
+        let n = codeword.len();
+        let qpsk = QpskModulator::new(1.0);
+
+        // Compute noise variance from Eb/N0
+        let eb_n0_lin = 10.0_f64.powf(eb_n0_db / 10.0);
+        let es_n0_lin = eb_n0_lin * code_rate * 2.0;
+        let sigma_squared = 1.0 / es_n0_lin;
+        let noise_dist = Normal::new(0.0, (sigma_squared / 2.0).sqrt())
+            .expect("Failed to create noise distribution");
+
+        // Convert BitVec to bool slice for interleaver
+        let bit_vec: Vec<bool> = (0..n).map(|i| codeword.get(i)).collect();
+
+        // Interleave
+        let interleaver = BitInterleaver::new(n, 0xFADE);
+        let interleaved = interleaver.interleave(&bit_vec);
+
+        // QPSK modulate
+        let symbols = qpsk.modulate_bits(&interleaved);
+
+        // Fading channel: generate per-symbol gains
+        let channel = RicianChannel::new(self.config);
+        let mut gains = channel.generate_frame_gains(rng);
+        gains.truncate(symbols.len()); // Frame may be larger than codeword
+
+        // Transmit through fading + AWGN
+        let received: Vec<Complex> = symbols
+            .iter()
+            .zip(gains.iter())
+            .map(|(s, h)| {
+                let noise_re: f64 = noise_dist.sample(rng);
+                let noise_im: f64 = noise_dist.sample(rng);
+                Complex::new(
+                    h.re * s.re - h.im * s.im + noise_re,
+                    h.re * s.im + h.im * s.re + noise_im,
+                )
+            })
+            .collect();
+
+        // Compute LLRs and de-interleave
+        let llrs = qpsk.symbols_to_llrs(&received, &gains, sigma_squared);
+        interleaver.deinterleave_llrs(&llrs)
+    }
+}
