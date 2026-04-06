@@ -59,6 +59,10 @@ pub const LIFTING_SIZE_SETS: &[&[u16]] = &[
 /// assert_eq!(lifting_set_index(7), Some(3));
 /// assert_eq!(lifting_set_index(100), None); // Not a valid lifting size
 /// ```
+///
+/// # Complexity
+///
+/// O(N) where N = 51 (total entries across all lifting size sets).
 pub fn lifting_set_index(z: u16) -> Option<usize> {
     for (i_ls, set) in LIFTING_SIZE_SETS.iter().enumerate() {
         if set.contains(&z) {
@@ -83,7 +87,7 @@ pub fn lifting_set_index(z: u16) -> Option<usize> {
 ///
 /// # Complexity
 ///
-/// O(1) — returns a static slice.
+/// O(N log N) where N = 51 (total valid lifting sizes across all sets).
 pub fn all_lifting_sizes() -> Vec<u16> {
     let mut sizes: Vec<u16> = LIFTING_SIZE_SETS
         .iter()
@@ -109,6 +113,10 @@ pub fn all_lifting_sizes() -> Vec<u16> {
 /// assert!(!is_valid_lifting_size(100));
 /// assert!(!is_valid_lifting_size(0));
 /// ```
+///
+/// # Complexity
+///
+/// O(N) where N = 51 (delegates to [`lifting_set_index`]).
 pub fn is_valid_lifting_size(z: u16) -> bool {
     lifting_set_index(z).is_some()
 }

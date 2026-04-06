@@ -383,6 +383,10 @@ impl NrRateMatchParams {
     /// let rate = rm_code.params().effective_rate();
     /// assert!((rate - 121.0 / 256.0).abs() < 1e-6);
     /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
     pub fn effective_rate(&self) -> f64 {
         self.target_k as f64 / self.target_n as f64
     }
@@ -398,6 +402,10 @@ impl NrRateMatchParams {
     /// let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
     /// assert_eq!(rm_code.params().active_systematic_bits(), 130 - 9 - 26);
     /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
     pub fn active_systematic_bits(&self) -> usize {
         self.full_k - self.num_shortened - self.num_punctured_systematic
     }
@@ -412,6 +420,10 @@ impl NrRateMatchParams {
     /// let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
     /// assert_eq!(rm_code.params().transmitted_parity_bits(), 256 - 95);
     /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
     pub fn transmitted_parity_bits(&self) -> usize {
         self.target_n - self.active_systematic_bits()
     }
@@ -621,6 +633,10 @@ impl Nr5gRateMatchedCode {
     /// let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
     /// assert_eq!(rm_code.n(), 256);
     /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
     pub fn n(&self) -> usize {
         self.params.target_n
     }
@@ -940,6 +956,10 @@ impl Nr5gRateMatchedDecoder {
     /// let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
     /// let decoder = Nr5gRateMatchedDecoder::new(rm_code);
     /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(n).
     pub fn new(rm_code: Nr5gRateMatchedCode) -> Self {
         let h = rm_code.mother_code.parity_check_matrix();
         let n = rm_code.mother_code.n();
