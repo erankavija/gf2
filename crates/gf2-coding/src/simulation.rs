@@ -14,8 +14,9 @@
 //!   take `&self` ([`run_coded`]).
 //! - **Coded iterative (mutable decoder)**: For [`IterativeSoftDecoder`]
 //!   implementations that take `&mut self` ([`run_coded_iterative`]).
-//! - **Coded iterative parallel**: Parallel SNR sweeps using a decoder factory
-//!   closure ([`run_coded_iterative_parallel`]).
+//! - **Coded iterative parallel**: Parallel SNR sweeps (with the `parallel`
+//!   feature) using a decoder factory closure ([`run_coded_iterative_parallel`]).
+//!   Falls back to sequential execution without the feature.
 //!
 //! # Channel Abstraction
 //!
@@ -924,8 +925,9 @@ where
 /// Runs a coded iterative simulation with per-SNR-point parallelism.
 ///
 /// Each SNR point gets its own decoder instance created by `make_decoder`,
-/// enabling safe parallel execution. This is the recommended entry point
-/// for production simulation campaigns.
+/// enabling safe parallel execution. With the `parallel` feature enabled,
+/// SNR points are dispatched to rayon threads. Without it, execution is
+/// sequential but each point still gets a fresh decoder.
 ///
 /// # Arguments
 ///
@@ -980,54 +982,64 @@ pub fn run_coded_iterative_parallel<E, D, F, C>(
 where
     E: BlockEncoder + Send + Sync,
     D: IterativeSoftDecoder,
-    F: Fn() -> D,
+    F: Fn() -> D + Send + Sync,
     C: ChannelModel + Send + Sync,
 {
     let k = encoder.k();
     let n = encoder.n();
     let rate = k as f64 / n as f64;
 
-    // Run each SNR point sequentially but with its own decoder.
-    // True rayon parallelism is available when the `parallel` feature is enabled
-    // but is not required for correctness.
+    let simulate_point = |(idx, &eb_n0_db): (usize, &f64)| -> SimulationResult {
+        let mut decoder = make_decoder();
+        // Each SNR point gets a unique sub-seed derived from the config seed.
+        // When no seed is provided, use a fixed per-point seed for consistency.
+        let point_seed = config
+            .rng_seed
+            .unwrap_or(0xDEAD_BEEF)
+            .wrapping_add(idx as u64);
+        let mut rng = StdRng::seed_from_u64(point_seed);
+
+        let mut acc = SnrAccumulator::new(eb_n0_db, k);
+
+        while !acc.should_stop(config.min_errors, config.max_frames) {
+            let message = BitVec::random(k, &mut rng);
+            let codeword = encoder.encode(&message);
+            let llrs = channel.transmit_and_demodulate(&codeword, eb_n0_db, rate, &mut rng);
+
+            decoder.reset();
+            let result = decoder.decode_iterative(&llrs, config.max_decoder_iterations);
+            let bit_errors = count_bit_errors(&message, &result.decoded_bits);
+            acc.record_frame(bit_errors, result.iterations, result.queries);
+
+            if acc.should_report() {
+                report_progress(
+                    eb_n0_db,
+                    acc.total_frames,
+                    acc.total_frame_errors,
+                    config.min_errors,
+                );
+            }
+        }
+
+        acc.into_result(config.min_errors)
+    };
+
+    #[cfg(feature = "parallel")]
+    let points: Vec<SimulationResult> = {
+        use rayon::prelude::*;
+        config
+            .eb_n0_range_db
+            .par_iter()
+            .enumerate()
+            .map(|pair| simulate_point(pair))
+            .collect()
+    };
+    #[cfg(not(feature = "parallel"))]
     let points: Vec<SimulationResult> = config
         .eb_n0_range_db
         .iter()
         .enumerate()
-        .map(|(idx, &eb_n0_db)| {
-            let mut decoder = make_decoder();
-            // Each SNR point gets a unique sub-seed derived from the config seed.
-            // When no seed is provided, use a fixed per-point seed for consistency.
-            let point_seed = config
-                .rng_seed
-                .unwrap_or(0xDEAD_BEEF)
-                .wrapping_add(idx as u64);
-            let mut rng = StdRng::seed_from_u64(point_seed);
-
-            let mut acc = SnrAccumulator::new(eb_n0_db, k);
-
-            while !acc.should_stop(config.min_errors, config.max_frames) {
-                let message = BitVec::random(k, &mut rng);
-                let codeword = encoder.encode(&message);
-                let llrs = channel.transmit_and_demodulate(&codeword, eb_n0_db, rate, &mut rng);
-
-                decoder.reset();
-                let result = decoder.decode_iterative(&llrs, config.max_decoder_iterations);
-                let bit_errors = count_bit_errors(&message, &result.decoded_bits);
-                acc.record_frame(bit_errors, result.iterations, result.queries);
-
-                if acc.should_report() {
-                    report_progress(
-                        eb_n0_db,
-                        acc.total_frames,
-                        acc.total_frame_errors,
-                        config.min_errors,
-                    );
-                }
-            }
-
-            acc.into_result(config.min_errors)
-        })
+        .map(|pair| simulate_point(pair))
         .collect();
 
     let results = SimulationResults { points };
