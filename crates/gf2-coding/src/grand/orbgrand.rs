@@ -1695,7 +1695,7 @@ mod tests {
         use crate::traits::BlockEncoder;
 
         let ebch = ExtendedBchCode::ebch_16_11();
-        let h = ebch.h().clone();
+        let h = ebch.parity_check().clone();
 
         let config = OrbGrandConfig {
             max_queries: 10_000,

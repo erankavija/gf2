@@ -167,6 +167,13 @@ impl RicianChannel {
     ///
     /// * `config` - Rician channel configuration (K-factor, block size, taps)
     ///
+    /// # Panics
+    ///
+    /// Panics if:
+    /// - `config.k_factor < 0.0` (K-factor must be non-negative)
+    /// - `config.coherence_block == 0` (coherence block size must be positive)
+    /// - `config.taps == 0` (number of taps must be positive)
+    ///
     /// # Examples
     ///
     /// ```
@@ -175,12 +182,28 @@ impl RicianChannel {
     /// let channel = RicianChannel::new(RicianConfig::fig8());
     /// ```
     pub fn new(config: RicianConfig) -> Self {
+        assert!(
+            config.k_factor >= 0.0,
+            "Rician K-factor must be non-negative, got {}",
+            config.k_factor
+        );
+        assert!(
+            config.coherence_block > 0,
+            "Coherence block size N_c must be positive, got {}",
+            config.coherence_block
+        );
+        assert!(
+            config.taps > 0,
+            "Number of taps t must be positive, got {}",
+            config.taps
+        );
+
         let k = config.k_factor;
         let los_amplitude = (k / (k + 1.0)).sqrt();
         let scatter_scale = (1.0 / (k + 1.0)).sqrt();
         // sigma^2 = 0.5, so sigma = 1/sqrt(2)
-        let scatter_dist =
-            Normal::new(0.0, (0.5_f64).sqrt()).expect("Failed to create normal distribution");
+        let sigma = (0.5_f64).sqrt();
+        let scatter_dist = Normal::new(0.0, sigma).expect("Failed to create normal distribution");
         RicianChannel {
             config,
             los_amplitude,
@@ -190,6 +213,18 @@ impl RicianChannel {
     }
 
     /// Returns the channel configuration.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::fading::{RicianChannel, RicianConfig};
+    ///
+    /// let channel = RicianChannel::new(RicianConfig::fig9());
+    /// let cfg = channel.config();
+    /// assert_eq!(cfg.k_factor, 8.0);
+    /// assert_eq!(cfg.coherence_block, 256);
+    /// assert_eq!(cfg.taps, 2);
+    /// ```
     pub fn config(&self) -> &RicianConfig {
         &self.config
     }
@@ -198,6 +233,15 @@ impl RicianChannel {
     ///
     /// Returns `H_Ri = sqrt(K/(K+1)) + sqrt(1/(K+1))·(X + jY)` where
     /// `X, Y ~ N(0, 0.5)`.
+    ///
+    /// # Arguments
+    ///
+    /// * `rng` - Random number generator for sampling the scatter component
+    ///
+    /// # Complexity
+    ///
+    /// O(1). Generates two Gaussian random samples and combines them with
+    /// the deterministic LOS component.
     ///
     /// # Examples
     ///
@@ -332,10 +376,8 @@ impl RicianChannel {
 /// ```
 /// use gf2_coding::fading::BitInterleaver;
 ///
-/// let interleaver = BitInterleaver::new(1024, 42);
-/// let bits = vec![false, true, false, false, true, false, true, true];
-/// // Only works for len == 1024 in this example, use small size for demo
 /// let interleaver = BitInterleaver::new(8, 42);
+/// let bits = vec![false, true, false, false, true, false, true, true];
 /// let interleaved = interleaver.interleave(&bits);
 /// let deinterleaved = interleaver.deinterleave(&interleaved);
 /// assert_eq!(deinterleaved, bits);
@@ -639,6 +681,55 @@ mod tests {
     fn test_rician_config_fig10_frame_bits() {
         let cfg = RicianConfig::fig10();
         assert_eq!(cfg.frame_bits(), 4096);
+    }
+
+    // ---- RicianChannel input validation ----
+
+    #[test]
+    #[should_panic(expected = "K-factor must be non-negative")]
+    fn test_rician_channel_negative_k_panics() {
+        let cfg = RicianConfig {
+            k_factor: -1.0,
+            coherence_block: 128,
+            taps: 4,
+        };
+        let _ = RicianChannel::new(cfg);
+    }
+
+    #[test]
+    #[should_panic(expected = "N_c must be positive")]
+    fn test_rician_channel_zero_coherence_block_panics() {
+        let cfg = RicianConfig {
+            k_factor: 5.0,
+            coherence_block: 0,
+            taps: 4,
+        };
+        let _ = RicianChannel::new(cfg);
+    }
+
+    #[test]
+    #[should_panic(expected = "t must be positive")]
+    fn test_rician_channel_zero_taps_panics() {
+        let cfg = RicianConfig {
+            k_factor: 5.0,
+            coherence_block: 128,
+            taps: 0,
+        };
+        let _ = RicianChannel::new(cfg);
+    }
+
+    #[test]
+    fn test_rician_channel_k_factor_zero_is_rayleigh() {
+        // K=0 is valid: pure Rayleigh fading (no LOS component)
+        let cfg = RicianConfig {
+            k_factor: 0.0,
+            coherence_block: 64,
+            taps: 1,
+        };
+        let channel = RicianChannel::new(cfg);
+        let mut rng = rand::thread_rng();
+        let h = channel.sample_coefficient(&mut rng);
+        assert!(h.re.is_finite() && h.im.is_finite());
     }
 
     // ---- RicianChannel ----
