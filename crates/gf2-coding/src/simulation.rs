@@ -20,8 +20,10 @@
 //!
 //! # Parallel sweeps
 //!
-//! When the `parallel` feature is enabled, each SNR point runs on a separate
-//! thread via rayon.
+//! When the `parallel` feature is enabled, the non-iterative `run_coded` path
+//! dispatches each SNR point to a separate rayon thread. The iterative path
+//! (`run_coded_iterative`) requires `&mut self` on the decoder, so parallel
+//! execution requires a decoder factory closure (see `run_coded_iterative`).
 //!
 //! # Output
 //!
@@ -270,7 +272,10 @@ pub struct CodedSimulationConfig {
     pub max_decoder_iterations: usize,
 
     /// Optional seed for deterministic RNG.
-    /// When `None`, the simulation uses a random seed per SNR point.
+    /// When `Some(seed)`, each SNR point uses `seed ^ point_index` for
+    /// reproducible results. When `None`, uses a fixed default seed
+    /// (`0x5EED_CAFE ^ point_index`), which is still deterministic but
+    /// not caller-controlled.
     pub rng_seed: Option<u64>,
 
     /// Optional path to write CSV results after simulation.
@@ -328,9 +333,11 @@ pub struct CodedSimulationResult {
 
     /// Average queries per information bit.
     ///
-    /// For iterative decoders this equals `avg_iterations`; for GRAND-family
-    /// decoders the `iterations` field in [`DecoderResult`] carries the
-    /// query count, and this field reports `total_queries / total_info_bits`.
+    /// Computed as `total_decoder_iterations / total_info_bits`. For standard
+    /// iterative decoders (e.g., LDPC BP), `DecoderResult.iterations` counts
+    /// BP iterations; for query-based decoders (e.g., GRAND), it counts
+    /// noise pattern queries. This field normalizes per information bit in
+    /// both cases.
     pub avg_queries_per_bit: f64,
 }
 
