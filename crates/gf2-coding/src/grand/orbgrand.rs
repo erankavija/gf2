@@ -646,13 +646,17 @@ impl SoftDecoder for OrbGrand {
                 }
                 msg
             };
-            DecoderResult::new(decoded, result.query_count, true, true)
+            let mut dr = DecoderResult::new(decoded, 1, true, true);
+            dr.queries = Some(result.query_count);
+            dr
         } else {
             let mut msg = BitVec::with_capacity(self.k());
             for llr in llrs.iter().take(self.k()) {
                 msg.push_bit(llr.hard_decision());
             }
-            DecoderResult::failure(msg, result.query_count)
+            let mut dr = DecoderResult::failure(msg, 1);
+            dr.queries = Some(result.query_count);
+            dr
         }
     }
 }
