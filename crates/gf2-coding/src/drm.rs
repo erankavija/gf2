@@ -582,6 +582,27 @@ mod tests {
                 );
             }
         }
+
+        // Weight 3
+        for i in 0..n {
+            for j in (i + 1)..n {
+                for l in (j + 1)..n {
+                    let mut e = BitVec::zeros(n);
+                    e.set(i, true);
+                    e.set(j, true);
+                    e.set(l, true);
+                    let syn = code.inner().syndrome(&e).unwrap();
+                    assert!(
+                        syn.count_ones() > 0,
+                        "weight-3 at ({},{},{}) has zero syndrome",
+                        i,
+                        j,
+                        l
+                    );
+                }
+            }
+        }
+        // d_min >= 4 proven
     }
 }
 
