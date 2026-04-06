@@ -875,11 +875,9 @@ impl SoftDecoder for Nr5gRateMatchedCode {
             "LLR length must equal target_n = {}",
             self.params.target_n
         );
-        // Use the full BP decoder with LLR mapping
-        let full_llrs = self.prepare_llrs(llrs);
+        // Use the full BP decoder — decode_iterative handles prepare_llrs internally
         let mut decoder = Nr5gRateMatchedDecoder::new((*self).clone());
-        let result = decoder.decode_iterative(&full_llrs, 50);
-        self.extract_message(&result.decoded_bits)
+        decoder.decode_iterative(llrs, 50).decoded_bits
     }
 }
 
