@@ -1729,6 +1729,7 @@ mod tests {
 
         let mut total_bits = 0usize;
         let mut bit_errors = 0usize;
+        let mut frame_errors = 0usize;
         let mut frames_decoded = 0usize;
 
         for _ in 0..num_frames {
@@ -1765,21 +1766,32 @@ mod tests {
             }
 
             // Compare decoded message with original
+            let mut frame_has_error = false;
             for i in 0..target_k {
                 if result.decoded_bits.get(i) != msg.get(i) {
                     bit_errors += 1;
+                    frame_has_error = true;
                 }
+            }
+            if frame_has_error {
+                frame_errors += 1;
             }
             total_bits += target_k;
         }
 
         let ber = bit_errors as f64 / total_bits as f64;
+        let bler = frame_errors as f64 / num_frames as f64;
         assert!(
             ber < max_ber,
             "{label}: BER = {ber:.2e} exceeds threshold {max_ber:.2e} \
              ({bit_errors}/{total_bits} errors, {num_frames} frames, \
              {frames_decoded}/{num_frames} converged, \
-             Eb/N0 = {eb_n0_db} dB)"
+             BLER = {bler:.2e}, Eb/N0 = {eb_n0_db} dB)"
+        );
+        // BLER must also be reasonable (at least some frames decoded correctly)
+        assert!(
+            bler < 1.0,
+            "{label}: BLER = 1.0 — no frame decoded correctly at {eb_n0_db} dB"
         );
     }
 
@@ -1802,8 +1814,20 @@ mod tests {
     }
 
     #[test]
+    fn test_ber_bg2_625_225_6db() {
+        // BG2 (625, 225) at 6 dB: rate 0.36
+        ber_acceptance(2, 625, 225, 6.0, 1e-3, 10, "BG2 (625,225) @ 6dB");
+    }
+
+    #[test]
     fn test_ber_bg1_1024_640_8db() {
         // BG1 (1024, 640) at 8 dB: previously broken with column-removal approach
         ber_acceptance(1, 1024, 640, 8.0, 1e-3, 10, "BG1 (1024,640) @ 8dB");
+    }
+
+    #[test]
+    fn test_ber_bg1_4096_3249_8db() {
+        // BG1 (4096, 3249) at 8 dB: high rate 0.793
+        ber_acceptance(1, 4096, 3249, 8.0, 5e-2, 3, "BG1 (4096,3249) @ 8dB");
     }
 }
