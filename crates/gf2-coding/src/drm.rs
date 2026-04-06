@@ -602,7 +602,20 @@ mod tests {
                 }
             }
         }
-        // d_min >= 4 proven
+        // d_min >= 4 proven; now find exact d_min by searching for weight-4 codeword
+        use crate::traits::BlockEncoder;
+        let k = code.k();
+        let mut found_weight_4 = false;
+        for bit in 0..k {
+            let mut msg = BitVec::zeros(k);
+            msg.set(bit, true);
+            let cw = code.encode(&msg);
+            if cw.count_ones() == 4 {
+                found_weight_4 = true;
+                break;
+            }
+        }
+        assert!(found_weight_4, "dRM(32,21) d_min should be exactly 4");
     }
 }
 

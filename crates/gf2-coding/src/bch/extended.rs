@@ -663,21 +663,22 @@ mod tests {
         assert!(found_weight_4, "d_min should be exactly 4");
     }
 
-    /// Verify d_min = 4 for eBCH(32,26) by exhaustive check on weight 1..3.
+    /// Verify d_min = 4 for eBCH(32,26): no nonzero codewords of weight < 4,
+    /// and at least one weight-4 codeword exists.
     #[test]
     fn test_ebch_32_26_minimum_distance() {
+        use crate::traits::BlockEncoder;
+
         let code = ExtendedBchCode::ebch_32_26();
         let n = code.n();
 
-        // Weight 1
+        // Weight 1, 2, 3: all syndromes nonzero
         for i in 0..n {
             let mut e = BitVec::zeros(n);
             e.set(i, true);
             let syn = code.inner().syndrome(&e).unwrap();
             assert!(syn.count_ones() > 0);
         }
-
-        // Weight 2
         for i in 0..n {
             for j in (i + 1)..n {
                 let mut e = BitVec::zeros(n);
@@ -687,8 +688,6 @@ mod tests {
                 assert!(syn.count_ones() > 0);
             }
         }
-
-        // Weight 3
         for i in 0..n {
             for j in (i + 1)..n {
                 for l in (j + 1)..n {
@@ -701,6 +700,21 @@ mod tests {
                 }
             }
         }
+
+        // Prove d_min = exactly 4 by finding a weight-4 codeword.
+        // Encode single-bit messages — at least one will produce weight 4.
+        let k = code.k();
+        let mut found_weight_4 = false;
+        for bit in 0..k {
+            let mut msg = BitVec::zeros(k);
+            msg.set(bit, true);
+            let cw = code.encode(&msg);
+            if cw.count_ones() == 4 {
+                found_weight_4 = true;
+                break;
+            }
+        }
+        assert!(found_weight_4, "d_min should be exactly 4");
     }
 
     /// Verify d_min = 4 for eBCH(64,57) by exhaustive check on weight 1..3.
@@ -741,6 +755,21 @@ mod tests {
                 }
             }
         }
+
+        // Prove d_min = exactly 4 by finding a weight-4 codeword
+        use crate::traits::BlockEncoder;
+        let k = code.k();
+        let mut found_weight_4 = false;
+        for bit in 0..k {
+            let mut msg = BitVec::zeros(k);
+            msg.set(bit, true);
+            let cw = code.encode(&msg);
+            if cw.count_ones() == 4 {
+                found_weight_4 = true;
+                break;
+            }
+        }
+        assert!(found_weight_4, "eBCH(64,57) d_min should be exactly 4");
     }
 
     /// Verify d_min = 6 for eBCH(16,7) by exhaustive check.
