@@ -751,303 +751,305 @@ fn count_bit_errors(original: &BitVec, decoded: &BitVec) -> usize {
     errors
 }
 
-/// Runs a coded simulation using an immutable [`SoftDecoder`].
-///
-/// Executes the encode-modulate-channel-demodulate-decode loop for each
-/// SNR point, collecting BER, BLER, and iteration statistics.
-///
-/// # Arguments
-///
-/// * `encoder` - Block encoder producing codewords from messages
-/// * `decoder` - Soft-decision decoder (immutable `&self`)
-/// * `channel` - Channel model for modulation, noise, and demodulation
-/// * `config` - Simulation configuration controlling sweep parameters
-///
-/// # Returns
-///
-/// Aggregated [`SimulationResults`] with one entry per SNR point.
-///
-/// # Panics
-///
-/// Panics if `output_path` is set and the file cannot be written.
-///
-/// # Examples
-///
-/// ```ignore
-/// use gf2_coding::simulation::{run_coded, BpskAwgnChannel, SimulationConfig};
-///
-/// let encoder = /* your BlockEncoder */;
-/// let decoder = /* your SoftDecoder */;
-/// let channel = BpskAwgnChannel;
-/// let config = SimulationConfig::quick_test();
-/// let results = run_coded(&encoder, &decoder, &channel, &config);
-/// ```
-///
-/// # Complexity
-///
-/// O(SNR_points * max_frames * (encode_time + channel_time + decode_time)).
-pub fn run_coded<E, D, C>(
-    encoder: &E,
-    decoder: &D,
-    channel: &C,
-    config: &SimulationConfig,
-) -> SimulationResults
-where
-    E: BlockEncoder,
-    D: SoftDecoder,
-    C: ChannelModel,
-{
-    let k = encoder.k();
-    let n = encoder.n();
-    let rate = k as f64 / n as f64;
+impl SimulationRunner {
+    /// Runs a coded simulation using an immutable [`SoftDecoder`].
+    ///
+    /// Executes the encode-modulate-channel-demodulate-decode loop for each
+    /// SNR point, collecting BER, BLER, and iteration statistics.
+    ///
+    /// # Arguments
+    ///
+    /// * `encoder` - Block encoder producing codewords from messages
+    /// * `decoder` - Soft-decision decoder (immutable `&self`)
+    /// * `channel` - Channel model for modulation, noise, and demodulation
+    /// * `config` - Simulation configuration controlling sweep parameters
+    ///
+    /// # Returns
+    ///
+    /// Aggregated [`SimulationResults`] with one entry per SNR point.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `output_path` is set and the file cannot be written.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// use gf2_coding::simulation::{run_coded, BpskAwgnChannel, SimulationConfig};
+    ///
+    /// let encoder = /* your BlockEncoder */;
+    /// let decoder = /* your SoftDecoder */;
+    /// let channel = BpskAwgnChannel;
+    /// let config = SimulationConfig::quick_test();
+    /// let results = SimulationRunner::run_coded(&encoder, &decoder, &channel, &config);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(SNR_points * max_frames * (encode_time + channel_time + decode_time)).
+    pub fn run_coded<E, D, C>(
+        encoder: &E,
+        decoder: &D,
+        channel: &C,
+        config: &SimulationConfig,
+    ) -> SimulationResults
+    where
+        E: BlockEncoder,
+        D: SoftDecoder,
+        C: ChannelModel,
+    {
+        let k = encoder.k();
+        let n = encoder.n();
+        let rate = k as f64 / n as f64;
 
-    let mut rng = config.make_rng();
-    let mut points = Vec::with_capacity(config.eb_n0_range_db.len());
+        let mut rng = config.make_rng();
+        let mut points = Vec::with_capacity(config.eb_n0_range_db.len());
 
-    for &eb_n0_db in &config.eb_n0_range_db {
-        let mut acc = SnrAccumulator::new(eb_n0_db, k);
+        for &eb_n0_db in &config.eb_n0_range_db {
+            let mut acc = SnrAccumulator::new(eb_n0_db, k);
 
-        while !acc.should_stop(config.min_errors, config.max_frames) {
-            let message = BitVec::random(k, &mut rng);
-            let codeword = encoder.encode(&message);
-            let llrs = channel.transmit_and_demodulate(&codeword, eb_n0_db, rate, &mut rng);
-            let result = decoder.decode_soft_with_result(&llrs);
-            let bit_errors = count_bit_errors(&message, &result.decoded_bits);
-            acc.record_frame(bit_errors, result.iterations, result.queries);
+            while !acc.should_stop(config.min_errors, config.max_frames) {
+                let message = BitVec::random(k, &mut rng);
+                let codeword = encoder.encode(&message);
+                let llrs = channel.transmit_and_demodulate(&codeword, eb_n0_db, rate, &mut rng);
+                let result = decoder.decode_soft_with_result(&llrs);
+                let bit_errors = count_bit_errors(&message, &result.decoded_bits);
+                acc.record_frame(bit_errors, result.iterations, result.queries);
 
-            if acc.should_report() {
-                report_progress(
-                    eb_n0_db,
-                    acc.total_frames,
-                    acc.total_frame_errors,
-                    config.min_errors,
-                );
+                if acc.should_report() {
+                    report_progress(
+                        eb_n0_db,
+                        acc.total_frames,
+                        acc.total_frame_errors,
+                        config.min_errors,
+                    );
+                }
             }
+
+            points.push(acc.into_result(config.min_errors));
         }
 
-        points.push(acc.into_result(config.min_errors));
+        let results = SimulationResults { points };
+        if let Some(ref path) = config.output_path {
+            results.write_to(path);
+        }
+        results
     }
 
-    let results = SimulationResults { points };
-    if let Some(ref path) = config.output_path {
-        results.write_to(path);
-    }
-    results
-}
+    /// Runs a coded simulation using a mutable [`IterativeSoftDecoder`].
+    ///
+    /// Similar to [`run_coded`] but accepts a decoder requiring `&mut self`,
+    /// as is typical for iterative belief-propagation decoders that maintain
+    /// internal message state.
+    ///
+    /// # Arguments
+    ///
+    /// * `encoder` - Block encoder producing codewords from messages
+    /// * `decoder` - Iterative soft-decision decoder (mutable `&mut self`)
+    /// * `channel` - Channel model for modulation, noise, and demodulation
+    /// * `config` - Simulation configuration controlling sweep parameters
+    ///
+    /// # Returns
+    ///
+    /// Aggregated [`SimulationResults`] with one entry per SNR point.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `output_path` is set and the file cannot be written.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// use gf2_coding::simulation::{run_coded_iterative, BpskAwgnChannel, SimulationConfig};
+    ///
+    /// let encoder = /* your BlockEncoder */;
+    /// let mut decoder = /* your IterativeSoftDecoder */;
+    /// let channel = BpskAwgnChannel;
+    /// let config = SimulationConfig::quick_test();
+    /// let results = SimulationRunner::run_coded_iterative(&encoder, &mut decoder, &channel, &config);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(SNR_points * max_frames * (encode_time + channel_time + decode_time)).
+    pub fn run_coded_iterative<E, D, C>(
+        encoder: &E,
+        decoder: &mut D,
+        channel: &C,
+        config: &SimulationConfig,
+    ) -> SimulationResults
+    where
+        E: BlockEncoder,
+        D: IterativeSoftDecoder,
+        C: ChannelModel,
+    {
+        let k = encoder.k();
+        let n = encoder.n();
+        let rate = k as f64 / n as f64;
 
-/// Runs a coded simulation using a mutable [`IterativeSoftDecoder`].
-///
-/// Similar to [`run_coded`] but accepts a decoder requiring `&mut self`,
-/// as is typical for iterative belief-propagation decoders that maintain
-/// internal message state.
-///
-/// # Arguments
-///
-/// * `encoder` - Block encoder producing codewords from messages
-/// * `decoder` - Iterative soft-decision decoder (mutable `&mut self`)
-/// * `channel` - Channel model for modulation, noise, and demodulation
-/// * `config` - Simulation configuration controlling sweep parameters
-///
-/// # Returns
-///
-/// Aggregated [`SimulationResults`] with one entry per SNR point.
-///
-/// # Panics
-///
-/// Panics if `output_path` is set and the file cannot be written.
-///
-/// # Examples
-///
-/// ```ignore
-/// use gf2_coding::simulation::{run_coded_iterative, BpskAwgnChannel, SimulationConfig};
-///
-/// let encoder = /* your BlockEncoder */;
-/// let mut decoder = /* your IterativeSoftDecoder */;
-/// let channel = BpskAwgnChannel;
-/// let config = SimulationConfig::quick_test();
-/// let results = run_coded_iterative(&encoder, &mut decoder, &channel, &config);
-/// ```
-///
-/// # Complexity
-///
-/// O(SNR_points * max_frames * (encode_time + channel_time + decode_time)).
-pub fn run_coded_iterative<E, D, C>(
-    encoder: &E,
-    decoder: &mut D,
-    channel: &C,
-    config: &SimulationConfig,
-) -> SimulationResults
-where
-    E: BlockEncoder,
-    D: IterativeSoftDecoder,
-    C: ChannelModel,
-{
-    let k = encoder.k();
-    let n = encoder.n();
-    let rate = k as f64 / n as f64;
+        let mut rng = config.make_rng();
+        let mut points = Vec::with_capacity(config.eb_n0_range_db.len());
 
-    let mut rng = config.make_rng();
-    let mut points = Vec::with_capacity(config.eb_n0_range_db.len());
+        for &eb_n0_db in &config.eb_n0_range_db {
+            let mut acc = SnrAccumulator::new(eb_n0_db, k);
 
-    for &eb_n0_db in &config.eb_n0_range_db {
-        let mut acc = SnrAccumulator::new(eb_n0_db, k);
+            while !acc.should_stop(config.min_errors, config.max_frames) {
+                let message = BitVec::random(k, &mut rng);
+                let codeword = encoder.encode(&message);
+                let llrs = channel.transmit_and_demodulate(&codeword, eb_n0_db, rate, &mut rng);
 
-        while !acc.should_stop(config.min_errors, config.max_frames) {
-            let message = BitVec::random(k, &mut rng);
-            let codeword = encoder.encode(&message);
-            let llrs = channel.transmit_and_demodulate(&codeword, eb_n0_db, rate, &mut rng);
+                decoder.reset();
+                let result = decoder.decode_iterative(&llrs, config.max_decoder_iterations);
+                let bit_errors = count_bit_errors(&message, &result.decoded_bits);
+                acc.record_frame(bit_errors, result.iterations, result.queries);
 
-            decoder.reset();
-            let result = decoder.decode_iterative(&llrs, config.max_decoder_iterations);
-            let bit_errors = count_bit_errors(&message, &result.decoded_bits);
-            acc.record_frame(bit_errors, result.iterations, result.queries);
-
-            if acc.should_report() {
-                report_progress(
-                    eb_n0_db,
-                    acc.total_frames,
-                    acc.total_frame_errors,
-                    config.min_errors,
-                );
+                if acc.should_report() {
+                    report_progress(
+                        eb_n0_db,
+                        acc.total_frames,
+                        acc.total_frame_errors,
+                        config.min_errors,
+                    );
+                }
             }
+
+            points.push(acc.into_result(config.min_errors));
         }
 
-        points.push(acc.into_result(config.min_errors));
-    }
-
-    let results = SimulationResults { points };
-    if let Some(ref path) = config.output_path {
-        results.write_to(path);
-    }
-    results
-}
-
-/// Runs a coded iterative simulation with per-SNR-point parallelism.
-///
-/// Each SNR point gets its own decoder instance created by `make_decoder`,
-/// enabling safe parallel execution. With the `parallel` feature enabled,
-/// SNR points are dispatched to rayon threads. Without it, execution is
-/// sequential but each point still gets a fresh decoder.
-///
-/// # Arguments
-///
-/// * `encoder` - Block encoder producing codewords from messages. Must be
-///   `Send + Sync` for parallel access.
-/// * `make_decoder` - Factory closure that creates a fresh
-///   [`IterativeSoftDecoder`] instance for each SNR point. Called once per
-///   SNR point, so each thread gets its own decoder with independent state.
-/// * `channel` - Channel model for modulation, noise, and demodulation.
-///   Must be `Send + Sync` for parallel access.
-/// * `config` - Simulation configuration controlling sweep parameters.
-///
-/// # Returns
-///
-/// Aggregated [`SimulationResults`] with one entry per SNR point, ordered
-/// by increasing Eb/N0.
-///
-/// # Panics
-///
-/// Panics if `output_path` is set and the file cannot be written.
-///
-/// # Examples
-///
-/// ```ignore
-/// use gf2_coding::simulation::{run_coded_iterative_parallel, BpskAwgnChannel, SimulationConfig};
-///
-/// let encoder = /* your BlockEncoder (Send + Sync) */;
-/// let channel = BpskAwgnChannel;
-/// let mut config = SimulationConfig::quick_test();
-/// config.rng_seed = Some(42);
-///
-/// let results = run_coded_iterative_parallel(
-///     &encoder,
-///     || { /* create decoder */ },
-///     &channel,
-///     &config,
-/// );
-/// assert_eq!(results.points.len(), config.eb_n0_range_db.len());
-/// ```
-///
-/// # Complexity
-///
-/// O(SNR_points * max_frames * (encode_time + channel_time + decode_time))
-/// wall-clock time, divided by available parallelism for independent SNR
-/// points.
-pub fn run_coded_iterative_parallel<E, D, F, C>(
-    encoder: &E,
-    make_decoder: F,
-    channel: &C,
-    config: &SimulationConfig,
-) -> SimulationResults
-where
-    E: BlockEncoder + Send + Sync,
-    D: IterativeSoftDecoder,
-    F: Fn() -> D + Send + Sync,
-    C: ChannelModel + Send + Sync,
-{
-    let k = encoder.k();
-    let n = encoder.n();
-    let rate = k as f64 / n as f64;
-
-    let simulate_point = |(idx, &eb_n0_db): (usize, &f64)| -> SimulationResult {
-        let mut decoder = make_decoder();
-        // Each SNR point gets a unique sub-seed derived from the config seed.
-        // When no seed is provided, use a fixed per-point seed for consistency.
-        let point_seed = config
-            .rng_seed
-            .unwrap_or(0xDEAD_BEEF)
-            .wrapping_add(idx as u64);
-        let mut rng = StdRng::seed_from_u64(point_seed);
-
-        let mut acc = SnrAccumulator::new(eb_n0_db, k);
-
-        while !acc.should_stop(config.min_errors, config.max_frames) {
-            let message = BitVec::random(k, &mut rng);
-            let codeword = encoder.encode(&message);
-            let llrs = channel.transmit_and_demodulate(&codeword, eb_n0_db, rate, &mut rng);
-
-            decoder.reset();
-            let result = decoder.decode_iterative(&llrs, config.max_decoder_iterations);
-            let bit_errors = count_bit_errors(&message, &result.decoded_bits);
-            acc.record_frame(bit_errors, result.iterations, result.queries);
-
-            if acc.should_report() {
-                report_progress(
-                    eb_n0_db,
-                    acc.total_frames,
-                    acc.total_frame_errors,
-                    config.min_errors,
-                );
-            }
+        let results = SimulationResults { points };
+        if let Some(ref path) = config.output_path {
+            results.write_to(path);
         }
+        results
+    }
 
-        acc.into_result(config.min_errors)
-    };
+    /// Runs a coded iterative simulation with per-SNR-point parallelism.
+    ///
+    /// Each SNR point gets its own decoder instance created by `make_decoder`,
+    /// enabling safe parallel execution. With the `parallel` feature enabled,
+    /// SNR points are dispatched to rayon threads. Without it, execution is
+    /// sequential but each point still gets a fresh decoder.
+    ///
+    /// # Arguments
+    ///
+    /// * `encoder` - Block encoder producing codewords from messages. Must be
+    ///   `Send + Sync` for parallel access.
+    /// * `make_decoder` - Factory closure that creates a fresh
+    ///   [`IterativeSoftDecoder`] instance for each SNR point. Called once per
+    ///   SNR point, so each thread gets its own decoder with independent state.
+    /// * `channel` - Channel model for modulation, noise, and demodulation.
+    ///   Must be `Send + Sync` for parallel access.
+    /// * `config` - Simulation configuration controlling sweep parameters.
+    ///
+    /// # Returns
+    ///
+    /// Aggregated [`SimulationResults`] with one entry per SNR point, ordered
+    /// by increasing Eb/N0.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `output_path` is set and the file cannot be written.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// use gf2_coding::simulation::{run_coded_iterative_parallel, BpskAwgnChannel, SimulationConfig};
+    ///
+    /// let encoder = /* your BlockEncoder (Send + Sync) */;
+    /// let channel = BpskAwgnChannel;
+    /// let mut config = SimulationConfig::quick_test();
+    /// config.rng_seed = Some(42);
+    ///
+    /// let results = SimulationRunner::run_coded_iterative_parallel(
+    ///     &encoder,
+    ///     || { /* create decoder */ },
+    ///     &channel,
+    ///     &config,
+    /// );
+    /// assert_eq!(results.points.len(), config.eb_n0_range_db.len());
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(SNR_points * max_frames * (encode_time + channel_time + decode_time))
+    /// wall-clock time, divided by available parallelism for independent SNR
+    /// points.
+    pub fn run_coded_iterative_parallel<E, D, F, C>(
+        encoder: &E,
+        make_decoder: F,
+        channel: &C,
+        config: &SimulationConfig,
+    ) -> SimulationResults
+    where
+        E: BlockEncoder + Send + Sync,
+        D: IterativeSoftDecoder,
+        F: Fn() -> D + Send + Sync,
+        C: ChannelModel + Send + Sync,
+    {
+        let k = encoder.k();
+        let n = encoder.n();
+        let rate = k as f64 / n as f64;
 
-    #[cfg(feature = "parallel")]
-    let points: Vec<SimulationResult> = {
-        use rayon::prelude::*;
-        config
+        let simulate_point = |(idx, &eb_n0_db): (usize, &f64)| -> SimulationResult {
+            let mut decoder = make_decoder();
+            // Each SNR point gets a unique sub-seed derived from the config seed.
+            // When no seed is provided, use a fixed per-point seed for consistency.
+            let point_seed = config
+                .rng_seed
+                .unwrap_or(0xDEAD_BEEF)
+                .wrapping_add(idx as u64);
+            let mut rng = StdRng::seed_from_u64(point_seed);
+
+            let mut acc = SnrAccumulator::new(eb_n0_db, k);
+
+            while !acc.should_stop(config.min_errors, config.max_frames) {
+                let message = BitVec::random(k, &mut rng);
+                let codeword = encoder.encode(&message);
+                let llrs = channel.transmit_and_demodulate(&codeword, eb_n0_db, rate, &mut rng);
+
+                decoder.reset();
+                let result = decoder.decode_iterative(&llrs, config.max_decoder_iterations);
+                let bit_errors = count_bit_errors(&message, &result.decoded_bits);
+                acc.record_frame(bit_errors, result.iterations, result.queries);
+
+                if acc.should_report() {
+                    report_progress(
+                        eb_n0_db,
+                        acc.total_frames,
+                        acc.total_frame_errors,
+                        config.min_errors,
+                    );
+                }
+            }
+
+            acc.into_result(config.min_errors)
+        };
+
+        #[cfg(feature = "parallel")]
+        let points: Vec<SimulationResult> = {
+            use rayon::prelude::*;
+            config
+                .eb_n0_range_db
+                .par_iter()
+                .enumerate()
+                .map(simulate_point)
+                .collect()
+        };
+        #[cfg(not(feature = "parallel"))]
+        let points: Vec<SimulationResult> = config
             .eb_n0_range_db
-            .par_iter()
+            .iter()
             .enumerate()
             .map(simulate_point)
-            .collect()
-    };
-    #[cfg(not(feature = "parallel"))]
-    let points: Vec<SimulationResult> = config
-        .eb_n0_range_db
-        .iter()
-        .enumerate()
-        .map(simulate_point)
-        .collect();
+            .collect();
 
-    let results = SimulationResults { points };
-    if let Some(ref path) = config.output_path {
-        results.write_to(path);
+        let results = SimulationResults { points };
+        if let Some(ref path) = config.output_path {
+            results.write_to(path);
+        }
+        results
     }
-    results
-}
+} // impl SimulationRunner (coded methods)
 
 #[cfg(test)]
 mod tests {
@@ -1427,7 +1429,7 @@ mod tests {
         config.min_errors = 5;
         config.max_frames = 1000;
 
-        let results = run_coded(&encoder, &decoder, &channel, &config);
+        let results = SimulationRunner::run_coded(&encoder, &decoder, &channel, &config);
         assert_eq!(results.points.len(), 1);
         assert!(results.points[0].num_frames > 0);
         assert!(results.points[0].ber >= 0.0);
@@ -1444,7 +1446,8 @@ mod tests {
         config.min_errors = 5;
         config.max_frames = 1000;
 
-        let results = run_coded_iterative(&encoder, &mut decoder, &channel, &config);
+        let results =
+            SimulationRunner::run_coded_iterative(&encoder, &mut decoder, &channel, &config);
         assert_eq!(results.points.len(), 1);
         assert!(results.points[0].num_frames > 0);
         assert!(results.points[0].avg_iterations.is_some());
@@ -1460,7 +1463,7 @@ mod tests {
         config.max_frames = 1000;
         config.rng_seed = Some(42);
 
-        let results = run_coded_iterative_parallel(
+        let results = SimulationRunner::run_coded_iterative_parallel(
             &encoder,
             || MockIterativeDecoder { last_iterations: 0 },
             &channel,
@@ -1487,7 +1490,7 @@ mod tests {
         config.max_frames = 500;
         config.output_path = Some(path.clone());
 
-        let _results = run_coded(&encoder, &decoder, &channel, &config);
+        let _results = SimulationRunner::run_coded(&encoder, &decoder, &channel, &config);
         assert!(path.exists(), "Output file must be created");
 
         let content = std::fs::read_to_string(&path).unwrap();
@@ -1511,7 +1514,8 @@ mod tests {
         config.max_frames = 500;
         config.output_path = Some(path.clone());
 
-        let _results = run_coded_iterative(&encoder, &mut decoder, &channel, &config);
+        let _results =
+            SimulationRunner::run_coded_iterative(&encoder, &mut decoder, &channel, &config);
         assert!(path.exists(), "Output file must be created");
 
         let content = std::fs::read_to_string(&path).unwrap();
@@ -1535,7 +1539,7 @@ mod tests {
         config.output_path = Some(path.clone());
         config.rng_seed = Some(99);
 
-        let _results = run_coded_iterative_parallel(
+        let _results = SimulationRunner::run_coded_iterative_parallel(
             &encoder,
             || MockIterativeDecoder { last_iterations: 0 },
             &channel,
@@ -1602,7 +1606,7 @@ mod tests {
         config.max_frames = 10;
         config.rng_seed = Some(12345);
 
-        let results = run_coded(&encoder, &decoder, &channel, &config);
+        let results = SimulationRunner::run_coded(&encoder, &decoder, &channel, &config);
         assert_eq!(results.points.len(), 1);
 
         let point = &results.points[0];
@@ -1646,7 +1650,7 @@ mod tests {
         config.max_frames = 20;
         config.rng_seed = Some(42);
 
-        let results = run_coded(&encoder, &decoder, &channel, &config);
+        let results = SimulationRunner::run_coded(&encoder, &decoder, &channel, &config);
         let point = &results.points[0];
 
         assert_eq!(point.num_frames, 20, "Should hit max_frames with no errors");
@@ -1673,7 +1677,7 @@ mod tests {
         config.max_frames = 1000;
         config.rng_seed = Some(1);
 
-        let results = run_coded(&encoder, &decoder, &channel, &config);
+        let results = SimulationRunner::run_coded(&encoder, &decoder, &channel, &config);
         let point = &results.points[0];
 
         assert_eq!(
@@ -1697,10 +1701,10 @@ mod tests {
         config.rng_seed = Some(42);
 
         let decoder1 = MockSoftDecoder;
-        let results1 = run_coded(&encoder, &decoder1, &channel, &config);
+        let results1 = SimulationRunner::run_coded(&encoder, &decoder1, &channel, &config);
 
         let decoder2 = MockSoftDecoder;
-        let results2 = run_coded(&encoder, &decoder2, &channel, &config);
+        let results2 = SimulationRunner::run_coded(&encoder, &decoder2, &channel, &config);
 
         assert_eq!(
             results1.points[0].num_bit_errors,
@@ -1749,7 +1753,7 @@ mod tests {
         config.max_frames = 5;
         config.rng_seed = Some(1);
 
-        let results = run_coded(&encoder, &decoder, &channel, &config);
+        let results = SimulationRunner::run_coded(&encoder, &decoder, &channel, &config);
         let point = &results.points[0];
 
         // 5 frames, each with 42 queries, k=2 bits per frame -> total_queries=210, total_bits=10
