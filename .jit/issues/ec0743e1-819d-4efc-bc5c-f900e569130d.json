@@ -13,25 +13,25 @@
     "cargo-ci"
   ],
   "gates_status": {
-    "cargo-ci": {
+    "cargo-kani": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-04-06T23:51:58.361431276Z"
-    },
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:claude",
-      "updated_at": "2026-04-07T00:06:36.606558975Z"
+      "updated_at": "2026-04-07T11:45:00.700088152Z"
     },
     "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-07T09:39:27.793465102Z"
     },
-    "cargo-kani": {
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:claude",
+      "updated_at": "2026-04-07T00:06:36.606558975Z"
+    },
+    "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-04-07T08:51:21.151769255Z"
+      "updated_at": "2026-04-06T23:51:58.361431276Z"
     }
   },
   "context": {},
@@ -42,5 +42,5 @@
     "story:8889e712"
   ],
   "created_at": "2026-03-11T21:08:42.317229542+00:00",
-  "updated_at": "2026-04-07T09:43:48.039086166+00:00"
+  "updated_at": "2026-04-07T12:14:19.821801483+00:00"
 }

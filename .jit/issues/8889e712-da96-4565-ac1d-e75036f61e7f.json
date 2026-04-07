@@ -25,20 +25,20 @@
       "updated_by": "agent:claude",
       "updated_at": "2026-04-07T09:56:14.396823560Z"
     },
+    "cargo-ci": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-07T12:14:19.829530839Z"
+    },
     "code-review": {
       "status": "failed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-04-07T10:53:25.315662132Z"
+      "updated_at": "2026-04-07T12:14:53.747555173Z"
     },
     "lake-build": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-07T09:50:05.043911465Z"
-    },
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-07T10:40:06.110267629Z"
     }
   },
   "context": {},
@@ -49,5 +49,5 @@
     "epic:e095a100"
   ],
   "created_at": "2026-03-11T21:07:15.911783041+00:00",
-  "updated_at": "2026-04-07T10:55:37.057465192+00:00"
+  "updated_at": "2026-04-07T12:19:09.642454584+00:00"
 }
