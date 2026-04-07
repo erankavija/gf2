@@ -437,13 +437,20 @@ impl QcGldpcCode {
         Self::from_component(component)
     }
 
-    /// Creates a (1024, k) QC-GLDPC code using eBCH(32, 26) as the component code.
+    /// Creates a (1024, 646) QC-GLDPC code using eBCH(32, 26) as the component code.
     ///
-    /// This is the target construction from Lentmaier (2010):
+    /// This is the target construction from Lentmaier (2010) for comparison
+    /// with 5G NR LDPC codes in the SO-GRAND paper (Fig. 7).
+    ///
     /// - Component: extended BCH(32, 26) derived from BCH(31, 26, 1)
-    /// - Code length: 32^2 = 1024
-    /// - Dimension: 646 (full-rank formula gives 640, but the QC circulant
-    ///   structure introduces 6 rank-deficient rows, yielding k = 1024 - 378 = 646)
+    /// - Code length: 32² = 1024
+    /// - Ideal dimension: 640 (formula k = n² − 2n(n−k) = 1024 − 384)
+    /// - **Actual dimension: 646** — the QC circulant adjacency structure
+    ///   introduces 6 linearly dependent rows in H, so rank(H) = 378
+    ///   instead of 384, giving k = 1024 − 378 = 646. This is an inherent
+    ///   property of the circulant construction and matches the behavior
+    ///   reported in QC-LDPC literature. The effective rate (0.631) is
+    ///   close to the ideal (0.625).
     ///
     /// # Examples
     ///
@@ -1225,7 +1232,6 @@ impl IterativeSoftDecoder for GldpcDecoder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::traits::BlockEncoder;
 
     // --- BchComponentCode tests ---
 
@@ -1943,5 +1949,30 @@ mod tests {
                 prop_assert!(code.is_valid_codeword(&cw));
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod simulation_integration {
+    use super::*;
+    use crate::simulation::{BpskAwgnChannel, SimulationConfig, SimulationRunner};
+
+    /// Verify GLDPC code works with the simulation framework.
+    #[test]
+    fn test_gldpc_with_simulation_runner() {
+        // Use the small BCH(7,4) component for speed
+        let component = BchComponentCode::new(7, 4, 1);
+        let code = QcGldpcCode::from_component(component.clone());
+        let mut decoder = GldpcDecoder::new(code.clone());
+
+        let channel = BpskAwgnChannel;
+        let mut config = SimulationConfig::quick_test();
+        config.eb_n0_range_db = vec![8.0];
+        config.max_frames = 5;
+        config.min_errors = 1;
+
+        let results = SimulationRunner::run_coded_iterative(&code, &mut decoder, &channel, &config);
+        assert_eq!(results.points.len(), 1);
+        assert!(results.points[0].num_frames > 0);
     }
 }
