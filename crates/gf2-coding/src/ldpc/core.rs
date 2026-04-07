@@ -1264,11 +1264,7 @@ impl LdpcDecoder {
     /// # Complexity
     ///
     /// Same as [`IterativeSoftDecoder::decode_iterative`].
-    pub fn decode_to_codeword(
-        &mut self,
-        llrs: &[Llr],
-        max_iterations: usize,
-    ) -> DecoderResult {
+    pub fn decode_to_codeword(&mut self, llrs: &[Llr], max_iterations: usize) -> DecoderResult {
         assert_eq!(llrs.len(), self.code.n(), "LLR length must equal n");
 
         // Reset all messages
