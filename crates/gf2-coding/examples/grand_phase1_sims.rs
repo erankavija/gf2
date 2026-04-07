@@ -338,8 +338,8 @@ fn main() {
     compare_with_reference(
         "dev/reference_data/fig_prod_drm_32x21.csv",
         &fig1_product,
-        "Fig 1 Product (ours vs paper dRM turbo)",
-        "dRM",
+        "Fig 1 Product (ours vs paper SOGRAND turbo)",
+        "SOGRAND",
     );
 }
 
