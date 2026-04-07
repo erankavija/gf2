@@ -89,6 +89,35 @@ pub mod lifting;
 
 pub use lifting::{all_lifting_sizes, is_valid_lifting_size, lifting_set_index};
 
+/// Returns the lifting set index for Z, panicking if Z is invalid.
+///
+/// Shared validation used by both `bg1_base_matrix` and `bg2_base_matrix`.
+pub(crate) fn require_lifting_set_index(z: usize) -> usize {
+    lifting::lifting_set_index(z as u16)
+        .unwrap_or_else(|| panic!("Z={z} is not a valid 5G NR lifting size"))
+}
+
+/// Applies `V mod Z` to each entry, preserving -1 (no connection).
+///
+/// Shared mod-reduction used by both `bg1_base_matrix` and `bg2_base_matrix`.
+pub(crate) fn reduce_shifts(table: &[impl AsRef<[i16]>], z: usize) -> Vec<Vec<i32>> {
+    table
+        .iter()
+        .map(|row| {
+            row.as_ref()
+                .iter()
+                .map(|&v| {
+                    if v < 0 {
+                        -1i32
+                    } else {
+                        (v as i32) % (z as i32)
+                    }
+                })
+                .collect()
+        })
+        .collect()
+}
+
 use super::{DecoderAlgorithm, DecoderConfig, LdpcCode, LdpcDecoder, QuasiCyclicLdpc};
 use crate::llr::Llr;
 use crate::traits::{DecoderResult, IterativeSoftDecoder, SoftDecoder};

@@ -23,13 +23,13 @@ pub const BG1_COLS: usize = 68;
 /// Number of systematic columns (K_b) in BG1.
 pub const BG1_KB: usize = 22;
 
-/// Returns the full BG1 base matrix for a given lifting size as a Vec<Vec<i32>>.
+/// Returns the full BG1 base matrix for a given lifting size as a `Vec<Vec<i32>>`.
 ///
 /// Determines the lifting set index i_LS from Z using 3GPP TS 38.212 Table 5.3.2-1,
-/// selects the corresponding shift table from Table 5.3.2-2, and applies V mod Z
+/// selects the corresponding shift table from Table 5.3.2-2, and applies `V mod Z`
 /// to each non-negative entry.
 ///
-/// This is suitable for passing to `QuasiCyclicLdpc::new()`.
+/// This is suitable for passing to [`QuasiCyclicLdpc::new()`](super::super::QuasiCyclicLdpc::new).
 ///
 /// # Arguments
 ///
@@ -38,24 +38,23 @@ pub const BG1_KB: usize = 22;
 /// # Panics
 ///
 /// Panics if `z` is not a valid 5G NR lifting size.
+///
+/// # Examples
+///
+/// ```ignore
+/// // bg1 module is pub(crate); use via QuasiCyclicLdpc::nr_5g(1, z) instead
+/// let matrix = bg1::bg1_base_matrix(256); // Z=256, i_LS=0
+/// assert_eq!(matrix.len(), 46);           // 46 rows
+/// assert_eq!(matrix[0].len(), 68);        // 68 columns
+/// assert_eq!(matrix[0][0], 250);          // i_LS=0 shift value for (0,0)
+/// ```
+///
+/// # Complexity
+///
+/// O(rows × cols) = O(46 × 68) = O(3128) for table copy and mod reduction.
 pub fn bg1_base_matrix(z: usize) -> Vec<Vec<i32>> {
-    let i_ls = super::lifting::lifting_set_index(z as u16)
-        .unwrap_or_else(|| panic!("invalid 5G NR lifting size Z={z}"));
-
-    BG1_SHIFTS[i_ls]
-        .iter()
-        .map(|row| {
-            row.iter()
-                .map(|&v| {
-                    if v < 0 {
-                        -1i32
-                    } else {
-                        (v as i32) % (z as i32)
-                    }
-                })
-                .collect()
-        })
-        .collect()
+    let i_ls = super::require_lifting_set_index(z);
+    super::reduce_shifts(&BG1_SHIFTS[i_ls], z)
 }
 
 // BG1 shift tables from 3GPP TS 38.212 Table 5.3.2-2.
