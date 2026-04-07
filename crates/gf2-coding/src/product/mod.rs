@@ -928,11 +928,12 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
             if let Some(threshold) = self.config.list_bler_threshold {
                 let avg_bler = row_bler_sum / n as f64;
                 if avg_bler < threshold {
+                    let valid = self.check_early_termination(&l_app_row);
                     let decoded = self.extract_decoded_message(&l_app_row);
                     return TurboDecoderResult {
                         decoded_bits: decoded,
                         iterations: iteration + 1,
-                        converged: true,
+                        converged: valid,
                         total_queries,
                         queries_per_bit: total_queries as f64 / (k * k) as f64,
                     };
@@ -984,11 +985,12 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
             if let Some(threshold) = self.config.list_bler_threshold {
                 let avg_bler = col_bler_sum / n as f64;
                 if avg_bler < threshold {
+                    let valid = self.check_early_termination(&l_app_col);
                     let decoded = self.extract_decoded_message(&l_app_col);
                     return TurboDecoderResult {
                         decoded_bits: decoded,
                         iterations: iteration + 1,
-                        converged: true,
+                        converged: valid,
                         total_queries,
                         queries_per_bit: total_queries as f64 / (k * k) as f64,
                     };
@@ -1889,5 +1891,67 @@ mod proptests {
             let extracted = product.extract_message(&matrix);
             prop_assert_eq!(extracted, msg, "CRC(25,15) message must roundtrip");
         }
+    }
+}
+
+#[cfg(test)]
+mod additional_component_tests {
+    use super::*;
+    use crate::bch::extended::ExtendedBchCode;
+    use crate::drm::DrmCode;
+    use crate::traits::BlockEncoder;
+
+    #[test]
+    fn test_product_code_parameters_ebch_32_26() {
+        let comp = ExtendedBchCode::ebch_32_26();
+        let product = ProductCode::new(comp);
+        assert_eq!(product.n(), 32 * 32);
+        assert_eq!(product.k(), 26 * 26);
+    }
+
+    #[test]
+    fn test_encode_ebch_32_26_all_zeros() {
+        let comp = ExtendedBchCode::ebch_32_26();
+        let product = ProductCode::new(comp);
+        let msg = BitVec::zeros(26 * 26);
+        let cw = product.encode(&msg);
+        assert_eq!(cw.len(), 32 * 32);
+        assert_eq!(cw.count_ones(), 0);
+    }
+
+    #[test]
+    fn test_product_code_parameters_ebch_64_57() {
+        let comp = ExtendedBchCode::ebch_64_57();
+        let product = ProductCode::new(comp);
+        assert_eq!(product.n(), 64 * 64);
+        assert_eq!(product.k(), 57 * 57);
+    }
+
+    #[test]
+    fn test_encode_ebch_64_57_all_zeros() {
+        let comp = ExtendedBchCode::ebch_64_57();
+        let product = ProductCode::new(comp);
+        let msg = BitVec::zeros(57 * 57);
+        let cw = product.encode(&msg);
+        assert_eq!(cw.len(), 64 * 64);
+        assert_eq!(cw.count_ones(), 0);
+    }
+
+    #[test]
+    fn test_product_code_parameters_drm_32_21() {
+        let comp = DrmCode::drm_32_21();
+        let product = ProductCode::new(comp);
+        assert_eq!(product.n(), 32 * 32);
+        assert_eq!(product.k(), 21 * 21);
+    }
+
+    #[test]
+    fn test_encode_drm_32_21_all_zeros() {
+        let comp = DrmCode::drm_32_21();
+        let product = ProductCode::new(comp);
+        let msg = BitVec::zeros(21 * 21);
+        let cw = product.encode(&msg);
+        assert_eq!(cw.len(), 32 * 32);
+        assert_eq!(cw.count_ones(), 0);
     }
 }
