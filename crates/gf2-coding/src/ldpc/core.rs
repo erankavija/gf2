@@ -67,6 +67,10 @@ pub struct LdpcCode {
     /// Cached generator matrix (computed lazily)
     #[allow(clippy::type_complexity)]
     cached_generator: std::sync::Arc<std::sync::Mutex<Option<gf2_core::BitMatrix>>>,
+    /// Cached systematic column positions (computed lazily via RREF).
+    /// These are the k column indices in the full codeword that carry message
+    /// bits. Computed once and reused by both the generator matrix and decoder.
+    cached_systematic_cols: std::sync::Arc<std::sync::Mutex<Option<Vec<usize>>>>,
 }
 
 impl LdpcCode {
@@ -100,6 +104,7 @@ impl LdpcCode {
             n,
             m,
             cached_generator: std::sync::Arc::new(std::sync::Mutex::new(None)),
+            cached_systematic_cols: std::sync::Arc::new(std::sync::Mutex::new(None)),
         }
     }
 
@@ -323,6 +328,86 @@ impl LdpcCode {
         }
 
         Some(g)
+    }
+
+    /// Computes the systematic column positions from the parity-check matrix.
+    ///
+    /// Uses a fast heuristic first: if every row of H has at least one nonzero
+    /// entry in columns k..n, then columns 0..k-1 are the systematic positions.
+    /// This is O(nnz) and covers DVB-T2, random LDPC, and most standard codes.
+    ///
+    /// Falls back to full RREF with right-to-left pivoting only when needed
+    /// (e.g., 5G NR BG2 where rows 40-41 have entries only in systematic columns).
+    /// The RREF convention matches [`RuEncodingMatrices::preprocess`](crate::ldpc::encoding::RuEncodingMatrices)
+    /// so decoder message extraction is consistent with the encoder.
+    ///
+    /// Returns `None` if H is rank deficient (RREF path only).
+    fn compute_systematic_cols(&self) -> Option<Vec<usize>> {
+        let k = self.k();
+        let m = self.m;
+
+        if k == 0 {
+            return Some(Vec::new());
+        }
+
+        // Fast path: check if columns 0..k can serve as systematic positions.
+        // This holds when every row of H has at least one nonzero entry in
+        // columns k..n (the natural parity region). O(nnz) scan.
+        let all_rows_touch_parity = (0..m).all(|row| self.h.row_iter(row).any(|col| col >= k));
+
+        if all_rows_touch_parity {
+            // Standard case: systematic columns are [0, 1, ..., k-1]
+            return Some((0..k).collect());
+        }
+
+        // Slow path: some rows have entries only in columns 0..k.
+        // Must run full RREF to determine the actual systematic positions.
+        use gf2_core::alg::rref::rref;
+
+        let h_dense = self.h.to_dense();
+
+        // Use right-to-left pivoting to match the RU encoder convention
+        let rref_result = rref(&h_dense, true);
+
+        if rref_result.rank != m {
+            return None;
+        }
+
+        let pivot_set: std::collections::HashSet<usize> =
+            rref_result.pivot_cols.iter().copied().collect();
+        let systematic_cols: Vec<usize> = (0..self.n).filter(|c| !pivot_set.contains(c)).collect();
+        debug_assert_eq!(systematic_cols.len(), k);
+
+        Some(systematic_cols)
+    }
+
+    /// Returns the systematic column positions (cached after first computation).
+    ///
+    /// These are the k column indices in the full codeword that carry message
+    /// bits when encoding with Richardson-Urbanke systematic encoding. The
+    /// positions are determined via RREF of the parity-check matrix H with
+    /// right-to-left pivoting, matching the encoder's convention.
+    ///
+    /// Message bit `i` corresponds to codeword position `systematic_cols[i]`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if H is rank deficient.
+    ///
+    /// # Complexity
+    ///
+    /// First call: O(m * n * min(m, n)) for RREF. Subsequent calls: O(1).
+    pub(crate) fn systematic_cols(&self) -> Vec<usize> {
+        let mut cache = self.cached_systematic_cols.lock().unwrap();
+        if let Some(ref cols) = *cache {
+            cols.clone()
+        } else {
+            let cols = self
+                .compute_systematic_cols()
+                .expect("LDPC parity-check matrix is not full rank");
+            *cache = Some(cols.clone());
+            cols
+        }
     }
 }
 
@@ -804,6 +889,10 @@ pub struct LdpcDecoder {
     last_iterations: usize,
     /// Decoder configuration (algorithm, early termination)
     config: DecoderConfig,
+    /// Systematic column positions: message bit `i` corresponds to codeword
+    /// position `systematic_cols[i]`. Computed lazily via RREF of H on first decode.
+    /// Using `Option` avoids the expensive RREF at construction time for large codes.
+    systematic_cols: Option<Vec<usize>>,
 }
 
 impl LdpcDecoder {
@@ -889,6 +978,7 @@ impl LdpcDecoder {
             temp_inputs: Vec::with_capacity(max_check_degree),
             last_iterations: 0,
             config,
+            systematic_cols: None,
         }
     }
 
@@ -1233,11 +1323,21 @@ impl IterativeSoftDecoder for LdpcDecoder {
             converged = syndrome_passed;
         }
 
-        // Extract message bits from systematic codeword [message | parity]
+        // Extract message bits from the decoded codeword at the systematic
+        // column positions determined by RREF. Message bit i is located at
+        // codeword position systematic_cols[i], which may differ from i when
+        // RREF assigns pivots to columns in the natural systematic range
+        // (e.g., for QC-LDPC codes like 5G NR BG2).
+        //
+        // Computed lazily on first decode to avoid expensive RREF at
+        // construction time for large codes (e.g., DVB-T2 normal frames).
+        let sys_cols = self
+            .systematic_cols
+            .get_or_insert_with(|| self.code.systematic_cols());
         let k = self.code.k();
         let mut message = BitVec::with_capacity(k);
-        for i in 0..k {
-            message.push_bit(decoded_codeword.get(i));
+        for &col in &sys_cols[..k] {
+            message.push_bit(decoded_codeword.get(col));
         }
 
         DecoderResult::new(message, iterations, converged, syndrome_passed)
