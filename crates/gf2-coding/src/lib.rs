@@ -63,6 +63,7 @@ pub mod convolutional;
 pub mod crc;
 pub mod drm;
 pub mod fading;
+pub mod gldpc;
 pub mod grand;
 pub mod ldpc;
 pub mod linear;
