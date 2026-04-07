@@ -33,10 +33,14 @@ use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 use std::path::PathBuf;
 
-/// Eb/N0 sweep points for both figures (dB).
-fn snr_points() -> Vec<f64> {
-    // 0.0, 0.5, 1.0, ..., 4.0
+/// Eb/N0 sweep for Fig 3: 0–4 dB in 0.5 dB steps.
+fn fig3_snr_points() -> Vec<f64> {
     (0..=8).map(|i| i as f64 * 0.5).collect()
+}
+
+/// Eb/N0 sweep for Fig 1: 0–2.5 dB in 0.5 dB steps (per paper).
+fn fig1_snr_points() -> Vec<f64> {
+    (0..=5).map(|i| i as f64 * 0.5).collect()
 }
 
 /// Run a product code turbo decoder simulation (custom loop since TurboDecoder
@@ -234,7 +238,7 @@ fn main() {
     let full_mode = std::env::args().any(|a| a == "--full");
 
     let (min_errors, max_frames, label) = if full_mode {
-        (100, 100_000, "FULL")
+        (100, 10_000_000, "FULL") // 10M frames ensures >=100 errors even at low BLER
     } else {
         (10, 1_000, "QUICK")
     };
@@ -243,8 +247,9 @@ fn main() {
     eprintln!("  min_errors={min_errors}, max_frames={max_frames}");
     eprintln!();
 
-    let config = SimulationConfig {
-        eb_n0_range_db: snr_points(),
+    // Fig 3 config: 0–4 dB
+    let fig3_config = SimulationConfig {
+        eb_n0_range_db: fig3_snr_points(),
         min_errors,
         max_frames,
         max_decoder_iterations: 50,
@@ -252,27 +257,39 @@ fn main() {
         output_path: None,
     };
 
+    // Fig 1 config: 0–2.5 dB (per paper)
+    let fig1_config = SimulationConfig {
+        eb_n0_range_db: fig1_snr_points(),
+        min_errors,
+        max_frames,
+        max_decoder_iterations: 50,
+        rng_seed: Some(42),
+        output_path: None,
+    };
+
+    std::fs::create_dir_all("dev/simulation_results").ok();
+
     // --- Fig 3: (256,121) ---
-    let fig3_product = run_fig3_product(&config);
+    let fig3_product = run_fig3_product(&fig3_config);
     save_results(
         &fig3_product,
         "dev/simulation_results/fig3_ebch_product_256_121.csv",
     );
 
-    let fig3_ldpc = run_fig3_ldpc(&config);
+    let fig3_ldpc = run_fig3_ldpc(&fig3_config);
     save_results(
         &fig3_ldpc,
         "dev/simulation_results/fig3_ldpc_nr5g_256_121.csv",
     );
 
     // --- Fig 1: (1024,441) ---
-    let fig1_product = run_fig1_product(&config);
+    let fig1_product = run_fig1_product(&fig1_config);
     save_results(
         &fig1_product,
         "dev/simulation_results/fig1_drm_product_1024_441.csv",
     );
 
-    let fig1_ldpc = run_fig1_ldpc(&config);
+    let fig1_ldpc = run_fig1_ldpc(&fig1_config);
     save_results(
         &fig1_ldpc,
         "dev/simulation_results/fig1_ldpc_nr5g_1024_441.csv",
@@ -286,6 +303,62 @@ fn main() {
     println!();
     println!("=== Fig 1: (1024,441) dRM Product vs 5G NR LDPC ===");
     print_comparison(&fig1_product, &fig1_ldpc, "Product", "LDPC");
+
+    // --- Reference data comparison ---
+    println!();
+    println!("=== Reference Data Comparison ===");
+    compare_with_reference(
+        "dev/reference_data/fig_prod_ebch_16x11.csv",
+        &fig3_ldpc,
+        "Fig 3 LDPC",
+    );
+    compare_with_reference(
+        "dev/reference_data/fig_prod_drm_32x21.csv",
+        &fig1_ldpc,
+        "Fig 1 LDPC",
+    );
+}
+
+/// Load reference CSV and compare BLER at matching Eb/N0 points.
+fn compare_with_reference(ref_path: &str, results: &SimulationResults, label: &str) {
+    let Ok(content) = std::fs::read_to_string(ref_path) else {
+        eprintln!("  {label}: reference file {ref_path} not found, skipping comparison");
+        return;
+    };
+    println!("  {label} vs {ref_path}:");
+    println!(
+        "    {:>8} | {:>12} | {:>12} | {:>8}",
+        "Eb/N0", "Ours", "Reference", "Delta"
+    );
+    for point in &results.points {
+        // Find closest reference BLER at this Eb/N0
+        // Reference CSV format: figure,metric,eb_n0_db,value,decoder,...
+        let mut best_ref: Option<f64> = None;
+        for line in content.lines().skip(1) {
+            let fields: Vec<&str> = line.split(',').collect();
+            if fields.len() >= 5 {
+                if let (Ok(snr), Ok(val)) = (fields[2].parse::<f64>(), fields[3].parse::<f64>()) {
+                    if (snr - point.eb_n0_db).abs() < 0.01
+                        && fields[4].contains("LDPC")
+                        && fields[1].contains("BLER")
+                    {
+                        best_ref = Some(val);
+                    }
+                }
+            }
+        }
+        if let Some(ref_val) = best_ref {
+            let delta_db = if point.bler > 0.0 && ref_val > 0.0 {
+                10.0 * (point.bler / ref_val).log10()
+            } else {
+                f64::NAN
+            };
+            println!(
+                "    {:>8.1} | {:>12.4e} | {:>12.4e} | {:>8.2} dB",
+                point.eb_n0_db, point.bler, ref_val, delta_db
+            );
+        }
+    }
 }
 
 fn print_comparison(a: &SimulationResults, b: &SimulationResults, label_a: &str, label_b: &str) {
