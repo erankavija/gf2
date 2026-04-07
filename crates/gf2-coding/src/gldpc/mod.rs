@@ -42,10 +42,11 @@
 //! assert!(code.code_k() > 0);
 //! ```
 
+use crate::grand::{OrbGrand, OrbGrandConfig, SoGrand};
 use crate::llr::Llr;
 use crate::traits::{BlockEncoder, DecoderResult, IterativeSoftDecoder, SoftDecoder};
 use gf2_core::sparse::SpBitMatrixDual;
-use gf2_core::BitVec;
+use gf2_core::{BitMatrix, BitVec};
 
 /// A component code used at GLDPC check nodes.
 ///
@@ -241,135 +242,30 @@ impl BchComponentCode {
         true
     }
 
-    /// Runs a min-sum SISO decoder on the component code.
-    ///
-    /// Performs iterative belief propagation on the component code's parity-check
-    /// matrix using the min-sum algorithm. Returns extrinsic LLR information for
-    /// each bit position.
-    ///
-    /// # Arguments
-    ///
-    /// * `input_llrs` - Channel/incoming LLRs of length `n_c`
-    /// * `max_iters` - Maximum BP iterations within the component decoder
+    /// Returns the parity-check matrix of the component code as a dense `BitMatrix`.
     ///
     /// # Returns
     ///
-    /// A vector of extrinsic LLRs (output minus input) of length `n_c`.
+    /// A `BitMatrix` with `num_checks` rows and `n_c` columns.
     ///
-    /// # Panics
+    /// # Examples
     ///
-    /// Panics if `input_llrs.len() != n_c`.
+    /// ```
+    /// use gf2_coding::gldpc::BchComponentCode;
     ///
-    /// # Complexity
-    ///
-    /// O(max_iters * n_c * num_checks) per call.
-    pub fn decode_siso(&self, input_llrs: &[Llr], max_iters: usize) -> Vec<Llr> {
-        assert_eq!(
-            input_llrs.len(),
-            self.n_c,
-            "Input LLR length must equal n_c = {}",
-            self.n_c
-        );
-
-        let n = self.n_c;
-
-        // check_to_var[check][position_in_check_row] messages
-        let mut check_to_var: Vec<Vec<Llr>> = self
-            .h_rows
-            .iter()
-            .map(|row| vec![Llr::zero(); row.len()])
-            .collect();
-
-        // var_to_check: for each variable, for each check it participates in
-        // We need a mapping: var -> list of (check_idx, position_in_check_row)
-        let mut var_checks: Vec<Vec<(usize, usize)>> = vec![Vec::new(); n];
-        for (check_idx, row) in self.h_rows.iter().enumerate() {
-            for (pos, &col) in row.iter().enumerate() {
-                var_checks[col].push((check_idx, pos));
+    /// let comp = BchComponentCode::new(7, 4, 1);
+    /// let h = comp.h_matrix();
+    /// assert_eq!(h.rows(), 3);
+    /// assert_eq!(h.cols(), 7);
+    /// ```
+    pub fn h_matrix(&self) -> BitMatrix {
+        let mut h = BitMatrix::zeros(self.num_checks, self.n_c);
+        for (row_idx, row_ones) in self.h_rows.iter().enumerate() {
+            for &col in row_ones {
+                h.set(row_idx, col, true);
             }
         }
-
-        let mut var_to_check: Vec<Vec<Llr>> = var_checks
-            .iter()
-            .map(|checks| vec![Llr::zero(); checks.len()])
-            .collect();
-
-        // Initialize var-to-check with channel LLRs
-        for (var, checks) in var_checks.iter().enumerate() {
-            for (idx, &(_check_idx, _pos)) in checks.iter().enumerate() {
-                var_to_check[var][idx] = input_llrs[var];
-            }
-        }
-
-        // Posterior beliefs
-        let mut beliefs: Vec<Llr> = input_llrs.to_vec();
-
-        for _iter in 0..max_iters {
-            // Check-to-variable update (min-sum)
-            for (check_idx, row) in self.h_rows.iter().enumerate() {
-                for (pos, &_col) in row.iter().enumerate() {
-                    // Collect all other var-to-check messages for this check
-                    let mut sign_product: f32 = 1.0;
-                    let mut min_mag: f32 = f32::INFINITY;
-
-                    for (other_pos, &other_col) in row.iter().enumerate() {
-                        if other_pos == pos {
-                            continue;
-                        }
-                        // Find var_to_check message for other_col -> check_idx
-                        let vc_idx = var_checks[other_col]
-                            .iter()
-                            .position(|&(ci, _)| ci == check_idx)
-                            .unwrap();
-                        let msg = var_to_check[other_col][vc_idx];
-                        let val = msg.value();
-                        if val < 0.0 {
-                            sign_product *= -1.0;
-                        }
-                        min_mag = min_mag.min(val.abs());
-                    }
-
-                    check_to_var[check_idx][pos] = Llr::new(sign_product * min_mag);
-                }
-            }
-
-            // Variable-to-check update
-            for (var, checks) in var_checks.iter().enumerate() {
-                // Total belief = channel + sum of all check-to-var
-                let mut total = input_llrs[var].value();
-                for &(check_idx, pos) in checks {
-                    total += check_to_var[check_idx][pos].value();
-                }
-                beliefs[var] = Llr::new(total);
-
-                // var-to-check = total - incoming from that check
-                for (idx, &(check_idx, pos)) in checks.iter().enumerate() {
-                    let incoming = check_to_var[check_idx][pos].value();
-                    var_to_check[var][idx] = Llr::new(total - incoming);
-                }
-            }
-
-            // Early termination: check syndrome
-            let hard: BitVec = beliefs
-                .iter()
-                .map(|l| l.hard_decision())
-                .collect::<Vec<_>>()
-                .into_iter()
-                .fold(BitVec::with_capacity(n), |mut bv, bit| {
-                    bv.push_bit(bit);
-                    bv
-                });
-            if self.is_valid_codeword(&hard) {
-                break;
-            }
-        }
-
-        // Return extrinsic information: posterior - prior
-        beliefs
-            .iter()
-            .zip(input_llrs.iter())
-            .map(|(post, prior)| Llr::new(post.value() - prior.value()))
-            .collect()
+        h
     }
 }
 
@@ -503,6 +399,9 @@ pub struct QcGldpcCode {
     /// For each variable node, the list of (check_node_idx, position_within_check)
     /// pairs indicating which check nodes it belongs to and at what position.
     var_check_map: Vec<Vec<(usize, usize)>>,
+    /// Non-pivot column indices from RREF, used as systematic (information) positions.
+    /// Message bits map to/from these column positions in the codeword.
+    systematic_positions: Vec<usize>,
     /// Generator matrix (computed lazily).
     cached_generator: std::sync::Arc<std::sync::Mutex<Option<gf2_core::BitMatrix>>>,
 }
@@ -543,7 +442,8 @@ impl QcGldpcCode {
     /// This is the target construction from Lentmaier (2010):
     /// - Component: extended BCH(32, 26) derived from BCH(31, 26, 1)
     /// - Code length: 32^2 = 1024
-    /// - Dimension: computed from rank(H)
+    /// - Dimension: 646 (full-rank formula gives 640, but the QC circulant
+    ///   structure introduces 6 rank-deficient rows, yielding k = 1024 - 378 = 646)
     ///
     /// # Examples
     ///
@@ -552,7 +452,7 @@ impl QcGldpcCode {
     ///
     /// let code = QcGldpcCode::lentmaier_1024();
     /// assert_eq!(code.code_n(), 1024);
-    /// assert!(code.code_k() > 0);
+    /// assert_eq!(code.code_k(), 646);
     /// ```
     ///
     /// # Complexity
@@ -628,11 +528,11 @@ impl QcGldpcCode {
             }
         }
 
-        // Compute the actual code dimension from the rank of the parity-check matrix.
+        // Compute the actual code dimension and systematic positions from RREF of H.
         // The formula k = n - 2*n_c*(n_c - k_c) assumes full rank, but the QC
         // structure introduces linear dependencies among check rows. We compute
         // the true rank via RREF.
-        let k = {
+        let (k, systematic_positions) = {
             let r_c = component.num_checks();
             let total_rows = num_check_nodes * r_c;
             let mut edges = Vec::new();
@@ -649,7 +549,12 @@ impl QcGldpcCode {
             let h_sparse = SpBitMatrixDual::from_coo(total_rows, n, &edges);
             let h_dense = h_sparse.to_dense();
             let rref_result = gf2_core::alg::rref::rref(&h_dense, false);
-            n - rref_result.rank
+            let k = n - rref_result.rank;
+            let sys_pos: Vec<usize> = (0..n)
+                .filter(|c| !rref_result.pivot_cols.contains(c))
+                .collect();
+            assert_eq!(sys_pos.len(), k);
+            (k, sys_pos)
         };
 
         Self {
@@ -659,6 +564,7 @@ impl QcGldpcCode {
             num_check_nodes,
             check_node_vars,
             var_check_map,
+            systematic_positions,
             cached_generator: std::sync::Arc::new(std::sync::Mutex::new(None)),
         }
     }
@@ -717,6 +623,24 @@ impl QcGldpcCode {
     /// ```
     pub fn component(&self) -> &BchComponentCode {
         &self.component
+    }
+
+    /// Returns the systematic (information) positions in the codeword.
+    ///
+    /// These are the non-pivot columns from RREF of H. Message bit `i` is placed
+    /// at codeword position `systematic_positions()[i]` during encoding, and
+    /// extracted from the same position during decoding.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::gldpc::QcGldpcCode;
+    ///
+    /// let code = QcGldpcCode::lentmaier(7, 4, 1);
+    /// assert_eq!(code.systematic_positions().len(), code.code_k());
+    /// ```
+    pub fn systematic_positions(&self) -> &[usize] {
+        &self.systematic_positions
     }
 
     /// Returns the variable indices connected to a given check node.
@@ -827,12 +751,14 @@ impl QcGldpcCode {
 
     /// Computes the generator matrix using RREF on the parity-check matrix.
     ///
+    /// Uses the stored `systematic_positions` (non-pivot columns from RREF)
+    /// to ensure encoding and decoding use exactly the same information positions.
+    ///
     /// # Complexity
     ///
     /// O(m^2 * n) for RREF where m = number of parity checks, n = code length.
-    fn compute_generator_matrix(&self) -> gf2_core::BitMatrix {
+    fn compute_generator_matrix(&self) -> BitMatrix {
         use gf2_core::alg::rref::rref;
-        use gf2_core::BitMatrix;
 
         let (m, n, edges) = self.build_parity_check_edges();
         let h_sparse = SpBitMatrixDual::from_coo(m, n, &edges);
@@ -851,9 +777,8 @@ impl QcGldpcCode {
             k, self.k
         );
 
-        // Non-pivot columns are systematic (information) positions
-        let systematic_positions: Vec<usize> = (0..n).filter(|c| !pivot_cols.contains(c)).collect();
-
+        // Use the stored systematic positions (non-pivot columns, computed at construction)
+        let systematic_positions = &self.systematic_positions;
         assert_eq!(systematic_positions.len(), k);
 
         // Build G (k x n): G = [I_k columns at systematic_positions, parity elsewhere]
@@ -1020,7 +945,6 @@ impl crate::traits::GeneratorMatrixAccess for QcGldpcCode {
 /// let result = decoder.decode_iterative(&llrs, 20);
 /// assert!(result.converged);
 /// ```
-#[derive(Debug)]
 pub struct GldpcDecoder {
     /// The GLDPC code being decoded.
     code: QcGldpcCode,
@@ -1030,14 +954,27 @@ pub struct GldpcDecoder {
     check_to_var: Vec<Vec<Llr>>,
     /// Variable-to-check messages: var_to_check[var][idx_in_var_check_map] -> Llr.
     var_to_check: Vec<Vec<Llr>>,
-    /// Maximum BP iterations within the component SISO decoder.
-    component_max_iters: usize,
+    /// Prebuilt SOGRAND decoder for the component code (reused across check nodes).
+    component_sogrand: SoGrand,
     /// Number of iterations in the last decode call.
     last_iterations: usize,
 }
 
+impl std::fmt::Debug for GldpcDecoder {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("GldpcDecoder")
+            .field("code", &self.code)
+            .field("beliefs_len", &self.beliefs.len())
+            .field("last_iterations", &self.last_iterations)
+            .finish_non_exhaustive()
+    }
+}
+
 impl GldpcDecoder {
     /// Creates a new GLDPC decoder for the given code.
+    ///
+    /// Builds a SOGRAND decoder from the component code's parity-check matrix,
+    /// used at each check node during BP iterations.
     ///
     /// # Arguments
     ///
@@ -1052,7 +989,38 @@ impl GldpcDecoder {
     /// let decoder = GldpcDecoder::new(code);
     /// ```
     pub fn new(code: QcGldpcCode) -> Self {
+        Self::with_sogrand_config(code, OrbGrandConfig::default())
+    }
+
+    /// Creates a new GLDPC decoder with a custom ORBGRAND configuration for
+    /// the component SOGRAND check node decoder.
+    ///
+    /// # Arguments
+    ///
+    /// * `code` - The QC-GLDPC code to decode
+    /// * `orbgrand_config` - Configuration for the underlying ORBGRAND decoder
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::gldpc::{QcGldpcCode, GldpcDecoder};
+    /// use gf2_coding::grand::OrbGrandConfig;
+    ///
+    /// let code = QcGldpcCode::lentmaier(7, 4, 1);
+    /// let config = OrbGrandConfig {
+    ///     list_size: 8,
+    ///     ..OrbGrandConfig::default()
+    /// };
+    /// let decoder = GldpcDecoder::with_sogrand_config(code, config);
+    /// ```
+    pub fn with_sogrand_config(code: QcGldpcCode, orbgrand_config: OrbGrandConfig) -> Self {
         let n = code.code_n();
+
+        // Build the component H matrix and create the SOGRAND decoder
+        let h_matrix = code.component().h_matrix();
+        let orbgrand = OrbGrand::new(h_matrix, orbgrand_config);
+        let component_sogrand = SoGrand::new(orbgrand);
+
         let check_to_var: Vec<Vec<Llr>> = code
             .check_node_vars
             .iter()
@@ -1070,40 +1038,18 @@ impl GldpcDecoder {
             beliefs: vec![Llr::zero(); n],
             check_to_var,
             var_to_check,
-            component_max_iters: 5,
+            component_sogrand,
             last_iterations: 0,
         }
     }
 
-    /// Creates a new GLDPC decoder with a custom number of component SISO iterations.
+    /// Performs check node update using full SISO-SOGRAND component decoding.
     ///
-    /// # Arguments
-    ///
-    /// * `code` - The QC-GLDPC code to decode
-    /// * `component_max_iters` - Maximum iterations for the component SISO decoder
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::gldpc::{QcGldpcCode, GldpcDecoder};
-    ///
-    /// let code = QcGldpcCode::lentmaier(7, 4, 1);
-    /// let decoder = GldpcDecoder::with_component_iters(code, 10);
-    /// ```
-    pub fn with_component_iters(code: QcGldpcCode, component_max_iters: usize) -> Self {
-        let mut decoder = Self::new(code);
-        decoder.component_max_iters = component_max_iters;
-        decoder
-    }
-
-    /// Performs check node update using SISO component decoding.
-    ///
-    /// For each check node, collects variable-to-check messages, runs the
-    /// component SISO decoder, and stores the extrinsic output as
+    /// For each check node, collects variable-to-check messages, runs
+    /// SOGRAND to obtain extrinsic LLRs, and stores them as
     /// check-to-variable messages.
     fn check_node_update(&mut self) {
         let n_c = self.code.component().n();
-        let component_max_iters = self.component_max_iters;
 
         for (check_idx, check_vars) in self.code.check_node_vars.iter().enumerate() {
             // Collect input LLRs from variable-to-check messages
@@ -1117,14 +1063,11 @@ impl GldpcDecoder {
                 input_llrs.push(self.var_to_check[var_idx][vc_idx]);
             }
 
-            // Run component SISO decoder
-            let extrinsic = self
-                .code
-                .component
-                .decode_siso(&input_llrs, component_max_iters);
+            // Run SOGRAND SISO decoder on the component code
+            let siso_result = self.component_sogrand.decode_siso(&input_llrs);
 
-            // Store check-to-variable messages
-            for (pos, ext) in extrinsic.into_iter().enumerate() {
+            // Store extrinsic LLRs as check-to-variable messages
+            for (pos, ext) in siso_result.extrinsic_llrs.into_iter().enumerate() {
                 self.check_to_var[check_idx][pos] = ext;
             }
         }
@@ -1173,8 +1116,8 @@ impl SoftDecoder for GldpcDecoder {
     fn decode_soft(&self, llrs: &[Llr]) -> BitVec {
         assert_eq!(llrs.len(), self.n());
         let mut decoded = BitVec::with_capacity(self.k());
-        for &llr in llrs.iter().take(self.k()) {
-            decoded.push_bit(llr.hard_decision());
+        for &sys_col in self.code.systematic_positions() {
+            decoded.push_bit(llrs[sys_col].hard_decision());
         }
         decoded
     }
@@ -1246,11 +1189,12 @@ impl IterativeSoftDecoder for GldpcDecoder {
         let decoded_codeword = self.hard_decode();
         let syndrome_passed = self.code.is_valid_codeword(&decoded_codeword);
 
-        // Extract message bits (first k bits of decoded codeword)
+        // Extract message bits from the systematic (non-pivot) positions,
+        // matching the positions used by the encoder.
         let k = self.code.code_k();
         let mut message = BitVec::with_capacity(k);
-        for i in 0..k {
-            message.push_bit(decoded_codeword.get(i));
+        for &sys_col in self.code.systematic_positions() {
+            message.push_bit(decoded_codeword.get(sys_col));
         }
 
         DecoderResult::new(message, iterations, converged, syndrome_passed)
@@ -1348,28 +1292,32 @@ mod tests {
     }
 
     #[test]
-    fn test_component_siso_extrinsic_for_valid_codeword() {
+    fn test_component_h_matrix_dimensions() {
         let comp = BchComponentCode::new(7, 4, 1);
+        let h = comp.h_matrix();
+        assert_eq!(h.rows(), 3); // num_checks = 7 - 4 = 3
+        assert_eq!(h.cols(), 7);
+    }
+
+    #[test]
+    fn test_sogrand_siso_extrinsic_for_valid_codeword() {
+        let comp = BchComponentCode::new(7, 4, 1);
+        let h = comp.h_matrix();
+        let orbgrand = OrbGrand::new(h, OrbGrandConfig::default());
+        let sogrand = SoGrand::new(orbgrand);
 
         // Strong LLRs for all-zeros codeword (positive = bit 0 likely)
         let llrs: Vec<Llr> = vec![Llr::new(5.0); 7];
-        let extrinsic = comp.decode_siso(&llrs, 5);
+        let result = sogrand.decode_siso(&llrs);
 
         // Extrinsic should be non-negative (reinforcing the decision)
-        for ext in &extrinsic {
+        for ext in &result.extrinsic_llrs {
             assert!(
                 ext.value() >= -0.01,
                 "Extrinsic {} should be non-negative for valid all-zeros",
                 ext.value()
             );
         }
-    }
-
-    #[test]
-    #[should_panic(expected = "Input LLR length must equal n_c")]
-    fn test_component_siso_wrong_length() {
-        let comp = BchComponentCode::new(7, 4, 1);
-        comp.decode_siso(&[Llr::new(1.0); 5], 5);
     }
 
     // --- QcGldpcCode construction tests ---
@@ -1761,10 +1709,17 @@ mod tests {
     fn test_lentmaier_1024_parameters() {
         let code = QcGldpcCode::lentmaier_1024();
         assert_eq!(code.code_n(), 1024);
-        assert!(code.code_k() > 0, "Dimension must be positive");
-        assert!(
-            code.code_k() < 1024,
-            "Dimension must be less than code length"
+        // eBCH(32,26): n_c=32, k_c=26, r_c=6
+        // Full-rank formula: k = 1024 - 2*32*6 = 640.
+        // The Lentmaier QC circulant construction introduces rank deficiency
+        // of 6: the 2*32*6 = 384 check rows have only 378 independent rows,
+        // giving k = 1024 - 378 = 646. This is inherent to the QC structure
+        // (the circulant block rows in row block 0 sum to zero modulo each
+        // component check, creating 6 linear dependencies).
+        assert_eq!(
+            code.code_k(),
+            646,
+            "Dimension must be 646 (full-rank 640 + 6 rank-deficient)"
         );
         assert_eq!(code.num_check_nodes(), 64); // 2 * 32
         assert_eq!(code.component().n(), 32);
@@ -1813,6 +1768,131 @@ mod tests {
 
         let result = decoder.decode_iterative(&llrs, 10);
         assert!(result.converged, "Should converge with clean LLRs");
+    }
+
+    // --- Roundtrip tests: encode -> noiseless decode -> extract == original ---
+
+    #[test]
+    fn test_roundtrip_encode_decode_small() {
+        let code = QcGldpcCode::lentmaier(7, 4, 1);
+        let mut decoder = GldpcDecoder::new(code.clone());
+        let k = code.code_k();
+
+        // Test multiple non-zero message patterns
+        let num_patterns = 1u32 << k.min(7);
+        for pattern in 1u32..num_patterns {
+            let mut msg = BitVec::with_capacity(k);
+            for bit in 0..k {
+                msg.push_bit(if bit < 32 {
+                    (pattern >> bit) & 1 == 1
+                } else {
+                    false
+                });
+            }
+
+            let cw = code.encode(&msg);
+
+            // Create noiseless LLRs from codeword
+            let llrs: Vec<Llr> = (0..code.code_n())
+                .map(|i| {
+                    if cw.get(i) {
+                        Llr::new(-10.0)
+                    } else {
+                        Llr::new(10.0)
+                    }
+                })
+                .collect();
+
+            decoder.reset();
+            let result = decoder.decode_iterative(&llrs, 20);
+            assert!(
+                result.converged,
+                "Pattern {}: should converge with noiseless LLRs",
+                pattern
+            );
+            assert_eq!(
+                result.decoded_bits, msg,
+                "Pattern {}: decode(encode(msg)) must equal msg",
+                pattern
+            );
+        }
+    }
+
+    #[test]
+    fn test_roundtrip_encode_decode_1024() {
+        let code = QcGldpcCode::lentmaier_1024();
+        let mut decoder = GldpcDecoder::new(code.clone());
+        let k = code.code_k();
+
+        // Test a few non-zero random-ish patterns
+        for seed in &[1u64, 42, 0xDEADBEEF, 0x12345678] {
+            let mut msg = BitVec::with_capacity(k);
+            // Simple PRNG based on seed to create a deterministic pattern
+            let mut state = *seed;
+            for _ in 0..k {
+                state = state.wrapping_mul(6364136223846793005).wrapping_add(1);
+                msg.push_bit((state >> 33) & 1 == 1);
+            }
+
+            let cw = code.encode(&msg);
+            assert!(
+                code.is_valid_codeword(&cw),
+                "Seed {}: encoded codeword must be valid",
+                seed
+            );
+
+            // Noiseless LLRs
+            let llrs: Vec<Llr> = (0..code.code_n())
+                .map(|i| {
+                    if cw.get(i) {
+                        Llr::new(-10.0)
+                    } else {
+                        Llr::new(10.0)
+                    }
+                })
+                .collect();
+
+            decoder.reset();
+            let result = decoder.decode_iterative(&llrs, 20);
+            assert!(
+                result.converged,
+                "Seed {}: should converge with noiseless LLRs",
+                seed
+            );
+            assert_eq!(
+                result.decoded_bits, msg,
+                "Seed {}: decode(encode(msg)) must equal msg",
+                seed
+            );
+        }
+    }
+
+    #[test]
+    fn test_systematic_positions_used_consistently() {
+        let code = QcGldpcCode::lentmaier(7, 4, 1);
+        let k = code.code_k();
+        let sys_pos = code.systematic_positions();
+        assert_eq!(sys_pos.len(), k);
+
+        // Encode a message and verify message bits appear at systematic positions
+        let mut msg = BitVec::with_capacity(k);
+        for i in 0..k {
+            msg.push_bit(i % 3 == 0);
+        }
+        let cw = code.encode(&msg);
+
+        // The systematic encoding G has identity columns at systematic_positions,
+        // so cw[sys_pos[i]] == msg[i] for each i
+        for (i, &col) in sys_pos.iter().enumerate() {
+            assert_eq!(
+                cw.get(col),
+                msg.get(i),
+                "Systematic position {}: cw[{}] should equal msg[{}]",
+                i,
+                col,
+                i
+            );
+        }
     }
 
     mod proptests {
