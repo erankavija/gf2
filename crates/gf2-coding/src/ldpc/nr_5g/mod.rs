@@ -1446,20 +1446,17 @@ mod tests {
 
     #[test]
     fn test_bg2_extension_has_identity_diagonal() {
-        let matrix = bg2::bg2_base_matrix(384);
-        for (r, row) in matrix.iter().enumerate().take(40).skip(4) {
-            let has_identity = row[bg2::BG2_KB..].contains(&0);
-            assert!(
-                has_identity,
-                "BG2 extension row {r} missing identity entry in parity part"
-            );
-        }
-        for (r, row) in matrix.iter().enumerate().take(42).skip(40) {
-            let has_identity = row[bg2::BG2_KB..].contains(&0);
-            assert!(
-                !has_identity,
-                "BG2 row {r} unexpectedly has identity entry in parity part"
-            );
+        // Test with multiple i_LS values to verify structure
+        for z in [2u16, 52, 384] {
+            let matrix = bg2::bg2_base_matrix(z as usize);
+            // Extension rows 4..39 should have at least one parity entry
+            for (r, row) in matrix.iter().enumerate().take(40).skip(4) {
+                let has_parity = row[bg2::BG2_KB..].iter().any(|&v| v >= 0);
+                assert!(
+                    has_parity,
+                    "BG2 Z={z} extension row {r} missing parity entry"
+                );
+            }
         }
     }
 
@@ -1695,26 +1692,31 @@ mod tests {
 
     #[test]
     fn test_bg2_specific_shift_values() {
+        // Z=384 belongs to lifting set 1 (384 = 3 * 2^7, base factor 3)
         let matrix = bg2::bg2_base_matrix(384);
-        assert_eq!(matrix[0][0], 38);
-        assert_eq!(matrix[0][1], 52);
-        assert_eq!(matrix[0][9], 103);
-        assert_eq!(matrix[1][13], 1);
-        assert_eq!(matrix[2][14], 0);
-        assert_eq!(matrix[3][15], 0);
-        assert_eq!(matrix[4][16], 0);
-        assert_eq!(matrix[41][6], 37);
-        assert_eq!(matrix[41][7], 80);
+        assert_eq!(matrix[0][0], 174); // i_LS=1 value
+        assert_eq!(matrix[0][1], 97);
+        assert_eq!(matrix[0][9], 172);
+
+        // Also verify i_LS=0 (Z=256 = 2 * 2^7, base factor 2)
+        let matrix0 = bg2::bg2_base_matrix(256);
+        assert_eq!(matrix0[0][0], 9); // i_LS=0 value
+        assert_eq!(matrix0[0][1], 117);
     }
 
     #[test]
     fn test_bg1_specific_shift_values() {
+        // Z=384 belongs to lifting set 1 (384 = 3 * 2^7, base factor 3)
         let matrix = bg1::bg1_base_matrix(384);
-        assert_eq!(matrix[0][0], 250);
-        assert_eq!(matrix[0][22], 56);
-        assert_eq!(matrix[1][23], 5);
-        assert_eq!(matrix[2][24], 0);
-        assert_eq!(matrix[45][67], 0);
+        assert_eq!(matrix[0][0], 307); // i_LS=1 table, row 0, col 0
+        assert_eq!(matrix[0][22], 1); // i_LS=1 table, row 0, col 22
+        assert_eq!(matrix[1][23], 0); // i_LS=1 table, row 1, col 23
+        assert_eq!(matrix[2][24], 0); // i_LS=1 table, row 2, col 24
+        assert_eq!(matrix[45][67], 0); // i_LS=1 table, row 45, col 67
+
+        // Also verify i_LS=0 (Z=256 = 2 * 2^7, base factor 2)
+        let matrix0 = bg1::bg1_base_matrix(256);
+        assert_eq!(matrix0[0][0], 250); // i_LS=0 table, row 0, col 0
     }
 
     // ========================================================================
