@@ -2,7 +2,7 @@
   "id": "f326ff2f-f10e-4b8b-9fa3-00971cb5e146",
   "title": "Implement product code construction and block turbo decoder",
   "description": "Implement product code construction and the iterative block turbo decoder using SOGRAND as the component SISO decoder.\n\n## Product Code Construction\n\nGiven a component (n,k) code, construct the (n², k²) product code:\n\n- Arrange k² info bits as a k×k matrix.\n- Encode each row with the component encoder → k×n matrix.\n- Encode each column → n×n codeword matrix.\n\nSupported component codes: eBCH(16,11), eBCH(16,7), eBCH(32,26), eBCH(64,57), dRM(32,21), CRC(25,15).\n\n## Block Turbo Decoder Algorithm\n\n1. Initialize: `L_Ch` = n×n channel LLR matrix, `L_A` = 0.\n2. **Row step**: decode each row independently with `SISO-SOGRAND(L_Ch + L_A)`, get `L_APP` per row. Compute `L_E = L_APP - L_A - L_Ch`. Check if hard decision forms a valid product codeword → early exit.\n3. Set `L_A = alpha * L_E` where `alpha = 0.5`.\n4. **Column step**: decode each column independently with `SISO-SOGRAND(L_Ch + L_A)`, get `L_APP`. Compute `L_E`. Check validity → early exit.\n5. Set `L_A = alpha * L_E`, go to step 2.\n6. Repeat up to `I_max = 20` iterations.\n\n**Configuration**: `I_max` (default 20), `alpha` (default 0.5), list size L (default ≤4), early-stop threshold on predicted list-BLER.\n\n## Acceptance Criteria\n\n- Product code encoder produces valid (n², k²) codewords.\n- Turbo decoder converges and improves BER/BLER over iterations.\n- Early termination works correctly (exits when valid product codeword found).\n- Exposes iteration count and queries/bit statistics.\n- Works with any component code that implements the SISO interface.\n\n## Location\n\nNew module `crates/gf2-coding/src/product/`.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "critical",
   "assignee": "agent:claude",
   "dependencies": [
@@ -15,25 +15,25 @@
     "tdd-reminder"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-07T05:29:00.113114201Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-07T05:29:35.647647421Z"
+    },
     "doc-review": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-04-05T23:09:13.868608950Z"
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-07T05:36:42.983684290Z"
     },
     "tdd-reminder": {
       "status": "passed",
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-07T00:16:05.058280480Z"
-    },
-    "cargo-ci": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-04-05T23:09:13.868545790Z"
-    },
-    "code-review": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-04-05T23:09:13.868589550Z"
     }
   },
   "context": {},
@@ -44,5 +44,5 @@
     "component:gf2-coding"
   ],
   "created_at": "2026-02-22T21:15:29.847431835+00:00",
-  "updated_at": "2026-04-07T00:16:06.467244144+00:00"
+  "updated_at": "2026-04-07T05:36:43.631141921+00:00"
 }
