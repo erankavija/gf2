@@ -238,7 +238,10 @@ fn main() {
     let full_mode = std::env::args().any(|a| a == "--full");
 
     let (min_errors, max_frames, label) = if full_mode {
-        (100, 10_000_000, "FULL") // 10M frames ensures >=100 errors even at low BLER
+        // 1B frames ensures >=100 errors even at BLER ~1e-7.
+        // The loop exits as soon as min_errors is reached, so this cap
+        // only matters for the lowest-BLER points.
+        (100, 1_000_000_000, "FULL")
     } else {
         (10, 1_000, "QUICK")
     };
@@ -307,28 +310,58 @@ fn main() {
     // --- Reference data comparison ---
     println!();
     println!("=== Reference Data Comparison ===");
+    println!("  (Comparing our simulation results against paper's reference curves.)");
+    println!("  (Acceptance: LDPC baseline within ~0.1 dB of paper.)");
+    println!();
+
+    // Fig 3: compare both LDPC and product code curves
     compare_with_reference(
         "dev/reference_data/fig_prod_ebch_16x11.csv",
         &fig3_ldpc,
-        "Fig 3 LDPC",
+        "Fig 3 LDPC (ours vs paper LDPC_BP)",
+        "LDPC",
     );
+    compare_with_reference(
+        "dev/reference_data/fig_prod_ebch_16x11.csv",
+        &fig3_product,
+        "Fig 3 Product (ours vs paper SOGRAND turbo)",
+        "SOGRAND",
+    );
+
+    // Fig 1: compare LDPC and product code curves
     compare_with_reference(
         "dev/reference_data/fig_prod_drm_32x21.csv",
         &fig1_ldpc,
-        "Fig 1 LDPC",
+        "Fig 1 LDPC (ours vs paper LDPC_BP)",
+        "LDPC",
+    );
+    compare_with_reference(
+        "dev/reference_data/fig_prod_drm_32x21.csv",
+        &fig1_product,
+        "Fig 1 Product (ours vs paper dRM turbo)",
+        "dRM",
     );
 }
 
 /// Load reference CSV and compare BLER at matching Eb/N0 points.
-fn compare_with_reference(ref_path: &str, results: &SimulationResults, label: &str) {
+///
+/// `decoder_filter` selects which decoder's curve to compare against
+/// (e.g., "LDPC" matches LDPC_BP/LDPC_normMinSum, "SOGRAND" matches
+/// SOGRAND turbo curves, "dRM" matches dRM product curves).
+fn compare_with_reference(
+    ref_path: &str,
+    results: &SimulationResults,
+    label: &str,
+    decoder_filter: &str,
+) {
     let Ok(content) = std::fs::read_to_string(ref_path) else {
         eprintln!("  {label}: reference file {ref_path} not found, skipping comparison");
         return;
     };
-    println!("  {label} vs {ref_path}:");
+    println!("  {label}:");
     println!(
-        "    {:>8} | {:>12} | {:>12} | {:>8}",
-        "Eb/N0", "Ours", "Reference", "Delta"
+        "    {:>8} | {:>12} | {:>12} | {:>10}",
+        "Eb/N0", "Ours(BLER)", "Ref(BLER)", "Ratio(dB)"
     );
     for point in &results.points {
         // Find closest reference BLER at this Eb/N0
@@ -338,9 +371,9 @@ fn compare_with_reference(ref_path: &str, results: &SimulationResults, label: &s
             let fields: Vec<&str> = line.split(',').collect();
             if fields.len() >= 5 {
                 if let (Ok(snr), Ok(val)) = (fields[2].parse::<f64>(), fields[3].parse::<f64>()) {
-                    if (snr - point.eb_n0_db).abs() < 0.01
-                        && fields[4].contains("LDPC")
-                        && fields[1].contains("BLER")
+                    if (snr - point.eb_n0_db).abs() < 0.26
+                        && fields[4].contains(decoder_filter)
+                        && (fields[1].contains("BLER") || fields[1].contains("BLER_or_BER"))
                     {
                         best_ref = Some(val);
                     }
