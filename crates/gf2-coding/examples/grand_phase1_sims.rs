@@ -319,7 +319,7 @@ fn main() {
         "dev/reference_data/fig_prod_ebch_16x11.csv",
         &fig3_ldpc,
         "Fig 3 LDPC (ours vs paper LDPC_BP)",
-        "LDPC",
+        "LDPC_BP",
     );
     compare_with_reference(
         "dev/reference_data/fig_prod_ebch_16x11.csv",
@@ -333,7 +333,7 @@ fn main() {
         "dev/reference_data/fig_prod_drm_32x21.csv",
         &fig1_ldpc,
         "Fig 1 LDPC (ours vs paper LDPC_BP)",
-        "LDPC",
+        "LDPC_BP",
     );
     compare_with_reference(
         "dev/reference_data/fig_prod_drm_32x21.csv",
