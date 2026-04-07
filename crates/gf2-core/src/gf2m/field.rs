@@ -5118,23 +5118,29 @@ mod kani_proofs {
     use crate::gf2m::mul_raw::gf2m_mul_raw;
 
     // Polynomials from PrimitivePolynomialDatabase::standard() — hardcoded here
-    // to avoid pulling the full database match statement into the GOTO program
-    // (which increases CBMC memory usage). The companion #[test] module
-    // kani_table_validation verifies these match the database at test time.
+    // to avoid pulling the database match statement into the GOTO program.
+    // The companion #[test] kani_table_validation verifies these match.
+    //
+    // CBMC limitation: the full Gf2mElement API (Arc, trait dispatch, multi-path
+    // Mul impl with SIMD/Barrett/table branches) exceeds CBMC's memory capacity
+    // even for GF(16). Harnesses therefore call generate_tables() directly
+    // (production table generation code) and verify table properties + cross-check
+    // against gf2m_mul_raw (production schoolbook multiplication). This is the
+    // deepest production code path CBMC can handle.
 
     // GF(2^4): PrimitivePolynomialDatabase::standard(4)
     const M4: usize = 4;
     const POLY4: u64 = 0b10011; // x^4 + x + 1
     const ORDER4: usize = (1 << M4) - 1;
 
-    fn tables_gf16() -> (Vec<u16>, Vec<u16>) {
-        Gf2mField_::<u64>::generate_tables(M4, POLY4)
-    }
-
     // GF(2^8): PrimitivePolynomialDatabase::standard(8)
     const M8: usize = 8;
     const POLY8: u64 = 0b100011101; // x^8 + x^4 + x^3 + x^2 + 1
     const ORDER8: usize = (1 << M8) - 1;
+
+    fn tables_gf16() -> (Vec<u16>, Vec<u16>) {
+        Gf2mField_::<u64>::generate_tables(M4, POLY4)
+    }
 
     fn tables_gf256() -> (Vec<u16>, Vec<u16>) {
         Gf2mField_::<u64>::generate_tables(M8, POLY8)
@@ -5143,18 +5149,16 @@ mod kani_proofs {
     // -- GF(2^4) harnesses --
 
     /// Verify exp_table and log_table are mutual inverses for GF(2^4).
-    /// Checks exp_table[0] = 1 (α^0) and exp_table[1] = primitive element.
+    /// Uses production generate_tables(). Checks exp_table[0] = 1 (α^0)
+    /// and exp_table[1] = primitive element.
     #[kani::proof]
     #[kani::unwind(20)]
     fn table_consistency_gf16() {
         let (log_table, exp_table) = tables_gf16();
 
-        // exp_table[0] = α^0 = 1 (multiplicative identity)
         assert_eq!(exp_table[0], 1);
-        // exp_table[1] is the primitive element α
         assert!(exp_table[1] >= 2);
 
-        // exp_table[log_table[x]] == x for all nonzero x < 2^m
         let mut x: usize = 1;
         while x < 16 {
             let log_x = log_table[x] as usize;
@@ -5163,7 +5167,6 @@ mod kani_proofs {
             x += 1;
         }
 
-        // log_table[exp_table[i]] == i for all i < order
         let mut i: usize = 0;
         while i < ORDER4 {
             let exp_i = exp_table[i] as usize;
@@ -5174,6 +5177,7 @@ mod kani_proofs {
     }
 
     /// Verify table-based multiplication matches schoolbook for GF(2^4).
+    /// Uses production generate_tables() + production gf2m_mul_raw().
     #[kani::proof]
     #[kani::unwind(20)]
     fn table_mul_matches_schoolbook_gf16() {
@@ -5184,6 +5188,7 @@ mod kani_proofs {
         kani::assume(a >= 1 && a < 16);
         kani::assume(b >= 1 && b < 16);
 
+        // Table-based multiply (same formula as production Mul impl)
         let log_a = log_table[a as usize] as usize;
         let log_b = log_table[b as usize] as usize;
         let table_result = exp_table[(log_a + log_b) % ORDER4] as u64;
@@ -5193,6 +5198,7 @@ mod kani_proofs {
     }
 
     /// Verify table-based inverse: a * inv(a) == 1 for all nonzero a in GF(2^4).
+    /// Uses production generate_tables() + production gf2m_mul_raw().
     #[kani::proof]
     #[kani::unwind(20)]
     fn table_inverse_correct_gf16() {
@@ -5211,7 +5217,8 @@ mod kani_proofs {
     // -- GF(2^8) harnesses --
 
     /// Verify exp_table and log_table are mutual inverses for GF(2^8).
-    /// Checks exp_table[0] = 1 (α^0) and exp_table[1] = primitive element.
+    /// Uses production generate_tables(). Checks exp_table[0] = 1 (α^0)
+    /// and exp_table[1] = primitive element.
     #[kani::proof]
     #[kani::unwind(260)]
     fn table_consistency_gf256() {
@@ -5238,6 +5245,7 @@ mod kani_proofs {
     }
 
     /// Verify table-based multiplication matches schoolbook for GF(2^8).
+    /// Uses production generate_tables() + production gf2m_mul_raw().
     #[kani::proof]
     #[kani::unwind(260)]
     fn table_mul_matches_schoolbook_gf256() {
@@ -5257,6 +5265,7 @@ mod kani_proofs {
     }
 
     /// Verify table-based inverse: a * inv(a) == 1 for all nonzero a in GF(2^8).
+    /// Uses production generate_tables() + production gf2m_mul_raw().
     #[kani::proof]
     #[kani::unwind(260)]
     fn table_inverse_correct_gf256() {
