@@ -28,6 +28,7 @@ charon cargo \
   --opaque 'gf2_core::gf2m::generation' \
   --opaque 'gf2_core::gf2m::uint_ext' \
   --opaque 'gf2_core::gf2m::thread_safety_tests' \
+  --opaque 'gf2_core::gf2m::barrett' \
   --opaque 'gf2_core::bitvec' \
   --opaque 'gf2_core::bitslice' \
   --opaque 'gf2_core::matrix' \
@@ -90,6 +91,12 @@ python3 "$REPO_ROOT/scripts/fix-aeneas-dupes.py" "$LEAN_DIR/Types.lean" "$LEAN_D
 # Charon (419f53b6+) LLBC. Restore known-good implementations from previous
 # working extraction. See fix-aeneas-sorrys.py docstring for details.
 python3 "$REPO_ROOT/scripts/fix-aeneas-sorrys.py" "$LEAN_DIR/Funs.lean"
+
+# TypesExternal.lean contains auto-generated type axioms (no hand-editing needed).
+# Always regenerate from template when present.
+if [ -f "$LEAN_DIR/TypesExternal_Template.lean" ]; then
+  cp "$LEAN_DIR/TypesExternal_Template.lean" "$LEAN_DIR/TypesExternal.lean"
+fi
 
 # FunsExternal.lean contains hand-edited concrete definitions (wrapping_neg,
 # overflowing_sub, U128 add/add_assign) that replace Aeneas axioms.

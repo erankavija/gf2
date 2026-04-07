@@ -5035,3 +5035,240 @@ mod generic_width_tests {
         }
     }
 }
+
+// ---------------------------------------------------------------------------
+// Kani bounded model checking harnesses for log/exp table verification
+// ---------------------------------------------------------------------------
+
+#[cfg(test)]
+mod kani_table_validation {
+    use super::*;
+    use crate::primitive_polys::PrimitivePolynomialDatabase;
+
+    #[test]
+    fn precomputed_tables_match_database_gf16() {
+        let poly = PrimitivePolynomialDatabase::standard(4).unwrap();
+        assert_eq!(poly, 0b10011);
+        let (log_table, exp_table) = Gf2mField_::<u64>::generate_tables(4, poly);
+        let expected_exp: [u16; 15] = [1, 2, 4, 8, 3, 6, 12, 11, 5, 10, 7, 14, 15, 13, 9];
+        let expected_log: [u16; 16] = [0, 0, 1, 4, 2, 8, 5, 10, 3, 14, 9, 7, 6, 13, 11, 12];
+        assert_eq!(exp_table, expected_exp);
+        assert_eq!(log_table, expected_log);
+    }
+
+    #[test]
+    fn precomputed_tables_match_database_gf256() {
+        let poly = PrimitivePolynomialDatabase::standard(8).unwrap();
+        assert_eq!(poly, 0b100011101);
+        let (log_table, exp_table) = Gf2mField_::<u64>::generate_tables(8, poly);
+        // Spot-check key entries against the Kani pre-computed constants
+        assert_eq!(exp_table[0], 1); // α^0 = 1
+        assert_eq!(exp_table[1], 2); // α = 2 (primitive element)
+        assert_eq!(exp_table.len(), 255);
+        assert_eq!(log_table.len(), 256);
+        assert_eq!(log_table[1], 0); // log(1) = 0
+        assert_eq!(log_table[2], 1); // log(α) = 1
+                                     // Full comparison against Kani constants
+        #[rustfmt::skip]
+        let kani_exp: [u16; 255] = [
+            1, 2, 4, 8, 16, 32, 64, 128, 29, 58, 116, 232, 205, 135, 19, 38,
+            76, 152, 45, 90, 180, 117, 234, 201, 143, 3, 6, 12, 24, 48, 96, 192,
+            157, 39, 78, 156, 37, 74, 148, 53, 106, 212, 181, 119, 238, 193, 159, 35,
+            70, 140, 5, 10, 20, 40, 80, 160, 93, 186, 105, 210, 185, 111, 222, 161,
+            95, 190, 97, 194, 153, 47, 94, 188, 101, 202, 137, 15, 30, 60, 120, 240,
+            253, 231, 211, 187, 107, 214, 177, 127, 254, 225, 223, 163, 91, 182, 113, 226,
+            217, 175, 67, 134, 17, 34, 68, 136, 13, 26, 52, 104, 208, 189, 103, 206,
+            129, 31, 62, 124, 248, 237, 199, 147, 59, 118, 236, 197, 151, 51, 102, 204,
+            133, 23, 46, 92, 184, 109, 218, 169, 79, 158, 33, 66, 132, 21, 42, 84,
+            168, 77, 154, 41, 82, 164, 85, 170, 73, 146, 57, 114, 228, 213, 183, 115,
+            230, 209, 191, 99, 198, 145, 63, 126, 252, 229, 215, 179, 123, 246, 241, 255,
+            227, 219, 171, 75, 150, 49, 98, 196, 149, 55, 110, 220, 165, 87, 174, 65,
+            130, 25, 50, 100, 200, 141, 7, 14, 28, 56, 112, 224, 221, 167, 83, 166,
+            81, 162, 89, 178, 121, 242, 249, 239, 195, 155, 43, 86, 172, 69, 138, 9,
+            18, 36, 72, 144, 61, 122, 244, 245, 247, 243, 251, 235, 203, 139, 11, 22,
+            44, 88, 176, 125, 250, 233, 207, 131, 27, 54, 108, 216, 173, 71, 142,
+        ];
+        assert_eq!(exp_table.as_slice(), &kani_exp[..]);
+        #[rustfmt::skip]
+        let kani_log: [u16; 256] = [
+            0, 0, 1, 25, 2, 50, 26, 198, 3, 223, 51, 238, 27, 104, 199, 75,
+            4, 100, 224, 14, 52, 141, 239, 129, 28, 193, 105, 248, 200, 8, 76, 113,
+            5, 138, 101, 47, 225, 36, 15, 33, 53, 147, 142, 218, 240, 18, 130, 69,
+            29, 181, 194, 125, 106, 39, 249, 185, 201, 154, 9, 120, 77, 228, 114, 166,
+            6, 191, 139, 98, 102, 221, 48, 253, 226, 152, 37, 179, 16, 145, 34, 136,
+            54, 208, 148, 206, 143, 150, 219, 189, 241, 210, 19, 92, 131, 56, 70, 64,
+            30, 66, 182, 163, 195, 72, 126, 110, 107, 58, 40, 84, 250, 133, 186, 61,
+            202, 94, 155, 159, 10, 21, 121, 43, 78, 212, 229, 172, 115, 243, 167, 87,
+            7, 112, 192, 247, 140, 128, 99, 13, 103, 74, 222, 237, 49, 197, 254, 24,
+            227, 165, 153, 119, 38, 184, 180, 124, 17, 68, 146, 217, 35, 32, 137, 46,
+            55, 63, 209, 91, 149, 188, 207, 205, 144, 135, 151, 178, 220, 252, 190, 97,
+            242, 86, 211, 171, 20, 42, 93, 158, 132, 60, 57, 83, 71, 109, 65, 162,
+            31, 45, 67, 216, 183, 123, 164, 118, 196, 23, 73, 236, 127, 12, 111, 246,
+            108, 161, 59, 82, 41, 157, 85, 170, 251, 96, 134, 177, 187, 204, 62, 90,
+            203, 89, 95, 176, 156, 169, 160, 81, 11, 245, 22, 235, 122, 117, 44, 215,
+            79, 174, 213, 233, 230, 231, 173, 232, 116, 214, 244, 234, 168, 80, 88, 175,
+        ];
+        assert_eq!(log_table.as_slice(), &kani_log[..]);
+    }
+}
+
+#[cfg(kani)]
+mod kani_proofs {
+    use super::*;
+    use crate::gf2m::mul_raw::gf2m_mul_raw;
+
+    // Polynomials from PrimitivePolynomialDatabase::standard() — hardcoded here
+    // to avoid pulling the full database match statement into the GOTO program
+    // (which increases CBMC memory usage). The companion #[test] module
+    // kani_table_validation verifies these match the database at test time.
+
+    // GF(2^4): PrimitivePolynomialDatabase::standard(4)
+    const M4: usize = 4;
+    const POLY4: u64 = 0b10011; // x^4 + x + 1
+    const ORDER4: usize = (1 << M4) - 1;
+
+    fn tables_gf16() -> (Vec<u16>, Vec<u16>) {
+        Gf2mField_::<u64>::generate_tables(M4, POLY4)
+    }
+
+    // GF(2^8): PrimitivePolynomialDatabase::standard(8)
+    const M8: usize = 8;
+    const POLY8: u64 = 0b100011101; // x^8 + x^4 + x^3 + x^2 + 1
+    const ORDER8: usize = (1 << M8) - 1;
+
+    fn tables_gf256() -> (Vec<u16>, Vec<u16>) {
+        Gf2mField_::<u64>::generate_tables(M8, POLY8)
+    }
+
+    // -- GF(2^4) harnesses --
+
+    /// Verify exp_table and log_table are mutual inverses for GF(2^4).
+    /// Checks exp_table[0] = 1 (α^0) and exp_table[1] = primitive element.
+    #[kani::proof]
+    #[kani::unwind(20)]
+    fn table_consistency_gf16() {
+        let (log_table, exp_table) = tables_gf16();
+
+        // exp_table[0] = α^0 = 1 (multiplicative identity)
+        assert_eq!(exp_table[0], 1);
+        // exp_table[1] is the primitive element α
+        assert!(exp_table[1] >= 2);
+
+        // exp_table[log_table[x]] == x for all nonzero x < 2^m
+        let mut x: usize = 1;
+        while x < 16 {
+            let log_x = log_table[x] as usize;
+            assert!(log_x < ORDER4);
+            assert!(exp_table[log_x] == x as u16);
+            x += 1;
+        }
+
+        // log_table[exp_table[i]] == i for all i < order
+        let mut i: usize = 0;
+        while i < ORDER4 {
+            let exp_i = exp_table[i] as usize;
+            assert!(exp_i > 0 && exp_i < (1 << M4));
+            assert!(log_table[exp_i] as usize == i);
+            i += 1;
+        }
+    }
+
+    /// Verify table-based multiplication matches schoolbook for GF(2^4).
+    #[kani::proof]
+    #[kani::unwind(20)]
+    fn table_mul_matches_schoolbook_gf16() {
+        let (log_table, exp_table) = tables_gf16();
+
+        let a: u64 = kani::any();
+        let b: u64 = kani::any();
+        kani::assume(a >= 1 && a < 16);
+        kani::assume(b >= 1 && b < 16);
+
+        let log_a = log_table[a as usize] as usize;
+        let log_b = log_table[b as usize] as usize;
+        let table_result = exp_table[(log_a + log_b) % ORDER4] as u64;
+
+        let schoolbook_result = gf2m_mul_raw(a, b, M4, POLY4);
+        assert_eq!(table_result, schoolbook_result);
+    }
+
+    /// Verify table-based inverse: a * inv(a) == 1 for all nonzero a in GF(2^4).
+    #[kani::proof]
+    #[kani::unwind(20)]
+    fn table_inverse_correct_gf16() {
+        let (log_table, exp_table) = tables_gf16();
+
+        let a: u64 = kani::any();
+        kani::assume(a >= 1 && a < 16);
+
+        let log_a = log_table[a as usize] as usize;
+        let inv_a = exp_table[(ORDER4 - log_a) % ORDER4] as u64;
+
+        let product = gf2m_mul_raw(a, inv_a, M4, POLY4);
+        assert_eq!(product, 1);
+    }
+
+    // -- GF(2^8) harnesses --
+
+    /// Verify exp_table and log_table are mutual inverses for GF(2^8).
+    /// Checks exp_table[0] = 1 (α^0) and exp_table[1] = primitive element.
+    #[kani::proof]
+    #[kani::unwind(260)]
+    fn table_consistency_gf256() {
+        let (log_table, exp_table) = tables_gf256();
+
+        assert_eq!(exp_table[0], 1);
+        assert!(exp_table[1] >= 2);
+
+        let mut x: usize = 1;
+        while x < 256 {
+            let log_x = log_table[x] as usize;
+            assert!(log_x < ORDER8);
+            assert!(exp_table[log_x] == x as u16);
+            x += 1;
+        }
+
+        let mut i: usize = 0;
+        while i < ORDER8 {
+            let exp_i = exp_table[i] as usize;
+            assert!(exp_i > 0 && exp_i < (1 << M8));
+            assert!(log_table[exp_i] as usize == i);
+            i += 1;
+        }
+    }
+
+    /// Verify table-based multiplication matches schoolbook for GF(2^8).
+    #[kani::proof]
+    #[kani::unwind(260)]
+    fn table_mul_matches_schoolbook_gf256() {
+        let (log_table, exp_table) = tables_gf256();
+
+        let a: u64 = kani::any();
+        let b: u64 = kani::any();
+        kani::assume(a >= 1 && a < 256);
+        kani::assume(b >= 1 && b < 256);
+
+        let log_a = log_table[a as usize] as usize;
+        let log_b = log_table[b as usize] as usize;
+        let table_result = exp_table[(log_a + log_b) % ORDER8] as u64;
+
+        let schoolbook_result = gf2m_mul_raw(a, b, M8, POLY8);
+        assert_eq!(table_result, schoolbook_result);
+    }
+
+    /// Verify table-based inverse: a * inv(a) == 1 for all nonzero a in GF(2^8).
+    #[kani::proof]
+    #[kani::unwind(260)]
+    fn table_inverse_correct_gf256() {
+        let (log_table, exp_table) = tables_gf256();
+
+        let a: u64 = kani::any();
+        kani::assume(a >= 1 && a < 256);
+
+        let log_a = log_table[a as usize] as usize;
+        let inv_a = exp_table[(ORDER8 - log_a) % ORDER8] as u64;
+
+        let product = gf2m_mul_raw(a, inv_a, M8, POLY8);
+        assert_eq!(product, 1);
+    }
+}

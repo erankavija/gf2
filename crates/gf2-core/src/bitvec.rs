@@ -2807,17 +2807,18 @@ mod kani_proofs {
         }
     }
 
-    /// Verify that shift_right preserves the tail masking invariant (single word).
+    /// Verify that shift_right preserves the tail masking invariant.
     ///
     /// Right-shifting moves bits toward LSB and zeros fill from the left,
-    /// so padding bits should remain clean after shift.
+    /// so padding bits should remain clean after shift. Uses single word
+    /// with shift amounts up to 128 to cover large-shift edge cases.
     #[kani::proof]
     #[kani::unwind(2)]
     fn shift_right_preserves_invariant() {
         let len: usize = kani::any();
         kani::assume(len >= 1 && len <= 64);
         let k: usize = kani::any();
-        kani::assume(k <= 64);
+        kani::assume(k <= 128);
 
         let word: u64 = kani::any();
         let bits_in_last = len % 64;

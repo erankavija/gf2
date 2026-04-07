@@ -3856,7 +3856,7 @@ def
 }
 
 /-- [gf2_core::simd::maybe_simd]:
-    Source: 'crates/gf2-core/src/lib.rs', lines 82:4-84:5
+    Source: 'crates/gf2-core/src/lib.rs', lines 95:4-97:5
     Visibility: public -/
 def simd.maybe_simd : Result (Option Unit) := do
   ok none

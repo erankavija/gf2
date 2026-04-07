@@ -64,7 +64,7 @@ structure core.ops.arith.AddAssign (Self : Type) (Rhs : Type) where
   add_assign : Self → Rhs → Result Self
 
 /-- Trait declaration: [gf2_core::field::traits::FiniteField]
-    Source: 'crates/gf2-core/src/field/traits.rs', lines 44:0-135:1
+    Source: 'crates/gf2-core/src/field/traits.rs', lines 44:0-258:1
     Visibility: public -/
 structure field.traits.FiniteField (Self : Type) (Self_Characteristic : Type)
   (Self_Wide : Type) where
@@ -105,7 +105,7 @@ structure field.traits.FiniteField (Self : Type) (Self_Characteristic : Type)
   max_unreduced_additions : Result Std.Usize
 
 /-- Trait declaration: [gf2_core::field::traits::ConstField]
-    Source: 'crates/gf2-core/src/field/traits.rs', lines 141:0-150:1
+    Source: 'crates/gf2-core/src/field/traits.rs', lines 264:0-273:1
     Visibility: public -/
 structure field.traits.ConstField (Self : Type) (Self_Clause0_Characteristic :
   Type) (Self_Clause0_Wide : Type) where
