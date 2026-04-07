@@ -158,8 +158,14 @@ fn save_results(results: &SimulationResults, path: &str) {
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent).expect("Failed to create output directory");
     }
+    // Save CSV
     results.write_to(&path);
-    eprintln!("  Saved: {}", path.display());
+    eprintln!("  Saved CSV: {}", path.display());
+    // Save JSON alongside
+    let json_path = path.with_extension("json");
+    let json = results.to_json();
+    std::fs::write(&json_path, json).expect("Failed to write JSON output");
+    eprintln!("  Saved JSON: {}", json_path.display());
 }
 
 // =========================================================================
@@ -318,8 +324,8 @@ fn main() {
     compare_with_reference(
         "dev/reference_data/fig_prod_ebch_16x11.csv",
         &fig3_ldpc,
-        "Fig 3 LDPC (ours vs paper LDPC_BP)",
-        "LDPC_BP",
+        "Fig 3 LDPC normMinSum (ours vs paper LDPC_normMinSum)",
+        "LDPC_normMinSum",
     );
     compare_with_reference(
         "dev/reference_data/fig_prod_ebch_16x11.csv",
@@ -332,8 +338,8 @@ fn main() {
     compare_with_reference(
         "dev/reference_data/fig_prod_drm_32x21.csv",
         &fig1_ldpc,
-        "Fig 1 LDPC (ours vs paper LDPC_BP)",
-        "LDPC_BP",
+        "Fig 1 LDPC normMinSum (ours vs paper LDPC_normMinSum)",
+        "LDPC_normMinSum",
     );
     compare_with_reference(
         "dev/reference_data/fig_prod_drm_32x21.csv",

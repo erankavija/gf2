@@ -20,7 +20,7 @@ use rand::SeedableRng;
 // =========================================================================
 
 #[test]
-fn smoke_fig3_ebch_product_code_construction() {
+fn test_fig3_ebch_product_code_construction() {
     let component = ExtendedBchCode::ebch_16_11();
     let product = ProductCode::new(component);
     assert_eq!(product.n(), 256);
@@ -28,7 +28,7 @@ fn smoke_fig3_ebch_product_code_construction() {
 }
 
 #[test]
-fn smoke_fig3_ebch_product_encode_decode() {
+fn test_fig3_ebch_product_encode_decode() {
     let component = ExtendedBchCode::ebch_16_11();
     let product = ProductCode::new(component.clone());
 
@@ -73,7 +73,7 @@ fn smoke_fig3_ebch_product_encode_decode() {
 // =========================================================================
 
 #[test]
-fn smoke_fig3_nr5g_ldpc_construction() {
+fn test_fig3_nr5g_ldpc_construction() {
     let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
     assert_eq!(rm_code.n(), 256);
     assert_eq!(rm_code.k(), 121);
@@ -82,7 +82,7 @@ fn smoke_fig3_nr5g_ldpc_construction() {
 }
 
 #[test]
-fn smoke_fig3_nr5g_ldpc_encode_decode() {
+fn test_fig3_nr5g_ldpc_encode_decode() {
     let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
     let mut decoder = Nr5gRateMatchedDecoder::new(rm_code.clone());
 
@@ -113,7 +113,7 @@ fn smoke_fig3_nr5g_ldpc_encode_decode() {
 }
 
 #[test]
-fn smoke_fig3_ldpc_simulation_runner() {
+fn test_fig3_ldpc_simulation_runner() {
     let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
     let encoder = rm_code.clone();
     let mut decoder = Nr5gRateMatchedDecoder::new(rm_code);
@@ -143,7 +143,7 @@ fn smoke_fig3_ldpc_simulation_runner() {
 // =========================================================================
 
 #[test]
-fn smoke_fig1_drm_product_code_construction() {
+fn test_fig1_drm_product_code_construction() {
     let component = DrmCode::drm_32_21();
     let product = ProductCode::new(component);
     assert_eq!(product.n(), 1024);
@@ -151,7 +151,7 @@ fn smoke_fig1_drm_product_code_construction() {
 }
 
 #[test]
-fn smoke_fig1_drm_product_encode_decode() {
+fn test_fig1_drm_product_encode_decode() {
     let component = DrmCode::drm_32_21();
     let product = ProductCode::new(component.clone());
 
@@ -196,7 +196,7 @@ fn smoke_fig1_drm_product_encode_decode() {
 // =========================================================================
 
 #[test]
-fn smoke_fig1_nr5g_ldpc_construction() {
+fn test_fig1_nr5g_ldpc_construction() {
     let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(2, 1024, 441);
     assert_eq!(rm_code.n(), 1024);
     assert_eq!(rm_code.k(), 441);
@@ -204,7 +204,7 @@ fn smoke_fig1_nr5g_ldpc_construction() {
 }
 
 #[test]
-fn smoke_fig1_nr5g_ldpc_encode_decode() {
+fn test_fig1_nr5g_ldpc_encode_decode() {
     let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(2, 1024, 441);
     let mut decoder = Nr5gRateMatchedDecoder::new(rm_code.clone());
 
@@ -239,7 +239,7 @@ fn smoke_fig1_nr5g_ldpc_encode_decode() {
 // =========================================================================
 
 #[test]
-fn smoke_csv_output_format() {
+fn test_csv_output_format() {
     use gf2_coding::simulation::SimulationResults;
 
     let results = SimulationResults {
