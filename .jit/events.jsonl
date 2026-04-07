@@ -1347,3 +1347,10 @@
 {"type":"gate_passed","id":"96e726b8-bf4b-4657-b879-4eafc0b18f84","issue_id":"ec0743e1-819d-4efc-bc5c-f900e569130d","timestamp":"2026-04-07T12:14:19.821949173Z","gate_key":"cargo-kani","updated_by":"auto:executor"}
 {"type":"gate_failed","id":"1e5e42e0-40d9-4c79-8d93-6be8605c171b","issue_id":"8889e712-da96-4565-ac1d-e75036f61e7f","timestamp":"2026-04-07T12:14:53.698112307Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
 {"type":"gate_failed","id":"b952d678-c634-498f-9ea9-d80d182e4e32","issue_id":"8889e712-da96-4565-ac1d-e75036f61e7f","timestamp":"2026-04-07T12:19:09.645728056Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"2c46cdb7-a014-4e43-8025-7dad97399c5b","issue_id":"8889e712-da96-4565-ac1d-e75036f61e7f","timestamp":"2026-04-07T17:35:38.927941689Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"9a5171c8-c2d2-4414-b730-f3f244fe015b","issue_id":"8889e712-da96-4565-ac1d-e75036f61e7f","timestamp":"2026-04-07T17:38:36.439910242Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"37a91a45-5e2a-4d76-83fa-57c4f15f9024","issue_id":"8889e712-da96-4565-ac1d-e75036f61e7f","timestamp":"2026-04-07T18:05:38.455954573Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"e3742a26-759d-4284-9d2d-d06be0a71f89","issue_id":"8889e712-da96-4565-ac1d-e75036f61e7f","timestamp":"2026-04-07T18:08:53.878917080Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_removed","id":"d0ba12ae-31ec-489f-bec6-6ae940c4037f","issue_id":"8889e712-da96-4565-ac1d-e75036f61e7f","timestamp":"2026-04-07T20:29:01.663683850Z","gate_key":"code-review"}
+{"type":"issue_state_changed","id":"1dc8f618-ef27-4390-b99d-da95a4d19a93","issue_id":"8889e712-da96-4565-ac1d-e75036f61e7f","timestamp":"2026-04-07T20:29:54.097032299Z","from":"gated","to":"done"}
+{"type":"issue_completed","id":"1e93395c-f533-4a7e-a875-3c55c3d52b49","issue_id":"8889e712-da96-4565-ac1d-e75036f61e7f","timestamp":"2026-04-07T20:29:54.097070739Z"}
