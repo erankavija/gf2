@@ -89,7 +89,7 @@ pub mod lifting;
 
 pub use lifting::{all_lifting_sizes, is_valid_lifting_size, lifting_set_index};
 
-use super::{LdpcCode, QuasiCyclicLdpc};
+use super::{DecoderAlgorithm, DecoderConfig, LdpcCode, LdpcDecoder, QuasiCyclicLdpc};
 use crate::llr::Llr;
 use crate::traits::{DecoderResult, IterativeSoftDecoder, SoftDecoder};
 use gf2_core::BitVec;
@@ -1029,18 +1029,19 @@ impl SoftDecoder for Nr5gRateMatchedCode {
     }
 }
 
-/// Normalized min-sum scaling factor for check-to-variable messages.
+/// Default normalized min-sum scaling factor for check-to-variable messages.
 ///
 /// The standard min-sum algorithm overestimates check-to-variable messages.
 /// Multiplying by alpha ≈ 0.75 corrects this and is critical for convergence
 /// when many variable nodes are punctured (LLR=0), as in rate-matched codes.
-const MINSUM_SCALE: f32 = 0.75;
+const DEFAULT_NMS_SCALE: f32 = 0.75;
 
 /// Iterative BP decoder for rate-matched 5G NR LDPC codes.
 ///
-/// Implements normalized min-sum belief propagation on the FULL mother code.
-/// The normalization factor [`MINSUM_SCALE`] is essential for convergence when
-/// the LLR vector contains many punctured positions (LLR=0).
+/// Wraps an [`LdpcDecoder`] operating on the full mother code, with
+/// rate-matching preprocessing (LLR mapping) and postprocessing (message
+/// extraction). The BP algorithm itself is delegated entirely to
+/// [`LdpcDecoder`], avoiding code duplication.
 ///
 /// # Examples
 ///
@@ -1056,26 +1057,15 @@ const MINSUM_SCALE: f32 = 0.75;
 pub struct Nr5gRateMatchedDecoder {
     /// The rate-matched code (owns mother code, encoder, params).
     rm_code: Nr5gRateMatchedCode,
-    /// Cached check node neighbors: check_neighbors[check] = [var1, var2, ...]
-    check_neighbors: Vec<Vec<usize>>,
-    /// Cached variable node neighbors: var_neighbors[var] = [check1, check2, ...]
-    var_neighbors: Vec<Vec<usize>>,
-    /// Current variable node beliefs (posterior LLRs)
-    beliefs: Vec<f32>,
-    /// Check-to-variable messages: c2v[check][pos] for neighbors[pos]
-    c2v: Vec<Vec<f32>>,
-    /// Variable-to-check messages: v2c[var][pos] for neighbors[pos]
-    v2c: Vec<Vec<f32>>,
-    /// Min-sum scaling factor (0.75 = normalized min-sum, 1.0 = plain min-sum BP).
-    scale: f32,
-    /// Last iteration count
-    last_iterations: usize,
+    /// Inner LDPC decoder operating on the full mother code.
+    inner: LdpcDecoder,
 }
 
 impl Nr5gRateMatchedDecoder {
-    /// Creates a new rate-matched decoder.
+    /// Creates a new rate-matched decoder with default normalized min-sum (α=0.75).
     ///
-    /// Pre-computes the Tanner graph adjacency from the mother code's H matrix.
+    /// Internally constructs an [`LdpcDecoder`] for the mother code, configured
+    /// with [`DecoderAlgorithm::NormalizedMinSum`] at the default scaling factor.
     ///
     /// # Arguments
     ///
@@ -1093,31 +1083,9 @@ impl Nr5gRateMatchedDecoder {
     ///
     /// # Complexity
     ///
-    /// O(n).
+    /// O(nnz(H)) for building the inner decoder's Tanner graph adjacency.
     pub fn new(rm_code: Nr5gRateMatchedCode) -> Self {
-        let h = rm_code.mother_code.parity_check_matrix();
-        let n = rm_code.mother_code.n();
-        let m = rm_code.mother_code.m();
-
-        let check_neighbors: Vec<Vec<usize>> = (0..m).map(|r| h.row_iter(r).collect()).collect();
-        let var_neighbors: Vec<Vec<usize>> = (0..n).map(|c| h.col_iter(c).collect()).collect();
-
-        let c2v: Vec<Vec<f32>> = check_neighbors
-            .iter()
-            .map(|nb| vec![0.0; nb.len()])
-            .collect();
-        let v2c: Vec<Vec<f32>> = var_neighbors.iter().map(|nb| vec![0.0; nb.len()]).collect();
-
-        Self {
-            rm_code,
-            check_neighbors,
-            var_neighbors,
-            beliefs: vec![0.0; n],
-            c2v,
-            v2c,
-            scale: MINSUM_SCALE,
-            last_iterations: 0,
-        }
+        Self::with_scale(rm_code, DEFAULT_NMS_SCALE)
     }
 
     /// Creates a decoder with a custom min-sum scaling factor.
@@ -1134,9 +1102,14 @@ impl Nr5gRateMatchedDecoder {
     ///
     /// Same as [`new`](Self::new).
     pub fn with_scale(rm_code: Nr5gRateMatchedCode, scale: f32) -> Self {
-        let mut decoder = Self::new(rm_code);
-        decoder.scale = scale;
-        decoder
+        let algorithm = if (scale - 1.0).abs() < f32::EPSILON {
+            DecoderAlgorithm::MinSum
+        } else {
+            DecoderAlgorithm::NormalizedMinSum(scale)
+        };
+        let config = DecoderConfig::new(algorithm, true);
+        let inner = LdpcDecoder::with_config(rm_code.mother_code.clone(), config);
+        Self { rm_code, inner }
     }
 
     /// Returns the target codeword length.
@@ -1219,107 +1192,6 @@ impl Nr5gRateMatchedDecoder {
     pub fn code(&self) -> &Nr5gRateMatchedCode {
         &self.rm_code
     }
-
-    /// Runs normalized min-sum BP on the full mother code.
-    fn bp_decode(&mut self, channel_llrs: &[f32], max_iterations: usize) -> DecoderResult {
-        let n = self.rm_code.mother_code.n();
-
-        // Reset check-to-variable messages
-        for msgs in &mut self.c2v {
-            for m in msgs.iter_mut() {
-                *m = 0.0;
-            }
-        }
-
-        // Initialize variable-to-check messages with channel LLRs
-        for (var, ch_llr) in channel_llrs.iter().enumerate().take(n) {
-            for slot in &mut self.v2c[var] {
-                *slot = *ch_llr;
-            }
-        }
-
-        let mut iterations = 0;
-        let mut converged = false;
-
-        for iter in 0..max_iterations {
-            iterations = iter + 1;
-
-            // === Check node update (normalized min-sum) ===
-            for (check, neighbors) in self.check_neighbors.iter().enumerate() {
-                let deg = neighbors.len();
-                for pos in 0..deg {
-                    // Compute extrinsic min-sum: product of signs, minimum magnitude
-                    let mut sign = 1i8;
-                    let mut min_abs = f32::MAX;
-                    for (other_pos, &other_var) in neighbors.iter().enumerate() {
-                        if other_pos != pos {
-                            let var_check_pos = self.var_neighbors[other_var]
-                                .iter()
-                                .position(|&c| c == check)
-                                .unwrap();
-                            let msg = self.v2c[other_var][var_check_pos];
-                            if msg < 0.0 {
-                                sign = -sign;
-                            }
-                            let abs = msg.abs();
-                            if abs < min_abs {
-                                min_abs = abs;
-                            }
-                        }
-                    }
-                    // Apply normalization scaling
-                    self.c2v[check][pos] = sign as f32 * min_abs * self.scale;
-                }
-            }
-
-            // === Variable node update ===
-            for (var, ch_llr) in channel_llrs.iter().enumerate().take(n) {
-                let neighbors = &self.var_neighbors[var];
-                // Total belief = channel + sum of incoming check messages
-                let mut belief = *ch_llr;
-                for &check in neighbors {
-                    let check_pos = self.check_neighbors[check]
-                        .iter()
-                        .position(|&v| v == var)
-                        .unwrap();
-                    belief += self.c2v[check][check_pos];
-                }
-                self.beliefs[var] = belief;
-
-                // Extrinsic variable-to-check messages
-                for (vpos, &check) in neighbors.iter().enumerate() {
-                    let check_pos = self.check_neighbors[check]
-                        .iter()
-                        .position(|&v| v == var)
-                        .unwrap();
-                    self.v2c[var][vpos] = belief - self.c2v[check][check_pos];
-                }
-            }
-
-            // === Syndrome check ===
-            let mut decoded = BitVec::with_capacity(n);
-            for &b in &self.beliefs {
-                decoded.push_bit(b < 0.0);
-            }
-            if self.rm_code.mother_code.is_valid_codeword(&decoded) {
-                converged = true;
-                break;
-            }
-        }
-
-        self.last_iterations = iterations;
-
-        // Hard decode the full codeword
-        let mut decoded_cw = BitVec::with_capacity(n);
-        for &b in &self.beliefs {
-            decoded_cw.push_bit(b < 0.0);
-        }
-        let syndrome_passed = self.rm_code.mother_code.is_valid_codeword(&decoded_cw);
-
-        // Return the full decoded codeword (extract_message will pick out
-        // the message bits using the systematic column mapping)
-        DecoderResult::new(decoded_cw, iterations, converged, syndrome_passed)
-    }
 }
 
 impl SoftDecoder for Nr5gRateMatchedDecoder {
@@ -1346,17 +1218,21 @@ impl IterativeSoftDecoder for Nr5gRateMatchedDecoder {
             self.rm_code.params.target_n
         );
 
-        // Map channel LLRs to full mother code LLR vector
+        // Step 1: Rate-matching preprocessing — map target_n channel LLRs
+        // to the full mother code length with punctured/filler LLR values.
         let full_llrs = self.rm_code.prepare_llrs(llrs);
 
-        // Convert to f32 for BP
-        let llr_f32: Vec<f32> = full_llrs.iter().map(|l| l.value()).collect();
+        // Step 2: Delegate BP decoding to the inner LdpcDecoder.
+        // This returns full_k message bits (systematic cols determined by RREF).
+        let mother_result = self.inner.decode_iterative(&full_llrs, max_iterations);
 
-        // Run normalized min-sum BP on full mother code
-        let mother_result = self.bp_decode(&llr_f32, max_iterations);
-
-        // Extract target_k message bits from decoded mother code output
-        let message = self.rm_code.extract_message(&mother_result.decoded_bits);
+        // Step 3: Truncate from full_k to target_k — the last
+        // (full_k - target_k) bits are filler (shortened) positions.
+        let target_k = self.rm_code.params.target_k;
+        let mut message = BitVec::with_capacity(target_k);
+        for i in 0..target_k {
+            message.push_bit(mother_result.decoded_bits.get(i));
+        }
 
         DecoderResult::new(
             message,
@@ -1367,24 +1243,11 @@ impl IterativeSoftDecoder for Nr5gRateMatchedDecoder {
     }
 
     fn last_iteration_count(&self) -> usize {
-        self.last_iterations
+        self.inner.last_iteration_count()
     }
 
     fn reset(&mut self) {
-        for msgs in &mut self.c2v {
-            for m in msgs.iter_mut() {
-                *m = 0.0;
-            }
-        }
-        for msgs in &mut self.v2c {
-            for m in msgs.iter_mut() {
-                *m = 0.0;
-            }
-        }
-        for b in &mut self.beliefs {
-            *b = 0.0;
-        }
-        self.last_iterations = 0;
+        self.inner.reset();
     }
 }
 
