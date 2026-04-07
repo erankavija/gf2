@@ -16,7 +16,16 @@
 //! [`SoGrand`](crate::grand::SoGrand) as the component decoder. Extrinsic
 //! information is exchanged between row and column steps with a scaling factor
 //! alpha (typically 0.5). Early termination occurs when the hard-decision matrix
-//! forms a valid product codeword.
+//! forms a valid product codeword or when the average list-BLER drops below a
+//! configurable threshold.
+//!
+//! # Generic Component Support
+//!
+//! The [`ProductComponent`] trait abstracts over component codes. Any code that
+//! provides a parity-check matrix, n/k dimensions, an even-code flag, and a
+//! [`BlockEncoder`] implementation can be used as a component. Built-in
+//! implementations exist for [`ExtendedBchCode`](crate::bch::extended::ExtendedBchCode)
+//! and [`CrcCode`](crate::crc::CrcCode).
 //!
 //! # Examples
 //!
@@ -48,15 +57,144 @@ use crate::llr::Llr;
 use crate::traits::BlockEncoder;
 use gf2_core::{BitMatrix, BitVec};
 
+/// Trait abstracting a component code for use in product code constructions.
+///
+/// Any linear block code that provides a parity-check matrix, code dimensions,
+/// an even-weight flag, and encoding can serve as a product code component.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_coding::product::ProductComponent;
+/// use gf2_coding::bch::extended::ExtendedBchCode;
+///
+/// let code = ExtendedBchCode::ebch_16_11();
+/// assert_eq!(ProductComponent::comp_n(&code), 16);
+/// assert_eq!(ProductComponent::comp_k(&code), 11);
+/// assert!(ProductComponent::comp_is_even(&code));
+/// ```
+pub trait ProductComponent: BlockEncoder {
+    /// Returns the codeword length of the component code.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::product::ProductComponent;
+    /// use gf2_coding::bch::extended::ExtendedBchCode;
+    ///
+    /// let code = ExtendedBchCode::ebch_16_11();
+    /// assert_eq!(code.comp_n(), 16);
+    /// ```
+    fn comp_n(&self) -> usize;
+
+    /// Returns the message length of the component code.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::product::ProductComponent;
+    /// use gf2_coding::bch::extended::ExtendedBchCode;
+    ///
+    /// let code = ExtendedBchCode::ebch_16_11();
+    /// assert_eq!(code.comp_k(), 11);
+    /// ```
+    fn comp_k(&self) -> usize;
+
+    /// Returns `true` if all codewords have even Hamming weight.
+    ///
+    /// This flag enables ORBGRAND's even-code optimization, which skips
+    /// odd-weight noise patterns.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::product::ProductComponent;
+    /// use gf2_coding::bch::extended::ExtendedBchCode;
+    ///
+    /// let code = ExtendedBchCode::ebch_16_11();
+    /// assert!(code.comp_is_even());
+    /// ```
+    fn comp_is_even(&self) -> bool;
+
+    /// Returns a reference to the parity-check matrix H.
+    ///
+    /// The matrix has dimensions (n - k) x n.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::product::ProductComponent;
+    /// use gf2_coding::bch::extended::ExtendedBchCode;
+    ///
+    /// let code = ExtendedBchCode::ebch_16_11();
+    /// let h = code.comp_parity_check();
+    /// assert_eq!(h.rows(), 5);
+    /// assert_eq!(h.cols(), 16);
+    /// ```
+    fn comp_parity_check(&self) -> &BitMatrix;
+}
+
+impl ProductComponent for crate::bch::extended::ExtendedBchCode {
+    fn comp_n(&self) -> usize {
+        self.n()
+    }
+
+    fn comp_k(&self) -> usize {
+        self.k()
+    }
+
+    fn comp_is_even(&self) -> bool {
+        self.is_even()
+    }
+
+    fn comp_parity_check(&self) -> &BitMatrix {
+        self.parity_check()
+    }
+}
+
+impl ProductComponent for crate::crc::CrcCode {
+    fn comp_n(&self) -> usize {
+        self.n()
+    }
+
+    fn comp_k(&self) -> usize {
+        self.k()
+    }
+
+    fn comp_is_even(&self) -> bool {
+        self.is_even()
+    }
+
+    fn comp_parity_check(&self) -> &BitMatrix {
+        self.parity_check()
+    }
+}
+
+impl ProductComponent for crate::drm::DrmCode {
+    fn comp_n(&self) -> usize {
+        self.n()
+    }
+
+    fn comp_k(&self) -> usize {
+        self.k()
+    }
+
+    fn comp_is_even(&self) -> bool {
+        self.is_even()
+    }
+
+    fn comp_parity_check(&self) -> &BitMatrix {
+        self.parity_check()
+    }
+}
+
 /// A product code constructed from a component (n, k) linear block code.
 ///
 /// The product code has parameters (n^2, k^2) and is formed by encoding rows
 /// and columns of a k x k information matrix with the component code.
 ///
-/// # Arguments
-///
-/// Constructed with a component code that implements [`BlockEncoder`] and
-/// provides a parity-check matrix via [`parity_check()`](Self::parity_check).
+/// The type parameter `C` is the component code, which must implement
+/// [`ProductComponent`].
 ///
 /// # Examples
 ///
@@ -77,22 +215,21 @@ use gf2_core::{BitMatrix, BitVec};
 /// assert_eq!(cw.len(), 256);
 /// ```
 #[derive(Debug, Clone)]
-pub struct ProductCode {
+pub struct ProductCode<C: ProductComponent> {
     /// The component (n, k) code used for row and column encoding.
-    component: crate::bch::extended::ExtendedBchCode,
+    component: C,
     /// Component code length.
     comp_n: usize,
     /// Component message length.
     comp_k: usize,
 }
 
-impl ProductCode {
+impl<C: ProductComponent> ProductCode<C> {
     /// Creates a new product code from the given component code.
     ///
     /// # Arguments
     ///
-    /// * `component` - The component (n, k) code. Must implement [`BlockEncoder`]
-    ///   and have an accessible parity-check matrix.
+    /// * `component` - The component (n, k) code implementing [`ProductComponent`].
     ///
     /// # Examples
     ///
@@ -108,9 +245,9 @@ impl ProductCode {
     /// # Complexity
     ///
     /// O(1) — the constructor just stores the component code.
-    pub fn new(component: crate::bch::extended::ExtendedBchCode) -> Self {
-        let comp_n = component.n();
-        let comp_k = component.k();
+    pub fn new(component: C) -> Self {
+        let comp_n = component.comp_n();
+        let comp_k = component.comp_k();
         Self {
             component,
             comp_n,
@@ -155,11 +292,12 @@ impl ProductCode {
     /// ```
     /// use gf2_coding::product::ProductCode;
     /// use gf2_coding::bch::extended::ExtendedBchCode;
+    /// use gf2_coding::product::ProductComponent;
     ///
     /// let product = ProductCode::new(ExtendedBchCode::ebch_16_11());
-    /// assert_eq!(product.component().n(), 16);
+    /// assert_eq!(product.component().comp_n(), 16);
     /// ```
-    pub fn component(&self) -> &crate::bch::extended::ExtendedBchCode {
+    pub fn component(&self) -> &C {
         &self.component
     }
 
@@ -290,7 +428,7 @@ impl ProductCode {
         let n = self.comp_n;
         assert_eq!(matrix.rows(), n);
         assert_eq!(matrix.cols(), n);
-        let h = self.component.parity_check();
+        let h = self.component.comp_parity_check();
 
         // Check all rows
         for i in 0..n {
@@ -461,7 +599,7 @@ impl ProductCode {
     }
 }
 
-impl BlockEncoder for ProductCode {
+impl<C: ProductComponent> BlockEncoder for ProductCode<C> {
     fn k(&self) -> usize {
         self.comp_k * self.comp_k
     }
@@ -478,7 +616,8 @@ impl BlockEncoder for ProductCode {
 /// Configuration for the iterative block turbo decoder.
 ///
 /// Controls the maximum number of turbo iterations, the extrinsic scaling
-/// factor, and the ORBGRAND configuration for the component SISO decoder.
+/// factor, the ORBGRAND configuration for the component SISO decoder, and
+/// an optional list-BLER early-termination threshold.
 ///
 /// # Examples
 ///
@@ -489,6 +628,7 @@ impl BlockEncoder for ProductCode {
 /// assert_eq!(config.max_iterations, 20);
 /// assert!((config.alpha - 0.5).abs() < 1e-10);
 /// assert_eq!(config.list_size, 4);
+/// assert!(config.list_bler_threshold.is_none());
 /// ```
 #[derive(Debug, Clone)]
 pub struct TurboDecoderConfig {
@@ -510,6 +650,16 @@ pub struct TurboDecoderConfig {
 
     /// Maximum ORBGRAND queries per component decode.
     pub max_queries: usize,
+
+    /// Optional list-BLER threshold for early termination.
+    ///
+    /// When set, if the average predicted list-BLER across all row/column
+    /// SISO decodings in a half-iteration drops below this threshold, the
+    /// decoder terminates early. Uses [`SisoResult::list_bler_prediction`]
+    /// from SOGRAND.
+    ///
+    /// A typical value might be `Some(1e-6)`.
+    pub list_bler_threshold: Option<f64>,
 }
 
 impl Default for TurboDecoderConfig {
@@ -519,6 +669,7 @@ impl Default for TurboDecoderConfig {
             alpha: 0.5,
             list_size: 4,
             max_queries: 1_000_000,
+            list_bler_threshold: None,
         }
     }
 }
@@ -539,9 +690,11 @@ impl Default for TurboDecoderConfig {
 ///     iterations: 3,
 ///     converged: true,
 ///     total_queries: 500,
+///     queries_per_bit: 500.0 / 121.0,
 /// };
 /// assert!(result.converged);
 /// assert_eq!(result.iterations, 3);
+/// assert!((result.queries_per_bit - 500.0 / 121.0).abs() < 1e-10);
 /// ```
 #[derive(Debug, Clone)]
 pub struct TurboDecoderResult {
@@ -556,13 +709,23 @@ pub struct TurboDecoderResult {
 
     /// Total number of ORBGRAND queries across all component decodes.
     pub total_queries: usize,
+
+    /// Average number of ORBGRAND queries per information bit.
+    ///
+    /// Computed as `total_queries as f64 / (k * k) as f64` where k is the
+    /// component message length.
+    pub queries_per_bit: f64,
 }
 
 /// Iterative block turbo decoder using SOGRAND as the component SISO decoder.
 ///
 /// The turbo decoder alternates between row-wise and column-wise SISO decoding,
 /// exchanging extrinsic information between steps. It uses early termination
-/// when the hard-decision matrix forms a valid product codeword.
+/// when the hard-decision matrix forms a valid product codeword or when the
+/// average list-BLER drops below a configured threshold.
+///
+/// The type parameter `C` is the component code, which must implement
+/// [`ProductComponent`] and [`Clone`].
 ///
 /// # Algorithm
 ///
@@ -607,23 +770,23 @@ pub struct TurboDecoderResult {
 /// O(I * n * Q) where I is the number of iterations, n is the component code
 /// length, and Q is the average ORBGRAND query count per component decode.
 /// Each iteration performs 2n component SISO decodes (n rows + n columns).
-pub struct TurboDecoder {
+pub struct TurboDecoder<C: ProductComponent> {
     /// Component code for encoding/validity checks.
-    component: crate::bch::extended::ExtendedBchCode,
+    component: C,
     /// Decoder configuration.
     config: TurboDecoderConfig,
     /// SOGRAND instance for component SISO decoding.
     sogrand: SoGrand,
     /// Product code for validity checking.
-    product_code: ProductCode,
+    product_code: ProductCode<C>,
 }
 
-impl TurboDecoder {
+impl<C: ProductComponent + Clone> TurboDecoder<C> {
     /// Creates a new turbo decoder for the given component code.
     ///
     /// # Arguments
     ///
-    /// * `component` - The component (n, k) extended BCH code.
+    /// * `component` - The component (n, k) code implementing [`ProductComponent`].
     /// * `config` - Decoder configuration controlling iterations, scaling, and
     ///   ORBGRAND parameters.
     ///
@@ -640,15 +803,12 @@ impl TurboDecoder {
     /// # Complexity
     ///
     /// O(n^2) for constructing the sparse parity-check matrix used by ORBGRAND.
-    pub fn new(
-        component: crate::bch::extended::ExtendedBchCode,
-        config: TurboDecoderConfig,
-    ) -> Self {
-        let h = component.parity_check().clone();
+    pub fn new(component: C, config: TurboDecoderConfig) -> Self {
+        let h = component.comp_parity_check().clone();
         let orb_config = OrbGrandConfig {
             list_size: config.list_size,
             max_queries: config.max_queries,
-            even_code: component.is_even(),
+            even_code: component.comp_is_even(),
             systematic: true,
         };
         let orbgrand = OrbGrand::new(h, orb_config);
@@ -709,7 +869,8 @@ impl TurboDecoder {
     /// O(I * n * Q) where I is the number of iterations, n is the component
     /// code length, and Q is the average ORBGRAND query count per component decode.
     pub fn decode(&self, channel_llrs: &[Llr]) -> TurboDecoderResult {
-        let n = self.component.n();
+        let n = self.component.comp_n();
+        let k = self.component.comp_k();
         let n_sq = n * n;
         assert_eq!(
             channel_llrs.len(),
@@ -731,11 +892,13 @@ impl TurboDecoder {
         for iteration in 0..self.config.max_iterations {
             // === Row step ===
             let mut l_app_row: Vec<Vec<f32>> = vec![vec![0.0; n]; n];
+            let mut row_bler_sum: f64 = 0.0;
             for i in 0..n {
                 // Input to SISO: L_Ch + L_A for this row
                 let input: Vec<Llr> = (0..n).map(|j| Llr::new(l_ch[i][j] + l_a[i][j])).collect();
                 let siso_result = self.sogrand.decode_siso(&input);
                 total_queries += siso_result.query_count;
+                row_bler_sum += siso_result.list_bler_prediction;
                 for (j, app_llr) in siso_result.app_llrs.iter().enumerate() {
                     l_app_row[i][j] = app_llr.value();
                 }
@@ -757,7 +920,23 @@ impl TurboDecoder {
                     iterations: iteration + 1,
                     converged: true,
                     total_queries,
+                    queries_per_bit: total_queries as f64 / (k * k) as f64,
                 };
+            }
+
+            // Check list-BLER threshold for early termination
+            if let Some(threshold) = self.config.list_bler_threshold {
+                let avg_bler = row_bler_sum / n as f64;
+                if avg_bler < threshold {
+                    let decoded = self.extract_decoded_message(&l_app_row);
+                    return TurboDecoderResult {
+                        decoded_bits: decoded,
+                        iterations: iteration + 1,
+                        converged: true,
+                        total_queries,
+                        queries_per_bit: total_queries as f64 / (k * k) as f64,
+                    };
+                }
             }
 
             // Set L_A = alpha * L_E
@@ -770,11 +949,13 @@ impl TurboDecoder {
 
             // === Column step ===
             let mut l_app_col: Vec<Vec<f32>> = vec![vec![0.0; n]; n];
+            let mut col_bler_sum: f64 = 0.0;
             for j in 0..n {
                 // Input to SISO: L_Ch + L_A for this column
                 let input: Vec<Llr> = (0..n).map(|i| Llr::new(l_ch[i][j] + l_a[i][j])).collect();
                 let siso_result = self.sogrand.decode_siso(&input);
                 total_queries += siso_result.query_count;
+                col_bler_sum += siso_result.list_bler_prediction;
                 for (i, app_llr) in siso_result.app_llrs.iter().enumerate() {
                     l_app_col[i][j] = app_llr.value();
                 }
@@ -795,7 +976,23 @@ impl TurboDecoder {
                     iterations: iteration + 1,
                     converged: true,
                     total_queries,
+                    queries_per_bit: total_queries as f64 / (k * k) as f64,
                 };
+            }
+
+            // Check list-BLER threshold for early termination
+            if let Some(threshold) = self.config.list_bler_threshold {
+                let avg_bler = col_bler_sum / n as f64;
+                if avg_bler < threshold {
+                    let decoded = self.extract_decoded_message(&l_app_col);
+                    return TurboDecoderResult {
+                        decoded_bits: decoded,
+                        iterations: iteration + 1,
+                        converged: true,
+                        total_queries,
+                        queries_per_bit: total_queries as f64 / (k * k) as f64,
+                    };
+                }
             }
 
             // Set L_A = alpha * L_E for next iteration
@@ -819,6 +1016,7 @@ impl TurboDecoder {
             iterations: self.config.max_iterations,
             converged: false,
             total_queries,
+            queries_per_bit: total_queries as f64 / (k * k) as f64,
         }
     }
 
@@ -832,7 +1030,7 @@ impl TurboDecoder {
     ///
     /// `true` if the hard-decision matrix is a valid product codeword.
     fn check_early_termination(&self, llr_matrix: &[Vec<f32>]) -> bool {
-        let n = self.component.n();
+        let n = self.component.comp_n();
         let mut matrix = BitMatrix::zeros(n, n);
         for (i, row) in llr_matrix.iter().enumerate().take(n) {
             for (j, &val) in row.iter().enumerate().take(n) {
@@ -848,7 +1046,7 @@ impl TurboDecoder {
     ///
     /// For a systematic code, the message bits are in the top-left k x k submatrix.
     fn extract_decoded_message(&self, llr_matrix: &[Vec<f32>]) -> BitVec {
-        let k = self.component.k();
+        let k = self.component.comp_k();
         let mut msg = BitVec::with_capacity(k * k);
         for row in llr_matrix.iter().take(k) {
             for &val in row.iter().take(k) {
@@ -895,6 +1093,7 @@ impl TurboDecoder {
 mod tests {
     use super::*;
     use crate::bch::extended::ExtendedBchCode;
+    use crate::crc::CrcCode;
     use crate::traits::BlockEncoder;
 
     // =====================================================================
@@ -907,8 +1106,8 @@ mod tests {
         let product = ProductCode::new(component);
         assert_eq!(product.n(), 256);
         assert_eq!(product.k(), 121);
-        assert_eq!(product.component().n(), 16);
-        assert_eq!(product.component().k(), 11);
+        assert_eq!(product.component().comp_n(), 16);
+        assert_eq!(product.component().comp_k(), 11);
     }
 
     #[test]
@@ -917,6 +1116,16 @@ mod tests {
         let product = ProductCode::new(component);
         assert_eq!(product.n(), 256);
         assert_eq!(product.k(), 49);
+    }
+
+    #[test]
+    fn test_product_code_parameters_crc_25_15() {
+        let component = CrcCode::crc_25_15();
+        let product = ProductCode::new(component);
+        assert_eq!(product.n(), 625);
+        assert_eq!(product.k(), 225);
+        assert_eq!(product.component().comp_n(), 25);
+        assert_eq!(product.component().comp_k(), 15);
     }
 
     #[test]
@@ -1006,6 +1215,93 @@ mod tests {
     }
 
     // =====================================================================
+    // eBCH(16,7) encoding tests
+    // =====================================================================
+
+    #[test]
+    fn test_encode_ebch_16_7_all_zeros() {
+        let component = ExtendedBchCode::ebch_16_7();
+        let product = ProductCode::new(component);
+        let msg = BitVec::zeros(product.k());
+        let cw = product.encode(&msg);
+        assert_eq!(cw.len(), product.n());
+        assert_eq!(cw.count_ones(), 0);
+    }
+
+    #[test]
+    fn test_encode_ebch_16_7_produces_valid_codeword() {
+        let component = ExtendedBchCode::ebch_16_7();
+        let product = ProductCode::new(component);
+        let mut msg = BitVec::zeros(product.k());
+        msg.set(0, true);
+        msg.set(3, true);
+        let cw = product.encode(&msg);
+        let matrix = product.flat_to_matrix(&cw);
+        assert!(
+            product.is_valid_codeword(&matrix),
+            "eBCH(16,7) product codeword must be valid"
+        );
+    }
+
+    #[test]
+    fn test_encode_ebch_16_7_systematic_roundtrip() {
+        let component = ExtendedBchCode::ebch_16_7();
+        let product = ProductCode::new(component);
+        let mut msg = BitVec::zeros(product.k());
+        for i in (0..product.k()).step_by(2) {
+            msg.set(i, true);
+        }
+        let cw = product.encode(&msg);
+        let matrix = product.flat_to_matrix(&cw);
+        let recovered = product.extract_message(&matrix);
+        assert_eq!(recovered, msg, "eBCH(16,7) systematic roundtrip must match");
+    }
+
+    // =====================================================================
+    // CRC(25,15) encoding tests
+    // =====================================================================
+
+    #[test]
+    fn test_encode_crc_25_15_all_zeros() {
+        let component = CrcCode::crc_25_15();
+        let product = ProductCode::new(component);
+        let msg = BitVec::zeros(product.k());
+        let cw = product.encode(&msg);
+        assert_eq!(cw.len(), product.n());
+        assert_eq!(cw.count_ones(), 0);
+    }
+
+    #[test]
+    fn test_encode_crc_25_15_produces_valid_codeword() {
+        let component = CrcCode::crc_25_15();
+        let product = ProductCode::new(component);
+        let mut msg = BitVec::zeros(product.k());
+        msg.set(0, true);
+        msg.set(7, true);
+        msg.set(14, true);
+        let cw = product.encode(&msg);
+        let matrix = product.flat_to_matrix(&cw);
+        assert!(
+            product.is_valid_codeword(&matrix),
+            "CRC(25,15) product codeword must be valid"
+        );
+    }
+
+    #[test]
+    fn test_encode_crc_25_15_systematic_roundtrip() {
+        let component = CrcCode::crc_25_15();
+        let product = ProductCode::new(component);
+        let mut msg = BitVec::zeros(product.k());
+        for i in (0..product.k()).step_by(3) {
+            msg.set(i, true);
+        }
+        let cw = product.encode(&msg);
+        let matrix = product.flat_to_matrix(&cw);
+        let recovered = product.extract_message(&matrix);
+        assert_eq!(recovered, msg, "CRC(25,15) systematic roundtrip must match");
+    }
+
+    // =====================================================================
     // Validity check tests
     // =====================================================================
 
@@ -1069,6 +1365,16 @@ mod tests {
         assert!((config.alpha - 0.5).abs() < 1e-10);
         assert_eq!(config.list_size, 4);
         assert_eq!(config.max_queries, 1_000_000);
+        assert!(config.list_bler_threshold.is_none());
+    }
+
+    #[test]
+    fn test_turbo_config_list_bler_threshold() {
+        let config = TurboDecoderConfig {
+            list_bler_threshold: Some(1e-6),
+            ..TurboDecoderConfig::default()
+        };
+        assert_eq!(config.list_bler_threshold, Some(1e-6));
     }
 
     // =====================================================================
@@ -1090,7 +1396,7 @@ mod tests {
     }
 
     // =====================================================================
-    // TurboDecoder decoding tests
+    // TurboDecoder decoding tests — eBCH(16,11)
     // =====================================================================
 
     #[test]
@@ -1117,6 +1423,10 @@ mod tests {
             "Decoded message should be all zeros"
         );
         assert!(result.total_queries > 0, "Should have performed queries");
+        assert!(
+            result.queries_per_bit > 0.0,
+            "queries_per_bit should be positive"
+        );
     }
 
     #[test]
@@ -1244,12 +1554,283 @@ mod tests {
             result_low.total_queries,
         );
     }
+
+    // =====================================================================
+    // queries_per_bit tests
+    // =====================================================================
+
+    #[test]
+    fn test_queries_per_bit_computed_correctly() {
+        let component = ExtendedBchCode::ebch_16_11();
+        let product = ProductCode::new(component.clone());
+        let config = TurboDecoderConfig {
+            max_iterations: 3,
+            list_size: 2,
+            max_queries: 10_000,
+            ..TurboDecoderConfig::default()
+        };
+        let decoder = TurboDecoder::new(component, config);
+
+        let llrs: Vec<Llr> = vec![Llr::new(5.0); product.n()];
+        let result = decoder.decode(&llrs);
+
+        let expected = result.total_queries as f64 / product.k() as f64;
+        assert!(
+            (result.queries_per_bit - expected).abs() < 1e-10,
+            "queries_per_bit should equal total_queries / k^2: got {}, expected {}",
+            result.queries_per_bit,
+            expected
+        );
+    }
+
+    // =====================================================================
+    // List-BLER threshold tests
+    // =====================================================================
+
+    #[test]
+    fn test_list_bler_threshold_early_termination() {
+        let component = ExtendedBchCode::ebch_16_11();
+        let product = ProductCode::new(component.clone());
+
+        // Without threshold: many iterations allowed
+        let config_no_thresh = TurboDecoderConfig {
+            max_iterations: 20,
+            list_size: 2,
+            max_queries: 10_000,
+            list_bler_threshold: None,
+            ..TurboDecoderConfig::default()
+        };
+        let decoder_no_thresh = TurboDecoder::new(component.clone(), config_no_thresh);
+
+        // With a very generous threshold: should still converge
+        let config_with_thresh = TurboDecoderConfig {
+            max_iterations: 20,
+            list_size: 2,
+            max_queries: 10_000,
+            list_bler_threshold: Some(0.5), // generous threshold
+            ..TurboDecoderConfig::default()
+        };
+        let decoder_with_thresh = TurboDecoder::new(component, config_with_thresh);
+
+        let llrs: Vec<Llr> = vec![Llr::new(5.0); product.n()];
+
+        let result_no = decoder_no_thresh.decode(&llrs);
+        let result_with = decoder_with_thresh.decode(&llrs);
+
+        // Both should converge at high SNR
+        assert!(result_no.converged);
+        assert!(result_with.converged);
+
+        // With threshold, should use at most as many iterations
+        assert!(
+            result_with.iterations <= result_no.iterations,
+            "BLER threshold should enable equal or earlier termination: \
+             with={}, without={}",
+            result_with.iterations,
+            result_no.iterations,
+        );
+    }
+
+    // =====================================================================
+    // TurboDecoder with eBCH(16,7) tests
+    // =====================================================================
+
+    #[test]
+    fn test_decode_ebch_16_7_all_zeros_high_snr() {
+        let component = ExtendedBchCode::ebch_16_7();
+        let product = ProductCode::new(component.clone());
+        let config = TurboDecoderConfig {
+            max_iterations: 5,
+            list_size: 2,
+            max_queries: 10_000,
+            ..TurboDecoderConfig::default()
+        };
+        let decoder = TurboDecoder::new(component, config);
+
+        let llrs: Vec<Llr> = vec![Llr::new(5.0); product.n()];
+        let result = decoder.decode(&llrs);
+
+        assert!(
+            result.converged,
+            "eBCH(16,7) should converge for high-SNR all-zeros"
+        );
+        assert_eq!(result.decoded_bits.len(), product.k());
+        assert_eq!(result.decoded_bits.count_ones(), 0);
+        assert!(result.queries_per_bit > 0.0);
+    }
+
+    #[test]
+    fn test_decode_ebch_16_7_nonzero_message() {
+        let component = ExtendedBchCode::ebch_16_7();
+        let product = ProductCode::new(component.clone());
+        let config = TurboDecoderConfig {
+            max_iterations: 5,
+            list_size: 2,
+            max_queries: 10_000,
+            ..TurboDecoderConfig::default()
+        };
+        let decoder = TurboDecoder::new(component, config);
+
+        let mut msg = BitVec::zeros(product.k());
+        msg.set(0, true);
+        msg.set(3, true);
+        let cw = product.encode(&msg);
+
+        let llrs: Vec<Llr> = (0..cw.len())
+            .map(|i| {
+                if cw.get(i) {
+                    Llr::new(-5.0)
+                } else {
+                    Llr::new(5.0)
+                }
+            })
+            .collect();
+
+        let result = decoder.decode(&llrs);
+        assert!(
+            result.converged,
+            "eBCH(16,7) should converge for high-SNR message"
+        );
+        assert_eq!(
+            result.decoded_bits, msg,
+            "eBCH(16,7) decoded must match original"
+        );
+    }
+
+    // =====================================================================
+    // TurboDecoder with CRC(25,15) tests
+    // =====================================================================
+
+    #[test]
+    fn test_decode_crc_25_15_all_zeros_high_snr() {
+        let component = CrcCode::crc_25_15();
+        let product = ProductCode::new(component.clone());
+        let config = TurboDecoderConfig {
+            max_iterations: 5,
+            list_size: 2,
+            max_queries: 10_000,
+            ..TurboDecoderConfig::default()
+        };
+        let decoder = TurboDecoder::new(component, config);
+
+        let llrs: Vec<Llr> = vec![Llr::new(5.0); product.n()];
+        let result = decoder.decode(&llrs);
+
+        assert!(
+            result.converged,
+            "CRC(25,15) should converge for high-SNR all-zeros"
+        );
+        assert_eq!(result.decoded_bits.len(), product.k());
+        assert_eq!(result.decoded_bits.count_ones(), 0);
+        assert!(result.queries_per_bit > 0.0);
+    }
+
+    #[test]
+    fn test_decode_crc_25_15_nonzero_message() {
+        let component = CrcCode::crc_25_15();
+        let product = ProductCode::new(component.clone());
+        let config = TurboDecoderConfig {
+            max_iterations: 5,
+            list_size: 2,
+            max_queries: 10_000,
+            ..TurboDecoderConfig::default()
+        };
+        let decoder = TurboDecoder::new(component, config);
+
+        let mut msg = BitVec::zeros(product.k());
+        msg.set(0, true);
+        msg.set(7, true);
+        msg.set(14, true);
+        let cw = product.encode(&msg);
+
+        let llrs: Vec<Llr> = (0..cw.len())
+            .map(|i| {
+                if cw.get(i) {
+                    Llr::new(-5.0)
+                } else {
+                    Llr::new(5.0)
+                }
+            })
+            .collect();
+
+        let result = decoder.decode(&llrs);
+        assert!(
+            result.converged,
+            "CRC(25,15) should converge for high-SNR message"
+        );
+        assert_eq!(
+            result.decoded_bits, msg,
+            "CRC(25,15) decoded must match original"
+        );
+    }
+
+    // =====================================================================
+    // BER improvement over iterations test
+    // =====================================================================
+
+    #[test]
+    fn test_ber_improves_over_iterations() {
+        let component = ExtendedBchCode::ebch_16_11();
+        let product = ProductCode::new(component.clone());
+
+        // Encode a known message
+        let mut msg = BitVec::zeros(product.k());
+        for i in (0..product.k()).step_by(5) {
+            msg.set(i, true);
+        }
+        let cw = product.encode(&msg);
+
+        // Create moderate-SNR LLRs with some noise to prevent instant convergence.
+        // Use a deterministic pattern: flip sign on specific positions.
+        let llrs: Vec<Llr> = (0..cw.len())
+            .map(|i| {
+                let base = if cw.get(i) { -2.0_f32 } else { 2.0 };
+                // Add systematic perturbation (not random, for reproducibility)
+                let perturbation = if (i * 7 + 3) % 11 < 3 { -0.5 } else { 0.0 };
+                Llr::new(base + perturbation)
+            })
+            .collect();
+
+        // Run decoder with increasing max_iterations and collect BER at each level
+        let mut prev_ber = f64::MAX;
+        for max_iter in 1..=5 {
+            let config = TurboDecoderConfig {
+                max_iterations: max_iter,
+                list_size: 2,
+                max_queries: 10_000,
+                ..TurboDecoderConfig::default()
+            };
+            let decoder = TurboDecoder::new(component.clone(), config);
+            let result = decoder.decode(&llrs);
+
+            // Compute BER
+            let mut bit_errors = 0;
+            for i in 0..product.k() {
+                if result.decoded_bits.get(i) != msg.get(i) {
+                    bit_errors += 1;
+                }
+            }
+            let ber = bit_errors as f64 / product.k() as f64;
+
+            // BER should be monotonically non-increasing with more iterations
+            assert!(
+                ber <= prev_ber + 1e-10,
+                "BER should not increase with more iterations: \
+                 iter={}, BER={}, prev_BER={}",
+                max_iter,
+                ber,
+                prev_ber
+            );
+            prev_ber = ber;
+        }
+    }
 }
 
 #[cfg(test)]
 mod proptests {
     use super::*;
     use crate::bch::extended::ExtendedBchCode;
+    use crate::crc::CrcCode;
     use crate::traits::BlockEncoder;
     use proptest::prelude::*;
 
@@ -1271,6 +1852,42 @@ mod proptests {
             prop_assert!(product.is_valid_codeword(&matrix), "Encoded codeword must be valid");
             let extracted = product.extract_message(&matrix);
             prop_assert_eq!(extracted, msg, "Extracted message must match original");
+        }
+
+        /// eBCH(16,7) product code: encoding roundtrips for random messages.
+        #[test]
+        fn prop_ebch_16_7_encode_roundtrip(
+            msg_bits in prop::collection::vec(any::<bool>(), 49)
+        ) {
+            let component = ExtendedBchCode::ebch_16_7();
+            let product = ProductCode::new(component);
+            let mut msg = BitVec::new();
+            for bit in msg_bits {
+                msg.push_bit(bit);
+            }
+            let cw = product.encode(&msg);
+            let matrix = product.flat_to_matrix(&cw);
+            prop_assert!(product.is_valid_codeword(&matrix), "eBCH(16,7) codeword must be valid");
+            let extracted = product.extract_message(&matrix);
+            prop_assert_eq!(extracted, msg, "eBCH(16,7) message must roundtrip");
+        }
+
+        /// CRC(25,15) product code: encoding roundtrips for random messages.
+        #[test]
+        fn prop_crc_25_15_encode_roundtrip(
+            msg_bits in prop::collection::vec(any::<bool>(), 225)
+        ) {
+            let component = CrcCode::crc_25_15();
+            let product = ProductCode::new(component);
+            let mut msg = BitVec::new();
+            for bit in msg_bits {
+                msg.push_bit(bit);
+            }
+            let cw = product.encode(&msg);
+            let matrix = product.flat_to_matrix(&cw);
+            prop_assert!(product.is_valid_codeword(&matrix), "CRC(25,15) codeword must be valid");
+            let extracted = product.extract_message(&matrix);
+            prop_assert_eq!(extracted, msg, "CRC(25,15) message must roundtrip");
         }
     }
 }
