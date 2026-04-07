@@ -963,6 +963,9 @@ pub struct GldpcDecoder {
     var_to_check: Vec<Vec<Llr>>,
     /// Prebuilt SOGRAND decoder for the component code (reused across check nodes).
     component_sogrand: SoGrand,
+    /// Lookup table: var_check_idx[var][check_idx] -> index in var_check_map[var].
+    /// Avoids O(degree) linear scan in the hot check-node update path.
+    var_check_idx: Vec<std::collections::HashMap<usize, usize>>,
     /// Number of iterations in the last decode call.
     last_iterations: usize,
 }
@@ -1040,12 +1043,25 @@ impl GldpcDecoder {
             .map(|checks| vec![Llr::zero(); checks.len()])
             .collect();
 
+        let var_check_idx: Vec<std::collections::HashMap<usize, usize>> = code
+            .var_check_map
+            .iter()
+            .map(|var_checks| {
+                var_checks
+                    .iter()
+                    .enumerate()
+                    .map(|(vc_idx, &(ci, _))| (ci, vc_idx))
+                    .collect()
+            })
+            .collect();
+
         Self {
             code,
             beliefs: vec![Llr::zero(); n],
             check_to_var,
             var_to_check,
             component_sogrand,
+            var_check_idx,
             last_iterations: 0,
         }
     }
@@ -1062,11 +1078,8 @@ impl GldpcDecoder {
             // Collect input LLRs from variable-to-check messages
             let mut input_llrs = Vec::with_capacity(n_c);
             for &var_idx in check_vars.iter() {
-                // Find which index in var_check_map[var_idx] corresponds to this check
-                let vc_idx = self.code.var_check_map[var_idx]
-                    .iter()
-                    .position(|&(ci, _)| ci == check_idx)
-                    .unwrap();
+                // O(1) lookup via prebuilt index (replaces O(degree) linear scan)
+                let vc_idx = self.var_check_idx[var_idx][&check_idx];
                 input_llrs.push(self.var_to_check[var_idx][vc_idx]);
             }
 
