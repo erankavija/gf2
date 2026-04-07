@@ -25,7 +25,7 @@ The paper presents 5 AWGN comparisons (Figures 1, 3–6). We target all of them:
 
 | Fig | Code Dimensions $(n,k)$ | GLDPC Structure | Component | LDPC | $E_b/N_0$ Range | Metrics |
 |-----|-------------------------|-----------------|-----------|------|------------------|---------|
-| 7 | $(1024, 640)$ | QC-GLDPC [Lentmaier10] | eBCH nodes | 5G NR | $0$–$4$ dB | BLER, BER, queries/bit, iterations |
+| 7 | $(1024, 646)$ | QC-GLDPC [Lentmaier10] | eBCH nodes | 5G NR | $0$–$4$ dB | BLER, BER, queries/bit, iterations |
 
 ### 2.3 Fading Channel Comparisons (Figures 8–10)
 
@@ -95,7 +95,7 @@ The paper presents 5 AWGN comparisons (Figures 1, 3–6). We target all of them:
 | $(256, 49)$ | $0.191$ | BG2 | Very low rate |
 | $(625, 225)$ | $0.36$ | BG2 | Non-standard length |
 | $(1024, 441)$ | $0.431$ | BG2 | Paper's headline result |
-| $(1024, 640)$ | $0.625$ | BG1 or BG2 | GLDPC comparison |
+| $(1024, 646)$ | $0.625$ | BG1 or BG2 | GLDPC comparison |
 | $(4096, 3249)$ | $0.793$ | BG1 | High rate, long block |
 
 Note: The paper says "5G LDPC" but the exact construction details (which $Z$, whether shortened/punctured) are not specified. We need to determine the closest valid 5G NR parameters for each target dimension, or use the LDPC codes as-is with matching $(n,k)$ via shortening/puncturing.

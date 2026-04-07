@@ -4,7 +4,6 @@ use gf2_coding::gldpc::{GldpcDecoder, QcGldpcCode};
 use gf2_coding::ldpc::nr_5g::Nr5gRateMatchedDecoder;
 use gf2_coding::ldpc::QuasiCyclicLdpc;
 use gf2_coding::simulation::{BpskAwgnChannel, SimulationConfig, SimulationRunner};
-use gf2_coding::traits::{BlockEncoder, IterativeSoftDecoder};
 
 #[test]
 fn test_gldpc_1024_construction() {
