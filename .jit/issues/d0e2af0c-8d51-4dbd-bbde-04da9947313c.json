@@ -2,9 +2,9 @@
   "id": "d0e2af0c-8d51-4dbd-bbde-04da9947313c",
   "title": "Implement QC-GLDPC construction with SOGRAND check nodes",
   "description": "Implement Generalized LDPC (GLDPC) codes with quasi-cyclic structure and eBCH check nodes, as described in Lentmaier (2010).\n\n## QC-GLDPC Construction\n\nThe adjacency matrix uses circulant permutation matrices:\n\n```\nGamma = [[I_n^(0), I_n^(0), ..., I_n^(0)],\n         [I_n^(0), I_n^(1), ..., I_n^(n-1)]]\n```\n\nwhere `I_n^(i)` is an n×n identity matrix right-rotated by i positions.\n\n- Code parameters: `(n², n² - 2n(n-k))` where (n,k) is the component code.\n- Target: **(1024, 640) QC-GLDPC** code.\n\n## Decoding\n\nBP decoding where each check node runs full SISO-SOGRAND instead of the usual boxplus/min-sum operation:\n\n- Variable node updates are standard BP.\n- Check node updates invoke SOGRAND on the eBCH component code with the incoming variable-to-check messages as input LLRs.\n- SOGRAND output provides the check-to-variable messages.\n\n## Acceptance Criteria\n\n- QC-GLDPC construction produces a valid (1024, 640) code.\n- Encoder works correctly (all codewords satisfy all check node constraints).\n- BP decoder with SOGRAND check nodes converges.\n- Can be used in the simulation framework.\n\n## Location\n\nNew module `crates/gf2-coding/src/gldpc/`, or extend `crates/gf2-coding/src/ldpc/`.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [
     "f03ea0fd-7159-49b8-a6a0-8f71f2b648b0",
     "1474a3ca-aba1-475a-a5a0-f26f8435cc36"
@@ -16,11 +16,6 @@
     "tdd-reminder"
   ],
   "gates_status": {
-    "tdd-reminder": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-04-05T23:09:14.298856173Z"
-    },
     "doc-review": {
       "status": "pending",
       "updated_by": null,
@@ -30,6 +25,11 @@
       "status": "pending",
       "updated_by": null,
       "updated_at": "2026-04-05T23:09:14.298792723Z"
+    },
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-07T00:16:05.510133028Z"
     },
     "code-review": {
       "status": "pending",
@@ -45,5 +45,5 @@
     "component:gf2-coding"
   ],
   "created_at": "2026-02-22T21:15:39.820865509+00:00",
-  "updated_at": "2026-04-06T22:29:32.495150960+00:00"
+  "updated_at": "2026-04-07T00:16:06.578140765+00:00"
 }
