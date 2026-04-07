@@ -1,54 +1,69 @@
 {
   "epic_id": "6efb756b-bee0-4dc1-9ee6-a1a0a61034d4",
   "epic_short_id": "6efb756b",
-  "current_wave": 1,
+  "current_wave": 4,
   "waves": [
     {
       "wave_number": 1,
       "issues": [
-        {"id": "d5dc78e8-bd07-486f-8cbd-90c04909416f", "short_id": "d5dc78e8", "title": "Implement ORBGRAND decoder with logistic-weight noise pattern ordering", "classification": "implementation", "status": "pending"},
-        {"id": "dd22a099-6bdf-42eb-a012-8109da9c0b00", "short_id": "dd22a099", "title": "Implement 5G NR LDPC code construction from 3GPP TS 38.212", "classification": "implementation", "status": "pending"},
-        {"id": "1474a3ca-aba1-475a-a5a0-f26f8435cc36", "short_id": "1474a3ca", "title": "Implement component codes: eBCH, dRM, and CRC for GRAND decoding", "classification": "implementation", "status": "pending"},
-        {"id": "290b4fa0-aad1-4480-b9d1-9a1ddf460f1c", "short_id": "290b4fa0", "title": "Upgrade simulation harness for coded BER/FER sweeps", "classification": "implementation", "status": "pending"},
-        {"id": "c3ea6855-9c42-4412-ae98-7a172ec9be28", "short_id": "c3ea6855", "title": "Implement normalized min-sum and early termination for LDPC", "classification": "implementation", "status": "pending"},
-        {"id": "d9db86e6-8328-4270-bf91-441874762b58", "short_id": "d9db86e6", "title": "Extract and organize reference data from paper's pgfplots files", "classification": "research", "status": "pending"},
-        {"id": "13594cd9-bfcb-400e-a5fc-ca0ed13c3378", "short_id": "13594cd9", "title": "Implement Rician fading channel and QPSK modulation", "classification": "implementation", "status": "pending"}
+        {"id": "d5dc78e8-bd07-486f-8cbd-90c04909416f", "short_id": "d5dc78e8", "title": "Implement ORBGRAND decoder", "classification": "implementation", "status": "done"},
+        {"id": "dd22a099-6bdf-42eb-a012-8109da9c0b00", "short_id": "dd22a099", "title": "5G NR LDPC construction", "classification": "implementation", "status": "done"},
+        {"id": "1474a3ca-aba1-475a-a5a0-f26f8435cc36", "short_id": "1474a3ca", "title": "Component codes (eBCH, dRM, CRC)", "classification": "implementation", "status": "done"},
+        {"id": "290b4fa0-aad1-4480-b9d1-9a1ddf460f1c", "short_id": "290b4fa0", "title": "Simulation harness", "classification": "implementation", "status": "done"},
+        {"id": "c3ea6855-9c42-4412-ae98-7a172ec9be28", "short_id": "c3ea6855", "title": "Normalized min-sum LDPC", "classification": "implementation", "status": "done"},
+        {"id": "d9db86e6-8328-4270-bf91-441874762b58", "short_id": "d9db86e6", "title": "Reference data extraction", "classification": "research", "status": "done"},
+        {"id": "13594cd9-bfcb-400e-a5fc-ca0ed13c3378", "short_id": "13594cd9", "title": "Rician fading + QPSK", "classification": "implementation", "status": "done"}
       ]
     },
     {
       "wave_number": 2,
       "issues": [
-        {"id": "f03ea0fd-7159-49b8-a6a0-8f71f2b648b0", "short_id": "f03ea0fd", "title": "Implement SOGRAND soft-output computation", "classification": "implementation", "status": "pending"}
+        {"id": "f03ea0fd-7159-49b8-a6a0-8f71f2b648b0", "short_id": "f03ea0fd", "title": "SOGRAND soft-output", "classification": "implementation", "status": "done"}
       ]
     },
     {
       "wave_number": 3,
       "issues": [
-        {"id": "f326ff2f-f10e-4b8b-9fa3-00971cb5e146", "short_id": "f326ff2f", "title": "Implement product code construction and block turbo decoder", "classification": "implementation", "status": "pending"},
-        {"id": "d0e2af0c-8d51-4dbd-bbde-04da9947313c", "short_id": "d0e2af0c", "title": "Implement QC-GLDPC construction with SOGRAND check nodes", "classification": "implementation", "status": "pending"}
+        {"id": "f326ff2f-f10e-4b8b-9fa3-00971cb5e146", "short_id": "f326ff2f", "title": "Product code turbo decoder", "classification": "implementation", "status": "done"},
+        {"id": "d0e2af0c-8d51-4dbd-bbde-04da9947313c", "short_id": "d0e2af0c", "title": "QC-GLDPC with SOGRAND", "classification": "implementation", "status": "done"}
+      ]
+    },
+    {
+      "wave_number": "3.5",
+      "issues": [
+        {"id": "6bf5dd47-6af0-49c5-a0fe-38759f0d0967", "short_id": "6bf5dd47", "title": "Extract per-i_LS shift tables from 3GPP TS 38.212", "classification": "implementation", "status": "in_progress",
+         "notes": "Root cause of LDPC BLER gap. BG1/BG2 shift data extracted from srsRAN_4G reference. Generating Rust code."}
       ]
     },
     {
       "wave_number": 4,
       "issues": [
-        {"id": "92086311-4dcc-4d04-9c26-a88034ffd894", "short_id": "92086311", "title": "Run Phase 1 AWGN simulations: Fig 1 and Fig 3 product codes vs 5G NR LDPC", "classification": "implementation", "status": "pending"},
-        {"id": "3ce1cd12-d0d6-421b-b005-3cfb6d448f07", "short_id": "3ce1cd12", "title": "Run Phase 3 AWGN simulation: Fig 7 GLDPC vs 5G NR LDPC", "classification": "implementation", "status": "pending"}
+        {"id": "92086311-4dcc-4d04-9c26-a88034ffd894", "short_id": "92086311", "title": "Phase 1 AWGN sims", "classification": "implementation", "status": "in_progress", "notes": "Blocked by 6bf5dd47"},
+        {"id": "3ce1cd12-d0d6-421b-b005-3cfb6d448f07", "short_id": "3ce1cd12", "title": "Phase 3 AWGN sim", "classification": "implementation", "status": "in_progress", "notes": "Blocked by 6bf5dd47"}
       ]
     },
     {
       "wave_number": 5,
       "issues": [
-        {"id": "45649554-b0dd-4a83-a54c-3693a3100345", "short_id": "45649554", "title": "Run Phase 2 AWGN simulations: Figs 4-6 additional product code dimensions", "classification": "implementation", "status": "pending"},
-        {"id": "831bfc4a-3677-496f-92ca-fa0ecf539e4b", "short_id": "831bfc4a", "title": "Run Phase 4 fading channel simulations: Figs 8-10", "classification": "implementation", "status": "pending"}
+        {"id": "45649554-b0dd-4a83-a54c-3693a3100345", "short_id": "45649554", "title": "Phase 2 AWGN sims", "classification": "implementation", "status": "pending"},
+        {"id": "831bfc4a-3677-496f-92ca-fa0ecf539e4b", "short_id": "831bfc4a", "title": "Phase 4 fading sims", "classification": "implementation", "status": "pending"}
       ]
     }
   ],
-  "created_during_execution": [],
+  "created_during_execution": [
+    {"id": "6bf5dd47", "title": "Extract per-i_LS shift tables", "reason": "Root cause: single shift table wrong for most i_LS", "wave": "3.5"}
+  ],
   "escalations": [
     {"type": "success_criteria", "resolution": "Added 9 criteria to epic, user approved"},
     {"type": "cross_epic_dep", "issue": "c3ea6855", "resolution": "Included in Wave 1, user approved"},
     {"type": "cross_epic_dep", "issue": "d4851c3d", "resolution": "QPSK-only within epic, dep edge removed, user approved"}
   ],
   "rework_counts": {"290b4fa0": 0, "c3ea6855": 0},
-  "started_at": "2026-04-06T00:00:00Z"
+  "started_at": "2026-04-06T00:00:00Z",
+  "root_cause_analysis": {
+    "symptom": "LDPC BLER ~0.09 at 3dB vs paper ~0.001 (shifted ~2dB right)",
+    "root_cause": "BG1/BG2 base graph shift tables stored single i_LS column instead of 8 per-i_LS columns from 3GPP TS 38.212 Tables 5.3.2-2/3. H matrix wrong for most lifting sizes.",
+    "verification": "Reference test vector (Z=22, i_LS=5) cannot converge even noiseless under our H",
+    "fix": "Extract all 8 i_LS columns from 3GPP spec (via srsRAN reference), plus 3GPP K_b Z selection + natural column ordering"
+  }
 }
