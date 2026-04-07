@@ -114,10 +114,18 @@ fn main() {
     // ---------------------------------------------------------------
     compare_with_reference(&gldpc_results, &ldpc_results);
 
+    // Save JSON alongside CSV
+    let gldpc_json = gldpc_results.to_json();
+    std::fs::write("dev/simulation_results/fig7_gldpc_bler.json", &gldpc_json)
+        .expect("Failed to write GLDPC JSON");
+    let ldpc_json = ldpc_results.to_json();
+    std::fs::write("dev/simulation_results/fig7_ldpc_bler.json", &ldpc_json)
+        .expect("Failed to write LDPC JSON");
+
     println!();
     println!("Results saved to:");
-    println!("  dev/simulation_results/fig7_gldpc_bler.csv");
-    println!("  dev/simulation_results/fig7_ldpc_bler.csv");
+    println!("  dev/simulation_results/fig7_gldpc_bler.{{csv,json}}");
+    println!("  dev/simulation_results/fig7_ldpc_bler.{{csv,json}}");
 }
 
 fn print_results_table(gldpc: &SimulationResults, ldpc: &SimulationResults) {
