@@ -973,6 +973,8 @@ pub struct Nr5gRateMatchedDecoder {
     c2v: Vec<Vec<f32>>,
     /// Variable-to-check messages: v2c[var][pos] for neighbors[pos]
     v2c: Vec<Vec<f32>>,
+    /// Min-sum scaling factor (0.75 = normalized min-sum, 1.0 = plain min-sum BP).
+    scale: f32,
     /// Last iteration count
     last_iterations: usize,
 }
@@ -1020,8 +1022,28 @@ impl Nr5gRateMatchedDecoder {
             beliefs: vec![0.0; n],
             c2v,
             v2c,
+            scale: MINSUM_SCALE,
             last_iterations: 0,
         }
+    }
+
+    /// Creates a decoder with a custom min-sum scaling factor.
+    ///
+    /// Use `scale = 1.0` for plain min-sum BP (no normalization).
+    /// Use `scale = 0.75` (default) for normalized min-sum.
+    ///
+    /// # Arguments
+    ///
+    /// * `rm_code` - The rate-matched code to decode
+    /// * `scale` - Min-sum scaling factor (0.0, 1.0]
+    ///
+    /// # Complexity
+    ///
+    /// Same as [`new`](Self::new).
+    pub fn with_scale(rm_code: Nr5gRateMatchedCode, scale: f32) -> Self {
+        let mut decoder = Self::new(rm_code);
+        decoder.scale = scale;
+        decoder
     }
 
     /// Returns the target codeword length.
@@ -1153,7 +1175,7 @@ impl Nr5gRateMatchedDecoder {
                         }
                     }
                     // Apply normalization scaling
-                    self.c2v[check][pos] = sign as f32 * min_abs * MINSUM_SCALE;
+                    self.c2v[check][pos] = sign as f32 * min_abs * self.scale;
                 }
             }
 
