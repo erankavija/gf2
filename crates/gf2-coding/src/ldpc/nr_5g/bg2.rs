@@ -24,41 +24,38 @@ pub const BG2_COLS: usize = 52;
 /// Number of systematic columns (K_b) in BG2.
 pub const BG2_KB: usize = 10;
 
-/// Returns the full BG2 base matrix for a given lifting size as a Vec<Vec<i32>>.
+/// Returns the full BG2 base matrix for a given lifting size as a `Vec<Vec<i32>>`.
 ///
 /// Selects the correct shift coefficient table based on the lifting set index
 /// i_LS determined from the lifting size Z (per 3GPP TS 38.212 Table 5.3.2-1),
 /// then applies `V mod Z` to each non-negative entry.
 ///
-/// This is suitable for passing to `QuasiCyclicLdpc::new()`.
+/// This is suitable for passing to [`QuasiCyclicLdpc::new()`](super::super::QuasiCyclicLdpc::new).
 ///
 /// # Arguments
 ///
-/// * `z` - Lifting size (must be a valid 5G NR lifting size)
+/// * `z` - Lifting size (must be a valid 5G NR lifting size from Table 5.3.2-1)
 ///
 /// # Panics
 ///
-/// Panics if `z` is less than 2 or not a valid 5G NR lifting size.
+/// Panics if `z` is not a valid 5G NR lifting size.
+///
+/// # Examples
+///
+/// ```ignore
+/// // bg2 module is pub(crate); use via QuasiCyclicLdpc::nr_5g(2, z) instead
+/// let matrix = bg2::bg2_base_matrix(13); // Z=13, i_LS=6
+/// assert_eq!(matrix.len(), 42);          // 42 rows
+/// assert_eq!(matrix[0].len(), 52);       // 52 columns
+/// assert!(matrix[0][0] >= 0 && matrix[0][0] < 13);
+/// ```
+///
+/// # Complexity
+///
+/// O(rows × cols) = O(42 × 52) = O(2184) for table copy and mod reduction.
 pub fn bg2_base_matrix(z: usize) -> Vec<Vec<i32>> {
-    assert!(z >= 2, "Z must be >= 2, got {z}");
-
-    let i_ls = super::lifting::lifting_set_index(z as u16)
-        .unwrap_or_else(|| panic!("Z={z} is not a valid 5G NR lifting size"));
-
-    BG2_SHIFTS[i_ls]
-        .iter()
-        .map(|row| {
-            row.iter()
-                .map(|&v| {
-                    if v < 0 {
-                        -1i32
-                    } else {
-                        (v as i32) % (z as i32)
-                    }
-                })
-                .collect()
-        })
-        .collect()
+    let i_ls = super::require_lifting_set_index(z);
+    super::reduce_shifts(&BG2_SHIFTS[i_ls], z)
 }
 
 // BG2 shift tables from 3GPP TS 38.212 Table 5.3.2-3.
