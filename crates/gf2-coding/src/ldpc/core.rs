@@ -1243,6 +1243,74 @@ impl LdpcDecoder {
         self.check_to_var[check][check_var_pos]
     }
 
+    /// Runs iterative BP and returns the full decoded codeword (all n bits).
+    ///
+    /// Unlike [`IterativeSoftDecoder::decode_iterative`] which extracts k
+    /// message bits from systematic positions, this returns the hard-decided
+    /// codeword at all n positions. Useful when the caller knows the
+    /// systematic column mapping (e.g., 5G NR rate-matched codes that use
+    /// natural column ordering per `SYSTEMATIC_ENCODING_CONVENTION.md`).
+    ///
+    /// # Arguments
+    ///
+    /// * `llrs` - Channel LLRs, one per codeword position (length n)
+    /// * `max_iterations` - Maximum BP iterations
+    ///
+    /// # Returns
+    ///
+    /// A [`DecoderResult`] where `decoded_bits` contains the full n-bit
+    /// codeword (not just the k message bits).
+    ///
+    /// # Complexity
+    ///
+    /// Same as [`IterativeSoftDecoder::decode_iterative`].
+    pub fn decode_to_codeword(
+        &mut self,
+        llrs: &[Llr],
+        max_iterations: usize,
+    ) -> DecoderResult {
+        assert_eq!(llrs.len(), self.code.n(), "LLR length must equal n");
+
+        // Reset all messages
+        for check_msgs in &mut self.check_to_var {
+            for msg in check_msgs {
+                *msg = Llr::zero();
+            }
+        }
+        for (var, &llr) in llrs.iter().enumerate().take(self.code.n()) {
+            for pos in 0..self.var_to_check[var].len() {
+                self.var_to_check[var][pos] = llr;
+            }
+        }
+
+        let mut iterations = 0;
+        let mut converged = false;
+
+        for iter in 0..max_iterations {
+            iterations = iter + 1;
+            self.check_node_update(llrs);
+            self.variable_node_update(llrs);
+
+            if self.config.early_termination {
+                let decoded = self.hard_decode();
+                if self.code.is_valid_codeword(&decoded) {
+                    converged = true;
+                    break;
+                }
+            }
+        }
+
+        self.last_iterations = iterations;
+        let decoded_codeword = self.hard_decode();
+        let syndrome_passed = self.code.is_valid_codeword(&decoded_codeword);
+
+        if !self.config.early_termination {
+            converged = syndrome_passed;
+        }
+
+        DecoderResult::new(decoded_codeword, iterations, converged, syndrome_passed)
+    }
+
     /// Makes hard decisions on current beliefs.
     fn hard_decode(&self) -> BitVec {
         let mut decoded = BitVec::with_capacity(self.code.n());
