@@ -7,8 +7,9 @@
   "assignee": "agent:claude",
   "dependencies": [
     "d0e2af0c-8d51-4dbd-bbde-04da9947313c",
-    "dd22a099-6bdf-42eb-a012-8109da9c0b00",
-    "290b4fa0-aad1-4480-b9d1-9a1ddf460f1c"
+    "290b4fa0-aad1-4480-b9d1-9a1ddf460f1c",
+    "6bf5dd47-6af0-49c5-a0fe-38759f0d0967",
+    "dd22a099-6bdf-42eb-a012-8109da9c0b00"
   ],
   "gates_required": [
     "cargo-ci",
@@ -17,25 +18,25 @@
     "tdd-reminder"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-07T11:15:15.382487922Z"
-    },
     "tdd-reminder": {
       "status": "passed",
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-07T09:06:36.847389487Z"
     },
-    "cargo-ci": {
-      "status": "passed",
+    "code-review": {
+      "status": "failed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-04-07T11:14:45.471394171Z"
+      "updated_at": "2026-04-07T11:15:15.382487922Z"
     },
     "doc-review": {
       "status": "pending",
       "updated_by": null,
       "updated_at": "2026-04-05T23:09:16.350108744Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-07T11:14:45.471394171Z"
     }
   },
   "context": {},
@@ -46,5 +47,5 @@
     "component:gf2-coding"
   ],
   "created_at": "2026-02-22T21:16:05.912701895+00:00",
-  "updated_at": "2026-04-07T11:23:39.514506244+00:00"
+  "updated_at": "2026-04-07T21:22:58.405798482+00:00"
 }

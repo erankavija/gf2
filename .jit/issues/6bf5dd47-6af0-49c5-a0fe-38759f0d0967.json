@@ -1,0 +1,34 @@
+{
+  "id": "6bf5dd47-6af0-49c5-a0fe-38759f0d0967",
+  "title": "Extract per-i_LS shift tables from 3GPP TS 38.212 for BG1/BG2",
+  "description": "## Problem\n\nOur BG1 and BG2 base graph modules (`bg1.rs`, `bg2.rs`) stored a **single set** of shift values V_{i,j}. The 3GPP TS 38.212 standard (Tables 5.3.2-2 and 5.3.2-3) defines **8 different sets**, one per lifting set index i_LS (0–7). Fixed by extracting per-i_LS tables from srsRAN reference (3GPP standardized data).\n\n## Remaining review findings\n\n1. **Missing regression test vectors**: Create our OWN test vectors by encoding known messages with our corrected encoder. Store as constants. Validate encode roundtrip and noiseless decode.\n2. **Duplicated logic**: bg1/bg2 base_matrix functions share copy-pasted i_LS lookup + mod-reduction. Extract shared helper.\n3. **Missing doc comments**: `# Examples`, `# Complexity`, `# Panics` on public functions.\n\n## Success Criteria\n\n- [x] bg1_base_matrix(z) and bg2_base_matrix(z) select V_{i,j} by i_LS\n- [x] All existing tests pass\n- [ ] Regression test vectors created from our encoder for all 6 target codes\n- [ ] Noiseless encode/decode roundtrip passes for all regression vectors\n- [ ] Shared helper eliminates bg1/bg2 code duplication\n- [ ] Doc comments complete on public functions",
+  "state": "done",
+  "priority": "critical",
+  "assignee": "agent:claude",
+  "dependencies": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-07T22:29:13.227524278Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-07T22:28:25.958374645Z"
+    }
+  },
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "epic:grand",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-04-07T21:22:52.681058359+00:00",
+  "updated_at": "2026-04-07T22:33:04.368153757+00:00"
+}
