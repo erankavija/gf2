@@ -312,7 +312,7 @@ impl QuasiCyclicLdpc {
         let mother_code = LdpcCode::from_quasi_cyclic(&qc);
 
         // Compute encoding data with column mapping
-        let encoding = compute_mother_encoding(&mother_code);
+        let encoding = compute_mother_encoding(&mother_code, &params);
 
         Nr5gRateMatchedCode {
             mother_code,
@@ -431,9 +431,12 @@ impl NrRateMatchParams {
 
 /// LLR value used for filler (shortened) bit positions.
 ///
-/// Filler bits are known to be zero, so we use a large positive LLR
-/// to represent high confidence in bit=0.
-const FILLER_LLR: f32 = 1000.0;
+/// Filler bits are known to be zero, so we use a moderately large positive LLR
+/// to represent high confidence in bit=0. Using a moderate value (20.0) rather
+/// than an extreme one (1000.0) avoids numerical saturation in the min-sum
+/// decoder, which can degrade convergence when many check nodes see mixed
+/// extreme and moderate messages.
+const FILLER_LLR: f32 = 20.0;
 
 /// Encoding data for the mother code with right-pivot column mapping.
 ///
@@ -449,6 +452,13 @@ struct MotherEncoding {
     systematic_cols: Vec<usize>,
     /// Sorted parity column indices in the codeword
     parity_cols: Vec<usize>,
+    /// Ordered list of full-codeword column indices that are transmitted after
+    /// rate matching. Length = target_n. Respects the RREF column assignment so
+    /// that punctured, filler, and truncated positions are correctly excluded.
+    transmitted_cols: Vec<usize>,
+    /// Set of filler (shortened) column positions in the full codeword, for
+    /// efficient lookup during LLR preparation.
+    filler_col_set: std::collections::HashSet<usize>,
 }
 
 /// Computes the encoding data for an LDPC code using RREF from the right.
@@ -459,13 +469,21 @@ struct MotherEncoding {
 /// systematic basis vector e_i, the codeword places 1 at systematic_cols[i]
 /// and the corresponding parity bits at parity_cols.
 ///
+/// Also computes the `transmitted_cols` list — the ordered set of full-codeword
+/// column indices that survive rate matching. This accounts for the fact that
+/// the RREF may assign some columns in the natural systematic range (0..K_b*Z)
+/// as parity pivots and vice-versa, which affects which columns carry filler
+/// zeros and which carry actual information.
+///
 /// # Arguments
 ///
 /// * `code` - The LDPC code with parity-check matrix H
+/// * `params` - Rate matching parameters
 ///
 /// # Returns
 ///
-/// A `MotherEncoding` containing the parity matrix and column mappings.
+/// A `MotherEncoding` containing the parity matrix, column mappings, and
+/// the transmitted column list.
 ///
 /// # Panics
 ///
@@ -474,7 +492,7 @@ struct MotherEncoding {
 /// # Complexity
 ///
 /// O(m * n * min(m, n)) for Gaussian elimination.
-fn compute_mother_encoding(code: &LdpcCode) -> MotherEncoding {
+fn compute_mother_encoding(code: &LdpcCode, params: &NrRateMatchParams) -> MotherEncoding {
     use gf2_core::BitMatrix;
 
     let n = code.n();
@@ -490,16 +508,23 @@ fn compute_mother_encoding(code: &LdpcCode) -> MotherEncoding {
         }
     }
 
-    // RREF from right: find pivots starting from rightmost column
+    // RREF with parity-column preference: find pivots preferring columns >= full_k
+    // (the natural parity region) over columns < full_k (natural systematic region).
+    //
+    // This ensures systematic_cols == [0, 1, ..., full_k-1] whenever the H matrix
+    // structure allows it. For 5G NR BG2, row 41's expanded block only has entries
+    // in systematic columns (base cols 6, 7), forcing Z pivot columns into the
+    // systematic range. The two-pass approach minimizes such "swapped" columns.
+    let full_k = params.full_k;
     let mut pivot_cols = Vec::with_capacity(m);
     let mut current_row = 0;
-    let mut col_idx = n;
 
-    while current_row < m && col_idx > 0 {
-        col_idx -= 1;
-        let col = col_idx;
+    // Pass 1: parity columns, right to left
+    for col in (full_k..n).rev() {
+        if current_row >= m {
+            break;
+        }
 
-        // Find pivot row in current_row..m
         let mut pivot_row = None;
         for row in current_row..m {
             if work.get(row, col) {
@@ -508,16 +533,50 @@ fn compute_mother_encoding(code: &LdpcCode) -> MotherEncoding {
             }
         }
 
-        let Some(pivot_row) = pivot_row else {
+        let Some(pr) = pivot_row else {
             continue;
         };
 
-        // Swap with current_row
-        if pivot_row != current_row {
-            work.swap_rows(current_row, pivot_row);
+        if pr != current_row {
+            work.swap_rows(pr, current_row);
         }
 
-        // Eliminate all other rows
+        for row in 0..m {
+            if row != current_row && work.get(row, col) {
+                work.row_xor(row, current_row);
+            }
+        }
+
+        pivot_cols.push(col);
+        current_row += 1;
+    }
+
+    // Pass 2: systematic columns, right to left (only needed if pass 1
+    // didn't find enough pivots, e.g., BG2 row 41 which only touches
+    // systematic columns). Right-to-left prefers higher-numbered systematic
+    // columns as parity pivots, which are closer to the filler/shortened
+    // region and tend to have lower connectivity in the Tanner graph.
+    for col in (0..full_k).rev() {
+        if current_row >= m {
+            break;
+        }
+
+        let mut pivot_row = None;
+        for row in current_row..m {
+            if work.get(row, col) {
+                pivot_row = Some(row);
+                break;
+            }
+        }
+
+        let Some(pr) = pivot_row else {
+            continue;
+        };
+
+        if pr != current_row {
+            work.swap_rows(pr, current_row);
+        }
+
         for row in 0..m {
             if row != current_row && work.get(row, col) {
                 work.row_xor(row, current_row);
@@ -567,10 +626,57 @@ fn compute_mother_encoding(code: &LdpcCode) -> MotherEncoding {
         }
     }
 
+    // Compute filler column positions: systematic_cols[target_k..full_k] are
+    // known-zero (filler) bits that should not be transmitted.
+    let filler_col_set: std::collections::HashSet<usize> = (params.target_k..params.full_k)
+        .map(|i| systematic_cols[i])
+        .collect();
+
+    // Compute the set of parity columns to keep. We keep the first parity_kept
+    // parity columns (sorted ascending) and exclude the rest.
+    let parity_kept_set: std::collections::HashSet<usize> = pivot_cols
+        .iter()
+        .take(params.parity_kept)
+        .copied()
+        .collect();
+
+    // Build the transmitted column list: walk through all columns 0..full_n
+    // in natural order, keeping those that are:
+    //   (a) NOT in the first 2*Z columns (always punctured)
+    //   (b) NOT a filler position
+    //   (c) NOT a truncated parity column (parity col not in parity_kept_set)
+    let punctured_end = params.num_punctured_systematic; // = 2*Z
+    let mut transmitted_cols = Vec::with_capacity(params.target_n);
+    for col in 0..params.full_n {
+        // (a) Skip punctured columns
+        if col < punctured_end {
+            continue;
+        }
+        // (b) Skip filler columns
+        if filler_col_set.contains(&col) {
+            continue;
+        }
+        // (c) Skip truncated parity columns (parity col not in kept set)
+        if pivot_set.contains(&col) && !parity_kept_set.contains(&col) {
+            continue;
+        }
+        transmitted_cols.push(col);
+    }
+
+    debug_assert_eq!(
+        transmitted_cols.len(),
+        params.target_n,
+        "transmitted_cols length {} != target_n {}",
+        transmitted_cols.len(),
+        params.target_n
+    );
+
     MotherEncoding {
         parity_matrix,
         systematic_cols,
         parity_cols: pivot_cols,
+        transmitted_cols,
+        filler_col_set,
     }
 }
 
@@ -584,16 +690,16 @@ fn compute_mother_encoding(code: &LdpcCode) -> MotherEncoding {
 ///
 /// 1. Pad the target_k message with filler zeros to reach full_k = K_b * Z.
 /// 2. Encode with the full mother code to get full_n = N_b * Z coded bits.
-/// 3. Extract target_n transmitted bits (skip punctured/filler positions).
+/// 3. Extract target_n transmitted bits using `transmitted_cols` (the
+///    precomputed list of non-punctured, non-filler, non-truncated columns).
 ///
 /// # Decoding
 ///
 /// 1. Receive target_n channel LLRs.
-/// 2. Map to full_n LLR vector with proper initialization:
-///    - Punctured systematic (first 2*Z): LLR = 0
-///    - Filler positions: LLR = +1000 (known zero)
+/// 2. Map to full_n LLR vector using `transmitted_cols`:
 ///    - Transmitted positions: channel LLR
-///    - Untransmitted parity: LLR = 0
+///    - Filler positions: LLR = +20 (known zero)
+///    - All other positions: LLR = 0 (no channel info)
 /// 3. BP decode on the full mother code H.
 /// 4. Extract target_k message bits.
 ///
@@ -750,21 +856,12 @@ impl Nr5gRateMatchedCode {
             codeword.set(col, parity.get(j));
         }
 
-        // Step 4: Extract transmitted bits
-        // Transmitted positions in codeword (same positions as in H):
-        //   - Skip first 2*Z positions (always punctured)
-        //   - Skip filler positions (full_k - num_shortened .. full_k - 1)
-        //   - Take parity_kept parity positions starting from full_k
+        // Step 4: Extract transmitted bits using the precomputed column list.
+        // This correctly handles the case where RREF assigns some natural
+        // "systematic" columns as parity pivots (e.g., BG2 row 41).
         let mut output = BitVec::with_capacity(p.target_n);
-
-        // Transmitted systematic: positions [2*Z .. full_k - num_shortened)
-        for i in p.num_punctured_systematic..(p.full_k - p.num_shortened) {
-            output.push_bit(codeword.get(i));
-        }
-
-        // Transmitted parity: positions [full_k .. full_k + parity_kept)
-        for i in p.full_k..(p.full_k + p.parity_kept) {
-            output.push_bit(codeword.get(i));
+        for &col in &enc.transmitted_cols {
+            output.push_bit(codeword.get(col));
         }
 
         debug_assert_eq!(output.len(), p.target_n);
@@ -773,12 +870,14 @@ impl Nr5gRateMatchedCode {
 
     /// Constructs the full-length LLR vector from target_n channel LLRs.
     ///
-    /// Maps channel LLRs back to the full mother code positions:
-    /// - First 2*Z positions: LLR = 0 (punctured systematic, no info)
-    /// - Active systematic positions: channel LLRs
-    /// - Filler positions: LLR = +1000 (known to be zero)
-    /// - Transmitted parity positions: channel LLRs
-    /// - Untransmitted parity positions: LLR = 0 (punctured)
+    /// Maps channel LLRs back to the full mother code positions using the
+    /// precomputed `transmitted_cols` list. This ensures consistency with
+    /// the encoder's column assignment, even when the RREF places some
+    /// natural-systematic columns as parity pivots (e.g., BG2 row 41).
+    ///
+    /// - Transmitted positions (from `transmitted_cols`): channel LLRs
+    /// - Filler positions: LLR = +20 (known to be zero)
+    /// - Punctured & untransmitted positions: LLR = 0 (no info)
     ///
     /// # Arguments
     ///
@@ -822,31 +921,25 @@ impl Nr5gRateMatchedCode {
         );
 
         let p = &self.params;
+        let enc = &self.encoding;
         let mut full_llrs = vec![Llr::zero(); p.full_n];
 
-        // Track position in channel_llrs via an iterator
-        let mut ch_iter = channel_llrs.iter();
-
-        // Map channel LLRs to the same codeword positions used during encoding:
-        // Transmitted positions = [2*Z .. full_k - num_shortened) ∪ [full_k .. full_k + parity_kept)
-        for slot in &mut full_llrs[p.num_punctured_systematic..(p.full_k - p.num_shortened)] {
-            *slot = *ch_iter.next().unwrap();
-        }
-        for slot in &mut full_llrs[p.full_k..(p.full_k + p.parity_kept)] {
-            *slot = *ch_iter.next().unwrap();
+        // Map channel LLRs to full codeword positions using transmitted_cols.
+        // This uses the same column list as the encoder, ensuring consistency
+        // even when the RREF assigns some natural-systematic columns as pivots.
+        for (ch_idx, &col) in enc.transmitted_cols.iter().enumerate() {
+            full_llrs[col] = channel_llrs[ch_idx];
         }
 
-        debug_assert_eq!(ch_iter.len(), 0, "All channel LLRs should be consumed");
-
-        // Set filler LLRs: filler message indices are target_k..full_k-1.
+        // Set filler LLRs: filler message indices are target_k..full_k.
         // These message bits were forced to zero during encoding.
-        // Their codeword positions are systematic_cols[target_k..full_k-1].
-        for i in p.target_k..p.full_k {
-            let cw_pos = self.encoding.systematic_cols[i];
-            full_llrs[cw_pos] = Llr::new(FILLER_LLR);
+        // Their codeword positions are systematic_cols[target_k..full_k].
+        // They are NOT in transmitted_cols so no overwrite conflict.
+        for &col in &enc.filler_col_set {
+            full_llrs[col] = Llr::new(FILLER_LLR);
         }
 
-        // All other positions (punctured systematic 0..2*Z, untransmitted parity,
+        // All other positions (punctured columns 0..2*Z, untransmitted parity,
         // and any non-transmitted positions) remain at LLR=0.
 
         full_llrs
