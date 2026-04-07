@@ -68,6 +68,7 @@ pub mod ldpc;
 pub mod linear;
 pub mod llr;
 pub mod modulation;
+pub mod product;
 
 // SIMD detection is now handled internally in llr.rs via once_cell::Lazy
 pub mod simulation;
