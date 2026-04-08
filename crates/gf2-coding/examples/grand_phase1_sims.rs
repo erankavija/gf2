@@ -25,13 +25,8 @@ use gf2_coding::ldpc::nr_5g::Nr5gRateMatchedDecoder;
 use gf2_coding::ldpc::{DecoderAlgorithm, QuasiCyclicLdpc};
 use gf2_coding::product::{ProductCode, TurboDecoder, TurboDecoderConfig};
 use gf2_coding::simulation::{
-    count_bit_errors, BpskAwgnChannel, ChannelModel, SimulationConfig, SimulationResult,
-    SimulationResults, SimulationRunner,
+    BpskAwgnChannel, SimulationConfig, SimulationResults, SimulationRunner,
 };
-use gf2_coding::traits::BlockEncoder;
-use gf2_core::BitVec;
-use rand::rngs::StdRng;
-use rand::{Rng, SeedableRng};
 use std::path::PathBuf;
 
 /// Eb/N0 sweep for Fig 3: 0–4 dB in 0.5 dB steps.
@@ -42,97 +37,6 @@ fn fig3_snr_points() -> Vec<f64> {
 /// Eb/N0 sweep for Fig 1: 0–2.5 dB in 0.5 dB steps (per paper).
 fn fig1_snr_points() -> Vec<f64> {
     (0..=5).map(|i| i as f64 * 0.5).collect()
-}
-
-/// Run a product code turbo decoder simulation (custom loop since TurboDecoder
-/// does not implement the IterativeSoftDecoder trait).
-fn run_product_sim<C: gf2_coding::product::ProductComponent + Clone>(
-    product: &ProductCode<C>,
-    turbo: &TurboDecoder<C>,
-    config: &SimulationConfig,
-) -> SimulationResults {
-    let k = product.k();
-    let n = product.n();
-    let rate = k as f64 / n as f64;
-    let channel = BpskAwgnChannel;
-
-    let seed = config.rng_seed.unwrap_or_else(|| rand::thread_rng().gen());
-    let mut rng = StdRng::seed_from_u64(seed);
-    let mut points = Vec::with_capacity(config.eb_n0_range_db.len());
-
-    for &eb_n0_db in &config.eb_n0_range_db {
-        let mut total_bit_errors: usize = 0;
-        let mut total_bits: usize = 0;
-        let mut total_frame_errors: usize = 0;
-        let mut total_frames: usize = 0;
-        let mut total_iterations: usize = 0;
-        let mut total_queries: usize = 0;
-
-        while total_frame_errors < config.min_errors && total_frames < config.max_frames {
-            let message = BitVec::random(k, &mut rng);
-            let codeword = product.encode(&message);
-            let llrs = channel.transmit_and_demodulate(&codeword, eb_n0_db, rate, &mut rng);
-
-            let result = turbo.decode(&llrs);
-
-            let bit_errors = count_bit_errors(&message, &result.decoded_bits);
-            total_bit_errors += bit_errors;
-            total_bits += k;
-            total_frames += 1;
-            if bit_errors > 0 {
-                total_frame_errors += 1;
-            }
-            total_iterations += result.iterations;
-            total_queries += result.total_queries;
-
-            if total_frames % 100 == 0 {
-                eprintln!(
-                    "  [{:.1} dB] frames={}, errors={}/{}",
-                    eb_n0_db, total_frames, total_frame_errors, config.min_errors
-                );
-            }
-        }
-
-        let ber = if total_bits > 0 {
-            total_bit_errors as f64 / total_bits as f64
-        } else {
-            0.0
-        };
-        let bler = if total_frames > 0 {
-            total_frame_errors as f64 / total_frames as f64
-        } else {
-            0.0
-        };
-        let avg_iterations = if total_frames > 0 {
-            Some(total_iterations as f64 / total_frames as f64)
-        } else {
-            None
-        };
-        let avg_queries_per_bit = if total_bits > 0 {
-            Some(total_queries as f64 / total_bits as f64)
-        } else {
-            None
-        };
-
-        eprintln!(
-            "  [{:.1} dB] DONE: frames={}, errors={}, BER={:.2e}, BLER={:.2e}",
-            eb_n0_db, total_frames, total_frame_errors, ber, bler
-        );
-
-        points.push(SimulationResult {
-            eb_n0_db,
-            ber,
-            bler,
-            avg_iterations,
-            avg_queries_per_bit,
-            num_bits: total_bits,
-            num_bit_errors: total_bit_errors,
-            num_frames: total_frames,
-            num_frame_errors: total_frame_errors,
-        });
-    }
-
-    SimulationResults { points }
 }
 
 /// Save results to CSV and JSON, creating parent directories as needed.
@@ -168,8 +72,9 @@ fn run_fig3_product(config: &SimulationConfig) -> SimulationResults {
         list_bler_threshold: None,
     };
     let turbo = TurboDecoder::new(component, turbo_config);
+    let channel = BpskAwgnChannel;
 
-    run_product_sim(&product, &turbo, config)
+    SimulationRunner::run_with_decoder(&product, |llrs| turbo.decode(llrs).into(), &channel, config)
 }
 
 fn run_fig3_ldpc_nms(config: &SimulationConfig) -> SimulationResults {
@@ -209,8 +114,9 @@ fn run_fig1_product(config: &SimulationConfig) -> SimulationResults {
         list_bler_threshold: None,
     };
     let turbo = TurboDecoder::new(component, turbo_config);
+    let channel = BpskAwgnChannel;
 
-    run_product_sim(&product, &turbo, config)
+    SimulationRunner::run_with_decoder(&product, |llrs| turbo.decode(llrs).into(), &channel, config)
 }
 
 fn run_fig1_ldpc_nms(config: &SimulationConfig) -> SimulationResults {
@@ -231,6 +137,23 @@ fn run_fig1_ldpc_sp(config: &SimulationConfig) -> SimulationResults {
     SimulationRunner::run_coded_iterative(&encoder, &mut decoder, &channel, config)
 }
 
+/// Creates a simulation config for the given SNR points and output file.
+fn make_config(
+    snr_points: Vec<f64>,
+    min_errors: usize,
+    max_frames: usize,
+    output_csv: &str,
+) -> SimulationConfig {
+    SimulationConfig {
+        eb_n0_range_db: snr_points,
+        min_errors,
+        max_frames,
+        max_decoder_iterations: 50,
+        rng_seed: Some(42),
+        output_path: Some(PathBuf::from(output_csv)),
+    }
+}
+
 fn main() {
     let full_mode = std::env::args().any(|a| a == "--full");
     let moderate_mode = std::env::args().any(|a| a == "--moderate");
@@ -247,61 +170,71 @@ fn main() {
     eprintln!("  min_errors={min_errors}, max_frames={max_frames}");
     eprintln!();
 
-    // Fig 3 config: 0–4 dB
-    let fig3_config = SimulationConfig {
-        eb_n0_range_db: fig3_snr_points(),
-        min_errors,
-        max_frames,
-        max_decoder_iterations: 50,
-        rng_seed: Some(42),
-        output_path: None,
-    };
-
-    // Fig 1 config: 0–2.5 dB
-    let fig1_config = SimulationConfig {
-        eb_n0_range_db: fig1_snr_points(),
-        min_errors,
-        max_frames,
-        max_decoder_iterations: 50,
-        rng_seed: Some(42),
-        output_path: None,
-    };
-
     std::fs::create_dir_all("dev/simulation_results").ok();
 
     // --- Fig 3: (256,121) ---
-    let fig3_product = run_fig3_product(&fig3_config);
+    let fig3_product = run_fig3_product(&make_config(
+        fig3_snr_points(),
+        min_errors,
+        max_frames,
+        "dev/simulation_results/fig3_ebch_product_256_121.csv",
+    ));
     save_results(
         &fig3_product,
         "dev/simulation_results/fig3_ebch_product_256_121.csv",
     );
 
-    let fig3_ldpc_nms = run_fig3_ldpc_nms(&fig3_config);
+    let fig3_ldpc_nms = run_fig3_ldpc_nms(&make_config(
+        fig3_snr_points(),
+        min_errors,
+        max_frames,
+        "dev/simulation_results/fig3_ldpc_nms_256_121.csv",
+    ));
     save_results(
         &fig3_ldpc_nms,
         "dev/simulation_results/fig3_ldpc_nms_256_121.csv",
     );
 
-    let fig3_ldpc_sp = run_fig3_ldpc_sp(&fig3_config);
+    let fig3_ldpc_sp = run_fig3_ldpc_sp(&make_config(
+        fig3_snr_points(),
+        min_errors,
+        max_frames,
+        "dev/simulation_results/fig3_ldpc_sp_256_121.csv",
+    ));
     save_results(
         &fig3_ldpc_sp,
         "dev/simulation_results/fig3_ldpc_sp_256_121.csv",
     );
 
     // --- Fig 1: (1024,441) ---
-    let fig1_product = run_fig1_product(&fig1_config);
+    let fig1_product = run_fig1_product(&make_config(
+        fig1_snr_points(),
+        min_errors,
+        max_frames,
+        "dev/simulation_results/fig1_drm_product_1024_441.csv",
+    ));
     save_results(
         &fig1_product,
         "dev/simulation_results/fig1_drm_product_1024_441.csv",
     );
 
-    let fig1_ldpc_nms = run_fig1_ldpc_nms(&fig1_config);
+    let fig1_ldpc_nms = run_fig1_ldpc_nms(&make_config(
+        fig1_snr_points(),
+        min_errors,
+        max_frames,
+        "dev/simulation_results/fig1_ldpc_nms_1024_441.csv",
+    ));
     save_results(
         &fig1_ldpc_nms,
         "dev/simulation_results/fig1_ldpc_nms_1024_441.csv",
     );
 
-    let fig1_ldpc_sp = run_fig1_ldpc_sp(&fig1_config);
+    let fig1_ldpc_sp = run_fig1_ldpc_sp(&make_config(
+        fig1_snr_points(),
+        min_errors,
+        max_frames,
+        "dev/simulation_results/fig1_ldpc_sp_1024_441.csv",
+    ));
     save_results(
         &fig1_ldpc_sp,
         "dev/simulation_results/fig1_ldpc_sp_1024_441.csv",
