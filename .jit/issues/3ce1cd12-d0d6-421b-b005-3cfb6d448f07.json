@@ -18,25 +18,25 @@
     "tdd-reminder"
   ],
   "gates_status": {
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-08T05:47:59.254692576Z"
+    },
     "tdd-reminder": {
       "status": "passed",
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-07T09:06:36.847389487Z"
     },
-    "code-review": {
-      "status": "failed",
+    "cargo-ci": {
+      "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-04-07T11:15:15.382487922Z"
+      "updated_at": "2026-04-08T05:47:24.523058860Z"
     },
     "doc-review": {
       "status": "pending",
       "updated_by": null,
       "updated_at": "2026-04-05T23:09:16.350108744Z"
-    },
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-07T11:14:45.471394171Z"
     }
   },
   "context": {},
@@ -47,5 +47,5 @@
     "component:gf2-coding"
   ],
   "created_at": "2026-02-22T21:16:05.912701895+00:00",
-  "updated_at": "2026-04-07T21:22:58.405798482+00:00"
+  "updated_at": "2026-04-08T05:51:38.934944502+00:00"
 }
