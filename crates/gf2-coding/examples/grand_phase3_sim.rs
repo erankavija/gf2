@@ -146,13 +146,20 @@ fn main() {
     // ---------------------------------------------------------------
     compare_with_reference(&gldpc_results, &ldpc_results);
 
-    // Save JSON alongside CSV
+    // Save JSON alongside CSV (CSV is saved via output_path in SimulationConfig)
     let gldpc_json = gldpc_results.to_json();
     std::fs::write("dev/simulation_results/fig7_gldpc_bler.json", &gldpc_json)
         .expect("Failed to write GLDPC JSON");
     let ldpc_json = ldpc_results.to_json();
     std::fs::write("dev/simulation_results/fig7_ldpc_bler.json", &ldpc_json)
         .expect("Failed to write LDPC JSON");
+
+    // Save durable comparison report
+    let report = build_comparison_report(&gldpc_results, &ldpc_results);
+    println!("{report}");
+    let report_path = "dev/simulation_results/phase3_comparison_report.txt";
+    std::fs::write(report_path, &report).expect("Failed to write comparison report");
+    println!("Comparison report saved to {report_path}");
 
     println!();
     println!("Results saved to:");
@@ -269,4 +276,72 @@ fn compare_with_reference(gldpc: &SimulationResults, ldpc: &SimulationResults) {
         }
         println!();
     }
+}
+
+fn build_comparison_report(gldpc: &SimulationResults, ldpc: &SimulationResults) -> String {
+    let mut report = String::new();
+    report.push_str("Phase 3 AWGN Simulation Results — Comparison Report\n");
+    report.push_str("===================================================\n\n");
+
+    report.push_str("Fig 7: (1024, 646) QC-GLDPC vs 5G NR LDPC (NMS α=0.75)\n\n");
+    report.push_str(&format!(
+        "{:>8} | {:>14} {:>10} {:>8} | {:>14} {:>10} {:>8}\n",
+        "Eb/N0", "GLDPC BLER", "Avg Iter", "Frames", "LDPC BLER", "Avg Iter", "Frames"
+    ));
+    report.push_str(&format!("{}\n", "-".repeat(88)));
+
+    for (g, l) in gldpc.points.iter().zip(ldpc.points.iter()) {
+        let g_iter = g
+            .avg_iterations
+            .map_or("-".to_string(), |v| format!("{:.1}", v));
+        let l_iter = l
+            .avg_iterations
+            .map_or("-".to_string(), |v| format!("{:.1}", v));
+        report.push_str(&format!(
+            "{:>8.2} | {:>14.6e} {:>10} {:>8} | {:>14.6e} {:>10} {:>8}\n",
+            g.eb_n0_db, g.bler, g_iter, g.num_frames, l.bler, l_iter, l.num_frames
+        ));
+    }
+
+    // Reference comparison
+    let ref_path = "dev/reference_data/fig_gldpc_sogrand.csv";
+    if let Ok(ref_data) = std::fs::read_to_string(ref_path) {
+        report.push_str("\nReference Data Comparison (paper's Fig 7 curves)\n");
+        report.push_str(&format!("{}\n", "-".repeat(60)));
+
+        for decoder_label in ["LDPC_BP", "eBCH_GLDPC"] {
+            let sim_data = if decoder_label == "LDPC_BP" {
+                ldpc
+            } else {
+                gldpc
+            };
+            report.push_str(&format!("  {} (sim vs paper):\n", decoder_label));
+            for line in ref_data.lines().skip(1) {
+                let fields: Vec<&str> = line.split(',').collect();
+                if fields.len() >= 5 && fields[1] == "BLER_or_BER" && fields[4] == decoder_label {
+                    if let (Ok(snr), Ok(ref_val)) =
+                        (fields[2].parse::<f64>(), fields[3].parse::<f64>())
+                    {
+                        if let Some(sim_pt) = sim_data
+                            .points
+                            .iter()
+                            .find(|p| (p.eb_n0_db - snr).abs() < 0.01)
+                        {
+                            let ratio_db = if sim_pt.bler > 0.0 && ref_val > 0.0 {
+                                10.0 * (sim_pt.bler / ref_val).log10()
+                            } else {
+                                f64::NAN
+                            };
+                            report.push_str(&format!(
+                                "    Eb/N0={:.1}: sim={:.4e}, ref={:.4e}, ratio={:.1} dB\n",
+                                snr, sim_pt.bler, ref_val, ratio_db
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    report
 }
