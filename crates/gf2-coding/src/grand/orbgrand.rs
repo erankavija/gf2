@@ -505,12 +505,16 @@ impl OrbGrand {
         // partition-based enumeration.
         let pattern_iter = LogisticWeightPatternIter::new(self.n);
 
+        let mut list_full = false;
+
         for pattern in pattern_iter {
             if query_count >= self.config.max_queries {
                 break;
             }
-            if codewords.len() >= self.config.list_size {
-                break;
+            // Once the list is full and cumulative probability is near 1.0,
+            // further iteration won't change P(C\L) meaningfully. Stop early.
+            if list_full && cumulative_log_prob > -1e-6 {
+                break; // cumulative ≈ 1.0, P(C\L) ≈ 0
             }
 
             // pattern is a sorted list of indices into pi (1-based logistic indices)
@@ -518,18 +522,34 @@ impl OrbGrand {
             let bit_positions: Vec<usize> = pattern.iter().map(|&idx| pi[idx]).collect();
             let noise_weight = bit_positions.len();
 
-            // Even code optimization: skip if parity doesn't match
+            // Compute noise log-probability for EVERY pattern (needed for
+            // cumulative probability accounting in SOGRAND soft output).
+            let noise_log_prob = compute_noise_log_prob(
+                &bit_positions,
+                &flip_log_probs,
+                &no_flip_log_probs,
+                base_log_prob,
+            );
+
+            // Accumulate cumulative probability for ALL tested patterns,
+            // including those skipped by even-code optimization. This is
+            // critical for SOGRAND: if cumulative probability is too low,
+            // P(C\L) dominates and APP LLRs collapse to channel LLRs.
+            cumulative_log_prob = log_sum_exp(cumulative_log_prob, noise_log_prob);
+
+            // Even code optimization: skip syndrome check if parity won't match.
+            // Probability is already accumulated above.
             if self.config.even_code {
-                // For an even code, codeword = y XOR z must have even weight.
-                // y has parity `hard_parity`, z has parity `noise_weight % 2 == 1`.
-                // (y XOR z) parity = hard_parity XOR noise_parity.
-                // For even code: (y XOR z) must have even parity, so
-                // hard_parity XOR noise_parity must be false.
                 let noise_parity = noise_weight % 2 == 1;
                 if hard_parity ^ noise_parity {
-                    // Skip: resulting codeword would have odd weight
                     continue;
                 }
+            }
+
+            // If the list is already full, continue iterating to accumulate
+            // probability but don't check for more codewords.
+            if list_full {
+                continue;
             }
 
             query_count += 1;
@@ -544,17 +564,6 @@ impl OrbGrand {
             // Check if syndrome is zero (valid codeword)
             let is_zero = syndrome.count_ones() == 0;
 
-            // Compute noise log-probability
-            let noise_log_prob = compute_noise_log_prob(
-                &bit_positions,
-                &flip_log_probs,
-                &no_flip_log_probs,
-                base_log_prob,
-            );
-
-            // Accumulate cumulative probability using log-sum-exp
-            cumulative_log_prob = log_sum_exp(cumulative_log_prob, noise_log_prob);
-
             if is_zero {
                 // Construct the codeword y XOR z
                 let mut codeword = hard.clone();
@@ -568,6 +577,10 @@ impl OrbGrand {
                     noise_log_probability: noise_log_prob,
                     noise_weight,
                 });
+
+                if codewords.len() >= self.config.list_size {
+                    list_full = true;
+                }
             }
         }
 
