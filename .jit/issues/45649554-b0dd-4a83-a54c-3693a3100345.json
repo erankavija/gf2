@@ -6,7 +6,8 @@
   "priority": "normal",
   "assignee": null,
   "dependencies": [
-    "92086311-4dcc-4d04-9c26-a88034ffd894"
+    "92086311-4dcc-4d04-9c26-a88034ffd894",
+    "a2026f8c-06be-44ee-82e9-36bd187532ea"
   ],
   "gates_required": [
     "cargo-ci",
@@ -15,16 +16,6 @@
     "tdd-reminder"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-04-05T23:09:15.762044567Z"
-    },
-    "tdd-reminder": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-04-05T23:09:15.762090317Z"
-    },
     "cargo-ci": {
       "status": "pending",
       "updated_by": null,
@@ -34,6 +25,16 @@
       "status": "pending",
       "updated_by": null,
       "updated_at": "2026-04-05T23:09:15.762071747Z"
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-04-05T23:09:15.762044567Z"
+    },
+    "tdd-reminder": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-04-05T23:09:15.762090317Z"
     }
   },
   "context": {},
@@ -44,5 +45,5 @@
     "component:gf2-coding"
   ],
   "created_at": "2026-02-22T21:16:02.521043921+00:00",
-  "updated_at": "2026-04-05T23:09:15.762108667+00:00"
+  "updated_at": "2026-04-08T16:56:43.222903638+00:00"
 }

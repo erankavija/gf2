@@ -1368,3 +1368,8 @@
 {"type":"gate_failed","id":"2a750370-8655-4b69-9f10-a9dc13ea640a","issue_id":"3ce1cd12-d0d6-421b-b005-3cfb6d448f07","timestamp":"2026-04-08T05:51:38.935109833Z","gate_key":"code-review","updated_by":"auto:executor"}
 {"type":"gate_failed","id":"08dc8aa9-1f0b-4fa4-8df8-549a32513df7","issue_id":"92086311-4dcc-4d04-9c26-a88034ffd894","timestamp":"2026-04-08T12:06:28.736992760Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
 {"type":"gate_failed","id":"b050cd99-f463-405b-a8a8-ed110d32e402","issue_id":"92086311-4dcc-4d04-9c26-a88034ffd894","timestamp":"2026-04-08T12:09:55.439470179Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"issue_created","id":"b01ffe46-2abb-4dc6-9354-60bb05b03512","issue_id":"a2026f8c-06be-44ee-82e9-36bd187532ea","timestamp":"2026-04-08T16:24:24.205637871Z","title":"Incremental simulation logging and per-point result persistence","priority":"normal"}
+{"type":"issue_state_changed","id":"504095c3-0dd0-42a7-bc8f-8afdbcb41bf9","issue_id":"a2026f8c-06be-44ee-82e9-36bd187532ea","timestamp":"2026-04-08T17:32:06.429594844Z","from":"ready","to":"in_progress"}
+{"type":"issue_claimed","id":"a40dd2d9-486b-4d31-917c-fbebb703135d","issue_id":"a2026f8c-06be-44ee-82e9-36bd187532ea","timestamp":"2026-04-08T17:32:06.429784534Z","assignee":"agent:claude"}
+{"type":"gate_added","id":"82fd9bd7-dd65-4d3d-ba78-e345167d43d7","issue_id":"a2026f8c-06be-44ee-82e9-36bd187532ea","timestamp":"2026-04-08T17:43:16.598654695Z","gate_key":"cargo-ci"}
+{"type":"gate_added","id":"807a53e4-7a41-4d98-b583-923ebefe9ee2","issue_id":"a2026f8c-06be-44ee-82e9-36bd187532ea","timestamp":"2026-04-08T17:43:16.598692105Z","gate_key":"code-review"}
