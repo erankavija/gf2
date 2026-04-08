@@ -12,14 +12,14 @@
   ],
   "gates_status": {
     "code-review": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-04-08T17:43:16.598691675Z"
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-08T19:39:07.759599763Z"
     },
     "cargo-ci": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-04-08T17:43:16.598633955Z"
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-08T19:38:45.645448662Z"
     }
   },
   "context": {},
@@ -37,5 +37,5 @@
     "component:gf2-coding"
   ],
   "created_at": "2026-04-08T16:24:24.205375421+00:00",
-  "updated_at": "2026-04-08T17:43:16.599126035+00:00"
+  "updated_at": "2026-04-08T19:44:31.528019210+00:00"
 }
