@@ -465,7 +465,13 @@ impl NrRateMatchParams {
 /// than an extreme one (1000.0) avoids numerical saturation in the min-sum
 /// decoder, which can degrade convergence when many check nodes see mixed
 /// extreme and moderate messages.
-const FILLER_LLR: f32 = 20.0;
+/// LLR value for filler (shortened) bit positions.
+///
+/// Filler bits are known to be zero, so we use a positive LLR representing
+/// high confidence. The value must be moderate enough for sum-product BP
+/// (tanh(LLR/2) must not saturate to exactly 1.0 in f32), yet large enough
+/// to provide a strong prior. Value 6.0 gives tanh(3.0) ≈ 0.995.
+const FILLER_LLR: f32 = 6.0;
 
 /// Encoding data for the mother code with right-pivot column mapping.
 ///
@@ -1119,7 +1125,7 @@ impl Nr5gRateMatchedDecoder {
 
     /// Creates a decoder with a custom min-sum scaling factor.
     ///
-    /// Use `scale = 1.0` for plain min-sum BP (no normalization).
+    /// Use `scale = 1.0` for plain min-sum (no normalization).
     /// Use `scale = 0.75` (default) for normalized min-sum.
     ///
     /// # Arguments
@@ -1136,6 +1142,24 @@ impl Nr5gRateMatchedDecoder {
         } else {
             DecoderAlgorithm::NormalizedMinSum(scale)
         };
+        Self::with_algorithm(rm_code, algorithm)
+    }
+
+    /// Creates a decoder with a specific BP algorithm variant.
+    ///
+    /// Use [`DecoderAlgorithm::SumProduct`] for exact belief propagation,
+    /// [`DecoderAlgorithm::NormalizedMinSum`] for the standard 5G NR
+    /// approximation, or [`DecoderAlgorithm::MinSum`] for plain min-sum.
+    ///
+    /// # Arguments
+    ///
+    /// * `rm_code` - The rate-matched code to decode
+    /// * `algorithm` - The check-node update algorithm
+    ///
+    /// # Complexity
+    ///
+    /// Same as [`new`](Self::new).
+    pub fn with_algorithm(rm_code: Nr5gRateMatchedCode, algorithm: DecoderAlgorithm) -> Self {
         let config = DecoderConfig::new(algorithm, true);
         let inner = LdpcDecoder::with_config(rm_code.mother_code.clone(), config);
         Self { rm_code, inner }
