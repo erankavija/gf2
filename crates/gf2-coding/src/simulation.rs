@@ -1249,9 +1249,11 @@ where
         acc_for_jsonl.write_point_complete_entry(pp, &sim_result);
     }
 
-    // Incremental CSV append.
+    // Incremental CSV append (only for CSV outputs; JSON is written at the end).
     if let Some(path) = ctx.output_path {
-        sim_result.append_csv_row_to(path);
+        if path.extension().and_then(|e| e.to_str()) != Some("json") {
+            sim_result.append_csv_row_to(path);
+        }
     }
 
     report_point_complete(
@@ -1285,9 +1287,14 @@ where
     let k = encoder.k();
     let rate = k as f64 / n as f64;
 
-    let existing = config.output_path.as_ref().map_or_else(HashMap::new, |p| {
-        try_load_existing_results(p, config.min_errors)
-    });
+    // Resume from existing CSV results (not applicable for JSON outputs).
+    let existing = config
+        .output_path
+        .as_ref()
+        .filter(|p| p.extension().and_then(|e| e.to_str()) != Some("json"))
+        .map_or_else(HashMap::new, |p| {
+            try_load_existing_results(p, config.min_errors)
+        });
     let progress_path = config.output_path.as_ref().map(|p| progress_path_for(p));
 
     let mut rng = config.make_rng();
@@ -1510,10 +1517,14 @@ impl SimulationRunner {
         let n = encoder.n();
         let rate = k as f64 / n as f64;
 
-        // Resume: load existing results if output_path is set.
-        let existing = config.output_path.as_ref().map_or_else(HashMap::new, |p| {
-            try_load_existing_results(p, config.min_errors)
-        });
+        // Resume from existing CSV results (not applicable for JSON outputs).
+        let existing = config
+            .output_path
+            .as_ref()
+            .filter(|p| p.extension().and_then(|e| e.to_str()) != Some("json"))
+            .map_or_else(HashMap::new, |p| {
+                try_load_existing_results(p, config.min_errors)
+            });
 
         let output_path = config.output_path.clone();
         let progress_path = config.output_path.as_ref().map(|p| progress_path_for(p));
