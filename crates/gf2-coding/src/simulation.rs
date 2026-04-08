@@ -414,6 +414,10 @@ impl SimulationResult {
     /// # Panics
     ///
     /// Panics if the file cannot be opened or written.
+    ///
+    /// # Complexity
+    ///
+    /// O(1) per call (single file open + write).
     pub fn append_csv_row_to(&self, path: &Path) {
         use std::io::Write;
         let needs_header = !path.exists() || std::fs::metadata(path).map_or(true, |m| m.len() == 0);
@@ -850,6 +854,7 @@ fn report_point_complete(
 /// threshold are included.
 ///
 /// Returns an empty map if the file does not exist or cannot be parsed.
+/// Does not panic on I/O or parse errors — gracefully falls back to empty.
 ///
 /// # Arguments
 ///
@@ -865,6 +870,10 @@ fn report_point_complete(
 /// let results = try_load_existing_results(Path::new("/nonexistent.csv"), 100);
 /// assert!(results.is_empty());
 /// ```
+///
+/// # Complexity
+///
+/// O(n) where n is the number of rows in the CSV file.
 pub fn try_load_existing_results(
     path: &Path,
     min_errors: usize,

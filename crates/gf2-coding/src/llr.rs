@@ -916,10 +916,11 @@ mod property_tests {
             prop_assert_eq!(exact.value() >= 0.0, approx.value() >= 0.0);
 
             // Min-sum approximation quality varies with input
-            // For larger LLRs (>1.0), the approximation is typically within 2x
-            // This is acceptable for LDPC decoding where it's a performance tradeoff
+            // Min-sum overestimates more for uniform small inputs (e.g., four
+            // values of 1.0: exact boxplus ≈ 0.09, min-sum = 1.0, ratio ≈ 11).
+            // Bound of 15x accommodates worst-case uniform-small inputs.
             let ratio = (approx.magnitude() / exact.magnitude()).max(exact.magnitude() / approx.magnitude());
-            prop_assert!(ratio < 5.0, "Approximation ratio {} exceeds acceptable bounds", ratio);
+            prop_assert!(ratio < 15.0, "Approximation ratio {} exceeds acceptable bounds", ratio);
         }
 
         #[test]
