@@ -739,17 +739,58 @@ fn format_duration(d: std::time::Duration) -> String {
     }
 }
 
-/// Reports simulation progress to stderr, including wall-clock elapsed time.
+/// Reports simulation progress to stderr, including wall-clock elapsed time
+/// and estimated remaining time for the current SNR point.
 fn report_progress(
     eb_n0_db: f64,
     frames: usize,
     frame_errors: usize,
     min_errors: usize,
+    max_frames: usize,
     elapsed: Option<std::time::Duration>,
 ) {
     let elapsed_str = elapsed.map_or_else(String::new, |d| format!(" [{}]", format_duration(d)));
+
+    // Estimate remaining time for this SNR point.
+    let eta_str = if let Some(el) = elapsed {
+        if frames > 0 && frame_errors > 0 && frame_errors < min_errors {
+            // Error-limited: estimate remaining frames from error rate.
+            let remaining_errors = min_errors - frame_errors;
+            let error_rate = frame_errors as f64 / frames as f64;
+            let remaining_frames = (remaining_errors as f64 / error_rate).ceil() as usize;
+            let remaining_frames = remaining_frames.min(max_frames.saturating_sub(frames));
+            let frame_rate = frames as f64 / el.as_secs_f64();
+            if frame_rate > 0.0 {
+                let eta_secs = remaining_frames as f64 / frame_rate;
+                format!(
+                    ", ETA ~{}",
+                    format_duration(std::time::Duration::from_secs_f64(eta_secs))
+                )
+            } else {
+                String::new()
+            }
+        } else if frames > 0 && frame_errors == 0 {
+            // No errors yet: estimate based on max_frames.
+            let remaining_frames = max_frames.saturating_sub(frames);
+            let frame_rate = frames as f64 / el.as_secs_f64();
+            if frame_rate > 0.0 {
+                let eta_secs = remaining_frames as f64 / frame_rate;
+                format!(
+                    ", ETA ~{}",
+                    format_duration(std::time::Duration::from_secs_f64(eta_secs))
+                )
+            } else {
+                String::new()
+            }
+        } else {
+            String::new()
+        }
+    } else {
+        String::new()
+    };
+
     eprintln!(
-        "[{:.1} dB] frames={}, frame_errors={}/{} ({:.1}%){elapsed_str}",
+        "[{:.1} dB] frames={}, frame_errors={}/{} ({:.1}%){elapsed_str}{eta_str}",
         eb_n0_db,
         frames,
         frame_errors,
@@ -862,6 +903,8 @@ struct SnrAccumulator {
     start_time: Instant,
     last_progress_time: Instant,
     progress_count: usize,
+    /// Set to `true` after the first JSONL write failure so we only warn once.
+    progress_write_warned: bool,
 }
 
 impl SnrAccumulator {
@@ -879,6 +922,7 @@ impl SnrAccumulator {
             start_time: now,
             last_progress_time: now,
             progress_count: 0,
+            progress_write_warned: false,
         }
     }
 
@@ -918,6 +962,8 @@ impl SnrAccumulator {
     }
 
     /// Appends a JSONL progress entry to the given file path.
+    ///
+    /// Warns on stderr on the first failure (best-effort, does not panic).
     fn write_progress_entry(&mut self, path: &Path) {
         use std::io::Write;
         let elapsed_s = self.start_time.elapsed().as_secs_f64();
@@ -928,7 +974,8 @@ impl SnrAccumulator {
         };
         let entry = format!(
             concat!(
-                "{{\"timestamp\":\"{}\",",
+                "{{\"type\":\"progress\",",
+                "\"timestamp\":\"{}\",",
                 "\"eb_n0_db\":{},",
                 "\"frames\":{},",
                 "\"frame_errors\":{},",
@@ -942,15 +989,75 @@ impl SnrAccumulator {
             bler_estimate,
             elapsed_s,
         );
-        if let Ok(mut file) = std::fs::OpenOptions::new()
+        let result = std::fs::OpenOptions::new()
             .create(true)
             .append(true)
             .open(path)
-        {
-            let _ = writeln!(file, "{entry}");
+            .and_then(|mut file| writeln!(file, "{entry}"));
+        if let Err(e) = result {
+            if !self.progress_write_warned {
+                eprintln!(
+                    "Warning: failed to write JSONL progress to {}: {e}",
+                    path.display()
+                );
+                self.progress_write_warned = true;
+            }
         }
         self.last_progress_time = Instant::now();
         self.progress_count += 1;
+    }
+
+    /// Appends a `"type":"point_complete"` JSONL entry with full result fields.
+    fn write_point_complete_entry(&mut self, path: &Path, result: &SimulationResult) {
+        use std::io::Write;
+        let elapsed_s = self.start_time.elapsed().as_secs_f64();
+        let avg_iter = result
+            .avg_iterations
+            .map_or("null".to_string(), |v| format!("{v}"));
+        let avg_q = result
+            .avg_queries_per_bit
+            .map_or("null".to_string(), |v| format!("{v}"));
+        let entry = format!(
+            concat!(
+                "{{\"type\":\"point_complete\",",
+                "\"timestamp\":\"{}\",",
+                "\"eb_n0_db\":{},",
+                "\"ber\":{},",
+                "\"bler\":{},",
+                "\"num_bits\":{},",
+                "\"num_bit_errors\":{},",
+                "\"num_frames\":{},",
+                "\"num_frame_errors\":{},",
+                "\"avg_iterations\":{},",
+                "\"avg_queries_per_bit\":{},",
+                "\"elapsed_s\":{:.1}}}"
+            ),
+            chrono_like_timestamp(),
+            result.eb_n0_db,
+            result.ber,
+            result.bler,
+            result.num_bits,
+            result.num_bit_errors,
+            result.num_frames,
+            result.num_frame_errors,
+            avg_iter,
+            avg_q,
+            elapsed_s,
+        );
+        let write_result = std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(path)
+            .and_then(|mut file| writeln!(file, "{entry}"));
+        if let Err(e) = write_result {
+            if !self.progress_write_warned {
+                eprintln!(
+                    "Warning: failed to write JSONL progress to {}: {e}",
+                    path.display()
+                );
+                self.progress_write_warned = true;
+            }
+        }
     }
 
     /// Returns the elapsed wall-clock time since this accumulator was created.
@@ -994,17 +1101,38 @@ impl SnrAccumulator {
     }
 }
 
-/// Returns a simple ISO 8601-like timestamp string without external dependencies.
+/// Returns an ISO 8601 timestamp string (`YYYY-MM-DDTHH:MM:SS`) without external dependencies.
 fn chrono_like_timestamp() -> String {
     use std::time::SystemTime;
     match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
         Ok(d) => {
             let secs = d.as_secs();
-            // Simple epoch-seconds timestamp; callers that need full ISO 8601
-            // can parse this. Avoids adding chrono as a dependency.
-            format!("{secs}")
+            // Manual UTC breakdown — avoids adding chrono as a dependency.
+            let days = secs / 86400;
+            let time_of_day = secs % 86400;
+            let hours = time_of_day / 3600;
+            let minutes = (time_of_day % 3600) / 60;
+            let seconds = time_of_day % 60;
+
+            // Convert days since epoch to (year, month, day) using a civil calendar algorithm.
+            // Based on Howard Hinnant's `civil_from_days` (public domain).
+            let z = days as i64 + 719468;
+            let era = if z >= 0 { z } else { z - 146096 } / 146097;
+            let doe = (z - era * 146097) as u64; // day of era [0, 146096]
+            let yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365; // year of era [0, 399]
+            let y = yoe as i64 + era * 400;
+            let doy = doe - (365 * yoe + yoe / 4 - yoe / 100); // day of year [0, 365]
+            let mp = (5 * doy + 2) / 153; // [0, 11]
+            let d = doy - (153 * mp + 2) / 5 + 1; // day [1, 31]
+            let m = if mp < 10 { mp + 3 } else { mp - 9 }; // month [1, 12]
+            let y = if m <= 2 { y + 1 } else { y };
+
+            format!(
+                "{:04}-{:02}-{:02}T{:02}:{:02}:{:02}",
+                y, m, d, hours, minutes, seconds
+            )
         }
-        Err(_) => "0".to_string(),
+        Err(_) => "1970-01-01T00:00:00".to_string(),
     }
 }
 
@@ -1029,6 +1157,167 @@ pub fn count_bit_errors(original: &BitVec, decoded: &BitVec) -> usize {
         }
         errors + original.len().abs_diff(decoded.len())
     }
+}
+
+/// Shared context for running a single SNR point within the simulation sweep.
+///
+/// Groups the parameters that are common across all simulation entry-points
+/// so the inner function does not exceed clippy's argument limit.
+struct SnrPointContext<'a> {
+    eb_n0_db: f64,
+    rate: f64,
+    config: &'a SimulationConfig,
+    existing: &'a HashMap<String, SimulationResult>,
+    output_path: Option<&'a Path>,
+    progress_path: Option<&'a Path>,
+    remaining_points: usize,
+    completed_durations: &'a [std::time::Duration],
+}
+
+/// Simulates a single SNR point, handling progress reporting, JSONL logging,
+/// incremental CSV append, and point-completion reporting.
+///
+/// The caller supplies a `decode_frame` closure that receives the channel LLRs
+/// for one frame and returns a [`DecoderResult`]. Everything else — the frame
+/// loop, early-termination, resume check, CSV/JSONL I/O — lives here so it
+/// is shared across all simulation entry-points.
+fn simulate_single_point<E, C, R, F>(
+    encoder: &E,
+    channel: &C,
+    rng: &mut R,
+    ctx: &SnrPointContext<'_>,
+    mut decode_frame: F,
+) -> SimulationResult
+where
+    E: BlockEncoder,
+    C: ChannelModel,
+    R: Rng,
+    F: FnMut(&[crate::llr::Llr]) -> DecoderResult,
+{
+    let eb_n0_db = ctx.eb_n0_db;
+    let rate = ctx.rate;
+    let config = ctx.config;
+    let k = encoder.k();
+
+    // Check resume cache.
+    let snr_key = format!("{:.6}", eb_n0_db);
+    if let Some(cached) = ctx.existing.get(&snr_key) {
+        eprintln!(
+            "[{:.1} dB] RESUMED: using existing result ({} errors, {} frames)",
+            eb_n0_db, cached.num_frame_errors, cached.num_frames,
+        );
+        return cached.clone();
+    }
+
+    let mut acc = SnrAccumulator::new(eb_n0_db, k);
+
+    while !acc.should_stop(config.min_errors, config.max_frames) {
+        let message = BitVec::random(k, rng);
+        let codeword = encoder.encode(&message);
+        let llrs = channel.transmit_and_demodulate(&codeword, eb_n0_db, rate, rng);
+
+        let result = decode_frame(&llrs);
+        let bit_errors = count_bit_errors(&message, &result.decoded_bits);
+        acc.record_frame(bit_errors, result.iterations, result.queries);
+
+        if acc.should_report() {
+            report_progress(
+                eb_n0_db,
+                acc.total_frames,
+                acc.total_frame_errors,
+                config.min_errors,
+                config.max_frames,
+                Some(acc.elapsed()),
+            );
+        }
+
+        if let Some(pp) = ctx.progress_path {
+            if acc.should_write_progress() {
+                acc.write_progress_entry(pp);
+            }
+        }
+    }
+
+    let point_elapsed = acc.elapsed();
+    let sim_result = acc.into_result();
+
+    // Write point_complete JSONL entry.
+    if let Some(pp) = ctx.progress_path {
+        let mut acc_for_jsonl = SnrAccumulator::new(eb_n0_db, k);
+        // Reuse the start time from the original accumulator via elapsed.
+        acc_for_jsonl.start_time = Instant::now() - point_elapsed;
+        acc_for_jsonl.write_point_complete_entry(pp, &sim_result);
+    }
+
+    // Incremental CSV append.
+    if let Some(path) = ctx.output_path {
+        sim_result.append_csv_row_to(path);
+    }
+
+    report_point_complete(
+        eb_n0_db,
+        &sim_result,
+        point_elapsed,
+        ctx.remaining_points,
+        ctx.completed_durations,
+    );
+
+    sim_result
+}
+
+/// Runs the sequential SNR sweep shared by `run_coded_iterative` and
+/// `run_with_decoder`.
+///
+/// Handles resume, progress, incremental CSV, JSONL logging, and final file
+/// write. The caller provides a per-frame `decode_frame` closure.
+fn run_sequential_sweep<E, C, F>(
+    encoder: &E,
+    channel: &C,
+    config: &SimulationConfig,
+    mut decode_frame: F,
+) -> SimulationResults
+where
+    E: BlockEncoder,
+    C: ChannelModel,
+    F: FnMut(&[crate::llr::Llr]) -> DecoderResult,
+{
+    let n = encoder.n();
+    let k = encoder.k();
+    let rate = k as f64 / n as f64;
+
+    let existing = config.output_path.as_ref().map_or_else(HashMap::new, |p| {
+        try_load_existing_results(p, config.min_errors)
+    });
+    let progress_path = config.output_path.as_ref().map(|p| progress_path_for(p));
+
+    let mut rng = config.make_rng();
+    let mut points = Vec::with_capacity(config.eb_n0_range_db.len());
+    let mut completed_durations: Vec<std::time::Duration> = Vec::new();
+
+    for (point_idx, &eb_n0_db) in config.eb_n0_range_db.iter().enumerate() {
+        let remaining = config.eb_n0_range_db.len() - point_idx - 1;
+        let point_start = Instant::now();
+        let ctx = SnrPointContext {
+            eb_n0_db,
+            rate,
+            config,
+            existing: &existing,
+            output_path: config.output_path.as_deref(),
+            progress_path: progress_path.as_deref(),
+            remaining_points: remaining,
+            completed_durations: &completed_durations,
+        };
+        let sim_result = simulate_single_point(encoder, channel, &mut rng, &ctx, &mut decode_frame);
+        completed_durations.push(point_start.elapsed());
+        points.push(sim_result);
+    }
+
+    let results = SimulationResults { points };
+    // Final overwrite with clean, complete file.
+    if let Some(ref path) = config.output_path {
+        results.write_to(path);
+    }
+    results
 }
 
 impl SimulationRunner {
@@ -1085,43 +1374,9 @@ impl SimulationRunner {
         D: SoftDecoder,
         C: ChannelModel,
     {
-        let k = encoder.k();
-        let n = encoder.n();
-        let rate = k as f64 / n as f64;
-
-        let mut rng = config.make_rng();
-        let mut points = Vec::with_capacity(config.eb_n0_range_db.len());
-
-        for &eb_n0_db in &config.eb_n0_range_db {
-            let mut acc = SnrAccumulator::new(eb_n0_db, k);
-
-            while !acc.should_stop(config.min_errors, config.max_frames) {
-                let message = BitVec::random(k, &mut rng);
-                let codeword = encoder.encode(&message);
-                let llrs = channel.transmit_and_demodulate(&codeword, eb_n0_db, rate, &mut rng);
-                let result = decoder.decode_soft_with_result(&llrs);
-                let bit_errors = count_bit_errors(&message, &result.decoded_bits);
-                acc.record_frame(bit_errors, result.iterations, result.queries);
-
-                if acc.should_report() {
-                    report_progress(
-                        eb_n0_db,
-                        acc.total_frames,
-                        acc.total_frame_errors,
-                        config.min_errors,
-                        Some(acc.elapsed()),
-                    );
-                }
-            }
-
-            points.push(acc.into_result());
-        }
-
-        let results = SimulationResults { points };
-        if let Some(ref path) = config.output_path {
-            results.write_to(path);
-        }
-        results
+        run_sequential_sweep(encoder, channel, config, |llrs| {
+            decoder.decode_soft_with_result(llrs)
+        })
     }
 
     /// Runs a coded simulation using a mutable [`IterativeSoftDecoder`].
@@ -1177,89 +1432,11 @@ impl SimulationRunner {
         D: IterativeSoftDecoder,
         C: ChannelModel,
     {
-        let k = encoder.k();
-        let n = encoder.n();
-        let rate = k as f64 / n as f64;
-
-        // Resume: load existing results if output_path is set.
-        let existing = config.output_path.as_ref().map_or_else(HashMap::new, |p| {
-            try_load_existing_results(p, config.min_errors)
-        });
-
-        let progress_path = config.output_path.as_ref().map(|p| progress_path_for(p));
-
-        let mut rng = config.make_rng();
-        let mut points = Vec::with_capacity(config.eb_n0_range_db.len());
-        let mut completed_durations: Vec<std::time::Duration> = Vec::new();
-
-        for (point_idx, &eb_n0_db) in config.eb_n0_range_db.iter().enumerate() {
-            let remaining = config.eb_n0_range_db.len() - point_idx - 1;
-
-            // Check resume cache.
-            let snr_key = format!("{:.6}", eb_n0_db);
-            if let Some(cached) = existing.get(&snr_key) {
-                eprintln!(
-                    "[{:.1} dB] RESUMED: using existing result ({} errors, {} frames)",
-                    eb_n0_db, cached.num_frame_errors, cached.num_frames,
-                );
-                points.push(cached.clone());
-                continue;
-            }
-
-            let mut acc = SnrAccumulator::new(eb_n0_db, k);
-
-            while !acc.should_stop(config.min_errors, config.max_frames) {
-                let message = BitVec::random(k, &mut rng);
-                let codeword = encoder.encode(&message);
-                let llrs = channel.transmit_and_demodulate(&codeword, eb_n0_db, rate, &mut rng);
-
-                decoder.reset();
-                let result = decoder.decode_iterative(&llrs, config.max_decoder_iterations);
-                let bit_errors = count_bit_errors(&message, &result.decoded_bits);
-                acc.record_frame(bit_errors, result.iterations, result.queries);
-
-                if acc.should_report() {
-                    report_progress(
-                        eb_n0_db,
-                        acc.total_frames,
-                        acc.total_frame_errors,
-                        config.min_errors,
-                        Some(acc.elapsed()),
-                    );
-                }
-
-                if let Some(ref pp) = progress_path {
-                    if acc.should_write_progress() {
-                        acc.write_progress_entry(pp);
-                    }
-                }
-            }
-
-            let point_elapsed = acc.elapsed();
-            let sim_result = acc.into_result();
-
-            // Incremental CSV append.
-            if let Some(ref path) = config.output_path {
-                sim_result.append_csv_row_to(path);
-            }
-
-            report_point_complete(
-                eb_n0_db,
-                &sim_result,
-                point_elapsed,
-                remaining,
-                &completed_durations,
-            );
-            completed_durations.push(point_elapsed);
-            points.push(sim_result);
-        }
-
-        let results = SimulationResults { points };
-        // Final overwrite with clean, complete file.
-        if let Some(ref path) = config.output_path {
-            results.write_to(path);
-        }
-        results
+        let max_iter = config.max_decoder_iterations;
+        run_sequential_sweep(encoder, channel, config, |llrs| {
+            decoder.reset();
+            decoder.decode_iterative(llrs, max_iter)
+        })
     }
 
     /// Runs a coded iterative simulation with per-SNR-point parallelism.
@@ -1340,74 +1517,31 @@ impl SimulationRunner {
 
         let output_path = config.output_path.clone();
         let progress_path = config.output_path.as_ref().map(|p| progress_path_for(p));
+        let max_iter = config.max_decoder_iterations;
 
         let simulate_point = |(idx, &eb_n0_db): (usize, &f64)| -> SimulationResult {
-            // Check resume cache.
-            let snr_key = format!("{:.6}", eb_n0_db);
-            if let Some(cached) = existing.get(&snr_key) {
-                eprintln!(
-                    "[{:.1} dB] RESUMED: using existing result ({} errors, {} frames)",
-                    eb_n0_db, cached.num_frame_errors, cached.num_frames,
-                );
-                return cached.clone();
-            }
-
             let mut decoder = make_decoder();
             // Each SNR point gets a unique sub-seed derived from the config seed.
-            // When no seed is provided, use a fixed per-point seed for consistency.
             let point_seed = config
                 .rng_seed
                 .unwrap_or(0xDEAD_BEEF)
                 .wrapping_add(idx as u64);
             let mut rng = StdRng::seed_from_u64(point_seed);
 
-            let mut acc = SnrAccumulator::new(eb_n0_db, k);
-
-            while !acc.should_stop(config.min_errors, config.max_frames) {
-                let message = BitVec::random(k, &mut rng);
-                let codeword = encoder.encode(&message);
-                let llrs = channel.transmit_and_demodulate(&codeword, eb_n0_db, rate, &mut rng);
-
-                decoder.reset();
-                let result = decoder.decode_iterative(&llrs, config.max_decoder_iterations);
-                let bit_errors = count_bit_errors(&message, &result.decoded_bits);
-                acc.record_frame(bit_errors, result.iterations, result.queries);
-
-                if acc.should_report() {
-                    report_progress(
-                        eb_n0_db,
-                        acc.total_frames,
-                        acc.total_frame_errors,
-                        config.min_errors,
-                        Some(acc.elapsed()),
-                    );
-                }
-
-                if let Some(ref pp) = progress_path {
-                    if acc.should_write_progress() {
-                        acc.write_progress_entry(pp);
-                    }
-                }
-            }
-
-            let point_elapsed = acc.elapsed();
-            let sim_result = acc.into_result();
-
-            // Incremental CSV append.
-            if let Some(ref path) = output_path {
-                sim_result.append_csv_row_to(path);
-            }
-
-            eprintln!(
-                "[{:.1} dB] DONE: BLER={:.2e} ({} errors / {} frames) in {}",
+            let ctx = SnrPointContext {
                 eb_n0_db,
-                sim_result.bler,
-                sim_result.num_frame_errors,
-                sim_result.num_frames,
-                format_duration(point_elapsed),
-            );
-
-            sim_result
+                rate,
+                config,
+                existing: &existing,
+                output_path: output_path.as_deref(),
+                progress_path: progress_path.as_deref(),
+                remaining_points: 0, // not tracked in parallel mode
+                completed_durations: &[],
+            };
+            simulate_single_point(encoder, channel, &mut rng, &ctx, |llrs| {
+                decoder.reset();
+                decoder.decode_iterative(llrs, max_iter)
+            })
         };
 
         #[cfg(feature = "parallel")]
@@ -1505,88 +1639,7 @@ impl SimulationRunner {
         C: ChannelModel,
         F: FnMut(&[crate::llr::Llr]) -> DecoderResult,
     {
-        let k = encoder.k();
-        let n = encoder.n();
-        let rate = k as f64 / n as f64;
-
-        // Resume: load existing results if output_path is set.
-        let existing = config.output_path.as_ref().map_or_else(HashMap::new, |p| {
-            try_load_existing_results(p, config.min_errors)
-        });
-
-        let progress_path = config.output_path.as_ref().map(|p| progress_path_for(p));
-
-        let mut rng = config.make_rng();
-        let mut points = Vec::with_capacity(config.eb_n0_range_db.len());
-        let mut completed_durations: Vec<std::time::Duration> = Vec::new();
-
-        for (point_idx, &eb_n0_db) in config.eb_n0_range_db.iter().enumerate() {
-            let remaining = config.eb_n0_range_db.len() - point_idx - 1;
-
-            // Check resume cache.
-            let snr_key = format!("{:.6}", eb_n0_db);
-            if let Some(cached) = existing.get(&snr_key) {
-                eprintln!(
-                    "[{:.1} dB] RESUMED: using existing result ({} errors, {} frames)",
-                    eb_n0_db, cached.num_frame_errors, cached.num_frames,
-                );
-                points.push(cached.clone());
-                continue;
-            }
-
-            let mut acc = SnrAccumulator::new(eb_n0_db, k);
-
-            while !acc.should_stop(config.min_errors, config.max_frames) {
-                let message = BitVec::random(k, &mut rng);
-                let codeword = encoder.encode(&message);
-                let llrs = channel.transmit_and_demodulate(&codeword, eb_n0_db, rate, &mut rng);
-
-                let result = decode_fn(&llrs);
-                let bit_errors = count_bit_errors(&message, &result.decoded_bits);
-                acc.record_frame(bit_errors, result.iterations, result.queries);
-
-                if acc.should_report() {
-                    report_progress(
-                        eb_n0_db,
-                        acc.total_frames,
-                        acc.total_frame_errors,
-                        config.min_errors,
-                        Some(acc.elapsed()),
-                    );
-                }
-
-                if let Some(ref pp) = progress_path {
-                    if acc.should_write_progress() {
-                        acc.write_progress_entry(pp);
-                    }
-                }
-            }
-
-            let point_elapsed = acc.elapsed();
-            let sim_result = acc.into_result();
-
-            // Incremental CSV append.
-            if let Some(ref path) = config.output_path {
-                sim_result.append_csv_row_to(path);
-            }
-
-            report_point_complete(
-                eb_n0_db,
-                &sim_result,
-                point_elapsed,
-                remaining,
-                &completed_durations,
-            );
-            completed_durations.push(point_elapsed);
-            points.push(sim_result);
-        }
-
-        let results = SimulationResults { points };
-        // Final overwrite with clean, complete file.
-        if let Some(ref path) = config.output_path {
-            results.write_to(path);
-        }
-        results
+        run_sequential_sweep(encoder, channel, config, |llrs| decode_fn(llrs))
     }
 } // impl SimulationRunner (coded methods)
 
@@ -2591,6 +2644,168 @@ mod tests {
         assert_eq!(
             format_duration(std::time::Duration::from_secs(3661)),
             "1h01m01s"
+        );
+    }
+
+    #[test]
+    fn test_jsonl_progress_written() {
+        let dir = std::env::temp_dir().join("gf2_sim_jsonl_test");
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let csv_path = dir.join("results.csv");
+        let jsonl_path = dir.join("results.progress.jsonl");
+
+        // Force JSONL progress by using a deterministic channel with errors
+        // so we hit enough frames, and set a 0s threshold override by writing
+        // directly through the accumulator API.
+        let encoder = MockEncoder;
+        let channel = DeterministicChannel {
+            flip_positions: vec![0, 1],
+        };
+        let mut config = SimulationConfig::quick_test();
+        config.eb_n0_range_db = vec![5.0];
+        config.min_errors = 5;
+        config.max_frames = 500;
+        config.rng_seed = Some(42);
+        config.output_path = Some(csv_path.clone());
+
+        // Manually simulate to force JSONL writes (the wall-clock threshold in
+        // should_write_progress means normal short tests won't trigger it).
+        let k = encoder.k();
+        let n = encoder.n();
+        let rate = k as f64 / n as f64;
+        let mut rng = config.make_rng();
+        let mut acc = SnrAccumulator::new(5.0, k);
+
+        while !acc.should_stop(config.min_errors, config.max_frames) {
+            let message = BitVec::random(k, &mut rng);
+            let codeword = encoder.encode(&message);
+            let llrs = channel.transmit_and_demodulate(&codeword, 5.0, rate, &mut rng);
+            let decoded_bits = {
+                let mut result = BitVec::with_capacity(2);
+                for pair in 0..2 {
+                    let combined = llrs[2 * pair].value() + llrs[2 * pair + 1].value();
+                    result.push_bit(combined < 0.0);
+                }
+                result
+            };
+            let bit_errors = count_bit_errors(&message, &decoded_bits);
+            acc.record_frame(bit_errors, 1, None);
+        }
+
+        // Force a progress entry write.
+        acc.write_progress_entry(&jsonl_path);
+        // Force a point_complete entry write.
+        let sim_result = acc.into_result();
+        let mut acc2 = SnrAccumulator::new(5.0, k);
+        acc2.write_point_complete_entry(&jsonl_path, &sim_result);
+
+        // Verify the JSONL file exists and has valid entries.
+        assert!(jsonl_path.exists(), "JSONL progress file must exist");
+        let content = std::fs::read_to_string(&jsonl_path).unwrap();
+        let lines: Vec<&str> = content.lines().collect();
+        assert!(
+            lines.len() >= 2,
+            "JSONL must have at least 2 lines (progress + point_complete), got {}",
+            lines.len()
+        );
+
+        // Validate the first progress line has expected fields.
+        let first_line = lines[0];
+        assert!(
+            first_line.contains("\"type\":\"progress\""),
+            "First line must have type:progress, got: {first_line}"
+        );
+        assert!(
+            first_line.contains("\"eb_n0_db\""),
+            "Must contain eb_n0_db field"
+        );
+        assert!(
+            first_line.contains("\"frames\""),
+            "Must contain frames field"
+        );
+        assert!(
+            first_line.contains("\"frame_errors\""),
+            "Must contain frame_errors field"
+        );
+        assert!(
+            first_line.contains("\"elapsed_s\""),
+            "Must contain elapsed_s field"
+        );
+        assert!(
+            first_line.contains("\"timestamp\""),
+            "Must contain timestamp field"
+        );
+
+        // Validate the point_complete line.
+        let last_line = lines[lines.len() - 1];
+        assert!(
+            last_line.contains("\"type\":\"point_complete\""),
+            "Last line must have type:point_complete, got: {last_line}"
+        );
+        assert!(
+            last_line.contains("\"ber\""),
+            "point_complete must contain ber"
+        );
+        assert!(
+            last_line.contains("\"bler\""),
+            "point_complete must contain bler"
+        );
+        assert!(
+            last_line.contains("\"num_frames\""),
+            "point_complete must contain num_frames"
+        );
+
+        // Verify timestamps are ISO 8601 format (YYYY-MM-DDTHH:MM:SS).
+        // Extract timestamp from first line.
+        if let Some(ts_start) = first_line.find("\"timestamp\":\"") {
+            let after = &first_line[ts_start + 13..];
+            if let Some(ts_end) = after.find('"') {
+                let ts = &after[..ts_end];
+                assert_eq!(
+                    ts.len(),
+                    19,
+                    "Timestamp must be 19 chars (YYYY-MM-DDTHH:MM:SS), got: {ts}"
+                );
+                assert_eq!(
+                    &ts[4..5],
+                    "-",
+                    "Timestamp must have dash at pos 4, got: {ts}"
+                );
+                assert_eq!(
+                    &ts[10..11],
+                    "T",
+                    "Timestamp must have T at pos 10, got: {ts}"
+                );
+                assert_eq!(
+                    &ts[13..14],
+                    ":",
+                    "Timestamp must have colon at pos 13, got: {ts}"
+                );
+            }
+        }
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn test_iso8601_timestamp_format() {
+        let ts = chrono_like_timestamp();
+        assert_eq!(
+            ts.len(),
+            19,
+            "Timestamp must be 19 chars (YYYY-MM-DDTHH:MM:SS), got: {ts}"
+        );
+        assert_eq!(&ts[4..5], "-", "Position 4 must be '-' in: {ts}");
+        assert_eq!(&ts[7..8], "-", "Position 7 must be '-' in: {ts}");
+        assert_eq!(&ts[10..11], "T", "Position 10 must be 'T' in: {ts}");
+        assert_eq!(&ts[13..14], ":", "Position 13 must be ':' in: {ts}");
+        assert_eq!(&ts[16..17], ":", "Position 16 must be ':' in: {ts}");
+        // Year should be reasonable (2020-2099).
+        let year: u32 = ts[..4].parse().expect("Year must be numeric");
+        assert!(
+            (2020..2100).contains(&year),
+            "Year {year} is out of range in: {ts}"
         );
     }
 
