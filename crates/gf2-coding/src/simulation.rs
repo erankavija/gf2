@@ -744,7 +744,7 @@ impl SnrAccumulator {
 ///
 /// Uses word-level XOR and popcount for O(n/64) performance on aligned
 /// vectors. Length mismatches count as additional errors.
-fn count_bit_errors(original: &BitVec, decoded: &BitVec) -> usize {
+pub fn count_bit_errors(original: &BitVec, decoded: &BitVec) -> usize {
     if original.len() == decoded.len() {
         // Fast path: XOR and popcount
         let mut diff = original.clone();

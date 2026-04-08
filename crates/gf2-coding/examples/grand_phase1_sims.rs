@@ -1,6 +1,6 @@
 //! Phase 1 AWGN simulation runners for GRAND paper Figs 1 and 3.
 //!
-//! Runs product code (turbo-decoded) vs 5G NR LDPC simulations at matched
+//! Runs product code (turbo-SOGRAND) vs 5G NR LDPC simulations at matched
 //! code parameters:
 //!
 //! - **Fig 3**: (256, 121) eBCH product code vs 5G NR LDPC (BG2)
@@ -8,24 +8,25 @@
 //!
 //! # Usage
 //!
-//! Quick mode (few frames, fast):
 //! ```bash
+//! # Quick mode (few frames, fast sanity check)
 //! cargo run -p gf2-coding --example grand_phase1_sims --release
-//! ```
 //!
-//! Full production mode (many frames, slow):
-//! ```bash
+//! # Moderate mode (≥100 frame errors per SNR point)
+//! cargo run -p gf2-coding --example grand_phase1_sims --release -- --moderate
+//!
+//! # Full production mode (≥200 frame errors, publishable statistics)
 //! cargo run -p gf2-coding --example grand_phase1_sims --release -- --full
 //! ```
 
 use gf2_coding::bch::extended::ExtendedBchCode;
 use gf2_coding::drm::DrmCode;
 use gf2_coding::ldpc::nr_5g::Nr5gRateMatchedDecoder;
-use gf2_coding::ldpc::QuasiCyclicLdpc;
+use gf2_coding::ldpc::{DecoderAlgorithm, QuasiCyclicLdpc};
 use gf2_coding::product::{ProductCode, TurboDecoder, TurboDecoderConfig};
 use gf2_coding::simulation::{
-    BpskAwgnChannel, ChannelModel, SimulationConfig, SimulationResult, SimulationResults,
-    SimulationRunner,
+    count_bit_errors, BpskAwgnChannel, ChannelModel, SimulationConfig, SimulationResult,
+    SimulationResults, SimulationRunner,
 };
 use gf2_coding::traits::BlockEncoder;
 use gf2_core::BitVec;
@@ -134,34 +135,14 @@ fn run_product_sim<C: gf2_coding::product::ProductComponent + Clone>(
     SimulationResults { points }
 }
 
-/// Counts bit errors between original and decoded.
-fn count_bit_errors(original: &BitVec, decoded: &BitVec) -> usize {
-    if original.len() == decoded.len() {
-        let mut diff = original.clone();
-        diff.bit_xor_into(decoded);
-        diff.count_ones()
-    } else {
-        let len = original.len().min(decoded.len());
-        let mut errors = 0;
-        for i in 0..len {
-            if original.get(i) != decoded.get(i) {
-                errors += 1;
-            }
-        }
-        errors + original.len().abs_diff(decoded.len())
-    }
-}
-
-/// Save results to CSV, creating parent directories as needed.
+/// Save results to CSV and JSON, creating parent directories as needed.
 fn save_results(results: &SimulationResults, path: &str) {
     let path = PathBuf::from(path);
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent).expect("Failed to create output directory");
     }
-    // Save CSV
     results.write_to(&path);
     eprintln!("  Saved CSV: {}", path.display());
-    // Save JSON alongside
     let json_path = path.with_extension("json");
     let json = results.to_json();
     std::fs::write(&json_path, json).expect("Failed to write JSON output");
@@ -173,7 +154,7 @@ fn save_results(results: &SimulationResults, path: &str) {
 // =========================================================================
 
 fn run_fig3_product(config: &SimulationConfig) -> SimulationResults {
-    eprintln!("=== Fig 3: (256,121) eBCH Product Code ===");
+    eprintln!("=== Fig 3: (256,121) eBCH Product Code (turbo-SOGRAND) ===");
     let component = ExtendedBchCode::ebch_16_11();
     let product = ProductCode::new(component.clone());
     assert_eq!(product.n(), 256);
@@ -192,19 +173,19 @@ fn run_fig3_product(config: &SimulationConfig) -> SimulationResults {
 }
 
 fn run_fig3_ldpc_nms(config: &SimulationConfig) -> SimulationResults {
-    eprintln!("=== Fig 3: (256,121) 5G NR LDPC norm-min-sum (BG2) ===");
+    eprintln!("=== Fig 3: (256,121) 5G NR LDPC normalized min-sum α=0.75 ===");
     let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
     let encoder = rm_code.clone();
-    let mut decoder = Nr5gRateMatchedDecoder::new(rm_code); // scale=0.75
+    let mut decoder = Nr5gRateMatchedDecoder::new(rm_code);
     let channel = BpskAwgnChannel;
     SimulationRunner::run_coded_iterative(&encoder, &mut decoder, &channel, config)
 }
 
-fn run_fig3_ldpc_bp(config: &SimulationConfig) -> SimulationResults {
-    eprintln!("=== Fig 3: (256,121) 5G NR LDPC plain BP (BG2) ===");
+fn run_fig3_ldpc_sp(config: &SimulationConfig) -> SimulationResults {
+    eprintln!("=== Fig 3: (256,121) 5G NR LDPC sum-product BP ===");
     let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
     let encoder = rm_code.clone();
-    let mut decoder = Nr5gRateMatchedDecoder::with_scale(rm_code, 1.0); // plain min-sum
+    let mut decoder = Nr5gRateMatchedDecoder::with_algorithm(rm_code, DecoderAlgorithm::SumProduct);
     let channel = BpskAwgnChannel;
     SimulationRunner::run_coded_iterative(&encoder, &mut decoder, &channel, config)
 }
@@ -214,7 +195,7 @@ fn run_fig3_ldpc_bp(config: &SimulationConfig) -> SimulationResults {
 // =========================================================================
 
 fn run_fig1_product(config: &SimulationConfig) -> SimulationResults {
-    eprintln!("=== Fig 1: (1024,441) dRM Product Code ===");
+    eprintln!("=== Fig 1: (1024,441) dRM Product Code (turbo-SOGRAND) ===");
     let component = DrmCode::drm_32_21();
     let product = ProductCode::new(component.clone());
     assert_eq!(product.n(), 1024);
@@ -233,7 +214,7 @@ fn run_fig1_product(config: &SimulationConfig) -> SimulationResults {
 }
 
 fn run_fig1_ldpc_nms(config: &SimulationConfig) -> SimulationResults {
-    eprintln!("=== Fig 1: (1024,441) 5G NR LDPC norm-min-sum (BG2) ===");
+    eprintln!("=== Fig 1: (1024,441) 5G NR LDPC normalized min-sum α=0.75 ===");
     let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(2, 1024, 441);
     let encoder = rm_code.clone();
     let mut decoder = Nr5gRateMatchedDecoder::new(rm_code);
@@ -241,23 +222,23 @@ fn run_fig1_ldpc_nms(config: &SimulationConfig) -> SimulationResults {
     SimulationRunner::run_coded_iterative(&encoder, &mut decoder, &channel, config)
 }
 
-fn run_fig1_ldpc_bp(config: &SimulationConfig) -> SimulationResults {
-    eprintln!("=== Fig 1: (1024,441) 5G NR LDPC plain BP (BG2) ===");
+fn run_fig1_ldpc_sp(config: &SimulationConfig) -> SimulationResults {
+    eprintln!("=== Fig 1: (1024,441) 5G NR LDPC sum-product BP ===");
     let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(2, 1024, 441);
     let encoder = rm_code.clone();
-    let mut decoder = Nr5gRateMatchedDecoder::with_scale(rm_code, 1.0);
+    let mut decoder = Nr5gRateMatchedDecoder::with_algorithm(rm_code, DecoderAlgorithm::SumProduct);
     let channel = BpskAwgnChannel;
     SimulationRunner::run_coded_iterative(&encoder, &mut decoder, &channel, config)
 }
 
 fn main() {
     let full_mode = std::env::args().any(|a| a == "--full");
+    let moderate_mode = std::env::args().any(|a| a == "--moderate");
 
     let (min_errors, max_frames, label) = if full_mode {
-        // 1B frames ensures >=100 errors even at BLER ~1e-7.
-        // The loop exits as soon as min_errors is reached, so this cap
-        // only matters for the lowest-BLER points.
-        (100, 1_000_000_000, "FULL")
+        (200, 1_000_000_000, "FULL")
+    } else if moderate_mode {
+        (100, 500_000, "MODERATE")
     } else {
         (10, 1_000, "QUICK")
     };
@@ -276,7 +257,7 @@ fn main() {
         output_path: None,
     };
 
-    // Fig 1 config: 0–2.5 dB (per paper)
+    // Fig 1 config: 0–2.5 dB
     let fig1_config = SimulationConfig {
         eb_n0_range_db: fig1_snr_points(),
         min_errors,
@@ -301,10 +282,10 @@ fn main() {
         "dev/simulation_results/fig3_ldpc_nms_256_121.csv",
     );
 
-    let fig3_ldpc_bp = run_fig3_ldpc_bp(&fig3_config);
+    let fig3_ldpc_sp = run_fig3_ldpc_sp(&fig3_config);
     save_results(
-        &fig3_ldpc_bp,
-        "dev/simulation_results/fig3_ldpc_bp_256_121.csv",
+        &fig3_ldpc_sp,
+        "dev/simulation_results/fig3_ldpc_sp_256_121.csv",
     );
 
     // --- Fig 1: (1024,441) ---
@@ -320,101 +301,146 @@ fn main() {
         "dev/simulation_results/fig1_ldpc_nms_1024_441.csv",
     );
 
-    let fig1_ldpc_bp = run_fig1_ldpc_bp(&fig1_config);
+    let fig1_ldpc_sp = run_fig1_ldpc_sp(&fig1_config);
     save_results(
-        &fig1_ldpc_bp,
-        "dev/simulation_results/fig1_ldpc_bp_1024_441.csv",
+        &fig1_ldpc_sp,
+        "dev/simulation_results/fig1_ldpc_sp_1024_441.csv",
     );
 
-    // --- Summary ---
-    println!();
-    println!("=== Fig 3: (256,121) eBCH Product vs 5G NR LDPC ===");
-    print_comparison(&fig3_product, &fig3_ldpc_nms, "Product", "LDPC-NMS");
-
-    println!();
-    println!("=== Fig 1: (1024,441) dRM Product vs 5G NR LDPC ===");
-    print_comparison(&fig1_product, &fig1_ldpc_nms, "Product", "LDPC-NMS");
-
-    // --- Reference data comparison ---
-    println!();
-    println!("=== Reference Data Comparison ===");
-    println!("  (Comparing our simulation results against paper's reference curves.)");
-    println!("  (Discrepancy note: our simplified rate matching may produce different");
-    println!("   absolute BLER values; qualitative trends should match.)");
-    println!();
-
-    // Fig 3: compare BP, norm-min-sum, and product code curves
-    compare_with_reference(
-        "dev/reference_data/fig_prod_ebch_16x11.csv",
-        &fig3_ldpc_bp,
-        "Fig 3 LDPC BP (ours vs paper LDPC_BP)",
-        "LDPC_BP",
-    );
-    compare_with_reference(
-        "dev/reference_data/fig_prod_ebch_16x11.csv",
-        &fig3_ldpc_nms,
-        "Fig 3 LDPC normMinSum (ours vs paper LDPC_normMinSum)",
-        "LDPC_normMinSum",
-    );
-    compare_with_reference(
-        "dev/reference_data/fig_prod_ebch_16x11.csv",
+    // --- Comparison report ---
+    let report = build_comparison_report(
         &fig3_product,
-        "Fig 3 Product (ours vs paper SOGRAND turbo)",
-        "SOGRAND",
-    );
-
-    // Fig 1: compare BP, norm-min-sum, and product code curves
-    compare_with_reference(
-        "dev/reference_data/fig_prod_drm_32x21.csv",
-        &fig1_ldpc_bp,
-        "Fig 1 LDPC BP (ours vs paper LDPC_BP)",
-        "LDPC_BP",
-    );
-    compare_with_reference(
-        "dev/reference_data/fig_prod_drm_32x21.csv",
-        &fig1_ldpc_nms,
-        "Fig 1 LDPC normMinSum (ours vs paper LDPC_normMinSum)",
-        "LDPC_normMinSum",
-    );
-    compare_with_reference(
-        "dev/reference_data/fig_prod_drm_32x21.csv",
+        &fig3_ldpc_nms,
+        &fig3_ldpc_sp,
         &fig1_product,
-        "Fig 1 Product (ours vs paper SOGRAND turbo)",
-        "SOGRAND",
+        &fig1_ldpc_nms,
+        &fig1_ldpc_sp,
     );
+    println!("{report}");
+
+    let report_path = "dev/simulation_results/phase1_comparison_report.txt";
+    std::fs::write(report_path, &report).expect("Failed to write comparison report");
+    eprintln!("Comparison report saved to {report_path}");
 }
 
-/// Load reference CSV and compare BLER at matching Eb/N0 points.
-///
-/// `decoder_filter` selects which decoder's curve to compare against
-/// (e.g., "LDPC" matches LDPC_BP/LDPC_normMinSum, "SOGRAND" matches
-/// SOGRAND turbo curves, "dRM" matches dRM product curves).
-fn compare_with_reference(
+fn build_comparison_report(
+    fig3_product: &SimulationResults,
+    fig3_ldpc_nms: &SimulationResults,
+    fig3_ldpc_sp: &SimulationResults,
+    fig1_product: &SimulationResults,
+    fig1_ldpc_nms: &SimulationResults,
+    fig1_ldpc_sp: &SimulationResults,
+) -> String {
+    let mut report = String::new();
+    report.push_str("Phase 1 AWGN Simulation Results — Comparison Report\n");
+    report.push_str("===================================================\n\n");
+
+    // Fig 3 table
+    report.push_str("Fig 3: (256,121) eBCH Product Code vs 5G NR LDPC\n");
+    report.push_str(&format!(
+        "{:>8} | {:>14} | {:>14} | {:>14}\n",
+        "Eb/N0", "Product BLER", "LDPC NMS BLER", "LDPC SP BLER"
+    ));
+    report.push_str(&format!("{}\n", "-".repeat(60)));
+    for (i, p) in fig3_product.points.iter().enumerate() {
+        let nms = fig3_ldpc_nms.points.get(i);
+        let sp = fig3_ldpc_sp.points.get(i);
+        report.push_str(&format!(
+            "{:>8.1} | {:>14.4e} | {:>14.4e} | {:>14.4e}\n",
+            p.eb_n0_db,
+            p.bler,
+            nms.map_or(f64::NAN, |x| x.bler),
+            sp.map_or(f64::NAN, |x| x.bler),
+        ));
+    }
+
+    // Product vs LDPC crossover
+    report.push_str("\nProduct code outperforms LDPC (NMS) at:\n");
+    for (i, p) in fig3_product.points.iter().enumerate() {
+        if let Some(nms) = fig3_ldpc_nms.points.get(i) {
+            if p.bler < nms.bler && p.bler > 0.0 {
+                report.push_str(&format!(
+                    "  Eb/N0={:.1} dB: Product BLER={:.4e} < LDPC NMS BLER={:.4e}\n",
+                    p.eb_n0_db, p.bler, nms.bler
+                ));
+            }
+        }
+    }
+
+    report.push('\n');
+
+    // Fig 1 table
+    report.push_str("Fig 1: (1024,441) dRM Product Code vs 5G NR LDPC\n");
+    report.push_str(&format!(
+        "{:>8} | {:>14} | {:>14} | {:>14}\n",
+        "Eb/N0", "Product BLER", "LDPC NMS BLER", "LDPC SP BLER"
+    ));
+    report.push_str(&format!("{}\n", "-".repeat(60)));
+    for (i, p) in fig1_product.points.iter().enumerate() {
+        let nms = fig1_ldpc_nms.points.get(i);
+        let sp = fig1_ldpc_sp.points.get(i);
+        report.push_str(&format!(
+            "{:>8.1} | {:>14.4e} | {:>14.4e} | {:>14.4e}\n",
+            p.eb_n0_db,
+            p.bler,
+            nms.map_or(f64::NAN, |x| x.bler),
+            sp.map_or(f64::NAN, |x| x.bler),
+        ));
+    }
+
+    // Reference comparison
+    report.push_str("\nReference Data Comparison (paper's LDPC BP curve)\n");
+    report.push_str(&format!("{}\n", "-".repeat(60)));
+    append_reference_comparison(
+        &mut report,
+        "dev/reference_data/fig_prod_ebch_16x11.csv",
+        fig3_ldpc_sp,
+        "Fig 3 LDPC SP vs paper LDPC_BP",
+        "LDPC_BP",
+    );
+    append_reference_comparison(
+        &mut report,
+        "dev/reference_data/fig_prod_ebch_16x11.csv",
+        fig3_product,
+        "Fig 3 Product vs paper eBCH_prod_SOGRAND",
+        "eBCH_prod_SOGRAND",
+    );
+    append_reference_comparison(
+        &mut report,
+        "dev/reference_data/fig_prod_drm_32x21.csv",
+        fig1_ldpc_sp,
+        "Fig 1 LDPC SP vs paper LDPC_BP",
+        "LDPC_BP",
+    );
+
+    report
+}
+
+fn append_reference_comparison(
+    report: &mut String,
     ref_path: &str,
     results: &SimulationResults,
     label: &str,
     decoder_filter: &str,
 ) {
     let Ok(content) = std::fs::read_to_string(ref_path) else {
-        eprintln!("  {label}: reference file {ref_path} not found, skipping comparison");
+        report.push_str(&format!("  {label}: reference file not found\n"));
         return;
     };
-    println!("  {label}:");
-    println!(
-        "    {:>8} | {:>12} | {:>12} | {:>10}",
-        "Eb/N0", "Ours(BLER)", "Ref(BLER)", "Ratio(dB)"
-    );
+    report.push_str(&format!("  {label}:\n"));
+    report.push_str(&format!(
+        "    {:>8} | {:>12} | {:>12} | {:>10}\n",
+        "Eb/N0", "Ours", "Paper", "Ratio(dB)"
+    ));
     for point in &results.points {
-        // Find closest reference BLER at this Eb/N0
-        // Reference CSV format: figure,metric,eb_n0_db,value,decoder,...
         let mut best_ref: Option<f64> = None;
         for line in content.lines().skip(1) {
             let fields: Vec<&str> = line.split(',').collect();
             if fields.len() >= 5 {
                 if let (Ok(snr), Ok(val)) = (fields[2].parse::<f64>(), fields[3].parse::<f64>()) {
                     if (snr - point.eb_n0_db).abs() < 0.26
-                        && fields[4].contains(decoder_filter)
-                        && (fields[1].contains("BLER") || fields[1].contains("BLER_or_BER"))
+                        && fields[4] == decoder_filter
+                        && fields[1].contains("BLER")
                     {
                         best_ref = Some(val);
                     }
@@ -427,28 +453,10 @@ fn compare_with_reference(
             } else {
                 f64::NAN
             };
-            println!(
-                "    {:>8.1} | {:>12.4e} | {:>12.4e} | {:>8.2} dB",
+            report.push_str(&format!(
+                "    {:>8.1} | {:>12.4e} | {:>12.4e} | {:>8.2} dB\n",
                 point.eb_n0_db, point.bler, ref_val, delta_db
-            );
+            ));
         }
-    }
-}
-
-fn print_comparison(a: &SimulationResults, b: &SimulationResults, label_a: &str, label_b: &str) {
-    println!(
-        "{:>8} | {:>12} {:>12} | {:>12} {:>12}",
-        "Eb/N0", "BER(A)", "BLER(A)", "BER(B)", "BLER(B)"
-    );
-    println!(
-        "{:>8} | {:>12} {:>12} | {:>12} {:>12}",
-        "(dB)", label_a, label_a, label_b, label_b
-    );
-    println!("{}", "-".repeat(68));
-    for (pa, pb) in a.points.iter().zip(b.points.iter()) {
-        println!(
-            "{:8.1} | {:12.4e} {:12.4e} | {:12.4e} {:12.4e}",
-            pa.eb_n0_db, pa.ber, pa.bler, pb.ber, pb.bler
-        );
     }
 }

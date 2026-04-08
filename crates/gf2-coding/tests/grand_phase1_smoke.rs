@@ -262,23 +262,4 @@ fn test_csv_output_format() {
     assert!(csv.contains("0.01"));
 }
 
-// =========================================================================
-// Helper
-// =========================================================================
-
-fn count_bit_errors(original: &BitVec, decoded: &BitVec) -> usize {
-    if original.len() == decoded.len() {
-        let mut diff = original.clone();
-        diff.bit_xor_into(decoded);
-        diff.count_ones()
-    } else {
-        let len = original.len().min(decoded.len());
-        let mut errors = 0;
-        for i in 0..len {
-            if original.get(i) != decoded.get(i) {
-                errors += 1;
-            }
-        }
-        errors + original.len().abs_diff(decoded.len())
-    }
-}
+use gf2_coding::simulation::count_bit_errors;
