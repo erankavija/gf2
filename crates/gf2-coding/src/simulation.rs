@@ -38,7 +38,15 @@ use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use std::time::Instant;
+use std::sync::{Arc, Mutex};
+
+/// Global lock for serializing all JSONL file appends (progress + point_complete).
+///
+/// Used by both `SnrAccumulator::write_progress_entry` and
+/// `append_point_complete_jsonl` to prevent interleaved writes from
+/// concurrent parallel simulation workers.
+static JSONL_WRITE_LOCK: Mutex<()> = Mutex::new(());
+use std::time::{Duration, Instant};
 
 /// CSV header row used for simulation result output files.
 const CSV_HEADER: &str =
@@ -991,9 +999,13 @@ impl SnrAccumulator {
 
     /// Appends a JSONL progress entry to the given file path.
     ///
+    /// Thread-safe: uses [`JSONL_WRITE_LOCK`] to serialize concurrent writes
+    /// from parallel simulation workers.
+    ///
     /// Warns on stderr on the first failure (best-effort, does not panic).
     fn write_progress_entry(&mut self, path: &Path) {
         use std::io::Write;
+
         let elapsed_s = self.start_time.elapsed().as_secs_f64();
         let bler_estimate = if self.total_frames > 0 {
             self.total_frame_errors as f64 / self.total_frames as f64
@@ -1017,11 +1029,13 @@ impl SnrAccumulator {
             bler_estimate,
             elapsed_s,
         );
+        let _guard = JSONL_WRITE_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         let result = std::fs::OpenOptions::new()
             .create(true)
             .append(true)
             .open(path)
             .and_then(|mut file| writeln!(file, "{entry}"));
+        drop(_guard);
         if let Err(e) = result {
             if !self.progress_write_warned {
                 eprintln!(
@@ -1037,47 +1051,7 @@ impl SnrAccumulator {
 
     /// Appends a `"type":"point_complete"` JSONL entry with full result fields.
     fn write_point_complete_entry(&mut self, path: &Path, result: &SimulationResult) {
-        use std::io::Write;
-        let elapsed_s = self.start_time.elapsed().as_secs_f64();
-        let avg_iter = result
-            .avg_iterations
-            .map_or("null".to_string(), |v| format!("{v}"));
-        let avg_q = result
-            .avg_queries_per_bit
-            .map_or("null".to_string(), |v| format!("{v}"));
-        let entry = format!(
-            concat!(
-                "{{\"type\":\"point_complete\",",
-                "\"timestamp\":\"{}\",",
-                "\"eb_n0_db\":{},",
-                "\"ber\":{},",
-                "\"bler\":{},",
-                "\"num_bits\":{},",
-                "\"num_bit_errors\":{},",
-                "\"num_frames\":{},",
-                "\"num_frame_errors\":{},",
-                "\"avg_iterations\":{},",
-                "\"avg_queries_per_bit\":{},",
-                "\"elapsed_s\":{:.1}}}"
-            ),
-            chrono_like_timestamp(),
-            result.eb_n0_db,
-            result.ber,
-            result.bler,
-            result.num_bits,
-            result.num_bit_errors,
-            result.num_frames,
-            result.num_frame_errors,
-            avg_iter,
-            avg_q,
-            elapsed_s,
-        );
-        let write_result = std::fs::OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(path)
-            .and_then(|mut file| writeln!(file, "{entry}"));
-        if let Err(e) = write_result {
+        if let Err(e) = append_point_complete_jsonl(path, result, self.start_time.elapsed()) {
             if !self.progress_write_warned {
                 eprintln!(
                     "Warning: failed to write JSONL progress to {}: {e}",
@@ -1127,6 +1101,59 @@ impl SnrAccumulator {
             num_frame_errors: self.total_frame_errors,
         }
     }
+}
+
+/// Formats and appends a `"type":"point_complete"` JSONL entry.
+///
+/// Shared implementation used by both `SnrAccumulator` (sequential) and
+/// `ParallelResultCollector` (parallel) to avoid duplicating the schema.
+fn append_point_complete_jsonl(
+    path: &Path,
+    result: &SimulationResult,
+    elapsed: Duration,
+) -> std::io::Result<()> {
+    use std::io::Write;
+    // Use the module-level JSONL_WRITE_LOCK to serialize all JSONL appends.
+    let _guard = JSONL_WRITE_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    let elapsed_s = elapsed.as_secs_f64();
+    let avg_iter = result
+        .avg_iterations
+        .map_or("null".to_string(), |v| format!("{v}"));
+    let avg_q = result
+        .avg_queries_per_bit
+        .map_or("null".to_string(), |v| format!("{v}"));
+    let entry = format!(
+        concat!(
+            "{{\"type\":\"point_complete\",",
+            "\"timestamp\":\"{}\",",
+            "\"eb_n0_db\":{},",
+            "\"ber\":{},",
+            "\"bler\":{},",
+            "\"num_bits\":{},",
+            "\"num_bit_errors\":{},",
+            "\"num_frames\":{},",
+            "\"num_frame_errors\":{},",
+            "\"avg_iterations\":{},",
+            "\"avg_queries_per_bit\":{},",
+            "\"elapsed_s\":{:.1}}}"
+        ),
+        chrono_like_timestamp(),
+        result.eb_n0_db,
+        result.ber,
+        result.bler,
+        result.num_bits,
+        result.num_bit_errors,
+        result.num_frames,
+        result.num_frame_errors,
+        avg_iter,
+        avg_q,
+        elapsed_s,
+    );
+    let mut file = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(path)?;
+    writeln!(file, "{entry}")
 }
 
 /// Returns an ISO 8601 timestamp string (`YYYY-MM-DDTHH:MM:SS`) without external dependencies.
@@ -1200,6 +1227,10 @@ struct SnrPointContext<'a> {
     progress_path: Option<&'a Path>,
     remaining_points: usize,
     completed_durations: &'a [std::time::Duration],
+    /// When `true`, `simulate_single_point` suppresses per-point completion
+    /// reporting and CSV/JSONL writes because the caller (e.g., the parallel
+    /// runner's `ParallelResultCollector`) handles them instead.
+    suppress_completion_side_effects: bool,
 }
 
 /// Simulates a single SNR point, handling progress reporting, JSONL logging,
@@ -1269,30 +1300,146 @@ where
     let point_elapsed = acc.elapsed();
     let sim_result = acc.into_result();
 
-    // Write point_complete JSONL entry.
-    if let Some(pp) = ctx.progress_path {
-        let mut acc_for_jsonl = SnrAccumulator::new(eb_n0_db, k);
-        // Reuse the start time from the original accumulator via elapsed.
-        acc_for_jsonl.start_time = Instant::now() - point_elapsed;
-        acc_for_jsonl.write_point_complete_entry(pp, &sim_result);
+    if !ctx.suppress_completion_side_effects {
+        // Write point_complete JSONL entry.
+        if let Some(pp) = ctx.progress_path {
+            let mut acc_for_jsonl = SnrAccumulator::new(eb_n0_db, k);
+            // Reuse the start time from the original accumulator via elapsed.
+            acc_for_jsonl.start_time = Instant::now() - point_elapsed;
+            acc_for_jsonl.write_point_complete_entry(pp, &sim_result);
+        }
+
+        // Incremental CSV append (only for CSV outputs; JSON is written at the end).
+        if let Some(path) = ctx.output_path {
+            if path.extension().and_then(|e| e.to_str()) != Some("json") {
+                sim_result.append_csv_row_to(path);
+            }
+        }
+
+        report_point_complete(
+            eb_n0_db,
+            &sim_result,
+            point_elapsed,
+            ctx.remaining_points,
+            ctx.completed_durations,
+        );
     }
 
-    // Incremental CSV append (only for CSV outputs; JSON is written at the end).
-    if let Some(path) = ctx.output_path {
-        if path.extension().and_then(|e| e.to_str()) != Some("json") {
-            sim_result.append_csv_row_to(path);
+    sim_result
+}
+
+/// Collects results from parallel SNR-point workers with synchronized I/O.
+///
+/// Each parallel worker calls [`record_completed_point`] when it finishes an SNR
+/// point. The collector holds the `Mutex` only briefly to:
+/// 1. Store the result at the correct index (preserving config ordering).
+/// 2. Append a CSV row (if CSV output is configured).
+/// 3. Write a `point_complete` JSONL entry (if output_path is set).
+/// 4. Print per-point completion with ETA to stderr.
+///
+/// Intra-point JSONL progress entries are written directly by parallel workers
+/// via append-mode file I/O (each `writeln!` is atomic for short lines on POSIX).
+/// Entries include `eb_n0_db` so readers can demultiplex interleaved progress
+/// from concurrent SNR points.
+#[derive(Debug)]
+struct ParallelResultCollector {
+    /// Results indexed by SNR point index; `None` until completed.
+    results: Vec<Option<SimulationResult>>,
+    /// Path for CSV output (if configured and not JSON).
+    output_path: Option<PathBuf>,
+    /// Path for JSONL progress output (derived from output_path).
+    progress_path: Option<PathBuf>,
+    /// Number of completed SNR points so far.
+    completed_count: usize,
+    /// Total number of SNR points to simulate.
+    total_points: usize,
+    /// Durations of completed points for ETA estimation.
+    completed_durations: Vec<Duration>,
+    /// Set to `true` after the first JSONL write failure so we only warn once.
+    progress_write_warned: bool,
+}
+
+impl ParallelResultCollector {
+    /// Creates a new collector for the given number of SNR points.
+    fn new(
+        total_points: usize,
+        output_path: Option<PathBuf>,
+        progress_path: Option<PathBuf>,
+    ) -> Self {
+        Self {
+            results: vec![None; total_points],
+            output_path,
+            progress_path,
+            completed_count: 0,
+            total_points,
+            completed_durations: Vec::with_capacity(total_points),
+            progress_write_warned: false,
         }
     }
 
-    report_point_complete(
-        eb_n0_db,
-        &sim_result,
-        point_elapsed,
-        ctx.remaining_points,
-        ctx.completed_durations,
-    );
+    /// Records a completed SNR point, writing CSV/JSONL and printing progress.
+    ///
+    /// Called by each parallel worker after `simulate_single_point` returns.
+    /// The Mutex is held only for this brief I/O + bookkeeping window.
+    fn record_completed_point(
+        &mut self,
+        index: usize,
+        result: SimulationResult,
+        point_elapsed: Duration,
+    ) {
+        self.results[index] = Some(result.clone());
+        self.completed_count += 1;
+        self.completed_durations.push(point_elapsed);
+        let remaining = self.total_points - self.completed_count;
 
-    sim_result
+        // Append CSV row immediately (if CSV output).
+        if let Some(ref path) = self.output_path {
+            if path.extension().and_then(|e| e.to_str()) != Some("json") {
+                result.append_csv_row_to(path);
+            }
+        }
+
+        // Write point_complete JSONL entry.
+        if let Some(pp) = self.progress_path.clone() {
+            self.write_point_complete_entry(&pp, &result, point_elapsed);
+        }
+
+        // Print per-point completion with ETA.
+        report_point_complete(
+            result.eb_n0_db,
+            &result,
+            point_elapsed,
+            remaining,
+            &self.completed_durations,
+        );
+    }
+
+    /// Appends a `"type":"point_complete"` JSONL entry with full result fields.
+    fn write_point_complete_entry(
+        &mut self,
+        path: &Path,
+        result: &SimulationResult,
+        elapsed: Duration,
+    ) {
+        if let Err(e) = append_point_complete_jsonl(path, result, elapsed) {
+            if !self.progress_write_warned {
+                eprintln!(
+                    "Warning: failed to write JSONL progress to {}: {e}",
+                    path.display()
+                );
+                self.progress_write_warned = true;
+            }
+        }
+    }
+
+    /// Collects all results in index order. Panics if any slot is still `None`.
+    fn into_results(self) -> Vec<SimulationResult> {
+        self.results
+            .into_iter()
+            .enumerate()
+            .map(|(i, opt)| opt.unwrap_or_else(|| panic!("SNR point {i} was never completed")))
+            .collect()
+    }
 }
 
 /// Runs the sequential SNR sweep shared by `run_coded_iterative` and
@@ -1341,6 +1488,7 @@ where
             progress_path: progress_path.as_deref(),
             remaining_points: remaining,
             completed_durations: &completed_durations,
+            suppress_completion_side_effects: false,
         };
         let sim_result = simulate_single_point(encoder, channel, &mut rng, &ctx, &mut decode_frame);
         completed_durations.push(point_start.elapsed());
@@ -1541,8 +1689,8 @@ impl SimulationRunner {
         F: Fn() -> D + Send + Sync,
         C: ChannelModel + Send + Sync,
     {
-        let k = encoder.k();
         let n = encoder.n();
+        let k = encoder.k();
         let rate = k as f64 / n as f64;
 
         // Resume from existing CSV results (not applicable for JSON outputs).
@@ -1555,8 +1703,28 @@ impl SimulationRunner {
             });
 
         let max_iter = config.max_decoder_iterations;
+        let total_points = config.eb_n0_range_db.len();
 
-        let simulate_point = |(idx, &eb_n0_db): (usize, &f64)| -> SimulationResult {
+        // Derive CSV-only output path (None for JSON outputs).
+        let csv_output = config.output_path.as_ref().and_then(|p| {
+            if p.extension().and_then(|e| e.to_str()) == Some("json") {
+                None
+            } else {
+                Some(p.clone())
+            }
+        });
+        let progress_path = config.output_path.as_ref().map(|p| progress_path_for(p));
+        let worker_progress_path = progress_path.clone();
+
+        let collector = Arc::new(Mutex::new(ParallelResultCollector::new(
+            total_points,
+            csv_output,
+            progress_path,
+        )));
+
+        // Worker closure: simulates one SNR point, then locks the collector
+        // briefly to record the result with immediate CSV/JSONL writes.
+        let simulate_and_record = |(idx, &eb_n0_db): (usize, &f64)| {
             let mut decoder = make_decoder();
             // Each SNR point gets a unique sub-seed derived from the config seed.
             let point_seed = config
@@ -1570,69 +1738,62 @@ impl SimulationRunner {
                 rate,
                 config,
                 existing: &existing,
-                // Intra-point JSONL progress is disabled in parallel mode since
-                // workers run concurrently. Per-point persistence is handled
-                // below after collection via sequential incremental writes.
+                // CSV writes handled by ParallelResultCollector under Mutex.
                 output_path: None,
-                progress_path: None,
+                // JSONL progress: enabled for parallel workers. All JSONL
+                // writes are serialized via the module-level JSONL_WRITE_LOCK
+                // mutex. Entries include eb_n0_db so readers can demultiplex
+                // interleaved progress from concurrent SNR points.
+                progress_path: worker_progress_path.as_deref(),
                 remaining_points: 0,
                 completed_durations: &[],
+                // The ParallelResultCollector handles CSV append and
+                // per-point completion reporting with proper ETA tracking.
+                suppress_completion_side_effects: true,
             };
-            simulate_single_point(encoder, channel, &mut rng, &ctx, |llrs| {
+
+            let point_start = Instant::now();
+            let result = simulate_single_point(encoder, channel, &mut rng, &ctx, |llrs| {
                 decoder.reset();
                 decoder.decode_iterative(llrs, max_iter)
-            })
+            });
+            let point_elapsed = point_start.elapsed();
+
+            // Lock the collector only for the brief I/O + bookkeeping window.
+            let mut coll = collector
+                .lock()
+                .expect("ParallelResultCollector lock poisoned");
+            coll.record_completed_point(idx, result, point_elapsed);
         };
 
         #[cfg(feature = "parallel")]
-        let points: Vec<SimulationResult> = {
+        {
             use rayon::prelude::*;
             config
                 .eb_n0_range_db
                 .par_iter()
                 .enumerate()
-                .map(simulate_point)
-                .collect()
-        };
+                .for_each(simulate_and_record);
+        }
         #[cfg(not(feature = "parallel"))]
-        let points: Vec<SimulationResult> = config
-            .eb_n0_range_db
-            .iter()
-            .enumerate()
-            .map(simulate_point)
-            .collect();
+        {
+            config
+                .eb_n0_range_db
+                .iter()
+                .enumerate()
+                .for_each(simulate_and_record);
+        }
 
-        // Incremental CSV: write each completed point sequentially (safe after
-        // parallel collection). This ensures crash-recoverable intermediate output.
-        if let Some(ref path) = config.output_path {
-            if path.extension().and_then(|e| e.to_str()) != Some("json") {
-                for point in &points {
-                    point.append_csv_row_to(path);
-                }
-            }
-        }
-        // JSONL point-complete entries for each finished point.
-        if let Some(ref path) = config.output_path {
-            let pp = progress_path_for(path);
-            for point in &points {
-                let mut acc = SnrAccumulator::new(point.eb_n0_db, 1);
-                let dummy_result = SimulationResult {
-                    eb_n0_db: point.eb_n0_db,
-                    ber: point.ber,
-                    bler: point.bler,
-                    avg_iterations: point.avg_iterations,
-                    avg_queries_per_bit: point.avg_queries_per_bit,
-                    num_bits: point.num_bits,
-                    num_bit_errors: point.num_bit_errors,
-                    num_frames: point.num_frames,
-                    num_frame_errors: point.num_frame_errors,
-                };
-                acc.write_point_complete_entry(&pp, &dummy_result);
-            }
-        }
+        let points = Arc::try_unwrap(collector)
+            .expect("ParallelResultCollector Arc has outstanding references")
+            .into_inner()
+            .expect("ParallelResultCollector Mutex poisoned")
+            .into_results();
 
         let results = SimulationResults { points };
-        // Final overwrite with clean, complete file.
+        // Final overwrite with clean, complete file (CSV gets a sorted, header-
+        // included version; JSON is written here since incremental JSON is not
+        // supported).
         if let Some(ref path) = config.output_path {
             results.write_to(path);
         }
@@ -2876,6 +3037,92 @@ mod tests {
             (2020..2100).contains(&year),
             "Year {year} is out of range in: {ts}"
         );
+    }
+
+    #[test]
+    fn test_parallel_incremental_csv_append() {
+        let dir = std::env::temp_dir().join("gf2_sim_par_incr_csv");
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let csv_path = dir.join("par_incremental.csv");
+        let jsonl_path = dir.join("par_incremental.progress.jsonl");
+
+        let encoder = MockEncoder;
+        let channel = BpskAwgnChannel;
+        let mut config = SimulationConfig::quick_test();
+        // Use 3 SNR points to test parallel incremental writes.
+        config.eb_n0_range_db = vec![6.0, 8.0, 10.0];
+        config.min_errors = 5;
+        config.max_frames = 1000;
+        config.rng_seed = Some(77);
+        config.output_path = Some(csv_path.clone());
+
+        let results = SimulationRunner::run_coded_iterative_parallel(
+            &encoder,
+            || MockIterativeDecoder { last_iterations: 0 },
+            &channel,
+            &config,
+        );
+
+        assert_eq!(results.points.len(), 3, "Must have 3 result points");
+
+        // Verify final CSV has header + 3 data rows.
+        let content = std::fs::read_to_string(&csv_path).unwrap();
+        let lines: Vec<&str> = content.lines().filter(|l| !l.is_empty()).collect();
+        assert!(
+            lines[0].contains("eb_n0_db"),
+            "CSV header must be present, got: {}",
+            lines[0]
+        );
+        assert_eq!(
+            lines.len(),
+            4,
+            "CSV must have header + 3 data rows, got {} lines",
+            lines.len()
+        );
+
+        // Verify JSONL has point_complete entries for each SNR point.
+        assert!(
+            jsonl_path.exists(),
+            "JSONL progress file must exist at {}",
+            jsonl_path.display()
+        );
+        let jsonl_content = std::fs::read_to_string(&jsonl_path).unwrap();
+        let jsonl_lines: Vec<&str> = jsonl_content
+            .lines()
+            .filter(|l| l.contains("\"type\":\"point_complete\""))
+            .collect();
+        assert_eq!(
+            jsonl_lines.len(),
+            3,
+            "JSONL must have 3 point_complete entries, got {}",
+            jsonl_lines.len()
+        );
+
+        // Verify all 3 SNR values appear in point_complete entries.
+        for &snr in &[6.0_f64, 8.0, 10.0] {
+            let snr_str = format!("\"eb_n0_db\":{}", snr);
+            assert!(
+                jsonl_lines.iter().any(|l| l.contains(&snr_str)),
+                "JSONL must have point_complete for {snr} dB"
+            );
+        }
+
+        // Verify result ordering matches config order.
+        assert!(
+            (results.points[0].eb_n0_db - 6.0).abs() < 1e-10,
+            "First point must be 6.0 dB"
+        );
+        assert!(
+            (results.points[1].eb_n0_db - 8.0).abs() < 1e-10,
+            "Second point must be 8.0 dB"
+        );
+        assert!(
+            (results.points[2].eb_n0_db - 10.0).abs() < 1e-10,
+            "Third point must be 10.0 dB"
+        );
+
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     // -------------------------------------------------------------------
