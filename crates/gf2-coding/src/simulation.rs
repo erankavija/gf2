@@ -1554,8 +1554,6 @@ impl SimulationRunner {
                 try_load_existing_results(p, config.min_errors)
             });
 
-        let output_path = config.output_path.clone();
-        let progress_path = config.output_path.as_ref().map(|p| progress_path_for(p));
         let max_iter = config.max_decoder_iterations;
 
         let simulate_point = |(idx, &eb_n0_db): (usize, &f64)| -> SimulationResult {
@@ -1572,9 +1570,12 @@ impl SimulationRunner {
                 rate,
                 config,
                 existing: &existing,
-                output_path: output_path.as_deref(),
-                progress_path: progress_path.as_deref(),
-                remaining_points: 0, // not tracked in parallel mode
+                // Intra-point JSONL progress is disabled in parallel mode since
+                // workers run concurrently. Per-point persistence is handled
+                // below after collection via sequential incremental writes.
+                output_path: None,
+                progress_path: None,
+                remaining_points: 0,
                 completed_durations: &[],
             };
             simulate_single_point(encoder, channel, &mut rng, &ctx, |llrs| {
@@ -1600,6 +1601,35 @@ impl SimulationRunner {
             .enumerate()
             .map(simulate_point)
             .collect();
+
+        // Incremental CSV: write each completed point sequentially (safe after
+        // parallel collection). This ensures crash-recoverable intermediate output.
+        if let Some(ref path) = config.output_path {
+            if path.extension().and_then(|e| e.to_str()) != Some("json") {
+                for point in &points {
+                    point.append_csv_row_to(path);
+                }
+            }
+        }
+        // JSONL point-complete entries for each finished point.
+        if let Some(ref path) = config.output_path {
+            let pp = progress_path_for(path);
+            for point in &points {
+                let mut acc = SnrAccumulator::new(point.eb_n0_db, 1);
+                let dummy_result = SimulationResult {
+                    eb_n0_db: point.eb_n0_db,
+                    ber: point.ber,
+                    bler: point.bler,
+                    avg_iterations: point.avg_iterations,
+                    avg_queries_per_bit: point.avg_queries_per_bit,
+                    num_bits: point.num_bits,
+                    num_bit_errors: point.num_bit_errors,
+                    num_frames: point.num_frames,
+                    num_frame_errors: point.num_frame_errors,
+                };
+                acc.write_point_complete_entry(&pp, &dummy_result);
+            }
+        }
 
         let results = SimulationResults { points };
         // Final overwrite with clean, complete file.
