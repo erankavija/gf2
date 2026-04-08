@@ -415,6 +415,21 @@ impl SimulationResult {
     ///
     /// Panics if the file cannot be opened or written.
     ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_coding::simulation::SimulationResult;
+    /// use std::path::Path;
+    ///
+    /// let result = SimulationResult {
+    ///     eb_n0_db: 3.0, ber: 0.001, bler: 0.01,
+    ///     avg_iterations: Some(5.0), avg_queries_per_bit: None,
+    ///     num_bits: 12100, num_bit_errors: 12,
+    ///     num_frames: 100, num_frame_errors: 1,
+    /// };
+    /// result.append_csv_row_to(Path::new("/tmp/test_results.csv"));
+    /// ```
+    ///
     /// # Complexity
     ///
     /// O(1) per call (single file open + write).
@@ -854,7 +869,11 @@ fn report_point_complete(
 /// threshold are included.
 ///
 /// Returns an empty map if the file does not exist or cannot be parsed.
-/// Does not panic on I/O or parse errors — gracefully falls back to empty.
+///
+/// # Panics
+///
+/// Does not panic. I/O and parse errors are handled gracefully by
+/// returning an empty map.
 ///
 /// # Arguments
 ///
