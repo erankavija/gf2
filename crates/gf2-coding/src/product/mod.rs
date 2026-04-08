@@ -717,6 +717,25 @@ pub struct TurboDecoderResult {
     pub queries_per_bit: f64,
 }
 
+impl From<TurboDecoderResult> for crate::traits::DecoderResult {
+    /// Converts a [`TurboDecoderResult`] into a generic [`DecoderResult`].
+    ///
+    /// Field mapping:
+    /// - `decoded_bits` maps directly.
+    /// - `iterations` maps directly.
+    /// - `converged` maps to both `converged` and `syndrome_check_passed`.
+    /// - `total_queries` maps to `queries`.
+    fn from(t: TurboDecoderResult) -> Self {
+        crate::traits::DecoderResult {
+            decoded_bits: t.decoded_bits,
+            iterations: t.iterations,
+            converged: t.converged,
+            syndrome_check_passed: t.converged,
+            queries: Some(t.total_queries),
+        }
+    }
+}
+
 /// Iterative block turbo decoder using SOGRAND as the component SISO decoder.
 ///
 /// The turbo decoder alternates between row-wise and column-wise SISO decoding,

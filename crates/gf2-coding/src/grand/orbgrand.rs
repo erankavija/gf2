@@ -506,15 +506,23 @@ impl OrbGrand {
         let pattern_iter = LogisticWeightPatternIter::new(self.n);
 
         let mut list_full = false;
+        // After the list is full, continue accumulating probability up to
+        // this many additional patterns. For n=16 (65536 total), this covers
+        // all patterns. For n=32 (4B total), this limits the overhead to a
+        // bounded number of extra iterations instead of running to max_queries.
+        let post_list_budget = (1usize << self.n.min(16)).min(self.config.max_queries);
+        let mut post_list_count = 0usize;
 
         for pattern in pattern_iter {
             if query_count >= self.config.max_queries {
                 break;
             }
-            // Once the list is full and cumulative probability is near 1.0,
-            // further iteration won't change P(C\L) meaningfully. Stop early.
-            if list_full && cumulative_log_prob > -1e-6 {
-                break; // cumulative ≈ 1.0, P(C\L) ≈ 0
+            if list_full {
+                post_list_count += 1;
+                // Stop if cumulative is near 1.0 or budget exhausted
+                if cumulative_log_prob > -1e-6 || post_list_count >= post_list_budget {
+                    break;
+                }
             }
 
             // pattern is a sorted list of indices into pi (1-based logistic indices)
