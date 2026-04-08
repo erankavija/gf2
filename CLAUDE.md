@@ -14,15 +14,15 @@ A **research-grade** toolkit for high-performance finite field computing and cod
 # Build workspace
 cargo build --workspace --all-features
 
-# Run all tests (match CI)
-cargo test --workspace --all-features
+# Run all tests (match CI) — ALWAYS use --release
+cargo test --workspace --all-features --release
 
 # Run tests for a single crate
-cargo test -p gf2-core
-cargo test -p gf2-coding
+cargo test -p gf2-core --release
+cargo test -p gf2-coding --release
 
 # Run a single test by name
-cargo test -p gf2-core <test_name>
+cargo test -p gf2-core --release <test_name>
 
 # Check formatting (CI enforces this)
 cargo fmt --all -- --check
@@ -51,6 +51,14 @@ cargo run -p gf2-coding --example ldpc_awgn --release
 # Just build the committed Lean files (requires elan only)
 cd proofs && lake build
 ```
+
+## Performance rules for test and build commands
+
+1. **ALWAYS use `--release` for `cargo test`**. Debug-mode tests take 10–100x longer due to unoptimized SIMD, crypto, and simulation code. The full test suite runs in ~7s with `--release` but can take minutes in debug mode.
+2. **Never run multiple `cargo test` or `cargo build` commands in parallel.** They compete for the same build cache and cause lock contention. Run one at a time.
+3. **For targeted testing during development**, use: `cargo test -p gf2-coding --release -- module_name::tests` instead of the full workspace.
+4. **Test suite wall-clock limit: 60 seconds.** If tests exceed this, something is wrong.
+5. **Examples and benchmarks also need `--release`** — simulation examples can be 100x slower without optimization.
 
 ## Architecture
 
