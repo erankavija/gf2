@@ -24,9 +24,17 @@ use std::path::PathBuf;
 
 fn main() {
     let full_mode = std::env::args().any(|a| a == "--full");
+    let moderate_mode = std::env::args().any(|a| a == "--moderate");
 
     println!("=== Phase 3: Fig 7 GLDPC vs LDPC AWGN Simulation ===");
-    println!("Mode: {}", if full_mode { "FULL" } else { "QUICK" });
+    let mode_name = if full_mode {
+        "FULL"
+    } else if moderate_mode {
+        "MODERATE"
+    } else {
+        "QUICK"
+    };
+    println!("Mode: {mode_name}");
     println!();
 
     // Eb/N0 sweep: 0 to 4 dB in 0.5 dB steps
@@ -51,8 +59,20 @@ fn main() {
 
     let gldpc_config = SimulationConfig {
         eb_n0_range_db: eb_n0_range.clone(),
-        min_errors: if full_mode { 200 } else { 10 },
-        max_frames: if full_mode { 1_000_000 } else { 500 },
+        min_errors: if full_mode {
+            200
+        } else if moderate_mode {
+            100
+        } else {
+            10
+        },
+        max_frames: if full_mode {
+            1_000_000
+        } else if moderate_mode {
+            500_000
+        } else {
+            500
+        },
         max_decoder_iterations: 50,
         rng_seed: Some(42),
         output_path: Some(PathBuf::from("dev/simulation_results/fig7_gldpc_bler.csv")),
@@ -86,8 +106,20 @@ fn main() {
 
     let ldpc_config = SimulationConfig {
         eb_n0_range_db: eb_n0_range.clone(),
-        min_errors: if full_mode { 200 } else { 10 },
-        max_frames: if full_mode { 1_000_000 } else { 500 },
+        min_errors: if full_mode {
+            200
+        } else if moderate_mode {
+            100
+        } else {
+            10
+        },
+        max_frames: if full_mode {
+            1_000_000
+        } else if moderate_mode {
+            500_000
+        } else {
+            500
+        },
         max_decoder_iterations: 50,
         rng_seed: Some(42),
         output_path: Some(PathBuf::from("dev/simulation_results/fig7_ldpc_bler.csv")),
