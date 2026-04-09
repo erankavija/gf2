@@ -77,25 +77,25 @@ fn verify_roundtrip(bg: u8, n: usize, k: usize, stride: usize, expected_cw: &[u8
 
 #[test]
 fn test_bg2_256_121_regression() {
-    // BG2 (256,121) Z=13 i_LS=6, stride=3
+    // BG2 (256,121) Z=22 i_LS=4, stride=3
     verify_roundtrip(2, 256, 121, 3, &VECTOR_256_121);
 }
 
 #[test]
 fn test_bg2_256_49_regression() {
-    // BG2 (256,49) Z=6 i_LS=1, stride=3
+    // BG2 (256,49) Z=9 i_LS=2, stride=3
     verify_roundtrip(2, 256, 49, 3, &VECTOR_256_49);
 }
 
 #[test]
 fn test_bg2_625_225_regression() {
-    // BG2 (625,225) Z=24 i_LS=1, stride=5
+    // BG2 (625,225) Z=30 i_LS=7, stride=5
     verify_roundtrip(2, 625, 225, 5, &VECTOR_625_225);
 }
 
 #[test]
 fn test_bg2_1024_441_regression() {
-    // BG2 (1024,441) Z=48 i_LS=1, stride=7
+    // BG2 (1024,441) Z=56 i_LS=3, stride=7
     verify_roundtrip(2, 1024, 441, 7, &VECTOR_1024_441);
 }
 

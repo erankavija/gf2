@@ -78,7 +78,7 @@ fn test_fig3_nr5g_ldpc_construction() {
     assert_eq!(rm_code.n(), 256);
     assert_eq!(rm_code.k(), 121);
     assert_eq!(rm_code.params().base_graph, 2);
-    assert_eq!(rm_code.params().lifting_factor, 13);
+    assert_eq!(rm_code.params().lifting_factor, 22);
 }
 
 #[test]
