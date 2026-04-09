@@ -959,12 +959,24 @@ fn report_point_complete(
             min_errors,
             max_frames,
         ) {
-            Some(eta) => format!(
-                " -- ETA ~{} for {} remaining point{}",
-                format_duration(eta),
-                remaining,
-                if remaining == 1 { "" } else { "s" }
-            ),
+            Some(eta) => {
+                let mut detail = format!(
+                    " -- ETA ~{} for {} remaining point{}",
+                    format_duration(eta),
+                    remaining,
+                    if remaining == 1 { "" } else { "s" }
+                );
+                // Show per-point breakdown for the next few points
+                if let Some(breakdown) = estimate_per_point_eta(
+                    completed_points,
+                    remaining_snr_points,
+                    min_errors,
+                    max_frames,
+                ) {
+                    detail.push_str(&format!(" ({})", breakdown));
+                }
+                detail
+            }
             None => format!(
                 " -- {} remaining point{}, ETA unknown",
                 remaining,
@@ -979,6 +991,82 @@ fn report_point_complete(
         "[{:.1} dB] DONE: BLER={:.2e} ({} errors / {} frames) in {}{eta_str}",
         eb_n0_db, result.bler, result.num_frame_errors, result.num_frames, elapsed_str,
     );
+}
+
+/// Produces a compact per-point ETA breakdown string, e.g. "3.0dB~12m, 3.5dB~2h, 4.0dB~cap".
+fn estimate_per_point_eta(
+    completed: &[CompletedPointInfo],
+    remaining_snr_points: &[f64],
+    min_errors: usize,
+    max_frames: usize,
+) -> Option<String> {
+    let data_points: Vec<(f64, f64)> = completed
+        .iter()
+        .filter(|p| p.bler > 0.0 && p.num_frames > 0)
+        .map(|p| (p.eb_n0_db, p.bler.ln()))
+        .collect();
+    if data_points.len() < 2 {
+        return None;
+    }
+
+    let n = data_points.len() as f64;
+    let sum_x: f64 = data_points.iter().map(|(x, _)| x).sum();
+    let sum_y: f64 = data_points.iter().map(|(_, y)| y).sum();
+    let sum_xy: f64 = data_points.iter().map(|(x, y)| x * y).sum();
+    let sum_xx: f64 = data_points.iter().map(|(x, _)| x * x).sum();
+    let denom = n * sum_xx - sum_x * sum_x;
+    if denom.abs() < 1e-15 {
+        return None;
+    }
+    let slope = (n * sum_xy - sum_x * sum_y) / denom;
+    let intercept = (sum_y - slope * sum_x) / n;
+
+    let parts: Vec<String> = remaining_snr_points
+        .iter()
+        .take(4) // show at most 4 points
+        .map(|&snr| {
+            let bler_est = (slope * snr + intercept).exp().clamp(1e-12, 1.0);
+            let frames_needed = if min_errors > 0 {
+                ((min_errors as f64 / bler_est).ceil() as usize).min(max_frames)
+            } else {
+                max_frames
+            };
+            let nearest = completed
+                .iter()
+                .filter(|p| p.num_frames > 0 && p.duration.as_secs_f64() > 0.0)
+                .min_by(|a, b| {
+                    (a.eb_n0_db - snr)
+                        .abs()
+                        .partial_cmp(&(b.eb_n0_db - snr).abs())
+                        .unwrap_or(std::cmp::Ordering::Equal)
+                });
+            if let Some(ref_point) = nearest {
+                let frame_rate = ref_point.num_frames as f64 / ref_point.duration.as_secs_f64();
+                if frame_rate > 0.0 {
+                    let secs = frames_needed as f64 / frame_rate;
+                    if frames_needed >= max_frames {
+                        format!("{:.1}dB~cap", snr)
+                    } else {
+                        format!(
+                            "{:.1}dB~{}",
+                            snr,
+                            format_duration(std::time::Duration::from_secs_f64(secs))
+                        )
+                    }
+                } else {
+                    format!("{:.1}dB~?", snr)
+                }
+            } else {
+                format!("{:.1}dB~?", snr)
+            }
+        })
+        .collect();
+
+    if parts.is_empty() {
+        None
+    } else {
+        Some(parts.join(", "))
+    }
 }
 
 /// Loads existing simulation results from a CSV file for resuming.
