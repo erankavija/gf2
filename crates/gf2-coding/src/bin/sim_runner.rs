@@ -534,13 +534,32 @@ fn main() {
 
     let total = selected.len();
     for (i, curve) in selected.iter().enumerate() {
+        let snr_count = curve.snr.to_points().len();
+        let type_str = format!("{:?}", curve.curve_type).to_lowercase();
+        let detail = match curve.curve_type {
+            CurveType::Product => curve
+                .component
+                .as_deref()
+                .map_or(String::new(), |c| format!(", {c}")),
+            CurveType::Gldpc => curve
+                .variant
+                .as_deref()
+                .map_or(String::new(), |v| format!(", {v}")),
+            CurveType::Ldpc => curve
+                .algorithm
+                .as_deref()
+                .map_or(String::new(), |a| format!(", {a}")),
+        };
         eprintln!(
-            "[{}/{}] Running curve: {} (type={:?})",
+            "[{}/{}] Running: {} ({}{}, {} SNR points)",
             i + 1,
             total,
             curve.name,
-            curve.curve_type
+            type_str,
+            detail,
+            snr_count,
         );
+        let curve_start = std::time::Instant::now();
         if let Err(e) = run_curve(
             curve,
             &campaign.campaign.output_dir,
@@ -550,7 +569,27 @@ fn main() {
             eprintln!("Error running curve {}: {e}", curve.name);
             std::process::exit(1);
         }
-        eprintln!("  Done: {}", curve.name);
+        let curve_elapsed = curve_start.elapsed();
+        let secs = curve_elapsed.as_secs();
+        let elapsed_str = if secs >= 3600 {
+            format!(
+                "{}h{:02}m{:02}s",
+                secs / 3600,
+                (secs % 3600) / 60,
+                secs % 60
+            )
+        } else if secs >= 60 {
+            format!("{}m{:02}s", secs / 60, secs % 60)
+        } else {
+            format!("{secs}s")
+        };
+        eprintln!(
+            "[{}/{}] Done: {} in {}",
+            i + 1,
+            total,
+            curve.name,
+            elapsed_str
+        );
     }
 
     eprintln!(

@@ -768,6 +768,11 @@ fn format_duration(d: std::time::Duration) -> String {
 
 /// Reports simulation progress to stderr, including wall-clock elapsed time
 /// and estimated remaining time for the current SNR point.
+///
+/// Uses a tiered approach based on error count:
+/// - 0 errors: show frame progress as percentage of max_frames, no ETA guess
+/// - 1-5 errors: show cautious ETA flagged as "rough"
+/// - >5 errors: confident ETA from current BLER and frame rate
 fn report_progress(
     eb_n0_db: f64,
     frames: usize,
@@ -778,10 +783,14 @@ fn report_progress(
 ) {
     let elapsed_str = elapsed.map_or_else(String::new, |d| format!(" [{}]", format_duration(d)));
 
-    // Estimate remaining time for this SNR point.
     let eta_str = if let Some(el) = elapsed {
-        if frames > 0 && frame_errors > 0 && frame_errors < min_errors {
-            // Error-limited: estimate remaining frames from error rate.
+        if frames == 0 || el.as_secs_f64() == 0.0 {
+            String::new()
+        } else if frame_errors == 0 {
+            // No errors yet: show progress toward max_frames, no ETA guess.
+            let pct = 100.0 * frames as f64 / max_frames as f64;
+            format!(", {frames}/{max_frames} ({pct:.1}%), no errors yet")
+        } else if frame_errors < min_errors {
             let remaining_errors = min_errors - frame_errors;
             let error_rate = frame_errors as f64 / frames as f64;
             let remaining_frames = (remaining_errors as f64 / error_rate).ceil() as usize;
@@ -789,23 +798,17 @@ fn report_progress(
             let frame_rate = frames as f64 / el.as_secs_f64();
             if frame_rate > 0.0 {
                 let eta_secs = remaining_frames as f64 / frame_rate;
-                format!(
-                    ", ETA ~{}",
-                    format_duration(std::time::Duration::from_secs_f64(eta_secs))
-                )
-            } else {
-                String::new()
-            }
-        } else if frames > 0 && frame_errors == 0 {
-            // No errors yet: estimate based on max_frames.
-            let remaining_frames = max_frames.saturating_sub(frames);
-            let frame_rate = frames as f64 / el.as_secs_f64();
-            if frame_rate > 0.0 {
-                let eta_secs = remaining_frames as f64 / frame_rate;
-                format!(
-                    ", ETA ~{}",
-                    format_duration(std::time::Duration::from_secs_f64(eta_secs))
-                )
+                let eta_dur = std::time::Duration::from_secs_f64(eta_secs);
+                if frame_errors <= 5 {
+                    // Few errors: ETA is unreliable, flag it.
+                    format!(
+                        ", ETA ~{} (rough, {} errors)",
+                        format_duration(eta_dur),
+                        frame_errors
+                    )
+                } else {
+                    format!(", ETA ~{}", format_duration(eta_dur))
+                }
             } else {
                 String::new()
             }
@@ -830,36 +833,144 @@ fn report_progress(
     );
 }
 
+/// Data about a completed SNR point for sweep ETA estimation.
+#[derive(Clone, Debug)]
+struct CompletedPointInfo {
+    eb_n0_db: f64,
+    duration: std::time::Duration,
+    num_frames: usize,
+    bler: f64,
+}
+
+/// Estimates the remaining sweep time using log-linear BLER extrapolation.
+///
+/// For each remaining SNR point, estimates the BLER from the log-linear trend
+/// of completed points that had errors, then estimates frames needed as
+/// `min_errors / estimated_bler` (capped at `max_frames`), and estimates
+/// duration from the frame rate of the nearest completed point.
+///
+/// Returns `None` if insufficient data (fewer than 2 completed points with
+/// errors) to extrapolate.
+fn estimate_sweep_eta(
+    completed: &[CompletedPointInfo],
+    remaining_snr_points: &[f64],
+    min_errors: usize,
+    max_frames: usize,
+) -> Option<std::time::Duration> {
+    if remaining_snr_points.is_empty() {
+        return None;
+    }
+
+    // Collect points with measurable BLER for log-linear fit.
+    let data_points: Vec<(f64, f64)> = completed
+        .iter()
+        .filter(|p| p.bler > 0.0 && p.num_frames > 0)
+        .map(|p| (p.eb_n0_db, p.bler.ln()))
+        .collect();
+
+    if data_points.len() < 2 {
+        return None;
+    }
+
+    // Simple linear regression: ln(BLER) = a * snr + b
+    let n = data_points.len() as f64;
+    let sum_x: f64 = data_points.iter().map(|(x, _)| x).sum();
+    let sum_y: f64 = data_points.iter().map(|(_, y)| y).sum();
+    let sum_xy: f64 = data_points.iter().map(|(x, y)| x * y).sum();
+    let sum_xx: f64 = data_points.iter().map(|(x, _)| x * x).sum();
+
+    let denom = n * sum_xx - sum_x * sum_x;
+    if denom.abs() < 1e-15 {
+        return None;
+    }
+
+    let slope = (n * sum_xy - sum_x * sum_y) / denom;
+    let intercept = (sum_y - slope * sum_x) / n;
+
+    // Estimate frame rate from the nearest completed point to each remaining point.
+    let mut total_eta_secs = 0.0f64;
+    for &snr in remaining_snr_points {
+        // Extrapolate BLER.
+        let ln_bler_est = slope * snr + intercept;
+        let bler_est = ln_bler_est.exp().clamp(1e-12, 1.0);
+
+        // Estimate frames needed.
+        let frames_needed = if min_errors > 0 {
+            ((min_errors as f64 / bler_est).ceil() as usize).min(max_frames)
+        } else {
+            max_frames
+        };
+
+        // Find nearest completed point by SNR for frame rate estimation.
+        let nearest = completed
+            .iter()
+            .filter(|p| p.num_frames > 0 && p.duration.as_secs_f64() > 0.0)
+            .min_by(|a, b| {
+                let da = (a.eb_n0_db - snr).abs();
+                let db = (b.eb_n0_db - snr).abs();
+                da.partial_cmp(&db).unwrap_or(std::cmp::Ordering::Equal)
+            });
+
+        if let Some(ref_point) = nearest {
+            let frame_rate = ref_point.num_frames as f64 / ref_point.duration.as_secs_f64();
+            if frame_rate > 0.0 {
+                total_eta_secs += frames_needed as f64 / frame_rate;
+            }
+        }
+    }
+
+    if total_eta_secs > 0.0 {
+        Some(std::time::Duration::from_secs_f64(total_eta_secs))
+    } else {
+        None
+    }
+}
+
 /// Reports per-point completion with elapsed time and optional ETA.
+///
+/// Uses log-linear BLER extrapolation for sweep ETA when sufficient data
+/// (2+ completed points with errors) is available. Falls back to "unknown"
+/// otherwise.
 ///
 /// # Arguments
 ///
 /// * `eb_n0_db` - The completed SNR point.
 /// * `result` - The completed simulation result.
 /// * `point_elapsed` - Wall-clock time for this point.
-/// * `remaining_points` - Number of SNR points still to simulate.
-/// * `completed_durations` - Durations of previously completed points for ETA estimation.
+/// * `remaining_snr_points` - SNR values still to simulate.
+/// * `completed_points` - Info about previously completed points for ETA estimation.
+/// * `min_errors` - Minimum errors per point (for frame count estimation).
+/// * `max_frames` - Maximum frames per point (cap for estimation).
 fn report_point_complete(
     eb_n0_db: f64,
     result: &SimulationResult,
     point_elapsed: std::time::Duration,
-    remaining_points: usize,
-    completed_durations: &[std::time::Duration],
+    remaining_snr_points: &[f64],
+    completed_points: &[CompletedPointInfo],
+    min_errors: usize,
+    max_frames: usize,
 ) {
     let elapsed_str = format_duration(point_elapsed);
-    let eta_str = if remaining_points > 0 && !completed_durations.is_empty() {
-        let avg_secs: f64 = completed_durations
-            .iter()
-            .map(|d| d.as_secs_f64())
-            .sum::<f64>()
-            / completed_durations.len() as f64;
-        let eta = std::time::Duration::from_secs_f64(avg_secs * remaining_points as f64);
-        format!(
-            " — ETA {} for {} remaining point{}",
-            format_duration(eta),
-            remaining_points,
-            if remaining_points == 1 { "" } else { "s" }
-        )
+    let remaining = remaining_snr_points.len();
+    let eta_str = if remaining > 0 {
+        match estimate_sweep_eta(
+            completed_points,
+            remaining_snr_points,
+            min_errors,
+            max_frames,
+        ) {
+            Some(eta) => format!(
+                " -- ETA ~{} for {} remaining point{}",
+                format_duration(eta),
+                remaining,
+                if remaining == 1 { "" } else { "s" }
+            ),
+            None => format!(
+                " -- {} remaining point{}, ETA unknown",
+                remaining,
+                if remaining == 1 { "" } else { "s" }
+            ),
+        }
     } else {
         String::new()
     };
@@ -1225,8 +1336,8 @@ struct SnrPointContext<'a> {
     existing: &'a HashMap<String, SimulationResult>,
     output_path: Option<&'a Path>,
     progress_path: Option<&'a Path>,
-    remaining_points: usize,
-    completed_durations: &'a [std::time::Duration],
+    remaining_snr_points: &'a [f64],
+    completed_points: &'a [CompletedPointInfo],
     /// When `true`, `simulate_single_point` suppresses per-point completion
     /// reporting and CSV/JSONL writes because the caller (e.g., the parallel
     /// runner's `ParallelResultCollector`) handles them instead.
@@ -1320,8 +1431,10 @@ where
             eb_n0_db,
             &sim_result,
             point_elapsed,
-            ctx.remaining_points,
-            ctx.completed_durations,
+            ctx.remaining_snr_points,
+            ctx.completed_points,
+            ctx.config.min_errors,
+            ctx.config.max_frames,
         );
     }
 
@@ -1351,10 +1464,14 @@ struct ParallelResultCollector {
     progress_path: Option<PathBuf>,
     /// Number of completed SNR points so far.
     completed_count: usize,
-    /// Total number of SNR points to simulate.
-    total_points: usize,
-    /// Durations of completed points for ETA estimation.
-    completed_durations: Vec<Duration>,
+    /// Info about completed points for ETA estimation.
+    completed_points: Vec<CompletedPointInfo>,
+    /// All SNR points in the sweep (for computing remaining points).
+    all_snr_points: Vec<f64>,
+    /// Minimum errors per point (for ETA estimation).
+    min_errors: usize,
+    /// Maximum frames per point (for ETA estimation).
+    max_frames: usize,
     /// Set to `true` after the first JSONL write failure so we only warn once.
     progress_write_warned: bool,
 }
@@ -1365,14 +1482,19 @@ impl ParallelResultCollector {
         total_points: usize,
         output_path: Option<PathBuf>,
         progress_path: Option<PathBuf>,
+        all_snr_points: Vec<f64>,
+        min_errors: usize,
+        max_frames: usize,
     ) -> Self {
         Self {
             results: vec![None; total_points],
             output_path,
             progress_path,
             completed_count: 0,
-            total_points,
-            completed_durations: Vec::with_capacity(total_points),
+            completed_points: Vec::with_capacity(total_points),
+            all_snr_points,
+            min_errors,
+            max_frames,
             progress_write_warned: false,
         }
     }
@@ -1389,8 +1511,21 @@ impl ParallelResultCollector {
     ) {
         self.results[index] = Some(result.clone());
         self.completed_count += 1;
-        self.completed_durations.push(point_elapsed);
-        let remaining = self.total_points - self.completed_count;
+        self.completed_points.push(CompletedPointInfo {
+            eb_n0_db: result.eb_n0_db,
+            duration: point_elapsed,
+            num_frames: result.num_frames,
+            bler: result.bler,
+        });
+
+        // Compute remaining SNR points (those not yet completed).
+        let completed_snrs: Vec<f64> = self.completed_points.iter().map(|p| p.eb_n0_db).collect();
+        let remaining_snr: Vec<f64> = self
+            .all_snr_points
+            .iter()
+            .filter(|snr| !completed_snrs.iter().any(|c| (c - **snr).abs() < 1e-9))
+            .copied()
+            .collect();
 
         // Append CSV row immediately (if CSV output).
         if let Some(ref path) = self.output_path {
@@ -1409,8 +1544,10 @@ impl ParallelResultCollector {
             result.eb_n0_db,
             &result,
             point_elapsed,
-            remaining,
-            &self.completed_durations,
+            &remaining_snr,
+            &self.completed_points,
+            self.min_errors,
+            self.max_frames,
         );
     }
 
@@ -1474,10 +1611,10 @@ where
 
     let mut rng = config.make_rng();
     let mut points = Vec::with_capacity(config.eb_n0_range_db.len());
-    let mut completed_durations: Vec<std::time::Duration> = Vec::new();
+    let mut completed_points: Vec<CompletedPointInfo> = Vec::new();
 
     for (point_idx, &eb_n0_db) in config.eb_n0_range_db.iter().enumerate() {
-        let remaining = config.eb_n0_range_db.len() - point_idx - 1;
+        let remaining_snr: Vec<f64> = config.eb_n0_range_db[point_idx + 1..].to_vec();
         let point_start = Instant::now();
         let ctx = SnrPointContext {
             eb_n0_db,
@@ -1486,12 +1623,18 @@ where
             existing: &existing,
             output_path: config.output_path.as_deref(),
             progress_path: progress_path.as_deref(),
-            remaining_points: remaining,
-            completed_durations: &completed_durations,
+            remaining_snr_points: &remaining_snr,
+            completed_points: &completed_points,
             suppress_completion_side_effects: false,
         };
         let sim_result = simulate_single_point(encoder, channel, &mut rng, &ctx, &mut decode_frame);
-        completed_durations.push(point_start.elapsed());
+        let point_elapsed = point_start.elapsed();
+        completed_points.push(CompletedPointInfo {
+            eb_n0_db,
+            duration: point_elapsed,
+            num_frames: sim_result.num_frames,
+            bler: sim_result.bler,
+        });
         points.push(sim_result);
     }
 
@@ -1720,6 +1863,9 @@ impl SimulationRunner {
             total_points,
             csv_output,
             progress_path,
+            config.eb_n0_range_db.clone(),
+            config.min_errors,
+            config.max_frames,
         )));
 
         // Worker closure: simulates one SNR point, then locks the collector
@@ -1745,8 +1891,8 @@ impl SimulationRunner {
                 // mutex. Entries include eb_n0_db so readers can demultiplex
                 // interleaved progress from concurrent SNR points.
                 progress_path: worker_progress_path.as_deref(),
-                remaining_points: 0,
-                completed_durations: &[],
+                remaining_snr_points: &[],
+                completed_points: &[],
                 // The ParallelResultCollector handles CSV append and
                 // per-point completion reporting with proper ETA tracking.
                 suppress_completion_side_effects: true,
