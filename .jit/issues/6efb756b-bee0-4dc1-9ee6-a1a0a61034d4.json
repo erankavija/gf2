@@ -21,6 +21,13 @@
       "label": "GRAND vs 5G NR LDPC Simulation Plan",
       "doc_type": "design",
       "format": "markdown"
+    },
+    {
+      "path": "dev/active/6efb756b-session-handover.md",
+      "commit": null,
+      "label": "Session handover 2026-04-10",
+      "doc_type": "notes",
+      "format": "markdown"
     }
   ],
   "labels": [
@@ -29,5 +36,5 @@
     "epic:grand"
   ],
   "created_at": "2026-02-21T19:35:51.613833285+00:00",
-  "updated_at": "2026-04-07T08:48:22.820002676+00:00"
+  "updated_at": "2026-04-09T22:19:14.962178450+00:00"
 }
