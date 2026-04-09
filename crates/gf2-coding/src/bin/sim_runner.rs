@@ -112,7 +112,16 @@ struct SnrRange {
 
 impl SnrRange {
     /// Expands the range into a `Vec<f64>` of SNR points.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `step` is not positive.
     fn to_points(&self) -> Vec<f64> {
+        assert!(
+            self.step > 0.0,
+            "SNR step must be positive, got {}",
+            self.step
+        );
         let mut points = Vec::new();
         let mut val = self.start;
         while val <= self.stop + self.step * 0.01 {
@@ -669,6 +678,28 @@ max_frames = 1000
         let points = range.to_points();
         assert_eq!(points.len(), 1);
         assert!((points[0] - 3.0).abs() < 1e-9);
+    }
+
+    #[test]
+    #[should_panic(expected = "SNR step must be positive")]
+    fn test_snr_range_zero_step_panics() {
+        let range = SnrRange {
+            start: 0.0,
+            stop: 4.0,
+            step: 0.0,
+        };
+        range.to_points();
+    }
+
+    #[test]
+    #[should_panic(expected = "SNR step must be positive")]
+    fn test_snr_range_negative_step_panics() {
+        let range = SnrRange {
+            start: 0.0,
+            stop: 4.0,
+            step: -0.5,
+        };
+        range.to_points();
     }
 
     #[test]
