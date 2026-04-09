@@ -1015,7 +1015,10 @@ impl GldpcDecoder {
             // meaningful soft output (APP LLRs) at check nodes.
             list_size: 4,
             even_code: is_even,
-            // Keep max_queries at default for bounded runtime per check node.
+            // For n=32 component codes, 100K queries covers the high-probability
+            // patterns sufficiently for good soft output while keeping per-frame
+            // runtime bounded (~0.2 fps at n=1024 with 1M queries, ~2 fps with 100K).
+            max_queries: 100_000,
             ..OrbGrandConfig::default()
         };
         Self::with_sogrand_config(code, config)
