@@ -1401,3 +1401,6 @@
 {"type":"gate_passed","id":"94f54b5c-f2ef-4ac6-8438-038d73815250","issue_id":"a2026f8c-06be-44ee-82e9-36bd187532ea","timestamp":"2026-04-08T22:42:15.388988025Z","gate_key":"code-review","updated_by":"auto:executor"}
 {"type":"issue_state_changed","id":"47559fe2-dd50-4684-a699-8ad32bb56cef","issue_id":"a2026f8c-06be-44ee-82e9-36bd187532ea","timestamp":"2026-04-08T22:42:24.855589389Z","from":"in_progress","to":"done"}
 {"type":"issue_completed","id":"fd550ba5-86ac-413b-acec-9a5e4d68969d","issue_id":"a2026f8c-06be-44ee-82e9-36bd187532ea","timestamp":"2026-04-08T22:42:24.855641019Z"}
+{"type":"gate_passed","id":"e8d8c9da-f1e0-4203-bc14-47ea11c5a7d9","issue_id":"92086311-4dcc-4d04-9c26-a88034ffd894","timestamp":"2026-04-09T10:55:09.670710683Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"0e165c2f-d56f-4475-b904-341952839f1a","issue_id":"92086311-4dcc-4d04-9c26-a88034ffd894","timestamp":"2026-04-09T11:01:37.324575046Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"issue_created","id":"5bff1d27-a330-492e-b019-df6a2074bbca","issue_id":"a4d86b3d-05e7-4596-939b-e09f9dd35e55","timestamp":"2026-04-09T11:43:22.372244257Z","title":"Configurable simulation campaign runner","priority":"high"}
