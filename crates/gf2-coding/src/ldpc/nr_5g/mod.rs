@@ -470,8 +470,9 @@ impl NrRateMatchParams {
 /// Filler bits are known to be zero, so we use a positive LLR representing
 /// high confidence. The value must be moderate enough for sum-product BP
 /// (tanh(LLR/2) must not saturate to exactly 1.0 in f32), yet large enough
-/// to provide a strong prior. Value 6.0 gives tanh(3.0) ≈ 0.995.
-const FILLER_LLR: f32 = 6.0;
+/// to provide a strong prior. Value 15.0 gives f32 tanh(7.5) ≈ 0.9999994,
+/// which avoids saturation while providing a very strong prior.
+const FILLER_LLR: f32 = 15.0;
 
 /// Encoding data for the mother code with right-pivot column mapping.
 ///
