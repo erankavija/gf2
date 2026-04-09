@@ -506,11 +506,13 @@ impl OrbGrand {
         let pattern_iter = LogisticWeightPatternIter::new(self.n);
 
         let mut list_full = false;
-        // After the list is full, continue accumulating probability up to
-        // this many additional patterns. For n=16 (65536 total), this covers
-        // all patterns. For n=32 (4B total), this limits the overhead to a
-        // bounded number of extra iterations instead of running to max_queries.
-        let post_list_budget = (1usize << self.n.min(16)).min(self.config.max_queries);
+        // After the list is full, continue accumulating probability to
+        // improve SOGRAND soft output quality. The budget is controlled by
+        // max_queries to allow callers to trade off accuracy vs speed.
+        // For SOGRAND SISO (e.g., GLDPC check nodes), high cumulative
+        // probability is critical: if too low, P(C\L) dominates and
+        // APP LLRs collapse to channel LLRs.
+        let post_list_budget = self.config.max_queries;
         let mut post_list_count = 0usize;
 
         for pattern in pattern_iter {
