@@ -103,6 +103,19 @@ impl Llr {
         Llr(0.0)
     }
 
+    /// Maximum absolute value of the tanh product before applying atanh.
+    ///
+    /// In f32, `tanh(x)` returns exactly `1.0` for `|x| >= ~9.01`, causing
+    /// `atanh(1.0) = Inf`. During iterative LDPC decoding, var-to-check
+    /// messages grow over iterations, making all `tanh(L/2)` values saturate
+    /// to `1.0`, which produces `atanh(1.0) = Inf` → `Inf - Inf = NaN`
+    /// at the variable node update, poisoning the entire decoder.
+    ///
+    /// Clamping the product to `1 - ε` (where `ε = f32::EPSILON ≈ 1.19e-7`)
+    /// bounds the output of `atanh` to approximately `±18.4`, which is finite
+    /// and large enough not to distort the decoding.
+    const MAX_TANH_PRODUCT: f32 = 1.0 - f32::EPSILON;
+
     /// Saturates the LLR to the range `[-max, max]` to prevent overflow.
     ///
     /// # Examples
@@ -144,7 +157,8 @@ impl Llr {
     pub fn boxplus(self, other: Llr) -> Llr {
         let a = self.0 / 2.0;
         let b = other.0 / 2.0;
-        Llr(2.0 * (a.tanh() * b.tanh()).atanh())
+        let product = (a.tanh() * b.tanh()).clamp(-Self::MAX_TANH_PRODUCT, Self::MAX_TANH_PRODUCT);
+        Llr(2.0 * product.atanh())
     }
 
     /// Min-sum approximation of box-plus: faster but less accurate.
@@ -211,7 +225,8 @@ impl Llr {
         assert!(!llrs.is_empty(), "Cannot compute boxplus_n of empty slice");
 
         let product: f32 = llrs.iter().map(|llr| (llr.0 / 2.0).tanh()).product();
-        Llr(2.0 * product.atanh())
+        let clamped = product.clamp(-Self::MAX_TANH_PRODUCT, Self::MAX_TANH_PRODUCT);
+        Llr(2.0 * clamped.atanh())
     }
 
     /// Multi-operand min-sum approximation of box-plus for check nodes.
