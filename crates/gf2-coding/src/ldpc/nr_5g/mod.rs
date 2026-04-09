@@ -53,10 +53,10 @@
 //!
 //! | Target (n, k) | Rate  | BG  | Z   | Mother (N, K)  | Filler | 2*Z punct. | Parity kept | Parity removed |
 //! |---------------|-------|-----|-----|----------------|--------|------------|-------------|----------------|
-//! | (256, 121)    | 0.473 | BG2 | 13  | (676, 130)     | 9      | 26         | 161         | 385            |
-//! | (256, 49)     | 0.191 | BG2 | 6   | (312, 60)      | 11     | 12         | 219         | 33             |
-//! | (625, 225)    | 0.360 | BG2 | 24  | (1248, 240)    | 15     | 48         | 448         | 560            |
-//! | (1024, 441)   | 0.431 | BG2 | 48  | (2496, 480)    | 39     | 96         | 679         | 1337           |
+//! | (256, 121)    | 0.473 | BG2 | 22  | (1144, 220)    | 99     | 44         | 179         | 745            |
+//! | (256, 49)     | 0.191 | BG2 | 9   | (468, 90)      | 41     | 18         | 225         | 153            |
+//! | (625, 225)    | 0.360 | BG2 | 30  | (1560, 300)    | 75     | 60         | 460         | 800            |
+//! | (1024, 441)   | 0.431 | BG2 | 56  | (2912, 560)    | 119    | 112        | 695         | 1657           |
 //! | (1024, 640)   | 0.625 | BG1 | 30  | (2040, 660)    | 20     | 60         | 444         | 936            |
 //! | (4096, 3249)  | 0.793 | BG1 | 160 | (10880, 3520)  | 271    | 320        | 1167        | 6193           |
 //!
@@ -233,7 +233,7 @@ impl QuasiCyclicLdpc {
     /// assert_eq!(rm_code.k(), 121);
     /// assert_eq!(rm_code.params().target_n, 256);
     /// assert_eq!(rm_code.params().target_k, 121);
-    /// assert_eq!(rm_code.params().num_punctured_systematic, 26); // 2 * Z = 2 * 13
+    /// assert_eq!(rm_code.params().num_punctured_systematic, 44); // 2 * Z = 2 * 22
     /// ```
     ///
     /// # Complexity
@@ -253,6 +253,7 @@ impl QuasiCyclicLdpc {
             "target_n ({target_n}) must be greater than target_k ({target_k})"
         );
 
+        // K_b for code dimension: always the maximum for the base graph.
         let kb = match base_graph {
             1 => bg1::BG1_KB,
             2 => bg2::BG2_KB,
@@ -265,8 +266,28 @@ impl QuasiCyclicLdpc {
             _ => unreachable!(),
         };
 
+        // 3GPP TS 38.212 Section 5.2.2: K_b for Z selection depends on B
+        // (the input block size) for BG2. This selects a larger Z (and thus
+        // a larger mother code) for small information blocks, matching the
+        // standard's intended code structure.
+        let kb_for_z = match base_graph {
+            1 => bg1::BG1_KB,
+            2 => {
+                if target_k > 640 {
+                    10
+                } else if target_k > 560 {
+                    9
+                } else if target_k > 192 {
+                    8
+                } else {
+                    6
+                }
+            }
+            _ => unreachable!(),
+        };
+
         // Step 1: Find the smallest valid Z such that:
-        //   (a) K_b * Z >= target_k  (enough information capacity)
+        //   (a) kb_for_z * Z >= target_k  (3GPP Z selection criterion)
         //   (b) target_k + (N_b - K_b - 2) * Z >= target_n  (enough transmitted bits
         //       after mandatory 2*Z systematic puncturing)
         let all_z = all_lifting_sizes();
@@ -275,18 +296,19 @@ impl QuasiCyclicLdpc {
             .copied()
             .find(|&z| {
                 let z_us = z as usize;
-                kb * z_us >= target_k && target_k + (nb - kb - 2) * z_us >= target_n
+                kb_for_z * z_us >= target_k && target_k + (nb - kb - 2) * z_us >= target_n
             })
             .unwrap_or_else(|| {
                 panic!(
                     "No valid lifting size for BG{} with (n={}, k={}): \
-                     max possible k = {} * {} = {}",
+                     kb_for_z={}, max possible k = {} * {} = {}",
                     base_graph,
                     target_n,
                     target_k,
-                    kb,
+                    kb_for_z,
+                    kb_for_z,
                     all_z.last().unwrap(),
-                    kb as u16 * all_z.last().unwrap()
+                    kb_for_z as u16 * all_z.last().unwrap()
                 )
             });
         let z = z as usize;
@@ -364,9 +386,9 @@ impl QuasiCyclicLdpc {
 /// let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
 /// let params = rm_code.params();
 /// assert_eq!(params.base_graph, 2);
-/// assert_eq!(params.lifting_factor, 13);
-/// assert_eq!(params.num_shortened, 9);
-/// assert_eq!(params.num_punctured_systematic, 26); // 2 * Z
+/// assert_eq!(params.lifting_factor, 22);
+/// assert_eq!(params.num_shortened, 99);
+/// assert_eq!(params.num_punctured_systematic, 44); // 2 * Z
 /// assert_eq!(params.target_n, 256);
 /// assert_eq!(params.target_k, 121);
 /// ```
@@ -429,7 +451,7 @@ impl NrRateMatchParams {
     /// use gf2_coding::ldpc::QuasiCyclicLdpc;
     ///
     /// let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
-    /// assert_eq!(rm_code.params().active_systematic_bits(), 130 - 9 - 26);
+    /// assert_eq!(rm_code.params().active_systematic_bits(), 220 - 99 - 44);
     /// ```
     ///
     /// # Complexity
@@ -447,7 +469,7 @@ impl NrRateMatchParams {
     /// use gf2_coding::ldpc::QuasiCyclicLdpc;
     ///
     /// let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
-    /// assert_eq!(rm_code.params().transmitted_parity_bits(), 256 - 95);
+    /// assert_eq!(rm_code.params().transmitted_parity_bits(), 256 - 77);
     /// ```
     ///
     /// # Complexity
@@ -809,7 +831,7 @@ impl Nr5gRateMatchedCode {
     /// use gf2_coding::ldpc::QuasiCyclicLdpc;
     ///
     /// let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
-    /// assert_eq!(rm_code.params().lifting_factor, 13);
+    /// assert_eq!(rm_code.params().lifting_factor, 22);
     /// ```
     ///
     /// # Complexity
@@ -831,7 +853,7 @@ impl Nr5gRateMatchedCode {
     ///
     /// let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
     /// let mother = rm_code.mother_code();
-    /// assert_eq!(mother.n(), 52 * 13); // BG2 N_b=52, Z=13
+    /// assert_eq!(mother.n(), 52 * 22); // BG2 N_b=52, Z=22
     /// ```
     ///
     /// # Complexity
@@ -1276,12 +1298,15 @@ impl IterativeSoftDecoder for Nr5gRateMatchedDecoder {
         // to the full mother code length with punctured/filler LLR values.
         let full_llrs = self.rm_code.prepare_llrs(llrs);
 
-        // Step 2: Delegate BP decoding to the inner LdpcDecoder.
-        // This returns full_k message bits (systematic cols determined by RREF).
-        let mother_result = self.inner.decode_iterative(&full_llrs, max_iterations);
+        // Step 2: Run BP on the full mother code and get the decoded CODEWORD
+        // (all N bits). We use decode_to_codeword instead of decode_iterative
+        // because the message extraction must use natural column ordering
+        // (positions 0..target_k) per the 3GPP encoding convention, not the
+        // RREF-determined systematic positions used by LdpcDecoder internally.
+        let mother_result = self.inner.decode_to_codeword(&full_llrs, max_iterations);
 
-        // Step 3: Truncate from full_k to target_k — the last
-        // (full_k - target_k) bits are filler (shortened) positions.
+        // Step 3: Extract target_k message bits from positions 0..target_k
+        // of the decoded codeword (natural column ordering per 3GPP TS 38.212).
         let target_k = self.rm_code.params.target_k;
         let mut message = BitVec::with_capacity(target_k);
         for i in 0..target_k {
@@ -1543,34 +1568,34 @@ mod tests {
         assert_eq!(rm_code.n(), 256, "n mismatch");
         assert_eq!(rm_code.k(), 121, "k mismatch");
         assert_eq!(params.base_graph, 2);
-        assert_eq!(params.lifting_factor, 13);
-        assert_eq!(params.full_k, 130); // 10 * 13
-        assert_eq!(params.full_n, 676); // 52 * 13
-        assert_eq!(params.num_shortened, 9); // 130 - 121
-        assert_eq!(params.num_punctured_systematic, 26); // 2 * 13
-        assert_eq!(params.num_punctured_parity, 385); // 546 - 161
+        assert_eq!(params.lifting_factor, 22);
+        assert_eq!(params.full_k, 220); // 10 * 22
+        assert_eq!(params.full_n, 1144); // 52 * 22
+        assert_eq!(params.num_shortened, 99); // 220 - 121
+        assert_eq!(params.num_punctured_systematic, 44); // 2 * 22
+        assert_eq!(params.num_punctured_parity, 745); // 924 - 179
         assert_eq!(params.target_n, 256);
         assert_eq!(params.target_k, 121);
-        assert_eq!(params.active_systematic_bits(), 95); // 130 - 9 - 26
-        assert_eq!(params.transmitted_parity_bits(), 161);
+        assert_eq!(params.active_systematic_bits(), 77); // 220 - 99 - 44
+        assert_eq!(params.transmitted_parity_bits(), 179);
     }
 
     #[test]
     fn test_rate_matched_bg2_256_49_exact_dimensions() {
-        // With 3GPP puncturing (2*Z mandatory), Z=5 is too small: only 249 bits
-        // available. Needs Z=6 (set 1: a=3, j=1).
+        // With 3GPP K_b rules, target_k=49 <= 192 so K_b_for_z=6,
+        // smallest Z with 6*Z >= 49 is Z=9 (set 2: a=3, j=2).
         let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 49);
         let params = rm_code.params();
         assert_eq!(rm_code.n(), 256, "n mismatch");
         assert_eq!(rm_code.k(), 49, "k mismatch");
         assert_eq!(params.base_graph, 2);
-        assert_eq!(params.lifting_factor, 6); // Z=6 (not 5) due to 2*Z puncturing
-        assert_eq!(params.full_k, 60); // 10 * 6
-        assert_eq!(params.full_n, 312); // 52 * 6
-        assert_eq!(params.num_shortened, 11); // 60 - 49
-        assert_eq!(params.num_punctured_systematic, 12); // 2 * 6
-        assert_eq!(params.active_systematic_bits(), 37); // 60 - 11 - 12
-        assert_eq!(params.transmitted_parity_bits(), 219);
+        assert_eq!(params.lifting_factor, 9); // Z=9 via K_b_for_z=6
+        assert_eq!(params.full_k, 90); // 10 * 9
+        assert_eq!(params.full_n, 468); // 52 * 9
+        assert_eq!(params.num_shortened, 41); // 90 - 49
+        assert_eq!(params.num_punctured_systematic, 18); // 2 * 9
+        assert_eq!(params.active_systematic_bits(), 31); // 90 - 41 - 18
+        assert_eq!(params.transmitted_parity_bits(), 225);
     }
 
     #[test]
@@ -1580,12 +1605,12 @@ mod tests {
         assert_eq!(rm_code.n(), 625, "n mismatch");
         assert_eq!(rm_code.k(), 225, "k mismatch");
         assert_eq!(params.base_graph, 2);
-        assert_eq!(params.lifting_factor, 24);
-        assert_eq!(params.full_k, 240);
-        assert_eq!(params.num_shortened, 15);
-        assert_eq!(params.num_punctured_systematic, 48); // 2 * 24
-        assert_eq!(params.active_systematic_bits(), 177); // 240 - 15 - 48
-        assert_eq!(params.transmitted_parity_bits(), 448);
+        assert_eq!(params.lifting_factor, 30);
+        assert_eq!(params.full_k, 300);
+        assert_eq!(params.num_shortened, 75);
+        assert_eq!(params.num_punctured_systematic, 60); // 2 * 30
+        assert_eq!(params.active_systematic_bits(), 165); // 300 - 75 - 60
+        assert_eq!(params.transmitted_parity_bits(), 460);
     }
 
     #[test]
@@ -1595,12 +1620,12 @@ mod tests {
         assert_eq!(rm_code.n(), 1024, "n mismatch");
         assert_eq!(rm_code.k(), 441, "k mismatch");
         assert_eq!(params.base_graph, 2);
-        assert_eq!(params.lifting_factor, 48);
-        assert_eq!(params.full_k, 480);
-        assert_eq!(params.num_shortened, 39);
-        assert_eq!(params.num_punctured_systematic, 96); // 2 * 48
-        assert_eq!(params.active_systematic_bits(), 345); // 480 - 39 - 96
-        assert_eq!(params.transmitted_parity_bits(), 679);
+        assert_eq!(params.lifting_factor, 56);
+        assert_eq!(params.full_k, 560);
+        assert_eq!(params.num_shortened, 119);
+        assert_eq!(params.num_punctured_systematic, 112); // 2 * 56
+        assert_eq!(params.active_systematic_bits(), 329); // 560 - 119 - 112
+        assert_eq!(params.transmitted_parity_bits(), 695);
     }
 
     #[test]
