@@ -2,9 +2,9 @@
   "id": "a4d86b3d-05e7-4596-939b-e09f9dd35e55",
   "title": "Configurable simulation campaign runner",
   "description": "## Problem\n\nSimulation campaigns are hardcoded in example binaries (`grand_phase1_sims.rs`, `grand_phase3_sim.rs`). Each binary runs a fixed set of curves sequentially with hardcoded parameters. There is no way to:\n\n- Run a single curve without running all others\n- Change parameters (SNR range, min_errors, decoder config) without editing source\n- Define new simulation campaigns without writing new Rust code\n- Compose campaigns from reusable curve definitions\n\nThe resume feature helps avoid redundant work, but the fundamental problem is that simulation campaigns are not configurable.\n\n## Proposed Solution\n\nA TOML-based simulation campaign configuration that a generic runner binary reads and executes.\n\n### Campaign config format\n\n```toml\n[campaign]\nname = \"phase1_fig3\"\noutput_dir = \"dev/simulation_results\"\n\n[[curve]]\nname = \"fig3_ebch_product\"\ncode_type = \"product\"\ncomponent = \"ebch_16_11\"\ndecoder = \"turbo_sogrand\"\ndecoder_params = { max_iterations = 20, alpha = 0.5, list_size = 4 }\nsnr_range = { start = 0.0, stop = 4.0, step = 0.5 }\nmin_errors = 100\nmax_frames = 500_000\n\n[[curve]]\nname = \"fig3_ldpc_nms\"\ncode_type = \"nr5g_ldpc\"\ncode_params = { base_graph = 2, n = 256, k = 121 }\ndecoder = \"nms\"\ndecoder_params = { scale = 0.75 }\nsnr_range = { start = 0.0, stop = 4.0, step = 0.5 }\nmin_errors = 100\nmax_frames = 500_000\n```\n\n### Runner binary\n\n```bash\n# Run all curves in a campaign\ncargo run -p gf2-coding --release --all-features --bin sim_runner -- campaign.toml\n\n# Run a single curve by name\ncargo run -p gf2-coding --release --all-features --bin sim_runner -- campaign.toml --curve fig3_ldpc_sp\n\n# Run with parallel SNR sweep\ncargo run -p gf2-coding --release --all-features --bin sim_runner -- campaign.toml --parallel\n```\n\n### Features\n\n- Each curve is independently runnable via `--curve` filter\n- Resume from existing CSV (already implemented in SimulationRunner)\n- Parallel SNR sweep via `--parallel` flag\n- Campaign configs checked into `dev/campaigns/` for reproducibility\n- The existing hardcoded examples become thin wrappers or are replaced entirely\n\n## Success Criteria\n\n- [ ] TOML campaign config format defined and parsed\n- [ ] Generic `sim_runner` binary reads config and executes curves\n- [ ] `--curve` flag to select individual curves\n- [ ] `--parallel` flag for parallel SNR sweep\n- [ ] Phase 1 and Phase 3 campaigns expressed as TOML configs\n- [ ] Existing hardcoded examples either removed or converted to use the config\n- [ ] All existing tests pass",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "high",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [],
   "gates_required": [
     "cargo-ci",
@@ -12,12 +12,20 @@
   ],
   "gates_status": {},
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/active/a4d86b3d-campaign-runner-plan.md",
+      "commit": null,
+      "label": "Implementation plan",
+      "doc_type": "design",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:story",
     "epic:grand",
     "component:gf2-coding"
   ],
   "created_at": "2026-04-09T11:43:22.371974187+00:00",
-  "updated_at": "2026-04-09T11:43:22.371981437+00:00"
+  "updated_at": "2026-04-09T13:58:07.248718706+00:00"
 }
