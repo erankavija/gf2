@@ -82,10 +82,10 @@ fn main() {
         "Running GLDPC simulation ({} SNR points)...",
         eb_n0_range.len()
     );
-    let mut gldpc_decoder = GldpcDecoder::new(gldpc_code.clone());
-    let gldpc_results = SimulationRunner::run_coded_iterative(
+    let gldpc_code_for_factory = gldpc_code.clone();
+    let gldpc_results = SimulationRunner::run_coded_iterative_parallel(
         &gldpc_code,
-        &mut gldpc_decoder,
+        || GldpcDecoder::new(gldpc_code_for_factory.clone()),
         &channel,
         &gldpc_config,
     );
@@ -129,10 +129,13 @@ fn main() {
         "Running LDPC simulation ({} SNR points)...",
         eb_n0_range.len()
     );
-    let rm_code_for_decoder = rm_code.clone();
-    let mut ldpc_decoder = Nr5gRateMatchedDecoder::new(rm_code_for_decoder);
-    let ldpc_results =
-        SimulationRunner::run_coded_iterative(&rm_code, &mut ldpc_decoder, &channel, &ldpc_config);
+    let rm_code_for_factory = rm_code.clone();
+    let ldpc_results = SimulationRunner::run_coded_iterative_parallel(
+        &rm_code,
+        || Nr5gRateMatchedDecoder::new(rm_code_for_factory.clone()),
+        &channel,
+        &ldpc_config,
+    );
     println!("LDPC simulation complete.");
     println!();
 
