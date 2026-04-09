@@ -1415,3 +1415,4 @@
 {"type":"gate_passed","id":"a1606c3a-be07-47b1-b7cc-eb654697633c","issue_id":"a4d86b3d-05e7-4596-939b-e09f9dd35e55","timestamp":"2026-04-09T16:50:13.733756670Z","gate_key":"code-review","updated_by":"auto:executor"}
 {"type":"issue_state_changed","id":"bfaeeca5-a148-4be5-a417-979f77fdd90e","issue_id":"a4d86b3d-05e7-4596-939b-e09f9dd35e55","timestamp":"2026-04-09T16:50:23.138247858Z","from":"in_progress","to":"done"}
 {"type":"issue_completed","id":"1f08a64c-2dd1-4d2f-920c-817b652eeee1","issue_id":"a4d86b3d-05e7-4596-939b-e09f9dd35e55","timestamp":"2026-04-09T16:50:23.138282128Z"}
+{"type":"issue_created","id":"ca475b19-e042-4967-a492-8a58cb11bc30","issue_id":"4eaa31a0-7f19-4902-b247-464fcd6aa2da","timestamp":"2026-04-09T21:43:23.659172534Z","title":"Fix simulation ETA estimation for waterfall regions","priority":"normal"}

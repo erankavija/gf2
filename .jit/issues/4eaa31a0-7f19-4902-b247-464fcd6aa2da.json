@@ -1,0 +1,19 @@
+{
+  "id": "4eaa31a0-7f19-4902-b247-464fcd6aa2da",
+  "title": "Fix simulation ETA estimation for waterfall regions",
+  "description": "## Problem\n\nThe current ETA estimation in SimulationRunner is misleading for BLER waterfall simulations:\n\n1. **Per-sweep ETA** averages completed point durations, but early high-BLER points (0-1 dB) finish in seconds while deep waterfall points (3+ dB) take hours. The average-based ETA is off by 10-100x.\n\n2. **Per-point ETA** extrapolates from current error rate: `remaining_frames = (min_errors - errors) / (errors / frames)`. When errors=0 or very few, the ETA is infinite or wildly wrong.\n\n3. **Product code runner** (`run_with_decoder`) runs sequentially and only shows progress within the current point — no visibility into which point is running or overall campaign progress.\n\n## Proposed Fix\n\n### Better per-point ETA\nWhen frame_errors > 0: estimate remaining frames from current BLER, multiply by measured frame rate. When frame_errors == 0: show `frames/max_frames` progress instead of meaningless ETA.\n\n### Better per-sweep ETA  \nUse the BLER trend across completed points to estimate remaining point durations. If BLER drops 10x per 0.5 dB, the next point needs ~10x more frames. Exponential extrapolation, not averaging.\n\n### Campaign-level progress\nThe sim_runner binary should print which curve and which point is active, not just the inner runner's per-frame progress.\n\n## Files\n- `crates/gf2-coding/src/simulation.rs` — `report_progress()`, `report_point_complete()`, ETA logic\n- `crates/gf2-coding/src/bin/sim_runner.rs` — campaign-level progress",
+  "state": "ready",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-04-09T21:43:23.658912953+00:00",
+  "updated_at": "2026-04-09T21:43:23.658923153+00:00"
+}
