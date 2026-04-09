@@ -2258,6 +2258,136 @@ mod algorithm_tests {
         }
     }
 
+    /// Diagnostic test: sum-product vs NMS on the (256,121) 5G NR rate-matched code.
+    ///
+    /// With noiseless LLRs, NMS converges but SP produces NaN/Inf due to
+    /// numerical overflow in boxplus_n (tanh product -> 1.0 -> atanh(1.0) = Inf).
+    #[test]
+    fn test_sum_product_nr5g_256_121_noiseless() {
+        use crate::ldpc::nr_5g::Nr5gRateMatchedDecoder;
+        use crate::ldpc::QuasiCyclicLdpc;
+        use crate::traits::{BlockEncoder, IterativeSoftDecoder};
+
+        let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
+        let target_k = rm_code.params().target_k;
+        let target_n = rm_code.params().target_n;
+
+        // Encode the zero message
+        let message = BitVec::zeros(target_k);
+        let codeword = rm_code.encode(&message);
+        assert_eq!(codeword.len(), target_n);
+
+        // Create noiseless LLRs: +10.0 for bit=0, -10.0 for bit=1
+        let channel_llrs: Vec<Llr> = (0..target_n)
+            .map(|i| {
+                if codeword.get(i) {
+                    Llr::new(-10.0)
+                } else {
+                    Llr::new(10.0)
+                }
+            })
+            .collect();
+
+        // NMS (alpha=0.75) should converge
+        let mut nms_decoder = Nr5gRateMatchedDecoder::new(rm_code.clone());
+        let nms_result = nms_decoder.decode_iterative(&channel_llrs, 50);
+        assert!(
+            nms_result.converged,
+            "NMS should converge on noiseless input"
+        );
+        assert!(
+            nms_result.syndrome_check_passed,
+            "NMS should pass syndrome check"
+        );
+        let nms_errors = (0..target_k)
+            .filter(|&i| nms_result.decoded_bits.get(i) != message.get(i))
+            .count();
+        assert_eq!(nms_errors, 0, "NMS should have zero bit errors");
+
+        // SumProduct should also converge
+        let mut sp_decoder =
+            Nr5gRateMatchedDecoder::with_algorithm(rm_code.clone(), DecoderAlgorithm::SumProduct);
+        let sp_result = sp_decoder.decode_iterative(&channel_llrs, 50);
+
+        let sp_errors = (0..target_k)
+            .filter(|&i| sp_result.decoded_bits.get(i) != message.get(i))
+            .count();
+
+        assert!(
+            sp_result.converged,
+            "SP should converge on noiseless input (converged={}, syndrome={}, iters={}, errors={})",
+            sp_result.converged,
+            sp_result.syndrome_check_passed,
+            sp_result.iterations,
+            sp_errors
+        );
+        assert!(
+            sp_result.syndrome_check_passed,
+            "SP should pass syndrome check"
+        );
+        assert_eq!(sp_errors, 0, "SP should have zero bit errors");
+    }
+
+    /// Diagnostic: check that boxplus_n handles extreme LLR values without NaN/Inf.
+    ///
+    /// When var-to-check messages grow large (>~9 in f32), tanh(x/2) saturates
+    /// to exactly 1.0, making the product 1.0, and atanh(1.0) = Inf.
+    /// This propagates through the graph: Inf - Inf = NaN at variable nodes.
+    #[test]
+    fn test_boxplus_n_numerical_stability() {
+        // Simulate what happens in a check node with large messages.
+        // In the 5G rate-matched code, filler LLR=15.0 and after a few
+        // iterations, var-to-check messages can reach 20+.
+        let large_msgs: Vec<Llr> = vec![
+            Llr::new(15.0),
+            Llr::new(12.0),
+            Llr::new(10.0),
+            Llr::new(8.0),
+            Llr::new(15.0),
+        ];
+        let result = Llr::boxplus_n(&large_msgs);
+        assert!(
+            result.is_finite(),
+            "boxplus_n should not produce Inf for large positive LLRs, got {}",
+            result.value()
+        );
+
+        // Mix of large positive and zero (punctured positions)
+        let mixed_msgs: Vec<Llr> = vec![
+            Llr::new(15.0),
+            Llr::new(0.0),
+            Llr::new(10.0),
+            Llr::new(15.0),
+        ];
+        let result = Llr::boxplus_n(&mixed_msgs);
+        assert!(
+            result.is_finite(),
+            "boxplus_n with a zero input should be finite, got {}",
+            result.value()
+        );
+        // tanh(0/2) = 0, so product = 0, atanh(0) = 0
+        assert_eq!(
+            result.value(),
+            0.0,
+            "boxplus_n with a zero input should return 0"
+        );
+
+        // Very large messages (simulating after many iterations)
+        let huge_msgs: Vec<Llr> = vec![Llr::new(50.0), Llr::new(30.0), Llr::new(40.0)];
+        let result = Llr::boxplus_n(&huge_msgs);
+        assert!(
+            result.is_finite(),
+            "boxplus_n should not produce Inf for very large LLRs, got {}",
+            result.value()
+        );
+
+        // Also check the first case passes after fix
+        assert!(
+            Llr::boxplus_n(&large_msgs).value().abs() < 20.0,
+            "boxplus_n of moderate LLRs should produce a bounded result"
+        );
+    }
+
     #[test]
     fn test_all_algorithms_converge_on_11_codeword() {
         let code = simple_parity_code();
