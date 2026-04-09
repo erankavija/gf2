@@ -516,7 +516,12 @@ fn main() {
     }
 
     // Ensure output directory exists.
-    std::fs::create_dir_all(&campaign.campaign.output_dir).ok();
+    std::fs::create_dir_all(&campaign.campaign.output_dir).unwrap_or_else(|e| {
+        panic!(
+            "Failed to create output directory '{}': {e}",
+            campaign.campaign.output_dir
+        )
+    });
 
     let total = selected.len();
     for (i, curve) in selected.iter().enumerate() {
