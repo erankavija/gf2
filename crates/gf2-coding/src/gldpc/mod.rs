@@ -999,7 +999,26 @@ impl GldpcDecoder {
     /// let decoder = GldpcDecoder::new(code);
     /// ```
     pub fn new(code: QcGldpcCode) -> Self {
-        Self::with_sogrand_config(code, OrbGrandConfig::default())
+        // Detect if the component code is an even code (all codewords have
+        // even Hamming weight). This is the case for extended BCH codes,
+        // which have an all-ones parity-check row. Enabling even_code halves
+        // the ORBGRAND search space by skipping impossible parity patterns.
+        let n_c = code.component().n();
+        let is_even = code
+            .component()
+            .h_rows
+            .iter()
+            .any(|row| row.len() == n_c && (0..n_c).all(|i| row.contains(&i)));
+
+        let config = OrbGrandConfig {
+            // list_size=4 gives SOGRAND enough codeword diversity for
+            // meaningful soft output (APP LLRs) at check nodes.
+            list_size: 4,
+            even_code: is_even,
+            // Keep max_queries at default for bounded runtime per check node.
+            ..OrbGrandConfig::default()
+        };
+        Self::with_sogrand_config(code, config)
     }
 
     /// Creates a new GLDPC decoder with a custom ORBGRAND configuration for
@@ -1911,6 +1930,63 @@ mod tests {
                 col,
                 i
             );
+        }
+    }
+
+    /// Diagnostic: measure SOGRAND cumulative probability and extrinsic gain
+    /// for the eBCH(32,26) component code used by GLDPC (1024,646).
+    ///
+    /// Tests with the ACTUAL default config (list_size=1, even_code=false)
+    /// used by GldpcDecoder::new(), and with various post_list_budget sizes.
+    #[test]
+    fn test_sogrand_ebch32_cumulative_probability_diagnostic() {
+        use crate::grand::{OrbGrand, OrbGrandConfig, SoGrand};
+
+        // Build the eBCH(32,26) component used by GLDPC(1024,646)
+        let comp = extended_bch_component(31, 26, 1);
+        assert_eq!(comp.n(), 32);
+        assert_eq!(comp.k(), 26);
+        let h = comp.h_matrix();
+
+        // Test at multiple LLR magnitudes:
+        for (label, llr_mag) in [
+            ("strong (3dB channel)", 4.0_f32),
+            ("moderate (BP early)", 1.5),
+            ("weak (BP struggling)", 0.5),
+        ] {
+            eprintln!(
+                "\n=== eBCH(32,26) SOGRAND Diagnostic: {} (|LLR|={:.1}) ===",
+                label, llr_mag
+            );
+
+            let llrs: Vec<Llr> = vec![Llr::new(llr_mag); 32];
+
+            // --- Test with different max_queries to see scaling ---
+            for max_q in [1_000_usize, 65_536, 1_000_000] {
+                let config = OrbGrandConfig {
+                    max_queries: max_q,
+                    list_size: 4,
+                    even_code: true,
+                    systematic: false,
+                };
+                let orb = OrbGrand::new(h.clone(), config.clone());
+                let sogrand = SoGrand::new(orb);
+                let result = sogrand.decode_siso(&llrs);
+
+                let orb2 = OrbGrand::new(h.clone(), config);
+                let orb_result = orb2.decode(&llrs);
+
+                let cum_prob = orb_result.cumulative_probability();
+                let avg_ext = result
+                    .extrinsic_llrs
+                    .iter()
+                    .map(|l| l.value().abs() as f64)
+                    .sum::<f64>()
+                    / 32.0;
+
+                eprintln!("  max_queries={:>9}: cum_prob={:.6e}, P(C\\L)={:.6e}, avg_ext={:.4}, queries={}",
+                    max_q, cum_prob, result.list_bler_prediction, avg_ext, orb_result.query_count);
+            }
         }
     }
 
