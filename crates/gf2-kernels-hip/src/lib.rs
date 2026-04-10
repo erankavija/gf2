@@ -16,7 +16,7 @@
 //!
 //! // h_cols: parity-check matrix columns as u32 bitmasks
 //! let h_cols = vec![0b101u32; 7];  // Hamming(7,4) example
-//! let mut gpu = GpuBcjrBatch::new(&h_cols, 7, 4, 64).unwrap();
+//! let gpu = GpuBcjrBatch::new(&h_cols, 7, 4, 64).unwrap();
 //!
 //! let inputs = vec![vec![3.0f32; 7]; 4];  // 4 SISO decodes
 //! let (app, ext) = gpu.decode_batch(&inputs).unwrap();
@@ -84,9 +84,7 @@ impl DeviceBuffer {
     fn copy_to_host(&self, dst: &mut [u8]) -> Result<(), HipError> {
         assert!(dst.len() <= self.size);
         check_hip(
-            unsafe {
-                ffi::hip_memcpy_d2h(dst.as_mut_ptr() as *mut c_void, self.ptr, dst.len())
-            },
+            unsafe { ffi::hip_memcpy_d2h(dst.as_mut_ptr() as *mut c_void, self.ptr, dst.len()) },
             "hipMemcpy D2H",
         )
     }
@@ -146,9 +144,8 @@ impl GpuBcjrBatch {
             DeviceBuffer::new(max_batch * (n + 1) * num_states * std::mem::size_of::<f32>())?;
 
         // Upload h_cols (persistent — same trellis for all decodes)
-        let h_bytes: &[u8] = unsafe {
-            std::slice::from_raw_parts(h_cols.as_ptr() as *const u8, h_cols.len() * 4)
-        };
+        let h_bytes: &[u8] =
+            unsafe { std::slice::from_raw_parts(h_cols.as_ptr() as *const u8, h_cols.len() * 4) };
         d_h_cols.copy_from_host(h_bytes)?;
 
         Ok(Self {
@@ -197,7 +194,7 @@ impl GpuBcjrBatch {
     ///
     /// Panics if `inputs.len() > max_batch` or any input length != n.
     pub fn decode_batch(
-        &mut self,
+        &self,
         inputs: &[Vec<f32>],
     ) -> Result<(Vec<Vec<f32>>, Vec<Vec<f32>>), HipError> {
         let batch_size = inputs.len();
@@ -252,7 +249,10 @@ impl GpuBcjrBatch {
         )?;
 
         // Synchronize
-        check_hip(unsafe { ffi::hip_device_synchronize() }, "hipDeviceSynchronize")?;
+        check_hip(
+            unsafe { ffi::hip_device_synchronize() },
+            "hipDeviceSynchronize",
+        )?;
 
         // Download APP results
         let mut flat_app = vec![0.0f32; batch_size * n];
@@ -305,7 +305,7 @@ mod tests {
     #[test]
     fn test_gpu_bcjr_hamming74_noiseless() {
         let h_cols = hamming74_h_cols();
-        let mut gpu = GpuBcjrBatch::new(&h_cols, 7, 4, 8).unwrap();
+        let gpu = GpuBcjrBatch::new(&h_cols, 7, 4, 8).unwrap();
 
         // All-zero codeword, high-confidence LLRs
         let input = vec![5.0f32; 7];
@@ -318,7 +318,8 @@ mod tests {
             assert!(
                 val > 0.0,
                 "APP LLR at bit {} should be positive, got {}",
-                j, val
+                j,
+                val
             );
         }
         // Extrinsic identity: ext = app - input
@@ -335,7 +336,7 @@ mod tests {
     #[test]
     fn test_gpu_bcjr_batch_multiple() {
         let h_cols = hamming74_h_cols();
-        let mut gpu = GpuBcjrBatch::new(&h_cols, 7, 4, 8).unwrap();
+        let gpu = GpuBcjrBatch::new(&h_cols, 7, 4, 8).unwrap();
 
         let inputs = vec![
             vec![5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0],
@@ -356,7 +357,7 @@ mod tests {
     #[test]
     fn test_gpu_bcjr_empty_batch() {
         let h_cols = hamming74_h_cols();
-        let mut gpu = GpuBcjrBatch::new(&h_cols, 7, 4, 8).unwrap();
+        let gpu = GpuBcjrBatch::new(&h_cols, 7, 4, 8).unwrap();
 
         let (app, ext) = gpu.decode_batch(&[]).unwrap();
         assert!(app.is_empty());

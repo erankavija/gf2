@@ -86,10 +86,17 @@ summarize_fail() {
   esac
 }
 
+# Determine feature flags: include 'hip' only when hipcc is available.
+if command -v hipcc &>/dev/null || [ -x /opt/rocm/bin/hipcc ]; then
+  FEAT_FLAGS="--all-features"
+else
+  FEAT_FLAGS="--features simd,parallel,visualization,llr-f64"
+fi
+
 # Run all steps in order; continue through failures to report all of them.
-run_step check  cargo check --workspace --all-features
-run_step test   cargo test --workspace --all-features
-run_step clippy cargo clippy --workspace --all-targets --all-features -- -D warnings
+run_step check  cargo check --workspace $FEAT_FLAGS
+run_step test   cargo test --workspace $FEAT_FLAGS
+run_step clippy cargo clippy --workspace --all-targets $FEAT_FLAGS -- -D warnings
 run_step fmt    cargo fmt --all -- --check
 
 echo "$summary"
