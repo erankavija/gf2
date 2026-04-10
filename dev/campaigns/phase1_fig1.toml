@@ -11,10 +11,10 @@ output_dir = "dev/simulation_results"
 name = "fig1_drm_product"
 type = "product"
 component = "drm_32_21"
-turbo = { max_iterations = 20, alpha = 0.5, list_size = 4, max_queries = 100000 }
+turbo = { max_iterations = 20, alpha = 0.5, list_size = 4, max_queries = 50000 }
 snr = { start = 0.0, stop = 2.5, step = 0.5 }
 min_errors = 50
-max_frames = 50000
+max_frames = 10000
 
 [[curve]]
 name = "fig1_ldpc_nms"
@@ -26,7 +26,7 @@ algorithm = "nms"
 scale = 0.75
 snr = { start = 0.0, stop = 2.5, step = 0.5 }
 min_errors = 100
-max_frames = 500000
+max_frames = 100000
 
 [[curve]]
 name = "fig1_ldpc_sp"
@@ -37,4 +37,4 @@ k = 441
 algorithm = "sum_product"
 snr = { start = 0.0, stop = 2.5, step = 0.5 }
 min_errors = 100
-max_frames = 500000
+max_frames = 100000
