@@ -1449,3 +1449,6 @@
 {"type":"gate_failed","id":"568a0d8a-7d28-489e-a19f-e94c9e1c922a","issue_id":"3e136982-5767-4d55-a779-d640bb3ec55c","timestamp":"2026-04-10T21:05:20.187140235Z","gate_key":"code-review","updated_by":"auto:executor"}
 {"type":"issue_created","id":"fcbae4eb-b8c5-451b-8412-bcbbfed81bf1","issue_id":"99e3b33e-f925-4154-bb1b-d9940e89aa15","timestamp":"2026-04-10T22:07:34.251470658Z","title":"Implement Chase-Pyndiah turbo product code decoder for dRM codes","priority":"high"}
 {"type":"issue_state_changed","id":"cc7bbb3b-fc7d-4ea3-86b1-a7e81c052fec","issue_id":"99e3b33e-f925-4154-bb1b-d9940e89aa15","timestamp":"2026-04-10T22:07:39.277825813Z","from":"ready","to":"backlog"}
+{"type":"issue_created","id":"40ab6813-0a88-45d6-b9b1-506762ab694b","issue_id":"795c156e-7cb8-4223-93d9-7c232d79fdeb","timestamp":"2026-04-10T22:22:59.658055272Z","title":"HIP/ROCm GPU-accelerated batch BCJR decoder prototype","priority":"high"}
+{"type":"issue_state_changed","id":"0839b684-38b0-413d-b98f-781902bd8112","issue_id":"795c156e-7cb8-4223-93d9-7c232d79fdeb","timestamp":"2026-04-10T22:23:08.856790811Z","from":"ready","to":"in_progress"}
+{"type":"issue_claimed","id":"011b0c28-bd71-4169-9ab7-749de2f03194","issue_id":"795c156e-7cb8-4223-93d9-7c232d79fdeb","timestamp":"2026-04-10T22:23:08.857023931Z","assignee":"agent:claude"}
