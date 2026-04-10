@@ -1443,3 +1443,9 @@
 {"type":"gate_passed","id":"4bb6b34c-6e3c-40e8-98d7-15efe5f96041","issue_id":"3e136982-5767-4d55-a779-d640bb3ec55c","timestamp":"2026-04-10T20:48:51.196776275Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
 {"type":"gate_failed","id":"d1951781-5c5d-46e3-92f1-ae48c9c99b8e","issue_id":"3e136982-5767-4d55-a779-d640bb3ec55c","timestamp":"2026-04-10T20:52:35.414239391Z","gate_key":"code-review","updated_by":"auto:executor"}
 {"type":"gate_failed","id":"d41a70a9-f51a-4c6b-ab4a-a33cc45bcc7b","issue_id":"3e136982-5767-4d55-a779-d640bb3ec55c","timestamp":"2026-04-10T20:54:09.873238999Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"d316ac58-7aea-4769-8ddb-c8cd968f9de4","issue_id":"3e136982-5767-4d55-a779-d640bb3ec55c","timestamp":"2026-04-10T20:57:08.346917861Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"37842a33-81ed-40c4-bbc3-0c6016b5fbbc","issue_id":"3e136982-5767-4d55-a779-d640bb3ec55c","timestamp":"2026-04-10T20:58:18.774104614Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"3edd0057-32af-47a2-8d6f-42156546e59f","issue_id":"3e136982-5767-4d55-a779-d640bb3ec55c","timestamp":"2026-04-10T21:01:08.692535725Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"568a0d8a-7d28-489e-a19f-e94c9e1c922a","issue_id":"3e136982-5767-4d55-a779-d640bb3ec55c","timestamp":"2026-04-10T21:05:20.187140235Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"issue_created","id":"fcbae4eb-b8c5-451b-8412-bcbbfed81bf1","issue_id":"99e3b33e-f925-4154-bb1b-d9940e89aa15","timestamp":"2026-04-10T22:07:34.251470658Z","title":"Implement Chase-Pyndiah turbo product code decoder for dRM codes","priority":"high"}
+{"type":"issue_state_changed","id":"cc7bbb3b-fc7d-4ea3-86b1-a7e81c052fec","issue_id":"99e3b33e-f925-4154-bb1b-d9940e89aa15","timestamp":"2026-04-10T22:07:39.277825813Z","from":"ready","to":"backlog"}

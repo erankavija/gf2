@@ -1,7 +1,7 @@
 {
   "id": "3e136982-5767-4d55-a779-d640bb3ec55c",
   "title": "Implement trellis-based SISO decoder for dRM(32,21) component code",
-  "description": "## Problem\n\nSOGRAND soft-output is insufficient for dRM(32,21) in the product code turbo decoder. Even with all SOGRAND bug fixes (overaccumulation, fallback factor-of-2, clamp), the dRM product code BLER at 1.0 dB is 0.566 vs paper's 0.072 (8x gap). The turbo decoder converges in ~6 iterations but to wrong codewords because SOGRAND's APP LLRs lack sufficient quality for this code.\n\nRoot cause: dRM(32,21) has d_min≈4 and 2M codewords in 4B patterns. SOGRAND finds ~24 codewords in 50K queries, but the correct codeword is often not distinguishable from competitors in the APP computation. The eBCH(16,11) product code works because n=16 allows exhaustive coverage.\n\n## Solution\n\nImplement a trellis-based Forward-Backward (BCJR) SISO decoder for dRM(32,21). The BCJR algorithm computes exact APP LLRs by propagating probabilities through the code trellis, without needing to enumerate noise patterns. This is the standard approach for SISO component decoding in turbo/product codes.\n\n## Acceptance Criteria\n\n1. BCJR decoder produces per-bit APP LLRs for dRM(32,21) component code.\n2. Extrinsic LLRs (APP - input) are correctly computed for turbo decoder integration.\n3. Product code turbo decoder can use BCJR as alternative to SOGRAND for component decoding.\n4. Alignment test at 0.75-1.0 dB shows significant improvement over SOGRAND (target: within 2x of paper's BLER).\n5. eBCH component codes also supported via BCJR (for future use).\n\n## Analysis\n\nSee `dev/active/sogrand-n32-analysis.md` for detailed alignment data and root cause analysis.",
+  "description": "## Problem\n\nSOGRAND soft-output is insufficient for dRM(32,21) in the product code turbo decoder. Even with all SOGRAND bug fixes (overaccumulation, fallback factor-of-2, clamp), the dRM product code BLER at 1.0 dB is 0.566 vs paper's 0.072 (8x gap). The turbo decoder converges in ~6 iterations but to wrong codewords because SOGRAND's APP LLRs lack sufficient quality for this code.\n\n## Solution\n\nImplemented a trellis-based Forward-Backward (BCJR) SISO decoder for dRM(32,21). BCJR computes exact APP LLRs without noise pattern enumeration.\n\n## Results\n\n- BCJR at 0.5 dB: BLER=0.704 vs paper 0.656 — **within 1.07x** (near-perfect alignment)\n- BCJR at 1.0 dB: BLER=0.467 vs paper 0.072 — 6.5x gap remains\n- Both SOGRAND and BCJR produce the same shallow waterfall, confirming the issue is in the turbo framework (extrinsic exchange), not the component SISO\n- Alpha scheduling (0.2→0.8): marginal improvement (~10%)\n- Extrinsic clamping: no improvement\n\n## Conclusion\n\nThe BCJR SISO decoder is correct and produces near-perfect single-iteration results. The remaining gap requires a Chase-Pyndiah turbo decoder framework that uses bounded reliability computation instead of raw APP extrinsic. This is tracked separately.\n\n## Acceptance Criteria\n\n1. ✅ BCJR decoder produces per-bit APP LLRs for dRM(32,21) component code.\n2. ✅ Extrinsic LLRs (APP - input) are correctly computed for turbo decoder integration.\n3. ✅ Product code turbo decoder can use BCJR as alternative to SOGRAND for component decoding.\n4. ❌ Alignment test at 0.75-1.0 dB shows significant improvement over SOGRAND (target: within 2x of paper's BLER). — Improvement exists but 5-6x gap remains due to turbo framework limitations.\n5. ✅ eBCH component codes also supported via BCJR (for future use).\n\nSee `dev/active/sogrand-n32-analysis.md` and `dev/active/bcjr-siso-decoder-plan.md`.",
   "state": "in_progress",
   "priority": "high",
   "assignee": "agent:claude",
@@ -15,17 +15,17 @@
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-04-10T20:47:30.346339923Z"
-    },
-    "code-review": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-10T20:48:51.244065020Z"
+      "updated_at": "2026-04-10T20:56:53.114825255Z"
     },
     "tdd-reminder": {
       "status": "passed",
       "updated_by": "agent:claude",
       "updated_at": "2026-04-10T20:24:17.201069181Z"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-10T20:58:18.822941509Z"
     }
   },
   "context": {},
@@ -44,5 +44,5 @@
     "component:gf2-coding"
   ],
   "created_at": "2026-04-10T13:30:18.497123658+00:00",
-  "updated_at": "2026-04-10T20:54:09.873074359+00:00"
+  "updated_at": "2026-04-10T22:07:15.691046771+00:00"
 }
