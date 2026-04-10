@@ -52,6 +52,54 @@ fn check_hip(code: i32, context: &'static str) -> Result<(), HipError> {
     }
 }
 
+/// Maximum trellis states supported by the GPU kernel's shared memory arrays.
+/// The kernel statically allocates `__shared__ float alpha[MAX_STATES]`.
+pub const MAX_GPU_STATES: usize = 2048;
+
+/// Extracts parity-check matrix columns as u32 bitmasks for GPU use.
+///
+/// This is the canonical column-extraction helper shared between the CPU
+/// `BcjrDecoder` and `GpuBcjrBatch`. Each returned u32 encodes the j-th
+/// column of H: bit i is set iff `H[i][j] == 1`.
+///
+/// # Arguments
+///
+/// * `h` - Parity-check matrix (m rows, n columns).
+///
+/// # Returns
+///
+/// A `Vec<u32>` of length n.
+///
+/// # Examples
+///
+/// ```no_run
+/// use gf2_kernels_hip::extract_h_cols;
+///
+/// let h = gf2_core::bitmatrix![
+///     1, 1, 0, 1, 1, 0, 0;
+///     1, 0, 1, 1, 0, 1, 0;
+///     0, 1, 1, 1, 0, 0, 1
+/// ];
+/// let cols = extract_h_cols(&h);
+/// assert_eq!(cols.len(), 7);
+/// ```
+pub fn extract_h_cols(h: &gf2_core::BitMatrix) -> Vec<u32> {
+    let m = h.rows();
+    let n = h.cols();
+    (0..n)
+        .map(|j| {
+            let col_bv = h.col_as_bitvec(j);
+            let mut col = 0u32;
+            for i in 0..m {
+                if col_bv.get(i) {
+                    col |= 1 << i;
+                }
+            }
+            col
+        })
+        .collect()
+}
+
 /// RAII wrapper for a HIP device allocation.
 struct DeviceBuffer {
     ptr: *mut c_void,
@@ -61,6 +109,8 @@ struct DeviceBuffer {
 impl DeviceBuffer {
     fn new(size: usize) -> Result<Self, HipError> {
         let mut ptr: *mut c_void = ptr::null_mut();
+        // SAFETY: hip_malloc writes a valid device pointer to `ptr` on success.
+        // The pointer is freed in Drop. `size` is validated by the HIP runtime.
         check_hip(unsafe { ffi::hip_malloc(&mut ptr, size) }, "hipMalloc")?;
         Ok(Self { ptr, size })
     }
@@ -75,6 +125,8 @@ impl DeviceBuffer {
 
     fn copy_from_host(&self, src: &[u8]) -> Result<(), HipError> {
         assert!(src.len() <= self.size);
+        // SAFETY: `self.ptr` is a valid device allocation of `self.size` bytes.
+        // `src` is a valid host slice. HIP copies `src.len()` bytes H→D.
         check_hip(
             unsafe { ffi::hip_memcpy_h2d(self.ptr, src.as_ptr() as *const c_void, src.len()) },
             "hipMemcpy H2D",
@@ -83,6 +135,8 @@ impl DeviceBuffer {
 
     fn copy_to_host(&self, dst: &mut [u8]) -> Result<(), HipError> {
         assert!(dst.len() <= self.size);
+        // SAFETY: `self.ptr` is a valid device allocation. `dst` is a valid
+        // mutable host slice. HIP copies `dst.len()` bytes D→H.
         check_hip(
             unsafe { ffi::hip_memcpy_d2h(dst.as_mut_ptr() as *mut c_void, self.ptr, dst.len()) },
             "hipMemcpy D2H",
@@ -93,6 +147,8 @@ impl DeviceBuffer {
 impl Drop for DeviceBuffer {
     fn drop(&mut self) {
         if !self.ptr.is_null() {
+            // SAFETY: `self.ptr` was allocated by `hip_malloc` in `new()` and
+            // has not been freed yet (we only free in Drop, which runs once).
             unsafe {
                 ffi::hip_free(self.ptr);
             }
@@ -100,8 +156,10 @@ impl Drop for DeviceBuffer {
     }
 }
 
-// DeviceBuffer is not Send/Sync by default due to raw pointer.
-// HIP device pointers are safe to send across threads (the HIP runtime is thread-safe).
+// SAFETY: HIP device pointers are opaque handles managed by the HIP runtime,
+// which is thread-safe. The pointer is not dereferenced on the host — all
+// access goes through HIP API calls (hipMemcpy, kernel launch) which
+// synchronize internally. Sending the handle to another thread is safe.
 unsafe impl Send for DeviceBuffer {}
 
 /// GPU-accelerated batch BCJR decoder.
@@ -122,9 +180,13 @@ pub struct GpuBcjrBatch {
 impl GpuBcjrBatch {
     /// Creates a new GPU BCJR batch decoder.
     ///
+    /// Pre-allocates device memory for up to `max_batch` simultaneous BCJR
+    /// decodes. The trellis columns are uploaded once and reused across calls.
+    ///
     /// # Arguments
     ///
     /// * `h_cols` - Parity-check matrix columns as u32 bitmasks (length n).
+    ///   Use [`extract_h_cols`] to obtain these from a `BitMatrix`.
     /// * `n` - Codeword length.
     /// * `k` - Message length.
     /// * `max_batch` - Maximum batch size (pre-allocates device memory).
@@ -132,9 +194,23 @@ impl GpuBcjrBatch {
     /// # Errors
     ///
     /// Returns `HipError` if device memory allocation fails.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `h_cols.len() != n` or if `2^(n-k) > MAX_GPU_STATES` (2048).
+    ///
+    /// # Complexity
+    ///
+    /// O(max_batch * n * 2^(n-k)) device memory allocated.
     pub fn new(h_cols: &[u32], n: usize, k: usize, max_batch: usize) -> Result<Self, HipError> {
         assert_eq!(h_cols.len(), n);
         let num_states = 1usize << (n - k);
+        assert!(
+            num_states <= MAX_GPU_STATES,
+            "2^(n-k) = {} exceeds GPU kernel limit of {} states",
+            num_states,
+            MAX_GPU_STATES
+        );
 
         // Allocate device buffers
         let d_h_cols = DeviceBuffer::new(n * std::mem::size_of::<u32>())?;
@@ -144,6 +220,8 @@ impl GpuBcjrBatch {
             DeviceBuffer::new(max_batch * (n + 1) * num_states * std::mem::size_of::<f32>())?;
 
         // Upload h_cols (persistent — same trellis for all decodes)
+        // SAFETY: h_cols is a valid &[u32]; reinterpreting as &[u8] with
+        // len * 4 bytes is safe because u32 has no padding and align >= 1.
         let h_bytes: &[u8] =
             unsafe { std::slice::from_raw_parts(h_cols.as_ptr() as *const u8, h_cols.len() * 4) };
         d_h_cols.copy_from_host(h_bytes)?;
@@ -226,12 +304,17 @@ impl GpuBcjrBatch {
         for inp in inputs {
             flat_llrs.extend_from_slice(inp);
         }
+        // SAFETY: Reinterpreting &[f32] as &[u8] with len*4 bytes is safe
+        // (f32 has no padding, alignment >= 1 for u8).
         let llr_bytes: &[u8] = unsafe {
             std::slice::from_raw_parts(flat_llrs.as_ptr() as *const u8, flat_llrs.len() * 4)
         };
         self.d_llrs.copy_from_host(llr_bytes)?;
 
         // Launch kernel
+        // SAFETY: All device pointers were allocated in `new()` with sufficient
+        // size for `max_batch` decodes. `batch_size <= max_batch` is asserted above.
+        // The kernel reads from d_llrs/d_h_cols and writes to d_app/d_alpha_ws.
         check_hip(
             unsafe {
                 ffi::launch_bcjr_batch(
@@ -248,7 +331,8 @@ impl GpuBcjrBatch {
             "launch_bcjr_batch",
         )?;
 
-        // Synchronize
+        // SAFETY: hipDeviceSynchronize has no preconditions; it blocks until
+        // all preceding HIP operations on the default stream complete.
         check_hip(
             unsafe { ffi::hip_device_synchronize() },
             "hipDeviceSynchronize",
@@ -256,6 +340,7 @@ impl GpuBcjrBatch {
 
         // Download APP results
         let mut flat_app = vec![0.0f32; batch_size * n];
+        // SAFETY: Reinterpreting &mut [f32] as &mut [u8] is safe (no padding).
         let app_bytes: &mut [u8] = unsafe {
             std::slice::from_raw_parts_mut(flat_app.as_mut_ptr() as *mut u8, flat_app.len() * 4)
         };

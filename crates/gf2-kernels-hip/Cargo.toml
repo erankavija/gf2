@@ -6,9 +6,11 @@ rust-version = "1.80"
 description = "HIP/ROCm GPU kernels for gf2 — BCJR batch decoder"
 publish = false
 
+[dependencies]
+gf2-core = { path = "../gf2-core" }
+
 [build-dependencies]
 cc = "1"
 
 [dev-dependencies]
-gf2-core = { path = "../gf2-core" }
 gf2-coding = { path = "../gf2-coding" }

@@ -953,20 +953,9 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
             #[cfg(feature = "hip")]
             {
                 let h = component.comp_parity_check();
+                let h_cols = gf2_kernels_hip::extract_h_cols(h);
                 let n = component.comp_n();
                 let k = component.comp_k();
-                let h_cols: Vec<u32> = (0..n)
-                    .map(|j| {
-                        let col_bv = h.col_as_bitvec(j);
-                        let mut col = 0u32;
-                        for i in 0..h.rows() {
-                            if col_bv.get(i) {
-                                col |= 1 << i;
-                            }
-                        }
-                        col
-                    })
-                    .collect();
                 SisoEngine::GpuBcjr(
                     gf2_kernels_hip::GpuBcjrBatch::new(&h_cols, n, k, n)
                         .expect("Failed to initialize GPU BCJR"),

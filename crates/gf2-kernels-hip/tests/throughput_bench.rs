@@ -7,26 +7,8 @@
 use gf2_coding::bcjr::BcjrDecoder;
 use gf2_coding::drm::DrmCode;
 use gf2_coding::llr::Llr;
-use gf2_core::BitMatrix;
-use gf2_kernels_hip::GpuBcjrBatch;
+use gf2_kernels_hip::{extract_h_cols, GpuBcjrBatch};
 use std::time::Instant;
-
-fn extract_h_cols(h: &BitMatrix) -> Vec<u32> {
-    let m = h.rows();
-    let n = h.cols();
-    (0..n)
-        .map(|j| {
-            let col_bv = h.col_as_bitvec(j);
-            let mut col = 0u32;
-            for i in 0..m {
-                if col_bv.get(i) {
-                    col |= 1 << i;
-                }
-            }
-            col
-        })
-        .collect()
-}
 
 #[test]
 fn bench_gpu_vs_cpu_batch64() {

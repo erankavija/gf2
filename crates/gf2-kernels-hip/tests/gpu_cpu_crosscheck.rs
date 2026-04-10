@@ -8,25 +8,7 @@ use gf2_coding::drm::DrmCode;
 use gf2_coding::llr::Llr;
 use gf2_coding::traits::BlockEncoder;
 use gf2_core::BitVec;
-use gf2_kernels_hip::GpuBcjrBatch;
-
-/// Extract h_cols from a BitMatrix (same logic as BcjrDecoder::new).
-fn extract_h_cols(h: &gf2_core::BitMatrix) -> Vec<u32> {
-    let m = h.rows();
-    let n = h.cols();
-    (0..n)
-        .map(|j| {
-            let col_bv = h.col_as_bitvec(j);
-            let mut col = 0u32;
-            for i in 0..m {
-                if col_bv.get(i) {
-                    col |= 1 << i;
-                }
-            }
-            col
-        })
-        .collect()
-}
+use gf2_kernels_hip::{extract_h_cols, GpuBcjrBatch};
 
 #[test]
 fn test_gpu_cpu_hamming74_crosscheck() {
@@ -39,6 +21,7 @@ fn test_gpu_cpu_hamming74_crosscheck() {
     let cpu = BcjrDecoder::new(&h);
     let gpu = GpuBcjrBatch::new(&h_cols, 7, 4, 32).unwrap();
 
+    // 25 deterministic test vectors (acceptance criterion requires 25)
     let test_vectors: Vec<Vec<f32>> = vec![
         vec![5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0],
         vec![-5.0, -5.0, -5.0, -5.0, -5.0, -5.0, -5.0],
@@ -48,6 +31,23 @@ fn test_gpu_cpu_hamming74_crosscheck() {
         vec![4.0, -3.0, 2.0, -1.0, 3.0, -2.0, 1.0],
         vec![-0.5, 0.5, -0.5, 0.5, -0.5, 0.5, -0.5],
         vec![0.1, -0.1, 0.2, -0.3, 0.4, -0.5, 0.6],
+        vec![10.0, -10.0, 10.0, -10.0, 10.0, -10.0, 10.0],
+        vec![0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0],
+        vec![-7.0, -6.0, -5.0, -4.0, -3.0, -2.0, -1.0],
+        vec![3.3, -2.2, 1.1, -0.5, 0.5, -1.1, 2.2],
+        vec![-1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0],
+        vec![8.0, 0.1, -0.1, 0.1, -0.1, 0.1, 8.0],
+        vec![0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01],
+        vec![-0.01, -0.01, -0.01, -0.01, -0.01, -0.01, -0.01],
+        vec![5.0, -5.0, 5.0, -5.0, 0.0, 0.0, 0.0],
+        vec![0.0, 0.0, 0.0, 5.0, -5.0, 5.0, -5.0],
+        vec![2.5, 2.5, -2.5, -2.5, 2.5, -2.5, 2.5],
+        vec![-4.0, 3.0, -2.0, 1.0, 0.0, -1.0, 2.0],
+        vec![6.0, -4.0, 2.0, 0.0, -2.0, 4.0, -6.0],
+        vec![1.0, -1.0, 2.0, -2.0, 3.0, -3.0, 4.0],
+        vec![-8.0, 8.0, -4.0, 4.0, -2.0, 2.0, -1.0],
+        vec![3.0, 3.0, 3.0, -3.0, -3.0, -3.0, 0.0],
     ];
 
     // Batch all on GPU
@@ -135,7 +135,7 @@ fn test_gpu_cpu_drm32_noisy_crosscheck() {
     let cpu = BcjrDecoder::new(h);
     let gpu = GpuBcjrBatch::new(&h_cols, 32, 21, 16).unwrap();
 
-    // Moderate SNR test vectors (simulating noisy channel)
+    // 10 moderate-SNR test vectors (acceptance criterion requires 10)
     let test_vectors: Vec<Vec<f32>> = vec![
         (0..32).map(|j| 1.5 * ((j % 3) as f32 - 1.0)).collect(),
         (0..32)
@@ -146,6 +146,15 @@ fn test_gpu_cpu_drm32_noisy_crosscheck() {
         (0..32)
             .map(|j| if j % 2 == 0 { 2.5 } else { -1.5 })
             .collect(),
+        (0..32).map(|j| ((j * 11 + 5) % 7) as f32 - 3.0).collect(),
+        (0..32).map(|j| 0.8 * ((j as f32).cos() * 4.0)).collect(),
+        (0..32)
+            .map(|j| if j % 4 < 2 { 1.5 } else { -2.0 })
+            .collect(),
+        (0..32)
+            .map(|j| ((j * 3 + 1) % 9) as f32 * 0.5 - 2.0)
+            .collect(),
+        (0..32).map(|j| 3.0 * ((j as f32) * 0.2).sin()).collect(),
     ];
 
     let (gpu_app, _) = gpu.decode_batch(&test_vectors).unwrap();
@@ -208,4 +217,36 @@ fn test_gpu_batch64_matches_serial_cpu() {
             );
         }
     }
+}
+
+#[test]
+fn test_gpu_turbo_ebch16_convergence() {
+    use gf2_coding::bch::extended::ExtendedBchCode;
+    use gf2_coding::product::{ProductCode, TurboDecoder, TurboDecoderConfig};
+
+    let component = ExtendedBchCode::ebch_16_11();
+    let product = ProductCode::new(component.clone());
+    let config = TurboDecoderConfig {
+        max_iterations: 5,
+        use_bcjr: false, // overridden by use_gpu_bcjr
+        #[cfg(feature = "hip")]
+        use_gpu_bcjr: true,
+        ..TurboDecoderConfig::default()
+    };
+    let decoder = TurboDecoder::new(component, config);
+
+    // All-zero codeword with high-confidence LLRs
+    let llrs: Vec<Llr> = vec![Llr::new(5.0); product.n()];
+    let result = decoder.decode(&llrs);
+
+    assert!(
+        result.converged,
+        "GPU BCJR turbo decoder should converge on high-SNR all-zeros"
+    );
+    assert_eq!(result.decoded_bits.len(), product.k());
+    assert_eq!(
+        result.decoded_bits.count_ones(),
+        0,
+        "Decoded message should be all zeros"
+    );
 }
