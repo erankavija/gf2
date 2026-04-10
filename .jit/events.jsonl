@@ -1425,3 +1425,5 @@
 {"type":"issue_created","id":"43a1808a-b5be-4232-83c0-3b89e363e777","issue_id":"3e136982-5767-4d55-a779-d640bb3ec55c","timestamp":"2026-04-10T13:30:18.497406408Z","title":"Implement trellis-based SISO decoder for dRM(32,21) component code","priority":"high"}
 {"type":"issue_created","id":"1e0f89a8-1a2c-4a02-8042-7234bca0aef3","issue_id":"9d8cb409-2b60-4039-bd83-6f8cf8e1a2bb","timestamp":"2026-04-10T13:30:31.384581919Z","title":"Profile and optimize SOGRAND/turbo decoder throughput for n=32 codes","priority":"normal"}
 {"type":"issue_state_changed","id":"4c58c057-b745-4de1-8f5b-abd2f7bced8f","issue_id":"9d8cb409-2b60-4039-bd83-6f8cf8e1a2bb","timestamp":"2026-04-10T13:30:37.778377829Z","from":"ready","to":"backlog"}
+{"type":"gate_passed","id":"e7d16a19-8434-42ea-83ae-4ad4425da645","issue_id":"3ce1cd12-d0d6-421b-b005-3cfb6d448f07","timestamp":"2026-04-10T14:51:40.474278275Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"0c09d585-d0fa-49dd-bdf1-e42d52680a1b","issue_id":"3ce1cd12-d0d6-421b-b005-3cfb6d448f07","timestamp":"2026-04-10T14:56:23.256504308Z","gate_key":"code-review","updated_by":"auto:executor"}
