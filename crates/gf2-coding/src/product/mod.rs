@@ -53,16 +53,22 @@
 //! - Chase, D. (1972). "A class of algorithms for decoding block codes with channel
 //!   measurement information." *IEEE Trans. Inform. Theory.*
 
+pub mod chase_pyndiah;
+
+pub use chase_pyndiah::{ChasePyndiahConfig, ChasePyndiahDecoder};
+
 use crate::bcjr::BcjrDecoder;
 use crate::grand::{OrbGrand, OrbGrandConfig, SisoResult, SoGrand};
 use crate::llr::Llr;
 use crate::traits::BlockEncoder;
 use gf2_core::{BitMatrix, BitVec};
 
-/// Internal SISO engine dispatch: either SOGRAND or BCJR.
+/// Internal SISO engine dispatch: SOGRAND, BCJR, or GPU-batched BCJR.
 enum SisoEngine {
     SoGrand(SoGrand),
     Bcjr(BcjrDecoder),
+    #[cfg(feature = "hip")]
+    GpuBcjr(gf2_kernels_hip::GpuBcjrBatch),
 }
 
 impl SisoEngine {
@@ -70,7 +76,59 @@ impl SisoEngine {
         match self {
             SisoEngine::SoGrand(s) => s.decode_siso(input),
             SisoEngine::Bcjr(b) => b.decode_siso(input),
+            #[cfg(feature = "hip")]
+            SisoEngine::GpuBcjr(gpu) => {
+                // Single-decode fallback: wrap in a batch of 1
+                let llrs: Vec<f32> = input.iter().map(|l| l.value()).collect();
+                let (app, ext) = gpu.decode_batch(&[llrs]).expect("GPU decode failed");
+                SisoResult {
+                    app_llrs: app[0].iter().map(|&v| Llr::new(v)).collect(),
+                    extrinsic_llrs: ext[0].iter().map(|&v| Llr::new(v)).collect(),
+                    list_bler_prediction: 0.0,
+                    query_count: 0,
+                }
+            }
         }
+    }
+
+    /// Batch-decode multiple inputs in one GPU launch. Falls back to serial
+    /// decode_siso for non-GPU engines.
+    fn decode_siso_batch(&self, inputs: &[Vec<f32>]) -> Vec<SisoResult> {
+        match self {
+            #[cfg(feature = "hip")]
+            SisoEngine::GpuBcjr(gpu) => {
+                let (app_batch, ext_batch) =
+                    gpu.decode_batch(inputs).expect("GPU batch decode failed");
+                app_batch
+                    .into_iter()
+                    .zip(ext_batch)
+                    .map(|(app, ext)| SisoResult {
+                        app_llrs: app.into_iter().map(Llr::new).collect(),
+                        extrinsic_llrs: ext.into_iter().map(Llr::new).collect(),
+                        list_bler_prediction: 0.0,
+                        query_count: 0,
+                    })
+                    .collect()
+            }
+            _ => {
+                // Serial fallback for CPU engines
+                inputs
+                    .iter()
+                    .map(|llrs| {
+                        let input: Vec<Llr> = llrs.iter().map(|&v| Llr::new(v)).collect();
+                        self.decode_siso(&input)
+                    })
+                    .collect()
+            }
+        }
+    }
+
+    fn is_gpu(&self) -> bool {
+        #[cfg(feature = "hip")]
+        if matches!(self, SisoEngine::GpuBcjr(_)) {
+            return true;
+        }
+        false
     }
 }
 
@@ -678,6 +736,23 @@ pub struct TurboDecoderConfig {
     /// A typical value might be `Some(1e-6)`.
     pub list_bler_threshold: Option<f64>,
 
+    /// Final alpha value for iteration-dependent scaling schedule.
+    ///
+    /// When set, alpha linearly increases from `alpha` (initial) to
+    /// `alpha_final` over `max_iterations`. This is the Chase-Pyndiah
+    /// technique: early iterations use low damping for stability, later
+    /// iterations use higher values for faster convergence.
+    ///
+    /// When `None`, a fixed `alpha` is used for all iterations.
+    pub alpha_final: Option<f32>,
+
+    /// Maximum absolute extrinsic LLR value (Chase-Pyndiah style).
+    ///
+    /// Bounds the extrinsic information to `[-beta, +beta]` to prevent
+    /// premature convergence to wrong codewords. When `None`, extrinsic
+    /// is unbounded (standard turbo decoding).
+    pub extrinsic_clamp: Option<f32>,
+
     /// Use BCJR trellis decoder instead of SOGRAND for component SISO.
     ///
     /// When `true`, the turbo decoder uses a forward-backward (BCJR) algorithm
@@ -688,6 +763,14 @@ pub struct TurboDecoderConfig {
     /// trellis states). For dRM(32,21) (n-k=11, 2048 states) it is significantly
     /// faster and more accurate than SOGRAND.
     pub use_bcjr: bool,
+
+    /// Use GPU-accelerated batch BCJR via HIP/ROCm.
+    ///
+    /// When `true`, the turbo decoder batches all row (or column) SISO calls
+    /// into a single GPU kernel launch. Requires the `hip` feature and an AMD
+    /// GPU with ROCm. Implies `use_bcjr = true`.
+    #[cfg(feature = "hip")]
+    pub use_gpu_bcjr: bool,
 }
 
 impl Default for TurboDecoderConfig {
@@ -698,7 +781,11 @@ impl Default for TurboDecoderConfig {
             list_size: 4,
             max_queries: 1_000_000,
             list_bler_threshold: None,
+            alpha_final: None,
+            extrinsic_clamp: None,
             use_bcjr: false,
+            #[cfg(feature = "hip")]
+            use_gpu_bcjr: false,
         }
     }
 }
@@ -857,7 +944,37 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
     ///
     /// O(n^2) for constructing the sparse parity-check matrix used by ORBGRAND.
     pub fn new(component: C, config: TurboDecoderConfig) -> Self {
-        let siso = if config.use_bcjr {
+        #[cfg(feature = "hip")]
+        let use_gpu = config.use_gpu_bcjr;
+        #[cfg(not(feature = "hip"))]
+        let use_gpu = false;
+
+        let siso = if use_gpu {
+            #[cfg(feature = "hip")]
+            {
+                let h = component.comp_parity_check();
+                let n = component.comp_n();
+                let k = component.comp_k();
+                let h_cols: Vec<u32> = (0..n)
+                    .map(|j| {
+                        let col_bv = h.col_as_bitvec(j);
+                        let mut col = 0u32;
+                        for i in 0..h.rows() {
+                            if col_bv.get(i) {
+                                col |= 1 << i;
+                            }
+                        }
+                        col
+                    })
+                    .collect();
+                SisoEngine::GpuBcjr(
+                    gf2_kernels_hip::GpuBcjrBatch::new(&h_cols, n, k, n)
+                        .expect("Failed to initialize GPU BCJR"),
+                )
+            }
+            #[cfg(not(feature = "hip"))]
+            unreachable!()
+        } else if config.use_bcjr {
             SisoEngine::Bcjr(BcjrDecoder::new(component.comp_parity_check()))
         } else {
             let h = component.comp_parity_check().clone();
@@ -951,22 +1068,41 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
             // === Row step ===
             let mut l_app_row: Vec<Vec<f32>> = vec![vec![0.0; n]; n];
             let mut row_bler_sum: f64 = 0.0;
-            for i in 0..n {
-                // Input to SISO: L_Ch + L_A for this row
-                let input: Vec<Llr> = (0..n).map(|j| Llr::new(l_ch[i][j] + l_a[i][j])).collect();
-                let siso_result = self.siso.decode_siso(&input);
-                total_queries += siso_result.query_count;
-                row_bler_sum += siso_result.list_bler_prediction;
-                for (j, app_llr) in siso_result.app_llrs.iter().enumerate() {
-                    l_app_row[i][j] = app_llr.value();
+            if self.siso.is_gpu() {
+                // GPU batch: collect all row inputs, decode in one kernel launch
+                let row_inputs: Vec<Vec<f32>> = (0..n)
+                    .map(|i| (0..n).map(|j| l_ch[i][j] + l_a[i][j]).collect())
+                    .collect();
+                let results = self.siso.decode_siso_batch(&row_inputs);
+                for (i, siso_result) in results.into_iter().enumerate() {
+                    total_queries += siso_result.query_count;
+                    row_bler_sum += siso_result.list_bler_prediction;
+                    for (j, app_llr) in siso_result.app_llrs.iter().enumerate() {
+                        l_app_row[i][j] = app_llr.value();
+                    }
+                }
+            } else {
+                for i in 0..n {
+                    let input: Vec<Llr> =
+                        (0..n).map(|j| Llr::new(l_ch[i][j] + l_a[i][j])).collect();
+                    let siso_result = self.siso.decode_siso(&input);
+                    total_queries += siso_result.query_count;
+                    row_bler_sum += siso_result.list_bler_prediction;
+                    for (j, app_llr) in siso_result.app_llrs.iter().enumerate() {
+                        l_app_row[i][j] = app_llr.value();
+                    }
                 }
             }
 
-            // Compute extrinsic: L_E = L_APP - L_A - L_Ch
+            // Compute extrinsic: L_E = L_APP - L_A - L_Ch, with optional clamping
             let mut l_e: Vec<Vec<f32>> = vec![vec![0.0; n]; n];
             for i in 0..n {
                 for j in 0..n {
-                    l_e[i][j] = l_app_row[i][j] - l_a[i][j] - l_ch[i][j];
+                    let mut ext = l_app_row[i][j] - l_a[i][j] - l_ch[i][j];
+                    if let Some(beta) = self.config.extrinsic_clamp {
+                        ext = ext.clamp(-beta, beta);
+                    }
+                    l_e[i][j] = ext;
                 }
             }
 
@@ -998,8 +1134,13 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
                 }
             }
 
-            // Set L_A = alpha * L_E
-            let alpha = self.config.alpha;
+            // Set L_A = alpha * L_E (iteration-dependent if alpha_final is set)
+            let alpha = if let Some(a_final) = self.config.alpha_final {
+                let t = iteration as f32 / (self.config.max_iterations - 1).max(1) as f32;
+                self.config.alpha + t * (a_final - self.config.alpha)
+            } else {
+                self.config.alpha
+            };
             for i in 0..n {
                 for j in 0..n {
                     l_a[i][j] = alpha * l_e[i][j];
@@ -1009,14 +1150,29 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
             // === Column step ===
             let mut l_app_col: Vec<Vec<f32>> = vec![vec![0.0; n]; n];
             let mut col_bler_sum: f64 = 0.0;
-            for j in 0..n {
-                // Input to SISO: L_Ch + L_A for this column
-                let input: Vec<Llr> = (0..n).map(|i| Llr::new(l_ch[i][j] + l_a[i][j])).collect();
-                let siso_result = self.siso.decode_siso(&input);
-                total_queries += siso_result.query_count;
-                col_bler_sum += siso_result.list_bler_prediction;
-                for (i, app_llr) in siso_result.app_llrs.iter().enumerate() {
-                    l_app_col[i][j] = app_llr.value();
+            if self.siso.is_gpu() {
+                // GPU batch: collect all column inputs, decode in one kernel launch
+                let col_inputs: Vec<Vec<f32>> = (0..n)
+                    .map(|j| (0..n).map(|i| l_ch[i][j] + l_a[i][j]).collect())
+                    .collect();
+                let results = self.siso.decode_siso_batch(&col_inputs);
+                for (j, siso_result) in results.into_iter().enumerate() {
+                    total_queries += siso_result.query_count;
+                    col_bler_sum += siso_result.list_bler_prediction;
+                    for (i, app_llr) in siso_result.app_llrs.iter().enumerate() {
+                        l_app_col[i][j] = app_llr.value();
+                    }
+                }
+            } else {
+                for j in 0..n {
+                    let input: Vec<Llr> =
+                        (0..n).map(|i| Llr::new(l_ch[i][j] + l_a[i][j])).collect();
+                    let siso_result = self.siso.decode_siso(&input);
+                    total_queries += siso_result.query_count;
+                    col_bler_sum += siso_result.list_bler_prediction;
+                    for (i, app_llr) in siso_result.app_llrs.iter().enumerate() {
+                        l_app_col[i][j] = app_llr.value();
+                    }
                 }
             }
 
@@ -1135,7 +1291,7 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
     pub fn sogrand(&self) -> &SoGrand {
         match &self.siso {
             SisoEngine::SoGrand(s) => s,
-            SisoEngine::Bcjr(_) => panic!("decoder configured with BCJR, not SOGRAND"),
+            _ => panic!("decoder not configured with SOGRAND"),
         }
     }
 
@@ -1159,7 +1315,7 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
     pub fn bcjr(&self) -> &BcjrDecoder {
         match &self.siso {
             SisoEngine::Bcjr(b) => b,
-            SisoEngine::SoGrand(_) => panic!("decoder configured with SOGRAND, not BCJR"),
+            _ => panic!("decoder not configured with BCJR"),
         }
     }
 

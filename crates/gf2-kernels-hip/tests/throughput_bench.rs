@@ -34,7 +34,7 @@ fn bench_gpu_vs_cpu_batch64() {
     let h = code.parity_check();
     let h_cols = extract_h_cols(h);
     let cpu = BcjrDecoder::new(h);
-    let mut gpu = GpuBcjrBatch::new(&h_cols, 32, 21, 64).unwrap();
+    let gpu = GpuBcjrBatch::new(&h_cols, 32, 21, 64).unwrap();
 
     let batch_size = 64;
     let inputs: Vec<Vec<f32>> = (0..batch_size)

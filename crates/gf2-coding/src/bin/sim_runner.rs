@@ -28,7 +28,9 @@ use gf2_coding::gldpc::{GldpcDecoder, GldpcDecoderConfig, QcGldpcCode};
 use gf2_coding::grand::OrbGrandConfig;
 use gf2_coding::ldpc::nr_5g::Nr5gRateMatchedDecoder;
 use gf2_coding::ldpc::{DecoderAlgorithm, QuasiCyclicLdpc};
-use gf2_coding::product::{ProductCode, TurboDecoder, TurboDecoderConfig};
+use gf2_coding::product::{
+    ChasePyndiahConfig, ChasePyndiahDecoder, ProductCode, TurboDecoder, TurboDecoderConfig,
+};
 use gf2_coding::simulation::{
     BpskAwgnChannel, SimulationConfig, SimulationResults, SimulationRunner,
 };
@@ -143,10 +145,27 @@ impl SnrRange {
 struct TurboConfig {
     max_iterations: usize,
     alpha: f32,
+    /// Final alpha for iteration-dependent schedule (Chase-Pyndiah style).
+    alpha_final: Option<f32>,
+    /// Maximum absolute extrinsic LLR value.
+    extrinsic_clamp: Option<f32>,
     list_size: usize,
     max_queries: usize,
     /// Use BCJR trellis decoder instead of SOGRAND for component SISO.
     use_bcjr: Option<bool>,
+    /// Use GPU-accelerated batch BCJR via HIP/ROCm.
+    use_gpu_bcjr: Option<bool>,
+    /// Use Chase-Pyndiah decoder instead of SOGRAND/BCJR turbo decoder.
+    chase_pyndiah: Option<ChasePyndiahToml>,
+}
+
+/// Chase-Pyndiah decoder parameters (optional override in TOML).
+#[derive(Debug, Deserialize)]
+struct ChasePyndiahToml {
+    /// Chase search depth (number of least reliable positions).
+    p: Option<usize>,
+    /// Maximum turbo iteration pairs (overrides `TurboConfig::max_iterations`).
+    max_iterations: Option<usize>,
 }
 
 /// SOGRAND check-node decoder parameters for GLDPC curves.
@@ -466,19 +485,46 @@ fn run_product<C>(
     config: &SimulationConfig,
 ) -> SimulationResults
 where
-    C: gf2_coding::product::ProductComponent + Clone,
+    C: gf2_coding::product::ProductComponent + Clone + 'static,
 {
     let product = ProductCode::new(encoder_component);
-    let turbo_config = TurboDecoderConfig {
-        max_iterations: turbo_cfg.max_iterations,
-        alpha: turbo_cfg.alpha,
-        list_size: turbo_cfg.list_size,
-        max_queries: turbo_cfg.max_queries,
-        list_bler_threshold: None,
-        use_bcjr: turbo_cfg.use_bcjr.unwrap_or(false),
-    };
-    let turbo = TurboDecoder::new(decoder_component, turbo_config);
-    SimulationRunner::run_with_decoder(&product, |llrs| turbo.decode(llrs).into(), channel, config)
+
+    if let Some(cp_toml) = &turbo_cfg.chase_pyndiah {
+        let mut cp_config = ChasePyndiahConfig::default();
+        if let Some(p) = cp_toml.p {
+            cp_config.p = p;
+        }
+        if let Some(iters) = cp_toml.max_iterations {
+            cp_config.max_iterations = iters;
+        }
+        let cp_decoder = ChasePyndiahDecoder::new(decoder_component, cp_config);
+        SimulationRunner::run_with_decoder(
+            &product,
+            |llrs| cp_decoder.decode(llrs).into(),
+            channel,
+            config,
+        )
+    } else {
+        let turbo_config = TurboDecoderConfig {
+            max_iterations: turbo_cfg.max_iterations,
+            alpha: turbo_cfg.alpha,
+            alpha_final: turbo_cfg.alpha_final,
+            extrinsic_clamp: turbo_cfg.extrinsic_clamp,
+            list_size: turbo_cfg.list_size,
+            max_queries: turbo_cfg.max_queries,
+            list_bler_threshold: None,
+            use_bcjr: turbo_cfg.use_bcjr.unwrap_or(false),
+            #[cfg(feature = "hip")]
+            use_gpu_bcjr: turbo_cfg.use_gpu_bcjr.unwrap_or(false),
+        };
+        let turbo = TurboDecoder::new(decoder_component, turbo_config);
+        SimulationRunner::run_with_decoder(
+            &product,
+            |llrs| turbo.decode(llrs).into(),
+            channel,
+            config,
+        )
+    }
 }
 
 // ---------------------------------------------------------------------------

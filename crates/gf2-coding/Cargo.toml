@@ -12,6 +12,7 @@ rust-version = "1.80"
 [dependencies]
 gf2-core = { path = "../gf2-core" }
 gf2-kernels-simd = { path = "../gf2-kernels-simd", optional = true }
+gf2-kernels-hip = { path = "../gf2-kernels-hip", optional = true }
 rand = { workspace = true }
 rand_distr = "0.4"
 rayon = { workspace = true, optional = true }
@@ -34,6 +35,8 @@ parallel = ["dep:rayon", "gf2-core/parallel"]
 visualization = ["gf2-core/visualization"]
 # Use f64 precision for LLRs instead of f32 (slower, for research/comparison)
 llr-f64 = []
+# HIP/ROCm GPU acceleration (requires hipcc and AMD GPU)
+hip = ["dep:gf2-kernels-hip"]
 
 # Binaries are auto-discovered in src/bin/
 # - generate_ldpc_cache: Generate DVB-T2 LDPC encoding cache files

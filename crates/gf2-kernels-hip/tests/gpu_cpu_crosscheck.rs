@@ -37,7 +37,7 @@ fn test_gpu_cpu_hamming74_crosscheck() {
     ];
     let h_cols = extract_h_cols(&h);
     let cpu = BcjrDecoder::new(&h);
-    let mut gpu = GpuBcjrBatch::new(&h_cols, 7, 4, 32).unwrap();
+    let gpu = GpuBcjrBatch::new(&h_cols, 7, 4, 32).unwrap();
 
     let test_vectors: Vec<Vec<f32>> = vec![
         vec![5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0],
@@ -79,7 +79,7 @@ fn test_gpu_cpu_drm32_noiseless_crosscheck() {
     let h = code.parity_check();
     let h_cols = extract_h_cols(h);
     let cpu = BcjrDecoder::new(h);
-    let mut gpu = GpuBcjrBatch::new(&h_cols, 32, 21, 16).unwrap();
+    let gpu = GpuBcjrBatch::new(&h_cols, 32, 21, 16).unwrap();
 
     // Test with 10 different codewords (noiseless)
     let mut inputs = Vec::new();
@@ -133,15 +133,19 @@ fn test_gpu_cpu_drm32_noisy_crosscheck() {
     let h = code.parity_check();
     let h_cols = extract_h_cols(h);
     let cpu = BcjrDecoder::new(h);
-    let mut gpu = GpuBcjrBatch::new(&h_cols, 32, 21, 16).unwrap();
+    let gpu = GpuBcjrBatch::new(&h_cols, 32, 21, 16).unwrap();
 
     // Moderate SNR test vectors (simulating noisy channel)
     let test_vectors: Vec<Vec<f32>> = vec![
         (0..32).map(|j| 1.5 * ((j % 3) as f32 - 1.0)).collect(),
-        (0..32).map(|j| 2.0 * (((j * 7 + 3) % 5) as f32 - 2.0) / 2.0).collect(),
+        (0..32)
+            .map(|j| 2.0 * (((j * 7 + 3) % 5) as f32 - 2.0) / 2.0)
+            .collect(),
         (0..32).map(|j| if j < 16 { 1.0 } else { -1.0 }).collect(),
         (0..32).map(|j| 0.5 * ((j as f32).sin() * 3.0)).collect(),
-        (0..32).map(|j| if j % 2 == 0 { 2.5 } else { -1.5 }).collect(),
+        (0..32)
+            .map(|j| if j % 2 == 0 { 2.5 } else { -1.5 })
+            .collect(),
     ];
 
     let (gpu_app, _) = gpu.decode_batch(&test_vectors).unwrap();
@@ -171,7 +175,7 @@ fn test_gpu_batch64_matches_serial_cpu() {
     let h = code.parity_check();
     let h_cols = extract_h_cols(h);
     let cpu = BcjrDecoder::new(h);
-    let mut gpu = GpuBcjrBatch::new(&h_cols, 32, 21, 64).unwrap();
+    let gpu = GpuBcjrBatch::new(&h_cols, 32, 21, 64).unwrap();
 
     // Build 64 diverse inputs
     let inputs: Vec<Vec<f32>> = (0..64)
