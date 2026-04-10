@@ -145,6 +145,8 @@ struct TurboConfig {
     alpha: f32,
     list_size: usize,
     max_queries: usize,
+    /// Use BCJR trellis decoder instead of SOGRAND for component SISO.
+    use_bcjr: Option<bool>,
 }
 
 /// SOGRAND check-node decoder parameters for GLDPC curves.
@@ -473,6 +475,7 @@ where
         list_size: turbo_cfg.list_size,
         max_queries: turbo_cfg.max_queries,
         list_bler_threshold: None,
+        use_bcjr: turbo_cfg.use_bcjr.unwrap_or(false),
     };
     let turbo = TurboDecoder::new(decoder_component, turbo_config);
     SimulationRunner::run_with_decoder(&product, |llrs| turbo.decode(llrs).into(), channel, config)

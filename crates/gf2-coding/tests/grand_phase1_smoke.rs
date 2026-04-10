@@ -38,6 +38,7 @@ fn test_fig3_ebch_product_encode_decode() {
         list_size: 2,
         max_queries: 100_000,
         list_bler_threshold: None,
+        use_bcjr: false,
     };
     let turbo = TurboDecoder::new(component, turbo_config);
 
@@ -161,6 +162,7 @@ fn test_fig1_drm_product_encode_decode() {
         list_size: 2,
         max_queries: 100_000,
         list_bler_threshold: None,
+        use_bcjr: false,
     };
     let turbo = TurboDecoder::new(component, turbo_config);
 
