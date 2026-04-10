@@ -4,6 +4,11 @@ members = [
 	"crates/gf2-coding",
 	"crates/gf2-kernels-simd",
 ]
+# HIP crate excluded from default workspace — requires ROCm/hipcc.
+# Build explicitly: cargo build -p gf2-kernels-hip
+exclude = [
+	"crates/gf2-kernels-hip",
+]
 resolver = "2"
 
 [workspace.dependencies]
