@@ -2,7 +2,7 @@
   "id": "3ce1cd12-d0d6-421b-b005-3cfb6d448f07",
   "title": "Run Phase 3 AWGN simulation: Fig 7 GLDPC vs 5G NR LDPC",
   "description": "Run the GLDPC vs 5G NR LDPC simulation from Figure 7.\n\n## Figure 7: (1024, 646) QC-GLDPC vs 5G NR LDPC\n\n- GLDPC: QC structure with eBCH check nodes, BP + SOGRAND\n- LDPC: 5G NR, BP (I_max=50)\n- Metrics: BLER, BER, queries/bit, iterations\n- Eb/N0 range: 0–4 dB\n\n**Note:** The QC-GLDPC code has actual dimension (1024, 646) due to circulant rank deficiency (see d0e2af0c and epic Open Issues). The 5G NR LDPC baseline is rate-matched to (1024, 646) for a fair comparison.\n\n## Acceptance Criteria\n\n- Simulation runs to completion with sufficient statistics: >=100 frame errors per SNR point where BLER > 0.01; at least 5000 frames at remaining deep-waterfall points where collecting 100 errors is computationally infeasible.\n- Results compared against paper's reference data.\n- GLDPC performance is documented relative to 5G NR LDPC.\n- Results saved in CSV/JSON format.\n\n## Location\n\nExtend simulation runners.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:claude",
   "dependencies": [
@@ -19,25 +19,25 @@
     "tdd-reminder"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-10T15:55:07.269043576Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-10T15:56:12.710078063Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-10T16:02:21.709168260Z"
+    },
     "tdd-reminder": {
       "status": "passed",
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-07T09:06:36.847389487Z"
-    },
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-10T14:50:34.731111858Z"
-    },
-    "code-review": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-10T14:51:40.519868248Z"
-    },
-    "doc-review": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-04-05T23:09:16.350108744Z"
     }
   },
   "context": {},
@@ -56,5 +56,5 @@
     "component:gf2-coding"
   ],
   "created_at": "2026-02-22T21:16:05.912701895+00:00",
-  "updated_at": "2026-04-10T15:17:46.133719275+00:00"
+  "updated_at": "2026-04-10T16:02:27.117449673+00:00"
 }
