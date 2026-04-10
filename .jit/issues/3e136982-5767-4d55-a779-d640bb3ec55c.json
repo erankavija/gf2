@@ -1,0 +1,24 @@
+{
+  "id": "3e136982-5767-4d55-a779-d640bb3ec55c",
+  "title": "Implement trellis-based SISO decoder for dRM(32,21) component code",
+  "description": "## Problem\n\nSOGRAND soft-output is insufficient for dRM(32,21) in the product code turbo decoder. Even with all SOGRAND bug fixes (overaccumulation, fallback factor-of-2, clamp), the dRM product code BLER at 1.0 dB is 0.566 vs paper's 0.072 (8x gap). The turbo decoder converges in ~6 iterations but to wrong codewords because SOGRAND's APP LLRs lack sufficient quality for this code.\n\nRoot cause: dRM(32,21) has d_min≈4 and 2M codewords in 4B patterns. SOGRAND finds ~24 codewords in 50K queries, but the correct codeword is often not distinguishable from competitors in the APP computation. The eBCH(16,11) product code works because n=16 allows exhaustive coverage.\n\n## Solution\n\nImplement a trellis-based Forward-Backward (BCJR) SISO decoder for dRM(32,21). The BCJR algorithm computes exact APP LLRs by propagating probabilities through the code trellis, without needing to enumerate noise patterns. This is the standard approach for SISO component decoding in turbo/product codes.\n\n## Acceptance Criteria\n\n1. BCJR decoder produces per-bit APP LLRs for dRM(32,21) component code.\n2. Extrinsic LLRs (APP - input) are correctly computed for turbo decoder integration.\n3. Product code turbo decoder can use BCJR as alternative to SOGRAND for component decoding.\n4. Alignment test at 0.75-1.0 dB shows significant improvement over SOGRAND (target: within 2x of paper's BLER).\n5. eBCH component codes also supported via BCJR (for future use).\n\n## Analysis\n\nSee `dev/active/sogrand-n32-analysis.md` for detailed alignment data and root cause analysis.",
+  "state": "ready",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "tdd-reminder"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "epic:grand",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-04-10T13:30:18.497123658+00:00",
+  "updated_at": "2026-04-10T13:30:18.497131858+00:00"
+}

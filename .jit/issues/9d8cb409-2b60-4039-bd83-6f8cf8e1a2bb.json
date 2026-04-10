@@ -1,0 +1,25 @@
+{
+  "id": "9d8cb409-2b60-4039-bd83-6f8cf8e1a2bb",
+  "title": "Profile and optimize SOGRAND/turbo decoder throughput for n=32 codes",
+  "description": "## Problem\n\nWith the corrected ORBGRAND (collecting all codewords during the full query sweep), decoder throughput has decreased:\n- eBCH(16,11) product code: ~0.06s/frame (was ~0.005s) — 12x slower\n- dRM(32,21) product code: ~20s/frame with 50K queries\n- GLDPC eBCH(32,26): ~3s/frame with 5K queries\n\nThe paper reports the (1024,441) dRM product code running at ~0.03 fps even with 100K queries. Our throughput needs to be competitive for practical simulation campaigns.\n\n## Tasks\n\n1. Profile ORBGRAND pattern enumeration — identify hotspots in the inner loop (syndrome check, probability accumulation, codeword construction).\n2. Profile SOGRAND APP computation — cost scales with list size × n. With ~24 codewords for dRM, this should be fast but verify.\n3. Evaluate early-exit strategies that preserve soft-output quality:\n   - Exit when cumulative probability exceeds a threshold (e.g., 0.999) AND min list_size is reached\n   - Reduce max_queries based on component code properties\n4. Consider SIMD acceleration for syndrome checks (batch multiple patterns).\n5. Benchmark before/after each optimization.\n\n## Acceptance Criteria\n\n1. Profiling report with flamegraph or equivalent identifying top hotspots.\n2. At least 3x throughput improvement for eBCH(16,11) product code (back to <0.02s/frame).\n3. No regression in BLER (verify with alignment sims at key SNR points).\n4. Document recommended max_queries settings for each component code size.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "3e136982-5767-4d55-a779-d640bb3ec55c"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "epic:grand",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-04-10T13:30:31.384309439+00:00",
+  "updated_at": "2026-04-10T13:30:37.778218759+00:00"
+}
