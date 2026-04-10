@@ -1416,3 +1416,7 @@
 {"type":"issue_state_changed","id":"bfaeeca5-a148-4be5-a417-979f77fdd90e","issue_id":"a4d86b3d-05e7-4596-939b-e09f9dd35e55","timestamp":"2026-04-09T16:50:23.138247858Z","from":"in_progress","to":"done"}
 {"type":"issue_completed","id":"1f08a64c-2dd1-4d2f-920c-817b652eeee1","issue_id":"a4d86b3d-05e7-4596-939b-e09f9dd35e55","timestamp":"2026-04-09T16:50:23.138282128Z"}
 {"type":"issue_created","id":"ca475b19-e042-4967-a492-8a58cb11bc30","issue_id":"4eaa31a0-7f19-4902-b247-464fcd6aa2da","timestamp":"2026-04-09T21:43:23.659172534Z","title":"Fix simulation ETA estimation for waterfall regions","priority":"normal"}
+{"type":"gate_passed","id":"48ac2996-5211-481d-bd0d-79594c51a93f","issue_id":"92086311-4dcc-4d04-9c26-a88034ffd894","timestamp":"2026-04-09T22:32:53.150275407Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"11d471b4-1b14-40a9-a92c-3fa6c5511628","issue_id":"92086311-4dcc-4d04-9c26-a88034ffd894","timestamp":"2026-04-09T22:38:45.594331496Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"205ee5d7-24d4-44b8-b293-62c5a7ecb24b","issue_id":"3ce1cd12-d0d6-421b-b005-3cfb6d448f07","timestamp":"2026-04-09T22:39:48.912309059Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"c0d43c0a-70eb-4d4e-9304-f337eb967169","issue_id":"3ce1cd12-d0d6-421b-b005-3cfb6d448f07","timestamp":"2026-04-09T22:44:53.088949699Z","gate_key":"code-review","updated_by":"auto:executor"}

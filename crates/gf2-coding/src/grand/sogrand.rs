@@ -427,9 +427,12 @@ fn compute_per_bit_app_llrs(
                 }
             }
 
-            // Add the "not found" fallback term
-            let log_fallback_0 = log_p_not_in_list + log_p_bit0_channel;
-            let log_fallback_1 = log_p_not_in_list + log_p_bit1_channel;
+            // Add the "not found" fallback term.
+            // Factor of 2 (LN_2) accounts for uniform prior P(c_i=b)=0.5:
+            // the paper's formula (eq. 17) uses the likelihood ratio
+            // P(y_i|c_i=b)/P(y_i) = P(c_i=b|y_i)/P(c_i=b) = 2*P(c_i=b|y_i).
+            let log_fallback_0 = log_p_not_in_list + log_p_bit0_channel + std::f64::consts::LN_2;
+            let log_fallback_1 = log_p_not_in_list + log_p_bit1_channel + std::f64::consts::LN_2;
 
             let log_numerator = log_sum_exp(log_sum_0, log_fallback_0);
             let log_denominator_bit = log_sum_exp(log_sum_1, log_fallback_1);
@@ -438,7 +441,7 @@ fn compute_per_bit_app_llrs(
             let app_llr = log_numerator - log_denominator_bit;
 
             // Clamp to avoid infinity in output
-            Llr::new(app_llr.clamp(-100.0, 100.0) as f32)
+            Llr::new(app_llr.clamp(-20.0, 20.0) as f32)
         })
         .collect()
 }

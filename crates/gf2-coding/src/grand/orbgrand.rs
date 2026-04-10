@@ -505,26 +505,26 @@ impl OrbGrand {
         // partition-based enumeration.
         let pattern_iter = LogisticWeightPatternIter::new(self.n);
 
-        let mut list_full = false;
-        // After the list is full, continue accumulating probability to
-        // improve SOGRAND soft output quality. The budget is controlled by
-        // max_queries to allow callers to trade off accuracy vs speed.
-        // For SOGRAND SISO (e.g., GLDPC check nodes), high cumulative
-        // probability is critical: if too low, P(C\L) dominates and
-        // APP LLRs collapse to channel LLRs.
-        let post_list_budget = self.config.max_queries;
-        let mut post_list_count = 0usize;
+        // Test all patterns up to max_queries. All found codewords are
+        // collected (the list grows beyond list_size). Cumulative probability
+        // is accumulated for all tested patterns. This matches the SO-GRAND
+        // paper: both the list L and cumulative S_Q reflect the same set of
+        // Q tested patterns, keeping P(C\L) consistent.
+        //
+        // list_size controls early termination for hard-decision-only callers:
+        // when at least list_size codewords are found AND cumulative probability
+        // is near 1.0, we can stop early. For SOGRAND callers, max_queries
+        // is the primary budget control.
+        let mut has_min_list = false;
 
         for pattern in pattern_iter {
             if query_count >= self.config.max_queries {
                 break;
             }
-            if list_full {
-                post_list_count += 1;
-                // Stop if cumulative is near 1.0 or budget exhausted
-                if cumulative_log_prob > -1e-6 || post_list_count >= post_list_budget {
-                    break;
-                }
+            // Early exit when we have enough codewords AND cumulative
+            // probability is near 1.0 (no more useful patterns to test).
+            if has_min_list && cumulative_log_prob > -1e-6 {
+                break;
             }
 
             // pattern is a sorted list of indices into pi (1-based logistic indices)
@@ -541,10 +541,9 @@ impl OrbGrand {
                 base_log_prob,
             );
 
-            // Accumulate cumulative probability for ALL tested patterns,
-            // including those skipped by even-code optimization. This is
-            // critical for SOGRAND: if cumulative probability is too low,
-            // P(C\L) dominates and APP LLRs collapse to channel LLRs.
+            // Accumulate cumulative probability for ALL tested patterns.
+            // Both the codeword list and cumulative probability must reflect
+            // the same set of tested patterns for P(C\L) to be consistent.
             cumulative_log_prob = log_sum_exp(cumulative_log_prob, noise_log_prob);
 
             // Even code optimization: skip syndrome check if parity won't match.
@@ -554,12 +553,6 @@ impl OrbGrand {
                 if hard_parity ^ noise_parity {
                     continue;
                 }
-            }
-
-            // If the list is already full, continue iterating to accumulate
-            // probability but don't check for more codewords.
-            if list_full {
-                continue;
             }
 
             query_count += 1;
@@ -589,7 +582,7 @@ impl OrbGrand {
                 });
 
                 if codewords.len() >= self.config.list_size {
-                    list_full = true;
+                    has_min_list = true;
                 }
             }
         }
@@ -1070,10 +1063,10 @@ mod tests {
             best.noise_weight, 0,
             "No errors, so noise weight should be 0"
         );
-        assert_eq!(
-            result.query_count, 1,
-            "Should find codeword on first query (empty pattern)"
-        );
+        // The codeword is found on the first query, but ORBGRAND continues
+        // testing patterns up to max_queries to collect additional codewords
+        // and accumulate cumulative probability for SOGRAND soft output.
+        assert!(result.query_count >= 1, "Should have at least one query");
     }
 
     #[test]
@@ -1170,13 +1163,15 @@ mod tests {
         ];
         let result = decoder.decode(&llrs);
 
-        // Hamming(7,4) has 16 codewords, so with enough queries we should find several
+        // Hamming(7,4) has 16 codewords. With max_queries=100K (covering all
+        // 128 patterns for n=7), ORBGRAND finds all 16. The list grows beyond
+        // list_size because ORBGRAND collects all codewords found during the
+        // full query sweep for accurate SOGRAND soft output.
         assert!(
             result.codewords.len() >= 2,
             "Expected at least 2 codewords in list mode, got {}",
             result.codewords.len()
         );
-        assert!(result.codewords.len() <= 3, "Should not exceed list_size=3");
     }
 
     #[test]

@@ -21,16 +21,6 @@
     "tdd-reminder"
   ],
   "gates_status": {
-    "tdd-reminder": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-07T09:06:35.856203046Z"
-    },
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-09T10:54:17.656452610Z"
-    },
     "doc-review": {
       "status": "pending",
       "updated_by": null,
@@ -39,16 +29,34 @@
     "code-review": {
       "status": "failed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-04-09T10:55:09.715924216Z"
+      "updated_at": "2026-04-09T22:32:53.196780450Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-09T22:32:01.329072813Z"
+    },
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-07T09:06:35.856203046Z"
     }
   },
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/active/sogrand-n32-analysis.md",
+      "commit": null,
+      "label": "SOGRAND n=32 soft-output quality analysis",
+      "doc_type": "notes",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:story",
     "epic:grand",
     "component:gf2-coding"
   ],
   "created_at": "2026-02-22T21:15:55.572874888+00:00",
-  "updated_at": "2026-04-09T11:43:37.919612322+00:00"
+  "updated_at": "2026-04-10T08:22:50.944966298+00:00"
 }

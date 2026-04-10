@@ -84,18 +84,29 @@ def interpolate(x_target: float, xs: list[float], ys: list[float]) -> float | No
     return None
 
 
+def get_value(row: dict) -> float:
+    """Extract the error rate value from a row, supporting both reference and sim formats."""
+    if 'value' in row and row['value']:
+        return float(row['value'])
+    elif 'bler' in row and row['bler']:
+        return float(row['bler'])
+    elif 'ber' in row and row['ber']:
+        return float(row['ber'])
+    raise KeyError(f"No value/bler/ber column found in row: {list(row.keys())}")
+
+
 def compare_curves(ref_rows: list[dict], sim_rows: list[dict]) -> list[dict]:
     """
     For each Eb/N0 in the simulation rows, look up the reference value
     (interpolated if necessary) and compute the ratio and absolute difference.
     """
     ref_xs = [float(r['eb_n0_db']) for r in ref_rows]
-    ref_ys = [float(r['value']) for r in ref_rows]
+    ref_ys = [get_value(r) for r in ref_rows]
 
     results = []
     for row in sim_rows:
         x = float(row['eb_n0_db'])
-        sim_val = float(row['value'])
+        sim_val = get_value(row)
         ref_val = interpolate(x, ref_xs, ref_ys)
         if ref_val is None:
             continue
@@ -164,7 +175,7 @@ def plot_overlay(ref_path: Path, sim_path: Path,
     ref_groups = group_by_curve(ref_rows, 'legend_full')
     for label, rows in sorted(ref_groups.items()):
         xs = [float(r['eb_n0_db']) for r in rows]
-        ys = [float(r['value']) for r in rows]
+        ys = [get_value(r) for r in rows]
         xs, ys = zip(*sorted(zip(xs, ys)))
         ax.semilogy(xs, ys, '--', linewidth=1.2,
                     label=f'Ref: {label}' if label else 'Reference')
@@ -173,7 +184,7 @@ def plot_overlay(ref_path: Path, sim_path: Path,
     sim_groups = group_by_curve(sim_rows, 'decoder')
     for label, rows in sorted(sim_groups.items()):
         xs = [float(r['eb_n0_db']) for r in rows]
-        ys = [float(r['value']) for r in rows]
+        ys = [get_value(r) for r in rows]
         xs, ys = zip(*sorted(zip(xs, ys)))
         ax.semilogy(xs, ys, 'o-', linewidth=1.8,
                     label=f'Sim: {label}' if label else 'Simulation')

@@ -914,6 +914,47 @@ impl crate::traits::GeneratorMatrixAccess for QcGldpcCode {
     }
 }
 
+/// Configuration for the GLDPC BP decoder.
+///
+/// Controls damping and saturation behavior during belief-propagation iterations.
+/// Alpha damping scales extrinsic check-to-variable messages, improving
+/// convergence stability at the cost of convergence speed. LLR saturation
+/// prevents unbounded belief growth during iterations.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_coding::gldpc::GldpcDecoderConfig;
+///
+/// // Default: alpha=0.7, saturation=25.0
+/// let config = GldpcDecoderConfig::default();
+/// assert!((config.alpha - 0.7).abs() < f32::EPSILON);
+/// assert!((config.llr_saturation - 25.0).abs() < f32::EPSILON);
+///
+/// // Custom: more aggressive damping
+/// let config = GldpcDecoderConfig { alpha: 0.5, llr_saturation: 20.0 };
+/// ```
+#[derive(Debug, Clone)]
+pub struct GldpcDecoderConfig {
+    /// Extrinsic information scaling factor (damping).
+    /// Applied to check-to-variable messages: `ext *= alpha`.
+    /// Smaller values produce more stable convergence but slower.
+    /// Typical values: 0.5-0.8.
+    pub alpha: f32,
+    /// Maximum absolute LLR value for variable-node beliefs.
+    /// Prevents unbounded growth during BP iterations.
+    pub llr_saturation: f32,
+}
+
+impl Default for GldpcDecoderConfig {
+    fn default() -> Self {
+        Self {
+            alpha: 0.7,
+            llr_saturation: 25.0,
+        }
+    }
+}
+
 /// Belief-propagation decoder for QC-GLDPC codes with component SISO check nodes.
 ///
 /// Unlike standard LDPC BP decoding (where check nodes compute box-plus), GLDPC
@@ -955,6 +996,8 @@ impl crate::traits::GeneratorMatrixAccess for QcGldpcCode {
 pub struct GldpcDecoder {
     /// The GLDPC code being decoded.
     code: QcGldpcCode,
+    /// Decoder configuration (damping, saturation).
+    config: GldpcDecoderConfig,
     /// Current posterior beliefs for each variable node.
     beliefs: Vec<Llr>,
     /// Check-to-variable messages: check_to_var[check][position] -> Llr.
@@ -974,6 +1017,7 @@ impl std::fmt::Debug for GldpcDecoder {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("GldpcDecoder")
             .field("code", &self.code)
+            .field("config", &self.config)
             .field("beliefs_len", &self.beliefs.len())
             .field("last_iterations", &self.last_iterations)
             .finish_non_exhaustive()
@@ -1010,7 +1054,7 @@ impl GldpcDecoder {
             .iter()
             .any(|row| row.len() == n_c && (0..n_c).all(|i| row.contains(&i)));
 
-        let config = OrbGrandConfig {
+        let orbgrand_config = OrbGrandConfig {
             // list_size=4 gives SOGRAND enough codeword diversity for
             // meaningful soft output (APP LLRs) at check nodes.
             list_size: 4,
@@ -1021,11 +1065,13 @@ impl GldpcDecoder {
             max_queries: 100_000,
             ..OrbGrandConfig::default()
         };
-        Self::with_sogrand_config(code, config)
+        Self::with_config(code, orbgrand_config, GldpcDecoderConfig::default())
     }
 
     /// Creates a new GLDPC decoder with a custom ORBGRAND configuration for
     /// the component SOGRAND check node decoder.
+    ///
+    /// Uses the default [`GldpcDecoderConfig`] for damping and saturation.
     ///
     /// # Arguments
     ///
@@ -1046,6 +1092,40 @@ impl GldpcDecoder {
     /// let decoder = GldpcDecoder::with_sogrand_config(code, config);
     /// ```
     pub fn with_sogrand_config(code: QcGldpcCode, orbgrand_config: OrbGrandConfig) -> Self {
+        Self::with_config(code, orbgrand_config, GldpcDecoderConfig::default())
+    }
+
+    /// Creates a new GLDPC decoder with custom ORBGRAND and decoder configurations.
+    ///
+    /// This is the most flexible constructor, allowing full control over both
+    /// the component SOGRAND decoder parameters and the BP iteration behavior
+    /// (damping, saturation).
+    ///
+    /// # Arguments
+    ///
+    /// * `code` - The QC-GLDPC code to decode
+    /// * `orbgrand_config` - Configuration for the underlying ORBGRAND decoder
+    /// * `decoder_config` - Configuration for BP damping and LLR saturation
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::gldpc::{QcGldpcCode, GldpcDecoder, GldpcDecoderConfig};
+    /// use gf2_coding::grand::OrbGrandConfig;
+    ///
+    /// let code = QcGldpcCode::lentmaier(7, 4, 1);
+    /// let orb_config = OrbGrandConfig {
+    ///     list_size: 8,
+    ///     ..OrbGrandConfig::default()
+    /// };
+    /// let dec_config = GldpcDecoderConfig { alpha: 0.6, llr_saturation: 20.0 };
+    /// let decoder = GldpcDecoder::with_config(code, orb_config, dec_config);
+    /// ```
+    pub fn with_config(
+        code: QcGldpcCode,
+        orbgrand_config: OrbGrandConfig,
+        decoder_config: GldpcDecoderConfig,
+    ) -> Self {
         let n = code.code_n();
 
         // Build the component H matrix and create the SOGRAND decoder
@@ -1079,6 +1159,7 @@ impl GldpcDecoder {
 
         Self {
             code,
+            config: decoder_config,
             beliefs: vec![Llr::zero(); n],
             check_to_var,
             var_to_check,
@@ -1108,9 +1189,10 @@ impl GldpcDecoder {
             // Run SOGRAND SISO decoder on the component code
             let siso_result = self.component_sogrand.decode_siso(&input_llrs);
 
-            // Store extrinsic LLRs as check-to-variable messages
+            // Store extrinsic LLRs as check-to-variable messages (with alpha damping)
+            let alpha = self.config.alpha;
             for (pos, ext) in siso_result.extrinsic_llrs.into_iter().enumerate() {
-                self.check_to_var[check_idx][pos] = ext;
+                self.check_to_var[check_idx][pos] = Llr::new(alpha * ext.value());
             }
         }
     }
@@ -1120,18 +1202,19 @@ impl GldpcDecoder {
     /// For each variable: posterior = channel_llr + sum(incoming check-to-var).
     /// Outgoing variable-to-check = posterior - incoming from that check.
     fn variable_node_update(&mut self, channel_llrs: &[Llr]) {
+        let sat = self.config.llr_saturation;
         for (var, checks) in self.code.var_check_map.iter().enumerate() {
             // Compute total belief
             let mut total = channel_llrs[var].value();
             for &(check_idx, pos) in checks {
                 total += self.check_to_var[check_idx][pos].value();
             }
-            self.beliefs[var] = Llr::new(total);
+            self.beliefs[var] = Llr::new(total.clamp(-sat, sat));
 
             // Compute outgoing variable-to-check messages
             for (idx, &(check_idx, pos)) in checks.iter().enumerate() {
                 let incoming = self.check_to_var[check_idx][pos].value();
-                self.var_to_check[var][idx] = Llr::new(total - incoming);
+                self.var_to_check[var][idx] = Llr::new((total - incoming).clamp(-sat, sat));
             }
         }
     }

@@ -20,15 +20,18 @@
 //! ```
 
 use serde::Deserialize;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use gf2_coding::bch::extended::ExtendedBchCode;
 use gf2_coding::drm::DrmCode;
-use gf2_coding::gldpc::{GldpcDecoder, QcGldpcCode};
+use gf2_coding::gldpc::{GldpcDecoder, GldpcDecoderConfig, QcGldpcCode};
+use gf2_coding::grand::OrbGrandConfig;
 use gf2_coding::ldpc::nr_5g::Nr5gRateMatchedDecoder;
 use gf2_coding::ldpc::{DecoderAlgorithm, QuasiCyclicLdpc};
 use gf2_coding::product::{ProductCode, TurboDecoder, TurboDecoderConfig};
-use gf2_coding::simulation::{BpskAwgnChannel, SimulationConfig, SimulationRunner};
+use gf2_coding::simulation::{
+    BpskAwgnChannel, SimulationConfig, SimulationResults, SimulationRunner,
+};
 
 // ---------------------------------------------------------------------------
 // Config types
@@ -92,6 +95,8 @@ struct CurveConfig {
     // -- GLDPC fields (optional) --
     /// GLDPC code variant: `"lentmaier_1024"`.
     variant: Option<String>,
+    /// SOGRAND configuration for GLDPC check-node decoder.
+    sogrand: Option<SograndConfig>,
 
     // -- Common --
     /// Eb/N0 sweep range.
@@ -140,6 +145,31 @@ struct TurboConfig {
     alpha: f32,
     list_size: usize,
     max_queries: usize,
+}
+
+/// SOGRAND check-node decoder parameters for GLDPC curves.
+#[derive(Debug, Deserialize)]
+struct SograndConfig {
+    list_size: usize,
+    max_queries: usize,
+    /// Enable even-code parity optimization (halves search space for codes
+    /// where all codewords have even weight, such as extended BCH).
+    #[serde(default)]
+    even_code: bool,
+    /// Extrinsic damping factor for check-to-variable messages (default 0.7).
+    #[serde(default = "default_alpha")]
+    alpha: f32,
+    /// Maximum absolute LLR value for variable-node beliefs (default 25.0).
+    #[serde(default = "default_saturation")]
+    llr_saturation: f32,
+}
+
+fn default_alpha() -> f32 {
+    0.7
+}
+
+fn default_saturation() -> f32 {
+    25.0
 }
 
 // ---------------------------------------------------------------------------
@@ -266,17 +296,17 @@ fn build_sim_config(curve: &CurveConfig, output_dir: &str, seed: u64) -> Simulat
     }
 }
 
-/// Runs a single curve according to its type.
+/// Runs a single curve according to its type, returning the simulation results.
 fn run_curve(
     curve: &CurveConfig,
     output_dir: &str,
     parallel: bool,
     seed: u64,
-) -> Result<(), String> {
+) -> Result<SimulationResults, String> {
     let config = build_sim_config(curve, output_dir, seed);
     let channel = BpskAwgnChannel;
 
-    match curve.curve_type {
+    let results = match curve.curve_type {
         CurveType::Ldpc => {
             let bg = curve.base_graph.ok_or("ldpc curve requires `base_graph`")?;
             let n = curve.n.ok_or("ldpc curve requires `n`")?;
@@ -296,11 +326,11 @@ fn run_curve(
                     move || Nr5gRateMatchedDecoder::with_algorithm(rm_f.clone(), algorithm),
                     &channel,
                     &config,
-                );
+                )
             } else {
                 let mut decoder =
                     Nr5gRateMatchedDecoder::with_algorithm(rm_code.clone(), algorithm);
-                SimulationRunner::run_coded_iterative(&rm_code, &mut decoder, &channel, &config);
+                SimulationRunner::run_coded_iterative(&rm_code, &mut decoder, &channel, &config)
             }
         }
         CurveType::Product => {
@@ -364,22 +394,65 @@ fn run_curve(
                 other => return Err(format!("unknown gldpc variant: {other}")),
             };
 
+            let make_decoder = |code: QcGldpcCode| -> GldpcDecoder {
+                if let Some(sc) = &curve.sogrand {
+                    let orb_config = OrbGrandConfig {
+                        list_size: sc.list_size,
+                        max_queries: sc.max_queries,
+                        even_code: sc.even_code,
+                        ..OrbGrandConfig::default()
+                    };
+                    let dec_config = GldpcDecoderConfig {
+                        alpha: sc.alpha,
+                        llr_saturation: sc.llr_saturation,
+                    };
+                    GldpcDecoder::with_config(code, orb_config, dec_config)
+                } else {
+                    GldpcDecoder::new(code)
+                }
+            };
+
             if parallel {
                 let code_f = code.clone();
+                let sogrand_cfg = curve.sogrand.as_ref().map(|s| {
+                    (
+                        s.list_size,
+                        s.max_queries,
+                        s.even_code,
+                        s.alpha,
+                        s.llr_saturation,
+                    )
+                });
                 SimulationRunner::run_coded_iterative_parallel(
                     &code,
-                    move || GldpcDecoder::new(code_f.clone()),
+                    move || {
+                        if let Some((ls, mq, ec, alpha, llr_sat)) = sogrand_cfg {
+                            let orb_config = OrbGrandConfig {
+                                list_size: ls,
+                                max_queries: mq,
+                                even_code: ec,
+                                ..OrbGrandConfig::default()
+                            };
+                            let dec_config = GldpcDecoderConfig {
+                                alpha,
+                                llr_saturation: llr_sat,
+                            };
+                            GldpcDecoder::with_config(code_f.clone(), orb_config, dec_config)
+                        } else {
+                            GldpcDecoder::new(code_f.clone())
+                        }
+                    },
                     &channel,
                     &config,
-                );
+                )
             } else {
-                let mut decoder = GldpcDecoder::new(code.clone());
-                SimulationRunner::run_coded_iterative(&code, &mut decoder, &channel, &config);
+                let mut decoder = make_decoder(code.clone());
+                SimulationRunner::run_coded_iterative(&code, &mut decoder, &channel, &config)
             }
         }
-    }
+    };
 
-    Ok(())
+    Ok(results)
 }
 
 /// Helper: runs a product-code curve for any `ProductComponent` type.
@@ -389,7 +462,8 @@ fn run_product<C>(
     turbo_cfg: &TurboConfig,
     channel: &BpskAwgnChannel,
     config: &SimulationConfig,
-) where
+) -> SimulationResults
+where
     C: gf2_coding::product::ProductComponent + Clone,
 {
     let product = ProductCode::new(encoder_component);
@@ -401,7 +475,7 @@ fn run_product<C>(
         list_bler_threshold: None,
     };
     let turbo = TurboDecoder::new(decoder_component, turbo_config);
-    SimulationRunner::run_with_decoder(&product, |llrs| turbo.decode(llrs).into(), channel, config);
+    SimulationRunner::run_with_decoder(&product, |llrs| turbo.decode(llrs).into(), channel, config)
 }
 
 // ---------------------------------------------------------------------------
@@ -459,6 +533,16 @@ fn print_dry_run(campaign: &CampaignConfig, curves: &[&CurveConfig], seed: u64, 
                     "    variant:    {}",
                     curve.variant.as_deref().unwrap_or("-")
                 );
+                if let Some(sc) = &curve.sogrand {
+                    println!(
+                        "    sogrand:    list={}, queries={}, even={}",
+                        sc.list_size, sc.max_queries, sc.even_code
+                    );
+                    println!(
+                        "    bp_config:  alpha={}, llr_sat={}",
+                        sc.alpha, sc.llr_saturation
+                    );
+                }
             }
         }
         println!(
@@ -560,15 +644,23 @@ fn main() {
             snr_count,
         );
         let curve_start = std::time::Instant::now();
-        if let Err(e) = run_curve(
+        let results = match run_curve(
             curve,
             &campaign.campaign.output_dir,
             args.parallel,
             args.seed,
         ) {
-            eprintln!("Error running curve {}: {e}", curve.name);
-            std::process::exit(1);
-        }
+            Ok(r) => r,
+            Err(e) => {
+                eprintln!("Error running curve {}: {e}", curve.name);
+                std::process::exit(1);
+            }
+        };
+
+        // Write JSON alongside the CSV output.
+        let json_path = format!("{}/{}.json", campaign.campaign.output_dir, curve.name);
+        results.write_to(Path::new(&json_path));
+
         let curve_elapsed = curve_start.elapsed();
         let secs = curve_elapsed.as_secs();
         let elapsed_str = if secs >= 3600 {
@@ -584,11 +676,13 @@ fn main() {
             format!("{secs}s")
         };
         eprintln!(
-            "[{}/{}] Done: {} in {}",
+            "[{}/{}] Done: {} in {} (CSV + JSON: {}/{}.{{csv,json}})",
             i + 1,
             total,
             curve.name,
-            elapsed_str
+            elapsed_str,
+            campaign.campaign.output_dir,
+            curve.name,
         );
     }
 
