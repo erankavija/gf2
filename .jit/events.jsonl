@@ -1434,3 +1434,12 @@
 {"type":"gate_passed","id":"d6e094ab-9676-4d4a-a2cd-8855d0d524b1","issue_id":"3ce1cd12-d0d6-421b-b005-3cfb6d448f07","timestamp":"2026-04-10T16:02:21.709371240Z","gate_key":"doc-review","updated_by":"agent:project-lead"}
 {"type":"issue_state_changed","id":"6f3e372f-a368-44e9-b39d-e0fa7257d116","issue_id":"3ce1cd12-d0d6-421b-b005-3cfb6d448f07","timestamp":"2026-04-10T16:02:27.117396183Z","from":"in_progress","to":"done"}
 {"type":"issue_completed","id":"50a65878-7583-4aed-9498-0cc7f0ad0170","issue_id":"3ce1cd12-d0d6-421b-b005-3cfb6d448f07","timestamp":"2026-04-10T16:02:27.117430733Z"}
+{"type":"gate_passed","id":"145135d1-b000-4d8b-9767-f3e41b1f874b","issue_id":"3e136982-5767-4d55-a779-d640bb3ec55c","timestamp":"2026-04-10T20:24:17.202001281Z","gate_key":"tdd-reminder","updated_by":"agent:claude"}
+{"type":"issue_state_changed","id":"aa9a8eaf-9a7d-4ab4-bca2-cf1121a347c4","issue_id":"3e136982-5767-4d55-a779-d640bb3ec55c","timestamp":"2026-04-10T20:24:19.626635835Z","from":"ready","to":"in_progress"}
+{"type":"issue_claimed","id":"e6b038cd-7fb0-47ad-8726-df6aab761bc6","issue_id":"3e136982-5767-4d55-a779-d640bb3ec55c","timestamp":"2026-04-10T20:24:19.629447467Z","assignee":"agent:claude"}
+{"type":"gate_passed","id":"ba99701b-30ac-4915-8c69-d96600c59fc2","issue_id":"3e136982-5767-4d55-a779-d640bb3ec55c","timestamp":"2026-04-10T20:38:48.248546246Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"d238a118-709c-430c-af70-f6c2e1bf2a25","issue_id":"3e136982-5767-4d55-a779-d640bb3ec55c","timestamp":"2026-04-10T20:44:38.042352367Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"a632ac5c-5e2d-4927-a364-102649d9074a","issue_id":"3e136982-5767-4d55-a779-d640bb3ec55c","timestamp":"2026-04-10T20:48:30.504349488Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"4bb6b34c-6e3c-40e8-98d7-15efe5f96041","issue_id":"3e136982-5767-4d55-a779-d640bb3ec55c","timestamp":"2026-04-10T20:48:51.196776275Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"d1951781-5c5d-46e3-92f1-ae48c9c99b8e","issue_id":"3e136982-5767-4d55-a779-d640bb3ec55c","timestamp":"2026-04-10T20:52:35.414239391Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"d41a70a9-f51a-4c6b-ab4a-a33cc45bcc7b","issue_id":"3e136982-5767-4d55-a779-d640bb3ec55c","timestamp":"2026-04-10T20:54:09.873238999Z","gate_key":"code-review","updated_by":"auto:executor"}

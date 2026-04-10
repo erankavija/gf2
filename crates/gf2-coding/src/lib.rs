@@ -58,6 +58,7 @@
 //! ```
 
 pub mod bch;
+pub mod bcjr;
 pub mod channel;
 pub mod convolutional;
 pub mod crc;

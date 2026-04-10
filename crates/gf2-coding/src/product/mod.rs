@@ -13,11 +13,12 @@
 //! # Turbo Decoding
 //!
 //! The block turbo decoder iterates between row and column SISO decoding using
-//! [`SoGrand`](crate::grand::SoGrand) as the component decoder. Extrinsic
-//! information is exchanged between row and column steps with a scaling factor
-//! alpha (typically 0.5). Early termination occurs when the hard-decision matrix
-//! forms a valid product codeword or when the average list-BLER drops below a
-//! configurable threshold.
+//! either [`SoGrand`](crate::grand::SoGrand) or [`BcjrDecoder`](crate::bcjr::BcjrDecoder)
+//! as the component SISO decoder (selected via [`TurboDecoderConfig::use_bcjr`]).
+//! Extrinsic information is exchanged between row and column steps with a scaling
+//! factor alpha (typically 0.5). Early termination occurs when the hard-decision
+//! matrix forms a valid product codeword or when the average list-BLER drops
+//! below a configurable threshold.
 //!
 //! # Generic Component Support
 //!
@@ -52,10 +53,26 @@
 //! - Chase, D. (1972). "A class of algorithms for decoding block codes with channel
 //!   measurement information." *IEEE Trans. Inform. Theory.*
 
-use crate::grand::{OrbGrand, OrbGrandConfig, SoGrand};
+use crate::bcjr::BcjrDecoder;
+use crate::grand::{OrbGrand, OrbGrandConfig, SisoResult, SoGrand};
 use crate::llr::Llr;
 use crate::traits::BlockEncoder;
 use gf2_core::{BitMatrix, BitVec};
+
+/// Internal SISO engine dispatch: either SOGRAND or BCJR.
+enum SisoEngine {
+    SoGrand(SoGrand),
+    Bcjr(BcjrDecoder),
+}
+
+impl SisoEngine {
+    fn decode_siso(&self, input: &[Llr]) -> SisoResult {
+        match self {
+            SisoEngine::SoGrand(s) => s.decode_siso(input),
+            SisoEngine::Bcjr(b) => b.decode_siso(input),
+        }
+    }
+}
 
 /// Trait abstracting a component code for use in product code constructions.
 ///
@@ -660,6 +677,17 @@ pub struct TurboDecoderConfig {
     ///
     /// A typical value might be `Some(1e-6)`.
     pub list_bler_threshold: Option<f64>,
+
+    /// Use BCJR trellis decoder instead of SOGRAND for component SISO.
+    ///
+    /// When `true`, the turbo decoder uses a forward-backward (BCJR) algorithm
+    /// on the code trellis for exact APP LLR computation. The `list_size` and
+    /// `max_queries` fields are ignored in BCJR mode.
+    ///
+    /// BCJR is recommended for component codes with n-k <= 16 (up to 2^16 = 64K
+    /// trellis states). For dRM(32,21) (n-k=11, 2048 states) it is significantly
+    /// faster and more accurate than SOGRAND.
+    pub use_bcjr: bool,
 }
 
 impl Default for TurboDecoderConfig {
@@ -670,6 +698,7 @@ impl Default for TurboDecoderConfig {
             list_size: 4,
             max_queries: 1_000_000,
             list_bler_threshold: None,
+            use_bcjr: false,
         }
     }
 }
@@ -736,12 +765,16 @@ impl From<TurboDecoderResult> for crate::traits::DecoderResult {
     }
 }
 
-/// Iterative block turbo decoder using SOGRAND as the component SISO decoder.
+/// Iterative block turbo decoder using SOGRAND or BCJR as the component SISO decoder.
 ///
 /// The turbo decoder alternates between row-wise and column-wise SISO decoding,
 /// exchanging extrinsic information between steps. It uses early termination
 /// when the hard-decision matrix forms a valid product codeword or when the
 /// average list-BLER drops below a configured threshold.
+///
+/// The component SISO engine is selected via [`TurboDecoderConfig::use_bcjr`]:
+/// - `false` (default): uses [`SoGrand`](crate::grand::SoGrand) (query-based)
+/// - `true`: uses [`BcjrDecoder`](crate::bcjr::BcjrDecoder) (trellis-based, exact APP)
 ///
 /// The type parameter `C` is the component code, which must implement
 /// [`ProductComponent`] and [`Clone`].
@@ -749,10 +782,10 @@ impl From<TurboDecoderResult> for crate::traits::DecoderResult {
 /// # Algorithm
 ///
 /// 1. Initialize: L_Ch = n x n channel LLR matrix, L_A = 0
-/// 2. **Row step**: for each row, decode with SISO-SOGRAND(L_Ch + L_A), compute
+/// 2. **Row step**: for each row, decode with SISO(L_Ch + L_A), compute
 ///    L_E = L_APP - L_A - L_Ch. Check if hard decision is valid -> early exit.
 /// 3. Set L_A = alpha * L_E
-/// 4. **Column step**: for each column, decode with SISO-SOGRAND(L_Ch + L_A),
+/// 4. **Column step**: for each column, decode with SISO(L_Ch + L_A),
 ///    compute L_E = L_APP - L_A - L_Ch. Check validity -> early exit.
 /// 5. Set L_A = alpha * L_E, go to step 2.
 /// 6. Repeat up to `max_iterations` pairs.
@@ -786,16 +819,17 @@ impl From<TurboDecoderResult> for crate::traits::DecoderResult {
 ///
 /// # Complexity
 ///
-/// O(I * n * Q) where I is the number of iterations, n is the component code
-/// length, and Q is the average ORBGRAND query count per component decode.
+/// O(I * n * S) where I is the number of iterations, n is the component code
+/// length, and S is the per-component SISO cost (ORBGRAND queries for SOGRAND,
+/// or O(n * 2^(n-k)) for BCJR).
 /// Each iteration performs 2n component SISO decodes (n rows + n columns).
 pub struct TurboDecoder<C: ProductComponent> {
     /// Component code for encoding/validity checks.
     component: C,
     /// Decoder configuration.
     config: TurboDecoderConfig,
-    /// SOGRAND instance for component SISO decoding.
-    sogrand: SoGrand,
+    /// SISO engine: either SOGRAND or BCJR trellis decoder.
+    siso: SisoEngine,
     /// Product code for validity checking.
     product_code: ProductCode<C>,
 }
@@ -823,20 +857,24 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
     ///
     /// O(n^2) for constructing the sparse parity-check matrix used by ORBGRAND.
     pub fn new(component: C, config: TurboDecoderConfig) -> Self {
-        let h = component.comp_parity_check().clone();
-        let orb_config = OrbGrandConfig {
-            list_size: config.list_size,
-            max_queries: config.max_queries,
-            even_code: component.comp_is_even(),
-            systematic: true,
+        let siso = if config.use_bcjr {
+            SisoEngine::Bcjr(BcjrDecoder::new(component.comp_parity_check()))
+        } else {
+            let h = component.comp_parity_check().clone();
+            let orb_config = OrbGrandConfig {
+                list_size: config.list_size,
+                max_queries: config.max_queries,
+                even_code: component.comp_is_even(),
+                systematic: true,
+            };
+            let orbgrand = OrbGrand::new(h, orb_config);
+            SisoEngine::SoGrand(SoGrand::new(orbgrand))
         };
-        let orbgrand = OrbGrand::new(h, orb_config);
-        let sogrand = SoGrand::new(orbgrand);
         let product_code = ProductCode::new(component.clone());
         Self {
             component,
             config,
-            sogrand,
+            siso,
             product_code,
         }
     }
@@ -885,8 +923,9 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
     ///
     /// # Complexity
     ///
-    /// O(I * n * Q) where I is the number of iterations, n is the component
-    /// code length, and Q is the average ORBGRAND query count per component decode.
+    /// O(I * n * S) where I is the number of iterations, n is the component code
+    /// length, and S is the per-component SISO cost (ORBGRAND queries for SOGRAND,
+    /// or O(n * 2^(n-k)) for BCJR).
     pub fn decode(&self, channel_llrs: &[Llr]) -> TurboDecoderResult {
         let n = self.component.comp_n();
         let k = self.component.comp_k();
@@ -915,7 +954,7 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
             for i in 0..n {
                 // Input to SISO: L_Ch + L_A for this row
                 let input: Vec<Llr> = (0..n).map(|j| Llr::new(l_ch[i][j] + l_a[i][j])).collect();
-                let siso_result = self.sogrand.decode_siso(&input);
+                let siso_result = self.siso.decode_siso(&input);
                 total_queries += siso_result.query_count;
                 row_bler_sum += siso_result.list_bler_prediction;
                 for (j, app_llr) in siso_result.app_llrs.iter().enumerate() {
@@ -973,7 +1012,7 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
             for j in 0..n {
                 // Input to SISO: L_Ch + L_A for this column
                 let input: Vec<Llr> = (0..n).map(|i| Llr::new(l_ch[i][j] + l_a[i][j])).collect();
-                let siso_result = self.sogrand.decode_siso(&input);
+                let siso_result = self.siso.decode_siso(&input);
                 total_queries += siso_result.query_count;
                 col_bler_sum += siso_result.list_bler_prediction;
                 for (i, app_llr) in siso_result.app_llrs.iter().enumerate() {
@@ -1079,6 +1118,10 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
 
     /// Returns a reference to the underlying SOGRAND decoder.
     ///
+    /// # Panics
+    ///
+    /// Panics if the decoder was constructed with `use_bcjr = true`.
+    ///
     /// # Examples
     ///
     /// ```
@@ -1090,7 +1133,34 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
     /// assert_eq!(decoder.sogrand().n(), 16);
     /// ```
     pub fn sogrand(&self) -> &SoGrand {
-        &self.sogrand
+        match &self.siso {
+            SisoEngine::SoGrand(s) => s,
+            SisoEngine::Bcjr(_) => panic!("decoder configured with BCJR, not SOGRAND"),
+        }
+    }
+
+    /// Returns a reference to the underlying BCJR decoder.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the decoder was constructed with `use_bcjr = false` (default).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::product::{TurboDecoder, TurboDecoderConfig};
+    /// use gf2_coding::bch::extended::ExtendedBchCode;
+    ///
+    /// let component = ExtendedBchCode::ebch_16_11();
+    /// let config = TurboDecoderConfig { use_bcjr: true, ..TurboDecoderConfig::default() };
+    /// let decoder = TurboDecoder::new(component, config);
+    /// assert_eq!(decoder.bcjr().n(), 16);
+    /// ```
+    pub fn bcjr(&self) -> &BcjrDecoder {
+        match &self.siso {
+            SisoEngine::Bcjr(b) => b,
+            SisoEngine::SoGrand(_) => panic!("decoder configured with SOGRAND, not BCJR"),
+        }
     }
 
     /// Returns the turbo decoder configuration.
@@ -1387,6 +1457,7 @@ mod tests {
         assert_eq!(config.list_size, 4);
         assert_eq!(config.max_queries, 1_000_000);
         assert!(config.list_bler_threshold.is_none());
+        assert!(!config.use_bcjr);
     }
 
     #[test]
@@ -1414,6 +1485,118 @@ mod tests {
         let decoder = TurboDecoder::new(component, config);
         assert_eq!(decoder.sogrand().n(), 16);
         assert_eq!(decoder.config().max_iterations, 5);
+    }
+
+    #[test]
+    fn test_turbo_decoder_bcjr_construction() {
+        let component = ExtendedBchCode::ebch_16_11();
+        let config = TurboDecoderConfig {
+            max_iterations: 5,
+            use_bcjr: true,
+            ..TurboDecoderConfig::default()
+        };
+        let decoder = TurboDecoder::new(component, config);
+        assert_eq!(decoder.bcjr().n(), 16);
+        assert_eq!(decoder.bcjr().k(), 11);
+    }
+
+    // =====================================================================
+    // TurboDecoder BCJR decoding tests
+    // =====================================================================
+
+    #[test]
+    fn test_decode_bcjr_all_zeros_high_snr() {
+        let component = ExtendedBchCode::ebch_16_11();
+        let product = ProductCode::new(component.clone());
+        let config = TurboDecoderConfig {
+            max_iterations: 5,
+            use_bcjr: true,
+            ..TurboDecoderConfig::default()
+        };
+        let decoder = TurboDecoder::new(component, config);
+
+        let llrs: Vec<Llr> = vec![Llr::new(5.0); product.n()];
+        let result = decoder.decode(&llrs);
+
+        assert!(
+            result.converged,
+            "BCJR should converge for high-SNR all-zeros"
+        );
+        assert_eq!(result.decoded_bits.len(), product.k());
+        assert_eq!(
+            result.decoded_bits.count_ones(),
+            0,
+            "Decoded message should be all zeros"
+        );
+        // BCJR reports 0 queries (trellis-based, not query-based)
+        assert_eq!(result.total_queries, 0);
+    }
+
+    #[test]
+    fn test_decode_bcjr_nonzero_message_high_snr() {
+        let component = ExtendedBchCode::ebch_16_11();
+        let product = ProductCode::new(component.clone());
+        let config = TurboDecoderConfig {
+            max_iterations: 5,
+            use_bcjr: true,
+            ..TurboDecoderConfig::default()
+        };
+        let decoder = TurboDecoder::new(component, config);
+
+        let mut msg = BitVec::zeros(product.k());
+        msg.set(0, true);
+        msg.set(1, true);
+        msg.set(10, true);
+        let cw = product.encode(&msg);
+
+        let llrs: Vec<Llr> = (0..cw.len())
+            .map(|i| {
+                if cw.get(i) {
+                    Llr::new(-5.0)
+                } else {
+                    Llr::new(5.0)
+                }
+            })
+            .collect();
+        let result = decoder.decode(&llrs);
+
+        assert!(
+            result.converged,
+            "BCJR should converge for high-SNR nonzero message"
+        );
+        assert_eq!(
+            result.decoded_bits, msg,
+            "BCJR decoded message should match input"
+        );
+    }
+
+    #[test]
+    fn test_decode_bcjr_drm_32_21_high_snr() {
+        use crate::drm::DrmCode;
+
+        let component = DrmCode::drm_32_21();
+        let product = ProductCode::new(component.clone());
+        let config = TurboDecoderConfig {
+            max_iterations: 10,
+            use_bcjr: true,
+            ..TurboDecoderConfig::default()
+        };
+        let decoder = TurboDecoder::new(component, config);
+
+        // All-zero codeword with high-SNR LLRs
+        let llrs: Vec<Llr> = vec![Llr::new(5.0); product.n()];
+        let result = decoder.decode(&llrs);
+
+        assert!(
+            result.converged,
+            "BCJR+dRM should converge for high-SNR all-zeros"
+        );
+        assert_eq!(result.decoded_bits.len(), product.k());
+        assert_eq!(
+            result.decoded_bits.count_ones(),
+            0,
+            "dRM decoded message should be all zeros"
+        );
     }
 
     // =====================================================================
