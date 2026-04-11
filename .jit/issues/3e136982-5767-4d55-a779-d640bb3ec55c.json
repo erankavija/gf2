@@ -2,7 +2,7 @@
   "id": "3e136982-5767-4d55-a779-d640bb3ec55c",
   "title": "Implement trellis-based SISO decoder for dRM(32,21) component code",
   "description": "## Problem\n\nSOGRAND soft-output is insufficient for dRM(32,21) in the product code turbo decoder.\n\n## Solution\n\nImplemented a trellis-based Forward-Backward (BCJR) SISO decoder for dRM(32,21). BCJR computes exact APP LLRs without noise pattern enumeration.\n\n## Results\n\nWith the corrected dRM(32,21) code (d_min=6, issue 8b1609a8):\n- BCJR turbo at 1.0 dB: BLER=0.207 (2.9x of paper's 0.072)\n- BCJR turbo at 1.5 dB: BLER=0.0045 (2.6x of paper's 0.00174)\n- Product code outperforms LDPC BP at 1.75+ dB\n\nThe original 6.5x gap was caused by the wrong code construction (d_min=4 vs d_min=6), not the BCJR decoder. Single-component BCJR was always near-perfect (1.07x at 0.5 dB).\n\nAlso fixed: BCJR/list-BLER-threshold integration bug (premature early termination when threshold is set in BCJR mode).\n\n## Acceptance Criteria\n\n1. ✅ BCJR decoder produces per-bit APP LLRs for dRM(32,21) component code.\n2. ✅ Extrinsic LLRs (APP - input) are correctly computed for turbo decoder integration.\n3. ✅ Product code turbo decoder can use BCJR as alternative to SOGRAND for component decoding.\n4. ✅ With corrected dRM(32,21) code (8b1609a8), BCJR turbo achieves BLER=0.207 at 1.0 dB — within 2.9x of paper. Original gap was code construction, not BCJR quality.\n5. ✅ eBCH component codes also supported via BCJR.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "high",
   "assignee": "agent:claude",
   "dependencies": [],
@@ -12,20 +12,20 @@
     "tdd-reminder"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-11T21:38:25.561032690Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-11T21:39:58.657688978Z"
+    },
     "tdd-reminder": {
       "status": "passed",
       "updated_by": "agent:claude",
       "updated_at": "2026-04-10T20:24:17.201069181Z"
-    },
-    "code-review": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-11T13:38:01.790505332Z"
-    },
-    "cargo-ci": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-11T13:36:53.048691315Z"
     }
   },
   "context": {},
@@ -44,5 +44,5 @@
     "component:gf2-coding"
   ],
   "created_at": "2026-04-10T13:30:18.497123658+00:00",
-  "updated_at": "2026-04-11T21:37:05.759166340+00:00"
+  "updated_at": "2026-04-11T21:44:33.151616063+00:00"
 }
