@@ -35,6 +35,11 @@ use gf2_coding::simulation::{
     BpskAwgnChannel, SimulationConfig, SimulationResults, SimulationRunner,
 };
 
+#[cfg(feature = "parallel")]
+use gf2_coding::simulation::SimulationResult;
+#[cfg(feature = "parallel")]
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+
 // ---------------------------------------------------------------------------
 // Config types
 // ---------------------------------------------------------------------------
@@ -377,6 +382,7 @@ fn run_curve(
                     turbo_cfg,
                     &channel,
                     &config,
+                    parallel,
                 ),
                 "ebch_16_7" => run_product(
                     ExtendedBchCode::ebch_16_7(),
@@ -384,6 +390,7 @@ fn run_curve(
                     turbo_cfg,
                     &channel,
                     &config,
+                    parallel,
                 ),
                 "ebch_32_26" => run_product(
                     ExtendedBchCode::ebch_32_26(),
@@ -391,6 +398,7 @@ fn run_curve(
                     turbo_cfg,
                     &channel,
                     &config,
+                    parallel,
                 ),
                 "ebch_64_57" => run_product(
                     ExtendedBchCode::ebch_64_57(),
@@ -398,6 +406,7 @@ fn run_curve(
                     turbo_cfg,
                     &channel,
                     &config,
+                    parallel,
                 ),
                 "drm_32_21" => run_product(
                     DrmCode::drm_32_21(),
@@ -405,6 +414,7 @@ fn run_curve(
                     turbo_cfg,
                     &channel,
                     &config,
+                    parallel,
                 ),
                 "drm_32_21_dynamic" => run_product(
                     DrmCode::drm_32_21_dynamic(),
@@ -412,6 +422,7 @@ fn run_curve(
                     turbo_cfg,
                     &channel,
                     &config,
+                    parallel,
                 ),
                 other => return Err(format!("unknown component: {other}")),
             }
@@ -487,6 +498,36 @@ fn run_curve(
     Ok(results)
 }
 
+/// Builds a `TurboDecoderConfig` from the TOML turbo parameters.
+fn build_turbo_decoder_config(turbo_cfg: &TurboConfig) -> TurboDecoderConfig {
+    TurboDecoderConfig {
+        max_iterations: turbo_cfg.max_iterations,
+        alpha: turbo_cfg.alpha,
+        alpha_final: turbo_cfg.alpha_final,
+        extrinsic_clamp: turbo_cfg.extrinsic_clamp,
+        list_size: turbo_cfg.list_size,
+        max_queries: turbo_cfg.max_queries,
+        list_bler_threshold: None,
+        no_early_termination: turbo_cfg.no_early_termination.unwrap_or(false),
+        pyndiah_extrinsic: turbo_cfg.pyndiah_extrinsic.unwrap_or(false),
+        use_bcjr: turbo_cfg.use_bcjr.unwrap_or(false),
+        #[cfg(feature = "hip")]
+        use_gpu_bcjr: turbo_cfg.use_gpu_bcjr.unwrap_or(false),
+    }
+}
+
+/// Builds a `ChasePyndiahConfig` from optional TOML overrides.
+fn build_chase_pyndiah_config(cp_toml: &ChasePyndiahToml) -> ChasePyndiahConfig {
+    let mut cp_config = ChasePyndiahConfig::default();
+    if let Some(p) = cp_toml.p {
+        cp_config.p = p;
+    }
+    if let Some(iters) = cp_toml.max_iterations {
+        cp_config.max_iterations = iters;
+    }
+    cp_config
+}
+
 /// Helper: runs a product-code curve for any `ProductComponent` type.
 fn run_product<C>(
     encoder_component: C,
@@ -494,20 +535,23 @@ fn run_product<C>(
     turbo_cfg: &TurboConfig,
     channel: &BpskAwgnChannel,
     config: &SimulationConfig,
+    parallel: bool,
 ) -> SimulationResults
 where
-    C: gf2_coding::product::ProductComponent + Clone + 'static,
+    C: gf2_coding::product::ProductComponent + Clone + Send + Sync + 'static,
 {
     let product = ProductCode::new(encoder_component);
 
+    #[cfg(feature = "parallel")]
+    if parallel {
+        return run_product_frame_parallel(product, decoder_component, turbo_cfg, channel, config);
+    }
+
+    #[cfg(not(feature = "parallel"))]
+    let _ = parallel;
+
     if let Some(cp_toml) = &turbo_cfg.chase_pyndiah {
-        let mut cp_config = ChasePyndiahConfig::default();
-        if let Some(p) = cp_toml.p {
-            cp_config.p = p;
-        }
-        if let Some(iters) = cp_toml.max_iterations {
-            cp_config.max_iterations = iters;
-        }
+        let cp_config = build_chase_pyndiah_config(cp_toml);
         let cp_decoder = ChasePyndiahDecoder::new(decoder_component, cp_config);
         SimulationRunner::run_with_decoder(
             &product,
@@ -516,20 +560,7 @@ where
             config,
         )
     } else {
-        let turbo_config = TurboDecoderConfig {
-            max_iterations: turbo_cfg.max_iterations,
-            alpha: turbo_cfg.alpha,
-            alpha_final: turbo_cfg.alpha_final,
-            extrinsic_clamp: turbo_cfg.extrinsic_clamp,
-            list_size: turbo_cfg.list_size,
-            max_queries: turbo_cfg.max_queries,
-            list_bler_threshold: None,
-            no_early_termination: turbo_cfg.no_early_termination.unwrap_or(false),
-            pyndiah_extrinsic: turbo_cfg.pyndiah_extrinsic.unwrap_or(false),
-            use_bcjr: turbo_cfg.use_bcjr.unwrap_or(false),
-            #[cfg(feature = "hip")]
-            use_gpu_bcjr: turbo_cfg.use_gpu_bcjr.unwrap_or(false),
-        };
+        let turbo_config = build_turbo_decoder_config(turbo_cfg);
         let turbo = TurboDecoder::new(decoder_component, turbo_config);
         SimulationRunner::run_with_decoder(
             &product,
@@ -538,6 +569,213 @@ where
             config,
         )
     }
+}
+
+/// Boxed decode closure used by per-thread decoder instances.
+#[cfg(feature = "parallel")]
+type ProductDecodeFn = Box<dyn FnMut(&[gf2_coding::llr::Llr]) -> gf2_coding::traits::DecoderResult>;
+
+/// Frame-parallel product code simulation.
+///
+/// For each SNR point, frames are distributed across rayon worker threads.
+/// Each worker creates its own decoder instance (via `map_init`) since
+/// `TurboDecoder` and `ChasePyndiahDecoder` are not `Send`. Shared
+/// atomic counters enable early stopping once enough frame errors are
+/// collected.
+///
+/// SNR points are processed sequentially to preserve resume and progress
+/// reporting semantics.
+#[cfg(feature = "parallel")]
+fn run_product_frame_parallel<C>(
+    product: ProductCode<C>,
+    decoder_component: C,
+    turbo_cfg: &TurboConfig,
+    channel: &BpskAwgnChannel,
+    config: &SimulationConfig,
+) -> SimulationResults
+where
+    C: gf2_coding::product::ProductComponent + Clone + Send + Sync + 'static,
+{
+    use gf2_coding::simulation::{count_bit_errors, ChannelModel};
+    use gf2_coding::traits::BlockEncoder;
+    use gf2_core::BitVec;
+    use rand::rngs::StdRng;
+    use rand::SeedableRng;
+    use rayon::prelude::*;
+
+    let n = product.n();
+    let k = product.k();
+    let rate = k as f64 / n as f64;
+    let base_seed = config.rng_seed.unwrap_or(0xDEAD_BEEF);
+
+    // Determine decoder variant from config.
+    let is_chase_pyndiah = turbo_cfg.chase_pyndiah.is_some();
+    let cp_config = turbo_cfg
+        .chase_pyndiah
+        .as_ref()
+        .map(build_chase_pyndiah_config);
+    let turbo_config = if !is_chase_pyndiah {
+        Some(build_turbo_decoder_config(turbo_cfg))
+    } else {
+        None
+    };
+
+    let mut points = Vec::with_capacity(config.eb_n0_range_db.len());
+    let mut completed_points: Vec<(f64, std::time::Duration, usize, f64)> = Vec::new();
+
+    for (point_idx, &eb_n0_db) in config.eb_n0_range_db.iter().enumerate() {
+        let point_start = std::time::Instant::now();
+
+        // Shared atomic counters for cross-thread accumulation.
+        let total_frames = AtomicUsize::new(0);
+        let total_frame_errors = AtomicUsize::new(0);
+        let total_bit_errors = AtomicUsize::new(0);
+        let total_iterations = AtomicUsize::new(0);
+        let total_queries = AtomicUsize::new(0);
+        let stop_flag = AtomicBool::new(false);
+
+        // Derive a unique per-point seed so different SNR points use
+        // independent RNG streams regardless of execution order.
+        let point_seed = base_seed.wrapping_add(point_idx as u64 * 1_000_000);
+
+        // Clone values that need to move into the closure.
+        let decoder_comp = decoder_component.clone();
+        let cp_cfg = cp_config.clone();
+        let turbo_cfg_inner = turbo_config.clone();
+
+        // Process frames in parallel using rayon's map_init to create
+        // one decoder per worker thread.
+        (0..config.max_frames)
+            .into_par_iter()
+            .map_init(
+                move || -> ProductDecodeFn {
+                    if let Some(ref cp) = cp_cfg {
+                        let dec = ChasePyndiahDecoder::new(decoder_comp.clone(), cp.clone());
+                        Box::new(move |llrs| dec.decode(llrs).into())
+                    } else {
+                        let dec = TurboDecoder::new(
+                            decoder_comp.clone(),
+                            turbo_cfg_inner.clone().unwrap(),
+                        );
+                        Box::new(move |llrs| dec.decode(llrs).into())
+                    }
+                },
+                |decode_fn, frame_idx| {
+                    // Check early-stop before doing work.
+                    if stop_flag.load(Ordering::Relaxed) {
+                        return;
+                    }
+
+                    let mut rng = StdRng::seed_from_u64(point_seed + frame_idx as u64);
+                    let message = BitVec::random(k, &mut rng);
+                    let codeword = product.encode(&message);
+                    let llrs = channel.transmit_and_demodulate(&codeword, eb_n0_db, rate, &mut rng);
+
+                    let result = decode_fn(&llrs);
+                    let bit_errs = count_bit_errors(&message, &result.decoded_bits);
+
+                    // Update shared accumulators.
+                    total_frames.fetch_add(1, Ordering::Relaxed);
+                    total_bit_errors.fetch_add(bit_errs, Ordering::Relaxed);
+                    total_iterations.fetch_add(result.iterations, Ordering::Relaxed);
+                    total_queries.fetch_add(
+                        result.queries.unwrap_or(result.iterations),
+                        Ordering::Relaxed,
+                    );
+                    if bit_errs > 0 {
+                        let fe = total_frame_errors.fetch_add(1, Ordering::Relaxed) + 1;
+                        if fe >= config.min_errors {
+                            stop_flag.store(true, Ordering::Relaxed);
+                        }
+                    }
+                },
+            )
+            .collect::<Vec<()>>();
+
+        // Collect final counter values.
+        let frames = total_frames.load(Ordering::Relaxed);
+        let frame_errors = total_frame_errors.load(Ordering::Relaxed);
+        let bit_errors = total_bit_errors.load(Ordering::Relaxed);
+        let iterations = total_iterations.load(Ordering::Relaxed);
+        let queries = total_queries.load(Ordering::Relaxed);
+        let bits = frames * k;
+
+        let ber = if bits > 0 {
+            bit_errors as f64 / bits as f64
+        } else {
+            0.0
+        };
+        let bler = if frames > 0 {
+            frame_errors as f64 / frames as f64
+        } else {
+            0.0
+        };
+        let avg_iterations = if frames > 0 {
+            Some(iterations as f64 / frames as f64)
+        } else {
+            None
+        };
+        let avg_queries_per_bit = if bits > 0 {
+            Some(queries as f64 / bits as f64)
+        } else {
+            None
+        };
+
+        let sim_result = SimulationResult {
+            eb_n0_db,
+            ber,
+            bler,
+            avg_iterations,
+            avg_queries_per_bit,
+            num_bits: bits,
+            num_bit_errors: bit_errors,
+            num_frames: frames,
+            num_frame_errors: frame_errors,
+        };
+
+        let point_elapsed = point_start.elapsed();
+
+        // Report point completion.
+        let remaining: Vec<f64> = config.eb_n0_range_db[point_idx + 1..].to_vec();
+        let secs = point_elapsed.as_secs();
+        let elapsed_str = if secs >= 3600 {
+            format!(
+                "{}h{:02}m{:02}s",
+                secs / 3600,
+                (secs % 3600) / 60,
+                secs % 60
+            )
+        } else if secs >= 60 {
+            format!("{}m{:02}s", secs / 60, secs % 60)
+        } else {
+            format!("{:.1}s", point_elapsed.as_secs_f64())
+        };
+        eprintln!(
+            "[{:.1} dB] DONE: BER={:.2e} BLER={:.2e} ({} errs / {} frames) in {} [{} pts remain]",
+            eb_n0_db,
+            ber,
+            bler,
+            frame_errors,
+            frames,
+            elapsed_str,
+            remaining.len(),
+        );
+
+        // Incremental CSV append.
+        if let Some(ref path) = config.output_path {
+            sim_result.append_csv_row_to(path);
+        }
+
+        completed_points.push((eb_n0_db, point_elapsed, frames, bler));
+        points.push(sim_result);
+    }
+
+    let results = SimulationResults { points };
+    // Final overwrite with clean, complete file.
+    if let Some(ref path) = config.output_path {
+        results.write_to(path);
+    }
+    results
 }
 
 // ---------------------------------------------------------------------------
