@@ -1,0 +1,24 @@
+# Final parameter sweep: low alpha + many iterations
+[campaign]
+name = "drm_final_sweep"
+output_dir = "dev/simulation_results/drm_waterfall"
+
+# Low alpha ramp with many iterations
+[[curve]]
+name = "bcjr_40iter_ramp01_08"
+type = "product"
+component = "drm_32_21"
+turbo = { max_iterations = 40, alpha = 0.1, alpha_final = 0.8, list_size = 4, max_queries = 50000, use_bcjr = true, use_gpu_bcjr = true, no_early_termination = true }
+snr = { start = 0.5, stop = 2.0, step = 0.5 }
+min_errors = 50
+max_frames = 500
+
+# BCJR with extrinsic clamp=10 (best so far) + more iterations
+[[curve]]
+name = "bcjr_40iter_clamp10"
+type = "product"
+component = "drm_32_21"
+turbo = { max_iterations = 40, alpha = 0.5, list_size = 4, max_queries = 50000, use_bcjr = true, use_gpu_bcjr = true, extrinsic_clamp = 10.0 }
+snr = { start = 0.5, stop = 2.0, step = 0.5 }
+min_errors = 50
+max_frames = 500

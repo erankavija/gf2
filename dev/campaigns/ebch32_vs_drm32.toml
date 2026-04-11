@@ -1,0 +1,14 @@
+# Compare eBCH(32,26) vs dRM(32,21) product codes with GPU BCJR
+# Same n=32 component, different k and code structure
+[campaign]
+name = "ebch32_vs_drm32"
+output_dir = "dev/simulation_results/drm_waterfall"
+
+[[curve]]
+name = "ebch_32_26_bcjr"
+type = "product"
+component = "ebch_32_26"
+turbo = { max_iterations = 20, alpha = 0.5, list_size = 4, max_queries = 50000, use_bcjr = true, use_gpu_bcjr = true }
+snr = { start = 1.0, stop = 3.0, step = 0.5 }
+min_errors = 30
+max_frames = 500

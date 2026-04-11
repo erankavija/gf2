@@ -835,4 +835,255 @@ mod tests {
             }
         }
     }
+
+    /// Compare BCJR vs SOGRAND extrinsic for dRM(32,21) at moderate SNR.
+    /// This diagnostic test checks if the two SISO decoders produce
+    /// qualitatively different extrinsic information.
+    #[test]
+    fn test_bcjr_vs_sogrand_extrinsic_drm() {
+        use crate::grand::{OrbGrand, OrbGrandConfig, SoGrand};
+
+        let code = DrmCode::drm_32_21();
+        let bcjr = BcjrDecoder::new(code.parity_check());
+
+        let h = code.parity_check().clone();
+        let sogrand = SoGrand::new(OrbGrand::new(
+            h,
+            OrbGrandConfig {
+                list_size: 4,
+                max_queries: 50_000,
+                even_code: code.is_even(),
+                systematic: true,
+            },
+        ));
+
+        // All-zeros codeword at moderate SNR (LLR ≈ 3.0)
+        let input: Vec<Llr> = vec![Llr::new(3.0); 32];
+
+        let bcjr_result = bcjr.decode_siso(&input);
+        let sogrand_result = sogrand.decode_siso(&input);
+
+        // Compare extrinsic magnitudes
+        let bcjr_ext_mean: f32 = bcjr_result
+            .extrinsic_llrs
+            .iter()
+            .map(|l| l.value().abs())
+            .sum::<f32>()
+            / 32.0;
+        let sogrand_ext_mean: f32 = sogrand_result
+            .extrinsic_llrs
+            .iter()
+            .map(|l| l.value().abs())
+            .sum::<f32>()
+            / 32.0;
+
+        eprintln!("BCJR mean |ext|: {bcjr_ext_mean:.3}");
+        eprintln!("SOGRAND mean |ext|: {sogrand_ext_mean:.3}");
+        eprintln!(
+            "SOGRAND P(C\\L): {:.6}",
+            sogrand_result.list_bler_prediction
+        );
+
+        // Check sign agreement
+        let mut sign_agree = 0;
+        let mut sign_disagree = 0;
+        for i in 0..32 {
+            let b = bcjr_result.extrinsic_llrs[i].value();
+            let s = sogrand_result.extrinsic_llrs[i].value();
+            if (b > 0.0) == (s > 0.0) {
+                sign_agree += 1;
+            } else {
+                sign_disagree += 1;
+            }
+        }
+        eprintln!("Sign agreement: {sign_agree}/32, disagree: {sign_disagree}/32");
+
+        // Both should produce positive extrinsic for all-zeros codeword
+        for (i, l) in bcjr_result.extrinsic_llrs.iter().enumerate() {
+            assert!(
+                l.value() > -1.0,
+                "BCJR ext[{i}] = {:.3} should not be strongly negative for correct codeword",
+                l.value()
+            );
+        }
+
+        // Now test with errors: some bits have wrong sign
+        eprintln!("\n--- With 2 bit errors ---");
+        let mut noisy_input: Vec<Llr> = vec![Llr::new(3.0); 32];
+        noisy_input[5] = Llr::new(-1.5); // error at bit 5
+        noisy_input[12] = Llr::new(-0.8); // error at bit 12
+
+        let bcjr_noisy = bcjr.decode_siso(&noisy_input);
+        let sogrand_noisy = sogrand.decode_siso(&noisy_input);
+
+        let bcjr_ext_noisy: f32 = bcjr_noisy
+            .extrinsic_llrs
+            .iter()
+            .map(|l| l.value().abs())
+            .sum::<f32>()
+            / 32.0;
+        let sogrand_ext_noisy: f32 = sogrand_noisy
+            .extrinsic_llrs
+            .iter()
+            .map(|l| l.value().abs())
+            .sum::<f32>()
+            / 32.0;
+        eprintln!("BCJR mean |ext|: {bcjr_ext_noisy:.3}");
+        eprintln!("SOGRAND mean |ext|: {sogrand_ext_noisy:.3}");
+
+        // Check ext at error positions — should be positive (correcting the error)
+        eprintln!(
+            "BCJR ext[5]={:.3} ext[12]={:.3}",
+            bcjr_noisy.extrinsic_llrs[5].value(),
+            bcjr_noisy.extrinsic_llrs[12].value()
+        );
+        eprintln!(
+            "SOGRAND ext[5]={:.3} ext[12]={:.3}",
+            sogrand_noisy.extrinsic_llrs[5].value(),
+            sogrand_noisy.extrinsic_llrs[12].value()
+        );
+
+        // Max extrinsic magnitude
+        let bcjr_max = bcjr_noisy
+            .extrinsic_llrs
+            .iter()
+            .map(|l| l.value().abs())
+            .fold(0.0f32, f32::max);
+        let sogrand_max = sogrand_noisy
+            .extrinsic_llrs
+            .iter()
+            .map(|l| l.value().abs())
+            .fold(0.0f32, f32::max);
+        eprintln!("BCJR max |ext|: {bcjr_max:.3}");
+        eprintln!("SOGRAND max |ext|: {sogrand_max:.3}");
+    }
+
+    /// Count minimum-weight codewords for dRM(32,21) vs eBCH codes.
+    /// High A_dmin (number of weight-d codewords) weakens turbo convergence
+    /// because many near-codewords compete with the correct one.
+    #[test]
+    fn test_weight_distribution_comparison() {
+        use crate::bch::extended::ExtendedBchCode;
+        use crate::traits::GeneratorMatrixAccess;
+
+        // dRM(32,21): enumerate all 2^21 messages
+        let drm = DrmCode::drm_32_21();
+        let g_drm = drm.generator_matrix();
+        let n_drm = drm.n();
+        let k_drm = drm.k();
+
+        let mut drm_weights = [0u64; 33]; // weight histogram
+        for msg_val in 0..(1u64 << k_drm) {
+            let mut cw_word = 0u64; // pack codeword into u64
+            for col in 0..n_drm {
+                let mut bit = false;
+                for row in 0..k_drm {
+                    if (msg_val >> row) & 1 == 1 && g_drm.get(row, col) {
+                        bit = !bit;
+                    }
+                }
+                if bit {
+                    cw_word |= 1u64 << col;
+                }
+            }
+            let w = cw_word.count_ones() as usize;
+            drm_weights[w] += 1;
+        }
+
+        eprintln!("dRM(32,21) weight distribution:");
+        eprintln!(
+            "  A0={}, A4={}, A8={}, A12={}, A16={}",
+            drm_weights[0], drm_weights[4], drm_weights[8], drm_weights[12], drm_weights[16]
+        );
+
+        // eBCH(16,11): enumerate all 2^11 messages
+        let ebch = ExtendedBchCode::ebch_16_11();
+        let g_ebch = ebch.generator_matrix();
+        let n_ebch = ebch.n();
+        let k_ebch = ebch.k();
+
+        let mut ebch_weights = [0u64; 17];
+        for msg_val in 0..(1u64 << k_ebch) {
+            let mut cw_word = 0u64;
+            for col in 0..n_ebch {
+                let mut bit = false;
+                for row in 0..k_ebch {
+                    if (msg_val >> row) & 1 == 1 && g_ebch.get(row, col) {
+                        bit = !bit;
+                    }
+                }
+                if bit {
+                    cw_word |= 1u64 << col;
+                }
+            }
+            let w = cw_word.count_ones() as usize;
+            ebch_weights[w] += 1;
+        }
+
+        eprintln!("eBCH(16,11) weight distribution:");
+        eprintln!(
+            "  A0={}, A4={}, A6={}, A8={}, A10={}, A12={}, A16={}",
+            ebch_weights[0],
+            ebch_weights[4],
+            ebch_weights[6],
+            ebch_weights[8],
+            ebch_weights[10],
+            ebch_weights[12],
+            ebch_weights[16]
+        );
+
+        // Also check eBCH(32,26)
+        let ebch32 = ExtendedBchCode::ebch_32_26();
+        let g_32 = ebch32.generator_matrix();
+        let n_32 = ebch32.n();
+        let k_32 = ebch32.k();
+
+        let mut e32_weights = [0u64; 33];
+        for msg_val in 0..(1u64 << k_32) {
+            let mut cw_word = 0u64;
+            for col in 0..n_32 {
+                let mut bit = false;
+                for row in 0..k_32 {
+                    if (msg_val >> row) & 1 == 1 && g_32.get(row, col) {
+                        bit = !bit;
+                    }
+                }
+                if bit {
+                    cw_word |= 1u64 << col;
+                }
+            }
+            let w = cw_word.count_ones() as usize;
+            e32_weights[w] += 1;
+        }
+
+        eprintln!("eBCH(32,26) weight distribution:");
+        eprintln!(
+            "  A0={}, A4={}, A6={}, A8={}, A12={}, A16={}",
+            e32_weights[0],
+            e32_weights[4],
+            e32_weights[6],
+            e32_weights[8],
+            e32_weights[12],
+            e32_weights[16]
+        );
+
+        // Compare A4 / total_codewords (density of minimum-weight codewords)
+        let drm_a4_ratio = drm_weights[4] as f64 / (1u64 << k_drm) as f64;
+        let ebch_a4_ratio = ebch_weights[4] as f64 / (1u64 << k_ebch) as f64;
+        let e32_a4_ratio = e32_weights[4] as f64 / (1u64 << k_32) as f64;
+
+        eprintln!("\nA4 density:");
+        eprintln!(
+            "  dRM(32,21):  A4={}, ratio={:.6e}",
+            drm_weights[4], drm_a4_ratio
+        );
+        eprintln!(
+            "  eBCH(16,11): A4={}, ratio={:.6e}",
+            ebch_weights[4], ebch_a4_ratio
+        );
+        eprintln!(
+            "  eBCH(32,26): A4={}, ratio={:.6e}",
+            e32_weights[4], e32_a4_ratio
+        );
+    }
 }

@@ -1,0 +1,44 @@
+# Deep investigation: SOGRAND vs BCJR turbo for dRM, alpha sweep
+[campaign]
+name = "drm_deep_investigation"
+output_dir = "dev/simulation_results/drm_waterfall"
+
+# SOGRAND turbo (paper's approach)
+[[curve]]
+name = "sogrand_alpha05"
+type = "product"
+component = "drm_32_21"
+turbo = { max_iterations = 20, alpha = 0.5, list_size = 4, max_queries = 100000 }
+snr = { start = 0.5, stop = 2.0, step = 0.5 }
+min_errors = 30
+max_frames = 200
+
+# SOGRAND with alpha=0.3 (more conservative)
+[[curve]]
+name = "sogrand_alpha03"
+type = "product"
+component = "drm_32_21"
+turbo = { max_iterations = 20, alpha = 0.3, list_size = 4, max_queries = 100000 }
+snr = { start = 0.5, stop = 2.0, step = 0.5 }
+min_errors = 30
+max_frames = 200
+
+# BCJR with alpha=0.3
+[[curve]]
+name = "bcjr_alpha03"
+type = "product"
+component = "drm_32_21"
+turbo = { max_iterations = 20, alpha = 0.3, list_size = 4, max_queries = 50000, use_bcjr = true, use_gpu_bcjr = true }
+snr = { start = 0.5, stop = 2.0, step = 0.5 }
+min_errors = 30
+max_frames = 200
+
+# SOGRAND with higher list_size
+[[curve]]
+name = "sogrand_list8"
+type = "product"
+component = "drm_32_21"
+turbo = { max_iterations = 20, alpha = 0.5, list_size = 8, max_queries = 100000 }
+snr = { start = 0.5, stop = 2.0, step = 0.5 }
+min_errors = 30
+max_frames = 200
