@@ -1498,3 +1498,4 @@
 {"type":"gate_passed","id":"cf3a8fb6-7695-444d-87c4-6fac7e1ec0d4","issue_id":"8b1609a8-dd50-4b57-9a6a-f5ee12b0bbb6","timestamp":"2026-04-11T21:04:24.918673204Z","gate_key":"code-review","updated_by":"auto:executor"}
 {"type":"issue_state_changed","id":"aeebb0cb-ce79-4914-9bf3-725c979eb248","issue_id":"8b1609a8-dd50-4b57-9a6a-f5ee12b0bbb6","timestamp":"2026-04-11T21:04:33.912334164Z","from":"in_progress","to":"done"}
 {"type":"issue_completed","id":"3aa079e9-31b5-48ee-a790-4b7df9a6c5f6","issue_id":"8b1609a8-dd50-4b57-9a6a-f5ee12b0bbb6","timestamp":"2026-04-11T21:04:33.912368454Z"}
+{"type":"issue_state_changed","id":"875eb34e-0d91-43b5-8c96-f1af4e1bc1c3","issue_id":"99e3b33e-f925-4154-bb1b-d9940e89aa15","timestamp":"2026-04-11T21:37:48.756386937Z","from":"in_progress","to":"rejected"}
