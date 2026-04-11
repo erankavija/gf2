@@ -250,3 +250,74 @@ fn test_gpu_turbo_ebch16_convergence() {
         "Decoded message should be all zeros"
     );
 }
+
+// ---- Property-based tests ----
+
+use proptest::prelude::*;
+
+proptest! {
+    /// GPU BCJR on Hamming(7,4) matches CPU for arbitrary LLR inputs.
+    #[test]
+    fn prop_gpu_cpu_hamming74_equivalence(
+        llrs in proptest::collection::vec(-10.0f32..10.0f32, 7..=7)
+    ) {
+        let h = gf2_core::bitmatrix![
+            1, 1, 0, 1, 1, 0, 0;
+            1, 0, 1, 1, 0, 1, 0;
+            0, 1, 1, 1, 0, 0, 1
+        ];
+        let h_cols = extract_h_cols(&h);
+        let cpu = BcjrDecoder::new(&h);
+        let gpu = GpuBcjrBatch::new(&h_cols, 7, 4, 4).unwrap();
+
+        let cpu_input: Vec<Llr> = llrs.iter().map(|&v| Llr::new(v)).collect();
+        let cpu_result = cpu.decode_siso(&cpu_input);
+        let (gpu_app, _) = gpu.decode_batch(&[llrs]).unwrap();
+
+        for j in 0..7 {
+            let diff = (gpu_app[0][j] - cpu_result.app_llrs[j].value()).abs();
+            prop_assert!(
+                diff < 0.01,
+                "bit {}: GPU={:.4}, CPU={:.4}, diff={:.4}",
+                j, gpu_app[0][j], cpu_result.app_llrs[j].value(), diff
+            );
+        }
+    }
+
+    /// GPU batch of N decodes matches N individual CPU decodes for dRM(32,21).
+    #[test]
+    fn prop_gpu_batch_matches_serial_cpu(
+        batch_size in 1usize..=16,
+        seed in 0u64..1000,
+    ) {
+        let code = DrmCode::drm_32_21();
+        let h = code.parity_check();
+        let h_cols = extract_h_cols(h);
+        let cpu = BcjrDecoder::new(h);
+        let gpu = GpuBcjrBatch::new(&h_cols, 32, 21, 16).unwrap();
+
+        let inputs: Vec<Vec<f32>> = (0..batch_size)
+            .map(|i| {
+                (0..32)
+                    .map(|j| ((seed.wrapping_mul(7) as usize + i * 13 + j * 11) % 20) as f32 * 0.3 - 3.0)
+                    .collect()
+            })
+            .collect();
+
+        let (gpu_app, _) = gpu.decode_batch(&inputs).unwrap();
+
+        for (idx, llrs) in inputs.iter().enumerate() {
+            let cpu_input: Vec<Llr> = llrs.iter().map(|&v| Llr::new(v)).collect();
+            let cpu_result = cpu.decode_siso(&cpu_input);
+
+            for j in 0..32 {
+                let diff = (gpu_app[idx][j] - cpu_result.app_llrs[j].value()).abs();
+                prop_assert!(
+                    diff < 0.2,
+                    "batch={}, idx={}, bit {}: GPU={:.4}, CPU={:.4}",
+                    batch_size, idx, j, gpu_app[idx][j], cpu_result.app_llrs[j].value()
+                );
+            }
+        }
+    }
+}

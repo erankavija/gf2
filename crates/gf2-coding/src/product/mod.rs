@@ -1165,10 +1165,14 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
                 }
             }
 
-            // Compute extrinsic: L_E = L_APP - L_A - L_Ch
+            // Compute extrinsic: L_E = L_APP - L_A - L_Ch, with optional clamping
             for i in 0..n {
                 for j in 0..n {
-                    l_e[i][j] = l_app_col[i][j] - l_a[i][j] - l_ch[i][j];
+                    let mut ext = l_app_col[i][j] - l_a[i][j] - l_ch[i][j];
+                    if let Some(beta) = self.config.extrinsic_clamp {
+                        ext = ext.clamp(-beta, beta);
+                    }
+                    l_e[i][j] = ext;
                 }
             }
 
