@@ -226,3 +226,8 @@
 {"type":"progress","timestamp":"2026-04-09T23:55:45","eb_n0_db":3.5,"frames":73890,"frame_errors":10,"bler_estimate":0.00013533631073216944,"elapsed_s":1990.5}
 {"type":"progress","timestamp":"2026-04-09T23:56:45","eb_n0_db":3.5,"frames":75972,"frame_errors":10,"bler_estimate":0.00013162744168904332,"elapsed_s":2050.5}
 {"type":"progress","timestamp":"2026-04-09T23:57:45","eb_n0_db":3.5,"frames":78054,"frame_errors":12,"bler_estimate":0.00015373971865631486,"elapsed_s":2110.5}
+{"type":"progress","timestamp":"2026-04-11T22:02:59","eb_n0_db":2.5,"frames":97,"frame_errors":0,"bler_estimate":0,"elapsed_s":10.0}
+{"type":"progress","timestamp":"2026-04-11T22:03:59","eb_n0_db":2.5,"frames":657,"frame_errors":1,"bler_estimate":0.0015220700152207,"elapsed_s":70.1}
+{"type":"progress","timestamp":"2026-04-11T22:04:59","eb_n0_db":2.5,"frames":1209,"frame_errors":4,"bler_estimate":0.0033085194375516956,"elapsed_s":130.1}
+{"type":"progress","timestamp":"2026-04-11T22:05:59","eb_n0_db":2.5,"frames":1792,"frame_errors":6,"bler_estimate":0.0033482142857142855,"elapsed_s":190.1}
+{"type":"progress","timestamp":"2026-04-11T22:06:59","eb_n0_db":2.5,"frames":2388,"frame_errors":7,"bler_estimate":0.002931323283082077,"elapsed_s":250.2}
