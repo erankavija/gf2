@@ -1,0 +1,17 @@
+# Verify SOGRAND + damping fix for GLDPC at 1.5-3.0 dB
+# GLDPC check nodes need few queries — paper shows ~60 avg queries.
+# max_queries=5000 gives ample budget for check-node SOGRAND while keeping
+# per-frame time manageable.
+
+[campaign]
+name = "verify_fix_fig7"
+output_dir = "dev/simulation_results/verify"
+
+[[curve]]
+name = "fig7_gldpc_fixed"
+type = "gldpc"
+variant = "lentmaier_1024"
+sogrand = { list_size = 4, max_queries = 5000, even_code = true, alpha = 0.7, llr_saturation = 25.0 }
+snr = { start = 1.5, stop = 3.0, step = 0.5 }
+min_errors = 30
+max_frames = 500

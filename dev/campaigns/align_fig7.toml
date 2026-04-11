@@ -1,0 +1,16 @@
+# Alignment test for Fig 7: (1024, 646) QC-GLDPC
+# High max_queries (1M) at low SNR to verify implementation correctness.
+# Compare against paper's GLDPC curve at high BLER region.
+
+[campaign]
+name = "align_fig7"
+output_dir = "dev/simulation_results/align"
+
+[[curve]]
+name = "fig7_gldpc_1M"
+type = "gldpc"
+variant = "lentmaier_1024"
+sogrand = { list_size = 4, max_queries = 1000000, even_code = true }
+snr = { start = 0.0, stop = 3.0, step = 0.5 }
+min_errors = 30
+max_frames = 200

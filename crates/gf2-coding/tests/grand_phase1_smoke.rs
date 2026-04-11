@@ -40,7 +40,8 @@ fn test_fig3_ebch_product_encode_decode() {
         list_bler_threshold: None,
         alpha_final: None,
         extrinsic_clamp: None,
-        use_bcjr: false,
+        no_early_termination: false,
+            use_bcjr: false,
         #[cfg(feature = "hip")]
         use_gpu_bcjr: false,
     };
@@ -168,7 +169,8 @@ fn test_fig1_drm_product_encode_decode() {
         list_bler_threshold: None,
         alpha_final: None,
         extrinsic_clamp: None,
-        use_bcjr: false,
+        no_early_termination: false,
+            use_bcjr: false,
         #[cfg(feature = "hip")]
         use_gpu_bcjr: false,
     };

@@ -43,3 +43,4 @@ target/charon/
 .jit/server.pid.json
 .jit/gate-runs/
 .claude/worktrees/
+crates/gf2-kernels-hip/target/

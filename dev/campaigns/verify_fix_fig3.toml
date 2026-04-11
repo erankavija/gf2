@@ -1,0 +1,16 @@
+# Verify Fig 3 no regression with corrected SOGRAND
+# For n=16, 5000 queries covers all 65K patterns after early exit
+# (cumulative probability reaches ~1.0 well before 5000).
+
+[campaign]
+name = "verify_fix_fig3"
+output_dir = "dev/simulation_results/verify"
+
+[[curve]]
+name = "fig3_product_fixed"
+type = "product"
+component = "ebch_16_11"
+turbo = { max_iterations = 20, alpha = 0.5, list_size = 4, max_queries = 5000 }
+snr = { start = 0.0, stop = 3.0, step = 1.0 }
+min_errors = 20
+max_frames = 500

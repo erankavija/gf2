@@ -1,0 +1,15 @@
+# Test dRM with list_size=128 at 0.75-1.0 dB
+# Previous: ls=4 → BLER=0.667, ls=64 → BLER~0.44, paper=0.072
+
+[campaign]
+name = "test_drm_ls128"
+output_dir = "dev/simulation_results/align"
+
+[[curve]]
+name = "fig1_drm_ls128"
+type = "product"
+component = "drm_32_21"
+turbo = { max_iterations = 20, alpha = 0.5, list_size = 128, max_queries = 1000000 }
+snr = { start = 0.75, stop = 1.0, step = 0.25 }
+min_errors = 20
+max_frames = 100

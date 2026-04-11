@@ -2,9 +2,9 @@
   "id": "99e3b33e-f925-4154-bb1b-d9940e89aa15",
   "title": "Implement Chase-Pyndiah turbo product code decoder for dRM codes",
   "description": "## Problem\n\nThe standard turbo product code decoder using raw APP-based extrinsic (from BCJR or SOGRAND) produces a shallow waterfall for dRM(32,21): BLER=0.467 at 1.0 dB vs paper's 0.072 (6.5x gap). The decoder converges in ~7 iterations to wrong product codewords due to d_min=4 creating many false convergence targets.\n\nBCJR single-component alignment is near-perfect (0.704 vs paper 0.656 at 0.5 dB = 1.07x). The gap is in the turbo framework, not the component SISO.\n\n## Solution\n\nImplement the Chase-Pyndiah turbo product code decoder, which uses bounded reliability computation:\n\n```\nW_i = C_ML_i × |d_ML - d_comp|_i   if ML and competitor differ at bit i\nW_i = beta × |d_ML|                 if ML and competitor agree at bit i\n```\n\nKey differences from raw BCJR extrinsic:\n1. **Bounded reliability** — soft output magnitude is bounded by ML distance\n2. **Iteration-dependent beta** — typically [0.2, 0.4, 0.6, 0.8, 1.0, ...]\n3. **Chase search** — finds ML and competitor codewords among test patterns\n4. **No cumulative probability** — uses algebraic distance, not probabilistic APP\n\n## Acceptance Criteria\n\n1. Chase-Pyndiah decoder matches paper's dRM product code curve within 2x at 0.75-1.0 dB.\n2. Works with both dRM and eBCH component codes.\n3. Configurable via campaign TOML (beta schedule, number of test patterns).\n4. Does not regress eBCH(16,11) product code performance (Fig 3).\n\n## References\n\n- Pyndiah (1998): \"Near-optimum decoding of product codes: block turbo codes\"\n- Chase (1972): \"A class of algorithms for decoding block codes with channel measurement information\"\n- Analysis: `dev/active/sogrand-n32-analysis.md`",
-  "state": "backlog",
+  "state": "in_progress",
   "priority": "high",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [
     "3e136982-5767-4d55-a779-d640bb3ec55c"
   ],
@@ -22,5 +22,5 @@
     "component:gf2-coding"
   ],
   "created_at": "2026-04-10T22:07:34.251153428+00:00",
-  "updated_at": "2026-04-10T22:07:39.277652073+00:00"
+  "updated_at": "2026-04-10T22:35:15.344390815+00:00"
 }

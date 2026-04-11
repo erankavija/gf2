@@ -1,0 +1,6 @@
+{"type":"progress","timestamp":"2026-04-10T21:03:50","eb_n0_db":0.5,"frames":7,"frame_errors":6,"bler_estimate":0.8571428571428571,"elapsed_s":10.6}
+{"type":"progress","timestamp":"2026-04-10T21:04:52","eb_n0_db":0.5,"frames":48,"frame_errors":41,"bler_estimate":0.8541666666666666,"elapsed_s":71.9}
+{"type":"point_complete","timestamp":"2026-04-10T21:05:06","eb_n0_db":0.5,"ber":0.0838604447627004,"bler":0.8771929824561403,"num_bits":25137,"num_bit_errors":2108,"num_frames":57,"num_frame_errors":50,"avg_iterations":18.842105263157894,"avg_queries_per_bit":0,"elapsed_s":85.8}
+{"type":"progress","timestamp":"2026-04-10T21:05:17","eb_n0_db":1,"frames":13,"frame_errors":5,"bler_estimate":0.38461538461538464,"elapsed_s":10.8}
+{"type":"progress","timestamp":"2026-04-10T21:06:17","eb_n0_db":1,"frames":84,"frame_errors":41,"bler_estimate":0.4880952380952381,"elapsed_s":70.9}
+{"type":"point_complete","timestamp":"2026-04-10T21:06:36","eb_n0_db":1,"ber":0.02156375370661085,"bler":0.4807692307692308,"num_bits":45864,"num_bit_errors":989,"num_frames":104,"num_frame_errors":50,"avg_iterations":11.798076923076923,"avg_queries_per_bit":0,"elapsed_s":90.5}

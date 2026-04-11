@@ -753,6 +753,13 @@ pub struct TurboDecoderConfig {
     /// is unbounded (standard turbo decoding).
     pub extrinsic_clamp: Option<f32>,
 
+    /// Disable early termination on valid product codeword.
+    ///
+    /// When `true`, the decoder always runs all `max_iterations` regardless
+    /// of whether a valid product codeword is found. This can help avoid
+    /// premature convergence to wrong codewords for codes with small d_min.
+    pub no_early_termination: bool,
+
     /// Use BCJR trellis decoder instead of SOGRAND for component SISO.
     ///
     /// When `true`, the turbo decoder uses a forward-backward (BCJR) algorithm
@@ -783,6 +790,7 @@ impl Default for TurboDecoderConfig {
             list_bler_threshold: None,
             alpha_final: None,
             extrinsic_clamp: None,
+            no_early_termination: false,
             use_bcjr: false,
             #[cfg(feature = "hip")]
             use_gpu_bcjr: false,
@@ -1096,7 +1104,7 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
             }
 
             // Check early termination: hard decision on L_APP
-            if self.check_early_termination(&l_app_row) {
+            if !self.config.no_early_termination && self.check_early_termination(&l_app_row) {
                 let decoded = self.extract_decoded_message(&l_app_row);
                 return TurboDecoderResult {
                     decoded_bits: decoded,
@@ -1108,18 +1116,20 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
             }
 
             // Check list-BLER threshold for early termination
-            if let Some(threshold) = self.config.list_bler_threshold {
-                let avg_bler = row_bler_sum / n as f64;
-                if avg_bler < threshold {
-                    let valid = self.check_early_termination(&l_app_row);
-                    let decoded = self.extract_decoded_message(&l_app_row);
-                    return TurboDecoderResult {
-                        decoded_bits: decoded,
-                        iterations: iteration + 1,
-                        converged: valid,
-                        total_queries,
-                        queries_per_bit: total_queries as f64 / (k * k) as f64,
-                    };
+            if !self.config.no_early_termination {
+                if let Some(threshold) = self.config.list_bler_threshold {
+                    let avg_bler = row_bler_sum / n as f64;
+                    if avg_bler < threshold {
+                        let valid = self.check_early_termination(&l_app_row);
+                        let decoded = self.extract_decoded_message(&l_app_row);
+                        return TurboDecoderResult {
+                            decoded_bits: decoded,
+                            iterations: iteration + 1,
+                            converged: valid,
+                            total_queries,
+                            queries_per_bit: total_queries as f64 / (k * k) as f64,
+                        };
+                    }
                 }
             }
 
@@ -1177,7 +1187,7 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
             }
 
             // Check early termination on column APP
-            if self.check_early_termination(&l_app_col) {
+            if !self.config.no_early_termination && self.check_early_termination(&l_app_col) {
                 let decoded = self.extract_decoded_message(&l_app_col);
                 return TurboDecoderResult {
                     decoded_bits: decoded,
@@ -1189,18 +1199,20 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
             }
 
             // Check list-BLER threshold for early termination
-            if let Some(threshold) = self.config.list_bler_threshold {
-                let avg_bler = col_bler_sum / n as f64;
-                if avg_bler < threshold {
-                    let valid = self.check_early_termination(&l_app_col);
-                    let decoded = self.extract_decoded_message(&l_app_col);
-                    return TurboDecoderResult {
-                        decoded_bits: decoded,
-                        iterations: iteration + 1,
-                        converged: valid,
-                        total_queries,
-                        queries_per_bit: total_queries as f64 / (k * k) as f64,
-                    };
+            if !self.config.no_early_termination {
+                if let Some(threshold) = self.config.list_bler_threshold {
+                    let avg_bler = col_bler_sum / n as f64;
+                    if avg_bler < threshold {
+                        let valid = self.check_early_termination(&l_app_col);
+                        let decoded = self.extract_decoded_message(&l_app_col);
+                        return TurboDecoderResult {
+                            decoded_bits: decoded,
+                            iterations: iteration + 1,
+                            converged: valid,
+                            total_queries,
+                            queries_per_bit: total_queries as f64 / (k * k) as f64,
+                        };
+                    }
                 }
             }
 

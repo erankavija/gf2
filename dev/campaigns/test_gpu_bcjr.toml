@@ -1,0 +1,15 @@
+# Test GPU-accelerated BCJR for dRM(32,21) product code
+# GPU batch BCJR should be much faster, enabling more parameter sweeps
+
+[campaign]
+name = "test_gpu_bcjr"
+output_dir = "dev/simulation_results/align"
+
+[[curve]]
+name = "gpu_bcjr_drm"
+type = "product"
+component = "drm_32_21"
+turbo = { max_iterations = 20, alpha = 0.7, list_size = 4, max_queries = 50000, use_bcjr = true, use_gpu_bcjr = true }
+snr = { start = 0.5, stop = 1.5, step = 0.5 }
+min_errors = 50
+max_frames = 500
