@@ -226,10 +226,10 @@ fn test_gpu_turbo_ebch16_convergence() {
 
     let component = ExtendedBchCode::ebch_16_11();
     let product = ProductCode::new(component.clone());
+    // gf2-coding is compiled with feature "hip" here (see Cargo.toml dev-dep),
+    // so use_gpu_bcjr is available and routes through SisoEngine::GpuBcjr.
     let config = TurboDecoderConfig {
         max_iterations: 5,
-        use_bcjr: false, // overridden by use_gpu_bcjr
-        #[cfg(feature = "hip")]
         use_gpu_bcjr: true,
         ..TurboDecoderConfig::default()
     };
