@@ -151,6 +151,8 @@ struct TurboConfig {
     extrinsic_clamp: Option<f32>,
     list_size: usize,
     max_queries: usize,
+    /// Disable early termination (always run max_iterations).
+    no_early_termination: Option<bool>,
     /// Use BCJR trellis decoder instead of SOGRAND for component SISO.
     use_bcjr: Option<bool>,
     /// Use GPU-accelerated batch BCJR via HIP/ROCm.
@@ -513,6 +515,7 @@ where
             list_size: turbo_cfg.list_size,
             max_queries: turbo_cfg.max_queries,
             list_bler_threshold: None,
+            no_early_termination: turbo_cfg.no_early_termination.unwrap_or(false),
             use_bcjr: turbo_cfg.use_bcjr.unwrap_or(false),
             #[cfg(feature = "hip")]
             use_gpu_bcjr: turbo_cfg.use_gpu_bcjr.unwrap_or(false),

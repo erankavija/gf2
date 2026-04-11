@@ -1,0 +1,1 @@
+[{"eb_n0_db":2,"ber":0.0048993808049535605,"bler":0.07,"num_bits":129200,"num_bit_errors":633,"num_frames":200,"num_frame_errors":14,"avg_iterations":10.955,"avg_queries_per_bit":0.016958204334365325},{"eb_n0_db":2.5,"ber":0,"bler":0,"num_bits":129200,"num_bit_errors":0,"num_frames":200,"num_frame_errors":0,"avg_iterations":4.31,"avg_queries_per_bit":0.006671826625386997}]

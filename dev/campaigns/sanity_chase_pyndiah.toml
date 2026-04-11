@@ -1,0 +1,15 @@
+# Sanity check: Chase-Pyndiah dRM(32,21) at 0.5-1.5 dB
+# chase_pyndiah MUST be inside the turbo table
+
+[campaign]
+name = "sanity_chase_pyndiah"
+output_dir = "dev/simulation_results/chase_pyndiah"
+
+[[curve]]
+name = "cp_drm_32_21"
+type = "product"
+component = "drm_32_21"
+turbo = { max_iterations = 8, alpha = 0.5, list_size = 4, max_queries = 50000, chase_pyndiah = { p = 5 } }
+snr = { start = 0.5, stop = 1.5, step = 0.25 }
+min_errors = 50
+max_frames = 500

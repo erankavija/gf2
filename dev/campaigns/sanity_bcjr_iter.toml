@@ -1,0 +1,26 @@
+# Test BCJR with more iterations and alpha tuning at 1.0 dB
+# Paper drops 9x from 0.5→1.0 dB. We drop 1.5x. Need steeper waterfall.
+
+[campaign]
+name = "sanity_bcjr_iter"
+output_dir = "dev/simulation_results/align"
+
+# 40 iterations, alpha=0.7
+[[curve]]
+name = "bcjr_i40_a07"
+type = "product"
+component = "drm_32_21"
+turbo = { max_iterations = 40, alpha = 0.7, list_size = 4, max_queries = 50000, use_bcjr = true }
+snr = { start = 0.75, stop = 1.0, step = 0.25 }
+min_errors = 50
+max_frames = 500
+
+# 40 iterations, alpha=0.8
+[[curve]]
+name = "bcjr_i40_a08"
+type = "product"
+component = "drm_32_21"
+turbo = { max_iterations = 40, alpha = 0.8, list_size = 4, max_queries = 50000, use_bcjr = true }
+snr = { start = 0.75, stop = 1.0, step = 0.25 }
+min_errors = 50
+max_frames = 500

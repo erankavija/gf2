@@ -1,0 +1,16 @@
+# Alignment test for Fig 1: (1024, 441) dRM product code
+# High max_queries (1M) at low SNR to verify implementation correctness.
+# Compare against paper's SOGRAND curve at high BLER region.
+
+[campaign]
+name = "align_fig1"
+output_dir = "dev/simulation_results/align"
+
+[[curve]]
+name = "fig1_drm_product_1M"
+type = "product"
+component = "drm_32_21"
+turbo = { max_iterations = 20, alpha = 0.5, list_size = 4, max_queries = 1000000 }
+snr = { start = 0.0, stop = 1.5, step = 0.25 }
+min_errors = 30
+max_frames = 200

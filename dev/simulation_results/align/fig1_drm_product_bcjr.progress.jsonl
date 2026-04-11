@@ -1,0 +1,10 @@
+{"type":"progress","timestamp":"2026-04-10T20:59:57","eb_n0_db":0.5,"frames":6,"frame_errors":6,"bler_estimate":1,"elapsed_s":10.2}
+{"type":"point_complete","timestamp":"2026-04-10T21:00:06","eb_n0_db":0.5,"ber":0.07849293563579278,"bler":0.7692307692307693,"num_bits":5733,"num_bit_errors":450,"num_frames":13,"num_frame_errors":10,"avg_iterations":17.923076923076923,"avg_queries_per_bit":0,"elapsed_s":19.8}
+{"type":"progress","timestamp":"2026-04-10T21:00:18","eb_n0_db":0.75,"frames":7,"frame_errors":6,"bler_estimate":0.8571428571428571,"elapsed_s":12.0}
+{"type":"point_complete","timestamp":"2026-04-10T21:00:27","eb_n0_db":0.75,"ber":0.05529391243676958,"bler":0.7692307692307693,"num_bits":5733,"num_bit_errors":317,"num_frames":13,"num_frame_errors":10,"avg_iterations":17.53846153846154,"avg_queries_per_bit":0,"elapsed_s":21.1}
+{"type":"progress","timestamp":"2026-04-10T21:00:38","eb_n0_db":1,"frames":11,"frame_errors":4,"bler_estimate":0.36363636363636365,"elapsed_s":10.4}
+{"type":"point_complete","timestamp":"2026-04-10T21:00:50","eb_n0_db":1,"ber":0.019820273788527756,"bler":0.37037037037037035,"num_bits":11907,"num_bit_errors":236,"num_frames":27,"num_frame_errors":10,"avg_iterations":11.296296296296296,"avg_queries_per_bit":0,"elapsed_s":22.8}
+{"type":"progress","timestamp":"2026-04-10T21:01:01","eb_n0_db":1.25,"frames":17,"frame_errors":5,"bler_estimate":0.29411764705882354,"elapsed_s":10.5}
+{"type":"point_complete","timestamp":"2026-04-10T21:01:10","eb_n0_db":1.25,"ber":0.0116921768707483,"bler":0.3125,"num_bits":14112,"num_bit_errors":165,"num_frames":32,"num_frame_errors":10,"avg_iterations":8.09375,"avg_queries_per_bit":0,"elapsed_s":19.2}
+{"type":"progress","timestamp":"2026-04-10T21:01:20","eb_n0_db":1.5,"frames":23,"frame_errors":7,"bler_estimate":0.30434782608695654,"elapsed_s":10.3}
+{"type":"point_complete","timestamp":"2026-04-10T21:01:28","eb_n0_db":1.5,"ber":0.004049238743116294,"bler":0.23809523809523808,"num_bits":18522,"num_bit_errors":75,"num_frames":42,"num_frame_errors":10,"avg_iterations":6.119047619047619,"avg_queries_per_bit":0,"elapsed_s":18.4}

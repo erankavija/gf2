@@ -1,0 +1,15 @@
+# Test BCJR with alpha scheduling (Chase-Pyndiah style)
+# Start conservative (alpha=0.2), ramp to aggressive (alpha=0.8)
+
+[campaign]
+name = "sanity_bcjr_sched"
+output_dir = "dev/simulation_results/align"
+
+[[curve]]
+name = "bcjr_sched_02_08"
+type = "product"
+component = "drm_32_21"
+turbo = { max_iterations = 20, alpha = 0.2, alpha_final = 0.8, list_size = 4, max_queries = 50000, use_bcjr = true }
+snr = { start = 0.5, stop = 1.5, step = 0.25 }
+min_errors = 50
+max_frames = 500

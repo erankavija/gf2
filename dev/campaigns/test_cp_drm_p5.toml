@@ -1,0 +1,16 @@
+# Test Chase-Pyndiah dRM with p=5 (32 test patterns) at 0.75-1.0 dB
+# At 0.5 dB, coded BER~16% → ~5 errors per 32-bit block, p=4 insufficient
+
+[campaign]
+name = "test_cp_drm_p5"
+output_dir = "dev/simulation_results/chase_pyndiah"
+
+[[curve]]
+name = "cp_drm_p5"
+type = "product"
+component = "drm_32_21"
+chase_pyndiah = { p = 5 }
+snr = { start = 0.75, stop = 1.25, step = 0.25 }
+min_errors = 30
+max_frames = 500
+turbo = { max_iterations = 20, alpha = 0.5, list_size = 4, max_queries = 50000 }

@@ -1,0 +1,15 @@
+# Quick test: Chase-Pyndiah on eBCH(16,11) to verify algorithm correctness
+
+[campaign]
+name = "test_cp_ebch"
+output_dir = "dev/simulation_results/chase_pyndiah"
+
+[[curve]]
+name = "cp_ebch_16_11"
+type = "product"
+component = "ebch_16_11"
+chase_pyndiah = { p = 3 }
+snr = { start = 1.0, stop = 2.0, step = 1.0 }
+min_errors = 20
+max_frames = 200
+turbo = { max_iterations = 20, alpha = 0.5, list_size = 4, max_queries = 5000 }

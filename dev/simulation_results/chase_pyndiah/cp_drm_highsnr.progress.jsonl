@@ -1,0 +1,3 @@
+{"type":"point_complete","timestamp":"2026-04-11T12:23:34","eb_n0_db":3,"ber":0.4950113378684807,"bler":1,"num_bits":4410,"num_bit_errors":2183,"num_frames":10,"num_frame_errors":10,"avg_iterations":8,"avg_queries_per_bit":0,"elapsed_s":0.5}
+{"type":"point_complete","timestamp":"2026-04-11T12:23:34","eb_n0_db":4,"ber":0.38792953078667364,"bler":0.7692307692307693,"num_bits":5733,"num_bit_errors":2224,"num_frames":13,"num_frame_errors":10,"avg_iterations":6.615384615384615,"avg_queries_per_bit":0,"elapsed_s":0.5}
+{"type":"point_complete","timestamp":"2026-04-11T12:23:36","eb_n0_db":5,"ber":0.04541950113378685,"bler":0.09,"num_bits":44100,"num_bit_errors":2003,"num_frames":100,"num_frame_errors":9,"avg_iterations":2.37,"avg_queries_per_bit":0,"elapsed_s":1.1}

@@ -1,0 +1,12 @@
+[campaign]
+name = "cp_highsnr"
+output_dir = "dev/simulation_results/chase_pyndiah"
+
+[[curve]]
+name = "cp_drm_highsnr"
+type = "product"
+component = "drm_32_21"
+turbo = { max_iterations = 8, alpha = 0.5, list_size = 4, max_queries = 50000, chase_pyndiah = { p = 5 } }
+snr = { start = 3.0, stop = 5.0, step = 1.0 }
+min_errors = 10
+max_frames = 100

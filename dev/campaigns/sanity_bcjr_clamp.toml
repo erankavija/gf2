@@ -1,0 +1,26 @@
+# Test BCJR with extrinsic clamping (Chase-Pyndiah bounded reliability)
+# Clamp extrinsic to [-2, +2] to prevent premature false convergence
+
+[campaign]
+name = "sanity_bcjr_clamp"
+output_dir = "dev/simulation_results/align"
+
+# BCJR + alpha schedule + extrinsic clamp=2.0
+[[curve]]
+name = "bcjr_clamp2"
+type = "product"
+component = "drm_32_21"
+turbo = { max_iterations = 20, alpha = 0.2, alpha_final = 0.8, extrinsic_clamp = 2.0, list_size = 4, max_queries = 50000, use_bcjr = true }
+snr = { start = 0.5, stop = 1.5, step = 0.25 }
+min_errors = 50
+max_frames = 500
+
+# BCJR + alpha schedule + extrinsic clamp=4.0
+[[curve]]
+name = "bcjr_clamp4"
+type = "product"
+component = "drm_32_21"
+turbo = { max_iterations = 20, alpha = 0.2, alpha_final = 0.8, extrinsic_clamp = 4.0, list_size = 4, max_queries = 50000, use_bcjr = true }
+snr = { start = 0.5, stop = 1.5, step = 0.25 }
+min_errors = 50
+max_frames = 500

@@ -1,0 +1,2 @@
+eb_n0_db,ber,bler,num_bits,num_bit_errors,num_frames,num_frame_errors,avg_iterations,avg_queries_per_bit
+1,0.014007290679985074,0.379746835443038,34839,488,79,30,10.265822784810126,41559.64958810528
