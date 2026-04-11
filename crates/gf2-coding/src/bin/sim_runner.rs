@@ -89,7 +89,7 @@ struct CurveConfig {
 
     // -- Product fields (optional) --
     /// Component code name: `"ebch_16_11"`, `"ebch_16_7"`, `"ebch_32_26"`,
-    /// `"ebch_64_57"`, `"drm_32_21"`.
+    /// `"ebch_64_57"`, `"drm_32_21"`, `"drm_32_21_dynamic"`.
     component: Option<String>,
     /// Turbo decoder configuration.
     turbo: Option<TurboConfig>,
@@ -402,6 +402,13 @@ fn run_curve(
                 "drm_32_21" => run_product(
                     DrmCode::drm_32_21(),
                     DrmCode::drm_32_21(),
+                    turbo_cfg,
+                    &channel,
+                    &config,
+                ),
+                "drm_32_21_dynamic" => run_product(
+                    DrmCode::drm_32_21_dynamic(),
+                    DrmCode::drm_32_21_dynamic(),
                     turbo_cfg,
                     &channel,
                     &config,
