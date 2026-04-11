@@ -56,7 +56,7 @@ These constraints act as extra parity equations. With 11 frozen positions
 each having a random linear constraint, the probability of any specific
 weight-4 codeword surviving is ~(1/2)^{11} ~ 1/2048. Since our code
 has only 152 weight-4 codewords, essentially all are eliminated,
-restoring d_min to 8.
+increasing d_min from 4 to 6 (the maximum achievable for (32,21)).
 
 ## Design
 
@@ -114,11 +114,10 @@ The parity-check matrix H:
 2. H has dimensions 11 x 32
 3. This can be done via standard null-space computation
 
-### Step 5: Verify d_min = 8
+### Step 5: Verify d_min ≥ 6
 
-Enumerate all 2^21 codewords and verify that no weight-4 codewords
-exist. If A4 > 0, regenerate the random frozen bit constraints and
-retry.
+Enumerate all 2^21 codewords and verify A4 = A5 = 0.
+If d_min < 6, regenerate extension rows with a different seed.
 
 ### Step 6: Integration
 
@@ -130,7 +129,7 @@ Update the sim_runner and campaign TOMLs to use the dynamic dRM code.
 
 ## Verification approach
 
-1. **Unit test**: d_min >= 8 (enumerate all 2^21 codewords, verify A4=0)
+1. **Unit test**: d_min >= 6 (enumerate all 2^21 codewords, verify A4=A5=0)
 2. **Unit test**: G * H^T = 0 (orthogonality)
 3. **Unit test**: encode-decode roundtrip with BCJR
 4. **Simulation**: BCJR turbo at 1.0 dB should give BLER <= 0.15
@@ -142,7 +141,7 @@ Update the sim_runner and campaign TOMLs to use the dynamic dRM code.
 - The specific reliability ordering for selecting the 5 weight-2
   positions may differ from the paper. If so, the code will have
   different properties. Mitigation: try multiple orderings and verify
-  d_min=8 for each.
+  d_min>=6 for each.
 - Dynamic frozen bits change the encoder structure. The product code
   encoder must be updated to handle the constraints. However, for
   GRAND-based decoding, only H is needed (the encoder can still use
