@@ -1,27 +1,22 @@
-//! Dynamic Reed-Muller (dRM) codes.
+//! Reed-Muller subcodes for GRAND decoding.
 //!
-//! A dynamic Reed-Muller code is constructed from the polar transform
-//! matrix G\_N = G\_2^{⊗m} (Kronecker power of the 2×2 Hadamard kernel),
-//! selecting rows to form a (n, k) code with improved minimum distance
-//! properties compared to standard monomial-degree-based RM subcodes.
+//! This module provides Reed-Muller (RM) subcodes suitable as component
+//! codes in product code turbo decoders with GRAND-family algorithms.
 //!
-//! # Construction
+//! # Constructions
 //!
-//! The [`DrmCode::new`] constructor builds a generic RM subcode from
-//! monomial evaluations (degree-then-lexicographic order). For the
-//! flagship [`DrmCode::drm_32_21`], a stronger construction is used:
+//! Two constructions are available:
 //!
-//! 1. Start with the 16 RM(2,5) rows (polar transform indices with
-//!    popcount ≥ 3), which form a (32, 16, 8) code.
-//! 2. Add 5 extension rows — random linear combinations of G\_32 rows,
-//!    selected by greedy d\_min maximization — to reach k=21.
-//! 3. The resulting (32, 21, 6) code has d\_min=6, the maximum achievable
-//!    for any (32, 21) code by the Hamming sphere-packing bound.
+//! - [`DrmCode::new`]: generic RM subcode from monomial evaluations
+//!   (degree-then-lexicographic order).
+//! - [`DrmCode::drm_32_21`]: a (32, 21, 6) code with precomputed
+//!   generator rows, constructed by extending RM(2,5) with 5 additional
+//!   rows found by greedy d\_min-maximizing search over random linear
+//!   combinations of polar transform rows. The construction is inspired
+//!   by the dRM ensemble of Coskun & Pfister (arxiv:2103.16680).
 //!
-//! This follows the dynamic frozen-bit construction of Coskun & Pfister
-//! (arxiv:2103.16680), where frozen bit values are linear combinations
-//! of preceding information bits. The extension rows in our construction
-//! are members of the dRM ensemble defined therein.
+//! The (32, 21, 6) code achieves d\_min=6, the maximum for any binary
+//! linear (32, 21) code by the Hamming sphere-packing bound.
 //!
 //! # Systematic form
 //!
@@ -129,16 +124,15 @@ impl DrmCode {
         Self { inner }
     }
 
-    /// Creates the dRM(32,21) code using the dynamic frozen-bit construction.
+    /// Creates the (32, 21, 6) Reed-Muller subcode.
     ///
-    /// This is a (32, 21, 6) code built from the polar transform G_32:
-    /// 16 RM(2,5) rows (indices with popcount ≥ 3) plus 5 extension rows
-    /// selected by greedy d_min maximization with dynamic frozen-bit
-    /// constraints (Coskun & Pfister, arxiv:2103.16680).
+    /// Uses a precomputed generator matrix with 21 rows derived from the
+    /// polar transform G\_32: 16 RM(2,5) rows (all indices with popcount
+    /// ≥ 3) plus 5 extension rows found by greedy d\_min-maximizing search
+    /// over random linear combinations of G\_32 rows (seed=3).
     ///
-    /// The resulting code has d_min=6 (the maximum achievable for (32,21)
-    /// by the Hamming sphere-packing bound), compared to d_min=4 for the
-    /// naive monomial-degree-based construction.
+    /// The code achieves d\_min=6, the maximum for any binary linear
+    /// (32, 21) code by the Hamming sphere-packing bound.
     ///
     /// # Examples
     ///

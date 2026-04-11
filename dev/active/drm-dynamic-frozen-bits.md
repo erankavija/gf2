@@ -91,41 +91,34 @@ rate 0.656), the Bhattacharyya parameters can be computed via density
 evolution. The most reliable weight-2 channels are typically those
 with higher indices (later in the polar transform).
 
-### Step 3: Generate dynamic frozen bit constraints
+### Step 3: Find extension rows by greedy search
 
-For each of the 11 frozen positions i in F:
-1. Collect all information positions j < i (preceding info bits)
-2. Generate a random binary vector v_i of length |{j in A : j < i}|
-3. The constraint is: u_i = v_i . u_{A cap [0,i-1]}
+For each candidate extension row (a random XOR of G_32 rows with a
+given seed), verify that adding it to the existing generator preserves
+d_min >= 6 by checking the weight of the new coset. Accept the row
+only if d_min is maintained. Repeat until 5 rows are added.
 
-Store these constraints as a binary matrix V (11 x 21 at most).
+The accepted rows are hardcoded as `DYNAMIC_DRM_32_21_ROWS` for
+deterministic, O(1) construction at runtime.
 
 ### Step 4: Construct G and H matrices
 
-The generator matrix for the dRM code:
-1. Start with G_32 (polar transform matrix)
-2. Select rows corresponding to the 21 information positions -> G_info
-3. For each frozen position with a dynamic constraint, add the
-   constraint row to the frozen position's row in G_32
-4. The resulting code is the row space of G_info (21 x 32)
-
-The parity-check matrix H:
-1. From G (21 x 32), compute H such that G * H^T = 0
-2. H has dimensions 11 x 32
-3. This can be done via standard null-space computation
+1. Load the 21 precomputed generator row words
+2. Build a 21 x 32 BitMatrix from them
+3. Apply Gaussian elimination to get systematic form G = [I_k | P]
+4. Derive H = [P^T | I_r]
 
 ### Step 5: Verify d_min ≥ 6
 
-Enumerate all 2^21 codewords and verify A4 = A5 = 0.
-If d_min < 6, regenerate extension rows with a different seed.
+Enumerate all 2^21 codewords (Gray code) and verify A4 = A5 = 0.
+If d_min < 6, try a different seed and regenerate extension rows.
+Seed=3 was found to work.
 
-### Step 6: Integration
+### Step 6: Integration (DONE)
 
-Replace `DrmCode::drm_32_21()` to use the new construction, or add
-a new constructor `DrmCode::drm_32_21_dynamic()`. The existing
-constructor can remain for backward compatibility.
-
-Update the sim_runner and campaign TOMLs to use the dynamic dRM code.
+`DrmCode::drm_32_21()` now returns the (32, 21, 6) code.
+`DrmCode::drm_32_21_dynamic()` is an alias for the same.
+`sim_runner` routes `component = "drm_32_21"` to this code.
 
 ## Verification approach
 
