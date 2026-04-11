@@ -147,18 +147,7 @@ impl BcjrDecoder {
         let k = n - m;
         let num_states = 1usize << m;
 
-        let h_cols: Vec<u32> = (0..n)
-            .map(|j| {
-                let col_bv = h.col_as_bitvec(j);
-                let mut col = 0u32;
-                for i in 0..m {
-                    if col_bv.get(i) {
-                        col |= 1 << i;
-                    }
-                }
-                col
-            })
-            .collect();
+        let h_cols = h.cols_as_u32_masks();
 
         Self {
             h_cols,

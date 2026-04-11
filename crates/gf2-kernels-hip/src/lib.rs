@@ -31,7 +31,9 @@ use std::ptr;
 /// Error type for HIP operations.
 #[derive(Debug, Clone)]
 pub struct HipError {
+    /// HIP error code (0 = hipSuccess).
     pub code: i32,
+    /// Name of the HIP API call that failed.
     pub context: &'static str,
 }
 
@@ -58,9 +60,9 @@ pub const MAX_GPU_STATES: usize = 2048;
 
 /// Extracts parity-check matrix columns as u32 bitmasks for GPU use.
 ///
-/// This is the canonical column-extraction helper shared between the CPU
-/// `BcjrDecoder` and `GpuBcjrBatch`. Each returned u32 encodes the j-th
-/// column of H: bit i is set iff `H[i][j] == 1`.
+/// Delegates to [`gf2_core::BitMatrix::cols_as_u32_masks`] — the canonical
+/// implementation. Each returned u32 encodes the j-th column of H: bit i
+/// is set iff `H[i][j] == 1`.
 ///
 /// # Arguments
 ///
@@ -69,6 +71,10 @@ pub const MAX_GPU_STATES: usize = 2048;
 /// # Returns
 ///
 /// A `Vec<u32>` of length n.
+///
+/// # Panics
+///
+/// Panics if the matrix has more than 32 rows (columns won't fit in a u32).
 ///
 /// # Examples
 ///
@@ -84,20 +90,7 @@ pub const MAX_GPU_STATES: usize = 2048;
 /// assert_eq!(cols.len(), 7);
 /// ```
 pub fn extract_h_cols(h: &gf2_core::BitMatrix) -> Vec<u32> {
-    let m = h.rows();
-    let n = h.cols();
-    (0..n)
-        .map(|j| {
-            let col_bv = h.col_as_bitvec(j);
-            let mut col = 0u32;
-            for i in 0..m {
-                if col_bv.get(i) {
-                    col |= 1 << i;
-                }
-            }
-            col
-        })
-        .collect()
+    h.cols_as_u32_masks()
 }
 
 /// RAII wrapper for a HIP device allocation.
@@ -202,6 +195,17 @@ impl GpuBcjrBatch {
     /// # Complexity
     ///
     /// O(max_batch * n * 2^(n-k)) device memory allocated.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_kernels_hip::GpuBcjrBatch;
+    ///
+    /// // Hamming(7,4): 3 parity rows → 2^3 = 8 states
+    /// let h_cols = vec![0b011, 0b101, 0b110, 0b111, 0b001, 0b010, 0b100];
+    /// let gpu = GpuBcjrBatch::new(&h_cols, 7, 4, 64).unwrap();
+    /// assert_eq!(gpu.n(), 7);
+    /// ```
     pub fn new(h_cols: &[u32], n: usize, k: usize, max_batch: usize) -> Result<Self, HipError> {
         assert_eq!(h_cols.len(), n);
         let num_states = 1usize << (n - k);
@@ -271,6 +275,23 @@ impl GpuBcjrBatch {
     /// # Panics
     ///
     /// Panics if `inputs.len() > max_batch` or any input length != n.
+    ///
+    /// # Complexity
+    ///
+    /// O(batch_size * n * num_states) GPU work. Host-side cost is dominated
+    /// by the H→D and D→H memcpy of `batch_size * n` floats.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_kernels_hip::GpuBcjrBatch;
+    ///
+    /// let h_cols = vec![0b011, 0b101, 0b110, 0b111, 0b001, 0b010, 0b100];
+    /// let gpu = GpuBcjrBatch::new(&h_cols, 7, 4, 8).unwrap();
+    /// let inputs = vec![vec![3.0f32; 7]; 4]; // batch of 4
+    /// let (app, ext) = gpu.decode_batch(&inputs).unwrap();
+    /// assert_eq!(app.len(), 4);
+    /// ```
     pub fn decode_batch(
         &self,
         inputs: &[Vec<f32>],

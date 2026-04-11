@@ -624,6 +624,51 @@ impl BitMatrix {
         bits
     }
 
+    /// Returns all columns as u32 bitmasks.
+    ///
+    /// For each column j, bit i of the returned u32 is set iff `self.get(i, j)`
+    /// is true. Useful for trellis-based decoders (BCJR) where each column of
+    /// the parity-check matrix defines a state transition.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the matrix has more than 32 rows.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::bitmatrix;
+    ///
+    /// let m = bitmatrix![
+    ///     1, 0, 1;
+    ///     0, 1, 1
+    /// ];
+    /// let masks = m.cols_as_u32_masks();
+    /// assert_eq!(masks, vec![0b01, 0b10, 0b11]);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(rows * cols).
+    pub fn cols_as_u32_masks(&self) -> Vec<u32> {
+        assert!(
+            self.rows <= 32,
+            "Matrix has {} rows; column bitmasks require <= 32",
+            self.rows
+        );
+        (0..self.cols)
+            .map(|j| {
+                let mut mask = 0u32;
+                for i in 0..self.rows {
+                    if self.get(i, j) {
+                        mask |= 1 << i;
+                    }
+                }
+                mask
+            })
+            .collect()
+    }
+
     /// Swaps two rows in the matrix.
     ///
     /// # Panics
