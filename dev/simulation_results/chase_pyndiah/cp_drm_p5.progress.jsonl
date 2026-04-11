@@ -32,3 +32,4 @@
 {"type":"progress","timestamp":"2026-04-10T23:37:03","eb_n0_db":1.25,"frames":68,"frame_errors":24,"bler_estimate":0.35294117647058826,"elapsed_s":538.9}
 {"type":"progress","timestamp":"2026-04-10T23:38:05","eb_n0_db":1.25,"frames":73,"frame_errors":27,"bler_estimate":0.3698630136986301,"elapsed_s":601.5}
 {"type":"point_complete","timestamp":"2026-04-10T23:38:42","eb_n0_db":1.25,"ber":0.015931913891097566,"bler":0.38961038961038963,"num_bits":33957,"num_bit_errors":541,"num_frames":77,"num_frame_errors":30,"avg_iterations":9.545454545454545,"avg_queries_per_bit":56990.31993403422,"elapsed_s":638.8}
+{"type":"point_complete","timestamp":"2026-04-11T13:51:15","eb_n0_db":2,"ber":0.13197278911564625,"bler":1,"num_bits":4410,"num_bit_errors":582,"num_frames":10,"num_frame_errors":10,"avg_iterations":8,"avg_queries_per_bit":0,"elapsed_s":0.5}

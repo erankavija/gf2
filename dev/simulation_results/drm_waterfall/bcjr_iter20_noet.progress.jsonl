@@ -1,0 +1,1 @@
+{"type":"point_complete","timestamp":"2026-04-11T15:53:47","eb_n0_db":1,"ber":0.01789208834218619,"bler":0.410958904109589,"num_bits":32193,"num_bit_errors":576,"num_frames":73,"num_frame_errors":30,"avg_iterations":20,"avg_queries_per_bit":0,"elapsed_s":1.0}

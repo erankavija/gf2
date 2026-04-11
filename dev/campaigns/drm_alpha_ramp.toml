@@ -1,0 +1,34 @@
+# Test alpha ramping for dRM turbo convergence
+[campaign]
+name = "drm_alpha_ramp"
+output_dir = "dev/simulation_results/drm_waterfall"
+
+# Gradual alpha ramp: 0.0 → 0.5 over 20 iterations
+[[curve]]
+name = "bcjr_ramp_0_to_05"
+type = "product"
+component = "drm_32_21"
+turbo = { max_iterations = 20, alpha = 0.0, alpha_final = 0.5, list_size = 4, max_queries = 50000, use_bcjr = true, use_gpu_bcjr = true, no_early_termination = true }
+snr = { start = 0.5, stop = 2.0, step = 0.5 }
+min_errors = 30
+max_frames = 200
+
+# Gradual alpha ramp: 0.0 → 0.8
+[[curve]]
+name = "bcjr_ramp_0_to_08"
+type = "product"
+component = "drm_32_21"
+turbo = { max_iterations = 20, alpha = 0.0, alpha_final = 0.8, list_size = 4, max_queries = 50000, use_bcjr = true, use_gpu_bcjr = true, no_early_termination = true }
+snr = { start = 0.5, stop = 2.0, step = 0.5 }
+min_errors = 30
+max_frames = 200
+
+# Fixed alpha = 0.2 with no early termination (many iterations at low alpha)
+[[curve]]
+name = "bcjr_alpha02_noet"
+type = "product"
+component = "drm_32_21"
+turbo = { max_iterations = 40, alpha = 0.2, list_size = 4, max_queries = 50000, use_bcjr = true, use_gpu_bcjr = true, no_early_termination = true }
+snr = { start = 0.5, stop = 2.0, step = 0.5 }
+min_errors = 30
+max_frames = 200

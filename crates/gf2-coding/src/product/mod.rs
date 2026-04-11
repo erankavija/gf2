@@ -774,6 +774,16 @@ pub struct TurboDecoderConfig {
     /// premature convergence to wrong codewords for codes with small d_min.
     pub no_early_termination: bool,
 
+    /// Use Pyndiah-style extrinsic extraction.
+    ///
+    /// When `true`, the extrinsic is computed as `L_E = L_APP - L_Ch` (subtracting
+    /// only the channel LLR, not the a-priori). This is the formula from Pyndiah
+    /// (1998) which provides "momentum" through accumulated a-priori information.
+    ///
+    /// When `false` (default), the standard formula `L_E = L_APP - L_Ch - L_A`
+    /// is used, which isolates the pure code contribution.
+    pub pyndiah_extrinsic: bool,
+
     /// Use BCJR trellis decoder instead of SOGRAND for component SISO.
     ///
     /// When `true`, the turbo decoder uses a forward-backward (BCJR) algorithm
@@ -805,6 +815,7 @@ impl Default for TurboDecoderConfig {
             alpha_final: None,
             extrinsic_clamp: None,
             no_early_termination: false,
+            pyndiah_extrinsic: false,
             use_bcjr: false,
             #[cfg(feature = "hip")]
             use_gpu_bcjr: false,
@@ -1106,11 +1117,17 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
                 }
             }
 
-            // Compute extrinsic: L_E = L_APP - L_A - L_Ch, with optional clamping
+            // Compute extrinsic with optional clamping.
+            // Standard: L_E = L_APP - L_A - L_Ch (pure code contribution)
+            // Pyndiah:  L_E = L_APP - L_Ch (includes accumulated a-priori)
             let mut l_e: Vec<Vec<f32>> = vec![vec![0.0; n]; n];
             for i in 0..n {
                 for j in 0..n {
-                    let mut ext = l_app_row[i][j] - l_a[i][j] - l_ch[i][j];
+                    let mut ext = if self.config.pyndiah_extrinsic {
+                        l_app_row[i][j] - l_ch[i][j]
+                    } else {
+                        l_app_row[i][j] - l_a[i][j] - l_ch[i][j]
+                    };
                     if let Some(beta) = self.config.extrinsic_clamp {
                         ext = ext.clamp(-beta, beta);
                     }
@@ -1191,10 +1208,14 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
                 }
             }
 
-            // Compute extrinsic: L_E = L_APP - L_A - L_Ch, with optional clamping
+            // Compute extrinsic (same formula as row step)
             for i in 0..n {
                 for j in 0..n {
-                    let mut ext = l_app_col[i][j] - l_a[i][j] - l_ch[i][j];
+                    let mut ext = if self.config.pyndiah_extrinsic {
+                        l_app_col[i][j] - l_ch[i][j]
+                    } else {
+                        l_app_col[i][j] - l_a[i][j] - l_ch[i][j]
+                    };
                     if let Some(beta) = self.config.extrinsic_clamp {
                         ext = ext.clamp(-beta, beta);
                     }
