@@ -962,6 +962,7 @@ mod tests {
     /// High A_dmin (number of weight-d codewords) weakens turbo convergence
     /// because many near-codewords compete with the correct one.
     #[test]
+    #[ignore] // ~38s: enumerates 2^26 codewords for eBCH(32,26)
     fn test_weight_distribution_comparison() {
         use crate::bch::extended::ExtendedBchCode;
         use crate::traits::GeneratorMatrixAccess;
