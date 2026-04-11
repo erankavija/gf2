@@ -26,8 +26,10 @@ Waves 1-3 complete (all 10 implementation issues done, gates passed). Wave 4 (si
 ### Fig 3 Product Code vs LDPC — Product Outperforms (paper's headline result)
 Product code BLER < LDPC NMS BLER at all SNR points 0-4 dB (verified in quick mode).
 
-### GLDPC, Fig 1 dRM Product — Not Yet Verified at Full Statistics
-Partial results exist from earlier runs but with old Z values. Need re-running.
+### Fig 1 dRM Product — VERIFIED with corrected (32,21,6) code
+dRM product code outperforms LDPC BP at 1.75+ dB (BLER 0.0006 vs 0.000641).
+Full statistics (≥100 frame errors) in `dev/simulation_results/phase1_final/`.
+See `dev/simulation_results/phase1_comparison_report.md` for full comparison.
 
 ## Next Session Plan
 
