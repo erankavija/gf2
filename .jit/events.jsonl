@@ -1466,3 +1466,13 @@
 {"type":"gate_failed","id":"75238ed2-51e5-49f8-bb88-efe6d075eee8","issue_id":"795c156e-7cb8-4223-93d9-7c232d79fdeb","timestamp":"2026-04-11T11:18:02.808762793Z","gate_key":"code-review","updated_by":"auto:executor"}
 {"type":"gate_passed","id":"5a2b447e-5359-4ff5-a4c9-a527c2c7d2f6","issue_id":"795c156e-7cb8-4223-93d9-7c232d79fdeb","timestamp":"2026-04-11T12:22:00.350334972Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
 {"type":"gate_passed","id":"aedb4b2a-b71e-4793-9774-337dde9f68a1","issue_id":"795c156e-7cb8-4223-93d9-7c232d79fdeb","timestamp":"2026-04-11T12:25:09.699727752Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"f3f86a63-10ea-40fc-bcea-d041d6159f59","issue_id":"3e136982-5767-4d55-a779-d640bb3ec55c","timestamp":"2026-04-11T13:38:01.747943401Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"a8a0704f-42cc-4b35-adcd-7aca730fa0b9","issue_id":"3e136982-5767-4d55-a779-d640bb3ec55c","timestamp":"2026-04-11T13:43:54.790886136Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"issue_created","id":"59e5c034-edee-4ec9-b3f7-348d6534e016","issue_id":"37e0b235-9fc6-48cd-93e0-0f35f1d3e545","timestamp":"2026-04-11T15:33:19.416610295Z","title":"HIP/ROCm GPU-accelerated batch LDPC BP decoder","priority":"high"}
+{"type":"issue_created","id":"2eab3e60-e5a5-4336-954d-30d1d8390900","issue_id":"9012f8a0-e4bd-40d1-8aac-bbdfb9eae3f0","timestamp":"2026-04-11T15:33:39.428381377Z","title":"HIP/ROCm GPU-accelerated batch BCH syndrome evaluation","priority":"high"}
+{"type":"gate_added","id":"b5da86f6-7586-42a4-875d-52bd890fa433","issue_id":"37e0b235-9fc6-48cd-93e0-0f35f1d3e545","timestamp":"2026-04-11T15:33:49.667711663Z","gate_key":"cargo-ci"}
+{"type":"gate_added","id":"b70bcc59-f19d-406b-8cf5-a6501b090137","issue_id":"37e0b235-9fc6-48cd-93e0-0f35f1d3e545","timestamp":"2026-04-11T15:33:49.667741003Z","gate_key":"code-review"}
+{"type":"gate_added","id":"75ab2eb4-f9ae-4908-8bf1-3e26126010a0","issue_id":"9012f8a0-e4bd-40d1-8aac-bbdfb9eae3f0","timestamp":"2026-04-11T15:33:50.139484086Z","gate_key":"cargo-ci"}
+{"type":"gate_added","id":"5e7efb69-0bbf-46fa-91d1-f349abad8ca9","issue_id":"9012f8a0-e4bd-40d1-8aac-bbdfb9eae3f0","timestamp":"2026-04-11T15:33:50.139515476Z","gate_key":"code-review"}
+{"type":"issue_state_changed","id":"44244045-cfa4-4651-bf42-1f220e19abd3","issue_id":"795c156e-7cb8-4223-93d9-7c232d79fdeb","timestamp":"2026-04-11T15:53:03.088951093Z","from":"in_progress","to":"done"}
+{"type":"issue_completed","id":"9b44201b-0342-4523-bf37-d29e78f1c8a6","issue_id":"795c156e-7cb8-4223-93d9-7c232d79fdeb","timestamp":"2026-04-11T15:53:03.088989213Z"}

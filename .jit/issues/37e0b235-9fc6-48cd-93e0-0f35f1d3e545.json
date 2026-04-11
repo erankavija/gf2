@@ -1,0 +1,43 @@
+{
+  "id": "37e0b235-9fc6-48cd-93e0-0f35f1d3e545",
+  "title": "HIP/ROCm GPU-accelerated batch LDPC BP decoder",
+  "description": "## Problem\n\nLDPC belief propagation (BP) decoding is the dominant computational cost in coded simulation campaigns. Each frame requires 10-50 iterations of check-node and variable-node message passing. Simulation campaigns need 10K-100K frames per SNR point. The current CPU implementation parallelizes across frames via rayon, but each frame's BP iteration loop is serial.\n\nFor DVB-T2 short (n=16200, m=9000): ~15ms per frame × 10K frames = 150 seconds per SNR point. For DVB-T2 normal (n=64800): ~80ms per frame.\n\n## Solution\n\nImplement HIP kernels that batch N LDPC frames into GPU-parallel BP iterations. Use edge-based Tanner graph representation with mate-index cross-referencing for O(1) message lookup. Implement normalized min-sum (NMS) algorithm with two-minimum technique for warp-uniform check-node updates.\n\nThree kernels per iteration: check-node update, variable-node update, syndrome check. Host-driven iteration loop with early termination.\n\nExtends `gf2-kernels-hip` crate (workspace-excluded, requires hipcc). Feature-gated behind `hip` in `gf2-coding`.\n\n## Acceptance Criteria\n\n1. **Tanner graph construction**: `GpuLdpcGraph` correctly represents Hamming(7,4) — edge counts, check/var offsets, and mate indices are consistent with `SpBitMatrixDual` row/col iterators.\n2. **GPU NMS matches CPU (Hamming)**: For Hamming(7,4), 25 deterministic LLR test vectors, GPU beliefs match CPU `LdpcDecoder` (NMS, alpha=0.875) within 0.05 LLR after 10 iterations.\n3. **GPU NMS matches CPU (5G NR)**: For BG2 (256,121), 10 noiseless test vectors (all-zero codeword, LLR=5.0), GPU hard decisions match CPU hard decisions exactly.\n4. **Batch correctness**: `decode_batch_gpu(64 inputs)` on BG2(1024,441) produces results matching 64 individual CPU `decode_iterative()` calls — hard decisions identical, beliefs within 0.1 LLR.\n5. **Convergence equivalence**: For 10 high-SNR frames on BG2(256,121), GPU and CPU converge on the same iteration count (exact match).\n6. **Early termination**: GPU with early termination uses strictly fewer iterations than max_iterations on high-SNR noiseless input (at least 10 frames).\n7. **DVB-T2 cross-check**: For DVB-T2 short Rate1/2 (n=16200), 10 frames at high SNR, GPU vs CPU NMS(0.875) produce identical hard decisions and beliefs within 0.1 LLR.\n8. **Throughput improvement**: GPU batch-64 decode of BG2(1024,441) at 50 iterations is at least 3x faster than 64 serial CPU decodes (measured wall-clock).\n9. **Property test (Hamming)**: For random LLRs on Hamming(7,4), GPU and CPU produce identical hard decisions after 10 NMS iterations (proptest).\n10. **Property test (batch)**: For random batch sizes 1-16 and random LLRs on BG2(256,121), GPU batch matches CPU serial — hard decisions identical (proptest).\n11. **Feature-gated**: All HIP code behind `hip` feature flag. `cargo build --workspace` succeeds without ROCm installed.\n\n## Architecture\n\n- `gf2-kernels-hip/hip/ldpc_bp_kernel.hip` — three HIP kernels (check-node NMS, var-node, syndrome)\n- `gf2-kernels-hip/src/lib.rs` — `GpuLdpcGraph`, `GpuLdpcBpBatch` safe wrappers\n- `gf2-coding/src/ldpc/core.rs` — `decode_batch_gpu()` method (cfg-gated)\n- Thread mapping: one thread per check-node (check kernel), one per var-node (var kernel)\n- Edge-based Tanner graph with mate-index cross-referencing\n- Host-driven iteration loop with optional early termination via syndrome kernel\n\n## References\n\nSee attached design doc for kernel pseudocode, memory budget, and performance estimates.",
+  "state": "ready",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {
+    "cargo-ci": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-04-11T15:33:49.667704513Z"
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-04-11T15:33:49.667740583Z"
+    }
+  },
+  "context": {},
+  "documents": [
+    {
+      "path": "dev/active/gpu-batch-ldpc-bp-plan.md",
+      "commit": null,
+      "label": "GPU batch LDPC BP design plan",
+      "doc_type": "design",
+      "format": "markdown"
+    }
+  ],
+  "labels": [
+    "type:task",
+    "epic:grand",
+    "component:gf2-kernels-hip",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-04-11T15:33:19.416265735+00:00",
+  "updated_at": "2026-04-11T15:33:52.026930478+00:00"
+}
