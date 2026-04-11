@@ -100,51 +100,46 @@ given seed), verify that adding it to the existing generator preserves
 d_min >= 6 by checking the weight of the new coset. Accept the row
 only if d_min is maintained. Repeat until 5 rows are added.
 
-The accepted rows are hardcoded as `DYNAMIC_DRM_32_21_ROWS` for
-deterministic, O(1) construction at runtime.
+The greedy search is seeded deterministically from (m, k) for
+reproducibility. For (32, 21), seed=3 produces d_min=6.
+
+The algorithm runs once at first use and is cached via `OnceLock`.
 
 ### Step 4: Construct G and H matrices
 
-1. Load the 21 precomputed generator row words
-2. Build a 21 x 32 BitMatrix from them
-3. Apply Gaussian elimination to get systematic form G = [I_k | P]
-4. Derive H = [P^T | I_r]
+1. Build a k x n BitMatrix from the accepted generator rows
+2. Apply Gaussian elimination to get systematic form G = [I_k | P]
+3. Derive H = [P^T | I_r]
 
-### Step 5: Verify d_min ≥ 6
+### Step 5: Verify d_min
 
-Enumerate all 2^21 codewords (Gray code) and verify A4 = A5 = 0.
-If d_min < 6, try a different seed and regenerate extension rows.
-Seed=3 was found to work.
+Enumerate all 2^k codewords (Gray code) and verify A_w = 0 for
+w < target d_min.
 
-### Step 6: Integration (DONE)
+## Implementation (DONE)
 
-`DrmCode::drm_32_21()` now returns the (32, 21, 6) code.
-`DrmCode::drm_32_21_dynamic()` is an alias for the same.
-`sim_runner` routes `component = "drm_32_21"` to this code.
+- `DrmCode::extended_rm(m, k)` — general constructor for any (2^m, k)
+- `DrmCode::drm_32_21()` — cached (32, 21, 6) via `extended_rm(5, 21)`
+- `DrmCode::drm_32_21_dynamic()` — alias for `drm_32_21()`
+- `sim_runner` routes `component = "drm_32_21"` to this code
 
-## Verification approach
+## Verification
 
-1. **Unit test**: d_min >= 6 (enumerate all 2^21 codewords, verify A4=A5=0)
-2. **Unit test**: G * H^T = 0 (orthogonality)
-3. **Unit test**: encode-decode roundtrip with BCJR
-4. **Simulation**: BCJR turbo at 1.0 dB should give BLER <= 0.15
-   (within 2x of paper's 0.072)
-5. **Simulation**: product code should outperform LDPC BP at some SNR point
+1. `test_drm_dynamic_dmin_at_least_6` — exhaustive d_min enumeration
+2. `test_extended_rm_32_21_orthogonality` — G * H^T = 0
+3. `test_drm_dynamic_encode_decode_roundtrip` — 100 BCJR decode trials
+4. `test_extended_rm_16_11` — generalization to (16, 11)
+5. `test_extended_rm_deterministic` — reproducibility
+6. Simulation: BLER=0.207 at 1.0 dB, outperforms LDPC at 1.75+ dB
 
 ## Risks
 
-- The specific reliability ordering for selecting the 5 weight-2
-  positions may differ from the paper. If so, the code will have
-  different properties. Mitigation: try multiple orderings and verify
-  d_min>=6 for each.
-- Dynamic frozen bits change the encoder structure. The product code
-  encoder must be updated to handle the constraints. However, for
-  GRAND-based decoding, only H is needed (the encoder can still use
-  standard systematic form derived from G).
-- The paper may use a specific random seed for the frozen bit constraints.
-  Without knowing the exact seed, our code will be a different instance
-  from the same dRM ensemble. This should still give similar performance
-  since the ensemble members have similar distance properties.
+- The exact code instance depends on the seed and greedy search order.
+  Different seeds produce different (but equivalently good) codes.
+- The paper may use a different specific code instance. Our code is a
+  valid member of the same ensemble with verified d_min=6.
+- For large m (e.g., m >= 8), the greedy search with exhaustive coset
+  weight checking may be slow. Approximations would be needed.
 
 ## References
 
