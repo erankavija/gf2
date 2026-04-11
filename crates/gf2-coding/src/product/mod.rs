@@ -130,6 +130,16 @@ impl SisoEngine {
         }
         false
     }
+
+    /// Returns `true` if the SISO engine produces meaningful
+    /// [`SisoResult::list_bler_prediction`] values.
+    ///
+    /// SOGRAND computes a probabilistic list-BLER estimate. BCJR and GPU-BCJR
+    /// always return 0.0, so the list-BLER threshold early-termination check
+    /// must be skipped for those engines.
+    fn has_list_bler_prediction(&self) -> bool {
+        matches!(self, SisoEngine::SoGrand(_))
+    }
 }
 
 /// Trait abstracting a component code for use in product code constructions.
@@ -726,12 +736,16 @@ pub struct TurboDecoderConfig {
     /// Maximum ORBGRAND queries per component decode.
     pub max_queries: usize,
 
-    /// Optional list-BLER threshold for early termination.
+    /// Optional list-BLER threshold for early termination (SOGRAND only).
     ///
     /// When set, if the average predicted list-BLER across all row/column
     /// SISO decodings in a half-iteration drops below this threshold, the
     /// decoder terminates early. Uses [`SisoResult::list_bler_prediction`]
     /// from SOGRAND.
+    ///
+    /// This threshold is ignored in BCJR and GPU-BCJR modes, where
+    /// `list_bler_prediction` is always 0.0 (exact trellis decoding does
+    /// not produce a probabilistic list-BLER estimate).
     ///
     /// A typical value might be `Some(1e-6)`.
     pub list_bler_threshold: Option<f64>,
@@ -936,7 +950,7 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
     ///
     /// * `component` - The component (n, k) code implementing [`ProductComponent`].
     /// * `config` - Decoder configuration controlling iterations, scaling, and
-    ///   ORBGRAND parameters.
+    ///   SISO engine selection (SOGRAND, BCJR, or GPU-BCJR).
     ///
     /// # Examples
     ///
@@ -950,7 +964,8 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
     ///
     /// # Complexity
     ///
-    /// O(n^2) for constructing the sparse parity-check matrix used by ORBGRAND.
+    /// O(n^2) for SOGRAND mode (constructing the sparse parity-check matrix
+    /// for ORBGRAND), or O(n * (n-k)) for BCJR mode (column bitmask extraction).
     pub fn new(component: C, config: TurboDecoderConfig) -> Self {
         #[cfg(feature = "hip")]
         let use_gpu = config.use_gpu_bcjr;
@@ -1115,8 +1130,9 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
                 };
             }
 
-            // Check list-BLER threshold for early termination
-            if !self.config.no_early_termination {
+            // Check list-BLER threshold for early termination (SOGRAND only —
+            // BCJR/GPU-BCJR always return list_bler_prediction=0.0)
+            if !self.config.no_early_termination && self.siso.has_list_bler_prediction() {
                 if let Some(threshold) = self.config.list_bler_threshold {
                     let avg_bler = row_bler_sum / n as f64;
                     if avg_bler < threshold {
@@ -1198,8 +1214,8 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
                 };
             }
 
-            // Check list-BLER threshold for early termination
-            if !self.config.no_early_termination {
+            // Check list-BLER threshold for early termination (SOGRAND only)
+            if !self.config.no_early_termination && self.siso.has_list_bler_prediction() {
                 if let Some(threshold) = self.config.list_bler_threshold {
                     let avg_bler = col_bler_sum / n as f64;
                     if avg_bler < threshold {
@@ -1994,6 +2010,35 @@ mod tests {
             result_with.iterations,
             result_no.iterations,
         );
+    }
+
+    #[test]
+    fn test_bcjr_ignores_list_bler_threshold() {
+        // BCJR always returns list_bler_prediction=0.0. A threshold check
+        // must be skipped in BCJR mode, otherwise any threshold > 0 would
+        // trigger immediate early termination after the first half-iteration.
+        let component = ExtendedBchCode::ebch_16_11();
+        let product = ProductCode::new(component.clone());
+
+        let config = TurboDecoderConfig {
+            max_iterations: 5,
+            list_size: 2,
+            max_queries: 10_000,
+            list_bler_threshold: Some(0.5), // would trigger immediately with 0.0
+            use_bcjr: true,
+            ..TurboDecoderConfig::default()
+        };
+        let decoder = TurboDecoder::new(component, config);
+
+        // Moderate-confidence LLRs — should need more than 1 iteration
+        let llrs: Vec<Llr> = vec![Llr::new(3.0); product.n()];
+        let result = decoder.decode(&llrs);
+
+        // BCJR must NOT terminate after 1 iteration due to the threshold
+        // (if it did, list_bler_prediction=0.0 < 0.5 would fire on iter 1)
+        assert!(result.converged, "BCJR should converge at moderate SNR");
+        // For all-zeros with LLR=3.0, early termination via valid-codeword check
+        // will fire, but NOT via list-BLER threshold (which is SOGRAND-only).
     }
 
     // =====================================================================

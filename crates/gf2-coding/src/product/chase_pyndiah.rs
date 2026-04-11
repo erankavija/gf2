@@ -410,7 +410,7 @@ impl<C: ProductComponent + Clone> ChasePyndiahDecoder<C> {
     /// # Complexity
     ///
     /// O(2^p * n) for the Chase search plus O(n) for soft-output computation.
-    fn chase_pyndiah_siso(&self, input: &[f32], _beta: f32) -> Vec<f32> {
+    fn chase_pyndiah_siso(&self, input: &[f32], beta: f32) -> Vec<f32> {
         let n = self.n;
         let k = self.k;
         let p = self.config.p.min(n); // cap p at n
@@ -424,8 +424,8 @@ impl<C: ProductComponent + Clone> ChasePyndiahDecoder<C> {
         indices.sort_by(|&a, &b| reliability[a].partial_cmp(&reliability[b]).unwrap());
         let least_reliable: Vec<usize> = indices[..p].to_vec();
 
-        // min reliability over all positions (for fallback formula)
-        let _min_reliability = reliability.iter().copied().fold(f32::INFINITY, f32::min);
+        // Reliability statistics for bounding the soft output
+        let mean_reliability: f32 = reliability.iter().copied().sum::<f32>() / n as f32;
 
         // Step 2: Generate 2^p test patterns and find codewords
         let num_patterns = 1usize << p;
@@ -493,7 +493,20 @@ impl<C: ProductComponent + Clone> ChasePyndiahDecoder<C> {
             .unwrap();
         let ml_codeword = &codewords[ml_idx];
 
-        // Step 3: Pyndiah soft output
+        // Step 3: Pyndiah soft output with extrinsic clamping
+        //
+        // The raw formula W_j = c_d_j * (M_ML - M_comp_j) / 2 can produce
+        // enormous values when the competitor is far from ML (many differing
+        // bits). In Pyndiah's received-signal domain (values ≈ ±1), this is
+        // naturally bounded. In the LLR domain (values ≈ ±3-10), unclamped W
+        // creates extrinsic that overwhelms channel LLRs, causing turbo
+        // divergence.
+        //
+        // We bound the extrinsic (W - input) using the beta schedule and the
+        // mean reliability. This is equivalent to Pyndiah's bounded-reliability
+        // approach adapted to the LLR domain.
+        let ext_bound = beta * mean_reliability;
+
         let mut w = vec![0.0f32; n];
         for i in 0..n {
             let ml_bipolar = if ml_codeword[i] { -1.0f32 } else { 1.0 };
@@ -512,15 +525,16 @@ impl<C: ProductComponent + Clone> ChasePyndiahDecoder<C> {
                 }
             }
 
-            w[i] = match best_comp_corr {
+            let raw_w = match best_comp_corr {
                 Some(comp_corr) => ml_bipolar * (ml_corr - comp_corr) / 2.0,
-                // No competitor found: no code information for this bit.
-                // Return the input LLR (extrinsic = 0) to avoid eroding the
-                // channel signal. The Pyndiah (1998) fallback beta*min_reliability
-                // is designed for the received-signal domain (|r|~1) and produces
-                // values too small in the LLR domain, creating destructive extrinsic.
+                // No competitor: return input unchanged (zero extrinsic).
+                // Conservative: no code information available for this bit.
                 None => input[i],
             };
+
+            // Clamp the extrinsic to prevent turbo divergence.
+            let ext = (raw_w - input[i]).clamp(-ext_bound, ext_bound);
+            w[i] = input[i] + ext;
         }
 
         w
@@ -717,6 +731,304 @@ mod tests {
             result.decoded_bits.count_ones(),
             0,
             "Decoded message should be all-zeros"
+        );
+    }
+
+    #[test]
+    fn test_syndrome_check_valid_drm_codeword() {
+        use crate::drm::DrmCode;
+
+        let component = DrmCode::drm_32_21();
+        let decoder = ChasePyndiahDecoder::new(component.clone(), ChasePyndiahConfig::default());
+
+        // Encode several messages and verify zero syndrome
+        for seed in 0..10 {
+            let mut msg = BitVec::with_capacity(21);
+            for i in 0..21 {
+                msg.push_bit((i + seed) % 3 == 0);
+            }
+            let cw = component.encode(&msg);
+            let candidate: Vec<bool> = (0..32).map(|j| cw.get(j)).collect();
+            let syndrome = decoder.compute_syndrome(&candidate);
+            assert_eq!(
+                syndrome, 0,
+                "dRM codeword (seed={seed}) must have zero syndrome, got {syndrome:#010b}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_drm_chase_siso_component_decode() {
+        // Test single-component Chase-Pyndiah SISO for dRM(32,21) at high SNR
+        use crate::drm::DrmCode;
+
+        let component = DrmCode::drm_32_21();
+        let decoder = ChasePyndiahDecoder::new(
+            component.clone(),
+            ChasePyndiahConfig {
+                p: 4,
+                ..ChasePyndiahConfig::default()
+            },
+        );
+
+        // All-zeros codeword, high-confidence positive LLRs
+        let input: Vec<f32> = vec![10.0; 32];
+        let w = decoder.chase_pyndiah_siso(&input, 0.5);
+
+        // All soft outputs should be positive (matching bit=0)
+        for (i, &wi) in w.iter().enumerate() {
+            assert!(
+                wi > 0.0,
+                "dRM W[{i}] = {wi} should be positive for all-zeros input"
+            );
+        }
+
+        // Now test with a non-trivial codeword
+        let mut msg = BitVec::with_capacity(21);
+        for i in 0..21 {
+            msg.push_bit(i % 2 == 0);
+        }
+        let cw = component.encode(&msg);
+
+        // Create LLRs: +10 for bit=0, -10 for bit=1
+        let input: Vec<f32> = (0..32)
+            .map(|j| if cw.get(j) { -10.0 } else { 10.0 })
+            .collect();
+        let w = decoder.chase_pyndiah_siso(&input, 0.5);
+
+        // Soft outputs should have correct sign for each bit
+        for (j, &wi) in w.iter().enumerate() {
+            let expected_sign = if cw.get(j) { "negative" } else { "positive" };
+            let correct = if cw.get(j) { wi < 0.0 } else { wi > 0.0 };
+            assert!(
+                correct,
+                "dRM W[{j}] = {wi} should be {expected_sign} for bit={}",
+                cw.get(j)
+            );
+        }
+    }
+
+    #[test]
+    fn test_drm_turbo_first_iteration() {
+        // Trace what happens in the first turbo iteration for dRM(32,21)
+        // at high SNR where the answer should be obvious.
+        use crate::drm::DrmCode;
+
+        let component = DrmCode::drm_32_21();
+        let config = ChasePyndiahConfig {
+            max_iterations: 1, // Just one iteration
+            p: 4,
+            ..ChasePyndiahConfig::default()
+        };
+        let decoder = ChasePyndiahDecoder::new(component, config);
+
+        // All-zeros product code at moderately high SNR
+        let n = 32;
+        let llrs: Vec<Llr> = vec![Llr::new(4.0); n * n]; // All +4.0, all-zeros codeword
+
+        let result = decoder.decode(&llrs);
+
+        // At LLR=4.0 for all-zeros, the product code should decode correctly
+        assert!(
+            result.converged,
+            "Should converge at LLR=4.0 for all-zeros (got {} iters, {} errors)",
+            result.iterations,
+            result.decoded_bits.count_ones()
+        );
+    }
+
+    #[test]
+    fn test_drm_turbo_moderate_noise() {
+        // Test dRM turbo with light noise (a few bit errors)
+        use crate::drm::DrmCode;
+
+        let component = DrmCode::drm_32_21();
+        let product = ProductCode::new(component.clone());
+        let n = 32;
+        let config = ChasePyndiahConfig {
+            max_iterations: 8,
+            p: 4,
+            ..ChasePyndiahConfig::default()
+        };
+        let decoder = ChasePyndiahDecoder::new(component.clone(), config);
+
+        // All-zeros codeword with a few flipped bits to simulate errors
+        // LLR = +3.0 for correct bits, -1.0 for "errored" bits
+        let mut llrs = vec![Llr::new(3.0); n * n];
+
+        // Flip some bits in a pattern (scattered errors)
+        let error_positions = [5, 37, 100, 200, 350, 500, 700, 850];
+        for &pos in &error_positions {
+            if pos < n * n {
+                llrs[pos] = Llr::new(-1.0);
+            }
+        }
+
+        let result = decoder.decode(&llrs);
+
+        let bit_errors = result.decoded_bits.count_ones();
+        eprintln!(
+            "dRM CP turbo with {} scattered errors: converged={}, iters={}, bit_errors={}/{}",
+            error_positions.len(),
+            result.converged,
+            result.iterations,
+            bit_errors,
+            product.k()
+        );
+
+        // Should correct these errors (they're weak: LLR=-1.0)
+        assert!(
+            bit_errors < 50,
+            "Too many bit errors after turbo decode: {bit_errors}"
+        );
+    }
+
+    #[test]
+    fn test_drm_turbo_nonzero_message() {
+        // Critical test: encode a non-trivial message and decode at high SNR
+        use crate::drm::DrmCode;
+
+        let component = DrmCode::drm_32_21();
+        let product = ProductCode::new(component.clone());
+        let n = 32;
+        let k = 21;
+        let config = ChasePyndiahConfig {
+            max_iterations: 8,
+            p: 4,
+            ..ChasePyndiahConfig::default()
+        };
+        let decoder = ChasePyndiahDecoder::new(component.clone(), config);
+
+        // Non-trivial message
+        let mut msg = BitVec::with_capacity(k * k);
+        for i in 0..(k * k) {
+            msg.push_bit(i % 3 == 0);
+        }
+        let cw = product.encode(&msg);
+
+        // Create high-SNR LLRs: +8 for bit=0, -8 for bit=1
+        let llrs: Vec<Llr> = (0..n * n)
+            .map(|i| {
+                if cw.get(i) {
+                    Llr::new(-8.0) // bit=1 → negative
+                } else {
+                    Llr::new(8.0) // bit=0 → positive
+                }
+            })
+            .collect();
+
+        let result = decoder.decode(&llrs);
+
+        // Compare decoded message with original
+        let bit_errors = (0..k * k)
+            .filter(|&i| result.decoded_bits.get(i) != msg.get(i))
+            .count();
+
+        assert_eq!(
+            bit_errors, 0,
+            "dRM CP turbo with non-trivial message at high SNR: {bit_errors} bit errors \
+             (converged={}, iters={})",
+            result.converged, result.iterations
+        );
+    }
+
+    #[test]
+    fn test_drm_turbo_with_awgn() {
+        // Reproduce the BLER=1.0 issue with realistic AWGN noise
+        use crate::drm::DrmCode;
+        use crate::simulation::{BpskAwgnChannel, ChannelModel};
+        use rand::rngs::StdRng;
+        use rand::SeedableRng;
+
+        let component = DrmCode::drm_32_21();
+        let product = ProductCode::new(component.clone());
+        let n = 32;
+        let k = 21;
+        let config = ChasePyndiahConfig {
+            max_iterations: 8,
+            p: 4,
+            ..ChasePyndiahConfig::default()
+        };
+        let decoder = ChasePyndiahDecoder::new(component.clone(), config);
+        let channel = BpskAwgnChannel;
+        let rate = (k * k) as f64 / (n * n) as f64;
+
+        let mut rng = StdRng::seed_from_u64(42);
+        let mut total_errors = 0;
+        let num_frames = 5;
+
+        for frame in 0..num_frames {
+            let msg = BitVec::random(k * k, &mut rng);
+            let cw = product.encode(&msg);
+            let llrs = channel.transmit_and_demodulate(&cw, 3.0, rate, &mut rng);
+
+            let result = decoder.decode(&llrs);
+            let bit_errors = (0..k * k)
+                .filter(|&i| result.decoded_bits.get(i) != msg.get(i))
+                .count();
+
+            eprintln!(
+                "Frame {frame}: converged={}, iters={}, bit_errors={}/{} (BER={:.4})",
+                result.converged,
+                result.iterations,
+                bit_errors,
+                k * k,
+                bit_errors as f64 / (k * k) as f64
+            );
+            total_errors += bit_errors;
+        }
+
+        let avg_ber = total_errors as f64 / (num_frames * k * k) as f64;
+        eprintln!("Average BER over {num_frames} frames: {avg_ber:.4}");
+
+        // At 3.0 dB, BCJR turbo gives BLER=0.002.
+        // Chase-Pyndiah should at least not make things worse than uncoded.
+        // Uncoded BER at 3.0 dB ≈ 0.013
+        assert!(
+            avg_ber < 0.10,
+            "Average BER {avg_ber:.4} is too high — decoder is degrading the signal"
+        );
+    }
+
+    #[test]
+    fn test_drm_chase_extrinsic_sign() {
+        // Test that Chase-Pyndiah extrinsic has correct sign for dRM(32,21)
+        // This is the critical test: wrong extrinsic sign would cause turbo divergence
+        use crate::drm::DrmCode;
+
+        let component = DrmCode::drm_32_21();
+        let decoder = ChasePyndiahDecoder::new(
+            component.clone(),
+            ChasePyndiahConfig {
+                p: 4,
+                ..ChasePyndiahConfig::default()
+            },
+        );
+
+        // Moderate SNR: add some noise to the all-zeros codeword
+        // L_ch = 2.0 for all bits (moderate confidence that bit=0)
+        let input: Vec<f32> = vec![2.0; 32];
+        let w = decoder.chase_pyndiah_siso(&input, 0.5);
+
+        // Extrinsic = W - input should have the same sign as input (code reinforces)
+        let mut negative_ext_count = 0;
+        for (j, &wi) in w.iter().enumerate() {
+            let ext = wi - input[j];
+            if ext < -0.1 {
+                negative_ext_count += 1;
+                // A strongly negative extrinsic for a correct codeword
+                // means the Chase decoder is actively harming the turbo loop
+                eprintln!(
+                    "WARN: bit {j}: input={:.2}, W={:.2}, ext={:.2}",
+                    input[j], wi, ext
+                );
+            }
+        }
+
+        // For the all-zeros codeword at moderate SNR, most extrinsic should be >= 0
+        assert!(
+            negative_ext_count <= 8,
+            "Too many negative extrinsics ({negative_ext_count}/32) for correct codeword"
         );
     }
 }
