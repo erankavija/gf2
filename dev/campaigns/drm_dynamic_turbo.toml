@@ -1,0 +1,14 @@
+# dRM(32,21) DYNAMIC (d_min=6) product code with GPU BCJR turbo
+# Compare with old dRM (d_min=4) and paper's SOGRAND results
+[campaign]
+name = "drm_dynamic_turbo"
+output_dir = "dev/simulation_results/drm_waterfall"
+
+[[curve]]
+name = "dynamic_drm_bcjr"
+type = "product"
+component = "drm_32_21_dynamic"
+turbo = { max_iterations = 20, alpha = 0.5, list_size = 4, max_queries = 50000, use_bcjr = true, use_gpu_bcjr = true }
+snr = { start = 0.5, stop = 2.5, step = 0.25 }
+min_errors = 50
+max_frames = 2000
