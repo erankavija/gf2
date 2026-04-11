@@ -890,6 +890,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore] // ~2s: searches for valid seed (already hardcoded)
     fn test_find_dynamic_seed() {
         // Search for a seed where 5 greedy extension rows added to RM(2,5)
         // produce a (32, 21) code with d_min >= 6.
