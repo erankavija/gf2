@@ -1,37 +1,35 @@
-//! Decreasing Reed-Muller (dRM) codes.
+//! Dynamic Reed-Muller (dRM) codes.
 //!
-//! A decreasing Reed-Muller code dRM(n, k) is constructed by evaluating
-//! monomials over GF(2)^m (where n = 2^m) at all 2^m points, selecting
-//! monomials in decreasing monomial order until k rows are obtained.
+//! A dynamic Reed-Muller code is constructed from the polar transform
+//! matrix G\_N = G\_2^{⊗m} (Kronecker power of the 2×2 Hadamard kernel),
+//! selecting rows to form a (n, k) code with improved minimum distance
+//! properties compared to standard monomial-degree-based RM subcodes.
 //!
 //! # Construction
 //!
-//! For m variables over GF(2), the decreasing monomial order sorts
-//! monomials first by degree (ascending), then lexicographically within
-//! each degree. The generator matrix has k rows, each being the evaluation
-//! vector of one monomial across all 2^m points.
+//! The [`DrmCode::new`] constructor builds a generic RM subcode from
+//! monomial evaluations (degree-then-lexicographic order). For the
+//! flagship [`DrmCode::drm_32_21`], a stronger construction is used:
 //!
-//! ## dRM(32, 21) example
+//! 1. Start with the 16 RM(2,5) rows (polar transform indices with
+//!    popcount ≥ 3), which form a (32, 16, 8) code.
+//! 2. Add 5 extension rows — random linear combinations of G\_32 rows,
+//!    selected by greedy d\_min maximization — to reach k=21.
+//! 3. The resulting (32, 21, 6) code has d\_min=6, the maximum achievable
+//!    for any (32, 21) code by the Hamming sphere-packing bound.
 //!
-//! With m=5 and n=32, the 21 monomials in increasing degree order are:
-//!
-//! - Degree 0: 1 (constant)
-//! - Degree 1: x\_1, x\_2, x\_3, x\_4, x\_5
-//! - Degree 2: x\_1 x\_2, x\_1 x\_3, x\_1 x\_4, x\_1 x\_5, x\_2 x\_3,
-//!   x\_2 x\_4, x\_2 x\_5, x\_3 x\_4, x\_3 x\_5, x\_4 x\_5
-//! - Degree 3 (first 5): x\_1 x\_2 x\_3, x\_1 x\_2 x\_4, x\_1 x\_2 x\_5,
-//!   x\_1 x\_3 x\_4, x\_1 x\_3 x\_5
-//!
-//! This gives exactly 1 + 5 + 10 + 5 = 21 rows.
+//! This follows the dynamic frozen-bit construction of Coskun & Pfister
+//! (arxiv:2103.16680), where frozen bit values are linear combinations
+//! of preceding information bits. The extension rows in our construction
+//! are members of the dRM ensemble defined therein.
 //!
 //! # Systematic form
 //!
-//! After evaluating the monomials, the constructor applies Gaussian
-//! elimination with column permutation to produce a systematic generator
-//! matrix G = [I_k | P]. The parity-check matrix is H = [P^T | I_r].
-//! As a result, the column ordering of the code differs from the raw
-//! evaluation-matrix ordering — this is standard practice for GRAND
-//! decoding, which only needs G and H with the orthogonality property.
+//! The constructor applies Gaussian elimination with column permutation
+//! to produce a systematic generator matrix G = [I\_k | P]. The
+//! parity-check matrix is H = [P^T | I\_r]. This is standard practice
+//! for GRAND decoding, which only needs G and H with the orthogonality
+//! property.
 //!
 //! # Examples
 //!
@@ -394,26 +392,9 @@ impl DrmCode {
         (g_sys, h)
     }
 
-    /// Creates a dRM(32,21) code with d_min=6 (extended RM(2,5) construction).
+    /// Alias for [`drm_32_21`](Self::drm_32_21) — the dynamic (32, 21, 6) code.
     ///
-    /// Unlike [`drm_32_21`](Self::drm_32_21), which uses the standard
-    /// decreasing monomial order and achieves d_min=4, this constructor
-    /// extends the RM(2,5) code (d_min=8, k=16) with 5 additional rows
-    /// that are random linear combinations of polar transform rows, chosen
-    /// via greedy search to maintain d_min=6.
-    ///
-    /// The construction:
-    /// 1. Start with the 16 rows of RM(2,5) from the polar transform G_32
-    ///    (all row indices with popcount >= 3, each having weight >= 8)
-    /// 2. Greedily add 5 rows, each a random linear combination of G_32
-    ///    rows, verified to maintain d_min >= 6 at each step
-    /// 3. The resulting 21-row generator produces a (32, 21, 6) code
-    ///
-    /// The resulting code has minimum distance 6, a significant improvement
-    /// over the d_min=4 of the standard dRM(32,21) code.
-    ///
-    /// Note: the Hamming bound shows d_min=8 is impossible for (32,21):
-    /// V(32,3) = 5489 > 2^11 = 2048. The maximum achievable d_min is 6.
+    /// Retained for explicitness when emphasizing the dynamic construction.
     ///
     /// # Examples
     ///
