@@ -15,11 +15,17 @@ The paper (Yuan et al., arxiv:2310.10737) uses a **dynamic Reed-Muller**
 (dRM) code as defined by Coskun & Pfister (arxiv:2103.16680). In this
 construction, frozen bits are set to **random linear combinations of
 preceding information bits**, which eliminates low-weight codewords and
-effectively increases d_min from 4 to 8 (matching RM(2,5)).
+increases d_min.
 
-With d_min=8, the product code distance is d^2=64 vs our d^2=16. This
-4x improvement in effective distance explains the 6x BLER gap at 1.0 dB
-(our BLER=0.44 vs paper's 0.072) and the much steeper waterfall slope.
+Note: the Hamming sphere-packing bound proves d_min >= 8 is impossible
+for any (32, 21) code (V(32,3) = 5489 > 2^11). The maximum achievable
+is d_min = 6, which this implementation achieves via greedy extension
+row selection (seed=3).
+
+With d_min=6, the product code distance is d^2=36 vs our old d^2=16.
+This improvement explains the dramatic waterfall slope change (46x/0.5dB
+vs 2.3x/0.5dB) and the dRM product code now outperforming LDPC BP at
+1.75+ dB Eb/N0.
 
 ## Background
 

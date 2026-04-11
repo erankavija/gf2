@@ -477,6 +477,25 @@ impl DrmCode {
     /// Searches for a seed that produces a (32, 21) extension of RM(2,5)
     /// with d_min >= `target_dmin`.
     ///
+    /// Computes the 32 rows of the polar transform G_32 as u32 bitmasks.
+    ///
+    /// Row i of G_32 has bit j set iff (i AND j) == j (the standard polar
+    /// transform / Kronecker power of [[1,0],[1,1]]).
+    #[cfg(test)]
+    fn polar_transform_rows_32() -> Vec<u32> {
+        (0..32)
+            .map(|i| {
+                let mut row = 0u32;
+                for j in 0..32 {
+                    if (i & j) == j {
+                        row |= 1u32 << j;
+                    }
+                }
+                row
+            })
+            .collect()
+    }
+
     /// Uses a greedy approach: for each seed, adds extension rows one at a
     /// time, accepting each row only if the new coset (row XOR all existing
     /// codewords) has minimum weight >= `target_dmin`. This avoids a full
@@ -487,19 +506,7 @@ impl DrmCode {
         use rand::{Rng, SeedableRng};
 
         let n = 32usize;
-
-        // Precompute polar transform rows as u32.
-        let g_n: Vec<u32> = (0..n)
-            .map(|i| {
-                let mut row = 0u32;
-                for j in 0..n {
-                    if (i & j) == j {
-                        row |= 1u32 << j;
-                    }
-                }
-                row
-            })
-            .collect();
+        let g_n = Self::polar_transform_rows_32();
 
         // RM(2,5) base rows (popcount >= 3).
         let base_rows: Vec<u32> = (0..n)
@@ -916,21 +923,10 @@ mod tests {
         use rand::rngs::StdRng;
         use rand::{Rng, SeedableRng};
 
-        let n = 32usize;
         let target_dmin = 6usize;
         let seed = 3u64;
 
-        let g_n: Vec<u32> = (0..n)
-            .map(|i| {
-                let mut row = 0u32;
-                for j in 0..n {
-                    if (i & j) == j {
-                        row |= 1u32 << j;
-                    }
-                }
-                row
-            })
-            .collect();
+        let g_n = DrmCode::polar_transform_rows_32();
 
         let mut rows: Vec<u32> = Vec::with_capacity(21);
         for (i, &g_row) in g_n.iter().enumerate() {
@@ -1012,13 +1008,16 @@ mod tests {
 
     #[test]
     fn test_drm_dynamic_encode_decode_roundtrip() {
+        use crate::bcjr::BcjrDecoder;
+        use crate::llr::Llr;
         use rand::rngs::StdRng;
         use rand::{Rng, SeedableRng};
 
         let code = DrmCode::drm_32_21_dynamic();
+        let decoder = BcjrDecoder::new(code.parity_check());
         let mut rng = StdRng::seed_from_u64(42);
 
-        for _ in 0..100 {
+        for trial in 0..100 {
             let mut msg = BitVec::new();
             for _ in 0..21 {
                 msg.push_bit(rng.gen_bool(0.5));
@@ -1026,13 +1025,25 @@ mod tests {
             let cw = code.encode(&msg);
             assert_eq!(cw.len(), 32);
 
-            // Verify syndrome is zero.
+            // Verify syndrome is zero
             let syn = code.inner().syndrome(&cw).unwrap();
-            assert_eq!(
-                syn.count_ones(),
-                0,
-                "syndrome must be zero for valid codeword"
-            );
+            assert_eq!(syn.count_ones(), 0, "trial {trial}: nonzero syndrome");
+
+            // BCJR decode at high SNR and verify message recovery
+            let llrs: Vec<Llr> = (0..32)
+                .map(|j| {
+                    if cw.get(j) {
+                        Llr::new(-10.0)
+                    } else {
+                        Llr::new(10.0)
+                    }
+                })
+                .collect();
+            let result = decoder.decode_siso(&llrs);
+            for j in 0..32 {
+                let hard = result.app_llrs[j].value() < 0.0;
+                assert_eq!(hard, cw.get(j), "trial {trial}: BCJR mismatch at bit {j}");
+            }
         }
     }
 
