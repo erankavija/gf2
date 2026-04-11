@@ -1,0 +1,13 @@
+   Compiling gf2-coding v0.1.0 (/home/vkaskivuo/Projects/gf2/crates/gf2-coding)
+    Finished `release` profile [optimized] target(s) in 1.23s
+     Running `target/release/sim_runner dev/campaigns/phase1_fig3_sogrand.toml --parallel`
+[1/1] Running: fig3_ebch_sogrand (product, ebch_16_11, 7 SNR points)
+[0.5 dB] DONE: BER=1.07e-1 BLER=7.91e-1 (121 errs / 153 frames) in 41.2s [6 pts remain]
+[1.0 dB] DONE: BER=4.95e-2 BLER=4.01e-1 (120 errs / 299 frames) in 40.5s [5 pts remain]
+[1.5 dB] DONE: BER=1.51e-2 BLER=1.41e-1 (113 errs / 804 frames) in 41.0s [4 pts remain]
+[2.0 dB] DONE: BER=2.92e-3 BLER=3.09e-2 (105 errs / 3398 frames) in 1m03s [3 pts remain]
+[2.5 dB] DONE: BER=3.49e-4 BLER=4.49e-3 (101 errs / 22496 frames) in 3m10s [2 pts remain]
+[3.0 dB] DONE: BER=4.29e-5 BLER=6.03e-4 (100 errs / 165936 frames) in 13m51s [1 pts remain]
+[3.5 dB] DONE: BER=3.84e-6 BLER=6.00e-5 (12 errs / 200000 frames) in 10m23s [0 pts remain]
+[1/1] Done: fig3_ebch_sogrand in 30m30s (CSV + JSON: dev/simulation_results/phase1_final/fig3_ebch_sogrand.{csv,json})
+Campaign 'phase1_fig3_sogrand' complete (1 curves).
