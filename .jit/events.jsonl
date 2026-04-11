@@ -1477,3 +1477,5 @@
 {"type":"issue_state_changed","id":"44244045-cfa4-4651-bf42-1f220e19abd3","issue_id":"795c156e-7cb8-4223-93d9-7c232d79fdeb","timestamp":"2026-04-11T15:53:03.088951093Z","from":"in_progress","to":"done"}
 {"type":"issue_completed","id":"9b44201b-0342-4523-bf37-d29e78f1c8a6","issue_id":"795c156e-7cb8-4223-93d9-7c232d79fdeb","timestamp":"2026-04-11T15:53:03.088989213Z"}
 {"type":"issue_created","id":"ad18a56a-47fd-488d-8892-cca035268cb1","issue_id":"8b1609a8-dd50-4b57-9a6a-f5ee12b0bbb6","timestamp":"2026-04-11T17:24:58.640234570Z","title":"Implement dRM(32,21) with dynamic frozen bits (Coskun-Pfister construction)","priority":"critical"}
+{"type":"issue_state_changed","id":"a5ee7151-ba70-4e6b-8bcb-a5e31f518171","issue_id":"8b1609a8-dd50-4b57-9a6a-f5ee12b0bbb6","timestamp":"2026-04-11T17:25:22.545958604Z","from":"ready","to":"in_progress"}
+{"type":"issue_claimed","id":"209f8788-42eb-4e89-be4b-d7e4e358f6bd","issue_id":"8b1609a8-dd50-4b57-9a6a-f5ee12b0bbb6","timestamp":"2026-04-11T17:25:22.548897116Z","assignee":"agent:claude"}
