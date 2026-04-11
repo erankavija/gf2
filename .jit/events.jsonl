@@ -1452,3 +1452,11 @@
 {"type":"issue_created","id":"40ab6813-0a88-45d6-b9b1-506762ab694b","issue_id":"795c156e-7cb8-4223-93d9-7c232d79fdeb","timestamp":"2026-04-10T22:22:59.658055272Z","title":"HIP/ROCm GPU-accelerated batch BCJR decoder prototype","priority":"high"}
 {"type":"issue_state_changed","id":"0839b684-38b0-413d-b98f-781902bd8112","issue_id":"795c156e-7cb8-4223-93d9-7c232d79fdeb","timestamp":"2026-04-10T22:23:08.856790811Z","from":"ready","to":"in_progress"}
 {"type":"issue_claimed","id":"011b0c28-bd71-4169-9ab7-749de2f03194","issue_id":"795c156e-7cb8-4223-93d9-7c232d79fdeb","timestamp":"2026-04-10T22:23:08.857023931Z","assignee":"agent:claude"}
+{"type":"issue_claimed","id":"d0a64cab-4585-41a8-ab38-9b5e52db5f0f","issue_id":"99e3b33e-f925-4154-bb1b-d9940e89aa15","timestamp":"2026-04-10T22:35:09.045830195Z","assignee":"agent:claude"}
+{"type":"issue_state_changed","id":"98d902c6-3a21-45cc-97dd-3687d2c44624","issue_id":"99e3b33e-f925-4154-bb1b-d9940e89aa15","timestamp":"2026-04-10T22:35:15.344351825Z","from":"backlog","to":"in_progress"}
+{"type":"gate_passed","id":"ac1c30b2-6f17-4e06-b6be-8127e69ff671","issue_id":"795c156e-7cb8-4223-93d9-7c232d79fdeb","timestamp":"2026-04-10T22:51:21.971242713Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"80852918-a543-4712-a25a-c7eb88122ec2","issue_id":"795c156e-7cb8-4223-93d9-7c232d79fdeb","timestamp":"2026-04-10T22:55:50.400633179Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"e348ef19-31ea-4db1-8043-0482afc3d73f","issue_id":"795c156e-7cb8-4223-93d9-7c232d79fdeb","timestamp":"2026-04-10T23:03:59.710264623Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"28d55da5-7780-4c87-8a16-6ab37d1ac113","issue_id":"795c156e-7cb8-4223-93d9-7c232d79fdeb","timestamp":"2026-04-10T23:08:47.436371560Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"7ae239ea-b775-441e-9f72-c2875d9a848a","issue_id":"795c156e-7cb8-4223-93d9-7c232d79fdeb","timestamp":"2026-04-11T07:35:46.753954722Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"1cfaa1af-dc80-41cc-a526-3d4c5625b400","issue_id":"795c156e-7cb8-4223-93d9-7c232d79fdeb","timestamp":"2026-04-11T07:38:39.425291575Z","gate_key":"code-review","updated_by":"auto:executor"}

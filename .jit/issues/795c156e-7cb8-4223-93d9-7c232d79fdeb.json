@@ -1,7 +1,7 @@
 {
   "id": "795c156e-7cb8-4223-93d9-7c232d79fdeb",
   "title": "HIP/ROCm GPU-accelerated batch BCJR decoder prototype",
-  "description": "## Problem\n\nThe CPU BCJR decoder processes each component SISO call serially. In a dRM(32,21) product code turbo decoder, each half-iteration has 64 independent SISO calls (32 rows + 32 columns). Across 20 turbo iterations, that's 2560 BCJR decodes per frame. For simulation campaigns requiring 10K+ frames per SNR point, CPU throughput is the bottleneck.\n\n## Solution\n\nImplement a HIP kernel that batches multiple BCJR decodes into a single GPU launch on AMD RX 6950 XT (RDNA2, gfx1030, 80 CUs, 16GB VRAM). Key algorithmic insight: the XOR-indexed scatter in the BCJR trellis can be reformulated as a conflict-free read-permutation, eliminating atomics entirely.\n\nNew crate `gf2-kernels-hip` follows the `gf2-kernels-simd` unsafe-isolation pattern: HIP C++ kernel compiled by hipcc, linked via FFI, wrapped in safe Rust API.\n\n## Acceptance Criteria\n\n1. **HIP kernel compiles**: `hipcc --offload-arch=gfx1030` builds `bcjr_kernel.hip` without errors via `build.rs`.\n2. **GPU matches CPU**: For Hamming(7,4), GPU BCJR APP LLRs match CPU BCJR within 0.01 LLR units on 25 deterministic test vectors.\n3. **GPU matches CPU (dRM)**: For dRM(32,21), GPU BCJR APP LLRs match CPU BCJR within 0.2 LLR units (f32 reduction ordering tolerance) on 10 noiseless + 10 moderate-SNR test vectors.\n4. **Batch correctness**: `decode_batch(64 inputs)` produces identical results to 64 individual CPU `decode_siso()` calls (within 0.2 LLR tolerance).\n5. **Turbo integration**: `TurboDecoder` with GPU batch BCJR converges on eBCH(16,11) product code at high SNR (LLR=5.0, all-zero codeword).\n6. **Feature-gated**: All HIP code behind `hip` feature flag. `cargo build --workspace` succeeds without ROCm installed. `cargo build -p gf2-kernels-hip` requires hipcc.\n7. **Throughput improvement**: GPU batch decode of 64 SISO calls is at least 5x faster than 64 serial CPU BCJR calls (measured via `std::time::Instant` in a benchmark test).\n\n## Architecture\n\n- `crates/gf2-kernels-hip/` — new crate, HIP kernel + FFI + safe wrapper\n- `crates/gf2-coding/` — `hip` feature flag, `SisoEngine::GpuBcjr` variant in product/mod.rs\n- Thread mapping: 1024 threads/block, 2 states/thread, one block per BCJR decode\n- Shared memory: 16KB per block (alpha + beta), alpha_all in global memory (264KB/block)\n\n## References\n\nSee attached design doc for full kernel pseudocode, memory budget, and occupancy analysis.",
+  "description": "## Problem\n\nThe CPU BCJR decoder processes each component SISO call serially. In a dRM(32,21) product code turbo decoder, each half-iteration has 64 independent SISO calls (32 rows + 32 columns). Across 20 turbo iterations, that's 2560 BCJR decodes per frame. For simulation campaigns requiring 10K+ frames per SNR point, CPU throughput is the bottleneck.\n\n## Solution\n\nImplement a HIP kernel that batches multiple BCJR decodes into a single GPU launch on AMD RX 6950 XT (RDNA2, gfx1030, 80 CUs, 16GB VRAM). Key algorithmic insight: the XOR-indexed scatter in the BCJR trellis can be reformulated as a conflict-free read-permutation, eliminating atomics entirely.\n\nNew crate `gf2-kernels-hip` follows the `gf2-kernels-simd` unsafe-isolation pattern: HIP C++ kernel compiled by hipcc, linked via FFI, wrapped in safe Rust API.\n\n## Acceptance Criteria\n\n1. **HIP kernel compiles**: `hipcc --offload-arch=gfx1030` builds `bcjr_kernel.hip` without errors via `build.rs`. Build with `cargo build --manifest-path crates/gf2-kernels-hip/Cargo.toml` (crate is excluded from workspace to avoid requiring hipcc globally).\n2. **GPU matches CPU**: For Hamming(7,4), GPU BCJR APP LLRs match CPU BCJR within 0.01 LLR units on 25 deterministic test vectors.\n3. **GPU matches CPU (dRM)**: For dRM(32,21), GPU BCJR APP LLRs match CPU BCJR within 0.2 LLR units (f32 reduction ordering tolerance) on 10 noiseless + 10 moderate-SNR test vectors.\n4. **Batch correctness**: `decode_batch(64 inputs)` produces identical results to 64 individual CPU `decode_siso()` calls (within 0.2 LLR tolerance).\n5. **Turbo integration**: `TurboDecoder` with GPU batch BCJR (`use_gpu_bcjr=true` via `gf2-coding`'s `hip` feature) converges on eBCH(16,11) product code at high SNR (LLR=5.0, all-zero codeword).\n6. **Feature-gated**: All HIP code behind `hip` feature flag. `cargo build --workspace` succeeds without ROCm installed (crate excluded from workspace). `cargo build --manifest-path crates/gf2-kernels-hip/Cargo.toml` requires hipcc.\n7. **Throughput improvement**: GPU batch decode of 64 SISO calls is at least 5x faster than 64 serial CPU BCJR calls (measured via `std::time::Instant` in a benchmark test).\n\n## Architecture\n\n- `crates/gf2-kernels-hip/` — new crate (workspace-excluded), HIP kernel + FFI + safe wrapper\n- `crates/gf2-coding/` — `hip` feature flag, `SisoEngine::GpuBcjr` variant in product/mod.rs\n- Thread mapping: 1024 threads/block, 2 states/thread, one block per BCJR decode\n- Shared memory: 16KB per block (alpha + beta), alpha_all in global memory (264KB/block)\n\n## References\n\nSee attached design doc for full kernel pseudocode, memory budget, and occupancy analysis.",
   "state": "in_progress",
   "priority": "high",
   "assignee": "agent:claude",
@@ -10,7 +10,18 @@
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-11T07:34:33.019270324Z"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-11T07:35:46.795969353Z"
+    }
+  },
   "context": {},
   "documents": [
     {
@@ -27,5 +38,5 @@
     "component:gf2-kernels-hip"
   ],
   "created_at": "2026-04-10T22:22:59.657740831+00:00",
-  "updated_at": "2026-04-10T22:23:08.856847351+00:00"
+  "updated_at": "2026-04-11T07:39:40.299193801+00:00"
 }
