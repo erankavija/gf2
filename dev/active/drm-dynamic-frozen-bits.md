@@ -45,18 +45,20 @@ rows) added to RM(2,5)'s 16 positions. Without constraints on the
 frozen bits, adding ANY degree-3 row introduces weight-4 codewords,
 reducing d_min to 4.
 
-### Dynamic frozen bits
+### Improving d_min via extension row selection
 
-Definition 1 from Coskun & Pfister: for each frozen position i in F,
-set u_i = sum_{j in A^{i-1}} v_{j,i} * u_j, where v_{j,i} are random
-coefficients in GF(2). This makes each frozen bit a linear combination
-of preceding information bits.
+The Coskun & Pfister dRM ensemble (arxiv:2103.16680) suggests using
+random linear combinations of polar transform rows, with greedy
+selection to maximize d_min. Our implementation follows this approach:
 
-These constraints act as extra parity equations. With 11 frozen positions
-each having a random linear constraint, the probability of any specific
-weight-4 codeword surviving is ~(1/2)^{11} ~ 1/2048. Since our code
-has only 152 weight-4 codewords, essentially all are eliminated,
-increasing d_min from 4 to 6 (the maximum achievable for (32,21)).
+1. Start with the 16 RM(2,5) rows (d_min=8)
+2. For each of 5 extension positions, generate a random XOR of G_32
+   rows and accept it only if d_min of the extended code is still ≥ 6
+3. The seed for the random generator determines which rows are chosen
+
+With seed=3, the search finds 5 valid extension rows on the first
+try. The resulting (32, 21, 6) code has zero weight-4 and weight-5
+codewords, verified by exhaustive enumeration of all 2^21 codewords.
 
 ## Design
 
