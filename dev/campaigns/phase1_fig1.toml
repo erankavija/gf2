@@ -12,9 +12,9 @@ name = "fig1_drm_product"
 type = "product"
 component = "drm_32_21"
 turbo = { max_iterations = 20, alpha = 0.5, list_size = 4, max_queries = 50000, use_bcjr = true, use_gpu_bcjr = true }
-snr = { start = 0.5, stop = 2.5, step = 0.25 }
+snr = { start = 0.5, stop = 2.0, step = 0.25 }
 min_errors = 100
-max_frames = 5000
+max_frames = 200000
 
 [[curve]]
 name = "fig1_ldpc_nms"
