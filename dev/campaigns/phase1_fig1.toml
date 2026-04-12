@@ -1,7 +1,9 @@
 # Phase 1, Figure 1: (1024, 441) dRM product code vs 5G NR LDPC
 #
-# Reproduces the BLER curves from Figure 1 of the GRAND paper.
-# Three curves: turbo-SOGRAND product code, LDPC NMS, LDPC sum-product.
+# Canonical Phase 1 Figure 1 campaign.
+# Compares dRM(32,21)^2 product code decoded with GPU BCJR turbo
+# against 5G NR LDPC with BP (sum-product) and NMS decoders.
+# BCJR is used because SOGRAND is impractical for n=32 (~20s/frame).
 
 [campaign]
 name = "phase1_fig1"

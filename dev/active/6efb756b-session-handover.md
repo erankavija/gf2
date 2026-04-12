@@ -27,9 +27,17 @@ Waves 1-3 complete (all 10 implementation issues done, gates passed). Wave 4 (si
 Product code BLER < LDPC NMS BLER at all SNR points 0-4 dB (verified in quick mode).
 
 ### Fig 1 dRM Product — VERIFIED with corrected (32,21,6) code
-dRM product code outperforms LDPC BP at 1.75+ dB (BLER 0.0006 vs 0.000641).
-Full statistics (≥100 frame errors) in `dev/simulation_results/phase1_final/`.
-See `dev/simulation_results/phase1_comparison_report.md` for full comparison.
+dRM product code outperforms LDPC BP at 1.75+ dB.
+Authoritative results: `dev/simulation_results/fig1_drm_product.{csv,json}`
+Campaign: `dev/campaigns/phase1_fig1.toml`
+
+### Fig 3 eBCH Product — VERIFIED with SOGRAND (queries/bit)
+eBCH product code outperforms the paper's LDPC BP from 1.5 dB onward and
+our checked-in LDPC SP baseline from 2.0 dB onward.
+Authoritative results: `dev/simulation_results/fig3_ebch_product.{csv,json}`
+Campaign: `dev/campaigns/phase1_fig3.toml`
+
+Full comparison: `dev/simulation_results/phase1_comparison_report.md`
 
 ## Next Session Plan
 

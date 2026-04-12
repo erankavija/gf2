@@ -14,6 +14,9 @@ use gf2_coding::traits::{BlockEncoder, IterativeSoftDecoder};
 use gf2_core::BitVec;
 use rand::rngs::StdRng;
 use rand::SeedableRng;
+use std::collections::BTreeMap;
+use std::fs;
+use std::path::PathBuf;
 
 // =========================================================================
 // Fig 3: (256, 121) eBCH product code
@@ -277,3 +280,229 @@ fn test_csv_output_format() {
 }
 
 use gf2_coding::simulation::count_bit_errors;
+
+#[derive(Debug)]
+struct Phase1CsvRow {
+    bler: f64,
+    frame_errors: u64,
+    queries_per_bit: f64,
+}
+
+fn repo_root() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..")
+}
+
+fn repo_path(relative: &str) -> PathBuf {
+    repo_root().join(relative)
+}
+
+fn read_repo_text(relative: &str) -> String {
+    let path = repo_path(relative);
+    fs::read_to_string(&path)
+        .unwrap_or_else(|err| panic!("failed to read {}: {err}", path.display()))
+}
+
+fn normalize_snr(snr: f64) -> String {
+    format!("{snr:.2}")
+}
+
+fn parse_phase1_csv(relative: &str) -> BTreeMap<String, Phase1CsvRow> {
+    let text = read_repo_text(relative);
+    text.lines()
+        .skip(1)
+        .filter(|line| !line.trim().is_empty())
+        .map(|line| {
+            let columns: Vec<_> = line.split(',').collect();
+            assert_eq!(
+                columns.len(),
+                9,
+                "unexpected CSV shape in {relative}: {line}"
+            );
+            let snr = columns[0]
+                .parse::<f64>()
+                .unwrap_or_else(|err| panic!("invalid SNR in {relative}: {err}"));
+            (
+                normalize_snr(snr),
+                Phase1CsvRow {
+                    bler: columns[2]
+                        .parse::<f64>()
+                        .unwrap_or_else(|err| panic!("invalid BLER in {relative}: {err}")),
+                    frame_errors: columns[6].parse::<u64>().unwrap_or_else(|err| {
+                        panic!("invalid frame error count in {relative}: {err}")
+                    }),
+                    queries_per_bit: columns[8]
+                        .parse::<f64>()
+                        .unwrap_or_else(|err| panic!("invalid queries/bit in {relative}: {err}")),
+                },
+            )
+        })
+        .collect()
+}
+
+fn parse_report_table(report: &str, heading: &str) -> BTreeMap<String, Vec<String>> {
+    let mut in_section = false;
+    let mut rows = BTreeMap::new();
+
+    for line in report.lines() {
+        if line == heading {
+            in_section = true;
+            continue;
+        }
+        if in_section && line.starts_with("## ") {
+            break;
+        }
+        if !in_section || !line.trim_start().starts_with('|') {
+            continue;
+        }
+
+        let columns: Vec<String> = line
+            .trim()
+            .trim_matches('|')
+            .split('|')
+            .map(|column| column.trim().to_string())
+            .collect();
+        if columns.is_empty()
+            || columns[0] == "Eb/N0 (dB)"
+            || columns
+                .iter()
+                .all(|column| column.chars().all(|ch| ch == '-' || ch == ':'))
+        {
+            continue;
+        }
+        rows.insert(columns[0].clone(), columns);
+    }
+
+    rows
+}
+
+fn parse_report_value(cell: &str) -> Option<f64> {
+    if cell == "—" {
+        None
+    } else if let Some(value) = cell.strip_suffix('K') {
+        Some(
+            value
+                .parse::<f64>()
+                .unwrap_or_else(|err| panic!("invalid K-suffixed value {cell}: {err}"))
+                * 1000.0,
+        )
+    } else {
+        Some(
+            cell.parse::<f64>()
+                .unwrap_or_else(|err| panic!("invalid numeric report value {cell}: {err}")),
+        )
+    }
+}
+
+fn assert_approx_eq(actual: f64, expected: f64, tolerance: f64) {
+    let diff = (actual - expected).abs();
+    assert!(
+        diff <= tolerance,
+        "expected {expected} within {tolerance}, got {actual} (diff {diff})"
+    );
+}
+
+#[test]
+fn test_phase1_canonical_campaign_surface() {
+    assert!(repo_path("dev/campaigns/phase1_fig1.toml").is_file());
+    assert!(repo_path("dev/campaigns/phase1_fig3.toml").is_file());
+    assert!(!repo_path("dev/campaigns/phase1_fig1_highstat.toml").exists());
+    assert!(!repo_path("dev/campaigns/phase1_fig3_sogrand.toml").exists());
+}
+
+#[test]
+fn test_phase1_canonical_result_surface() {
+    assert!(repo_path("dev/simulation_results/fig1_drm_product.csv").is_file());
+    assert!(repo_path("dev/simulation_results/fig1_drm_product.json").is_file());
+    assert!(repo_path("dev/simulation_results/fig3_ebch_product.csv").is_file());
+    assert!(repo_path("dev/simulation_results/fig3_ebch_product.json").is_file());
+    assert!(repo_path("dev/simulation_results/phase1_final/fig3_sogrand_stdout.log").is_file());
+
+    assert!(!repo_path("dev/simulation_results/phase1_final/fig1_drm_product.csv").exists());
+    assert!(!repo_path("dev/simulation_results/phase1_final/fig1_drm_product.json").exists());
+    assert!(!repo_path("dev/simulation_results/phase1_final/fig3_ebch_sogrand.csv").exists());
+    assert!(!repo_path("dev/simulation_results/phase1_final/fig3_ebch_sogrand.json").exists());
+}
+
+#[test]
+fn test_phase1_report_matches_figure1_artifacts() {
+    let report = read_repo_text("dev/simulation_results/phase1_comparison_report.md");
+    let product = parse_phase1_csv("dev/simulation_results/fig1_drm_product.csv");
+    let sp = parse_phase1_csv("dev/simulation_results/fig1_ldpc_sp.csv");
+    let nms = parse_phase1_csv("dev/simulation_results/fig1_ldpc_nms.csv");
+    let table = parse_report_table(&report, "## Figure 1: dRM(32,21)^2 product code vs LDPC");
+
+    for snr in ["0.50", "0.75", "1.00", "1.25", "1.50", "1.75", "2.00"] {
+        let row = table
+            .get(snr)
+            .unwrap_or_else(|| panic!("missing Figure 1 row {snr}"));
+        let product_row = product
+            .get(snr)
+            .unwrap_or_else(|| panic!("missing Figure 1 product CSV row {snr}"));
+        assert_approx_eq(parse_report_value(&row[1]).unwrap(), product_row.bler, 5e-4);
+        assert_eq!(row[2], product_row.frame_errors.to_string());
+    }
+
+    for snr in ["0.50", "1.00", "1.50", "2.00"] {
+        let row = table
+            .get(snr)
+            .unwrap_or_else(|| panic!("missing Figure 1 row {snr}"));
+        let sp_row = sp
+            .get(snr)
+            .unwrap_or_else(|| panic!("missing Figure 1 LDPC SP row {snr}"));
+        let nms_row = nms
+            .get(snr)
+            .unwrap_or_else(|| panic!("missing Figure 1 LDPC NMS row {snr}"));
+        assert_approx_eq(parse_report_value(&row[3]).unwrap(), sp_row.bler, 5e-4);
+        assert_approx_eq(parse_report_value(&row[4]).unwrap(), nms_row.bler, 5e-4);
+    }
+
+    for snr in ["0.75", "1.25", "1.75"] {
+        let row = table
+            .get(snr)
+            .unwrap_or_else(|| panic!("missing Figure 1 row {snr}"));
+        assert_eq!(row[3], "—");
+        assert_eq!(row[4], "—");
+    }
+}
+
+#[test]
+fn test_phase1_report_matches_figure3_artifacts() {
+    let report = read_repo_text("dev/simulation_results/phase1_comparison_report.md");
+    let product = parse_phase1_csv("dev/simulation_results/fig3_ebch_product.csv");
+    let sp = parse_phase1_csv("dev/simulation_results/fig3_ldpc_sp.csv");
+    let nms = parse_phase1_csv("dev/simulation_results/fig3_ldpc_nms.csv");
+    let table = parse_report_table(&report, "## Figure 3: eBCH(16,11)^2 product code vs LDPC");
+
+    for snr in ["0.50", "1.00", "1.50", "2.00", "2.50", "3.00", "3.50"] {
+        let row = table
+            .get(snr)
+            .unwrap_or_else(|| panic!("missing Figure 3 row {snr}"));
+        let product_row = product
+            .get(snr)
+            .unwrap_or_else(|| panic!("missing Figure 3 product CSV row {snr}"));
+        let sp_row = sp
+            .get(snr)
+            .unwrap_or_else(|| panic!("missing Figure 3 LDPC SP row {snr}"));
+        let nms_row = nms
+            .get(snr)
+            .unwrap_or_else(|| panic!("missing Figure 3 LDPC NMS row {snr}"));
+
+        assert_approx_eq(parse_report_value(&row[1]).unwrap(), product_row.bler, 5e-4);
+        assert_approx_eq(
+            parse_report_value(&row[2]).unwrap(),
+            product_row.queries_per_bit,
+            50.0,
+        );
+        assert_approx_eq(parse_report_value(&row[3]).unwrap(), sp_row.bler, 5e-4);
+        assert_approx_eq(parse_report_value(&row[4]).unwrap(), nms_row.bler, 5e-4);
+    }
+
+    assert!(report.contains("`dev/campaigns/phase1_fig1.toml`, `dev/campaigns/phase1_fig3.toml`"));
+    assert!(report.contains("Quick/alignment helper"));
+    assert!(report.contains("`100/max_frames`"));
+    assert!(!report.contains("exceeds 1/max_frames"));
+    assert!(!report.contains("between 1.5 and 1.75 dB"));
+    assert!(report.contains("between 1.5 and\n2.0 dB"));
+    assert!(!report.contains("identical extrinsic to SOGRAND"));
+    assert!(!report.contains("phase1_final/fig1_drm_product"));
+}
