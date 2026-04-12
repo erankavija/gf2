@@ -23,6 +23,7 @@ use serde::Deserialize;
 use std::path::{Path, PathBuf};
 
 use gf2_coding::bch::extended::ExtendedBchCode;
+use gf2_coding::crc::CrcCode;
 use gf2_coding::drm::DrmCode;
 use gf2_coding::gldpc::{GldpcDecoder, GldpcDecoderConfig, QcGldpcCode};
 use gf2_coding::grand::OrbGrandConfig;
@@ -403,6 +404,14 @@ fn run_curve(
                 "ebch_64_57" => run_product(
                     ExtendedBchCode::ebch_64_57(),
                     ExtendedBchCode::ebch_64_57(),
+                    turbo_cfg,
+                    &channel,
+                    &config,
+                    parallel,
+                ),
+                "crc_25_15" => run_product(
+                    CrcCode::crc_25_15(),
+                    CrcCode::crc_25_15(),
                     turbo_cfg,
                     &channel,
                     &config,
@@ -1199,6 +1208,42 @@ max_frames = 1000
             sim.output_path.as_ref().unwrap().to_str().unwrap(),
             "/tmp/out/test_ldpc_nms.csv"
         );
+    }
+
+    #[test]
+    fn test_run_curve_crc_25_15_product() {
+        let config: CampaignConfig = toml::from_str(
+            r#"
+[campaign]
+name = "crc_curve_test"
+output_dir = "/tmp/ignored"
+
+[[curve]]
+name = "crc_25_15_smoke"
+type = "product"
+component = "crc_25_15"
+turbo = { max_iterations = 1, alpha = 0.5, list_size = 1, max_queries = 1000 }
+snr = { start = 4.0, stop = 4.0, step = 0.5 }
+min_errors = 1
+max_frames = 1
+"#,
+        )
+        .unwrap();
+
+        let output_dir =
+            std::env::temp_dir().join(format!("gf2-sim-runner-crc-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&output_dir);
+        std::fs::create_dir_all(&output_dir).unwrap();
+
+        let results =
+            run_curve(&config.curve[0], output_dir.to_str().unwrap(), false, 123).unwrap();
+
+        assert_eq!(results.points.len(), 1);
+        assert!(results.points[0].ber.is_finite());
+        assert!(results.points[0].bler.is_finite());
+        assert!(output_dir.join("crc_25_15_smoke.csv").is_file());
+
+        std::fs::remove_dir_all(&output_dir).unwrap();
     }
 
     #[test]

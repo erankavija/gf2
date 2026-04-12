@@ -1,41 +1,38 @@
-# Phase 1, Figure 3: (256, 121) eBCH product code vs 5G NR LDPC
-#
-# Canonical Phase 1 Figure 3 campaign.
-# Compares eBCH(16,11)^2 product code decoded with turbo-SOGRAND
-# against 5G NR LDPC with BP (sum-product) and NMS decoders.
+# Canonical Phase 2 Figure 6 campaign.
+# (256, 49) eBCH(16,7)^2 product code vs 5G NR LDPC under AWGN.
 
 [campaign]
-name = "phase1_fig3"
+name = "phase2_fig6"
 output_dir = "dev/simulation_results"
 
 [[curve]]
-name = "fig3_ebch_product"
+name = "fig6_ebch_16_7_product"
 type = "product"
-component = "ebch_16_11"
+component = "ebch_16_7"
 turbo = { max_iterations = 20, alpha = 0.5, list_size = 4, max_queries = 100000 }
-snr = { start = 0.5, stop = 3.5, step = 0.5 }
+snr = { start = 0.0, stop = 4.0, step = 0.5 }
 min_errors = 100
 max_frames = 200000
 
 [[curve]]
-name = "fig3_ldpc_nms"
+name = "fig6_ldpc_nms"
 type = "ldpc"
 base_graph = 2
 n = 256
-k = 121
+k = 49
 algorithm = "nms"
 scale = 0.75
 snr = { start = 0.0, stop = 4.0, step = 0.5 }
 min_errors = 100
-max_frames = 500000
+max_frames = 200000
 
 [[curve]]
-name = "fig3_ldpc_sp"
+name = "fig6_ldpc_sp"
 type = "ldpc"
 base_graph = 2
 n = 256
-k = 121
+k = 49
 algorithm = "sum_product"
 snr = { start = 0.0, stop = 4.0, step = 0.5 }
 min_errors = 100
-max_frames = 500000
+max_frames = 200000
