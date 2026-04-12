@@ -1,0 +1,28 @@
+{
+  "id": "c007875b-33fb-4ebd-b377-38045fbb9c30",
+  "title": "Define bit-channel metadata and demapper analysis modes",
+  "description": "Define how the modem framework represents bit positions within a symbol for analysis, and make demapper semantics explicit for analytical and empirical tooling.\n\n## Success Criteria\n\n- [ ] The modem API exposes bit-position or bit-channel identity for supported constellations.\n- [ ] Analysis-facing demapper mode selection is explicit, including supported exact and approximate LLR semantics.\n- [ ] Normalization and noise-parameter assumptions needed for analysis are documented in the API contract.\n\n## Notes\n\nThis task should extend the shared modem API rather than introducing a parallel analysis-only modem surface.",
+  "state": "backlog",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [
+    "24144d1a-f24a-4f00-a69e-da920f7f7a4d"
+  ],
+  "gates_required": [
+    "tdd-reminder",
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-coding",
+    "epic:d4851c3d",
+    "story:bit-channel-analysis"
+  ],
+  "created_at": "2026-04-12T20:04:48.345075553+00:00",
+  "updated_at": "2026-04-12T20:05:02.649806145+00:00"
+}

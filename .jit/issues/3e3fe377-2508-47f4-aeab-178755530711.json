@@ -1,0 +1,28 @@
+{
+  "id": "3e3fe377-2508-47f4-aeab-178755530711",
+  "title": "Add modem builders and validation",
+  "description": "Implement validated modem construction so users can create custom constellations and built-in presets with clear failure modes.\n\n## Success Criteria\n\n- [ ] Builders validate bijection, bits-per-symbol consistency, and normalization requirements.\n- [ ] Invalid configurations are rejected with explicit user-facing errors.\n- [ ] Builder outputs are ready to feed both the reference and optimized modem paths.\n\n## Notes\n\nThis task closes the core API story by turning the shared data model into a safe construction surface.",
+  "state": "backlog",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [
+    "d36ae697-cd9b-419d-89cb-24410496a25e"
+  ],
+  "gates_required": [
+    "tdd-reminder",
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-coding",
+    "epic:d4851c3d",
+    "story:modem-core-api"
+  ],
+  "created_at": "2026-04-12T19:40:37.525658012+00:00",
+  "updated_at": "2026-04-12T19:42:10.460851662+00:00"
+}

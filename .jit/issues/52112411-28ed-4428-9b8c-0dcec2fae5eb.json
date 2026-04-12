@@ -1,0 +1,28 @@
+{
+  "id": "52112411-28ed-4428-9b8c-0dcec2fae5eb",
+  "title": "Implement optimized Gray square-QAM mapper and demapper",
+  "description": "Add the optimized modem path for Gray-coded square QAM, including QPSK, 16-QAM, 64-QAM, and 256-QAM. This story delivers the high-performance path needed for common BICM and DVB-T2 workflows.\n\n## Background\n\nArbitrary-constellation support is necessary for ergonomics, but the common square-QAM family should not pay the full generic cost. The optimized path should exploit Gray-PAM structure, precomputed tables, and batch-friendly memory layout while remaining API-compatible with the generic modem surface.\n\n## Success Criteria\n\n- [ ] Built-in Gray square-QAM presets exist for the supported modulations.\n- [ ] The fast path shares the same high-level API as the arbitrary-constellation reference path.\n- [ ] Benchmarked hot loops avoid per-symbol allocation and are structured for SIMD dispatch.\n- [ ] Fast-path outputs match the reference demapper across representative AWGN test cases.\n\n## Notes\n\nThis story is the performance-critical core of the epic and should be designed to support SIMD acceleration cleanly.",
+  "state": "backlog",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [
+    "24144d1a-f24a-4f00-a69e-da920f7f7a4d",
+    "c5cee991-b410-469c-bd9b-849f717f8f51"
+  ],
+  "gates_required": [
+    "tdd-reminder",
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:story",
+    "component:gf2-coding",
+    "epic:d4851c3d"
+  ],
+  "created_at": "2026-04-12T19:39:51.666381904+00:00",
+  "updated_at": "2026-04-12T19:44:31.171081663+00:00"
+}

@@ -1,0 +1,28 @@
+{
+  "id": "625f5e1b-21a6-4297-8259-7b421df14a1a",
+  "title": "Add Gray square-QAM presets",
+  "description": "Provide built-in normalized Gray-coded presets for BPSK, QPSK, 16-QAM, 64-QAM, and 256-QAM through the shared modem surface.\n\n## Success Criteria\n\n- [ ] Public preset constructors exist for the supported Gray-coded square-QAM family.\n- [ ] Presets use the same high-level modem API as custom constellations.\n- [ ] Preset definitions are normalized consistently so downstream demappers can rely on them.\n\n## Notes\n\nThis task is the first leaf task under the optimized Gray square-QAM story.",
+  "state": "backlog",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [
+    "3e3fe377-2508-47f4-aeab-178755530711"
+  ],
+  "gates_required": [
+    "tdd-reminder",
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-coding",
+    "epic:d4851c3d",
+    "story:gray-square-qam-fast-path"
+  ],
+  "created_at": "2026-04-12T19:40:37.531504266+00:00",
+  "updated_at": "2026-04-12T19:42:10.441590278+00:00"
+}

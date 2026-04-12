@@ -1,19 +1,31 @@
 {
   "id": "d4851c3d-a9ae-42cc-bf5d-31ab973ba0fe",
   "title": "Implement QAM modulation with soft-decision demapping",
-  "description": "Implement QAM modulation (QPSK, 16/64/256-QAM) with soft-decision demapping for the FEC chain. This includes LLR computation from constellation points and integration with the existing channel simulation framework. Required for end-to-end DVB-T2 BICM simulation.",
-  "state": "ready",
+  "description": "Build a general modem framework for link simulation that supports arbitrary constellations and arbitrary bit mappings, while making common Gray-coded square QAM the optimized default path for production-style BICM workflows.\n\n## Background\n\nThe current modulation surface is fragmented across `crates/gf2-coding/src/channel.rs` (BPSK + AWGN), `crates/gf2-coding/src/modulation.rs` (QPSK-only logic), and `crates/gf2-coding/src/fading.rs` (QPSK + Rician integration). That split was sufficient for the SOGRAND-era placeholder QPSK path, but it does not scale to DVB-T2-style QAM, custom research constellations, or accelerator-friendly batch demapping.\n\nThis epic replaces the placeholder QPSK implementation with a shared modem framework that separates constellation geometry, bit labeling, mapping, demapping, and channel composition. The framework must support arbitrary constellations for research ergonomics, while providing extremely fast Gray-coded square-QAM presets for QPSK, 16-QAM, 64-QAM, and 256-QAM. CPU scalar + SIMD support is required in this epic; GPU work is tracked only as a conditional prototype branch.\n\nBit-channel analysis is also a requirement. Different bit positions inside one symbol can have different reliability, so the modem surface must support per-bit-channel LLR distribution and information-metric analysis without imposing overhead on simulations that do not request it.\n\nDownstream story `003e4088` depends on this epic for the unified DVB-T2 FEC + QAM chain, so the resulting API must be ergonomic enough to slot into the existing simulation harness without bespoke glue.\n\n## Success Criteria\n\n- [ ] The crate exposes an ergonomic modem framework that supports arbitrary constellations and arbitrary bit mappings.\n- [ ] Gray-coded square-QAM presets for QPSK, 16-QAM, 64-QAM, and 256-QAM exist and are the optimized default path for common BICM workflows.\n- [ ] Existing BPSK/AWGN and QPSK/Rician simulation flows run through framework-backed adapters rather than bespoke modem implementations.\n- [ ] Soft-decision demapping is validated against reference formulas and tests for AWGN and the current fading use cases.\n- [ ] Bit-channel analysis tools can evaluate per-bit LLR behavior and information metrics without penalizing non-analysis simulation paths.\n- [ ] Benchmarks cover generic versus specialized modem paths, and the accelerator interface is ready for SIMD and future GPU backends.\n- [ ] The downstream DVB-T2 integration story `003e4088` can consume the new modem surface without bespoke glue.\n\n## Notes\n\nCreate child stories and leaf tasks that cover the modem core API, the arbitrary-constellation reference path, the Gray square-QAM fast path, simulation integration, migration of legacy modem surfaces, bit-channel analysis, public-facing validation and benchmarking, and a conditional GPU prototype path.",
+  "state": "backlog",
   "priority": "high",
-  "assignee": null,
-  "dependencies": [],
+  "assignee": "agent:claude",
+  "dependencies": [
+    "0884289e-33a4-495b-97a3-9ba5625dd878",
+    "19069bc1-2010-4a41-804e-316036ec3e11",
+    "e2c0f65a-5e65-4cfc-abdd-e65377f7da2b"
+  ],
   "gates_required": [],
   "gates_status": {},
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/active/d4851c3d-modem-framework-design.md",
+      "commit": null,
+      "label": "General modem framework design",
+      "doc_type": "design",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:epic",
     "component:gf2-coding"
   ],
   "created_at": "2026-02-21T19:35:51.598964928+00:00",
-  "updated_at": "2026-02-21T19:35:51.598969878+00:00"
+  "updated_at": "2026-04-12T20:13:31.962189745+00:00"
 }

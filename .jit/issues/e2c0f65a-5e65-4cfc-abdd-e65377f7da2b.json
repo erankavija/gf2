@@ -1,0 +1,28 @@
+{
+  "id": "e2c0f65a-5e65-4cfc-abdd-e65377f7da2b",
+  "title": "Add bit-channel analysis for per-bit LLR statistics and information metrics",
+  "description": "Add explicit bit-channel analysis support so the modem framework can analyze reliability differences between bit positions within a symbol. This story covers per-bit LLR distributions, demapper-mode semantics, and information metrics such as MI and GMI, while keeping analysis strictly opt-in.\n\n## Background\n\nFor QAM and other higher-order constellations, different bit positions inside one symbol can have different reliability. The modem framework therefore needs more than just correct map and demap behavior: it must expose bit positions as analyzable channels, make demapper approximations explicit, and provide tools for per-bit LLR and information-metric analysis.\n\nThis analysis capability must not slow down ordinary simulations. Many production or regression runs will not request bit-channel analysis, so the hot modem and simulation paths must remain unchanged in behavior and performance when analysis is disabled.\n\n## Success Criteria\n\n- [ ] The framework exposes bit-position and bit-channel identity explicitly enough to analyze different bits within one symbol.\n- [ ] Demapper semantics used for analysis are explicit, including whether the analysis path uses exact log-MAP, max-log, or another supported approximation.\n- [ ] Analysis tools can compute or export per-bit conditional LLR statistics and distributions, including $p(L_k \\mid B_k = 0)$ and $p(L_k \\mid B_k = 1)$.\n- [ ] Analysis tools can estimate per-bit mutual information or GMI for supported modem paths.\n- [ ] Bit-channel analysis is opt-in and does not impose measurable overhead, extra allocations, or analysis-specific work on simulations that do not request it.\n\n## Notes\n\nThis story is about observability and research tooling around the modem framework, not about creating a second modem implementation. It must rely on the shared modem source of truth.",
+  "state": "backlog",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [
+    "448491d5-c2be-41ba-89cf-0147e0679347",
+    "52112411-28ed-4428-9b8c-0dcec2fae5eb"
+  ],
+  "gates_required": [
+    "tdd-reminder",
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:story",
+    "component:gf2-coding",
+    "epic:d4851c3d"
+  ],
+  "created_at": "2026-04-12T20:04:48.343842982+00:00",
+  "updated_at": "2026-04-12T20:05:02.783880323+00:00"
+}
