@@ -1613,3 +1613,15 @@
 {"type":"issue_state_changed","id":"a1947f0e-0892-41af-bc5d-7ee575474781","issue_id":"80f218ca-7bce-4cf6-bf03-e1fe2789620d","timestamp":"2026-04-12T20:05:02.714294112Z","from":"ready","to":"backlog"}
 {"type":"issue_claimed","id":"fe029e23-455b-40d3-8bfd-5d34d1216fc8","issue_id":"d4851c3d-a9ae-42cc-bf5d-31ab973ba0fe","timestamp":"2026-04-12T20:11:06.459386289Z","assignee":"agent:claude"}
 {"type":"issue_created","id":"4ce5c69c-e95a-445a-a24b-bfa1784c036e","issue_id":"d77519a3-0cc7-42f7-90d8-042a9309f2ab","timestamp":"2026-04-12T21:46:49.662693149Z","title":"Investigate shared CPU/GPU work-queue strategy for maximum decoder throughput","priority":"high"}
+{"type":"issue_state_changed","id":"ce353926-398d-47c4-8689-b1c5a63ed482","issue_id":"d4851c3d-a9ae-42cc-bf5d-31ab973ba0fe","timestamp":"2026-04-13T11:47:11.677941666Z","from":"backlog","to":"in_progress"}
+{"type":"gate_passed","id":"642ce02e-24ad-4b84-9c3b-907d24e7953a","issue_id":"c87c5043-ff07-4209-bf23-a1a4b71daaa9","timestamp":"2026-04-13T11:48:17.810135595Z","gate_key":"tdd-reminder","updated_by":"agent:project-lead"}
+{"type":"issue_state_changed","id":"be0f84af-b87e-482c-bac1-838e9a58ecfc","issue_id":"c87c5043-ff07-4209-bf23-a1a4b71daaa9","timestamp":"2026-04-13T11:48:20.920715387Z","from":"ready","to":"in_progress"}
+{"type":"issue_claimed","id":"50429a9d-25dd-40f3-89ff-529397b4e7cf","issue_id":"c87c5043-ff07-4209-bf23-a1a4b71daaa9","timestamp":"2026-04-13T11:48:20.923668509Z","assignee":"agent:claude"}
+{"type":"gate_passed","id":"86453039-5442-4788-941f-95d5346ba3bd","issue_id":"c87c5043-ff07-4209-bf23-a1a4b71daaa9","timestamp":"2026-04-13T12:08:18.005287709Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"3a72c24d-1bab-477e-8eec-4294ede792cb","issue_id":"c87c5043-ff07-4209-bf23-a1a4b71daaa9","timestamp":"2026-04-13T12:12:26.062724820Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"f20bb704-cac6-4128-ae69-913166d716e8","issue_id":"c87c5043-ff07-4209-bf23-a1a4b71daaa9","timestamp":"2026-04-13T12:12:26.076786720Z","gate_key":"doc-review","updated_by":"agent:project-lead"}
+{"type":"issue_state_changed","id":"acfbb68e-c905-4318-9736-bd0418158777","issue_id":"c87c5043-ff07-4209-bf23-a1a4b71daaa9","timestamp":"2026-04-13T12:12:28.883169221Z","from":"in_progress","to":"gated"}
+{"type":"gate_passed","id":"8703d2be-4232-42c1-9567-2115a843282d","issue_id":"c87c5043-ff07-4209-bf23-a1a4b71daaa9","timestamp":"2026-04-13T12:17:20.635895197Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"issue_state_changed","id":"7d9fb659-ac56-486c-9848-d0169ce97120","issue_id":"c87c5043-ff07-4209-bf23-a1a4b71daaa9","timestamp":"2026-04-13T12:17:29.786662731Z","from":"gated","to":"done"}
+{"type":"issue_completed","id":"39cde1b8-8651-4c1f-8dac-386c4e731b63","issue_id":"c87c5043-ff07-4209-bf23-a1a4b71daaa9","timestamp":"2026-04-13T12:17:29.786699291Z"}
+{"type":"issue_state_changed","id":"e34155dc-dd31-4ef7-b0f2-36fee136dfc4","issue_id":"d36ae697-cd9b-419d-89cb-24410496a25e","timestamp":"2026-04-13T12:17:30.127150828Z","from":"backlog","to":"ready"}

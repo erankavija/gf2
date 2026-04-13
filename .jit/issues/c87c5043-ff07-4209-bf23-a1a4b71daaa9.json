@@ -2,7 +2,7 @@
   "id": "c87c5043-ff07-4209-bf23-a1a4b71daaa9",
   "title": "Define constellation and labeling data model",
   "description": "Introduce the core value types for constellation points, bit labels, normalization metadata, bit-channel identity/semantics, demap-method selection, and modem capabilities — the shared foundation that every downstream story in epic `d4851c3d` builds on.\n\nThis task is the first and most widely consumed leaf task under the modem core API story (`24144d1a`). Eight downstream issues depend on the exact type names and invariants established here: trait task `d36ae697`, builder task `3e3fe377`, reference-path story `51334873`, Gray-QAM fast-path story `52112411`, bit-channel analysis story `e2c0f65a`, simulation/channel refactor `92186a40`, legacy-surface migration `46ffe45a`, and DVB-T2 integration `003e4088`. A breaking change here forces renames across the epic, so the implementation plan front-loads every decision the downstream work needs.\n\n## Scope\n\nShip the complete sealed `ModemSpec` type surface plus BPSK and Gray square-QAM presets (QPSK, 16-QAM, 64-QAM, 256-QAM) with bit-channel semantics populated, so later tasks can start immediately against stable names.\n\nSee the implementation plan for full detail:\n**`dev/active/c87c5043-constellation-data-model-plan.md`** (linked as a design document on this issue).\n\n## Design decisions (locked in 2026-04-13 interview)\n\n- **Scalar:** generic `ModemSpec<S: ModemScalar>`, with `ModemScalar` sealed to `f32` and `f64`. `pub type DefaultScalar = f32`; presets default to `ModemSpec<f32>`.\n- **LLR ordering:** MSB-first within a symbol, symbol-major across symbols.\n- **Normalization:** post-normalized points stored directly; `Normalization` variant and scale factor retained on the spec.\n- **Sealing:** `ModemSpec` is sealed (private fields, construction only via builders/presets). Public `ModemView<'a, S>` exposes both contiguous slices and per-item accessors.\n- **Label storage:** `LabelWord { bits: u16, width: u8 }`; 16-bit headroom for research constellations, `bits_per_symbol` tracked separately on the spec.\n- **Bit-channel semantics:** ship `BitChannelSemantics` on day one with `Opaque`, `SingleAxisPam`, `IAxisPam`, `QAxisPam` variants. Presets populate the semantic variants; arbitrary constellations (future builder) default to `Opaque`.\n- **Demap method + capabilities:** `DemapMethod { ExactLogMap, MaxLog }` and `ModemCapabilities` live here so builders can reject mismatches at construction.\n- **Errors:** invalid construction panics with a descriptive message. No `Result` / error enum on builders in this task.\n\n## Success Criteria\n\n- [ ] `crates/gf2-coding/src/modem/` exists with modules `scalar.rs`, `types.rs`, `spec.rs`, `view.rs`, `presets.rs` and is re-exported from `lib.rs`.\n- [ ] `ModemScalar` is sealed, implemented for `f32` and `f64`; `DefaultScalar = f32`.\n- [ ] `SymbolPoint<S>`, `LabelWord`, `BitChannelId`, `BitChannelSemantics`, `Normalization<S>`, `DemapMethod`, `ModemCapabilities` are all public and documented as specified in the plan §4.\n- [ ] `ModemSpec<S>` is sealed: private fields, construction only via preset or (future) builder entry points; accessors return a `ModemView<'a, S>`.\n- [ ] `ModemView<'a, S>` exposes both contiguous slices (`points()`, `labels()`, `bit_channels()`) and per-item accessors.\n- [ ] Presets ship: `ModemSpec::bpsk()`, `ModemSpec::gray_square_qam(order)` for `order ∈ {2, 4, 16, 64, 256}`. Generic `*_with_scalar` variants for f64 workflows.\n- [ ] Gray square-QAM presets match the DVB-T2 EN 302 755 Table 14 bit-to-cell ordering (MSB half = I-axis PAM bits, LSB half = Q-axis PAM bits; MSB is coarsest PAM level).\n- [ ] Presets store post-normalized points with unit average symbol energy and the correct scale factor (`sqrt(3 / (2·(M − 1)))` for square QAM).\n- [ ] Invariants from plan §5 are enforced at construction with descriptive panic messages.\n- [ ] Test matrix from plan §6 is green: type tests, preset tests, invariant panic tests, view tests, proptest-driven bijection tests.\n- [ ] `cargo test -p gf2-coding --release`, `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets --all-features -- -D warnings`, and `cargo test --doc` are all clean.\n\n## Out of scope\n\n- Batched mapper/demapper traits (`d36ae697`).\n- General `custom_constellation(...)` public builder (`3e3fe377`; this task ships presets only).\n- Any demapper math or backend implementation (`51334873`, `52112411`).\n- Rewiring `channel.rs`, `modulation.rs`, `fading.rs` (`92186a40`, `46ffe45a`).\n- Bit-channel analysis collectors (`e2c0f65a`).\n\n## Notes\n\nRead the full plan at `dev/active/c87c5043-constellation-data-model-plan.md` before starting implementation. The plan contains complete type signatures, the preset bit-ordering table, the invariant list with panic-message guidance, and the full test matrix.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "high",
   "assignee": "agent:claude",
   "dependencies": [],
@@ -17,6 +17,21 @@
       "status": "passed",
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-13T11:48:17.809921455Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-13T12:06:58.766369328Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-13T12:13:33.653006980Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-13T12:12:26.076610030Z"
     }
   },
   "context": {},
@@ -36,5 +51,5 @@
     "story:modem-core-api"
   ],
   "created_at": "2026-04-12T19:40:37.522724970+00:00",
-  "updated_at": "2026-04-13T11:48:21.095089864+00:00"
+  "updated_at": "2026-04-13T12:17:29.786719281+00:00"
 }
