@@ -2,9 +2,9 @@
   "id": "ee556fbf-f865-4b52-980f-7830b1b676ad",
   "title": "Refactor the AWGN link adapter",
   "description": "Build the AWGN-side composition layer on top of the shared modem framework instead of direct BPSK helpers.\n\n## Success Criteria\n\n- [ ] AWGN link composition can use modem presets or custom modems through the shared framework.\n- [ ] AWGN modulation and LLR generation are no longer hard-coded to the legacy BPSK helper path.\n- [ ] The adapter shape is compatible with the existing simulation harness.\n\n## Notes\n\nThis is the first integration leaf under the simulation and channel story.",
-  "state": "backlog",
+  "state": "in_progress",
   "priority": "high",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [
     "625f5e1b-21a6-4297-8259-7b421df14a1a",
     "b2c9c0f0-ccb1-4fea-a4b8-1676143b281e"
@@ -15,7 +15,13 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-13T15:27:08.587897444Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -25,5 +31,5 @@
     "story:simulation-channel-integration"
   ],
   "created_at": "2026-04-12T19:40:37.534753758+00:00",
-  "updated_at": "2026-04-12T19:42:10.488615272+00:00"
+  "updated_at": "2026-04-13T15:27:09.656608081+00:00"
 }
