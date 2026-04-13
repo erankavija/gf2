@@ -83,3 +83,11 @@ dev/campaigns/phase3_fig7.toml  — 2 curves, (1024,646), max_frames=50K
 ## Commits Since Last Handover
 
 See `git log --oneline edecd7e..HEAD` for full list (~25 commits).
+
+## Current Phase 2 Blocker
+
+Phase 2 Figure 4 should currently be treated as a **paper-alignment investigation**, not a production run. The CRC-product curve does not yet reproduce the paper's $1.0$ dB behavior or the expected product-beats-LDPC crossover. Resume from:
+
+- `dev/active/phase2_fig4_alignment_investigation.md`
+
+Do not restart full Figure 4--6 campaigns until the Figure 4 CRC product point is aligned closely enough to the paper to justify a full rerun.
