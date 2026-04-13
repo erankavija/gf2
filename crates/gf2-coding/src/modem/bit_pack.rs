@@ -69,6 +69,26 @@ pub(crate) fn pack_label_msb_first(symbol_bits: &[bool]) -> u16 {
     label
 }
 
+/// Extracts a single MSB-first bit of an `m`-bit label.
+///
+/// Returns bit `bit_idx` of `label` under the canonical modem MSB-first
+/// ordering, where `bit_idx = 0` is the **MSB** of the `m`-bit label and
+/// `bit_idx = m - 1` is the **LSB**. The returned `u16` is always `0` or
+/// `1`.
+///
+/// Every demapper that iterates bit positions across a `LabelWord` goes
+/// through this helper so the MSB-first rule has exactly one source of
+/// truth in the crate.
+///
+/// # Complexity
+///
+/// O(1).
+#[inline]
+pub(crate) fn bit_at_msb_first(label: u16, bit_idx: u8, bits_per_symbol: u8) -> u16 {
+    let shift = bits_per_symbol - 1 - bit_idx;
+    (label >> shift) & 1
+}
+
 /// Explodes a `u16` label into an MSB-first `Vec<bool>` of length `m`.
 ///
 /// Used by tests and examples to construct synthetic bit inputs for
@@ -84,7 +104,7 @@ pub(crate) fn pack_label_msb_first(symbol_bits: &[bool]) -> u16 {
 /// O(`m`).
 #[inline]
 pub fn unpack_label_msb_first(label: u16, m: u8) -> Vec<bool> {
-    (0..m).map(|k| ((label >> (m - 1 - k)) & 1) == 1).collect()
+    (0..m).map(|k| bit_at_msb_first(label, k, m) == 1).collect()
 }
 
 #[cfg(test)]
@@ -107,6 +127,22 @@ mod tests {
         // bit index 0 (first entry) should be the MSB.
         let bits = vec![true, false, false, false];
         assert_eq!(pack_label_msb_first(&bits), 0b1000);
+    }
+
+    #[test]
+    fn test_bit_at_msb_first_matches_unpack() {
+        for m in 1u8..=8 {
+            for v in 0u16..(1 << m) {
+                let unpacked = unpack_label_msb_first(v, m);
+                for k in 0..m {
+                    assert_eq!(
+                        bit_at_msb_first(v, k, m),
+                        u16::from(unpacked[k as usize]),
+                        "mismatch at v={v} m={m} k={k}"
+                    );
+                }
+            }
+        }
     }
 
     #[test]

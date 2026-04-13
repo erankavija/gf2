@@ -70,7 +70,7 @@ mod spec;
 mod types;
 mod view;
 
-pub use awgn_link::ModemAwgnChannel;
+pub use awgn_link::{ModemAwgnChannel, ModemChannelAdapter};
 #[doc(hidden)]
 pub use bit_pack::unpack_label_msb_first;
 pub use builder::ModemSpecBuilder;

@@ -15,6 +15,7 @@
 
 use crate::llr::Llr;
 
+use super::bit_pack::bit_at_msb_first;
 use super::{BatchSoftDemapper, DemapInput, DemapMethod, ModemScalar, ModemSpec, ModemView};
 
 /// Correctness-first soft demapper for any validated [`ModemSpec`].
@@ -106,13 +107,6 @@ impl<S: ModemScalar> ReferenceSoftDemapper<S> {
     pub fn spec_ref(&self) -> &ModemSpec<S> {
         &self.spec
     }
-}
-
-/// Extracts bit `b` (MSB-first, `b = 0` is the MSB) of an `m`-bit label.
-#[inline]
-fn label_bit_msb_first(label_bits: u16, bit_idx: u8, bits_per_symbol: u8) -> u16 {
-    let shift = bits_per_symbol - 1 - bit_idx;
-    (label_bits >> shift) & 1
 }
 
 impl<S: ModemScalar> BatchSoftDemapper<S> for ReferenceSoftDemapper<S> {
@@ -233,7 +227,7 @@ fn exact_log_map_llr(d: &[f64], labels: &[super::LabelWord], bits_per_symbol: u8
     let mut d_min0 = f64::INFINITY;
     let mut d_min1 = f64::INFINITY;
     for (j, lbl) in labels.iter().enumerate() {
-        let bit = label_bit_msb_first(lbl.bits, b, bits_per_symbol);
+        let bit = bit_at_msb_first(lbl.bits, b, bits_per_symbol);
         if bit == 0 {
             if d[j] < d_min0 {
                 d_min0 = d[j];
@@ -246,7 +240,7 @@ fn exact_log_map_llr(d: &[f64], labels: &[super::LabelWord], bits_per_symbol: u8
     let mut sum0 = 0.0_f64;
     let mut sum1 = 0.0_f64;
     for (j, lbl) in labels.iter().enumerate() {
-        let bit = label_bit_msb_first(lbl.bits, b, bits_per_symbol);
+        let bit = bit_at_msb_first(lbl.bits, b, bits_per_symbol);
         if bit == 0 {
             sum0 += (d_min0 - d[j]).exp();
         } else {
@@ -278,7 +272,7 @@ fn max_log_llr(d: &[f64], labels: &[super::LabelWord], bits_per_symbol: u8, b: u
     let mut d_min0 = f64::INFINITY;
     let mut d_min1 = f64::INFINITY;
     for (j, lbl) in labels.iter().enumerate() {
-        let bit = label_bit_msb_first(lbl.bits, b, bits_per_symbol);
+        let bit = bit_at_msb_first(lbl.bits, b, bits_per_symbol);
         if bit == 0 {
             if d[j] < d_min0 {
                 d_min0 = d[j];
@@ -331,9 +325,8 @@ mod tests {
                 d_min = d;
             }
         }
-        let shift = bits_per_symbol - 1 - b;
         for (j, &d) in dists.iter().enumerate() {
-            let bit = (labels[j] >> shift) & 1;
+            let bit = super::super::bit_pack::bit_at_msb_first(labels[j], b, bits_per_symbol);
             let e = (d_min - d).exp();
             if bit == 0 {
                 sum0 += e;
