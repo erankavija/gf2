@@ -2,7 +2,7 @@
   "id": "831bfc4a-3677-496f-92ca-fa0ecf539e4b",
   "title": "Run Phase 4 fading channel simulations: Figs 8-10",
   "description": "Run the fading channel simulations from Figures 8, 9, and 10.\n\n## Figure 8: (1024, 441) product code with Rician fading\n\n- Component: dRM(32,21) — `[(32,21)² dRM]`\n- Fading: Rician K=5, N_c=128, t=4, QPSK\n- Eb/N0 range: 0–8 dB\n\n## Figure 9: (1024, 676) product code with Rician fading\n\n- Component: eBCH(32,26) — `[(32,26)² eBCH]`\n- Fading: Rician K=8, N_c=256, t=2, QPSK\n- Eb/N0 range: 0–8 dB\n- Note: requires eBCH(32,26) component code\n\n## Figure 10: (4096, 3249) product code with Rician fading\n\n- Component: eBCH(64,57) — `[(64,57)² eBCH]`\n- Fading: Rician K=6, N_c=256, t=8, QPSK\n- Eb/N0 range: 0–8 dB\n\nAll figures compare product code turbo-SOGRAND vs 5G NR LDPC under fading.\n\n## Acceptance Criteria\n\n- All three simulations run to completion.\n- Results compared against paper's reference data.\n- Fading channel behavior is qualitatively correct (performance degrades vs AWGN, diversity gain visible).\n- Results saved in CSV/JSON format.\n\n## Location\n\nExtend simulation runners.",
-  "state": "backlog",
+  "state": "ready",
   "priority": "low",
   "assignee": null,
   "dependencies": [
@@ -21,11 +21,6 @@
       "updated_by": null,
       "updated_at": "2026-04-05T23:09:16.528122244Z"
     },
-    "doc-review": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-04-05T23:09:16.528141484Z"
-    },
     "tdd-reminder": {
       "status": "pending",
       "updated_by": null,
@@ -35,6 +30,11 @@
       "status": "pending",
       "updated_by": null,
       "updated_at": "2026-04-05T23:09:16.528079304Z"
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-04-05T23:09:16.528141484Z"
     }
   },
   "context": {},
@@ -45,5 +45,5 @@
     "component:gf2-coding"
   ],
   "created_at": "2026-02-22T21:16:11.471663274+00:00",
-  "updated_at": "2026-04-05T23:09:16.528178394+00:00"
+  "updated_at": "2026-04-12T19:35:33.159160264+00:00"
 }
