@@ -205,19 +205,21 @@ impl<S: ModemScalar> FastGrayQamDemapper<S> {
                 "FastGrayQamDemapper::new: spec does not cover every Q-half-label; \
                  not a Gray square-QAM preset"
             );
-            // The axis-separable kernel uses the same `pam_levels` table
-            // for both axes. Verify that the Q axis uses the same level
-            // set as the I axis (modulo ordering); for canonical Gray
-            // square-QAM presets these sets are identical.
-            let mut i_sorted = pam_levels.clone();
-            let mut q_sorted = q_levels.clone();
-            i_sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
-            q_sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
-            for (a, b) in i_sorted.iter().zip(q_sorted.iter()) {
+            // The axis-separable kernel uses the I-derived `pam_levels`
+            // table for both I and Q distance computations:
+            // `d_q[label] = (z_q - g * pam_levels[label])^2 / n0_eq`.
+            // That is correct only when the per-label mapping matches
+            // between axes, i.e. `q_levels[label] == pam_levels[label]`
+            // for every label value. Set equality alone is not enough,
+            // because a permuted Q-label mapping (same level set,
+            // different label assignment) would silently produce wrong
+            // Q-bit LLRs.
+            for (label, (&il, &ql)) in pam_levels.iter().zip(q_levels.iter()).enumerate() {
                 assert!(
-                    (a - b).abs() < 1e-9,
-                    "FastGrayQamDemapper::new: I-axis and Q-axis level sets differ \
-                     ({a} vs {b}); the fast kernel requires a symmetric Gray square-QAM preset"
+                    (il - ql).abs() < 1e-9,
+                    "FastGrayQamDemapper::new: Q-label-to-level mapping at label {label} \
+                     ({ql}) does not match the I mapping ({il}); the fast kernel reuses the \
+                     I level table for both axes and requires a symmetric preset"
                 );
             }
         }
@@ -780,6 +782,45 @@ mod tests {
             .points(points)
             .labels(labels)
             .normalization(Normalization::UnitAverageSymbolEnergy)
+            .build();
+        let _ = FastGrayQamDemapper::new(spec);
+    }
+
+    #[test]
+    #[should_panic(expected = "Q-label-to-level mapping")]
+    fn test_permuted_q_label_mapping_rejected() {
+        // A 4-QAM spec with valid I/Q factorisation, matching level
+        // sets ({+1, -1} on both axes), but a Q-label permutation that
+        // disagrees with the I mapping: Q-half-label 0 maps to -1 while
+        // the I mapping puts label 0 at +1. The fast kernel reuses the
+        // I-derived level table for both axes, so this must be
+        // rejected at construction.
+        use crate::modem::{BitChannelSemantics, ModemCapabilities};
+        let points: Vec<SymbolPoint<f32>> = vec![
+            // Label 00 (I-half=0, Q-half=0): I=+1, but Q = -1 instead of +1.
+            SymbolPoint::new(1.0, -1.0),
+            // Label 01 (I-half=0, Q-half=1): I=+1, Q=+1.
+            SymbolPoint::new(1.0, 1.0),
+            // Label 10 (I-half=1, Q-half=0): I=-1, Q=-1.
+            SymbolPoint::new(-1.0, -1.0),
+            // Label 11 (I-half=1, Q-half=1): I=-1, Q=+1.
+            SymbolPoint::new(-1.0, 1.0),
+        ];
+        let labels: Vec<LabelWord> = (0u16..4).map(|b| LabelWord::new(b, 2)).collect();
+        let spec = ModemSpecBuilder::<f32>::new()
+            .bits_per_symbol(2)
+            .points(points)
+            .labels(labels)
+            .bit_channels(vec![
+                BitChannelSemantics::IAxisPam(0),
+                BitChannelSemantics::QAxisPam(0),
+            ])
+            .capabilities(ModemCapabilities {
+                supports_exact_log_map: true,
+                supports_max_log: true,
+                analysis: &[],
+            })
+            .normalization(Normalization::ExplicitEs(2.0))
             .build();
         let _ = FastGrayQamDemapper::new(spec);
     }
