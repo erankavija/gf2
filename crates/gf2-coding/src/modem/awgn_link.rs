@@ -3,11 +3,10 @@
 //! [`ModemAwgnChannel`] ties a [`BatchMapper`] and a [`BatchSoftDemapper`]
 //! together with the existing [`crate::channel::AwgnChannel`] to provide a
 //! single `bits -> LLRs` pipeline for any validated [`super::ModemSpec`],
-//! preset or custom. It is the integration entry point for story
-//! `92186a40`: downstream task `bf865220` will route
-//! [`crate::simulation::SimulationRunner`] through this adapter, and tasks
-//! `0cafa5f5` / `b3bb774a` will rebuild BPSK/QPSK compatibility wrappers
-//! on top of it.
+//! preset or custom. [`ModemChannelAdapter`] wraps the same two components
+//! behind the [`crate::simulation::ChannelModel`] trait so any modem spec
+//! can drop into [`crate::simulation::SimulationRunner`] in place of the
+//! legacy [`crate::simulation::BpskAwgnChannel`].
 //!
 //! This module is deliberately additive. The legacy
 //! [`crate::channel::BpskAwgn`](crate::channel) / `BpskModulator` helpers
@@ -16,18 +15,23 @@
 //!
 //! # Noise convention
 //!
-//! The existing [`AwgnChannel`] samples real-valued Gaussian noise with
-//! variance `channel.variance()`. For a complex AWGN channel with
-//! independent Gaussian noise on each of I and Q, `channel.variance()` is
-//! interpreted as the **per-component** variance (`N0 / 2`), which is the
-//! value the log-MAP demapper expects in
-//! [`super::DemapInput::noise_var`]. This matches the legacy BPSK LLR
-//! formula `LLR = 2 r / sigma^2` used by [`crate::channel::BpskModulator`]
-//! (see `crates/gf2-coding/src/channel.rs:100` and `channel.rs:156`).
+//! [`AwgnChannel::variance`] returns `sigma^2`, the per-component
+//! real-axis variance applied to each of I and Q. For a 2-D complex AWGN
+//! channel the combined noise power is `N0 = 2 sigma^2`, and the
+//! log-MAP demapper defines [`super::DemapInput::noise_var`] as `N0` (see
+//! the BPSK closed-form tests in
+//! [`super::ReferenceSoftDemapper`]: `LLR = 4 y / N0`). This adapter
+//! therefore passes `N0 = 2 * channel.variance()` into every
+//! [`super::DemapInput`] it builds, which recovers the legacy BPSK LLR
+//! `LLR = 2 r / sigma^2` (= `4 r / N0`) used by
+//! [`crate::channel::BpskModulator::to_llr`] and
+//! [`crate::simulation::BpskAwgnChannel`] at matching noise settings.
 
 use super::{BatchMapper, BatchSoftDemapper, DemapInput, DemapMethod, ModemScalar};
 use crate::channel::AwgnChannel;
 use crate::llr::Llr;
+use crate::simulation::ChannelModel;
+use gf2_core::BitVec;
 use rand::Rng;
 
 /// AWGN link over any modem spec, using the shared [`BatchMapper`] and
@@ -36,9 +40,10 @@ use rand::Rng;
 /// Combines a caller-supplied mapper, demapper, and [`AwgnChannel`] into a
 /// single `transmit_and_demap` call. Complex Gaussian noise is applied to
 /// each received symbol as two independent real Gaussian draws (one on I,
-/// one on Q), each with variance equal to [`AwgnChannel::variance`]. The
-/// per-component variance is then passed through to the demapper as
-/// [`DemapInput::noise_var`].
+/// one on Q), each with variance equal to [`AwgnChannel::variance`]
+/// (`sigma^2`, the per-component variance). The demapper is fed
+/// `N0 = 2 sigma^2` via [`DemapInput::noise_var`] — see the module-level
+/// "Noise convention" section.
 ///
 /// Construction is zero-cost beyond moving the three components in; the
 /// hot [`ModemAwgnChannel::transmit_and_demap`] loop allocates exactly
@@ -59,21 +64,11 @@ use rand::Rng;
 /// use gf2_coding::channel::AwgnChannel;
 /// use gf2_coding::llr::Llr;
 /// use gf2_coding::modem::{
-///     BatchMapper, BatchSoftDemapper, DemapInput, DemapMethod, GrayQamMapper,
-///     ModemAwgnChannel, ModemScalar, ModemView,
+///     DemapMethod, GrayQamMapper, ModemAwgnChannel, ModemSpec, ReferenceSoftDemapper,
 /// };
 ///
-/// struct StubDemap<'a>(gf2_coding::modem::ModemSpec<f32>, std::marker::PhantomData<&'a ()>);
-/// impl<'a> BatchSoftDemapper<f32> for StubDemap<'a> {
-///     fn spec(&self) -> ModemView<'_, f32> { self.0.view() }
-///     fn demap_llrs(&self, input: DemapInput<'_, f32>, out: &mut [Llr]) {
-///         for v in out.iter_mut() { *v = Llr::new(0.0); }
-///         let _ = input;
-///     }
-/// }
-///
 /// let mapper = GrayQamMapper::<f32>::from_preset_order(4);
-/// let demap = StubDemap(gf2_coding::modem::ModemSpec::gray_square_qam(4), std::marker::PhantomData);
+/// let demap = ReferenceSoftDemapper::new(ModemSpec::<f32>::gray_square_qam(4));
 /// let channel = AwgnChannel::from_variance(0.25);
 /// let link = ModemAwgnChannel::new(mapper, demap, channel, DemapMethod::MaxLog);
 ///
@@ -101,13 +96,29 @@ impl<S: ModemScalar, M: BatchMapper<S>, D: BatchSoftDemapper<S>> ModemAwgnChanne
     ///   [`super::ModemSpec::bits_per_symbol`] as `demapper`.
     /// * `demapper` - Soft demapper; must advertise `method` in its
     ///   [`super::ModemCapabilities`].
-    /// * `channel` - Noise model. [`AwgnChannel::variance`] is used as the
-    ///   per-component variance for both I and Q (see module docs).
+    /// * `channel` - Noise model. [`AwgnChannel::variance`] is read as
+    ///   `sigma^2`, the per-component variance for both I and Q (see the
+    ///   module-level noise convention).
     /// * `method` - Log-MAP demapping method (`ExactLogMap` or `MaxLog`).
     ///
     /// # Panics
     ///
     /// Panics if `mapper` and `demapper` disagree on `bits_per_symbol`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::channel::AwgnChannel;
+    /// use gf2_coding::modem::{
+    ///     DemapMethod, GrayQamMapper, ModemAwgnChannel, ModemSpec, ReferenceSoftDemapper,
+    /// };
+    ///
+    /// let mapper = GrayQamMapper::<f32>::from_preset_order(4);
+    /// let demapper = ReferenceSoftDemapper::new(ModemSpec::gray_square_qam(4));
+    /// let channel = AwgnChannel::from_variance(0.25);
+    /// let link = ModemAwgnChannel::new(mapper, demapper, channel, DemapMethod::MaxLog);
+    /// assert_eq!(link.method(), DemapMethod::MaxLog);
+    /// ```
     ///
     /// # Complexity
     ///
@@ -171,8 +182,10 @@ impl<S: ModemScalar, M: BatchMapper<S>, D: BatchSoftDemapper<S>> ModemAwgnChanne
     /// and demaps to per-bit LLRs.
     ///
     /// The per-component noise variance for each of I and Q equals
-    /// [`AwgnChannel::variance`]. Noise samples on I and Q are drawn
-    /// independently from the channel's Gaussian distribution.
+    /// [`AwgnChannel::variance`] (= `sigma^2`). Noise samples on I and Q
+    /// are drawn independently from the channel's Gaussian distribution.
+    /// The demapper receives `N0 = 2 * sigma^2` — see the module-level
+    /// noise convention.
     ///
     /// # Arguments
     ///
@@ -187,6 +200,26 @@ impl<S: ModemScalar, M: BatchMapper<S>, D: BatchSoftDemapper<S>> ModemAwgnChanne
     ///
     /// Panics if `out_llrs.len() != bits.len()`, or if `bits.len()` is not
     /// a multiple of `bits_per_symbol`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::channel::AwgnChannel;
+    /// use gf2_coding::llr::Llr;
+    /// use gf2_coding::modem::{
+    ///     DemapMethod, GrayQamMapper, ModemAwgnChannel, ModemSpec, ReferenceSoftDemapper,
+    /// };
+    ///
+    /// let mapper = GrayQamMapper::<f32>::from_preset_order(4);
+    /// let demapper = ReferenceSoftDemapper::new(ModemSpec::gray_square_qam(4));
+    /// let channel = AwgnChannel::from_variance(1e-6);
+    /// let link = ModemAwgnChannel::new(mapper, demapper, channel, DemapMethod::MaxLog);
+    /// let bits = vec![false, true, true, false];
+    /// let mut out = vec![Llr::new(0.0); bits.len()];
+    /// let mut rng = rand::thread_rng();
+    /// link.transmit_and_demap(&bits, &mut rng, &mut out);
+    /// assert_eq!(out.len(), bits.len());
+    /// ```
     ///
     /// # Complexity
     ///
@@ -225,9 +258,12 @@ impl<S: ModemScalar, M: BatchMapper<S>, D: BatchSoftDemapper<S>> ModemAwgnChanne
             *sample = S::from_f64(noisy);
         }
 
-        // Per-symbol noise variance (constant across the batch for AWGN).
-        let per_comp_var = S::from_f64(self.channel.variance());
-        let noise_var = vec![per_comp_var; num_symbols];
+        // Per-symbol N0 = 2 * sigma^2 (constant across the batch for
+        // AWGN). The reference demapper defines DemapInput::noise_var as
+        // the total complex noise variance N0, not the per-component
+        // variance; see the module-level noise convention.
+        let n0 = S::from_f64(2.0 * self.channel.variance());
+        let noise_var = vec![n0; num_symbols];
 
         let input = DemapInput::<S> {
             rx_i: &tx_i,
@@ -238,6 +274,154 @@ impl<S: ModemScalar, M: BatchMapper<S>, D: BatchSoftDemapper<S>> ModemAwgnChanne
             method: self.method,
         };
         self.demapper.demap_llrs(input, out_llrs);
+    }
+}
+
+/// Drop-in [`ChannelModel`] implementation that runs any modem spec over
+/// AWGN.
+///
+/// Holds a mapper + demapper pair and builds a fresh [`AwgnChannel`] from
+/// `(eb_n0_db, rate)` on every [`ChannelModel::transmit_and_demodulate`]
+/// call, so it plugs into [`crate::simulation::SimulationRunner`] exactly
+/// where [`crate::simulation::BpskAwgnChannel`] currently does. For BPSK
+/// with the reference demapper this reproduces the legacy
+/// `LLR = 2 r / sigma^2` path; for higher-order modems it returns one LLR
+/// per transmitted bit in the same MSB-first-within-symbol layout the
+/// shared batch-demapper contract defines.
+///
+/// # Type parameters
+///
+/// * `M` - Bit-to-symbol mapper implementing [`BatchMapper<f32>`]. `f32`
+///   is the modem-scalar width the simulation harness works in.
+/// * `D` - Soft demapper implementing [`BatchSoftDemapper<f32>`].
+///
+/// # Examples
+///
+/// ```
+/// use gf2_coding::modem::{
+///     DemapMethod, GrayQamMapper, ModemChannelAdapter, ModemSpec, ReferenceSoftDemapper,
+/// };
+/// use gf2_coding::simulation::ChannelModel;
+/// use gf2_core::BitVec;
+///
+/// let mapper = GrayQamMapper::<f32>::from_preset_order(2); // BPSK (size 2)
+/// let demap = ReferenceSoftDemapper::new(ModemSpec::<f32>::bpsk());
+/// let adapter = ModemChannelAdapter::new(mapper, demap, DemapMethod::ExactLogMap);
+///
+/// let bits = BitVec::from_bytes_le(&[0b1010_0101]);
+/// let mut rng = rand::thread_rng();
+/// let llrs = adapter.transmit_and_demodulate(&bits, 3.0, 0.5, &mut rng);
+/// assert_eq!(llrs.len(), bits.len());
+/// ```
+pub struct ModemChannelAdapter<M, D>
+where
+    M: BatchMapper<f32>,
+    D: BatchSoftDemapper<f32>,
+{
+    mapper: M,
+    demapper: D,
+    method: DemapMethod,
+}
+
+impl<M, D> ModemChannelAdapter<M, D>
+where
+    M: BatchMapper<f32>,
+    D: BatchSoftDemapper<f32>,
+{
+    /// Builds an adapter from an already-validated mapper/demapper pair.
+    ///
+    /// # Arguments
+    ///
+    /// * `mapper` - Bit-to-symbol mapper. Must have the same
+    ///   [`super::ModemSpec::bits_per_symbol`] as `demapper`.
+    /// * `demapper` - Soft demapper. Must advertise `method` in its
+    ///   [`super::ModemCapabilities`].
+    /// * `method` - Log-MAP demapping method (`ExactLogMap` or `MaxLog`).
+    ///
+    /// # Panics
+    ///
+    /// Panics if `mapper.spec().bits_per_symbol() != demapper.spec().bits_per_symbol()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::modem::{
+    ///     DemapMethod, GrayQamMapper, ModemChannelAdapter, ModemSpec, ReferenceSoftDemapper,
+    /// };
+    ///
+    /// let mapper = GrayQamMapper::<f32>::from_preset_order(16);
+    /// let demap = ReferenceSoftDemapper::new(ModemSpec::<f32>::gray_square_qam(16));
+    /// let _ = ModemChannelAdapter::new(mapper, demap, DemapMethod::MaxLog);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
+    pub fn new(mapper: M, demapper: D, method: DemapMethod) -> Self {
+        assert_eq!(
+            mapper.spec().bits_per_symbol(),
+            demapper.spec().bits_per_symbol(),
+            "mapper and demapper bits_per_symbol must match",
+        );
+        Self {
+            mapper,
+            demapper,
+            method,
+        }
+    }
+
+    /// Returns the configured [`DemapMethod`].
+    #[inline]
+    pub fn method(&self) -> DemapMethod {
+        self.method
+    }
+}
+
+impl<M, D> ChannelModel for ModemChannelAdapter<M, D>
+where
+    M: BatchMapper<f32>,
+    D: BatchSoftDemapper<f32>,
+{
+    fn transmit_and_demodulate<R: Rng>(
+        &self,
+        bits: &BitVec,
+        eb_n0_db: f64,
+        rate: f64,
+        rng: &mut R,
+    ) -> Vec<Llr> {
+        let m = self.mapper.spec().bits_per_symbol() as usize;
+        assert!(m > 0, "bits_per_symbol must be non-zero");
+        let n = bits.len();
+        assert_eq!(n % m, 0, "bits.len() must be a multiple of bits_per_symbol",);
+        let num_symbols = n / m;
+
+        let channel = AwgnChannel::from_eb_n0_db(eb_n0_db, rate);
+        let bits_vec: Vec<bool> = (0..n).map(|i| bits.get(i)).collect();
+
+        let mut tx_i = vec![0.0_f32; num_symbols];
+        let mut tx_q = vec![0.0_f32; num_symbols];
+        self.mapper.map_bits(&bits_vec, &mut tx_i, &mut tx_q);
+
+        for sample in tx_i.iter_mut() {
+            *sample = channel.transmit(*sample as f64, rng) as f32;
+        }
+        for sample in tx_q.iter_mut() {
+            *sample = channel.transmit(*sample as f64, rng) as f32;
+        }
+
+        let n0 = (2.0 * channel.variance()) as f32;
+        let noise_var = vec![n0; num_symbols];
+        let input = DemapInput::<f32> {
+            rx_i: &tx_i,
+            rx_q: &tx_q,
+            gain_i: None,
+            gain_q: None,
+            noise_var: &noise_var,
+            method: self.method,
+        };
+        let mut out = vec![Llr::new(0.0); n];
+        self.demapper.demap_llrs(input, &mut out);
+        out
     }
 }
 
@@ -438,6 +622,110 @@ mod property_tests {
             for l in out.iter() {
                 prop_assert!(l.value().is_finite());
             }
+        }
+    }
+}
+
+#[cfg(test)]
+mod legacy_compat_tests {
+    //! Regressions that pin the adapter to the legacy BPSK path.
+    //!
+    //! The code-review gate called out two issues the earlier version of
+    //! this module was missing:
+    //!
+    //! 1. `ModemChannelAdapter` (the `ChannelModel` integration point) was
+    //!    absent, so the existing [`crate::simulation::SimulationRunner`]
+    //!    was still hard-coded to [`crate::simulation::BpskAwgnChannel`].
+    //! 2. The noise-variance convention handed to the reference demapper
+    //!    was inconsistent with the demapper's own BPSK closed-form test
+    //!    (`LLR = 4 y / N0`), which silently scaled every LLR by 2x.
+    //!
+    //! These tests cover both: the adapter plugs into a `ChannelModel`
+    //! consumer, and BPSK LLRs produced through the modem framework match
+    //! the legacy `LLR = 2 r / sigma^2` formula.
+    use super::*;
+    use crate::channel::BpskModulator;
+    use crate::modem::{GrayQamMapper, ModemSpec, ReferenceSoftDemapper};
+    use crate::simulation::{BpskAwgnChannel, ChannelModel};
+    use gf2_core::BitVec;
+    use rand::rngs::StdRng;
+    use rand::SeedableRng;
+
+    #[test]
+    fn test_bpsk_llrs_match_legacy_formula() {
+        // With noise_var = 2 * sigma^2 the reference demapper's BPSK LLR
+        // equals 4 r / N0 = 2 r / sigma^2, which is exactly the legacy
+        // BpskModulator::to_llr formula. Drive both paths with the same
+        // fabricated rx symbols and assert equality.
+        let sigma_sq = 0.5_f64;
+        let n0 = 2.0 * sigma_sq;
+        let rx_samples = [-1.5_f32, -0.3, 0.0, 0.2, 1.1];
+
+        let demapper = ReferenceSoftDemapper::new(ModemSpec::<f32>::bpsk());
+        let rx_q = [0.0_f32; 5];
+        let noise_var = [n0 as f32; 5];
+        let input = DemapInput::<f32> {
+            rx_i: &rx_samples,
+            rx_q: &rx_q,
+            gain_i: None,
+            gain_q: None,
+            noise_var: &noise_var,
+            method: DemapMethod::ExactLogMap,
+        };
+        let mut modem_llrs = [Llr::new(0.0); 5];
+        demapper.demap_llrs(input, &mut modem_llrs);
+
+        for (i, &r) in rx_samples.iter().enumerate() {
+            let legacy = BpskModulator::to_llr(r as f64, sigma_sq);
+            let err = (modem_llrs[i].value() - legacy.value()).abs();
+            assert!(
+                err < 1e-3,
+                "BPSK LLR mismatch at r={r}: modem={} legacy={}",
+                modem_llrs[i].value(),
+                legacy.value(),
+            );
+        }
+    }
+
+    #[test]
+    fn test_adapter_is_channel_model() {
+        // Smoke test: ModemChannelAdapter plugs into a generic function
+        // bound to ChannelModel the same way BpskAwgnChannel does.
+        fn run<C: ChannelModel>(channel: &C, bits: &BitVec, rng: &mut StdRng) -> Vec<Llr> {
+            channel.transmit_and_demodulate(bits, 3.0, 1.0, rng)
+        }
+
+        let mapper = GrayQamMapper::<f32>::from_preset_order(2); // BPSK label order = 2
+        let demap = ReferenceSoftDemapper::new(ModemSpec::<f32>::bpsk());
+        let adapter = ModemChannelAdapter::new(mapper, demap, DemapMethod::ExactLogMap);
+
+        let bits = BitVec::from_bytes_le(&[0b1010_0101]);
+        let mut rng_a = StdRng::seed_from_u64(0xA5A5);
+        let mut rng_b = StdRng::seed_from_u64(0xA5A5);
+        let modem_llrs = run(&adapter, &bits, &mut rng_a);
+        let legacy_llrs = run(&BpskAwgnChannel, &bits, &mut rng_b);
+        assert_eq!(modem_llrs.len(), bits.len());
+        assert_eq!(legacy_llrs.len(), bits.len());
+    }
+
+    #[test]
+    fn test_adapter_high_snr_bpsk_recovers_bits() {
+        // At very high Eb/N0 the adapter must recover every bit through
+        // sign decisions, same as the legacy path would.
+        let mapper = GrayQamMapper::<f32>::from_preset_order(2);
+        let demap = ReferenceSoftDemapper::new(ModemSpec::<f32>::bpsk());
+        let adapter = ModemChannelAdapter::new(mapper, demap, DemapMethod::ExactLogMap);
+
+        let bits = BitVec::from_bytes_le(&[0b1011_0010, 0b0110_1100]);
+        let mut rng = StdRng::seed_from_u64(0xD15EA5E);
+        let llrs = adapter.transmit_and_demodulate(&bits, 20.0, 1.0, &mut rng);
+        for (i, llr) in llrs.iter().enumerate() {
+            assert_eq!(
+                llr.hard_decision(),
+                bits.get(i),
+                "hard decision mismatch at bit {i}: llr={}",
+                llr.value(),
+            );
         }
     }
 }
