@@ -3,8 +3,8 @@
 //! [`ModemSpec`] is the post-validation data model consumed by every
 //! modem-facing task: trait layer, reference path, Gray-QAM fast path,
 //! analysis collectors, and simulation adapters. All fields are private;
-//! construction must go through presets (this task) or future builder
-//! entry points (task `3e3fe377`).
+//! construction must go through presets or the public
+//! [`super::ModemSpecBuilder`] entry point for custom constellations.
 //!
 //! Invariants enforced at construction are listed in
 //! `dev/active/c87c5043-constellation-data-model-plan.md` §5. Violations

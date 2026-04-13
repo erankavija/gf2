@@ -1,7 +1,9 @@
 //! Preset [`ModemSpec`] constructors for BPSK and Gray square-QAM.
 //!
-//! This file intentionally ships only the preset-side entry points. The
-//! general `custom_constellation(...)` builder lands in task `3e3fe377`.
+//! This file ships the preset-side entry points. Custom constellations
+//! are constructed via the public [`super::ModemSpecBuilder`]; both
+//! paths funnel through the same validating
+//! [`super::ModemSpec::from_parts_checked`] choke point.
 //!
 //! Bit-to-symbol mapping for Gray square-QAM (locked in plan §4.5):
 //!
