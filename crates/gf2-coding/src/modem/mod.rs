@@ -25,9 +25,19 @@
 //! - [`ReferenceMapper`] is the correctness-first [`BatchMapper`]
 //!   implementation for any validated [`ModemSpec`] (including custom
 //!   research constellations built via [`ModemSpecBuilder`]).
+//! - [`ReferenceSoftDemapper`] is the correctness-first
+//!   [`BatchSoftDemapper`] implementation for any validated
+//!   [`ModemSpec`]; it evaluates the exact log-MAP or max-log formula
+//!   over every constellation point.
 //! - [`GrayQamMapper`] is the scalar Gray-square-QAM fast-path
 //!   implementation of [`BatchMapper`], built directly from a preset
 //!   [`ModemSpec`].
+//! - [`ModemAwgnChannel`] is a generic AWGN link adapter that composes
+//!   any [`BatchMapper`] + [`BatchSoftDemapper`] over an
+//!   [`crate::channel::AwgnChannel`]. It replaces the BPSK-only
+//!   `channel::BpskAwgn` path for modem-framework workflows while
+//!   leaving the legacy surface in place (migration is tracked in
+//!   issues `bf865220`, `0cafa5f5`, `b3bb774a`, `5fd315c0`).
 //!
 //! See `dev/active/c87c5043-constellation-data-model-plan.md` for the
 //! locked design decisions behind this surface.
@@ -46,24 +56,28 @@
 //! assert_eq!(view.bit_channel(2), BitChannelSemantics::QAxisPam(0));
 //! ```
 
+mod awgn_link;
 mod bit_pack;
 mod builder;
 mod demapper;
 mod gray_qam_mapper;
 mod mapper;
 mod presets;
+mod ref_demapper;
 mod ref_mapper;
 mod scalar;
 mod spec;
 mod types;
 mod view;
 
+pub use awgn_link::ModemAwgnChannel;
 #[doc(hidden)]
 pub use bit_pack::unpack_label_msb_first;
 pub use builder::ModemSpecBuilder;
 pub use demapper::{BatchHardDemapper, BatchSoftDemapper, DemapInput};
 pub use gray_qam_mapper::GrayQamMapper;
 pub use mapper::BatchMapper;
+pub use ref_demapper::ReferenceSoftDemapper;
 pub use ref_mapper::ReferenceMapper;
 pub use scalar::{DefaultScalar, ModemScalar};
 pub use spec::ModemSpec;
