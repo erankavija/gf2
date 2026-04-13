@@ -3633,6 +3633,45 @@ mod tests {
         );
     }
 
+    /// Regression locking in that the uncoded runner honours the
+    /// `batch_alignment()` contract for the existing QPSK Rician fading
+    /// path as well as for modem-framework channels.
+    ///
+    /// `QpskRicianChannelModel::transmit_and_demodulate` asserts an
+    /// even codeword length. Before the batch-alignment fix the runner
+    /// could feed it an odd tail and panic; with
+    /// `QpskRicianChannelModel::batch_alignment() -> 2` the runner must
+    /// round each batch down and never panic. `max_frames = 963` is
+    /// intentionally not divisible by 2.
+    #[test]
+    fn test_run_uncoded_ber_with_channel_handles_ragged_tail_for_qpsk_rician() {
+        use crate::fading::{QpskRicianChannelModel, RicianConfig};
+
+        let channel = QpskRicianChannelModel::new(RicianConfig::fig8());
+        assert_eq!(
+            channel.batch_alignment(),
+            2,
+            "QpskRicianChannelModel must declare alignment 2"
+        );
+
+        let mut config = SimulationConfig::quick_test();
+        config.eb_n0_range_db = vec![3.0];
+        config.min_errors = 1;
+        config.max_frames = 963; // intentionally not divisible by 2
+        config.rng_seed = Some(0xFADE_CAFE_u64);
+
+        let mut rng = StdRng::seed_from_u64(config.rng_seed.unwrap());
+        // Must not panic even though max_frames is odd.
+        let results = SimulationRunner::run_uncoded_ber_with_channel(&channel, &config, &mut rng);
+        assert_eq!(results.len(), 1);
+        let r = &results[0];
+        assert!(r.ber.is_finite());
+        assert!(
+            r.num_bits % 2 == 0,
+            "transmitted bits must stay aligned to the QPSK fading channel's 2-bit requirement"
+        );
+    }
+
     /// Regression for ragged-tail safety on modem-backed channels with
     /// `bits_per_symbol > 1`.
     ///
