@@ -1,7 +1,7 @@
 {
   "epic_id": "d4851c3d-a9ae-42cc-bf5d-31ab973ba0fe",
   "epic_short_id": "d4851c3d",
-  "current_wave": 2,
+  "current_wave": 3,
   "waves": [
     {
       "wave_number": 1,
@@ -12,7 +12,7 @@
     {
       "wave_number": 2,
       "issues": [
-        {"id": "d36ae697-cd9b-419d-89cb-24410496a25e", "short_id": "d36ae697", "title": "Define batched map and demap traits", "classification": "implementation", "status": "pending"}
+        {"id": "d36ae697-cd9b-419d-89cb-24410496a25e", "short_id": "d36ae697", "title": "Define batched map and demap traits", "classification": "implementation", "status": "done", "completed_at": "2026-04-13T12:43:00Z", "rework_rounds": 1, "rework_note": "auto code-review flagged duplicated ZeroMapper/ZeroDemapper stubs, non-conforming integration test name, and stale modem/mod.rs docstring; project-lead patched inline (removed redundant unit-test stubs, renamed test to test_batched_trait_surface_is_public, added trait items to module docs)"}
       ]
     },
     {

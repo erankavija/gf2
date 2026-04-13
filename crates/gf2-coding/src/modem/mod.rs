@@ -16,6 +16,11 @@
 //! - [`ModemSpec`] is the sealed, validated spec. All construction goes
 //!   through presets here and, in the future, general builders.
 //! - [`ModemView`] is the borrowed read-only view handed to backends.
+//! - [`BatchMapper`], [`BatchSoftDemapper`], and [`BatchHardDemapper`] are
+//!   the backend-agnostic batch interfaces implemented by every modem
+//!   backend (scalar reference path, Gray-QAM fast path, SIMD kernels, and
+//!   any future GPU backend). [`DemapInput`] is the shared per-batch input
+//!   struct consumed by both demapper variants.
 //!
 //! See `dev/active/c87c5043-constellation-data-model-plan.md` for the
 //! locked design decisions behind this surface.
@@ -34,12 +39,16 @@
 //! assert_eq!(view.bit_channel(2), BitChannelSemantics::QAxisPam(0));
 //! ```
 
+mod demapper;
+mod mapper;
 mod presets;
 mod scalar;
 mod spec;
 mod types;
 mod view;
 
+pub use demapper::{BatchHardDemapper, BatchSoftDemapper, DemapInput};
+pub use mapper::BatchMapper;
 pub use scalar::{DefaultScalar, ModemScalar};
 pub use spec::ModemSpec;
 pub use types::{

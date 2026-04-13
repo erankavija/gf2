@@ -2,9 +2,9 @@
   "id": "d36ae697-cd9b-419d-89cb-24410496a25e",
   "title": "Define batched map and demap traits",
   "description": "Add the batch-oriented mapper, hard demapper, and soft demapper interfaces that all modem backends must satisfy.\n\n## Success Criteria\n\n- [ ] Public traits exist for batched modulation, hard demodulation, and soft demapping.\n- [ ] The batch interfaces do not leak backend-specific details into the high-level API.\n- [ ] The trait surface is sufficient for scalar, SIMD, and future GPU implementations.\n\n## Notes\n\nThis task should build directly on the shared modem data model.",
-  "state": "ready",
+  "state": "done",
   "priority": "high",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [
     "c87c5043-ff07-4209-bf23-a1a4b71daaa9"
   ],
@@ -14,7 +14,28 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-13T12:18:27.559728872Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-13T12:24:58.374717953Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-13T12:36:50.068310080Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-13T12:42:27.222045450Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -24,5 +45,5 @@
     "story:modem-core-api"
   ],
   "created_at": "2026-04-12T19:40:37.523894831+00:00",
-  "updated_at": "2026-04-13T12:17:30.126982898+00:00"
+  "updated_at": "2026-04-13T12:42:34.451339857+00:00"
 }
