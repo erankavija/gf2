@@ -385,11 +385,18 @@ impl<S: ModemScalar> ModemSpecBuilder<S> {
         // slice as-is (it will be validated by from_parts_checked once
         // invariant D9 lands; today the length check happens at
         // ModemCapabilities construction sites).
-        let capabilities = capabilities.unwrap_or_else(|| ModemCapabilities {
+        let mut capabilities = capabilities.unwrap_or_else(|| ModemCapabilities {
             supports_exact_log_map: true,
             supports_max_log: true,
             analysis: default_analysis_slice(bits_per_symbol),
         });
+        // If the caller supplied capabilities via `ModemCapabilities::default()`
+        // (which cannot know bits_per_symbol and so returns an empty
+        // analysis slice), fill the slot from `default_analysis_slice` so
+        // the built spec always satisfies the length invariant.
+        if capabilities.analysis.is_empty() {
+            capabilities.analysis = default_analysis_slice(bits_per_symbol);
+        }
 
         let parts = ModemSpecParts {
             points,
