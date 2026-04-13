@@ -290,13 +290,13 @@ Design draft:
 
 ### Migration strategy
 
-Migration is complete only when there is one shared modem implementation.
+Migration is complete only when there is one shared modem implementation. The work is broken out across explicit JIT issues so that story `24144d1a` (core API design) closes when the API surface is in place, and the actual rewiring of legacy modem surfaces — which edits `channel.rs`, `modulation.rs`, and `fading.rs` — happens under story `92186a40` (simulation + channel refactor) and story `46ffe45a` (legacy surface migration).
 
-1. Introduce `modem/` and the new shared construction and demap APIs.
-2. Move arbitrary-constellation and Gray-QAM functionality onto that surface.
-3. Rewire AWGN and fading integration to call the shared modem implementation.
-4. Replace BPSK and QPSK compatibility surfaces with wrappers over the shared implementation.
-5. Delete duplicated modem implementations. Do not add deprecation shims.
+1. Introduce `modem/` and the new shared construction and demap APIs. — task `c87c5043` (data model), task `d36ae697` (batch traits), task `3e3fe377` (builder). **[Done.]**
+2. Move arbitrary-constellation and Gray-QAM functionality onto that surface. — task `b2c9c0f0` (reference mapper), task `625f5e1b` (Gray-QAM scalar mapper), task `abf03b13` (reference soft demapper), task `db1dda70` (Gray-QAM fast demapper), task `c5cee991` (SIMD kernels).
+3. Rewire AWGN and fading integration to call the shared modem implementation. — task `ee556fbf` (AWGN link adapter), task `a23646dd` (Rician fading link), task `bf865220` (SimulationRunner composition), under story `92186a40`.
+4. Replace BPSK and QPSK compatibility surfaces with wrappers over the shared implementation. — task `0cafa5f5` (BPSK compat), task `b3bb774a` (QPSK replacement), under story `92186a40`.
+5. Delete duplicated modem implementations. Do not add deprecation shims. — task `5fd315c0` under story `46ffe45a`.
 
 ### GPU and SIMD strategy
 
