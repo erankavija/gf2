@@ -390,10 +390,9 @@ mod tests {
             mapper.map_bits(&bits, &mut oi, &mut oq);
 
             for k in 0..num_symbols {
-                let mut label: u16 = 0;
-                for j in 0..m {
-                    label = (label << 1) | (bits[k * m + j] as u16);
-                }
+                let label = super::super::bit_pack::pack_label_msb_first(
+                    &bits[k * m..(k + 1) * m],
+                );
                 let idx = view
                     .labels()
                     .iter()
