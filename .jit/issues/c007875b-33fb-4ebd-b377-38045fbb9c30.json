@@ -15,6 +15,11 @@
     "doc-review"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-13T18:47:29.697333547Z"
+    },
     "doc-review": {
       "status": "passed",
       "updated_by": "agent:project-lead",
@@ -23,17 +28,12 @@
     "code-review": {
       "status": "failed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-04-13T18:48:45.295080040Z"
+      "updated_at": "2026-04-13T19:03:06.778226070Z"
     },
     "tdd-reminder": {
       "status": "passed",
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-13T18:37:48.956130666Z"
-    },
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-13T18:47:29.697333547Z"
     }
   },
   "context": {},
@@ -45,5 +45,5 @@
     "story:bit-channel-analysis"
   ],
   "created_at": "2026-04-12T20:04:48.345075553+00:00",
-  "updated_at": "2026-04-13T18:53:21.683266343+00:00"
+  "updated_at": "2026-04-13T19:05:47.036081116+00:00"
 }

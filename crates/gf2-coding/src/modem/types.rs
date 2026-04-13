@@ -296,10 +296,22 @@ pub struct BitChannelAnalysis {
     /// LLR conditional distribution is symmetric about 0 under
     /// equiprobable input bits.
     pub symmetric_llr_distribution: bool,
-    /// This bit is conditionally independent of the other bits in the
-    /// same symbol given the received sample. Holds for Gray-coded
-    /// square QAM under AWGN because I and Q decouple and the two axes
-    /// separate by PAM.
+    /// This bit is conditionally independent of every other bit in the
+    /// same symbol given the received sample. Strictly: the joint
+    /// posterior `P(b_0, ..., b_{m-1} | y)` factors as the product of
+    /// per-bit posteriors.
+    ///
+    /// Holds for modulations that place exactly one bit on each
+    /// uncorrelated signal axis -- BPSK (one I-axis bit) and QPSK (one
+    /// I-axis bit, one Q-axis bit) under independent I/Q AWGN.
+    ///
+    /// Does **not** hold in general for Gray square-QAM with
+    /// bits-per-axis > 1 (16/64/256-QAM): bits on the same axis share
+    /// the same received component and their joint posterior does not
+    /// factor except at `y = 0`. Downstream analysis that needs strict
+    /// per-bit independence must therefore treat this flag as the
+    /// authoritative per-preset answer rather than inferring it from the
+    /// constellation family.
     pub conditionally_independent: bool,
     /// A closed-form analytic LLR expression exists for this bit
     /// channel (for example BPSK / QPSK `LLR = 4 y / N0`, or the
