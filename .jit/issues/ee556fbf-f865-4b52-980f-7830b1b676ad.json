@@ -17,19 +17,19 @@
   ],
   "gates_status": {
     "code-review": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-13T16:10:31.150089755Z"
-    },
-    "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-04-13T16:03:19.739999764Z"
+      "updated_at": "2026-04-13T17:25:23.046051994Z"
     },
     "doc-review": {
       "status": "passed",
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-13T16:04:36.473268892Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-13T16:03:19.739999764Z"
     },
     "tdd-reminder": {
       "status": "passed",
@@ -46,5 +46,5 @@
     "story:simulation-channel-integration"
   ],
   "created_at": "2026-04-12T19:40:37.534753758+00:00",
-  "updated_at": "2026-04-13T16:16:20.362570784+00:00"
+  "updated_at": "2026-04-13T17:30:46.398849479+00:00"
 }
