@@ -15,8 +15,7 @@
 
 use crate::llr::Llr;
 
-use super::bit_pack::bit_at_msb_first;
-use super::{BatchSoftDemapper, DemapInput, DemapMethod, ModemScalar, ModemSpec, ModemView};
+use super::{BatchSoftDemapper, DemapInput, ModemScalar, ModemSpec, ModemView};
 
 /// Correctness-first soft demapper for any validated [`ModemSpec`].
 ///
@@ -155,82 +154,18 @@ impl<S: ModemScalar> BatchSoftDemapper<S> for ReferenceSoftDemapper<S> {
             }
 
             for b in 0..m {
-                let llr = match input.method {
-                    DemapMethod::ExactLogMap => {
-                        exact_log_map_llr(&d, labels, bits_per_symbol, b as u8)
-                    }
-                    DemapMethod::MaxLog => max_log_llr(&d, labels, bits_per_symbol, b as u8),
-                };
+                let llr = super::demapper::subset_log_map_llr(
+                    &d,
+                    |j| labels[j].bits,
+                    labels.len(),
+                    bits_per_symbol,
+                    b as u8,
+                    input.method,
+                );
                 out_llrs[k * m + b] = Llr::new(llr as f32);
             }
         }
     }
-}
-
-/// Exact log-MAP LLR for bit position `b` (MSB-first).
-///
-/// Returns `log(sum_{j in S0} exp(-d_j)) - log(sum_{j in S1} exp(-d_j))`,
-/// computed stably by subtracting the per-set minimum distance before
-/// exponentiating. Positive result means bit `0` is more likely.
-fn exact_log_map_llr(d: &[f64], labels: &[super::LabelWord], bits_per_symbol: u8, b: u8) -> f64 {
-    let mut d_min0 = f64::INFINITY;
-    let mut d_min1 = f64::INFINITY;
-    for (j, lbl) in labels.iter().enumerate() {
-        let bit = bit_at_msb_first(lbl.bits, b, bits_per_symbol);
-        if bit == 0 {
-            if d[j] < d_min0 {
-                d_min0 = d[j];
-            }
-        } else if d[j] < d_min1 {
-            d_min1 = d[j];
-        }
-    }
-
-    let mut sum0 = 0.0_f64;
-    let mut sum1 = 0.0_f64;
-    for (j, lbl) in labels.iter().enumerate() {
-        let bit = bit_at_msb_first(lbl.bits, b, bits_per_symbol);
-        if bit == 0 {
-            sum0 += (d_min0 - d[j]).exp();
-        } else {
-            sum1 += (d_min1 - d[j]).exp();
-        }
-    }
-
-    // If a subset is empty (constellation should have both by bijection
-    // at this bit, but guard defensively), fall back to max-log for the
-    // missing side by treating its contribution as -inf.
-    let log0 = if sum0 > 0.0 {
-        -d_min0 + sum0.ln()
-    } else {
-        f64::NEG_INFINITY
-    };
-    let log1 = if sum1 > 0.0 {
-        -d_min1 + sum1.ln()
-    } else {
-        f64::NEG_INFINITY
-    };
-    log0 - log1
-}
-
-/// Max-log LLR for bit position `b` (MSB-first).
-///
-/// Returns `-min_{j in S0} d_j + min_{j in S1} d_j`. Positive result
-/// means bit `0` is more likely.
-fn max_log_llr(d: &[f64], labels: &[super::LabelWord], bits_per_symbol: u8, b: u8) -> f64 {
-    let mut d_min0 = f64::INFINITY;
-    let mut d_min1 = f64::INFINITY;
-    for (j, lbl) in labels.iter().enumerate() {
-        let bit = bit_at_msb_first(lbl.bits, b, bits_per_symbol);
-        if bit == 0 {
-            if d[j] < d_min0 {
-                d_min0 = d[j];
-            }
-        } else if d[j] < d_min1 {
-            d_min1 = d[j];
-        }
-    }
-    -d_min0 + d_min1
 }
 
 #[cfg(test)]
