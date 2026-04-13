@@ -1,7 +1,7 @@
 {
   "epic_id": "d4851c3d-a9ae-42cc-bf5d-31ab973ba0fe",
   "epic_short_id": "d4851c3d",
-  "current_wave": 4,
+  "current_wave": 5,
   "waves": [
     {
       "wave_number": 1,
@@ -24,9 +24,9 @@
     {
       "wave_number": 4,
       "issues": [
-        {"id": "625f5e1b-21a6-4297-8259-7b421df14a1a", "short_id": "625f5e1b", "title": "Add Gray square-QAM presets", "classification": "implementation", "status": "pending"},
-        {"id": "b2c9c0f0-ccb1-4fea-a4b8-1676143b281e", "short_id": "b2c9c0f0", "title": "Implement arbitrary-constellation mapper", "classification": "implementation", "status": "pending"},
-        {"id": "24144d1a-f24a-4f00-a69e-da920f7f7a4d", "short_id": "24144d1a", "title": "Design the general modem core API (story completion)", "classification": "design", "status": "pending"}
+        {"id": "625f5e1b-21a6-4297-8259-7b421df14a1a", "short_id": "625f5e1b", "title": "Add Gray square-QAM presets (rescoped to scalar GrayQamMapper)", "classification": "implementation", "status": "done", "completed_at": "2026-04-13T15:07:44Z", "rework_rounds": 3, "rework_note": "auto code-review rejected original submission twice for production-path duplication and test-side label-pack duplication; project-lead refactored via shared modem::bit_pack module and #[doc(hidden)] pub unpack_label_msb_first helper"},
+        {"id": "b2c9c0f0-ccb1-4fea-a4b8-1676143b281e", "short_id": "b2c9c0f0", "title": "Implement arbitrary-constellation mapper", "classification": "implementation", "status": "done", "completed_at": "2026-04-13T15:07:45Z", "rework_rounds": 2, "rework_note": "same bit_pack duplication findings as sibling 625f5e1b; fix shared between them"},
+        {"id": "24144d1a-f24a-4f00-a69e-da920f7f7a4d", "short_id": "24144d1a", "title": "Design the general modem core API (story completion)", "classification": "design", "status": "in_progress_deferred", "rework_rounds": 1, "rework_note": "Story's own SCs satisfied (types/builder/traits landed, migration doc identifies 92186a40 and 46ffe45a as the rewiring stories). But auto code-review gate is repo-holistic: it insists on no duplicate modem logic (channel.rs, modulation.rs, fading.rs still present alongside new modem/ surface). That duplication is explicitly tracked in migration stories 92186a40 and 46ffe45a (waves 8-10). Marking as deferred: 24144d1a will be transitioned to done after issue 5fd315c0 (delete duplicated modem implementations) lands and the shared-source requirement auto-reviews cleanly. tdd-reminder, cargo-ci, doc-review all pass; code-review is the sole blocker."}
       ]
     },
     {
