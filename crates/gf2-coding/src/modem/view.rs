@@ -7,7 +7,8 @@
 
 use super::scalar::ModemScalar;
 use super::types::{
-    BitChannelId, BitChannelSemantics, LabelWord, ModemCapabilities, Normalization, SymbolPoint,
+    BitChannelAnalysis, BitChannelId, BitChannelSemantics, LabelWord, ModemCapabilities,
+    Normalization, SymbolPoint,
 };
 
 /// Borrowed read-only view over a [`super::ModemSpec`].
@@ -231,6 +232,59 @@ impl<'a, S: ModemScalar> ModemView<'a, S> {
         BitChannelId { bit_index: bit_idx }
     }
 
+    /// Returns the per-bit-channel analytic metadata for bit position
+    /// `bit_idx`.
+    ///
+    /// Borrowed from the [`ModemCapabilities::analysis`] slice attached
+    /// to the underlying [`super::ModemSpec`]. Consumers use the flags
+    /// to specialize analysis paths (closed-form LLR, symmetric
+    /// distribution assumptions, BICM independence shortcuts).
+    ///
+    /// # Arguments
+    ///
+    /// * `bit_idx` - Bit index within a symbol, `0` is the MSB.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `bit_idx >= bits_per_symbol()` or if the attached
+    /// capabilities do not carry a populated analysis slice (length
+    /// different from `bits_per_symbol()`). Preset- and builder-built
+    /// specs always populate the slice; the latter case can only occur
+    /// when a caller manually constructs [`ModemCapabilities`] via its
+    /// [`Default`] impl (which leaves `analysis` empty).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::modem::ModemSpec;
+    ///
+    /// let spec = ModemSpec::gray_square_qam(16);
+    /// let a = spec.view().bit_channel_analysis(0);
+    /// assert!(a.symmetric_llr_distribution);
+    /// assert!(a.conditionally_independent);
+    /// assert!(a.closed_form_llr_available);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
+    #[inline]
+    pub fn bit_channel_analysis(&self, bit_idx: u8) -> &'static BitChannelAnalysis {
+        assert!(
+            bit_idx < self.bits_per_symbol,
+            "ModemView::bit_channel_analysis: bit_idx {bit_idx} out of range [0, {})",
+            self.bits_per_symbol
+        );
+        let analysis = self.capabilities.analysis;
+        assert!(
+            analysis.len() == self.bits_per_symbol as usize,
+            "ModemView::bit_channel_analysis: capabilities.analysis length {} does not match bits_per_symbol {}",
+            analysis.len(),
+            self.bits_per_symbol
+        );
+        &analysis[bit_idx as usize]
+    }
+
     /// Number of constellation symbols.
     ///
     /// # Examples
@@ -353,5 +407,27 @@ mod tests {
     fn test_view_bit_channel_id_out_of_range_panics() {
         let spec = ModemSpec::gray_square_qam(16);
         let _ = spec.view().bit_channel_id(4);
+    }
+
+    #[test]
+    fn test_view_bit_channel_analysis_returns_preset_entry() {
+        let spec = ModemSpec::gray_square_qam(16);
+        let v = spec.view();
+        let caps = v.capabilities();
+        assert_eq!(caps.analysis.len(), v.bits_per_symbol() as usize);
+        for k in 0..v.bits_per_symbol() {
+            let a = v.bit_channel_analysis(k);
+            assert_eq!(a, &caps.analysis[k as usize]);
+            assert!(a.symmetric_llr_distribution);
+            assert!(a.conditionally_independent);
+            assert!(a.closed_form_llr_available);
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "bit_idx 4 out of range [0, 4)")]
+    fn test_view_bit_channel_analysis_out_of_range_panics() {
+        let spec = ModemSpec::gray_square_qam(16);
+        let _ = spec.view().bit_channel_analysis(4);
     }
 }

@@ -22,7 +22,58 @@
 
 use super::scalar::{DefaultScalar, ModemScalar};
 use super::spec::{ModemSpec, ModemSpecParts};
-use super::types::{BitChannelSemantics, LabelWord, ModemCapabilities, Normalization, SymbolPoint};
+use super::types::{
+    BitChannelAnalysis, BitChannelSemantics, LabelWord, ModemCapabilities, Normalization,
+    SymbolPoint,
+};
+
+/// Analysis entry used by every preset bit channel.
+///
+/// For BPSK, QPSK, and the Gray-coded square QAMs (order 16/64/256) each
+/// bit channel satisfies all three analytic flags under AWGN:
+///
+/// - `symmetric_llr_distribution` holds because the constellation and
+///   its Gray labelling are symmetric about 0 on each axis.
+/// - `conditionally_independent` holds because I and Q decouple under
+///   independent I/Q AWGN and, within a single axis, the Gray labelling
+///   minimizes per-bit dependence so BICM treats each PAM bit as
+///   independent of the other bits on its own axis (and of all
+///   other-axis bits) for analysis purposes.
+/// - `closed_form_llr_available` holds because BPSK / QPSK admit
+///   `LLR = 4 y / N0` directly and Gray PAM axes admit a
+///   piecewise-linear exact log-MAP at small constellation orders.
+const PRESET_ANALYSIS: BitChannelAnalysis = BitChannelAnalysis {
+    symmetric_llr_distribution: true,
+    conditionally_independent: true,
+    closed_form_llr_available: true,
+};
+
+/// Per-bit-channel analysis arrays for the built-in presets.
+///
+/// Indexed by bit count; the slice length equals the preset's
+/// `bits_per_symbol()`. All entries share [`PRESET_ANALYSIS`] — see its
+/// doc comment for the BICM-analysis reasoning behind the `true` flags.
+const PRESET_ANALYSIS_M1: &[BitChannelAnalysis] = &[PRESET_ANALYSIS; 1];
+const PRESET_ANALYSIS_M2: &[BitChannelAnalysis] = &[PRESET_ANALYSIS; 2];
+const PRESET_ANALYSIS_M4: &[BitChannelAnalysis] = &[PRESET_ANALYSIS; 4];
+const PRESET_ANALYSIS_M6: &[BitChannelAnalysis] = &[PRESET_ANALYSIS; 6];
+const PRESET_ANALYSIS_M8: &[BitChannelAnalysis] = &[PRESET_ANALYSIS; 8];
+
+/// Returns the preset analysis slice for a given `bits_per_symbol`.
+///
+/// Single source of truth shared by every preset constructor so the
+/// `bits_per_symbol` → `&'static [BitChannelAnalysis]` mapping is not
+/// duplicated per constellation order.
+const fn preset_analysis(bits_per_symbol: u8) -> &'static [BitChannelAnalysis] {
+    match bits_per_symbol {
+        1 => PRESET_ANALYSIS_M1,
+        2 => PRESET_ANALYSIS_M2,
+        4 => PRESET_ANALYSIS_M4,
+        6 => PRESET_ANALYSIS_M6,
+        8 => PRESET_ANALYSIS_M8,
+        _ => panic!("preset_analysis: unsupported bits_per_symbol for built-in presets"),
+    }
+}
 
 /// Returns the inverse-Gray decoding of `g` over `width` bits.
 ///
@@ -141,6 +192,7 @@ fn build_gray_square_qam<S: ModemScalar>(order: usize) -> ModemSpec<S> {
         capabilities: ModemCapabilities {
             supports_exact_log_map: true,
             supports_max_log: true,
+            analysis: preset_analysis(m_total),
         },
     };
     ModemSpec::from_parts_checked(parts)
@@ -164,6 +216,7 @@ fn build_bpsk<S: ModemScalar>() -> ModemSpec<S> {
         capabilities: ModemCapabilities {
             supports_exact_log_map: true,
             supports_max_log: true,
+            analysis: preset_analysis(1),
         },
     };
     ModemSpec::from_parts_checked(parts)
@@ -491,5 +544,44 @@ mod tests {
     #[should_panic(expected = "order must be one of 2, 4, 16, 64, 256")]
     fn test_preset_invalid_order_panics() {
         let _ = ModemSpec::gray_square_qam(8);
+    }
+
+    #[test]
+    fn test_preset_bpsk_bit_channel_analysis() {
+        let spec = ModemSpec::bpsk();
+        let caps = spec.capabilities();
+        assert_eq!(caps.analysis.len(), spec.bits_per_symbol() as usize);
+        for a in caps.analysis {
+            assert!(a.symmetric_llr_distribution);
+            assert!(a.conditionally_independent);
+            assert!(a.closed_form_llr_available);
+        }
+    }
+
+    #[test]
+    fn test_preset_gray_square_qam_bit_channel_analysis() {
+        for order in all_orders() {
+            let spec = ModemSpec::gray_square_qam(order);
+            let caps = spec.capabilities();
+            assert_eq!(
+                caps.analysis.len(),
+                spec.bits_per_symbol() as usize,
+                "analysis len mismatch for order {order}"
+            );
+            for (k, a) in caps.analysis.iter().enumerate() {
+                assert!(
+                    a.symmetric_llr_distribution,
+                    "order {order} bit {k} symmetric_llr_distribution"
+                );
+                assert!(
+                    a.conditionally_independent,
+                    "order {order} bit {k} conditionally_independent"
+                );
+                assert!(
+                    a.closed_form_llr_available,
+                    "order {order} bit {k} closed_form_llr_available"
+                );
+            }
+        }
     }
 }

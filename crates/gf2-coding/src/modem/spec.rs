@@ -154,6 +154,18 @@ impl<S: ModemScalar> ModemSpec<S> {
             "ModemSpec: capabilities must advertise at least one demap method"
         );
 
+        // Invariant 9: per-bit-channel analysis length matches
+        // bits_per_symbol. Length zero is also accepted for backward
+        // compatibility with callers constructing ModemCapabilities via
+        // its Default impl, which cannot know bits_per_symbol.
+        assert!(
+            capabilities.analysis.is_empty()
+                || capabilities.analysis.len() == bits_per_symbol as usize,
+            "ModemSpec: capabilities.analysis length {} does not match bits_per_symbol {}",
+            capabilities.analysis.len(),
+            bits_per_symbol
+        );
+
         Self {
             points,
             labels,
@@ -344,6 +356,7 @@ mod tests {
             capabilities: ModemCapabilities {
                 supports_exact_log_map: true,
                 supports_max_log: true,
+                analysis: &[],
             },
         }
     }
@@ -378,6 +391,7 @@ mod tests {
             capabilities: ModemCapabilities {
                 supports_exact_log_map: true,
                 supports_max_log: true,
+                analysis: &[],
             },
         };
         let _ = ModemSpec::from_parts_checked(parts);
@@ -442,6 +456,7 @@ mod tests {
         parts.capabilities = ModemCapabilities {
             supports_exact_log_map: false,
             supports_max_log: false,
+            analysis: &[],
         };
         let _ = ModemSpec::from_parts_checked(parts);
     }

@@ -39,9 +39,12 @@ use super::{DemapMethod, ModemScalar, ModemView};
 ///   into real and imaginary parts. Pass `None` for AWGN. When provided,
 ///   both slices must be `Some` and have length `num_symbols`;
 ///   implementations panic on half-specified gains.
-/// * `noise_var` - Per-symbol noise variance (`N0` or `sigma^2` per
-///   complex sample, matching the convention used by the consuming
-///   demapper). Length `num_symbols`.
+/// * `noise_var` - Per-symbol total complex AWGN noise variance
+///   `N0 = 2 sigma^2`. For real AWGN with independent Gaussian noise of
+///   variance `sigma^2` on each of I and Q, pass `2 * sigma^2` here.
+///   This matches the log-MAP LLR formulas
+///   `LLR = log(p(y|bit=0)/p(y|bit=1))` with per-point distances scaled
+///   by `1/N0`. Length `num_symbols`.
 /// * `method` - Selected demapper semantics; implementations must reject
 ///   methods not advertised by the [`super::ModemSpec`]'s
 ///   [`super::ModemCapabilities`].
@@ -76,7 +79,12 @@ pub struct DemapInput<'a, S: ModemScalar> {
     /// Optional quadrature channel-gain component for fading channels.
     /// `None` signals AWGN (implicit unit gain).
     pub gain_q: Option<&'a [S]>,
-    /// Per-symbol noise variance. Length `num_symbols`.
+    /// Per-symbol total complex AWGN noise variance `N0 = 2 sigma^2`.
+    /// For real AWGN with independent Gaussian noise of variance
+    /// `sigma^2` on each of I and Q, pass `2 * sigma^2` here. This
+    /// matches the log-MAP LLR formulas
+    /// `LLR = log(p(y|bit=0)/p(y|bit=1))` with per-point distances
+    /// scaled by `1/N0`. Length `num_symbols`.
     pub noise_var: &'a [S],
     /// Which demap semantics to use.
     pub method: DemapMethod,
