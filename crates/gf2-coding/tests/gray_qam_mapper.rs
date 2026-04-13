@@ -4,14 +4,9 @@
 //! [`BatchMapper`] methods produce outputs equivalent to the preset
 //! [`ModemSpec::gray_square_qam`] per-label point lookup for 16-QAM.
 
-use gf2_coding::modem::{BatchMapper, GrayQamMapper, ModemSpec};
-
-/// Flatten a u16 label of `width` bits into an MSB-first bool vector.
-fn bits_msb_first(label: u16, width: u8) -> Vec<bool> {
-    (0..width)
-        .map(|k| ((label >> (width - 1 - k)) & 1) == 1)
-        .collect()
-}
+use gf2_coding::modem::{
+    unpack_label_msb_first as bits_msb_first, BatchMapper, GrayQamMapper, ModemSpec,
+};
 
 #[test]
 fn test_gray_qam_mapper_public_surface_16qam() {

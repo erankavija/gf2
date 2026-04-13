@@ -58,6 +58,8 @@ mod spec;
 mod types;
 mod view;
 
+#[doc(hidden)]
+pub use bit_pack::unpack_label_msb_first;
 pub use builder::ModemSpecBuilder;
 pub use demapper::{BatchHardDemapper, BatchSoftDemapper, DemapInput};
 pub use gray_qam_mapper::GrayQamMapper;
