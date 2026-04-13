@@ -433,9 +433,8 @@ mod tests {
 
         for k in 0..batch {
             let lab = labels[k];
-            // MSB first: bit 0 = (lab >> 1) & 1, bit 1 = lab & 1.
-            let bit0 = (lab >> 1) & 1;
-            let bit1 = lab & 1;
+            let bit0 = super::super::bit_pack::bit_at_msb_first(lab, 0, 2);
+            let bit1 = super::super::bit_pack::bit_at_msb_first(lab, 1, 2);
             let got0 = out[2 * k].hard_decision() as u16;
             let got1 = out[2 * k + 1].hard_decision() as u16;
             assert_eq!(got0, bit0, "QPSK bit0 mismatch at k={k}, lab={lab:02b}");
@@ -790,8 +789,7 @@ mod tests {
             for b in 0..m {
                 let v = out[b as usize].value();
                 prop_assert!(v.is_finite(), "LLR {v} not finite");
-                let shift = m - 1 - b;
-                let nearest_bit = (labs[pick] >> shift) & 1;
+                let nearest_bit = super::super::bit_pack::bit_at_msb_first(labs[pick], b, m);
                 let hd = out[b as usize].hard_decision() as u16;
                 prop_assert_eq!(hd, nearest_bit);
             }
