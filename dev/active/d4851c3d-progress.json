@@ -1,0 +1,100 @@
+{
+  "epic_id": "d4851c3d-a9ae-42cc-bf5d-31ab973ba0fe",
+  "epic_short_id": "d4851c3d",
+  "current_wave": 1,
+  "waves": [
+    {
+      "wave_number": 1,
+      "issues": [
+        {"id": "c87c5043-ff07-4209-bf23-a1a4b71daaa9", "short_id": "c87c5043", "title": "Define constellation and labeling data model", "classification": "implementation", "status": "pending"}
+      ]
+    },
+    {
+      "wave_number": 2,
+      "issues": [
+        {"id": "d36ae697-cd9b-419d-89cb-24410496a25e", "short_id": "d36ae697", "title": "Define batched map and demap traits", "classification": "implementation", "status": "pending"}
+      ]
+    },
+    {
+      "wave_number": 3,
+      "issues": [
+        {"id": "3e3fe377-2508-47f4-aeab-178755530711", "short_id": "3e3fe377", "title": "Add modem builders and validation", "classification": "implementation", "status": "pending"}
+      ]
+    },
+    {
+      "wave_number": 4,
+      "issues": [
+        {"id": "625f5e1b-21a6-4297-8259-7b421df14a1a", "short_id": "625f5e1b", "title": "Add Gray square-QAM presets", "classification": "implementation", "status": "pending"},
+        {"id": "b2c9c0f0-ccb1-4fea-a4b8-1676143b281e", "short_id": "b2c9c0f0", "title": "Implement arbitrary-constellation mapper", "classification": "implementation", "status": "pending"},
+        {"id": "24144d1a-f24a-4f00-a69e-da920f7f7a4d", "short_id": "24144d1a", "title": "Design the general modem core API (story completion)", "classification": "design", "status": "pending"}
+      ]
+    },
+    {
+      "wave_number": 5,
+      "issues": [
+        {"id": "abf03b13-e8a8-4049-a30a-e601fd640ca8", "short_id": "abf03b13", "title": "Implement reference soft demapper", "classification": "implementation", "status": "pending"},
+        {"id": "c007875b-33fb-4ebd-b377-38045fbb9c30", "short_id": "c007875b", "title": "Define bit-channel metadata and demapper analysis modes", "classification": "implementation", "status": "pending"},
+        {"id": "ee556fbf-f865-4b52-980f-7830b1b676ad", "short_id": "ee556fbf", "title": "Refactor the AWGN link adapter", "classification": "implementation", "status": "pending"}
+      ]
+    },
+    {
+      "wave_number": 6,
+      "issues": [
+        {"id": "0aac93c6-189d-430f-bc74-050f24d9b780", "short_id": "0aac93c6", "title": "Add reference-model tests", "classification": "implementation", "status": "pending"},
+        {"id": "db1dda70-a870-4b52-a4ea-92acee4e3fad", "short_id": "db1dda70", "title": "Implement fast Gray square-QAM soft demapper", "classification": "implementation", "status": "pending"},
+        {"id": "bf865220-f00f-4567-84d5-5f12db79cb63", "short_id": "bf865220", "title": "Integrate modem composition into SimulationRunner", "classification": "implementation", "status": "pending"}
+      ]
+    },
+    {
+      "wave_number": 7,
+      "issues": [
+        {"id": "c5cee991-b410-469c-bd9b-849f717f8f51", "short_id": "c5cee991", "title": "Add SIMD-ready Gray square-QAM batch kernels", "classification": "implementation", "status": "pending"},
+        {"id": "51334873-c2dc-4174-ab13-60c45997b9d4", "short_id": "51334873", "title": "Implement arbitrary-constellation mapping and reference demapping (story)", "classification": "design", "status": "pending"},
+        {"id": "a23646dd-2980-420e-a7ac-c0094c63f55c", "short_id": "a23646dd", "title": "Adapt the Rician fading link to the common modem surface", "classification": "implementation", "status": "pending"},
+        {"id": "0cafa5f5-a680-4f65-a14e-b11dcbb668de", "short_id": "0cafa5f5", "title": "Reimplement BPSK compatibility surface on the modem framework", "classification": "implementation", "status": "pending"}
+      ]
+    },
+    {
+      "wave_number": 8,
+      "issues": [
+        {"id": "52112411-28ed-4428-9b8c-0dcec2fae5eb", "short_id": "52112411", "title": "Implement optimized Gray square-QAM mapper and demapper (story)", "classification": "design", "status": "pending"},
+        {"id": "a9ccb8ae-62de-4631-9bae-532499bf8ae0", "short_id": "a9ccb8ae", "title": "Implement per-bit LLR distribution and statistics tools", "classification": "implementation", "status": "pending"},
+        {"id": "b3bb774a-5c57-4d95-9ce4-43fbb3b7d0fd", "short_id": "b3bb774a", "title": "Replace the placeholder QPSK path with framework-backed adapters", "classification": "implementation", "status": "pending"},
+        {"id": "92186a40-1d97-49f9-8b82-e91b8afe47b2", "short_id": "92186a40", "title": "Refactor simulation and channel surfaces around the modem framework (story)", "classification": "design", "status": "pending"},
+        {"id": "71c19c32-3a80-4df8-9640-0fd5e8d6653d", "short_id": "71c19c32", "title": "Prototype a GPU demapper on the shared batch interface", "classification": "research", "status": "pending"}
+      ]
+    },
+    {
+      "wave_number": 9,
+      "issues": [
+        {"id": "9c37ec8c-f310-47f8-b54e-ba4a41143b0c", "short_id": "9c37ec8c", "title": "Measure GPU crossover and document the decision", "classification": "research", "status": "pending"},
+        {"id": "0f7a6cd9-4ac0-4b79-b167-ea041ec389dd", "short_id": "0f7a6cd9", "title": "Implement per-bit MI and GMI estimators", "classification": "implementation", "status": "pending"},
+        {"id": "5fd315c0-4713-4744-925f-619de215ba98", "short_id": "5fd315c0", "title": "Delete duplicated modem implementations", "classification": "implementation", "status": "pending"},
+        {"id": "80f218ca-7bce-4cf6-bf03-e1fe2789620d", "short_id": "80f218ca", "title": "Integrate opt-in bit-channel analysis into simulation workflows", "classification": "implementation", "status": "pending"}
+      ]
+    },
+    {
+      "wave_number": 10,
+      "issues": [
+        {"id": "19069bc1-2010-4a41-804e-316036ec3e11", "short_id": "19069bc1", "title": "Prototype a GPU batch demapper backend (story)", "classification": "design", "status": "pending"},
+        {"id": "f80407f8-05a7-464b-b845-1c1c41842196", "short_id": "f80407f8", "title": "Add modem docs and examples", "classification": "documentation", "status": "pending"},
+        {"id": "1663515c-a17f-4d72-beb0-99c7e8168f80", "short_id": "1663515c", "title": "Add generic versus fast-path modem benchmarks", "classification": "implementation", "status": "pending"},
+        {"id": "dafb938a-405a-472f-af4b-56ec9955d8b4", "short_id": "dafb938a", "title": "Add modem regression and property tests", "classification": "implementation", "status": "pending"},
+        {"id": "46ffe45a-6cc7-47e8-bb15-d406b3a17abc", "short_id": "46ffe45a", "title": "Migrate legacy modem surfaces to a single shared implementation (story)", "classification": "design", "status": "pending"},
+        {"id": "448491d5-c2be-41ba-89cf-0147e0679347", "short_id": "448491d5", "title": "Benchmark zero-overhead disabled path for bit-channel analysis", "classification": "implementation", "status": "pending"}
+      ]
+    },
+    {
+      "wave_number": 11,
+      "issues": [
+        {"id": "e2c0f65a-5e65-4cfc-abdd-e65377f7da2b", "short_id": "e2c0f65a", "title": "Add bit-channel analysis (story)", "classification": "design", "status": "pending"},
+        {"id": "0884289e-33a4-495b-97a3-9ba5625dd878", "short_id": "0884289e", "title": "Add modem ergonomics, validation, examples, and benchmarking (story)", "classification": "design", "status": "pending"}
+      ]
+    }
+  ],
+  "created_during_execution": [],
+  "escalations": [],
+  "rework_counts": {},
+  "started_at": "2026-04-13T11:48:00Z",
+  "notes": "Epic has 33 children across 11 dependency waves. Design doc: dev/active/d4851c3d-modem-framework-design.md. Wave 1 foundation task (c87c5043) has a dedicated implementation plan at dev/active/c87c5043-constellation-data-model-plan.md. Gates on each leaf: tdd-reminder, cargo-ci, code-review, doc-review."
+}
