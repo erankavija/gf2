@@ -90,6 +90,80 @@ pub struct DemapInput<'a, S: ModemScalar> {
     pub method: DemapMethod,
 }
 
+/// Computes the per-bit log-MAP or max-log LLR given per-label squared
+/// distances, a label accessor, and the demap method.
+///
+/// The core subset-reduction pattern used by both the arbitrary-
+/// constellation reference path (which walks every `LabelWord` in a
+/// `ModemSpec`) and the Gray square-QAM fast path (which walks the
+/// `2^m_bits` implicit labels of a PAM axis). Kept here so neither
+/// backend reimplements the min-shift + log-sum-exp math.
+///
+/// # Arguments
+///
+/// * `distances` - Per-label noise-weighted squared distances,
+///   `distances[j]` giving the distance for label `label_bits(j)`.
+/// * `label_bits` - Returns the MSB-first `u16` label for index `j`.
+///   For the reference path this reads `labels[j].bits`; for the fast
+///   path the label is the index itself.
+/// * `n_labels` - Total number of labels (`distances.len()`).
+/// * `bits_per_symbol` - Label width in bits.
+/// * `bit_idx` - Bit position (MSB-first; `0` is the MSB).
+/// * `method` - Exact log-MAP or max-log.
+///
+/// # Complexity
+///
+/// O(`n_labels`).
+#[inline]
+pub(crate) fn subset_log_map_llr(
+    distances: &[f64],
+    label_bits: impl Fn(usize) -> u16,
+    n_labels: usize,
+    bits_per_symbol: u8,
+    bit_idx: u8,
+    method: DemapMethod,
+) -> f64 {
+    use super::bit_pack::bit_at_msb_first;
+    let mut d_min0 = f64::INFINITY;
+    let mut d_min1 = f64::INFINITY;
+    for (j, &dj) in distances.iter().enumerate().take(n_labels) {
+        let bit = bit_at_msb_first(label_bits(j), bit_idx, bits_per_symbol);
+        if bit == 0 {
+            if dj < d_min0 {
+                d_min0 = dj;
+            }
+        } else if dj < d_min1 {
+            d_min1 = dj;
+        }
+    }
+    match method {
+        DemapMethod::MaxLog => -d_min0 + d_min1,
+        DemapMethod::ExactLogMap => {
+            let mut sum0 = 0.0_f64;
+            let mut sum1 = 0.0_f64;
+            for (j, &dj) in distances.iter().enumerate().take(n_labels) {
+                let bit = bit_at_msb_first(label_bits(j), bit_idx, bits_per_symbol);
+                if bit == 0 {
+                    sum0 += (d_min0 - dj).exp();
+                } else {
+                    sum1 += (d_min1 - dj).exp();
+                }
+            }
+            let log0 = if sum0 > 0.0 {
+                -d_min0 + sum0.ln()
+            } else {
+                f64::NEG_INFINITY
+            };
+            let log1 = if sum1 > 0.0 {
+                -d_min1 + sum1.ln()
+            } else {
+                f64::NEG_INFINITY
+            };
+            log0 - log1
+        }
+    }
+}
+
 /// Validates a [`DemapInput`] and output slice against a modem view.
 ///
 /// Shared pre-flight check used by every `BatchSoftDemapper`

@@ -1044,6 +1044,14 @@ impl QpskRicianChannelModel {
 }
 
 impl ChannelModel for QpskRicianChannelModel {
+    fn batch_alignment(&self) -> usize {
+        // QPSK carries 2 bits per symbol, so `codeword.len()` must be
+        // even. Surfacing this through the trait lets modem-aware
+        // simulation runners round their batches down to a multiple of
+        // 2 rather than hitting the assertion below.
+        2
+    }
+
     fn transmit_and_demodulate<R: rand::Rng>(
         &self,
         codeword: &gf2_core::BitVec,

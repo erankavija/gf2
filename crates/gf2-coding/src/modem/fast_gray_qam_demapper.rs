@@ -39,7 +39,6 @@
 
 use crate::llr::Llr;
 
-use super::bit_pack::bit_at_msb_first;
 use super::{
     BatchSoftDemapper, BitChannelSemantics, DemapInput, DemapMethod, ModemScalar, ModemSpec,
     ModemView,
@@ -97,19 +96,27 @@ impl<S: ModemScalar> FastGrayQamDemapper<S> {
     ///
     /// # Arguments
     ///
-    /// * `spec` - A [`ModemSpec`] produced by [`ModemSpec::bpsk`],
-    ///   [`ModemSpec::gray_square_qam`], or their `*_with_scalar`
-    ///   variants. Custom [`super::ModemSpecBuilder`]-built specs are
-    ///   not accepted.
+    /// * `spec` - A [`ModemSpec`] whose metadata advertises the
+    ///   Gray-square-QAM layout. The canonical way to obtain one is
+    ///   [`ModemSpec::bpsk`], [`ModemSpec::gray_square_qam`], or their
+    ///   `*_with_scalar` variants. Custom [`super::ModemSpecBuilder`]
+    ///   specs are accepted iff they advertise the same metadata shape
+    ///   (see Panics) **and** carry canonical Gray square-PAM geometry
+    ///   on each axis; the geometry itself is not verified here, so a
+    ///   spec that spoofs the metadata but ships non-preset points
+    ///   produces undefined LLRs. Prefer the preset constructors.
     ///
     /// # Panics
     ///
     /// Panics if the spec does not match a supported Gray-square-QAM
     /// preset layout: `bits_per_symbol` must be one of `1, 2, 4, 6, 8`,
-    /// `num_symbols` must equal `2^bits_per_symbol`, and the bit
-    /// channels must follow the preset layout
-    /// (`SingleAxisPam(0)` for BPSK; `m/2` `IAxisPam` entries followed
-    /// by `m/2` `QAxisPam` entries in MSB-first order for QAM).
+    /// `num_symbols` must equal `2^bits_per_symbol`, the bit channels
+    /// must follow the preset layout (`SingleAxisPam(0)` for BPSK;
+    /// `m/2` `IAxisPam` entries followed by `m/2` `QAxisPam` entries in
+    /// MSB-first order for QAM), and (for QAM) every composite symbol
+    /// with the same I-half-label must share the same I coordinate so
+    /// the I/Q factorisation is well-defined — mismatch panics with a
+    /// descriptive message.
     ///
     /// # Examples
     ///
@@ -147,19 +154,32 @@ impl<S: ModemScalar> FastGrayQamDemapper<S> {
             pam_levels[1] = view.point(1).i.to_f64();
         } else {
             let mask_half = (1u16 << m_half) - 1;
-            // Track which labels have been filled so we can assert
-            // completeness at the end.
             let mut filled = vec![false; table_len];
             for (idx, label) in view.labels().iter().enumerate() {
                 let i_label = ((label.bits >> m_half) & mask_half) as usize;
+                let i_coord = view.point(idx).i.to_f64();
                 if !filled[i_label] {
-                    pam_levels[i_label] = view.point(idx).i.to_f64();
+                    pam_levels[i_label] = i_coord;
                     filled[i_label] = true;
+                } else {
+                    // Enforce I/Q factorisation: every symbol sharing an
+                    // I-half-label must share the same I coordinate, or
+                    // the axis-separable demap is not well-defined.
+                    let diff = (pam_levels[i_label] - i_coord).abs();
+                    assert!(
+                        diff < 1e-9,
+                        "FastGrayQamDemapper::new: I-axis factorisation failed: \
+                         symbols with I-half-label {i_label} have different I coordinates \
+                         ({} vs {}); spec is not a canonical Gray square-QAM preset",
+                        pam_levels[i_label],
+                        i_coord,
+                    );
                 }
             }
-            debug_assert!(
+            assert!(
                 filled.iter().all(|b| *b),
-                "FastGrayQamDemapper: preset did not cover every I-half-label"
+                "FastGrayQamDemapper::new: spec does not cover every I-half-label; \
+                 not a Gray square-QAM preset"
             );
         }
 
@@ -258,49 +278,13 @@ fn validate_preset_layout<S: ModemScalar>(spec: &ModemSpec<S>) {
 /// `m_bits`-wide half-label) given per-level squared distances `d`.
 ///
 /// `d.len() == 1 << m_bits`, indexed by the raw Gray label. `method`
-/// selects exact log-MAP or max-log. This helper is shared by the I-axis
-/// and Q-axis passes.
+/// selects exact log-MAP or max-log. The subset-reduction math itself
+/// lives in [`super::demapper::subset_log_map_llr`] — this is a thin
+/// wrapper that supplies the "label = index" mapping used on a PAM
+/// axis.
 #[inline]
 fn pam_axis_llr(d: &[f64], m_bits: u8, bit_idx: u8, method: DemapMethod) -> f64 {
-    let mut d_min0 = f64::INFINITY;
-    let mut d_min1 = f64::INFINITY;
-    for (label, &dj) in d.iter().enumerate() {
-        let bit = bit_at_msb_first(label as u16, bit_idx, m_bits);
-        if bit == 0 {
-            if dj < d_min0 {
-                d_min0 = dj;
-            }
-        } else if dj < d_min1 {
-            d_min1 = dj;
-        }
-    }
-
-    match method {
-        DemapMethod::MaxLog => -d_min0 + d_min1,
-        DemapMethod::ExactLogMap => {
-            let mut sum0 = 0.0_f64;
-            let mut sum1 = 0.0_f64;
-            for (label, &dj) in d.iter().enumerate() {
-                let bit = bit_at_msb_first(label as u16, bit_idx, m_bits);
-                if bit == 0 {
-                    sum0 += (d_min0 - dj).exp();
-                } else {
-                    sum1 += (d_min1 - dj).exp();
-                }
-            }
-            let log0 = if sum0 > 0.0 {
-                -d_min0 + sum0.ln()
-            } else {
-                f64::NEG_INFINITY
-            };
-            let log1 = if sum1 > 0.0 {
-                -d_min1 + sum1.ln()
-            } else {
-                f64::NEG_INFINITY
-            };
-            log0 - log1
-        }
-    }
+    super::demapper::subset_log_map_llr(d, |j| j as u16, d.len(), m_bits, bit_idx, method)
 }
 
 impl<S: ModemScalar> BatchSoftDemapper<S> for FastGrayQamDemapper<S> {
@@ -757,6 +741,40 @@ mod tests {
             .points(points)
             .labels(labels)
             .normalization(Normalization::UnitAverageSymbolEnergy)
+            .build();
+        let _ = FastGrayQamDemapper::new(spec);
+    }
+
+    #[test]
+    #[should_panic(expected = "I-axis factorisation failed")]
+    fn test_spoofed_iaxispam_metadata_with_non_preset_geometry_rejected() {
+        // Build a custom 4-point spec with IAxisPam/QAxisPam metadata
+        // (so validate_preset_layout accepts it) but asymmetric geometry
+        // that breaks the I/Q factorisation the fast path relies on.
+        use crate::modem::{BitChannelSemantics, ModemCapabilities};
+        let points: Vec<SymbolPoint<f32>> = vec![
+            SymbolPoint::new(1.0, 1.0),
+            SymbolPoint::new(1.0, -1.0),
+            // Two symbols that share I-half-label 0b1 but have different
+            // I coordinates break the factorisation and must be caught.
+            SymbolPoint::new(-1.0, 1.0),
+            SymbolPoint::new(-2.0, -1.0),
+        ];
+        let labels: Vec<LabelWord> = (0u16..4).map(|b| LabelWord::new(b, 2)).collect();
+        let spec = ModemSpecBuilder::<f32>::new()
+            .bits_per_symbol(2)
+            .points(points)
+            .labels(labels)
+            .bit_channels(vec![
+                BitChannelSemantics::IAxisPam(0),
+                BitChannelSemantics::QAxisPam(0),
+            ])
+            .capabilities(ModemCapabilities {
+                supports_exact_log_map: true,
+                supports_max_log: true,
+                analysis: &[],
+            })
+            .normalization(Normalization::ExplicitEs(2.5))
             .build();
         let _ = FastGrayQamDemapper::new(spec);
     }
