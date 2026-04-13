@@ -2,9 +2,9 @@
   "id": "3e3fe377-2508-47f4-aeab-178755530711",
   "title": "Add modem builders and validation",
   "description": "Implement validated modem construction so users can create custom constellations and built-in presets with clear failure modes.\n\n## Success Criteria\n\n- [ ] Builders validate bijection, bits-per-symbol consistency, and normalization requirements.\n- [ ] Invalid configurations are rejected with explicit user-facing errors.\n- [ ] Builder outputs are ready to feed both the reference and optimized modem paths.\n\n## Notes\n\nThis task closes the core API story by turning the shared data model into a safe construction surface.",
-  "state": "ready",
+  "state": "done",
   "priority": "high",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [
     "d36ae697-cd9b-419d-89cb-24410496a25e"
   ],
@@ -14,7 +14,28 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-13T12:43:29.056991085Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-13T12:49:23.377854859Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-13T13:06:27.727323911Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-13T13:00:55.777277645Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -24,5 +45,5 @@
     "story:modem-core-api"
   ],
   "created_at": "2026-04-12T19:40:37.525658012+00:00",
-  "updated_at": "2026-04-13T12:42:34.547037927+00:00"
+  "updated_at": "2026-04-13T13:06:37.898236187+00:00"
 }
