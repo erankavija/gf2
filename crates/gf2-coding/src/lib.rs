@@ -69,6 +69,7 @@ pub mod grand;
 pub mod ldpc;
 pub mod linear;
 pub mod llr;
+pub mod modem;
 pub mod modulation;
 pub mod product;
 

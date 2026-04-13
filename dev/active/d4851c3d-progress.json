@@ -1,12 +1,12 @@
 {
   "epic_id": "d4851c3d-a9ae-42cc-bf5d-31ab973ba0fe",
   "epic_short_id": "d4851c3d",
-  "current_wave": 1,
+  "current_wave": 2,
   "waves": [
     {
       "wave_number": 1,
       "issues": [
-        {"id": "c87c5043-ff07-4209-bf23-a1a4b71daaa9", "short_id": "c87c5043", "title": "Define constellation and labeling data model", "classification": "implementation", "status": "pending"}
+        {"id": "c87c5043-ff07-4209-bf23-a1a4b71daaa9", "short_id": "c87c5043", "title": "Define constellation and labeling data model", "classification": "implementation", "status": "done", "completed_at": "2026-04-13T12:17:29Z", "rework_rounds": 1, "rework_note": "auto code-review flagged missing out-of-range guard on ModemView::bit_channel_id; project-lead patched inline (one-line fix + panic test) rather than dispatching a rework agent"}
       ]
     },
     {
