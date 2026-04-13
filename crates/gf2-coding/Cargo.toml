@@ -11,7 +11,7 @@ rust-version = "1.80"
 
 [dependencies]
 gf2-core = { path = "../gf2-core" }
-gf2-kernels-simd = { path = "../gf2-kernels-simd", optional = true }
+gf2-kernels-simd = { path = "../gf2-kernels-simd" }
 gf2-kernels-hip = { path = "../gf2-kernels-hip", optional = true }
 rand = { workspace = true }
 rand_distr = "0.4"
@@ -30,7 +30,7 @@ num_cpus = "1.17.0"
 
 [features]
 default = ["simd"]
-simd = ["gf2-core/simd", "gf2-kernels-simd"]
+simd = ["gf2-core/simd"]
 parallel = ["dep:rayon", "gf2-core/parallel"]
 visualization = ["gf2-core/visualization"]
 # Use f64 precision for LLRs instead of f32 (slower, for research/comparison)
