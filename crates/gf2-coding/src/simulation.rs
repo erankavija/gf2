@@ -694,55 +694,14 @@ impl SimulationRunner {
         config: &SimulationConfig,
         rng: &mut R,
     ) -> Vec<SimulationResult> {
-        config
-            .eb_n0_range_db
-            .iter()
-            .map(|&eb_n0_db| {
-                let channel = AwgnChannel::from_eb_n0_db(eb_n0_db, 1.0);
-
-                let mut total_bits = 0;
-                let mut total_errors = 0;
-
-                while total_errors < config.min_errors && total_bits < config.max_frames {
-                    let batch_size = 1000.min(config.max_frames - total_bits);
-                    let bits = BitVec::random(batch_size, rng);
-
-                    let bits_vec: Vec<bool> = (0..batch_size).map(|i| bits.get(i)).collect();
-                    let symbols = BpskModulator::modulate_bits(&bits_vec);
-                    let received = channel.transmit_symbols(&symbols, rng);
-
-                    let decoded: Vec<bool> = received
-                        .iter()
-                        .map(|&r| BpskModulator::demodulate_hard(r))
-                        .collect();
-
-                    let errors = (0..batch_size)
-                        .filter(|&i| bits.get(i) != decoded[i])
-                        .count();
-
-                    total_bits += batch_size;
-                    total_errors += errors;
-                }
-
-                let ber = if total_bits > 0 {
-                    total_errors as f64 / total_bits as f64
-                } else {
-                    0.0
-                };
-
-                SimulationResult {
-                    eb_n0_db,
-                    ber,
-                    bler: 0.0,
-                    avg_iterations: None,
-                    avg_queries_per_bit: None,
-                    num_bits: total_bits,
-                    num_bit_errors: total_errors,
-                    num_frames: 0,
-                    num_frame_errors: 0,
-                }
-            })
-            .collect()
+        // Delegate to the shared modem-backed runner so the legacy BPSK
+        // entry point no longer reimplements the modulate/transmit/
+        // demodulate Monte Carlo loop. `BpskAwgnChannel` is the canonical
+        // `ChannelModel` for the legacy path; running through it keeps
+        // the noise-variance, RNG consumption, and hard-decision
+        // convention identical to the previous implementation while
+        // eliminating duplication with `run_uncoded_ber_with_channel`.
+        Self::run_uncoded_ber_with_channel(&BpskAwgnChannel, config, rng)
     }
 
     /// Modem-backed counterpart to [`SimulationRunner::run_uncoded_ber`].
