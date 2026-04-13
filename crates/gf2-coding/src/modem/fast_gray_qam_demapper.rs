@@ -125,6 +125,10 @@ impl<S: ModemScalar> FastGrayQamDemapper<S> {
     ///   the kernel reuses the I-derived level table for both axes, so
     ///   `q_levels[label] == pam_levels[label]` must hold for every
     ///   label value.
+    /// - (BPSK) The two points are not stored in label order (label 0
+    ///   at index 0, label 1 at index 1), or they do not share a common
+    ///   Q coordinate (the BPSK kernel treats `label == index` and
+    ///   drops Q as a common additive constant).
     ///
     /// # Examples
     ///
@@ -158,6 +162,30 @@ impl<S: ModemScalar> FastGrayQamDemapper<S> {
         // row / column.
         let mut pam_levels = vec![0.0_f64; table_len];
         if is_bpsk {
+            // The BPSK kernel treats `label == index` and drops the Q
+            // component as a common additive constant. Validate both
+            // invariants here so custom builder-made BPSK specs that
+            // violate them are rejected at construction instead of
+            // silently producing wrong LLRs.
+            assert_eq!(
+                view.labels()[0].bits,
+                0,
+                "FastGrayQamDemapper::new: BPSK spec must store label 0 at index 0, got {}",
+                view.labels()[0].bits
+            );
+            assert_eq!(
+                view.labels()[1].bits,
+                1,
+                "FastGrayQamDemapper::new: BPSK spec must store label 1 at index 1, got {}",
+                view.labels()[1].bits
+            );
+            let q0 = view.point(0).q.to_f64();
+            let q1 = view.point(1).q.to_f64();
+            assert!(
+                (q0 - q1).abs() < 1e-9,
+                "FastGrayQamDemapper::new: BPSK spec must place both points on a common Q coordinate \
+                 (got {q0} vs {q1}); the fast kernel drops Q as a common additive constant"
+            );
             pam_levels[0] = view.point(0).i.to_f64();
             pam_levels[1] = view.point(1).i.to_f64();
         } else {
@@ -790,6 +818,54 @@ mod tests {
             .points(points)
             .labels(labels)
             .normalization(Normalization::UnitAverageSymbolEnergy)
+            .build();
+        let _ = FastGrayQamDemapper::new(spec);
+    }
+
+    #[test]
+    #[should_panic(expected = "BPSK spec must store label 0 at index 0")]
+    fn test_permuted_bpsk_label_order_rejected() {
+        // Custom BPSK spec with labels stored in reversed order:
+        // index 0 => label 1, index 1 => label 0. The fast kernel
+        // assumes label == index, so must reject this at construction.
+        use crate::modem::{BitChannelSemantics, ModemCapabilities};
+        let points = vec![SymbolPoint::new(1.0, 0.0), SymbolPoint::new(-1.0, 0.0)];
+        let labels = vec![LabelWord::new(1, 1), LabelWord::new(0, 1)];
+        let spec = ModemSpecBuilder::<f32>::new()
+            .bits_per_symbol(1)
+            .points(points)
+            .labels(labels)
+            .bit_channels(vec![BitChannelSemantics::SingleAxisPam(0)])
+            .capabilities(ModemCapabilities {
+                supports_exact_log_map: true,
+                supports_max_log: true,
+                analysis: &[],
+            })
+            .normalization(Normalization::UnitAverageSymbolEnergy)
+            .build();
+        let _ = FastGrayQamDemapper::new(spec);
+    }
+
+    #[test]
+    #[should_panic(expected = "common Q coordinate")]
+    fn test_bpsk_non_common_q_coordinate_rejected() {
+        // Custom BPSK spec where the two points have different Q
+        // coordinates. The fast kernel drops Q as a common additive
+        // constant, so a non-common Q would yield wrong LLRs — reject.
+        use crate::modem::{BitChannelSemantics, ModemCapabilities};
+        let points = vec![SymbolPoint::new(1.0, 0.3), SymbolPoint::new(-1.0, -0.3)];
+        let labels = vec![LabelWord::new(0, 1), LabelWord::new(1, 1)];
+        let spec = ModemSpecBuilder::<f32>::new()
+            .bits_per_symbol(1)
+            .points(points)
+            .labels(labels)
+            .bit_channels(vec![BitChannelSemantics::SingleAxisPam(0)])
+            .capabilities(ModemCapabilities {
+                supports_exact_log_map: true,
+                supports_max_log: true,
+                analysis: &[],
+            })
+            .normalization(Normalization::ExplicitEs(1.09))
             .build();
         let _ = FastGrayQamDemapper::new(spec);
     }
