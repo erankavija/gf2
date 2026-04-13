@@ -71,11 +71,19 @@ pub(crate) fn pack_label_msb_first(symbol_bits: &[bool]) -> u16 {
 
 /// Explodes a `u16` label into an MSB-first `Vec<bool>` of length `m`.
 ///
-/// Used in tests to construct synthetic bit inputs for `BatchMapper`
-/// implementations. Inverse of [`pack_label_msb_first`].
-#[cfg(test)]
+/// Used by tests and examples to construct synthetic bit inputs for
+/// `BatchMapper` implementations. Inverse of [`pack_label_msb_first`].
+///
+/// This is a testing/utility helper — not a core part of the public
+/// modem surface — and is re-exported from `gf2_coding::modem` as a
+/// doc-hidden item so integration tests and internal property tests
+/// share a single implementation.
+///
+/// # Complexity
+///
+/// O(`m`).
 #[inline]
-pub(crate) fn unpack_label_msb_first(label: u16, m: u8) -> Vec<bool> {
+pub fn unpack_label_msb_first(label: u16, m: u8) -> Vec<bool> {
     (0..m).map(|k| ((label >> (m - 1 - k)) & 1) == 1).collect()
 }
 

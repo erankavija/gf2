@@ -405,9 +405,7 @@ mod tests {
             }
             let mut bits: Vec<bool> = Vec::with_capacity(batch_len * m as usize);
             for &v in &labels_stream {
-                for k in 0..m {
-                    bits.push(((v >> (m - 1 - k)) & 1) == 1);
-                }
+                bits.extend(super::super::bit_pack::unpack_label_msb_first(v, m));
             }
 
             let mapper = ReferenceMapper::new(spec);

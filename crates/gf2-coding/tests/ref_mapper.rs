@@ -6,7 +6,8 @@
 //! surface that downstream users will actually consume.
 
 use gf2_coding::modem::{
-    BatchMapper, LabelWord, ModemSpecBuilder, Normalization, ReferenceMapper, SymbolPoint,
+    unpack_label_msb_first, BatchMapper, LabelWord, ModemSpecBuilder, Normalization,
+    ReferenceMapper, SymbolPoint,
 };
 
 #[test]
@@ -45,8 +46,7 @@ fn test_reference_mapper_end_to_end_custom_constellation() {
     // Bits are MSB-first within each symbol.
     let mut bits: Vec<bool> = Vec::with_capacity(8);
     for v in 0u16..4 {
-        bits.push(((v >> 1) & 1) == 1);
-        bits.push((v & 1) == 1);
+        bits.extend(unpack_label_msb_first(v, 2));
     }
 
     let mut out_i = [0.0_f32; 4];
