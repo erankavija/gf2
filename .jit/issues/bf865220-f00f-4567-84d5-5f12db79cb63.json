@@ -20,20 +20,20 @@
       "updated_by": "auto:executor",
       "updated_at": "2026-04-13T19:37:29.815353282Z"
     },
-    "code-review": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-13T20:46:53.795348809Z"
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-13T19:38:45.453246974Z"
     },
     "tdd-reminder": {
       "status": "passed",
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-13T19:15:15.921381126Z"
     },
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-13T19:38:45.453246974Z"
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-13T21:27:33.901127225Z"
     }
   },
   "context": {},
@@ -45,5 +45,5 @@
     "story:simulation-channel-integration"
   ],
   "created_at": "2026-04-12T19:41:45.863636426+00:00",
-  "updated_at": "2026-04-13T20:54:27.735325263+00:00"
+  "updated_at": "2026-04-13T21:32:45.106313716+00:00"
 }
