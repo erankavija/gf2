@@ -96,27 +96,35 @@ impl<S: ModemScalar> FastGrayQamDemapper<S> {
     ///
     /// # Arguments
     ///
-    /// * `spec` - A [`ModemSpec`] whose metadata advertises the
-    ///   Gray-square-QAM layout. The canonical way to obtain one is
+    /// * `spec` - A [`ModemSpec`] whose metadata **and** geometry match
+    ///   the Gray-square-QAM layout. The canonical way to obtain one is
     ///   [`ModemSpec::bpsk`], [`ModemSpec::gray_square_qam`], or their
     ///   `*_with_scalar` variants. Custom [`super::ModemSpecBuilder`]
-    ///   specs are accepted iff they advertise the same metadata shape
-    ///   (see Panics) **and** carry canonical Gray square-PAM geometry
-    ///   on each axis; the geometry itself is not verified here, so a
-    ///   spec that spoofs the metadata but ships non-preset points
-    ///   produces undefined LLRs. Prefer the preset constructors.
+    ///   specs are accepted iff they pass every check listed under
+    ///   Panics below. The constructor verifies both the metadata shape
+    ///   and the axis-separable PAM geometry, so specs that spoof the
+    ///   metadata but ship mismatched points are rejected at
+    ///   construction — there is no silent "undefined LLR" path.
     ///
     /// # Panics
     ///
-    /// Panics if the spec does not match a supported Gray-square-QAM
-    /// preset layout: `bits_per_symbol` must be one of `1, 2, 4, 6, 8`,
-    /// `num_symbols` must equal `2^bits_per_symbol`, the bit channels
-    /// must follow the preset layout (`SingleAxisPam(0)` for BPSK;
-    /// `m/2` `IAxisPam` entries followed by `m/2` `QAxisPam` entries in
-    /// MSB-first order for QAM), and (for QAM) every composite symbol
-    /// with the same I-half-label must share the same I coordinate so
-    /// the I/Q factorisation is well-defined — mismatch panics with a
-    /// descriptive message.
+    /// Panics with a descriptive message if any of the following fails:
+    ///
+    /// - `bits_per_symbol` is not one of `1, 2, 4, 6, 8`.
+    /// - `num_symbols != 2^bits_per_symbol`.
+    /// - For BPSK, `bit_channels[0] != SingleAxisPam(0)`; for QAM, bit
+    ///   channels do not follow `m/2` `IAxisPam` entries followed by
+    ///   `m/2` `QAxisPam` entries in MSB-first order.
+    /// - Capabilities do not advertise both `ExactLogMap` and `MaxLog`.
+    /// - (QAM) Two symbols share an I-half-label but have different I
+    ///   coordinates (I-axis factorisation failed), or the analogous
+    ///   Q-half-label / Q-coordinate condition fails.
+    /// - (QAM) Some I-half-label or Q-half-label is not populated by
+    ///   any symbol.
+    /// - (QAM) The per-label Q mapping disagrees with the I mapping:
+    ///   the kernel reuses the I-derived level table for both axes, so
+    ///   `q_levels[label] == pam_levels[label]` must hold for every
+    ///   label value.
     ///
     /// # Examples
     ///
