@@ -20,20 +20,20 @@
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-13T16:04:36.093230226Z"
     },
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-13T16:02:02.101920807Z"
-    },
     "code-review": {
       "status": "failed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-04-13T17:41:29.015656914Z"
+      "updated_at": "2026-04-13T17:51:35.516332467Z"
     },
     "tdd-reminder": {
       "status": "passed",
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-13T15:27:07.801327962Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-13T16:02:02.101920807Z"
     }
   },
   "context": {},
@@ -45,5 +45,5 @@
     "story:arbitrary-constellation-reference"
   ],
   "created_at": "2026-04-12T19:40:37.529241904+00:00",
-  "updated_at": "2026-04-13T17:49:08.500717771+00:00"
+  "updated_at": "2026-04-13T17:56:50.439885592+00:00"
 }

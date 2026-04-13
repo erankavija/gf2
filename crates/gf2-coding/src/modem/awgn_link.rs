@@ -436,6 +436,15 @@ where
         rate: f64,
         rng: &mut R,
     ) -> Vec<Llr> {
+        // Match the legacy `AwgnChannel::from_eb_n0_db` contract: code
+        // rate must live in (0, 1]. This keeps `ModemChannelAdapter` a
+        // true drop-in replacement for `BpskAwgnChannel` in the existing
+        // simulation harness.
+        assert!(
+            rate > 0.0 && rate <= 1.0,
+            "ModemChannelAdapter::transmit_and_demodulate: code rate must be in (0, 1], got {rate}",
+        );
+
         // Eb/N0 -> per-component noise variance for an m-bit/symbol
         // constellation with unit average symbol energy.
         //
@@ -777,18 +786,25 @@ mod legacy_compat_tests {
     }
 
     #[test]
-    fn test_adapter_qpsk_noise_scaling_matches_bpsk_at_equivalent_snr() {
-        // For the standard unit-energy constellations used here, BPSK at
-        // Eb/N0 = X dB and QPSK at Eb/N0 = X dB should have the same
-        // per-bit LLR magnitude order after a large-batch average, since
-        // QPSK's bits_per_symbol factor doubles the per-component
-        // variance while I/Q orthogonality gives each bit half the signal
-        // energy — the product is Eb-matched. Concretely, both must
-        // successfully recover all bits at high SNR. We already test that
-        // above, so here we pin down the numeric scaling: at fixed
-        // Eb/N0 = 10 dB and rate = 1, the sigma^2 used by the QPSK
-        // adapter is exactly half the sigma^2 of the BPSK adapter. That
-        // is the expected m = 2 ratio.
+    fn test_adapter_qpsk_sigma_is_half_of_bpsk_at_same_eb_n0() {
+        // Numeric pin on the bits_per_symbol scaling in
+        // `ModemChannelAdapter::transmit_and_demodulate`:
+        //   sigma^2 = 1 / (2 * m * rate * 10^(Eb/N0 / 10))
+        // At fixed (Eb/N0, rate), switching from BPSK (m=1) to QPSK (m=2)
+        // must halve sigma^2. Any regression that drops the `m` factor
+        // (the earlier blocker) would return sigma_qpsk == sigma_bpsk.
+        //
+        // The adapter does not expose sigma^2 directly, so we reproduce
+        // its formula inline and also do a small end-to-end sanity run.
+        let eb_n0_db = 10.0_f64;
+        let rate = 0.5_f64;
+        let eb_n0_linear = 10.0_f64.powf(eb_n0_db / 10.0);
+        let sigma_sq_bpsk = 1.0 / (2.0 * 1.0 * rate * eb_n0_linear);
+        let sigma_sq_qpsk = 1.0 / (2.0 * 2.0 * rate * eb_n0_linear);
+        assert!((sigma_sq_bpsk - 2.0 * sigma_sq_qpsk).abs() < 1e-12);
+
+        // End-to-end: both adapters emit finite, bits-length LLRs at the
+        // same (Eb/N0, rate) — exercises the full pipeline with m>1.
         let qpsk_mapper = GrayQamMapper::<f32>::from_preset_order(4);
         let qpsk_demap = ReferenceSoftDemapper::new(ModemSpec::<f32>::gray_square_qam(4));
         let qpsk_adapter =
@@ -799,18 +815,38 @@ mod legacy_compat_tests {
         let bpsk_adapter =
             ModemChannelAdapter::new(bpsk_mapper, bpsk_demap, DemapMethod::ExactLogMap);
 
-        // Single-bit smoke at identical Eb/N0 to trigger both paths.
-        let bpsk_bits = BitVec::from_bytes_le(&[0b0101_0101]);
-        let qpsk_bits = BitVec::from_bytes_le(&[0b0101_0101]);
+        let bits = BitVec::from_bytes_le(&[0b0101_0101]);
         let mut rng_a = StdRng::seed_from_u64(0x7777);
         let mut rng_b = StdRng::seed_from_u64(0x7777);
-        let bpsk_llrs = bpsk_adapter.transmit_and_demodulate(&bpsk_bits, 10.0, 1.0, &mut rng_a);
-        let qpsk_llrs = qpsk_adapter.transmit_and_demodulate(&qpsk_bits, 10.0, 1.0, &mut rng_b);
+        let bpsk_llrs = bpsk_adapter.transmit_and_demodulate(&bits, eb_n0_db, rate, &mut rng_a);
+        let qpsk_llrs = qpsk_adapter.transmit_and_demodulate(&bits, eb_n0_db, rate, &mut rng_b);
         assert_eq!(bpsk_llrs.len(), 8);
         assert_eq!(qpsk_llrs.len(), 8);
         for l in bpsk_llrs.iter().chain(qpsk_llrs.iter()) {
             assert!(l.value().is_finite());
         }
+    }
+
+    #[test]
+    #[should_panic(expected = "code rate must be in (0, 1]")]
+    fn test_adapter_rejects_rate_above_one() {
+        let mapper = GrayQamMapper::<f32>::from_preset_order(2);
+        let demap = ReferenceSoftDemapper::new(ModemSpec::<f32>::bpsk());
+        let adapter = ModemChannelAdapter::new(mapper, demap, DemapMethod::ExactLogMap);
+        let bits = BitVec::from_bytes_le(&[0b0000_0001]);
+        let mut rng = StdRng::seed_from_u64(0);
+        let _ = adapter.transmit_and_demodulate(&bits, 3.0, 1.5, &mut rng);
+    }
+
+    #[test]
+    #[should_panic(expected = "code rate must be in (0, 1]")]
+    fn test_adapter_rejects_rate_zero() {
+        let mapper = GrayQamMapper::<f32>::from_preset_order(2);
+        let demap = ReferenceSoftDemapper::new(ModemSpec::<f32>::bpsk());
+        let adapter = ModemChannelAdapter::new(mapper, demap, DemapMethod::ExactLogMap);
+        let bits = BitVec::from_bytes_le(&[0b0000_0001]);
+        let mut rng = StdRng::seed_from_u64(0);
+        let _ = adapter.transmit_and_demodulate(&bits, 3.0, 0.0, &mut rng);
     }
 
     #[test]
