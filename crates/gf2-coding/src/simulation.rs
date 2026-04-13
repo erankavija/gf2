@@ -104,6 +104,22 @@ pub trait ChannelModel {
         rate: f64,
         rng: &mut R,
     ) -> Vec<Llr>;
+
+    /// Minimum required alignment for `bits.len()` calls into
+    /// [`ChannelModel::transmit_and_demodulate`].
+    ///
+    /// Returns `1` for channels that accept any length (the BPSK legacy
+    /// path). Modem-backed channels that internally require
+    /// `bits.len() % bits_per_symbol == 0` return their `bits_per_symbol`
+    /// here so callers like
+    /// [`SimulationRunner::run_uncoded_ber_with_channel`] can round their
+    /// batch lengths down to a multiple rather than panicking on a
+    /// ragged tail.
+    ///
+    /// Default is `1`.
+    fn batch_alignment(&self) -> usize {
+        1
+    }
 }
 
 /// Default BPSK modulation over an AWGN channel.
@@ -803,15 +819,16 @@ impl SimulationRunner {
         config: &SimulationConfig,
         rng: &mut R,
     ) -> Vec<SimulationResult> {
-        /// Batch length used by
-        /// [`SimulationRunner::run_uncoded_ber_with_channel`]. Chosen to be
-        /// divisible by every `bits_per_symbol` the shipped modem presets
-        /// use (1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 16), so that generic
-        /// [`ChannelModel`] backends like
-        /// [`ModemChannelAdapter`](crate::modem::ModemChannelAdapter) which
-        /// require `bits.len() % bits_per_symbol == 0` never see a
-        /// ragged-tail batch.
+        /// Nominal batch length. The loop rounds each call down to a
+        /// multiple of `channel.batch_alignment()` so that modem-backed
+        /// [`ChannelModel`] implementations like
+        /// [`ModemChannelAdapter`](crate::modem::ModemChannelAdapter) --
+        /// which require `bits.len() % bits_per_symbol == 0` -- never
+        /// see a ragged-tail batch, regardless of how `max_frames` is
+        /// configured.
         const UNCODED_MODEM_BATCH_BITS: usize = 960;
+
+        let alignment = channel.batch_alignment().max(1);
 
         config
             .eb_n0_range_db
@@ -822,7 +839,11 @@ impl SimulationRunner {
 
                 while total_errors < config.min_errors && total_bits < config.max_frames {
                     let remaining = config.max_frames - total_bits;
-                    let batch_size = UNCODED_MODEM_BATCH_BITS.min(remaining);
+                    let mut batch_size = UNCODED_MODEM_BATCH_BITS.min(remaining);
+                    // Round down to the channel's required alignment so
+                    // modem-backed channels with bits_per_symbol > 1 do
+                    // not panic on a ragged tail.
+                    batch_size -= batch_size % alignment;
                     if batch_size == 0 {
                         break;
                     }
@@ -3610,6 +3631,47 @@ mod tests {
             "uncoded BER must lie in [0, 1], got {}",
             r.ber,
         );
+    }
+
+    /// Regression for ragged-tail safety on modem-backed channels with
+    /// `bits_per_symbol > 1`.
+    ///
+    /// Earlier code computed `batch_size = UNCODED_MODEM_BATCH_BITS.min(remaining)`
+    /// without respecting the channel's required alignment, which would
+    /// panic inside `ModemChannelAdapter::transmit_and_demodulate` on
+    /// the final batch when `max_frames` was not a multiple of
+    /// `bits_per_symbol`. The runner now honours
+    /// `ChannelModel::batch_alignment()` and rounds every batch down,
+    /// exercised here with a QPSK adapter and `max_frames = 963` (not
+    /// divisible by 2).
+    #[test]
+    fn test_run_uncoded_ber_with_channel_handles_ragged_tail_for_qpsk() {
+        use crate::modem::{
+            DemapMethod, GrayQamMapper, ModemChannelAdapter, ModemSpec, ReferenceSoftDemapper,
+        };
+
+        let mapper = GrayQamMapper::<f32>::from_preset_order(4); // QPSK
+        let demap = ReferenceSoftDemapper::new(ModemSpec::<f32>::gray_square_qam(4));
+        let adapter = ModemChannelAdapter::new(mapper, demap, DemapMethod::ExactLogMap);
+        assert_eq!(
+            adapter.batch_alignment(),
+            2,
+            "QPSK adapter must require alignment 2"
+        );
+
+        let mut config = SimulationConfig::quick_test();
+        config.eb_n0_range_db = vec![3.0];
+        config.min_errors = 1; // terminate quickly
+        config.max_frames = 963; // intentionally not divisible by 2
+        config.rng_seed = Some(0xCAFE_F00D_u64);
+
+        let mut rng = StdRng::seed_from_u64(config.rng_seed.unwrap());
+        // Must not panic: each inner batch must be pre-aligned to 2.
+        let results = SimulationRunner::run_uncoded_ber_with_channel(&adapter, &config, &mut rng);
+        assert_eq!(results.len(), 1);
+        let r = &results[0];
+        assert!(r.ber.is_finite());
+        assert!(r.num_bits % 2 == 0, "transmitted bits must stay aligned");
     }
 
     // -------------------------------------------------------------------

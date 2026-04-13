@@ -58,12 +58,13 @@ fn lcg_label_stream(seed: u64, batch: usize, n: usize) -> Vec<u16> {
 /// Brute-force exact log-MAP LLR for a single received sample, bit
 /// position, and noise variance.
 ///
-/// Mirrors the oracle used in `ref_demapper.rs` unit tests, but operates
-/// directly on the integration-test `Vec<(f64, f64)>` / `Vec<u16>`
-/// snapshots of a post-normalization `ModemSpec`. Kept as the **only**
-/// brute-force oracle in this file so the reviewer can see a single
-/// source of truth for cross-check math.
-#[allow(clippy::too_many_arguments)]
+/// Thin wrapper that forwards to the shared
+/// `gf2_coding::modem::test_oracle::brute_force_log_map_llr`, hardcoding
+/// the pure-AWGN complex gain `(h_i, h_q) = (1.0, 0.0)` so integration
+/// test call sites stay compact. Keeping the oracle math itself in
+/// `test_oracle` is the single-source-of-truth guarantee the reviewer
+/// checks: `ref_demapper.rs` unit tests and this file both route through
+/// the same helper.
 fn oracle_log_map_llr(
     points: &[(f64, f64)],
     labels: &[u16],
@@ -73,28 +74,17 @@ fn oracle_log_map_llr(
     n0: f64,
     b: u8,
 ) -> f64 {
-    let dists: Vec<f64> = points
-        .iter()
-        .map(|&(pi, pq)| {
-            let ei = y_i - pi;
-            let eq = y_q - pq;
-            (ei * ei + eq * eq) / n0
-        })
-        .collect();
-    let d_min = dists.iter().cloned().fold(f64::INFINITY, f64::min);
-    let mut sum0 = 0.0_f64;
-    let mut sum1 = 0.0_f64;
-    for (j, &d) in dists.iter().enumerate() {
-        let bits = unpack_label_msb_first(labels[j], bits_per_symbol);
-        let bit = bits[b as usize];
-        let e = (d_min - d).exp();
-        if !bit {
-            sum0 += e;
-        } else {
-            sum1 += e;
-        }
-    }
-    sum0.ln() - sum1.ln()
+    gf2_coding::modem::test_oracle::brute_force_log_map_llr(
+        points,
+        labels,
+        bits_per_symbol,
+        y_i,
+        y_q,
+        1.0,
+        0.0,
+        n0,
+        b,
+    )
 }
 
 /// Snapshots post-normalization points and labels from a spec into flat

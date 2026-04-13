@@ -310,63 +310,13 @@ impl<S: ModemScalar> BatchSoftDemapper<S> for FastGrayQamDemapper<S> {
 
     fn demap_llrs(&self, input: DemapInput<'_, S>, out_llrs: &mut [Llr]) {
         let m = self.m_total as usize;
-        let num_symbols = input.rx_i.len();
-
-        assert_eq!(
-            input.rx_q.len(),
-            num_symbols,
-            "FastGrayQamDemapper::demap_llrs: rx_i.len() ({}) != rx_q.len() ({})",
-            num_symbols,
-            input.rx_q.len()
-        );
-        assert_eq!(
-            input.noise_var.len(),
-            num_symbols,
-            "FastGrayQamDemapper::demap_llrs: rx_i.len() ({}) != noise_var.len() ({})",
-            num_symbols,
-            input.noise_var.len()
-        );
-        match (input.gain_i, input.gain_q) {
-            (Some(gi), Some(gq)) => {
-                assert_eq!(
-                    gi.len(),
-                    num_symbols,
-                    "FastGrayQamDemapper::demap_llrs: gain_i.len() ({}) != num_symbols ({})",
-                    gi.len(),
-                    num_symbols
-                );
-                assert_eq!(
-                    gq.len(),
-                    num_symbols,
-                    "FastGrayQamDemapper::demap_llrs: gain_q.len() ({}) != num_symbols ({})",
-                    gq.len(),
-                    num_symbols
-                );
-            }
-            (None, None) => {}
-            _ => panic!(
-                "FastGrayQamDemapper::demap_llrs: gain_i and gain_q must be both Some or both None"
-            ),
-        }
-        assert_eq!(
+        let view = self.spec.view();
+        let num_symbols = super::demapper::validate_demap_input(
+            "FastGrayQamDemapper::demap_llrs",
+            &view,
+            &input,
             out_llrs.len(),
-            num_symbols * m,
-            "FastGrayQamDemapper::demap_llrs: out_llrs.len() ({}) != num_symbols * bits_per_symbol ({})",
-            out_llrs.len(),
-            num_symbols * m
         );
-
-        let caps = self.spec.view().capabilities();
-        match input.method {
-            DemapMethod::ExactLogMap => assert!(
-                caps.supports_exact_log_map,
-                "FastGrayQamDemapper::demap_llrs: spec does not advertise ExactLogMap support"
-            ),
-            DemapMethod::MaxLog => assert!(
-                caps.supports_max_log,
-                "FastGrayQamDemapper::demap_llrs: spec does not advertise MaxLog support"
-            ),
-        }
 
         let axis_len = if self.is_bpsk {
             2
@@ -396,6 +346,21 @@ impl<S: ModemScalar> BatchSoftDemapper<S> for FastGrayQamDemapper<S> {
             let z_i = h_i * y_i + h_q * y_q;
             let z_q = h_i * y_q - h_q * y_i;
             let n0_eq = n0 * g;
+
+            // Zero (or vanishingly small) channel gain: every
+            // constellation point has identical squared distance from y,
+            // so the log-MAP posterior degenerates to a label-count
+            // ratio. For our balanced presets every bit channel carries
+            // an equal count of 0- and 1-labels, so the LLR is exactly
+            // zero. Emit zeros rather than dividing by n0_eq == 0 and
+            // propagating NaNs. This matches the reference demapper's
+            // behaviour at h = 0 on these presets.
+            if n0_eq <= f64::EPSILON * n0 {
+                for b in 0..m {
+                    out_llrs[k * m + b] = Llr::new(0.0);
+                }
+                continue;
+            }
 
             if self.is_bpsk {
                 // BPSK: two I-axis points (±1), no Q contribution from
@@ -649,6 +614,47 @@ mod tests {
     }
 
     #[test]
+    fn test_zero_channel_gain_emits_zero_llrs() {
+        // When h = 0 every constellation point has identical squared
+        // distance from y, so the log-MAP LLR collapses to the
+        // 0-bit/1-bit label count ratio. For balanced presets that
+        // ratio is exactly 1, i.e. LLR = 0. The fast path must produce
+        // finite zeros rather than NaN from dividing by |h|^2 == 0.
+        for &order in &PRESET_ORDERS {
+            let spec = spec_for_order_f64(order);
+            let m = spec.bits_per_symbol() as usize;
+            let fast = FastGrayQamDemapper::new(spec);
+            let rx_i = [0.4_f64];
+            let rx_q = [-0.3_f64];
+            let gi = [0.0_f64];
+            let gq = [0.0_f64];
+            let nv = [0.5_f64];
+            let input = DemapInput::<f64> {
+                rx_i: &rx_i,
+                rx_q: &rx_q,
+                gain_i: Some(&gi),
+                gain_q: Some(&gq),
+                noise_var: &nv,
+                method: DemapMethod::ExactLogMap,
+            };
+            let mut out = vec![Llr::new(0.0); m];
+            fast.demap_llrs(input, &mut out);
+            for (b, llr) in out.iter().enumerate() {
+                assert!(
+                    llr.value().is_finite(),
+                    "order={order} bit={b}: LLR {} not finite at zero channel gain",
+                    llr.value()
+                );
+                assert!(
+                    llr.value().abs() < 1e-6,
+                    "order={order} bit={b}: expected ~0 LLR at zero gain, got {}",
+                    llr.value()
+                );
+            }
+        }
+    }
+
+    #[test]
     fn test_bpsk_closed_form_high_snr() {
         // BPSK sanity: L = 4*y / N0 at unit gain. Smoke-tests the
         // single-axis branch beyond the cross-check against the
@@ -779,5 +785,78 @@ mod tests {
             .normalization(Normalization::UnitAverageSymbolEnergy)
             .build();
         let _ = FastGrayQamDemapper::new(spec);
+    }
+}
+
+#[cfg(test)]
+mod property_tests {
+    //! Property-based coverage matching the sibling
+    //! [`super::super::ref_demapper`] proptest surface: random inputs
+    //! must not produce NaN and the fast path must agree with the
+    //! reference demapper within tight tolerance across all preset
+    //! orders and both demap methods.
+    use super::super::{
+        BatchSoftDemapper, DemapInput, DemapMethod, ModemSpec, ReferenceSoftDemapper,
+    };
+    use super::FastGrayQamDemapper;
+    use crate::llr::Llr;
+    use proptest::prelude::*;
+
+    const PRESET_ORDERS: &[usize] = &[2, 4, 16, 64, 256];
+
+    fn spec_for_order(order: usize) -> ModemSpec<f64> {
+        if order == 2 {
+            ModemSpec::<f64>::bpsk_with_scalar()
+        } else {
+            ModemSpec::<f64>::gray_square_qam_with_scalar(order)
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn prop_fast_matches_reference_on_random_awgn(
+            order_idx in 0usize..PRESET_ORDERS.len(),
+            method_max_log in any::<bool>(),
+            n_sym in 1usize..24usize,
+            y_seed in any::<u64>(),
+            nv_base in 0.05f64..2.0f64,
+        ) {
+            let order = PRESET_ORDERS[order_idx];
+            let method = if method_max_log {
+                DemapMethod::MaxLog
+            } else {
+                DemapMethod::ExactLogMap
+            };
+            let spec = spec_for_order(order);
+            let m = spec.bits_per_symbol() as usize;
+            let fast = FastGrayQamDemapper::new(spec.clone());
+            let reference = ReferenceSoftDemapper::new(spec);
+
+            let mut state = y_seed | 1;
+            let mut next = || {
+                state = state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+                ((state >> 11) as f64 / ((1u64 << 53) as f64)) * 2.0 - 1.0
+            };
+            let rx_i: Vec<f64> = (0..n_sym).map(|_| next() * 1.5).collect();
+            let rx_q: Vec<f64> = (0..n_sym).map(|_| next() * 1.5).collect();
+            let nv: Vec<f64> = (0..n_sym).map(|i| nv_base + (i as f64) * 0.01).collect();
+
+            let input = DemapInput::<f64> {
+                rx_i: &rx_i,
+                rx_q: &rx_q,
+                gain_i: None,
+                gain_q: None,
+                noise_var: &nv,
+                method,
+            };
+            let mut out_fast = vec![Llr::new(0.0); n_sym * m];
+            let mut out_ref = vec![Llr::new(0.0); n_sym * m];
+            fast.demap_llrs(input, &mut out_fast);
+            reference.demap_llrs(input, &mut out_ref);
+            for (f, r) in out_fast.iter().zip(out_ref.iter()) {
+                prop_assert!(f.value().is_finite());
+                prop_assert!((f.value() - r.value()).abs() < 1e-2);
+            }
+        }
     }
 }

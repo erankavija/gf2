@@ -90,6 +90,99 @@ pub struct DemapInput<'a, S: ModemScalar> {
     pub method: DemapMethod,
 }
 
+/// Validates a [`DemapInput`] and output slice against a modem view.
+///
+/// Shared pre-flight check used by every `BatchSoftDemapper`
+/// implementation so the trait's length and capability contracts live in
+/// exactly one place. The caller passes its own `backend_name` so panic
+/// messages still identify which backend rejected the input.
+///
+/// # Arguments
+///
+/// * `backend_name` - Short string embedded in panic messages (e.g.
+///   `"ReferenceSoftDemapper::demap_llrs"`).
+/// * `view` - Borrowed modem view used to read `bits_per_symbol` and
+///   `capabilities`.
+/// * `input` - The [`DemapInput`] to validate.
+/// * `out_llrs_len` - Length of the caller's destination slice.
+///
+/// # Returns
+///
+/// `num_symbols == input.rx_i.len()` for convenience.
+///
+/// # Panics
+///
+/// Panics with a descriptive message on any length mismatch,
+/// half-specified gains, or when `input.method` is not advertised by
+/// `view.capabilities()`.
+///
+/// # Complexity
+///
+/// O(1).
+pub(crate) fn validate_demap_input<S: ModemScalar>(
+    backend_name: &str,
+    view: &ModemView<'_, S>,
+    input: &DemapInput<'_, S>,
+    out_llrs_len: usize,
+) -> usize {
+    let m = view.bits_per_symbol() as usize;
+    let num_symbols = input.rx_i.len();
+    assert_eq!(
+        input.rx_q.len(),
+        num_symbols,
+        "{backend_name}: rx_i.len() ({}) != rx_q.len() ({})",
+        num_symbols,
+        input.rx_q.len()
+    );
+    assert_eq!(
+        input.noise_var.len(),
+        num_symbols,
+        "{backend_name}: rx_i.len() ({}) != noise_var.len() ({})",
+        num_symbols,
+        input.noise_var.len()
+    );
+    match (input.gain_i, input.gain_q) {
+        (Some(gi), Some(gq)) => {
+            assert_eq!(
+                gi.len(),
+                num_symbols,
+                "{backend_name}: gain_i.len() ({}) != num_symbols ({})",
+                gi.len(),
+                num_symbols
+            );
+            assert_eq!(
+                gq.len(),
+                num_symbols,
+                "{backend_name}: gain_q.len() ({}) != num_symbols ({})",
+                gq.len(),
+                num_symbols
+            );
+        }
+        (None, None) => {}
+        _ => panic!("{backend_name}: gain_i and gain_q must be both Some or both None"),
+    }
+    assert_eq!(
+        out_llrs_len,
+        num_symbols * m,
+        "{backend_name}: out_llrs.len() ({}) != num_symbols * bits_per_symbol ({})",
+        out_llrs_len,
+        num_symbols * m
+    );
+
+    let caps = view.capabilities();
+    match input.method {
+        DemapMethod::ExactLogMap => assert!(
+            caps.supports_exact_log_map,
+            "{backend_name}: spec does not advertise ExactLogMap support"
+        ),
+        DemapMethod::MaxLog => assert!(
+            caps.supports_max_log,
+            "{backend_name}: spec does not advertise MaxLog support"
+        ),
+    }
+    num_symbols
+}
+
 /// Batched soft (LLR) demapper.
 ///
 /// Implementations compute one LLR per bit per received symbol and write
