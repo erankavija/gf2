@@ -1,12 +1,12 @@
 {
   "id": "c007875b-33fb-4ebd-b377-38045fbb9c30",
-  "title": "Define bit-channel metadata and demapper analysis modes",
-  "description": "Define how the modem framework represents bit positions within a symbol for analysis, and make demapper semantics explicit for analytical and empirical tooling.\n\n## Success Criteria\n\n- [ ] The modem API exposes bit-position or bit-channel identity for supported constellations.\n- [ ] Analysis-facing demapper mode selection is explicit, including supported exact and approximate LLR semantics.\n- [ ] Normalization and noise-parameter assumptions needed for analysis are documented in the API contract.\n\n## Notes\n\nThis task should extend the shared modem API rather than introducing a parallel analysis-only modem surface.",
-  "state": "backlog",
+  "title": "Add per-bit-channel analysis metadata to ModemCapabilities",
+  "description": "Extend `ModemCapabilities` with per-bit-channel metadata that downstream analysis work (a9ccb8ae per-bit LLR distribution, 80f218ca analysis integration, e2c0f65a bit-channel analysis story) can consume without re-deriving it from the constellation geometry. Also nail down the canonical noise-parameter contract at the trait layer so those analysis tools can interpret `DemapInput::noise_var` unambiguously.\n\nThe original c007875b title (\"Define bit-channel metadata and demapper analysis modes\") is rescoped here: the deliverables it named -- `BitChannelId`, `BitChannelSemantics`, `DemapMethod`, `ModemCapabilities` -- already shipped in c87c5043. What analysis work actually needs on top of that is metadata *about* each bit channel, not just its identity.\n\n## Success Criteria\n\n- [ ] `ModemCapabilities` exposes a per-bit-channel view with at minimum: a **symmetry hint** (the LLR distribution is symmetric about 0 under equiprobable bits), an **independence hint** (this bit is conditionally independent of other bits in the same symbol given the channel output, useful for bit-interleaved coded modulation analysis), and a **closed-form-LLR-available** flag.\n- [ ] Built-in presets (BPSK, Gray square-QAM 4/16/64/256) populate the new metadata correctly, and the reference demapper + any reference mapper also surface matching capabilities through `ModemView`.\n- [ ] `DemapInput::noise_var` and the modem module docs state the noise convention explicitly (`N0 = 2 * sigma^2`, total complex noise variance, as ee556fbf pinned for the AWGN adapter). This captures SC3 of the original issue.\n- [ ] Unit tests cover the new per-bit-channel metadata for each preset, and assert it round-trips through `ModemView` correctly.\n\n## Notes\n\n- Scope restricted to metadata plumbing and documentation. No new demapping *modes* are added here -- the `ExactLogMap` / `MaxLog` set already covers the demapper-side analysis axis.\n- Redefined during the project-lead session on 2026-04-13 with explicit user approval (original scope was duplicated by c87c5043). See `dev/active/d4851c3d-handoff.md` for context.",
+  "state": "ready",
   "priority": "high",
   "assignee": null,
   "dependencies": [
-    "24144d1a-f24a-4f00-a69e-da920f7f7a4d"
+    "d36ae697-cd9b-419d-89cb-24410496a25e"
   ],
   "gates_required": [
     "tdd-reminder",
@@ -24,5 +24,5 @@
     "story:bit-channel-analysis"
   ],
   "created_at": "2026-04-12T20:04:48.345075553+00:00",
-  "updated_at": "2026-04-12T20:05:02.649806145+00:00"
+  "updated_at": "2026-04-13T18:36:12.294581276+00:00"
 }

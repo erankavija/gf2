@@ -2,7 +2,7 @@
   "id": "abf03b13-e8a8-4049-a30a-e601fd640ca8",
   "title": "Implement reference soft demapper",
   "description": "Add the generic reference soft-decision demapper for arbitrary constellations and arbitrary bit partitions.\n\n## Success Criteria\n\n- [ ] The generic demapper computes per-bit soft information for arbitrary valid constellations.\n- [ ] The implementation is correct for non-Gray and non-square mappings, not only standard QAM.\n- [ ] The output format matches the shared batch demapper contract.\n\n## Notes\n\nThis task provides the correctness baseline that optimized demappers must match.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "high",
   "assignee": "agent:claude",
   "dependencies": [
@@ -15,15 +15,10 @@
     "doc-review"
   ],
   "gates_status": {
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-13T16:04:36.093230226Z"
-    },
     "code-review": {
-      "status": "failed",
+      "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-04-13T17:51:35.516332467Z"
+      "updated_at": "2026-04-13T17:59:41.550781750Z"
     },
     "tdd-reminder": {
       "status": "passed",
@@ -34,6 +29,11 @@
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-13T16:02:02.101920807Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-13T16:04:36.093230226Z"
     }
   },
   "context": {},
@@ -45,5 +45,5 @@
     "story:arbitrary-constellation-reference"
   ],
   "created_at": "2026-04-12T19:40:37.529241904+00:00",
-  "updated_at": "2026-04-13T17:56:50.439885592+00:00"
+  "updated_at": "2026-04-13T18:04:17.134609808+00:00"
 }
