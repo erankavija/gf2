@@ -27,37 +27,50 @@ use super::types::{
     SymbolPoint,
 };
 
-/// Analysis entry used by every preset bit channel.
+/// Per-axis analysis entry for BPSK and QPSK, where each bit channel
+/// lives on its own uncorrelated I- or Q-axis.
 ///
-/// For BPSK, QPSK, and the Gray-coded square QAMs (order 16/64/256) each
-/// bit channel satisfies all three analytic flags under AWGN:
-///
-/// - `symmetric_llr_distribution` holds because the constellation and
-///   its Gray labelling are symmetric about 0 on each axis.
-/// - `conditionally_independent` holds because I and Q decouple under
-///   independent I/Q AWGN and, within a single axis, the Gray labelling
-///   minimizes per-bit dependence so BICM treats each PAM bit as
-///   independent of the other bits on its own axis (and of all
-///   other-axis bits) for analysis purposes.
-/// - `closed_form_llr_available` holds because BPSK / QPSK admit
-///   `LLR = 4 y / N0` directly and Gray PAM axes admit a
-///   piecewise-linear exact log-MAP at small constellation orders.
-const PRESET_ANALYSIS: BitChannelAnalysis = BitChannelAnalysis {
+/// BPSK has one axis (I-only) and QPSK has two (one bit per axis), so
+/// every bit is conditionally independent of every other bit in the
+/// same symbol given the received sample under independent I/Q AWGN.
+/// The LLR distribution is symmetric about zero and admits the exact
+/// closed form `LLR = 4 y_axis / N0`.
+const BPSK_QPSK_ANALYSIS: BitChannelAnalysis = BitChannelAnalysis {
     symmetric_llr_distribution: true,
     conditionally_independent: true,
+    closed_form_llr_available: true,
+};
+
+/// Per-axis analysis entry for 16/64/256-QAM (Gray-coded square QAM).
+///
+/// Each axis carries `m/2` Gray-labelled PAM bits. Bits on *different*
+/// axes are conditionally independent given the received sample (I and Q
+/// noise are independent), but bits on the *same* axis are not: for
+/// 4-PAM with Gray labels `00 → +3, 01 → +1, 11 → -1, 10 → -3`, the
+/// posterior `P(b0, b1 | y)` does not generally factor as
+/// `P(b0 | y) · P(b1 | y)` — equality only holds at `y = 0`. The
+/// `conditionally_independent` field therefore cannot be advertised as
+/// `true` for these presets. Symmetry still holds because the
+/// constellation and labelling are symmetric about 0, and a
+/// piecewise-linear closed-form max-log expression exists per PAM axis.
+const QAM_MULTI_BIT_AXIS_ANALYSIS: BitChannelAnalysis = BitChannelAnalysis {
+    symmetric_llr_distribution: true,
+    conditionally_independent: false,
     closed_form_llr_available: true,
 };
 
 /// Per-bit-channel analysis arrays for the built-in presets.
 ///
 /// Indexed by bit count; the slice length equals the preset's
-/// `bits_per_symbol()`. All entries share [`PRESET_ANALYSIS`] — see its
-/// doc comment for the BICM-analysis reasoning behind the `true` flags.
-const PRESET_ANALYSIS_M1: &[BitChannelAnalysis] = &[PRESET_ANALYSIS; 1];
-const PRESET_ANALYSIS_M2: &[BitChannelAnalysis] = &[PRESET_ANALYSIS; 2];
-const PRESET_ANALYSIS_M4: &[BitChannelAnalysis] = &[PRESET_ANALYSIS; 4];
-const PRESET_ANALYSIS_M6: &[BitChannelAnalysis] = &[PRESET_ANALYSIS; 6];
-const PRESET_ANALYSIS_M8: &[BitChannelAnalysis] = &[PRESET_ANALYSIS; 8];
+/// `bits_per_symbol()`. BPSK (m=1) and QPSK (m=2) share
+/// [`BPSK_QPSK_ANALYSIS`]; 16/64/256-QAM (m=4/6/8) share
+/// [`QAM_MULTI_BIT_AXIS_ANALYSIS`] — see each constant's doc comment for
+/// the analysis-facing reasoning.
+const PRESET_ANALYSIS_M1: &[BitChannelAnalysis] = &[BPSK_QPSK_ANALYSIS; 1];
+const PRESET_ANALYSIS_M2: &[BitChannelAnalysis] = &[BPSK_QPSK_ANALYSIS; 2];
+const PRESET_ANALYSIS_M4: &[BitChannelAnalysis] = &[QAM_MULTI_BIT_AXIS_ANALYSIS; 4];
+const PRESET_ANALYSIS_M6: &[BitChannelAnalysis] = &[QAM_MULTI_BIT_AXIS_ANALYSIS; 6];
+const PRESET_ANALYSIS_M8: &[BitChannelAnalysis] = &[QAM_MULTI_BIT_AXIS_ANALYSIS; 8];
 
 /// Returns the preset analysis slice for a given `bits_per_symbol`.
 ///
@@ -559,8 +572,27 @@ mod tests {
     }
 
     #[test]
-    fn test_preset_gray_square_qam_bit_channel_analysis() {
-        for order in all_orders() {
+    fn test_preset_qpsk_bit_channel_analysis_all_flags_true() {
+        // QPSK places exactly one bit per axis, so each bit is
+        // conditionally independent of every other bit in the symbol.
+        let spec = ModemSpec::gray_square_qam(4);
+        let caps = spec.capabilities();
+        assert_eq!(caps.analysis.len(), 2);
+        for (k, a) in caps.analysis.iter().enumerate() {
+            assert!(a.symmetric_llr_distribution, "QPSK bit {k}");
+            assert!(a.conditionally_independent, "QPSK bit {k}");
+            assert!(a.closed_form_llr_available, "QPSK bit {k}");
+        }
+    }
+
+    #[test]
+    fn test_preset_gray_square_qam_multi_bit_axis_not_conditionally_independent() {
+        // 16/64/256-QAM carry multiple Gray-PAM bits per axis. Bits on
+        // different axes are conditionally independent, but bits on the
+        // same axis are not in general (P(b0,b1|y) != P(b0|y)P(b1|y)
+        // except at y=0), so the flag must be advertised as `false`.
+        // Symmetry and closed-form availability still hold.
+        for order in [16usize, 64, 256] {
             let spec = ModemSpec::gray_square_qam(order);
             let caps = spec.capabilities();
             assert_eq!(
@@ -571,15 +603,15 @@ mod tests {
             for (k, a) in caps.analysis.iter().enumerate() {
                 assert!(
                     a.symmetric_llr_distribution,
-                    "order {order} bit {k} symmetric_llr_distribution"
+                    "order {order} bit {k} symmetric"
                 );
                 assert!(
-                    a.conditionally_independent,
-                    "order {order} bit {k} conditionally_independent"
+                    !a.conditionally_independent,
+                    "order {order} bit {k} must not claim conditional independence"
                 );
                 assert!(
                     a.closed_form_llr_available,
-                    "order {order} bit {k} closed_form_llr_available"
+                    "order {order} bit {k} closed_form"
                 );
             }
         }

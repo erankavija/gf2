@@ -154,13 +154,14 @@ impl<S: ModemScalar> ModemSpec<S> {
             "ModemSpec: capabilities must advertise at least one demap method"
         );
 
-        // Invariant 9: per-bit-channel analysis length matches
-        // bits_per_symbol. Length zero is also accepted for backward
-        // compatibility with callers constructing ModemCapabilities via
-        // its Default impl, which cannot know bits_per_symbol.
+        // Invariant 9: per-bit-channel analysis length equals
+        // bits_per_symbol exactly. `ModemSpecBuilder::build` fills this
+        // slot from `default_analysis_slice` when callers supply
+        // capabilities via `ModemCapabilities::default()` (whose
+        // `analysis` is empty because it cannot know bits_per_symbol),
+        // so every validated `ModemSpec` carries a length-matched slice.
         assert!(
-            capabilities.analysis.is_empty()
-                || capabilities.analysis.len() == bits_per_symbol as usize,
+            capabilities.analysis.len() == bits_per_symbol as usize,
             "ModemSpec: capabilities.analysis length {} does not match bits_per_symbol {}",
             capabilities.analysis.len(),
             bits_per_symbol
@@ -343,6 +344,7 @@ pub(super) type DefaultSpec = ModemSpec<DefaultScalar>;
 
 #[cfg(test)]
 mod tests {
+    use super::super::types::BitChannelAnalysis;
     use super::*;
 
     fn valid_bpsk_parts() -> ModemSpecParts<f32> {
@@ -356,7 +358,11 @@ mod tests {
             capabilities: ModemCapabilities {
                 supports_exact_log_map: true,
                 supports_max_log: true,
-                analysis: &[],
+                analysis: &[BitChannelAnalysis {
+                    symmetric_llr_distribution: true,
+                    conditionally_independent: true,
+                    closed_form_llr_available: true,
+                }],
             },
         }
     }
@@ -391,7 +397,11 @@ mod tests {
             capabilities: ModemCapabilities {
                 supports_exact_log_map: true,
                 supports_max_log: true,
-                analysis: &[],
+                analysis: &[BitChannelAnalysis {
+                    symmetric_llr_distribution: true,
+                    conditionally_independent: true,
+                    closed_form_llr_available: true,
+                }],
             },
         };
         let _ = ModemSpec::from_parts_checked(parts);

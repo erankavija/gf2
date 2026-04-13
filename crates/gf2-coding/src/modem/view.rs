@@ -258,11 +258,18 @@ impl<'a, S: ModemScalar> ModemView<'a, S> {
     /// ```
     /// use gf2_coding::modem::ModemSpec;
     ///
-    /// let spec = ModemSpec::gray_square_qam(16);
+    /// // BPSK places one bit per axis, so every analytic flag holds.
+    /// let spec = ModemSpec::<f32>::bpsk();
     /// let a = spec.view().bit_channel_analysis(0);
     /// assert!(a.symmetric_llr_distribution);
     /// assert!(a.conditionally_independent);
     /// assert!(a.closed_form_llr_available);
+    ///
+    /// // 16-QAM carries two PAM bits per axis; those are symmetric and
+    /// // closed-form but NOT conditionally independent given the received
+    /// // sample, so the flag is advertised as `false`.
+    /// let spec16 = ModemSpec::<f32>::gray_square_qam(16);
+    /// assert!(!spec16.view().bit_channel_analysis(0).conditionally_independent);
     /// ```
     ///
     /// # Complexity
@@ -410,8 +417,8 @@ mod tests {
     }
 
     #[test]
-    fn test_view_bit_channel_analysis_returns_preset_entry() {
-        let spec = ModemSpec::gray_square_qam(16);
+    fn test_view_bit_channel_analysis_bpsk_roundtrip() {
+        let spec = ModemSpec::bpsk();
         let v = spec.view();
         let caps = v.capabilities();
         assert_eq!(caps.analysis.len(), v.bits_per_symbol() as usize);
@@ -425,9 +432,77 @@ mod tests {
     }
 
     #[test]
+    fn test_view_bit_channel_analysis_qpsk_roundtrip() {
+        let spec = ModemSpec::<f32>::gray_square_qam(4);
+        let v = spec.view();
+        let caps = v.capabilities();
+        assert_eq!(caps.analysis.len(), 2);
+        for k in 0..v.bits_per_symbol() {
+            let a = v.bit_channel_analysis(k);
+            assert_eq!(a, &caps.analysis[k as usize]);
+            assert!(a.symmetric_llr_distribution);
+            assert!(a.conditionally_independent);
+            assert!(a.closed_form_llr_available);
+        }
+    }
+
+    #[test]
+    fn test_view_bit_channel_analysis_gray_qam_higher_order_roundtrip() {
+        // For 16/64/256-QAM the per-axis multi-bit presets advertise
+        // `conditionally_independent = false`; every entry must match the
+        // slice returned from capabilities() on each preset order.
+        for order in [16usize, 64, 256] {
+            let spec = ModemSpec::<f32>::gray_square_qam(order);
+            let v = spec.view();
+            let caps = v.capabilities();
+            assert_eq!(
+                caps.analysis.len(),
+                v.bits_per_symbol() as usize,
+                "analysis len mismatch for order {order}"
+            );
+            for k in 0..v.bits_per_symbol() {
+                let a = v.bit_channel_analysis(k);
+                assert_eq!(
+                    a, &caps.analysis[k as usize],
+                    "order {order} bit {k} mismatch between view accessor and capabilities slice"
+                );
+                assert!(a.symmetric_llr_distribution);
+                assert!(!a.conditionally_independent);
+                assert!(a.closed_form_llr_available);
+            }
+        }
+    }
+
+    #[test]
     #[should_panic(expected = "bit_idx 4 out of range [0, 4)")]
     fn test_view_bit_channel_analysis_out_of_range_panics() {
         let spec = ModemSpec::gray_square_qam(16);
         let _ = spec.view().bit_channel_analysis(4);
+    }
+
+    #[test]
+    fn test_reference_surfaces_expose_matching_analysis() {
+        // The reference mapper and reference soft demapper both carry a
+        // ModemSpec; the analysis metadata surfaced via their
+        // `ModemView` must match the spec's own capabilities entry for
+        // each preset. Downstream analysis tools rely on this equality
+        // to avoid re-deriving hints from the constellation geometry.
+        use crate::modem::{
+            BatchMapper, BatchSoftDemapper, ReferenceMapper, ReferenceSoftDemapper,
+        };
+        for order in [2usize, 4, 16, 64, 256] {
+            let spec = if order == 2 {
+                ModemSpec::<f32>::bpsk()
+            } else {
+                ModemSpec::<f32>::gray_square_qam(order)
+            };
+            let ref_mapper = ReferenceMapper::new(spec.clone());
+            let ref_demapper = ReferenceSoftDemapper::new(spec.clone());
+            let spec_caps = spec.view().capabilities();
+            let mapper_caps = ref_mapper.spec().capabilities();
+            let demapper_caps = ref_demapper.spec().capabilities();
+            assert_eq!(mapper_caps.analysis, spec_caps.analysis, "order {order}");
+            assert_eq!(demapper_caps.analysis, spec_caps.analysis, "order {order}");
+        }
     }
 }
