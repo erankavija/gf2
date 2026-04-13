@@ -155,16 +155,21 @@ impl<S: ModemScalar> FastGrayQamDemapper<S> {
         } else {
             let mask_half = (1u16 << m_half) - 1;
             let mut filled = vec![false; table_len];
+            // Secondary Q-axis level table for validation only. The demap
+            // core reuses `pam_levels` for both axes, so we also verify
+            // that the Q-axis factorisation uses the same level set and
+            // that every Q-half-label resolves to that set consistently.
+            let mut q_levels = vec![0.0_f64; table_len];
+            let mut q_filled = vec![false; table_len];
             for (idx, label) in view.labels().iter().enumerate() {
                 let i_label = ((label.bits >> m_half) & mask_half) as usize;
+                let q_label = (label.bits & mask_half) as usize;
                 let i_coord = view.point(idx).i.to_f64();
+                let q_coord = view.point(idx).q.to_f64();
                 if !filled[i_label] {
                     pam_levels[i_label] = i_coord;
                     filled[i_label] = true;
                 } else {
-                    // Enforce I/Q factorisation: every symbol sharing an
-                    // I-half-label must share the same I coordinate, or
-                    // the axis-separable demap is not well-defined.
                     let diff = (pam_levels[i_label] - i_coord).abs();
                     assert!(
                         diff < 1e-9,
@@ -175,12 +180,46 @@ impl<S: ModemScalar> FastGrayQamDemapper<S> {
                         i_coord,
                     );
                 }
+                if !q_filled[q_label] {
+                    q_levels[q_label] = q_coord;
+                    q_filled[q_label] = true;
+                } else {
+                    let diff = (q_levels[q_label] - q_coord).abs();
+                    assert!(
+                        diff < 1e-9,
+                        "FastGrayQamDemapper::new: Q-axis factorisation failed: \
+                         symbols with Q-half-label {q_label} have different Q coordinates \
+                         ({} vs {}); spec is not a canonical Gray square-QAM preset",
+                        q_levels[q_label],
+                        q_coord,
+                    );
+                }
             }
             assert!(
                 filled.iter().all(|b| *b),
                 "FastGrayQamDemapper::new: spec does not cover every I-half-label; \
                  not a Gray square-QAM preset"
             );
+            assert!(
+                q_filled.iter().all(|b| *b),
+                "FastGrayQamDemapper::new: spec does not cover every Q-half-label; \
+                 not a Gray square-QAM preset"
+            );
+            // The axis-separable kernel uses the same `pam_levels` table
+            // for both axes. Verify that the Q axis uses the same level
+            // set as the I axis (modulo ordering); for canonical Gray
+            // square-QAM presets these sets are identical.
+            let mut i_sorted = pam_levels.clone();
+            let mut q_sorted = q_levels.clone();
+            i_sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
+            q_sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
+            for (a, b) in i_sorted.iter().zip(q_sorted.iter()) {
+                assert!(
+                    (a - b).abs() < 1e-9,
+                    "FastGrayQamDemapper::new: I-axis and Q-axis level sets differ \
+                     ({a} vs {b}); the fast kernel requires a symmetric Gray square-QAM preset"
+                );
+            }
         }
 
         Self {
@@ -741,6 +780,40 @@ mod tests {
             .points(points)
             .labels(labels)
             .normalization(Normalization::UnitAverageSymbolEnergy)
+            .build();
+        let _ = FastGrayQamDemapper::new(spec);
+    }
+
+    #[test]
+    #[should_panic(expected = "Q-axis factorisation failed")]
+    fn test_spoofed_qaxispam_metadata_with_non_preset_geometry_rejected() {
+        // Symmetric of the I-axis case: valid IAxisPam/QAxisPam metadata
+        // with I coordinates that pass factorisation but Q coordinates
+        // that break it. Two symbols sharing Q-half-label 0b1 (raw
+        // labels 0b01 and 0b11) must be rejected when they disagree on
+        // their Q coordinate.
+        use crate::modem::{BitChannelSemantics, ModemCapabilities};
+        let points: Vec<SymbolPoint<f32>> = vec![
+            SymbolPoint::new(1.0, 1.0),   // label 00
+            SymbolPoint::new(1.0, -1.0),  // label 01 (Q-half = 1, Q = -1)
+            SymbolPoint::new(-1.0, 1.0),  // label 10
+            SymbolPoint::new(-1.0, -2.0), // label 11 (Q-half = 1, Q = -2)  <- mismatch
+        ];
+        let labels: Vec<LabelWord> = (0u16..4).map(|b| LabelWord::new(b, 2)).collect();
+        let spec = ModemSpecBuilder::<f32>::new()
+            .bits_per_symbol(2)
+            .points(points)
+            .labels(labels)
+            .bit_channels(vec![
+                BitChannelSemantics::IAxisPam(0),
+                BitChannelSemantics::QAxisPam(0),
+            ])
+            .capabilities(ModemCapabilities {
+                supports_exact_log_map: true,
+                supports_max_log: true,
+                analysis: &[],
+            })
+            .normalization(Normalization::ExplicitEs(1.875))
             .build();
         let _ = FastGrayQamDemapper::new(spec);
     }
