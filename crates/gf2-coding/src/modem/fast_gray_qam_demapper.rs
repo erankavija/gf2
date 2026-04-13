@@ -44,6 +44,24 @@ use super::{
     ModemView,
 };
 
+use gf2_kernels_simd::modem::{self as kernel_modem, GrayPamDistanceFnsF64};
+use std::sync::OnceLock;
+
+/// Returns the cached best-available Gray-PAM distance kernel bundle.
+///
+/// Dispatch cost is amortized: the first call runs CPU-feature
+/// detection via `gf2_kernels_simd::modem::detect_f64`, and all
+/// subsequent calls return the same `&'static` bundle through a
+/// `OnceLock` read. The bundle always yields a working kernel (scalar
+/// fallback when no SIMD backend matches, AVX2 on x86_64 hosts that
+/// advertise it), so the demap hot path never needs a `None` branch
+/// and no architecture-specific `cfg` gating is required here.
+#[inline]
+fn kernel_fns_f64() -> &'static GrayPamDistanceFnsF64 {
+    static FNS: OnceLock<GrayPamDistanceFnsF64> = OnceLock::new();
+    FNS.get_or_init(kernel_modem::detect_f64)
+}
+
 /// Fast soft demapper specialized for Gray square-QAM presets.
 ///
 /// Accepts BPSK (order 2, `m = 1`) and the Gray-coded square-QAM presets
@@ -369,6 +387,36 @@ impl<S: ModemScalar> BatchSoftDemapper<S> for FastGrayQamDemapper<S> {
         self.spec.view()
     }
 
+    /// Batched, allocation-minimal Gray-QAM soft demap.
+    ///
+    /// The hot path is organized as three contiguous passes over the
+    /// symbol batch:
+    ///
+    /// 1. **Pre-rotation**: walk `num_symbols` once to compute
+    ///    `z_i[s], z_q[s], g[s], inv_n0_eq[s]` into stack-friendly
+    ///    scratch `Vec<f64>` buffers (sized once, not per-symbol).
+    /// 2. **Distance kernel**: call the runtime-selected Gray-PAM
+    ///    squared-distance kernel once per axis, filling a
+    ///    `num_symbols * axis_len` contiguous distance slab. This is
+    ///    the SIMD plug-in point — the default dispatch is AVX2 on
+    ///    x86_64, scalar otherwise. For BPSK the Q axis is skipped
+    ///    (its only contribution is a common additive constant).
+    /// 3. **LLR reduction**: walk the distance slab with the shared
+    ///    subset-reduction helper (`subset_log_map_llr` in the
+    ///    crate-private `super::demapper` module) to produce the final
+    ///    LLRs in the canonical symbol-major, MSB-first layout.
+    ///
+    /// The zero-gain guard is expressed by writing `inv_n0_eq[s] = 0`
+    /// into the pre-rotation scratch; the kernel contract
+    /// (see [`gf2_kernels_simd::modem`]) emits a zero distance slab
+    /// for that symbol, and the LLR reduction naturally yields zero
+    /// on balanced Gray presets.
+    ///
+    /// # Complexity
+    ///
+    /// `O(num_symbols * sqrt(M) * m)` where `M = 2^m` is the
+    /// constellation order; the distance kernel and the reduction are
+    /// both linear in the per-symbol work.
     fn demap_llrs(&self, input: DemapInput<'_, S>, out_llrs: &mut [Llr]) {
         let m = self.m_total as usize;
         let view = self.spec.view();
@@ -379,14 +427,25 @@ impl<S: ModemScalar> BatchSoftDemapper<S> for FastGrayQamDemapper<S> {
             out_llrs.len(),
         );
 
+        if num_symbols == 0 {
+            return;
+        }
+
         let axis_len = if self.is_bpsk {
             2
         } else {
             1usize << self.m_half
         };
-        let mut d_i: Vec<f64> = vec![0.0; axis_len];
-        let mut d_q: Vec<f64> = vec![0.0; axis_len];
 
+        // Pass 1: build contiguous per-symbol scratch for the kernel.
+        // All four buffers are allocated exactly once per call; the
+        // per-symbol inner loop does no allocation and writes through
+        // contiguous indices so both SIMD and scalar backends see an
+        // allocation-free hot path.
+        let mut z_i: Vec<f64> = Vec::with_capacity(num_symbols);
+        let mut z_q: Vec<f64> = Vec::with_capacity(num_symbols);
+        let mut g_scratch: Vec<f64> = Vec::with_capacity(num_symbols);
+        let mut inv_n0_eq: Vec<f64> = Vec::with_capacity(num_symbols);
         for k in 0..num_symbols {
             let y_i = input.rx_i[k].to_f64();
             let y_q = input.rx_q[k].to_f64();
@@ -404,58 +463,92 @@ impl<S: ModemScalar> BatchSoftDemapper<S> for FastGrayQamDemapper<S> {
             // data: |y - h p|^2 / n0 == |z - g p|^2 / (n0 * g) where
             // z = conj(h) * y and g = |h|^2.
             let g = h_i * h_i + h_q * h_q;
-            let z_i = h_i * y_i + h_q * y_q;
-            let z_q = h_i * y_q - h_q * y_i;
-            let n0_eq = n0 * g;
+            z_i.push(h_i * y_i + h_q * y_q);
+            z_q.push(h_i * y_q - h_q * y_i);
+            g_scratch.push(g);
 
             // Zero (or vanishingly small) channel gain: every
-            // constellation point has identical squared distance from y,
-            // so the log-MAP posterior degenerates to a label-count
-            // ratio. For our balanced presets every bit channel carries
-            // an equal count of 0- and 1-labels, so the LLR is exactly
-            // zero. Emit zeros rather than dividing by n0_eq == 0 and
-            // propagating NaNs. This matches the reference demapper's
+            // constellation point has identical squared distance from
+            // y, so the log-MAP posterior degenerates to a label-count
+            // ratio. For our balanced presets every bit channel
+            // carries an equal count of 0- and 1-labels, so the LLR
+            // is exactly zero. Feeding `inv_n0_eq = 0` to the distance
+            // kernel makes it emit a zero distance slab for this
+            // symbol (contract defined in `gf2_kernels_simd::modem`);
+            // the subsequent subset-reduction then produces zero LLRs
+            // without touching NaN. Matches the reference demapper's
             // behaviour at h = 0 on these presets.
-            if n0_eq <= f64::EPSILON * n0 {
-                for b in 0..m {
-                    out_llrs[k * m + b] = Llr::new(0.0);
-                }
-                continue;
-            }
+            let n0_eq = n0 * g;
+            let inv = if n0_eq <= f64::EPSILON * n0 {
+                0.0
+            } else {
+                1.0 / n0_eq
+            };
+            inv_n0_eq.push(inv);
+        }
 
-            if self.is_bpsk {
-                // BPSK: two I-axis points (±1), no Q contribution from
-                // the constellation. The Q-only term (z_q^2 / n0_eq) is
-                // a common additive constant across both points and
-                // drops out of the LLR, so we ignore it.
-                for (label, &level) in self.pam_levels.iter().enumerate() {
-                    let e = z_i - g * level;
-                    d_i[label] = e * e / n0_eq;
-                }
-                let llr = pam_axis_llr(&d_i, 1, 0, input.method);
+        // Pass 2: distance-kernel dispatch. I axis always, Q axis only
+        // for QAM. Levels are the same on both axes (enforced in
+        // `FastGrayQamDemapper::new`), so we reuse the single level
+        // table for both kernel calls.
+        let mut d_i: Vec<f64> = vec![0.0; num_symbols * axis_len];
+        let mut d_q: Vec<f64> = if self.is_bpsk {
+            Vec::new()
+        } else {
+            vec![0.0; num_symbols * axis_len]
+        };
+
+        run_pam_distance_kernel(&z_i, &g_scratch, &inv_n0_eq, &self.pam_levels, &mut d_i);
+        if !self.is_bpsk {
+            run_pam_distance_kernel(&z_q, &g_scratch, &inv_n0_eq, &self.pam_levels, &mut d_q);
+        }
+
+        // Pass 3: LLR reduction over each per-symbol distance slab.
+        if self.is_bpsk {
+            for k in 0..num_symbols {
+                let slab = &d_i[k * axis_len..(k + 1) * axis_len];
+                let llr = pam_axis_llr(slab, 1, 0, input.method);
                 out_llrs[k * m] = Llr::new(llr as f32);
-                continue;
             }
-
-            // QAM: compute per-level distances on each axis.
-            for (label, &level) in self.pam_levels.iter().enumerate() {
-                let e_i = z_i - g * level;
-                d_i[label] = e_i * e_i / n0_eq;
-                let e_q = z_q - g * level;
-                d_q[label] = e_q * e_q / n0_eq;
-            }
-
-            // First m_half bits are I-axis, remainder are Q-axis.
-            for b in 0..self.m_half {
-                let llr = pam_axis_llr(&d_i, self.m_half, b, input.method);
-                out_llrs[k * m + b as usize] = Llr::new(llr as f32);
-            }
-            for b in 0..self.m_half {
-                let llr = pam_axis_llr(&d_q, self.m_half, b, input.method);
-                out_llrs[k * m + (self.m_half + b) as usize] = Llr::new(llr as f32);
+        } else {
+            let m_half = self.m_half;
+            for k in 0..num_symbols {
+                let i_slab = &d_i[k * axis_len..(k + 1) * axis_len];
+                let q_slab = &d_q[k * axis_len..(k + 1) * axis_len];
+                // First m_half bits are I-axis, remainder are Q-axis.
+                for b in 0..m_half {
+                    let llr = pam_axis_llr(i_slab, m_half, b, input.method);
+                    out_llrs[k * m + b as usize] = Llr::new(llr as f32);
+                }
+                for b in 0..m_half {
+                    let llr = pam_axis_llr(q_slab, m_half, b, input.method);
+                    out_llrs[k * m + (m_half + b) as usize] = Llr::new(llr as f32);
+                }
             }
         }
     }
+}
+
+/// Runs the Gray-PAM squared-distance kernel on a single axis.
+///
+/// Dispatches unconditionally to the runtime-selected
+/// `gf2-kernels-simd` bundle (AVX2 on x86_64 hosts that advertise the
+/// feature, scalar everywhere else). The output layout is
+/// symbol-major: `out[s * pam_levels.len() + l]` is the squared
+/// distance between the pre-rotated sample `z[s]` and the `l`-th
+/// Gray-PAM level. The zero-gain contract
+/// (`inv_n0_eq[s] == 0 ⇒ distance slab all zero`) is enforced inside
+/// the kernel by every backend.
+#[inline]
+fn run_pam_distance_kernel(
+    z: &[f64],
+    g: &[f64],
+    inv_n0_eq: &[f64],
+    pam_levels: &[f64],
+    out: &mut [f64],
+) {
+    let fns = kernel_fns_f64();
+    (fns.pam_sq_distances_fn)(z, g, inv_n0_eq, pam_levels, out);
 }
 
 #[cfg(test)]
@@ -670,6 +763,56 @@ mod tests {
                     1e-3,
                     &format!("f64 fading order={order} method={method:?}"),
                 );
+            }
+        }
+    }
+
+    /// Sweep batch sizes that cross the AVX2 8-lane boundary to prove
+    /// the batched kernel dispatch is size-agnostic: every preset must
+    /// match the reference demapper for sizes 0, 1, 7, 8, 9, 15, 16,
+    /// 17, 31, 32 on both methods. The zero-length case exercises the
+    /// empty-batch short-circuit added alongside the kernel refactor.
+    #[test]
+    fn test_batch_size_sweep_crosses_avx2_boundary() {
+        let methods = [DemapMethod::ExactLogMap, DemapMethod::MaxLog];
+        let sizes = [0usize, 1, 7, 8, 9, 15, 16, 17, 31, 32];
+        for &order in &PRESET_ORDERS {
+            for method in methods {
+                for &n in &sizes {
+                    let spec = spec_for_order_f32(order);
+                    let m = spec.bits_per_symbol() as usize;
+                    let fast = FastGrayQamDemapper::new(spec.clone());
+                    let reference = ReferenceSoftDemapper::new(spec);
+
+                    let mut rng =
+                        Lcg::new(0xB47C_415E ^ (order as u64) ^ method_seed(method) ^ (n as u64));
+                    let mut rx_i = Vec::with_capacity(n);
+                    let mut rx_q = Vec::with_capacity(n);
+                    let mut nv = Vec::with_capacity(n);
+                    for _ in 0..n {
+                        rx_i.push((rng.next_unit() * 2.0) as f32);
+                        rx_q.push((rng.next_unit() * 2.0) as f32);
+                        nv.push(rng.next_positive(0.05, 2.0) as f32);
+                    }
+                    let input = DemapInput::<f32> {
+                        rx_i: &rx_i,
+                        rx_q: &rx_q,
+                        gain_i: None,
+                        gain_q: None,
+                        noise_var: &nv,
+                        method,
+                    };
+                    let mut out_fast = vec![Llr::new(0.0); n * m];
+                    let mut out_ref = vec![Llr::new(0.0); n * m];
+                    fast.demap_llrs(input, &mut out_fast);
+                    reference.demap_llrs(input, &mut out_ref);
+                    assert_close_f32(
+                        &out_fast,
+                        &out_ref,
+                        1e-3,
+                        &format!("batch sweep order={order} n={n} method={method:?}"),
+                    );
+                }
             }
         }
     }
