@@ -705,6 +705,7 @@ mod tests {
             .capabilities(super::super::ModemCapabilities {
                 supports_exact_log_map: true,
                 supports_max_log: false,
+                analysis: &[],
             })
             .build();
         let demapper = ReferenceSoftDemapper::new(spec);

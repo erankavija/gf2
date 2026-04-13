@@ -267,22 +267,76 @@ pub enum DemapMethod {
     MaxLog,
 }
 
-/// Which demap methods a given [`super::ModemSpec`] supports.
+/// Per-bit-channel analytic metadata consumed by downstream analysis.
 ///
-/// Builders populate this; the trait layer reads it to reject
-/// method/spec mismatches at call time.
+/// Advertised by [`ModemCapabilities::analysis`] with one entry per bit
+/// position (length `bits_per_symbol()`). Analysis, documentation, and
+/// test-vector generators consume this; hot demap loops never read it.
+///
+/// Each flag describes a property of the bit-channel LLR under AWGN with
+/// the normalization contract documented at the [`super::modem`] module
+/// level.
 ///
 /// # Examples
 ///
 /// ```
-/// use gf2_coding::modem::ModemCapabilities;
+/// use gf2_coding::modem::BitChannelAnalysis;
 ///
+/// let a = BitChannelAnalysis {
+///     symmetric_llr_distribution: true,
+///     conditionally_independent: true,
+///     closed_form_llr_available: true,
+/// };
+/// assert!(a.symmetric_llr_distribution);
+/// assert!(a.conditionally_independent);
+/// assert!(a.closed_form_llr_available);
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct BitChannelAnalysis {
+    /// LLR conditional distribution is symmetric about 0 under
+    /// equiprobable input bits.
+    pub symmetric_llr_distribution: bool,
+    /// This bit is conditionally independent of the other bits in the
+    /// same symbol given the received sample. Holds for Gray-coded
+    /// square QAM under AWGN because I and Q decouple and the two axes
+    /// separate by PAM.
+    pub conditionally_independent: bool,
+    /// A closed-form analytic LLR expression exists for this bit
+    /// channel (for example BPSK / QPSK `LLR = 4 y / N0`, or the
+    /// piecewise-linear exact log-MAP for small Gray-PAM axes).
+    pub closed_form_llr_available: bool,
+}
+
+/// Which demap methods a given [`super::ModemSpec`] supports, plus per
+/// bit-channel analytic metadata.
+///
+/// Builders populate this; the trait layer reads the capability flags to
+/// reject method/spec mismatches at call time, and analysis consumers
+/// read [`ModemCapabilities::analysis`] for per-bit properties.
+///
+/// # Invariants
+///
+/// - `analysis.len() == bits_per_symbol()` — one entry per bit position,
+///   indexed MSB-first to match [`super::BitChannelSemantics`] and
+///   [`super::BitChannelId`].
+///
+/// # Examples
+///
+/// ```
+/// use gf2_coding::modem::{BitChannelAnalysis, ModemCapabilities};
+///
+/// const A: &[BitChannelAnalysis] = &[BitChannelAnalysis {
+///     symmetric_llr_distribution: true,
+///     conditionally_independent: true,
+///     closed_form_llr_available: true,
+/// }];
 /// let caps = ModemCapabilities {
 ///     supports_exact_log_map: true,
 ///     supports_max_log: true,
+///     analysis: A,
 /// };
 /// assert!(caps.supports_exact_log_map);
-/// assert!(caps.supports_max_log);
+/// assert_eq!(caps.analysis.len(), 1);
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ModemCapabilities {
@@ -290,6 +344,11 @@ pub struct ModemCapabilities {
     pub supports_exact_log_map: bool,
     /// Whether the spec supports the max-log demapper path.
     pub supports_max_log: bool,
+    /// Per-bit-channel analytic metadata. Length equals
+    /// `bits_per_symbol()`; entry `k` applies to bit position `k`
+    /// (MSB-first within a symbol). `&'static` so presets ship as
+    /// compile-time constants.
+    pub analysis: &'static [BitChannelAnalysis],
 }
 
 #[cfg(test)]
@@ -363,6 +422,21 @@ mod tests {
     fn test_symbol_point_energy_f64() {
         let p = SymbolPoint::<f64>::new(3.0, 4.0);
         assert!((p.energy() - 25.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn test_bit_channel_analysis_construct_and_fields() {
+        let a = BitChannelAnalysis {
+            symmetric_llr_distribution: true,
+            conditionally_independent: false,
+            closed_form_llr_available: true,
+        };
+        assert!(a.symmetric_llr_distribution);
+        assert!(!a.conditionally_independent);
+        assert!(a.closed_form_llr_available);
+        // Derive checks: Copy + Eq + Hash available.
+        let b = a;
+        assert_eq!(a, b);
     }
 
     #[test]

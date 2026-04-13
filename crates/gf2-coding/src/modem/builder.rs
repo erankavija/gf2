@@ -50,7 +50,44 @@
 
 use super::scalar::ModemScalar;
 use super::spec::{ModemSpec, ModemSpecParts};
-use super::types::{BitChannelSemantics, LabelWord, ModemCapabilities, Normalization, SymbolPoint};
+use super::types::{
+    BitChannelAnalysis, BitChannelSemantics, LabelWord, ModemCapabilities, Normalization,
+    SymbolPoint,
+};
+
+/// Conservative [`BitChannelAnalysis`] used as the builder default.
+///
+/// For arbitrary custom constellations none of the three analytic flags
+/// can be asserted in general, so the builder's default fills every bit
+/// channel with this all-`false` entry. Callers with known analytic
+/// properties supply an explicit [`ModemCapabilities`] via
+/// [`ModemSpecBuilder::capabilities`].
+const DEFAULT_ANALYSIS: BitChannelAnalysis = BitChannelAnalysis {
+    symmetric_llr_distribution: false,
+    conditionally_independent: false,
+    closed_form_llr_available: false,
+};
+
+/// 16-entry static pool of [`DEFAULT_ANALYSIS`] used to cheaply produce
+/// an `&'static [BitChannelAnalysis]` of any length in `[1, 16]`.
+///
+/// [`ModemSpec`] enforces `bits_per_symbol in [1, 16]`, so a 16-entry
+/// pool is always long enough; the builder slices off the needed prefix.
+const DEFAULT_ANALYSIS_POOL: &[BitChannelAnalysis; 16] = &[DEFAULT_ANALYSIS; 16];
+
+/// Returns a static [`BitChannelAnalysis`] slice of length
+/// `bits_per_symbol` for the builder default.
+///
+/// Single source of truth for the "no known analytic properties"
+/// fallback shared between [`ModemSpecBuilder::build`] and
+/// [`ModemCapabilities::default`].
+fn default_analysis_slice(bits_per_symbol: u8) -> &'static [BitChannelAnalysis] {
+    assert!(
+        (1..=16).contains(&bits_per_symbol),
+        "default_analysis_slice: bits_per_symbol must be in [1, 16], got {bits_per_symbol}"
+    );
+    &DEFAULT_ANALYSIS_POOL[..bits_per_symbol as usize]
+}
 
 /// Fluent builder for a custom [`ModemSpec`].
 ///
@@ -263,6 +300,7 @@ impl<S: ModemScalar> ModemSpecBuilder<S> {
     /// let _ = ModemSpecBuilder::<f32>::new().capabilities(ModemCapabilities {
     ///     supports_exact_log_map: true,
     ///     supports_max_log: false,
+    ///     analysis: &[],
     /// });
     /// ```
     ///
@@ -341,7 +379,17 @@ impl<S: ModemScalar> ModemSpecBuilder<S> {
                 .collect()
         });
 
-        let capabilities = capabilities.unwrap_or_default();
+        // Fill in the analysis slot for the "no explicit capabilities"
+        // path: one conservative default entry per bit position. If the
+        // caller supplied explicit capabilities we honor their analysis
+        // slice as-is (it will be validated by from_parts_checked once
+        // invariant D9 lands; today the length check happens at
+        // ModemCapabilities construction sites).
+        let capabilities = capabilities.unwrap_or_else(|| ModemCapabilities {
+            supports_exact_log_map: true,
+            supports_max_log: true,
+            analysis: default_analysis_slice(bits_per_symbol),
+        });
 
         let parts = ModemSpecParts {
             points,
@@ -364,12 +412,20 @@ impl<S: ModemScalar> Default for ModemSpecBuilder<S> {
 }
 
 impl Default for ModemCapabilities {
-    /// Default: both exact log-MAP and max-log demap paths advertised.
+    /// Default: both demap paths advertised, no per-bit analysis.
+    ///
+    /// The `analysis` slot defaults to an empty slice because
+    /// [`ModemCapabilities`] does not know the surrounding spec's
+    /// `bits_per_symbol` at this construction site. Prefer constructing
+    /// capabilities through [`ModemSpecBuilder`] (which fills in a
+    /// length-matched default) or the preset constructors (which ship
+    /// compile-time analysis constants), rather than this raw default.
     #[inline]
     fn default() -> Self {
         Self {
             supports_exact_log_map: true,
             supports_max_log: true,
+            analysis: &[],
         }
     }
 }
@@ -571,6 +627,7 @@ mod tests {
             .capabilities(ModemCapabilities {
                 supports_exact_log_map: true,
                 supports_max_log: false,
+                analysis: &[],
             })
             .build();
         assert!(spec.capabilities().supports_exact_log_map);

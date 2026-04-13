@@ -42,6 +42,21 @@
 //! See `dev/active/c87c5043-constellation-data-model-plan.md` for the
 //! locked design decisions behind this surface.
 //!
+//! # Noise and normalization contract
+//!
+//! Every batched demapper in this module receives per-symbol noise via
+//! [`DemapInput::noise_var`]. That field carries the **total per-symbol
+//! complex AWGN noise variance** `N0 = 2 sigma^2`: for real AWGN with
+//! independent Gaussian noise of variance `sigma^2` on each of I and Q,
+//! callers must pass `2 * sigma^2`. This matches the log-MAP LLR formula
+//! `LLR = log(p(y | bit = 0) / p(y | bit = 1))` with per-point squared
+//! distances scaled by `1 / N0` (equivalently `1 / (2 sigma^2)`). The
+//! authoritative discussion of how this composes with
+//! [`crate::channel::AwgnChannel::variance`] (which returns `sigma^2`)
+//! lives in the `awgn_link` module docs (see [`ModemAwgnChannel`]);
+//! modem backends read the value supplied through
+//! [`DemapInput::noise_var`] and never re-derive it.
+//!
 //! # Examples
 //!
 //! ```
@@ -82,7 +97,7 @@ pub use ref_mapper::ReferenceMapper;
 pub use scalar::{DefaultScalar, ModemScalar};
 pub use spec::ModemSpec;
 pub use types::{
-    BitChannelId, BitChannelSemantics, DemapMethod, LabelWord, ModemCapabilities, Normalization,
-    SymbolPoint,
+    BitChannelAnalysis, BitChannelId, BitChannelSemantics, DemapMethod, LabelWord,
+    ModemCapabilities, Normalization, SymbolPoint,
 };
 pub use view::ModemView;

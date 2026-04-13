@@ -5,8 +5,8 @@
 //! view accessors, and property-based bijection properties.
 
 use gf2_coding::modem::{
-    BitChannelId, BitChannelSemantics, DemapMethod, LabelWord, ModemCapabilities, ModemSpec,
-    ModemView, Normalization, SymbolPoint,
+    BitChannelId, BitChannelSemantics, DemapMethod, LabelWord, ModemSpec, ModemView, Normalization,
+    SymbolPoint,
 };
 
 use proptest::prelude::*;
@@ -59,13 +59,10 @@ fn test_public_capabilities_populated_for_presets() {
         assert!(c.supports_exact_log_map);
         assert!(c.supports_max_log);
     }
-    assert_eq!(
-        caps,
-        ModemCapabilities {
-            supports_exact_log_map: true,
-            supports_max_log: true,
-        }
-    );
+    assert!(caps.supports_exact_log_map);
+    assert!(caps.supports_max_log);
+    // BPSK preset ships a single-entry analysis slice.
+    assert_eq!(caps.analysis.len(), 1);
 }
 
 #[test]
