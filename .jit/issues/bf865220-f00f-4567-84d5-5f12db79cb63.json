@@ -2,7 +2,7 @@
   "id": "bf865220-f00f-4567-84d5-5f12db79cb63",
   "title": "Integrate modem composition into SimulationRunner",
   "description": "Make the coded and uncoded simulation flows consume framework-backed modems through the shared channel composition layer.\n\n## Success Criteria\n\n- [ ] `SimulationRunner` can execute modem-backed coded and uncoded flows through the shared framework.\n- [ ] Existing simulation entry points keep a coherent public API while using the new modem path internally.\n- [ ] The integration path is reusable by both AWGN and existing fading models.\n\n## Notes\n\nThis task follows the AWGN adapter and is the main integration point for the shared modem framework in the simulation harness.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "high",
   "assignee": "agent:claude",
   "dependencies": [
@@ -15,6 +15,11 @@
     "doc-review"
   ],
   "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-13T22:02:50.102257136Z"
+    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
@@ -29,11 +34,6 @@
       "status": "passed",
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-13T19:15:15.921381126Z"
-    },
-    "code-review": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-13T21:27:33.901127225Z"
     }
   },
   "context": {},
@@ -45,5 +45,5 @@
     "story:simulation-channel-integration"
   ],
   "created_at": "2026-04-12T19:41:45.863636426+00:00",
-  "updated_at": "2026-04-13T21:32:45.106313716+00:00"
+  "updated_at": "2026-04-13T22:22:19.738462368+00:00"
 }

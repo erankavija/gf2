@@ -2,7 +2,7 @@
   "id": "a23646dd-2980-420e-a7ac-c0094c63f55c",
   "title": "Adapt the Rician fading link to the common modem surface",
   "description": "Rewire the existing fading and interleaving path so it uses the shared modem abstractions instead of bespoke QPSK-specific modem logic.\n\n## Success Criteria\n\n- [ ] The current Rician fading link can use the shared modem surface for modulation and demapping.\n- [ ] Existing interleaving and fading composition still works with the migrated modem pipeline.\n- [ ] The resulting path no longer depends on a unique QPSK-only modem implementation.\n\n## Notes\n\nThis task closes the simulation integration story by bringing the current fading pipeline onto the shared surface.",
-  "state": "backlog",
+  "state": "ready",
   "priority": "high",
   "assignee": null,
   "dependencies": [
@@ -24,5 +24,5 @@
     "story:simulation-channel-integration"
   ],
   "created_at": "2026-04-12T19:41:45.864789186+00:00",
-  "updated_at": "2026-04-12T19:42:16.652815175+00:00"
+  "updated_at": "2026-04-13T22:22:19.949079111+00:00"
 }
