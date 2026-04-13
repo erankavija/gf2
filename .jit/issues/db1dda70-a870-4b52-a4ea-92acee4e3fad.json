@@ -2,9 +2,9 @@
   "id": "db1dda70-a870-4b52-a4ea-92acee4e3fad",
   "title": "Implement fast Gray square-QAM soft demapper",
   "description": "Implement the specialized Gray square-QAM demapper that exploits axis separability and other square-QAM structure while preserving the shared API.\n\n## Success Criteria\n\n- [ ] The specialized demapper supports the built-in Gray QAM presets required by the epic.\n- [ ] The fast path is API-compatible with the generic modem reference path.\n- [ ] Outputs match the reference demapper across representative AWGN test cases.\n\n## Notes\n\nThis task should focus on algorithmic structure first and leave backend-specific acceleration hooks to the follow-on batch-kernel task.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "high",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [
     "625f5e1b-21a6-4297-8259-7b421df14a1a",
     "abf03b13-e8a8-4049-a30a-e601fd640ca8"
@@ -15,7 +15,13 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-13T19:15:15.020988941Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -25,5 +31,5 @@
     "story:gray-square-qam-fast-path"
   ],
   "created_at": "2026-04-12T19:40:37.532601087+00:00",
-  "updated_at": "2026-04-13T18:04:17.460290625+00:00"
+  "updated_at": "2026-04-13T19:15:20.239182606+00:00"
 }

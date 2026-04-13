@@ -2,9 +2,9 @@
   "id": "0aac93c6-189d-430f-bc74-050f24d9b780",
   "title": "Add reference-model tests",
   "description": "Add round-trip, brute-force, and invalid-input coverage that establishes the arbitrary-constellation path as the modem ground truth.\n\n## Success Criteria\n\n- [ ] Tests cover valid round-trips for representative arbitrary constellations and labelings.\n- [ ] Tests verify the reference soft demapper against brute-force or analytically equivalent expectations.\n- [ ] Invalid builder inputs and malformed labelings are covered by failing tests.\n\n## Notes\n\nThis task should leave the reference path suitable for cross-checking the Gray-QAM fast path.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "high",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [
     "abf03b13-e8a8-4049-a30a-e601fd640ca8"
   ],
@@ -14,7 +14,13 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-13T19:15:14.177682508Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -24,5 +30,5 @@
     "story:arbitrary-constellation-reference"
   ],
   "created_at": "2026-04-12T19:40:37.530412745+00:00",
-  "updated_at": "2026-04-13T18:04:17.160726497+00:00"
+  "updated_at": "2026-04-13T19:15:19.858120889+00:00"
 }

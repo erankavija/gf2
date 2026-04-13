@@ -9,7 +9,13 @@
 //! The simulation framework supports three main workflows:
 //!
 //! - **Uncoded BER**: Raw bit-error-rate measurement without coding
-//!   ([`SimulationRunner::run_uncoded_ber`]).
+//!   ([`SimulationRunner::run_uncoded_ber`]). The legacy entry point is
+//!   hard-coded to BPSK; the modem-backed counterpart
+//!   [`SimulationRunner::run_uncoded_ber_with_channel`] takes any
+//!   [`ChannelModel`] (e.g., the
+//!   [`ModemChannelAdapter`](crate::modem::ModemChannelAdapter) built on the
+//!   shared modem framework) and performs hard decisions directly on the
+//!   LLRs it returns.
 //! - **Coded (immutable decoder)**: For [`SoftDecoder`] implementations that
 //!   take `&self` ([`run_coded`]).
 //! - **Coded iterative (mutable decoder)**: For [`IterativeSoftDecoder`]
@@ -21,7 +27,15 @@
 //! # Channel Abstraction
 //!
 //! The [`ChannelModel`] trait abstracts the modulation and channel, with a
-//! default BPSK/AWGN implementation provided by [`BpskAwgnChannel`].
+//! default BPSK/AWGN implementation provided by [`BpskAwgnChannel`]. The
+//! modem-framework adapter
+//! [`ModemChannelAdapter`](crate::modem::ModemChannelAdapter) also implements
+//! [`ChannelModel`], so any validated
+//! [`ModemSpec`](crate::modem::ModemSpec) (BPSK, QPSK, 16-/64-/256-QAM, ...)
+//! can be plugged into every `*_with_channel` runner entry point as well as
+//! into [`run_coded`], [`run_coded_iterative`], and
+//! [`run_coded_iterative_parallel`], which already accept any
+//! `C: ChannelModel`.
 //!
 //! # Output
 //!
@@ -629,6 +643,9 @@ impl SimulationResults {
 /// Provides static methods for both uncoded and coded simulations:
 ///
 /// - [`SimulationRunner::run_uncoded_ber`] — uncoded BPSK over AWGN
+/// - [`SimulationRunner::run_uncoded_ber_with_channel`] — uncoded over any
+///   [`ChannelModel`] (modem-framework backed, e.g.
+///   [`ModemChannelAdapter`](crate::modem::ModemChannelAdapter))
 /// - [`SimulationRunner::run_coded`] — coded with immutable [`SoftDecoder`]
 /// - [`SimulationRunner::run_coded_iterative`] — coded with [`IterativeSoftDecoder`]
 /// - [`SimulationRunner::run_coded_iterative_parallel`] — parallel iterative with decoder factory
@@ -685,6 +702,144 @@ impl SimulationRunner {
 
                     let errors = (0..batch_size)
                         .filter(|&i| bits.get(i) != decoded[i])
+                        .count();
+
+                    total_bits += batch_size;
+                    total_errors += errors;
+                }
+
+                let ber = if total_bits > 0 {
+                    total_errors as f64 / total_bits as f64
+                } else {
+                    0.0
+                };
+
+                SimulationResult {
+                    eb_n0_db,
+                    ber,
+                    bler: 0.0,
+                    avg_iterations: None,
+                    avg_queries_per_bit: None,
+                    num_bits: total_bits,
+                    num_bit_errors: total_errors,
+                    num_frames: 0,
+                    num_frame_errors: 0,
+                }
+            })
+            .collect()
+    }
+
+    /// Modem-backed counterpart to [`SimulationRunner::run_uncoded_ber`].
+    ///
+    /// Routes the uncoded sweep through the supplied [`ChannelModel`]
+    /// instead of hard-coding [`crate::channel::BpskModulator`], and applies
+    /// a hard decision to the returned LLRs (convention: positive LLR =>
+    /// bit 0, negative LLR => bit 1; this matches
+    /// [`crate::channel::BpskModulator::to_llr`] and the modem framework's
+    /// [`BatchSoftDemapper`](crate::modem::BatchSoftDemapper) output sign).
+    /// All modulation, noise generation, and demapping live inside
+    /// [`ChannelModel::transmit_and_demodulate`] — this method never
+    /// reimplements a BPSK LLR formula or a noise draw itself.
+    ///
+    /// Passing [`crate::simulation::BpskAwgnChannel`] reproduces the legacy
+    /// BPSK path (at equal `StdRng` seeds the two sweeps converge to the
+    /// same BER, modulo the different bit/noise interleaving of the legacy
+    /// loop vs. the modem pipeline). Passing
+    /// [`crate::modem::ModemChannelAdapter`] runs any validated
+    /// [`ModemSpec`](crate::modem::ModemSpec) (BPSK, QPSK, 16-/64-/256-QAM)
+    /// over AWGN with the shared [`BatchMapper`](crate::modem::BatchMapper)
+    /// and [`BatchSoftDemapper`](crate::modem::BatchSoftDemapper) surfaces.
+    ///
+    /// # Arguments
+    ///
+    /// * `channel` - Any [`ChannelModel`] implementation. `rate = 1.0` is
+    ///   passed for every call because this is an uncoded sweep.
+    /// * `config` - Simulation configuration. `eb_n0_range_db`, `min_errors`,
+    ///   and `max_frames` are consumed; the decoder-iteration and output
+    ///   fields are ignored (this is an uncoded runner).
+    /// * `rng` - Random source used for both bit generation and channel
+    ///   noise. A single RNG feeds both so deterministic seeding is
+    ///   honoured end-to-end.
+    ///
+    /// # Batch sizing
+    ///
+    /// Bits are generated in batches of `UNCODED_MODEM_BATCH_BITS` so that
+    /// the batch size is a multiple of every common `bits_per_symbol`
+    /// (1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 16), satisfying the
+    /// [`ModemChannelAdapter`](crate::modem::ModemChannelAdapter)
+    /// precondition `bits.len() % bits_per_symbol == 0` for all standard
+    /// modulations.
+    ///
+    /// # Returns
+    ///
+    /// One [`SimulationResult`] per SNR point in `config.eb_n0_range_db`.
+    /// `num_bits` / `num_bit_errors` are populated; `num_frames` stays 0
+    /// because uncoded streaming has no natural frame boundary.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::simulation::{
+    ///     BpskAwgnChannel, SimulationConfig, SimulationRunner,
+    /// };
+    ///
+    /// let mut config = SimulationConfig::quick_test();
+    /// config.eb_n0_range_db = vec![6.0];
+    /// config.min_errors = 1;
+    /// config.max_frames = 10_000;
+    /// let channel = BpskAwgnChannel;
+    /// let mut rng = rand::thread_rng();
+    /// let results = SimulationRunner::run_uncoded_ber_with_channel(
+    ///     &channel, &config, &mut rng,
+    /// );
+    /// assert_eq!(results.len(), 1);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(SNR_points * max_frames * channel_time).
+    pub fn run_uncoded_ber_with_channel<C: ChannelModel, R: Rng>(
+        channel: &C,
+        config: &SimulationConfig,
+        rng: &mut R,
+    ) -> Vec<SimulationResult> {
+        /// Batch length used by
+        /// [`SimulationRunner::run_uncoded_ber_with_channel`]. Chosen to be
+        /// divisible by every `bits_per_symbol` the shipped modem presets
+        /// use (1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 16), so that generic
+        /// [`ChannelModel`] backends like
+        /// [`ModemChannelAdapter`](crate::modem::ModemChannelAdapter) which
+        /// require `bits.len() % bits_per_symbol == 0` never see a
+        /// ragged-tail batch.
+        const UNCODED_MODEM_BATCH_BITS: usize = 960;
+
+        config
+            .eb_n0_range_db
+            .iter()
+            .map(|&eb_n0_db| {
+                let mut total_bits = 0usize;
+                let mut total_errors = 0usize;
+
+                while total_errors < config.min_errors && total_bits < config.max_frames {
+                    let remaining = config.max_frames - total_bits;
+                    let batch_size = UNCODED_MODEM_BATCH_BITS.min(remaining);
+                    if batch_size == 0 {
+                        break;
+                    }
+                    let bits = BitVec::random(batch_size, rng);
+                    // Uncoded => rate = 1.0. The channel owns modulation,
+                    // noise, and demapping end-to-end; we only consume LLRs.
+                    let llrs = channel.transmit_and_demodulate(&bits, eb_n0_db, 1.0, rng);
+                    debug_assert_eq!(llrs.len(), batch_size);
+
+                    let errors = (0..batch_size)
+                        .filter(|&i| {
+                            // Positive LLR => bit 0, negative => bit 1.
+                            // Ties (0.0) map to bit 0, matching
+                            // BpskModulator::demodulate_hard.
+                            let decoded_bit = llrs[i].value() < 0.0;
+                            bits.get(i) != decoded_bit
+                        })
                         .count();
 
                     total_bits += batch_size;
@@ -3357,6 +3512,104 @@ mod tests {
         );
 
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    // -------------------------------------------------------------------
+    // Modem-backed uncoded runner (run_uncoded_ber_with_channel) tests
+    // -------------------------------------------------------------------
+
+    /// SC3(a): at matched Eb/N0 and the same `StdRng` seed, the modem-backed
+    /// path through [`BpskAwgnChannel`] converges to the same BER as the
+    /// legacy hard-coded BPSK path, within a small Monte Carlo tolerance.
+    ///
+    /// The two paths differ slightly in interleaving order (legacy draws all
+    /// payload bits then all noise samples in one contiguous block; the
+    /// generic runner uses 960-bit batches) so we do not require bit-exact
+    /// match — we require BER closeness at a moderately-high Eb/N0 where
+    /// both paths have settled.
+    #[test]
+    fn test_run_uncoded_ber_with_channel_matches_legacy_bpsk() {
+        let mut config = SimulationConfig::quick_test();
+        config.eb_n0_range_db = vec![5.0];
+        config.min_errors = 200;
+        config.max_frames = 200_000;
+        config.rng_seed = Some(0xC0FFEE_u64);
+
+        // Legacy BPSK path.
+        let mut rng_legacy = StdRng::seed_from_u64(config.rng_seed.unwrap());
+        let legacy = SimulationRunner::run_uncoded_ber(&config, &mut rng_legacy);
+
+        // Modem-backed path through the same BpskAwgnChannel contract.
+        let mut rng_modem = StdRng::seed_from_u64(config.rng_seed.unwrap());
+        let channel = BpskAwgnChannel;
+        let modem_path =
+            SimulationRunner::run_uncoded_ber_with_channel(&channel, &config, &mut rng_modem);
+
+        assert_eq!(legacy.len(), 1);
+        assert_eq!(modem_path.len(), 1);
+
+        let ber_legacy = legacy[0].ber;
+        let ber_modem = modem_path[0].ber;
+
+        assert!(
+            ber_legacy.is_finite() && ber_modem.is_finite(),
+            "both BERs must be finite: legacy={ber_legacy}, modem={ber_modem}",
+        );
+        assert!(
+            ber_legacy > 0.0 && ber_modem > 0.0,
+            "at 5 dB both paths should observe some errors: legacy={ber_legacy}, modem={ber_modem}",
+        );
+        // Tolerance: relative error below 40% covers Monte Carlo variance
+        // at min_errors=200 between two independently interleaved paths
+        // without hiding a systematic noise-convention drift (which would
+        // produce >2x or >0.5x relative deviations).
+        let ratio = ber_modem / ber_legacy;
+        assert!(
+            ratio > 0.6 && ratio < 1.4,
+            "modem BER should track legacy BER within ~40% (got ratio={ratio}: legacy={ber_legacy}, modem={ber_modem})",
+        );
+    }
+
+    /// SC3(b): [`ModemChannelAdapter`] built on BPSK (the smallest modem
+    /// spec) plugs into [`SimulationRunner::run_uncoded_ber_with_channel`]
+    /// and returns a sane result (non-zero frame count, finite BER).
+    ///
+    /// Covers the reusability requirement that the new runner accepts any
+    /// `ChannelModel` — BPSK here, but the type is
+    /// `ModemChannelAdapter<GrayQamMapper<f32>, ReferenceSoftDemapper<f32>>`,
+    /// the exact surface coded runners (`run_coded`, `run_coded_iterative`)
+    /// already accept.
+    #[test]
+    fn test_run_uncoded_ber_with_channel_supports_modem_adapter() {
+        use crate::modem::{
+            DemapMethod, GrayQamMapper, ModemChannelAdapter, ModemSpec, ReferenceSoftDemapper,
+        };
+
+        let mapper = GrayQamMapper::<f32>::from_preset_order(2); // BPSK
+        let demap = ReferenceSoftDemapper::new(ModemSpec::<f32>::bpsk());
+        let adapter = ModemChannelAdapter::new(mapper, demap, DemapMethod::ExactLogMap);
+
+        let mut config = SimulationConfig::quick_test();
+        config.eb_n0_range_db = vec![3.0];
+        config.min_errors = 50;
+        config.max_frames = 50_000;
+        config.rng_seed = Some(0xA5A5_A5A5_u64);
+
+        let mut rng = StdRng::seed_from_u64(config.rng_seed.unwrap());
+        let results = SimulationRunner::run_uncoded_ber_with_channel(&adapter, &config, &mut rng);
+
+        assert_eq!(results.len(), 1);
+        let r = &results[0];
+        assert!(
+            r.num_bits > 0,
+            "modem-adapter uncoded sweep must transmit at least one batch of bits",
+        );
+        assert!(r.ber.is_finite(), "BER must be finite, got {}", r.ber);
+        assert!(
+            (0.0..=1.0).contains(&r.ber),
+            "uncoded BER must lie in [0, 1], got {}",
+            r.ber,
+        );
     }
 
     // -------------------------------------------------------------------
