@@ -670,6 +670,11 @@ pub struct SimulationRunner;
 impl SimulationRunner {
     /// Simulates uncoded BPSK transmission over AWGN and computes BER.
     ///
+    /// Thin wrapper that delegates to
+    /// [`SimulationRunner::run_uncoded_ber_with_channel`] with
+    /// [`BpskAwgnChannel`] as the channel, so the BPSK/AWGN Monte Carlo
+    /// loop has a single source of truth.
+    ///
     /// # Arguments
     ///
     /// * `config` - Simulation configuration (uses `eb_n0_range_db`, `min_errors`, `max_frames`)
@@ -689,7 +694,10 @@ impl SimulationRunner {
     ///
     /// # Complexity
     ///
-    /// O(SNR_points * max_frames * batch_size) where batch_size = 1000.
+    /// O(SNR_points * max_frames) in transmitted bits. Internal batching
+    /// is governed by `run_uncoded_ber_with_channel` (currently 960 bits
+    /// per inner call, rounded down to `BpskAwgnChannel::batch_alignment()`
+    /// which is `1`).
     pub fn run_uncoded_ber<R: Rng>(
         config: &SimulationConfig,
         rng: &mut R,
