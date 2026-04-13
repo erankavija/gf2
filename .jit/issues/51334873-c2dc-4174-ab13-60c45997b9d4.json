@@ -1,7 +1,7 @@
 {
   "id": "51334873-c2dc-4174-ab13-60c45997b9d4",
   "title": "Implement arbitrary-constellation mapping and reference demapping",
-  "description": "Implement the correctness-first modem path for arbitrary complex constellations and arbitrary bit labelings. This path is the reference implementation used for uncommon constellations, research workflows, and fast-path validation.\n\n## Background\n\nThe framework must support user-defined constellations rather than only standard square QAM. That requires validated construction, a scalar reference mapper, and a soft demapper that is correct across arbitrary labelings so specialized implementations can be checked against it.\n\n## Success Criteria\n\n- [ ] Users can construct a modem from explicit constellation points and bit labels.\n- [ ] Mapping and hard and soft demapping round-trip correctly for arbitrary valid labelings.\n- [ ] Reference soft-decision demapping matches brute-force or log-sum-exp expectations in tests.\n- [ ] Invalid constellations or duplicate and incomplete labels are rejected with explicit errors.\n\n## Notes\n\nThis story provides the ground-truth implementation used to validate the optimized Gray square-QAM path.",
+  "description": "Implement the correctness-first modem path for arbitrary complex constellations and arbitrary bit labelings. This path is the reference implementation used for uncommon constellations, research workflows, and fast-path validation.\n\n## Background\n\nThe framework must support user-defined constellations rather than only standard square QAM. That requires validated construction, a scalar reference mapper, and a soft demapper that is correct across arbitrary labelings so specialized implementations can be checked against it.\n\n## Success Criteria\n\n- [ ] Users can construct a modem from explicit constellation points and bit labels through the shared validated builder.\n- [ ] The arbitrary-constellation mapper produces deterministic symbol outputs and a deterministic LLR layout for any valid labeling.\n- [ ] An exact log-MAP reference demapper exists for arbitrary valid constellations and matches brute-force or equivalent log-sum-exp expectations on representative non-Gray or non-square cases.\n- [ ] Invalid constellations or duplicate and incomplete labels are rejected with explicit errors rather than silent fallbacks.\n\n## Notes\n\nThis story provides the ground-truth implementation used to validate the optimized Gray square-QAM path.",
   "state": "backlog",
   "priority": "high",
   "assignee": null,
@@ -24,5 +24,5 @@
     "epic:d4851c3d"
   ],
   "created_at": "2026-04-12T19:39:51.665092663+00:00",
-  "updated_at": "2026-04-12T19:44:31.170925423+00:00"
+  "updated_at": "2026-04-12T21:36:48.848313081+00:00"
 }

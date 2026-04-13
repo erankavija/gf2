@@ -1,7 +1,7 @@
 {
   "id": "448491d5-c2be-41ba-89cf-0147e0679347",
   "title": "Benchmark zero-overhead disabled path for bit-channel analysis",
-  "description": "Validate that bit-channel analysis remains opt-in by benchmarking and testing the analysis-disabled path against the normal simulation and modem hot paths.\n\n## Success Criteria\n\n- [ ] Benchmark coverage demonstrates that non-analysis runs do not suffer performance regression from analysis functionality being available.\n- [ ] Validation covers both correctness of bit-channel separation and non-interference with the shared fast path.\n- [ ] The evidence is strong enough to reject designs that impose analysis overhead on normal simulations.\n\n## Notes\n\nThis task is the guardrail that ensures analysis tooling does not compromise the modem framework's performance goals.",
+  "description": "Validate that bit-channel analysis remains opt-in by benchmarking and testing the analysis-disabled path against the normal simulation and modem hot paths.\n\n## Success Criteria\n\n- [ ] Benchmark coverage compares the standard hot path with analysis disabled against the same modem and simulation scenarios with bit-channel analysis support available.\n- [ ] The analysis-disabled path performs no analysis-specific collector calls or analysis-buffer allocation during normal runs.\n- [ ] Validation covers both correctness of bit-channel separation and non-interference with the shared fast path.\n- [ ] The evidence is strong enough to reject designs that impose analysis overhead on normal simulations.\n\n## Notes\n\nThis task is the guardrail that ensures analysis tooling does not compromise the modem framework's performance goals.",
   "state": "backlog",
   "priority": "high",
   "assignee": null,
@@ -26,5 +26,5 @@
     "story:bit-channel-analysis"
   ],
   "created_at": "2026-04-12T20:04:48.350582117+00:00",
-  "updated_at": "2026-04-12T20:05:02.727123321+00:00"
+  "updated_at": "2026-04-12T21:37:10.917433669+00:00"
 }
