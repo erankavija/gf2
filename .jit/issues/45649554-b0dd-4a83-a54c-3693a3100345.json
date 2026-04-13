@@ -2,9 +2,9 @@
   "id": "45649554-b0dd-4a83-a54c-3693a3100345",
   "title": "Run Phase 2 AWGN simulations: Figs 4-6 additional product code dimensions",
   "description": "Run the additional AWGN product code vs LDPC simulations from Figures 4, 5, and 6.\n\n## Figure 4: (625, 225) product code\n\n- Component: CRC-0x2b9(25,15) — `[(25,15)² CRC]` product code\n- Metrics: BLER, BER, queries/bit, iterations\n- Eb/N0 range: 0–3 dB\n\n## Figure 5: (4096, 3249) product code\n\n- Component: eBCH(64,57) — `[(64,57)² eBCH]` product code\n- Rate: 0.793 (high rate, uses BG1)\n- Metrics: BLER, BER, queries/bit, iterations\n- Eb/N0 range: 2–4 dB\n\n## Figure 6: (256, 49) product code\n\n- Component: eBCH(16,7) — `[(16,7)² eBCH]` product code\n- Rate: 0.191 (very low rate)\n- Metrics: BLER, BER, queries/bit, iterations\n- Eb/N0 range: 0–4 dB\n\n## Acceptance Criteria\n\n- All three simulations run to completion with sufficient statistics.\n- Results match paper's reference data within expected tolerance.\n- All component codes (CRC, eBCH(64,57), eBCH(16,7)) work correctly in the product code framework.\n- Results saved in CSV/JSON format.\n\n## Location\n\nExtend simulation runners from Phase 1.",
-  "state": "backlog",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [
     "92086311-4dcc-4d04-9c26-a88034ffd894",
     "a2026f8c-06be-44ee-82e9-36bd187532ea"
@@ -16,15 +16,15 @@
     "tdd-reminder"
   ],
   "gates_status": {
-    "cargo-ci": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-04-05T23:09:15.761999517Z"
-    },
     "doc-review": {
       "status": "pending",
       "updated_by": null,
       "updated_at": "2026-04-05T23:09:15.762071747Z"
+    },
+    "cargo-ci": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-04-05T23:09:15.761999517Z"
     },
     "code-review": {
       "status": "pending",
@@ -32,18 +32,26 @@
       "updated_at": "2026-04-05T23:09:15.762044567Z"
     },
     "tdd-reminder": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-04-05T23:09:15.762090317Z"
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-12T19:36:07.504390439Z"
     }
   },
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/active/phase2_fig4_alignment_investigation.md",
+      "commit": null,
+      "label": "Phase 2 Figure 4 paper-alignment investigation",
+      "doc_type": "notes",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:story",
     "epic:grand",
     "component:gf2-coding"
   ],
   "created_at": "2026-02-22T21:16:02.521043921+00:00",
-  "updated_at": "2026-04-08T16:56:43.222903638+00:00"
+  "updated_at": "2026-04-13T07:56:33.488896175+00:00"
 }

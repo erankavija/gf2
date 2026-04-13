@@ -1612,3 +1612,4 @@
 {"type":"issue_state_changed","id":"5164e14c-6fdc-4ee5-a804-8d8edf88494f","issue_id":"0f7a6cd9-4ac0-4b79-b167-ea041ec389dd","timestamp":"2026-04-12T20:05:02.661923604Z","from":"ready","to":"backlog"}
 {"type":"issue_state_changed","id":"a1947f0e-0892-41af-bc5d-7ee575474781","issue_id":"80f218ca-7bce-4cf6-bf03-e1fe2789620d","timestamp":"2026-04-12T20:05:02.714294112Z","from":"ready","to":"backlog"}
 {"type":"issue_claimed","id":"fe029e23-455b-40d3-8bfd-5d34d1216fc8","issue_id":"d4851c3d-a9ae-42cc-bf5d-31ab973ba0fe","timestamp":"2026-04-12T20:11:06.459386289Z","assignee":"agent:claude"}
+{"type":"issue_created","id":"4ce5c69c-e95a-445a-a24b-bfa1784c036e","issue_id":"d77519a3-0cc7-42f7-90d8-042a9309f2ab","timestamp":"2026-04-12T21:46:49.662693149Z","title":"Investigate shared CPU/GPU work-queue strategy for maximum decoder throughput","priority":"high"}
