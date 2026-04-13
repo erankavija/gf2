@@ -117,63 +117,12 @@ impl<S: ModemScalar> BatchSoftDemapper<S> for ReferenceSoftDemapper<S> {
     fn demap_llrs(&self, input: DemapInput<'_, S>, out_llrs: &mut [Llr]) {
         let view = self.spec.view();
         let m = view.bits_per_symbol() as usize;
-        let num_symbols = input.rx_i.len();
-
-        assert_eq!(
-            input.rx_q.len(),
-            num_symbols,
-            "ReferenceSoftDemapper::demap_llrs: rx_i.len() ({}) != rx_q.len() ({})",
-            num_symbols,
-            input.rx_q.len()
-        );
-        assert_eq!(
-            input.noise_var.len(),
-            num_symbols,
-            "ReferenceSoftDemapper::demap_llrs: rx_i.len() ({}) != noise_var.len() ({})",
-            num_symbols,
-            input.noise_var.len()
-        );
-        match (input.gain_i, input.gain_q) {
-            (Some(gi), Some(gq)) => {
-                assert_eq!(
-                    gi.len(),
-                    num_symbols,
-                    "ReferenceSoftDemapper::demap_llrs: gain_i.len() ({}) != num_symbols ({})",
-                    gi.len(),
-                    num_symbols
-                );
-                assert_eq!(
-                    gq.len(),
-                    num_symbols,
-                    "ReferenceSoftDemapper::demap_llrs: gain_q.len() ({}) != num_symbols ({})",
-                    gq.len(),
-                    num_symbols
-                );
-            }
-            (None, None) => {}
-            _ => panic!(
-                "ReferenceSoftDemapper::demap_llrs: gain_i and gain_q must be both Some or both None"
-            ),
-        }
-        assert_eq!(
+        let num_symbols = super::demapper::validate_demap_input(
+            "ReferenceSoftDemapper::demap_llrs",
+            &view,
+            &input,
             out_llrs.len(),
-            num_symbols * m,
-            "ReferenceSoftDemapper::demap_llrs: out_llrs.len() ({}) != num_symbols * bits_per_symbol ({})",
-            out_llrs.len(),
-            num_symbols * m
         );
-
-        let caps = view.capabilities();
-        match input.method {
-            DemapMethod::ExactLogMap => assert!(
-                caps.supports_exact_log_map,
-                "ReferenceSoftDemapper::demap_llrs: spec does not advertise ExactLogMap support"
-            ),
-            DemapMethod::MaxLog => assert!(
-                caps.supports_max_log,
-                "ReferenceSoftDemapper::demap_llrs: spec does not advertise MaxLog support"
-            ),
-        }
 
         let points = view.points();
         let labels = view.labels();
@@ -294,8 +243,8 @@ mod tests {
     use crate::llr::Llr;
     use proptest::prelude::*;
 
-    /// Brute-force log-MAP LLR computed directly from (post-normalized)
-    /// spec points and labels, used as an oracle in tests.
+    /// Thin wrapper re-exporting the shared brute-force oracle so
+    /// existing call sites in this file keep their short local name.
     #[allow(clippy::too_many_arguments)]
     fn brute_force_log_map(
         points: &[(f64, f64)],
@@ -308,33 +257,17 @@ mod tests {
         n0: f64,
         b: u8,
     ) -> f64 {
-        let mut sum0 = 0.0;
-        let mut sum1 = 0.0;
-        // Stability shift.
-        let mut d_min = f64::INFINITY;
-        let dists: Vec<f64> = points
-            .iter()
-            .map(|&(pi, pq)| {
-                let ei = y_i - (h_i * pi - h_q * pq);
-                let eq = y_q - (h_i * pq + h_q * pi);
-                (ei * ei + eq * eq) / n0
-            })
-            .collect();
-        for &d in &dists {
-            if d < d_min {
-                d_min = d;
-            }
-        }
-        for (j, &d) in dists.iter().enumerate() {
-            let bit = super::super::bit_pack::bit_at_msb_first(labels[j], b, bits_per_symbol);
-            let e = (d_min - d).exp();
-            if bit == 0 {
-                sum0 += e;
-            } else {
-                sum1 += e;
-            }
-        }
-        sum0.ln() - sum1.ln()
+        super::super::test_oracle::brute_force_log_map_llr(
+            points,
+            labels,
+            bits_per_symbol,
+            y_i,
+            y_q,
+            h_i,
+            h_q,
+            n0,
+            b,
+        )
     }
 
     #[test]

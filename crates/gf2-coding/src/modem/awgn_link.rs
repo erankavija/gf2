@@ -429,6 +429,10 @@ where
     M: BatchMapper<f32>,
     D: BatchSoftDemapper<f32>,
 {
+    fn batch_alignment(&self) -> usize {
+        self.mapper.spec().bits_per_symbol() as usize
+    }
+
     fn transmit_and_demodulate<R: Rng>(
         &self,
         bits: &BitVec,

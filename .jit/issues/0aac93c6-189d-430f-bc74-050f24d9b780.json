@@ -15,10 +15,25 @@
     "doc-review"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-13T19:23:48.991638728Z"
+    },
     "tdd-reminder": {
       "status": "passed",
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-13T19:15:14.177682508Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-13T19:25:04.321086636Z"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-13T19:25:04.375955206Z"
     }
   },
   "context": {},
@@ -30,5 +45,5 @@
     "story:arbitrary-constellation-reference"
   ],
   "created_at": "2026-04-12T19:40:37.530412745+00:00",
-  "updated_at": "2026-04-13T19:15:19.858120889+00:00"
+  "updated_at": "2026-04-13T19:30:43.803020989+00:00"
 }

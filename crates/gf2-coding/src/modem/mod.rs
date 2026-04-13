@@ -83,6 +83,8 @@ mod ref_demapper;
 mod ref_mapper;
 mod scalar;
 mod spec;
+#[doc(hidden)]
+pub mod test_oracle;
 mod types;
 mod view;
 
