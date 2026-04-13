@@ -22,6 +22,12 @@
 //!   backend (scalar reference path, Gray-QAM fast path, SIMD kernels, and
 //!   any future GPU backend). [`DemapInput`] is the shared per-batch input
 //!   struct consumed by both demapper variants.
+//! - [`ReferenceMapper`] is the correctness-first [`BatchMapper`]
+//!   implementation for any validated [`ModemSpec`] (including custom
+//!   research constellations built via [`ModemSpecBuilder`]).
+//! - [`GrayQamMapper`] is the scalar Gray-square-QAM fast-path
+//!   implementation of [`BatchMapper`], built directly from a preset
+//!   [`ModemSpec`].
 //!
 //! See `dev/active/c87c5043-constellation-data-model-plan.md` for the
 //! locked design decisions behind this surface.
@@ -40,10 +46,13 @@
 //! assert_eq!(view.bit_channel(2), BitChannelSemantics::QAxisPam(0));
 //! ```
 
+mod bit_pack;
 mod builder;
 mod demapper;
+mod gray_qam_mapper;
 mod mapper;
 mod presets;
+mod ref_mapper;
 mod scalar;
 mod spec;
 mod types;
@@ -51,7 +60,9 @@ mod view;
 
 pub use builder::ModemSpecBuilder;
 pub use demapper::{BatchHardDemapper, BatchSoftDemapper, DemapInput};
+pub use gray_qam_mapper::GrayQamMapper;
 pub use mapper::BatchMapper;
+pub use ref_mapper::ReferenceMapper;
 pub use scalar::{DefaultScalar, ModemScalar};
 pub use spec::ModemSpec;
 pub use types::{
