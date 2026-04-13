@@ -240,53 +240,88 @@ impl<S: ModemScalar, M: BatchMapper<S>, D: BatchSoftDemapper<S>> ModemAwgnChanne
     /// the exact log-MAP reference path). Adds three scratch allocations
     /// of sizes `num_symbols`, `num_symbols`, and `num_symbols`.
     pub fn transmit_and_demap<R: Rng>(&self, bits: &[bool], rng: &mut R, out_llrs: &mut [Llr]) {
-        let m = self.mapper.spec().bits_per_symbol() as usize;
-        assert!(m > 0, "bits_per_symbol must be non-zero");
-        assert_eq!(
-            bits.len() % m,
-            0,
-            "bits.len() must be a multiple of bits_per_symbol",
+        run_awgn_modem_pipeline(
+            &self.mapper,
+            &self.demapper,
+            &self.channel,
+            self.method,
+            bits,
+            rng,
+            out_llrs,
         );
-        assert_eq!(
-            out_llrs.len(),
-            bits.len(),
-            "out_llrs.len() must equal bits.len()",
-        );
-        let num_symbols = bits.len() / m;
-
-        // Map bits to symbols.
-        let mut tx_i = vec![S::zero(); num_symbols];
-        let mut tx_q = vec![S::zero(); num_symbols];
-        self.mapper.map_bits(bits, &mut tx_i, &mut tx_q);
-
-        // Add independent Gaussian noise on I and Q (per-component
-        // variance = channel.variance()).
-        for sample in tx_i.iter_mut() {
-            let noisy = self.channel.transmit(sample.to_f64(), rng);
-            *sample = S::from_f64(noisy);
-        }
-        for sample in tx_q.iter_mut() {
-            let noisy = self.channel.transmit(sample.to_f64(), rng);
-            *sample = S::from_f64(noisy);
-        }
-
-        // Per-symbol N0 = 2 * sigma^2 (constant across the batch for
-        // AWGN). The reference demapper defines DemapInput::noise_var as
-        // the total complex noise variance N0, not the per-component
-        // variance; see the module-level noise convention.
-        let n0 = S::from_f64(2.0 * self.channel.variance());
-        let noise_var = vec![n0; num_symbols];
-
-        let input = DemapInput::<S> {
-            rx_i: &tx_i,
-            rx_q: &tx_q,
-            gain_i: None,
-            gain_q: None,
-            noise_var: &noise_var,
-            method: self.method,
-        };
-        self.demapper.demap_llrs(input, out_llrs);
     }
+}
+
+/// Shared `bits -> LLRs` pipeline backing both [`ModemAwgnChannel`] and
+/// [`ModemChannelAdapter`].
+///
+/// Runs the canonical map/noise/demap composition once and is the single
+/// source of truth for:
+///
+/// - Length-preconditions on `bits.len()` and `out_llrs.len()`.
+/// - Independent per-component Gaussian noise on I and Q using
+///   [`AwgnChannel::transmit`].
+/// - The `N0 = 2 * channel.variance()` convention documented at the
+///   module level, passed through [`DemapInput::noise_var`].
+///
+/// Both adapters differ only in how they obtain `channel` (pre-built vs.
+/// derived from `Eb/N0 + rate + m`) and how they source `bits` (raw
+/// `&[bool]` vs. `BitVec`). The shared body below ensures they cannot
+/// drift on any pipeline detail.
+#[inline]
+fn run_awgn_modem_pipeline<S, M, D, R>(
+    mapper: &M,
+    demapper: &D,
+    channel: &AwgnChannel,
+    method: DemapMethod,
+    bits: &[bool],
+    rng: &mut R,
+    out_llrs: &mut [Llr],
+) where
+    S: ModemScalar,
+    M: BatchMapper<S>,
+    D: BatchSoftDemapper<S>,
+    R: Rng,
+{
+    let m = mapper.spec().bits_per_symbol() as usize;
+    assert!(m > 0, "bits_per_symbol must be non-zero");
+    assert_eq!(
+        bits.len() % m,
+        0,
+        "bits.len() must be a multiple of bits_per_symbol",
+    );
+    assert_eq!(
+        out_llrs.len(),
+        bits.len(),
+        "out_llrs.len() must equal bits.len()",
+    );
+    let num_symbols = bits.len() / m;
+
+    let mut tx_i = vec![S::zero(); num_symbols];
+    let mut tx_q = vec![S::zero(); num_symbols];
+    mapper.map_bits(bits, &mut tx_i, &mut tx_q);
+
+    for sample in tx_i.iter_mut() {
+        let noisy = channel.transmit(sample.to_f64(), rng);
+        *sample = S::from_f64(noisy);
+    }
+    for sample in tx_q.iter_mut() {
+        let noisy = channel.transmit(sample.to_f64(), rng);
+        *sample = S::from_f64(noisy);
+    }
+
+    let n0 = S::from_f64(2.0 * channel.variance());
+    let noise_var = vec![n0; num_symbols];
+
+    let input = DemapInput::<S> {
+        rx_i: &tx_i,
+        rx_q: &tx_q,
+        gain_i: None,
+        gain_q: None,
+        noise_var: &noise_var,
+        method,
+    };
+    demapper.demap_llrs(input, out_llrs);
 }
 
 /// Drop-in [`ChannelModel`] implementation that runs any modem spec over
@@ -401,12 +436,6 @@ where
         rate: f64,
         rng: &mut R,
     ) -> Vec<Llr> {
-        let m = self.mapper.spec().bits_per_symbol() as usize;
-        assert!(m > 0, "bits_per_symbol must be non-zero");
-        let n = bits.len();
-        assert_eq!(n % m, 0, "bits.len() must be a multiple of bits_per_symbol",);
-        let num_symbols = n / m;
-
         // Eb/N0 -> per-component noise variance for an m-bit/symbol
         // constellation with unit average symbol energy.
         //
@@ -418,34 +447,23 @@ where
         // matching the legacy `AwgnChannel::from_eb_n0_db` path used by
         // [`crate::simulation::BpskAwgnChannel`]. See the module-level
         // noise convention.
+        let m = self.mapper.spec().bits_per_symbol() as usize;
         let eb_n0_linear = 10.0_f64.powf(eb_n0_db / 10.0);
         let sigma_squared = 1.0 / (2.0 * (m as f64) * rate * eb_n0_linear);
         let channel = AwgnChannel::from_variance(sigma_squared);
+
+        let n = bits.len();
         let bits_vec: Vec<bool> = (0..n).map(|i| bits.get(i)).collect();
-
-        let mut tx_i = vec![0.0_f32; num_symbols];
-        let mut tx_q = vec![0.0_f32; num_symbols];
-        self.mapper.map_bits(&bits_vec, &mut tx_i, &mut tx_q);
-
-        for sample in tx_i.iter_mut() {
-            *sample = channel.transmit(*sample as f64, rng) as f32;
-        }
-        for sample in tx_q.iter_mut() {
-            *sample = channel.transmit(*sample as f64, rng) as f32;
-        }
-
-        let n0 = (2.0 * channel.variance()) as f32;
-        let noise_var = vec![n0; num_symbols];
-        let input = DemapInput::<f32> {
-            rx_i: &tx_i,
-            rx_q: &tx_q,
-            gain_i: None,
-            gain_q: None,
-            noise_var: &noise_var,
-            method: self.method,
-        };
         let mut out = vec![Llr::new(0.0); n];
-        self.demapper.demap_llrs(input, &mut out);
+        run_awgn_modem_pipeline(
+            &self.mapper,
+            &self.demapper,
+            &channel,
+            self.method,
+            &bits_vec,
+            rng,
+            &mut out,
+        );
         out
     }
 }
