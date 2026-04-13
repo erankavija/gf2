@@ -2,7 +2,7 @@
   "id": "c007875b-33fb-4ebd-b377-38045fbb9c30",
   "title": "Add per-bit-channel analysis metadata to ModemCapabilities",
   "description": "Extend `ModemCapabilities` with per-bit-channel metadata that downstream analysis work (a9ccb8ae per-bit LLR distribution, 80f218ca analysis integration, e2c0f65a bit-channel analysis story) can consume without re-deriving it from the constellation geometry. Also nail down the canonical noise-parameter contract at the trait layer so those analysis tools can interpret `DemapInput::noise_var` unambiguously.\n\nThe original c007875b title (\"Define bit-channel metadata and demapper analysis modes\") is rescoped here: the deliverables it named -- `BitChannelId`, `BitChannelSemantics`, `DemapMethod`, `ModemCapabilities` -- already shipped in c87c5043. What analysis work actually needs on top of that is metadata *about* each bit channel, not just its identity.\n\n## Success Criteria\n\n- [ ] `ModemCapabilities` exposes a per-bit-channel view with at minimum: a **symmetry hint** (the LLR distribution is symmetric about 0 under equiprobable bits), an **independence hint** (this bit is conditionally independent of other bits in the same symbol given the channel output, useful for bit-interleaved coded modulation analysis), and a **closed-form-LLR-available** flag.\n- [ ] Built-in presets (BPSK, Gray square-QAM 4/16/64/256) populate the new metadata correctly, and the reference demapper + any reference mapper also surface matching capabilities through `ModemView`.\n- [ ] `DemapInput::noise_var` and the modem module docs state the noise convention explicitly (`N0 = 2 * sigma^2`, total complex noise variance, as ee556fbf pinned for the AWGN adapter). This captures SC3 of the original issue.\n- [ ] Unit tests cover the new per-bit-channel metadata for each preset, and assert it round-trips through `ModemView` correctly.\n\n## Notes\n\n- Scope restricted to metadata plumbing and documentation. No new demapping *modes* are added here -- the `ExactLogMap` / `MaxLog` set already covers the demapper-side analysis axis.\n- Redefined during the project-lead session on 2026-04-13 with explicit user approval (original scope was duplicated by c87c5043). See `dev/active/d4851c3d-handoff.md` for context.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "high",
   "assignee": "agent:claude",
   "dependencies": [
@@ -15,25 +15,25 @@
     "doc-review"
   ],
   "gates_status": {
-    "cargo-ci": {
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-13T18:37:48.956130666Z"
+    },
+    "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-04-13T18:47:29.697333547Z"
+      "updated_at": "2026-04-13T19:07:34.474996013Z"
     },
     "doc-review": {
       "status": "passed",
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-13T18:48:45.226964301Z"
     },
-    "code-review": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-13T19:03:06.778226070Z"
-    },
-    "tdd-reminder": {
+    "cargo-ci": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-13T18:37:48.956130666Z"
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-13T18:47:29.697333547Z"
     }
   },
   "context": {},
@@ -45,5 +45,5 @@
     "story:bit-channel-analysis"
   ],
   "created_at": "2026-04-12T20:04:48.345075553+00:00",
-  "updated_at": "2026-04-13T19:05:47.036081116+00:00"
+  "updated_at": "2026-04-13T19:13:40.377785699+00:00"
 }
