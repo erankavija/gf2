@@ -1,7 +1,7 @@
 {
   "epic_id": "d4851c3d-a9ae-42cc-bf5d-31ab973ba0fe",
   "epic_short_id": "d4851c3d",
-  "current_wave": 3,
+  "current_wave": 4,
   "waves": [
     {
       "wave_number": 1,
@@ -18,7 +18,7 @@
     {
       "wave_number": 3,
       "issues": [
-        {"id": "3e3fe377-2508-47f4-aeab-178755530711", "short_id": "3e3fe377", "title": "Add modem builders and validation", "classification": "implementation", "status": "pending"}
+        {"id": "3e3fe377-2508-47f4-aeab-178755530711", "short_id": "3e3fe377", "title": "Add modem builders and validation", "classification": "implementation", "status": "done", "completed_at": "2026-04-13T13:08:00Z", "rework_rounds": 1, "rework_note": "auto code-review flagged f64 precision loss in compute_scale (f32 downcast); project-lead added ModemScalar::to_f64 (lossless), swapped compute_scale to use it, added two f64 regression tests"}
       ]
     },
     {

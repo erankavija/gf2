@@ -10,6 +10,7 @@
 //! `dev/active/c87c5043-constellation-data-model-plan.md` §5. Violations
 //! panic with a descriptive message per design decision D8.
 
+use super::builder::ModemSpecBuilder;
 use super::scalar::{DefaultScalar, ModemScalar};
 use super::types::{BitChannelSemantics, LabelWord, ModemCapabilities, Normalization, SymbolPoint};
 use super::view::ModemView;
@@ -166,6 +167,37 @@ impl<S: ModemScalar> ModemSpec<S> {
 }
 
 impl<S: ModemScalar> ModemSpec<S> {
+    /// Starts a fluent [`ModemSpecBuilder`] for a custom constellation.
+    ///
+    /// For BPSK/QPSK/16-QAM/64-QAM/256-QAM prefer the preset constructors
+    /// ([`ModemSpec::bpsk`], [`ModemSpec::gray_square_qam`]). Use this
+    /// entry point for research constellations and standards-specific
+    /// geometries that don't match a preset.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::modem::{LabelWord, ModemSpec, SymbolPoint};
+    ///
+    /// let spec = ModemSpec::<f32>::builder()
+    ///     .bits_per_symbol(1)
+    ///     .points(vec![
+    ///         SymbolPoint::new(1.0, 0.0),
+    ///         SymbolPoint::new(-1.0, 0.0),
+    ///     ])
+    ///     .labels(vec![LabelWord::new(0, 1), LabelWord::new(1, 1)])
+    ///     .build();
+    /// assert_eq!(spec.num_symbols(), 2);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
+    #[inline]
+    pub fn builder() -> ModemSpecBuilder<S> {
+        ModemSpecBuilder::new()
+    }
+
     /// Returns a borrowed view of this spec for backends and analysis.
     ///
     /// # Examples

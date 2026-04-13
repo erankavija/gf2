@@ -54,6 +54,12 @@ pub trait ModemScalar:
     fn from_f64(v: f64) -> Self;
     /// Conversion to `f32` for producing [`crate::Llr`] values.
     fn to_f32(self) -> f32;
+    /// Lossless widening conversion to `f64`.
+    ///
+    /// For `f64` this is the identity; for `f32` this preserves the exact
+    /// value. Builders that compute normalization in `f64` use this to
+    /// avoid the precision loss of routing through `f32`.
+    fn to_f64(self) -> f64;
     /// Square root.
     fn sqrt(self) -> Self;
     /// Absolute value.
@@ -97,6 +103,10 @@ impl ModemScalar for f32 {
     #[inline]
     fn to_f32(self) -> f32 {
         self
+    }
+    #[inline]
+    fn to_f64(self) -> f64 {
+        self as f64
     }
     #[inline]
     fn sqrt(self) -> Self {
@@ -152,6 +162,10 @@ impl ModemScalar for f64 {
     #[inline]
     fn to_f32(self) -> f32 {
         self as f32
+    }
+    #[inline]
+    fn to_f64(self) -> f64 {
+        self
     }
     #[inline]
     fn sqrt(self) -> Self {

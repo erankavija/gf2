@@ -13,8 +13,9 @@
 //! - [`SymbolPoint`], [`LabelWord`], [`BitChannelId`],
 //!   [`BitChannelSemantics`], [`Normalization`], [`DemapMethod`], and
 //!   [`ModemCapabilities`] are the value vocabulary.
-//! - [`ModemSpec`] is the sealed, validated spec. All construction goes
-//!   through presets here and, in the future, general builders.
+//! - [`ModemSpec`] is the sealed, validated spec. Construction goes
+//!   through presets ([`ModemSpec::bpsk`], [`ModemSpec::gray_square_qam`])
+//!   or the public [`ModemSpecBuilder`] for custom constellations.
 //! - [`ModemView`] is the borrowed read-only view handed to backends.
 //! - [`BatchMapper`], [`BatchSoftDemapper`], and [`BatchHardDemapper`] are
 //!   the backend-agnostic batch interfaces implemented by every modem
@@ -39,6 +40,7 @@
 //! assert_eq!(view.bit_channel(2), BitChannelSemantics::QAxisPam(0));
 //! ```
 
+mod builder;
 mod demapper;
 mod mapper;
 mod presets;
@@ -47,6 +49,7 @@ mod spec;
 mod types;
 mod view;
 
+pub use builder::ModemSpecBuilder;
 pub use demapper::{BatchHardDemapper, BatchSoftDemapper, DemapInput};
 pub use mapper::BatchMapper;
 pub use scalar::{DefaultScalar, ModemScalar};
