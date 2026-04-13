@@ -2,9 +2,9 @@
   "id": "b2c9c0f0-ccb1-4fea-a4b8-1676143b281e",
   "title": "Implement arbitrary-constellation mapper",
   "description": "Implement the correctness-first mapper for validated user-defined constellations so arbitrary bit labels can be turned into symbol streams through the shared modem API.\n\n## Success Criteria\n\n- [ ] Validated arbitrary constellations can map input bits to the correct output symbols.\n- [ ] Bit ordering and symbol ordering are explicit and consistent across batches.\n- [ ] The implementation is simple and trustworthy enough to serve as a reference path.\n\n## Notes\n\nThis is the first implementation task under the arbitrary-constellation reference story.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "high",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [
     "3e3fe377-2508-47f4-aeab-178755530711"
   ],
@@ -14,7 +14,28 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-13T14:00:09.433956809Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-13T14:08:39.098027015Z"
+    },
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-13T13:24:13.592684543Z"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-13T14:01:23.712626243Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -24,5 +45,5 @@
     "story:arbitrary-constellation-reference"
   ],
   "created_at": "2026-04-12T19:40:37.527670883+00:00",
-  "updated_at": "2026-04-13T13:06:38.161644229+00:00"
+  "updated_at": "2026-04-13T14:08:39.098031305+00:00"
 }

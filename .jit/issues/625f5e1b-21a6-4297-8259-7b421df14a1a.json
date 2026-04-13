@@ -1,10 +1,10 @@
 {
   "id": "625f5e1b-21a6-4297-8259-7b421df14a1a",
   "title": "Add Gray square-QAM presets",
-  "description": "Provide built-in normalized Gray-coded presets for BPSK, QPSK, 16-QAM, 64-QAM, and 256-QAM through the shared modem surface.\n\n## Success Criteria\n\n- [ ] Public preset constructors exist for the supported Gray-coded square-QAM family.\n- [ ] Presets use the same high-level modem API as custom constellations.\n- [ ] Preset definitions are normalized consistently so downstream demappers can rely on them.\n\n## Notes\n\nThis task is the first leaf task under the optimized Gray square-QAM story.",
-  "state": "ready",
+  "description": "Ship a scalar `GrayQamMapper<S>` struct that implements `BatchMapper<S>` for the Gray-coded square-QAM preset family, using the preset's Gray structure to map bit-pairs directly to PAM levels without round-tripping through the general `ModemSpec` label-lookup path.\n\nThe preset `ModemSpec` itself (from `c87c5043`) already ships the canonical normalized constellation and bit-channel semantics. This task adds the concrete optimized scalar mapper that pairs with the fast soft demapper (`db1dda70`) and the SIMD kernels (`c5cee991`). The general arbitrary-constellation mapper lives in `b2c9c0f0`; this is its Gray-QAM fast-path sibling.\n\n## Scope\n\n- Add `crates/gf2-coding/src/modem/gray_qam_mapper.rs` containing a `GrayQamMapper<S: ModemScalar>` struct that wraps (or derives its state from) `ModemSpec<S>` preset output and implements `BatchMapper<S>`.\n- Internally cache a bit-pair → signed PAM level lookup so each output symbol is `O(1)` relative to `bits_per_symbol`, independent of constellation size `M`.\n- Constructor `GrayQamMapper::from_preset_order(order)` (and a generic `from_preset_order_with_scalar(order)`) that accepts `2, 4, 16, 64, 256` and panics on any other value with a descriptive message.\n- The mapper's `spec()` accessor returns the preset `ModemView` so downstream code can treat a `GrayQamMapper` and the reference mapper interchangeably.\n\n## Success Criteria\n\n- [ ] Public `GrayQamMapper<S>` struct exists under `crates/gf2-coding/src/modem/` and is re-exported from the crate's `modem` module.\n- [ ] `GrayQamMapper<S>` implements `BatchMapper<S>` end-to-end: `spec()` returns a `ModemView` of the backing preset, and `map_bits` writes the correct pre-normalized I/Q symbols in symbol-major, MSB-first order.\n- [ ] Output matches the corresponding `ModemSpec::gray_square_qam(order).view().point(label)` for every valid input-bit pattern; verified by a round-trip test for all five supported orders.\n- [ ] Invalid `order` or mismatched `bits.len() / out_i.len() / out_q.len()` panics with a descriptive message.\n- [ ] Preset bit ordering (MSB-half = I-axis Gray-PAM bits, LSB-half = Q-axis) is preserved; covered by a DVB-T2-aligned regression test (QPSK match against the legacy `QpskModulator` layout).\n- [ ] Test matrix is green: round-trip, per-symbol-count bijection, panic tests for invalid order and length mismatch, property test over random bit inputs.\n- [ ] `cargo test -p gf2-coding --release`, `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets --all-features -- -D warnings`, and `cargo test --doc` are all clean.\n\n## Out of scope\n\n- Soft-decision demapping math (task `db1dda70`).\n- SIMD kernels (task `c5cee991`; this task ships a scalar reference fast path).\n- Public `custom_constellation(...)` builder (`3e3fe377`; already landed).\n- Any changes to the underlying `ModemSpec`/`ModemView` surface (`c87c5043`).\n\n## Notes\n\nModel after the preset ordering locked in `dev/active/c87c5043-constellation-data-model-plan.md` §4.5. The `ModemSpec` preset already carries the required Gray-PAM scale factor (`sqrt(3 / (2·(M − 1)))`) and bit-channel semantics; the mapper just needs a small PAM-level LUT to avoid the generic `label → point` lookup.\n\nScope was redefined 2026-04-13 (project-lead, with user approval) because the original \"add Gray square-QAM presets\" scope was already fully delivered by `c87c5043`.",
+  "state": "in_progress",
   "priority": "high",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [
     "3e3fe377-2508-47f4-aeab-178755530711"
   ],
@@ -14,7 +14,28 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-13T13:24:13.438930111Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-13T14:08:39.087294547Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-13T13:53:03.447927322Z"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-13T13:54:20.560236017Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -24,5 +45,5 @@
     "story:gray-square-qam-fast-path"
   ],
   "created_at": "2026-04-12T19:40:37.531504266+00:00",
-  "updated_at": "2026-04-13T13:06:38.053112020+00:00"
+  "updated_at": "2026-04-13T14:08:39.087299157+00:00"
 }
