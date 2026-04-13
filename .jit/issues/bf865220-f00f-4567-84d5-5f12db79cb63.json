@@ -15,20 +15,20 @@
     "doc-review"
   ],
   "gates_status": {
-    "tdd-reminder": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-13T19:15:15.921381126Z"
-    },
-    "code-review": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-13T20:18:09.903178045Z"
-    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-13T19:37:29.815353282Z"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-13T20:34:48.589656156Z"
+    },
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-13T19:15:15.921381126Z"
     },
     "doc-review": {
       "status": "passed",
@@ -45,5 +45,5 @@
     "story:simulation-channel-integration"
   ],
   "created_at": "2026-04-12T19:41:45.863636426+00:00",
-  "updated_at": "2026-04-13T20:23:03.964106029+00:00"
+  "updated_at": "2026-04-13T20:39:17.679632562+00:00"
 }
