@@ -119,7 +119,52 @@ impl<S: ModemScalar> GrayQamMapper<S> {
     ///
     /// O(M) in `order = M`.
     pub fn from_preset_order_with_scalar(order: usize) -> Self {
-        let spec = ModemSpec::<S>::gray_square_qam_with_scalar(order);
+        Self::from_spec(ModemSpec::<S>::gray_square_qam_with_scalar(order))
+    }
+
+    /// Builds a `GrayQamMapper` from a caller-supplied [`ModemSpec`].
+    ///
+    /// The spec must already satisfy the canonical Gray-square-QAM
+    /// layout — this is checked by `presets::assert_valid_gray_square_qam_spec`,
+    /// which is the same validator used by
+    /// [`GrayQamMapper::from_preset_order_with_scalar`] and
+    /// [`super::FastGrayQamDemapper::new`], so every Gray-square-QAM
+    /// entry point agrees on what "Gray square-QAM" means.
+    ///
+    /// The caller's spec is stored verbatim. This preserves any
+    /// extension metadata (normalization, bit-channel analysis hints)
+    /// that the caller attached through [`super::ModemSpecBuilder`] —
+    /// contrast with `from_preset_order_with_scalar`, which discards
+    /// builder metadata and rebuilds a canonical preset from `order`
+    /// alone.
+    ///
+    /// # Arguments
+    ///
+    /// * `spec` — a validated Gray-square-QAM modem spec. Pass a preset
+    ///   via `ModemSpec::gray_square_qam_with_scalar(order)` or a
+    ///   builder-produced spec that matches the canonical Gray-QAM
+    ///   geometry.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `spec` does not match the canonical Gray-square-QAM
+    /// layout (wrong label ordering, wrong point positions, or a
+    /// `bits_per_symbol` that is not in {1, 2, 4, 6, 8}).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::modem::{BatchMapper, GrayQamMapper, ModemSpec};
+    ///
+    /// let spec: ModemSpec<f64> = ModemSpec::<f64>::gray_square_qam_with_scalar(16);
+    /// let mapper = GrayQamMapper::from_spec(spec);
+    /// assert_eq!(mapper.spec().bits_per_symbol(), 4);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(M) in `M = 1 << bits_per_symbol`.
+    pub fn from_spec(spec: ModemSpec<S>) -> Self {
         let m_total = spec.bits_per_symbol();
         let is_bpsk = m_total == 1;
         let (m_half, mask_half) = if is_bpsk {

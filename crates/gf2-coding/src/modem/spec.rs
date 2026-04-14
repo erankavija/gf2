@@ -463,20 +463,13 @@ struct GrayQamMapperFactory<S: ModemScalar> {
 
 impl<S: ModemScalar> GrayQamMapperFactory<S> {
     fn from_spec(spec: ModemSpec<S>) -> Self {
-        // The spec has already passed `is_valid_gray_square_qam_spec`, so
-        // the preset order derived from `bits_per_symbol` is guaranteed
-        // to be one of {2, 4, 16, 64, 256}. Rebuild through the public
-        // `from_preset_order_with_scalar` entry point so the SSOT
-        // validator in `GrayQamMapper::new_from_preset_order` still
-        // runs and the cached PAM levels come from the shared helper.
-        let order = 1usize << spec.bits_per_symbol;
-        // Keep `spec` alive for error messages even though the
-        // fast-path mapper only needs the order to rebuild its caches;
-        // the preset-built spec inside the mapper is equivalent (same
-        // points/labels by construction) and matches the validator.
-        let _ = spec;
+        // The caller's spec has already passed `is_valid_gray_square_qam_spec`.
+        // Hand it to `GrayQamMapper::from_spec` verbatim so any extension
+        // metadata (normalization, bit-channel analysis hints) supplied
+        // through `ModemSpecBuilder` is preserved on the returned
+        // mapper's `spec()` view — no canonical-preset substitution.
         Self {
-            inner: super::GrayQamMapper::<S>::from_preset_order_with_scalar(order),
+            inner: super::GrayQamMapper::<S>::from_spec(spec),
         }
     }
 }
@@ -634,18 +627,9 @@ mod tests {
     // -------- preferred_* factory methods (Finding 1) -----------------
 
     fn deterministic_rx(n: usize, seed: u64) -> (Vec<f32>, Vec<f32>, Vec<f32>) {
-        // Small deterministic LCG to avoid pulling in `rand` from
-        // dev-dependencies in this unit-test module.
-        let mut state = seed.wrapping_mul(0x9E3779B97F4A7C15);
-        let next = |s: &mut u64| -> f32 {
-            *s = s
-                .wrapping_mul(6364136223846793005)
-                .wrapping_add(1442695040888963407);
-            let v = (*s >> 33) as u32;
-            (v as f32) / (u32::MAX as f32) * 2.0 - 1.0
-        };
-        let rx_i: Vec<f32> = (0..n).map(|_| next(&mut state)).collect();
-        let rx_q: Vec<f32> = (0..n).map(|_| next(&mut state)).collect();
+        let mut rng = crate::modem::test_oracle::Lcg::new(seed);
+        let rx_i: Vec<f32> = (0..n).map(|_| rng.next_unit_f32() * 2.0 - 1.0).collect();
+        let rx_q: Vec<f32> = (0..n).map(|_| rng.next_unit_f32() * 2.0 - 1.0).collect();
         let noise_var: Vec<f32> = vec![0.25_f32; n];
         (rx_i, rx_q, noise_var)
     }
@@ -787,5 +771,24 @@ mod tests {
         }
         assert!(ModemSpec::<f32>::bpsk().is_gray_square_qam_preset());
         assert!(!custom_8_point_spec().is_gray_square_qam_preset());
+    }
+
+    /// Regression: `preferred_mapper()` must hand the caller's spec to
+    /// the backing `GrayQamMapper` verbatim (via `GrayQamMapper::from_spec`),
+    /// not rebuild a canonical preset from `order` alone. This test
+    /// locks in that the returned mapper's `spec()` points / labels /
+    /// bit-channels are bit-equal to the caller's. Under the pre-fix
+    /// code the returned spec was a freshly-built preset, and while it
+    /// would carry equivalent geometry it would not share storage or
+    /// builder-attached metadata such as bit-channel analysis overrides.
+    #[test]
+    fn test_preferred_mapper_preserves_caller_spec() {
+        let caller = ModemSpec::<f32>::gray_square_qam(16);
+        let preferred = caller.clone().preferred_mapper();
+        let pref_view = preferred.spec();
+        assert_eq!(pref_view.points(), caller.view().points());
+        assert_eq!(pref_view.labels(), caller.view().labels());
+        assert_eq!(pref_view.bit_channels(), caller.view().bit_channels());
+        assert_eq!(pref_view.bits_per_symbol(), caller.view().bits_per_symbol());
     }
 }

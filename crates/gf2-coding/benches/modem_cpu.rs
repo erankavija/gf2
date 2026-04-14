@@ -22,34 +22,25 @@
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use gf2_coding::llr::Llr;
+use gf2_coding::modem::test_oracle::Lcg;
 use gf2_coding::modem::{
     BatchMapper, BatchSoftDemapper, DemapInput, DemapMethod, FastGrayQamDemapper, GrayQamMapper,
     ModemSpec, ReferenceMapper, ReferenceSoftDemapper,
 };
 
-/// Deterministic bit pattern to feed mappers. Matches the shape of the
-/// patterns used by the existing modem unit tests without pulling a
-/// full PRNG into the bench.
+/// Deterministic bit pattern to feed mappers. Routes through the
+/// shared `modem::test_oracle::Lcg` SSOT helper so the bench cannot
+/// drift from the test-side RNG contract.
 fn deterministic_bits(n_bits: usize) -> Vec<bool> {
-    (0..n_bits)
-        .map(|i| (i.wrapping_mul(2654435761)) & 1 == 1)
-        .collect()
+    Lcg::bit_stream(0x9E37_79B9_7F4A_7C15, n_bits)
 }
 
-/// Deterministic received-sample scratch for the demapper bench.
+/// Deterministic received-sample scratch for the demapper bench. Uses
+/// the shared `modem::test_oracle::Lcg` SSOT helper.
 fn deterministic_rx(n: usize) -> (Vec<f32>, Vec<f32>, Vec<f32>) {
-    // Cheap splitmix-style sequence: good enough for a bench's data
-    // distribution, no dependency on `rand`.
-    let mut s: u64 = 0x9E3779B97F4A7C15;
-    let mut next = || -> f32 {
-        s = s
-            .wrapping_mul(6364136223846793005)
-            .wrapping_add(1442695040888963407);
-        let v = (s >> 33) as u32;
-        (v as f32) / (u32::MAX as f32) * 2.0 - 1.0
-    };
-    let rx_i: Vec<f32> = (0..n).map(|_| next()).collect();
-    let rx_q: Vec<f32> = (0..n).map(|_| next()).collect();
+    let mut rng = Lcg::new(0x9E37_79B9_7F4A_7C15);
+    let rx_i: Vec<f32> = (0..n).map(|_| rng.next_unit_f32() * 2.0 - 1.0).collect();
+    let rx_q: Vec<f32> = (0..n).map(|_| rng.next_unit_f32() * 2.0 - 1.0).collect();
     let noise_var = vec![0.25_f32; n];
     (rx_i, rx_q, noise_var)
 }
