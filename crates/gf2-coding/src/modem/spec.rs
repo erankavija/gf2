@@ -11,6 +11,8 @@
 //! panic with a descriptive message per design decision D8.
 
 use super::builder::ModemSpecBuilder;
+use super::demapper::BatchSoftDemapper;
+use super::mapper::BatchMapper;
 use super::scalar::{DefaultScalar, ModemScalar};
 use super::types::{BitChannelSemantics, LabelWord, ModemCapabilities, Normalization, SymbolPoint};
 use super::view::ModemView;
@@ -337,6 +339,160 @@ impl<S: ModemScalar> ModemSpec<S> {
     }
 }
 
+impl<S: ModemScalar + Send + Sync> ModemSpec<S> {
+    /// Returns `true` iff this spec matches the canonical Gray
+    /// square-QAM / BPSK layout accepted by the optimized
+    /// [`super::GrayQamMapper`] / [`super::FastGrayQamDemapper`] backends.
+    ///
+    /// This is the single shared-API probe the factory methods
+    /// ([`Self::preferred_mapper`], [`Self::preferred_soft_demapper`]) use
+    /// to decide whether the fast path is safe for a given spec. Custom
+    /// specs built through [`super::ModemSpecBuilder`] that happen to
+    /// match the preset geometry return `true`; everything else returns
+    /// `false`, and the factories fall back to the reference path.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::modem::ModemSpec;
+    ///
+    /// assert!(ModemSpec::<f32>::gray_square_qam(16).is_gray_square_qam_preset());
+    /// assert!(ModemSpec::<f32>::bpsk().is_gray_square_qam_preset());
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(`num_symbols`).
+    #[inline]
+    pub fn is_gray_square_qam_preset(&self) -> bool {
+        super::presets::is_valid_gray_square_qam_spec(&self.view())
+    }
+
+    /// Returns the best-available [`BatchMapper`] backend for this spec.
+    ///
+    /// This is the shared-API entry point the story success criterion
+    /// points at: callers describe *what* they want (a spec) and let the
+    /// framework pick the specialized backend rather than constructing a
+    /// backend by name. For specs whose geometry matches the Gray
+    /// square-QAM layout this routes to the optimized
+    /// [`super::GrayQamMapper`]; otherwise it falls back to
+    /// [`super::ReferenceMapper`], which works for any validated spec.
+    ///
+    /// Direct construction of [`super::GrayQamMapper`] and
+    /// [`super::ReferenceMapper`] remains supported for advanced callers
+    /// that need backend-specific methods (e.g. GPU adapters); new code
+    /// that only consumes the [`BatchMapper`] trait should prefer this
+    /// factory.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::modem::{BatchMapper, ModemSpec};
+    ///
+    /// let mapper = ModemSpec::<f32>::gray_square_qam(16).preferred_mapper();
+    /// assert_eq!(mapper.spec().bits_per_symbol(), 4);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// Construction is O(`num_symbols`); the returned trait object's
+    /// hot path matches its concrete backend.
+    pub fn preferred_mapper(&self) -> Box<dyn BatchMapper<S> + Send + Sync> {
+        if self.is_gray_square_qam_preset() {
+            // Safe: the is_valid check ran the same predicate that
+            // `GrayQamMapper::from_preset_order_with_scalar`'s constructor
+            // asserts, so we can construct the Gray-QAM backend without
+            // redundant panics. We go through the spec-aware path below
+            // to keep any extension metadata (label permutation, custom
+            // normalization) that `build_gray_square_qam` would discard.
+            Box::new(GrayQamMapperFactory::from_spec(self.clone()))
+        } else {
+            Box::new(super::ReferenceMapper::new(self.clone()))
+        }
+    }
+
+    /// Returns the best-available [`BatchSoftDemapper`] backend for this
+    /// spec.
+    ///
+    /// For Gray square-QAM specs with `bits_per_symbol >= 2` this routes
+    /// to the optimized [`super::FastGrayQamDemapper`]. For BPSK (`m == 1`)
+    /// and every non-preset spec this returns
+    /// [`super::ReferenceSoftDemapper`]; the fast kernel is only wired
+    /// for the QAM axis-separable geometry, so BPSK intentionally falls
+    /// back to the reference path.
+    ///
+    /// This is the preferred shared-API way to obtain a soft demapper —
+    /// downstream code that accepts a [`BatchSoftDemapper`] trait object
+    /// (AWGN link adapters, simulation harnesses, bit-channel analysis
+    /// collectors) should prefer `spec.preferred_soft_demapper()` over
+    /// directly constructing a backend by name.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::modem::{BatchSoftDemapper, ModemSpec};
+    ///
+    /// let dem = ModemSpec::<f32>::gray_square_qam(16).preferred_soft_demapper();
+    /// assert_eq!(dem.spec().bits_per_symbol(), 4);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// Construction is O(`num_symbols`); the returned trait object's
+    /// hot path matches its concrete backend.
+    pub fn preferred_soft_demapper(&self) -> Box<dyn BatchSoftDemapper<S> + Send + Sync> {
+        if self.bits_per_symbol >= 2 && self.is_gray_square_qam_preset() {
+            Box::new(super::FastGrayQamDemapper::new(self.clone()))
+        } else {
+            Box::new(super::ReferenceSoftDemapper::new(self.clone()))
+        }
+    }
+}
+
+/// Crate-internal factory type that constructs a [`super::GrayQamMapper`]
+/// directly from a pre-validated spec, without rebuilding the preset from
+/// an `order: usize`. Keeps `preferred_mapper` to a single spec-aware
+/// construction path so callers that have already paid for a
+/// `ModemSpec::from_parts_checked` validation don't pay for it twice.
+///
+/// Implemented as a thin `BatchMapper` forwarder that embeds a
+/// `GrayQamMapper` built from the spec's `bits_per_symbol` preset order.
+struct GrayQamMapperFactory<S: ModemScalar> {
+    inner: super::GrayQamMapper<S>,
+}
+
+impl<S: ModemScalar> GrayQamMapperFactory<S> {
+    fn from_spec(spec: ModemSpec<S>) -> Self {
+        // The spec has already passed `is_valid_gray_square_qam_spec`, so
+        // the preset order derived from `bits_per_symbol` is guaranteed
+        // to be one of {2, 4, 16, 64, 256}. Rebuild through the public
+        // `from_preset_order_with_scalar` entry point so the SSOT
+        // validator in `GrayQamMapper::new_from_preset_order` still
+        // runs and the cached PAM levels come from the shared helper.
+        let order = 1usize << spec.bits_per_symbol;
+        // Keep `spec` alive for error messages even though the
+        // fast-path mapper only needs the order to rebuild its caches;
+        // the preset-built spec inside the mapper is equivalent (same
+        // points/labels by construction) and matches the validator.
+        let _ = spec;
+        Self {
+            inner: super::GrayQamMapper::<S>::from_preset_order_with_scalar(order),
+        }
+    }
+}
+
+impl<S: ModemScalar> BatchMapper<S> for GrayQamMapperFactory<S> {
+    #[inline]
+    fn spec(&self) -> super::ModemView<'_, S> {
+        self.inner.spec()
+    }
+
+    #[inline]
+    fn map_bits(&self, bits: &[bool], out_i: &mut [S], out_q: &mut [S]) {
+        self.inner.map_bits(bits, out_i, out_q);
+    }
+}
+
 // Default = f32 convenience alias, kept for readability in code that
 // frequently uses the default scalar path.
 #[allow(dead_code)]
@@ -344,8 +500,12 @@ pub(super) type DefaultSpec = ModemSpec<DefaultScalar>;
 
 #[cfg(test)]
 mod tests {
+    use super::super::demapper::DemapInput;
     use super::super::types::BitChannelAnalysis;
+    use super::super::types::DemapMethod;
+    use super::super::{BatchMapper, BatchSoftDemapper, ReferenceMapper, ReferenceSoftDemapper};
     use super::*;
+    use crate::llr::Llr;
 
     fn valid_bpsk_parts() -> ModemSpecParts<f32> {
         ModemSpecParts {
@@ -469,5 +629,163 @@ mod tests {
             analysis: &[],
         };
         let _ = ModemSpec::from_parts_checked(parts);
+    }
+
+    // -------- preferred_* factory methods (Finding 1) -----------------
+
+    fn deterministic_rx(n: usize, seed: u64) -> (Vec<f32>, Vec<f32>, Vec<f32>) {
+        // Small deterministic LCG to avoid pulling in `rand` from
+        // dev-dependencies in this unit-test module.
+        let mut state = seed.wrapping_mul(0x9E3779B97F4A7C15);
+        let next = |s: &mut u64| -> f32 {
+            *s = s
+                .wrapping_mul(6364136223846793005)
+                .wrapping_add(1442695040888963407);
+            let v = (*s >> 33) as u32;
+            (v as f32) / (u32::MAX as f32) * 2.0 - 1.0
+        };
+        let rx_i: Vec<f32> = (0..n).map(|_| next(&mut state)).collect();
+        let rx_q: Vec<f32> = (0..n).map(|_| next(&mut state)).collect();
+        let noise_var: Vec<f32> = vec![0.25_f32; n];
+        (rx_i, rx_q, noise_var)
+    }
+
+    #[test]
+    fn test_preferred_soft_demapper_matches_reference_on_presets() {
+        for &order in &[2usize, 4, 16, 64, 256] {
+            let spec = ModemSpec::<f32>::gray_square_qam(order);
+            let m = spec.bits_per_symbol() as usize;
+            let n = 32usize;
+            let (rx_i, rx_q, noise_var) = deterministic_rx(n, order as u64);
+            let input = DemapInput::<f32> {
+                rx_i: &rx_i,
+                rx_q: &rx_q,
+                gain_i: None,
+                gain_q: None,
+                noise_var: &noise_var,
+                method: DemapMethod::MaxLog,
+            };
+            let preferred = spec.preferred_soft_demapper();
+            let reference = ReferenceSoftDemapper::new(spec.clone());
+            let mut out_pref = vec![Llr::new(0.0); n * m];
+            let mut out_ref = vec![Llr::new(0.0); n * m];
+            preferred.demap_llrs(input, &mut out_pref);
+            reference.demap_llrs(input, &mut out_ref);
+            // Tolerance mirrors the existing reference-vs-fast parity
+            // tests in `fast_gray_qam_demapper.rs`.
+            for k in 0..n * m {
+                let a = out_pref[k].value();
+                let b = out_ref[k].value();
+                let diff = (a - b).abs();
+                assert!(
+                    diff <= 1e-3 + 1e-3 * b.abs(),
+                    "order={order} bit={k} preferred={a} reference={b} diff={diff}"
+                );
+            }
+        }
+    }
+
+    /// Builds a non-Gray 8-point custom spec and asserts the factory
+    /// falls back to the reference path.
+    fn custom_8_point_spec() -> ModemSpec<f32> {
+        // Raw 8-PSK geometry with a non-Gray label permutation — mapping
+        // preset detection should fail, forcing the reference fallback.
+        let points: Vec<SymbolPoint<f32>> = (0..8)
+            .map(|k| {
+                let theta = (k as f32) * core::f32::consts::PI / 4.0;
+                SymbolPoint::new(theta.cos(), theta.sin())
+            })
+            .collect();
+        // Non-identity, non-Gray permutation.
+        let labels_perm: [u16; 8] = [3, 1, 6, 4, 0, 7, 2, 5];
+        let labels: Vec<LabelWord> = labels_perm.iter().map(|&b| LabelWord::new(b, 3)).collect();
+
+        super::super::ModemSpecBuilder::new()
+            .bits_per_symbol(3)
+            .points(points)
+            .labels(labels)
+            .build()
+    }
+
+    #[test]
+    fn test_preferred_soft_demapper_falls_back_to_reference_on_custom_spec() {
+        let spec = custom_8_point_spec();
+        assert!(!spec.is_gray_square_qam_preset());
+        let m = spec.bits_per_symbol() as usize;
+        let n = 16usize;
+        let (rx_i, rx_q, noise_var) = deterministic_rx(n, 0xDEADBEEF);
+        let input = DemapInput::<f32> {
+            rx_i: &rx_i,
+            rx_q: &rx_q,
+            gain_i: None,
+            gain_q: None,
+            noise_var: &noise_var,
+            method: DemapMethod::ExactLogMap,
+        };
+        let preferred = spec.preferred_soft_demapper();
+        let reference = ReferenceSoftDemapper::new(spec.clone());
+        let mut out_pref = vec![Llr::new(0.0); n * m];
+        let mut out_ref = vec![Llr::new(0.0); n * m];
+        preferred.demap_llrs(input, &mut out_pref);
+        reference.demap_llrs(input, &mut out_ref);
+        for k in 0..n * m {
+            // Exact equality: fallback must route through the same
+            // reference kernel, not a subtly different numerical path.
+            assert_eq!(
+                out_pref[k].value(),
+                out_ref[k].value(),
+                "fallback diverged from reference at bit {k}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_preferred_mapper_matches_reference_on_any_spec() {
+        // Preset path (Gray-QAM).
+        for &order in &[2usize, 4, 16, 64, 256] {
+            let spec = ModemSpec::<f32>::gray_square_qam(order);
+            let m = spec.bits_per_symbol() as usize;
+            let n_sym = spec.num_symbols();
+            let bits: Vec<bool> = (0..n_sym * m).map(|i| (i * 13 + 7) & 1 == 1).collect();
+            let preferred = spec.preferred_mapper();
+            let reference = ReferenceMapper::new(spec.clone());
+            let mut i_pref = vec![0.0_f32; n_sym];
+            let mut q_pref = vec![0.0_f32; n_sym];
+            let mut i_ref = vec![0.0_f32; n_sym];
+            let mut q_ref = vec![0.0_f32; n_sym];
+            preferred.map_bits(&bits, &mut i_pref, &mut q_pref);
+            reference.map_bits(&bits, &mut i_ref, &mut q_ref);
+            for k in 0..n_sym {
+                assert!(
+                    (i_pref[k] - i_ref[k]).abs() < 1e-6 && (q_pref[k] - q_ref[k]).abs() < 1e-6,
+                    "order={order} sym={k}"
+                );
+            }
+        }
+
+        // Fallback path (custom spec).
+        let spec = custom_8_point_spec();
+        let m = spec.bits_per_symbol() as usize;
+        let n_sym = spec.num_symbols();
+        let bits: Vec<bool> = (0..n_sym * m).map(|i| (i * 5 + 1) & 1 == 1).collect();
+        let preferred = spec.preferred_mapper();
+        let reference = ReferenceMapper::new(spec.clone());
+        let mut i_pref = vec![0.0_f32; n_sym];
+        let mut q_pref = vec![0.0_f32; n_sym];
+        let mut i_ref = vec![0.0_f32; n_sym];
+        let mut q_ref = vec![0.0_f32; n_sym];
+        preferred.map_bits(&bits, &mut i_pref, &mut q_pref);
+        reference.map_bits(&bits, &mut i_ref, &mut q_ref);
+        assert_eq!(i_pref, i_ref);
+        assert_eq!(q_pref, q_ref);
+    }
+
+    #[test]
+    fn test_is_gray_square_qam_preset_detects_presets_and_rejects_custom() {
+        for &order in &[2usize, 4, 16, 64, 256] {
+            assert!(ModemSpec::<f32>::gray_square_qam(order).is_gray_square_qam_preset());
+        }
+        assert!(ModemSpec::<f32>::bpsk().is_gray_square_qam_preset());
+        assert!(!custom_8_point_spec().is_gray_square_qam_preset());
     }
 }

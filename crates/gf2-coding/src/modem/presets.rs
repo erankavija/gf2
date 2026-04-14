@@ -352,6 +352,110 @@ pub(crate) fn assert_valid_gray_square_qam_spec<S: ModemScalar>(view: &super::Mo
     }
 }
 
+/// Returns `true` iff `view` matches the canonical BPSK / Gray square-QAM
+/// preset layout accepted by [`super::GrayQamMapper`] and
+/// [`super::FastGrayQamDemapper`].
+///
+/// Non-panicking companion of [`assert_valid_gray_square_qam_spec`]: runs
+/// the exact same checks but returns a `bool` instead of panicking on
+/// mismatch. Used by the [`super::ModemSpec`] factory methods
+/// (`preferred_mapper`, `preferred_soft_demapper`) to decide whether the
+/// optimized Gray-QAM backend is safe to construct for an arbitrary
+/// user-supplied spec, without the "probe by catch_unwind" anti-pattern.
+///
+/// # Arguments
+///
+/// * `view` - Borrowed view of a [`super::ModemSpec`] (post-normalization).
+///
+/// # Examples
+///
+/// ```
+/// // Helper is crate-internal; see the `ModemSpec::preferred_*` factory
+/// // methods in `modem/spec.rs` for the public entry points that route
+/// // through it.
+/// ```
+///
+/// # Complexity
+///
+/// O(`num_symbols`) in the worst case (runs the same level-set agreement
+/// sweep as the asserting variant).
+#[doc(hidden)]
+pub(crate) fn is_valid_gray_square_qam_spec<S: ModemScalar>(
+    view: &super::ModemView<'_, S>,
+) -> bool {
+    let m = view.bits_per_symbol();
+    if !matches!(m, 1 | 2 | 4 | 6 | 8) {
+        return false;
+    }
+    let expected_symbols = 1usize << m;
+    if view.num_symbols() != expected_symbols {
+        return false;
+    }
+
+    let bit_channels = view.bit_channels();
+    if bit_channels.len() != m as usize {
+        return false;
+    }
+
+    if m == 1 {
+        if bit_channels[0] != BitChannelSemantics::SingleAxisPam(0) {
+            return false;
+        }
+    } else {
+        let m_half = m / 2;
+        for k in 0..m_half {
+            if bit_channels[k as usize] != BitChannelSemantics::IAxisPam(k) {
+                return false;
+            }
+        }
+        for k in 0..m_half {
+            if bit_channels[(m_half + k) as usize] != BitChannelSemantics::QAxisPam(k) {
+                return false;
+            }
+        }
+    }
+
+    let caps = view.capabilities();
+    if !(caps.supports_exact_log_map && caps.supports_max_log) {
+        return false;
+    }
+
+    const LEVEL_TOL: f64 = 1e-6;
+    let levels: Vec<f64> = gray_pam_levels::<f64>(m);
+    if m == 1 {
+        if view.label(0).bits != 0 || view.label(1).bits != 1 {
+            return false;
+        }
+        let q0 = view.point(0).q.to_f64();
+        let q1 = view.point(1).q.to_f64();
+        if (q0 - q1).abs() >= 1e-9 {
+            return false;
+        }
+        for (idx, &want) in levels.iter().enumerate().take(2) {
+            let got = view.point(idx).i.to_f64();
+            if (got - want).abs() >= LEVEL_TOL {
+                return false;
+            }
+        }
+    } else {
+        let m_half = m / 2;
+        let mask_half = (1u16 << m_half) - 1;
+        for (idx, label) in view.labels().iter().enumerate() {
+            let i_label = ((label.bits >> m_half) & mask_half) as usize;
+            let q_label = (label.bits & mask_half) as usize;
+            let p = view.point(idx);
+            let got_i = p.i.to_f64();
+            let got_q = p.q.to_f64();
+            let want_i = levels[i_label];
+            let want_q = levels[q_label];
+            if (got_i - want_i).abs() >= LEVEL_TOL || (got_q - want_q).abs() >= LEVEL_TOL {
+                return false;
+            }
+        }
+    }
+    true
+}
+
 /// Core builder for a Gray-coded square-QAM preset over any [`ModemScalar`].
 fn build_gray_square_qam<S: ModemScalar>(order: usize) -> ModemSpec<S> {
     // Accept BPSK as a special case via this preset too.

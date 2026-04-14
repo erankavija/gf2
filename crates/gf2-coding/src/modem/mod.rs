@@ -32,6 +32,12 @@
 //! - [`GrayQamMapper`] is the scalar Gray-square-QAM fast-path
 //!   implementation of [`BatchMapper`], built directly from a preset
 //!   [`ModemSpec`].
+//! - Prefer the shared-API factories
+//!   [`ModemSpec::preferred_mapper`] and
+//!   [`ModemSpec::preferred_soft_demapper`] to obtain the best-available
+//!   backend for a given spec; they return the optimized Gray-QAM
+//!   backend for recognized preset layouts and transparently fall back
+//!   to the reference path for every other validated spec.
 //! - [`ModemAwgnChannel`] is a generic AWGN link adapter that composes
 //!   any [`BatchMapper`] + [`BatchSoftDemapper`] over an
 //!   [`crate::channel::AwgnChannel`]. It is the canonical AWGN link for
