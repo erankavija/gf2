@@ -47,12 +47,17 @@
 //!
 //! Two per-bit mutual-information estimators are exposed:
 //!
-//! - [`PerBitChannelStats::mutual_info_bits_gaussian_lower_bound`] — a
-//!   fast, closed-form Gaussian-approximation *lower bound* computed from
-//!   `mean(|L_k|)` alone. Always available; always cheap; strictly
-//!   pessimistic whenever the true per-position conditional LLR
-//!   distribution departs from the consistent Gaussian (notably the
-//!   bimodal inner-PAM bits of higher-order Gray-QAM).
+//! - [`PerBitChannelStats::mutual_info_bits_gaussian_approximation`] — a
+//!   fast, closed-form *Gaussian approximation* computed from
+//!   `mean(|L_k|)` alone via the consistent-Gaussian J-function with
+//!   `sigma^2 = 2 mu`. Always available and always cheap, but it is
+//!   **not** a rigorous lower bound on the true mutual information:
+//!   when the actual per-position conditional LLR distribution departs
+//!   from the consistent Gaussian (notably the bimodal inner-PAM bits
+//!   of higher-order Gray-QAM), the approximation can be either
+//!   pessimistic or optimistic depending on how the distribution
+//!   deviates. Use the histogram estimator below when strict bounds
+//!   matter.
 //! - [`per_bit_mi_histogram_bits`] — a histogram-based empirical MI
 //!   estimate that integrates `0.5 p(i|0) log2(2 p(i|0) / (p(i|0) +
 //!   p(i|1))) + 0.5 p(i|1) log2(2 p(i|1) / (p(i|0) + p(i|1)))` over
@@ -76,9 +81,10 @@
 //! max-log rule, and equals the BICM capacity for the exact log-MAP rule
 //! whenever per-bit independence holds (the canonical
 //! Caire/Taricco/Biglieri decomposition). Use [`GmiMethod`] to choose
-//! between the Gaussian-approximation sum (fast, a lower bound) and the
-//! histogram-based sum (closer to the truth for non-Gaussian per-bit
-//! channels, at the cost of requiring histogram accumulation). The
+//! between the Gaussian-approximation sum (fast; an approximation, not
+//! a rigorous bound) and the histogram-based sum (closer to the truth
+//! for non-Gaussian per-bit channels, at the cost of requiring
+//! histogram accumulation). The
 //! histogram estimator's accuracy depends on the caller's choice of
 //! [`HistogramConfig::min`], [`HistogramConfig::max`], and
 //! [`HistogramConfig::num_bins`] — narrow bins and a range covering
@@ -643,20 +649,26 @@ pub struct PerBitChannelStats {
     /// Mean of `|L_k|` over all samples (both conditional streams),
     /// a commonly-reported bit-channel reliability figure.
     pub mean_abs_llr: f64,
-    /// Gaussian-approximation lower bound on bit-channel mutual
-    /// information `I(B_k; L_k)`, in bits.
+    /// Gaussian **approximation** to the bit-channel mutual information
+    /// `I(B_k; L_k)`, in bits.
     ///
     /// For a symmetric consistent LLR channel with `mean(L | 0) = mu`
-    /// and `var(L | 0) ~= 2 mu` the mutual information equals
+    /// and `var(L | 0) ≈ 2 mu` the mutual information equals
     /// `1 - E[log2(1 + exp(-L))] where L ~ N(mu, 2 mu)`. We plug the
     /// observed `mean(|L|)` (as an estimator of `mu`) into the
     /// consistent-Gaussian J-function approximation with `sigma^2 = 2 mu`
-    /// and clip into `[0, 1]`. This is a *lower bound* because the
-    /// actual per-bit LLR distribution on higher-order Gray-QAM is
-    /// not Gaussian; callers that need exact MI should consume the
-    /// histogram via [`PerBitChannelStats::hist_bit0`] /
-    /// [`PerBitChannelStats::hist_bit1`] and integrate directly.
-    pub mutual_info_bits_gaussian_lower_bound: f64,
+    /// and clip into `[0, 1]`.
+    ///
+    /// This is **not** a rigorous lower bound on the true MI: when the
+    /// actual per-bit LLR distribution departs from the consistent
+    /// Gaussian model (notably the bimodal inner-PAM bits of
+    /// higher-order Gray-QAM), the plug-in J-function estimate can
+    /// over- or under-estimate the true MI depending on how the
+    /// distribution deviates. For strict bounds or for non-Gaussian
+    /// bit-channels, consume the histograms at
+    /// [`PerBitChannelStats::hist_bit0`] / [`PerBitChannelStats::hist_bit1`]
+    /// and integrate directly via [`per_bit_mi_histogram_bits`].
+    pub mutual_info_bits_gaussian_approximation: f64,
     /// Optional histogram of `L_k` given `B_k = 0`. Present iff the
     /// accumulator was built with [`PerBitLlrStats::with_histogram`].
     pub hist_bit0: Option<Histogram>,
@@ -665,13 +677,15 @@ pub struct PerBitChannelStats {
     pub hist_bit1: Option<Histogram>,
 }
 
-/// Gaussian-approximation mutual-information lower bound in bits,
-/// using the consistent-LLR assumption `sigma_L^2 = 2 mu_L`.
+/// Gaussian approximation to mutual information in bits, using the
+/// consistent-LLR assumption `sigma_L^2 = 2 mu_L`.
 ///
 /// Returns a value in `[0, 1]`. `mean_abs_llr <= 0` maps to `0`; large
-/// `mean_abs_llr` saturates near `1`.
+/// `mean_abs_llr` saturates near `1`. Not a rigorous lower bound —
+/// see [`PerBitChannelStats::mutual_info_bits_gaussian_approximation`]
+/// for when the plug-in estimator can exceed the true MI.
 #[inline]
-fn gaussian_mi_lower_bound_bits(mean_abs_llr: f64) -> f64 {
+fn gaussian_mi_approximation_bits(mean_abs_llr: f64) -> f64 {
     if !(mean_abs_llr.is_finite()) || mean_abs_llr <= 0.0 {
         return 0.0;
     }
@@ -681,9 +695,9 @@ fn gaussian_mi_lower_bound_bits(mean_abs_llr: f64) -> f64 {
     // sigma^2 = 2 * mean(L | bit=0) for consistent Gaussian LLRs.
     //
     // We use mean_abs_llr as an estimator of mu = mean(L | 0). This
-    // yields a *lower bound* on the true MI because any deviation
-    // from Gaussian/consistent (including the bimodal inner-PAM-bit
-    // case) reduces the equivalent sigma.
+    // is a plug-in approximation, not a rigorous bound — see the
+    // public docstring on `mutual_info_bits_gaussian_approximation`
+    // for caveats.
     let sigma = (2.0 * mean_abs_llr).sqrt();
     // Coefficients from ten Brink's fit; good to ~1e-3 over
     // sigma in [0, 10].
@@ -700,8 +714,10 @@ fn gaussian_mi_lower_bound_bits(mean_abs_llr: f64) -> f64 {
 /// mutual informations; this enum picks which per-bit MI estimator is
 /// summed. Both options return a value in `[0, m]` bits per symbol for
 /// an `m`-bit constellation label. The Gaussian-approximation variant
-/// is a strict *lower bound*; the histogram variant is the empirical
-/// MI restricted to the configured histogram range.
+/// is a plug-in estimate (not a rigorous bound — see
+/// [`PerBitChannelStats::mutual_info_bits_gaussian_approximation`]);
+/// the histogram variant is the empirical MI restricted to the
+/// configured histogram range.
 ///
 /// # Examples
 ///
@@ -712,13 +728,14 @@ fn gaussian_mi_lower_bound_bits(mean_abs_llr: f64) -> f64 {
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GmiMethod {
-    /// Sum the closed-form Gaussian-approximation lower bound on per-bit
-    /// MI (field
-    /// [`PerBitChannelStats::mutual_info_bits_gaussian_lower_bound`]).
+    /// Sum the closed-form Gaussian-approximation per-bit MI estimate
+    /// (field
+    /// [`PerBitChannelStats::mutual_info_bits_gaussian_approximation`]).
     ///
-    /// Always available and cheap. Strictly pessimistic whenever the
-    /// per-position conditional LLR distribution is non-Gaussian
-    /// (higher-order Gray-QAM inner-PAM bits in particular).
+    /// Always available and cheap. **Not** a rigorous bound: it can
+    /// over- or under-estimate the true MI whenever the per-position
+    /// conditional LLR distribution is non-Gaussian (higher-order
+    /// Gray-QAM inner-PAM bits in particular).
     GaussianApproximation,
     /// Sum the empirical histogram-based per-bit MI from
     /// [`per_bit_mi_histogram_bits`].
@@ -882,7 +899,7 @@ pub fn gmi_bits(stats: &[PerBitChannelStats], method: GmiMethod) -> f64 {
     match method {
         GmiMethod::GaussianApproximation => stats
             .iter()
-            .map(|s| s.mutual_info_bits_gaussian_lower_bound)
+            .map(|s| s.mutual_info_bits_gaussian_approximation)
             .sum(),
         GmiMethod::Histogram => stats
             .iter()
@@ -1211,7 +1228,7 @@ impl PerBitLlrStats {
                     bit0: self.bit0[k],
                     bit1: self.bit1[k],
                     mean_abs_llr,
-                    mutual_info_bits_gaussian_lower_bound: gaussian_mi_lower_bound_bits(
+                    mutual_info_bits_gaussian_approximation: gaussian_mi_approximation_bits(
                         mean_abs_llr,
                     ),
                     hist_bit0: self.hist_bit0[k].clone(),
@@ -1474,11 +1491,11 @@ mod tests {
     #[test]
     fn test_gaussian_mi_monotone_and_bounded() {
         // Monotone non-decreasing in mean_abs_llr, clipped to [0, 1].
-        assert_eq!(gaussian_mi_lower_bound_bits(0.0), 0.0);
-        assert_eq!(gaussian_mi_lower_bound_bits(-1.0), 0.0);
-        let small = gaussian_mi_lower_bound_bits(0.1);
-        let mid = gaussian_mi_lower_bound_bits(2.0);
-        let big = gaussian_mi_lower_bound_bits(50.0);
+        assert_eq!(gaussian_mi_approximation_bits(0.0), 0.0);
+        assert_eq!(gaussian_mi_approximation_bits(-1.0), 0.0);
+        let small = gaussian_mi_approximation_bits(0.1);
+        let mid = gaussian_mi_approximation_bits(2.0);
+        let big = gaussian_mi_approximation_bits(50.0);
         assert!(small < mid);
         assert!(mid < big);
         assert!(big <= 1.0);
@@ -1490,8 +1507,8 @@ mod tests {
         stats.accumulate(&[Llr::new(4.0), Llr::new(-4.0)], &[false, true]);
         let r = stats.report();
         assert!((r[0].mean_abs_llr - 4.0).abs() < 1e-6);
-        let expected = gaussian_mi_lower_bound_bits(4.0);
-        assert!((r[0].mutual_info_bits_gaussian_lower_bound - expected).abs() < 1e-12);
+        let expected = gaussian_mi_approximation_bits(4.0);
+        assert!((r[0].mutual_info_bits_gaussian_approximation - expected).abs() < 1e-12);
     }
 
     #[test]
@@ -1575,8 +1592,8 @@ mod tests {
             a in 0.0f64..100.0,
             delta in 0.0f64..100.0,
         ) {
-            let lo = gaussian_mi_lower_bound_bits(a);
-            let hi = gaussian_mi_lower_bound_bits(a + delta);
+            let lo = gaussian_mi_approximation_bits(a);
+            let hi = gaussian_mi_approximation_bits(a + delta);
             prop_assert!((0.0..=1.0).contains(&lo));
             prop_assert!((0.0..=1.0).contains(&hi));
             prop_assert!(hi + 1e-12 >= lo,
@@ -1711,7 +1728,7 @@ mod tests {
         let r = s.report();
         let expected: f64 = r
             .iter()
-            .map(|p| p.mutual_info_bits_gaussian_lower_bound)
+            .map(|p| p.mutual_info_bits_gaussian_approximation)
             .sum();
         let actual = gmi_bits(&r, GmiMethod::GaussianApproximation);
         assert!(
