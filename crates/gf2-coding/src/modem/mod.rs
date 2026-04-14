@@ -192,6 +192,7 @@
 //! ```
 
 pub mod analysis;
+pub mod analysis_capture;
 pub mod awgn_link;
 mod bit_pack;
 mod builder;
@@ -209,6 +210,7 @@ pub mod test_oracle;
 mod types;
 mod view;
 
+pub use analysis_capture::AnalysisCapture;
 pub use awgn_link::{ModemAwgnChannel, ModemChannelAdapter};
 #[doc(hidden)]
 pub use bit_pack::unpack_label_msb_first;
