@@ -2,7 +2,7 @@
   "id": "1663515c-a17f-4d72-beb0-99c7e8168f80",
   "title": "Add generic versus fast-path modem benchmarks",
   "description": "Measure the reference arbitrary-constellation path against the Gray-QAM fast path and capture the main hot loops.\n\n## Success Criteria\n\n- [ ] Benchmarks compare the generic modem path against the optimized Gray-QAM fast path.\n- [ ] The benchmark set captures the main hot loops that matter for future optimization work.\n- [ ] Results are usable as a baseline for later SIMD and accelerator tuning.\n\n## Notes\n\nThis task provides the performance baseline needed by the epic success criteria.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:claude",
   "dependencies": [
@@ -17,19 +17,24 @@
   ],
   "gates_status": {
     "code-review": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-14T22:38:29.759501602Z"
-    },
-    "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-04-14T23:01:16.150295149Z"
+      "updated_at": "2026-04-14T23:01:19.664038494Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-14T23:17:21.110667505Z"
     },
     "tdd-reminder": {
       "status": "passed",
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-14T22:13:09.093845180Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-14T23:01:16.150295149Z"
     }
   },
   "context": {},
@@ -41,5 +46,5 @@
     "story:modem-ergonomics-validation-benchmarks"
   ],
   "created_at": "2026-04-12T19:41:45.873463053+00:00",
-  "updated_at": "2026-04-14T23:03:42.094585296+00:00"
+  "updated_at": "2026-04-14T23:17:21.124462255+00:00"
 }

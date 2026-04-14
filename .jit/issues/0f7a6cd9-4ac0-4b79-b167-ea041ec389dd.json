@@ -2,7 +2,7 @@
   "id": "0f7a6cd9-4ac0-4b79-b167-ea041ec389dd",
   "title": "Implement per-bit MI and GMI estimators",
   "description": "Implement information-metric estimators that can evaluate the reliability of individual bit-channels from modem outputs or collected LLR statistics.\n\n## Success Criteria\n\n- [ ] The analysis tooling can estimate per-bit mutual information or GMI for supported modem paths.\n- [ ] The estimators are compatible with the demapper semantics selected for analysis.\n- [ ] Results are suitable for comparing the relative quality of different bit positions within a symbol.\n\n## Notes\n\nThis task builds on the per-bit LLR statistics tooling and should remain compatible with the shared modem source of truth.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "high",
   "assignee": "agent:claude",
   "dependencies": [
@@ -15,20 +15,25 @@
     "doc-review"
   ],
   "gates_status": {
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-14T22:13:10.240794224Z"
+    },
     "code-review": {
-      "status": "failed",
+      "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-04-14T22:26:51.969904486Z"
+      "updated_at": "2026-04-14T23:01:19.666693666Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-14T23:17:21.377317239Z"
     },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-14T23:01:16.150265779Z"
-    },
-    "tdd-reminder": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-14T22:13:10.240794224Z"
     }
   },
   "context": {},
@@ -40,5 +45,5 @@
     "story:bit-channel-analysis"
   ],
   "created_at": "2026-04-12T20:04:48.348117625+00:00",
-  "updated_at": "2026-04-14T23:03:42.386253608+00:00"
+  "updated_at": "2026-04-14T23:17:21.390726699+00:00"
 }

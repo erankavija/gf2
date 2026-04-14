@@ -2,7 +2,7 @@
   "id": "dafb938a-405a-472f-af4b-56ec9955d8b4",
   "title": "Add modem regression and property tests",
   "description": "Add modem-level invariants, round-trip tests, and regression coverage for the migrated public entry points.\n\n## Success Criteria\n\n- [ ] The shared modem surface has regression coverage for standard presets and migrated compatibility entry points.\n- [ ] Property tests cover relevant round-trip or labeling invariants where appropriate.\n- [ ] The new tests protect both the reference path and the optimized path from divergence.\n\n## Notes\n\nThis task extends the earlier reference tests into full framework-level regression protection.",
-  "state": "gated",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:claude",
   "dependencies": [
@@ -16,25 +16,25 @@
     "doc-review"
   ],
   "gates_status": {
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-14T23:01:16.149933869Z"
-    },
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-14T22:38:07.200868718Z"
-    },
     "tdd-reminder": {
       "status": "passed",
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-14T17:18:04.198380233Z"
     },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-14T23:01:16.149933869Z"
+    },
     "doc-review": {
       "status": "passed",
       "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-14T22:45:51.112104393Z"
+      "updated_at": "2026-04-14T23:17:20.588702536Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-14T23:01:19.665920415Z"
     }
   },
   "context": {},
@@ -46,5 +46,5 @@
     "story:modem-ergonomics-validation-benchmarks"
   ],
   "created_at": "2026-04-12T19:41:45.872268442+00:00",
-  "updated_at": "2026-04-14T23:03:52.676934471+00:00"
+  "updated_at": "2026-04-14T23:17:20.858792652+00:00"
 }
