@@ -24,10 +24,59 @@
 //! L_1 = 2·Δ·Re(y·conj(h_hat)) / σ²
 //! L_2 = 2·Δ·Im(y·conj(h_hat)) / σ²
 //! ```
+//!
+//! # Modem framework integration (Wave 8, jit:b3bb774a)
+//!
+//! [`QpskModulator`] is a thin compatibility shim over the shared modem
+//! framework (see [`crate::modem`]). All bit-to-symbol mapping,
+//! hard-demapping, and LLR conversion delegate to a cached
+//! [`ReferenceMapper<f64>`](crate::modem::ReferenceMapper) and
+//! [`ReferenceSoftDemapper<f64>`](crate::modem::ReferenceSoftDemapper) built
+//! from [`ModemSpec::<f64>::gray_square_qam_with_scalar(4)`](crate::modem::ModemSpec::gray_square_qam_with_scalar).
+//! No hand-rolled `±Δ ± jΔ` constellation arithmetic remains in this file.
+//!
+//! The preset is unit-average-symbol-energy (`±1/√2 ± j/√2`), while the
+//! legacy `QpskModulator` accepts an arbitrary amplitude `Δ` via its
+//! constructor. The shim composes the framework outputs with a scalar
+//! re-scaling by `Δ·√2`, which maps the unit-energy constellation onto
+//! the legacy `±Δ ± jΔ` layout and preserves the closed-form LLR
+//! `L = 2·Δ·Re/Im(y·conj(h)) / σ²` bit-for-bit under the shared noise
+//! convention `N0 = 2·σ²` (see [`crate::modem::awgn_link`]).
 
 use std::ops::{Add, Mul};
+use std::sync::OnceLock;
 
 use crate::llr::Llr;
+use crate::modem::{
+    BatchMapper, BatchSoftDemapper, DemapInput, DemapMethod, ModemSpec, ReferenceMapper,
+    ReferenceSoftDemapper,
+};
+
+/// Lazily-initialised, process-wide QPSK (unit-energy) reference mapper
+/// over `f64`.
+///
+/// The QPSK preset is a compile-time constant, so the mapper can be shared
+/// across all callers of [`QpskModulator`]. Construction is cheap; caching
+/// reduces the per-call cost to a single pointer dereference.
+fn qpsk_mapper() -> &'static ReferenceMapper<f64> {
+    static MAPPER: OnceLock<ReferenceMapper<f64>> = OnceLock::new();
+    MAPPER.get_or_init(|| ReferenceMapper::new(ModemSpec::<f64>::gray_square_qam_with_scalar(4)))
+}
+
+/// Lazily-initialised, process-wide QPSK reference soft demapper over `f64`.
+///
+/// Shared across all callers of [`QpskModulator::soft_llrs`] and
+/// [`QpskModulator::symbols_to_llrs`] for the same reason as
+/// [`qpsk_mapper`]. The demapper computes the exact log-MAP LLR under the
+/// preset (unit-energy, Gray-coded) constellation; the legacy closed form
+/// `L = 2·Δ·Re/Im(y·conj(h))/σ²` is recovered by scaling the per-symbol
+/// gain by `Δ·√2` (see [`QpskModulator::gain_rescale`]).
+fn qpsk_demapper() -> &'static ReferenceSoftDemapper<f64> {
+    static DEMAP: OnceLock<ReferenceSoftDemapper<f64>> = OnceLock::new();
+    DEMAP.get_or_init(|| {
+        ReferenceSoftDemapper::new(ModemSpec::<f64>::gray_square_qam_with_scalar(4))
+    })
+}
 
 /// Complex number type for QPSK computations.
 ///
@@ -209,8 +258,20 @@ impl Add for Complex {
 /// | [0, 1]        | +Δ-Δj  |
 /// | [1, 0]        | -Δ+Δj  |
 /// | [1, 1]        | -Δ-Δj  |
+///
+/// # Framework delegation (jit:b3bb774a)
+///
+/// All mapping and demapping routes through the shared modem framework
+/// presets (see the module-level docs). The amplitude `delta` appears
+/// only as a post-map scale factor and as a gain re-scale in the demap
+/// path; no hand-rolled `±Δ ± jΔ` arithmetic lives in this type.
 pub struct QpskModulator {
     delta: f64,
+    /// Pre-computed `delta * sqrt(2)`: the scale factor that converts the
+    /// unit-energy QPSK preset (`±1/√2 ± j/√2`) into the legacy
+    /// `±Δ ± jΔ` layout. Cached on the instance so every call path can
+    /// reuse it.
+    delta_rescale: f64,
 }
 
 impl QpskModulator {
@@ -238,7 +299,10 @@ impl QpskModulator {
             delta > 0.0,
             "Constellation amplitude delta must be positive"
         );
-        QpskModulator { delta }
+        QpskModulator {
+            delta,
+            delta_rescale: delta * std::f64::consts::SQRT_2,
+        }
     }
 
     /// Returns the constellation amplitude Δ.
@@ -246,7 +310,36 @@ impl QpskModulator {
         self.delta
     }
 
+    /// Returns the gain re-scale factor `Δ·√2` used to convert the
+    /// framework's unit-energy QPSK preset into the legacy `±Δ ± jΔ`
+    /// layout.
+    ///
+    /// Exposed for [`fading`](crate::fading) and regression tests that
+    /// want to mirror the same rescaling when feeding the framework
+    /// demapper directly.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::modulation::QpskModulator;
+    ///
+    /// let qpsk = QpskModulator::new(1.0);
+    /// assert!((qpsk.gain_rescale() - 2.0_f64.sqrt()).abs() < 1e-12);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
+    pub fn gain_rescale(&self) -> f64 {
+        self.delta_rescale
+    }
+
     /// Modulates a pair of bits to a QPSK symbol.
+    ///
+    /// Delegates to the framework [`ReferenceMapper`] over
+    /// [`ModemSpec::<f64>::gray_square_qam_with_scalar(4)`](crate::modem::ModemSpec::gray_square_qam_with_scalar)
+    /// and scales the unit-energy output by `Δ·√2` to recover the
+    /// legacy `±Δ ± jΔ` layout.
     ///
     /// # Arguments
     ///
@@ -268,14 +361,19 @@ impl QpskModulator {
     ///
     /// O(1).
     pub fn modulate(&self, b1: bool, b2: bool) -> Complex {
-        let re = if b1 { -self.delta } else { self.delta };
-        let im = if b2 { -self.delta } else { self.delta };
-        Complex::new(re, im)
+        let bits = [b1, b2];
+        let mut i = [0.0_f64; 1];
+        let mut q = [0.0_f64; 1];
+        qpsk_mapper().map_bits(&bits, &mut i, &mut q);
+        Complex::new(i[0] * self.delta_rescale, q[0] * self.delta_rescale)
     }
 
     /// Modulates a slice of bits (must have even length) to QPSK symbols.
     ///
-    /// Consecutive pairs `[b_{2k}, b_{2k+1}]` are mapped to one symbol each.
+    /// Delegates the Gray-coded mapping to the framework
+    /// [`ReferenceMapper`] in a single batched call and then scales the
+    /// unit-energy I/Q pairs by `Δ·√2`. Consecutive pairs
+    /// `[b_{2k}, b_{2k+1}]` are mapped to one symbol each.
     ///
     /// # Arguments
     ///
@@ -300,7 +398,8 @@ impl QpskModulator {
     ///
     /// # Complexity
     ///
-    /// O(n) where n is the number of bits.
+    /// O(n) where n is the number of bits. Allocates two scratch buffers
+    /// of `n/2` elements each for the framework mapper output.
     pub fn modulate_bits(&self, bits: &[bool]) -> Vec<Complex> {
         assert_eq!(
             bits.len() % 2,
@@ -308,8 +407,15 @@ impl QpskModulator {
             "QPSK requires even number of bits, got {}",
             bits.len()
         );
-        bits.chunks(2)
-            .map(|chunk| self.modulate(chunk[0], chunk[1]))
+        let n_sym = bits.len() / 2;
+        let mut out_i = vec![0.0_f64; n_sym];
+        let mut out_q = vec![0.0_f64; n_sym];
+        qpsk_mapper().map_bits(bits, &mut out_i, &mut out_q);
+        let s = self.delta_rescale;
+        out_i
+            .into_iter()
+            .zip(out_q)
+            .map(|(i, q)| Complex::new(i * s, q * s))
             .collect()
     }
 
@@ -354,11 +460,29 @@ impl QpskModulator {
             sigma_squared > 0.0 && sigma_squared.is_finite(),
             "sigma_squared must be positive and finite, got {sigma_squared}"
         );
-        let z = y * h_hat.conj();
-        let scale = 2.0 * self.delta / sigma_squared;
-        let l1 = Llr::new((scale * z.re) as f32);
-        let l2 = Llr::new((scale * z.im) as f32);
-        (l1, l2)
+        // Delegate to the framework demapper. The unit-energy QPSK
+        // preset is scaled up to the legacy `±Δ±jΔ` layout by passing
+        // the gain as `h_hat · Δ·√2`; the framework demapper then
+        // computes `|y − (h·Δ·√2)·p_unit|^2 / N0` against unit-energy
+        // points, which matches `|y − h·Δ·(±1±j)|^2 / N0` pointwise.
+        // Noise convention: `N0 = 2·σ²` (shared across modem/awgn_link).
+        let rx_i = [y.re];
+        let rx_q = [y.im];
+        let s = self.delta_rescale;
+        let gi = [h_hat.re * s];
+        let gq = [h_hat.im * s];
+        let n0 = [2.0 * sigma_squared];
+        let mut out = [Llr::new(0.0); 2];
+        let input = DemapInput::<f64> {
+            rx_i: &rx_i,
+            rx_q: &rx_q,
+            gain_i: Some(&gi),
+            gain_q: Some(&gq),
+            noise_var: &n0,
+            method: DemapMethod::ExactLogMap,
+        };
+        qpsk_demapper().demap_llrs(input, &mut out);
+        (out[0], out[1])
     }
 
     /// Computes LLRs for all received symbols, returning a flat LLR vector.
@@ -403,18 +527,48 @@ impl QpskModulator {
             channel_estimates.len(),
             "received and channel_estimates must have equal length"
         );
-        let mut llrs = Vec::with_capacity(received.len() * 2);
-        for (&y, &h) in received.iter().zip(channel_estimates.iter()) {
-            let (l1, l2) = self.soft_llrs(y, h, sigma_squared);
-            llrs.push(l1);
-            llrs.push(l2);
+        assert!(
+            sigma_squared > 0.0 && sigma_squared.is_finite(),
+            "sigma_squared must be positive and finite, got {sigma_squared}"
+        );
+        let n_sym = received.len();
+        let mut rx_i = Vec::with_capacity(n_sym);
+        let mut rx_q = Vec::with_capacity(n_sym);
+        let mut gi = Vec::with_capacity(n_sym);
+        let mut gq = Vec::with_capacity(n_sym);
+        let s = self.delta_rescale;
+        for (y, h) in received.iter().zip(channel_estimates.iter()) {
+            rx_i.push(y.re);
+            rx_q.push(y.im);
+            // Pre-scale the gain by Δ·√2 so the unit-energy preset
+            // overlaps the legacy `±Δ±jΔ` constellation (see
+            // `soft_llrs` for the derivation).
+            gi.push(h.re * s);
+            gq.push(h.im * s);
         }
+        let n0 = vec![2.0 * sigma_squared; n_sym];
+        let mut llrs = vec![Llr::new(0.0); n_sym * 2];
+        let input = DemapInput::<f64> {
+            rx_i: &rx_i,
+            rx_q: &rx_q,
+            gain_i: Some(&gi),
+            gain_q: Some(&gq),
+            noise_var: &n0,
+            method: DemapMethod::ExactLogMap,
+        };
+        qpsk_demapper().demap_llrs(input, &mut llrs);
         llrs
     }
 
     /// Hard-demodulates a received symbol pair to bits (no channel compensation).
     ///
-    /// Signs of real and imaginary parts determine the hard decisions.
+    /// The two bits are the signs of the I and Q components respectively.
+    /// This is equivalent to thresholding the framework
+    /// [`ReferenceSoftDemapper`] LLRs at zero under a real, unit channel
+    /// (`N0 > 0`, `gain = 1+0j`) — the Gray-coded QPSK preset places one
+    /// bit per axis, so `sign(LLR_k) = sign(y_axis_k)` and the closed
+    /// form collapses to a per-axis comparison. Preserved as a compact
+    /// O(1) shim over the framework's hard-decision rule.
     ///
     /// # Arguments
     ///
@@ -794,6 +948,83 @@ mod tests {
     }
 
     // ---- Simulation surface integration: QPSK + fading channel decode loop ----
+
+    // ---- Migration regression: framework-backed path reproduces the
+    //      legacy hand-rolled QPSK+Rician BER bit-for-bit ----
+
+    /// Pins the framework-backed QPSK path against legacy hand-rolled
+    /// bit-error counts captured before the jit:b3bb774a migration.
+    ///
+    /// These numbers were measured on the previous `QpskModulator`
+    /// implementation (`modulate_bits` using ±Δ±jΔ directly,
+    /// `symbols_to_llrs` via `L = 2·Δ·Re(y·conj(h))/σ²`). The migrated
+    /// implementation routes every step through
+    /// [`crate::modem::ReferenceMapper`] /
+    /// [`crate::modem::ReferenceSoftDemapper`] with a `Δ·√2` gain
+    /// re-scale; under the shared `N0 = 2·σ²` convention the closed
+    /// form recovers exactly, so the per-seed error count must remain
+    /// identical.
+    ///
+    /// A drift here means one of: axis swap / sign flip in the mapper
+    /// glue, gain-rescale mismatch, or N0 convention slip.
+    #[test]
+    fn test_qpsk_rician_ber_matches_legacy_reference_counts() {
+        use crate::fading::{BitInterleaver, RicianChannel, RicianConfig};
+        use rand::rngs::StdRng;
+        use rand::Rng;
+        use rand::SeedableRng;
+
+        // Captured from the legacy implementation (pre-migration):
+        //   LEGACY seed=0x12345678deadbeef eb_n0_db=2  errors=12
+        //   LEGACY seed=0x12345678deadbeef eb_n0_db=6  errors=1
+        //   LEGACY seed=0x12345678deadbeef eb_n0_db=10 errors=0
+        //   LEGACY seed=0xcafebabe12345678 eb_n0_db=2  errors=39
+        //   LEGACY seed=0xcafebabe12345678 eb_n0_db=6  errors=1
+        //   LEGACY seed=0xcafebabe12345678 eb_n0_db=10 errors=0
+        let expected = [
+            (0x1234_5678_DEAD_BEEFu64, 2.0_f64, 12usize),
+            (0x1234_5678_DEAD_BEEFu64, 6.0_f64, 1usize),
+            (0x1234_5678_DEAD_BEEFu64, 10.0_f64, 0usize),
+            (0xCAFE_BABE_1234_5678u64, 2.0_f64, 39usize),
+            (0xCAFE_BABE_1234_5678u64, 6.0_f64, 1usize),
+            (0xCAFE_BABE_1234_5678u64, 10.0_f64, 0usize),
+        ];
+
+        for (seed, eb_n0_db, expected_errors) in expected {
+            let cfg = RicianConfig::fig8();
+            let channel = RicianChannel::new(cfg);
+            let delta = 1.0_f64 / 2.0_f64.sqrt();
+            let qpsk = QpskModulator::new(delta);
+            let interleaver = BitInterleaver::new(cfg.frame_bits(), 0xFADE);
+
+            // For unit-energy QPSK (delta = 1/√2, Es = 1, Eb = 0.5),
+            // `sigma_squared` here is semantically N0 (per-complex-
+            // dimension noise power) — matches the `RicianChannel`
+            // sampling convention: each axis ~ N(0, sigma_squared/2).
+            let eb_n0_lin = 10.0_f64.powf(eb_n0_db / 10.0);
+            let sigma_sq = 0.5_f64 / eb_n0_lin;
+
+            let mut rng = StdRng::seed_from_u64(seed);
+            let tx_bits: Vec<bool> = (0..cfg.frame_bits()).map(|_| rng.gen()).collect();
+            let interleaved = interleaver.interleave(&tx_bits);
+            let symbols = qpsk.modulate_bits(&interleaved);
+            let gains = channel.generate_frame_gains(&mut rng);
+            let received = channel.transmit(&symbols, &gains, sigma_sq, &mut rng);
+            let llrs = qpsk.symbols_to_llrs(&received, &gains, sigma_sq);
+            let deinterleaved = interleaver.deinterleave_llrs(&llrs);
+            let decoded: Vec<bool> = deinterleaved.iter().map(|l| l.value() < 0.0).collect();
+            let errors: usize = tx_bits
+                .iter()
+                .zip(decoded.iter())
+                .filter(|(a, b)| a != b)
+                .count();
+            assert_eq!(
+                errors, expected_errors,
+                "QPSK+Rician framework path drifted from legacy: \
+                 seed={seed:#x} eb_n0_db={eb_n0_db} got {errors} expected {expected_errors}"
+            );
+        }
+    }
 
     #[test]
     fn test_qpsk_fading_channel_decode_loop() {
