@@ -150,6 +150,7 @@ mod tests {
     use proptest::prelude::*;
 
     use super::super::bit_pack::unpack_label_msb_first as label_to_bits;
+    use super::super::test_oracle::Lcg;
 
     #[test]
     fn test_map_bits_gray16_roundtrip_against_spec() {
@@ -364,15 +365,9 @@ mod tests {
         ) {
             let n = 1usize << m;
 
-            // Deterministic permutation (Fisher-Yates via LCG).
-            let mut perm: Vec<u16> = (0..n as u16).collect();
-            let mut state = seed.wrapping_mul(6364136223846793005).wrapping_add(1);
-            for i in (1..n).rev() {
-                state = state.wrapping_mul(6364136223846793005)
-                    .wrapping_add(1442695040888963407);
-                let j = (state as usize) % (i + 1);
-                perm.swap(i, j);
-            }
+            // Deterministic permutation (Fisher-Yates) via the shared
+            // modem test LCG — SSOT helper in `test_oracle::Lcg`.
+            let perm = Lcg::permutation(seed, n);
 
             // Points on the unit circle (guarantees normalizable energy).
             let points: Vec<SymbolPoint<f32>> = (0..n)
@@ -395,14 +390,12 @@ mod tests {
                     (view.point(k).i, view.point(k).q);
             }
 
-            // Generate a deterministic bit stream from seed.
-            let mut labels_stream: Vec<u16> = Vec::with_capacity(batch_len);
-            let mut s = state;
-            for _ in 0..batch_len {
-                s = s.wrapping_mul(6364136223846793005)
-                    .wrapping_add(1442695040888963407);
-                labels_stream.push((s as usize % n) as u16);
-            }
+            // Generate a deterministic bit stream. A distinct seed mix
+            // (XOR with a constant) keeps the stream decorrelated from
+            // the permutation RNG above while still routing through the
+            // SSOT `Lcg::label_stream` helper.
+            let labels_stream: Vec<u16> =
+                Lcg::label_stream(seed ^ 0x9E37_79B9_7F4A_7C15, batch_len, n);
             let mut bits: Vec<bool> = Vec::with_capacity(batch_len * m as usize);
             for &v in &labels_stream {
                 bits.extend(super::super::bit_pack::unpack_label_msb_first(v, m));
