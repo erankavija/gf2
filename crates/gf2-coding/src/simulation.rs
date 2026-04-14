@@ -993,11 +993,24 @@ impl SimulationRunner {
     /// * `config` - Simulation configuration.
     /// * `capture` - Optional [`AnalysisCapture`] handle. When `Some`,
     ///   the accumulator backing the capture must have
-    ///   `bits_per_symbol() == channel.batch_alignment()` (or `1` when
-    ///   the channel declares a `batch_alignment()` of `1` for BPSK —
+    ///   `bits_per_symbol()` equal to the number of bits per modem
+    ///   symbol advertised by `channel` (for a modem-backed channel
+    ///   that is `channel.batch_alignment()`; for `BpskAwgnChannel`
+    ///   it is `1`). If the counts disagree
     ///   [`PerBitLlrStats::accumulate`](crate::modem::analysis::PerBitLlrStats::accumulate)
-    ///   enforces the length invariant internally).
+    ///   panics with a descriptive message — the runner does not try
+    ///   to guess a translation.
     /// * `rng` - Random source.
+    ///
+    /// # Multi-SNR sweeps
+    ///
+    /// The same `AnalysisCapture` accumulator is reused across every
+    /// entry in `config.eb_n0_range_db`. For most link-level workflows
+    /// that is intentional — the report reflects the *aggregate*
+    /// per-bit LLR distribution over the whole sweep. If you need
+    /// per-SNR decompositions, drive the runner once per SNR point
+    /// with a fresh `AnalysisCapture` (construct a new
+    /// [`crate::modem::analysis::PerBitLlrStats`] between calls).
     ///
     /// # Returns
     ///

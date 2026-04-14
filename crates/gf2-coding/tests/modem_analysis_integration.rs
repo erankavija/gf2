@@ -153,29 +153,25 @@ fn test_analysis_capture_disabled_matches_unaugmented_path() {
 }
 
 #[test]
-fn test_analysis_capture_none_branch_is_inert() {
-    // Sanity: passing `None` does not mutate any accumulator state we
-    // might have nearby. A fresh `PerBitLlrStats` built before the run
-    // must still be empty after a `None`-capture sweep.
+fn test_analysis_capture_does_not_touch_sibling_accumulator() {
+    // Guards the "opt-in" contract: passing `None` to the runner, then
+    // later constructing an unrelated `PerBitLlrStats`, must not see
+    // any cross-contamination in the unrelated accumulator. This catches
+    // regressions where the runner might have accidentally grabbed a
+    // global or thread-local capture target.
     let channel = BpskAwgnChannel;
     let config = bpsk_config();
-
-    let stats_before = PerBitLlrStats::new(1);
-    let empty_report_before = stats_before.report();
-    let empty_counts_before: Vec<(u64, u64)> = empty_report_before
-        .iter()
-        .map(|r| (r.bit0.count(), r.bit1.count()))
-        .collect();
 
     let mut rng = StdRng::seed_from_u64(config.rng_seed.unwrap());
     let _ = SimulationRunner::run_uncoded_ber_with_analysis(&channel, &config, None, &mut rng);
 
-    let stats_after = PerBitLlrStats::new(1);
-    let empty_report_after = stats_after.report();
-    let empty_counts_after: Vec<(u64, u64)> = empty_report_after
-        .iter()
-        .map(|r| (r.bit0.count(), r.bit1.count()))
-        .collect();
-
-    assert_eq!(empty_counts_before, empty_counts_after);
+    // Build a fresh accumulator *after* the None-capture sweep. If the
+    // runner touched any shared state this accumulator would see
+    // non-zero counts even though it was never passed anywhere.
+    let sibling = PerBitLlrStats::new(1);
+    let report = sibling.report();
+    for r in &report {
+        assert_eq!(r.bit0.count(), 0);
+        assert_eq!(r.bit1.count(), 0);
+    }
 }
