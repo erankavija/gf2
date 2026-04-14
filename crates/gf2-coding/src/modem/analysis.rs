@@ -42,6 +42,48 @@
 //! LLR precision. `Llr` is `f32` today; widening to `f64` on ingest
 //! avoids silent accuracy loss in mean / variance accumulation for long
 //! simulations.
+//!
+//! # Mutual information and GMI
+//!
+//! Two per-bit mutual-information estimators are exposed:
+//!
+//! - [`PerBitChannelStats::mutual_info_bits_gaussian_lower_bound`] — a
+//!   fast, closed-form Gaussian-approximation *lower bound* computed from
+//!   `mean(|L_k|)` alone. Always available; always cheap; strictly
+//!   pessimistic whenever the true per-position conditional LLR
+//!   distribution departs from the consistent Gaussian (notably the
+//!   bimodal inner-PAM bits of higher-order Gray-QAM).
+//! - [`per_bit_mi_histogram_bits`] — a histogram-based empirical MI
+//!   estimate that integrates `0.5 p(i|0) log2(2 p(i|0) / (p(i|0) +
+//!   p(i|1))) + 0.5 p(i|1) log2(2 p(i|1) / (p(i|0) + p(i|1)))` over
+//!   the shared `lo..=hi` bin grid of the accumulator. Only available
+//!   when the accumulator was built via
+//!   [`PerBitLlrStats::with_histogram`]. Any mass that fell into
+//!   [`Histogram::underflow`] or [`Histogram::overflow`] is **excluded**
+//!   from the bin-by-bin sum; pick
+//!   [`HistogramConfig::min`]/[`HistogramConfig::max`] wide enough to
+//!   cover roughly ±5σ of the expected LLR distribution (and bins
+//!   narrow enough to resolve bimodal peaks) to keep the bias small.
+//!
+//! Summing per-bit MI across the `m` bit positions of a BICM receiver
+//! gives the **generalised mutual information (GMI)**:
+//!
+//! ```text
+//!   GMI = sum_{k=0}^{m-1} I(B_k; L_k)   (bits / symbol)
+//! ```
+//!
+//! GMI is a lower bound on the BICM capacity when demapping uses the
+//! max-log rule, and equals the BICM capacity for the exact log-MAP rule
+//! whenever per-bit independence holds (the canonical
+//! Caire/Taricco/Biglieri decomposition). Use [`GmiMethod`] to choose
+//! between the Gaussian-approximation sum (fast, a lower bound) and the
+//! histogram-based sum (closer to the truth for non-Gaussian per-bit
+//! channels, at the cost of requiring histogram accumulation). The
+//! histogram estimator's accuracy depends on the caller's choice of
+//! [`HistogramConfig::min`], [`HistogramConfig::max`], and
+//! [`HistogramConfig::num_bins`] — narrow bins and a range covering
+//! ±5σ of the expected LLR distribution keep both the tail-truncation
+//! bias and the discretisation bias under control.
 
 use core::num::NonZeroUsize;
 
@@ -650,6 +692,213 @@ fn gaussian_mi_lower_bound_bits(mean_abs_llr: f64) -> f64 {
     const H3: f64 = 1.1064;
     let mi = 1.0 - (-H1 * sigma.powf(2.0 * H2)).exp().powf(H3);
     mi.clamp(0.0, 1.0)
+}
+
+/// Strategy selector for the [`gmi_bits`] BICM capacity estimator.
+///
+/// BICM generalised mutual information is the sum of per-bit-channel
+/// mutual informations; this enum picks which per-bit MI estimator is
+/// summed. Both options return a value in `[0, m]` bits per symbol for
+/// an `m`-bit constellation label. The Gaussian-approximation variant
+/// is a strict *lower bound*; the histogram variant is the empirical
+/// MI restricted to the configured histogram range.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_coding::modem::analysis::GmiMethod;
+/// let m = GmiMethod::GaussianApproximation;
+/// assert!(matches!(m, GmiMethod::GaussianApproximation));
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum GmiMethod {
+    /// Sum the closed-form Gaussian-approximation lower bound on per-bit
+    /// MI (field
+    /// [`PerBitChannelStats::mutual_info_bits_gaussian_lower_bound`]).
+    ///
+    /// Always available and cheap. Strictly pessimistic whenever the
+    /// per-position conditional LLR distribution is non-Gaussian
+    /// (higher-order Gray-QAM inner-PAM bits in particular).
+    GaussianApproximation,
+    /// Sum the empirical histogram-based per-bit MI from
+    /// [`per_bit_mi_histogram_bits`].
+    ///
+    /// Requires the accumulator to have been built with
+    /// [`PerBitLlrStats::with_histogram`]. The estimator integrates the
+    /// two conditional densities only over the shared `[lo, hi]` bin
+    /// grid; tail mass that fell into [`Histogram::underflow`] or
+    /// [`Histogram::overflow`] is ignored. Widen the histogram range
+    /// and/or add bins to tighten the estimate on heavy-tailed LLR
+    /// distributions.
+    Histogram,
+}
+
+/// Empirical per-bit mutual information in bits, computed from the pair
+/// of conditional histograms attached to a [`PerBitChannelStats`].
+///
+/// Implements the equiprobable-prior estimator
+///
+/// ```text
+///   I(B_k; L_k) ~= sum_i [ 0.5 p(i|0) log2( 2 p(i|0) / (p(i|0) + p(i|1)) )
+///                        + 0.5 p(i|1) log2( 2 p(i|1) / (p(i|0) + p(i|1)) ) ]
+/// ```
+///
+/// where `p(i|b)` is the empirical bin-`i` probability of `L_k` given
+/// `B_k = b` (bin counts normalised by the **in-range** sample total,
+/// i.e. [`Histogram::total`] minus [`Histogram::underflow`] and
+/// [`Histogram::overflow`]). Bins with `p(i|0) = 0` or `p(i|1) = 0`
+/// contribute zero under the standard `0 * log 0 = 0` convention. The
+/// result is clipped into `[0, 1]`.
+///
+/// # Arguments
+///
+/// * `stats` - Per-bit-position stats with both conditional histograms
+///   populated.
+///
+/// # Returns
+///
+/// `Some(mi_bits)` with `mi_bits` in `[0, 1]`, or `None` if either
+/// histogram is absent, if the shared bin grid disagrees, or if either
+/// conditional stream has no in-range samples.
+///
+/// # Tail handling
+///
+/// Samples that landed in [`Histogram::underflow`] or
+/// [`Histogram::overflow`] are **excluded** from both the normalisation
+/// and the bin-by-bin sum. Callers that need to capture the full MI of
+/// heavy-tailed LLR distributions should widen
+/// [`HistogramConfig::min`] / [`HistogramConfig::max`] (a range of
+/// ±5σ of the expected LLR distribution typically suffices).
+///
+/// # Examples
+///
+/// ```
+/// use core::num::NonZeroUsize;
+/// use gf2_coding::llr::Llr;
+/// use gf2_coding::modem::analysis::{
+///     HistogramConfig, PerBitLlrStats, per_bit_mi_histogram_bits,
+/// };
+///
+/// // Perfectly-separated conditional distributions -> MI ~= 1 bit.
+/// let cfg = HistogramConfig {
+///     min: -4.0,
+///     max: 4.0,
+///     num_bins: NonZeroUsize::new(8).unwrap(),
+/// };
+/// let mut s = PerBitLlrStats::new(1).with_histogram(cfg);
+/// for _ in 0..128 {
+///     s.accumulate(&[Llr::new(3.0)], &[false]);
+///     s.accumulate(&[Llr::new(-3.0)], &[true]);
+/// }
+/// let r = s.report();
+/// let mi = per_bit_mi_histogram_bits(&r[0]).unwrap();
+/// assert!(mi > 0.99);
+/// ```
+///
+/// # Complexity
+///
+/// O(`num_bins`).
+pub fn per_bit_mi_histogram_bits(stats: &PerBitChannelStats) -> Option<f64> {
+    let h0 = stats.hist_bit0.as_ref()?;
+    let h1 = stats.hist_bit1.as_ref()?;
+    if h0.bins().len() != h1.bins().len() {
+        return None;
+    }
+    let n0: u64 = h0.bins().iter().sum();
+    let n1: u64 = h1.bins().iter().sum();
+    if n0 == 0 || n1 == 0 {
+        return None;
+    }
+    let inv_n0 = 1.0 / (n0 as f64);
+    let inv_n1 = 1.0 / (n1 as f64);
+    let mut mi = 0.0f64;
+    for (c0, c1) in h0.bins().iter().zip(h1.bins().iter()) {
+        let p0 = (*c0 as f64) * inv_n0;
+        let p1 = (*c1 as f64) * inv_n1;
+        let denom = p0 + p1;
+        if denom <= 0.0 {
+            continue;
+        }
+        if p0 > 0.0 {
+            mi += 0.5 * p0 * (2.0 * p0 / denom).log2();
+        }
+        if p1 > 0.0 {
+            mi += 0.5 * p1 * (2.0 * p1 / denom).log2();
+        }
+    }
+    Some(mi.clamp(0.0, 1.0))
+}
+
+/// Generalised mutual information (BICM capacity estimate) in bits per
+/// symbol.
+///
+/// For a BICM receiver that treats the `m` per-position bit channels
+/// as independent, the GMI is the sum of per-bit-channel mutual
+/// informations. This function sums the MI estimator selected by
+/// `method` across all entries of `stats`.
+///
+/// GMI is a **lower bound** on BICM capacity when the demapper uses the
+/// max-log rule, and **equals** the BICM capacity for the exact log-MAP
+/// rule whenever the per-bit-channel independence assumption holds.
+///
+/// # Arguments
+///
+/// * `stats` - One [`PerBitChannelStats`] per bit position, typically
+///   the output of [`PerBitLlrStats::report`].
+/// * `method` - Which per-bit MI estimator to sum.
+///
+/// # Returns
+///
+/// GMI in bits per symbol, in the range `[0, stats.len()]`.
+///
+/// # Panics
+///
+/// Panics with a clear message when `method == GmiMethod::Histogram`
+/// and any entry of `stats` lacks a conditional histogram or otherwise
+/// causes [`per_bit_mi_histogram_bits`] to return `None`. The
+/// Gaussian-approximation variant never panics.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_coding::llr::Llr;
+/// use gf2_coding::modem::analysis::{gmi_bits, GmiMethod, PerBitLlrStats};
+///
+/// let mut s = PerBitLlrStats::new(2);
+/// s.accumulate(
+///     &[Llr::new(4.0), Llr::new(-4.0), Llr::new(-4.0), Llr::new(4.0)],
+///     &[false, true, true, false],
+/// );
+/// let report = s.report();
+/// let gmi = gmi_bits(&report, GmiMethod::GaussianApproximation);
+/// assert!((0.0..=2.0).contains(&gmi));
+/// ```
+///
+/// # Complexity
+///
+/// O(`stats.len()`) for the Gaussian variant; O(`stats.len() *
+/// num_bins`) for the histogram variant.
+pub fn gmi_bits(stats: &[PerBitChannelStats], method: GmiMethod) -> f64 {
+    match method {
+        GmiMethod::GaussianApproximation => stats
+            .iter()
+            .map(|s| s.mutual_info_bits_gaussian_lower_bound)
+            .sum(),
+        GmiMethod::Histogram => stats
+            .iter()
+            .enumerate()
+            .map(|(k, s)| {
+                per_bit_mi_histogram_bits(s).unwrap_or_else(|| {
+                    panic!(
+                        "gmi_bits: GmiMethod::Histogram requires both conditional \
+                         histograms at bit position {k}; build the accumulator \
+                         via PerBitLlrStats::with_histogram and ensure both \
+                         conditional streams received samples"
+                    )
+                })
+            })
+            .sum(),
+    }
 }
 
 /// Per-bit-position LLR statistics accumulator.
@@ -1333,5 +1582,171 @@ mod tests {
             prop_assert!(hi + 1e-12 >= lo,
                 "non-monotone: mi(a={a})={lo}, mi(a+delta={}) = {hi}", a + delta);
         }
+
+        /// For any valid histogram-backed accumulator, the histogram GMI
+        /// must lie in `[0, m]` bits/symbol.
+        #[test]
+        fn test_prop_gmi_histogram_bounded_by_m(
+            seed in 0u64..1024,
+            m in 1u8..=4,
+            batch in 4usize..=64,
+        ) {
+            use gf2_core::rng::Lcg;
+            let m_us = m as usize;
+            let mut rng = Lcg::new(seed);
+            let n = batch * m_us;
+            // Symmetric LLR-like samples in [-8, 8].
+            let llrs: Vec<Llr> = (0..n)
+                .map(|_| Llr::new((rng.next_unit_f32() * 2.0 - 1.0) * 8.0))
+                .collect();
+            let truth: Vec<bool> = (0..n).map(|_| rng.next_u64() & 1 == 1).collect();
+
+            let cfg = HistogramConfig {
+                min: -12.0,
+                max: 12.0,
+                num_bins: NonZeroUsize::new(24).unwrap(),
+            };
+            let mut s = PerBitLlrStats::new(m).with_histogram(cfg);
+            s.accumulate(&llrs, &truth);
+            let r = s.report();
+
+            // If any bit position never saw both truth=0 and truth=1,
+            // the histogram estimator returns None; skip the test case.
+            let all_populated = r.iter().all(|p| {
+                let h0 = p.hist_bit0.as_ref().unwrap();
+                let h1 = p.hist_bit1.as_ref().unwrap();
+                h0.bins().iter().any(|&c| c > 0) && h1.bins().iter().any(|&c| c > 0)
+            });
+            prop_assume!(all_populated);
+
+            let gmi = gmi_bits(&r, GmiMethod::Histogram);
+            prop_assert!(gmi >= -1e-12,
+                "gmi_bits (histogram) went negative: {gmi}");
+            prop_assert!(gmi <= m as f64 + 1e-12,
+                "gmi_bits (histogram) {gmi} exceeds m={m}");
+
+            // Gaussian-approximation variant is always callable and
+            // obeys the same bound.
+            let gmi_g = gmi_bits(&r, GmiMethod::GaussianApproximation);
+            prop_assert!((0.0..=m as f64 + 1e-12).contains(&gmi_g),
+                "gmi_bits (gaussian) {gmi_g} out of [0, m={m}]");
+        }
+    }
+
+    // ----- MI / GMI tests ------------------------------------------------
+
+    /// Builds a [`PerBitLlrStats`] with a single bit position whose two
+    /// conditional histograms are populated from pre-chosen LLR samples.
+    fn single_bit_stats_with_hist(
+        cfg: HistogramConfig,
+        xs_bit0: &[f32],
+        xs_bit1: &[f32],
+    ) -> PerBitChannelStats {
+        let mut s = PerBitLlrStats::new(1).with_histogram(cfg);
+        let llrs_bit0: Vec<Llr> = xs_bit0.iter().map(|&x| Llr::new(x)).collect();
+        let truth_bit0 = vec![false; xs_bit0.len()];
+        s.accumulate(&llrs_bit0, &truth_bit0);
+        let llrs_bit1: Vec<Llr> = xs_bit1.iter().map(|&x| Llr::new(x)).collect();
+        let truth_bit1 = vec![true; xs_bit1.len()];
+        s.accumulate(&llrs_bit1, &truth_bit1);
+        s.report().into_iter().next().unwrap()
+    }
+
+    #[test]
+    fn test_per_bit_mi_histogram_bits_zero_noise() {
+        // Perfect separation: bit=0 samples at +3, bit=1 samples at -3.
+        // Bin grid includes both, so empirical MI must saturate at 1 bit.
+        let cfg = HistogramConfig {
+            min: -4.0,
+            max: 4.0,
+            num_bins: NonZeroUsize::new(8).unwrap(),
+        };
+        let xs0 = vec![3.0_f32; 256];
+        let xs1 = vec![-3.0_f32; 256];
+        let stats = single_bit_stats_with_hist(cfg, &xs0, &xs1);
+        let mi = per_bit_mi_histogram_bits(&stats).expect("histograms present");
+        assert!(
+            (mi - 1.0).abs() < 1e-9,
+            "zero-noise MI should saturate at 1 bit, got {mi}"
+        );
+    }
+
+    #[test]
+    fn test_per_bit_mi_histogram_bits_pure_noise() {
+        // Identical conditional distributions -> MI is exactly 0.
+        let cfg = HistogramConfig {
+            min: -4.0,
+            max: 4.0,
+            num_bins: NonZeroUsize::new(8).unwrap(),
+        };
+        let xs = vec![0.5_f32; 64];
+        let stats = single_bit_stats_with_hist(cfg, &xs, &xs);
+        let mi = per_bit_mi_histogram_bits(&stats).expect("histograms present");
+        assert!(mi.abs() < 1e-12, "pure-noise MI should be 0, got {mi}");
+    }
+
+    #[test]
+    fn test_per_bit_mi_histogram_bits_requires_histograms() {
+        // Accumulator without histograms: MI estimator must return None.
+        let mut s = PerBitLlrStats::new(1);
+        s.accumulate(&[Llr::new(2.0), Llr::new(-2.0)], &[false, true]);
+        let r = s.report();
+        assert!(per_bit_mi_histogram_bits(&r[0]).is_none());
+    }
+
+    #[test]
+    fn test_gmi_gaussian_approximation_sums_per_bit_mi() {
+        // The Gaussian-approximation GMI is just the sum of the
+        // Gaussian-lower-bound fields on each PerBitChannelStats.
+        use gf2_core::rng::Lcg;
+        let mut rng = Lcg::new(0xC0FFEE);
+        let m = 3;
+        let n_syms = 64;
+        let llrs: Vec<Llr> = (0..n_syms * m)
+            .map(|_| Llr::new((rng.next_unit_f32() * 2.0 - 1.0) * 5.0))
+            .collect();
+        let truth: Vec<bool> = (0..n_syms * m).map(|_| rng.next_u64() & 1 == 1).collect();
+        let mut s = PerBitLlrStats::new(m as u8);
+        s.accumulate(&llrs, &truth);
+        let r = s.report();
+        let expected: f64 = r
+            .iter()
+            .map(|p| p.mutual_info_bits_gaussian_lower_bound)
+            .sum();
+        let actual = gmi_bits(&r, GmiMethod::GaussianApproximation);
+        assert!(
+            (actual - expected).abs() < 1e-12,
+            "gmi_bits(GaussianApproximation) should sum per-bit MI fields: \
+             expected={expected}, actual={actual}"
+        );
+    }
+
+    #[test]
+    fn test_gmi_histogram_matches_single_bit() {
+        // For m = 1, GMI(Histogram) must equal per_bit_mi_histogram_bits
+        // on the single position.
+        let cfg = HistogramConfig {
+            min: -4.0,
+            max: 4.0,
+            num_bins: NonZeroUsize::new(16).unwrap(),
+        };
+        let xs0: Vec<f32> = (0..128).map(|i| 1.5 + (i as f32) * 0.01).collect();
+        let xs1: Vec<f32> = (0..128).map(|i| -1.5 + (i as f32) * 0.01).collect();
+        let stats = single_bit_stats_with_hist(cfg, &xs0, &xs1);
+        let per_bit = per_bit_mi_histogram_bits(&stats).unwrap();
+        let gmi = gmi_bits(std::slice::from_ref(&stats), GmiMethod::Histogram);
+        assert!(
+            (gmi - per_bit).abs() < 1e-12,
+            "m=1 GMI(Histogram) should equal per-bit MI: per_bit={per_bit}, gmi={gmi}"
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "GmiMethod::Histogram requires both conditional histograms")]
+    fn test_gmi_histogram_panics_without_histograms() {
+        let mut s = PerBitLlrStats::new(1);
+        s.accumulate(&[Llr::new(2.0)], &[false]);
+        let r = s.report();
+        let _ = gmi_bits(&r, GmiMethod::Histogram);
     }
 }
