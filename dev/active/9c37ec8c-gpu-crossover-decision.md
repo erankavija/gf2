@@ -12,12 +12,16 @@ through it by default, and do not remove it.
 
 ## Executive summary
 
-The HIP/ROCm max-log Gray-QAM demapper on gfx1030 **already wins over
-the CPU AVX2 fast path at ≥1024 symbols for every supported order**,
-breaks even at ~256 symbols for 16/64-QAM, and grows to a **decisive
-~27× speedup at 16384-symbol 256-QAM**. The CPU AVX2 fast path itself
-is already ~2.0–2.7× faster than the scalar fallback on this host, so
-the GPU win is measured against a genuinely optimized CPU baseline.
+The HIP/ROCm max-log Gray-QAM demapper on gfx1030 wins over the CPU
+AVX2 fast path **only for large batches and/or high modulation orders**:
+measured crossover is at batch ≥ 1024 for 64/256-QAM, batch ≥ 4096 for
+16-QAM, and batch ≥ 16384 for QPSK. **The GPU always loses at batch = 256**
+across all orders (0.064×–0.48× CPU performance), and still loses at
+batch = 1024 for QPSK (0.24×) and 16-QAM (0.52×). Where it wins, the
+margin grows to a decisive **~27× speedup at 16384-symbol 256-QAM**.
+The CPU AVX2 fast path itself is ~2.0–2.7× faster than the scalar
+fallback on this host, so the GPU win is measured against a genuinely
+optimized CPU baseline.
 
 Despite the measured win we recommend **keep-experimental** rather than
 **ship** because:
@@ -130,31 +134,35 @@ differences at the crossover regime exceed the CI width by more than
 
 ### Consolidated throughput (Msymbol/s, higher is better)
 
-| order | batch | CPU scalar (est.) | CPU AVX2 | GPU |
-|------:|------:|------------------:|---------:|----:|
-|     4 |   256 |              0.37 |    0.70  | 0.045 |
-|     4 |  1024 |              0.36 |    0.67  | 0.018 |
-|     4 |  4096 |              0.36 |    0.73  | 0.066 |
-|     4 | 16384 |              0.36 |    0.73  | 0.218 |
-|    16 |   256 |              0.28 |    0.70  | 0.044 |
-|    16 |  1024 |              0.28 |    0.65  | 0.270 |
-|    16 |  4096 |              0.27 |    0.59  | 0.614 |
-|    16 | 16384 |              0.27 |    0.57  | 1.831 |
-|    64 |   256 |              0.20 |    0.53  | 0.043 |
-|    64 |  1024 |              0.20 |    0.52  | 0.855 |
-|    64 |  4096 |              0.20 |    0.50  | 1.697 |
-|    64 | 16384 |              0.20 |    0.52  | 5.809 |
-|   256 |   256 |              0.17 |    0.42  | 0.040 |
-|   256 |  1024 |              0.17 |    0.41  | 0.793 |
-|   256 |  4096 |              0.17 |    0.41  | 2.605 |
-|   256 | 16384 |              0.17 |    0.40  | 4.877 |
+| order | batch | CPU AVX2 | GPU   |
+|------:|------:|---------:|------:|
+|     4 |   256 |    0.70  | 0.045 |
+|     4 |  1024 |    0.67  | 0.018 |
+|     4 |  4096 |    0.73  | 0.066 |
+|     4 | 16384 |    0.73  | 0.218 |
+|    16 |   256 |    0.70  | 0.044 |
+|    16 |  1024 |    0.65  | 0.270 |
+|    16 |  4096 |    0.59  | 0.614 |
+|    16 | 16384 |    0.57  | 1.831 |
+|    64 |   256 |    0.53  | 0.043 |
+|    64 |  1024 |    0.52  | 0.855 |
+|    64 |  4096 |    0.50  | 1.697 |
+|    64 | 16384 |    0.52  | 5.809 |
+|   256 |   256 |    0.42  | 0.040 |
+|   256 |  1024 |    0.41  | 0.793 |
+|   256 |  4096 |    0.41  | 2.605 |
+|   256 | 16384 |    0.40  | 4.877 |
 
-("CPU scalar (est.)" extrapolates the single-axis scalar kernel back to
-two-axis QAM + validation + scratch overhead by applying the measured
-AVX2-path full-demapper numbers and the per-axis AVX2/scalar ratio;
-actual scalar full-demapper numbers would need the AVX2 dispatch
-disabled at runtime, which the current `FastGrayQamDemapper` API does
-not expose.)
+CPU AVX2 numbers come from `FastGrayQamDemapper::demap_llrs` (full
+demapper) via the GPU-vs-CPU criterion bench. GPU numbers come from
+`GpuGrayQamSoftDemapper::demap_llrs`. The scalar full-demapper
+throughput is not tabulated here because `FastGrayQamDemapper`'s
+kernel dispatch is runtime-detected and cannot be pinned to scalar
+from its public API; for the dispatch-cost question the per-axis
+kernel table above is the right signal, and `modem_cpu.rs` plus the
+companion `modem_generic_vs_fast.rs` bench cover the full-demapper
+AVX2-vs-reference-path comparison (reference path is scalar f64 by
+construction).
 
 ## Crossover analysis
 
