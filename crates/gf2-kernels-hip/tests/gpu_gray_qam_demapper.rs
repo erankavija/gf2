@@ -150,14 +150,19 @@ fn test_gpu_gray_qam_empty_batch() {
     assert!(out.is_empty());
 }
 
-/// Regression test: the GPU adapter must refuse `DemapMethod::ExactLogMap`
-/// with a descriptive panic instead of silently substituting max-log.
+/// Regression test: the GPU adapter must refuse `DemapMethod::ExactLogMap`.
 ///
-/// The underlying HIP kernel implements only max-log. The adapter's trait
-/// contract is to "honor the requested method or panic" — see
-/// `GpuGrayQamSoftDemapper::demap_llrs` doc comment.
+/// The underlying HIP kernel implements only max-log. The adapter encodes
+/// that limitation by narrowing the advertised [`super::ModemCapabilities`]
+/// via [`BatchSoftDemapper::spec`] so the *shared*
+/// `validate_demap_input` pre-flight rejects `ExactLogMap` with the
+/// canonical "method not advertised" message. This test pins that
+/// behavior: building a Gray-QAM preset via the public constructor,
+/// handing it to the GPU adapter, and asking for `ExactLogMap` must
+/// panic through the validator, not through any adapter-specific
+/// special case.
 #[test]
-#[should_panic(expected = "GpuGrayQamSoftDemapper::demap_llrs: GPU adapter only implements")]
+#[should_panic(expected = "spec does not advertise ExactLogMap support")]
 fn test_gpu_gray_qam_rejects_exact_log_map() {
     let spec = ModemSpec::<f32>::gray_square_qam(16);
     let batch = 8usize;
@@ -173,4 +178,19 @@ fn test_gpu_gray_qam_rejects_exact_log_map() {
     let gpu = GpuGrayQamSoftDemapper::new(spec, batch).unwrap();
     let mut out = vec![Llr::new(0.0); batch * 4];
     gpu.demap_llrs(input, &mut out);
+}
+
+/// Positive metadata test: after construction the adapter's advertised
+/// capabilities honestly reflect the kernel's support matrix — MaxLog
+/// only, ExactLogMap withheld.
+#[test]
+fn test_gpu_gray_qam_spec_capabilities_advertise_max_log_only() {
+    let spec = ModemSpec::<f32>::gray_square_qam(16);
+    let gpu = GpuGrayQamSoftDemapper::new(spec, 16).unwrap();
+    let caps = gpu.spec().capabilities();
+    assert!(
+        !caps.supports_exact_log_map,
+        "GPU adapter must not advertise ExactLogMap"
+    );
+    assert!(caps.supports_max_log, "GPU adapter must advertise MaxLog");
 }
