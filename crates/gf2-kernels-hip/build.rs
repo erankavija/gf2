@@ -5,15 +5,17 @@ fn main() {
     let rocm_path = env::var("ROCM_PATH").unwrap_or_else(|_| "/opt/rocm".to_string());
     let hipcc = format!("{rocm_path}/bin/hipcc");
 
-    // Compile HIP kernel to static library
+    // Compile HIP kernels to a single static library. Both kernels share
+    // the same hipcc flags; adding more kernels is a one-liner here.
     cc::Build::new()
         .compiler(&hipcc)
         .file("hip/bcjr_kernel.hip")
+        .file("hip/gray_qam_demapper.hip")
         .flag("--offload-arch=gfx1030")
         .flag("-fPIC")
         .flag("-O3")
         .cpp(true)
-        .compile("bcjr_hip");
+        .compile("gf2_kernels_hip");
 
     // Link against HIP runtime
     let lib_path = format!("{rocm_path}/lib");
@@ -22,6 +24,7 @@ fn main() {
 
     // Rerun if kernel source changes
     println!("cargo:rerun-if-changed=hip/bcjr_kernel.hip");
+    println!("cargo:rerun-if-changed=hip/gray_qam_demapper.hip");
     println!("cargo:rerun-if-env-changed=ROCM_PATH");
 
     // Export the ROCm path for runtime library resolution
