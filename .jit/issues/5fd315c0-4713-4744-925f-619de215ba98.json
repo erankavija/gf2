@@ -2,7 +2,7 @@
   "id": "5fd315c0-4713-4744-925f-619de215ba98",
   "title": "Delete duplicated modem implementations",
   "description": "Delete modem logic that becomes redundant after the BPSK and QPSK migration is complete. This task exists to enforce a single shared modem implementation rather than multiple compatibility-era implementations.\n\n## Success Criteria\n\n- [ ] Duplicated modem code paths are removed cleanly rather than deprecated.\n- [ ] One coherent shared modem implementation remains as the source of truth for functionality.\n- [ ] Custom or parallel modem implementations do not remain scattered across the codebase after cleanup.\n- [ ] Legacy cleanup does not break the migrated public entry points.\n\n## Notes\n\nDo not add deprecation shims, compatibility aliases, or transitional duplicated logic here. The expected outcome is direct deletion of superseded modem code once the shared framework-backed path is in place.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "high",
   "assignee": "agent:claude",
   "dependencies": [
@@ -16,6 +16,21 @@
     "doc-review"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-14T15:51:55.179973606Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-14T15:53:11.352231557Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-14T15:59:31.290027068Z"
+    },
     "tdd-reminder": {
       "status": "passed",
       "updated_by": "agent:project-lead",
@@ -31,5 +46,5 @@
     "story:legacy-modem-surface-migration"
   ],
   "created_at": "2026-04-12T19:41:45.869446170+00:00",
-  "updated_at": "2026-04-14T15:25:03.055765518+00:00"
+  "updated_at": "2026-04-14T15:59:32.086602258+00:00"
 }

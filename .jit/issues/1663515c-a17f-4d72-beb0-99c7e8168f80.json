@@ -2,7 +2,7 @@
   "id": "1663515c-a17f-4d72-beb0-99c7e8168f80",
   "title": "Add generic versus fast-path modem benchmarks",
   "description": "Measure the reference arbitrary-constellation path against the Gray-QAM fast path and capture the main hot loops.\n\n## Success Criteria\n\n- [ ] Benchmarks compare the generic modem path against the optimized Gray-QAM fast path.\n- [ ] The benchmark set captures the main hot loops that matter for future optimization work.\n- [ ] Results are usable as a baseline for later SIMD and accelerator tuning.\n\n## Notes\n\nThis task provides the performance baseline needed by the epic success criteria.",
-  "state": "backlog",
+  "state": "ready",
   "priority": "normal",
   "assignee": null,
   "dependencies": [
@@ -25,5 +25,5 @@
     "story:modem-ergonomics-validation-benchmarks"
   ],
   "created_at": "2026-04-12T19:41:45.873463053+00:00",
-  "updated_at": "2026-04-12T19:42:16.680754215+00:00"
+  "updated_at": "2026-04-14T15:59:32.126457227+00:00"
 }

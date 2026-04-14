@@ -2,9 +2,9 @@
   "id": "9c37ec8c-f310-47f8-b54e-ba4a41143b0c",
   "title": "Measure GPU crossover and document the decision",
   "description": "Benchmark the GPU prototype against CPU scalar and SIMD demappers and decide whether the modem GPU path should ship, remain experimental, or be deferred.\n\n## Success Criteria\n\n- [ ] Benchmarks identify the batch-size crossover region versus CPU scalar and SIMD baselines.\n- [ ] The outcome is documented clearly as ship, keep-experimental, or defer.\n- [ ] The conclusion reflects measured data rather than speculation.\n\n## Notes\n\nThis task closes the conditional GPU story with an evidence-based decision.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [
     "71c19c32-3a80-4df8-9640-0fd5e8d6653d"
   ],
@@ -14,7 +14,13 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-14T17:18:03.454575712Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -24,5 +30,5 @@
     "story:gpu-demapper-prototype"
   ],
   "created_at": "2026-04-12T19:41:45.875377574+00:00",
-  "updated_at": "2026-04-14T14:22:54.517441494+00:00"
+  "updated_at": "2026-04-14T17:18:05.038741604+00:00"
 }

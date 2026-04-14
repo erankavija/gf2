@@ -2,7 +2,7 @@
   "id": "24144d1a-f24a-4f00-a69e-da920f7f7a4d",
   "title": "Design the general modem core API",
   "description": "Define the public modem abstractions that separate constellation geometry, bit labeling, mapping, demapping, and channel integration. This story establishes the shared surface that all later modem work will build on.\n\n## Background\n\nThe current modem code is split across BPSK-specific AWGN helpers, a QPSK-only modulation module, and a fading wrapper that embeds QPSK assumptions. Before adding higher-order QAM or custom constellations, the crate needs a single batch-oriented modem API that can support both arbitrary research constellations and optimized built-in presets.\n\n## Success Criteria\n\n- [ ] Public modem types represent constellation points, bit labels, bits-per-symbol, normalization, and demapper method selection without embedding backend-specific assumptions.\n- [ ] Validated construction exists for user-defined constellations and built-in presets, including rejection of duplicate labels, incomplete labelings, and inconsistent bits-per-symbol.\n- [ ] Batch mapper and soft-demapper interfaces accept caller-provided buffers and define a deterministic output LLR ordering that maps back to symbol bit positions.\n- [ ] The issue-linked design and API surface identify how current BPSK, QPSK, and fading-facing wrappers will delegate to modem-owned replacements.\n\n## Notes\n\nThis story should anchor the type and trait design for the follow-on reference path, Gray-QAM fast path, and simulation integration work.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "high",
   "assignee": "agent:claude",
   "dependencies": [
@@ -15,6 +15,16 @@
     "doc-review"
   ],
   "gates_status": {
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-13T15:07:46.666533682Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-14T16:20:14.151605568Z"
+    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
@@ -24,16 +34,6 @@
       "status": "passed",
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-13T15:16:00.931154989Z"
-    },
-    "tdd-reminder": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-13T15:07:46.666533682Z"
-    },
-    "code-review": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-13T21:41:05.878460906Z"
     }
   },
   "context": {},
@@ -52,5 +52,5 @@
     "epic:d4851c3d"
   ],
   "created_at": "2026-04-12T19:39:51.663910092+00:00",
-  "updated_at": "2026-04-13T21:47:54.049141038+00:00"
+  "updated_at": "2026-04-14T16:30:04.535794301+00:00"
 }
