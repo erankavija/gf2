@@ -46,7 +46,8 @@ Coding theory algorithms for error correction:
 - **DVB-T2 LDPC**: All 12 configurations validated (202/202 blocks match test vectors)
 - **Parallel batch operations**: BCH and LDPC with rayon support
 - **Soft-decision LLR**: Operations for iterative decoding
-- **Channel models**: AWGN simulation with BPSK modulation
+- **Modem framework**: BPSK and Gray-coded QPSK/16/64/256-QAM presets plus a validated builder for arbitrary custom constellations; reference (exact log-MAP) and optimized (Gray-QAM fast) backends selected through `ModemSpec::preferred_*` factories
+- **Channel models**: AWGN and Rician fading integrations on top of the modem framework
 
 See [crates/gf2-coding/README.md](crates/gf2-coding/README.md) for detailed features and examples.
 
@@ -154,7 +155,8 @@ The project roadmap is divided into strategic goals (this document) and detailed
 - ✅ LDPC codes: All 12 configurations validated
 - ✅ Parallel batch operations with rayon
 - 🔧 CPU parallelization for real-time decoding (50-100 Mbps target)
-- 🔮 QAM modulation and full FEC chain (planned)
+- ✅ Modem framework: BPSK + Gray-coded QPSK/16/64/256-QAM + arbitrary custom constellations (soft-decision demapping, AWGN and Rician fading integration)
+- 🔮 Full coded-modem FEC chain (planned)
 
 ## Development
 

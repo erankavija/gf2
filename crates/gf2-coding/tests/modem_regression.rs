@@ -377,35 +377,70 @@ fn test_bpsk_awgn_channel_ber_locked() {
 
 #[test]
 fn test_qpsk_rician_channel_locked() {
-    // Similar locked-value test for the migrated Rician fading link.
-    // The legacy entry point routes through the modem framework; this
-    // test guards against regressions in the adapter glue (interleaver,
-    // QPSK mapper, demapper, noise-scale conversion).
+    // Locked-value test for the migrated Rician fading link. The legacy
+    // entry point routes through the modem framework; this test guards
+    // against regressions in the adapter glue (interleaver, QPSK mapper,
+    // demapper, noise-scale conversion).
+    //
+    // Two-sided protection:
+    //   1. Band the high-SNR BER: regression to an open-loop /
+    //      coefficient-swapped implementation collapses BER toward ~0.5,
+    //      which trips the `< 0.25` upper bound.
+    //   2. Separately catch the "noise scale collapsed to 0" failure mode
+    //      at a low Eb/N0: if the noise step is silently dropped, BER
+    //      at -2 dB also collapses to 0 even though the channel is
+    //      deep in the noise-limited regime. The lower-bound assertion
+    //      below forces at least one bit error across a 4 096-bit
+    //      low-SNR run, which is trivially satisfied by any non-zero
+    //      noise floor but impossible under a dropped-noise regression.
     let channel = QpskRicianChannelModel::new(RicianConfig::fig8());
     let n_bits = 1024; // exact `frame_bits()` for fig8.
     let tx_bits = bit_stream(0xF1_0FAD_EF16_0008u64, n_bits);
     let tx_bv = bits_to_bitvec(&tx_bits);
-    let mut rng = StdRng::seed_from_u64(0xFADE_5EED);
 
-    let llrs = channel.transmit_and_demodulate(&tx_bv, 10.0, 1.0, &mut rng);
-    assert_eq!(llrs.len(), n_bits);
-
-    let mut errors = 0usize;
-    for (i, llr) in llrs.iter().enumerate() {
-        if llr.hard_decision() != tx_bits[i] {
-            errors += 1;
-        }
+    // High-SNR sweep: band the BER.
+    {
+        let mut rng = StdRng::seed_from_u64(0xFADE_5EED);
+        let llrs = channel.transmit_and_demodulate(&tx_bv, 10.0, 1.0, &mut rng);
+        assert_eq!(llrs.len(), n_bits);
+        let errors = llrs
+            .iter()
+            .zip(tx_bits.iter())
+            .filter(|(l, &b)| l.hard_decision() != b)
+            .count();
+        let ber = errors as f64 / n_bits as f64;
+        assert!(
+            ber < 0.25,
+            "QpskRicianChannelModel BER at 10 dB = {ber} too high ({errors}/{n_bits})"
+        );
     }
-    let ber = errors as f64 / n_bits as f64;
-    // QPSK over Rician (K=5) at 10 dB with the current framework-backed
-    // adapter produces a small but nonzero BER. Lock a loose band: if
-    // the adapter regresses to an open-loop or coefficient-swapped
-    // implementation the BER collapses to ~0.5; if the noise-scale
-    // helper breaks in the other direction the BER collapses to 0.
-    assert!(
-        ber < 0.25,
-        "QpskRicianChannelModel BER at 10 dB = {ber} too high ({errors}/{n_bits})"
-    );
+
+    // Noise-floor probe at low SNR: four independent 1024-bit frames,
+    // each at Eb/N0 = -2 dB. If the noise step is dropped the aggregate
+    // error count collapses to 0; otherwise it should sit near the
+    // Rician BER curve (well above a single bit).
+    {
+        let mut rng = StdRng::seed_from_u64(0xD15E_A5ED);
+        let mut total_errors = 0usize;
+        let mut total_bits = 0usize;
+        for frame_seed in 0..4u64 {
+            let tx = bit_stream(0xD15E_A5ED_u64.wrapping_add(frame_seed), n_bits);
+            let tx_bv = bits_to_bitvec(&tx);
+            let llrs = channel.transmit_and_demodulate(&tx_bv, -2.0, 1.0, &mut rng);
+            assert_eq!(llrs.len(), n_bits);
+            total_errors += llrs
+                .iter()
+                .zip(tx.iter())
+                .filter(|(l, &b)| l.hard_decision() != b)
+                .count();
+            total_bits += n_bits;
+        }
+        assert!(
+            total_errors > 0,
+            "QpskRicianChannelModel at -2 dB Eb/N0 produced zero bit errors over {total_bits} bits; \
+             this indicates the adapter's noise step has silently collapsed to 0"
+        );
+    }
 }
 
 // ---------------------------------------------------------------------

@@ -331,6 +331,23 @@ pub trait BatchSoftDemapper<S: ModemScalar> {
     fn demap_llrs(&self, input: DemapInput<'_, S>, out_llrs: &mut [Llr]);
 }
 
+/// Blanket implementation so `Box<dyn BatchSoftDemapper<S> + Send + Sync>`
+/// (the return type of [`super::ModemSpec::preferred_soft_demapper`])
+/// can be passed anywhere a `D: BatchSoftDemapper<S>` is required —
+/// notably to [`super::ModemChannelAdapter::new`] without the caller
+/// having to unwrap the box or name the concrete backend.
+impl<S: ModemScalar, T: BatchSoftDemapper<S> + ?Sized> BatchSoftDemapper<S> for Box<T> {
+    #[inline]
+    fn spec(&self) -> ModemView<'_, S> {
+        (**self).spec()
+    }
+
+    #[inline]
+    fn demap_llrs(&self, input: DemapInput<'_, S>, out_llrs: &mut [Llr]) {
+        (**self).demap_llrs(input, out_llrs);
+    }
+}
+
 /// Batched hard demapper.
 ///
 /// Emits bit decisions (`bool`) rather than LLRs, in the same layout as

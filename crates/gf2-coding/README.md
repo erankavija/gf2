@@ -2,7 +2,7 @@
 
 Error-correcting code implementations and coding theory primitives built on `gf2-core`.
 
-`gf2-coding` provides implementations of linear block codes (Hamming, BCH, LDPC), convolutional codes with Viterbi decoding, and soft-decision decoding infrastructure for AWGN channel simulation.
+`gf2-coding` provides implementations of linear block codes (Hamming, BCH, LDPC), convolutional codes with Viterbi decoding, and a batch-oriented modem framework (BPSK, Gray-coded QPSK/16/64/256-QAM, and arbitrary custom constellations with soft-decision demapping) over AWGN and Rician fading channels.
 
 ## Quick Start
 
@@ -120,9 +120,9 @@ assert!(code.is_valid_codeword(&zero_cw));
 let _channel = BpskAwgnChannel;
 ```
 
-**Examples**: `dvb_t2_ldpc_basic`, `ldpc_awgn`, `qc_ldpc_demo`, `ldpc_cache_file_io`  
-**API docs**: [`LdpcCode`](https://docs.rs/gf2-coding/latest/gf2_coding/ldpc/struct.LdpcCode.html), [`BpskAwgnChannel`](https://docs.rs/gf2-coding/latest/gf2_coding/simulation/struct.BpskAwgnChannel.html)  
-**Guides**: [DVB_T2.md](docs/DVB_T2.md), [LDPC_PERFORMANCE.md](docs/LDPC_PERFORMANCE.md)
+**Examples**: `dvb_t2_ldpc_basic`, `ldpc_awgn`, `qc_ldpc_demo`, `ldpc_cache_file_io`, `modem_gray_qam_preset`, `modem_custom_constellation`, `modem_simulation_harness`
+**API docs**: [`LdpcCode`](https://docs.rs/gf2-coding/latest/gf2_coding/ldpc/struct.LdpcCode.html), [`ModemSpec`](https://docs.rs/gf2-coding/latest/gf2_coding/modem/struct.ModemSpec.html), [`BpskAwgnChannel`](https://docs.rs/gf2-coding/latest/gf2_coding/simulation/struct.BpskAwgnChannel.html), [`QpskRicianChannelModel`](https://docs.rs/gf2-coding/latest/gf2_coding/fading/struct.QpskRicianChannelModel.html)
+**Guides**: [DVB_T2.md](docs/DVB_T2.md), [LDPC_PERFORMANCE.md](docs/LDPC_PERFORMANCE.md), `crates/gf2-coding/src/modem/mod.rs` (module-level modem-framework guide)
 
 ### Advanced: Performance Optimization
 
