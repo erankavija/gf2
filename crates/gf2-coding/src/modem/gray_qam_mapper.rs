@@ -122,47 +122,20 @@ impl<S: ModemScalar> GrayQamMapper<S> {
         let spec = ModemSpec::<S>::gray_square_qam_with_scalar(order);
         let m_total = spec.bits_per_symbol();
         let is_bpsk = m_total == 1;
-        let (m_half, mask_half, table_len) = if is_bpsk {
-            (0u8, 0u16, 2usize)
+        let (m_half, mask_half) = if is_bpsk {
+            (0u8, 0u16)
         } else {
             let m_half = m_total / 2;
-            (m_half, (1u16 << m_half) - 1, 1usize << m_half)
+            (m_half, (1u16 << m_half) - 1)
         };
 
-        // Derive the PAM table from the preset's points. The preset
-        // guarantees consistency across all symbols that share an
-        // i-label / q-label; we debug-assert it here as a safety net.
-        let mut cached: Vec<Option<S>> = vec![None; table_len];
-        let view = spec.view();
-        if is_bpsk {
-            // Preset guarantees point(0) = (+1, 0), point(1) = (-1, 0).
-            cached[0] = Some(view.point(0).i);
-            cached[1] = Some(view.point(1).i);
-        } else {
-            for (idx, label) in view.labels().iter().enumerate() {
-                let i_label = ((label.bits >> m_half) & mask_half) as usize;
-                let q_label = (label.bits & mask_half) as usize;
-                let p = view.point(idx);
-                match cached[i_label] {
-                    None => cached[i_label] = Some(p.i),
-                    Some(existing) => debug_assert!(
-                        same_scalar::<S>(existing, p.i),
-                        "GrayQamMapper: inconsistent I level for i_label {i_label}"
-                    ),
-                }
-                match cached[q_label] {
-                    None => cached[q_label] = Some(p.q),
-                    Some(existing) => debug_assert!(
-                        same_scalar::<S>(existing, p.q),
-                        "GrayQamMapper: inconsistent Q level for q_label {q_label}"
-                    ),
-                }
-            }
-        }
-        let pam_levels: Vec<S> = cached
-            .into_iter()
-            .map(|v| v.expect("GrayQamMapper: preset missing PAM level entry"))
-            .collect();
+        // Cross-check the spec against the canonical Gray-square-QAM
+        // layout, then pull the PAM level table from the SSOT helper in
+        // `presets`. Both steps route through the same implementation as
+        // `FastGrayQamDemapper::new` so the mapper and demapper can
+        // never drift out of agreement on what "Gray square-QAM" means.
+        super::presets::assert_valid_gray_square_qam_spec(&spec.view());
+        let pam_levels: Vec<S> = super::presets::gray_pam_levels::<S>(m_total);
 
         Self {
             spec,
@@ -173,14 +146,34 @@ impl<S: ModemScalar> GrayQamMapper<S> {
             is_bpsk,
         }
     }
-}
 
-/// Helper used only inside `debug_assert!`: bit-identical compare through
-/// the lossless `to_f64` widening. Avoids depending on `PartialEq` beyond
-/// what `ModemScalar` provides (it only requires `PartialOrd`).
-#[inline]
-fn same_scalar<S: ModemScalar>(a: S, b: S) -> bool {
-    a.to_f64().to_bits() == b.to_f64().to_bits()
+    /// Returns the post-normalization Gray-PAM level table shared between
+    /// the I and Q axes.
+    ///
+    /// The table is indexed by the raw Gray-PAM axis label (MSB-first
+    /// within the `m/2`-bit half-label for QAM, or the single raw bit for
+    /// BPSK) and has length `1 << (m / 2)` for QAM or exactly `2` for
+    /// BPSK. Matches the accessor exposed by
+    /// [`super::FastGrayQamDemapper::pam_levels`] so alternate-backend
+    /// adapters can read the level table through a single obvious entry
+    /// point regardless of which side of the mapper/demapper they hold.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::modem::GrayQamMapper;
+    ///
+    /// let mapper = GrayQamMapper::from_preset_order(16);
+    /// assert_eq!(mapper.pam_levels().len(), 4);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
+    #[inline]
+    pub fn pam_levels(&self) -> &[S] {
+        &self.pam_levels
+    }
 }
 
 impl<S: ModemScalar> BatchMapper<S> for GrayQamMapper<S> {
