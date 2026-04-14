@@ -808,15 +808,8 @@ mod tests {
         ) {
             let n = 1usize << m;
 
-            // Deterministic permutation from seed (Fisher-Yates with a
-            // trivial LCG; no external rng dep needed).
-            let mut perm: Vec<u16> = (0..n as u16).collect();
-            let mut state = seed.wrapping_mul(6364136223846793005).wrapping_add(1);
-            for i in (1..n).rev() {
-                state = state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
-                let j = (state as usize) % (i + 1);
-                perm.swap(i, j);
-            }
+            // Deterministic permutation via the shared SSOT modem test LCG.
+            let perm = super::super::test_oracle::Lcg::permutation(seed, n);
 
             // Points on the unit circle at distinct angles; energy is
             // always 1 so normalization is trivially well-defined.

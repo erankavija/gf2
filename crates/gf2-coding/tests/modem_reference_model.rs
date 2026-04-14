@@ -16,44 +16,12 @@
 //!    builder entry point.
 
 use gf2_coding::llr::Llr;
+use gf2_coding::modem::test_oracle::Lcg;
 use gf2_coding::modem::{
     unpack_label_msb_first, BatchMapper, BatchSoftDemapper, BitChannelSemantics, DemapInput,
     DemapMethod, LabelWord, ModemCapabilities, ModemScalar, ModemSpec, ModemSpecBuilder,
     Normalization, ReferenceMapper, ReferenceSoftDemapper, SymbolPoint,
 };
-
-// ---------------------------------------------------------------------
-// Shared helpers
-// ---------------------------------------------------------------------
-
-/// Deterministic LCG-based Fisher-Yates permutation used when a test needs
-/// a reproducible, non-identity label assignment without pulling in an rng.
-fn lcg_permutation(seed: u64, n: usize) -> Vec<u16> {
-    let mut perm: Vec<u16> = (0..n as u16).collect();
-    let mut state = seed.wrapping_mul(6364136223846793005).wrapping_add(1);
-    for i in (1..n).rev() {
-        state = state
-            .wrapping_mul(6364136223846793005)
-            .wrapping_add(1442695040888963407);
-        let j = (state as usize) % (i + 1);
-        perm.swap(i, j);
-    }
-    perm
-}
-
-/// Deterministic pseudo-random label stream of length `batch` over
-/// `0..n`, seeded by `seed`. Used to drive the round-trip tests.
-fn lcg_label_stream(seed: u64, batch: usize, n: usize) -> Vec<u16> {
-    let mut state = seed.wrapping_mul(6364136223846793005).wrapping_add(1);
-    let mut labels = Vec::with_capacity(batch);
-    for _ in 0..batch {
-        state = state
-            .wrapping_mul(6364136223846793005)
-            .wrapping_add(1442695040888963407);
-        labels.push((state as usize % n) as u16);
-    }
-    labels
-}
 
 /// Brute-force exact log-MAP LLR for a single received sample, bit
 /// position, and noise variance.
@@ -107,7 +75,7 @@ fn snapshot_spec_f64<S: ModemScalar>(spec: &ModemSpec<S>) -> (Vec<(f64, f64)>, V
 fn check_round_trip_f64(spec: ModemSpec<f64>, seed: u64, batch: usize) {
     let bps = spec.bits_per_symbol();
     let n = spec.num_symbols();
-    let label_stream = lcg_label_stream(seed, batch, n);
+    let label_stream = Lcg::label_stream(seed, batch, n);
 
     // Build the input bit stream in MSB-first symbol-major order.
     let mut bits: Vec<bool> = Vec::with_capacity(batch * bps as usize);
@@ -342,7 +310,7 @@ fn test_oracle_random_bijection_matches_brute_force() {
     // oracle on a builder-built, non-preset constellation that is not
     // one of the three named representative specs above.
     let n = 8usize;
-    let perm = lcg_permutation(0x51EED, n);
+    let perm = Lcg::permutation(0x51EED, n);
     let points: Vec<SymbolPoint<f64>> = (0..n)
         .map(|k| {
             let theta = (k as f64) * core::f64::consts::TAU / (n as f64);

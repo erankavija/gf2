@@ -378,12 +378,12 @@ mod tests {
             let view = spec.view();
             let m = view.bits_per_symbol() as usize;
 
-            // Deterministic pseudo-random bit generator seeded by `seed`.
-            let mut state = seed | 1;
+            // Deterministic pseudo-random bit generator seeded by `seed`,
+            // routed through the shared SSOT modem test LCG.
+            let mut rng = super::super::test_oracle::Lcg::new(seed | 1);
             let mut bits = Vec::with_capacity(num_symbols * m);
             for _ in 0..(num_symbols * m) {
-                state = state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
-                bits.push((state >> 63) & 1 == 1);
+                bits.push((rng.next_u64() >> 63) & 1 == 1);
             }
             let mut oi = vec![0.0_f32; num_symbols];
             let mut oq = vec![0.0_f32; num_symbols];

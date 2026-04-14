@@ -1197,13 +1197,11 @@ mod property_tests {
             let fast = FastGrayQamDemapper::new(spec.clone());
             let reference = ReferenceSoftDemapper::new(spec);
 
-            let mut state = y_seed | 1;
-            let mut next = || {
-                state = state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
-                ((state >> 11) as f64 / ((1u64 << 53) as f64)) * 2.0 - 1.0
-            };
-            let rx_i: Vec<f64> = (0..n_sym).map(|_| next() * 1.5).collect();
-            let rx_q: Vec<f64> = (0..n_sym).map(|_| next() * 1.5).collect();
+            // Deterministic pseudo-random samples routed through the
+            // shared SSOT modem test LCG.
+            let mut rng = super::super::test_oracle::Lcg::new(y_seed | 1);
+            let rx_i: Vec<f64> = (0..n_sym).map(|_| rng.next_unit_f64() * 1.5).collect();
+            let rx_q: Vec<f64> = (0..n_sym).map(|_| rng.next_unit_f64() * 1.5).collect();
             let nv: Vec<f64> = (0..n_sym).map(|i| nv_base + (i as f64) * 0.01).collect();
 
             let input = DemapInput::<f64> {

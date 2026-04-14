@@ -170,6 +170,7 @@ impl<S: ModemScalar> BatchSoftDemapper<S> for ReferenceSoftDemapper<S> {
 
 #[cfg(test)]
 mod tests {
+    use super::super::test_oracle::Lcg;
     use super::super::{
         BatchSoftDemapper, DemapInput, DemapMethod, LabelWord, ModemSpec, ModemSpecBuilder,
         Normalization, SymbolPoint,
@@ -273,17 +274,14 @@ mod tests {
         }
         let demapper = ReferenceSoftDemapper::new(spec);
 
-        // 200 random labels at very low noise (pseudo-random via LCG).
+        // 200 random labels at very low noise — pseudo-random via the
+        // shared SSOT modem test LCG.
         let batch = 200usize;
-        let mut state: u64 = 0xC0FFEE;
+        let labels = Lcg::label_stream(0xC0FFEE, batch, n);
         let mut rx_i = Vec::with_capacity(batch);
         let mut rx_q = Vec::with_capacity(batch);
-        let mut labels = Vec::with_capacity(batch);
-        for _ in 0..batch {
-            state = state.wrapping_mul(6364136223846793005).wrapping_add(1);
-            let v = (state as usize) % n;
-            labels.push(v as u16);
-            let (i, q) = lab_to_iq[v];
+        for &v in &labels {
+            let (i, q) = lab_to_iq[v as usize];
             rx_i.push(i);
             rx_q.push(q);
         }
@@ -602,15 +600,8 @@ mod tests {
             y_scale in 0.1f32..1.5f32,
         ) {
             let n = 1usize << m;
-            // Deterministic permutation.
-            let mut perm: Vec<u16> = (0..n as u16).collect();
-            let mut state = seed.wrapping_mul(6364136223846793005).wrapping_add(1);
-            for i in (1..n).rev() {
-                state = state.wrapping_mul(6364136223846793005)
-                    .wrapping_add(1442695040888963407);
-                let j = (state as usize) % (i + 1);
-                perm.swap(i, j);
-            }
+            // Deterministic permutation via the shared SSOT modem test LCG.
+            let perm = Lcg::permutation(seed, n);
             // Points on a circle.
             let points: Vec<SymbolPoint<f32>> = (0..n)
                 .map(|k| {
@@ -633,9 +624,10 @@ mod tests {
             let demapper = ReferenceSoftDemapper::new(spec);
 
             // Construct a received sample not too far from some point.
-            state = state.wrapping_mul(6364136223846793005)
-                .wrapping_add(1442695040888963407);
-            let pick = (state as usize) % n;
+            // Seed a separate Lcg stream (mixed from `seed`) to choose
+            // which constellation point to perturb.
+            let pick = Lcg::new(seed ^ 0xD1B5_4A32_D192_ED03)
+                .next_bounded_usize(n);
             let (pi, pq) = pts[pick];
             let y_i = pi + 0.05 * y_scale;
             let y_q = pq - 0.03 * y_scale;
