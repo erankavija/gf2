@@ -55,29 +55,14 @@
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use gf2_coding::llr::Llr;
-use gf2_coding::modem::test_oracle::{bit_stream, Lcg};
 use gf2_coding::modem::{
     BatchMapper, BatchSoftDemapper, DemapInput, DemapMethod, FastGrayQamDemapper, GrayQamMapper,
     ModemSpec, ReferenceMapper, ReferenceSoftDemapper,
 };
 
-/// Deterministic bit pattern shared across the `reference` and `fast`
-/// sides of each comparison. Routed through the workspace SSOT
-/// `modem::test_oracle::bit_stream` helper.
-fn deterministic_bits(n_bits: usize) -> Vec<bool> {
-    bit_stream(0x9E37_79B9_7F4A_7C15, n_bits)
-}
-
-/// Deterministic received-sample triple `(rx_i, rx_q, noise_var)` for
-/// the demapper side. Uses the SSOT `Lcg` so bench inputs stay in
-/// lockstep with the modem test oracle.
-fn deterministic_rx(n: usize) -> (Vec<f32>, Vec<f32>, Vec<f32>) {
-    let mut rng = Lcg::new(0x9E37_79B9_7F4A_7C15);
-    let rx_i: Vec<f32> = (0..n).map(|_| rng.next_unit_f32()).collect();
-    let rx_q: Vec<f32> = (0..n).map(|_| rng.next_unit_f32()).collect();
-    let noise_var = vec![0.25_f32; n];
-    (rx_i, rx_q, noise_var)
-}
+#[path = "bench_support.rs"]
+mod bench_support;
+use bench_support::{deterministic_bits, deterministic_rx};
 
 const QAM_ORDERS: [usize; 4] = [4, 16, 64, 256];
 const BATCH_SIZES: [usize; 2] = [1024, 16384];

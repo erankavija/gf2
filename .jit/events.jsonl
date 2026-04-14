@@ -1953,3 +1953,10 @@
 {"type":"gate_failed","id":"4f0af8d2-7bd3-4448-b4f8-d7cca03b8186","issue_id":"f80407f8-05a7-464b-b845-1c1c41842196","timestamp":"2026-04-14T22:40:14.440369914Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
 {"type":"gate_failed","id":"daa97383-c223-4138-a3c0-9d086077bf17","issue_id":"1663515c-a17f-4d72-beb0-99c7e8168f80","timestamp":"2026-04-14T22:42:48.982715713Z","gate_key":"code-review","updated_by":"auto:executor"}
 {"type":"gate_failed","id":"4058a033-b065-4e8e-aa18-33e9cab26362","issue_id":"f80407f8-05a7-464b-b845-1c1c41842196","timestamp":"2026-04-14T22:43:34.412317228Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"33ca138c-f100-426e-953c-ac2fedf309a1","issue_id":"dafb938a-405a-472f-af4b-56ec9955d8b4","timestamp":"2026-04-14T22:44:25.891792103Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"35eb670f-5697-4224-99fd-7a0a777c18ea","issue_id":"9c37ec8c-f310-47f8-b54e-ba4a41143b0c","timestamp":"2026-04-14T22:45:33.228576279Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"1e9f523f-644a-4cb8-89d8-a65c07fd9799","issue_id":"dafb938a-405a-472f-af4b-56ec9955d8b4","timestamp":"2026-04-14T22:45:51.112324183Z","gate_key":"doc-review","updated_by":"agent:project-lead"}
+{"type":"issue_state_changed","id":"af25e443-724f-40a7-bad3-75e8444c349a","issue_id":"dafb938a-405a-472f-af4b-56ec9955d8b4","timestamp":"2026-04-14T22:45:51.125607423Z","from":"gated","to":"gated"}
+{"type":"gate_passed","id":"e6663c2d-da06-4949-9d74-d5e448eeaa16","issue_id":"80f218ca-7bce-4cf6-bf03-e1fe2789620d","timestamp":"2026-04-14T22:46:36.460475580Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"6d8ea031-911b-42e5-a512-7ef5e0c0d1b9","issue_id":"80f218ca-7bce-4cf6-bf03-e1fe2789620d","timestamp":"2026-04-14T22:48:57.718013779Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"048c36e0-934e-4eb5-aa5f-af0ed1ac2605","issue_id":"9c37ec8c-f310-47f8-b54e-ba4a41143b0c","timestamp":"2026-04-14T22:49:33.043231136Z","gate_key":"code-review","updated_by":"auto:executor"}

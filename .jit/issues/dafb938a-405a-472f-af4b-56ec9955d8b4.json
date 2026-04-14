@@ -16,15 +16,15 @@
     "doc-review"
   ],
   "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-14T22:38:07.200868718Z"
+    },
     "doc-review": {
       "status": "passed",
       "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-14T22:26:37.055561901Z"
-    },
-    "code-review": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-14T22:26:52.739817596Z"
+      "updated_at": "2026-04-14T22:45:51.112104393Z"
     },
     "cargo-ci": {
       "status": "failed",
@@ -46,5 +46,5 @@
     "story:modem-ergonomics-validation-benchmarks"
   ],
   "created_at": "2026-04-12T19:41:45.872268442+00:00",
-  "updated_at": "2026-04-14T22:40:03.793723802+00:00"
+  "updated_at": "2026-04-14T22:45:51.125185863+00:00"
 }
