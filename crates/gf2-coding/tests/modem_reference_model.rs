@@ -16,7 +16,7 @@
 //!    builder entry point.
 
 use gf2_coding::llr::Llr;
-use gf2_coding::modem::test_oracle::Lcg;
+use gf2_coding::modem::test_oracle::{label_stream, permutation};
 use gf2_coding::modem::{
     unpack_label_msb_first, BatchMapper, BatchSoftDemapper, BitChannelSemantics, DemapInput,
     DemapMethod, LabelWord, ModemCapabilities, ModemScalar, ModemSpec, ModemSpecBuilder,
@@ -75,7 +75,7 @@ fn snapshot_spec_f64<S: ModemScalar>(spec: &ModemSpec<S>) -> (Vec<(f64, f64)>, V
 fn check_round_trip_f64(spec: ModemSpec<f64>, seed: u64, batch: usize) {
     let bps = spec.bits_per_symbol();
     let n = spec.num_symbols();
-    let label_stream = Lcg::label_stream(seed, batch, n);
+    let label_stream = label_stream(seed, batch, n);
 
     // Build the input bit stream in MSB-first symbol-major order.
     let mut bits: Vec<bool> = Vec::with_capacity(batch * bps as usize);
@@ -310,7 +310,7 @@ fn test_oracle_random_bijection_matches_brute_force() {
     // oracle on a builder-built, non-preset constellation that is not
     // one of the three named representative specs above.
     let n = 8usize;
-    let perm = Lcg::permutation(0x51EED, n);
+    let perm = permutation(0x51EED, n);
     let points: Vec<SymbolPoint<f64>> = (0..n)
         .map(|k| {
             let theta = (k as f64) * core::f64::consts::TAU / (n as f64);

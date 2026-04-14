@@ -54,6 +54,9 @@ pub mod matrix;
 pub mod primitive_polys;
 pub mod sparse;
 
+#[doc(hidden)]
+pub mod test_rng;
+
 pub use bitslice::{BitSlice, BitSliceMut};
 pub use bitvec::BitVec;
 pub use matrix::BitMatrix;

@@ -150,7 +150,8 @@ mod tests {
     use proptest::prelude::*;
 
     use super::super::bit_pack::unpack_label_msb_first as label_to_bits;
-    use super::super::test_oracle::Lcg;
+    #[allow(unused_imports)]
+    use super::super::test_oracle::{label_stream, permutation, Lcg};
 
     #[test]
     fn test_map_bits_gray16_roundtrip_against_spec() {
@@ -367,7 +368,7 @@ mod tests {
 
             // Deterministic permutation (Fisher-Yates) via the shared
             // modem test LCG — SSOT helper in `test_oracle::Lcg`.
-            let perm = Lcg::permutation(seed, n);
+            let perm = permutation(seed, n);
 
             // Points on the unit circle (guarantees normalizable energy).
             let points: Vec<SymbolPoint<f32>> = (0..n)
@@ -395,7 +396,7 @@ mod tests {
             // the permutation RNG above while still routing through the
             // SSOT `Lcg::label_stream` helper.
             let labels_stream: Vec<u16> =
-                Lcg::label_stream(seed ^ 0x9E37_79B9_7F4A_7C15, batch_len, n);
+                label_stream(seed ^ 0x9E37_79B9_7F4A_7C15, batch_len, n);
             let mut bits: Vec<bool> = Vec::with_capacity(batch_len * m as usize);
             for &v in &labels_stream {
                 bits.extend(super::super::bit_pack::unpack_label_msb_first(v, m));
