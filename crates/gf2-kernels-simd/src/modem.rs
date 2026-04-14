@@ -607,7 +607,7 @@ mod avx2 {
 mod tests {
     use super::*;
 
-    use gf2_core::test_rng::Lcg;
+    use gf2_core::rng::Lcg;
 
     fn pam_levels_for_axis_len(axis_len: usize) -> Vec<f32> {
         // Gray-PAM axis levels are (2l + 1 - axis_len) after centering.

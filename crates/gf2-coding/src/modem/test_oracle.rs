@@ -11,14 +11,12 @@
 use super::bit_pack::bit_at_msb_first;
 
 /// Re-export of the workspace SSOT deterministic LCG. The primitive
-/// lives in `gf2-core` so both `gf2-coding` (this crate) and
-/// `gf2-kernels-simd` (a dependency) can share one implementation
-/// without introducing a dependency cycle. All modem test RNG usage
-/// must go through this re-export; modem-specific helpers
-/// ([`bit_stream`], [`permutation`], [`label_stream`]) live as free
-/// functions in this module and take a seed.
+/// lives in [`gf2_core::rng`] so every crate in the workspace shares
+/// one implementation. Modem-specific helpers ([`bit_stream`],
+/// [`permutation`], [`label_stream`]) live as free functions in this
+/// module and take a seed.
 #[doc(hidden)]
-pub use gf2_core::test_rng::Lcg;
+pub use gf2_core::rng::Lcg;
 
 /// Builds a deterministic Fisher-Yates permutation of `[0, n)` as a
 /// `Vec<u16>`, seeded by `seed`.

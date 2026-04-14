@@ -4939,11 +4939,11 @@ mod generic_width_tests {
                 (0..order).collect()
             } else {
                 // Sample: 0, 1, 2, order-1, order-2, plus pseudo-random elements
+                // drawn from the workspace SSOT LCG.
                 let mut elems = vec![0, 1, 2, order - 1, order - 2];
-                let mut rng_state = 0xDEAD_BEEF_u64;
+                let mut rng = crate::rng::Lcg::new(0xDEAD_BEEF_u64);
                 for _ in 0..50 {
-                    rng_state = rng_state.wrapping_mul(6364136223846793005).wrapping_add(1);
-                    elems.push((rng_state >> 33) % order);
+                    elems.push((rng.next_u64() >> 33) % order);
                 }
                 elems.sort_unstable();
                 elems.dedup();
@@ -4979,22 +4979,21 @@ mod generic_width_tests {
             let test_elems: Vec<u64> = if m <= 4 {
                 (0..order).collect()
             } else if m <= 8 {
-                // Use a subset for pair/triple tests to keep runtime reasonable
+                // Use a subset for pair/triple tests to keep runtime reasonable;
+                // sample via the workspace SSOT LCG.
                 let mut elems = vec![0, 1, 2, order - 1];
-                let mut rng_state = 0xCAFE_BABE_u64;
+                let mut rng = crate::rng::Lcg::new(0xCAFE_BABE_u64);
                 for _ in 0..12 {
-                    rng_state = rng_state.wrapping_mul(6364136223846793005).wrapping_add(1);
-                    elems.push((rng_state >> 33) % order);
+                    elems.push((rng.next_u64() >> 33) % order);
                 }
                 elems.sort_unstable();
                 elems.dedup();
                 elems
             } else {
                 let mut elems = vec![0, 1, 2, order - 1];
-                let mut rng_state = 0xCAFE_BABE_u64;
+                let mut rng = crate::rng::Lcg::new(0xCAFE_BABE_u64);
                 for _ in 0..20 {
-                    rng_state = rng_state.wrapping_mul(6364136223846793005).wrapping_add(1);
-                    elems.push((rng_state >> 33) % order);
+                    elems.push((rng.next_u64() >> 33) % order);
                 }
                 elems.sort_unstable();
                 elems.dedup();

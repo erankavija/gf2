@@ -1867,3 +1867,9 @@
 {"type":"gate_passed","id":"2aa80af6-c669-4644-996d-3dd04dddd2ce","issue_id":"52112411-28ed-4428-9b8c-0dcec2fae5eb","timestamp":"2026-04-14T17:58:43.475795257Z","gate_key":"code-review","updated_by":"auto:executor"}
 {"type":"gate_passed","id":"c5e9161e-a461-456e-9914-c0d513b29bcf","issue_id":"51334873-c2dc-4174-ab13-60c45997b9d4","timestamp":"2026-04-14T18:04:19.801572435Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
 {"type":"gate_failed","id":"374afa82-0d87-4f42-83ca-18d2260031f1","issue_id":"51334873-c2dc-4174-ab13-60c45997b9d4","timestamp":"2026-04-14T18:08:52.985938539Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"0a931115-23e9-4a66-adbc-45f8e02f910c","issue_id":"51334873-c2dc-4174-ab13-60c45997b9d4","timestamp":"2026-04-14T20:09:13.721640325Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"efa2651f-abb4-4abf-bed5-a63d7346e2a6","issue_id":"51334873-c2dc-4174-ab13-60c45997b9d4","timestamp":"2026-04-14T20:17:56.730069274Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"issue_created","id":"02792f52-2f9a-4798-8a90-610ff057a348","issue_id":"9aa0f8b7-e213-4a52-8378-4befa558f2b2","timestamp":"2026-04-14T20:25:35.963338658Z","title":"Consolidate workspace deterministic-LCG helpers onto gf2_core::rng::Lcg","priority":"high"}
+{"type":"gate_passed","id":"dda650a4-1668-4845-831d-e7f54edd0046","issue_id":"9aa0f8b7-e213-4a52-8378-4befa558f2b2","timestamp":"2026-04-14T20:25:40.753388631Z","gate_key":"tdd-reminder","updated_by":"agent:project-lead"}
+{"type":"issue_state_changed","id":"d6c0b532-cf9f-4f5e-b814-74c268b548da","issue_id":"9aa0f8b7-e213-4a52-8378-4befa558f2b2","timestamp":"2026-04-14T20:25:41.528476585Z","from":"ready","to":"in_progress"}
+{"type":"issue_claimed","id":"4ef5f512-7397-4840-852d-6fd7721ed59c","issue_id":"9aa0f8b7-e213-4a52-8378-4befa558f2b2","timestamp":"2026-04-14T20:25:41.531278337Z","assignee":"agent:project-lead"}

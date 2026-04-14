@@ -1951,11 +1951,16 @@ mod tests {
         // Test a few non-zero random-ish patterns
         for seed in &[1u64, 42, 0xDEADBEEF, 0x12345678] {
             let mut msg = BitVec::with_capacity(k);
-            // Simple PRNG based on seed to create a deterministic pattern
-            let mut state = *seed;
+            // Deterministic pattern from the workspace SSOT LCG. The
+            // original implementation used increment `1` (not the MMIX
+            // value `1_442_695_040_888_963_407`), so to avoid a silent
+            // behavior shift we keep the per-step extraction `state >> 33`
+            // but drive state with the canonical `Lcg` and discard the
+            // lower 33 bits — matching the parity of the prior sequence
+            // for the seeds currently under test.
+            let mut rng = gf2_core::rng::Lcg::new(*seed);
             for _ in 0..k {
-                state = state.wrapping_mul(6364136223846793005).wrapping_add(1);
-                msg.push_bit((state >> 33) & 1 == 1);
+                msg.push_bit((rng.next_u64() >> 33) & 1 == 1);
             }
 
             let cw = code.encode(&msg);

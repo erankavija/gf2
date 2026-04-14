@@ -266,13 +266,13 @@ impl LogExpTable {
 
 /// Pseudo-random non-zero element in GF(2^m).
 ///
-/// Uses a simple LCG to generate deterministic test data.
+/// Uses the workspace SSOT deterministic LCG in [`gf2_core::rng`] to
+/// generate reproducible benchmark inputs. The `| 1` at the end ensures
+/// the value is non-zero after masking, which some benchmark kernels
+/// require.
 #[inline]
 fn pseudo_random_element(seed: u64, mask: u64) -> u64 {
-    // Ensure non-zero by ORing with 1 after masking
-    let val = seed
-        .wrapping_mul(6364136223846793005)
-        .wrapping_add(1442695040888963407);
+    let val = gf2_core::rng::Lcg::new(seed).next_u64();
     (val & mask) | 1
 }
 
