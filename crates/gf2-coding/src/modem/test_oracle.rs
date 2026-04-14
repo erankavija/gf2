@@ -10,6 +10,189 @@
 
 use super::bit_pack::bit_at_msb_first;
 
+/// Deterministic linear-congruential pseudo-random generator used by
+/// modem demapper / mapper tests.
+///
+/// SSOT for the "cheap deterministic LCG" pattern repeated across the
+/// modem test suites and HIP integration tests. Seeded with the same
+/// Numerical-Recipes constants so test vectors are reproducible across
+/// builds and platforms.
+///
+/// This is test-support infrastructure; carries no stability guarantees.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_coding::modem::test_oracle::Lcg;
+///
+/// let mut rng = Lcg::new(0xDEAD_BEEF);
+/// let a = rng.next_u32();
+/// let b = rng.next_u32();
+/// assert_ne!(a, b);
+/// ```
+#[doc(hidden)]
+pub struct Lcg {
+    state: u64,
+}
+
+impl Lcg {
+    /// Constructs a new LCG seeded with `seed`.
+    ///
+    /// # Arguments
+    ///
+    /// * `seed` - 64-bit seed. Any value is valid; distinct seeds produce
+    ///   independent streams.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::modem::test_oracle::Lcg;
+    ///
+    /// let _ = Lcg::new(0);
+    /// let _ = Lcg::new(u64::MAX);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
+    #[inline]
+    pub fn new(seed: u64) -> Self {
+        Self { state: seed }
+    }
+
+    /// Advances the state one step and returns the raw 64-bit output.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::modem::test_oracle::Lcg;
+    ///
+    /// let mut rng = Lcg::new(1);
+    /// let _ = rng.next_u64();
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
+    #[inline]
+    pub fn next_u64(&mut self) -> u64 {
+        self.state = self
+            .state
+            .wrapping_mul(6_364_136_223_846_793_005)
+            .wrapping_add(1_442_695_040_888_963_407);
+        self.state
+    }
+
+    /// Advances the state and returns the top 32 bits of the new state.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::modem::test_oracle::Lcg;
+    ///
+    /// let mut rng = Lcg::new(42);
+    /// let _ = rng.next_u32();
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
+    #[inline]
+    pub fn next_u32(&mut self) -> u32 {
+        (self.next_u64() >> 32) as u32
+    }
+
+    /// Returns a pseudo-uniform `f32` in `(-1, 1)`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::modem::test_oracle::Lcg;
+    ///
+    /// let mut rng = Lcg::new(7);
+    /// let v = rng.next_unit_f32();
+    /// assert!(v.abs() <= 1.0);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
+    #[inline]
+    pub fn next_unit_f32(&mut self) -> f32 {
+        (self.next_u32() as f32 / u32::MAX as f32) * 2.0 - 1.0
+    }
+
+    /// Returns a pseudo-uniform `f64` in `(-1, 1)`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::modem::test_oracle::Lcg;
+    ///
+    /// let mut rng = Lcg::new(11);
+    /// let v = rng.next_unit_f64();
+    /// assert!(v.abs() <= 1.0);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
+    #[inline]
+    pub fn next_unit_f64(&mut self) -> f64 {
+        (self.next_u32() as f64 / u32::MAX as f64) * 2.0 - 1.0
+    }
+
+    /// Returns a pseudo-uniform `f32` in `[lo, hi)`.
+    ///
+    /// # Arguments
+    ///
+    /// * `lo` - Lower inclusive bound.
+    /// * `hi` - Upper exclusive bound; caller must ensure `hi > lo`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::modem::test_oracle::Lcg;
+    ///
+    /// let mut rng = Lcg::new(13);
+    /// let v = rng.next_positive_f32(0.05, 2.0);
+    /// assert!(v >= 0.05 && v <= 2.0);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
+    #[inline]
+    pub fn next_positive_f32(&mut self, lo: f32, hi: f32) -> f32 {
+        lo + (self.next_u32() as f32 / u32::MAX as f32) * (hi - lo)
+    }
+
+    /// Returns a pseudo-uniform `f64` in `[lo, hi)`.
+    ///
+    /// # Arguments
+    ///
+    /// * `lo` - Lower inclusive bound.
+    /// * `hi` - Upper exclusive bound; caller must ensure `hi > lo`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::modem::test_oracle::Lcg;
+    ///
+    /// let mut rng = Lcg::new(17);
+    /// let v = rng.next_positive_f64(0.05, 2.0);
+    /// assert!(v >= 0.05 && v <= 2.0);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
+    #[inline]
+    pub fn next_positive_f64(&mut self, lo: f64, hi: f64) -> f64 {
+        lo + (self.next_u32() as f64 / u32::MAX as f64) * (hi - lo)
+    }
+}
+
 /// Brute-force exact log-MAP LLR for a single received sample, bit
 /// position, and total complex noise variance `N0 = 2 sigma^2`.
 ///

@@ -6,41 +6,16 @@
 //! (1e-3) because both sides are arithmetically identical up to f32
 //! rounding on the distance computation.
 //!
-//! Throughput probe `bench_gpu_vs_cpu_gray_qam_16qam` records wall-clock
-//! time for a representative batch and prints a ratio; it is the
-//! prototype hook used by the JIT-9c37ec8c crossover measurement.
+//! The throughput measurement lives as a `criterion` benchmark under
+//! `benches/gpu_vs_cpu_gray_qam.rs`; this file keeps only the correctness
+//! tests so `cargo test` has no silent-no-assertion probes.
 
 use gf2_coding::llr::Llr;
+use gf2_coding::modem::test_oracle::Lcg;
 use gf2_coding::modem::{
     BatchSoftDemapper, DemapInput, DemapMethod, FastGrayQamDemapper, GpuGrayQamSoftDemapper,
     ModemSpec,
 };
-use std::time::Instant;
-
-/// Cheap deterministic LCG (matches the pattern used in
-/// `fast_gray_qam_demapper.rs` tests).
-struct Lcg {
-    state: u64,
-}
-
-impl Lcg {
-    fn new(seed: u64) -> Self {
-        Self { state: seed }
-    }
-    fn next_u32(&mut self) -> u32 {
-        self.state = self
-            .state
-            .wrapping_mul(6364136223846793005)
-            .wrapping_add(1442695040888963407);
-        (self.state >> 32) as u32
-    }
-    fn next_unit(&mut self) -> f32 {
-        (self.next_u32() as f32 / u32::MAX as f32) * 2.0 - 1.0
-    }
-    fn next_positive(&mut self, lo: f32, hi: f32) -> f32 {
-        lo + (self.next_u32() as f32 / u32::MAX as f32) * (hi - lo)
-    }
-}
 
 fn spec_for_order(order: usize) -> ModemSpec<f32> {
     if order == 2 {
@@ -58,9 +33,9 @@ fn gen_batch(order: usize, batch: usize, seed: u64) -> (Vec<f32>, Vec<f32>, Vec<
     // Scale of 2.0 keeps samples well inside [-2, +2] which covers the
     // unit-average-energy Gray-QAM constellations for m up to 8.
     for _ in 0..batch {
-        rx_i.push(rng.next_unit() * 2.0);
-        rx_q.push(rng.next_unit() * 2.0);
-        nv.push(rng.next_positive(0.05, 2.0));
+        rx_i.push(rng.next_unit_f32() * 2.0);
+        rx_q.push(rng.next_unit_f32() * 2.0);
+        nv.push(rng.next_positive_f32(0.05, 2.0));
     }
     (rx_i, rx_q, nv)
 }
@@ -130,8 +105,8 @@ fn test_gpu_gray_qam_matches_cpu_fast_path_with_fading_gains() {
     let mut gi = Vec::with_capacity(batch);
     let mut gq = Vec::with_capacity(batch);
     for _ in 0..batch {
-        gi.push(rng.next_unit());
-        gq.push(rng.next_unit());
+        gi.push(rng.next_unit_f32());
+        gq.push(rng.next_unit_f32());
     }
 
     let input = DemapInput::<f32> {
@@ -175,56 +150,27 @@ fn test_gpu_gray_qam_empty_batch() {
     assert!(out.is_empty());
 }
 
-/// Throughput probe. Not a correctness test — it just records wall-clock
-/// time for GPU and CPU runs of the same 16-QAM batch and prints a ratio
-/// so the JIT-9c37ec8c crossover measurement has a ready-made driver.
+/// Regression test: the GPU adapter must refuse `DemapMethod::ExactLogMap`
+/// with a descriptive panic instead of silently substituting max-log.
+///
+/// The underlying HIP kernel implements only max-log. The adapter's trait
+/// contract is to "honor the requested method or panic" — see
+/// `GpuGrayQamSoftDemapper::demap_llrs` doc comment.
 #[test]
-fn bench_gpu_vs_cpu_gray_qam_16qam() {
+#[should_panic(expected = "GpuGrayQamSoftDemapper::demap_llrs: GPU adapter only implements")]
+fn test_gpu_gray_qam_rejects_exact_log_map() {
     let spec = ModemSpec::<f32>::gray_square_qam(16);
-    let batch = 16_384usize;
-    let (rx_i, rx_q, nv) = gen_batch(16, batch, 0xBEEF_u64);
-
+    let batch = 8usize;
+    let (rx_i, rx_q, nv) = gen_batch(16, batch, 0xF00D_u64);
     let input = DemapInput::<f32> {
         rx_i: &rx_i,
         rx_q: &rx_q,
         gain_i: None,
         gain_q: None,
         noise_var: &nv,
-        method: DemapMethod::MaxLog,
+        method: DemapMethod::ExactLogMap,
     };
-
-    let m = 4usize;
-    let gpu = GpuGrayQamSoftDemapper::new(spec.clone(), batch).unwrap();
-    let cpu = FastGrayQamDemapper::<f32>::new(spec);
-
-    let mut out_gpu = vec![Llr::new(0.0); batch * m];
-    let mut out_cpu = vec![Llr::new(0.0); batch * m];
-
-    // Warm up the GPU (first launch pays JIT / driver cost).
-    gpu.demap_llrs(input, &mut out_gpu);
-
-    let iters = 20;
-    let t_gpu = Instant::now();
-    for _ in 0..iters {
-        gpu.demap_llrs(input, &mut out_gpu);
-    }
-    let gpu_elapsed = t_gpu.elapsed();
-
-    let t_cpu = Instant::now();
-    for _ in 0..iters {
-        cpu.demap_llrs(input, &mut out_cpu);
-    }
-    let cpu_elapsed = t_cpu.elapsed();
-
-    let gpu_per = gpu_elapsed / iters;
-    let cpu_per = cpu_elapsed / iters;
-    eprintln!(
-        "bench_gpu_vs_cpu_gray_qam_16qam: batch={batch}, iters={iters}\n\
-         GPU: {:?} per batch\n\
-         CPU: {:?} per batch\n\
-         ratio (CPU / GPU): {:.3}x",
-        gpu_per,
-        cpu_per,
-        cpu_elapsed.as_secs_f64() / gpu_elapsed.as_secs_f64(),
-    );
+    let gpu = GpuGrayQamSoftDemapper::new(spec, batch).unwrap();
+    let mut out = vec![Llr::new(0.0); batch * 4];
+    gpu.demap_llrs(input, &mut out);
 }

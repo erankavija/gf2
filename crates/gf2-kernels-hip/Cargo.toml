@@ -15,3 +15,8 @@ cc = "1"
 [dev-dependencies]
 gf2-coding = { path = "../gf2-coding", features = ["hip"] }
 proptest = "1.0"
+criterion = "0.5"
+
+[[bench]]
+name = "gpu_vs_cpu_gray_qam"
+harness = false
