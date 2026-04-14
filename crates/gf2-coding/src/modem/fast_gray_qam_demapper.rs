@@ -39,10 +39,7 @@
 
 use crate::llr::Llr;
 
-use super::{
-    BatchSoftDemapper, BitChannelSemantics, DemapInput, DemapMethod, ModemScalar, ModemSpec,
-    ModemView,
-};
+use super::{BatchSoftDemapper, DemapInput, DemapMethod, ModemScalar, ModemSpec, ModemView};
 
 use gf2_kernels_simd::modem::{self as kernel_modem, GrayPamDistanceFnsF64};
 use std::sync::OnceLock;
@@ -161,122 +158,21 @@ impl<S: ModemScalar> FastGrayQamDemapper<S> {
     ///
     /// O(M) in `order = M`.
     pub fn new(spec: ModemSpec<S>) -> Self {
-        validate_preset_layout(&spec);
+        // SSOT validator: confirms layout, bit-channel semantics, and
+        // that every (i_label, q_label) resolves to the canonical
+        // Gray-PAM level table (ruling out permuted-level specs that
+        // would silently produce wrong LLRs through the axis-separable
+        // kernel).
+        super::presets::assert_valid_gray_square_qam_spec(&spec.view());
 
-        let view = spec.view();
-        let m_total = view.bits_per_symbol();
+        let m_total = spec.bits_per_symbol();
         let is_bpsk = m_total == 1;
-        let (m_half, table_len) = if is_bpsk {
-            (0u8, 2usize)
-        } else {
-            (m_total / 2, 1usize << (m_total / 2))
-        };
+        let m_half = if is_bpsk { 0u8 } else { m_total / 2 };
 
-        // Derive post-normalization PAM levels from the preset's points.
-        // For BPSK the table is indexed by the raw bit: bit 0 -> +scale,
-        // bit 1 -> -scale. For QAM the preset guarantees every composite
-        // symbol with the same I-half-label shares the same I coordinate
-        // (and analogously for Q), so we can read off levels from any
-        // row / column.
-        let mut pam_levels = vec![0.0_f64; table_len];
-        if is_bpsk {
-            // The BPSK kernel treats `label == index` and drops the Q
-            // component as a common additive constant. Validate both
-            // invariants here so custom builder-made BPSK specs that
-            // violate them are rejected at construction instead of
-            // silently producing wrong LLRs.
-            assert_eq!(
-                view.labels()[0].bits,
-                0,
-                "FastGrayQamDemapper::new: BPSK spec must store label 0 at index 0, got {}",
-                view.labels()[0].bits
-            );
-            assert_eq!(
-                view.labels()[1].bits,
-                1,
-                "FastGrayQamDemapper::new: BPSK spec must store label 1 at index 1, got {}",
-                view.labels()[1].bits
-            );
-            let q0 = view.point(0).q.to_f64();
-            let q1 = view.point(1).q.to_f64();
-            assert!(
-                (q0 - q1).abs() < 1e-9,
-                "FastGrayQamDemapper::new: BPSK spec must place both points on a common Q coordinate \
-                 (got {q0} vs {q1}); the fast kernel drops Q as a common additive constant"
-            );
-            pam_levels[0] = view.point(0).i.to_f64();
-            pam_levels[1] = view.point(1).i.to_f64();
-        } else {
-            let mask_half = (1u16 << m_half) - 1;
-            let mut filled = vec![false; table_len];
-            // Secondary Q-axis level table for validation only. The demap
-            // core reuses `pam_levels` for both axes, so we also verify
-            // that the Q-axis factorisation uses the same level set and
-            // that every Q-half-label resolves to that set consistently.
-            let mut q_levels = vec![0.0_f64; table_len];
-            let mut q_filled = vec![false; table_len];
-            for (idx, label) in view.labels().iter().enumerate() {
-                let i_label = ((label.bits >> m_half) & mask_half) as usize;
-                let q_label = (label.bits & mask_half) as usize;
-                let i_coord = view.point(idx).i.to_f64();
-                let q_coord = view.point(idx).q.to_f64();
-                if !filled[i_label] {
-                    pam_levels[i_label] = i_coord;
-                    filled[i_label] = true;
-                } else {
-                    let diff = (pam_levels[i_label] - i_coord).abs();
-                    assert!(
-                        diff < 1e-9,
-                        "FastGrayQamDemapper::new: I-axis factorisation failed: \
-                         symbols with I-half-label {i_label} have different I coordinates \
-                         ({} vs {}); spec is not a canonical Gray square-QAM preset",
-                        pam_levels[i_label],
-                        i_coord,
-                    );
-                }
-                if !q_filled[q_label] {
-                    q_levels[q_label] = q_coord;
-                    q_filled[q_label] = true;
-                } else {
-                    let diff = (q_levels[q_label] - q_coord).abs();
-                    assert!(
-                        diff < 1e-9,
-                        "FastGrayQamDemapper::new: Q-axis factorisation failed: \
-                         symbols with Q-half-label {q_label} have different Q coordinates \
-                         ({} vs {}); spec is not a canonical Gray square-QAM preset",
-                        q_levels[q_label],
-                        q_coord,
-                    );
-                }
-            }
-            assert!(
-                filled.iter().all(|b| *b),
-                "FastGrayQamDemapper::new: spec does not cover every I-half-label; \
-                 not a Gray square-QAM preset"
-            );
-            assert!(
-                q_filled.iter().all(|b| *b),
-                "FastGrayQamDemapper::new: spec does not cover every Q-half-label; \
-                 not a Gray square-QAM preset"
-            );
-            // The axis-separable kernel uses the I-derived `pam_levels`
-            // table for both I and Q distance computations:
-            // `d_q[label] = (z_q - g * pam_levels[label])^2 / n0_eq`.
-            // That is correct only when the per-label mapping matches
-            // between axes, i.e. `q_levels[label] == pam_levels[label]`
-            // for every label value. Set equality alone is not enough,
-            // because a permuted Q-label mapping (same level set,
-            // different label assignment) would silently produce wrong
-            // Q-bit LLRs.
-            for (label, (&il, &ql)) in pam_levels.iter().zip(q_levels.iter()).enumerate() {
-                assert!(
-                    (il - ql).abs() < 1e-9,
-                    "FastGrayQamDemapper::new: Q-label-to-level mapping at label {label} \
-                     ({ql}) does not match the I mapping ({il}); the fast kernel reuses the \
-                     I level table for both axes and requires a symmetric preset"
-                );
-            }
-        }
+        // SSOT Gray-PAM level derivation. The validator above has
+        // already asserted that the spec's points match this table, so
+        // there is no divergence risk from recomputing it here.
+        let pam_levels: Vec<f64> = super::presets::gray_pam_levels::<f64>(m_total);
 
         Self {
             spec,
@@ -333,68 +229,6 @@ impl<S: ModemScalar> FastGrayQamDemapper<S> {
     pub fn spec_ref(&self) -> &ModemSpec<S> {
         &self.spec
     }
-}
-
-/// Validates that `spec` matches one of the Gray-square-QAM preset layouts.
-///
-/// Panics with a descriptive message if the spec is not BPSK or one of
-/// the Gray square-QAM presets (orders 2/4/16/64/256 with canonical
-/// I-axis-then-Q-axis MSB-first bit-channel layout).
-fn validate_preset_layout<S: ModemScalar>(spec: &ModemSpec<S>) {
-    let view = spec.view();
-    let m = view.bits_per_symbol();
-    assert!(
-        matches!(m, 1 | 2 | 4 | 6 | 8),
-        "FastGrayQamDemapper::new: bits_per_symbol {m} is not one of {{1, 2, 4, 6, 8}}"
-    );
-    let expected_symbols = 1usize << m;
-    assert_eq!(
-        view.num_symbols(),
-        expected_symbols,
-        "FastGrayQamDemapper::new: num_symbols {} does not match 2^bits_per_symbol {}",
-        view.num_symbols(),
-        expected_symbols
-    );
-
-    let bit_channels = view.bit_channels();
-    assert_eq!(
-        bit_channels.len(),
-        m as usize,
-        "FastGrayQamDemapper::new: bit_channels length {} != bits_per_symbol {}",
-        bit_channels.len(),
-        m
-    );
-
-    if m == 1 {
-        assert_eq!(
-            bit_channels[0],
-            BitChannelSemantics::SingleAxisPam(0),
-            "FastGrayQamDemapper::new: BPSK spec must advertise SingleAxisPam(0)"
-        );
-    } else {
-        let m_half = m / 2;
-        for k in 0..m_half {
-            assert_eq!(
-                bit_channels[k as usize],
-                BitChannelSemantics::IAxisPam(k),
-                "FastGrayQamDemapper::new: bit {k} must be IAxisPam({k}) for Gray square-QAM preset"
-            );
-        }
-        for k in 0..m_half {
-            assert_eq!(
-                bit_channels[(m_half + k) as usize],
-                BitChannelSemantics::QAxisPam(k),
-                "FastGrayQamDemapper::new: bit {} must be QAxisPam({k}) for Gray square-QAM preset",
-                m_half + k
-            );
-        }
-    }
-
-    let caps = view.capabilities();
-    assert!(
-        caps.supports_exact_log_map && caps.supports_max_log,
-        "FastGrayQamDemapper::new: spec must advertise both ExactLogMap and MaxLog support"
-    );
 }
 
 /// Computes the 1D Gray-PAM LLR for bit `bit_idx` (MSB-first within the
@@ -1020,7 +854,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Q-label-to-level mapping")]
+    #[should_panic(expected = "expected canonical Gray-PAM level")]
     fn test_permuted_q_label_mapping_rejected() {
         // A 4-QAM spec with valid I/Q factorisation, matching level
         // sets ({+1, -1} on both axes), but a Q-label permutation that
@@ -1059,7 +893,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Q-axis factorisation failed")]
+    #[should_panic(expected = "expected canonical Gray-PAM level")]
     fn test_spoofed_qaxispam_metadata_with_non_preset_geometry_rejected() {
         // Symmetric of the I-axis case: valid IAxisPam/QAxisPam metadata
         // with I coordinates that pass factorisation but Q coordinates
@@ -1093,7 +927,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "I-axis factorisation failed")]
+    #[should_panic(expected = "expected canonical Gray-PAM level")]
     fn test_spoofed_iaxispam_metadata_with_non_preset_geometry_rejected() {
         // Build a custom 4-point spec with IAxisPam/QAxisPam metadata
         // (so validate_preset_layout accepts it) but asymmetric geometry
