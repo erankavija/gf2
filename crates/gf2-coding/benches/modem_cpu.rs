@@ -39,8 +39,9 @@ fn deterministic_bits(n_bits: usize) -> Vec<bool> {
 /// the shared `modem::test_oracle::Lcg` SSOT helper.
 fn deterministic_rx(n: usize) -> (Vec<f32>, Vec<f32>, Vec<f32>) {
     let mut rng = Lcg::new(0x9E37_79B9_7F4A_7C15);
-    let rx_i: Vec<f32> = (0..n).map(|_| rng.next_unit_f32() * 2.0 - 1.0).collect();
-    let rx_q: Vec<f32> = (0..n).map(|_| rng.next_unit_f32() * 2.0 - 1.0).collect();
+    // next_unit_f32() already emits samples in (-1, 1); no further scaling.
+    let rx_i: Vec<f32> = (0..n).map(|_| rng.next_unit_f32()).collect();
+    let rx_q: Vec<f32> = (0..n).map(|_| rng.next_unit_f32()).collect();
     let noise_var = vec![0.25_f32; n];
     (rx_i, rx_q, noise_var)
 }
