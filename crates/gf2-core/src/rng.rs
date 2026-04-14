@@ -94,7 +94,10 @@ impl Lcg {
         (self.next_u64() >> 32) as u32
     }
 
-    /// Returns a pseudo-uniform `f32` in `(-1, 1)`.
+    /// Returns a pseudo-uniform `f32` in the **closed** interval
+    /// `[-1.0, 1.0]`. Both endpoints are reachable (when
+    /// `next_u32() == 0` the output is `-1.0`; when
+    /// `next_u32() == u32::MAX` the output is `1.0`).
     ///
     /// # Examples
     ///
@@ -113,7 +116,10 @@ impl Lcg {
         (self.next_u32() as f32 / u32::MAX as f32) * 2.0 - 1.0
     }
 
-    /// Returns a pseudo-uniform `f64` in `(-1, 1)`.
+    /// Returns a pseudo-uniform `f64` in the **closed** interval
+    /// `[-1.0, 1.0]`. Both endpoints are reachable (when
+    /// `next_u32() == 0` the output is `-1.0`; when
+    /// `next_u32() == u32::MAX` the output is `1.0`).
     ///
     /// # Examples
     ///
@@ -132,12 +138,15 @@ impl Lcg {
         (self.next_u32() as f64 / u32::MAX as f64) * 2.0 - 1.0
     }
 
-    /// Returns a pseudo-uniform `f32` in `[lo, hi)`.
+    /// Returns a pseudo-uniform `f32` in the **closed** interval
+    /// `[lo, hi]`. Both endpoints are reachable (when
+    /// `next_u32() == 0` the output is `lo`; when
+    /// `next_u32() == u32::MAX` the output is `hi`).
     ///
     /// # Arguments
     ///
-    /// * `lo` — Lower inclusive bound.
-    /// * `hi` — Upper exclusive bound; caller must ensure `hi > lo`.
+    /// * `lo` — Lower bound, reachable.
+    /// * `hi` — Upper bound, reachable; caller must ensure `hi > lo`.
     ///
     /// # Examples
     ///
@@ -157,12 +166,15 @@ impl Lcg {
         lo + (self.next_u32() as f32 / u32::MAX as f32) * (hi - lo)
     }
 
-    /// Returns a pseudo-uniform `f64` in `[lo, hi)`.
+    /// Returns a pseudo-uniform `f64` in the **closed** interval
+    /// `[lo, hi]`. Both endpoints are reachable (when
+    /// `next_u32() == 0` the output is `lo`; when
+    /// `next_u32() == u32::MAX` the output is `hi`).
     ///
     /// # Arguments
     ///
-    /// * `lo` — Lower inclusive bound.
-    /// * `hi` — Upper exclusive bound; caller must ensure `hi > lo`.
+    /// * `lo` — Lower bound, reachable.
+    /// * `hi` — Upper bound, reachable; caller must ensure `hi > lo`.
     ///
     /// # Examples
     ///

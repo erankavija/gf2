@@ -1948,16 +1948,18 @@ mod tests {
         let mut decoder = GldpcDecoder::new(code.clone());
         let k = code.code_k();
 
-        // Test a few non-zero random-ish patterns
+        // Test a few non-zero random-ish patterns drawn from the
+        // workspace SSOT LCG. The pre-consolidation helper used the
+        // MMIX multiplier with a non-standard increment (`+1`); routing
+        // through `gf2_core::rng::Lcg` instead gives a different
+        // deterministic stream, but this test asserts only that
+        // encoded codewords are valid — it does not lock specific bit
+        // patterns, so changing the stream is behavior-safe. What is
+        // preserved is the *property* being exercised: a handful of
+        // non-zero message vectors from reproducible seeds encode into
+        // valid codewords.
         for seed in &[1u64, 42, 0xDEADBEEF, 0x12345678] {
             let mut msg = BitVec::with_capacity(k);
-            // Deterministic pattern from the workspace SSOT LCG. The
-            // original implementation used increment `1` (not the MMIX
-            // value `1_442_695_040_888_963_407`), so to avoid a silent
-            // behavior shift we keep the per-step extraction `state >> 33`
-            // but drive state with the canonical `Lcg` and discard the
-            // lower 33 bits — matching the parity of the prior sequence
-            // for the seeds currently under test.
             let mut rng = gf2_core::rng::Lcg::new(*seed);
             for _ in 0..k {
                 msg.push_bit((rng.next_u64() >> 33) & 1 == 1);
