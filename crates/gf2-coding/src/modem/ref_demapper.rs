@@ -31,7 +31,7 @@ use super::{BatchSoftDemapper, DemapInput, ModemScalar, ModemSpec, ModemView};
 /// # LLR sign convention
 ///
 /// Positive LLR means bit `0` is more likely. This matches
-/// [`crate::llr::Llr`] and the existing `QpskModulator::symbols_to_llrs`.
+/// [`crate::llr::Llr`].
 ///
 /// # Examples
 ///

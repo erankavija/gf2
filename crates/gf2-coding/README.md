@@ -102,7 +102,8 @@ Build DVB-T2 digital TV codes and simulate transmission over noisy channels:
 
 ```rust
 use gf2_coding::ldpc::LdpcCode;
-use gf2_coding::{CodeRate, AwgnChannel, BpskModulator};
+use gf2_coding::simulation::{BpskAwgnChannel, ChannelModel};
+use gf2_coding::CodeRate;
 use gf2_core::BitVec;
 
 // DVB-T2 LDPC code: 32,400 data bits → 64,800 coded bits
@@ -114,12 +115,13 @@ assert_eq!(code.n(), 64800);
 let zero_cw = BitVec::zeros(64800);
 assert!(code.is_valid_codeword(&zero_cw));
 
-// Simulate AWGN channel (see ldpc_awgn example for full pipeline)
-let channel = AwgnChannel::new(3.0, 0.5); // Eb/N0 = 3dB, rate 0.5
+// Simulate BPSK/AWGN (see ldpc_awgn example for full pipeline):
+//   let llrs = BpskAwgnChannel.transmit_and_demodulate(&zero_cw, 3.0, 0.5, &mut rng);
+let _channel = BpskAwgnChannel;
 ```
 
 **Examples**: `dvb_t2_ldpc_basic`, `ldpc_awgn`, `qc_ldpc_demo`, `ldpc_cache_file_io`  
-**API docs**: [`LdpcCode`](https://docs.rs/gf2-coding/latest/gf2_coding/ldpc/struct.LdpcCode.html), [`AwgnChannel`](https://docs.rs/gf2-coding/latest/gf2_coding/channel/struct.AwgnChannel.html)  
+**API docs**: [`LdpcCode`](https://docs.rs/gf2-coding/latest/gf2_coding/ldpc/struct.LdpcCode.html), [`BpskAwgnChannel`](https://docs.rs/gf2-coding/latest/gf2_coding/simulation/struct.BpskAwgnChannel.html)  
 **Guides**: [DVB_T2.md](docs/DVB_T2.md), [LDPC_PERFORMANCE.md](docs/LDPC_PERFORMANCE.md)
 
 ### Advanced: Performance Optimization

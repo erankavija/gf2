@@ -506,9 +506,9 @@ mod tests {
 
     #[test]
     fn test_preset_qpsk_matches_legacy_layout() {
-        // Legacy QpskModulator with delta = 1/sqrt(2) matches the new
-        // Gray-square-QAM(4) preset exactly, confirming the shared
-        // bit-to-point layout for the simulation migration path.
+        // Gray-square-QAM(4) preset has the expected ±delta × ±delta layout
+        // at delta = 1/sqrt(2) (unit average symbol energy), confirming
+        // the canonical bit-to-point mapping used by the QPSK presets.
         let spec = ModemSpec::gray_square_qam(4);
         let delta = (0.5_f64).sqrt();
         // Label layout (MSB = I-bit, LSB = Q-bit):

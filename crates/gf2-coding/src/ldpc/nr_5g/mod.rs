@@ -1911,7 +1911,7 @@ mod tests {
         num_frames: usize,
         label: &str,
     ) {
-        use crate::channel::{AwgnChannel, BpskModulator};
+        use crate::simulation::{BpskAwgnChannel, ChannelModel};
         use crate::traits::BlockEncoder;
         use rand::Rng;
 
@@ -1921,8 +1921,7 @@ mod tests {
         ));
 
         let rate = rm_code.params().effective_rate();
-        let channel = AwgnChannel::from_eb_n0_db(eb_n0_db, rate);
-        let sigma_sq = channel.variance();
+        let channel = BpskAwgnChannel;
         let mut rng = rand::thread_rng();
 
         let mut total_bits = 0usize;
@@ -1943,18 +1942,9 @@ mod tests {
             let codeword = rm_code.encode(&msg);
             assert_eq!(codeword.len(), target_n);
 
-            // BPSK modulate
-            let bits: Vec<bool> = (0..target_n).map(|i| codeword.get(i)).collect();
-            let symbols = BpskModulator::modulate_bits(&bits);
-
-            // Transmit through AWGN channel
-            let received = channel.transmit_symbols(&symbols, &mut rng);
-
-            // Convert to LLRs
-            let llrs: Vec<Llr> = received
-                .iter()
-                .map(|&r| BpskModulator::to_llr(r, sigma_sq))
-                .collect();
+            // BPSK modulate, transmit through AWGN, and demap via the
+            // modem-framework-backed reference channel.
+            let llrs = channel.transmit_and_demodulate(&codeword, eb_n0_db, rate, &mut rng);
 
             // BP decode on full mother code via rate-matched decoder
             let result = decoder.decode_iterative(&llrs, 50);

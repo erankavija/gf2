@@ -9,8 +9,8 @@
 //!
 //! This serves as a baseline for comparing coded vs. uncoded transmission.
 
+use gf2_coding::info_theory::{shannon_capacity, shannon_limit};
 use gf2_coding::simulation::{SimulationConfig, SimulationRunner};
-use gf2_coding::AwgnChannel;
 
 fn main() {
     println!("=== Uncoded BPSK Transmission over AWGN ===\n");
@@ -40,9 +40,9 @@ fn main() {
     println!("├──────────┼─────────────┼────────────────┼────────────┤");
 
     for result in &results {
-        let capacity = AwgnChannel::shannon_capacity(result.eb_n0_db);
-        let shannon_limit = AwgnChannel::shannon_limit(code_rate);
-        let gap = result.eb_n0_db - shannon_limit;
+        let capacity = shannon_capacity(result.eb_n0_db);
+        let limit = shannon_limit(code_rate);
+        let gap = result.eb_n0_db - limit;
 
         println!(
             "│   {:5.1}  │  {:9.6}  │     {:6.4}     │   {:6.2}   │",
@@ -61,7 +61,7 @@ fn main() {
     println!(
         "- Shannon limit for rate {} is {:.2} dB",
         code_rate,
-        AwgnChannel::shannon_limit(code_rate)
+        shannon_limit(code_rate)
     );
     println!("- At Shannon limit, capacity = rate (reliable communication theoretically possible)");
     println!("- Gap shows how far uncoded transmission is from the Shannon limit");

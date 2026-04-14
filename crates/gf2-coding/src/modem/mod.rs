@@ -34,10 +34,11 @@
 //!   [`ModemSpec`].
 //! - [`ModemAwgnChannel`] is a generic AWGN link adapter that composes
 //!   any [`BatchMapper`] + [`BatchSoftDemapper`] over an
-//!   [`crate::channel::AwgnChannel`]. It replaces the BPSK-only
-//!   `channel::BpskAwgn` path for modem-framework workflows while
-//!   leaving the legacy surface in place (migration is tracked in
-//!   issues `bf865220`, `0cafa5f5`, `b3bb774a`, `5fd315c0`).
+//!   [`crate::channel::AwgnChannel`]. It is the canonical AWGN link for
+//!   any modem spec; the BPSK reference channel in
+//!   [`crate::simulation::BpskAwgnChannel`] routes through the same
+//!   `BPSK` preset for the `ChannelModel` consumers of the simulation
+//!   harness.
 //!
 //! See `dev/active/c87c5043-constellation-data-model-plan.md` for the
 //! locked design decisions behind this surface.
