@@ -46,6 +46,86 @@ use crate::simulation::ChannelModel;
 use gf2_core::BitVec;
 use rand::Rng;
 
+/// Canonical `Eb/N0` → per-component AWGN variance (`sigma^2`) conversion
+/// for the framework-wide **unit-average-symbol-energy** convention.
+///
+/// Returns `sigma^2 = 1 / (2 * m * rate * 10^(Eb_N0_dB / 10))` — the per-axis
+/// variance applied to each of I and Q. Use [`unit_energy_n0_from_eb_n0_db`]
+/// when you need the total complex noise power `N0 = 2 * sigma^2` instead.
+///
+/// Both [`ModemChannelAdapter::transmit_and_demodulate`] and the Rician
+/// fading adapter in `crate::fading` call this helper so there is exactly
+/// one place in the crate that turns `Eb/N0` into a noise scale.
+///
+/// # Arguments
+///
+/// * `m` — bits per symbol for the target constellation (e.g. `1` for
+///   BPSK, `2` for QPSK, `4` for 16-QAM).
+/// * `rate` — code rate in `(0, 1]`.
+/// * `eb_n0_db` — target per-bit SNR in decibels.
+///
+/// # Panics
+///
+/// Panics if `m == 0` or if `rate` is outside `(0, 1]`.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_coding::modem::awgn_link::unit_energy_sigma_sq_from_eb_n0_db;
+/// // QPSK at 10 dB Eb/N0, uncoded:
+/// let sigma_sq = unit_energy_sigma_sq_from_eb_n0_db(2, 1.0, 10.0);
+/// let expected = 1.0_f64 / (2.0 * 2.0 * 1.0 * 10.0_f64.powi(1));
+/// assert!((sigma_sq - expected).abs() < 1e-15);
+/// ```
+///
+/// # Complexity
+///
+/// O(1).
+pub fn unit_energy_sigma_sq_from_eb_n0_db(m: usize, rate: f64, eb_n0_db: f64) -> f64 {
+    assert!(m > 0, "bits-per-symbol m must be positive");
+    assert!(
+        rate > 0.0 && rate <= 1.0,
+        "code rate must be in (0, 1], got {rate}"
+    );
+    let eb_n0_lin = 10.0_f64.powf(eb_n0_db / 10.0);
+    1.0 / (2.0 * (m as f64) * rate * eb_n0_lin)
+}
+
+/// Canonical `Eb/N0` → total complex noise power `N0` under the
+/// framework-wide unit-average-symbol-energy convention.
+///
+/// Convenience wrapper for `2.0 * unit_energy_sigma_sq_from_eb_n0_db(m, rate, eb_n0_db)`.
+/// Consumers that sample noise per-axis (I and Q independently with
+/// variance `sigma^2 = N0/2`) should call
+/// [`unit_energy_sigma_sq_from_eb_n0_db`] directly; consumers that need
+/// the aggregate `N0` (for the demapper's `DemapInput::noise_var`) call
+/// this one.
+///
+/// # Arguments
+///
+/// Same as [`unit_energy_sigma_sq_from_eb_n0_db`].
+///
+/// # Panics
+///
+/// Same as [`unit_energy_sigma_sq_from_eb_n0_db`].
+///
+/// # Examples
+///
+/// ```
+/// use gf2_coding::modem::awgn_link::unit_energy_n0_from_eb_n0_db;
+/// // QPSK at 10 dB Eb/N0, uncoded:
+/// let n0 = unit_energy_n0_from_eb_n0_db(2, 1.0, 10.0);
+/// let expected = 1.0_f64 / (2.0 * 1.0 * 10.0_f64.powi(1));
+/// assert!((n0 - expected).abs() < 1e-15);
+/// ```
+///
+/// # Complexity
+///
+/// O(1).
+pub fn unit_energy_n0_from_eb_n0_db(m: usize, rate: f64, eb_n0_db: f64) -> f64 {
+    2.0 * unit_energy_sigma_sq_from_eb_n0_db(m, rate, eb_n0_db)
+}
+
 /// AWGN link over any modem spec, using the shared [`BatchMapper`] and
 /// [`BatchSoftDemapper`] surfaces.
 ///
@@ -449,20 +529,14 @@ where
             "ModemChannelAdapter::transmit_and_demodulate: code rate must be in (0, 1], got {rate}",
         );
 
-        // Eb/N0 -> per-component noise variance for an m-bit/symbol
-        // constellation with unit average symbol energy.
-        //
-        // Es = m * Rc * Eb, so Es/N0 = m * rate * Eb/N0. With unit-average
-        // symbol energy the complex noise power is N0 = 1 / (Es/N0) and
-        // each of I and Q carries sigma^2 = N0 / 2.
-        //
-        // For BPSK (m = 1) this reduces to sigma^2 = 1 / (2 * rate * Eb/N0),
-        // matching the legacy `AwgnChannel::from_eb_n0_db` path used by
-        // [`crate::simulation::BpskAwgnChannel`]. See the module-level
-        // noise convention.
+        // Canonical unit-energy Eb/N0 -> sigma^2 conversion. Shared with
+        // `crate::fading::QpskRicianChannelModel` via
+        // [`unit_energy_sigma_sq_from_eb_n0_db`] so both AWGN and
+        // Rician fading paths derive their noise scale from a single
+        // formula. See module-level "Eb/N0 scaling for higher-order
+        // modulation" docs.
         let m = self.mapper.spec().bits_per_symbol() as usize;
-        let eb_n0_linear = 10.0_f64.powf(eb_n0_db / 10.0);
-        let sigma_squared = 1.0 / (2.0 * (m as f64) * rate * eb_n0_linear);
+        let sigma_squared = unit_energy_sigma_sq_from_eb_n0_db(m, rate, eb_n0_db);
         let channel = AwgnChannel::from_variance(sigma_squared);
 
         let n = bits.len();

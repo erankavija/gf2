@@ -71,7 +71,7 @@
 //! assert_eq!(view.bit_channel(2), BitChannelSemantics::QAxisPam(0));
 //! ```
 
-mod awgn_link;
+pub mod awgn_link;
 mod bit_pack;
 mod builder;
 mod demapper;
