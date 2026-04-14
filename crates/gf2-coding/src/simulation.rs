@@ -47,8 +47,8 @@
 use crate::channel::AwgnChannel;
 use crate::llr::Llr;
 use crate::modem::{
-    BatchMapper, BatchSoftDemapper, DemapInput, DemapMethod, ModemSpec, ReferenceMapper,
-    ReferenceSoftDemapper,
+    AnalysisCapture, BatchMapper, BatchSoftDemapper, DemapInput, DemapMethod, ModemSpec,
+    ReferenceMapper, ReferenceSoftDemapper,
 };
 use crate::traits::{BlockEncoder, DecoderResult, IterativeSoftDecoder, SoftDecoder};
 use gf2_core::BitVec;
@@ -715,6 +715,115 @@ impl SimulationResults {
     }
 }
 
+/// Shared body of the uncoded-BER Monte Carlo loop, parameterized by
+/// an optional [`AnalysisCapture`]. Both
+/// [`SimulationRunner::run_uncoded_ber_with_channel`] (always `None`)
+/// and [`SimulationRunner::run_uncoded_ber_with_analysis`] (caller's
+/// choice) delegate here so there is exactly one implementation of the
+/// `bits -> channel -> hard-decision` logic.
+///
+/// # Zero-overhead contract
+///
+/// The function is `#[inline]` and the only branch on `capture` is a
+/// single `if let Some(_) = capture` guard around the
+/// [`AnalysisCapture::accumulate_slice`] call. When the caller passes
+/// `None`, the guard's body is dead code after monomorphization and
+/// constant propagation: the compiler emits exactly the same loop
+/// that the analysis-free runner emitted before this refactor. The
+/// `simulation_no_analysis_overhead` bench guards that equivalence.
+#[inline]
+fn run_uncoded_ber_with_channel_impl<C: ChannelModel, R: Rng>(
+    channel: &C,
+    config: &SimulationConfig,
+    mut capture: Option<&mut AnalysisCapture<'_>>,
+    rng: &mut R,
+) -> Vec<SimulationResult> {
+    /// Nominal batch length. See
+    /// [`SimulationRunner::run_uncoded_ber_with_channel`] for the
+    /// rationale behind the value and the alignment rounding.
+    const UNCODED_MODEM_BATCH_BITS: usize = 960;
+
+    let alignment = channel.batch_alignment().max(1);
+    // Scratch buffer reused across batches when analysis is enabled.
+    // Allocated exactly once per SNR-point sweep and only on the
+    // analysis-enabled path. Stays `None` when `capture.is_none()`.
+    let mut truth_scratch: Option<Vec<bool>> = if capture.is_some() {
+        Some(Vec::with_capacity(UNCODED_MODEM_BATCH_BITS))
+    } else {
+        None
+    };
+
+    config
+        .eb_n0_range_db
+        .iter()
+        .map(|&eb_n0_db| {
+            let mut total_bits = 0usize;
+            let mut total_errors = 0usize;
+
+            while total_errors < config.min_errors && total_bits < config.max_frames {
+                let remaining = config.max_frames - total_bits;
+                let mut batch_size = UNCODED_MODEM_BATCH_BITS.min(remaining);
+                // Round down to the channel's required alignment so
+                // modem-backed channels with bits_per_symbol > 1 do
+                // not panic on a ragged tail.
+                batch_size -= batch_size % alignment;
+                if batch_size == 0 {
+                    break;
+                }
+                let bits = BitVec::random(batch_size, rng);
+                // Uncoded => rate = 1.0. The channel owns modulation,
+                // noise, and demapping end-to-end; we only consume LLRs.
+                let llrs = channel.transmit_and_demodulate(&bits, eb_n0_db, 1.0, rng);
+                debug_assert_eq!(llrs.len(), batch_size);
+
+                // Opt-in per-bit analysis. The `None` branch has no
+                // extra work; the inline wrapper lets the optimizer
+                // collapse the match when the caller passed `None`.
+                if let (Some(cap), Some(scratch)) = (capture.as_deref_mut(), truth_scratch.as_mut())
+                {
+                    scratch.clear();
+                    scratch.reserve(batch_size);
+                    for i in 0..batch_size {
+                        scratch.push(bits.get(i));
+                    }
+                    cap.accumulate_slice(&llrs, scratch);
+                }
+
+                let errors = (0..batch_size)
+                    .filter(|&i| {
+                        // Positive LLR => bit 0, negative => bit 1.
+                        // Ties (0.0) map to bit 0, matching the
+                        // framework hard-decision convention.
+                        let decoded_bit = llrs[i].value() < 0.0;
+                        bits.get(i) != decoded_bit
+                    })
+                    .count();
+
+                total_bits += batch_size;
+                total_errors += errors;
+            }
+
+            let ber = if total_bits > 0 {
+                total_errors as f64 / total_bits as f64
+            } else {
+                0.0
+            };
+
+            SimulationResult {
+                eb_n0_db,
+                ber,
+                bler: 0.0,
+                avg_iterations: None,
+                avg_queries_per_bit: None,
+                num_bits: total_bits,
+                num_bit_errors: total_errors,
+                num_frames: 0,
+                num_frame_errors: 0,
+            }
+        })
+        .collect()
+}
+
 /// Monte Carlo simulation runner for communication systems.
 ///
 /// Provides static methods for both uncoded and coded simulations:
@@ -723,6 +832,8 @@ impl SimulationResults {
 /// - [`SimulationRunner::run_uncoded_ber_with_channel`] — uncoded over any
 ///   [`ChannelModel`] (modem-framework backed, e.g.
 ///   [`ModemChannelAdapter`](crate::modem::ModemChannelAdapter))
+/// - [`SimulationRunner::run_uncoded_ber_with_analysis`] — same, with
+///   opt-in per-bit LLR analysis capture
 /// - [`SimulationRunner::run_coded`] — coded with immutable [`SoftDecoder`]
 /// - [`SimulationRunner::run_coded_iterative`] — coded with [`IterativeSoftDecoder`]
 /// - [`SimulationRunner::run_coded_iterative_parallel`] — parallel iterative with decoder factory
@@ -845,73 +956,95 @@ impl SimulationRunner {
         config: &SimulationConfig,
         rng: &mut R,
     ) -> Vec<SimulationResult> {
-        /// Nominal batch length. The loop rounds each call down to a
-        /// multiple of `channel.batch_alignment()` so that modem-backed
-        /// [`ChannelModel`] implementations like
-        /// [`ModemChannelAdapter`](crate::modem::ModemChannelAdapter) --
-        /// which require `bits.len() % bits_per_symbol == 0` -- never
-        /// see a ragged-tail batch, regardless of how `max_frames` is
-        /// configured.
-        const UNCODED_MODEM_BATCH_BITS: usize = 960;
+        // Delegate to the analysis-aware core with no capture. The
+        // `None` branch is a single `match` arm behind an `#[inline]`
+        // wrapper, so after optimization this path performs no
+        // analysis-specific work whatsoever — no LLR copy, no truth
+        // materialization, no extra allocation. The
+        // `simulation_no_analysis_overhead` bench locks this
+        // equivalence in place.
+        run_uncoded_ber_with_channel_impl::<C, R>(channel, config, None, rng)
+    }
 
-        let alignment = channel.batch_alignment().max(1);
-
-        config
-            .eb_n0_range_db
-            .iter()
-            .map(|&eb_n0_db| {
-                let mut total_bits = 0usize;
-                let mut total_errors = 0usize;
-
-                while total_errors < config.min_errors && total_bits < config.max_frames {
-                    let remaining = config.max_frames - total_bits;
-                    let mut batch_size = UNCODED_MODEM_BATCH_BITS.min(remaining);
-                    // Round down to the channel's required alignment so
-                    // modem-backed channels with bits_per_symbol > 1 do
-                    // not panic on a ragged tail.
-                    batch_size -= batch_size % alignment;
-                    if batch_size == 0 {
-                        break;
-                    }
-                    let bits = BitVec::random(batch_size, rng);
-                    // Uncoded => rate = 1.0. The channel owns modulation,
-                    // noise, and demapping end-to-end; we only consume LLRs.
-                    let llrs = channel.transmit_and_demodulate(&bits, eb_n0_db, 1.0, rng);
-                    debug_assert_eq!(llrs.len(), batch_size);
-
-                    let errors = (0..batch_size)
-                        .filter(|&i| {
-                            // Positive LLR => bit 0, negative => bit 1.
-                            // Ties (0.0) map to bit 0, matching the
-                            // framework hard-decision convention.
-                            let decoded_bit = llrs[i].value() < 0.0;
-                            bits.get(i) != decoded_bit
-                        })
-                        .count();
-
-                    total_bits += batch_size;
-                    total_errors += errors;
-                }
-
-                let ber = if total_bits > 0 {
-                    total_errors as f64 / total_bits as f64
-                } else {
-                    0.0
-                };
-
-                SimulationResult {
-                    eb_n0_db,
-                    ber,
-                    bler: 0.0,
-                    avg_iterations: None,
-                    avg_queries_per_bit: None,
-                    num_bits: total_bits,
-                    num_bit_errors: total_errors,
-                    num_frames: 0,
-                    num_frame_errors: 0,
-                }
-            })
-            .collect()
+    /// Uncoded BER sweep with opt-in per-bit LLR analysis capture.
+    ///
+    /// Behaves exactly like
+    /// [`SimulationRunner::run_uncoded_ber_with_channel`] — same
+    /// `ChannelModel` contract, same batch-size alignment, same
+    /// hard-decision convention, same result vector layout — with one
+    /// addition: when `capture` is `Some(&mut AnalysisCapture)`, each
+    /// post-demap `(llrs, truth_bits)` batch is forwarded to the
+    /// accumulator before the error count is tallied. When `capture` is
+    /// `None`, the hot loop is bit-identical to the unaugmented runner
+    /// (the extra branch collapses under `#[inline]`).
+    ///
+    /// # Zero-overhead contract
+    ///
+    /// The no-capture path is benchmarked against
+    /// [`SimulationRunner::run_uncoded_ber_with_channel`] in
+    /// `simulation_no_analysis_overhead`; both paths share the same
+    /// `#[inline]` implementation, so the disabled path matches the
+    /// original to within measurement noise.
+    ///
+    /// # Arguments
+    ///
+    /// * `channel` - Any [`ChannelModel`] implementation (same as
+    ///   `run_uncoded_ber_with_channel`).
+    /// * `config` - Simulation configuration.
+    /// * `capture` - Optional [`AnalysisCapture`] handle. When `Some`,
+    ///   the accumulator backing the capture must have
+    ///   `bits_per_symbol() == channel.batch_alignment()` (or `1` when
+    ///   the channel declares a `batch_alignment()` of `1` for BPSK —
+    ///   [`PerBitLlrStats::accumulate`](crate::modem::analysis::PerBitLlrStats::accumulate)
+    ///   enforces the length invariant internally).
+    /// * `rng` - Random source.
+    ///
+    /// # Returns
+    ///
+    /// Same as [`SimulationRunner::run_uncoded_ber_with_channel`]: one
+    /// [`SimulationResult`] per SNR point.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::modem::analysis::PerBitLlrStats;
+    /// use gf2_coding::modem::AnalysisCapture;
+    /// use gf2_coding::simulation::{
+    ///     BpskAwgnChannel, SimulationConfig, SimulationRunner,
+    /// };
+    ///
+    /// let mut config = SimulationConfig::quick_test();
+    /// config.eb_n0_range_db = vec![6.0];
+    /// config.min_errors = 1;
+    /// config.max_frames = 2_000;
+    /// let channel = BpskAwgnChannel;
+    ///
+    /// let mut stats = PerBitLlrStats::new(1);
+    /// let mut capture = AnalysisCapture::new(&mut stats);
+    /// let mut rng = rand::thread_rng();
+    /// let results = SimulationRunner::run_uncoded_ber_with_analysis(
+    ///     &channel,
+    ///     &config,
+    ///     Some(&mut capture),
+    ///     &mut rng,
+    /// );
+    /// assert_eq!(results.len(), 1);
+    /// let report = stats.report();
+    /// assert_eq!(report.len(), 1);
+    /// assert!(report[0].bit0.count() + report[0].bit1.count() > 0);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// Same as [`SimulationRunner::run_uncoded_ber_with_channel`], plus
+    /// O(bits) accumulator work on the enabled path.
+    pub fn run_uncoded_ber_with_analysis<C: ChannelModel, R: Rng>(
+        channel: &C,
+        config: &SimulationConfig,
+        capture: Option<&mut AnalysisCapture<'_>>,
+        rng: &mut R,
+    ) -> Vec<SimulationResult> {
+        run_uncoded_ber_with_channel_impl::<C, R>(channel, config, capture, rng)
     }
 
     /// Exports simulation results to CSV format.

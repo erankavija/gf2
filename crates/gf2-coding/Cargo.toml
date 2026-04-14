@@ -98,3 +98,7 @@ harness = false
 [[bench]]
 name = "modem_generic_vs_fast"
 harness = false
+
+[[bench]]
+name = "simulation_no_analysis_overhead"
+harness = false
