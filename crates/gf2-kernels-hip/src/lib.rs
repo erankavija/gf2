@@ -387,6 +387,354 @@ impl GpuBcjrBatch {
     }
 }
 
+/// Reinterprets a `&[f32]` as a byte slice for H→D copies.
+///
+/// Safe because `f32` has no padding bits and u8 alignment is 1. The
+/// returned slice aliases `src`'s backing storage and has the same
+/// lifetime; callers must not mutate `src` while the byte slice is
+/// live.
+#[inline]
+fn f32_slice_as_bytes(src: &[f32]) -> &[u8] {
+    // SAFETY: f32 has no padding and u8 alignment is 1; the total byte
+    // count is computed from `src` so the resulting slice spans the
+    // same memory region as the input.
+    unsafe { std::slice::from_raw_parts(src.as_ptr() as *const u8, std::mem::size_of_val(src)) }
+}
+
+/// Reinterprets a `&mut [f32]` as a mutable byte slice for D→H copies.
+///
+/// Same rationale as [`f32_slice_as_bytes`]; the mutable variant is
+/// needed because `hipMemcpy` writes into the host buffer.
+#[inline]
+fn f32_slice_as_bytes_mut(dst: &mut [f32]) -> &mut [u8] {
+    let len = std::mem::size_of_val(dst);
+    // SAFETY: see f32_slice_as_bytes; mutability is preserved.
+    unsafe { std::slice::from_raw_parts_mut(dst.as_mut_ptr() as *mut u8, len) }
+}
+
+/// GPU-accelerated batch Gray square-QAM / BPSK soft demapper (max-log).
+///
+/// Computes per-bit LLRs on the GPU using the same axis-separable
+/// pre-rotation contract as the CPU fast path
+/// (`gf2_coding::modem::FastGrayQamDemapper`): under AWGN with
+/// independent I/Q noise the per-symbol 2D max-log decomposes into two
+/// 1D Gray-PAM max-log LLRs of size `sqrt(M)` each, so the hot path
+/// cost is `O(num_symbols * sqrt(M) * m)`.
+///
+/// The kernel implements the max-log variant only; this is a research
+/// prototype intended to back the CPU/GPU crossover measurement tracked
+/// in JIT issue `9c37ec8c`. For exact log-MAP or arbitrary constellations,
+/// use the CPU reference/fast paths.
+///
+/// Persistent state: the device-side `pam_levels` table and reusable
+/// input / output buffers are allocated once at construction for up to
+/// `max_batch` symbols. Subsequent `demap_batch` calls reuse the same
+/// allocations.
+///
+/// # Examples
+///
+/// ```no_run
+/// use gf2_kernels_hip::GpuGrayQamDemapper;
+///
+/// // 16-QAM: m = 4, axis_len = 4, pam_levels derived by the caller
+/// // (on the CPU side, matching the preset).
+/// let pam_levels: Vec<f32> = vec![-3.0, -1.0, 1.0, 3.0]
+///     .into_iter()
+///     .map(|v| v / (10.0f32).sqrt())
+///     .collect();
+/// let demapper = GpuGrayQamDemapper::new(&pam_levels, 4, false, 256).unwrap();
+/// let rx_i = vec![0.3f32; 4];
+/// let rx_q = vec![-0.2f32; 4];
+/// let nv = vec![0.25f32; 4];
+/// let llrs = demapper.demap_batch(&rx_i, &rx_q, None, None, &nv).unwrap();
+/// assert_eq!(llrs.len(), 4 * 4);
+/// ```
+pub struct GpuGrayQamDemapper {
+    d_rx_i: DeviceBuffer,
+    d_rx_q: DeviceBuffer,
+    d_gain_i: DeviceBuffer,
+    d_gain_q: DeviceBuffer,
+    d_noise_var: DeviceBuffer,
+    d_pam_levels: DeviceBuffer,
+    d_out_llrs: DeviceBuffer,
+    axis_len: usize,
+    m: u8,
+    m_half: u8,
+    is_bpsk: bool,
+    max_batch: usize,
+}
+
+impl GpuGrayQamDemapper {
+    /// Constructs a new GPU demapper for a fixed Gray square-QAM / BPSK
+    /// preset, pre-uploading the PAM level table.
+    ///
+    /// # Arguments
+    ///
+    /// * `pam_levels` - Post-normalization Gray-PAM levels shared between
+    ///   the I and Q axes. Length `1 << (m / 2)` for QAM or exactly `2`
+    ///   for BPSK. These must come from the caller's matching CPU
+    ///   [`gf2_coding::modem::FastGrayQamDemapper`] construction — the
+    ///   GPU path never re-derives them.
+    /// * `m` - Bits per symbol. Must be one of `1, 2, 4, 6, 8`.
+    /// * `is_bpsk` - `true` for BPSK (`m == 1`), `false` for Gray-QAM.
+    /// * `max_batch` - Maximum number of symbols per `demap_batch` call.
+    ///   Device buffers for all inputs / outputs are allocated up to this
+    ///   size and reused across calls.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`HipError`] if device allocation or the one-time
+    /// `pam_levels` upload fails.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `m` is not in `{1, 2, 4, 6, 8}`, if `pam_levels` has the
+    /// wrong length for `m`, or if the BPSK flag disagrees with `m == 1`.
+    ///
+    /// # Complexity
+    ///
+    /// O(`max_batch`) device memory for inputs / outputs plus
+    /// `O(axis_len)` for the PAM table.
+    pub fn new(
+        pam_levels: &[f32],
+        m: u8,
+        is_bpsk: bool,
+        max_batch: usize,
+    ) -> Result<Self, HipError> {
+        assert!(
+            matches!(m, 1 | 2 | 4 | 6 | 8),
+            "GpuGrayQamDemapper::new: m = {m} must be one of {{1, 2, 4, 6, 8}}"
+        );
+        assert_eq!(
+            is_bpsk,
+            m == 1,
+            "GpuGrayQamDemapper::new: is_bpsk={is_bpsk} inconsistent with m={m}"
+        );
+        let (m_half, axis_len) = if is_bpsk {
+            (0u8, 2usize)
+        } else {
+            (m / 2, 1usize << (m / 2))
+        };
+        assert_eq!(
+            pam_levels.len(),
+            axis_len,
+            "GpuGrayQamDemapper::new: pam_levels.len() = {} != expected axis_len = {axis_len}",
+            pam_levels.len()
+        );
+
+        let f32_size = std::mem::size_of::<f32>();
+        let d_rx_i = DeviceBuffer::new(max_batch * f32_size)?;
+        let d_rx_q = DeviceBuffer::new(max_batch * f32_size)?;
+        let d_gain_i = DeviceBuffer::new(max_batch * f32_size)?;
+        let d_gain_q = DeviceBuffer::new(max_batch * f32_size)?;
+        let d_noise_var = DeviceBuffer::new(max_batch * f32_size)?;
+        let d_pam_levels = DeviceBuffer::new(axis_len * f32_size)?;
+        let d_out_llrs = DeviceBuffer::new(max_batch * (m as usize) * f32_size)?;
+
+        // Upload PAM levels once (persistent for the lifetime of self).
+        // The matching assertion on `pam_levels.len()` above guarantees
+        // the destination device allocation is sized correctly.
+        assert_eq!(pam_levels.len(), axis_len);
+        d_pam_levels.copy_from_host(f32_slice_as_bytes(pam_levels))?;
+
+        Ok(Self {
+            d_rx_i,
+            d_rx_q,
+            d_gain_i,
+            d_gain_q,
+            d_noise_var,
+            d_pam_levels,
+            d_out_llrs,
+            axis_len,
+            m,
+            m_half,
+            is_bpsk,
+            max_batch,
+        })
+    }
+
+    /// Returns the bits-per-symbol `m` this demapper was constructed for.
+    pub fn m(&self) -> u8 {
+        self.m
+    }
+
+    /// Returns the maximum batch size.
+    pub fn max_batch(&self) -> usize {
+        self.max_batch
+    }
+
+    /// Demaps a batch of received symbols into max-log LLRs on the GPU.
+    ///
+    /// Returns a flat `Vec<f32>` of length `num_symbols * m` in the
+    /// canonical symbol-major, MSB-first layout: for QAM the first
+    /// `m/2` bits of each symbol are the I-axis Gray-PAM label (MSB =
+    /// coarsest level), followed by `m/2` Q-axis bits.
+    ///
+    /// # Arguments
+    ///
+    /// * `rx_i` / `rx_q` - Received samples split into I and Q. Lengths
+    ///   must match and define `num_symbols`.
+    /// * `gain_i` / `gain_q` - Optional per-symbol complex channel gain.
+    ///   Pass `None` on both for AWGN. When provided, both must be
+    ///   `Some(_)` and have length `num_symbols`.
+    /// * `noise_var` - Per-symbol `N0 = 2 sigma^2`, length `num_symbols`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`HipError`] on device memcpy, kernel launch, or
+    /// synchronization failures.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `num_symbols > max_batch`, if `rx_i` / `rx_q` /
+    /// `noise_var` have mismatched lengths, or if exactly one of
+    /// `gain_i` / `gain_q` is `Some`.
+    ///
+    /// # Complexity
+    ///
+    /// O(`num_symbols * axis_len * m`) GPU work. Host-side cost is
+    /// dominated by the five H→D copies and one D→H copy of
+    /// `num_symbols` f32s each.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_kernels_hip::GpuGrayQamDemapper;
+    ///
+    /// let pam_levels: Vec<f32> = vec![-3.0, -1.0, 1.0, 3.0]
+    ///     .into_iter()
+    ///     .map(|v| v / (10.0f32).sqrt())
+    ///     .collect();
+    /// let demapper = GpuGrayQamDemapper::new(&pam_levels, 4, false, 64).unwrap();
+    /// let rx_i = vec![0.3f32; 8];
+    /// let rx_q = vec![-0.5f32; 8];
+    /// let nv = vec![0.1f32; 8];
+    /// let llrs = demapper
+    ///     .demap_batch(&rx_i, &rx_q, None, None, &nv)
+    ///     .unwrap();
+    /// assert_eq!(llrs.len(), 8 * 4);
+    /// ```
+    pub fn demap_batch(
+        &self,
+        rx_i: &[f32],
+        rx_q: &[f32],
+        gain_i: Option<&[f32]>,
+        gain_q: Option<&[f32]>,
+        noise_var: &[f32],
+    ) -> Result<Vec<f32>, HipError> {
+        let num_symbols = rx_i.len();
+        assert_eq!(
+            rx_q.len(),
+            num_symbols,
+            "GpuGrayQamDemapper::demap_batch: rx_i.len() ({}) != rx_q.len() ({})",
+            num_symbols,
+            rx_q.len()
+        );
+        assert_eq!(
+            noise_var.len(),
+            num_symbols,
+            "GpuGrayQamDemapper::demap_batch: rx_i.len() ({}) != noise_var.len() ({})",
+            num_symbols,
+            noise_var.len()
+        );
+        assert!(
+            num_symbols <= self.max_batch,
+            "GpuGrayQamDemapper::demap_batch: num_symbols {num_symbols} > max_batch {}",
+            self.max_batch
+        );
+        let gains_present = match (gain_i, gain_q) {
+            (Some(gi), Some(gq)) => {
+                assert_eq!(
+                    gi.len(),
+                    num_symbols,
+                    "GpuGrayQamDemapper::demap_batch: gain_i.len() ({}) != num_symbols ({})",
+                    gi.len(),
+                    num_symbols
+                );
+                assert_eq!(
+                    gq.len(),
+                    num_symbols,
+                    "GpuGrayQamDemapper::demap_batch: gain_q.len() ({}) != num_symbols ({})",
+                    gq.len(),
+                    num_symbols
+                );
+                true
+            }
+            (None, None) => false,
+            _ => panic!(
+                "GpuGrayQamDemapper::demap_batch: gain_i and gain_q must both be Some or both be None"
+            ),
+        };
+
+        if num_symbols == 0 {
+            return Ok(Vec::new());
+        }
+
+        // H→D copies. `f32_slice_as_bytes` asserts are satisfied by the
+        // length checks above (`rx_i.len() == num_symbols`, etc.).
+        self.d_rx_i.copy_from_host(f32_slice_as_bytes(rx_i))?;
+        self.d_rx_q.copy_from_host(f32_slice_as_bytes(rx_q))?;
+        self.d_noise_var
+            .copy_from_host(f32_slice_as_bytes(noise_var))?;
+
+        if gains_present {
+            // Safe to unwrap: `gains_present == true` implies both
+            // gain_i and gain_q are Some, proven by the match arm above.
+            let gi = gain_i.expect("gains_present invariant");
+            let gq = gain_q.expect("gains_present invariant");
+            self.d_gain_i.copy_from_host(f32_slice_as_bytes(gi))?;
+            self.d_gain_q.copy_from_host(f32_slice_as_bytes(gq))?;
+        }
+
+        // Launch kernel.
+        // SAFETY: all device pointers originate from `DeviceBuffer::new`
+        // in this constructor and are sized for `max_batch` symbols;
+        // `num_symbols <= max_batch` is asserted above. When
+        // `gains_present == 0` the kernel does not dereference gain
+        // pointers (see hip/gray_qam_demapper.hip), so passing their
+        // current device addresses (unchanged since construction) is
+        // safe either way.
+        check_hip(
+            unsafe {
+                ffi::launch_gray_qam_demap(
+                    self.d_rx_i.as_ptr() as *const f32,
+                    self.d_rx_q.as_ptr() as *const f32,
+                    self.d_gain_i.as_ptr() as *const f32,
+                    self.d_gain_q.as_ptr() as *const f32,
+                    self.d_noise_var.as_ptr() as *const f32,
+                    self.d_pam_levels.as_ptr() as *const f32,
+                    self.d_out_llrs.as_mut_ptr() as *mut f32,
+                    num_symbols as i32,
+                    self.axis_len as i32,
+                    self.m as i32,
+                    self.m_half as i32,
+                    if self.is_bpsk { 1 } else { 0 },
+                    if gains_present { 1 } else { 0 },
+                    ptr::null_mut(),
+                )
+            },
+            "launch_gray_qam_demap",
+        )?;
+        // SAFETY: hipDeviceSynchronize blocks until all preceding default-stream
+        // work completes; no preconditions.
+        check_hip(
+            unsafe { ffi::hip_device_synchronize() },
+            "hipDeviceSynchronize",
+        )?;
+
+        // D→H copy.
+        let out_len = num_symbols * self.m as usize;
+        let mut out = vec![0.0f32; out_len];
+        self.d_out_llrs
+            .copy_to_host(f32_slice_as_bytes_mut(&mut out))?;
+        Ok(out)
+    }
+}
+
+// SAFETY: all contained device buffers are `Send` (see the impl on
+// `DeviceBuffer`); the configuration fields are plain `Copy` values.
+unsafe impl Send for GpuGrayQamDemapper {}
+
 #[cfg(test)]
 mod tests {
     use super::*;

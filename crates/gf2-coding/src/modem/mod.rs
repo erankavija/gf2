@@ -106,3 +106,8 @@ pub use types::{
     ModemCapabilities, Normalization, SymbolPoint,
 };
 pub use view::ModemView;
+
+#[cfg(feature = "hip")]
+pub mod gpu_demapper;
+#[cfg(feature = "hip")]
+pub use gpu_demapper::GpuGrayQamSoftDemapper;

@@ -287,6 +287,34 @@ impl<S: ModemScalar> FastGrayQamDemapper<S> {
         }
     }
 
+    /// Returns the post-normalization Gray-PAM level table shared between
+    /// the I and Q axes.
+    ///
+    /// The table is indexed by the raw Gray-PAM axis label (MSB-first
+    /// within the `m/2`-bit half-label for QAM, or the single raw bit for
+    /// BPSK) and has length `1 << (m / 2)` for QAM or exactly `2` for
+    /// BPSK. The validator in [`Self::new`] guarantees both axes use the
+    /// same level set, so GPU and alternate-backend adapters can reuse
+    /// this one table rather than rederiving it from the
+    /// [`super::ModemSpec`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::modem::{FastGrayQamDemapper, ModemSpec};
+    ///
+    /// let demapper = FastGrayQamDemapper::new(ModemSpec::<f32>::gray_square_qam(16));
+    /// assert_eq!(demapper.pam_levels().len(), 4);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
+    #[inline]
+    pub fn pam_levels(&self) -> &[f64] {
+        &self.pam_levels
+    }
+
     /// Returns a borrowed reference to the owned [`ModemSpec`].
     ///
     /// # Examples
