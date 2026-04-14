@@ -86,3 +86,7 @@ harness = false
 [[bench]]
 name = "allocation_optimization"
 harness = false
+
+[[bench]]
+name = "cpu_dispatch_probe"
+harness = false
