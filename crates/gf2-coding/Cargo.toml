@@ -86,3 +86,7 @@ harness = false
 [[bench]]
 name = "allocation_optimization"
 harness = false
+
+[[bench]]
+name = "modem_cpu"
+harness = false
