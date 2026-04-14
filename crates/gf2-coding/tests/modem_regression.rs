@@ -43,6 +43,24 @@ use rand::{rngs::StdRng, SeedableRng};
 /// through the preset surface (BPSK + Gray square-QAM).
 const PRESET_ORDERS: [usize; 5] = [2, 4, 16, 64, 256];
 
+/// Box-Muller pair of unit-variance Gaussian samples `(N_I, N_Q)` drawn
+/// from the shared deterministic `Lcg`. Done by hand (rather than via
+/// `rand_distr`) so the generated noise vector depends only on the
+/// workspace SSOT RNG and is reproducible across platforms. SSOT helper
+/// shared between both f32 and f64 regression sites.
+fn box_muller_pair_f64(rng: &mut Lcg) -> (f64, f64) {
+    let u1 = (rng.next_u32() as f64 / u32::MAX as f64).max(1e-12);
+    let u2 = rng.next_u32() as f64 / u32::MAX as f64;
+    let r = (-2.0 * u1.ln()).sqrt();
+    let theta = std::f64::consts::TAU * u2;
+    (r * theta.cos(), r * theta.sin())
+}
+
+fn box_muller_pair_f32(rng: &mut Lcg) -> (f32, f32) {
+    let (a, b) = box_muller_pair_f64(rng);
+    (a as f32, b as f32)
+}
+
 /// Builds a `BitVec` from a `[bool]` slice using the crate's dense bit
 /// storage. Used to feed [`BpskAwgnChannel::transmit_and_demodulate`],
 /// which takes a `gf2_core::BitVec`.
@@ -179,18 +197,8 @@ fn parity_f64(
     let mut rng = Lcg::new(rng_seed);
     let mut rx_i = vec![0.0_f64; batch];
     let mut rx_q = vec![0.0_f64; batch];
-    // Box-Muller from two independent uniform(0, 1) draws. Done by hand
-    // here (rather than through `rand_distr`) so the test vector depends
-    // only on the shared LCG and is reproducible across platforms.
     for k in 0..batch {
-        let u1 = (rng.next_u32() as f64 / u32::MAX as f64).max(1e-12);
-        let u2 = rng.next_u32() as f64 / u32::MAX as f64;
-        let r = (-2.0 * u1.ln()).sqrt();
-        let n_i = r * (std::f64::consts::TAU * u2).cos();
-        let u3 = (rng.next_u32() as f64 / u32::MAX as f64).max(1e-12);
-        let u4 = rng.next_u32() as f64 / u32::MAX as f64;
-        let r2 = (-2.0 * u3.ln()).sqrt();
-        let n_q = r2 * (std::f64::consts::TAU * u4).cos();
+        let (n_i, n_q) = box_muller_pair_f64(&mut rng);
         rx_i[k] = tx_i[k] + std * n_i;
         rx_q[k] = tx_q[k] + std * n_q;
     }
@@ -296,14 +304,9 @@ fn test_fast_ref_parity_f32_awgn_all_presets() {
         let mut rx_i = vec![0.0_f32; 64];
         let mut rx_q = vec![0.0_f32; 64];
         for k in 0..64 {
-            let u1 = (rng.next_u32() as f32 / u32::MAX as f32).max(1e-12);
-            let u2 = rng.next_u32() as f32 / u32::MAX as f32;
-            let r = (-2.0_f32 * u1.ln()).sqrt();
-            rx_i[k] = tx_i[k] + std * r * (std::f32::consts::TAU * u2).cos();
-            let u3 = (rng.next_u32() as f32 / u32::MAX as f32).max(1e-12);
-            let u4 = rng.next_u32() as f32 / u32::MAX as f32;
-            let r2 = (-2.0_f32 * u3.ln()).sqrt();
-            rx_q[k] = tx_q[k] + std * r2 * (std::f32::consts::TAU * u4).cos();
+            let (n_i, n_q) = box_muller_pair_f32(&mut rng);
+            rx_i[k] = tx_i[k] + std * n_i;
+            rx_q[k] = tx_q[k] + std * n_q;
         }
 
         let nv = vec![n0; 64];
