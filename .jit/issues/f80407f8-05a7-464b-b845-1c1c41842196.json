@@ -15,6 +15,11 @@
     "doc-review"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-14T22:26:44.249379372Z"
+    },
     "tdd-reminder": {
       "status": "passed",
       "updated_by": "agent:project-lead",
@@ -30,5 +35,5 @@
     "story:modem-ergonomics-validation-benchmarks"
   ],
   "created_at": "2026-04-12T19:41:45.870562801+00:00",
-  "updated_at": "2026-04-14T22:13:10.652269464+00:00"
+  "updated_at": "2026-04-14T22:29:39.369613705+00:00"
 }

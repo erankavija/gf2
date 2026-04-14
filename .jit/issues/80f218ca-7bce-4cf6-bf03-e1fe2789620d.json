@@ -2,9 +2,9 @@
   "id": "80f218ca-7bce-4cf6-bf03-e1fe2789620d",
   "title": "Integrate opt-in bit-channel analysis into simulation workflows",
   "description": "Integrate bit-channel analysis collectors into the simulation surface in a way that preserves the existing fast path when analysis is not enabled.\n\n## Success Criteria\n\n- [ ] Simulation workflows can request bit-channel analysis explicitly.\n- [ ] When analysis is disabled, the simulation path does not perform analysis-specific collection or bookkeeping work.\n- [ ] Analysis integration does not create a second source of modem functionality inside the simulation layer.\n\n## Notes\n\nThis task must preserve zero-overhead intent for non-analysis simulations as a hard design constraint.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "high",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [
     "c007875b-33fb-4ebd-b377-38045fbb9c30",
     "92186a40-1d97-49f9-8b82-e91b8afe47b2"
@@ -15,7 +15,13 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-14T22:29:02.140480793Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -25,5 +31,5 @@
     "story:bit-channel-analysis"
   ],
   "created_at": "2026-04-12T20:04:48.349166676+00:00",
-  "updated_at": "2026-04-14T22:15:16.946809012+00:00"
+  "updated_at": "2026-04-14T22:29:02.970062796+00:00"
 }

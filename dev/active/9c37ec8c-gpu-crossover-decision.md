@@ -1,5 +1,3 @@
-<!-- jit: link this document to issue 9c37ec8c as doc_type=decision -->
-
 # GPU crossover decision — JIT `9c37ec8c`
 
 **Decision:** **keep-experimental** — gate the GPU Gray-QAM demapper
