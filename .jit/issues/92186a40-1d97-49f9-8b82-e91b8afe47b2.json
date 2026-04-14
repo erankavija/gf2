@@ -2,7 +2,7 @@
   "id": "92186a40-1d97-49f9-8b82-e91b8afe47b2",
   "title": "Refactor simulation and channel surfaces around the modem framework",
   "description": "Refactor the simulation harness so modulation and demapping are composed through the shared modem framework instead of being embedded in channel-specific helpers. This story makes the new modem surface usable from the existing coded and uncoded simulation flows and removes simulation-owned custom modem behavior.\n\n## Background\n\n`channel.rs`, `simulation.rs`, and the current fading integration embed assumptions about BPSK or QPSK directly into the link path. The modem framework needs an integration layer that lets AWGN and existing fading models consume modem presets or custom constellations without bespoke glue while keeping modem functionality owned by one shared implementation.\n\n## Success Criteria\n\n- [ ] `SimulationRunner` coded and uncoded workflows can consume framework-backed modems or preset wrappers without a separate conversion layer.\n- [ ] `BpskAwgnChannel` and the current Rician-facing wrapper obtain mapping and demapping behavior from the shared modem implementation rather than from local modem-specific formulas.\n- [ ] Simulation and channel modules no longer interpret constellation labels or compute modem-specific LLRs outside the shared modem surface.\n- [ ] The downstream DVB-T2 integration work can compose the modem path from shared constructors plus channel settings only.\n\n## Notes\n\nThis story is the handoff point from modem internals to the current simulation surface and should preserve a single source of truth for modem behavior.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "high",
   "assignee": "agent:claude",
   "dependencies": [
@@ -21,15 +21,20 @@
       "updated_by": "auto:executor",
       "updated_at": "2026-04-14T22:06:35.715742245Z"
     },
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-14T22:08:07.216358692Z"
-    },
     "tdd-reminder": {
       "status": "passed",
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-14T21:51:21.866269256Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-14T22:15:16.462228200Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-14T22:08:07.216358692Z"
     }
   },
   "context": {},
@@ -40,5 +45,5 @@
     "epic:d4851c3d"
   ],
   "created_at": "2026-04-12T19:39:51.667858715+00:00",
-  "updated_at": "2026-04-14T22:12:48.924527414+00:00"
+  "updated_at": "2026-04-14T22:15:16.818414009+00:00"
 }
