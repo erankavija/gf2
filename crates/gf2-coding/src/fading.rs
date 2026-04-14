@@ -737,17 +737,21 @@ impl BitInterleaver {
 
 /// Generates a random permutation of `[0, length)` using a seeded LCG.
 ///
-/// Uses a simple Fisher-Yates shuffle with a linear congruential generator
-/// for a deterministic, seed-reproducible permutation without external deps.
+/// Uses a simple Fisher-Yates shuffle with the workspace SSOT
+/// deterministic LCG ([`gf2_core::rng::Lcg`]) for a seed-reproducible
+/// permutation without external dependencies. The state is initialised
+/// with `seed.wrapping_add(1)` so the first `next_u64()` output matches
+/// the pre-SSOT implementation bit-for-bit — existing regression tests
+/// that lock BER / permutation values against specific seeds continue
+/// to pass.
 fn generate_permutation(length: usize, seed: u64) -> Vec<usize> {
     let mut perm: Vec<usize> = (0..length).collect();
-    // LCG parameters from Knuth TAOCP Vol 2, suitable for 64-bit
-    let mut state = seed.wrapping_add(1);
+    let mut rng = gf2_core::rng::Lcg::new(seed.wrapping_add(1));
     for i in (1..length).rev() {
-        state = state
-            .wrapping_mul(6364136223846793005)
-            .wrapping_add(1442695040888963407);
-        let j = (state >> 33) as usize % (i + 1);
+        // Preserve the `(state >> 33) % (i+1)` bit-extraction used by
+        // the original implementation so seed→permutation output is
+        // unchanged.
+        let j = (rng.next_u64() >> 33) as usize % (i + 1);
         perm.swap(i, j);
     }
     perm

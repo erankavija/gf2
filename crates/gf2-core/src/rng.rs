@@ -1,23 +1,28 @@
 //! Deterministic linear-congruential pseudo-random generator used across
-//! workspace test and benchmark code as the single source of truth for
-//! the "cheap deterministic LCG" pattern that would otherwise be
-//! duplicated in every downstream crate.
+//! the workspace as the single source of truth for the "cheap
+//! deterministic LCG" pattern.
 //!
-//! This is test-support infrastructure; it is not part of `gf2-core`'s
-//! public mathematical API and carries no stability guarantees. The
-//! module is gated behind `#[doc(hidden)]` so it does not appear in the
-//! public rustdoc.
+//! The implementation uses Numerical Recipes' `MMIX` constants
+//! (multiplier `6_364_136_223_846_793_005`, increment
+//! `1_442_695_040_888_963_407`). Consumers include:
 //!
-//! The implementation uses Numerical Recipes' `MMIX` constants so
-//! every downstream crate that seeds the same state observes the same
-//! pseudo-random stream — parity tests between e.g. the CPU scalar,
-//! AVX2, and HIP backends stay reproducible.
+//! - production permutation generators (e.g. `gf2_coding::fading` for
+//!   Rician-channel seed-reproducible Fisher-Yates shuffles),
+//! - deterministic test/benchmark data in `gf2_core::gf2m`,
+//!   `gf2_coding::gldpc`, `gf2_coding::modem`, and
+//!   `gf2_kernels_simd::modem`,
+//! - modem parity fixtures that need the same stream across CPU
+//!   scalar, AVX2, and HIP backends so cross-backend failures
+//!   reproduce deterministically.
+//!
+//! This is **not** a cryptographic RNG. It is a simulation-grade,
+//! seed-reproducible PRNG. Use `rand`/`rand_chacha` for anything
+//! security-sensitive.
 
 /// Deterministic LCG state.
 ///
 /// See the module documentation for the rationale for living in
-/// `gf2-core`.
-#[doc(hidden)]
+/// `gf2-core` rather than in a downstream test-support module.
 pub struct Lcg {
     state: u64,
 }
@@ -33,7 +38,7 @@ impl Lcg {
     /// # Examples
     ///
     /// ```
-    /// use gf2_core::test_rng::Lcg;
+    /// use gf2_core::rng::Lcg;
     ///
     /// let _ = Lcg::new(0);
     /// let _ = Lcg::new(u64::MAX);
@@ -52,7 +57,7 @@ impl Lcg {
     /// # Examples
     ///
     /// ```
-    /// use gf2_core::test_rng::Lcg;
+    /// use gf2_core::rng::Lcg;
     ///
     /// let mut rng = Lcg::new(1);
     /// let _ = rng.next_u64();
@@ -75,7 +80,7 @@ impl Lcg {
     /// # Examples
     ///
     /// ```
-    /// use gf2_core::test_rng::Lcg;
+    /// use gf2_core::rng::Lcg;
     ///
     /// let mut rng = Lcg::new(42);
     /// let _ = rng.next_u32();
@@ -94,7 +99,7 @@ impl Lcg {
     /// # Examples
     ///
     /// ```
-    /// use gf2_core::test_rng::Lcg;
+    /// use gf2_core::rng::Lcg;
     ///
     /// let mut rng = Lcg::new(7);
     /// assert!(rng.next_unit_f32().abs() <= 1.0);
@@ -113,7 +118,7 @@ impl Lcg {
     /// # Examples
     ///
     /// ```
-    /// use gf2_core::test_rng::Lcg;
+    /// use gf2_core::rng::Lcg;
     ///
     /// let mut rng = Lcg::new(11);
     /// assert!(rng.next_unit_f64().abs() <= 1.0);
@@ -137,7 +142,7 @@ impl Lcg {
     /// # Examples
     ///
     /// ```
-    /// use gf2_core::test_rng::Lcg;
+    /// use gf2_core::rng::Lcg;
     ///
     /// let mut rng = Lcg::new(13);
     /// let v = rng.next_positive_f32(0.05, 2.0);
@@ -162,7 +167,7 @@ impl Lcg {
     /// # Examples
     ///
     /// ```
-    /// use gf2_core::test_rng::Lcg;
+    /// use gf2_core::rng::Lcg;
     ///
     /// let mut rng = Lcg::new(17);
     /// let v = rng.next_positive_f64(0.05, 2.0);
@@ -190,7 +195,7 @@ impl Lcg {
     /// # Examples
     ///
     /// ```
-    /// use gf2_core::test_rng::Lcg;
+    /// use gf2_core::rng::Lcg;
     ///
     /// let mut rng = Lcg::new(19);
     /// assert!(rng.next_bounded_usize(8) < 8);
