@@ -34,6 +34,11 @@
 /// let capacity = shannon_capacity(3.0);
 /// assert!(capacity > 0.7 && capacity < 0.8);
 /// ```
+///
+/// # Complexity
+///
+/// O(N) where N is the fixed number of trapezoidal-rule integration
+/// nodes (currently 1000); effectively constant time.
 pub fn shannon_capacity(eb_n0_db: f64) -> f64 {
     let snr = 10.0_f64.powf(eb_n0_db / 10.0);
     shannon_capacity_numerical(snr)
@@ -45,6 +50,10 @@ pub fn shannon_capacity(eb_n0_db: f64) -> f64 {
 /// reliable communication at the specified rate over a BPSK AWGN channel.
 ///
 /// For rate R, finds Eb/N0 such that `shannon_capacity(Eb/N0) = R`.
+///
+/// # Arguments
+///
+/// * `rate` - Code rate, must be in `(0, 1]`.
 ///
 /// # Panics
 ///
@@ -59,6 +68,12 @@ pub fn shannon_capacity(eb_n0_db: f64) -> f64 {
 /// let eb_n0_min = shannon_limit(0.5);
 /// assert!(eb_n0_min < 1.0 && eb_n0_min > -1.0);
 /// ```
+///
+/// # Complexity
+///
+/// O(K · N) where K is the binary-search iteration cap (60) and N is
+/// the fixed integration-node count from [`shannon_capacity`];
+/// effectively constant time.
 pub fn shannon_limit(rate: f64) -> f64 {
     assert!(rate > 0.0 && rate <= 1.0, "Rate must be in (0, 1]");
 
