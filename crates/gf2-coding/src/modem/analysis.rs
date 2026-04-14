@@ -607,11 +607,13 @@ pub struct PerBitChannelStats {
     /// For a symmetric consistent LLR channel with `mean(L | 0) = mu`
     /// and `var(L | 0) ~= 2 mu` the mutual information equals
     /// `1 - E[log2(1 + exp(-L))] where L ~ N(mu, 2 mu)`. We plug the
-    /// observed `mean(|L|)` and `max(var(L|0), var(L|1))` into the
-    /// consistent-Gaussian J-function approximation, then clip into
-    /// `[0, 1]`. This is a *lower bound* because the actual per-bit
-    /// LLR distribution on higher-order Gray-QAM is not Gaussian;
-    /// callers that need exact MI should consume the histogram.
+    /// observed `mean(|L|)` (as an estimator of `mu`) into the
+    /// consistent-Gaussian J-function approximation with `sigma^2 = 2 mu`
+    /// and clip into `[0, 1]`. This is a *lower bound* because the
+    /// actual per-bit LLR distribution on higher-order Gray-QAM is
+    /// not Gaussian; callers that need exact MI should consume the
+    /// histogram via [`PerBitChannelStats::hist_bit0`] /
+    /// [`PerBitChannelStats::hist_bit1`] and integrate directly.
     pub mutual_info_bits_gaussian_lower_bound: f64,
     /// Optional histogram of `L_k` given `B_k = 0`. Present iff the
     /// accumulator was built with [`PerBitLlrStats::with_histogram`].
@@ -1014,9 +1016,10 @@ fn merge_hist(dst: &mut Histogram, src: &Histogram) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use proptest::prelude::*;
 
     #[test]
-    fn running_stats_empty_state() {
+    fn test_running_stats_empty_state() {
         let s = RunningStats::new();
         assert_eq!(s.count(), 0);
         assert_eq!(s.mean(), 0.0);
@@ -1027,7 +1030,7 @@ mod tests {
     }
 
     #[test]
-    fn running_stats_drops_non_finite() {
+    fn test_running_stats_drops_non_finite() {
         let mut s = RunningStats::new();
         s.push(1.0);
         s.push(f64::NAN);
@@ -1039,7 +1042,7 @@ mod tests {
     }
 
     #[test]
-    fn running_stats_matches_closed_form_variance() {
+    fn test_running_stats_matches_closed_form_variance() {
         let xs = [1.0, 2.0, 3.0, 4.0, 5.0];
         let mut s = RunningStats::new();
         for &x in &xs {
@@ -1054,7 +1057,7 @@ mod tests {
     }
 
     #[test]
-    fn histogram_routes_bins_and_tails() {
+    fn test_histogram_routes_bins_and_tails() {
         let mut h = Histogram::new(-4.0, 4.0, NonZeroUsize::new(8).unwrap());
         h.push(-10.0); // underflow
         h.push(-4.0); // bin 0
@@ -1075,18 +1078,18 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "min < max")]
-    fn histogram_rejects_degenerate_range() {
+    fn test_histogram_rejects_degenerate_range() {
         let _ = Histogram::new(1.0, 1.0, NonZeroUsize::new(4).unwrap());
     }
 
     #[test]
     #[should_panic(expected = "finite")]
-    fn histogram_rejects_non_finite_bounds() {
+    fn test_histogram_rejects_non_finite_bounds() {
         let _ = Histogram::new(f64::NAN, 1.0, NonZeroUsize::new(4).unwrap());
     }
 
     #[test]
-    fn per_bit_llr_stats_splits_by_truth() {
+    fn test_per_bit_llr_stats_splits_by_truth() {
         // m = 2, 4 symbols; bit 0 always 0, bit 1 always 1.
         // LLRs chosen so bit 0 has mean 2.0, bit 1 has mean -2.0.
         let llrs: Vec<Llr> = [1.0_f32, -1.0, 2.0, -2.0, 3.0, -3.0, 2.0, -2.0]
@@ -1110,7 +1113,7 @@ mod tests {
     }
 
     #[test]
-    fn per_bit_llr_stats_histograms_opt_in() {
+    fn test_per_bit_llr_stats_histograms_opt_in() {
         let stats = PerBitLlrStats::new(2);
         let r = stats.report();
         assert!(r[0].hist_bit0.is_none());
@@ -1134,26 +1137,26 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "bits_per_symbol must be in [1, 16]")]
-    fn per_bit_llr_stats_rejects_zero_bits() {
+    fn test_per_bit_llr_stats_rejects_zero_bits() {
         let _ = PerBitLlrStats::new(0);
     }
 
     #[test]
     #[should_panic(expected = "not a multiple")]
-    fn per_bit_llr_stats_rejects_ragged_input() {
+    fn test_per_bit_llr_stats_rejects_ragged_input() {
         let mut s = PerBitLlrStats::new(2);
         s.accumulate(&[Llr::new(1.0)], &[false]);
     }
 
     #[test]
     #[should_panic(expected = "truth_bits.len()")]
-    fn per_bit_llr_stats_rejects_length_mismatch() {
+    fn test_per_bit_llr_stats_rejects_length_mismatch() {
         let mut s = PerBitLlrStats::new(2);
         s.accumulate(&[Llr::new(1.0), Llr::new(2.0)], &[false]);
     }
 
     #[test]
-    fn merge_exact_equivalent_to_single_stream() {
+    fn test_merge_exact_equivalent_to_single_stream() {
         let all: Vec<Llr> = (0..100)
             .map(|i| Llr::new((i as f32 - 50.0) * 0.1))
             .collect();
@@ -1184,7 +1187,7 @@ mod tests {
     }
 
     #[test]
-    fn merge_with_histograms_sums_bins() {
+    fn test_merge_with_histograms_sums_bins() {
         let cfg = HistogramConfig {
             min: -4.0,
             max: 4.0,
@@ -1202,7 +1205,7 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "histogram configurations differ")]
-    fn merge_rejects_mismatched_hist_cfg() {
+    fn test_merge_rejects_mismatched_hist_cfg() {
         let cfg_a = HistogramConfig {
             min: -4.0,
             max: 4.0,
@@ -1220,7 +1223,7 @@ mod tests {
     }
 
     #[test]
-    fn gaussian_mi_monotone_and_bounded() {
+    fn test_gaussian_mi_monotone_and_bounded() {
         // Monotone non-decreasing in mean_abs_llr, clipped to [0, 1].
         assert_eq!(gaussian_mi_lower_bound_bits(0.0), 0.0);
         assert_eq!(gaussian_mi_lower_bound_bits(-1.0), 0.0);
@@ -1233,7 +1236,7 @@ mod tests {
     }
 
     #[test]
-    fn report_populates_mutual_info_from_mean_abs() {
+    fn test_report_populates_mutual_info_from_mean_abs() {
         let mut stats = PerBitLlrStats::new(1);
         stats.accumulate(&[Llr::new(4.0), Llr::new(-4.0)], &[false, true]);
         let r = stats.report();
@@ -1243,7 +1246,7 @@ mod tests {
     }
 
     #[test]
-    fn bit_edges_cover_full_range() {
+    fn test_bit_edges_cover_full_range() {
         let h = Histogram::new(0.0, 4.0, NonZeroUsize::new(4).unwrap());
         let (lo0, _) = h.bin_edges(0);
         let (_, hi_last) = h.bin_edges(3);
@@ -1252,7 +1255,7 @@ mod tests {
     }
 
     #[test]
-    fn accumulate_skips_saturated_llrs_in_running_stats() {
+    fn test_accumulate_skips_saturated_llrs_in_running_stats() {
         let mut s = PerBitLlrStats::new(1);
         s.accumulate(
             &[Llr::infinity(), Llr::new(1.0), Llr::neg_infinity()],
@@ -1261,5 +1264,74 @@ mod tests {
         let r = s.report();
         // All three are bit=0, but infinities are dropped from running stats.
         assert_eq!(r[0].bit0.count(), 1);
+    }
+
+    // ----- Property tests ------------------------------------------------
+    //
+    // Invariants of merge and accumulate that must hold for any finite
+    // sequence of samples; example-based tests above cover specific
+    // regressions, these cover the mathematical shape.
+
+    proptest! {
+        /// `merge(a, b)` with `a` and `b` drawn from the same underlying
+        /// stream split into halves must equal accumulating the full
+        /// stream in one go, modulo floating-point roundoff.
+        #[test]
+        fn test_merge_associativity_matches_full_stream(
+            seed in 0u64..1024,
+            m in 1u8..=4,
+            batch in 1usize..=128,
+        ) {
+            use gf2_core::rng::Lcg;
+            let m_us = m as usize;
+            let mut rng = Lcg::new(seed);
+            let n = batch * m_us;
+            let llrs: Vec<Llr> = (0..n)
+                .map(|_| Llr::new(rng.next_unit_f32() * 8.0))
+                .collect();
+            let truth: Vec<bool> = (0..n).map(|_| rng.next_u64() & 1 == 1).collect();
+
+            let mid = (batch / 2) * m_us;
+            let mut full = PerBitLlrStats::new(m);
+            full.accumulate(&llrs, &truth);
+
+            let mut a = PerBitLlrStats::new(m);
+            a.accumulate(&llrs[..mid], &truth[..mid]);
+            let mut b = PerBitLlrStats::new(m);
+            b.accumulate(&llrs[mid..], &truth[mid..]);
+            a.merge(b);
+
+            let r_full = full.report();
+            let r_merged = a.report();
+            for k in 0..m_us {
+                prop_assert_eq!(r_full[k].bit0.count(), r_merged[k].bit0.count());
+                prop_assert_eq!(r_full[k].bit1.count(), r_merged[k].bit1.count());
+                // Welford merge is only equal to single-pass up to FP
+                // roundoff; 1e-9 relative tolerance is sufficient here.
+                let e_full = r_full[k].mean_abs_llr;
+                let e_merge = r_merged[k].mean_abs_llr;
+                let diff = (e_full - e_merge).abs();
+                let tol = 1e-9 * (1.0 + e_full.abs());
+                prop_assert!(
+                    diff <= tol,
+                    "mean_abs_llr mismatch after merge: full={e_full} merged={e_merge} diff={diff}"
+                );
+            }
+        }
+
+        /// MI lower bound is monotone non-decreasing in `mean_abs_llr`
+        /// and always in `[0, 1]`.
+        #[test]
+        fn test_gaussian_mi_monotone_in_mean_abs(
+            a in 0.0f64..100.0,
+            delta in 0.0f64..100.0,
+        ) {
+            let lo = gaussian_mi_lower_bound_bits(a);
+            let hi = gaussian_mi_lower_bound_bits(a + delta);
+            prop_assert!((0.0..=1.0).contains(&lo));
+            prop_assert!((0.0..=1.0).contains(&hi));
+            prop_assert!(hi + 1e-12 >= lo,
+                "non-monotone: mi(a={a})={lo}, mi(a+delta={}) = {hi}", a + delta);
+        }
     }
 }
