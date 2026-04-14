@@ -93,9 +93,8 @@ impl AwgnChannel {
     /// let channel = AwgnChannel::from_eb_n0_db(3.0, 1.0);
     /// ```
     pub fn from_eb_n0_db(eb_n0_db: f64, rate: f64) -> Self {
-        assert!(rate > 0.0 && rate <= 1.0, "Code rate must be in (0, 1]");
-        let eb_n0_linear = 10.0_f64.powf(eb_n0_db / 10.0);
-        let sigma_squared = 1.0 / (2.0 * rate * eb_n0_linear);
+        let sigma_squared =
+            crate::modem::awgn_link::unit_energy_sigma_sq_from_eb_n0_db(1, rate, eb_n0_db);
         Self::from_variance(sigma_squared)
     }
 
