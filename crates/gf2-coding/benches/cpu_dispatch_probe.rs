@@ -27,8 +27,11 @@
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 
+use gf2_coding::llr::Llr;
 use gf2_coding::modem::test_oracle::Lcg;
-use gf2_coding::modem::{FastGrayQamDemapper, ModemSpec};
+use gf2_coding::modem::{
+    BatchSoftDemapper, DemapInput, DemapMethod, FastGrayQamDemapper, ModemSpec,
+};
 
 use gf2_kernels_simd::modem::{detect_f64, scalar_fns_f64, GrayPamDistanceFnsF64};
 
@@ -99,5 +102,70 @@ fn bench_cpu_dispatch(c: &mut Criterion) {
     }
 }
 
-criterion_group!(benches, bench_cpu_dispatch);
+/// Full-demapper scalar-vs-best crossover: constructs two
+/// `FastGrayQamDemapper<f32>` instances that share the same spec but
+/// pin different PAM distance kernels (scalar vs auto-detected best)
+/// and benches `demap_llrs` end-to-end. This is the full-demapper
+/// scalar baseline the GPU crossover decision (JIT `9c37ec8c`)
+/// reports alongside the per-axis kernel probe above — it captures
+/// per-symbol overhead (validation, axis reduction, LLR assembly)
+/// that the raw kernel bench omits.
+fn bench_full_demapper_scalar_vs_best(c: &mut Criterion) {
+    let orders = [4usize, 16, 64, 256];
+    let batches = [256usize, 1_024, 4_096, 16_384];
+
+    for &order in &orders {
+        let spec = ModemSpec::<f32>::gray_square_qam(order);
+        let bits_per_symbol = spec.bits_per_symbol() as usize;
+        let demap_best = FastGrayQamDemapper::<f32>::new(spec.clone());
+        let demap_scalar = FastGrayQamDemapper::<f32>::new_with_scalar_kernel(spec);
+
+        let mut group = c.benchmark_group(format!("full_demapper/order={order}"));
+        for &batch in &batches {
+            group.throughput(Throughput::Elements((batch * bits_per_symbol) as u64));
+            let mut rng = Lcg::new(0xDECAF_u64 ^ order as u64);
+            let rx_i: Vec<f32> = (0..batch).map(|_| rng.next_unit_f32()).collect();
+            let rx_q: Vec<f32> = (0..batch).map(|_| rng.next_unit_f32()).collect();
+            let noise_var = vec![0.25_f32; batch];
+            let mut out = vec![Llr::new(0.0); batch * bits_per_symbol];
+
+            group.bench_with_input(BenchmarkId::new("scalar", batch), &batch, |b, _| {
+                b.iter(|| {
+                    let input = DemapInput::<f32> {
+                        rx_i: &rx_i,
+                        rx_q: &rx_q,
+                        gain_i: None,
+                        gain_q: None,
+                        noise_var: &noise_var,
+                        method: DemapMethod::MaxLog,
+                    };
+                    demap_scalar.demap_llrs(input, &mut out);
+                    black_box(&out);
+                });
+            });
+
+            group.bench_with_input(BenchmarkId::new("best", batch), &batch, |b, _| {
+                b.iter(|| {
+                    let input = DemapInput::<f32> {
+                        rx_i: &rx_i,
+                        rx_q: &rx_q,
+                        gain_i: None,
+                        gain_q: None,
+                        noise_var: &noise_var,
+                        method: DemapMethod::MaxLog,
+                    };
+                    demap_best.demap_llrs(input, &mut out);
+                    black_box(&out);
+                });
+            });
+        }
+        group.finish();
+    }
+}
+
+criterion_group!(
+    benches,
+    bench_cpu_dispatch,
+    bench_full_demapper_scalar_vs_best
+);
 criterion_main!(benches);
