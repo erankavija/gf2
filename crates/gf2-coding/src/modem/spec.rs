@@ -628,7 +628,7 @@ mod tests {
 
     fn deterministic_rx(n: usize, seed: u64) -> (Vec<f32>, Vec<f32>, Vec<f32>) {
         let mut rng = crate::modem::test_oracle::Lcg::new(seed);
-        // next_unit_f32() already emits samples in (-1, 1); no further scaling.
+        // next_unit_f32() already emits samples in [-1, 1]; no further scaling.
         let rx_i: Vec<f32> = (0..n).map(|_| rng.next_unit_f32()).collect();
         let rx_q: Vec<f32> = (0..n).map(|_| rng.next_unit_f32()).collect();
         let noise_var: Vec<f32> = vec![0.25_f32; n];
