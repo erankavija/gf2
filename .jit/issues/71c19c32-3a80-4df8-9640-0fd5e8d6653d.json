@@ -2,7 +2,7 @@
   "id": "71c19c32-3a80-4df8-9640-0fd5e8d6653d",
   "title": "Prototype a GPU demapper on the shared batch interface",
   "description": "Reuse the shared batch demapper contract to stand up a GPU demapper experiment without changing the high-level modem API.\n\n## Success Criteria\n\n- [ ] A GPU demapper prototype can consume the shared batch demapper shape used by the CPU fast path.\n- [ ] The experiment does not require API churn in the public modem surface.\n- [ ] The prototype is sufficient to support a real crossover measurement.\n\n## Notes\n\nThis task is conditional exploratory work and should not block the CPU scalar and SIMD path.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:claude",
   "dependencies": [
@@ -16,6 +16,21 @@
     "doc-review"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-14T14:14:32.718615348Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-14T14:06:04.577203409Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-14T14:22:54.237824970Z"
+    },
     "tdd-reminder": {
       "status": "passed",
       "updated_by": "agent:project-lead",
@@ -31,5 +46,5 @@
     "story:gpu-demapper-prototype"
   ],
   "created_at": "2026-04-12T19:41:45.874042923+00:00",
-  "updated_at": "2026-04-14T10:33:49.093831480+00:00"
+  "updated_at": "2026-04-14T14:22:54.322407162+00:00"
 }

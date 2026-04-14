@@ -2,9 +2,9 @@
   "id": "b3bb774a-5c57-4d95-9ce4-43fbb3b7d0fd",
   "title": "Replace the placeholder QPSK path with framework-backed adapters",
   "description": "Retire the bespoke QPSK path used by the SOGRAND-era fading work and move it onto the shared modem framework.\n\n## Success Criteria\n\n- [ ] The existing QPSK path is implemented through the shared modem framework rather than owning unique modem logic.\n- [ ] The current fading-facing QPSK integration no longer bypasses the common modem surface.\n- [ ] No standalone QPSK implementation remains as a competing source of functionality after migration.\n- [ ] Existing behavior needed by current simulations is preserved through the migration.\n\n## Notes\n\nThis task is the main leaf where the placeholder QPSK implementation is actually replaced, so it should reduce the codebase to one modem source of truth rather than multiple QPSK implementations.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "high",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [
     "db1dda70-a870-4b52-a4ea-92acee4e3fad",
     "a23646dd-2980-420e-a7ac-c0094c63f55c"
@@ -15,7 +15,13 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-14T14:23:07.419651996Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -25,5 +31,5 @@
     "story:legacy-modem-surface-migration"
   ],
   "created_at": "2026-04-12T19:41:45.867227108+00:00",
-  "updated_at": "2026-04-14T09:55:36.122643506+00:00"
+  "updated_at": "2026-04-14T14:23:07.927093465+00:00"
 }
