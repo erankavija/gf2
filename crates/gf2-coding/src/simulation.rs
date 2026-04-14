@@ -128,6 +128,26 @@ pub trait ChannelModel {
 /// determined by Eb/N0 and code rate, then converts received symbols
 /// to LLRs via `2r / sigma^2`.
 ///
+/// # Framework-backed implementation
+///
+/// This type is a compatibility wrapper over the shared modem framework.
+/// All bit-to-symbol mapping and LLR conversion are routed through
+/// [`BpskModulator`] and [`AwgnChannel::to_llrs`], which themselves
+/// delegate to [`crate::modem::ReferenceMapper`] and
+/// [`crate::modem::ReferenceSoftDemapper`] over
+/// [`crate::modem::ModemSpec::bpsk_with_scalar`]. There is no hand-rolled
+/// `±1` math or BPSK-specific LLR formula in this implementation. The
+/// only call that is intrinsically AWGN-shaped (and therefore not modem
+/// business) is the noise application via [`AwgnChannel::transmit_symbols`].
+///
+/// Bit-exact RNG-stream behaviour is preserved relative to the legacy
+/// implementation: noise is drawn once per BPSK symbol on the I axis
+/// (no Q-axis draw), matching the legacy
+/// [`AwgnChannel::transmit_symbols`] sequence. Callers that want the
+/// generic 2-D modem pipeline (with Q-axis noise and arbitrary
+/// constellation order) should use
+/// [`crate::modem::ModemChannelAdapter`] instead.
+///
 /// # Examples
 ///
 /// ```
@@ -150,6 +170,15 @@ impl ChannelModel for BpskAwgnChannel {
         rate: f64,
         rng: &mut R,
     ) -> Vec<Llr> {
+        // All BPSK-specific math is delegated:
+        // - `BpskModulator::modulate_bits` runs the framework
+        //   `ReferenceMapper<f64>` over `ModemSpec::bpsk_with_scalar()`.
+        // - `AwgnChannel::to_llrs` calls `BpskModulator::to_llr` per
+        //   symbol, which runs the framework `ReferenceSoftDemapper<f64>`
+        //   over the same spec with `noise_var = 2 * sigma^2`.
+        // The only BPSK-shaped concern handled directly here is the 1-D
+        // noise application (`transmit_symbols`), which intentionally
+        // matches the legacy RNG-stream shape — see the type-level docs.
         let n = bits.len();
         let channel = AwgnChannel::from_eb_n0_db(eb_n0_db, rate);
         let bits_vec: Vec<bool> = (0..n).map(|i| bits.get(i)).collect();

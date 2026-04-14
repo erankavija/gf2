@@ -2,9 +2,9 @@
   "id": "0cafa5f5-a680-4f65-a14e-b11dcbb668de",
   "title": "Reimplement BPSK compatibility surface on the modem framework",
   "description": "Back the current BPSK entry points with the shared modem framework so existing BPSK users keep working without preserving a separate modem implementation.\n\n## Success Criteria\n\n- [ ] Existing BPSK-facing helpers are implemented as framework-backed adapters or equivalent wrappers.\n- [ ] BPSK call sites do not require bespoke modulation logic outside the shared modem framework.\n- [ ] No standalone BPSK implementation remains as an alternative source of modem functionality.\n- [ ] Compatibility is preserved for the existing simulation-facing surface.\n\n## Notes\n\nThis task handles the BPSK migration half of the legacy-surface cleanup story and should converge behavior onto the single shared modem implementation.",
-  "state": "ready",
+  "state": "done",
   "priority": "high",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [
     "bf865220-f00f-4567-84d5-5f12db79cb63"
   ],
@@ -14,7 +14,28 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-14T05:42:14.666136839Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-14T05:43:37.389361664Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": null,
+      "updated_at": "2026-04-14T05:43:37.332244602Z"
+    },
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-13T23:15:26.783515121Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -24,5 +45,5 @@
     "story:legacy-modem-surface-migration"
   ],
   "created_at": "2026-04-12T19:41:45.866585418+00:00",
-  "updated_at": "2026-04-13T22:22:19.764123766+00:00"
+  "updated_at": "2026-04-14T09:55:35.034397044+00:00"
 }
