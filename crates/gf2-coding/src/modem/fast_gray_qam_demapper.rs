@@ -615,32 +615,9 @@ mod tests {
         }
     }
 
-    /// Deterministic LCG for test inputs (matches pattern used elsewhere
-    /// in the crate so tests stay reproducible without a dev-dep RNG).
-    struct Lcg {
-        state: u64,
-    }
-    impl Lcg {
-        fn new(seed: u64) -> Self {
-            Self { state: seed }
-        }
-        fn next_u64(&mut self) -> u64 {
-            self.state = self
-                .state
-                .wrapping_mul(6364136223846793005)
-                .wrapping_add(1442695040888963407);
-            self.state
-        }
-        fn next_unit(&mut self) -> f64 {
-            // Uniform in (-1, 1) using top 32 bits.
-            let v = (self.next_u64() >> 32) as u32;
-            (v as f64 / u32::MAX as f64) * 2.0 - 1.0
-        }
-        fn next_positive(&mut self, lo: f64, hi: f64) -> f64 {
-            let v = (self.next_u64() >> 32) as u32;
-            lo + (v as f64 / u32::MAX as f64) * (hi - lo)
-        }
-    }
+    // Deterministic LCG for test inputs is shared with the rest of the
+    // modem test surface via `crate::modem::test_oracle::Lcg`.
+    use crate::modem::test_oracle::Lcg;
 
     fn assert_close_f32(a: &[Llr], b: &[Llr], tol: f32, ctx: &str) {
         assert_eq!(a.len(), b.len(), "{ctx}: length mismatch");
@@ -671,9 +648,9 @@ mod tests {
                 let mut rx_q = Vec::with_capacity(batch);
                 let mut nv = Vec::with_capacity(batch);
                 for _ in 0..batch {
-                    rx_i.push((rng.next_unit() * 2.0) as f32);
-                    rx_q.push((rng.next_unit() * 2.0) as f32);
-                    nv.push(rng.next_positive(0.05, 2.0) as f32);
+                    rx_i.push((rng.next_unit_f64() * 2.0) as f32);
+                    rx_q.push((rng.next_unit_f64() * 2.0) as f32);
+                    nv.push(rng.next_positive_f64(0.05, 2.0) as f32);
                 }
 
                 let input = DemapInput::<f32> {
@@ -714,9 +691,9 @@ mod tests {
                 let mut rx_q = Vec::with_capacity(batch);
                 let mut nv = Vec::with_capacity(batch);
                 for _ in 0..batch {
-                    rx_i.push(rng.next_unit() * 2.0);
-                    rx_q.push(rng.next_unit() * 2.0);
-                    nv.push(rng.next_positive(0.05, 2.0));
+                    rx_i.push(rng.next_unit_f64() * 2.0);
+                    rx_q.push(rng.next_unit_f64() * 2.0);
+                    nv.push(rng.next_positive_f64(0.05, 2.0));
                 }
 
                 let input = DemapInput::<f64> {
@@ -762,15 +739,16 @@ mod tests {
                 let mut gq = Vec::with_capacity(batch);
                 let mut nv = Vec::with_capacity(batch);
                 for _ in 0..batch {
-                    rx_i.push(rng.next_unit() * 2.0);
-                    rx_q.push(rng.next_unit() * 2.0);
+                    rx_i.push(rng.next_unit_f64() * 2.0);
+                    rx_q.push(rng.next_unit_f64() * 2.0);
                     // Avoid near-zero |h| that would blow up the
                     // equalized noise variance.
-                    let hi = if rng.next_unit() > 0.0 { 0.6 } else { -0.6 } + 0.3 * rng.next_unit();
-                    let hq = 0.2 * rng.next_unit();
+                    let hi = if rng.next_unit_f64() > 0.0 { 0.6 } else { -0.6 }
+                        + 0.3 * rng.next_unit_f64();
+                    let hq = 0.2 * rng.next_unit_f64();
                     gi.push(hi);
                     gq.push(hq);
-                    nv.push(rng.next_positive(0.05, 1.0));
+                    nv.push(rng.next_positive_f64(0.05, 1.0));
                 }
 
                 let input = DemapInput::<f64> {
@@ -818,9 +796,9 @@ mod tests {
                     let mut rx_q = Vec::with_capacity(n);
                     let mut nv = Vec::with_capacity(n);
                     for _ in 0..n {
-                        rx_i.push((rng.next_unit() * 2.0) as f32);
-                        rx_q.push((rng.next_unit() * 2.0) as f32);
-                        nv.push(rng.next_positive(0.05, 2.0) as f32);
+                        rx_i.push((rng.next_unit_f64() * 2.0) as f32);
+                        rx_q.push((rng.next_unit_f64() * 2.0) as f32);
+                        nv.push(rng.next_positive_f64(0.05, 2.0) as f32);
                     }
                     let input = DemapInput::<f32> {
                         rx_i: &rx_i,

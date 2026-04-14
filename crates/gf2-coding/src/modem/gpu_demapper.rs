@@ -16,13 +16,12 @@
 //! - Only `f32` scalars are supported on device. The wider
 //!   [`BatchSoftDemapper<S>`] trait is still generic, but this adapter
 //!   implements it for `S = f32` only.
-//! - The kernel implements the max-log variant. When
-//!   [`super::DemapMethod::ExactLogMap`] is requested the adapter still
-//!   runs the kernel but the returned LLRs are the max-log
-//!   approximation; callers that need log-MAP must keep using the CPU
-//!   path. This matches the prototype's target: the crossover
-//!   measurement compares the GPU max-log path against the CPU max-log
-//!   path.
+//! - The kernel implements the max-log variant only. Requests for
+//!   [`super::DemapMethod::ExactLogMap`] are rejected with a panic at the
+//!   dispatch site; the adapter does not silently substitute a different
+//!   algorithm. Callers that need log-MAP must keep using the CPU path.
+//!   This matches the prototype's target: the crossover measurement
+//!   compares the GPU max-log path against the CPU max-log path.
 //! - The construction contract defers to
 //!   [`super::FastGrayQamDemapper::new`] for preset validation: the
 //!   adapter holds the CPU fast-path demapper as its numerical oracle
@@ -31,7 +30,9 @@
 
 use crate::llr::Llr;
 
-use super::{BatchSoftDemapper, DemapInput, FastGrayQamDemapper, ModemSpec, ModemView};
+use super::{
+    BatchSoftDemapper, DemapInput, DemapMethod, FastGrayQamDemapper, ModemSpec, ModemView,
+};
 
 use gf2_kernels_hip::{GpuGrayQamDemapper, HipError};
 
@@ -43,6 +44,14 @@ use gf2_kernels_hip::{GpuGrayQamDemapper, HipError};
 /// limitations; the construction-time validation is delegated to the CPU
 /// fast path so this adapter and the CPU path accept the exact same set
 /// of specs.
+///
+/// # Method limitation
+///
+/// The GPU kernel implements only [`super::DemapMethod::MaxLog`].
+/// Attempting to call [`Self::demap_llrs`] with
+/// [`super::DemapMethod::ExactLogMap`] panics with a descriptive
+/// message rather than silently substituting a different algorithm.
+/// Callers that need log-MAP must stay on [`FastGrayQamDemapper`].
 ///
 /// # Examples
 ///
@@ -151,10 +160,7 @@ impl BatchSoftDemapper<f32> for GpuGrayQamSoftDemapper {
     /// `out_llrs`.
     ///
     /// The per-symbol `noise_var` is the total complex AWGN variance
-    /// `N0 = 2 sigma^2`, exactly as for every other backend. When
-    /// [`super::DemapMethod::ExactLogMap`] is selected the kernel still
-    /// runs (max-log approximation); see the module-level note on this
-    /// design choice.
+    /// `N0 = 2 sigma^2`, exactly as for every other backend.
     ///
     /// # Panics
     ///
@@ -163,7 +169,24 @@ impl BatchSoftDemapper<f32> for GpuGrayQamSoftDemapper {
     /// `num_symbols > max_batch`, or when the underlying GPU call
     /// returns an error (surfaced as a panic because the prototype
     /// adapter has no infallible error channel through the trait).
+    ///
+    /// Also panics with a descriptive message when `input.method` is
+    /// [`super::DemapMethod::ExactLogMap`]: the GPU adapter only
+    /// implements the max-log variant and refuses to silently substitute
+    /// a different algorithm. Callers that need log-MAP must use the CPU
+    /// path.
     fn demap_llrs(&self, input: DemapInput<'_, f32>, out_llrs: &mut [Llr]) {
+        // Method-contract enforcement (SSOT principle): the underlying
+        // kernel is max-log only, so rather than silently approximating
+        // ExactLogMap we reject it up front with a clear diagnostic.
+        // See the type-level doc for the rationale.
+        assert!(
+            matches!(input.method, DemapMethod::MaxLog),
+            "GpuGrayQamSoftDemapper::demap_llrs: GPU adapter only implements \
+             DemapMethod::MaxLog; got {:?}. Use FastGrayQamDemapper (CPU) for \
+             ExactLogMap.",
+            input.method,
+        );
         let view = self.cpu.spec();
         let num_symbols = super::demapper::validate_demap_input(
             "GpuGrayQamSoftDemapper::demap_llrs",
