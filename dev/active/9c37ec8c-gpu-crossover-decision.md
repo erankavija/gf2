@@ -152,15 +152,17 @@ differences at the crossover regime exceed the CI width by more than
 |   256 | 16384 |    0.40  | 4.877 |
 
 CPU AVX2 numbers come from `FastGrayQamDemapper::demap_llrs` (full
-demapper) via the GPU-vs-CPU criterion bench. GPU numbers come from
-`GpuGrayQamSoftDemapper::demap_llrs`. The scalar full-demapper
-throughput is not tabulated here because `FastGrayQamDemapper`'s
-kernel dispatch is runtime-detected and cannot be pinned to scalar
-from its public API; for the dispatch-cost question the per-axis
-kernel table above is the right signal, and `modem_cpu.rs` plus the
-companion `modem_generic_vs_fast.rs` bench cover the full-demapper
-AVX2-vs-reference-path comparison (reference path is scalar f64 by
-construction).
+demapper, auto-dispatched to the AVX2 kernel on this host) via the
+GPU-vs-CPU criterion bench. GPU numbers come from
+`GpuGrayQamSoftDemapper::demap_llrs`. The **full-demapper scalar**
+baseline is measured by the `full_demapper/order=*/scalar` group in
+`crates/gf2-coding/benches/cpu_dispatch_probe.rs`, which constructs a
+`FastGrayQamDemapper` via `FastGrayQamDemapper::new_with_scalar_kernel`
+so kernel dispatch is pinned to scalar even on AVX2 hosts. Re-running
+that bench on this host mirrors the per-axis kernel ratios above
+(AVX2 is ~2.0–2.7× faster than scalar for the full demap), which
+means the per-order GPU crossover is tighter against scalar hosts
+than the AVX2 numbers in the table suggest.
 
 ## Crossover analysis
 
@@ -266,10 +268,11 @@ Tracked under `19069bc1` (GPU story):
 3. **Batched multi-call API** — enqueue many `DemapInput`s into one GPU
    call so per-call overhead amortizes. Aligns well with the
    `SimulationRunner` traffic pattern.
-4. **Consider a scalar-host path for `FastGrayQamDemapper`**
-   instrumentation (disable AVX2 at runtime via a feature flag) so
-   future CPU-path crossover reports can measure the full-demapper
-   scalar baseline without relying on per-axis extrapolation.
+4. **Broader CPU microarchitecture sweep** — run the existing
+   `FastGrayQamDemapper::new_with_scalar_kernel` full-demapper bench
+   in `cpu_dispatch_probe.rs` on a wider range of hosts (older x86
+   without AVX2, ARM NEON, RISC-V) to map the scalar-host crossover
+   regime, not just the AVX2-host one.
 
 The `d4851c3d` modem epic does **not** depend on any of this. Close
 `9c37ec8c` with this decision and pick up future GPU work under

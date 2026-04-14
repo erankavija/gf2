@@ -54,6 +54,11 @@ use std::sync::OnceLock;
 /// advertise it), so the demap hot path never needs a `None` branch
 /// and no architecture-specific `cfg` gating is required here.
 #[inline]
+fn scalar_fns_f64_static() -> &'static GrayPamDistanceFnsF64 {
+    static FNS: OnceLock<GrayPamDistanceFnsF64> = OnceLock::new();
+    FNS.get_or_init(kernel_modem::scalar_fns_f64)
+}
+
 fn kernel_fns_f64() -> &'static GrayPamDistanceFnsF64 {
     static FNS: OnceLock<GrayPamDistanceFnsF64> = OnceLock::new();
     FNS.get_or_init(kernel_modem::detect_f64)
@@ -100,6 +105,12 @@ pub struct FastGrayQamDemapper<S: ModemScalar> {
     m_half: u8,
     /// `true` if this is the BPSK (single-axis) preset.
     is_bpsk: bool,
+    /// PAM squared-distance kernel pointer. Normally resolved to the
+    /// runtime-best kernel (AVX2 when available, scalar otherwise) via
+    /// [`gf2_kernels_simd::modem::detect_f64`]; callers that need to pin
+    /// the scalar backend for benchmarking can construct the demapper via
+    /// [`Self::new_with_scalar_kernel`].
+    kernel_fns: &'static GrayPamDistanceFnsF64,
     /// Post-normalization Gray-PAM levels on each axis, indexed by the
     /// `m_half`-bit Gray label (MSB-first within the half-label). Length
     /// `1 << m_half` for QAM, or `2` for BPSK (indexed by the raw bit).
@@ -158,6 +169,47 @@ impl<S: ModemScalar> FastGrayQamDemapper<S> {
     ///
     /// O(M) in `order = M`.
     pub fn new(spec: ModemSpec<S>) -> Self {
+        Self::new_with_kernel(spec, kernel_fns_f64())
+    }
+
+    /// Builds the same fast demapper but pinned to the **scalar** PAM
+    /// distance kernel, bypassing the runtime AVX2 dispatch.
+    ///
+    /// This is a benchmarking affordance, not a production construction
+    /// path — the default [`Self::new`] constructor auto-selects the
+    /// best-available kernel (AVX2 on x86_64 hosts that advertise it,
+    /// scalar otherwise) and that remains the right choice for all
+    /// production callers. Use this method only when a benchmark needs
+    /// to measure the scalar full-demapper baseline in isolation from
+    /// whatever kernel the host would otherwise detect (see
+    /// `crates/gf2-coding/benches/cpu_dispatch_probe.rs`).
+    ///
+    /// # Arguments
+    ///
+    /// * `spec` — a validated Gray-square-QAM modem spec, as for
+    ///   [`Self::new`].
+    ///
+    /// # Panics
+    ///
+    /// Same invariants as [`Self::new`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::modem::{FastGrayQamDemapper, ModemSpec};
+    ///
+    /// let spec = ModemSpec::<f32>::gray_square_qam(16);
+    /// let _scalar = FastGrayQamDemapper::new_with_scalar_kernel(spec);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(M) in `order = M`.
+    pub fn new_with_scalar_kernel(spec: ModemSpec<S>) -> Self {
+        Self::new_with_kernel(spec, scalar_fns_f64_static())
+    }
+
+    fn new_with_kernel(spec: ModemSpec<S>, kernel_fns: &'static GrayPamDistanceFnsF64) -> Self {
         // SSOT validator: confirms layout, bit-channel semantics, and
         // that every (i_label, q_label) resolves to the canonical
         // Gray-PAM level table (ruling out permuted-level specs that
@@ -179,6 +231,7 @@ impl<S: ModemScalar> FastGrayQamDemapper<S> {
             m_total,
             m_half,
             is_bpsk,
+            kernel_fns,
             pam_levels,
         }
     }
@@ -360,9 +413,23 @@ impl<S: ModemScalar> BatchSoftDemapper<S> for FastGrayQamDemapper<S> {
             vec![0.0; num_symbols * axis_len]
         };
 
-        run_pam_distance_kernel(&z_i, &g_scratch, &inv_n0_eq, &self.pam_levels, &mut d_i);
+        run_pam_distance_kernel(
+            self.kernel_fns,
+            &z_i,
+            &g_scratch,
+            &inv_n0_eq,
+            &self.pam_levels,
+            &mut d_i,
+        );
         if !self.is_bpsk {
-            run_pam_distance_kernel(&z_q, &g_scratch, &inv_n0_eq, &self.pam_levels, &mut d_q);
+            run_pam_distance_kernel(
+                self.kernel_fns,
+                &z_q,
+                &g_scratch,
+                &inv_n0_eq,
+                &self.pam_levels,
+                &mut d_q,
+            );
         }
 
         // Pass 3: LLR reduction over each per-symbol distance slab.
@@ -403,13 +470,13 @@ impl<S: ModemScalar> BatchSoftDemapper<S> for FastGrayQamDemapper<S> {
 /// the kernel by every backend.
 #[inline]
 fn run_pam_distance_kernel(
+    fns: &GrayPamDistanceFnsF64,
     z: &[f64],
     g: &[f64],
     inv_n0_eq: &[f64],
     pam_levels: &[f64],
     out: &mut [f64],
 ) {
-    let fns = kernel_fns_f64();
     (fns.pam_sq_distances_fn)(z, g, inv_n0_eq, pam_levels, out);
 }
 
