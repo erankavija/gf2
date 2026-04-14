@@ -809,7 +809,7 @@ mod tests {
             let n = 1usize << m;
 
             // Deterministic permutation via the shared SSOT modem test LCG.
-            let perm = super::super::test_oracle::Lcg::permutation(seed, n);
+            let perm = super::super::test_oracle::permutation(seed, n);
 
             // Points on the unit circle at distinct angles; energy is
             // always 1 so normalization is trivially well-defined.

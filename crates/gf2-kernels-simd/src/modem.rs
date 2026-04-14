@@ -607,35 +607,7 @@ mod avx2 {
 mod tests {
     use super::*;
 
-    /// Advances a Numerical-Recipes LCG state in place and returns the
-    /// raw new state. Kept as a free function — intentionally NOT a
-    /// reusable `Lcg` struct — so the SIMD-kernel parity tests don't
-    /// duplicate the SSOT `gf2_coding::modem::test_oracle::Lcg`
-    /// abstraction (which lives in an upstream crate and is therefore
-    /// unreachable from here without a dependency cycle). The constants
-    /// match test_oracle by design so failures reproduce across crates.
-    fn step_lcg(state: &mut u64) -> u64 {
-        *state = state
-            .wrapping_mul(6_364_136_223_846_793_005)
-            .wrapping_add(1_442_695_040_888_963_407);
-        *state
-    }
-    fn signed_f32(state: &mut u64) -> f32 {
-        let v = (step_lcg(state) >> 32) as u32;
-        (v as f32 / u32::MAX as f32) * 2.0 - 1.0
-    }
-    fn signed_f64(state: &mut u64) -> f64 {
-        let v = (step_lcg(state) >> 32) as u32;
-        (v as f64 / u32::MAX as f64) * 2.0 - 1.0
-    }
-    fn positive_f32(state: &mut u64, lo: f32, hi: f32) -> f32 {
-        let v = (step_lcg(state) >> 32) as u32;
-        lo + (v as f32 / u32::MAX as f32) * (hi - lo)
-    }
-    fn positive_f64(state: &mut u64, lo: f64, hi: f64) -> f64 {
-        let v = (step_lcg(state) >> 32) as u32;
-        lo + (v as f64 / u32::MAX as f64) * (hi - lo)
-    }
+    use gf2_core::test_rng::Lcg;
 
     fn pam_levels_for_axis_len(axis_len: usize) -> Vec<f32> {
         // Gray-PAM axis levels are (2l + 1 - axis_len) after centering.
@@ -689,18 +661,18 @@ mod tests {
 
     fn run_parity_f32(axis_len: usize, num_symbols: usize, seed: u64) {
         let pam = pam_levels_for_axis_len(axis_len);
-        let mut state = seed | 1;
+        let mut rng = Lcg::new(seed | 1);
         let mut z = Vec::with_capacity(num_symbols);
         let mut g = Vec::with_capacity(num_symbols);
         let mut inv_n0 = Vec::with_capacity(num_symbols);
         for s in 0..num_symbols {
-            z.push(signed_f32(&mut state) * 2.5);
-            g.push(0.5 + positive_f32(&mut state, 0.0, 1.5));
+            z.push(rng.next_unit_f32() * 2.5);
+            g.push(0.5 + rng.next_positive_f32(0.0, 1.5));
             // Exercise the zero-gain branch on every 13th symbol.
             let iv = if s % 13 == 7 {
                 0.0
             } else {
-                positive_f32(&mut state, 0.1, 4.0)
+                rng.next_positive_f32(0.1, 4.0)
             };
             inv_n0.push(iv);
         }
@@ -725,17 +697,17 @@ mod tests {
 
     fn run_parity_f64(axis_len: usize, num_symbols: usize, seed: u64) {
         let pam = pam_levels_for_axis_len_f64(axis_len);
-        let mut state = seed | 1;
+        let mut rng = Lcg::new(seed | 1);
         let mut z = Vec::with_capacity(num_symbols);
         let mut g = Vec::with_capacity(num_symbols);
         let mut inv_n0 = Vec::with_capacity(num_symbols);
         for s in 0..num_symbols {
-            z.push(signed_f64(&mut state) * 2.5);
-            g.push(0.5 + positive_f64(&mut state, 0.0, 1.5));
+            z.push(rng.next_unit_f64() * 2.5);
+            g.push(0.5 + rng.next_positive_f64(0.0, 1.5));
             let iv = if s % 13 == 7 {
                 0.0
             } else {
-                positive_f64(&mut state, 0.1, 4.0)
+                rng.next_positive_f64(0.1, 4.0)
             };
             inv_n0.push(iv);
         }

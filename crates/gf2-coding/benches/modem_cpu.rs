@@ -22,7 +22,7 @@
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use gf2_coding::llr::Llr;
-use gf2_coding::modem::test_oracle::Lcg;
+use gf2_coding::modem::test_oracle::{bit_stream, Lcg};
 use gf2_coding::modem::{
     BatchMapper, BatchSoftDemapper, DemapInput, DemapMethod, FastGrayQamDemapper, GrayQamMapper,
     ModemSpec, ReferenceMapper, ReferenceSoftDemapper,
@@ -32,7 +32,7 @@ use gf2_coding::modem::{
 /// shared `modem::test_oracle::Lcg` SSOT helper so the bench cannot
 /// drift from the test-side RNG contract.
 fn deterministic_bits(n_bits: usize) -> Vec<bool> {
-    Lcg::bit_stream(0x9E37_79B9_7F4A_7C15, n_bits)
+    bit_stream(0x9E37_79B9_7F4A_7C15, n_bits)
 }
 
 /// Deterministic received-sample scratch for the demapper bench. Uses

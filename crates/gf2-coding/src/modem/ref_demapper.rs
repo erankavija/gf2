@@ -170,7 +170,8 @@ impl<S: ModemScalar> BatchSoftDemapper<S> for ReferenceSoftDemapper<S> {
 
 #[cfg(test)]
 mod tests {
-    use super::super::test_oracle::Lcg;
+    #[allow(unused_imports)]
+    use super::super::test_oracle::{label_stream, permutation, Lcg};
     use super::super::{
         BatchSoftDemapper, DemapInput, DemapMethod, LabelWord, ModemSpec, ModemSpecBuilder,
         Normalization, SymbolPoint,
@@ -277,7 +278,7 @@ mod tests {
         // 200 random labels at very low noise — pseudo-random via the
         // shared SSOT modem test LCG.
         let batch = 200usize;
-        let labels = Lcg::label_stream(0xC0FFEE, batch, n);
+        let labels = label_stream(0xC0FFEE, batch, n);
         let mut rx_i = Vec::with_capacity(batch);
         let mut rx_q = Vec::with_capacity(batch);
         for &v in &labels {
@@ -601,7 +602,7 @@ mod tests {
         ) {
             let n = 1usize << m;
             // Deterministic permutation via the shared SSOT modem test LCG.
-            let perm = Lcg::permutation(seed, n);
+            let perm = permutation(seed, n);
             // Points on a circle.
             let points: Vec<SymbolPoint<f32>> = (0..n)
                 .map(|k| {

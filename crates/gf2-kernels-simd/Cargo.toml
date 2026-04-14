@@ -17,3 +17,9 @@ default = []
 # Feature toggles for building specific backends; detection is runtime.
 avx2 = []
 avx512 = []
+
+[dev-dependencies]
+# Shared workspace deterministic LCG lives in gf2-core::test_rng so the
+# parity tests here can use the same SSOT helper as gf2-coding without a
+# dependency cycle.
+gf2-core = { path = "../gf2-core" }

@@ -30,7 +30,7 @@ use gf2_coding::llr::Llr;
 use gf2_coding::modem::awgn_link::{
     unit_energy_n0_from_eb_n0_db, unit_energy_sigma_sq_from_eb_n0_db,
 };
-use gf2_coding::modem::test_oracle::Lcg;
+use gf2_coding::modem::test_oracle::{bit_stream, Lcg};
 use gf2_coding::modem::{
     BatchMapper, BatchSoftDemapper, DemapInput, DemapMethod, FastGrayQamDemapper, GrayQamMapper,
     ModemSpec, ReferenceMapper, ReferenceSoftDemapper,
@@ -112,7 +112,7 @@ fn test_round_trip_reference_path_all_presets() {
     for (order, seed) in seeds {
         let spec: ModemSpec<f64> = ModemSpec::<f64>::gray_square_qam_with_scalar(order);
         let m = spec.bits_per_symbol();
-        let bits = Lcg::bit_stream(seed, 128 * m as usize);
+        let bits = bit_stream(seed, 128 * m as usize);
         let mapper = ReferenceMapper::new(spec.clone());
         let demapper = ReferenceSoftDemapper::new(spec);
         check_round_trip_clean(&mapper, &demapper, &bits, m);
@@ -134,7 +134,7 @@ fn test_round_trip_fast_path_all_presets() {
     for (order, seed) in seeds {
         let spec: ModemSpec<f64> = ModemSpec::<f64>::gray_square_qam_with_scalar(order);
         let m = spec.bits_per_symbol();
-        let bits = Lcg::bit_stream(seed, 128 * m as usize);
+        let bits = bit_stream(seed, 128 * m as usize);
         let mapper: GrayQamMapper<f64> = GrayQamMapper::<f64>::from_preset_order_with_scalar(order);
         let demapper = FastGrayQamDemapper::new(spec);
         check_round_trip_clean(&mapper, &demapper, &bits, m);
@@ -171,7 +171,7 @@ fn parity_f64(
     let std = sigma_sq.sqrt();
 
     let mapper = ReferenceMapper::new(spec);
-    let bits = Lcg::bit_stream(rng_seed.wrapping_add(1), batch * m);
+    let bits = bit_stream(rng_seed.wrapping_add(1), batch * m);
     let mut tx_i = vec![0.0_f64; batch];
     let mut tx_q = vec![0.0_f64; batch];
     mapper.map_bits(&bits, &mut tx_i, &mut tx_q);
@@ -287,7 +287,7 @@ fn test_fast_ref_parity_f32_awgn_all_presets() {
         let std = sigma_sq.sqrt() as f32;
 
         let mapper = ReferenceMapper::new(spec);
-        let bits = Lcg::bit_stream(0xC0FE_0000u64.wrapping_add(order as u64), 64 * m);
+        let bits = bit_stream(0xC0FE_0000u64.wrapping_add(order as u64), 64 * m);
         let mut tx_i = vec![0.0_f32; 64];
         let mut tx_q = vec![0.0_f32; 64];
         mapper.map_bits(&bits, &mut tx_i, &mut tx_q);
@@ -346,7 +346,7 @@ fn test_bpsk_awgn_channel_ber_locked() {
     let channel = BpskAwgnChannel;
     let n_bits = 2048;
     let mut rng = StdRng::seed_from_u64(0xB9_B95C_5EED_0003u64);
-    let tx_bits = Lcg::bit_stream(0xDEAD_5EED_BEEF_5EEDu64, n_bits);
+    let tx_bits = bit_stream(0xDEAD_5EED_BEEF_5EEDu64, n_bits);
     let tx_bv = bits_to_bitvec(&tx_bits);
 
     let llrs = channel.transmit_and_demodulate(&tx_bv, 3.0, 1.0, &mut rng);
@@ -380,7 +380,7 @@ fn test_qpsk_rician_channel_locked() {
     // QPSK mapper, demapper, noise-scale conversion).
     let channel = QpskRicianChannelModel::new(RicianConfig::fig8());
     let n_bits = 1024; // exact `frame_bits()` for fig8.
-    let tx_bits = Lcg::bit_stream(0xF1_0FAD_EF16_0008u64, n_bits);
+    let tx_bits = bit_stream(0xF1_0FAD_EF16_0008u64, n_bits);
     let tx_bv = bits_to_bitvec(&tx_bits);
     let mut rng = StdRng::seed_from_u64(0xFADE_5EED);
 
