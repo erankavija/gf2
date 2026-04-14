@@ -29,6 +29,9 @@ use std::process::ExitCode;
 
 use gf2_coding::channel::AwgnChannel;
 use gf2_coding::llr::Llr;
+use gf2_coding::modem::awgn_link::{
+    unit_energy_n0_from_eb_n0_db, unit_energy_sigma_sq_from_eb_n0_db,
+};
 use gf2_coding::modem::{DemapInput, DemapMethod, ModemSpec};
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
@@ -69,15 +72,13 @@ fn run() -> Result<(), String> {
     mapper.map_bits(&tx_bits, &mut tx_i, &mut tx_q);
 
     // ---- 5. Apply AWGN --------------------------------------------------
-    // We pick a fixed Eb/N0 of 10 dB. `AwgnChannel::from_eb_n0_db` bakes
-    // in BPSK `m = 1`, which is fine for the noise *generator* — the
-    // framework's demapper re-derives the correct variance below. What we
-    // need here is just a Gaussian source of the right variance per axis.
-    //
-    // For 16-QAM at Eb/N0 = 10 dB, rate = 1, the per-axis noise variance
-    // is `sigma^2 = 1 / (2 * m * rate * 10^(Eb_N0_dB / 10))`.
+    // Route all Eb/N0 → noise conversions through the canonical modem
+    // framework helpers in `gf2_coding::modem::awgn_link`. Those are the
+    // workspace SSOT for the unit-average-symbol-energy noise convention
+    // (documented at `crates/gf2-coding/src/modem/awgn_link.rs`).
     let eb_n0_db: f64 = 10.0;
-    let sigma_sq = 1.0 / (2.0 * m as f64 * 1.0 * 10.0_f64.powf(eb_n0_db / 10.0));
+    let rate = 1.0_f64; // uncoded
+    let sigma_sq = unit_energy_sigma_sq_from_eb_n0_db(m, rate, eb_n0_db);
     let channel = AwgnChannel::from_variance(sigma_sq);
 
     // Apply independent Gaussian noise on I and Q (the usual 2-D AWGN
@@ -92,9 +93,9 @@ fn run() -> Result<(), String> {
     }
 
     // ---- 6. Demap to per-bit LLRs ---------------------------------------
-    // The framework demapper takes `N0 = 2 * sigma^2` per the module-level
-    // noise convention.
-    let n0 = 2.0 * sigma_sq as f32;
+    // The framework demapper takes `N0 = 2 * sigma^2` — read it from the
+    // same SSOT helper instead of recomputing inline.
+    let n0 = unit_energy_n0_from_eb_n0_db(m, rate, eb_n0_db) as f32;
     let noise_var = vec![n0; num_symbols];
     let input = DemapInput::<f32> {
         rx_i: &rx_i,

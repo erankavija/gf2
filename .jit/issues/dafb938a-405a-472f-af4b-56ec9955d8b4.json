@@ -16,15 +16,15 @@
     "doc-review"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-14T22:18:43.473613213Z"
-    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-14T22:16:44.587813013Z"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-14T22:26:52.739817596Z"
     },
     "doc-review": {
       "status": "passed",
@@ -46,5 +46,5 @@
     "story:modem-ergonomics-validation-benchmarks"
   ],
   "created_at": "2026-04-12T19:41:45.872268442+00:00",
-  "updated_at": "2026-04-14T22:26:37.070596382+00:00"
+  "updated_at": "2026-04-14T22:32:30.170296808+00:00"
 }

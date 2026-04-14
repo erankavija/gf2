@@ -33,9 +33,7 @@
 use std::process::ExitCode;
 
 use gf2_coding::fading::{QpskRicianChannelModel, RicianConfig};
-use gf2_coding::modem::{
-    DemapMethod, GrayQamMapper, ModemChannelAdapter, ModemSpec, ReferenceSoftDemapper,
-};
+use gf2_coding::modem::{DemapMethod, ModemChannelAdapter, ModemSpec};
 use gf2_coding::simulation::{SimulationConfig, SimulationRunner};
 use rand::rngs::StdRng;
 use rand::SeedableRng;
@@ -58,15 +56,17 @@ fn run() -> Result<(), String> {
 
     // ---- 1. QPSK over AWGN via ModemChannelAdapter ----------------------
     //
-    // `ModemChannelAdapter` needs an owned mapper + demapper pair. For a
-    // preset we can hand it the fast-path `GrayQamMapper` directly and
-    // pair it with `ReferenceSoftDemapper` — both satisfy `BatchMapper<f32>`
-    // / `BatchSoftDemapper<f32>` respectively. (We could equally wrap
-    // `spec.preferred_*` boxes; using concrete types here keeps the
-    // trait-object noise out of the example.)
+    // The ergonomic path for user code is `ModemSpec::preferred_mapper` +
+    // `ModemSpec::preferred_soft_demapper`. Those factories select the
+    // Gray-QAM fast path for preset specs and fall back to the reference
+    // path for custom constellations — the caller never has to name the
+    // backend. We use them here so the example reads like the module-
+    // level docs recommend. The returned `Box<dyn BatchMapper<f32> +
+    // Send + Sync>` / `Box<dyn BatchSoftDemapper<f32> + Send + Sync>`
+    // satisfy `ModemChannelAdapter`'s generic bounds directly.
     let qpsk_spec = ModemSpec::<f32>::gray_square_qam(4);
-    let qpsk_mapper = GrayQamMapper::<f32>::from_preset_order(4);
-    let qpsk_demap = ReferenceSoftDemapper::new(qpsk_spec);
+    let qpsk_mapper = qpsk_spec.clone().preferred_mapper();
+    let qpsk_demap = qpsk_spec.preferred_soft_demapper();
     let awgn_channel = ModemChannelAdapter::new(qpsk_mapper, qpsk_demap, DemapMethod::MaxLog);
 
     let mut rng = StdRng::seed_from_u64(0xDEAD_BEEF);

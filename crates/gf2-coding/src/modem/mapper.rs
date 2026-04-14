@@ -105,3 +105,20 @@ pub trait BatchMapper<S: ModemScalar> {
     /// per-symbol constant.
     fn map_bits(&self, bits: &[bool], out_i: &mut [S], out_q: &mut [S]);
 }
+
+/// Blanket implementation so `Box<dyn BatchMapper<S> + Send + Sync>`
+/// (the return type of [`super::ModemSpec::preferred_mapper`]) can be
+/// passed anywhere a `M: BatchMapper<S>` is required — notably to
+/// [`super::ModemChannelAdapter::new`] without the caller having to
+/// unwrap the box or switch backends.
+impl<S: ModemScalar, T: BatchMapper<S> + ?Sized> BatchMapper<S> for Box<T> {
+    #[inline]
+    fn spec(&self) -> ModemView<'_, S> {
+        (**self).spec()
+    }
+
+    #[inline]
+    fn map_bits(&self, bits: &[bool], out_i: &mut [S], out_q: &mut [S]) {
+        (**self).map_bits(bits, out_i, out_q);
+    }
+}

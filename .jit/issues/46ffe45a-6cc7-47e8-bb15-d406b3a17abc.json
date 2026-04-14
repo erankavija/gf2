@@ -17,6 +17,16 @@
     "doc-review"
   ],
   "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-14T22:29:02.482829792Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-14T22:29:00.873534112Z"
+    },
     "tdd-reminder": {
       "status": "passed",
       "updated_by": "agent:project-lead",
@@ -31,5 +41,5 @@
     "epic:d4851c3d"
   ],
   "created_at": "2026-04-12T19:39:51.669734207+00:00",
-  "updated_at": "2026-04-14T22:15:18.141811781+00:00"
+  "updated_at": "2026-04-14T22:34:43.625204313+00:00"
 }
