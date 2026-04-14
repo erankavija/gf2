@@ -2,7 +2,7 @@
   "id": "52112411-28ed-4428-9b8c-0dcec2fae5eb",
   "title": "Implement optimized Gray square-QAM mapper and demapper",
   "description": "Add the optimized modem path for Gray-coded square QAM, including QPSK, 16-QAM, 64-QAM, and 256-QAM. This story delivers the high-performance path needed for common BICM and DVB-T2 workflows.\n\n## Background\n\nArbitrary-constellation support is necessary for ergonomics, but the common square-QAM family should not pay the full generic cost. The optimized path should exploit Gray-PAM structure, precomputed tables, and batch-friendly memory layout while remaining API-compatible with the generic modem surface.\n\n## Success Criteria\n\n- [ ] Public preset constructors exist for Gray-coded QPSK, 16-QAM, 64-QAM, and 256-QAM and use the same labeling and normalization metadata as the shared modem builder.\n- [ ] The preset-backed modem path selects a specialized Gray square-QAM demapper through the shared modem API rather than through a separate public interface.\n- [ ] The Gray-QAM hot path uses caller-provided output buffers and avoids per-symbol heap allocation in the demapper loop.\n- [ ] Fast-path demapper outputs match the reference modem path for the supported demapper modes on representative AWGN cases, and benchmark coverage reports the relevant throughput-critical loops.\n\n## Notes\n\nThis story is the performance-critical core of the epic and should be designed to support SIMD acceleration cleanly.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "high",
   "assignee": "agent:claude",
   "dependencies": [
@@ -16,6 +16,11 @@
     "doc-review"
   ],
   "gates_status": {
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-14T20:53:04.418497665Z"
+    },
     "tdd-reminder": {
       "status": "passed",
       "updated_by": "agent:project-lead",
@@ -40,5 +45,5 @@
     "epic:d4851c3d"
   ],
   "created_at": "2026-04-12T19:39:51.666381904+00:00",
-  "updated_at": "2026-04-14T17:58:43.475654237+00:00"
+  "updated_at": "2026-04-14T20:53:05.195805720+00:00"
 }

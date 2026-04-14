@@ -2,7 +2,7 @@
   "id": "51334873-c2dc-4174-ab13-60c45997b9d4",
   "title": "Implement arbitrary-constellation mapping and reference demapping",
   "description": "Implement the correctness-first modem path for arbitrary complex constellations and arbitrary bit labelings. This path is the reference implementation used for uncommon constellations, research workflows, and fast-path validation.\n\n## Background\n\nThe framework must support user-defined constellations rather than only standard square QAM. That requires validated construction, a scalar reference mapper, and a soft demapper that is correct across arbitrary labelings so specialized implementations can be checked against it.\n\n## Success Criteria\n\n- [ ] Users can construct a modem from explicit constellation points and bit labels through the shared validated builder.\n- [ ] The arbitrary-constellation mapper produces deterministic symbol outputs and a deterministic LLR layout for any valid labeling.\n- [ ] An exact log-MAP reference demapper exists for arbitrary valid constellations and matches brute-force or equivalent log-sum-exp expectations on representative non-Gray or non-square cases.\n- [ ] Invalid constellations or duplicate and incomplete labels are rejected with explicit errors rather than silent fallbacks.\n\n## Notes\n\nThis story provides the ground-truth implementation used to validate the optimized Gray square-QAM path.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "high",
   "assignee": "agent:claude",
   "dependencies": [
@@ -18,19 +18,24 @@
   ],
   "gates_status": {
     "code-review": {
-      "status": "failed",
+      "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-04-14T20:09:13.797620090Z"
+      "updated_at": "2026-04-14T20:44:19.573475240Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-14T20:51:28.615438559Z"
     },
     "tdd-reminder": {
       "status": "passed",
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-14T16:30:05.347490391Z"
     },
-    "cargo-ci": {
+    "doc-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-14T20:07:32.435319472Z"
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-14T20:53:03.251024396Z"
     }
   },
   "context": {},
@@ -41,5 +46,5 @@
     "epic:d4851c3d"
   ],
   "created_at": "2026-04-12T19:39:51.665092663+00:00",
-  "updated_at": "2026-04-14T20:25:39.530580362+00:00"
+  "updated_at": "2026-04-14T20:53:03.658134782+00:00"
 }
