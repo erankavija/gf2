@@ -264,6 +264,40 @@ impl Lcg {
         perm
     }
 
+    /// Builds a deterministic pseudo-random bit stream of length `n_bits`,
+    /// seeded by `seed`.
+    ///
+    /// This is the SSOT helper for the "random bit vector" pattern used by
+    /// modem regression and property tests (round-trip fidelity, label
+    /// bijection fuzzing, etc.). Bits are drawn independently and uniformly
+    /// at random.
+    ///
+    /// # Arguments
+    ///
+    /// * `seed` - 64-bit seed for the internal [`Lcg`].
+    /// * `n_bits` - Number of bits to generate.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::modem::test_oracle::Lcg;
+    ///
+    /// let bits = Lcg::bit_stream(0xA11CE, 64);
+    /// assert_eq!(bits.len(), 64);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(`n_bits`).
+    pub fn bit_stream(seed: u64, n_bits: usize) -> Vec<bool> {
+        let mut rng = Self::new(seed);
+        let mut out = Vec::with_capacity(n_bits);
+        for _ in 0..n_bits {
+            out.push((rng.next_u64() & 1) == 1);
+        }
+        out
+    }
+
     /// Builds a deterministic pseudo-random stream of `batch` label
     /// integers drawn uniformly from `[0, n)`, seeded by `seed`.
     ///
