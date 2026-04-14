@@ -2,9 +2,9 @@
   "id": "f80407f8-05a7-464b-b845-1c1c41842196",
   "title": "Add modem docs and examples",
   "description": "Document the modem framework and add user-facing examples for presets, custom constellations, and simulation integration.\n\n## Success Criteria\n\n- [ ] Documentation explains the common preset workflow and the custom-constellation workflow.\n- [ ] Examples cover at least one custom constellation, one Gray-QAM preset, and one simulation-harness integration path.\n- [ ] Public-facing docs make the intended ergonomics of the modem framework clear.\n\n## Notes\n\nThis is the first leaf under the ergonomics and validation story.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [
     "5fd315c0-4713-4744-925f-619de215ba98"
   ],
@@ -14,7 +14,13 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-14T22:13:08.706825039Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -24,5 +30,5 @@
     "story:modem-ergonomics-validation-benchmarks"
   ],
   "created_at": "2026-04-12T19:41:45.870562801+00:00",
-  "updated_at": "2026-04-14T15:59:32.387830257+00:00"
+  "updated_at": "2026-04-14T22:13:10.652269464+00:00"
 }

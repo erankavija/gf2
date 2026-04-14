@@ -15,6 +15,16 @@
     "doc-review"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-14T21:51:23.037309767Z"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-14T21:54:29.743971446Z"
+    },
     "tdd-reminder": {
       "status": "passed",
       "updated_by": "agent:project-lead",
@@ -30,5 +40,5 @@
     "story:gpu-demapper-prototype"
   ],
   "created_at": "2026-04-12T19:41:45.875377574+00:00",
-  "updated_at": "2026-04-14T17:18:05.038741604+00:00"
+  "updated_at": "2026-04-14T22:01:35.465652211+00:00"
 }
