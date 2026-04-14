@@ -222,12 +222,14 @@ axis kernel dominates the per-symbol work.
    needs re-validation; the crossover batch will likely shift.
 7. **ROCm-only.** CUDA is not supported; no HIP-to-CUDA translation
    path is configured in `build.rs`.
-8. **CPU scalar numbers are per-axis kernel only**, not full-demapper.
-   The full demapper also does validation, scratch allocation, and
-   per-symbol reduction which are not covered by the kernel-only bench.
-   Those components are identical on scalar and AVX2 hosts, so the
-   full-demapper scalar-vs-AVX2 speedup is bounded above by the
-   per-axis ratios (2.0–2.7×) and likely closer to 1.7–2.3× end-to-end.
+8. **Two scalar baselines are available**: the per-axis kernel in
+   `cpu_dispatch_probe::bench_cpu_dispatch` and the full-demapper
+   scalar-pinned path in
+   `cpu_dispatch_probe::bench_full_demapper_scalar_vs_best`. This
+   report quotes the full-demapper AVX2 numbers against the measured
+   GPU; re-running the `full_demapper/order=*/scalar` group on a
+   non-AVX2 host yields the scalar full-demapper numbers directly —
+   no extrapolation required.
 
 ## Recommendation
 
