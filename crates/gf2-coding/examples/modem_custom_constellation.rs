@@ -29,14 +29,9 @@ use std::process::ExitCode;
 
 use gf2_coding::llr::Llr;
 use gf2_coding::modem::{
-    BatchMapper, BatchSoftDemapper, DemapInput, DemapMethod, LabelWord, ModemSpecBuilder,
-    ReferenceMapper, ReferenceSoftDemapper, SymbolPoint,
+    unpack_label_msb_first, BatchMapper, BatchSoftDemapper, DemapInput, DemapMethod, LabelWord,
+    ModemSpecBuilder, ReferenceMapper, ReferenceSoftDemapper, SymbolPoint,
 };
-
-/// Unpacks a `u16` label into MSB-first bits of width `m`.
-fn unpack_label(bits: u16, m: u8) -> Vec<bool> {
-    (0..m).rev().map(|i| ((bits >> i) & 1) == 1).collect()
-}
 
 fn run() -> Result<(), String> {
     // ---- 1. 8-PSK geometry on the unit circle ---------------------------
@@ -101,7 +96,7 @@ fn run() -> Result<(), String> {
 
     // Flatten "0, 1, ..., 7" into MSB-first-within-symbol bits.
     let tx_bits: Vec<bool> = (0..num_symbols as u16)
-        .flat_map(|k| unpack_label(k, m))
+        .flat_map(|k| unpack_label_msb_first(k, m))
         .collect();
 
     let mut tx_i = vec![0.0_f32; num_symbols];
