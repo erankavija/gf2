@@ -2,7 +2,7 @@
   "id": "dafb938a-405a-472f-af4b-56ec9955d8b4",
   "title": "Add modem regression and property tests",
   "description": "Add modem-level invariants, round-trip tests, and regression coverage for the migrated public entry points.\n\n## Success Criteria\n\n- [ ] The shared modem surface has regression coverage for standard presets and migrated compatibility entry points.\n- [ ] Property tests cover relevant round-trip or labeling invariants where appropriate.\n- [ ] The new tests protect both the reference path and the optimized path from divergence.\n\n## Notes\n\nThis task extends the earlier reference tests into full framework-level regression protection.",
-  "state": "in_progress",
+  "state": "gated",
   "priority": "normal",
   "assignee": "agent:claude",
   "dependencies": [
@@ -19,12 +19,17 @@
     "code-review": {
       "status": "failed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-04-14T22:01:35.559208609Z"
+      "updated_at": "2026-04-14T22:18:43.473613213Z"
     },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-04-14T21:52:57.413263625Z"
+      "updated_at": "2026-04-14T22:16:44.587813013Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-14T22:26:37.055561901Z"
     },
     "tdd-reminder": {
       "status": "passed",
@@ -41,5 +46,5 @@
     "story:modem-ergonomics-validation-benchmarks"
   ],
   "created_at": "2026-04-12T19:41:45.872268442+00:00",
-  "updated_at": "2026-04-14T22:06:35.699962944+00:00"
+  "updated_at": "2026-04-14T22:26:37.070596382+00:00"
 }

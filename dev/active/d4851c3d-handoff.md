@@ -109,10 +109,12 @@ Suggested dispatch order:
 ## Reference: GPU crossover decision (JIT `9c37ec8c`)
 
 Decision document: `dev/active/9c37ec8c-gpu-crossover-decision.md`.
-Outcome: **keep-experimental** — the HIP GPU Gray-QAM demapper wins at
-batches ≥ 1024 for orders ≥ 16 and by ~27× at 16k/256-QAM, but loses
-below ~256-symbol batches. Stay gated behind the `hip` Cargo feature;
-future GPU work lives under `19069bc1`.
+Outcome: **keep-experimental** — the HIP GPU Gray-QAM demapper wins
+at batch ≥ 1024 for 64/256-QAM, batch ≥ 4096 for 16-QAM, and batch ≥
+16384 for QPSK, and by ~27× at 16k/256-QAM; it loses at batch = 256
+across all orders and still loses at batch = 1024 for QPSK and 16-QAM.
+Stay gated behind the `hip` Cargo feature; future GPU work lives under
+`19069bc1`.
 
 ## Reference: state of `in_progress_deferred` / `deferred_to_wave_9` issues
 

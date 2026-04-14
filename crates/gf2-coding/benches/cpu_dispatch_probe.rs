@@ -28,36 +28,21 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 
 use gf2_coding::modem::test_oracle::Lcg;
-use gf2_coding::modem::ModemSpec;
+use gf2_coding::modem::{FastGrayQamDemapper, ModemSpec};
 
 use gf2_kernels_simd::modem::{detect_f64, scalar_fns_f64, GrayPamDistanceFnsF64};
 
-/// Returns `(axis_len, pam_levels)` for a given modulation order.
-///
-/// `order == 2` is BPSK, mapped onto a two-level axis. Orders
-/// `{4, 16, 64, 256}` are square-QAM; we read the PAM level table off
-/// the Gray-QAM preset so the bench exercises the same level spacing
-/// the real demapper sees.
+/// Reads the canonical post-normalization PAM level table for a given
+/// modulation order off the Gray-QAM fast-path demapper, which is the
+/// SSOT for Gray-PAM levels in the workspace (see
+/// [`gf2_coding::modem::presets::gray_pam_levels`] via
+/// [`FastGrayQamDemapper::pam_levels`]). This ensures the bench feeds
+/// the scalar and AVX2 kernels with the **exact same axis** that the
+/// production demapper would — no re-derivation, no drift.
 fn axis_for_order(order: usize) -> Vec<f64> {
-    if order == 2 {
-        vec![-1.0, 1.0]
-    } else {
-        // Square Gray-QAM preset: I- and Q-axis levels are identical,
-        // so read once and cast to f64.
-        let spec = ModemSpec::<f64>::gray_square_qam_with_scalar(order);
-        // The preset constructor validates the axis; we re-derive the
-        // axis levels from first-principles here to avoid poking at
-        // private fields.
-        let m_half = (spec.bits_per_symbol() / 2) as u32;
-        let axis_len = 1usize << m_half;
-        // Standard unit-energy Gray-PAM levels {±1, ±3, ...} scaled to
-        // unit average energy. We use the unscaled odd integers; the
-        // kernel is insensitive to overall axis scale for the purposes
-        // of the dispatch-cost crossover.
-        (0..axis_len)
-            .map(|l| (2 * l as isize - axis_len as isize + 1) as f64)
-            .collect()
-    }
+    let spec = ModemSpec::<f64>::gray_square_qam_with_scalar(order);
+    let demapper = FastGrayQamDemapper::<f64>::new(spec);
+    demapper.pam_levels().to_vec()
 }
 
 fn gen_batch_f64(batch: usize, seed: u64) -> (Vec<f64>, Vec<f64>, Vec<f64>) {
