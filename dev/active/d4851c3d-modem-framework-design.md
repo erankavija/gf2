@@ -288,15 +288,15 @@ Design draft:
 3. Ordinary coded and uncoded simulations call the shared modem path directly.
 4. Bit-channel analysis becomes an explicit simulation option that routes to the analysis layer without altering the normal path.
 
-### Migration strategy
+### Migration strategy — status
 
-Migration is complete only when there is one shared modem implementation. The work is broken out across explicit JIT issues so that story `24144d1a` (core API design) closes when the API surface is in place, and the actual rewiring of legacy modem surfaces — which edits `channel.rs`, `modulation.rs`, and `fading.rs` — happens under story `92186a40` (simulation + channel refactor) and story `46ffe45a` (legacy surface migration).
+Migration is complete. The work was broken out across explicit JIT issues so that story `24144d1a` (core API design) closed when the API surface was in place, and the actual rewiring of legacy modem surfaces — which edited `channel.rs`, `modulation.rs`, and `fading.rs` — happened under story `92186a40` (simulation + channel refactor) and story `46ffe45a` (legacy surface migration).
 
 1. Introduce `modem/` and the new shared construction and demap APIs. — task `c87c5043` (data model), task `d36ae697` (batch traits), task `3e3fe377` (builder). **[Done.]**
-2. Move arbitrary-constellation and Gray-QAM functionality onto that surface. — task `b2c9c0f0` (reference mapper), task `625f5e1b` (Gray-QAM scalar mapper), task `abf03b13` (reference soft demapper), task `db1dda70` (Gray-QAM fast demapper), task `c5cee991` (SIMD kernels).
-3. Rewire AWGN and fading integration to call the shared modem implementation. — task `ee556fbf` (AWGN link adapter), task `a23646dd` (Rician fading link), task `bf865220` (SimulationRunner composition), under story `92186a40`.
-4. Replace BPSK and QPSK compatibility surfaces with wrappers over the shared implementation. — task `0cafa5f5` (BPSK compat), task `b3bb774a` (QPSK replacement), under story `92186a40`.
-5. Delete duplicated modem implementations. Do not add deprecation shims. — task `5fd315c0` under story `46ffe45a`.
+2. Move arbitrary-constellation and Gray-QAM functionality onto that surface. — task `b2c9c0f0` (reference mapper), task `625f5e1b` (Gray-QAM scalar mapper), task `abf03b13` (reference soft demapper), task `db1dda70` (Gray-QAM fast demapper), task `c5cee991` (SIMD kernels). **[Done.]**
+3. Rewire AWGN and fading integration to call the shared modem implementation. — task `ee556fbf` (AWGN link adapter), task `a23646dd` (Rician fading link), task `bf865220` (SimulationRunner composition), under story `92186a40`. **[Done.]**
+4. Replace BPSK and QPSK compatibility surfaces with wrappers over the shared implementation. — task `0cafa5f5` (BPSK compat), task `b3bb774a` (QPSK replacement), under story `92186a40`. **[Done.]**
+5. Delete duplicated modem implementations. Do not add deprecation shims. — task `5fd315c0` under story `46ffe45a`. **[Done — commit `d8663d5` deleted `modulation.rs` outright, shrunk `channel.rs` from 832 → 200 LoC, moved Shannon helpers to `info_theory.rs`, and left one coherent modem path rooted at `crates/gf2-coding/src/modem/`.]**
 
 ### GPU and SIMD strategy
 
@@ -317,17 +317,17 @@ Bit-channel analysis must not force accelerator backends to pay for observabilit
 | Rician integration | `modem::fading` hooks | Yes, through shared demap contract | Optional sideband only |
 | Bit-channel analysis | `modem::analysis` | No second modem implementation | Observes shared outputs |
 
-## Implementation Steps
+## Implementation Steps — status
 
-1. Create the shared modem data model, builder, normalization contract, and batch demapper interface in `crates/gf2-coding/src/modem/`.
-2. Implement the arbitrary-constellation reference mapper and exact log-MAP demapper as the correctness baseline.
-3. Implement Gray-coded square-QAM presets plus the optimized scalar and SIMD-friendly fast path.
-4. Introduce `DemapMethod` selection with exact log-MAP and max-log, and thread it through modem-facing APIs.
-5. Add `modem::analysis` with bit-channel identifiers, conditional LLR collectors, histogram/statistics sinks, and MI/GMI estimators.
-6. Integrate opt-in bit-channel analysis into simulation orchestration without modifying the default non-analysis hot path.
-7. Rewire `channel.rs`, `modulation.rs`, and the current fading-facing QPSK flow onto the shared modem implementation.
-8. Delete duplicated modem implementations once the shared path is proven by tests and benchmarks.
-9. Add examples and benchmarks that demonstrate presets, custom constellations, and the zero-overhead disabled analysis path.
+1. Create the shared modem data model, builder, normalization contract, and batch demapper interface in `crates/gf2-coding/src/modem/`. **[Done.]**
+2. Implement the arbitrary-constellation reference mapper and exact log-MAP demapper as the correctness baseline. **[Done.]**
+3. Implement Gray-coded square-QAM presets plus the optimized scalar and SIMD-friendly fast path. **[Done.]**
+4. Introduce `DemapMethod` selection with exact log-MAP and max-log, and thread it through modem-facing APIs. **[Done.]**
+5. Add `modem::analysis` with bit-channel identifiers, conditional LLR collectors, histogram/statistics sinks, and MI/GMI estimators. **[Partially done — `modem::analysis` landed in commit `67e1b08` under task `a9ccb8ae`; MI/GMI estimators are follow-on task `0f7a6cd9`.]**
+6. Integrate opt-in bit-channel analysis into simulation orchestration without modifying the default non-analysis hot path. **[Follow-on task `80f218ca`.]**
+7. Rewire `channel.rs`, `modulation.rs`, and the current fading-facing QPSK flow onto the shared modem implementation. **[Done — tasks `ee556fbf`, `a23646dd`, `bf865220`, `0cafa5f5`, `b3bb774a`.]**
+8. Delete duplicated modem implementations once the shared path is proven by tests and benchmarks. **[Done — task `5fd315c0`, commit `d8663d5`. `modulation.rs` deleted, `channel.rs` reduced to a thin AWGN sampler, Shannon helpers moved to `info_theory.rs`.]**
+9. Add examples and benchmarks that demonstrate presets, custom constellations, and the zero-overhead disabled analysis path. **[Follow-on tasks `f80407f8`, `1663515c`, `448491d5`.]**
 
 ## Testing Approach
 
