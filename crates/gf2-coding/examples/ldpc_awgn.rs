@@ -3,15 +3,16 @@
 //! This example demonstrates:
 //! - LDPC code construction (regular code)
 //! - Encoding (systematic, all-zero codewords for simplicity)
-//! - BPSK modulation over AWGN channel
+//! - BPSK modulation over AWGN channel (via the shared modem framework)
 //! - Iterative belief propagation decoding
 //! - Frame error rate (FER) and convergence analysis
 //!
 //! Compares coded vs. uncoded performance to show LDPC coding gain.
 
-use gf2_coding::llr::Llr;
+use gf2_coding::info_theory::{shannon_capacity, shannon_limit};
+use gf2_coding::simulation::{BpskAwgnChannel, ChannelModel};
 use gf2_coding::traits::IterativeSoftDecoder;
-use gf2_coding::{AwgnChannel, BpskModulator, LdpcCode, LdpcDecoder};
+use gf2_coding::{LdpcCode, LdpcDecoder};
 use gf2_core::BitVec;
 
 fn main() {
@@ -31,7 +32,7 @@ fn main() {
     println!();
 
     // Show Shannon limit for this rate
-    let shannon_limit_db = AwgnChannel::shannon_limit(code.rate());
+    let shannon_limit_db = shannon_limit(code.rate());
     println!("Shannon Limit:");
     println!(
         "  Min Eb/N0 for R={:.3}: {:.2} dB",
@@ -58,7 +59,7 @@ fn main() {
         let (fer, avg_iter, uncoded_ber) =
             simulate_ldpc_transmission(&code, num_frames, eb_n0_db, max_iterations);
 
-        let capacity = AwgnChannel::shannon_capacity(eb_n0_db);
+        let capacity = shannon_capacity(eb_n0_db);
 
         println!(
             "│   {:5.1}  │  {:6.4}  │   {:5.1}  │   {:8.6}   │  {:6.4}  │",
@@ -125,7 +126,7 @@ fn simulate_ldpc_transmission(
     max_iterations: usize,
 ) -> (f64, f64, f64) {
     let mut rng = rand::thread_rng();
-    let channel = AwgnChannel::from_eb_n0_db(eb_n0_db, code.rate());
+    let channel = BpskAwgnChannel;
 
     let mut decoder = LdpcDecoder::new(code.clone());
 
@@ -139,15 +140,9 @@ fn simulate_ldpc_transmission(
         // In practice, you'd encode actual message bits
         let codeword = BitVec::zeros(code.n());
 
-        // Modulate to BPSK
-        let bits_vec: Vec<bool> = (0..code.n()).map(|i| codeword.get(i)).collect();
-        let symbols = BpskModulator::modulate_bits(&bits_vec);
-
-        // Transmit through AWGN
-        let received = channel.transmit_symbols(&symbols, &mut rng);
-
-        // Convert to LLRs
-        let llrs: Vec<Llr> = channel.to_llrs(&received);
+        // Modulate + transmit + demap through the BPSK/AWGN reference
+        // channel (drives the modem framework internally).
+        let llrs = channel.transmit_and_demodulate(&codeword, eb_n0_db, code.rate(), &mut rng);
 
         // Decode with belief propagation
         let result = decoder.decode_iterative(&llrs, max_iterations);

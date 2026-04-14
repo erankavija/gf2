@@ -30,9 +30,128 @@
 //! | Fig 9  | 8  | 256 | 2  |
 //! | Fig 10 | 6  | 256 | 8  |
 
-use crate::modulation::Complex;
 use rand::Rng;
 use rand_distr::{Distribution, Normal};
+use std::ops::{Add, Mul};
+
+/// Complex number used by the Rician fading channel model for
+/// channel-math composition (`y = h·x + n`).
+///
+/// This type is intentionally minimal: it carries only the real/imaginary
+/// pair and the arithmetic required by [`RicianChannel::transmit`] and
+/// [`RicianChannel::generate_frame_gains`]. It is **not** a modulation
+/// primitive — all bit-to-symbol mapping and demapping lives in
+/// [`crate::modem`].
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Complex {
+    /// Real part.
+    pub re: f64,
+    /// Imaginary part.
+    pub im: f64,
+}
+
+impl Complex {
+    /// Creates a new complex number.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::fading::Complex;
+    ///
+    /// let c = Complex::new(1.0, -2.0);
+    /// assert_eq!(c.re, 1.0);
+    /// assert_eq!(c.im, -2.0);
+    /// ```
+    pub fn new(re: f64, im: f64) -> Self {
+        Complex { re, im }
+    }
+
+    /// Returns the complex conjugate.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::fading::Complex;
+    ///
+    /// let c = Complex::new(1.0, -2.0).conj();
+    /// assert_eq!(c.re, 1.0);
+    /// assert_eq!(c.im, 2.0);
+    /// ```
+    pub fn conj(self) -> Self {
+        Complex {
+            re: self.re,
+            im: -self.im,
+        }
+    }
+
+    /// Returns the squared absolute value |z|^2.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::fading::Complex;
+    ///
+    /// let c = Complex::new(3.0, 4.0);
+    /// assert!((c.norm_sq() - 25.0).abs() < 1e-12);
+    /// ```
+    pub fn norm_sq(self) -> f64 {
+        self.re * self.re + self.im * self.im
+    }
+
+    /// Returns the absolute value |z|.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::fading::Complex;
+    ///
+    /// let c = Complex::new(3.0, 4.0);
+    /// assert!((c.norm() - 5.0).abs() < 1e-12);
+    /// ```
+    pub fn norm(self) -> f64 {
+        self.norm_sq().sqrt()
+    }
+
+    /// Scales the complex number by a real scalar.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::fading::Complex;
+    ///
+    /// let c = Complex::new(1.0, -2.0).scale(3.0);
+    /// assert_eq!(c.re, 3.0);
+    /// assert_eq!(c.im, -6.0);
+    /// ```
+    pub fn scale(self, s: f64) -> Self {
+        Complex {
+            re: self.re * s,
+            im: self.im * s,
+        }
+    }
+}
+
+impl Mul for Complex {
+    type Output = Complex;
+
+    fn mul(self, other: Complex) -> Complex {
+        Complex {
+            re: self.re * other.re - self.im * other.im,
+            im: self.re * other.im + self.im * other.re,
+        }
+    }
+}
+
+impl Add for Complex {
+    type Output = Complex;
+
+    fn add(self, other: Complex) -> Complex {
+        Complex {
+            re: self.re + other.re,
+            im: self.im + other.im,
+        }
+    }
+}
 
 /// Rician fading configuration for one of the three paper configurations.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -326,14 +445,14 @@ impl RicianChannel {
     /// # Examples
     ///
     /// ```
-    /// use gf2_coding::fading::{RicianChannel, RicianConfig};
-    /// use gf2_coding::modulation::{Complex, QpskModulator};
+    /// use gf2_coding::fading::{Complex, RicianChannel, RicianConfig};
     ///
     /// let channel = RicianChannel::new(RicianConfig::fig8());
     /// let mut rng = rand::thread_rng();
-    /// let qpsk = QpskModulator::new(1.0);
-    /// let bits = vec![false; 8];
-    /// let symbols = qpsk.modulate_bits(&bits);
+    /// // Drive the channel with explicit complex symbols — QPSK bit-to-
+    /// // symbol mapping lives in `gf2_coding::modem` and is exercised by
+    /// // `QpskRicianChannelModel` end-to-end.
+    /// let symbols = vec![Complex::new(1.0, 1.0); 4];
     /// let gains = vec![Complex::new(1.0, 0.0); symbols.len()];
     /// let received = channel.transmit(&symbols, &gains, 0.1, &mut rng);
     /// assert_eq!(received.len(), symbols.len());
@@ -1022,9 +1141,9 @@ use crate::simulation::ChannelModel;
 /// The framework demapper consumes the per-symbol complex gain
 /// `h = h_i + j h_q` directly via [`DemapInput::gain_i`] /
 /// [`DemapInput::gain_q`]; no manual `conj(h)` pre-rotation is performed
-/// here. The MSB-first intra-symbol bit order matches the legacy
-/// [`crate::modulation::QpskModulator`] convention bit-for-bit (bit 0 of
-/// each pair drives the I axis, bit 1 drives Q).
+/// here. The MSB-first intra-symbol bit order matches the framework
+/// Gray-QAM convention (bit 0 of each pair drives the I axis, bit 1
+/// drives Q).
 ///
 /// # Noise convention
 ///
@@ -1234,148 +1353,17 @@ mod channel_model_tests {
 }
 
 // ---------------------------------------------------------------------------
-// Migration regressions: the framework-backed Rician path agrees with the
-// legacy hand-rolled QPSK math the issue replaces. These pin the migration
-// to the observable semantics of the previous implementation so a future
-// refactor cannot silently drift conventions (bit order, axis assignment,
-// LLR sign, noise scaling, fading composition).
+// Framework calibration lock: the Rician fading path shares its N0 formula
+// with `ModemChannelAdapter` through `modem::awgn_link::unit_energy_*`.
+// The remaining test below pins that formula at literal values so any
+// silent drift in the Eb/N0 -> N0 mapping is caught regardless of which
+// caller triggered the change.
 // ---------------------------------------------------------------------------
 
 #[cfg(test)]
-mod modem_framework_migration_tests {
+mod modem_framework_calibration_tests {
     use super::*;
-    use crate::llr::Llr;
-    use crate::modem::{
-        BatchMapper, BatchSoftDemapper, DemapInput, DemapMethod, GrayQamMapper, ModemSpec,
-        ReferenceSoftDemapper,
-    };
-    use crate::modulation::{Complex, QpskModulator};
-    use rand::rngs::StdRng;
-    use rand::SeedableRng;
-    use rand_distr::{Distribution, Normal};
 
-    /// Map a bit stream through both the legacy [`QpskModulator`]
-    /// (delta = 1/sqrt(2), matching unit average symbol energy) and the
-    /// framework's [`GrayQamMapper`] preset 4 (which is also unit-energy
-    /// QPSK), and assert per-symbol I/Q agreement bit-for-bit.
-    ///
-    /// Catches any axis-swap, sign-flip, or MSB/LSB inversion in the
-    /// migration glue.
-    #[test]
-    fn test_qpsk_rician_matches_framework_mapping() {
-        let mapper = GrayQamMapper::<f32>::from_preset_order(4);
-        let delta = (0.5_f64).sqrt();
-        let qpsk = QpskModulator::new(delta);
-
-        // 8 deterministic bit pairs covering every QPSK label.
-        let bits: Vec<bool> = vec![
-            false, false, false, true, true, false, true, true, true, true, false, false, false,
-            true, true, false,
-        ];
-        let n_sym = bits.len() / 2;
-
-        let legacy: Vec<Complex> = qpsk.modulate_bits(&bits);
-        let mut tx_i = vec![0.0_f32; n_sym];
-        let mut tx_q = vec![0.0_f32; n_sym];
-        mapper.map_bits(&bits, &mut tx_i, &mut tx_q);
-
-        for k in 0..n_sym {
-            assert!(
-                ((tx_i[k] as f64) - legacy[k].re).abs() < 1e-6,
-                "I mismatch at {k}: framework={} legacy={}",
-                tx_i[k],
-                legacy[k].re,
-            );
-            assert!(
-                ((tx_q[k] as f64) - legacy[k].im).abs() < 1e-6,
-                "Q mismatch at {k}: framework={} legacy={}",
-                tx_q[k],
-                legacy[k].im,
-            );
-        }
-    }
-
-    /// For a deterministic batch of received samples and per-symbol
-    /// complex channel gains, the legacy
-    /// [`QpskModulator::symbols_to_llrs`] and the framework's
-    /// [`ReferenceSoftDemapper`] (fed the same gains via
-    /// [`DemapInput::gain_i`]/[`gain_q`] and `noise_var = 2 sigma^2`) must
-    /// emit identical LLRs within `f32` rounding.
-    ///
-    /// Pins the noise-variance convention (`N0 = 2 sigma^2`), the LLR
-    /// sign convention (positive = bit 0 more likely), and the
-    /// per-symbol gain plumbing all at once.
-    #[test]
-    fn test_qpsk_rician_llr_matches_reference_demapper() {
-        let delta = (0.5_f64).sqrt();
-        let qpsk = QpskModulator::new(delta);
-        let demapper = ReferenceSoftDemapper::new(ModemSpec::<f32>::gray_square_qam(4));
-
-        // Fixed seed -> deterministic rx/gain/noise inputs.
-        let mut rng = StdRng::seed_from_u64(0xCAFEF00D);
-        let bits: Vec<bool> = (0..32).map(|i| (i * 7 + 3) & 1 == 0).collect();
-        let n_sym = bits.len() / 2;
-
-        let symbols = qpsk.modulate_bits(&bits);
-        let channel = RicianChannel::new(RicianConfig::fig8());
-        let mut gains = channel.generate_frame_gains(&mut rng);
-        gains.truncate(n_sym);
-
-        let sigma_squared = 0.25_f64;
-        let n0 = 2.0 * sigma_squared;
-        let noise_dist = Normal::new(0.0, (sigma_squared / 2.0).sqrt()).unwrap();
-        let received: Vec<Complex> = symbols
-            .iter()
-            .zip(gains.iter())
-            .map(|(s, h)| {
-                let nr: f64 = noise_dist.sample(&mut rng);
-                let ni: f64 = noise_dist.sample(&mut rng);
-                Complex::new(
-                    h.re * s.re - h.im * s.im + nr,
-                    h.re * s.im + h.im * s.re + ni,
-                )
-            })
-            .collect();
-
-        let legacy_llrs = qpsk.symbols_to_llrs(&received, &gains, sigma_squared);
-
-        let rx_i: Vec<f32> = received.iter().map(|c| c.re as f32).collect();
-        let rx_q: Vec<f32> = received.iter().map(|c| c.im as f32).collect();
-        let gi: Vec<f32> = gains.iter().map(|h| h.re as f32).collect();
-        let gq: Vec<f32> = gains.iter().map(|h| h.im as f32).collect();
-        let nv = vec![n0 as f32; n_sym];
-        let mut framework_llrs = vec![Llr::new(0.0); bits.len()];
-        demapper.demap_llrs(
-            DemapInput {
-                rx_i: &rx_i,
-                rx_q: &rx_q,
-                gain_i: Some(&gi),
-                gain_q: Some(&gq),
-                noise_var: &nv,
-                method: DemapMethod::ExactLogMap,
-            },
-            &mut framework_llrs,
-        );
-
-        // Tolerance budget: f64->f32 rounding on inputs + ExactLogMap
-        // sum-exp accumulation + Llr stored as f32. 5e-3 is comfortable
-        // headroom while still catching real divergences.
-        for (k, (lf, ll)) in framework_llrs.iter().zip(legacy_llrs.iter()).enumerate() {
-            let err = (lf.value() - ll.value()).abs();
-            assert!(
-                err < 5e-3,
-                "LLR mismatch at bit {k}: framework={} legacy={} err={err}",
-                lf.value(),
-                ll.value(),
-            );
-        }
-    }
-
-    /// End-to-end sanity: the migrated [`QpskRicianChannelModel`] wired
-    /// through [`SimulationRunner::run_coded`] must still recover bits at
-    /// a usable rate (BER < 0.5) at high SNR. This pins the full
-    /// `interleave -> map -> fade -> demap -> deinterleave` composition
-    /// so a regression in any of the four stages is caught.
     /// Shared-formula calibration lock for the fading path.
     ///
     /// The migrated fading path and `ModemChannelAdapter` both derive
@@ -1480,40 +1468,5 @@ mod modem_framework_migration_tests {
             "interleaver+modem composition broken: BER {} too high",
             results.points[0].ber
         );
-    }
-}
-
-#[cfg(test)]
-mod modem_framework_migration_property_tests {
-    use crate::modem::{BatchMapper, GrayQamMapper};
-    use crate::modulation::QpskModulator;
-    use proptest::prelude::*;
-
-    proptest! {
-        /// For arbitrary even-length bit streams, the framework
-        /// [`GrayQamMapper`] preset 4 emits exactly the same I/Q values as
-        /// the legacy [`QpskModulator`] at delta = 1/sqrt(2) (the
-        /// unit-average-symbol-energy normalization both paths share).
-        #[test]
-        fn prop_qpsk_mapping_matches_legacy(
-            seed in any::<u64>(),
-            n_pairs in 1usize..32usize,
-        ) {
-            let bits: Vec<bool> = (0..n_pairs * 2)
-                .map(|i| ((seed.wrapping_add(i as u64)) & 1) == 0)
-                .collect();
-            let mapper = GrayQamMapper::<f32>::from_preset_order(4);
-            let qpsk = QpskModulator::new((0.5_f64).sqrt());
-
-            let legacy = qpsk.modulate_bits(&bits);
-            let mut tx_i = vec![0.0_f32; n_pairs];
-            let mut tx_q = vec![0.0_f32; n_pairs];
-            mapper.map_bits(&bits, &mut tx_i, &mut tx_q);
-
-            for k in 0..n_pairs {
-                prop_assert!(((tx_i[k] as f64) - legacy[k].re).abs() < 1e-6);
-                prop_assert!(((tx_q[k] as f64) - legacy[k].im).abs() < 1e-6);
-            }
-        }
     }
 }

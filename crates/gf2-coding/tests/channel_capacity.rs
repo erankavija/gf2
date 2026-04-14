@@ -3,7 +3,7 @@
 //! Validates that the AWGN channel capacity computations match theoretical
 //! predictions and satisfy fundamental information-theoretic constraints.
 
-use gf2_coding::channel::AwgnChannel;
+use gf2_coding::info_theory::{shannon_capacity, shannon_limit};
 
 /// Known Shannon capacity values for BPSK over AWGN at specific Eb/N0 points.
 ///
@@ -25,7 +25,7 @@ const REFERENCE_CAPACITY_VALUES: &[(f64, f64)] = &[
 #[test]
 fn test_capacity_at_reference_points() {
     for &(eb_n0_db, expected) in REFERENCE_CAPACITY_VALUES {
-        let capacity = AwgnChannel::shannon_capacity(eb_n0_db);
+        let capacity = shannon_capacity(eb_n0_db);
         let error = (capacity - expected).abs();
 
         // Allow 0.1% relative error for numerical stability
@@ -47,7 +47,7 @@ fn test_capacity_monotonic_with_snr() {
 
     let mut prev_capacity = 0.0;
     for &eb_n0_db in &eb_n0_values {
-        let capacity = AwgnChannel::shannon_capacity(eb_n0_db);
+        let capacity = shannon_capacity(eb_n0_db);
         assert!(
             capacity > prev_capacity,
             "Capacity should increase with Eb/N0: at {} dB got {}, previous was {}",
@@ -63,7 +63,7 @@ fn test_capacity_monotonic_with_snr() {
 fn test_capacity_bounds() {
     // Capacity must be in [0, 1] for all valid SNR values
     for eb_n0_db in [-5.0, -2.0, 0.0, 3.0, 6.0, 9.0, 15.0, 20.0] {
-        let capacity = AwgnChannel::shannon_capacity(eb_n0_db);
+        let capacity = shannon_capacity(eb_n0_db);
         assert!(
             (0.0..=1.0).contains(&capacity),
             "Capacity out of bounds at Eb/N0={} dB: {}",
@@ -75,7 +75,7 @@ fn test_capacity_bounds() {
 
 #[test]
 fn test_capacity_approaches_zero_at_low_snr() {
-    let capacity = AwgnChannel::shannon_capacity(-10.0);
+    let capacity = shannon_capacity(-10.0);
     assert!(
         capacity < 0.2,
         "Capacity should be small at very low SNR, got {}",
@@ -85,14 +85,14 @@ fn test_capacity_approaches_zero_at_low_snr() {
 
 #[test]
 fn test_capacity_approaches_one_at_high_snr() {
-    let capacity = AwgnChannel::shannon_capacity(20.0);
+    let capacity = shannon_capacity(20.0);
     assert!(capacity > 0.99, "Capacity should approach 1.0 at high SNR");
 }
 
 #[test]
 fn test_shannon_limit_for_rate_half() {
     let rate = 0.5;
-    let eb_n0_min = AwgnChannel::shannon_limit(rate);
+    let eb_n0_min = shannon_limit(rate);
 
     // Theoretical Shannon limit for rate 1/2 is approximately 0.19 dB
     assert!(
@@ -109,7 +109,7 @@ fn test_shannon_limit_for_various_rates() {
     let mut prev_limit = f64::NEG_INFINITY;
 
     for &rate in &rates {
-        let limit = AwgnChannel::shannon_limit(rate);
+        let limit = shannon_limit(rate);
         assert!(
             limit > prev_limit,
             "Shannon limit should increase with rate: at rate {} got {} dB, previous was {}",
@@ -125,8 +125,8 @@ fn test_shannon_limit_for_various_rates() {
 fn test_shannon_limit_consistency() {
     // Verify that capacity at Shannon limit equals the target rate
     for &rate in &[0.25, 0.5, 0.75, 0.9] {
-        let eb_n0_limit = AwgnChannel::shannon_limit(rate);
-        let capacity = AwgnChannel::shannon_capacity(eb_n0_limit);
+        let eb_n0_limit = shannon_limit(rate);
+        let capacity = shannon_capacity(eb_n0_limit);
 
         let error = (capacity - rate).abs();
         assert!(
@@ -140,7 +140,7 @@ fn test_shannon_limit_consistency() {
 #[test]
 fn test_shannon_limit_for_rate_one() {
     let rate = 1.0;
-    let eb_n0_min = AwgnChannel::shannon_limit(rate);
+    let eb_n0_min = shannon_limit(rate);
 
     // For rate 1.0, Shannon limit approaches infinity (need infinite SNR)
     // But for BPSK, practical limit is very high
@@ -156,8 +156,8 @@ fn test_capacity_with_different_rates() {
     // This test no longer makes sense since capacity doesn't take rate
     // Shannon capacity is a property of the channel alone
     // We test that capacity increases with SNR instead
-    let capacity_low = AwgnChannel::shannon_capacity(0.0);
-    let capacity_high = AwgnChannel::shannon_capacity(6.0);
+    let capacity_low = shannon_capacity(0.0);
+    let capacity_high = shannon_capacity(6.0);
 
     assert!(capacity_high > capacity_low);
 }
@@ -172,7 +172,7 @@ mod property_tests {
         fn capacity_always_in_unit_interval(
             eb_n0_db in -5.0..20.0
         ) {
-            let capacity = AwgnChannel::shannon_capacity(eb_n0_db);
+            let capacity = shannon_capacity(eb_n0_db);
             prop_assert!((0.0..=1.0).contains(&capacity));
         }
 
@@ -182,8 +182,8 @@ mod property_tests {
             delta in 0.1..5.0
         ) {
             let eb_n0_high = eb_n0_low + delta;
-            let cap_low = AwgnChannel::shannon_capacity(eb_n0_low);
-            let cap_high = AwgnChannel::shannon_capacity(eb_n0_high);
+            let cap_low = shannon_capacity(eb_n0_low);
+            let cap_high = shannon_capacity(eb_n0_high);
             prop_assert!(cap_high > cap_low);
         }
 
@@ -191,8 +191,8 @@ mod property_tests {
         fn shannon_limit_achieves_rate(
             rate in 0.2..0.95
         ) {
-            let limit = AwgnChannel::shannon_limit(rate);
-            let capacity = AwgnChannel::shannon_capacity(limit);
+            let limit = shannon_limit(rate);
+            let capacity = shannon_capacity(limit);
             let error = (capacity - rate).abs();
             prop_assert!(error < 0.002, "Error {} exceeds tolerance for rate {}", error, rate);
         }
@@ -207,8 +207,8 @@ mod property_tests {
             if rate_high - rate_low < 0.03 {
                 return Ok(());
             }
-            let limit_low = AwgnChannel::shannon_limit(rate_low);
-            let limit_high = AwgnChannel::shannon_limit(rate_high);
+            let limit_low = shannon_limit(rate_low);
+            let limit_high = shannon_limit(rate_high);
             prop_assert!(limit_high > limit_low - 0.01,
                 "Shannon limit should increase: rate {} -> {} gave {} -> {} dB",
                 rate_low, rate_high, limit_low, limit_high);

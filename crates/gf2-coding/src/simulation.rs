@@ -44,14 +44,19 @@
 //! to disk in the format determined by the file extension (`.json` for JSON,
 //! anything else for CSV).
 
-use crate::channel::{AwgnChannel, BpskModulator};
+use crate::channel::AwgnChannel;
 use crate::llr::Llr;
+use crate::modem::{
+    BatchMapper, BatchSoftDemapper, DemapInput, DemapMethod, ModemSpec, ReferenceMapper,
+    ReferenceSoftDemapper,
+};
 use crate::traits::{BlockEncoder, DecoderResult, IterativeSoftDecoder, SoftDecoder};
 use gf2_core::BitVec;
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+use std::sync::OnceLock;
 use std::sync::{Arc, Mutex};
 
 /// Global lock for serializing all JSONL file appends (progress + point_complete).
@@ -130,22 +135,17 @@ pub trait ChannelModel {
 ///
 /// # Framework-backed implementation
 ///
-/// This type is a compatibility wrapper over the shared modem framework.
-/// All bit-to-symbol mapping and LLR conversion are routed through
-/// [`BpskModulator`] and [`AwgnChannel::to_llrs`], which themselves
-/// delegate to [`crate::modem::ReferenceMapper`] and
+/// All bit-to-symbol mapping and LLR conversion route through the shared
+/// modem framework ([`crate::modem::ReferenceMapper`] and
 /// [`crate::modem::ReferenceSoftDemapper`] over
-/// [`crate::modem::ModemSpec::bpsk_with_scalar`]. There is no hand-rolled
-/// `±1` math or BPSK-specific LLR formula in this implementation. The
-/// only call that is intrinsically AWGN-shaped (and therefore not modem
-/// business) is the noise application via [`AwgnChannel::transmit_symbols`].
+/// [`crate::modem::ModemSpec::bpsk_with_scalar`]). The only call that is
+/// intrinsically AWGN-shaped (and therefore not modem business) is the
+/// noise application via [`AwgnChannel::transmit_symbols`].
 ///
-/// Bit-exact RNG-stream behaviour is preserved relative to the legacy
-/// implementation: noise is drawn once per BPSK symbol on the I axis
-/// (no Q-axis draw), matching the legacy
-/// [`AwgnChannel::transmit_symbols`] sequence. Callers that want the
-/// generic 2-D modem pipeline (with Q-axis noise and arbitrary
-/// constellation order) should use
+/// Noise is drawn once per BPSK symbol on the I axis (no Q-axis draw),
+/// matching the 1-D noise convention used by BPSK reference simulations.
+/// Callers that want the generic 2-D modem pipeline (with Q-axis noise
+/// and arbitrary constellation order) should use
 /// [`crate::modem::ModemChannelAdapter`] instead.
 ///
 /// # Examples
@@ -162,6 +162,22 @@ pub trait ChannelModel {
 /// ```
 pub struct BpskAwgnChannel;
 
+/// Lazily-initialised, process-wide BPSK reference mapper over `f64`,
+/// used by [`BpskAwgnChannel::transmit_and_demodulate`] so every frame
+/// shares the same constant preset without reallocating.
+fn bpsk_mapper_f64() -> &'static ReferenceMapper<f64> {
+    static MAPPER: OnceLock<ReferenceMapper<f64>> = OnceLock::new();
+    MAPPER.get_or_init(|| ReferenceMapper::new(ModemSpec::<f64>::bpsk_with_scalar()))
+}
+
+/// Lazily-initialised, process-wide BPSK reference soft demapper over
+/// `f64`. Matches the convention `noise_var = 2 * sigma^2` for the BPSK
+/// closed form `LLR = 2 y / sigma^2`.
+fn bpsk_demapper_f64() -> &'static ReferenceSoftDemapper<f64> {
+    static DEMAP: OnceLock<ReferenceSoftDemapper<f64>> = OnceLock::new();
+    DEMAP.get_or_init(|| ReferenceSoftDemapper::new(ModemSpec::<f64>::bpsk_with_scalar()))
+}
+
 impl ChannelModel for BpskAwgnChannel {
     fn transmit_and_demodulate<R: Rng>(
         &self,
@@ -170,21 +186,37 @@ impl ChannelModel for BpskAwgnChannel {
         rate: f64,
         rng: &mut R,
     ) -> Vec<Llr> {
-        // All BPSK-specific math is delegated:
-        // - `BpskModulator::modulate_bits` runs the framework
-        //   `ReferenceMapper<f64>` over `ModemSpec::bpsk_with_scalar()`.
-        // - `AwgnChannel::to_llrs` calls `BpskModulator::to_llr` per
-        //   symbol, which runs the framework `ReferenceSoftDemapper<f64>`
-        //   over the same spec with `noise_var = 2 * sigma^2`.
-        // The only BPSK-shaped concern handled directly here is the 1-D
-        // noise application (`transmit_symbols`), which intentionally
-        // matches the legacy RNG-stream shape — see the type-level docs.
+        // All modem-side math runs through the shared framework:
+        //   bits -> ReferenceMapper<f64> (BPSK preset) -> I-axis symbols
+        //   -> AwgnChannel::transmit_symbols (1-D noise) -> received I
+        //   -> ReferenceSoftDemapper<f64> with noise_var = 2 * sigma^2
+        //      (the framework's BPSK closed form recovers LLR = 2 y/sigma^2)
+        //
+        // The I-only (1-D) noise application is deliberate: legacy
+        // `BpskAwgnChannel` never drew Q-axis noise, and downstream tests
+        // rely on that RNG-stream shape.
         let n = bits.len();
         let channel = AwgnChannel::from_eb_n0_db(eb_n0_db, rate);
         let bits_vec: Vec<bool> = (0..n).map(|i| bits.get(i)).collect();
-        let symbols = BpskModulator::modulate_bits(&bits_vec);
-        let received = channel.transmit_symbols(&symbols, rng);
-        channel.to_llrs(&received)
+
+        let mut tx_i = vec![0.0_f64; n];
+        let mut tx_q = vec![0.0_f64; n];
+        bpsk_mapper_f64().map_bits(&bits_vec, &mut tx_i, &mut tx_q);
+
+        let received = channel.transmit_symbols(&tx_i, rng);
+
+        let n0 = vec![2.0 * channel.variance(); n];
+        let mut llrs = vec![Llr::new(0.0); n];
+        let input = DemapInput::<f64> {
+            rx_i: &received,
+            rx_q: &tx_q, // all zeros — BPSK is I-axis only
+            gain_i: None,
+            gain_q: None,
+            noise_var: &n0,
+            method: DemapMethod::ExactLogMap,
+        };
+        bpsk_demapper_f64().demap_llrs(input, &mut llrs);
+        llrs
     }
 }
 
@@ -744,19 +776,17 @@ impl SimulationRunner {
     /// Modem-backed counterpart to [`SimulationRunner::run_uncoded_ber`].
     ///
     /// Routes the uncoded sweep through the supplied [`ChannelModel`]
-    /// instead of hard-coding [`crate::channel::BpskModulator`], and applies
-    /// a hard decision to the returned LLRs (convention: positive LLR =>
-    /// bit 0, negative LLR => bit 1; this matches
-    /// [`crate::channel::BpskModulator::to_llr`] and the modem framework's
-    /// [`BatchSoftDemapper`](crate::modem::BatchSoftDemapper) output sign).
-    /// All modulation, noise generation, and demapping live inside
-    /// [`ChannelModel::transmit_and_demodulate`] — this method never
-    /// reimplements a BPSK LLR formula or a noise draw itself.
+    /// and applies a hard decision to the returned LLRs (convention:
+    /// positive LLR => bit 0, negative LLR => bit 1; this matches the
+    /// modem framework's
+    /// [`BatchSoftDemapper`](crate::modem::BatchSoftDemapper) output
+    /// sign). All modulation, noise generation, and demapping live
+    /// inside [`ChannelModel::transmit_and_demodulate`] — this method
+    /// never reimplements a BPSK LLR formula or a noise draw itself.
     ///
-    /// Passing [`crate::simulation::BpskAwgnChannel`] reproduces the legacy
-    /// BPSK path (at equal `StdRng` seeds the two sweeps converge to the
-    /// same BER, modulo the different bit/noise interleaving of the legacy
-    /// loop vs. the modem pipeline). Passing
+    /// Passing [`crate::simulation::BpskAwgnChannel`] gives the BPSK/AWGN
+    /// reference path (at equal `StdRng` seeds it converges to the same
+    /// BER as the legacy uncoded runner). Passing
     /// [`crate::modem::ModemChannelAdapter`] runs any validated
     /// [`ModemSpec`](crate::modem::ModemSpec) (BPSK, QPSK, 16-/64-/256-QAM)
     /// over AWGN with the shared [`BatchMapper`](crate::modem::BatchMapper)
@@ -852,8 +882,8 @@ impl SimulationRunner {
                     let errors = (0..batch_size)
                         .filter(|&i| {
                             // Positive LLR => bit 0, negative => bit 1.
-                            // Ties (0.0) map to bit 0, matching
-                            // BpskModulator::demodulate_hard.
+                            // Ties (0.0) map to bit 0, matching the
+                            // framework hard-decision convention.
                             let decoded_bit = llrs[i].value() < 0.0;
                             bits.get(i) != decoded_bit
                         })

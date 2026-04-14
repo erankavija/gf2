@@ -66,11 +66,11 @@ pub mod drm;
 pub mod fading;
 pub mod gldpc;
 pub mod grand;
+pub mod info_theory;
 pub mod ldpc;
 pub mod linear;
 pub mod llr;
 pub mod modem;
-pub mod modulation;
 pub mod product;
 
 // SIMD detection is now handled internally in llr.rs via once_cell::Lazy
@@ -79,7 +79,7 @@ pub mod traits;
 
 // Re-export main types
 pub use bch::{BchCode, BchDecoder, BchEncoder, CodeRate};
-pub use channel::{AwgnChannel, BpskModulator};
+pub use channel::AwgnChannel;
 pub use convolutional::{ConvolutionalDecoder, ConvolutionalEncoder};
 pub use ldpc::{
     CirculantMatrix, DecoderAlgorithm, DecoderConfig, LdpcCode, LdpcDecoder, QuasiCyclicLdpc,

@@ -5,13 +5,8 @@
 //! single `bits -> LLRs` pipeline for any validated [`super::ModemSpec`],
 //! preset or custom. [`ModemChannelAdapter`] wraps the same two components
 //! behind the [`crate::simulation::ChannelModel`] trait so any modem spec
-//! can drop into [`crate::simulation::SimulationRunner`] in place of the
-//! legacy [`crate::simulation::BpskAwgnChannel`].
-//!
-//! This module is deliberately additive. The legacy
-//! [`crate::channel::BpskAwgn`](crate::channel) / `BpskModulator` helpers
-//! are left untouched so existing callers keep working while the modem
-//! framework migration rolls forward.
+//! can drop into [`crate::simulation::SimulationRunner`] alongside the
+//! BPSK reference channel [`crate::simulation::BpskAwgnChannel`].
 //!
 //! # Noise convention
 //!
@@ -22,10 +17,8 @@
 //! the BPSK closed-form tests in
 //! [`super::ReferenceSoftDemapper`]: `LLR = 4 y / N0`). This adapter
 //! therefore passes `N0 = 2 * channel.variance()` into every
-//! [`super::DemapInput`] it builds, which recovers the legacy BPSK LLR
-//! `LLR = 2 r / sigma^2` (= `4 r / N0`) used by
-//! [`crate::channel::BpskModulator::to_llr`] and
-//! [`crate::simulation::BpskAwgnChannel`] at matching noise settings.
+//! [`super::DemapInput`] it builds, which recovers the BPSK LLR
+//! `LLR = 2 r / sigma^2` (= `4 r / N0`) at matching noise settings.
 //!
 //! # Eb/N0 scaling for higher-order modulation
 //!
@@ -34,10 +27,10 @@
 //! energy the per-component variance is
 //! `sigma^2 = 1 / (2 * m * rate * 10^(Eb_N0_dB / 10))`. [`ModemChannelAdapter`]
 //! applies this formula directly so that 16-QAM, QPSK, etc. are simulated
-//! at the correct noise level; the legacy
+//! at the correct noise level; the helper
 //! [`AwgnChannel::from_eb_n0_db`](crate::channel::AwgnChannel::from_eb_n0_db)
-//! helper bakes in `m = 1` and is used only by the BPSK compatibility
-//! path.
+//! bakes in `m = 1` and is used only by the BPSK reference path
+//! ([`crate::simulation::BpskAwgnChannel`]).
 
 use super::{BatchMapper, BatchSoftDemapper, DemapInput, DemapMethod, ModemScalar};
 use crate::channel::AwgnChannel;
@@ -774,7 +767,6 @@ mod legacy_compat_tests {
     //! consumer, and BPSK LLRs produced through the modem framework match
     //! the legacy `LLR = 2 r / sigma^2` formula.
     use super::*;
-    use crate::channel::BpskModulator;
     use crate::modem::{GrayQamMapper, ModemSpec, ReferenceSoftDemapper};
     use crate::simulation::{BpskAwgnChannel, ChannelModel};
     use gf2_core::BitVec;
@@ -782,11 +774,10 @@ mod legacy_compat_tests {
     use rand::SeedableRng;
 
     #[test]
-    fn test_bpsk_llrs_match_legacy_formula() {
+    fn test_bpsk_llrs_match_closed_form() {
         // With noise_var = 2 * sigma^2 the reference demapper's BPSK LLR
-        // equals 4 r / N0 = 2 r / sigma^2, which is exactly the legacy
-        // BpskModulator::to_llr formula. Drive both paths with the same
-        // fabricated rx symbols and assert equality.
+        // must equal 4 r / N0 = 2 r / sigma^2, the BPSK closed form. The
+        // pre-migration implementation failed this at noise_var = sigma^2.
         let sigma_sq = 0.5_f64;
         let n0 = 2.0 * sigma_sq;
         let rx_samples = [-1.5_f32, -0.3, 0.0, 0.2, 1.1];
@@ -806,13 +797,12 @@ mod legacy_compat_tests {
         demapper.demap_llrs(input, &mut modem_llrs);
 
         for (i, &r) in rx_samples.iter().enumerate() {
-            let legacy = BpskModulator::to_llr(r as f64, sigma_sq);
-            let err = (modem_llrs[i].value() - legacy.value()).abs();
+            let expected = (2.0 * r as f64 / sigma_sq) as f32;
+            let err = (modem_llrs[i].value() - expected).abs();
             assert!(
                 err < 1e-3,
-                "BPSK LLR mismatch at r={r}: modem={} legacy={}",
+                "BPSK LLR mismatch at r={r}: modem={} expected={expected}",
                 modem_llrs[i].value(),
-                legacy.value(),
             );
         }
     }

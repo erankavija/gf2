@@ -86,8 +86,8 @@ fn test_public_bpsk_point_layout() {
 
 #[test]
 fn test_public_qpsk_matches_legacy_layout_under_scaling() {
-    // The new Gray-square-QAM(4) preset must match the legacy QpskModulator
-    // with delta = 1/sqrt(2) (unit symbol energy).
+    // The Gray-square-QAM(4) preset must place its four symbols at
+    // delta = 1/sqrt(2) (unit symbol energy), the canonical QPSK layout.
     let spec = ModemSpec::gray_square_qam(4);
     let delta = (0.5_f64).sqrt();
     // bit0 (MSB) toggles I sign, bit1 (LSB) toggles Q sign.
