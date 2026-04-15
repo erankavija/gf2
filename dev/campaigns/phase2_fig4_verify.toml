@@ -1,0 +1,45 @@
+# Phase 2 Figure 4 paper-alignment verify sweep.
+# (625, 225) CRC(25,15)^2 product code vs 5G NR LDPC under AWGN.
+#
+# Uses the paper-aligned turbo config: alpha=0.5, list_size=4,
+# list_bler_threshold=1e-4, max_queries=100_000, plus the 1-line ORBGRAND +
+# list-BLER stopping now wired into OrbGrand via auto-IC. Reduced statistics
+# (min_errors=30, max_frames=5000) so the whole curve completes in a few
+# minutes; the canonical Fig 4 run should follow once this confirms
+# paper alignment.
+
+[campaign]
+name = "phase2_fig4_verify"
+output_dir = "dev/simulation_results"
+
+[[curve]]
+name = "fig4_verify_crc_product"
+type = "product"
+component = "crc_25_15"
+turbo = { max_iterations = 20, alpha = 0.5, list_size = 4, max_queries = 100000, list_bler_threshold = 1e-4 }
+snr = { start = 0.0, stop = 3.0, step = 0.5 }
+min_errors = 30
+max_frames = 5000
+
+[[curve]]
+name = "fig4_verify_ldpc_nms"
+type = "ldpc"
+base_graph = 2
+n = 625
+k = 225
+algorithm = "nms"
+scale = 0.75
+snr = { start = 0.0, stop = 3.0, step = 0.5 }
+min_errors = 30
+max_frames = 5000
+
+[[curve]]
+name = "fig4_verify_ldpc_sp"
+type = "ldpc"
+base_graph = 2
+n = 625
+k = 225
+algorithm = "sum_product"
+snr = { start = 0.0, stop = 3.0, step = 0.5 }
+min_errors = 30
+max_frames = 5000
