@@ -506,6 +506,10 @@ where
         self.mapper.spec().bits_per_symbol() as usize
     }
 
+    fn demap_method(&self) -> DemapMethod {
+        self.method
+    }
+
     fn transmit_and_demodulate<R: Rng>(
         &self,
         bits: &BitVec,

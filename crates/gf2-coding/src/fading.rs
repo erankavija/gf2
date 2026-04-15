@@ -1213,6 +1213,14 @@ impl ChannelModel for QpskRicianChannelModel {
         2
     }
 
+    fn demap_method(&self) -> crate::modem::DemapMethod {
+        // The Rician wrapper feeds the reference demapper with
+        // `DemapMethod::ExactLogMap` — see the `DemapInput` built in
+        // `transmit_and_demodulate` below. Mirror that here so
+        // `AnalysisCapture` tagging stays consistent.
+        crate::modem::DemapMethod::ExactLogMap
+    }
+
     fn transmit_and_demodulate<R: rand::Rng>(
         &self,
         codeword: &gf2_core::BitVec,

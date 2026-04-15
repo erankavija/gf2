@@ -125,6 +125,26 @@ pub trait ChannelModel {
     fn batch_alignment(&self) -> usize {
         1
     }
+
+    /// The [`crate::modem::DemapMethod`] whose LLRs this channel
+    /// produces. Consumed by
+    /// [`SimulationRunner::run_uncoded_ber_with_analysis`] to tag the
+    /// captured statistics with the method that generated them —
+    /// heterogeneous batches silently merged into one `PerBitLlrStats`
+    /// would produce un-interpretable MI / GMI estimates, so the
+    /// runner asserts that the capture's
+    /// [`crate::modem::AnalysisCapture::demap_method`] matches this
+    /// value before the first batch.
+    ///
+    /// Default is [`crate::modem::DemapMethod::MaxLog`], which matches
+    /// the LLR convention of the legacy BPSK/AWGN paths and the
+    /// [`BpskAwgnChannel`] compatibility surface. Modem-backed
+    /// channels that use exact log-MAP (or expose a user-selected
+    /// method like [`crate::modem::ModemChannelAdapter`]) should
+    /// override this.
+    fn demap_method(&self) -> crate::modem::DemapMethod {
+        crate::modem::DemapMethod::MaxLog
+    }
 }
 
 /// Default BPSK modulation over an AWGN channel.
@@ -217,6 +237,14 @@ impl ChannelModel for BpskAwgnChannel {
         };
         bpsk_demapper_f64().demap_llrs(input, &mut llrs);
         llrs
+    }
+
+    /// `BpskAwgnChannel` drives the shared `ReferenceSoftDemapper`
+    /// with [`DemapMethod::ExactLogMap`] (BPSK exact log-MAP collapses
+    /// to the closed-form `2r / sigma^2` under the consistent-Gaussian
+    /// LLR convention, so this is the numerically correct choice).
+    fn demap_method(&self) -> DemapMethod {
+        DemapMethod::ExactLogMap
     }
 }
 
@@ -761,6 +789,23 @@ fn run_uncoded_ber_with_channel_impl<C: ChannelModel, R: Rng>(
             cap.bits_per_symbol(),
             alignment,
         );
+        // Second provenance check: the capture is tagged with the
+        // demap method its MI/GMI numbers will describe. The channel
+        // advertises its own method through `ChannelModel::demap_method`.
+        // Per-bit MI / GMI semantics differ between exact log-MAP and
+        // max-log (see the `analysis` module docs), so heterogeneous
+        // batches silently merged into one accumulator would produce
+        // un-interpretable statistics.
+        let channel_method = channel.demap_method();
+        assert_eq!(
+            cap.demap_method(),
+            channel_method,
+            "AnalysisCapture was tagged with {:?} but the channel produces {:?} LLRs — \
+             rebuild the capture via `AnalysisCapture::with_method(...)` so the per-bit \
+             MI / GMI numbers are interpretable",
+            cap.demap_method(),
+            channel_method,
+        );
     }
 
     // Scratch buffer reused across batches when analysis is enabled.
@@ -1047,7 +1092,7 @@ impl SimulationRunner {
     ///
     /// ```
     /// use gf2_coding::modem::analysis::PerBitLlrStats;
-    /// use gf2_coding::modem::AnalysisCapture;
+    /// use gf2_coding::modem::{AnalysisCapture, DemapMethod};
     /// use gf2_coding::simulation::{
     ///     BpskAwgnChannel, SimulationConfig, SimulationRunner,
     /// };
@@ -1059,7 +1104,10 @@ impl SimulationRunner {
     /// let channel = BpskAwgnChannel;
     ///
     /// let mut stats = PerBitLlrStats::new(1);
-    /// let mut capture = AnalysisCapture::new(&mut stats);
+    /// // BpskAwgnChannel advertises DemapMethod::ExactLogMap; the
+    /// // capture must be tagged to match or the runner will panic.
+    /// let mut capture =
+    ///     AnalysisCapture::with_method(&mut stats, DemapMethod::ExactLogMap);
     /// let mut rng = rand::thread_rng();
     /// let results = SimulationRunner::run_uncoded_ber_with_analysis(
     ///     &channel,

@@ -64,7 +64,7 @@ fn test_analysis_capture_integrates_with_uncoded_runner_bpsk() {
     let mut stats = PerBitLlrStats::new(1);
     let mut rng = StdRng::seed_from_u64(config.rng_seed.unwrap());
     let results = {
-        let mut capture = AnalysisCapture::new(&mut stats);
+        let mut capture = AnalysisCapture::with_method(&mut stats, DemapMethod::ExactLogMap);
         SimulationRunner::run_uncoded_ber_with_analysis(
             &channel,
             &config,
@@ -100,7 +100,7 @@ fn test_analysis_capture_integrates_with_qam16_runner() {
     let mut stats = PerBitLlrStats::new(bits_per_symbol);
     let mut rng = StdRng::seed_from_u64(config.rng_seed.unwrap());
     let results = {
-        let mut capture = AnalysisCapture::new(&mut stats);
+        let mut capture = AnalysisCapture::with_method(&mut stats, DemapMethod::ExactLogMap);
         SimulationRunner::run_uncoded_ber_with_analysis(
             &adapter,
             &config,
@@ -248,6 +248,43 @@ fn test_analysis_capture_disabled_matches_unaugmented_path() {
 }
 
 #[test]
+#[should_panic(expected = "AnalysisCapture was tagged with")]
+fn test_analysis_capture_mismatched_demap_method_panics() {
+    // Criterion 2 of e2c0f65a: MI/GMI interpretation depends on the
+    // demapper method that produced the LLRs. The runner must reject
+    // a capture tagged with a different DemapMethod from the channel.
+    // Here: BpskAwgnChannel produces ExactLogMap LLRs, but we tag the
+    // capture with MaxLog — runner panics before the first batch.
+    let channel = BpskAwgnChannel;
+    let mut stats = PerBitLlrStats::new(1);
+    let mut capture = AnalysisCapture::with_method(&mut stats, DemapMethod::MaxLog);
+    let config = bpsk_config();
+    let mut rng = StdRng::seed_from_u64(config.rng_seed.unwrap());
+    let _ = SimulationRunner::run_uncoded_ber_with_analysis(
+        &channel,
+        &config,
+        Some(&mut capture),
+        &mut rng,
+    );
+}
+
+#[test]
+fn test_analysis_capture_retains_demap_method_tag() {
+    // Criterion 2 basic coverage: the capture's tagged method is
+    // queryable post-construction and preserved across use.
+    let mut stats_a = PerBitLlrStats::new(1);
+    let cap_a = AnalysisCapture::with_method(&mut stats_a, DemapMethod::ExactLogMap);
+    assert_eq!(cap_a.demap_method(), DemapMethod::ExactLogMap);
+    let mut stats_b = PerBitLlrStats::new(4);
+    let cap_b = AnalysisCapture::with_method(&mut stats_b, DemapMethod::MaxLog);
+    assert_eq!(cap_b.demap_method(), DemapMethod::MaxLog);
+    // Legacy new() defaults to MaxLog.
+    let mut stats_c = PerBitLlrStats::new(2);
+    let cap_c = AnalysisCapture::new(&mut stats_c);
+    assert_eq!(cap_c.demap_method(), DemapMethod::MaxLog);
+}
+
+#[test]
 #[should_panic(expected = "AnalysisCapture bits_per_symbol")]
 fn test_analysis_capture_mismatched_bits_per_symbol_panics() {
     // A 16-QAM modem channel advertises batch_alignment = 4, so an
@@ -299,7 +336,7 @@ fn test_analysis_capture_multi_snr_aggregation_matches_sum_of_single_point_sweep
     // (1) Two-point sweep into one capture.
     let mut swept_stats = PerBitLlrStats::new(1);
     {
-        let mut cap = AnalysisCapture::new(&mut swept_stats);
+        let mut cap = AnalysisCapture::with_method(&mut swept_stats, DemapMethod::ExactLogMap);
         let mut rng = StdRng::seed_from_u64(RNG_SEED);
         let _ = SimulationRunner::run_uncoded_ber_with_analysis(
             &channel,
@@ -316,7 +353,7 @@ fn test_analysis_capture_multi_snr_aggregation_matches_sum_of_single_point_sweep
     //      what the two-point run does for its first SNR point.
     let mut stats_3db = PerBitLlrStats::new(1);
     {
-        let mut cap = AnalysisCapture::new(&mut stats_3db);
+        let mut cap = AnalysisCapture::with_method(&mut stats_3db, DemapMethod::ExactLogMap);
         let mut rng = StdRng::seed_from_u64(RNG_SEED);
         let _ = SimulationRunner::run_uncoded_ber_with_analysis(
             &channel,
@@ -335,7 +372,7 @@ fn test_analysis_capture_multi_snr_aggregation_matches_sum_of_single_point_sweep
     //      draw from the same post-3dB stream state.
     let mut stats_7db = PerBitLlrStats::new(1);
     {
-        let mut cap = AnalysisCapture::new(&mut stats_7db);
+        let mut cap = AnalysisCapture::with_method(&mut stats_7db, DemapMethod::ExactLogMap);
         // Re-seed and advance: the two-point runner uses a single
         // StdRng across both SNR points. We emulate that by re-seeding
         // here and running a 3 dB warmup to advance the stream.
@@ -343,7 +380,8 @@ fn test_analysis_capture_multi_snr_aggregation_matches_sum_of_single_point_sweep
         // Warmup: same shape the two-point runner did at 3 dB.
         let mut warmup_stats = PerBitLlrStats::new(1);
         {
-            let mut warmup = AnalysisCapture::new(&mut warmup_stats);
+            let mut warmup =
+                AnalysisCapture::with_method(&mut warmup_stats, DemapMethod::ExactLogMap);
             let _ = SimulationRunner::run_uncoded_ber_with_analysis(
                 &channel,
                 &make_config(vec![3.0]),

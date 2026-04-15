@@ -75,16 +75,60 @@ use gf2_core::BitVec;
 #[derive(Debug)]
 pub struct AnalysisCapture<'a> {
     stats: &'a mut PerBitLlrStats,
+    demap_method: super::DemapMethod,
 }
 
 impl<'a> AnalysisCapture<'a> {
-    /// Wraps an existing [`PerBitLlrStats`] in a capture handle.
+    /// Wraps an existing [`PerBitLlrStats`] in a capture handle tagged
+    /// with the [`super::DemapMethod`] that produced the LLRs being
+    /// captured.
+    ///
+    /// The method stamp is load-bearing: per-bit MI / GMI estimates
+    /// have different semantics under exact log-MAP vs. max-log (the
+    /// module docs flag this at
+    /// [`gf2_coding::modem::analysis`](super::analysis)), so the
+    /// runner asserts that the capture's method matches the channel's
+    /// [`crate::simulation::ChannelModel::demap_method`] before the
+    /// first batch. Heterogeneous batches silently merged into one
+    /// accumulator would produce un-interpretable statistics; this
+    /// tag is the tripwire that prevents it.
+    ///
+    /// For legacy callers who do not distinguish the two methods, use
+    /// [`AnalysisCapture::new`] which defaults to [`super::DemapMethod::MaxLog`].
     ///
     /// # Arguments
     ///
-    /// * `stats` - Caller-owned accumulator. Its `bits_per_symbol` must
-    ///   match the constellation driving the runner; the runner asserts
-    ///   this alignment on the first accumulation.
+    /// * `stats` - Caller-owned accumulator.
+    /// * `demap_method` - The demap method whose LLRs this capture will
+    ///   accumulate. Must match the channel's
+    ///   [`crate::simulation::ChannelModel::demap_method`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::modem::analysis::PerBitLlrStats;
+    /// use gf2_coding::modem::{AnalysisCapture, DemapMethod};
+    ///
+    /// let mut stats = PerBitLlrStats::new(4);
+    /// let _capture = AnalysisCapture::with_method(&mut stats, DemapMethod::ExactLogMap);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1). No allocation.
+    #[inline]
+    pub fn with_method(stats: &'a mut PerBitLlrStats, demap_method: super::DemapMethod) -> Self {
+        Self {
+            stats,
+            demap_method,
+        }
+    }
+
+    /// Legacy constructor: builds a capture tagged with
+    /// [`super::DemapMethod::MaxLog`] (the max-log variant). Most
+    /// uncoded-BER workflows drive the runner with max-log LLRs, so
+    /// this matches the common case. Use
+    /// [`AnalysisCapture::with_method`] when you need exact log-MAP.
     ///
     /// # Examples
     ///
@@ -101,7 +145,30 @@ impl<'a> AnalysisCapture<'a> {
     /// O(1). No allocation.
     #[inline]
     pub fn new(stats: &'a mut PerBitLlrStats) -> Self {
-        Self { stats }
+        Self::with_method(stats, super::DemapMethod::MaxLog)
+    }
+
+    /// Returns the [`super::DemapMethod`] this capture was tagged
+    /// with at construction. Used by the runner to assert consistency
+    /// with the channel's advertised demap method.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::modem::analysis::PerBitLlrStats;
+    /// use gf2_coding::modem::{AnalysisCapture, DemapMethod};
+    ///
+    /// let mut stats = PerBitLlrStats::new(1);
+    /// let capture = AnalysisCapture::with_method(&mut stats, DemapMethod::MaxLog);
+    /// assert_eq!(capture.demap_method(), DemapMethod::MaxLog);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
+    #[inline]
+    pub fn demap_method(&self) -> super::DemapMethod {
+        self.demap_method
     }
 
     /// Returns the accumulator's `bits_per_symbol`.
