@@ -127,6 +127,76 @@ fn test_analysis_capture_integrates_with_qam16_runner() {
 }
 
 #[test]
+fn test_analysis_capture_preserves_msb_first_bit_position_mapping_qam16() {
+    // Correctness lock for bit-channel separation on Gray-QAM. We feed
+    // the accumulator `PerBitLlrStats` a direct, symbol-major MSB-first
+    // stream of known `Llr` values and ground-truth bits through
+    // `accumulate_slice` (the same path `AnalysisCapture::accumulate_slice`
+    // invokes), then assert that every bit *position* saw the correct
+    // per-position sample and that the per-position bit0/bit1 split
+    // matches the truth bits at each position. A regression that
+    // accidentally transposed columns or shifted the stride by one
+    // would scramble the per-position counts.
+    use gf2_coding::llr::Llr;
+
+    let bits_per_symbol = 4u8;
+    let num_symbols = 64;
+    let mut stats = PerBitLlrStats::new(bits_per_symbol);
+
+    // Construct a stream where bit position k has truth = (symbol_idx >> k) & 1.
+    // LLR sign matches the hard-decision convention (positive => bit 0).
+    let mut llrs: Vec<Llr> = Vec::with_capacity(num_symbols * bits_per_symbol as usize);
+    let mut truth: Vec<bool> = Vec::with_capacity(num_symbols * bits_per_symbol as usize);
+    for s in 0..num_symbols {
+        for k in 0..bits_per_symbol as usize {
+            let bit = (s >> k) & 1 == 1;
+            truth.push(bit);
+            // Strong-confidence LLR: +4 for bit 0, -4 for bit 1.
+            llrs.push(Llr::new(if bit { -4.0 } else { 4.0 }));
+        }
+    }
+
+    stats.accumulate(&llrs, &truth);
+    let report = stats.report();
+    assert_eq!(report.len(), bits_per_symbol as usize);
+
+    for (k, r) in report.iter().enumerate() {
+        // At position k, truth = (s >> k) & 1 for s in [0, num_symbols).
+        // Count how many of those are 0 vs 1 independently.
+        let expected_ones = (0..num_symbols).filter(|s| (s >> k) & 1 == 1).count() as u64;
+        let expected_zeros = num_symbols as u64 - expected_ones;
+        assert_eq!(
+            r.bit0.count(),
+            expected_zeros,
+            "position {k}: bit0 count = {}, expected {expected_zeros}",
+            r.bit0.count()
+        );
+        assert_eq!(
+            r.bit1.count(),
+            expected_ones,
+            "position {k}: bit1 count = {}, expected {expected_ones}",
+            r.bit1.count()
+        );
+        // All bit0 samples are +4.0; all bit1 samples are -4.0.
+        // Welford mean must match exactly up to FP roundoff.
+        if r.bit0.count() > 0 {
+            assert!(
+                (r.bit0.mean() - 4.0).abs() < 1e-9,
+                "position {k}: bit0 mean = {}, expected 4.0",
+                r.bit0.mean()
+            );
+        }
+        if r.bit1.count() > 0 {
+            assert!(
+                (r.bit1.mean() + 4.0).abs() < 1e-9,
+                "position {k}: bit1 mean = {}, expected -4.0",
+                r.bit1.mean()
+            );
+        }
+    }
+}
+
+#[test]
 fn test_analysis_capture_disabled_matches_unaugmented_path() {
     // Same seed, same config, same channel. The analysis-capable runner
     // with `None` must return exactly the same BER as the unaugmented

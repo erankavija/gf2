@@ -2,7 +2,7 @@
   "id": "19069bc1-2010-4a41-804e-316036ec3e11",
   "title": "Prototype a GPU batch demapper backend",
   "description": "Prototype a GPU demapper that uses the shared batch-oriented modem interface without changing the high-level API. This story is conditional work that follows the CPU scalar and SIMD implementation, and exists to measure whether demapping has a worthwhile GPU crossover.\n\n## Background\n\nThe repository already contains a dedicated GPU kernel crate, so there is a natural place for experimental accelerator work. For this epic, GPU support is exploratory rather than mandatory: the primary deliverable is the CPU scalar and SIMD framework, and this story is used to determine whether modem demapping should also have a GPU branch.\n\n## Success Criteria\n\n- [ ] A GPU prototype consumes the same batch demapper input and output shape, LLR ordering, and modem metadata semantics as the CPU fast path.\n- [ ] The prototype does not require a second public modem API or public API divergence from the shared modem surface.\n- [ ] The crossover report records tested hardware, batch sizes, demapper mode, and the resulting ship, experimental, or defer decision.\n\n## Notes\n\nThis story should remain conditional and should not block the core modem framework from shipping.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:claude",
   "dependencies": [
@@ -17,9 +17,9 @@
   ],
   "gates_status": {
     "code-review": {
-      "status": "failed",
+      "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-04-15T05:14:22.838588955Z"
+      "updated_at": "2026-04-15T06:38:58.394697178Z"
     },
     "tdd-reminder": {
       "status": "passed",
@@ -30,6 +30,11 @@
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-15T05:14:22.064098691Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-15T06:43:51.289089754Z"
     }
   },
   "context": {},
@@ -40,5 +45,5 @@
     "epic:d4851c3d"
   ],
   "created_at": "2026-04-12T19:39:51.672221548+00:00",
-  "updated_at": "2026-04-15T05:18:42.785484952+00:00"
+  "updated_at": "2026-04-15T06:43:51.302741954+00:00"
 }
