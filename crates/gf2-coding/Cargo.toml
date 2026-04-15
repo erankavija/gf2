@@ -27,6 +27,10 @@ criterion = { workspace = true }
 tempfile = "3.8"
 thiserror = "1.0"
 num_cpus = "1.17.0"
+# SVG plot generation for the d4851c3d presentation figures example only.
+# Default-features disabled: we only need the SVG backend, not the bitmap
+# / font backends, which keeps the build lean.
+plotters = { version = "0.3", default-features = false, features = ["svg_backend", "line_series", "histogram"] }
 
 [features]
 default = ["simd"]
