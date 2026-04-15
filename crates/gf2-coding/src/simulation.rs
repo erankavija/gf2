@@ -1015,11 +1015,18 @@ impl SimulationRunner {
     ///   `bits_per_symbol()` equal to the number of bits per modem
     ///   symbol advertised by `channel` (for a modem-backed channel
     ///   that is `channel.batch_alignment()`; for `BpskAwgnChannel`
-    ///   it is `1`). If the counts disagree
-    ///   [`PerBitLlrStats::accumulate`](crate::modem::analysis::PerBitLlrStats::accumulate)
-    ///   panics with a descriptive message — the runner does not try
-    ///   to guess a translation.
+    ///   it is `1`). See the `# Panics` section for enforcement
+    ///   details.
     /// * `rng` - Random source.
+    ///
+    /// # Panics
+    ///
+    /// Panics with a descriptive message if `capture` is `Some(_)` and
+    /// `capture.bits_per_symbol() != channel.batch_alignment()`. The
+    /// check runs up front, before the first batch — a misconfigured
+    /// capture is caught immediately rather than silently accumulating
+    /// nonsensical per-position statistics over an entire sweep. The
+    /// runner does not try to translate between capture shapes.
     ///
     /// # Multi-SNR sweeps
     ///

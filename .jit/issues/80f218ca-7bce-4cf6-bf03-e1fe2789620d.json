@@ -16,15 +16,15 @@
     "doc-review"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-15T04:46:36.076957545Z"
-    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-04-14T23:04:03.842746271Z"
+      "updated_at": "2026-04-15T04:58:08.292228578Z"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-15T04:58:09.030886115Z"
     },
     "tdd-reminder": {
       "status": "passed",
@@ -41,5 +41,5 @@
     "story:bit-channel-analysis"
   ],
   "created_at": "2026-04-12T20:04:48.349166676+00:00",
-  "updated_at": "2026-04-15T04:51:10.860134131+00:00"
+  "updated_at": "2026-04-15T05:04:17.787914026+00:00"
 }
