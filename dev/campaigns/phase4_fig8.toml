@@ -1,17 +1,15 @@
-# Phase 4, Figure 8: dRM(32,21)² product code vs 5G NR LDPC over Rician fading
+# Phase 4, Figure 8: dRM(32,21)^2 product code vs 5G NR LDPC, Rician fading
 #
-# Reproduces the BLER curves from Figure 8 of the SO-GRAND paper.
-# Channel: QPSK + Rician fading, K=5, N_c=128, t=4, frame_bits=1024.
-# Three curves: dRM(32,21)² product code (BCJR turbo), 5G NR LDPC BG2
-# (1024, 441) with NMS and sum-product decoders.
+# Paper-aligned turbo-SOGRAND with 1-line ORBGRAND auto-IC and list-BLER
+# stopping (OrbGrandConfig::list_bler_stop_threshold, plumbed via the
+# turbo-level list_bler_threshold) so each component decode exits once
+# P(C \ L) drops below the threshold — matching the SO-GRAND Fig 8
+# caption "lists are added to until L=4 OR predicted list-BLER < 1e-4".
 #
+# Channel: QPSK + Rician K=5, N_c=128, t=4, frame=1024 bits.
 # Code parameters:
 #   dRM(32,21)^2  -> n=1024, k=441, rate≈0.43
 #   LDPC BG2      -> n=1024, k=441, rate≈0.43
-#
-# Note: dRM(32,21) uses BCJR SISO decoder (not SOGRAND) because SOGRAND
-# is impractical at n=32 (>20s/frame). The paper uses SOGRAND/ORBGRAND
-# Pyndiah; BCJR provides an equivalent/lower bound on decoding error rate.
 
 [campaign]
 name = "phase4_fig8"
@@ -21,7 +19,7 @@ output_dir = "dev/simulation_results"
 name = "fig8_drm_product"
 type = "product"
 component = "drm_32_21"
-turbo = { max_iterations = 20, alpha = 0.5, list_size = 4, max_queries = 50000, use_bcjr = true }
+turbo = { max_iterations = 20, alpha = 0.5, list_size = 4, max_queries = 100000, list_bler_threshold = 1e-4 }
 channel = { kind = "rician", preset = "fig8" }
 snr = { start = 0.0, stop = 8.0, step = 1.0 }
 min_errors = 30
