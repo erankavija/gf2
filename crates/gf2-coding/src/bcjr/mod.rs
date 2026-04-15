@@ -841,7 +841,7 @@ mod tests {
     /// qualitatively different extrinsic information.
     #[test]
     fn test_bcjr_vs_sogrand_extrinsic_drm() {
-        use crate::grand::{OrbGrand, OrbGrandConfig, SoGrand};
+        use crate::grand::{OneLineIntercept, OrbGrand, OrbGrandConfig, SoGrand};
 
         let code = DrmCode::drm_32_21();
         let bcjr = BcjrDecoder::new(code.parity_check());
@@ -854,6 +854,8 @@ mod tests {
                 max_queries: 50_000,
                 even_code: code.is_even(),
                 systematic: true,
+                list_bler_stop_threshold: None,
+                one_line_intercept: OneLineIntercept::Auto,
             },
         ));
 

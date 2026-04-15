@@ -58,7 +58,7 @@ pub mod chase_pyndiah;
 pub use chase_pyndiah::{ChasePyndiahConfig, ChasePyndiahDecoder};
 
 use crate::bcjr::BcjrDecoder;
-use crate::grand::{OrbGrand, OrbGrandConfig, SisoResult, SoGrand};
+use crate::grand::{OneLineIntercept, OrbGrand, OrbGrandConfig, SisoResult, SoGrand};
 use crate::llr::Llr;
 use crate::traits::BlockEncoder;
 use gf2_core::{BitMatrix, BitVec};
@@ -135,8 +135,11 @@ impl SisoEngine {
     /// [`SisoResult::list_bler_prediction`] values.
     ///
     /// SOGRAND computes a probabilistic list-BLER estimate. BCJR and GPU-BCJR
-    /// always return 0.0, so the list-BLER threshold early-termination check
-    /// must be skipped for those engines.
+    /// always return 0.0, so any caller that consumes list-BLER values should
+    /// gate on this. Currently unused at the turbo level (see paper-aligned
+    /// termination note in [`TurboDecoder::decode`]); kept for potential
+    /// callers that want to distinguish SOGRAND from trellis engines.
+    #[allow(dead_code)]
     fn has_list_bler_prediction(&self) -> bool {
         matches!(self, SisoEngine::SoGrand(_))
     }
@@ -1006,6 +1009,11 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
                 max_queries: config.max_queries,
                 even_code: component.comp_is_even(),
                 systematic: true,
+                // Paper-aligned inner stop: mirror the turbo-level list-BLER
+                // threshold so each SISO component decode exits as soon as the
+                // list-BLER prediction drops below it.
+                list_bler_stop_threshold: config.list_bler_threshold,
+                one_line_intercept: OneLineIntercept::Auto,
             };
             let orbgrand = OrbGrand::new(h, orb_config);
             SisoEngine::SoGrand(SoGrand::new(orbgrand))
@@ -1147,24 +1155,14 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
                 };
             }
 
-            // Check list-BLER threshold for early termination (SOGRAND only —
-            // BCJR/GPU-BCJR always return list_bler_prediction=0.0)
-            if !self.config.no_early_termination && self.siso.has_list_bler_prediction() {
-                if let Some(threshold) = self.config.list_bler_threshold {
-                    let avg_bler = row_bler_sum / n as f64;
-                    if avg_bler < threshold {
-                        let valid = self.check_early_termination(&l_app_row);
-                        let decoded = self.extract_decoded_message(&l_app_row);
-                        return TurboDecoderResult {
-                            decoded_bits: decoded,
-                            iterations: iteration + 1,
-                            converged: valid,
-                            total_queries,
-                            queries_per_bit: total_queries as f64 / (k * k) as f64,
-                        };
-                    }
-                }
-            }
+            // Paper-aligned turbo termination is purely on "all rows and
+            // columns correspond to valid codewords" (see paper § V, step 1).
+            // The per-component list-BLER check is now delegated to the
+            // inner ORBGRAND via `OrbGrandConfig::list_bler_stop_threshold`;
+            // no additional turbo-level list-BLER short-circuit is applied
+            // here, since doing so was empirically pessimistic at high SNR
+            // (premature exits left residual errors uncorrected).
+            let _ = row_bler_sum;
 
             // Set L_A = alpha * L_E (iteration-dependent if alpha_final is set)
             let alpha = if let Some(a_final) = self.config.alpha_final {
@@ -1235,23 +1233,10 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
                 };
             }
 
-            // Check list-BLER threshold for early termination (SOGRAND only)
-            if !self.config.no_early_termination && self.siso.has_list_bler_prediction() {
-                if let Some(threshold) = self.config.list_bler_threshold {
-                    let avg_bler = col_bler_sum / n as f64;
-                    if avg_bler < threshold {
-                        let valid = self.check_early_termination(&l_app_col);
-                        let decoded = self.extract_decoded_message(&l_app_col);
-                        return TurboDecoderResult {
-                            decoded_bits: decoded,
-                            iterations: iteration + 1,
-                            converged: valid,
-                            total_queries,
-                            queries_per_bit: total_queries as f64 / (k * k) as f64,
-                        };
-                    }
-                }
-            }
+            // See the row-step comment above: turbo termination stays on
+            // valid-codeword only; list-BLER is applied inside each
+            // ORBGRAND component decode, not at the turbo level.
+            let _ = col_bler_sum;
 
             // Set L_A = alpha * L_E for next iteration
             for i in 0..n {

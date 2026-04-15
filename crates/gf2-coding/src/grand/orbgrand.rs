@@ -86,6 +86,7 @@ use gf2_core::BitVec;
 ///     list_size: 5,
 ///     even_code: true,
 ///     systematic: true,
+///     list_bler_stop_threshold: Some(1e-4),
 /// };
 /// ```
 #[derive(Debug, Clone)]
@@ -110,6 +111,53 @@ pub struct OrbGrandConfig {
     /// Use [`OrbGrand::decode`] directly for non-systematic codes and
     /// extract message bits according to the code's structure.
     pub systematic: bool,
+
+    /// Paper-aligned early-stop criterion on the running list-BLER estimate.
+    ///
+    /// When `Some(t)`, the search terminates as soon as the list has at
+    /// least one codeword AND `P(C \ L) < t`, OR the list has `list_size`
+    /// codewords (whichever fires first), in addition to the `max_queries`
+    /// backstop. This matches the rule used in Yuan–Médard–Galligan–Duffy
+    /// SO-GRAND: "lists are added to until L=4 OR the predicted list-BLER
+    /// is below 1e-4" (Figs 1/3/8; 1e-5 for the GLDPC configuration).
+    ///
+    /// When `None` (default), the legacy stop rule is used: exhaust
+    /// `max_queries` or reach cumulative probability ≈ 1 with
+    /// `list_size` codewords.
+    pub list_bler_stop_threshold: Option<f64>,
+
+    /// 1-line ORBGRAND intercept (`IC` in Duffy–An–Médard 2022).
+    ///
+    /// Controls the combined-weight enumeration order
+    /// `wt = IC·w + lw` where `w` is the Hamming weight of a test
+    /// error pattern and `lw = sum of 1-based |LLR|-ranks of the
+    /// flipped bits`:
+    ///
+    /// - [`OneLineIntercept::Basic`] (`IC = 0`) reduces to basic
+    ///   ORBGRAND — pure logistic-weight ordering, Hamming weights
+    ///   freely interleaved.
+    /// - [`OneLineIntercept::Fixed(k)`](OneLineIntercept::Fixed)
+    ///   pins a user-chosen intercept.
+    /// - [`OneLineIntercept::Auto`] (default) recomputes `IC` from
+    ///   the sorted `|LLR|` distribution on every decode, using the
+    ///   slope heuristic from the paper:
+    ///   `β = (|L|_{(n/2)} − |L|_{(1)}) / (n/2 − 1)`,
+    ///   `IC = max(round(|L|_{(1)} / β − 1), 0)`.
+    pub one_line_intercept: OneLineIntercept,
+}
+
+/// Intercept selection for 1-line ORBGRAND (see
+/// [`OrbGrandConfig::one_line_intercept`]).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum OneLineIntercept {
+    /// Recompute `IC` from the sorted `|LLR|` distribution per decode
+    /// (paper default).
+    Auto,
+    /// Basic ORBGRAND: `IC = 0`. Patterns are enumerated by pure
+    /// ascending logistic weight.
+    Basic,
+    /// Fixed intercept, used verbatim for every decode.
+    Fixed(u32),
 }
 
 impl Default for OrbGrandConfig {
@@ -119,7 +167,38 @@ impl Default for OrbGrandConfig {
             list_size: 1,
             even_code: false,
             systematic: true,
+            list_bler_stop_threshold: None,
+            one_line_intercept: OneLineIntercept::Auto,
         }
+    }
+}
+
+/// Compute the 1-line ORBGRAND intercept from a sorted-ascending slice of
+/// `|LLR|` magnitudes, using the slope heuristic from Duffy–An–Médard 2022.
+///
+/// `β = (|L|_{(n/2)} − |L|_{(1)}) / (n/2 − 1)`,
+/// `IC = max(round(|L|_{(1)} / β − 1), 0)`.
+///
+/// Returns 0 for edge cases (n < 4, degenerate slope).
+pub(crate) fn auto_one_line_intercept(absl_sorted: &[f64]) -> u32 {
+    let n = absl_sorted.len();
+    if n < 4 {
+        return 0;
+    }
+    let mid = n / 2;
+    let denom = (mid as f64) - 1.0;
+    if denom <= 0.0 {
+        return 0;
+    }
+    let slope = (absl_sorted[mid - 1] - absl_sorted[0]) / denom;
+    if slope <= 0.0 || !slope.is_finite() {
+        return 0;
+    }
+    let ic_f = (absl_sorted[0] / slope - 1.0).round();
+    if !ic_f.is_finite() || ic_f <= 0.0 {
+        0
+    } else {
+        ic_f.min(u32::MAX as f64) as u32
     }
 }
 
@@ -501,9 +580,22 @@ impl OrbGrand {
         let mut query_count: usize = 0;
         let mut cumulative_log_prob = f64::NEG_INFINITY;
 
-        // Generate noise patterns in logistic-weight order using the
-        // partition-based enumeration.
-        let pattern_iter = LogisticWeightPatternIter::new(self.n);
+        // Resolve the 1-line ORBGRAND intercept. `Auto` uses the slope
+        // heuristic on the sorted `|LLR|` distribution; `Basic` forces
+        // IC=0 (basic ORBGRAND); `Fixed(k)` pins a user-supplied value.
+        let ic = match self.config.one_line_intercept {
+            OneLineIntercept::Basic => 0u32,
+            OneLineIntercept::Fixed(k) => k,
+            OneLineIntercept::Auto => {
+                let sorted_abs: Vec<f64> =
+                    pi.iter().map(|&idx| llrs[idx].magnitude() as f64).collect();
+                auto_one_line_intercept(&sorted_abs)
+            }
+        };
+
+        // Generate noise patterns in ascending combined-weight order
+        // (`wt = IC·w + lw`). With IC=0 this is basic ORBGRAND.
+        let pattern_iter = LogisticWeightPatternIter::with_ic(self.n, ic);
 
         // Test all patterns up to max_queries. All found codewords are
         // collected (the list grows beyond list_size). Cumulative probability
@@ -514,8 +606,15 @@ impl OrbGrand {
         // list_size controls early termination for hard-decision-only callers:
         // when at least list_size codewords are found AND cumulative probability
         // is near 1.0, we can stop early. For SOGRAND callers, max_queries
-        // is the primary budget control.
+        // is the primary budget control unless `list_bler_stop_threshold` is set.
         let mut has_min_list = false;
+
+        // Paper-aligned stopping: when `list_bler_stop_threshold` is set,
+        // track the running list-BLER incrementally so we can stop as soon
+        // as `P(C \ L) < threshold` with a non-empty list, or the list has
+        // filled to `list_size`.
+        let log_codebook_ratio = super::sogrand::log_codebook_ratio(self.n, self.k());
+        let mut log_sum_list = f64::NEG_INFINITY;
 
         for pattern in pattern_iter {
             if query_count >= self.config.max_queries {
@@ -525,6 +624,23 @@ impl OrbGrand {
             // probability is near 1.0 (no more useful patterns to test).
             if has_min_list && cumulative_log_prob > -1e-6 {
                 break;
+            }
+            // Paper-aligned early exit: list has ≥ list_size codewords,
+            // or predicted list-BLER has dropped below the configured
+            // threshold with a non-empty list.
+            if let Some(threshold) = self.config.list_bler_stop_threshold {
+                if codewords.len() >= self.config.list_size {
+                    break;
+                }
+                if !codewords.is_empty() {
+                    let log_one_minus_cum = super::sogrand::log1mexp(cumulative_log_prob);
+                    let log_not_found = log_one_minus_cum + log_codebook_ratio;
+                    let log_denom = log_sum_exp(log_sum_list, log_not_found);
+                    let log_p_not_in_list = log_not_found - log_denom;
+                    if log_p_not_in_list.exp() < threshold {
+                        break;
+                    }
+                }
             }
 
             // pattern is a sorted list of indices into pi (1-based logistic indices)
@@ -580,6 +696,7 @@ impl OrbGrand {
                     noise_log_probability: noise_log_prob,
                     noise_weight,
                 });
+                log_sum_list = log_sum_exp(log_sum_list, noise_log_prob);
 
                 if codewords.len() >= self.config.list_size {
                     has_min_list = true;
@@ -718,45 +835,62 @@ fn compute_noise_log_prob(
     log_prob
 }
 
-/// Iterator that generates noise patterns in **weight-tiered** logistic-weight order.
+/// Iterator that generates noise patterns in ascending **combined weight**
+/// `wt = IC·w + lw`, matching the 1-line ORBGRAND enumeration of
+/// Duffy–An–Médard 2022 (*IEEE Trans. Signal Proc.* 70, 4528–4542).
 ///
-/// Patterns are grouped by Hamming weight and enumerated tier by tier:
+/// For each `wt = 1, 2, …`, all valid `(w, partition)` pairs are yielded,
+/// where:
 ///
-/// 1. **Weight 0**: the empty pattern `{}`.
-/// 2. **Weight 1**: single-bit patterns `{i}`, ordered by reliability index
-///    (least reliable first, i.e., ascending `i`).
-/// 3. **Weight 2**: two-bit patterns `{i, j}`, ordered by the sum of their
-///    1-based reliability indices (logistic weight), with ties broken
-///    lexicographically.
-/// 4. And so on for higher Hamming weights.
+/// - `w` is the Hamming weight (number of flipped bits);
+/// - `lw = wt − IC·w` is the pure logistic weight (sum of 1-based
+///   reliability ranks of the flipped bits), which must satisfy
+///   `w(w+1)/2 ≤ lw ≤ w·n − w(w−1)/2`;
+/// - the partition enumerates all size-`w` subsets of `{1, …, n}`
+///   summing to `lw`, in ascending lexicographic order of 0-based
+///   indices.
 ///
-/// Within each weight tier, the logistic weight of a pattern `{i_1, ..., i_w}`
-/// (0-based indices into the reliability-sorted order) is
-/// `(i_1 + 1) + ... + (i_w + 1)`.
+/// With `ic = 0` the enumeration reduces to basic ORBGRAND (ascending
+/// logistic weight, Hamming weights freely interleaved). With `ic > 0`
+/// the intercept penalises higher Hamming weights so that low-weight
+/// patterns get priority, which is the 1-line variant used in
+/// Yuan–Médard–Galligan–Duffy SO-GRAND (§ V).
 ///
-/// This ordering ensures that all weight-`w` patterns are enumerated before
-/// any weight-`(w+1)` pattern, matching the standard 1-line ORBGRAND definition.
+/// The empty pattern `{}` is yielded first (wt = 0), representing the
+/// no-flip hypothesis, and every other pattern of Hamming weight in
+/// `{1, …, n}` follows exactly once.
 struct LogisticWeightPatternIter {
     n: usize,
-    /// Current Hamming weight tier being enumerated.
-    current_weight: usize,
-    /// Current logistic weight within the current Hamming weight tier.
-    current_lw: usize,
-    /// Buffer of patterns at the current (weight, lw), to be yielded.
+    /// 1-line ORBGRAND intercept (`IC` in the paper). 0 = basic ORBGRAND.
+    ic: u32,
+    /// Current `wt = IC·w + lw` being enumerated. Starts at `usize::MAX`
+    /// until the empty pattern is yielded, then rolls over to 1.
+    current_wt: usize,
+    /// Buffer of patterns for the current `wt`, to be yielded one at a time.
     buffer: Vec<Vec<usize>>,
-    /// Index into the buffer.
+    /// Cursor into `buffer`.
     buffer_idx: usize,
+    /// Whether the empty pattern has already been yielded.
+    emitted_empty: bool,
 }
 
 impl LogisticWeightPatternIter {
+    /// Convenience constructor for basic ORBGRAND (IC = 0). Identical to
+    /// `LogisticWeightPatternIter::with_ic(n, 0)`. Retained for tests and
+    /// proptest harnesses; production decodes call `with_ic` directly.
+    #[cfg(test)]
     fn new(n: usize) -> Self {
-        // Start with Hamming weight 0, logistic weight 0: the empty pattern
+        Self::with_ic(n, 0)
+    }
+
+    fn with_ic(n: usize, ic: u32) -> Self {
         Self {
             n,
-            current_weight: 0,
-            current_lw: 0,
-            buffer: vec![vec![]],
+            ic,
+            current_wt: 0,
+            buffer: Vec::new(),
             buffer_idx: 0,
+            emitted_empty: false,
         }
     }
 
@@ -853,34 +987,56 @@ impl Iterator for LogisticWeightPatternIter {
     type Item = Vec<usize>;
 
     fn next(&mut self) -> Option<Self::Item> {
+        // Special-case the empty pattern (wt = 0, w = 0).
+        if !self.emitted_empty {
+            self.emitted_empty = true;
+            return Some(Vec::new());
+        }
+
         loop {
-            // Yield buffered patterns at current (weight, lw)
+            // Drain the buffer for the current `wt`.
             if self.buffer_idx < self.buffer.len() {
                 let pattern = self.buffer[self.buffer_idx].clone();
                 self.buffer_idx += 1;
                 return Some(pattern);
             }
 
-            // Advance within the current weight tier
-            self.current_lw += 1;
+            // Advance to the next `wt` and rebuild the buffer with all
+            // valid `(w, lw)` pairs for it.
+            self.current_wt += 1;
+            let wt = self.current_wt;
 
-            let max_lw = Self::max_lw_for_weight(self.n, self.current_weight);
-            if self.current_lw > max_lw {
-                // Move to next weight tier
-                self.current_weight += 1;
-                if self.current_weight > self.n {
-                    return None;
-                }
-                self.current_lw = Self::min_lw_for_weight(self.current_weight);
+            // Upper bound on `wt`: the largest wt any length-n pattern can
+            // produce (Hamming weight n, all ranks flipped).
+            let wt_max = (self.ic as usize) * self.n + self.n * (self.n + 1) / 2;
+            if wt > wt_max {
+                return None;
             }
 
-            self.buffer = Self::generate_patterns_for_weight_and_lw(
-                self.n,
-                self.current_weight,
-                self.current_lw,
-            );
+            self.buffer.clear();
             self.buffer_idx = 0;
-            // If this (weight, lw) has no patterns, loop to next lw
+
+            // For this wt, enumerate over Hamming weight w.
+            // Constraint: lw = wt - IC·w ∈ [w(w+1)/2, w·n − w(w−1)/2].
+            for w in 1..=self.n {
+                let ic_contrib = (self.ic as usize) * w;
+                if ic_contrib > wt {
+                    break;
+                }
+                let lw = wt - ic_contrib;
+                if lw < Self::min_lw_for_weight(w) {
+                    // The residual logistic weight is smaller than the
+                    // minimum achievable with this w. Higher w will only
+                    // make the IC contribution larger, so the residual
+                    // would shrink further — break out.
+                    break;
+                }
+                if lw > Self::max_lw_for_weight(self.n, w) {
+                    continue;
+                }
+                let mut patterns = Self::generate_patterns_for_weight_and_lw(self.n, w, lw);
+                self.buffer.append(&mut patterns);
+            }
         }
     }
 }
@@ -913,66 +1069,69 @@ mod tests {
 
     #[test]
     fn test_logistic_weight_iter_weight_1_patterns() {
-        // For n=4, weight-1 patterns in LW order:
-        // LW=1: {0}, LW=2: {1}, LW=3: {2}, LW=4: {3}
-        // All weight-1 patterns come before any weight-2 pattern.
+        // For n=4 basic ORBGRAND (IC=0), patterns are enumerated by
+        // ascending logistic weight, not by Hamming weight. So after the
+        // initial single-bit run, weight-2 patterns with small LW appear
+        // before high-rank weight-1 patterns.
         let mut iter = LogisticWeightPatternIter::new(4);
-        let _ = iter.next(); // Skip empty pattern (LW=0)
+        let _ = iter.next(); // Skip empty pattern (wt=0)
 
-        assert_eq!(iter.next().unwrap(), vec![0]); // LW=1
-        assert_eq!(iter.next().unwrap(), vec![1]); // LW=2
-        assert_eq!(iter.next().unwrap(), vec![2]); // LW=3
-        assert_eq!(iter.next().unwrap(), vec![3]); // LW=4
-
-        // Next should be weight-2 patterns, starting with {0,1} (LW=3)
-        assert_eq!(iter.next().unwrap(), vec![0, 1]); // LW=3
+        assert_eq!(iter.next().unwrap(), vec![0]); // wt=1, w=1
+        assert_eq!(iter.next().unwrap(), vec![1]); // wt=2, w=1
+                                                   // wt=3: w=1 → {2}, then w=2 → {0,1} (both have lw=3)
+        assert_eq!(iter.next().unwrap(), vec![2]);
+        assert_eq!(iter.next().unwrap(), vec![0, 1]);
+        // wt=4: w=1 → {3}, then w=2 → {0,2}
+        assert_eq!(iter.next().unwrap(), vec![3]);
+        assert_eq!(iter.next().unwrap(), vec![0, 2]);
     }
 
     #[test]
     fn test_logistic_weight_iter_all_patterns_n3() {
-        // For n=3, weight-tiered order:
-        // Weight 0: {} (LW=0)
-        // Weight 1: {0} (LW=1), {1} (LW=2), {2} (LW=3)
-        // Weight 2: {0,1} (LW=3), {0,2} (LW=4), {1,2} (LW=5)
-        // Weight 3: {0,1,2} (LW=6)
+        // For n=3 basic ORBGRAND order (by ascending wt = lw):
+        //   wt=0: {}
+        //   wt=1: {0}
+        //   wt=2: {1}
+        //   wt=3: {2}, {0,1}
+        //   wt=4: {0,2}
+        //   wt=5: {1,2}
+        //   wt=6: {0,1,2}
         let iter = LogisticWeightPatternIter::new(3);
         let patterns: Vec<Vec<usize>> = iter.collect();
 
         assert_eq!(patterns.len(), 8); // 2^3 = 8 patterns total
 
-        // Check weight-tiered ordering: Hamming weight must be non-decreasing
+        // Logistic weight (sum of 1-based ranks) must be non-decreasing —
+        // this is the defining invariant of basic ORBGRAND.
         for i in 1..patterns.len() {
-            let w_prev = patterns[i - 1].len();
-            let w_curr = patterns[i].len();
+            let lw_prev: usize = patterns[i - 1].iter().map(|&x| x + 1).sum();
+            let lw_curr: usize = patterns[i].iter().map(|&x| x + 1).sum();
             assert!(
-                w_prev <= w_curr,
-                "Patterns must be in non-decreasing Hamming weight order: {} vs {}",
-                w_prev,
-                w_curr
+                lw_prev <= lw_curr,
+                "Logistic weight must be non-decreasing: {:?} (lw={}) vs {:?} (lw={})",
+                patterns[i - 1],
+                lw_prev,
+                patterns[i],
+                lw_curr
             );
         }
+    }
 
-        // Within each weight tier, logistic weight must be non-decreasing
-        let mut i = 0;
-        while i < patterns.len() {
-            let w = patterns[i].len();
-            let start = i;
-            while i < patterns.len() && patterns[i].len() == w {
-                i += 1;
-            }
-            // Check LW ordering within this tier
-            for j in (start + 1)..i {
-                let lw_prev: usize = patterns[j - 1].iter().map(|&x| x + 1).sum();
-                let lw_curr: usize = patterns[j].iter().map(|&x| x + 1).sum();
-                assert!(
-                    lw_prev <= lw_curr,
-                    "Within weight {}, LW must be non-decreasing: {} vs {}",
-                    w,
-                    lw_prev,
-                    lw_curr
-                );
-            }
-        }
+    #[test]
+    fn test_one_line_ic_reorders_by_weight_penalty() {
+        // With IC=2 and n=4, the combined weight is wt = 2w + lw. A weight-2
+        // pattern {0,1} has lw=3 but wt = 2·2+3 = 7, so it comes AFTER
+        // {3} (w=1, lw=4, wt=0+4=4) and even after {0,1,2} (w=3, lw=6,
+        // wt=6+6=12)? No, wt(0,1,2)=6+6=12; wt(0,1)=4+3=7; wt(3)=2+4=6.
+        // So ordering for first few patterns: {} (wt=0), {0} (wt=3),
+        // {1} (wt=4), {2} (wt=5), {3} (wt=6), {0,1} (wt=7), {0,2} (wt=8), …
+        let mut iter = LogisticWeightPatternIter::with_ic(4, 2);
+        assert!(iter.next().unwrap().is_empty());
+        assert_eq!(iter.next().unwrap(), vec![0]);
+        assert_eq!(iter.next().unwrap(), vec![1]);
+        assert_eq!(iter.next().unwrap(), vec![2]);
+        assert_eq!(iter.next().unwrap(), vec![3]);
+        assert_eq!(iter.next().unwrap(), vec![0, 1]);
     }
 
     #[test]
@@ -1118,6 +1277,8 @@ mod tests {
             list_size: 1,
             even_code: false,
             systematic: true,
+            list_bler_stop_threshold: None,
+            one_line_intercept: OneLineIntercept::Auto,
         };
         let decoder = OrbGrand::new(h, config);
 
@@ -1148,6 +1309,8 @@ mod tests {
             list_size: 3,
             even_code: false,
             systematic: true,
+            list_bler_stop_threshold: None,
+            one_line_intercept: OneLineIntercept::Auto,
         };
         let decoder = OrbGrand::new(h, config);
 
@@ -1185,6 +1348,8 @@ mod tests {
             list_size: 16, // All codewords for Hamming(7,4)
             even_code: false,
             systematic: true,
+            list_bler_stop_threshold: None,
+            one_line_intercept: OneLineIntercept::Auto,
         };
         let decoder = OrbGrand::new(h, config);
 
@@ -1248,6 +1413,8 @@ mod tests {
             list_size: 16,
             even_code: false,
             systematic: true,
+            list_bler_stop_threshold: None,
+            one_line_intercept: OneLineIntercept::Auto,
         };
         let decoder_normal = OrbGrand::new(h_ext.clone(), config_normal);
 
@@ -1256,6 +1423,8 @@ mod tests {
             list_size: 16,
             even_code: true,
             systematic: true,
+            list_bler_stop_threshold: None,
+            one_line_intercept: OneLineIntercept::Auto,
         };
         let decoder_even = OrbGrand::new(h_ext, config_even);
 
@@ -1332,6 +1501,8 @@ mod tests {
             list_size: 1,
             even_code: false,
             systematic: true,
+            list_bler_stop_threshold: None,
+            one_line_intercept: OneLineIntercept::Auto,
         };
         let decoder = OrbGrand::new(h, config);
 
@@ -1412,6 +1583,8 @@ mod tests {
             list_size: 0,
             even_code: false,
             systematic: true,
+            list_bler_stop_threshold: None,
+            one_line_intercept: OneLineIntercept::Auto,
         };
         OrbGrand::new(h, config);
     }
@@ -1677,30 +1850,19 @@ mod tests {
             /// For small n (3-5), within each weight class patterns are ordered by
             /// logistic weight sum (non-decreasing).
             #[test]
-            fn test_weight_tiered_ordering(n in 3usize..=5) {
+            fn test_logistic_weight_ordering(n in 3usize..=5) {
+                // Basic ORBGRAND (IC=0) enumerates patterns by ascending
+                // logistic weight, NOT by Hamming weight. The defining
+                // invariant is: lw(pattern_i) ≤ lw(pattern_{i+1}).
                 let iter = LogisticWeightPatternIter::new(n);
                 let patterns: Vec<Vec<usize>> = iter.collect();
 
-                // Group patterns by Hamming weight and verify ordering
-                let mut prev_weight = 0usize;
                 let mut prev_lw = 0usize;
-
                 for pattern in &patterns {
-                    let weight = pattern.len();
                     let lw: usize = pattern.iter().map(|&x| x + 1).sum();
-
-                    if weight == prev_weight {
-                        // Within same weight: LW must be non-decreasing
-                        prop_assert!(lw >= prev_lw,
-                            "Within weight {}, LW decreased: {} -> {} for pattern {:?}",
-                            weight, prev_lw, lw, pattern);
-                    } else {
-                        // Weight must increase (never decrease)
-                        prop_assert!(weight > prev_weight,
-                            "Weight decreased: {} -> {} for pattern {:?}",
-                            prev_weight, weight, pattern);
-                    }
-                    prev_weight = weight;
+                    prop_assert!(lw >= prev_lw,
+                        "Logistic weight decreased: {} -> {} for pattern {:?}",
+                        prev_lw, lw, pattern);
                     prev_lw = lw;
                 }
             }
@@ -1720,6 +1882,8 @@ mod tests {
             list_size: 1,
             even_code: true,
             systematic: true,
+            list_bler_stop_threshold: None,
+            one_line_intercept: OneLineIntercept::Auto,
         };
         let decoder = OrbGrand::new(h, config);
 
@@ -1767,5 +1931,80 @@ mod tests {
                 );
             }
         }
+    }
+
+    /// Paper-aligned stopping rule: with `list_bler_stop_threshold = Some(t)`,
+    /// the decoder must stop as soon as the predicted list-BLER drops below
+    /// `t` with at least one codeword found. At high SNR this fires almost
+    /// immediately — query count should be a tiny fraction of `max_queries`
+    /// and the recovered codeword must still match the transmitted one.
+    #[test]
+    fn test_list_bler_stop_threshold_reduces_queries_at_high_snr() {
+        use crate::bch::extended::ExtendedBchCode;
+        use crate::traits::BlockEncoder;
+
+        let ebch = ExtendedBchCode::ebch_16_11();
+        let h = ebch.parity_check().clone();
+
+        let msg = BitVec::zeros(11);
+        let codeword = ebch.encode(&msg);
+
+        // High-reliability channel: strong +ve LLRs for zero bits (flipped for
+        // the single noise bit at position 3). ORBGRAND should find the
+        // correct codeword within a handful of queries.
+        let llrs: Vec<Llr> = (0..16)
+            .map(|i| {
+                let is_error = i == 3;
+                let mag = 6.0_f32;
+                if is_error {
+                    // Bit was transmitted as 0, received as 1 → negative LLR.
+                    Llr::new(-mag)
+                } else {
+                    Llr::new(mag)
+                }
+            })
+            .collect();
+
+        let baseline_config = OrbGrandConfig {
+            max_queries: 100_000,
+            list_size: 4,
+            even_code: true,
+            systematic: true,
+            list_bler_stop_threshold: None,
+            one_line_intercept: OneLineIntercept::Auto,
+        };
+        let baseline = OrbGrand::new(h.clone(), baseline_config).decode(&llrs);
+
+        let aligned_config = OrbGrandConfig {
+            max_queries: 100_000,
+            list_size: 4,
+            even_code: true,
+            systematic: true,
+            list_bler_stop_threshold: Some(1e-4),
+            one_line_intercept: OneLineIntercept::Auto,
+        };
+        let aligned = OrbGrand::new(h, aligned_config).decode(&llrs);
+
+        assert!(
+            aligned.success(),
+            "paper-aligned decode must still succeed at high SNR"
+        );
+        assert_eq!(
+            aligned.best_codeword().unwrap().codeword,
+            codeword,
+            "aligned decoder must recover the transmitted codeword"
+        );
+        assert!(
+            aligned.query_count * 3 < baseline.query_count,
+            "threshold stopping should cut queries by ≥3x at high SNR: \
+             baseline={}, aligned={}",
+            baseline.query_count,
+            aligned.query_count
+        );
+        assert!(
+            aligned.query_count < 200,
+            "aligned query count should be tiny at high SNR, got {}",
+            aligned.query_count
+        );
     }
 }
