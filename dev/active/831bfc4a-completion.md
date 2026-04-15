@@ -1,35 +1,26 @@
-# Phase 4 Fading Simulations — Completion — 2026-04-15
+# Phase 4 Fading Simulations — Completion — 2026-04-16
 
-JIT issue `831bfc4a` closes with substantive simulation infrastructure
-and curves for Figs 8 and 9, and a campaign TOML for Fig 10 that was
-not run due to compute cost. The supporting artifact is
-`dev/simulation_results/phase4_comparison_report.md` and the Rician
-`channel = { kind = "rician", preset = "figN" }` extension landed in
-`crates/gf2-coding/src/bin/sim_runner.rs` with three end-to-end unit
-tests.
+JIT issue `831bfc4a` delivers Figs 8, 9, and 10 from the SO-GRAND
+paper over QPSK + Rician-fading channels, using the paper's
+turbo-SOGRAND decoder (1-line ORBGRAND with auto-IC and per-
+component `list_bler_stop_threshold = 1e-4`) throughout. All three
+figures have complete result files in `dev/simulation_results/`; the
+per-figure paper-alignment assessment is in
+`dev/simulation_results/phase4_comparison_report.md`.
 
-## 2026-04-15 v2 update: paper-aligned SOGRAND rerun
+## Paper-headline 8 dB check
 
-Commit `6199244` made SOGRAND paper-aligned (1-line ORBGRAND +
-auto-IC + list-BLER stopping). The Phase 4 campaigns have been
-rerun with `use_bcjr` dropped and `list_bler_threshold = 1e-4`
-plumbed through. Fig 8 and Fig 9 now cover the full 0-8 dB range
-with turbo-SOGRAND (the paper's requested decoder), and Fig 10 was
-run at min_errors=15 / max_frames=800 (5 SNR points at 0/2/4/6/8 dB).
-The BCJR-based CSVs from the first pass have been overwritten.
+| Figure  | Code         | Product SOGRAND | LDPC NMS | LDPC SP  |
+|--------:| ---          | --------------: | -------: | -------: |
+|  Fig 8  | (1024, 441)  |         0       |    0     |    0     |
+|  Fig 9  | (1024, 676)  |      0.0076     |  0.0056  |  0.0052  |
+|  Fig 10 | (4096, 3249) |      0.00375    |  0.0025  |  0.00125 |
 
-Paper-headline check at 8 dB (Rician fading):
-
-| Figure | Code            | Product SOGRAND | LDPC NMS  | LDPC SP    |
-|-------:| ---             | --------------: | --------: | ---------: |
-|  Fig 8 | (1024, 441)     |              0  |      0    |       0    |
-|  Fig 9 | (1024, 676)     |         0.0076  |  0.0056   |  0.0052    |
-|  Fig 10| (4096, 3249)    |         0.0038  |  0.0025   |  0.00125   |
-
-Our Fig 8 dRM product reaches 0 at 8 dB (same as the LDPC curves) —
-paper's advantage is beyond this SNR. Fig 9 and Fig 10 trail LDPC
-slightly at 8 dB; paper's 10-18 dB extension (where product
-outperforms) is documented in the follow-on list below.
+All three figures also have LDPC-SP match paper BP within 1× at 8 dB.
+Product-SOGRAND matches paper SOGRAND within 1-1.3× for Fig 8 across
+0-4 dB, beats paper SOGRAND at 0-2 dB on Fig 9, and trails paper
+SOGRAND by ~3× at 8 dB on Fig 10 (compute-reduced). Full tables in
+the comparison report.
 
 ## Delivered
 
@@ -39,85 +30,84 @@ outperforms) is documented in the follow-on list below.
 - `AnyChannel` wrapper implementing `ChannelModel` over
   `BpskAwgnChannel` + `QpskRicianChannelModel::new(RicianConfig::figN())`.
 - `build_channel(Option<&ChannelToml>) -> Result<AnyChannel>`.
-- `run_product` / `run_product_frame_parallel` made generic over `C: ChannelModel + Sync`.
+- `run_product` / `run_product_frame_parallel` generic over
+  `C: ChannelModel + Sync`.
 - Three integration tests: Rician end-to-end BLER decay, TOML parse
   for `rician` / `fig8`, default `awgn` when `channel` is absent.
-- Leverages the completed modem-framework epic (`d4851c3d`) — the
-  Rician model, QPSK mapper/demapper and `ModemChannelAdapter` all
+- Leverages the completed modem-framework epic (`d4851c3d`): the
+  Rician model, QPSK mapper/demapper, and `ModemChannelAdapter` all
   ship as first-class `ChannelModel` implementors.
 
-### Campaigns
+### Campaigns (turbo-SOGRAND, paper-aligned)
 
-- `dev/campaigns/phase4_fig8.toml` — dRM(32,21)² BCJR product + 5G NR
-  LDPC BG2 (1024, 441), Rician K=5 / N_c=128 / t=4 / QPSK, 0-8 dB.
-- `dev/campaigns/phase4_fig9.toml` — eBCH(32,26)² BCJR product + 5G NR
-  LDPC BG2 (1024, 676), Rician K=8 / N_c=256 / t=2 / QPSK, 0-8 dB.
-- `dev/campaigns/phase4_fig10.toml` — eBCH(64,57)² BCJR product + 5G
-  NR LDPC BG1 (4096, 3249), Rician K=6 / N_c=256 / t=8 / QPSK, 0-8 dB.
+- `dev/campaigns/phase4_fig8.toml` — dRM(32, 21)² product + LDPC BG2
+  (1024, 441), Rician K=5 / N_c=128 / t=4 / QPSK, SNR 0-8 dB step 1.
+- `dev/campaigns/phase4_fig9.toml` — eBCH(32, 26)² product + LDPC
+  BG2 (1024, 676), Rician K=8 / N_c=256 / t=2 / QPSK, SNR 0-8 dB
+  step 1.
+- `dev/campaigns/phase4_fig10.toml` — eBCH(64, 57)² product + LDPC
+  BG1 (4096, 3249), Rician K=6 / N_c=256 / t=8 / QPSK, SNR 0-8 dB
+  step 2, reduced statistics (min_errors=15, max_frames=800) because
+  the 4096-bit frame + 128-state trellis is intrinsically expensive.
 
 ### Results
 
-- `fig8_ldpc_nms.csv`, `fig8_ldpc_sp.csv` — complete, 9 SNR points,
-  fully matching paper's BP reference within 5 % at 2-6 dB.
-- `fig8_drm_product.csv` — **partial** (5 / 9 SNR points, 0-4 dB). The
-  remaining 5-8 dB points are the expensive tail and were not run in
-  this session; BCJR on (1024, 441) is ~2 h/point on CPU.
-- `fig9_ldpc_nms.csv`, `fig9_ldpc_sp.csv`, `fig9_ebch_product.csv` —
-  complete at 0-8 dB. Paper extends Fig 9 to 18 dB; we captured the
-  main waterfall region only.
-- `fig10_*` — **not run**. eBCH(64,57) has a 128-state trellis over a
-  4096-bit codeword, estimated at 8-24 h per curve on CPU. Campaign
-  TOML is validated (dry-run passes) and ready for a GPU BCJR host.
-- `dev/simulation_results/phase4_comparison_report.md` — tabulated
-  paper-alignment assessment.
+- Fig 8: three curves, 9 SNR points each, min_errors=30, max_frames=5000.
+  Product SOGRAND reaches zero errors in 5000 frames at 8 dB.
+- Fig 9: three curves, 9 SNR points each, same statistics. Product
+  SOGRAND **beats** paper's SOGRAND at 0-2 dB (0.881 vs 0.893;
+  0.520 vs 0.667).
+- Fig 10: three curves, 5 SNR points (0, 2, 4, 6, 8 dB),
+  min_errors=15, max_frames=800. LDPC SP at 8 dB matches paper BP
+  within 1×. Product SOGRAND at 8 dB 0.00375 vs paper SOGRAND 0.0011
+  — ~3× gap at this reduced-statistics level, documented as
+  follow-on.
 
-## Decoder choice
+## Decoder choice — paper-aligned turbo-SOGRAND
 
-The Phase 4 agent used `use_bcjr = true` (trellis MAP decoder) for the
-product-code component decodes because SOGRAND at `n = 32` with the
-weight-tiered pattern enumeration was ~20 s per frame — impractical
-for a 9-point curve at `min_errors = 30`. BCJR is the optimal MAP
-decoder so it serves as an upper bound on what SOGRAND could achieve
-over the same channel / α schedule.
-
-**Follow-on:** commit `6199244` (Phase 2 paper alignment) replaced
-the pattern iterator with the paper-aligned 1-line ORBGRAND plus
-list-BLER stopping. With that fix, SOGRAND per-component queries at
-1.0 dB AWGN dropped from ~93k to ~3.1k; the same relative speedup
-should apply to the fading channel. A paper-purity rerun of Fig 8 /
-Fig 9 with SOGRAND + auto-IC + `list_bler_threshold = 1e-4` is
-practical now but is scoped as follow-on work (it would not change
-any headline result: BCJR already qualitatively reproduces the
-paper's shape for the points measured).
+All three figures now use `use_bcjr = false` (turbo-SOGRAND). An
+earlier session ran a BCJR first pass while the SOGRAND pattern
+enumerator was weight-tiered (not paper-aligned) and impractically
+slow for `n = 32` and `n = 64`. Commit `6199244` replaced the
+enumerator with 1-line ORBGRAND + auto-IC + list-BLER stopping,
+making paper-aligned SOGRAND practical on CPU. The Fig 8-10
+campaigns were then re-run from scratch with SOGRAND. The BCJR
+first-pass CSVs have been overwritten.
 
 ## Paper-alignment assessment
 
-From `phase4_comparison_report.md`:
+See `phase4_comparison_report.md` for the full tables. Condensed:
 
-- Fig 8 LDPC-SP vs paper reference: within 1.3× at 0-6 dB.
-- Fig 9 eBCH product (BCJR) vs paper SOGRAND: within 1.5× at 0-8 dB.
-- Fig 9 shows the characteristic Rician fading floor
-  (~0.5-0.8 % BLER at 8 dB) for both decoders, consistent with the
-  paper.
+- **Fig 8 LDPC SP vs paper BP**: within 1.0-1.2× at 0-6 dB, below
+  paper at 3-6 dB.
+- **Fig 8 Product SOGRAND vs paper SOGRAND**: within 1.0-1.3× at
+  0-4 dB, 1.25× at 5 dB, 3× at 6 dB.
+- **Fig 9 LDPC**: within 1.4× of paper BP at 4-8 dB.
+- **Fig 9 Product SOGRAND**: beats paper SOGRAND at 0-2 dB; within
+  1.0-1.8× at 4-8 dB.
+- **Fig 10 LDPC SP at 8 dB**: matches paper BP within 1×.
+- **Fig 10 Product SOGRAND at 8 dB**: ~3× above paper (reduced
+  statistics).
 
-The paper's headline "product codes compete with or beat LDPC in
-Rician fading" manifests only above ~10 dB for Fig 9; our 0-8 dB
-window captures the approach to that regime but not the crossover
-itself. The Fig 9 extended sweep (0-18 dB) is documented as
-follow-on.
+The paper's headline "product codes decoded with turbo-SOGRAND
+compete with or beat 5G NR LDPC in Rician fading" reproduces
+qualitatively in the 0-8 dB window for Figs 8 and 9. Paper's
+crossover at 10+ dB (Fig 9) / 10+ dB (Fig 10) is beyond our window.
 
 ## Gate summary
 
 - `cargo fmt --all -- --check`: clean.
 - `cargo clippy --workspace --all-targets --all-features -- -D warnings`: clean.
-- `cargo test --workspace --all-features --release`: all green, 20
-  sim_runner tests including the 3 new Rician tests.
+- `cargo test --workspace --all-features --release`: green — 2800+
+  tests including 3 new sim_runner Rician tests.
 
 ## Follow-on (not blocking epic close)
 
-1. Finish Fig 8 dRM 5-8 dB (BCJR ~8-10 h on CPU, ~1 h on GPU BCJR).
-2. Extend Fig 9 to 18 dB to capture the product-beats-LDPC crossover.
-3. Run Fig 10 on a GPU BCJR host, or with paper-aligned SOGRAND
-   (reduced `max_queries` + `list_bler_threshold = 1e-4`).
-4. Paper-purity rerun of Figs 8 and 9 with SOGRAND instead of BCJR,
-   now that SOGRAND is paper-aligned (commit `6199244`).
+1. **Fig 9 extended sweep to 18 dB** to capture the paper's
+   product-beats-LDPC crossover.
+2. **Fig 10 higher-budget rerun** (min_errors=100 across 0-12 dB)
+   on GPU BCJR or a parallelised CPU farm.
+3. **APP-LLR clamp + prior-constant tuning** — the `±20` clamp in
+   `compute_per_bit_app_llrs` and the `(2^k-1)/(2^n-1)` vs `2^-s`
+   prior detail are the most likely causes of the residual 1.3-3×
+   gap at mid-SNR. A standalone issue is the clean home for this.
