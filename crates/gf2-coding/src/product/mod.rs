@@ -1098,7 +1098,6 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
         for iteration in 0..self.config.max_iterations {
             // === Row step ===
             let mut l_app_row: Vec<Vec<f32>> = vec![vec![0.0; n]; n];
-            let mut row_bler_sum: f64 = 0.0;
             if self.siso.is_gpu() {
                 // GPU batch: collect all row inputs, decode in one kernel launch
                 let row_inputs: Vec<Vec<f32>> = (0..n)
@@ -1107,7 +1106,6 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
                 let results = self.siso.decode_siso_batch(&row_inputs);
                 for (i, siso_result) in results.into_iter().enumerate() {
                     total_queries += siso_result.query_count;
-                    row_bler_sum += siso_result.list_bler_prediction;
                     for (j, app_llr) in siso_result.app_llrs.iter().enumerate() {
                         l_app_row[i][j] = app_llr.value();
                     }
@@ -1118,7 +1116,6 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
                         (0..n).map(|j| Llr::new(l_ch[i][j] + l_a[i][j])).collect();
                     let siso_result = self.siso.decode_siso(&input);
                     total_queries += siso_result.query_count;
-                    row_bler_sum += siso_result.list_bler_prediction;
                     for (j, app_llr) in siso_result.app_llrs.iter().enumerate() {
                         l_app_row[i][j] = app_llr.value();
                     }
@@ -1162,7 +1159,6 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
             // no additional turbo-level list-BLER short-circuit is applied
             // here, since doing so was empirically pessimistic at high SNR
             // (premature exits left residual errors uncorrected).
-            let _ = row_bler_sum;
 
             // Set L_A = alpha * L_E (iteration-dependent if alpha_final is set)
             let alpha = if let Some(a_final) = self.config.alpha_final {
@@ -1179,7 +1175,6 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
 
             // === Column step ===
             let mut l_app_col: Vec<Vec<f32>> = vec![vec![0.0; n]; n];
-            let mut col_bler_sum: f64 = 0.0;
             if self.siso.is_gpu() {
                 // GPU batch: collect all column inputs, decode in one kernel launch
                 let col_inputs: Vec<Vec<f32>> = (0..n)
@@ -1188,7 +1183,6 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
                 let results = self.siso.decode_siso_batch(&col_inputs);
                 for (j, siso_result) in results.into_iter().enumerate() {
                     total_queries += siso_result.query_count;
-                    col_bler_sum += siso_result.list_bler_prediction;
                     for (i, app_llr) in siso_result.app_llrs.iter().enumerate() {
                         l_app_col[i][j] = app_llr.value();
                     }
@@ -1199,7 +1193,6 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
                         (0..n).map(|i| Llr::new(l_ch[i][j] + l_a[i][j])).collect();
                     let siso_result = self.siso.decode_siso(&input);
                     total_queries += siso_result.query_count;
-                    col_bler_sum += siso_result.list_bler_prediction;
                     for (i, app_llr) in siso_result.app_llrs.iter().enumerate() {
                         l_app_col[i][j] = app_llr.value();
                     }
@@ -1236,7 +1229,6 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
             // See the row-step comment above: turbo termination stays on
             // valid-codeword only; list-BLER is applied inside each
             // ORBGRAND component decode, not at the turbo level.
-            let _ = col_bler_sum;
 
             // Set L_A = alpha * L_E for next iteration
             for i in 0..n {

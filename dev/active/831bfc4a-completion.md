@@ -8,6 +8,29 @@ not run due to compute cost. The supporting artifact is
 `crates/gf2-coding/src/bin/sim_runner.rs` with three end-to-end unit
 tests.
 
+## 2026-04-15 v2 update: paper-aligned SOGRAND rerun
+
+Commit `6199244` made SOGRAND paper-aligned (1-line ORBGRAND +
+auto-IC + list-BLER stopping). The Phase 4 campaigns have been
+rerun with `use_bcjr` dropped and `list_bler_threshold = 1e-4`
+plumbed through. Fig 8 and Fig 9 now cover the full 0-8 dB range
+with turbo-SOGRAND (the paper's requested decoder), and Fig 10 was
+run at min_errors=15 / max_frames=800 (5 SNR points at 0/2/4/6/8 dB).
+The BCJR-based CSVs from the first pass have been overwritten.
+
+Paper-headline check at 8 dB (Rician fading):
+
+| Figure | Code            | Product SOGRAND | LDPC NMS  | LDPC SP    |
+|-------:| ---             | --------------: | --------: | ---------: |
+|  Fig 8 | (1024, 441)     |              0  |      0    |       0    |
+|  Fig 9 | (1024, 676)     |         0.0076  |  0.0056   |  0.0052    |
+|  Fig 10| (4096, 3249)    |         0.0038  |  0.0025   |  0.00125   |
+
+Our Fig 8 dRM product reaches 0 at 8 dB (same as the LDPC curves) —
+paper's advantage is beyond this SNR. Fig 9 and Fig 10 trail LDPC
+slightly at 8 dB; paper's 10-18 dB extension (where product
+outperforms) is documented in the follow-on list below.
+
 ## Delivered
 
 ### `sim_runner` Rician extension

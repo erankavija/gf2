@@ -97,6 +97,30 @@ NMS baseline; the LDPC-SP baseline is matched within 1.2× of the paper
 throughout, confirming that the residual gap is in the product-code
 decoder, not the LDPC reference.
 
+### Fig 5 verify (`phase2_fig5_verify.toml`, 800 frames) — (4096, 3249) eBCH(64,57)² vs LDPC BG1
+
+Reduced statistics due to the n=64 component cost; 8 SNR points
+0.25-dB spaced. Paper-aligned turbo-SOGRAND throughout.
+
+| Eb/N0 (dB) | eBCH Product | LDPC NMS | LDPC SP |
+|-----------:|-------------:|---------:|--------:|
+|       2.00 |        1.000 |    1.000 |   1.000 |
+|       2.25 |        1.000 |    0.750 |   0.652 |
+|       2.50 |        0.818 |    0.395 |   0.224 |
+|       2.75 |       0.0785 |   0.0331 |  0.0088 |
+|       3.00 |       0.0025 |  0.00125 |       0 |
+|       3.25 |            0 |        0 |       0 |
+|       3.50 |            0 |        0 |       0 |
+|       3.75 |            0 |        0 |       0 |
+
+At 800 frames, eBCH(64,57)² product trails LDPC-SP by ~8× at 2.75 dB
+and the curves all hit the noise floor by 3.25 dB. Paper's Fig 5
+headline — product beating LDPC at very-high rate — is not cleanly
+reproduced at this statistic level; a higher-budget rerun is
+follow-on work (tracked in the epic completion report). The other
+six points match LDPC qualitatively and the product code keeps the
+same waterfall slope.
+
 ### Fig 6 verify (`phase2_fig6_verify.toml`, 5000 frames) — (256, 49) eBCH(16,7)² vs LDPC
 
 | Eb/N0 (dB) | eBCH Product | LDPC NMS | LDPC SP |

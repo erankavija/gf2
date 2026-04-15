@@ -1,18 +1,10 @@
-# Phase 4, Figure 10: eBCH(64,57)² product code vs 5G NR LDPC over Rician fading
+# Phase 4, Figure 10: eBCH(64,57)^2 product code vs 5G NR LDPC, Rician fading
 #
-# Reproduces the BLER curves from Figure 10 of the SO-GRAND paper.
-# Channel: QPSK + Rician fading, K=6, N_c=256, t=8, frame_bits=4096.
-# Three curves: eBCH(64,57)² product code (SOGRAND turbo), 5G NR LDPC BG1
-# (4096, 3249) with NMS and sum-product decoders.
-#
-# Code parameters:
-#   eBCH(64,57)^2 -> n=4096, k=3249, rate≈0.79
-#   LDPC BG1      -> n=4096, k=3249, rate≈0.79
-#
-# Note: eBCH(64,57) uses BCJR SISO decoder (not SOGRAND) because SOGRAND is
-# impractical at n=64. eBCH(64,57) has trellis complexity 2^7 states which is
-# feasible with CPU BCJR. The code's large size (n=4096) makes this campaign
-# very computationally expensive; expect hours of runtime per curve.
+# Paper-aligned turbo-SOGRAND with 1-line ORBGRAND + list-BLER stopping.
+# Channel: QPSK + Rician K=6, N_c=256, t=8, frame=4096 bits. The (4096,
+# 3249) code is large; we keep min_errors=15 + max_frames=800 for a
+# sanity run that captures the main waterfall without paying the
+# paper's 3e-3 floor budget.
 
 [campaign]
 name = "phase4_fig10"
@@ -22,11 +14,11 @@ output_dir = "dev/simulation_results"
 name = "fig10_ebch_product"
 type = "product"
 component = "ebch_64_57"
-turbo = { max_iterations = 20, alpha = 0.5, list_size = 2, max_queries = 50000, use_bcjr = true }
+turbo = { max_iterations = 20, alpha = 0.5, list_size = 4, max_queries = 50000, list_bler_threshold = 1e-4 }
 channel = { kind = "rician", preset = "fig10" }
-snr = { start = 0.0, stop = 8.0, step = 1.0 }
-min_errors = 30
-max_frames = 5000
+snr = { start = 0.0, stop = 8.0, step = 2.0 }
+min_errors = 15
+max_frames = 800
 
 [[curve]]
 name = "fig10_ldpc_nms"
@@ -37,9 +29,9 @@ k = 3249
 algorithm = "nms"
 scale = 0.75
 channel = { kind = "rician", preset = "fig10" }
-snr = { start = 0.0, stop = 8.0, step = 1.0 }
-min_errors = 30
-max_frames = 5000
+snr = { start = 0.0, stop = 8.0, step = 2.0 }
+min_errors = 15
+max_frames = 800
 
 [[curve]]
 name = "fig10_ldpc_sp"
@@ -49,6 +41,6 @@ n = 4096
 k = 3249
 algorithm = "sum_product"
 channel = { kind = "rician", preset = "fig10" }
-snr = { start = 0.0, stop = 8.0, step = 1.0 }
-min_errors = 30
-max_frames = 5000
+snr = { start = 0.0, stop = 8.0, step = 2.0 }
+min_errors = 15
+max_frames = 800
