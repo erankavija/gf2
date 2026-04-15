@@ -1,0 +1,53 @@
+# Phase 4, Figure 8: dRM(32,21)² product code vs 5G NR LDPC over Rician fading
+#
+# Reproduces the BLER curves from Figure 8 of the SO-GRAND paper.
+# Channel: QPSK + Rician fading, K=5, N_c=128, t=4, frame_bits=1024.
+# Three curves: dRM(32,21)² product code (BCJR turbo), 5G NR LDPC BG2
+# (1024, 441) with NMS and sum-product decoders.
+#
+# Code parameters:
+#   dRM(32,21)^2  -> n=1024, k=441, rate≈0.43
+#   LDPC BG2      -> n=1024, k=441, rate≈0.43
+#
+# Note: dRM(32,21) uses BCJR SISO decoder (not SOGRAND) because SOGRAND
+# is impractical at n=32 (>20s/frame). The paper uses SOGRAND/ORBGRAND
+# Pyndiah; BCJR provides an equivalent/lower bound on decoding error rate.
+
+[campaign]
+name = "phase4_fig8"
+output_dir = "dev/simulation_results"
+
+[[curve]]
+name = "fig8_drm_product"
+type = "product"
+component = "drm_32_21"
+turbo = { max_iterations = 20, alpha = 0.5, list_size = 4, max_queries = 50000, use_bcjr = true }
+channel = { kind = "rician", preset = "fig8" }
+snr = { start = 0.0, stop = 8.0, step = 1.0 }
+min_errors = 30
+max_frames = 5000
+
+[[curve]]
+name = "fig8_ldpc_nms"
+type = "ldpc"
+base_graph = 2
+n = 1024
+k = 441
+algorithm = "nms"
+scale = 0.75
+channel = { kind = "rician", preset = "fig8" }
+snr = { start = 0.0, stop = 8.0, step = 1.0 }
+min_errors = 30
+max_frames = 5000
+
+[[curve]]
+name = "fig8_ldpc_sp"
+type = "ldpc"
+base_graph = 2
+n = 1024
+k = 441
+algorithm = "sum_product"
+channel = { kind = "rician", preset = "fig8" }
+snr = { start = 0.0, stop = 8.0, step = 1.0 }
+min_errors = 30
+max_frames = 5000
