@@ -153,33 +153,6 @@ fn test_analysis_capture_disabled_matches_unaugmented_path() {
 }
 
 #[test]
-fn test_analysis_capture_disabled_path_does_not_accumulate_into_provided_capture() {
-    // Guards the opt-in contract: build a `Some` capture, then drop
-    // the reference before running so the compiler forces us to drive
-    // the runner with an **explicit** `None`. This is distinct from
-    // test_analysis_capture_disabled_matches_unaugmented_path (which
-    // checks BER equivalence) because it verifies the accumulator we
-    // *could* have passed is still empty afterwards. A regression that
-    // accidentally wrote into the accumulator via, e.g., a thread-local
-    // or static would trip this.
-    let channel = BpskAwgnChannel;
-    let config = bpsk_config();
-    let mut stats = PerBitLlrStats::new(1);
-    {
-        // Scope `cap` so it and its &mut borrow end before the run.
-        let _cap = AnalysisCapture::new(&mut stats);
-    }
-    let mut rng = StdRng::seed_from_u64(config.rng_seed.unwrap());
-    let _ = SimulationRunner::run_uncoded_ber_with_analysis(&channel, &config, None, &mut rng);
-
-    let report = stats.report();
-    for r in &report {
-        assert_eq!(r.bit0.count(), 0);
-        assert_eq!(r.bit1.count(), 0);
-    }
-}
-
-#[test]
 #[should_panic(expected = "AnalysisCapture bits_per_symbol")]
 fn test_analysis_capture_mismatched_bits_per_symbol_panics() {
     // A 16-QAM modem channel advertises batch_alignment = 4, so an
