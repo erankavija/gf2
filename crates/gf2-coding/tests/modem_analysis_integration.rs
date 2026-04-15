@@ -153,21 +153,26 @@ fn test_analysis_capture_disabled_matches_unaugmented_path() {
 }
 
 #[test]
-fn test_analysis_capture_unused_accumulator_stays_empty_after_none_sweep() {
-    // Guards the opt-in contract from the *other* side: build an
-    // accumulator up front, but deliberately do NOT pass it to the
-    // runner. Run a sweep with `None`. After the sweep, the untouched
-    // accumulator must still be empty — catches a regression where the
-    // runner grabs some shared/thread-local capture target instead of
-    // respecting the caller's explicit `None`.
+fn test_analysis_capture_disabled_path_does_not_accumulate_into_provided_capture() {
+    // Guards the opt-in contract: build a `Some` capture, then drop
+    // the reference before running so the compiler forces us to drive
+    // the runner with an **explicit** `None`. This is distinct from
+    // test_analysis_capture_disabled_matches_unaugmented_path (which
+    // checks BER equivalence) because it verifies the accumulator we
+    // *could* have passed is still empty afterwards. A regression that
+    // accidentally wrote into the accumulator via, e.g., a thread-local
+    // or static would trip this.
     let channel = BpskAwgnChannel;
     let config = bpsk_config();
-
-    let unused = PerBitLlrStats::new(1);
+    let mut stats = PerBitLlrStats::new(1);
+    {
+        // Scope `cap` so it and its &mut borrow end before the run.
+        let _cap = AnalysisCapture::new(&mut stats);
+    }
     let mut rng = StdRng::seed_from_u64(config.rng_seed.unwrap());
     let _ = SimulationRunner::run_uncoded_ber_with_analysis(&channel, &config, None, &mut rng);
 
-    let report = unused.report();
+    let report = stats.report();
     for r in &report {
         assert_eq!(r.bit0.count(), 0);
         assert_eq!(r.bit1.count(), 0);
@@ -201,43 +206,101 @@ fn test_analysis_capture_mismatched_bits_per_symbol_panics() {
 }
 
 #[test]
-fn test_analysis_capture_multi_snr_aggregation_is_documented() {
+fn test_analysis_capture_multi_snr_aggregation_matches_sum_of_single_point_sweeps() {
     // The documented behaviour is that the same AnalysisCapture is
     // reused across every SNR point in the sweep and reports an
-    // aggregate. Lock that: run a two-point sweep with a capture, then
-    // run two single-point sweeps at the same seeds, and confirm the
-    // total sample count is preserved (we do not require bit-exact
-    // decomposition, because the runner stream order is deliberately
-    // sweep-oriented, but the *sum* must match so callers reading
-    // `report()` see every bit that was transmitted).
+    // aggregate. Lock that precisely:
+    //   1. Run a two-point sweep (Eb/N0 = 3 dB, 7 dB) into one capture.
+    //   2. Run the same config as two separate single-point sweeps
+    //      (3 dB, 7 dB) each into its own capture.
+    //   3. The aggregate count from (1) must exactly equal
+    //      single_point_3dB + single_point_7dB, because the runner
+    //      consumes the same per-point frame count driven by the same
+    //      seed stream.
     let channel = BpskAwgnChannel;
-    let config = SimulationConfig {
-        eb_n0_range_db: vec![3.0, 7.0],
+    let make_config = |points: Vec<f64>| SimulationConfig {
+        eb_n0_range_db: points,
         min_errors: usize::MAX,
         max_frames: 4_000,
         max_decoder_iterations: 0,
         rng_seed: Some(0xAAAA_5555),
         output_path: None,
     };
+    const RNG_SEED: u64 = 0xAAAA_5555;
 
-    let mut stats = PerBitLlrStats::new(1);
-    let mut cap = AnalysisCapture::new(&mut stats);
-    let mut rng = StdRng::seed_from_u64(config.rng_seed.unwrap());
-    let _ = SimulationRunner::run_uncoded_ber_with_analysis(
-        &channel,
-        &config,
-        Some(&mut cap),
-        &mut rng,
-    );
+    // (1) Two-point sweep into one capture.
+    let mut swept_stats = PerBitLlrStats::new(1);
+    {
+        let mut cap = AnalysisCapture::new(&mut swept_stats);
+        let mut rng = StdRng::seed_from_u64(RNG_SEED);
+        let _ = SimulationRunner::run_uncoded_ber_with_analysis(
+            &channel,
+            &make_config(vec![3.0, 7.0]),
+            Some(&mut cap),
+            &mut rng,
+        );
+    }
+    let swept_report = swept_stats.report();
+    let swept_total = swept_report[0].bit0.count() + swept_report[0].bit1.count();
 
-    let report = stats.report();
-    let total = report[0].bit0.count() + report[0].bit1.count();
-    // Two SNR points × max_frames bits each, rounded to batch alignment
-    // (= 1 for BPSK), must account for every transmitted bit.
-    let expected_min = 2 * (config.max_frames - (config.max_frames % 960));
-    assert!(
-        total >= expected_min as u64,
-        "aggregate sample count {total} is below expected minimum {expected_min} — \
-         the multi-SNR sweep did not accumulate across both points"
+    // (2a) Single-point sweep at 3 dB. Crucial: seed the runner's RNG
+    //      from the same config seed as the two-point run — that is
+    //      what the two-point run does for its first SNR point.
+    let mut stats_3db = PerBitLlrStats::new(1);
+    {
+        let mut cap = AnalysisCapture::new(&mut stats_3db);
+        let mut rng = StdRng::seed_from_u64(RNG_SEED);
+        let _ = SimulationRunner::run_uncoded_ber_with_analysis(
+            &channel,
+            &make_config(vec![3.0]),
+            Some(&mut cap),
+            &mut rng,
+        );
+    }
+    let total_3db = {
+        let r = stats_3db.report();
+        r[0].bit0.count() + r[0].bit1.count()
+    };
+
+    // (2b) Single-point sweep at 7 dB, run **after** the 3 dB run on
+    //      the same RNG stream. The two-point runner's 7 dB batches
+    //      draw from the same post-3dB stream state.
+    let mut stats_7db = PerBitLlrStats::new(1);
+    {
+        let mut cap = AnalysisCapture::new(&mut stats_7db);
+        // Re-seed and advance: the two-point runner uses a single
+        // StdRng across both SNR points. We emulate that by re-seeding
+        // here and running a 3 dB warmup to advance the stream.
+        let mut rng = StdRng::seed_from_u64(RNG_SEED);
+        // Warmup: same shape the two-point runner did at 3 dB.
+        let mut warmup_stats = PerBitLlrStats::new(1);
+        {
+            let mut warmup = AnalysisCapture::new(&mut warmup_stats);
+            let _ = SimulationRunner::run_uncoded_ber_with_analysis(
+                &channel,
+                &make_config(vec![3.0]),
+                Some(&mut warmup),
+                &mut rng,
+            );
+        }
+        // Now run the 7 dB point on the advanced stream.
+        let _ = SimulationRunner::run_uncoded_ber_with_analysis(
+            &channel,
+            &make_config(vec![7.0]),
+            Some(&mut cap),
+            &mut rng,
+        );
+    }
+    let total_7db = {
+        let r = stats_7db.report();
+        r[0].bit0.count() + r[0].bit1.count()
+    };
+
+    assert_eq!(
+        swept_total,
+        total_3db + total_7db,
+        "two-point sweep aggregate ({swept_total}) must equal the sum of matching \
+         single-point sweeps ({total_3db} at 3 dB + {total_7db} at 7 dB = {})",
+        total_3db + total_7db
     );
 }
