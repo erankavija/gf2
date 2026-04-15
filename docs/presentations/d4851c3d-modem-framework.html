@@ -198,9 +198,9 @@ use gf2_coding::modem::{AnalysisCapture, DemapMethod};
 use gf2_coding::simulation::{SimulationConfig, SimulationRunner, BpskAwgnChannel};
 
 // 1. Build an accumulator. Histograms opt-in (ranges and bin count are yours).
-let mut stats = PerBitLlrStats::new(4).with_histogram(
-    HistogramConfig::new(-40.0, 40.0, 256.try_into().unwrap())
-);
+let mut stats = PerBitLlrStats::new(4).with_histogram(HistogramConfig {
+    min: -40.0, max: 40.0, num_bins: 256.try_into().unwrap(),
+});
 
 // 2. Tag the capture with the demap method your channel produces.
 //    Mismatched captures are rejected up front by the runner.
@@ -219,6 +219,57 @@ for r in &report {
 }
 let gmi = gmi_bits(&report, GmiMethod::Histogram);  // empirical from histograms
     </code></pre>
+</section>
+
+<!-- 7b. Figure: BER curves -->
+<section>
+    <h2>Figure 1 — BER across the preset family</h2>
+    <p class="small muted">
+        Uncoded Monte Carlo over AWGN driven through <code>SimulationRunner::run_uncoded_ber_with_channel</code>.
+        80 000 symbols per Eb/N0 point, seed locked. All four curves use the same
+        <code>ModemChannelAdapter</code> path — only the <code>ModemSpec</code> differs.
+    </p>
+    <div style="text-align: center;">
+        <img src="figures/ber_curves.svg" alt="Uncoded BER vs Eb/N0 for BPSK, QPSK, 16-QAM, 64-QAM"
+             style="max-width: 85%; max-height: 520px; background: white; border-radius: 6px;">
+    </div>
+    <p class="small muted" style="margin-top: 0.5em;">
+        Reproducible via <code>cargo run -p gf2-coding --example gen_presentation_figures --release</code>.
+    </p>
+</section>
+
+<!-- 7c. Figure: per-bit MI -->
+<section>
+    <h2>Figure 2 — 16-QAM per-bit mutual information</h2>
+    <p class="small muted">
+        The analysis framework exposes the "inner vs outer PAM bit" reliability gap that standard BER summaries hide.
+        Gray-QAM's MSB bits (positions 0, 2 — outer PAM) climb toward 1 bit faster than the inner-PAM bits (1, 3).
+    </p>
+    <div style="text-align: center;">
+        <img src="figures/per_bit_mi_16qam.svg" alt="Per-bit mutual information vs Eb/N0 for 16-QAM"
+             style="max-width: 85%; max-height: 520px; background: white; border-radius: 6px;">
+    </div>
+    <p class="small muted" style="margin-top: 0.5em;">
+        Computed via <code>AnalysisCapture::with_method(…, MaxLog)</code> over 60 000 symbols per point; values are
+        <code>mutual_info_bits_gaussian_approximation</code> from <code>PerBitChannelStats</code>.
+    </p>
+</section>
+
+<!-- 7d. Figure: LLR histograms -->
+<section>
+    <h2>Figure 3 — Conditional LLR densities, 16-QAM</h2>
+    <p class="small muted">
+        At Eb/N0 = 8 dB, 200 000 symbols, max-log demap. Outer-PAM bits (0, 2) are near-Gaussian; inner-PAM bits (1, 3)
+        are <strong>bimodal</strong> — exactly the regime where the Gaussian-approximation MI estimate breaks down.
+        This is why the framework ships a histogram-based MI/GMI estimator alongside it.
+    </p>
+    <div style="text-align: center;">
+        <img src="figures/llr_histograms_16qam.svg" alt="Conditional LLR histograms for 16-QAM bit positions at Eb/N0 = 8 dB"
+             style="max-width: 95%; max-height: 560px; background: white; border-radius: 6px;">
+    </div>
+    <p class="small muted" style="margin-top: 0.3em;">
+        Histograms are read from <code>PerBitChannelStats::{hist_bit0, hist_bit1}</code>; bin counts normalised to densities.
+    </p>
 </section>
 
 <!-- 8. What's actually in the box -->
@@ -363,6 +414,7 @@ let gmi = gmi_bits(&report, GmiMethod::Histogram);  // empirical from histograms
                 <li><code>cargo run -p gf2-coding --example modem_gray_qam_preset --release</code></li>
                 <li><code>cargo run -p gf2-coding --example modem_custom_constellation --release</code></li>
                 <li><code>cargo run -p gf2-coding --example modem_simulation_harness --release</code></li>
+                <li><code>cargo run -p gf2-coding --example gen_presentation_figures --release</code> — regenerates the three SVGs in this deck from fresh simulations</li>
             </ul>
         </li>
         <li><strong>Benchmarks:</strong> <code>cargo bench -p gf2-coding</code> (4 criterion suites: <code>modem_cpu</code>, <code>modem_generic_vs_fast</code>, <code>cpu_dispatch_probe</code>, <code>simulation_no_analysis_overhead</code>)</li>
