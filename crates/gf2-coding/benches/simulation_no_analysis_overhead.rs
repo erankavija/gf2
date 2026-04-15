@@ -89,7 +89,7 @@ fn bench_simulation_no_analysis_overhead(c: &mut Criterion) {
             let mut rng = StdRng::seed_from_u64(BENCH_SEED);
             let channel = BpskAwgnChannel;
             let mut stats = PerBitLlrStats::new(1);
-            let mut capture = AnalysisCapture::new(&mut stats);
+            let mut capture = AnalysisCapture::with_method(&mut stats, DemapMethod::ExactLogMap);
             let r = SimulationRunner::run_uncoded_ber_with_analysis(
                 black_box(&channel),
                 black_box(&config),
@@ -148,7 +148,9 @@ fn bench_simulation_no_analysis_overhead_qam16(c: &mut Criterion) {
         b.iter(|| {
             let mut rng = StdRng::seed_from_u64(BENCH_SEED);
             let mut stats = PerBitLlrStats::new(4);
-            let mut capture = AnalysisCapture::new(&mut stats);
+            // QAM16 adapter was built with DemapMethod::MaxLog above
+            // (see the `channel` binding in this function's scope).
+            let mut capture = AnalysisCapture::with_method(&mut stats, DemapMethod::MaxLog);
             let r = SimulationRunner::run_uncoded_ber_with_analysis(
                 black_box(&channel),
                 black_box(&config),
