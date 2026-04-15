@@ -744,6 +744,25 @@ fn run_uncoded_ber_with_channel_impl<C: ChannelModel, R: Rng>(
     const UNCODED_MODEM_BATCH_BITS: usize = 960;
 
     let alignment = channel.batch_alignment().max(1);
+
+    // Contract: if the caller opted into analysis capture, its
+    // accumulator's `bits_per_symbol` must match the channel's
+    // `batch_alignment`. `PerBitLlrStats::accumulate` only enforces
+    // length invariants; a silent mismatch would accumulate nonsensical
+    // per-position statistics without tripping any downstream check.
+    // Reject up front with a descriptive panic so the misuse is caught
+    // at the first batch rather than being silently averaged away.
+    if let Some(cap) = capture.as_deref() {
+        assert_eq!(
+            cap.bits_per_symbol() as usize,
+            alignment,
+            "AnalysisCapture bits_per_symbol ({}) must equal channel.batch_alignment() \
+             ({}) — a mismatched capture would silently collapse per-position statistics",
+            cap.bits_per_symbol(),
+            alignment,
+        );
+    }
+
     // Scratch buffer reused across batches when analysis is enabled.
     // Allocated exactly once per SNR-point sweep and only on the
     // analysis-enabled path. Stays `None` when `capture.is_none()`.
