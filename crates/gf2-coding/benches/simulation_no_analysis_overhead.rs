@@ -19,7 +19,10 @@
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion, Throughput};
 use gf2_coding::modem::analysis::PerBitLlrStats;
-use gf2_coding::modem::AnalysisCapture;
+use gf2_coding::modem::{
+    AnalysisCapture, DemapMethod, FastGrayQamDemapper, GrayQamMapper, ModemChannelAdapter,
+    ModemSpec,
+};
 use gf2_coding::simulation::{BpskAwgnChannel, SimulationConfig, SimulationRunner};
 use rand::rngs::StdRng;
 use rand::SeedableRng;
@@ -101,5 +104,68 @@ fn bench_simulation_no_analysis_overhead(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(benches, bench_simulation_no_analysis_overhead);
+/// Companion bench over a 16-QAM `ModemChannelAdapter` fast path so the
+/// zero-overhead claim is tested against the shared modem framework
+/// (Gray-QAM fast kernel dispatch, `c5cee991`-prerequisite path), not
+/// just the BPSK compatibility surface.
+fn bench_simulation_no_analysis_overhead_qam16(c: &mut Criterion) {
+    let config = bench_config();
+    let mut group = c.benchmark_group("simulation_no_analysis_overhead_qam16");
+    group.throughput(Throughput::Elements(BENCH_FRAMES as u64));
+
+    // 16-QAM, m = 4, so the runner aligns to 4 bits per batch.
+    let spec = ModemSpec::<f32>::gray_square_qam(16);
+    let mapper = GrayQamMapper::<f32>::from_preset_order(16);
+    let demapper = FastGrayQamDemapper::<f32>::new(spec);
+    let channel = ModemChannelAdapter::new(mapper, demapper, DemapMethod::MaxLog);
+
+    group.bench_function("baseline_run_uncoded_ber_with_channel", |b| {
+        b.iter(|| {
+            let mut rng = StdRng::seed_from_u64(BENCH_SEED);
+            let r = SimulationRunner::run_uncoded_ber_with_channel(
+                black_box(&channel),
+                black_box(&config),
+                &mut rng,
+            );
+            black_box(r);
+        });
+    });
+
+    group.bench_function("analysis_none", |b| {
+        b.iter(|| {
+            let mut rng = StdRng::seed_from_u64(BENCH_SEED);
+            let r = SimulationRunner::run_uncoded_ber_with_analysis(
+                black_box(&channel),
+                black_box(&config),
+                None,
+                &mut rng,
+            );
+            black_box(r);
+        });
+    });
+
+    group.bench_function("analysis_enabled", |b| {
+        b.iter(|| {
+            let mut rng = StdRng::seed_from_u64(BENCH_SEED);
+            let mut stats = PerBitLlrStats::new(4);
+            let mut capture = AnalysisCapture::new(&mut stats);
+            let r = SimulationRunner::run_uncoded_ber_with_analysis(
+                black_box(&channel),
+                black_box(&config),
+                Some(&mut capture),
+                &mut rng,
+            );
+            black_box(r);
+            black_box(stats);
+        });
+    });
+
+    group.finish();
+}
+
+criterion_group!(
+    benches,
+    bench_simulation_no_analysis_overhead,
+    bench_simulation_no_analysis_overhead_qam16
+);
 criterion_main!(benches);
