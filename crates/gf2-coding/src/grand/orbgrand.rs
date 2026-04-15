@@ -81,12 +81,14 @@ use gf2_core::BitVec;
 /// assert!(!config.even_code);
 ///
 /// // Custom configuration
+/// use gf2_coding::grand::OneLineIntercept;
 /// let config = OrbGrandConfig {
 ///     max_queries: 10_000,
 ///     list_size: 5,
 ///     even_code: true,
 ///     systematic: true,
 ///     list_bler_stop_threshold: Some(1e-4),
+///     one_line_intercept: OneLineIntercept::Auto,
 /// };
 /// ```
 #[derive(Debug, Clone)]
