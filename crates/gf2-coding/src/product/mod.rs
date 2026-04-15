@@ -739,18 +739,27 @@ pub struct TurboDecoderConfig {
     /// Maximum ORBGRAND queries per component decode.
     pub max_queries: usize,
 
-    /// Optional list-BLER threshold for early termination (SOGRAND only).
+    /// Paper-aligned per-component list-BLER early-stop threshold for
+    /// SOGRAND.
     ///
-    /// When set, if the average predicted list-BLER across all row/column
-    /// SISO decodings in a half-iteration drops below this threshold, the
-    /// decoder terminates early. Uses [`SisoResult::list_bler_prediction`]
-    /// from SOGRAND.
+    /// When set, this value is plumbed into each SOGRAND component decode
+    /// via [`crate::grand::OrbGrandConfig::list_bler_stop_threshold`]: the
+    /// inner ORBGRAND search exits as soon as the list has `list_size`
+    /// codewords OR the incrementally-maintained `P(C \ L)` drops below
+    /// this threshold, matching the SO-GRAND paper's Fig 8 caption
+    /// ("lists are added to until L=4 OR the predicted list-BLER is
+    /// below 1e-4").
+    ///
+    /// The turbo loop itself still terminates on "all rows and columns
+    /// correspond to valid product codewords" (paper § V, step 1) and
+    /// does NOT short-circuit on an aggregate list-BLER average.
     ///
     /// This threshold is ignored in BCJR and GPU-BCJR modes, where
-    /// `list_bler_prediction` is always 0.0 (exact trellis decoding does
-    /// not produce a probabilistic list-BLER estimate).
+    /// `list_bler_prediction` is always 0.0 (exact trellis decoding
+    /// does not produce a probabilistic list-BLER estimate).
     ///
-    /// A typical value might be `Some(1e-6)`.
+    /// A typical value is `Some(1e-4)` for AWGN product codes or
+    /// `Some(1e-5)` for GLDPC configurations.
     pub list_bler_threshold: Option<f64>,
 
     /// Final alpha value for iteration-dependent scaling schedule.
