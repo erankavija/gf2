@@ -25,6 +25,7 @@ use std::path::{Path, PathBuf};
 use gf2_coding::bch::extended::ExtendedBchCode;
 use gf2_coding::crc::CrcCode;
 use gf2_coding::drm::DrmCode;
+use gf2_coding::fading::{QpskRicianChannelModel, RicianConfig};
 use gf2_coding::gldpc::{GldpcDecoder, GldpcDecoderConfig, QcGldpcCode};
 use gf2_coding::grand::OrbGrandConfig;
 use gf2_coding::ldpc::nr_5g::Nr5gRateMatchedDecoder;
@@ -33,13 +34,94 @@ use gf2_coding::product::{
     ChasePyndiahConfig, ChasePyndiahDecoder, ProductCode, TurboDecoder, TurboDecoderConfig,
 };
 use gf2_coding::simulation::{
-    BpskAwgnChannel, SimulationConfig, SimulationResults, SimulationRunner,
+    BpskAwgnChannel, ChannelModel, SimulationConfig, SimulationResults, SimulationRunner,
 };
 
 #[cfg(feature = "parallel")]
 use gf2_coding::simulation::SimulationResult;
 #[cfg(feature = "parallel")]
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+
+// ---------------------------------------------------------------------------
+// Channel selection
+// ---------------------------------------------------------------------------
+
+/// TOML sub-table for per-curve channel selection.
+///
+/// ```toml
+/// channel = { kind = "rician", preset = "fig8" }
+/// ```
+///
+/// Omitting the `channel` key defaults to BPSK/AWGN (existing behaviour).
+#[derive(Debug, Deserialize)]
+struct ChannelToml {
+    /// `"awgn"` (default) or `"rician"`.
+    kind: String,
+    /// Required when `kind = "rician"`: one of `"fig8"`, `"fig9"`, `"fig10"`.
+    preset: Option<String>,
+}
+
+/// Unified channel variant that dispatches to either the BPSK/AWGN or the
+/// QPSK/Rician path.  Wrapping both in an enum lets every helper function
+/// remain generic (`impl ChannelModel`) without needing a trait object.
+enum AnyChannel {
+    Awgn(BpskAwgnChannel),
+    Rician(QpskRicianChannelModel),
+}
+
+impl ChannelModel for AnyChannel {
+    fn batch_alignment(&self) -> usize {
+        match self {
+            AnyChannel::Awgn(c) => c.batch_alignment(),
+            AnyChannel::Rician(c) => c.batch_alignment(),
+        }
+    }
+
+    fn demap_method(&self) -> gf2_coding::modem::DemapMethod {
+        match self {
+            AnyChannel::Awgn(c) => c.demap_method(),
+            AnyChannel::Rician(c) => c.demap_method(),
+        }
+    }
+
+    fn transmit_and_demodulate<R: rand::Rng>(
+        &self,
+        bits: &gf2_core::BitVec,
+        eb_n0_db: f64,
+        rate: f64,
+        rng: &mut R,
+    ) -> Vec<gf2_coding::llr::Llr> {
+        match self {
+            AnyChannel::Awgn(c) => c.transmit_and_demodulate(bits, eb_n0_db, rate, rng),
+            AnyChannel::Rician(c) => c.transmit_and_demodulate(bits, eb_n0_db, rate, rng),
+        }
+    }
+}
+
+/// Builds an `AnyChannel` from an optional `ChannelToml`.  Returns
+/// `AnyChannel::Awgn` when the TOML key is absent.
+fn build_channel(cfg: Option<&ChannelToml>) -> Result<AnyChannel, String> {
+    match cfg {
+        None => Ok(AnyChannel::Awgn(BpskAwgnChannel)),
+        Some(ch) => match ch.kind.as_str() {
+            "awgn" => Ok(AnyChannel::Awgn(BpskAwgnChannel)),
+            "rician" => {
+                let preset = ch
+                    .preset
+                    .as_deref()
+                    .ok_or("rician channel requires `preset`")?;
+                let rician_cfg = match preset {
+                    "fig8" => RicianConfig::fig8(),
+                    "fig9" => RicianConfig::fig9(),
+                    "fig10" => RicianConfig::fig10(),
+                    other => return Err(format!("unknown rician preset: {other}")),
+                };
+                Ok(AnyChannel::Rician(QpskRicianChannelModel::new(rician_cfg)))
+            }
+            other => Err(format!("unknown channel kind: {other}")),
+        },
+    }
+}
 
 // ---------------------------------------------------------------------------
 // Config types
@@ -107,6 +189,8 @@ struct CurveConfig {
     sogrand: Option<SograndConfig>,
 
     // -- Common --
+    /// Optional channel selection; omit for BPSK/AWGN (default).
+    channel: Option<ChannelToml>,
     /// Eb/N0 sweep range.
     snr: SnrRange,
     /// Minimum number of frame errors to collect per SNR point.
@@ -157,6 +241,14 @@ struct TurboConfig {
     extrinsic_clamp: Option<f32>,
     list_size: usize,
     max_queries: usize,
+    /// Paper-aligned list-BLER early-stop threshold.
+    ///
+    /// When set, each SOGRAND component decode exits as soon as the list
+    /// has `list_size` codewords OR the predicted list-BLER drops below
+    /// this value. The same threshold also drives turbo-level early
+    /// termination. Typical values: `1e-4` for AWGN product codes,
+    /// `1e-5` for the GLDPC configuration (see SO-GRAND paper Figs 1/7/8).
+    list_bler_threshold: Option<f64>,
     /// Disable early termination (always run max_iterations).
     no_early_termination: Option<bool>,
     /// Use Pyndiah-style extrinsic: L_E = L_APP - L_Ch (not subtracting L_A).
@@ -335,7 +427,7 @@ fn run_curve(
     seed: u64,
 ) -> Result<SimulationResults, String> {
     let config = build_sim_config(curve, output_dir, seed);
-    let channel = BpskAwgnChannel;
+    let channel = build_channel(curve.channel.as_ref())?;
 
     let results = match curve.curve_type {
         CurveType::Ldpc => {
@@ -516,7 +608,7 @@ fn build_turbo_decoder_config(turbo_cfg: &TurboConfig) -> TurboDecoderConfig {
         extrinsic_clamp: turbo_cfg.extrinsic_clamp,
         list_size: turbo_cfg.list_size,
         max_queries: turbo_cfg.max_queries,
-        list_bler_threshold: None,
+        list_bler_threshold: turbo_cfg.list_bler_threshold,
         no_early_termination: turbo_cfg.no_early_termination.unwrap_or(false),
         pyndiah_extrinsic: turbo_cfg.pyndiah_extrinsic.unwrap_or(false),
         use_bcjr: turbo_cfg.use_bcjr.unwrap_or(false),
@@ -537,17 +629,18 @@ fn build_chase_pyndiah_config(cp_toml: &ChasePyndiahToml) -> ChasePyndiahConfig 
     cp_config
 }
 
-/// Helper: runs a product-code curve for any `ProductComponent` type.
-fn run_product<C>(
+/// Helper: runs a product-code curve for any `ProductComponent` and channel type.
+fn run_product<C, CH>(
     encoder_component: C,
     decoder_component: C,
     turbo_cfg: &TurboConfig,
-    channel: &BpskAwgnChannel,
+    channel: &CH,
     config: &SimulationConfig,
     parallel: bool,
 ) -> SimulationResults
 where
     C: gf2_coding::product::ProductComponent + Clone + Send + Sync + 'static,
+    CH: ChannelModel + Sync,
 {
     let product = ProductCode::new(encoder_component);
 
@@ -595,17 +688,18 @@ type ProductDecodeFn = Box<dyn FnMut(&[gf2_coding::llr::Llr]) -> gf2_coding::tra
 /// SNR points are processed sequentially to preserve resume and progress
 /// reporting semantics.
 #[cfg(feature = "parallel")]
-fn run_product_frame_parallel<C>(
+fn run_product_frame_parallel<C, CH>(
     product: ProductCode<C>,
     decoder_component: C,
     turbo_cfg: &TurboConfig,
-    channel: &BpskAwgnChannel,
+    channel: &CH,
     config: &SimulationConfig,
 ) -> SimulationResults
 where
     C: gf2_coding::product::ProductComponent + Clone + Send + Sync + 'static,
+    CH: ChannelModel + Sync,
 {
-    use gf2_coding::simulation::{count_bit_errors, ChannelModel};
+    use gf2_coding::simulation::count_bit_errors;
     use gf2_coding::traits::BlockEncoder;
     use gf2_core::BitVec;
     use rand::rngs::StdRng;
@@ -1244,6 +1338,90 @@ max_frames = 1
         assert!(output_dir.join("crc_25_15_smoke.csv").is_file());
 
         std::fs::remove_dir_all(&output_dir).unwrap();
+    }
+
+    /// Verifies that a product-code curve routed through the Rician fading
+    /// channel (`channel = { kind = "rician", preset = "fig8" }`) produces
+    /// monotonically decreasing BLER across the SNR sweep and that high-SNR
+    /// BLER is strictly lower than low-SNR BLER — a basic sanity check that
+    /// the fading path wires up correctly end-to-end.
+    #[test]
+    fn test_run_curve_rician_product_bler_decays() {
+        let toml_str = r#"
+[campaign]
+name = "rician_sanity"
+output_dir = "/tmp/ignored"
+
+[[curve]]
+name = "rician_drm_sanity"
+type = "product"
+component = "drm_32_21"
+turbo = { max_iterations = 5, alpha = 0.5, list_size = 2, max_queries = 5000 }
+channel = { kind = "rician", preset = "fig8" }
+snr = { start = 2.0, stop = 8.0, step = 3.0 }
+min_errors = 5
+max_frames = 200
+"#;
+        let config: CampaignConfig = toml::from_str(toml_str).unwrap();
+
+        let output_dir =
+            std::env::temp_dir().join(format!("gf2-sim-runner-rician-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&output_dir);
+        std::fs::create_dir_all(&output_dir).unwrap();
+
+        let results = run_curve(&config.curve[0], output_dir.to_str().unwrap(), false, 42).unwrap();
+
+        // Expect three SNR points: 2.0, 5.0, 8.0 dB.
+        assert_eq!(results.points.len(), 3);
+
+        // All BLERs must be finite and in [0, 1].
+        for pt in &results.points {
+            assert!(
+                pt.bler.is_finite(),
+                "BLER is not finite at {} dB",
+                pt.eb_n0_db
+            );
+            assert!(
+                (0.0..=1.0).contains(&pt.bler),
+                "BLER {} out of [0,1] at {} dB",
+                pt.bler,
+                pt.eb_n0_db
+            );
+        }
+
+        // High-SNR BLER (8 dB) must be strictly below low-SNR BLER (2 dB).
+        let bler_low = results.points[0].bler;
+        let bler_high = results.points[2].bler;
+        assert!(
+            bler_high < bler_low,
+            "Expected BLER to decay: low={bler_low:.4} high={bler_high:.4}"
+        );
+
+        std::fs::remove_dir_all(&output_dir).unwrap();
+    }
+
+    /// Verifies that the TOML parser correctly deserialises
+    /// `channel = { kind = "rician", preset = "fig8" }` and that
+    /// `build_channel` returns the Rician variant.
+    #[test]
+    fn test_build_channel_rician_preset_parsing() {
+        let toml_str = r#"
+kind = "rician"
+preset = "fig8"
+"#;
+        let ch: ChannelToml = toml::from_str(toml_str).unwrap();
+        assert_eq!(ch.kind, "rician");
+        assert_eq!(ch.preset.as_deref(), Some("fig8"));
+
+        let chan = build_channel(Some(&ch)).unwrap();
+        assert!(matches!(chan, AnyChannel::Rician(_)));
+    }
+
+    /// Verifies that omitting the `channel` key defaults to BPSK/AWGN.
+    #[test]
+    fn test_build_channel_default_awgn() {
+        let chan = build_channel(None).unwrap();
+        assert!(matches!(chan, AnyChannel::Awgn(_)));
     }
 
     #[test]

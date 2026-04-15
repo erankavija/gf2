@@ -25,5 +25,5 @@
 pub(crate) mod orbgrand;
 mod sogrand;
 
-pub use orbgrand::{OrbGrand, OrbGrandConfig, OrbGrandResult, ScoredCodeword};
+pub use orbgrand::{OneLineIntercept, OrbGrand, OrbGrandConfig, OrbGrandResult, ScoredCodeword};
 pub use sogrand::{SisoResult, SoGrand};

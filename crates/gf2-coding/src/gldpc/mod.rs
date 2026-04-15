@@ -2033,7 +2033,7 @@ mod tests {
     /// used by GldpcDecoder::new(), and with various post_list_budget sizes.
     #[test]
     fn test_sogrand_ebch32_cumulative_probability_diagnostic() {
-        use crate::grand::{OrbGrand, OrbGrandConfig, SoGrand};
+        use crate::grand::{OneLineIntercept, OrbGrand, OrbGrandConfig, SoGrand};
 
         // Build the eBCH(32,26) component used by GLDPC(1024,646)
         let comp = extended_bch_component(31, 26, 1);
@@ -2061,6 +2061,8 @@ mod tests {
                     list_size: 4,
                     even_code: true,
                     systematic: false,
+                    list_bler_stop_threshold: None,
+                    one_line_intercept: OneLineIntercept::Auto,
                 };
                 let orb = OrbGrand::new(h.clone(), config.clone());
                 let sogrand = SoGrand::new(orb);

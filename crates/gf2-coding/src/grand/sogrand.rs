@@ -454,7 +454,7 @@ fn compute_per_bit_app_llrs(
 /// - If `x >= -ln(2)` (i.e., `p >= 0.5`): `log(1 - exp(x)) = log(-expm1(x))`
 ///
 /// Reference: Machler (2012), "Accurately Computing log(1 - exp(-|a|))".
-fn log1mexp(x: f64) -> f64 {
+pub(super) fn log1mexp(x: f64) -> f64 {
     if x >= 0.0 {
         // cumulative probability >= 1.0 (can happen due to floating point
         // when all patterns are tested). 1 - exp(x>=0) <= 0 → log = -inf.
@@ -475,7 +475,7 @@ fn log1mexp(x: f64) -> f64 {
 /// For moderate n, k (<= 63): uses direct f64 computation.
 /// For large n, k: approximates as `(k - n) * ln(2)` since
 /// `(2^k - 1)/(2^n - 1) ≈ 2^(k-n)` for large values.
-fn log_codebook_ratio(n: usize, k: usize) -> f64 {
+pub(super) fn log_codebook_ratio(n: usize, k: usize) -> f64 {
     if n <= 63 && k <= 63 {
         let numerator = (1u64 << k) as f64 - 1.0;
         let denominator = (1u64 << n) as f64 - 1.0;
@@ -492,7 +492,7 @@ use super::orbgrand::ln_1_plus_exp;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::grand::{OrbGrandConfig, ScoredCodeword};
+    use crate::grand::{OneLineIntercept, OrbGrandConfig, ScoredCodeword};
     use gf2_core::BitVec;
 
     // =====================================================================
@@ -513,6 +513,8 @@ mod tests {
             list_size,
             even_code: false,
             systematic: true,
+            list_bler_stop_threshold: None,
+            one_line_intercept: OneLineIntercept::Auto,
         };
         SoGrand::new(OrbGrand::new(h, config))
     }
@@ -1021,6 +1023,8 @@ mod tests {
             list_size: 4,
             even_code: false,
             systematic: true,
+            list_bler_stop_threshold: None,
+            one_line_intercept: OneLineIntercept::Auto,
         };
         let sogrand = SoGrand::new(OrbGrand::new(h, config));
 
@@ -1177,7 +1181,7 @@ mod tests {
 mod fig2_validation {
     //! Fig. 2 reproduction: compare predicted vs empirical list-BLER.
     use super::*;
-    use crate::grand::orbgrand::{OrbGrand, OrbGrandConfig};
+    use crate::grand::orbgrand::{OneLineIntercept, OrbGrand, OrbGrandConfig};
     use crate::linear::LinearBlockCode;
     use crate::traits::BlockEncoder;
     use gf2_core::BitVec;
@@ -1199,6 +1203,8 @@ mod fig2_validation {
             list_size: 2,
             even_code: false,
             systematic: true,
+            list_bler_stop_threshold: None,
+            one_line_intercept: OneLineIntercept::Auto,
         };
         let sogrand = SoGrand::new(OrbGrand::new(h, config));
 
@@ -1239,6 +1245,8 @@ mod fig2_validation {
                     list_size: 2,
                     even_code: false,
                     systematic: true,
+                    list_bler_stop_threshold: None,
+                    one_line_intercept: OneLineIntercept::Auto,
                 },
             )
             .decode(&llrs);
@@ -1293,6 +1301,8 @@ mod fig2_validation {
             list_size: 2,
             even_code: true,
             systematic: true,
+            list_bler_stop_threshold: None,
+            one_line_intercept: OneLineIntercept::Auto,
         };
         let sogrand = SoGrand::new(OrbGrand::new(h, config));
 
