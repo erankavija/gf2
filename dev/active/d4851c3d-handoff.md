@@ -1,126 +1,107 @@
-# Epic d4851c3d — project-lead session handoff (v3)
+# Epic d4851c3d — project-lead session handoff (v4)
 
 **Epic:** `d4851c3d` — Implement QAM modulation with soft-decision demapping
-**Session end:** 2026-04-14
+**Session end:** 2026-04-15
 **Outgoing project lead:** agent:project-lead (Claude Opus 4.6)
 **Progress snapshot:** `dev/active/d4851c3d-progress.json` (structured) + this doc (strategic)
 
 ## Where we are
 
-**Waves 1–7 executed.** 14 of 33 leaf/story issues closed, 3 stories deferred for structural gate reasons (`24144d1a`, `51334873`, to be followed by `92186a40`, `46ffe45a`), 1 task rescoped with user approval (`c007875b`). The epic DAG now has waves 8–11 still to dispatch.
+**Waves 1–11 landed; only guardrail leaf + final story + epic close remain.**
+Session started at 63 done / 0 leaves in flight. Ended at **81 done**, with
+448491d5 (zero-overhead guardrail) in its retry loop and e2c0f65a still to
+claim after it closes.
 
-### Closed cleanly in Wave 7
+### Closed this session (18 issues)
 
-| ID | Title | Rework | Commit |
+| ID | Title | Rework | Notes |
 |---|---|---|---|
-| `c5cee991` | SIMD-ready Gray-QAM batch kernels | 2 | `5c70f8d` |
-| `0cafa5f5` | BPSK framework-backed compat surface | 0 | `cb8c0c7` |
-| `a23646dd` | Rician fading modem adapter | 3 | `eee9344` |
+| `71c19c32` | GPU demapper prototype | 2 | `6ab9d6a` — capability narrowing |
+| `b3bb774a` | QPSK framework migration | 0 | `46fd683` |
+| `5fd315c0` | **Delete duplicated modem implementations** | 1 | `d8663d5` — deleted `modulation.rs`, shrunk `channel.rs` 832→200 LoC. Unblocked 5 deferred stories. |
+| `24144d1a` | Modem core API (story) | 0 | closed after legacy deletion |
+| `52112411` | Gray-QAM fast-path (story) | 2 | added `ModemSpec::preferred_*` factories + CPU benches |
+| `51334873` | Arb-constellation (story) | 2 | `from_spec` preserves caller metadata; LCG SSOT lift to `gf2-core` |
+| `9aa0f8b7` | **Workspace LCG consolidation** (new) | 1 | `d8258e6` — promoted `gf2_core::test_rng` → `gf2_core::rng`, migrated 5 sites |
+| `a9ccb8ae` | Per-bit LLR statistics | 1 | `67e1b08` + `6aadc83` MI docs/tests |
+| `dafb938a` | Modem regression + property tests | 1 | Box-Muller helper extracted |
+| `9c37ec8c` | GPU crossover decision | 3 | keep-experimental; scalar full-demapper bench added; doc attached via `jit doc add` |
+| `f80407f8` | Modem docs + examples | 2 | 3 examples under `crates/gf2-coding/examples/` + `preferred_*` blanket impls for `Box<dyn Batch…>` |
+| `1663515c` | Generic-vs-fast benches | 1 | `modem_generic_vs_fast.rs`; bench helpers in shared `bench_support.rs` |
+| `0f7a6cd9` | MI/GMI estimators | 0 | GmiMethod + histogram MI, docs corrected |
+| `46ffe45a` | Legacy migration (story) | 0 | formality close after 5fd315c0 |
+| `92186a40` | Sim/channel refactor (story) | 0 | formality close |
+| `80f218ca` | Bit-channel analysis integration | 2 | `AnalysisCapture` + alignment panic + multi-SNR aggregation test |
+| `0884289e` | Ergonomics/examples/benches (story) | 1 | Gray-QAM validator SSOT refactor |
+| `19069bc1` | GPU story (story) | 1 | CLAUDE.md updated: `gf2-kernels-hip` recognized as second unsafe host |
 
-### Deferred — structural (repo-holistic) code-review block
+### In flight / remaining
 
-| ID | Title | State | Unblock path |
-|---|---|---|---|
-| `24144d1a` | Design the general modem core API (story) | `in_progress_deferred` | After `5fd315c0` deletes legacy `channel.rs` / `modulation.rs` / `fading.rs` |
-| `51334873` | Arbitrary-constellation mapping + reference demapping (story) | `deferred_to_wave_9` | Same — all leaf SCs covered by done tasks, story code-review waits on `5fd315c0` |
+| ID | State | Blocking |
+|---|---|---|
+| `448491d5` | `in_progress`, code-review retry fired on commit `e53154f` | Added modem-backed QAM bench group + MSB-first bit-position regression test in the latest fix. Resume: `jit gate check-all 448491d5 --json` when the async run completes. |
+| `e2c0f65a` | `ready`, blocked on 448491d5 | Bit-channel analysis story; formality close after 448491d5 lands. Deps: `448491d5` + `52112411` ✓ |
+| `d4851c3d` | **Epic**, blocked on e2c0f65a | Run `jit gate check-all d4851c3d` after e2c0f65a closes; complete per `.claude/skills/project-lead` Section 10. |
 
-Both stories' own success criteria are covered by completed leaf tasks. The auto code-review script is repo-holistic and will not pass until duplicated legacy modem surface is gone — exactly `5fd315c0`'s deliverable. Expect `92186a40` and `46ffe45a` to hit the same wall when their code-review gates run.
+**No deferred issues remain.** Every structural defer from the v3 handoff was cleared this session.
 
-## Hard-won lessons (extensions of v2)
+## Hard-won lessons (extensions of v3)
 
-1. **Calibration changes are the most hidden source of bugs.** `a23646dd` took **3 rounds** on the same class of issue: (a) first flag was Es=1 vs Es=2 symbol-energy mismatch (3 dB); (b) second flag was the local variable named `sigma_squared` being semantically N0 in this file — my first fix misinterpreted the variable, producing 2x-too-quiet noise; (c) third flag was SSOT — the corrected formula duplicated one in `modem/awgn_link.rs`. **Implication:** when touching any `sigma^2`/`N0`/`Eb/N0` code, verify the variable *semantics* by tracing downstream sampling (what std does `Normal::new(0, _)` get?) and re-verify after the fix, AND look for other copies of the same formula across the codebase before landing.
+1. **Use the CLI, fire gates async.** `jit gate pass <id> <key>` via Bash `run_in_background: true` is a must; the AI code-review script takes 4–7 min per call and blocks the foreground tool otherwise. Multiple concurrent background gates work fine; be disciplined about one CLI call per Bash tool use (user called this out explicitly — no `for` loops).
+2. **The code-review reviewer iterates on small findings.** Expect 1–3 rework rounds per issue even when the fundamental implementation is correct. Findings are typically SSOT violations (duplicated helpers), doc/impl mismatches (especially # Panics sections), or missing-test-of-what-the-docs-claim. Address each one inline, commit, re-fire — don't dispatch a whole worktree agent for a 10-line fix.
+3. **`preferred_*` factories need blanket impls for `Box<dyn Trait>`.** `ModemSpec::preferred_mapper()` returns `Box<dyn BatchMapper<S> + Send + Sync>`. For callers to pass it into `ModemChannelAdapter::new(mapper, …)` (which takes generic `M: BatchMapper<S>`), the crate now provides `impl<S, T: BatchMapper<S> + ?Sized> BatchMapper<S> for Box<T>` (same for `BatchSoftDemapper`). Any future trait with similar generic consumers should ship the blanket impl at the same time.
+4. **Workspace LCG has two acceptable unsafe hosts.** `CLAUDE.md` now says unsafe lives in `gf2-kernels-simd` AND `gf2-kernels-hip` (FFI requires it; HIP crate is opt-in and excluded from default workspace). The previous text was written before the HIP crate existed. If a third accelerator lands (cuBLAS? Vulkan?), update CLAUDE.md *with* the commit that introduces it.
+5. **`FastGrayQamDemapper::new_with_scalar_kernel`** is the escape hatch for host-dispatch benchmarks. Default `new()` still auto-detects AVX2; the scalar constructor exists purely so benches can measure the scalar full-demapper baseline on AVX2 hosts (for the 9c37ec8c crossover report).
+6. **Decision docs must be linked via `jit doc add`.** The agent can write the markdown file, but only the project lead (or the user) runs `jit doc add <issue> <path> --doc-type decision`. The sentinel HTML comment trick (`<!-- jit: link this document to issue X -->`) is worth keeping as a reminder but is not a substitute for the CLI call.
 
-2. **Extract shared helpers preemptively for Eb/N0 / N0 / σ² math.** `modem::awgn_link::{unit_energy_sigma_sq_from_eb_n0_db, unit_energy_n0_from_eb_n0_db}` are now the SSOT for noise-scale computation. Future tasks that touch noise scaling should *call* these and not redefine the formula. If a new helper becomes necessary, add it next to the existing ones.
-
-3. **New public items require `# Arguments`, `# Examples` (tested), `# Panics`, `# Complexity` — per `CLAUDE.md`.** The c5cee991 reviewer flagged missing sections on 8 public items even though the prose was there. Budget 15–20 minutes per new pub item for the full doc set.
-
-4. **AVX2 safe wrappers need slice-length asserts before unsafe pointer arithmetic.** The `get_unchecked_mut` + `.add()` pattern is UB-reachable from safe public API without length checks. Add `assert_eq!` on every derived length in the safe wrapper, and add `#[should_panic]` regression tests. This will be the pattern for every future SIMD kernel in `gf2-kernels-simd`.
-
-5. **`gf2-kernels-simd` is now non-optional for `gf2-coding`.** Done as part of c5cee991's SSOT fix. The `simd` feature now only propagates to `gf2-core/simd`. Downstream consumers always see the kernel crate's scalar functions. The cfg for `x86_64` still lives inside the kernel crate itself.
-
-6. **The shared `ChannelModel::batch_alignment()` is load-bearing.** Introduced in `bf865220`, used by `QpskRicianChannelModel::batch_alignment() -> 2` and by `SimulationRunner::run_uncoded_ber_with_channel`. Any new higher-order modulation `ChannelModel` impl must override it with `bits_per_symbol`.
-
-## Shared helpers landed this session (extend the v2 list)
+## Shared helpers landed this session (extend the v3 list)
 
 | Helper | Module | Purpose |
 |---|---|---|
-| `GrayPamDistanceFnsF32/F64` | `gf2_kernels_simd::modem` | Function-pointer bundle for the Gray-PAM squared-distance hot loop |
-| `detect_f32()` / `detect_f64()` | `gf2_kernels_simd::modem` | Runtime-detect the best-available kernel bundle (AVX2 or scalar) |
-| `scalar_pam_sq_distances_f32/f64` | `gf2_kernels_simd::modem` | Scalar backend; also the oracle for AVX2 parity tests |
-| `unit_energy_sigma_sq_from_eb_n0_db(m, rate, eb_n0_db)` | `gf2_coding::modem::awgn_link` | Canonical Eb/N0 → per-component AWGN σ² for unit-energy symbols |
-| `unit_energy_n0_from_eb_n0_db(m, rate, eb_n0_db)` | `gf2_coding::modem::awgn_link` | Canonical Eb/N0 → N0 (= 2σ²) |
+| `gf2_core::rng::Lcg` | `gf2-core` | **Workspace SSOT** deterministic LCG. Previously `gf2_coding::modem::test_oracle::Lcg`; promoted so `gf2-kernels-simd` can consume it without a dep cycle. Closed-range `[-1, 1]` / `[lo, hi]` (endpoints reachable). |
+| `modem::test_oracle::{bit_stream, permutation, label_stream}` | `gf2-coding` | Free functions taking a seed; previously `Lcg::bit_stream(seed, n)` etc. |
+| `ModemSpec::preferred_mapper()` / `preferred_soft_demapper()` | `gf2-coding::modem` | Routes Gray-QAM presets to fast path, falls back to reference path otherwise. Returns `Box<dyn Batch…>`. |
+| `ModemSpec::is_gray_square_qam_preset()` | `gf2-coding::modem` | Non-panicking probe; both it and `assert_valid_gray_square_qam_spec` delegate to `check_gray_square_qam_spec` (Result-returning SSOT). |
+| `GrayQamMapper::from_spec(spec)` | `gf2-coding::modem` | Preserves caller's validated spec (vs. `from_preset_order` which rebuilds canonical preset). |
+| `FastGrayQamDemapper::new_with_scalar_kernel(spec)` | `gf2-coding::modem` | Benchmark-only: pins the scalar PAM distance kernel. |
+| `AnalysisCapture` | `gf2-coding::modem` | Opt-in handle wrapping `&mut PerBitLlrStats`, passed to `SimulationRunner::run_uncoded_ber_with_analysis`. |
+| `impl BatchMapper<S> for Box<dyn BatchMapper<S> + ?Sized>` | `gf2-coding::modem::mapper` | Blanket impl so `preferred_*` output is directly usable. Same for `BatchSoftDemapper`. |
+| `crates/gf2-coding/benches/bench_support.rs` | bench shim | Shared `deterministic_bits` / `deterministic_rx`; included via `#[path] mod bench_support;` |
+| `crates/gf2-kernels-hip/tests/gpu_bench_support.rs` | bench shim | Shared `spec_for_order` / `gen_batch` for HIP test + bench |
+| `info_theory::{shannon_capacity, shannon_limit}` | `gf2-coding` | Moved out of the deleted `channel.rs` into their own module. |
 
-## Dependency DAG (waves 8–11, current wave = 8)
+## New dev artefacts
 
-```
-Wave 8  52112411* ── Gray-QAM fast-path story           (dep: 24144d1a†, c5cee991 ✓)
-        a9ccb8ae ── Per-bit LLR distribution tools      (dep: c007875b ✓, 51334873†)
-        b3bb774a ── QPSK replacement                    (dep: db1dda70 ✓, a23646dd ✓)
-        92186a40* ── Simulation/channel refactor story  (dep: a23646dd ✓, 51334873†)
-        71c19c32 ── GPU demapper prototype              (dep: c5cee991 ✓, bf865220 ✓)
-
-Wave 9  9c37ec8c ── GPU crossover doc                   (dep: 71c19c32)
-        0f7a6cd9 ── Per-bit MI/GMI estimators           (dep: a9ccb8ae)
-        5fd315c0 ── Delete duplicated modem impls       (dep: 0cafa5f5 ✓, b3bb774a)
-          ↑ unblocks 24144d1a, 51334873, 92186a40, 46ffe45a code-review
-        80f218ca ── Analysis integration                (dep: c007875b ✓, 92186a40)
-
-Wave 10 19069bc1* ── GPU story                          (dep: 9c37ec8c, 92186a40)
-        f80407f8 ── Modem docs + examples               (dep: 5fd315c0)
-        1663515c ── Generic vs fast-path benches        (dep: 5fd315c0, c5cee991 ✓)
-        dafb938a ── Regression + property tests         (dep: 5fd315c0, 0aac93c6 ✓)
-        46ffe45a* ── Legacy surface migration story     (dep: 5fd315c0, 52112411, 92186a40)
-        448491d5 ── Zero-overhead bench                 (dep: c5cee991 ✓, 0f7a6cd9, 80f218ca)
-
-Wave 11 e2c0f65a* ── Bit-channel analysis story         (dep: 448491d5, 52112411)
-        0884289e* ── Ergonomics/benchmarks story        (dep: 46ffe45a, f80407f8, 1663515c, dafb938a)
-```
-
-**Stars (*) mark stories.** All stories in this epic close as a formality after their leaf deps complete; several will defer on code-review until `5fd315c0` lands.
-
-## Wave 8 dispatch plan
-
-| Issue | Risk | File ownership | Dispatch batch |
-|---|---|---|---|
-| `a9ccb8ae` | Low-medium — new analysis module | `modem/analysis.rs` (new) + `modem/mod.rs` | A (alone or first) |
-| `b3bb774a` | Medium — replaces placeholder QPSK path with framework | `simulation.rs` + possibly `channel.rs` | B (alone; may touch files 0cafa5f5/a23646dd also modified — coordinate) |
-| `71c19c32` | High — GPU prototype, research quality not production | `gf2-kernels-hip` likely + new scaffolding | A (in parallel with a9ccb8ae — disjoint files) |
-| `52112411` | Story — formality close | none | Last (after leafs) |
-| `92186a40` | Story — will defer on code-review | none | Last (likely defer) |
-
-Suggested dispatch order:
-1. Dispatch `a9ccb8ae` + `71c19c32` in parallel (disjoint files: new analysis module vs new HIP scaffolding).
-2. After both land, dispatch `b3bb774a` alone (touches `simulation.rs` which is shared across the epic).
-3. Close the two stories (`52112411` likely clean, `92186a40` will defer).
+- `dev/active/9c37ec8c-gpu-crossover-decision.md` — **keep-experimental** decision, measured AVX2 + scalar full-demapper crossover tables, attached via `jit doc add` as `doc_type=decision`.
 
 ## Resume checklist for the next session
 
-1. `git status` (expect clean). `git log --oneline -15` (sanity; `0833146` should be HEAD).
-2. `cargo test --workspace --all-features --release` (expect ≥ 2741 passed).
-3. `cat dev/active/d4851c3d-progress.json | jq '.waves[] | {wave_number, issues: [.issues[] | {short_id, status}]}'` to confirm wave state; `current_wave` should be 8.
-4. Claim and dispatch Wave 8 per the plan above. Budget 2–3 rework rounds per leaf task.
-5. Continue through Wave 11. Remember to:
-   - retry gate on `24144d1a`, `51334873`, `92186a40`, `46ffe45a` after `5fd315c0` lands.
-   - separate commits per JIT issue (user preference from 2026-04-14).
-   - call `unit_energy_{sigma_sq,n0}_from_eb_n0_db` from any new code that needs Eb/N0 → noise conversion.
-   - never pipe shell output through `awk` (triggers permission prompts).
-6. Final step: mark epic `d4851c3d` done, write completion report per `.claude/skills/project-lead/references/completion-report-template.md`.
+1. `git status` (expect clean). `git log --oneline -8`; HEAD should be on a 448491d5 fix commit.
+2. `jit status` — target state: "83 done, 1 in progress (d4851c3d), 0 epic leaves open".
+3. `jit gate check-all 448491d5 --json` — if the async retry hasn't returned yet, re-fire with `jit gate pass 448491d5 code-review --by agent:project-lead` in the background.
+4. Once 448491d5 passes: `jit gate pass 448491d5 doc-review --by agent:project-lead && jit issue update 448491d5 --state done`.
+5. Claim **e2c0f65a** (final story, formality close):
+   - `jit gate pass e2c0f65a tdd-reminder --by agent:project-lead`
+   - `jit issue claim e2c0f65a agent:claude`
+   - `jit gate pass e2c0f65a cargo-ci --by agent:project-lead` (background)
+   - `jit gate pass e2c0f65a code-review --by agent:project-lead` (background)
+6. After e2c0f65a lands: **epic close**.
+   - `jit gate check-all d4851c3d --json` — run every gate in order.
+   - Produce completion report per `.claude/skills/project-lead/references/completion-report-template.md`.
+   - `jit issue update d4851c3d --state done`.
+7. Archive `dev/active/d4851c3d-*` artifacts per project-lead Section 10.
 
-## Reference: GPU crossover decision (JIT `9c37ec8c`)
+## Commit footprint
 
-Decision document: `dev/active/9c37ec8c-gpu-crossover-decision.md`.
-Outcome: **keep-experimental** — the HIP GPU Gray-QAM demapper wins
-against CPU AVX2 at batch ≥ 1024 for 64/256-QAM, batch ≥ 4096 for
-16-QAM, and batch ≥ 16384 for QPSK, and by ~27× at 16k/256-QAM; it
-loses at batch = 256 across all orders and still loses at batch =
-1024 for QPSK and 16-QAM. Against **scalar** CPU hosts the GPU wins
-sooner at the low orders (QPSK crosses at 4096, 16-QAM at 4096,
-64-QAM at 1024 slightly / 4096 clearly, 256-QAM at 1024) but still
-loses at batch = 256. Stay gated behind the `hip` Cargo feature;
-future GPU work lives under `19069bc1`.
+HEAD is `e53154f` (448491d5 fix). 247 session commits + ~30 merges. `cargo test --workspace --all-features --release` passes (2770+ tests). No unsafe code outside the two accelerator crates. All workspace LCG duplicates consolidated onto `gf2_core::rng::Lcg`.
 
-## Reference: state of `in_progress_deferred` / `deferred_to_wave_9` issues
+## Reference: wave DAG state (complete)
 
-- `24144d1a` (story): gates tdd-reminder/cargo-ci/doc-review green; code-review blocks on legacy surface duplication.
-- `51334873` (story): all leaf SCs covered (b2c9c0f0, abf03b13, 3e3fe377 done); code-review will block on legacy duplication when run.
-- Both clear when `5fd315c0` lands in Wave 9.
+```
+Wave 8  52112411 ✓  a9ccb8ae ✓  b3bb774a ✓  92186a40 ✓  71c19c32 ✓
+Wave 9  9c37ec8c ✓  0f7a6cd9 ✓  5fd315c0 ✓  80f218ca ✓  9aa0f8b7 ✓ (new)
+Wave 10 19069bc1 ✓  f80407f8 ✓  1663515c ✓  dafb938a ✓  46ffe45a ✓  448491d5 🟡
+Wave 11 e2c0f65a ⏳  0884289e ✓
+```
+
+Legend: ✓ done, 🟡 gates retrying, ⏳ ready to claim.
