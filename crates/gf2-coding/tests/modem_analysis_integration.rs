@@ -129,70 +129,95 @@ fn test_analysis_capture_integrates_with_qam16_runner() {
 #[test]
 fn test_analysis_capture_preserves_msb_first_bit_position_mapping_qam16() {
     // Correctness lock for bit-channel separation on Gray-QAM. We feed
-    // the accumulator `PerBitLlrStats` a direct, symbol-major MSB-first
-    // stream of known `Llr` values and ground-truth bits through
-    // `accumulate_slice` (the same path `AnalysisCapture::accumulate_slice`
-    // invokes), then assert that every bit *position* saw the correct
-    // per-position sample and that the per-position bit0/bit1 split
-    // matches the truth bits at each position. A regression that
-    // accidentally transposed columns or shifted the stride by one
-    // would scramble the per-position counts.
+    // `PerBitLlrStats::accumulate` a symbol-major, MSB-first stream
+    // with a pattern whose per-position fingerprint is **asymmetric**
+    // across bit positions — so any column transpose, stride shift, or
+    // MSB↔LSB swap in the accumulator would scramble the counts.
+    //
+    // The asymmetry is encoded in two ways:
+    //   1. Per-position bit1 fraction is `p_k = (k + 1) / (m + 1)` —
+    //      strictly monotone in `k`, so positions {0, 1, 2, 3} have
+    //      distinct expected bit1 counts of N/5, 2N/5, 3N/5, 4N/5.
+    //      Transposing any two positions breaks the monotone sequence.
+    //   2. LLR magnitudes scale with position: `|L_k| = (k + 1)`. That
+    //      means bit0.mean()/bit1.mean() at position k = ±(k + 1), so a
+    //      column swap would also scramble the means.
     use gf2_coding::llr::Llr;
 
     let bits_per_symbol = 4u8;
-    let num_symbols = 64;
+    let m = bits_per_symbol as usize;
+    // Choose a multiple of 5 so every p_k = (k+1)/5 gives an integer count.
+    let num_symbols: usize = 5 * 200;
     let mut stats = PerBitLlrStats::new(bits_per_symbol);
 
-    // Construct a stream where bit position k has truth = (symbol_idx >> k) & 1.
-    // LLR sign matches the hard-decision convention (positive => bit 0).
-    let mut llrs: Vec<Llr> = Vec::with_capacity(num_symbols * bits_per_symbol as usize);
-    let mut truth: Vec<bool> = Vec::with_capacity(num_symbols * bits_per_symbol as usize);
+    let mut llrs: Vec<Llr> = Vec::with_capacity(num_symbols * m);
+    let mut truth: Vec<bool> = Vec::with_capacity(num_symbols * m);
     for s in 0..num_symbols {
-        for k in 0..bits_per_symbol as usize {
-            let bit = (s >> k) & 1 == 1;
+        for k in 0..m {
+            // Position k is bit 1 iff (s mod 5) < (k + 1). Over
+            // num_symbols = 5*N this gives exactly (k+1)*N ones at
+            // position k, and (5 - (k+1))*N = (4-k)*N zeros.
+            let bit = (s % 5) < (k + 1);
             truth.push(bit);
-            // Strong-confidence LLR: +4 for bit 0, -4 for bit 1.
-            llrs.push(Llr::new(if bit { -4.0 } else { 4.0 }));
+            let mag = (k + 1) as f32;
+            llrs.push(Llr::new(if bit { -mag } else { mag }));
         }
     }
 
     stats.accumulate(&llrs, &truth);
     let report = stats.report();
-    assert_eq!(report.len(), bits_per_symbol as usize);
+    assert_eq!(report.len(), m);
 
+    let samples_per_position = num_symbols as u64;
     for (k, r) in report.iter().enumerate() {
-        // At position k, truth = (s >> k) & 1 for s in [0, num_symbols).
-        // Count how many of those are 0 vs 1 independently.
-        let expected_ones = (0..num_symbols).filter(|s| (s >> k) & 1 == 1).count() as u64;
-        let expected_zeros = num_symbols as u64 - expected_ones;
+        let expected_ones = ((k + 1) as u64) * (num_symbols as u64 / 5);
+        let expected_zeros = samples_per_position - expected_ones;
+
+        assert_eq!(
+            r.bit1.count(),
+            expected_ones,
+            "position {k}: bit1 count = {}, expected {expected_ones} — \
+             a column transpose or stride shift would break this",
+            r.bit1.count()
+        );
         assert_eq!(
             r.bit0.count(),
             expected_zeros,
             "position {k}: bit0 count = {}, expected {expected_zeros}",
             r.bit0.count()
         );
-        assert_eq!(
-            r.bit1.count(),
-            expected_ones,
-            "position {k}: bit1 count = {}, expected {expected_ones}",
-            r.bit1.count()
-        );
-        // All bit0 samples are +4.0; all bit1 samples are -4.0.
-        // Welford mean must match exactly up to FP roundoff.
+
+        // All bit0 samples at position k are +(k+1); bit1 samples are -(k+1).
+        let expected_mag = (k + 1) as f64;
         if r.bit0.count() > 0 {
             assert!(
-                (r.bit0.mean() - 4.0).abs() < 1e-9,
-                "position {k}: bit0 mean = {}, expected 4.0",
+                (r.bit0.mean() - expected_mag).abs() < 1e-9,
+                "position {k}: bit0 mean = {}, expected {expected_mag} — \
+                 LLR-magnitude check would flag a column swap",
                 r.bit0.mean()
             );
         }
         if r.bit1.count() > 0 {
             assert!(
-                (r.bit1.mean() + 4.0).abs() < 1e-9,
-                "position {k}: bit1 mean = {}, expected -4.0",
+                (r.bit1.mean() + expected_mag).abs() < 1e-9,
+                "position {k}: bit1 mean = {}, expected -{expected_mag}",
                 r.bit1.mean()
             );
         }
+    }
+
+    // Final asymmetry check: the per-position bit1-fractions must be
+    // strictly monotone in k. A transposition would shuffle this
+    // sequence and trip the assert.
+    let fractions: Vec<f64> = report
+        .iter()
+        .map(|r| r.bit1.count() as f64 / samples_per_position as f64)
+        .collect();
+    for w in fractions.windows(2) {
+        assert!(
+            w[1] > w[0],
+            "per-position bit1 fraction must be strictly increasing, got {fractions:?}"
+        );
     }
 }
 
