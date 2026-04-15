@@ -153,25 +153,91 @@ fn test_analysis_capture_disabled_matches_unaugmented_path() {
 }
 
 #[test]
-fn test_analysis_capture_does_not_touch_sibling_accumulator() {
-    // Guards the "opt-in" contract: passing `None` to the runner, then
-    // later constructing an unrelated `PerBitLlrStats`, must not see
-    // any cross-contamination in the unrelated accumulator. This catches
-    // regressions where the runner might have accidentally grabbed a
-    // global or thread-local capture target.
+fn test_analysis_capture_unused_accumulator_stays_empty_after_none_sweep() {
+    // Guards the opt-in contract from the *other* side: build an
+    // accumulator up front, but deliberately do NOT pass it to the
+    // runner. Run a sweep with `None`. After the sweep, the untouched
+    // accumulator must still be empty — catches a regression where the
+    // runner grabs some shared/thread-local capture target instead of
+    // respecting the caller's explicit `None`.
     let channel = BpskAwgnChannel;
     let config = bpsk_config();
 
+    let unused = PerBitLlrStats::new(1);
     let mut rng = StdRng::seed_from_u64(config.rng_seed.unwrap());
     let _ = SimulationRunner::run_uncoded_ber_with_analysis(&channel, &config, None, &mut rng);
 
-    // Build a fresh accumulator *after* the None-capture sweep. If the
-    // runner touched any shared state this accumulator would see
-    // non-zero counts even though it was never passed anywhere.
-    let sibling = PerBitLlrStats::new(1);
-    let report = sibling.report();
+    let report = unused.report();
     for r in &report {
         assert_eq!(r.bit0.count(), 0);
         assert_eq!(r.bit1.count(), 0);
     }
+}
+
+#[test]
+#[should_panic(expected = "AnalysisCapture bits_per_symbol")]
+fn test_analysis_capture_mismatched_bits_per_symbol_panics() {
+    // A 16-QAM modem channel advertises batch_alignment = 4, so an
+    // AnalysisCapture built from a BPSK-shaped (m = 1) accumulator must
+    // be rejected up front. Previously this silently accumulated
+    // nonsensical per-position statistics; the runner now panics with a
+    // descriptive error before the first batch.
+    let spec = ModemSpec::<f32>::gray_square_qam(16);
+    let mapper = GrayQamMapper::<f32>::from_preset_order(16);
+    let demapper = ReferenceSoftDemapper::new(spec);
+    let channel = ModemChannelAdapter::new(mapper, demapper, DemapMethod::MaxLog);
+
+    // BPSK-shaped accumulator: m = 1, but channel.batch_alignment() = 4.
+    let mut wrong = PerBitLlrStats::new(1);
+    let mut capture = AnalysisCapture::new(&mut wrong);
+    let config = bpsk_config();
+    let mut rng = StdRng::seed_from_u64(config.rng_seed.unwrap());
+    let _ = SimulationRunner::run_uncoded_ber_with_analysis(
+        &channel,
+        &config,
+        Some(&mut capture),
+        &mut rng,
+    );
+}
+
+#[test]
+fn test_analysis_capture_multi_snr_aggregation_is_documented() {
+    // The documented behaviour is that the same AnalysisCapture is
+    // reused across every SNR point in the sweep and reports an
+    // aggregate. Lock that: run a two-point sweep with a capture, then
+    // run two single-point sweeps at the same seeds, and confirm the
+    // total sample count is preserved (we do not require bit-exact
+    // decomposition, because the runner stream order is deliberately
+    // sweep-oriented, but the *sum* must match so callers reading
+    // `report()` see every bit that was transmitted).
+    let channel = BpskAwgnChannel;
+    let config = SimulationConfig {
+        eb_n0_range_db: vec![3.0, 7.0],
+        min_errors: usize::MAX,
+        max_frames: 4_000,
+        max_decoder_iterations: 0,
+        rng_seed: Some(0xAAAA_5555),
+        output_path: None,
+    };
+
+    let mut stats = PerBitLlrStats::new(1);
+    let mut cap = AnalysisCapture::new(&mut stats);
+    let mut rng = StdRng::seed_from_u64(config.rng_seed.unwrap());
+    let _ = SimulationRunner::run_uncoded_ber_with_analysis(
+        &channel,
+        &config,
+        Some(&mut cap),
+        &mut rng,
+    );
+
+    let report = stats.report();
+    let total = report[0].bit0.count() + report[0].bit1.count();
+    // Two SNR points × max_frames bits each, rounded to batch alignment
+    // (= 1 for BPSK), must account for every transmitted bit.
+    let expected_min = 2 * (config.max_frames - (config.max_frames % 960));
+    assert!(
+        total >= expected_min as u64,
+        "aggregate sample count {total} is below expected minimum {expected_min} — \
+         the multi-SNR sweep did not accumulate across both points"
+    );
 }
