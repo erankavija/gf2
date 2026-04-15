@@ -260,6 +260,13 @@ impl<'a> AnalysisCapture<'a> {
     /// O(`llrs.len()`).
     #[inline]
     pub fn accumulate_slice(&mut self, llrs: &[Llr], truth_bits: &[bool]) {
+        // Stamp the underlying accumulator's demap-method provenance
+        // on the first batch so exported PerBitChannelStats records
+        // carry the method that produced them. Subsequent calls are
+        // idempotent (re-stamping with the same method is a no-op);
+        // a mismatch panics, which catches a caller who reuses the
+        // accumulator across captures tagged with different methods.
+        self.stats.set_demap_method_once(self.demap_method);
         self.stats.accumulate(llrs, truth_bits);
     }
 
@@ -311,6 +318,7 @@ impl<'a> AnalysisCapture<'a> {
             llrs.len(),
             truth_bits.len(),
         );
+        self.stats.set_demap_method_once(self.demap_method);
         let truth: Vec<bool> = (0..truth_bits.len()).map(|i| truth_bits.get(i)).collect();
         self.stats.accumulate(llrs, &truth);
     }
