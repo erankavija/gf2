@@ -234,121 +234,8 @@ pub(crate) fn gray_pam_levels<S: ModemScalar>(bits_per_symbol: u8) -> Vec<S> {
 ///   inconsistent with the canonical Gray-PAM level table.
 #[doc(hidden)]
 pub(crate) fn assert_valid_gray_square_qam_spec<S: ModemScalar>(view: &super::ModemView<'_, S>) {
-    let m = view.bits_per_symbol();
-    assert!(
-        matches!(m, 1 | 2 | 4 | 6 | 8),
-        "assert_valid_gray_square_qam_spec: bits_per_symbol {m} is not one of {{1, 2, 4, 6, 8}}"
-    );
-    let expected_symbols = 1usize << m;
-    assert_eq!(
-        view.num_symbols(),
-        expected_symbols,
-        "assert_valid_gray_square_qam_spec: num_symbols {} does not match 2^bits_per_symbol {}",
-        view.num_symbols(),
-        expected_symbols
-    );
-
-    let bit_channels = view.bit_channels();
-    assert_eq!(
-        bit_channels.len(),
-        m as usize,
-        "assert_valid_gray_square_qam_spec: bit_channels length {} != bits_per_symbol {}",
-        bit_channels.len(),
-        m
-    );
-
-    if m == 1 {
-        assert_eq!(
-            bit_channels[0],
-            BitChannelSemantics::SingleAxisPam(0),
-            "assert_valid_gray_square_qam_spec: BPSK spec must advertise SingleAxisPam(0)"
-        );
-    } else {
-        let m_half = m / 2;
-        for k in 0..m_half {
-            assert_eq!(
-                bit_channels[k as usize],
-                BitChannelSemantics::IAxisPam(k),
-                "assert_valid_gray_square_qam_spec: bit {k} must be IAxisPam({k}) for Gray \
-                 square-QAM preset"
-            );
-        }
-        for k in 0..m_half {
-            assert_eq!(
-                bit_channels[(m_half + k) as usize],
-                BitChannelSemantics::QAxisPam(k),
-                "assert_valid_gray_square_qam_spec: bit {} must be QAxisPam({k}) for Gray \
-                 square-QAM preset",
-                m_half + k
-            );
-        }
-    }
-
-    let caps = view.capabilities();
-    assert!(
-        caps.supports_exact_log_map && caps.supports_max_log,
-        "assert_valid_gray_square_qam_spec: spec must advertise both ExactLogMap and MaxLog support"
-    );
-
-    // Level-set agreement: every symbol's I and Q coordinate must match
-    // the canonical Gray-PAM level table at the corresponding axis
-    // label. Tolerance is chosen to accept specs whose scalar storage
-    // was `f32` (round-trip through `ModemScalar::to_f64` incurs up to
-    // ~1e-7 absolute error) without letting genuinely mismatched
-    // permutations slip through.
-    const LEVEL_TOL: f64 = 1e-6;
-    let levels: Vec<f64> = gray_pam_levels::<f64>(m);
-    if m == 1 {
-        // BPSK: labels must be [0, 1]; points must be (±level, shared_q).
-        assert_eq!(
-            view.label(0).bits,
-            0,
-            "assert_valid_gray_square_qam_spec: BPSK spec must store label 0 at index 0, got {}",
-            view.label(0).bits
-        );
-        assert_eq!(
-            view.label(1).bits,
-            1,
-            "assert_valid_gray_square_qam_spec: BPSK spec must store label 1 at index 1, got {}",
-            view.label(1).bits
-        );
-        let q0 = view.point(0).q.to_f64();
-        let q1 = view.point(1).q.to_f64();
-        assert!(
-            (q0 - q1).abs() < 1e-9,
-            "assert_valid_gray_square_qam_spec: BPSK spec must place both points on a common Q \
-             coordinate (got {q0} vs {q1}); the fast kernel drops Q as a common additive constant"
-        );
-        for (idx, &want) in levels.iter().enumerate().take(2) {
-            let got = view.point(idx).i.to_f64();
-            assert!(
-                (got - want).abs() < LEVEL_TOL,
-                "assert_valid_gray_square_qam_spec: BPSK spec I coordinate at index {idx} \
-                 ({got}) does not match canonical Gray-PAM level ({want})"
-            );
-        }
-    } else {
-        let m_half = m / 2;
-        let mask_half = (1u16 << m_half) - 1;
-        for (idx, label) in view.labels().iter().enumerate() {
-            let i_label = ((label.bits >> m_half) & mask_half) as usize;
-            let q_label = (label.bits & mask_half) as usize;
-            let p = view.point(idx);
-            let got_i = p.i.to_f64();
-            let got_q = p.q.to_f64();
-            let want_i = levels[i_label];
-            let want_q = levels[q_label];
-            assert!(
-                (got_i - want_i).abs() < LEVEL_TOL,
-                "assert_valid_gray_square_qam_spec: I coordinate at symbol {idx} \
-                 (i_label {i_label}) is {got_i}, expected canonical Gray-PAM level {want_i}"
-            );
-            assert!(
-                (got_q - want_q).abs() < LEVEL_TOL,
-                "assert_valid_gray_square_qam_spec: Q coordinate at symbol {idx} \
-                 (q_label {q_label}) is {got_q}, expected canonical Gray-PAM level {want_q}"
-            );
-        }
+    if let Err(msg) = check_gray_square_qam_spec(view) {
+        panic!("assert_valid_gray_square_qam_spec: {msg}");
     }
 }
 
@@ -383,58 +270,109 @@ pub(crate) fn assert_valid_gray_square_qam_spec<S: ModemScalar>(view: &super::Mo
 pub(crate) fn is_valid_gray_square_qam_spec<S: ModemScalar>(
     view: &super::ModemView<'_, S>,
 ) -> bool {
+    check_gray_square_qam_spec(view).is_ok()
+}
+
+/// SSOT for the Gray-square-QAM preset validity rules. Returns `Ok(())`
+/// iff `view` matches the canonical BPSK / Gray square-QAM layout; on
+/// failure returns an `Err(String)` with a descriptive message suitable
+/// for embedding in a panic. Both [`assert_valid_gray_square_qam_spec`]
+/// (asserting wrapper, used on the fast-path construction path) and
+/// [`is_valid_gray_square_qam_spec`] (non-panicking probe, used by
+/// `ModemSpec::preferred_*` to pick a backend) route through this one
+/// function so the two cannot drift.
+fn check_gray_square_qam_spec<S: ModemScalar>(
+    view: &super::ModemView<'_, S>,
+) -> Result<(), String> {
     let m = view.bits_per_symbol();
     if !matches!(m, 1 | 2 | 4 | 6 | 8) {
-        return false;
+        return Err(format!(
+            "bits_per_symbol {m} is not one of {{1, 2, 4, 6, 8}}"
+        ));
     }
     let expected_symbols = 1usize << m;
     if view.num_symbols() != expected_symbols {
-        return false;
+        return Err(format!(
+            "num_symbols {} does not match 2^bits_per_symbol {}",
+            view.num_symbols(),
+            expected_symbols
+        ));
     }
 
     let bit_channels = view.bit_channels();
     if bit_channels.len() != m as usize {
-        return false;
+        return Err(format!(
+            "bit_channels length {} != bits_per_symbol {}",
+            bit_channels.len(),
+            m
+        ));
     }
 
     if m == 1 {
         if bit_channels[0] != BitChannelSemantics::SingleAxisPam(0) {
-            return false;
+            return Err("BPSK spec must advertise SingleAxisPam(0)".into());
         }
     } else {
         let m_half = m / 2;
         for k in 0..m_half {
             if bit_channels[k as usize] != BitChannelSemantics::IAxisPam(k) {
-                return false;
+                return Err(format!(
+                    "bit {k} must be IAxisPam({k}) for Gray square-QAM preset"
+                ));
             }
         }
         for k in 0..m_half {
             if bit_channels[(m_half + k) as usize] != BitChannelSemantics::QAxisPam(k) {
-                return false;
+                return Err(format!(
+                    "bit {} must be QAxisPam({k}) for Gray square-QAM preset",
+                    m_half + k
+                ));
             }
         }
     }
 
     let caps = view.capabilities();
     if !(caps.supports_exact_log_map && caps.supports_max_log) {
-        return false;
+        return Err("spec must advertise both ExactLogMap and MaxLog support".into());
     }
 
+    // Level-set agreement: every symbol's I and Q coordinate must match
+    // the canonical Gray-PAM level table at the corresponding axis
+    // label. Tolerance is chosen to accept specs whose scalar storage
+    // was `f32` (round-trip through `ModemScalar::to_f64` incurs up to
+    // ~1e-7 absolute error) without letting genuinely mismatched
+    // permutations slip through.
     const LEVEL_TOL: f64 = 1e-6;
     let levels: Vec<f64> = gray_pam_levels::<f64>(m);
     if m == 1 {
-        if view.label(0).bits != 0 || view.label(1).bits != 1 {
-            return false;
+        // BPSK: labels must be [0, 1]; points must be (±level, shared_q).
+        if view.label(0).bits != 0 {
+            return Err(format!(
+                "BPSK spec must store label 0 at index 0, got {}",
+                view.label(0).bits
+            ));
+        }
+        if view.label(1).bits != 1 {
+            return Err(format!(
+                "BPSK spec must store label 1 at index 1, got {}",
+                view.label(1).bits
+            ));
         }
         let q0 = view.point(0).q.to_f64();
         let q1 = view.point(1).q.to_f64();
         if (q0 - q1).abs() >= 1e-9 {
-            return false;
+            return Err(format!(
+                "BPSK spec must place both points on a common Q coordinate \
+                 (got {q0} vs {q1}); the fast kernel drops Q as a common additive constant"
+            ));
         }
         for (idx, &want) in levels.iter().enumerate().take(2) {
             let got = view.point(idx).i.to_f64();
             if (got - want).abs() >= LEVEL_TOL {
-                return false;
+                return Err(format!(
+                    "BPSK spec I coordinate at index {idx} \
+                     ({got}) does not match canonical Gray-PAM level ({want})"
+                ));
             }
         }
     } else {
@@ -448,12 +386,21 @@ pub(crate) fn is_valid_gray_square_qam_spec<S: ModemScalar>(
             let got_q = p.q.to_f64();
             let want_i = levels[i_label];
             let want_q = levels[q_label];
-            if (got_i - want_i).abs() >= LEVEL_TOL || (got_q - want_q).abs() >= LEVEL_TOL {
-                return false;
+            if (got_i - want_i).abs() >= LEVEL_TOL {
+                return Err(format!(
+                    "I coordinate at symbol {idx} (i_label {i_label}) is {got_i}, \
+                     expected canonical Gray-PAM level {want_i}"
+                ));
+            }
+            if (got_q - want_q).abs() >= LEVEL_TOL {
+                return Err(format!(
+                    "Q coordinate at symbol {idx} (q_label {q_label}) is {got_q}, \
+                     expected canonical Gray-PAM level {want_q}"
+                ));
             }
         }
     }
-    true
+    Ok(())
 }
 
 /// Core builder for a Gray-coded square-QAM preset over any [`ModemScalar`].
