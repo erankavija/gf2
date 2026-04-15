@@ -675,6 +675,17 @@ pub struct PerBitChannelStats {
     /// Optional histogram of `L_k` given `B_k = 1`. Present iff the
     /// accumulator was built with [`PerBitLlrStats::with_histogram`].
     pub hist_bit1: Option<Histogram>,
+    /// Demapper method whose LLRs produced these statistics, or
+    /// `None` if the originating accumulator was never stamped (e.g.
+    /// built via the legacy `PerBitLlrStats::new` constructor and
+    /// fed untagged samples). `Some(DemapMethod::ExactLogMap)` vs.
+    /// `Some(DemapMethod::MaxLog)` distinguishes the two regimes
+    /// under which [`PerBitChannelStats::mutual_info_bits_gaussian_approximation`]
+    /// and [`per_bit_mi_histogram_bits`] have different interpretations
+    /// (see the module-level docs). Mixed streams would be rejected
+    /// by [`PerBitLlrStats::merge`] so this field, when `Some`, is
+    /// guaranteed to cover every sample in the accumulator.
+    pub demap_method: Option<super::DemapMethod>,
 }
 
 /// Gaussian approximation to mutual information in bits, using the
@@ -955,6 +966,14 @@ pub fn gmi_bits(stats: &[PerBitChannelStats], method: GmiMethod) -> f64 {
 #[derive(Debug, Clone)]
 pub struct PerBitLlrStats {
     bits_per_symbol: u8,
+    /// Demapper-method provenance for the LLRs this accumulator has
+    /// consumed. `None` on a newly-constructed accumulator; becomes
+    /// `Some(method)` as soon as an [`AnalysisCapture`](super::AnalysisCapture)
+    /// with a declared method writes into it (see
+    /// [`PerBitLlrStats::set_demap_method_once`]). `merge` rejects
+    /// heterogeneous methods so callers cannot silently mix e.g.
+    /// exact-log-MAP and max-log samples into one report.
+    demap_method: Option<super::DemapMethod>,
     bit0: Vec<RunningStats>,
     bit1: Vec<RunningStats>,
     abs_llr: Vec<RunningStats>,
@@ -994,6 +1013,7 @@ impl PerBitLlrStats {
         let m = bits_per_symbol as usize;
         Self {
             bits_per_symbol,
+            demap_method: None,
             bit0: vec![RunningStats::new(); m],
             bit1: vec![RunningStats::new(); m],
             abs_llr: vec![RunningStats::new(); m],
@@ -1062,6 +1082,80 @@ impl PerBitLlrStats {
     #[inline]
     pub fn bits_per_symbol(&self) -> u8 {
         self.bits_per_symbol
+    }
+
+    /// Returns the demapper method whose LLRs populated this
+    /// accumulator, or `None` if no tagged samples have been
+    /// accumulated yet.
+    ///
+    /// MI/GMI interpretation depends on the demapper method that
+    /// produced the LLRs (see the module-level docs). Once set, the
+    /// tag is part of every [`PerBitChannelStats::demap_method`] and
+    /// prevents [`PerBitLlrStats::merge`] from combining heterogeneous
+    /// streams.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::modem::analysis::PerBitLlrStats;
+    ///
+    /// let stats = PerBitLlrStats::new(1);
+    /// assert_eq!(stats.demap_method(), None);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
+    #[inline]
+    pub fn demap_method(&self) -> Option<super::DemapMethod> {
+        self.demap_method
+    }
+
+    /// Stamps the accumulator with the demapper method whose LLRs will
+    /// be accumulated. Idempotent when the stamp matches; panics on a
+    /// mismatch so a single `PerBitLlrStats` cannot silently span two
+    /// method regimes.
+    ///
+    /// Typically invoked by
+    /// [`AnalysisCapture::with_method`](super::AnalysisCapture::with_method)
+    /// rather than by users directly — the capture layer forwards the
+    /// method stamp from the `ChannelModel` into the accumulator on
+    /// the first batch.
+    ///
+    /// # Arguments
+    ///
+    /// * `method` — the demapper method that produced the LLRs about
+    ///   to be folded in.
+    ///
+    /// # Panics
+    ///
+    /// Panics if this accumulator was previously stamped with a
+    /// *different* method.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::modem::analysis::PerBitLlrStats;
+    /// use gf2_coding::modem::DemapMethod;
+    ///
+    /// let mut stats = PerBitLlrStats::new(1);
+    /// stats.set_demap_method_once(DemapMethod::ExactLogMap);
+    /// assert_eq!(stats.demap_method(), Some(DemapMethod::ExactLogMap));
+    /// // Idempotent on a matching re-stamp:
+    /// stats.set_demap_method_once(DemapMethod::ExactLogMap);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
+    pub fn set_demap_method_once(&mut self, method: super::DemapMethod) {
+        match self.demap_method {
+            None => self.demap_method = Some(method),
+            Some(existing) => assert_eq!(
+                existing, method,
+                "PerBitLlrStats was previously stamped with {existing:?}, cannot re-stamp with {method:?}"
+            ),
+        }
     }
 
     /// Folds a batch of demapper LLRs and matching truth bits into the
@@ -1181,6 +1275,20 @@ impl PerBitLlrStats {
             self.hist_cfg, other.hist_cfg,
             "merge: histogram configurations differ"
         );
+        // Demapper-method provenance: if both accumulators carry a
+        // stamp, the stamps must match — MI/GMI semantics differ
+        // between exact log-MAP and max-log, so silently combining
+        // them would yield un-interpretable summaries. If only one
+        // side is stamped, propagate that stamp into the merged
+        // accumulator.
+        match (self.demap_method, other.demap_method) {
+            (Some(a), Some(b)) => assert_eq!(
+                a, b,
+                "merge: demap_method mismatch ({a:?} vs {b:?}); refusing to combine heterogeneous LLR streams"
+            ),
+            (None, Some(b)) => self.demap_method = Some(b),
+            _ => {}
+        }
         let m = self.bits_per_symbol as usize;
         for k in 0..m {
             merge_running(&mut self.bit0[k], &other.bit0[k]);
@@ -1233,6 +1341,7 @@ impl PerBitLlrStats {
                     ),
                     hist_bit0: self.hist_bit0[k].clone(),
                     hist_bit1: self.hist_bit1[k].clone(),
+                    demap_method: self.demap_method,
                 }
             })
             .collect()

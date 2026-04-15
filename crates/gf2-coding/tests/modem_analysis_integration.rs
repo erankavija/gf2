@@ -269,6 +269,54 @@ fn test_analysis_capture_mismatched_demap_method_panics() {
 }
 
 #[test]
+fn test_analysis_report_carries_demap_method_provenance() {
+    // Criterion 2 export-side coverage: the method stamp survives
+    // through the runner into every PerBitChannelStats record that
+    // the caller reads from `stats.report()`. Without this the
+    // exported summary would have no way to tell downstream consumers
+    // whether its MI/GMI values describe exact log-MAP or max-log.
+    let channel = BpskAwgnChannel;
+    let config = bpsk_config();
+    let mut stats = PerBitLlrStats::new(1);
+    let mut rng = StdRng::seed_from_u64(config.rng_seed.unwrap());
+    {
+        let mut capture = AnalysisCapture::with_method(&mut stats, DemapMethod::ExactLogMap);
+        let _ = SimulationRunner::run_uncoded_ber_with_analysis(
+            &channel,
+            &config,
+            Some(&mut capture),
+            &mut rng,
+        );
+    }
+    let report = stats.report();
+    assert_eq!(report.len(), 1);
+    assert_eq!(
+        report[0].demap_method,
+        Some(DemapMethod::ExactLogMap),
+        "report must carry the demap method that produced the LLRs"
+    );
+}
+
+#[test]
+#[should_panic(expected = "merge: demap_method mismatch")]
+fn test_analysis_stats_merge_rejects_mismatched_demap_methods() {
+    // Criterion 2 merge-side coverage: two accumulators stamped with
+    // different DemapMethods cannot be silently combined. Without
+    // this check, callers could fold an ExactLogMap run and a MaxLog
+    // run into one report() and read a GMI value with no coherent
+    // interpretation.
+    use gf2_coding::llr::Llr;
+    let mut a = PerBitLlrStats::new(1);
+    let mut b = PerBitLlrStats::new(1);
+    a.set_demap_method_once(DemapMethod::ExactLogMap);
+    b.set_demap_method_once(DemapMethod::MaxLog);
+    // Accumulate something in each so merge is a real operation.
+    a.accumulate(&[Llr::new(1.0)], &[false]);
+    b.accumulate(&[Llr::new(1.0)], &[false]);
+    a.merge(b);
+}
+
+#[test]
 fn test_analysis_capture_retains_demap_method_tag() {
     // Criterion 2 basic coverage: the capture's tagged method is
     // queryable post-construction and preserved across use.
