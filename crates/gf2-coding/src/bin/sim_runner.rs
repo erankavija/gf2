@@ -241,12 +241,14 @@ struct TurboConfig {
     extrinsic_clamp: Option<f32>,
     list_size: usize,
     max_queries: usize,
-    /// Paper-aligned list-BLER early-stop threshold.
+    /// Paper-aligned per-component list-BLER early-stop threshold.
     ///
     /// When set, each SOGRAND component decode exits as soon as the list
     /// has `list_size` codewords OR the predicted list-BLER drops below
-    /// this value. The same threshold also drives turbo-level early
-    /// termination. Typical values: `1e-4` for AWGN product codes,
+    /// this value. The turbo loop itself still terminates only when every
+    /// row and every column of the hard decision is a valid component
+    /// codeword (paper § V, step 1); the threshold is not applied at the
+    /// turbo level. Typical values: `1e-4` for AWGN product codes,
     /// `1e-5` for the GLDPC configuration (see SO-GRAND paper Figs 1/7/8).
     list_bler_threshold: Option<f64>,
     /// Disable early termination (always run max_iterations).
