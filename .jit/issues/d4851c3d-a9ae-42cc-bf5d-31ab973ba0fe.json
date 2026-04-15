@@ -27,6 +27,13 @@
       "label": "Project-lead session handoff (2026-04-13)",
       "doc_type": "notes",
       "format": "markdown"
+    },
+    {
+      "path": "docs/presentations/d4851c3d-modem-framework.html",
+      "commit": null,
+      "label": "Modem framework for gf2 — researcher-facing highlights (revealjs)",
+      "doc_type": "presentation",
+      "format": "markdown"
     }
   ],
   "labels": [
@@ -34,5 +41,5 @@
     "component:gf2-coding"
   ],
   "created_at": "2026-02-21T19:35:51.598964928+00:00",
-  "updated_at": "2026-04-15T08:37:47.367406617+00:00"
+  "updated_at": "2026-04-15T12:11:15.342435730+00:00"
 }
