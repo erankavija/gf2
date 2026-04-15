@@ -2,9 +2,9 @@
   "id": "19069bc1-2010-4a41-804e-316036ec3e11",
   "title": "Prototype a GPU batch demapper backend",
   "description": "Prototype a GPU demapper that uses the shared batch-oriented modem interface without changing the high-level API. This story is conditional work that follows the CPU scalar and SIMD implementation, and exists to measure whether demapping has a worthwhile GPU crossover.\n\n## Background\n\nThe repository already contains a dedicated GPU kernel crate, so there is a natural place for experimental accelerator work. For this epic, GPU support is exploratory rather than mandatory: the primary deliverable is the CPU scalar and SIMD framework, and this story is used to determine whether modem demapping should also have a GPU branch.\n\n## Success Criteria\n\n- [ ] A GPU prototype consumes the same batch demapper input and output shape, LLR ordering, and modem metadata semantics as the CPU fast path.\n- [ ] The prototype does not require a second public modem API or public API divergence from the shared modem surface.\n- [ ] The crossover report records tested hardware, batch sizes, demapper mode, and the resulting ship, experimental, or defer decision.\n\n## Notes\n\nThis story should remain conditional and should not block the core modem framework from shipping.",
-  "state": "backlog",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [
     "9c37ec8c-f310-47f8-b54e-ba4a41143b0c",
     "92186a40-1d97-49f9-8b82-e91b8afe47b2"
@@ -15,7 +15,23 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-15T05:14:22.838588955Z"
+    },
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-15T05:14:16.997172747Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-15T05:14:22.064098691Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -24,5 +40,5 @@
     "epic:d4851c3d"
   ],
   "created_at": "2026-04-12T19:39:51.672221548+00:00",
-  "updated_at": "2026-04-12T21:37:10.908341273+00:00"
+  "updated_at": "2026-04-15T05:18:42.785484952+00:00"
 }
