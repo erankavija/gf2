@@ -70,12 +70,19 @@ Two criterion benches, both run with `--quick --warm-up-time 1
 
 2. **CPU scalar vs CPU AVX2 kernel** —
    `crates/gf2-coding/benches/cpu_dispatch_probe.rs` (new, this issue).
-   Compares `scalar_fns_f64` against `detect_f64` (resolved AVX2) at
-   the same orders × batches sweep, benching the raw
-   `pam_sq_distances_fn` kernel that `FastGrayQamDemapper` dispatches
-   through. Single-axis only — the QAM demapper calls the kernel twice
-   per batch (I + Q) so the AVX2 savings on the full demap are
-   approximately double the per-axis numbers reported here.
+   Contains **two** criterion groups:
+
+   - `pam_sq_distance/order=*` benches the raw
+     `pam_sq_distances_fn` kernel (scalar vs `detect_f64`). Single-axis
+     only — the QAM demapper calls the kernel twice per batch (I + Q)
+     so the AVX2 savings on the full demap are approximately double
+     these per-axis numbers.
+   - `full_demapper/order=*` benches `FastGrayQamDemapper::demap_llrs`
+     end-to-end with the kernel pinned to scalar
+     (via `FastGrayQamDemapper::new_with_scalar_kernel`) and with
+     the default auto-dispatched kernel (AVX2 on this host). This
+     captures per-symbol validation/allocation/reduction overhead
+     that the kernel-only bench omits.
 
 ### Confidence interval shape
 
@@ -158,17 +165,41 @@ GPU-vs-CPU criterion bench. GPU numbers come from
 baseline is measured by the `full_demapper/order=*/scalar` group in
 `crates/gf2-coding/benches/cpu_dispatch_probe.rs`, which constructs a
 `FastGrayQamDemapper` via `FastGrayQamDemapper::new_with_scalar_kernel`
-so kernel dispatch is pinned to scalar even on AVX2 hosts. Re-running
-that bench on this host mirrors the per-axis kernel ratios above
-(AVX2 is ~2.0–2.7× faster than scalar for the full demap), which
-means the per-order GPU crossover is tighter against scalar hosts
-than the AVX2 numbers in the table suggest.
+so kernel dispatch is pinned to scalar even on AVX2 hosts. The
+measured full-demapper scalar vs AVX2 speedup is much lower than the
+per-axis kernel speedup above: roughly 1.04–1.20× across the sweep
+(table below), because `FastGrayQamDemapper::demap_llrs` spends
+substantial time in per-symbol validation, allocation, and LLR
+reduction that the kernel does not touch.
+
+### Full-demapper scalar vs CPU AVX2 (µs per batch, median `--quick`)
+
+| order | batch | scalar (µs) | best/AVX2 (µs) | scalar/best |
+|------:|------:|------------:|---------------:|------------:|
+|     4 |   256 |        4.27 |           3.68 |       1.16× |
+|     4 |  1024 |       17.2  |          14.5  |       1.19× |
+|     4 |  4096 |       67.4  |          56.2  |       1.20× |
+|     4 | 16384 |      268.9  |         225.6  |       1.19× |
+|    16 |   256 |        8.07 |           7.29 |       1.11× |
+|    16 |  1024 |       35.4  |          31.6  |       1.12× |
+|    16 |  4096 |      152.3  |         132.3  |       1.15× |
+|    16 | 16384 |      613.0  |         541.4  |       1.13× |
+|    64 |   256 |       16.5  |          14.8  |       1.11× |
+|    64 |  1024 |       68.1  |          61.5  |       1.11× |
+|    64 |  4096 |      278.6  |         253.5  |       1.10× |
+|    64 | 16384 |     1119    |        1008    |       1.11× |
+|   256 |   256 |       35.1  |          33.5  |       1.05× |
+|   256 |  1024 |      140.7  |         135.0  |       1.04× |
+|   256 |  4096 |      573.0  |         544.1  |       1.05× |
+|   256 | 16384 |     3512    |        3385    |       1.04× |
 
 ## Crossover analysis
 
 Define the crossover batch as the smallest measured batch at which the
-GPU's median per-batch time is less than or equal to the CPU AVX2
+GPU's median per-batch time is less than or equal to the CPU
 fast-path median.
+
+### GPU vs CPU AVX2 (primary reference)
 
 | order | GPU crossover batch | comment |
 |------:|--------------------:|---------|
@@ -176,6 +207,23 @@ fast-path median.
 |    16 | ~4096 | GPU loses at 1k by 2×, wins at 4k by 2× |
 |    64 | ~1024 | GPU essentially at parity at 1k, pulls away from there |
 |   256 | ~1024 | GPU wins by ~2× at 1k, by ~27× at 16k |
+
+### GPU vs CPU scalar full-demapper (scalar-host reference)
+
+Computed from the measured full-demapper scalar times above against
+the same GPU table:
+
+| order | GPU crossover batch | comment |
+|------:|--------------------:|---------|
+|     4 | 4096 (slight), 16384 (clear) | scalar 67.4/268.9 µs vs GPU 61.9/75.2 µs |
+|    16 | 4096 | scalar 152 µs vs GPU 67 µs — GPU wins by ~2.3× at 4k, ~6.9× at 16k |
+|    64 | 1024 (slight) / 4096 (clear) | scalar 68.1 µs vs GPU 59.9 µs → GPU wins 1.14× at 1k, 10.9× at 16k |
+|   256 | 1024 | scalar 141 µs vs GPU 64.6 µs — GPU wins 2.2× at 1k, 29.4× at 16k |
+
+GPU still loses at batch = 256 on every order even against a
+scalar-only CPU host. Against scalar hosts the GPU wins sooner at
+QPSK and 16-QAM than it does against an AVX2 host, but the ~57–63 µs
+GPU floor still dominates small batches.
 
 **GPU always loses at batch = 256 across all orders.** The ~57–63 µs
 GPU floor dominates when there are fewer than ~1000 symbols to
@@ -187,8 +235,11 @@ between-runs variance for short criterion runs on a shared desktop.
 AVX2 is unambiguously faster than scalar on the per-axis kernel —
 roughly 2.0–2.7× across the sweep, with a weak maximum near 16-QAM/64-
 QAM where the axis length (`sqrt(M) ∈ {4, 8}`) fills the AVX2 lane
-count well. Full-demapper AVX2 speedup would be similar since the
-axis kernel dominates the per-symbol work.
+count well. The end-to-end full-demapper speedup is much smaller
+(1.04–1.20×, see the table above) because the kernel is only one
+step in `demap_llrs`: per-symbol validation, allocation, and LLR
+reduction dominate the budget for larger `M` and/or small batches
+and do not benefit from AVX2 vector lanes.
 
 ## Caveats
 
