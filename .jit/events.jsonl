@@ -2047,3 +2047,11 @@
 {"type":"gate_passed","id":"acb093c5-81ac-475a-aee2-8314f82ffb35","issue_id":"e2c0f65a-5e65-4cfc-abdd-e65377f7da2b","timestamp":"2026-04-15T07:59:20.621697626Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
 {"type":"gate_failed","id":"bcb5ae20-1a75-4476-b16b-aab7666275d9","issue_id":"e2c0f65a-5e65-4cfc-abdd-e65377f7da2b","timestamp":"2026-04-15T08:08:03.657396375Z","gate_key":"code-review","updated_by":"auto:executor"}
 {"type":"gate_failed","id":"75f155dd-7a18-42c3-a470-9ee000fcce2e","issue_id":"e2c0f65a-5e65-4cfc-abdd-e65377f7da2b","timestamp":"2026-04-15T08:16:52.358200924Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"f66a8efd-9289-419c-b461-fea362e0ae42","issue_id":"e2c0f65a-5e65-4cfc-abdd-e65377f7da2b","timestamp":"2026-04-15T08:22:24.376523330Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"57b5e437-d833-4f80-9f84-191389f4cdc4","issue_id":"e2c0f65a-5e65-4cfc-abdd-e65377f7da2b","timestamp":"2026-04-15T08:31:04.841707010Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"4844992f-c26f-4e05-8968-f6509e679521","issue_id":"e2c0f65a-5e65-4cfc-abdd-e65377f7da2b","timestamp":"2026-04-15T08:37:23.871121761Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"378a51e5-fc9c-44d5-90da-1ab889ca5d42","issue_id":"e2c0f65a-5e65-4cfc-abdd-e65377f7da2b","timestamp":"2026-04-15T08:37:36.024170608Z","gate_key":"doc-review","updated_by":"agent:project-lead"}
+{"type":"issue_state_changed","id":"57f73931-ff92-4a36-a15a-f61d2d2923e3","issue_id":"e2c0f65a-5e65-4cfc-abdd-e65377f7da2b","timestamp":"2026-04-15T08:37:36.037435158Z","from":"in_progress","to":"done"}
+{"type":"issue_completed","id":"d66824db-9985-40aa-8e8c-1f51484d6a11","issue_id":"e2c0f65a-5e65-4cfc-abdd-e65377f7da2b","timestamp":"2026-04-15T08:37:36.037468218Z"}
+{"type":"issue_state_changed","id":"6880e85b-5765-4336-8756-6ef118d8a588","issue_id":"d4851c3d-a9ae-42cc-bf5d-31ab973ba0fe","timestamp":"2026-04-15T08:37:47.367356807Z","from":"in_progress","to":"done"}
+{"type":"issue_completed","id":"3de8b6c4-7f54-4fbc-a9f0-d6a34a544489","issue_id":"d4851c3d-a9ae-42cc-bf5d-31ab973ba0fe","timestamp":"2026-04-15T08:37:47.367391207Z"}
