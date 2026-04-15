@@ -18,32 +18,13 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 
 use gf2_coding::llr::Llr;
-use gf2_coding::modem::test_oracle::Lcg;
 use gf2_coding::modem::{
     BatchSoftDemapper, DemapInput, DemapMethod, FastGrayQamDemapper, GpuGrayQamSoftDemapper,
-    ModemSpec,
 };
 
-fn spec_for_order(order: usize) -> ModemSpec<f32> {
-    if order == 2 {
-        ModemSpec::<f32>::bpsk()
-    } else {
-        ModemSpec::<f32>::gray_square_qam(order)
-    }
-}
-
-fn gen_batch(order: usize, batch: usize, seed: u64) -> (Vec<f32>, Vec<f32>, Vec<f32>) {
-    let mut rng = Lcg::new(seed ^ (order as u64));
-    let mut rx_i = Vec::with_capacity(batch);
-    let mut rx_q = Vec::with_capacity(batch);
-    let mut nv = Vec::with_capacity(batch);
-    for _ in 0..batch {
-        rx_i.push(rng.next_unit_f32() * 2.0);
-        rx_q.push(rng.next_unit_f32() * 2.0);
-        nv.push(rng.next_positive_f32(0.05, 2.0));
-    }
-    (rx_i, rx_q, nv)
-}
+#[path = "../tests/gpu_bench_support.rs"]
+mod gpu_bench_support;
+use gpu_bench_support::{gen_batch, spec_for_order};
 
 fn bench_gpu_vs_cpu(c: &mut Criterion) {
     // Moderate range — the crossover is the point of interest, not a

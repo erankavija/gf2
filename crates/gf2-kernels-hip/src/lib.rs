@@ -694,13 +694,29 @@ impl GpuGrayQamDemapper {
         // pointers (see hip/gray_qam_demapper.hip), so passing their
         // current device addresses (unchanged since construction) is
         // safe either way.
+        // Gain buffer pointers: when `gains_present == 0` the kernel
+        // promises not to dereference these, but we still pass literal
+        // nulls to make the FFI contract explicit — no "trusted
+        // non-null" implicit coupling between the Rust wrapper and the
+        // device kernel. This also keeps the unsafe block narrow: the
+        // non-null path dereferences device-owned allocations that
+        // outlive the launch; the null path has no reachable load at
+        // all.
+        let (gain_i_ptr, gain_q_ptr) = if gains_present {
+            (
+                self.d_gain_i.as_ptr() as *const f32,
+                self.d_gain_q.as_ptr() as *const f32,
+            )
+        } else {
+            (ptr::null::<f32>(), ptr::null::<f32>())
+        };
         check_hip(
             unsafe {
                 ffi::launch_gray_qam_demap(
                     self.d_rx_i.as_ptr() as *const f32,
                     self.d_rx_q.as_ptr() as *const f32,
-                    self.d_gain_i.as_ptr() as *const f32,
-                    self.d_gain_q.as_ptr() as *const f32,
+                    gain_i_ptr,
+                    gain_q_ptr,
                     self.d_noise_var.as_ptr() as *const f32,
                     self.d_pam_levels.as_ptr() as *const f32,
                     self.d_out_llrs.as_mut_ptr() as *mut f32,

@@ -11,34 +11,15 @@
 //! tests so `cargo test` has no silent-no-assertion probes.
 
 use gf2_coding::llr::Llr;
-use gf2_coding::modem::test_oracle::Lcg;
 use gf2_coding::modem::{
     BatchSoftDemapper, DemapInput, DemapMethod, FastGrayQamDemapper, GpuGrayQamSoftDemapper,
     ModemSpec,
 };
+use gf2_core::rng::Lcg;
 
-fn spec_for_order(order: usize) -> ModemSpec<f32> {
-    if order == 2 {
-        ModemSpec::<f32>::bpsk()
-    } else {
-        ModemSpec::<f32>::gray_square_qam(order)
-    }
-}
-
-fn gen_batch(order: usize, batch: usize, seed: u64) -> (Vec<f32>, Vec<f32>, Vec<f32>) {
-    let mut rng = Lcg::new(seed ^ (order as u64));
-    let mut rx_i = Vec::with_capacity(batch);
-    let mut rx_q = Vec::with_capacity(batch);
-    let mut nv = Vec::with_capacity(batch);
-    // Scale of 2.0 keeps samples well inside [-2, +2] which covers the
-    // unit-average-energy Gray-QAM constellations for m up to 8.
-    for _ in 0..batch {
-        rx_i.push(rng.next_unit_f32() * 2.0);
-        rx_q.push(rng.next_unit_f32() * 2.0);
-        nv.push(rng.next_positive_f32(0.05, 2.0));
-    }
-    (rx_i, rx_q, nv)
-}
+#[path = "gpu_bench_support.rs"]
+mod gpu_bench_support;
+use gpu_bench_support::{gen_batch, spec_for_order};
 
 fn assert_close(gpu: &[Llr], cpu: &[Llr], tol: f32, ctx: &str) {
     assert_eq!(gpu.len(), cpu.len(), "{ctx}: length mismatch");
