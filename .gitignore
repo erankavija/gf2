@@ -44,3 +44,7 @@ target/charon/
 .jit/gate-runs/
 .claude/worktrees/
 crates/gf2-kernels-hip/target/
+
+# sim_runner transient progress logs (final results live in
+# .csv / .json next to them)
+dev/simulation_results/*.progress.jsonl
