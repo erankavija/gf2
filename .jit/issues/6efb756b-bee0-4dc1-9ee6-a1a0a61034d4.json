@@ -2,7 +2,7 @@
   "id": "6efb756b-bee0-4dc1-9ee6-a1a0a61034d4",
   "title": "Implement GRAND (Guessing Random Additive Noise Decoding)",
   "description": "Implement the GRAND (Guessing Random Additive Noise Decoding) family of decoders and reproduce the key simulation results from Yuan, Médard, Galligan & Duffy, *\"Soft-output (SO) GRAND and Iterative Decoding to Outperform LDPCs\"*.\n\n## Goal\n\nIndependently verify that simple product codes decoded with SOGRAND can outperform 5G NR LDPC codes (BP/min-sum) in AWGN and fading channels.\n\n## Success Criteria\n\n1. ORBGRAND decoder correctly performs ML decoding on short codes with list mode and even-code optimization\n2. SOGRAND produces accurate per-bit APP LLR soft outputs with \"not found\" probability term\n3. Product code block turbo decoder converges using SISO-SOGRAND components\n4. 5G NR LDPC codes constructed from 3GPP TS 38.212 BG1/BG2 with rate matching\n5. LDPC BP baseline matches paper's curves within ~0.1 dB for all target code dimensions\n6. AWGN simulations (Figs 1, 3-6) reproduce paper's product-code-outperforms-LDPC result\n7. GLDPC simulation (Fig 7) reproduces paper's QC-GLDPC result\n8. Fading simulations (Figs 8-10) reproduce paper's fading channel results\n9. Reference data extracted from paper's pgfplots files for automated comparison\n\n## Open Issues\n\n**QC-GLDPC dimension discrepancy:** The Lentmaier (2010) QC construction with eBCH(32,26) yields (1024, 646) instead of the ideal (1024, 640). The QC circulant adjacency structure introduces 6 linearly dependent rows in H. This must be revisited before closing the epic — options include: (a) accepting the rate difference (0.631 vs 0.625) as negligible for the paper comparison, (b) finding a modified construction that achieves exact rank, or (c) using a different component code. The simulation in Fig 7 should document which parameters were actually used.\n\n## Key Components\n\n1. **5G NR LDPC codes** — BG1/BG2 base matrices from 3GPP TS 38.212, lifting factor selection, rate matching. Currently a stub in `ldpc/nr_5g.rs`.\n2. **ORBGRAND decoder** — Ordered Reliability Bits GRAND with logistic-weight noise pattern ordering, syndrome-based codebook membership test, list decoding mode, even-code parity optimization.\n3. **SOGRAND soft-output** — Per-block APP computation (Corollary 1): accurate estimate of decoding correctness including \"not found\" probability term `(2^k-1)/(2^n-1)`. Per-bit LLR output (eq. 17) as weighted mixture of list + channel fallback.\n4. **Product code turbo decoder** — Block turbo decoding with SISO-SOGRAND component decoder, extrinsic LLR scaling (α=0.5), max 20 iterations, early termination on valid product codeword.\n5. **Component codes** — eBCH(16,11), eBCH(16,7), eBCH(32,26), eBCH(64,57), dRM(32,21), CRC(25,15) as short block codes for GRAND decoding.\n6. **Simulation infrastructure** — Coded BER/FER simulation harness, fading channels (Rician), QPSK modulation.\n\n## Target Simulations\n\n- AWGN: (256,121), (256,49), (625,225), (1024,441), (4096,3249) product codes vs 5G NR LDPC\n- AWGN: (1024,646) QC-GLDPC vs 5G NR LDPC (see Open Issues for dimension note)\n- Fading: (1024,441), (1024,676), (4096,3249) product codes vs 5G NR LDPC with Rician fading + QPSK\n\n## Validation\n\nReference data extracted from paper's pgfplots `.tex` files in `~/Projects/so-grand/img_PY/`. Our LDPC BP baseline should match paper's curves within ~0.1 dB.\n\nSee spec: `dev/plans/grand_5gnr_ldpc_comparison.md`\"",
-  "state": "in_progress",
+  "state": "done",
   "priority": "low",
   "assignee": "agent:project-lead",
   "dependencies": [
@@ -28,6 +28,26 @@
       "label": "Session handover 2026-04-10",
       "doc_type": "notes",
       "format": "markdown"
+    },
+    {
+      "path": "dev/active/6efb756b-completion-report.md",
+      "commit": null,
+      "label": "Epic Completion Report",
+      "doc_type": "notes",
+      "format": "markdown"
+    },
+    {
+      "path": "dev/active/6efb756b-session-handoff-2026-04-16.md",
+      "commit": null,
+      "label": "Session handoff 2026-04-16 (even-code lead)",
+      "doc_type": "notes",
+      "format": "markdown"
+    },
+    {
+      "path": "docs/presentations/6efb756b-grand-sogrand.html",
+      "commit": null,
+      "label": "Epic closeout presentation (GRAND/SOGRAND math + Fig 4/5/6 paper comparison)",
+      "doc_type": "presentation"
     }
   ],
   "labels": [
@@ -36,5 +56,5 @@
     "epic:grand"
   ],
   "created_at": "2026-02-21T19:35:51.613833285+00:00",
-  "updated_at": "2026-04-09T22:19:14.962178450+00:00"
+  "updated_at": "2026-04-16T22:46:51.666562177+00:00"
 }
