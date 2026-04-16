@@ -300,7 +300,12 @@ impl SoGrand {
         // Step 1: Run ORBGRAND in list mode
         let orb_result = self.decoder.decode(input_llrs);
 
-        // Step 2: Compute per-block APP and the "not found" probability
+        // Step 2: Compute per-block APP and the "not found" probability.
+        // `compute_block_apps` now consults `orb_result.log_parity_cap`
+        // and `orb_result.even_code` so that the APP denominator is
+        // paper-aligned for even codes (SO-GRAND eq. (17) with
+        // `P_notGuess` initialised from the parity mass and the
+        // codebook ratio using `2^-(s-1)`).
         let (log_apps, log_p_not_in_list) = compute_block_apps(&orb_result, n, k);
 
         // Step 3: Compute per-bit APP LLRs (eq. 17)
@@ -354,19 +359,26 @@ fn compute_block_apps(orb_result: &OrbGrandResult, n: usize, k: usize) -> (Vec<f
         .map(|cw| cw.noise_log_probability)
         .fold(f64::NEG_INFINITY, log_sum_exp);
 
-    // log(1 - sum_cumulative): the probability mass NOT yet tested
-    // Uses log1p(-exp(x)) for stability when cumulative is close to 1
-    let log_one_minus_cumulative = log1mexp(orb_result.cumulative_log_probability);
+    // Untested-mass ceiling is `log_parity_cap`, which is `log(1) = 0`
+    // for non-even codes and `log P(parity(Z) = hard_parity)` for even
+    // codes (see `OrbGrandResult::log_parity_cap`). This is the
+    // paper-aligned `P_notGuess` initial value (SO-GRAND §III / eq.
+    // (17)): the untested pool never exceeds the parity-consistent
+    // half for even codes.
+    let log_not_tested_mass = log_cap_minus_exp(
+        orb_result.cumulative_log_probability,
+        orb_result.log_parity_cap,
+    );
 
-    // log((2^k - 1) / (2^n - 1)): ratio of codewords to total words
-    // For stability with large n, k, use the identity:
-    // (2^k - 1)/(2^n - 1) = (2^k - 1) / (2^n - 1)
-    // When n and k are moderate (< 64), direct computation is fine.
-    let log_codebook_ratio = log_codebook_ratio(n, k);
+    // log((2^k - 1) / (2^n - 1)) for general codes, or
+    // log((2^k - 1) / (2^(n-1) - 1)) ≈ 2^-(s-1) for even codes
+    // (paper eq. (17) correction: all 2^k codewords carry the
+    // hard-decision parity while only 2^(n-1) binary words do).
+    let log_codebook_ratio = log_codebook_ratio_for_code(n, k, orb_result.even_code);
 
     // log of the "not found" unnormalized weight:
-    // log((1 - sum_cumulative) * (2^k - 1) / (2^n - 1))
-    let log_not_found_unnorm = log_one_minus_cumulative + log_codebook_ratio;
+    // log(P_notGuess * codebook_ratio)
+    let log_not_found_unnorm = log_not_tested_mass + log_codebook_ratio;
 
     // Denominator: log(sum_list + not_found_unnorm)
     let log_denominator = log_sum_exp(log_sum_list, log_not_found_unnorm);
@@ -428,11 +440,28 @@ fn compute_per_bit_app_llrs(
             }
 
             // Add the "not found" fallback term.
-            // Factor of 2 (LN_2) accounts for uniform prior P(c_i=b)=0.5:
-            // the paper's formula (eq. 17) uses the likelihood ratio
-            // P(y_i|c_i=b)/P(y_i) = P(c_i=b|y_i)/P(c_i=b) = 2*P(c_i=b|y_i).
-            let log_fallback_0 = log_p_not_in_list + log_p_bit0_channel + std::f64::consts::LN_2;
-            let log_fallback_1 = log_p_not_in_list + log_p_bit1_channel + std::f64::consts::LN_2;
+            //
+            // Paper SO-GRAND eq. (17) (`eq:LLRi`) is
+            //   L_APP,i = log [ Σ_{c ∈ L, c_i = 0} p(c | r^n)
+            //                   + p(C \\ L | r^n) · p(x_i = 0 | r_i)
+            //                 / Σ_{c ∈ L, c_i = 1} p(c | r^n)
+            //                   + p(C \\ L | r^n) · p(x_i = 1 | r_i) ]
+            // where `p(x_i = b | r_i)` is the channel bit POSTERIOR
+            // (paper § III.C defines `L_APP,i = log p_{X_i | R}(0 | r)
+            // / p_{X_i | R}(1 | r)`, i.e., the APP ratio is over
+            // posteriors, not likelihoods). `P_notL` is jointly
+            // normalised with the list APPs in `compute_block_apps`
+            // (sum_L APP + P_notL = 1), so summing the fallback over
+            // bit values yields `P_notL · (p(0|r_i) + p(1|r_i)) =
+            // P_notL`, and sum_list + P_notL = 1 — no extra factor-of-2
+            // adjustment. An earlier formulation scaled the fallback by
+            // `LN_2` under the mistaken reading that the paper's
+            // fallback used the likelihood ratio `p(y | c_i = b) / p(y)
+            // = 2 · p(c_i = b | y)`; doing so double-counts the
+            // fallback mass and pulls `L_APP,i` toward the channel in
+            // the mixed regime.
+            let log_fallback_0 = log_p_not_in_list + log_p_bit0_channel;
+            let log_fallback_1 = log_p_not_in_list + log_p_bit1_channel;
 
             let log_numerator = log_sum_exp(log_sum_0, log_fallback_0);
             let log_denominator_bit = log_sum_exp(log_sum_1, log_fallback_1);
@@ -484,6 +513,70 @@ pub(super) fn log_codebook_ratio(n: usize, k: usize) -> f64 {
         // Approximation for large n, k
         (k as f64 - n as f64) * std::f64::consts::LN_2
     }
+}
+
+/// Paper-aligned codebook-ratio with optional even-code correction.
+///
+/// For a general code the "not found" weight in the SO-GRAND APP
+/// denominator uses `(2^k − 1) / (2^n − 1) ≈ 2^−s` where `s = n − k`.
+/// For an even code (every codeword has even Hamming weight) only the
+/// parity-consistent half of the `2^n` binary words is reachable by the
+/// noise, while all `2^k` codewords still are, so the ratio doubles:
+/// `(2^k − 1) / (2^(n−1) − 1) ≈ 2^−(s−1)` — the paper's eq. (17) uses
+/// `s − 1` in the even-code exponent for exactly this reason.
+///
+/// In the log domain this is [`log_codebook_ratio`] + `ln(2)` (the
+/// `−1`-in-the-exponent adjustment), with a small exact correction in
+/// the `n ≤ 63` branch because `2^(n−1) − 1` is not exactly half of
+/// `2^n − 1`.
+pub(super) fn log_codebook_ratio_for_code(n: usize, k: usize, even_code: bool) -> f64 {
+    if !even_code {
+        return log_codebook_ratio(n, k);
+    }
+    if (1..=63).contains(&n) && k <= 63 {
+        let numerator = (1u64 << k) as f64 - 1.0;
+        // 2^(n-1) - 1 is the count of parity-consistent non-zero binary
+        // words. For n = 1 this is 0, but even codes of length 1 are
+        // degenerate (only the zero codeword); fall through to the
+        // ln(2)-shift approximation in that corner.
+        let denominator = (1u64 << (n - 1)) as f64 - 1.0;
+        if denominator > 0.0 {
+            return (numerator / denominator).ln();
+        }
+    }
+    // Large-n approximation: 2^(k - (n - 1)) = 2 · 2^(k - n).
+    log_codebook_ratio(n, k) + std::f64::consts::LN_2
+}
+
+/// Compute `log(exp(cap) - exp(x))` stably for `x <= cap`.
+///
+/// Paper-aligned "untested mass" helper: SO-GRAND's `P_notGuess` starts
+/// at `exp(cap)` (= 1 in general, `prob_parity(hard_parity, |L|)` for
+/// even codes) and decrements by the probability of each tested
+/// pattern, so after `Q` queries the remaining mass is
+/// `exp(cap) - exp(cumulative_log_prob)`.
+///
+/// Equal to `cap + log1mexp(x - cap)` (Machler 2012 numerics), which
+/// specialises to `log1mexp(x)` when `cap = 0`.
+///
+/// # Returns
+///
+/// - `cap + log1mexp(x - cap)` when `x <= cap`.
+/// - `f64::NEG_INFINITY` when `x >= cap` (untested mass is 0 or
+///   numerically negative — can happen after floating-point noise
+///   when the scan exhausts the reachable mass).
+pub(super) fn log_cap_minus_exp(x: f64, cap: f64) -> f64 {
+    if !cap.is_finite() && cap == f64::NEG_INFINITY {
+        // No reachable mass at all: degenerate. Untested = 0.
+        return f64::NEG_INFINITY;
+    }
+    if x == f64::NEG_INFINITY {
+        return cap;
+    }
+    if x >= cap {
+        return f64::NEG_INFINITY;
+    }
+    cap + log1mexp(x - cap)
 }
 
 /// Import the numerically stable `ln(1 + exp(x))` from orbgrand.
@@ -606,6 +699,139 @@ mod tests {
         );
     }
 
+    #[test]
+    fn test_log_codebook_ratio_for_code_non_even_matches_baseline() {
+        // Non-even flag delegates to log_codebook_ratio.
+        for (n, k) in [(7, 4), (16, 11), (32, 26), (64, 57)] {
+            let baseline = log_codebook_ratio(n, k);
+            let general = log_codebook_ratio_for_code(n, k, false);
+            assert!(
+                (baseline - general).abs() < 1e-12,
+                "({n},{k}) baseline={baseline} general={general}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_log_codebook_ratio_for_code_even_is_ln2_shift() {
+        // Even-code correction is (approximately) `+ ln(2)` relative to
+        // the general ratio — exactly so in the large-n approximation,
+        // and very close for moderate n (the exact form uses
+        // `2^(n-1) - 1` rather than `(2^n - 1)/2`).
+        let ln2 = std::f64::consts::LN_2;
+        for (n, k) in [(16, 11), (32, 26), (64, 57)] {
+            let general = log_codebook_ratio_for_code(n, k, false);
+            let even = log_codebook_ratio_for_code(n, k, true);
+            let shift = even - general;
+            assert!(
+                (shift - ln2).abs() < 5e-3,
+                "({n},{k}) shift={shift}, expected ≈ ln2={ln2}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_log_cap_minus_exp_cap_one_matches_log1mexp() {
+        // When cap = 0 (= log 1), log_cap_minus_exp(x, 0) = log1mexp(x).
+        for x in [-10.0, -1.0, -0.5, -0.1, -0.01] {
+            let cap = log_cap_minus_exp(x, 0.0);
+            let base = log1mexp(x);
+            assert!((cap - base).abs() < 1e-12, "x={x}: cap={cap} base={base}");
+        }
+    }
+
+    #[test]
+    fn test_log_cap_minus_exp_decrements_under_parity_cap() {
+        // With a parity cap at -ln 2 (≈ 0.5 total mass), untested mass
+        // starts at the cap when x = -inf and drops to -inf as x → cap.
+        let cap = -std::f64::consts::LN_2;
+        // At x = -inf, untested = cap.
+        assert!((log_cap_minus_exp(f64::NEG_INFINITY, cap) - cap).abs() < 1e-12);
+        // At x = cap, untested = 0 → -inf.
+        assert_eq!(log_cap_minus_exp(cap, cap), f64::NEG_INFINITY);
+        // At x = cap - 0.1, untested = cap + log1p(-exp(-0.1)).
+        let x = cap - 0.1;
+        let val = log_cap_minus_exp(x, cap);
+        let expected = cap + (1.0 - (-0.1_f64).exp()).ln();
+        assert!(
+            (val - expected).abs() < 1e-10,
+            "log_cap_minus_exp({x}, {cap}) = {val}, expected {expected}"
+        );
+    }
+
+    #[test]
+    fn test_log_cap_minus_exp_x_above_cap_returns_neg_inf() {
+        // x > cap can only happen via numerical overshoot when the scan
+        // exhausts the reachable mass; return -inf to avoid NaN.
+        assert_eq!(log_cap_minus_exp(-0.1, -0.2), f64::NEG_INFINITY);
+    }
+
+    #[test]
+    fn test_log_prob_parity_all_zero_llr_is_uniform() {
+        // |L| = 0 ⇒ tanh(0) = 0 ⇒ product = 0 ⇒ P(parity) = 0.5.
+        use crate::grand::orbgrand::log_prob_parity;
+        let absl = vec![0.0, 0.0, 0.0];
+        let even = log_prob_parity(&absl, false);
+        let odd = log_prob_parity(&absl, true);
+        let ln_half = -std::f64::consts::LN_2;
+        assert!((even - ln_half).abs() < 1e-12);
+        assert!((odd - ln_half).abs() < 1e-12);
+    }
+
+    #[test]
+    fn test_log_prob_parity_large_llr_collapses_to_even_parity() {
+        // |L| large ⇒ tanh → 1 ⇒ prod tanh → 1 ⇒ P(even) → 1, P(odd) → 0.
+        use crate::grand::orbgrand::log_prob_parity;
+        let absl = vec![20.0; 4]; // each bit extremely reliable
+        let even = log_prob_parity(&absl, false);
+        let odd = log_prob_parity(&absl, true);
+        // log P(even) close to 0 (P = 1 − something tiny).
+        assert!(even < 0.0 && even > -1e-3, "log P(even)={}", even);
+        // log P(odd) very negative.
+        assert!(odd < -10.0, "log P(odd)={}", odd);
+    }
+
+    #[test]
+    fn test_log_prob_parity_two_bit_closed_form() {
+        // For n = 2 independent bit flips with p_i = 1/(1 + exp(|L|)),
+        // P(even) = p1*p2 + (1-p1)*(1-p2); P(odd) = p1*(1-p2) + (1-p1)*p2.
+        use crate::grand::orbgrand::log_prob_parity;
+        let l1 = 1.5_f64;
+        let l2 = 2.5_f64;
+        let p1 = 1.0 / (1.0 + l1.exp());
+        let p2 = 1.0 / (1.0 + l2.exp());
+        let p_even = p1 * p2 + (1.0 - p1) * (1.0 - p2);
+        let p_odd = p1 * (1.0 - p2) + (1.0 - p1) * p2;
+        // Probabilities must be non-negative and sum to 1.
+        assert!((p_even + p_odd - 1.0).abs() < 1e-12);
+
+        let absl = vec![l1, l2];
+        let log_even = log_prob_parity(&absl, false);
+        let log_odd = log_prob_parity(&absl, true);
+        assert!(
+            (log_even - p_even.ln()).abs() < 1e-10,
+            "even: got {log_even}, expected {}",
+            p_even.ln()
+        );
+        assert!(
+            (log_odd - p_odd.ln()).abs() < 1e-10,
+            "odd: got {log_odd}, expected {}",
+            p_odd.ln()
+        );
+    }
+
+    #[test]
+    fn test_log_prob_parity_sums_to_one() {
+        // For any |L|s, P(even) + P(odd) = 1. Check in log domain via
+        // log_sum_exp.
+        use crate::grand::orbgrand::log_prob_parity;
+        let absl = vec![0.1, 0.7, 1.3, 2.0, 5.0];
+        let log_even = log_prob_parity(&absl, false);
+        let log_odd = log_prob_parity(&absl, true);
+        let sum = log_sum_exp(log_even, log_odd);
+        assert!(sum.abs() < 1e-10, "log(P_even + P_odd) = {sum}, expected 0");
+    }
+
     // =====================================================================
     // Block APP computation tests
     // =====================================================================
@@ -617,6 +843,8 @@ mod tests {
             codewords: vec![],
             query_count: 100,
             cumulative_log_probability: f64::NEG_INFINITY,
+            log_parity_cap: 0.0,
+            even_code: false,
         };
         let (log_apps, log_p_not) = compute_block_apps(&result, 7, 4);
         assert!(log_apps.is_empty());
@@ -636,6 +864,8 @@ mod tests {
             }],
             query_count: 100,
             cumulative_log_probability: -0.01, // almost all probability mass tested
+            log_parity_cap: 0.0,
+            even_code: false,
         };
         let (log_apps, log_p_not) = compute_block_apps(&result, 7, 4);
         assert_eq!(log_apps.len(), 1);
@@ -665,6 +895,8 @@ mod tests {
             ],
             query_count: 50,
             cumulative_log_probability: (0.6_f64).ln(),
+            log_parity_cap: 0.0,
+            even_code: false,
         };
         let (log_apps, log_p_not) = compute_block_apps(&result, 7, 4);
 

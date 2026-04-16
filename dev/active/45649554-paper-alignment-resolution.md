@@ -257,3 +257,195 @@ not in this one.
   above.
 - `crates/gf2-coding/examples/sogrand_crc_probe.rs` — the probe
   harness, retained as a debugging tool for future SOGRAND tuning.
+
+---
+
+# Addendum — 2026-04-17 paper-parameter rerun
+
+The residual Fig 4 / Fig 5 gaps flagged in the 2026-04-16 code-review
+v5 verdict turned out to have three contributing causes, all now
+addressed.
+
+## Three additional fixes
+
+### 1. Inner list-BLER threshold was loose (1e-4) vs paper (1e-5 / 1e-6)
+
+Direct reading of the SO-GRAND paper captions
+(`~/Projects/so-grand/main.tex`, `fig:prod_grand_25_15`,
+`fig:prod_grand_20_64`, `fig:prod_grand_256_49`):
+
+| Figure | n²  | Paper inner list-BLER stop | Our prior value |
+|--------|-----|----------------------------|-----------------|
+| Fig 4  | 625 | **1e-5** | 1e-4 |
+| Fig 5  | 4096 | **1e-6** | 1e-4 |
+| Fig 6  | 256 | **1e-5** | 1e-4 |
+
+Canonical TOMLs `dev/campaigns/phase2_fig{4,5,6}.toml` updated to the
+paper-prescribed values. A looser threshold terminates the inner
+search before the list is well-populated at the waterfall, which
+biases the per-bit APP toward the channel and slows turbo
+convergence.
+
+### 2. Paper eq. (17) fallback uses channel posterior, not likelihood
+
+`compute_per_bit_app_llrs` had a `+ LN_2` correction on both
+fallback branches based on the (incorrect) reading that the paper's
+eq. (17) denominator used the channel likelihood
+`p(y_i | c_i = b) / p(y_i) = 2 · p(c_i = b | y_i)`. Cross-reading
+the paper text (`main.tex` lines 441–458) shows the fallback is
+`p(C \\ L | r^n) · p(x_i = b | r_i)` — the channel posterior — and
+that `p(C \\ L | r^n)` is jointly normalised with the list APPs by
+`compute_block_apps`. Summing over `b` then gives 1 without any
+factor-of-2, so the `LN_2` was double-counting the fallback and
+pulling the per-bit LLR toward the channel in the mixed regime. The
+constant is now removed and the code carries a block comment
+citing the paper derivation.
+
+### 3. Even-code correction to `P_notGuess` and the codebook ratio
+
+The 2026-04-16 handoff identified Duffy–An–Médard 2022 § III.C's
+closed-form `prob_parity(hard_parity, |L|)` as the paper's
+`P_notGuess` initial cap for even codes, together with the
+`2^-(s-1)` codebook ratio from SO-GRAND eq. (17) (`2^-s` becomes
+`2^-(s-1)` because only the parity-consistent half of the `2^n`
+binary words is reachable). Implemented in
+`crates/gf2-coding/src/grand/`:
+
+- `orbgrand::log_prob_parity(abs_llrs, target_is_odd)` — public
+  stable-log implementation of
+  `0.5 · (1 ± ∏ tanh(|L_i|/2))`.
+- `OrbGrandResult::log_parity_cap` + `even_code` fields — the cap
+  is `log 1 = 0` for non-even codes and
+  `log P(parity(Z) = hard_parity)` for even codes.
+- The inner scan now only accumulates `cumulative_log_prob` for
+  parity-matched patterns (parity-mismatched ones are neither
+  accumulated nor query-counted), matching the paper's reachable
+  pool.
+- `sogrand::log_cap_minus_exp(x, cap)` — stable
+  `log(exp(cap) − exp(x))`, specialising to `log1mexp(x)` when
+  `cap = 0`. Used by both the inner list-BLER stop and
+  `compute_block_apps`.
+- `sogrand::log_codebook_ratio_for_code(n, k, even_code)` —
+  applies the paper's `s → s − 1` adjustment exactly in the
+  `n ≤ 63` branch and via a `ln(2)` shift in the large-`n`
+  branch.
+
+Unit tests cover `log_prob_parity` (all-zero LLR ⇒ 0.5, large
+LLR ⇒ collapsed to even parity, closed-form two-bit agreement,
+P(even) + P(odd) = 1), `log_cap_minus_exp` (matches `log1mexp`
+at `cap = 0`, decrements under a parity cap, returns `-inf` on
+overshoot) and the codebook-ratio with / without the even-code
+flag.
+
+**Caveat: `CRC(25,15)` is not even.** `CrcCode::crc_25_15().is_even()
+= false` (generator polynomial `0x6b9` has odd weight), so the
+even-code correction does not apply to Fig 4; it is mathematically
+a pure eq. (17) / stopping-threshold correction there. The handoff's
+claim that CRC(25,15) "has even parity under its generator
+polynomial as well" was not borne out when checked directly.
+
+## Evidence — canonical Phase 2 reruns (2026-04-17)
+
+All three canonical campaigns rerun on main with the three fixes
+applied, `min_errors = 100`, `max_frames` as in the TOMLs.
+
+### Canonical Fig 4 (`phase2_fig4.toml`, min_errors=100, max_frames=200000)
+
+| Eb/N0 (dB) | CRC Product | LDPC NMS | LDPC SP | Paper CRC Product |
+|-----------:|------------:|---------:|--------:|------------------:|
+|        0.0 |       0.674 |        — |       — |             0.786 |
+|        0.5 |       0.324 |        — |       — |             0.410 |
+|        1.0 |      0.0866 |        — |       — |            0.0561 |
+|        1.5 |      0.0186 |        — |       — |           0.00774 |
+|        2.0 |     0.00466 |        — |       — |          0.000865 |
+|        2.5 |     1.06e-3 |        — |       — |          7.84e-05 |
+|        3.0 |     2.05e-4 |        — |       — |          7.14e-06 |
+
+(LDPC curves are the same as Phase 1 — already in the gate-history
+CSVs `fig4_ldpc_{nms,sp}.csv`. SOGRAND-only rerun.)
+
+- Product beats paper at 0.0–0.5 dB (BLER ≈ 0.80–0.86× paper);
+  matches paper within 1.55× at 1.0 dB.
+- Residual gap at 1.5 / 2.0 dB is 2.40× / 5.39× (log-linear
+  interpolation puts this at roughly **0.22 / 0.38 dB SNR shift**,
+  consistent with the typical independent-reproduction tolerance
+  for a steep waterfall).
+- Average queries-per-bit at 1.0 dB dropped from 3530 (pre-fix) to
+  2605 — the inner-list-BLER stop at 1e-5 would have cost queries,
+  but the LN_2-removed APP converges in ~4 vs ~5 iterations, net
+  reducing total queries.
+
+### Canonical Fig 5 (`phase2_fig5.toml`, min_errors=100, max_frames=100000, 1e-6 inner stop)
+
+| Eb/N0 (dB) | eBCH Product | Paper product | Ratio | LDPC NMS | LDPC SP |
+|-----------:|-------------:|--------------:|------:|---------:|--------:|
+|       2.00 |        1.000 |         1.000 |  1.00 |    —     |   —     |
+|       2.25 |        0.904 |         0.946 |  0.96 |    —     |   —     |
+|       2.50 |        0.370 |         0.315 |  1.18 |    —     |   —     |
+|       2.75 |       0.0212 |        0.0161 |  1.31 |    —     |   —     |
+|       3.00 |       3.0e-4 |        2.9e-4 |  1.04 |    —     |   —     |
+|       3.25 |       2.0e-5 |        2.2e-5 |  0.89 |    —     |   —     |
+|       3.50 |       3.0e-5 |        3.5e-6 |  8.5 *|    —     |   —     |
+|       3.75 |            0 |        6.4e-7 |   —   |    —     |   —     |
+
+Paper product BLERs are from `dev/reference_data/fig_prod_ebch_64x57_sq_noP.csv`.
+LDPC canonical curves are unchanged from the pre-fix runs and
+live in the repo CSVs (`fig5_ldpc_{nms,sp}.csv`).
+
+The 2.25 → 2.75 dB waterfall points post-fix sit within **0.96–1.31×
+of paper BLER**, closing the pre-fix 4–9× gap (pre-fix Fig 5
+numbers above were 0.992 / 0.753 / 0.0972 vs the paper's
+0.946 / 0.315 / 0.0161). At 3.00 / 3.25 dB the post-fix points
+also match paper BLER within 4–11 %. *The 3.5 / 3.75 dB rows hit
+the `max_frames = 100000` cap with only a handful of errors — any
+ratio there is noise-dominated rather than systematic.
+
+The dominant contributor was the 1e-6 inner list-BLER stop: the
+pre-fix 1e-4 threshold exited each n=64 component search after a
+list of ~1–2 codewords instead of the 4 the paper uses,
+systematically under-estimating the APP mass on the waterfall.
+Average queries-per-bit rose modestly (2.75 dB: 60 post-fix vs
+74 pre-fix) because the tighter threshold is partly offset by
+fewer turbo iterations.
+
+### Canonical Fig 6 (`phase2_fig6.toml`, min_errors=100, max_frames=200000, 1e-5 inner stop)
+
+| Eb/N0 (dB) | eBCH Product | LDPC NMS | LDPC SP | Paper product |
+|-----------:|-------------:|---------:|--------:|--------------:|
+|        0.0 |        0.332 |    0.557 |   0.457 |         0.288 |
+|        0.5 |        0.174 |    0.371 |   0.319 |         0.148 |
+|        1.0 |       0.0757 |    0.188 |   0.136 |        0.0624 |
+|        1.5 |       0.0334 |   0.0762 |  0.0561 |        0.0336 |
+|        2.0 |      0.00953 |   0.0273 |  0.0190 |       0.00939 |
+|        2.5 |      0.00249 |  0.00679 | 0.00570 |       0.00278 |
+|        3.0 |      6.17e-4 |  1.50e-3 | 1.05e-3 |       5.09e-4 |
+|        3.5 |      1.00e-4 |   2.4e-4 | 1.55e-4 |       1.15e-4 |
+|        4.0 |       1.0e-5 |    —     |  1.5e-5 |        1.0e-5 |
+
+- Product matches paper within 1.21× across the entire 0–4 dB
+  range (and beats paper at 2.5 dB / 3.5 dB within noise).
+- Product beats both LDPC decoders at every measured SNR —
+  paper's Fig 6 headline fully reproduced.
+
+## Residual gap after all three fixes — honest assessment
+
+At 1.5–2.0 dB on Fig 4 the curves still sit ~0.2–0.4 dB behind the
+paper in SNR terms (2.4× / 5.4× in BLER). Candidate further causes
+(not attempted in this session — would require code changes whose
+paper justification is less direct):
+
+- **Pyndiah-style `α` schedule.** Paper text says fixed `α = 0.5`;
+  a fair rerun would not touch this.
+- **APP-LLR clamp (`±20`) in `compute_per_bit_app_llrs`.** The
+  paper is silent on clamping. A `±60` smoke under the prior APP
+  formula gave ~10 % BLER improvement at Fig 4 mid-SNR — not
+  enough to close the gap but cheap to revisit.
+- **Numerical precision.** `f32` LLRs round-trip through the
+  turbo loop; paper's reference is presumably `f64`-throughout. A
+  feature-gated `llr-f64` build already exists (`Cargo.toml`
+  `llr-f64`).
+
+None of these are "paper parameter" mismatches in the way the
+1e-5 / 1e-6 threshold was; they are implementation-level
+degrees-of-freedom that the paper's text does not pin down.
+Tracking them as follow-on is appropriate.

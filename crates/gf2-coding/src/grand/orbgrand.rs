@@ -277,6 +277,8 @@ impl ScoredCodeword {
 ///     codewords: vec![],
 ///     query_count: 0,
 ///     cumulative_log_probability: f64::NEG_INFINITY,
+///     log_parity_cap: 0.0,
+///     even_code: false,
 /// };
 /// assert!(!result.success());
 /// ```
@@ -293,10 +295,29 @@ pub struct OrbGrandResult {
     /// Total number of noise patterns tested (queries).
     pub query_count: usize,
 
-    /// Log of the cumulative probability of all tested noise patterns.
-    /// This is `ln(sum_z p(z|r))` summed over all tested patterns `z`.
-    /// Use [`cumulative_probability()`](Self::cumulative_probability) for the linear-domain value.
+    /// Log of the cumulative probability of all tested noise patterns
+    /// that are eligible under the parity constraint (all patterns for
+    /// non-even codes, only patterns matching `hard_parity` for even codes).
+    /// This is `ln(sum_z p(z|r))` summed over the eligible tested patterns.
+    /// Use [`cumulative_probability()`](Self::cumulative_probability) for
+    /// the linear-domain value.
     pub cumulative_log_probability: f64,
+
+    /// Log of the total probability mass the noise can physically realise.
+    ///
+    /// For non-even codes this is `0.0` (= `log(1)`): any pattern is a
+    /// possible noise realisation. For even codes, the noise parity is
+    /// constrained to match `hard_parity`, so the reachable mass is
+    /// `log P(parity(Z) = hard_parity | |L|)` (see
+    /// [`log_prob_parity`]). The untested mass after `Q` queries is
+    /// therefore `exp(log_parity_cap) − exp(cumulative_log_probability)`
+    /// rather than `1 − exp(cumulative_log_probability)`.
+    pub log_parity_cap: f64,
+
+    /// Whether the decoder treated this as an even code (matches
+    /// `OrbGrandConfig::even_code`). Downstream soft-output computations
+    /// use this flag to apply the even-code codebook-ratio correction.
+    pub even_code: bool,
 }
 
 impl OrbGrandResult {
@@ -320,6 +341,8 @@ impl OrbGrandResult {
     ///     codewords: vec![],
     ///     query_count: 100,
     ///     cumulative_log_probability: f64::NEG_INFINITY,
+    ///     log_parity_cap: 0.0,
+    ///     even_code: false,
     /// };
     /// assert!(!result.success());
     /// ```
@@ -340,6 +363,8 @@ impl OrbGrandResult {
     ///     codewords: vec![],
     ///     query_count: 0,
     ///     cumulative_log_probability: f64::NEG_INFINITY,
+    ///     log_parity_cap: 0.0,
+    ///     even_code: false,
     /// };
     /// assert!(result.best_codeword().is_none());
     /// ```
@@ -578,6 +603,20 @@ impl OrbGrand {
         // Even code optimization: determine required parity of noise pattern
         let hard_parity = hard.parity(); // true if odd weight
 
+        // Paper-aligned P_notGuess initialisation (Duffy–An–Médard 2022,
+        // SO-GRAND §V). For even codes the noise parity is constrained to
+        // match `hard_parity`, so the reachable pattern mass is
+        // `P(parity(Z) = hard_parity | |L|)` — at most ≈ 1/2 for balanced
+        // noise, not 1. We stop accumulating probability for
+        // parity-skipped patterns below, so this cap is the correct
+        // ceiling for `cumulative_log_prob`.
+        let log_parity_cap = if self.config.even_code {
+            let absl: Vec<f64> = llrs.iter().map(|l| l.magnitude() as f64).collect();
+            log_prob_parity(&absl, hard_parity)
+        } else {
+            0.0 // log(1): all patterns are reachable
+        };
+
         let mut codewords = Vec::new();
         let mut query_count: usize = 0;
         let mut cumulative_log_prob = f64::NEG_INFINITY;
@@ -615,7 +654,12 @@ impl OrbGrand {
         // track the running list-BLER incrementally so we can stop as soon
         // as `P(C \ L) < threshold` with a non-empty list, or the list has
         // filled to `list_size`.
-        let log_codebook_ratio = super::sogrand::log_codebook_ratio(self.n, self.k());
+        // The codebook-ratio absorbs the even-code correction (paper eq.
+        // (17) uses `2^-(s-1)` for even codes rather than `2^-s`): only
+        // half the `2^n` binary words carry the matching parity, and all
+        // `2^k` codewords of an even code do.
+        let log_codebook_ratio =
+            super::sogrand::log_codebook_ratio_for_code(self.n, self.k(), self.config.even_code);
         let mut log_sum_list = f64::NEG_INFINITY;
 
         for pattern in pattern_iter {
@@ -623,8 +667,8 @@ impl OrbGrand {
                 break;
             }
             // Early exit when we have enough codewords AND cumulative
-            // probability is near 1.0 (no more useful patterns to test).
-            if has_min_list && cumulative_log_prob > -1e-6 {
+            // probability is at the cap (no reachable patterns left).
+            if has_min_list && cumulative_log_prob > log_parity_cap - 1e-6 {
                 break;
             }
             // Paper-aligned early exit: list has ≥ list_size codewords,
@@ -635,8 +679,9 @@ impl OrbGrand {
                     break;
                 }
                 if !codewords.is_empty() {
-                    let log_one_minus_cum = super::sogrand::log1mexp(cumulative_log_prob);
-                    let log_not_found = log_one_minus_cum + log_codebook_ratio;
+                    let log_not_tested_mass =
+                        super::sogrand::log_cap_minus_exp(cumulative_log_prob, log_parity_cap);
+                    let log_not_found = log_not_tested_mass + log_codebook_ratio;
                     let log_denom = log_sum_exp(log_sum_list, log_not_found);
                     let log_p_not_in_list = log_not_found - log_denom;
                     if log_p_not_in_list.exp() < threshold {
@@ -650,8 +695,21 @@ impl OrbGrand {
             let bit_positions: Vec<usize> = pattern.iter().map(|&idx| pi[idx]).collect();
             let noise_weight = bit_positions.len();
 
-            // Compute noise log-probability for EVERY pattern (needed for
-            // cumulative probability accounting in SOGRAND soft output).
+            // Even code optimization: skip parity-mismatched patterns entirely.
+            // Under the paper-aligned P_notGuess semantics the untested pool
+            // is the parity-consistent half of the pattern space, so
+            // mismatched patterns are not "tested" probability mass — we
+            // neither accumulate nor query-count them.
+            if self.config.even_code {
+                let noise_parity = noise_weight % 2 == 1;
+                if hard_parity ^ noise_parity {
+                    continue;
+                }
+            }
+
+            // Compute noise log-probability for each eligible pattern
+            // (needed for cumulative probability accounting in SOGRAND
+            // soft output and for codeword scoring).
             let noise_log_prob = compute_noise_log_prob(
                 &bit_positions,
                 &flip_log_probs,
@@ -659,19 +717,11 @@ impl OrbGrand {
                 base_log_prob,
             );
 
-            // Accumulate cumulative probability for ALL tested patterns.
-            // Both the codeword list and cumulative probability must reflect
-            // the same set of tested patterns for P(C\L) to be consistent.
+            // Accumulate cumulative probability over the eligible tested
+            // patterns. Both the codeword list and cumulative probability
+            // reflect the same set of tested patterns so that
+            // `P(C\L)` stays consistent with `log_parity_cap` as the cap.
             cumulative_log_prob = log_sum_exp(cumulative_log_prob, noise_log_prob);
-
-            // Even code optimization: skip syndrome check if parity won't match.
-            // Probability is already accumulated above.
-            if self.config.even_code {
-                let noise_parity = noise_weight % 2 == 1;
-                if hard_parity ^ noise_parity {
-                    continue;
-                }
-            }
 
             query_count += 1;
 
@@ -718,6 +768,8 @@ impl OrbGrand {
             codewords,
             query_count,
             cumulative_log_probability: cumulative_log_prob,
+            log_parity_cap,
+            even_code: self.config.even_code,
         }
     }
 }
@@ -817,6 +869,71 @@ pub fn log_sum_exp(a: f64, b: f64) -> f64 {
     }
     let max = a.max(b);
     max + ((a - max).exp() + (b - max).exp()).ln()
+}
+
+/// Compute `log P(parity(noise) = target | |L|)` for independent bit
+/// flips with flip probability `p_i = 1 / (1 + exp(|L_i|))`.
+///
+/// Using the characteristic-function identity `E[(-1)^{sum X_i}] =
+/// prod (1 - 2 p_i) = prod tanh(|L_i|/2)`:
+///
+/// - `P(parity = 0)` (even target) `= 0.5 * (1 + prod tanh(|L_i|/2))`
+/// - `P(parity = 1)` (odd target)  `= 0.5 * (1 − prod tanh(|L_i|/2))`
+///
+/// All terms live in the log domain:
+///
+/// ```text
+/// log T = sum log tanh(|L_i|/2)  where
+/// log tanh(x/2) = log1p(-exp(-x)) − log1p(exp(-x))   for x > 0.
+/// ```
+///
+/// This is the `prob_parity` helper from Duffy–An–Médard 2022 (§III.C,
+/// 1-line ORBGRAND): SO-GRAND uses it to initialise the `P_notGuess`
+/// total probability cap for even codes, capturing the fact that the
+/// noise pattern is constrained to match the hard-decision parity.
+///
+/// # Arguments
+///
+/// * `abs_llrs` — per-bit |LLR| values (non-negative; `abs()` is applied
+///   to each entry defensively).
+/// * `target_is_odd` — if `true`, return `log P(odd parity)`;
+///   if `false`, return `log P(even parity)`.
+///
+/// # Returns
+///
+/// A value in `(-inf, 0]`. Returns `-ln 2` when all `|L_i| = 0`
+/// (uniform parity), and approaches `-inf` for the opposite-parity
+/// target when the per-bit LLRs are uniformly large.
+///
+/// # Complexity
+///
+/// `O(n)` where `n = abs_llrs.len()`.
+pub fn log_prob_parity(abs_llrs: &[f64], target_is_odd: bool) -> f64 {
+    let ln2 = std::f64::consts::LN_2;
+    // log T = sum log |tanh(|L_i|/2)|. Each contribution lies in
+    // (-inf, 0]. If any bit has |L| = 0 the product is zero
+    // (uniform parity), short-circuit to -ln 2.
+    let mut log_t = 0.0;
+    for &absl in abs_llrs {
+        let abs_l = absl.abs();
+        if abs_l == 0.0 {
+            return -ln2;
+        }
+        let e = (-abs_l).exp();
+        // log tanh(|L|/2) = log1p(-exp(-|L|)) - log1p(exp(-|L|))
+        log_t += (-e).ln_1p() - e.ln_1p();
+    }
+    if log_t == f64::NEG_INFINITY {
+        return -ln2;
+    }
+    if target_is_odd {
+        // log(0.5 * (1 - T)) = -ln 2 + log1p(-exp(log_t))
+        // Delegate to the shared log1mexp for numerical stability.
+        -ln2 + super::sogrand::log1mexp(log_t)
+    } else {
+        // log(0.5 * (1 + T)) = -ln 2 + log1p(exp(log_t))
+        -ln2 + log_t.exp().ln_1p()
+    }
 }
 
 /// Compute the log-probability of a noise pattern given the bit positions flipped.

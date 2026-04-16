@@ -1,6 +1,13 @@
 # Canonical Phase 2 Figure 5 campaign.
 # (4096, 3249) eBCH(64,57)^2 product code vs 5G NR LDPC under AWGN.
 # The SNR grid matches the extracted reference data (2.0-3.75 dB in 0.25 dB steps).
+#
+# Paper parameters (SO-GRAND main.tex fig:prod_grand_20_64 caption):
+#   - alpha = 0.5, max. iteration 20
+#   - L = 4 or predicted list-BLER below 1e-6.
+# We now mirror the paper's 1e-6 inner-list-BLER stop (was 1e-4 in
+# earlier runs, which terminated the inner search too aggressively
+# at the waterfall and showed up as the Fig 5 paper-alignment gap).
 
 [campaign]
 name = "phase2_fig5"
@@ -10,7 +17,7 @@ output_dir = "dev/simulation_results"
 name = "fig5_ebch_64_57_product"
 type = "product"
 component = "ebch_64_57"
-turbo = { max_iterations = 20, alpha = 0.5, list_size = 4, max_queries = 100000, list_bler_threshold = 1e-4 }
+turbo = { max_iterations = 20, alpha = 0.5, list_size = 4, max_queries = 100000, list_bler_threshold = 1e-6 }
 snr = { start = 2.0, stop = 3.75, step = 0.25 }
 min_errors = 100
 max_frames = 100000

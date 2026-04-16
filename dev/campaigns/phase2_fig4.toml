@@ -1,5 +1,14 @@
 # Canonical Phase 2 Figure 4 campaign.
 # (625, 225) CRC(25,15)^2 product code vs 5G NR LDPC under AWGN.
+#
+# Paper parameters (SO-GRAND main.tex fig:prod_grand_25_15 caption):
+#   - CRC-0x2b9 (our 0x6b9 with the implicit x^10 leading term)
+#   - alpha = 0.5, max. iteration 20
+#   - L = 4 or predicted list-BLER below 1e-5.
+# We mirror these exactly. The prior 1e-4 threshold was too loose and
+# stopped the inner search too early at mid-SNR, which (per the
+# 2026-04-16 paper-alignment probe) accounts for the bulk of the
+# residual Fig 4 BLER gap.
 
 [campaign]
 name = "phase2_fig4"
@@ -9,7 +18,7 @@ output_dir = "dev/simulation_results"
 name = "fig4_crc_product"
 type = "product"
 component = "crc_25_15"
-turbo = { max_iterations = 20, alpha = 0.5, list_size = 4, max_queries = 100000, list_bler_threshold = 1e-4 }
+turbo = { max_iterations = 20, alpha = 0.5, list_size = 4, max_queries = 100000, list_bler_threshold = 1e-5 }
 snr = { start = 0.0, stop = 3.0, step = 0.5 }
 min_errors = 100
 max_frames = 200000

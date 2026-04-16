@@ -3,6 +3,19 @@ Phase 3 — Figure 7: (1024, 646) QC-GLDPC vs 5G NR LDPC
 
 Generated: 2026-04-10T18:54:47+03:00
 
+Dimension note
+--------------
+The paper's Fig 7 uses a (1024, 640) QC-GLDPC (rate 0.625). Our Lentmaier (2010)
+QC construction with eBCH(32,26) yields (1024, 646) (rate 0.631) because the
+QC circulant adjacency structure introduces 6 linearly dependent rows in H.
+After review during epic 6efb756b closure, this discrepancy is accepted and
+documented: rate 0.631 vs 0.625 is 0.95 % off and has negligible impact on
+the headline "GLDPC outperforms LDPC" qualitative result visible in the table
+below. Resolving the rank deficiency would require either a modified QC
+construction (research effort, uncertain outcome) or a different component
+code (out-of-scope scope change), neither of which would materially change
+the epic's conclusion.
+
 GLDPC vs Paper Reference (eBCH_GLDPC):
 ----------------------------------------
    Eb/N0           Sim           Ref     Ratio        |Diff|
