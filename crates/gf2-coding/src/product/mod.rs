@@ -17,8 +17,10 @@
 //! as the component SISO decoder (selected via [`TurboDecoderConfig::use_bcjr`]).
 //! Extrinsic information is exchanged between row and column steps with a scaling
 //! factor alpha (typically 0.5). Early termination occurs when the hard-decision
-//! matrix forms a valid product codeword or when the average list-BLER drops
-//! below a configurable threshold.
+//! matrix forms a valid product codeword (paper-aligned behaviour). The
+//! [`TurboDecoderConfig::list_bler_threshold`] is delegated to each component
+//! decode via [`crate::grand::OrbGrandConfig::list_bler_stop_threshold`], not
+//! applied as an additional turbo-level short-circuit.
 //!
 //! # Generic Component Support
 //!
@@ -900,9 +902,12 @@ impl From<TurboDecoderResult> for crate::traits::DecoderResult {
 /// Iterative block turbo decoder using SOGRAND or BCJR as the component SISO decoder.
 ///
 /// The turbo decoder alternates between row-wise and column-wise SISO decoding,
-/// exchanging extrinsic information between steps. It uses early termination
-/// when the hard-decision matrix forms a valid product codeword or when the
-/// average list-BLER drops below a configured threshold.
+/// exchanging extrinsic information between steps. It terminates when the
+/// hard-decision matrix forms a valid product codeword (paper-aligned
+/// behaviour). [`TurboDecoderConfig::list_bler_threshold`] is plumbed into
+/// each component ORBGRAND decode as an inner-loop stopping criterion via
+/// [`crate::grand::OrbGrandConfig::list_bler_stop_threshold`]; no additional
+/// turbo-level list-BLER short-circuit is applied.
 ///
 /// The component SISO engine is selected via [`TurboDecoderConfig::use_bcjr`]:
 /// - `false` (default): uses [`SoGrand`](crate::grand::SoGrand) (query-based)
