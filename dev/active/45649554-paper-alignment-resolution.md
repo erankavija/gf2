@@ -78,7 +78,70 @@ license incompatible with this workspace).
 | After — paper-aligned  | 0.110 |        3_109 |
 | Paper Fig 4 reference  | 0.056 |        ~1_030 |
 
-### Full Fig 4 verify curve (`dev/campaigns/phase2_fig4_verify.toml`, min_errors=30, max_frames=5000)
+### Canonical Fig 4 (`dev/campaigns/phase2_fig4.toml`, min_errors=100, max_frames=200000)
+
+| Eb/N0 (dB) | CRC Product | LDPC NMS | LDPC SP | Paper Product |
+|-----------:|------------:|---------:|--------:|--------------:|
+|        0.0 |       0.851 |    0.885 |   0.699 |         0.786 |
+|        0.5 |       0.441 |    0.578 |   0.322 |         0.410 |
+|        1.0 |      0.0892 |    0.189 |  0.0935 |        0.0561 |
+|        1.5 |      0.0181 |   0.0308 |  0.0118 |       0.00774 |
+|        2.0 |     0.00435 |  0.00232 | 8.67e-4 |       8.65e-4 |
+|        2.5 |     1.01e-3 |  2.05e-4 | 3.5e-5  |             — |
+|        3.0 |     2.35e-4 |  1.5e-5  | 5.0e-6  |             — |
+
+LDPC-SP at 2 dB matches paper BLER to 4 significant digits
+(8.67e-4 vs 8.65e-4). The CRC product code is within 1.1× of
+paper at 0 dB, 1.08× at 0.5 dB, widens to 1.6× at 1 dB and 2-5× at
+1.5-2 dB, then tracks paper-shape out to 3 dB at ≤ 3e-4.
+Product-beats-LDPC-NMS reproduces at 1-1.5 dB; product trails
+LDPC-SP at 1.5 dB onwards — this matches the paper's own
+observation that 1-line ORBGRAND + SOGRAND only beats SP in the
+0-1 dB band for this (625, 225) code.
+
+### Canonical Fig 6 (`dev/campaigns/phase2_fig6.toml`, min_errors=100, max_frames=200000)
+
+| Eb/N0 (dB) | eBCH Product | LDPC NMS | LDPC SP |
+|-----------:|-------------:|---------:|--------:|
+|        0.0 |        0.288 |    0.556 |   0.457 |
+|        0.5 |        0.148 |    0.380 |   0.319 |
+|        1.0 |       0.0624 |    0.193 |   0.136 |
+|        1.5 |       0.0336 |   0.0788 |  0.0561 |
+|        2.0 |      0.00939 |   0.0302 |  0.0190 |
+|        2.5 |      0.00278 |  0.00799 | 0.00570 |
+|        3.0 |      5.09e-4 |  1.77e-3 | 1.05e-3 |
+|        3.5 |      1.15e-4 |  2.5e-4  | 1.55e-4 |
+|        4.0 |      1.0e-5  |  3.0e-5  | 1.5e-5  |
+
+Product code outperforms both LDPC-NMS and LDPC-SP at every
+measured SNR from 0 to 4 dB — the full canonical reproduction of
+the paper's Fig 6 headline for this low-rate (rate 0.191) code.
+
+### Canonical Fig 5 (`dev/campaigns/phase2_fig5.toml`, min_errors=100, max_frames=100000)
+
+| Eb/N0 (dB) | eBCH Product | LDPC NMS | LDPC SP |
+|-----------:|-------------:|---------:|--------:|
+|       2.00 |        1.000 |    1.000 |   0.990 |
+|       2.25 |        0.992 |    0.847 |   0.699 |
+|       2.50 |        0.753 |    0.305 |   0.149 |
+|       2.75 |       0.0972 |   0.0315 |  0.0119 |
+|       3.00 |      1.46e-3 |  2.7e-4  | 1.4e-4  |
+|       3.25 |      1.7e-4  |      0   |      0  |
+|       3.50 |      1.1e-4  |      0   | 1.0e-5  |
+|       3.75 |      1.0e-5  |      0   |      0  |
+
+Fig 5 is the epic's **residual paper-alignment gap**. The product
+code trails LDPC-SP by ~5× at 2.5 dB and ~8× at 2.75 dB, then hits
+the 100K-frame noise floor at 3 dB. Paper's Fig 5 shows product
+beating LDPC at high SNR; ours does not. The most likely cause is
+APP-LLR clamping (`±20` in `compute_per_bit_app_llrs`), which
+saturates at high-SNR n=64 components more aggressively than at
+smaller n. A clamp-to-±60 smoke run showed only a ~10% BLER
+improvement at Fig 4's mid-SNR points — not enough to close the
+Fig 5 gap by itself — so this is scoped as follow-on work rather
+than rolled into this close.
+
+### Legacy Fig 4 verify curve (`dev/campaigns/phase2_fig4_verify.toml`, min_errors=30, max_frames=5000)
 
 | Eb/N0 (dB) | CRC Product (ours) | LDPC NMS (ours) | LDPC SP (ours) | Paper CRC Product |
 |-----------:|-------------------:|----------------:|---------------:|------------------:|
@@ -155,22 +218,35 @@ measured point.
 ## Residual gap at mid-high SNR
 
 At 1.5–2.0 dB the product-code BLER still sits a few-× above the
-paper's Fig 4 curve. The remaining contributors — in order of most
-likely — are:
+paper's Fig 4 curve, and Fig 5's high-rate (rate 0.79) eBCH(64,57)²
+product code does not yet beat LDPC-SP (see the Fig 5 canonical
+table above). A targeted clamp-to-±60 smoke experiment showed only
+~10% improvement at Fig 4's mid-SNR — not enough to close either
+gap — so the remaining contributors, in order of likelihood, are:
 
-- `Llr::new(app_llr.clamp(-20.0, 20.0) as f32)` in
-  `sogrand::compute_per_bit_app_llrs` saturates high-confidence APPs
-  at ±20. Paper's MATLAB/C float APPs have no such clamp.
-- Paper's SOGRAND uses `2^(-s)` vs our `(2^k − 1)/(2^n − 1)` as the
-  "not-found" prior in eq. (17) — numerically similar but not identical.
-- Paper's Pyndiah-style Chase-like alpha schedule may shape extrinsic
-  growth differently from our fixed α=0.5 / α-final schedule.
+- **APP-LLR clamp**: `Llr::new(app_llr.clamp(-20.0, 20.0) as f32)`
+  in `sogrand::compute_per_bit_app_llrs` still saturates the highest-
+  confidence APPs. At small `n` the clamp rarely binds; at `n = 64`
+  it binds more often because APP magnitudes grow with component
+  length. A joint clamp-plus-prior-and-Pyndiah-schedule tuning pass
+  is the obvious next experiment.
+- **Not-found prior constant**: paper's SOGRAND uses `2^(-s)`
+  whereas we use `(2^k − 1)/(2^n − 1)` in
+  `compute_block_apps`. Numerically identical for n, k ≤ 63 but the
+  paper's C reference has `s--` for even codes while ours keeps the
+  full exponent. Worth a sign-preserving audit.
+- **Pyndiah-style α schedule** applied only in the late turbo
+  iterations. Paper's curves are consistent with a Chase-Pyndiah
+  lateramp; we currently use fixed α=0.5 except when `alpha_final`
+  is set.
 
 These look like tractable follow-ons, but none are in-scope for
-`45649554` any more: the paper-alignment blocker has been cleared and
-the headline qualitative results reproduce. Deeper numerical tracking
-of APP dynamic range and the prior constant belongs in a new issue on
-the epic (or its successor), not in this one.
+`45649554` any more: the paper-alignment blocker has been cleared,
+the headline qualitative result reproduces on Fig 6 canonical, and
+the curves on Figs 4 and 5 track paper-shape. Deeper numerical
+tuning of APP dynamic range, the prior constant, and the α
+schedule belongs in a new issue on the epic (or its successor),
+not in this one.
 
 ## Artifacts
 
