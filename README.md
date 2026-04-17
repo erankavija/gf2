@@ -16,7 +16,7 @@ A research-grade Rust toolkit for finite field computing and modern coding theor
 - **Acceleration**: AVX2/AVX-512 CPU kernels (runtime-dispatched) and optional HIP/ROCm GPU kernels (gfx1030) for batched BCJR and Gray-QAM demap.
 - **Formal verification**: Lean4 proofs of prime-field Montgomery arithmetic extracted from the live Rust source via Charon/Aeneas.
 
-Active work is tracked in-repo with [jit](https://github.com/ArcadeLabsInc/jit) under `.jit/` — run `jit status` or browse issues there for the current backlog and in-progress items.
+Active work is tracked in-repo with [jit](https://github.com/erankavija/just-in-time) under `.jit/` — run `jit status` or browse issues there for the current backlog and in-progress items.
 
 ## Workspace layout
 
