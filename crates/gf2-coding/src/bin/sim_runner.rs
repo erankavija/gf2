@@ -258,6 +258,7 @@ struct TurboConfig {
     /// Use BCJR trellis decoder instead of SOGRAND for component SISO.
     use_bcjr: Option<bool>,
     /// Use GPU-accelerated batch BCJR via HIP/ROCm.
+    #[cfg(feature = "hip")]
     use_gpu_bcjr: Option<bool>,
     /// Use Chase-Pyndiah decoder instead of SOGRAND/BCJR turbo decoder.
     chase_pyndiah: Option<ChasePyndiahToml>,

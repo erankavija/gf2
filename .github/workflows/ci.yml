@@ -47,16 +47,16 @@ jobs:
       run: cargo fmt --all -- --check
 
     - name: Run clippy
-      run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+      run: cargo clippy --workspace --all-targets --features simd,parallel,visualization,io,rand,llr-f64 -- -D warnings
 
     - name: Build
-      run: cargo build --workspace --verbose --all-features
+      run: cargo build --workspace --verbose --features simd,parallel,visualization,io,rand,llr-f64
 
     - name: Run tests
-      run: cargo test --workspace --verbose --all-features
+      run: cargo test --workspace --verbose --features simd,parallel,visualization,io,rand,llr-f64
 
     - name: Build documentation
-      run: cargo doc --workspace --no-deps --all-features
+      run: cargo doc --workspace --no-deps --features simd,parallel,visualization,io,rand,llr-f64
 
     - name: Build benchmarks
       run: cargo build --workspace --benches
@@ -92,7 +92,7 @@ jobs:
       uses: taiki-e/install-action@cargo-llvm-cov
 
     - name: Generate coverage data
-      run: cargo llvm-cov --all-features --workspace --json --summary-only --output-path coverage.json
+      run: cargo llvm-cov --features simd,parallel,visualization,io,rand,llr-f64 --workspace --json --summary-only --output-path coverage.json
 
     - name: Generate coverage badges
       run: bash scripts/generate-coverage-badges.sh coverage.json badges
