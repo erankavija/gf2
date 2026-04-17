@@ -1,278 +1,173 @@
 # gf2-coding
 
-Error-correcting code implementations and coding theory primitives built on `gf2-core`.
+Error-correcting codes and coding-theory primitives built on [`gf2-core`](../gf2-core/): Hamming and BCH algebraic codes, LDPC with belief propagation (DVB-T2 and 5G NR base graphs), convolutional/Viterbi, product codes and generalized LDPC with Chase–Pyndiah, GRAND-family decoders (ORBGRAND, SO-GRAND), a batch-oriented modem framework with Gray-QAM soft demapping, and AWGN / Rician fading channel models tied together by a simulation harness.
 
-`gf2-coding` provides implementations of linear block codes (Hamming, BCH, LDPC), convolutional codes with Viterbi decoding, and a batch-oriented modem framework (BPSK, Gray-coded QPSK/16/64/256-QAM, and arbitrary custom constellations with soft-decision demapping) over AWGN and Rician fading channels.
+## What's here
 
-## Quick Start
+### Block codes
 
-New to error correction? Start with the Hamming code example below, then explore the examples organized by difficulty level.
+| Family | Module | Parameters | Notes |
+|---|---|---|---|
+| Hamming | `linear` | (2^r − 1, 2^r − r − 1) | Syndrome-table decoder |
+| BCH | `bch` | (n, k, t) over GF(2^m) | Berlekamp–Massey + Chien; extended BCH; DVB-T2 profiles validated against ETSI EN 302 755 (202/202) |
+| LDPC | `ldpc` | quasi-cyclic (n, k) | Belief propagation; DVB-T2 (all 12 rates, 202/202) and 5G NR (BG1/BG2 with per-i_LS shift tables); Richardson–Urbanke encoding with file cache |
+| Product | `product` | N₁ × N₂ | Row/column iteration |
+| Generalized LDPC | `gldpc` | — | Chase–Pyndiah product decoder |
 
-### Installation
+### Streaming and soft decoders
+
+- `convolutional` — convolutional encoder, Viterbi decoder (NASA/CCSDS generator polynomials)
+- `bcjr` — batch BCJR soft-input/soft-output decoder (CPU; HIP GPU path via `gf2-kernels-hip`)
+- `grand` — `ORBGRAND` and `SO-GRAND` universal noise-centric decoders
+- `llr` — `Llr` type (`f32` by default, `f64` with `llr-f64`) and min-sum / box-plus operations
+- `drm` — Doubled Reed–Muller with polar transform
+
+### Modem, channel, simulation
+
+- `modem` — BPSK, Gray-coded QPSK / 16-QAM / 64-QAM / 256-QAM presets, plus a validated builder for arbitrary custom constellations; reference (exact log-MAP) and optimized (Gray-QAM fast) backends selected through `ModemSpec::preferred_*` factories; optional GPU demap
+- `channel` — AWGN with BPSK modulation for quick BER sweeps
+- `fading` — Rician channel models integrated with the modem framework (`QpskRicianChannelModel`)
+- `simulation` — BER/FER harness with batched encode/transmit/decode
+- `info_theory`, `crc` — capacity/mutual information helpers, CRC polynomials
+
+## Install
 
 ```toml
 [dependencies]
-gf2-core = "0.1"
-gf2-coding = "0.1"
+gf2-core   = { path = "../gf2-core" }
+gf2-coding = { path = "../gf2-coding" }  # simd on by default
+
+# Enable extras
+# gf2-coding = { path = "...", features = ["parallel", "llr-f64", "hip"] }
 ```
 
-### Example: Hamming(7,4) Error Correction
+## Getting started
+
+### Hamming(7,4)
 
 ```rust
 use gf2_coding::{LinearBlockCode, SyndromeTableDecoder};
 use gf2_coding::traits::{BlockEncoder, HardDecisionDecoder};
 use gf2_core::BitVec;
 
-// Create Hamming(7,4) code: 4 data bits → 7 bits with 1-bit error correction
-let code = LinearBlockCode::hamming(3);
+let code    = LinearBlockCode::hamming(3);
 let decoder = SyndromeTableDecoder::new(code.clone());
 
-// Encode a 4-bit message
 let msg = BitVec::from_bytes_le(&[0b1010]);
-let codeword = code.encode(&msg);
-assert_eq!(codeword.len(), 7);
-
-// Simulate transmission error
-let mut received = codeword.clone();
-received.set(2, !received.get(2));  // Flip one bit
-
-// Decode and correct
-let decoded = decoder.decode(&received);
-assert_eq!(decoded, msg);  // Error corrected!
+let mut cw = code.encode(&msg);
+cw.set(2, !cw.get(2));                   // inject a single-bit error
+assert_eq!(decoder.decode(&cw), msg);
 ```
 
-Run `cargo run --example hamming_basic` for a complete walkthrough.
-
-## Core Concepts
-
-### Block Codes vs Streaming Codes
-
-- **Block codes** (Hamming, BCH, LDPC): Encode fixed-length messages → fixed-length codewords
-  - Use: Data storage, packetized communication, DVB-T2 broadcast
-- **Streaming codes** (Convolutional): Process bits one-at-a-time with internal state
-  - Use: Real-time communications, satellite links, Viterbi decoding
-
-### Hard-Decision vs Soft-Decision Decoding
-
-- **Hard-decision**: Binary input (0 or 1) → simpler, faster
-  - Example: Syndrome table decoder for Hamming codes
-- **Soft-decision**: Probabilistic input (LLRs) → better error correction (1-3 dB gain)
-  - Example: LDPC belief propagation with channel reliability
-
-### Which Code Should I Use?
-
-| Need | Code Type | Example |
-|------|-----------|---------|
-| Simple error correction (1-2 bits) | **Hamming** | Storage checksums, simple comms |
-| Moderate errors (10-12 bits) | **BCH** | DVB-T2 outer code, flash memory |
-| High performance near Shannon limit | **LDPC** | DVB-T2 inner code, 5G NR, WiFi 6 |
-| Streaming/real-time | **Convolutional** | Satellite links, deep space (NASA) |
-
-## Usage by Experience Level
-
-### Beginner: Your First Error-Correcting Code
-
-Learn the basics of encoding, decoding, and error correction with Hamming(7,4):
+### DVB-T2 LDPC
 
 ```rust
-use gf2_coding::{LinearBlockCode, SyndromeTableDecoder};
-use gf2_coding::traits::{BlockEncoder, HardDecisionDecoder};
+use gf2_coding::{CodeRate, ldpc::LdpcCode};
 use gf2_core::BitVec;
 
-let code = LinearBlockCode::hamming(3); // Create Hamming(7,4)
-let decoder = SyndromeTableDecoder::new(code.clone());
-
-// Encode 4-bit message → 7-bit codeword
-let message = BitVec::from_bytes_le(&[0b1101]); 
-let codeword = code.encode(&message);
-
-// Introduce error and correct
-let mut received = codeword.clone();
-received.set(0, !received.get(0)); // Flip bit 0
-let corrected = decoder.decode(&received);
-assert_eq!(corrected, message); // ✓ Corrected!
-```
-
-**Examples**: `hamming_basic`, `block_code_intro`  
-**API docs**: [`LinearBlockCode`](https://docs.rs/gf2-coding/latest/gf2_coding/struct.LinearBlockCode.html), [`SyndromeTableDecoder`](https://docs.rs/gf2-coding/latest/gf2_coding/struct.SyndromeTableDecoder.html)
-
-### Intermediate: Real-World Applications
-
-Build DVB-T2 digital TV codes and simulate transmission over noisy channels:
-
-```rust
-use gf2_coding::ldpc::LdpcCode;
-use gf2_coding::simulation::{BpskAwgnChannel, ChannelModel};
-use gf2_coding::CodeRate;
-use gf2_core::BitVec;
-
-// DVB-T2 LDPC code: 32,400 data bits → 64,800 coded bits
 let code = LdpcCode::dvb_t2_normal(CodeRate::Rate1_2);
-assert_eq!(code.k(), 32400);
-assert_eq!(code.n(), 64800);
+assert_eq!((code.k(), code.n()), (32_400, 64_800));
 
-// Verify zero codeword
-let zero_cw = BitVec::zeros(64800);
+let zero_cw = BitVec::zeros(code.n());
 assert!(code.is_valid_codeword(&zero_cw));
-
-// Simulate BPSK/AWGN (see ldpc_awgn example for full pipeline):
-//   let llrs = BpskAwgnChannel.transmit_and_demodulate(&zero_cw, 3.0, 0.5, &mut rng);
-let _channel = BpskAwgnChannel;
 ```
 
-**Examples**: `dvb_t2_ldpc_basic`, `ldpc_awgn`, `qc_ldpc_demo`, `ldpc_cache_file_io`, `modem_gray_qam_preset`, `modem_custom_constellation`, `modem_simulation_harness`
-**API docs**: [`LdpcCode`](https://docs.rs/gf2-coding/latest/gf2_coding/ldpc/struct.LdpcCode.html), [`ModemSpec`](https://docs.rs/gf2-coding/latest/gf2_coding/modem/struct.ModemSpec.html), [`BpskAwgnChannel`](https://docs.rs/gf2-coding/latest/gf2_coding/simulation/struct.BpskAwgnChannel.html), [`QpskRicianChannelModel`](https://docs.rs/gf2-coding/latest/gf2_coding/fading/struct.QpskRicianChannelModel.html)
-**Guides**: [DVB_T2.md](docs/DVB_T2.md), [LDPC_PERFORMANCE.md](docs/LDPC_PERFORMANCE.md), `crates/gf2-coding/src/modem/mod.rs` (module-level modem-framework guide)
+See `examples/ldpc_awgn.rs` for the full BPSK/AWGN → LLR → belief-propagation pipeline.
 
-### Advanced: Performance Optimization
+### 5G NR LDPC
 
-High-performance encoding with caching and parallel decoding:
+The `ldpc::nr_5g` submodule carries BG1 and BG2 base graphs with per-i_LS shift tables. Select the lifting factor and base graph, then use the shared `LdpcCode` API for encode/decode. A single shift table across lifting sets costs ~2 dB BLER, so the per-i_LS indirection matters.
 
-- **SIMD acceleration**: 256-512× faster matrix operations (enabled by default)
-- **Generator matrix caching**: Save preprocessing results to disk (13min → <16ms load time)
-- **Parallel decoding**: Batch decode multiple frames with Rayon
+### Gray-QAM modem
 
-**Examples**: `hamming_7_4` (comprehensive tutorial), `nasa_rate_half_k3` (Viterbi decoding), `ldpc_encoding_with_cache`  
-**Guides**: [SIMD_PERFORMANCE_GUIDE.md](docs/SIMD_PERFORMANCE_GUIDE.md), [PARALLELIZATION.md](docs/PARALLELIZATION.md)
+```rust
+use gf2_coding::modem::ModemSpec;
 
-## Supported Codes
+let modem = ModemSpec::gray_qam_16().preferred_fast();  // Gray-QAM fast backend
+// see examples/modem_gray_qam_preset.rs and modem_simulation_harness.rs
+```
 
-### Block Codes
+Custom constellations go through the validated builder in `examples/modem_custom_constellation.rs`.
 
-| Code Family | Parameters | Error Correction | Applications |
-|-------------|------------|------------------|--------------|
-| **Hamming** | (2^r-1, 2^r-r-1) | 1-bit | Simple ECC, educational |
-| **BCH** | (n, k, t) over GF(2^m) | t-bit algebraic | DVB-T2 outer, flash memory |
-| **LDPC** | (n, k) sparse | Near Shannon limit | DVB-T2 inner, 5G NR, WiFi 6 |
+### GRAND
 
-### Streaming Codes
+```rust
+use gf2_coding::grand::OrbGrandDecoder;
+// see examples/sogrand_crc_probe.rs for a CRC-aided soft-GRAND setup
+```
 
-| Code Family | Parameters | Decoding | Applications |
-|-------------|------------|----------|--------------|
-| **Convolutional** | (n, k, K) | Viterbi | Satellite, deep space |
+## Acceleration
 
-### Standards Compliance
+- **SIMD** (default): bit-level and RREF-stage operations go through AVX2 / AVX-512 via `gf2-core`'s SIMD layer. Word-level (64×) × SIMD (4–8×) ≈ 256–512× over naïve Gaussian elimination for LDPC preprocessing.
+- **Parallel** (opt-in, `--features parallel`): Rayon-backed batch encode/decode across frames.
 
-- **DVB-T2** (ETSI EN 302 755): LDPC inner + BCH outer codes
-- **5G NR**: Quasi-cyclic LDPC framework
-- **NASA/CCSDS**: Convolutional code generator polynomials
+  ```bash
+  RAYON_NUM_THREADS=8 cargo bench -p gf2-coding --bench quick_parallel --features parallel
+  ```
 
-## Performance
+- **GPU** (opt-in, `--features hip`): HIP/ROCm kernels on gfx1030 accelerate batched BCJR soft decoding and Gray-QAM demapping. Requires `hipcc` and an AMD GPU; see [`../gf2-kernels-hip/`](../gf2-kernels-hip/). The HIP crate is excluded from the default workspace build.
 
-### SIMD Acceleration (Enabled by Default)
+See [`docs/SIMD_PERFORMANCE_GUIDE.md`](docs/SIMD_PERFORMANCE_GUIDE.md), [`docs/PARALLELIZATION.md`](docs/PARALLELIZATION.md), and [`docs/LDPC_PERFORMANCE.md`](docs/LDPC_PERFORMANCE.md) for benchmarks and methodology.
 
-LDPC preprocessing uses `gf2-core`'s optimized RREF with:
-- **Word-level operations**: 64× faster than bit-level
-- **AVX2/AVX512 SIMD**: Additional 4-8× speedup
-- **Total**: 256-512× faster than naive Gaussian elimination
+## Features
+
+| Feature | Default | Effect |
+|---|---|---|
+| `simd` | ✅ | Propagates to `gf2-core/simd` (AVX2 / AVX-512) |
+| `parallel` | — | Rayon batch encode/decode |
+| `visualization` | — | Propagates to `gf2-core/visualization` (matrix PNG export) |
+| `llr-f64` | — | Use `f64` LLRs instead of `f32` (for research / reference runs) |
+| `hip` | — | Enable `gf2-kernels-hip` GPU kernels (requires ROCm/hipcc) |
+
+## Utility binaries
 
 ```bash
-# Disable SIMD if needed
-cargo build --no-default-features
+cargo run --release -p gf2-coding --bin generate_ldpc_cache all
+cargo run --release -p gf2-coding --bin validate_ldpc_cache
+cargo run           -p gf2-coding --bin check_encoding
 ```
 
-See [SIMD_PERFORMANCE_GUIDE.md](docs/SIMD_PERFORMANCE_GUIDE.md) for details.
+`generate_ldpc_cache` writes ~530 MB of generator-matrix caches (a one-time ~13 min preprocessing); cached encoders then load in <16 ms.
 
-### Parallel Processing (Opt-in)
+## Examples
 
-Batch decode multiple frames in parallel with Rayon:
+Run with `cargo run --release -p gf2-coding --example <name>`:
 
-```bash
-# Benchmark with different thread counts
-RAYON_NUM_THREADS=1 cargo bench --bench quick_parallel --features parallel
-RAYON_NUM_THREADS=8 cargo bench --bench quick_parallel --features parallel
-
-# Automated scaling test
-./benchmark_quick.sh
-```
-
-See [PARALLELIZATION.md](docs/PARALLELIZATION.md) for details.
-
-## Examples by Difficulty
-
-### Beginner (Start Here)
-
-| Example | Concepts | Runtime |
-|---------|----------|---------|
-| `hamming_basic` | Encoding, decoding, 1-bit correction | <1s |
-| `block_code_intro` | Generator matrices, systematic codes | <1s |
-| `awgn_uncoded` | Channel simulation, BER measurement | <1s |
-| `dvb_t2_ldpc_basic` | LDPC construction, code validation | <1s |
-
-### Intermediate
-
-| Example | Concepts | Runtime |
-|---------|----------|---------|
-| `qc_ldpc_demo` | Quasi-cyclic LDPC codes | <1s |
-| `ldpc_awgn` | Belief propagation, soft decoding | 5-10s |
-| `llr_operations` | Soft-decision LLR ops, min-sum | <1s |
-| `ldpc_cache_file_io` | File-based caching, performance | <1s |
-| `ldpc_encoding_with_cache` | Cached encoder creation | <1s |
-| `generator_from_parity_check` | Matrix algebra, Gaussian elim | <1s |
-| `visualize_large_matrices` | Matrix visualization (PNG export) | 2-5s |
-| `dvb_t2_bch_demo` | BCH algebraic decoding (in development) | <1s |
-
-### Advanced (Deep Dives)
-
-| Example | Concepts | Runtime |
-|---------|----------|---------|
-| `hamming_7_4` | Complete tutorial with BSC simulation | <1s |
-| `nasa_rate_half_k3` | Convolutional codes, Viterbi decoding | <1s |
-
-Run an example: `cargo run --example hamming_basic`
-
-## Utility Binaries
-
-Pre-compute generator matrices for faster LDPC encoding:
-
-```bash
-# Generate cache files (~530 MB, one-time 13min preprocessing)
-cargo run --release --bin generate_ldpc_cache all
-
-# Validate cache integrity with error correction tests
-cargo run --release --bin validate_ldpc_cache
-
-# Quick encoding sanity check
-cargo run --bin check_encoding
-```
-
-Cached encoders load in <16ms (vs 13 minutes preprocessing).
+| Area | Examples |
+|---|---|
+| Block / Hamming | `hamming_basic`, `hamming_7_4`, `block_code_intro`, `generator_from_parity_check` |
+| DVB-T2 | `dvb_t2_ldpc_basic`, `dvb_t2_bch_demo` |
+| LDPC | `ldpc_awgn`, `ldpc_bler_check`, `ldpc_mother_check`, `ldpc_cache_file_io`, `ldpc_encoding_with_cache`, `qc_ldpc_demo` |
+| Convolutional | `nasa_rate_half_k3` |
+| Modem / fading | `modem_gray_qam_preset`, `modem_custom_constellation`, `modem_simulation_harness` |
+| Soft / GRAND | `llr_operations`, `sogrand_crc_probe` |
+| Channel / utilities | `awgn_uncoded`, `visualize_large_matrices`, `gen_presentation_figures` |
 
 ## Testing
 
 ```bash
-# Run all tests
-cargo test
-
-# Run with property-based tests
-cargo test --features proptest
-
-# Run doc tests only
-cargo test --doc
-
-# Run examples (verifies they compile and run)
-cargo build --examples
+cargo test  -p gf2-coding --release
+cargo test  -p gf2-coding --release --doc
+cargo bench -p gf2-coding --bench ldpc_decode
 ```
+
+Always use `--release`: debug mode is 10–100× slower on LDPC and simulation code, and the suite has a 60-second wall-clock budget.
 
 ## Documentation
 
-- **API Reference**: `cargo doc --no-deps --open` or [docs.rs](https://docs.rs/gf2-coding)
-- **Specialized Guides**: See [`docs/`](docs/) directory
-  - [DVB_T2.md](docs/DVB_T2.md) - DVB-T2 implementation and verification
-  - [SIMD_PERFORMANCE_GUIDE.md](docs/SIMD_PERFORMANCE_GUIDE.md) - SIMD optimization
-  - [PARALLELIZATION.md](docs/PARALLELIZATION.md) - Parallel processing
-  - [LDPC_PERFORMANCE.md](docs/LDPC_PERFORMANCE.md) - Benchmarks and profiling
-  - [SDR_INTEGRATION.md](docs/SDR_INTEGRATION.md) - Software-defined radio usage
-- **Workspace README**: [../../README.md](../../README.md) - Project overview and roadmap
+- [`docs/DVB_T2.md`](docs/DVB_T2.md) — DVB-T2 implementation and reference-vector verification
+- [`docs/SIMD_PERFORMANCE_GUIDE.md`](docs/SIMD_PERFORMANCE_GUIDE.md) — SIMD routing and measured speedups
+- [`docs/PARALLELIZATION.md`](docs/PARALLELIZATION.md) — Rayon batch strategy
+- [`docs/LDPC_PERFORMANCE.md`](docs/LDPC_PERFORMANCE.md), [`docs/LDPC_VERIFICATION_TESTS.md`](docs/LDPC_VERIFICATION_TESTS.md)
+- [`docs/SDR_INTEGRATION.md`](docs/SDR_INTEGRATION.md) — using the modem from an SDR stack
+- [`docs/SYSTEMATIC_ENCODING_CONVENTION.md`](docs/SYSTEMATIC_ENCODING_CONVENTION.md) — bit-order and systematic form conventions
+- `src/modem/mod.rs` — module-level modem-framework guide
+- Workspace overview: [`../../README.md`](../../README.md)
 
 ## Contributing
 
-Contributions welcome! When adding features:
-- Write tests first (TDD)
-- Add rustdoc with examples for public APIs
-- Update README if adding major functionality
-- Follow [workspace guidelines](../../README.md#contributing)
+Follow TDD. Add property tests for algebraic invariants, standards test vectors where the code claims standards compliance, and benchmarks for anything performance-sensitive. See the workspace guide in [`../../CLAUDE.md`](../../CLAUDE.md) and [`../../CONTRIBUTING.md`](../../CONTRIBUTING.md).
 
 ## License
 
-MIT OR Apache-2.0
+MIT — see [`../../LICENSE-MIT`](../../LICENSE-MIT).
