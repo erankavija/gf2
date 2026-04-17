@@ -1,382 +1,166 @@
 # gf2-core
 
-High-performance bit manipulation and GF(2) linear algebra in Rust.
+Finite-field and GF(2) linear-algebra primitives in safe Rust: dense and sparse bit matrices, GF(2^m) arithmetic with strategy dispatch, prime fields `Fp<P>` with Montgomery multiplication (plus specialized Mersenne/Proth backends), and tower extensions `QuadraticExt` / `CubicExt` over the `ExtConfig` trait.
 
-`gf2-core` provides two core primitives for working with bits and binary matrices: **`BitVec`** for dense bit strings and **`BitMatrix`** for bit-packed matrices with efficient GF(2) operations.
+`gf2-core` is the mathematical foundation for the `gf2-coding` codes crate and the target of Lean4 proofs in `proofs/`. The crate is `#![deny(unsafe_code)]`; SIMD lives in the sibling `gf2-kernels-simd` crate and is reached through runtime dispatch.
 
-## Core Primitives
+## Module map
 
-### BitVec - Dense Bit Vectors
+| Module | Contents |
+|---|---|
+| `bitvec`, `bitslice` | Dense bit storage in `Vec<u64>`, word-aligned ops, shifts, scans, rank/select |
+| `matrix` | `BitMatrix` — row-major bit-packed matrix, M4RM multiply, row ops, transpose |
+| `sparse` | CSR / CSC / `SpBitMatrixDual` for LDPC-scale sparse matrices |
+| `alg/` | M4RM multiply, Gauss–Jordan inversion, RREF, polar / Fast Hadamard transform |
+| `field/` | `FiniteField`, `ConstField` traits; axiom-test harness; `FieldVec` |
+| `gf2m/` | GF(2^m) arithmetic generic over storage width (sealed `UintExt` trait); Barrett, Karatsuba, table and SIMD strategies |
+| `gfp/` | `Fp<const P: u64>` Montgomery multiplication, plus a specialized module for Mersenne/Proth primes |
+| `gfpn/` | `QuadraticExt<C>`, `CubicExt<C>` tower extensions over `ExtConfig` |
+| `primitive_polys` | Static database of primitive polynomials for m = 2..16, plus verification and generation |
+| `kernels/` | Runtime dispatch to scalar or SIMD backends |
+| `compute/` | Parallel/batch operations (Rayon, feature-gated) |
+| `io/` | Serde serialization (feature-gated) |
+| `rng` | Deterministic random bit generators |
 
-A growable bit string backed by `Vec<u64>` with word-level operations for performance.
-
-```rust
-use gf2_core::BitVec;
-
-// Create and manipulate bit vectors
-let mut bv = BitVec::new();
-bv.push_bit(true);
-bv.push_bit(false);
-bv.push_bit(true);
-
-assert_eq!(bv.len(), 3);
-assert_eq!(bv.get(0), true);
-assert_eq!(bv.get(1), false);
-assert_eq!(bv.count_ones(), 2);
-
-// Bitwise operations (in-place, functional style for chaining)
-let mut a = BitVec::from_bytes_le(&[0b1010]);
-let b = BitVec::from_bytes_le(&[0b1100]);
-a.bit_xor_into(&b);  // a = 0b0110
-
-// Shifts and searches
-let mut v = BitVec::from_bytes_le(&[0b0001_0000]);
-assert_eq!(v.find_first_one(), Some(4));
-v.shift_left(2);
-assert_eq!(v.find_first_one(), Some(6));
-```
-
-**Common operations:**
-- `new()`, `zeros(n)`, `ones(n)` - Constructors
-- `push_bit()`, `pop_bit()`, `get()`, `set()` - Element access
-- `count_ones()`, `parity()` - Population count
-- `bit_and_into()`, `bit_or_into()`, `bit_xor_into()`, `not_into()` - Bitwise ops
-- `shift_left()`, `shift_right()` - Bit shifting
-- `find_first_one()`, `find_first_zero()` - Scanning
-
-### BitMatrix - Bit-Packed Matrices
-
-Row-major, bit-packed boolean matrices for GF(2) linear algebra.
-
-```rust
-use gf2_core::BitMatrix;
-
-// Create matrices
-let mut m = BitMatrix::zeros(3, 4);
-m.set(0, 0, true);
-m.set(1, 2, true);
-assert_eq!(m.get(0, 0), true);
-assert_eq!(m.get(1, 2), true);
-
-// Identity matrix
-let id = BitMatrix::identity(4);
-assert_eq!(id.get(0, 0), true);
-assert_eq!(id.get(0, 1), false);
-
-// Matrix operations
-let a = BitMatrix::identity(3);
-let b = BitMatrix::ones(3, 3);
-let c = &a * &b;  // M4RM multiplication
-
-// Row operations (core GF(2) algebra)
-let mut m = BitMatrix::identity(3);
-m.row_xor(0, 1);  // row[0] ^= row[1]
-m.swap_rows(1, 2);
-
-// Transpose
-let t = m.transpose();
-assert_eq!(t.rows(), m.cols());
-assert_eq!(t.cols(), m.rows());
-```
-
-**Common operations:**
-- `zeros()`, `identity()`, `ones()` - Constructors
-- `get()`, `set()` - Element access
-- `rows()`, `cols()` - Dimensions
-- `row_xor()`, `swap_rows()` - Row operations
-- `transpose()` - Matrix transpose
-- `*` operator - Matrix multiplication (M4RM algorithm)
-- `row_as_bitvec()`, `col_as_bitvec()` - Extract rows/columns
-
-## Installation
-
-Add to your `Cargo.toml`:
+## Install
 
 ```toml
 [dependencies]
-gf2-core = "0.1"
+gf2-core = { path = "...", features = ["simd"] }   # AVX2/AVX-512 on x86_64
 
-# With SIMD acceleration (3.4-3.6× faster for large operations)
-gf2-core = { version = "0.1", features = ["simd"] }
-
-# Minimal build (no random generation)
-gf2-core = { version = "0.1", default-features = false }
+# Minimal
+gf2-core = { path = "...", default-features = false }
 ```
 
-## Quick Start
+## Getting started
 
-### 5-Minute BitVec Tutorial
+### Bit vectors and matrices
 
 ```rust
-use gf2_core::BitVec;
+use gf2_core::{BitVec, BitMatrix};
 
-// Construction
-let mut bv = BitVec::zeros(8);  // 00000000
-bv.set(0, true);                 // 00000001
-bv.set(7, true);                 // 10000001
-
-// Querying
-assert_eq!(bv.len(), 8);
+let mut bv = BitVec::zeros(8);
+bv.set(0, true); bv.set(7, true);
 assert_eq!(bv.count_ones(), 2);
 assert_eq!(bv.find_first_one(), Some(0));
-assert_eq!(bv.find_last_one(), Some(7));
 
-// Bitwise operations (in-place)
 let mut a = BitVec::from_bytes_le(&[0b1010]);
-let b = BitVec::from_bytes_le(&[0b1100]);
-a.bit_xor_into(&b);
+a.bit_xor_into(&BitVec::from_bytes_le(&[0b1100]));
 assert_eq!(a.to_bytes_le(), vec![0b0110]);
 
-// Conversion
-let bytes = vec![0xFF, 0x00];
-let bv = BitVec::from_bytes_le(&bytes);
-assert_eq!(bv.len(), 16);
-assert_eq!(bv.count_ones(), 8);
+let m = BitMatrix::identity(128);
+let p = &m * &m;                // M4RM
+assert_eq!(p, m);
 ```
 
-### 5-Minute BitMatrix Tutorial
-
-```rust
-use gf2_core::BitMatrix;
-
-// Construction
-let mut m = BitMatrix::zeros(3, 3);
-m.set(0, 0, true);
-m.set(1, 1, true);
-m.set(2, 2, true);
-// Now m is the 3×3 identity matrix
-
-// Element access
-assert_eq!(m.get(0, 0), true);
-assert_eq!(m.get(0, 1), false);
-
-// GF(2) row operations
-m.row_xor(0, 1);  // row[0] = row[0] XOR row[1]
-m.swap_rows(1, 2);
-
-// Matrix multiplication (uses M4RM algorithm)
-let a = BitMatrix::identity(100);
-let b = BitMatrix::ones(100, 50);
-let c = &a * &b;  // Efficient multiplication
-assert_eq!(c.rows(), 100);
-assert_eq!(c.cols(), 50);
-
-// Transpose
-let t = m.transpose();
-assert_eq!(t.get(1, 0), m.get(0, 1));
-
-// Extract rows/columns as BitVec
-let row0 = m.row_as_bitvec(0);
-let col0 = m.col_as_bitvec(0);
-```
-
-## Advanced Features
-
-### Sparse Matrices
-
-For low-density matrices (e.g., LDPC codes), use `SpBitMatrix` or `SpBitMatrixDual`:
+### Sparse matrices (LDPC-scale)
 
 ```rust
 use gf2_core::sparse::SpBitMatrix;
 
-let coo = vec![(0, 1), (0, 3), (1, 2)];
-let sparse = SpBitMatrix::from_coo(2, 5, &coo);
-
-// Iterate over nonzero columns in a row
-for col in sparse.row_iter(0) {
-    println!("Column {}", col);
+let coo = [(0, 1), (0, 3), (1, 2)];
+let h   = SpBitMatrix::from_coo(2, 5, &coo);
+for col in h.row_iter(0) {
+    println!("nonzero at column {col}");
 }
 ```
 
-[→ Full sparse matrix documentation](https://docs.rs/gf2-core/latest/gf2_core/sparse/)
+Use `SpBitMatrixDual` when you need both row and column traversal (syndrome computation, min-sum passes).
 
-### GF(2^m) Extension Field Arithmetic
-
-Fast multiplication, division, and inversion in binary extension fields:
+### GF(2^m) arithmetic
 
 ```rust
 use gf2_core::gf2m::Gf2mField;
 
-// GF(2^8) with primitive polynomial x^8 + x^4 + x^3 + x + 1
-let field = Gf2mField::new(8, 0b100011101).with_tables();
-let a = field.element(0x53);
-let b = field.element(0xCA);
-let product = &a * &b;  // O(1) via log/antilog tables
+// AES field: GF(2^8) with x^8 + x^4 + x^3 + x + 1
+let f = Gf2mField::new(8, 0b1_0001_1101).with_tables();
+let a = f.element(0x53);
+let b = f.element(0xCA);
+let _ = &a * &b;                // O(1) log/antilog
 ```
 
-All field elements implement the generic `FiniteField` trait (see `field` module).
+Strategy selection (Barrett, Karatsuba, tables, SIMD) is transparent and depends on `m`, storage width, and available CPU features.
 
-[→ Full GF(2^m) documentation](docs/GF2M.md)
-
-### RREF and Matrix Inversion
-
-Compute reduced row echelon form and inverses:
+### Prime fields and tower extensions
 
 ```rust
-use gf2_core::alg::rref::rref;
+use gf2_core::gfp::Fp;
 
-let m = BitMatrix::identity(10);
-let result = rref(&m, false);  // false = pivot from left
-assert_eq!(result.rank, 10);
-assert_eq!(result.reduced, m);
+// Fp<P> carries Montgomery constants as associated consts.
+type F = Fp<1_000_000_007>;
+let a = F::new(12345);
+let b = F::new(67890);
+let _ = a * b + a;               // Montgomery multiplication + modular add
 ```
 
-[→ RREF algorithm details](docs/BENCHMARKS.md#rref-performance)
+`gfpn::QuadraticExt<C>` and `gfpn::CubicExt<C>` build tower extensions on top of any prime-field base through the `ExtConfig` trait. Both levels are covered by Lean4 proofs — see [`proofs/`](../../proofs/).
 
-### Polar Codes Support
+### Primitive polynomials
 
-Fast Hadamard Transform for polar code encoding/decoding:
+```rust
+use gf2_core::primitive_polys;
+
+let p = primitive_polys::lookup(8).unwrap();        // degree 8
+assert!(primitive_polys::verify(8, p));
+```
+
+The static database covers m = 2..16. `generation` can search for primitive polynomials at larger degrees.
+
+### Polar / Fast Hadamard transform
 
 ```rust
 use gf2_core::BitVec;
 
-let mut info = BitVec::zeros(1024);
-info.set(0, true);
-let encoded = info.polar_transform(1024);
-let decoded = encoded.polar_transform_inverse(1024);
-assert_eq!(decoded, info);
+let mut u = BitVec::zeros(1024);
+u.set(0, true);
+let x = u.polar_transform(1024);
+assert_eq!(x.polar_transform_inverse(1024), u);
 ```
 
-### Random Generation
+## SIMD and parallelism
 
-Generate random bit vectors and matrices (requires `rand` feature, enabled by default):
+- Enable `simd` (or rely on `gf2-coding`'s default) to route bitwise operations, matrix row XORs, and popcount through AVX2 / AVX-512 kernels. Runtime detection happens once per process via `OnceLock` in `lib.rs`.
+- Enable `parallel` to opt in to Rayon-backed batch algorithms in `compute/`.
 
-```rust
-use gf2_core::{BitVec, BitMatrix};
-use rand::SeedableRng;
+Validated speedups on large operands (>512 bytes): 3.4–3.6× for bulk logical ops and popcount; see [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md) and [`docs/KERNEL_OPTIMIZATION.md`](docs/KERNEL_OPTIMIZATION.md) for measurements and methodology.
 
-let mut rng = rand::rngs::StdRng::seed_from_u64(42);
+## Features
 
-// Random bit vector with p=0.5
-let bv = BitVec::random(1000, &mut rng);
+| Feature | Default | Effect |
+|---|---|---|
+| `rand` | ✅ | Random `BitVec` / `BitMatrix` / field elements |
+| `io` | ✅ | Serde serialization of bit containers |
+| `simd` | — | Route through `gf2-kernels-simd` (AVX2 / AVX-512) |
+| `parallel` | — | Rayon batch algorithms |
+| `visualization` | — | Save `BitMatrix` as PNG |
 
-// Sparse random matrix with p=0.1
-let m = BitMatrix::random_with_probability(100, 100, 0.1, &mut rng);
+## Invariants
 
-// Deterministic seeded generation
-let bv = BitVec::random_seeded(500, 0x1234);
+- **Tail masking**: padding bits past `len_bits` in the last `u64` word are always zero. Every mutating operation calls `mask_tail()`. Equality, `count_ones`, and `parity` depend on this.
+- **Bit numbering**: bit `i` lives in `word = i >> 6`, `mask = 1u64 << (i & 63)`.
+- **Dense vs sparse**: use `BitMatrix` when >5–10% of entries are nonzero; use `SpBitMatrix` / `SpBitMatrixDual` below that.
+
+## Testing & docs
+
+```bash
+cargo test -p gf2-core --release                # full suite
+cargo test -p gf2-core --release --doc          # doc examples
+cargo bench -p gf2-core --bench fp_montgomery   # focused bench
+cargo doc -p gf2-core --no-deps --open
 ```
 
-### SIMD Acceleration
+Deep dives under `docs/`:
 
-Enable the `simd` feature for AVX2-accelerated operations on x86_64:
-
-```toml
-[dependencies]
-gf2-core = { version = "0.1", features = ["simd"] }
-```
-
-Operations automatically use SIMD when beneficial (>512 bytes). Validated speedups:
-- Logical operations (XOR, AND, OR): **3.4-3.6×** faster
-- Popcount: **3.5×** faster
-- Large matrix operations benefit from vectorized row XOR
-
-[→ SIMD architecture details](docs/KERNEL_OPTIMIZATION.md)
-
-### Matrix Visualization
-
-Enable `visualization` feature to save matrices as PNG images:
-
-```toml
-[dependencies]
-gf2-core = { version = "0.1", features = ["visualization"] }
-```
-
-```rust
-let m = BitMatrix::identity(100);
-m.save_image("identity.png").unwrap();
-```
-
-## Performance
-
-Benchmarked against specialized C/C++ libraries (M4RI, NTL, FLINT):
-
-- **M4RM matrix multiply:** Within 4× of M4RI (hand-optimized C)
-- **RREF:** Within 8-10× of M4RI for large matrices (150-170× faster than naive)
-- **GF(2^m) multiplication:** 13-18× faster than NTL
-- **SIMD operations:** 3.4-3.6× speedup for large data (AVX2)
-
-**See [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md) for detailed performance analysis.**
-
-## Common Patterns & Pitfalls
-
-### Working with Word Boundaries
-
-BitVec stores bits in 64-bit words. Operations at word boundaries (multiples of 64) are more efficient:
-
-```rust
-// Efficient: aligned to word boundary
-let bv = BitVec::zeros(64);  
-
-// Less efficient: requires word splitting
-let bv = BitVec::zeros(65);  
-```
-
-### Tail Masking Invariant
-
-BitVec maintains an invariant that padding bits beyond `len_bits` are always zero. All operations preserve this automatically - you don't need to think about it, but it's important for correctness of operations like `==` and `count_ones()`.
-
-### When to Use Sparse vs Dense Matrices
-
-- **Dense (`BitMatrix`)**: When >5-10% of entries are nonzero
-- **Sparse (`SpBitMatrix`)**: When <5% of entries are nonzero (e.g., LDPC codes)
-- **Dual (`SpBitMatrixDual`)**: When you need both row and column access
-
-### Functional Style with In-Place Operations
-
-Many BitVec operations are in-place for performance but follow functional naming:
-
-```rust
-let mut a = BitVec::ones(8);
-let b = BitVec::zeros(8);
-a.bit_xor_into(&b);  // a is mutated, b is borrowed immutably
-```
-
-For pure functional style, clone first:
-
-```rust
-let a = BitVec::ones(8);
-let b = BitVec::zeros(8);
-let mut result = a.clone();
-result.bit_xor_into(&b);  // a and b unchanged
-```
-
-## Documentation & Examples
-
-- **Rustdocs:** Run `cargo doc --no-deps --open` for full API documentation
-- **Examples:** Run `cargo run --example <name>`:
-  - `bitvec_basics` - BitVec operations walkthrough
-  - `matrix_basics` - BitMatrix operations walkthrough  
-  - `sparse_display` - Sparse matrix visualization
-  - `random_generation` - Random BitVec/BitMatrix generation
-  - `visualize_matrix` - Matrix PNG export (requires `visualization` feature)
-- **Deep Dives:**
-  - [BENCHMARKS.md](docs/BENCHMARKS.md) - Performance analysis & comparisons
-  - [KERNEL_OPTIMIZATION.md](docs/KERNEL_OPTIMIZATION.md) - SIMD architecture
-  - [GF2M.md](docs/GF2M.md) - Extension field arithmetic
-  - [PRIMITIVE_POLYNOMIALS.md](docs/PRIMITIVE_POLYNOMIALS.md) - Polynomial generation
-
-## Features Reference
-
-| Feature | Default | Description |
-|---------|---------|-------------|
-| `rand` | ✅ | Random BitVec/BitMatrix generation |
-| `simd` | ❌ | AVX2/NEON acceleration (opt-in, runtime detected) |
-| `visualization` | ❌ | Save BitMatrix as PNG images |
-| `parallel` | ❌ | Rayon-based parallelization (future) |
+- [`BENCHMARKS.md`](docs/BENCHMARKS.md) — performance vs. M4RI / NTL / FLINT
+- [`KERNEL_OPTIMIZATION.md`](docs/KERNEL_OPTIMIZATION.md) — SIMD architecture
+- [`GF2M.md`](docs/GF2M.md) — GF(2^m) strategy selection
+- [`PRIMITIVE_POLYNOMIALS.md`](docs/PRIMITIVE_POLYNOMIALS.md) — polynomial database and generation
+- [`COMPUTE_BACKEND_DESIGN.md`](docs/COMPUTE_BACKEND_DESIGN.md), [`RREF_DESIGN_PLAN.md`](docs/RREF_DESIGN_PLAN.md), [`SPARSE_DEDUP_DESIGN.md`](docs/SPARSE_DEDUP_DESIGN.md), [`POLAR_IMPLEMENTATION_PLAN.md`](docs/POLAR_IMPLEMENTATION_PLAN.md)
 
 ## Safety
 
-This crate uses `#![deny(unsafe_code)]`. All operations are implemented in safe Rust.
+`#![deny(unsafe_code)]`. Unsafe SIMD lives in `gf2-kernels-simd`; GPU kernels in `gf2-kernels-hip` (used only from `gf2-coding` under the `hip` feature).
 
 ## License
 
-Licensed under either of:
-- Apache License, Version 2.0 ([LICENSE-APACHE](../../LICENSE-APACHE))
-- MIT License ([LICENSE-MIT](../../LICENSE-MIT))
-
-at your option.
-
-## Contributing
-
-Contributions welcome! Please see the workspace-level [CONTRIBUTING.md](../../CONTRIBUTING.md).
+MIT — see [LICENSE-MIT](../../LICENSE-MIT).

@@ -1,218 +1,191 @@
-# gf2 - High-Performance GF(2) Computing
+# gf2
 
 [![CI](https://github.com/erankavija/gf2/workflows/CI/badge.svg)](https://github.com/erankavija/gf2/actions)
 [![gf2-core coverage](https://raw.githubusercontent.com/erankavija/gf2/badges/gf2-core.svg)](https://github.com/erankavija/gf2/actions)
 [![gf2-coding coverage](https://raw.githubusercontent.com/erankavija/gf2/badges/gf2-coding.svg)](https://github.com/erankavija/gf2/actions)
 [![workspace coverage](https://raw.githubusercontent.com/erankavija/gf2/badges/workspace.svg)](https://github.com/erankavija/gf2/actions)
 
-A Rust workspace for high-performance binary field computing and coding theory, containing two complementary crates:
+A research-grade Rust toolkit for finite field computing and modern coding theory — binary fields, prime fields, tower extensions, and error-correcting codes with SIMD/GPU kernels and machine-checked proofs. Built to explore algorithms that compete with specialized CAS (Magma, Sage) and production PHY stacks (DVB-T2, 5G NR), behind clean, composable Rust APIs.
 
-- **`gf2-core`** - Bit manipulation primitives, GF(2) linear algebra, and extension field GF(2^m) arithmetic
-- **`gf2-coding`** - Error-correcting codes and coding theory algorithms built on gf2-core
+## Highlights
 
-## Project Goals
+- **Finite fields**: dense GF(2) linear algebra, GF(2^m) with Karatsuba/Barrett/table strategies, GF(p) via Montgomery (plus specialized Mersenne/Proth backends), and GF(p^n) quadratic/cubic tower extensions.
+- **Codes**: Hamming, BCH, LDPC (belief-propagation, quasi-cyclic), convolutional/Viterbi, product codes, generalized LDPC with Chase–Pyndiah, and GRAND family (ORBGRAND, SO-GRAND).
+- **Standards**: DVB-T2 LDPC + BCH validated against ETSI EN 302 755 test vectors (202/202); 5G NR LDPC BG1/BG2 base graphs with per-i_LS shift tables.
+- **Modulation & channel**: BPSK + Gray-QAM (QPSK/16/64/256) with soft demapping, AWGN, Rician fading, BCJR batch decoder.
+- **Acceleration**: AVX2/AVX-512 CPU kernels (runtime-dispatched) and optional HIP/ROCm GPU kernels (gfx1030) for batched BCJR and Gray-QAM demap.
+- **Formal verification**: Lean4 proofs of prime-field Montgomery arithmetic extracted from the live Rust source via Charon/Aeneas.
 
-- **Performance**: Optimized kernels with SIMD acceleration for throughput-critical operations
-- **Correctness**: Comprehensive testing including property-based tests and mathematical validation
-- **Education**: Clear documentation with examples demonstrating coding theory concepts
-- **Composability**: Clean, functional APIs that hide low-level complexity
+Active work is tracked in-repo with [jit](https://github.com/ArcadeLabsInc/jit) under `.jit/` — run `jit status` or browse issues there for the current backlog and in-progress items.
 
-## Crate Overview
+## Workspace layout
 
-### gf2-core - Performance Primitives
+| Crate | Purpose |
+|---|---|
+| [`gf2-core`](crates/gf2-core/) | Bit primitives, dense/sparse linear algebra over GF(2), GF(2^m), GF(p), and tower extensions GF(p^n). No unsafe. |
+| [`gf2-coding`](crates/gf2-coding/) | Block codes, streaming codes, GRAND decoders, modem framework, channel models, simulation harness. |
+| [`gf2-kernels-simd`](crates/gf2-kernels-simd/) | Isolated unsafe CPU kernels (AVX2, AVX-512, aarch64). |
+| [`gf2-kernels-hip`](crates/gf2-kernels-hip/) | Isolated unsafe HIP/ROCm GPU kernels. Excluded from the default workspace; opt in with `--features hip` on `gf2-coding`. |
+| [`proofs/`](proofs/) | Lean4 formal-verification package for `gfp/` and `gfpn/`. |
 
-Low-level building blocks for binary field computing:
-- **BitVec/BitMatrix**: Dense bit storage with word-level operations
-- **GF(2) linear algebra**: M4RM multiplication, Gauss-Jordan inversion
-- **Extension fields GF(2^m)**: Polynomial arithmetic with Karatsuba and SIMD multiplication
-- **Primitive polynomials**: Verification, generation, and standard database (m=2..16)
-- **Sparse matrices**: CSR/CSC formats for low-density operations
-- **Rank/select**: O(1) rank, O(log n) select with lazy indexing
-- **Polar transforms**: Fast Hadamard Transform for polar codes
-- **SIMD acceleration**: Optional AVX2 kernels via `simd` feature
-- **Visualization**: Optional PNG export for matrices via `visualization` feature
+All `unsafe` code is confined to the two kernel crates; everything else is `#![deny(unsafe_code)]`.
 
-See [crates/gf2-core/README.md](crates/gf2-core/README.md) for detailed features and usage.
-
-### gf2-coding - Error-Correcting Codes
-
-Coding theory algorithms for error correction:
-- **Block codes**: Hamming codes with syndrome decoding
-- **Generator matrix access**: Unified trait for all linear codes (lazy, cached)
-- **BCH codes**: Algebraic decoding (Berlekamp-Massey, Chien search)
-- **DVB-T2 BCH**: All 12 configurations validated (202/202 blocks match ETSI EN 302 755)
-- **Convolutional codes**: Viterbi decoder
-- **LDPC codes**: Belief propagation with quasi-cyclic support
-- **DVB-T2 LDPC**: All 12 configurations validated (202/202 blocks match test vectors)
-- **Parallel batch operations**: BCH and LDPC with rayon support
-- **Soft-decision LLR**: Operations for iterative decoding
-- **Modem framework**: BPSK and Gray-coded QPSK/16/64/256-QAM presets plus a validated builder for arbitrary custom constellations; reference (exact log-MAP) and optimized (Gray-QAM fast) backends selected through `ModemSpec::preferred_*` factories
-- **Channel models**: AWGN and Rician fading integrations on top of the modem framework
-
-See [crates/gf2-coding/README.md](crates/gf2-coding/README.md) for detailed features and examples.
-
-### Formal Verification
-
-Machine-checked proofs of field arithmetic correctness in Lean4, extracted from the
-actual Rust source via [Charon](https://github.com/AeneasVerif/charon)/[Aeneas](https://github.com/AeneasVerif/aeneas):
-
-- **Scope**: `Fp<P>` Montgomery arithmetic (`gfp/`) and tower extensions (`gfpn/`)
-- **Proofs**: Montgomery roundtrip, REDC, Newton iteration, `CommRing`/`Field` instances
-- **Build**: `cd proofs && lake build` (requires [elan](https://github.com/leanprover/elan))
-
-See [proofs/README.md](proofs/README.md) for the full pipeline and prerequisites.
-
-## Key Design Principles
-
-- **Functional style at API level**: Immutability and pure functions where practical
-- **Imperative kernels for performance**: Low-level code optimized for speed
-- **Tail masking invariant**: Padding bits always zeroed for correctness
-- **Test-driven development**: Comprehensive unit and property-based tests
-- **Safe by default**: `#![deny(unsafe_code)]` at crate level
-- **MSRV**: Rust 1.80+
-
-## Quick Start
-
-Add dependencies to your `Cargo.toml`:
+## Install
 
 ```toml
 [dependencies]
-gf2-core = "0.1"
-gf2-coding = "0.1"
+gf2-core   = { path = "crates/gf2-core" }
+gf2-coding = { path = "crates/gf2-coding" }
 
-# Optional: enable SIMD acceleration
-# gf2-core = { version = "0.1", features = ["simd"] }
+# Optional: SIMD (default on for gf2-coding), parallel, LLR in f64, HIP GPU
+# gf2-coding = { path = "...", features = ["parallel", "llr-f64", "hip"] }
 ```
 
-### Basic Example
+The crates are not yet published to crates.io.
+
+## Tour by task
+
+### Bit algebra & GF(2) linear algebra
 
 ```rust
-use gf2_core::BitVec;
-use gf2_core::matrix::BitMatrix;
+use gf2_core::{BitVec, BitMatrix};
 
-// Bit vector operations
-let mut bv = BitVec::from_bytes_le(&[0b11110000]);
-let b = BitVec::from_bytes_le(&[0b11001100]);
-bv.bit_xor_into(&b);
-assert_eq!(bv.count_ones(), 4);
+let mut a = BitVec::from_bytes_le(&[0b1010_1010]);
+a.bit_xor_into(&BitVec::from_bytes_le(&[0b1100_1100]));
+assert_eq!(a.count_ones(), 4);
 
-// Matrix operations over GF(2)
-let a = BitMatrix::identity(3);
-let b = BitMatrix::zeros(3, 3);
-let product = &a * &b;  // M4RM multiplication
+let m = BitMatrix::identity(128);
+let p = &m * &m;                     // M4RM matrix multiply
+assert_eq!(p, m);
 ```
 
-### Error-Correcting Codes
+### GF(2^m) and GF(p^n) arithmetic
+
+```rust
+use gf2_core::gf2m::Gf2mField;
+
+let f = Gf2mField::new(8, 0b1_0001_1101).with_tables();   // AES polynomial
+let x = f.element(0x53);
+let y = f.element(0xCA);
+let _ = &x * &y;                     // O(1) via log/antilog
+```
+
+Prime fields (`Fp<P>`), quadratic and cubic extensions live under `gf2_core::gfp` and `gf2_core::gfpn`; both are the subject of machine-checked Lean proofs (see [proofs/](proofs/)).
+
+### Error correction (Hamming)
 
 ```rust
 use gf2_coding::{LinearBlockCode, SyndromeTableDecoder};
 use gf2_coding::traits::{BlockEncoder, HardDecisionDecoder};
+use gf2_core::BitVec;
 
-// Hamming(7,4) code
-let code = LinearBlockCode::hamming(3);
+let code    = LinearBlockCode::hamming(3);
 let decoder = SyndromeTableDecoder::new(code.clone());
 
-// Encode and inject error
-let message = BitVec::from_bytes_le(&[0b1011]);
-let mut codeword = code.encode(&message);
-codeword.set(2, !codeword.get(2));  // Flip bit
-
-// Decode with error correction
-let decoded = decoder.decode(&codeword);
-assert_eq!(decoded, message);
+let msg = BitVec::from_bytes_le(&[0b1011]);
+let mut cw = code.encode(&msg);
+cw.set(2, !cw.get(2));                // flip one bit
+assert_eq!(decoder.decode(&cw), msg); // corrected
 ```
 
-For more examples, see the individual crate READMEs and the `examples/` directory.
+### DVB-T2 LDPC + BCH + BPSK/AWGN
+
+```rust
+use gf2_coding::{CodeRate, ldpc::LdpcCode, simulation::BpskAwgnChannel};
+
+let code = LdpcCode::dvb_t2_normal(CodeRate::Rate1_2);
+assert_eq!((code.k(), code.n()), (32_400, 64_800));
+let _channel = BpskAwgnChannel;       // full pipeline: see examples/ldpc_awgn.rs
+```
+
+See [crates/gf2-coding/README.md](crates/gf2-coding/README.md) for the full menu (5G NR LDPC, GRAND, product codes, Chase–Pyndiah, Gray-QAM modem, Rician fading, BCJR).
+
+## Features
+
+| Crate | Feature | Default | Effect |
+|---|---|---|---|
+| `gf2-core` | `rand` | ✅ | Random bit/matrix/field generators |
+| `gf2-core` | `io` | ✅ | Serde (de)serialization |
+| `gf2-core` | `simd` | — | Routes to `gf2-kernels-simd` (AVX2/AVX-512) |
+| `gf2-core` | `parallel` | — | Rayon batch operations |
+| `gf2-core` | `visualization` | — | PNG export of matrices |
+| `gf2-coding` | `simd` | ✅ | Propagates to `gf2-core/simd` |
+| `gf2-coding` | `parallel` | — | Rayon batch encode/decode |
+| `gf2-coding` | `llr-f64` | — | f64 LLRs (default f32) |
+| `gf2-coding` | `hip` | — | HIP/ROCm GPU kernels (requires hipcc) |
+
+Runtime SIMD dispatch: the first call probes CPU features via `OnceLock` and binds the best available backend for the process's lifetime.
+
+## Developing
+
+```bash
+# build everything (default workspace, HIP excluded)
+cargo build --workspace --all-features
+
+# test — ALWAYS --release (debug is 10–100× slower on SIMD / simulation code)
+cargo test --workspace --all-features --release
+
+# format + lint gates (CI enforces -D warnings and fmt --check)
+cargo fmt --all
+cargo clippy --workspace --all-targets --all-features -- -D warnings
+
+# focused benches
+cargo bench -p gf2-core --bench fp_montgomery
+cargo bench -p gf2-coding --bench ldpc_decode
+
+# docs
+cargo doc --no-deps --open
+
+# HIP GPU kernels (requires ROCm + hipcc, builds independently of workspace)
+cargo build --manifest-path crates/gf2-kernels-hip/Cargo.toml
+
+# Lean4 verification — needs elan only
+cd proofs && lake build
+# Full regeneration from Rust source — needs patched Charon + Aeneas
+./scripts/verify-lean.sh
+```
+
+Test-suite wall-clock budget is 60 seconds. If it takes longer, something is wrong.
+
+## Examples
+
+`cargo run --release -p gf2-coding --example <name>`:
+
+- **Block codes**: `hamming_basic`, `hamming_7_4`, `block_code_intro`, `generator_from_parity_check`
+- **DVB-T2**: `dvb_t2_ldpc_basic`, `dvb_t2_bch_demo`
+- **LDPC**: `ldpc_awgn`, `ldpc_bler_check`, `ldpc_mother_check`, `ldpc_cache_file_io`, `ldpc_encoding_with_cache`, `qc_ldpc_demo`
+- **Convolutional / Viterbi**: `nasa_rate_half_k3`
+- **Modem + fading**: `modem_gray_qam_preset`, `modem_custom_constellation`, `modem_simulation_harness`
+- **Soft decoding / GRAND**: `llr_operations`, `sogrand_crc_probe`
+- **Channel**: `awgn_uncoded`
+- **Utilities**: `visualize_large_matrices`, `gen_presentation_figures`
+
+`cargo run -p gf2-core --example <name>`: `bitvec_basics`, `matrix_basics`, `sparse_display`, `random_generation`, `primitive_polynomial_verification`, `visualize_matrix`.
+
+## Formal verification
+
+`proofs/` contains a self-contained Lean4 package that proves correctness of the Rust implementations of `Fp<P>` (Montgomery) and the quadratic/cubic tower extensions. Lean sources are auto-generated from the live Rust via a Charon/Aeneas pipeline (`scripts/verify-lean.sh`), committed to the repo, and backed by hand-written proofs under `proofs/Gf2Core/Proofs/`. Headline theorems include Montgomery roundtrip, REDC correctness, and `CommRing`/`Field` instances via equivalence with `ZMod P.val`. See [proofs/README.md](proofs/README.md) for the full pipeline and prerequisites.
+
+## Design notes
+
+- **Tail-masking invariant** — `BitVec` guarantees that padding bits beyond `len_bits` in the final `u64` word are zero. Every mutating operation calls `mask_tail()`. This is the single most critical correctness invariant.
+- **Functional at the API boundary, imperative inside kernels** — high-level code prefers pure functions and iterator combinators; `kernels/` and `compute/` use mutation and loops for speed.
+- **Unsafe isolation** — the only crates allowed to use `unsafe` are `gf2-kernels-simd` and `gf2-kernels-hip`. Runtime SIMD dispatch goes through `simd::maybe_simd()`.
+- **MSRV**: Rust 1.80.
 
 ## Documentation
 
-- **gf2-core API**: [crates/gf2-core/README.md](crates/gf2-core/README.md)
-- **gf2-coding API**: [crates/gf2-coding/README.md](crates/gf2-coding/README.md)
-- **Formal verification**: [proofs/README.md](proofs/README.md)
-- **Development roadmap**: [ROADMAP.md](ROADMAP.md)
-- **Full API docs**: Run `cargo doc --no-deps --open`
-
-## Development Roadmap
-
-The project roadmap is divided into strategic goals (this document) and detailed implementation plans (subproject roadmaps):
-
-- **[ROADMAP.md](ROADMAP.md)** - Strategic overview and cross-cutting themes
-- **[crates/gf2-core/ROADMAP.md](crates/gf2-core/ROADMAP.md)** - Performance optimization phases
-- **[crates/gf2-coding/ROADMAP.md](crates/gf2-coding/ROADMAP.md)** - Coding theory implementations
-
-### Current Status
-
-**gf2-core**: Core primitives feature-complete
-- ✅ GF(2^m) extension field arithmetic
-- ✅ Karatsuba multiplication and SIMD operations
-- ✅ Primitive polynomial verification and generation
-- ✅ Sparse matrix primitives (CSR/CSC)
-- ✅ Rank/select operations (lazy indexing)
-- ✅ Polar transforms (Fast Hadamard Transform)
-
-**gf2-coding**: DVB-T2 FEC validation complete, parallelization active
-- ✅ BCH codes: 202/202 blocks validated against ETSI EN 302 755
-- ✅ LDPC codes: All 12 configurations validated
-- ✅ Parallel batch operations with rayon
-- 🔧 CPU parallelization for real-time decoding (50-100 Mbps target)
-- ✅ Modem framework: BPSK + Gray-coded QPSK/16/64/256-QAM + arbitrary custom constellations (soft-decision demapping, AWGN and Rician fading integration)
-- 🔮 Full coded-modem FEC chain (planned)
-
-## Development
-
-### Build and Test
-
-```bash
-# Build workspace
-cargo build --workspace
-
-# Run all tests
-cargo test --workspace --all-features
-
-# Run benchmarks
-cargo bench -p gf2-core
-
-# Build documentation
-cargo doc --no-deps --open
-```
-
-### Examples
-
-Educational examples demonstrating coding theory concepts:
-
-```bash
-# Block codes
-cargo run -p gf2-coding --example hamming_7_4
-
-# Convolutional codes with Viterbi decoding
-cargo run -p gf2-coding --example nasa_rate_half_k3
-
-# DVB-T2 BCH outer codes (algebraic decoding)
-# Note: Verification against reference implementation pending
-cargo run -p gf2-coding --example dvb_t2_bch_demo
-
-# DVB-T2 LDPC codes from standard tables
-cargo run -p gf2-coding --example dvb_t2_ldpc_basic
-
-# Quasi-cyclic LDPC construction
-cargo run -p gf2-coding --example qc_ldpc_demo
-
-# LDPC codes over AWGN
-cargo run -p gf2-coding --example ldpc_awgn --release
-```
+- Crate guides: [gf2-core](crates/gf2-core/README.md), [gf2-coding](crates/gf2-coding/README.md), [proofs/](proofs/README.md)
+- Deep dives under `crates/*/docs/` (benchmarks, kernel optimization, DVB-T2, SIMD, parallelization, SDR integration, systematic encoding)
+- Full API docs: `cargo doc --no-deps --open`
+- Strategic roadmap: [ROADMAP.md](ROADMAP.md) (subproject roadmaps under each crate)
 
 ## Contributing
 
-Contributions welcome in these areas:
-- SIMD implementations (AVX-512, NEON)
-- Coding theory algorithms
-- Performance optimizations
-- Documentation and examples
-- Formal verification proofs
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) and the workspace guide in [CLAUDE.md](CLAUDE.md). TDD is expected: write the test first, implement minimally, add property tests for mathematical invariants, and cover word-boundary edge cases (0, 1, 63, 64, 65 bits). Public APIs need doc examples that compile under `cargo test --doc`.
 
-See the roadmaps in [ROADMAP.md](ROADMAP.md) and the subproject directories for specific tasks.
-Work items are tracked with [jit](https://github.com/ArcadeLabsInc/jit) (`.jit/` directory).
+Good first areas: SIMD kernels (NEON, AVX-512 extensions), new code families, soft-decoding algorithms, Lean proof polish, and fuzzing harnesses.
 
 ## License
 
-To be determined. See repository for license information.
+MIT — see [LICENSE-MIT](LICENSE-MIT).
