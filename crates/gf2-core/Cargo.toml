@@ -19,9 +19,12 @@ rayon = { workspace = true, optional = true }
 image = { version = "0.25", optional = true, default-features = false, features = ["png"] }
 serde = { version = "1.0", features = ["derive"], optional = true }
 serde_json = { version = "1.0", optional = true }
+# Only pulled in when the `test-support` feature is enabled.
+proptest = { workspace = true, optional = true }
 
 [dev-dependencies]
 criterion = { workspace = true }
+gf2-core = { path = ".", features = ["test-support"] }
 gf2-kernels-simd = { path = "../gf2-kernels-simd" }
 proptest = { workspace = true }
 rand = { workspace = true }
@@ -38,6 +41,10 @@ parallel = ["dep:rayon"]
 visualization = ["image"]
 # File I/O support
 io = ["dep:serde", "dep:serde_json"]
+# Exposes the canonical field axiom test harness (`field::axiom_tests`) to
+# integration tests, benchmarks, and downstream crates. Off by default; gets
+# auto-enabled under `cargo test` via the self-dev-dependency above.
+test-support = ["dep:proptest"]
 
 [[bench]]
 name = "bitvec"
