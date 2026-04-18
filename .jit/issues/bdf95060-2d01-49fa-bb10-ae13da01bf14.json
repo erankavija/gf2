@@ -6,7 +6,8 @@
   "priority": "low",
   "assignee": "agent:project-lead",
   "dependencies": [
-    "bfe0ba7b-e36b-45e3-a219-dc2acfe88957"
+    "bfe0ba7b-e36b-45e3-a219-dc2acfe88957",
+    "224a7d9e-caa5-45a8-8287-3792f11f0baa"
   ],
   "gates_required": [
     "code-review",
@@ -37,5 +38,5 @@
     "component:gf2-core"
   ],
   "created_at": "2026-02-21T19:35:51.773062501+00:00",
-  "updated_at": "2026-04-18T20:35:06.435273916+00:00"
+  "updated_at": "2026-04-18T21:57:31.381720446+00:00"
 }

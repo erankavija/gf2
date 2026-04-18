@@ -1,0 +1,25 @@
+{
+  "id": "3e947c3f-a642-480a-b023-e34b6821c340",
+  "title": "TwoAdicField trait + primitive roots of unity",
+  "description": "Introduce an `NTT`-friendly field API. Needed by Task 7 (NTT multiplication); independent of Tasks 1–5.\n\n## New module `crates/gf2-core/src/field/two_adic.rs`\n\n```rust\npub trait TwoAdicField: FiniteField {\n    /// The largest k such that 2^k divides |F*|.\n    const TWO_ADICITY: u32;\n    /// A fixed generator of the 2^TWO_ADICITY-th roots of unity.\n    fn two_adic_generator() -> Self;\n    /// The 2^k-th root of unity for k <= TWO_ADICITY. Panics if k > TWO_ADICITY.\n    fn two_adic_root_of_unity(k: u32) -> Self {\n        assert!(k <= Self::TWO_ADICITY);\n        Self::two_adic_generator().pow(1u64 << (Self::TWO_ADICITY - k))\n    }\n}\n```\n\n## Impls\n\n- `Fp<P>` (and specialised prime-field types via `gfp/specialized.rs`) for every supported Proth prime. `TWO_ADICITY = PrimeShape::Proth { n, .. }.n` extracted at compile time.\n- Hard-coded primitive generators per supported prime in a small table — at minimum `Fp<65537>`, BabyBear, KoalaBear. Cite references in comments.\n- **Explicitly NOT implemented** for `Gf2mElement_<V>`; multiplicative group has odd order `2^m - 1` so `TWO_ADICITY = 0` trivially. Document in module prose.\n\n## Const-generic constraint (per breakdown doc risk #6)\n\n`TWO_ADICITY` must be derivable from the const-generic `P`. If `const fn` in trait-const position requires nightly on MSRV 1.80, fall back to a helper `struct ProthConst<const P: u64>` with a `pub const TWO_ADICITY: u32` and have the `TwoAdicField::TWO_ADICITY` delegate to it. Document the workaround.\n\n## Success criteria\n\n- Unit tests per supported prime: `g = two_adic_generator()` satisfies `g^(2^TWO_ADICITY) == 1` and `g^(2^(TWO_ADICITY-1)) != 1` (primitive check).\n- `cargo fmt` / `cargo clippy -- -D warnings` / `cargo test --release` clean.\n- Every public item doc-commented with `# Arguments` / `# Examples` / `# Panics` / `# Complexity`.\n\n## Depends on\n\nNone — can run in parallel with Task 1.\n\n## Breakdown reference\n\nSee `dev/plans/bdf95060_breakdown.md` Task 6.",
+  "state": "in_progress",
+  "priority": "low",
+  "assignee": "agent:claude",
+  "dependencies": [],
+  "gates_required": [
+    "code-review",
+    "doc-review",
+    "cargo-ci"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "epic:e095a100",
+    "story:bdf95060"
+  ],
+  "created_at": "2026-04-18T21:56:51.520083051+00:00",
+  "updated_at": "2026-04-18T21:57:47.651781121+00:00"
+}

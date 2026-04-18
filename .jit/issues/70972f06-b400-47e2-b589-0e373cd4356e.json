@@ -1,0 +1,25 @@
+{
+  "id": "70972f06-b400-47e2-b589-0e373cd4356e",
+  "title": "FieldPoly<F> core type, normalisation, basic arithmetic",
+  "description": "Introduce `FieldPoly<F: FiniteField>` in a new module `crates/gf2-core/src/field/poly.rs`.\n\n## Scope\n\n- `pub struct FieldPoly<F: FiniteField> { coeffs: Vec<F> }` — ascending-degree storage.\n- Constructors: `new(coeffs)`, `zero_like(&F)`, `one_like(&F)`, `constant(F)`, `monomial(F, usize)`, `from_coeffs_trimmed(…)`.\n- Queries: `degree() -> Option<usize>` (None for zero), `is_zero()`, `coeff(i) -> F`, `leading_coeff()`, `len()`, `iter()`.\n- Normalisation: every constructor and mutating op trims trailing zero coefficients. Document prominently — this is the module's equivalent of the `mask_tail` invariant from `BitVec`.\n- Operators: `Add`, `Sub`, `Neg`, `AddAssign`, `SubAssign` (both owned and `&`-ref RHS).\n- Schoolbook `mul(&self, &Self) -> Self`. **Karatsuba is deferred to the next task**.\n- Scalar: `mul_scalar(&self, &F)`, in-place `scale(&mut self, &F)`.\n- Pretty `Debug` showing non-zero terms in descending degree.\n\n## Success criteria\n\n- Every public item has a doc comment with description, `# Arguments`, `# Examples` (compiled by `cargo test --doc`), `# Panics` if applicable, `# Complexity` for non-trivial ops.\n- Unit tests: constructors, normalisation (trailing zeros), zero polynomial, degree of constant, schoolbook over `Fp<7>` and `Gf2mElement`.\n- Proptests (≤64 cases each, to respect the 60s workspace-test budget): associativity `(a+b)+c == a+(b+c)`, distributivity `a*(b+c) == a*b + a*c`, `deg(a*b) == deg(a)+deg(b)` when neither is zero.\n- Re-exported from `crates/gf2-core/src/field/mod.rs`.\n- `#![deny(unsafe_code)]` preserved.\n\n## Out of scope\n\n- Karatsuba multiplication (separate task).\n- Division, GCD, evaluation (separate task).\n- Batch/NTT/interpolation (separate tasks).\n\n## Breakdown reference\n\nSee `dev/plans/bdf95060_breakdown.md` Task 1 (parent story: bdf95060).",
+  "state": "in_progress",
+  "priority": "low",
+  "assignee": "agent:claude",
+  "dependencies": [],
+  "gates_required": [
+    "code-review",
+    "doc-review",
+    "cargo-ci"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "epic:e095a100",
+    "story:bdf95060"
+  ],
+  "created_at": "2026-04-18T21:55:55.753048086+00:00",
+  "updated_at": "2026-04-18T21:57:47.175213884+00:00"
+}

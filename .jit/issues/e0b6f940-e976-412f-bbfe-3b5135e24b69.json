@@ -1,0 +1,28 @@
+{
+  "id": "e0b6f940-e976-412f-bbfe-3b5135e24b69",
+  "title": "NTT-based polynomial multiplication for TwoAdicField",
+  "description": "O(n log n) polynomial multiplication via Number Theoretic Transform for `FieldPoly<F: TwoAdicField>`.\n\n## New module `crates/gf2-core/src/field/ntt.rs`\n\n- `pub fn ntt_inplace<F: TwoAdicField>(data: &mut [F], inverse: bool)` — radix-2 decimation-in-time FFT, bit-reversal permutation, twiddles via `TwoAdicField::two_adic_root_of_unity`. Length must be a power of two and `<= 2^F::TWO_ADICITY`.\n- `FieldPoly::<F>::mul_ntt(&self, other: &Self) -> Self` — pad to next power of two, NTT both, pointwise-multiply, inverse NTT, scale by `n^{-1}` (reuse field `F::inv`), trim trailing zeros.\n\n## Dispatch\n\n`FieldPoly::mul` should route to `mul_ntt` when `F: TwoAdicField` and the product length exceeds a size threshold tuned by bench (expect `n >~ 128` for `Fp<65537>`). Rust coherence may force exposing this as a separate `mul_fast` method on a marker trait or as a free function. Document whichever mechanism is chosen.\n\n`Gf2mElement` does not implement `TwoAdicField`, so it falls through to Karatsuba — no regression.\n\n## Success criteria\n\n- Roundtrip proptest: `inverse_ntt(ntt(x)) == x` for random vectors of power-of-two length.\n- Agreement proptest: `mul_ntt(a, b) == mul_karatsuba(a, b)` for random polys of degree up to 64 over `Fp<65537>`.\n- Bench in `benches/field_poly.rs` showing NTT beating Karatsuba at the crossover, results in module doc.\n- `cargo fmt` / `cargo clippy -- -D warnings` / `cargo test --release` clean; budget ≤60s.\n\n## Depends on\n\n- Task 2 (FieldPoly arithmetic + Karatsuba)\n- Task 6 (`TwoAdicField` trait)\n\n## Breakdown reference\n\nSee `dev/plans/bdf95060_breakdown.md` Task 7.",
+  "state": "backlog",
+  "priority": "low",
+  "assignee": null,
+  "dependencies": [
+    "d9c3d414-580e-4f3e-bb59-71a198ed0c96",
+    "3e947c3f-a642-480a-b023-e34b6821c340"
+  ],
+  "gates_required": [
+    "code-review",
+    "doc-review",
+    "cargo-ci"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "epic:e095a100",
+    "story:bdf95060"
+  ],
+  "created_at": "2026-04-18T21:57:02.426172212+00:00",
+  "updated_at": "2026-04-18T21:57:29.336659991+00:00"
+}

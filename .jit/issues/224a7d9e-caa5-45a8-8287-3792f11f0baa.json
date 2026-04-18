@@ -1,0 +1,30 @@
+{
+  "id": "224a7d9e-caa5-45a8-8287-3792f11f0baa",
+  "title": "FieldPoly integration docs + bench consolidation",
+  "description": "Close-out task for the bdf95060 story: consolidate docs, bench, and add a narrow integration helper.\n\n## Scope\n\n- Module-level docstring in `crates/gf2-core/src/field/poly.rs` enumerates all operations with complexity, mirroring the table in `batch_ops.rs`.\n- Consolidated bench harness `crates/gf2-core/benches/field_poly.rs`: `batch_evaluate` vs Horner (from Task 3), `interpolate_fast` vs `interpolate` (from Task 4), `mul_ntt` vs Karatsuba (from Task 7). Regenerate tables; paste into the module docstring.\n- Narrow integration helper `pub(crate) fn gf2m_poly_to_field_poly(&Gf2mPoly) -> FieldPoly<Gf2mElement>` and its inverse, in `crates/gf2-core`. Proptest-level round-trip test. **No bch rewrite** — out of scope.\n- Short overview `dev/plans/field_poly_module_overview.md` linking each API to its algorithmic reference.\n\n## Success criteria\n\n- `cargo test --workspace --all-features --release` ≤ 60s (CLAUDE.md rule). If this task pushes budget, move long proptests behind `#[ignore]`.\n- All three gates pass: `code-review`, `doc-review`, `cargo-ci`.\n- Round-trip proptest passes for `gf2m_poly_to_field_poly`.\n\n## Depends on\n\nTasks 3, 4, 5, 7.\n\n## Breakdown reference\n\nSee `dev/plans/bdf95060_breakdown.md` Task 8.",
+  "state": "backlog",
+  "priority": "low",
+  "assignee": null,
+  "dependencies": [
+    "a7c81834-a34b-474c-88a3-50989295b68b",
+    "e0b6f940-e976-412f-bbfe-3b5135e24b69",
+    "3cff65f7-5e7f-410d-8a02-70c64b697854"
+  ],
+  "gates_required": [
+    "code-review",
+    "doc-review",
+    "cargo-ci"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "component:gf2-coding",
+    "epic:e095a100",
+    "story:bdf95060"
+  ],
+  "created_at": "2026-04-18T21:57:11.858297020+00:00",
+  "updated_at": "2026-04-18T21:57:30.009387133+00:00"
+}
