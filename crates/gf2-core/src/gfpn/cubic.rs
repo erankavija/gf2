@@ -61,6 +61,163 @@ use crate::field::{ConstField, FiniteField};
 
 use super::ExtConfig;
 
+// ---------------------------------------------------------------------------
+// Wide accumulator
+// ---------------------------------------------------------------------------
+
+/// Wide accumulator for [`CubicExt`]: three base-field wide components.
+///
+/// Stores the coefficients `(c0, c1, c2)` of a cubic-extension product using
+/// the base field's `Wide` type. Multiple products may be accumulated via
+/// `+=` before a single [`FiniteField::reduce_wide`] call reduces back into
+/// the field. The per-component limit is inherited from
+/// [`FiniteField::max_unreduced_additions`] on the base field.
+///
+/// # Type Parameters
+///
+/// * `W` — The base field's wide type (e.g., `u128` for `Fp<P>`).
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::field::FiniteField;
+/// use gf2_core::gfp::Fp;
+/// use gf2_core::gfpn::{CubicExt, ExtConfig};
+///
+/// struct Cfg;
+/// impl ExtConfig for Cfg {
+///     type BaseField = Fp<7>;
+///     const NON_RESIDUE: Fp<7> = Fp::<7>::new(3);
+/// }
+/// type Fq3 = CubicExt<Cfg>;
+///
+/// let a = Fq3::new(Fp::new(1), Fp::new(2), Fp::new(3));
+/// let b = Fq3::new(Fp::new(4), Fp::new(5), Fp::new(6));
+///
+/// let mut acc = a.mul_to_wide(&b);
+/// acc += a.mul_to_wide(&b);
+/// let reduced = Fq3::reduce_wide(&acc);
+/// assert_eq!(reduced, a * b + a * b);
+/// ```
+pub struct CubicExtWide<W> {
+    /// Unreduced constant coefficient.
+    c0: W,
+    /// Unreduced coefficient of `v`.
+    c1: W,
+    /// Unreduced coefficient of `v²`.
+    c2: W,
+}
+
+impl<W> CubicExtWide<W> {
+    /// Creates a new wide accumulator from three component-wise wide values.
+    ///
+    /// # Arguments
+    ///
+    /// * `c0` — Wide value for the constant coefficient.
+    /// * `c1` — Wide value for the coefficient of `v`.
+    /// * `c2` — Wide value for the coefficient of `v²`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::gfpn::CubicExtWide;
+    ///
+    /// let w = CubicExtWide::<u128>::new(1u128, 2u128, 3u128);
+    /// assert_eq!(w.c0(), &1u128);
+    /// assert_eq!(w.c1(), &2u128);
+    /// assert_eq!(w.c2(), &3u128);
+    /// ```
+    #[inline]
+    pub const fn new(c0: W, c1: W, c2: W) -> Self {
+        Self { c0, c1, c2 }
+    }
+
+    /// Returns a reference to the wide `c0` component.
+    #[inline]
+    pub const fn c0(&self) -> &W {
+        &self.c0
+    }
+
+    /// Returns a reference to the wide `c1` component.
+    #[inline]
+    pub const fn c1(&self) -> &W {
+        &self.c1
+    }
+
+    /// Returns a reference to the wide `c2` component.
+    #[inline]
+    pub const fn c2(&self) -> &W {
+        &self.c2
+    }
+}
+
+impl<W: Clone> Clone for CubicExtWide<W> {
+    #[inline]
+    fn clone(&self) -> Self {
+        Self {
+            c0: self.c0.clone(),
+            c1: self.c1.clone(),
+            c2: self.c2.clone(),
+        }
+    }
+}
+
+impl<W: Copy> Copy for CubicExtWide<W> {}
+
+impl<W: fmt::Debug> fmt::Debug for CubicExtWide<W> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("CubicExtWide")
+            .field("c0", &self.c0)
+            .field("c1", &self.c1)
+            .field("c2", &self.c2)
+            .finish()
+    }
+}
+
+impl<W: PartialEq> PartialEq for CubicExtWide<W> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.c0 == other.c0 && self.c1 == other.c1 && self.c2 == other.c2
+    }
+}
+
+impl<W: Eq> Eq for CubicExtWide<W> {}
+
+impl<W: Default> Default for CubicExtWide<W> {
+    #[inline]
+    fn default() -> Self {
+        Self {
+            c0: W::default(),
+            c1: W::default(),
+            c2: W::default(),
+        }
+    }
+}
+
+impl<W: Add<Output = W>> Add for CubicExtWide<W> {
+    type Output = Self;
+
+    /// Component-wise wide addition.
+    #[inline]
+    fn add(self, rhs: Self) -> Self {
+        Self {
+            c0: self.c0 + rhs.c0,
+            c1: self.c1 + rhs.c1,
+            c2: self.c2 + rhs.c2,
+        }
+    }
+}
+
+impl<W: AddAssign> AddAssign for CubicExtWide<W> {
+    /// Component-wise wide `+=`.
+    #[inline]
+    fn add_assign(&mut self, rhs: Self) {
+        self.c0 += rhs.c0;
+        self.c1 += rhs.c1;
+        self.c2 += rhs.c2;
+    }
+}
+
 /// Element of a cubic extension field: `c0 + c1·v + c2·v²` where `v³ = β`.
 ///
 /// Parameterized by a config type `C: ExtConfig` that specifies the base field
@@ -472,7 +629,7 @@ impl<C: ExtConfig> Neg for &CubicExt<C> {
 
 impl<C: ExtConfig> FiniteField for CubicExt<C> {
     type Characteristic = <C::BaseField as FiniteField>::Characteristic;
-    type Wide = Self;
+    type Wide = CubicExtWide<<C::BaseField as FiniteField>::Wide>;
 
     #[inline]
     fn characteristic(&self) -> Self::Characteristic {
@@ -525,23 +682,43 @@ impl<C: ExtConfig> FiniteField for CubicExt<C> {
         Self::new(self.c0.one_like(), self.c0.zero_like(), self.c0.zero_like())
     }
 
+    /// Component-wise widening: each base coefficient is lifted via
+    /// [`FiniteField::to_wide`].
     #[inline]
-    fn to_wide(&self) -> Self {
-        *self
+    fn to_wide(&self) -> Self::Wide {
+        CubicExtWide::new(self.c0.to_wide(), self.c1.to_wide(), self.c2.to_wide())
     }
 
+    /// Karatsuba-style multiplication at the tower level followed by
+    /// component-wise widening (Option 1 of the design plan). Individual
+    /// products are fully reduced in the base field, but the result is stored
+    /// in a three-component wide accumulator so that sums of products can be
+    /// accumulated without per-product reduction.
+    ///
+    /// # Complexity
+    ///
+    /// 6M + 13A + 2B in the base field plus 3 widening copies.
     #[inline]
-    fn mul_to_wide(&self, rhs: &Self) -> Self {
-        *self * *rhs
+    fn mul_to_wide(&self, rhs: &Self) -> Self::Wide {
+        (*self * *rhs).to_wide()
     }
 
+    /// Reduces a wide accumulator component-wise via the base field's
+    /// [`FiniteField::reduce_wide`].
     #[inline]
-    fn reduce_wide(wide: &Self) -> Self {
-        *wide
+    fn reduce_wide(wide: &Self::Wide) -> Self {
+        Self::new(
+            C::BaseField::reduce_wide(&wide.c0),
+            C::BaseField::reduce_wide(&wide.c1),
+            C::BaseField::reduce_wide(&wide.c2),
+        )
     }
 
+    /// Delegates to the base field. Because each tower coefficient accumulates
+    /// independently, the per-component limit equals
+    /// [`C::BaseField::max_unreduced_additions`].
     fn max_unreduced_additions() -> usize {
-        usize::MAX
+        C::BaseField::max_unreduced_additions()
     }
 }
 
@@ -876,5 +1053,137 @@ mod tests {
     #[test]
     fn test_size_of() {
         assert_eq!(std::mem::size_of::<Fq3>(), 3 * std::mem::size_of::<Fp<7>>());
+    }
+
+    // -----------------------------------------------------------------------
+    // Wide accumulator tests (issue d11b769a)
+    // -----------------------------------------------------------------------
+
+    /// Wide is a real three-component accumulator, not an alias for `Self`.
+    #[test]
+    fn test_wide_type_is_not_self() {
+        assert_eq!(
+            std::mem::size_of::<<Fq3 as FiniteField>::Wide>(),
+            3 * std::mem::size_of::<<Fp<7> as FiniteField>::Wide>(),
+        );
+    }
+
+    /// `max_unreduced_additions` must equal the base field's bound. For GF(7)
+    /// the bound saturates at `usize::MAX` because `(p-1)²` is tiny; the
+    /// meaningful finite case is covered by the Mersenne-61 test below.
+    #[test]
+    fn test_max_unreduced_additions_is_base_field_bound() {
+        let k = <Fq3 as FiniteField>::max_unreduced_additions();
+        let base = <Fp<7> as FiniteField>::max_unreduced_additions();
+        assert_eq!(k, base);
+    }
+
+    /// For a large prime the bound is finite, proving we no longer return
+    /// the `usize::MAX` sentinel that the old `Wide = Self` placeholder used.
+    #[test]
+    fn test_max_unreduced_additions_finite_for_large_prime() {
+        // GF(Mersenne61³) with β = 3.
+        struct MConfig;
+        impl ExtConfig for MConfig {
+            type BaseField = Fp<2305843009213693951>;
+            const NON_RESIDUE: Fp<2305843009213693951> = Fp::<2305843009213693951>::new(3);
+        }
+        type MFq3 = CubicExt<MConfig>;
+
+        let k = <MFq3 as FiniteField>::max_unreduced_additions();
+        let base = <Fp<2305843009213693951> as FiniteField>::max_unreduced_additions();
+        assert_eq!(k, base);
+        assert_ne!(k, usize::MAX);
+        assert!(k >= 1);
+    }
+
+    /// `reduce_wide(to_wide(a)) == a` for all 343 elements of GF(7³).
+    #[test]
+    fn test_wide_roundtrip_exhaustive() {
+        for c0 in 0..7u64 {
+            for c1 in 0..7u64 {
+                for c2 in 0..7u64 {
+                    let a = Fq3::new(Fp::new(c0), Fp::new(c1), Fp::new(c2));
+                    let wide = a.to_wide();
+                    let back = <Fq3 as FiniteField>::reduce_wide(&wide);
+                    assert_eq!(back, a, "roundtrip failed at ({c0}, {c1}, {c2})");
+                }
+            }
+        }
+    }
+
+    /// `reduce_wide(mul_to_wide(a, b)) == a * b` — representative subset.
+    #[test]
+    fn test_mul_to_wide_consistency_representative() {
+        // Full exhaustive would be 343² = 117649 pairs; that's fine but slow.
+        // Representative sweep already validates the path; the proptest below
+        // provides the randomised coverage.
+        for a0 in 0..7u64 {
+            for a1 in 0..7u64 {
+                for a2 in 0..7u64 {
+                    let a = Fq3::new(Fp::new(a0), Fp::new(a1), Fp::new(a2));
+                    let b = Fq3::new(
+                        Fp::new((a0 + 1) % 7),
+                        Fp::new((a1 * 2) % 7),
+                        Fp::new((a2 + 3) % 7),
+                    );
+                    let wide = a.mul_to_wide(&b);
+                    let reduced = <Fq3 as FiniteField>::reduce_wide(&wide);
+                    assert_eq!(reduced, a * b);
+                }
+            }
+        }
+    }
+
+    /// Dot-product accumulation over random cases.
+    #[test]
+    fn test_dot_product_accumulation_proptest() {
+        let mut runner =
+            proptest::test_runner::TestRunner::new(proptest::test_runner::Config::with_cases(200));
+        let strategy = proptest::collection::vec(
+            (0..7u64, 0..7u64, 0..7u64, 0..7u64, 0..7u64, 0..7u64),
+            1..=32,
+        );
+        runner
+            .run(&strategy, |pairs| {
+                let mut acc: <Fq3 as FiniteField>::Wide = <Fq3 as FiniteField>::Wide::default();
+                let mut expected = Fq3::zero();
+                for (a0, a1, a2, b0, b1, b2) in &pairs {
+                    let a = Fq3::new(Fp::new(*a0), Fp::new(*a1), Fp::new(*a2));
+                    let b = Fq3::new(Fp::new(*b0), Fp::new(*b1), Fp::new(*b2));
+                    acc += a.mul_to_wide(&b);
+                    expected += a * b;
+                }
+                let got = <Fq3 as FiniteField>::reduce_wide(&acc);
+                prop_assert_eq!(got, expected);
+                Ok(())
+            })
+            .expect("cubic dot-product accumulation must match element-wise");
+    }
+
+    /// `CubicExtWide` Add and AddAssign are component-wise.
+    #[test]
+    fn test_wide_add_and_add_assign() {
+        let w1 = <Fq3 as FiniteField>::Wide::new(1u128, 2u128, 3u128);
+        let w2 = <Fq3 as FiniteField>::Wide::new(10u128, 20u128, 30u128);
+        let sum = w1 + w2;
+        assert_eq!(*sum.c0(), 11u128);
+        assert_eq!(*sum.c1(), 22u128);
+        assert_eq!(*sum.c2(), 33u128);
+
+        let mut w = <Fq3 as FiniteField>::Wide::new(1u128, 2u128, 3u128);
+        w += <Fq3 as FiniteField>::Wide::new(5u128, 6u128, 7u128);
+        assert_eq!(*w.c0(), 6u128);
+        assert_eq!(*w.c1(), 8u128);
+        assert_eq!(*w.c2(), 10u128);
+    }
+
+    /// `CubicExtWide` Debug output is informative and not `Self`-typed.
+    #[test]
+    fn test_wide_debug_format() {
+        let w = <Fq3 as FiniteField>::Wide::new(1u128, 2u128, 3u128);
+        let s = format!("{:?}", w);
+        assert!(s.contains("CubicExtWide"), "unexpected debug: {s}");
+        assert!(s.contains("1") && s.contains("2") && s.contains("3"));
     }
 }
