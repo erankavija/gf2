@@ -110,6 +110,12 @@ pub type Fq12Small = QuadraticExt<Fp7Ext12>;
 // ---------------------------------------------------------------------------
 // Tower configurations: shallow (single-level) chains used by
 // `karatsuba_cross_verify.rs`.
+//
+// The β = 3 shallow quadratics over Fp<7> and Fp<65537> are **the same
+// mathematical fields** as `Fq2Small` / `Fq2Large` defined above — same base
+// field, same non-residue, default `mul_by_non_residue`. Those types serve
+// dual duty: as the base field for the nested towers AND as the subject of
+// the Karatsuba cross-check. No wrapper needed.
 // ---------------------------------------------------------------------------
 
 /// GF(7²) with β = 6 ≡ −1 (mod 7). Overridden `mul_by_non_residue` (negation).
@@ -125,14 +131,6 @@ impl ExtConfig for Fq2Fp7NegOneConfig {
 }
 pub type Fq2Fp7NegOne = QuadraticExt<Fq2Fp7NegOneConfig>;
 
-/// GF(7²) with β = 3 and the default `mul_by_non_residue`.
-pub struct Fq2Fp7Beta3Config;
-impl ExtConfig for Fq2Fp7Beta3Config {
-    type BaseField = Fp<7>;
-    const NON_RESIDUE: Fp<7> = Fp::<7>::new(3);
-}
-pub type Fq2Fp7Beta3 = QuadraticExt<Fq2Fp7Beta3Config>;
-
 /// GF(101²) with β = 99 ≡ −2 (mod 101). Default `mul_by_non_residue`.
 pub struct Fq2Fp101NegTwoConfig;
 impl ExtConfig for Fq2Fp101NegTwoConfig {
@@ -140,17 +138,6 @@ impl ExtConfig for Fq2Fp101NegTwoConfig {
     const NON_RESIDUE: Fp<101> = Fp::<101>::new(99);
 }
 pub type Fq2Fp101NegTwo = QuadraticExt<Fq2Fp101NegTwoConfig>;
-
-/// GF(65537²) with β = 3. Fermat prime, default `mul_by_non_residue`. Shares
-/// the same mathematical field as [`Fq2Large`] but with the default
-/// non-residue multiplier (kept separate to distinguish the Karatsuba code
-/// path from the nested-tower tests).
-pub struct Fq2Fp65537Beta3Config;
-impl ExtConfig for Fq2Fp65537Beta3Config {
-    type BaseField = Fp<65537>;
-    const NON_RESIDUE: Fp<65537> = Fp::<65537>::new(3);
-}
-pub type Fq2Fp65537Beta3 = QuadraticExt<Fq2Fp65537Beta3Config>;
 
 /// GF(7³) with β = 3 and overridden `mul_by_non_residue` (`3x = x+x+x`).
 pub struct Fq3Fp7Beta3Config;
