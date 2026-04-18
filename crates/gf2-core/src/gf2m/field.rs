@@ -132,7 +132,15 @@ use gf2_kernels_simd::gf2m as simd_gf2m;
 use super::barrett::BarrettReducer;
 use super::uint_ext::UintExt;
 
-/// A binary extension field GF(2^m) with a specified primitive polynomial.
+/// A binary extension field GF(2^m) with a specified defining polynomial.
+///
+/// The defining polynomial must be **irreducible** over GF(2) of degree `m`.
+/// Irreducibility alone is sufficient for field arithmetic (add, sub, mul,
+/// inv, div). Log/exp tables and primitive-element operations additionally
+/// require the polynomial to be **primitive**, which is a strictly stronger
+/// property. See the module-level docs for the distinction and
+/// [`crate::primitive_polys::PrimitivePolynomialDatabase`] for which catalog
+/// accessors guarantee each property.
 ///
 /// The type parameter `V` controls the underlying integer representation for
 /// field elements. Use [`Gf2mField`] (alias for `Gf2mField_<u64>`) for
@@ -204,16 +212,31 @@ pub struct Gf2mElement_<V: UintExt = u64> {
 pub type Gf2mElement = Gf2mElement_<u64>;
 
 impl<V: UintExt> Gf2mField_<V> {
-    /// Creates a new GF(2^m) field with the specified primitive polynomial.
+    /// Creates a new GF(2^m) field with the specified defining polynomial.
+    ///
+    /// The polynomial must be **irreducible** over GF(2) of degree `m`.
+    /// Irreducibility is sufficient for arithmetic correctness (add, sub,
+    /// mul, inv, div). If the polynomial is also **primitive** (a strictly
+    /// stronger property), log/exp tables are built for `m <= 16` enabling
+    /// faster multiplication and the primitive-element API. Callers can
+    /// obtain verified-primitive polynomials for `m <= 16` from
+    /// [`crate::primitive_polys::PrimitivePolynomialDatabase::standard`]
+    /// and verified-irreducible (but not necessarily primitive) polynomials
+    /// for `m = 64..=127` from
+    /// [`crate::primitive_polys::PrimitivePolynomialDatabase::standard_u128`].
     ///
     /// # Arguments
     ///
-    /// * `m` - Extension degree (field has 2^m elements, must fit in `V`)
-    /// * `primitive_poly` - Primitive polynomial of degree m in binary representation
+    /// * `m` - Extension degree (field has 2^m elements, must satisfy `m < V::BITS`)
+    /// * `primitive_poly` - Defining polynomial of degree m in binary representation.
+    ///   The parameter is named `primitive_poly` for historical/API-stability
+    ///   reasons; irreducibility is the strictly necessary property.
     ///
     /// # Panics
     ///
-    /// Panics if `m > V::BITS` or `m == 0`.
+    /// Panics if `m == 0` or `m >= V::BITS` (the leading coefficient at bit `m`
+    /// would not fit in `V`, even though the stored value represents only the
+    /// lower `m` bits of the reduction polynomial).
     ///
     /// # Example
     ///
@@ -302,7 +325,16 @@ impl<V: UintExt> Gf2mField_<V> {
         V::ONE << (self.params.m as u32)
     }
 
-    /// Returns the primitive polynomial.
+    /// Returns the defining polynomial of the field.
+    ///
+    /// For `m <= 16` fields constructed from
+    /// [`crate::primitive_polys::PrimitivePolynomialDatabase::standard`], this
+    /// is a verified primitive polynomial. For `m = 64..=127` fields
+    /// constructed from
+    /// [`crate::primitive_polys::PrimitivePolynomialDatabase::standard_u128`],
+    /// this is only verified irreducible — not necessarily primitive. The
+    /// method name is retained for API stability; see the struct-level docs
+    /// for the full contract.
     pub fn primitive_polynomial(&self) -> V {
         self.params.primitive_poly
     }
