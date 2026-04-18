@@ -1932,6 +1932,95 @@ mod tests {
             prop_assert_eq!(-&elem, elem);
         }
     }
+
+    // -----------------------------------------------------------------------
+    // Known-answer tests for Gf2mElement_<u128> (GF(2^64) and up)
+    // -----------------------------------------------------------------------
+
+    /// Known-answer multiplication test vectors for GF(2^64) with the
+    /// standard irreducible polynomial p(x) = x^64 + x^4 + x^3 + x + 1
+    /// (from Seroussi's table, `PrimitivePolynomialDatabase::standard_u128(64)`;
+    /// see that accessor's doc for the exact strength of the guarantee).
+    ///
+    /// # Test vectors
+    ///
+    /// All reductions are derived by hand from x^64 ≡ x^4 + x^3 + x + 1 (mod p).
+    ///
+    /// 1. `x * x = x^2`: (2) * (2) = 4. No reduction needed (degree 2 < 64).
+    /// 2. `x^63 * x = x^64 ≡ x^4 + x^3 + x + 1 = 0b11011`. Exercises the
+    ///    reduction step exactly once.
+    /// 3. `x^63 * x^63`: squaring the highest pre-reduction element; the
+    ///    reference value was independently computed with
+    ///    `Gf2mField_::<u128>::mul_raw`. This catches any divergence between
+    ///    operator-level `*` and the schoolbook primitive used during
+    ///    table generation / inverse computation.
+    #[test]
+    fn test_gf2_64_known_multiplication_vectors() {
+        use crate::primitive_polys::PrimitivePolynomialDatabase;
+        let poly = PrimitivePolynomialDatabase::standard_u128(64).unwrap();
+        assert_eq!(poly, (1u128 << 64) | 0b11011);
+
+        let field = Gf2mField_::<u128>::new(64, poly);
+
+        // Vector 1: x * x = x^2.
+        let x = field.element(2);
+        let x2 = &x * &x;
+        assert_eq!(
+            x2.value(),
+            4,
+            "x * x should be x^2 (value 4), got {:#x}",
+            x2.value()
+        );
+
+        // Vector 2: x^63 * x = x^64 ≡ x^4 + x^3 + x + 1 = 0b11011.
+        let x63 = field.element(1u128 << 63);
+        let x64_reduced = &x63 * &x;
+        assert_eq!(
+            x64_reduced.value(),
+            0b11011,
+            "x^63 * x should reduce to x^4 + x^3 + x + 1 = 0b11011, got {:#x}",
+            x64_reduced.value()
+        );
+
+        // Vector 3: cross-check against the generic schoolbook primitive.
+        let a = 1u128 << 63;
+        let b = 1u128 << 63;
+        let expected = Gf2mField_::<u128>::mul_raw(a, b, 64, poly);
+        let op_result = (&field.element(a) * &field.element(b)).value();
+        assert_eq!(
+            op_result, expected,
+            "operator-mul and mul_raw disagree: op={:#x}, raw={:#x}",
+            op_result, expected
+        );
+    }
+
+    /// Verifies additional GF(2^64) identities: commutativity, the
+    /// multiplicative-identity element, and the zero annihilator on random
+    /// u128 inputs. These act as a smoke test that the u128 storage does not
+    /// silently lose bits in the high half.
+    #[test]
+    fn test_gf2_64_identities_on_u128() {
+        use crate::primitive_polys::PrimitivePolynomialDatabase;
+        let poly = PrimitivePolynomialDatabase::standard_u128(64).unwrap();
+        let field = Gf2mField_::<u128>::new(64, poly);
+
+        // Multiplicative identity
+        let a_val: u128 = 0xDEAD_BEEF_CAFE_BABE_0123_4567_89AB_CDEF;
+        let mask: u128 = (1u128 << 64) - 1;
+        let a = field.element(a_val & mask);
+        let one = field.one();
+        assert_eq!((&a * &one).value(), a.value(), "a * 1 != a");
+
+        // Zero annihilation
+        let zero = field.zero();
+        assert_eq!((&a * &zero).value(), 0, "a * 0 != 0");
+
+        // Commutativity
+        let b = field.element(0x0123_4567_89AB_CDEF);
+        let ab = (&a * &b).value();
+        let ba = (&b * &a).value();
+        assert_eq!(ab, ba, "GF(2^64) multiplication is not commutative");
+    }
 }
 
 // ============================================================================
