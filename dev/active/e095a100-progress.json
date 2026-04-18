@@ -25,10 +25,10 @@
     {
       "wave_number": 2,
       "sub_wave": "2b",
-      "status": "pending",
+      "status": "in_progress",
       "issues": [
-        {"id": "86b3dc7d-8920-4227-abd0-2cac0925c57b", "short_id": "86b3dc7d", "title": "Nested tower verification GF(p^4,6,12)", "classification": "implementation", "status": "pending", "depends_on_wave": "2a:d11b769a"},
-        {"id": "bdf95060-2d01-49fa-bb10-ae13da01bf14", "short_id": "bdf95060", "title": "Batch polynomial operations story", "classification": "breakdown+implementation", "status": "pending", "note": "story, needs jit-breakdown"}
+        {"id": "86b3dc7d-8920-4227-abd0-2cac0925c57b", "short_id": "86b3dc7d", "title": "Nested tower verification GF(p^4,6,12)", "classification": "implementation", "status": "rework_1_in_progress", "commits": ["d5d7d26"], "note": "First attempt FAILED code-review (SSOT on tower configs + narrow axiom harness + doc errors + stale sage script ref + test naming). Rework agent a7d83bd6025539f05 dispatched to address all six findings.", "depends_on_wave": "2a:d11b769a"},
+        {"id": "bdf95060-2d01-49fa-bb10-ae13da01bf14", "short_id": "bdf95060", "title": "Batch polynomial operations story", "classification": "breakdown+implementation", "status": "broken_down", "breakdown_plan": "dev/plans/bdf95060_breakdown.md", "child_tasks_proposed": 8, "note": "8-task DAG proposed (Task 1/6 parallel entry points, ending at Task 8 integration). Not yet created in JIT — pending lead review of scope vs session budget."}
       ]
     },
     {
@@ -43,7 +43,7 @@
   ],
   "created_during_execution": [],
   "escalations": [],
-  "rework_counts": {},
+  "rework_counts": {"86b3dc7d": 2},
   "started_at": "2026-04-18T18:00:00Z",
   "notes": [
     "Host: Zen 3 (AVX2, no AVX-512). HIP crate excluded from default workspace.",
