@@ -87,7 +87,7 @@ fn naive_mul(a: u64, b: u64, m: usize, poly: u64) -> u64 {
 
 /// Naive multiplication specialized for GF(2^64).
 ///
-/// The leading bit of the primitive polynomial is implicit (it would be bit 64, which
+/// The leading bit of the irreducible polynomial is implicit (it would be bit 64, which
 /// does not fit in u64). We store only the reduction polynomial (lower 64 bits).
 #[inline]
 fn naive_mul_64(a: u64, b: u64, reduce: u64) -> u64 {
@@ -602,7 +602,7 @@ fn random_elements_gf2_64(n: usize) -> Vec<u128> {
 
 fn bench_single_gf2_64(c: &mut Criterion) {
     // GF(2^64) is the smallest field where u64 storage is insufficient: the
-    // leading coefficient of the primitive polynomial sits at bit 64 and does
+    // leading coefficient of the irreducible polynomial sits at bit 64 and does
     // not fit in the element slot. We therefore dispatch through
     // `Gf2mField_<u128>` and compare against the hand-rolled `naive_mul_64`
     // baseline (which avoids storing the leading bit at all).
@@ -970,7 +970,7 @@ mod tests {
     }
 
     /// Cross-check that the `naive_mul_64` u64-specialised path and the u128-backed
-    /// `Gf2mField_<u128>` path agree on GF(2^64) — both use the primitive polynomial
+    /// `Gf2mField_<u128>` path agree on GF(2^64) — both use the irreducible polynomial
     /// x^64 + x^4 + x^3 + x + 1 (with the leading bit stored implicitly in `naive_mul_64`
     /// and explicitly in the u128 field). This ensures the GF(2^64) benchmark pair
     /// measures equivalent work.
