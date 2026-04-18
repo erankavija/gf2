@@ -1,12 +1,31 @@
 //! GF(p) — Prime Field Arithmetic
 //!
 //! Arithmetic over prime fields GF(p) using a const-generic representation.
-//! Internally, elements are stored in Montgomery form (`aR mod P` where `R = 2^64`)
-//! for efficient multiplication without expensive division. The public API is
-//! unchanged — `new()` converts in, `value()` converts out.
+//! The public API is uniform — `new()` converts any `u64` into a canonical
+//! field element, `value()` extracts the canonical `[0, P)` representative,
+//! and the `+ − * /` operators and `inv()` all work as expected — but the
+//! internal storage form is chosen at compile time based on the algebraic
+//! shape of `P`:
 //!
-//! `P = 2` is handled specially with naive arithmetic since Montgomery form
-//! requires odd modulus (`gcd(P, R) = 1`).
+//! - **Montgomery form** (`aR mod P` with `R = 2^64`) for generic primes.
+//!   Multiplication uses REDC; `new()` and `value()` pay the cost of the
+//!   `to_mont` / `from_mont` conversions.
+//! - **Canonical form** (value in `[0, P)`) for primes with recognised
+//!   structure: Mersenne `2^n − 1` with `n ≥ 31` and Proth `k·2^n + 1`
+//!   with `n ≥ 24`. These use the specialised reducers in
+//!   [`specialized`]; `new()`/`value()` are essentially the identity
+//!   (modulo a single `%`), so short-lived values pay no boundary cost.
+//!
+//! The switch is made by the compile-time `use_specialized_storage`
+//! helper below; callers see a single consistent API regardless of which
+//! form the underlying `u64` carries.
+//!
+//! `P = 2` is handled specially with naive bitwise arithmetic since
+//! Montgomery form requires an odd modulus (`gcd(P, R) = 1`).
+//!
+//! The Goldilocks prime `2^64 − 2^32 + 1` does not fit the `P ≤ 2^63`
+//! bound enforced by `Fp<P>` and is exposed via the dedicated
+//! [`specialized::GoldilocksFp`] type.
 //!
 //! # Examples
 //!
@@ -31,20 +50,60 @@
 //! ```
 
 mod montgomery;
+pub mod specialized;
 
 use montgomery::{from_mont, mod_pow_mont, mont_add, mont_sub, redc, to_mont, MontConsts};
+use specialized::{
+    canonical_add, canonical_sub, classify, mersenne_reduce, mersenne_reduce_u64, proth_reduce_u64,
+    PrimeShape,
+};
 
 use std::fmt;
 use std::ops::{Add, AddAssign, Div, Mul, Neg, Sub};
 
 use crate::field::{ConstField, FiniteField};
 
+/// Compile-time flag indicating whether `Fp<P>` should use canonical storage
+/// with a specialized reduction instead of Montgomery form.
+///
+/// Evaluated at compile time from the [`classify`] result; `true` only for
+/// primes whose specialized reduction beats the `to_mont`/`redc`/`from_mont`
+/// round-trip. For generic primes (and for small primes such as `P = 2` or
+/// `P = 65537` where Montgomery is already competitive) this is `false`.
+const fn use_specialized_storage(p: u64) -> bool {
+    if p == 2 {
+        return false;
+    }
+    match classify(p) {
+        PrimeShape::Mersenne { n } => n >= 31,
+        // Proth primes with n >= 24 benefit because the divisor fits in
+        // ≲ 40 bits and the 128-bit `%` path avoids Montgomery's three
+        // multiplies. The threshold also covers the BabyBear (n=27) and
+        // KoalaBear (n=24) zk-friendly primes.
+        PrimeShape::Proth { n, .. } => n >= 24,
+        // Goldilocks is handled by the dedicated `GoldilocksFp` type.
+        PrimeShape::Goldilocks => false,
+        PrimeShape::Generic => false,
+    }
+}
+
 /// An element of the prime field GF(P) for a compile-time-known prime `P`.
 ///
-/// Elements are stored internally in Montgomery form (`aR mod P` where `R = 2^64`)
-/// for efficient multiplication. The public API operates on canonical values in
-/// `[0, P)`. For `P = 2`, naive arithmetic is used since Montgomery form requires
-/// an odd modulus.
+/// The public API operates on canonical values in `[0, P)`. The internal
+/// storage form is chosen at compile time via [`use_specialized_storage`]:
+///
+/// - **Canonical form** (value in `[0, P)`) for specialised Mersenne
+///   (`n ≥ 31`) and Proth (`n ≥ 24`) primes. `new`/`value` are essentially
+///   the identity (one `%`), and multiplication dispatches into the
+///   specialised reducers in [`specialized`].
+/// - **Montgomery form** (`aR mod P` with `R = 2^64`) for all other
+///   primes with `P > 2`. `new`/`value` perform `to_mont`/`from_mont`;
+///   multiplication uses REDC.
+/// - **Bitwise form** for `P = 2`: multiplication is `&`, addition is
+///   `^` — Montgomery is inapplicable because `P` must be odd.
+///
+/// This is invisible at the API surface: callers always see canonical
+/// values and a single set of operators.
 ///
 /// The type parameter `P` must be prime with `1 < P <= 2^63`; primality is not
 /// checked at compile time but is required for correctness.
@@ -106,7 +165,9 @@ impl<const P: u64> Fp<P> {
         #[allow(clippy::let_unit_value)]
         let _ = Self::VALIDATED;
         let reduced = value % P;
-        if P == 2 {
+        // Canonical storage (for `P = 2` and for specialized primes) keeps
+        // the reduced value as-is; Montgomery storage converts via `to_mont`.
+        if P == 2 || use_specialized_storage(P) {
             Self(reduced)
         } else {
             Self(to_mont::<P>(reduced))
@@ -124,11 +185,74 @@ impl<const P: u64> Fp<P> {
     /// ```
     #[inline]
     pub const fn value(self) -> u64 {
-        if P == 2 {
+        if P == 2 || use_specialized_storage(P) {
             self.0
         } else {
             from_mont::<P>(self.0)
         }
+    }
+}
+
+/// Compile-time helper that performs a specialized modular multiplication
+/// when `P` has a recognised structure. Only called from code paths guarded
+/// by `use_specialized_storage(P) == true`.
+#[inline(always)]
+fn specialized_mul<const P: u64>(a: u64, b: u64) -> u64 {
+    match classify(P) {
+        PrimeShape::Mersenne { n } => {
+            // Dispatch on the (compile-time) exponent so the reducer sees
+            // a concrete const-generic `N`.
+            dispatch_mersenne_mul(n, a, b)
+        }
+        PrimeShape::Proth { k, n } => dispatch_proth_mul(k, n, a, b),
+        PrimeShape::Goldilocks | PrimeShape::Generic => {
+            // Unreachable when use_specialized_storage(P) is true; kept as a
+            // safety fallback that still produces correct results.
+            ((a as u128 * b as u128) % P as u128) as u64
+        }
+    }
+}
+
+/// Dispatch a Mersenne multiplication to the appropriate const-generic
+/// instantiation of `mersenne_reduce`. Each arm is monomorphised separately
+/// so the `N` is a true compile-time constant inside the reducer.
+#[inline(always)]
+fn dispatch_mersenne_mul(n: u32, a: u64, b: u64) -> u64 {
+    match n {
+        // For N ≤ 31 the product fits in u64 so we skip u128 entirely
+        // — a 64×64→64 multiply plus a 64-bit fold beats the generic path.
+        31 => mersenne_reduce_u64::<31>(a.wrapping_mul(b)),
+        // For N = 61 the product is 122 bits; the u128 reducer is optimal.
+        61 => mersenne_reduce::<61>((a as u128) * (b as u128)),
+        // Other Mersenne exponents are theoretically supported but not
+        // specialised here; fall back to generic reduction.
+        _ => {
+            let wide = (a as u128) * (b as u128);
+            (wide % ((1u128 << n) - 1)) as u64
+        }
+    }
+}
+
+#[inline(always)]
+fn dispatch_proth_mul(k: u64, n: u32, a: u64, b: u64) -> u64 {
+    // For Proth primes P < 2^32 (such as BabyBear and KoalaBear), the
+    // product a*b fits in u64 and we can avoid u128 entirely. A u64
+    // modulo by a compile-time-known constant compiles to a multiply-high
+    // schedule that beats Montgomery REDC's three 64-bit multiplies.
+    let p = (k as u128) * (1u128 << n) + 1;
+    let p32 = p as u64;
+    if p < (1u128 << 32) {
+        let prod = a.wrapping_mul(b);
+        // For the common cases we hand off to the const-generic reducer;
+        // the compiler monomorphises each case separately.
+        match (k, n) {
+            (15, 27) => proth_reduce_u64::<15, 27>(prod),
+            (127, 24) => proth_reduce_u64::<127, 24>(prod),
+            _ => prod % p32,
+        }
+    } else {
+        let wide = (a as u128) * (b as u128);
+        (wide % p) as u64
     }
 }
 
@@ -147,12 +271,21 @@ impl<const P: u64> Add for Fp<P> {
 
     /// Branchless modular addition.
     ///
+    /// Selects between Montgomery-form and canonical-form addition at
+    /// compile time based on [`use_specialized_storage`]. Both paths are
+    /// identical modular adds on `u64`; the distinction only matters for
+    /// consistency with the chosen storage form of `self.0`.
+    ///
     /// # Complexity
     ///
     /// O(1).
     #[inline]
     fn add(self, rhs: Self) -> Self {
-        Self(mont_add::<P>(self.0, rhs.0))
+        if use_specialized_storage(P) {
+            Self(canonical_add::<P>(self.0, rhs.0))
+        } else {
+            Self(mont_add::<P>(self.0, rhs.0))
+        }
     }
 }
 
@@ -166,16 +299,23 @@ impl<const P: u64> Sub for Fp<P> {
     /// O(1).
     #[inline]
     fn sub(self, rhs: Self) -> Self {
-        Self(mont_sub::<P>(self.0, rhs.0))
+        if use_specialized_storage(P) {
+            Self(canonical_sub::<P>(self.0, rhs.0))
+        } else {
+            Self(mont_sub::<P>(self.0, rhs.0))
+        }
     }
 }
 
 impl<const P: u64> Mul for Fp<P> {
     type Output = Self;
 
-    /// Montgomery multiplication via REDC.
+    /// Modular multiplication.
     ///
-    /// For `P = 2`, uses bitwise AND (GF(2) multiplication).
+    /// Uses specialized reduction for primes with favourable algebraic
+    /// structure (Mersenne, Proth), Montgomery REDC otherwise, and bitwise
+    /// AND for `P = 2`. The choice is made at compile time — callers see
+    /// a single inlined implementation per instantiation.
     ///
     /// # Complexity
     ///
@@ -184,6 +324,8 @@ impl<const P: u64> Mul for Fp<P> {
     fn mul(self, rhs: Self) -> Self {
         if P == 2 {
             Self(self.0 & rhs.0)
+        } else if use_specialized_storage(P) {
+            Self(specialized_mul::<P>(self.0, rhs.0))
         } else {
             Self(redc::<P>(self.0 as u128 * rhs.0 as u128))
         }
@@ -348,7 +490,7 @@ impl<const P: u64> FiniteField for Fp<P> {
 
     #[inline]
     fn is_one(&self) -> bool {
-        if P == 2 {
+        if P == 2 || use_specialized_storage(P) {
             self.0 == 1
         } else {
             self.0 == MontConsts::<P>::R_MOD_P
@@ -365,6 +507,21 @@ impl<const P: u64> FiniteField for Fp<P> {
             None
         } else if P == 2 {
             Some(Self(1))
+        } else if use_specialized_storage(P) {
+            // Canonical-form square-and-multiply using specialized_mul.
+            let mut result: u64 = 1;
+            let mut base: u64 = self.0;
+            let mut e = P - 2;
+            while e > 0 {
+                if e & 1 == 1 {
+                    result = specialized_mul::<P>(result, base);
+                }
+                e >>= 1;
+                if e > 0 {
+                    base = specialized_mul::<P>(base, base);
+                }
+            }
+            Some(Self(result))
         } else {
             Some(Self(mod_pow_mont::<P>(self.0, P - 2)))
         }
@@ -377,7 +534,7 @@ impl<const P: u64> FiniteField for Fp<P> {
 
     #[inline]
     fn one_like(&self) -> Self {
-        if P == 2 {
+        if P == 2 || use_specialized_storage(P) {
             Self(1)
         } else {
             Self(MontConsts::<P>::R_MOD_P)
@@ -429,7 +586,7 @@ impl<const P: u64> ConstField for Fp<P> {
     fn one() -> Self {
         #[allow(clippy::let_unit_value)]
         let _ = Self::VALIDATED;
-        if P == 2 {
+        if P == 2 || use_specialized_storage(P) {
             Self(1)
         } else {
             Self(MontConsts::<P>::R_MOD_P)

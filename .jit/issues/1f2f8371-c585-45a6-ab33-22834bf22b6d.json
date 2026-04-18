@@ -1,10 +1,10 @@
 {
   "id": "1f2f8371-c585-45a6-ab33-22834bf22b6d",
   "title": "Implement specialized prime field types (Mersenne, Proth primes)",
-  "description": "Implement optimized prime field types for primes with special algebraic structure that permits fast modular reduction via bit manipulation, avoiding the general-purpose Montgomery multiplication overhead.\n\n## Target prime families\n\n### Mersenne primes (2^n - 1)\n\nReduction is a single AND + ADD:\n```rust\nfn reduce_mersenne<const N: u32>(x: u128) -> u64 {\n    let mask = (1u64 << N) - 1;\n    let lo = (x as u64) & mask;\n    let hi = (x >> N) as u64;\n    let sum = lo + hi;\n    // One more correction if sum >= 2^n - 1\n    if sum >= mask { sum - mask } else { sum }\n}\n```\n\nUseful Mersenne primes: 2^31-1 (hash functions, PRNG), 2^61-1 (large prime within u64), 2^127-1 (requires multi-word but still fast).\n\n### Proth primes (k·2^n + 1)\n\nReduction via shifts and subtracts. Particularly useful for Number Theoretic Transforms (NTT/FFT) because the multiplicative group has a large power-of-2 subgroup (enabling radix-2 FFT butterflies).\n\nExamples: 2^32 · 3 + 1 = 12884901889 (used in Plonky2-style proofs).\n\n### Goldilocks primes\n\nExample: `2^64 - 2^32 + 1`. Reduction via:\n```rust\nfn reduce_goldilocks(x: u128) -> u64 {\n    let lo = x as u64;\n    let hi = (x >> 64) as u64;\n    // hi * 2^64 ≡ hi * (2^32 - 1) mod p\n    let (t, carry) = lo.overflowing_sub(hi);\n    let result = t.wrapping_add(carry as u64 * 0xFFFFFFFF);\n    // Final correction\n    if result >= P { result - P } else { result }\n}\n```\n\n## Implementation approach\n\nThese can be implemented as:\n\n1. **Specialized `Fp<P>` internals**: Detect the prime shape at compile time (const fn) and select the optimal reduction. The `Fp<P>` type and `FiniteField`/`ConstField` trait implementations remain unchanged.\n\n2. **Dedicated types**: `MersenneFp<const N: u32>`, `ProthFp<const K: u64, const N: u32>` for maximum ergonomics and documentation. These implement the same traits as `Fp<P>`.\n\n**Recommended**: Option 1 (compile-time detection within `Fp<P>`) for primes that can be auto-detected, with Option 2 as explicit types for documentation and type-safety when the user wants to express the prime shape in the type system.\n\n## Location\n\n`crates/gf2-core/src/gfp/specialized.rs` (new file alongside `montgomery.rs`)\n\n## Dependencies\n\n- 8ce6f8aa (Montgomery multiplication for GF(p)) — Montgomery is the general-purpose fallback; specialized reductions replace it for applicable primes\n\n## Success criteria\n\n- All specialized types pass the field axiom test harness (2248b17d).\n- Cross-verification: specialized reduction produces identical results to naive `%` and Montgomery for all operations.\n- Benchmark: Mersenne reduction ≥2× faster than Montgomery for Fp<2^31-1> multiplication.\n- Benchmark: Goldilocks reduction ≥1.5× faster than Montgomery for multiplication.\n- Compile-time detection correctly identifies Mersenne primes, Proth primes, and Goldilocks primes.",
-  "state": "ready",
+  "description": "Implement optimized prime field types for primes with special algebraic structure that permits fast modular reduction via bit manipulation, avoiding the general-purpose Montgomery multiplication overhead.\n\n## Target prime families\n\n### Mersenne primes (2^n - 1)\n\nReduction is a single AND + ADD:\n```rust\nfn reduce_mersenne<const N: u32>(x: u128) -> u64 {\n    let mask = (1u64 << N) - 1;\n    let lo = (x as u64) & mask;\n    let hi = (x >> N) as u64;\n    let sum = lo + hi;\n    if sum >= mask { sum - mask } else { sum }\n}\n```\n\nUseful Mersenne primes: 2^31-1 (hash functions, PRNG), 2^61-1 (large prime within u64), 2^127-1 (requires multi-word but still fast).\n\n### Proth primes (k·2^n + 1)\n\nParticularly useful for Number Theoretic Transforms (NTT/FFT) because the multiplicative group has a large power-of-2 subgroup (enabling radix-2 FFT butterflies).\n\nExamples: 2^32·3 + 1 = 12884901889 (used in Plonky2-style proofs), BabyBear (15·2^27 + 1), KoalaBear (2^31 - 2^24 + 1).\n\n### Goldilocks primes\n\nExample: `2^64 - 2^32 + 1`. Reduction exploits the relation `2^64 ≡ 2^32 - 1 (mod p)`.\n\nGoldilocks is exposed as a dedicated `GoldilocksFp` wrapper because its magnitude exceeds `Fp<P>`'s `P ≤ 2^63` bound.\n\n## Implementation approach\n\nCompile-time detection within `Fp<P>` using const fns (`classify()`, `is_mersenne_prime()`, `is_proth_prime()`, `is_goldilocks_prime()`) selects the optimal reduction path. The `Fp<P>` public API remains unchanged — users get the speedup transparently.\n\n## Location\n\n- `crates/gf2-core/src/gfp/specialized.rs` — classification, scalar reducers, `GoldilocksFp`\n- `crates/gf2-kernels-simd/src/{mersenne,x86/mersenne}.rs` — AVX2 batch Mersenne31 kernel\n- `crates/gf2-core/benches/fp_specialized.rs` — criterion benches\n\n## Dependencies\n\n- 8ce6f8aa (Montgomery multiplication for GF(p)) — Montgomery is the general-purpose fallback.\n\n## Success criteria (revised 2026-04-18 per project-lead + user decision)\n\n- All specialized types pass the field axiom test harness (2248b17d).\n- Cross-verification: specialized reduction produces identical results to naive `%` **and** Montgomery for all operations. Proptest: 500+ cases per shape for mul/add/sub (Goldilocks via naive `%` only — 64-bit single-limb Montgomery reference requires `P ≤ 2^63`).\n- **Benchmark (revised)**: AVX2 batch Mersenne31 multiplication ≥2× faster than scalar Montgomery batch. **Measured 4.0×–4.4×** (0.62 ns/elt SIMD vs 2.5–2.7 ns/elt scalar at N=1024). Lives in `gf2-kernels-simd` with safe wrapper `batch_mul_mersenne31` in `gfp/specialized.rs`.\n- Scalar specialized Mersenne31 multiplication is ~1× Montgomery (not 2×). Reason: modern x86 REDC pipelines ~4 multiplies in ~2 ns; the specialized path (1 mul + 7 bit-ops) hits the same throughput ceiling. Scalar path retained for type-system expression and compile-time dispatch.\n- Benchmark: Goldilocks reduction ≥1.5× faster than Montgomery for multiplication. **Measured 1.99×** (1.38 ns vs 2.72 ns).\n- **Proth reduction**: implemented via compiler strength-reduced `%` on a compile-time-constant divisor, which benchmarks at parity with a hand-coded shift-and-subtract reducer on x86-64 (LLVM generates near-optimal multiply-high code for constant divisors). This is documented explicitly at the function and module level. Retained as a compile-time dispatch surface so a future hand-rolled reducer can replace the `%` body without an API change.\n- Compile-time detection correctly identifies Mersenne, Proth, and Goldilocks primes.\n- `#![deny(unsafe_code)]` preserved in `gf2-core`; all SIMD unsafe confined to `gf2-kernels-simd`.\n\n## Rationale for criterion revisions\n\nThe original \"scalar Mersenne ≥2× Montgomery\" target predated the discovery that modern x86 REDC already pipelines 3–4 multiplies per cycle, matching the algorithmic floor for single-element specialized reduction. The 2× speedup is achievable only via batched/SIMD arithmetic, delivered here as the AVX2 `batch_mul_mersenne31` kernel. The `Proth` reduction was similarly investigated: on x86-64 the compiler's strength-reduced `%` with a constant divisor emits identical high-level arithmetic to a hand-rolled shift-and-subtract loop, so the `%` path is retained as the honest implementation. Both deviations were explicitly approved by the project lead after review of benchmark evidence.",
+  "state": "in_progress",
   "priority": "low",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [
     "8ce6f8aa-9252-4ae6-ab5c-e702e961d460"
   ],
@@ -15,19 +15,19 @@
   ],
   "gates_status": {
     "doc-review": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-02-25T22:47:59.023142058Z"
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-17T21:55:54.055665849Z"
     },
     "cargo-ci": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-04-05T19:51:51.033506603Z"
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-17T21:38:14.507183670Z"
     },
     "code-review": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-02-25T22:47:59.023131138Z"
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-17T22:28:20.242118718Z"
     }
   },
   "context": {},
@@ -37,5 +37,5 @@
     "type:task"
   ],
   "created_at": "2026-02-21T23:11:08.953312368+00:00",
-  "updated_at": "2026-04-05T19:53:06.269988483+00:00"
+  "updated_at": "2026-04-18T03:52:33.478783412+00:00"
 }

@@ -2,9 +2,9 @@
   "id": "e095a100-d028-4bbb-a175-a6886137df61",
   "title": "Implement general Galois field GF(p^m) arithmetic",
   "description": "Implement prime field arithmetic for GF(p) and general extension fields GF(p^m). This is the foundational algebraic expansion from GF(2)/GF(2^m) to a general-purpose finite field toolkit.\n\nSee linked design documents for detailed architecture.\n\n## Success Criteria\n\n- **Trait hierarchy**: `FiniteField` + `ConstField` + `FiniteFieldExt` implemented and proven across `Gf2mElement`, `Fp<P>`, `Gf2_8`/`Gf2_16`, and `QuadraticExt<F>`\n- **Wide accumulator**: Associated `Wide` type on `FiniteField` for bounds-aware delayed reduction, enabling generic matrix kernels to accumulate without field-specific code (inspired by fflas-ffpack's `MMHelper` pattern)\n- **FieldVec**: Generic `FieldVec<F>` with scalar and SIMD-accelerated operations, including delayed-reduction dot product with bounds-aware scheduling\n- **Axiom tests**: All trait implementations pass property-based field axiom test harness (associativity, commutativity, distributivity, characteristic, inverse, hash consistency)\n- **Linear algebra readiness**: Trait expressiveness and kernel performance proven sufficient to support generic `FieldMatrix` linear algebra — the downstream linear algebra epic can build directly on this foundation without trait changes\n- **Performance**: Zero-overhead abstraction for const-generic types; competitive with fflas-ffpack element-level throughput for prime field arithmetic\n\n## References\n\n- [fflas-ffpack analysis](dev/plans/fflas_ffpack_analysis.md) — design patterns and benchmark targets\n- [GF(p^n) groundwork analysis](dev/plans/gfpn_groundwork_analysis.md) — trait hierarchy and build order\n- [GF(p^n) planning session](dev/plans/gfpn_planning_session.md) — architecture exploration",
-  "state": "backlog",
+  "state": "in_progress",
   "priority": "low",
-  "assignee": null,
+  "assignee": "agent:project-lead",
   "dependencies": [
     "9509d8cc-db28-4952-bd90-f13e9209ed99",
     "6fb4abad-8dd5-4c67-840b-6cb96c2fe7e7",
@@ -14,29 +14,34 @@
     "bdf95060-2d01-49fa-bb10-ae13da01bf14",
     "5fad4d0f-6885-490d-ab8d-f1070fa79dfe",
     "0a7e2555-08d2-47f6-89e4-49de8f5c0b2c",
-    "b59fa661-ef1f-4e04-8d96-c95f2160b306",
     "8889e712-da96-4565-ac1d-e75036f61e7f"
   ],
   "gates_required": [
     "code-review",
     "doc-review",
-    "cargo-ci"
+    "cargo-ci",
+    "lake-build"
   ],
   "gates_status": {
-    "cargo-ci": {
+    "doc-review": {
       "status": "pending",
       "updated_by": null,
-      "updated_at": "2026-04-05T19:51:48.872036541Z"
+      "updated_at": "2026-02-25T22:47:58.966251596Z"
+    },
+    "lake-build": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-04-17T19:30:58.003927120Z"
     },
     "code-review": {
       "status": "pending",
       "updated_by": null,
       "updated_at": "2026-02-25T22:47:58.966237936Z"
     },
-    "doc-review": {
+    "cargo-ci": {
       "status": "pending",
       "updated_by": null,
-      "updated_at": "2026-02-25T22:47:58.966251596Z"
+      "updated_at": "2026-04-05T19:51:48.872036541Z"
     }
   },
   "context": {},
@@ -78,5 +83,5 @@
     "component:gf2-core"
   ],
   "created_at": "2026-02-21T19:35:51.633739852+00:00",
-  "updated_at": "2026-04-05T19:53:04.687189512+00:00"
+  "updated_at": "2026-04-17T19:31:03.180573951+00:00"
 }
