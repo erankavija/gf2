@@ -379,7 +379,10 @@ impl<C: ExtConfig> QuadraticExt<C> {
 // Display and Debug
 // ---------------------------------------------------------------------------
 
-impl<C: ExtConfig> fmt::Display for QuadraticExt<C> {
+impl<C: ExtConfig> fmt::Display for QuadraticExt<C>
+where
+    C::BaseField: fmt::Display,
+{
     /// Formats as `"c0 + c1·u"`, omitting zero terms.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let c0_zero = self.c0.is_zero();

@@ -393,7 +393,10 @@ impl<C: ExtConfig> CubicExt<C> {
 // Display and Debug
 // ---------------------------------------------------------------------------
 
-impl<C: ExtConfig> fmt::Display for CubicExt<C> {
+impl<C: ExtConfig> fmt::Display for CubicExt<C>
+where
+    C::BaseField: fmt::Display,
+{
     /// Formats as `"c0 + c1·v + c2·v²"`, omitting zero terms.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let c0_zero = self.c0.is_zero();
