@@ -138,3 +138,7 @@ harness = false
 [[bench]]
 name = "fieldvec_dot_product"
 harness = false
+
+[[bench]]
+name = "batch_inverse"
+harness = false
