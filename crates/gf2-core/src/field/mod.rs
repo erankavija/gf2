@@ -15,8 +15,16 @@
 //!
 //! - [`batch_ops`] — Montgomery's trick for inverting many elements with a
 //!   single field inversion.
+//!
+//! # Polynomials
+//!
+//! - [`poly`] — [`FieldPoly<F>`](poly::FieldPoly), a generic univariate
+//!   polynomial type with schoolbook arithmetic. Higher-level operations
+//!   (division, Karatsuba, NTT, batch evaluation) land in follow-up
+//!   tasks of the `bdf95060` story.
 
 pub mod batch_ops;
+pub mod poly;
 mod traits;
 pub mod two_adic;
 pub mod vec;
@@ -28,6 +36,7 @@ pub use batch_ops::{
     batch_inverse, batch_inverse_in_place, batch_inverse_skip_zeros,
     batch_inverse_skip_zeros_in_place, batch_inverse_with_scratch,
 };
+pub use poly::FieldPoly;
 pub use traits::{ConstField, FiniteField, FiniteFieldExt};
 pub use two_adic::TwoAdicField;
 pub use vec::{FieldVec, StridedIter};
