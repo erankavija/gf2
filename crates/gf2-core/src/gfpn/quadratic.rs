@@ -779,9 +779,16 @@ mod tests {
 
     #[test]
     fn test_debug() {
+        // Debug uses {:?} on base-field coefficients so that tower
+        // base fields without `fmt::Display` still produce a useful
+        // debug representation. For `Fp<7>` the Debug format is
+        // `Fp<7>(value)`.
         let a = Fq2::new(Fp::new(3), Fp::new(5));
-        assert_eq!(format!("{:?}", a), "QuadraticExt(3, 5)");
-        assert_eq!(format!("{:?}", Fq2::zero()), "QuadraticExt(0, 0)");
+        assert_eq!(format!("{:?}", a), "QuadraticExt(Fp<7>(3), Fp<7>(5))");
+        assert_eq!(
+            format!("{:?}", Fq2::zero()),
+            "QuadraticExt(Fp<7>(0), Fp<7>(0))"
+        );
     }
 
     // -----------------------------------------------------------------------
