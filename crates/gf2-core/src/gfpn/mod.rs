@@ -53,10 +53,12 @@
 //! assert_eq!(Fq2Config::mul_by_non_residue(x).value(), 5); // 4*3 mod 7 = 5
 //! ```
 
+pub mod batch;
 mod cubic;
 mod ext_config;
 mod quadratic;
 
+pub use batch::BatchExtField;
 pub use cubic::{CubicExt, CubicExtWide};
 pub use ext_config::ExtConfig;
 pub use quadratic::{QuadraticExt, QuadraticExtWide};
