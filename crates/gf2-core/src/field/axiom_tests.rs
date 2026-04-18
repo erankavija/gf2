@@ -67,10 +67,51 @@ fn gf2m_u128_strategy(field: &Gf2mField_<u128>) -> BoxedStrategy<Gf2mElement_<u1
 // Generic axiom harness
 // ---------------------------------------------------------------------------
 
-/// Run the full field axiom test suite for a `FiniteField` implementation.
+/// Run the full field axiom test suite for a [`FiniteField`] implementation.
 ///
-/// `characteristic` is the field characteristic as a `u64` (e.g., 2 for binary fields).
-/// Each axiom is verified with [`CASES_PER_AXIOM`] random inputs.
+/// Drives a `proptest` [`TestRunner`] through every axiom the trait must
+/// satisfy: additive group (associativity, commutativity, identity, inverse,
+/// subtraction consistency), multiplicative group (associativity,
+/// commutativity, identity, inverse, division consistency), ring
+/// distributivity, zero annihilation, field characteristic (`p · a = 0`),
+/// hash consistency, wide-accumulator roundtrip / mul consistency, and the
+/// [`FiniteFieldExt`] extras (`square`, `pow`, Frobenius, Freshman's dream).
+/// Used both by the crate's own in-module `#[test]` functions and by
+/// integration tests that layer new tower shapes on top of existing base
+/// fields.
+///
+/// # Arguments
+///
+/// * `strategy` — a `proptest` [`BoxedStrategy<F>`] that samples uniformly
+///   random field elements, **including zero** (each axiom either handles
+///   zero natively or filters it out locally where needed, e.g., the
+///   multiplicative-inverse axiom).
+/// * `characteristic` — the prime characteristic `p` of the field as a
+///   `u64`. For GF(2ᵐ) this is 2; for `Fp<P>` or towers over it, `P` itself.
+///   The value is used both by the characteristic axiom (`p·a = 0`) and by
+///   Frobenius / Freshman's-dream checks (`a^p`, `(a+b)^p = a^p + b^p`).
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::field::axiom_tests::{fp_strategy, test_field_axioms};
+///
+/// // Exercise Fp<7> under the canonical axiom harness. Uses the module's
+/// // built-in 1000-cases-per-axiom configuration.
+/// test_field_axioms(fp_strategy::<7>(), 7);
+/// ```
+///
+/// # Panics
+///
+/// Panics (via `proptest`'s `TestRunner`) on the first axiom violation it
+/// detects — that is the entire point of the harness. A proptest shrink
+/// report is included in the panic message.
+///
+/// # Complexity
+///
+/// `O(CASES_PER_AXIOM × axiom_count × cost_of_field_ops)` where
+/// `CASES_PER_AXIOM` is the module-level constant (currently 1000) and
+/// `axiom_count` is roughly 18.
 pub fn test_field_axioms<F: FiniteField + Debug>(strategy: BoxedStrategy<F>, characteristic: u64)
 where
     F::Characteristic: Into<u64>,
@@ -112,7 +153,42 @@ where
     check_freshman_dream(&mut runner, &strategy, characteristic);
 }
 
-/// Run axiom tests for a [`ConstField`] implementation (superset of [`test_field_axioms`]).
+/// Run the full axiom suite for a [`ConstField`] implementation.
+///
+/// Superset of [`test_field_axioms`]: runs every `FiniteField` axiom and
+/// additionally checks that the const identities agree with the instance
+/// identities (`F::zero().is_zero()`, `F::one().is_one()`) and that
+/// `F::order()` matches `p^m` where `m = extension_degree()`. Used by every
+/// `Fp<P>` and tower-extension test in the crate.
+///
+/// # Arguments
+///
+/// * `strategy` — a `proptest` [`BoxedStrategy<F>`] sampling uniformly over
+///   the field, including zero.
+/// * `characteristic` — the prime characteristic `p` of the field as a
+///   `u64`. For towers, this is the base-prime `P`, not `p^m`.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::field::axiom_tests::{fp_strategy, test_const_field_axioms};
+///
+/// // Exercise Fp<7> under the full ConstField axiom harness (also checks
+/// // `F::order() == 7^1` and const zero/one identities).
+/// test_const_field_axioms(fp_strategy::<7>(), 7);
+/// ```
+///
+/// # Panics
+///
+/// Panics on the first axiom violation the underlying `TestRunner` detects,
+/// or if `F::order()` disagrees with `p^m`, or if the const zero/one do not
+/// match the predicates. See [`test_field_axioms`] for the axiom catalogue.
+///
+/// # Complexity
+///
+/// Same big-O as [`test_field_axioms`]:
+/// `O(CASES_PER_AXIOM × axiom_count × cost_of_field_ops)`. The const-only
+/// extra checks are three `assert!` calls and contribute a constant.
 pub fn test_const_field_axioms<F: ConstField + Debug>(
     strategy: BoxedStrategy<F>,
     characteristic: u64,
@@ -615,10 +691,36 @@ fn test_gf2_8_via_u128_field_axioms() {
 // Strategies and concrete tests for Fp<P>
 // ---------------------------------------------------------------------------
 
-/// Strategy that generates uniformly random `Fp<P>` values (including zero).
+/// Strategy that generates uniformly random [`Fp<P>`] values (including zero).
 ///
-/// Exposed for integration tests that need to build strategies for
-/// tower-extension types layered over [`Fp`].
+/// The canonical sampler used by every prime-field axiom test in the crate
+/// and by tower-extension integration tests that need to sample Fp
+/// coefficients. Each draw is a uniform `u64` in `0..P`, then lifted through
+/// `Fp::<P>::new`, so zero is produced with probability `1/P`.
+///
+/// # Arguments
+///
+/// * `P` — the const-generic prime modulus. Must be a prime so that
+///   `Fp<P>` is actually a field; the strategy does not itself check
+///   primality (the [`Fp`] construction does).
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::field::axiom_tests::{fp_strategy, test_field_axioms};
+///
+/// // Compose the strategy with the axiom harness to exercise Fp<7>.
+/// test_field_axioms(fp_strategy::<7>(), 7);
+/// ```
+///
+/// # Panics
+///
+/// None. The strategy is infallible: every sampled `u64` in `0..P` is a
+/// valid input to `Fp::<P>::new`.
+///
+/// # Complexity
+///
+/// Constant time per sample.
 pub fn fp_strategy<const P: u64>() -> BoxedStrategy<Fp<P>> {
     (0..P).prop_map(Fp::<P>::new).boxed()
 }
