@@ -7,6 +7,7 @@ use crate::LogicalFns;
 mod avx2;
 
 pub(crate) mod clmul;
+pub(crate) mod mersenne;
 
 #[allow(dead_code)]
 pub(crate) fn detect_x86() -> Option<LogicalFns> {

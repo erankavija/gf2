@@ -67,11 +67,13 @@ pub use sparse::{SpBitMatrix, SpBitMatrixDual};
 #[cfg(feature = "simd")]
 pub(crate) mod simd {
     use gf2_kernels_simd::gf2m::Gf2mFns;
+    use gf2_kernels_simd::mersenne::MersenneFns;
     use gf2_kernels_simd::LogicalFns;
     use std::sync::OnceLock;
 
     static FNS: OnceLock<Option<LogicalFns>> = OnceLock::new();
     static GF2M_FNS: OnceLock<Option<Gf2mFns>> = OnceLock::new();
+    static MERSENNE_FNS: OnceLock<Option<MersenneFns>> = OnceLock::new();
 
     #[inline]
     pub fn maybe_simd() -> Option<&'static LogicalFns> {
@@ -88,6 +90,17 @@ pub(crate) mod simd {
             .get_or_init(gf2_kernels_simd::gf2m::detect)
             .as_ref()
     }
+
+    /// Returns the best available Mersenne-prime SIMD batch kernels, if any.
+    ///
+    /// Currently provides AVX2 kernels for `Fp<2^31 - 1>`. Returns `None`
+    /// on non-AVX2 hardware; callers must fall back to scalar loops.
+    #[inline]
+    pub fn maybe_mersenne() -> Option<&'static MersenneFns> {
+        MERSENNE_FNS
+            .get_or_init(gf2_kernels_simd::mersenne::detect)
+            .as_ref()
+    }
 }
 
 #[cfg(not(feature = "simd"))]
@@ -95,6 +108,12 @@ pub(crate) mod simd {
     #[allow(dead_code)]
     #[inline]
     pub fn maybe_simd() -> Option<()> {
+        None
+    }
+
+    #[allow(dead_code)]
+    #[inline]
+    pub fn maybe_mersenne() -> Option<()> {
         None
     }
 }

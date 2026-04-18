@@ -648,3 +648,42 @@ fn test_fp65537_const_field_axioms() {
 fn test_fp_mersenne61_const_field_axioms() {
     test_const_field_axioms(fp_strategy::<2305843009213693951>(), 2305843009213693951);
 }
+
+// ---------------------------------------------------------------------------
+// Specialized primes: axiom coverage
+// ---------------------------------------------------------------------------
+
+/// `Fp<P>` for the 31-bit Mersenne prime `2^31 - 1` (compile-time specialised).
+#[test]
+fn test_fp_mersenne31_const_field_axioms() {
+    const M31: u64 = (1u64 << 31) - 1;
+    test_const_field_axioms(fp_strategy::<M31>(), M31);
+}
+
+/// `Fp<P>` for the BabyBear Proth prime `15·2^27 + 1 = 2013265921`
+/// (compile-time specialised; widely used in zk-STARK frameworks).
+#[test]
+fn test_fp_babybear_const_field_axioms() {
+    const BABYBEAR: u64 = 15 * (1u64 << 27) + 1;
+    test_const_field_axioms(fp_strategy::<BABYBEAR>(), BABYBEAR);
+}
+
+/// `Fp<P>` for the KoalaBear Proth prime `2^31 - 2^24 + 1 = 2130706433`
+/// (compile-time specialised).
+#[test]
+fn test_fp_koalabear_const_field_axioms() {
+    const KOALABEAR: u64 = (1u64 << 31) - (1u64 << 24) + 1;
+    test_const_field_axioms(fp_strategy::<KOALABEAR>(), KOALABEAR);
+}
+
+// Goldilocks strategy and axiom test.
+use crate::gfp::specialized::{GoldilocksFp, GOLDILOCKS_PRIME};
+
+fn goldilocks_strategy() -> BoxedStrategy<GoldilocksFp> {
+    (0..GOLDILOCKS_PRIME).prop_map(GoldilocksFp::new).boxed()
+}
+
+#[test]
+fn test_goldilocks_const_field_axioms() {
+    test_const_field_axioms(goldilocks_strategy(), GOLDILOCKS_PRIME);
+}
