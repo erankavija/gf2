@@ -212,13 +212,10 @@ impl PrimitivePolynomialDatabase {
     ///
     /// O(1) table lookup.
     pub fn standard_u128(m: usize) -> Option<u128> {
-        if m <= 16 {
-            return Self::standard(m).map(|p| p as u128);
-        }
         if m <= 63 {
-            // Not currently catalogued as u128; callers at these degrees
-            // should use `standard(m)` directly or supply their own polynomial.
-            return None;
+            // Delegate to the u64 catalog (widened). Covers m = 2..=16
+            // (verified primitive) and returns None for m = 17..=63.
+            return Self::standard(m).map(|p| p as u128);
         }
         Self::seroussi_u128(m)
     }

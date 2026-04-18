@@ -129,6 +129,7 @@ harness = false
 [[bench]]
 name = "fp_specialized"
 harness = false
+required-features = ["simd"]
 
 [[bench]]
 name = "gf2m_mul_strategies"
