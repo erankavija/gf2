@@ -50,14 +50,31 @@
 //! Binary: 0101 ⊕ 1100 = 1001
 //! ```
 //!
-//! **Multiplication**: Multiply polynomials, then reduce modulo a primitive polynomial
+//! **Multiplication**: Multiply polynomials, then reduce modulo an irreducible
+//! polynomial of degree m
 //! ```text
-//! In GF(2^4) with primitive polynomial p(x) = x⁴ + x + 1:
+//! In GF(2^4) with irreducible polynomial p(x) = x⁴ + x + 1 (also primitive):
 //! (x + 1) · (x² + 1) = x³ + x² + x + 1
 //! ```
 //!
-//! **Primitive Polynomial**: An irreducible polynomial of degree m that generates
-//! the full multiplicative group. Required to define field structure.
+//! **Defining polynomial**: An **irreducible** polynomial of degree m is
+//! sufficient to define the field structure of GF(2^m) — irreducibility ensures
+//! that the quotient `GF(2)[x] / ⟨p(x)⟩` is a field. A **primitive** polynomial
+//! is an irreducible polynomial whose root generates the full multiplicative
+//! group; primitivity is additionally needed for log/exp tables and discrete-log
+//! constructions.
+//!
+//! Polynomials returned by [`PrimitivePolynomialDatabase::standard`] (m ≤ 16)
+//! are verified **primitive**. Polynomials returned by
+//! [`PrimitivePolynomialDatabase::standard_u128`] for m = 64..=127 are verified
+//! only **irreducible** (see
+//! [`PrimitivePolynomialDatabase::standard_u128_irreducibility_note`]); this is
+//! sufficient for correctness of arithmetic operations (add, sub, mul, inv,
+//! div) but not for primitive-element or discrete-log operations.
+//!
+//! [`PrimitivePolynomialDatabase::standard`]: crate::primitive_polys::PrimitivePolynomialDatabase::standard
+//! [`PrimitivePolynomialDatabase::standard_u128`]: crate::primitive_polys::PrimitivePolynomialDatabase::standard_u128
+//! [`PrimitivePolynomialDatabase::standard_u128_irreducibility_note`]: crate::primitive_polys::PrimitivePolynomialDatabase::standard_u128_irreducibility_note
 //!
 //! ## Example: Computing in GF(2^4)
 //!
