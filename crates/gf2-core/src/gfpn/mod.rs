@@ -11,6 +11,26 @@
 //! - [`QuadraticExt<C>`]: Elements c₀ + c₁·u where u² = β.
 //! - [`CubicExt<C>`]: Elements c₀ + c₁·v + c₂·v² where v³ = β.
 //!
+//! # Wide accumulator types
+//!
+//! [`QuadraticExtWide<W>`] and [`CubicExtWide<W>`] are the wide accumulator
+//! types associated with the two extension constructors. They store
+//! component-wise, unreduced wide values (using the base field's `Wide`) so
+//! that dot-product-style loops can accumulate many products with only a
+//! single final [`crate::field::FiniteField::reduce_wide`] call.
+//!
+//! The `Wide` type propagates through nested towers naturally. For example:
+//!
+//! ```text
+//! GF(p^2)  = QuadraticExt<Fp<P>>             Wide = QuadraticExtWide<u128>
+//! GF(p^4)  = QuadraticExt<QuadraticExt<Fp<P>>>  Wide = QuadraticExtWide<QuadraticExtWide<u128>>
+//! GF(p^6)  = CubicExt<QuadraticExt<Fp<P>>>      Wide = CubicExtWide<QuadraticExtWide<u128>>
+//! ```
+//!
+//! At every tower level [`crate::field::FiniteField::max_unreduced_additions`]
+//! collapses down to the base prime field's bound: accumulation is limited by
+//! the smallest component accumulator in the tower (usually `u128`).
+//!
 //! # Examples
 //!
 //! ```
@@ -37,6 +57,6 @@ mod cubic;
 mod ext_config;
 mod quadratic;
 
-pub use cubic::CubicExt;
+pub use cubic::{CubicExt, CubicExtWide};
 pub use ext_config::ExtConfig;
-pub use quadratic::QuadraticExt;
+pub use quadratic::{QuadraticExt, QuadraticExtWide};
