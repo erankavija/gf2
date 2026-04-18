@@ -398,7 +398,7 @@ where
 
 impl<C: ExtConfig> fmt::Debug for QuadraticExt<C> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "QuadraticExt({}, {})", self.c0, self.c1)
+        write!(f, "QuadraticExt({:?}, {:?})", self.c0, self.c1)
     }
 }
 
