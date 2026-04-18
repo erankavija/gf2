@@ -5,38 +5,23 @@
 //! the wide type correctly — the outer `Wide` is
 //! `QuadraticExtWide<QuadraticExtWide<u128>>` — and that all field axioms hold
 //! including the wide roundtrip and `mul_to_wide` consistency.
+//!
+//! Tower configurations are imported from `common::` (see
+//! `tests/common/mod.rs`), the single source of truth for the chains used
+//! across the tower integration tests.
 
 use gf2_core::field::{ConstField, FiniteField};
 use gf2_core::gfp::Fp;
 use gf2_core::gfpn::{ExtConfig, QuadraticExt, QuadraticExtWide};
 
-// GF(65537²) = Fp<65537>[u]/(u² − β). 65537 is prime and 3 is a quadratic
-// non-residue mod 65537 (it's the smallest such value for that Fermat prime).
-struct Fp65537Ext2;
-impl ExtConfig for Fp65537Ext2 {
-    type BaseField = Fp<65537>;
-    const NON_RESIDUE: Fp<65537> = Fp::<65537>::new(3);
-}
-type Fq2 = QuadraticExt<Fp65537Ext2>;
-
-// GF(65537⁴) = Fq2[w]/(w² − γ). The inner β = 3 is NOT a square in Fq2
-// (verified by: 3 is a QNR in Fp<65537>, so c₀ + 0·u = 3 has no square root).
-// For simplicity we pick γ = u (i.e., γ = 0 + 1·u in Fq2), which is a known
-// non-square in any quadratic extension field whose base non-residue is not a
-// square (it is the "canonical" construction of GF(p^4) via two quadratic
-// extensions).
-struct Fp65537Ext4;
-impl ExtConfig for Fp65537Ext4 {
-    type BaseField = Fq2;
-    const NON_RESIDUE: Fq2 = Fq2::new(Fp::<65537>::new(0), Fp::<65537>::new(1));
-}
-type Fq4 = QuadraticExt<Fp65537Ext4>;
+mod common;
+use common::{Fp65537Ext4, Fq2Large as Fq2, Fq4Large as Fq4};
 
 /// The outer `Wide` propagates through the tower:
 /// `QuadraticExt<QuadraticExt<Fp<P>>>::Wide == QuadraticExtWide<QuadraticExtWide<u128>>`.
 /// This test compiles only if the types match (enforced by the type checker).
 #[test]
-fn nested_wide_type_propagation() {
+fn test_nested_wide_type_propagation() {
     // Construct by type inference from a concrete element path.
     let a = Fq4::new(
         Fq2::new(Fp::new(1), Fp::new(2)),
@@ -49,7 +34,7 @@ fn nested_wide_type_propagation() {
 }
 
 #[test]
-fn nested_wide_roundtrip() {
+fn test_nested_wide_roundtrip() {
     // Pick a few non-trivial elements and verify reduce_wide ∘ to_wide = id.
     for c00 in [0u64, 1, 42, 65535] {
         for c01 in [0u64, 7, 1000] {
@@ -69,7 +54,7 @@ fn nested_wide_roundtrip() {
 }
 
 #[test]
-fn nested_mul_to_wide_consistency() {
+fn test_nested_mul_to_wide_consistency() {
     // Pick several pairs and check mul_to_wide ∘ reduce_wide matches direct
     // multiplication.
     let samples = [
@@ -98,7 +83,7 @@ fn nested_mul_to_wide_consistency() {
 }
 
 #[test]
-fn nested_dot_product_accumulation() {
+fn test_nested_dot_product_accumulation() {
     // Accumulate 16 random-looking products in the nested wide, reduce once,
     // and compare to the element-wise multiply-and-add path.
     let coeffs: &[(u64, u64, u64, u64)] = &[
@@ -140,13 +125,16 @@ fn nested_dot_product_accumulation() {
 
 /// The nested tower must still cap accumulation at the base prime's budget.
 #[test]
-fn nested_max_unreduced_additions_matches_base() {
+fn test_nested_max_unreduced_additions_matches_base() {
     // For P=65537 the bound `u128::MAX / (P-1)²` exceeds `usize::MAX` and
     // saturates, so this assertion is only meaningful for the *equality*:
     // the tower must pass through whatever the base field reports.
     let k = <Fq4 as FiniteField>::max_unreduced_additions();
     let base = <Fp<65537> as FiniteField>::max_unreduced_additions();
     assert_eq!(k, base);
+    // Silence unused-item warnings for config types imported but not directly
+    // referenced: force the compiler to record the use.
+    let _ = Fp65537Ext4::NON_RESIDUE;
 }
 
 // ---------------------------------------------------------------------------
@@ -172,7 +160,7 @@ impl ExtConfig for M61Ext4 {
 type M61Fq4 = QuadraticExt<M61Ext4>;
 
 #[test]
-fn nested_max_unreduced_additions_finite_for_large_prime() {
+fn test_nested_max_unreduced_additions_finite_for_large_prime() {
     // Mersenne61 gives `k = u128::MAX / (P-1)² ≈ 64` — far below usize::MAX.
     let k = <M61Fq4 as FiniteField>::max_unreduced_additions();
     let base = <Fp<M61> as FiniteField>::max_unreduced_additions();
@@ -185,7 +173,7 @@ fn nested_max_unreduced_additions_finite_for_large_prime() {
 }
 
 #[test]
-fn nested_wide_type_propagates_through_two_levels() {
+fn test_nested_wide_type_propagates_through_two_levels() {
     let a = M61Fq4::new(
         M61Fq2::new(Fp::new(1), Fp::new(2)),
         M61Fq2::new(Fp::new(3), Fp::new(4)),
@@ -197,7 +185,7 @@ fn nested_wide_type_propagates_through_two_levels() {
 
 /// Field axioms smoke test: one element and its inverse satisfy the identity.
 #[test]
-fn nested_axioms_smoke() {
+fn test_nested_axioms_smoke() {
     let a = Fq4::new(
         Fq2::new(Fp::new(3), Fp::new(5)),
         Fq2::new(Fp::new(7), Fp::new(11)),
