@@ -770,16 +770,16 @@ fn test_fp_mersenne31_const_field_axioms() {
 /// (compile-time specialised; widely used in zk-STARK frameworks).
 #[test]
 fn test_fp_babybear_const_field_axioms() {
-    const BABYBEAR: u64 = 15 * (1u64 << 27) + 1;
-    test_const_field_axioms(fp_strategy::<BABYBEAR>(), BABYBEAR);
+    use crate::field::two_adic::BABYBEAR_P;
+    test_const_field_axioms(fp_strategy::<BABYBEAR_P>(), BABYBEAR_P);
 }
 
 /// `Fp<P>` for the KoalaBear Proth prime `2^31 - 2^24 + 1 = 2130706433`
 /// (compile-time specialised).
 #[test]
 fn test_fp_koalabear_const_field_axioms() {
-    const KOALABEAR: u64 = (1u64 << 31) - (1u64 << 24) + 1;
-    test_const_field_axioms(fp_strategy::<KOALABEAR>(), KOALABEAR);
+    use crate::field::two_adic::KOALABEAR_P;
+    test_const_field_axioms(fp_strategy::<KOALABEAR_P>(), KOALABEAR_P);
 }
 
 // Goldilocks strategy and axiom test.

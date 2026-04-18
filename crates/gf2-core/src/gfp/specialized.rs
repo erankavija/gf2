@@ -1359,13 +1359,16 @@ mod tests {
     // AND to Montgomery for all operations.
     // -----------------------------------------------------------------------
 
+    use crate::field::two_adic::BABYBEAR_P;
     use crate::field::FiniteField;
     use crate::gfp::Fp;
 
     const M31: u64 = (1u64 << 31) - 1;
     const M61: u64 = (1u64 << 61) - 1;
-    /// BabyBear Proth prime: 15 · 2^27 + 1 = 2013265921.
-    const PROTH: u64 = 15 * (1u64 << 27) + 1;
+    /// BabyBear Proth prime: 15 · 2^27 + 1 = 2013265921 — re-exported from
+    /// [`crate::field::two_adic::BABYBEAR_P`] to keep this test module aligned
+    /// with the canonical constant defined alongside the `TwoAdicField` impls.
+    const PROTH: u64 = BABYBEAR_P;
 
     // ------------------------------------------------------------------
     // Naive Montgomery reference (standalone; independent of the main
