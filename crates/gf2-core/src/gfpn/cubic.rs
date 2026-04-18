@@ -435,7 +435,7 @@ where
 
 impl<C: ExtConfig> fmt::Debug for CubicExt<C> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "CubicExt({}, {}, {})", self.c0, self.c1, self.c2)
+        write!(f, "CubicExt({:?}, {:?}, {:?})", self.c0, self.c1, self.c2)
     }
 }
 
