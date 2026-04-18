@@ -8,6 +8,8 @@
 //! - [`FiniteField`] — Core trait: arithmetic, identities, wide accumulation.
 //! - [`ConstField`] — Extension for `Copy` fields with zero-cost constructors.
 //! - [`FiniteFieldExt`] — Blanket convenience methods: `square`, `pow`, `frobenius`.
+//! - [`TwoAdicField`] — Fields with a large power-of-two subgroup of `F^*`,
+//!   enabling radix-2 NTT butterflies.
 //!
 //! # Batch operations
 //!
@@ -16,6 +18,7 @@
 
 pub mod batch_ops;
 mod traits;
+pub mod two_adic;
 pub mod vec;
 
 #[cfg(any(test, feature = "test-support"))]
@@ -26,4 +29,5 @@ pub use batch_ops::{
     batch_inverse_skip_zeros_in_place, batch_inverse_with_scratch,
 };
 pub use traits::{ConstField, FiniteField, FiniteFieldExt};
+pub use two_adic::TwoAdicField;
 pub use vec::{FieldVec, StridedIter};
