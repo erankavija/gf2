@@ -14,6 +14,11 @@
     "cargo-ci"
   ],
   "gates_status": {
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-18T03:57:11.029433440Z"
+    },
     "doc-review": {
       "status": "passed",
       "updated_by": "agent:project-lead",
@@ -23,11 +28,6 @@
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-17T21:38:14.507183670Z"
-    },
-    "code-review": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-17T22:28:20.242118718Z"
     }
   },
   "context": {},
@@ -37,5 +37,5 @@
     "type:task"
   ],
   "created_at": "2026-02-21T23:11:08.953312368+00:00",
-  "updated_at": "2026-04-18T03:52:33.478783412+00:00"
+  "updated_at": "2026-04-18T04:04:37.018333118+00:00"
 }

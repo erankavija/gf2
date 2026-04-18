@@ -1,7 +1,7 @@
 {
   "id": "c488ed29-df70-46ef-94c0-2a9f0d61b2f0",
   "title": "Generalize Gf2mElement storage beyond u64 to support m=64+",
-  "description": "Currently `Gf2mElement` uses `u64` storage via the `UintExt` sealed trait, which caps field size at m=63 (the primitive polynomial for m=64 has a leading bit at position 64, which doesn't fit in `u64`). This limits GF(2^m) operations to fields smaller than GF(2^64).\n\n## Goal\n\nExtend `Gf2mElement_<V: UintExt>` to support `u128` (and potentially wider) storage, enabling GF(2^64) through GF(2^127).\n\n## Scope\n\n- Add `UintExt` impl for `u128`\n- Ensure `BarrettReducer` works for m=64+ (it already uses `u128` internally, but verify edge cases)\n- Update `primitive_polys.rs` with standard primitive polynomials for m=64\n- Update benchmarks in `gf2m_mul_strategies.rs` to include true GF(2^64) once supported\n- Verify PCLMULQDQ kernels handle the wider storage correctly (the intrinsic produces 128-bit output, so m=64 fits naturally)\n\n## Success criteria\n\n- `Gf2mElement_<u128>` passes the same field axiom tests as `Gf2mElement_<u64>`\n- GF(2^64) multiplication produces correct results verified against known test vectors\n- Benchmarks updated to include GF(2^64) alongside GF(2^63) for comparison",
+  "description": "Currently `Gf2mElement` uses `u64` storage via the `UintExt` sealed trait, which caps field size at m=63 (the primitive polynomial for m=64 has a leading bit at position 64, which doesn't fit in `u64`). This limits GF(2^m) operations to fields smaller than GF(2^64).\n\n## Goal\n\nExtend `Gf2mElement_<V: UintExt>` to support `u128` (and potentially wider) storage, enabling GF(2^64) through GF(2^127).\n\n## Scope\n\n- Add `UintExt` impl for `u128`\n- Extend `BarrettReducer` coverage analysis for m=64+: **determined to require 256-bit arithmetic** (product degree 2m-2 up to 252 bits; μ constant up to 128 bits). Implementation deferred to JIT issue `6fb4abad` (multi-word GF(2^m) umbrella). Current scope pins `BarrettReducer::new` at m ≤ 63 via contract test `test_new_rejects_degree_64_today` and documents the boundary explicitly.\n- Update `primitive_polys.rs` with standard irreducible polynomials for m=64..=127 (Seroussi's HPL-98-135 + FIPS 186-4)\n- Update benchmarks in `gf2m_mul_strategies.rs` to include true GF(2^64) once supported\n- Verify PCLMULQDQ kernels handle the wider storage correctly: for `Gf2mField_<u128>` at m ≥ 64, SIMD dispatch is intentionally disabled (schoolbook path used); wiring PCLMULQDQ to the widened path is tracked under `6fb4abad`.\n\n## Success criteria (revised 2026-04-18 per project-lead decision)\n\n- `Gf2mElement_<u128>` passes the same field axiom tests as `Gf2mElement_<u64>` — **met** (property-based axiom harness at m = 64, 80, 100, 127; plus m = 8 via u128 to prove storage-width routing).\n- GF(2^64) multiplication produces correct results verified against known test vectors — **met** (derivations cited inline in `test_gf2_64_known_multiplication_vectors`: `x^63 · x ≡ 0b11011` via the primitive polynomial `(1u128 << 64) | 0b11011`; operator-vs-`mul_raw` cross-check).\n- Benchmarks updated to include GF(2^64) alongside GF(2^63) — **met** (`bench_single_gf2_64` + `bench_dot_gf2_64`).\n- `PrimitivePolynomialDatabase::standard_u128(m)` delegates to `standard(m)` for m ≤ 63 (widened) and returns Seroussi-verified irreducible polynomials for m = 64..=127. Entries proven irreducible via in-module Rabin test; primitivity verification for m ≥ 64 is **explicitly deferred** because `verify_primitive` is `u64`-bounded, tracked as a follow-up. Callers needing primitive polynomials for m ≥ 64 must verify independently — see `standard_u128_irreducibility_note()` for the exact contract wording.\n- BarrettReducer m ≥ 64 extension is **deferred to 6fb4abad**. Current implementation explicitly rejects degree ≥ 64 via panic + pinned `#[should_panic]` contract test; docs reference the follow-up issue.\n\n## Rationale for scope deferrals\n\nThe original issue text asked for BarrettReducer and PCLMULQDQ to \"work for m=64+\". Investigation during execution showed this requires 256-bit polynomial arithmetic (μ constant up to 128 bits; product degree up to 252 bits), substantially exceeding the current u64/u128 arithmetic surface. Rather than push a partial/broken implementation, the project lead approved explicit deferral of the fast-path to `6fb4abad`, which covers multi-word GF(2^m) as a unified effort. Correctness at m = 64..=127 is preserved via the existing generic schoolbook multiplication path in `mul_raw`, which transparently handles u128 storage.\n\nSimilarly, verified-primitive polynomial contracts at m ≥ 64 are deferred: `verify_primitive` uses u64 internal arithmetic and would require non-trivial widening. Irreducibility is independently verified for every catalog entry, which is sufficient for field-arithmetic use cases (multiplication + inversion). Downstream users relying on `primitive_element()` at m ≥ 64 are explicitly warned in `standard_u128_irreducibility_note()`.",
   "state": "in_progress",
   "priority": "low",
   "assignee": "agent:claude",
@@ -14,15 +14,15 @@
     "cargo-ci"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-17T22:28:18.234009643Z"
-    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-17T21:34:52.364791577Z"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-18T03:57:09.105419929Z"
     },
     "doc-review": {
       "status": "passed",
@@ -37,5 +37,5 @@
     "component:gf2-core"
   ],
   "created_at": "2026-04-05T11:58:00.309773139+00:00",
-  "updated_at": "2026-04-17T22:32:32.951040308+00:00"
+  "updated_at": "2026-04-18T04:05:51.865962842+00:00"
 }
