@@ -116,7 +116,7 @@
       "checker": {
         "type": "exec",
         "command": "./scripts/ai-review.sh",
-        "timeout_seconds": 600,
+        "timeout_seconds": 1800,
         "working_dir": null,
         "env": {
           "REVIEWER_AGENT": "copilot -s --model gpt-5.4 --allow-tool \"shell(cargo test)\" --allow-tool \"shell(cargo clippy)\" --allow-tool \"shell(cargo fmt)\" --allow-tool \"shell(cargo bench)\""
