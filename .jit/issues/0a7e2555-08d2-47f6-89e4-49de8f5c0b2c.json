@@ -2,9 +2,9 @@
   "id": "0a7e2555-08d2-47f6-89e4-49de8f5c0b2c",
   "title": "Research RNS (Residue Number System) representation for large prime fields",
   "description": "Research and prototype Residue Number System (RNS) representation for GF(p) with very large primes or high extension degrees.\n\n## Concept\n\nRepresent a large integer X as a tuple of residues: `X ≡ (r₁, r₂, …, rₙ)` where `rᵢ = X mod mᵢ` and each `mᵢ` is a small double-compatible prime (~50 bits). Addition and multiplication become fully parallelizable (no carry chain) — each SIMD lane handles a specific small modulus.\n\n## Reference implementation: fflas-ffpack `rns-double`\n\nfflas-ffpack's `rns-double` module (`field/rns-double.h`, `field/rns-double.inl`) is a proven production implementation. Key architectural insight: **the CRT basis changes are themselves matrix multiplications**:\n\n- **Integer → RNS**: Split integer into base-2^16 chunks, then `Arns = CRT_in × A_beta^T` via BLAS\n- **RNS → Integer**: `A_beta = Arns^T × CRT_out` via BLAS, then reconstruct from chunks\n\nThis means RNS conversion cost is amortized over batch operations — converting a matrix is a matrix multiply against precomputed CRT constants.\n\n## Key design questions\n\n1. Should RNS elements implement `FiniteField` directly, or be an internal representation behind `Fp<P>`?\n2. What is the crossover point where RNS outperforms direct multi-word Montgomery?\n3. Can we use our own SIMD kernels instead of BLAS for the CRT basis changes?\n\n## Dependencies\n\n- Montgomery multiplication for GF(p) (8ce6f8aa) — needed as the baseline to benchmark against",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "low",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [
     "8ce6f8aa-9252-4ae6-ab5c-e702e961d460"
   ],
@@ -14,28 +14,46 @@
     "cargo-ci"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-02-25T22:47:59.008470710Z"
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-17T21:55:52.959192526Z"
     },
     "cargo-ci": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-04-05T19:51:57.341210400Z"
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-17T21:31:22.957875075Z"
     },
-    "doc-review": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-02-25T22:47:59.008481470Z"
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-17T22:28:16.145300556Z"
     }
   },
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/research/rns_representation.md",
+      "commit": null,
+      "label": "RNS research (recommendation: defer)",
+      "doc_type": "design",
+      "format": "markdown",
+      "assets": [
+        {
+          "original_path": "https://github.com/linbox-team/fflas-ffpack",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        }
+      ]
+    }
+  ],
   "labels": [
     "component:gf2-core",
     "type:task"
   ],
   "created_at": "2026-02-21T23:11:13.942471295+00:00",
-  "updated_at": "2026-04-05T19:53:10.248396796+00:00"
+  "updated_at": "2026-04-17T22:33:33.326600722+00:00"
 }
