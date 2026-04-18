@@ -90,11 +90,13 @@ fn m31_batch_mul_safe(a: &[u32], b: &[u32], out: &mut [u32]) {
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn m31_batch_mul_add_safe(a: &[u32], b: &[u32], acc: &mut [u32]) {
+    // Safety: `detect_x86` only returns these pointers when AVX2 is available.
     unsafe { crate::x86::mersenne::mersenne31_batch_mul_add(a, b, acc) }
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn m31_batch_dot_safe(a: &[u32], b: &[u32]) -> u32 {
+    // Safety: `detect_x86` only returns these pointers when AVX2 is available.
     unsafe { crate::x86::mersenne::mersenne31_batch_dot(a, b) }
 }
 
