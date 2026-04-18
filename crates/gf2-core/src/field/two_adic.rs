@@ -196,6 +196,16 @@ pub trait TwoAdicField: FiniteField {
 /// [`TwoAdicField`] impl is deliberately not provided — Proth is the only
 /// shape the trait currently supports).
 ///
+/// # Arguments
+///
+/// * `P` — const-generic `u64` modulus. Must be an odd prime ≤ 2^63 (the
+///   same bound enforced by [`Fp`]) and should be of Proth shape
+///   (`P = k · 2^n + 1` with odd `k`) for the extracted `TWO_ADICITY` to
+///   be meaningful. When `P` is not Proth, the classifier returns
+///   `PrimeShape::Other` and this helper reports `TWO_ADICITY = 0`; in
+///   that case there is no matching [`TwoAdicField`] impl, so the helper
+///   cannot be composed with the trait-level API for that `P`.
+///
 /// # Examples
 ///
 /// ```
@@ -204,6 +214,26 @@ pub trait TwoAdicField: FiniteField {
 /// // Fp<65537> is the Fermat prime 2^16 + 1 = 1 · 2^16 + 1.
 /// assert_eq!(ProthTwoAdicity::<65537>::TWO_ADICITY, 16);
 /// ```
+///
+/// # Panics
+///
+/// None. The associated [`TWO_ADICITY`](Self::TWO_ADICITY) constant is a
+/// total `const fn` match on [`PrimeShape`] and cannot fail at
+/// monomorphisation time.
+///
+/// # Complexity
+///
+/// O(1) at runtime — every read is a compile-time constant.
+/// [`classify`] itself is `O(log P)` but runs exclusively at
+/// monomorphisation, contributing nothing to runtime cost.
+///
+/// # References
+///
+/// The Proth prime shape `k · 2^n + 1` is the classical form introduced
+/// by François Proth (1878); see e.g. Crandall & Pomerance, *Prime
+/// Numbers: A Computational Perspective*, §4.2.2. The Plonky3 zk-STARK
+/// framework (<https://github.com/Plonky3/Plonky3>) popularised this
+/// shape for fast NTTs over 31-bit fields.
 pub struct ProthTwoAdicity<const P: u64>;
 
 impl<const P: u64> ProthTwoAdicity<P> {
@@ -269,14 +299,61 @@ impl TwoAdicField for Fp<{ KOALABEAR_P }> {
 
 /// BabyBear Proth prime: `15 · 2^27 + 1 = 2_013_265_921`.
 ///
-/// Used in Plonky3 for zk-friendly field arithmetic.
+/// Exact value — a 31-bit Proth prime with two-adicity 27, introduced as
+/// the canonical zk-STARK field by the Plonky3 framework
+/// (<https://github.com/Plonky3/Plonky3>) and subsequently adopted by
+/// RISC Zero (`risc0-zkp`) and the AIR/plonkish zk ecosystem at large.
+/// Composes with [`TwoAdicField`] via the [`Fp<{ BABYBEAR_P }>`] impl in
+/// this module, which fixes the 2^27-th primitive root of unity to the
+/// Plonky3 canonical constant `0x1a42_7a41`.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::field::two_adic::BABYBEAR_P;
+///
+/// assert_eq!(BABYBEAR_P, 2_013_265_921);
+/// assert_eq!(BABYBEAR_P, 15 * (1u64 << 27) + 1);
+/// ```
+///
+/// # Panics
+///
+/// None — this is a compile-time constant.
+///
+/// # Complexity
+///
+/// O(1).
 pub const BABYBEAR_P: u64 = 15 * (1u64 << 27) + 1;
 
 /// KoalaBear Proth prime: `127 · 2^24 + 1 = 2_130_706_433`, equivalently
 /// `2^31 − 2^24 + 1`.
 ///
-/// Used in Plonky3 for zk-friendly field arithmetic with a slightly wider
-/// multiplicative group than BabyBear at the cost of a smaller two-adicity.
+/// Exact value — a 31-bit Proth prime with two-adicity 24, also
+/// introduced by Plonky3 (<https://github.com/Plonky3/Plonky3>) as a
+/// companion to BabyBear: the multiplicative group has slightly larger
+/// cofactor (`127` instead of `15`) at the cost of a smaller
+/// two-adicity. Composes with [`TwoAdicField`] via the
+/// [`Fp<{ KOALABEAR_P }>`] impl in this module, which fixes the 2^24-th
+/// primitive root of unity to the Plonky3 canonical constant
+/// `0x6ac4_9f88`.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::field::two_adic::KOALABEAR_P;
+///
+/// assert_eq!(KOALABEAR_P, 2_130_706_433);
+/// assert_eq!(KOALABEAR_P, 127 * (1u64 << 24) + 1);
+/// assert_eq!(KOALABEAR_P, (1u64 << 31) - (1u64 << 24) + 1);
+/// ```
+///
+/// # Panics
+///
+/// None — this is a compile-time constant.
+///
+/// # Complexity
+///
+/// O(1).
 pub const KOALABEAR_P: u64 = 127 * (1u64 << 24) + 1;
 
 #[cfg(test)]
