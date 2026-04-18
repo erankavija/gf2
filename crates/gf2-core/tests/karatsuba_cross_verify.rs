@@ -41,8 +41,8 @@ use proptest::prelude::*;
 
 mod common;
 use common::{
-    naive_cubic_mul, naive_quadratic_mul, Fq2Fp101NegTwo, Fq2Fp65537Beta3, Fq2Fp7Beta3,
-    Fq2Fp7NegOne, Fq3Fp101Beta2, Fq3Fp31Beta11, Fq3Fp7Beta3,
+    naive_cubic_mul, naive_quadratic_mul, Fq2Fp101NegTwo, Fq2Fp7NegOne, Fq2Large, Fq2Small,
+    Fq3Fp101Beta2, Fq3Fp31Beta11, Fq3Fp7Beta3,
 };
 
 // ---------------------------------------------------------------------------
@@ -66,8 +66,8 @@ fn test_naive_quadratic_reference_hand_check_neg_one() {
 fn test_naive_quadratic_reference_hand_check_beta_three() {
     // (2 + 3u)(1 + 4u) over Fp<7> with β = 3.
     // = 2 + 8u + 3u + 12u² = 2 + 11u + 36 = 38 + 11u = 3 + 4u (mod 7).
-    let a = Fq2Fp7Beta3::new(Fp::new(2), Fp::new(3));
-    let b = Fq2Fp7Beta3::new(Fp::new(1), Fp::new(4));
+    let a = Fq2Small::new(Fp::new(2), Fp::new(3));
+    let b = Fq2Small::new(Fp::new(1), Fp::new(4));
     let c = naive_quadratic_mul(a, b);
     assert_eq!(c.c0().value(), 3);
     assert_eq!(c.c1().value(), 4);
@@ -160,8 +160,8 @@ proptest! {
         b0 in 0u64..7,
         b1 in 0u64..7,
     ) {
-        let a = Fq2Fp7Beta3::new(Fp::new(a0), Fp::new(a1));
-        let b = Fq2Fp7Beta3::new(Fp::new(b0), Fp::new(b1));
+        let a = Fq2Small::new(Fp::new(a0), Fp::new(a1));
+        let b = Fq2Small::new(Fp::new(b0), Fp::new(b1));
         prop_assert_eq!(a * b, naive_quadratic_mul(a, b));
     }
 
@@ -184,8 +184,8 @@ proptest! {
         b0 in 0u64..65537,
         b1 in 0u64..65537,
     ) {
-        let a = Fq2Fp65537Beta3::new(Fp::new(a0), Fp::new(a1));
-        let b = Fq2Fp65537Beta3::new(Fp::new(b0), Fp::new(b1));
+        let a = Fq2Large::new(Fp::new(a0), Fp::new(a1));
+        let b = Fq2Large::new(Fp::new(b0), Fp::new(b1));
         prop_assert_eq!(a * b, naive_quadratic_mul(a, b));
     }
 
@@ -257,7 +257,7 @@ proptest! {
         a0 in 0u64..7,
         a1 in 0u64..7,
     ) {
-        let a = Fq2Fp7Beta3::new(Fp::new(a0), Fp::new(a1));
+        let a = Fq2Small::new(Fp::new(a0), Fp::new(a1));
         prop_assert_eq!(a.square(), naive_quadratic_mul(a, a));
     }
 
@@ -275,7 +275,7 @@ proptest! {
         a0 in 0u64..65537,
         a1 in 0u64..65537,
     ) {
-        let a = Fq2Fp65537Beta3::new(Fp::new(a0), Fp::new(a1));
+        let a = Fq2Large::new(Fp::new(a0), Fp::new(a1));
         prop_assert_eq!(a.square(), naive_quadratic_mul(a, a));
     }
 
