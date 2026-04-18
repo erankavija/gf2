@@ -9,6 +9,10 @@ pub mod generation;
 pub mod mul_raw;
 mod thread_safety_tests;
 pub mod uint_ext;
+pub mod wide;
+pub mod wide_config;
 
 pub use field::*;
 pub use uint_ext::UintExt;
+pub use wide::Gf2mWide;
+pub use wide_config::Gf2mWideConfig;
