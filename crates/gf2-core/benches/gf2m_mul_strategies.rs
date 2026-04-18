@@ -50,7 +50,9 @@ const POLY_8: u64 = 0b1_0001_1101;
 /// GF(2^16): x^16 + x^12 + x^3 + x + 1 (same as Gf2mField::gf65536)
 const POLY_16: u64 = 0b1_0001_0000_0000_1011;
 
-/// GF(2^64): x^64 + x^4 + x^3 + x + 1 (a standard primitive polynomial for GF(2^64))
+/// GF(2^64): x^64 + x^4 + x^3 + x + 1 (a standard irreducible polynomial for GF(2^64);
+/// primitivity is not independently verified — see `standard_u128_irreducibility_note`
+/// in `primitive_polys.rs`).
 /// Note: This polynomial has degree 64 so the leading bit (bit 64) is implicit in the
 /// reduction — we store only the lower 64 bits as the reduction mask.
 const POLY_64_REDUCE: u64 = 0b11011; // x^4 + x^3 + x + 1
