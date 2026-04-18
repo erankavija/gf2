@@ -31,8 +31,6 @@
 //! }
 //! ```
 
-use std::fmt;
-
 use crate::field::ConstField;
 
 /// Configuration specifying the irreducible polynomial for a field extension.
@@ -58,7 +56,14 @@ use crate::field::ConstField;
 /// - β from a lower tower level: exploit structure
 pub trait ExtConfig: 'static {
     /// The base field being extended.
-    type BaseField: ConstField + fmt::Display;
+    ///
+    /// Only [`ConstField`] is required at the algebra layer. The
+    /// `fmt::Display` bound that individual extension types need (e.g. for
+    /// `impl Display for QuadraticExt<C>`) is added as a `where`-clause at
+    /// those presentation impls rather than inherited here, so a base field
+    /// that does not implement `Display` can still participate in tower
+    /// arithmetic.
+    type BaseField: ConstField;
 
     /// The non-residue β defining the extension polynomial.
     ///
