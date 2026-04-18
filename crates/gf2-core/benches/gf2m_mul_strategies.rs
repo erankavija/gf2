@@ -1,8 +1,8 @@
 //! Benchmarks comparing GF(2^m) multiplication strategies.
 //!
 //! Covers naive (schoolbook), direct LUT, split LUT, log/exp table, `Gf2mField`,
-//! and PCLMULQDQ+Barrett reduction multiplication across GF(2^8), GF(2^16), and
-//! GF(2^63).
+//! and PCLMULQDQ+Barrett reduction multiplication across GF(2^8), GF(2^16),
+//! GF(2^63), and — with `Gf2mField_<u128>` — GF(2^64).
 //!
 //! # Key questions
 //!
@@ -15,24 +15,30 @@
 //!    scale. The split-LUT approach for GF(2^16) tests this L1 boundary explicitly.
 //!
 //! 3. **Batch performance**: 1000-element dot products stress the memory subsystem for LUT
-//!    strategies. Batch benchmarks exist for all three field sizes.
+//!    strategies. Batch benchmarks exist for all field sizes.
 //!
 //! 4. **Backend selection guidance**: Results inform runtime dispatch thresholds in
 //!    `gf2-core/src/kernels/`.
 //!
+//! 5. **u128 storage overhead (m=64)**: `Gf2mField_<u128>` unlocks true
+//!    GF(2^64) but doubles the operand width. The GF(2^64) benchmarks compare
+//!    the new u128-backed path with the hand-rolled `naive_mul_64` u64
+//!    baseline to quantify that overhead.
+//!
 //! # Strategies benchmarked
 //!
-//! | Strategy | GF(2^8) | GF(2^16) | GF(2^63) |
-//! |----------|---------|----------|----------|
-//! | Naive shift-and-add | yes | yes | yes |
-//! | Direct LUT (256x256) | yes (64 KB) | no | no |
-//! | Split LUT (2x 256x256) | no | yes (128 KB) | no |
-//! | Log/exp tables | yes (2x256) | yes (2x65536) | no |
-//! | Existing Gf2mField | yes | yes | yes |
-//! | PCLMULQDQ + Barrett | yes | yes | yes |
+//! | Strategy | GF(2^8) | GF(2^16) | GF(2^63) | GF(2^64) |
+//! |----------|---------|----------|----------|----------|
+//! | Naive shift-and-add | yes | yes | yes | yes (u64 specialised) |
+//! | Direct LUT (256x256) | yes (64 KB) | no | no | no |
+//! | Split LUT (2x 256x256) | no | yes (128 KB) | no | no |
+//! | Log/exp tables | yes (2x256) | yes (2x65536) | no | no |
+//! | Existing Gf2mField | yes | yes | yes | yes (via `Gf2mField_<u128>`) |
+//! | PCLMULQDQ + Barrett | yes | yes | yes | m <= 63 (multi-word support deferred to JIT issue `6fb4abad`) |
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
-use gf2_core::gf2m::Gf2mField;
+use gf2_core::gf2m::{Gf2mField, Gf2mField_};
+use gf2_core::primitive_polys::PrimitivePolynomialDatabase;
 
 // ---------------------------------------------------------------------------
 // Primitive polynomials
@@ -575,6 +581,91 @@ fn bench_dot_gf2_63(c: &mut Criterion) {
 }
 
 // ---------------------------------------------------------------------------
+// True GF(2^64) benchmarks via Gf2mField_<u128>
+// ---------------------------------------------------------------------------
+
+/// Pseudo-random 64-bit element suitable for GF(2^64).
+#[inline]
+fn pseudo_random_u64_element(seed: u64) -> u64 {
+    // `| 1` guarantees a non-zero operand; MSB is allowed since m=64.
+    gf2_core::rng::Lcg::new(seed).next_u64() | 1
+}
+
+/// Generate N pseudo-random non-zero elements in GF(2^64), stored as `u128`.
+fn random_elements_gf2_64(n: usize) -> Vec<u128> {
+    (0..n)
+        .map(|i| pseudo_random_u64_element(i as u64) as u128)
+        .collect()
+}
+
+fn bench_single_gf2_64(c: &mut Criterion) {
+    // GF(2^64) is the smallest field where u64 storage is insufficient: the
+    // leading coefficient of the primitive polynomial sits at bit 64 and does
+    // not fit in the element slot. We therefore dispatch through
+    // `Gf2mField_<u128>` and compare against the hand-rolled `naive_mul_64`
+    // baseline (which avoids storing the leading bit at all).
+    let mut group = c.benchmark_group("gf2m_mul_single/gf2_64");
+    group.throughput(Throughput::Elements(1));
+
+    let a: u64 = 0xDEAD_BEEF_CAFE_BABE;
+    let b: u64 = 0x0123_4567_89AB_CDEF;
+
+    // Reference: u64-specialised schoolbook (no u128 overhead, no bit storage for x^64).
+    group.bench_function("naive_64", |bench| {
+        bench.iter(|| naive_mul_64(black_box(a), black_box(b), POLY_64_REDUCE))
+    });
+
+    // Actual u128-backed Gf2mField<u128> at m=64 (the new path unlocked by c488ed29).
+    let poly_64 = PrimitivePolynomialDatabase::standard_u128(64)
+        .expect("GF(2^64) standard polynomial catalogued");
+    let field = Gf2mField_::<u128>::new(64, poly_64);
+    let ea = field.element(a as u128);
+    let eb = field.element(b as u128);
+    group.bench_function("gf2m_field_u128", |bench| {
+        bench.iter(|| black_box(&ea) * black_box(&eb))
+    });
+
+    group.finish();
+}
+
+fn bench_dot_gf2_64(c: &mut Criterion) {
+    let mut group = c.benchmark_group("gf2m_dot_product/gf2_64");
+    group.throughput(Throughput::Elements(DOT_SIZE as u64));
+
+    let xs = random_elements_gf2_64(DOT_SIZE);
+    let ys = random_elements_gf2_64(DOT_SIZE);
+
+    // Reference: u64 specialised schoolbook (strategy 1b from the single-mul bench).
+    group.bench_function("naive_64", |bench| {
+        bench.iter(|| {
+            let mut acc = 0u64;
+            for (&x, &y) in xs.iter().zip(ys.iter()) {
+                acc ^= naive_mul_64(x as u64, y as u64, POLY_64_REDUCE);
+            }
+            black_box(acc)
+        })
+    });
+
+    // Gf2mField_<u128> at m=64 (the new public path).
+    let poly_64 = PrimitivePolynomialDatabase::standard_u128(64)
+        .expect("GF(2^64) standard polynomial catalogued");
+    let field = Gf2mField_::<u128>::new(64, poly_64);
+    let ex: Vec<_> = xs.iter().map(|&x| field.element(x)).collect();
+    let ey: Vec<_> = ys.iter().map(|&y| field.element(y)).collect();
+    group.bench_function("gf2m_field_u128", |bench| {
+        bench.iter(|| {
+            let mut acc = field.element(0);
+            for (a, b) in ex.iter().zip(ey.iter()) {
+                acc += a * b;
+            }
+            black_box(acc.value())
+        })
+    });
+
+    group.finish();
+}
+
+// ---------------------------------------------------------------------------
 // Parameterized sweep: single mul across field sizes (for crossover analysis)
 // ---------------------------------------------------------------------------
 
@@ -751,9 +842,11 @@ criterion_group!(
     bench_single_gf2_8,
     bench_single_gf2_16,
     bench_single_gf2_63,
+    bench_single_gf2_64,
     bench_dot_gf2_8,
     bench_dot_gf2_16,
     bench_dot_gf2_63,
+    bench_dot_gf2_64,
     bench_crossover_sweep,
     bench_pclmulqdq_barrett,
 );
@@ -872,6 +965,39 @@ mod tests {
             naive_mul_64(a, b, POLY_64_REDUCE),
             naive_mul_64(b, a, POLY_64_REDUCE)
         );
+    }
+
+    /// Cross-check that the `naive_mul_64` u64-specialised path and the u128-backed
+    /// `Gf2mField_<u128>` path agree on GF(2^64) — both use the primitive polynomial
+    /// x^64 + x^4 + x^3 + x + 1 (with the leading bit stored implicitly in `naive_mul_64`
+    /// and explicitly in the u128 field). This ensures the GF(2^64) benchmark pair
+    /// measures equivalent work.
+    #[test]
+    fn test_gf2_64_naive_matches_u128_field() {
+        let poly_64_u128 = (1u128 << 64) | (POLY_64_REDUCE as u128);
+        let field = Gf2mField_::<u128>::new(64, poly_64_u128);
+
+        let test_pairs: &[(u64, u64)] = &[
+            (0, 0),
+            (1, 1),
+            (0xDEAD_BEEF_CAFE_BABE, 0x0123_4567_89AB_CDEF),
+            (u64::MAX, u64::MAX),
+            (1u64 << 63, 2),
+            (1u64 << 63, 1u64 << 63),
+            (0xAAAA_AAAA_AAAA_AAAA, 0x5555_5555_5555_5555),
+        ];
+
+        for &(a, b) in test_pairs {
+            let naive = naive_mul_64(a, b, POLY_64_REDUCE);
+            let ea = field.element(a as u128);
+            let eb = field.element(b as u128);
+            let viafield = (&ea * &eb).value() as u64;
+            assert_eq!(
+                naive, viafield,
+                "GF(2^64) mismatch for ({a:#018x}, {b:#018x}): \
+                 naive_mul_64={naive:#018x} vs Gf2mField_<u128>={viafield:#018x}"
+            );
+        }
     }
 
     /// Verify that naive_mul (generic) and Gf2mField produce identical results for GF(2^63).

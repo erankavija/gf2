@@ -20,7 +20,7 @@ use proptest::prelude::*;
 use proptest::test_runner::{Config as ProptestConfig, TestRunner};
 
 use crate::field::{ConstField, FiniteField, FiniteFieldExt};
-use crate::gf2m::{Gf2mElement, Gf2mField};
+use crate::gf2m::{Gf2mElement, Gf2mElement_, Gf2mField, Gf2mField_};
 use crate::gfp::Fp;
 
 /// Number of random test cases per axiom.
@@ -39,6 +39,28 @@ fn gf2m_strategy(field: &Gf2mField) -> BoxedStrategy<Gf2mElement> {
     let field = field.clone();
     let max_val = (1u64 << field.degree()) - 1;
     (0..=max_val).prop_map(move |v| field.element(v)).boxed()
+}
+
+/// Strategy that generates uniformly random `Gf2mElement_<u128>` values
+/// (including zero) for fields with extension degree up to 127.
+///
+/// Draws two independent `u64`s, concatenates them into a `u128`, and masks to
+/// the field degree. This gives full coverage for all catalogued `m` values in
+/// the u128 range even though proptest does not natively produce `u128`s.
+fn gf2m_u128_strategy(field: &Gf2mField_<u128>) -> BoxedStrategy<Gf2mElement_<u128>> {
+    let field_clone = field.clone();
+    let m = field.degree();
+    (any::<u64>(), any::<u64>())
+        .prop_map(move |(hi, lo)| {
+            let v = ((hi as u128) << 64) | (lo as u128);
+            let mask: u128 = if m >= 128 {
+                u128::MAX
+            } else {
+                (1u128 << m) - 1
+            };
+            field_clone.element(v & mask)
+        })
+        .boxed()
 }
 
 // ---------------------------------------------------------------------------
@@ -543,6 +565,49 @@ fn test_gf2_8_field_axioms() {
 fn test_gf2_16_field_axioms() {
     let field = Gf2mField::gf65536();
     test_field_axioms(gf2m_strategy(&field), 2);
+}
+
+// ---------------------------------------------------------------------------
+// Concrete tests for Gf2mElement_<u128> at the full m = 17..=127 range
+// ---------------------------------------------------------------------------
+
+/// Helper: build a `Gf2mField_<u128>` using the catalogued standard polynomial.
+fn gf2m_u128_field_from_standard(m: usize) -> Gf2mField_<u128> {
+    let poly = crate::primitive_polys::PrimitivePolynomialDatabase::standard_u128(m)
+        .unwrap_or_else(|| panic!("no u128 polynomial catalogued for m={}", m));
+    Gf2mField_::<u128>::new(m, poly)
+}
+
+#[test]
+fn test_gf2_64_u128_field_axioms() {
+    let field = gf2m_u128_field_from_standard(64);
+    test_field_axioms(gf2m_u128_strategy(&field), 2);
+}
+
+#[test]
+fn test_gf2_80_u128_field_axioms() {
+    let field = gf2m_u128_field_from_standard(80);
+    test_field_axioms(gf2m_u128_strategy(&field), 2);
+}
+
+#[test]
+fn test_gf2_100_u128_field_axioms() {
+    let field = gf2m_u128_field_from_standard(100);
+    test_field_axioms(gf2m_u128_strategy(&field), 2);
+}
+
+#[test]
+fn test_gf2_127_u128_field_axioms() {
+    let field = gf2m_u128_field_from_standard(127);
+    test_field_axioms(gf2m_u128_strategy(&field), 2);
+}
+
+/// Also exercise `Gf2mField_<u128>` at a small `m` that fits in `u64` to prove
+/// the generic backend routes correctly regardless of storage width.
+#[test]
+fn test_gf2_8_via_u128_field_axioms() {
+    let field = Gf2mField_::<u128>::new(8, 0b100011101);
+    test_field_axioms(gf2m_u128_strategy(&field), 2);
 }
 
 // ---------------------------------------------------------------------------

@@ -8,6 +8,27 @@
 //!
 //! All arithmetic here is over GF(2): addition is XOR, and multiplication is
 //! carry-less (no carries propagate between bit positions).
+//!
+//! # Width limitation (`m <= 63`)
+//!
+//! **This module deliberately caps the supported degree at `m <= 63`.**
+//!
+//! The implementation represents both the Barrett constant
+//! `mu = x^(2m) / P(x)` (up to `m+1` bits) and the dividend `x^(2m)` (up to
+//! `2m + 1` bits) in a single `u128`, which caps `2m + 1 <= 128`, i.e.
+//! `m <= 63`. Extending Barrett to `m = 64..=127` requires true 256-bit
+//! intermediate arithmetic:
+//!
+//! - the product `c(x)` has degree up to `2m - 2` (252 bits at `m = 127`);
+//! - the Barrett constant `mu` has degree up to `m` (up to 128 bits);
+//! - the two carry-less multiplications `c_high * mu` and `q * P` then
+//!   produce 256-bit intermediates.
+//!
+//! That widening is deliberately deferred to the multi-word GF(2^m) story
+//! (JIT issue `6fb4abad`). Until that lands, [`crate::gf2m::Gf2mField_`]
+//! over `u128` storage transparently falls back to the generic schoolbook
+//! primitive for `m >= 64`, so correctness is preserved — only the
+//! PCLMULQDQ + Barrett fast path is unavailable at those degrees.
 
 /// Carry-less multiplication of two GF(2) polynomials.
 ///
@@ -72,6 +93,22 @@ fn clmul128_trunc(a: u128, b: u128) -> u128 {
 /// products by the same modulus (e.g., during field multiplication tables or
 /// repeated arithmetic).
 ///
+/// # Width limitation (`degree <= 63`)
+///
+/// **Warning:** This reducer is restricted to `degree <= 63` and will panic
+/// in [`BarrettReducer::new`] for any larger degree. The restriction exists
+/// because both the Barrett constant `mu = x^(2m) / P(x)` and the dividend
+/// `x^(2m)` are stored in a single `u128`, capping `2m` at 128 bits.
+///
+/// The SIMD dispatch in [`crate::gf2m::Gf2mField_`] mirrors that cap —
+/// Barrett is only wired in when the backing type is `u64`. Extending
+/// Barrett to `m = 64..=127` requires 256-bit intermediate arithmetic
+/// (see the module-level docs) and is deliberately deferred to a later
+/// wider-SIMD story (tracked as JIT issue `6fb4abad`). For u128-backed
+/// fields at `m >= 64`, `Gf2mField_<u128>` transparently falls back to
+/// the generic schoolbook primitive, so correctness is preserved — only
+/// the PCLMULQDQ + Barrett fast path is unavailable at those degrees.
+///
 /// # Examples
 ///
 /// ```
@@ -114,7 +151,10 @@ impl BarrettReducer {
     /// # Panics
     ///
     /// Panics if `degree` is 0 or greater than 63, or if the polynomial does not
-    /// have its leading bit at position `degree`.
+    /// have its leading bit at position `degree`. The upper bound of 63 is a
+    /// deliberate contract, not a bug — see the struct-level and module-level
+    /// docs for the 256-bit-arithmetic reasoning, and JIT issue `6fb4abad`
+    /// for the planned extension to `m = 64..=127`.
     ///
     /// # Examples
     ///
@@ -659,6 +699,61 @@ mod tests {
 
             prop_assert_eq!(ab_c, a_bc);
         }
+    }
+
+    /// Verify BarrettReducer handles the maximum-width boundary (m=63) correctly.
+    ///
+    /// At m=63 the Barrett constant mu has degree 63 (fits in u128) and the
+    /// dividend x^(2m) = x^126 is the largest we can store in a u128. Any
+    /// arithmetic bug at this edge would produce a reducer that disagrees with
+    /// the naive reference.
+    #[test]
+    fn test_reduce_at_m_equals_63_boundary() {
+        // x^63 + x + 1 is a primitive trinomial for GF(2^63).
+        let poly: u128 = (1u128 << 63) | 0b11;
+        let m: u32 = 63;
+        let reducer = BarrettReducer::new(poly, m);
+        assert_eq!(reducer.degree(), 63);
+
+        // Random-ish products with degree up to 2m-2 = 124.
+        let max_deg_mask = (1u128 << 125) - 1;
+        let samples: [u128; 8] = [
+            0,
+            1,
+            1u128 << 62,
+            1u128 << 124,
+            (1u128 << 125) - 1,
+            0xDEAD_BEEF_CAFE_BABE_0123_4567_89AB_CDEFu128 & max_deg_mask,
+            0x5555_5555_5555_5555_5555_5555_5555_5555u128 & max_deg_mask,
+            0xAAAA_AAAA_AAAA_AAAA_AAAA_AAAA_AAAA_AAAAu128 & max_deg_mask,
+        ];
+        for &p in &samples {
+            let barrett = reducer.reduce(p);
+            let naive = naive_reduce(p, poly, m);
+            assert_eq!(
+                barrett, naive,
+                "m=63 reducer mismatch for product {p:#x}: barrett={barrett:#x} naive={naive:#x}"
+            );
+        }
+    }
+
+    /// Pins the current `degree <= 63` boundary of [`BarrettReducer::new`].
+    ///
+    /// This test intentionally asserts the panic message, so any future
+    /// widening (JIT issue `6fb4abad`, multi-word GF(2^m)) forces a
+    /// deliberate update here — it is NOT a latent bug. See the module-
+    /// level docs for the underlying 256-bit arithmetic requirement that
+    /// extending Barrett to `m >= 64` would entail.
+    ///
+    /// Removing this test (rather than relaxing the bound after a proper
+    /// 256-bit Barrett implementation lands) would silently change the
+    /// dispatch contract and is explicitly discouraged.
+    #[test]
+    #[should_panic(expected = "degree must be in 1..=63")]
+    fn test_new_rejects_degree_64_today() {
+        // GF(2^64) standard polynomial — degree 64 not supported by Barrett yet.
+        let poly: u128 = (1u128 << 64) | 0b11011;
+        let _ = BarrettReducer::new(poly, 64);
     }
 
     #[test]
