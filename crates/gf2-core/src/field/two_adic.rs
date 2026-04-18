@@ -81,7 +81,7 @@ use crate::gfp::specialized::{classify, PrimeShape};
 use crate::gfp::Fp;
 
 /// Marker trait for finite fields whose multiplicative group contains a large
-/// power-of-two subgroup.
+/// power-of-two subgroup, enabling radix-2 NTT / FFT butterflies.
 ///
 /// Implementors expose:
 ///
@@ -94,6 +94,32 @@ use crate::gfp::Fp;
 /// **not** imply any specific fast-multiplication algorithm and does not
 /// prescribe a transform length.
 ///
+/// # Implementors
+///
+/// This trait is currently implemented for the Proth primes used in the
+/// workspace's NTT code paths:
+///
+/// - [`Fp<65537>`] — the Fermat prime `2^16 + 1`, with `TWO_ADICITY = 16`.
+/// - [`Fp<BABYBEAR_P>`] — Plonky3's 31-bit BabyBear prime `15·2^27 + 1`,
+///   with `TWO_ADICITY = 27`.
+/// - [`Fp<KOALABEAR_P>`] — Plonky3's 31-bit KoalaBear prime `127·2^24 + 1`,
+///   with `TWO_ADICITY = 24`.
+///
+/// Additional Proth primes can be added by providing a concrete impl that
+/// forwards `TWO_ADICITY` through [`ProthTwoAdicity`] and supplies a
+/// verified generator value.
+///
+/// # Not implemented for `Gf2mElement`
+///
+/// Binary extension fields `GF(2^m)` have multiplicative group of *odd*
+/// order `2^m − 1`, so the only power of two dividing `|F^*|` is
+/// `2^0 = 1`. A `TwoAdicField` impl with `TWO_ADICITY = 0` would be
+/// useless for NTT purposes — the only `2^0`-th root of unity is `1` —
+/// so we deliberately do not implement [`TwoAdicField`] for
+/// [`Gf2mElement`](crate::gf2m::Gf2mElement). Callers needing an FFT
+/// over `GF(2^m)` should use the additive (Gao–Mateer / Lin–Chung–Han)
+/// FFT instead, which is outside the scope of this trait.
+///
 /// # Examples
 ///
 /// ```
@@ -105,11 +131,39 @@ use crate::gfp::Fp;
 /// assert!(w.pow(4).is_one());
 /// assert!(!w.pow(2).is_one());
 /// ```
+///
+/// # Complexity
+///
+/// The trait itself adds no runtime cost. See
+/// [`two_adic_generator`](Self::two_adic_generator) and
+/// [`two_adic_root_of_unity`](Self::two_adic_root_of_unity) for the
+/// per-method complexity of the concrete accessors.
 pub trait TwoAdicField: FiniteField {
     /// The largest `k` such that `2^k` divides `|F^*|`.
     ///
     /// For a prime field `GF(P)` this is the exponent `k` in the
     /// factorisation `P − 1 = m · 2^k` with `m` odd.
+    ///
+    /// # Arguments
+    ///
+    /// Not applicable — this is an associated constant with no operands.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::TwoAdicField;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// assert_eq!(<Fp<65537> as TwoAdicField>::TWO_ADICITY, 16);
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// Not applicable — evaluated at compile time, no runtime execution.
+    ///
+    /// # Complexity
+    ///
+    /// Not applicable — a compile-time constant, zero runtime cost.
     const TWO_ADICITY: u32;
 
     /// A fixed generator of the `2^TWO_ADICITY`-th roots-of-unity subgroup.
@@ -117,6 +171,11 @@ pub trait TwoAdicField: FiniteField {
     /// All smaller `2^j`-th primitive roots are obtained by squaring
     /// this generator `TWO_ADICITY − j` times — see
     /// [`two_adic_root_of_unity`](Self::two_adic_root_of_unity).
+    ///
+    /// # Arguments
+    ///
+    /// No runtime arguments — the type parameter `Self` is implicit and
+    /// determines which field's generator is returned.
     ///
     /// # Examples
     ///
@@ -131,9 +190,16 @@ pub trait TwoAdicField: FiniteField {
     /// assert!(!g.pow(1u64 << 15).is_one());
     /// ```
     ///
+    /// # Panics
+    ///
+    /// Does not panic — all supplied impls return a hard-coded constant
+    /// value. Implementors that cannot produce a valid generator should
+    /// decline to implement the trait rather than panic.
+    ///
     /// # Complexity
     ///
-    /// O(1) — the generator is a compile-time constant.
+    /// O(1) — the generator is returned directly as a compile-time
+    /// constant. No field arithmetic is performed.
     fn two_adic_generator() -> Self;
 
     /// A primitive `2^k`-th root of unity, for any `k` in `[0, TWO_ADICITY]`.
@@ -239,6 +305,31 @@ pub struct ProthTwoAdicity<const P: u64>;
 impl<const P: u64> ProthTwoAdicity<P> {
     /// Two-adicity of `P` — the largest `n` with `2^n | (P − 1)`, assuming
     /// `P` has Proth shape. Zero otherwise.
+    ///
+    /// # Arguments
+    ///
+    /// Not applicable — the modulus `P` is supplied as a const-generic
+    /// parameter on the enclosing [`ProthTwoAdicity`] struct.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::two_adic::{BABYBEAR_P, KOALABEAR_P, ProthTwoAdicity};
+    ///
+    /// assert_eq!(ProthTwoAdicity::<65537>::TWO_ADICITY, 16);
+    /// assert_eq!(ProthTwoAdicity::<BABYBEAR_P>::TWO_ADICITY, 27);
+    /// assert_eq!(ProthTwoAdicity::<KOALABEAR_P>::TWO_ADICITY, 24);
+    /// // Non-Proth primes report 0.
+    /// assert_eq!(ProthTwoAdicity::<7>::TWO_ADICITY, 0);
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// Not applicable — a total `const fn` match on [`PrimeShape`].
+    ///
+    /// # Complexity
+    ///
+    /// Not applicable — a compile-time constant, zero runtime cost.
     pub const TWO_ADICITY: u32 = match classify(P) {
         PrimeShape::Proth { n, .. } => n,
         _ => 0,
@@ -364,19 +455,19 @@ mod tests {
     // --- Two-adicity compile-time constants ---
 
     #[test]
-    fn two_adicity_constants_match_classify() {
+    fn test_two_adicity_constants_match_classify() {
         assert_eq!(<Fp<65537> as TwoAdicField>::TWO_ADICITY, 16);
         assert_eq!(<Fp<{ BABYBEAR_P }> as TwoAdicField>::TWO_ADICITY, 27);
         assert_eq!(<Fp<{ KOALABEAR_P }> as TwoAdicField>::TWO_ADICITY, 24);
     }
 
     #[test]
-    fn babybear_p_value() {
+    fn test_babybear_p_value_matches_plonky3_constant() {
         assert_eq!(BABYBEAR_P, 2_013_265_921);
     }
 
     #[test]
-    fn koalabear_p_value() {
+    fn test_koalabear_p_value_matches_plonky3_constant() {
         assert_eq!(KOALABEAR_P, 2_130_706_433);
         assert_eq!(KOALABEAR_P, (1u64 << 31) - (1u64 << 24) + 1);
     }
@@ -401,17 +492,17 @@ mod tests {
     }
 
     #[test]
-    fn fp_65537_generator_is_primitive() {
+    fn test_generator_is_primitive_fp_65537() {
         assert_generator_primitive::<Fp<65537>>();
     }
 
     #[test]
-    fn babybear_generator_is_primitive() {
+    fn test_generator_is_primitive_babybear() {
         assert_generator_primitive::<Fp<{ BABYBEAR_P }>>();
     }
 
     #[test]
-    fn koalabear_generator_is_primitive() {
+    fn test_generator_is_primitive_koalabear() {
         assert_generator_primitive::<Fp<{ KOALABEAR_P }>>();
     }
 
@@ -452,17 +543,17 @@ mod tests {
     }
 
     #[test]
-    fn fp_65537_small_roots() {
+    fn test_small_roots_fp_65537() {
         assert_small_roots::<Fp<65537>>();
     }
 
     #[test]
-    fn babybear_small_roots() {
+    fn test_small_roots_babybear() {
         assert_small_roots::<Fp<{ BABYBEAR_P }>>();
     }
 
     #[test]
-    fn koalabear_small_roots() {
+    fn test_small_roots_koalabear() {
         assert_small_roots::<Fp<{ KOALABEAR_P }>>();
     }
 
@@ -470,19 +561,19 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "exceeds field two-adicity")]
-    fn fp_65537_panics_when_k_exceeds_two_adicity() {
+    fn test_root_of_unity_panics_when_k_exceeds_two_adicity_fp_65537() {
         let _ = <Fp<65537> as TwoAdicField>::two_adic_root_of_unity(17);
     }
 
     #[test]
     #[should_panic(expected = "exceeds field two-adicity")]
-    fn babybear_panics_when_k_exceeds_two_adicity() {
+    fn test_root_of_unity_panics_when_k_exceeds_two_adicity_babybear() {
         let _ = <Fp<{ BABYBEAR_P }> as TwoAdicField>::two_adic_root_of_unity(28);
     }
 
     #[test]
     #[should_panic(expected = "exceeds field two-adicity")]
-    fn koalabear_panics_when_k_exceeds_two_adicity() {
+    fn test_root_of_unity_panics_when_k_exceeds_two_adicity_koalabear() {
         let _ = <Fp<{ KOALABEAR_P }> as TwoAdicField>::two_adic_root_of_unity(25);
     }
 
@@ -490,12 +581,12 @@ mod tests {
     //     changes to the hard-coded constants). ---
 
     #[test]
-    fn fp_65537_generator_value_is_3() {
+    fn test_generator_value_is_3_fp_65537() {
         assert_eq!(<Fp<65537> as TwoAdicField>::two_adic_generator().value(), 3,);
     }
 
     #[test]
-    fn babybear_generator_value_matches_plonky3() {
+    fn test_generator_value_matches_plonky3_babybear() {
         assert_eq!(
             <Fp<{ BABYBEAR_P }> as TwoAdicField>::two_adic_generator().value(),
             0x1a42_7a41,
@@ -503,7 +594,7 @@ mod tests {
     }
 
     #[test]
-    fn koalabear_generator_value_matches_plonky3() {
+    fn test_generator_value_matches_plonky3_koalabear() {
         assert_eq!(
             <Fp<{ KOALABEAR_P }> as TwoAdicField>::two_adic_generator().value(),
             0x6ac4_9f88,
@@ -514,7 +605,7 @@ mod tests {
     //     multiplicative generator of F^* by the cofactor m = (P−1)/2^k. ---
 
     #[test]
-    fn fp_65537_generator_matches_cofactor_exponentiation() {
+    fn test_generator_matches_cofactor_exponentiation_fp_65537() {
         // 3 is a primitive root mod 65537 (Hardy & Wright §7.3).
         // Cofactor m = (P-1)/2^16 = 1, so the two-adic generator is 3^1 = 3.
         let g_mult = Fp::<65537>::new(3);
@@ -527,7 +618,7 @@ mod tests {
     }
 
     #[test]
-    fn babybear_generator_matches_cofactor_exponentiation() {
+    fn test_generator_matches_cofactor_exponentiation_babybear() {
         // Plonky3 uses g_mult = 31 as a multiplicative generator for BabyBear.
         // Cofactor m = (P-1)/2^27 = 15.
         let g_mult = Fp::<{ BABYBEAR_P }>::new(31);
@@ -540,7 +631,7 @@ mod tests {
     }
 
     #[test]
-    fn koalabear_generator_matches_cofactor_exponentiation() {
+    fn test_generator_matches_cofactor_exponentiation_koalabear() {
         // Plonky3 uses g_mult = 3 as a multiplicative generator for KoalaBear.
         // Cofactor m = (P-1)/2^24 = 127.
         let g_mult = Fp::<{ KOALABEAR_P }>::new(3);

@@ -16,6 +16,7 @@
 //!   acceptance gates.
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use gf2_core::field::two_adic::BABYBEAR_P;
 use gf2_core::field::{ConstField, FiniteField};
 use gf2_core::gfp::specialized::{
     batch_dot_mersenne31, batch_mul_mersenne31, goldilocks_reduce_fast, mersenne_reduce,
@@ -29,8 +30,12 @@ use gf2_core::gfp::Fp;
 
 const M31: u64 = (1u64 << 31) - 1;
 const M61: u64 = (1u64 << 61) - 1;
-/// BabyBear Proth prime: 15 * 2^27 + 1 = 2013265921.
-const PROTH: u64 = 15 * (1u64 << 27) + 1;
+/// BabyBear Proth prime: 15 * 2^27 + 1 = 2_013_265_921.
+///
+/// Rebinds the SSOT constant `BABYBEAR_P` (`crates/gf2-core/src/field/two_adic.rs`)
+/// under the bench-local name `PROTH` to preserve the historical call-site
+/// names throughout this benchmark file without duplicating the literal.
+const PROTH: u64 = BABYBEAR_P;
 
 fn bench_fp_mersenne31_mul(c: &mut Criterion) {
     let a = Fp::<M31>::new(123_456_789);

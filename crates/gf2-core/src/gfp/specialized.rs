@@ -1108,18 +1108,17 @@ mod tests {
 
     #[test]
     fn classify_detects_proth() {
+        // SSOT: the prime *values* live in `field::two_adic`; here we only
+        // assert that `classify` decomposes them into the expected
+        // `PrimeShape::Proth { k, n }` form.
+        use crate::field::two_adic::{BABYBEAR_P, KOALABEAR_P};
+
         // BabyBear: 15 * 2^27 + 1 (prime, used in Plonky3)
-        assert_eq!(
-            classify(15 * (1u64 << 27) + 1),
-            PrimeShape::Proth { k: 15, n: 27 }
-        );
+        assert_eq!(classify(BABYBEAR_P), PrimeShape::Proth { k: 15, n: 27 });
         // 65537 = 1 * 2^16 + 1 (Fermat prime, also Proth with k=1)
         assert_eq!(classify(65537), PrimeShape::Proth { k: 1, n: 16 });
         // KoalaBear: p - 1 = 2^31 - 2^24, so k = 2^7 - 1 = 127, n = 24
-        assert_eq!(
-            classify((1u64 << 31) - (1u64 << 24) + 1),
-            PrimeShape::Proth { k: 127, n: 24 }
-        );
+        assert_eq!(classify(KOALABEAR_P), PrimeShape::Proth { k: 127, n: 24 });
     }
 
     #[test]
