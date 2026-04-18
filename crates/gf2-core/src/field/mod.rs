@@ -18,8 +18,8 @@ pub mod batch_ops;
 mod traits;
 pub mod vec;
 
-#[cfg(test)]
-pub(crate) mod axiom_tests;
+#[cfg(any(test, feature = "test-support"))]
+pub mod axiom_tests;
 
 pub use batch_ops::{
     batch_inverse, batch_inverse_in_place, batch_inverse_skip_zeros,

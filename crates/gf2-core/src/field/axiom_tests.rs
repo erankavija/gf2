@@ -572,6 +572,7 @@ fn test_gf2_16_field_axioms() {
 // ---------------------------------------------------------------------------
 
 /// Helper: build a `Gf2mField_<u128>` using the catalogued standard polynomial.
+#[cfg(test)]
 fn gf2m_u128_field_from_standard(m: usize) -> Gf2mField_<u128> {
     let poly = crate::primitive_polys::PrimitivePolynomialDatabase::standard_u128(m)
         .unwrap_or_else(|| panic!("no u128 polynomial catalogued for m={}", m));
@@ -615,7 +616,10 @@ fn test_gf2_8_via_u128_field_axioms() {
 // ---------------------------------------------------------------------------
 
 /// Strategy that generates uniformly random `Fp<P>` values (including zero).
-fn fp_strategy<const P: u64>() -> BoxedStrategy<Fp<P>> {
+///
+/// Exposed for integration tests that need to build strategies for
+/// tower-extension types layered over [`Fp`].
+pub fn fp_strategy<const P: u64>() -> BoxedStrategy<Fp<P>> {
     (0..P).prop_map(Fp::<P>::new).boxed()
 }
 
@@ -681,6 +685,17 @@ use crate::gfp::specialized::{GoldilocksFp, GOLDILOCKS_PRIME};
 
 fn goldilocks_strategy() -> BoxedStrategy<GoldilocksFp> {
     (0..GOLDILOCKS_PRIME).prop_map(GoldilocksFp::new).boxed()
+}
+
+// Silence "unused" warnings for the strategies that are only referenced by
+// in-crate `#[test]` functions when the module is compiled under
+// `feature = "test-support"` without `cfg(test)`.
+#[cfg(all(feature = "test-support", not(test)))]
+#[allow(dead_code)]
+fn _keep_private_strategies_alive() {
+    let _ = gf2m_strategy;
+    let _ = gf2m_u128_strategy;
+    let _ = goldilocks_strategy;
 }
 
 #[test]
