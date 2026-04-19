@@ -19,9 +19,17 @@
 //! # Polynomials
 //!
 //! - [`poly`] — [`FieldPoly<F>`](poly::FieldPoly), a generic univariate
-//!   polynomial type with schoolbook arithmetic. Higher-level operations
-//!   (division, Karatsuba, NTT, batch evaluation) land in follow-up
-//!   tasks of the `bdf95060` story.
+//!   polynomial type. It is the single source of truth in `gf2-core`:
+//!   [`Gf2mPoly_<V>`](crate::gf2m::Gf2mPoly_) is now a thin `pub type`
+//!   alias for `FieldPoly<Gf2mElement_<V>>`. The module covers the
+//!   full basic algebraic surface — addition, subtraction, negation,
+//!   scalar multiplication, polynomial multiplication (schoolbook +
+//!   Karatsuba dispatch), Euclidean division and GCD, Horner
+//!   evaluation, per-point batch evaluation, construction from roots,
+//!   and products of polynomial slices. Advanced upgrades (subproduct
+//!   tree batch evaluation, Lagrange interpolation, balanced product
+//!   tree + batch GCD, NTT) land in sibling tasks that build on this
+//!   surface.
 
 pub mod batch_ops;
 pub mod poly;
