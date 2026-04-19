@@ -10,7 +10,7 @@ Binary extension fields GF(2^m) are fundamental for algebraic error-correcting c
 
 - Field element arithmetic (add, multiply, divide, inversion, exponentiation)
 - Table-based multiplication for m ≤ 16 (10× faster than schoolbook)
-- Karatsuba and SIMD-accelerated multiplication for larger fields
+- SIMD-accelerated (PCLMULQDQ) and schoolbook multiplication for larger fields
 - Polynomial operations (add, multiply, divide, GCD, evaluation)
 - Thread-safe field sharing (`Arc`-based)
 - Implements the generic `FiniteField` trait (see `field::FiniteField`)
