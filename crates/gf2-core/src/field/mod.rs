@@ -25,11 +25,11 @@
 //!   full basic algebraic surface — addition, subtraction, negation,
 //!   scalar multiplication, polynomial multiplication (schoolbook +
 //!   Karatsuba dispatch), Euclidean division and GCD, Horner
-//!   evaluation, per-point batch evaluation, construction from roots,
-//!   and products of polynomial slices. Advanced upgrades (subproduct
-//!   tree batch evaluation, Lagrange interpolation, balanced product
-//!   tree + batch GCD, NTT) land in sibling tasks that build on this
-//!   surface.
+//!   evaluation, naive per-point batch evaluation, subproduct-tree
+//!   batch evaluation, construction from roots, and products of
+//!   polynomial slices. Further algorithmic upgrades (Lagrange
+//!   interpolation, balanced product tree + batch GCD, NTT) land in
+//!   sibling tasks that build on this surface.
 
 pub mod batch_ops;
 pub mod poly;
