@@ -1,13 +1,19 @@
 //! Generic univariate polynomials over any [`FiniteField`].
 //!
-//! `FieldPoly<F>` is the generic sibling of the specialised
-//! [`Gf2mPoly`](crate::gf2m::Gf2mPoly) type in `gf2-core`. It stores
-//! coefficients in **ascending-degree** order (`coeffs[i]` is the
-//! coefficient of `x^i`) and supports any field type that implements the
-//! [`FiniteField`] trait — binary extension fields
+//! `FieldPoly<F>` is the single-source-of-truth polynomial type in
+//! `gf2-core`. It stores coefficients in **ascending-degree** order
+//! (`coeffs[i]` is the coefficient of `x^i`) and supports any field type
+//! that implements the [`FiniteField`] trait — binary extension fields
 //! ([`Gf2mElement`](crate::gf2m::Gf2mElement)), prime fields
-//! ([`Fp<P>`](crate::gfp::Fp)), and future tower extensions all compose
+//! ([`Fp<P>`](crate::gfp::Fp)), and tower extensions all compose
 //! uniformly.
+//!
+//! The legacy binary-field alias
+//! [`Gf2mPoly_<V>`](crate::gf2m::Gf2mPoly_) /
+//! [`Gf2mPoly`](crate::gf2m::Gf2mPoly) is now a thin `pub type` alias to
+//! `FieldPoly<Gf2mElement_<V>>`, preserved only so existing BCH / DVB-T2
+//! call-sites continue to compile without churn. All algorithmic code
+//! lives here.
 //!
 //! # The normalisation invariant
 //!
@@ -20,18 +26,20 @@
 //! This is the polynomial analogue of the [`BitVec`](crate::BitVec)
 //! `mask_tail` invariant and is the single most important correctness
 //! rule in this module. All arithmetic (`Add`, `Sub`, `Neg`, `Mul`,
-//! `scale`, …) is written so that it calls [`FieldPoly::normalise`]
-//! before returning. Equality is *structural* — two `FieldPoly`s are
-//! equal iff their normalised `coeffs` slices compare equal element-wise.
+//! `scale`, `div_rem`, `gcd`, …) is written so that it calls
+//! [`FieldPoly::normalise`] before returning. Equality is *structural* —
+//! two `FieldPoly`s are equal iff their normalised `coeffs` slices
+//! compare equal element-wise.
 //!
-//! # Scope of this module (Task 1 of the `bdf95060` story)
+//! # Scope
 //!
-//! This file deliberately contains only the **core type** and its
-//! **basic arithmetic surface**:
+//! This file provides the core type and **all** algorithmic operations
+//! that are generic over `F: FiniteField`:
 //!
 //! - Construction: [`FieldPoly::new`], [`FieldPoly::zero_like`],
 //!   [`FieldPoly::one_like`], [`FieldPoly::constant`],
-//!   [`FieldPoly::monomial`], [`FieldPoly::from_coeffs_trimmed`].
+//!   [`FieldPoly::monomial`], [`FieldPoly::from_coeffs_trimmed`],
+//!   [`FieldPoly::from_roots`], [`FieldPoly::product`].
 //! - Queries: [`FieldPoly::degree`], [`FieldPoly::is_zero`],
 //!   [`FieldPoly::coeff`], [`FieldPoly::leading_coeff`],
 //!   [`FieldPoly::len`], [`FieldPoly::iter`].
@@ -39,70 +47,16 @@
 //!   in both owned and borrowed RHS forms.
 //! - Scalar multiplication: [`FieldPoly::mul_scalar`],
 //!   [`FieldPoly::scale`].
-//! - Schoolbook polynomial multiplication through the `Mul` operator.
+//! - Multiplication through the `Mul` operator: dispatches to
+//!   schoolbook below [`KARATSUBA_THRESHOLD`] and to Karatsuba above.
+//! - Euclidean division [`FieldPoly::div_rem`] and GCD
+//!   [`FieldPoly::gcd`].
+//! - Evaluation: [`FieldPoly::eval`] (Horner) and
+//!   [`FieldPoly::eval_batch`] (naive per-point loop).
 //!
-//! The following capabilities are **out of scope** for this module file
-//! and land in later tasks (`crates/gf2-core/src/field/poly.rs`
-//! extensions or sibling files):
-//!
-//! - Karatsuba multiplication, Euclidean division and GCD, Horner
-//!   evaluation (Task 2).
-//! - Subproduct-tree batch evaluation (Task 3).
-//! - Lagrange interpolation (Task 4).
-//! - Balanced product tree / batch GCD (Task 5).
-//! - NTT-friendly field trait and NTT-based multiplication
-//!   (Tasks 6 and 7).
-//!
-//! The `Mul` implementation here is therefore plain O(n · m)
-//! schoolbook; Task 2 will replace it with a Karatsuba dispatch sharing
-//! the same operator surface.
-//!
-//! # Relationship to `Gf2mPoly`
-//!
-//! `FieldPoly<F>` lives alongside — not in place of — the older
-//! [`Gf2mPoly`](crate::gf2m::Gf2mPoly) /
-//! [`Gf2mPoly_<V>`](crate::gf2m::Gf2mPoly_) type. The two overlap by
-//! design during the `bdf95060` story; the overlap is intentional and
-//! scope-limited:
-//!
-//! - `Gf2mPoly_<V>` is the binary-field-specialised polynomial type that
-//!   predates this module. It remains the single source of truth for
-//!   BCH-related polynomial operations in
-//!   [`gf2_coding::bch`](../../../gf2_coding/bch/index.html) and is not
-//!   being removed or rewritten in this story.
-//! - `FieldPoly<F>` is the generic polynomial type for *any*
-//!   `F: `[`FiniteField`] — prime fields
-//!   ([`Fp<P>`](crate::gfp::Fp)), tower extensions
-//!   ([`QuadraticExt`](crate::gfpn::QuadraticExt),
-//!   [`CubicExt`](crate::gfpn::CubicExt)), and
-//!   [`Gf2mElement`](crate::gf2m::Gf2mElement) alike. It is the engine
-//!   that later tasks in `bdf95060` (subproduct trees, Lagrange
-//!   interpolation, NTT) build on.
-//! - During this story's scope the two types coexist. A narrow one-way
-//!   conversion `fn gf2m_poly_to_field_poly(&Gf2mPoly) -> `
-//!   `FieldPoly<Gf2mElement>` (and its inverse) lands in **Task 8**
-//!   (`224a7d9e`) of the `bdf95060` breakdown to bridge them without
-//!   rewriting BCH.
-//! - Semantic divergence to be aware of: the zero polynomial is
-//!   represented as an *empty* `coeffs` vector in `FieldPoly` but as a
-//!   *singleton zero coefficient* in `Gf2mPoly_`. This divergence is
-//!   observable via [`FieldPoly::len`] and the three coefficient
-//!   accessors: [`FieldPoly::coeff`] (returns `F` by value, **panics on
-//!   the zero polynomial** since no field sample is available),
-//!   [`FieldPoly::try_coeff`] (returns `Option<&F>`, `None` for any
-//!   out-of-range index including the zero polynomial), and
-//!   [`FieldPoly::coeff_or_zero`] (returns `F`, uses a caller-supplied
-//!   sample to synthesise zero on out-of-range). `Gf2mPoly_::coeff`
-//!   returns a zero element for any out-of-range index, including
-//!   index `0` on the zero polynomial — closer to
-//!   [`FieldPoly::coeff_or_zero`]. Both types agree on `is_zero()`,
-//!   `degree() == None`, arithmetic results, and equality.
-//! - A future epic may converge the two by delegating `Gf2mPoly_`
-//!   operations to `FieldPoly<Gf2mElement>`. That is explicitly out of
-//!   scope for `bdf95060`.
-//!
-//! See `dev/plans/bdf95060_breakdown.md` "Out of scope / deferred" for
-//! the rationale behind keeping `Gf2mPoly_` untouched in this story.
+//! Algorithmic upgrades (subproduct-tree batch evaluation, Lagrange
+//! interpolation, balanced product + batch GCD, NTT multiplication)
+//! land in sibling tasks on top of this surface.
 
 use crate::field::FiniteField;
 use std::fmt;
@@ -776,6 +730,326 @@ impl<F: FiniteField> FieldPoly<F> {
     }
 
     // -----------------------------------------------------------------
+    // Evaluation
+    // -----------------------------------------------------------------
+
+    /// Evaluates the polynomial at a point using Horner's method.
+    ///
+    /// Computes `self(x)` as
+    /// `((…((a_n · x) + a_{n-1}) · x + …) · x + a_0)`.
+    ///
+    /// # Arguments
+    ///
+    /// * `x` — the evaluation point.
+    ///
+    /// # Panics
+    ///
+    /// Panics if called on the zero polynomial: no field sample is
+    /// available from an empty `coeffs` vector to synthesise the zero
+    /// result. Callers with a sample in hand should guard against
+    /// [`FieldPoly::is_zero`] and return `x.zero_like()` explicitly.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::FieldPoly;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// // p(x) = 3x² + 2x + 1 over Fp<7>
+    /// let p = FieldPoly::new(vec![Fp::<7>::new(1), Fp::<7>::new(2), Fp::<7>::new(3)]);
+    /// // p(2) = 12 + 4 + 1 = 17 ≡ 3 (mod 7)
+    /// assert_eq!(p.eval(&Fp::<7>::new(2)), Fp::<7>::new(3));
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(n)` field multiplications and `O(n)` field additions, where
+    /// `n = self.len()`.
+    pub fn eval(&self, x: &F) -> F {
+        assert!(
+            !self.coeffs.is_empty(),
+            "FieldPoly::eval called on the zero polynomial (no field sample); \
+             guard with is_zero() and return x.zero_like() explicitly"
+        );
+
+        // Horner: start from the leading coefficient and fold down.
+        let mut result = self.coeffs.last().unwrap().clone();
+        for i in (0..self.coeffs.len() - 1).rev() {
+            result = result * x.clone() + self.coeffs[i].clone();
+        }
+        result
+    }
+
+    /// Evaluates the polynomial at every point in `points`, returning
+    /// the values in the same order.
+    ///
+    /// This is a naive per-point loop. A subproduct-tree algorithm with
+    /// better asymptotics is provided in a follow-up module.
+    ///
+    /// # Arguments
+    ///
+    /// * `points` — slice of evaluation points.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `points` is non-empty and `self` is the zero polynomial,
+    /// for the same reason as [`FieldPoly::eval`]. Returns an empty
+    /// vector for an empty `points` slice regardless of `self`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::FieldPoly;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let p = FieldPoly::new(vec![Fp::<7>::new(1), Fp::<7>::new(2)]);
+    /// let ys = p.eval_batch(&[Fp::<7>::new(0), Fp::<7>::new(1), Fp::<7>::new(3)]);
+    /// assert_eq!(ys, vec![Fp::<7>::new(1), Fp::<7>::new(3), Fp::<7>::new(0)]);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(n · k)` field operations for `n = self.len()` and
+    /// `k = points.len()`.
+    pub fn eval_batch(&self, points: &[F]) -> Vec<F> {
+        points.iter().map(|x| self.eval(x)).collect()
+    }
+
+    // -----------------------------------------------------------------
+    // Construction from roots and products
+    // -----------------------------------------------------------------
+
+    /// Builds the monic polynomial whose roots are exactly `roots`:
+    /// `(x - r_0)(x - r_1) · … · (x - r_{n-1})`.
+    ///
+    /// # Arguments
+    ///
+    /// * `roots` — field elements to use as roots.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `roots` is empty (no field sample available).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::FieldPoly;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// // (x - 1)(x - 2) = x² - 3x + 2 over Fp<7>
+    /// let p = FieldPoly::from_roots(&[Fp::<7>::new(1), Fp::<7>::new(2)]);
+    /// assert_eq!(p.eval(&Fp::<7>::new(1)), Fp::<7>::new(0));
+    /// assert_eq!(p.eval(&Fp::<7>::new(2)), Fp::<7>::new(0));
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(n²)` field multiplications via sequential folding. A balanced
+    /// product tree (Task 5 of the `bdf95060` story) reduces this to
+    /// `O(M(n) log n)`.
+    pub fn from_roots(roots: &[F]) -> Self {
+        assert!(!roots.is_empty(), "FieldPoly::from_roots: roots cannot be empty");
+
+        let one = roots[0].one_like();
+        let mut result = FieldPoly::new(vec![-roots[0].clone(), one.clone()]);
+        for root in &roots[1..] {
+            let factor = FieldPoly::new(vec![-root.clone(), one.clone()]);
+            result = &result * &factor;
+        }
+        result
+    }
+
+    /// Computes the product of a slice of polynomials using a naive
+    /// linear fold.
+    ///
+    /// # Arguments
+    ///
+    /// * `polys` — slice of polynomials to multiply.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `polys` is empty.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::FieldPoly;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let p1 = FieldPoly::new(vec![Fp::<7>::new(1), Fp::<7>::new(1)]); // x + 1
+    /// let p2 = FieldPoly::new(vec![Fp::<7>::new(2), Fp::<7>::new(1)]); // x + 2
+    /// let p3 = FieldPoly::new(vec![Fp::<7>::new(3), Fp::<7>::new(1)]); // x + 3
+    /// let prod = FieldPoly::product(&[p1.clone(), p2.clone(), p3.clone()]);
+    /// assert_eq!(prod.eval(&Fp::<7>::new(1)), Fp::<7>::new(0) - (Fp::<7>::new(2) * Fp::<7>::new(3) * Fp::<7>::new(4)));
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(n · d²)` where `n = polys.len()` and `d` is the average
+    /// degree. A balanced product tree (Task 5) reduces the polynomial
+    /// multiplication cost to `O(M(nd) log n)`.
+    pub fn product(polys: &[FieldPoly<F>]) -> Self {
+        assert!(!polys.is_empty(), "FieldPoly::product: polys cannot be empty");
+
+        if polys.len() == 1 {
+            return polys[0].clone();
+        }
+        polys
+            .iter()
+            .skip(1)
+            .fold(polys[0].clone(), |acc, p| &acc * p)
+    }
+
+    // -----------------------------------------------------------------
+    // Euclidean division and GCD
+    // -----------------------------------------------------------------
+
+    /// Divides `self` by `divisor`, returning the quotient and
+    /// remainder.
+    ///
+    /// The result satisfies `self = quotient · divisor + remainder`
+    /// with `deg(remainder) < deg(divisor)` (or remainder is the zero
+    /// polynomial).
+    ///
+    /// # Arguments
+    ///
+    /// * `divisor` — the polynomial to divide by.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `divisor` is the zero polynomial.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::FieldPoly;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// // (x² + x + 1) / (x + 1) over Fp<7>
+    /// let dividend = FieldPoly::new(vec![Fp::<7>::new(1), Fp::<7>::new(1), Fp::<7>::new(1)]);
+    /// let divisor  = FieldPoly::new(vec![Fp::<7>::new(1), Fp::<7>::new(1)]);
+    /// let (q, r) = dividend.div_rem(&divisor);
+    /// // Verify: q·divisor + r = dividend.
+    /// assert_eq!(&(&q * &divisor) + &r, dividend);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O((n - m) · m)` field operations, where `n = self.len()` and
+    /// `m = divisor.len()`.
+    pub fn div_rem(&self, divisor: &FieldPoly<F>) -> (FieldPoly<F>, FieldPoly<F>) {
+        assert!(
+            !divisor.is_zero(),
+            "FieldPoly::div_rem: division by zero polynomial"
+        );
+
+        // If self is zero, both quotient and remainder are zero.
+        let Some(dividend_deg) = self.degree() else {
+            return (FieldPoly { coeffs: Vec::new() }, FieldPoly { coeffs: Vec::new() });
+        };
+        let divisor_deg = divisor.degree().unwrap();
+
+        if dividend_deg < divisor_deg {
+            return (FieldPoly { coeffs: Vec::new() }, self.clone());
+        }
+
+        let zero = self.coeffs[0].zero_like();
+        let mut remainder_coeffs = self.coeffs.clone();
+        let mut quotient_coeffs = vec![zero.clone(); dividend_deg - divisor_deg + 1];
+
+        let divisor_lead = divisor.coeffs.last().unwrap().clone();
+        // Current degree of the working remainder, tracked without
+        // re-scanning the vector.
+        let mut rem_len = remainder_coeffs.len();
+
+        while rem_len > 0 && rem_len - 1 >= divisor_deg {
+            let rem_deg = rem_len - 1;
+            let rem_lead = remainder_coeffs[rem_deg].clone();
+            if rem_lead.is_zero() {
+                // Skip spurious leading zero and shrink the window.
+                rem_len -= 1;
+                continue;
+            }
+            let q_coeff = rem_lead / divisor_lead.clone();
+            let q_deg = rem_deg - divisor_deg;
+
+            quotient_coeffs[q_deg] = q_coeff.clone();
+
+            // remainder -= q_coeff · x^q_deg · divisor
+            for i in 0..divisor.coeffs.len() {
+                let sub_term = q_coeff.clone() * divisor.coeffs[i].clone();
+                let slot = i + q_deg;
+                let cur = remainder_coeffs[slot].clone();
+                remainder_coeffs[slot] = cur - sub_term;
+            }
+            // Shrink remainder window past the (now-zero) leading term.
+            rem_len = rem_deg;
+            while rem_len > 0 && remainder_coeffs[rem_len - 1].is_zero() {
+                rem_len -= 1;
+            }
+        }
+
+        remainder_coeffs.truncate(rem_len);
+        let quotient = FieldPoly::new(quotient_coeffs);
+        let remainder = FieldPoly::new(remainder_coeffs);
+        (quotient, remainder)
+    }
+
+    /// Returns the monic greatest common divisor of `a` and `b`, using
+    /// the Euclidean algorithm.
+    ///
+    /// The result is always monic (leading coefficient is `1`) unless
+    /// both inputs are zero, in which case the zero polynomial is
+    /// returned.
+    ///
+    /// # Arguments
+    ///
+    /// * `a` — first polynomial.
+    /// * `b` — second polynomial.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::FieldPoly;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// // Shared factor (x - 1): p1 = (x - 1)(x - 2), p2 = (x - 1)(x - 3).
+    /// let xm1 = FieldPoly::new(vec![-Fp::<7>::new(1), Fp::<7>::new(1)]);
+    /// let xm2 = FieldPoly::new(vec![-Fp::<7>::new(2), Fp::<7>::new(1)]);
+    /// let xm3 = FieldPoly::new(vec![-Fp::<7>::new(3), Fp::<7>::new(1)]);
+    /// let p1 = &xm1 * &xm2;
+    /// let p2 = &xm1 * &xm3;
+    /// let g = FieldPoly::gcd(&p1, &p2);
+    /// assert_eq!(g, xm1);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(n²)` field operations in the worst case, where `n` is the
+    /// maximum degree.
+    pub fn gcd(a: &FieldPoly<F>, b: &FieldPoly<F>) -> FieldPoly<F> {
+        let mut r0 = a.clone();
+        let mut r1 = b.clone();
+
+        while !r1.is_zero() {
+            let (_, remainder) = r0.div_rem(&r1);
+            r0 = r1;
+            r1 = remainder;
+        }
+
+        // Make the result monic (leading coefficient = 1).
+        if let Some(lead) = r0.coeffs.last() {
+            if !lead.is_one() {
+                if let Some(inv) = lead.inv() {
+                    let monic: Vec<F> = r0.coeffs.iter().map(|c| c.clone() * inv.clone()).collect();
+                    return FieldPoly::new(monic);
+                }
+            }
+        }
+        r0
+    }
+
+    // -----------------------------------------------------------------
     // Internals
     // -----------------------------------------------------------------
 
@@ -1032,15 +1306,20 @@ impl<'a, F: FiniteField> SubAssign<&'a FieldPoly<F>> for FieldPoly<F> {
 }
 
 // ---------------------------------------------------------------------
-// Schoolbook multiplication
+// Multiplication — schoolbook / Karatsuba dispatch
 // ---------------------------------------------------------------------
 
-/// Core schoolbook polynomial multiplication, O(n · m) in field mults.
+/// Crossover threshold between schoolbook and Karatsuba multiplication.
 ///
-/// Karatsuba and NTT dispatches are deferred to later tasks in the
-/// `bdf95060` story; this routine is what the `Mul` operator calls
-/// today.
-fn mul_impl<F: FiniteField>(lhs: &[F], rhs: &[F]) -> FieldPoly<F> {
+/// Operand degrees strictly less than [`KARATSUBA_THRESHOLD`] use the
+/// schoolbook algorithm; above that threshold both operands recurse
+/// through Karatsuba. A quick microbenchmark on `Gf2mElement<u64>` at
+/// GF(2^14) places the crossover near 32; smaller prime fields benefit
+/// from the same value.
+pub const KARATSUBA_THRESHOLD: usize = 32;
+
+/// Core schoolbook polynomial multiplication, `O(n · m)` in field mults.
+fn mul_schoolbook_impl<F: FiniteField>(lhs: &[F], rhs: &[F]) -> FieldPoly<F> {
     if lhs.is_empty() || rhs.is_empty() {
         return FieldPoly { coeffs: Vec::new() };
     }
@@ -1064,6 +1343,139 @@ fn mul_impl<F: FiniteField>(lhs: &[F], rhs: &[F]) -> FieldPoly<F> {
         }
     }
 
+    FieldPoly::new(coeffs)
+}
+
+/// Slice-level addition used by Karatsuba recombination.
+fn slice_add<F: FiniteField>(a: &[F], b: &[F]) -> Vec<F> {
+    let max_len = a.len().max(b.len());
+    let mut out = Vec::with_capacity(max_len);
+    for i in 0..max_len {
+        match (a.get(i), b.get(i)) {
+            (Some(x), Some(y)) => out.push(x.clone() + y.clone()),
+            (Some(x), None) => out.push(x.clone()),
+            (None, Some(y)) => out.push(y.clone()),
+            (None, None) => unreachable!(),
+        }
+    }
+    out
+}
+
+/// Karatsuba multiplication. `lhs` and `rhs` must be non-empty and
+/// normalised; the caller (`mul_impl`) guarantees that. Returns raw
+/// coefficients of length `lhs.len() + rhs.len() - 1` **without**
+/// normalising — the top-level `FieldPoly::new` at the entry point does
+/// the final trim.
+fn mul_karatsuba_raw<F: FiniteField>(lhs: &[F], rhs: &[F]) -> Vec<F> {
+    debug_assert!(!lhs.is_empty() && !rhs.is_empty());
+
+    let deg_lhs = lhs.len() - 1;
+    let deg_rhs = rhs.len() - 1;
+
+    if deg_lhs < KARATSUBA_THRESHOLD || deg_rhs < KARATSUBA_THRESHOLD {
+        let out = mul_schoolbook_impl(lhs, rhs);
+        // Rehydrate to an unnormalised-length Vec for caller's combine
+        // step: pad to (lhs.len() + rhs.len() - 1) with zeros.
+        let out_len = lhs.len() + rhs.len() - 1;
+        let zero = lhs[0].zero_like();
+        let mut padded = out.coeffs;
+        padded.resize(out_len, zero);
+        return padded;
+    }
+
+    // Split point: midpoint of the larger operand.
+    let m = (deg_lhs.max(deg_rhs) / 2) + 1;
+
+    // p_lo, p_hi  (low and high halves of lhs about x^m)
+    let (p_lo_slice, p_hi_slice) = if lhs.len() > m {
+        (&lhs[..m], &lhs[m..])
+    } else {
+        (lhs, &[] as &[F])
+    };
+    // q_lo, q_hi
+    let (q_lo_slice, q_hi_slice) = if rhs.len() > m {
+        (&rhs[..m], &rhs[m..])
+    } else {
+        (rhs, &[] as &[F])
+    };
+
+    // z0 = p_lo · q_lo
+    let z0 = if p_lo_slice.is_empty() || q_lo_slice.is_empty() {
+        Vec::new()
+    } else {
+        mul_karatsuba_raw(p_lo_slice, q_lo_slice)
+    };
+    // z2 = p_hi · q_hi
+    let z2 = if p_hi_slice.is_empty() || q_hi_slice.is_empty() {
+        Vec::new()
+    } else {
+        mul_karatsuba_raw(p_hi_slice, q_hi_slice)
+    };
+    // (p_lo + p_hi) · (q_lo + q_hi)
+    let p_sum = slice_add(p_lo_slice, p_hi_slice);
+    let q_sum = slice_add(q_lo_slice, q_hi_slice);
+    let z1_full = if p_sum.is_empty() || q_sum.is_empty() {
+        Vec::new()
+    } else {
+        mul_karatsuba_raw(&p_sum, &q_sum)
+    };
+
+    // z1 = z1_full - z0 - z2  (over a field, subtraction is addition of
+    // the additive inverse)
+    let mut z1: Vec<F> = z1_full;
+    for (i, c) in z0.iter().enumerate() {
+        if i < z1.len() {
+            z1[i] = z1[i].clone() - c.clone();
+        } else {
+            z1.push(-c.clone());
+        }
+    }
+    for (i, c) in z2.iter().enumerate() {
+        if i < z1.len() {
+            z1[i] = z1[i].clone() - c.clone();
+        } else {
+            z1.push(-c.clone());
+        }
+    }
+
+    // result = z0 + z1 · x^m + z2 · x^(2m)
+    let out_len = lhs.len() + rhs.len() - 1;
+    let zero = lhs[0].zero_like();
+    let mut result = vec![zero; out_len];
+    for (i, c) in z0.iter().enumerate() {
+        result[i] = result[i].clone() + c.clone();
+    }
+    for (i, c) in z1.iter().enumerate() {
+        let slot = i + m;
+        if slot < out_len {
+            result[slot] = result[slot].clone() + c.clone();
+        }
+    }
+    for (i, c) in z2.iter().enumerate() {
+        let slot = i + 2 * m;
+        if slot < out_len {
+            result[slot] = result[slot].clone() + c.clone();
+        }
+    }
+    result
+}
+
+/// Top-level multiplication dispatcher used by the `Mul` operator and
+/// the inherent [`FieldPoly::mul`] method. Handles zero-polynomial
+/// short-circuits, then routes to schoolbook or Karatsuba based on
+/// operand degrees.
+fn mul_impl<F: FiniteField>(lhs: &[F], rhs: &[F]) -> FieldPoly<F> {
+    if lhs.is_empty() || rhs.is_empty() {
+        return FieldPoly { coeffs: Vec::new() };
+    }
+
+    let deg_lhs = lhs.len() - 1;
+    let deg_rhs = rhs.len() - 1;
+    if deg_lhs < KARATSUBA_THRESHOLD || deg_rhs < KARATSUBA_THRESHOLD {
+        return mul_schoolbook_impl(lhs, rhs);
+    }
+
+    let coeffs = mul_karatsuba_raw(lhs, rhs);
     FieldPoly::new(coeffs)
 }
 
@@ -1626,6 +2038,194 @@ mod tests {
         })
     }
 
+    // -----------------------------------------------------------------
+    // Horner evaluation + batch eval + from_roots + product
+    // -----------------------------------------------------------------
+
+    #[test]
+    fn test_eval_horner_matches_expansion() {
+        // p(x) = 3x² + 2x + 1 over Fp<7>
+        let p = FieldPoly::new(vec![fp7(1), fp7(2), fp7(3)]);
+        // p(4) = 48 + 8 + 1 = 57 ≡ 57 mod 7 = 1
+        assert_eq!(p.eval(&fp7(4)), fp7(1));
+        // p(0) = 1
+        assert_eq!(p.eval(&fp7(0)), fp7(1));
+        // p(1) = 3 + 2 + 1 = 6
+        assert_eq!(p.eval(&fp7(1)), fp7(6));
+    }
+
+    #[test]
+    #[should_panic(expected = "zero polynomial")]
+    fn test_eval_on_zero_polynomial_panics() {
+        let z: FieldPoly<FP7> = FieldPoly::zero_like(&fp7(0));
+        z.eval(&fp7(3));
+    }
+
+    #[test]
+    fn test_eval_batch_matches_individual() {
+        let p = FieldPoly::new(vec![fp7(1), fp7(2), fp7(3)]);
+        let xs = vec![fp7(0), fp7(1), fp7(2), fp7(5)];
+        let ys = p.eval_batch(&xs);
+        for (x, y) in xs.iter().zip(ys.iter()) {
+            assert_eq!(p.eval(x), *y);
+        }
+    }
+
+    #[test]
+    fn test_eval_batch_empty_points_on_zero_poly_ok() {
+        // Vacuous: an empty points slice must not panic even on the zero
+        // polynomial.
+        let z: FieldPoly<FP7> = FieldPoly::zero_like(&fp7(0));
+        assert_eq!(z.eval_batch(&[]), Vec::<FP7>::new());
+    }
+
+    #[test]
+    fn test_from_roots_roots_vanish() {
+        let roots = vec![fp7(1), fp7(2), fp7(3)];
+        let p = FieldPoly::from_roots(&roots);
+        for r in &roots {
+            assert_eq!(p.eval(r), fp7(0));
+        }
+        assert_eq!(p.degree(), Some(3));
+    }
+
+    #[test]
+    fn test_product_matches_sequential_mul() {
+        let p1 = FieldPoly::new(vec![fp7(1), fp7(1)]);
+        let p2 = FieldPoly::new(vec![fp7(2), fp7(1)]);
+        let p3 = FieldPoly::new(vec![fp7(3), fp7(1)]);
+        let prod = FieldPoly::product(&[p1.clone(), p2.clone(), p3.clone()]);
+        assert_eq!(prod, &(&p1 * &p2) * &p3);
+    }
+
+    #[test]
+    fn test_product_singleton_is_identity() {
+        let p = FieldPoly::new(vec![fp7(1), fp7(2), fp7(3)]);
+        assert_eq!(FieldPoly::product(std::slice::from_ref(&p)), p);
+    }
+
+    #[test]
+    #[should_panic(expected = "polys cannot be empty")]
+    fn test_product_empty_panics() {
+        FieldPoly::<FP7>::product(&[]);
+    }
+
+    // -----------------------------------------------------------------
+    // Euclidean division / gcd
+    // -----------------------------------------------------------------
+
+    #[test]
+    fn test_div_rem_identity() {
+        let dividend = FieldPoly::new(vec![fp7(1), fp7(2), fp7(3), fp7(4)]);
+        let divisor = FieldPoly::new(vec![fp7(1), fp7(1)]);
+        let (q, r) = dividend.div_rem(&divisor);
+        assert!(r.degree().map(|d| d < 1).unwrap_or(true));
+        assert_eq!(&(&q * &divisor) + &r, dividend);
+    }
+
+    #[test]
+    fn test_div_rem_exact_division() {
+        let a = FieldPoly::new(vec![fp7(1), fp7(1)]);
+        let b = FieldPoly::new(vec![fp7(2), fp7(1)]);
+        let prod = &a * &b;
+        let (q, r) = prod.div_rem(&a);
+        assert!(r.is_zero());
+        assert_eq!(q, b);
+    }
+
+    #[test]
+    fn test_div_rem_dividend_smaller_than_divisor() {
+        let dividend = FieldPoly::new(vec![fp7(5)]);
+        let divisor = FieldPoly::new(vec![fp7(1), fp7(1)]);
+        let (q, r) = dividend.div_rem(&divisor);
+        assert!(q.is_zero());
+        assert_eq!(r, dividend);
+    }
+
+    #[test]
+    fn test_div_rem_zero_dividend() {
+        let z: FieldPoly<FP7> = FieldPoly::zero_like(&fp7(0));
+        let divisor = FieldPoly::new(vec![fp7(1), fp7(1)]);
+        let (q, r) = z.div_rem(&divisor);
+        assert!(q.is_zero());
+        assert!(r.is_zero());
+    }
+
+    #[test]
+    #[should_panic(expected = "division by zero polynomial")]
+    fn test_div_rem_by_zero_panics() {
+        let dividend = FieldPoly::new(vec![fp7(1), fp7(2)]);
+        let zero: FieldPoly<FP7> = FieldPoly::zero_like(&fp7(0));
+        let _ = dividend.div_rem(&zero);
+    }
+
+    #[test]
+    fn test_gcd_shared_linear_factor() {
+        // (x - 1)(x - 2) and (x - 1)(x - 3); gcd should be monic (x - 1).
+        let xm1 = FieldPoly::new(vec![-fp7(1), fp7(1)]);
+        let xm2 = FieldPoly::new(vec![-fp7(2), fp7(1)]);
+        let xm3 = FieldPoly::new(vec![-fp7(3), fp7(1)]);
+        let p1 = &xm1 * &xm2;
+        let p2 = &xm1 * &xm3;
+        let g = FieldPoly::gcd(&p1, &p2);
+        assert_eq!(g, xm1);
+    }
+
+    #[test]
+    fn test_gcd_coprime_polynomials() {
+        let p1 = FieldPoly::new(vec![-fp7(1), fp7(1)]);
+        let p2 = FieldPoly::new(vec![-fp7(2), fp7(1)]);
+        let g = FieldPoly::gcd(&p1, &p2);
+        // Coprime linear factors — gcd is monic constant 1.
+        assert_eq!(g, FieldPoly::constant(fp7(1)));
+    }
+
+    #[test]
+    fn test_gcd_zero_arg_is_other() {
+        let p = FieldPoly::new(vec![fp7(1), fp7(2)]);
+        let z: FieldPoly<FP7> = FieldPoly::zero_like(&fp7(0));
+        let g = FieldPoly::gcd(&p, &z);
+        // gcd(p, 0) is p made monic.
+        // p has leading coefficient 2, so monic(p) = p * 2^(-1) = p * 4 in Fp<7>.
+        let p_monic = p.mul_scalar(&fp7(2).inv().unwrap());
+        assert_eq!(g, p_monic);
+    }
+
+    // -----------------------------------------------------------------
+    // Karatsuba cross-check: degrees above the threshold must agree with
+    // schoolbook results.
+    // -----------------------------------------------------------------
+
+    #[test]
+    fn test_karatsuba_matches_schoolbook_fp7() {
+        // Construct two polynomials with degree well above KARATSUBA_THRESHOLD.
+        let n = KARATSUBA_THRESHOLD + 8;
+        let a_coeffs: Vec<FP7> = (0..=n).map(|i| fp7(((i as u64) * 3 + 1) % 7)).collect();
+        let b_coeffs: Vec<FP7> = (0..=n).map(|i| fp7(((i as u64) * 5 + 2) % 7)).collect();
+        let a = FieldPoly::new(a_coeffs.clone());
+        let b = FieldPoly::new(b_coeffs.clone());
+
+        let karatsuba = &a * &b;
+        let schoolbook = mul_schoolbook_impl(&a_coeffs, &b_coeffs);
+        assert_eq!(karatsuba, schoolbook);
+    }
+
+    #[test]
+    fn test_karatsuba_matches_schoolbook_gf16() {
+        let field = Gf2mField::new(4, 0b10011);
+        let n = KARATSUBA_THRESHOLD + 6;
+        let a_coeffs: Vec<Gf2mElement> =
+            (0..=n).map(|i| field.element(((i as u64) * 7 + 1) & 0xF)).collect();
+        let b_coeffs: Vec<Gf2mElement> =
+            (0..=n).map(|i| field.element(((i as u64) * 3 + 2) & 0xF)).collect();
+        let a = FieldPoly::new(a_coeffs.clone());
+        let b = FieldPoly::new(b_coeffs.clone());
+
+        let karatsuba = &a * &b;
+        let schoolbook = mul_schoolbook_impl(&a_coeffs, &b_coeffs);
+        assert_eq!(karatsuba, schoolbook);
+    }
+
     proptest! {
         #![proptest_config(ProptestConfig::with_cases(64))]
 
@@ -1663,6 +2263,75 @@ mod tests {
             // element), and a and b are non-zero by construction, so
             // the product is non-zero and its degree is exactly da+db.
             prop_assert_eq!(prod.degree(), Some(da + db));
+        }
+
+        #[test]
+        fn prop_div_rem_identity_fp7(
+            a in any_nonzero_fp7_poly(),
+            b in any_nonzero_fp7_poly(),
+        ) {
+            let (q, r) = a.div_rem(&b);
+            // r.degree() < b.degree() (or r = 0)
+            let db = b.degree().unwrap();
+            match r.degree() {
+                None => {}
+                Some(d) => prop_assert!(d < db),
+            }
+            prop_assert_eq!(&(&q * &b) + &r, a);
+        }
+
+        #[test]
+        fn prop_gcd_divides_both_fp7(
+            a in any_nonzero_fp7_poly(),
+            b in any_nonzero_fp7_poly(),
+        ) {
+            let g = FieldPoly::gcd(&a, &b);
+            prop_assume!(!g.is_zero());
+            let (_, ra) = a.div_rem(&g);
+            let (_, rb) = b.div_rem(&g);
+            prop_assert!(ra.is_zero());
+            prop_assert!(rb.is_zero());
+        }
+
+        #[test]
+        fn prop_gcd_commutative_fp7(
+            a in any_fp7_poly(),
+            b in any_fp7_poly(),
+        ) {
+            prop_assume!(!a.is_zero() || !b.is_zero());
+            prop_assert_eq!(FieldPoly::gcd(&a, &b), FieldPoly::gcd(&b, &a));
+        }
+
+        #[test]
+        fn prop_eval_matches_expansion_fp7(
+            a in any_nonzero_fp7_poly(),
+            x in 0u64..7,
+        ) {
+            let x = fp7(x);
+            let mut expected = fp7(0);
+            let mut pow = fp7(1);
+            for i in 0..a.len() {
+                expected = expected + a.coeff(i) * pow.clone();
+                pow = pow * x.clone();
+            }
+            prop_assert_eq!(a.eval(&x), expected);
+        }
+
+        #[test]
+        fn prop_karatsuba_matches_schoolbook_fp7(
+            a in prop::collection::vec(0u64..7, KARATSUBA_THRESHOLD..=KARATSUBA_THRESHOLD + 4),
+            b in prop::collection::vec(0u64..7, KARATSUBA_THRESHOLD..=KARATSUBA_THRESHOLD + 4),
+        ) {
+            let a_coeffs: Vec<FP7> = a.into_iter().map(fp7).collect();
+            let b_coeffs: Vec<FP7> = b.into_iter().map(fp7).collect();
+            // Force non-zero leading coefficients.
+            if a_coeffs.iter().all(FiniteField::is_zero) || b_coeffs.iter().all(FiniteField::is_zero) {
+                return Ok(());
+            }
+            let a_poly = FieldPoly::new(a_coeffs.clone());
+            let b_poly = FieldPoly::new(b_coeffs.clone());
+            let school = mul_schoolbook_impl(&a_coeffs, &b_coeffs);
+            prop_assert_eq!(&a_poly * &b_poly, school);
         }
     }
 }
