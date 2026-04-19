@@ -1034,9 +1034,9 @@ impl<F: FiniteField> FieldPoly<F> {
     ///
     /// # Complexity
     ///
-    /// `O(n²)` field multiplications via sequential folding. A balanced
-    /// product tree (Task 5 of the `bdf95060` story) reduces this to
-    /// `O(M(n) log n)`.
+    /// `O(M(nd) log n)` via [`FieldPoly::batch_mul`], where `n` is
+    /// the number of roots and `M(k)` is the cost of multiplying two
+    /// degree-`k` polynomials.
     pub fn from_roots(roots: &[F]) -> Self {
         assert!(
             !roots.is_empty(),
@@ -1044,24 +1044,28 @@ impl<F: FiniteField> FieldPoly<F> {
         );
 
         let one = roots[0].one_like();
-        let mut result = FieldPoly::new(vec![-roots[0].clone(), one.clone()]);
-        for root in &roots[1..] {
-            let factor = FieldPoly::new(vec![-root.clone(), one.clone()]);
-            result = &result * &factor;
-        }
-        result
+        let factors: Vec<FieldPoly<F>> = roots
+            .iter()
+            .map(|r| FieldPoly::new(vec![-r.clone(), one.clone()]))
+            .collect();
+        FieldPoly::batch_mul(&factors)
     }
 
-    /// Computes the product of a slice of polynomials using a naive
-    /// linear fold.
+    /// Computes the product of a non-empty slice of polynomials.
+    ///
+    /// Delegates to [`FieldPoly::batch_mul`], which uses a balanced
+    /// binary product tree. Kept as the canonical entry point so that
+    /// existing call-sites (BCH generator construction, DVB-T2 tables,
+    /// …) continue to compile without change.
     ///
     /// # Arguments
     ///
-    /// * `polys` — slice of polynomials to multiply.
+    /// * `polys` — non-empty slice of polynomials to multiply.
     ///
     /// # Panics
     ///
-    /// Panics if `polys` is empty.
+    /// Panics if `polys` is empty. Use [`FieldPoly::batch_mul_with_field`]
+    /// if an empty slice must return the multiplicative identity.
     ///
     /// # Examples
     ///
@@ -1079,22 +1083,13 @@ impl<F: FiniteField> FieldPoly<F> {
     ///
     /// # Complexity
     ///
-    /// `O(n · d²)` where `n = polys.len()` and `d` is the average
-    /// degree. A balanced product tree (Task 5) reduces the polynomial
-    /// multiplication cost to `O(M(nd) log n)`.
+    /// `O(M(nd) log n)` — same as [`FieldPoly::batch_mul`].
     pub fn product(polys: &[FieldPoly<F>]) -> Self {
         assert!(
             !polys.is_empty(),
             "FieldPoly::product: polys cannot be empty"
         );
-
-        if polys.len() == 1 {
-            return polys[0].clone();
-        }
-        polys
-            .iter()
-            .skip(1)
-            .fold(polys[0].clone(), |acc, p| &acc * p)
+        FieldPoly::batch_mul(polys)
     }
 
     // -----------------------------------------------------------------
@@ -1206,6 +1201,13 @@ impl<F: FiniteField> FieldPoly<F> {
     ///   construct `FieldPoly::one_like(sample)`.
     /// * `polys` — slice of polynomials to multiply; may be empty.
     ///
+    /// # Panics
+    ///
+    /// Does not panic. All slice lengths, including empty, are accepted.
+    /// When `polys` is non-empty, any panic would come from an ill-formed
+    /// polynomial; [`FieldPoly::batch_mul`] itself only panics on an empty
+    /// slice, which this wrapper handles first.
+    ///
     /// # Examples
     ///
     /// ```
@@ -1271,7 +1273,9 @@ impl<F: FiniteField> FieldPoly<F> {
     /// let xp4 = FieldPoly::new(vec![Fp::<7>::new(4), Fp::<7>::new(1)]);
     /// let polys = vec![&d * &xp2, &d * &xp3, &d * &xp4];
     /// let g = FieldPoly::batch_gcd(&polys);
-    /// // d is a common factor, so g must be divisible by d.
+    /// // d divides every element, so d divides gcd([a*d, b*d, c*d]).
+    /// // Equivalently: gcd([a*d, b*d, c*d]) = d · gcd(a, b, c).
+    /// // Verify d | g (i.e. g is divisible by d):
     /// let (_, r) = g.div_rem(&d);
     /// assert!(r.is_zero());
     /// ```
@@ -3098,12 +3102,14 @@ mod tests {
             let cd = &c * &d;
 
             let g = FieldPoly::batch_gcd(&[ad, bd, cd]);
-            // d | g: d divides the gcd because d is a common factor.
+            // Mathematical invariant: d | each a*d, b*d, c*d
+            //   ⇒ d | gcd(a*d, b*d, c*d).
+            // i.e. g is a multiple of d; we check g mod d = 0.
             prop_assume!(!d.is_zero());
             let (_, r) = g.div_rem(&d);
             prop_assert!(
                 r.is_zero(),
-                "batch_gcd([a*d, b*d, c*d]) should be divisible by d; got remainder {:?}",
+                "d should divide batch_gcd([a*d, b*d, c*d]); got remainder {:?}",
                 r
             );
         }
