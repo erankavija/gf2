@@ -403,13 +403,14 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     /// ```
     /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
     ///
-    /// struct Cfg;
-    /// impl Gf2mWideConfig<1> for Cfg {
-    ///     const M: usize = 64;
-    ///     const MODULUS: [u64; 1] = [0x1b];
+    /// struct Gf2m256TestConfig;
+    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
+    ///     const M: usize = 256;
+    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
     /// }
-    /// let a = Gf2mWide::<1, Cfg>::from_u64(42);
+    /// let a = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(42);
     /// assert_eq!(a.words()[0], 42);
+    /// assert_eq!(a.words()[1..], [0, 0, 0]);
     /// ```
     #[inline]
     pub fn from_u64(v: u64) -> Self {
@@ -436,13 +437,13 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     /// ```
     /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
     ///
-    /// struct Cfg;
-    /// impl Gf2mWideConfig<1> for Cfg {
-    ///     const M: usize = 64;
-    ///     const MODULUS: [u64; 1] = [0x1b];
+    /// struct Gf2m256TestConfig;
+    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
+    ///     const M: usize = 256;
+    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
     /// }
-    /// let a = Gf2mWide::<1, Cfg>::from_u64(0xabcd);
-    /// assert_eq!(a.words(), &[0xabcd]);
+    /// let a = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(0xabcd);
+    /// assert_eq!(a.words(), &[0xabcd, 0, 0, 0]);
     /// ```
     #[inline]
     pub fn words(&self) -> &[u64; N] {
@@ -465,12 +466,12 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     /// ```
     /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
     ///
-    /// struct Cfg;
-    /// impl Gf2mWideConfig<1> for Cfg {
-    ///     const M: usize = 64;
-    ///     const MODULUS: [u64; 1] = [0x1b];
+    /// struct Gf2m256TestConfig;
+    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
+    ///     const M: usize = 256;
+    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
     /// }
-    /// let a = Gf2mWide::<1, Cfg>::from_u64(0b1010);
+    /// let a = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(0b1010);
     /// assert!(!a.bit(0));
     /// assert!(a.bit(1));
     /// assert!(!a.bit(2));
@@ -499,13 +500,13 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     /// ```
     /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
     ///
-    /// struct Cfg;
-    /// impl Gf2mWideConfig<1> for Cfg {
-    ///     const M: usize = 64;
-    ///     const MODULUS: [u64; 1] = [0x1b];
+    /// struct Gf2m256TestConfig;
+    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
+    ///     const M: usize = 256;
+    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
     /// }
-    /// assert!(Gf2mWide::<1, Cfg>::zero().is_zero());
-    /// assert!(!Gf2mWide::<1, Cfg>::one().is_zero());
+    /// assert!(Gf2mWide::<4, Gf2m256TestConfig>::zero().is_zero());
+    /// assert!(!Gf2mWide::<4, Gf2m256TestConfig>::one().is_zero());
     /// ```
     #[inline]
     pub fn is_zero(&self) -> bool {
@@ -525,13 +526,13 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     /// ```
     /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
     ///
-    /// struct Cfg;
-    /// impl Gf2mWideConfig<1> for Cfg {
-    ///     const M: usize = 64;
-    ///     const MODULUS: [u64; 1] = [0x1b];
+    /// struct Gf2m256TestConfig;
+    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
+    ///     const M: usize = 256;
+    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
     /// }
-    /// assert!(Gf2mWide::<1, Cfg>::one().is_one());
-    /// assert!(!Gf2mWide::<1, Cfg>::zero().is_one());
+    /// assert!(Gf2mWide::<4, Gf2m256TestConfig>::one().is_one());
+    /// assert!(!Gf2mWide::<4, Gf2m256TestConfig>::zero().is_one());
     /// ```
     #[inline]
     pub fn is_one(&self) -> bool {
