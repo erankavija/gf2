@@ -191,6 +191,40 @@ impl<const P: u64> Fp<P> {
             from_mont::<P>(self.0)
         }
     }
+
+    /// Returns the raw internal storage word.
+    ///
+    /// For primes where [`use_specialized_storage`] is `true` or for
+    /// `P = 2`, the internal word already holds the canonical value
+    /// in `[0, P)`. For Montgomery-stored primes the word holds
+    /// `a · R mod P` — which coincides with the canonical value only
+    /// when `R ≡ 1 (mod P)` (for instance `P = 65537`, since
+    /// `R = 2^64 ≡ 1 (mod P)`).
+    ///
+    /// This is a `pub(crate)` backdoor that callers in specialised
+    /// SIMD dispatch paths use to avoid the redundant REDC round-trip
+    /// in `.value()` for those specific primes. Do **not** use this
+    /// outside the crate: the storage form is an implementation detail
+    /// and is free to change.
+    #[inline]
+    pub(crate) const fn raw_storage(self) -> u64 {
+        self.0
+    }
+
+    /// Constructs an `Fp<P>` directly from a raw storage word.
+    ///
+    /// The caller asserts that `raw` is already in the correct internal
+    /// representation (canonical for specialised primes and `P = 2`;
+    /// Montgomery for everything else). See [`Self::raw_storage`] for
+    /// the legality of using a canonical value as Montgomery storage
+    /// when `R ≡ 1 (mod P)` (e.g. `P = 65537`).
+    ///
+    /// Misuse produces silently wrong arithmetic; this helper is
+    /// crate-private and exists only for the SIMD dispatch layer.
+    #[inline]
+    pub(crate) const fn from_raw_storage(raw: u64) -> Self {
+        Self(raw)
+    }
 }
 
 /// Compile-time helper that performs a specialized modular multiplication
