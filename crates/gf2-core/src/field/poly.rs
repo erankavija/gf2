@@ -121,8 +121,8 @@ use std::ops::{Add, AddAssign, Mul, Neg, Sub, SubAssign};
 /// // 2x + 3 over Fp<7>
 /// let p = FieldPoly::new(vec![Fp::<7>::new(3), Fp::<7>::new(2)]);
 /// assert_eq!(p.degree(), Some(1));
-/// assert_eq!(p.coeff(0), Some(&Fp::<7>::new(3)));
-/// assert_eq!(p.coeff(1), Some(&Fp::<7>::new(2)));
+/// assert_eq!(p.try_coeff(0), Some(&Fp::<7>::new(3)));
+/// assert_eq!(p.try_coeff(1), Some(&Fp::<7>::new(2)));
 /// ```
 // The semantic "empty" predicate for a polynomial is `is_zero` (see the
 // normalisation invariant in the module docs): the zero polynomial is
@@ -210,7 +210,7 @@ impl<F: FiniteField> FieldPoly<F> {
     ///     Fp::<7>::new(0),
     /// ]);
     /// assert_eq!(p.degree(), Some(0));
-    /// assert_eq!(p.coeff(0), Some(&Fp::<7>::new(4)));
+    /// assert_eq!(p.try_coeff(0), Some(&Fp::<7>::new(4)));
     /// ```
     ///
     /// # Complexity
@@ -235,10 +235,12 @@ impl<F: FiniteField> FieldPoly<F> {
     /// # Arguments
     ///
     /// * `_sample` — any field element; only consumed to nail down the
-    ///   type parameter `F` (and, for runtime-configured fields, to
-    ///   carry their field context into any subsequent operations on
-    ///   the returned zero polynomial via [`FieldPoly::coeff`] fallbacks
-    ///   once additional coefficients appear).
+    ///   type parameter `F`. The sample is **not** stored anywhere on
+    ///   the returned polynomial: the zero polynomial has an empty
+    ///   `coeffs` vector. Callers that need a zero element derived from
+    ///   a specific field context on an empty polynomial should use
+    ///   [`FieldPoly::coeff_or_zero`] and pass the sample at that call
+    ///   site.
     ///
     /// # Examples
     ///
@@ -275,7 +277,7 @@ impl<F: FiniteField> FieldPoly<F> {
     ///
     /// let p: FieldPoly<Fp<7>> = FieldPoly::one_like(&Fp::<7>::new(0));
     /// assert_eq!(p.degree(), Some(0));
-    /// assert_eq!(p.coeff(0), Some(&Fp::<7>::new(1)));
+    /// assert_eq!(p.try_coeff(0), Some(&Fp::<7>::new(1)));
     /// ```
     ///
     /// # Complexity
@@ -305,7 +307,7 @@ impl<F: FiniteField> FieldPoly<F> {
     ///
     /// let p = FieldPoly::constant(Fp::<7>::new(5));
     /// assert_eq!(p.degree(), Some(0));
-    /// assert_eq!(p.coeff(0), Some(&Fp::<7>::new(5)));
+    /// assert_eq!(p.try_coeff(0), Some(&Fp::<7>::new(5)));
     ///
     /// let z = FieldPoly::constant(Fp::<7>::new(0));
     /// assert!(z.is_zero());
@@ -342,8 +344,8 @@ impl<F: FiniteField> FieldPoly<F> {
     /// // 3·x^4
     /// let p = FieldPoly::monomial(Fp::<7>::new(3), 4);
     /// assert_eq!(p.degree(), Some(4));
-    /// assert_eq!(p.coeff(0), Some(&Fp::<7>::new(0)));
-    /// assert_eq!(p.coeff(4), Some(&Fp::<7>::new(3)));
+    /// assert_eq!(p.try_coeff(0), Some(&Fp::<7>::new(0)));
+    /// assert_eq!(p.try_coeff(4), Some(&Fp::<7>::new(3)));
     /// ```
     ///
     /// ```
@@ -441,21 +443,75 @@ impl<F: FiniteField> FieldPoly<F> {
     ///
     /// // 2x + 3
     /// let p = FieldPoly::new(vec![Fp::<7>::new(3), Fp::<7>::new(2)]);
-    /// assert_eq!(p.coeff(0), Some(&Fp::<7>::new(3)));
-    /// assert_eq!(p.coeff(1), Some(&Fp::<7>::new(2)));
+    /// assert_eq!(p.try_coeff(0), Some(&Fp::<7>::new(3)));
+    /// assert_eq!(p.try_coeff(1), Some(&Fp::<7>::new(2)));
     /// // Out-of-range: returns None.
-    /// assert_eq!(p.coeff(10), None);
+    /// assert_eq!(p.try_coeff(10), None);
     ///
     /// // The zero polynomial returns None for every index.
     /// let z: FieldPoly<Fp<7>> = FieldPoly::zero_like(&Fp::<7>::new(0));
-    /// assert_eq!(z.coeff(0), None);
+    /// assert_eq!(z.try_coeff(0), None);
     /// ```
     ///
     /// # Complexity
     ///
     /// `O(1)`.
-    pub fn coeff(&self, i: usize) -> Option<&F> {
+    pub fn try_coeff(&self, i: usize) -> Option<&F> {
         self.coeffs.get(i)
+    }
+
+    /// Returns the `i`-th coefficient by value.
+    ///
+    /// Behaviour (matching `dev/plans/bdf95060_breakdown.md` Task 1):
+    /// * `0 <= i < self.len()`: returns `self.coeffs[i].clone()`.
+    /// * `i >= self.len()` on a non-zero polynomial: returns a zero
+    ///   built from an existing coefficient via
+    ///   [`FiniteField::zero_like`].
+    /// * `self.is_zero()` (empty storage): panics, because no sample
+    ///   is available to derive a zero from. Use [`FieldPoly::try_coeff`]
+    ///   or [`FieldPoly::coeff_or_zero`] on polynomials that may be zero.
+    ///
+    /// # Arguments
+    ///
+    /// * `i` — exponent of the requested coefficient.
+    ///
+    /// # Panics
+    ///
+    /// Panics if called on the zero polynomial (no field context
+    /// available to derive a zero element). Callers with a field
+    /// sample should use [`FieldPoly::coeff_or_zero`]; callers that
+    /// want a clean `Option` should use [`FieldPoly::try_coeff`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::FieldPoly;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// // 2x + 3
+    /// let p = FieldPoly::new(vec![Fp::<7>::new(3), Fp::<7>::new(2)]);
+    /// assert_eq!(p.coeff(0), Fp::<7>::new(3));
+    /// assert_eq!(p.coeff(1), Fp::<7>::new(2));
+    /// // Out-of-range on a non-zero polynomial: the zero element.
+    /// assert_eq!(p.coeff(10), Fp::<7>::new(0));
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(1)`.
+    pub fn coeff(&self, i: usize) -> F {
+        if let Some(c) = self.coeffs.get(i) {
+            c.clone()
+        } else {
+            // Safe: we just checked self.coeffs.get(i) was None; if
+            // the slice is non-empty, index 0 is valid.
+            assert!(
+                !self.coeffs.is_empty(),
+                "FieldPoly::coeff called on the zero polynomial (no field sample available); \
+                 use try_coeff or coeff_or_zero instead"
+            );
+            self.coeffs[0].zero_like()
+        }
     }
 
     /// Returns the `i`-th coefficient, or a zero element built from
@@ -496,7 +552,9 @@ impl<F: FiniteField> FieldPoly<F> {
     ///
     /// `O(1)`.
     pub fn coeff_or_zero(&self, i: usize, sample: &F) -> F {
-        self.coeff(i).cloned().unwrap_or_else(|| sample.zero_like())
+        self.try_coeff(i)
+            .cloned()
+            .unwrap_or_else(|| sample.zero_like())
     }
 
     /// Returns a reference to the leading (highest-degree) coefficient,
@@ -573,6 +631,46 @@ impl<F: FiniteField> FieldPoly<F> {
     }
 
     // -----------------------------------------------------------------
+    // Inherent multiplication (schoolbook)
+    // -----------------------------------------------------------------
+
+    /// Schoolbook polynomial multiplication — `O(n·m)` base-field
+    /// multiplications for `self` of length `n` and `other` of length
+    /// `m`.
+    ///
+    /// Equivalent to the [`core::ops::Mul`] trait impls
+    /// (`&FieldPoly * &FieldPoly`) that delegate to this inherent
+    /// method. The zero polynomial on either side produces the zero
+    /// polynomial.
+    ///
+    /// # Arguments
+    ///
+    /// * `other` — polynomial to multiply `self` by.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::FieldPoly;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// // (x + 2)(x + 3) = x^2 + 5x + 6 (mod 7)
+    /// let a = FieldPoly::new(vec![Fp::<7>::new(2), Fp::<7>::new(1)]);
+    /// let b = FieldPoly::new(vec![Fp::<7>::new(3), Fp::<7>::new(1)]);
+    /// let c = a.mul(&b);
+    /// assert_eq!(c.degree(), Some(2));
+    /// assert_eq!(c.coeff(0), Fp::<7>::new(6));
+    /// assert_eq!(c.coeff(1), Fp::<7>::new(5));
+    /// assert_eq!(c.coeff(2), Fp::<7>::new(1));
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(n·m)` base-field multiplications.
+    pub fn mul(&self, other: &Self) -> Self {
+        mul_impl(&self.coeffs, &other.coeffs)
+    }
+
+    // -----------------------------------------------------------------
     // Scalar multiplication
     // -----------------------------------------------------------------
 
@@ -594,8 +692,8 @@ impl<F: FiniteField> FieldPoly<F> {
     /// // (2x + 3) * 2 = 4x + 6 over Fp<7>
     /// let p = FieldPoly::new(vec![Fp::<7>::new(3), Fp::<7>::new(2)]);
     /// let q = p.mul_scalar(&Fp::<7>::new(2));
-    /// assert_eq!(q.coeff(0), Some(&Fp::<7>::new(6)));
-    /// assert_eq!(q.coeff(1), Some(&Fp::<7>::new(4)));
+    /// assert_eq!(q.try_coeff(0), Some(&Fp::<7>::new(6)));
+    /// assert_eq!(q.try_coeff(1), Some(&Fp::<7>::new(4)));
     ///
     /// // Multiplying by zero produces the zero polynomial.
     /// let z = p.mul_scalar(&Fp::<7>::new(0));
@@ -631,8 +729,8 @@ impl<F: FiniteField> FieldPoly<F> {
     ///
     /// let mut p = FieldPoly::new(vec![Fp::<7>::new(3), Fp::<7>::new(2)]);
     /// p.scale(&Fp::<7>::new(2));
-    /// assert_eq!(p.coeff(0), Some(&Fp::<7>::new(6)));
-    /// assert_eq!(p.coeff(1), Some(&Fp::<7>::new(4)));
+    /// assert_eq!(p.try_coeff(0), Some(&Fp::<7>::new(6)));
+    /// assert_eq!(p.try_coeff(1), Some(&Fp::<7>::new(4)));
     ///
     /// p.scale(&Fp::<7>::new(0));
     /// assert!(p.is_zero());
@@ -1048,14 +1146,14 @@ mod tests {
     fn test_one_like() {
         let o: FieldPoly<FP7> = FieldPoly::one_like(&fp7(0));
         assert_eq!(o.degree(), Some(0));
-        assert_eq!(o.coeff(0), Some(&fp7(1)));
+        assert_eq!(o.try_coeff(0), Some(&fp7(1)));
     }
 
     #[test]
     fn test_constant() {
         let p = FieldPoly::constant(fp7(5));
         assert_eq!(p.degree(), Some(0));
-        assert_eq!(p.coeff(0), Some(&fp7(5)));
+        assert_eq!(p.try_coeff(0), Some(&fp7(5)));
     }
 
     #[test]
@@ -1068,9 +1166,9 @@ mod tests {
     fn test_monomial() {
         let p = FieldPoly::monomial(fp7(3), 4);
         assert_eq!(p.degree(), Some(4));
-        assert_eq!(p.coeff(0), Some(&fp7(0)));
-        assert_eq!(p.coeff(3), Some(&fp7(0)));
-        assert_eq!(p.coeff(4), Some(&fp7(3)));
+        assert_eq!(p.try_coeff(0), Some(&fp7(0)));
+        assert_eq!(p.try_coeff(3), Some(&fp7(0)));
+        assert_eq!(p.try_coeff(4), Some(&fp7(3)));
     }
 
     #[test]
@@ -1087,7 +1185,7 @@ mod tests {
 
         let q = FieldPoly::monomial(fp7(2), 0);
         assert_eq!(q.degree(), Some(0));
-        assert_eq!(q.coeff(0), Some(&fp7(2)));
+        assert_eq!(q.try_coeff(0), Some(&fp7(2)));
     }
 
     // -----------------------------------------------------------------
@@ -1097,8 +1195,8 @@ mod tests {
     #[test]
     fn test_coeff_in_range_returns_some() {
         let p = FieldPoly::new(vec![fp7(1), fp7(2)]);
-        assert_eq!(p.coeff(0), Some(&fp7(1)));
-        assert_eq!(p.coeff(1), Some(&fp7(2)));
+        assert_eq!(p.try_coeff(0), Some(&fp7(1)));
+        assert_eq!(p.try_coeff(1), Some(&fp7(2)));
     }
 
     #[test]
@@ -1113,7 +1211,7 @@ mod tests {
         // The zero polynomial returns None for every index — this is the
         // totality contract. No panic, regardless of index.
         let z: FieldPoly<FP7> = FieldPoly::zero_like(&fp7(0));
-        assert_eq!(z.coeff(0), None);
+        assert_eq!(z.try_coeff(0), None);
         assert_eq!(z.coeff(1), None);
         assert_eq!(z.coeff(100), None);
     }
@@ -1190,8 +1288,8 @@ mod tests {
         let a = FieldPoly::new(vec![fp7(1), fp7(2)]); // 2x + 1
         let b = FieldPoly::new(vec![fp7(3), fp7(4)]); // 4x + 3
         let c = &a + &b; // (2+4)x + (1+3) = 6x + 4
-        assert_eq!(c.coeff(0), Some(&fp7(4)));
-        assert_eq!(c.coeff(1), Some(&fp7(6)));
+        assert_eq!(c.try_coeff(0), Some(&fp7(4)));
+        assert_eq!(c.try_coeff(1), Some(&fp7(6)));
         assert_eq!(c.degree(), Some(1));
     }
 
@@ -1202,7 +1300,7 @@ mod tests {
         let b = FieldPoly::new(vec![fp7(3), fp7(5)]);
         let c = a + b;
         assert_eq!(c.degree(), Some(0));
-        assert_eq!(c.coeff(0), Some(&fp7(4)));
+        assert_eq!(c.try_coeff(0), Some(&fp7(4)));
     }
 
     #[test]
@@ -1222,8 +1320,8 @@ mod tests {
         let a = FieldPoly::new(vec![fp7(5), fp7(6)]); // 6x + 5
         let b = FieldPoly::new(vec![fp7(1), fp7(2)]); // 2x + 1
         let c = a - b;
-        assert_eq!(c.coeff(0), Some(&fp7(4)));
-        assert_eq!(c.coeff(1), Some(&fp7(4)));
+        assert_eq!(c.try_coeff(0), Some(&fp7(4)));
+        assert_eq!(c.try_coeff(1), Some(&fp7(4)));
     }
 
     #[test]
@@ -1249,9 +1347,9 @@ mod tests {
     fn test_neg_basic() {
         let a = FieldPoly::new(vec![fp7(3), fp7(5)]);
         let n = -a.clone();
-        assert_eq!(n.coeff(0), Some(&fp7(4))); // -3 mod 7 = 4
-        assert_eq!(n.coeff(1), Some(&fp7(2))); // -5 mod 7 = 2
-                                               // Double-negation is identity.
+        assert_eq!(n.try_coeff(0), Some(&fp7(4))); // -3 mod 7 = 4
+        assert_eq!(n.try_coeff(1), Some(&fp7(2))); // -5 mod 7 = 2
+                                                   // Double-negation is identity.
         assert_eq!(-n, a);
     }
 
@@ -1281,7 +1379,7 @@ mod tests {
         a += &b;
         assert_eq!(a, FieldPoly::new(vec![fp7(4), fp7(6)]));
         // `b` still valid after reference-based add_assign.
-        assert_eq!(b.coeff(1), Some(&fp7(4)));
+        assert_eq!(b.try_coeff(1), Some(&fp7(4)));
     }
 
     #[test]
@@ -1298,7 +1396,7 @@ mod tests {
         let b = FieldPoly::new(vec![fp7(1), fp7(2)]);
         a -= &b;
         assert_eq!(a, FieldPoly::new(vec![fp7(4), fp7(4)]));
-        assert_eq!(b.coeff(0), Some(&fp7(1)));
+        assert_eq!(b.try_coeff(0), Some(&fp7(1)));
     }
 
     // -----------------------------------------------------------------
@@ -1310,8 +1408,8 @@ mod tests {
         // (2x + 3) * 2 = 4x + 6
         let p = FieldPoly::new(vec![fp7(3), fp7(2)]);
         let q = p.mul_scalar(&fp7(2));
-        assert_eq!(q.coeff(0), Some(&fp7(6)));
-        assert_eq!(q.coeff(1), Some(&fp7(4)));
+        assert_eq!(q.try_coeff(0), Some(&fp7(6)));
+        assert_eq!(q.try_coeff(1), Some(&fp7(4)));
     }
 
     #[test]
@@ -1349,8 +1447,8 @@ mod tests {
         let b = FieldPoly::new(vec![fp7(4), fp7(3)]);
         let c = &a * &b;
         assert_eq!(c.degree(), Some(2));
-        assert_eq!(c.coeff(0), Some(&fp7(4)));
-        assert_eq!(c.coeff(1), Some(&fp7(4))); // 2*4 + 1*3 = 11 mod 7 = 4
+        assert_eq!(c.try_coeff(0), Some(&fp7(4)));
+        assert_eq!(c.try_coeff(1), Some(&fp7(4))); // 2*4 + 1*3 = 11 mod 7 = 4
         assert_eq!(c.coeff(2), Some(&fp7(6)));
     }
 
