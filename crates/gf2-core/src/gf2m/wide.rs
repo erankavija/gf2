@@ -27,6 +27,23 @@
 //! because XOR of two zero-tailed operands is zero-tailed; callers that
 //! fabricate words from raw input must use [`Gf2mWide::new`] (which masks)
 //! rather than [`Gf2mWide::from_words`] (which only debug-asserts).
+//!
+//! # `clmul_wide` and the `[u64; 2*N]` Rust 1.80 caveat (Task 2)
+//!
+//! Stable Rust 1.80 (our MSRV) does not support const arithmetic on generic
+//! parameters in array lengths — `[u64; 2 * N]` does not compile. Two
+//! work-arounds are described in the issue specification:
+//!
+//! - **(a)** A second const parameter `M` with `const { assert!(M == 2 * N); }`.
+//! - **(c)** An `&mut [u64; 2 * N]` out-parameter (which fails for the same
+//!   reason) or `&mut [u64]` with a `debug_assert!` on the length.
+//!
+//! This module uses **pattern (a)**: [`clmul_wide`] takes `<const N: usize,
+//! const M: usize>` and asserts `M == 2 * N` at compile time. Callers must
+//! annotate the turbofish: `clmul_wide::<2, 4>(a, b)`. The ergonomic cost is
+//! small and the return-type annotation is explicit rather than hidden in a
+//! mutable out-parameter. Pattern (a) is preferred because it keeps the
+//! function purely functional and avoids `&mut` API surface.
 
 use std::fmt;
 use std::hash::{Hash, Hasher};
@@ -657,6 +674,86 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Neg for Gf2mWide<N, Cfg> {
     fn neg(self) -> Self::Output {
         self
     }
+}
+
+// ---------------------------------------------------------------------------
+// Multiplication — schoolbook carry-less (Task 2 of story 6fb4abad)
+// ---------------------------------------------------------------------------
+
+/// Carry-less multiplication of two `N`-word GF(2)-polynomial operands,
+/// producing an unreduced `M`-word result where `M == 2 * N`.
+///
+/// Each word stores 64 polynomial coefficients in little-endian bit order: bit
+/// `i` of the element lives at `words[i >> 6] >> (i & 63) & 1`. The product of
+/// two degree-`(64N - 1)` polynomials has degree at most `2 * (64N - 1)`,
+/// which requires exactly `2 * N` words of storage.
+///
+/// The result is **unreduced** — no modular reduction with respect to an
+/// irreducible polynomial is applied. Reduction back to `N` words is a
+/// separate task (JIT issue `9dd11973`).
+///
+/// # MSRV caveat: why two const parameters?
+///
+/// On stable Rust 1.80 the compiler cannot evaluate `2 * N` in an array-length
+/// position (`[u64; 2 * N]` is rejected). This function therefore takes a
+/// second const parameter `M` and asserts `M == 2 * N` at compile time. Pass
+/// the double manually: `clmul_wide::<N, {2 * N}>(a, b)`.
+///
+/// # Arguments
+///
+/// * `a` - First operand: `N` little-endian `u64` words.
+/// * `b` - Second operand: `N` little-endian `u64` words.
+///
+/// # Returns
+///
+/// The unreduced product as `M == 2 * N` little-endian `u64` words.
+///
+/// # Panics
+///
+/// Panics (at compile time via `const { assert!(...) }`) if `M != 2 * N`.
+///
+/// # Complexity
+///
+/// `O(N²)` carry-less word multiplications (`clmul` calls), each producing a
+/// `u128`. For `N` words the inner loop performs `N²` calls.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::gf2m::wide::clmul_wide;
+///
+/// // 1 * 1 = 1 (N = 1, M = 2)
+/// let a = [1u64];
+/// let b = [1u64];
+/// let out = clmul_wide::<1, 2>(&a, &b);
+/// assert_eq!(out, [1u64, 0u64]);
+///
+/// // x * x = x^2  (operand = 0b10, result = 0b100 in word 0)
+/// let a = [0b10u64];
+/// let b = [0b10u64];
+/// let out = clmul_wide::<1, 2>(&a, &b);
+/// assert_eq!(out[0], 0b100);
+/// assert_eq!(out[1], 0);
+/// ```
+pub fn clmul_wide<const N: usize, const M: usize>(a: &[u64; N], b: &[u64; N]) -> [u64; M] {
+    const { assert!(M == 2 * N, "clmul_wide: M must equal 2 * N") }
+    let mut out = [0u64; M];
+    for i in 0..N {
+        for j in 0..N {
+            // Carry-less multiply a[i] * b[j] → 128-bit intermediate.
+            let product: u128 = super::barrett::clmul(a[i], b[j]);
+            // The low 64 bits accumulate into out[i + j].
+            out[i + j] ^= product as u64;
+            // The high 64 bits (the "carry" in carry-less multiplication)
+            // accumulate into out[i + j + 1].
+            //
+            // Safety of the index: the maximum value of `i + j + 1` is
+            // `(N - 1) + (N - 1) + 1 = 2N - 1 = M - 1`, which is always a
+            // valid index into `out` of length `M = 2N`.
+            out[i + j + 1] ^= (product >> 64) as u64;
+        }
+    }
+    out
 }
 
 // ---------------------------------------------------------------------------
@@ -1296,6 +1393,167 @@ mod tests {
                 let mut acc = a;
                 acc += b;
                 prop_assert_eq!(acc, a + b);
+            }
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // clmul_wide — schoolbook carry-less multiplication (Task 2)
+    // -----------------------------------------------------------------------
+
+    mod clmul_wide_tests {
+        use super::super::clmul_wide;
+        use crate::gf2m::barrett::clmul;
+        use proptest::prelude::*;
+
+        // ---- Known-vector unit tests --------------------------------------
+
+        /// `1 * 1 = 1` (N = 1).
+        #[test]
+        fn test_clmul_wide_one_times_one() {
+            let out = clmul_wide::<1, 2>(&[1u64], &[1u64]);
+            assert_eq!(out, [1u64, 0u64]);
+        }
+
+        /// `x * x = x²` (N = 1).
+        ///
+        /// Operand = 0b10 (the polynomial `x`).
+        /// Product = 0b100 (the polynomial `x²`).
+        #[test]
+        fn test_clmul_wide_x_times_x() {
+            let out = clmul_wide::<1, 2>(&[0b10u64], &[0b10u64]);
+            assert_eq!(out[0], 0b100);
+            assert_eq!(out[1], 0);
+        }
+
+        /// `(x + 1)² = x² + 1` in GF(2)[x] (N = 1).
+        ///
+        /// Note: `(x+1)² = x² + 2x + 1 = x² + 1` because `2 ≡ 0 (mod 2)`.
+        #[test]
+        fn test_clmul_wide_x_plus_one_squared() {
+            // (x + 1) = 0b11
+            let out = clmul_wide::<1, 2>(&[0b11u64], &[0b11u64]);
+            // x² + 1 = 0b101
+            assert_eq!(out[0], 0b101);
+            assert_eq!(out[1], 0);
+        }
+
+        /// All-ones squared, N = 1.
+        ///
+        /// `(sum_{i=0}^{63} x^i)² = sum_{i=0}^{126} x^{2i}` (even powers).
+        ///
+        /// Squaring in GF(2)[x] places every bit of the input at even
+        /// positions in the output, interleaving zeros at odd positions.
+        /// The result fits in 127 bits (two words wide).
+        #[test]
+        fn test_clmul_wide_all_ones_squared_n1() {
+            let a = [u64::MAX];
+            let out = clmul_wide::<1, 2>(&a, &a);
+            // Each set bit at position k maps to position 2k in the product.
+            // Bits 0..=63 of `a` become bits 0, 2, 4, …, 126 in the product.
+            // Word 0 collects even-position bits at positions 0..64 → bits 0,2,...,62 → alternating 1,0.
+            // Word 1 collects bits 64..=126 → bits 64,66,...,126.
+            let expected_word0: u64 = 0x5555_5555_5555_5555u64; // 0x55…55 = even bits set in low 64
+            let expected_word1: u64 = 0x5555_5555_5555_5555u64; // even bits set in high 63 positions
+            assert_eq!(
+                out[0], expected_word0,
+                "word 0 mismatch for all-ones squared"
+            );
+            assert_eq!(
+                out[1], expected_word1,
+                "word 1 mismatch for all-ones squared"
+            );
+        }
+
+        /// All-ones squared, N = 2 (128-bit operand).
+        ///
+        /// The same "squaring scatters to even positions" pattern, now producing
+        /// a 4-word result.  Words 0 and 2 collect even-position bits;
+        /// words 1 and 3 are zero (odd positions).
+        #[test]
+        fn test_clmul_wide_all_ones_squared_n2() {
+            let a = [u64::MAX, u64::MAX];
+            let out = clmul_wide::<2, 4>(&a, &a);
+            // Squaring a[0] (bits 0..=63) → even bits in [0..=126]; lands in out[0] and out[1].
+            // Squaring a[1] (bits 64..=127) → even bits in [128..=254]; lands in out[2] and out[3].
+            // Cross-terms a[0]*a[1] and a[1]*a[0] cancel in GF(2) (they're equal, 2x = 0).
+            let even = 0x5555_5555_5555_5555u64;
+            assert_eq!(out[0], even, "word 0");
+            assert_eq!(out[1], even, "word 1");
+            assert_eq!(out[2], even, "word 2");
+            assert_eq!(out[3], even, "word 3");
+        }
+
+        // ---- Property-based tests ----------------------------------------
+
+        proptest! {
+            #![proptest_config(ProptestConfig::with_cases(128))]
+
+            /// Commutativity: `clmul_wide(a, b) == clmul_wide(b, a)` (N = 2).
+            #[test]
+            fn prop_clmul_wide_commutative_n2(
+                a0 in any::<u64>(), a1 in any::<u64>(),
+                b0 in any::<u64>(), b1 in any::<u64>(),
+            ) {
+                let a = [a0, a1];
+                let b = [b0, b1];
+                prop_assert_eq!(clmul_wide::<2, 4>(&a, &b), clmul_wide::<2, 4>(&b, &a));
+            }
+
+            /// Commutativity for N = 1 (extra coverage at word boundary).
+            #[test]
+            fn prop_clmul_wide_commutative_n1(a in any::<u64>(), b in any::<u64>()) {
+                prop_assert_eq!(clmul_wide::<1, 2>(&[a], &[b]), clmul_wide::<1, 2>(&[b], &[a]));
+            }
+        }
+
+        proptest! {
+            #![proptest_config(ProptestConfig::with_cases(64))]
+
+            /// Cross-check for N = 2 against a reference built directly on
+            /// `barrett::clmul(u64, u64) -> u128`.
+            ///
+            /// For 128-bit operands `a = a1 * x^64 + a0` and
+            /// `b = b1 * x^64 + b0`, the schoolbook product is:
+            ///
+            /// ```text
+            /// a * b = (a0*b0) + (a0*b1 + a1*b0) * x^64 + (a1*b1) * x^128
+            /// ```
+            ///
+            /// Each term is a `u128`; splitting them at the 64-bit boundary
+            /// and XOR-accumulating gives the four output words.
+            #[test]
+            fn prop_clmul_wide_n2_matches_reference(
+                a0 in any::<u64>(), a1 in any::<u64>(),
+                b0 in any::<u64>(), b1 in any::<u64>(),
+            ) {
+                let a = [a0, a1];
+                let b = [b0, b1];
+
+                // Reference: schoolbook with u128 intermediates.
+                let p00: u128 = clmul(a0, b0);
+                let p01: u128 = clmul(a0, b1);
+                let p10: u128 = clmul(a1, b0);
+                let p11: u128 = clmul(a1, b1);
+
+                // p00 contributes to words 0 and 1.
+                // p01 contributes to words 1 and 2 (shifted by 64).
+                // p10 contributes to words 1 and 2 (shifted by 64).
+                // p11 contributes to words 2 and 3 (shifted by 128).
+                let mut ref_out = [0u64; 4];
+                ref_out[0] ^= p00 as u64;
+                ref_out[1] ^= (p00 >> 64) as u64;
+                ref_out[1] ^= p01 as u64;
+                ref_out[2] ^= (p01 >> 64) as u64;
+                ref_out[1] ^= p10 as u64;
+                ref_out[2] ^= (p10 >> 64) as u64;
+                ref_out[2] ^= p11 as u64;
+                ref_out[3] ^= (p11 >> 64) as u64;
+
+                let got = clmul_wide::<2, 4>(&a, &b);
+                prop_assert_eq!(got, ref_out,
+                    "mismatch for a=[{:#x},{:#x}] b=[{:#x},{:#x}]",
+                    a0, a1, b0, b1);
             }
         }
     }
