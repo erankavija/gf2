@@ -12,6 +12,7 @@
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 mod x86;
 
+pub mod fp65537;
 pub mod gf2m;
 pub mod llr;
 pub mod mersenne;
