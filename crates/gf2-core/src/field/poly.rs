@@ -1097,9 +1097,8 @@ impl<F: FiniteField> FieldPoly<F> {
     // -----------------------------------------------------------------
 
     /// Computes the product of a non-empty slice of polynomials using a
-    /// **balanced binary product tree**, which reduces the total
-    /// multiplication cost compared to the linear-fold
-    /// [`FieldPoly::product`].
+    /// **balanced binary product tree**, which reduces total
+    /// multiplication cost compared to a linear left-fold.
     ///
     /// A balanced tree keeps pairs of operands at the same accumulated
     /// degree, so every multiplication sees equally-sized inputs and
@@ -1107,6 +1106,11 @@ impl<F: FiniteField> FieldPoly<F> {
     /// that balance. A linear left-fold accumulates one polynomial to
     /// full size before multiplying the next, giving quadratic schoolbook
     /// work even when Karatsuba fires.
+    ///
+    /// [`FieldPoly::product`] is a thin wrapper around this method —
+    /// both entry points share the balanced-tree implementation so that
+    /// existing BCH / DVB-T2 call-sites pick up the speedup without any
+    /// API churn.
     ///
     /// # Arguments
     ///
