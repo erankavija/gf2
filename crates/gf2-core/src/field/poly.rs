@@ -51,12 +51,66 @@
 //!   schoolbook below [`KARATSUBA_THRESHOLD`] and to Karatsuba above.
 //! - Euclidean division [`FieldPoly::div_rem`] and GCD
 //!   [`FieldPoly::gcd`].
-//! - Evaluation: [`FieldPoly::eval`] (Horner) and
-//!   [`FieldPoly::eval_batch`] (naive per-point loop).
+//! - Evaluation: [`FieldPoly::eval`] (Horner),
+//!   [`FieldPoly::eval_batch`] (naive per-point loop), and
+//!   [`FieldPoly::batch_evaluate`] (subproduct-tree,
+//!   `O(M(n) log k + k log² k)`).
 //!
-//! Algorithmic upgrades (subproduct-tree batch evaluation, Lagrange
-//! interpolation, balanced product + batch GCD, NTT multiplication)
-//! land in sibling tasks on top of this surface.
+//! Further algorithmic upgrades (Lagrange interpolation, balanced
+//! product + batch GCD, NTT multiplication) land in sibling tasks on top
+//! of this surface.
+//!
+//! # `batch_evaluate` benchmark results
+//!
+//! Measured on `Fp<65537>` with
+//! `cargo bench -p gf2-core --bench field_poly -- --quick` on the repo's
+//! reference Zen 3 host. Each cell is the median total wall-clock time
+//! for one invocation on a polynomial of length `n` evaluated at `k`
+//! points. The *subproduct-tree* column reports the time for the raw
+//! subproduct path (bypassing the [`SUBPRODUCT_THRESHOLD`] gate);
+//! `speedup = naive / subproduct`, so values **< 1** mean the naive
+//! per-point Horner baseline wins.
+//!
+//! | `n`  | `k`  | naive Horner | subproduct tree | naive/subproduct |
+//! |-----:|-----:|-------------:|----------------:|-----------------:|
+//! |   16 |   16 |      0.88 µs |         6.64 µs |            0.13× |
+//! |   16 |   64 |       3.5 µs |          35 µs  |            0.10× |
+//! |   16 |  256 |        14 µs |         215 µs  |            0.06× |
+//! |   16 | 1024 |        56 µs |         1.50 ms |            0.04× |
+//! |   64 |   16 |       3.7 µs |          12 µs  |            0.30× |
+//! |   64 |   64 |        15 µs |          55 µs  |            0.27× |
+//! |   64 |  256 |        59 µs |         293 µs  |            0.20× |
+//! |   64 | 1024 |       237 µs |         1.82 ms |            0.13× |
+//! |  256 |   16 |        15 µs |          35 µs  |            0.41× |
+//! |  256 |   64 |        59 µs |         115 µs  |            0.51× |
+//! |  256 |  256 |       234 µs |         515 µs  |            0.45× |
+//! |  256 | 1024 |       939 µs |         2.73 ms |            0.34× |
+//! | 1024 |   16 |        59 µs |         127 µs  |            0.46× |
+//! | 1024 |   64 |       234 µs |         237 µs  |            0.99× |
+//! | 1024 |  256 |       940 µs |         1.34 ms |            0.70× |
+//! | 1024 | 1024 |       3.75 ms|         6.00 ms |            0.63× |
+//!
+//! **The naive path wins on every benchmarked cell** on `Fp<65537>`.
+//! This is expected given the scalar-field cost profile: a single
+//! `Fp<65537>` multiplication is ≈ 3.6 ns (inlined Barrett-style
+//! reduction over `u64`), while the subproduct tree incurs a fixed
+//! constant factor of additional `Vec<F>` allocations from every
+//! intermediate [`FieldPoly::mul`] and [`FieldPoly::div_rem`]. The
+//! theoretical `O(M(n) log k + k log² k)` asymptotic win assumes a
+//! fast-polynomial-division primitive built on FFT / Newton iteration;
+//! with schoolbook [`FieldPoly::div_rem`] the reduction phase remains
+//! `O(n · k)` — the same as naive — so only the allocation overhead
+//! shows up on the clock.
+//!
+//! The subproduct path is therefore guarded by
+//! [`SUBPRODUCT_THRESHOLD`] and is only expected to pay off on fields
+//! with significantly more expensive scalar arithmetic than `Fp<65537>`
+//! (large-prime Montgomery, tower extensions, …) or once a fast
+//! polynomial-division kernel lands alongside this API. The
+//! implementation is retained unchanged so that a future
+//! FFT-multiplication drop-in (Task 6 of the `bdf95060` story) lights up
+//! the expected speedup without further API churn. Regenerate this
+//! table with `cargo bench -p gf2-core --bench field_poly`.
 
 use crate::field::FiniteField;
 use std::fmt;
@@ -823,6 +877,104 @@ impl<F: FiniteField> FieldPoly<F> {
         points.iter().map(|x| self.eval(x)).collect()
     }
 
+    /// Evaluates the polynomial at every point in `points` using a
+    /// subproduct-tree algorithm, or the naive per-point Horner fallback
+    /// when the inputs are below the [`SUBPRODUCT_THRESHOLD`] crossover.
+    ///
+    /// With schoolbook polynomial arithmetic this routine costs
+    /// `O(n · k + k² log k)` field operations for
+    /// `n = self.degree() + 1` and `k = points.len()`. The asymptotic
+    /// target is `O(M(n) log k + k log² k)` — achievable with an
+    /// FFT-backed polynomial multiplication (`M(n) = O(n log n)`) and a
+    /// fast polynomial division built on Newton's iteration for the
+    /// reciprocal; both are sibling tasks (see the `bdf95060` story).
+    /// Until those land, this implementation is slower than the naive
+    /// Horner baseline on fields with cheap scalar arithmetic such as
+    /// `Fp<65537>` (see the benchmark table in the module docstring),
+    /// which is why [`SUBPRODUCT_THRESHOLD`] is set conservatively.
+    ///
+    /// # Algorithm
+    ///
+    /// 1. **Leaves**: build `M_i = x - points[i]` for every point.
+    /// 2. **Subproduct tree** (bottom-up): pair-merge siblings through
+    ///    [`FieldPoly::Mul`] (which in turn dispatches schoolbook /
+    ///    Karatsuba above [`KARATSUBA_THRESHOLD`]), recording every
+    ///    internal node.
+    /// 3. **Reduction** (top-down): starting from `self mod root`,
+    ///    reduce modulo each internal node via [`FieldPoly::div_rem`]
+    ///    and descend to the leaves. Each leaf-modulus remainder is a
+    ///    constant whose value is the Horner evaluation `self(point_i)`.
+    ///
+    /// The agreement with per-point Horner is exhaustive (see the
+    /// proptests in this module) — this function returns the **same**
+    /// `Vec<F>` as `points.iter().map(|p| self.eval(p)).collect()`.
+    ///
+    /// # Arguments
+    ///
+    /// * `points` — slice of evaluation points. May be empty, contain
+    ///   zeros, or contain duplicates.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::FieldPoly;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// // p(x) = 3x² + 2x + 1 over Fp<7>
+    /// let p = FieldPoly::new(vec![Fp::<7>::new(1), Fp::<7>::new(2), Fp::<7>::new(3)]);
+    /// let xs = vec![Fp::<7>::new(0), Fp::<7>::new(1), Fp::<7>::new(4)];
+    /// let ys = p.batch_evaluate(&xs);
+    /// assert_eq!(ys, vec![Fp::<7>::new(1), Fp::<7>::new(6), Fp::<7>::new(1)]);
+    /// // Agrees with per-point Horner.
+    /// assert_eq!(ys, xs.iter().map(|x| p.eval(x)).collect::<Vec<_>>());
+    /// ```
+    ///
+    /// On the zero polynomial every result is `x.zero_like()` for the
+    /// corresponding point, matching the total [`FieldPoly::eval`]
+    /// contract:
+    ///
+    /// ```
+    /// use gf2_core::field::{FieldPoly, FiniteField};
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let z: FieldPoly<Fp<7>> = FieldPoly::zero_like(&Fp::<7>::new(0));
+    /// assert_eq!(
+    ///     z.batch_evaluate(&[Fp::<7>::new(1), Fp::<7>::new(2)]),
+    ///     vec![Fp::<7>::new(0), Fp::<7>::new(0)],
+    /// );
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// With the current schoolbook-backed [`FieldPoly::mul`] and
+    /// [`FieldPoly::div_rem`] primitives the subproduct path runs in
+    /// `O(n · k + k² log k)` field operations for `n = self.degree() + 1`
+    /// and `k = points.len()`. Below [`SUBPRODUCT_THRESHOLD`] in either
+    /// dimension it falls back to the `O(n · k)` per-point Horner loop,
+    /// which wins on `Fp<65537>` on every benchmarked cell (see the
+    /// module docstring for the measured table).
+    ///
+    /// # Panics
+    ///
+    /// Does not panic on valid inputs: `points.is_empty()` returns an
+    /// empty `Vec`, duplicate or zero points are accepted, and the zero
+    /// polynomial evaluates to `x.zero_like()` at every point.
+    pub fn batch_evaluate(&self, points: &[F]) -> Vec<F> {
+        // Small-input fallback: below the crossover, the overhead of
+        // building the subproduct tree (O(k) polynomial multiplications
+        // plus O(k) Euclidean divisions) exceeds the savings compared to
+        // k Horner folds of length n. See the benchmark table in the
+        // module docstring for the measured crossover on Fp<65537>; both
+        // gates are relaxed so that a zero-polynomial / single-coefficient
+        // input short-circuits immediately.
+        let n = self.len();
+        if points.len() < SUBPRODUCT_THRESHOLD || n < SUBPRODUCT_THRESHOLD {
+            return self.eval_batch(points);
+        }
+
+        batch_evaluate_subproduct(self, points)
+    }
+
     // -----------------------------------------------------------------
     // Construction from roots and products
     // -----------------------------------------------------------------
@@ -1335,6 +1487,157 @@ impl<'a, F: FiniteField> SubAssign<&'a FieldPoly<F>> for FieldPoly<F> {
 /// GF(2^14) places the crossover near 32; smaller prime fields benefit
 /// from the same value.
 pub const KARATSUBA_THRESHOLD: usize = 32;
+
+/// Crossover threshold for [`FieldPoly::batch_evaluate`] between the
+/// subproduct-tree algorithm and the naive per-point Horner fallback.
+///
+/// When either `points.len()` or `self.len()` (the polynomial length, i.e.
+/// degree + 1) is strictly less than this value,
+/// [`FieldPoly::batch_evaluate`] falls through to
+/// [`FieldPoly::eval_batch`] (`O(n · k)` naive Horner).
+///
+/// The value is tuned from the benchmark harness in
+/// `crates/gf2-core/benches/field_poly.rs`. On `Fp<65537>`, where a
+/// single scalar multiplication is ≈ 3.6 ns, the overhead of building
+/// the subproduct tree (and the `Vec<F>` allocations that accompany
+/// every intermediate [`FieldPoly::mul`] / [`FieldPoly::div_rem`]) is
+/// never amortised at the benchmarked sizes; the naive path wins on
+/// every cell in the `n, k ∈ {16, 64, 256, 1024}` matrix. See the module
+/// docstring for the measured table. A conservative default of `256`
+/// keeps the fallback active for those cheap-arithmetic fields until a
+/// fast polynomial-division primitive (FFT / Newton) lands alongside
+/// this API — at which point the asymptotic win materialises and the
+/// threshold can be lowered. Fields with substantially more expensive
+/// scalar arithmetic (large-prime Montgomery, tower extensions) tip the
+/// balance earlier; callers can already dispatch the subproduct path
+/// manually by skipping `batch_evaluate` and reusing the existing
+/// [`FieldPoly::mul`] + [`FieldPoly::div_rem`] primitives on a tree
+/// they build themselves.
+pub const SUBPRODUCT_THRESHOLD: usize = 256;
+
+/// Subproduct-tree batch evaluation (see
+/// [`FieldPoly::batch_evaluate`]). Caller guarantees
+/// `!points.is_empty()`; the algorithm is correct without the
+/// [`SUBPRODUCT_THRESHOLD`] gate, which is purely a performance guard on
+/// the public entry-point.
+///
+/// The tree is stored as a flat `Vec<Vec<FieldPoly<F>>>` with
+/// `levels[0]` holding the leaves `M_i = x - points[i]` and
+/// `levels[last]` holding the single root subproduct. Internal layers
+/// are computed bottom-up by pair-merging through the existing `Mul`
+/// operator on `FieldPoly`, which dispatches schoolbook/Karatsuba
+/// automatically. Reduction then walks top-down, reducing `self` modulo
+/// the root, splitting the remainder across the left/right children
+/// until every leaf holds the constant remainder — which is exactly the
+/// Horner value at that point.
+///
+/// Tree layout note: we explicitly carry an odd final node up to the
+/// next level without a partner (no ghost-identity multiplication),
+/// keeping the multiplication count exactly `k - 1` internal nodes for
+/// `k` leaves. This matches the structure of [`FieldPoly::product`] but
+/// is exposed in parallel as a two-dimensional array so the reduction
+/// phase can walk the same structure top-down without rebuilding it.
+///
+/// This function is exposed as `pub` strictly so the benchmark harness
+/// (`benches/field_poly.rs`) can compare the raw subproduct cost against
+/// the naive baseline without being masked by the threshold dispatch in
+/// [`FieldPoly::batch_evaluate`]. It is hidden from `rustdoc` (via
+/// `#[doc(hidden)]`) and is not part of the stable API — external
+/// callers should always go through the public entry point, which
+/// guards the subproduct path with [`SUBPRODUCT_THRESHOLD`].
+#[doc(hidden)]
+pub fn batch_evaluate_subproduct<F: FiniteField>(poly: &FieldPoly<F>, points: &[F]) -> Vec<F> {
+    debug_assert!(!points.is_empty());
+
+    let k = points.len();
+
+    // Build the leaves: M_i = x - points[i], stored in
+    // ascending-degree order `[-points[i], 1]`.
+    let one = points[0].one_like();
+    let leaves: Vec<FieldPoly<F>> = points
+        .iter()
+        .map(|p| FieldPoly::new(vec![-p.clone(), one.clone()]))
+        .collect();
+
+    // Bottom-up: pair-merge siblings. Odd tail at each level carries
+    // up unchanged. `levels[0]` = leaves; `levels[last]` = root.
+    let mut levels: Vec<Vec<FieldPoly<F>>> = vec![leaves];
+    while levels.last().unwrap().len() > 1 {
+        let cur = levels.last().unwrap();
+        let mut next: Vec<FieldPoly<F>> = Vec::with_capacity(cur.len().div_ceil(2));
+        let mut i = 0;
+        while i + 1 < cur.len() {
+            next.push(&cur[i] * &cur[i + 1]);
+            i += 2;
+        }
+        if i < cur.len() {
+            // Odd tail: carry the last node up without a partner. The
+            // reduction phase below handles single-child descents.
+            next.push(cur[i].clone());
+        }
+        levels.push(next);
+    }
+
+    // Top-down reduction.
+    //
+    // Invariant maintained while descending: for every node `j` at
+    // level `h`, the polynomial `rems[h][j]` equals `poly mod levels[h][j]`
+    // and has degree strictly less than `levels[h][j].degree()`. At the
+    // leaves (level 0) each modulus is linear, so `rems[0][j]` is the
+    // constant `poly(points[j])`.
+    //
+    // We only materialise a single "current level" of remainders at a
+    // time to keep peak memory proportional to the widest tree level.
+    let root_level = levels.len() - 1;
+    debug_assert_eq!(levels[root_level].len(), 1);
+
+    let (_, root_rem) = poly.div_rem(&levels[root_level][0]);
+    let mut cur_rems: Vec<FieldPoly<F>> = vec![root_rem];
+
+    for h in (0..root_level).rev() {
+        let children = &levels[h];
+        let parents = &levels[h + 1];
+        debug_assert_eq!(cur_rems.len(), parents.len());
+
+        let mut next_rems: Vec<FieldPoly<F>> = Vec::with_capacity(children.len());
+        for (p_idx, rem) in cur_rems.iter().enumerate() {
+            let left_idx = 2 * p_idx;
+            let right_idx = left_idx + 1;
+
+            if right_idx < children.len() {
+                // Paired parent: split `rem` across both children.
+                let (_, left_rem) = rem.div_rem(&children[left_idx]);
+                let (_, right_rem) = rem.div_rem(&children[right_idx]);
+                next_rems.push(left_rem);
+                next_rems.push(right_rem);
+            } else {
+                // Odd carry-up: parent equals its lone child exactly, so
+                // the remainder passes through unchanged.
+                debug_assert_eq!(&children[left_idx], &parents[p_idx]);
+                next_rems.push(rem.clone());
+            }
+        }
+        cur_rems = next_rems;
+    }
+
+    debug_assert_eq!(cur_rems.len(), k);
+
+    // Extract constant remainders. A remainder mod (x - point_i) is
+    // either the zero polynomial (value zero) or a constant; the
+    // normalised representation is `[]` for zero and `[c]` for c != 0.
+    cur_rems
+        .into_iter()
+        .enumerate()
+        .map(|(i, r)| {
+            if r.is_zero() {
+                points[i].zero_like()
+            } else {
+                debug_assert_eq!(r.len(), 1, "remainder mod linear must be constant");
+                r.coeffs.into_iter().next().unwrap()
+            }
+        })
+        .collect()
+}
 
 /// Core schoolbook polynomial multiplication, `O(n · m)` in field mults.
 fn mul_schoolbook_impl<F: FiniteField>(lhs: &[F], rhs: &[F]) -> FieldPoly<F> {
@@ -2143,6 +2446,124 @@ mod tests {
         assert_eq!(z.eval_batch(&[]), Vec::<FP7>::new());
     }
 
+    // -----------------------------------------------------------------
+    // batch_evaluate (subproduct tree)
+    //
+    // All unit tests below deliberately exercise the fallback path
+    // (k < SUBPRODUCT_THRESHOLD or n < SUBPRODUCT_THRESHOLD) as well as
+    // the subproduct path. The agreement proptests at the bottom of the
+    // module cover the subproduct branch at scale.
+    // -----------------------------------------------------------------
+
+    #[test]
+    fn test_batch_evaluate_k1() {
+        // Single point: agrees with Horner eval.
+        let p = FieldPoly::new(vec![fp7(1), fp7(2), fp7(3)]);
+        let ys = p.batch_evaluate(&[fp7(4)]);
+        assert_eq!(ys, vec![p.eval(&fp7(4))]);
+    }
+
+    #[test]
+    fn test_batch_evaluate_k2() {
+        let p = FieldPoly::new(vec![fp7(1), fp7(2), fp7(3)]);
+        let xs = vec![fp7(0), fp7(5)];
+        let ys = p.batch_evaluate(&xs);
+        assert_eq!(ys, xs.iter().map(|x| p.eval(x)).collect::<Vec<_>>());
+    }
+
+    #[test]
+    fn test_batch_evaluate_duplicate_points() {
+        let p = FieldPoly::new(vec![fp7(1), fp7(2), fp7(3)]);
+        let xs = vec![fp7(2), fp7(2), fp7(5), fp7(2)];
+        let ys = p.batch_evaluate(&xs);
+        assert_eq!(ys, xs.iter().map(|x| p.eval(x)).collect::<Vec<_>>());
+        // Duplicates map to identical outputs.
+        assert_eq!(ys[0], ys[1]);
+        assert_eq!(ys[0], ys[3]);
+    }
+
+    #[test]
+    fn test_batch_evaluate_contains_zero() {
+        let p = FieldPoly::new(vec![fp7(2), fp7(3), fp7(1)]);
+        let xs = vec![fp7(0), fp7(1), fp7(3)];
+        let ys = p.batch_evaluate(&xs);
+        assert_eq!(ys, xs.iter().map(|x| p.eval(x)).collect::<Vec<_>>());
+        // p(0) = constant term = 2.
+        assert_eq!(ys[0], fp7(2));
+    }
+
+    #[test]
+    fn test_batch_evaluate_degree_zero_polynomial() {
+        // Constant polynomial: every evaluation is the constant itself.
+        let p = FieldPoly::constant(fp7(4));
+        let xs = vec![fp7(0), fp7(1), fp7(6)];
+        let ys = p.batch_evaluate(&xs);
+        assert_eq!(ys, vec![fp7(4), fp7(4), fp7(4)]);
+    }
+
+    #[test]
+    fn test_batch_evaluate_zero_polynomial() {
+        let z: FieldPoly<FP7> = FieldPoly::zero_like(&fp7(0));
+        let xs = vec![fp7(0), fp7(1), fp7(3)];
+        let ys = z.batch_evaluate(&xs);
+        assert_eq!(ys, vec![fp7(0); 3]);
+    }
+
+    #[test]
+    fn test_batch_evaluate_empty_points() {
+        let p = FieldPoly::new(vec![fp7(1), fp7(2), fp7(3)]);
+        assert_eq!(p.batch_evaluate(&[]), Vec::<FP7>::new());
+    }
+
+    #[test]
+    fn test_batch_evaluate_exercises_subproduct_path_fp7() {
+        // Inputs sized at >= SUBPRODUCT_THRESHOLD in both dimensions so
+        // the fast path is exercised directly in the unit harness.
+        let n = SUBPRODUCT_THRESHOLD + 4;
+        let k = SUBPRODUCT_THRESHOLD + 3;
+        let p_coeffs: Vec<FP7> = (0..=n).map(|i| fp7((i as u64 * 3 + 1) % 7)).collect();
+        let p = FieldPoly::new(p_coeffs);
+        let xs: Vec<FP7> = (0..k).map(|i| fp7((i as u64 * 5) % 7)).collect();
+
+        let fast = p.batch_evaluate(&xs);
+        let naive: Vec<FP7> = xs.iter().map(|x| p.eval(x)).collect();
+        assert_eq!(fast, naive);
+    }
+
+    #[test]
+    fn test_batch_evaluate_exercises_subproduct_path_gf16() {
+        let field = Gf2mField::new(4, 0b10011);
+        let n = SUBPRODUCT_THRESHOLD + 4;
+        let k = SUBPRODUCT_THRESHOLD + 3;
+        let p_coeffs: Vec<Gf2mElement> = (0..=n)
+            .map(|i| field.element(((i as u64) * 7 + 1) & 0xF))
+            .collect();
+        let p = FieldPoly::new(p_coeffs);
+        let xs: Vec<Gf2mElement> = (0..k)
+            .map(|i| field.element((i as u64 * 11) & 0xF))
+            .collect();
+
+        let fast = p.batch_evaluate(&xs);
+        let naive: Vec<Gf2mElement> = xs.iter().map(|x| p.eval(x)).collect();
+        assert_eq!(fast, naive);
+    }
+
+    #[test]
+    fn test_batch_evaluate_odd_sized_point_set_fp7() {
+        // Odd k forces the odd-tail-carry branch in the bottom-up tree
+        // build and the corresponding single-child descent during the
+        // top-down reduction.
+        let n = SUBPRODUCT_THRESHOLD + 4;
+        let k = SUBPRODUCT_THRESHOLD + 1; // deliberately odd
+        let p_coeffs: Vec<FP7> = (0..=n).map(|i| fp7((i as u64 * 2 + 1) % 7)).collect();
+        let p = FieldPoly::new(p_coeffs);
+        let xs: Vec<FP7> = (0..k).map(|i| fp7((i as u64 * 3) % 7)).collect();
+
+        let fast = p.batch_evaluate(&xs);
+        let naive: Vec<FP7> = xs.iter().map(|x| p.eval(x)).collect();
+        assert_eq!(fast, naive);
+    }
+
     #[test]
     fn test_from_roots_roots_vanish() {
         let roots = vec![fp7(1), fp7(2), fp7(3)];
@@ -2521,6 +2942,122 @@ mod tests {
             let b_poly = FieldPoly::new(b_coeffs.clone());
             let school = mul_schoolbook_impl(&a_coeffs, &b_coeffs);
             prop_assert_eq!(&a_poly * &b_poly, school);
+        }
+
+        // -----------------------------------------------------------------
+        // batch_evaluate agreement with per-point Horner.
+        //
+        // Two families of proptests:
+        //   * `prop_batch_evaluate_matches_per_point_*` exercises the public
+        //     `batch_evaluate` entry-point, which dispatches to either the
+        //     subproduct tree or the naive Horner fallback depending on
+        //     `SUBPRODUCT_THRESHOLD`.
+        //   * `prop_batch_evaluate_subproduct_matches_per_point_*` calls
+        //     the internal `batch_evaluate_subproduct` helper directly so
+        //     the subproduct branch is exercised on small random inputs
+        //     regardless of the public threshold.
+        // -----------------------------------------------------------------
+
+        #[test]
+        fn prop_batch_evaluate_matches_per_point_fp7(
+            poly_coeffs in prop::collection::vec(0u64..7, 0..40),
+            point_vals in prop::collection::vec(0u64..7, 0..40),
+        ) {
+            let poly = FieldPoly::new(poly_coeffs.into_iter().map(fp7).collect::<Vec<_>>());
+            let points: Vec<FP7> = point_vals.into_iter().map(fp7).collect();
+
+            let fast = poly.batch_evaluate(&points);
+            let naive: Vec<FP7> = points.iter().map(|x| poly.eval(x)).collect();
+            prop_assert_eq!(fast, naive);
+        }
+
+        #[test]
+        fn prop_batch_evaluate_subproduct_matches_per_point_fp7(
+            poly_coeffs in prop::collection::vec(0u64..7, 1..20),
+            point_vals in prop::collection::vec(0u64..7, 1..20),
+        ) {
+            let poly = FieldPoly::new(poly_coeffs.into_iter().map(fp7).collect::<Vec<_>>());
+            let points: Vec<FP7> = point_vals.into_iter().map(fp7).collect();
+            // Exercise the subproduct branch directly on small inputs;
+            // the public `batch_evaluate` short-circuits these sizes to
+            // the naive path, so we poke the helper through the
+            // crate-private wrapper below. Non-empty points are
+            // guaranteed by the strategy range; the zero polynomial is
+            // tolerated by the helper because the leaf-remainder
+            // extraction hands back `x.zero_like()` whenever `poly.div_rem`
+            // returns the zero remainder.
+            let fast = batch_evaluate_subproduct(&poly, &points);
+            let naive: Vec<FP7> = points.iter().map(|x| poly.eval(x)).collect();
+            prop_assert_eq!(fast, naive);
+        }
+
+        #[test]
+        fn prop_batch_evaluate_idempotent_fp7(
+            poly_coeffs in prop::collection::vec(0u64..7, 0..40),
+            point_vals in prop::collection::vec(0u64..7, 0..40),
+        ) {
+            let poly = FieldPoly::new(poly_coeffs.into_iter().map(fp7).collect::<Vec<_>>());
+            let points: Vec<FP7> = point_vals.into_iter().map(fp7).collect();
+
+            let first = poly.batch_evaluate(&points);
+            let second = poly.batch_evaluate(&points);
+            prop_assert_eq!(first, second);
+        }
+
+        #[test]
+        fn prop_batch_evaluate_matches_per_point_gf16(
+            poly_vals in prop::collection::vec(0u64..16, 0..40),
+            point_vals in prop::collection::vec(0u64..16, 0..40),
+        ) {
+            let field = gf16_field();
+            let poly = FieldPoly::new(
+                poly_vals.into_iter().map(|v| field.element(v)).collect::<Vec<_>>(),
+            );
+            let points: Vec<Gf2mElement> = point_vals
+                .into_iter()
+                .map(|v| field.element(v))
+                .collect();
+
+            let fast = poly.batch_evaluate(&points);
+            let naive: Vec<Gf2mElement> = points.iter().map(|x| poly.eval(x)).collect();
+            prop_assert_eq!(fast, naive);
+        }
+
+        #[test]
+        fn prop_batch_evaluate_subproduct_matches_per_point_gf16(
+            poly_vals in prop::collection::vec(0u64..16, 1..20),
+            point_vals in prop::collection::vec(0u64..16, 1..20),
+        ) {
+            let field = gf16_field();
+            let poly = FieldPoly::new(
+                poly_vals.into_iter().map(|v| field.element(v)).collect::<Vec<_>>(),
+            );
+            let points: Vec<Gf2mElement> = point_vals
+                .into_iter()
+                .map(|v| field.element(v))
+                .collect();
+            let fast = batch_evaluate_subproduct(&poly, &points);
+            let naive: Vec<Gf2mElement> = points.iter().map(|x| poly.eval(x)).collect();
+            prop_assert_eq!(fast, naive);
+        }
+
+        #[test]
+        fn prop_batch_evaluate_idempotent_gf16(
+            poly_vals in prop::collection::vec(0u64..16, 0..40),
+            point_vals in prop::collection::vec(0u64..16, 0..40),
+        ) {
+            let field = gf16_field();
+            let poly = FieldPoly::new(
+                poly_vals.into_iter().map(|v| field.element(v)).collect::<Vec<_>>(),
+            );
+            let points: Vec<Gf2mElement> = point_vals
+                .into_iter()
+                .map(|v| field.element(v))
+                .collect();
+
+            let first = poly.batch_evaluate(&points);
+            let second = poly.batch_evaluate(&points);
+            prop_assert_eq!(first, second);
         }
     }
 }

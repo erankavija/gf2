@@ -154,3 +154,7 @@ harness = false
 name = "soa_batch"
 harness = false
 required-features = ["simd"]
+
+[[bench]]
+name = "field_poly"
+harness = false
