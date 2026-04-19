@@ -58,9 +58,68 @@
 //! `cargo bench -p gf2-core --bench field_poly -- --quick interpolate`.
 
 use crate::field::batch_ops::batch_inverse;
-use crate::field::poly::{batch_evaluate_subproduct, build_subproduct_tree};
+use crate::field::poly::build_subproduct_tree;
 use crate::field::{FieldPoly, FiniteField};
 use std::fmt;
+
+// ---------------------------------------------------------------------
+// Threshold + dispatcher
+// ---------------------------------------------------------------------
+
+/// Number-of-points threshold at which [`interpolate_auto`] prefers
+/// [`interpolate_fast`] over [`interpolate`].
+///
+/// Tuned from the benchmark table in the module docstring: fast already wins
+/// the `n = 16` cell on `Fp<65537>` (0.65× of naive wall-clock), so the
+/// threshold is set to `16`. Callers who want a specific variant regardless
+/// of `n` should call [`interpolate`] or [`interpolate_fast`] directly.
+pub const INTERPOLATE_THRESHOLD: usize = 16;
+
+/// Interpolates through `points` using the threshold-tuned dispatcher.
+///
+/// Routes to [`interpolate`] for `points.len() < INTERPOLATE_THRESHOLD`
+/// (where the quadratic path is at worst on par with the fast path) and to
+/// [`interpolate_fast`] otherwise. Retains the same error contract as the
+/// two entry points.
+///
+/// # Arguments
+///
+/// * `points` — slice of `(x_i, y_i)` pairs. All `x_i` must be distinct.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::field::poly_interpolate::interpolate_auto;
+/// use gf2_core::gfp::Fp;
+///
+/// let p = interpolate_auto(&[
+///     (Fp::<7>::new(0), Fp::<7>::new(1)),
+///     (Fp::<7>::new(1), Fp::<7>::new(3)),
+/// ])
+/// .unwrap();
+/// assert_eq!(p.eval(&Fp::<7>::new(0)), Fp::<7>::new(1));
+/// assert_eq!(p.eval(&Fp::<7>::new(1)), Fp::<7>::new(3));
+/// ```
+///
+/// # Errors
+///
+/// Returns [`InterpolationError::DuplicatePoint`] if any two `x_i` coincide.
+///
+/// # Complexity
+///
+/// Below the threshold: `O(n²)` field operations (via [`interpolate`]).
+/// Above the threshold: `O(M(n) log n)` field operations, where `M(n)` is
+/// the cost of multiplying two degree-`n` polynomials (via
+/// [`interpolate_fast`]).
+pub fn interpolate_auto<F: FiniteField>(
+    points: &[(F, F)],
+) -> Result<FieldPoly<F>, InterpolationError> {
+    if points.len() < INTERPOLATE_THRESHOLD {
+        interpolate(points)
+    } else {
+        interpolate_fast(points)
+    }
+}
 
 // ---------------------------------------------------------------------
 // Error type
@@ -355,10 +414,8 @@ pub fn interpolate<F: FiniteField>(points: &[(F, F)]) -> Result<FieldPoly<F>, In
 ///
 /// 1. Build `M(x) = Π_i (x − x_i)` via [`FieldPoly::from_roots`].
 /// 2. Compute `M'(x)` (formal derivative) via [`formal_derivative`].
-/// 3. Evaluate `M'` at all `x_i` via
-///    [`batch_evaluate_subproduct`][crate::field::poly::batch_evaluate_subproduct]
-///    — the subproduct-tree internal entry point shared with
-///    [`FieldPoly::batch_evaluate`]. By the product rule,
+/// 3. Evaluate `M'` at all `x_i` via the public
+///    [`FieldPoly::batch_evaluate`] entry point. By the product rule,
 ///    `M'(x_i) = Π_{j ≠ i} (x_i − x_j)`.
 /// 4. Compute barycentric weights `w_i = y_i / M'(x_i)` using
 ///    [`crate::field::batch_ops::batch_inverse`].
@@ -441,7 +498,7 @@ pub fn interpolate_fast<F: FiniteField>(
 
     // Step 3: Evaluate M'(x) at all x_i.
     // By the product rule: M'(x_i) = Π_{j≠i}(x_i − x_j).
-    let m_prime_vals: Vec<F> = batch_evaluate_subproduct(&m_deriv, &xs);
+    let m_prime_vals: Vec<F> = m_deriv.batch_evaluate(&xs);
 
     // Step 4: Compute weights w_i = y_i / M'(x_i).
     // M'(x_i) is non-zero for distinct x_i (it equals the product of all
