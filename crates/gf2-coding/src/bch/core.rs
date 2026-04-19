@@ -599,9 +599,9 @@ impl BchDecoder {
             });
         }
 
-        // Convert to polynomial. An all-zero received vector normalises
-        // to the zero polynomial in `FieldPoly` (empty coeff vector); in
-        // that case every syndrome is zero by definition.
+        // Convert to polynomial. `FieldPoly::eval_batch` is total on the
+        // zero polynomial (returns `x.zero_like()` for each point), so
+        // the all-zero received vector needs no special case here.
         let r_poly = Gf2mPoly::new(coeffs);
 
         // Compute evaluation points α, α^2, ..., α^(2t)
@@ -619,11 +619,7 @@ impl BchDecoder {
             alpha_power = &alpha_power * &alpha;
         }
 
-        // Batch evaluate r(x) at all syndrome points. Short-circuit the
-        // zero-polynomial case so `FieldPoly::eval` does not panic.
-        if r_poly.is_zero() {
-            return vec![self.code.field.zero(); eval_points.len()];
-        }
+        // Batch evaluate r(x) at all syndrome points.
         r_poly.eval_batch(&eval_points)
     }
 }

@@ -3026,12 +3026,10 @@ mod poly_tests {
             let p2 = Gf2mPoly_::new(vec![field.element(b), field.element(1)]);
             let x = field.element(x_val);
 
-            // (p1 + p2)(x) = p1(x) + p2(x)
-            // The sum may normalise to the zero polynomial (FieldPoly
-            // stores zero as an empty coeff vector); eval() panics
-            // there, so fall back to the additive identity.
-            let sum = &p1 + &p2;
-            let left = if sum.is_zero() { field.zero() } else { sum.eval(&x) };
+            // (p1 + p2)(x) = p1(x) + p2(x). `FieldPoly::eval` is total
+            // on the zero polynomial (returns `x.zero_like()`), so the
+            // cancellation-to-zero case needs no special handling.
+            let left = (&p1 + &p2).eval(&x);
             let right = &p1.eval(&x) + &p2.eval(&x);
 
             prop_assert_eq!(left, right);
