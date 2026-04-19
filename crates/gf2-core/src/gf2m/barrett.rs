@@ -136,13 +136,14 @@ fn clmul128_trunc(a: u128, b: u128) -> u128 {
 /// `x^(2m)` are stored in a single `u128`, capping `2m` at 128 bits.
 ///
 /// The SIMD dispatch in [`crate::gf2m::Gf2mField_`] mirrors that cap —
-/// Barrett is only wired in when the backing type is `u64`. Extending
-/// Barrett to `m = 64..=127` requires 256-bit intermediate arithmetic
-/// (see the module-level docs) and is deliberately deferred to a later
-/// wider-SIMD story (tracked as JIT issue `6fb4abad`). For u128-backed
-/// fields at `m >= 64`, `Gf2mField_<u128>` transparently falls back to
-/// the generic schoolbook primitive, so correctness is preserved — only
-/// the PCLMULQDQ + Barrett fast path is unavailable at those degrees.
+/// Barrett is only wired in when the backing type is `u64`. For wider
+/// fields (`m = 64..=127`, `m = 128..=255`, etc.) use
+/// [`BarrettReducerWide`], which handles arbitrary `N`-word fields by
+/// operating through [`super::wide::clmul_wide`] and explicit
+/// multi-word shift helpers. For u128-backed fields at `m >= 64`,
+/// `Gf2mField_<u128>` transparently falls back to the generic schoolbook
+/// primitive, so correctness is preserved — only the PCLMULQDQ + Barrett
+/// fast path is unavailable at those degrees via this reducer.
 ///
 /// # Examples
 ///
@@ -714,13 +715,15 @@ impl<const N: usize> BarrettReducerWide<N> {
     /// * `modulus` - The low `m` bits of the irreducible polynomial in `N`
     ///   little-endian `u64` words. The implicit leading bit at bit `m` must
     ///   not be set.
-    /// * `m` - The extension degree. Must satisfy `64*(N-1) < m <= 64*N` and
-    ///   be strictly positive.
+    /// * `m` - The extension degree. Must satisfy `1 <= m <= 64 * N`.
+    ///   Typical callers have `64*(N-1) < m <= 64*N` (the natural per-word
+    ///   range), but any value in `1..=64*N` is accepted.
     ///
     /// # Panics
     ///
-    /// Panics if `m` is 0 or greater than `64 * N`, or if bit `m` of `modulus`
-    /// is set (the leading bit must be implicit, not stored).
+    /// Panics if `m` is 0, greater than `64 * N`, or if bit `m` (the
+    /// implicit leading bit of the polynomial) is set in `modulus`
+    /// (the leading bit must be implicit, not stored).
     ///
     /// # Complexity
     ///
@@ -976,34 +979,31 @@ fn xor_modulus_into<const N: usize>(r: &mut [u64; N], modulus: &[u64; N], m: u32
 }
 
 /// Naive O(m) shift-and-XOR polynomial reduction over GF(2) for multi-word
-/// operands. Used only in tests as a reference oracle.
+/// operands. Used only in tests as a reference oracle against which
+/// [`BarrettReducerWide`] is checked.
+///
+/// This function is only compiled in test builds (`#[cfg(test)]`). It is
+/// kept outside the `tests` module so that hypothetical integration tests in
+/// the same crate can reach it, but callers outside of test code should use
+/// [`BarrettReducerWide::reduce`] instead.
 ///
 /// # Arguments
 ///
 /// * `product` - The unreduced polynomial as `M = 2 * N` little-endian u64 words.
-/// * `modulus` - The low m bits of the irreducible polynomial as `N` words
-///   (implicit leading bit at position `m` not stored).
-/// * `m` - The extension degree.
+///   Must have `deg(product) < 2m`.
+/// * `modulus` - The low m bits of the irreducible polynomial as `N` words.
+///   The implicit leading bit at position `m` is not stored.
+/// * `m` - The extension degree. Must satisfy `1 <= m <= 64 * N`.
 ///
-/// # Examples
+/// # Panics
 ///
-/// ```
-/// use gf2_core::gf2m::barrett::reference_reduce_wide;
-///
-/// // GF(2^63) with P(x) = x^63 + x + 1 (modulus low bits = 3).
-/// // The zero product should reduce to zero.
-/// let zero = reference_reduce_wide::<1, 2>(&[0u64, 0u64], &[3u64], 63);
-/// assert_eq!(zero, [0u64]);
-///
-/// // An element with degree < m is already reduced.
-/// let small = reference_reduce_wide::<1, 2>(&[42u64, 0u64], &[3u64], 63);
-/// assert_eq!(small, [42u64]);
-/// ```
+/// Panics at compile time if `M != 2 * N`.
 ///
 /// # Complexity
 ///
 /// O(m · N) — up to m shift-and-XOR passes, each O(N) words.
-pub fn reference_reduce_wide<const N: usize, const M: usize>(
+#[cfg(test)]
+pub(crate) fn reference_reduce_wide<const N: usize, const M: usize>(
     product: &[u64; M],
     modulus: &[u64; N],
     m: u32,
