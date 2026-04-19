@@ -138,7 +138,7 @@
 //! Regenerate with
 //! `cargo bench -p gf2-core --bench field_poly -- --quick batch_mul`.
 
-use crate::field::FiniteField;
+use crate::field::{FiniteField, TwoAdicField};
 use std::fmt;
 use std::ops::{Add, AddAssign, Mul, Neg, Sub, SubAssign};
 
@@ -2103,8 +2103,14 @@ impl<F: FiniteField> Mul<FieldPoly<F>> for FieldPoly<F> {
     ///
     /// `O(n · m)` field multiplications in the schoolbook regime and
     /// `O(n^{log₂ 3})` in the Karatsuba regime, where `n = self.len()`
-    /// and `m = rhs.len()`. NTT-based multiplication for
-    /// `TwoAdicField` inputs is a separate task (`e0b6f940`).
+    /// and `m = rhs.len()`. The [`Mul`] operator deliberately stays on
+    /// the Karatsuba path for every `F: FiniteField` because Rust
+    /// coherence (on MSRV-1.80, without the nightly `specialization`
+    /// feature) does not let us add a second, more-specific impl for
+    /// `F: TwoAdicField`. Call sites that want the `O(N log N)` NTT
+    /// convolution opt in via the free function
+    /// [`poly::mul_fast`](crate::field::poly::mul_fast) or the inherent
+    /// method [`FieldPoly::mul_ntt`].
     fn mul(self, rhs: FieldPoly<F>) -> FieldPoly<F> {
         mul_impl(&self.coeffs, &rhs.coeffs)
     }
@@ -2132,6 +2138,191 @@ impl<'b, F: FiniteField> Mul<&'b FieldPoly<F>> for &FieldPoly<F> {
     fn mul(self, rhs: &'b FieldPoly<F>) -> FieldPoly<F> {
         mul_impl(&self.coeffs, &rhs.coeffs)
     }
+}
+
+// ---------------------------------------------------------------------
+// NTT-based multiplication (TwoAdicField-specialised)
+// ---------------------------------------------------------------------
+
+/// Crossover threshold between Karatsuba and NTT-based multiplication.
+///
+/// When the *output* length `lhs.len() + rhs.len() - 1` strictly exceeds
+/// [`NTT_THRESHOLD`], the free function [`mul_fast`] routes through
+/// [`FieldPoly::mul_ntt`]. Below it, the caller is better served by the
+/// existing schoolbook / Karatsuba dispatch.
+///
+/// The value is tuned from the `ntt` arm of
+/// `crates/gf2-core/benches/field_poly.rs` on `Fp<65537>` — see the
+/// table in the [`ntt`](crate::field::ntt) module docstring. Callers
+/// that want deterministic behaviour can bypass the gate by calling
+/// [`FieldPoly::mul_ntt`] directly.
+pub const NTT_THRESHOLD: usize = 128;
+
+impl<F: TwoAdicField> FieldPoly<F> {
+    /// Multiplies two polynomials over a [`TwoAdicField`] via a radix-2
+    /// NTT convolution.
+    ///
+    /// The algorithm pads both operands to the next power of two
+    /// `N ≥ self.len() + other.len() - 1`, runs a forward NTT on each,
+    /// performs the elementwise product, runs an inverse NTT, and scales
+    /// by `N^{-1}`. The output is trimmed to restore the
+    /// [normalisation invariant](self).
+    ///
+    /// Equivalent to [`FieldPoly::mul`] on every input — the algorithm
+    /// is just asymptotically faster for large operands. The two
+    /// products are checked for agreement by the proptest suite in the
+    /// [`ntt`](crate::field::ntt) module.
+    ///
+    /// # Arguments
+    ///
+    /// * `other` — polynomial to multiply `self` by.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::FieldPoly;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// // (x + 2)(x + 3) = x^2 + 5x + 6 over Fp<65537>
+    /// let a = FieldPoly::new(vec![Fp::<65537>::new(2), Fp::<65537>::new(1)]);
+    /// let b = FieldPoly::new(vec![Fp::<65537>::new(3), Fp::<65537>::new(1)]);
+    /// let c = a.mul_ntt(&b);
+    /// assert_eq!(c.coeff(0), Fp::<65537>::new(6));
+    /// assert_eq!(c.coeff(1), Fp::<65537>::new(5));
+    /// assert_eq!(c.coeff(2), Fp::<65537>::new(1));
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics if the required transform length exceeds
+    /// `2^F::TWO_ADICITY` — i.e. the field does not host a primitive
+    /// root of unity large enough for the product. For `Fp<65537>` that
+    /// cap is `2^16 = 65_536`; the operands would need combined length
+    /// over 32k for this panic to fire.
+    ///
+    /// Multiplying by the zero polynomial on either side is a total
+    /// `O(1)` operation: the result is zero regardless of the other
+    /// operand.
+    ///
+    /// # Complexity
+    ///
+    /// `O(N log N)` field multiplications and additions, where
+    /// `N = next_power_of_two(self.len() + other.len() - 1)`. The
+    /// constant factors make this path slower than Karatsuba below
+    /// [`NTT_THRESHOLD`]; see the benchmark table in the
+    /// [`ntt`](crate::field::ntt) module docstring for the tuned
+    /// crossover on `Fp<65537>`.
+    pub fn mul_ntt(&self, other: &Self) -> Self {
+        use crate::field::ntt::ntt_inplace;
+
+        if self.is_zero() || other.is_zero() {
+            return FieldPoly { coeffs: Vec::new() };
+        }
+
+        let out_len = self.coeffs.len() + other.coeffs.len() - 1;
+        // Next power of two ≥ out_len. `out_len` is always ≥ 1 here
+        // because both operands are non-empty.
+        let n = out_len.next_power_of_two();
+
+        let sample = &self.coeffs[0];
+        let zero = sample.zero_like();
+
+        let mut a: Vec<F> = self.coeffs.clone();
+        a.resize(n, zero.clone());
+        let mut b: Vec<F> = other.coeffs.clone();
+        b.resize(n, zero);
+
+        ntt_inplace(&mut a, false);
+        ntt_inplace(&mut b, false);
+
+        // Elementwise product in the frequency domain.
+        for (x, y) in a.iter_mut().zip(b.iter()) {
+            *x = x.clone() * y.clone();
+        }
+
+        ntt_inplace(&mut a, true);
+
+        // Scale by n^{-1}. Build `n` as `one + one + ...` so that
+        // runtime-configured field handles (not needed for Fp, but kept
+        // uniform) are respected.
+        let one = sample.one_like();
+        let mut n_field = sample.zero_like();
+        for _ in 0..n {
+            n_field += one.clone();
+        }
+        let n_inv = n_field
+            .inv()
+            .expect("transform length n is always non-zero in a TwoAdic field");
+        for x in a.iter_mut() {
+            *x = x.clone() * n_inv.clone();
+        }
+
+        // Truncate padding and normalise (trailing zeros may appear if
+        // the operands' true degree differed from `len() - 1`, though
+        // the inputs are normalised).
+        a.truncate(out_len);
+        FieldPoly::new(a)
+    }
+}
+
+/// Multiplies two polynomials over a [`TwoAdicField`] with dispatch
+/// between Karatsuba / schoolbook (via [`FieldPoly::mul`]) and NTT
+/// (via [`FieldPoly::mul_ntt`]).
+///
+/// Rust coherence prevents us from specialising the blanket
+/// `impl Mul for FieldPoly<F>` on the stable MSRV-1.80 toolchain: we
+/// cannot add a second, more-specific `impl<F: TwoAdicField>` without
+/// the nightly `specialization` feature. `mul_fast` is the escape
+/// valve — a free function constrained to [`TwoAdicField`] that every
+/// call site can opt into explicitly when it knows the field is
+/// NTT-capable. The `Mul` operator continues to run the Karatsuba
+/// fallback unconditionally, so generic `F: FiniteField` call sites
+/// (notably `Gf2mElement`, which does not implement [`TwoAdicField`])
+/// are unaffected.
+///
+/// The output-length threshold [`NTT_THRESHOLD`] is tuned from the
+/// benchmark harness (see the [`ntt`](crate::field::ntt) module
+/// docstring). Below it, this function delegates to [`FieldPoly::mul`];
+/// above, it delegates to [`FieldPoly::mul_ntt`].
+///
+/// # Arguments
+///
+/// * `a` — first operand.
+/// * `b` — second operand.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::field::poly::mul_fast;
+/// use gf2_core::field::FieldPoly;
+/// use gf2_core::gfp::Fp;
+///
+/// // Small operands fall through to Karatsuba / schoolbook.
+/// let a = FieldPoly::new(vec![Fp::<65537>::new(1), Fp::<65537>::new(2)]);
+/// let b = FieldPoly::new(vec![Fp::<65537>::new(3), Fp::<65537>::new(4)]);
+/// let c = mul_fast(&a, &b);
+/// assert_eq!(c, a.mul(&b));
+/// ```
+///
+/// # Panics
+///
+/// Inherits the panic surface of [`FieldPoly::mul_ntt`] — panics only
+/// if the product length exceeds `2^F::TWO_ADICITY`. The Karatsuba
+/// fallback never panics on valid inputs.
+///
+/// # Complexity
+///
+/// `O(n · m)` field multiplications below [`NTT_THRESHOLD`] and
+/// `O(N log N)` above, where `N = next_power_of_two(n + m - 1)`.
+pub fn mul_fast<F: TwoAdicField>(a: &FieldPoly<F>, b: &FieldPoly<F>) -> FieldPoly<F> {
+    if a.is_zero() || b.is_zero() {
+        return FieldPoly { coeffs: Vec::new() };
+    }
+    let out_len = a.coeffs.len() + b.coeffs.len() - 1;
+    if out_len <= NTT_THRESHOLD {
+        return a.mul(b);
+    }
+    a.mul_ntt(b)
 }
 
 // ---------------------------------------------------------------------

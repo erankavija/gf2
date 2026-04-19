@@ -150,5 +150,59 @@ fn bench_batch_mul(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(benches, bench_batch_evaluate, bench_batch_mul);
+/// Build a deterministic polynomial of length `n` for the NTT /
+/// Karatsuba shoot-out. Coefficients are drawn from a fast LCG so the
+/// bench is reproducible across runs without pulling in `rand`.
+fn make_ntt_poly(n: usize, seed: u64) -> FieldPoly<F> {
+    let modulus: u64 = 65537;
+    let mut state = seed | 1;
+    let coeffs: Vec<F> = (0..n)
+        .map(|_| {
+            state = state
+                .wrapping_mul(6_364_136_223_846_793_005)
+                .wrapping_add(1_442_695_040_888_963_407);
+            F::new((state >> 33) % modulus)
+        })
+        .collect();
+    FieldPoly::new(coeffs)
+}
+
+fn bench_ntt_vs_karatsuba(c: &mut Criterion) {
+    use gf2_core::field::poly::mul_fast;
+
+    let mut group = c.benchmark_group("field_poly_mul_fp65537");
+    group.sample_size(20);
+
+    for &n in &[64usize, 128, 256, 512, 1024] {
+        let a = make_ntt_poly(n, 0xa5a5_5a5a_a5a5_5a5a);
+        let b = make_ntt_poly(n, 0x5a5a_a5a5_5a5a_a5a5);
+
+        // "karatsuba" — the existing `Mul` operator dispatch, which
+        // routes through the schoolbook / Karatsuba code path.
+        group.bench_with_input(BenchmarkId::new("karatsuba", n), &(&a, &b), |bh, (p, q)| {
+            bh.iter(|| black_box(black_box(*p).mul(black_box(*q))));
+        });
+
+        // "ntt" — the unconditional NTT path via `mul_ntt`. The
+        // threshold gate in `mul_fast` is benchmarked separately below.
+        group.bench_with_input(BenchmarkId::new("ntt", n), &(&a, &b), |bh, (p, q)| {
+            bh.iter(|| black_box(black_box(*p).mul_ntt(black_box(*q))));
+        });
+
+        // "mul_fast" — the tuned dispatcher; should track the faster of
+        // the two arms above on every `n`.
+        group.bench_with_input(BenchmarkId::new("mul_fast", n), &(&a, &b), |bh, (p, q)| {
+            bh.iter(|| black_box(mul_fast(black_box(*p), black_box(*q))));
+        });
+    }
+
+    group.finish();
+}
+
+criterion_group!(
+    benches,
+    bench_batch_evaluate,
+    bench_batch_mul,
+    bench_ntt_vs_karatsuba,
+);
 criterion_main!(benches);
