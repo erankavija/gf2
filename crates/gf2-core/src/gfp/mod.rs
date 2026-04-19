@@ -50,7 +50,10 @@
 //! ```
 
 mod montgomery;
+pub mod simd_ops;
 pub mod specialized;
+
+pub use simd_ops::SimdVecOps;
 
 use montgomery::{from_mont, mod_pow_mont, mont_add, mont_sub, redc, to_mont, MontConsts};
 use specialized::{

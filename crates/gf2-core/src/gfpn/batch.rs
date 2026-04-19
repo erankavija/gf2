@@ -46,6 +46,14 @@
 //! inner loop is branchless and cross-lane-dependency-free so LLVM's
 //! auto-vectoriser can widen it opportunistically.
 //!
+//! [`crate::field::FieldVec`] uses the *same* AVX2 `Fp<65537>` kernels
+//! at the element-wise level via the
+//! [`crate::gfp::SimdVecOps`] trait — `mul_vec`, `add_vec`, and
+//! `sub_vec` transparently route through `gf2-kernels-simd` on AVX2
+//! hosts. The pack/unpack helpers in
+//! [`crate::gfp::simd_ops`] are shared between the two surfaces so there
+//! is a single source of truth for the Montgomery-canonical fast path.
+//!
 //! # Measured performance
 //!
 //! Benchmarked on the reference Zen 3 host (AMD Ryzen 9 5900X) via
@@ -54,9 +62,9 @@
 //!
 //! | workload                                        | time     | vs baseline |
 //! |-------------------------------------------------|---------:|------------:|
-//! | sequential `QuadraticExt::mul` (AoS, scalar)    | 15.54 µs |   1.00× |
-//! | `BatchExtField::batch_mul_quadratic` (SoA)      |  1.95 µs |   7.98× |
-//! | SoA including AoS↔SoA transpose                 |  5.04 µs |   3.08× |
+//! | sequential `QuadraticExt::mul` (AoS, scalar)    | 15.60 µs |   1.00× |
+//! | `BatchExtField::batch_mul_quadratic` (SoA)      |  1.97 µs |   7.91× |
+//! | SoA including AoS↔SoA transpose                 |  5.06 µs |   3.08× |
 //!
 //! Both the pure SoA path and the end-to-end AoS→SoA→AoS path beat the
 //! issue's ≥3× target. The fused AVX2 Karatsuba kernel is the source
@@ -539,11 +547,16 @@ impl<F: ConstField + SimdKaratsubaHook> BatchExtField<F, 2> {
     /// out.c1 = (self.c0 + self.c1)·(other.c0 + other.c1) − v0 − v1
     /// ```
     ///
-    /// Each arithmetic line is a single base-field batch pass over
-    /// contiguous `&[F]` slices, so the hot loops are amenable to SIMD
-    /// auto-vectorisation (or to a future explicit SIMD kernel wired
-    /// through `FieldVec<F>::mul_vec`). Total cost: 3 batch-muls, 2 batch
-    /// adds, 3 batch subtractions, and 1 batch `mul_by_non_residue`.
+    /// For the specialised base field `Fp<65537>` on AVX2 hosts with the
+    /// `simd` feature, the implementation routes through the fused AVX2
+    /// Karatsuba kernel in `gf2-kernels-simd::fp65537::batch_karatsuba_fn`
+    /// — all seven Karatsuba intermediates stay in registers across the
+    /// 8-lane vector loop. For any other `F` (or when AVX2 is unavailable)
+    /// the scalar straight-line combine runs element by element.
+    /// [`crate::field::FieldVec`]'s element-wise ops share the same
+    /// `Fp<65537>` SIMD kernels via the [`crate::gfp::SimdVecOps`] trait.
+    /// Total cost: 3 base-field multiplications, 2 additions, 3
+    /// subtractions, and one `mul_by_non_residue` per batch element.
     ///
     /// # Type Parameters
     ///
@@ -769,26 +782,32 @@ fn fp65537_simd_impl<const P: u64, C: ExtConfig<BaseField = Fp<P>>>(
     b0: &[Fp<P>],
     b1: &[Fp<P>],
 ) -> Option<(Vec<Fp<P>>, Vec<Fp<P>>)> {
+    use crate::gfp::simd_ops::{fp65537_pack, fp65537_unpack};
     debug_assert_eq!(P, 65537, "fp65537_simd_impl requires P = 65537");
 
     let fns = crate::simd::maybe_fp65537()?;
     let n = a0.len();
 
-    // Pack `&[Fp<P>]` → `Vec<u32>` via the canonical-storage fast path.
-    // For P = 65537, `raw_storage()` returns the canonical value because
-    // R = 2^64 ≡ 1 (mod P), so Montgomery and canonical representations
-    // coincide.
-    let pack = |xs: &[Fp<P>]| -> Vec<u32> { xs.iter().map(|x| x.raw_storage() as u32).collect() };
-    let a0_u32 = pack(a0);
-    let a1_u32 = pack(a1);
-    let b0_u32 = pack(b0);
-    let b1_u32 = pack(b1);
+    // Pack through the shared `gfp::simd_ops::fp65537_pack` helper so that
+    // FieldVec and BatchExtField both go through one implementation. For
+    // `P = 65537`, `raw_storage()` returns the canonical value because
+    // `R = 2^64 ≡ 1 (mod P)` (Montgomery coincides with canonical).
+    let a0_u32 = fp65537_pack::<P>(a0);
+    let a1_u32 = fp65537_pack::<P>(a1);
+    let b0_u32 = fp65537_pack::<P>(b0);
+    let b1_u32 = fp65537_pack::<P>(b1);
 
     // Single fused SIMD pass: reads each input slice once, writes each
     // output slice once, and keeps all seven Karatsuba intermediates in
     // AVX2 registers. This is the crucial speedup vs. a per-op
     // composition — eliminating nine heap buffers and six extra memory
-    // round-trips.
+    // round-trips. This fused pass is also the reason we keep a direct
+    // path here rather than expressing the Karatsuba combine purely in
+    // terms of `FieldVec::mul_vec`/`add_vec`/`sub_vec` calls: doing so
+    // would re-introduce the per-op intermediate buffers and lose ~5×
+    // of the measured speedup. FieldVec's element-wise ops still route
+    // through the same underlying `Fp65537Fns` table via `SimdVecOps`,
+    // so the two surfaces stay consistent.
     let beta_u32 = C::NON_RESIDUE.raw_storage() as u32;
     let mut out_c0 = vec![0u32; n];
     let mut out_c1 = vec![0u32; n];
@@ -802,14 +821,7 @@ fn fp65537_simd_impl<const P: u64, C: ExtConfig<BaseField = Fp<P>>>(
         &mut out_c1,
     );
 
-    // Unpack `Vec<u32>` back into `Vec<Fp<P>>` via the canonical-storage
-    // fast path (same reasoning as `pack`).
-    let unpack = |xs: &[u32]| -> Vec<Fp<P>> {
-        xs.iter()
-            .map(|&x| Fp::<P>::from_raw_storage(x as u64))
-            .collect()
-    };
-    Some((unpack(&out_c0), unpack(&out_c1)))
+    Some((fp65537_unpack::<P>(&out_c0), fp65537_unpack::<P>(&out_c1)))
 }
 
 #[cfg(not(feature = "simd"))]
