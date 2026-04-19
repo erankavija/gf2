@@ -16,6 +16,13 @@
 //! - [`batch_ops`] — Montgomery's trick for inverting many elements with a
 //!   single field inversion.
 //!
+//! # Fast transforms
+//!
+//! - [`ntt`] — radix-2 Number Theoretic Transform over [`TwoAdicField`].
+//!   Powers the `O(n log n)` fast polynomial multiplication path
+//!   [`FieldPoly::mul_ntt`](poly::FieldPoly::mul_ntt) and the free
+//!   function [`poly::mul_fast`].
+//!
 //! # Polynomials
 //!
 //! - [`poly`] — [`FieldPoly<F>`](poly::FieldPoly), a generic univariate
@@ -32,6 +39,7 @@
 //!   sibling tasks that build on this surface.
 
 pub mod batch_ops;
+pub mod ntt;
 pub mod poly;
 mod traits;
 pub mod two_adic;
@@ -44,6 +52,7 @@ pub use batch_ops::{
     batch_inverse, batch_inverse_in_place, batch_inverse_skip_zeros,
     batch_inverse_skip_zeros_in_place, batch_inverse_with_scratch,
 };
+pub use ntt::ntt_inplace;
 pub use poly::FieldPoly;
 pub use traits::{ConstField, FiniteField, FiniteFieldExt};
 pub use two_adic::TwoAdicField;
