@@ -1467,16 +1467,18 @@ mod tests {
 
         /// All-ones squared, N = 2 (128-bit operand).
         ///
-        /// The same "squaring scatters to even positions" pattern, now producing
-        /// a 4-word result.  Words 0 and 2 collect even-position bits;
-        /// words 1 and 3 are zero (odd positions).
+        /// Squaring in GF(2) is a bit-scatter: bit `i` of the input lands at
+        /// bit `2i` of the output. Starting from a 128-bit all-ones operand,
+        /// the output has the even-indexed bit of every output position set
+        /// and the odd-indexed bit clear. Packed into u64 lanes that is the
+        /// constant `0x5555_5555_5555_5555` in all four output words — the
+        /// cross-terms `a[0]*a[1]` and `a[1]*a[0]` cancel in GF(2) (equal
+        /// terms XOR to zero), so the self-squaring structure survives
+        /// intact.
         #[test]
         fn test_clmul_wide_all_ones_squared_n2() {
             let a = [u64::MAX, u64::MAX];
             let out = clmul_wide::<2, 4>(&a, &a);
-            // Squaring a[0] (bits 0..=63) → even bits in [0..=126]; lands in out[0] and out[1].
-            // Squaring a[1] (bits 64..=127) → even bits in [128..=254]; lands in out[2] and out[3].
-            // Cross-terms a[0]*a[1] and a[1]*a[0] cancel in GF(2) (they're equal, 2x = 0).
             let even = 0x5555_5555_5555_5555u64;
             assert_eq!(out[0], even, "word 0");
             assert_eq!(out[1], even, "word 1");
@@ -1504,6 +1506,22 @@ mod tests {
             #[test]
             fn prop_clmul_wide_commutative_n1(a in any::<u64>(), b in any::<u64>()) {
                 prop_assert_eq!(clmul_wide::<1, 2>(&[a], &[b]), clmul_wide::<1, 2>(&[b], &[a]));
+            }
+
+            /// Commutativity for N = 4 (256-bit operands, `[u64; 4]`).
+            ///
+            /// Exercises the inner O(N²) schoolbook loop at the largest
+            /// size the 6fb4abad story plans to support (`Gf2mWide<4>`
+            /// for `GF(2^256)`), confirming that commutativity holds
+            /// word-by-word on the full 512-bit product layout.
+            #[test]
+            fn prop_clmul_wide_commutative_n4(
+                a0 in any::<u64>(), a1 in any::<u64>(), a2 in any::<u64>(), a3 in any::<u64>(),
+                b0 in any::<u64>(), b1 in any::<u64>(), b2 in any::<u64>(), b3 in any::<u64>(),
+            ) {
+                let a = [a0, a1, a2, a3];
+                let b = [b0, b1, b2, b3];
+                prop_assert_eq!(clmul_wide::<4, 8>(&a, &b), clmul_wide::<4, 8>(&b, &a));
             }
         }
 
