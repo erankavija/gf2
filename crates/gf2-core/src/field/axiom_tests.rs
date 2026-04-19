@@ -129,6 +129,30 @@ where
 /// * `strategy` — proptest strategy producing random field elements.
 /// * `characteristic` — the prime characteristic of the field.
 /// * `cases` — number of proptest cases per axiom.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::field::axiom_tests::{fp_strategy, test_field_axioms_with_cases};
+///
+/// // Run the full FiniteField axiom suite over Fp<7> at a reduced
+/// // 64-case budget (useful in doctests or when driving a very slow field).
+/// test_field_axioms_with_cases(fp_strategy::<7>(), 7, 64);
+/// ```
+///
+/// # Panics
+///
+/// Panics — via a proptest `TestRunner` abort — if any axiom check fails on a
+/// random sample (e.g. an implementation of the target [`FiniteField`] violates
+/// associativity, distributivity, or any other algebraic law the harness
+/// verifies). Also panics if `cases == 0`, because `proptest` treats a
+/// zero-case runner as a configuration error.
+///
+/// # Complexity
+///
+/// `O(cases × axiom_count × cost_of_field_ops)`, where `axiom_count` is the
+/// ~18 axioms run by this harness. Linear in `cases`, so halving it halves
+/// wall-clock time.
 pub fn test_field_axioms_with_cases<F: FiniteField + Debug>(
     strategy: BoxedStrategy<F>,
     characteristic: u64,
