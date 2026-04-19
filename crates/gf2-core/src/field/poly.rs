@@ -1495,13 +1495,19 @@ fn mul_impl<F: FiniteField>(lhs: &[F], rhs: &[F]) -> FieldPoly<F> {
 impl<F: FiniteField> Mul<FieldPoly<F>> for FieldPoly<F> {
     type Output = FieldPoly<F>;
 
-    /// Schoolbook polynomial multiplication.
+    /// Polynomial multiplication with schoolbook/Karatsuba dispatch.
+    ///
+    /// Below [`KARATSUBA_THRESHOLD`] coefficients the schoolbook
+    /// implementation is used; above it, recursive Karatsuba. The
+    /// dispatch is transparent to callers — the operator always yields a
+    /// normalised `FieldPoly<F>`.
     ///
     /// # Complexity
     ///
-    /// `O(n · m)` field multiplications, where `n = self.len()` and
-    /// `m = rhs.len()`. See the [module documentation](self) for why
-    /// Karatsuba / NTT are not dispatched here.
+    /// `O(n · m)` field multiplications in the schoolbook regime and
+    /// `O(n^{log₂ 3})` in the Karatsuba regime, where `n = self.len()`
+    /// and `m = rhs.len()`. NTT-based multiplication for
+    /// `TwoAdicField` inputs is a separate task (`e0b6f940`).
     fn mul(self, rhs: FieldPoly<F>) -> FieldPoly<F> {
         mul_impl(&self.coeffs, &rhs.coeffs)
     }
