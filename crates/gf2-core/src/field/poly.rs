@@ -86,10 +86,16 @@
 //! - Semantic divergence to be aware of: the zero polynomial is
 //!   represented as an *empty* `coeffs` vector in `FieldPoly` but as a
 //!   *singleton zero coefficient* in `Gf2mPoly_`. This divergence is
-//!   observable via [`FieldPoly::len`] / [`FieldPoly::coeff`] (returns
-//!   `None` for the zero polynomial) vs. `Gf2mPoly_::coeff` (returns a
-//!   zero element for any out-of-range index, including index `0` on
-//!   the zero polynomial). Both types agree on `is_zero()`,
+//!   observable via [`FieldPoly::len`] and the three coefficient
+//!   accessors: [`FieldPoly::coeff`] (returns `F` by value, **panics on
+//!   the zero polynomial** since no field sample is available),
+//!   [`FieldPoly::try_coeff`] (returns `Option<&F>`, `None` for any
+//!   out-of-range index including the zero polynomial), and
+//!   [`FieldPoly::coeff_or_zero`] (returns `F`, uses a caller-supplied
+//!   sample to synthesise zero on out-of-range). `Gf2mPoly_::coeff`
+//!   returns a zero element for any out-of-range index, including
+//!   index `0` on the zero polynomial — closer to
+//!   [`FieldPoly::coeff_or_zero`]. Both types agree on `is_zero()`,
 //!   `degree() == None`, arithmetic results, and equality.
 //! - A future epic may converge the two by delegating `Gf2mPoly_`
 //!   operations to `FieldPoly<Gf2mElement>`. That is explicitly out of
@@ -114,6 +120,8 @@ use std::ops::{Add, AddAssign, Mul, Neg, Sub, SubAssign};
 ///
 /// # Examples
 ///
+/// Over a compile-time prime field `Fp<7>`:
+///
 /// ```
 /// use gf2_core::field::FieldPoly;
 /// use gf2_core::gfp::Fp;
@@ -123,6 +131,23 @@ use std::ops::{Add, AddAssign, Mul, Neg, Sub, SubAssign};
 /// assert_eq!(p.degree(), Some(1));
 /// assert_eq!(p.try_coeff(0), Some(&Fp::<7>::new(3)));
 /// assert_eq!(p.try_coeff(1), Some(&Fp::<7>::new(2)));
+/// ```
+///
+/// Over a runtime-configured binary extension field `Gf2mElement`
+/// (e.g. GF(2^4) with reduction polynomial `x^4 + x + 1`):
+///
+/// ```
+/// use gf2_core::field::{FieldPoly, FiniteField};
+/// use gf2_core::gf2m::Gf2mField;
+///
+/// let field = Gf2mField::new(4, 0b10011);
+/// let p = FieldPoly::new(vec![field.element(5), field.element(3)]);
+/// assert_eq!(p.degree(), Some(1));
+/// // Polynomial arithmetic composes with the runtime field:
+/// let q = FieldPoly::new(vec![field.element(2), field.element(1)]);
+/// let sum = &p + &q;
+/// assert_eq!(sum.degree(), Some(1));
+/// assert_eq!(sum.try_coeff(0), Some(&(field.element(5) + field.element(2))));
 /// ```
 // The semantic "empty" predicate for a polynomial is `is_zero` (see the
 // normalisation invariant in the module docs): the zero polynomial is
