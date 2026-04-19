@@ -23,12 +23,21 @@ All core types are generic over `V: UintExt`, a sealed trait implemented for
 ```rust
 pub struct Gf2mField_<V: UintExt = u64> { params: Arc<FieldParams_<V>> }
 pub struct Gf2mElement_<V: UintExt = u64> { value: V, params: Arc<FieldParams_<V>> }
-pub struct Gf2mPoly_<V: UintExt = u64> { coeffs: Vec<Gf2mElement_<V>> }
+
+// Polynomials over GF(2^m) are a specialisation of the generic FieldPoly<F>
+// type in `crate::field::poly`. Gf2mPoly_ / Gf2mPoly are `pub type` aliases;
+// all arithmetic lives on FieldPoly and is shared across every FiniteField.
+pub type Gf2mPoly_<V: UintExt = u64> = crate::field::FieldPoly<Gf2mElement_<V>>;
 
 pub type Gf2mField = Gf2mField_<u64>;
 pub type Gf2mElement = Gf2mElement_<u64>;
 pub type Gf2mPoly = Gf2mPoly_<u64>;
 ```
+
+GF(2^m)-specific polynomial helpers (`from_exponents`, `from_bitvec`,
+`to_bitvec`, etc.) are inherent methods on `FieldPoly<Gf2mElement_<V>>`
+provided by `crate::gf2m::poly_helpers`, so they remain reachable through the
+`Gf2mPoly_` / `Gf2mPoly` aliases without ergonomic churn.
 
 `Gf2mElement_<V>` implements `FiniteField` for all `V: UintExt`, with `Wide = Self`
 (XOR addition never overflows).
