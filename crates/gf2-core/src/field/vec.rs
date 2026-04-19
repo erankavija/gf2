@@ -2000,11 +2000,7 @@ mod tests {
         // 0, 1, p-1 = 65536, p/2 = 32768, saturation case 65536*65536
         let raw = [0u64, 1, 65536, 32768, 1, 65536, 0, 65535, 65536];
         let a: FieldVec<Fp<65537>> = raw.iter().map(|&v| Fp::<65537>::new(v)).collect();
-        let b: FieldVec<Fp<65537>> = raw
-            .iter()
-            .rev()
-            .map(|&v| Fp::<65537>::new(v))
-            .collect();
+        let b: FieldVec<Fp<65537>> = raw.iter().rev().map(|&v| Fp::<65537>::new(v)).collect();
         let simd = a.simd_mul_vec(&b);
         let scalar = a.mul_vec(&b);
         assert_eq!(simd, scalar);

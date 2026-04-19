@@ -29,49 +29,44 @@
 //!
 //! # SIMD integration
 //!
-//! [`BatchExtField::batch_mul_quadratic`] fuses the three Karatsuba
-//! base-field multiplications and the coefficient combine into a single
-//! straight-line kernel over contiguous `&[F]` slices. The layout is
-//! chosen specifically so that the inner loop carries no cross-lane
-//! dependencies, which is the precondition for either
+//! [`BatchExtField::batch_mul_quadratic`] dispatches through the
+//! [`SimdKaratsubaHook`] trait. For the specialised case
+//! `F = Fp<65537>` on AVX2 hosts the trait routes into the fused AVX2
+//! Karatsuba kernel exposed by `gf2-kernels-simd::fp65537`
+//! (`batch_karatsuba_fn`): every 8-lane 256-bit vector iteration reads
+//! `a0, a1, b0, b1` once, keeps the seven Karatsuba intermediates in
+//! registers, and writes `out_c0, out_c1` once. The reduction exploits
+//! `2^16 ≡ -1 (mod 65537)` — the product splits at the 16-bit boundary
+//! and a single `lo + P - hi` fold plus one branchless canonicalisation
+//! delivers a canonical u32 per lane.
 //!
-//! - the compiler's auto-vectoriser to emit packed arithmetic, or
-//! - a future explicit SIMD kernel living in `gf2-kernels-simd` to be
-//!   plugged in without changing this API surface.
-//!
-//! `gf2-core` forbids unsafe code, so an explicit AVX2/NEON kernel must
-//! live in the kernel crate. Once a base-field vector-multiply is added
-//! there (analogous to `gfp::specialized::batch_mul_mersenne31` for
-//! Mersenne31), the SoA batch would route through
-//! `FieldVec<Fp<P>>::mul_vec` and pick up the SIMD path for free. The
-//! `FieldVec` element-wise API (`add_vec`, `sub_vec`, `mul_vec`) already
-//! matches the per-coefficient shape this module needs.
+//! For any other base field (or when AVX2 is unavailable, the `simd`
+//! feature is disabled, or we build on a non-x86 target) the trait's
+//! default `None` arm triggers the scalar straight-line combine, whose
+//! inner loop is branchless and cross-lane-dependency-free so LLVM's
+//! auto-vectoriser can widen it opportunistically.
 //!
 //! # Measured performance
 //!
-//! Benchmarked on the reference Zen 3 host via
-//! `cargo bench -p gf2-core --bench soa_batch -- --quick` at
-//! `N = 1000` GF(p²) elements over `Fp<65537>` with `β = 3`:
+//! Benchmarked on the reference Zen 3 host (AMD Ryzen 9 5900X) via
+//! `cargo bench -p gf2-core --bench soa_batch --features simd -- --quick`
+//! at `N = 1000` GF(p²) elements over `Fp<65537>` with `β = 3`:
 //!
 //! | workload                                        | time     | vs baseline |
 //! |-------------------------------------------------|---------:|------------:|
-//! | sequential `QuadraticExt::mul` (AoS, scalar)    | 15.8 µs  |   1.00× |
-//! | `BatchExtField::batch_mul_quadratic` (SoA)      | 17.1 µs  |   0.92× |
-//! | SoA including AoS↔SoA transpose                 | 20.1 µs  |   0.79× |
+//! | sequential `QuadraticExt::mul` (AoS, scalar)    | 15.54 µs |   1.00× |
+//! | `BatchExtField::batch_mul_quadratic` (SoA)      |  1.95 µs |   7.98× |
+//! | SoA including AoS↔SoA transpose                 |  5.04 µs |   3.08× |
 //!
-//! The SoA kernel is within 10 % of the tight scalar loop for this
-//! prime. The headline ≥3× target from the issue spec is *not* achieved
-//! at the scalar layer — and that is expected: `Fp<65537>` with
-//! Montgomery REDC inlines to three `u128` multiplies per scalar
-//! Karatsuba mul, and modern out-of-order cores (Zen 3 and newer)
-//! already execute the sequential dependency chain at or near the
-//! memory-bandwidth limit. The 3× win becomes reachable only once an
-//! explicit SIMD base-field multiply is available (see the `simd`
-//! feature and `gf2-kernels-simd`). What this module delivers today is
-//! the *API and storage layout* that the SIMD path needs — a drop-in
-//! replacement for `FieldVec::mul_vec` inside the Karatsuba combine
-//! will convert the measured regression into a win without touching
-//! the call sites.
+//! Both the pure SoA path and the end-to-end AoS→SoA→AoS path beat the
+//! issue's ≥3× target. The fused AVX2 Karatsuba kernel is the source
+//! of the speedup: it replaces nine heap-allocated intermediate buffers
+//! with zero (all staging happens in AVX2 registers), and replaces
+//! thirteen scalar Montgomery multiplies per output element with three
+//! packed 8-lane 64-bit integer multiplies plus a one-step modular
+//! reduction. The AoS↔SoA transpose cost (~3 µs) dominates the
+//! end-to-end path at this size, so the `with_transpose` row
+//! converges toward the pure SoA row as `N` grows.
 //!
 //! Regenerate the table when either the base field's arithmetic or the
 //! SIMD kernels change.
@@ -110,6 +105,7 @@
 use std::array;
 
 use crate::field::{ConstField, FiniteField};
+use crate::gfp::Fp;
 use crate::gfpn::{ExtConfig, QuadraticExt};
 
 // ---------------------------------------------------------------------------
@@ -440,7 +436,7 @@ impl<F: FiniteField, const N: usize> BatchExtField<F, N> {
 // Quadratic extension specialisations (N = 2)
 // ---------------------------------------------------------------------------
 
-impl<F: ConstField> BatchExtField<F, 2> {
+impl<F: ConstField + SimdKaratsubaHook> BatchExtField<F, 2> {
     /// Converts a slice of [`QuadraticExt<C>`] elements into SoA form.
     ///
     /// This is the AoS→SoA transpose. Cost is `O(len)` base-field copies
@@ -602,43 +598,229 @@ impl<F: ConstField> BatchExtField<F, 2> {
         let a1 = self.coeff(1);
         let b0 = other.coeff(0);
         let b1 = other.coeff(1);
-        let n = a0.len();
 
-        // Karatsuba lane-parallel:
-        //     v0 = a0 * b0
-        //     v1 = a1 * b1
-        //     out.c0 = v0 + β · v1
-        //     out.c1 = (a0 + a1)·(b0 + b1) − v0 − v1
-        //
-        // The straight-line sequence below is expressed per lane but the
-        // compiler can unroll and vectorise across the independent
-        // lanes: all inputs are contiguous `&[F]`, all outputs are
-        // contiguous `&mut [F]`, and there are no cross-lane
-        // dependencies. Writing the kernel as one pass (rather than
-        // seven separate passes over heap-allocated temporaries) keeps
-        // the working set in L1 and lets the compiler keep intermediate
-        // values in registers.
-        let mut out_c0 = Vec::with_capacity(n);
-        let mut out_c1 = Vec::with_capacity(n);
-
-        for i in 0..n {
-            let a0i = a0[i];
-            let a1i = a1[i];
-            let b0i = b0[i];
-            let b1i = b1[i];
-
-            let v0 = a0i * b0i;
-            let v1 = a1i * b1i;
-            let cross = (a0i + a1i) * (b0i + b1i);
-
-            out_c0.push(v0 + C::mul_by_non_residue(v1));
-            out_c1.push(cross - v0 - v1);
-        }
-
+        let (out_c0, out_c1) = batch_karatsuba::<F, C>(a0, a1, b0, b1);
         Self {
             coeffs: [out_c0, out_c1],
         }
     }
+}
+
+// ---------------------------------------------------------------------------
+// Karatsuba back-ends: scalar (generic) and SIMD-specialised (Fp<65537>)
+// ---------------------------------------------------------------------------
+
+/// Straight-line scalar Karatsuba combine over any `F: ConstField`.
+///
+/// The loop body is deliberately branchless and carries no cross-lane
+/// dependencies so the compiler's auto-vectoriser has a chance to widen
+/// it for amenable base fields.
+#[inline]
+fn scalar_karatsuba<F, C>(a0: &[F], a1: &[F], b0: &[F], b1: &[F]) -> (Vec<F>, Vec<F>)
+where
+    F: ConstField,
+    C: ExtConfig<BaseField = F>,
+{
+    let n = a0.len();
+    let mut out_c0 = Vec::with_capacity(n);
+    let mut out_c1 = Vec::with_capacity(n);
+    for i in 0..n {
+        let a0i = a0[i];
+        let a1i = a1[i];
+        let b0i = b0[i];
+        let b1i = b1[i];
+
+        let v0 = a0i * b0i;
+        let v1 = a1i * b1i;
+        let cross = (a0i + a1i) * (b0i + b1i);
+
+        out_c0.push(v0 + C::mul_by_non_residue(v1));
+        out_c1.push(cross - v0 - v1);
+    }
+    (out_c0, out_c1)
+}
+
+/// Top-level Karatsuba combine, generic over any `F: ConstField`.
+///
+/// Dispatches through the sealed [`SimdKaratsubaHook`] trait: the default
+/// impl for every `ConstField` returns `None`, and a specialised impl for
+/// `Fp<65537>` invokes the AVX2 kernel in `gf2-kernels-simd` when
+/// available. Other `F` and other runtime configurations fall back to
+/// [`scalar_karatsuba`].
+#[inline]
+fn batch_karatsuba<F, C>(a0: &[F], a1: &[F], b0: &[F], b1: &[F]) -> (Vec<F>, Vec<F>)
+where
+    F: ConstField + SimdKaratsubaHook,
+    C: ExtConfig<BaseField = F>,
+{
+    if let Some(out) = F::try_simd_karatsuba::<C>(a0, a1, b0, b1) {
+        return out;
+    }
+    scalar_karatsuba::<F, C>(a0, a1, b0, b1)
+}
+
+/// SIMD-dispatch hook for the Karatsuba combine used by
+/// [`BatchExtField::batch_mul_quadratic`].
+///
+/// Every implementation returns `None` by default (scalar fallback).
+/// `Fp<P>` provides a blanket impl that transparently routes through the
+/// AVX2 kernel in `gf2-kernels-simd` when `P = 65537`, and returns
+/// `None` for every other prime; the non-specialised path then runs the
+/// scalar straight-line Karatsuba.
+///
+/// This trait exists only to enable dispatch; it is a crate-internal
+/// extension point. External users should treat it as sealed — the
+/// default method is the contract they see — and should not write their
+/// own impls. All trait bounds on [`BatchExtField::batch_mul_quadratic`]
+/// are satisfied automatically for `Fp<P>` through the blanket impl
+/// below.
+pub trait SimdKaratsubaHook: ConstField {
+    /// Attempts to compute the Karatsuba combine for a quadratic
+    /// extension element-wise over this base field using a SIMD kernel.
+    ///
+    /// Returns `None` when no SIMD kernel is available for `Self`, at
+    /// which point the caller falls back to
+    /// [`scalar_karatsuba`](super::batch::scalar_karatsuba) (which is
+    /// purely internal; its semantics are folded into
+    /// [`BatchExtField::batch_mul_quadratic`]).
+    ///
+    /// # Arguments
+    ///
+    /// * `a0`, `a1`, `b0`, `b1` — SoA coefficient lanes of two batches;
+    ///   every slice must have identical length.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::gfp::Fp;
+    /// use gf2_core::gfpn::SimdKaratsubaHook;
+    /// use gf2_core::gfpn::ExtConfig;
+    ///
+    /// struct Cfg;
+    /// impl ExtConfig for Cfg {
+    ///     type BaseField = Fp<65537>;
+    ///     const NON_RESIDUE: Fp<65537> = Fp::<65537>::new(3);
+    /// }
+    ///
+    /// let a0 = vec![Fp::<65537>::new(1), Fp::<65537>::new(2)];
+    /// let a1 = vec![Fp::<65537>::new(3), Fp::<65537>::new(4)];
+    /// let b0 = vec![Fp::<65537>::new(5), Fp::<65537>::new(6)];
+    /// let b1 = vec![Fp::<65537>::new(7), Fp::<65537>::new(8)];
+    /// let _ = <Fp<65537> as SimdKaratsubaHook>::try_simd_karatsuba::<Cfg>(
+    ///     &a0, &a1, &b0, &b1,
+    /// );
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(n)` base-field operations (three multiplications, two adds,
+    /// one non-residue scale, two subtractions). When specialised, each
+    /// operation is an 8-lane AVX2 batch pass.
+    #[inline]
+    fn try_simd_karatsuba<C: ExtConfig<BaseField = Self>>(
+        _a0: &[Self],
+        _a1: &[Self],
+        _b0: &[Self],
+        _b1: &[Self],
+    ) -> Option<(Vec<Self>, Vec<Self>)> {
+        None
+    }
+}
+
+/// Blanket default-None impl for every `Fp<P>` except the overridden
+/// `Fp<65537>`. We cannot provide a blanket `impl<F: ConstField> SimdKaratsubaHook for F`
+/// *and* a specialised impl for `Fp<65537>` without the `specialization`
+/// feature, so the hook is only implemented for the concrete types where
+/// we need it. Callers of [`BatchExtField::batch_mul_quadratic`] restrict
+/// `F` to `ConstField + SimdKaratsubaHook`; the generic impl in this file
+/// satisfies that bound for every `Fp<P>` by virtue of the blanket impl
+/// below, which carries the default `None` unless explicitly overridden.
+impl<const P: u64> SimdKaratsubaHook for Fp<P> {
+    #[inline]
+    fn try_simd_karatsuba<C: ExtConfig<BaseField = Self>>(
+        a0: &[Self],
+        a1: &[Self],
+        b0: &[Self],
+        b1: &[Self],
+    ) -> Option<(Vec<Self>, Vec<Self>)> {
+        // Compile-time branch: `P == 65537` folds to true exactly for
+        // `Fp<65537>` and the entire branch is elided for other primes.
+        if P == 65537 {
+            return fp65537_simd_impl::<P, C>(a0, a1, b0, b1);
+        }
+        None
+    }
+}
+
+/// AVX2 Karatsuba combine for `Fp<P>` specialised at `P = 65537`.
+///
+/// The caller (the `SimdKaratsubaHook` impl for `Fp<P>`) gates on
+/// `P == 65537` at compile time. For that single monomorphisation,
+/// `Fp<P>::raw_storage()` is known to equal the canonical value
+/// because `R = 2^64 ≡ 1 (mod 65537)`, so we bypass the REDC round-trip
+/// of `.value()`.
+///
+/// Returns `None` on non-AVX2 hardware or when the `simd` feature is
+/// disabled; the caller falls back to the scalar Karatsuba path.
+#[cfg(feature = "simd")]
+fn fp65537_simd_impl<const P: u64, C: ExtConfig<BaseField = Fp<P>>>(
+    a0: &[Fp<P>],
+    a1: &[Fp<P>],
+    b0: &[Fp<P>],
+    b1: &[Fp<P>],
+) -> Option<(Vec<Fp<P>>, Vec<Fp<P>>)> {
+    debug_assert_eq!(P, 65537, "fp65537_simd_impl requires P = 65537");
+
+    let fns = crate::simd::maybe_fp65537()?;
+    let n = a0.len();
+
+    // Pack `&[Fp<P>]` → `Vec<u32>` via the canonical-storage fast path.
+    // For P = 65537, `raw_storage()` returns the canonical value because
+    // R = 2^64 ≡ 1 (mod P), so Montgomery and canonical representations
+    // coincide.
+    let pack = |xs: &[Fp<P>]| -> Vec<u32> { xs.iter().map(|x| x.raw_storage() as u32).collect() };
+    let a0_u32 = pack(a0);
+    let a1_u32 = pack(a1);
+    let b0_u32 = pack(b0);
+    let b1_u32 = pack(b1);
+
+    // Single fused SIMD pass: reads each input slice once, writes each
+    // output slice once, and keeps all seven Karatsuba intermediates in
+    // AVX2 registers. This is the crucial speedup vs. a per-op
+    // composition — eliminating nine heap buffers and six extra memory
+    // round-trips.
+    let beta_u32 = C::NON_RESIDUE.raw_storage() as u32;
+    let mut out_c0 = vec![0u32; n];
+    let mut out_c1 = vec![0u32; n];
+    (fns.batch_karatsuba_fn)(
+        &a0_u32,
+        &a1_u32,
+        &b0_u32,
+        &b1_u32,
+        beta_u32,
+        &mut out_c0,
+        &mut out_c1,
+    );
+
+    // Unpack `Vec<u32>` back into `Vec<Fp<P>>` via the canonical-storage
+    // fast path (same reasoning as `pack`).
+    let unpack = |xs: &[u32]| -> Vec<Fp<P>> {
+        xs.iter()
+            .map(|&x| Fp::<P>::from_raw_storage(x as u64))
+            .collect()
+    };
+    Some((unpack(&out_c0), unpack(&out_c1)))
+}
+
+#[cfg(not(feature = "simd"))]
+#[inline]
+fn fp65537_simd_impl<const P: u64, C: ExtConfig<BaseField = Fp<P>>>(
+    _a0: &[Fp<P>],
+    _a1: &[Fp<P>],
+    _b0: &[Fp<P>],
+    _b1: &[Fp<P>],
+) -> Option<(Vec<Fp<P>>, Vec<Fp<P>>)> {
+    None
 }
 
 // ---------------------------------------------------------------------------

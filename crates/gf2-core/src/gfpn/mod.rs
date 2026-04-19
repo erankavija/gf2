@@ -58,7 +58,7 @@ mod cubic;
 mod ext_config;
 mod quadratic;
 
-pub use batch::BatchExtField;
+pub use batch::{BatchExtField, SimdKaratsubaHook};
 pub use cubic::{CubicExt, CubicExtWide};
 pub use ext_config::ExtConfig;
 pub use quadratic::{QuadraticExt, QuadraticExtWide};
