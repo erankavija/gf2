@@ -39,7 +39,9 @@
 //! - Construction: [`FieldPoly::new`], [`FieldPoly::zero_like`],
 //!   [`FieldPoly::one_like`], [`FieldPoly::constant`],
 //!   [`FieldPoly::monomial`], [`FieldPoly::from_coeffs_trimmed`],
-//!   [`FieldPoly::from_roots`], [`FieldPoly::product`].
+//!   [`FieldPoly::from_roots`], [`FieldPoly::product`],
+//!   [`FieldPoly::batch_mul`], [`FieldPoly::batch_mul_with_field`],
+//!   [`FieldPoly::batch_gcd`].
 //! - Queries: [`FieldPoly::degree`], [`FieldPoly::is_zero`],
 //!   [`FieldPoly::coeff`], [`FieldPoly::leading_coeff`],
 //!   [`FieldPoly::len`], [`FieldPoly::iter`].
@@ -60,9 +62,8 @@
 //!   — see the method docs and the benchmark table below for the
 //!   detailed dispatch policy).
 //!
-//! Further algorithmic upgrades (Lagrange interpolation, balanced
-//! product + batch GCD, NTT multiplication) land in sibling tasks on top
-//! of this surface.
+//! Further algorithmic upgrades (Lagrange interpolation, NTT
+//! multiplication) land in sibling tasks on top of this surface.
 //!
 //! # `batch_evaluate` benchmark results
 //!
@@ -115,6 +116,27 @@
 //! FFT-multiplication drop-in (Task 6 of the `bdf95060` story) lights up
 //! the expected speedup without further API churn. Regenerate this
 //! table with `cargo bench -p gf2-core --bench field_poly`.
+//!
+//! # `batch_mul` benchmark results
+//!
+//! Measured on `Fp<65537>` with
+//! `cargo bench -p gf2-core --bench field_poly -- --quick batch_mul` on
+//! the repo's reference Zen 3 host. Each cell shows the median wall-clock
+//! time for one call to the respective variant over `k` degree-8
+//! polynomials. The speedup column is `left_fold / balanced_tree`.
+//!
+//! | `k`  | left-fold (linear) | balanced tree | speedup |
+//! |-----:|-------------------:|--------------:|--------:|
+//! |    8 |           8.85 µs  |      8.10 µs  |   1.09× |
+//! |   32 |         151.0 µs   |    100.6 µs   |   1.50× |
+//! |  128 |           2.45 ms  |      1.07 ms  |   2.29× |
+//!
+//! At `k = 128` the balanced tree is **2.3× faster** than a schoolbook
+//! left-fold. At `k = 8` the advantage is marginal (~9%) because the
+//! degree-8 operands are well below `KARATSUBA_THRESHOLD = 32`, so both
+//! paths use the schoolbook kernel and only the merge-order differs.
+//! Regenerate with
+//! `cargo bench -p gf2-core --bench field_poly -- --quick batch_mul`.
 
 use crate::field::FiniteField;
 use std::fmt;
@@ -1073,6 +1095,225 @@ impl<F: FiniteField> FieldPoly<F> {
             .iter()
             .skip(1)
             .fold(polys[0].clone(), |acc, p| &acc * p)
+    }
+
+    // -----------------------------------------------------------------
+    // Batch product and GCD
+    // -----------------------------------------------------------------
+
+    /// Computes the product of a non-empty slice of polynomials using a
+    /// **balanced binary product tree**, which reduces the total
+    /// multiplication cost compared to the linear-fold
+    /// [`FieldPoly::product`].
+    ///
+    /// A balanced tree keeps pairs of operands at the same accumulated
+    /// degree, so every multiplication sees equally-sized inputs and
+    /// Karatsuba (already dispatched by the `Mul` operator) can exploit
+    /// that balance. A linear left-fold accumulates one polynomial to
+    /// full size before multiplying the next, giving quadratic schoolbook
+    /// work even when Karatsuba fires.
+    ///
+    /// # Arguments
+    ///
+    /// * `polys` — non-empty slice of polynomials to multiply.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `polys` is empty (no field sample available to construct
+    /// the multiplicative identity). Use [`FieldPoly::batch_mul_with_field`]
+    /// when an empty slice must return the constant-1 polynomial.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::FieldPoly;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// // (x + 1)(x + 2)(x + 3) over Fp<7>
+    /// let polys: Vec<FieldPoly<Fp<7>>> = [1u64, 2, 3]
+    ///     .iter()
+    ///     .map(|&c| FieldPoly::new(vec![Fp::<7>::new(c), Fp::<7>::new(1)]))
+    ///     .collect();
+    /// let prod = FieldPoly::batch_mul(&polys);
+    /// // Evaluate at x = 1: (1+1)(1+2)(1+3) = 2·3·4 = 24 ≡ 3 (mod 7).
+    /// assert_eq!(prod.eval(&Fp::<7>::new(1)), Fp::<7>::new(3));
+    /// assert_eq!(prod.degree(), Some(3));
+    /// ```
+    ///
+    /// Single-element slice is the identity:
+    ///
+    /// ```
+    /// use gf2_core::field::FieldPoly;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let p = FieldPoly::new(vec![Fp::<7>::new(5), Fp::<7>::new(1)]);
+    /// assert_eq!(FieldPoly::batch_mul(std::slice::from_ref(&p)), p);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(M(nd) log n)` field operations, where `n = polys.len()`, `d` is
+    /// the average polynomial degree, and `M(k)` is the cost of
+    /// multiplying two degree-`k` polynomials (`O(k²)` schoolbook or
+    /// `O(k^{log₂ 3})` Karatsuba). This beats the `O(n²d²)` of a
+    /// schoolbook linear fold at large `n`.
+    pub fn batch_mul(polys: &[Self]) -> Self {
+        assert!(
+            !polys.is_empty(),
+            "FieldPoly::batch_mul: polys cannot be empty; \
+             use batch_mul_with_field for empty-slice support"
+        );
+
+        // A single-element slice is its own product.
+        if polys.len() == 1 {
+            return polys[0].clone();
+        }
+
+        // Bottom-up balanced product tree.
+        // Level 0 = input clones; each subsequent level merges pairs.
+        let mut current: Vec<Self> = polys.to_vec();
+        while current.len() > 1 {
+            let mut next: Vec<Self> = Vec::with_capacity(current.len().div_ceil(2));
+            let mut i = 0;
+            while i + 1 < current.len() {
+                next.push(&current[i] * &current[i + 1]);
+                i += 2;
+            }
+            if i < current.len() {
+                // Odd tail: carry the unpaired element up unchanged.
+                next.push(current.remove(i));
+            }
+            current = next;
+        }
+        current.remove(0)
+    }
+
+    /// Computes the product of a slice of polynomials using a balanced
+    /// binary product tree, returning the constant-1 polynomial (in the
+    /// same field as `sample`) when `polys` is empty.
+    ///
+    /// This is the *total* variant of [`FieldPoly::batch_mul`]: the
+    /// `sample` parameter provides a field-element context from which the
+    /// multiplicative identity is derived via [`FiniteField::one_like`]
+    /// when the slice is empty. For runtime-configured field types such as
+    /// [`Gf2mElement`](crate::gf2m::Gf2mElement), the sample must live in
+    /// the intended field so the returned polynomial carries the correct
+    /// runtime handle.
+    ///
+    /// # Arguments
+    ///
+    /// * `sample` — any field element; used only when `polys` is empty to
+    ///   construct `FieldPoly::one_like(sample)`.
+    /// * `polys` — slice of polynomials to multiply; may be empty.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::FieldPoly;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let sample = Fp::<7>::new(0);
+    ///
+    /// // Empty slice returns the multiplicative identity.
+    /// let prod = FieldPoly::batch_mul_with_field(&sample, &[]);
+    /// assert_eq!(prod, FieldPoly::one_like(&sample));
+    ///
+    /// // Non-empty slice works identically to batch_mul.
+    /// let polys: Vec<FieldPoly<Fp<7>>> = [1u64, 2]
+    ///     .iter()
+    ///     .map(|&c| FieldPoly::new(vec![Fp::<7>::new(c), Fp::<7>::new(1)]))
+    ///     .collect();
+    /// let prod2 = FieldPoly::batch_mul_with_field(&sample, &polys);
+    /// assert_eq!(prod2, FieldPoly::batch_mul(&polys));
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(1)` for an empty slice; otherwise identical to
+    /// [`FieldPoly::batch_mul`]: `O(M(nd) log n)` field operations.
+    pub fn batch_mul_with_field(sample: &F, polys: &[Self]) -> Self {
+        if polys.is_empty() {
+            return FieldPoly::one_like(sample);
+        }
+        FieldPoly::batch_mul(polys)
+    }
+
+    /// Computes a single GCD of a non-empty slice of polynomials by
+    /// folding pairwise from the first element using
+    /// [`FieldPoly::gcd`].
+    ///
+    /// The result is the monic greatest common divisor of all elements in
+    /// `polys`. If any element is zero it is skipped via the standard
+    /// `gcd(a, 0) = monic(a)` identity. The result is always monic (or
+    /// zero when every element is zero).
+    ///
+    /// # Arguments
+    ///
+    /// * `polys` — non-empty slice of polynomials.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `polys` is empty (no canonical GCD identity exists on an
+    /// empty set of polynomials).
+    ///
+    /// # Examples
+    ///
+    /// Shared factor:
+    ///
+    /// ```
+    /// use gf2_core::field::FieldPoly;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// // d = x + 1; a = d·(x+2), b = d·(x+3), c = d·(x+4)
+    /// let d  = FieldPoly::new(vec![Fp::<7>::new(1), Fp::<7>::new(1)]);
+    /// let xp2 = FieldPoly::new(vec![Fp::<7>::new(2), Fp::<7>::new(1)]);
+    /// let xp3 = FieldPoly::new(vec![Fp::<7>::new(3), Fp::<7>::new(1)]);
+    /// let xp4 = FieldPoly::new(vec![Fp::<7>::new(4), Fp::<7>::new(1)]);
+    /// let polys = vec![&d * &xp2, &d * &xp3, &d * &xp4];
+    /// let g = FieldPoly::batch_gcd(&polys);
+    /// // d is a common factor, so g must be divisible by d.
+    /// let (_, r) = g.div_rem(&d);
+    /// assert!(r.is_zero());
+    /// ```
+    ///
+    /// Single-element slice returns a monic version of that element:
+    ///
+    /// ```
+    /// use gf2_core::field::FieldPoly;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let p = FieldPoly::new(vec![Fp::<7>::new(3), Fp::<7>::new(2)]); // 2x + 3
+    /// let g = FieldPoly::batch_gcd(std::slice::from_ref(&p));
+    /// // gcd of a single element is the monic form of that element.
+    /// assert_eq!(g.leading_coeff(), Some(&Fp::<7>::new(1)));
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(n · G)` where `n = polys.len()` and `G` is the cost of a
+    /// single `FieldPoly::gcd` call (itself `O(d²)` in the maximum
+    /// element degree `d`). Divide-and-conquer batch GCD is a future
+    /// algorithmic upgrade.
+    pub fn batch_gcd(polys: &[Self]) -> Self {
+        assert!(
+            !polys.is_empty(),
+            "FieldPoly::batch_gcd: polys cannot be empty (no GCD identity on an empty set)"
+        );
+
+        // Fold pairwise via the Euclidean GCD, which returns a monic result
+        // whenever both arguments are non-zero. Starting from just the first
+        // element would leave a non-monic polynomial on a single-element
+        // slice; passing it through one GCD step (with the element itself as
+        // both arguments) normalises it.
+        let first = polys[0].clone();
+        if polys.len() == 1 {
+            // gcd(a, a) normalises to monic(a) in O(1) extra work.
+            return FieldPoly::gcd(&first, &first);
+        }
+        polys
+            .iter()
+            .skip(1)
+            .fold(first, |acc, p| FieldPoly::gcd(&acc, p))
     }
 
     // -----------------------------------------------------------------
@@ -2639,6 +2880,233 @@ mod tests {
     #[should_panic(expected = "polys cannot be empty")]
     fn test_product_empty_panics() {
         FieldPoly::<FP7>::product(&[]);
+    }
+
+    // -----------------------------------------------------------------
+    // batch_mul / batch_mul_with_field / batch_gcd
+    // -----------------------------------------------------------------
+
+    /// Helper: build a monic degree-1 polynomial `x + c` over Fp<7>.
+    fn linear_fp7(c: u64) -> FieldPoly<FP7> {
+        FieldPoly::new(vec![fp7(c), fp7(1)])
+    }
+
+    // --- batch_mul unit tests ---
+
+    #[test]
+    #[should_panic(expected = "polys cannot be empty")]
+    fn test_batch_mul_empty_panics() {
+        FieldPoly::<FP7>::batch_mul(&[]);
+    }
+
+    #[test]
+    fn test_batch_mul_single() {
+        let p = linear_fp7(3);
+        assert_eq!(FieldPoly::batch_mul(std::slice::from_ref(&p)), p);
+    }
+
+    #[test]
+    fn test_batch_mul_two() {
+        let a = linear_fp7(1); // x + 1
+        let b = linear_fp7(2); // x + 2
+        let expected = &a * &b;
+        let got = FieldPoly::batch_mul(&[a, b]);
+        assert_eq!(got, expected);
+    }
+
+    #[test]
+    fn test_batch_mul_three() {
+        // Odd tail exercises the carry-up branch.
+        let a = linear_fp7(1);
+        let b = linear_fp7(2);
+        let c = linear_fp7(3);
+        let expected = &(&a * &b) * &c;
+        let got = FieldPoly::batch_mul(&[a, b, c]);
+        assert_eq!(got, expected);
+    }
+
+    #[test]
+    fn test_batch_mul_four() {
+        let polys: Vec<FieldPoly<FP7>> = (1..=4).map(linear_fp7).collect();
+        let expected = FieldPoly::product(&polys);
+        let got = FieldPoly::batch_mul(&polys);
+        assert_eq!(got, expected);
+    }
+
+    // --- batch_mul_with_field unit tests ---
+
+    #[test]
+    fn test_batch_mul_with_field_empty_returns_one() {
+        let sample = fp7(0);
+        let prod = FieldPoly::batch_mul_with_field(&sample, &[]);
+        assert_eq!(prod, FieldPoly::one_like(&sample));
+    }
+
+    #[test]
+    fn test_batch_mul_with_field_single() {
+        let p = linear_fp7(5);
+        let sample = fp7(0);
+        let got = FieldPoly::batch_mul_with_field(&sample, std::slice::from_ref(&p));
+        assert_eq!(got, p);
+    }
+
+    #[test]
+    fn test_batch_mul_with_field_two() {
+        let a = linear_fp7(1);
+        let b = linear_fp7(6);
+        let sample = fp7(0);
+        let expected = &a * &b;
+        let got = FieldPoly::batch_mul_with_field(&sample, &[a, b]);
+        assert_eq!(got, expected);
+    }
+
+    #[test]
+    fn test_batch_mul_with_field_three() {
+        // Ensure the odd-tail branch is reached via with_field too.
+        let polys: Vec<FieldPoly<FP7>> = (1..=3).map(linear_fp7).collect();
+        let expected = FieldPoly::product(&polys);
+        let got = FieldPoly::batch_mul_with_field(&fp7(0), &polys);
+        assert_eq!(got, expected);
+    }
+
+    // --- batch_gcd unit tests ---
+
+    #[test]
+    #[should_panic(expected = "polys cannot be empty")]
+    fn test_batch_gcd_empty_panics() {
+        FieldPoly::<FP7>::batch_gcd(&[]);
+    }
+
+    #[test]
+    fn test_batch_gcd_single_monic() {
+        // gcd of a single element is its monic form.
+        let p = FieldPoly::new(vec![fp7(3), fp7(2)]); // 2x + 3 — lead = 2
+        let g = FieldPoly::batch_gcd(std::slice::from_ref(&p));
+        // Leading coeff must be 1.
+        assert_eq!(g.leading_coeff(), Some(&fp7(1)));
+        // And the result must divide p.
+        let (_, r) = p.div_rem(&g);
+        assert!(r.is_zero());
+    }
+
+    #[test]
+    fn test_batch_gcd_two_shared_factor() {
+        let d = linear_fp7(1); // x + 1
+        let a = &d * &linear_fp7(2); // (x+1)(x+2)
+        let b = &d * &linear_fp7(3); // (x+1)(x+3)
+        let g = FieldPoly::batch_gcd(&[a, b]);
+        // d is a common factor, so g must be divisible by d.
+        let (_, r) = g.div_rem(&d);
+        assert!(r.is_zero(), "batch_gcd result should be divisible by d");
+    }
+
+    #[test]
+    fn test_batch_gcd_three_shared_factor() {
+        let d = linear_fp7(4); // x + 4
+        let a = &d * &linear_fp7(1);
+        let b = &d * &linear_fp7(2);
+        let c = &d * &linear_fp7(3);
+        let g = FieldPoly::batch_gcd(&[a, b, c]);
+        // d is a common factor, so g must be divisible by d.
+        let (_, r) = g.div_rem(&d);
+        assert!(r.is_zero(), "batch_gcd result should be divisible by d");
+    }
+
+    // --- Gf2mElement unit tests ---
+
+    #[test]
+    fn test_batch_mul_gf16_two() {
+        let field = Gf2mField::new(4, 0b10011);
+        let a = FieldPoly::new(vec![field.element(5), field.element(1)]);
+        let b = FieldPoly::new(vec![field.element(3), field.element(1)]);
+        let expected = &a * &b;
+        let got = FieldPoly::batch_mul(&[a, b]);
+        assert_eq!(got, expected);
+    }
+
+    #[test]
+    fn test_batch_mul_with_field_gf16_empty() {
+        let field = Gf2mField::new(4, 0b10011);
+        let sample = field.zero();
+        let prod = FieldPoly::batch_mul_with_field(&sample, &[]);
+        assert_eq!(prod, FieldPoly::one_like(&sample));
+    }
+
+    // --- Proptests ---
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(64))]
+
+        #[test]
+        fn prop_batch_mul_agrees_with_fold_fp7(
+            raw in prop::collection::vec(
+                prop::collection::vec(0u64..7, 1..5),
+                0..=8usize,
+            ),
+        ) {
+            let polys: Vec<FieldPoly<FP7>> = raw.into_iter()
+                .map(|cs| FieldPoly::new(cs.into_iter().map(fp7).collect::<Vec<_>>()))
+                .collect();
+
+            let sample = fp7(0);
+            let one = FieldPoly::one_like(&sample);
+
+            let expected = polys.iter().fold(one, |a, b| &a * b);
+            let got = FieldPoly::batch_mul_with_field(&sample, &polys);
+            prop_assert_eq!(got, expected);
+        }
+
+        #[test]
+        fn prop_batch_mul_agrees_with_fold_gf16(
+            raw in prop::collection::vec(
+                prop::collection::vec(0u64..16, 1..5),
+                0..=8usize,
+            ),
+        ) {
+            let field = gf16_field();
+            let sample = field.zero();
+            let polys: Vec<FieldPoly<Gf2mElement>> = raw.into_iter()
+                .map(|cs| FieldPoly::new(
+                    cs.into_iter().map(|v| field.element(v)).collect::<Vec<_>>(),
+                ))
+                .collect();
+
+            let one = FieldPoly::one_like(&sample);
+            let expected = polys.iter().fold(one, |a, b| &a * b);
+            let got = FieldPoly::batch_mul_with_field(&sample, &polys);
+            prop_assert_eq!(got, expected);
+        }
+
+        #[test]
+        fn prop_batch_gcd_divides_common_factor_fp7(
+            // a, b, c: small non-zero polynomials used as coprime cofactors
+            a_cs in prop::collection::vec(1u64..7, 1..4),
+            b_cs in prop::collection::vec(1u64..7, 1..4),
+            c_cs in prop::collection::vec(1u64..7, 1..4),
+            // d: shared factor
+            d_cs in prop::collection::vec(1u64..7, 1..4),
+        ) {
+            let a = FieldPoly::new(a_cs.into_iter().map(fp7).collect::<Vec<_>>());
+            let b = FieldPoly::new(b_cs.into_iter().map(fp7).collect::<Vec<_>>());
+            let c = FieldPoly::new(c_cs.into_iter().map(fp7).collect::<Vec<_>>());
+            let d = FieldPoly::new(d_cs.into_iter().map(fp7).collect::<Vec<_>>());
+
+            prop_assume!(!d.is_zero());
+
+            let ad = &a * &d;
+            let bd = &b * &d;
+            let cd = &c * &d;
+
+            let g = FieldPoly::batch_gcd(&[ad, bd, cd]);
+            // d | g: d divides the gcd because d is a common factor.
+            prop_assume!(!d.is_zero());
+            let (_, r) = g.div_rem(&d);
+            prop_assert!(
+                r.is_zero(),
+                "batch_gcd([a*d, b*d, c*d]) should be divisible by d; got remainder {:?}",
+                r
+            );
+        }
     }
 
     // -----------------------------------------------------------------

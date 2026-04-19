@@ -100,5 +100,55 @@ fn bench_batch_evaluate(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(benches, bench_batch_evaluate);
+/// Build `k` degree-8 polynomials with uniform random-looking coefficients
+/// over `Fp<65537>`. Each polynomial uses a distinct LCG seed so every
+/// member of the batch is unique and no artificial cancellation occurs.
+fn make_batch(k: usize) -> Vec<FieldPoly<F>> {
+    let modulus: u64 = 65537;
+    (0..k)
+        .map(|seed| {
+            // A simple LCG: different per polynomial.
+            let mut state: u64 =
+                seed as u64 * 6_364_136_223_846_793_005 + 1_442_695_040_888_963_407;
+            let coeffs: Vec<F> = (0..=8)
+                .map(|_| {
+                    state = state
+                        .wrapping_mul(6_364_136_223_846_793_005)
+                        .wrapping_add(1_442_695_040_888_963_407);
+                    // Map to [1, modulus-1] to avoid accidental zero leading coeff.
+                    F::new((state >> 33) % (modulus - 1) + 1)
+                })
+                .collect();
+            FieldPoly::new(coeffs)
+        })
+        .collect()
+}
+
+fn bench_batch_mul(c: &mut Criterion) {
+    let mut group = c.benchmark_group("field_poly_batch_mul_fp65537");
+    // Keep sample size small so the k=128 cells stay inside the 60s budget
+    // when run via `--quick`. Criterion's default 100-sample target would
+    // overrun on k=128 balanced-tree runs.
+    group.sample_size(20);
+
+    for &k in &[8usize, 32, 128] {
+        let polys = make_batch(k);
+        let sample = F::new(1);
+
+        group.bench_with_input(BenchmarkId::new("balanced_tree", k), &polys, |b, ps| {
+            b.iter(|| black_box(FieldPoly::batch_mul(black_box(ps))));
+        });
+
+        group.bench_with_input(BenchmarkId::new("left_fold", k), &polys, |b, ps| {
+            b.iter(|| {
+                let linear = ps.iter().fold(FieldPoly::one_like(&sample), |a, b| &a * b);
+                black_box(linear)
+            });
+        });
+    }
+
+    group.finish();
+}
+
+criterion_group!(benches, bench_batch_evaluate, bench_batch_mul);
 criterion_main!(benches);
