@@ -373,7 +373,13 @@ impl<F: FiniteField, const N: usize> BatchExtField<F, N> {
             self.len(),
             other.len()
         );
-        let coeffs: [Vec<F>; N] = array::from_fn(|i| add_slices(&self.coeffs[i], &other.coeffs[i]));
+        let coeffs: [Vec<F>; N] = array::from_fn(|i| {
+            self.coeffs[i]
+                .iter()
+                .zip(other.coeffs[i].iter())
+                .map(|(x, y)| x.clone() + y.clone())
+                .collect()
+        });
         Self { coeffs }
     }
 
@@ -419,31 +425,15 @@ impl<F: FiniteField, const N: usize> BatchExtField<F, N> {
             self.len(),
             other.len()
         );
-        let coeffs: [Vec<F>; N] = array::from_fn(|i| sub_slices(&self.coeffs[i], &other.coeffs[i]));
+        let coeffs: [Vec<F>; N] = array::from_fn(|i| {
+            self.coeffs[i]
+                .iter()
+                .zip(other.coeffs[i].iter())
+                .map(|(x, y)| x.clone() - y.clone())
+                .collect()
+        });
         Self { coeffs }
     }
-}
-
-// ---------------------------------------------------------------------------
-// Lane helpers (base-field batch ops)
-// ---------------------------------------------------------------------------
-
-#[inline]
-fn add_slices<F: FiniteField>(a: &[F], b: &[F]) -> Vec<F> {
-    debug_assert_eq!(a.len(), b.len());
-    a.iter()
-        .zip(b.iter())
-        .map(|(x, y)| x.clone() + y.clone())
-        .collect()
-}
-
-#[inline]
-fn sub_slices<F: FiniteField>(a: &[F], b: &[F]) -> Vec<F> {
-    debug_assert_eq!(a.len(), b.len());
-    a.iter()
-        .zip(b.iter())
-        .map(|(x, y)| x.clone() - y.clone())
-        .collect()
 }
 
 // ---------------------------------------------------------------------------
