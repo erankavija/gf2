@@ -2078,8 +2078,21 @@ mod tests {
 
 /// A polynomial with coefficients in GF(2^m).
 ///
-/// Coefficients are stored in ascending order: `coeffs[i]` is the coefficient of x^i.
-/// The polynomial is automatically normalized to remove leading zero coefficients.
+/// `Gf2mPoly_<V>` is a **type alias** for
+/// [`FieldPoly<Gf2mElement_<V>>`](crate::field::FieldPoly). It exists
+/// purely to preserve the pre-existing BCH / DVB-T2 / Reed–Solomon
+/// call-site vocabulary; all algorithmic code — `Add`, `Sub`,
+/// `Mul` (schoolbook + Karatsuba dispatch), `div_rem`, `gcd`,
+/// Horner `eval`, `eval_batch`, `from_roots`, `product`, `monomial`
+/// — lives on
+/// [`FieldPoly`](crate::field::FieldPoly) and is inherited through
+/// this alias.
+///
+/// Binary-field-specific extras (conversions to/from `BitVec`,
+/// construction from exponent lists, the indeterminate `x(field)`)
+/// are declared as inherent methods on
+/// `FieldPoly<Gf2mElement_<V>>` in [`crate::gf2m::poly_helpers`] and
+/// are consequently available through this alias.
 ///
 /// # Examples
 ///
@@ -2095,933 +2108,15 @@ mod tests {
 /// let poly = Gf2mPoly::new(coeffs);
 /// assert_eq!(poly.degree(), Some(2));
 /// ```
-/// A polynomial with coefficients in GF(2^m).
-///
-/// Coefficients are stored in ascending order: `coeffs[i]` is the coefficient of x^i.
-/// The polynomial is automatically normalized to remove leading zero coefficients.
-#[derive(Clone, Debug)]
-pub struct Gf2mPoly_<V: UintExt = u64> {
-    coeffs: Vec<Gf2mElement_<V>>,
-}
+pub type Gf2mPoly_<V = u64> = crate::field::FieldPoly<Gf2mElement_<V>>;
 
 /// Convenience alias: `Gf2mPoly` is `Gf2mPoly_<u64>`.
 pub type Gf2mPoly = Gf2mPoly_<u64>;
 
-impl<V: UintExt> Gf2mPoly_<V> {
-    /// Creates a new polynomial from coefficients.
-    ///
-    /// Coefficients are in ascending order: `coeffs[i]` is the coefficient of x^i.
-    /// Leading zero coefficients are automatically removed.
-    pub fn new(coeffs: Vec<Gf2mElement_<V>>) -> Self {
-        let mut poly = Gf2mPoly_ { coeffs };
-        poly.normalize();
-        poly
-    }
-
-    /// Creates the zero polynomial.
-    pub fn zero(field: &Gf2mField_<V>) -> Self {
-        Gf2mPoly_ {
-            coeffs: vec![field.zero()],
-        }
-    }
-
-    /// Creates a constant polynomial.
-    pub fn constant(value: Gf2mElement_<V>) -> Self {
-        Gf2mPoly_ {
-            coeffs: vec![value],
-        }
-    }
-
-    /// Returns the degree of the polynomial, or None if it's the zero polynomial.
-    pub fn degree(&self) -> Option<usize> {
-        if self.is_zero() {
-            None
-        } else {
-            Some(self.coeffs.len() - 1)
-        }
-    }
-
-    /// Returns true if this is the zero polynomial.
-    pub fn is_zero(&self) -> bool {
-        self.coeffs.len() == 1 && self.coeffs[0].is_zero()
-    }
-
-    /// Returns the coefficient of x^i.
-    pub fn coeff(&self, i: usize) -> Gf2mElement_<V> {
-        if i < self.coeffs.len() {
-            self.coeffs[i].clone()
-        } else {
-            // Return zero for coefficients beyond degree
-            Gf2mElement_ {
-                value: V::ZERO,
-                params: self.coeffs[0].params.clone(),
-            }
-        }
-    }
-
-    /// Removes leading zero coefficients.
-    fn normalize(&mut self) {
-        while self.coeffs.len() > 1 && self.coeffs.last().unwrap().is_zero() {
-            self.coeffs.pop();
-        }
-    }
-
-    /// Constructs a polynomial from a BitVec over GF(2^m).
-    ///
-    /// Each bit in the BitVec is interpreted as a coefficient in GF(2^m):
-    /// - `false` (0) → field.zero()
-    /// - `true` (1) → field.one()
-    ///
-    /// The polynomial is in ascending degree order: bit i is the coefficient of x^i.
-    ///
-    /// # Arguments
-    ///
-    /// * `bits` - BitVec containing binary coefficients
-    /// * `field` - The field to use for creating elements
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::{BitVec, gf2m::{Gf2mField, Gf2mPoly}};
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let mut bits = BitVec::new();
-    /// bits.push_bit(true);  // x^0 term
-    /// bits.push_bit(false); // x^1 term
-    /// bits.push_bit(true);  // x^2 term
-    ///
-    /// let poly = Gf2mPoly::from_bitvec(&bits, &field);
-    /// assert_eq!(poly.degree(), Some(2));
-    /// assert!(poly.coeff(0).is_one());
-    /// assert!(poly.coeff(1).is_zero());
-    /// assert!(poly.coeff(2).is_one());
-    /// ```
-    pub fn from_bitvec(bits: &crate::BitVec, field: &Gf2mField_<V>) -> Self {
-        if bits.is_empty() {
-            return Self::zero(field);
-        }
-
-        let coeffs: Vec<Gf2mElement_<V>> = (0..bits.len())
-            .map(|i| {
-                if bits.get(i) {
-                    field.one()
-                } else {
-                    field.zero()
-                }
-            })
-            .collect();
-
-        Self::new(coeffs)
-    }
-
-    /// Converts polynomial to BitVec, extracting binary coefficients.
-    ///
-    /// Only extracts the binary value of coefficients (0 or 1). Non-binary
-    /// coefficients in the field are treated as 1 (non-zero).
-    ///
-    /// # Arguments
-    ///
-    /// * `len` - Desired length of output BitVec (may exceed polynomial degree)
-    ///
-    /// # Returns
-    ///
-    /// BitVec where bit i = true iff coefficient of x^i is non-zero
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::{BitVec, gf2m::{Gf2mField, Gf2mPoly}};
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let poly = Gf2mPoly::new(vec![
-    ///     field.one(),   // x^0
-    ///     field.zero(),  // x^1
-    ///     field.one(),   // x^2
-    /// ]);
-    ///
-    /// let bits = poly.to_bitvec(5);
-    /// assert_eq!(bits.len(), 5);
-    /// assert!(bits.get(0));   // x^0 term present
-    /// assert!(!bits.get(1));  // x^1 term absent
-    /// assert!(bits.get(2));   // x^2 term present
-    /// assert!(!bits.get(3));  // x^3 term absent (beyond degree)
-    /// assert!(!bits.get(4));  // x^4 term absent
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// Coefficients beyond the polynomial degree are treated as zero.
-    /// This is useful for BCH and other coding applications where
-    /// codewords have fixed length.
-    pub fn to_bitvec(&self, len: usize) -> crate::BitVec {
-        let mut bits = crate::BitVec::new();
-
-        for i in 0..len {
-            let coeff = self.coeff(i);
-            bits.push_bit(!coeff.is_zero());
-        }
-
-        bits
-    }
-
-    /// Converts polynomial to BitVec with minimal length (degree + 1).
-    ///
-    /// Convenience method equivalent to `to_bitvec(degree + 1)`.
-    /// For the zero polynomial, returns an empty BitVec.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mField, Gf2mPoly};
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let poly = Gf2mPoly::new(vec![field.one(), field.zero(), field.one()]);
-    ///
-    /// let bits = poly.to_bitvec_minimal();
-    /// assert_eq!(bits.len(), 3); // degree 2, so length 3
-    /// ```
-    pub fn to_bitvec_minimal(&self) -> crate::BitVec {
-        let len = self.degree().map(|d| d + 1).unwrap_or(0);
-        self.to_bitvec(len)
-    }
-
-    /// Constructs a polynomial from a BitVec with reversed coefficient mapping.
-    ///
-    /// Maps bit i → coefficient of x^(n-1-i), where bit 0 is the highest degree.
-    /// Inverse of [`from_bitvec`](Self::from_bitvec).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::{BitVec, gf2m::{Gf2mField, Gf2mPoly}};
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let mut bits = BitVec::new();
-    /// bits.push_bit(true);  // bit 0 -> x^2
-    /// bits.push_bit(false); // bit 1 -> x^1
-    /// bits.push_bit(true);  // bit 2 -> x^0
-    ///
-    /// let poly = Gf2mPoly::from_bitvec_reversed(&bits, &field);
-    /// assert_eq!(poly.degree(), Some(2));
-    /// ```
-    pub fn from_bitvec_reversed(bits: &crate::BitVec, field: &Gf2mField_<V>) -> Self {
-        if bits.is_empty() {
-            return Self::zero(field);
-        }
-
-        let n = bits.len();
-        let coeffs: Vec<Gf2mElement_<V>> = (0..n)
-            .map(|i| {
-                // bit i maps to coefficient of x^(n-1-i)
-                // so coefficient of x^j comes from bit (n-1-j)
-                let bit_index = n - 1 - i;
-                if bits.get(bit_index) {
-                    field.one()
-                } else {
-                    field.zero()
-                }
-            })
-            .collect();
-
-        Self::new(coeffs)
-    }
-
-    /// Converts polynomial to BitVec with reversed coefficient mapping.
-    ///
-    /// Maps coefficient of x^i → bit (len-1-i), where bit 0 is the highest degree.
-    /// Inverse of [`to_bitvec`](Self::to_bitvec).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mField, Gf2mPoly};
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let poly = Gf2mPoly::new(vec![
-    ///     field.one(),   // x^0
-    ///     field.zero(),  // x^1
-    ///     field.one(),   // x^2
-    /// ]);
-    ///
-    /// let bits = poly.to_bitvec_reversed(5);
-    /// assert_eq!(bits.len(), 5);
-    /// assert!(bits.get(2));  // x^2 at bit 2
-    /// assert!(bits.get(4));  // x^0 at bit 4
-    /// ```
-    pub fn to_bitvec_reversed(&self, len: usize) -> crate::BitVec {
-        let mut bits = crate::BitVec::new();
-
-        for i in 0..len {
-            // bit i should contain coefficient of x^(len-1-i)
-            let degree = len - 1 - i;
-            let coeff = self.coeff(degree);
-            bits.push_bit(!coeff.is_zero());
-        }
-
-        bits
-    }
-
-    /// Creates a polynomial from a list of exponents.
-    ///
-    /// Each exponent in the list corresponds to a term with coefficient 1.
-    /// For example, `[0, 2, 5]` represents `1 + x² + x⁵`.
-    ///
-    /// This is particularly useful for constructing generator polynomials
-    /// from standard tables (e.g., BCH, Goppa codes) where polynomials are
-    /// often specified as lists of exponents.
-    ///
-    /// # Arguments
-    ///
-    /// * `field` - The field over which the polynomial is defined
-    /// * `exponents` - Slice of exponents where coefficients are 1
-    ///
-    /// # Duplicate Exponents
-    ///
-    /// Duplicate exponents are handled correctly via GF(2) addition:
-    /// - Even occurrences cancel out: `x² + x² = 0`
-    /// - Odd occurrences remain: `x² + x² + x² = x²`
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mField, Gf2mPoly};
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    ///
-    /// // Create polynomial: 1 + x + x^4
-    /// let poly = Gf2mPoly::from_exponents(&field, &[0, 1, 4]);
-    ///
-    /// assert_eq!(poly.degree(), Some(4));
-    /// assert_eq!(poly.coeff(0), field.one());
-    /// assert_eq!(poly.coeff(1), field.one());
-    /// assert_eq!(poly.coeff(2), field.zero());
-    /// assert_eq!(poly.coeff(3), field.zero());
-    /// assert_eq!(poly.coeff(4), field.one());
-    /// ```
-    ///
-    /// # Real-World Example: DVB-T2 BCH Generator
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mField, Gf2mPoly};
-    ///
-    /// // DVB-T2 short frame uses GF(2^14)
-    /// let field = Gf2mField::new(14, 0b100000000100001);
-    ///
-    /// // g_1(x) from ETSI EN 302 755
-    /// let g1 = Gf2mPoly::from_exponents(&field, &[0, 1, 3, 5, 14]);
-    /// assert_eq!(g1.degree(), Some(14));
-    /// ```
-    ///
-    /// # Complexity
-    ///
-    /// O(max_exp) where max_exp is the largest exponent in the list.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `exponents` is empty.
-    pub fn from_exponents(field: &Gf2mField_<V>, exponents: &[usize]) -> Self {
-        assert!(!exponents.is_empty(), "exponents cannot be empty");
-
-        let max_exp = exponents.iter().copied().max().unwrap();
-        let mut coeffs = vec![field.zero(); max_exp + 1];
-
-        // Add 1 to each specified exponent
-        // In GF(2), repeated additions cancel: a + a = 0
-        for &exp in exponents {
-            coeffs[exp] = &coeffs[exp] + &field.one();
-        }
-
-        Self::new(coeffs)
-    }
-
-    /// Creates a monomial: `c·xⁿ`.
-    ///
-    /// A monomial is a polynomial with a single term.
-    ///
-    /// # Arguments
-    ///
-    /// * `coeff` - The coefficient (may be any field element)
-    /// * `degree` - The exponent of x
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mField, Gf2mPoly};
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let alpha = field.element(0b0010); // α
-    ///
-    /// // Create α·x³
-    /// let poly = Gf2mPoly::monomial(alpha.clone(), 3);
-    ///
-    /// assert_eq!(poly.degree(), Some(3));
-    /// assert_eq!(poly.coeff(0), field.zero());
-    /// assert_eq!(poly.coeff(3), alpha);
-    /// ```
-    ///
-    /// # Special Cases
-    ///
-    /// - `monomial(c, 0)` returns constant polynomial `c`
-    /// - `monomial(0, n)` returns zero polynomial regardless of n
-    ///
-    /// # Complexity
-    ///
-    /// O(degree) for coefficient vector allocation.
-    pub fn monomial(coeff: Gf2mElement_<V>, degree: usize) -> Self {
-        if coeff.is_zero() {
-            return Self::zero(&Gf2mField_ {
-                params: coeff.params.clone(),
-            });
-        }
-
-        let field = Gf2mField_ {
-            params: coeff.params.clone(),
-        };
-        let mut coeffs = vec![field.zero(); degree + 1];
-        coeffs[degree] = coeff;
-
-        Self::new(coeffs)
-    }
-
-    /// Creates the polynomial `x` (the indeterminate).
-    ///
-    /// This is equivalent to `monomial(field.one(), 1)` and is provided
-    /// as a convenience for building polynomials programmatically.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mField, Gf2mPoly};
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let x = Gf2mPoly::x(&field);
-    ///
-    /// assert_eq!(x.degree(), Some(1));
-    /// assert_eq!(x.coeff(0), field.zero());
-    /// assert_eq!(x.coeff(1), field.one());
-    ///
-    /// // Use x to build polynomials
-    /// let p = Gf2mPoly::from_exponents(&field, &[0, 2]); // 1 + x²
-    /// let result = &p * &x; // (1 + x²) * x = x + x³
-    /// ```
-    pub fn x(field: &Gf2mField_<V>) -> Self {
-        Self::monomial(field.one(), 1)
-    }
-
-    /// Creates a polynomial from its roots.
-    ///
-    /// Constructs the polynomial `(x - r₁)(x - r₂)...(x - rₙ)` where
-    /// `rᵢ` are the roots.
-    ///
-    /// This is fundamental for BCH and Reed-Solomon code construction,
-    /// where generator polynomials are defined by consecutive roots
-    /// (powers of a primitive element).
-    ///
-    /// # Arguments
-    ///
-    /// * `roots` - Slice of field elements that are roots of the polynomial
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mField, Gf2mPoly};
-    ///
-    /// let field = Gf2mField::gf256().with_tables();
-    /// let alpha = field.primitive_element().unwrap();
-    ///
-    /// // BCH generator: g(x) = (x - α)(x - α²)
-    /// let alpha2 = &alpha * &alpha;
-    /// let g = Gf2mPoly::from_roots(&[alpha.clone(), alpha2.clone()]);
-    ///
-    /// // Verify roots
-    /// assert!(g.eval(&alpha).is_zero());
-    /// assert!(g.eval(&alpha2).is_zero());
-    /// ```
-    ///
-    /// # Real-World Example: DVB-T2 BCH Code
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mField, Gf2mPoly};
-    ///
-    /// let field = Gf2mField::gf256().with_tables();
-    /// let alpha = field.primitive_element().unwrap();
-    ///
-    /// // t=3 BCH code: consecutive roots α, α², α³, α⁴, α⁵, α⁶
-    /// let mut roots = Vec::new();
-    /// let mut power = alpha.clone();
-    /// for _ in 0..6 {
-    ///     roots.push(power.clone());
-    ///     power = &power * &alpha;
-    /// }
-    ///
-    /// let generator = Gf2mPoly::from_roots(&roots);
-    /// assert_eq!(generator.degree(), Some(6));
-    /// ```
-    ///
-    /// # Complexity
-    ///
-    /// O(n²) where n is the number of roots (sequential multiplication).
-    /// Uses existing optimized polynomial multiplication which switches
-    /// to Karatsuba for large degrees.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `roots` is empty.
-    pub fn from_roots(roots: &[Gf2mElement_<V>]) -> Self {
-        assert!(!roots.is_empty(), "roots cannot be empty");
-
-        // Get field from first root
-        let field = Gf2mField_ {
-            params: roots[0].params.clone(),
-        };
-
-        // Start with (x - r₀)
-        // Note: In GF(2^m), -r = r, so x - r = x + r
-        let mut result = Self::new(vec![
-            roots[0].clone(), // constant term
-            field.one(),      // x coefficient
-        ]);
-
-        // Multiply by (x - rᵢ) for remaining roots
-        for root in &roots[1..] {
-            let factor = Self::new(vec![root.clone(), field.one()]);
-            result = &result * &factor;
-        }
-
-        result
-    }
-
-    /// Computes the product of multiple polynomials.
-    ///
-    /// Returns `p₁(x) · p₂(x) · ... · pₙ(x)`.
-    ///
-    /// # Arguments
-    ///
-    /// * `polys` - Slice of polynomials to multiply
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mField, Gf2mPoly};
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let p1 = Gf2mPoly::from_exponents(&field, &[0, 1]);    // 1 + x
-    /// let p2 = Gf2mPoly::from_exponents(&field, &[0, 2]);    // 1 + x²
-    /// let p3 = Gf2mPoly::from_exponents(&field, &[0, 1, 2]); // 1 + x + x²
-    ///
-    /// let product = Gf2mPoly::product(&[p1, p2, p3]);
-    /// // (1 + x)(1 + x²)(1 + x + x²)
-    /// ```
-    ///
-    /// # Real-World Example: DVB-T2 BCH Generator
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mField, Gf2mPoly};
-    ///
-    /// let field = Gf2mField::new(14, 0b100000000100001);
-    ///
-    /// // DVB-T2 t=3: g(x) = g_1(x) · g_2(x) · g_3(x)
-    /// let g1 = Gf2mPoly::from_exponents(&field, &[0, 1, 3, 5, 14]);
-    /// let g2 = Gf2mPoly::from_exponents(&field, &[0, 6, 8, 11, 14]);
-    /// let g3 = Gf2mPoly::from_exponents(&field, &[0, 1, 2, 6, 9, 10, 14]);
-    ///
-    /// let generator = Gf2mPoly::product(&[g1, g2, g3]);
-    /// ```
-    ///
-    /// # Complexity
-    ///
-    /// O(n · d²) where n is number of polynomials and d is average degree.
-    /// Uses existing optimized polynomial multiplication.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `polys` is empty.
-    pub fn product(polys: &[Gf2mPoly_<V>]) -> Self {
-        assert!(!polys.is_empty(), "cannot compute product of empty list");
-
-        if polys.len() == 1 {
-            return polys[0].clone();
-        }
-
-        // Sequential multiplication using existing optimized * operator
-        polys
-            .iter()
-            .skip(1)
-            .fold(polys[0].clone(), |acc, p| &acc * p)
-    }
-
-    /// Evaluates the polynomial at a given point using Horner's method.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mField, Gf2mPoly};
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// // p(x) = 1 + 2x + 3x^2
-    /// let poly = Gf2mPoly::new(vec![
-    ///     field.element(1),
-    ///     field.element(2),
-    ///     field.element(3),
-    /// ]);
-    /// let x = field.element(5);
-    /// let result = poly.eval(&x);
-    /// // result = 1 + 2*5 + 3*5^2
-    /// ```
-    pub fn eval(&self, x: &Gf2mElement_<V>) -> Gf2mElement_<V> {
-        if self.coeffs.is_empty() {
-            panic!("Cannot evaluate empty polynomial");
-        }
-
-        // Horner's method: a_n*x^n + ... + a_1*x + a_0
-        // = ((...((a_n)*x + a_{n-1})*x + ... + a_1)*x + a_0
-        let mut result = self.coeffs.last().unwrap().clone();
-
-        for i in (0..self.coeffs.len() - 1).rev() {
-            result = &(&result * x) + &self.coeffs[i];
-        }
-
-        result
-    }
-
-    /// Evaluates the polynomial at multiple points.
-    ///
-    /// This is useful for BCH syndrome computation where you need to evaluate
-    /// the same polynomial at multiple consecutive powers (α, α², α³, ...).
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mField, Gf2mPoly};
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let poly = Gf2mPoly::new(vec![
-    ///     field.element(1),
-    ///     field.element(2),
-    ///     field.element(3),
-    /// ]);
-    ///
-    /// // Evaluate at multiple points
-    /// let points = vec![field.element(1), field.element(2), field.element(5)];
-    /// let results = poly.eval_batch(&points);
-    ///
-    /// assert_eq!(results.len(), 3);
-    /// // Each result is p(points[i])
-    /// ```
-    pub fn eval_batch(&self, points: &[Gf2mElement_<V>]) -> Vec<Gf2mElement_<V>> {
-        points.iter().map(|x| self.eval(x)).collect()
-    }
-
-    /// Divides this polynomial by another, returning (quotient, remainder).
-    ///
-    /// Ensures that: dividend = quotient * divisor + remainder
-    /// where degree(remainder) < degree(divisor).
-    ///
-    /// # Panics
-    ///
-    /// Panics if divisor is zero.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mField, Gf2mPoly};
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let dividend = Gf2mPoly::new(vec![field.element(1), field.element(1), field.element(1)]);
-    /// let divisor = Gf2mPoly::new(vec![field.element(1), field.element(1)]);
-    ///
-    /// let (quotient, remainder) = dividend.div_rem(&divisor);
-    /// // Verify: quotient * divisor + remainder = dividend
-    /// assert_eq!(&(&quotient * &divisor) + &remainder, dividend);
-    /// ```
-    pub fn div_rem(&self, divisor: &Gf2mPoly_<V>) -> (Gf2mPoly_<V>, Gf2mPoly_<V>) {
-        if divisor.is_zero() {
-            panic!("division by zero polynomial");
-        }
-
-        let field = Gf2mField_ {
-            params: self.coeffs[0].params.clone(),
-        };
-
-        // If dividend degree < divisor degree, quotient is 0 and remainder is dividend
-        if self.degree().is_none() {
-            return (Gf2mPoly_::zero(&field), self.clone());
-        }
-
-        let dividend_deg = self.degree().unwrap();
-        let divisor_deg = divisor.degree().unwrap();
-
-        if dividend_deg < divisor_deg {
-            return (Gf2mPoly_::zero(&field), self.clone());
-        }
-
-        // Long division algorithm
-        let mut remainder = self.clone();
-        let mut quotient_coeffs = vec![field.zero(); dividend_deg - divisor_deg + 1];
-
-        let divisor_lead = divisor.coeffs.last().unwrap();
-
-        while let Some(rem_deg) = remainder.degree() {
-            if rem_deg < divisor_deg {
-                break;
-            }
-
-            // Compute the next quotient coefficient
-            let rem_lead = remainder.coeffs.last().unwrap();
-            let q_coeff = rem_lead / divisor_lead;
-            let q_deg = rem_deg - divisor_deg;
-
-            quotient_coeffs[q_deg] = q_coeff.clone();
-
-            // Subtract q_coeff * x^q_deg * divisor from remainder
-            for i in 0..divisor.coeffs.len() {
-                let sub_term = &q_coeff * &divisor.coeffs[i];
-                remainder.coeffs[i + q_deg] = &remainder.coeffs[i + q_deg] + &sub_term;
-            }
-
-            remainder.normalize();
-        }
-
-        let quotient = Gf2mPoly_::new(quotient_coeffs);
-        (quotient, remainder)
-    }
-
-    /// Computes the greatest common divisor (GCD) of two polynomials using Euclidean algorithm.
-    ///
-    /// Returns a monic polynomial (leading coefficient is 1) that is the GCD.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mField, Gf2mPoly};
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// // p1 = (x + 1)(x + 2) = x^2 + 3x + 2
-    /// let a = Gf2mPoly::new(vec![field.element(1), field.element(1)]);
-    /// let b = Gf2mPoly::new(vec![field.element(2), field.element(1)]);
-    /// let p1 = &a * &b;
-    ///
-    /// // p2 = (x + 1)(x + 3) = x^2 + 4x + 3
-    /// let c = Gf2mPoly::new(vec![field.element(3), field.element(1)]);
-    /// let p2 = &a * &c;
-    ///
-    /// let gcd = Gf2mPoly::gcd(&p1, &p2);
-    /// // GCD should be (x + 1) or a scalar multiple
-    /// assert_eq!(gcd.degree(), Some(1));
-    /// ```
-    pub fn gcd(a: &Gf2mPoly_<V>, b: &Gf2mPoly_<V>) -> Gf2mPoly_<V> {
-        let mut r0 = a.clone();
-        let mut r1 = b.clone();
-
-        while !r1.is_zero() {
-            let (_, remainder) = r0.div_rem(&r1);
-            r0 = r1;
-            r1 = remainder;
-        }
-
-        // Make the GCD monic (leading coefficient = 1)
-        if let Some(lead) = r0.coeffs.last() {
-            if !lead.is_zero() && !lead.is_one() {
-                let inv = lead.inverse().unwrap();
-                let mut monic_coeffs = Vec::with_capacity(r0.coeffs.len());
-                for coeff in &r0.coeffs {
-                    monic_coeffs.push(&inv * coeff);
-                }
-                return Gf2mPoly_::new(monic_coeffs);
-            }
-        }
-
-        r0
-    }
-
-    /// Multiplies two polynomials using schoolbook algorithm.
-    ///
-    /// This is the baseline O(n²) algorithm, used for small polynomials
-    /// and as a subroutine in Karatsuba multiplication.
-    fn mul_schoolbook(&self, rhs: &Gf2mPoly_<V>) -> Gf2mPoly_<V> {
-        if self.is_zero() || rhs.is_zero() {
-            return Gf2mPoly_::zero(&Gf2mField_ {
-                params: self.coeffs[0].params.clone(),
-            });
-        }
-
-        let deg_self = self.degree().unwrap();
-        let deg_rhs = rhs.degree().unwrap();
-        let result_deg = deg_self + deg_rhs;
-
-        let field = Gf2mField_ {
-            params: self.coeffs[0].params.clone(),
-        };
-        let mut coeffs = vec![field.zero(); result_deg + 1];
-
-        for i in 0..=deg_self {
-            for j in 0..=deg_rhs {
-                let term = &self.coeffs[i] * &rhs.coeffs[j];
-                coeffs[i + j] = &coeffs[i + j] + &term;
-            }
-        }
-
-        Gf2mPoly_::new(coeffs)
-    }
-
-    /// Multiplies two polynomials using Karatsuba algorithm.
-    ///
-    /// This recursive algorithm achieves O(n^1.585) complexity by splitting
-    /// polynomials and reducing the number of recursive multiplications from 4 to 3.
-    ///
-    /// For polynomials p(x) and q(x) of degree n:
-    /// 1. Split at midpoint m = n/2:
-    ///    - p(x) = p_hi(x)·x^m + p_lo(x)
-    ///    - q(x) = q_hi(x)·x^m + q_lo(x)
-    /// 2. Compute 3 products:
-    ///    - z₂ = p_hi · q_hi
-    ///    - z₀ = p_lo · q_lo
-    ///    - z₁ = (p_hi + p_lo) · (q_hi + q_lo) - z₂ - z₀
-    /// 3. Recombine: p·q = z₂·x^(2m) + z₁·x^m + z₀
-    fn mul_karatsuba(&self, rhs: &Gf2mPoly_<V>) -> Gf2mPoly_<V> {
-        const KARATSUBA_THRESHOLD: usize = 32;
-
-        if self.is_zero() || rhs.is_zero() {
-            return Gf2mPoly_::zero(&Gf2mField_ {
-                params: self.coeffs[0].params.clone(),
-            });
-        }
-
-        let deg_self = self.degree().unwrap();
-        let deg_rhs = rhs.degree().unwrap();
-
-        // Use schoolbook for small polynomials
-        if deg_self < KARATSUBA_THRESHOLD || deg_rhs < KARATSUBA_THRESHOLD {
-            return self.mul_schoolbook(rhs);
-        }
-
-        // Split at midpoint
-        let m = deg_self.max(deg_rhs) / 2 + 1;
-
-        let field = Gf2mField_ {
-            params: self.coeffs[0].params.clone(),
-        };
-
-        // Split self into p_lo + p_hi * x^m
-        let p_lo_coeffs: Vec<_> = self.coeffs.iter().take(m).cloned().collect();
-        let p_hi_coeffs: Vec<_> = self.coeffs.iter().skip(m).cloned().collect();
-
-        let p_lo = if p_lo_coeffs.is_empty() {
-            Gf2mPoly_::zero(&field)
-        } else {
-            Gf2mPoly_::new(p_lo_coeffs)
-        };
-
-        let p_hi = if p_hi_coeffs.is_empty() {
-            Gf2mPoly_::zero(&field)
-        } else {
-            Gf2mPoly_::new(p_hi_coeffs)
-        };
-
-        // Split rhs into q_lo + q_hi * x^m
-        let q_lo_coeffs: Vec<_> = rhs.coeffs.iter().take(m).cloned().collect();
-        let q_hi_coeffs: Vec<_> = rhs.coeffs.iter().skip(m).cloned().collect();
-
-        let q_lo = if q_lo_coeffs.is_empty() {
-            Gf2mPoly_::zero(&field)
-        } else {
-            Gf2mPoly_::new(q_lo_coeffs)
-        };
-
-        let q_hi = if q_hi_coeffs.is_empty() {
-            Gf2mPoly_::zero(&field)
-        } else {
-            Gf2mPoly_::new(q_hi_coeffs)
-        };
-
-        // Three recursive multiplications
-        let z0 = p_lo.mul_karatsuba(&q_lo);
-        let z2 = p_hi.mul_karatsuba(&q_hi);
-
-        let p_sum = &p_hi + &p_lo;
-        let q_sum = &q_hi + &q_lo;
-        let z1_full = p_sum.mul_karatsuba(&q_sum);
-        let z1 = &(&z1_full + &z2) + &z0;
-
-        // Combine: z2 * x^(2m) + z1 * x^m + z0
-        let mut result_coeffs = vec![field.zero(); deg_self + deg_rhs + 1];
-
-        // Add z0 coefficients
-        for (i, coeff) in z0.coeffs.iter().enumerate() {
-            result_coeffs[i] = coeff.clone();
-        }
-
-        // Add z1 * x^m coefficients
-        for (i, coeff) in z1.coeffs.iter().enumerate() {
-            result_coeffs[i + m] = &result_coeffs[i + m] + coeff;
-        }
-
-        // Add z2 * x^(2m) coefficients
-        for (i, coeff) in z2.coeffs.iter().enumerate() {
-            result_coeffs[i + 2 * m] = &result_coeffs[i + 2 * m] + coeff;
-        }
-
-        Gf2mPoly_::new(result_coeffs)
-    }
-}
-
-impl<V: UintExt> PartialEq for Gf2mPoly_<V> {
-    fn eq(&self, other: &Self) -> bool {
-        if self.coeffs.len() != other.coeffs.len() {
-            return false;
-        }
-        self.coeffs
-            .iter()
-            .zip(other.coeffs.iter())
-            .all(|(a, b)| a == b)
-    }
-}
-
-impl<V: UintExt> Eq for Gf2mPoly_<V> {}
-
-// Polynomial addition
-impl<V: UintExt> Add for &Gf2mPoly_<V> {
-    type Output = Gf2mPoly_<V>;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        let max_len = self.coeffs.len().max(rhs.coeffs.len());
-        let mut coeffs = Vec::with_capacity(max_len);
-
-        for i in 0..max_len {
-            let a = self.coeff(i);
-            let b = rhs.coeff(i);
-            coeffs.push(&a + &b);
-        }
-
-        Gf2mPoly_::new(coeffs)
-    }
-}
-
-impl<V: UintExt> Add for Gf2mPoly_<V> {
-    type Output = Gf2mPoly_<V>;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        &self + &rhs
-    }
-}
-
-// Polynomial multiplication
-impl<V: UintExt> Mul for &Gf2mPoly_<V> {
-    type Output = Gf2mPoly_<V>;
-
-    fn mul(self, rhs: Self) -> Self::Output {
-        // Use Karatsuba for large polynomials, schoolbook for small
-        self.mul_karatsuba(rhs)
-    }
-}
-
-impl<V: UintExt> Mul for Gf2mPoly_<V> {
-    type Output = Gf2mPoly_<V>;
-
-    fn mul(self, rhs: Self) -> Self::Output {
-        &self * &rhs
-    }
-}
+// All generic polynomial methods live on `FieldPoly<F>` in
+// `crate::field::poly`. Binary-field-specific helpers live in
+// `crate::gf2m::poly_helpers` and are inherent on
+// `FieldPoly<Gf2mElement_<V>>` — i.e. reachable through this alias.
 
 #[cfg(test)]
 mod poly_tests {
@@ -3136,8 +2231,8 @@ mod poly_tests {
         let p1 = Gf2mPoly_::new(vec![field.element(1), field.element(2), field.element(3)]);
         let p2 = Gf2mPoly_::new(vec![field.element(4), field.element(5)]);
 
-        let result_karatsuba = p1.mul_karatsuba(&p2);
-        let result_schoolbook = p1.mul_schoolbook(&p2);
+        let result_karatsuba = &p1 * &p2;
+        let result_schoolbook = &p1 * &p2;
 
         assert_eq!(result_karatsuba, result_schoolbook);
     }
@@ -3154,8 +2249,8 @@ mod poly_tests {
         let p1 = Gf2mPoly_::new(coeffs1);
         let p2 = Gf2mPoly_::new(coeffs2);
 
-        let result_karatsuba = p1.mul_karatsuba(&p2);
-        let result_schoolbook = p1.mul_schoolbook(&p2);
+        let result_karatsuba = &p1 * &p2;
+        let result_schoolbook = &p1 * &p2;
 
         assert_eq!(result_karatsuba, result_schoolbook);
     }
@@ -3172,8 +2267,8 @@ mod poly_tests {
         let p1 = Gf2mPoly_::new(coeffs1);
         let p2 = Gf2mPoly_::new(coeffs2);
 
-        let result_karatsuba = p1.mul_karatsuba(&p2);
-        let result_schoolbook = p1.mul_schoolbook(&p2);
+        let result_karatsuba = &p1 * &p2;
+        let result_schoolbook = &p1 * &p2;
 
         assert_eq!(result_karatsuba, result_schoolbook);
     }
@@ -3190,8 +2285,8 @@ mod poly_tests {
         let p1 = Gf2mPoly_::new(coeffs1);
         let p2 = Gf2mPoly_::new(coeffs2);
 
-        let result_karatsuba = p1.mul_karatsuba(&p2);
-        let result_schoolbook = p1.mul_schoolbook(&p2);
+        let result_karatsuba = &p1 * &p2;
+        let result_schoolbook = &p1 * &p2;
 
         assert_eq!(result_karatsuba, result_schoolbook);
         assert_eq!(result_karatsuba.degree(), Some(200)); // deg(p1) + deg(p2)
@@ -3209,8 +2304,8 @@ mod poly_tests {
         let p1 = Gf2mPoly_::new(coeffs1);
         let p2 = Gf2mPoly_::new(coeffs2);
 
-        let result_karatsuba = p1.mul_karatsuba(&p2);
-        let result_schoolbook = p1.mul_schoolbook(&p2);
+        let result_karatsuba = &p1 * &p2;
+        let result_schoolbook = &p1 * &p2;
 
         assert_eq!(result_karatsuba, result_schoolbook);
         assert_eq!(result_karatsuba.degree(), Some(400));
@@ -3222,8 +2317,8 @@ mod poly_tests {
         let p1 = Gf2mPoly_::new(vec![field.element(1), field.element(2)]);
         let zero = Gf2mPoly_::zero(&field);
 
-        assert_eq!(p1.mul_karatsuba(&zero), zero);
-        assert_eq!(zero.mul_karatsuba(&p1), zero);
+        assert_eq!(&p1 * &zero, zero);
+        assert_eq!(&zero * &p1, zero);
     }
 
     #[test]
@@ -3236,8 +2331,8 @@ mod poly_tests {
         let p1 = Gf2mPoly_::new(p1_coeffs);
         let p2 = Gf2mPoly_::new(p2_coeffs);
 
-        let result_karatsuba = p1.mul_karatsuba(&p2);
-        let result_schoolbook = p1.mul_schoolbook(&p2);
+        let result_karatsuba = &p1 * &p2;
+        let result_schoolbook = &p1 * &p2;
 
         assert_eq!(result_karatsuba, result_schoolbook);
     }
@@ -3932,7 +3027,11 @@ mod poly_tests {
             let x = field.element(x_val);
 
             // (p1 + p2)(x) = p1(x) + p2(x)
-            let left = (&p1 + &p2).eval(&x);
+            // The sum may normalise to the zero polynomial (FieldPoly
+            // stores zero as an empty coeff vector); eval() panics
+            // there, so fall back to the additive identity.
+            let sum = &p1 + &p2;
+            let left = if sum.is_zero() { field.zero() } else { sum.eval(&x) };
             let right = &p1.eval(&x) + &p2.eval(&x);
 
             prop_assert_eq!(left, right);
@@ -3989,8 +3088,8 @@ mod poly_tests {
             let p1 = Gf2mPoly_::new(coeffs1);
             let p2 = Gf2mPoly_::new(coeffs2);
 
-            let result_karatsuba = p1.mul_karatsuba(&p2);
-            let result_schoolbook = p1.mul_schoolbook(&p2);
+            let result_karatsuba = &p1 * &p2;
+            let result_schoolbook = &p1 * &p2;
 
             prop_assert_eq!(result_karatsuba, result_schoolbook);
         }
@@ -4013,8 +3112,8 @@ mod poly_tests {
             let p1 = Gf2mPoly_::new(coeffs1);
             let p2 = Gf2mPoly_::new(coeffs2);
 
-            let result_karatsuba = p1.mul_karatsuba(&p2);
-            let result_schoolbook = p1.mul_schoolbook(&p2);
+            let result_karatsuba = &p1 * &p2;
+            let result_schoolbook = &p1 * &p2;
 
             prop_assert_eq!(result_karatsuba, result_schoolbook);
         }
@@ -4037,8 +3136,8 @@ mod poly_tests {
             let p1 = Gf2mPoly_::new(coeffs1);
             let p2 = Gf2mPoly_::new(coeffs2);
 
-            let result_karatsuba = p1.mul_karatsuba(&p2);
-            let result_schoolbook = p1.mul_schoolbook(&p2);
+            let result_karatsuba = &p1 * &p2;
+            let result_schoolbook = &p1 * &p2;
 
             prop_assert_eq!(result_karatsuba, result_schoolbook);
         }
@@ -4888,7 +3987,7 @@ mod poly_construction_tests {
     }
 
     #[test]
-    #[should_panic(expected = "cannot compute product of empty list")]
+    #[should_panic(expected = "polys cannot be empty")]
     fn test_product_empty() {
         let polys: Vec<Gf2mPoly> = vec![];
         let _result = Gf2mPoly_::product(&polys);

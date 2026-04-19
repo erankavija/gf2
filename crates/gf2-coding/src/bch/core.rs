@@ -442,10 +442,14 @@ impl BlockEncoder for BchEncoder {
             .collect();
         let m = Gf2mPoly::new(m_coeffs);
 
-        // Multiply by x^r to shift message left: x^r · m(x)
-        let mut m_shifted_coeffs = vec![self.code.field.zero(); r];
+        // Multiply by x^r to shift message left: x^r · m(x).
+        // `m` normalises to the zero polynomial when the input message
+        // is all-zero; use `coeff_or_zero` so the shift still produces
+        // a well-formed, all-zero shifted polynomial.
+        let field_zero = self.code.field.zero();
+        let mut m_shifted_coeffs = vec![field_zero.clone(); r];
         for i in 0..=m.degree().unwrap_or(0) {
-            m_shifted_coeffs.push(m.coeff(i));
+            m_shifted_coeffs.push(m.coeff_or_zero(i, &field_zero));
         }
         let m_shifted = Gf2mPoly::new(m_shifted_coeffs);
 
@@ -453,7 +457,9 @@ impl BlockEncoder for BchEncoder {
         let (_, parity) = m_shifted.div_rem(&self.code.generator);
 
         // Codeword: c(x) = x^r · m(x) + p(x) = m_shifted + parity
-        // Since we're in GF(2), addition is XOR
+        // Since we're in GF(2), addition is XOR. The codeword polynomial
+        // may normalise to zero (all-zero message produces all-zero
+        // codeword); `coeff_or_zero` keeps the extraction total.
         let codeword_poly = &m_shifted + &parity;
 
         // Convert polynomial to systematic bitvec: [message | parity]
@@ -463,12 +469,12 @@ impl BlockEncoder for BchEncoder {
         // First k bits: message (from polynomial degrees k-1 down to 0 of m(x))
         // In codeword_poly, these are at degrees r+k-1 down to r
         for i in (r..self.code.n).rev() {
-            codeword.push_bit(codeword_poly.coeff(i).is_one());
+            codeword.push_bit(codeword_poly.coeff_or_zero(i, &field_zero).is_one());
         }
 
         // Last r bits: parity (from polynomial degrees r-1 down to 0 of p(x))
         for i in (0..r).rev() {
-            codeword.push_bit(codeword_poly.coeff(i).is_one());
+            codeword.push_bit(codeword_poly.coeff_or_zero(i, &field_zero).is_one());
         }
 
         codeword
@@ -593,7 +599,9 @@ impl BchDecoder {
             });
         }
 
-        // Convert to polynomial
+        // Convert to polynomial. An all-zero received vector normalises
+        // to the zero polynomial in `FieldPoly` (empty coeff vector); in
+        // that case every syndrome is zero by definition.
         let r_poly = Gf2mPoly::new(coeffs);
 
         // Compute evaluation points α, α^2, ..., α^(2t)
@@ -611,7 +619,11 @@ impl BchDecoder {
             alpha_power = &alpha_power * &alpha;
         }
 
-        // Batch evaluate r(x) at all syndrome points
+        // Batch evaluate r(x) at all syndrome points. Short-circuit the
+        // zero-polynomial case so `FieldPoly::eval` does not panic.
+        if r_poly.is_zero() {
+            return vec![self.code.field.zero(); eval_points.len()];
+        }
         r_poly.eval_batch(&eval_points)
     }
 }
