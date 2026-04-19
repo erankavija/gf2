@@ -930,6 +930,13 @@ impl<V: UintExt> Gf2mElement_<V> {
     /// Uses repeated squaring to find conjugates, then builds the polynomial
     /// as the product of (x - conjugate) for each unique conjugate.
     ///
+    /// # Complexity
+    ///
+    /// `O(d)` GF(2^m) multiplications to collect the conjugate orbit
+    /// (`d = degree of the minimal polynomial, with d | m`), plus `O(d^2)`
+    /// base-field operations to build the product polynomial. In practice
+    /// `d ≤ m`, so total work is bounded by `O(m^2)` GF(2^m) operations.
+    ///
     /// # Example
     ///
     /// ```

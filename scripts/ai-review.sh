@@ -78,6 +78,7 @@ ${PROMPT}
 ${CONTEXT_JSON}
 \`\`\`
 
+You MUST let any subagents finish before issuing your final reviev and verdict.
 You MUST end your response with exactly one of these lines:
 VERDICT: PASS
 VERDICT: FAIL

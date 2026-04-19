@@ -284,6 +284,11 @@ impl<V: UintExt> FieldPoly<Gf2mElement_<V>> {
     /// Equivalent to
     /// [`FieldPoly::monomial`](crate::field::FieldPoly::monomial)`(field.one(), 1)`.
     ///
+    /// # Arguments
+    ///
+    /// * `field` — the `GF(2^m)` field whose `one()` element becomes the
+    ///   coefficient of `x^1`.
+    ///
     /// # Examples
     ///
     /// ```
@@ -313,6 +318,11 @@ impl<V: UintExt> FieldPoly<Gf2mElement_<V>> {
     ///
     /// New code should prefer
     /// [`FieldPoly::zero_like`](crate::field::FieldPoly::zero_like).
+    ///
+    /// # Arguments
+    ///
+    /// * `field` — the `GF(2^m)` field used only to source a `zero()`
+    ///   element that fixes the polynomial's coefficient type.
     ///
     /// # Examples
     ///
