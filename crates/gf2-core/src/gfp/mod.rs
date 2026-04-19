@@ -207,6 +207,7 @@ impl<const P: u64> Fp<P> {
     /// outside the crate: the storage form is an implementation detail
     /// and is free to change.
     #[inline]
+    #[allow(dead_code)]
     pub(crate) const fn raw_storage(self) -> u64 {
         self.0
     }
@@ -222,6 +223,7 @@ impl<const P: u64> Fp<P> {
     /// Misuse produces silently wrong arithmetic; this helper is
     /// crate-private and exists only for the SIMD dispatch layer.
     #[inline]
+    #[allow(dead_code)]
     pub(crate) const fn from_raw_storage(raw: u64) -> Self {
         Self(raw)
     }

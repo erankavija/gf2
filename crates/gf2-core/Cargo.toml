@@ -153,3 +153,4 @@ harness = false
 [[bench]]
 name = "soa_batch"
 harness = false
+required-features = ["simd"]
