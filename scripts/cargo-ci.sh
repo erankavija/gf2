@@ -95,7 +95,7 @@ fi
 
 # Run all steps in order; continue through failures to report all of them.
 run_step check  cargo check --workspace $FEAT_FLAGS
-run_step test   cargo test --workspace $FEAT_FLAGS
+run_step test   cargo test --workspace $FEAT_FLAGS --release
 run_step clippy cargo clippy --workspace --all-targets $FEAT_FLAGS -- -D warnings
 run_step fmt    cargo fmt --all -- --check
 
