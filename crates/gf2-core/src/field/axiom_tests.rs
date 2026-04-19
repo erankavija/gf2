@@ -20,7 +20,7 @@ use proptest::prelude::*;
 use proptest::test_runner::{Config as ProptestConfig, TestRunner};
 
 use crate::field::{ConstField, FiniteField, FiniteFieldExt};
-use crate::gf2m::{Gf2mElement, Gf2mElement_, Gf2mField, Gf2mField_};
+use crate::gf2m::{Gf2mElement, Gf2mElement_, Gf2mField, Gf2mField_, Gf2mWide, Gf2mWideConfig};
 use crate::gfp::Fp;
 
 /// Number of random test cases per axiom.
@@ -803,4 +803,181 @@ fn _keep_private_strategies_alive() {
 #[test]
 fn test_goldilocks_const_field_axioms() {
     test_const_field_axioms(goldilocks_strategy(), GOLDILOCKS_PRIME);
+}
+
+// ---------------------------------------------------------------------------
+// Strategy and concrete tests for Gf2mWide<N, Cfg>
+// ---------------------------------------------------------------------------
+
+/// Strategy that generates uniformly random [`Gf2mWide<N, Cfg>`] values
+/// (including zero) for any multi-word binary extension field.
+///
+/// Draws `2 * N` independent `u64` values, pairs them so that adjacent pairs
+/// are XOR-mixed for bit coverage, packs the result into a `[u64; N]` array,
+/// and delegates to [`Gf2mWide::new`] which tail-masks any bits above
+/// `Cfg::M` to zero. The strategy therefore produces uniformly distributed
+/// elements across all `2^(Cfg::M)` field elements without over-counting the
+/// all-zero element.
+///
+/// # Arguments
+///
+/// * `N` — const generic word count; must match `Cfg`'s `N`.
+/// * `Cfg` — the [`Gf2mWideConfig`] marker that selects the irreducible
+///   polynomial and extension degree.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::field::axiom_tests::{gf2m_wide_strategy, test_field_axioms};
+/// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
+///
+/// struct Gf2m256DocConfig;
+/// impl Gf2mWideConfig<4> for Gf2m256DocConfig {
+///     const M: usize = 256;
+///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
+/// }
+///
+/// // Build the strategy and run a single field-axiom check (the full
+/// // harness runs 100 cases per axiom; here we just verify it compiles).
+/// let strat = gf2m_wide_strategy::<4, Gf2m256DocConfig>();
+/// // Calling test_field_axioms would exercise all axioms; omitted here to
+/// // keep the doctest fast.
+/// let _ = strat;
+/// ```
+///
+/// # Panics
+///
+/// None from the strategy itself. [`Gf2mWide::new`] panics in debug builds if
+/// its internal `debug_assert!` fires — but since we always pass raw `u64`
+/// arrays (which may have high bits), we call `new` rather than `from_words`,
+/// so the masking is applied unconditionally.
+///
+/// # Complexity
+///
+/// Constant time per sample: `O(N)` XOR operations and one call to
+/// `Gf2mWide::new`.
+pub fn gf2m_wide_strategy<const N: usize, Cfg: Gf2mWideConfig<N>>(
+) -> BoxedStrategy<Gf2mWide<N, Cfg>> {
+    // Generate 2*N u64 values. Adjacent pairs are XOR-mixed to pack extra
+    // entropy into N words, giving good coverage of all bit positions even
+    // though proptest draws u64 values independently.
+    proptest::collection::vec(any::<u64>(), 2 * N)
+        .prop_map(|vals| {
+            // Pack pairs into N words: word[i] = vals[2*i] ^ vals[2*i+1]
+            let mut words = [0u64; N];
+            for i in 0..N {
+                words[i] = vals[2 * i] ^ vals[2 * i + 1];
+            }
+            Gf2mWide::<N, Cfg>::new(words)
+        })
+        .boxed()
+}
+
+// ---------------------------------------------------------------------------
+// Test config: GF(2^256) with irreducible x^256 + x^10 + x^5 + x^2 + 1
+// (Seroussi HPL-98-135 Table 1, m = 256).
+// ---------------------------------------------------------------------------
+
+/// GF(2^256) test configuration.
+///
+/// Irreducible polynomial: `x^256 + x^10 + x^5 + x^2 + 1`.
+/// Cited from Seroussi, "Table of Low-Weight Binary Irreducible Polynomials",
+/// HP Laboratories technical report HPL-98-135 (1998), Table 1 row m = 256.
+///
+/// Low-order bits: `x^10 + x^5 + x^2 + 1 = 1024 + 32 + 4 + 1 = 1061 = 0x425`.
+#[cfg(test)]
+struct Gf2m256TestConfig;
+
+#[cfg(test)]
+impl Gf2mWideConfig<4> for Gf2m256TestConfig {
+    const M: usize = 256;
+    /// `x^10 + x^5 + x^2 + 1 = 0x425`; high bit at position 256 is implicit.
+    const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
+    const NAME: &'static str = "Gf2m256TestConfig";
+}
+
+/// Axiom-harness integration test for `Gf2mWide<4, Gf2m256TestConfig>`.
+///
+/// Uses `test_field_axioms` (not `test_const_field_axioms`) because
+/// `ConstField::order()` panics for `M >= 128`; that limitation is separately
+/// documented by `test_order_panics_at_m256`. Runs 100 proptest cases per
+/// axiom so the full workspace suite stays within the 60-second budget.
+#[test]
+fn test_axioms_gf2m_wide_256() {
+    let mut runner = proptest::test_runner::TestRunner::new(ProptestConfig::with_cases(100));
+
+    // Run all field axioms using the 100-case local runner.
+    let strategy = gf2m_wide_strategy::<4, Gf2m256TestConfig>();
+    let characteristic = 2u64;
+
+    // Additive group
+    check_additive_associativity(&mut runner, &strategy);
+    check_additive_commutativity(&mut runner, &strategy);
+    check_additive_identity(&mut runner, &strategy);
+    check_additive_inverse(&mut runner, &strategy);
+    check_subtraction_consistency(&mut runner, &strategy);
+
+    // Multiplicative group
+    check_multiplicative_associativity(&mut runner, &strategy);
+    check_multiplicative_commutativity(&mut runner, &strategy);
+    check_multiplicative_identity(&mut runner, &strategy);
+    check_multiplicative_inverse(&mut runner, &strategy);
+    check_division_consistency(&mut runner, &strategy);
+
+    // Ring axioms
+    check_distributivity(&mut runner, &strategy);
+    check_zero_annihilation(&mut runner, &strategy);
+
+    // Characteristic
+    check_characteristic(&mut runner, &strategy, characteristic);
+
+    // Hash consistency
+    check_hash_consistency(&mut runner, &strategy);
+
+    // Wide accumulator
+    check_wide_roundtrip(&mut runner, &strategy);
+    check_mul_wide_consistency(&mut runner, &strategy);
+
+    // FiniteFieldExt convenience methods
+    check_square_consistency(&mut runner, &strategy);
+    check_pow_consistency(&mut runner, &strategy);
+    check_frobenius_consistency(&mut runner, &strategy, characteristic);
+    check_freshman_dream(&mut runner, &strategy, characteristic);
+}
+
+/// Verify that `zero()` and `one()` constants satisfy their predicates for
+/// `Gf2mWide<4, Gf2m256TestConfig>` without calling `order()`, which panics
+/// for `M >= 128`.
+#[test]
+fn test_const_field_zero_one_gf2m_wide_256() {
+    assert!(
+        <Gf2mWide<4, Gf2m256TestConfig> as crate::field::ConstField>::zero().is_zero(),
+        "Gf2mWide::<4, Gf2m256TestConfig>::zero() must satisfy is_zero()"
+    );
+    assert!(
+        <Gf2mWide<4, Gf2m256TestConfig> as crate::field::ConstField>::one().is_one(),
+        "Gf2mWide::<4, Gf2m256TestConfig>::one() must satisfy is_one()"
+    );
+}
+
+/// Documents the u128 overflow limitation of `ConstField::order()` for large
+/// extension degrees.
+///
+/// `order()` on `Gf2mWide<N, Cfg>` panics for `Cfg::M >= 128` because `2^M`
+/// does not fit in a `u128`. Callers that need the order for large fields
+/// should use `Cfg::M` directly.
+#[test]
+#[should_panic(expected = "Gf2mWide::order exceeds u128 for M = 256")]
+fn test_order_panics_at_m256() {
+    let _ = <Gf2mWide<4, Gf2m256TestConfig> as crate::field::ConstField>::order();
+}
+
+/// Stress variant of the GF(2^256) axiom harness at 1000 cases per axiom.
+///
+/// Skipped by default; run with `cargo test -- --ignored` for thoroughness.
+/// Expected wall-clock time: ~2 seconds on a reference host with `--release`.
+#[test]
+#[ignore]
+fn test_axioms_gf2m_wide_256_stress() {
+    test_field_axioms(gf2m_wide_strategy::<4, Gf2m256TestConfig>(), 2);
 }
