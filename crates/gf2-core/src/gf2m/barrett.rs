@@ -455,77 +455,15 @@ pub fn naive_reduce(product: u128, modulus: u128, degree: u32) -> u64 {
 
 // ---------------------------------------------------------------------------
 // Multi-word Barrett reduction helpers (used by BarrettReducerWide)
+//
+// The array-based versions of `wide_shr_2n_to_n`, `clmul_wide_with_implicit_high`,
+// and `wide_is_already_reduced` previously lived here, but have been retired:
+// `BarrettReducerWide::reduce<M>` now delegates to `reduce_slice`, and the
+// slice-based private helpers (`slice_wide_shr_2n_to_n`,
+// `slice_clmul_wide_with_implicit_high`, `slice_wide_is_already_reduced`)
+// below are the single source of truth for the reduction algorithm. Keeping
+// both sets of helpers invited the SSOT violation that code-review flagged.
 // ---------------------------------------------------------------------------
-
-/// Wide right-shift of a 2N-word little-endian polynomial by `shift` bits,
-/// returning only the low N words of the result.
-///
-/// The full result of `shr(a, shift)` occupies `2N - shift/64` words, but the
-/// caller only needs the low N words (because subsequent operations discard the
-/// rest). This helper avoids building the full `2N`-word intermediate.
-fn wide_shr_2n_to_n<const N: usize, const M: usize>(a: &[u64; M], shift: u32) -> [u64; N] {
-    const { assert!(M == 2 * N, "wide_shr_2n_to_n: M must equal 2 * N") }
-    let mut out = [0u64; N];
-    if shift == 0 {
-        // Return the low N words directly.
-        out[..N].copy_from_slice(&a[..N]);
-        return out;
-    }
-    let word_shift = (shift / 64) as usize;
-    let bit_shift = shift % 64;
-    #[allow(clippy::needless_range_loop)]
-    for i in 0..N {
-        let src = i + word_shift;
-        if src >= M {
-            break;
-        }
-        out[i] = a[src] >> bit_shift;
-        if bit_shift != 0 && src + 1 < M {
-            out[i] |= a[src + 1] << (64 - bit_shift);
-        }
-    }
-    out
-}
-
-/// Carry-less multiply two N-word polynomials producing a 2N-word result (via
-/// `clmul_wide`), but add the extra contribution from the implicit leading bit
-/// of `b` (at bit position `b_implicit_bit`) to the result.
-///
-/// This is used to multiply by `mu` or by `modulus` when those polynomials have
-/// an implicit leading-one bit stored separately (same convention as
-/// `Gf2mWideConfig::MODULUS`).
-///
-/// The result is `a * b_stored XOR (a << b_implicit_bit)`, returned in a 2N-word
-/// array.
-fn clmul_wide_with_implicit_high<const N: usize, const M: usize>(
-    a: &[u64; N],
-    b_stored: &[u64; N],
-    b_implicit_bit: u32,
-) -> [u64; M] {
-    const {
-        assert!(
-            M == 2 * N,
-            "clmul_wide_with_implicit_high: M must equal 2 * N"
-        )
-    }
-    // Main product: a * b_stored (N words × N words → 2N words).
-    let mut out = super::wide::clmul_wide::<N, M>(a, b_stored);
-    // Add contribution from the implicit high bit: a * x^b_implicit_bit = a << b_implicit_bit.
-    let word_shift = (b_implicit_bit / 64) as usize;
-    let bit_shift = b_implicit_bit % 64;
-    #[allow(clippy::needless_range_loop)]
-    for i in 0..N {
-        let dst = i + word_shift;
-        if dst >= M {
-            break;
-        }
-        out[dst] ^= a[i] << bit_shift;
-        if bit_shift != 0 && dst + 1 < M {
-            out[dst + 1] ^= a[i] >> (64 - bit_shift);
-        }
-    }
-    out
-}
 
 /// Compute `mu = floor(x^(2m) / P(x))` over GF(2) via polynomial long division.
 ///
@@ -812,53 +750,11 @@ impl<const N: usize> BarrettReducerWide<N> {
     /// ```
     pub fn reduce<const M: usize>(&self, product: &[u64; M]) -> [u64; N] {
         const { assert!(M == 2 * N, "BarrettReducerWide::reduce: M must equal 2 * N") }
-        let m = self.m;
-
-        // Fast path: if product has no bits at or above position m, it is
-        // already reduced — return the low N words directly.
-        if wide_is_already_reduced::<N, M>(product, m) {
-            let mut out = [0u64; N];
-            out[..N].copy_from_slice(&product[..N]);
-            return out;
-        }
-
-        // Step 1: q1 = product >> (m - 1).
-        // q1 is the high part of the product; degree <= m + 1.
-        // We only need the low N words of q1 (the rest are discarded by step 3).
-        let q1: [u64; N] = wide_shr_2n_to_n::<N, M>(product, m - 1);
-
-        // Step 2: q2 = q1 * mu (with implicit leading bit of mu at position m).
-        // q2 fits in 2N words; we only need the high part for step 3.
-        let q2: [u64; M] = clmul_wide_with_implicit_high::<N, M>(&q1, &self.mu, m);
-
-        // Step 3: q3 = q2 >> (m + 1).
-        // q3 has at most m - 1 bits; we need the low N words.
-        let q3: [u64; N] = wide_shr_2n_to_n::<N, M>(&q2, m + 1);
-
-        // Step 4: r = product XOR (q3 * modulus).
-        // q3 * modulus (with implicit leading bit at m) fits in 2N words.
-        let q3p: [u64; M] = clmul_wide_with_implicit_high::<N, M>(&q3, &self.modulus, m);
-
-        // XOR product with q3 * modulus; only the low N words matter (the high
-        // words of a correct result must be zero after reduction).
-        let mut r = [0u64; N];
-        for i in 0..N {
-            r[i] = product[i] ^ q3p[i];
-        }
-
-        // Step 5: at most two corrections — if deg(r) >= m, XOR with P once.
-        let mask = field_mask::<N>(m);
-        if is_high_bit_set(&r, m) {
-            xor_modulus_into(&mut r, &self.modulus, m);
-        }
-        if is_high_bit_set(&r, m) {
-            xor_modulus_into(&mut r, &self.modulus, m);
-        }
-
-        // Mask off any residual high bits (defensive; should not be needed after
-        // at most two corrections, but ensures the invariant holds regardless).
-        r[N - 1] &= mask;
-        r
+        // Thin wrapper over the slice-based implementation so there is a
+        // single source of truth for the Barrett-reduction algorithm.
+        // The const-generic `M == 2 * N` assertion above guarantees the
+        // slice length invariant that `reduce_slice` checks at runtime.
+        self.reduce_slice(&product[..])
     }
 
     /// Slice-taking variant of [`BarrettReducerWide::reduce`] for callers that
@@ -1015,25 +911,6 @@ fn is_high_bit_set<const N: usize>(a: &[u64; N], m: u32) -> bool {
     // Any word above the top-field word must be zero in a reduced value.
     // The top-field word must have no bits above the mask.
     a[N - 1] & !top_mask != 0
-}
-
-/// Returns `true` if the 2N-word product has no bits at positions `>= m`.
-///
-/// Used for the fast-path check in `reduce`.
-#[inline]
-fn wide_is_already_reduced<const N: usize, const M: usize>(product: &[u64; M], m: u32) -> bool {
-    const { assert!(M == 2 * N, "wide_is_already_reduced: M must equal 2 * N") }
-    if M == 0 {
-        return true;
-    }
-    // Words above index N-1 must all be zero.
-    if product[N..M].iter().any(|&w| w != 0) {
-        return false;
-    }
-    // In the top kept word (index N-1), bits at positions >= (m mod 64 within that word)
-    // must be zero.
-    let top_mask = field_mask::<N>(m);
-    product[N - 1] & !top_mask == 0
 }
 
 /// Slice-based equivalent of [`wide_is_already_reduced`] for callers that
