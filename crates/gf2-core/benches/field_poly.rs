@@ -101,23 +101,20 @@ fn bench_batch_evaluate(c: &mut Criterion) {
 }
 
 /// Build `k` degree-8 polynomials with uniform random-looking coefficients
-/// over `Fp<65537>`. Each polynomial uses a distinct LCG seed so every
-/// member of the batch is unique and no artificial cancellation occurs.
+/// over `Fp<65537>`. Each polynomial uses a distinct seed so every member
+/// of the batch is unique and no artificial cancellation occurs. Uses the
+/// shared workspace LCG (`gf2_core::rng::Lcg`) so the bench stays in sync
+/// with the SSOT deterministic RNG.
 fn make_batch(k: usize) -> Vec<FieldPoly<F>> {
     let modulus: u64 = 65537;
     (0..k)
         .map(|seed| {
-            // A simple LCG: different per polynomial.
-            let mut state: u64 =
-                seed as u64 * 6_364_136_223_846_793_005 + 1_442_695_040_888_963_407;
+            // Advance the shared LCG once from the per-polynomial seed so
+            // each batch element starts from an independent stream.
+            let mut rng = gf2_core::rng::Lcg::new((seed as u64).wrapping_add(1));
+            rng.next_u64();
             let coeffs: Vec<F> = (0..=8)
-                .map(|_| {
-                    state = state
-                        .wrapping_mul(6_364_136_223_846_793_005)
-                        .wrapping_add(1_442_695_040_888_963_407);
-                    // Map to [1, modulus-1] to avoid accidental zero leading coeff.
-                    F::new((state >> 33) % (modulus - 1) + 1)
-                })
+                .map(|_| F::new((rng.next_u64() >> 33) % (modulus - 1) + 1))
                 .collect();
             FieldPoly::new(coeffs)
         })
