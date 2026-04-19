@@ -288,13 +288,9 @@ mod tests {
             seed in any::<u64>(),
         ) {
             let n = 1usize << log_n;
-            let mut s = seed | 1;
+            let mut rng = crate::rng::Lcg::new(seed | 1);
             let data: Vec<Fp<65537>> = (0..n)
-                .map(|_| {
-                    s = s.wrapping_mul(6_364_136_223_846_793_005)
-                         .wrapping_add(1_442_695_040_888_963_407);
-                    Fp::<65537>::new((s >> 33) % 65537)
-                })
+                .map(|_| Fp::<65537>::new((rng.next_u64() >> 33) % 65537))
                 .collect();
             ntt_roundtrip_recovers(data);
         }
@@ -340,16 +336,13 @@ mod tests {
 
         #[test]
         fn proptest_mul_ntt_agrees_with_mul_karatsuba(
-            a_len in 0usize..=64,
-            b_len in 0usize..=64,
+            // Degree up to 64 ⇒ length up to 65.
+            a_len in 0usize..=65,
+            b_len in 0usize..=65,
             seed in any::<u64>(),
         ) {
-            let mut s = seed | 1;
-            let mut next = || {
-                s = s.wrapping_mul(6_364_136_223_846_793_005)
-                     .wrapping_add(1_442_695_040_888_963_407);
-                Fp::<65537>::new((s >> 33) % 65537)
-            };
+            let mut rng = crate::rng::Lcg::new(seed | 1);
+            let mut next = || Fp::<65537>::new((rng.next_u64() >> 33) % 65537);
             let a_coeffs: Vec<Fp<65537>> = (0..a_len).map(|_| next()).collect();
             let b_coeffs: Vec<Fp<65537>> = (0..b_len).map(|_| next()).collect();
             let a = FieldPoly::new(a_coeffs);

@@ -151,18 +151,14 @@ fn bench_batch_mul(c: &mut Criterion) {
 }
 
 /// Build a deterministic polynomial of length `n` for the NTT /
-/// Karatsuba shoot-out. Coefficients are drawn from a fast LCG so the
-/// bench is reproducible across runs without pulling in `rand`.
+/// Karatsuba shoot-out. Coefficients are drawn from the shared workspace
+/// LCG (`gf2_core::rng::Lcg`) so the bench is reproducible across runs
+/// and stays in sync with the SSOT deterministic RNG.
 fn make_ntt_poly(n: usize, seed: u64) -> FieldPoly<F> {
     let modulus: u64 = 65537;
-    let mut state = seed | 1;
+    let mut rng = gf2_core::rng::Lcg::new(seed | 1);
     let coeffs: Vec<F> = (0..n)
-        .map(|_| {
-            state = state
-                .wrapping_mul(6_364_136_223_846_793_005)
-                .wrapping_add(1_442_695_040_888_963_407);
-            F::new((state >> 33) % modulus)
-        })
+        .map(|_| F::new((rng.next_u64() >> 33) % modulus))
         .collect();
     FieldPoly::new(coeffs)
 }
