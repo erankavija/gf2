@@ -759,146 +759,6 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Neg for Gf2mWide<N, Cfg> {
 static BARRETT_CACHE: OnceLock<Mutex<HashMap<TypeId, Box<dyn Any + Send + Sync>>>> =
     OnceLock::new();
 
-// ---------------------------------------------------------------------------
-// Slice-based Barrett reduction helper
-//
-// `BarrettReducerWide::reduce` requires a `&[u64; M]` where `M` is a const.
-// Because `M = 2 * N` involves a const generic arithmetic expression that is
-// rejected by MSRV 1.80 in the `mul_ref` context, this helper reimplements
-// the same algorithm operating on `&[u64]` slices whose length is asserted at
-// runtime. The logic mirrors `BarrettReducerWide::reduce`/the private helpers
-// in `barrett.rs`; it is placed here (owned file) so we do not touch the
-// unowned `barrett.rs`.
-// ---------------------------------------------------------------------------
-
-/// Shift a 2N-word slice right by `shift` bits, storing the low N words of
-/// the result into `out`.
-fn slice_shr_to_n<const N: usize>(a: &[u64], shift: u32, out: &mut [u64; N]) {
-    debug_assert_eq!(a.len(), 2 * N);
-    let m = 2 * N;
-    if shift == 0 {
-        out[..N].copy_from_slice(&a[..N]);
-        return;
-    }
-    let word_shift = (shift / 64) as usize;
-    let bit_shift = shift % 64;
-    #[allow(clippy::needless_range_loop)]
-    for i in 0..N {
-        let src = i + word_shift;
-        if src >= m {
-            break;
-        }
-        out[i] = a[src] >> bit_shift;
-        if bit_shift != 0 && src + 1 < m {
-            out[i] |= a[src + 1] << (64 - bit_shift);
-        }
-    }
-}
-
-/// Multiply an N-word `a` by an N-word `b_stored` plus an implicit leading
-/// bit at `b_implicit_bit`, accumulating the 2N-word result into `out` via XOR.
-fn clmul_with_implicit_to_slice<const N: usize>(
-    a: &[u64; N],
-    b_stored: &[u64; N],
-    b_implicit_bit: u32,
-    out: &mut [u64],
-) {
-    debug_assert_eq!(out.len(), 2 * N);
-    // Main product a * b_stored via schoolbook carry-less multiply.
-    for i in 0..N {
-        for j in 0..N {
-            let p: u128 = super::barrett::clmul(a[i], b_stored[j]);
-            out[i + j] ^= p as u64;
-            out[i + j + 1] ^= (p >> 64) as u64;
-        }
-    }
-    // Add contribution from implicit leading bit: a * x^b_implicit_bit.
-    let word_shift = (b_implicit_bit / 64) as usize;
-    let bit_shift = b_implicit_bit % 64;
-    #[allow(clippy::needless_range_loop)]
-    for i in 0..N {
-        let dst = i + word_shift;
-        if dst >= 2 * N {
-            break;
-        }
-        out[dst] ^= a[i] << bit_shift;
-        if bit_shift != 0 && dst + 1 < 2 * N {
-            out[dst + 1] ^= a[i] >> (64 - bit_shift);
-        }
-    }
-}
-
-/// Barrett-reduce a 2N-word product (in a `Vec<u64>`) using `reducer`.
-///
-/// This is the slice-based equivalent of `BarrettReducerWide::reduce::<{2*N}>`.
-/// The extra indirection (Vec + runtime assertion) is the cost of avoiding the
-/// `2 * N` const-expression prohibition in MSRV 1.80.
-fn barrett_reduce_wide_from_slice<const N: usize>(
-    reducer: &BarrettReducerWide<N>,
-    product: &[u64],
-) -> [u64; N] {
-    debug_assert_eq!(product.len(), 2 * N);
-    let m = reducer.degree();
-    let modulus = reducer.modulus();
-    let mu = reducer.mu();
-
-    // Fast path: already reduced.
-    let top_mask = if (m as usize) - 64 * (N - 1) >= 64 {
-        u64::MAX
-    } else {
-        (1u64 << ((m as usize) - 64 * (N - 1))) - 1
-    };
-    let already_reduced =
-        product[N..].iter().all(|&w| w == 0) && (N == 0 || product[N - 1] & !top_mask == 0);
-    if already_reduced {
-        let mut out = [0u64; N];
-        out[..N].copy_from_slice(&product[..N]);
-        return out;
-    }
-
-    // Step 1: q1 = product >> (m - 1)
-    let mut q1 = [0u64; N];
-    slice_shr_to_n::<N>(product, m - 1, &mut q1);
-
-    // Step 2: q2 = q1 * mu (with implicit leading bit at position m)
-    let mut q2 = vec![0u64; 2 * N];
-    clmul_with_implicit_to_slice::<N>(&q1, mu, m, &mut q2);
-
-    // Step 3: q3 = q2 >> (m + 1)
-    let mut q3 = [0u64; N];
-    slice_shr_to_n::<N>(&q2, m + 1, &mut q3);
-
-    // Step 4: r = product XOR (q3 * modulus)
-    let mut q3p = vec![0u64; 2 * N];
-    clmul_with_implicit_to_slice::<N>(&q3, modulus, m, &mut q3p);
-
-    let mut r = [0u64; N];
-    for i in 0..N {
-        r[i] = product[i] ^ q3p[i];
-    }
-
-    // Step 5: at most two corrections.
-    let high_bit_set = |a: &[u64; N]| a[N - 1] & !top_mask != 0;
-    let xor_modulus = |a: &mut [u64; N]| {
-        for i in 0..N {
-            a[i] ^= modulus[i];
-        }
-        let mw = (m as usize) / 64;
-        let mb = (m as usize) % 64;
-        if mw < N {
-            a[mw] ^= 1u64 << mb;
-        }
-    };
-    if high_bit_set(&r) {
-        xor_modulus(&mut r);
-    }
-    if high_bit_set(&r) {
-        xor_modulus(&mut r);
-    }
-    r[N - 1] &= top_mask;
-    r
-}
-
 /// Returns a freshly constructed (or cached) [`BarrettReducerWide<N>`] for the
 /// given `Cfg`.
 ///
@@ -1009,25 +869,22 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     pub fn mul_ref(&self, rhs: &Self) -> Self {
         // Step 1: carry-less multiply to get a 2N-word unreduced product.
         //
-        // MSRV 1.80 caveat: `[u64; 2 * N]` is not valid as an array-length
+        // MSRV 1.80 caveat: `[u64; 2 * N]` is rejected as an array-length
         // expression on stable because `N` is a const generic parameter.
-        // We therefore use a `Vec<u64>` for the intermediate product to avoid
-        // that restriction. The allocation is small (2 * N * 8 bytes) and is
-        // incurred once per field multiplication; it can be eliminated in a
-        // future refactor once Rust stabilises const generics arithmetic.
+        // We therefore use a `Vec<u64>` buffer and the slice-based helpers
+        // [`clmul_wide_slice`] (schoolbook clmul) and
+        // [`BarrettReducerWide::reduce_slice`] (Barrett reduction) that were
+        // introduced exactly for this callsite. Both share implementations
+        // with the array-typed `clmul_wide` / `BarrettReducerWide::reduce`,
+        // so `Gf2mWide` pays no algorithmic duplication — only the
+        // heap-allocated scratch buffer that MSRV forces on us.
         let mut product = vec![0u64; 2 * N];
-        // Schoolbook carry-less multiply: a[i] * b[j] → [i+j].
-        for i in 0..N {
-            for j in 0..N {
-                let p: u128 = super::barrett::clmul(self.words[i], rhs.words[j]);
-                product[i + j] ^= p as u64;
-                product[i + j + 1] ^= (p >> 64) as u64;
-            }
-        }
+        clmul_wide_slice::<N>(&self.words, &rhs.words, &mut product);
 
-        // Step 2: Barrett-reduce the 2N-word product back to N words.
+        // Step 2: Barrett-reduce the 2N-word product back to N words, via the
+        // shared `BarrettReducerWide::reduce_slice` primitive.
         let reducer = get_reducer::<N, Cfg>();
-        let reduced = barrett_reduce_wide_from_slice::<N>(&reducer, &product);
+        let reduced = reducer.reduce_slice(&product);
 
         // The reducer guarantees tail-masking, so `from_words` is safe.
         Gf2mWide::from_words(reduced)
@@ -1872,22 +1729,58 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> crate::field::ConstField for Gf2mWi
 pub fn clmul_wide<const N: usize, const M: usize>(a: &[u64; N], b: &[u64; N]) -> [u64; M] {
     const { assert!(M == 2 * N, "clmul_wide: M must equal 2 * N") }
     let mut out = [0u64; M];
+    clmul_wide_slice::<N>(a, b, &mut out);
+    out
+}
+
+/// Slice-taking variant of [`clmul_wide`] for callers that cannot produce a
+/// `[u64; 2 * N]` output array under MSRV 1.80 stable generics.
+///
+/// `out` must have length exactly `2 * N`. The function XOR-accumulates the
+/// schoolbook carry-less product `a * b` into `out`; callers are responsible
+/// for zero-initialising `out` before the call if they want the raw product.
+///
+/// This is the shared implementation used by both [`clmul_wide`] (which owns
+/// the output array) and [`Gf2mWide::mul`] (which needs an N-parameterised
+/// product buffer without writing `{2 * N}` in a generic context).
+///
+/// # Arguments
+///
+/// * `a`, `b` — N-word input operands.
+/// * `out` — 2N-word accumulator; products are XOR-ed in. Zero-initialise
+///   beforehand to obtain the plain product.
+///
+/// # Panics
+///
+/// Debug-asserts that `out.len() == 2 * N`. Release builds rely on the
+/// unchecked index arithmetic being in range — passing a shorter slice is
+/// undefined at the caller's level.
+///
+/// # Complexity
+///
+/// `O(N²)` carry-less-multiply-plus-XOR operations.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::gf2m::wide::clmul_wide_slice;
+///
+/// let a = [0b10u64];              // polynomial x
+/// let b = [0b10u64];              // polynomial x
+/// let mut out = [0u64; 2];
+/// clmul_wide_slice::<1>(&a, &b, &mut out);
+/// assert_eq!(out[0], 0b100);      // x * x == x²
+/// ```
+#[inline]
+pub fn clmul_wide_slice<const N: usize>(a: &[u64; N], b: &[u64; N], out: &mut [u64]) {
+    debug_assert_eq!(out.len(), 2 * N);
     for i in 0..N {
         for j in 0..N {
-            // Carry-less multiply a[i] * b[j] → 128-bit intermediate.
             let product: u128 = super::barrett::clmul(a[i], b[j]);
-            // The low 64 bits accumulate into out[i + j].
             out[i + j] ^= product as u64;
-            // The high 64 bits (the "carry" in carry-less multiplication)
-            // accumulate into out[i + j + 1].
-            //
-            // Safety of the index: the maximum value of `i + j + 1` is
-            // `(N - 1) + (N - 1) + 1 = 2N - 1 = M - 1`, which is always a
-            // valid index into `out` of length `M = 2N`.
             out[i + j + 1] ^= (product >> 64) as u64;
         }
     }
-    out
 }
 
 // ---------------------------------------------------------------------------

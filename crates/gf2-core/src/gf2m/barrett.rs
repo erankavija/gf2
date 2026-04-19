@@ -861,6 +861,87 @@ impl<const N: usize> BarrettReducerWide<N> {
         r
     }
 
+    /// Slice-taking variant of [`BarrettReducerWide::reduce`] for callers that
+    /// cannot construct a `[u64; 2 * N]` array at the call site.
+    ///
+    /// Under MSRV 1.80 stable, generic const expressions of the form `{2 * N}`
+    /// are not accepted in array-length position from a generic context, so
+    /// callers that parameterise over `N` alone (notably
+    /// [`crate::gf2m::Gf2mWide::mul_ref`]) cannot directly invoke the
+    /// array-typed `reduce`. This method accepts a `&[u64]` slice of length
+    /// exactly `2 * N` and performs the same Barrett reduction; the
+    /// array-typed [`BarrettReducerWide::reduce`] is a thin wrapper around
+    /// this method, so both share a single implementation.
+    ///
+    /// # Arguments
+    ///
+    /// * `product` — 2N-word carry-less product to reduce. Panics if
+    ///   `product.len() != 2 * N`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::gf2m::barrett::BarrettReducerWide;
+    ///
+    /// let reducer = BarrettReducerWide::<1>::new([3u64], 63);
+    /// let reduced = reducer.reduce_slice(&[0u64, 0u64]);
+    /// assert_eq!(reduced, [0u64]);
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics if `product.len() != 2 * N`.
+    ///
+    /// # Complexity
+    ///
+    /// O(N²) word-level operations, matching [`BarrettReducerWide::reduce`].
+    pub fn reduce_slice(&self, product: &[u64]) -> [u64; N] {
+        assert_eq!(
+            product.len(),
+            2 * N,
+            "BarrettReducerWide::reduce_slice: product.len() must equal 2 * N"
+        );
+        let m = self.m;
+
+        if slice_wide_is_already_reduced::<N>(product, m) {
+            let mut out = [0u64; N];
+            out[..N].copy_from_slice(&product[..N]);
+            return out;
+        }
+
+        // Step 1: q1 = product >> (m - 1). Only the low N words are needed.
+        let q1: [u64; N] = slice_wide_shr_2n_to_n::<N>(product, m - 1);
+
+        // Step 2: q2 = q1 * mu (with implicit leading bit of mu at position m).
+        // Accumulate into a 2N-length buffer on the stack-like Vec.
+        let mut q2 = vec![0u64; 2 * N];
+        slice_clmul_wide_with_implicit_high::<N>(&q1, &self.mu, m, &mut q2);
+
+        // Step 3: q3 = q2 >> (m + 1).
+        let q3: [u64; N] = slice_wide_shr_2n_to_n::<N>(&q2, m + 1);
+
+        // Step 4: r = product XOR (q3 * modulus).
+        let mut q3p = vec![0u64; 2 * N];
+        slice_clmul_wide_with_implicit_high::<N>(&q3, &self.modulus, m, &mut q3p);
+
+        let mut r = [0u64; N];
+        for i in 0..N {
+            r[i] = product[i] ^ q3p[i];
+        }
+
+        // Step 5: at most two corrections.
+        let mask = field_mask::<N>(m);
+        if is_high_bit_set(&r, m) {
+            xor_modulus_into(&mut r, &self.modulus, m);
+        }
+        if is_high_bit_set(&r, m) {
+            xor_modulus_into(&mut r, &self.modulus, m);
+        }
+
+        r[N - 1] &= mask;
+        r
+    }
+
     /// Returns the precomputed Barrett constant `mu = floor(x^(2m) / P(x))`,
     /// stored as `N` little-endian `u64` words (implicit leading bit at
     /// position `m` is dropped).
@@ -953,6 +1034,82 @@ fn wide_is_already_reduced<const N: usize, const M: usize>(product: &[u64; M], m
     // must be zero.
     let top_mask = field_mask::<N>(m);
     product[N - 1] & !top_mask == 0
+}
+
+/// Slice-based equivalent of [`wide_is_already_reduced`] for callers that
+/// cannot produce a `[u64; 2 * N]` under MSRV 1.80 stable generics. Asserts
+/// `product.len() == 2 * N` as a debug check.
+#[inline]
+fn slice_wide_is_already_reduced<const N: usize>(product: &[u64], m: u32) -> bool {
+    debug_assert_eq!(product.len(), 2 * N);
+    if product.len() < N {
+        return true;
+    }
+    if product[N..].iter().any(|&w| w != 0) {
+        return false;
+    }
+    let top_mask = field_mask::<N>(m);
+    product[N - 1] & !top_mask == 0
+}
+
+/// Slice-based equivalent of [`wide_shr_2n_to_n`].
+#[inline]
+fn slice_wide_shr_2n_to_n<const N: usize>(a: &[u64], shift: u32) -> [u64; N] {
+    debug_assert_eq!(a.len(), 2 * N);
+    let m = 2 * N;
+    let mut out = [0u64; N];
+    if shift == 0 {
+        out[..N].copy_from_slice(&a[..N]);
+        return out;
+    }
+    let word_shift = (shift / 64) as usize;
+    let bit_shift = shift % 64;
+    #[allow(clippy::needless_range_loop)]
+    for i in 0..N {
+        let src = i + word_shift;
+        if src >= m {
+            break;
+        }
+        out[i] = a[src] >> bit_shift;
+        if bit_shift != 0 && src + 1 < m {
+            out[i] |= a[src + 1] << (64 - bit_shift);
+        }
+    }
+    out
+}
+
+/// Slice-based equivalent of [`clmul_wide_with_implicit_high`] — writes the
+/// product into `out: &mut [u64]` (length `2 * N`) via XOR accumulation.
+#[inline]
+fn slice_clmul_wide_with_implicit_high<const N: usize>(
+    a: &[u64; N],
+    b_stored: &[u64; N],
+    b_implicit_bit: u32,
+    out: &mut [u64],
+) {
+    debug_assert_eq!(out.len(), 2 * N);
+    // Main product a * b_stored via schoolbook carry-less multiply.
+    for i in 0..N {
+        for j in 0..N {
+            let p: u128 = clmul(a[i], b_stored[j]);
+            out[i + j] ^= p as u64;
+            out[i + j + 1] ^= (p >> 64) as u64;
+        }
+    }
+    // Add contribution from implicit leading bit: a * x^b_implicit_bit.
+    let word_shift = (b_implicit_bit / 64) as usize;
+    let bit_shift = b_implicit_bit % 64;
+    #[allow(clippy::needless_range_loop)]
+    for i in 0..N {
+        let dst = i + word_shift;
+        if dst >= 2 * N {
+            break;
+        }
+        out[dst] ^= a[i] << bit_shift;
+        if bit_shift != 0 && dst + 1 < 2 * N {
+            out[dst + 1] ^= a[i] >> (64 - bit_shift);
+        }
+    }
 }
 
 /// XOR the irreducible polynomial (stored low bits + implicit high bit at `m`)
