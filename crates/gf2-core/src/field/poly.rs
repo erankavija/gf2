@@ -848,7 +848,10 @@ impl<F: FiniteField> FieldPoly<F> {
     /// product tree (Task 5 of the `bdf95060` story) reduces this to
     /// `O(M(n) log n)`.
     pub fn from_roots(roots: &[F]) -> Self {
-        assert!(!roots.is_empty(), "FieldPoly::from_roots: roots cannot be empty");
+        assert!(
+            !roots.is_empty(),
+            "FieldPoly::from_roots: roots cannot be empty"
+        );
 
         let one = roots[0].one_like();
         let mut result = FieldPoly::new(vec![-roots[0].clone(), one.clone()]);
@@ -880,7 +883,8 @@ impl<F: FiniteField> FieldPoly<F> {
     /// let p2 = FieldPoly::new(vec![Fp::<7>::new(2), Fp::<7>::new(1)]); // x + 2
     /// let p3 = FieldPoly::new(vec![Fp::<7>::new(3), Fp::<7>::new(1)]); // x + 3
     /// let prod = FieldPoly::product(&[p1.clone(), p2.clone(), p3.clone()]);
-    /// assert_eq!(prod.eval(&Fp::<7>::new(1)), Fp::<7>::new(0) - (Fp::<7>::new(2) * Fp::<7>::new(3) * Fp::<7>::new(4)));
+    /// // (1+1)(1+2)(1+3) = 2*3*4 = 24 = 3 mod 7
+    /// assert_eq!(prod.eval(&Fp::<7>::new(1)), Fp::<7>::new(3));
     /// ```
     ///
     /// # Complexity
@@ -889,7 +893,10 @@ impl<F: FiniteField> FieldPoly<F> {
     /// degree. A balanced product tree (Task 5) reduces the polynomial
     /// multiplication cost to `O(M(nd) log n)`.
     pub fn product(polys: &[FieldPoly<F>]) -> Self {
-        assert!(!polys.is_empty(), "FieldPoly::product: polys cannot be empty");
+        assert!(
+            !polys.is_empty(),
+            "FieldPoly::product: polys cannot be empty"
+        );
 
         if polys.len() == 1 {
             return polys[0].clone();
@@ -945,7 +952,10 @@ impl<F: FiniteField> FieldPoly<F> {
 
         // If self is zero, both quotient and remainder are zero.
         let Some(dividend_deg) = self.degree() else {
-            return (FieldPoly { coeffs: Vec::new() }, FieldPoly { coeffs: Vec::new() });
+            return (
+                FieldPoly { coeffs: Vec::new() },
+                FieldPoly { coeffs: Vec::new() },
+            );
         };
         let divisor_deg = divisor.degree().unwrap();
 
@@ -962,7 +972,7 @@ impl<F: FiniteField> FieldPoly<F> {
         // re-scanning the vector.
         let mut rem_len = remainder_coeffs.len();
 
-        while rem_len > 0 && rem_len - 1 >= divisor_deg {
+        while rem_len > 0 && rem_len > divisor_deg {
             let rem_deg = rem_len - 1;
             let rem_lead = remainder_coeffs[rem_deg].clone();
             if rem_lead.is_zero() {
@@ -2214,10 +2224,12 @@ mod tests {
     fn test_karatsuba_matches_schoolbook_gf16() {
         let field = Gf2mField::new(4, 0b10011);
         let n = KARATSUBA_THRESHOLD + 6;
-        let a_coeffs: Vec<Gf2mElement> =
-            (0..=n).map(|i| field.element(((i as u64) * 7 + 1) & 0xF)).collect();
-        let b_coeffs: Vec<Gf2mElement> =
-            (0..=n).map(|i| field.element(((i as u64) * 3 + 2) & 0xF)).collect();
+        let a_coeffs: Vec<Gf2mElement> = (0..=n)
+            .map(|i| field.element(((i as u64) * 7 + 1) & 0xF))
+            .collect();
+        let b_coeffs: Vec<Gf2mElement> = (0..=n)
+            .map(|i| field.element(((i as u64) * 3 + 2) & 0xF))
+            .collect();
         let a = FieldPoly::new(a_coeffs.clone());
         let b = FieldPoly::new(b_coeffs.clone());
 
@@ -2311,8 +2323,8 @@ mod tests {
             let mut expected = fp7(0);
             let mut pow = fp7(1);
             for i in 0..a.len() {
-                expected = expected + a.coeff(i) * pow.clone();
-                pow = pow * x.clone();
+                expected += a.coeff(i) * pow;
+                pow = pow * x;
             }
             prop_assert_eq!(a.eval(&x), expected);
         }
