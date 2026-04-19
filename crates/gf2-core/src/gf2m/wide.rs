@@ -80,15 +80,17 @@ use super::wide_config::Gf2mWideConfig;
 /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
 ///
 /// /// GF(2^256), Seroussi HPL-98-135 Table 1 row m = 256:
-/// /// `x^256 + x^10 + x^5 + x^2 + 1`.
-/// struct Gf2m256;
-/// impl Gf2mWideConfig<4> for Gf2m256 {
+/// /// `x^256 + x^10 + x^5 + x^2 + 1`. This is the canonical
+/// /// `Gf2m256TestConfig` used by every other public item's doctest in
+/// /// this module.
+/// struct Gf2m256TestConfig;
+/// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
 ///     const M: usize = 256;
 ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
 /// }
 ///
-/// let a = Gf2mWide::<4, Gf2m256>::from_u64(5);
-/// let b = Gf2mWide::<4, Gf2m256>::from_u64(3);
+/// let a = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(5);
+/// let b = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(3);
 /// let sum = a + b;
 /// assert_eq!(sum.words()[0], 5 ^ 3);
 /// // Characteristic 2: a + a == 0.
@@ -246,12 +248,14 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     /// ```
     /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
     ///
-    /// struct Cfg;
-    /// impl Gf2mWideConfig<1> for Cfg {
-    ///     const M: usize = 64;
-    ///     const MODULUS: [u64; 1] = [0x1b]; // irreducible placeholder
+    /// struct Gf2m256TestConfig;
+    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
+    ///     const M: usize = 256;
+    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
     /// }
-    /// let a = Gf2mWide::<1, Cfg>::from_words([0x1234_5678]);
+    /// // M = 256 = 64 * 4, so every input word is already fully in-range and
+    /// // `from_words` round-trips verbatim.
+    /// let a = Gf2mWide::<4, Gf2m256TestConfig>::from_words([0x1234_5678, 0, 0, 0]);
     /// assert_eq!(a.words()[0], 0x1234_5678);
     /// ```
     #[inline]
@@ -292,26 +296,18 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     /// ```
     /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
     ///
-    /// // Documented irreducible pentanomial x^253 + x^46 + x^18 + x^8 + 1.
-    /// // (Seroussi HPL-98-135 Table 1, m=253.) Chosen for this doctest
-    /// // because `M = 253 < 64*4 = 256` exercises the tail-masking path
-    /// // — and the polynomial satisfies the trait's irreducibility
-    /// // contract (unlike x^M + 1, which is reducible for M > 1).
-    /// struct Cfg;
-    /// impl Gf2mWideConfig<4> for Cfg {
-    ///     const M: usize = 253;
-    ///     // bits 46, 18, 8, 0 set: 2^46 | 2^18 | 2^8 | 1
-    ///     const MODULUS: [u64; 4] = [
-    ///         (1u64 << 46) | (1u64 << 18) | (1u64 << 8) | 1,
-    ///         0,
-    ///         0,
-    ///         0,
-    ///     ];
+    /// struct Gf2m256TestConfig;
+    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
+    ///     const M: usize = 256;
+    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
     /// }
-    /// let a = Gf2mWide::<4, Cfg>::new([u64::MAX; 4]);
-    /// // The top 3 bits of the top word must be zero (since M = 253,
-    /// // bits 253..=255 of the 256-bit register are outside the field).
-    /// assert_eq!(a.words()[3] >> (253 - 64 * 3), 0);
+    /// // M = 256 = 64 * 4, so the tail has zero slack: `new` is an
+    /// // identity on valid inputs (no bits to mask). For a canonical
+    /// // tail-masking demonstration (requires `M < 64 * N`) see the
+    /// // unit-test suite in this module's `tests` submodule, which
+    /// // exercises `Gf2m250TestConfig` (M = 250, 6 bits of tail slack).
+    /// let a = Gf2mWide::<4, Gf2m256TestConfig>::new([0x1234, 0, 0, 0]);
+    /// assert_eq!(a.words()[0], 0x1234);
     /// ```
     #[inline]
     pub fn new(mut words: [u64; N]) -> Self {
@@ -334,12 +330,12 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     /// ```
     /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
     ///
-    /// struct Cfg;
-    /// impl Gf2mWideConfig<1> for Cfg {
-    ///     const M: usize = 64;
-    ///     const MODULUS: [u64; 1] = [0x1b];
+    /// struct Gf2m256TestConfig;
+    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
+    ///     const M: usize = 256;
+    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
     /// }
-    /// assert!(Gf2mWide::<1, Cfg>::zero().is_zero());
+    /// assert!(Gf2mWide::<4, Gf2m256TestConfig>::zero().is_zero());
     /// ```
     #[inline]
     pub const fn zero() -> Self {
@@ -369,12 +365,12 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     /// ```
     /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
     ///
-    /// struct Cfg;
-    /// impl Gf2mWideConfig<1> for Cfg {
-    ///     const M: usize = 64;
-    ///     const MODULUS: [u64; 1] = [0x1b];
+    /// struct Gf2m256TestConfig;
+    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
+    ///     const M: usize = 256;
+    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
     /// }
-    /// assert!(Gf2mWide::<1, Cfg>::one().is_one());
+    /// assert!(Gf2mWide::<4, Gf2m256TestConfig>::one().is_one());
     /// ```
     #[inline]
     pub fn one() -> Self {
