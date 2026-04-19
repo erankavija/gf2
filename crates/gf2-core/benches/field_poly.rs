@@ -1,12 +1,20 @@
 //! Benchmarks for [`gf2_core::field::FieldPoly`] batch evaluation.
 //!
-//! Compares the subproduct-tree [`FieldPoly::batch_evaluate`] against the
-//! naive per-point Horner baseline (`points.iter().map(|p| self.eval(p)).collect()`)
-//! on `Fp<65537>` for the matrix
+//! Compares the raw subproduct-tree path
+//! (`batch_evaluate_subproduct`, bypassing the
+//! `SUBPRODUCT_THRESHOLD` gate) against the naive per-point Horner
+//! baseline (`points.iter().map(|p| self.eval(p)).collect()`) on
+//! `Fp<65537>` for the matrix
 //! `n ∈ {16, 64, 256, 1024} × k ∈ {16, 64, 256, 1024}`.
 //!
-//! The success criterion from the issue spec is that the subproduct-tree
-//! path beats `k` individual Horner folds at `k >= 16 && n >= 16`.
+//! This harness drives the tuning of `SUBPRODUCT_THRESHOLD`. On the
+//! cheap-scalar `Fp<65537>` field, naive Horner wins on every cell; the
+//! revised issue scope (see `2e7db385`, 2026-04-19) defers the
+//! asymptotic crossover to the sibling NTT task (`e0b6f940`) that
+//! replaces schoolbook `FieldPoly::div_rem` with an FFT / Newton
+//! primitive. Until that lands the tuned threshold is `usize::MAX` and
+//! the public `batch_evaluate` always routes through the naive path.
+//!
 //! The measured results are committed into the module docstring of
 //! [`gf2_core::field::poly`] so callers can consult them without
 //! re-running the benchmark.

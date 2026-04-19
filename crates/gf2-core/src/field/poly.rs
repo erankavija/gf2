@@ -53,8 +53,12 @@
 //!   [`FieldPoly::gcd`].
 //! - Evaluation: [`FieldPoly::eval`] (Horner),
 //!   [`FieldPoly::eval_batch`] (naive per-point loop), and
-//!   [`FieldPoly::batch_evaluate`] (subproduct-tree,
-//!   `O(M(n) log k + k log² k)`).
+//!   [`FieldPoly::batch_evaluate`] (subproduct-tree infrastructure
+//!   in place; asymptotic target `O(M(n) log k + k log² k)` requires
+//!   FFT / Newton-iteration fast division from task `e0b6f940`. With
+//!   today's schoolbook `div_rem` the tree path is `O(n · k + k² log k)`
+//!   — see the method docs and the benchmark table below for the
+//!   detailed dispatch policy).
 //!
 //! Further algorithmic upgrades (Lagrange interpolation, balanced
 //! product + batch GCD, NTT multiplication) land in sibling tasks on top
@@ -960,15 +964,19 @@ impl<F: FiniteField> FieldPoly<F> {
     /// empty `Vec`, duplicate or zero points are accepted, and the zero
     /// polynomial evaluates to `x.zero_like()` at every point.
     pub fn batch_evaluate(&self, points: &[F]) -> Vec<F> {
-        // Small-input fallback: below the crossover, the overhead of
+        // Small-input fallback: below the threshold, the overhead of
         // building the subproduct tree (O(k) polynomial multiplications
         // plus O(k) Euclidean divisions) exceeds the savings compared to
         // k Horner folds of length n. See the benchmark table in the
-        // module docstring for the measured crossover on Fp<65537>; both
-        // gates are relaxed so that a zero-polynomial / single-coefficient
-        // input short-circuits immediately.
-        let n = self.len();
-        if points.len() < SUBPRODUCT_THRESHOLD || n < SUBPRODUCT_THRESHOLD {
+        // module docstring — on `Fp<65537>` the naive path wins on every
+        // benchmarked cell with today's schoolbook `div_rem`, so
+        // `SUBPRODUCT_THRESHOLD` is deliberately set to `usize::MAX` and
+        // this branch routes every public call through `eval_batch`
+        // until a fast-division primitive (task `e0b6f940`) lowers the
+        // threshold. Zero / constant polynomials short-circuit via the
+        // `degree().unwrap_or(0)` path.
+        let deg = self.degree().unwrap_or(0);
+        if points.len() < SUBPRODUCT_THRESHOLD || deg < SUBPRODUCT_THRESHOLD {
             return self.eval_batch(points);
         }
 
@@ -1491,29 +1499,32 @@ pub const KARATSUBA_THRESHOLD: usize = 32;
 /// Crossover threshold for [`FieldPoly::batch_evaluate`] between the
 /// subproduct-tree algorithm and the naive per-point Horner fallback.
 ///
-/// When either `points.len()` or `self.len()` (the polynomial length, i.e.
-/// degree + 1) is strictly less than this value,
-/// [`FieldPoly::batch_evaluate`] falls through to
-/// [`FieldPoly::eval_batch`] (`O(n · k)` naive Horner).
+/// When either `points.len()` or `self.degree().unwrap_or(0)` is
+/// strictly less than this value, [`FieldPoly::batch_evaluate`] falls
+/// through to [`FieldPoly::eval_batch`] (`O(n · k)` naive Horner).
 ///
-/// The value is tuned from the benchmark harness in
+/// Tuned directly from the benchmark harness in
 /// `crates/gf2-core/benches/field_poly.rs`. On `Fp<65537>`, where a
 /// single scalar multiplication is ≈ 3.6 ns, the overhead of building
 /// the subproduct tree (and the `Vec<F>` allocations that accompany
 /// every intermediate [`FieldPoly::mul`] / [`FieldPoly::div_rem`]) is
 /// never amortised at the benchmarked sizes; the naive path wins on
-/// every cell in the `n, k ∈ {16, 64, 256, 1024}` matrix. See the module
-/// docstring for the measured table. A conservative default of `256`
-/// keeps the fallback active for those cheap-arithmetic fields until a
-/// fast polynomial-division primitive (FFT / Newton) lands alongside
-/// this API — at which point the asymptotic win materialises and the
-/// threshold can be lowered. Fields with substantially more expensive
-/// scalar arithmetic (large-prime Montgomery, tower extensions) tip the
-/// balance earlier; callers can already dispatch the subproduct path
-/// manually by skipping `batch_evaluate` and reusing the existing
-/// [`FieldPoly::mul`] + [`FieldPoly::div_rem`] primitives on a tree
-/// they build themselves.
-pub const SUBPRODUCT_THRESHOLD: usize = 256;
+/// every cell in the `n, k ∈ {16, 64, 256, 1024}` matrix. See the
+/// module docstring for the measured table.
+///
+/// The value is therefore set to [`usize::MAX`] so that the public
+/// `batch_evaluate` entry point always routes through the naive path
+/// until a fast polynomial-division primitive (FFT / Newton,
+/// `bdf95060` task `e0b6f940`) makes the asymptotic win materialise —
+/// at which point this constant is lowered and the tree path takes
+/// over without any API change.
+///
+/// Fields with substantially more expensive scalar arithmetic
+/// (large-prime Montgomery, tower extensions) tip the balance earlier;
+/// callers on those fields can already dispatch the subproduct path
+/// manually by calling [`batch_evaluate_subproduct`] directly, which
+/// bypasses this threshold.
+pub const SUBPRODUCT_THRESHOLD: usize = usize::MAX;
 
 /// Raw subproduct-tree batch evaluation, exposed **only** for the
 /// benchmark harness (see [`FieldPoly::batch_evaluate`] for the stable
@@ -2546,15 +2557,19 @@ mod tests {
 
     #[test]
     fn test_batch_evaluate_exercises_subproduct_path_fp7() {
-        // Inputs sized at >= SUBPRODUCT_THRESHOLD in both dimensions so
-        // the fast path is exercised directly in the unit harness.
-        let n = SUBPRODUCT_THRESHOLD + 4;
-        let k = SUBPRODUCT_THRESHOLD + 3;
+        // Call the raw subproduct kernel directly (bypassing the
+        // SUBPRODUCT_THRESHOLD gate, which is `usize::MAX` under the
+        // current schoolbook `div_rem` profile). Verifies the tree
+        // construction + top-down reduction math on moderately-sized
+        // inputs where the algorithm's odd-tail and descent branches all
+        // fire.
+        let n = 20;
+        let k = 24;
         let p_coeffs: Vec<FP7> = (0..=n).map(|i| fp7((i as u64 * 3 + 1) % 7)).collect();
         let p = FieldPoly::new(p_coeffs);
         let xs: Vec<FP7> = (0..k).map(|i| fp7((i as u64 * 5) % 7)).collect();
 
-        let fast = p.batch_evaluate(&xs);
+        let fast = batch_evaluate_subproduct(&p, &xs);
         let naive: Vec<FP7> = xs.iter().map(|x| p.eval(x)).collect();
         assert_eq!(fast, naive);
     }
@@ -2562,8 +2577,8 @@ mod tests {
     #[test]
     fn test_batch_evaluate_exercises_subproduct_path_gf16() {
         let field = Gf2mField::new(4, 0b10011);
-        let n = SUBPRODUCT_THRESHOLD + 4;
-        let k = SUBPRODUCT_THRESHOLD + 3;
+        let n = 20;
+        let k = 24;
         let p_coeffs: Vec<Gf2mElement> = (0..=n)
             .map(|i| field.element(((i as u64) * 7 + 1) & 0xF))
             .collect();
@@ -2572,7 +2587,7 @@ mod tests {
             .map(|i| field.element((i as u64 * 11) & 0xF))
             .collect();
 
-        let fast = p.batch_evaluate(&xs);
+        let fast = batch_evaluate_subproduct(&p, &xs);
         let naive: Vec<Gf2mElement> = xs.iter().map(|x| p.eval(x)).collect();
         assert_eq!(fast, naive);
     }
@@ -2581,14 +2596,16 @@ mod tests {
     fn test_batch_evaluate_odd_sized_point_set_fp7() {
         // Odd k forces the odd-tail-carry branch in the bottom-up tree
         // build and the corresponding single-child descent during the
-        // top-down reduction.
-        let n = SUBPRODUCT_THRESHOLD + 4;
-        let k = SUBPRODUCT_THRESHOLD + 1; // deliberately odd
+        // top-down reduction. Dispatches straight to the raw tree
+        // kernel so the branch fires regardless of the public
+        // `batch_evaluate` threshold policy.
+        let n = 20;
+        let k = 23; // deliberately odd
         let p_coeffs: Vec<FP7> = (0..=n).map(|i| fp7((i as u64 * 2 + 1) % 7)).collect();
         let p = FieldPoly::new(p_coeffs);
         let xs: Vec<FP7> = (0..k).map(|i| fp7((i as u64 * 3) % 7)).collect();
 
-        let fast = p.batch_evaluate(&xs);
+        let fast = batch_evaluate_subproduct(&p, &xs);
         let naive: Vec<FP7> = xs.iter().map(|x| p.eval(x)).collect();
         assert_eq!(fast, naive);
     }
