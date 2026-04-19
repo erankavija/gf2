@@ -826,12 +826,17 @@ fn fp65537_simd_impl<const P: u64, C: ExtConfig<BaseField = Fp<P>>>(
 
 #[cfg(not(feature = "simd"))]
 #[inline]
+#[allow(clippy::extra_unused_type_parameters)]
 fn fp65537_simd_impl<const P: u64, C: ExtConfig<BaseField = Fp<P>>>(
     _a0: &[Fp<P>],
     _a1: &[Fp<P>],
     _b0: &[Fp<P>],
     _b1: &[Fp<P>],
 ) -> Option<(Vec<Fp<P>>, Vec<Fp<P>>)> {
+    // `C` is deliberately part of this stub's signature so that callers
+    // can use the same generic parameters regardless of whether the
+    // `simd` feature is enabled; the SIMD path uses `C` to locate the
+    // `ExtConfig::NON_RESIDUE`-typed output vectors.
     None
 }
 
