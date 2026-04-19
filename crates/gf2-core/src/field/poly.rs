@@ -1775,6 +1775,85 @@ pub const KARATSUBA_THRESHOLD: usize = 32;
 /// bypasses this threshold.
 pub const SUBPRODUCT_THRESHOLD: usize = usize::MAX;
 
+/// Builds the subproduct tree for a slice of evaluation points.
+///
+/// Returns a flat `Vec<Vec<FieldPoly<F>>>` where `levels[0]` holds the
+/// linear leaves `M_i = x - points[i]`, `levels[h + 1]` holds the
+/// pairwise products of `levels[h]`, and `levels.last()` is a
+/// single-element vector containing the full product
+/// `M(x) = ∏ (x - points[i])`. Odd-sized levels carry the last node up
+/// unchanged.
+///
+/// This is the single source of truth for subproduct-tree construction:
+/// both [`batch_evaluate_subproduct`] (batch evaluation) and the fast
+/// Lagrange interpolation path in
+/// [`crate::field::poly_interpolate::interpolate_fast`] build on it, so
+/// any refinement to the tree layout (e.g., a faster pairing strategy
+/// via balanced-tree reordering) lands once and propagates to both
+/// callers.
+///
+/// # Arguments
+///
+/// * `points` — non-empty slice of evaluation points. May contain
+///   zeros and duplicates (each duplicate contributes an independent
+///   linear factor to the product).
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::field::poly::build_subproduct_tree;
+/// use gf2_core::gfp::Fp;
+///
+/// let levels = build_subproduct_tree(&[Fp::<7>::new(1), Fp::<7>::new(2)]);
+/// assert_eq!(levels.len(), 2);              // leaves + root
+/// assert_eq!(levels[0].len(), 2);           // two leaves
+/// assert_eq!(levels[1].len(), 1);           // single root
+/// ```
+///
+/// # Panics
+///
+/// Panics (via `debug_assert`) in debug builds if `points` is empty; in
+/// release builds the leaf construction indexes `points[0]` to source a
+/// `one_like()` and will panic with an out-of-bounds error. Callers
+/// requiring the total contract on empty input must handle the
+/// `points.is_empty()` case themselves.
+///
+/// # Complexity
+///
+/// `O(k log k)` polynomial multiplications for `k = points.len()` on a
+/// balanced tree — dominated by the top-level merges of two
+/// degree-`k/2` polynomials.
+pub fn build_subproduct_tree<F: FiniteField>(points: &[F]) -> Vec<Vec<FieldPoly<F>>> {
+    debug_assert!(!points.is_empty());
+
+    // Leaves: M_i = x - points[i], stored in ascending-degree order
+    // `[-points[i], 1]`.
+    let one = points[0].one_like();
+    let leaves: Vec<FieldPoly<F>> = points
+        .iter()
+        .map(|p| FieldPoly::new(vec![-p.clone(), one.clone()]))
+        .collect();
+
+    // Bottom-up: pair-merge siblings. Odd tail at each level carries
+    // up unchanged. `levels[0]` = leaves; `levels[last]` = root.
+    let mut levels: Vec<Vec<FieldPoly<F>>> = vec![leaves];
+    while levels.last().unwrap().len() > 1 {
+        let cur = levels.last().unwrap();
+        let mut next: Vec<FieldPoly<F>> = Vec::with_capacity(cur.len().div_ceil(2));
+        let mut i = 0;
+        while i + 1 < cur.len() {
+            next.push(&cur[i] * &cur[i + 1]);
+            i += 2;
+        }
+        if i < cur.len() {
+            // Odd tail: carry the last node up without a partner.
+            next.push(cur[i].clone());
+        }
+        levels.push(next);
+    }
+    levels
+}
+
 /// Raw subproduct-tree batch evaluation, exposed **only** for the
 /// benchmark harness (see [`FieldPoly::batch_evaluate`] for the stable
 /// entry point). Callers bypass the [`SUBPRODUCT_THRESHOLD`]
@@ -1839,33 +1918,7 @@ pub fn batch_evaluate_subproduct<F: FiniteField>(poly: &FieldPoly<F>, points: &[
     debug_assert!(!points.is_empty());
 
     let k = points.len();
-
-    // Build the leaves: M_i = x - points[i], stored in
-    // ascending-degree order `[-points[i], 1]`.
-    let one = points[0].one_like();
-    let leaves: Vec<FieldPoly<F>> = points
-        .iter()
-        .map(|p| FieldPoly::new(vec![-p.clone(), one.clone()]))
-        .collect();
-
-    // Bottom-up: pair-merge siblings. Odd tail at each level carries
-    // up unchanged. `levels[0]` = leaves; `levels[last]` = root.
-    let mut levels: Vec<Vec<FieldPoly<F>>> = vec![leaves];
-    while levels.last().unwrap().len() > 1 {
-        let cur = levels.last().unwrap();
-        let mut next: Vec<FieldPoly<F>> = Vec::with_capacity(cur.len().div_ceil(2));
-        let mut i = 0;
-        while i + 1 < cur.len() {
-            next.push(&cur[i] * &cur[i + 1]);
-            i += 2;
-        }
-        if i < cur.len() {
-            // Odd tail: carry the last node up without a partner. The
-            // reduction phase below handles single-child descents.
-            next.push(cur[i].clone());
-        }
-        levels.push(next);
-    }
+    let levels = build_subproduct_tree(points);
 
     // Top-down reduction.
     //

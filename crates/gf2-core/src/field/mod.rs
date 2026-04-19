@@ -55,9 +55,7 @@ pub use batch_ops::{
 };
 pub use ntt::ntt_inplace;
 pub use poly::FieldPoly;
-pub use poly_interpolate::{
-    formal_derivative, interpolate, interpolate_fast, InterpolationError, INTERPOLATE_THRESHOLD,
-};
+pub use poly_interpolate::{formal_derivative, interpolate, interpolate_fast, InterpolationError};
 pub use traits::{ConstField, FiniteField, FiniteFieldExt};
 pub use two_adic::TwoAdicField;
 pub use vec::{FieldVec, StridedIter};

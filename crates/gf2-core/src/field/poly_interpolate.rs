@@ -11,9 +11,10 @@
 //! | [`interpolate`] | Lagrange barycentric O(n²) | `O(n²)` field ops |
 //! | [`interpolate_fast`] | Subproduct-tree O(n log² n) | `O(n log² n)` field ops |
 //!
-//! [`INTERPOLATE_THRESHOLD`] governs the crossover inside any future
-//! auto-dispatch wrapper. The current value is tuned from the benchmark results
-//! in the module docstring below.
+//! The two entry points are currently chosen explicitly by the caller.
+//! Benchmarks (table below) show the fast path wins at every measured `n ≥ 16`
+//! on `Fp<65537>` with schoolbook `div_rem`, so a future auto-dispatch wrapper
+//! would always prefer `interpolate_fast` for non-trivial inputs.
 //!
 //! # Dependency on `batch_inverse`
 //!
@@ -47,17 +48,17 @@
 //! each linear factor `(x − x_i)` individually — `n` calls to `div_rem` on a
 //! degree-n polynomial. Although this is nominally `O(n²)`, the constant
 //! factor (each `div_rem` on a monic degree-n poly takes `O(n)` field mults)
-//! makes it slower than the `fast` path's `batch_evaluate_subproduct` +
-//! one-pass upward merge even at small `n` on this machine.
-//!
-//! [`INTERPOLATE_THRESHOLD`] is therefore set to `8` so that any future
-//! auto-dispatch wrapper prefers the fast path for all non-trivial inputs.
+//! makes it slower than the `fast` path's subproduct-tree batch evaluation +
+//! one-pass upward merge even at small `n` on this machine. Callers on
+//! fields with very expensive Karatsuba multiplications may see the crossover
+//! shift; dispatch explicitly by calling [`interpolate`] or
+//! [`interpolate_fast`] as appropriate.
 //!
 //! Regenerate this table with
 //! `cargo bench -p gf2-core --bench field_poly -- --quick interpolate`.
 
 use crate::field::batch_ops::batch_inverse;
-use crate::field::poly::batch_evaluate_subproduct;
+use crate::field::poly::{batch_evaluate_subproduct, build_subproduct_tree};
 use crate::field::{FieldPoly, FiniteField};
 use std::fmt;
 
@@ -111,27 +112,6 @@ impl fmt::Display for InterpolationError {
         }
     }
 }
-
-// ---------------------------------------------------------------------
-// Threshold
-// ---------------------------------------------------------------------
-
-/// Number-of-points threshold at which [`interpolate_fast`] is preferred over
-/// [`interpolate`] in any future auto-dispatch entry point.
-///
-/// Benchmarks on `Fp<65537>` (see module docstring for the measured table) show
-/// that the fast path wins at *all* measured sizes (n ≥ 16): the naive
-/// implementation's `n` calls to `div_rem` on the full-degree `M(x)` carry a
-/// large constant factor that exceeds the `from_roots` + `batch_evaluate_subproduct`
-/// overhead of the fast path even for small `n`. The threshold is therefore set
-/// to `8` — below that the two paths are essentially equivalent constant-work and
-/// neither is worth dispatching dynamically.
-///
-/// Fields with cheaper scalar arithmetic may flip the balance back at very small
-/// `n`; callers on those fields can invoke [`interpolate`] directly. Currently
-/// each caller chooses the implementation explicitly; this constant is reserved
-/// for a future auto-dispatch wrapper.
-pub const INTERPOLATE_THRESHOLD: usize = 8;
 
 // ---------------------------------------------------------------------
 // Helpers
@@ -376,14 +356,19 @@ pub fn interpolate<F: FiniteField>(points: &[(F, F)]) -> Result<FieldPoly<F>, In
 /// 1. Build `M(x) = Π_i (x − x_i)` via [`FieldPoly::from_roots`].
 /// 2. Compute `M'(x)` (formal derivative) via [`formal_derivative`].
 /// 3. Evaluate `M'` at all `x_i` via
-///    [`batch_evaluate_subproduct`][crate::field::poly::batch_evaluate_subproduct].
-///    By the product rule, `M'(x_i) = Π_{j ≠ i} (x_i − x_j)`.
+///    [`batch_evaluate_subproduct`][crate::field::poly::batch_evaluate_subproduct]
+///    — the subproduct-tree internal entry point shared with
+///    [`FieldPoly::batch_evaluate`]. By the product rule,
+///    `M'(x_i) = Π_{j ≠ i} (x_i − x_j)`.
 /// 4. Compute barycentric weights `w_i = y_i / M'(x_i)` using
 ///    [`crate::field::batch_ops::batch_inverse`].
-/// 5. Downward pass: starting from leaf vector `[w_0, …, w_{n-1}]`,
-///    merge pairs using the recurrence
+/// 5. Upward merge: starting from leaf vector `[w_0, …, w_{n-1}]`,
+///    merge pairs bottom-up on the subproduct tree using the recurrence
 ///    `L_{left+right}(x) = L_left(x) · M_right(x) + L_right(x) · M_left(x)`
-///    where `M_left`, `M_right` are the subproduct-tree nodes.
+///    where `M_left`, `M_right` are the subproduct-tree nodes. The tree
+///    itself is built via [`build_subproduct_tree`][crate::field::poly::build_subproduct_tree]
+///    so both `batch_evaluate` and `interpolate_fast` share one
+///    construction.
 ///
 /// Steps 1–4 are `O(M(n) log n)` with fast polynomial multiplication;
 /// with schoolbook multiplication they remain `O(n² log n)`.
@@ -425,9 +410,11 @@ pub fn interpolate<F: FiniteField>(points: &[(F, F)]) -> Result<FieldPoly<F>, In
 /// `O(M(n) log n)` field operations where `M(n)` is the cost of multiplying
 /// two degree-`n` polynomials. With schoolbook multiplication (`M(n) = O(n²)`)
 /// this is `O(n² log n)`; with NTT (`M(n) = O(n log n)`) this becomes
-/// the optimal `O(n log² n)`. In practice the crossover where this path
-/// outperforms the `O(n²)` [`interpolate`] is around `n ≈ 1024` on
-/// `Fp<65537>` — see [`INTERPOLATE_THRESHOLD`] and the module docstring.
+/// the optimal `O(n log² n)`. In practice this path **already outperforms
+/// the `O(n²)` [`interpolate`] at every measured `n ≥ 16` on `Fp<65537>`
+/// with schoolbook `div_rem`** — see the benchmark table in the module
+/// docstring. Callers with very cheap `Mul` / expensive `div_rem` may see
+/// the crossover move upward; dispatch explicitly.
 pub fn interpolate_fast<F: FiniteField>(
     points: &[(F, F)],
 ) -> Result<FieldPoly<F>, InterpolationError> {
@@ -468,41 +455,14 @@ pub fn interpolate_fast<F: FiniteField>(
         .map(|(inv, y)| inv * y.clone())
         .collect();
 
-    // Step 5: Upward merge pass using the subproduct tree.
-    //
-    // We build the same subproduct tree as in `batch_evaluate_subproduct`
-    // but this time we use it *bottom-up* to combine partial interpolants.
-    //
-    // Leaf level: L_i(x) = w_i  (constant polynomial — the "partial sum"
-    // for the leaf node [x - x_i]).
-    // Merge rule at each level:
-    //   L_{left ∪ right}(x) = L_left(x) · M_right(x) + L_right(x) · M_left(x)
-    // where M_left and M_right are the subproduct-tree nodes.
-    //
-    // After the root merge, L_root = L(x), the unique interpolant.
-
-    // Build the subproduct tree (leaves = [x - x_i]).
-    let one = xs[0].one_like();
-    let leaves: Vec<FieldPoly<F>> = xs
-        .iter()
-        .map(|xi| FieldPoly::new(vec![-xi.clone(), one.clone()]))
-        .collect();
-
-    // Bottom-up build the product tree.
-    let mut tree: Vec<Vec<FieldPoly<F>>> = vec![leaves];
-    while tree.last().unwrap().len() > 1 {
-        let cur = tree.last().unwrap();
-        let mut next: Vec<FieldPoly<F>> = Vec::with_capacity(cur.len().div_ceil(2));
-        let mut i = 0;
-        while i + 1 < cur.len() {
-            next.push(&cur[i] * &cur[i + 1]);
-            i += 2;
-        }
-        if i < cur.len() {
-            next.push(cur[i].clone());
-        }
-        tree.push(next);
-    }
+    // Step 5: Upward merge pass using the same subproduct tree that
+    // batch_evaluate uses for reduction, built through the shared
+    // [`build_subproduct_tree`] helper (SSOT). Leaf level:
+    // `L_i(x) = w_i` (constant polynomial). Merge rule at each level:
+    //   `L_{left ∪ right}(x) = L_left(x) · M_right(x) + L_right(x) · M_left(x)`
+    // where `M_left` / `M_right` are the subproduct-tree nodes. After
+    // the root merge, `L_root = L(x)`, the unique interpolant.
+    let tree = build_subproduct_tree(&xs);
 
     // Initialise the "partial interpolant" at each leaf as the constant w_i.
     let mut cur_interp: Vec<FieldPoly<F>> = weights.into_iter().map(FieldPoly::constant).collect();
