@@ -2496,5 +2496,31 @@ mod tests {
             }
             prop_assert_eq!(a.eval(&x), expected);
         }
+
+        #[test]
+        fn prop_karatsuba_matches_schoolbook_gf16(
+            a_len in KARATSUBA_THRESHOLD..=KARATSUBA_THRESHOLD + 4,
+            b_len in KARATSUBA_THRESHOLD..=KARATSUBA_THRESHOLD + 4,
+            a_seed in 0u64..16,
+            b_seed in 0u64..16,
+        ) {
+            let field = gf16_field();
+            // Deterministic coefficient generation from the seeds keeps the
+            // input space small enough to finish within the 64-case budget
+            // while still exercising the Karatsuba dispatch on GF(2^4).
+            let a_coeffs: Vec<Gf2mElement> = (0..a_len)
+                .map(|i| field.element((a_seed.wrapping_add(i as u64 * 7 + 1)) & 0xF))
+                .collect();
+            let b_coeffs: Vec<Gf2mElement> = (0..b_len)
+                .map(|i| field.element((b_seed.wrapping_add(i as u64 * 5 + 2)) & 0xF))
+                .collect();
+            if a_coeffs.iter().all(FiniteField::is_zero) || b_coeffs.iter().all(FiniteField::is_zero) {
+                return Ok(());
+            }
+            let a_poly = FieldPoly::new(a_coeffs.clone());
+            let b_poly = FieldPoly::new(b_coeffs.clone());
+            let school = mul_schoolbook_impl(&a_coeffs, &b_coeffs);
+            prop_assert_eq!(&a_poly * &b_poly, school);
+        }
     }
 }
