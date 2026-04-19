@@ -192,10 +192,45 @@ fn bench_ntt_vs_karatsuba(c: &mut Criterion) {
     group.finish();
 }
 
+/// Build `n` deterministic distinct evaluation points for interpolation benchmarks.
+/// Uses a stride coprime to 65537 so no two points collide for n ≤ 65536.
+fn make_interp_points(n: usize) -> Vec<(F, F)> {
+    let modulus: u64 = 65537;
+    (0..n)
+        .map(|i| {
+            let x = ((i as u64).wrapping_mul(1_000_003) % (modulus - 1)) + 1;
+            let y = ((i as u64).wrapping_mul(999_983) % (modulus - 1)) + 1;
+            (F::new(x), F::new(y))
+        })
+        .collect()
+}
+
+fn bench_interpolate(c: &mut Criterion) {
+    use gf2_core::field::poly_interpolate::{interpolate, interpolate_fast};
+
+    let mut group = c.benchmark_group("field_poly_interpolate_fp65537");
+    group.sample_size(10);
+
+    for &n in &[16usize, 32, 64, 128, 256, 512, 1024, 2048] {
+        let points = make_interp_points(n);
+
+        group.bench_with_input(BenchmarkId::new("naive", n), &points, |b, pts| {
+            b.iter(|| black_box(interpolate(black_box(pts)).unwrap()));
+        });
+
+        group.bench_with_input(BenchmarkId::new("fast", n), &points, |b, pts| {
+            b.iter(|| black_box(interpolate_fast(black_box(pts)).unwrap()));
+        });
+    }
+
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_batch_evaluate,
     bench_batch_mul,
     bench_ntt_vs_karatsuba,
+    bench_interpolate,
 );
 criterion_main!(benches);
