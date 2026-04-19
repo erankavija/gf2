@@ -539,8 +539,14 @@ impl<F: FiniteField> FieldVec<F> {
 
 // ── Element-wise ops ──────────────────────────────────────────────────────────
 
-impl<F: FiniteField> FieldVec<F> {
+impl<F: FiniteField + SimdVecOps> FieldVec<F> {
     /// Returns `self[i] + rhs[i]` element-wise.
+    ///
+    /// For base fields with a SIMD kernel (currently `Fp<65537>` on AVX2
+    /// hosts with the `simd` feature) this dispatches through
+    /// [`SimdVecOps::try_simd_add_vec`]; other base fields, non-AVX2
+    /// hardware, and `simd`-disabled builds fall back to the scalar
+    /// element-wise loop.
     ///
     /// # Panics
     ///
@@ -567,6 +573,9 @@ impl<F: FiniteField> FieldVec<F> {
             self.len(),
             rhs.len()
         );
+        if let Some(out) = F::try_simd_add_vec(&self.data, &rhs.data) {
+            return FieldVec { data: out };
+        }
         FieldVec {
             data: self
                 .data
@@ -578,6 +587,12 @@ impl<F: FiniteField> FieldVec<F> {
     }
 
     /// Returns `self[i] - rhs[i]` element-wise.
+    ///
+    /// For base fields with a SIMD kernel (currently `Fp<65537>` on AVX2
+    /// hosts with the `simd` feature) this dispatches through
+    /// [`SimdVecOps::try_simd_sub_vec`]; other base fields, non-AVX2
+    /// hardware, and `simd`-disabled builds fall back to the scalar
+    /// element-wise loop.
     ///
     /// # Panics
     ///
@@ -604,6 +619,9 @@ impl<F: FiniteField> FieldVec<F> {
             self.len(),
             rhs.len()
         );
+        if let Some(out) = F::try_simd_sub_vec(&self.data, &rhs.data) {
+            return FieldVec { data: out };
+        }
         FieldVec {
             data: self
                 .data
@@ -615,6 +633,12 @@ impl<F: FiniteField> FieldVec<F> {
     }
 
     /// Returns the Hadamard product `self[i] * rhs[i]` element-wise.
+    ///
+    /// For base fields with a SIMD kernel (currently `Fp<65537>` on AVX2
+    /// hosts with the `simd` feature) this dispatches through
+    /// [`SimdVecOps::try_simd_mul_vec`]; other base fields, non-AVX2
+    /// hardware, and `simd`-disabled builds fall back to the scalar
+    /// element-wise loop.
     ///
     /// # Panics
     ///
@@ -645,6 +669,9 @@ impl<F: FiniteField> FieldVec<F> {
             self.len(),
             rhs.len()
         );
+        if let Some(out) = F::try_simd_mul_vec(&self.data, &rhs.data) {
+            return FieldVec { data: out };
+        }
         FieldVec {
             data: self
                 .data
@@ -834,222 +861,19 @@ impl<'a, F> Iterator for StridedIter<'a, F> {
     }
 }
 
-// ── Fp<65537>-specific SIMD-accelerated element-wise ops ────────────────────
+// ── SimdVecOps: element-wise SIMD dispatch hook for FieldVec ────────────────
 //
-// `P = 65537 = 2^16 + 1` is the fifth Fermat prime. Because `R = 2^64 ≡ 1
-// (mod P)`, the Montgomery internal storage of `Fp<65537>` coincides with
-// the canonical `[0, P)` representative: `x.raw_storage() == x.value()`.
-// The SIMD batch kernels operate on canonical `u32` slices, and we avoid
-// the REDC round-trip of `.value()`/`Fp::new()` by using the crate-private
-// raw-storage accessors.
+// `FieldVec::mul_vec`/`add_vec`/`sub_vec` consult this trait's `try_simd_*`
+// hooks before falling back to scalar loops. Every base field may return
+// `None` (the default, giving scalar behaviour) or override the hook to
+// route through a kernel in `gf2-kernels-simd`.
+//
+// Currently only `Fp<65537>` has a non-trivial implementation, routed to
+// the AVX2 kernel via the central helpers in [`crate::gfp::simd_ops`].
+// Other `Fp<P>` primes inherit the `None` default through the same
+// blanket impl.
 
-use crate::gfp::Fp;
-
-impl FieldVec<Fp<65537>> {
-    /// SIMD-accelerated element-wise multiplication for `Fp<65537>`.
-    ///
-    /// Dispatches to the AVX2 kernel in `gf2-kernels-simd` when available,
-    /// producing a batch of canonical products with a lane-parallel
-    /// `_mm256_mul_epu32` followed by a single `lo - hi` reduction step
-    /// exploiting `2^16 ≡ -1 (mod 65537)`. Falls back to the generic
-    /// [`mul_vec`](FieldVec::mul_vec) on non-AVX2 hardware or when the
-    /// `simd` feature is disabled.
-    ///
-    /// This is the same Hadamard product as the generic path — only the
-    /// implementation differs.
-    ///
-    /// # Arguments
-    ///
-    /// * `rhs` — right-hand vector; must have the same length as `self`.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `self.len() != rhs.len()`.
-    ///
-    /// # Complexity
-    ///
-    /// `O(n)` with an 8-lane vectorisation factor on AVX2-capable CPUs.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldVec;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let a = FieldVec::from(vec![Fp::<65537>::new(3), Fp::<65537>::new(5)]);
-    /// let b = FieldVec::from(vec![Fp::<65537>::new(2), Fp::<65537>::new(4)]);
-    /// let c = a.simd_mul_vec(&b);
-    /// assert_eq!(c.as_slice(), &[Fp::<65537>::new(6), Fp::<65537>::new(20)]);
-    /// ```
-    pub fn simd_mul_vec(&self, rhs: &Self) -> Self {
-        assert_eq!(
-            self.len(),
-            rhs.len(),
-            "simd_mul_vec: length mismatch ({} vs {})",
-            self.len(),
-            rhs.len()
-        );
-        match fp65537_simd_mul(self.as_slice(), rhs.as_slice()) {
-            Some(out) => FieldVec { data: out },
-            None => self.mul_vec(rhs),
-        }
-    }
-
-    /// SIMD-accelerated element-wise addition for `Fp<65537>`.
-    ///
-    /// See [`simd_mul_vec`](Self::simd_mul_vec) for dispatch and fallback
-    /// semantics.
-    ///
-    /// # Arguments
-    ///
-    /// * `rhs` — right-hand vector; must have the same length as `self`.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `self.len() != rhs.len()`.
-    ///
-    /// # Complexity
-    ///
-    /// `O(n)`, 8-lane AVX2 when available.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldVec;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let a = FieldVec::from(vec![Fp::<65537>::new(65536), Fp::<65537>::new(3)]);
-    /// let b = FieldVec::from(vec![Fp::<65537>::new(2), Fp::<65537>::new(4)]);
-    /// let c = a.simd_add_vec(&b);
-    /// assert_eq!(c.as_slice(), &[Fp::<65537>::new(1), Fp::<65537>::new(7)]);
-    /// ```
-    pub fn simd_add_vec(&self, rhs: &Self) -> Self {
-        assert_eq!(
-            self.len(),
-            rhs.len(),
-            "simd_add_vec: length mismatch ({} vs {})",
-            self.len(),
-            rhs.len()
-        );
-        match fp65537_simd_add(self.as_slice(), rhs.as_slice()) {
-            Some(out) => FieldVec { data: out },
-            None => self.add_vec(rhs),
-        }
-    }
-
-    /// SIMD-accelerated element-wise subtraction for `Fp<65537>`.
-    ///
-    /// See [`simd_mul_vec`](Self::simd_mul_vec) for dispatch and fallback
-    /// semantics.
-    ///
-    /// # Arguments
-    ///
-    /// * `rhs` — right-hand vector; must have the same length as `self`.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `self.len() != rhs.len()`.
-    ///
-    /// # Complexity
-    ///
-    /// `O(n)`, 8-lane AVX2 when available.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldVec;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let a = FieldVec::from(vec![Fp::<65537>::new(3), Fp::<65537>::new(2)]);
-    /// let b = FieldVec::from(vec![Fp::<65537>::new(5), Fp::<65537>::new(2)]);
-    /// let c = a.simd_sub_vec(&b);
-    /// assert_eq!(c.as_slice(), &[Fp::<65537>::new(65535), Fp::<65537>::new(0)]);
-    /// ```
-    pub fn simd_sub_vec(&self, rhs: &Self) -> Self {
-        assert_eq!(
-            self.len(),
-            rhs.len(),
-            "simd_sub_vec: length mismatch ({} vs {})",
-            self.len(),
-            rhs.len()
-        );
-        match fp65537_simd_sub(self.as_slice(), rhs.as_slice()) {
-            Some(out) => FieldVec { data: out },
-            None => self.sub_vec(rhs),
-        }
-    }
-}
-
-/// Attempts SIMD batch multiply over `Fp<65537>`. Returns `None` when no
-/// acceleration is available; callers fall back to the scalar element-wise
-/// path. When the `simd` feature is enabled and AVX2 is detected at
-/// runtime, this unpacks canonical `u32` lanes, runs the kernel, and
-/// packs the results back into `Vec<Fp<65537>>`.
-#[cfg(feature = "simd")]
-fn fp65537_simd_mul(a: &[Fp<65537>], b: &[Fp<65537>]) -> Option<Vec<Fp<65537>>> {
-    let fns = crate::simd::maybe_fp65537()?;
-    let (a_u32, b_u32) = fp65537_pack(a, b);
-    let mut out_u32 = vec![0u32; a.len()];
-    (fns.batch_mul_fn)(&a_u32, &b_u32, &mut out_u32);
-    Some(fp65537_unpack(&out_u32))
-}
-
-#[cfg(feature = "simd")]
-fn fp65537_simd_add(a: &[Fp<65537>], b: &[Fp<65537>]) -> Option<Vec<Fp<65537>>> {
-    let fns = crate::simd::maybe_fp65537()?;
-    let (a_u32, b_u32) = fp65537_pack(a, b);
-    let mut out_u32 = vec![0u32; a.len()];
-    (fns.batch_add_fn)(&a_u32, &b_u32, &mut out_u32);
-    Some(fp65537_unpack(&out_u32))
-}
-
-#[cfg(feature = "simd")]
-fn fp65537_simd_sub(a: &[Fp<65537>], b: &[Fp<65537>]) -> Option<Vec<Fp<65537>>> {
-    let fns = crate::simd::maybe_fp65537()?;
-    let (a_u32, b_u32) = fp65537_pack(a, b);
-    let mut out_u32 = vec![0u32; a.len()];
-    (fns.batch_sub_fn)(&a_u32, &b_u32, &mut out_u32);
-    Some(fp65537_unpack(&out_u32))
-}
-
-#[cfg(not(feature = "simd"))]
-fn fp65537_simd_mul(_a: &[Fp<65537>], _b: &[Fp<65537>]) -> Option<Vec<Fp<65537>>> {
-    None
-}
-
-#[cfg(not(feature = "simd"))]
-fn fp65537_simd_add(_a: &[Fp<65537>], _b: &[Fp<65537>]) -> Option<Vec<Fp<65537>>> {
-    None
-}
-
-#[cfg(not(feature = "simd"))]
-fn fp65537_simd_sub(_a: &[Fp<65537>], _b: &[Fp<65537>]) -> Option<Vec<Fp<65537>>> {
-    None
-}
-
-/// Packs two `&[Fp<65537>]` slices into `Vec<u32>` canonical buffers.
-///
-/// Exploits the Fermat-prime coincidence `R = 2^64 ≡ 1 (mod 65537)` which
-/// makes the Montgomery internal storage equal the canonical value, so we
-/// can use the crate-private `raw_storage` accessor instead of the more
-/// expensive `.value()` (which would call REDC).
-#[cfg(feature = "simd")]
-fn fp65537_pack(a: &[Fp<65537>], b: &[Fp<65537>]) -> (Vec<u32>, Vec<u32>) {
-    // For P = 65537, raw_storage() == canonical value in [0, 65537), so
-    // the cast to u32 is exact.
-    let a_u32: Vec<u32> = a.iter().map(|e| e.raw_storage() as u32).collect();
-    let b_u32: Vec<u32> = b.iter().map(|e| e.raw_storage() as u32).collect();
-    (a_u32, b_u32)
-}
-
-/// Unpacks a `&[u32]` canonical buffer back into `Vec<Fp<65537>>` using
-/// the Fermat-prime raw-storage identity (see [`fp65537_pack`]).
-#[cfg(feature = "simd")]
-fn fp65537_unpack(out: &[u32]) -> Vec<Fp<65537>> {
-    out.iter()
-        .map(|&x| Fp::<65537>::from_raw_storage(x as u64))
-        .collect()
-}
+pub use crate::gfp::SimdVecOps;
 
 // ── GF(2^m)-specific SIMD-accelerated dot product ───────────────────────────
 
@@ -1976,65 +1800,97 @@ mod tests {
         assert_eq!(a.dot_product(&b), a.simd_dot_product(&b));
     }
 
-    // ── Fp<65537> SIMD tests ────────────────────────────────────────────────
+    // ── FieldVec<Fp<65537>> SIMD-dispatch tests ────────────────────────────
+    //
+    // `mul_vec`/`add_vec`/`sub_vec` transparently route through the AVX2
+    // kernel via `SimdVecOps`. These tests verify the unified surface
+    // produces the same result as a hand-rolled scalar reference loop
+    // (exercising the boundary and overflow cases that distinguish the
+    // SIMD path). When the `simd` feature is off or AVX2 is unavailable,
+    // the fallback arm runs; the tests are written so either path yields
+    // the same answer.
+
+    fn fp65537_scalar_mul_vec(a: &[u64], b: &[u64]) -> Vec<u64> {
+        a.iter()
+            .zip(b.iter())
+            .map(|(&x, &y)| (x * y) % 65537)
+            .collect()
+    }
+
+    fn fp65537_scalar_add_vec(a: &[u64], b: &[u64]) -> Vec<u64> {
+        a.iter()
+            .zip(b.iter())
+            .map(|(&x, &y)| (x + y) % 65537)
+            .collect()
+    }
+
+    fn fp65537_scalar_sub_vec(a: &[u64], b: &[u64]) -> Vec<u64> {
+        a.iter()
+            .zip(b.iter())
+            .map(|(&x, &y)| (x + 65537 - y) % 65537)
+            .collect()
+    }
 
     #[test]
-    fn test_simd_mul_vec_fp65537_matches_scalar() {
+    fn test_mul_vec_fp65537_matches_scalar_reference() {
         use crate::gfp::Fp;
         for &n in &[0usize, 1, 7, 8, 9, 16, 17, 100, 1000] {
-            let a: FieldVec<Fp<65537>> = (0..n as u64)
-                .map(|i| Fp::<65537>::new((i * 12345) % 65537))
-                .collect();
-            let b: FieldVec<Fp<65537>> = (0..n as u64)
-                .map(|i| Fp::<65537>::new((i * 67890 + 7) % 65537))
-                .collect();
-            let simd = a.simd_mul_vec(&b);
-            let scalar = a.mul_vec(&b);
-            assert_eq!(simd, scalar, "simd/scalar mismatch for n={n}");
+            let xs: Vec<u64> = (0..n as u64).map(|i| (i * 12345) % 65537).collect();
+            let ys: Vec<u64> = (0..n as u64).map(|i| (i * 67890 + 7) % 65537).collect();
+            let a: FieldVec<Fp<65537>> = xs.iter().map(|&v| Fp::<65537>::new(v)).collect();
+            let b: FieldVec<Fp<65537>> = ys.iter().map(|&v| Fp::<65537>::new(v)).collect();
+            let out = a.mul_vec(&b);
+            let expected = fp65537_scalar_mul_vec(&xs, &ys);
+            for (i, e) in expected.iter().enumerate() {
+                assert_eq!(out[i].value(), *e, "mul_vec n={n} i={i}");
+            }
         }
     }
 
     #[test]
-    fn test_simd_mul_vec_fp65537_boundary_values() {
+    fn test_mul_vec_fp65537_boundary_values() {
         use crate::gfp::Fp;
         // 0, 1, p-1 = 65536, p/2 = 32768, saturation case 65536*65536
         let raw = [0u64, 1, 65536, 32768, 1, 65536, 0, 65535, 65536];
+        let rev: Vec<u64> = raw.iter().rev().copied().collect();
         let a: FieldVec<Fp<65537>> = raw.iter().map(|&v| Fp::<65537>::new(v)).collect();
-        let b: FieldVec<Fp<65537>> = raw.iter().rev().map(|&v| Fp::<65537>::new(v)).collect();
-        let simd = a.simd_mul_vec(&b);
-        let scalar = a.mul_vec(&b);
-        assert_eq!(simd, scalar);
-    }
-
-    #[test]
-    fn test_simd_add_vec_fp65537_matches_scalar() {
-        use crate::gfp::Fp;
-        for &n in &[0usize, 1, 8, 9, 100, 1000] {
-            let a: FieldVec<Fp<65537>> = (0..n as u64)
-                .map(|i| Fp::<65537>::new((i * 4093) % 65537))
-                .collect();
-            let b: FieldVec<Fp<65537>> = (0..n as u64)
-                .map(|i| Fp::<65537>::new((i * 9973) % 65537))
-                .collect();
-            let simd = a.simd_add_vec(&b);
-            let scalar = a.add_vec(&b);
-            assert_eq!(simd, scalar, "simd/scalar add mismatch for n={n}");
+        let b: FieldVec<Fp<65537>> = rev.iter().map(|&v| Fp::<65537>::new(v)).collect();
+        let out = a.mul_vec(&b);
+        let expected = fp65537_scalar_mul_vec(&raw, &rev);
+        for (i, e) in expected.iter().enumerate() {
+            assert_eq!(out[i].value(), *e, "boundary mul i={i}");
         }
     }
 
     #[test]
-    fn test_simd_sub_vec_fp65537_matches_scalar() {
+    fn test_add_vec_fp65537_matches_scalar_reference() {
         use crate::gfp::Fp;
         for &n in &[0usize, 1, 8, 9, 100, 1000] {
-            let a: FieldVec<Fp<65537>> = (0..n as u64)
-                .map(|i| Fp::<65537>::new((i * 4093) % 65537))
-                .collect();
-            let b: FieldVec<Fp<65537>> = (0..n as u64)
-                .map(|i| Fp::<65537>::new((i * 9973) % 65537))
-                .collect();
-            let simd = a.simd_sub_vec(&b);
-            let scalar = a.sub_vec(&b);
-            assert_eq!(simd, scalar, "simd/scalar sub mismatch for n={n}");
+            let xs: Vec<u64> = (0..n as u64).map(|i| (i * 4093) % 65537).collect();
+            let ys: Vec<u64> = (0..n as u64).map(|i| (i * 9973) % 65537).collect();
+            let a: FieldVec<Fp<65537>> = xs.iter().map(|&v| Fp::<65537>::new(v)).collect();
+            let b: FieldVec<Fp<65537>> = ys.iter().map(|&v| Fp::<65537>::new(v)).collect();
+            let out = a.add_vec(&b);
+            let expected = fp65537_scalar_add_vec(&xs, &ys);
+            for (i, e) in expected.iter().enumerate() {
+                assert_eq!(out[i].value(), *e, "add_vec n={n} i={i}");
+            }
+        }
+    }
+
+    #[test]
+    fn test_sub_vec_fp65537_matches_scalar_reference() {
+        use crate::gfp::Fp;
+        for &n in &[0usize, 1, 8, 9, 100, 1000] {
+            let xs: Vec<u64> = (0..n as u64).map(|i| (i * 4093) % 65537).collect();
+            let ys: Vec<u64> = (0..n as u64).map(|i| (i * 9973) % 65537).collect();
+            let a: FieldVec<Fp<65537>> = xs.iter().map(|&v| Fp::<65537>::new(v)).collect();
+            let b: FieldVec<Fp<65537>> = ys.iter().map(|&v| Fp::<65537>::new(v)).collect();
+            let out = a.sub_vec(&b);
+            let expected = fp65537_scalar_sub_vec(&xs, &ys);
+            for (i, e) in expected.iter().enumerate() {
+                assert_eq!(out[i].value(), *e, "sub_vec n={n} i={i}");
+            }
         }
     }
 
@@ -2042,7 +1898,7 @@ mod tests {
         #![proptest_config(proptest::prelude::ProptestConfig::with_cases(64))]
 
         #[test]
-        fn prop_simd_mul_vec_fp65537_matches_scalar(
+        fn prop_mul_vec_fp65537_matches_scalar(
             xs in proptest::collection::vec(0u64..65537, 1..=1024),
             ys in proptest::collection::vec(0u64..65537, 1..=1024),
         ) {
@@ -2052,11 +1908,15 @@ mod tests {
                 xs[..n].iter().map(|&v| Fp::<65537>::new(v)).collect();
             let b: FieldVec<Fp<65537>> =
                 ys[..n].iter().map(|&v| Fp::<65537>::new(v)).collect();
-            proptest::prop_assert_eq!(a.simd_mul_vec(&b), a.mul_vec(&b));
+            let out = a.mul_vec(&b);
+            let expected = fp65537_scalar_mul_vec(&xs[..n], &ys[..n]);
+            for (i, e) in expected.iter().enumerate() {
+                proptest::prop_assert_eq!(out[i].value(), *e);
+            }
         }
 
         #[test]
-        fn prop_simd_add_vec_fp65537_matches_scalar(
+        fn prop_add_vec_fp65537_matches_scalar(
             xs in proptest::collection::vec(0u64..65537, 1..=1024),
             ys in proptest::collection::vec(0u64..65537, 1..=1024),
         ) {
@@ -2066,11 +1926,15 @@ mod tests {
                 xs[..n].iter().map(|&v| Fp::<65537>::new(v)).collect();
             let b: FieldVec<Fp<65537>> =
                 ys[..n].iter().map(|&v| Fp::<65537>::new(v)).collect();
-            proptest::prop_assert_eq!(a.simd_add_vec(&b), a.add_vec(&b));
+            let out = a.add_vec(&b);
+            let expected = fp65537_scalar_add_vec(&xs[..n], &ys[..n]);
+            for (i, e) in expected.iter().enumerate() {
+                proptest::prop_assert_eq!(out[i].value(), *e);
+            }
         }
 
         #[test]
-        fn prop_simd_sub_vec_fp65537_matches_scalar(
+        fn prop_sub_vec_fp65537_matches_scalar(
             xs in proptest::collection::vec(0u64..65537, 1..=1024),
             ys in proptest::collection::vec(0u64..65537, 1..=1024),
         ) {
@@ -2080,7 +1944,11 @@ mod tests {
                 xs[..n].iter().map(|&v| Fp::<65537>::new(v)).collect();
             let b: FieldVec<Fp<65537>> =
                 ys[..n].iter().map(|&v| Fp::<65537>::new(v)).collect();
-            proptest::prop_assert_eq!(a.simd_sub_vec(&b), a.sub_vec(&b));
+            let out = a.sub_vec(&b);
+            let expected = fp65537_scalar_sub_vec(&xs[..n], &ys[..n]);
+            for (i, e) in expected.iter().enumerate() {
+                proptest::prop_assert_eq!(out[i].value(), *e);
+            }
         }
     }
 
