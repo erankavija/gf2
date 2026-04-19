@@ -120,6 +120,12 @@ use crate::gfp::Fp;
 /// over `GF(2^m)` should use the additive (Gao–Mateer / Lin–Chung–Han)
 /// FFT instead, which is outside the scope of this trait.
 ///
+/// # Arguments
+///
+/// (Trait-level — per-method arguments are documented on
+/// [`two_adic_generator`](Self::two_adic_generator) and
+/// [`two_adic_root_of_unity`](Self::two_adic_root_of_unity).)
+///
 /// # Examples
 ///
 /// ```
@@ -131,6 +137,13 @@ use crate::gfp::Fp;
 /// assert!(w.pow(4).is_one());
 /// assert!(!w.pow(2).is_one());
 /// ```
+///
+/// # Panics
+///
+/// No methods of this trait panic on valid inputs. The provided
+/// [`two_adic_root_of_unity`](Self::two_adic_root_of_unity) default
+/// panics when `k > TWO_ADICITY` (out of the supported range); see
+/// its method doc for details.
 ///
 /// # Complexity
 ///
