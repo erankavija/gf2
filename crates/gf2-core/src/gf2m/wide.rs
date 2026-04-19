@@ -210,14 +210,26 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     /// ```
     /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
     ///
+    /// // Documented irreducible pentanomial x^253 + x^46 + x^18 + x^8 + 1.
+    /// // (Seroussi HPL-98-135 Table 1, m=253.) Chosen for this doctest
+    /// // because `M = 253 < 64*4 = 256` exercises the tail-masking path
+    /// // — and the polynomial satisfies the trait's irreducibility
+    /// // contract (unlike x^M + 1, which is reducible for M > 1).
     /// struct Cfg;
     /// impl Gf2mWideConfig<4> for Cfg {
-    ///     const M: usize = 250; // leaves 6 high bits to mask
-    ///     const MODULUS: [u64; 4] = [0x1, 0, 0, 0];
+    ///     const M: usize = 253;
+    ///     // bits 46, 18, 8, 0 set: 2^46 | 2^18 | 2^8 | 1
+    ///     const MODULUS: [u64; 4] = [
+    ///         (1u64 << 46) | (1u64 << 18) | (1u64 << 8) | 1,
+    ///         0,
+    ///         0,
+    ///         0,
+    ///     ];
     /// }
     /// let a = Gf2mWide::<4, Cfg>::new([u64::MAX; 4]);
-    /// // The top 6 bits of the top word must be zero.
-    /// assert_eq!(a.words()[3] >> (250 - 64 * 3), 0);
+    /// // The top 3 bits of the top word must be zero (since M = 253,
+    /// // bits 253..=255 of the 256-bit register are outside the field).
+    /// assert_eq!(a.words()[3] >> (253 - 64 * 3), 0);
     /// ```
     #[inline]
     pub fn new(mut words: [u64; N]) -> Self {
@@ -961,21 +973,34 @@ mod tests {
     }
 
     // -----------------------------------------------------------------------
-    // Word-boundary configs (M = 63, 64, 65)
+    // Word-boundary configs (M = 1, 63, 64, 65)
     //
     // CLAUDE.md requires coverage of 0, 1, 63, 64, 65 bits at word
-    // boundaries. `M = 0` and `M = 1` are trivial / ill-formed for
-    // `Gf2mWide` (the config contract requires `N >= 1` and at least one
-    // bit in the top word), so we cover the non-trivial boundary trio
-    // `63, 64, 65` explicitly here. The existing `M = 7` (tiny), `M = 250`
-    // (cross-word, non-aligned), and `M = 256` (fully aligned) configs
-    // cover the remaining boundary classes.
+    // boundaries. `M = 0` is ill-formed (the trait contract requires
+    // `M >= 1`), but every other value in the list is covered here.
+    // The existing `M = 7` (tiny), `M = 250` (cross-word, non-aligned),
+    // and `M = 256` (fully aligned) configs cover the remaining boundary
+    // classes.
     //
     // All moduli below are **not** necessarily irreducible; they are
     // placeholders for the tail-masking and XOR tests landed in Task 1.
     // Multiplicative operations are introduced in follow-up tasks and
     // will adopt proper irreducible moduli at that point.
     // -----------------------------------------------------------------------
+
+    /// `M = 1`: the trivial single-bit field. `N = 1`, top-word mask is
+    /// `0x1` — only bit 0 is in the field. This is the degenerate but
+    /// valid extreme of the contract's `64 * (N - 1) < M <= 64 * N`
+    /// range.
+    ///
+    /// The only irreducible polynomial of degree 1 over GF(2) is
+    /// `x + 1`, whose low-bit representation is `MODULUS = [0x1]`.
+    struct Gf2m1TestConfig;
+
+    impl Gf2mWideConfig<1> for Gf2m1TestConfig {
+        const M: usize = 1;
+        const MODULUS: [u64; 1] = [0x1]; // x + 1 (irreducible over GF(2))
+    }
 
     /// `M = 63`: top (and only) word uses 63 of 64 bits — one high bit
     /// must be masked.
@@ -1003,6 +1028,31 @@ mod tests {
     impl Gf2mWideConfig<2> for Gf2m65TestConfig {
         const M: usize = 65;
         const MODULUS: [u64; 2] = [0x1b, 0]; // placeholder
+    }
+
+    #[test]
+    fn test_boundary_m1_degenerate_field() {
+        // M = 1 is the smallest valid configuration — GF(2) itself.
+        // Only bit 0 is retained; all other bits must be masked.
+        let zero = Gf2mWide::<1, Gf2m1TestConfig>::new([0x0]);
+        let one = Gf2mWide::<1, Gf2m1TestConfig>::new([0x1]);
+        let all_ones = Gf2mWide::<1, Gf2m1TestConfig>::new([u64::MAX]);
+
+        // Tail mask keeps only the low bit.
+        assert_eq!(zero.words()[0], 0);
+        assert_eq!(one.words()[0], 1);
+        assert_eq!(all_ones.words()[0], 1);
+
+        // Characteristic-2 identities still hold at the trivial width.
+        assert!(zero.is_zero());
+        assert!(one.is_one());
+        assert_eq!((one + one).words()[0], 0); // 1 + 1 = 0 in GF(2)
+        assert_eq!((one + zero).words()[0], 1);
+        assert_eq!((zero + zero).words()[0], 0);
+
+        // Neg is identity in characteristic 2.
+        assert_eq!((-one).words()[0], 1);
+        assert_eq!((-zero).words()[0], 0);
     }
 
     #[test]
