@@ -2979,78 +2979,15 @@ mod poly_tests {
             }
         }
 
-        // Karatsuba property tests
-        #[test]
-        fn prop_karatsuba_equals_schoolbook_small(
-            deg1 in 1usize..10,
-            deg2 in 1usize..10,
-            seed in 1u64..256
-        ) {
-            let field = Gf2mField::gf256();
-
-            let coeffs1: Vec<_> = (0..=deg1)
-                .map(|i| field.element((i as u64 * seed) % 256))
-                .collect();
-            let coeffs2: Vec<_> = (0..=deg2)
-                .map(|i| field.element((i as u64 * seed * 7) % 256))
-                .collect();
-
-            let p1 = Gf2mPoly_::new(coeffs1);
-            let p2 = Gf2mPoly_::new(coeffs2);
-
-            let result_karatsuba = &p1 * &p2;
-            let result_schoolbook = &p1 * &p2;
-
-            prop_assert_eq!(result_karatsuba, result_schoolbook);
-        }
-
-        #[test]
-        fn prop_karatsuba_equals_schoolbook_medium(
-            deg1 in 30usize..60,
-            deg2 in 30usize..60,
-            seed in 1u64..256
-        ) {
-            let field = Gf2mField::gf256();
-
-            let coeffs1: Vec<_> = (0..=deg1)
-                .map(|i| field.element((i as u64 * seed) % 256))
-                .collect();
-            let coeffs2: Vec<_> = (0..=deg2)
-                .map(|i| field.element((i as u64 * seed * 11) % 256))
-                .collect();
-
-            let p1 = Gf2mPoly_::new(coeffs1);
-            let p2 = Gf2mPoly_::new(coeffs2);
-
-            let result_karatsuba = &p1 * &p2;
-            let result_schoolbook = &p1 * &p2;
-
-            prop_assert_eq!(result_karatsuba, result_schoolbook);
-        }
-
-        #[test]
-        fn prop_karatsuba_equals_schoolbook_large(
-            deg1 in 100usize..150,
-            deg2 in 100usize..150,
-            seed in 1u64..256
-        ) {
-            let field = Gf2mField::gf256();
-
-            let coeffs1: Vec<_> = (0..=deg1)
-                .map(|i| field.element((i as u64 * seed) % 256))
-                .collect();
-            let coeffs2: Vec<_> = (0..=deg2)
-                .map(|i| field.element((i as u64 * seed * 13) % 256))
-                .collect();
-
-            let p1 = Gf2mPoly_::new(coeffs1);
-            let p2 = Gf2mPoly_::new(coeffs2);
-
-            let result_karatsuba = &p1 * &p2;
-            let result_schoolbook = &p1 * &p2;
-
-            prop_assert_eq!(result_karatsuba, result_schoolbook);
-        }
+        // Karatsuba vs schoolbook cross-verification is covered
+        // generically on the SSOT side by
+        // `prop_karatsuba_matches_schoolbook_fp7` and
+        // `prop_karatsuba_matches_schoolbook_gf16` in
+        // `crate::field::poly`, plus the matching unit tests
+        // `test_karatsuba_matches_schoolbook_fp7` / `_gf16`. Those use
+        // the private `mul_schoolbook_impl` so the two sides of the
+        // assertion cannot collapse to the same dispatch. No alias-side
+        // duplicate of those properties is needed.
     }
 
     mod reversed_conversion_proptests {
