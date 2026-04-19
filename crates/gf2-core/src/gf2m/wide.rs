@@ -155,6 +155,10 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     /// `words` is set. In release builds this check is elided; callers
     /// must uphold the invariant themselves.
     ///
+    /// # Complexity
+    ///
+    /// `O(1)` — a single top-word mask check (elided in release builds).
+    ///
     /// # Examples
     ///
     /// ```
@@ -196,6 +200,11 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     ///
     /// * `words` - Little-endian `[u64; N]` candidate representation.
     ///
+    /// # Complexity
+    ///
+    /// `O(1)` — a single bitwise AND on the top word; the input `[u64; N]`
+    /// is moved, not copied word-by-word.
+    ///
     /// # Examples
     ///
     /// ```
@@ -220,6 +229,11 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     }
 
     /// Returns the additive identity (the zero polynomial).
+    ///
+    /// # Complexity
+    ///
+    /// `O(N)` words — zero-initialises the `[u64; N]` storage. In practice
+    /// LLVM lowers this to a single `memset` / stack-local zero fill.
     ///
     /// # Examples
     ///
@@ -251,6 +265,10 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     /// Panics if `N == 0`. Implementations of [`Gf2mWideConfig`] must
     /// satisfy `N >= 1` by the `64 * (N - 1) < M <= 64 * N` range
     /// constraint.
+    ///
+    /// # Complexity
+    ///
+    /// `O(N)` words — zero-initialises the storage and sets a single word.
     ///
     /// # Examples
     ///
@@ -284,6 +302,11 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     /// # Arguments
     ///
     /// * `v` - Value to place in the low word.
+    ///
+    /// # Complexity
+    ///
+    /// `O(N)` words — zero-initialises the storage, sets the low word, and
+    /// masks the top word.
     ///
     /// # Examples
     ///
@@ -376,6 +399,11 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
 
     /// Returns `true` iff every coefficient is zero.
     ///
+    /// # Complexity
+    ///
+    /// `O(N)` words — short-circuits on the first non-zero word. The worst
+    /// case scans every word in `self.words`.
+    ///
     /// # Examples
     ///
     /// ```
@@ -395,6 +423,12 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     }
 
     /// Returns `true` iff the element equals the multiplicative identity.
+    ///
+    /// # Complexity
+    ///
+    /// `O(N)` words — checks the low word equals `1` and scans the
+    /// remaining `N - 1` words for zeroes, short-circuiting on the first
+    /// non-zero word.
     ///
     /// # Examples
     ///
@@ -924,5 +958,295 @@ mod tests {
         assert!(s.contains("GF(2^256)"), "got: {}", s);
         assert!(s.contains("Gf2m256TestConfig"), "got: {}", s);
         assert!(s.contains("0x"), "got: {}", s);
+    }
+
+    // -----------------------------------------------------------------------
+    // Word-boundary configs (M = 63, 64, 65)
+    //
+    // CLAUDE.md requires coverage of 0, 1, 63, 64, 65 bits at word
+    // boundaries. `M = 0` and `M = 1` are trivial / ill-formed for
+    // `Gf2mWide` (the config contract requires `N >= 1` and at least one
+    // bit in the top word), so we cover the non-trivial boundary trio
+    // `63, 64, 65` explicitly here. The existing `M = 7` (tiny), `M = 250`
+    // (cross-word, non-aligned), and `M = 256` (fully aligned) configs
+    // cover the remaining boundary classes.
+    //
+    // All moduli below are **not** necessarily irreducible; they are
+    // placeholders for the tail-masking and XOR tests landed in Task 1.
+    // Multiplicative operations are introduced in follow-up tasks and
+    // will adopt proper irreducible moduli at that point.
+    // -----------------------------------------------------------------------
+
+    /// `M = 63`: top (and only) word uses 63 of 64 bits — one high bit
+    /// must be masked.
+    struct Gf2m63TestConfig;
+
+    impl Gf2mWideConfig<1> for Gf2m63TestConfig {
+        const M: usize = 63;
+        const MODULUS: [u64; 1] = [0x1b]; // placeholder
+    }
+
+    /// `M = 64`: top (and only) word is fully used — `top_word_mask`
+    /// must be `u64::MAX`.
+    struct Gf2m64TestConfig;
+
+    impl Gf2mWideConfig<1> for Gf2m64TestConfig {
+        const M: usize = 64;
+        const MODULUS: [u64; 1] = [0x1b]; // placeholder
+    }
+
+    /// `M = 65`: storage spans two words — top word uses only 1 bit
+    /// (the other 63 must be masked). This is the smallest multi-word
+    /// config possible.
+    struct Gf2m65TestConfig;
+
+    impl Gf2mWideConfig<2> for Gf2m65TestConfig {
+        const M: usize = 65;
+        const MODULUS: [u64; 2] = [0x1b, 0]; // placeholder
+    }
+
+    #[test]
+    fn test_boundary_m63_tail_masking() {
+        // top_word_mask must zero the single high bit (bit 63).
+        let a = Gf2mWide::<1, Gf2m63TestConfig>::new([u64::MAX]);
+        assert_eq!(a.words()[0], (1u64 << 63) - 1);
+        // `from_u64(u64::MAX)` must also strip bit 63.
+        let b = Gf2mWide::<1, Gf2m63TestConfig>::from_u64(u64::MAX);
+        assert_eq!(b.words()[0], (1u64 << 63) - 1);
+        // Sanity: arithmetic and predicates still hold.
+        assert!(Gf2mWide::<1, Gf2m63TestConfig>::zero().is_zero());
+        assert!(Gf2mWide::<1, Gf2m63TestConfig>::one().is_one());
+        let x = Gf2mWide::<1, Gf2m63TestConfig>::new([0x12_3456_789a]);
+        assert!((x + x).is_zero());
+    }
+
+    #[test]
+    fn test_boundary_m64_tail_masking() {
+        // top_word_mask must equal u64::MAX — no masking is performed.
+        let a = Gf2mWide::<1, Gf2m64TestConfig>::new([u64::MAX]);
+        assert_eq!(a.words()[0], u64::MAX);
+        let b = Gf2mWide::<1, Gf2m64TestConfig>::from_u64(u64::MAX);
+        assert_eq!(b.words()[0], u64::MAX);
+        assert!(Gf2mWide::<1, Gf2m64TestConfig>::zero().is_zero());
+        assert!(Gf2mWide::<1, Gf2m64TestConfig>::one().is_one());
+        let x = Gf2mWide::<1, Gf2m64TestConfig>::new([0xdead_beef_cafe_f00d]);
+        assert!((x + x).is_zero());
+    }
+
+    #[test]
+    fn test_boundary_m65_tail_masking() {
+        // top_word_mask must select exactly bit 0 of word 1.
+        let a = Gf2mWide::<2, Gf2m65TestConfig>::new([u64::MAX; 2]);
+        assert_eq!(a.words()[0], u64::MAX);
+        assert_eq!(a.words()[1], 1);
+        // `from_u64` only touches the low word — word 1 stays zero.
+        let b = Gf2mWide::<2, Gf2m65TestConfig>::from_u64(u64::MAX);
+        assert_eq!(b.words(), &[u64::MAX, 0]);
+        assert!(Gf2mWide::<2, Gf2m65TestConfig>::zero().is_zero());
+        assert!(Gf2mWide::<2, Gf2m65TestConfig>::one().is_one());
+        let x = Gf2mWide::<2, Gf2m65TestConfig>::new([0xfeed_face, 1]);
+        assert!((x + x).is_zero());
+    }
+
+    // -----------------------------------------------------------------------
+    // Property-based tests (`proptest`)
+    //
+    // Each property is exercised against the three flagship test configs:
+    //
+    //   * `Gf2m256TestConfig`     — full top-word (M = 256, N = 4)
+    //   * `Gf2m250TestConfig`     — unaligned top-word tail (M = 250, N = 4)
+    //   * `Gf2m63TestConfig` / `Gf2m64TestConfig` / `Gf2m65TestConfig`
+    //     — word-boundary trio (N = 1 or 2)
+    //
+    // `ProptestConfig::with_cases(64)` keeps the full workspace test suite
+    // within the 60s budget set in `CLAUDE.md` while still giving a meaningful
+    // number of random samples per invariant.
+    // -----------------------------------------------------------------------
+
+    mod proptests {
+        use super::*;
+        use proptest::prelude::*;
+
+        /// Build a 4-word strategy used by the `M = 256` and `M = 250`
+        /// configs. Each word is fully random; configs mask the top word
+        /// themselves via `Gf2mWide::new`.
+        fn any_4_words() -> impl Strategy<Value = [u64; 4]> {
+            (any::<u64>(), any::<u64>(), any::<u64>(), any::<u64>())
+                .prop_map(|(a, b, c, d)| [a, b, c, d])
+        }
+
+        proptest! {
+            #![proptest_config(ProptestConfig::with_cases(64))]
+
+            // ---- Gf2m256TestConfig (M = 256, full top-word) ------------
+
+            #[test]
+            fn prop_add_commutative_m256(xs in any_4_words(), ys in any_4_words()) {
+                let a = Gf2mWide::<4, Gf2m256TestConfig>::new(xs);
+                let b = Gf2mWide::<4, Gf2m256TestConfig>::new(ys);
+                prop_assert_eq!(a + b, b + a);
+            }
+
+            #[test]
+            fn prop_add_zero_identity_m256(xs in any_4_words()) {
+                let a = Gf2mWide::<4, Gf2m256TestConfig>::new(xs);
+                let z = Gf2mWide::<4, Gf2m256TestConfig>::zero();
+                prop_assert_eq!(a + z, a);
+                prop_assert_eq!(z + a, a);
+            }
+
+            #[test]
+            fn prop_self_inverse_char2_m256(xs in any_4_words()) {
+                let a = Gf2mWide::<4, Gf2m256TestConfig>::new(xs);
+                prop_assert!((a + a).is_zero());
+            }
+
+            #[test]
+            fn prop_add_assign_matches_add_m256(xs in any_4_words(), ys in any_4_words()) {
+                let a = Gf2mWide::<4, Gf2m256TestConfig>::new(xs);
+                let b = Gf2mWide::<4, Gf2m256TestConfig>::new(ys);
+                let mut acc = a;
+                acc += b;
+                prop_assert_eq!(acc, a + b);
+            }
+
+            #[test]
+            fn prop_tail_masked_after_new_m256(xs in any_4_words()) {
+                // M = 256, N = 4: top_word_mask == u64::MAX, so nothing
+                // can live above bit M. This property still guards against
+                // regressions in the mask-computation logic.
+                let a = Gf2mWide::<4, Gf2m256TestConfig>::new(xs);
+                let top_mask: u64 = if 256 - 64 * 3 >= 64 {
+                    u64::MAX
+                } else {
+                    (1u64 << (256 - 64 * 3)) - 1
+                };
+                prop_assert_eq!(a.words()[3] & !top_mask, 0);
+            }
+
+            // ---- Gf2m250TestConfig (M = 250, unaligned top-word) -------
+
+            #[test]
+            fn prop_add_commutative_m250(xs in any_4_words(), ys in any_4_words()) {
+                let a = Gf2mWide::<4, Gf2m250TestConfig>::new(xs);
+                let b = Gf2mWide::<4, Gf2m250TestConfig>::new(ys);
+                prop_assert_eq!(a + b, b + a);
+            }
+
+            #[test]
+            fn prop_add_zero_identity_m250(xs in any_4_words()) {
+                let a = Gf2mWide::<4, Gf2m250TestConfig>::new(xs);
+                let z = Gf2mWide::<4, Gf2m250TestConfig>::zero();
+                prop_assert_eq!(a + z, a);
+            }
+
+            #[test]
+            fn prop_self_inverse_char2_m250(xs in any_4_words()) {
+                let a = Gf2mWide::<4, Gf2m250TestConfig>::new(xs);
+                prop_assert!((a + a).is_zero());
+            }
+
+            #[test]
+            fn prop_add_assign_matches_add_m250(xs in any_4_words(), ys in any_4_words()) {
+                let a = Gf2mWide::<4, Gf2m250TestConfig>::new(xs);
+                let b = Gf2mWide::<4, Gf2m250TestConfig>::new(ys);
+                let mut acc = a;
+                acc += b;
+                prop_assert_eq!(acc, a + b);
+            }
+
+            #[test]
+            fn prop_tail_masked_after_new_m250(xs in any_4_words()) {
+                // M = 250, N = 4: top word must have bits >= 58 cleared.
+                let a = Gf2mWide::<4, Gf2m250TestConfig>::new(xs);
+                let top_mask: u64 = (1u64 << (250 - 64 * 3)) - 1;
+                prop_assert_eq!(a.words()[3] & !top_mask, 0);
+            }
+
+            #[test]
+            fn prop_tail_masked_after_from_u64_m250(v in any::<u64>()) {
+                // `from_u64` must also respect the tail invariant for
+                // configs whose top word sits beyond word 0 — the high
+                // bits of the top word must remain zero.
+                let a = Gf2mWide::<4, Gf2m250TestConfig>::from_u64(v);
+                let top_mask: u64 = (1u64 << (250 - 64 * 3)) - 1;
+                prop_assert_eq!(a.words()[3] & !top_mask, 0);
+            }
+
+            #[test]
+            fn prop_tail_masked_zero_one_from_u64_m250(v in any::<u64>()) {
+                // `zero`, `one`, and `from_u64` must all produce a tail-
+                // masked top word.
+                let z = Gf2mWide::<4, Gf2m250TestConfig>::zero();
+                let o = Gf2mWide::<4, Gf2m250TestConfig>::one();
+                let f = Gf2mWide::<4, Gf2m250TestConfig>::from_u64(v);
+                let top_mask: u64 = (1u64 << (250 - 64 * 3)) - 1;
+                prop_assert_eq!(z.words()[3] & !top_mask, 0);
+                prop_assert_eq!(o.words()[3] & !top_mask, 0);
+                prop_assert_eq!(f.words()[3] & !top_mask, 0);
+            }
+
+            // ---- Boundary configs: M = 63, 64, 65 ----------------------
+
+            #[test]
+            fn prop_add_commutative_m63(x in any::<u64>(), y in any::<u64>()) {
+                let a = Gf2mWide::<1, Gf2m63TestConfig>::new([x]);
+                let b = Gf2mWide::<1, Gf2m63TestConfig>::new([y]);
+                prop_assert_eq!(a + b, b + a);
+                prop_assert!((a + a).is_zero());
+            }
+
+            #[test]
+            fn prop_tail_masked_m63(x in any::<u64>()) {
+                let a = Gf2mWide::<1, Gf2m63TestConfig>::new([x]);
+                let top_mask: u64 = (1u64 << 63) - 1;
+                prop_assert_eq!(a.words()[0] & !top_mask, 0);
+            }
+
+            #[test]
+            fn prop_add_commutative_m64(x in any::<u64>(), y in any::<u64>()) {
+                let a = Gf2mWide::<1, Gf2m64TestConfig>::new([x]);
+                let b = Gf2mWide::<1, Gf2m64TestConfig>::new([y]);
+                prop_assert_eq!(a + b, b + a);
+                prop_assert!((a + a).is_zero());
+            }
+
+            #[test]
+            fn prop_tail_masked_m64(x in any::<u64>()) {
+                // M = 64: top_word_mask == u64::MAX, no bits to clear.
+                let a = Gf2mWide::<1, Gf2m64TestConfig>::new([x]);
+                prop_assert_eq!(a.words()[0], x);
+            }
+
+            #[test]
+            fn prop_add_commutative_m65(
+                x0 in any::<u64>(), x1 in any::<u64>(),
+                y0 in any::<u64>(), y1 in any::<u64>(),
+            ) {
+                let a = Gf2mWide::<2, Gf2m65TestConfig>::new([x0, x1]);
+                let b = Gf2mWide::<2, Gf2m65TestConfig>::new([y0, y1]);
+                prop_assert_eq!(a + b, b + a);
+                prop_assert!((a + a).is_zero());
+            }
+
+            #[test]
+            fn prop_tail_masked_m65(x0 in any::<u64>(), x1 in any::<u64>()) {
+                let a = Gf2mWide::<2, Gf2m65TestConfig>::new([x0, x1]);
+                // M = 65: top word uses bit 0 only.
+                prop_assert_eq!(a.words()[1] & !1u64, 0);
+            }
+
+            #[test]
+            fn prop_add_assign_matches_add_m65(
+                x0 in any::<u64>(), x1 in any::<u64>(),
+                y0 in any::<u64>(), y1 in any::<u64>(),
+            ) {
+                let a = Gf2mWide::<2, Gf2m65TestConfig>::new([x0, x1]);
+                let b = Gf2mWide::<2, Gf2m65TestConfig>::new([y0, y1]);
+                let mut acc = a;
+                acc += b;
+                prop_assert_eq!(acc, a + b);
+            }
+        }
     }
 }
