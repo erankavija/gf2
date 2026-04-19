@@ -43,7 +43,22 @@
   ],
   "created_during_execution": [],
   "escalations": [],
-  "rework_counts": {"86b3dc7d": 2},
+  "rework_counts": {
+    "86b3dc7d": 2,
+    "3e947c3f": 2,
+    "9fa99685": 2,
+    "70972f06": 3,
+    "5fad4d0f": 1
+  },
+  "policy_overrides": [
+    {
+      "date": "2026-04-19",
+      "decision": "SSOT is inviolable; the FieldPoly<F>/Gf2mPoly_<V> parallel-implementation loophole granted by dev/plans/bdf95060_breakdown.md is rescinded. Next session must collapse the duplication.",
+      "affects": ["70972f06", "224a7d9e"],
+      "pending_action": "session 3: reopen 70972f06 scope to include Gf2mPoly_ delegation; Task 8 (224a7d9e) may fold in"
+    }
+  ],
+  "session_2_handoff": "dev/active/e095a100-handoff-2.md",
   "started_at": "2026-04-18T18:00:00Z",
   "notes": [
     "Host: Zen 3 (AVX2, no AVX-512). HIP crate excluded from default workspace.",
