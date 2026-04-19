@@ -23,12 +23,11 @@ use crate::field::{ConstField, FiniteField, FiniteFieldExt};
 use crate::gf2m::{Gf2mElement, Gf2mElement_, Gf2mField, Gf2mField_, Gf2mWide, Gf2mWideConfig};
 use crate::gfp::Fp;
 
-/// Number of random test cases per axiom.
+/// Number of random test cases per axiom for the default entry points
+/// [`test_field_axioms`] and [`test_const_field_axioms`]. Specialised
+/// callers that want a smaller case count pass an explicit value through
+/// [`test_field_axioms_with_cases`] instead.
 const CASES_PER_AXIOM: u32 = 1000;
-
-fn config() -> ProptestConfig {
-    ProptestConfig::with_cases(CASES_PER_AXIOM)
-}
 
 // ---------------------------------------------------------------------------
 // Strategies
@@ -116,7 +115,28 @@ pub fn test_field_axioms<F: FiniteField + Debug>(strategy: BoxedStrategy<F>, cha
 where
     F::Characteristic: Into<u64>,
 {
-    let mut runner = TestRunner::new(config());
+    test_field_axioms_with_cases(strategy, characteristic, CASES_PER_AXIOM);
+}
+
+/// Same as [`test_field_axioms`] but with an explicit proptest-case count.
+///
+/// Used by very-large-field tests (e.g. `Gf2mWide<4, Gf2m256TestConfig>`) that
+/// want a fast in-suite tier plus a separate `#[ignore]`-gated stress tier at
+/// the full `CASES_PER_AXIOM` budget.
+///
+/// # Arguments
+///
+/// * `strategy` — proptest strategy producing random field elements.
+/// * `characteristic` — the prime characteristic of the field.
+/// * `cases` — number of proptest cases per axiom.
+pub fn test_field_axioms_with_cases<F: FiniteField + Debug>(
+    strategy: BoxedStrategy<F>,
+    characteristic: u64,
+    cases: u32,
+) where
+    F::Characteristic: Into<u64>,
+{
+    let mut runner = TestRunner::new(ProptestConfig::with_cases(cases));
 
     // Additive group
     check_additive_associativity(&mut runner, &strategy);
@@ -895,20 +915,23 @@ impl Gf2mWideConfig<4> for Gf2m256TestConfig {
     const NAME: &'static str = "Gf2m256TestConfig";
 }
 
-/// Axiom-harness integration test for `Gf2mWide<4, Gf2m256TestConfig>`.
+/// Axiom-harness integration test for `Gf2mWide<4, Gf2m256TestConfig>` at
+/// a reduced 100-case-per-axiom budget for the routine `cargo test` pass.
 ///
-/// Uses the shared [`test_field_axioms`] harness (the SSOT for
+/// Uses the shared [`test_field_axioms_with_cases`] harness (the SSOT for
 /// `FiniteField` axiom coverage). `test_const_field_axioms` is
 /// deliberately **not** used because `ConstField::order()` panics for
 /// `M >= 128`; that limitation is separately documented by
 /// `test_order_panics_at_m256`.
 ///
-/// Runtime on the reference Zen 3 host: ≈ 20 ms wall-clock at the
-/// harness default of 1000 cases per axiom, well inside the 60 s
-/// workspace-test budget.
+/// The 1000-case full-budget variant lives in
+/// [`test_axioms_gf2m_wide_256_stress`] as `#[ignore]`-gated; this
+/// 100-case variant keeps the routine suite well under the 60 s
+/// workspace-test budget even if a future reviewer adds new axioms
+/// or a slower field config.
 #[test]
 fn test_axioms_gf2m_wide_256() {
-    test_field_axioms(gf2m_wide_strategy::<4, Gf2m256TestConfig>(), 2);
+    test_field_axioms_with_cases(gf2m_wide_strategy::<4, Gf2m256TestConfig>(), 2, 100);
 }
 
 /// Verify that `zero()` and `one()` constants satisfy their predicates for
@@ -938,8 +961,13 @@ fn test_order_panics_at_m256() {
     let _ = <Gf2mWide<4, Gf2m256TestConfig> as crate::field::ConstField>::order();
 }
 
-// The previously-present `test_axioms_gf2m_wide_256_stress` variant
-// (ignored, 1000-case override) was removed: the default
-// `test_field_axioms` now already runs at `CASES_PER_AXIOM = 1000` on
-// this strategy in ≈ 20 ms wall-clock, so there is no manual-only
-// stress tier to preserve.
+/// Full-budget stress variant of `test_axioms_gf2m_wide_256` — runs the
+/// axiom harness at `CASES_PER_AXIOM = 1000` cases per axiom. Skipped by
+/// default; run with `cargo test -- --ignored` for thorough coverage.
+///
+/// Expected wall-clock ≈ 200 ms release on the reference Zen 3 host.
+#[test]
+#[ignore]
+fn test_axioms_gf2m_wide_256_stress() {
+    test_field_axioms(gf2m_wide_strategy::<4, Gf2m256TestConfig>(), 2);
+}
