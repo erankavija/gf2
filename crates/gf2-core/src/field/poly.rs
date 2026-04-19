@@ -610,12 +610,15 @@ impl<F: FiniteField> FieldPoly<F> {
     }
 
     // -----------------------------------------------------------------
-    // Inherent multiplication (schoolbook)
+    // Inherent multiplication (schoolbook / Karatsuba dispatch)
     // -----------------------------------------------------------------
 
-    /// Schoolbook polynomial multiplication — `O(n·m)` base-field
-    /// multiplications for `self` of length `n` and `other` of length
-    /// `m`.
+    /// Polynomial multiplication with schoolbook/Karatsuba dispatch.
+    ///
+    /// Below [`KARATSUBA_THRESHOLD`] coefficients this routes through the
+    /// schoolbook kernel; above it, recursive Karatsuba. Callers observe
+    /// a single, normalised `FieldPoly<F>` and do not need to choose
+    /// between the two.
     ///
     /// Equivalent to the [`core::ops::Mul`] trait impls
     /// (`&FieldPoly * &FieldPoly`) that delegate to this inherent
@@ -644,7 +647,9 @@ impl<F: FiniteField> FieldPoly<F> {
     ///
     /// # Complexity
     ///
-    /// `O(n·m)` base-field multiplications.
+    /// `O(n·m)` base-field multiplications in the schoolbook regime and
+    /// `O(n^{log₂ 3})` in the Karatsuba regime, where `n = self.len()`
+    /// and `m = other.len()`.
     pub fn mul(&self, other: &Self) -> Self {
         mul_impl(&self.coeffs, &other.coeffs)
     }
