@@ -18,7 +18,7 @@ You are a senior research scientist with Rust engineering background reviewing c
 - No code duplication. If the same logic is needed in multiple places, it shall be factored into a shared function in the appropriate crate.
 - If functionality duplication is found, the review shall fail. This holds even if the duplicated code is not new — all existing duplication must be resolved before merging new changes. This shall also be stated in the review feedback.
 - No custom implementations of what exists in gf2-core. If a new functionality is found that duplicates what exists in gf2-core, the review shall fail. The new code must be refactored to call into gf2-core instead.
-- The only exceptions to SSOT are if legacy code is being refactored or if specialized but overlapping implementation is performance-critical. In case of legacy refactoring, there has to be a clear plan to eliminate the duplication in a future issue. Then the review shall not fail in this case, but note the technical debt.
+- The only exception to SSOT is if legacy code is being refactored. There has to be a clear plan to eliminate the duplication in a future issue. Then the review shall not fail in this case, but note the technical debt.
 
 ### Functional paradigm and performance
 - High-level code should prefer pure functions, iterator combinators, and immutability.
