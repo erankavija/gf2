@@ -1200,20 +1200,20 @@ mod tests {
     }
 
     #[test]
-    fn test_coeff_out_of_range_returns_none() {
+    fn test_try_coeff_out_of_range_returns_none() {
         let p = FieldPoly::new(vec![fp7(1), fp7(2)]);
-        assert_eq!(p.coeff(2), None);
-        assert_eq!(p.coeff(100), None);
+        assert_eq!(p.try_coeff(2), None);
+        assert_eq!(p.try_coeff(100), None);
     }
 
     #[test]
-    fn test_coeff_on_zero_poly_returns_none() {
-        // The zero polynomial returns None for every index — this is the
-        // totality contract. No panic, regardless of index.
+    fn test_try_coeff_on_zero_poly_returns_none() {
+        // try_coeff is the total Option-returning variant; the zero
+        // polynomial returns None for every index without panicking.
         let z: FieldPoly<FP7> = FieldPoly::zero_like(&fp7(0));
         assert_eq!(z.try_coeff(0), None);
-        assert_eq!(z.coeff(1), None);
-        assert_eq!(z.coeff(100), None);
+        assert_eq!(z.try_coeff(1), None);
+        assert_eq!(z.try_coeff(100), None);
     }
 
     #[test]
@@ -1449,7 +1449,7 @@ mod tests {
         assert_eq!(c.degree(), Some(2));
         assert_eq!(c.try_coeff(0), Some(&fp7(4)));
         assert_eq!(c.try_coeff(1), Some(&fp7(4))); // 2*4 + 1*3 = 11 mod 7 = 4
-        assert_eq!(c.coeff(2), Some(&fp7(6)));
+        assert_eq!(c.try_coeff(2), Some(&fp7(6)));
     }
 
     #[test]
@@ -1540,9 +1540,12 @@ mod tests {
         let product = &poly_a * &poly_b;
 
         assert_eq!(product.degree(), Some(2));
-        assert_eq!(product.coeff(0), Some(&(a1.clone() * b1.clone())));
-        assert_eq!(product.coeff(1), Some(&(a1 * b2.clone() + a2.clone() * b1)));
-        assert_eq!(product.coeff(2), Some(&(a2 * b2)));
+        assert_eq!(product.try_coeff(0), Some(&(a1.clone() * b1.clone())));
+        assert_eq!(
+            product.try_coeff(1),
+            Some(&(a1 * b2.clone() + a2.clone() * b1))
+        );
+        assert_eq!(product.try_coeff(2), Some(&(a2 * b2)));
     }
 
     #[test]
