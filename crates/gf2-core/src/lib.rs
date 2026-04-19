@@ -66,6 +66,7 @@ pub use sparse::{SpBitMatrix, SpBitMatrixDual};
 // gf2-kernels-simd crate.
 #[cfg(feature = "simd")]
 pub(crate) mod simd {
+    use gf2_kernels_simd::fp65537::Fp65537Fns;
     use gf2_kernels_simd::gf2m::Gf2mFns;
     use gf2_kernels_simd::mersenne::MersenneFns;
     use gf2_kernels_simd::LogicalFns;
@@ -74,6 +75,7 @@ pub(crate) mod simd {
     static FNS: OnceLock<Option<LogicalFns>> = OnceLock::new();
     static GF2M_FNS: OnceLock<Option<Gf2mFns>> = OnceLock::new();
     static MERSENNE_FNS: OnceLock<Option<MersenneFns>> = OnceLock::new();
+    static FP65537_FNS: OnceLock<Option<Fp65537Fns>> = OnceLock::new();
 
     #[inline]
     pub fn maybe_simd() -> Option<&'static LogicalFns> {
@@ -101,6 +103,18 @@ pub(crate) mod simd {
             .get_or_init(gf2_kernels_simd::mersenne::detect)
             .as_ref()
     }
+
+    /// Returns the best available `Fp<65537>` SIMD batch kernels, if any.
+    ///
+    /// Provides AVX2 lane-parallel multiply/add/sub kernels for the Fermat
+    /// prime `P = 2^16 + 1`. Returns `None` on non-AVX2 hardware; callers
+    /// must fall back to scalar loops.
+    #[inline]
+    pub fn maybe_fp65537() -> Option<&'static Fp65537Fns> {
+        FP65537_FNS
+            .get_or_init(gf2_kernels_simd::fp65537::detect)
+            .as_ref()
+    }
 }
 
 #[cfg(not(feature = "simd"))]
@@ -114,6 +128,12 @@ pub(crate) mod simd {
     #[allow(dead_code)]
     #[inline]
     pub fn maybe_mersenne() -> Option<()> {
+        None
+    }
+
+    #[allow(dead_code)]
+    #[inline]
+    pub fn maybe_fp65537() -> Option<()> {
         None
     }
 }
