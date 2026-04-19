@@ -2231,117 +2231,22 @@ mod poly_tests {
 
     // Karatsuba multiplication tests
 
+    // Karatsuba vs schoolbook cross-verification lives on the generic
+    // `FieldPoly<F>` tests in `crate::field::poly` (SSOT): see
+    // `tests::test_karatsuba_matches_schoolbook_fp7`,
+    // `tests::test_karatsuba_matches_schoolbook_gf16`, and the
+    // `prop_karatsuba_matches_schoolbook_fp7` proptest. Those cover this
+    // alias automatically. A standalone multiplicative-annihilation
+    // check on the alias surface is kept below to confirm the alias
+    // itself still exposes `Mul` correctly.
     #[test]
-    fn test_karatsuba_vs_schoolbook_small() {
-        // Test that Karatsuba matches schoolbook for polynomials below threshold
-        let field = Gf2mField::new(4, 0b10011);
-        let p1 = Gf2mPoly_::new(vec![field.element(1), field.element(2), field.element(3)]);
-        let p2 = Gf2mPoly_::new(vec![field.element(4), field.element(5)]);
-
-        let result_karatsuba = &p1 * &p2;
-        let result_schoolbook = &p1 * &p2;
-
-        assert_eq!(result_karatsuba, result_schoolbook);
-    }
-
-    #[test]
-    fn test_karatsuba_vs_schoolbook_at_threshold() {
-        // Test degree 32 (at threshold boundary)
-        let field = Gf2mField::gf256();
-        let coeffs1: Vec<_> = (0..33).map(|i| field.element((i % 256) as u64)).collect();
-        let coeffs2: Vec<_> = (0..33)
-            .map(|i| field.element(((i * 7) % 256) as u64))
-            .collect();
-
-        let p1 = Gf2mPoly_::new(coeffs1);
-        let p2 = Gf2mPoly_::new(coeffs2);
-
-        let result_karatsuba = &p1 * &p2;
-        let result_schoolbook = &p1 * &p2;
-
-        assert_eq!(result_karatsuba, result_schoolbook);
-    }
-
-    #[test]
-    fn test_karatsuba_vs_schoolbook_above_threshold() {
-        // Test degree 64 (well above threshold)
-        let field = Gf2mField::gf256();
-        let coeffs1: Vec<_> = (0..65).map(|i| field.element((i % 256) as u64)).collect();
-        let coeffs2: Vec<_> = (0..65)
-            .map(|i| field.element(((i * 13) % 256) as u64))
-            .collect();
-
-        let p1 = Gf2mPoly_::new(coeffs1);
-        let p2 = Gf2mPoly_::new(coeffs2);
-
-        let result_karatsuba = &p1 * &p2;
-        let result_schoolbook = &p1 * &p2;
-
-        assert_eq!(result_karatsuba, result_schoolbook);
-    }
-
-    #[test]
-    fn test_karatsuba_degree_100() {
-        // Test degree 100 polynomials (realistic BCH-like scenario)
-        let field = Gf2mField::gf256();
-        let coeffs1: Vec<_> = (0..101).map(|i| field.element((i % 256) as u64)).collect();
-        let coeffs2: Vec<_> = (0..101)
-            .map(|i| field.element(((i * 17) % 256) as u64))
-            .collect();
-
-        let p1 = Gf2mPoly_::new(coeffs1);
-        let p2 = Gf2mPoly_::new(coeffs2);
-
-        let result_karatsuba = &p1 * &p2;
-        let result_schoolbook = &p1 * &p2;
-
-        assert_eq!(result_karatsuba, result_schoolbook);
-        assert_eq!(result_karatsuba.degree(), Some(200)); // deg(p1) + deg(p2)
-    }
-
-    #[test]
-    fn test_karatsuba_degree_200() {
-        // Test degree 200 polynomials (critical BCH-255 benchmark)
-        let field = Gf2mField::gf256();
-        let coeffs1: Vec<_> = (0..201).map(|i| field.element((i % 256) as u64)).collect();
-        let coeffs2: Vec<_> = (0..201)
-            .map(|i| field.element(((i * 19) % 256) as u64))
-            .collect();
-
-        let p1 = Gf2mPoly_::new(coeffs1);
-        let p2 = Gf2mPoly_::new(coeffs2);
-
-        let result_karatsuba = &p1 * &p2;
-        let result_schoolbook = &p1 * &p2;
-
-        assert_eq!(result_karatsuba, result_schoolbook);
-        assert_eq!(result_karatsuba.degree(), Some(400));
-    }
-
-    #[test]
-    fn test_karatsuba_with_zero() {
+    fn test_mul_with_zero_on_alias() {
         let field = Gf2mField::gf256();
         let p1 = Gf2mPoly_::new(vec![field.element(1), field.element(2)]);
         let zero = Gf2mPoly_::zero(&field);
 
         assert_eq!(&p1 * &zero, zero);
         assert_eq!(&zero * &p1, zero);
-    }
-
-    #[test]
-    fn test_karatsuba_different_degrees() {
-        // Test polynomials with very different degrees
-        let field = Gf2mField::gf256();
-        let p1_coeffs: Vec<_> = (0..100).map(|i| field.element((i % 256) as u64)).collect();
-        let p2_coeffs: Vec<_> = (0..10).map(|i| field.element((i % 256) as u64)).collect();
-
-        let p1 = Gf2mPoly_::new(p1_coeffs);
-        let p2 = Gf2mPoly_::new(p2_coeffs);
-
-        let result_karatsuba = &p1 * &p2;
-        let result_schoolbook = &p1 * &p2;
-
-        assert_eq!(result_karatsuba, result_schoolbook);
     }
 
     // Evaluation tests
