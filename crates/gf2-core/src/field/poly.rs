@@ -1515,37 +1515,66 @@ pub const KARATSUBA_THRESHOLD: usize = 32;
 /// they build themselves.
 pub const SUBPRODUCT_THRESHOLD: usize = 256;
 
-/// Subproduct-tree batch evaluation (see
-/// [`FieldPoly::batch_evaluate`]). Caller guarantees
-/// `!points.is_empty()`; the algorithm is correct without the
-/// [`SUBPRODUCT_THRESHOLD`] gate, which is purely a performance guard on
-/// the public entry-point.
+/// Raw subproduct-tree batch evaluation, exposed **only** for the
+/// benchmark harness (see [`FieldPoly::batch_evaluate`] for the stable
+/// entry point). Callers bypass the [`SUBPRODUCT_THRESHOLD`]
+/// performance gate and pay the full tree cost unconditionally.
 ///
-/// The tree is stored as a flat `Vec<Vec<FieldPoly<F>>>` with
-/// `levels[0]` holding the leaves `M_i = x - points[i]` and
-/// `levels[last]` holding the single root subproduct. Internal layers
-/// are computed bottom-up by pair-merging through the existing `Mul`
-/// operator on `FieldPoly`, which dispatches schoolbook/Karatsuba
-/// automatically. Reduction then walks top-down, reducing `self` modulo
-/// the root, splitting the remainder across the left/right children
-/// until every leaf holds the constant remainder — which is exactly the
-/// Horner value at that point.
+/// # Arguments
 ///
-/// Tree layout note: we explicitly carry an odd final node up to the
-/// next level without a partner (no ghost-identity multiplication),
-/// keeping the multiplication count exactly `k - 1` internal nodes for
-/// `k` leaves. This matches the structure of [`FieldPoly::product`] but
-/// is exposed in parallel as a two-dimensional array so the reduction
-/// phase can walk the same structure top-down without rebuilding it.
+/// * `poly` — the polynomial to evaluate.
+/// * `points` — slice of evaluation points. Must be non-empty
+///   (`debug_assert!`ed); may contain zeros and duplicates. Empty
+///   `points` slices must go through [`FieldPoly::batch_evaluate`],
+///   which handles that case in the fallback path.
+///
+/// # Algorithm
+///
+/// 1. Build the leaves `M_i = x - points[i]`.
+/// 2. Bottom-up, pair-merge siblings through [`FieldPoly::Mul`],
+///    carrying an odd final node up without a partner. The tree is
+///    retained in full as a flat `Vec<Vec<FieldPoly<F>>>`.
+/// 3. Top-down, reduce `poly` modulo the root, then split each
+///    remainder across its children via [`FieldPoly::div_rem`] until
+///    every leaf holds the constant `poly(points[i])`.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::field::poly::batch_evaluate_subproduct;
+/// use gf2_core::field::FieldPoly;
+/// use gf2_core::gfp::Fp;
+///
+/// let p = FieldPoly::new(vec![Fp::<7>::new(1), Fp::<7>::new(2), Fp::<7>::new(3)]);
+/// let xs = vec![Fp::<7>::new(0), Fp::<7>::new(1), Fp::<7>::new(4)];
+/// let ys = batch_evaluate_subproduct(&p, &xs);
+/// // Agrees with per-point Horner.
+/// assert_eq!(ys, xs.iter().map(|x| p.eval(x)).collect::<Vec<_>>());
+/// ```
+///
+/// # Panics
+///
+/// Panics (via `debug_assert`) in debug builds if `points` is empty.
+/// Release builds are left to exhibit UB-free but arbitrary behaviour
+/// — in practice the leaf construction needs `points[0]` to
+/// materialise `one_like()`, so the function does panic with an
+/// out-of-bounds index on an empty slice. Callers must route through
+/// [`FieldPoly::batch_evaluate`] for the total contract.
+///
+/// # Complexity
+///
+/// `O(n · k + k² log k)` field operations for `n = poly.len()` and
+/// `k = points.len()` when backed by schoolbook
+/// [`FieldPoly::div_rem`]. The target asymptotic
+/// `O(M(n) log k + k log² k)` requires an FFT / Newton-iteration fast
+/// polynomial division primitive (Task 6 of the `bdf95060` story).
 ///
 /// This function is exposed as `pub` strictly so the benchmark harness
-/// (`benches/field_poly.rs`) can compare the raw subproduct cost against
-/// the naive baseline without being masked by the threshold dispatch in
-/// [`FieldPoly::batch_evaluate`]. It is hidden from `rustdoc` (via
-/// `#[doc(hidden)]`) and is not part of the stable API — external
-/// callers should always go through the public entry point, which
-/// guards the subproduct path with [`SUBPRODUCT_THRESHOLD`].
-#[doc(hidden)]
+/// (`benches/field_poly.rs`) can compare the raw subproduct cost
+/// against the naive baseline without being masked by the threshold
+/// dispatch in [`FieldPoly::batch_evaluate`]. External callers should
+/// always go through the public entry point, which guards the
+/// subproduct path with [`SUBPRODUCT_THRESHOLD`].
 pub fn batch_evaluate_subproduct<F: FiniteField>(poly: &FieldPoly<F>, points: &[F]) -> Vec<F> {
     debug_assert!(!points.is_empty());
 
