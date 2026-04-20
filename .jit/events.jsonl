@@ -2474,3 +2474,10 @@
 {"type":"issue_state_changed","id":"75ec04ad-8875-479c-b131-1c0ae76ecefc","issue_id":"046f95c1-1245-4021-b5ea-9fa0ae4c53bb","timestamp":"2026-04-20T19:36:14.257961334Z","from":"backlog","to":"ready"}
 {"type":"issue_state_changed","id":"132e42d9-1217-45b9-b9b5-a620a6c61beb","issue_id":"046f95c1-1245-4021-b5ea-9fa0ae4c53bb","timestamp":"2026-04-20T19:36:15.011014570Z","from":"ready","to":"in_progress"}
 {"type":"issue_claimed","id":"df14a96d-6d0a-4885-90b2-6490cc8a0fef","issue_id":"046f95c1-1245-4021-b5ea-9fa0ae4c53bb","timestamp":"2026-04-20T19:36:15.011213160Z","assignee":"agent:claude"}
+{"type":"gate_passed","id":"5d00b91f-c1a1-4976-b801-ae16ca8796c3","issue_id":"046f95c1-1245-4021-b5ea-9fa0ae4c53bb","timestamp":"2026-04-20T20:13:18.173001721Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"828c3c16-c1fd-40ed-8739-462c0ba2b752","issue_id":"046f95c1-1245-4021-b5ea-9fa0ae4c53bb","timestamp":"2026-04-20T20:13:18.186101175Z","gate_key":"doc-review","updated_by":"agent:project-lead"}
+{"type":"gate_failed","id":"9ab992d7-2742-45db-a3ba-2d8cc2dea6b6","issue_id":"046f95c1-1245-4021-b5ea-9fa0ae4c53bb","timestamp":"2026-04-20T20:19:30.407655659Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"issue_released","id":"9691bf34-bdcb-4da6-b368-129d0715f19a","issue_id":"046f95c1-1245-4021-b5ea-9fa0ae4c53bb","timestamp":"2026-04-20T20:19:58.366950438Z","assignee":"agent:claude","reason":"rework for 3 review findings"}
+{"type":"issue_state_changed","id":"5346eaa1-ff7c-417a-861f-5d88c698ecb4","issue_id":"046f95c1-1245-4021-b5ea-9fa0ae4c53bb","timestamp":"2026-04-20T20:19:58.366979088Z","from":"in_progress","to":"ready"}
+{"type":"issue_state_changed","id":"2aaf9bd9-6847-468a-a80f-acdfd65c8f2f","issue_id":"046f95c1-1245-4021-b5ea-9fa0ae4c53bb","timestamp":"2026-04-20T20:19:58.385375913Z","from":"ready","to":"in_progress"}
+{"type":"issue_claimed","id":"d66cbeae-9142-4618-afff-0b877184525b","issue_id":"046f95c1-1245-4021-b5ea-9fa0ae4c53bb","timestamp":"2026-04-20T20:19:58.385538433Z","assignee":"agent:claude"}
