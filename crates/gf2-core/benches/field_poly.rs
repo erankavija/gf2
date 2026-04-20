@@ -24,9 +24,12 @@
 //! This harness drove the tuning of `SUBPRODUCT_THRESHOLD` under
 //! issue `046f95c1`. On the cheap-scalar `Fp<65537>` field naive
 //! Horner wins on every cell except the (`n = 4096`, `k = 4096`)
-//! corner, where `subproduct_auto` pulls ahead at `0.87×` of naive
-//! (53.9 ms vs 62.1 ms). That crossover pins the threshold at the
-//! smallest power of two above the measured boundary (`4096`).
+//! corner, where `subproduct_auto` pulls ahead at `0.89×` of naive
+//! (54.29 ms vs 60.89 ms on the latest rerun; the `dispatcher`
+//! at that cell lands at ~80 ms because it routes through the
+//! schoolbook `subproduct` arm, not the `_auto` winner). That
+//! crossover pins the threshold at the smallest power of two above
+//! the measured boundary (`4096`).
 //!
 //! The measured results are committed into the module docstring of
 //! [`gf2_core::field::poly`] so callers can consult them without
