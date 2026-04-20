@@ -1,11 +1,22 @@
 //! Benchmarks for [`gf2_core::field::FieldPoly`] batch evaluation.
 //!
-//! Compares the raw subproduct-tree path
-//! (`batch_evaluate_subproduct`, bypassing the
-//! `SUBPRODUCT_THRESHOLD` gate) against the naive per-point Horner
-//! baseline (`points.iter().map(|p| self.eval(p)).collect()`) on
-//! `Fp<65537>` for the matrix
-//! `n ∈ {16, 64, 256, 1024} × k ∈ {16, 64, 256, 1024}`.
+//! Benchmarks three implementations on `Fp<65537>` across the matrix
+//! `n ∈ {16, 64, 256, 1024} × k ∈ {16, 64, 256, 1024}`:
+//!
+//! - **`dispatcher`** — the public [`FieldPoly::batch_evaluate`] API,
+//!   which today routes to the naive per-point Horner path whenever
+//!   both `n` and `k` are below `SUBPRODUCT_THRESHOLD = usize::MAX`
+//!   (i.e. always). The arm is kept so the bench has a direct measure
+//!   of what ordinary callers see, and so the numbers stay meaningful
+//!   after the threshold is lowered by the follow-up fast-`div_rem`
+//!   task.
+//! - **`subproduct`** — the raw subproduct-tree path
+//!   ([`batch_evaluate_subproduct`], bypassing the threshold gate). This
+//!   is the fast-path substrate that both `batch_evaluate` and
+//!   `interpolate_fast` build on.
+//! - **`naive`** — the literal comparison point from the issue scope:
+//!   `points.iter().map(|x| poly.eval(x)).collect()` — `k` independent
+//!   Horner folds collected into a `Vec<F>`.
 //!
 //! This harness drives the tuning of `SUBPRODUCT_THRESHOLD`. On the
 //! cheap-scalar `Fp<65537>` field, naive Horner wins on every cell; the
@@ -13,7 +24,7 @@
 //! asymptotic crossover to the sibling NTT task (`e0b6f940`) that
 //! replaces schoolbook `FieldPoly::div_rem` with an FFT / Newton
 //! primitive. Until that lands the tuned threshold is `usize::MAX` and
-//! the public `batch_evaluate` always routes through the naive path.
+//! the `dispatcher` arm coincides with `naive`.
 //!
 //! The measured results are committed into the module docstring of
 //! [`gf2_core::field::poly`] so callers can consult them without
@@ -71,11 +82,24 @@ fn bench_batch_evaluate(c: &mut Criterion) {
             let points = make_points(k);
             let id_fmt = format!("n{n}_k{k}");
 
-            // The "subproduct" arm bypasses the SUBPRODUCT_THRESHOLD gate
-            // so we always measure the fast-path cost even on sizes where
-            // `batch_evaluate` would fall back to the naive loop. The
-            // "naive" arm is the literal spec from the issue: k
-            // independent Horner folds collected into a `Vec<F>`.
+            // "dispatcher" arm: the public FieldPoly::batch_evaluate
+            // API — what ordinary callers exercise today. While
+            // SUBPRODUCT_THRESHOLD is usize::MAX the dispatcher always
+            // delegates to the naive Horner path, so these numbers
+            // coincide with the "naive" arm today; they will diverge
+            // once the follow-up fast-div_rem task lowers the threshold.
+            group.bench_with_input(
+                BenchmarkId::new("dispatcher", &id_fmt),
+                &(&poly, &points),
+                |b, (p, xs)| {
+                    b.iter(|| black_box(p.batch_evaluate(xs)));
+                },
+            );
+
+            // "subproduct" arm: bypasses the SUBPRODUCT_THRESHOLD gate
+            // so we always measure the fast-path cost, even on sizes
+            // where `batch_evaluate` currently falls back to the naive
+            // loop.
             group.bench_with_input(
                 BenchmarkId::new("subproduct", &id_fmt),
                 &(&poly, &points),
@@ -84,6 +108,8 @@ fn bench_batch_evaluate(c: &mut Criterion) {
                 },
             );
 
+            // "naive" arm: the literal comparison point from the issue
+            // scope — k independent Horner folds collected into a Vec.
             group.bench_with_input(
                 BenchmarkId::new("naive", &id_fmt),
                 &(&poly, &points),
