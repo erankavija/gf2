@@ -186,14 +186,21 @@
 //! but keeps the arms comparable within a single run. Regenerate with the
 //! same command; minor variance is expected across hosts and reruns.
 //!
-//! ## `batch_evaluate` — naive Horner vs. subproduct tree
+//! ## `batch_evaluate_subproduct` — naive Horner vs. subproduct tree
 //!
-//! Each cell measures one call of the raw subproduct path
-//! ([`batch_evaluate_subproduct`], bypassing the
-//! [`SUBPRODUCT_THRESHOLD`] gate) versus the naive per-point Horner
-//! baseline on a polynomial of length `n` evaluated at `k` points over
-//! `Fp<65537>`. `speedup = naive / subproduct`, so values **< 1** mean
-//! the naive per-point Horner baseline wins.
+//! The public [`FieldPoly::batch_evaluate`] dispatcher currently routes
+//! every call to the naive path because [`SUBPRODUCT_THRESHOLD`] is
+//! `usize::MAX` on the schoolbook [`FieldPoly::div_rem`] substrate, so
+//! benching the dispatcher against naive Horner would measure the same
+//! code twice. Instead each cell measures one call of the raw subproduct
+//! path ([`batch_evaluate_subproduct`], which bypasses the threshold
+//! gate and always takes the fast-path tree) versus the naive per-point
+//! Horner baseline on a polynomial of length `n` evaluated at `k` points
+//! over `Fp<65537>`. `speedup = naive / subproduct`, so values **< 1**
+//! mean the naive per-point Horner baseline wins — that is what makes
+//! `usize::MAX` the right tuned threshold for this field today. The
+//! number will flip once the NTT-backed fast `div_rem` lands and the
+//! subproduct-tree reduction cost drops from `O(n·k)` to `O(M(n) log k)`.
 //!
 //! | `n`  | `k`  | naive Horner | subproduct tree | naive/subproduct |
 //! |-----:|-----:|-------------:|----------------:|-----------------:|
