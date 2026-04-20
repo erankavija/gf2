@@ -8,8 +8,9 @@
 //!   both `n` and `k` are below `SUBPRODUCT_THRESHOLD = usize::MAX`
 //!   (i.e. always). The arm is kept so the bench has a direct measure
 //!   of what ordinary callers see, and so the numbers stay meaningful
-//!   after the threshold is lowered by the follow-up fast-`div_rem`
-//!   task.
+//!   after the threshold is lowered by the follow-up subproduct-tree
+//!   integration task (`046f95c1`), which wires the tree through the
+//!   already-landed `div_rem_auto` primitive.
 //! - **`subproduct`** — the raw subproduct-tree path
 //!   ([`batch_evaluate_subproduct`], bypassing the threshold gate). This
 //!   is the fast-path substrate that both `batch_evaluate` and
