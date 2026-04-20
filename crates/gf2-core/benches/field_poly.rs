@@ -78,8 +78,8 @@ fn bench_batch_evaluate(c: &mut Criterion) {
     // budget when run via `--quick`.
     group.sample_size(20);
 
-    let ns = [16usize, 64, 256, 1024, 4096];
-    let ks = [16usize, 64, 256, 1024, 4096];
+    let ns = [16usize, 64, 256, 1024, 4096, 8192];
+    let ks = [16usize, 64, 256, 1024, 4096, 8192];
 
     for &n in &ns {
         let poly = make_poly(n);

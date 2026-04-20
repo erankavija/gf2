@@ -262,17 +262,30 @@
 //! | 4096 |  256 |     3.78 ms  |    3.80 ms |    4.62 ms |         4.67 ms |
 //! | 4096 | 1024 |    15.21 ms  |   15.36 ms |   18.63 ms |        18.56 ms |
 //! | 4096 | 4096 |    60.89 ms  |   80.39 ms |   80.26 ms |    **54.29 ms** |
+//! | 8192 |   16 |   481.89 µs  |  979.80 µs |  979.78 µs |         1.89 ms |
+//! | 8192 |   64 |     1.91 ms  |    2.66 ms |    2.66 ms |         2.67 ms |
+//! | 8192 |  256 |     7.67 ms  |    7.52 ms |    9.27 ms |         9.24 ms |
+//! | 8192 | 1024 |    30.69 ms  |   30.16 ms |   36.56 ms |        36.36 ms |
+//! | 8192 | 4096 |   121.50 ms  |  151.11 ms |  149.62 ms |    **62.92 ms** |
+//! | 8192 | 8192 |   243.52 ms  |  309.59 ms |  309.77 ms |   **136.83 ms** |
 //!
-//! **Naive Horner wins at every measured `(n, k)` cell except the
-//! (`n = 4096`, `k = 4096`) corner**, where the `subproduct_auto` arm
-//! pulls ahead at `0.89×` of naive (54.29 ms vs 60.89 ms). This is
-//! the crossover that fixes [`SUBPRODUCT_THRESHOLD`] at `4096`. The
-//! `dispatcher` arm at that corner routes through the schoolbook
-//! `subproduct` path (both land at ~80 ms), which is ~1.32× slower
-//! than naive — the documented regression for the generic entry
-//! point on cheap-scalar fields. Callers on [`TwoAdicField`] should
-//! reach for [`FieldPoly::batch_evaluate_auto`] to pick up the
-//! winning `subproduct_auto` path automatically. The raw
+//! **At and above `(n, k) = (2·SUBPRODUCT_THRESHOLD, 2·SUBPRODUCT_THRESHOLD)
+//! = (8192, 8192)` the `subproduct_auto` arm wins decisively**:
+//! 136.83 ms vs 243.52 ms naive on `Fp<65537>` — a `0.56×` wall-clock
+//! ratio (`~1.78×` speedup) that confirms the `O(M(n) log k)` asymptotic
+//! of the Newton-iteration-backed subproduct tree. The
+//! (`n = 4096`, `k = 4096`) corner was the first crossover where
+//! `subproduct_auto` first pulls ahead at `0.89×` of naive
+//! (54.29 ms vs 60.89 ms). This is the crossover that fixes
+//! [`SUBPRODUCT_THRESHOLD`] at `4096`; the `8192` rows above provide
+//! the `n, k ≥ 2·SUBPRODUCT_THRESHOLD` evidence that the asymptotic
+//! win materialises at scale. The `dispatcher` arm at those corners
+//! routes through the schoolbook `subproduct` path (both land within
+//! ~1% of each other), which is ~1.27× slower than naive — the
+//! documented regression for the generic entry point on cheap-scalar
+//! fields. Callers on [`TwoAdicField`] should reach for
+//! [`FieldPoly::batch_evaluate_auto`] to pick up the winning
+//! `subproduct_auto` path automatically. The raw
 //! `subproduct` arm (schoolbook [`FieldPoly::div_rem`]) stays close
 //! to `subproduct_auto` whenever both inputs remain below
 //! [`DIV_REM_THRESHOLD`] = 2048 because
