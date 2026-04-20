@@ -14,6 +14,7 @@ mod x86;
 
 pub mod fp65537;
 pub mod gf2m;
+pub mod gf2m_wide;
 pub mod llr;
 pub mod mersenne;
 pub mod modem;
