@@ -121,11 +121,14 @@ pub(crate) mod simd {
     /// Returns the best available 4-limb (GF(2^256)) carry-less multiply
     /// kernel, if any.
     ///
-    /// Preference order: AVX-512VL+VPCLMULQDQ → AVX2+VPCLMULQDQ → PCLMULQDQ
-    /// scalar-lane. The kernel produces only the unreduced 8-limb carry-less
+    /// Preference order: AVX2+VPCLMULQDQ (YMM) → PCLMULQDQ scalar-lane
+    /// (XMM). The kernel produces only the unreduced 8-limb carry-less
     /// product; Barrett reduction is applied by the caller. Returns `None`
     /// when no PCLMULQDQ is present; callers must fall back to the pure-Rust
-    /// scalar `clmul_wide` implementation.
+    /// scalar `clmul_wide` implementation. An AVX-512VL+VPCLMULQDQ (ZMM)
+    /// lane is not currently provided — the stable Rust `_mm512_*` carry-
+    /// less-multiply intrinsics only stabilised in Rust 1.89, after this
+    /// workspace's MSRV (1.80). Re-add once MSRV moves forward.
     #[inline]
     pub fn maybe_gf2m_wide256() -> Option<&'static ClmulWide256Fns> {
         GF2M_WIDE256_FNS
