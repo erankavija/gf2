@@ -42,37 +42,39 @@
 //!
 //! | `n`  | naive O(n²) | fast O(n² log n) | fast / naive |
 //! |-----:|------------:|-----------------:|-------------:|
-//! |    4 |      1.65 µs |         1.92 µs |        1.16× |
-//! |    8 |      5.53 µs |         4.84 µs |        0.88× |
-//! |   16 |     19.8 µs |          12.5 µs |        0.63× |
-//! |   32 |     75.9 µs |          35.8 µs |        0.47× |
-//! |   64 |    295 µs   |         107 µs   |        0.36× |
-//! |  128 |   1.16 ms   |         324 µs   |        0.28× |
-//! |  256 |   4.60 ms   |        1.01 ms   |        0.22× |
-//! |  512 |   18.2 ms   |        3.23 ms   |        0.18× |
-//! | 1024 |   72.4 ms   |        11.0 ms   |        0.15× |
-//! | 2048 |   285 ms    |        36.4 ms   |        0.13× |
+//! |    4 |      1.62 µs |         1.01 µs |        0.62× |
+//! |    8 |      5.40 µs |         2.50 µs |        0.46× |
+//! |   16 |     19.5 µs |          6.66 µs |        0.34× |
+//! |   32 |     74.7 µs |          20.5 µs |        0.27× |
+//! |   64 |    291 µs   |         68.0 µs  |        0.23× |
+//! |  128 |   1.14 ms   |         223 µs   |        0.20× |
+//! |  256 |   4.51 ms   |         744 µs   |        0.17× |
+//! |  512 |   17.9 ms   |        2.53 ms   |        0.14× |
+//! | 1024 |   71.3 ms   |        8.74 ms   |        0.12× |
+//! | 2048 |   280 ms    |        30.5 ms   |        0.11× |
 //!
-//! **`fast` wins from `n = 8` onward; naive wins only at `n = 4`.**
-//! `INTERPOLATE_THRESHOLD = 16` is a conservatively measured crossover
-//! boundary: fast already wins at `n = 8` (0.88×) and clearly dominates
-//! at `n = 16` (0.63×). Below that (n = 4) the subproduct-tree overhead
-//! makes naive slightly faster (1.16×). The threshold is kept at 16 to
-//! stay well within the crossover point and avoid marginal-case variance.
-//! The `naive` implementation computes M(x) via `from_roots` once and
-//! then divides out each linear factor `(x − x_i)` individually — `n`
-//! calls to `div_rem` on a degree-n polynomial. Although this is nominally
-//! `O(n²)`, the constant factor makes it slower than the `fast` path's
-//! subproduct-tree batch evaluation + one-pass upward merge at `n ≥ 8`.
-//! Callers on fields with very expensive Karatsuba multiplications may see
-//! the crossover shift; call [`interpolate`] or [`interpolate_fast`]
-//! directly when needed, or use [`interpolate_auto`] for the tuned default.
+//! **`fast` wins at every measured `n ≥ 4` on `Fp<65537>`.** The `naive`
+//! path issues `n` full-degree `div_rem`s on `M(x)`; the `fast` path does
+//! one `from_roots` + one [`FieldPoly::batch_evaluate`] (O(n²) per
+//! point-by-point Horner while `SUBPRODUCT_THRESHOLD = usize::MAX`, or
+//! `O(n log² n)` once an NTT-backed `div_rem` lands via `e0b6f940` /
+//! `2e7db385`) + one `O(n log n)` upward merge. Even at the current
+//! schoolbook substrate the merge savings alone push `fast` below
+//! `0.62×` of `naive` at `n = 4`.
+//!
+//! `INTERPOLATE_THRESHOLD = 16` is kept as a conservative safety margin
+//! for callers on fields with very expensive Karatsuba (where the
+//! merge-pass polynomial multiplications may flip the balance upward).
+//! On cheap fields like `Fp<65537>` the threshold could safely drop to
+//! 4; the tuning is deliberately conservative. Call [`interpolate`] or
+//! [`interpolate_fast`] directly to override, or use
+//! [`interpolate_auto`] for the tuned default.
 //!
 //! Regenerate this table with
 //! `cargo bench -p gf2-core --bench field_poly -- --quick interpolate`.
 
 use crate::field::batch_ops::batch_inverse;
-use crate::field::poly::{batch_evaluate_subproduct, build_subproduct_tree};
+use crate::field::poly::build_subproduct_tree;
 use crate::field::{FieldPoly, FiniteField};
 use std::fmt;
 
@@ -428,10 +430,13 @@ pub fn interpolate<F: FiniteField>(points: &[(F, F)]) -> Result<FieldPoly<F>, In
 ///
 /// 1. Build `M(x) = Π_i (x − x_i)` via [`FieldPoly::from_roots`].
 /// 2. Compute `M'(x)` (formal derivative) via [`formal_derivative`].
-/// 3. Evaluate `M'` at all `x_i` via
-///    [`batch_evaluate_subproduct`][crate::field::poly::batch_evaluate_subproduct],
-///    bypassing the [`SUBPRODUCT_THRESHOLD`] gate so the tree path is
-///    always exercised (this function is the explicitly fast variant).
+/// 3. Evaluate `M'` at all `x_i` via [`FieldPoly::batch_evaluate`] — the
+///    public batch-evaluation API named by the issue contract. Today
+///    [`SUBPRODUCT_THRESHOLD`] (= `usize::MAX`) routes that through the
+///    naive per-point Horner fallback; once `e0b6f940` / `2e7db385`
+///    lower the threshold via an NTT-backed `div_rem`, this call
+///    automatically picks up the `O(n log² n)` subproduct-tree path
+///    without any change to this function.
 ///    By the product rule, `M'(x_i) = Π_{j ≠ i} (x_i − x_j)`.
 /// 4. Compute barycentric weights `w_i = y_i / M'(x_i)` using
 ///    [`crate::field::batch_ops::batch_inverse`].
@@ -511,13 +516,17 @@ pub fn interpolate_fast<F: FiniteField>(
     let m_poly = FieldPoly::from_roots(&xs);
     let m_deriv = formal_derivative(&m_poly);
 
-    // Step 3: Evaluate M'(x) at all x_i using the subproduct-tree path
-    // directly (bypassing the SUBPRODUCT_THRESHOLD gate in batch_evaluate).
-    // This is intentional: interpolate_fast is the explicitly tree-based
-    // variant and is entitled to use the tree at every n. Callers who want
-    // the threshold-gated default should use interpolate_auto instead.
+    // Step 3: Evaluate M'(x) at all x_i via the public FieldPoly::batch_evaluate
+    // API — this is the evaluation surface named by the bdf95060 story for this
+    // role. Today `SUBPRODUCT_THRESHOLD = usize::MAX` makes that call route
+    // through naive Horner, which costs O(n²) field operations on this step
+    // just like `n` independent `.eval(x_i)` calls would; the upward merge in
+    // Step 5 is still the O(n log n) win over `interpolate`'s n full-degree
+    // `div_rem`s. Once `e0b6f940` / `2e7db385` lower `SUBPRODUCT_THRESHOLD`
+    // via an NTT-backed `div_rem`, this call automatically picks up the
+    // O(n log² n) subproduct-tree path without any local code change.
     // By the product rule: M'(x_i) = Π_{j≠i}(x_i − x_j).
-    let m_prime_vals: Vec<F> = batch_evaluate_subproduct(&m_deriv, &xs);
+    let m_prime_vals: Vec<F> = m_deriv.batch_evaluate(&xs);
 
     // Step 4: Compute weights w_i = y_i / M'(x_i).
     // M'(x_i) is non-zero for distinct x_i (it equals the product of all
