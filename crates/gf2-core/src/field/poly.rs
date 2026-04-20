@@ -31,7 +31,111 @@
 //! two `FieldPoly`s are equal iff their normalised `coeffs` slices
 //! compare equal element-wise.
 //!
-//! # Scope
+//! # Public API — complexity reference
+//!
+//! The table below enumerates every public polynomial operation exposed
+//! by this module, with its algorithmic strategy, big-O cost, and any
+//! tuning constant or companion module. Throughout, `n` and `m` are the
+//! lengths of the two operand polynomials (so `degree = len - 1`), `k`
+//! is the number of evaluation / interpolation points, and
+//! `M(n) = O(n log n)` is the cost of an `n`-point NTT-based
+//! multiplication (see [`FieldPoly::mul_ntt`]).
+//!
+//! ## Construction and queries
+//!
+//! | Operation | Strategy | Complexity | Notes |
+//! |-----------|----------|-----------:|-------|
+//! | [`FieldPoly::new`] / [`FieldPoly::from_coeffs_trimmed`] | Linear scan + trailing-zero trim | `O(n)` | Enforces the normalisation invariant. |
+//! | [`FieldPoly::zero_like`] / [`FieldPoly::one_like`] / [`FieldPoly::constant`] | Direct construction | `O(1)` | `sample: &F` anchors the field parameters. |
+//! | [`FieldPoly::monomial`] | Fill + trim | `O(degree)` | |
+//! | [`FieldPoly::from_roots`] | Left-fold of linear factors | `O(k²)` field ops | Use [`FieldPoly::batch_mul`] for a balanced-tree variant. |
+//! | [`FieldPoly::product`] | Balanced tree of multiplications | `O(k · M(k))` | |
+//! | [`FieldPoly::degree`] / [`FieldPoly::is_zero`] / [`FieldPoly::len`] | Direct read | `O(1)` | |
+//! | [`FieldPoly::try_coeff`] / [`FieldPoly::coeff`] / [`FieldPoly::coeff_or_zero`] / [`FieldPoly::leading_coeff`] | Slice / default | `O(1)` | `coeff` is total (returns `zero_like` above `len`). |
+//! | [`FieldPoly::iter`] | Borrow-iteration over `coeffs` | `O(1)` per step | |
+//!
+//! ## Arithmetic
+//!
+//! | Operation | Strategy | Complexity | Threshold / const |
+//! |-----------|----------|-----------:|-------------------|
+//! | `Add` / `Sub` / `Neg` / `AddAssign` / `SubAssign` (owned + `&_` RHS) | Elementwise | `O(max(n, m))` | — |
+//! | [`FieldPoly::mul_scalar`] / [`FieldPoly::scale`] | Elementwise scale | `O(n)` | Skips trailing zeros after trim. |
+//! | [`FieldPoly::mul`] and `impl Mul` (four owned/borrowed variants) | Schoolbook ⇄ Karatsuba dispatch | `O(n · m)` schoolbook, `O(n^{log₂ 3})` Karatsuba | [`KARATSUBA_THRESHOLD`] = 32 |
+//! | [`FieldPoly::mul_ntt`] (for `F: TwoAdicField`) | Radix-2 NTT convolution | `O(N log N)` with `N = next_pow2(n + m − 1)` | Detailed doc in [`crate::field::ntt`] |
+//! | Free function [`mul_fast`] (for `F: TwoAdicField`) | Tuned dispatcher: Karatsuba ⇄ NTT | matches the winning path for each size | [`NTT_THRESHOLD`] = 128 |
+//! | [`FieldPoly::div_rem`] | Schoolbook long division | `O(n · m)` field ops | Total; panics only on division by zero. |
+//! | [`FieldPoly::gcd`] | Euclidean algorithm over `div_rem` | `O(n · m · log(min(n, m)))` field ops | Monic-normalised result. |
+//!
+//! There is no standalone `pub fn mul_karatsuba`: the schoolbook ⇄
+//! Karatsuba crossover is internal and selected by the `Mul` operator
+//! and [`FieldPoly::mul`] at [`KARATSUBA_THRESHOLD`]. Callers that want
+//! to force the `O(N log N)` path use [`FieldPoly::mul_ntt`] or
+//! [`mul_fast`] directly.
+//!
+//! ## Evaluation and interpolation
+//!
+//! | Operation | Strategy | Complexity | Threshold / const |
+//! |-----------|----------|-----------:|-------------------|
+//! | [`FieldPoly::eval`] | Horner | `O(n)` | — |
+//! | [`FieldPoly::eval_batch`] | `k` independent Horner folds | `O(n · k)` | — |
+//! | [`FieldPoly::batch_evaluate`] | Auto-dispatch: naive Horner ⇄ subproduct tree | `O(n · k)` (current) / `O(M(n) · log k)` (target, pending fast `div_rem`) | [`SUBPRODUCT_THRESHOLD`] = `usize::MAX` today |
+//! | [`batch_evaluate_subproduct`] (free fn) | Unconditional subproduct tree | `O(n · k + k² log k)` (current) / `O(M(n) · log k)` (target) | Bypasses the threshold gate. |
+//! | [`build_subproduct_tree`] (free fn) | Balanced pair-merge | `O(k · M(k))` polynomial mults | Single source of truth shared by `batch_evaluate` and `interpolate_fast`. |
+//! | [`interpolate`] (see [`crate::field::poly_interpolate`]) | Barycentric Lagrange + `batch_inverse` | `O(n²)` field ops | — |
+//! | [`interpolate_fast`] (see [`crate::field::poly_interpolate`]) | Subproduct-tree Lagrange | `O(n² log n)` today / `O(n log² n)` once fast `div_rem` lands | — |
+//! | [`interpolate_auto`] (see [`crate::field::poly_interpolate`]) | Dispatcher over the two above | picks the right asymptotic | [`INTERPOLATE_THRESHOLD`] = 16 |
+//! | [`formal_derivative`] (see [`crate::field::poly_interpolate`]) | Elementwise `i · coeffs[i]` | `O(n)` | — |
+//!
+//! ## Batch polynomial operations
+//!
+//! | Operation | Strategy | Complexity | Notes |
+//! |-----------|----------|-----------:|-------|
+//! | [`FieldPoly::batch_mul`] | Balanced binary merge | `O(K · M(K) · log k)` for `k` polys of combined length `K` | Requires `k ≥ 1`. |
+//! | [`FieldPoly::batch_mul_with_field`] | Same as above but accepts an empty batch with an explicit `sample` | same asymptotic | Avoids requiring a non-empty batch to anchor the field type. |
+//! | [`FieldPoly::batch_gcd`] | Repeated Euclidean reductions over the slice | `O(k · n · m · log min(n, m))` field ops | Returns the slice-wide `gcd`. |
+//!
+//! # Cross-module references
+//!
+//! Closely related algorithms ship in sibling files — this module's
+//! `Mul` / `mul_ntt` / `interpolate_*` entries link into them so callers
+//! can find the underlying implementation notes:
+//!
+//! - [`crate::field::ntt`] (`field/ntt.rs`) — the low-level radix-2
+//!   decimation-in-time NTT kernel [`ntt_inplace`](crate::field::ntt::ntt_inplace)
+//!   that powers [`FieldPoly::mul_ntt`] and the [`mul_fast`] dispatcher.
+//! - [`crate::field::two_adic`] (`field/two_adic.rs`) — the
+//!   [`TwoAdicField`] trait, which certifies the primitive roots of
+//!   unity required by the NTT path.
+//! - [`crate::field::poly_interpolate`] (`field/poly_interpolate.rs`)
+//!   — [`interpolate`], [`interpolate_fast`], [`interpolate_auto`], and
+//!   [`formal_derivative`], plus the [`INTERPOLATE_THRESHOLD`] tuning
+//!   constant.
+//! - [`crate::field::batch_ops`] (`field/batch_ops.rs`) — Montgomery's
+//!   batch-inversion trick (`batch_inverse*`), the single-inversion
+//!   substrate that both Lagrange variants depend on for their
+//!   barycentric weights.
+//!
+//! [`ntt_inplace`]: crate::field::ntt::ntt_inplace
+//! [`interpolate`]: crate::field::poly_interpolate::interpolate
+//! [`interpolate_fast`]: crate::field::poly_interpolate::interpolate_fast
+//! [`interpolate_auto`]: crate::field::poly_interpolate::interpolate_auto
+//! [`INTERPOLATE_THRESHOLD`]: crate::field::poly_interpolate::INTERPOLATE_THRESHOLD
+//! [`formal_derivative`]: crate::field::poly_interpolate::formal_derivative
+//!
+//! # Known gaps and successor work
+//!
+//! [`SUBPRODUCT_THRESHOLD`] is currently pinned to [`usize::MAX`] so
+//! that the public [`FieldPoly::batch_evaluate`] entry point always
+//! routes through the naive Horner loop: the subproduct path repeatedly
+//! calls the schoolbook [`FieldPoly::div_rem`], which eats the asymptotic
+//! win the tree is supposed to deliver. The same substrate limits
+//! [`interpolate_fast`] to `O(n² log n)` instead of its target
+//! `O(n log² n)`. The story `bdf95060` plan schedules a follow-up task
+//! that replaces `div_rem` with an NTT-backed
+//! Newton-iteration primitive; once it lands, this constant is lowered
+//! and the fast paths activate without any further API churn.
+//!
+//! # Scope covered here
 //!
 //! This file provides the core type and **all** algorithmic operations
 //! that are generic over `F: FiniteField`:
@@ -51,49 +155,64 @@
 //!   [`FieldPoly::scale`].
 //! - Multiplication through the `Mul` operator: dispatches to
 //!   schoolbook below [`KARATSUBA_THRESHOLD`] and to Karatsuba above.
+//! - NTT convolution for `F: TwoAdicField` via [`FieldPoly::mul_ntt`]
+//!   and the free-function tuned dispatcher [`mul_fast`].
 //! - Euclidean division [`FieldPoly::div_rem`] and GCD
 //!   [`FieldPoly::gcd`].
 //! - Evaluation: [`FieldPoly::eval`] (Horner),
 //!   [`FieldPoly::eval_batch`] (naive per-point loop), and
 //!   [`FieldPoly::batch_evaluate`] (subproduct-tree infrastructure
 //!   in place; asymptotic target `O(M(n) log k + k log² k)` requires
-//!   FFT / Newton-iteration fast division from task `e0b6f940`. With
-//!   today's schoolbook `div_rem` the tree path is `O(n · k + k² log k)`
-//!   — see the method docs and the benchmark table below for the
-//!   detailed dispatch policy).
+//!   FFT / Newton-iteration fast division. With today's schoolbook
+//!   `div_rem` the tree path is `O(n · k + k² log k)` — see the
+//!   method docs and the benchmark table below for the detailed
+//!   dispatch policy).
 //!
-//! Further algorithmic upgrades (Lagrange interpolation, NTT
-//! multiplication) land in sibling tasks on top of this surface.
+//! Lagrange interpolation (task `3cff65f7`) and the radix-2 NTT
+//! (task `e0b6f940`) have already landed in their respective sibling
+//! files and are wired into the tables above.
 //!
-//! # `batch_evaluate` benchmark results
+//! # Benchmark snapshot (criterion `--quick`, Zen 3 host)
 //!
-//! Measured on `Fp<65537>` with
-//! `cargo bench -p gf2-core --bench field_poly -- --quick` on the repo's
-//! reference Zen 3 host. Each cell is the median total wall-clock time
-//! for one invocation on a polynomial of length `n` evaluated at `k`
-//! points. The *subproduct-tree* column reports the time for the raw
-//! subproduct path (bypassing the [`SUBPRODUCT_THRESHOLD`] gate);
-//! `speedup = naive / subproduct`, so values **< 1** mean the naive
-//! per-point Horner baseline wins.
+//! All tables in this section were produced by a single invocation of
+//!
+//! ```text
+//! cargo bench -p gf2-core --bench field_poly -- --quick
+//! ```
+//!
+//! on the reference host (AMD Ryzen 9 5900X, "Zen 3", x86-64) at commit
+//! `3d98431`. Numbers are median total wall-clock time per call reported
+//! by criterion's point estimate; `--quick` reduces measurement iterations
+//! but keeps the arms comparable within a single run. Regenerate with the
+//! same command; minor variance is expected across hosts and reruns.
+//!
+//! ## `batch_evaluate` — naive Horner vs. subproduct tree
+//!
+//! Each cell measures one call of the raw subproduct path
+//! ([`batch_evaluate_subproduct`], bypassing the
+//! [`SUBPRODUCT_THRESHOLD`] gate) versus the naive per-point Horner
+//! baseline on a polynomial of length `n` evaluated at `k` points over
+//! `Fp<65537>`. `speedup = naive / subproduct`, so values **< 1** mean
+//! the naive per-point Horner baseline wins.
 //!
 //! | `n`  | `k`  | naive Horner | subproduct tree | naive/subproduct |
 //! |-----:|-----:|-------------:|----------------:|-----------------:|
-//! |   16 |   16 |      0.88 µs |         6.64 µs |            0.13× |
-//! |   16 |   64 |       3.5 µs |          35 µs  |            0.10× |
-//! |   16 |  256 |        14 µs |         215 µs  |            0.06× |
-//! |   16 | 1024 |        56 µs |         1.50 ms |            0.04× |
-//! |   64 |   16 |       3.7 µs |          12 µs  |            0.30× |
-//! |   64 |   64 |        15 µs |          55 µs  |            0.27× |
-//! |   64 |  256 |        59 µs |         293 µs  |            0.20× |
-//! |   64 | 1024 |       237 µs |         1.82 ms |            0.13× |
-//! |  256 |   16 |        15 µs |          35 µs  |            0.41× |
-//! |  256 |   64 |        59 µs |         115 µs  |            0.51× |
-//! |  256 |  256 |       234 µs |         515 µs  |            0.45× |
-//! |  256 | 1024 |       939 µs |         2.73 ms |            0.34× |
-//! | 1024 |   16 |        59 µs |         127 µs  |            0.46× |
-//! | 1024 |   64 |       234 µs |         237 µs  |            0.99× |
-//! | 1024 |  256 |       940 µs |         1.34 ms |            0.70× |
-//! | 1024 | 1024 |       3.75 ms|         6.00 ms |            0.63× |
+//! |   16 |   16 |      0.91 µs |         6.77 µs |            0.13× |
+//! |   16 |   64 |      3.62 µs |         35.4 µs |            0.10× |
+//! |   16 |  256 |      14.3 µs |        215.1 µs |            0.07× |
+//! |   16 | 1024 |      57.2 µs |         1.53 ms |            0.04× |
+//! |   64 |   16 |      3.98 µs |         12.6 µs |            0.32× |
+//! |   64 |   64 |      14.9 µs |         55.6 µs |            0.27× |
+//! |   64 |  256 |      59.6 µs |        297.3 µs |            0.20× |
+//! |   64 | 1024 |       238 µs |         1.86 ms |            0.13× |
+//! |  256 |   16 |      14.8 µs |         35.9 µs |            0.41× |
+//! |  256 |   64 |      58.8 µs |        117.3 µs |            0.50× |
+//! |  256 |  256 |       235 µs |        528.4 µs |            0.44× |
+//! |  256 | 1024 |       941 µs |         2.81 ms |            0.33× |
+//! | 1024 |   16 |      58.6 µs |        128.9 µs |            0.45× |
+//! | 1024 |   64 |       235 µs |        362.2 µs |            0.65× |
+//! | 1024 |  256 |       938 µs |         1.36 ms |            0.69× |
+//! | 1024 | 1024 |      3.76 ms |         6.07 ms |            0.62× |
 //!
 //! **The naive path wins on every benchmarked cell** on `Fp<65537>`.
 //! This is expected given the scalar-field cost profile: a single
@@ -113,30 +232,71 @@
 //! (large-prime Montgomery, tower extensions, …) or once a fast
 //! polynomial-division kernel lands alongside this API. The
 //! implementation is retained unchanged so that a future
-//! FFT-multiplication drop-in (Task 6 of the `bdf95060` story) lights up
-//! the expected speedup without further API churn. Regenerate this
-//! table with `cargo bench -p gf2-core --bench field_poly`.
+//! fast-`div_rem` drop-in lights up the expected speedup without
+//! further API churn.
 //!
-//! # `batch_mul` benchmark results
+//! ## `batch_mul` — left-fold vs. balanced tree
 //!
-//! Measured on `Fp<65537>` with
-//! `cargo bench -p gf2-core --bench field_poly -- --quick batch_mul` on
-//! the repo's reference Zen 3 host. Each cell shows the median wall-clock
-//! time for one call to the respective variant over `k` degree-8
-//! polynomials. The speedup column is `left_fold / balanced_tree`.
+//! Each cell shows the median wall-clock time for one call to the
+//! respective variant over `k` degree-8 polynomials on `Fp<65537>`.
+//! `speedup = left_fold / balanced_tree`.
 //!
 //! | `k`  | left-fold (linear) | balanced tree | speedup |
 //! |-----:|-------------------:|--------------:|--------:|
-//! |    8 |           8.85 µs  |      8.10 µs  |   1.09× |
-//! |   32 |         151.0 µs   |    100.6 µs   |   1.50× |
-//! |  128 |           2.45 ms  |      1.07 ms  |   2.29× |
+//! |    8 |            9.01 µs |       8.53 µs |   1.06× |
+//! |   32 |          154.3 µs  |     102.5 µs  |   1.51× |
+//! |  128 |            2.49 ms |       1.09 ms |   2.28× |
 //!
 //! At `k = 128` the balanced tree is **2.3× faster** than a schoolbook
-//! left-fold. At `k = 8` the advantage is marginal (~9%) because the
+//! left-fold. At `k = 8` the advantage is marginal because the
 //! degree-8 operands are well below `KARATSUBA_THRESHOLD = 32`, so both
 //! paths use the schoolbook kernel and only the merge-order differs.
-//! Regenerate with
-//! `cargo bench -p gf2-core --bench field_poly -- --quick batch_mul`.
+//!
+//! ## `mul_ntt` vs. Karatsuba
+//!
+//! Each cell is the median wall-clock time for one call on *two*
+//! polynomials of length `n` over `Fp<65537>`, so the output length is
+//! `2n − 1`. `speedup = karatsuba / ntt`; values above 1 mean NTT wins.
+//! The `mul_fast` dispatcher column shows the tuned free-function
+//! entry point (Karatsuba below [`NTT_THRESHOLD`] = 128, NTT above) and
+//! should track the winning arm on every row.
+//!
+//! | `n`   | Karatsuba | `mul_ntt` | `mul_fast` | speedup |
+//! |------:|----------:|----------:|-----------:|--------:|
+//! |    64 |  14.13 µs |  15.05 µs |   14.27 µs |   0.94× |
+//! |   128 |  44.27 µs |  28.35 µs |   28.41 µs |   1.56× |
+//! |   256 | 135.43 µs |  63.75 µs |   60.83 µs |   2.12× |
+//! |   512 | 415.84 µs | 131.55 µs |  131.13 µs |   3.16× |
+//! |  1024 |   1.25 ms | 284.09 µs |  320.04 µs |   4.40× |
+//!
+//! NTT ties Karatsuba at `n = 64` and wins decisively from `n = 128`
+//! onwards — `mul_fast`'s [`NTT_THRESHOLD`] = 128 is tuned from exactly
+//! this measurement. See the [`crate::field::ntt`] module docs for the
+//! underlying primitive and its algorithmic shape.
+//!
+//! ## `interpolate` — quadratic Lagrange vs. `interpolate_fast`
+//!
+//! `n` distinct `(x, y)` points over `Fp<65537>`; `speedup = naive /
+//! fast`. `naive` is the O(n²) barycentric Lagrange path
+//! ([`interpolate`]); `fast` is the subproduct-tree variant
+//! ([`interpolate_fast`]).
+//!
+//! | `n`   |     naive |      fast | speedup |
+//! |------:|----------:|----------:|--------:|
+//! |     4 |   1.62 µs |   1.03 µs |   1.56× |
+//! |     8 |   5.50 µs |   2.53 µs |   2.17× |
+//! |    16 |  19.90 µs |   7.16 µs |   2.78× |
+//! |    32 |  75.91 µs |  20.36 µs |   3.73× |
+//! |    64 | 297.28 µs |  68.08 µs |   4.37× |
+//! |   128 |   1.16 ms | 224.70 µs |   5.17× |
+//! |   256 |   4.66 ms | 753.87 µs |   6.18× |
+//! |   512 |  18.21 ms |   2.56 ms |   7.12× |
+//! |  1024 |  72.56 ms |   8.78 ms |   8.27× |
+//! |  2048 | 286.81 ms |  30.90 ms |   9.28× |
+//!
+//! The `fast` path wins at every measured `n ≥ 4` on `Fp<65537>`; the
+//! tuned [`INTERPOLATE_THRESHOLD`] is set at 16 as a conservative margin
+//! for callers on fields with more expensive polynomial multiplication.
 
 use crate::field::{FiniteField, TwoAdicField};
 use std::fmt;
