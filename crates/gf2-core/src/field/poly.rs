@@ -248,11 +248,16 @@
 //! The subproduct path is therefore guarded by
 //! [`SUBPRODUCT_THRESHOLD`] and is only expected to pay off on fields
 //! with significantly more expensive scalar arithmetic than `Fp<65537>`
-//! (large-prime Montgomery, tower extensions, …) or once a fast
-//! polynomial-division kernel lands alongside this API. The
-//! implementation is retained unchanged so that a future
-//! fast-`div_rem` drop-in lights up the expected speedup without
-//! further API churn.
+//! (large-prime Montgomery, tower extensions, …) or once the subproduct
+//! tree's reductions route through [`div_rem_auto`] and
+//! [`SUBPRODUCT_THRESHOLD`] drops below `usize::MAX`. The fast
+//! polynomial-division primitive itself has landed
+//! ([`FieldPoly::div_rem_fast`] / [`FieldPoly::div_rem_auto`] from
+//! issue `ae0c7e1f`); wiring it into `batch_evaluate_subproduct` and
+//! lowering the threshold is tracked by follow-up task `046f95c1`. The
+//! `batch_evaluate_subproduct` implementation is retained unchanged so
+//! the subproduct-tree integration lights up the expected speedup
+//! without further API churn.
 //!
 //! ## `batch_mul` — left-fold vs. balanced tree
 //!
@@ -1977,10 +1982,12 @@ pub const KARATSUBA_THRESHOLD: usize = 32;
 ///
 /// The value is therefore set to [`usize::MAX`] so that the public
 /// `batch_evaluate` entry point always routes through the naive path
-/// until a fast polynomial-division primitive (FFT / Newton,
-/// `bdf95060` task `e0b6f940`) makes the asymptotic win materialise —
-/// at which point this constant is lowered and the tree path takes
-/// over without any API change.
+/// until the subproduct tree's reductions are routed through
+/// [`div_rem_auto`] (the Newton-iteration fast division primitive
+/// added by issue `ae0c7e1f` alongside the NTT multiplication from
+/// `e0b6f940`). When the follow-up task `046f95c1` wires that
+/// integration and the asymptotic win materialises, this constant is
+/// lowered and the tree path takes over without any API change.
 ///
 /// Fields with substantially more expensive scalar arithmetic
 /// (large-prime Montgomery, tower extensions) tip the balance earlier;
