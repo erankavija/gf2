@@ -269,19 +269,10 @@ pub unsafe fn clmul_barrett_reduce(a: u64, b: u64, mu: u64, modulus: u64, degree
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    /// Scalar reference carry-less multiplication for testing.
-    fn scalar_clmul(a: u64, b: u64) -> u128 {
-        let a = a as u128;
-        let mut result: u128 = 0;
-        let mut b_remaining = b;
-        while b_remaining != 0 {
-            let bit = b_remaining.trailing_zeros();
-            result ^= a << bit;
-            b_remaining &= b_remaining - 1;
-        }
-        result
-    }
+    // Reference oracle shared with production code. Centralising the
+    // bit-by-bit algorithm in `clmul_scalar` keeps this test module in
+    // lock-step with `gf2_core::gf2m::barrett::clmul`.
+    use crate::clmul_u64_scalar as scalar_clmul;
 
     #[test]
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]

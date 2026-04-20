@@ -13,7 +13,10 @@ rust-version = "1.80"
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(kani)'] }
 
 [dependencies]
-gf2-kernels-simd = { path = "../gf2-kernels-simd", optional = true }
+# Non-optional: hosts the SSOT scalar `clmul_u64_scalar` that
+# `gf2m::barrett::clmul` delegates to. The SIMD feature now only gates
+# whether runtime detection wires up the accelerated kernel bundles.
+gf2-kernels-simd = { path = "../gf2-kernels-simd" }
 rand = { workspace = true, optional = true }
 rayon = { workspace = true, optional = true }
 image = { version = "0.25", optional = true, default-features = false, features = ["png"] }
@@ -25,14 +28,15 @@ proptest = { workspace = true, optional = true }
 [dev-dependencies]
 criterion = { workspace = true }
 gf2-core = { path = ".", features = ["test-support"] }
-gf2-kernels-simd = { path = "../gf2-kernels-simd" }
 proptest = { workspace = true }
 rand = { workspace = true }
 
 [features]
 default = ["rand", "io"]
-# Opt-in to SIMD accelerated kernels via optional crate.
-simd = ["gf2-kernels-simd"]
+# Opt-in to SIMD accelerated kernels. The `gf2-kernels-simd` crate is
+# always linked (it hosts the scalar `clmul_u64_scalar` SSOT); this
+# feature only gates the runtime detection / kernel dispatch paths.
+simd = []
 # Random generation functions (enabled by default for testing/examples).
 rand = ["dep:rand"]
 # Parallel algorithms with rayon

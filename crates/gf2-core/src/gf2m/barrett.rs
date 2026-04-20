@@ -92,15 +92,10 @@
 ///
 /// O(n) where n is the number of set bits in `b`.
 pub fn clmul(a: u64, b: u64) -> u128 {
-    let a = a as u128;
-    let mut result: u128 = 0;
-    let mut b_remaining = b;
-    while b_remaining != 0 {
-        let bit = b_remaining.trailing_zeros();
-        result ^= a << bit;
-        b_remaining &= b_remaining - 1; // clear lowest set bit
-    }
-    result
+    // SSOT: the bit-by-bit scalar algorithm lives in `gf2-kernels-simd`
+    // so production callers and test-only reference oracles share a
+    // single definition.
+    gf2_kernels_simd::clmul_u64_scalar(a, b)
 }
 
 /// Carry-less multiplication of two `u128` GF(2) polynomials, returning a `u128`.

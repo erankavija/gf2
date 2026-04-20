@@ -110,23 +110,13 @@ fn clmul_wide4_ymm_safe(a: &[u64; 4], b: &[u64; 4], out: &mut [u64; 8]) {
 #[cfg(test)]
 pub(crate) mod test_helpers {
     /// Scalar reference matching `gf2_core::gf2m::wide::clmul_wide_slice::<4>`:
-    /// the 4×4 schoolbook built on a bit-by-bit carry-less 64×64 multiply.
+    /// the 4×4 schoolbook built on the workspace-wide bit-by-bit
+    /// carry-less 64×64 multiply SSOT (`crate::clmul_u64_scalar`).
     pub(crate) fn scalar_ref(a: &[u64; 4], b: &[u64; 4]) -> [u64; 8] {
-        fn clmul_u64(a: u64, b: u64) -> u128 {
-            let a = a as u128;
-            let mut r: u128 = 0;
-            let mut br = b;
-            while br != 0 {
-                let bit = br.trailing_zeros();
-                r ^= a << bit;
-                br &= br - 1;
-            }
-            r
-        }
         let mut out = [0u64; 8];
         for i in 0..4 {
             for j in 0..4 {
-                let p = clmul_u64(a[i], b[j]);
+                let p = crate::clmul_u64_scalar(a[i], b[j]);
                 out[i + j] ^= p as u64;
                 out[i + j + 1] ^= (p >> 64) as u64;
             }
