@@ -1,69 +1,57 @@
 {
   "epic_id": "e095a100-d028-4bbb-a175-a6886137df61",
   "epic_short_id": "e095a100",
-  "current_wave": 2,
-  "waves": [
-    {
-      "wave_number": 1,
-      "status": "completed",
-      "issues": [
-        {"id": "0a7e2555-08d2-47f6-89e4-49de8f5c0b2c", "short_id": "0a7e2555", "title": "RNS research", "classification": "research", "status": "done"},
-        {"id": "c488ed29-df70-46ef-94c0-2a9f0d61b2f0", "short_id": "c488ed29", "title": "u128 Gf2mElement", "classification": "implementation", "status": "done"},
-        {"id": "1f2f8371-c585-45a6-ab33-22834bf22b6d", "short_id": "1f2f8371", "title": "Mersenne/Proth/Goldilocks Fp", "classification": "implementation", "status": "done"}
-      ]
-    },
-    {
-      "wave_number": 2,
-      "sub_wave": "2a",
-      "status": "in_progress",
-      "issues": [
-        {"id": "72a2118a-0648-462d-802d-ee0f616dbe07", "short_id": "72a2118a", "title": "Batch inversion (Montgomery trick)", "classification": "implementation", "status": "pending", "file_scope": "crates/gf2-core/src/field/batch_ops.rs (new), field/mod.rs (+mod decl)"},
-        {"id": "d11b769a-f4c1-404c-a98e-797f14260357", "short_id": "d11b769a", "title": "Wide accumulator for tower types", "classification": "implementation", "status": "pending", "file_scope": "crates/gf2-core/src/gfpn/{quadratic.rs,cubic.rs,mod.rs}"},
-        {"id": "2ce2a757-ad1f-4c6e-9174-987fb642ada2", "short_id": "2ce2a757", "title": "Karatsuba vs naive cross-verification", "classification": "implementation", "status": "pending", "file_scope": "crates/gf2-core/tests/karatsuba_cross_verify.rs (new)"}
-      ]
-    },
-    {
-      "wave_number": 2,
-      "sub_wave": "2b",
-      "status": "in_progress",
-      "issues": [
-        {"id": "86b3dc7d-8920-4227-abd0-2cac0925c57b", "short_id": "86b3dc7d", "title": "Nested tower verification GF(p^4,6,12)", "classification": "implementation", "status": "rework_1_in_progress", "commits": ["d5d7d26"], "note": "First attempt FAILED code-review (SSOT on tower configs + narrow axiom harness + doc errors + stale sage script ref + test naming). Rework agent a7d83bd6025539f05 dispatched to address all six findings.", "depends_on_wave": "2a:d11b769a"},
-        {"id": "bdf95060-2d01-49fa-bb10-ae13da01bf14", "short_id": "bdf95060", "title": "Batch polynomial operations story", "classification": "breakdown+implementation", "status": "broken_down", "breakdown_plan": "dev/plans/bdf95060_breakdown.md", "child_tasks_proposed": 8, "note": "8-task DAG proposed (Task 1/6 parallel entry points, ending at Task 8 integration). Not yet created in JIT — pending lead review of scope vs session budget."}
-      ]
-    },
-    {
-      "wave_number": 3,
-      "status": "pending",
-      "issues": [
-        {"id": "3f4b946c-ea9a-440d-a59f-b64e837b5cce", "short_id": "3f4b946c", "title": "Tower extension story close-out", "classification": "story-close", "status": "pending"},
-        {"id": "6fb4abad-8dd5-4c67-840b-6cb96c2fe7e7", "short_id": "6fb4abad", "title": "Multi-word GF(2^m) m>128 story", "classification": "breakdown+implementation", "status": "pending", "note": "story, needs jit-breakdown"},
-        {"id": "5fad4d0f-6885-490d-ab8d-f1070fa79dfe", "short_id": "5fad4d0f", "title": "SoA batch layout for GF(p^n)", "classification": "implementation", "status": "pending", "depends_on_wave": "3:3f4b946c"}
-      ]
-    }
+  "current_session": 3,
+  "next_session": 4,
+  "epic_completion": "7/9 direct deps done",
+  "remaining_direct_deps": ["bdf95060 (6/8 tasks closed, 2 rejected, 1 task open: 224a7d9e)", "6fb4abad (5/7 tasks closed, 2 tasks open: afac2262 + d013cfdf)"],
+  "closed_this_session_3": [
+    {"short_id": "70972f06", "title": "FieldPoly<F> core + Gf2mPoly_ retirement (SSOT)", "rework_count": 5, "final_commit": "4a97165"},
+    {"short_id": "e1fbf2d4", "title": "clmul_wide multi-word", "rework_count": 2, "final_commit": "3c16271"},
+    {"short_id": "5fad4d0f", "title": "SoA batch + AVX2 Fp<65537> kernel", "speedup": "7.91x @ N=1000", "rework_count": 1, "final_commit": "9a6024f"},
+    {"short_id": "2e7db385", "title": "subproduct-tree batch_evaluate", "rework_count": 2, "final_commit": "ff58724", "note": "SUBPRODUCT_THRESHOLD = usize::MAX until fast div_rem"},
+    {"short_id": "a7c81834", "title": "batch_mul + batch_gcd", "rework_count": 2, "final_commit": "22efc8c"},
+    {"short_id": "9dd11973", "title": "BarrettReducerWide<N>", "rework_count": 1, "final_commit": "421e134"},
+    {"short_id": "b77768f0", "title": "Gf2mWide Mul/Inv/FiniteField/ConstField", "rework_count": 3, "final_commit": "b9a7830"},
+    {"short_id": "e0b6f940", "title": "NTT-based polynomial mul", "speedup": "4.37x @ n=1024", "rework_count": 2, "final_commit": "def3e72"},
+    {"short_id": "a1229d72", "title": "Gf2mWide<4> axiom harness", "rework_count": 3, "final_commit": "3f0f104"}
   ],
-  "created_during_execution": [],
-  "escalations": [],
-  "rework_counts": {
-    "86b3dc7d": 2,
-    "3e947c3f": 2,
-    "9fa99685": 2,
-    "70972f06": 3,
-    "5fad4d0f": 1
-  },
+  "rejected_this_session_3": [
+    {"short_id": "d9c3d414", "reason": "Subsumed by 70972f06 per SSOT override 2026-04-19"},
+    {"short_id": "3cff65f7", "reason": "Asymptotic gap (O(n log² n) target) unachievable with current schoolbook substrate; requires SUBPRODUCT_THRESHOLD drop after e0b6f940/2e7db385. Work landed in-tree across commits b219159, d504030, f848dbf, ad1a77f, 01de721 but reviewer contract not literally satisfied."}
+  ],
+  "open_at_handoff": [
+    {"short_id": "224a7d9e", "story": "bdf95060", "title": "integration docs + bench consolidation", "state": "ready", "deps_resolved": "2e7db385, 3cff65f7 (rejected; work in-tree), a7c81834, e0b6f940", "scope_note": "Session-3 trim: removed cross-type helper (folded into 70972f06). Remaining: module docstring + bench consolidation + dev/plans/field_poly_module_overview.md."},
+    {"short_id": "afac2262", "story": "6fb4abad", "title": "VPCLMULQDQ SIMD kernel for Gf2mWide<4>", "state": "ready", "deps_resolved": "b77768f0, a1229d72", "dispatch_prompt": "/tmp/afac2262_dispatch.md", "host_note": "Zen 3 lacks AVX-512; primary deliverable is PCLMULQDQ scalar-lane fallback."},
+    {"short_id": "d013cfdf", "story": "6fb4abad", "title": "Karatsuba N=4 (conditional on bench)", "state": "blocked", "blocks_on": ["afac2262"], "note": "May be rejected if Karatsuba N=4 benchmark does not beat schoolbook."}
+  ],
   "policy_overrides": [
-    {
-      "date": "2026-04-19",
-      "decision": "SSOT is inviolable; the FieldPoly<F>/Gf2mPoly_<V> parallel-implementation loophole granted by dev/plans/bdf95060_breakdown.md is rescinded. Next session must collapse the duplication.",
-      "affects": ["70972f06", "224a7d9e"],
-      "pending_action": "session 3: reopen 70972f06 scope to include Gf2mPoly_ delegation; Task 8 (224a7d9e) may fold in"
-    }
+    {"date": "2026-04-19", "decision": "SSOT is inviolable", "memory": "feedback_quality_gates.md (pre-existing) + feedback_everyones_responsibility.md (new)", "status": "enforced"},
+    {"date": "2026-04-19", "decision": "No deferred quality issues (no TODO markers)", "memory": "feedback_everyones_responsibility.md", "status": "enforced"},
+    {"date": "2026-04-19", "decision": "Sub-agents must not run jit gate pass", "memory": "feedback_agents_no_gate_runs.md", "status": "enforced"},
+    {"date": "2026-04-19", "decision": "Parallel same-crate sub-agents need worktree isolation or serialization", "memory": "feedback_parallel_agent_isolation.md", "status": "enforced"}
   ],
+  "infrastructure_fixes_session_3": [
+    {"commit": "864edfd", "description": "Revert unauthorized weakening of SSOT rule in scripts/code-review-prompt.md (70972f06 agent amended session-2 handoff commit; forward revert)"},
+    {"commit": "5219e7b", "description": "Add --release to cargo-ci.sh:98 per CLAUDE.md rule; fixes test-wall-clock budget enforcement"},
+    {"commit": "97f8a96", "description": "Fix extra_unused_type_parameters clippy under --no-default-features (5fad4d0f fallout)"}
+  ],
+  "session_3_handoff": "dev/active/e095a100-handoff-3.md",
   "session_2_handoff": "dev/active/e095a100-handoff-2.md",
+  "session_3_started_at": "2026-04-19T11:50:00Z",
+  "session_3_ended_at": "2026-04-19T23:30:00Z",
   "started_at": "2026-04-18T18:00:00Z",
-  "notes": [
-    "Host: Zen 3 (AVX2, no AVX-512). HIP crate excluded from default workspace.",
-    "Epic gates: code-review, doc-review, cargo-ci, lake-build.",
-    "Not pushing local commits to origin/main during session (prior session flagged the reviewer-scope issue; mitigation now in code-review-prompt.md).",
-    "3f4b946c is not a direct child of e095a100 but 5fad4d0f depends on it; driving it done to unblock 5fad4d0f."
+  "branch_state_at_handoff": {
+    "branch": "main",
+    "commits_ahead_of_origin": 89,
+    "tests_at_head": {"passed": 3412, "failed": 0, "ignored": 72, "wall_clock_release": "~36s"},
+    "working_tree": ".jit/ metadata + handoff docs only, no source drift"
+  },
+  "session_4_dispatch_plan": [
+    "1. Lead-direct 224a7d9e (module docstring + bench consolidation + overview file, ~30 min).",
+    "2. Dispatch afac2262 using /tmp/afac2262_dispatch.md (opus-class, 3-4h expected).",
+    "3. After afac2262: decide d013cfdf (implement if Karatsuba N=4 benches favourably; reject otherwise).",
+    "4. Close bdf95060 and 6fb4abad stories.",
+    "5. Close epic e095a100 per project-lead Section 10."
   ]
 }
