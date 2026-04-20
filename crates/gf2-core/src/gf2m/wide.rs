@@ -7,14 +7,28 @@
 //! type level via a zero-sized [`Gf2mWideConfig`] marker, and therefore
 //! impose no heap or reference-counting overhead on downstream users.
 //!
-//! # Scope of this module (Task 1 of story 6fb4abad)
+//! # Scope of this module (story 6fb4abad)
 //!
-//! This file delivers the **type shell and XOR-only operators**. Specifically
-//! implemented here: construction, accessors, `Add`, `Sub`, `Neg`,
-//! `AddAssign`, `SubAssign`, and the tail-masking invariant. Multiplication,
-//! Barrett reduction, inversion, and `FiniteField` / `ConstField` trait
-//! implementations land in follow-up tasks 2–4 of the same story. Treat this
-//! module as the algebraic skeleton onto which those pieces will attach.
+//! This file now delivers the **complete `Gf2mWide<N, Cfg>` surface**:
+//! construction, accessors, XOR-based `Add` / `Sub` / `Neg` / `AddAssign`
+//! / `SubAssign`, tail-masking invariant, [`clmul_wide`] multi-word
+//! carry-less multiply, Barrett reduction via
+//! [`crate::gf2m::barrett::BarrettReducerWide`], Fermat-based
+//! [`Gf2mWide::inverse`], and full [`crate::field::FiniteField`] /
+//! [`crate::field::ConstField`] trait implementations. The
+//! `GF(2^256)` variant additionally dispatches to the AVX2+VPCLMULQDQ
+//! SIMD kernel in [`gf2_kernels_simd::gf2m_wide`] when the host supports
+//! it (task `afac2262`).
+//!
+//! Historically this file grew through five tasks of story `bdf95060`
+//! (nee `6fb4abad`): Task 1 landed the type shell and XOR operators
+//! (`9fa99685`), Task 2 landed `clmul_wide` (`e1fbf2d4`), Task 3 landed
+//! `BarrettReducerWide` (`9dd11973`), Task 4 landed `Mul` / `Inv` /
+//! `FiniteField` / `ConstField` impls (`b77768f0`), Task 5 landed the
+//! axiom-harness coverage (`a1229d72`), and Task 6 (`afac2262`) wired
+//! the SIMD fast path. Task 7 (`d013cfdf`, conditional Karatsuba-N=4)
+//! was rejected because the scalar fallback rarely executes on modern
+//! x86_64 hosts. Every one of those pieces lives in-file below.
 //!
 //! # Tail-masking invariant
 //!
