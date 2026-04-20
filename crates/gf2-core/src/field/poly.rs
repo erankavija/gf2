@@ -64,6 +64,8 @@
 //! | [`FieldPoly::mul_ntt`] (for `F: TwoAdicField`) | Radix-2 NTT convolution | `O(N log N)` with `N = next_pow2(n + m − 1)` | Detailed doc in [`crate::field::ntt`] |
 //! | Free function [`mul_fast`] (for `F: TwoAdicField`) | Tuned dispatcher: Karatsuba ⇄ NTT | matches the winning path for each size | [`NTT_THRESHOLD`] = 128 |
 //! | [`FieldPoly::div_rem`] | Schoolbook long division | `O(n · m)` field ops | Total; panics only on division by zero. |
+//! | [`FieldPoly::invert_series`] (for `F: TwoAdicField`) | Newton iteration on the reciprocal | `O(M(k))` field ops | Powers the `div_rem_fast` path. |
+//! | [`FieldPoly::div_rem_fast`] (for `F: TwoAdicField`) | Newton iteration via reversed-divisor inverse | `O(M(n))` field ops | Dispatches via [`mul_fast`]. |
 //! | [`FieldPoly::gcd`] | Euclidean algorithm over `div_rem` | `O(n · m · log(min(n, m)))` field ops | Monic-normalised result. |
 //!
 //! There is no standalone `pub fn mul_karatsuba`: the schoolbook ⇄
@@ -2554,6 +2556,320 @@ pub fn mul_fast<F: TwoAdicField>(a: &FieldPoly<F>, b: &FieldPoly<F>) -> FieldPol
 }
 
 // ---------------------------------------------------------------------
+// Newton-iteration fast division (TwoAdicField-specialised)
+// ---------------------------------------------------------------------
+
+impl<F: TwoAdicField> FieldPoly<F> {
+    /// Formal-power-series inverse `g` of `self` modulo `x^k`, so that
+    /// `self · g ≡ 1 (mod x^k)`.
+    ///
+    /// Uses Newton's iteration on the reciprocal: starting from
+    /// `g_0 = [self[0]^{-1}]` (correct modulo `x`), each step doubles the
+    /// precision via
+    ///
+    /// ```text
+    /// g_{i+1} = g_i · (2 − self · g_i)   mod x^{2·prec_i}
+    /// ```
+    ///
+    /// so after `⌈log₂ k⌉` steps the precision reaches `k`. Multiplications
+    /// inside the loop are truncated to the current precision and routed
+    /// through [`mul_fast`], which picks Karatsuba below [`NTT_THRESHOLD`]
+    /// and NTT above so every iteration runs at its asymptotically best
+    /// cost.
+    ///
+    /// # Arguments
+    ///
+    /// * `k` — target precision. The returned polynomial has length at
+    ///   most `k`; its coefficients satisfy `self · g ≡ 1 (mod x^k)`. If
+    ///   `k == 0` the result is the zero polynomial.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `self.coeffs[0]` is zero — the constant term must be a
+    /// unit for the formal power series inverse to exist. Also panics if
+    /// `self` is the zero polynomial.
+    ///
+    /// # Examples
+    ///
+    /// `(1 + x)` has inverse `1 − x + x² − x³ + … + (−x)^{k−1}` as a
+    /// formal power series. Over `Fp<65537>`, the negation of `1` is
+    /// `65_536`, so the coefficients alternate between `1` and `65_536`:
+    ///
+    /// ```
+    /// use gf2_core::field::FieldPoly;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// // f(x) = 1 + x
+    /// let f = FieldPoly::new(vec![Fp::<65537>::new(1), Fp::<65537>::new(1)]);
+    /// let g = f.invert_series(8);
+    /// // g(x) = 1 − x + x² − x³ + x⁴ − x⁵ + x⁶ − x⁷
+    /// let minus_one = -Fp::<65537>::new(1);
+    /// let one = Fp::<65537>::new(1);
+    /// let expected = FieldPoly::new(vec![
+    ///     one,       minus_one, one,       minus_one,
+    ///     one,       minus_one, one,       minus_one,
+    /// ]);
+    /// assert_eq!(g, expected);
+    ///
+    /// // Verify f · g ≡ 1 (mod x^8): the low 8 coefficients of the product
+    /// // are [1, 0, 0, 0, 0, 0, 0, 0].
+    /// let prod = f.mul(&g);
+    /// assert_eq!(prod.coeff(0), Fp::<65537>::new(1));
+    /// for i in 1..8 {
+    ///     assert_eq!(prod.coeff(i), Fp::<65537>::new(0));
+    /// }
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(M(k))` field operations, where `M(k) = O(k log k)` is the cost
+    /// of an `k`-point NTT-based multiplication via [`mul_fast`]. The
+    /// Newton iteration's total work is a geometric sum dominated by the
+    /// final doubling step at precision `≈ k`.
+    pub fn invert_series(&self, k: usize) -> FieldPoly<F> {
+        assert!(
+            !self.is_zero(),
+            "FieldPoly::invert_series: cannot invert the zero polynomial"
+        );
+        let c0 = &self.coeffs[0];
+        assert!(
+            !c0.is_zero(),
+            "FieldPoly::invert_series: constant term must be non-zero"
+        );
+
+        if k == 0 {
+            return FieldPoly { coeffs: Vec::new() };
+        }
+
+        let sample = c0;
+        let one = sample.one_like();
+        let two = one.clone() + one.clone();
+
+        // g_0 = [1 / self[0]] — correct modulo x (precision 1).
+        let c0_inv = c0
+            .inv()
+            .expect("constant term is non-zero; inverse exists in a field");
+        let mut g = FieldPoly {
+            coeffs: vec![c0_inv],
+        };
+        let mut prec: usize = 1;
+
+        while prec < k {
+            // Target precision for this step: 2·prec, capped at k.
+            let next_prec = (prec * 2).min(k);
+
+            // Truncate `self` to the current target precision so the
+            // intermediate product stays bounded in size.
+            let f_trunc = truncate_to_len(self, next_prec);
+
+            // h = self · g   mod x^{next_prec}
+            let fg = mul_fast(&f_trunc, &g);
+            let h = truncate_to_len(&fg, next_prec);
+
+            // r = 2 − h   mod x^{next_prec}
+            let mut r_coeffs: Vec<F> = (0..next_prec).map(|_| sample.zero_like()).collect();
+            r_coeffs[0] = two.clone();
+            // Subtract h from r coefficient-wise. h.len() ≤ next_prec.
+            for (i, hc) in h.coeffs.iter().enumerate() {
+                let cur = r_coeffs[i].clone();
+                r_coeffs[i] = cur - hc.clone();
+            }
+            let r = FieldPoly::new(r_coeffs);
+
+            // g ← g · r   mod x^{next_prec}
+            let gr = mul_fast(&g, &r);
+            g = truncate_to_len(&gr, next_prec);
+
+            prec = next_prec;
+        }
+
+        truncate_to_len(&g, k)
+    }
+
+    /// `O(M(n))` polynomial division via Newton iteration on the reversed
+    /// divisor's formal-power-series inverse.
+    ///
+    /// Returns the same `(quotient, remainder)` pair as
+    /// [`FieldPoly::div_rem`] but in asymptotically better time. Both
+    /// outputs satisfy the usual Euclidean identity
+    /// `self = quotient · divisor + remainder` with
+    /// `deg(remainder) < deg(divisor)`.
+    ///
+    /// # Algorithm
+    ///
+    /// Let `n = deg(self)`, `m = deg(divisor)`, and `k = n − m`. Define
+    /// the *reversed* polynomials
+    /// `rev(p)(x) = x^{deg p} · p(1/x)`, i.e. just the coefficient vector
+    /// reversed. Reversing the Euclidean identity modulo `x^{k+1}` yields
+    ///
+    /// ```text
+    /// rev(self) ≡ rev(quotient) · rev(divisor)   (mod x^{k+1})
+    /// ```
+    ///
+    /// so `rev(quotient) ≡ rev(self) · rev(divisor)^{-1} (mod x^{k+1})`
+    /// where the inverse is a formal power series built by
+    /// [`invert_series`](Self::invert_series). One final
+    /// `remainder = self − divisor · quotient` recovers the remainder.
+    ///
+    /// # Arguments
+    ///
+    /// * `divisor` — the polynomial to divide by.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `divisor` is the zero polynomial.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::FieldPoly;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// // (x⁴ + 2x² + 1) / (x² + 1) = x² + 1 over Fp<65537>.
+    /// let dividend = FieldPoly::new(vec![
+    ///     Fp::<65537>::new(1),
+    ///     Fp::<65537>::new(0),
+    ///     Fp::<65537>::new(2),
+    ///     Fp::<65537>::new(0),
+    ///     Fp::<65537>::new(1),
+    /// ]);
+    /// let divisor = FieldPoly::new(vec![Fp::<65537>::new(1), Fp::<65537>::new(0), Fp::<65537>::new(1)]);
+    /// let (q, r) = dividend.div_rem_fast(&divisor);
+    /// // Quotient: x² + 1. Remainder: 0.
+    /// assert_eq!(q, FieldPoly::new(vec![Fp::<65537>::new(1), Fp::<65537>::new(0), Fp::<65537>::new(1)]));
+    /// assert!(r.is_zero());
+    /// // Euclidean identity holds.
+    /// assert_eq!(&(&q * &divisor) + &r, dividend);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(M(n))` field operations, where `M(n) = O(n log n)` is the cost
+    /// of the underlying [`mul_fast`] call at NTT-regime sizes. The
+    /// schoolbook [`FieldPoly::div_rem`] is `O((n − m) · m)`, so the fast
+    /// path wins decisively once both operand lengths are large enough to
+    /// amortise the Newton-iteration and NTT setup cost — see the
+    /// benchmark harness in `crates/gf2-core/benches/field_poly.rs` for
+    /// the tuned crossover on `Fp<65537>`.
+    pub fn div_rem_fast(&self, divisor: &FieldPoly<F>) -> (FieldPoly<F>, FieldPoly<F>) {
+        assert!(
+            !divisor.is_zero(),
+            "FieldPoly::div_rem_fast: division by zero polynomial"
+        );
+
+        // Zero dividend: both quotient and remainder are zero. Anchor the
+        // field-type sample on `divisor` since `self.coeffs` is empty.
+        let Some(dividend_deg) = self.degree() else {
+            let sample = &divisor.coeffs[0];
+            return (FieldPoly::zero_like(sample), FieldPoly::zero_like(sample));
+        };
+        let divisor_deg = divisor.degree().unwrap();
+
+        // deg(self) < deg(divisor): quotient is 0, remainder is self.
+        if dividend_deg < divisor_deg {
+            let sample = &self.coeffs[0];
+            return (FieldPoly::zero_like(sample), self.clone());
+        }
+
+        // Constant divisor: quotient = self · divisor[0]^{-1}, remainder = 0.
+        if divisor_deg == 0 {
+            let sample = &self.coeffs[0];
+            let inv = divisor.coeffs[0]
+                .inv()
+                .expect("divisor is non-zero constant; inverse exists in a field");
+            let q = self.mul_scalar(&inv);
+            return (q, FieldPoly::zero_like(sample));
+        }
+
+        let n = dividend_deg;
+        let m = divisor_deg;
+        let k = n - m;
+
+        // Step 4–5: reversed divisor and its formal-power-series inverse
+        // modulo x^{k+1}. The reverse of a normalised polynomial has a
+        // non-zero constant term (that constant is the leading coefficient
+        // of the original polynomial).
+        let rev_divisor = reverse_poly(divisor);
+        let rev_inv = rev_divisor.invert_series(k + 1);
+
+        // Step 6: rev(dividend), then truncate to degree ≤ k.
+        let rev_dividend = reverse_poly(self);
+        let rev_dividend_trunc = truncate_to_len(&rev_dividend, k + 1);
+
+        // Step 7: rev_quotient = (rev_dividend_trunc · rev_inv)  mod x^{k+1}.
+        let prod = mul_fast(&rev_dividend_trunc, &rev_inv);
+        let rev_quotient = truncate_to_len(&prod, k + 1);
+
+        // Step 8: pad rev_quotient out to length (k + 1) before
+        // reversing, so the reversal lines up the quotient coefficients
+        // at their correct ascending-degree positions.
+        let quotient = reverse_poly_padded(&rev_quotient, k + 1);
+
+        // Step 9: remainder = self − divisor · quotient. mul_fast
+        // composes the Karatsuba / NTT dispatch that matches the scale of
+        // the sub-product.
+        let dq = mul_fast(divisor, &quotient);
+        let remainder = self - &dq;
+
+        (quotient, remainder)
+    }
+}
+
+// ---------------------------------------------------------------------
+// Internal helpers for invert_series / div_rem_fast.
+// ---------------------------------------------------------------------
+
+/// Returns the polynomial formed by the first `len` coefficients of
+/// `poly`, normalised. Used internally by [`FieldPoly::invert_series`]
+/// and [`FieldPoly::div_rem_fast`] to keep Newton-iteration products
+/// bounded in size.
+fn truncate_to_len<F: FiniteField>(poly: &FieldPoly<F>, len: usize) -> FieldPoly<F> {
+    if len == 0 {
+        return FieldPoly { coeffs: Vec::new() };
+    }
+    let take = poly.coeffs.len().min(len);
+    let coeffs: Vec<F> = poly.coeffs[..take].to_vec();
+    FieldPoly::new(coeffs)
+}
+
+/// Returns the coefficient-reversed polynomial of `poly`. For a
+/// normalised polynomial of degree `d` the reversal has coefficient
+/// vector `poly.coeffs` read right-to-left — equivalently,
+/// `rev(x) = x^d · poly(1/x)`. The constant term of the reversal equals
+/// the leading coefficient of the original, so the reversal of a
+/// non-zero polynomial always has a non-zero constant term.
+fn reverse_poly<F: FiniteField>(poly: &FieldPoly<F>) -> FieldPoly<F> {
+    if poly.is_zero() {
+        return FieldPoly { coeffs: Vec::new() };
+    }
+    let mut coeffs = poly.coeffs.clone();
+    coeffs.reverse();
+    FieldPoly::new(coeffs)
+}
+
+/// Reverses `poly` after padding its coefficient vector out to length
+/// `pad_len` with zero elements drawn from `poly`'s field sample. Used by
+/// [`FieldPoly::div_rem_fast`] to line up the quotient coefficients at
+/// their correct ascending-degree positions when the reversed quotient
+/// happens to have lost trailing zeros (equivalently, leading zeros after
+/// reversal).
+fn reverse_poly_padded<F: FiniteField>(poly: &FieldPoly<F>, pad_len: usize) -> FieldPoly<F> {
+    if pad_len == 0 {
+        return FieldPoly { coeffs: Vec::new() };
+    }
+    if poly.is_zero() {
+        return FieldPoly { coeffs: Vec::new() };
+    }
+    let sample = &poly.coeffs[0];
+    let mut coeffs: Vec<F> = poly.coeffs.clone();
+    while coeffs.len() < pad_len {
+        coeffs.push(sample.zero_like());
+    }
+    coeffs.reverse();
+    FieldPoly::new(coeffs)
+}
+
+// ---------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------
 
@@ -4001,6 +4317,196 @@ mod tests {
             let first = poly.batch_evaluate(&points);
             let second = poly.batch_evaluate(&points);
             prop_assert_eq!(first, second);
+        }
+    }
+
+    // -----------------------------------------------------------------
+    // invert_series / div_rem_fast / div_rem_auto (TwoAdicField path)
+    // -----------------------------------------------------------------
+
+    type FP65537 = Fp<65537>;
+
+    fn fp65537(n: u64) -> FP65537 {
+        FP65537::new(n)
+    }
+
+    #[test]
+    fn test_invert_series_of_one_plus_x_over_fp65537() {
+        // (1 + x) has inverse 1 − x + x² − … + (−x)^7 modulo x^8.
+        let f = FieldPoly::new(vec![fp65537(1), fp65537(1)]);
+        let g = f.invert_series(8);
+        assert_eq!(g.len(), 8);
+        let minus_one = -fp65537(1);
+        for i in 0..8 {
+            let expected = if i % 2 == 0 { fp65537(1) } else { minus_one };
+            assert_eq!(g.coeff(i), expected, "coeff {i} mismatch");
+        }
+
+        // f · g ≡ 1 (mod x^8).
+        let prod = f.mul(&g);
+        assert_eq!(prod.coeff(0), fp65537(1));
+        for i in 1..8 {
+            assert_eq!(prod.coeff(i), fp65537(0), "product coeff {i} not zero");
+        }
+    }
+
+    #[test]
+    fn test_invert_series_identity() {
+        // The constant polynomial `c` has inverse `c^{-1}` modulo any x^k.
+        let c = FieldPoly::constant(fp65537(7));
+        let inv = c.invert_series(5);
+        assert_eq!(inv.len(), 1);
+        assert_eq!(inv.coeff(0) * fp65537(7), fp65537(1));
+    }
+
+    #[test]
+    fn test_invert_series_k_zero_is_zero() {
+        let f = FieldPoly::new(vec![fp65537(1), fp65537(2), fp65537(3)]);
+        let g = f.invert_series(0);
+        assert!(g.is_zero());
+    }
+
+    #[test]
+    #[should_panic(expected = "constant term must be non-zero")]
+    fn test_invert_series_zero_constant_term_panics() {
+        // x has a zero constant term — not a unit in the power series ring.
+        let f = FieldPoly::new(vec![fp65537(0), fp65537(1)]);
+        let _ = f.invert_series(4);
+    }
+
+    #[test]
+    fn test_invert_series_roundtrip_truncated() {
+        // Proptest-lite: check that f · g ≡ 1 (mod x^k) for a few random
+        // polynomials over Fp<65537>.
+        let modulus: u64 = 65537;
+        for seed in 1u64..=8 {
+            let n = 5 + (seed as usize);
+            let mut coeffs: Vec<FP65537> = (0..n)
+                .map(|i| {
+                    let v = ((seed.wrapping_mul(0x9E3779B1) ^ (i as u64).wrapping_mul(0x165667B1))
+                        % (modulus - 1))
+                        + 1;
+                    fp65537(v)
+                })
+                .collect();
+            // Guarantee a non-zero constant term.
+            if coeffs[0].is_zero() {
+                coeffs[0] = fp65537(1);
+            }
+            let f = FieldPoly::new(coeffs);
+            let k = n + 3;
+            let g = f.invert_series(k);
+            let prod = f.mul(&g);
+            assert_eq!(prod.coeff(0), fp65537(1));
+            for i in 1..k {
+                assert_eq!(
+                    prod.coeff(i),
+                    fp65537(0),
+                    "seed={seed}, i={i} non-zero in f*g mod x^k"
+                );
+            }
+        }
+    }
+
+    // --- div_rem_fast unit tests: edge cases from the task spec. ---
+
+    #[test]
+    fn test_div_rem_fast_zero_dividend() {
+        let zero: FieldPoly<FP65537> = FieldPoly::zero_like(&fp65537(0));
+        let divisor = FieldPoly::new(vec![fp65537(1), fp65537(1)]);
+        let (q, r) = zero.div_rem_fast(&divisor);
+        assert!(q.is_zero());
+        assert!(r.is_zero());
+    }
+
+    #[test]
+    fn test_div_rem_fast_dividend_smaller_than_divisor() {
+        // deg(dividend) < deg(divisor): quotient = 0, remainder = dividend.
+        let dividend = FieldPoly::new(vec![fp65537(3), fp65537(2)]);
+        let divisor = FieldPoly::new(vec![fp65537(1), fp65537(0), fp65537(1)]); // 1 + x^2
+        let (q, r) = dividend.div_rem_fast(&divisor);
+        assert!(q.is_zero());
+        assert_eq!(r, dividend);
+    }
+
+    #[test]
+    fn test_div_rem_fast_constant_divisor() {
+        // Non-zero constant divisor: quotient = dividend · c^{-1},
+        // remainder = 0.
+        let dividend = FieldPoly::new(vec![fp65537(4), fp65537(6), fp65537(8)]);
+        let divisor = FieldPoly::constant(fp65537(2));
+        let (q, r) = dividend.div_rem_fast(&divisor);
+        // 2^{-1} mod 65537 is 32769 (since 2·32769 = 65538 ≡ 1).
+        let inv2 = fp65537(2).inv().unwrap();
+        assert_eq!(q, dividend.mul_scalar(&inv2));
+        assert!(r.is_zero());
+    }
+
+    #[test]
+    fn test_div_rem_fast_dividend_equals_divisor() {
+        // self / self == (1, 0).
+        let divisor = FieldPoly::new(vec![fp65537(3), fp65537(2), fp65537(5)]);
+        let (q, r) = divisor.div_rem_fast(&divisor);
+        assert_eq!(q, FieldPoly::one_like(&fp65537(0)));
+        assert!(r.is_zero());
+    }
+
+    #[test]
+    fn test_div_rem_fast_matches_schoolbook_small() {
+        // A small deterministic case: (x^4 + 2x^2 + 1) / (x^2 + 1) =
+        // x^2 + 1 with remainder 0.
+        let dividend = FieldPoly::new(vec![
+            fp65537(1),
+            fp65537(0),
+            fp65537(2),
+            fp65537(0),
+            fp65537(1),
+        ]);
+        let divisor = FieldPoly::new(vec![fp65537(1), fp65537(0), fp65537(1)]);
+        let (q_fast, r_fast) = dividend.div_rem_fast(&divisor);
+        let (q_school, r_school) = dividend.div_rem(&divisor);
+        assert_eq!(q_fast, q_school);
+        assert_eq!(r_fast, r_school);
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(500))]
+
+        /// Exhaustive agreement test: `div_rem_fast` must match the
+        /// schoolbook `div_rem` pair and satisfy the Euclidean identity
+        /// `dividend = quotient · divisor + remainder` with
+        /// `deg(remainder) < deg(divisor)`, for ≥ 500 random
+        /// `(dividend, divisor)` pairs over `Fp<65537>`.
+        #[test]
+        fn prop_div_rem_fast_matches_schoolbook_fp65537(
+            dividend_coeffs in prop::collection::vec(0u64..65537, 1..40),
+            divisor_coeffs in prop::collection::vec(0u64..65537, 1..20),
+            divisor_lead in 1u64..65537,
+        ) {
+            // Build normalised dividend (may be zero).
+            let dividend = FieldPoly::new(
+                dividend_coeffs.into_iter().map(fp65537).collect::<Vec<_>>(),
+            );
+            // Build a non-zero divisor by forcing a non-zero leading
+            // coefficient appended to the random middle section.
+            let mut dc: Vec<FP65537> = divisor_coeffs.into_iter().map(fp65537).collect();
+            dc.push(fp65537(divisor_lead));
+            let divisor = FieldPoly::new(dc);
+
+            let (q_fast, r_fast) = dividend.div_rem_fast(&divisor);
+            let (q_school, r_school) = dividend.div_rem(&divisor);
+
+            prop_assert_eq!(&q_fast, &q_school);
+            prop_assert_eq!(&r_fast, &r_school);
+
+            // Euclidean identity + degree bound.
+            let reconstructed = &(&q_fast * &divisor) + &r_fast;
+            prop_assert_eq!(reconstructed, dividend);
+            let db = divisor.degree().unwrap();
+            match r_fast.degree() {
+                None => {}
+                Some(d) => prop_assert!(d < db),
+            }
         }
     }
 }
