@@ -127,16 +127,20 @@
 //!
 //! # Known gaps and successor work
 //!
-//! [`SUBPRODUCT_THRESHOLD`] is currently pinned to [`usize::MAX`] so
-//! that the public [`FieldPoly::batch_evaluate`] entry point always
-//! routes through the naive Horner loop: the subproduct path repeatedly
-//! calls the schoolbook [`FieldPoly::div_rem`], which eats the asymptotic
-//! win the tree is supposed to deliver. The same substrate limits
-//! [`interpolate_fast`] to `O(n² log n)` instead of its target
-//! `O(n log² n)`. The story `bdf95060` plan schedules a follow-up task
-//! that replaces `div_rem` with an NTT-backed
-//! Newton-iteration primitive; once it lands, this constant is lowered
-//! and the fast paths activate without any further API churn.
+//! Fast polynomial division has now landed as [`FieldPoly::div_rem_fast`]
+//! (Newton iteration on the reversed-divisor series inverse) and the
+//! [`FieldPoly::div_rem_auto`] dispatcher, tuned via [`DIV_REM_THRESHOLD`]
+//! from the `field_poly_div_rem_fp65537` bench group. What is *not* yet
+//! done is wiring that substrate into the subproduct-tree path:
+//! [`SUBPRODUCT_THRESHOLD`] is still pinned to [`usize::MAX`] so the
+//! public [`FieldPoly::batch_evaluate`] entry point continues to route
+//! through the naive Horner loop, and [`interpolate_fast`] therefore
+//! still runs at `O(n² log n)` instead of its target `O(n log² n)`.
+//! The follow-up task `046f95c1` switches the subproduct reduction to
+//! `div_rem_auto`, lowers `SUBPRODUCT_THRESHOLD` to the empirical
+//! crossover point, re-benches `interpolate_fast`, and refreshes the
+//! tables below. After that lands, all three fast paths activate
+//! without any further API churn.
 //!
 //! # Scope covered here
 //!
@@ -2611,10 +2615,11 @@ pub fn mul_fast<F: TwoAdicField>(a: &FieldPoly<F>, b: &FieldPoly<F>) -> FieldPol
 /// and an NTT-backed convolution), so it only pays off once the schoolbook
 /// `O((n − m) · m)` cost exceeds the fast `O(M(n)) = O(n log n)` cost by
 /// enough to amortise the overhead. On the Zen 3 reference host the
-/// schoolbook path still wins at `n = 1024, m = 512` (1.07 ms vs 1.13 ms),
-/// and the fast path wins decisively at `n = 2048, m = 1024` (2.49 ms vs
-/// 4.25 ms) — so the threshold is pinned at `2048`, the smallest power of
-/// two above the measured crossover. See the benchmark snapshot in the
+/// schoolbook path still wins at `n = 1024, m = 512` (1.07 ms schoolbook
+/// vs 1.13 ms fast), and the fast path wins decisively at `n = 2048,
+/// m = 1024` (4.25 ms schoolbook vs 2.49 ms fast) — so the threshold is
+/// pinned at `2048`, the smallest power of two above the measured
+/// crossover. See the benchmark snapshot in the
 /// module docstring for the full table.
 ///
 /// The schoolbook path remains the only implementation for non-`TwoAdicField`

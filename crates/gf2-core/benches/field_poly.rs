@@ -19,12 +19,14 @@
 //!   Horner folds collected into a `Vec<F>`.
 //!
 //! This harness drives the tuning of `SUBPRODUCT_THRESHOLD`. On the
-//! cheap-scalar `Fp<65537>` field, naive Horner wins on every cell; the
-//! revised issue scope (see `2e7db385`, 2026-04-19) defers the
-//! asymptotic crossover to the sibling NTT task (`e0b6f940`) that
-//! replaces schoolbook `FieldPoly::div_rem` with an FFT / Newton
-//! primitive. Until that lands the tuned threshold is `usize::MAX` and
-//! the `dispatcher` arm coincides with `naive`.
+//! cheap-scalar `Fp<65537>` field, naive Horner wins on every cell
+//! measured here; the threshold is still pinned to `usize::MAX` and the
+//! `dispatcher` arm therefore coincides with the `naive` arm. Fast
+//! polynomial division landed separately as `FieldPoly::div_rem_fast`
+//! + `FieldPoly::div_rem_auto` (issue `ae0c7e1f`, `DIV_REM_THRESHOLD =
+//! 2048`); the follow-up task `046f95c1` wires the subproduct-tree
+//! reduction through `div_rem_auto`, lowers `SUBPRODUCT_THRESHOLD` to
+//! the empirical crossover, and refreshes these tables.
 //!
 //! The measured results are committed into the module docstring of
 //! [`gf2_core::field::poly`] so callers can consult them without
