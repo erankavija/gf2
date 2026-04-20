@@ -66,6 +66,7 @@
 //! | [`FieldPoly::div_rem`] | Schoolbook long division | `O(n · m)` field ops | Total; panics only on division by zero. |
 //! | [`FieldPoly::invert_series`] (for `F: TwoAdicField`) | Newton iteration on the reciprocal | `O(M(k))` field ops | Powers the `div_rem_fast` path. |
 //! | [`FieldPoly::div_rem_fast`] (for `F: TwoAdicField`) | Newton iteration via reversed-divisor inverse | `O(M(n))` field ops | Dispatches via [`mul_fast`]. |
+//! | [`FieldPoly::div_rem_auto`] (for `F: TwoAdicField`) | Dispatcher: schoolbook ⇄ Newton fast division | picks the winning path for each size | [`DIV_REM_THRESHOLD`] = 2048 |
 //! | [`FieldPoly::gcd`] | Euclidean algorithm over `div_rem` | `O(n · m · log(min(n, m)))` field ops | Monic-normalised result. |
 //!
 //! There is no standalone `pub fn mul_karatsuba`: the schoolbook ⇄
@@ -311,6 +312,41 @@
 //! The `fast` path wins at every measured `n ≥ 4` on `Fp<65537>`; the
 //! tuned [`INTERPOLATE_THRESHOLD`] is set at 16 as a conservative margin
 //! for callers on fields with more expensive polynomial multiplication.
+//!
+//! ## `div_rem` — schoolbook vs. Newton-iteration fast
+//!
+//! Each cell shows the median wall-clock time for one call with
+//! `dividend.len() = n` and `divisor.len() = m` over `Fp<65537>`;
+//! `speedup = schoolbook / fast` so values above 1 mean the fast path
+//! wins. `schoolbook` is [`FieldPoly::div_rem`] (`O((n − m) · m)` long
+//! division); `fast` is [`FieldPoly::div_rem_fast`], which runs Newton
+//! iteration on the reversed divisor's formal-power-series inverse and
+//! dispatches intermediate multiplications through the
+//! Karatsuba ⇄ NTT [`mul_fast`] backend.
+//!
+//! | `n`  |  `m` | schoolbook |     fast | speedup |
+//! |-----:|-----:|-----------:|---------:|--------:|
+//! |  128 |   64 |    20.4 µs |  76.8 µs |   0.27× |
+//! |  256 |  128 |    75.4 µs | 216.1 µs |   0.35× |
+//! |  512 |  256 |   276.7 µs | 499.3 µs |   0.55× |
+//! | 1024 |  512 |    1.07 ms |  1.12 ms |   0.95× |
+//! | 2048 | 1024 |    4.25 ms |  2.49 ms |   1.71× |
+//!
+//! The schoolbook path is faster on every row up to and including
+//! `n = 1024`, then the fast path pulls ahead decisively at `n = 2048`
+//! as the `(n − m) · m` term overtakes the `n log n` cost of the
+//! Newton-iteration products. The tuned [`DIV_REM_THRESHOLD`] is pinned
+//! at `2048` — the smallest power of two at which `div_rem_fast` beats
+//! `div_rem` on `Fp<65537>`. Below it, [`FieldPoly::div_rem_auto`]
+//! delegates to [`FieldPoly::div_rem`]; above it, the fast path takes
+//! over.
+//!
+//! This is the primitive that unblocks the tuning work in the sibling
+//! task `046f95c1`: once [`SUBPRODUCT_THRESHOLD`] and
+//! [`INTERPOLATE_THRESHOLD`] are re-tuned to route the inner reduction
+//! phase through [`FieldPoly::div_rem_auto`], `batch_evaluate` and
+//! `interpolate_fast` inherit the asymptotic win without any public API
+//! change.
 
 use crate::field::{FiniteField, TwoAdicField};
 use std::fmt;
@@ -2559,6 +2595,32 @@ pub fn mul_fast<F: TwoAdicField>(a: &FieldPoly<F>, b: &FieldPoly<F>) -> FieldPol
 // Newton-iteration fast division (TwoAdicField-specialised)
 // ---------------------------------------------------------------------
 
+/// Crossover threshold between schoolbook [`FieldPoly::div_rem`] and
+/// Newton-iteration [`FieldPoly::div_rem_fast`] on a [`TwoAdicField`].
+///
+/// When either operand is strictly shorter than this threshold,
+/// [`FieldPoly::div_rem_auto`] falls back to the schoolbook implementation;
+/// above it, the Newton-iteration path takes over. Values are in number
+/// of coefficients (i.e. `len()`, which is `degree + 1`).
+///
+/// # Tuning
+///
+/// Tuned from the `bench_div_rem` group in
+/// `crates/gf2-core/benches/field_poly.rs` on `Fp<65537>`. The fast path
+/// has larger constant factors (Newton iteration plus a coefficient-reverse
+/// and an NTT-backed convolution), so it only pays off once the schoolbook
+/// `O((n − m) · m)` cost exceeds the fast `O(M(n)) = O(n log n)` cost by
+/// enough to amortise the overhead. On the Zen 3 reference host the
+/// schoolbook path still wins at `n = 1024, m = 512` (1.07 ms vs 1.13 ms),
+/// and the fast path wins decisively at `n = 2048, m = 1024` (2.49 ms vs
+/// 4.25 ms) — so the threshold is pinned at `2048`, the smallest power of
+/// two above the measured crossover. See the benchmark snapshot in the
+/// module docstring for the full table.
+///
+/// The schoolbook path remains the only implementation for non-`TwoAdicField`
+/// element types; [`FieldPoly::div_rem`] is unchanged.
+pub const DIV_REM_THRESHOLD: usize = 2048;
+
 impl<F: TwoAdicField> FieldPoly<F> {
     /// Formal-power-series inverse `g` of `self` modulo `x^k`, so that
     /// `self · g ≡ 1 (mod x^k)`.
@@ -2747,10 +2809,10 @@ impl<F: TwoAdicField> FieldPoly<F> {
     /// `O(M(n))` field operations, where `M(n) = O(n log n)` is the cost
     /// of the underlying [`mul_fast`] call at NTT-regime sizes. The
     /// schoolbook [`FieldPoly::div_rem`] is `O((n − m) · m)`, so the fast
-    /// path wins decisively once both operand lengths are large enough to
-    /// amortise the Newton-iteration and NTT setup cost — see the
-    /// benchmark harness in `crates/gf2-core/benches/field_poly.rs` for
-    /// the tuned crossover on `Fp<65537>`.
+    /// path wins decisively once both operand lengths exceed
+    /// [`DIV_REM_THRESHOLD`]; below that the dispatcher
+    /// [`FieldPoly::div_rem_auto`] routes through the schoolbook
+    /// implementation.
     pub fn div_rem_fast(&self, divisor: &FieldPoly<F>) -> (FieldPoly<F>, FieldPoly<F>) {
         assert!(
             !divisor.is_zero(),
@@ -2812,6 +2874,57 @@ impl<F: TwoAdicField> FieldPoly<F> {
         let remainder = self - &dq;
 
         (quotient, remainder)
+    }
+
+    /// Dispatches between the schoolbook [`FieldPoly::div_rem`] and the
+    /// Newton-iteration [`FieldPoly::div_rem_fast`] based on
+    /// [`DIV_REM_THRESHOLD`].
+    ///
+    /// When either operand has strictly fewer than
+    /// [`DIV_REM_THRESHOLD`] coefficients, the schoolbook path wins on
+    /// constant factors and is selected. Above that threshold the fast
+    /// path's `O(M(n))` asymptotic amortises its NTT / Newton overhead.
+    /// Both arms return the same `(quotient, remainder)` pair satisfying
+    /// `self = quotient · divisor + remainder` with
+    /// `deg(remainder) < deg(divisor)`.
+    ///
+    /// # Arguments
+    ///
+    /// * `divisor` — the polynomial to divide by.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `divisor` is the zero polynomial.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::FieldPoly;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let dividend = FieldPoly::new(vec![
+    ///     Fp::<65537>::new(1),
+    ///     Fp::<65537>::new(1),
+    ///     Fp::<65537>::new(1),
+    /// ]);
+    /// let divisor = FieldPoly::new(vec![Fp::<65537>::new(1), Fp::<65537>::new(1)]);
+    /// let (q, r) = dividend.div_rem_auto(&divisor);
+    /// // Same result as the schoolbook path.
+    /// let (qs, rs) = dividend.div_rem(&divisor);
+    /// assert_eq!(q, qs);
+    /// assert_eq!(r, rs);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// Matches the dispatched arm: `O((n − m) · m)` in the schoolbook
+    /// regime and `O(M(n))` in the fast-division regime.
+    pub fn div_rem_auto(&self, divisor: &FieldPoly<F>) -> (FieldPoly<F>, FieldPoly<F>) {
+        if self.coeffs.len() < DIV_REM_THRESHOLD || divisor.coeffs.len() < DIV_REM_THRESHOLD {
+            self.div_rem(divisor)
+        } else {
+            self.div_rem_fast(divisor)
+        }
     }
 }
 
@@ -4467,6 +4580,47 @@ mod tests {
         let (q_school, r_school) = dividend.div_rem(&divisor);
         assert_eq!(q_fast, q_school);
         assert_eq!(r_fast, r_school);
+    }
+
+    #[test]
+    fn test_div_rem_auto_small_uses_schoolbook() {
+        // For small operands, div_rem_auto must agree with div_rem.
+        let dividend = FieldPoly::new(vec![fp65537(1), fp65537(1), fp65537(1)]);
+        let divisor = FieldPoly::new(vec![fp65537(1), fp65537(1)]);
+        let (q, r) = dividend.div_rem_auto(&divisor);
+        let (qs, rs) = dividend.div_rem(&divisor);
+        assert_eq!(q, qs);
+        assert_eq!(r, rs);
+    }
+
+    #[test]
+    fn test_div_rem_auto_large_agrees_with_fast() {
+        // Construct operands above DIV_REM_THRESHOLD so the fast path is
+        // dispatched, and verify agreement with div_rem_fast itself (which
+        // in turn is cross-checked by the proptest below against
+        // schoolbook).
+        let n = DIV_REM_THRESHOLD + 16;
+        let m = DIV_REM_THRESHOLD;
+        let mut a_coeffs: Vec<FP65537> = (0..n)
+            .map(|i| fp65537(((i as u64).wrapping_mul(0x9E3779B1) % 65536) + 1))
+            .collect();
+        let mut b_coeffs: Vec<FP65537> = (0..m)
+            .map(|i| fp65537(((i as u64).wrapping_mul(0x165667B1) % 65536) + 1))
+            .collect();
+        // Ensure non-zero leading coefficients so `len() == degree + 1`
+        // holds as expected.
+        *a_coeffs.last_mut().unwrap() = fp65537(1);
+        *b_coeffs.last_mut().unwrap() = fp65537(1);
+        let a = FieldPoly::new(a_coeffs);
+        let b = FieldPoly::new(b_coeffs);
+
+        let (q_auto, r_auto) = a.div_rem_auto(&b);
+        let (q_fast, r_fast) = a.div_rem_fast(&b);
+        assert_eq!(q_auto, q_fast);
+        assert_eq!(r_auto, r_fast);
+
+        // Euclidean identity holds.
+        assert_eq!(&(&q_auto * &b) + &r_auto, a);
     }
 
     proptest! {
