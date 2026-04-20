@@ -2,7 +2,7 @@
   "id": "ae0c7e1f-9e4a-41ac-b032-ad2fd81b55a1",
   "title": "Fast FieldPoly div_rem via Newton iteration on inverse power series",
   "description": "Add `FieldPoly::div_rem_fast` for `F: TwoAdicField` — polynomial division in `O(M(n))` via Newton iteration on the reversed divisor's formal power series inverse. This is the prerequisite primitive for dropping `SUBPRODUCT_THRESHOLD` from `usize::MAX` and realising the `O(n log² n)` asymptotic of `interpolate_fast` and `batch_evaluate_subproduct`.\n\n## Background\n\n`FieldPoly::div_rem` at `crates/gf2-core/src/field/poly.rs:1364` is schoolbook long division with `O((n - m) · m)` complexity. `FieldPoly::mul_ntt` provides `O(n log n)` multiplication over `TwoAdicField`. Together they enable Newton-iteration polynomial inverse, which gives `O(n log n)` division.\n\n`SUBPRODUCT_THRESHOLD = usize::MAX` at `poly.rs:1776` was set in session 3 (issue `2e7db385`) precisely because the subproduct-tree reduction phase bottlenecks on schoolbook `div_rem`. This task unblocks the asymptotic win.\n\n## Scope\n\n### 1. `FieldPoly::invert_series`\n\n```rust\nimpl<F: TwoAdicField> FieldPoly<F> {\n    /// Formal power series inverse `g` of `self` modulo `x^k`:\n    /// `self · g ≡ 1 (mod x^k)`. Requires `self.coeffs[0] != 0`.\n    pub fn invert_series(&self, k: usize) -> FieldPoly<F>;\n}\n```\n\nNewton iteration: `g_{i+1} = g_i · (2 - self · g_i) mod x^{2 · prec_i}`, doubling precision each step. Uses `mul_fast` (which dispatches Karatsuba ⇄ NTT) internally.\n\n### 2. `FieldPoly::div_rem_fast`\n\n```rust\nimpl<F: TwoAdicField> FieldPoly<F> {\n    /// `O(M(n))` polynomial division via Newton iteration on the\n    /// reversed divisor's series inverse. Returns (quotient, remainder)\n    /// such that `self = divisor · quotient + remainder` and\n    /// `remainder.degree() < divisor.degree()`.\n    pub fn div_rem_fast(&self, divisor: &FieldPoly<F>) -> (FieldPoly<F>, FieldPoly<F>);\n}\n```\n\nStandard algorithm:\n1. Let `n = dividend.degree()`, `m = divisor.degree()`, `k = n − m`.\n2. Compute `rev_divisor.invert_series(k + 1)`.\n3. Quotient = reverse of `(rev_dividend · rev_inv).truncate(k + 1)`.\n4. Remainder = `dividend − divisor · quotient`.\n\n### 3. `div_rem_auto` dispatcher\n\nNew `DIV_REM_THRESHOLD: usize` constant, tuned empirically (plausible range 64–256). Add:\n\n```rust\nimpl<F: TwoAdicField> FieldPoly<F> {\n    /// Dispatches to schoolbook `div_rem` below the threshold, fast\n    /// `div_rem_fast` above. Matches the `mul` / `mul_fast` dispatcher\n    /// pattern.\n    pub fn div_rem_auto(&self, divisor: &FieldPoly<F>) -> (FieldPoly<F>, FieldPoly<F>);\n}\n```\n\nExisting `div_rem` stays unchanged (it's the only path for non-TwoAdicField).\n\n### 4. Tests\n\n- Doctest on `invert_series` and `div_rem_fast`.\n- Proptest: `div_rem_fast` vs schoolbook `div_rem` agreement on ≥ 500 random inputs over `Fp<65537>`.\n- Edge cases: dividend shorter than divisor (quotient = 0, remainder = dividend); constant divisor; dividend == divisor (quotient = 1, remainder = 0).\n\n### 5. Bench\n\nAdd `div_rem` group to `crates/gf2-core/benches/field_poly.rs`: schoolbook vs fast at degree pairs `(n=128, m=64)`, `(n=512, m=256)`, `(n=1024, m=512)`. Record tuned `DIV_REM_THRESHOLD` value + crossover table in the `poly.rs` module docstring.\n\n## Out of scope\n\nDo NOT touch `SUBPRODUCT_THRESHOLD` or `INTERPOLATE_THRESHOLD` values — that is the next task's scope.\n\n## Success criteria\n\n- `cargo fmt --all` clean\n- `cargo clippy --workspace --all-targets --all-features --release -- -D warnings` clean\n- `cargo test --workspace --all-features --release` passes, release test execution ≤ 60 s (CLAUDE.md rule)\n- `invert_series` and `div_rem_fast` documented with complexity\n- `div_rem_auto` threshold tuned from bench data and documented\n\n## Dependencies\n\n- `e0b6f940` (NTT mul) — done\n- `70972f06` (FieldPoly SSOT core) — done\n- `a7c81834` (batch_mul infrastructure) — done\n- `224a7d9e` (module docstring / bench scaffold) — done",
-  "state": "in_progress",
+  "state": "done",
   "priority": "low",
   "assignee": "agent:claude",
   "dependencies": [],
@@ -12,20 +12,20 @@
     "cargo-ci"
   ],
   "gates_status": {
-    "doc-review": {
+    "code-review": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-20T18:36:56.662445388Z"
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-20T19:29:48.245660825Z"
     },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-04-20T18:53:19.616825064Z"
+      "updated_at": "2026-04-20T19:27:40.812580227Z"
     },
-    "code-review": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-20T18:36:56.742453951Z"
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-20T18:36:56.662445388Z"
     }
   },
   "context": {},
@@ -37,5 +37,5 @@
     "story:bdf95060"
   ],
   "created_at": "2026-04-20T17:26:16.970534833+00:00",
-  "updated_at": "2026-04-20T18:53:58.869012714+00:00"
+  "updated_at": "2026-04-20T19:36:14.236962878+00:00"
 }
