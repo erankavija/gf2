@@ -17,17 +17,17 @@
     "doc-review": {
       "status": "passed",
       "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-20T16:02:19.820892414Z"
+      "updated_at": "2026-04-20T16:26:36.938631698Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-20T16:24:23.955484091Z"
     },
     "code-review": {
       "status": "failed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-20T16:02:01.638535822Z"
-    },
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-20T16:00:59.897222307Z"
     }
   },
   "context": {},
@@ -40,5 +40,5 @@
     "story:6fb4abad"
   ],
   "created_at": "2026-04-18T22:40:03.067585229+00:00",
-  "updated_at": "2026-04-20T16:13:01.252813599+00:00"
+  "updated_at": "2026-04-20T16:26:36.938635618+00:00"
 }
