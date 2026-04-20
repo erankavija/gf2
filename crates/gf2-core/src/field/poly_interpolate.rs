@@ -11,13 +11,17 @@
 //! | [`interpolate`] | Lagrange barycentric | `O(n²)` field ops | `O(n²)` |
 //! | [`interpolate_fast`] | Subproduct-tree | `O(n² log n)` field ops¹ | `O(n log² n)` |
 //!
-//! ¹ `interpolate_fast` achieves its target `O(n log² n)` once a fast
-//! polynomial-division primitive lands (see `e0b6f940`, which adds an NTT
-//! entry point, and `2e7db385`, which gates `SUBPRODUCT_THRESHOLD` on the
-//! availability of fast `div_rem`). With today's schoolbook `div_rem` the
-//! fast path still beats naive at every measured `n ≥ 8` on `Fp<65537>`
-//! (see the benchmark table below), but the absolute asymptotic stays at
-//! `O(n² log n)` until that follow-up work.
+//! ¹ `interpolate_fast` achieves its target `O(n log² n)` once the
+//! subproduct-tree reductions route through [`crate::field::poly::div_rem_auto`]
+//! and [`crate::field::poly::SUBPRODUCT_THRESHOLD`] is dropped below
+//! `usize::MAX`. The underlying fast polynomial-division primitive
+//! itself (`div_rem_fast` / `div_rem_auto`) has landed (issue
+//! `ae0c7e1f`, `DIV_REM_THRESHOLD = 2048` on `Fp<65537>`); the subproduct-tree
+//! integration is tracked by follow-up task `046f95c1`. With today's
+//! schoolbook-gated subproduct path the fast Lagrange variant still
+//! beats the quadratic one at every measured `n ≥ 8` on `Fp<65537>`
+//! (see the benchmark table below), but the absolute asymptotic stays
+//! at `O(n² log n)` until that follow-up work lands.
 //!
 //! [`interpolate_auto`] is the recommended entry point: it dispatches to
 //! [`interpolate_fast`] for `n ≥ INTERPOLATE_THRESHOLD` (currently 16) and to

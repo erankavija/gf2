@@ -89,7 +89,9 @@ fn bench_batch_evaluate(c: &mut Criterion) {
             // SUBPRODUCT_THRESHOLD is usize::MAX the dispatcher always
             // delegates to the naive Horner path, so these numbers
             // coincide with the "naive" arm today; they will diverge
-            // once the follow-up fast-div_rem task lowers the threshold.
+            // once the follow-up subproduct-tree integration task
+            // (046f95c1) routes the tree's reductions through
+            // div_rem_auto and lowers the threshold.
             group.bench_with_input(
                 BenchmarkId::new("dispatcher", &id_fmt),
                 &(&poly, &points),
