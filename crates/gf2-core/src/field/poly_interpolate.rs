@@ -11,10 +11,10 @@
 //! | [`interpolate`] | Lagrange barycentric O(n²) | `O(n²)` field ops |
 //! | [`interpolate_fast`] | Subproduct-tree O(n log² n) | `O(n log² n)` field ops |
 //!
-//! The two entry points are currently chosen explicitly by the caller.
-//! Benchmarks (table below) show the fast path wins at every measured `n ≥ 16`
-//! on `Fp<65537>` with schoolbook `div_rem`, so a future auto-dispatch wrapper
-//! would always prefer `interpolate_fast` for non-trivial inputs.
+//! [`interpolate_auto`] is the recommended entry point: it dispatches to
+//! [`interpolate_fast`] for `n ≥ INTERPOLATE_THRESHOLD` (currently 16) and to
+//! [`interpolate`] below that. [`interpolate`] and [`interpolate_fast`] remain
+//! available for callers who want a specific variant regardless of `n`.
 //!
 //! # Dependency on `batch_inverse`
 //!
@@ -32,33 +32,39 @@
 //! repo's reference Zen 3 host. Each cell is the median total wall-clock time
 //! for one call on `n` random distinct points.
 //!
-//! | `n`  | naive O(n²) | fast O(n log² n) | fast / naive |
+//! | `n`  | naive O(n²) | fast O(n² log n) | fast / naive |
 //! |-----:|------------:|-----------------:|-------------:|
-//! |   16 |     19.7 µs |          12.9 µs |        0.65× |
-//! |   32 |     77.8 µs |          36.3 µs |        0.47× |
-//! |   64 |    301 µs   |         110 µs   |        0.36× |
-//! |  128 |   1.18 ms   |         333 µs   |        0.28× |
-//! |  256 |   4.68 ms   |        1.03 ms   |        0.22× |
-//! |  512 |   18.5 ms   |        3.49 ms   |        0.19× |
-//! | 1024 |   73.5 ms   |        10.9 ms   |        0.15× |
-//! | 2048 |   294 ms    |        36.8 ms   |        0.13× |
+//! |    4 |      1.65 µs |         1.92 µs |        1.16× |
+//! |    8 |      5.53 µs |         4.84 µs |        0.88× |
+//! |   16 |     19.8 µs |          12.5 µs |        0.63× |
+//! |   32 |     75.9 µs |          35.8 µs |        0.47× |
+//! |   64 |    295 µs   |         107 µs   |        0.36× |
+//! |  128 |   1.16 ms   |         324 µs   |        0.28× |
+//! |  256 |   4.60 ms   |        1.01 ms   |        0.22× |
+//! |  512 |   18.2 ms   |        3.23 ms   |        0.18× |
+//! | 1024 |   72.4 ms   |        11.0 ms   |        0.15× |
+//! | 2048 |   285 ms    |        36.4 ms   |        0.13× |
 //!
-//! **The fast path wins at all measured sizes.** The `naive` implementation
-//! in this module computes M(x) via `from_roots` once and then divides out
-//! each linear factor `(x − x_i)` individually — `n` calls to `div_rem` on a
-//! degree-n polynomial. Although this is nominally `O(n²)`, the constant
-//! factor (each `div_rem` on a monic degree-n poly takes `O(n)` field mults)
-//! makes it slower than the `fast` path's subproduct-tree batch evaluation +
-//! one-pass upward merge even at small `n` on this machine. Callers on
-//! fields with very expensive Karatsuba multiplications may see the crossover
-//! shift; dispatch explicitly by calling [`interpolate`] or
-//! [`interpolate_fast`] as appropriate.
+//! **`fast` wins from `n = 8` onward; naive wins only at `n = 4`.**
+//! `INTERPOLATE_THRESHOLD = 16` is a conservatively measured crossover
+//! boundary: fast already wins at `n = 8` (0.88×) and clearly dominates
+//! at `n = 16` (0.63×). Below that (n = 4) the subproduct-tree overhead
+//! makes naive slightly faster (1.16×). The threshold is kept at 16 to
+//! stay well within the crossover point and avoid marginal-case variance.
+//! The `naive` implementation computes M(x) via `from_roots` once and
+//! then divides out each linear factor `(x − x_i)` individually — `n`
+//! calls to `div_rem` on a degree-n polynomial. Although this is nominally
+//! `O(n²)`, the constant factor makes it slower than the `fast` path's
+//! subproduct-tree batch evaluation + one-pass upward merge at `n ≥ 8`.
+//! Callers on fields with very expensive Karatsuba multiplications may see
+//! the crossover shift; call [`interpolate`] or [`interpolate_fast`]
+//! directly when needed, or use [`interpolate_auto`] for the tuned default.
 //!
 //! Regenerate this table with
 //! `cargo bench -p gf2-core --bench field_poly -- --quick interpolate`.
 
 use crate::field::batch_ops::batch_inverse;
-use crate::field::poly::build_subproduct_tree;
+use crate::field::poly::{batch_evaluate_subproduct, build_subproduct_tree};
 use crate::field::{FieldPoly, FiniteField};
 use std::fmt;
 
@@ -414,9 +420,11 @@ pub fn interpolate<F: FiniteField>(points: &[(F, F)]) -> Result<FieldPoly<F>, In
 ///
 /// 1. Build `M(x) = Π_i (x − x_i)` via [`FieldPoly::from_roots`].
 /// 2. Compute `M'(x)` (formal derivative) via [`formal_derivative`].
-/// 3. Evaluate `M'` at all `x_i` via the public
-///    [`FieldPoly::batch_evaluate`] entry point. By the product rule,
-///    `M'(x_i) = Π_{j ≠ i} (x_i − x_j)`.
+/// 3. Evaluate `M'` at all `x_i` via
+///    [`batch_evaluate_subproduct`][crate::field::poly::batch_evaluate_subproduct],
+///    bypassing the [`SUBPRODUCT_THRESHOLD`] gate so the tree path is
+///    always exercised (this function is the explicitly fast variant).
+///    By the product rule, `M'(x_i) = Π_{j ≠ i} (x_i − x_j)`.
 /// 4. Compute barycentric weights `w_i = y_i / M'(x_i)` using
 ///    [`crate::field::batch_ops::batch_inverse`].
 /// 5. Upward merge: starting from leaf vector `[w_0, …, w_{n-1}]`,
@@ -464,14 +472,13 @@ pub fn interpolate<F: FiniteField>(points: &[(F, F)]) -> Result<FieldPoly<F>, In
 ///
 /// # Complexity
 ///
-/// `O(M(n) log n)` field operations where `M(n)` is the cost of multiplying
-/// two degree-`n` polynomials. With schoolbook multiplication (`M(n) = O(n²)`)
-/// this is `O(n² log n)`; with NTT (`M(n) = O(n log n)`) this becomes
-/// the optimal `O(n log² n)`. In practice this path **already outperforms
-/// the `O(n²)` [`interpolate`] at every measured `n ≥ 16` on `Fp<65537>`
-/// with schoolbook `div_rem`** — see the benchmark table in the module
-/// docstring. Callers with very cheap `Mul` / expensive `div_rem` may see
-/// the crossover move upward; dispatch explicitly.
+/// With the current schoolbook-backed [`FieldPoly`] `Mul` and `div_rem`
+/// this path costs `O(n² log n)` field operations; the `O(n log² n)`
+/// optimum materialises once `e0b6f940` / `2e7db385` lower
+/// `SUBPRODUCT_THRESHOLD` via NTT-backed `div_rem`. Empirically this
+/// path already beats the `O(n²)` [`interpolate`] at every measured
+/// `n ≥ 16` on `Fp<65537>` — see the benchmark table in the module
+/// docstring.
 pub fn interpolate_fast<F: FiniteField>(
     points: &[(F, F)],
 ) -> Result<FieldPoly<F>, InterpolationError> {
@@ -496,9 +503,13 @@ pub fn interpolate_fast<F: FiniteField>(
     let m_poly = FieldPoly::from_roots(&xs);
     let m_deriv = formal_derivative(&m_poly);
 
-    // Step 3: Evaluate M'(x) at all x_i.
+    // Step 3: Evaluate M'(x) at all x_i using the subproduct-tree path
+    // directly (bypassing the SUBPRODUCT_THRESHOLD gate in batch_evaluate).
+    // This is intentional: interpolate_fast is the explicitly tree-based
+    // variant and is entitled to use the tree at every n. Callers who want
+    // the threshold-gated default should use interpolate_auto instead.
     // By the product rule: M'(x_i) = Π_{j≠i}(x_i − x_j).
-    let m_prime_vals: Vec<F> = m_deriv.batch_evaluate(&xs);
+    let m_prime_vals: Vec<F> = batch_evaluate_subproduct(&m_deriv, &xs);
 
     // Step 4: Compute weights w_i = y_i / M'(x_i).
     // M'(x_i) is non-zero for distinct x_i (it equals the product of all
