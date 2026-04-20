@@ -2,7 +2,7 @@
   "id": "afac2262-07e9-4be7-a8b4-a83c0e19748a",
   "title": "VPCLMULQDQ SIMD kernel for GF(2^256) (opt-in)",
   "description": "Performance task — adds a VPCLMULQDQ SIMD kernel for `Gf2mWide<4>` multiplication. Opt-in per the \"within 2× of handwritten SIMD\" criterion of the 6fb4abad story.\n\n## Scope\n\n- New `crates/gf2-kernels-simd/src/gf2m_wide.rs` with `unsafe` VPCLMULQDQ-based schoolbook for `N=4`. Plus scalar PCLMULQDQ fallback for hosts without VPCLMULQDQ.\n- `pub re-export` in `crates/gf2-kernels-simd/src/lib.rs`.\n- `pub type ClmulWide256Fn = unsafe fn(&[u64; 4], &[u64; 4], &mut [u64; 8])` with runtime detection via `detect()`. AVX512VL+VPCLMULQDQ path first (reference: existing `clmul_batch_vpclmul` at `crates/gf2-kernels-simd/src/x86/clmul.rs:130`).\n- Dispatch hook in `crates/gf2-core/src/gf2m/wide.rs`: feature-gated fast-path in the `Mul` impl using the `OnceLock`+`detect()` pattern from `crates/gf2-core/src/lib.rs`.\n- All `unsafe` stays in `gf2-kernels-simd`; `gf2-core` remains `#![deny(unsafe_code)]`.\n- Criterion bench `crates/gf2-core/benches/gf2m_wide_mul.rs` comparing scalar vs SIMD.\n\n## Success criteria\n\n- Agreement test: scalar and SIMD paths match on 100 random inputs (when SIMD detected; `#[ignore]` otherwise).\n- Benchmark recorded in PR body. Scalar within 2× of SIMD OR this task lands the SIMD path.\n- `#[detect()]` returns `None` on hosts without PCLMULQDQ; scalar path used unconditionally.\n- `cargo fmt`/`cargo clippy -- -D warnings`/`cargo test --release` clean.\n\n## Depends on\n\nTask 4 (correct scalar baseline), Task 5 (axiom coverage).\n\n## Breakdown reference\n\nSee `dev/plans/6fb4abad_breakdown.md` Task 6.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "low",
   "assignee": "agent:claude",
   "dependencies": [
@@ -22,12 +22,12 @@
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-04-20T16:24:23.955484091Z"
+      "updated_at": "2026-04-20T17:07:44.345040649Z"
     },
     "code-review": {
-      "status": "failed",
+      "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-04-20T16:02:01.638535822Z"
+      "updated_at": "2026-04-20T17:08:28.791834245Z"
     }
   },
   "context": {},
@@ -40,5 +40,5 @@
     "story:6fb4abad"
   ],
   "created_at": "2026-04-18T22:40:03.067585229+00:00",
-  "updated_at": "2026-04-20T16:26:36.938635618+00:00"
+  "updated_at": "2026-04-20T17:14:29.396793865+00:00"
 }

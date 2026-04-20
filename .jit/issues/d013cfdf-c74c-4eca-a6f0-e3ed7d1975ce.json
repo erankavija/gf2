@@ -2,7 +2,7 @@
   "id": "d013cfdf-c74c-4eca-a6f0-e3ed7d1975ce",
   "title": "Karatsuba for Gf2mWide N=4 (conditional on bench)",
   "description": "**Conditional** task — one-level Karatsuba for `N=4` only if Task 6 benchmarks show schoolbook is a bottleneck.\n\n## Entry condition\n\nIf Task 6's bench shows the scalar schoolbook is already within 2× of handwritten SIMD, **close this task without implementation**. Otherwise:\n\n## Scope\n\n- One-level Karatsuba for `N=4` (3 half-size products instead of 4) in `crates/gf2-core/src/gf2m/wide.rs`. Pure safe Rust over `[u64; 2]` halves.\n- Proptest bit-exact equality with `clmul_wide::<4>` on ≥10 000 cases.\n- `const fn` compile-time selection between schoolbook and Karatsuba per `N`; no runtime switching.\n- Bench delta vs Task 6 baseline recorded in PR body.\n\n## Depends on\n\nTask 6 (bench data).\n\n## Breakdown reference\n\nSee `dev/plans/6fb4abad_breakdown.md` Task 7.",
-  "state": "backlog",
+  "state": "rejected",
   "priority": "low",
   "assignee": null,
   "dependencies": [
@@ -20,8 +20,9 @@
     "type:task",
     "component:gf2-core",
     "epic:e095a100",
-    "story:6fb4abad"
+    "story:6fb4abad",
+    "resolution:scalar-path-rarely-hit"
   ],
   "created_at": "2026-04-18T22:40:09.403716142+00:00",
-  "updated_at": "2026-04-18T22:40:23.443209678+00:00"
+  "updated_at": "2026-04-20T17:24:10.808889628+00:00"
 }
