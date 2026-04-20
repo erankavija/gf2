@@ -2427,3 +2427,11 @@
 {"type":"issue_completed","id":"096d8efa-e963-456a-8e13-a85dfcb50e9a","issue_id":"afac2262-07e9-4be7-a8b4-a83c0e19748a","timestamp":"2026-04-20T17:14:29.396774865Z"}
 {"type":"issue_state_changed","id":"aa553579-94ae-45eb-b03b-186fe8f159e6","issue_id":"d013cfdf-c74c-4eca-a6f0-e3ed7d1975ce","timestamp":"2026-04-20T17:14:29.573589955Z","from":"backlog","to":"ready"}
 {"type":"issue_state_changed","id":"0a83a639-9b16-498c-8791-84829a8ed0d2","issue_id":"d013cfdf-c74c-4eca-a6f0-e3ed7d1975ce","timestamp":"2026-04-20T17:24:03.004359395Z","from":"ready","to":"rejected"}
+{"type":"issue_state_changed","id":"f10b80f6-aed2-42a6-95b5-acd3bc772f77","issue_id":"6fb4abad-8dd5-4c67-840b-6cb96c2fe7e7","timestamp":"2026-04-20T17:24:59.146533898Z","from":"backlog","to":"in_progress"}
+{"type":"gate_passed","id":"a72ac039-7c36-41af-8a61-8c5a24ece3bd","issue_id":"6fb4abad-8dd5-4c67-840b-6cb96c2fe7e7","timestamp":"2026-04-20T17:25:39.045706153Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"8149fd91-c806-4a44-8197-c5e0d919f873","issue_id":"6fb4abad-8dd5-4c67-840b-6cb96c2fe7e7","timestamp":"2026-04-20T17:25:39.059875747Z","gate_key":"doc-review","updated_by":"agent:project-lead"}
+{"type":"issue_created","id":"f822d46f-de90-4c61-9134-8f4e87d0291b","issue_id":"ae0c7e1f-9e4a-41ac-b032-ad2fd81b55a1","timestamp":"2026-04-20T17:26:16.970806713Z","title":"Fast FieldPoly div_rem via Newton iteration on inverse power series","priority":"low"}
+{"type":"issue_created","id":"c5da71f9-9ac7-4fec-82f6-8d33d5801e0c","issue_id":"046f95c1-1245-4021-b5ea-9fa0ae4c53bb","timestamp":"2026-04-20T17:26:47.475971561Z","title":"Lagrange fast-path re-enablement — drop SUBPRODUCT_THRESHOLD via div_rem_auto","priority":"low"}
+{"type":"issue_state_changed","id":"c4bca393-abbc-40d1-b847-071e01ecbe16","issue_id":"046f95c1-1245-4021-b5ea-9fa0ae4c53bb","timestamp":"2026-04-20T17:26:54.117853691Z","from":"ready","to":"backlog"}
+{"type":"issue_state_changed","id":"791dc560-2c4a-40ad-971c-63651c2ad613","issue_id":"ae0c7e1f-9e4a-41ac-b032-ad2fd81b55a1","timestamp":"2026-04-20T17:26:55.162596580Z","from":"ready","to":"in_progress"}
+{"type":"issue_claimed","id":"3cbb3ac7-c3dc-4320-a229-f7a3b3143f3b","issue_id":"ae0c7e1f-9e4a-41ac-b032-ad2fd81b55a1","timestamp":"2026-04-20T17:26:55.165432391Z","assignee":"agent:claude"}
