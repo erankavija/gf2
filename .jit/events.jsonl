@@ -2481,3 +2481,11 @@
 {"type":"issue_state_changed","id":"5346eaa1-ff7c-417a-861f-5d88c698ecb4","issue_id":"046f95c1-1245-4021-b5ea-9fa0ae4c53bb","timestamp":"2026-04-20T20:19:58.366979088Z","from":"in_progress","to":"ready"}
 {"type":"issue_state_changed","id":"2aaf9bd9-6847-468a-a80f-acdfd65c8f2f","issue_id":"046f95c1-1245-4021-b5ea-9fa0ae4c53bb","timestamp":"2026-04-20T20:19:58.385375913Z","from":"ready","to":"in_progress"}
 {"type":"issue_claimed","id":"d66cbeae-9142-4618-afff-0b877184525b","issue_id":"046f95c1-1245-4021-b5ea-9fa0ae4c53bb","timestamp":"2026-04-20T20:19:58.385538433Z","assignee":"agent:claude"}
+{"type":"gate_passed","id":"fc66a4e2-91b5-4582-b439-f5f27ac65611","issue_id":"046f95c1-1245-4021-b5ea-9fa0ae4c53bb","timestamp":"2026-04-20T20:53:40.641142725Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"8355bcb7-34f0-4e22-8713-f1f62963935c","issue_id":"046f95c1-1245-4021-b5ea-9fa0ae4c53bb","timestamp":"2026-04-20T21:03:39.509471932Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"f67d0ac6-121c-4cbe-8417-4a1e1d726e39","issue_id":"046f95c1-1245-4021-b5ea-9fa0ae4c53bb","timestamp":"2026-04-20T21:11:22.055175828Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"471de609-bae8-4f6b-91cb-66e0cb6e24fc","issue_id":"046f95c1-1245-4021-b5ea-9fa0ae4c53bb","timestamp":"2026-04-20T21:16:51.770567500Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"issue_state_changed","id":"03044636-302c-421d-942b-1428d9ca61ba","issue_id":"046f95c1-1245-4021-b5ea-9fa0ae4c53bb","timestamp":"2026-04-20T21:17:04.556229678Z","from":"in_progress","to":"done"}
+{"type":"issue_completed","id":"09dca8f5-06d3-4bc3-919b-4685aa16b729","issue_id":"046f95c1-1245-4021-b5ea-9fa0ae4c53bb","timestamp":"2026-04-20T21:17:04.556263848Z"}
+{"type":"gate_passed","id":"8a51a3d7-0068-47c9-9cec-8abccec18ba9","issue_id":"bdf95060-2d01-49fa-bb10-ae13da01bf14","timestamp":"2026-04-20T21:17:51.605211709Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"219ba1cc-5099-4e41-a50f-79e3f0977a04","issue_id":"bdf95060-2d01-49fa-bb10-ae13da01bf14","timestamp":"2026-04-20T21:17:51.618792533Z","gate_key":"doc-review","updated_by":"agent:project-lead"}
