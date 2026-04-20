@@ -11,7 +11,23 @@
     "doc-review",
     "cargo-ci"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-20T18:36:56.662445388Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-20T18:53:19.616825064Z"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-20T18:36:56.742453951Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -21,5 +37,5 @@
     "story:bdf95060"
   ],
   "created_at": "2026-04-20T17:26:16.970534833+00:00",
-  "updated_at": "2026-04-20T18:08:44.480436511+00:00"
+  "updated_at": "2026-04-20T18:53:58.869012714+00:00"
 }
