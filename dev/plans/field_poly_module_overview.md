@@ -119,11 +119,16 @@ complexity-reference table and the most recent `cargo bench
 ## Known gaps and future work
 
 - **`SUBPRODUCT_THRESHOLD = usize::MAX`.** The asymptotic benefit of the
-  subproduct-tree `batch_evaluate` — and therefore the full `O(n log² n)`
-  target for `interpolate_fast` — is unrealised until a fast `div_rem`
-  primitive lands alongside the existing NTT. The tree currently depends
-  on `FieldPoly::div_rem` for the reduction phase, which is schoolbook
-  `O(n · m)` and eats the gain. The follow-up task to fix this is
+  subproduct-tree path (`batch_evaluate_subproduct`) — and therefore the
+  full `O(n log² n)` target for `interpolate_fast` — is unrealised until
+  a fast `div_rem` primitive lands alongside the existing NTT. The tree
+  currently depends on `FieldPoly::div_rem` for the reduction phase,
+  which is schoolbook `O(n · m)` and eats the gain. While the threshold
+  stays at `usize::MAX`, every call through the public
+  `FieldPoly::batch_evaluate` dispatcher routes to the naive per-point
+  Horner path, so the bench snapshot in `poly.rs` compares the internal
+  fast-path helper (`batch_evaluate_subproduct`) against naive Horner
+  rather than the dispatcher itself. The follow-up task to fix this is
   tracked in the `bdf95060` story plan and will replace `div_rem` with an
   NTT-backed Newton-iteration inverse; when it lands, this constant is
   lowered to the tuned crossover point and both fast paths activate
