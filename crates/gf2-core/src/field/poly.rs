@@ -81,11 +81,11 @@
 //! |-----------|----------|-----------:|-------------------|
 //! | [`FieldPoly::eval`] | Horner | `O(n)` | — |
 //! | [`FieldPoly::eval_batch`] | `k` independent Horner folds | `O(n · k)` | — |
-//! | [`FieldPoly::batch_evaluate`] | Auto-dispatch: naive Horner ⇄ subproduct tree | `O(n · k)` (current) / `O(M(n) · log k)` (target, pending fast `div_rem`) | [`SUBPRODUCT_THRESHOLD`] = `usize::MAX` today |
+//! | [`FieldPoly::batch_evaluate`] | Auto-dispatch: naive Horner ⇄ subproduct tree | `O(n · k)` (current) / `O(M(n) · log k)` (target, pending subproduct-tree integration with [`div_rem_auto`]) | [`SUBPRODUCT_THRESHOLD`] = `usize::MAX` today |
 //! | [`batch_evaluate_subproduct`] (free fn) | Unconditional subproduct tree | `O(n · k + k² log k)` (current) / `O(M(n) · log k)` (target) | Bypasses the threshold gate. |
 //! | [`build_subproduct_tree`] (free fn) | Balanced pair-merge | `O(k · M(k))` polynomial mults | Single source of truth shared by `batch_evaluate` and `interpolate_fast`. |
 //! | [`interpolate`] (see [`crate::field::poly_interpolate`]) | Barycentric Lagrange + `batch_inverse` | `O(n²)` field ops | — |
-//! | [`interpolate_fast`] (see [`crate::field::poly_interpolate`]) | Subproduct-tree Lagrange | `O(n² log n)` today / `O(n log² n)` once fast `div_rem` lands | — |
+//! | [`interpolate_fast`] (see [`crate::field::poly_interpolate`]) | Subproduct-tree Lagrange | `O(n² log n)` today / `O(n log² n)` once the subproduct tree routes its reductions through [`div_rem_auto`] | — |
 //! | [`interpolate_auto`] (see [`crate::field::poly_interpolate`]) | Dispatcher over the two above | picks the right asymptotic | [`INTERPOLATE_THRESHOLD`] = 16 |
 //! | [`formal_derivative`] (see [`crate::field::poly_interpolate`]) | Elementwise `i · coeffs[i]` | `O(n)` | — |
 //!
