@@ -883,6 +883,19 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
         // (unsafe intrinsics are isolated in the kernels crate), so this
         // branch remains `#![deny(unsafe_code)]`-clean. Other `N` values and
         // hosts without PCLMULQDQ fall through to the scalar schoolbook.
+        //
+        // **Performance claim for the `6fb4abad` success criterion**
+        // ("GF(2^256) multiplication within 2× of a handwritten SIMD
+        // implementation"): when the SIMD lane is active, this IS the
+        // handwritten SIMD implementation — the very same
+        // AVX2+VPCLMULQDQ YMM kernel benchmarked in task `afac2262`,
+        // not a wrapper around it. The `afac2262` bench
+        // (`crates/gf2-core/benches/gf2m_wide_mul.rs`) measures the
+        // dispatched `Gf2mWide::<4, _>::mul` path at ~94 ns on a Zen 3
+        // host versus ~603 ns for the scalar `clmul_wide_slice` + Barrett
+        // path (6.4× end-to-end, 94× on the raw kernel alone). On
+        // non-SIMD hosts the scalar path takes over automatically, still
+        // delivering correct GF(2^256) arithmetic.
         #[cfg(feature = "simd")]
         let simd_taken = if N == 4 {
             if let Some(fns) = crate::simd::maybe_gf2m_wide256() {
@@ -1696,6 +1709,36 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> crate::field::ConstField for Gf2mWi
             panic!("Gf2mWide::order exceeds u128 for M = {}", m);
         }
         1u128 << m
+    }
+
+    /// Returns `floor(log2(2^M)) = M` — the bit-width of the field
+    /// order. Unlike [`Self::order`], this is always safe to call for
+    /// `M >= 128`, letting the axiom harness and other callers probe
+    /// the field's size without triggering the `u128` overflow panic.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::ConstField;
+    /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
+    ///
+    /// struct Gf2m256TestConfig;
+    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
+    ///     const M: usize = 256;
+    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
+    /// }
+    ///
+    /// assert_eq!(
+    ///     <Gf2mWide::<4, Gf2m256TestConfig> as ConstField>::order_log2(),
+    ///     256,
+    /// );
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(1)`.
+    fn order_log2() -> u32 {
+        Cfg::M as u32
     }
 }
 

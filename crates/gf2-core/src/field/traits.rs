@@ -269,7 +269,37 @@ pub trait ConstField: FiniteField + Copy {
     fn one() -> Self;
 
     /// Returns the number of elements in the field.
+    ///
+    /// # Panics
+    ///
+    /// Impls are permitted to panic when the order exceeds `u128::MAX` —
+    /// for example, `Gf2mWide<N, Cfg>` with `Cfg::M >= 128` (GF(2^256)
+    /// and above). Callers that need a non-panicking width probe should
+    /// use [`Self::order_log2`] first.
     fn order() -> u128;
+
+    /// Returns `floor(log2(order))`. Always safe to call, even for
+    /// fields whose order exceeds `u128::MAX`.
+    ///
+    /// The default implementation computes `Self::order().ilog2()` and
+    /// therefore panics when `order()` does. Impls whose order is too
+    /// large to fit in a `u128` (e.g. `Gf2mWide<4, _>` for `GF(2^256)`)
+    /// MUST override this method so that callers can still query the
+    /// field's bit-width without triggering the overflow panic on
+    /// `order()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::ConstField;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// assert_eq!(<Fp<7> as ConstField>::order_log2(), 2); // floor(log2(7))
+    /// assert_eq!(<Fp<17> as ConstField>::order_log2(), 4);
+    /// ```
+    fn order_log2() -> u32 {
+        Self::order().ilog2()
+    }
 }
 
 /// Blanket-implemented convenience methods for all [`FiniteField`] types.

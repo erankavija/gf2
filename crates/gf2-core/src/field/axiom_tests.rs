@@ -239,23 +239,68 @@ pub fn test_const_field_axioms<F: ConstField + Debug>(
 ) where
     F::Characteristic: Into<u64>,
 {
-    test_field_axioms(strategy, characteristic);
+    test_const_field_axioms_with_cases(strategy, characteristic, CASES_PER_AXIOM);
+}
+
+/// Variant of [`test_const_field_axioms`] that accepts a custom per-axiom
+/// case budget. See [`test_field_axioms_with_cases`] for the rationale.
+///
+/// The `ConstField::order()` check is skipped when
+/// `F::order_log2() > 127`, i.e. when the field order exceeds
+/// `u128::MAX` and `order()` would panic. For those fields (the canonical
+/// example being `Gf2mWide<4, _>` for `GF(2^256)`) we instead verify
+/// that [`ConstField::order_log2`] agrees with the characteristic and
+/// extension-degree: `log2(p^m) = log2(p) * m`.
+///
+/// # Panics
+///
+/// Same as [`test_const_field_axioms`], plus: panics if
+/// `F::order_log2()` disagrees with the characteristic/extension-degree
+/// pair for fields whose order does not fit in `u128`.
+pub fn test_const_field_axioms_with_cases<F: ConstField + Debug>(
+    strategy: BoxedStrategy<F>,
+    characteristic: u64,
+    cases: u32,
+) where
+    F::Characteristic: Into<u64>,
+{
+    test_field_axioms_with_cases(strategy, characteristic, cases);
 
     assert!(F::zero().is_zero(), "ConstField::zero() must be zero");
     assert!(F::one().is_one(), "ConstField::one() must be one");
 
     let one = F::one();
     let m = one.extension_degree() as u32;
-    let p128 = characteristic as u128;
-    let expected_order = p128.pow(m);
-    assert_eq!(
-        F::order(),
-        expected_order,
-        "ConstField::order() must be p^m = {}^{} = {}",
-        characteristic,
-        m,
-        expected_order
-    );
+    let order_log2 = F::order_log2();
+
+    if order_log2 <= 127 {
+        // Order fits in a `u128`; check the full order() value directly.
+        let p128 = characteristic as u128;
+        let expected_order = p128.pow(m);
+        assert_eq!(
+            F::order(),
+            expected_order,
+            "ConstField::order() must be p^m = {}^{} = {}",
+            characteristic,
+            m,
+            expected_order
+        );
+    } else {
+        // Order > u128::MAX — `order()` would panic, so check the
+        // bit-width invariant via `order_log2` instead:
+        //   log2(p^m) = log2(p) * m
+        // which pins down `order()` modulo a choice of floor/ceil. For
+        // characteristic-2 fields this is an exact equality.
+        let expected_log2 = (characteristic as u128).ilog2() * m;
+        assert_eq!(
+            order_log2,
+            expected_log2,
+            "ConstField::order_log2() must be log2(p) * m = {} * {} = {} for fields with order > u128::MAX",
+            (characteristic as u128).ilog2(),
+            m,
+            expected_log2
+        );
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -939,14 +984,15 @@ impl Gf2mWideConfig<4> for Gf2m256TestConfig {
     const NAME: &'static str = "Gf2m256TestConfig";
 }
 
-/// Axiom-harness integration test for `Gf2mWide<4, Gf2m256TestConfig>` at
-/// a reduced 100-case-per-axiom budget for the routine `cargo test` pass.
+/// `ConstField` axiom-harness integration test for
+/// `Gf2mWide<4, Gf2m256TestConfig>` at a reduced 100-case-per-axiom budget
+/// for the routine `cargo test` pass.
 ///
-/// Uses the shared [`test_field_axioms_with_cases`] harness (the SSOT for
-/// `FiniteField` axiom coverage). `test_const_field_axioms` is
-/// deliberately **not** used because `ConstField::order()` panics for
-/// `M >= 128`; that limitation is separately documented by
-/// `test_order_panics_at_m256`.
+/// Uses [`test_const_field_axioms_with_cases`] — the standard `ConstField`
+/// harness. It exercises the full field axiom suite plus the const-only
+/// zero/one/order checks; for `M = 256` the `order()` check is
+/// automatically skipped because `order_log2() > 127`, and the bit-width
+/// invariant `order_log2 == log2(p) * m` is verified instead.
 ///
 /// The 1000-case full-budget variant lives in
 /// [`test_axioms_gf2m_wide_256_stress`] as `#[ignore]`-gated; this
@@ -955,30 +1001,16 @@ impl Gf2mWideConfig<4> for Gf2m256TestConfig {
 /// or a slower field config.
 #[test]
 fn test_axioms_gf2m_wide_256() {
-    test_field_axioms_with_cases(gf2m_wide_strategy::<4, Gf2m256TestConfig>(), 2, 100);
-}
-
-/// Verify that `zero()` and `one()` constants satisfy their predicates for
-/// `Gf2mWide<4, Gf2m256TestConfig>` without calling `order()`, which panics
-/// for `M >= 128`.
-#[test]
-fn test_const_field_zero_one_gf2m_wide_256() {
-    assert!(
-        <Gf2mWide<4, Gf2m256TestConfig> as crate::field::ConstField>::zero().is_zero(),
-        "Gf2mWide::<4, Gf2m256TestConfig>::zero() must satisfy is_zero()"
-    );
-    assert!(
-        <Gf2mWide<4, Gf2m256TestConfig> as crate::field::ConstField>::one().is_one(),
-        "Gf2mWide::<4, Gf2m256TestConfig>::one() must satisfy is_one()"
-    );
+    test_const_field_axioms_with_cases(gf2m_wide_strategy::<4, Gf2m256TestConfig>(), 2, 100);
 }
 
 /// Documents the u128 overflow limitation of `ConstField::order()` for large
 /// extension degrees.
 ///
 /// `order()` on `Gf2mWide<N, Cfg>` panics for `Cfg::M >= 128` because `2^M`
-/// does not fit in a `u128`. Callers that need the order for large fields
-/// should use `Cfg::M` directly.
+/// does not fit in a `u128`. Callers that need a non-panicking width probe
+/// should use [`ConstField::order_log2`] instead, which returns `Cfg::M` for
+/// all `M` including `>= 128`.
 #[test]
 #[should_panic(expected = "Gf2mWide::order exceeds u128 for M = 256")]
 fn test_order_panics_at_m256() {
@@ -986,12 +1018,13 @@ fn test_order_panics_at_m256() {
 }
 
 /// Full-budget stress variant of `test_axioms_gf2m_wide_256` — runs the
-/// axiom harness at `CASES_PER_AXIOM = 1000` cases per axiom. Skipped by
-/// default; run with `cargo test -- --ignored` for thorough coverage.
+/// `ConstField` axiom harness at `CASES_PER_AXIOM = 1000` cases per
+/// axiom. Skipped by default; run with `cargo test -- --ignored` for
+/// thorough coverage.
 ///
 /// Expected wall-clock ≈ 200 ms release on the reference Zen 3 host.
 #[test]
 #[ignore]
 fn test_axioms_gf2m_wide_256_stress() {
-    test_field_axioms(gf2m_wide_strategy::<4, Gf2m256TestConfig>(), 2);
+    test_const_field_axioms(gf2m_wide_strategy::<4, Gf2m256TestConfig>(), 2);
 }
