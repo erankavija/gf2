@@ -15,14 +15,15 @@
 //!
 //! [`detect`] returns the fastest available lane:
 //!
-//! 1. **AVX-512VL + VPCLMULQDQ** (ZMM, 512-bit) — 4 clmuls per instruction,
-//!    16-product schoolbook in 4 instructions. Compiled only when the build
-//!    toolchain advertises `avx512vl`; otherwise silently skipped.
-//! 2. **AVX2 + VPCLMULQDQ** (YMM, 256-bit) — 2 clmuls per instruction,
+//! 1. **AVX2 + VPCLMULQDQ** (YMM, 256-bit) — 2 clmuls per instruction,
 //!    16-product schoolbook in 8 instructions. Primary path on Zen 3.
-//! 3. **PCLMULQDQ** (XMM, 128-bit) — 1 clmul per instruction, 16-product
+//! 2. **PCLMULQDQ** (XMM, 128-bit) — 1 clmul per instruction, 16-product
 //!    schoolbook in 16 instructions. Universal x86_64 fallback.
-//! 4. `None` — callers fall back to pure-Rust `clmul_wide` in `gf2-core`.
+//! 3. `None` — callers fall back to pure-Rust `clmul_wide` in `gf2-core`.
+//!
+//! A ZMM (AVX-512VL + VPCLMULQDQ) lane is out of scope until the project's
+//! MSRV moves to Rust ≥ 1.89, when the required 512-bit VPCLMULQDQ and
+//! 128-bit-lane extraction intrinsics become stable.
 
 /// Kernel signature: computes the 8-limb carry-less product of two 4-limb
 /// GF(2)-polynomial operands.
@@ -40,8 +41,7 @@ pub struct ClmulWide256Fns {
     /// 4×4 schoolbook carry-less multiply, writing the full 8-limb product.
     pub clmul: ClmulWide256Fn,
     /// Human-readable tag of the chosen lane: one of
-    /// `"avx512vl+vpclmulqdq-zmm"`, `"avx2+vpclmulqdq-ymm"`,
-    /// `"pclmulqdq-scalar-xmm"`.
+    /// `"avx2+vpclmulqdq-ymm"`, `"pclmulqdq-scalar-xmm"`.
     pub name: &'static str,
 }
 
@@ -63,20 +63,7 @@ pub fn detect() -> Option<ClmulWide256Fns> {
 fn detect_x86() -> Option<ClmulWide256Fns> {
     use std::arch::is_x86_feature_detected;
 
-    // 1. ZMM (AVX-512VL + VPCLMULQDQ). Compiled only when the toolchain has
-    //    the `avx512vl` target feature; otherwise skipped so the crate still
-    //    builds on older cores.
-    #[cfg(all(target_arch = "x86_64", target_feature = "avx512vl"))]
-    {
-        if is_x86_feature_detected!("avx512vl") && is_x86_feature_detected!("vpclmulqdq") {
-            return Some(ClmulWide256Fns {
-                clmul: clmul_wide4_zmm_safe,
-                name: "avx512vl+vpclmulqdq-zmm",
-            });
-        }
-    }
-
-    // 2. YMM (AVX2 + VPCLMULQDQ) — primary path on Zen 3.
+    // 1. YMM (AVX2 + VPCLMULQDQ) — primary path on Zen 3.
     if is_x86_feature_detected!("avx2") && is_x86_feature_detected!("vpclmulqdq") {
         return Some(ClmulWide256Fns {
             clmul: clmul_wide4_ymm_safe,
@@ -84,7 +71,7 @@ fn detect_x86() -> Option<ClmulWide256Fns> {
         });
     }
 
-    // 3. XMM (PCLMULQDQ scalar-lane) — universal x86_64 fallback.
+    // 2. XMM (PCLMULQDQ scalar-lane) — universal x86_64 fallback.
     if is_x86_feature_detected!("pclmulqdq") {
         return Some(ClmulWide256Fns {
             clmul: clmul_wide4_xmm_safe,
@@ -117,19 +104,14 @@ fn clmul_wide4_ymm_safe(a: &[u64; 4], b: &[u64; 4], out: &mut [u64; 8]) {
     unsafe { crate::x86::gf2m_wide::clmul_wide4_ymm(a, b, out) }
 }
 
-#[cfg(all(target_arch = "x86_64", target_feature = "avx512vl"))]
-fn clmul_wide4_zmm_safe(a: &[u64; 4], b: &[u64; 4], out: &mut [u64; 8]) {
-    // SAFETY: `detect_x86` only returns this pointer when AVX-512VL and
-    // VPCLMULQDQ are available.
-    unsafe { crate::x86::gf2m_wide::clmul_wide4_zmm(a, b, out) }
-}
-
+/// Test-only helpers shared between this module's tests and the inner-x86
+/// kernel tests. Keeping `scalar_ref` here enforces SSOT: there is exactly
+/// one bit-by-bit reference implementation of the 4×4 carry-less schoolbook.
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    /// Scalar reference: schoolbook over the bit-by-bit carry-less multiply.
-    fn scalar_ref(a: &[u64; 4], b: &[u64; 4]) -> [u64; 8] {
+pub(crate) mod test_helpers {
+    /// Scalar reference matching `gf2_core::gf2m::wide::clmul_wide_slice::<4>`:
+    /// the 4×4 schoolbook built on a bit-by-bit carry-less 64×64 multiply.
+    pub(crate) fn scalar_ref(a: &[u64; 4], b: &[u64; 4]) -> [u64; 8] {
         fn clmul_u64(a: u64, b: u64) -> u128 {
             let a = a as u128;
             let mut r: u128 = 0;
@@ -151,6 +133,12 @@ mod tests {
         }
         out
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::test_helpers::scalar_ref;
+    use super::*;
 
     #[test]
     fn detect_returns_some_when_pclmulqdq_available() {
@@ -162,9 +150,7 @@ mod tests {
                 let fns = fns.expect("expected PCLMULQDQ-backed kernel on this host");
                 // Name must reflect the lane.
                 assert!(
-                    fns.name == "pclmulqdq-scalar-xmm"
-                        || fns.name == "avx2+vpclmulqdq-ymm"
-                        || fns.name == "avx512vl+vpclmulqdq-zmm",
+                    fns.name == "pclmulqdq-scalar-xmm" || fns.name == "avx2+vpclmulqdq-ymm",
                     "unexpected kernel name: {}",
                     fns.name
                 );
