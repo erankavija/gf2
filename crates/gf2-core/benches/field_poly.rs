@@ -211,7 +211,7 @@ fn bench_interpolate(c: &mut Criterion) {
     let mut group = c.benchmark_group("field_poly_interpolate_fp65537");
     group.sample_size(10);
 
-    for &n in &[16usize, 32, 64, 128, 256, 512, 1024, 2048] {
+    for &n in &[4usize, 8, 16, 32, 64, 128, 256, 512, 1024, 2048] {
         let points = make_interp_points(n);
 
         group.bench_with_input(BenchmarkId::new("naive", n), &points, |b, pts| {

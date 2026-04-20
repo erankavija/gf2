@@ -1854,10 +1854,13 @@ pub fn build_subproduct_tree<F: FiniteField>(points: &[F]) -> Vec<Vec<FieldPoly<
     levels
 }
 
-/// Raw subproduct-tree batch evaluation, exposed **only** for the
-/// benchmark harness (see [`FieldPoly::batch_evaluate`] for the stable
-/// entry point). Callers bypass the [`SUBPRODUCT_THRESHOLD`]
-/// performance gate and pay the full tree cost unconditionally.
+/// Canonical subproduct-tree batch evaluation entry point, shared
+/// between the benchmark harness (`benches/field_poly.rs`) and
+/// [`crate::field::poly_interpolate::interpolate_fast`]. Callers bypass
+/// the [`SUBPRODUCT_THRESHOLD`] performance gate and pay the full tree
+/// cost unconditionally. Callers who want the threshold-gated default
+/// (naive Horner for `Fp`-sized scalars until NTT `div_rem` lands)
+/// should use [`FieldPoly::batch_evaluate`] instead.
 ///
 /// # Arguments
 ///
@@ -1908,12 +1911,12 @@ pub fn build_subproduct_tree<F: FiniteField>(points: &[F]) -> Vec<Vec<FieldPoly<
 /// `O(M(n) log k + k log² k)` requires an FFT / Newton-iteration fast
 /// polynomial division primitive (Task 6 of the `bdf95060` story).
 ///
-/// This function is exposed as `pub` strictly so the benchmark harness
-/// (`benches/field_poly.rs`) can compare the raw subproduct cost
-/// against the naive baseline without being masked by the threshold
-/// dispatch in [`FieldPoly::batch_evaluate`]. External callers should
-/// always go through the public entry point, which guards the
-/// subproduct path with [`SUBPRODUCT_THRESHOLD`].
+/// This function is `pub` so both the benchmark harness
+/// (`benches/field_poly.rs`) and [`crate::field::poly_interpolate::interpolate_fast`]
+/// can invoke the tree path directly. Callers who simply want to
+/// evaluate a polynomial at many points and are happy with the
+/// threshold-gated dispatch should use [`FieldPoly::batch_evaluate`]
+/// instead, which guards this path behind [`SUBPRODUCT_THRESHOLD`].
 pub fn batch_evaluate_subproduct<F: FiniteField>(poly: &FieldPoly<F>, points: &[F]) -> Vec<F> {
     debug_assert!(!points.is_empty());
 
