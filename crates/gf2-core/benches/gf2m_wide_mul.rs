@@ -7,11 +7,13 @@
 //!    `simd` feature is disabled or PCLMULQDQ is unavailable.
 //!
 //! 2. **simd-kernel** — the dispatched kernel returned by
-//!    `gf2_kernels_simd::gf2m_wide::detect()` (AVX2+VPCLMULQDQ YMM on Zen 3,
-//!    PCLMULQDQ scalar-XMM elsewhere, AVX-512VL+VPCLMULQDQ ZMM on capable
-//!    hosts). The group name is suffixed with the kernel tag from
-//!    `ClmulWide256Fns::name` so the benchmark output identifies which lane
-//!    ran. Falls back to scalar if no PCLMULQDQ is present.
+//!    `gf2_kernels_simd::gf2m_wide::detect()` (AVX2+VPCLMULQDQ YMM on Zen 3-
+//!    class hosts, PCLMULQDQ scalar-XMM elsewhere). The group name is
+//!    suffixed with the kernel tag from `ClmulWide256Fns::name` so the
+//!    benchmark output identifies which lane ran. Falls back to scalar if
+//!    no PCLMULQDQ is present. An AVX-512VL+VPCLMULQDQ (ZMM) lane is out of
+//!    scope until MSRV moves to ≥ 1.89 (the `_mm512_*` carry-less-multiply
+//!    intrinsics are not stable on MSRV 1.80).
 //!
 //! # Running
 //!
