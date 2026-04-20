@@ -204,8 +204,10 @@
 //! naive Horner on every size, so the dispatcher arm coincides with the
 //! naive arm in the current table and is omitted from the columns
 //! below for clarity. The dispatcher numbers will diverge from naive
-//! once the follow-up NTT-backed fast-`div_rem` task lowers the tuned
-//! threshold below `usize::MAX`.
+//! once the follow-up subproduct-tree integration task (`046f95c1`)
+//! routes the tree through [`div_rem_auto`] (the Newton-iteration fast
+//! division landed under `ae0c7e1f`) and lowers the tuned threshold
+//! below `usize::MAX`.
 //!
 //! The cells below therefore compare the raw subproduct-tree path
 //! against the naive per-point Horner baseline on a polynomial of
