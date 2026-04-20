@@ -12,12 +12,15 @@
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 mod x86;
 
+pub mod clmul_scalar;
 pub mod fp65537;
 pub mod gf2m;
 pub mod gf2m_wide;
 pub mod llr;
 pub mod mersenne;
 pub mod modem;
+
+pub use clmul_scalar::clmul_u64_scalar;
 
 /// Set of accelerated logical operations. Each function must have identical
 /// semantics to the scalar implementation (in-place dst modification, slice length min).
