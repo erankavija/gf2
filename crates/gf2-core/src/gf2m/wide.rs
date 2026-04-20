@@ -775,9 +775,16 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Neg for Gf2mWide<N, Cfg> {
 // widths in one table.
 // ---------------------------------------------------------------------------
 
-/// Global cache: `(TypeId::of::<Cfg>(), N)` → `Box<BarrettReducerWide<N>>` (erased).
-static BARRETT_CACHE: OnceLock<Mutex<HashMap<(TypeId, usize), Box<dyn Any + Send + Sync>>>> =
-    OnceLock::new();
+/// Type-erased Barrett reducer stored in the global cache.
+type CachedReducer = Box<dyn Any + Send + Sync>;
+
+/// Cache key pair `(TypeId::of::<Cfg>(), N)` — see the module-level note
+/// on `Gf2mWideConfig<const N: usize>` allowing multiple `N` impls per
+/// marker type.
+type BarrettCacheKey = (TypeId, usize);
+
+/// Global cache: `(Cfg, N)` → `BarrettReducerWide<N>` (erased to `Any`).
+static BARRETT_CACHE: OnceLock<Mutex<HashMap<BarrettCacheKey, CachedReducer>>> = OnceLock::new();
 
 /// Returns a freshly constructed (or cached) [`BarrettReducerWide<N>`] for the
 /// given `Cfg`.
@@ -1918,6 +1925,44 @@ pub fn clmul_wide_slice<const N: usize>(a: &[u64; N], b: &[u64; N], out: &mut [u
 #[allow(clippy::op_ref)]
 mod tests {
     use super::*;
+
+    /// Regression test for the Barrett-reducer cache key. A single
+    /// marker type may legally implement `Gf2mWideConfig<N>` for more
+    /// than one `N`; the cache must distinguish those instantiations
+    /// instead of aliasing them by `TypeId` alone. Before the
+    /// `(TypeId, N)` key, the second `Mul` call below panicked inside
+    /// `get_reducer` on the `downcast_ref::<BarrettReducerWide<N>>()`
+    /// mismatch. After the fix, both multiplications succeed and the
+    /// cache holds two distinct entries for `Gf2mMultiNConfig`.
+    ///
+    /// See `crates/gf2-core/src/gf2m/wide.rs:762-777` for the cache
+    /// layout comment that documents why `N` must be part of the key.
+    struct Gf2mMultiNConfig;
+    impl Gf2mWideConfig<1> for Gf2mMultiNConfig {
+        // GF(2^64): x^64 + x^4 + x^3 + x + 1 (low bits only; implicit high bit).
+        const M: usize = 64;
+        const MODULUS: [u64; 1] = [0x1b];
+    }
+    impl Gf2mWideConfig<2> for Gf2mMultiNConfig {
+        // GF(2^128): x^128 + x^7 + x^2 + x + 1 (low bits only; implicit high bit).
+        const M: usize = 128;
+        const MODULUS: [u64; 2] = [0x87, 0];
+    }
+
+    #[test]
+    fn test_barrett_cache_distinguishes_n_for_same_cfg_type() {
+        // Use both <1, Gf2mMultiNConfig> and <2, Gf2mMultiNConfig> back-to-back.
+        // Before the (TypeId, N) key the second call panicked on downcast.
+        let a1 = <Gf2mWide<1, Gf2mMultiNConfig> as crate::field::ConstField>::one();
+        let b1 = <Gf2mWide<1, Gf2mMultiNConfig> as crate::field::ConstField>::one();
+        let c1 = a1 * b1;
+        assert!(c1.is_one(), "GF(2^64) identity multiplication");
+
+        let a2 = <Gf2mWide<2, Gf2mMultiNConfig> as crate::field::ConstField>::one();
+        let b2 = <Gf2mWide<2, Gf2mMultiNConfig> as crate::field::ConstField>::one();
+        let c2 = a2 * b2;
+        assert!(c2.is_one(), "GF(2^128) identity multiplication");
+    }
 
     /// Test config for GF(2^256) using the pentanomial
     /// `x^256 + x^10 + x^5 + x^2 + 1` from Seroussi, *Table of Low-Weight
