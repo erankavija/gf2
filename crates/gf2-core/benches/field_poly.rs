@@ -1,40 +1,39 @@
 //! Benchmarks for [`gf2_core::field::FieldPoly`] batch evaluation.
 //!
-//! Benchmarks three implementations on `Fp<65537>` across the matrix
-//! `n ∈ {16, 64, 256, 1024} × k ∈ {16, 64, 256, 1024}`:
+//! Benchmarks four implementations on `Fp<65537>` across the matrix
+//! `n ∈ {16, 64, 256, 1024, 4096} × k ∈ {16, 64, 256, 1024, 4096}`:
 //!
 //! - **`dispatcher`** — the public [`FieldPoly::batch_evaluate`] API,
-//!   which today routes to the naive per-point Horner path whenever
-//!   both `n` and `k` are below `SUBPRODUCT_THRESHOLD = usize::MAX`
-//!   (i.e. always). The arm is kept so the bench has a direct measure
-//!   of what ordinary callers see, and so the numbers stay meaningful
-//!   after the threshold is lowered by the follow-up subproduct-tree
-//!   integration task (`046f95c1`), which wires the tree through the
-//!   already-landed `div_rem_auto` primitive.
+//!   which routes to the naive per-point Horner path below
+//!   `SUBPRODUCT_THRESHOLD = 4096` and to the
+//!   schoolbook-[`FieldPoly::div_rem`] subproduct tree above it.
 //! - **`subproduct`** — the raw subproduct-tree path
-//!   ([`batch_evaluate_subproduct`], bypassing the threshold gate). This
-//!   is the fast-path substrate that both `batch_evaluate` and
-//!   `interpolate_fast` build on.
+//!   ([`batch_evaluate_subproduct`], bypassing the threshold gate).
+//!   Always uses schoolbook [`FieldPoly::div_rem`] for per-node
+//!   reductions.
+//! - **`subproduct_auto`** — the [`TwoAdicField`]-specialised
+//!   subproduct-tree path
+//!   ([`batch_evaluate_subproduct_auto`]) that routes per-node
+//!   reductions through [`FieldPoly::div_rem_auto`], picking up the
+//!   Newton-iteration fast-division primitive (issue `ae0c7e1f`,
+//!   `DIV_REM_THRESHOLD = 2048`) above the fast-division threshold.
 //! - **`naive`** — the literal comparison point from the issue scope:
 //!   `points.iter().map(|x| poly.eval(x)).collect()` — `k` independent
 //!   Horner folds collected into a `Vec<F>`.
 //!
-//! This harness drives the tuning of `SUBPRODUCT_THRESHOLD`. On the
-//! cheap-scalar `Fp<65537>` field, naive Horner wins on every cell
-//! measured here; the threshold is still pinned to `usize::MAX` and
-//! the `dispatcher` arm therefore coincides with the `naive` arm.
-//! Fast polynomial division landed separately as `div_rem_fast` and
-//! `div_rem_auto` (issue `ae0c7e1f`, `DIV_REM_THRESHOLD = 2048`);
-//! the follow-up task `046f95c1` wires the subproduct-tree reduction
-//! through `div_rem_auto`, lowers `SUBPRODUCT_THRESHOLD` to the
-//! empirical crossover, and refreshes these tables.
+//! This harness drove the tuning of `SUBPRODUCT_THRESHOLD` under
+//! issue `046f95c1`. On the cheap-scalar `Fp<65537>` field naive
+//! Horner wins on every cell except the (`n = 4096`, `k = 4096`)
+//! corner, where `subproduct_auto` pulls ahead at `0.87×` of naive
+//! (53.9 ms vs 62.1 ms). That crossover pins the threshold at the
+//! smallest power of two above the measured boundary (`4096`).
 //!
 //! The measured results are committed into the module docstring of
 //! [`gf2_core::field::poly`] so callers can consult them without
 //! re-running the benchmark.
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
-use gf2_core::field::poly::batch_evaluate_subproduct;
+use gf2_core::field::poly::{batch_evaluate_subproduct, batch_evaluate_subproduct_auto};
 use gf2_core::field::FieldPoly;
 use gf2_core::gfp::Fp;
 
@@ -76,8 +75,8 @@ fn bench_batch_evaluate(c: &mut Criterion) {
     // budget when run via `--quick`.
     group.sample_size(20);
 
-    let ns = [16usize, 64, 256, 1024];
-    let ks = [16usize, 64, 256, 1024];
+    let ns = [16usize, 64, 256, 1024, 4096];
+    let ks = [16usize, 64, 256, 1024, 4096];
 
     for &n in &ns {
         let poly = make_poly(n);
@@ -86,13 +85,14 @@ fn bench_batch_evaluate(c: &mut Criterion) {
             let id_fmt = format!("n{n}_k{k}");
 
             // "dispatcher" arm: the public FieldPoly::batch_evaluate
-            // API — what ordinary callers exercise today. While
-            // SUBPRODUCT_THRESHOLD is usize::MAX the dispatcher always
-            // delegates to the naive Horner path, so these numbers
-            // coincide with the "naive" arm today; they will diverge
-            // once the follow-up subproduct-tree integration task
-            // (046f95c1) routes the tree's reductions through
-            // div_rem_auto and lowers the threshold.
+            // API — what ordinary callers exercise. Below
+            // SUBPRODUCT_THRESHOLD (4096) it delegates to naive
+            // Horner; at or above the threshold it uses
+            // batch_evaluate_subproduct (schoolbook FieldPoly::div_rem).
+            // TwoAdicField callers who want the div_rem_auto-backed
+            // dispatcher should call FieldPoly::batch_evaluate_auto
+            // (see the "subproduct_auto" arm below for the underlying
+            // free function).
             group.bench_with_input(
                 BenchmarkId::new("dispatcher", &id_fmt),
                 &(&poly, &points),
@@ -110,6 +110,24 @@ fn bench_batch_evaluate(c: &mut Criterion) {
                 &(&poly, &points),
                 |b, (p, xs)| {
                     b.iter(|| black_box(batch_evaluate_subproduct(black_box(*p), black_box(*xs))));
+                },
+            );
+
+            // "subproduct_auto" arm: the TwoAdicField-specialised
+            // variant that routes per-node reductions through
+            // `FieldPoly::div_rem_auto`. Measures the Newton-iteration
+            // fast-division speedup wired into the subproduct tree by
+            // issue `046f95c1`.
+            group.bench_with_input(
+                BenchmarkId::new("subproduct_auto", &id_fmt),
+                &(&poly, &points),
+                |b, (p, xs)| {
+                    b.iter(|| {
+                        black_box(batch_evaluate_subproduct_auto(
+                            black_box(*p),
+                            black_box(*xs),
+                        ))
+                    });
                 },
             );
 

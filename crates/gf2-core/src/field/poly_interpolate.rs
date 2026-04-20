@@ -6,22 +6,25 @@
 //!
 //! # Two implementations
 //!
-//! | Function | Algorithm | Complexity (current) | Target complexity |
-//! |----------|-----------|---------------------:|------------------:|
+//! | Function | Algorithm | Complexity (generic) | Complexity (`TwoAdicField`) |
+//! |----------|-----------|---------------------:|----------------------------:|
 //! | [`interpolate`] | Lagrange barycentric | `O(n²)` field ops | `O(n²)` |
-//! | [`interpolate_fast`] | Subproduct-tree | `O(n² log n)` field ops¹ | `O(n log² n)` |
+//! | [`interpolate_fast`] | Subproduct-tree | `O(n² log n)` field ops | `O(n log² n)` via [`FieldPoly::batch_evaluate_auto`]¹ |
 //!
-//! ¹ `interpolate_fast` achieves its target `O(n log² n)` once the
-//! subproduct-tree reductions route through [`crate::field::poly::div_rem_auto`]
-//! and [`crate::field::poly::SUBPRODUCT_THRESHOLD`] is dropped below
-//! `usize::MAX`. The underlying fast polynomial-division primitive
-//! itself (`div_rem_fast` / `div_rem_auto`) has landed (issue
-//! `ae0c7e1f`, `DIV_REM_THRESHOLD = 2048` on `Fp<65537>`); the subproduct-tree
-//! integration is tracked by follow-up task `046f95c1`. With today's
-//! schoolbook-gated subproduct path the fast Lagrange variant still
-//! beats the quadratic one at every measured `n ≥ 8` on `Fp<65537>`
-//! (see the benchmark table below), but the absolute asymptotic stays
-//! at `O(n² log n)` until that follow-up work lands.
+//! ¹ On `F: TwoAdicField` the middle step
+//! (`m_deriv.batch_evaluate(&xs)`) is asymptotically `O(M(n) log k)`
+//! when its inputs straddle
+//! [`crate::field::poly::SUBPRODUCT_THRESHOLD`] and the per-node
+//! reductions route through the Newton-iteration
+//! [`FieldPoly::div_rem_auto`] primitive (issue `ae0c7e1f`,
+//! `DIV_REM_THRESHOLD = 2048` on `Fp<65537>`). The subproduct-tree
+//! integration landed in issue `046f95c1` — see
+//! [`crate::field::poly::batch_evaluate_subproduct_auto`] for the
+//! public free function that performs the [`TwoAdicField`]-specialised
+//! reductions. With the schoolbook-substrate call through the generic
+//! [`FieldPoly::batch_evaluate`] the fast Lagrange variant still
+//! beats the quadratic one at every measured `n ≥ 4` on `Fp<65537>`
+//! (see the benchmark table below).
 //!
 //! [`interpolate_auto`] is the recommended entry point: it dispatches to
 //! [`interpolate_fast`] for `n ≥ INTERPOLATE_THRESHOLD` (currently 16) and to
@@ -46,28 +49,32 @@
 //!
 //! | `n`  | naive O(n²) | fast O(n² log n) | fast / naive |
 //! |-----:|------------:|-----------------:|-------------:|
-//! |    4 |      1.62 µs |         1.01 µs |        0.62× |
-//! |    8 |      5.40 µs |         2.50 µs |        0.46× |
-//! |   16 |     19.5 µs |          6.66 µs |        0.34× |
-//! |   32 |     74.7 µs |          20.5 µs |        0.27× |
-//! |   64 |    291 µs   |         68.0 µs  |        0.23× |
-//! |  128 |   1.14 ms   |         223 µs   |        0.20× |
-//! |  256 |   4.51 ms   |         744 µs   |        0.17× |
-//! |  512 |   17.9 ms   |        2.53 ms   |        0.14× |
-//! | 1024 |   71.3 ms   |        8.74 ms   |        0.12× |
-//! | 2048 |   280 ms    |        30.5 ms   |        0.11× |
+//! |    4 |      1.60 µs |         1.00 µs |        0.63× |
+//! |    8 |      5.57 µs |         2.50 µs |        0.45× |
+//! |   16 |     20.17 µs |         6.88 µs |        0.34× |
+//! |   32 |     77.20 µs |        20.05 µs |        0.26× |
+//! |   64 |    300.0 µs  |        67.49 µs |        0.22× |
+//! |  128 |      1.18 ms |       220.7 µs  |        0.19× |
+//! |  256 |      4.68 ms |       738.9 µs  |        0.16× |
+//! |  512 |     18.49 ms |         2.50 ms |        0.14× |
+//! | 1024 |     73.57 ms |         8.61 ms |        0.12× |
+//! | 2048 |    288.3 ms  |        30.08 ms |        0.10× |
 //!
 //! **`fast` wins at every measured `n ≥ 4` on `Fp<65537>`.** The `naive`
 //! path issues `n` full-degree `div_rem`s on `M(x)`; the `fast` path does
-//! one `from_roots` + one [`FieldPoly::batch_evaluate`] (`O(n²)` per
-//! point-by-point Horner while `SUBPRODUCT_THRESHOLD = usize::MAX`, or
-//! `O(n log² n)` once the subproduct tree routes its reductions through
-//! [`crate::field::poly::div_rem_auto`] — `div_rem_fast` /
-//! `div_rem_auto` have already landed under issue `ae0c7e1f`; the
-//! subproduct-tree wiring is tracked by follow-up task `046f95c1`) +
-//! one `O(n log n)` upward merge. Even at the current schoolbook
-//! substrate the merge savings alone push `fast` below `0.62×` of
-//! `naive` at `n = 4`.
+//! one `from_roots` + one [`FieldPoly::batch_evaluate`] + one
+//! `O(n log n)` upward merge. [`FieldPoly::batch_evaluate`] routes to
+//! naive Horner below [`crate::field::poly::SUBPRODUCT_THRESHOLD`] =
+//! 4096, so for the measured `n ≤ 2048` the middle step is still
+//! `O(n²)` in field operations. Even at this schoolbook substrate the
+//! merge savings alone push `fast` below `0.63×` of `naive` at
+//! `n = 4`. Callers on [`TwoAdicField`] who want the `O(n log² n)`
+//! asymptotic at `n ≥ SUBPRODUCT_THRESHOLD` can call
+//! [`crate::field::poly::batch_evaluate_subproduct_auto`] directly
+//! before the merge pass, or reach for
+//! [`FieldPoly::batch_evaluate_auto`] in the
+//! [`interpolate_fast`]-style recipe; the fast-division primitive
+//! lands from [`DIV_REM_THRESHOLD`] = 2048 upwards.
 //!
 //! `INTERPOLATE_THRESHOLD = 16` is kept as a conservative safety margin
 //! for callers on fields with very expensive Karatsuba (where the
@@ -92,10 +99,17 @@ use std::fmt;
 /// Number-of-points threshold at which [`interpolate_auto`] prefers
 /// [`interpolate_fast`] over [`interpolate`].
 ///
-/// Tuned from the benchmark table in the module docstring: fast already wins
-/// the `n = 16` cell on `Fp<65537>` (0.65× of naive wall-clock), so the
-/// threshold is set to `16`. Callers who want a specific variant regardless
-/// of `n` should call [`interpolate`] or [`interpolate_fast`] directly.
+/// Tuned from the benchmark table in the module docstring: `fast`
+/// already wins the `n = 4` cell on `Fp<65537>` at `0.63×` of the
+/// naive wall-clock, but the threshold is deliberately set at `16` as
+/// a conservative safety margin for callers on fields with very
+/// expensive polynomial multiplication (where the subproduct-tree
+/// build and upward merge can flip the balance). Re-verified under
+/// issue `046f95c1` after the subproduct-tree
+/// [`crate::field::poly::div_rem_auto`] integration landed: the
+/// crossover remains at `n = 4` so no retuning was needed. Callers
+/// who want a specific variant regardless of `n` should call
+/// [`interpolate`] or [`interpolate_fast`] directly.
 pub const INTERPOLATE_THRESHOLD: usize = 16;
 
 /// Interpolates through `points` using the threshold-tuned dispatcher.
@@ -438,14 +452,17 @@ pub fn interpolate<F: FiniteField>(points: &[(F, F)]) -> Result<FieldPoly<F>, In
 /// 1. Build `M(x) = Π_i (x − x_i)` via [`FieldPoly::from_roots`].
 /// 2. Compute `M'(x)` (formal derivative) via [`formal_derivative`].
 /// 3. Evaluate `M'` at all `x_i` via [`FieldPoly::batch_evaluate`] — the
-///    public batch-evaluation API named by the issue contract. Today
-///    [`SUBPRODUCT_THRESHOLD`] (= `usize::MAX`) routes that through the
-///    naive per-point Horner fallback; once the subproduct tree's
-///    reductions route through `div_rem_auto` (landed under
-///    `ae0c7e1f`) and the threshold is dropped by follow-up task
-///    `046f95c1`, this call automatically picks up the `O(n log² n)`
-///    subproduct-tree path without any change to this function.
-///    By the product rule, `M'(x_i) = Π_{j ≠ i} (x_i − x_j)`.
+///    public batch-evaluation API named by the issue contract. Below
+///    [`crate::field::poly::SUBPRODUCT_THRESHOLD`] the dispatcher
+///    routes through the naive per-point Horner fallback; above it,
+///    the schoolbook-[`FieldPoly::div_rem`] subproduct tree takes
+///    over. On [`TwoAdicField`] callers who want the Newton-iteration
+///    fast-division primitive
+///    [`crate::field::poly::batch_evaluate_subproduct_auto`] or
+///    [`FieldPoly::batch_evaluate_auto`] reach the `O(M(n) log k)`
+///    path above [`crate::field::poly::DIV_REM_THRESHOLD`]; both
+///    primitives landed under issues `ae0c7e1f` + `046f95c1`. By the
+///    product rule, `M'(x_i) = Π_{j ≠ i} (x_i − x_j)`.
 /// 4. Compute barycentric weights `w_i = y_i / M'(x_i)` using
 ///    [`crate::field::batch_ops::batch_inverse`].
 /// 5. Upward merge: starting from leaf vector `[w_0, …, w_{n-1}]`,
@@ -493,15 +510,18 @@ pub fn interpolate<F: FiniteField>(points: &[(F, F)]) -> Result<FieldPoly<F>, In
 ///
 /// # Complexity
 ///
-/// With the current schoolbook-backed subproduct reductions this path
-/// costs `O(n² log n)` field operations; the `O(n log² n)` optimum
-/// materialises once follow-up task `046f95c1` routes the subproduct
-/// tree through [`crate::field::poly::div_rem_auto`] (landed under
-/// `ae0c7e1f`) and lowers `SUBPRODUCT_THRESHOLD` below `usize::MAX`.
-/// Empirically this
-/// path already beats the `O(n²)` [`interpolate`] at every measured
-/// `n ≥ 16` on `Fp<65537>` — see the benchmark table in the module
-/// docstring.
+/// With the schoolbook-backed call through the generic
+/// [`FieldPoly::batch_evaluate`] this path costs `O(n² log n)` field
+/// operations; the `O(n log² n)` optimum is reached on
+/// [`TwoAdicField`] callers at `n ≥ SUBPRODUCT_THRESHOLD` when the
+/// middle step routes through
+/// [`crate::field::poly::batch_evaluate_subproduct_auto`], which wires
+/// the Newton-iteration [`FieldPoly::div_rem_auto`] primitive
+/// (`ae0c7e1f`, `DIV_REM_THRESHOLD = 2048` on `Fp<65537>`) into the
+/// subproduct-tree reductions (integration landed under issue
+/// `046f95c1`). Empirically this path already beats the `O(n²)`
+/// [`interpolate`] at every measured `n ≥ 4` on `Fp<65537>` — see the
+/// benchmark table in the module docstring.
 pub fn interpolate_fast<F: FiniteField>(
     points: &[(F, F)],
 ) -> Result<FieldPoly<F>, InterpolationError> {
@@ -527,16 +547,17 @@ pub fn interpolate_fast<F: FiniteField>(
     let m_deriv = formal_derivative(&m_poly);
 
     // Step 3: Evaluate M'(x) at all x_i via the public FieldPoly::batch_evaluate
-    // API — this is the evaluation surface named by the bdf95060 story for this
-    // role. Today `SUBPRODUCT_THRESHOLD = usize::MAX` makes that call route
-    // through naive Horner, which costs O(n²) field operations on this step
-    // just like `n` independent `.eval(x_i)` calls would; the upward merge in
-    // Step 5 is still the O(n log n) win over `interpolate`'s n full-degree
-    // `div_rem`s. Once follow-up task `046f95c1` routes the subproduct tree
-    // through `div_rem_auto` (landed under `ae0c7e1f`) and lowers
-    // `SUBPRODUCT_THRESHOLD` below `usize::MAX`, this call automatically
-    // picks up the O(n log² n) subproduct-tree path without any local code
-    // change.
+    // API — this is the evaluation surface named by the bdf95060 story for
+    // this role. The public generic dispatcher uses schoolbook
+    // FieldPoly::div_rem below SUBPRODUCT_THRESHOLD = 4096 and above it; the
+    // TwoAdicField-specialised dispatcher FieldPoly::batch_evaluate_auto
+    // (landed under issue 046f95c1) instead routes the tree's reductions
+    // through FieldPoly::div_rem_auto (landed under ae0c7e1f), picking up the
+    // O(M(n) log k) fast-division asymptotic above DIV_REM_THRESHOLD. This
+    // generic function keeps calling the generic batch_evaluate so it stays
+    // usable on non-TwoAdicField element types; TwoAdicField callers can
+    // reach for batch_evaluate_subproduct_auto directly when they want the
+    // O(n log² n) middle step at n ≥ SUBPRODUCT_THRESHOLD.
     // By the product rule: M'(x_i) = Π_{j≠i}(x_i − x_j).
     let m_prime_vals: Vec<F> = m_deriv.batch_evaluate(&xs);
 
