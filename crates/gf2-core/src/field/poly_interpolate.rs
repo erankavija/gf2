@@ -59,12 +59,15 @@
 //!
 //! **`fast` wins at every measured `n ≥ 4` on `Fp<65537>`.** The `naive`
 //! path issues `n` full-degree `div_rem`s on `M(x)`; the `fast` path does
-//! one `from_roots` + one [`FieldPoly::batch_evaluate`] (O(n²) per
+//! one `from_roots` + one [`FieldPoly::batch_evaluate`] (`O(n²)` per
 //! point-by-point Horner while `SUBPRODUCT_THRESHOLD = usize::MAX`, or
-//! `O(n log² n)` once an NTT-backed `div_rem` lands via `e0b6f940` /
-//! `2e7db385`) + one `O(n log n)` upward merge. Even at the current
-//! schoolbook substrate the merge savings alone push `fast` below
-//! `0.62×` of `naive` at `n = 4`.
+//! `O(n log² n)` once the subproduct tree routes its reductions through
+//! [`crate::field::poly::div_rem_auto`] — `div_rem_fast` /
+//! `div_rem_auto` have already landed under issue `ae0c7e1f`; the
+//! subproduct-tree wiring is tracked by follow-up task `046f95c1`) +
+//! one `O(n log n)` upward merge. Even at the current schoolbook
+//! substrate the merge savings alone push `fast` below `0.62×` of
+//! `naive` at `n = 4`.
 //!
 //! `INTERPOLATE_THRESHOLD = 16` is kept as a conservative safety margin
 //! for callers on fields with very expensive Karatsuba (where the
@@ -437,10 +440,11 @@ pub fn interpolate<F: FiniteField>(points: &[(F, F)]) -> Result<FieldPoly<F>, In
 /// 3. Evaluate `M'` at all `x_i` via [`FieldPoly::batch_evaluate`] — the
 ///    public batch-evaluation API named by the issue contract. Today
 ///    [`SUBPRODUCT_THRESHOLD`] (= `usize::MAX`) routes that through the
-///    naive per-point Horner fallback; once `e0b6f940` / `2e7db385`
-///    lower the threshold via an NTT-backed `div_rem`, this call
-///    automatically picks up the `O(n log² n)` subproduct-tree path
-///    without any change to this function.
+///    naive per-point Horner fallback; once the subproduct tree's
+///    reductions route through `div_rem_auto` (landed under
+///    `ae0c7e1f`) and the threshold is dropped by follow-up task
+///    `046f95c1`, this call automatically picks up the `O(n log² n)`
+///    subproduct-tree path without any change to this function.
 ///    By the product rule, `M'(x_i) = Π_{j ≠ i} (x_i − x_j)`.
 /// 4. Compute barycentric weights `w_i = y_i / M'(x_i)` using
 ///    [`crate::field::batch_ops::batch_inverse`].
@@ -489,10 +493,12 @@ pub fn interpolate<F: FiniteField>(points: &[(F, F)]) -> Result<FieldPoly<F>, In
 ///
 /// # Complexity
 ///
-/// With the current schoolbook-backed [`FieldPoly`] `Mul` and `div_rem`
-/// this path costs `O(n² log n)` field operations; the `O(n log² n)`
-/// optimum materialises once `e0b6f940` / `2e7db385` lower
-/// `SUBPRODUCT_THRESHOLD` via NTT-backed `div_rem`. Empirically this
+/// With the current schoolbook-backed subproduct reductions this path
+/// costs `O(n² log n)` field operations; the `O(n log² n)` optimum
+/// materialises once follow-up task `046f95c1` routes the subproduct
+/// tree through [`crate::field::poly::div_rem_auto`] (landed under
+/// `ae0c7e1f`) and lowers `SUBPRODUCT_THRESHOLD` below `usize::MAX`.
+/// Empirically this
 /// path already beats the `O(n²)` [`interpolate`] at every measured
 /// `n ≥ 16` on `Fp<65537>` — see the benchmark table in the module
 /// docstring.
@@ -526,9 +532,11 @@ pub fn interpolate_fast<F: FiniteField>(
     // through naive Horner, which costs O(n²) field operations on this step
     // just like `n` independent `.eval(x_i)` calls would; the upward merge in
     // Step 5 is still the O(n log n) win over `interpolate`'s n full-degree
-    // `div_rem`s. Once `e0b6f940` / `2e7db385` lower `SUBPRODUCT_THRESHOLD`
-    // via an NTT-backed `div_rem`, this call automatically picks up the
-    // O(n log² n) subproduct-tree path without any local code change.
+    // `div_rem`s. Once follow-up task `046f95c1` routes the subproduct tree
+    // through `div_rem_auto` (landed under `ae0c7e1f`) and lowers
+    // `SUBPRODUCT_THRESHOLD` below `usize::MAX`, this call automatically
+    // picks up the O(n log² n) subproduct-tree path without any local code
+    // change.
     // By the product rule: M'(x_i) = Π_{j≠i}(x_i − x_j).
     let m_prime_vals: Vec<F> = m_deriv.batch_evaluate(&xs);
 
