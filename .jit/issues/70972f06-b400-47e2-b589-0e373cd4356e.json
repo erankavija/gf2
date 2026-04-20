@@ -1,8 +1,8 @@
 {
   "id": "70972f06-b400-47e2-b589-0e373cd4356e",
   "title": "FieldPoly<F> core type, normalisation, basic arithmetic",
-  "description": "Introduce `FieldPoly<F: FiniteField>` in a new module `crates/gf2-core/src/field/poly.rs`.\n\n## Scope\n\n- `pub struct FieldPoly<F: FiniteField> { coeffs: Vec<F> }` — ascending-degree storage.\n- Constructors: `new(coeffs)`, `zero_like(&F)`, `one_like(&F)`, `constant(F)`, `monomial(F, usize)`, `from_coeffs_trimmed(…)`.\n- Queries: `degree() -> Option<usize>` (None for zero), `is_zero()`, `coeff(i) -> F`, `leading_coeff()`, `len()`, `iter()`.\n- Normalisation: every constructor and mutating op trims trailing zero coefficients. Document prominently — this is the module's equivalent of the `mask_tail` invariant from `BitVec`.\n- Operators: `Add`, `Sub`, `Neg`, `AddAssign`, `SubAssign` (both owned and `&`-ref RHS).\n- Schoolbook `mul(&self, &Self) -> Self`. **Karatsuba is deferred to the next task**.\n- Scalar: `mul_scalar(&self, &F)`, in-place `scale(&mut self, &F)`.\n- Pretty `Debug` showing non-zero terms in descending degree.\n\n## Success criteria\n\n- Every public item has a doc comment with description, `# Arguments`, `# Examples` (compiled by `cargo test --doc`), `# Panics` if applicable, `# Complexity` for non-trivial ops.\n- Unit tests: constructors, normalisation (trailing zeros), zero polynomial, degree of constant, schoolbook over `Fp<7>` and `Gf2mElement`.\n- Proptests (≤64 cases each, to respect the 60s workspace-test budget): associativity `(a+b)+c == a+(b+c)`, distributivity `a*(b+c) == a*b + a*c`, `deg(a*b) == deg(a)+deg(b)` when neither is zero.\n- Re-exported from `crates/gf2-core/src/field/mod.rs`.\n- `#![deny(unsafe_code)]` preserved.\n\n## Out of scope\n\n- Karatsuba multiplication (separate task).\n- Division, GCD, evaluation (separate task).\n- Batch/NTT/interpolation (separate tasks).\n\n## Breakdown reference\n\nSee `dev/plans/bdf95060_breakdown.md` Task 1 (parent story: bdf95060).",
-  "state": "in_progress",
+  "description": "Introduce `FieldPoly<F: FiniteField>` in `crates/gf2-core/src/field/poly.rs` AND fully retire the `Gf2mPoly_<V>` duplication per the SSOT override (2026-04-19) and the \"everyone's responsibility — no deferred quality issues\" policy.\n\n## Original scope (delivered in session 2, retained)\n\n- `pub struct FieldPoly<F: FiniteField> { coeffs: Vec<F> }` — ascending-degree storage.\n- Constructors: `new(coeffs)`, `zero_like(&F)`, `one_like(&F)`, `constant(F)`, `monomial(F, usize)`, `from_coeffs_trimmed(…)`.\n- Queries: `degree() -> Option<usize>` (None for zero), `is_zero()`, `coeff(i) -> F`, `leading_coeff()`, `len()`, `iter()`.\n- Normalisation: trim trailing zero coefficients in every constructor and mutating op (the module's `mask_tail` equivalent).\n- Operators: `Add`, `Sub`, `Neg`, `AddAssign`, `SubAssign` (owned and `&`-ref RHS).\n- Schoolbook `mul(&self, &Self) -> Self`.\n- Scalar: `mul_scalar(&self, &F)`, in-place `scale(&mut self, &F)`.\n- Pretty `Debug` showing non-zero terms in descending degree.\n\n## Expanded scope: retire Gf2mPoly_ (SSOT override, 2026-04-19)\n\nThe reviewer correctly flagged `FieldPoly<F>` / `Gf2mPoly_<V>` as a parallel-implementation SSOT violation. The loophole granted by `dev/plans/bdf95060_breakdown.md` lines 19–20 and 240 is rescinded. Per the \"everyone's responsibility — no deferred quality issues\" policy, the cleanup must be complete in-place: **no `TODO(SSOT)` markers, no deferred migration to later tasks**.\n\n### Required\n\nPort every `Gf2mPoly_<V>` method that has a generic polynomial analogue to `FieldPoly<F>`, then make `Gf2mPoly_<V>` either a type alias `pub type Gf2mPoly_<V> = FieldPoly<Gf2mElement_<V>>` or retire it entirely by rewriting every `gf2-coding::bch` call-site to use `FieldPoly<Gf2mElement_<V>>`. Pick whichever yields fewer call-site changes.\n\nMethods to port to `FieldPoly<F>` (scope of this task):\n\n- **Karatsuba `mul`** — dispatch inside the `Mul` operator (schoolbook below a configurable threshold, Karatsuba above).\n- **`div_rem(&self, &Self) -> (Self, Self)`** — Euclidean division.\n- **`gcd(a: &Self, b: &Self) -> Self`** — polynomial GCD.\n- **`eval(&self, &F) -> F`** — Horner evaluation.\n- **`eval_batch(&self, &[F]) -> Vec<F>`** — naive per-point loop (the subproduct-tree algorithmic upgrade remains in Task 3, `2e7db385`).\n- **`from_roots(&[F]) -> Self`** — product of `(x - rᵢ)` factors.\n- **`product(&[Self]) -> Self`** — product of a slice of polynomials (naive linear fold; the balanced tree remains in Task 5, `a7c81834`).\n\nMethods that stay specialised to `Gf2m*` (these live on `Gf2mElement_<V>`, `Gf2mField_<V>`, or free functions in `gf2m/`):\n\n- `minimal_polynomial` — binary-field-specific (Frobenius orbit computation). Move to `Gf2mElement_<V>::minimal_polynomial(&self) -> FieldPoly<Gf2mElement_<V>>`.\n- `from_exponents`, `from_bitvec`, `to_bitvec`, `from_bitvec_reversed`, `to_bitvec_reversed`, `to_bitvec_minimal`, `x(field)` — binary-representation encoding helpers. Move to free functions `gf2m::poly::from_exponents`, `gf2m::poly::from_bitvec`, etc., or to extension methods `Gf2mFieldExt::poly_from_bitvec`. All return `FieldPoly<Gf2mElement_<V>>`.\n\n### Call-site audit\n\nEnumerate every `gf2-coding::bch` call-site that touches `Gf2mPoly`, `Gf2mPoly_`, or the Gf2m-specific helpers. Known entry points (grep-confirmed): `crates/gf2-coding/src/bch/core.rs` (18 occurrences), `crates/gf2-coding/src/bch/dvb_t2/generators.rs` (9 occurrences). Record the call-site table in the commit message.\n\n### Regression confirmation\n\nRe-run all DVB-T2 / BCH / Reed–Solomon test vectors and confirm bit-exact output. Run the full workspace test suite in release mode and confirm ≤ 60s wall-clock.\n\n## Success criteria\n\n- Every public item has a doc comment with description, `# Arguments`, `# Examples` (compiled by `cargo test --doc`), `# Panics` if applicable, `# Complexity` for non-trivial ops.\n- Unit tests for each ported method on `FieldPoly<F>`: constructors, normalisation (trailing zeros), zero polynomial, schoolbook + Karatsuba cross-verify over `Fp<7>` and `Gf2mElement`, `div_rem` identity (`a = q*b + r` with `deg(r) < deg(b)`), `gcd` correctness (Bézout's identity on random pairs), Horner `eval` against direct polynomial expansion, `from_roots` round-trip.\n- Proptests (≤64 cases each to respect the 60s test budget): associativity, distributivity, `deg(a*b) == deg(a)+deg(b)`, `div_rem` identity over `Fp<P>` and `Gf2mElement_<V>`, `gcd` is commutative and divides both inputs.\n- Re-exported from `crates/gf2-core/src/field/mod.rs`.\n- `#![deny(unsafe_code)]` preserved.\n- **SSOT**: zero duplicate implementations. Specifically, no `Gf2mPoly_<V>` method body contains arithmetic/algorithmic code that also exists in `FieldPoly<F>` — either the method delegates, the type is a thin alias, or the old type is removed.\n- All existing `gf2-coding` tests pass (`cargo test -p gf2-coding --release`); full workspace test suite ≤ 60s wall-clock.\n- DVB-T2 / BCH / Reed–Solomon test vectors unchanged numerically.\n- **No `TODO(SSOT)`, `FIXME(ssot)`, or equivalent \"migrate later\" markers in the final diff.**\n\n## Out of scope (genuinely new work, remains in later tasks)\n\n- Subproduct-tree batch evaluation (Task 3, `2e7db385`): algorithmic upgrade over the naive `eval_batch` ported in this task.\n- Lagrange interpolation (Task 4, `3cff65f7`): new capability, not in `Gf2mPoly_`.\n- Balanced-product tree + batch GCD (Task 5, `a7c81834`): new capability.\n- NTT-based multiplication for `TwoAdicField` (Task 7, `e0b6f940`): new capability built on Task 6's trait.\n- Module docstring + consolidated bench harness (Task 8, `224a7d9e`).\n\n## Breakdown reference\n\n- `dev/plans/bdf95060_breakdown.md` Task 1 (parent story: `bdf95060`).\n- `dev/active/e095a100-handoff-2.md` — SSOT override policy (2026-04-19).\n- Memory: `feedback_everyones_responsibility.md` — no deferred quality issues.\n\n## Note on downstream tasks\n\nThis expansion subsumes the arithmetic deliverables of Task 2 (`d9c3d414`: div_rem, gcd, Horner, Karatsuba). After 70972f06 closes, `d9c3d414` will be rejected with reason \"subsumed by 70972f06 per SSOT override\" and its lineage preserved in the rejection note. The remaining bdf95060 tasks (3, 4, 5, 7, 8) deliver genuinely new capability on top of the unified `FieldPoly<F>` surface.",
+  "state": "done",
   "priority": "low",
   "assignee": "agent:claude",
   "dependencies": [],
@@ -12,15 +12,20 @@
     "cargo-ci"
   ],
   "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-19T15:46:41.467216247Z"
+    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-04-19T03:43:04.111029156Z"
+      "updated_at": "2026-04-19T15:19:58.532615704Z"
     },
-    "code-review": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-19T03:46:42.425437236Z"
+    "doc-review": {
+      "status": "passed",
+      "updated_by": null,
+      "updated_at": "2026-04-19T15:56:52.137084621Z"
     }
   },
   "context": {},
@@ -29,8 +34,9 @@
     "type:task",
     "component:gf2-core",
     "epic:e095a100",
-    "story:bdf95060"
+    "story:bdf95060",
+    "component:gf2-coding"
   ],
   "created_at": "2026-04-18T21:55:55.753048086+00:00",
-  "updated_at": "2026-04-19T03:54:46.205267936+00:00"
+  "updated_at": "2026-04-19T15:57:03.782624433+00:00"
 }

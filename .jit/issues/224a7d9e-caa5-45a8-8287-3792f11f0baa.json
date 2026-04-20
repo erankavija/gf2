@@ -1,8 +1,8 @@
 {
   "id": "224a7d9e-caa5-45a8-8287-3792f11f0baa",
   "title": "FieldPoly integration docs + bench consolidation",
-  "description": "Close-out task for the bdf95060 story: consolidate docs, bench, and add a narrow integration helper.\n\n## Scope\n\n- Module-level docstring in `crates/gf2-core/src/field/poly.rs` enumerates all operations with complexity, mirroring the table in `batch_ops.rs`.\n- Consolidated bench harness `crates/gf2-core/benches/field_poly.rs`: `batch_evaluate` vs Horner (from Task 3), `interpolate_fast` vs `interpolate` (from Task 4), `mul_ntt` vs Karatsuba (from Task 7). Regenerate tables; paste into the module docstring.\n- Narrow integration helper `pub(crate) fn gf2m_poly_to_field_poly(&Gf2mPoly) -> FieldPoly<Gf2mElement>` and its inverse, in `crates/gf2-core`. Proptest-level round-trip test. **No bch rewrite** — out of scope.\n- Short overview `dev/plans/field_poly_module_overview.md` linking each API to its algorithmic reference.\n\n## Success criteria\n\n- `cargo test --workspace --all-features --release` ≤ 60s (CLAUDE.md rule). If this task pushes budget, move long proptests behind `#[ignore]`.\n- All three gates pass: `code-review`, `doc-review`, `cargo-ci`.\n- Round-trip proptest passes for `gf2m_poly_to_field_poly`.\n\n## Depends on\n\nTasks 3, 4, 5, 7.\n\n## Breakdown reference\n\nSee `dev/plans/bdf95060_breakdown.md` Task 8.",
-  "state": "backlog",
+  "description": "Close-out task for the `bdf95060` story: consolidate module documentation and bench harness.\n\n## Scope\n\n- Module-level docstring in `crates/gf2-core/src/field/poly.rs` enumerates every operation with complexity, mirroring the table in `batch_ops.rs`.\n- Consolidated bench harness `crates/gf2-core/benches/field_poly.rs`: `batch_evaluate` vs naive Horner (from Tasks 1/3), `interpolate_fast` vs quadratic `interpolate` (from Task 4), `mul_ntt` vs Karatsuba (from Task 7). Regenerate tables; paste them into the module docstring.\n- Short overview `dev/plans/field_poly_module_overview.md` linking each API to its algorithmic reference.\n\n## Scope removed (2026-04-19, SSOT override)\n\nThe previously-scoped \"narrow integration helper `gf2m_poly_to_field_poly(&Gf2mPoly) -> FieldPoly<Gf2mElement>`\" bullet is **removed**. Under the SSOT override, `Gf2mPoly_<V>` is fully retired or becomes a type alias for `FieldPoly<Gf2mElement_<V>>` as part of `70972f06`'s closing rework, so no cross-type conversion helper is needed.\n\n## Success criteria\n\n- `cargo test --workspace --all-features --release` ≤ 60s (CLAUDE.md rule). If this task pushes budget, move long proptests behind `#[ignore]`.\n- All three gates pass: `code-review`, `doc-review`, `cargo-ci`.\n- Module docstring enumerates every public operation with its complexity.\n- Bench harness produces tables for all three comparisons listed above.\n\n## Depends on\n\nTasks 3 (`2e7db385`), 4 (`3cff65f7`), 5 (`a7c81834`), 7 (`e0b6f940`).\n\n## Breakdown reference\n\nSee `dev/plans/bdf95060_breakdown.md` Task 8.",
+  "state": "ready",
   "priority": "low",
   "assignee": null,
   "dependencies": [
@@ -26,5 +26,5 @@
     "story:bdf95060"
   ],
   "created_at": "2026-04-18T21:57:11.858297020+00:00",
-  "updated_at": "2026-04-18T21:57:30.009387133+00:00"
+  "updated_at": "2026-04-20T14:51:38.453112039+00:00"
 }
