@@ -6,10 +6,18 @@
 //!
 //! # Two implementations
 //!
-//! | Function | Algorithm | Complexity |
-//! |----------|-----------|------------|
-//! | [`interpolate`] | Lagrange barycentric O(n²) | `O(n²)` field ops |
-//! | [`interpolate_fast`] | Subproduct-tree O(n log² n) | `O(n log² n)` field ops |
+//! | Function | Algorithm | Complexity (current) | Target complexity |
+//! |----------|-----------|---------------------:|------------------:|
+//! | [`interpolate`] | Lagrange barycentric | `O(n²)` field ops | `O(n²)` |
+//! | [`interpolate_fast`] | Subproduct-tree | `O(n² log n)` field ops¹ | `O(n log² n)` |
+//!
+//! ¹ `interpolate_fast` achieves its target `O(n log² n)` once a fast
+//! polynomial-division primitive lands (see `e0b6f940`, which adds an NTT
+//! entry point, and `2e7db385`, which gates `SUBPRODUCT_THRESHOLD` on the
+//! availability of fast `div_rem`). With today's schoolbook `div_rem` the
+//! fast path still beats naive at every measured `n ≥ 8` on `Fp<65537>`
+//! (see the benchmark table below), but the absolute asymptotic stays at
+//! `O(n² log n)` until that follow-up work.
 //!
 //! [`interpolate_auto`] is the recommended entry point: it dispatches to
 //! [`interpolate_fast`] for `n ≥ INTERPOLATE_THRESHOLD` (currently 16) and to
