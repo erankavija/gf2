@@ -17,8 +17,11 @@
 //!
 //! # Running
 //!
+//! The bench target is feature-gated on `simd` (see
+//! `crates/gf2-core/Cargo.toml`), so the `--features` flag is required:
+//!
 //! ```text
-//! cargo bench -p gf2-core --bench gf2m_wide_mul -- --quick
+//! cargo bench -p gf2-core --bench gf2m_wide_mul --features simd -- --quick
 //! ```
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
