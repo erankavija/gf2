@@ -226,45 +226,59 @@
 //! `Fp<65537>`. The only cell where the subproduct tree wins is the
 //! (`n = 4096`, `k = 4096`) corner through the `subproduct_auto`
 //! arm — that is the measured crossover that pins
-//! [`SUBPRODUCT_THRESHOLD`] at `4096`.
+//! [`SUBPRODUCT_THRESHOLD`] at `4096`. The `dispatcher` arm routes
+//! through `batch_evaluate_subproduct` (schoolbook
+//! [`FieldPoly::div_rem`]) above the threshold and through naive
+//! Horner below; at the `(4096, 4096)` cell the dispatcher tracks
+//! `subproduct` (both ~80 ms) because that is the arm it delegates
+//! to, while the separate `subproduct_auto` arm wins on that cell
+//! because it takes the Newton-iteration
+//! [`FieldPoly::div_rem_auto`] path.
 //!
 //! | `n`  | `k`  | naive Horner | dispatcher | subproduct | subproduct_auto |
 //! |-----:|-----:|-------------:|-----------:|-----------:|----------------:|
-//! |   16 |   16 |     0.88 µs  |    0.88 µs |    6.65 µs |         6.69 µs |
-//! |   16 |   64 |     3.56 µs  |    3.54 µs |   34.6 µs  |        34.8 µs  |
-//! |   16 |  256 |     14.0 µs  |    14.7 µs |   214.2 µs |       216.0 µs  |
-//! |   16 | 1024 |     55.9 µs  |    56.0 µs |    1.50 ms |         1.50 ms |
-//! |   16 | 4096 |    223.2 µs  |   224.3 µs |   12.10 ms |        12.06 ms |
-//! |   64 |   16 |     3.71 µs  |    3.73 µs |   12.4 µs  |        12.5 µs  |
-//! |   64 |   64 |     14.9 µs  |    15.4 µs |   54.8 µs  |        54.6 µs  |
-//! |   64 |  256 |     59.1 µs  |    61.7 µs |   292.1 µs |       291.9 µs  |
-//! |   64 | 1024 |    236.5 µs  |   237.3 µs |    1.82 ms |         1.82 ms |
-//! |   64 | 4096 |    945.8 µs  |   950.0 µs |   13.37 ms |        13.38 ms |
-//! |  256 |   16 |     14.7 µs  |    15.2 µs |   35.9 µs  |        35.3 µs  |
-//! |  256 |   64 |     59.0 µs  |    59.4 µs |   116.3 µs |       116.0 µs  |
-//! |  256 |  256 |    248.5 µs  |   237.4 µs |   520.3 µs |       520.5 µs  |
-//! |  256 | 1024 |    940.5 µs  |   953.3 µs |    2.74 ms |         2.75 ms |
-//! |  256 | 4096 |     3.78 ms  |    3.80 ms |   17.05 ms |        17.10 ms |
-//! | 1024 |   16 |     58.6 µs  |    59.4 µs |   127.6 µs |       127.6 µs  |
-//! | 1024 |   64 |    234.8 µs  |   237.5 µs |   359.3 µs |       358.0 µs  |
-//! | 1024 |  256 |    940.1 µs  |   957.8 µs |    1.35 ms |         1.36 ms |
-//! | 1024 | 1024 |     3.75 ms  |    3.80 ms |    6.00 ms |         5.98 ms |
-//! | 1024 | 4096 |    15.08 ms  |   15.20 ms |   30.07 ms |        30.13 ms |
-//! | 4096 |   16 |    241.7 µs  |   246.8 µs |   499.2 µs |       496.4 µs  |
-//! | 4096 |   64 |    967.7 µs  |   950.2 µs |    1.34 ms |         1.34 ms |
-//! | 4096 |  256 |     3.91 ms  |    3.80 ms |    4.67 ms |         4.63 ms |
-//! | 4096 | 1024 |    15.52 ms  |   15.21 ms |   18.78 ms |        19.02 ms |
-//! | 4096 | 4096 |    62.13 ms  |   60.87 ms |   80.17 ms |    **53.92 ms** |
+//! |   16 |   16 |     0.88 µs  |    0.88 µs |    6.70 µs |         6.74 µs |
+//! |   16 |   64 |     3.59 µs  |    3.50 µs |   35.05 µs |        35.19 µs |
+//! |   16 |  256 |    14.00 µs  |   13.99 µs |  211.51 µs |       212.08 µs |
+//! |   16 | 1024 |    55.92 µs  |   55.79 µs |    1.50 ms |         1.50 ms |
+//! |   16 | 4096 |   223.48 µs  |  223.77 µs |   12.08 ms |        12.14 ms |
+//! |   64 |   16 |     3.75 µs  |    3.76 µs |   12.57 µs |        12.60 µs |
+//! |   64 |   64 |    14.95 µs  |   14.81 µs |   55.45 µs |        55.16 µs |
+//! |   64 |  256 |    59.74 µs  |   59.74 µs |  288.67 µs |       291.78 µs |
+//! |   64 | 1024 |   238.91 µs  |  238.88 µs |    1.82 ms |         1.84 ms |
+//! |   64 | 4096 |   957.27 µs  |  947.72 µs |   13.45 ms |        13.52 ms |
+//! |  256 |   16 |    14.87 µs  |   15.17 µs |   35.51 µs |        35.65 µs |
+//! |  256 |   64 |    60.14 µs  |   59.81 µs |  115.02 µs |       115.11 µs |
+//! |  256 |  256 |   236.65 µs  |  237.19 µs |  516.76 µs |       517.53 µs |
+//! |  256 | 1024 |   958.34 µs  |  958.31 µs |    2.73 ms |         2.72 ms |
+//! |  256 | 4096 |     3.84 ms  |    3.80 ms |   17.18 ms |        17.15 ms |
+//! | 1024 |   16 |    59.75 µs  |   59.42 µs |  127.33 µs |       128.26 µs |
+//! | 1024 |   64 |   235.88 µs  |  237.28 µs |  358.91 µs |       358.25 µs |
+//! | 1024 |  256 |   943.62 µs  |  950.53 µs |    1.34 ms |         1.34 ms |
+//! | 1024 | 1024 |     3.80 ms  |    3.82 ms |    5.98 ms |         5.97 ms |
+//! | 1024 | 4096 |    15.10 ms  |   15.18 ms |   29.92 ms |        30.05 ms |
+//! | 4096 |   16 |   238.16 µs  |  240.08 µs |  495.40 µs |       499.33 µs |
+//! | 4096 |   64 |   943.80 µs  |  964.53 µs |    1.32 ms |         1.34 ms |
+//! | 4096 |  256 |     3.78 ms  |    3.80 ms |    4.62 ms |         4.67 ms |
+//! | 4096 | 1024 |    15.21 ms  |   15.36 ms |   18.63 ms |        18.56 ms |
+//! | 4096 | 4096 |    60.89 ms  |   80.39 ms |   80.26 ms |    **54.29 ms** |
 //!
 //! **Naive Horner wins at every measured `(n, k)` cell except the
 //! (`n = 4096`, `k = 4096`) corner**, where the `subproduct_auto` arm
-//! pulls ahead at `0.87×` of naive (53.92 ms vs 62.13 ms). This is
+//! pulls ahead at `0.89×` of naive (54.29 ms vs 60.89 ms). This is
 //! the crossover that fixes [`SUBPRODUCT_THRESHOLD`] at `4096`. The
-//! raw `subproduct` arm (schoolbook [`FieldPoly::div_rem`]) stays
-//! slower than `subproduct_auto` whenever either operand exceeds
-//! [`DIV_REM_THRESHOLD`] = 2048 and the Newton-iteration primitive
-//! fires; below that, the two arms match because
-//! [`FieldPoly::div_rem_auto`] delegates to [`FieldPoly::div_rem`].
+//! `dispatcher` arm at that corner routes through the schoolbook
+//! `subproduct` path (both land at ~80 ms), which is ~1.32× slower
+//! than naive — the documented regression for the generic entry
+//! point on cheap-scalar fields. Callers on [`TwoAdicField`] should
+//! reach for [`FieldPoly::batch_evaluate_auto`] to pick up the
+//! winning `subproduct_auto` path automatically. The raw
+//! `subproduct` arm (schoolbook [`FieldPoly::div_rem`]) stays close
+//! to `subproduct_auto` whenever both inputs remain below
+//! [`DIV_REM_THRESHOLD`] = 2048 because
+//! [`FieldPoly::div_rem_auto`] delegates to [`FieldPoly::div_rem`];
+//! above the `div_rem_auto` crossover the two arms diverge as the
+//! Newton-iteration primitive kicks in.
 //!
 //! This confirms the scalar-field cost profile: a single `Fp<65537>`
 //! multiplication is ≈ 3.6 ns (inlined Barrett-style reduction over
@@ -2029,12 +2043,13 @@ pub const KARATSUBA_THRESHOLD: usize = 32;
 /// per-node reductions through the Newton-iteration
 /// [`FieldPoly::div_rem_auto`] primitive (issue `ae0c7e1f`,
 /// [`DIV_REM_THRESHOLD`] = 2048) — sits at `n = k = 4096` on the
-/// reference Zen 3 host (53.9 ms `subproduct_auto` vs 62.1 ms naive,
-/// a `0.87×` win). The generic [`FieldPoly::batch_evaluate`] never
-/// strictly beats naive at any measured cell on `Fp<65537>`, so
-/// sharing the 4096 threshold incurs a small regression (≈ `1.3×`
-/// at `n = k = 4096`) on the generic path; the regression is
-/// tolerable because (a) most `TwoAdicField`-eligible workloads
+/// reference Zen 3 host (54.29 ms `subproduct_auto` vs 60.89 ms
+/// naive, a `0.89×` win). The generic [`FieldPoly::batch_evaluate`]
+/// never strictly beats naive at any measured cell on `Fp<65537>`,
+/// so sharing the 4096 threshold incurs a small regression (≈ 1.32×
+/// at `n = k = 4096` — the dispatcher lands at 80.39 ms via the
+/// schoolbook subproduct arm) on the generic path; the regression
+/// is tolerable because (a) most `TwoAdicField`-eligible workloads
 /// should use the `_auto` variant anyway, and (b) fields with more
 /// expensive scalar arithmetic (large-prime Montgomery, tower
 /// extensions) invert the comparison at smaller sizes.
@@ -4893,6 +4908,88 @@ mod tests {
             let fast = batch_evaluate_subproduct_auto(&poly, &points);
             let naive: Vec<FP65537> = points.iter().map(|x| poly.eval(x)).collect();
             prop_assert_eq!(fast, naive);
+        }
+    }
+
+    // Straddle-SUBPRODUCT_THRESHOLD proptest for the public
+    // dispatcher `FieldPoly::batch_evaluate` (issue `046f95c1`
+    // finding 3). Picks sizes from a pre-approved set that includes
+    // cells on both sides of SUBPRODUCT_THRESHOLD = 4096 so both
+    // branches (naive-Horner fallback below threshold, subproduct-
+    // tree above) are exercised against a per-point Horner reference
+    // over `Fp<65537>`. Uses weighted `prop_oneof!` to keep the suite
+    // wall-clock under the 60s budget: small sizes dominate the
+    // sample, with the 4096 and 8192 cells firing rarely enough to
+    // amortise their ~80 ms / ~300 ms per-case cost across the 500
+    // default runs.
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(500))]
+
+        /// Agreement: the public [`FieldPoly::batch_evaluate`]
+        /// dispatcher matches per-point Horner on ≥ 500 random
+        /// inputs over `Fp<65537>`, with input sizes drawn from a
+        /// set that straddles [`SUBPRODUCT_THRESHOLD`] = 4096: the
+        /// pool `{16, 1024, 4096, 8192}` guarantees coverage of
+        /// both the "below threshold" (naive Horner fallback) and
+        /// "at/above threshold" (subproduct-tree) branches. Weights
+        /// are tuned so the expensive 4096/8192 cells fire often
+        /// enough to catch regressions but rarely enough to keep the
+        /// full test suite under the 60 s budget.
+        #[test]
+        fn prop_batch_evaluate_dispatcher_matches_horner_straddling_threshold_fp65537(
+            // Weighted size sampler: 16 and 1024 are cheap (below
+            // threshold) and carry the majority of cases; 4096 is
+            // the crossover cell (dispatcher routes through the
+            // subproduct tree — ~80 ms per case); 8192 is strictly
+            // above in both dimensions (~300 ms per case, so capped
+            // tight).
+            n in prop_oneof![
+                50 => Just(16usize),
+                30 => Just(1024usize),
+                10 => Just(4096usize),
+                1 => Just(8192usize),
+            ],
+            k in prop_oneof![
+                50 => Just(16usize),
+                30 => Just(1024usize),
+                10 => Just(4096usize),
+                1 => Just(8192usize),
+            ],
+            poly_seed in 0u64..65537,
+            point_seed in 0u64..65537,
+        ) {
+            // Build poly of length n with a guaranteed non-zero
+            // leading coefficient so degree == n - 1 (matching the
+            // bench harness's `make_poly(n)` convention).
+            let modulus: u64 = 65537;
+            let mut coeffs: Vec<FP65537> = (0..n)
+                .map(|i| {
+                    let v = ((i as u64)
+                        .wrapping_mul(0x9E3779B1)
+                        .wrapping_add(poly_seed)
+                        % (modulus - 1))
+                        + 1;
+                    fp65537(v)
+                })
+                .collect();
+            *coeffs.last_mut().unwrap() = fp65537(1);
+            let poly = FieldPoly::new(coeffs);
+
+            let points: Vec<FP65537> = (0..k)
+                .map(|i| {
+                    fp65537(
+                        ((i as u64)
+                            .wrapping_mul(1_000_003)
+                            .wrapping_add(point_seed)
+                            % (modulus - 1))
+                            + 1,
+                    )
+                })
+                .collect();
+
+            let via_dispatcher = poly.batch_evaluate(&points);
+            let naive: Vec<FP65537> = points.iter().map(|x| poly.eval(x)).collect();
+            prop_assert_eq!(via_dispatcher, naive);
         }
     }
 
