@@ -876,7 +876,42 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
         // so `Gf2mWide` pays no algorithmic duplication — only the
         // heap-allocated scratch buffer that MSRV forces on us.
         let mut product = vec![0u64; 2 * N];
-        clmul_wide_slice::<N>(&self.words, &rhs.words, &mut product);
+
+        // SIMD fast-path: for N == 4 (GF(2^256)) and available PCLMULQDQ,
+        // delegate the 4×4 schoolbook to the dispatched kernel in
+        // `gf2-kernels-simd`. The kernel is exposed as a safe `fn` pointer
+        // (unsafe intrinsics are isolated in the kernels crate), so this
+        // branch remains `#![deny(unsafe_code)]`-clean. Other `N` values and
+        // hosts without PCLMULQDQ fall through to the scalar schoolbook.
+        #[cfg(feature = "simd")]
+        let simd_taken = if N == 4 {
+            if let Some(fns) = crate::simd::maybe_gf2m_wide256() {
+                // `N == 4` was checked above; the `try_into` conversions are
+                // infallible and monomorphise away.
+                let a_arr: &[u64; 4] = (&self.words[..])
+                    .try_into()
+                    .expect("N == 4 guarantees a 4-limb slice");
+                let b_arr: &[u64; 4] = (&rhs.words[..])
+                    .try_into()
+                    .expect("N == 4 guarantees a 4-limb slice");
+                let out_arr: &mut [u64; 8] = (&mut product[..])
+                    .try_into()
+                    .expect("2 * N == 8 guarantees an 8-limb slice");
+                (fns.clmul)(a_arr, b_arr, out_arr);
+                true
+            } else {
+                false
+            }
+        } else {
+            false
+        };
+
+        #[cfg(not(feature = "simd"))]
+        let simd_taken = false;
+
+        if !simd_taken {
+            clmul_wide_slice::<N>(&self.words, &rhs.words, &mut product);
+        }
 
         // Step 2: Barrett-reduce the 2N-word product back to N words, via the
         // shared `BarrettReducerWide::reduce_slice` primitive.
@@ -2970,6 +3005,50 @@ mod tests {
                 } else {
                     prop_assert!(a.inverse().is_none());
                 }
+            }
+        }
+
+        /// Reference scalar 4×4 schoolbook carry-less multiply, reduced with
+        /// the shared `BarrettReducerWide` — kept here as an independent
+        /// copy of the code path so the agreement test does not re-use the
+        /// same primitives that `Gf2mWide::mul_ref` itself calls.
+        fn scalar_reference_mul(
+            a: &Gf2mWide<4, Gf2m256TestConfig>,
+            b: &Gf2mWide<4, Gf2m256TestConfig>,
+        ) -> Gf2mWide<4, Gf2m256TestConfig> {
+            let mut product = [0u64; 8];
+            // `clmul_wide_slice` has no SIMD path of its own; it always runs
+            // the scalar bit-by-bit clmul → Barrett pipeline. On SIMD hosts
+            // `Mul::mul` takes the VPCLMULQDQ path, so this comparison
+            // covers both.
+            super::clmul_wide_slice::<4>(a.words(), b.words(), &mut product);
+            let reducer = super::BarrettReducerWide::<4>::new(Gf2m256TestConfig::MODULUS, 256);
+            let reduced = reducer.reduce_slice(&product);
+            Gf2mWide::<4, Gf2m256TestConfig>::from_words(reduced)
+        }
+
+        proptest! {
+            #![proptest_config(ProptestConfig::with_cases(100))]
+
+            /// Unconditional agreement test for the N=4 multiplication path.
+            ///
+            /// On SIMD hosts (VPCLMULQDQ present, Zen 3 and similar)
+            /// `Gf2mWide::<4, _>::mul` dispatches through the kernel in
+            /// `gf2-kernels-simd::gf2m_wide`. On hosts without PCLMULQDQ
+            /// the dispatch falls back to the pure-Rust scalar schoolbook.
+            /// Either way the result must equal the independent reference
+            /// implementation in `scalar_reference_mul`.
+            #[test]
+            fn prop_simd_matches_scalar_reference_m256(
+                xs in any_4_words(),
+                ys in any_4_words(),
+            ) {
+                let a = Gf2mWide::<4, Gf2m256TestConfig>::new(xs);
+                let b = Gf2mWide::<4, Gf2m256TestConfig>::new(ys);
+                let got = a * b;
+                let expected = scalar_reference_mul(&a, &b);
+                prop_assert_eq!(got, expected,
+                    "SIMD/scalar disagreement for a={:?}, b={:?}", a, b);
             }
         }
     }

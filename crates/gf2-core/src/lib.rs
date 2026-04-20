@@ -68,6 +68,7 @@ pub use sparse::{SpBitMatrix, SpBitMatrixDual};
 pub(crate) mod simd {
     use gf2_kernels_simd::fp65537::Fp65537Fns;
     use gf2_kernels_simd::gf2m::Gf2mFns;
+    use gf2_kernels_simd::gf2m_wide::ClmulWide256Fns;
     use gf2_kernels_simd::mersenne::MersenneFns;
     use gf2_kernels_simd::LogicalFns;
     use std::sync::OnceLock;
@@ -76,6 +77,7 @@ pub(crate) mod simd {
     static GF2M_FNS: OnceLock<Option<Gf2mFns>> = OnceLock::new();
     static MERSENNE_FNS: OnceLock<Option<MersenneFns>> = OnceLock::new();
     static FP65537_FNS: OnceLock<Option<Fp65537Fns>> = OnceLock::new();
+    static GF2M_WIDE256_FNS: OnceLock<Option<ClmulWide256Fns>> = OnceLock::new();
 
     #[inline]
     pub fn maybe_simd() -> Option<&'static LogicalFns> {
@@ -115,6 +117,21 @@ pub(crate) mod simd {
             .get_or_init(gf2_kernels_simd::fp65537::detect)
             .as_ref()
     }
+
+    /// Returns the best available 4-limb (GF(2^256)) carry-less multiply
+    /// kernel, if any.
+    ///
+    /// Preference order: AVX-512VL+VPCLMULQDQ → AVX2+VPCLMULQDQ → PCLMULQDQ
+    /// scalar-lane. The kernel produces only the unreduced 8-limb carry-less
+    /// product; Barrett reduction is applied by the caller. Returns `None`
+    /// when no PCLMULQDQ is present; callers must fall back to the pure-Rust
+    /// scalar `clmul_wide` implementation.
+    #[inline]
+    pub fn maybe_gf2m_wide256() -> Option<&'static ClmulWide256Fns> {
+        GF2M_WIDE256_FNS
+            .get_or_init(gf2_kernels_simd::gf2m_wide::detect)
+            .as_ref()
+    }
 }
 
 #[cfg(not(feature = "simd"))]
@@ -134,6 +151,12 @@ pub(crate) mod simd {
     #[allow(dead_code)]
     #[inline]
     pub fn maybe_fp65537() -> Option<()> {
+        None
+    }
+
+    #[allow(dead_code)]
+    #[inline]
+    pub fn maybe_gf2m_wide256() -> Option<()> {
         None
     }
 }
