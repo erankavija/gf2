@@ -81,11 +81,13 @@
 //! |-----------|----------|-----------:|-------------------|
 //! | [`FieldPoly::eval`] | Horner | `O(n)` | — |
 //! | [`FieldPoly::eval_batch`] | `k` independent Horner folds | `O(n · k)` | — |
-//! | [`FieldPoly::batch_evaluate`] | Auto-dispatch: naive Horner ⇄ subproduct tree | `O(n · k)` (current) / `O(M(n) · log k)` (target, pending subproduct-tree integration with [`div_rem_auto`]) | [`SUBPRODUCT_THRESHOLD`] = `usize::MAX` today |
-//! | [`batch_evaluate_subproduct`] (free fn) | Unconditional subproduct tree | `O(n · k + k² log k)` (current) / `O(M(n) · log k)` (target) | Bypasses the threshold gate. |
+//! | [`FieldPoly::batch_evaluate`] | Auto-dispatch: naive Horner ⇄ subproduct tree (schoolbook [`FieldPoly::div_rem`]) | `O(n · k)` below threshold, `O(n · k + k² log k)` above | [`SUBPRODUCT_THRESHOLD`] = 4096 |
+//! | [`FieldPoly::batch_evaluate_auto`] (for `F: TwoAdicField`) | Auto-dispatch: naive Horner ⇄ subproduct tree (Newton-iteration [`FieldPoly::div_rem_auto`]) | `O(n · k)` below threshold, `O(M(n) · log k + k² log k)` above | [`SUBPRODUCT_THRESHOLD`] = 4096 |
+//! | [`batch_evaluate_subproduct`] (free fn) | Unconditional subproduct tree, schoolbook [`FieldPoly::div_rem`] | `O(n · k + k² log k)` | Bypasses the threshold gate. |
+//! | [`batch_evaluate_subproduct_auto`] (free fn, `F: TwoAdicField`) | Unconditional subproduct tree, Newton-iteration [`FieldPoly::div_rem_auto`] | `O(M(n) · log k + k² log k)` above [`DIV_REM_THRESHOLD`] | Bypasses the threshold gate. |
 //! | [`build_subproduct_tree`] (free fn) | Balanced pair-merge | `O(k · M(k))` polynomial mults | Single source of truth shared by `batch_evaluate` and `interpolate_fast`. |
 //! | [`interpolate`] (see [`crate::field::poly_interpolate`]) | Barycentric Lagrange + `batch_inverse` | `O(n²)` field ops | — |
-//! | [`interpolate_fast`] (see [`crate::field::poly_interpolate`]) | Subproduct-tree Lagrange | `O(n² log n)` today / `O(n log² n)` once the subproduct tree routes its reductions through [`div_rem_auto`] | — |
+//! | [`interpolate_fast`] (see [`crate::field::poly_interpolate`]) | Subproduct-tree Lagrange over [`FieldPoly::batch_evaluate`] | `O(n² log n)` with the generic substrate; [`TwoAdicField`] callers routing through [`FieldPoly::batch_evaluate_auto`] reach `O(n log² n)` above [`SUBPRODUCT_THRESHOLD`] | — |
 //! | [`interpolate_auto`] (see [`crate::field::poly_interpolate`]) | Dispatcher over the two above | picks the right asymptotic | [`INTERPOLATE_THRESHOLD`] = 16 |
 //! | [`formal_derivative`] (see [`crate::field::poly_interpolate`]) | Elementwise `i · coeffs[i]` | `O(n)` | — |
 //!
@@ -125,22 +127,32 @@
 //! [`INTERPOLATE_THRESHOLD`]: crate::field::poly_interpolate::INTERPOLATE_THRESHOLD
 //! [`formal_derivative`]: crate::field::poly_interpolate::formal_derivative
 //!
-//! # Known gaps and successor work
+//! # Fast-path integration status
 //!
-//! Fast polynomial division has now landed as [`FieldPoly::div_rem_fast`]
-//! (Newton iteration on the reversed-divisor series inverse) and the
-//! [`FieldPoly::div_rem_auto`] dispatcher, tuned via [`DIV_REM_THRESHOLD`]
-//! from the `field_poly_div_rem_fp65537` bench group. What is *not* yet
-//! done is wiring that substrate into the subproduct-tree path:
-//! [`SUBPRODUCT_THRESHOLD`] is still pinned to [`usize::MAX`] so the
-//! public [`FieldPoly::batch_evaluate`] entry point continues to route
-//! through the naive Horner loop, and [`interpolate_fast`] therefore
-//! still runs at `O(n² log n)` instead of its target `O(n log² n)`.
-//! The follow-up task `046f95c1` switches the subproduct reduction to
-//! `div_rem_auto`, lowers `SUBPRODUCT_THRESHOLD` to the empirical
-//! crossover point, re-benches `interpolate_fast`, and refreshes the
-//! tables below. After that lands, all three fast paths activate
-//! without any further API churn.
+//! All three of the high-leverage fast paths for this module have
+//! now landed:
+//!
+//! - Fast polynomial division — [`FieldPoly::div_rem_fast`] (Newton
+//!   iteration on the reversed-divisor series inverse) and the
+//!   [`FieldPoly::div_rem_auto`] dispatcher tuned via
+//!   [`DIV_REM_THRESHOLD`] (issue `ae0c7e1f`).
+//! - NTT-backed polynomial multiplication — [`FieldPoly::mul_ntt`]
+//!   and the [`mul_fast`] dispatcher tuned via [`NTT_THRESHOLD`]
+//!   (task `e0b6f940`).
+//! - Subproduct-tree batch evaluation wired through
+//!   [`FieldPoly::div_rem_auto`] — [`batch_evaluate_subproduct_auto`]
+//!   and the [`FieldPoly::batch_evaluate_auto`] dispatcher tuned via
+//!   [`SUBPRODUCT_THRESHOLD`] (issue `046f95c1`, this task).
+//!
+//! [`FieldPoly::batch_evaluate`] (the generic dispatcher on
+//! `F: FiniteField`) keeps schoolbook [`FieldPoly::div_rem`] for the
+//! reduction phase because Rust coherence on MSRV-1.80 does not permit
+//! a specialised `impl` that swaps in [`FieldPoly::div_rem_auto`] for
+//! [`TwoAdicField`] operands. Callers on [`TwoAdicField`] should
+//! prefer [`FieldPoly::batch_evaluate_auto`] (or the
+//! [`batch_evaluate_subproduct_auto`] free function) to pick up the
+//! Newton-iteration fast-division primitive automatically above
+//! [`DIV_REM_THRESHOLD`].
 //!
 //! # Scope covered here
 //!
@@ -167,13 +179,15 @@
 //! - Euclidean division [`FieldPoly::div_rem`] and GCD
 //!   [`FieldPoly::gcd`].
 //! - Evaluation: [`FieldPoly::eval`] (Horner),
-//!   [`FieldPoly::eval_batch`] (naive per-point loop), and
-//!   [`FieldPoly::batch_evaluate`] (subproduct-tree infrastructure
-//!   in place; asymptotic target `O(M(n) log k + k log² k)` requires
-//!   FFT / Newton-iteration fast division. With today's schoolbook
-//!   `div_rem` the tree path is `O(n · k + k² log k)` — see the
-//!   method docs and the benchmark table below for the detailed
-//!   dispatch policy).
+//!   [`FieldPoly::eval_batch`] (naive per-point loop),
+//!   [`FieldPoly::batch_evaluate`] (generic auto-dispatcher,
+//!   schoolbook-backed subproduct tree above
+//!   [`SUBPRODUCT_THRESHOLD`]), and — for `F: TwoAdicField` —
+//!   [`FieldPoly::batch_evaluate_auto`] (same dispatcher with the
+//!   Newton-iteration fast-division primitive
+//!   [`FieldPoly::div_rem_auto`] wired into the reduction phase, so
+//!   above [`DIV_REM_THRESHOLD`] the tree reaches
+//!   `O(M(n) log k + k² log k)`).
 //!
 //! Lagrange interpolation (task `3cff65f7`) and the radix-2 NTT
 //! (task `e0b6f940`) have already landed in their respective sibling
@@ -187,79 +201,87 @@
 //! cargo bench -p gf2-core --bench field_poly -- --quick
 //! ```
 //!
-//! on the reference host (AMD Ryzen 9 5900X, "Zen 3", x86-64) at commit
-//! `3d98431`. Numbers are median total wall-clock time per call reported
-//! by criterion's point estimate; `--quick` reduces measurement iterations
-//! but keeps the arms comparable within a single run. Regenerate with the
-//! same command; minor variance is expected across hosts and reruns.
+//! on the reference host (AMD Ryzen 9 5900X, "Zen 3", x86-64) after
+//! [`SUBPRODUCT_THRESHOLD`] was tuned in issue `046f95c1`. Numbers are
+//! median total wall-clock time per call reported by criterion's point
+//! estimate; `--quick` reduces measurement iterations but keeps the
+//! arms comparable within a single run. Regenerate with the same
+//! command; minor variance is expected across hosts and reruns.
 //!
-//! ## `batch_evaluate` — dispatcher, subproduct tree, and naive Horner
+//! ## `batch_evaluate` — dispatcher, subproduct tree (schoolbook and auto), and naive Horner
 //!
-//! The bench at `benches/field_poly.rs` runs three arms for each
-//! `(n, k)` cell: the public [`FieldPoly::batch_evaluate`] dispatcher,
-//! the raw subproduct path [`batch_evaluate_subproduct`] (bypassing the
-//! threshold gate), and the naive per-point Horner baseline
-//! (`points.iter().map(|x| poly.eval(x)).collect()`). While
-//! [`SUBPRODUCT_THRESHOLD`] is `usize::MAX` the dispatcher delegates to
-//! naive Horner on every size, so the dispatcher arm coincides with the
-//! naive arm in the current table and is omitted from the columns
-//! below for clarity. The dispatcher numbers will diverge from naive
-//! once the follow-up subproduct-tree integration task (`046f95c1`)
-//! routes the tree through [`div_rem_auto`] (the Newton-iteration fast
-//! division landed under `ae0c7e1f`) and lowers the tuned threshold
-//! below `usize::MAX`.
+//! The bench at `benches/field_poly.rs` runs four arms for each
+//! `(n, k)` cell: the public [`FieldPoly::batch_evaluate`] dispatcher
+//! (schoolbook-backed subproduct above [`SUBPRODUCT_THRESHOLD`]), the
+//! raw subproduct path [`batch_evaluate_subproduct`] bypassing the
+//! threshold gate (always schoolbook [`FieldPoly::div_rem`]), the
+//! [`TwoAdicField`]-specialised [`batch_evaluate_subproduct_auto`]
+//! bypass (routes reductions through [`FieldPoly::div_rem_auto`] —
+//! Newton-iteration fast division above [`DIV_REM_THRESHOLD`] = 2048),
+//! and the naive per-point Horner baseline
+//! (`points.iter().map(|x| poly.eval(x)).collect()`).
 //!
-//! The cells below therefore compare the raw subproduct-tree path
-//! against the naive per-point Horner baseline on a polynomial of
-//! length `n` evaluated at `k` points over `Fp<65537>`.
-//! `speedup = naive / subproduct`, so values **< 1** mean the naive
-//! per-point Horner baseline wins — that is what makes `usize::MAX` the
-//! right tuned threshold for this field today.
+//! The cells below show wall-clock time per call for each of the four
+//! arms on a polynomial of length `n` evaluated at `k` points over
+//! `Fp<65537>`. The only cell where the subproduct tree wins is the
+//! (`n = 4096`, `k = 4096`) corner through the `subproduct_auto`
+//! arm — that is the measured crossover that pins
+//! [`SUBPRODUCT_THRESHOLD`] at `4096`.
 //!
-//! | `n`  | `k`  | naive Horner | subproduct tree | naive/subproduct |
-//! |-----:|-----:|-------------:|----------------:|-----------------:|
-//! |   16 |   16 |      0.91 µs |         6.77 µs |            0.13× |
-//! |   16 |   64 |      3.62 µs |         35.4 µs |            0.10× |
-//! |   16 |  256 |      14.3 µs |        215.1 µs |            0.07× |
-//! |   16 | 1024 |      57.2 µs |         1.53 ms |            0.04× |
-//! |   64 |   16 |      3.98 µs |         12.6 µs |            0.32× |
-//! |   64 |   64 |      14.9 µs |         55.6 µs |            0.27× |
-//! |   64 |  256 |      59.6 µs |        297.3 µs |            0.20× |
-//! |   64 | 1024 |       238 µs |         1.86 ms |            0.13× |
-//! |  256 |   16 |      14.8 µs |         35.9 µs |            0.41× |
-//! |  256 |   64 |      58.8 µs |        117.3 µs |            0.50× |
-//! |  256 |  256 |       235 µs |        528.4 µs |            0.44× |
-//! |  256 | 1024 |       941 µs |         2.81 ms |            0.33× |
-//! | 1024 |   16 |      58.6 µs |        128.9 µs |            0.45× |
-//! | 1024 |   64 |       235 µs |        362.2 µs |            0.65× |
-//! | 1024 |  256 |       938 µs |         1.36 ms |            0.69× |
-//! | 1024 | 1024 |      3.76 ms |         6.07 ms |            0.62× |
+//! | `n`  | `k`  | naive Horner | dispatcher | subproduct | subproduct_auto |
+//! |-----:|-----:|-------------:|-----------:|-----------:|----------------:|
+//! |   16 |   16 |     0.88 µs  |    0.88 µs |    6.65 µs |         6.69 µs |
+//! |   16 |   64 |     3.56 µs  |    3.54 µs |   34.6 µs  |        34.8 µs  |
+//! |   16 |  256 |     14.0 µs  |    14.7 µs |   214.2 µs |       216.0 µs  |
+//! |   16 | 1024 |     55.9 µs  |    56.0 µs |    1.50 ms |         1.50 ms |
+//! |   16 | 4096 |    223.2 µs  |   224.3 µs |   12.10 ms |        12.06 ms |
+//! |   64 |   16 |     3.71 µs  |    3.73 µs |   12.4 µs  |        12.5 µs  |
+//! |   64 |   64 |     14.9 µs  |    15.4 µs |   54.8 µs  |        54.6 µs  |
+//! |   64 |  256 |     59.1 µs  |    61.7 µs |   292.1 µs |       291.9 µs  |
+//! |   64 | 1024 |    236.5 µs  |   237.3 µs |    1.82 ms |         1.82 ms |
+//! |   64 | 4096 |    945.8 µs  |   950.0 µs |   13.37 ms |        13.38 ms |
+//! |  256 |   16 |     14.7 µs  |    15.2 µs |   35.9 µs  |        35.3 µs  |
+//! |  256 |   64 |     59.0 µs  |    59.4 µs |   116.3 µs |       116.0 µs  |
+//! |  256 |  256 |    248.5 µs  |   237.4 µs |   520.3 µs |       520.5 µs  |
+//! |  256 | 1024 |    940.5 µs  |   953.3 µs |    2.74 ms |         2.75 ms |
+//! |  256 | 4096 |     3.78 ms  |    3.80 ms |   17.05 ms |        17.10 ms |
+//! | 1024 |   16 |     58.6 µs  |    59.4 µs |   127.6 µs |       127.6 µs  |
+//! | 1024 |   64 |    234.8 µs  |   237.5 µs |   359.3 µs |       358.0 µs  |
+//! | 1024 |  256 |    940.1 µs  |   957.8 µs |    1.35 ms |         1.36 ms |
+//! | 1024 | 1024 |     3.75 ms  |    3.80 ms |    6.00 ms |         5.98 ms |
+//! | 1024 | 4096 |    15.08 ms  |   15.20 ms |   30.07 ms |        30.13 ms |
+//! | 4096 |   16 |    241.7 µs  |   246.8 µs |   499.2 µs |       496.4 µs  |
+//! | 4096 |   64 |    967.7 µs  |   950.2 µs |    1.34 ms |         1.34 ms |
+//! | 4096 |  256 |     3.91 ms  |    3.80 ms |    4.67 ms |         4.63 ms |
+//! | 4096 | 1024 |    15.52 ms  |   15.21 ms |   18.78 ms |        19.02 ms |
+//! | 4096 | 4096 |    62.13 ms  |   60.87 ms |   80.17 ms |    **53.92 ms** |
 //!
-//! **The naive path wins on every benchmarked cell** on `Fp<65537>`.
-//! This is expected given the scalar-field cost profile: a single
-//! `Fp<65537>` multiplication is ≈ 3.6 ns (inlined Barrett-style
-//! reduction over `u64`), while the subproduct tree incurs a fixed
-//! constant factor of additional `Vec<F>` allocations from every
-//! intermediate [`FieldPoly::mul`] and [`FieldPoly::div_rem`]. The
-//! theoretical `O(M(n) log k + k log² k)` asymptotic win assumes a
-//! fast-polynomial-division primitive built on FFT / Newton iteration;
-//! with schoolbook [`FieldPoly::div_rem`] the reduction phase remains
-//! `O(n · k)` — the same as naive — so only the allocation overhead
-//! shows up on the clock.
+//! **Naive Horner wins at every measured `(n, k)` cell except the
+//! (`n = 4096`, `k = 4096`) corner**, where the `subproduct_auto` arm
+//! pulls ahead at `0.87×` of naive (53.92 ms vs 62.13 ms). This is
+//! the crossover that fixes [`SUBPRODUCT_THRESHOLD`] at `4096`. The
+//! raw `subproduct` arm (schoolbook [`FieldPoly::div_rem`]) stays
+//! slower than `subproduct_auto` whenever either operand exceeds
+//! [`DIV_REM_THRESHOLD`] = 2048 and the Newton-iteration primitive
+//! fires; below that, the two arms match because
+//! [`FieldPoly::div_rem_auto`] delegates to [`FieldPoly::div_rem`].
 //!
-//! The subproduct path is therefore guarded by
-//! [`SUBPRODUCT_THRESHOLD`] and is only expected to pay off on fields
-//! with significantly more expensive scalar arithmetic than `Fp<65537>`
-//! (large-prime Montgomery, tower extensions, …) or once the subproduct
-//! tree's reductions route through [`div_rem_auto`] and
-//! [`SUBPRODUCT_THRESHOLD`] drops below `usize::MAX`. The fast
-//! polynomial-division primitive itself has landed
-//! ([`FieldPoly::div_rem_fast`] / [`FieldPoly::div_rem_auto`] from
-//! issue `ae0c7e1f`); wiring it into `batch_evaluate_subproduct` and
-//! lowering the threshold is tracked by follow-up task `046f95c1`. The
-//! `batch_evaluate_subproduct` implementation is retained unchanged so
-//! the subproduct-tree integration lights up the expected speedup
-//! without further API churn.
+//! This confirms the scalar-field cost profile: a single `Fp<65537>`
+//! multiplication is ≈ 3.6 ns (inlined Barrett-style reduction over
+//! `u64`), so the subproduct tree's fixed `Vec<F>` allocations from
+//! every intermediate [`FieldPoly::mul`] and [`FieldPoly::div_rem`]
+//! take a long time to amortise on cheap scalar multiplication.
+//! Fields with substantially more expensive scalar arithmetic
+//! (large-prime Montgomery, tower extensions, …) tip the balance
+//! earlier; callers on those fields can already dispatch the
+//! subproduct path manually by calling [`batch_evaluate_subproduct`]
+//! (generic) or [`batch_evaluate_subproduct_auto`] ([`TwoAdicField`])
+//! directly, which bypass this threshold.
+//!
+//! The fast polynomial-division primitive (`div_rem_fast` /
+//! `div_rem_auto`) landed in issue `ae0c7e1f`; the subproduct-tree
+//! integration plus [`SUBPRODUCT_THRESHOLD`] tuning landed in issue
+//! `046f95c1`.
 //!
 //! ## `batch_mul` — left-fold vs. balanced tree
 //!
@@ -309,16 +331,16 @@
 //!
 //! | `n`   |     naive |      fast | speedup |
 //! |------:|----------:|----------:|--------:|
-//! |     4 |   1.62 µs |   1.03 µs |   1.56× |
-//! |     8 |   5.50 µs |   2.53 µs |   2.17× |
-//! |    16 |  19.90 µs |   7.16 µs |   2.78× |
-//! |    32 |  75.91 µs |  20.36 µs |   3.73× |
-//! |    64 | 297.28 µs |  68.08 µs |   4.37× |
-//! |   128 |   1.16 ms | 224.70 µs |   5.17× |
-//! |   256 |   4.66 ms | 753.87 µs |   6.18× |
-//! |   512 |  18.21 ms |   2.56 ms |   7.12× |
-//! |  1024 |  72.56 ms |   8.78 ms |   8.27× |
-//! |  2048 | 286.81 ms |  30.90 ms |   9.28× |
+//! |     4 |   1.60 µs |   1.00 µs |   1.59× |
+//! |     8 |   5.57 µs |   2.50 µs |   2.22× |
+//! |    16 |  20.17 µs |   6.88 µs |   2.93× |
+//! |    32 |  77.20 µs |  20.05 µs |   3.85× |
+//! |    64 | 300.03 µs |  67.49 µs |   4.45× |
+//! |   128 |   1.18 ms | 220.69 µs |   5.33× |
+//! |   256 |   4.68 ms | 738.86 µs |   6.33× |
+//! |   512 |  18.49 ms |   2.50 ms |   7.39× |
+//! |  1024 |  73.57 ms |   8.61 ms |   8.55× |
+//! |  2048 | 288.30 ms |  30.08 ms |   9.58× |
 //!
 //! The `fast` path wins at every measured `n ≥ 4` on `Fp<65537>`; the
 //! tuned [`INTERPOLATE_THRESHOLD`] is set at 16 as a conservative margin
@@ -337,11 +359,11 @@
 //!
 //! | `n`  |  `m` | schoolbook |     fast | speedup |
 //! |-----:|-----:|-----------:|---------:|--------:|
-//! |  128 |   64 |    20.4 µs |  76.8 µs |   0.27× |
-//! |  256 |  128 |    75.4 µs | 216.1 µs |   0.35× |
-//! |  512 |  256 |   276.7 µs | 499.3 µs |   0.55× |
-//! | 1024 |  512 |    1.07 ms |  1.12 ms |   0.95× |
-//! | 2048 | 1024 |    4.25 ms |  2.49 ms |   1.71× |
+//! |  128 |   64 |    20.2 µs |  77.7 µs |   0.26× |
+//! |  256 |  128 |    72.7 µs | 220.1 µs |   0.33× |
+//! |  512 |  256 |   282.7 µs | 509.8 µs |   0.55× |
+//! | 1024 |  512 |    1.06 ms |  1.14 ms |   0.93× |
+//! | 2048 | 1024 |    4.21 ms |  2.50 ms |   1.69× |
 //!
 //! The schoolbook path is faster on every row up to and including
 //! `n = 1024`, then the fast path pulls ahead decisively at `n = 2048`
@@ -352,12 +374,15 @@
 //! delegates to [`FieldPoly::div_rem`]; above it, the fast path takes
 //! over.
 //!
-//! This is the primitive that unblocks the tuning work in the sibling
-//! task `046f95c1`: once [`SUBPRODUCT_THRESHOLD`] and
-//! [`INTERPOLATE_THRESHOLD`] are re-tuned to route the inner reduction
-//! phase through [`FieldPoly::div_rem_auto`], `batch_evaluate` and
-//! `interpolate_fast` inherit the asymptotic win without any public API
-//! change.
+//! This is the primitive that the subproduct-tree dispatcher
+//! [`FieldPoly::batch_evaluate_auto`] and the companion free function
+//! [`batch_evaluate_subproduct_auto`] build on (issue `046f95c1`): the
+//! per-node `self mod M_node` reductions route through
+//! [`FieldPoly::div_rem_auto`], so on [`TwoAdicField`] the
+//! subproduct-tree path inherits the `O(M(n))` fast-division
+//! asymptotic above [`DIV_REM_THRESHOLD`]. That pushes the
+//! subproduct / naive crossover down to `n = k = 4096` on `Fp<65537>`
+//! — the tuned [`SUBPRODUCT_THRESHOLD`].
 
 use crate::field::{FiniteField, TwoAdicField};
 use std::fmt;
@@ -1131,14 +1156,20 @@ impl<F: FiniteField> FieldPoly<F> {
     /// With schoolbook polynomial arithmetic this routine costs
     /// `O(n · k + k² log k)` field operations for
     /// `n = self.degree() + 1` and `k = points.len()`. The asymptotic
-    /// target is `O(M(n) log k + k log² k)` — achievable with an
-    /// FFT-backed polynomial multiplication (`M(n) = O(n log n)`) and a
-    /// fast polynomial division built on Newton's iteration for the
-    /// reciprocal; both are sibling tasks (see the `bdf95060` story).
-    /// Until those land, this implementation is slower than the naive
-    /// Horner baseline on fields with cheap scalar arithmetic such as
-    /// `Fp<65537>` (see the benchmark table in the module docstring),
-    /// which is why [`SUBPRODUCT_THRESHOLD`] is set conservatively.
+    /// target `O(M(n) log k + k log² k)` — achievable with an
+    /// NTT-backed polynomial multiplication (`M(n) = O(n log n)`) and
+    /// Newton-iteration fast polynomial division — is reached by the
+    /// sibling dispatcher [`FieldPoly::batch_evaluate_auto`] on
+    /// [`TwoAdicField`]. The NTT multiplication primitive landed in
+    /// task `e0b6f940`; the Newton-iteration fast division primitive
+    /// ([`FieldPoly::div_rem_fast`] / [`FieldPoly::div_rem_auto`])
+    /// landed in issue `ae0c7e1f`; the subproduct-tree wiring plus
+    /// [`SUBPRODUCT_THRESHOLD`] tuning landed in issue `046f95c1`. On
+    /// fields with cheap scalar arithmetic such as `Fp<65537>` the
+    /// naive Horner baseline dominates at small and medium sizes —
+    /// see the benchmark table in the module docstring — which is
+    /// why [`SUBPRODUCT_THRESHOLD`] is set conservatively at the
+    /// measured crossover.
     ///
     /// # Algorithm
     ///
@@ -1210,16 +1241,24 @@ impl<F: FiniteField> FieldPoly<F> {
         // Small-input fallback: below the threshold, the overhead of
         // building the subproduct tree (O(k) polynomial multiplications
         // plus O(k) Euclidean divisions) exceeds the savings compared to
-        // k Horner folds of length n. See the benchmark table in the
-        // module docstring — on `Fp<65537>` the naive path wins on every
-        // benchmarked cell with today's schoolbook `div_rem`, so
-        // `SUBPRODUCT_THRESHOLD` is deliberately set to `usize::MAX` and
-        // this branch routes every public call through `eval_batch`
-        // until a fast-division primitive (task `e0b6f940`) lowers the
-        // threshold. Zero / constant polynomials short-circuit via the
-        // `degree().unwrap_or(0)` path.
-        let deg = self.degree().unwrap_or(0);
-        if points.len() < SUBPRODUCT_THRESHOLD || deg < SUBPRODUCT_THRESHOLD {
+        // k Horner folds of length n. The tuned `SUBPRODUCT_THRESHOLD`
+        // (4096) sits at the empirical crossover measured on Fp<65537>
+        // for the [`FieldPoly::batch_evaluate_auto`] dispatcher (see
+        // the benchmark table in the module docstring); this generic
+        // entry point uses the same threshold and calls
+        // [`batch_evaluate_subproduct`] (schoolbook-backed
+        // [`FieldPoly::div_rem`]). Fields that implement
+        // [`TwoAdicField`] should prefer
+        // [`FieldPoly::batch_evaluate_auto`], which wires the
+        // Newton-iteration fast division primitive
+        // [`FieldPoly::div_rem_auto`] (issue `ae0c7e1f`) into the
+        // reduction phase. Compares against `self.len()` (coefficient
+        // count) rather than `degree()` so that a polynomial of
+        // length `SUBPRODUCT_THRESHOLD` crosses the threshold — this
+        // matches the bench harness's `make_poly(n)` convention.
+        // Zero / constant polynomials are length 0/1, well below the
+        // threshold, and short-circuit to the naive path.
+        if points.len() < SUBPRODUCT_THRESHOLD || self.coeffs.len() < SUBPRODUCT_THRESHOLD {
             return self.eval_batch(points);
         }
 
@@ -1966,37 +2005,49 @@ impl<'a, F: FiniteField> SubAssign<&'a FieldPoly<F>> for FieldPoly<F> {
 /// from the same value.
 pub const KARATSUBA_THRESHOLD: usize = 32;
 
-/// Crossover threshold for [`FieldPoly::batch_evaluate`] between the
-/// subproduct-tree algorithm and the naive per-point Horner fallback.
+/// Crossover threshold for [`FieldPoly::batch_evaluate`] (generic,
+/// schoolbook [`FieldPoly::div_rem`]) and
+/// [`FieldPoly::batch_evaluate_auto`] ([`TwoAdicField`], Newton-iteration
+/// [`FieldPoly::div_rem_auto`]) between the subproduct-tree algorithm
+/// and the naive per-point Horner fallback.
 ///
-/// When either `points.len()` or `self.degree().unwrap_or(0)` is
-/// strictly less than this value, [`FieldPoly::batch_evaluate`] falls
-/// through to [`FieldPoly::eval_batch`] (`O(n · k)` naive Horner).
+/// When `points.len()` or `self.coeffs.len()` is strictly less than
+/// this value, the corresponding dispatcher falls through to
+/// [`FieldPoly::eval_batch`] (`O(n · k)` naive Horner); at or above
+/// the threshold it pays for the subproduct tree build and top-down
+/// reduction.
+///
+/// # Tuning
 ///
 /// Tuned directly from the benchmark harness in
 /// `crates/gf2-core/benches/field_poly.rs`. On `Fp<65537>`, where a
 /// single scalar multiplication is ≈ 3.6 ns, the overhead of building
 /// the subproduct tree (and the `Vec<F>` allocations that accompany
 /// every intermediate [`FieldPoly::mul`] / [`FieldPoly::div_rem`]) is
-/// never amortised at the benchmarked sizes; the naive path wins on
-/// every cell in the `n, k ∈ {16, 64, 256, 1024}` matrix. See the
-/// module docstring for the measured table.
+/// slow to amortise. The measured crossover for the
+/// [`FieldPoly::batch_evaluate_auto`] dispatcher — which routes the
+/// per-node reductions through the Newton-iteration
+/// [`FieldPoly::div_rem_auto`] primitive (issue `ae0c7e1f`,
+/// [`DIV_REM_THRESHOLD`] = 2048) — sits at `n = k = 4096` on the
+/// reference Zen 3 host (53.9 ms `subproduct_auto` vs 62.1 ms naive,
+/// a `0.87×` win). The generic [`FieldPoly::batch_evaluate`] never
+/// strictly beats naive at any measured cell on `Fp<65537>`, so
+/// sharing the 4096 threshold incurs a small regression (≈ `1.3×`
+/// at `n = k = 4096`) on the generic path; the regression is
+/// tolerable because (a) most `TwoAdicField`-eligible workloads
+/// should use the `_auto` variant anyway, and (b) fields with more
+/// expensive scalar arithmetic (large-prime Montgomery, tower
+/// extensions) invert the comparison at smaller sizes.
 ///
-/// The value is therefore set to [`usize::MAX`] so that the public
-/// `batch_evaluate` entry point always routes through the naive path
-/// until the subproduct tree's reductions are routed through
-/// [`div_rem_auto`] (the Newton-iteration fast division primitive
-/// added by issue `ae0c7e1f` alongside the NTT multiplication from
-/// `e0b6f940`). When the follow-up task `046f95c1` wires that
-/// integration and the asymptotic win materialises, this constant is
-/// lowered and the tree path takes over without any API change.
+/// The integration landed in two passes: the Newton-iteration fast
+/// division primitive itself in issue `ae0c7e1f`; the subproduct-tree
+/// wiring plus this threshold tuning in issue `046f95c1`.
 ///
-/// Fields with substantially more expensive scalar arithmetic
-/// (large-prime Montgomery, tower extensions) tip the balance earlier;
-/// callers on those fields can already dispatch the subproduct path
-/// manually by calling [`batch_evaluate_subproduct`] directly, which
-/// bypasses this threshold.
-pub const SUBPRODUCT_THRESHOLD: usize = usize::MAX;
+/// Callers who want the subproduct path unconditionally can call
+/// [`batch_evaluate_subproduct`] (generic, [`FieldPoly::div_rem`]) or
+/// [`batch_evaluate_subproduct_auto`] ([`TwoAdicField`],
+/// [`FieldPoly::div_rem_auto`]) directly, bypassing this threshold.
+pub const SUBPRODUCT_THRESHOLD: usize = 4096;
 
 /// Builds the subproduct tree for a slice of evaluation points.
 ///
@@ -2082,8 +2133,11 @@ pub fn build_subproduct_tree<F: FiniteField>(points: &[F]) -> Vec<Vec<FieldPoly<
 /// [`crate::field::poly_interpolate::interpolate_fast`]. Callers bypass
 /// the [`SUBPRODUCT_THRESHOLD`] performance gate and pay the full tree
 /// cost unconditionally. Callers who want the threshold-gated default
-/// (naive Horner for `Fp`-sized scalars until NTT `div_rem` lands)
-/// should use [`FieldPoly::batch_evaluate`] instead.
+/// should use [`FieldPoly::batch_evaluate`] instead; callers on a
+/// [`TwoAdicField`] who want the Newton-iteration fast division
+/// primitive wired into the reduction phase should use
+/// [`batch_evaluate_subproduct_auto`] (or the
+/// [`FieldPoly::batch_evaluate_auto`] threshold-gated dispatcher).
 ///
 /// # Arguments
 ///
@@ -2130,9 +2184,13 @@ pub fn build_subproduct_tree<F: FiniteField>(points: &[F]) -> Vec<Vec<FieldPoly<
 ///
 /// `O(n · k + k² log k)` field operations for `n = poly.len()` and
 /// `k = points.len()` when backed by schoolbook
-/// [`FieldPoly::div_rem`]. The target asymptotic
-/// `O(M(n) log k + k log² k)` requires an FFT / Newton-iteration fast
-/// polynomial division primitive (Task 6 of the `bdf95060` story).
+/// [`FieldPoly::div_rem`]. The Newton-iteration fast division
+/// primitive (landed under issue `ae0c7e1f` as
+/// [`FieldPoly::div_rem_fast`] / [`FieldPoly::div_rem_auto`]) is
+/// available on [`TwoAdicField`] and wired into the sibling entry
+/// point [`batch_evaluate_subproduct_auto`]; that variant reaches
+/// `O(M(n) log k + k log² k)` whenever the per-level reductions cross
+/// [`DIV_REM_THRESHOLD`].
 ///
 /// This function is `pub` so both the benchmark harness
 /// (`benches/field_poly.rs`) and [`crate::field::poly_interpolate::interpolate_fast`]
@@ -2141,6 +2199,79 @@ pub fn build_subproduct_tree<F: FiniteField>(points: &[F]) -> Vec<Vec<FieldPoly<
 /// threshold-gated dispatch should use [`FieldPoly::batch_evaluate`]
 /// instead, which guards this path behind [`SUBPRODUCT_THRESHOLD`].
 pub fn batch_evaluate_subproduct<F: FiniteField>(poly: &FieldPoly<F>, points: &[F]) -> Vec<F> {
+    batch_evaluate_subproduct_with_reduce(poly, points, |a, b| a.div_rem(b).1)
+}
+
+/// [`TwoAdicField`]-specialised subproduct-tree batch evaluation.
+///
+/// Identical contract to [`batch_evaluate_subproduct`], but every
+/// top-down `self mod M_node` reduction flows through
+/// [`FieldPoly::div_rem_auto`] instead of [`FieldPoly::div_rem`], so the
+/// Newton-iteration fast-division primitive (issue `ae0c7e1f`,
+/// [`DIV_REM_THRESHOLD`]) fires automatically at the sizes where it
+/// beats schoolbook long division. Small intermediate divisions (below
+/// [`DIV_REM_THRESHOLD`]) still fall through to the schoolbook path via
+/// the dispatcher, so there is no penalty at the leaves.
+///
+/// Both the SSOT traversal and the remainder-extraction phase are
+/// shared with the generic [`batch_evaluate_subproduct`] — the only
+/// per-node specialisation is the choice of division primitive.
+///
+/// # Arguments
+///
+/// * `poly` — the polynomial to evaluate.
+/// * `points` — slice of evaluation points. Must be non-empty
+///   (`debug_assert!`ed); may contain zeros and duplicates.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::field::poly::batch_evaluate_subproduct_auto;
+/// use gf2_core::field::FieldPoly;
+/// use gf2_core::gfp::Fp;
+///
+/// let p = FieldPoly::new(vec![Fp::<65537>::new(1), Fp::<65537>::new(2), Fp::<65537>::new(3)]);
+/// let xs = vec![Fp::<65537>::new(0), Fp::<65537>::new(1), Fp::<65537>::new(4)];
+/// let ys = batch_evaluate_subproduct_auto(&p, &xs);
+/// assert_eq!(ys, xs.iter().map(|x| p.eval(x)).collect::<Vec<_>>());
+/// ```
+///
+/// # Panics
+///
+/// Panics (via `debug_assert`) in debug builds if `points` is empty;
+/// see [`batch_evaluate_subproduct`] for the non-total contract shared
+/// with this entry point.
+///
+/// # Complexity
+///
+/// `O(M(n) · log k + k² log k)` field operations on `TwoAdicField`,
+/// where `M(n) = O(n log n)` for NTT-backed multiplication; the leaf
+/// merges stay schoolbook at `O(k² log k)` total through the balanced
+/// subproduct tree built by [`build_subproduct_tree`].
+pub fn batch_evaluate_subproduct_auto<F: TwoAdicField>(
+    poly: &FieldPoly<F>,
+    points: &[F],
+) -> Vec<F> {
+    batch_evaluate_subproduct_with_reduce(poly, points, |a, b| a.div_rem_auto(b).1)
+}
+
+/// SSOT traversal for the subproduct-tree batch-evaluation path.
+///
+/// Shared helper behind [`batch_evaluate_subproduct`] (generic,
+/// [`FieldPoly::div_rem`]) and [`batch_evaluate_subproduct_auto`]
+/// ([`TwoAdicField`], [`FieldPoly::div_rem_auto`]). The traversal logic,
+/// odd-tail carry-up, and constant-remainder extraction all live here
+/// so the two public entry points differ only in the choice of
+/// reduction primitive.
+fn batch_evaluate_subproduct_with_reduce<F, R>(
+    poly: &FieldPoly<F>,
+    points: &[F],
+    reduce: R,
+) -> Vec<F>
+where
+    F: FiniteField,
+    R: Fn(&FieldPoly<F>, &FieldPoly<F>) -> FieldPoly<F>,
+{
     debug_assert!(!points.is_empty());
 
     let k = points.len();
@@ -2159,7 +2290,7 @@ pub fn batch_evaluate_subproduct<F: FiniteField>(poly: &FieldPoly<F>, points: &[
     let root_level = levels.len() - 1;
     debug_assert_eq!(levels[root_level].len(), 1);
 
-    let (_, root_rem) = poly.div_rem(&levels[root_level][0]);
+    let root_rem = reduce(poly, &levels[root_level][0]);
     let mut cur_rems: Vec<FieldPoly<F>> = vec![root_rem];
 
     for h in (0..root_level).rev() {
@@ -2174,8 +2305,8 @@ pub fn batch_evaluate_subproduct<F: FiniteField>(poly: &FieldPoly<F>, points: &[
 
             if right_idx < children.len() {
                 // Paired parent: split `rem` across both children.
-                let (_, left_rem) = rem.div_rem(&children[left_idx]);
-                let (_, right_rem) = rem.div_rem(&children[right_idx]);
+                let left_rem = reduce(rem, &children[left_idx]);
+                let right_rem = reduce(rem, &children[right_idx]);
                 next_rems.push(left_rem);
                 next_rems.push(right_rem);
             } else {
@@ -2940,6 +3071,54 @@ impl<F: TwoAdicField> FieldPoly<F> {
             self.div_rem_fast(divisor)
         }
     }
+
+    /// [`TwoAdicField`]-specialised batch evaluation: routes the
+    /// subproduct-tree reductions through [`FieldPoly::div_rem_auto`]
+    /// so the Newton-iteration fast-division primitive fires at sizes
+    /// where it beats schoolbook long division
+    /// ([`DIV_REM_THRESHOLD`]).
+    ///
+    /// Semantically identical to the generic
+    /// [`FieldPoly::batch_evaluate`]: returns the same `Vec<F>` of
+    /// evaluations in the same order. The only difference is the
+    /// internal choice of division primitive. Dispatches through
+    /// [`SUBPRODUCT_THRESHOLD`]: below it the call falls back to
+    /// [`FieldPoly::eval_batch`] (`O(n · k)` naive Horner); above it
+    /// [`batch_evaluate_subproduct_auto`] takes over.
+    ///
+    /// # Arguments
+    ///
+    /// * `points` — slice of evaluation points. May be empty, contain
+    ///   zeros, or contain duplicates.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::FieldPoly;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let p = FieldPoly::new(vec![Fp::<65537>::new(1), Fp::<65537>::new(2), Fp::<65537>::new(3)]);
+    /// let xs = vec![Fp::<65537>::new(0), Fp::<65537>::new(1), Fp::<65537>::new(4)];
+    /// let ys = p.batch_evaluate_auto(&xs);
+    /// assert_eq!(ys, xs.iter().map(|x| p.eval(x)).collect::<Vec<_>>());
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// Below [`SUBPRODUCT_THRESHOLD`]: `O(n · k)` naive Horner. Above
+    /// it: `O(M(n) log k + k² log k)` field operations with
+    /// `M(n) = O(n log n)` through the NTT-backed fast multiplication
+    /// / fast division primitives.
+    pub fn batch_evaluate_auto(&self, points: &[F]) -> Vec<F> {
+        // Compare on `self.coeffs.len()` (coefficient count) so a
+        // polynomial of length == `SUBPRODUCT_THRESHOLD` crosses the
+        // gate. Zero / constant polynomials have length 0 / 1, well
+        // below the threshold, and short-circuit to the naive path.
+        if points.len() < SUBPRODUCT_THRESHOLD || self.coeffs.len() < SUBPRODUCT_THRESHOLD {
+            return self.eval_batch(points);
+        }
+        batch_evaluate_subproduct_auto(self, points)
+    }
 }
 
 // ---------------------------------------------------------------------
@@ -3669,11 +3848,10 @@ mod tests {
     #[test]
     fn test_batch_evaluate_exercises_subproduct_path_fp7() {
         // Call the raw subproduct kernel directly (bypassing the
-        // SUBPRODUCT_THRESHOLD gate, which is `usize::MAX` under the
-        // current schoolbook `div_rem` profile). Verifies the tree
-        // construction + top-down reduction math on moderately-sized
-        // inputs where the algorithm's odd-tail and descent branches all
-        // fire.
+        // SUBPRODUCT_THRESHOLD gate at 4096, which the tiny FP7 inputs
+        // below would never cross). Verifies the tree construction +
+        // top-down reduction math on moderately-sized inputs where the
+        // algorithm's odd-tail and descent branches all fire.
         let n = 20;
         let k = 24;
         let p_coeffs: Vec<FP7> = (0..=n).map(|i| fp7((i as u64 * 3 + 1) % 7)).collect();
@@ -4675,6 +4853,114 @@ mod tests {
                 None => {}
                 Some(d) => prop_assert!(d < db),
             }
+        }
+    }
+
+    // -----------------------------------------------------------------
+    // batch_evaluate_auto + batch_evaluate_subproduct_auto agreement
+    // (issue 046f95c1).
+    //
+    // Two families of coverage on Fp<65537>:
+    //   1. A ≥ 500-case proptest on batch_evaluate_subproduct_auto at
+    //      small random sizes, agreeing with per-point Horner. This
+    //      exercises the subproduct-tree traversal and the
+    //      div_rem_auto reduction closure directly on every random
+    //      shape (odd / even k, duplicates, zero polynomial, etc.).
+    //   2. A deterministic test that straddles SUBPRODUCT_THRESHOLD in
+    //      both dimensions, so both branches of FieldPoly::batch_evaluate
+    //      and FieldPoly::batch_evaluate_auto (naive fallback below
+    //      threshold, subproduct tree above) are exercised against a
+    //      naive Horner reference on Fp<65537>.
+    // -----------------------------------------------------------------
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(500))]
+
+        /// Agreement: `batch_evaluate_subproduct_auto` matches per-point
+        /// Horner on ≥ 500 random inputs over `Fp<65537>`. Exercises
+        /// the subproduct-tree traversal and the div_rem_auto reduction
+        /// closure on every random shape (odd / even k, duplicates,
+        /// zero polynomial, etc.) — the "below-threshold" side of the
+        /// auto dispatcher.
+        #[test]
+        fn prop_batch_evaluate_subproduct_auto_matches_horner_fp65537(
+            poly_coeffs in prop::collection::vec(0u64..65537, 1..40),
+            point_vals in prop::collection::vec(0u64..65537, 1..40),
+        ) {
+            let poly = FieldPoly::new(poly_coeffs.into_iter().map(fp65537).collect::<Vec<_>>());
+            let points: Vec<FP65537> = point_vals.into_iter().map(fp65537).collect();
+
+            let fast = batch_evaluate_subproduct_auto(&poly, &points);
+            let naive: Vec<FP65537> = points.iter().map(|x| poly.eval(x)).collect();
+            prop_assert_eq!(fast, naive);
+        }
+    }
+
+    #[test]
+    fn test_batch_evaluate_auto_straddles_subproduct_threshold_fp65537() {
+        // SUBPRODUCT_THRESHOLD = 4096 on Fp<65537>, compared against
+        // `points.len()` and the polynomial's coefficient length
+        // (len == degree + 1). We exercise cells on both sides of the
+        // threshold in both dimensions so every branch of
+        // FieldPoly::batch_evaluate / batch_evaluate_auto fires at
+        // least once:
+        //   - (n, k) = (64, 64)       → both lengths below → naive.
+        //   - (n, k) = (4095, 4095)   → both below → naive.
+        //   - (n, k) = (4096, 64)     → poly at threshold, k below →
+        //                               still naive (k dimension gates).
+        //   - (n, k) = (4096, 4096)   → both at threshold → subproduct.
+        //   - (n, k) = (4200, 4200)   → both above → subproduct.
+        // For every cell we verify agreement with a naive Horner sweep
+        // (eval_batch) and cross-check that the two dispatchers and
+        // the two raw subproduct helpers all produce identical output.
+        let cells: &[(usize, usize)] = &[
+            (64, 64),
+            (4095, 4095),
+            (4096, 64),
+            (4096, 4096),
+            (4200, 4200),
+        ];
+
+        for &(n, k) in cells {
+            let modulus: u64 = 65537;
+            // Build poly of length n with a guaranteed non-zero leading
+            // coefficient so degree == n - 1.
+            let mut p_coeffs: Vec<FP65537> = (0..n)
+                .map(|i| {
+                    let v = ((i as u64).wrapping_mul(0x9E3779B1) % (modulus - 1)) + 1;
+                    fp65537(v)
+                })
+                .collect();
+            *p_coeffs.last_mut().unwrap() = fp65537(1);
+            let poly = FieldPoly::new(p_coeffs);
+
+            // Build k distinct evaluation points.
+            let points: Vec<FP65537> = (0..k)
+                .map(|i| fp65537(((i as u64).wrapping_mul(1_000_003) % (modulus - 1)) + 1))
+                .collect();
+
+            let naive: Vec<FP65537> = points.iter().map(|x| poly.eval(x)).collect();
+            let via_dispatcher = poly.batch_evaluate(&points);
+            let via_dispatcher_auto = poly.batch_evaluate_auto(&points);
+            let via_subproduct = batch_evaluate_subproduct(&poly, &points);
+            let via_subproduct_auto = batch_evaluate_subproduct_auto(&poly, &points);
+
+            assert_eq!(
+                naive, via_dispatcher,
+                "batch_evaluate disagrees with per-point Horner at n={n}, k={k}"
+            );
+            assert_eq!(
+                naive, via_dispatcher_auto,
+                "batch_evaluate_auto disagrees with per-point Horner at n={n}, k={k}"
+            );
+            assert_eq!(
+                naive, via_subproduct,
+                "batch_evaluate_subproduct disagrees with per-point Horner at n={n}, k={k}"
+            );
+            assert_eq!(
+                naive, via_subproduct_auto,
+                "batch_evaluate_subproduct_auto disagrees with per-point Horner at n={n}, k={k}"
+            );
         }
     }
 }
