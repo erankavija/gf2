@@ -252,11 +252,82 @@ fn bench_interpolate(c: &mut Criterion) {
     group.finish();
 }
 
+/// Build a deterministic pair of polynomials for the `div_rem` shoot-out.
+/// Lengths are `(n, m)` where `n = dividend.len()` and `m = divisor.len()`.
+/// The divisor is forced to have a non-zero leading coefficient so the
+/// Newton-iteration path hits its `k = n − m` precision target; the
+/// dividend is a randomly-looking `Fp<65537>` polynomial of length `n`.
+fn make_div_rem_pair(n: usize, m: usize) -> (FieldPoly<F>, FieldPoly<F>) {
+    let modulus: u64 = 65537;
+    let mut rng_a = gf2_core::rng::Lcg::new(0xa5a5_5a5a_a5a5_5a5a);
+    let mut a_coeffs: Vec<F> = (0..n)
+        .map(|_| F::new((rng_a.next_u64() >> 33) % (modulus - 1) + 1))
+        .collect();
+    *a_coeffs.last_mut().unwrap() = F::new(1);
+
+    let mut rng_b = gf2_core::rng::Lcg::new(0x5a5a_a5a5_5a5a_a5a5);
+    let mut b_coeffs: Vec<F> = (0..m)
+        .map(|_| F::new((rng_b.next_u64() >> 33) % (modulus - 1) + 1))
+        .collect();
+    *b_coeffs.last_mut().unwrap() = F::new(1);
+
+    (FieldPoly::new(a_coeffs), FieldPoly::new(b_coeffs))
+}
+
+fn bench_div_rem(c: &mut Criterion) {
+    let mut group = c.benchmark_group("field_poly_div_rem_fp65537");
+    // Keep sample count small so the largest (n = 1024, m = 512) cell fits
+    // comfortably inside the 60s test-suite budget under `--quick`.
+    group.sample_size(10);
+
+    // Sizes bracket the schoolbook / fast crossover on `Fp<65537>` (Zen 3).
+    // The (n = 128 … 1024) block is the required task arm set; the
+    // (n = 2048, m = 1024) row is appended so the crossover is visible in
+    // a single `--quick` run — the tuned `DIV_REM_THRESHOLD` sits exactly
+    // at that row's `n`. See the module docstring in
+    // `crates/gf2-core/src/field/poly.rs` for the committed numbers.
+    let sizes = [
+        (128usize, 64usize),
+        (256, 128),
+        (512, 256),
+        (1024, 512),
+        (2048, 1024),
+    ];
+
+    for &(n, m) in &sizes {
+        let (dividend, divisor) = make_div_rem_pair(n, m);
+        let id_fmt = format!("n{n}_m{m}");
+
+        // "schoolbook" arm — the existing O((n − m) · m) long division.
+        group.bench_with_input(
+            BenchmarkId::new("schoolbook", &id_fmt),
+            &(&dividend, &divisor),
+            |b, (a, d)| {
+                b.iter(|| black_box(black_box(*a).div_rem(black_box(*d))));
+            },
+        );
+
+        // "fast" arm — Newton-iteration `div_rem_fast`, which routes its
+        // internal multiplications through `mul_fast` (Karatsuba below
+        // NTT_THRESHOLD, NTT above).
+        group.bench_with_input(
+            BenchmarkId::new("fast", &id_fmt),
+            &(&dividend, &divisor),
+            |b, (a, d)| {
+                b.iter(|| black_box(black_box(*a).div_rem_fast(black_box(*d))));
+            },
+        );
+    }
+
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_batch_evaluate,
     bench_batch_mul,
     bench_ntt_vs_karatsuba,
     bench_interpolate,
+    bench_div_rem,
 );
 criterion_main!(benches);
