@@ -158,3 +158,8 @@ required-features = ["simd"]
 [[bench]]
 name = "field_poly"
 harness = false
+
+[[bench]]
+name = "gf2m_wide_mul"
+harness = false
+required-features = ["simd"]
