@@ -2616,7 +2616,7 @@ pub fn mul_fast<F: TwoAdicField>(a: &FieldPoly<F>, b: &FieldPoly<F>) -> FieldPol
 /// `O((n − m) · m)` cost exceeds the fast `O(M(n)) = O(n log n)` cost by
 /// enough to amortise the overhead. On the Zen 3 reference host the
 /// schoolbook path still wins at `n = 1024, m = 512` (1.07 ms schoolbook
-/// vs 1.13 ms fast), and the fast path wins decisively at `n = 2048,
+/// vs 1.12 ms fast), and the fast path wins decisively at `n = 2048,
 /// m = 1024` (4.25 ms schoolbook vs 2.49 ms fast) — so the threshold is
 /// pinned at `2048`, the smallest power of two above the measured
 /// crossover. See the benchmark snapshot in the
