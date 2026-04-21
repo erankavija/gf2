@@ -831,27 +831,26 @@ fn get_reducer<const N: usize, Cfg: Gf2mWideConfig<N>>() -> BarrettReducerWide<N
     let cache = BARRETT_CACHE.get_or_init(|| Mutex::new(HashMap::new()));
     let key = (TypeId::of::<Cfg>(), N);
 
-    // Fast path: try to retrieve without holding the lock long.
-    {
-        let guard = cache.lock().expect("Barrett cache mutex poisoned");
-        if let Some(boxed) = guard.get(&key) {
-            // The `(TypeId, N)` key guarantees the boxed reducer was
-            // constructed for this exact `N`; downcast cannot fail.
-            return boxed
-                .downcast_ref::<BarrettReducerWide<N>>()
-                .expect("Barrett cache type mismatch — (TypeId, N) key broken?")
-                .clone();
-        }
+    // Hold the lock across check-and-insert so that concurrent callers for
+    // the same `(Cfg, N)` pair never redundantly run the `O(M²)`
+    // `BarrettReducerWide::new` constructor. The mutex is uncontended on the
+    // fast path (`HashMap::get` is a quick hash lookup); the one-time
+    // `new()` cost pays for itself on the first miss and every subsequent
+    // caller pays only the lookup + clone.
+    let mut guard = cache.lock().expect("Barrett cache mutex poisoned");
+    if let Some(boxed) = guard.get(&key) {
+        // The `(TypeId, N)` key guarantees the boxed reducer was
+        // constructed for this exact `N`; downcast cannot fail.
+        return boxed
+            .downcast_ref::<BarrettReducerWide<N>>()
+            .expect("Barrett cache type mismatch — (TypeId, N) key broken?")
+            .clone();
     }
 
-    // Slow path: construct the reducer and store it.
+    // Cache miss: construct while still holding the lock so that another
+    // thread racing on the same key cannot duplicate the `new()` work.
     let reducer = BarrettReducerWide::<N>::new(Cfg::MODULUS, Cfg::M as u32);
-    {
-        let mut guard = cache.lock().expect("Barrett cache mutex poisoned");
-        // Another thread may have inserted while we were constructing — that's
-        // fine; we just overwrite with an equivalent value.
-        guard.insert(key, Box::new(reducer.clone()));
-    }
+    guard.insert(key, Box::new(reducer.clone()));
     reducer
 }
 
@@ -1947,6 +1946,36 @@ mod tests {
         // GF(2^128): x^128 + x^7 + x^2 + x + 1 (low bits only; implicit high bit).
         const M: usize = 128;
         const MODULUS: [u64; 2] = [0x87, 0];
+    }
+
+    /// Concurrency regression: many threads asking for the same
+    /// `(Cfg, N)` reducer must all observe the same cached instance
+    /// without panicking or corrupting the map. Covers the single-lock
+    /// check-and-insert path in `get_reducer`.
+    #[test]
+    fn test_barrett_cache_concurrent_contention_same_key() {
+        use std::thread;
+
+        struct Gf2mConcurrentCfg;
+        impl Gf2mWideConfig<2> for Gf2mConcurrentCfg {
+            const M: usize = 128;
+            const MODULUS: [u64; 2] = [0x87, 0];
+        }
+
+        // 32 threads all racing on the same `(Gf2mConcurrentCfg, 2)` key.
+        let handles: Vec<_> = (0..32)
+            .map(|_| {
+                thread::spawn(|| {
+                    let a = <Gf2mWide<2, Gf2mConcurrentCfg> as crate::field::ConstField>::one();
+                    let b = <Gf2mWide<2, Gf2mConcurrentCfg> as crate::field::ConstField>::one();
+                    let c = a * b;
+                    assert!(c.is_one(), "concurrent GF(2^128) identity multiplication");
+                })
+            })
+            .collect();
+        for h in handles {
+            h.join().expect("thread panicked during concurrent reducer access");
+        }
     }
 
     #[test]
