@@ -23,25 +23,25 @@
     "lake-build"
   ],
   "gates_status": {
-    "lake-build": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-21T02:44:45.296229949Z"
-    },
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-21T03:15:04.948995046Z"
-    },
     "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-21T03:17:15.462339426Z"
     },
+    "lake-build": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-21T02:44:45.296229949Z"
+    },
     "doc-review": {
       "status": "passed",
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-21T02:44:50.615598831Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-21T03:15:04.948995046Z"
     }
   },
   "context": {},
@@ -83,6 +83,20 @@
       "label": "Session 1 handoff (Wave 1 complete, Wave 2 plan ready)",
       "doc_type": "session",
       "format": "markdown"
+    },
+    {
+      "path": "dev/active/e095a100-presentation.html",
+      "commit": null,
+      "label": "Epic close-out reveal.js presentation",
+      "doc_type": "presentation",
+      "format": "markdown"
+    },
+    {
+      "path": "dev/active/e095a100-completion-report.md",
+      "commit": null,
+      "label": "Completion report (session 4 / epic rollup)",
+      "doc_type": "session",
+      "format": "markdown"
     }
   ],
   "labels": [
@@ -90,5 +104,5 @@
     "component:gf2-core"
   ],
   "created_at": "2026-02-21T19:35:51.633739852+00:00",
-  "updated_at": "2026-04-21T03:32:29.582357188+00:00"
+  "updated_at": "2026-04-21T19:13:54.062725283+00:00"
 }
