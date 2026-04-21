@@ -2489,3 +2489,10 @@
 {"type":"issue_completed","id":"09dca8f5-06d3-4bc3-919b-4685aa16b729","issue_id":"046f95c1-1245-4021-b5ea-9fa0ae4c53bb","timestamp":"2026-04-20T21:17:04.556263848Z"}
 {"type":"gate_passed","id":"8a51a3d7-0068-47c9-9cec-8abccec18ba9","issue_id":"bdf95060-2d01-49fa-bb10-ae13da01bf14","timestamp":"2026-04-20T21:17:51.605211709Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
 {"type":"gate_passed","id":"219ba1cc-5099-4e41-a50f-79e3f0977a04","issue_id":"bdf95060-2d01-49fa-bb10-ae13da01bf14","timestamp":"2026-04-20T21:17:51.618792533Z","gate_key":"doc-review","updated_by":"agent:project-lead"}
+{"type":"gate_failed","id":"7a639c1a-9533-4885-8633-1f896715b771","issue_id":"bdf95060-2d01-49fa-bb10-ae13da01bf14","timestamp":"2026-04-20T21:23:42.798724726Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"e1b34ffd-a8d5-40c8-bb19-8edfa36e6e76","issue_id":"bdf95060-2d01-49fa-bb10-ae13da01bf14","timestamp":"2026-04-21T02:43:38.956201219Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"issue_state_changed","id":"d2e8820f-0d8b-4cd8-ac8f-a32c15da1be6","issue_id":"bdf95060-2d01-49fa-bb10-ae13da01bf14","timestamp":"2026-04-21T02:43:55.730573719Z","from":"in_progress","to":"done"}
+{"type":"issue_completed","id":"a8bbe94d-d358-4bb8-b7ee-b763b166aa20","issue_id":"bdf95060-2d01-49fa-bb10-ae13da01bf14","timestamp":"2026-04-21T02:43:55.730605409Z"}
+{"type":"gate_passed","id":"4fdafe12-9883-454b-8f14-6599feb94cc6","issue_id":"e095a100-d028-4bbb-a175-a6886137df61","timestamp":"2026-04-21T02:44:45.283118186Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"20efe302-6e1a-43a7-ae97-2e69cb7c081b","issue_id":"e095a100-d028-4bbb-a175-a6886137df61","timestamp":"2026-04-21T02:44:50.604767888Z","gate_key":"lake-build","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"f85b79ac-68b5-4196-98d6-269e6e59c2e7","issue_id":"e095a100-d028-4bbb-a175-a6886137df61","timestamp":"2026-04-21T02:44:50.615787931Z","gate_key":"doc-review","updated_by":"agent:project-lead"}
