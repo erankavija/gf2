@@ -1974,7 +1974,8 @@ mod tests {
             })
             .collect();
         for h in handles {
-            h.join().expect("thread panicked during concurrent reducer access");
+            h.join()
+                .expect("thread panicked during concurrent reducer access");
         }
     }
 
