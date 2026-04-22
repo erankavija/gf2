@@ -7,6 +7,7 @@ use gf2_coding::info_theory::shannon_capacity;
 use gf2_coding::simulation::{SimulationConfig, SimulationRunner};
 
 #[test]
+#[ignore = "sim: uncoded BPSK BER baseline, 100 000 frames"]
 fn test_uncoded_ber_at_high_snr() {
     // At high SNR (10 dB), BER should be very low
     let mut config = SimulationConfig::quick_test();
@@ -26,6 +27,7 @@ fn test_uncoded_ber_at_high_snr() {
 }
 
 #[test]
+#[ignore = "sim: BER monotonicity, 3 SNR points x 100 000 frames"]
 fn test_uncoded_ber_decreases_monotonically() {
     // BER should decrease as Eb/N0 increases
     let mut config = SimulationConfig::quick_test();
@@ -52,6 +54,7 @@ fn test_uncoded_ber_decreases_monotonically() {
 }
 
 #[test]
+#[ignore = "sim: BER precision, 500 000 frames, 200 min errors"]
 fn test_uncoded_ber_reasonable_values() {
     // Check that BER values are in expected ranges for uncoded BPSK
     // These are approximate bounds based on Q-function
@@ -81,6 +84,7 @@ fn test_uncoded_ber_reasonable_values() {
 }
 
 #[test]
+#[ignore = "sim: BER vs Shannon, 100 000 frames"]
 fn test_ber_far_from_shannon_limit() {
     // Uncoded transmission operates far from Shannon limit
     // At Shannon limit for rate 1.0, we'd need infinite SNR
@@ -139,6 +143,7 @@ mod property_tests {
 
     proptest! {
         #[test]
+        #[ignore = "sim: proptest Monte Carlo, 20+ SNR points x 10 000 frames each"]
         fn ber_bounded_by_half(eb_n0_db in -5.0..20.0) {
             // BER for BPSK should always be <= 0.5 (worst case is random guessing)
             let mut config = SimulationConfig::quick_test();

@@ -36,22 +36,15 @@ summarize_pass() {
   local name="$1"
   case "$name" in
     test)
-      # Extract "test result:" summary lines
-      local results
-      results=$(grep "^test result:" "$TMPDIR/$name.out" || true)
-      if [ -n "$results" ]; then
-        # Sum up passed/failed counts across all test binaries
-        local total_passed=0 total_failed=0 total_ignored=0
-        while IFS= read -r line; do
-          local p f i
-          p=$(echo "$line" | grep -oP '\d+(?= passed)' || true)
-          f=$(echo "$line" | grep -oP '\d+(?= failed)' || true)
-          i=$(echo "$line" | grep -oP '\d+(?= ignored)' || true)
-          total_passed=$((total_passed + ${p:-0}))
-          total_failed=$((total_failed + ${f:-0}))
-          total_ignored=$((total_ignored + ${i:-0}))
-        done <<< "$results"
-        echo "${total_passed} passed, ${total_failed} failed, ${total_ignored} ignored"
+      # Extract nextest summary line: "Summary [Xs] N tests run: P passed, F failed, S skipped"
+      local summary_line
+      summary_line=$(grep "^Summary" "$TMPDIR/$name.out" || true)
+      if [ -n "$summary_line" ]; then
+        local p f s
+        p=$(echo "$summary_line" | grep -oP '\d+(?= passed)' || true)
+        f=$(echo "$summary_line" | grep -oP '\d+(?= failed)' || true)
+        s=$(echo "$summary_line" | grep -oP '\d+(?= skipped)' || true)
+        echo "${p:-0} passed, ${f:-0} failed, ${s:-0} skipped"
       else
         echo "ok"
       fi
@@ -66,9 +59,10 @@ summarize_fail() {
   local name="$1"
   case "$name" in
     test)
-      # Show failure details: stdout blocks + failing test names + result summary
+      # Show failure details from nextest output
       echo "--- $name failures ---"
-      sed -n '/^---- .* stdout ----$/,/^test result:/p' "$TMPDIR/$name.out" || true
+      grep -E "^(FAIL|TIMEOUT|  ×)" "$TMPDIR/$name.out" || true
+      grep -A 20 "^--- STDOUT:" "$TMPDIR/$name.out" | head -60 || true
       ;;
     clippy)
       echo "--- $name diagnostics ---"
@@ -95,7 +89,7 @@ fi
 
 # Run all steps in order; continue through failures to report all of them.
 run_step check  cargo check --workspace $FEAT_FLAGS
-run_step test   cargo test --workspace $FEAT_FLAGS --release
+run_step test   cargo nextest run --workspace $FEAT_FLAGS --release --profile ci
 run_step clippy cargo clippy --workspace --all-targets $FEAT_FLAGS -- -D warnings
 run_step fmt    cargo fmt --all -- --check
 

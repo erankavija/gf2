@@ -49,11 +49,14 @@ jobs:
     - name: Run clippy
       run: cargo clippy --workspace --all-targets --features simd,parallel,visualization,io,rand,llr-f64 -- -D warnings
 
+    - name: Install cargo-nextest
+      uses: taiki-e/install-action@nextest
+
     - name: Build
       run: cargo build --workspace --verbose --features simd,parallel,visualization,io,rand,llr-f64
 
     - name: Run tests
-      run: cargo test --workspace --verbose --features simd,parallel,visualization,io,rand,llr-f64
+      run: cargo nextest run --workspace --features simd,parallel,visualization,io,rand,llr-f64 --profile ci
 
     - name: Build documentation
       run: cargo doc --workspace --no-deps --features simd,parallel,visualization,io,rand,llr-f64
