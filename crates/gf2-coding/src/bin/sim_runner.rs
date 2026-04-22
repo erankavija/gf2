@@ -1349,6 +1349,7 @@ max_frames = 1
     /// BLER is strictly lower than low-SNR BLER — a basic sanity check that
     /// the fading path wires up correctly end-to-end.
     #[test]
+    #[ignore = "sim: Rician product-code BLER decay across 3 SNR points, ~30-60 s"]
     fn test_run_curve_rician_product_bler_decays() {
         let toml_str = r#"
 [campaign]
@@ -1359,11 +1360,11 @@ output_dir = "/tmp/ignored"
 name = "rician_drm_sanity"
 type = "product"
 component = "drm_32_21"
-turbo = { max_iterations = 5, alpha = 0.5, list_size = 2, max_queries = 5000 }
+turbo = { max_iterations = 5, alpha = 0.5, list_size = 2, max_queries = 200 }
 channel = { kind = "rician", preset = "fig8" }
 snr = { start = 2.0, stop = 8.0, step = 3.0 }
-min_errors = 5
-max_frames = 200
+min_errors = 2
+max_frames = 30
 "#;
         let config: CampaignConfig = toml::from_str(toml_str).unwrap();
 

@@ -14,15 +14,15 @@ A **research-grade** toolkit for high-performance finite field computing and cod
 # Build workspace
 cargo build --workspace --all-features
 
-# Run all tests (match CI) — ALWAYS use --release
-cargo test --workspace --all-features --release
+# Run all tests (fast tier — default, matches CI) — ALWAYS use --release
+cargo nextest run --workspace --all-features --release --profile ci
 
 # Run tests for a single crate
-cargo test -p gf2-core --release
-cargo test -p gf2-coding --release
+cargo nextest run -p gf2-core --release --profile ci
+cargo nextest run -p gf2-coding --release --profile ci
 
 # Run a single test by name
-cargo test -p gf2-core --release <test_name>
+cargo nextest run -p gf2-core --release -E 'test(test_name)'
 
 # Check formatting (CI enforces this)
 cargo fmt --all -- --check
@@ -52,12 +52,27 @@ cargo run -p gf2-coding --example ldpc_awgn --release
 cd proofs && lake build
 ```
 
+## Test tiers
+
+Two tiers. Use the fast tier by default. Never run the slow tier as an agent.
+
+| Tier | Command | Per-test limit | Who runs it |
+|------|---------|---------------|-------------|
+| Fast | `cargo nextest run --workspace --all-features --release --profile ci` | 5 s (hard kill) | CI + agents |
+| Slow | `cargo nextest run --workspace --all-features --release --profile slow --run-ignored ignored-only` | 120 s | Nightly CI only |
+
+**Rules — read carefully:**
+- **NEVER** pass `--run-ignored all`, `--run-ignored ignored-only`, `-- --ignored`, or `-- --include-ignored` in normal work. Those unlock the slow tier and will stall the agent for minutes.
+- Any test calling `SimulationRunner`, `run_curve`, `run_coded`, or `run_coded_iterative` with `max_frames > 50` or `max_queries > 500` **MUST** carry `#[ignore = "sim: <description>"]`.
+- Any test expected to exceed 5 s **MUST** carry `#[ignore = "slow: <description>"]` or `#[ignore = "sim: <description>"]`.
+- Tests requiring external ETSI test vector files use `#[ignore = "external: <description>"]`.
+
 ## Performance rules for test and build commands
 
-1. **ALWAYS use `--release` for `cargo test`**. Debug-mode tests take 10–100x longer due to unoptimized SIMD, crypto, and simulation code. The full test suite runs in ~7s with `--release` but can take minutes in debug mode.
-2. **Never run multiple `cargo test` or `cargo build` commands in parallel.** They compete for the same build cache and cause lock contention. Run one at a time.
-3. **For targeted testing during development**, use: `cargo test -p gf2-coding --release -- module_name::tests` instead of the full workspace.
-4. **Test suite wall-clock limit: 60 seconds.** If tests exceed this, something is wrong.
+1. **ALWAYS use `--release`**. Debug-mode tests take 10–100x longer due to unoptimized SIMD, crypto, and simulation code.
+2. **Never run multiple `cargo nextest` or `cargo build` commands in parallel.** They compete for the same build cache and cause lock contention. Run one at a time.
+3. **For targeted testing during development**, use `-p gf2-coding` instead of the full workspace.
+4. **Test suite wall-clock limit: 60 seconds.** Nextest enforces 5 s per test; if the full suite exceeds 60 s, a test is missing its `#[ignore]`.
 5. **Examples and benchmarks also need `--release`** — simulation examples can be 100x slower without optimization.
 
 ## Architecture

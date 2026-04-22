@@ -2552,6 +2552,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "sim: BER at 10 dB, 10 000 frames"]
     fn test_uncoded_ber_simulation() {
         let mut config = SimulationConfig::quick_test();
         config.eb_n0_range_db = vec![10.0];
@@ -2567,6 +2568,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "sim: BER monotonicity, 2 SNR points, 50 errors each"]
     fn test_ber_decreases_with_snr() {
         let mut config = SimulationConfig::quick_test();
         config.eb_n0_range_db = vec![0.0, 6.0];
@@ -2931,6 +2933,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "sim: parallel-iterative coded sim, 2 SNR x 1000 frames"]
     fn test_run_coded_iterative_parallel_basic() {
         let encoder = MockEncoder;
         let channel = BpskAwgnChannel;
@@ -3168,6 +3171,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "sim: reproducibility check, 2000 frames, 20 min errors"]
     fn test_seeded_rng_reproducibility() {
         let encoder = MockEncoder;
         let channel = BpskAwgnChannel;
