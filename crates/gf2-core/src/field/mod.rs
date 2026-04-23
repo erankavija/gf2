@@ -43,6 +43,7 @@ pub mod matrix;
 pub mod ntt;
 pub mod poly;
 pub mod poly_interpolate;
+pub mod sparse_matrix;
 mod traits;
 pub mod two_adic;
 pub mod vec;
