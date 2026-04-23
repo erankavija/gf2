@@ -2697,6 +2697,33 @@ mod tests {
         );
     }
 
+    #[test]
+    fn test_matvec_transpose_panics_for_non_const_zero_rows() {
+        // (0, 3) on Gf2mElement. matvec_transpose has no zero witness and must
+        // panic because it cannot seed the length-3 output without a row to
+        // borrow an element from, and Gf2mElement is not ConstField.
+        let field = gf16();
+        let a = FieldMatrix::<Gf2mElement>::new(0, 3, field.element(0));
+        let x = FieldVec::<Gf2mElement>::new(); // length 0 == self.rows
+        let result = std::panic::catch_unwind(|| a.matvec_transpose(&x));
+        assert!(result.is_err(), "expected matvec_transpose to panic");
+        let payload = result.err().unwrap();
+        let msg = payload
+            .downcast_ref::<String>()
+            .cloned()
+            .or_else(|| {
+                payload
+                    .downcast_ref::<&'static str>()
+                    .map(|s| s.to_string())
+            })
+            .unwrap_or_default();
+        assert!(
+            msg.contains("requires a zero witness"),
+            "unexpected panic message: {:?}",
+            msg
+        );
+    }
+
     proptest! {
         #![proptest_config(ProptestConfig::with_cases(32))]
 
