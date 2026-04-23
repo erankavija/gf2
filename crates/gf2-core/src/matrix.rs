@@ -1127,6 +1127,8 @@ impl fmt::Display for BitMatrix {
 }
 
 impl crate::matrix_like::MatrixLike<bool> for BitMatrix {
+    type Owned = BitMatrix;
+
     #[inline]
     fn rows(&self) -> usize {
         BitMatrix::rows(self)

@@ -43,13 +43,20 @@ existing inherent methods, so zero existing call sites need to change and
 no behavior shifts. `FieldMatrix<F>` and `MatViewMut<'_, F>` implement
 both; `MatView<'_, F>` implements only the read-only half.
 
-The `MatView` / `MatViewMut` transpose methods are deliberately
-`unimplemented!()`. Returning a transposed view over the same buffer would
-require a column-major reinterpretation of a row-major slice — incorrect
-without a physical data copy. Users who need the transpose must reify:
-`view.to_owned().transpose()`. The issue's success criterion ("`MatView`
-implements `MatrixLike<F>`") is satisfied because the other three methods
-are honest; the fourth documents a precise escape hatch.
+The `MatrixLike` trait carries an associated type `Owned: MatrixLike<Elem>`
+so that `transpose(&self) -> Self::Owned` stays total. Concrete matrices
+(`BitMatrix`, `FieldMatrix<F>`) set `Owned = Self` and return an in-kind
+transpose. Zero-copy views (`MatView<'_, F>`, `MatViewMut<'_, F>`) set
+`Owned = FieldMatrix<F>` and materialise a fresh owned matrix, because a
+row-major borrowed slice cannot be reinterpreted in place as a column-major
+one without physical data motion. Each view also exposes an inherent
+`to_owned(&self) -> FieldMatrix<F>` so callers can reify explicitly; the
+trait `transpose` composes `to_owned` with `FieldMatrix::transpose`.
+
+This replaces the earlier `unimplemented!()` sketch — a public trait
+method must not panic for any valid receiver, so the `Owned` type was
+introduced to encode the "views return owned" semantics in the type
+system rather than at runtime.
 
 ## 2. `Transposed<M>` placeholder
 
@@ -106,27 +113,39 @@ Empty matrices render as `[ ]`, exactly as `BitMatrix::Display` does.
 `Mul` is implemented with a single classical O(n·m·k) triple loop in
 `gemm()`, iterating `i → k → j` to keep the reads of `aik` out of the
 inner loop. No delayed-reduction accumulation, no Strassen-Winograd. Both
-of those optimisations are explicitly deferred to issue `d48a3cfd`. The
-eager path is gated on `F: ConstField` because the body calls `F::zero()`
-to skip zero-valued pivots — a cheap sparsity heuristic that disappears on
-dense `Fp<7>` test data but earns its keep as soon as we start reusing
-`gemm` for the identity-dominated blocks in PLE's `R11 B = L12` solves.
+of those optimisations are explicitly deferred to issue `d48a3cfd`.
 
-## 6. Why no `to_sparse`
+The eager path is bounded on `F: FiniteField` (not `ConstField`) so that
+runtime-context fields such as `Gf2mElement` participate in matrix
+multiplication directly. The zero-element comparison used for the
+sparsity early-exit is sourced via `FiniteField::zero_like()` on an
+interior element, and the output matrix is initialised with
+`FieldVec::zeros_from(.., &zero)` so no `F::zero()` constant is required.
+The same transformation applies to `matvec` and `matvec_transpose`.
 
-`BitMatrix::to_sparse()` returns a `SpBitMatrix`. The finite-field analogue
-is a `SparseFieldMatrix<F>` (CSR over `F` entries) which is the subject of
-story `8a90882e` and therefore does not exist yet. Declaring a
-`FieldMatrix::to_sparse` here would either have to:
+## 6. `to_sparse` signature ships here, implementation stub
 
-1. return `SpBitMatrix` via some coercion — wrong type, and wrong semantics
-   for non-GF(2) fields, or
-2. refer to a not-yet-existing type — won't compile, blocking this story
-   on `8a90882e`.
+The issue contract lists `to_sparse` as part of the public surface of
+`FieldMatrix<F>`. The full sparse representation — CSR over `F` entries,
+arithmetic, conversion helpers — is owned by story `8a90882e`, but the
+*signature* must exist in this story so callers can compile against the
+final shape.
 
-Neither is acceptable, so the method is omitted from this story. The
-parity requirement is logged in the PR description as a known gap that
-the follow-up story closes; there is no `todo!()` or stub to remove later.
+Implementation: add a dedicated module `crates/gf2-core/src/field/sparse_matrix.rs`
+that defines a minimal `SparseFieldMatrix<F: FiniteField>` backed by a
+`Vec<(usize, usize, F)>` triplet list, plus a crate-private
+`from_dense_stub` constructor. `FieldMatrix::to_sparse` scans the dense
+matrix and emits one triplet per non-zero entry (O(rows · cols)). The
+stub compiles cleanly and behaves correctly; the earlier worry that the
+signature "won't compile" was mistaken — a standalone stub type is a
+valid target as long as the owning story (`8a90882e`) replaces it
+wholesale. The stub module carries an `8a90882e` reference comment so
+the follow-up story finds it on the first search.
+
+This intentionally leaves no `todo!()` or `unimplemented!()` behind:
+the `to_sparse` body is fully functional. What `8a90882e` replaces is the
+internal representation and the additional operator surface, not the
+`FieldMatrix::to_sparse` method itself.
 
 ## 7. Random generation
 
@@ -153,9 +172,11 @@ constructors sit in the `ConstField` impl block.
   allocator traffic matters.
 - **`AddAssign<&FieldMatrix<F>>` on views**: would be useful for PLE but
   not required here; can be added in Wave 2.
-- **`transpose` on views**: left `unimplemented!` pending a decision in
-  `cdcebf6a` about whether the expression layer materialises transposes
-  via the owned path or via a dedicated column-major view type.
+- **`transpose` on views**: views now reify an owned `FieldMatrix<F>`
+  via `MatrixLike::Owned` and the inherent `to_owned` path. If `cdcebf6a`
+  later introduces a dedicated column-major view type, the trait method
+  can be specialised without source-breaking callers because the return
+  type is still `Self::Owned`.
 - **Scalar `Mul<F>` for non-`Fp` fields**: the `F * &M` direction is only
   implemented for `Fp<P>` because a blanket `impl<F> Mul<&M<F>> for F`
   triggers orphan-rule trouble. `Gf2mElement` (which is not `Copy`) gets

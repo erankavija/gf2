@@ -17,6 +17,16 @@
 //! The split means that an immutable `MatView<'_, F>` can implement the
 //! read-only trait without having to `panic!("read-only")` on the mutators.
 //! See `dev/active/ab791e27-design.md` for the design rationale.
+//!
+//! # Owned transpose
+//!
+//! [`MatrixLike::transpose`] returns an [`MatrixLike::Owned`] matrix rather
+//! than `Self`. Concrete row-major matrices (`BitMatrix`, `FieldMatrix<F>`)
+//! set `Owned = Self` and return the obvious in-kind transpose; zero-copy
+//! views instead materialise a fresh owned matrix of the parent type. This
+//! keeps the trait method total (no panicking impl) while still allowing
+//! generic code to obtain a transpose from any `MatrixLike` without assuming
+//! ownership.
 
 /// Shared read-only matrix surface.
 ///
@@ -25,6 +35,12 @@
 /// [`BitMatrix`](crate::matrix::BitMatrix) can implement `MatrixLike<bool>`
 /// and [`FieldMatrix<F>`](crate::field::matrix::FieldMatrix) can implement
 /// `MatrixLike<F>`.
+///
+/// # Owned associated type
+///
+/// [`MatrixLike::transpose`] returns `Self::Owned`, not `Self`. For concrete
+/// matrix types `Owned = Self`; for borrow-only views `Owned` is the parent
+/// owned matrix type, so the view's transpose materialises a fresh copy.
 ///
 /// # Examples
 ///
@@ -40,6 +56,12 @@
 /// assert!(MatrixLike::<bool>::is_square(&m));
 /// ```
 pub trait MatrixLike<Elem> {
+    /// Owned matrix type produced by [`transpose`](Self::transpose).
+    ///
+    /// Concrete owned matrices set this to `Self`. Borrow-only views set it
+    /// to the parent owned type (e.g. `MatView<'_, F>::Owned = FieldMatrix<F>`).
+    type Owned: MatrixLike<Elem>;
+
     /// Number of rows.
     fn rows(&self) -> usize;
 
@@ -53,10 +75,12 @@ pub trait MatrixLike<Elem> {
     /// Panics if `row >= self.rows()` or `col >= self.cols()`.
     fn get(&self, row: usize, col: usize) -> Elem;
 
-    /// Returns a fresh owned matrix that is the transpose of `self`.
-    fn transpose(&self) -> Self
-    where
-        Self: Sized;
+    /// Returns a freshly allocated owned matrix that is the transpose of
+    /// `self`.
+    ///
+    /// Views materialise a new `Self::Owned` because a row-major slice cannot
+    /// be reinterpreted in-place as column-major without data motion.
+    fn transpose(&self) -> Self::Owned;
 
     /// Returns `(rows, cols)`.
     #[inline]
