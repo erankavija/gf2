@@ -1,0 +1,28 @@
+{
+  "id": "6ed7f050-6a09-47e3-baa7-8485fd9c2acd",
+  "title": "64c88ae4/T2: gf2 criterion benchmark suite (all ops × fields × sizes)",
+  "description": "Second task of story `64c88ae4`. Criterion bench suite on the gf2 side covering every (operation, field, size) combination, in both full-rank and rank-deficient regimes.\n\n## Deliverables\n\n- **`crates/gf2-core/benches/fieldmatrix_gemm.rs`** — matmul at 64², 256², 1024², 4096²; plus rectangular (1024 × 1024 × 1024^0.5), (1024 × 1024 × 1024^0.3).\n- **`crates/gf2-core/benches/fieldmatrix_ple.rs`** — PLE / rank / nullspace / rref at 64², 256², 1024², 4096²; full-rank and rank n/2.\n- **`crates/gf2-core/benches/fieldmatrix_solve.rs`** — inv / solve / det.\n- **`crates/gf2-core/benches/fieldmatrix_charpoly.rs`** — charpoly / minpoly at 32², 128², 512².\n- **`crates/gf2-core/benches/sparse_spmv.rs`** — SpMV at sparsity 1%, 5% and n = 256, 1024, 4096.\n- **CSV emitter** — each bench writes to `bench_results/gf2-<timestamp>.csv` in the same schema as T1's reference output.\n- **Seeded matrix generators** matching T1's harness — identical inputs across libs.\n\n## Field coverage\n\nPer story `64c88ae4`: GF(7), GF(31), GF(251), GF(65521), GF(2^31−1), GF(2^8), GF(2^16), GF(2^32).\n\n## Success criteria\n\n- [hard] Every (operation, field, size) combo from the story bench matrix has a criterion bench.\n- [hard] Rank-deficient regime exercised for every factorization op.\n- [hard] Seeded matrix generators produce identical data to T1's reference harness (verify via a small doctest checking a hash of the first row at seed 0).\n- [hard] CSV output schema matches T1.\n\n## Depends on\n\n- `d48a3cfd` (matmul; full story, not just T1).\n- `c3f8c1cb` (PLE + echelon).\n- `83b1ad8b` (trsm).\n- `ae1d1e88` (inv/solve/det).\n- `e47231cd` (charpoly/minpoly).\n- `8a90882e` (sparse).",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "e47231cd-7f4b-40d7-9164-033aa2be63bb",
+    "ae1d1e88-c3cc-4cbf-9d52-e65940b1efe0",
+    "8a90882e-5eec-4943-8482-7f08a5bc5492"
+  ],
+  "gates_required": [
+    "code-review",
+    "cargo-ci"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "story:64c88ae4",
+    "epic:bb85c68a"
+  ],
+  "created_at": "2026-04-23T16:30:29.796594383+00:00",
+  "updated_at": "2026-04-23T16:31:18.257086258+00:00"
+}

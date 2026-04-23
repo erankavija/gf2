@@ -1,15 +1,35 @@
 {
   "id": "ab791e27-49c5-428f-8029-d19752a7bf61",
   "title": "Design FieldMatrix<F: FiniteField> dense matrix type",
-  "description": "Row-major dense matrix over `FieldVec<F>`. Core API: construct, index, row/col slices, transpose, dimensions. Ergonomic operator overloads (`Mul`, `Add`, `Index`). Must NOT touch `BitMatrix` (remains GF(2)-specialized).\n\n## API sketch\n\n```rust\npub struct FieldMatrix<F: FiniteField> {\n    rows: usize,\n    cols: usize,\n    data: FieldVec<F>,\n}\n\nimpl<F: FiniteField> FieldMatrix<F> {\n    pub fn new(rows: usize, cols: usize) -> Self;\n    pub fn from_rows(rows: Vec<FieldVec<F>>) -> Self;\n    pub fn row(&self, i: usize) -> &[F];\n    pub fn col_iter(&self, j: usize) -> impl Iterator<Item = &F>;\n    pub fn transpose(&self) -> Self;\n    pub fn identity(n: usize) -> Self where F: ConstField;\n}\n```\n\n## Location\n\n`crates/gf2-core/src/field/matrix.rs`\n\n## Dependencies\n\n- `FieldVec` scalar container (54a60c90)",
+  "description": "Row-major dense `FieldMatrix<F: FiniteField>` type built on `FieldVec<F>`. Delivers the full `BitMatrix`-parity public surface plus the Armadillo-shape convenience operations listed in `dev/plans/armadillo_ux_mapping.md`. Introduces the `MatrixLike<Elem>` shared trait and has `BitMatrix` (bool) and `FieldMatrix<F>` (F) both implement it.\n\n## API surface (must match `BitMatrix` method-for-method where applicable)\n\n```rust\npub struct FieldMatrix<F: FiniteField> {\n    rows: usize,\n    cols: usize,\n    data: FieldVec<F>, // row-major, stride = cols\n}\n\nimpl<F: FiniteField> FieldMatrix<F> {\n    // Constructors (parity with BitMatrix where names exist)\n    pub fn new(rows: usize, cols: usize, fill: F) -> Self;\n    pub fn from_rows(rows: Vec<FieldVec<F>>) -> Self;\n    pub fn with_capacity(rows: usize, cols: usize) -> Self;\n\n    // Shape\n    pub fn rows(&self) -> usize;\n    pub fn cols(&self) -> usize;\n    pub fn shape(&self) -> (usize, usize);\n    pub fn is_square(&self) -> bool;\n    pub fn is_empty(&self) -> bool;\n\n    // Element access\n    pub fn get(&self, r: usize, c: usize) -> F;\n    pub fn set(&mut self, r: usize, c: usize, v: F);\n    pub fn get_unchecked(&self, r: usize, c: usize) -> F;\n\n    // Row/col access\n    pub fn row(&self, i: usize) -> &[F];\n    pub fn row_mut(&mut self, i: usize) -> &mut [F];\n    pub fn col(&self, j: usize) -> ColView<'_, F>;\n    pub fn col_iter(&self, j: usize) -> impl Iterator<Item = &F>;\n\n    // Views (Armadillo-style submat)\n    pub fn submat(&self, rows: impl RangeBounds<usize>, cols: impl RangeBounds<usize>) -> MatView<'_, F>;\n    pub fn submat_mut(&mut self, rows: impl RangeBounds<usize>, cols: impl RangeBounds<usize>) -> MatViewMut<'_, F>;\n    pub fn row_range(&self, rows: impl RangeBounds<usize>) -> MatView<'_, F>;\n    pub fn col_range(&self, cols: impl RangeBounds<usize>) -> MatView<'_, F>;\n\n    // Row operations (needed by Gaussian elimination / PLE)\n    pub fn swap_rows(&mut self, r1: usize, r2: usize);\n    pub fn scale_row(&mut self, row: usize, factor: F);\n    pub fn axpy_row(&mut self, dst: usize, src: usize, factor: F); // parity with BitMatrix::row_xor\n    pub fn find_pivot_row(&self, col: usize, start_row: usize) -> Option<usize>;\n\n    // Derived\n    pub fn transpose(&self) -> Self;\n    pub fn t(&self) -> Transposed<&Self>;           // lazy proxy (design in cdcebf6a)\n    pub fn diag(&self) -> FieldVec<F>;\n    pub fn trace(&self) -> F;\n    pub fn is_symmetric(&self) -> bool;\n\n    // Conversion\n    pub fn to_sparse(&self) -> SparseFieldMatrix<F>; // mirrors BitMatrix::to_sparse, from story 8a90882e\n    pub fn matvec(&self, x: &FieldVec<F>) -> FieldVec<F>;\n    pub fn matvec_transpose(&self, x: &FieldVec<F>) -> FieldVec<F>;\n}\n\nimpl<F: ConstField> FieldMatrix<F> {\n    pub fn zeros(rows: usize, cols: usize) -> Self;\n    pub fn ones(rows: usize, cols: usize) -> Self;\n    pub fn identity(n: usize) -> Self;\n    pub fn random<R: Rng>(rows: usize, cols: usize, rng: &mut R) -> Self;\n    pub fn random_seeded(rows: usize, cols: usize, seed: u64) -> Self;\n}\n\n// Operator overloads — all four owned/ref combos for Mul/Add/Sub (per BitMatrix precedent).\n// Scalar multiplication F * M and M * F.\n// Neg for -A.\n// Index<(usize, usize)> for A[(i, j)].\n// Display (styled consistently with BitMatrix::Display).\n```\n\n## `MatrixLike<Elem>` shared trait\n\nNew module `crates/gf2-core/src/matrix_like.rs`:\n\n```rust\npub trait MatrixLike<Elem> {\n    fn rows(&self) -> usize;\n    fn cols(&self) -> usize;\n    fn get(&self, row: usize, col: usize) -> Elem;\n    fn set(&mut self, row: usize, col: usize, v: Elem);\n    fn swap_rows(&mut self, r1: usize, r2: usize);\n    fn transpose(&self) -> Self where Self: Sized;\n    fn shape(&self) -> (usize, usize) { (self.rows(), self.cols()) }\n    fn is_square(&self) -> bool { self.rows() == self.cols() }\n    fn is_empty(&self) -> bool { self.rows() == 0 || self.cols() == 0 }\n}\n```\n\n`BitMatrix` gains a trivial `MatrixLike<bool>` impl in `matrix.rs`. No behavioral change to existing `BitMatrix` users. `FieldMatrix<F>` implements `MatrixLike<F>` in `field/matrix.rs`. `MatView<'_, F>` / `MatViewMut<'_, F>` also implement it (read-only variant for `MatView`), so algorithms written against `MatrixLike` can recurse into submatrix views without copying.\n\n## Location\n\n- `crates/gf2-core/src/field/matrix.rs` — `FieldMatrix<F>`, `MatView`, `MatViewMut`, `ColView`\n- `crates/gf2-core/src/matrix_like.rs` — `MatrixLike<Elem>` trait\n- `crates/gf2-core/src/matrix.rs` — add `MatrixLike<bool>` impl for `BitMatrix` (non-invasive)\n\n## Non-goals\n\n- Operator expression-template proxy types — those are designed in `cdcebf6a` and implemented in `d48a3cfd`.\n- Sparse conversion body — `to_sparse` signature is declared here but implementation is in `8a90882e`.\n- Matrix multiplication — algorithmic body lives in `d48a3cfd`; only the `Mul` trait shell and signature land here.\n\n## Success criteria\n\n- [hard] Every `BitMatrix` method listed above has a signature-parity counterpart on `FieldMatrix<F>` or a clear justification in the PR description for why it does not apply.\n- [hard] `MatrixLike<Elem>` trait exists and is implemented by `BitMatrix`, `FieldMatrix<F>`, and at least `MatView<'_, F>`.\n- [hard] `BitMatrix`'s public behavior is unchanged (existing tests still pass without modification).\n- [hard] Every public item has a doc comment with `# Examples` (doctest-compiled) and `# Complexity` for non-trivial operations.\n- [hard] Display output for `FieldMatrix<F>` follows `BitMatrix::Display`'s alignment conventions.\n- [hard] Criterion micro-benchmarks exist for `FieldMatrix::zeros`, `identity`, `transpose`, `row`/`col` access at representative sizes.\n- [hard] `cargo test --workspace --all-features --release --profile ci` + `cargo clippy --all-targets --all-features -- -D warnings` + `cargo fmt --all -- --check` all pass.\n\n## Dependencies\n\n- GF(p^m) foundation (`e095a100`) — DONE.\n- Expression-template design (`cdcebf6a`) — **informational only**; operator overload signatures land here but the proxy types are implemented in `d48a3cfd`. This story is not blocked by cdcebf6a but is dispatched in parallel wave.\n\n## References\n\n- [Armadillo UX mapping](dev/plans/armadillo_ux_mapping.md) (comprehensive API table)\n- [Dumas–Pernet takeaways](dev/plans/dumas_pernet_takeaways.md) §3.1\n- [fflas-ffpack analysis](dev/plans/fflas_ffpack_analysis.md) §7.2",
   "state": "ready",
   "priority": "normal",
   "assignee": null,
   "dependencies": [
     "e095a100-d028-4bbb-a175-a6886137df61"
   ],
-  "gates_required": [],
-  "gates_status": {},
+  "gates_required": [
+    "code-review",
+    "cargo-ci",
+    "doc-review"
+  ],
+  "gates_status": {
+    "doc-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-04-23T16:00:44.152454656Z"
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-04-23T16:00:44.152398956Z"
+    },
+    "cargo-ci": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-04-23T16:00:44.152439456Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -17,5 +37,5 @@
     "type:story"
   ],
   "created_at": "2026-02-23T19:20:28.213036572+00:00",
-  "updated_at": "2026-04-21T03:32:29.694560730+00:00"
+  "updated_at": "2026-04-23T16:00:44.152470566+00:00"
 }

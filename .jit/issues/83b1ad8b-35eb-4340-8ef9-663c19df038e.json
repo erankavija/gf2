@@ -1,0 +1,26 @@
+{
+  "id": "83b1ad8b-35eb-4340-8ef9-663c19df038e",
+  "title": "Implement block-recursive trsm/trmm/trtri/trtrm triangular primitives",
+  "description": "Block-recursive triangular primitives reducing to `gemm` per Dumas–Pernet §2.1 (algorithms 2.1–2.4). These are the shared building blocks of `inv`, `solve`, `rref`, and characteristic polynomial.\n\n## Operations\n\n```rust\n// All take matrix views and operate in-place where the paper permits.\npub fn trsm_upper<F: FiniteField>(a: MatView<F>, b: MatViewMut<F>);   // Upper A, solve AX = B\npub fn trsm_lower<F: FiniteField>(a: MatView<F>, b: MatViewMut<F>);   // Lower A, solve AX = B\npub fn trmm_upper<F: FiniteField>(a: MatView<F>, b: MatViewMut<F>);   // B ← A·B, A upper triangular\npub fn trmm_lower<F: FiniteField>(a: MatView<F>, b: MatViewMut<F>);   // B ← A·B, A lower triangular\npub fn trtri_upper<F: FiniteField>(a: MatViewMut<F>);                 // A ← A⁻¹, A upper triangular\npub fn trtri_lower<F: FiniteField>(a: MatViewMut<F>);                 // A ← A⁻¹, A lower triangular\npub fn trtrm<F: FiniteField>(l: MatViewMut<F>, u: MatView<F>);        // A = U·L written into L-view\n```\n\n## Algorithms\n\n- `trsm`: recurse halving the triangular dimension; inner block uses `gemm` (paper alg 2.1).\n- `trmm`: recurse halving the triangular dimension; inner block uses `gemm` (alg 2.2).\n- `trtri`: recursive inversion with two `trmm` calls (alg 2.3).\n- `trtrm`: upper-times-lower, uses `gemm` + recursive `trtrm` (alg 2.4).\n\n## Success criteria\n\n- [hard] All four operations implemented generically over `F: FiniteField`, dispatched through `FieldVec` / `gemm` under the hood.\n- [hard] Zero extra allocation beyond the input/output arguments (per paper §2.1 note). Use in-place `MatViewMut` throughout.\n- [hard] Property-based tests: for random `A` triangular and random `B`, `trsm(A, B)` then multiply-back equals `B`. Same for all four.\n- [hard] Edge cases covered: n = 0, 1, power-of-two boundaries, odd recursion splits, singular upper-triangular blocks (must panic with clear message, not silently return garbage).\n- [hard] Benchmarked via criterion at n = 64, 256, 1024 for GF(7), GF(2^31-1), GF(2^8). Benches compiled and runnable under `cargo bench -p gf2-core`.\n- [hard] API consistency: triangular primitives have the same naming conventions as the rest of `FieldMatrix`; signature style mirrors existing `BitMatrix` kernel utilities where applicable.\n- [hard] Documented at module level with the paper citation and the reduction-to-gemm sketch.\n- [aspirational] Crossover to base case (small-n direct code) tuned per field; `TRI_BASE_THRESHOLD` configurable.\n\n## Dependencies\n\n- Dense `FieldMatrix<F>` type (ab791e27) — must have `MatView` / `MatViewMut`.\n- Matrix multiplication (d48a3cfd) — `gemm` is the inner kernel.\n- Expression-template design (N1) — operator overloads for triangular views must match the broader expression algebra.\n\n## References\n\n- [Dumas–Pernet takeaways](dev/plans/dumas_pernet_takeaways.md) §3.2, §7\n- [fflas-ffpack analysis](dev/plans/fflas_ffpack_analysis.md) §6",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "d48a3cfd-3187-41c3-b4a5-78c4c6f8a967"
+  ],
+  "gates_required": [
+    "code-review",
+    "cargo-ci",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:story",
+    "component:gf2-core",
+    "epic:bb85c68a"
+  ],
+  "created_at": "2026-04-23T15:56:35.298288069+00:00",
+  "updated_at": "2026-04-23T15:57:03.825119090+00:00"
+}

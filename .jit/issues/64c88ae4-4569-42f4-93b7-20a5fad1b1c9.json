@@ -1,16 +1,35 @@
 {
   "id": "64c88ae4-4569-42f4-93b7-20a5fad1b1c9",
-  "title": "Benchmark finite field linear algebra against fflas-ffpack",
-  "description": "Rigorous performance benchmarking of gf2 finite field linear algebra against fflas-ffpack. **This is a mandatory completion gate for the linear algebra epic.**\n\n## Benchmark suite\n\n| Operation | Sizes |\n|-----------|-------|\n| Matrix multiply (`fgemm`) | 64x64, 256x256, 1024x1024, 4096x4096 |\n| Gaussian elimination | 64x64, 256x256, 1024x1024, 4096x4096 |\n| Matrix inversion | 64x64, 256x256, 1024x1024 |\n| Linear solve (`Ax = b`) | 64x64, 256x256, 1024x1024, 4096x4096 |\n\n## Field coverage\n\n- Small GF(p): p = 7, 31, 251, 65521\n- Medium GF(p): p = 2^31 - 1 (Mersenne), large 32-bit primes\n- GF(2^m): m = 8, 16, 32\n\n## Targets\n\n- **GF(p)**: Within 2x of fflas-ffpack throughput\n- **GF(2^m)**: **Exceed** fflas-ffpack (we have direct PCLMULQDQ; they route through float BLAS)\n\n## Methodology\n\n- Criterion.rs benchmarks with statistical rigor\n- fflas-ffpack built with OpenBLAS, `-O3 -march=native`\n- Same hardware, same matrix data, median of 100+ iterations\n- Published results with full methodology documentation\n\n## Dependencies\n\n- Matrix multiplication kernels (d48a3cfd)\n- Gaussian elimination (c3f8c1cb)",
+  "title": "Benchmark FieldMatrix linear algebra against fflas-ffpack (and M4RI for GF(2))",
+  "description": "Rigorous performance benchmarking of `gf2` finite field linear algebra against `fflas-ffpack` (for GF(p) and GF(2^m)) and `M4RI` (for GF(2)). **This is a mandatory completion gate for the linear algebra epic.** Reproducible via a pinned container image.\n\n## Benchmark suite\n\n| Operation | Sizes |\n|-----------|-------|\n| Matrix multiply (`fgemm`) | 64², 256², 1024², 4096² |\n| PLE decomposition | 64², 256², 1024², 4096² |\n| Row/Reduced echelon form | 64², 256², 1024² |\n| Matrix inversion | 64², 256², 1024² |\n| Linear solve (`Ax = b`) | 64², 256², 1024², 4096² |\n| Characteristic polynomial | 32², 128², 512² |\n| Minimal polynomial | 32², 128², 512² |\n| Rectangular fgemm | m × k × n at (1024, 1024, 1024^0.5), (1024, 1024, 1024^0.3) — Winograd crossover |\n| SpMV | sparsity 1%, 5% at n = 1024, 4096 |\n\n## Field coverage\n\n- **Small GF(p)**: p = 7, 31, 251, 65521\n- **Medium GF(p)**: p = 2^31 − 1 (Mersenne), other 32-bit primes\n- **GF(2^m)**: m = 8, 16, 32\n- **GF(2)**: matched against M4RI only (our M4RM is the reference implementation here; bench vs M4RI)\n\n## Rank profile regimes\n\nAll factorizations (PLE, echelon, inv, solve) benchmarked on **both**:\n- Uniformly random (full-rank w.p. ~1) matrices\n- Explicitly rank-deficient matrices (rank = n/2) — measures PLE's advantage over PLU.\n\n## Targets\n\n- **GF(p)**: Within 2× of `fflas-ffpack` throughput\n- **GF(2^m)**: **Exceed** `fflas-ffpack` (direct PCLMULQDQ vs. float-BLAS detour)\n- **GF(2)**: Within 1.5× of `M4RI` (our M4RM is already specialized; exceeding is stretch)\n\n## Methodology\n\n- Criterion.rs with statistical rigor; median of 100+ iterations, warm-up per Criterion defaults.\n- Reproducibility: pinned **container image** (Debian-slim + pinned gcc, OpenBLAS, fflas-ffpack, Givaro, GMP, M4RI) — built from `benchmarks/Dockerfile` in-repo. Container image digest pinned in a `benchmarks/Dockerfile.lock` file.\n- Host hardware captured in `benchmarks/host.txt` at run time (CPU model, MHz, L1/L2/L3 sizes).\n- Same matrix data used across gf2 and reference runs — seed-controlled generators.\n- Published results at `dev/bench_results/<date>.md` with full methodology and raw numbers (CSV).\n\n## Deliverables\n\n1. `benchmarks/Dockerfile` + `benchmarks/Dockerfile.lock` — reproducible bench environment.\n2. `benchmarks/run.sh` — launches the pinned container, runs criterion, dumps CSV.\n3. `crates/gf2-core/benches/fieldmatrix_*.rs` — criterion benches for gf2 side.\n4. `benchmarks/reference/fflas_bench.cpp` + `benchmarks/reference/m4ri_bench.c` — reference implementations invoking fflas-ffpack / M4RI on identical matrices.\n5. `dev/bench_results/2026-*.md` — first published run with analysis.\n\n## Success criteria\n\n- [hard] Criterion benchmarks for every (operation, field, size) combination listed above exist and complete.\n- [hard] Reference fflas-ffpack + M4RI benchmarks run inside the pinned container and emit CSV compatible with our analysis script.\n- [hard] Published results document in `dev/bench_results/` shows gf2 numbers side-by-side with reference numbers and percentage delta.\n- [hard] Rank-deficient and rectangular regimes included.\n- [aspirational] GF(p) targets (within 2× of fflas-ffpack) met on at least 75% of (op, size, p) combinations.\n- [aspirational] GF(2^m) targets (exceed fflas-ffpack) met on at least 50% of (op, size, m) combinations.\n- [aspirational] GF(2) vs M4RI within 1.5× on matmul at 1024² and 4096².\n\nIf aspirational targets are missed, the issue is still PASS provided the numbers are documented and the gap is analyzed — per project convention, crossover thresholds and speedup factors are amendable against empirical evidence.\n\n## Dependencies\n\n- Matrix multiplication (d48a3cfd)\n- PLE + echelon (c3f8c1cb)\n- Triangular primitives (83b1ad8b)\n- Inverse/solve/det (ae1d1e88) — via the transitive closure through PLE/trsm\n- Characteristic polynomial (e47231cd)\n- Sparse matrix (8a90882e) — for SpMV benches\n\n## References\n\n- [Dumas–Pernet takeaways](dev/plans/dumas_pernet_takeaways.md) §5\n- [fflas-ffpack analysis](dev/plans/fflas_ffpack_analysis.md) §8",
   "state": "backlog",
   "priority": "normal",
   "assignee": null,
   "dependencies": [
-    "d48a3cfd-3187-41c3-b4a5-78c4c6f8a967",
-    "c3f8c1cb-eda4-4af9-8ccf-2ceb5eb87876"
+    "a9ab0a4f-5ae3-4da2-a15f-636b62cff0ec"
   ],
-  "gates_required": [],
-  "gates_status": {},
+  "gates_required": [
+    "code-review",
+    "cargo-ci",
+    "doc-review"
+  ],
+  "gates_status": {
+    "code-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-04-23T16:00:47.221952044Z"
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-04-23T16:00:47.222011654Z"
+    },
+    "cargo-ci": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-04-23T16:00:47.221993844Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -18,5 +37,5 @@
     "type:story"
   ],
   "created_at": "2026-02-23T19:20:28.214456832+00:00",
-  "updated_at": "2026-02-23T21:51:50.743182553+00:00"
+  "updated_at": "2026-04-23T16:31:21.715616747+00:00"
 }

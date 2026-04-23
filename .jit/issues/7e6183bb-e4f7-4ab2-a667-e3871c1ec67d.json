@@ -1,0 +1,27 @@
+{
+  "id": "7e6183bb-e4f7-4ab2-a667-e3871c1ec67d",
+  "title": "d48a3cfd/T2: Expression-template proxy types + canonical fusions",
+  "description": "Second task of story `d48a3cfd`. Implements the proxy-type architecture designed in `cdcebf6a`, layering lazy evaluation on top of T1's eager kernels.\n\n## Deliverables\n\n- **Proxy types**: `Product<A, B>`, `Sum<A, B>`, `Scale<F, M>`, `Transposed<M>`, `FusedProductPlus<Product, C>` per design doc.\n- **`Evaluate<F>` trait** with `evaluate_into(&mut FieldMatrix<F>)`; `From<E: Evaluate<F>> for FieldMatrix<F>` bridge.\n- **Canonical fusions**:\n  - `A·B + βC` → single `gemm` call with β.\n  - `αA + B` → single pass, no temp for the scaled operand.\n  - `Aᵀ·B` → `gemm` with transposed-A path.\n  - `αAᵀ·B + βC` → composition of the above.\n- **Trace counters (debug builds)** verifying that the canonical fusions hit one kernel call, not two.\n- **Bench showing fusion wins**: `&a * &b + &c` vs. `{ let t = &a * &b; t + &c }` at n = 1024 — the fused path must be measurably faster and allocate less.\n\n## Success criteria\n\n- [hard] Proxy types implement `MatrixLike<F>` where semantically read-only (per design §3).\n- [hard] Every canonical fusion verified to collapse to one kernel call (trace counters).\n- [hard] `(&a * &b + &c).into::<FieldMatrix<F>>()` is bit-exact equal to the eager-path result.\n- [hard] Shape-mismatch panics fire at evaluation time with clear messages.\n- [hard] Fused-vs-naive benchmark comparison present and shows the expected speedup.\n\n## Depends on\n\n- `cdcebf6a` (design approved).\n- `d48a3cfd/T1` (eager kernels exist).",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "cdcebf6a-4dce-4f08-886c-5427646e7c73",
+    "91c06222-98cf-4486-90fa-a48d745bac99"
+  ],
+  "gates_required": [
+    "code-review",
+    "cargo-ci"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "story:d48a3cfd",
+    "epic:bb85c68a"
+  ],
+  "created_at": "2026-04-23T16:29:55.262511963+00:00",
+  "updated_at": "2026-04-23T16:31:16.708468105+00:00"
+}

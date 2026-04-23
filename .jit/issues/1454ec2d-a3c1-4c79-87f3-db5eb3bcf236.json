@@ -1,0 +1,27 @@
+{
+  "id": "1454ec2d-a3c1-4c79-87f3-db5eb3bcf236",
+  "title": "e47231cd/T2: Sub-cubic Keller-Gehrig charpoly + empirical crossover",
+  "description": "Second task of story `e47231cd`. Sub-cubic Keller-Gehrig characteristic-polynomial variant per Dumas–Pernet theorem 13.4, with empirical crossover measurement against T1's cubic baseline.\n\n## Deliverables\n\n- **Sub-cubic charpoly** via Keller-Gehrig fast exponentiation: O(n^ω · log n). Engaged only when `q > 2n²` (Las-Vegas guarantee from theorem 13.4).\n- **Automatic dispatch** in `charpoly()` — pick cubic (T1) or sub-cubic (T2) based on field cardinality and matrix size; tunable threshold.\n- **Uses `trsm`/`trtri`** from `83b1ad8b` in the sub-cubic path.\n- **Crossover criterion bench**: at what `n` does sub-cubic start winning for GF(2^31-1)? Document the measured threshold.\n\n## Success criteria\n\n- [hard] Sub-cubic path produces identical results to cubic path on every test input from T1 (bit-exact equality).\n- [hard] Dispatch logic correctly routes based on field size and matrix dimension.\n- [hard] Measured crossover documented in the module-level docs.\n- [aspirational] Sub-cubic beats cubic at n ≥ 256 on GF(2^31-1).\n\n## Depends on\n\n- `e47231cd/T1` (cubic baseline for equivalence testing).\n- `83b1ad8b` (trsm/trtri for the sub-cubic recursion).",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "83b1ad8b-35eb-4340-8ef9-663c19df038e",
+    "f01298db-cebf-49c8-8b84-6dadcdf1d378"
+  ],
+  "gates_required": [
+    "code-review",
+    "cargo-ci"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "story:e47231cd",
+    "epic:bb85c68a"
+  ],
+  "created_at": "2026-04-23T16:30:59.804478248+00:00",
+  "updated_at": "2026-04-23T16:31:20.159113862+00:00"
+}

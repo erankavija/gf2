@@ -1,0 +1,28 @@
+{
+  "id": "a9ab0a4f-5ae3-4da2-a15f-636b62cff0ec",
+  "title": "64c88ae4/T3: Published side-by-side analysis + bench results report",
+  "description": "Third task of story `64c88ae4`. Runs T1 and T2 end-to-end, merges the CSVs, produces the published analysis document.\n\n## Deliverables\n\n- **End-to-end run** driven by `benchmarks/run.sh` — emits two CSVs (gf2 side, reference side).\n- **`benchmarks/analyze.py`** (or Rust equivalent) — merges CSVs, computes throughput ratios per operation, renders markdown tables.\n- **`dev/bench_results/2026-XX-YY.md`** — the published run:\n  - Hardware block (CPU model, L1/L2/L3, memory, kernel).\n  - Methodology block (container image digest, compiler versions, library versions).\n  - Tables: one per (operation family, field family), gf2 vs. fflas-ffpack vs. M4RI (where applicable), with throughput ratio column.\n  - Narrative: where we hit targets, where we miss them, why.\n  - Raw CSV attached (or linked to the bench artefact path).\n\n## Success criteria\n\n- [hard] Published markdown renders correctly (tables align, numbers have units).\n- [hard] Every bench combo from T2 appears in the published tables.\n- [hard] Methodology section contains the container digest, compiler versions, host info — fully reproducible.\n- [hard] Narrative identifies at least one operation where we hit the `[aspirational]` targets from the epic and at least one where we do not; the latter has a concrete explanation.\n- [hard] Markdown doc attached to story `64c88ae4` via `jit doc add`.\n\n## Depends on\n\n- `64c88ae4/T1` (container + reference harnesses).\n- `64c88ae4/T2` (gf2 bench suite).",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "a03b2556-369d-41ea-ae02-0c6199d3c480",
+    "6ed7f050-6a09-47e3-baa7-8485fd9c2acd"
+  ],
+  "gates_required": [
+    "code-review",
+    "cargo-ci",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "story:64c88ae4",
+    "epic:bb85c68a"
+  ],
+  "created_at": "2026-04-23T16:30:39.735940337+00:00",
+  "updated_at": "2026-04-23T16:31:18.985628366+00:00"
+}
