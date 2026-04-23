@@ -1043,6 +1043,11 @@ impl FiniteField for GoldilocksFp {
     }
 
     #[inline]
+    fn zero_hint() -> Option<Self> {
+        Some(Self(0))
+    }
+
+    #[inline]
     fn to_wide(&self) -> u128 {
         self.0 as u128
     }

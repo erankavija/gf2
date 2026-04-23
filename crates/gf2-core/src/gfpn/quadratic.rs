@@ -627,6 +627,12 @@ impl<C: ExtConfig> FiniteField for QuadraticExt<C> {
         Self::new(self.c0.one_like(), self.c0.zero_like())
     }
 
+    #[inline]
+    fn zero_hint() -> Option<Self> {
+        // QuadraticExt is always ConstField; delegate to the typed zero.
+        Some(<Self as ConstField>::zero())
+    }
+
     /// Component-wise widening: each base coefficient is lifted via
     /// [`FiniteField::to_wide`].
     #[inline]

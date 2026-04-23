@@ -1572,6 +1572,12 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> crate::field::FiniteField for Gf2mW
         Self::one()
     }
 
+    #[inline]
+    fn zero_hint() -> Option<Self> {
+        // Gf2mWide is always ConstField; delegate to the typed zero.
+        Some(<Self as crate::field::ConstField>::zero())
+    }
+
     /// Converts `self` to the wide accumulator type.
     ///
     /// For `GF(2^M)`, `Wide = Self` so this is a copy.

@@ -119,6 +119,35 @@ pub trait FiniteField:
     /// Returns the multiplicative identity (one) in the same field as `self`.
     fn one_like(&self) -> Self;
 
+    /// Returns the additive identity when the field's context is known
+    /// purely from the type (no runtime field witness required).
+    ///
+    /// Implementations that satisfy [`ConstField`] return `Some(Self::zero())`;
+    /// every other `FiniteField` returns `None`. This is a *static escape
+    /// hatch* used by constructors that need to fabricate a zero but hold
+    /// neither an existing element nor a field descriptor — the canonical
+    /// example is multiplying an `m×0` matrix by a `0×n` matrix with both
+    /// factors carrying empty storage.
+    ///
+    /// Override this in any [`ConstField`] impl to return `Some(Self::zero())`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::FiniteField;
+    /// use gf2_core::gfp::Fp;
+    /// use gf2_core::gf2m::Gf2mElement;
+    ///
+    /// // Compile-time field: zero is always available.
+    /// assert_eq!(<Fp<7> as FiniteField>::zero_hint(), Some(Fp::<7>::new(0)));
+    ///
+    /// // Runtime-context field: no zero without a witness.
+    /// assert!(<Gf2mElement as FiniteField>::zero_hint().is_none());
+    /// ```
+    fn zero_hint() -> Option<Self> {
+        None
+    }
+
     /// Converts this element to the wide accumulator type.
     ///
     /// For binary extension fields GF(2^m), `Wide = Self` so this is a clone.

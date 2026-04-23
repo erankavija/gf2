@@ -1140,6 +1140,15 @@ impl<F: FiniteField> FieldMatrix<F> {
     ///
     /// O(rows · cols) multiply-adds.
     ///
+    /// # Panics
+    ///
+    /// Panics if `x.len() != self.cols()`. Also panics if
+    /// `self.rows > 0 && self.cols == 0` because the output is a length-
+    /// `self.rows` zero vector but neither `x` (empty) nor `self.data`
+    /// (empty) supplies an `F` instance to seed the zero vector under the
+    /// `F: FiniteField` bound; use `F: ConstField` or ensure the matrix has
+    /// at least one column.
+    ///
     /// # Examples
     ///
     /// ```
@@ -1163,21 +1172,23 @@ impl<F: FiniteField> FieldMatrix<F> {
             return FieldVec::new();
         }
         // Obtain a zero element without requiring `F: ConstField`. When
-        // `cols > 0`, `x[0]` is available; otherwise fall back to a matrix
-        // entry (which exists only if `rows > 0 && cols > 0`). A matrix with
-        // zero columns contributes no multiplications, so the result is
-        // all-zero-of-length-`rows` — we need one zero to clone. We panic on
-        // the pathological shape `(rows > 0, cols == 0)` because no source of
-        // `F` is available from the inputs.
+        // `cols > 0`, `x[0]` is available; otherwise the only candidate is
+        // a matrix entry, which requires `rows > 0 && cols > 0`. For the
+        // pathological shape `(rows > 0, cols == 0)` we fall back to the
+        // static escape hatch `F::zero_hint()` (returns `Some` for all
+        // `ConstField` impls), and only panic if that also returns `None`.
         let zero: F = if self.cols > 0 {
             x.as_slice()[0].zero_like()
+        } else if let Some(z) = F::zero_hint() {
+            z
         } else {
-            assert!(
-                self.rows == 0,
-                "FieldMatrix::matvec: cannot construct zero element for \
-                 (rows > 0, cols == 0) without a ConstField bound"
+            // `self.rows > 0 && self.cols == 0` on a runtime-context field.
+            panic!(
+                "FieldMatrix::matvec: producing length-{} zero vector from \
+                 ({}×0) matrix requires a zero witness; use F: ConstField \
+                 or ensure the matrix has at least one column",
+                self.rows, self.rows
             );
-            return FieldVec::new();
         };
         let mut y: FieldVec<F> = FieldVec::zeros_from(self.rows, &zero);
         for r in 0..self.rows {
@@ -1195,7 +1206,12 @@ impl<F: FiniteField> FieldMatrix<F> {
     ///
     /// # Panics
     ///
-    /// Panics if `x.len() != self.rows()`.
+    /// Panics if `x.len() != self.rows()`. Also panics if
+    /// `self.rows == 0 && self.cols > 0` because the output is a length-
+    /// `self.cols` zero vector but neither `x` (empty) nor `self.data`
+    /// (empty) supplies an `F` instance to seed the zero vector under the
+    /// `F: FiniteField` bound; use `F: ConstField` or ensure the matrix has
+    /// at least one row.
     ///
     /// # Complexity
     ///
@@ -1224,15 +1240,20 @@ impl<F: FiniteField> FieldMatrix<F> {
             return FieldVec::new();
         }
         // Same `zero_like` pattern as `matvec`: prefer `x[0]` when the input
-        // vector is non-empty, else pull a zero from the matrix interior.
+        // vector is non-empty, else fall back to `F::zero_hint()` (which
+        // returns `Some` for `ConstField` impls), and only panic when that
+        // also fails.
         let zero: F = if self.rows > 0 {
             x.as_slice()[0].zero_like()
+        } else if let Some(z) = F::zero_hint() {
+            z
         } else {
-            // rows == 0 and cols > 0: Aᵀ · x is a length-`cols` zero vector,
-            // but we have no `F` instance to clone. This path is reachable
-            // only for an all-empty multiplication, which we treat as an
-            // empty output.
-            return FieldVec::new();
+            panic!(
+                "FieldMatrix::matvec_transpose: producing length-{} zero \
+                 vector from (0×{}) matrix requires a zero witness; use \
+                 F: ConstField or ensure the matrix has at least one row",
+                self.cols, self.cols
+            );
         };
         let mut y: FieldVec<F> = FieldVec::zeros_from(self.cols, &zero);
         for r in 0..self.rows {
@@ -1293,6 +1314,20 @@ impl<F: FiniteField> MatrixLikeMut<F> for FieldMatrix<F> {
 /// Rows are contiguous in memory; stepping between rows uses the parent's
 /// full row stride (`parent_cols`) so views over column ranges remain
 /// aligned to the parent's row-major layout.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::field::matrix::FieldMatrix;
+/// use gf2_core::gfp::Fp;
+///
+/// let m = FieldMatrix::<Fp<7>>::identity(4);
+/// let v = m.submat(1..3, 1..3);
+/// assert_eq!(v.rows(), 2);
+/// assert_eq!(v.cols(), 2);
+/// // Element (0, 0) of the view is m[(1, 1)] of the parent.
+/// assert_eq!(v.get(0, 0), Fp::<7>::new(1));
+/// ```
 #[derive(Debug)]
 pub struct MatView<'a, F> {
     data: &'a [F],
@@ -1428,6 +1463,24 @@ impl<F: FiniteField> MatrixLike<F> for MatView<'_, F> {
 }
 
 /// Zero-copy mutable submatrix view.
+///
+/// A `MatViewMut` borrows a rectangular window of a parent [`FieldMatrix`]
+/// with exclusive write access. Like [`MatView`], rows are contiguous in
+/// memory and stepping between rows uses the parent's row stride.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::field::matrix::FieldMatrix;
+/// use gf2_core::gfp::Fp;
+///
+/// let mut m = FieldMatrix::<Fp<7>>::zeros(3, 3);
+/// m.submat_mut(0..2, 0..2).fill(Fp::<7>::new(2));
+/// assert_eq!(m.get(0, 0), Fp::<7>::new(2));
+/// assert_eq!(m.get(1, 1), Fp::<7>::new(2));
+/// // Cells outside the view are untouched.
+/// assert_eq!(m.get(2, 2), Fp::<7>::new(0));
+/// ```
 #[derive(Debug)]
 pub struct MatViewMut<'a, F> {
     data: &'a mut [F],
@@ -1689,6 +1742,21 @@ impl<F: FiniteField> MatrixLikeMut<F> for MatViewMut<'_, F> {
 ///
 /// `ColView` is returned by [`FieldMatrix::col`] and borrows the parent's
 /// backing slice with a stride of `parent.cols()`.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::field::matrix::FieldMatrix;
+/// use gf2_core::gfp::Fp;
+///
+/// let m = FieldMatrix::<Fp<7>>::identity(3);
+/// let c = m.col(1);
+/// assert_eq!(c.len(), 3);
+/// // Column 1 of the 3×3 identity is (0, 1, 0).
+/// assert_eq!(c.get(0), Fp::<7>::new(0));
+/// assert_eq!(c.get(1), Fp::<7>::new(1));
+/// assert_eq!(c.get(2), Fp::<7>::new(0));
+/// ```
 #[derive(Debug, Clone, Copy)]
 pub struct ColView<'a, F> {
     data: &'a [F],
@@ -1945,18 +2013,24 @@ impl<F: FiniteField> Neg for &FieldMatrix<F> {
 
 // Classical O(n³) gemm used as the eager fallback. Story `d48a3cfd` will
 // replace the body with delayed-reduction / Strassen-Winograd paths.
+//
+// # Panics
+//
+// Panics if `a.cols != b.rows`. Also panics if `a.rows > 0 && b.cols > 0 &&
+// a.cols == 0` (equivalently `b.rows == 0`) **and** both inputs carry no
+// elements; in that degenerate configuration no `F` instance is available
+// from either factor so the output's zero matrix cannot be materialised for
+// a runtime-context field. Use `F: ConstField` or ensure at least one factor
+// is non-empty to avoid this panic.
 fn gemm<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldMatrix<F>) -> FieldMatrix<F> {
     assert_eq!(
         a.cols, b.rows,
         "FieldMatrix::mul: inner dimensions must match ({} vs {})",
         a.cols, b.rows
     );
-    // Fast paths for degenerate shapes. When any inner or outer dimension is
-    // zero the product is a zero matrix of the right shape. We need a zero
-    // element to materialise that, and the only way that's available without
-    // `F: ConstField` is to borrow from a non-empty input. When both inputs
-    // carry no data, the output has zero elements, so an empty backing
-    // storage is correct.
+    // Degenerate outer dimensions: output is empty in storage. This matches
+    // `FieldMatrix::new(rows, 0, _)` and `FieldMatrix::new(0, cols, _)`, both
+    // of which carry an empty `FieldVec`.
     if a.rows == 0 || b.cols == 0 {
         return FieldMatrix {
             rows: a.rows,
@@ -1964,24 +2038,29 @@ fn gemm<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldMatrix<F>) -> FieldMatrix<F
             data: FieldVec::new(),
         };
     }
-    // From here: a.rows > 0 && b.cols > 0. We need a zero element to seed
-    // accumulators; either input may supply it if non-empty.
-    let zero: F = if a.cols > 0 {
+    // From here: a.rows > 0 && b.cols > 0, so the output has `a.rows * b.cols
+    // > 0` cells and its backing storage MUST be the same length. We need a
+    // zero element to materialise those cells. Source one from whichever
+    // factor is non-empty, or — if both are empty — use `F::zero_hint()`
+    // which returns `Some(F::zero())` on `ConstField` implementations and
+    // `None` on runtime-context fields like `Gf2mElement`.
+    let zero: F = if !a.data.as_slice().is_empty() {
         a.data.as_slice()[0].zero_like()
-    } else if b.rows > 0 {
+    } else if !b.data.as_slice().is_empty() {
         b.data.as_slice()[0].zero_like()
+    } else if let Some(z) = F::zero_hint() {
+        z
     } else {
-        // a.cols == 0 and b.rows == 0: output is a zero matrix, but each
-        // output cell is a genuine empty dot product — no accumulations
-        // happen. We still need a zero. Fall through to `zeros_from` below
-        // using an element we can't obtain → unreachable because
-        // `a.cols == b.rows`, so if either is 0 they both are, and we
-        // already have no way to source a zero. Return an empty buffer.
-        return FieldMatrix {
-            rows: a.rows,
-            cols: b.cols,
-            data: FieldVec::with_capacity(0),
-        };
+        // a.cols == 0 (equivalently b.rows == 0) and both factors carry no
+        // storage. The output's semantic value is the m×n zero matrix, but
+        // we have no `F` instance to clone for runtime-context fields. The
+        // type-only escape hatch `F::zero_hint()` also returned `None`, so
+        // there is no way to fabricate a zero here.
+        panic!(
+            "gemm: producing an m×n zero matrix from (m×0) * (0×n) is \
+             ambiguous for runtime-context fields; use F: ConstField or \
+             ensure at least one factor is non-empty"
+        );
     };
     let mut out = FieldMatrix {
         rows: a.rows,
@@ -2464,6 +2543,123 @@ mod tests {
             rows_vec.push(row);
         }
         FieldMatrix::from_rows(rows_vec)
+    }
+
+    // ─── Degenerate-dimension correctness tests ───────────────────────────
+
+    #[test]
+    fn test_gemm_m_times_zero_times_zero_times_n_returns_zero_matrix() {
+        // (m=3, k=0) * (k=0, n=2) on a ConstField. Expected: 3×2 zero matrix
+        // with backing storage of length 6, not an inconsistent empty buffer.
+        let a = FieldMatrix::<F>::zeros(3, 0);
+        let b = FieldMatrix::<F>::zeros(0, 2);
+        let out = &a * &b;
+        assert_eq!(out.rows(), 3);
+        assert_eq!(out.cols(), 2);
+        for r in 0..3 {
+            for c in 0..2 {
+                assert_eq!(out.get(r, c), f(0), "({}, {}) not zero", r, c);
+            }
+        }
+        // Storage invariant: data.len() == rows * cols. Accessing every
+        // (r, c) above already exercises this through `FieldMatrix::get`,
+        // which indexes `data[r * cols + c]`.
+    }
+
+    #[test]
+    fn test_gemm_empty_outer_dim_returns_empty_storage() {
+        // (0, k) * (k, n) and (m, k) * (k, 0) on the non-ConstField path.
+        // The zero-outer-dim short circuit in `gemm` must NOT panic for
+        // Gf2mElement even though we cannot synthesise a standalone zero;
+        // the output carries an empty `FieldVec` because `rows * cols == 0`.
+        let field = gf16();
+        let a_empty_rows = FieldMatrix::<Gf2mElement>::new(0, 3, field.element(0));
+        let b = gf16_mat(&field, &[&[1, 2], &[3, 4], &[5, 6]]);
+        let out1 = &a_empty_rows * &b;
+        assert_eq!(out1.rows(), 0);
+        assert_eq!(out1.cols(), 2);
+
+        let a = gf16_mat(&field, &[&[1, 2, 3], &[4, 5, 6]]);
+        let b_empty_cols = FieldMatrix::<Gf2mElement>::new(3, 0, field.element(0));
+        let out2 = &a * &b_empty_cols;
+        assert_eq!(out2.rows(), 2);
+        assert_eq!(out2.cols(), 0);
+    }
+
+    #[test]
+    fn test_gemm_panics_for_zero_inner_without_const_zero() {
+        // (3, 0) * (0, 2) on Gf2mElement. Both factors are empty, so gemm
+        // has no `F` witness to materialise the 3×2 zero output and must
+        // panic with the documented message.
+        let field = gf16();
+        let a = FieldMatrix::<Gf2mElement>::new(3, 0, field.element(0));
+        let b = FieldMatrix::<Gf2mElement>::new(0, 2, field.element(0));
+        let result = std::panic::catch_unwind(|| &a * &b);
+        assert!(result.is_err(), "expected gemm to panic");
+        let payload = result.err().unwrap();
+        let msg = payload
+            .downcast_ref::<String>()
+            .cloned()
+            .or_else(|| {
+                payload
+                    .downcast_ref::<&'static str>()
+                    .map(|s| s.to_string())
+            })
+            .unwrap_or_default();
+        assert!(
+            msg.contains("ambiguous for runtime-context fields"),
+            "unexpected panic message: {:?}",
+            msg
+        );
+    }
+
+    #[test]
+    fn test_matvec_zero_cols_returns_zero_vector() {
+        // (3, 0) * length-0 vec on Fp<7> returns length-3 zero vector.
+        let a = FieldMatrix::<F>::zeros(3, 0);
+        let x = FieldVec::<F>::new();
+        let y = a.matvec(&x);
+        assert_eq!(y.len(), 3);
+        for i in 0..3 {
+            assert_eq!(y[i], f(0));
+        }
+    }
+
+    #[test]
+    fn test_matvec_transpose_zero_rows_returns_zero_vector() {
+        // (0, 3)ᵀ * length-0 vec on Fp<7> returns length-3 zero vector.
+        let a = FieldMatrix::<F>::zeros(0, 3);
+        let x = FieldVec::<F>::new();
+        let y = a.matvec_transpose(&x);
+        assert_eq!(y.len(), 3);
+        for i in 0..3 {
+            assert_eq!(y[i], f(0));
+        }
+    }
+
+    #[test]
+    fn test_matvec_panics_for_non_const_zero_cols() {
+        // (3, 0) on Gf2mElement. matvec has no zero witness and must panic.
+        let field = gf16();
+        let a = FieldMatrix::<Gf2mElement>::new(3, 0, field.element(0));
+        let x = FieldVec::<Gf2mElement>::new();
+        let result = std::panic::catch_unwind(|| a.matvec(&x));
+        assert!(result.is_err(), "expected matvec to panic");
+        let payload = result.err().unwrap();
+        let msg = payload
+            .downcast_ref::<String>()
+            .cloned()
+            .or_else(|| {
+                payload
+                    .downcast_ref::<&'static str>()
+                    .map(|s| s.to_string())
+            })
+            .unwrap_or_default();
+        assert!(
+            msg.contains("requires a zero witness"),
+            "unexpected panic message: {:?}",
+            msg
+        );
     }
 
     proptest! {
