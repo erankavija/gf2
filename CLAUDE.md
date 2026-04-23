@@ -177,3 +177,51 @@ Longer explanation if needed.
 ## MSRV
 
 Rust 1.80 (set in both `gf2-core` and `gf2-coding` `Cargo.toml`).
+
+## Success-criterion maturity markers
+
+Individual success-criterion bullets in JIT issues may carry an inline marker at the start of the line, teaching the code-review gate which criteria are amendable against empirical data and which are hard contracts. This project defines two markers (see `scripts/code-review-prompt.md` for the exact reviewer semantics):
+
+- `[hard]` — Default. Failure to meet the criterion is a review FAIL; modifying the criterion requires explicit user approval via the escalation path in `.claude/skills/project-lead/references/escalation-policy.md`.
+- `[aspirational]` — A target written optimistically before empirical evidence existed. May be amended in-loop if the aggregate contract still holds and `cargo-ci` + `code-review` verify the amended criterion. The amendment must be recorded as a visible note in the issue's description with the observed number and reason (e.g., "crossover threshold updated from k≥16 to k≥4096 based on `dev/benchmarks/run-2026-04-21.csv`").
+
+Criteria without a marker default to `[hard]`. **Correctness requirements are always `[hard]`** regardless of marker — no test-vector equality, field axiom, invariant, or API contract is ever aspirational.
+
+Issue-extraction agents should use `[aspirational]` sparingly, only for targets that are explicitly provisional (expected throughput, speedup factors, crossover thresholds unsupported by prior measurement). When in doubt, use `[hard]`.
+
+This is a project-local convention — JIT itself does not read or enforce the markers; enforcement is entirely in the reviewer prompt at `scripts/code-review-prompt.md`. Do not put the marker definitions in `.jit/config.toml`; that file is for JIT's own schema, not for project conventions consumed by prompt-layer agents.
+
+## Breakdown-time feasibility check
+
+When an issue description mentions specific CPU intrinsics, SIMD lanes, unstable library features, or toolchain-version-dependent behaviour, verify MSRV compatibility **before** accepting the breakdown. Run:
+
+```bash
+rustup run 1.80.0 cargo check --workspace --all-features
+```
+
+against a minimal stub that uses the intended intrinsic. If the intrinsic is unstable on MSRV 1.80 (e.g., several `_mm512_*` clmul/extract functions stabilised only in 1.89 — Rust issue #44839), the implementation must either: (a) restrict to stable intrinsics on the current MSRV, (b) compile-gate behind `#[cfg(all(target_arch = ..., target_feature = ...))]` with a scalar fallback on the default build, or (c) escalate to the user for MSRV bump approval before dispatch.
+
+Previous incident: `afac2262` (AVX-512 ZMM lane) cost a rework cycle and a scope reduction because the intrinsic-feasibility check was not run during breakdown; the ZMM lane was requested on a host that has no AVX-512 hardware AND on an MSRV that does not stabilise the required intrinsics.
+
+## Verification work
+
+Any issue whose core deliverable is a formal proof (Lean4, Coq) or a model-checking harness (Kani, CBMC) is classified as **verification work** and has stricter dispatch rules than implementation work. These rules exist because verification failures look different — a worker cannot know in advance how hard a proof is or whether their approach will be accepted, so each attempt without a pre-approved design is an all-or-nothing shot.
+
+**Before implementation is dispatched on a verification issue, a proof-sketch artefact must exist and be approved.** The proof sketch is a short markdown document (stored alongside the issue's design docs) listing:
+
+1. **Lemmas to be proved**, in statement form only (not with full proofs). One bullet per lemma.
+2. **Intended proof strategy per lemma** — the tactic or proof shape, in one line each. Examples:
+   - "by induction on the loop iteration count, using `Nat.rec`"
+   - "by `scalar_tac` from the bounds in `ValidPrime`"
+   - "by `bv_omega` after unfolding `UScalar.val`"
+   - "by unwinding the Newton iteration invariant `P * inv ≡ 1 (mod 2^(2^k))`"
+3. **Exact production code path** each verification harness must exercise. For Lean4 via Charon/Aeneas, state the module path and the function name that the generated Lean definition will be proved against. For Kani, state the exact production entrypoint signature the harness must call — not a test-copied helper, not a semantically equivalent reimplementation.
+4. **For Kani specifically:** the expected unwind bounds and whether the production path uses `OnceLock`-dispatched runtime tables. `OnceLock` paths typically require non-standard unwind strategies and must be flagged in the sketch.
+
+The lead (or the user, if the work has significant architectural impact) reviews and **approves the sketch before any proof code is written**. The implementation issue is then dispatched as "implement this approved proof sketch" — a much more tightly scoped task than "prove X."
+
+Previous incidents:
+- `467d835e` needed 10 review cycles because the proof approach (axiom vs derived, placeholder vs full) was re-negotiated each cycle. A pre-approved sketch would have cut this to 2–3 cycles.
+- `8889e712` needed 9 cycles — 8 of them all citing the same finding (Kani harness attached to a test-copied table helper instead of the production `OnceLock`-dispatched path). A sketch that named the production code path explicitly would have caught this on attempt 1.
+
+Verification issues that do not have an approved sketch at dispatch time are a process bug. If you find yourself about to dispatch one, stop — create the sketch task first, wire the implementation as a dependent, and return to wave planning.
