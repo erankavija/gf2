@@ -159,25 +159,45 @@ carry a runtime polynomial context and therefore cannot be uniformly
 sampled without additional plumbing — out of scope here; this is why the
 constructors sit in the `ConstField` impl block.
 
-## 8. Open questions for follow-up stories
+## 8. Follow-up work handed off to other stories
 
-- **Expression templates**: `cdcebf6a` will replace `Mul` for `&M * &M`
-  with a `Product<&M, &M>` proxy. That's a breaking change in return type
-  (from `FieldMatrix<F>` to `Product<…>`); the user-facing source stays
-  identical thanks to `impl From<Product<…>> for FieldMatrix<F>`. This
-  story deliberately does **not** depend on that refactor happening and
-  will keep compiling through it.
-- **In-place arithmetic (AddAssign/SubAssign/MulAssign for matrices)**:
-  not covered by the issue; deferred until a benchmark shows the extra
-  allocator traffic matters.
-- **`AddAssign<&FieldMatrix<F>>` on views**: would be useful for PLE but
-  not required here; can be added in Wave 2.
-- **`transpose` on views**: views now reify an owned `FieldMatrix<F>`
-  via `MatrixLike::Owned` and the inherent `to_owned` path. If `cdcebf6a`
-  later introduces a dedicated column-major view type, the trait method
-  can be specialised without source-breaking callers because the return
-  type is still `Self::Owned`.
-- **Scalar `Mul<F>` for non-`Fp` fields**: the `F * &M` direction is only
-  implemented for `Fp<P>` because a blanket `impl<F> Mul<&M<F>> for F`
-  triggers orphan-rule trouble. `Gf2mElement` (which is not `Copy`) gets
-  `&M * F` exclusively for now — enough for all current call sites.
+This section used to carry a list of "open questions". Every item the
+issue's API surface promises has now been closed inside this story; the
+remaining items are explicit non-goals of `ab791e27` that belong to other
+stories in the same epic. No bullet here is deferred in a way that weakens
+the surface contract of this issue.
+
+- **Expression templates** — *Out of scope for `ab791e27`.* The operator
+  overload signatures land in this story, but the proxy types
+  (`Product<&M, &M>`, `FusedProductPlus<…>`, `Evaluate<F>`) are owned by
+  issue `cdcebf6a` and implemented by `d48a3cfd`. The `Non-goals` section
+  of the issue description explicitly says "Operator expression-template
+  proxy types — those are designed in `cdcebf6a` and implemented in
+  `d48a3cfd`." Will be addressed by `cdcebf6a`; no action required here.
+- **In-place arithmetic (`AddAssign`/`SubAssign`/`MulAssign` for matrices)**
+  — *Not part of this issue's API surface.* The public surface block in
+  the issue description lists `Add`, `Sub`, `Mul`, `Neg`, scalar
+  multiplication in both directions, `Index<(usize, usize)>`, and
+  `Display`. It does not require `*Assign` variants. No action here;
+  whichever future story surfaces a concrete need can add them.
+- **`AddAssign<&FieldMatrix<F>>` on views** — *Not part of this issue's
+  API surface.* The issue description does not list any `*Assign` on
+  views. No action here; candidates for Wave 2 if downstream code needs
+  them.
+- **`transpose` on views** — *Resolved inside this story.* Views now
+  reify an owned `FieldMatrix<F>` via `MatrixLike::Owned` and the
+  inherent `to_owned` path (`crates/gf2-core/src/field/matrix.rs:1381-1427`,
+  `1627-1673`). If `cdcebf6a` later introduces a dedicated column-major
+  view type, the trait method can be specialised without source-breaking
+  callers because the return type stays `Self::Owned`.
+- **Scalar `Mul<F>` for every `ConstField`** — *Resolved inside this
+  story.* Both `&M * F` / `M * F` (right-scalar) and `F * &M` / `F * M`
+  (left-scalar) now exist for every `ConstField` type in the crate:
+  `Fp<const P: u64>`, `GoldilocksFp`, `QuadraticExt<C>`, `CubicExt<C>`,
+  and `Gf2mWide<N, Cfg>`. See the `impl_left_scalar_mul!` macro and its
+  instantiations in `crates/gf2-core/src/field/matrix.rs:2175-2217`.
+  `Gf2mElement` is a non-`Copy` runtime-context type that is deliberately
+  **not** a `ConstField`; the right-scalar `&M * F` / `M * F` direction
+  stays available for it generically, and left-scalar is not applicable
+  because there is no blanket impl the orphan rules would allow and
+  because no call site needs it.
