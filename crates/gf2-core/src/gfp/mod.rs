@@ -581,6 +581,11 @@ impl<const P: u64> FiniteField for Fp<P> {
     }
 
     #[inline]
+    fn zero_hint() -> Option<Self> {
+        Some(Self(0))
+    }
+
+    #[inline]
     fn to_wide(&self) -> u128 {
         self.value() as u128
     }
