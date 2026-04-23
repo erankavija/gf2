@@ -2752,8 +2752,8 @@ mod tests {
 
     #[test]
     fn test_output_path_csv() {
-        let dir = std::env::temp_dir().join("gf2_sim_test_csv");
-        std::fs::create_dir_all(&dir).unwrap();
+        let tmpdir = tempfile::tempdir().unwrap();
+        let dir = tmpdir.path();
         let path = dir.join("results.csv");
 
         let results = SimulationResults {
@@ -2774,15 +2774,12 @@ mod tests {
         let content = std::fs::read_to_string(&path).unwrap();
         assert!(content.contains("eb_n0_db"), "CSV file must have header");
         assert!(content.contains("0.001"), "CSV must contain BER value");
-
-        // Cleanup
-        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
     fn test_output_path_json() {
-        let dir = std::env::temp_dir().join("gf2_sim_test_json");
-        std::fs::create_dir_all(&dir).unwrap();
+        let tmpdir = tempfile::tempdir().unwrap();
+        let dir = tmpdir.path();
         let path = dir.join("results.json");
 
         let results = SimulationResults {
@@ -2806,9 +2803,6 @@ mod tests {
             content.contains("\"ber\":0.001"),
             "JSON must contain ber:0.001"
         );
-
-        // Cleanup
-        let _ = std::fs::remove_dir_all(&dir);
     }
 
     // --- Mock encoder/decoder for coded simulation tests ---
@@ -2957,8 +2951,8 @@ mod tests {
 
     #[test]
     fn test_run_coded_with_output_path() {
-        let dir = std::env::temp_dir().join("gf2_sim_coded_out");
-        std::fs::create_dir_all(&dir).unwrap();
+        let tmpdir = tempfile::tempdir().unwrap();
+        let dir = tmpdir.path();
         let path = dir.join("coded_results.csv");
 
         let encoder = MockEncoder;
@@ -2975,14 +2969,12 @@ mod tests {
 
         let content = std::fs::read_to_string(&path).unwrap();
         assert!(content.contains("eb_n0_db"), "CSV must have header");
-
-        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
     fn test_run_coded_iterative_with_output_path() {
-        let dir = std::env::temp_dir().join("gf2_sim_iter_out");
-        std::fs::create_dir_all(&dir).unwrap();
+        let tmpdir = tempfile::tempdir().unwrap();
+        let dir = tmpdir.path();
         let path = dir.join("iter_results.json");
 
         let encoder = MockEncoder;
@@ -3000,14 +2992,12 @@ mod tests {
 
         let content = std::fs::read_to_string(&path).unwrap();
         assert!(content.starts_with('['), "JSON file must start with [");
-
-        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
     fn test_run_coded_iterative_parallel_with_output_path() {
-        let dir = std::env::temp_dir().join("gf2_sim_par_out");
-        std::fs::create_dir_all(&dir).unwrap();
+        let tmpdir = tempfile::tempdir().unwrap();
+        let dir = tmpdir.path();
         let path = dir.join("par_results.csv");
 
         let encoder = MockEncoder;
@@ -3026,8 +3016,6 @@ mod tests {
             &config,
         );
         assert!(path.exists(), "Output file must be created");
-
-        let _ = std::fs::remove_dir_all(&dir);
     }
 
     /// A deterministic "channel" that always returns fixed LLRs.
@@ -3326,9 +3314,8 @@ mod tests {
 
     #[test]
     fn test_incremental_csv_append() {
-        let dir = std::env::temp_dir().join("gf2_sim_incr_csv");
-        let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir_all(&dir).unwrap();
+        let tmpdir = tempfile::tempdir().unwrap();
+        let dir = tmpdir.path();
         let path = dir.join("incremental.csv");
 
         let encoder = MockEncoder;
@@ -3351,15 +3338,12 @@ mod tests {
         // 1 header + 2 data rows
         assert_eq!(lines.len(), 3, "CSV must have header + 2 data rows");
         assert_eq!(results.points.len(), 2);
-
-        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
     fn test_resume_skips_completed_points() {
-        let dir = std::env::temp_dir().join("gf2_sim_resume");
-        let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir_all(&dir).unwrap();
+        let tmpdir = tempfile::tempdir().unwrap();
+        let dir = tmpdir.path();
         let path = dir.join("resume.csv");
 
         // Write a partial CSV with one completed point.
@@ -3398,8 +3382,6 @@ mod tests {
         // The 10.0 dB point should be freshly simulated.
         assert!(results.points[1].num_frames > 0);
         assert!((results.points[1].eb_n0_db - 10.0).abs() < 1e-10);
-
-        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
@@ -3539,9 +3521,8 @@ mod tests {
 
     #[test]
     fn test_jsonl_progress_written() {
-        let dir = std::env::temp_dir().join("gf2_sim_jsonl_test");
-        let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir_all(&dir).unwrap();
+        let tmpdir = tempfile::tempdir().unwrap();
+        let dir = tmpdir.path();
         let csv_path = dir.join("results.csv");
         let jsonl_path = dir.join("results.progress.jsonl");
 
@@ -3674,8 +3655,6 @@ mod tests {
                 );
             }
         }
-
-        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
@@ -3701,9 +3680,8 @@ mod tests {
 
     #[test]
     fn test_parallel_incremental_csv_append() {
-        let dir = std::env::temp_dir().join("gf2_sim_par_incr_csv");
-        let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir_all(&dir).unwrap();
+        let tmpdir = tempfile::tempdir().unwrap();
+        let dir = tmpdir.path();
         let csv_path = dir.join("par_incremental.csv");
         let jsonl_path = dir.join("par_incremental.progress.jsonl");
 
@@ -3781,8 +3759,6 @@ mod tests {
             (results.points[2].eb_n0_db - 10.0).abs() < 1e-10,
             "Third point must be 10.0 dB"
         );
-
-        let _ = std::fs::remove_dir_all(&dir);
     }
 
     // -------------------------------------------------------------------
