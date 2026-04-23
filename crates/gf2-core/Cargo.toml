@@ -167,3 +167,8 @@ harness = false
 name = "gf2m_wide_mul"
 harness = false
 required-features = ["simd"]
+
+[[bench]]
+name = "field_matrix"
+harness = false
+required-features = ["rand"]

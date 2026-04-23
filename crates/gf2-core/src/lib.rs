@@ -51,6 +51,7 @@ pub mod io;
 pub mod kernels;
 mod macros;
 pub mod matrix;
+pub mod matrix_like;
 pub mod primitive_polys;
 pub mod sparse;
 

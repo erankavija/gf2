@@ -39,6 +39,7 @@
 //!   sibling tasks that build on this surface.
 
 pub mod batch_ops;
+pub mod matrix;
 pub mod ntt;
 pub mod poly;
 pub mod poly_interpolate;

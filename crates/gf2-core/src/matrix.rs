@@ -1126,6 +1126,40 @@ impl fmt::Display for BitMatrix {
     }
 }
 
+impl crate::matrix_like::MatrixLike<bool> for BitMatrix {
+    #[inline]
+    fn rows(&self) -> usize {
+        BitMatrix::rows(self)
+    }
+
+    #[inline]
+    fn cols(&self) -> usize {
+        BitMatrix::cols(self)
+    }
+
+    #[inline]
+    fn get(&self, row: usize, col: usize) -> bool {
+        BitMatrix::get(self, row, col)
+    }
+
+    #[inline]
+    fn transpose(&self) -> Self {
+        BitMatrix::transpose(self)
+    }
+}
+
+impl crate::matrix_like::MatrixLikeMut<bool> for BitMatrix {
+    #[inline]
+    fn set(&mut self, row: usize, col: usize, v: bool) {
+        BitMatrix::set(self, row, col, v);
+    }
+
+    #[inline]
+    fn swap_rows(&mut self, r1: usize, r2: usize) {
+        BitMatrix::swap_rows(self, r1, r2);
+    }
+}
+
 impl Mul<BitMatrix> for BitMatrix {
     type Output = BitMatrix;
 
