@@ -2172,21 +2172,48 @@ impl<F: ConstField> Mul<F> for FieldMatrix<F> {
     }
 }
 
-// `F * &M` is provided via inherent method to avoid orphan-rule trouble for
-// generic `F` parameters. Implemented for the concrete `Fp<P>` family below.
-impl<const P: u64> Mul<&FieldMatrix<crate::gfp::Fp<P>>> for crate::gfp::Fp<P> {
-    type Output = FieldMatrix<crate::gfp::Fp<P>>;
-    fn mul(self, rhs: &FieldMatrix<crate::gfp::Fp<P>>) -> Self::Output {
-        rhs * self
-    }
+// `F * M` (left-scalar multiplication) is provided concretely for every
+// `ConstField` type in the crate. A blanket `impl<F: ConstField> Mul<&M<F>>
+// for F` would hit orphan-rule trouble because `F` is an unconstrained type
+// parameter on the left of the impl, so instead the macro below stamps out
+// the two owned/ref variants for each concrete `ConstField` family. The
+// bodies delegate to the existing right-scalar `&M * F` / `M * F` impls
+// so the arithmetic lives in one place.
+macro_rules! impl_left_scalar_mul {
+    ($field_ty:ty $(, $($generics:tt)+)?) => {
+        impl$(<$($generics)+>)? Mul<&FieldMatrix<$field_ty>> for $field_ty {
+            type Output = FieldMatrix<$field_ty>;
+            #[inline]
+            fn mul(self, rhs: &FieldMatrix<$field_ty>) -> Self::Output {
+                rhs * self
+            }
+        }
+
+        impl$(<$($generics)+>)? Mul<FieldMatrix<$field_ty>> for $field_ty {
+            type Output = FieldMatrix<$field_ty>;
+            #[inline]
+            fn mul(self, rhs: FieldMatrix<$field_ty>) -> Self::Output {
+                &rhs * self
+            }
+        }
+    };
 }
 
-impl<const P: u64> Mul<FieldMatrix<crate::gfp::Fp<P>>> for crate::gfp::Fp<P> {
-    type Output = FieldMatrix<crate::gfp::Fp<P>>;
-    fn mul(self, rhs: FieldMatrix<crate::gfp::Fp<P>>) -> Self::Output {
-        &rhs * self
-    }
-}
+impl_left_scalar_mul!(crate::gfp::Fp<P>, const P: u64);
+impl_left_scalar_mul!(crate::gfp::specialized::GoldilocksFp);
+impl_left_scalar_mul!(
+    crate::gfpn::QuadraticExt<C>,
+    C: crate::gfpn::ExtConfig
+);
+impl_left_scalar_mul!(
+    crate::gfpn::CubicExt<C>,
+    C: crate::gfpn::ExtConfig
+);
+impl_left_scalar_mul!(
+    crate::gf2m::Gf2mWide<N, Cfg>,
+    const N: usize,
+    Cfg: crate::gf2m::Gf2mWideConfig<N>
+);
 
 // ─── Range resolution ─────────────────────────────────────────────────────────
 
@@ -2445,6 +2472,129 @@ mod tests {
         let r2 = f(2) * &a;
         assert_eq!(r1, r2);
         assert_eq!(r1.get(0, 1), f(6));
+    }
+
+    // ─── Left-scalar multiplication parity across every `ConstField` ─────
+    //
+    // The issue's API surface comment promises `F * M` and `M * F` for
+    // every `ConstField`, not only `Fp<P>`. These regression tests lock
+    // commutativity (`F * &M == &M * F`) and the owned/ref combos for
+    // each concrete `ConstField` in the crate.
+
+    #[test]
+    fn test_left_scalar_mul_fp_matches_right() {
+        let mut a = FieldMatrix::<Fp<7>>::zeros(2, 2);
+        a.set(0, 0, Fp::<7>::new(1));
+        a.set(0, 1, Fp::<7>::new(3));
+        a.set(1, 0, Fp::<7>::new(5));
+        let k = Fp::<7>::new(4);
+        let right_ref = &a * k;
+        let left_ref = k * &a;
+        assert_eq!(right_ref, left_ref);
+        let right_owned = a.clone() * k;
+        let left_owned = k * a.clone();
+        assert_eq!(right_owned, left_owned);
+        assert_eq!(right_owned, right_ref);
+    }
+
+    #[test]
+    fn test_left_scalar_mul_goldilocks_matches_right() {
+        use crate::gfp::specialized::GoldilocksFp;
+        let mut a = FieldMatrix::<GoldilocksFp>::zeros(2, 2);
+        a.set(0, 0, GoldilocksFp::new(7));
+        a.set(0, 1, GoldilocksFp::new(11));
+        a.set(1, 1, GoldilocksFp::new(13));
+        let k = GoldilocksFp::new(5);
+        let right_ref = &a * k;
+        let left_ref = k * &a;
+        assert_eq!(right_ref, left_ref);
+        let right_owned = a.clone() * k;
+        let left_owned = k * a.clone();
+        assert_eq!(right_owned, left_owned);
+        assert_eq!(right_owned, right_ref);
+    }
+
+    // Ext-field test configs reused from the pattern established in
+    // `gfpn::ext_config` tests: GF(7²) and GF(7³) with simple non-residues.
+    struct MatScalarQ7Cfg;
+    impl crate::gfpn::ExtConfig for MatScalarQ7Cfg {
+        type BaseField = Fp<7>;
+        const NON_RESIDUE: Fp<7> = Fp::<7>::new(3);
+    }
+
+    struct MatScalarC7Cfg;
+    impl crate::gfpn::ExtConfig for MatScalarC7Cfg {
+        type BaseField = Fp<7>;
+        const NON_RESIDUE: Fp<7> = Fp::<7>::new(3);
+    }
+
+    #[test]
+    fn test_left_scalar_mul_quadratic_ext_matches_right() {
+        use crate::gfpn::QuadraticExt;
+        type Q = QuadraticExt<MatScalarQ7Cfg>;
+        let a00 = Q::new(Fp::<7>::new(2), Fp::<7>::new(1));
+        let a01 = Q::new(Fp::<7>::new(5), Fp::<7>::new(3));
+        let mut a = FieldMatrix::<Q>::zeros(2, 2);
+        a.set(0, 0, a00);
+        a.set(0, 1, a01);
+        let k = Q::new(Fp::<7>::new(4), Fp::<7>::new(6));
+        let right_ref = &a * k;
+        let left_ref = k * &a;
+        assert_eq!(right_ref, left_ref);
+        let right_owned = a.clone() * k;
+        let left_owned = k * a.clone();
+        assert_eq!(right_owned, left_owned);
+        assert_eq!(right_owned, right_ref);
+    }
+
+    #[test]
+    fn test_left_scalar_mul_cubic_ext_matches_right() {
+        use crate::gfpn::CubicExt;
+        type C = CubicExt<MatScalarC7Cfg>;
+        let a00 = C::new(Fp::<7>::new(2), Fp::<7>::new(1), Fp::<7>::new(0));
+        let a01 = C::new(Fp::<7>::new(5), Fp::<7>::new(3), Fp::<7>::new(4));
+        let mut a = FieldMatrix::<C>::zeros(2, 2);
+        a.set(0, 0, a00);
+        a.set(0, 1, a01);
+        let k = C::new(Fp::<7>::new(4), Fp::<7>::new(6), Fp::<7>::new(2));
+        let right_ref = &a * k;
+        let left_ref = k * &a;
+        assert_eq!(right_ref, left_ref);
+        let right_owned = a.clone() * k;
+        let left_owned = k * a.clone();
+        assert_eq!(right_owned, left_owned);
+        assert_eq!(right_owned, right_ref);
+    }
+
+    // Test config for `Gf2mWide`: GF(2^4) with irreducible x^4 + x + 1.
+    // Uses a single-word layout (N = 1). `MODULUS` stores only the low m
+    // bits (implicit-leading-one convention documented on
+    // `Gf2mWideConfig`), so `x^4 + x + 1` becomes `0b0011` = 3, with the
+    // leading `x^4` term implicit at position M = 4.
+    struct MatScalarGf2m4Cfg;
+    impl crate::gf2m::Gf2mWideConfig<1> for MatScalarGf2m4Cfg {
+        const M: usize = 4;
+        const MODULUS: [u64; 1] = [0b0011];
+        const NAME: &'static str = "MatScalarGf2m4Cfg";
+    }
+
+    #[test]
+    fn test_left_scalar_mul_gf2m_wide_matches_right() {
+        use crate::gf2m::Gf2mWide;
+        type W = Gf2mWide<1, MatScalarGf2m4Cfg>;
+        let a00 = W::new([0b0110]); // α^2 + α
+        let a01 = W::new([0b1001]); // α^3 + 1
+        let mut a = FieldMatrix::<W>::zeros(2, 2);
+        a.set(0, 0, a00);
+        a.set(0, 1, a01);
+        let k = W::new([0b0011]); // α + 1
+        let right_ref = &a * k;
+        let left_ref = k * &a;
+        assert_eq!(right_ref, left_ref);
+        let right_owned = a.clone() * k;
+        let left_owned = k * a.clone();
+        assert_eq!(right_owned, left_owned);
+        assert_eq!(right_owned, right_ref);
     }
 
     #[test]
