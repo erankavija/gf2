@@ -785,6 +785,10 @@ impl<F: FiniteField> FieldMatrix<F> {
     ///
     /// Panics if either index is out of bounds.
     ///
+    /// # Complexity
+    ///
+    /// O(cols) element swaps; no allocation.
+    ///
     /// # Examples
     ///
     /// ```
@@ -928,6 +932,11 @@ impl<F: FiniteField> FieldMatrix<F> {
     ///
     /// Mirrors [`BitMatrix::find_pivot_row`](crate::matrix::BitMatrix::find_pivot_row).
     ///
+    /// # Complexity
+    ///
+    /// O(rows − start_row) comparisons in the worst case; returns early on the
+    /// first non-zero entry found.
+    ///
     /// # Examples
     ///
     /// ```
@@ -1058,6 +1067,10 @@ impl<F: FiniteField> FieldMatrix<F> {
     ///
     /// Length equals `min(rows, cols)`.
     ///
+    /// # Complexity
+    ///
+    /// O(min(rows, cols)) element clones.
+    ///
     /// # Examples
     ///
     /// ```
@@ -1081,6 +1094,10 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// # Panics
     ///
     /// Panics if the matrix is empty.
+    ///
+    /// # Complexity
+    ///
+    /// O(min(rows, cols)) field additions.
     ///
     /// # Examples
     ///
@@ -1398,8 +1415,11 @@ impl<'a, F: FiniteField> MatView<'a, F> {
     /// Materialises this view into a freshly allocated [`FieldMatrix<F>`].
     ///
     /// The returned matrix owns its storage, so it can outlive the parent
-    /// buffer the view borrowed from. The contents are copied element-by-
-    /// element (O(rows · cols)).
+    /// buffer the view borrowed from.
+    ///
+    /// # Complexity
+    ///
+    /// O(rows · cols) element clones plus one allocation of that size.
     ///
     /// # Examples
     ///
@@ -1580,6 +1600,10 @@ impl<'a, F: FiniteField> MatViewMut<'a, F> {
 
     /// Fills every cell of the view with `value`.
     ///
+    /// # Complexity
+    ///
+    /// O(rows · cols) element clones.
+    ///
     /// # Examples
     ///
     /// ```
@@ -1605,6 +1629,10 @@ impl<'a, F: FiniteField> MatViewMut<'a, F> {
     /// # Panics
     ///
     /// Panics if `src.shape() != self.shape()`.
+    ///
+    /// # Complexity
+    ///
+    /// O(rows · cols) element clones; no allocation.
     ///
     /// # Examples
     ///
@@ -1635,6 +1663,10 @@ impl<'a, F: FiniteField> MatViewMut<'a, F> {
     ///
     /// Panics if either index is out of range for the view.
     ///
+    /// # Complexity
+    ///
+    /// O(cols) element swaps; no allocation.
+    ///
     /// # Examples
     ///
     /// ```
@@ -1663,7 +1695,10 @@ impl<'a, F: FiniteField> MatViewMut<'a, F> {
     /// [`FieldMatrix<F>`].
     ///
     /// The returned matrix owns its storage, so it can outlive the borrow.
-    /// The contents are copied element-by-element (O(rows · cols)).
+    ///
+    /// # Complexity
+    ///
+    /// O(rows · cols) element clones plus one allocation of that size.
     ///
     /// # Examples
     ///
