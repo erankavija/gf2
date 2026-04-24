@@ -1076,6 +1076,13 @@ impl FiniteField for GoldilocksFp {
             k as usize
         }
     }
+
+    /// Theorem-4 per-cell operand bound: `p - 1` for the Goldilocks prime.
+    /// See [`FiniteField::theorem_4_operand_bound`] for the semantics.
+    #[inline]
+    fn theorem_4_operand_bound() -> u128 {
+        GOLDILOCKS_PRIME as u128 - 1
+    }
 }
 
 impl ConstField for GoldilocksFp {

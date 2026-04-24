@@ -612,6 +612,15 @@ impl<const P: u64> FiniteField for Fp<P> {
             k as usize
         }
     }
+
+    /// Theorem-4 per-cell operand bound: `p - 1` for `Fp<P>` with `P > 1`,
+    /// and `0` for the degenerate `P = 1` case (which is not a valid
+    /// prime — the override is defensive). See
+    /// [`FiniteField::theorem_4_operand_bound`] for the semantics.
+    #[inline]
+    fn theorem_4_operand_bound() -> u128 {
+        (P as u128).saturating_sub(1)
+    }
 }
 
 // ---------------------------------------------------------------------------

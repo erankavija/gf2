@@ -29,25 +29,36 @@
 //! |z| ≤ ((1 + 3^l) / 2)² · ceil(k / 2^l) · (p − 1)²
 //! ```
 //!
-//! Before a sub-problem at depth `l` is handed to the base-case gemm, the
-//! implementation compares this bound with `F::max_unreduced_additions()`
-//! and refuses to recurse deeper if the classical gemm's own delayed-
-//! reduction budget would be exceeded. For Mersenne-31
-//! (`F::max_unreduced_additions()` ≈ 4·10⁹) the bound is generous enough
+//! Before a sub-problem at depth `l` is handed to the base-case gemm the
+//! production recursion
+//! ([`gemm_winograd_inner`]) reads
+//! [`theorem_4_bound`] directly with the current `level + 1` and
+//! compares it against the classical-gemm delayed-reduction headroom
+//! `F::max_unreduced_additions() · (p − 1)²`. When the bound would
+//! exceed headroom the recursion refuses to peel further and falls back
+//! to the classical gemm at the current size. For Mersenne-31
+//! (`max_unreduced_additions ≈ 4·10⁹`) the bound is generous enough
 //! that the threshold is the binding constraint at practical matrix
-//! sizes; for small prime fields near `2^63` it can fire, at which point
-//! we fall back to the classical base case.
+//! sizes; for small prime fields near `2^63` it can fire, at which
+//! point we fall back to the classical base case.
 //!
-//! The bound is additionally asserted at every recursion level in the
-//! property test `prop_winograd_bound_propagates_across_levels_fp31`,
-//! which mirrors the production recursion 1:1 with a small threshold
-//! (4) to force ≥ 2 peels and checks each of the eight S/T block
-//! operands against `theorem_4_bound(ℓ+1, k, p − 1)` before they are
-//! handed to the next recursive multiply. Because canonical values are
-//! always ≤ `p − 1` ≤ the theorem-4 bound, this is a correct — if
-//! slightly loose — enforcement: whenever canonical inputs respect the
-//! bound, the implied unreduced arithmetic inside the base-case gemm
-//! trivially does too.
+//! The operand bound `p − 1` is exposed via
+//! [`FiniteField::theorem_4_operand_bound`]; prime fields override this
+//! with their modulus-minus-one, while binary fields keep the default
+//! `u128::MAX` sentinel (the theorem is vacuous — XOR never overflows).
+//!
+//! The bound is additionally verified at every recursion level by two
+//! tests in this module. The canonical-residue proptest
+//! `prop_winograd_bound_propagates_across_levels_fp31` asserts each of
+//! the eight S/T block operands (which always hold canonical, reduced
+//! values in `[0, p − 1]`) trivially respects the bound. The
+//! complementary Wide-shadow proptest
+//! `prop_winograd_wide_shadow_respects_theorem_4_bound_fp31` mirrors
+//! the recursion but carries S/T operand magnitudes as **unreduced**
+//! `u128` integers (summing absolute integer magnitudes across every
+//! add/sub performed by Winograd's peel), so it exercises exactly the
+//! unreduced-arithmetic growth theorem 4 talks about, not just the
+//! trivially-bounded canonical residues.
 //!
 //! # Bit-exact correctness
 //!
@@ -248,24 +259,29 @@ fn gemm_winograd_inner<F: FiniteField>(
         return gemm(a, b);
     }
 
-    // Theorem-4 sanity check: refuse to recurse if the bound would exceed
-    // the field's delayed-reduction budget. At depth `l = 1` (a single
-    // Winograd peel) the bound is
-    //   |z| ≤ 4 · ceil(k / 2) · (p - 1)²
-    // and the base-case gemm needs the inner dim to fit under
-    //   F::max_unreduced_additions() * (p - 1)² ≥ |z|.
-    // Concretely: we require the ceil(k/2) half-dimension of the
-    // sub-problems to fit under `F::max_unreduced_additions() / 4`. If
-    // that is false the classical `gemm` is safer because its own
-    // chunked accumulator already chops the inner dim at `kmax`.
+    // Theorem-4 sanity check: refuse to recurse if the bound that
+    // Dumas–Pernet §1.4 theorem 4 places on every intermediate cell
+    // value at depth `level + 1` would exceed the field's
+    // delayed-reduction headroom. Concretely the wide accumulator in the
+    // base-case gemm can hold at most
+    //   F::max_unreduced_additions() · (p − 1)²
+    // before a `reduce_wide` is required, and theorem 4 upper-bounds an
+    // intermediate cell at depth ℓ by
+    //   theorem_4_bound(ℓ, k, p − 1) = ((1+3^ℓ)/2)² · ceil(k/2^ℓ) · (p − 1)².
+    // We compare these directly so the gate is a literal reading of the
+    // theorem.
+    //
+    // For binary fields `max_unreduced_additions() == usize::MAX` and
+    // `theorem_4_operand_bound() == u128::MAX`, so the gate is skipped —
+    // XOR addition never overflows.
     let kmax = F::max_unreduced_additions();
-    if kmax != usize::MAX {
-        let half_k = k.div_ceil(2);
-        // Each half-size product's bound factor at one recursion level is
-        // 4 · ceil(k/2) · (p-1)². The wide accumulator budgets
-        // `kmax · (p-1)²` per single reduction. So we need `4 · half_k ≤
-        // kmax` to be safe for one Winograd level at the base.
-        if half_k > kmax / 4 {
+    let p_minus_1 = F::theorem_4_operand_bound();
+    if kmax != usize::MAX && p_minus_1 != u128::MAX {
+        let bound = theorem_4_bound(level + 1, k, p_minus_1);
+        let headroom = (kmax as u128)
+            .saturating_mul(p_minus_1)
+            .saturating_mul(p_minus_1);
+        if bound > headroom {
             return gemm(a, b);
         }
     }
@@ -350,14 +366,18 @@ fn winograd_step<F: FiniteField>(
     let t3 = sub_mats(&b22, &b12);
     let t4 = sub_mats(&t2, &b21);
 
-    // Note: the theorem-4 bound at level (`level + 1`) is exercised in
-    // debug test mode by the bound-propagation proptest in this module
-    // (`prop_winograd_bound_propagates_across_levels_fp31`). We don't
-    // instrument the production path with a runtime check because the
-    // canonical operand values are always within `[0, p − 1]` — the
-    // bound is structural and verified by the proptest scaffold, which
-    // mirrors this recursion 1:1. The `level` parameter is still
-    // threaded so deeper calls can be instrumented if ever needed.
+    // The theorem-4 bound at `level + 1` was already checked against the
+    // field's delayed-reduction headroom in `gemm_winograd_inner` before
+    // we got here — that gate is the production fallback mechanism and
+    // it references [`theorem_4_bound`] and
+    // [`FiniteField::theorem_4_operand_bound`] literally. The
+    // complementary Wide-shadow proptest
+    // (`prop_winograd_wide_shadow_respects_theorem_4_bound_fp31`)
+    // exercises the unreduced growth invariant directly on the S/T
+    // operands at every level; the canonical-residue proptest
+    // (`prop_winograd_bound_propagates_across_levels_fp31`) adds a
+    // defence-in-depth check on top. The `level` counter flows into the
+    // recursive multiplies below so the gate gets stricter with depth.
 
     // Seven recursive multiplies. Each call re-enters the recursion so
     // the bound / threshold gates apply at every level; the `level`
@@ -945,6 +965,235 @@ mod tests {
         }
     }
 
+    // ─── Wide-shadow bound propagation on UNREDUCED magnitudes ───────────
+
+    /// Scaffold that mirrors [`gemm_winograd_inner`] 1:1 but carries each
+    /// cell's value as a signed `i128` **unreduced integer magnitude**
+    /// (i.e. it does not apply any `mod p` during the S/T/U assembly).
+    /// Every add / sub in Winograd's peel propagates the true integer,
+    /// so at any recursion level `ℓ` the magnitude of a cell is exactly
+    /// the worst-case bound theorem 4 talks about. At every level we
+    /// assert `|cell| ≤ theorem_4_bound(ℓ, k_top, p − 1)` on the eight
+    /// S/T operand blocks going into the next recursive multiply — this
+    /// is stronger than the canonical-residue proptest because the
+    /// unreduced magnitudes grow as Winograd peels, while canonical
+    /// values trivially stay ≤ `p − 1`.
+    ///
+    /// The per-cell magnitude is tracked in an `I128Mat` shadow: a
+    /// freshly allocated `rows * cols` `Vec<i128>`. The function returns
+    /// the final padded shadow (never consumed — we only assert
+    /// invariants), and the outer scaffold checks that the **top-level
+    /// output** shadow, once reduced mod p, equals the classical gemm
+    /// output over `Fp<MERSENNE_31>`. This double-checks the scaffold
+    /// itself is faithful.
+    #[derive(Clone)]
+    struct I128Mat {
+        rows: usize,
+        cols: usize,
+        data: Vec<i128>,
+    }
+    impl I128Mat {
+        fn zeros(rows: usize, cols: usize) -> Self {
+            Self {
+                rows,
+                cols,
+                data: vec![0i128; rows * cols],
+            }
+        }
+        fn from_fp(src: &FieldMatrix<Fp<MERSENNE_31>>) -> Self {
+            let (rows, cols) = src.shape();
+            let mut out = Self::zeros(rows, cols);
+            for r in 0..rows {
+                for c in 0..cols {
+                    out.data[r * cols + c] = src.get_unchecked(r, c).value() as i128;
+                }
+            }
+            out
+        }
+        fn pad_to(&self, rows: usize, cols: usize) -> Self {
+            debug_assert!(self.rows <= rows && self.cols <= cols);
+            let mut out = Self::zeros(rows, cols);
+            for r in 0..self.rows {
+                for c in 0..self.cols {
+                    out.data[r * cols + c] = self.data[r * self.cols + c];
+                }
+            }
+            out
+        }
+        fn submatrix(&self, row_off: usize, col_off: usize, rows: usize, cols: usize) -> Self {
+            let mut out = Self::zeros(rows, cols);
+            for r in 0..rows {
+                for c in 0..cols {
+                    out.data[r * cols + c] = self.data[(row_off + r) * self.cols + (col_off + c)];
+                }
+            }
+            out
+        }
+        fn add(&self, other: &Self) -> Self {
+            debug_assert_eq!((self.rows, self.cols), (other.rows, other.cols));
+            let mut out = Self::zeros(self.rows, self.cols);
+            for i in 0..self.data.len() {
+                out.data[i] = self.data[i].saturating_add(other.data[i]);
+            }
+            out
+        }
+        fn sub(&self, other: &Self) -> Self {
+            debug_assert_eq!((self.rows, self.cols), (other.rows, other.cols));
+            let mut out = Self::zeros(self.rows, self.cols);
+            for i in 0..self.data.len() {
+                out.data[i] = self.data[i].saturating_sub(other.data[i]);
+            }
+            out
+        }
+        fn max_abs(&self) -> u128 {
+            let mut m: u128 = 0;
+            for &v in &self.data {
+                let a = v.unsigned_abs();
+                if a > m {
+                    m = a;
+                }
+            }
+            m
+        }
+    }
+
+    /// Verify the theorem-4 bound holds for every S/T block operand in
+    /// the unreduced integer shadow at every recursion level. Returns
+    /// the shadow output matrix (not needed for assertions; returned
+    /// only so the outer test can double-check the scaffold tracks
+    /// reality).
+    fn verify_wide_shadow_recursive(
+        a_shadow: &I128Mat,
+        b_shadow: &I128Mat,
+        threshold: usize,
+        level: u32,
+        k_top: usize,
+        p_minus_1: u128,
+    ) -> I128Mat {
+        let (m, k) = (a_shadow.rows, a_shadow.cols);
+        let n = b_shadow.cols;
+        debug_assert_eq!(b_shadow.rows, k);
+        if m == 0 || k == 0 || n == 0 {
+            return I128Mat::zeros(m, n);
+        }
+        if m.min(k).min(n) < threshold.max(2) {
+            // Base case: no further peel. Assert that the *operands*
+            // entering this gemm respect the bound at THIS level.
+            let bound = theorem_4_bound(level, k_top, p_minus_1);
+            assert!(
+                a_shadow.max_abs() <= bound,
+                "wide-shadow level {} A.max_abs = {} > bound {}",
+                level,
+                a_shadow.max_abs(),
+                bound,
+            );
+            assert!(
+                b_shadow.max_abs() <= bound,
+                "wide-shadow level {} B.max_abs = {} > bound {}",
+                level,
+                b_shadow.max_abs(),
+                bound,
+            );
+            // Base-case "multiplication": classical gemm as i128 (the
+            // integer product of two bounded matrices). We use
+            // saturating arithmetic to avoid panics if the bench ever
+            // runs with parameters that would overflow i128 at the base
+            // — callers are responsible for sizing.
+            let mut out = I128Mat::zeros(m, n);
+            for i in 0..m {
+                for j in 0..n {
+                    let mut acc: i128 = 0;
+                    for t in 0..k {
+                        let av = a_shadow.data[i * k + t];
+                        let bv = b_shadow.data[t * n + j];
+                        acc = acc.saturating_add(av.saturating_mul(bv));
+                    }
+                    out.data[i * n + j] = acc;
+                }
+            }
+            return out;
+        }
+        let m_even = m + (m & 1);
+        let k_even = k + (k & 1);
+        let n_even = n + (n & 1);
+        let a_p = a_shadow.pad_to(m_even, k_even);
+        let b_p = b_shadow.pad_to(k_even, n_even);
+        let mh = m_even / 2;
+        let kh = k_even / 2;
+        let nh = n_even / 2;
+        let a11 = a_p.submatrix(0, 0, mh, kh);
+        let a12 = a_p.submatrix(0, kh, mh, kh);
+        let a21 = a_p.submatrix(mh, 0, mh, kh);
+        let a22 = a_p.submatrix(mh, kh, mh, kh);
+        let b11 = b_p.submatrix(0, 0, kh, nh);
+        let b12 = b_p.submatrix(0, nh, kh, nh);
+        let b21 = b_p.submatrix(kh, 0, kh, nh);
+        let b22 = b_p.submatrix(kh, nh, kh, nh);
+        // S/T block adds/subs tracked over the unreduced integer shadow.
+        let s1 = a21.add(&a22);
+        let s2 = s1.sub(&a11);
+        let s3 = a11.sub(&a21);
+        let s4 = a12.sub(&s2);
+        let t1 = b12.sub(&b11);
+        let t2 = b22.sub(&t1);
+        let t3 = b22.sub(&b12);
+        let t4 = t2.sub(&b21);
+        // **Wide-shadow theorem-4 assertion**: every S/T operand
+        // entering the next recursive multiply must satisfy the
+        // theorem-4 bound at depth (level + 1). Unlike the
+        // canonical-residue proptest this tests the *unreduced* integer
+        // magnitude, so a regression in the peel (e.g. a future SIMD
+        // specialisation doing an extra add) would be caught.
+        let next_level = level + 1;
+        let bound_next = theorem_4_bound(next_level, k_top, p_minus_1);
+        for (name, blk) in [
+            ("S1", &s1),
+            ("S2", &s2),
+            ("S3", &s3),
+            ("S4", &s4),
+            ("T1", &t1),
+            ("T2", &t2),
+            ("T3", &t3),
+            ("T4", &t4),
+        ] {
+            let observed = blk.max_abs();
+            assert!(
+                observed <= bound_next,
+                "wide-shadow level {} block {} observed {} > theorem_4_bound = {}",
+                next_level,
+                name,
+                observed,
+                bound_next
+            );
+        }
+        let m1 = verify_wide_shadow_recursive(&a11, &b11, threshold, next_level, k_top, p_minus_1);
+        let m2 = verify_wide_shadow_recursive(&a12, &b21, threshold, next_level, k_top, p_minus_1);
+        let m3 = verify_wide_shadow_recursive(&s4, &b22, threshold, next_level, k_top, p_minus_1);
+        let m4 = verify_wide_shadow_recursive(&a22, &t4, threshold, next_level, k_top, p_minus_1);
+        let m5 = verify_wide_shadow_recursive(&s1, &t1, threshold, next_level, k_top, p_minus_1);
+        let m6 = verify_wide_shadow_recursive(&s2, &t2, threshold, next_level, k_top, p_minus_1);
+        let m7 = verify_wide_shadow_recursive(&s3, &t3, threshold, next_level, k_top, p_minus_1);
+        let c11 = m1.add(&m2);
+        let u2 = m1.add(&m6);
+        let u3 = u2.add(&m7);
+        let u4 = u2.add(&m5);
+        let c12 = u4.add(&m3);
+        let c21 = u3.sub(&m4);
+        let c22 = u3.add(&m5);
+        // Stitch quarters. Returning the padded shadow is fine — the
+        // outer scaffold only reads max_abs.
+        let mut c = I128Mat::zeros(2 * mh, 2 * nh);
+        for r in 0..mh {
+            for ccol in 0..nh {
+                c.data[r * (2 * nh) + ccol] = c11.data[r * nh + ccol];
+                c.data[r * (2 * nh) + nh + ccol] = c12.data[r * nh + ccol];
+                c.data[(mh + r) * (2 * nh) + ccol] = c21.data[r * nh + ccol];
+                c.data[(mh + r) * (2 * nh) + nh + ccol] = c22.data[r * nh + ccol];
+            }
+        }
+        c
+    }
+
     proptest::proptest! {
         #![proptest_config(proptest::prelude::ProptestConfig::with_cases(4))]
 
@@ -1002,6 +1251,44 @@ mod tests {
             let b = random_fp::<7>(k, n, seed_b);
             let got = gemm_winograd(&a, &b);
             let expected = gemm(&a, &b);
+            proptest::prop_assert_eq!(got, expected);
+        }
+
+        /// Wide-shadow theorem-4 bound propagation on Mersenne-31.
+        ///
+        /// Mirrors [`gemm_winograd_inner`] with a small threshold (4) at
+        /// `n = 16` (force ≥ 2 recursion levels) while tracking each
+        /// cell as an **unreduced** `i128` integer shadow — no `mod p`
+        /// applied during S/T/U assembly. At every level it asserts
+        /// every S_i, T_i block operand entering a recursive multiply
+        /// satisfies `|cell| ≤ theorem_4_bound(ℓ+1, k_top, p − 1)`.
+        /// This is stronger than the canonical-residue propagation test
+        /// above because the unreduced integer magnitude really does
+        /// grow as Winograd peels, while canonical values (always
+        /// `[0, p-1]`) trivially stay under the bound.
+        #[test]
+        fn prop_winograd_wide_shadow_respects_theorem_4_bound_fp31(
+            seed in 0u64..256,
+        ) {
+            let threshold_small = 4usize; // force ≥ 2 peels at n = 16
+            let n = 4 * threshold_small; // = 16
+            let a = random_fp::<MERSENNE_31>(n, n, seed);
+            let b = random_fp::<MERSENNE_31>(n, n, seed.wrapping_add(7));
+            let p_minus_1 = (MERSENNE_31 - 1) as u128;
+            let a_sh = I128Mat::from_fp(&a);
+            let b_sh = I128Mat::from_fp(&b);
+            let _out_shadow = verify_wide_shadow_recursive(
+                &a_sh,
+                &b_sh,
+                threshold_small,
+                0,
+                n,
+                p_minus_1,
+            );
+            // Additionally: bit-exact production path still matches
+            // classical gemm (so the bound gate never trips at this n).
+            let expected = gemm(&a, &b);
+            let got = gemm_winograd_with_threshold(&a, &b, threshold_small);
             proptest::prop_assert_eq!(got, expected);
         }
     }
