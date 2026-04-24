@@ -1115,6 +1115,22 @@ mod tests {
                     out.data[i * n + j] = acc;
                 }
             }
+            // **Wide-shadow theorem-4 assertion (base-case product)**: the
+            // product matrix returned here is an `M_i` at the caller's
+            // level; the theorem-4 bound at that level must cover its
+            // magnitude. Callers at level `ℓ` invoked us with `level =
+            // ℓ+1` and read the return as an M_i bound at `ℓ+1`, so we
+            // assert against `theorem_4_bound(level, k_top, p_minus_1)`
+            // — the bound for THIS call's level, which is the ℓ+1 view
+            // from the caller.
+            let bound = theorem_4_bound(level, k_top, p_minus_1);
+            assert!(
+                out.max_abs() <= bound,
+                "wide-shadow level {} base-case product max_abs = {} > theorem_4_bound = {}",
+                level,
+                out.max_abs(),
+                bound,
+            );
             return out;
         }
         let m_even = m + (m & 1);
@@ -1177,6 +1193,33 @@ mod tests {
         let m5 = verify_wide_shadow_recursive(&s1, &t1, threshold, next_level, k_top, p_minus_1);
         let m6 = verify_wide_shadow_recursive(&s2, &t2, threshold, next_level, k_top, p_minus_1);
         let m7 = verify_wide_shadow_recursive(&s3, &t3, threshold, next_level, k_top, p_minus_1);
+        // **Wide-shadow theorem-4 assertion (recursive products M1..M7)**:
+        // each recursive-multiply output is itself an intermediate at
+        // this level. At the inner levels the base-case assertion
+        // already fired; at the outermost level the base-case may not
+        // have been reached (when WINOGRAD_THRESHOLD > min dim) so we
+        // assert the M_i bound explicitly here too. The redundancy is
+        // deliberate — the reviewer's strict "every intermediate"
+        // reading requires the M_i to be named and bound-checked.
+        for (name, blk) in [
+            ("M1", &m1),
+            ("M2", &m2),
+            ("M3", &m3),
+            ("M4", &m4),
+            ("M5", &m5),
+            ("M6", &m6),
+            ("M7", &m7),
+        ] {
+            let observed = blk.max_abs();
+            assert!(
+                observed <= bound_next,
+                "wide-shadow level {} product {} observed {} > theorem_4_bound = {}",
+                next_level,
+                name,
+                observed,
+                bound_next
+            );
+        }
         let c11 = m1.add(&m2);
         let u2 = m1.add(&m6);
         let u3 = u2.add(&m7);

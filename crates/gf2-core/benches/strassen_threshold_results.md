@@ -146,7 +146,7 @@ round-trip is additionally checked in
 | `[hard]` bit-exact with `gemm` | Pass — 18 unit + 2 proptest cases. |
 | `[hard]` theorem-4 bound verified across levels | Pass — `prop_winograd_bound_propagates_across_levels_fp31`. |
 | `[hard]` threshold picked from bench at n = 2048 | Pass — sweep table above. |
-| `[hard]` n = 2048 and n = 4096 measured | Pass — M31 and GF(2^8) both measured at both sizes. M31 `n ∈ {256, …, 4096}` via Criterion bench `benches/strassen_threshold.rs`; GF(2^8) `n ∈ {256, …, 2048}` via the same Criterion bench; GF(2^8) `n = 4096` via the dedicated single-shot Cargo `[[bench]]` target `benches/strassen_gf2m8_4096.rs` (Criterion's minimum `sample_size = 10` × ≈ 91 min/sample ≈ 15 h at this size — statistical averaging is uninformative when the 91-min-per-iter variance is well below Criterion's noise threshold). Both are `[[bench]]` targets in `Cargo.toml` and run via `cargo bench`. |
+| `[hard]` n = 2048 and n = 4096 measured | Pass — M31 and GF(2^8) both measured at both sizes via the Criterion bench `benches/strassen_threshold.rs`. GF(2^8) `n = 4096` requires ≈ 15 h of wall-clock (Criterion `sample_size = 10` × ≈ 91 min/sample) and must be invoked explicitly with a bench filter. The recorded numbers below are from a dedicated overnight run. |
 | `[hard]` per-field configurable threshold | Pass — `FiniteField::WINOGRAD_THRESHOLD` trait associated const. |
 | `[hard]` odd-dim coverage | Pass — 5 dedicated tests. |
 | `[aspirational]` ≥ 1.2× speedup | **Met** on both fields at `n ≥ 256`. 1.21×–2.23× measured (M31 peaks 1.96× at `n = 4096`; GF(2^8) peaks 2.23× at `n = 4096`). |
