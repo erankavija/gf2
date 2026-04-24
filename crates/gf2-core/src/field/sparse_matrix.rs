@@ -34,21 +34,39 @@
 //! | `from_dense(&BitMatrix)` | [`SparseFieldMatrix::from_dense`] | Row-major scan, drops zeros. |
 //! | `to_dense() -> BitMatrix` | [`SparseFieldMatrix::to_dense`] | Materialises a dense [`FieldMatrix`]. |
 //! | `from_coo(rows, cols, &[(r, c)])` | [`SparseFieldMatrix::from_triplets`] | Over a field, duplicates *sum* (field) instead of XOR (GF(2)). |
+//! | `from_coo_deduplicated(rows, cols, &[(r, c)])` | [`SparseFieldMatrix::from_triplets`] | Over GF(2), "dedup" means "keep one hit per coordinate"; over a general field the same contract falls out of [`SparseFieldMatrix::from_triplets`] when each coordinate is supplied at most once by the caller (the post-sum zero-drop subsumes the GF(2) cancellation). No separate entry point is needed on the field side. |
 //! | `rows()` / `cols()` / `nnz()` | identical | Same contract. |
 //! | `row_iter(row)` | [`SparseFieldMatrix::row_iter`] | Yields `(col, &value)`, CSR-native. |
+//! | `col_iter(col)` | [`SparseFieldMatrixCsc::col_iter`] | CSR does not expose `col_iter` natively; convert first via [`SparseFieldMatrix::to_csc`]. The CSC variant yields `(row, &value)` pairs directly. |
 //! | `transpose()` | [`SparseFieldMatrix::transpose`] | Field version materialises a dense transpose (see below). |
-//! | `matvec(&BitVec)` | [`SparseFieldMatrix::matvec`] | Row-by-row dispatch to [`FieldVec`]'s dot-product kernel. |
+//! | `matvec(&BitVec)` | [`SparseFieldMatrix::matvec`] | Row-by-row allocation-free SpMV with delayed reduction over `F::Wide`. |
 //! | — | [`SparseFieldMatrix::matvec_transpose`] | New: field SpMV^T, O(nnz) via CSC. |
 //! | — | [`SparseFieldMatrix::matmat`] | New: SpMM (sparse × dense → dense). |
+//! | `save_image` (feature `visualization`) | — | N/A — not re-exposed on the field side (only the GF(2) crate ships the visualization path today). |
 //! | [`SpBitMatrixDual`](crate::sparse::SpBitMatrixDual) | [`SparseFieldMatrixCsc`] | GF(2) stores both layouts in one handle; over a general field the two layouts are split into separate types and converted on demand. |
+//! | `SpBitMatrixDual::{from_dense,from_coo,from_coo_deduplicated}` | `SparseFieldMatrix` + [`SparseFieldMatrix::to_csc`] | Construct the CSR half first, then flip to CSC if both views are needed. |
+//! | `SpBitMatrixDual::{row_iter,col_iter}` | [`SparseFieldMatrix::row_iter`] / [`SparseFieldMatrixCsc::col_iter`] | Same contract, but sourced from the matching CSR/CSC layout rather than a fused pair. |
+//! | `SpBitMatrixDual::{rows,cols,nnz}` | identical on either field variant | Trivial shape accessors. |
+//! | `SpBitMatrixDual::matvec` | [`SparseFieldMatrix::matvec`] | Field side routes SpMV through CSR. |
+//! | `SpBitMatrixDual::matvec_transpose` | [`SparseFieldMatrix::matvec_transpose`] | CSR-based scatter; no CSC flip required. |
 //!
-//! **Divergence.** `SpBitMatrix::from_coo` treats duplicate coordinates as
-//! XOR-cancelling because that matches GF(2) arithmetic; over a general field
-//! we sum them instead, which is the correct "reconstruct the matrix from
-//! its triplet expansion" semantics. Callers that want to suppress duplicates
-//! entirely can deduplicate client-side or rely on the post-sum zero drop.
-//! This is the only behavioural divergence from the GF(2) vocabulary;
-//! everything else keeps shape.
+//! **Divergences.** Two behavioural differences from the GF(2) vocabulary:
+//!
+//! 1. `SpBitMatrix::from_coo` treats duplicate coordinates as XOR-cancelling
+//!    because that matches GF(2) arithmetic; over a general field we sum them
+//!    instead, which is the correct "reconstruct the matrix from its triplet
+//!    expansion" semantics. Callers that want to suppress duplicates entirely
+//!    can deduplicate client-side or rely on the post-sum zero drop — both
+//!    routes reproduce the `from_coo_deduplicated` shape without a separate
+//!    entry point.
+//! 2. `SpBitMatrix::col_iter` is exposed directly on the CSR type (the GF(2)
+//!    implementation scans the CSR indices with a filter), whereas the field
+//!    side keeps the two layouts separate: `col_iter` lives on
+//!    [`SparseFieldMatrixCsc`] only and is reached by a [`SparseFieldMatrix::to_csc`]
+//!    flip. The iterator contract (`(row, &value)` pairs in ascending row
+//!    order) is otherwise identical.
+//!
+//! Everything else keeps shape.
 //!
 //! # Transpose choice
 //!
@@ -67,11 +85,14 @@
 //!
 //! Sparse accumulation is already structured around per-row scatter and does
 //! not benefit from the same §1.2 Dumas–Pernet kmax chunking the dense `gemm`
-//! uses. The per-row `matvec` here delegates to the crate-internal
-//! `dot_product_slices` kernel, which *does* honour delayed reduction — but
-//! the inner dimension it sees is `nnz_in_row`, not `cols`, so the reduction
-//! cost is already close to minimal. We do not add a separate wide
-//! accumulator path for sparse.
+//! uses at the outer level. The per-row `matvec` kernel inlines the same
+//! delayed-reduction dot product that `FieldVec::dot_product` uses (chunk by
+//! `F::max_unreduced_additions()`, accumulate in `F::Wide`, reduce at chunk
+//! boundaries) directly against the CSR `values`/`col_idx` slices, so the
+//! SpMV hot path performs **zero heap allocations per row** — only the
+//! output [`FieldVec`] is allocated. The inner dimension each row sees is
+//! `nnz_in_row`, not `cols`, so the reduction cost is already close to
+//! minimal.
 //!
 //! # Out-of-scope (epic Non-goals)
 //!
@@ -104,7 +125,7 @@
 //! ```
 
 use crate::field::matrix::FieldMatrix;
-use crate::field::vec::{dot_product_slices, FieldVec};
+use crate::field::vec::FieldVec;
 use crate::field::{ConstField, FiniteField};
 use crate::matrix_like::MatrixLike;
 
@@ -790,22 +811,55 @@ impl<F: FiniteField> SparseFieldMatrix<F> {
         let zero: F = zero_witness_pair(self.values.as_slice(), x.as_slice());
         let mut y: FieldVec<F> = FieldVec::zeros_from(self.rows, &zero);
         let xs = x.as_slice();
+        // Inline the delayed-reduction dot product per row rather than
+        // gathering `x[col_idx[k]]` into a scratch `Vec<F>` before calling
+        // `dot_product_slices`. This keeps the SpMV hot path allocation-free
+        // (O(nnz) multiply-adds, zero heap allocations beyond the output
+        // vector), mirroring the structure of `matvec_transpose`. The chunked
+        // `Wide` accumulator preserves the §1.2 Dumas–Pernet delayed-reduction
+        // bound for prime fields where `max_unreduced_additions()` is finite.
+        let kmax = F::max_unreduced_additions();
         for r in 0..self.rows {
             let start = self.row_ptr[r];
             let end = self.row_ptr[r + 1];
             if start == end {
                 continue;
             }
-            // Gather the column entries of `x` corresponding to this row's
-            // non-zero positions into a contiguous slice so we can reuse the
-            // `FieldVec` delayed-reduction dot-product kernel. The gather
-            // length is `nnz_in_row`, so allocation is proportional to the
-            // sparse data, not the dense cols.
-            let gathered: Vec<F> = self.col_idx[start..end]
-                .iter()
-                .map(|&c| xs[c].clone())
-                .collect();
-            let dot = dot_product_slices(&self.values[start..end], &gathered, &zero);
+            let values_row = &self.values[start..end];
+            let cols_row = &self.col_idx[start..end];
+            let n = values_row.len();
+
+            let dot: F = if kmax == usize::MAX {
+                // Fast path: no overflow possible (e.g., GF(2^m), Wide = Self).
+                let mut acc = values_row[0].mul_to_wide(&xs[cols_row[0]]);
+                for i in 1..n {
+                    acc += values_row[i].mul_to_wide(&xs[cols_row[i]]);
+                }
+                F::reduce_wide(&acc)
+            } else if kmax == 0 {
+                // Degenerate: reduce after every multiply.
+                let mut acc = values_row[0].clone() * xs[cols_row[0]].clone();
+                for i in 1..n {
+                    acc += &(values_row[i].clone() * xs[cols_row[i]].clone());
+                }
+                acc
+            } else {
+                // General case: chunk by `kmax`, accumulate in `Wide`, reduce
+                // at chunk boundaries. Matches `dot_product_slices` semantics
+                // exactly, just without the gather.
+                let mut result = zero.zero_like();
+                let mut offset = 0usize;
+                while offset < n {
+                    let chunk_size = (n - offset).min(kmax);
+                    let mut acc = values_row[offset].mul_to_wide(&xs[cols_row[offset]]);
+                    for i in 1..chunk_size {
+                        acc += values_row[offset + i].mul_to_wide(&xs[cols_row[offset + i]]);
+                    }
+                    result += &F::reduce_wide(&acc);
+                    offset += chunk_size;
+                }
+                result
+            };
             y.set(r, dot);
         }
         y
