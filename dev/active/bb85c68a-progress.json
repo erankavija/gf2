@@ -4,9 +4,9 @@
   "title": "Implement generic finite field linear algebra (FieldMatrix)",
   "claimed_by": "agent:project-lead",
   "started_at": "2026-04-23T16:00:00+00:00",
-  "last_updated": "2026-04-23T16:32:00+00:00",
-  "current_wave": 0,
-  "phase": "ready_to_dispatch_wave_1",
+  "last_updated": "2026-04-24T02:18:00+00:00",
+  "current_wave": 2,
+  "phase": "wave_1_complete_wave_2_not_dispatched",
   "notes": [
     "User explicitly directed inspiration from arXiv:1204.3735 (Dumas-Pernet) and Armadillo C++ UX.",
     "User approved scope-edit bundle: PLE-first in c3f8c1cb; MatrixLike shared trait; expression templates (cdcebf6a); trsm/trmm/trtri (83b1ad8b); char/min poly (e47231cd); M4RI bench in 64c88ae4; per-story criterion benches; container-pinned bench environment.",
@@ -24,8 +24,11 @@
           "title": "Design FieldMatrix<F: FiniteField> dense matrix type",
           "kind": "story",
           "classification": "design",
-          "status": "ready",
-          "state": "ready"
+          "status": "done",
+          "state": "done",
+          "rework_cycles": 8,
+          "final_commit": "b8bbfe6",
+          "note": "8 review cycles. Triggered project-lead skill tightening (Tier 1.5 prior-findings regression, Tier 2.75 deferred-items audit, expanded rework sweeps). Known limitation approved 2026-04-23: zero-inner-dim gemm/matvec/matvec_transpose panic on F: FiniteField non-ConstField (e.g., Gf2mElement) with clear message."
         },
         {
           "id": "cdcebf6a-4dce-4f08-886c-5427646e7c73",
@@ -33,9 +36,11 @@
           "title": "Design FieldMatrix expression-template algebra (proxy types)",
           "kind": "story",
           "classification": "design",
-          "status": "ready",
-          "state": "ready",
-          "note": "Depends on ab791e27 — serialized after it within wave 1."
+          "status": "done",
+          "state": "done",
+          "rework_cycles": 3,
+          "final_commit": "5840e5e",
+          "note": "Design doc: dev/plans/expression_templates_design.md (1033 lines). Amended issue's aspirational cargo-asm criterion to defer empirical verification to d48a3cfd/7e6183bb."
         }
       ]
     },
