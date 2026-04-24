@@ -6,7 +6,6 @@
   "priority": "normal",
   "assignee": null,
   "dependencies": [
-    "d48a3cfd-3187-41c3-b4a5-78c4c6f8a967",
     "c3f8c1cb-eda4-4af9-8ccf-2ceb5eb87876"
   ],
   "gates_required": [
@@ -23,5 +22,5 @@
     "epic:bb85c68a"
   ],
   "created_at": "2026-04-23T16:30:51.359884762+00:00",
-  "updated_at": "2026-04-23T16:31:19.369510806+00:00"
+  "updated_at": "2026-04-24T07:08:40.002889258+00:00"
 }

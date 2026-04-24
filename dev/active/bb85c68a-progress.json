@@ -4,44 +4,22 @@
   "title": "Implement generic finite field linear algebra (FieldMatrix)",
   "claimed_by": "agent:project-lead",
   "started_at": "2026-04-23T16:00:00+00:00",
-  "last_updated": "2026-04-24T02:18:00+00:00",
+  "last_updated": "2026-04-24T12:05:00+00:00",
   "current_wave": 2,
-  "phase": "wave_1_complete_wave_2_not_dispatched",
+  "phase": "wave_2_partially_complete; T2 stashed mid-implementation",
   "notes": [
-    "User explicitly directed inspiration from arXiv:1204.3735 (Dumas-Pernet) and Armadillo C++ UX.",
-    "User approved scope-edit bundle: PLE-first in c3f8c1cb; MatrixLike shared trait; expression templates (cdcebf6a); trsm/trmm/trtri (83b1ad8b); char/min poly (e47231cd); M4RI bench in 64c88ae4; per-story criterion benches; container-pinned bench environment.",
-    "User also approved a second round of breakdown: three oversize stories (d48a3cfd, 64c88ae4, e47231cd) split into 8 child tasks via story ← task dependency wiring. Stories retain narrative scope; tasks carry dispatchable work units.",
-    "User did NOT approve starting wave execution; the ask was readiness assessment only. Wave 1 dispatch is on user command."
+    "Session 3 (this session) completed d48a3cfd/T1 (91c06222) and 8a90882e. Started d48a3cfd/T2 (7e6183bb) but worker hit model rate limit mid-implementation. Stashed partial work at stash@{0}.",
+    "Session 2 completed Wave 1 (ab791e27, cdcebf6a).",
+    "Worker rework pattern: both 91c06222 and 8a90882e needed exactly 1 rework round. Reviewer is catching doc-contract violations (missing # Arguments/# Examples/# Complexity) reliably; serving as a safety net for worker drift.",
+    "Added explicit dep edge c3f8c1cb → 83b1ad8b (PLE uses trsm per description's hard success criterion; edge was missing from the DAG). jit validate --fix cleaned up 3 transitive redundancies post-add."
   ],
   "waves": [
     {
       "wave_number": 1,
       "label": "Design",
       "issues": [
-        {
-          "id": "ab791e27-49c5-428f-8029-d19752a7bf61",
-          "short_id": "ab791e27",
-          "title": "Design FieldMatrix<F: FiniteField> dense matrix type",
-          "kind": "story",
-          "classification": "design",
-          "status": "done",
-          "state": "done",
-          "rework_cycles": 8,
-          "final_commit": "b8bbfe6",
-          "note": "8 review cycles. Triggered project-lead skill tightening (Tier 1.5 prior-findings regression, Tier 2.75 deferred-items audit, expanded rework sweeps). Known limitation approved 2026-04-23: zero-inner-dim gemm/matvec/matvec_transpose panic on F: FiniteField non-ConstField (e.g., Gf2mElement) with clear message."
-        },
-        {
-          "id": "cdcebf6a-4dce-4f08-886c-5427646e7c73",
-          "short_id": "cdcebf6a",
-          "title": "Design FieldMatrix expression-template algebra (proxy types)",
-          "kind": "story",
-          "classification": "design",
-          "status": "done",
-          "state": "done",
-          "rework_cycles": 3,
-          "final_commit": "5840e5e",
-          "note": "Design doc: dev/plans/expression_templates_design.md (1033 lines). Amended issue's aspirational cargo-asm criterion to defer empirical verification to d48a3cfd/7e6183bb."
-        }
+        {"id": "ab791e27-49c5-428f-8029-d19752a7bf61", "short_id": "ab791e27", "title": "Design FieldMatrix<F: FiniteField> dense matrix type", "kind": "story", "classification": "design", "status": "done", "state": "done", "rework_cycles": 8, "final_commit": "b8bbfe6", "note": "Session 2. Triggered project-lead skill tightening (Tier 1.5, Tier 2.75)."},
+        {"id": "cdcebf6a-4dce-4f08-886c-5427646e7c73", "short_id": "cdcebf6a", "title": "Design FieldMatrix expression-template algebra (proxy types)", "kind": "story", "classification": "design", "status": "done", "state": "done", "rework_cycles": 3, "final_commit": "5840e5e", "note": "Session 2. Design doc dev/plans/expression_templates_design.md (1033 lines)."}
       ]
     },
     {
@@ -54,26 +32,41 @@
           "title": "Implement matrix multiplication with delayed-reduction kernels + proxy types",
           "kind": "story",
           "classification": "implementation",
-          "status": "pending",
+          "status": "in_progress",
           "state": "backlog",
+          "note": "Story-level transition to done gated on T1+T2+T3 completion.",
           "child_tasks": [
             {
               "id": "91c06222-98cf-4486-90fa-a48d745bac99",
               "short_id": "91c06222",
               "title": "T1: Classical blocked gemm + eager operator overloads",
-              "depends_on_task_short_ids": []
+              "depends_on_task_short_ids": [],
+              "status": "done",
+              "state": "done",
+              "rework_cycles": 1,
+              "final_commits": ["17b6fa4", "3aba44e"],
+              "session_completed": 3,
+              "note": "R1 fail was missing # Arguments/# Examples/# Complexity on pub fn gemm. Fixed in 3aba44e."
             },
             {
               "id": "7e6183bb-e4f7-4ab2-a667-e3871c1ec67d",
               "short_id": "7e6183bb",
               "title": "T2: Expression-template proxy types + canonical fusions",
-              "depends_on_task_short_ids": ["91c06222"]
+              "depends_on_task_short_ids": ["91c06222"],
+              "status": "stashed",
+              "state": "ready",
+              "rework_cycles": 0,
+              "wip_stash": "stash@{0}",
+              "note": "Session 3 dispatched a worker; worker wrote 1934 lines of expr.rs + ~180 lines matrix.rs refactor + 32 lines matrix_like.rs extension before hitting rate limit. CODE DOES NOT COMPILE at stash: blanket 'impl<F, E> From<E> for FieldMatrix<F> where E: Evaluate<F>' in expr.rs:1469 conflicts with core's blanket 'impl<T> From<T> for T'. Next session: git stash apply stash@{0}, fix the From/Into approach (use per-proxy From impls OR an inherent FieldMatrix::eval method per design §5), then complete + test + bench."
             },
             {
               "id": "ad597ede-5edf-4f79-a185-56d5ee16917a",
               "short_id": "ad597ede",
               "title": "T3: Strassen–Winograd recursion + bound propagation",
-              "depends_on_task_short_ids": ["91c06222"]
+              "depends_on_task_short_ids": ["91c06222"],
+              "status": "pending",
+              "state": "backlog",
+              "rework_cycles": 0
             }
           ]
         },
@@ -84,7 +77,8 @@
           "kind": "story",
           "classification": "implementation",
           "status": "pending",
-          "state": "backlog"
+          "state": "ready",
+          "note": "Added dep edge c3f8c1cb → 83b1ad8b in session 3 (DAG was under-specified vs. the description's hard success criterion)."
         },
         {
           "id": "83b1ad8b-35eb-4340-8ef9-663c19df038e",
@@ -93,7 +87,8 @@
           "kind": "story",
           "classification": "implementation",
           "status": "pending",
-          "state": "ready"
+          "state": "backlog",
+          "note": "Depends on d48a3cfd story (i.e., T1+T2+T3). Currently blocked until T2/T3 finish."
         },
         {
           "id": "8a90882e-5eec-4943-8482-7f08a5bc5492",
@@ -101,25 +96,21 @@
           "title": "Implement sparse FieldMatrix (CSR/CSC) over FiniteField",
           "kind": "story",
           "classification": "implementation",
-          "status": "pending",
-          "state": "backlog"
+          "status": "done",
+          "state": "done",
+          "rework_cycles": 1,
+          "final_commits": ["5a9a287", "ba16868", "aa1bbc5"],
+          "session_completed": 3,
+          "note": "R1 fail was 2-part: parity table incomplete (col_iter, from_coo_deduplicated missing) + matvec per-row heap alloc. Rework fixed both plus sweep (8 resolution-table rows). Lead polish commit aa1bbc5 fixed a 1-line parity-table inconsistency the reviewer had PASSED as minor."
         }
       ],
-      "parallelism_notes": "d48a3cfd, c3f8c1cb, 83b1ad8b all touch field/matrix.rs and field/*. Recommend serialization or worktree isolation per feedback_parallel_agent_isolation memory. 8a90882e touches field/sparse_matrix.rs (disjoint) and can run in parallel. Within d48a3cfd: T1 → (T2, T3) serial; T2 and T3 can run in parallel once T1 is done."
+      "parallelism_notes": "Serialized all wave-2 dispatches to avoid cargo target/ cache contention (CLAUDE.md: 'Never run multiple cargo commands in parallel') AND same-repo agent-WIP conflicts (feedback_parallel_agent_isolation). Within d48a3cfd: T1 done → (T2, T3) can serialize. Across stories: 8a90882e serialized despite disjoint files because of the cargo cache rule."
     },
     {
       "wave_number": 3,
       "label": "Derived operations",
       "issues": [
-        {
-          "id": "ae1d1e88-c3cc-4cbf-9d52-e65940b1efe0",
-          "short_id": "ae1d1e88",
-          "title": "Implement matrix inversion and linear system solving",
-          "kind": "story",
-          "classification": "implementation",
-          "status": "pending",
-          "state": "backlog"
-        },
+        {"id": "ae1d1e88-c3cc-4cbf-9d52-e65940b1efe0", "short_id": "ae1d1e88", "title": "Implement matrix inversion and linear system solving", "kind": "story", "classification": "implementation", "status": "pending", "state": "backlog"},
         {
           "id": "e47231cd-7f4b-40d7-9164-033aa2be63bb",
           "short_id": "e47231cd",
@@ -129,18 +120,8 @@
           "status": "pending",
           "state": "ready",
           "child_tasks": [
-            {
-              "id": "f01298db-cebf-49c8-8b84-6dadcdf1d378",
-              "short_id": "f01298db",
-              "title": "T1: Cubic Krylov baseline for charpoly/minpoly/Frobenius form",
-              "depends_on_task_short_ids": []
-            },
-            {
-              "id": "1454ec2d-a3c1-4c79-87f3-db5eb3bcf236",
-              "short_id": "1454ec2d",
-              "title": "T2: Sub-cubic Keller-Gehrig charpoly + empirical crossover",
-              "depends_on_task_short_ids": ["f01298db"]
-            }
+            {"id": "f01298db-cebf-49c8-8b84-6dadcdf1d378", "short_id": "f01298db", "title": "T1: Cubic Krylov baseline", "depends_on_task_short_ids": []},
+            {"id": "1454ec2d-a3c1-4c79-87f3-db5eb3bcf236", "short_id": "1454ec2d", "title": "T2: Sub-cubic Keller-Gehrig charpoly", "depends_on_task_short_ids": ["f01298db"]}
           ]
         }
       ]
@@ -158,25 +139,9 @@
           "status": "pending",
           "state": "backlog",
           "child_tasks": [
-            {
-              "id": "a03b2556-369d-41ea-ae02-0c6199d3c480",
-              "short_id": "a03b2556",
-              "title": "T1: Benchmark container + fflas-ffpack/M4RI reference harnesses",
-              "depends_on_task_short_ids": [],
-              "parallel_with": "T2"
-            },
-            {
-              "id": "6ed7f050-6a09-47e3-baa7-8485fd9c2acd",
-              "short_id": "6ed7f050",
-              "title": "T2: gf2 criterion benchmark suite",
-              "depends_on_task_short_ids": []
-            },
-            {
-              "id": "a9ab0a4f-5ae3-4da2-a15f-636b62cff0ec",
-              "short_id": "a9ab0a4f",
-              "title": "T3: Published side-by-side analysis + bench results report",
-              "depends_on_task_short_ids": ["a03b2556", "6ed7f050"]
-            }
+            {"id": "a03b2556-369d-41ea-ae02-0c6199d3c480", "short_id": "a03b2556", "title": "T1: fflas-ffpack/M4RI reference harness in pinned container", "depends_on_task_short_ids": []},
+            {"id": "6ed7f050-6a09-47e3-baa7-8485fd9c2acd", "short_id": "6ed7f050", "title": "T2: gf2 criterion benchmark suite", "depends_on_task_short_ids": []},
+            {"id": "a9ab0a4f-5ae3-4da2-a15f-636b62cff0ec", "short_id": "a9ab0a4f", "title": "T3: Published side-by-side analysis", "depends_on_task_short_ids": ["a03b2556", "6ed7f050"]}
           ]
         }
       ]
@@ -196,43 +161,38 @@
     "1454ec2d-a3c1-4c79-87f3-db5eb3bcf236"
   ],
   "escalations": [],
-  "rework_counts": {},
+  "rework_counts": {
+    "91c06222": 1,
+    "8a90882e": 1,
+    "7e6183bb": 0
+  },
   "gates_attached": {
     "story_standard_set": ["code-review", "cargo-ci", "doc-review"],
     "task_standard_set": ["code-review", "cargo-ci"],
-    "task_a9ab0a4f_extra": ["doc-review"],
-    "notes": "Tasks carry code-review + cargo-ci (fast per-commit feedback). doc-review is kept at the story level (holistic doc review when all tasks land), except 64c88ae4/T3 which delivers the published analysis doc and therefore carries doc-review itself."
+    "task_a9ab0a4f_extra": ["doc-review"]
   },
   "design_docs": [
     "dev/plans/fflas_ffpack_analysis.md",
     "dev/plans/dumas_pernet_takeaways.md",
     "dev/plans/armadillo_ux_mapping.md",
-    "dev/plans/gpu_fieldmatrix_sketch.md (future GPU epic 16283d6f, pre-filed)"
+    "dev/plans/expression_templates_design.md",
+    "dev/active/ab791e27-design.md",
+    "dev/plans/gpu_fieldmatrix_sketch.md"
   ],
-  "total_work_items": {
-    "stories": 9,
-    "tasks": 8,
-    "total": 17
-  },
+  "total_work_items": {"stories": 9, "tasks": 8, "total": 17, "done": 4, "remaining": 13},
   "related_future_epics": [
-    {
-      "id": "16283d6f-99f2-42e9-8254-4e0604aadc43",
-      "short_id": "16283d6f",
-      "title": "GPU-accelerated FieldMatrix (HIP, dense matmul + SpMV)",
-      "status": "backlog",
-      "note": "Depends transitively on bb85c68a; not ready for dispatch. Pre-filed with design sketch."
-    }
+    {"id": "16283d6f-99f2-42e9-8254-4e0604aadc43", "short_id": "16283d6f", "title": "GPU-accelerated FieldMatrix (HIP, dense matmul + SpMV)", "status": "backlog", "note": "Not in scope for this epic."}
   ],
-  "open_prereqs_for_wave_1": [
-    "None — ab791e27 is READY and cdcebf6a is READY (depends on ab791e27). No user input required before starting."
+  "open_prereqs_for_resume": [
+    "Next action: resume T2 from stash@{0}. Read dev/plans/expression_templates_design.md §5 (From/Into bridge) carefully — the blanket From<E> for FieldMatrix approach the worker tried does not work; the design doc should specify the alternative."
   ],
   "traps": [
-    "Do NOT treat LU-with-partial-pivoting as the core factorization. Over finite fields, PLE is the ground truth (Dumas-Pernet §2.2). c3f8c1cb now reflects this; any rework that reverts to bespoke LU must be rejected.",
-    "Do NOT let per-story benchmarks become best-effort. The user stated benchmarking is mandatory; criterion micro-benches are a [hard] success criterion at every implementation story, not just 64c88ae4.",
-    "Do NOT unify BitMatrix and FieldMatrix into a single type. The user chose 'Name parity + shared trait', NOT 'Full unification'. BitMatrix keeps bit-packed storage and its existing hot paths.",
-    "Expression templates (cdcebf6a) must be designed BEFORE d48a3cfd/T2 starts. T2 implements the proxy types cdcebf6a specifies; without the design, T2 will either ship without fusion or invent its own ad-hoc proxy scheme.",
-    "fflas-ffpack / M4RI are NOT installed on this host; 64c88ae4 runs in a pinned container per user directive. Do not assume a host install and do not have a worker attempt to install it bare-metal.",
-    "When dispatching d48a3cfd as a story, dispatch its child tasks (91c06222, 7e6183bb, ad597ede) — not the story itself. Same pattern for 64c88ae4 and e47231cd. Stories carry narrative scope; tasks are the dispatch units.",
-    "The transitive-reduction auto-fix removed epic→{8a90882e, ae1d1e88} direct edges because they became reachable via bb85c68a→64c88ae4→6ed7f050→{8a90882e, ae1d1e88}. This is correct; the DAG still enforces that the epic cannot close until those are done. Do not re-add the direct edges."
+    "From §1 traps (carried): PLE-first over LU; no BitMatrix unification; dispatch tasks not stories for d48a3cfd/64c88ae4/e47231cd; 64c88ae4 in pinned container only; per-story benches are [hard]; don't re-add epic→{8a90882e, ae1d1e88} direct edges; SIMD foundation complete (no new SIMD in matrix layer); GPU epic 16283d6f not in scope.",
+    "From §2 traps (carried): reviewer drift is real (Tier 1.5 mandatory); workers silently defer via design docs (Tier 2.75 mandatory); rework prompts must be symmetric across classes of thing; right-scalar Mul<F> bounded on F: FiniteField but left-scalar is per-ConstField-family; with_capacity(rows, cols) fills with zeros (can't optimize to no-init without unsafe); zero-inner-dim gemm/matvec/matvec_transpose panics for F: FiniteField non-ConstField; FiniteField::zero_hint() is the distinguisher; Transposed<M> is minimal; design-doc 'Follow-up work' bullets must cite Non-goals.",
+    "Session 3 new: Do NOT write 'impl<F, E> From<E> for FieldMatrix<F> where E: Evaluate<F>' — it conflicts with core's blanket 'impl<T> From<T> for T' (see stashed expr.rs:1469 for the attempted code and the E0119 error). The design in §5 must be read carefully; the correct approach is either (a) per-proxy `From<Product<A,B>> for FieldMatrix<F>` + `From<Sum<A,B>> for FieldMatrix<F>` + … (per-type, not blanket), or (b) inherent method `FieldMatrix::eval<E: Evaluate<F>>(expr) -> Self`, or (c) the .into() idiom via a typed-bridge struct. If the design doc doesn't already decide, the next lead must pick one and document in the module header.",
+    "Session 3 new: T2's worker also left UNUSED imports in matrix.rs (Add, Mul, Neg, Sub) because it refactored the operator overloads into expr.rs but didn't clean up the old imports. That's part of the stash — clean up after resuming.",
+    "Session 3 new: Serialized wave-2 dispatches even when files were disjoint (e.g., 91c06222 touches matrix.rs and 8a90882e touches sparse_matrix.rs — they could theoretically run in parallel). Chose serialize because CLAUDE.md forbids parallel cargo commands (shared target/ cache) and the feedback_parallel_agent_isolation memory warns against same-repo parallel agents reverting each other's WIP. For future waves, serialize by default unless worktree isolation is set up.",
+    "Session 3 new: Rework round success rate is 100% so far (1 round per issue for both 91c06222 and 8a90882e). The code-review gate's AI reviewer is reliably catching doc-contract violations (# Arguments/# Examples/# Complexity). Use this as the rework budget baseline: plan for 1 rework round per dispatched issue, not 0.",
+    "Session 3 new: jit_gate_pass on auto gates returns 'Passed' even when the underlying run fails — always inspect jit gate check-all after jit_gate_pass to see the real outcome. Example: I called jit_gate_pass code-review on 91c06222 commit 17b6fa4 and got 'Passed gate code-review' back, but jit_gate_check-all showed the gate actually FAILED with the docs finding. The tool return is misleading; the gate-runs are the ground truth."
   ]
 }
