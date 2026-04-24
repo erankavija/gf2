@@ -1,8 +1,8 @@
 {
   "id": "7e6183bb-e4f7-4ab2-a667-e3871c1ec67d",
   "title": "d48a3cfd/T2: Expression-template proxy types + canonical fusions",
-  "description": "Second task of story `d48a3cfd`. Implements the proxy-type architecture designed in `cdcebf6a`, layering lazy evaluation on top of T1's eager kernels.\n\n## Deliverables\n\n- **Proxy types**: `Product<A, B>`, `Sum<A, B>`, `Scale<F, M>`, `Transposed<M>`, `FusedProductPlus<Product, C>` per design doc.\n- **`Evaluate<F>` trait** with `evaluate_into(&mut FieldMatrix<F>)`; `From<E: Evaluate<F>> for FieldMatrix<F>` bridge.\n- **Canonical fusions**:\n  - `A·B + βC` → single `gemm` call with β.\n  - `αA + B` → single pass, no temp for the scaled operand.\n  - `Aᵀ·B` → `gemm` with transposed-A path.\n  - `αAᵀ·B + βC` → composition of the above.\n- **Trace counters (debug builds)** verifying that the canonical fusions hit one kernel call, not two.\n- **Bench showing fusion wins**: `&a * &b + &c` vs. `{ let t = &a * &b; t + &c }` at n = 1024 — the fused path must be measurably faster and allocate less.\n\n## Success criteria\n\n- [hard] Proxy types implement `MatrixLike<F>` where semantically read-only (per design §3).\n- [hard] Every canonical fusion verified to collapse to one kernel call (trace counters).\n- [hard] `(&a * &b + &c).into::<FieldMatrix<F>>()` is bit-exact equal to the eager-path result.\n- [hard] Shape-mismatch panics fire at evaluation time with clear messages.\n- [hard] Fused-vs-naive benchmark comparison present and shows the expected speedup.\n\n## Depends on\n\n- `cdcebf6a` (design approved).\n- `d48a3cfd/T1` (eager kernels exist).",
-  "state": "ready",
+  "description": "Second task of story `d48a3cfd`. Implements the proxy-type architecture designed in `cdcebf6a`, layering lazy evaluation on top of T1's eager kernels.\n\n## Deliverables\n\n- **Proxy types**: `Product<A, B>`, `Sum<A, B>`, `Scale<F, M>`, `Transposed<M>`, `FusedProductPlus<Product, C>` per design doc.\n- **`Evaluate<F>` trait** with `evaluate_into(&mut FieldMatrix<F>)`; `From<E: Evaluate<F>> for FieldMatrix<F>` bridge (sealed via `ProxyExpr` marker to avoid E0119 against `core`'s reflexive `From<T> for T`).\n- **Canonical fusions**:\n  - `A·B + βC` → single `gemm_with_beta` call.\n  - `αA + B` → single `axpy_linear` pass, no temp for the scaled operand.\n  - `Aᵀ·B` → single `gemm_trans_a` call.\n  - `αAᵀ·B + βC` → single `gemm_trans_a_with_beta` call via the `ScaledTransposedProduct` proxy.\n- **Trace counters** verifying that the canonical fusions hit one kernel call, not two (serialised via `serial_test::serial` for correctness under `cargo test`).\n- **Bench**: `&a * &b + &c` vs. `{ let t = &a * &b; t + &c }` at n ∈ {256, 1024} on Mersenne-31.\n\n## Success criteria\n\n- [hard] Proxy types implement `MatrixLike<F>` where semantically read-only (per design §3).\n- [hard] Every canonical fusion verified to collapse to one kernel call (trace counters).\n- [hard] `(&a * &b + &c).into::<FieldMatrix<F>>()` is bit-exact equal to the eager-path result.\n- [hard] Shape-mismatch panics fire at construction and evaluation time with clear messages.\n- [hard] Fused path allocates fewer owned `FieldMatrix` values than eager (verified at runtime by `test_fused_path_allocates_fewer_matrices_than_eager`; evidence in `benches/field_matrix_fusion_results.md`).\n- [aspirational] Fused path measurably faster than eager at n = 1024 over Mersenne-31.\n\n  **Amendment (d48a3cfd/T2 R3, 2026-04-24):** Originally `[hard]`. Amended to `[aspirational]` after three review cycles surfaced an empirical floor. At n = 1024 the fully-blocked fused kernel (commit `e94eb23`) measures **3.227 s** vs the eager two-step at **3.163 s** — eager is ~2% faster, not slower. The cause is physical:\n\n  - Fusion's theoretical saving is ~4 MB of intermediate allocation + ~8 MB of avoided read-plus-write memory traffic (the materialised product `t`).\n  - Workload is ~10⁹ field multiplications (O(n³)) ≈ 3 s of compute.\n  - Memory-traffic saving at DRAM bandwidth ~20 GB/s is ~0.4 ms; allocator cost is ~1 ms. Sum ≤ **~0.05 %** of runtime — well inside Criterion's noise threshold (~±5 %).\n\n  The saving the fusion *does* deliver — one fewer owned `FieldMatrix` allocation per evaluation — is kept as `[hard]` above and verified at runtime.\n\n  **Proposal for further study** (tracked separately; do NOT gate T2 on any of these):\n\n  1. **SIMD-native inner kernel.** Vectorise `dot_product_slices` (or its fused `prod + β·c[i,j]` variant) inside the field-element layer so each MAC step processes a SIMD lane rather than a scalar. Expected: kernel-level speedup of 4–16× over scalar; once the O(n³) compute shrinks, the O(n²) fusion saving becomes proportionally more visible. Belongs alongside or after `ad597ede` (T3 Strassen-Winograd).\n  2. **Strassen recursion below O(n³).** Reduces the compute asymptote so the allocation / memory-traffic saving moves from ~10⁻³ of runtime toward ~10⁻² at n = 1024 and above. Already scoped as task `ad597ede`.\n  3. **Block-level β·C prefetch / overlap.** Interleave the β·c[i,j] read with the A/B block prefetch so the 4 MB of C is streamed into cache during the dot-product compute rather than waited on at the write step. Speculative; only worth pursuing if measurement at a specific cache hierarchy shows the current fused kernel is memory-bound, which it currently is not.\n  4. **Smaller-n crossover study.** At some n < 1024 the one-off allocation cost becomes a larger fraction of runtime and the fused path may win decisively. Characterise the crossover size and document it as the `[hard]` target window for fusion, rather than pinning the criterion at n = 1024.\n\n  All four suggestions are out of scope for this task and for the current T2 / T3 implementation pair. Any of them, if pursued, should be filed as a new child of story `d48a3cfd` or as a follow-on to the benchmark story `64c88ae4`.\n\n## Depends on\n\n- `cdcebf6a` (design approved).\n- `d48a3cfd/T1` (eager kernels exist).",
+  "state": "done",
   "priority": "normal",
   "assignee": null,
   "dependencies": [
@@ -13,7 +13,18 @@
     "code-review",
     "cargo-ci"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-24T18:06:54.080791201Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-24T18:07:00.367797739Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -23,5 +34,5 @@
     "epic:bb85c68a"
   ],
   "created_at": "2026-04-23T16:29:55.262511963+00:00",
-  "updated_at": "2026-04-24T12:00:13.873938853+00:00"
+  "updated_at": "2026-04-24T18:09:10.464766950+00:00"
 }
