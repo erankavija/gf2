@@ -4,13 +4,16 @@
   "title": "Implement generic finite field linear algebra (FieldMatrix)",
   "claimed_by": "agent:project-lead",
   "started_at": "2026-04-23T16:00:00+00:00",
-  "last_updated": "2026-04-24T12:05:00+00:00",
+  "last_updated": "2026-04-24T15:55:00+00:00",
   "current_wave": 2,
-  "phase": "wave_2_partially_complete; T2 stashed mid-implementation",
+  "phase": "wave_2_partially_complete; T2 stuck on [hard] runtime-speedup criterion at n=1024; awaiting user scope decision",
   "notes": [
-    "Session 3 (this session) completed d48a3cfd/T1 (91c06222) and 8a90882e. Started d48a3cfd/T2 (7e6183bb) but worker hit model rate limit mid-implementation. Stashed partial work at stash@{0}.",
+    "Session 4 (this session) dispatched T2 resume from stash → R1 rework (αAᵀ·B+βC fusion + serial test isolation) → R2 doc polish (lead-only commit c267f25) → R3 hit a hard-criterion miss (fused ~6.6% SLOWER than eager at n=1024). User chose 'rewrite the kernel in T2 scope'. Worker completed blocked rewrite of all three fused kernels (commit e94eb23). Bench improved fused 3.375s → 3.227s but eager is still 3.163s — ~2% gap remains.",
+    "Empirical finding from session 4: the [hard] 'fused must be measurably faster at n=1024' criterion may be physically unreachable for Mersenne-31 without SIMD / Strassen. At n=1024 the fusion saves ~4MB allocation + O(n²) memory traffic, dwarfed by O(n³) ≈ 10⁹ field-mul compute (ratio ~10⁻³).",
+    "Re-escalation pending: user previously rejected [aspirational] amendment; session-4 data may change that decision. See handoff-4 for the three options.",
+    "Session 3 completed d48a3cfd/T1 (91c06222) and 8a90882e.",
     "Session 2 completed Wave 1 (ab791e27, cdcebf6a).",
-    "Worker rework pattern: both 91c06222 and 8a90882e needed exactly 1 rework round. Reviewer is catching doc-contract violations (missing # Arguments/# Examples/# Complexity) reliably; serving as a safety net for worker drift.",
+    "Worker rework pattern: 91c06222 and 8a90882e needed exactly 1 rework round each; 7e6183bb needed 3.",
     "Added explicit dep edge c3f8c1cb → 83b1ad8b (PLE uses trsm per description's hard success criterion; edge was missing from the DAG). jit validate --fix cleaned up 3 transitive redundancies post-add."
   ],
   "waves": [
@@ -53,11 +56,12 @@
               "short_id": "7e6183bb",
               "title": "T2: Expression-template proxy types + canonical fusions",
               "depends_on_task_short_ids": ["91c06222"],
-              "status": "stashed",
-              "state": "ready",
-              "rework_cycles": 0,
-              "wip_stash": "stash@{0}",
-              "note": "Session 3 dispatched a worker; worker wrote 1934 lines of expr.rs + ~180 lines matrix.rs refactor + 32 lines matrix_like.rs extension before hitting rate limit. CODE DOES NOT COMPILE at stash: blanket 'impl<F, E> From<E> for FieldMatrix<F> where E: Evaluate<F>' in expr.rs:1469 conflicts with core's blanket 'impl<T> From<T> for T'. Next session: git stash apply stash@{0}, fix the From/Into approach (use per-proxy From impls OR an inherent FieldMatrix::eval method per design §5), then complete + test + bench."
+              "status": "in_review_blocked_on_scope_decision",
+              "state": "in_progress",
+              "rework_cycles": 3,
+              "commits": ["bf78239", "a2c5cbb", "c267f25", "e94eb23"],
+              "gates_status": {"cargo-ci": "passed", "code-review": "failed_R3"},
+              "note": "Session 4 drove 3 review cycles to close all except the [hard] 'fused must be measurably faster at n=1024' criterion. Worker rewrote all three fused kernels with T1's blocked structure (commit e94eb23) but fused is still ~2% slower than eager (3.227s vs 3.163s). Physical finding: fusion's saving is ~10⁻³ of runtime at this scale. Next session must re-escalate scope decision; see handoff-4 §3 for the three options."
             },
             {
               "id": "ad597ede-5edf-4f79-a185-56d5ee16917a",
@@ -164,7 +168,7 @@
   "rework_counts": {
     "91c06222": 1,
     "8a90882e": 1,
-    "7e6183bb": 0
+    "7e6183bb": 3
   },
   "gates_attached": {
     "story_standard_set": ["code-review", "cargo-ci", "doc-review"],
@@ -184,7 +188,7 @@
     {"id": "16283d6f-99f2-42e9-8254-4e0604aadc43", "short_id": "16283d6f", "title": "GPU-accelerated FieldMatrix (HIP, dense matmul + SpMV)", "status": "backlog", "note": "Not in scope for this epic."}
   ],
   "open_prereqs_for_resume": [
-    "Next action: resume T2 from stash@{0}. Read dev/plans/expression_templates_design.md §5 (From/Into bridge) carefully — the blanket From<E> for FieldMatrix approach the worker tried does not work; the design doc should specify the alternative."
+    "Next action (blocks T2 close): re-escalate the T2 runtime-speedup criterion to the user with session-4 empirical evidence. See handoff-4 §3 for the three pre-formulated options (aspirational / amend to 'measurably smaller allocation' only / defer win to T3 Strassen or a new kernel story). User previously chose 'rewrite kernel'; the rewrite landed at commit e94eb23 and improved fused by 4.4% but did not close the 2% gap with eager. Physics of O(n³) compute vs O(n²) memory-traffic savings explain why further blocking cannot close the gap at n=1024."
   ],
   "traps": [
     "From §1 traps (carried): PLE-first over LU; no BitMatrix unification; dispatch tasks not stories for d48a3cfd/64c88ae4/e47231cd; 64c88ae4 in pinned container only; per-story benches are [hard]; don't re-add epic→{8a90882e, ae1d1e88} direct edges; SIMD foundation complete (no new SIMD in matrix layer); GPU epic 16283d6f not in scope.",
@@ -193,6 +197,10 @@
     "Session 3 new: T2's worker also left UNUSED imports in matrix.rs (Add, Mul, Neg, Sub) because it refactored the operator overloads into expr.rs but didn't clean up the old imports. That's part of the stash — clean up after resuming.",
     "Session 3 new: Serialized wave-2 dispatches even when files were disjoint (e.g., 91c06222 touches matrix.rs and 8a90882e touches sparse_matrix.rs — they could theoretically run in parallel). Chose serialize because CLAUDE.md forbids parallel cargo commands (shared target/ cache) and the feedback_parallel_agent_isolation memory warns against same-repo parallel agents reverting each other's WIP. For future waves, serialize by default unless worktree isolation is set up.",
     "Session 3 new: Rework round success rate is 100% so far (1 round per issue for both 91c06222 and 8a90882e). The code-review gate's AI reviewer is reliably catching doc-contract violations (# Arguments/# Examples/# Complexity). Use this as the rework budget baseline: plan for 1 rework round per dispatched issue, not 0.",
-    "Session 3 new: jit_gate_pass on auto gates returns 'Passed' even when the underlying run fails — always inspect jit gate check-all after jit_gate_pass to see the real outcome. Example: I called jit_gate_pass code-review on 91c06222 commit 17b6fa4 and got 'Passed gate code-review' back, but jit_gate_check-all showed the gate actually FAILED with the docs finding. The tool return is misleading; the gate-runs are the ground truth."
+    "Session 3 new: jit_gate_pass on auto gates returns 'Passed' even when the underlying run fails — always inspect jit gate check-all after jit_gate_pass to see the real outcome. Example: I called jit_gate_pass code-review on 91c06222 commit 17b6fa4 and got 'Passed gate code-review' back, but jit_gate_check-all showed the gate actually FAILED with the docs finding. The tool return is misleading; the gate-runs are the ground truth.",
+    "Session 4 new: jit_gate_pass MCP call has a 10-minute tool-level timeout; ai-review.sh for a 2260-line module takes 7-10+ min and may exceed it. The MCP timeout kills the subprocess AND records no gate run (no result.json folder). Workaround: invoke `jit gate pass <issue> code-review` via Bash with `run_in_background=true` and a 15-minute timeout, then poll `.jit/gate-runs/` directory listings for the new run folder. Never assume MCP success === gate run completed.",
+    "Session 4 new: For expression-template / delayed-reduction fused-vs-eager performance, the speedup ceiling at n=1024 over Mersenne-31 is extremely thin. Allocation cost is amortised over 3 seconds of compute (ratio ~10⁻³). A 'measurably faster at n=1024' criterion cannot be met by blocking alone; it requires either SIMD vectorisation inside the inner loop, Strassen recursion, or a structurally different memory layout. Lesson for future criterion-writing: if the criterion is about runtime wins at a specific size, require an order-of-magnitude justification before signing it [hard].",
+    "Session 4 new: When prescribing a rework, do NOT offer 'either write a proper blocked kernel OR amend the criterion' as worker-visible options. That leaks the scope decision to the worker, who will sometimes pick the cheapest option (amend the doc). Keep worker prompts strictly about code changes; keep scope decisions in lead ↔ user escalation. Session 4 ultimately did this correctly by using AskUserQuestion before dispatching R3 rework, but the R2 prompt's option-list style (per Fix A's 'either A/B/C') is a footgun for future rounds.",
+    "Session 4 new: Commit `e94eb23` preserves the blocked kernel rewrite even though the gate isn't closed. This is intentional: the rewrite is a strict performance improvement (4.4% faster fused path) that should NOT be reverted when the user finalises the scope decision. If the user picks 'aspirational', commit e94eb23 stays and the bench md gets updated with honest numbers. If the user picks 'kernel-rewrite again', we already have T1's blocking exhausted — the next lever is SIMD or a different approach, neither of which fits T2's scope."
   ]
 }
