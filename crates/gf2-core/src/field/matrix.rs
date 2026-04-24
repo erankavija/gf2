@@ -2086,6 +2086,16 @@ const GEMM_COL_TILE: usize = 64;
 /// it delegates. Strassen–Winograd recursion is explicitly out of scope
 /// (that is issue `ad597ede`).
 ///
+/// # Arguments
+///
+/// * `a` - Left operand of shape `m × k`. Its column count must equal
+///   `b.rows`.
+/// * `b` - Right operand of shape `k × n`. Its row count must equal
+///   `a.cols`.
+///
+/// The result has shape `m × n` with entry `(i, j) = ∑_{t=0}^{k-1}
+/// a[i, t] · b[t, j]`.
+///
 /// # Panics
 ///
 /// Panics if `a.cols != b.rows`. Also panics if `a.rows > 0 && b.cols > 0 &&
@@ -2095,6 +2105,45 @@ const GEMM_COL_TILE: usize = 64;
 /// a runtime-context field. Use `F: ConstField` or ensure at least one
 /// factor is non-empty to avoid this panic — this matches the contract
 /// locked by `ab791e27`.
+///
+/// # Complexity
+///
+/// The classical triple-loop cost is `O(m · k · n)` field multiplications
+/// plus the same count of field additions, amortised against a single
+/// transpose of `B` costing `O(k · n)` clones for cache locality. The
+/// slice-level dot-product kernel accumulates in the field's `Wide` type
+/// and folds back to canonical form at most once per `kmax` additions,
+/// where `kmax = F::max_unreduced_additions()`. The per-MAC reduction
+/// count is therefore reduced by a factor of `kmax` relative to an
+/// eager-reduction inner loop — for Mersenne-31 that is a ~2³¹ headroom,
+/// and for the small `Gf2m` fields it coincides with unbounded
+/// accumulation (`kmax == usize::MAX`).
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::field::matrix::{gemm, FieldMatrix};
+/// use gf2_core::gfp::Fp;
+///
+/// // A = [[1, 2], [3, 4]] over GF(7)
+/// let a = FieldMatrix::<Fp<7>>::from_rows(vec![
+///     vec![Fp::<7>::new(1), Fp::<7>::new(2)].into_iter().collect(),
+///     vec![Fp::<7>::new(3), Fp::<7>::new(4)].into_iter().collect(),
+/// ]);
+/// // B = [[5, 6], [7, 8]] over GF(7)
+/// let b = FieldMatrix::<Fp<7>>::from_rows(vec![
+///     vec![Fp::<7>::new(5), Fp::<7>::new(6)].into_iter().collect(),
+///     vec![Fp::<7>::new(7), Fp::<7>::new(8)].into_iter().collect(),
+/// ]);
+///
+/// // A·B = [[19, 22], [43, 50]]  →  mod 7  →  [[5, 1], [1, 1]]
+/// let c = gemm(&a, &b);
+/// assert_eq!(c.shape(), (2, 2));
+/// assert_eq!(c.get(0, 0), Fp::<7>::new(5));
+/// assert_eq!(c.get(0, 1), Fp::<7>::new(1));
+/// assert_eq!(c.get(1, 0), Fp::<7>::new(1));
+/// assert_eq!(c.get(1, 1), Fp::<7>::new(1));
+/// ```
 pub fn gemm<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldMatrix<F>) -> FieldMatrix<F> {
     assert_eq!(
         a.cols, b.rows,
