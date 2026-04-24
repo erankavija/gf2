@@ -5,6 +5,16 @@
 //! `n ∈ {256, 1024, 4096}` on a 32-bit Mersenne prime (`Fp<2^31-1>`) and a
 //! binary field (`Gf2mWide<1, AES-GF(2^8)>`).
 //!
+//! ## Allocation contract
+//!
+//! `SparseFieldMatrix::matvec` inlines the delayed-reduction dot product
+//! directly over its CSR slices, so the SpMV hot path is **allocation-free**
+//! per row — the only heap allocation is the output [`FieldVec`]. The numbers
+//! these benches produce therefore reflect field-arithmetic cost, not
+//! per-row `Vec<F>` gather overhead (the pre-rework implementation allocated
+//! a scratch `Vec<F>` per non-empty row, which dominated Mersenne-31 at the
+//! 4096×5% size).
+//!
 //! ## Usage
 //!
 //! ```bash
