@@ -202,13 +202,6 @@ impl<F: FiniteField> FieldMatrix<F> {
         self.data.as_slice()
     }
 
-    /// Crate-private constructor shim exposing [`from_raw_parts`] to the
-    /// expression-template module. Identical contract.
-    #[doc(hidden)]
-    pub(crate) fn from_raw_parts_expr(rows: usize, cols: usize, data: FieldVec<F>) -> Self {
-        Self::from_raw_parts(rows, cols, data)
-    }
-
     /// Constructs a matrix from a `Vec` of row vectors, one [`FieldVec<F>`] per row.
     ///
     /// # Arguments

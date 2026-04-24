@@ -565,10 +565,33 @@ pub fn gemm_trans_a<F: FiniteField, LA, LB>(
 ```
 
 **Compositional extension.** `(α · a.t() · b + β · c).into()` routes
-through `FusedProductPlusScaled<TransposedProduct<A, B>, Scale<F, C>>`.
+through `FusedProductPlusScaled<ScaledTransposedProduct<F, A, B>, Scale<F, C>>`.
 The evaluator for that combination (§5.2's impl, plus a
 `gemm_trans_a_with_beta` kernel) is listed in §11 as a required kernel
 for `d48a3cfd`.
+
+> **Amendment (`d48a3cfd/T2`, R1 rework).** The concrete proxy shape chosen
+> for this fusion is
+> `FusedProductPlusScaled<ScaledTransposedProduct<F, A, B>, Scale<F, C>>`,
+> where `ScaledTransposedProduct<F, A, B>` is a new proxy type carrying
+> `(α, A, B)` for the `α · Aᵀ · B` subexpression. The kernel
+> `gemm_trans_a_with_beta_concrete` takes both `alpha` and `beta` as
+> explicit parameters. The operator chain that produces this shape is:
+>
+> 1. `F * Transposed<&M> → Scale<F, Transposed<&M>>` (stamped per
+>    `ConstField` by `impl_left_scalar_mul_proxy!`).
+> 2. `Scale<F, Transposed<&M>> * &M → ScaledTransposedProduct<F, &M, &M>`.
+> 3. `ScaledTransposedProduct<F, A, B> + Scale<F, &M>` (or commuted)
+>    → `FusedProductPlusScaled<ScaledTransposedProduct<F, A, B>, Scale<F, &M>>`.
+>
+> An earlier attempt to reuse `Scale<F, TransposedProduct<A, B>>` as the
+> LHS shape did not compile: Rust's orphan/coherence rules force the
+> compiler to assume a downstream crate could add
+> `impl<F> MatrixLike<F> for TransposedProduct<_, _>`, which would then
+> make the `A: MatrixLike<F>` bound on the generic
+> `Scale<F, A> + Scale<F, B> → FusedLinear` add impl apply and cause
+> `E0119` conflicts. Introducing a distinct proxy type carves the αAᵀ·B
+> path out of that conflict cleanly.
 
 ### 5.5 Summary of kernels expected from `d48a3cfd`
 

@@ -10,7 +10,8 @@
 //! ```
 //!
 //! Success criterion (issue 7e6183bb §5): the fused path must be
-//! **measurably** faster at n ∈ {256, 1024} for Mersenne-31 (`Fp<2^31-1>`).
+//! **measurably** faster and allocate less at n ∈ {256, 1024} for
+//! Mersenne-31 (`Fp<2^31-1>`).
 //!
 //! ## Usage
 //!
@@ -19,6 +20,15 @@
 //! # Smoke-only.
 //! cargo bench -p gf2-core --bench field_matrix_fusion -- --test
 //! ```
+//!
+//! ## Results and allocation evidence
+//!
+//! See `benches/field_matrix_fusion_results.md` (checked into the repo)
+//! for timing tables and the allocation-count breakdown. The companion
+//! in-crate unit test `test_fused_path_allocates_fewer_matrices_than_eager`
+//! (`crates/gf2-core/src/field/expr.rs`) asserts the allocation claim
+//! directly via the `KernelCounts` trace counters without needing a
+//! global allocator wrapper.
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use gf2_core::field::matrix::FieldMatrix;
