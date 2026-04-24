@@ -675,6 +675,22 @@ API shape here — see §11, "ConstField-vs-runtime seam" and §12 item A.**
 
 ### 6.5 Self-evaluate: `FieldMatrix::from(&a)` and `FieldMatrix::from(a)`
 
+> **Amendment (d48a3cfd/T2):** The original design below proposes that bare
+> `FieldMatrix<F>` and `&FieldMatrix<F>` implement `Evaluate<F>`. In
+> implementation this overlapped `core`'s reflexive `impl<T> From<T> for T`
+> because §6.4's `impl<F, E> From<E> for FieldMatrix<F> where E: Evaluate<F>`
+> blanket would then fire for `E = FieldMatrix<F>` (Rust rejects with E0119
+> "conflicting implementations of trait"). The implemented resolution is to
+> **keep the §6.4 `From<E>` blanket** (needed for the `.into()` fusion idiom)
+> and **drop the `Evaluate<F>` impls on bare matrices**. Proxies whose
+> operand is `&FieldMatrix<F>` (e.g. `Transposed<&FieldMatrix<F>>`,
+> `Scale<F, &FieldMatrix<F>>`, `NegProxy<&FieldMatrix<F>>`) invoke kernels
+> directly, matching §6.3. User-facing impact: `FieldMatrix::from(&a)` no
+> longer bridges through `Evaluate<F>`; use `a.clone()` for an owned copy,
+> or `(F::one() * &a).into()` for the lazy route. See the `expr.rs`
+> module-level doc "Why `FieldMatrix<F>` does not implement `Evaluate<F>`"
+> for the canonical statement.
+
 Bare matrices implement `Evaluate<F>`:
 
 ```rust

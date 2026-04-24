@@ -72,7 +72,7 @@ fn bench_gemm_fp_mersenne31(c: &mut Criterion) {
         let b = random_fp_matrix::<MERSENNE_31>(n, n, 0xBB ^ n as u64);
         group.bench_with_input(BenchmarkId::from_parameter(n), &n, |bench, _| {
             bench.iter(|| {
-                let out = black_box(&a) * black_box(&b);
+                let out: FieldMatrix<_> = (black_box(&a) * black_box(&b)).into();
                 black_box(out);
             });
         });
@@ -88,7 +88,7 @@ fn bench_gemm_gf2m8(c: &mut Criterion) {
         let b = random_gf2m8_matrix(n, n, 0xDD ^ n as u64);
         group.bench_with_input(BenchmarkId::from_parameter(n), &n, |bench, _| {
             bench.iter(|| {
-                let out = black_box(&a) * black_box(&b);
+                let out: FieldMatrix<_> = (black_box(&a) * black_box(&b)).into();
                 black_box(out);
             });
         });

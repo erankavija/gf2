@@ -136,3 +136,35 @@ pub trait MatrixLikeMut<Elem>: MatrixLike<Elem> {
     /// Panics if either index is out of range.
     fn swap_rows(&mut self, r1: usize, r2: usize);
 }
+
+// Reference-forwarding impl — lets proxy algebra compose over `&FieldMatrix<F>`
+// as a `MatrixLike<Elem>` operand. Without this, `Product<&FieldMatrix<F>,
+// &FieldMatrix<F>>` cannot satisfy its `A: MatrixLike<F>` bound because the
+// concrete `MatrixLike<F>` impl lives on `FieldMatrix<F>`, not `&FieldMatrix<F>`.
+//
+// The blanket delegates every method to the borrowed operand; `Owned` matches
+// the underlying matrix's `Owned` so `(&m).transpose()` still returns an
+// owned result of the natural kind.
+impl<Elem, T: MatrixLike<Elem> + ?Sized> MatrixLike<Elem> for &T {
+    type Owned = T::Owned;
+
+    #[inline]
+    fn rows(&self) -> usize {
+        (**self).rows()
+    }
+
+    #[inline]
+    fn cols(&self) -> usize {
+        (**self).cols()
+    }
+
+    #[inline]
+    fn get(&self, row: usize, col: usize) -> Elem {
+        (**self).get(row, col)
+    }
+
+    #[inline]
+    fn transpose(&self) -> Self::Owned {
+        (**self).transpose()
+    }
+}
