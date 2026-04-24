@@ -94,7 +94,7 @@
 use std::ops::{Add, Mul, Neg, Sub};
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use crate::field::matrix::{FieldMatrix, Transposed};
+use crate::field::matrix::{FieldMatrix, Transposed, GEMM_COL_TILE, GEMM_ROW_TILE};
 use crate::field::vec::dot_product_slices;
 use crate::field::{ConstField, FieldVec, FiniteField};
 use crate::matrix_like::MatrixLike;
@@ -422,9 +422,19 @@ fn gemm_concrete<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldMatrix<F>, out: &m
 
 /// Kernel `out <- A · B + β · C`. Overwrites. See design §5.1 / §5.2.
 ///
-/// The kernel walks the inner dimension once per output cell using the
-/// same `dot_product_slices` chunked delayed-reduction primitive as T1's
-/// blocked gemm; the β·C term is added after the dot-product reduction.
+/// Structurally mirrors T1's [`crate::field::matrix::gemm`]: transposes
+/// `B` once, then walks output tiles of `GEMM_ROW_TILE × GEMM_COL_TILE`.
+/// The inner kernel is a `dot_product_slices` call per cell — the same
+/// delayed-reduction primitive T1 uses — and the `β · C[i, j]` add is
+/// folded into the same inner write, so the whole operation is a single
+/// pass over the output with no intermediate allocation.
+///
+/// # Complexity
+///
+/// O(m · k · n) field multiplies. The `Wide` accumulator inherits the
+/// `max_unreduced_additions` chunking from `dot_product_slices`; the
+/// β·C fold is an additional O(m · n) multiplies + adds, dominated by
+/// the dot product for any non-degenerate inner dim.
 fn gemm_with_beta_concrete<F: FiniteField, LC: MatrixLike<F>>(
     a: &FieldMatrix<F>,
     b: &FieldMatrix<F>,
@@ -475,18 +485,37 @@ fn gemm_with_beta_concrete<F: FiniteField, LC: MatrixLike<F>>(
     // Source a zero witness from whichever factor has storage. Neither is
     // empty here (m, k, n > 0).
     let zero: F = <FieldMatrix<F> as MatrixLike<F>>::get(a, 0, 0).zero_like();
-    let b_t = <FieldMatrix<F> as MatrixLike<F>>::transpose(b);
-    for i in 0..m {
-        let a_row = &a.as_data_slice()[i * k..(i + 1) * k];
-        for j in 0..n {
-            let b_col = &b_t.as_data_slice()[j * k..(j + 1) * k];
-            let prod = dot_product_slices(a_row, b_col, &zero);
-            out.set(i, j, prod + beta.clone() * c.get(i, j));
+    let b_t = b.transpose();
+    let out_cols = n;
+    // Blocked traversal over output tiles — mirrors T1's `gemm`. The
+    // inner write folds β · c[i, j] so the eager two-step (gemm + axpy)
+    // is collapsed into one pass. `c.get(i, j)` is one extra clone per
+    // cell, amortised over the k field multiplies in the dot product.
+    for i_blk in (0..m).step_by(GEMM_ROW_TILE) {
+        let i_end = (i_blk + GEMM_ROW_TILE).min(m);
+        for j_blk in (0..n).step_by(GEMM_COL_TILE) {
+            let j_end = (j_blk + GEMM_COL_TILE).min(n);
+            for i in i_blk..i_end {
+                let a_row = &a.as_data_slice()[i * k..(i + 1) * k];
+                let out_row = &mut out.as_data_mut_slice()[i * out_cols..(i + 1) * out_cols];
+                for (j, out_cell) in out_row.iter_mut().enumerate().take(j_end).skip(j_blk) {
+                    let b_col = &b_t.as_data_slice()[j * k..(j + 1) * k];
+                    debug_assert_eq!(a_row.len(), b_col.len());
+                    let prod = dot_product_slices(a_row, b_col, &zero);
+                    *out_cell = prod + beta.clone() * c.get(i, j);
+                }
+            }
         }
     }
 }
 
 /// Kernel `out <- Aᵀ · B`. Overwrites. See design §5.4.
+///
+/// Transposes both `A` (k×m → m×k) and `B` (k×n → n×k) once, then
+/// dispatches the same blocked inner kernel as T1's `gemm`: the output
+/// traversal steps by `GEMM_ROW_TILE` × `GEMM_COL_TILE` tiles and each
+/// cell is a single `dot_product_slices` call over contiguous rows of
+/// `A_t` and `B_t`.
 fn gemm_trans_a_concrete<F: FiniteField>(
     a: &FieldMatrix<F>,
     b: &FieldMatrix<F>,
@@ -514,17 +543,26 @@ fn gemm_trans_a_concrete<F: FiniteField>(
     if m == 0 || n == 0 || k1 == 0 {
         return;
     }
-    // Transpose A once (k×m → m×k) then the inner loop is a row·row dot
-    // product — the same shape as the plain gemm kernel, reusing the same
-    // delayed-reduction primitive.
+    // Transpose A once (k×m → m×k) and B once (k×n → n×k). The inner
+    // loop is then a row·row dot product shaped identically to T1's
+    // `gemm`, reusing the same delayed-reduction primitive.
     let zero: F = <FieldMatrix<F> as MatrixLike<F>>::get(a, 0, 0).zero_like();
-    let a_t = <FieldMatrix<F> as MatrixLike<F>>::transpose(a);
-    let b_t = <FieldMatrix<F> as MatrixLike<F>>::transpose(b);
-    for i in 0..m {
-        let a_row = &a_t.as_data_slice()[i * k1..(i + 1) * k1];
-        for j in 0..n {
-            let b_col = &b_t.as_data_slice()[j * k1..(j + 1) * k1];
-            out.set(i, j, dot_product_slices(a_row, b_col, &zero));
+    let a_t = a.transpose();
+    let b_t = b.transpose();
+    let out_cols = n;
+    for i_blk in (0..m).step_by(GEMM_ROW_TILE) {
+        let i_end = (i_blk + GEMM_ROW_TILE).min(m);
+        for j_blk in (0..n).step_by(GEMM_COL_TILE) {
+            let j_end = (j_blk + GEMM_COL_TILE).min(n);
+            for i in i_blk..i_end {
+                let a_row = &a_t.as_data_slice()[i * k1..(i + 1) * k1];
+                let out_row = &mut out.as_data_mut_slice()[i * out_cols..(i + 1) * out_cols];
+                for (j, out_cell) in out_row.iter_mut().enumerate().take(j_end).skip(j_blk) {
+                    let b_col = &b_t.as_data_slice()[j * k1..(j + 1) * k1];
+                    debug_assert_eq!(a_row.len(), b_col.len());
+                    *out_cell = dot_product_slices(a_row, b_col, &zero);
+                }
+            }
         }
     }
 }
@@ -578,15 +616,28 @@ fn gemm_trans_a_with_beta_concrete<F: FiniteField, LC: MatrixLike<F>>(
         }
         return;
     }
+    // Transpose A and B once (see `gemm_trans_a_concrete` for shapes),
+    // then use T1's blocked inner structure. The α and β scalars are
+    // folded into the same inner write so the whole operation is a
+    // single pass over the output.
     let zero: F = <FieldMatrix<F> as MatrixLike<F>>::get(a, 0, 0).zero_like();
-    let a_t = <FieldMatrix<F> as MatrixLike<F>>::transpose(a);
-    let b_t = <FieldMatrix<F> as MatrixLike<F>>::transpose(b);
-    for i in 0..m {
-        let a_row = &a_t.as_data_slice()[i * k1..(i + 1) * k1];
-        for j in 0..n {
-            let b_col = &b_t.as_data_slice()[j * k1..(j + 1) * k1];
-            let prod = dot_product_slices(a_row, b_col, &zero);
-            out.set(i, j, alpha.clone() * prod + beta.clone() * c.get(i, j));
+    let a_t = a.transpose();
+    let b_t = b.transpose();
+    let out_cols = n;
+    for i_blk in (0..m).step_by(GEMM_ROW_TILE) {
+        let i_end = (i_blk + GEMM_ROW_TILE).min(m);
+        for j_blk in (0..n).step_by(GEMM_COL_TILE) {
+            let j_end = (j_blk + GEMM_COL_TILE).min(n);
+            for i in i_blk..i_end {
+                let a_row = &a_t.as_data_slice()[i * k1..(i + 1) * k1];
+                let out_row = &mut out.as_data_mut_slice()[i * out_cols..(i + 1) * out_cols];
+                for (j, out_cell) in out_row.iter_mut().enumerate().take(j_end).skip(j_blk) {
+                    let b_col = &b_t.as_data_slice()[j * k1..(j + 1) * k1];
+                    debug_assert_eq!(a_row.len(), b_col.len());
+                    let prod = dot_product_slices(a_row, b_col, &zero);
+                    *out_cell = alpha.clone() * prod + beta.clone() * c.get(i, j);
+                }
+            }
         }
     }
 }
