@@ -285,6 +285,53 @@ pub trait FiniteField:
     /// ```
     fn max_unreduced_additions() -> usize;
 
+    /// Per-cell operand magnitude bound used by the Strassen–Winograd
+    /// theorem-4 recursion gate in [`crate::field::winograd`].
+    ///
+    /// Returns the maximum absolute integer value a canonical field
+    /// element can take when viewed as an element of `Self::Wide`. For
+    /// prime fields this is `p - 1`; for binary extension fields where
+    /// `Wide = Self` and addition is XOR the theorem is vacuous, and the
+    /// sentinel `u128::MAX` signals to callers that the bound check can
+    /// be skipped entirely (matching the behaviour of
+    /// `max_unreduced_additions() == usize::MAX`).
+    ///
+    /// Used by `gemm_winograd_inner` to decide whether the theorem-4
+    /// cell-magnitude bound at the next recursion depth would exceed the
+    /// field's delayed-reduction headroom:
+    ///
+    /// ```text
+    /// theorem_4_bound(level + 1, k, theorem_4_operand_bound())
+    ///     > max_unreduced_additions() * theorem_4_operand_bound()²
+    /// ```
+    ///
+    /// When true, the recursion falls back to the classical gemm at the
+    /// current level.
+    ///
+    /// # Overrides
+    ///
+    /// **Every prime-field implementation MUST override this** to return
+    /// `(P - 1) as u128` (or the moral equivalent for the specific
+    /// field) — the default value is calibrated for binary fields, where
+    /// the theorem is vacuous, and is too loose for prime fields.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::FiniteField;
+    /// use gf2_core::gfp::Fp;
+    /// use gf2_core::gf2m::Gf2mElement;
+    ///
+    /// assert_eq!(<Fp<7> as FiniteField>::theorem_4_operand_bound(), 6);
+    /// assert_eq!(
+    ///     <Gf2mElement as FiniteField>::theorem_4_operand_bound(),
+    ///     u128::MAX,
+    /// );
+    /// ```
+    fn theorem_4_operand_bound() -> u128 {
+        u128::MAX
+    }
+
     /// Square-matrix size at or below which Strassen–Winograd recursion
     /// falls back to the classical blocked `gemm`. Empirically tuned per
     /// field: the default `128` is calibrated against Mersenne-31 and

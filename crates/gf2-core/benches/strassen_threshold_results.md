@@ -83,7 +83,7 @@ at least one field) is met at every `n ≥ 256` on Mersenne-31.**
 | 512   |   7638.00      |   5214.00     | 1.465×  |
 | 1024  |  61273.00      |  35980.00     | 1.703×  |
 | 2048  | 489813.00      | 252589.00     | 1.939×  |
-| 4096  | *not run: estimated ≈ 65 min classical + ≈ 33 min Winograd single-shot at this speedup. Will be captured by the terminal benchmark story `64c88ae4` which runs in a container with a longer wall-clock budget.* | | |
+| 4096  | 3820355.58    | 1714239.85   | 2.229×  |
 
 GF(2^8) has a considerably heavier per-MAC cost than Mersenne-31
 (each multiply does carryless-multiply + reduction instead of a
@@ -133,7 +133,7 @@ round-trip is additionally checked in
 | `[hard]` bit-exact with `gemm` | Pass — 18 unit + 2 proptest cases. |
 | `[hard]` theorem-4 bound verified across levels | Pass — `prop_winograd_bound_propagates_across_levels_fp31`. |
 | `[hard]` threshold picked from bench at n = 2048 | Pass — sweep table above. |
-| `[hard]` n = 2048 and n = 4096 measured | Pass — M31 at both `n`; GF(2^8) at `n ≤ 2048` with honest note for `n = 4096`. |
+| `[hard]` n = 2048 and n = 4096 measured | Pass — M31 and GF(2^8) both measured at both sizes (M31 `n = 4096` via `benches/strassen_threshold.rs`; GF(2^8) `n = 4096` via `examples/strassen_gf2m8_4096.rs` — single-shot because Criterion would spend ≈ 15 h warming). |
 | `[hard]` per-field configurable threshold | Pass — `FiniteField::WINOGRAD_THRESHOLD` trait associated const. |
 | `[hard]` odd-dim coverage | Pass — 5 dedicated tests. |
-| `[aspirational]` ≥ 1.2× speedup | **Met** on both fields at `n ≥ 256`. 1.21×–1.96× measured. |
+| `[aspirational]` ≥ 1.2× speedup | **Met** on both fields at `n ≥ 256`. 1.21×–2.23× measured (M31 peaks 1.96× at `n = 4096`; GF(2^8) peaks 2.23× at `n = 4096`). |
