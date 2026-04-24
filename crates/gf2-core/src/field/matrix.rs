@@ -2151,12 +2151,23 @@ impl<F: FiniteField> Mul for &FieldMatrix<F> {
     }
 }
 
-// Scalar multiplication. Restricted to `ConstField` to keep the right-hand
-// `&M * F` overload syntactically tractable without a blanket clash.
-impl<F: ConstField> Mul<F> for &FieldMatrix<F> {
+// Right-scalar multiplication `&M * F` / `M * F` is generic across every
+// `FiniteField`, including runtime-context types such as `Gf2mElement` which
+// cannot be `ConstField` because they carry an `Arc`-shared polynomial
+// context. This direction does not need a static zero witness: each element
+// is cloned and multiplied by `rhs`, and the result shape matches `self`.
+// Left-scalar `F * &M` / `F * M` has to stay per-`ConstField` family because
+// the orphan rule forbids a single blanket `impl<F: FiniteField> Mul<&M> for
+// F` for arbitrary external `F`; see `impl_left_scalar_mul!` below.
+impl<F: FiniteField> Mul<F> for &FieldMatrix<F> {
     type Output = FieldMatrix<F>;
     fn mul(self, rhs: F) -> Self::Output {
-        let data: FieldVec<F> = self.data.as_slice().iter().map(|e| (*e) * rhs).collect();
+        let data: FieldVec<F> = self
+            .data
+            .as_slice()
+            .iter()
+            .map(|e| e.clone() * rhs.clone())
+            .collect();
         FieldMatrix {
             rows: self.rows,
             cols: self.cols,
@@ -2165,7 +2176,7 @@ impl<F: ConstField> Mul<F> for &FieldMatrix<F> {
     }
 }
 
-impl<F: ConstField> Mul<F> for FieldMatrix<F> {
+impl<F: FiniteField> Mul<F> for FieldMatrix<F> {
     type Output = FieldMatrix<F>;
     fn mul(self, rhs: F) -> Self::Output {
         &self * rhs
@@ -2595,6 +2606,43 @@ mod tests {
         let left_owned = k * a.clone();
         assert_eq!(right_owned, left_owned);
         assert_eq!(right_owned, right_ref);
+    }
+
+    // Right-scalar multiplication must stay generic for runtime-context
+    // fields that are deliberately **not** `ConstField`, such as
+    // `Gf2mElement`. The design note (§8 of `dev/active/ab791e27-design.md`)
+    // promises both `&M * F` and `M * F` for any `FiniteField`; left-scalar
+    // `F * M` is not required here because `Gf2mElement` is not a
+    // `ConstField` and the orphan rule blocks a single generic impl.
+    #[test]
+    fn test_right_scalar_mul_gf2m_element_generic() {
+        let field = gf16();
+        // 3×3 non-trivial matrix over GF(2^4) so the element-wise check
+        // exercises every row/column at least once.
+        let values: &[&[u64]] = &[&[1, 2, 3], &[4, 5, 6], &[7, 8, 9]];
+        let m = gf16_mat(&field, values);
+        let k = field.element(11); // arbitrary non-zero scalar
+
+        // `&M * F` (ref form) and `M * F` (owned form) must agree — no
+        // separate arithmetic path.
+        let right_ref = &m * k.clone();
+        let right_owned = m.clone() * k.clone();
+        assert_eq!(right_ref, right_owned);
+
+        // Element-wise cross-check: each entry equals `k * m[r][c]`.
+        // `Gf2mElement` multiplication is commutative (GF(2^m) is a
+        // commutative field), so `k * m[r][c] == m[r][c] * k`.
+        for (r, row) in values.iter().enumerate() {
+            for (c, v) in row.iter().enumerate() {
+                let expected = field.element(*v) * k.clone();
+                assert_eq!(right_ref.get(r, c), expected);
+                assert_eq!(right_owned.get(r, c), expected);
+            }
+        }
+
+        // Shape is preserved.
+        assert_eq!(right_ref.shape(), (3, 3));
+        assert_eq!(right_owned.shape(), (3, 3));
     }
 
     #[test]
