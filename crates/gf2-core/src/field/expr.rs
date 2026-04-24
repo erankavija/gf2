@@ -19,16 +19,18 @@
 //!
 //! # Proxy taxonomy (design §3)
 //!
-//! | Proxy                            | Represents                     |
-//! |----------------------------------|--------------------------------|
-//! | [`Product<A, B>`]                | `A · B`                        |
-//! | [`Sum<A, B>`]                    | `A + B`                        |
-//! | [`Scale<F, M>`]                  | `α · M`                        |
-//! | [`NegProxy<M>`]                  | `-M`                           |
-//! | [`TransposedProduct<A, B>`]      | `Aᵀ · B` — fused               |
-//! | [`FusedProductPlus<P, C>`]       | `A·B + C` (β = 1)              |
-//! | [`FusedProductPlusScaled<P, S>`] | `A·B + β·C`                    |
-//! | [`FusedLinear<A, B>`]            | `α·A + β·B`                    |
+//! | Proxy                                                                  | Represents                     |
+//! |------------------------------------------------------------------------|--------------------------------|
+//! | [`Product<A, B>`]                                                      | `A · B`                        |
+//! | [`Sum<A, B>`]                                                          | `A + B`                        |
+//! | [`Scale<F, M>`]                                                        | `α · M`                        |
+//! | [`NegProxy<M>`]                                                        | `-M`                           |
+//! | [`TransposedProduct<A, B>`]                                            | `Aᵀ · B` — fused               |
+//! | [`ScaledTransposedProduct<F, A, B>`]                                   | `α · Aᵀ · B` — fused           |
+//! | [`FusedProductPlus<P, C>`]                                             | `A·B + C` (β = 1)              |
+//! | [`FusedProductPlusScaled<P, S>`]                                       | `A·B + β·C`                    |
+//! | [`FusedProductPlusScaled<ScaledTransposedProduct<F, A, B>, Scale<F, C>>`] | `α·Aᵀ·B + β·C` — fused       |
+//! | [`FusedLinear<A, B>`]                                                  | `α·A + β·B`                    |
 //!
 //! The already-in-tree [`Transposed<M>`](crate::field::matrix::Transposed)
 //! proxy is extended here with `MatrixLike<F>` + `Evaluate<F>` impls.
@@ -214,11 +216,19 @@ pub fn reset_kernel_counts() {
 
 /// Consumer side of the expression-template algebra.
 ///
-/// Every proxy type in this module — plus bare `&FieldMatrix<F>` and owned
-/// `FieldMatrix<F>` — implements `Evaluate<F>`. The `From<E> for
-/// FieldMatrix<F>` blanket at the bottom of this module allocates a fresh
-/// output of the correct shape and calls
-/// [`evaluate_into`](Evaluate::evaluate_into) into it.
+/// Every lazy proxy in this module — [`Product`], [`Sum`], [`Scale`],
+/// [`NegProxy`], [`Transposed<&FieldMatrix<F>>`](crate::field::matrix::Transposed),
+/// [`FusedProductPlus`], [`FusedProductPlusScaled`], [`FusedLinear`],
+/// [`TransposedProduct`] — implements `Evaluate<F>`. Bare
+/// `&FieldMatrix<F>` and owned `FieldMatrix<F>` **do not**; see the
+/// module-header rationale "Why `FieldMatrix<F>` does not implement
+/// `Evaluate<F>`" for the Rust E0119 reason. Users get an owned matrix
+/// from a bare input via `a.clone()` or `(F::one() * &a).into()`.
+///
+/// The [`From<E> for FieldMatrix<F>`](FieldMatrix) blanket (sealed via
+/// `sealed::ProxyExpr` to avoid E0119 against a hypothetical downstream
+/// `Evaluate<F>` impl on `FieldMatrix<F>`) allocates a fresh output of
+/// the correct shape and calls [`evaluate_into`](Self::evaluate_into).
 ///
 /// # Overwrite semantics
 ///
@@ -515,8 +525,13 @@ fn gemm_trans_a_concrete<F: FiniteField>(
 }
 
 /// Kernel `out <- α · Aᵀ · B + β · C`. Overwrites. Used by the §5.4
-/// compositional extension and for `a.t() * &b + &c` patterns.
+/// compositional extension and for `(α · a.t()) · &b + β · &c` patterns.
+///
+/// Both `alpha` and `beta` are explicit runtime scalars; callers that need
+/// the β = 1 case pass a one-witness via `F::one_like()` / the usual
+/// `get(0, 0).one_like()` pattern.
 fn gemm_trans_a_with_beta_concrete<F: FiniteField, LC: MatrixLike<F>>(
+    alpha: F,
     a: &FieldMatrix<F>,
     b: &FieldMatrix<F>,
     beta: F,
@@ -566,7 +581,7 @@ fn gemm_trans_a_with_beta_concrete<F: FiniteField, LC: MatrixLike<F>>(
         for j in 0..n {
             let b_col = &b_t.as_data_slice()[j * k1..(j + 1) * k1];
             let prod = dot_product_slices(a_row, b_col, &zero);
-            out.set(i, j, prod + beta.clone() * c.get(i, j));
+            out.set(i, j, alpha.clone() * prod + beta.clone() * c.get(i, j));
         }
     }
 }
@@ -841,6 +856,40 @@ pub struct FusedLinear<A, B>(pub A, pub B);
 #[must_use = "TransposedProduct is a lazy expression; call `.into()` to materialise"]
 #[derive(Debug, Clone, Copy)]
 pub struct TransposedProduct<A, B>(pub A, pub B);
+
+/// Canonical fusion: `α · Aᵀ · B`. See design §5.4 (compositional).
+///
+/// Built by `alpha * a.t() * &b` or `(alpha * a.t()) * &b`. Exists as a
+/// distinct proxy (rather than `Scale<F, TransposedProduct<A, B>>`) so the
+/// `Scale<F, X> + Scale<F, Y> → FusedLinear` add impl does not spuriously
+/// match here — `FusedLinear` requires both sides to be `MatrixLike`, and
+/// we deliberately contract `Aᵀ·B` only at `evaluate_into` time.
+///
+/// # Arguments
+///
+/// * `0` - The scalar `α`.
+/// * `1` - The un-transposed left operand.
+/// * `2` - The right operand.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::field::matrix::FieldMatrix;
+/// use gf2_core::gfp::Fp;
+///
+/// let a = FieldMatrix::<Fp<7>>::identity(3);
+/// let b = FieldMatrix::<Fp<7>>::identity(3);
+/// let alpha = Fp::<7>::new(2);
+/// let r: FieldMatrix<Fp<7>> = ((alpha * a.t()) * &b).into();
+/// assert_eq!(r.get(0, 0), Fp::<7>::new(2));
+/// ```
+///
+/// # Complexity
+///
+/// Construction is O(1). Evaluation is O(m·k·n).
+#[must_use = "ScaledTransposedProduct is a lazy expression; call `.into()` to materialise"]
+#[derive(Debug, Clone, Copy)]
+pub struct ScaledTransposedProduct<F: FiniteField, A, B>(pub F, pub A, pub B);
 
 // ─── Proxy constructors (design §7.1 — shape checks) ───────────────────────
 
@@ -1118,12 +1167,13 @@ where
             Some(z) => z,
             None => {
                 // Runtime-context field with empty shape: construct via
-                // `from_raw_parts` with an empty FieldVec. This is identical
-                // to what T1's `gemm` returns for m×0 · 0×n pairs.
-                return FieldMatrix::from_raw_parts_expr(rows, cols, FieldVec::<F>::new());
+                // `FieldMatrix::from_raw_parts` with an empty FieldVec. This
+                // is identical to what T1's `gemm` returns for m×0 · 0×n
+                // pairs.
+                return FieldMatrix::from_raw_parts(rows, cols, FieldVec::<F>::new());
             }
         };
-        return FieldMatrix::from_raw_parts_expr(rows, cols, FieldVec::zeros_from(0, &zero));
+        return FieldMatrix::from_raw_parts(rows, cols, FieldVec::zeros_from(0, &zero));
     }
     // Source a zero witness from the proxy itself.
     let zero = expr.get(0, 0).zero_like();
@@ -1134,7 +1184,7 @@ where
         }
     }
     let _ = zero; // `data` carries its own element witnesses; zero was for allocation branching only.
-    FieldMatrix::from_raw_parts_expr(rows, cols, data)
+    FieldMatrix::from_raw_parts(rows, cols, data)
 }
 
 // ─── Evaluate<F> impls (design §5, §6) ──────────────────────────────────────
@@ -1472,7 +1522,9 @@ where
         };
         let TransposedProduct(a, b) = self.0;
         match (A::as_concrete(&a), B::as_concrete(&b)) {
-            (Some(ar), Some(br)) => gemm_trans_a_with_beta_concrete(ar, br, one, &self.1, out),
+            (Some(ar), Some(br)) => {
+                gemm_trans_a_with_beta_concrete(one.clone(), ar, br, one, &self.1, out)
+            }
             _ => {
                 bump(&KC_GEMM_TA_BETA);
                 let k = a.rows();
@@ -1492,6 +1544,145 @@ where
     }
     fn shape(&self) -> (usize, usize) {
         (self.0 .0.cols(), self.0 .1.cols())
+    }
+}
+
+// Evaluator for the dedicated `α·Aᵀ·B` proxy (§5.4 compositional). Falls
+// back to `TransposedProduct`'s scalar-less gemm_trans_a + post-scale when
+// no addend is present; the full αAᵀ·B + βC fusion lives on the
+// `FusedProductPlusScaled<ScaledTransposedProduct, Scale<F, C>>` impl below.
+impl<F, A, B> Evaluate<F> for ScaledTransposedProduct<F, A, B>
+where
+    F: FiniteField,
+    A: MatrixLike<F> + ConcreteRef<F>,
+    B: MatrixLike<F> + ConcreteRef<F>,
+{
+    fn evaluate_into(self, out: &mut FieldMatrix<F>) {
+        let ScaledTransposedProduct(alpha, a, b) = self;
+        let (m, n) = (a.cols(), b.cols());
+        assert_eq!(
+            <FieldMatrix<F> as MatrixLike<F>>::shape(out),
+            (m, n),
+            "ScaledTransposedProduct::evaluate_into: output shape mismatch"
+        );
+        if m == 0 || n == 0 {
+            return;
+        }
+        let k = a.rows();
+        let zero = if k > 0 {
+            a.get(0, 0).zero_like()
+        } else {
+            // m > 0 and n > 0 but k = 0 — output is α · 0 = 0. We need a
+            // zero witness; borrow from b (which shares an element type).
+            if b.rows() > 0 && b.cols() > 0 {
+                b.get(0, 0).zero_like()
+            } else {
+                // All operands empty along k — nothing to write.
+                return;
+            }
+        };
+        // Reuse the alpha-parametric concrete kernel with a zero-shaped C
+        // so we pay exactly one kernel call. We synthesize that C as an
+        // on-stack adapter that always returns the zero element and
+        // reports the (m, n) shape the kernel expects.
+        struct ZeroC<'a, F: FiniteField> {
+            m: usize,
+            n: usize,
+            zero: &'a F,
+        }
+        impl<'a, F: FiniteField> MatrixLike<F> for ZeroC<'a, F> {
+            type Owned = FieldMatrix<F>;
+            fn rows(&self) -> usize {
+                self.m
+            }
+            fn cols(&self) -> usize {
+                self.n
+            }
+            fn get(&self, _r: usize, _c: usize) -> F {
+                self.zero.clone()
+            }
+            fn transpose(&self) -> FieldMatrix<F> {
+                unimplemented!("ZeroC is a kernel-internal witness adapter")
+            }
+        }
+        let c_witness = ZeroC { m, n, zero: &zero };
+        match (A::as_concrete(&a), B::as_concrete(&b)) {
+            (Some(ar), Some(br)) => {
+                gemm_trans_a_with_beta_concrete(alpha, ar, br, zero.clone(), &c_witness, out)
+            }
+            _ => {
+                bump(&KC_GEMM_TA_BETA);
+                for i in 0..m {
+                    for j in 0..n {
+                        let mut acc = zero.zero_like();
+                        for t in 0..k {
+                            acc += a.get(t, i) * b.get(t, j);
+                        }
+                        out.set(i, j, alpha.clone() * acc);
+                    }
+                }
+            }
+        }
+    }
+    fn shape(&self) -> (usize, usize) {
+        (self.1.cols(), self.2.cols())
+    }
+}
+
+// Compositional fusion: `α·Aᵀ·B + β·C` collapses to `gemm_trans_a_with_beta`.
+//
+// Built by `(alpha * a.t()) * &b + beta * &c`. The operator chain produces
+// `FusedProductPlusScaled<ScaledTransposedProduct<F, A, B>, Scale<F, C>>`
+// via the Add overload on scaled transposed-product + scaled addend below.
+impl<F, A, B, C> Evaluate<F>
+    for FusedProductPlusScaled<ScaledTransposedProduct<F, A, B>, Scale<F, C>>
+where
+    F: FiniteField,
+    A: MatrixLike<F> + ConcreteRef<F>,
+    B: MatrixLike<F> + ConcreteRef<F>,
+    C: MatrixLike<F>,
+{
+    fn evaluate_into(self, out: &mut FieldMatrix<F>) {
+        let ScaledTransposedProduct(alpha, a, b) = self.0;
+        let Scale(beta, c) = self.1;
+        let (m, n) = (a.cols(), b.cols());
+        assert_eq!(
+            <FieldMatrix<F> as MatrixLike<F>>::shape(out),
+            (m, n),
+            "FusedProductPlusScaled<ScaledTransposedProduct, Scale<C>>: output shape mismatch"
+        );
+        match (A::as_concrete(&a), B::as_concrete(&b)) {
+            (Some(ar), Some(br)) => gemm_trans_a_with_beta_concrete(alpha, ar, br, beta, &c, out),
+            _ => {
+                bump(&KC_GEMM_TA_BETA);
+                if m == 0 || n == 0 {
+                    return;
+                }
+                let k = a.rows();
+                if k == 0 {
+                    for i in 0..m {
+                        for j in 0..n {
+                            out.set(i, j, beta.clone() * c.get(i, j));
+                        }
+                    }
+                    return;
+                }
+                let zero = a.get(0, 0).zero_like();
+                for i in 0..m {
+                    for j in 0..n {
+                        let mut acc = zero.zero_like();
+                        for t in 0..k {
+                            acc += a.get(t, i) * b.get(t, j);
+                        }
+                        acc = alpha.clone() * acc + beta.clone() * c.get(i, j);
+                        out.set(i, j, acc);
+                    }
+                }
+            }
+        }
+    }
+    fn shape(&self) -> (usize, usize) {
+        (self.0 .1.cols(), self.0 .2.cols())
     }
 }
 
@@ -1521,6 +1712,7 @@ impl<P, C> sealed::ProxyExpr for FusedProductPlus<P, C> {}
 impl<P, SS> sealed::ProxyExpr for FusedProductPlusScaled<P, SS> {}
 impl<A, B> sealed::ProxyExpr for FusedLinear<A, B> {}
 impl<A, B> sealed::ProxyExpr for TransposedProduct<A, B> {}
+impl<F: FiniteField, A, B> sealed::ProxyExpr for ScaledTransposedProduct<F, A, B> {}
 
 impl<F, E> From<E> for FieldMatrix<F>
 where
@@ -1626,6 +1818,26 @@ impl<'a, 'b, F: FiniteField> Mul<&'b FieldMatrix<F>> for Transposed<&'a FieldMat
     }
 }
 
+// Scale<F, Transposed<&M>> × &M → ScaledTransposedProduct<F, &M, &M>
+// (§5.4 compositional: lets `(alpha * a.t()) * &b + beta * &c` produce the
+// αAᵀ·B + βC fusion without overlapping the generic
+// `Scale<F, A> + Scale<F, B> → FusedLinear` add impl.)
+impl<'a, 'b, F: FiniteField> Mul<&'b FieldMatrix<F>> for Scale<F, Transposed<&'a FieldMatrix<F>>> {
+    type Output = ScaledTransposedProduct<F, &'a FieldMatrix<F>, &'b FieldMatrix<F>>;
+    fn mul(self, rhs: &'b FieldMatrix<F>) -> Self::Output {
+        // Inner-dimension check mirroring TransposedProduct::new: Aᵀ·B
+        // requires a.rows() == b.rows().
+        assert_eq!(
+            <FieldMatrix<F> as MatrixLike<F>>::rows(self.1 .0),
+            <FieldMatrix<F> as MatrixLike<F>>::rows(rhs),
+            "FieldMatrix::mul: inner dimensions must match ({} vs {})",
+            <FieldMatrix<F> as MatrixLike<F>>::rows(self.1 .0),
+            <FieldMatrix<F> as MatrixLike<F>>::rows(rhs)
+        );
+        ScaledTransposedProduct(self.0, self.1 .0, rhs)
+    }
+}
+
 // Scale<F, &M> × &M → Scale<F, Product<&M, &M>> (design §4.1)
 impl<'a, 'b, F: FiniteField> Mul<&'b FieldMatrix<F>> for Scale<F, &'a FieldMatrix<F>> {
     type Output = Scale<F, Product<&'a FieldMatrix<F>, &'b FieldMatrix<F>>>;
@@ -1700,6 +1912,17 @@ macro_rules! impl_left_scalar_mul_proxy {
                 Scale(self, rhs)
             }
         }
+
+        // Left-scalar `F * Transposed<&M>` → `Scale<F, Transposed<&M>>`.
+        // Needed so `alpha * a.t()` is a proxy that can participate in the
+        // `αAᵀ·B + βC` fusion (§5.4 compositional).
+        impl<'a $(, $($generics)+)?> Mul<Transposed<&'a FieldMatrix<$field_ty>>> for $field_ty {
+            type Output = Scale<$field_ty, Transposed<&'a FieldMatrix<$field_ty>>>;
+            #[inline]
+            fn mul(self, rhs: Transposed<&'a FieldMatrix<$field_ty>>) -> Self::Output {
+                Scale(self, rhs)
+            }
+        }
     };
 }
 
@@ -1770,7 +1993,7 @@ fn elementwise_add_owned<F: FiniteField>(a: FieldMatrix<F>, b: FieldMatrix<F>) -
             );
         }
     }
-    FieldMatrix::from_raw_parts_expr(rows, cols, data)
+    FieldMatrix::from_raw_parts(rows, cols, data)
 }
 
 // Product + &M → FusedProductPlus
@@ -1891,6 +2114,55 @@ where
     }
 }
 
+// ScaledTransposedProduct<F, A, B> + Scale<F, &M>
+//   → FusedProductPlusScaled<ScaledTransposedProduct<F, A, B>, Scale<F, &M>>
+//
+// §5.4 compositional fusion for `αAᵀ·B + βC`. Uses a dedicated proxy type
+// (`ScaledTransposedProduct`) rather than `Scale<F, TransposedProduct<...>>`
+// so the generic `Scale<F, A> + Scale<F, B> → FusedLinear` impl does not
+// overlap (Rust conservatively assumes downstream crates may add a
+// `MatrixLike<F>` impl for `TransposedProduct<A, B>`).
+impl<'c, F, A, B> Add<Scale<F, &'c FieldMatrix<F>>> for ScaledTransposedProduct<F, A, B>
+where
+    F: FiniteField,
+    A: MatrixLike<F>,
+    B: MatrixLike<F>,
+{
+    type Output =
+        FusedProductPlusScaled<ScaledTransposedProduct<F, A, B>, Scale<F, &'c FieldMatrix<F>>>;
+    fn add(self, rhs: Scale<F, &'c FieldMatrix<F>>) -> Self::Output {
+        let m = self.1.cols();
+        let n = self.2.cols();
+        assert_eq!(
+            <FieldMatrix<F> as MatrixLike<F>>::shape(rhs.1),
+            (m, n),
+            "FieldMatrix::add: scaled-Aᵀ·B · scaled-addend shape mismatch"
+        );
+        FusedProductPlusScaled(self, rhs)
+    }
+}
+
+// Scale<F, &M> + ScaledTransposedProduct<F, A, B> (commuted, design §4.2)
+impl<'a, F, A, B> Add<ScaledTransposedProduct<F, A, B>> for Scale<F, &'a FieldMatrix<F>>
+where
+    F: FiniteField,
+    A: MatrixLike<F>,
+    B: MatrixLike<F>,
+{
+    type Output =
+        FusedProductPlusScaled<ScaledTransposedProduct<F, A, B>, Scale<F, &'a FieldMatrix<F>>>;
+    fn add(self, rhs: ScaledTransposedProduct<F, A, B>) -> Self::Output {
+        let m = rhs.1.cols();
+        let n = rhs.2.cols();
+        assert_eq!(
+            <FieldMatrix<F> as MatrixLike<F>>::shape(self.1),
+            (m, n),
+            "FieldMatrix::add: scaled-addend · scaled-Aᵀ·B shape mismatch"
+        );
+        FusedProductPlusScaled(rhs, self)
+    }
+}
+
 // ---- Sub: rewrite A - B as A + (-B) via NegProxy ----
 
 impl<F: FiniteField> Sub<&FieldMatrix<F>> for &FieldMatrix<F> {
@@ -1945,7 +2217,7 @@ fn elementwise_sub<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldMatrix<F>) -> Fi
             );
         }
     }
-    FieldMatrix::from_raw_parts_expr(ar, ac, data)
+    FieldMatrix::from_raw_parts(ar, ac, data)
 }
 
 // Product - &M → FusedProductPlus<Product, NegProxy<&M>>
@@ -2001,6 +2273,12 @@ mod tests {
     use crate::gfp::Fp;
     use rand::rngs::StdRng;
     use rand::{Rng, SeedableRng};
+    // `#[serial]` keeps global KernelCounts deltas correct when `cargo test`
+    // (in-process parallel runner) is used instead of `cargo nextest` (per
+    // R1 finding F1). `cargo nextest` already isolates tests in subprocesses,
+    // so the annotation is defensive — the goal is correctness under every
+    // runner Cargo ships with.
+    use serial_test::serial;
 
     const MERSENNE_31: u64 = 2_147_483_647;
     type M31 = Fp<MERSENNE_31>;
@@ -2037,14 +2315,22 @@ mod tests {
     }
 
     // ─── Fusion trace-counter assertions (success criterion 2) ─────────
+    //
+    // Every test in this cluster reads process-wide `KernelCounts` atomics.
+    // `#[serial]` serialises the cluster against itself so before/after
+    // deltas are stable under `cargo test` (in-process parallel runner).
+    // `cargo nextest` runs each test in a fresh subprocess and does not
+    // strictly need this; the annotation is defensive (per R1 finding F1).
 
     #[test]
+    #[serial]
     fn test_fusion_product_plus_one_gemm_with_beta_call() {
         // (&a * &b + &c).into() must dispatch exactly one `gemm_with_beta`
         // call and zero plain `gemm` / `axpy_linear` calls.
         let a = rand_m31(8, 6, 0x101);
         let b = rand_m31(6, 7, 0x102);
         let c = rand_m31(8, 7, 0x103);
+        reset_kernel_counts();
         let before = kernel_counts();
         let _r: FieldMatrix<M31> = (&a * &b + &c).into();
         let after = kernel_counts();
@@ -2054,6 +2340,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_fusion_product_plus_scaled_one_gemm_with_beta_call() {
         // (&a * &b + beta * &c).into() must dispatch one `gemm_with_beta`
         // (general β).
@@ -2061,6 +2348,7 @@ mod tests {
         let b = rand_m31(4, 6, 0x202);
         let c = rand_m31(5, 6, 0x203);
         let beta = M31::new(42);
+        reset_kernel_counts();
         let before = kernel_counts();
         let _r: FieldMatrix<M31> = (&a * &b + beta * &c).into();
         let after = kernel_counts();
@@ -2070,12 +2358,14 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_fusion_product_plus_scaled_right_one_gemm_with_beta_call() {
         // The commuted form `&a * &b + &c * beta` must also fuse.
         let a = rand_m31(5, 4, 0x301);
         let b = rand_m31(4, 6, 0x302);
         let c = rand_m31(5, 6, 0x303);
         let beta = M31::new(17);
+        reset_kernel_counts();
         let before = kernel_counts();
         let _r: FieldMatrix<M31> = (&a * &b + &c * beta).into();
         let after = kernel_counts();
@@ -2084,12 +2374,14 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_fusion_linear_one_axpy_call() {
         // (alpha * &a + beta * &b).into() must dispatch one `axpy_linear`.
         let a = rand_m31(6, 9, 0x401);
         let b = rand_m31(6, 9, 0x402);
         let alpha = M31::new(3);
         let beta = M31::new(5);
+        reset_kernel_counts();
         let before = kernel_counts();
         let _r: FieldMatrix<M31> = (alpha * &a + beta * &b).into();
         let after = kernel_counts();
@@ -2099,15 +2391,82 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_fusion_transposed_product_one_gemm_trans_a_call() {
         // (a.t() * &b).into() must dispatch one `gemm_trans_a`.
         let a = rand_m31(6, 5, 0x501); // k=6, m=5 → Aᵀ is 5×6
         let b = rand_m31(6, 7, 0x502); // Aᵀ·B ⇒ 5×7
+        reset_kernel_counts();
         let before = kernel_counts();
         let _r: FieldMatrix<M31> = (a.t() * &b).into();
         let after = kernel_counts();
         assert_eq!(after.gemm_trans_a - before.gemm_trans_a, 1);
         assert_eq!(after.gemm - before.gemm, 0);
+    }
+
+    #[test]
+    #[serial]
+    fn test_fusion_alpha_transposed_product_plus_beta_c_one_call() {
+        // `(alpha * a.t()) * &b + beta * &c` must dispatch exactly one
+        // `gemm_trans_a_with_beta` call and zero other kernels. This is the
+        // full `αAᵀ·B + βC` canonical fusion (issue §5.4 compositional,
+        // R1 finding F2).
+        let a = rand_m31(6, 5, 0x601); // a is 6×5 → a.t() is 5×6
+        let b = rand_m31(6, 7, 0x602); // Aᵀ·B is 5×7
+        let c = rand_m31(5, 7, 0x603);
+        let alpha = M31::new(3);
+        let beta = M31::new(5);
+        reset_kernel_counts();
+        let _r: FieldMatrix<M31> = ((alpha * a.t()) * &b + beta * &c).into();
+        let kc = kernel_counts();
+        assert_eq!(kc.gemm_trans_a_with_beta, 1);
+        assert_eq!(kc.gemm_trans_a, 0);
+        assert_eq!(kc.gemm_with_beta, 0);
+        assert_eq!(kc.gemm, 0);
+        assert_eq!(kc.axpy_linear, 0);
+        assert_eq!(kc.scale_into, 0);
+    }
+
+    #[test]
+    #[serial]
+    fn test_fusion_alpha_transposed_product_plus_beta_c_commuted_one_call() {
+        // Commuted form `beta * &c + (alpha * a.t()) * &b` must also fuse.
+        let a = rand_m31(6, 5, 0x611);
+        let b = rand_m31(6, 7, 0x612);
+        let c = rand_m31(5, 7, 0x613);
+        let alpha = M31::new(4);
+        let beta = M31::new(9);
+        reset_kernel_counts();
+        let _r: FieldMatrix<M31> = (beta * &c + (alpha * a.t()) * &b).into();
+        let kc = kernel_counts();
+        assert_eq!(kc.gemm_trans_a_with_beta, 1);
+        assert_eq!(kc.gemm_trans_a, 0);
+        assert_eq!(kc.gemm_with_beta, 0);
+        assert_eq!(kc.gemm, 0);
+    }
+
+    #[test]
+    fn test_alpha_transposed_product_plus_beta_c_bit_exact() {
+        // Bit-exact cross-check: the fused `αAᵀ·B + βC` must match a
+        // materialised eager pipeline that computes each subexpression
+        // separately. Counter-independent so no `#[serial]` needed.
+        let a = rand_m31(6, 5, 0x621);
+        let b = rand_m31(6, 7, 0x622);
+        let c = rand_m31(5, 7, 0x623);
+        let alpha = M31::new(3);
+        let beta = M31::new(5);
+
+        let fused: FieldMatrix<M31> = ((alpha * a.t()) * &b + beta * &c).into();
+
+        // Eager expansion: Aᵀ·B → scale by α, C → scale by β, then sum.
+        let at_b: FieldMatrix<M31> = (a.t() * &b).into();
+        let mut expected = FieldMatrix::<M31>::zeros(5, 7);
+        for i in 0..5 {
+            for j in 0..7 {
+                expected.set(i, j, alpha * at_b.get(i, j) + beta * c.get(i, j));
+            }
+        }
+        assert_eq!(fused, expected);
     }
 
     // ─── Bit-exact fused vs eager (success criterion 3) ────────────────
@@ -2203,6 +2562,196 @@ mod tests {
         let b = FieldMatrix::<M31>::zeros(4, 5);
         let c = FieldMatrix::<M31>::zeros(3, 6);
         let _f = &a * &b + &c;
+    }
+
+    // ─── Evaluation-time shape-mismatch panics (success criterion 4 / R1 F4) ──
+    //
+    // Each kernel primitive asserts `out.shape() == self.shape()`. These
+    // tests preallocate a wrong-shape `out` and call `evaluate_into` on a
+    // construction-legal proxy so the panic fires inside the kernel rather
+    // than inside an operator overload.
+
+    #[test]
+    #[should_panic(expected = "copy_into: shape mismatch")]
+    fn test_evaluate_into_copy_panics_on_shape_mismatch() {
+        // Transposed<&M>::evaluate_into routes through `copy_into`.
+        let a = FieldMatrix::<M31>::zeros(3, 4); // transpose shape: 4×3
+        let mut out = FieldMatrix::<M31>::zeros(5, 6);
+        a.t().evaluate_into(&mut out);
+    }
+
+    #[test]
+    #[should_panic(expected = "scale_into: shape mismatch")]
+    fn test_evaluate_into_scale_panics_on_shape_mismatch() {
+        let a = FieldMatrix::<M31>::zeros(3, 4);
+        let mut out = FieldMatrix::<M31>::zeros(5, 6);
+        let s = M31::new(7) * &a;
+        s.evaluate_into(&mut out);
+    }
+
+    #[test]
+    #[should_panic(expected = "neg_into: shape mismatch")]
+    fn test_evaluate_into_neg_panics_on_shape_mismatch() {
+        let a = FieldMatrix::<M31>::zeros(3, 4);
+        let mut out = FieldMatrix::<M31>::zeros(5, 6);
+        let n = -&a;
+        n.evaluate_into(&mut out);
+    }
+
+    #[test]
+    #[should_panic(expected = "axpy_linear: output shape mismatch")]
+    fn test_evaluate_into_axpy_linear_panics_on_shape_mismatch() {
+        // `Sum::evaluate_into` calls `axpy_linear`. Use a construction-legal
+        // Sum (matching operand shapes) but a wrong-shape `out`.
+        let a = FieldMatrix::<M31>::zeros(3, 4);
+        let b = FieldMatrix::<M31>::zeros(3, 4);
+        let mut out = FieldMatrix::<M31>::zeros(5, 6);
+        let s = &a + &b;
+        s.evaluate_into(&mut out);
+    }
+
+    #[test]
+    #[should_panic(expected = "gemm_concrete: output shape mismatch")]
+    fn test_evaluate_into_gemm_panics_on_shape_mismatch() {
+        // Product<&M, &M>::evaluate_into routes through `gemm_concrete` for
+        // concrete operands. Product is 3×5; pass a 4×4 `out`.
+        let a = FieldMatrix::<M31>::zeros(3, 4);
+        let b = FieldMatrix::<M31>::zeros(4, 5);
+        let mut out = FieldMatrix::<M31>::zeros(4, 4);
+        let p = &a * &b;
+        p.evaluate_into(&mut out);
+    }
+
+    #[test]
+    #[should_panic(expected = "FusedProductPlus::evaluate_into: output shape mismatch")]
+    fn test_evaluate_into_gemm_with_beta_panics_on_shape_mismatch() {
+        // FusedProductPlus::evaluate_into performs its own output-shape
+        // assert before calling the concrete kernel.
+        let a = FieldMatrix::<M31>::zeros(3, 4);
+        let b = FieldMatrix::<M31>::zeros(4, 5);
+        let c = FieldMatrix::<M31>::zeros(3, 5);
+        let mut out = FieldMatrix::<M31>::zeros(6, 6);
+        let f = &a * &b + &c;
+        f.evaluate_into(&mut out);
+    }
+
+    #[test]
+    #[should_panic(expected = "TransposedProduct::evaluate_into: output shape mismatch")]
+    fn test_evaluate_into_gemm_trans_a_panics_on_shape_mismatch() {
+        // TransposedProduct<&M, &M>::evaluate_into asserts out shape before
+        // routing to `gemm_trans_a_concrete`.
+        let a = FieldMatrix::<M31>::zeros(6, 5); // a.t() is 5×6
+        let b = FieldMatrix::<M31>::zeros(6, 7); // Aᵀ·B is 5×7
+        let mut out = FieldMatrix::<M31>::zeros(4, 4);
+        let tp = a.t() * &b;
+        tp.evaluate_into(&mut out);
+    }
+
+    #[test]
+    #[should_panic(expected = "FusedProductPlus<TransposedProduct, C>: output shape mismatch")]
+    fn test_evaluate_into_gemm_trans_a_with_beta_panics_on_shape_mismatch() {
+        // FusedProductPlus<TransposedProduct<&M, &M>, &M>::evaluate_into
+        // routes through `gemm_trans_a_with_beta_concrete`.
+        let a = FieldMatrix::<M31>::zeros(6, 5);
+        let b = FieldMatrix::<M31>::zeros(6, 7);
+        let c = FieldMatrix::<M31>::zeros(5, 7);
+        let mut out = FieldMatrix::<M31>::zeros(4, 4);
+        let fused = a.t() * &b + &c;
+        fused.evaluate_into(&mut out);
+    }
+
+    #[test]
+    #[should_panic(
+        expected = "FusedProductPlusScaled<ScaledTransposedProduct, Scale<C>>: output shape mismatch"
+    )]
+    fn test_evaluate_into_alpha_trans_a_with_beta_panics_on_shape_mismatch() {
+        // αAᵀ·B + βC fusion — new in R1 rework.
+        let a = FieldMatrix::<M31>::zeros(6, 5);
+        let b = FieldMatrix::<M31>::zeros(6, 7);
+        let c = FieldMatrix::<M31>::zeros(5, 7);
+        let alpha = M31::new(3);
+        let beta = M31::new(4);
+        let mut out = FieldMatrix::<M31>::zeros(4, 4);
+        let fused = (alpha * a.t()) * &b + beta * &c;
+        fused.evaluate_into(&mut out);
+    }
+
+    #[test]
+    #[should_panic(expected = "FusedProductPlusScaled::evaluate_into: output shape mismatch")]
+    fn test_evaluate_into_product_plus_scaled_panics_on_shape_mismatch() {
+        let a = FieldMatrix::<M31>::zeros(3, 4);
+        let b = FieldMatrix::<M31>::zeros(4, 5);
+        let c = FieldMatrix::<M31>::zeros(3, 5);
+        let beta = M31::new(2);
+        let mut out = FieldMatrix::<M31>::zeros(6, 6);
+        let f = &a * &b + beta * &c;
+        f.evaluate_into(&mut out);
+    }
+
+    // ─── Allocation-count evidence for fused vs eager (R1 F3) ─────────────
+    //
+    // Direct assertion: the fused `(&a * &b + &c).into()` path allocates
+    // exactly one owned `FieldMatrix<F>` (the output), whereas the eager
+    // pipeline allocates two intermediates (`t = &a * &b`, then the
+    // `&t + &c` sum) plus the final result — three matrices. We observe
+    // this by counting `gemm`, `axpy_linear`, and `gemm_with_beta` kernel
+    // calls: each concrete kernel invocation corresponds to exactly one
+    // newly-allocated `FieldMatrix<F>`. See `benches/field_matrix_fusion.rs`
+    // and `benches/field_matrix_fusion_results.md` for the full timing +
+    // allocation characterisation.
+
+    #[test]
+    #[serial]
+    fn test_fused_path_allocates_fewer_matrices_than_eager() {
+        let a = rand_m31(16, 16, 0x1101);
+        let b = rand_m31(16, 16, 0x1102);
+        let c = rand_m31(16, 16, 0x1103);
+
+        // Fused path: exactly one owned matrix via one `gemm_with_beta`.
+        reset_kernel_counts();
+        let _fused: FieldMatrix<M31> = (&a * &b + &c).into();
+        let fused_counts = kernel_counts();
+        let fused_owned_matrices = fused_counts.gemm
+            + fused_counts.gemm_with_beta
+            + fused_counts.gemm_trans_a
+            + fused_counts.gemm_trans_a_with_beta
+            + fused_counts.axpy_linear
+            + fused_counts.scale_into
+            + fused_counts.neg_into
+            + fused_counts.copy_into;
+
+        // Eager path: two owned matrices — one `gemm` for the product, one
+        // `axpy_linear` for the sum (the T1 blocked gemm that backs the
+        // product also allocates a transposed B scratch internally, but
+        // that is not a `FieldMatrix` and is not exposed to callers).
+        reset_kernel_counts();
+        let t: FieldMatrix<M31> = (&a * &b).into();
+        let _eager: FieldMatrix<M31> = (&t + &c).into();
+        let eager_counts = kernel_counts();
+        let eager_owned_matrices = eager_counts.gemm
+            + eager_counts.gemm_with_beta
+            + eager_counts.gemm_trans_a
+            + eager_counts.gemm_trans_a_with_beta
+            + eager_counts.axpy_linear
+            + eager_counts.scale_into
+            + eager_counts.neg_into
+            + eager_counts.copy_into;
+
+        assert_eq!(
+            fused_owned_matrices, 1,
+            "fused path must produce exactly one owned FieldMatrix (one kernel call)"
+        );
+        assert!(
+            eager_owned_matrices >= 2,
+            "eager path must produce at least two owned FieldMatrices; got {}",
+            eager_owned_matrices
+        );
+        assert!(
+            fused_owned_matrices < eager_owned_matrices,
+            "fused ({}) must allocate fewer owned matrices than eager ({})",
+            fused_owned_matrices,
+            eager_owned_matrices
+        );
     }
 
     // ─── Scale + NegProxy ───────────────────────────────────────────────
