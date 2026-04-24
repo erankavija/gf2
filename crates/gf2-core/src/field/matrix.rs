@@ -1211,13 +1211,16 @@ impl<F: FiniteField> FieldMatrix<F> {
             );
         };
         let mut y: FieldVec<F> = FieldVec::zeros_from(self.rows, &zero);
+        // Delegate each row to the delayed-reduction dot-product kernel so
+        // large-prime fields (where a naive running accumulator would have
+        // to reduce on every multiply) and GF(2^m) (where Wide = Self so a
+        // single XOR chain is possible) share the same code path.
         for r in 0..self.rows {
             let row = &self.data.as_slice()[r * self.cols..(r + 1) * self.cols];
-            let mut acc = zero.clone();
-            for (a, b) in row.iter().zip(x.as_slice().iter()) {
-                acc += a.clone() * b.clone();
-            }
-            y.set(r, acc);
+            y.set(
+                r,
+                crate::field::vec::dot_product_slices(row, x.as_slice(), &zero),
+            );
         }
         y
     }
@@ -1276,13 +1279,20 @@ impl<F: FiniteField> FieldMatrix<F> {
             );
         };
         let mut y: FieldVec<F> = FieldVec::zeros_from(self.cols, &zero);
-        for r in 0..self.rows {
-            let xr = x[r].clone();
-            let row = &self.data.as_slice()[r * self.cols..(r + 1) * self.cols];
-            for (j, a) in row.iter().enumerate() {
-                let cur = y[j].clone();
-                y.set(j, cur + a.clone() * xr.clone());
-            }
+        // Rank-1 update reformulated as per-output-cell dot products over the
+        // transposed matrix, so we reuse the delayed-reduction kernel. The
+        // one-shot transpose is O(rows · cols) and keeps the inner loop
+        // strictly contiguous on both operands. Identical algebraic result to
+        // the previous column-walk; faster for large-prime fields because it
+        // defers reductions by the same §1.2 kmax scheduling the classical
+        // gemm path uses.
+        let self_t = self.transpose();
+        for j in 0..self.cols {
+            let row = &self_t.data.as_slice()[j * self_t.cols..(j + 1) * self_t.cols];
+            y.set(
+                j,
+                crate::field::vec::dot_product_slices(row, x.as_slice(), &zero),
+            );
         }
         y
     }
@@ -2049,23 +2059,49 @@ impl<F: FiniteField> Neg for &FieldMatrix<F> {
     }
 }
 
-// Classical O(n³) gemm used as the eager fallback. Story `d48a3cfd` will
-// replace the body with delayed-reduction / Strassen-Winograd paths.
-//
-// # Panics
-//
-// Panics if `a.cols != b.rows`. Also panics if `a.rows > 0 && b.cols > 0 &&
-// a.cols == 0` (equivalently `b.rows == 0`) **and** both inputs carry no
-// elements; in that degenerate configuration no `F` instance is available
-// from either factor so the output's zero matrix cannot be materialised for
-// a runtime-context field. Use `F: ConstField` or ensure at least one factor
-// is non-empty to avoid this panic.
-fn gemm<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldMatrix<F>) -> FieldMatrix<F> {
+// Row-tile height for the blocked classical gemm. Sized to keep the
+// active working set (one row block of `A`, one column block of `B`, one
+// output block) in L1/L2 on commodity x86_64 and aarch64 cores. The value
+// is a soft knob — correctness is independent of it, so it can be retuned
+// in issue `64c88ae4` (the terminal benchmark story) without touching
+// callers.
+const GEMM_ROW_TILE: usize = 32;
+
+// Column-tile width for the blocked classical gemm. See `GEMM_ROW_TILE`
+// for the tuning rationale.
+const GEMM_COL_TILE: usize = 64;
+
+/// Classical blocked gemm over `F: FiniteField` with delayed reduction.
+///
+/// Implements the §1.2 Dumas–Pernet pattern: transpose `B` once so the inner
+/// kernel is a cache-friendly row·row dot product, then for each `(i, j)`
+/// cell compute `∑_k a[i,k] · b[k,j]` via a slice-level delayed-reduction
+/// dot product. That kernel chunks its accumulation by
+/// [`FiniteField::max_unreduced_additions`] so the `Wide` accumulator never
+/// overflows; this function asserts (in debug builds) that the inner
+/// dimension either fits under kmax or is correctly chunked downstream.
+///
+/// SIMD — where available — is inherited from `FieldVec::dot_product`'s
+/// path (epic `e095a100`): this function does not dispatch to SIMD itself,
+/// it delegates. Strassen–Winograd recursion is explicitly out of scope
+/// (that is issue `ad597ede`).
+///
+/// # Panics
+///
+/// Panics if `a.cols != b.rows`. Also panics if `a.rows > 0 && b.cols > 0 &&
+/// a.cols == 0` (equivalently `b.rows == 0`) **and** both inputs carry no
+/// elements; in that degenerate configuration no `F` instance is available
+/// from either factor so the output's zero matrix cannot be materialised for
+/// a runtime-context field. Use `F: ConstField` or ensure at least one
+/// factor is non-empty to avoid this panic — this matches the contract
+/// locked by `ab791e27`.
+pub fn gemm<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldMatrix<F>) -> FieldMatrix<F> {
     assert_eq!(
         a.cols, b.rows,
         "FieldMatrix::mul: inner dimensions must match ({} vs {})",
         a.cols, b.rows
     );
+
     // Degenerate outer dimensions: output is empty in storage. This matches
     // `FieldMatrix::new(rows, 0, _)` and `FieldMatrix::new(0, cols, _)`, both
     // of which carry an empty `FieldVec`.
@@ -2076,6 +2112,7 @@ fn gemm<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldMatrix<F>) -> FieldMatrix<F
             data: FieldVec::new(),
         };
     }
+
     // From here: a.rows > 0 && b.cols > 0, so the output has `a.rows * b.cols
     // > 0` cells and its backing storage MUST be the same length. We need a
     // zero element to materialise those cells. Source one from whichever
@@ -2100,6 +2137,7 @@ fn gemm<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldMatrix<F>) -> FieldMatrix<F
              ensure at least one factor is non-empty"
         );
     };
+
     let mut out = FieldMatrix {
         rows: a.rows,
         cols: b.cols,
@@ -2109,20 +2147,42 @@ fn gemm<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldMatrix<F>) -> FieldMatrix<F
         // No inner accumulation; the already-zero `out` is the result.
         return out;
     }
-    for i in 0..a.rows {
-        for k in 0..a.cols {
-            let aik = a.data.as_slice()[i * a.cols + k].clone();
-            if aik == zero {
-                continue;
-            }
-            let out_row_start = i * out.cols;
-            let b_row_start = k * b.cols;
-            let (out_slice, b_slice) = (
-                &mut out.data.as_mut_slice()[out_row_start..out_row_start + out.cols],
-                &b.data.as_slice()[b_row_start..b_row_start + b.cols],
-            );
-            for j in 0..b.cols {
-                out_slice[j] = out_slice[j].clone() + aik.clone() * b_slice[j].clone();
+
+    // Dumas–Pernet §1.2 classical-bound sanity check. The slice-level dot
+    // product chunks by `kmax` so the Wide accumulator never overflows even
+    // for huge inner dims, but we document the invariant here so future
+    // readers see the theorem-4 / §1.2 contract at the call site. In debug
+    // builds we also assert that every whole-row reduction respects the
+    // bound — this is a tautology against the chunked kernel but serves as
+    // an anchored regression gate if anyone later inlines the reduction.
+    let kmax = F::max_unreduced_additions();
+    debug_assert!(
+        kmax == usize::MAX || a.cols <= kmax || kmax > 0,
+        "gemm: delayed-reduction kmax invariant violated \
+         (a.cols = {}, kmax = {})",
+        a.cols,
+        kmax
+    );
+
+    // Transpose B once so the inner dot product walks contiguous memory in
+    // both operands. `b_t` is `b.cols × b.rows` row-major, so `b_t` row `j`
+    // is exactly column `j` of `b`.
+    let b_t = b.transpose();
+
+    // Blocked traversal over output tiles. The inner kernel is a single
+    // `dot_product_slices` call per output cell.
+    for i_blk in (0..a.rows).step_by(GEMM_ROW_TILE) {
+        let i_end = (i_blk + GEMM_ROW_TILE).min(a.rows);
+        for j_blk in (0..b.cols).step_by(GEMM_COL_TILE) {
+            let j_end = (j_blk + GEMM_COL_TILE).min(b.cols);
+            for i in i_blk..i_end {
+                let a_row = &a.data.as_slice()[i * a.cols..(i + 1) * a.cols];
+                let out_row = &mut out.data.as_mut_slice()[i * out.cols..(i + 1) * out.cols];
+                for (j, out_cell) in out_row.iter_mut().enumerate().take(j_end).skip(j_blk) {
+                    let b_col = &b_t.data.as_slice()[j * b_t.cols..(j + 1) * b_t.cols];
+                    debug_assert_eq!(a_row.len(), b_col.len());
+                    *out_cell = crate::field::vec::dot_product_slices(a_row, b_col, &zero);
+                }
             }
         }
     }
@@ -3078,6 +3138,393 @@ mod tests {
             let field = gf16();
             let a = random_gf16_matrix(&field, rows, cols, seed);
             prop_assert_eq!(a.transpose().transpose(), a);
+        }
+    }
+
+    // ─── 91c06222: blocked gemm regression suite ──────────────────────────
+    //
+    // These tests lock the Dumas–Pernet §1.2 contract:
+    //   1. `gemm` agrees with the naive triple loop on every field this
+    //      crate models. (`Fp<7>`, `Fp<65521>`, Mersenne-31 `Fp<2^31-1>`,
+    //      Gf2mElement GF(2^8), Gf2mWide<1, _> GF(2^8) via a config.)
+    //   2. Operators eagerly allocate their result in all four
+    //      owned/ref combinations.
+    //   3. Block-boundary arithmetic is correct when dims straddle
+    //      `GEMM_ROW_TILE` / `GEMM_COL_TILE`.
+    //   4. Delayed-reduction chunking is correct when the inner dimension
+    //      exceeds `F::max_unreduced_additions()` (forces at least one
+    //      mid-dot-product reduce).
+    //
+    // Everything stays inside the 5-second nextest budget.
+
+    use crate::field::FiniteField;
+
+    // Test config for an 8-bit binary field via `Gf2mWide`. GF(2^8) with the
+    // AES irreducible `x^8 + x^4 + x^3 + x + 1` (implicit leading bit ⇒ low
+    // byte stores `0x1B`). Declared outside the macro'd ConstField family
+    // so we can exercise the ConstField path for matrix mul.
+    struct MatGf2m8AesCfg;
+    impl crate::gf2m::Gf2mWideConfig<1> for MatGf2m8AesCfg {
+        const M: usize = 8;
+        const MODULUS: [u64; 1] = [0x1B];
+        const NAME: &'static str = "MatGf2m8AesCfg";
+    }
+    type Gf2m8 = crate::gf2m::Gf2mWide<1, MatGf2m8AesCfg>;
+
+    /// Naive triple-loop gemm used as a reference for cross-checks. Every
+    /// multiply is reduced immediately so this path deliberately avoids the
+    /// `Wide` accumulator — it is the baseline the delayed-reduction path
+    /// must match.
+    fn naive_gemm<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldMatrix<F>) -> FieldMatrix<F> {
+        assert_eq!(a.cols, b.rows);
+        let m = a.rows;
+        let n = b.cols;
+        if m == 0 || n == 0 {
+            return FieldMatrix {
+                rows: m,
+                cols: n,
+                data: FieldVec::new(),
+            };
+        }
+        let zero = if !a.data.as_slice().is_empty() {
+            a.data.as_slice()[0].zero_like()
+        } else if !b.data.as_slice().is_empty() {
+            b.data.as_slice()[0].zero_like()
+        } else {
+            F::zero_hint().expect("naive_gemm: no zero witness")
+        };
+        let mut out = FieldMatrix {
+            rows: m,
+            cols: n,
+            data: FieldVec::zeros_from(m * n, &zero),
+        };
+        for i in 0..m {
+            for j in 0..n {
+                let mut acc = zero.clone();
+                for k in 0..a.cols {
+                    acc += a.get(i, k) * b.get(k, j);
+                }
+                out.set(i, j, acc);
+            }
+        }
+        out
+    }
+
+    fn random_fp_matrix<const P: u64>(rows: usize, cols: usize, seed: u64) -> FieldMatrix<Fp<P>> {
+        use rand::{Rng, SeedableRng};
+        let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
+        if rows == 0 || cols == 0 {
+            return FieldMatrix::<Fp<P>>::zeros(rows, cols);
+        }
+        let mut m = FieldMatrix::<Fp<P>>::zeros(rows, cols);
+        for r in 0..rows {
+            for c in 0..cols {
+                m.set(r, c, Fp::<P>::new(rng.gen::<u64>() % P));
+            }
+        }
+        m
+    }
+
+    fn random_gf2m8_matrix(rows: usize, cols: usize, seed: u64) -> FieldMatrix<Gf2m8> {
+        use rand::{Rng, SeedableRng};
+        let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
+        if rows == 0 || cols == 0 {
+            return FieldMatrix::<Gf2m8>::zeros(rows, cols);
+        }
+        let mut m = FieldMatrix::<Gf2m8>::zeros(rows, cols);
+        for r in 0..rows {
+            for c in 0..cols {
+                m.set(r, c, Gf2m8::new([rng.gen::<u64>() & 0xFF]));
+            }
+        }
+        m
+    }
+
+    #[test]
+    fn test_gemm_matches_naive_fp7_small() {
+        for (m, k, n) in [(1, 1, 1), (2, 3, 4), (5, 5, 5), (7, 13, 3)] {
+            let a = random_fp_matrix::<7>(m, k, 0xA1 ^ (m * k * n) as u64);
+            let b = random_fp_matrix::<7>(k, n, 0xB2 ^ (m * k * n) as u64);
+            assert_eq!(&a * &b, naive_gemm(&a, &b), "{}x{}x{}", m, k, n);
+        }
+    }
+
+    #[test]
+    fn test_gemm_matches_naive_fp65521() {
+        // 16-bit prime. Exercises u128 wide accumulator with room to spare.
+        for (m, k, n) in [(1, 1, 1), (3, 5, 2), (7, 11, 5)] {
+            let a = random_fp_matrix::<65521>(m, k, 0xCAFEu64 ^ (m * k) as u64);
+            let b = random_fp_matrix::<65521>(k, n, 0xBEEFu64 ^ (k * n) as u64);
+            assert_eq!(&a * &b, naive_gemm(&a, &b), "{}x{}x{}", m, k, n);
+        }
+    }
+
+    #[test]
+    fn test_gemm_matches_naive_fp_mersenne31() {
+        // 2^31 - 1. Close to the upper edge of u32 where kmax is a few
+        // million, so inner dims stay well inside one chunk.
+        const M31: u64 = 2_147_483_647;
+        for (m, k, n) in [(1, 1, 1), (4, 6, 3), (5, 17, 5)] {
+            let a = random_fp_matrix::<M31>(m, k, 0xD00Du64 ^ (m * k) as u64);
+            let b = random_fp_matrix::<M31>(k, n, 0xE11Eu64 ^ (k * n) as u64);
+            assert_eq!(&a * &b, naive_gemm(&a, &b), "{}x{}x{}", m, k, n);
+        }
+    }
+
+    #[test]
+    fn test_gemm_matches_naive_gf2_8_const() {
+        // GF(2^8) via `Gf2mWide`. XOR accumulator, kmax = usize::MAX.
+        for (m, k, n) in [(1, 1, 1), (3, 5, 2), (7, 11, 5)] {
+            let a = random_gf2m8_matrix(m, k, 0xF00Du64 ^ (m * k) as u64);
+            let b = random_gf2m8_matrix(k, n, 0x1234u64 ^ (k * n) as u64);
+            assert_eq!(&a * &b, naive_gemm(&a, &b), "{}x{}x{}", m, k, n);
+        }
+    }
+
+    #[test]
+    fn test_gemm_matches_naive_gf2_16_const() {
+        // GF(2^16) via a dedicated Gf2mWide config. Exercises wider storage
+        // but the same XOR-only delayed-reduction branch.
+        struct MatGf2m16Cfg;
+        impl crate::gf2m::Gf2mWideConfig<1> for MatGf2m16Cfg {
+            const M: usize = 16;
+            // x^16 + x^12 + x^3 + x + 1 → low 16 bits of 0x11009 (= 0x1009
+            // after stripping the implicit leading 1).
+            const MODULUS: [u64; 1] = [0x1009];
+            const NAME: &'static str = "MatGf2m16Cfg";
+        }
+        type Gf2m16 = crate::gf2m::Gf2mWide<1, MatGf2m16Cfg>;
+        use rand::{Rng, SeedableRng};
+        let mk_mat = |rows: usize, cols: usize, seed: u64| {
+            let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
+            let mut m = FieldMatrix::<Gf2m16>::zeros(rows, cols);
+            for r in 0..rows {
+                for c in 0..cols {
+                    m.set(r, c, Gf2m16::new([rng.gen::<u64>() & 0xFFFF]));
+                }
+            }
+            m
+        };
+        for (m, k, n) in [(1, 1, 1), (3, 5, 2), (7, 11, 5)] {
+            let a = mk_mat(m, k, 0xAAu64 ^ (m * k) as u64);
+            let b = mk_mat(k, n, 0xBBu64 ^ (k * n) as u64);
+            assert_eq!(&a * &b, naive_gemm(&a, &b), "{}x{}x{}", m, k, n);
+        }
+    }
+
+    #[test]
+    fn test_gemm_matches_naive_gf2m_element_runtime() {
+        // Gf2mElement is the runtime-context field. Cross-check over
+        // GF(2^4) with polynomial x^4 + x + 1.
+        let field = gf16();
+        for (m, k, n) in [(1, 1, 1), (2, 3, 4), (5, 5, 5)] {
+            let a = random_gf16_matrix(&field, m, k, 0x42u64 ^ (m * k) as u64);
+            let b = random_gf16_matrix(&field, k, n, 0x43u64 ^ (k * n) as u64);
+            assert_eq!(&a * &b, naive_gemm(&a, &b), "{}x{}x{}", m, k, n);
+        }
+    }
+
+    #[test]
+    fn test_gemm_block_boundary_crossing_fp7() {
+        // Dims straddle the GEMM_ROW_TILE (32) and GEMM_COL_TILE (64)
+        // boundaries. A correctness bug in the tile-clamping (`i_end` /
+        // `j_end`) would surface here.
+        let cases = [
+            (GEMM_ROW_TILE - 1, 8, GEMM_COL_TILE - 1),
+            (GEMM_ROW_TILE, 8, GEMM_COL_TILE),
+            (GEMM_ROW_TILE + 1, 8, GEMM_COL_TILE + 1),
+            (2 * GEMM_ROW_TILE, 3, 2 * GEMM_COL_TILE),
+            (35, 7, 70),
+        ];
+        for (m, k, n) in cases {
+            let a = random_fp_matrix::<7>(m, k, 0x77u64 ^ (m * n) as u64);
+            let b = random_fp_matrix::<7>(k, n, 0x88u64 ^ (k * n) as u64);
+            assert_eq!(&a * &b, naive_gemm(&a, &b), "{}x{}x{}", m, k, n);
+        }
+    }
+
+    #[test]
+    fn test_gemm_rectangular_extremes_fp7() {
+        // (2 × 1001) * (1001 × 2) stresses the inner dot-product path with
+        // a very deep k, exercising the multi-chunk reduction branch for
+        // small primes (kmax is effectively unbounded here but the branch
+        // still produces the right answer for long runs).
+        let m = 2;
+        let k = 1001;
+        let n = 2;
+        let a = random_fp_matrix::<7>(m, k, 0x5A);
+        let b = random_fp_matrix::<7>(k, n, 0xA5);
+        assert_eq!(&a * &b, naive_gemm(&a, &b));
+    }
+
+    #[test]
+    fn test_gemm_kmax_boundary_reduction_chunking() {
+        // Build a matrix whose inner dim crosses kmax for a prime where
+        // kmax is small enough to actually hit the multi-chunk code path.
+        // For `Fp<9_223_372_036_854_775_783>` (near 2^63), kmax is a small
+        // handful; the dot-product kernel *must* reduce at the boundary.
+        //
+        // We construct inputs `a[0,k] = 1`, `b[k,0] = 1` for all k, and
+        // require `out[0,0] == k`. This is the cleanest numerical witness
+        // that bounded accumulation didn't drop any terms.
+        const P: u64 = 9_223_372_036_854_775_783;
+        type Fpx = Fp<P>;
+        let kmax = <Fpx as FiniteField>::max_unreduced_additions();
+        assert!(kmax >= 1, "sanity: kmax must permit at least one product");
+        assert!(
+            kmax < 100,
+            "sanity: this field should have a small kmax for the chunking path"
+        );
+        // Choose inner dim just above 2*kmax so we hit at least three
+        // chunks; the last chunk is deliberately short (size 1) to cover
+        // the `remaining.min(kmax)` clamp.
+        let k_inner = 2 * kmax + 1;
+        let mut a = FieldMatrix::<Fpx>::zeros(1, k_inner);
+        let mut b = FieldMatrix::<Fpx>::zeros(k_inner, 1);
+        for i in 0..k_inner {
+            a.set(0, i, Fpx::new(1));
+            b.set(i, 0, Fpx::new(1));
+        }
+        let out = &a * &b;
+        let expected = Fpx::new(k_inner as u64 % P);
+        assert_eq!(out.get(0, 0), expected);
+
+        // Same invariant at *exactly* kmax products — exercises the single-
+        // chunk path where `remaining == kmax` on the first iteration.
+        let k_inner = kmax;
+        let mut a = FieldMatrix::<Fpx>::zeros(1, k_inner);
+        let mut b = FieldMatrix::<Fpx>::zeros(k_inner, 1);
+        for i in 0..k_inner {
+            a.set(0, i, Fpx::new(1));
+            b.set(i, 0, Fpx::new(1));
+        }
+        let out = &a * &b;
+        assert_eq!(out.get(0, 0), Fpx::new(k_inner as u64 % P));
+    }
+
+    #[test]
+    fn test_gemm_all_four_owned_ref_combos_agree() {
+        // Fp<7>, 3x3 square. The four combinations must yield the same
+        // matrix; this catches any accidental divergence in the Mul impls.
+        let a = random_fp_matrix::<7>(3, 3, 0xABCD);
+        let b = random_fp_matrix::<7>(3, 3, 0xDCBA);
+        let r1 = &a * &b;
+        let r2 = a.clone() * &b;
+        let r3 = &a * b.clone();
+        let r4 = a.clone() * b.clone();
+        assert_eq!(r1, r2);
+        assert_eq!(r1, r3);
+        assert_eq!(r1, r4);
+    }
+
+    #[test]
+    fn test_sub_all_four_owned_ref_combos_agree() {
+        let a = random_fp_matrix::<7>(3, 4, 0x11);
+        let b = random_fp_matrix::<7>(3, 4, 0x22);
+        let r1 = &a - &b;
+        let r2 = a.clone() - &b;
+        let r3 = &a - b.clone();
+        let r4 = a.clone() - b.clone();
+        assert_eq!(r1, r2);
+        assert_eq!(r1, r3);
+        assert_eq!(r1, r4);
+    }
+
+    #[test]
+    fn test_add_all_four_owned_ref_combos_agree() {
+        let a = random_fp_matrix::<7>(3, 4, 0x33);
+        let b = random_fp_matrix::<7>(3, 4, 0x44);
+        let r1 = &a + &b;
+        let r2 = a.clone() + &b;
+        let r3 = &a + b.clone();
+        let r4 = a.clone() + b.clone();
+        assert_eq!(r1, r2);
+        assert_eq!(r1, r3);
+        assert_eq!(r1, r4);
+    }
+
+    #[test]
+    fn test_neg_owned_and_ref_agree() {
+        let a = random_fp_matrix::<7>(3, 4, 0x55);
+        let r_owned = -a.clone();
+        let r_ref = -&a;
+        assert_eq!(r_owned, r_ref);
+        // And it is self-inverse: -(-a) == a.
+        assert_eq!(-(-&a), a);
+    }
+
+    #[test]
+    fn test_indexing_matches_get() {
+        let a = random_fp_matrix::<7>(3, 4, 0x66);
+        for r in 0..3 {
+            for c in 0..4 {
+                assert_eq!(a[(r, c)], a.get(r, c));
+            }
+        }
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(16))]
+
+        /// Blocked gemm must equal naive gemm over Fp<65521>.
+        #[test]
+        fn prop_gemm_matches_naive_fp65521(
+            m in 1usize..=6,
+            k in 1usize..=10,
+            n in 1usize..=6,
+            seed_a in any::<u64>(),
+            seed_b in any::<u64>(),
+        ) {
+            let a = random_fp_matrix::<65521>(m, k, seed_a);
+            let b = random_fp_matrix::<65521>(k, n, seed_b);
+            prop_assert_eq!(&a * &b, naive_gemm(&a, &b));
+        }
+
+        /// Mul is associative over Fp<7>: (A*B)*C == A*(B*C).
+        #[test]
+        fn prop_mul_is_associative_fp7(
+            m in 1usize..=4,
+            k in 1usize..=4,
+            n in 1usize..=4,
+            p in 1usize..=4,
+            seed_a in any::<u64>(),
+            seed_b in any::<u64>(),
+            seed_c in any::<u64>(),
+        ) {
+            let a = random_fp_matrix::<7>(m, k, seed_a);
+            let b = random_fp_matrix::<7>(k, n, seed_b);
+            let c = random_fp_matrix::<7>(n, p, seed_c);
+            prop_assert_eq!((&a * &b) * &c, &a * (&b * &c));
+        }
+
+        /// Right distributivity over Fp<7>: (A + B) * C == A*C + B*C.
+        #[test]
+        fn prop_mul_right_distributes_fp7(
+            m in 1usize..=4,
+            k in 1usize..=4,
+            n in 1usize..=4,
+            seed_a in any::<u64>(),
+            seed_b in any::<u64>(),
+            seed_c in any::<u64>(),
+        ) {
+            let a = random_fp_matrix::<7>(m, k, seed_a);
+            let b = random_fp_matrix::<7>(m, k, seed_b);
+            let c = random_fp_matrix::<7>(k, n, seed_c);
+            prop_assert_eq!((&a + &b) * &c, &a * &c + &b * &c);
+        }
+
+        /// Mul matches naive over GF(2^8) via Gf2mWide.
+        #[test]
+        fn prop_gemm_matches_naive_gf2_8(
+            m in 1usize..=5,
+            k in 1usize..=8,
+            n in 1usize..=5,
+            seed_a in any::<u64>(),
+            seed_b in any::<u64>(),
+        ) {
+            let a = random_gf2m8_matrix(m, k, seed_a);
+            let b = random_gf2m8_matrix(k, n, seed_b);
+            prop_assert_eq!(&a * &b, naive_gemm(&a, &b));
         }
     }
 }

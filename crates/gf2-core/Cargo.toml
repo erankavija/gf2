@@ -172,3 +172,8 @@ required-features = ["simd"]
 name = "field_matrix"
 harness = false
 required-features = ["rand"]
+
+[[bench]]
+name = "field_matrix_gemm"
+harness = false
+required-features = ["rand"]

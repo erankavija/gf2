@@ -420,53 +420,92 @@ impl<F: FiniteField> FieldVec<F> {
             rhs.len()
         );
         assert!(!self.is_empty(), "dot_product: vectors must not be empty");
+        // Delegate to the slice-based kernel. Using the first element as the
+        // zero witness matches the previous behaviour exactly (`self.data[0]
+        // .zero_like()`).
+        let zero = self.data[0].zero_like();
+        dot_product_slices(&self.data, &rhs.data, &zero)
+    }
+}
 
-        let kmax = F::max_unreduced_additions();
-
-        if kmax == usize::MAX {
-            // Fast path: no overflow possible (e.g., GF(2^m) where Wide = Self)
-            let mut acc = self.data[0].mul_to_wide(&rhs.data[0]);
-            for (a, b) in self.data[1..].iter().zip(rhs.data[1..].iter()) {
-                acc += a.mul_to_wide(b);
-            }
-            F::reduce_wide(&acc)
-        } else if kmax == 0 {
-            // Degenerate case: must reduce after every single multiply
-            let mut acc = self.data[0].clone() * rhs.data[0].clone();
-            for (a, b) in self.data[1..].iter().zip(rhs.data[1..].iter()) {
-                acc += &(a.clone() * b);
-            }
-            acc
-        } else {
-            // General case: chunk by kmax, accumulate in Wide, reduce at boundaries
-            let pairs = self.data.iter().zip(rhs.data.iter());
-            let mut result = self.data[0].zero_like(); // field zero
-
-            let mut chunk_iter = pairs;
-            let mut remaining = self.len();
-
-            while remaining > 0 {
-                let chunk_size = remaining.min(kmax); // kmax products can be summed safely
-                let mut acc: Option<F::Wide> = None;
-
-                for (a, b) in chunk_iter.by_ref().take(chunk_size) {
-                    match acc {
-                        None => acc = Some(a.mul_to_wide(b)),
-                        Some(ref mut w) => *w += a.mul_to_wide(b),
-                    }
-                }
-
-                if let Some(w) = acc {
-                    result += &F::reduce_wide(&w);
-                }
-
-                remaining -= chunk_size;
-            }
-
-            result
-        }
+/// Slice-level dot product with delayed reduction.
+///
+/// This is the inner kernel shared by [`FieldVec::dot_product`] and the
+/// [`FieldMatrix`](crate::field::matrix::FieldMatrix) classical `gemm` /
+/// `matvec` / `matvec_transpose` paths. It exists so those callers can
+/// compute `∑ a[i] * b[i]` over arbitrary borrowed slices without first
+/// materialising a `FieldVec`.
+///
+/// Correctness contract (Dumas–Pernet §1.2, theorem 4 classical case):
+/// accumulates at most
+/// [`FiniteField::max_unreduced_additions`](crate::field::FiniteField::max_unreduced_additions)
+/// wide products before reducing, so the `Wide` accumulator never overflows
+/// for any finite field this crate models.
+///
+/// # Arguments
+///
+/// * `a`, `b` — Slices of equal length `n >= 0`.
+/// * `zero` — Any field element; `zero.zero_like()` is used to seed the
+///   accumulator for the empty-input case and for chunked reductions.
+///
+/// # Panics
+///
+/// Panics in debug builds if `a.len() != b.len()`.
+#[inline]
+pub(crate) fn dot_product_slices<F: FiniteField>(a: &[F], b: &[F], zero: &F) -> F {
+    debug_assert_eq!(
+        a.len(),
+        b.len(),
+        "dot_product_slices: length mismatch ({} vs {})",
+        a.len(),
+        b.len()
+    );
+    if a.is_empty() {
+        return zero.zero_like();
     }
 
+    let kmax = F::max_unreduced_additions();
+
+    if kmax == usize::MAX {
+        // Fast path: no overflow possible (e.g., GF(2^m) where Wide = Self).
+        let mut acc = a[0].mul_to_wide(&b[0]);
+        for (x, y) in a[1..].iter().zip(b[1..].iter()) {
+            acc += x.mul_to_wide(y);
+        }
+        F::reduce_wide(&acc)
+    } else if kmax == 0 {
+        // Degenerate: reduce after every multiply.
+        let mut acc = a[0].clone() * b[0].clone();
+        for (x, y) in a[1..].iter().zip(b[1..].iter()) {
+            acc += &(x.clone() * y);
+        }
+        acc
+    } else {
+        // General case: chunk by kmax, accumulate in Wide, reduce at boundaries.
+        // Each chunk contributes at most kmax wide products — this is the
+        // delayed-reduction bound theorem 4 / §1.2 of Dumas–Pernet.
+        let mut result = zero.zero_like();
+        let mut offset = 0usize;
+        while offset < a.len() {
+            let chunk_size = (a.len() - offset).min(kmax);
+            debug_assert!(
+                chunk_size <= kmax,
+                "dot_product_slices: chunk size {} exceeds kmax {}",
+                chunk_size,
+                kmax
+            );
+            let mut acc = a[offset].mul_to_wide(&b[offset]);
+            for i in 1..chunk_size {
+                acc += a[offset + i].mul_to_wide(&b[offset + i]);
+            }
+            result += &F::reduce_wide(&acc);
+            offset += chunk_size;
+        }
+        result
+    }
+}
+
+impl<F: FiniteField> FieldVec<F> {
     /// Returns a new `FieldVec` with each element multiplied by scalar `a`.
     ///
     /// # Arguments
