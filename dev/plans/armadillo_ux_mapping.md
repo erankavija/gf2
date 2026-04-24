@@ -17,7 +17,7 @@
 | Armadillo C++ | `FieldMatrix<F>` (Rust) | Notes |
 |---|---|---|
 | `arma::mat A(rows, cols, fill::zeros)` | `FieldMatrix::<F>::zeros(rows, cols)` where `F: ConstField` | `ConstField` bound so we know what zero is |
-| `arma::mat A(rows, cols, fill::none)` | `FieldMatrix::<F>::with_capacity(rows, cols)` | No-init for hot paths |
+| `arma::mat A(rows, cols, fill::none)` | `FieldMatrix::<F>::with_capacity(rows, cols)` where `F: ConstField` | Zero-initialised, `rows × cols` shape. The Armadillo `fill::none` no-init optimisation is not available without `unsafe`, which `gf2-core` denies, so this is equivalent to `zeros(rows, cols)` today. |
 | `arma::eye(n, n)` | `FieldMatrix::<F>::identity(n)` | Same name as `BitMatrix::identity` |
 | `arma::randu(n, m)` | `FieldMatrix::<F>::random(n, m, rng)` | Mirrors `BitMatrix::random` |
 | `A(i, j)` | `a[(i, j)]` (read) / `a.set(i, j, v)` (write) | `Index<(usize,usize)>` for read; write needs `set` for reduction bookkeeping |
@@ -25,19 +25,19 @@
 | `A.col(j)` | `a.col(j)` → `ColView<'_, F>` | Strided view; mirrors `BitMatrix::col_as_bitvec` (but zero-copy) |
 | `A.submat(r0, c0, r1, c1)` | `a.submat(r0..=r1, c0..=c1)` | Immutable view |
 | `A.submat(...) = X` | `a.submat_mut(r0..=r1, c0..=c1).assign(&x)` | Mutable view via `.assign()` |
-| `A.t()` | `a.t()` | Owned transpose. `.t()` returns a lazy `Transpose<&Self>` proxy in Wave 1 design |
-| `A.i()` / `inv(A)` | `a.inv()` / `inv(&a)` → `Option<FieldMatrix<F>>` | `None` iff singular |
+| `A.t()` | `a.t()` / `a.transpose()` | `.t()` returns a lazy `Transposed<&Self>` proxy (Wave 1 stub; fused-expression semantics land in `d48a3cfd`). `a.transpose()` materialises an owned transpose eagerly. |
+| `A.i()` / `inv(A)` | `a.inv()` / `inv(&a)` → `Option<FieldMatrix<F>>` | `None` iff singular. **Future work** — owned by story `ae1d1e88`; not yet implemented at HEAD. |
 | `A * B` | `&a * &b` (preferred) or `a * b` (moves) | All four owned/ref combos (as in `BitMatrix`) |
 | `A + B`, `A - B`, `-A` | same operator set | All four combos for binary ops |
 | `k * A` / `A * k` | `scalar * &a` / `&a * scalar` | Where `scalar: F` |
-| `solve(A, B)` | `solve(&a, &b)` → `Option<FieldVec<F>>` or `Option<FieldMatrix<F>>` | Free function uses PLE under the hood |
-| `det(A)` | `det(&a)` → `F` | Free function; `a.det()` also works |
-| `rank(A)` | `rank(&a)` → `usize` | Reads from cached PLE if available |
+| `solve(A, B)` | `solve(&a, &b)` → `Option<FieldVec<F>>` or `Option<FieldMatrix<F>>` | Free function uses PLE under the hood. **Future work** — owned by story `ae1d1e88`; not yet implemented at HEAD. |
+| `det(A)` | `det(&a)` → `F` | Free function; `a.det()` also works. **Future work** — owned by story `ae1d1e88`; not yet implemented at HEAD. |
+| `rank(A)` | `rank(&a)` → `usize` | Reads from cached PLE if available. **Future work** — owned by story `c3f8c1cb` (PLE); not yet implemented at HEAD. |
 | `trace(A)` | `trace(&a)` → `F` | |
 | `A.diag()` | `a.diag()` → `FieldVec<F>` | Owned copy of the diagonal |
 | `A.is_symmetric()` | `a.is_symmetric()` | |
 | `cout << A` | `println!("{}", a)` via `Display` | Mirrors `BitMatrix::Display` styling |
-| `A.save("f", raw_ascii)` / `A.load(...)` | `a.write_raw(path)` / `FieldMatrix::read_raw(path)` | Optional; behind `io` feature |
+| `A.save("f", raw_ascii)` / `A.load(...)` | `a.write_raw(path)` / `FieldMatrix::read_raw(path)` | Optional; behind `io` feature. **Future work** — not yet implemented at HEAD; `FieldMatrix` currently uses the workspace-wide serde-based `io` module for persistence. |
 
 ## 3. The `MatrixLike<Elem>` trait
 
