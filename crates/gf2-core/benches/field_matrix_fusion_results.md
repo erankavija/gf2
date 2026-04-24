@@ -26,8 +26,8 @@ wins on wall-clock because it:
 
 1. Performs the `β · C` add **inline** with the dot-product reduction —
    avoiding a second full sweep over the `n²` output cells.
-2. Avoids the intermediate `FieldMatrix<F>` allocation and its subsequent
-   `Clone` into the axpy destination.
+2. Avoids the intermediate `FieldMatrix<F>` allocation that the eager
+   path materialises between the product and the sum.
 
 The *measurable* speedup at n = 1024 comes almost entirely from the
 second point; at n = 256 the cache-resident working set dampens the
@@ -35,37 +35,40 @@ allocation-avoidance gain. Either way, the fused path is not slower.
 
 ## Allocation evidence
 
-The fused path allocates **one** owned matrix — the output of
-`gemm_with_beta`. The eager two-step baseline allocates three:
+Counted in terms of owned `FieldMatrix<F>` heap allocations (what the
+`KernelCounts` trace counters expose; each kernel call produces exactly
+one owned output matrix):
 
-1. `t = &a * &b` — one `FieldMatrix<F>` from the plain `gemm` kernel.
-2. `&t + &c` — one `FieldMatrix<F>` from the `axpy_linear` output.
-3. (Each `gemm` additionally materialises a transposed `B` scratch
-   buffer inside the T1 blocked kernel — this is an implementation
-   detail and not counted here, but it *does* compound the eager-path
-   allocation cost because both the plain `gemm` and the subsequent
-   `axpy_linear` pay one scratch allocation each.)
+- **Fused** — `(&a * &b + &c).into()` — **1** owned `FieldMatrix`
+  (the output of `gemm_with_beta`).
+- **Eager** — `{ let t = &a * &b; t + &c }` — **2** owned
+  `FieldMatrix` values:
+  1. `t = &a * &b` from the `gemm` kernel.
+  2. `&t + &c` from the `axpy_linear` kernel.
 
-Net:
-- **Fused:** 1 owned `FieldMatrix`, 1 transpose scratch → 2 heap
-  allocations.
-- **Eager:** 3 owned `FieldMatrix`es, 1 transpose scratch → 4 heap
-  allocations.
+Net: the fused path saves exactly **one** owned `FieldMatrix`
+allocation per `A·B + C` evaluation compared with eager.
+
+The T1 blocked `gemm` additionally builds transposed operand packs
+internally; those are `FieldVec`-backed scratch, not owned
+`FieldMatrix` values, and are not attributed to this comparison.
+`axpy_linear` is a straight elementwise `α·A + β·B` pass with no
+scratch of its own.
 
 The in-crate unit test
-`test_fused_path_allocates_fewer_matrices_than_eager`
-(`crates/gf2-core/src/field/expr.rs`) verifies this at runtime by
-counting kernel-exit allocations via the `KernelCounts` trace counters:
-each kernel listed in `KernelCounts` produces exactly one owned
-`FieldMatrix` per call, so the sum of increments is the owned-matrix
-allocation count for the expression.
+[`test_fused_path_allocates_fewer_matrices_than_eager`][alloc-test]
+(in `crates/gf2-core/src/field/expr.rs`) makes this assertion runtime-
+observable by summing the kernel-exit counters on both paths.
+
+[alloc-test]: ../src/field/expr.rs
 
 ## Why no `stats-alloc` harness
 
 A global allocator wrapper (e.g. `stats-alloc`) would catch both the
-owned matrices and the internal scratch buffers, but the workspace MSRV
-is 1.80 and the project policy in `CLAUDE.md` bars pulling in
-dev-dependencies that are not strictly necessary for the headline claim.
-The `KernelCounts`-based verification gives exact evidence for the
-claim the issue actually makes ("the fused path allocates fewer
-matrices than eager"), which is what matters for the reviewer gate.
+owned matrices and the internal `FieldVec` scratch buffers. The
+workspace MSRV is 1.80 and the project policy in `CLAUDE.md` bars
+pulling in dev-dependencies that are not strictly necessary for the
+headline claim. The `KernelCounts`-based verification gives exact
+evidence for the claim the issue actually makes ("the fused path
+allocates fewer matrices than eager"), which is what matters for the
+reviewer gate.

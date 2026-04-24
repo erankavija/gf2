@@ -143,10 +143,15 @@ fn bump(c: &AtomicU64) {
 /// Returns a snapshot of the cumulative kernel-call counters.
 ///
 /// Counters are process-wide and are not reset automatically between test
-/// runs; see [`reset_kernel_counts`] for a single-threaded reset. Use the
-/// delta between two [`kernel_counts`] snapshots when asserting that a
-/// particular expression dispatched a particular number of kernel calls —
-/// this is robust to concurrent activity in other tests.
+/// runs; see [`reset_kernel_counts`] for the single-threaded reset.
+///
+/// **Concurrency caveat.** Any test that asserts on the before/after delta
+/// *must* be serialised against every other test that bumps these counters
+/// — the counters are global, so a concurrent test's kernel call is
+/// indistinguishable from a bump the test under observation caused
+/// itself. The in-crate trace tests use `#[serial_test::serial]` on every
+/// `test_fusion_*` cluster to enforce this; new counter-based tests must
+/// do the same (see `expr.rs` test module).
 ///
 /// # Examples
 ///
@@ -2691,14 +2696,15 @@ mod tests {
     // ─── Allocation-count evidence for fused vs eager (R1 F3) ─────────────
     //
     // Direct assertion: the fused `(&a * &b + &c).into()` path allocates
-    // exactly one owned `FieldMatrix<F>` (the output), whereas the eager
-    // pipeline allocates two intermediates (`t = &a * &b`, then the
-    // `&t + &c` sum) plus the final result — three matrices. We observe
-    // this by counting `gemm`, `axpy_linear`, and `gemm_with_beta` kernel
-    // calls: each concrete kernel invocation corresponds to exactly one
-    // newly-allocated `FieldMatrix<F>`. See `benches/field_matrix_fusion.rs`
-    // and `benches/field_matrix_fusion_results.md` for the full timing +
-    // allocation characterisation.
+    // exactly one owned `FieldMatrix<F>` via a single `gemm_with_beta`
+    // kernel call, whereas the eager two-step pipeline allocates two —
+    // one from the `&a * &b` `gemm` and one from the `&t + &c`
+    // `axpy_linear`. We observe this by counting each kernel invocation
+    // (each produces exactly one newly-allocated `FieldMatrix<F>`). Any
+    // transpose/packing scratch done inside the T1 blocked gemm is
+    // `FieldVec`-backed, not a `FieldMatrix`, and is not counted here.
+    // See `benches/field_matrix_fusion_results.md` for the full
+    // timing + allocation characterisation.
 
     #[test]
     #[serial]
