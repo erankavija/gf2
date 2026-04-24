@@ -1,66 +1,293 @@
-//! Placeholder for the sparse finite-field matrix type.
+//! Sparse matrix primitives over a generic [`FiniteField`].
 //!
-//! The full CSR/CSC sparse representation and its API surface are owned by
-//! story `8a90882e` in epic `bb85c68a`. The minimal [`SparseFieldMatrix<F>`]
-//! defined here exists solely so that [`FieldMatrix::to_sparse`](super::matrix::FieldMatrix::to_sparse)
-//! can carry the signature required by the `ab791e27` contract without
-//! depending on the yet-to-be-implemented sparse module.
+//! This module provides Compressed-Sparse-Row ([`SparseFieldMatrix<F>`]) and
+//! Compressed-Sparse-Column ([`SparseFieldMatrixCsc<F>`]) storage with
+//! conversions, element access, and matrix–vector / matrix–matrix products.
+//! It is the field-generic counterpart of [`crate::sparse::SpBitMatrix`] and
+//! owns the public sparse surface promised by issue `8a90882e` of epic
+//! `bb85c68a`.
 //!
-//! **Do not rely on the representation here.** When `8a90882e` lands this
-//! type will be replaced wholesale — likely with a CSR-style layout and a
-//! much larger operator surface. Downstream code that imports
-//! `SparseFieldMatrix` should either (a) wait for `8a90882e` to land, or
-//! (b) treat this type as opaque and interact with it only via the
-//! conversion helpers provided by `FieldMatrix`.
-//
-// 8a90882e — owning story for the full sparse surface.
+//! # Layout
+//!
+//! Both types store three flat arrays, mirroring the usual Netlib convention:
+//!
+//! | Field | CSR ([`SparseFieldMatrix`]) | CSC ([`SparseFieldMatrixCsc`]) |
+//! |-------|-----------------------------|--------------------------------|
+//! | `ptr` | `row_ptr`, length `rows + 1` | `col_ptr`, length `cols + 1` |
+//! | `idx` | column indices per row, sorted | row indices per col, sorted |
+//! | `val` | non-zero values, aligned with `idx` | non-zero values, aligned with `idx` |
+//!
+//! All stored `val[i]` entries are guaranteed non-zero (the constructors drop
+//! zeros and sum duplicate coordinates). Per-row (resp. per-col) column
+//! (resp. row) indices are sorted ascending — enabling `get(r, c)` via
+//! binary search and making `SpMV` output deterministic.
+//!
+//! # Naming parity with [`SpBitMatrix`](crate::sparse::SpBitMatrix)
+//!
+//! The GF(2) sparse type `SpBitMatrix` fixes the method vocabulary for all
+//! sparse matrices in this crate. The table below records the pairs:
+//!
+//! | [`SpBitMatrix`](crate::sparse::SpBitMatrix) | [`SparseFieldMatrix`] | Notes |
+//! |-----|-----|-----|
+//! | `zeros(rows, cols)` | [`SparseFieldMatrix::zeros`] | Empty structure, same shape. |
+//! | `identity(n)` | [`SparseFieldMatrix::identity`] | Diagonal of `F::one()` (requires [`ConstField`]). |
+//! | `from_dense(&BitMatrix)` | [`SparseFieldMatrix::from_dense`] | Row-major scan, drops zeros. |
+//! | `to_dense() -> BitMatrix` | [`SparseFieldMatrix::to_dense`] | Materialises a dense [`FieldMatrix`]. |
+//! | `from_coo(rows, cols, &[(r, c)])` | [`SparseFieldMatrix::from_triplets`] | Over a field, duplicates *sum* (field) instead of XOR (GF(2)). |
+//! | `rows()` / `cols()` / `nnz()` | identical | Same contract. |
+//! | `row_iter(row)` | [`SparseFieldMatrix::row_iter`] | Yields `(col, &value)`, CSR-native. |
+//! | `transpose()` | [`SparseFieldMatrix::transpose`] | Field version materialises a dense transpose (see below). |
+//! | `matvec(&BitVec)` | [`SparseFieldMatrix::matvec`] | Row-by-row dispatch to [`FieldVec`]'s dot-product kernel. |
+//! | — | [`SparseFieldMatrix::matvec_transpose`] | New: field SpMV^T, O(nnz) via CSC. |
+//! | — | [`SparseFieldMatrix::matmat`] | New: SpMM (sparse × dense → dense). |
+//! | [`SpBitMatrixDual`](crate::sparse::SpBitMatrixDual) | [`SparseFieldMatrixCsc`] | GF(2) stores both layouts in one handle; over a general field the two layouts are split into separate types and converted on demand. |
+//!
+//! **Divergence.** `SpBitMatrix::from_coo` treats duplicate coordinates as
+//! XOR-cancelling because that matches GF(2) arithmetic; over a general field
+//! we sum them instead, which is the correct "reconstruct the matrix from
+//! its triplet expansion" semantics. Callers that want to suppress duplicates
+//! entirely can deduplicate client-side or rely on the post-sum zero drop.
+//! This is the only behavioural divergence from the GF(2) vocabulary;
+//! everything else keeps shape.
+//!
+//! # Transpose choice
+//!
+//! [`SparseFieldMatrix::transpose`] returns a freshly materialised dense
+//! [`FieldMatrix<F>`]. This is the same choice the `MatrixLike<F>` trait
+//! already forces on every view inside `gf2-core` (see
+//! [`crate::matrix_like`]) and matches the [`MatrixLike::Owned`] associated
+//! type set to `FieldMatrix<F>`. A layout-flip — CSR to CSC — is available
+//! separately via [`SparseFieldMatrix::to_csc`] (symmetrically,
+//! [`SparseFieldMatrixCsc::to_csr`] flips back). Keeping those as explicit
+//! conversions rather than overloading `transpose` avoids the surprise of
+//! `transpose` returning a different concrete type depending on which sparse
+//! variant the caller holds.
+//!
+//! # Delayed reduction
+//!
+//! Sparse accumulation is already structured around per-row scatter and does
+//! not benefit from the same §1.2 Dumas–Pernet kmax chunking the dense `gemm`
+//! uses. The per-row `matvec` here delegates to the crate-internal
+//! `dot_product_slices` kernel, which *does* honour delayed reduction — but
+//! the inner dimension it sees is `nnz_in_row`, not `cols`, so the reduction
+//! cost is already close to minimal. We do not add a separate wide
+//! accumulator path for sparse.
+//!
+//! # Out-of-scope (epic Non-goals)
+//!
+//! * Sparse reordering (Markowitz, minimum-degree) from Dumas–Pernet §5 is
+//!   intentionally deferred per the epic Non-goals; the constructors leave
+//!   rows and columns in natural order.
+//! * Wiedemann / Lanczos black-box solvers are likewise deferred.
+//!
+//! # Examples
+//!
+//! ```
+//! use gf2_core::field::matrix::FieldMatrix;
+//! use gf2_core::field::sparse_matrix::SparseFieldMatrix;
+//! use gf2_core::field::FieldVec;
+//! use gf2_core::gfp::Fp;
+//!
+//! type F = Fp<7>;
+//!
+//! let mut m = FieldMatrix::<F>::zeros(3, 4);
+//! m.set(0, 1, F::new(2));
+//! m.set(2, 3, F::new(5));
+//!
+//! let s = SparseFieldMatrix::from_dense(&m);
+//! assert_eq!(s.nnz(), 2);
+//!
+//! let x = FieldVec::from(vec![F::new(1), F::new(2), F::new(3), F::new(4)]);
+//! let y = s.matvec(&x);
+//! assert_eq!(y[0], F::new(2) * F::new(2)); // 4
+//! assert_eq!(y[2], F::new(5) * F::new(4)); // 20 mod 7 = 6
+//! ```
 
-use crate::field::FiniteField;
+use crate::field::matrix::FieldMatrix;
+use crate::field::vec::{dot_product_slices, FieldVec};
+use crate::field::{ConstField, FiniteField};
+use crate::matrix_like::MatrixLike;
 
-/// Sparse dense-equivalent matrix over a [`FiniteField`].
+// ─── CSR ─────────────────────────────────────────────────────────────────────
+
+/// Row-major sparse matrix over a [`FiniteField`] in Compressed-Sparse-Row
+/// (CSR) form.
 ///
-/// Stored as a triplet list `(row, col, value)` of non-zero entries.
-/// This shape is intentionally minimal; story `8a90882e` replaces it with
-/// a CSR layout and adds arithmetic, matvec, conversion helpers, and
-/// iterator adaptors.
+/// All stored values are non-zero (constructors canonicalise) and per-row
+/// column indices are sorted ascending. See the module-level docs for the
+/// full layout, parity table with [`SpBitMatrix`](crate::sparse::SpBitMatrix),
+/// and the transpose contract.
 ///
 /// # Examples
 ///
 /// ```
-/// use gf2_core::field::matrix::FieldMatrix;
 /// use gf2_core::field::sparse_matrix::SparseFieldMatrix;
 /// use gf2_core::gfp::Fp;
 ///
-/// let mut m = FieldMatrix::<Fp<7>>::zeros(2, 3);
-/// m.set(0, 1, Fp::<7>::new(5));
-/// m.set(1, 2, Fp::<7>::new(3));
-/// let s: SparseFieldMatrix<Fp<7>> = m.to_sparse();
+/// type F = Fp<7>;
+///
+/// // Build 2×3 matrix with entries at (0,1)=3 and (1,2)=5.
+/// let s = SparseFieldMatrix::<F>::from_triplets(
+///     2,
+///     3,
+///     [(0usize, 1usize, F::new(3)), (1, 2, F::new(5))],
+/// );
 /// assert_eq!(s.shape(), (2, 3));
 /// assert_eq!(s.nnz(), 2);
+/// assert_eq!(s.get(0, 1), F::new(3));
+/// assert_eq!(s.get(0, 2), F::new(0));
 /// ```
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SparseFieldMatrix<F: FiniteField> {
     rows: usize,
     cols: usize,
-    // 8a90882e will replace this with (row_ptr, col_idx, values) CSR arrays.
-    triplets: Vec<(usize, usize, F)>,
+    /// Length `rows + 1`. Row `r` owns indices `row_ptr[r]..row_ptr[r + 1]`.
+    row_ptr: Vec<usize>,
+    /// Column indices of non-zero entries. Sorted ascending within each row.
+    col_idx: Vec<usize>,
+    /// Non-zero values, aligned with [`col_idx`]; guaranteed non-zero.
+    values: Vec<F>,
 }
 
+// ─── CSC ─────────────────────────────────────────────────────────────────────
+
+/// Column-major sparse matrix over a [`FiniteField`] in
+/// Compressed-Sparse-Column (CSC) form.
+///
+/// All stored values are non-zero and per-column row indices are sorted
+/// ascending. See the module-level docs.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::field::sparse_matrix::{SparseFieldMatrix, SparseFieldMatrixCsc};
+/// use gf2_core::gfp::Fp;
+///
+/// type F = Fp<7>;
+///
+/// let csr = SparseFieldMatrix::<F>::from_triplets(
+///     2,
+///     3,
+///     [(0usize, 1usize, F::new(3)), (1, 2, F::new(5))],
+/// );
+/// let csc: SparseFieldMatrixCsc<F> = csr.to_csc();
+/// assert_eq!(csc.shape(), (2, 3));
+/// assert_eq!(csc.nnz(), 2);
+/// assert_eq!(csc.get(1, 2), F::new(5));
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SparseFieldMatrixCsc<F: FiniteField> {
+    rows: usize,
+    cols: usize,
+    /// Length `cols + 1`. Column `c` owns indices `col_ptr[c]..col_ptr[c + 1]`.
+    col_ptr: Vec<usize>,
+    /// Row indices of non-zero entries. Sorted ascending within each column.
+    row_idx: Vec<usize>,
+    /// Non-zero values aligned with [`row_idx`]; guaranteed non-zero.
+    values: Vec<F>,
+}
+
+// ─── Shared helpers ──────────────────────────────────────────────────────────
+
+/// Returns a field `zero` element either by borrowing from an existing slice
+/// or via the static escape hatch [`FiniteField::zero_hint`] when no witness
+/// is available. Panics when both paths fail (runtime-context field with no
+/// elements to copy).
+fn zero_witness<F: FiniteField>(from_values: &[F]) -> F {
+    if let Some(v) = from_values.first() {
+        v.zero_like()
+    } else if let Some(z) = F::zero_hint() {
+        z
+    } else {
+        panic!(
+            "SparseFieldMatrix: no zero witness available; \
+             use F: ConstField or build the matrix with at least one non-zero entry"
+        );
+    }
+}
+
+/// Returns a zero element borrowed from whichever side of a `(matrix, vector)`
+/// pair carries at least one element. Fallback is [`FiniteField::zero_hint`].
+fn zero_witness_pair<F: FiniteField>(a: &[F], b: &[F]) -> F {
+    if let Some(v) = a.first() {
+        v.zero_like()
+    } else if let Some(v) = b.first() {
+        v.zero_like()
+    } else if let Some(z) = F::zero_hint() {
+        z
+    } else {
+        panic!(
+            "SparseFieldMatrix: no zero witness available; \
+             use F: ConstField or provide at least one non-zero operand"
+        );
+    }
+}
+
+// ─── CSR impl ────────────────────────────────────────────────────────────────
+
 impl<F: FiniteField> SparseFieldMatrix<F> {
-    /// Constructs a sparse matrix from `rows × cols` plus a triplet list of
-    /// non-zero entries. Crate-private because the public entry-point is
-    /// [`FieldMatrix::to_sparse`](super::matrix::FieldMatrix::to_sparse); the
-    /// final public constructors will be re-designed in story `8a90882e`.
-    pub(crate) fn from_dense_stub(
-        rows: usize,
-        cols: usize,
-        triplets: Vec<(usize, usize, F)>,
-    ) -> Self {
+    /// Creates a structurally empty `rows × cols` sparse matrix (no stored
+    /// non-zeros).
+    ///
+    /// # Arguments
+    ///
+    /// * `rows` — row count.
+    /// * `cols` — column count.
+    ///
+    /// # Complexity
+    ///
+    /// O(rows) — only the `row_ptr` array is allocated.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::sparse_matrix::SparseFieldMatrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let s = SparseFieldMatrix::<Fp<7>>::zeros(3, 5);
+    /// assert_eq!(s.shape(), (3, 5));
+    /// assert_eq!(s.nnz(), 0);
+    /// ```
+    pub fn zeros(rows: usize, cols: usize) -> Self {
         Self {
             rows,
             cols,
-            triplets,
+            row_ptr: vec![0; rows + 1],
+            col_idx: Vec::new(),
+            values: Vec::new(),
         }
+    }
+
+    /// Returns the number of rows.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::sparse_matrix::SparseFieldMatrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let s = SparseFieldMatrix::<Fp<7>>::zeros(3, 5);
+    /// assert_eq!(s.rows(), 3);
+    /// ```
+    #[inline]
+    pub fn rows(&self) -> usize {
+        self.rows
+    }
+
+    /// Returns the number of columns.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::sparse_matrix::SparseFieldMatrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let s = SparseFieldMatrix::<Fp<7>>::zeros(3, 5);
+    /// assert_eq!(s.cols(), 5);
+    /// ```
+    #[inline]
+    pub fn cols(&self) -> usize {
+        self.cols
     }
 
     /// Returns `(rows, cols)`.
@@ -68,15 +295,734 @@ impl<F: FiniteField> SparseFieldMatrix<F> {
     /// # Examples
     ///
     /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
+    /// use gf2_core::field::sparse_matrix::SparseFieldMatrix;
     /// use gf2_core::gfp::Fp;
     ///
-    /// let m = FieldMatrix::<Fp<7>>::zeros(3, 5);
-    /// let s = m.to_sparse();
+    /// let s = SparseFieldMatrix::<Fp<7>>::zeros(3, 5);
     /// assert_eq!(s.shape(), (3, 5));
     /// ```
+    #[inline]
     pub fn shape(&self) -> (usize, usize) {
         (self.rows, self.cols)
+    }
+
+    /// Returns the number of stored non-zero entries.
+    ///
+    /// All zero values are dropped by the canonicalising constructors, so
+    /// this is an exact count of structural non-zeros.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::sparse_matrix::SparseFieldMatrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// type F = Fp<7>;
+    /// let s = SparseFieldMatrix::<F>::from_triplets(
+    ///     2,
+    ///     2,
+    ///     [(0usize, 0usize, F::new(3))],
+    /// );
+    /// assert_eq!(s.nnz(), 1);
+    /// ```
+    #[inline]
+    pub fn nnz(&self) -> usize {
+        self.values.len()
+    }
+
+    /// Returns the value stored at `(row, col)`, or `F::zero()` if the entry
+    /// is structurally absent.
+    ///
+    /// # Arguments
+    ///
+    /// * `row` — row index in `0..rows`.
+    /// * `col` — column index in `0..cols`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `row >= self.rows()` or `col >= self.cols()`. Also panics
+    /// if the stored `F` is a runtime-context field with no zero witness and
+    /// the queried cell is structurally zero — callers on such fields should
+    /// keep at least one non-zero in the matrix or use [`ConstField`].
+    ///
+    /// # Complexity
+    ///
+    /// `O(log k)` where `k` is the number of non-zeros in the target row,
+    /// via binary search on the sorted column-index slice.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::sparse_matrix::SparseFieldMatrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// type F = Fp<7>;
+    /// let s = SparseFieldMatrix::<F>::from_triplets(
+    ///     2,
+    ///     3,
+    ///     [(0usize, 1usize, F::new(3)), (1, 2, F::new(5))],
+    /// );
+    /// assert_eq!(s.get(0, 1), F::new(3));
+    /// assert_eq!(s.get(1, 0), F::new(0));
+    /// ```
+    pub fn get(&self, row: usize, col: usize) -> F {
+        assert!(
+            row < self.rows,
+            "SparseFieldMatrix::get: row {row} out of bounds (rows={})",
+            self.rows
+        );
+        assert!(
+            col < self.cols,
+            "SparseFieldMatrix::get: col {col} out of bounds (cols={})",
+            self.cols
+        );
+        let start = self.row_ptr[row];
+        let end = self.row_ptr[row + 1];
+        let slice = &self.col_idx[start..end];
+        match slice.binary_search(&col) {
+            Ok(off) => self.values[start + off].clone(),
+            Err(_) => zero_witness(&self.values),
+        }
+    }
+
+    /// Iterates over the non-zero entries of `row` as `(col, &value)` pairs,
+    /// sorted by `col`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `row >= self.rows()`.
+    ///
+    /// # Complexity
+    ///
+    /// O(nnz_in_row).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::sparse_matrix::SparseFieldMatrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// type F = Fp<7>;
+    /// let s = SparseFieldMatrix::<F>::from_triplets(
+    ///     2,
+    ///     3,
+    ///     [(0usize, 2usize, F::new(3)), (0, 0, F::new(1))],
+    /// );
+    /// let pairs: Vec<(usize, F)> =
+    ///     s.row_iter(0).map(|(c, v)| (c, v.clone())).collect();
+    /// assert_eq!(pairs, vec![(0, F::new(1)), (2, F::new(3))]);
+    /// ```
+    pub fn row_iter(&self, row: usize) -> impl ExactSizeIterator<Item = (usize, &F)> + '_ {
+        assert!(
+            row < self.rows,
+            "SparseFieldMatrix::row_iter: row {row} out of bounds (rows={})",
+            self.rows
+        );
+        let start = self.row_ptr[row];
+        let end = self.row_ptr[row + 1];
+        self.col_idx[start..end]
+            .iter()
+            .copied()
+            .zip(self.values[start..end].iter())
+    }
+
+    /// Returns `(row_ptr, col_idx, values)` as borrowed slices — useful for
+    /// callers that want to scan the underlying arrays without reconstructing
+    /// the triplet list. The `row_ptr` slice has length `rows + 1`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::sparse_matrix::SparseFieldMatrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// type F = Fp<7>;
+    /// let s = SparseFieldMatrix::<F>::zeros(3, 3);
+    /// let (rp, ci, vs) = s.as_raw_parts();
+    /// assert_eq!(rp.len(), 4);
+    /// assert!(ci.is_empty());
+    /// assert!(vs.is_empty());
+    /// ```
+    #[inline]
+    pub fn as_raw_parts(&self) -> (&[usize], &[usize], &[F]) {
+        (&self.row_ptr, &self.col_idx, &self.values)
+    }
+
+    /// Builds a sparse matrix from an arbitrary triplet stream, canonicalising
+    /// the result: duplicate `(row, col)` pairs are **summed** (field
+    /// arithmetic), explicit zeros are dropped, and column indices are sorted
+    /// ascending within each row.
+    ///
+    /// # Arguments
+    ///
+    /// * `rows`, `cols` — declared shape.
+    /// * `triplets` — any iterator of `(row, col, value)`. Entries with
+    ///   `row >= rows` or `col >= cols` cause a panic; values equal to the
+    ///   field's zero are dropped after summing.
+    ///
+    /// # Panics
+    ///
+    /// Panics on out-of-bounds indices.
+    ///
+    /// # Complexity
+    ///
+    /// O(nnz log(nnz/rows)) from the per-row sort, plus O(nnz) for the
+    /// duplicate-merge and zero-drop pass.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::sparse_matrix::SparseFieldMatrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// type F = Fp<7>;
+    /// // Duplicates sum: (0,0,3) + (0,0,4) = 7 ≡ 0 (mod 7), so this cell is
+    /// // dropped entirely.
+    /// let s = SparseFieldMatrix::<F>::from_triplets(
+    ///     2,
+    ///     2,
+    ///     [
+    ///         (0usize, 0usize, F::new(3)),
+    ///         (0, 0, F::new(4)),
+    ///         (1, 1, F::new(2)),
+    ///     ],
+    /// );
+    /// assert_eq!(s.nnz(), 1);
+    /// assert_eq!(s.get(0, 0), F::new(0));
+    /// assert_eq!(s.get(1, 1), F::new(2));
+    /// ```
+    pub fn from_triplets<I>(rows: usize, cols: usize, triplets: I) -> Self
+    where
+        I: IntoIterator<Item = (usize, usize, F)>,
+    {
+        // Bucket triplets by row. Each bucket is `(col, value)`. Explicit
+        // zeros are passed through; post-sum zeros are dropped below.
+        let mut per_row: Vec<Vec<(usize, F)>> = (0..rows).map(|_| Vec::new()).collect();
+        for (r, c, v) in triplets {
+            assert!(
+                r < rows,
+                "SparseFieldMatrix::from_triplets: row {r} out of bounds (rows={rows})"
+            );
+            assert!(
+                c < cols,
+                "SparseFieldMatrix::from_triplets: col {c} out of bounds (cols={cols})"
+            );
+            per_row[r].push((c, v));
+        }
+
+        let mut row_ptr = Vec::with_capacity(rows + 1);
+        let mut col_idx: Vec<usize> = Vec::new();
+        let mut values: Vec<F> = Vec::new();
+        row_ptr.push(0);
+
+        for bucket in per_row.iter_mut() {
+            bucket.sort_by_key(|&(c, _)| c);
+            let mut i = 0;
+            while i < bucket.len() {
+                let c = bucket[i].0;
+                // Start accumulator from the first value; fold in duplicates.
+                let mut acc = bucket[i].1.clone();
+                let mut j = i + 1;
+                while j < bucket.len() && bucket[j].0 == c {
+                    acc += &bucket[j].1;
+                    j += 1;
+                }
+                if !acc.is_zero() {
+                    col_idx.push(c);
+                    values.push(acc);
+                }
+                i = j;
+            }
+            row_ptr.push(values.len());
+        }
+
+        Self {
+            rows,
+            cols,
+            row_ptr,
+            col_idx,
+            values,
+        }
+    }
+
+    /// Builds a sparse matrix by scanning a dense [`FieldMatrix<F>`] and
+    /// recording non-zero cells in row-major order.
+    ///
+    /// # Complexity
+    ///
+    /// O(rows · cols) scalar comparisons; allocates exactly `nnz`
+    /// `(col_idx, value)` pairs.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::matrix::FieldMatrix;
+    /// use gf2_core::field::sparse_matrix::SparseFieldMatrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// type F = Fp<7>;
+    /// let mut m = FieldMatrix::<F>::zeros(2, 3);
+    /// m.set(0, 1, F::new(4));
+    /// m.set(1, 2, F::new(5));
+    /// let s = SparseFieldMatrix::from_dense(&m);
+    /// assert_eq!(s.nnz(), 2);
+    /// assert_eq!(s.get(0, 1), F::new(4));
+    /// ```
+    pub fn from_dense(m: &FieldMatrix<F>) -> Self {
+        let rows = m.rows();
+        let cols = m.cols();
+        let mut row_ptr = Vec::with_capacity(rows + 1);
+        let mut col_idx: Vec<usize> = Vec::new();
+        let mut values: Vec<F> = Vec::new();
+        row_ptr.push(0);
+        for r in 0..rows {
+            for c in 0..cols {
+                let v = m.get(r, c);
+                if !v.is_zero() {
+                    col_idx.push(c);
+                    values.push(v);
+                }
+            }
+            row_ptr.push(values.len());
+        }
+        Self {
+            rows,
+            cols,
+            row_ptr,
+            col_idx,
+            values,
+        }
+    }
+
+    /// Materialises a dense [`FieldMatrix<F>`]. The stored zero-values are
+    /// expanded back to explicit `F::zero()` cells.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the matrix has `0` non-zeros **and** `F` provides no
+    /// [`FiniteField::zero_hint`] witness (pure runtime-context field). The
+    /// canonical `ConstField` impls never hit this path.
+    ///
+    /// # Complexity
+    ///
+    /// O(rows · cols) — the dense back-buffer is zero-filled and then the
+    /// `nnz` stored entries are scattered into place.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::sparse_matrix::SparseFieldMatrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// type F = Fp<7>;
+    /// let s = SparseFieldMatrix::<F>::from_triplets(
+    ///     2,
+    ///     2,
+    ///     [(0usize, 0usize, F::new(1)), (1, 1, F::new(1))],
+    /// );
+    /// let m = s.to_dense();
+    /// assert_eq!(m.get(0, 0), F::new(1));
+    /// assert_eq!(m.get(0, 1), F::new(0));
+    /// ```
+    pub fn to_dense(&self) -> FieldMatrix<F> {
+        if self.rows == 0 || self.cols == 0 {
+            return FieldMatrix::<F>::from_raw_parts(self.rows, self.cols, FieldVec::new());
+        }
+        let zero = zero_witness(&self.values);
+        let mut out = FieldMatrix::<F>::from_raw_parts(
+            self.rows,
+            self.cols,
+            FieldVec::zeros_from(self.rows * self.cols, &zero),
+        );
+        for r in 0..self.rows {
+            let start = self.row_ptr[r];
+            let end = self.row_ptr[r + 1];
+            for k in start..end {
+                out.set(r, self.col_idx[k], self.values[k].clone());
+            }
+        }
+        out
+    }
+
+    /// Converts this CSR matrix to a [`SparseFieldMatrixCsc`] of the same
+    /// shape in O(nnz + rows + cols).
+    ///
+    /// # Complexity
+    ///
+    /// O(nnz + rows + cols). Exactly one scatter pass.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::sparse_matrix::SparseFieldMatrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// type F = Fp<7>;
+    /// let s = SparseFieldMatrix::<F>::from_triplets(
+    ///     3,
+    ///     3,
+    ///     [(0usize, 2usize, F::new(4)), (2, 0, F::new(5))],
+    /// );
+    /// let csc = s.to_csc();
+    /// assert_eq!(csc.get(0, 2), F::new(4));
+    /// assert_eq!(csc.get(2, 0), F::new(5));
+    /// ```
+    pub fn to_csc(&self) -> SparseFieldMatrixCsc<F> {
+        let nnz = self.values.len();
+        // Count per-column occupancy. Each non-zero in row r at column c
+        // contributes one entry to column c of the CSC.
+        let mut counts = vec![0usize; self.cols];
+        for &c in &self.col_idx {
+            counts[c] += 1;
+        }
+        let mut col_ptr = Vec::with_capacity(self.cols + 1);
+        col_ptr.push(0);
+        for i in 0..self.cols {
+            col_ptr.push(col_ptr[i] + counts[i]);
+        }
+        // Working write-heads, initialised to the start of each column run.
+        let mut next = col_ptr.clone();
+        // Preallocate the output with placeholders cloned from existing
+        // values so the storage is type-correct without requiring
+        // `F: ConstField`.
+        let mut row_idx = vec![0usize; nnz];
+        let mut values: Vec<F> = if nnz == 0 {
+            Vec::new()
+        } else {
+            (0..nnz).map(|_| self.values[0].clone()).collect()
+        };
+
+        // Row-major scatter. CSR was built with rows in natural order, so
+        // the emitted row indices per column are already ascending.
+        for r in 0..self.rows {
+            let start = self.row_ptr[r];
+            let end = self.row_ptr[r + 1];
+            for k in start..end {
+                let c = self.col_idx[k];
+                let pos = next[c];
+                row_idx[pos] = r;
+                values[pos] = self.values[k].clone();
+                next[c] += 1;
+            }
+        }
+
+        SparseFieldMatrixCsc {
+            rows: self.rows,
+            cols: self.cols,
+            col_ptr,
+            row_idx,
+            values,
+        }
+    }
+
+    /// Creates an `n × n` identity matrix stored as one non-zero per row.
+    ///
+    /// Requires [`ConstField`] because it must manufacture `F::one()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::sparse_matrix::SparseFieldMatrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// type F = Fp<7>;
+    /// let id = SparseFieldMatrix::<F>::identity(3);
+    /// assert_eq!(id.nnz(), 3);
+    /// assert_eq!(id.get(1, 1), F::new(1));
+    /// ```
+    pub fn identity(n: usize) -> Self
+    where
+        F: ConstField,
+    {
+        let row_ptr: Vec<usize> = (0..=n).collect();
+        let col_idx: Vec<usize> = (0..n).collect();
+        let values: Vec<F> = (0..n).map(|_| F::one()).collect();
+        Self {
+            rows: n,
+            cols: n,
+            row_ptr,
+            col_idx,
+            values,
+        }
+    }
+
+    /// Computes `y = A · x` using CSR row iteration.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `x.len() != self.cols()`. Also panics on the pathological
+    /// `(rows > 0, cols == 0)` runtime-field shape if `F::zero_hint()`
+    /// returns `None` (use [`ConstField`] if you need that edge case).
+    ///
+    /// # Complexity
+    ///
+    /// O(nnz) multiply-adds.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::sparse_matrix::SparseFieldMatrix;
+    /// use gf2_core::field::FieldVec;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// type F = Fp<7>;
+    /// let s = SparseFieldMatrix::<F>::from_triplets(
+    ///     2,
+    ///     3,
+    ///     [(0usize, 1usize, F::new(2)), (1, 2, F::new(3))],
+    /// );
+    /// let x = FieldVec::from(vec![F::new(1), F::new(4), F::new(5)]);
+    /// let y = s.matvec(&x);
+    /// assert_eq!(y[0], F::new(2) * F::new(4));
+    /// assert_eq!(y[1], F::new(3) * F::new(5));
+    /// ```
+    pub fn matvec(&self, x: &FieldVec<F>) -> FieldVec<F> {
+        assert_eq!(
+            x.len(),
+            self.cols,
+            "SparseFieldMatrix::matvec: x.len() ({}) != cols ({})",
+            x.len(),
+            self.cols
+        );
+        if self.rows == 0 {
+            return FieldVec::new();
+        }
+        let zero: F = zero_witness_pair(self.values.as_slice(), x.as_slice());
+        let mut y: FieldVec<F> = FieldVec::zeros_from(self.rows, &zero);
+        let xs = x.as_slice();
+        for r in 0..self.rows {
+            let start = self.row_ptr[r];
+            let end = self.row_ptr[r + 1];
+            if start == end {
+                continue;
+            }
+            // Gather the column entries of `x` corresponding to this row's
+            // non-zero positions into a contiguous slice so we can reuse the
+            // `FieldVec` delayed-reduction dot-product kernel. The gather
+            // length is `nnz_in_row`, so allocation is proportional to the
+            // sparse data, not the dense cols.
+            let gathered: Vec<F> = self.col_idx[start..end]
+                .iter()
+                .map(|&c| xs[c].clone())
+                .collect();
+            let dot = dot_product_slices(&self.values[start..end], &gathered, &zero);
+            y.set(r, dot);
+        }
+        y
+    }
+
+    /// Computes `y = Aᵀ · x`. Length of `x` is `self.rows()`, length of `y`
+    /// is `self.cols()`. Implementation scatters each stored non-zero of `A`
+    /// into the output vector.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `x.len() != self.rows()`. Also panics on
+    /// `(rows == 0, cols > 0)` runtime-field shape if `F::zero_hint()` is
+    /// `None`.
+    ///
+    /// # Complexity
+    ///
+    /// O(nnz) multiply-adds.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::sparse_matrix::SparseFieldMatrix;
+    /// use gf2_core::field::FieldVec;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// type F = Fp<7>;
+    /// let s = SparseFieldMatrix::<F>::from_triplets(
+    ///     2,
+    ///     3,
+    ///     [(0usize, 1usize, F::new(2)), (1, 2, F::new(3))],
+    /// );
+    /// let x = FieldVec::from(vec![F::new(1), F::new(4)]);
+    /// let y = s.matvec_transpose(&x);
+    /// // y[1] = 2 * 1; y[2] = 3 * 4 = 12 mod 7 = 5
+    /// assert_eq!(y[0], F::new(0));
+    /// assert_eq!(y[1], F::new(2));
+    /// assert_eq!(y[2], F::new(5));
+    /// ```
+    pub fn matvec_transpose(&self, x: &FieldVec<F>) -> FieldVec<F> {
+        assert_eq!(
+            x.len(),
+            self.rows,
+            "SparseFieldMatrix::matvec_transpose: x.len() ({}) != rows ({})",
+            x.len(),
+            self.rows
+        );
+        if self.cols == 0 {
+            return FieldVec::new();
+        }
+        let zero: F = zero_witness_pair(self.values.as_slice(), x.as_slice());
+        let mut y: FieldVec<F> = FieldVec::zeros_from(self.cols, &zero);
+        for (r, xr) in x.as_slice().iter().enumerate().take(self.rows) {
+            let start = self.row_ptr[r];
+            let end = self.row_ptr[r + 1];
+            if start == end {
+                continue;
+            }
+            for k in start..end {
+                let c = self.col_idx[k];
+                // y[c] += values[k] * x[r]
+                let contrib = self.values[k].clone() * xr;
+                let updated = y[c].clone() + contrib;
+                y.set(c, updated);
+            }
+        }
+        y
+    }
+
+    /// Computes `C = A · B` where `A` is this sparse matrix and `B` is a
+    /// dense [`FieldMatrix`]. The result `C` is dense and has shape
+    /// `self.rows × B.cols`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `self.cols() != b.rows()`.
+    ///
+    /// # Complexity
+    ///
+    /// O(nnz · B.cols) multiply-adds — one pass per stored non-zero of `A`
+    /// and per column of `B`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::matrix::FieldMatrix;
+    /// use gf2_core::field::sparse_matrix::SparseFieldMatrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// type F = Fp<7>;
+    /// let a = SparseFieldMatrix::<F>::identity(3);
+    /// let mut b = FieldMatrix::<F>::zeros(3, 2);
+    /// b.set(0, 0, F::new(1));
+    /// b.set(1, 1, F::new(2));
+    /// b.set(2, 0, F::new(3));
+    /// let c = a.matmat(&b);
+    /// assert_eq!(c, b);
+    /// ```
+    pub fn matmat(&self, b: &FieldMatrix<F>) -> FieldMatrix<F> {
+        assert_eq!(
+            self.cols,
+            b.rows(),
+            "SparseFieldMatrix::matmat: A.cols ({}) != B.rows ({})",
+            self.cols,
+            b.rows()
+        );
+        let out_cols = b.cols();
+        if self.rows == 0 || out_cols == 0 {
+            return FieldMatrix::<F>::from_raw_parts(self.rows, out_cols, FieldVec::new());
+        }
+        // Zero witness: any stored value in A works, otherwise any cell of B,
+        // otherwise the static hint.
+        let zero = if let Some(v) = self.values.first() {
+            v.zero_like()
+        } else if b.rows() > 0 && b.cols() > 0 {
+            b.get(0, 0).zero_like()
+        } else if let Some(z) = F::zero_hint() {
+            z
+        } else {
+            panic!(
+                "SparseFieldMatrix::matmat: no zero witness; use F: ConstField \
+                 or supply at least one non-zero operand"
+            );
+        };
+        let mut out = FieldMatrix::<F>::from_raw_parts(
+            self.rows,
+            out_cols,
+            FieldVec::zeros_from(self.rows * out_cols, &zero),
+        );
+        // Scatter: for each stored (r, k, a_rk), accumulate a_rk * B[k, :]
+        // into row r of the output. This is the standard CSR-times-dense
+        // SpMM recipe; keeping B row-accessed is contiguous-friendly
+        // because FieldMatrix is row-major.
+        for r in 0..self.rows {
+            let start = self.row_ptr[r];
+            let end = self.row_ptr[r + 1];
+            for k_off in start..end {
+                let k = self.col_idx[k_off];
+                let a_rk = &self.values[k_off];
+                for j in 0..out_cols {
+                    let prod = a_rk.clone() * b.get(k, j);
+                    let updated = out.get(r, j) + prod;
+                    out.set(r, j, updated);
+                }
+            }
+        }
+        out
+    }
+
+    /// Returns the dense transpose of this matrix as an owned
+    /// [`FieldMatrix<F>`].
+    ///
+    /// **Why dense.** The [`MatrixLike<F>`] contract fixes
+    /// `Self::Owned = FieldMatrix<F>` for every sparse variant in this
+    /// module (see the transpose discussion in the module-level docs), so
+    /// `transpose` materialises into the owned type. Callers that need a
+    /// layout-flip instead of a densified transpose should call
+    /// [`SparseFieldMatrix::to_csc`].
+    ///
+    /// # Complexity
+    ///
+    /// O(rows · cols) because the output is dense.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::sparse_matrix::SparseFieldMatrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// type F = Fp<7>;
+    /// let s = SparseFieldMatrix::<F>::from_triplets(
+    ///     2,
+    ///     3,
+    ///     [(0usize, 2usize, F::new(4)), (1, 0, F::new(5))],
+    /// );
+    /// let t = s.transpose();
+    /// assert_eq!(t.shape(), (3, 2));
+    /// assert_eq!(t.get(2, 0), F::new(4));
+    /// assert_eq!(t.get(0, 1), F::new(5));
+    /// ```
+    pub fn transpose(&self) -> FieldMatrix<F> {
+        // Materialise dense first, then use the dense transpose: keeps the
+        // contract simple and reuses the audited dense transpose. SpMM and
+        // SpMV already cover the common case where the transpose is applied
+        // implicitly, so this rarely-hit path staying straightforward is
+        // preferable to open-coding a sparse-to-dense transpose.
+        self.to_dense().transpose()
+    }
+}
+
+// ─── CSC impl ────────────────────────────────────────────────────────────────
+
+impl<F: FiniteField> SparseFieldMatrixCsc<F> {
+    /// Creates a structurally empty CSC matrix.
+    ///
+    /// # Complexity
+    ///
+    /// O(cols).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::sparse_matrix::SparseFieldMatrixCsc;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let s = SparseFieldMatrixCsc::<Fp<7>>::zeros(3, 4);
+    /// assert_eq!(s.shape(), (3, 4));
+    /// assert_eq!(s.nnz(), 0);
+    /// ```
+    pub fn zeros(rows: usize, cols: usize) -> Self {
+        Self {
+            rows,
+            cols,
+            col_ptr: vec![0; cols + 1],
+            row_idx: Vec::new(),
+            values: Vec::new(),
+        }
     }
 
     /// Number of rows.
@@ -84,12 +1030,12 @@ impl<F: FiniteField> SparseFieldMatrix<F> {
     /// # Examples
     ///
     /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
+    /// use gf2_core::field::sparse_matrix::SparseFieldMatrixCsc;
     /// use gf2_core::gfp::Fp;
     ///
-    /// let m = FieldMatrix::<Fp<7>>::zeros(4, 2);
-    /// assert_eq!(m.to_sparse().rows(), 4);
+    /// assert_eq!(SparseFieldMatrixCsc::<Fp<7>>::zeros(3, 4).rows(), 3);
     /// ```
+    #[inline]
     pub fn rows(&self) -> usize {
         self.rows
     }
@@ -99,14 +1045,29 @@ impl<F: FiniteField> SparseFieldMatrix<F> {
     /// # Examples
     ///
     /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
+    /// use gf2_core::field::sparse_matrix::SparseFieldMatrixCsc;
     /// use gf2_core::gfp::Fp;
     ///
-    /// let m = FieldMatrix::<Fp<7>>::zeros(4, 2);
-    /// assert_eq!(m.to_sparse().cols(), 2);
+    /// assert_eq!(SparseFieldMatrixCsc::<Fp<7>>::zeros(3, 4).cols(), 4);
     /// ```
+    #[inline]
     pub fn cols(&self) -> usize {
         self.cols
+    }
+
+    /// Returns `(rows, cols)`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::sparse_matrix::SparseFieldMatrixCsc;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// assert_eq!(SparseFieldMatrixCsc::<Fp<7>>::zeros(3, 4).shape(), (3, 4));
+    /// ```
+    #[inline]
+    pub fn shape(&self) -> (usize, usize) {
+        (self.rows, self.cols)
     }
 
     /// Number of stored non-zero entries.
@@ -114,36 +1075,722 @@ impl<F: FiniteField> SparseFieldMatrix<F> {
     /// # Examples
     ///
     /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
+    /// use gf2_core::field::sparse_matrix::SparseFieldMatrixCsc;
     /// use gf2_core::gfp::Fp;
     ///
-    /// let mut m = FieldMatrix::<Fp<7>>::zeros(3, 3);
-    /// m.set(0, 0, Fp::<7>::new(1));
-    /// m.set(2, 2, Fp::<7>::new(5));
-    /// assert_eq!(m.to_sparse().nnz(), 2);
+    /// assert_eq!(SparseFieldMatrixCsc::<Fp<7>>::zeros(3, 4).nnz(), 0);
     /// ```
+    #[inline]
     pub fn nnz(&self) -> usize {
-        self.triplets.len()
+        self.values.len()
     }
 
-    /// Returns a slice over the stored `(row, col, value)` triplets.
+    /// Returns the value stored at `(row, col)`, or `F::zero()` if absent.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `row >= self.rows()` or `col >= self.cols()`. Also panics
+    /// on pure runtime-context fields with no zero witness when the queried
+    /// cell is structurally zero — use [`ConstField`] if that matters.
+    ///
+    /// # Complexity
+    ///
+    /// O(log k) where k is the per-column non-zero count.
     ///
     /// # Examples
     ///
     /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
+    /// use gf2_core::field::sparse_matrix::{SparseFieldMatrix, SparseFieldMatrixCsc};
     /// use gf2_core::gfp::Fp;
     ///
-    /// let mut m = FieldMatrix::<Fp<7>>::zeros(2, 2);
-    /// m.set(1, 0, Fp::<7>::new(4));
-    /// let s = m.to_sparse();
-    /// let t = s.triplets();
-    /// assert_eq!(t.len(), 1);
-    /// assert_eq!(t[0].0, 1);
-    /// assert_eq!(t[0].1, 0);
-    /// assert_eq!(t[0].2, Fp::<7>::new(4));
+    /// type F = Fp<7>;
+    /// let csc = SparseFieldMatrix::<F>::from_triplets(
+    ///     2, 3, [(0usize, 1usize, F::new(3))],
+    /// ).to_csc();
+    /// assert_eq!(csc.get(0, 1), F::new(3));
+    /// assert_eq!(csc.get(1, 0), F::new(0));
     /// ```
-    pub fn triplets(&self) -> &[(usize, usize, F)] {
-        &self.triplets
+    pub fn get(&self, row: usize, col: usize) -> F {
+        assert!(
+            row < self.rows,
+            "SparseFieldMatrixCsc::get: row {row} out of bounds (rows={})",
+            self.rows
+        );
+        assert!(
+            col < self.cols,
+            "SparseFieldMatrixCsc::get: col {col} out of bounds (cols={})",
+            self.cols
+        );
+        let start = self.col_ptr[col];
+        let end = self.col_ptr[col + 1];
+        let slice = &self.row_idx[start..end];
+        match slice.binary_search(&row) {
+            Ok(off) => self.values[start + off].clone(),
+            Err(_) => zero_witness(&self.values),
+        }
+    }
+
+    /// Iterates over the non-zero entries of column `col` as `(row, &value)`
+    /// pairs in ascending row order.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `col >= self.cols()`.
+    ///
+    /// # Complexity
+    ///
+    /// O(nnz_in_col).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::sparse_matrix::{SparseFieldMatrix, SparseFieldMatrixCsc};
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// type F = Fp<7>;
+    /// let csc: SparseFieldMatrixCsc<F> = SparseFieldMatrix::<F>::from_triplets(
+    ///     3, 2, [(0usize, 0usize, F::new(1)), (2, 0, F::new(2))],
+    /// ).to_csc();
+    /// let got: Vec<(usize, F)> =
+    ///     csc.col_iter(0).map(|(r, v)| (r, v.clone())).collect();
+    /// assert_eq!(got, vec![(0, F::new(1)), (2, F::new(2))]);
+    /// ```
+    pub fn col_iter(&self, col: usize) -> impl ExactSizeIterator<Item = (usize, &F)> + '_ {
+        assert!(
+            col < self.cols,
+            "SparseFieldMatrixCsc::col_iter: col {col} out of bounds (cols={})",
+            self.cols
+        );
+        let start = self.col_ptr[col];
+        let end = self.col_ptr[col + 1];
+        self.row_idx[start..end]
+            .iter()
+            .copied()
+            .zip(self.values[start..end].iter())
+    }
+
+    /// Converts to CSR with the same shape in O(nnz + rows + cols).
+    ///
+    /// # Complexity
+    ///
+    /// O(nnz + rows + cols).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::sparse_matrix::{SparseFieldMatrix, SparseFieldMatrixCsc};
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// type F = Fp<7>;
+    /// let csr = SparseFieldMatrix::<F>::from_triplets(
+    ///     3, 2, [(0usize, 1usize, F::new(4))],
+    /// );
+    /// let roundtrip = csr.to_csc().to_csr();
+    /// assert_eq!(roundtrip, csr);
+    /// ```
+    pub fn to_csr(&self) -> SparseFieldMatrix<F> {
+        let nnz = self.values.len();
+        let mut counts = vec![0usize; self.rows];
+        for &r in &self.row_idx {
+            counts[r] += 1;
+        }
+        let mut row_ptr = Vec::with_capacity(self.rows + 1);
+        row_ptr.push(0);
+        for i in 0..self.rows {
+            row_ptr.push(row_ptr[i] + counts[i]);
+        }
+        let mut next = row_ptr.clone();
+        let mut col_idx = vec![0usize; nnz];
+        let mut values: Vec<F> = if nnz == 0 {
+            Vec::new()
+        } else {
+            (0..nnz).map(|_| self.values[0].clone()).collect()
+        };
+        // Column-major scatter: columns are already in ascending order, so
+        // within each row the emitted column indices come out sorted.
+        for c in 0..self.cols {
+            let start = self.col_ptr[c];
+            let end = self.col_ptr[c + 1];
+            for k in start..end {
+                let r = self.row_idx[k];
+                let pos = next[r];
+                col_idx[pos] = c;
+                values[pos] = self.values[k].clone();
+                next[r] += 1;
+            }
+        }
+        SparseFieldMatrix {
+            rows: self.rows,
+            cols: self.cols,
+            row_ptr,
+            col_idx,
+            values,
+        }
+    }
+
+    /// Materialises the dense counterpart.
+    ///
+    /// # Complexity
+    ///
+    /// O(rows · cols).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::sparse_matrix::{SparseFieldMatrix, SparseFieldMatrixCsc};
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// type F = Fp<7>;
+    /// let csc = SparseFieldMatrix::<F>::from_triplets(
+    ///     2, 2, [(0usize, 0usize, F::new(1)), (1, 1, F::new(1))],
+    /// ).to_csc();
+    /// let m = csc.to_dense();
+    /// assert_eq!(m.get(0, 0), F::new(1));
+    /// assert_eq!(m.get(1, 1), F::new(1));
+    /// ```
+    pub fn to_dense(&self) -> FieldMatrix<F> {
+        self.to_csr().to_dense()
+    }
+
+    /// Returns `(col_ptr, row_idx, values)`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::sparse_matrix::SparseFieldMatrixCsc;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let s = SparseFieldMatrixCsc::<Fp<7>>::zeros(2, 3);
+    /// let (cp, ri, vs) = s.as_raw_parts();
+    /// assert_eq!(cp.len(), 4);
+    /// assert!(ri.is_empty());
+    /// assert!(vs.is_empty());
+    /// ```
+    #[inline]
+    pub fn as_raw_parts(&self) -> (&[usize], &[usize], &[F]) {
+        (&self.col_ptr, &self.row_idx, &self.values)
+    }
+}
+
+// ─── MatrixLike impls ────────────────────────────────────────────────────────
+
+impl<F: FiniteField> MatrixLike<F> for SparseFieldMatrix<F> {
+    type Owned = FieldMatrix<F>;
+
+    #[inline]
+    fn rows(&self) -> usize {
+        SparseFieldMatrix::rows(self)
+    }
+
+    #[inline]
+    fn cols(&self) -> usize {
+        SparseFieldMatrix::cols(self)
+    }
+
+    #[inline]
+    fn get(&self, row: usize, col: usize) -> F {
+        SparseFieldMatrix::get(self, row, col)
+    }
+
+    #[inline]
+    fn transpose(&self) -> Self::Owned {
+        SparseFieldMatrix::transpose(self)
+    }
+}
+
+impl<F: FiniteField> MatrixLike<F> for SparseFieldMatrixCsc<F> {
+    type Owned = FieldMatrix<F>;
+
+    #[inline]
+    fn rows(&self) -> usize {
+        SparseFieldMatrixCsc::rows(self)
+    }
+
+    #[inline]
+    fn cols(&self) -> usize {
+        SparseFieldMatrixCsc::cols(self)
+    }
+
+    #[inline]
+    fn get(&self, row: usize, col: usize) -> F {
+        SparseFieldMatrixCsc::get(self, row, col)
+    }
+
+    #[inline]
+    fn transpose(&self) -> Self::Owned {
+        // Densify first, then use the dense transpose (same choice as the
+        // CSR variant). Keeps the `Owned = FieldMatrix<F>` contract.
+        self.to_dense().transpose()
+    }
+}
+
+// ─── Tests ───────────────────────────────────────────────────────────────────
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::field::matrix::FieldMatrix;
+    use crate::field::FieldVec;
+    use crate::gf2m::{Gf2mWide, Gf2mWideConfig};
+    use crate::gfp::Fp;
+
+    type F7 = Fp<7>;
+    type F65521 = Fp<65521>;
+    const M31: u64 = (1u64 << 31) - 1;
+
+    // GF(2^8) via Gf2mWide, AES irreducible.
+    struct Gf2m8AesCfg;
+    impl Gf2mWideConfig<1> for Gf2m8AesCfg {
+        const M: usize = 8;
+        const MODULUS: [u64; 1] = [0x1B];
+        const NAME: &'static str = "SparseTestsGf2m8AesCfg";
+    }
+    type G8 = Gf2mWide<1, Gf2m8AesCfg>;
+
+    // ── Generic test helpers ─────────────────────────────────────────────
+
+    fn dense_random_fp<const P: u64>(
+        rows: usize,
+        cols: usize,
+        density: f64,
+        seed: u64,
+    ) -> FieldMatrix<Fp<P>> {
+        use rand::{Rng, SeedableRng};
+        let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
+        let mut m = FieldMatrix::<Fp<P>>::zeros(rows, cols);
+        for r in 0..rows {
+            for c in 0..cols {
+                if rng.gen::<f64>() < density {
+                    let v = (rng.gen::<u64>() % (P - 1)) + 1;
+                    m.set(r, c, Fp::<P>::new(v));
+                }
+            }
+        }
+        m
+    }
+
+    fn dense_random_g8(rows: usize, cols: usize, density: f64, seed: u64) -> FieldMatrix<G8> {
+        use rand::{Rng, SeedableRng};
+        let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
+        let mut m = FieldMatrix::<G8>::zeros(rows, cols);
+        for r in 0..rows {
+            for c in 0..cols {
+                if rng.gen::<f64>() < density {
+                    let w = (rng.gen::<u64>() & 0xFF).max(1);
+                    m.set(r, c, G8::new([w]));
+                }
+            }
+        }
+        m
+    }
+
+    fn random_fieldvec_fp<const P: u64>(n: usize, seed: u64) -> FieldVec<Fp<P>> {
+        use rand::{Rng, SeedableRng};
+        let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
+        (0..n).map(|_| Fp::<P>::new(rng.gen::<u64>() % P)).collect()
+    }
+
+    fn random_fieldvec_g8(n: usize, seed: u64) -> FieldVec<G8> {
+        use rand::{Rng, SeedableRng};
+        let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
+        (0..n).map(|_| G8::new([rng.gen::<u64>() & 0xFF])).collect()
+    }
+
+    // ── Roundtrip: from_dense → to_dense ─────────────────────────────────
+
+    #[test]
+    fn test_roundtrip_from_dense_to_dense_fp7() {
+        let m = dense_random_fp::<7>(5, 7, 0.4, 0xAAA);
+        let s = SparseFieldMatrix::from_dense(&m);
+        assert_eq!(s.to_dense(), m);
+    }
+
+    #[test]
+    fn test_roundtrip_from_dense_to_dense_fp65521() {
+        let m = dense_random_fp::<65521>(4, 9, 0.3, 0xBBB);
+        let s = SparseFieldMatrix::from_dense(&m);
+        assert_eq!(s.to_dense(), m);
+    }
+
+    #[test]
+    fn test_roundtrip_from_dense_to_dense_m31() {
+        let m = dense_random_fp::<M31>(8, 8, 0.2, 0xCCC);
+        let s = SparseFieldMatrix::from_dense(&m);
+        assert_eq!(s.to_dense(), m);
+    }
+
+    #[test]
+    fn test_roundtrip_from_dense_to_dense_g8() {
+        let m = dense_random_g8(6, 10, 0.3, 0xDDD);
+        let s = SparseFieldMatrix::from_dense(&m);
+        assert_eq!(s.to_dense(), m);
+    }
+
+    // ── CSR ↔ CSC round-trip ─────────────────────────────────────────────
+
+    #[test]
+    fn test_csr_csc_roundtrip_fp7() {
+        let m = dense_random_fp::<7>(6, 5, 0.5, 0xE1);
+        let csr = SparseFieldMatrix::from_dense(&m);
+        let csc = csr.to_csc();
+        let csr_back = csc.to_csr();
+        assert_eq!(csr, csr_back);
+        assert_eq!(csc.to_dense(), m);
+    }
+
+    #[test]
+    fn test_csr_csc_roundtrip_g8() {
+        let m = dense_random_g8(7, 4, 0.4, 0xE2);
+        let csr = SparseFieldMatrix::from_dense(&m);
+        let csc = csr.to_csc();
+        assert_eq!(csc.to_dense(), m);
+        assert_eq!(csc.to_csr(), csr);
+    }
+
+    // ── SpMV ─────────────────────────────────────────────────────────────
+
+    #[test]
+    fn test_matvec_matches_dense_fp7() {
+        let m = dense_random_fp::<7>(8, 11, 0.3, 0x11);
+        let s = SparseFieldMatrix::from_dense(&m);
+        let x = random_fieldvec_fp::<7>(11, 0x22);
+        assert_eq!(s.matvec(&x), m.matvec(&x));
+    }
+
+    #[test]
+    fn test_matvec_matches_dense_fp65521() {
+        let m = dense_random_fp::<65521>(6, 7, 0.25, 0x33);
+        let s = SparseFieldMatrix::from_dense(&m);
+        let x = random_fieldvec_fp::<65521>(7, 0x44);
+        assert_eq!(s.matvec(&x), m.matvec(&x));
+    }
+
+    #[test]
+    fn test_matvec_matches_dense_m31() {
+        let m = dense_random_fp::<M31>(9, 13, 0.2, 0x55);
+        let s = SparseFieldMatrix::from_dense(&m);
+        let x = random_fieldvec_fp::<M31>(13, 0x66);
+        assert_eq!(s.matvec(&x), m.matvec(&x));
+    }
+
+    #[test]
+    fn test_matvec_matches_dense_g8() {
+        let m = dense_random_g8(5, 12, 0.35, 0x77);
+        let s = SparseFieldMatrix::from_dense(&m);
+        let x = random_fieldvec_g8(12, 0x88);
+        assert_eq!(s.matvec(&x), m.matvec(&x));
+    }
+
+    // ── SpMV transpose ───────────────────────────────────────────────────
+
+    #[test]
+    fn test_matvec_transpose_matches_dense_fp7() {
+        let m = dense_random_fp::<7>(6, 9, 0.4, 0x99);
+        let s = SparseFieldMatrix::from_dense(&m);
+        let x = random_fieldvec_fp::<7>(6, 0xAA);
+        assert_eq!(s.matvec_transpose(&x), m.matvec_transpose(&x));
+    }
+
+    #[test]
+    fn test_matvec_transpose_matches_dense_fp65521() {
+        let m = dense_random_fp::<65521>(5, 8, 0.3, 0xBB);
+        let s = SparseFieldMatrix::from_dense(&m);
+        let x = random_fieldvec_fp::<65521>(5, 0xCC);
+        assert_eq!(s.matvec_transpose(&x), m.matvec_transpose(&x));
+    }
+
+    #[test]
+    fn test_matvec_transpose_matches_dense_m31() {
+        let m = dense_random_fp::<M31>(7, 10, 0.25, 0xDD);
+        let s = SparseFieldMatrix::from_dense(&m);
+        let x = random_fieldvec_fp::<M31>(7, 0xEE);
+        assert_eq!(s.matvec_transpose(&x), m.matvec_transpose(&x));
+    }
+
+    #[test]
+    fn test_matvec_transpose_matches_dense_g8() {
+        let m = dense_random_g8(4, 11, 0.35, 0xFF);
+        let s = SparseFieldMatrix::from_dense(&m);
+        let x = random_fieldvec_g8(4, 0x101);
+        assert_eq!(s.matvec_transpose(&x), m.matvec_transpose(&x));
+    }
+
+    // ── SpMM ─────────────────────────────────────────────────────────────
+
+    #[test]
+    fn test_matmat_matches_dense_fp7() {
+        let a = dense_random_fp::<7>(5, 8, 0.3, 0x201);
+        let b = dense_random_fp::<7>(8, 4, 0.5, 0x202);
+        let s = SparseFieldMatrix::from_dense(&a);
+        let got = s.matmat(&b);
+        let expected = &a * &b;
+        assert_eq!(got, expected);
+    }
+
+    #[test]
+    fn test_matmat_matches_dense_fp65521() {
+        let a = dense_random_fp::<65521>(4, 6, 0.25, 0x203);
+        let b = dense_random_fp::<65521>(6, 3, 0.6, 0x204);
+        let s = SparseFieldMatrix::from_dense(&a);
+        assert_eq!(s.matmat(&b), &a * &b);
+    }
+
+    #[test]
+    fn test_matmat_matches_dense_m31() {
+        let a = dense_random_fp::<M31>(6, 7, 0.2, 0x205);
+        let b = dense_random_fp::<M31>(7, 5, 0.4, 0x206);
+        let s = SparseFieldMatrix::from_dense(&a);
+        assert_eq!(s.matmat(&b), &a * &b);
+    }
+
+    #[test]
+    fn test_matmat_matches_dense_g8() {
+        let a = dense_random_g8(4, 6, 0.3, 0x207);
+        let b = dense_random_g8(6, 5, 0.4, 0x208);
+        let s = SparseFieldMatrix::from_dense(&a);
+        assert_eq!(s.matmat(&b), &a * &b);
+    }
+
+    // ── Triplet canonicalisation ─────────────────────────────────────────
+
+    #[test]
+    fn test_from_triplets_sums_duplicates() {
+        let s = SparseFieldMatrix::<F7>::from_triplets(
+            2,
+            2,
+            [
+                (0usize, 0usize, F7::new(2)),
+                (0, 0, F7::new(3)),
+                (1, 1, F7::new(1)),
+            ],
+        );
+        assert_eq!(s.get(0, 0), F7::new(5));
+        assert_eq!(s.get(1, 1), F7::new(1));
+        assert_eq!(s.nnz(), 2);
+    }
+
+    #[test]
+    fn test_from_triplets_drops_zero_sum() {
+        // 3 + 4 ≡ 0 (mod 7) — the (0, 0) cell must disappear.
+        let s = SparseFieldMatrix::<F7>::from_triplets(
+            2,
+            2,
+            [(0usize, 0usize, F7::new(3)), (0, 0, F7::new(4))],
+        );
+        assert_eq!(s.nnz(), 0);
+    }
+
+    #[test]
+    fn test_from_triplets_drops_explicit_zeros() {
+        let s = SparseFieldMatrix::<F7>::from_triplets(
+            2,
+            2,
+            [(0usize, 0usize, F7::new(0)), (1, 1, F7::new(2))],
+        );
+        assert_eq!(s.nnz(), 1);
+    }
+
+    #[test]
+    fn test_from_triplets_sorts_within_row() {
+        let s = SparseFieldMatrix::<F7>::from_triplets(
+            1,
+            4,
+            [
+                (0usize, 3usize, F7::new(1)),
+                (0, 0, F7::new(2)),
+                (0, 2, F7::new(3)),
+            ],
+        );
+        let (_rp, ci, _vs) = s.as_raw_parts();
+        assert_eq!(ci, &[0, 2, 3]);
+    }
+
+    #[test]
+    #[should_panic(expected = "out of bounds")]
+    fn test_from_triplets_oob_row_panics() {
+        let _ = SparseFieldMatrix::<F7>::from_triplets(2, 2, [(5usize, 0usize, F7::new(1))]);
+    }
+
+    // ── Identity + matvec correctness ────────────────────────────────────
+
+    #[test]
+    fn test_identity_matvec_fp7() {
+        let id = SparseFieldMatrix::<F7>::identity(5);
+        let x = random_fieldvec_fp::<7>(5, 0x301);
+        assert_eq!(id.matvec(&x), x);
+    }
+
+    // ── Edge cases ───────────────────────────────────────────────────────
+
+    #[test]
+    fn test_empty_0x0() {
+        let s: SparseFieldMatrix<F7> = SparseFieldMatrix::zeros(0, 0);
+        assert_eq!(s.shape(), (0, 0));
+        assert_eq!(s.nnz(), 0);
+        let d = s.to_dense();
+        assert_eq!(d.shape(), (0, 0));
+    }
+
+    #[test]
+    fn test_all_zero_mxn() {
+        let s: SparseFieldMatrix<F7> = SparseFieldMatrix::zeros(4, 7);
+        assert_eq!(s.shape(), (4, 7));
+        assert_eq!(s.nnz(), 0);
+        let d = s.to_dense();
+        assert_eq!(d.shape(), (4, 7));
+        for r in 0..4 {
+            for c in 0..7 {
+                assert_eq!(d.get(r, c), F7::new(0));
+            }
+        }
+        // matvec on the structurally empty matrix — must be y = 0.
+        let x = random_fieldvec_fp::<7>(7, 0x401);
+        let y = s.matvec(&x);
+        assert_eq!(y.len(), 4);
+        for i in 0..4 {
+            assert!(y[i].is_zero());
+        }
+    }
+
+    #[test]
+    fn test_single_nonzero() {
+        let s = SparseFieldMatrix::<F7>::from_triplets(3, 3, [(1usize, 2usize, F7::new(4))]);
+        assert_eq!(s.nnz(), 1);
+        assert_eq!(s.get(1, 2), F7::new(4));
+        assert_eq!(s.get(0, 0), F7::new(0));
+        let m = s.to_dense();
+        assert_eq!(m.get(1, 2), F7::new(4));
+        let s2 = SparseFieldMatrix::from_dense(&m);
+        assert_eq!(s2, s);
+    }
+
+    #[test]
+    fn test_diagonal_only() {
+        let mut m = FieldMatrix::<F7>::zeros(5, 5);
+        for i in 0..5 {
+            m.set(i, i, F7::new((i as u64 + 1) % 7));
+        }
+        let s = SparseFieldMatrix::from_dense(&m);
+        assert_eq!(s.nnz(), m.diag().iter().filter(|v| !v.is_zero()).count());
+        assert_eq!(s.to_dense(), m);
+    }
+
+    #[test]
+    fn test_fully_dense_stored_as_sparse() {
+        // Every cell non-zero; sparse representation just stores them all.
+        let mut m = FieldMatrix::<F7>::zeros(3, 4);
+        for r in 0..3 {
+            for c in 0..4 {
+                m.set(r, c, F7::new(((r * 7 + c + 1) as u64) % 7 + 1));
+            }
+        }
+        let s = SparseFieldMatrix::from_dense(&m);
+        assert_eq!(s.nnz(), 3 * 4);
+        assert_eq!(s.to_dense(), m);
+        let x = random_fieldvec_fp::<7>(4, 0x501);
+        assert_eq!(s.matvec(&x), m.matvec(&x));
+    }
+
+    #[test]
+    fn test_very_wide_matrix() {
+        // m = 1, n = 10_000. Verify matvec on a single-row sparse matrix.
+        let n = 10_000usize;
+        let s = SparseFieldMatrix::<F7>::from_triplets(
+            1,
+            n,
+            [
+                (0usize, 0usize, F7::new(1)),
+                (0, n / 2, F7::new(2)),
+                (0, n - 1, F7::new(3)),
+            ],
+        );
+        assert_eq!(s.shape(), (1, n));
+        let m = s.to_dense();
+        assert_eq!(m.shape(), (1, n));
+        let x = random_fieldvec_fp::<7>(n, 0x601);
+        assert_eq!(s.matvec(&x), m.matvec(&x));
+    }
+
+    #[test]
+    fn test_very_tall_matrix() {
+        let rows = 1000usize;
+        let mut triplets = Vec::new();
+        for r in 0..rows {
+            triplets.push((r, r % 5, F7::new(((r as u64) % 6) + 1)));
+        }
+        let s = SparseFieldMatrix::<F7>::from_triplets(rows, 5, triplets);
+        assert_eq!(s.shape(), (rows, 5));
+        let m = s.to_dense();
+        let x = random_fieldvec_fp::<7>(5, 0x701);
+        assert_eq!(s.matvec(&x), m.matvec(&x));
+    }
+
+    // ── Transpose contract ───────────────────────────────────────────────
+
+    #[test]
+    fn test_transpose_matches_dense_transpose() {
+        let m = dense_random_fp::<7>(4, 6, 0.4, 0x801);
+        let s = SparseFieldMatrix::from_dense(&m);
+        let t = s.transpose();
+        assert_eq!(t, m.transpose());
+    }
+
+    #[test]
+    fn test_matrixlike_transpose_csc_matches_dense() {
+        let m = dense_random_fp::<7>(4, 5, 0.4, 0x802);
+        let csc = SparseFieldMatrix::from_dense(&m).to_csc();
+        // Using the MatrixLike trait method path.
+        let t = <SparseFieldMatrixCsc<F7> as MatrixLike<F7>>::transpose(&csc);
+        assert_eq!(t, m.transpose());
+    }
+
+    // ── MatrixLike plumbing ──────────────────────────────────────────────
+
+    #[test]
+    fn test_matrixlike_csr_basic() {
+        let m = dense_random_fp::<7>(3, 4, 0.4, 0x901);
+        let s = SparseFieldMatrix::from_dense(&m);
+        assert_eq!(<SparseFieldMatrix<F7> as MatrixLike<F7>>::rows(&s), 3);
+        assert_eq!(<SparseFieldMatrix<F7> as MatrixLike<F7>>::cols(&s), 4);
+        for r in 0..3 {
+            for c in 0..4 {
+                assert_eq!(
+                    <SparseFieldMatrix<F7> as MatrixLike<F7>>::get(&s, r, c),
+                    m.get(r, c)
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_matrixlike_csc_basic() {
+        let m = dense_random_fp::<65521>(3, 4, 0.4, 0x902);
+        let s = SparseFieldMatrix::from_dense(&m).to_csc();
+        assert_eq!(
+            <SparseFieldMatrixCsc<F65521> as MatrixLike<F65521>>::rows(&s),
+            3
+        );
+        assert_eq!(
+            <SparseFieldMatrixCsc<F65521> as MatrixLike<F65521>>::cols(&s),
+            4
+        );
+        for r in 0..3 {
+            for c in 0..4 {
+                assert_eq!(
+                    <SparseFieldMatrixCsc<F65521> as MatrixLike<F65521>>::get(&s, r, c),
+                    m.get(r, c)
+                );
+            }
+        }
+    }
+
+    // ── FieldMatrix::to_sparse keeps compiling and semantically matches ──
+
+    #[test]
+    fn test_field_matrix_to_sparse_returns_csr() {
+        let m = dense_random_fp::<7>(4, 5, 0.3, 0xA01);
+        let s = m.to_sparse();
+        assert_eq!(s.shape(), m.shape());
+        assert_eq!(s.to_dense(), m);
     }
 }

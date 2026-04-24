@@ -177,3 +177,8 @@ required-features = ["rand"]
 name = "field_matrix_gemm"
 harness = false
 required-features = ["rand"]
+
+[[bench]]
+name = "field_sparse_matrix"
+harness = false
+required-features = ["rand"]
