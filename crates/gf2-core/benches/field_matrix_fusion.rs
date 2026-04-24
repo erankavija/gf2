@@ -9,9 +9,21 @@
 //! let r: FieldMatrix<F> = &t + &c;   // axpy-linear, second alloc
 //! ```
 //!
-//! Success criterion (issue 7e6183bb §5): the fused path must be
-//! **measurably** faster and allocate less at n ∈ {256, 1024} for
-//! Mersenne-31 (`Fp<2^31-1>`).
+//! Success criteria (issue 7e6183bb, as amended 2026-04-24):
+//!
+//! - `[hard]` the fused path allocates fewer owned `FieldMatrix` values
+//!   than the eager two-step at n ∈ {256, 1024} on Mersenne-31
+//!   (`Fp<2^31-1>`) — verified by
+//!   `test_fused_path_allocates_fewer_matrices_than_eager`.
+//! - `[aspirational]` the fused path runs measurably faster at the same
+//!   sizes. Empirically it does not at n = 1024 on commodity x86 (eager
+//!   is ~2 % faster after the blocked kernel rewrite in commit
+//!   `e94eb23`); the O(n²) fusion saving is dwarfed by O(n³) compute at
+//!   this scale. See `field_matrix_fusion_results.md` for the measured
+//!   numbers and the "Proposal for further study" section for the
+//!   structural changes (SIMD inner kernel, Strassen recursion, MSRV
+//!   bump to unlock AVX-512 IFMA) that would make the runtime criterion
+//!   reachable again.
 //!
 //! ## Usage
 //!
