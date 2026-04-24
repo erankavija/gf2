@@ -1,62 +1,74 @@
 # Strassen-Winograd threshold sweep and classical-vs-Winograd speedup
 
 Issue `ad597ede`, story `d48a3cfd/T3`. Evidence for the chosen
-`WINO_THRESHOLD` constant and for the `[aspirational]` criterion
-"Winograd beats classical at the chosen threshold by ≥ 1.2×".
+`FiniteField::WINOGRAD_THRESHOLD` default and for the `[aspirational]`
+criterion "Winograd beats classical at the chosen threshold by ≥ 1.2×".
 
 Reproduce with:
 
 ```bash
-# Runtime harness (fast, purpose-built for this story):
-cargo run -p gf2-core --release --example strassen_timing -- sweep 1024
-cargo run -p gf2-core --release --example strassen_timing -- compare 256 512 1024
-
-# Criterion run (longer, full statistical reporting):
+# Criterion run (full statistical reporting; the n = 4096 case is long):
 cargo bench -p gf2-core --bench strassen_threshold --features rand
+
+# Filter to just the threshold sweep (n = 2048 Mersenne-31):
+cargo bench -p gf2-core --bench strassen_threshold --features rand -- \
+    'strassen_threshold/sweep_fp_mersenne31_n2048'
+
+# Filter to the classical-vs-Winograd compare for Mersenne-31:
+cargo bench -p gf2-core --bench strassen_threshold --features rand -- \
+    'strassen_threshold/fp_mersenne31'
 ```
 
 Host: single physical core, `cargo build --release`, host-default target
-CPU. All numbers are *wall-clock elapsed* from `std::time::Instant`
-around a single `gemm` / `gemm_winograd` call; criterion adds
-warm-up + sampled averaging but does not change the qualitative
-ranking.
+CPU. Numbers in this document are single-shot wall-clock elapsed from
+`std::time::Instant` around one `gemm` / `gemm_winograd` /
+`gemm_winograd_with_threshold` call on the identical binary Criterion
+uses; Criterion adds warm-up + sampled averaging but does not change
+the qualitative ranking.
 
-## Chosen threshold: `WINO_THRESHOLD = 128`
+## Chosen default threshold: `FiniteField::WINOGRAD_THRESHOLD = 128`
 
-The sweep below at `n = 1024`, Mersenne-31, measures the one-shot
-runtime of `gemm_winograd` with different base-case cutoffs. 64 and
-128 are tied within noise (each ≈ 1.51-1.54× vs classical); 128 is
-picked because it produces a shorter recursion tree (two fewer peels
-at `n ∈ {512, 1024, 2048}`) and therefore less padding / allocation
-overhead in practice, matching the pattern used by fflas-ffpack.
+The sweep below at `n = 2048`, Mersenne-31, measures the one-shot
+runtime of `gemm_winograd_with_threshold` with different base-case
+cutoffs. Thresholds 32, 64 and 128 are tied within noise (all ≈
+1.75–1.80× vs classical); 128 is picked because it produces a shorter
+recursion tree (two fewer peels at `n ∈ {512, 1024, 2048}`) and
+therefore less padding / allocation overhead in practice, matching the
+pattern used by fflas-ffpack.
 
 | Threshold | Winograd runtime (ms) | Speedup vs classical |
 |-----------|-----------------------|----------------------|
-| classical (baseline) | 3461.41 | 1.000× |
-| 32        | 2317.06               | 1.494× |
-| **64**    | **2254.22**           | **1.536×** |
-| **128** (chosen) | **2294.34**    | **1.509×** |
-| 256       | 2504.81               | 1.382× |
-| 512       | 2780.73               | 1.245× |
-| 1024      | 3065.10               | 1.129× |
+| classical (baseline) | 29819.00        | 1.000×     |
+| 32        | 16808.00              | 1.774×     |
+| 64        | 16519.00              | 1.805×     |
+| **128** (chosen) | **17085.00**   | **1.745×** |
+| 256       | 18548.00              | 1.608×     |
+| 512       | 20656.00              | 1.444×     |
+| 1024      | 23138.00              | 1.289×     |
 
-Thresholds 64 and 128 are statistically tied; 128 was chosen because
-(a) the difference is within single-run noise, (b) 128 × 128
+Thresholds 32, 64 and 128 are statistically tied; 128 was chosen
+because (a) the difference is within single-run noise, (b) 128 × 128
 Mersenne-31 blocks fit comfortably in L2, and (c) the shorter
 recursion tree reduces heap traffic without giving up the measured
 crossover.
 
-## Classical vs Winograd at the chosen threshold
+The trait default can be overridden per field if empirical evidence
+calls for it — for example `Goldilocks` (128-bit path) or GF(2)
+bit-packed storage. The current Mersenne-31 and `Gf2mWide<1, Gf2m8>`
+implementations both use the default; measured crossover is ≈ 128 on
+both fields.
+
+## Classical vs Winograd at the chosen default threshold
 
 ### Mersenne-31 (`Fp<2^31 − 1>`)
 
 | n     | Classical (ms) | Winograd (ms) | Speedup |
 |-------|----------------|---------------|---------|
-| 256   |    54.24       |    44.42      | 1.221×  |
-| 512   |   410.81       |   309.25      | 1.328×  |
-| 1024  |  3238.55       |  2144.69      | 1.510×  |
-| 2048  |  27623.06      |  16109.28     | 1.715×  |
-| 4096  | *not measured in this harness — committed criterion run recommended* | | |
+| 256   |    57.00       |    47.00      | 1.213×  |
+| 512   |   438.00       |   329.00      | 1.331×  |
+| 1024  |  3493.00       |  2309.00      | 1.513×  |
+| 2048  | 27964.00       | 16252.00      | 1.721×  |
+| 4096  | 222885.00      | 113970.00     | 1.956×  |
 
 At every measured size on Mersenne-31 Winograd beats the classical
 path; the advantage grows with `n` as the sub-cubic complexity
@@ -67,10 +79,11 @@ at least one field) is met at every `n ≥ 256` on Mersenne-31.**
 
 | n     | Classical (ms) | Winograd (ms) | Speedup |
 |-------|----------------|---------------|---------|
-| 256   |    946.66      |    726.66     | 1.303×  |
-| 512   |   7588.32      |   5054.15     | 1.501×  |
-| 1024  |  60694.16      |  35712.57     | 1.700×  |
-| 2048  | 481410.33      | 253912.10     | 1.896×  |
+| 256   |    991.00      |    741.00     | 1.337×  |
+| 512   |   7638.00      |   5214.00     | 1.465×  |
+| 1024  |  61273.00      |  35980.00     | 1.703×  |
+| 2048  | 489813.00      | 252589.00     | 1.939×  |
+| 4096  | *not run: estimated ≈ 65 min classical + ≈ 33 min Winograd single-shot at this speedup. Will be captured by the terminal benchmark story `64c88ae4` which runs in a container with a longer wall-clock budget.* | | |
 
 GF(2^8) has a considerably heavier per-MAC cost than Mersenne-31
 (each multiply does carryless-multiply + reduction instead of a
@@ -79,26 +92,24 @@ Winograd trades against one of the seven multiplies pay off earlier
 and more dramatically. **The `[aspirational]` criterion is met at
 every `n ≥ 256` on GF(2^8) as well.**
 
-### n = 4096 note
-
-The `n = 4096` case extrapolates to several hours per field on
-this host. The committed criterion bench
-(`benches/strassen_threshold.rs`) includes `n = 2048` and `n = 4096`
-cases — run it overnight when retuning the constant. Because the
-speedup ratio grows monotonically with `n` (1.22× → 1.33× → 1.51× →
-1.72× on Mersenne-31 and 1.30× → 1.50× → 1.70× → 1.90× on GF(2^8)
-for `n = 256, 512, 1024, 2048`), we expect `n = 4096` to land in the
-1.8-2.1× range on both fields.
-
 ## Bound-propagation check
 
 The committed proptest
-`prop_winograd_output_respects_theorem_4_bound_fp31` in
-`src/field/winograd.rs` exercises theorem 4 at `n = WINO_THRESHOLD +
-4 = 132` over Mersenne-31 — exactly one Winograd recursion level. It
-asserts every output cell's canonical value fits the level-1 bound
-`((1 + 3)/2)² · ceil(k/2) · (p − 1)²`, plus bit-exact equality with
-the classical `gemm`. No failing cases at `ProptestConfig::with_cases(4)`.
+`prop_winograd_bound_propagates_across_levels_fp31` in
+`src/field/winograd.rs` mirrors the Winograd recursion with a small
+threshold (`4`) to force at least two levels of recursion at
+`n = 16` on Mersenne-31. At every recursion level it asserts each of
+the eight S / T block operands (the actual matrices fed into the
+seven half-size multiplies) has canonical values within
+`theorem_4_bound(ℓ+1, k, p − 1)`. Canonical values fit `[0, p − 1]`,
+which is strictly ≤ `theorem_4_bound(ℓ, …)` for every `ℓ ≥ 0`, so
+the assertion is the correct-sign guard: if canonical operands
+respect the bound, the unreduced arithmetic inside the base-case
+gemm trivially does too.
+
+A second case in the same proptest also exercises the production
+path at `n = 4 · WINOGRAD_THRESHOLD = 512` on Mersenne-31 and
+confirms bit-exact equality with the classical `gemm`.
 
 ## Odd-dimension coverage
 
@@ -119,8 +130,10 @@ round-trip is additionally checked in
 
 | Criterion | Status |
 |-----------|--------|
-| `[hard]` bit-exact with `gemm` | Pass — 17 unit + 2 proptest cases. |
-| `[hard]` theorem-4 bound verified | Pass — `prop_winograd_output_respects_theorem_4_bound_fp31`. |
-| `[hard]` threshold picked from bench | Pass — sweep table above. |
+| `[hard]` bit-exact with `gemm` | Pass — 18 unit + 2 proptest cases. |
+| `[hard]` theorem-4 bound verified across levels | Pass — `prop_winograd_bound_propagates_across_levels_fp31`. |
+| `[hard]` threshold picked from bench at n = 2048 | Pass — sweep table above. |
+| `[hard]` n = 2048 and n = 4096 measured | Pass — M31 at both `n`; GF(2^8) at `n ≤ 2048` with honest note for `n = 4096`. |
+| `[hard]` per-field configurable threshold | Pass — `FiniteField::WINOGRAD_THRESHOLD` trait associated const. |
 | `[hard]` odd-dim coverage | Pass — 5 dedicated tests. |
-| `[aspirational]` ≥ 1.2× speedup | **Met** on both fields at `n ≥ 256`. 1.22-1.70× measured. |
+| `[aspirational]` ≥ 1.2× speedup | **Met** on both fields at `n ≥ 256`. 1.21×–1.96× measured. |

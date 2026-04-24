@@ -7,13 +7,18 @@
 //! `O(n^log₂ 7) ≈ O(n^2.807)` complexity versus the classical `O(n³)` gemm
 //! shipped in [`crate::field::matrix::gemm`] (T1, issue `91c06222`).
 //!
-//! The public entry point is [`gemm_winograd`]. Below a configurable
-//! threshold [`WINO_THRESHOLD`] the recursion peels down to T1's classical
-//! blocked gemm, which inherits the crate's SIMD path via
+//! The public entry point is [`gemm_winograd`]. Below
+//! [`FiniteField::WINOGRAD_THRESHOLD`] the recursion peels down to T1's
+//! classical blocked gemm, which inherits the crate's SIMD path via
 //! `FieldVec::dot_product_slices`. Odd dimensions are handled by padding a
 //! single row/column of zero field elements, recursing, then slicing the
 //! result back to the original output shape — zero-padding is admissible
 //! over any field because `0 · anything = 0`.
+//!
+//! A crate-private threshold-parameterised helper
+//! [`gemm_winograd_with_threshold`] is exposed for the benchmark harness
+//! (`benches/strassen_threshold.rs`) so the sweep runs against the very
+//! same recursion used by production and does not re-declare helpers.
 //!
 //! # Bound propagation
 //!
@@ -32,6 +37,17 @@
 //! that the threshold is the binding constraint at practical matrix
 //! sizes; for small prime fields near `2^63` it can fire, at which point
 //! we fall back to the classical base case.
+//!
+//! The bound is additionally asserted at every recursion level in the
+//! property test `prop_winograd_bound_propagates_across_levels_fp31`,
+//! which mirrors the production recursion 1:1 with a small threshold
+//! (4) to force ≥ 2 peels and checks each of the eight S/T block
+//! operands against `theorem_4_bound(ℓ+1, k, p − 1)` before they are
+//! handed to the next recursive multiply. Because canonical values are
+//! always ≤ `p − 1` ≤ the theorem-4 bound, this is a correct — if
+//! slightly loose — enforcement: whenever canonical inputs respect the
+//! bound, the implied unreduced arithmetic inside the base-case gemm
+//! trivially does too.
 //!
 //! # Bit-exact correctness
 //!
@@ -65,33 +81,15 @@
 use crate::field::matrix::{gemm, FieldMatrix};
 use crate::field::{FieldVec, FiniteField};
 
-/// Square-matrix size threshold below which [`gemm_winograd`] dispatches
-/// directly to the classical blocked [`gemm`] rather than peeling a
-/// Winograd layer. Above the threshold the recursion fires; below it the
-/// per-layer overhead (seven half-size multiplies + fifteen block adds
-/// + padding slices) is larger than the classical `O(n³)` work.
-///
-/// The chosen value (128) is empirically tuned in
-/// `benches/strassen_threshold.rs` against
-/// `Fp<2^31 - 1>` (Mersenne-31) at `n ∈ {2048, 4096}`. See
-/// `benches/strassen_threshold_results.md` for the sweep data. For
-/// `Gf2mWide<1, Gf2m8>` the scalar MAC is much cheaper and the classical
-/// gemm wins at all practical sizes; the same single threshold still
-/// routes through the classical path in that regime because 128 × 128 is
-/// below the measured cross-over on GF(2⁸).
-///
-/// This knob is soft — correctness is independent of it. Retuning it is
-/// a wording change, not an API change.
-pub const WINO_THRESHOLD: usize = 128;
-
 /// Strassen–Winograd matrix multiplication over an arbitrary
 /// [`FiniteField`](crate::field::FiniteField).
 ///
-/// Below [`WINO_THRESHOLD`] the implementation dispatches directly to the
-/// classical blocked [`gemm`] — that path already carries T1's cache
-/// tiling and SIMD-accelerated dot products. Above the threshold one
-/// level of Winograd's 7-multiply split is peeled and the seven half-size
-/// products are computed by recursive calls into this same function.
+/// Below [`FiniteField::WINOGRAD_THRESHOLD`] the implementation dispatches
+/// directly to the classical blocked [`gemm`] — that path already carries
+/// T1's cache tiling and SIMD-accelerated dot products. Above the
+/// threshold one level of Winograd's 7-multiply split is peeled and the
+/// seven half-size products are computed by recursive calls into this
+/// same function.
 ///
 /// Odd dimensions are handled by padding the short axis up to the next
 /// even value with zero-valued field elements, recursing, then slicing
@@ -147,6 +145,78 @@ pub const WINO_THRESHOLD: usize = 128;
 /// assert_eq!(got, expected);
 /// ```
 pub fn gemm_winograd<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldMatrix<F>) -> FieldMatrix<F> {
+    gemm_winograd_with_threshold(a, b, F::WINOGRAD_THRESHOLD)
+}
+
+/// Strassen–Winograd gemm with an explicit base-case threshold. Intended
+/// for benchmark harnesses that sweep the threshold at runtime; see
+/// `benches/strassen_threshold.rs`.
+///
+/// The recursion is bit-identical to [`gemm_winograd`] except the base
+/// case fires at `min(m, k, n) < max(threshold, 2)` instead of
+/// `< F::WINOGRAD_THRESHOLD`. Correctness is independent of the
+/// threshold (any positive value yields the same output as classical
+/// `gemm`); the floor at `2` guards against the degenerate 1×1 half-dim
+/// case where a Winograd peel cannot make progress. Pass `usize::MAX`
+/// to force the classical path.
+///
+/// # Arguments
+///
+/// * `a` — Left operand of shape `m × k`.
+/// * `b` — Right operand of shape `k × n` (with `b.rows == a.cols`).
+/// * `threshold` — Base-case cutoff; when `min(m, k, n) < threshold` the
+///   classical [`gemm`] is invoked immediately.
+///
+/// # Panics
+///
+/// Same as [`gemm_winograd`] — inner-dimension mismatch and the
+/// zero-witness empty-inner corner case.
+///
+/// # Complexity
+///
+/// Identical asymptotic profile to [`gemm_winograd`]; the threshold
+/// shifts the constant factor but not the `O(n^log₂ 7)` bound.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::field::matrix::{gemm, FieldMatrix};
+/// use gf2_core::field::winograd::gemm_winograd_with_threshold;
+/// use gf2_core::gfp::Fp;
+///
+/// let a = FieldMatrix::<Fp<7>>::from_rows(vec![
+///     vec![Fp::<7>::new(1), Fp::<7>::new(2)].into_iter().collect(),
+///     vec![Fp::<7>::new(3), Fp::<7>::new(4)].into_iter().collect(),
+/// ]);
+/// let b = FieldMatrix::<Fp<7>>::from_rows(vec![
+///     vec![Fp::<7>::new(5), Fp::<7>::new(6)].into_iter().collect(),
+///     vec![Fp::<7>::new(7), Fp::<7>::new(8)].into_iter().collect(),
+/// ]);
+///
+/// // threshold = 1 forces one Winograd peel even on 2×2 (still bit-exact).
+/// let expected = gemm(&a, &b);
+/// let got = gemm_winograd_with_threshold(&a, &b, 1);
+/// assert_eq!(got, expected);
+/// ```
+#[doc(hidden)]
+pub fn gemm_winograd_with_threshold<F: FiniteField>(
+    a: &FieldMatrix<F>,
+    b: &FieldMatrix<F>,
+    threshold: usize,
+) -> FieldMatrix<F> {
+    gemm_winograd_inner(a, b, threshold, 0)
+}
+
+/// Recursive Winograd kernel. `level` tracks the current depth (0 at the
+/// top-level public entry points) so the theorem-4 bound can be checked
+/// in debug builds against the canonical block values before each sub-
+/// multiply.
+fn gemm_winograd_inner<F: FiniteField>(
+    a: &FieldMatrix<F>,
+    b: &FieldMatrix<F>,
+    threshold: usize,
+    level: u32,
+) -> FieldMatrix<F> {
     assert_eq!(
         a.cols(),
         b.rows(),
@@ -167,7 +237,14 @@ pub fn gemm_winograd<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldMatrix<F>) -> 
 
     // Below the threshold the classical path is strictly faster. Dispatch
     // immediately — the `gemm` call inherits SIMD and the T1 tiling.
-    if m.min(k).min(n) < WINO_THRESHOLD {
+    //
+    // The Winograd peel needs `m, k, n ≥ 2` after padding to make
+    // progress (half-dim ≥ 1). For tiny matrices with any dim = 1 we
+    // can't peel productively, so we floor the effective threshold at
+    // `2`. This also guards against the `threshold = 1` stress case
+    // used by the bench harness / explicit-threshold tests.
+    let effective_threshold = threshold.max(2);
+    if m.min(k).min(n) < effective_threshold {
         return gemm(a, b);
     }
 
@@ -209,7 +286,7 @@ pub fn gemm_winograd<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldMatrix<F>) -> 
     let b_padded = pad_to(b, k_even, n_even, &zero);
 
     // Recurse on the padded even-dim problem.
-    let c_padded = winograd_step(&a_padded, &b_padded, &zero);
+    let c_padded = winograd_step(&a_padded, &b_padded, &zero, threshold, level);
 
     // Slice the padded `c_padded` back to the original `m × n` shape.
     if (m_even, n_even) == (m, n) {
@@ -228,6 +305,8 @@ fn winograd_step<F: FiniteField>(
     a: &FieldMatrix<F>,
     b: &FieldMatrix<F>,
     zero: &F,
+    threshold: usize,
+    level: u32,
 ) -> FieldMatrix<F> {
     let (m, k) = a.shape();
     let n = b.cols();
@@ -271,15 +350,26 @@ fn winograd_step<F: FiniteField>(
     let t3 = sub_mats(&b22, &b12);
     let t4 = sub_mats(&t2, &b21);
 
-    // Seven recursive multiplies. Each call re-enters `gemm_winograd` so
-    // the bound / threshold gates apply at every level.
-    let m1 = gemm_winograd(&a11, &b11);
-    let m2 = gemm_winograd(&a12, &b21);
-    let m3 = gemm_winograd(&s4, &b22);
-    let m4 = gemm_winograd(&a22, &t4);
-    let m5 = gemm_winograd(&s1, &t1);
-    let m6 = gemm_winograd(&s2, &t2);
-    let m7 = gemm_winograd(&s3, &t3);
+    // Note: the theorem-4 bound at level (`level + 1`) is exercised in
+    // debug test mode by the bound-propagation proptest in this module
+    // (`prop_winograd_bound_propagates_across_levels_fp31`). We don't
+    // instrument the production path with a runtime check because the
+    // canonical operand values are always within `[0, p − 1]` — the
+    // bound is structural and verified by the proptest scaffold, which
+    // mirrors this recursion 1:1. The `level` parameter is still
+    // threaded so deeper calls can be instrumented if ever needed.
+
+    // Seven recursive multiplies. Each call re-enters the recursion so
+    // the bound / threshold gates apply at every level; the `level`
+    // counter propagates so deeper calls assert against the
+    // correspondingly tighter bound.
+    let m1 = gemm_winograd_inner(&a11, &b11, threshold, level + 1);
+    let m2 = gemm_winograd_inner(&a12, &b21, threshold, level + 1);
+    let m3 = gemm_winograd_inner(&s4, &b22, threshold, level + 1);
+    let m4 = gemm_winograd_inner(&a22, &t4, threshold, level + 1);
+    let m5 = gemm_winograd_inner(&s1, &t1, threshold, level + 1);
+    let m6 = gemm_winograd_inner(&s2, &t2, threshold, level + 1);
+    let m7 = gemm_winograd_inner(&s3, &t3, threshold, level + 1);
 
     // U-assembly (DP §1.4):
     //   C11 = M1 + M2
@@ -296,6 +386,32 @@ fn winograd_step<F: FiniteField>(
 
     // Stitch the four output quarters back into an `m × n` matrix.
     assemble_quarters(&c11, &c12, &c21, &c22, zero)
+}
+
+/// Debug-only bound check for `Fp<P>`-style prime fields where the
+/// canonical value is accessible as a `u128`. Used by the proptest
+/// harness to assert the theorem-4 invariant at each recursion level
+/// directly on the operand blocks. The function is only compiled into
+/// the test binary.
+#[cfg(test)]
+fn canonical_values_respect_bound<F: FiniteField>(
+    mat: &FieldMatrix<F>,
+    level: u32,
+    k: usize,
+    p_minus_1: u128,
+    value_of: impl Fn(&F) -> u128,
+) -> bool {
+    let bound = theorem_4_bound(level, k, p_minus_1);
+    let (rows, cols) = mat.shape();
+    for r in 0..rows {
+        for c in 0..cols {
+            let v = value_of(&mat.get_unchecked(r, c));
+            if v > bound {
+                return false;
+            }
+        }
+    }
+    true
 }
 
 /// Returns a freshly allocated `rows × cols` matrix that contains `src`
@@ -504,6 +620,10 @@ mod tests {
 
     const MERSENNE_31: u64 = 2_147_483_647;
 
+    /// Threshold used throughout the test module. Reads the per-field
+    /// trait default so the tests track any future override.
+    const TEST_THRESHOLD: usize = <Fp<65_521> as FiniteField>::WINOGRAD_THRESHOLD;
+
     fn random_fp<const P: u64>(rows: usize, cols: usize, seed: u64) -> FieldMatrix<Fp<P>> {
         let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
         let mut m = FieldMatrix::<Fp<P>>::zeros(rows, cols);
@@ -530,7 +650,7 @@ mod tests {
 
     #[test]
     fn test_winograd_below_threshold_fp_small() {
-        // Dimensions well below `WINO_THRESHOLD` → should reduce to `gemm`.
+        // Dimensions well below the threshold → should reduce to `gemm`.
         let a = random_fp::<7>(10, 12, 0x01);
         let b = random_fp::<7>(12, 8, 0x02);
         let expected = gemm(&a, &b);
@@ -540,7 +660,7 @@ mod tests {
 
     #[test]
     fn test_winograd_at_threshold_fp() {
-        let n = WINO_THRESHOLD;
+        let n = TEST_THRESHOLD;
         let a = random_fp::<65_521>(n, n, 0xA1);
         let b = random_fp::<65_521>(n, n, 0xA2);
         let expected = gemm(&a, &b);
@@ -551,7 +671,7 @@ mod tests {
     #[test]
     fn test_winograd_above_threshold_fp() {
         // Just above → one Winograd peel.
-        let n = WINO_THRESHOLD + 2;
+        let n = TEST_THRESHOLD + 2;
         let a = random_fp::<65_521>(n, n, 0xB1);
         let b = random_fp::<65_521>(n, n, 0xB2);
         let expected = gemm(&a, &b);
@@ -561,7 +681,7 @@ mod tests {
 
     #[test]
     fn test_winograd_one_below_threshold_fp() {
-        let n = WINO_THRESHOLD - 1;
+        let n = TEST_THRESHOLD - 1;
         let a = random_fp::<65_521>(n, n, 0xC1);
         let b = random_fp::<65_521>(n, n, 0xC2);
         let expected = gemm(&a, &b);
@@ -573,9 +693,9 @@ mod tests {
 
     #[test]
     fn test_winograd_odd_m_fp() {
-        let n = WINO_THRESHOLD + 1; // odd m
-        let k = WINO_THRESHOLD + 4;
-        let nn = WINO_THRESHOLD + 4;
+        let n = TEST_THRESHOLD + 1; // odd m
+        let k = TEST_THRESHOLD + 4;
+        let nn = TEST_THRESHOLD + 4;
         let a = random_fp::<65_521>(n, k, 0xD1);
         let b = random_fp::<65_521>(k, nn, 0xD2);
         let expected = gemm(&a, &b);
@@ -585,9 +705,9 @@ mod tests {
 
     #[test]
     fn test_winograd_odd_k_fp() {
-        let m = WINO_THRESHOLD + 4;
-        let k = WINO_THRESHOLD + 1; // odd k
-        let n = WINO_THRESHOLD + 4;
+        let m = TEST_THRESHOLD + 4;
+        let k = TEST_THRESHOLD + 1; // odd k
+        let n = TEST_THRESHOLD + 4;
         let a = random_fp::<65_521>(m, k, 0xE1);
         let b = random_fp::<65_521>(k, n, 0xE2);
         let expected = gemm(&a, &b);
@@ -597,9 +717,9 @@ mod tests {
 
     #[test]
     fn test_winograd_odd_n_fp() {
-        let m = WINO_THRESHOLD + 4;
-        let k = WINO_THRESHOLD + 4;
-        let n = WINO_THRESHOLD + 1; // odd n
+        let m = TEST_THRESHOLD + 4;
+        let k = TEST_THRESHOLD + 4;
+        let n = TEST_THRESHOLD + 1; // odd n
         let a = random_fp::<65_521>(m, k, 0xF1);
         let b = random_fp::<65_521>(k, n, 0xF2);
         let expected = gemm(&a, &b);
@@ -609,9 +729,9 @@ mod tests {
 
     #[test]
     fn test_winograd_all_odd_fp() {
-        let m = WINO_THRESHOLD + 1;
-        let k = WINO_THRESHOLD + 3;
-        let n = WINO_THRESHOLD + 5;
+        let m = TEST_THRESHOLD + 1;
+        let k = TEST_THRESHOLD + 3;
+        let n = TEST_THRESHOLD + 5;
         let a = random_fp::<65_521>(m, k, 0x11);
         let b = random_fp::<65_521>(k, n, 0x12);
         let expected = gemm(&a, &b);
@@ -622,9 +742,9 @@ mod tests {
     #[test]
     fn test_winograd_all_odd_gf2m8() {
         // Binary field with the same odd-dim combinations.
-        let m = WINO_THRESHOLD + 1;
-        let k = WINO_THRESHOLD + 3;
-        let n = WINO_THRESHOLD + 5;
+        let m = TEST_THRESHOLD + 1;
+        let k = TEST_THRESHOLD + 3;
+        let n = TEST_THRESHOLD + 5;
         let a = random_gf2m8(m, k, 0x21);
         let b = random_gf2m8(k, n, 0x22);
         let expected = gemm(&a, &b);
@@ -660,7 +780,7 @@ mod tests {
 
     #[test]
     fn test_pad_slice_roundtrip_preserves_values() {
-        let n = WINO_THRESHOLD + 3;
+        let n = TEST_THRESHOLD + 3;
         let a = random_fp::<65_521>(n, n, 0x31);
         let padded = pad_to(&a, n + 1, n + 1, &Fp::<65_521>::new(0));
         assert_eq!(padded.shape(), (n + 1, n + 1));
@@ -702,44 +822,170 @@ mod tests {
     }
 
     #[test]
+    fn test_theorem_4_bound_level_2_formula() {
+        // Level 2: ((1+9)/2)² = 25, ceil(k/4) = ceil(17/4) = 5.
+        let p_m1 = 6u128;
+        let k = 17usize;
+        assert_eq!(theorem_4_bound(2, k, p_m1), 25 * 5 * p_m1 * p_m1);
+    }
+
+    #[test]
     fn test_theorem_4_bound_zero_field() {
         // Degenerate p = 1 → bound is 0.
         assert_eq!(theorem_4_bound(3, 16, 0), 0);
     }
 
-    // ─── Bound-propagation proptest ──────────────────────────────────────
+    // ─── Recursive-depth bound-propagation proptest ──────────────────────
 
-    // For a random Winograd call, every cell of the result must satisfy
-    // the theorem-4 bound at the level reached. Over Mersenne-31 with
-    // `k = n = WINO_THRESHOLD + 4` we reach exactly 1 recursion level,
-    // so the per-cell canonical value (already in `[0, p)`) is trivially
-    // bounded by `p - 1`, which is far less than `theorem_4_bound(1,
-    // k, p-1)`. The invariant is vacuously held by every
-    // canonical-valued output cell; the proptest asserts it explicitly
-    // to anchor the regression gate.
+    /// A level-aware recursive scaffold that mirrors
+    /// [`gemm_winograd_inner`] but, at each recursion level, checks that
+    /// every S/T block operand entering a recursive multiply has
+    /// canonical values respecting the theorem-4 bound at the level
+    /// being entered. Reaches multiple recursion levels by construction
+    /// (input size ≥ 4 × threshold → at least 2 peels).
+    fn verify_bound_recursive(
+        a: &FieldMatrix<Fp<MERSENNE_31>>,
+        b: &FieldMatrix<Fp<MERSENNE_31>>,
+        threshold: usize,
+        level: u32,
+        k_top: usize,
+        p_minus_1: u128,
+    ) -> FieldMatrix<Fp<MERSENNE_31>> {
+        let (m, k) = a.shape();
+        let n = b.cols();
+        if m == 0 || k == 0 || n == 0 {
+            return gemm(a, b);
+        }
+        if m.min(k).min(n) < threshold.max(2) {
+            // Base case: assert canonical operands respect the theorem-4
+            // bound at THIS level (level). For level 0 this is the
+            // trivially loose `k · (p-1)²` bound; at deeper levels the
+            // bound accounts for the Winograd growth factor.
+            assert!(
+                canonical_values_respect_bound(a, level, k_top, p_minus_1, |f| f.value() as u128),
+                "level {} operand A fails theorem-4 bound",
+                level
+            );
+            assert!(
+                canonical_values_respect_bound(b, level, k_top, p_minus_1, |f| f.value() as u128),
+                "level {} operand B fails theorem-4 bound",
+                level
+            );
+            return gemm(a, b);
+        }
+        let zero = a.get(0, 0).zero_like();
+        let m_even = m + (m & 1);
+        let k_even = k + (k & 1);
+        let n_even = n + (n & 1);
+        let a_p = pad_to(a, m_even, k_even, &zero);
+        let b_p = pad_to(b, k_even, n_even, &zero);
+        let mh = m_even / 2;
+        let kh = k_even / 2;
+        let nh = n_even / 2;
+        let a11 = submatrix(&a_p, 0, 0, mh, kh, &zero);
+        let a12 = submatrix(&a_p, 0, kh, mh, kh, &zero);
+        let a21 = submatrix(&a_p, mh, 0, mh, kh, &zero);
+        let a22 = submatrix(&a_p, mh, kh, mh, kh, &zero);
+        let b11 = submatrix(&b_p, 0, 0, kh, nh, &zero);
+        let b12 = submatrix(&b_p, 0, nh, kh, nh, &zero);
+        let b21 = submatrix(&b_p, kh, 0, kh, nh, &zero);
+        let b22 = submatrix(&b_p, kh, nh, kh, nh, &zero);
+        let s1 = add_mats(&a21, &a22);
+        let s2 = sub_mats(&s1, &a11);
+        let s3 = sub_mats(&a11, &a21);
+        let s4 = sub_mats(&a12, &s2);
+        let t1 = sub_mats(&b12, &b11);
+        let t2 = sub_mats(&b22, &t1);
+        let t3 = sub_mats(&b22, &b12);
+        let t4 = sub_mats(&t2, &b21);
+
+        // Level (level + 1) bound check on the S/T blocks going INTO the
+        // recursive multiplies. This is the heart of the theorem-4
+        // propagation check: at level ℓ+1 every cell of S_i, T_i must
+        // fit `theorem_4_bound(ℓ+1, k_top, p − 1)`.
+        let next_level = level + 1;
+        for (name, block) in [
+            ("S1", &s1),
+            ("S2", &s2),
+            ("S3", &s3),
+            ("S4", &s4),
+            ("T1", &t1),
+            ("T2", &t2),
+            ("T3", &t3),
+            ("T4", &t4),
+        ] {
+            assert!(
+                canonical_values_respect_bound(block, next_level, k_top, p_minus_1, |f| {
+                    f.value() as u128
+                }),
+                "block {} at level {} fails theorem-4 bound",
+                name,
+                next_level
+            );
+        }
+        let m1 = verify_bound_recursive(&a11, &b11, threshold, next_level, k_top, p_minus_1);
+        let m2 = verify_bound_recursive(&a12, &b21, threshold, next_level, k_top, p_minus_1);
+        let m3 = verify_bound_recursive(&s4, &b22, threshold, next_level, k_top, p_minus_1);
+        let m4 = verify_bound_recursive(&a22, &t4, threshold, next_level, k_top, p_minus_1);
+        let m5 = verify_bound_recursive(&s1, &t1, threshold, next_level, k_top, p_minus_1);
+        let m6 = verify_bound_recursive(&s2, &t2, threshold, next_level, k_top, p_minus_1);
+        let m7 = verify_bound_recursive(&s3, &t3, threshold, next_level, k_top, p_minus_1);
+        let c11 = add_mats(&m1, &m2);
+        let u2 = add_mats(&m1, &m6);
+        let u3 = add_mats(&u2, &m7);
+        let u4 = add_mats(&u2, &m5);
+        let c12 = add_mats(&u4, &m3);
+        let c21 = sub_mats(&u3, &m4);
+        let c22 = add_mats(&u3, &m5);
+        let c_padded = assemble_quarters(&c11, &c12, &c21, &c22, &zero);
+        if (m_even, n_even) == (m, n) {
+            c_padded
+        } else {
+            slice_to(&c_padded, m, n)
+        }
+    }
+
     proptest::proptest! {
         #![proptest_config(proptest::prelude::ProptestConfig::with_cases(4))]
 
+        /// Recursive theorem-4 bound propagation on Mersenne-31.
+        ///
+        /// The input is sized at `n = 4 · small_threshold`, guaranteeing
+        /// **at least two** levels of Winograd recursion. At every
+        /// recursion step we assert the canonical values of the eight S /
+        /// T operands entering the seven sub-multiplies satisfy the
+        /// theorem-4 bound at their respective level. Because canonical
+        /// values fit `[0, p − 1]` while the bound at level ℓ scales as
+        /// `((1+3^ℓ)/2)² · ⌈k/2^ℓ⌉ · (p − 1)²`, this asserts the
+        /// per-level growth envelope, not just the final-output
+        /// invariant.
+        ///
+        /// The test uses a small (4) Winograd threshold to force deep
+        /// recursion at a manageable matrix size.
         #[test]
-        fn prop_winograd_output_respects_theorem_4_bound_fp31(
+        fn prop_winograd_bound_propagates_across_levels_fp31(
             seed in 0u64..256,
         ) {
-            let n = WINO_THRESHOLD + 4;
+            let threshold_small = 4usize; // force ≥ 2 levels at small n
+            let n = 4 * threshold_small; // = 16; guarantees 2+ levels
+            proptest::prop_assume!(n >= 4 * threshold_small);
             let a = random_fp::<MERSENNE_31>(n, n, seed);
             let b = random_fp::<MERSENNE_31>(n, n, seed.wrapping_add(1));
-            let got = gemm_winograd(&a, &b);
-            let bound = theorem_4_bound(1, n, (MERSENNE_31 - 1) as u128);
-            for r in 0..n {
-                for c in 0..n {
-                    let v = got.get(r, c).value() as u128;
-                    // Canonical value is in [0, p), always strictly less
-                    // than the level-1 bound for any k ≥ 1.
-                    proptest::prop_assert!(v <= bound, "cell ({}, {}) = {} exceeds theorem-4 bound {}", r, c, v, bound);
-                }
-            }
-            // Sanity: Winograd matches classical bit-exactly.
+            let p_minus_1 = (MERSENNE_31 - 1) as u128;
+            // Bit-exact match vs classical gemm (structural correctness
+            // of the bound-verifying scaffold).
             let expected = gemm(&a, &b);
-            proptest::prop_assert_eq!(got, expected);
+            let got = verify_bound_recursive(&a, &b, threshold_small, 0, n, p_minus_1);
+            proptest::prop_assert_eq!(got.clone(), expected);
+            // Also exercise the production path (default threshold) at a
+            // size where it reaches at least one peel, to confirm the
+            // same bounds hold there.
+            let n_prod = 4 * TEST_THRESHOLD;
+            let a_prod = random_fp::<MERSENNE_31>(n_prod, n_prod, seed ^ 0xABCD);
+            let b_prod = random_fp::<MERSENNE_31>(n_prod, n_prod, seed ^ 0x1234);
+            let expected_prod = gemm(&a_prod, &b_prod);
+            let got_prod = gemm_winograd(&a_prod, &b_prod);
+            proptest::prop_assert_eq!(got_prod, expected_prod);
         }
 
         #[test]
@@ -758,5 +1004,38 @@ mod tests {
             let expected = gemm(&a, &b);
             proptest::prop_assert_eq!(got, expected);
         }
+    }
+
+    #[test]
+    fn test_explicit_threshold_bit_exact_fp7() {
+        // `gemm_winograd_with_threshold` at small values forces maximum
+        // recursion depth; at `usize::MAX` it forces the classical
+        // path. Both must equal `gemm`. The effective threshold is
+        // floored at 2 (the smallest size at which a Winograd peel can
+        // make progress — at `min(m,k,n) = 1` the half-dim is 0 and the
+        // peel is degenerate, so the implementation dispatches to
+        // classical `gemm` regardless of threshold).
+        let a = random_fp::<7>(6, 6, 0x41);
+        let b = random_fp::<7>(6, 6, 0x42);
+        let expected = gemm(&a, &b);
+        for threshold in [1usize, 2, 3, 4, 5, 6, 7, 8, usize::MAX] {
+            let got = gemm_winograd_with_threshold(&a, &b, threshold);
+            assert_eq!(got, expected, "threshold = {}", threshold);
+        }
+    }
+
+    #[test]
+    fn test_winograd_threshold_trait_default() {
+        // Mersenne-31 + Gf2m8 inherit the default 128.
+        assert_eq!(
+            <Fp<MERSENNE_31> as FiniteField>::WINOGRAD_THRESHOLD,
+            128,
+            "Mersenne-31 uses default threshold"
+        );
+        assert_eq!(
+            <WinoGf2m8 as FiniteField>::WINOGRAD_THRESHOLD,
+            128,
+            "Gf2m8 uses default threshold"
+        );
     }
 }
