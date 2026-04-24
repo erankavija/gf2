@@ -190,14 +190,24 @@ the surface contract of this issue.
   `1627-1673`). If `cdcebf6a` later introduces a dedicated column-major
   view type, the trait method can be specialised without source-breaking
   callers because the return type stays `Self::Owned`.
-- **Scalar `Mul<F>` for every `ConstField`** — *Resolved inside this
-  story.* Both `&M * F` / `M * F` (right-scalar) and `F * &M` / `F * M`
-  (left-scalar) now exist for every `ConstField` type in the crate:
+- **Scalar `Mul<F>` — resolved contract.** *Resolved inside this story.*
+  Right-scalar `&M * F` / `M * F` works generically for every
+  `FiniteField`, including the runtime-context `Gf2mElement` which
+  deliberately is not a `ConstField` (it carries an `Arc<FieldParams_>`
+  and therefore is not `Copy`). Both right-scalar impls are bounded on
+  `F: FiniteField` and clone `self.data` element-by-element into the
+  output, so no static zero witness is required
+  (`crates/gf2-core/src/field/matrix.rs:2154-2184`). The new regression
+  test `test_right_scalar_mul_gf2m_element_generic` exercises this path
+  on a 3×3 `Gf2mElement` matrix, locking `&m * k == m.clone() * k` and
+  the element-wise `k * m[r][c]` cross-check. Left-scalar `F * &M` /
+  `F * M` stays per-`ConstField`-family because the orphan rule blocks a
+  single generic blanket impl (`impl<F: FiniteField> Mul<&FieldMatrix<F>>
+  for F` is forbidden for external `F`), so the `impl_left_scalar_mul!`
+  macro stamps it out for every `ConstField` type the crate owns:
   `Fp<const P: u64>`, `GoldilocksFp`, `QuadraticExt<C>`, `CubicExt<C>`,
-  and `Gf2mWide<N, Cfg>`. See the `impl_left_scalar_mul!` macro and its
-  instantiations in `crates/gf2-core/src/field/matrix.rs:2175-2217`.
-  `Gf2mElement` is a non-`Copy` runtime-context type that is deliberately
-  **not** a `ConstField`; the right-scalar `&M * F` / `M * F` direction
-  stays available for it generically, and left-scalar is not applicable
-  because there is no blanket impl the orphan rules would allow and
-  because no call site needs it.
+  and `Gf2mWide<N, Cfg>`
+  (`crates/gf2-core/src/field/matrix.rs:2186-2228`). `Gf2mElement` has
+  no left-scalar impl and none is required — no caller needs `gf2m *
+  matrix` as an expression, and a user-side workaround (`&matrix *
+  gf2m`) is always available because the field is commutative.
