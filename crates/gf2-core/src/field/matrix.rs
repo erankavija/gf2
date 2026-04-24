@@ -28,7 +28,7 @@
 //! kernels and Strassen-Winograd are reserved for story `d48a3cfd`.
 
 use std::fmt;
-use std::ops::{Add, Bound, Index, Mul, Neg, RangeBounds, Sub};
+use std::ops::{Bound, Index, RangeBounds};
 
 use crate::field::{ConstField, FieldVec, FiniteField};
 use crate::matrix_like::{MatrixLike, MatrixLikeMut};
@@ -190,6 +190,51 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// assert_eq!(m.shape(), (2, 2));
     /// assert_eq!(m.get(1, 0), Fp::<7>::new(3));
     /// ```
+    /// Crate-private accessor for the raw backing slice.
+    ///
+    /// Used by the expression-template kernels in
+    /// [`crate::field::expr`] (story `d48a3cfd/T2`) so they can feed the
+    /// existing `dot_product_slices` helper without reaching through the
+    /// `MatrixLike::get` interface element-by-element. This is strictly
+    /// row-major over `rows * cols` cells.
+    #[doc(hidden)]
+    pub(crate) fn as_data_slice(&self) -> &[F] {
+        self.data.as_slice()
+    }
+
+    /// Crate-private constructor shim exposing [`from_raw_parts`] to the
+    /// expression-template module. Identical contract.
+    #[doc(hidden)]
+    pub(crate) fn from_raw_parts_expr(rows: usize, cols: usize, data: FieldVec<F>) -> Self {
+        Self::from_raw_parts(rows, cols, data)
+    }
+
+    /// Constructs a matrix from a `Vec` of row vectors, one [`FieldVec<F>`] per row.
+    ///
+    /// # Arguments
+    ///
+    /// * `rows` - Non-empty list of equal-length row vectors.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `rows` is empty or if the rows have unequal lengths.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::FieldVec;
+    /// use gf2_core::field::matrix::FieldMatrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let r0: FieldVec<Fp<7>> = vec![Fp::new(1), Fp::new(2)].into_iter().collect();
+    /// let r1: FieldVec<Fp<7>> = vec![Fp::new(3), Fp::new(4)].into_iter().collect();
+    /// let m = FieldMatrix::from_rows(vec![r0, r1]);
+    /// assert_eq!(m.shape(), (2, 2));
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(rows × cols).
     pub fn from_rows(rows: Vec<FieldVec<F>>) -> Self {
         assert!(
             !rows.is_empty(),
@@ -1951,113 +1996,17 @@ impl<F: FiniteField + fmt::Display> fmt::Display for FieldMatrix<F> {
     }
 }
 
-// Element-wise addition / subtraction helpers ---------------------------------
-
-fn elementwise_add<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldMatrix<F>) -> FieldMatrix<F> {
-    assert_eq!(a.shape(), b.shape(), "FieldMatrix::add: shape mismatch");
-    let data: FieldVec<F> = a
-        .data
-        .as_slice()
-        .iter()
-        .zip(b.data.as_slice().iter())
-        .map(|(x, y)| x.clone() + y.clone())
-        .collect();
-    FieldMatrix {
-        rows: a.rows,
-        cols: a.cols,
-        data,
-    }
-}
-
-fn elementwise_sub<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldMatrix<F>) -> FieldMatrix<F> {
-    assert_eq!(a.shape(), b.shape(), "FieldMatrix::sub: shape mismatch");
-    let data: FieldVec<F> = a
-        .data
-        .as_slice()
-        .iter()
-        .zip(b.data.as_slice().iter())
-        .map(|(x, y)| x.clone() - y.clone())
-        .collect();
-    FieldMatrix {
-        rows: a.rows,
-        cols: a.cols,
-        data,
-    }
-}
-
-impl<F: FiniteField> Add for FieldMatrix<F> {
-    type Output = FieldMatrix<F>;
-    fn add(self, rhs: Self) -> Self::Output {
-        elementwise_add(&self, &rhs)
-    }
-}
-impl<F: FiniteField> Add<&FieldMatrix<F>> for FieldMatrix<F> {
-    type Output = FieldMatrix<F>;
-    fn add(self, rhs: &FieldMatrix<F>) -> Self::Output {
-        elementwise_add(&self, rhs)
-    }
-}
-impl<F: FiniteField> Add<FieldMatrix<F>> for &FieldMatrix<F> {
-    type Output = FieldMatrix<F>;
-    fn add(self, rhs: FieldMatrix<F>) -> Self::Output {
-        elementwise_add(self, &rhs)
-    }
-}
-impl<F: FiniteField> Add for &FieldMatrix<F> {
-    type Output = FieldMatrix<F>;
-    fn add(self, rhs: &FieldMatrix<F>) -> Self::Output {
-        elementwise_add(self, rhs)
-    }
-}
-
-impl<F: FiniteField> Sub for FieldMatrix<F> {
-    type Output = FieldMatrix<F>;
-    fn sub(self, rhs: Self) -> Self::Output {
-        elementwise_sub(&self, &rhs)
-    }
-}
-impl<F: FiniteField> Sub<&FieldMatrix<F>> for FieldMatrix<F> {
-    type Output = FieldMatrix<F>;
-    fn sub(self, rhs: &FieldMatrix<F>) -> Self::Output {
-        elementwise_sub(&self, rhs)
-    }
-}
-impl<F: FiniteField> Sub<FieldMatrix<F>> for &FieldMatrix<F> {
-    type Output = FieldMatrix<F>;
-    fn sub(self, rhs: FieldMatrix<F>) -> Self::Output {
-        elementwise_sub(self, &rhs)
-    }
-}
-impl<F: FiniteField> Sub for &FieldMatrix<F> {
-    type Output = FieldMatrix<F>;
-    fn sub(self, rhs: &FieldMatrix<F>) -> Self::Output {
-        elementwise_sub(self, rhs)
-    }
-}
-
-impl<F: FiniteField> Neg for FieldMatrix<F> {
-    type Output = FieldMatrix<F>;
-    fn neg(self) -> Self::Output {
-        let data: FieldVec<F> = self.data.into_iter().map(|e| -e).collect();
-        FieldMatrix {
-            rows: self.rows,
-            cols: self.cols,
-            data,
-        }
-    }
-}
-
-impl<F: FiniteField> Neg for &FieldMatrix<F> {
-    type Output = FieldMatrix<F>;
-    fn neg(self) -> Self::Output {
-        let data: FieldVec<F> = self.data.as_slice().iter().map(|e| -e.clone()).collect();
-        FieldMatrix {
-            rows: self.rows,
-            cols: self.cols,
-            data,
-        }
-    }
-}
+// NOTE: The eager `Add`/`Sub`/`Neg` operator overloads that T1 (issue
+// `91c06222`) provided here have been moved to the expression-template
+// layer in `crate::field::expr` (story `d48a3cfd/T2`, issue `7e6183bb`).
+// See `dev/plans/expression_templates_design.md` §4.5 for the migration
+// rationale.
+//
+// The new impls return proxy types (`Sum`, `NegProxy`, `FusedProductPlus`,
+// …) instead of `FieldMatrix<F>`, so `&a * &b + &c` fuses to a single
+// kernel call on the evaluation boundary. Call sites that need the
+// materialised matrix write `(&a + &b).into()` (or rely on type inference
+// at the binding site).
 
 // Row-tile height for the blocked classical gemm. Sized to keep the
 // active working set (one row block of `A`, one column block of `B`, one
@@ -2238,105 +2187,14 @@ pub fn gemm<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldMatrix<F>) -> FieldMatr
     out
 }
 
-impl<F: FiniteField> Mul for FieldMatrix<F> {
-    type Output = FieldMatrix<F>;
-    fn mul(self, rhs: Self) -> Self::Output {
-        gemm(&self, &rhs)
-    }
-}
-impl<F: FiniteField> Mul<&FieldMatrix<F>> for FieldMatrix<F> {
-    type Output = FieldMatrix<F>;
-    fn mul(self, rhs: &FieldMatrix<F>) -> Self::Output {
-        gemm(&self, rhs)
-    }
-}
-impl<F: FiniteField> Mul<FieldMatrix<F>> for &FieldMatrix<F> {
-    type Output = FieldMatrix<F>;
-    fn mul(self, rhs: FieldMatrix<F>) -> Self::Output {
-        gemm(self, &rhs)
-    }
-}
-impl<F: FiniteField> Mul for &FieldMatrix<F> {
-    type Output = FieldMatrix<F>;
-    fn mul(self, rhs: &FieldMatrix<F>) -> Self::Output {
-        gemm(self, rhs)
-    }
-}
-
-// Right-scalar multiplication `&M * F` / `M * F` is generic across every
-// `FiniteField`, including runtime-context types such as `Gf2mElement` which
-// cannot be `ConstField` because they carry an `Arc`-shared polynomial
-// context. This direction does not need a static zero witness: each element
-// is cloned and multiplied by `rhs`, and the result shape matches `self`.
-// Left-scalar `F * &M` / `F * M` has to stay per-`ConstField` family because
-// the orphan rule forbids a single blanket `impl<F: FiniteField> Mul<&M> for
-// F` for arbitrary external `F`; see `impl_left_scalar_mul!` below.
-impl<F: FiniteField> Mul<F> for &FieldMatrix<F> {
-    type Output = FieldMatrix<F>;
-    fn mul(self, rhs: F) -> Self::Output {
-        let data: FieldVec<F> = self
-            .data
-            .as_slice()
-            .iter()
-            .map(|e| e.clone() * rhs.clone())
-            .collect();
-        FieldMatrix {
-            rows: self.rows,
-            cols: self.cols,
-            data,
-        }
-    }
-}
-
-impl<F: FiniteField> Mul<F> for FieldMatrix<F> {
-    type Output = FieldMatrix<F>;
-    fn mul(self, rhs: F) -> Self::Output {
-        &self * rhs
-    }
-}
-
-// `F * M` (left-scalar multiplication) is provided concretely for every
-// `ConstField` type in the crate. A blanket `impl<F: ConstField> Mul<&M<F>>
-// for F` would hit orphan-rule trouble because `F` is an unconstrained type
-// parameter on the left of the impl, so instead the macro below stamps out
-// the two owned/ref variants for each concrete `ConstField` family. The
-// bodies delegate to the existing right-scalar `&M * F` / `M * F` impls
-// so the arithmetic lives in one place.
-macro_rules! impl_left_scalar_mul {
-    ($field_ty:ty $(, $($generics:tt)+)?) => {
-        impl$(<$($generics)+>)? Mul<&FieldMatrix<$field_ty>> for $field_ty {
-            type Output = FieldMatrix<$field_ty>;
-            #[inline]
-            fn mul(self, rhs: &FieldMatrix<$field_ty>) -> Self::Output {
-                rhs * self
-            }
-        }
-
-        impl$(<$($generics)+>)? Mul<FieldMatrix<$field_ty>> for $field_ty {
-            type Output = FieldMatrix<$field_ty>;
-            #[inline]
-            fn mul(self, rhs: FieldMatrix<$field_ty>) -> Self::Output {
-                &rhs * self
-            }
-        }
-    };
-}
-
-impl_left_scalar_mul!(crate::gfp::Fp<P>, const P: u64);
-impl_left_scalar_mul!(crate::gfp::specialized::GoldilocksFp);
-impl_left_scalar_mul!(
-    crate::gfpn::QuadraticExt<C>,
-    C: crate::gfpn::ExtConfig
-);
-impl_left_scalar_mul!(
-    crate::gfpn::CubicExt<C>,
-    C: crate::gfpn::ExtConfig
-);
-impl_left_scalar_mul!(
-    crate::gf2m::Gf2mWide<N, Cfg>,
-    const N: usize,
-    Cfg: crate::gf2m::Gf2mWideConfig<N>
-);
+// NOTE: The eager `Mul` operator overloads that T1 (`91c06222`) provided
+// here have been moved to the expression-template layer in
+// `crate::field::expr`. See `dev/plans/expression_templates_design.md` §4.5.
+//
+// `&a * &b` now returns `Product<&M, &M>`, a lazy proxy; pipe it through
+// `.into()` to materialise, or compose it with `+` to reach a canonical
+// fusion such as `FusedProductPlus<Product<_, _>, &M>` that dispatches one
+// `gemm_with_beta` kernel call.
 
 // ─── Range resolution ─────────────────────────────────────────────────────────
 
@@ -2563,16 +2421,19 @@ mod tests {
         let mut b = FieldMatrix::<F>::zeros(2, 2);
         a.set(0, 0, f(5));
         b.set(0, 0, f(3));
-        assert_eq!((&a + &b).get(0, 0), f(1));
-        assert_eq!((&a - &b).get(0, 0), f(2));
-        assert_eq!((-&a).get(0, 0), f(7 - 5));
+        let sum: FieldMatrix<F> = (&a + &b).into();
+        let diff: FieldMatrix<F> = &a - &b;
+        let neg: FieldMatrix<F> = (-&a).into();
+        assert_eq!(sum.get(0, 0), f(1));
+        assert_eq!(diff.get(0, 0), f(2));
+        assert_eq!(neg.get(0, 0), f(7 - 5));
     }
 
     #[test]
     fn test_mul_identity_returns_identity() {
         let a = FieldMatrix::<F>::identity(3);
         let b = FieldMatrix::<F>::identity(3);
-        let c = &a * &b;
+        let c: FieldMatrix<F> = (&a * &b).into();
         assert_eq!(c, FieldMatrix::<F>::identity(3));
     }
 
@@ -2586,7 +2447,7 @@ mod tests {
         b.set(0, 0, f(1));
         b.set(1, 1, f(4));
         b.set(2, 0, f(5));
-        let c = &a * &b;
+        let c: FieldMatrix<F> = (&a * &b).into();
         assert_eq!(c.shape(), (2, 2));
         assert_eq!(c.get(0, 0), f(1));
         assert_eq!(c.get(0, 1), f(2) * f(4));
@@ -2598,7 +2459,7 @@ mod tests {
         let field = gf16();
         let a = gf16_mat(&field, &[&[2, 4, 0], &[0, 8, 6]]);
         let b = gf16_mat(&field, &[&[1, 3], &[5, 0], &[0, 7]]);
-        let c = &a * &b;
+        let c = crate::field::matrix::gemm(&a, &b);
         assert_eq!(c.shape(), (2, 2));
         // c[0][0] = 2·1 + 4·5 + 0·0.
         let expected_00 = field.element(2) * field.element(1) + field.element(4) * field.element(5);
@@ -2612,8 +2473,8 @@ mod tests {
     fn test_scalar_mul_both_sides_agree() {
         let mut a = FieldMatrix::<F>::zeros(2, 2);
         a.set(0, 1, f(3));
-        let r1 = &a * f(2);
-        let r2 = f(2) * &a;
+        let r1: FieldMatrix<F> = (&a * f(2)).into();
+        let r2: FieldMatrix<F> = (f(2) * &a).into();
         assert_eq!(r1, r2);
         assert_eq!(r1.get(0, 1), f(6));
     }
@@ -2632,11 +2493,11 @@ mod tests {
         a.set(0, 1, Fp::<7>::new(3));
         a.set(1, 0, Fp::<7>::new(5));
         let k = Fp::<7>::new(4);
-        let right_ref = &a * k;
-        let left_ref = k * &a;
+        let right_ref: FieldMatrix<Fp<7>> = (&a * k).into();
+        let left_ref: FieldMatrix<Fp<7>> = (k * &a).into();
         assert_eq!(right_ref, left_ref);
-        let right_owned = a.clone() * k;
-        let left_owned = k * a.clone();
+        let right_owned: FieldMatrix<Fp<7>> = (a.clone() * k).into();
+        let left_owned: FieldMatrix<Fp<7>> = (k * a.clone()).into();
         assert_eq!(right_owned, left_owned);
         assert_eq!(right_owned, right_ref);
     }
@@ -2649,11 +2510,11 @@ mod tests {
         a.set(0, 1, GoldilocksFp::new(11));
         a.set(1, 1, GoldilocksFp::new(13));
         let k = GoldilocksFp::new(5);
-        let right_ref = &a * k;
-        let left_ref = k * &a;
+        let right_ref: FieldMatrix<GoldilocksFp> = (&a * k).into();
+        let left_ref: FieldMatrix<GoldilocksFp> = (k * &a).into();
         assert_eq!(right_ref, left_ref);
-        let right_owned = a.clone() * k;
-        let left_owned = k * a.clone();
+        let right_owned: FieldMatrix<GoldilocksFp> = (a.clone() * k).into();
+        let left_owned: FieldMatrix<GoldilocksFp> = (k * a.clone()).into();
         assert_eq!(right_owned, left_owned);
         assert_eq!(right_owned, right_ref);
     }
@@ -2682,11 +2543,11 @@ mod tests {
         a.set(0, 0, a00);
         a.set(0, 1, a01);
         let k = Q::new(Fp::<7>::new(4), Fp::<7>::new(6));
-        let right_ref = &a * k;
-        let left_ref = k * &a;
+        let right_ref: FieldMatrix<Q> = (&a * k).into();
+        let left_ref: FieldMatrix<Q> = (k * &a).into();
         assert_eq!(right_ref, left_ref);
-        let right_owned = a.clone() * k;
-        let left_owned = k * a.clone();
+        let right_owned: FieldMatrix<Q> = (a.clone() * k).into();
+        let left_owned: FieldMatrix<Q> = (k * a.clone()).into();
         assert_eq!(right_owned, left_owned);
         assert_eq!(right_owned, right_ref);
     }
@@ -2701,11 +2562,11 @@ mod tests {
         a.set(0, 0, a00);
         a.set(0, 1, a01);
         let k = C::new(Fp::<7>::new(4), Fp::<7>::new(6), Fp::<7>::new(2));
-        let right_ref = &a * k;
-        let left_ref = k * &a;
+        let right_ref: FieldMatrix<C> = (&a * k).into();
+        let left_ref: FieldMatrix<C> = (k * &a).into();
         assert_eq!(right_ref, left_ref);
-        let right_owned = a.clone() * k;
-        let left_owned = k * a.clone();
+        let right_owned: FieldMatrix<C> = (a.clone() * k).into();
+        let left_owned: FieldMatrix<C> = (k * a.clone()).into();
         assert_eq!(right_owned, left_owned);
         assert_eq!(right_owned, right_ref);
     }
@@ -2732,11 +2593,11 @@ mod tests {
         a.set(0, 0, a00);
         a.set(0, 1, a01);
         let k = W::new([0b0011]); // α + 1
-        let right_ref = &a * k;
-        let left_ref = k * &a;
+        let right_ref: FieldMatrix<W> = (&a * k).into();
+        let left_ref: FieldMatrix<W> = (k * &a).into();
         assert_eq!(right_ref, left_ref);
-        let right_owned = a.clone() * k;
-        let left_owned = k * a.clone();
+        let right_owned: FieldMatrix<W> = (a.clone() * k).into();
+        let left_owned: FieldMatrix<W> = (k * a.clone()).into();
         assert_eq!(right_owned, left_owned);
         assert_eq!(right_owned, right_ref);
     }
@@ -2749,6 +2610,7 @@ mod tests {
     // `ConstField` and the orphan rule blocks a single generic impl.
     #[test]
     fn test_right_scalar_mul_gf2m_element_generic() {
+        use crate::matrix_like::MatrixLike;
         let field = gf16();
         // 3×3 non-trivial matrix over GF(2^4) so the element-wise check
         // exercises every row/column at least once.
@@ -2757,10 +2619,10 @@ mod tests {
         let k = field.element(11); // arbitrary non-zero scalar
 
         // `&M * F` (ref form) and `M * F` (owned form) must agree — no
-        // separate arithmetic path.
+        // separate arithmetic path. These return `Scale` proxies whose
+        // `MatrixLike::get` implements the multiplication lazily.
         let right_ref = &m * k.clone();
         let right_owned = m.clone() * k.clone();
-        assert_eq!(right_ref, right_owned);
 
         // Element-wise cross-check: each entry equals `k * m[r][c]`.
         // `Gf2mElement` multiplication is commutative (GF(2^m) is a
@@ -2768,14 +2630,20 @@ mod tests {
         for (r, row) in values.iter().enumerate() {
             for (c, v) in row.iter().enumerate() {
                 let expected = field.element(*v) * k.clone();
-                assert_eq!(right_ref.get(r, c), expected);
-                assert_eq!(right_owned.get(r, c), expected);
+                assert_eq!(
+                    <_ as MatrixLike<Gf2mElement>>::get(&right_ref, r, c),
+                    expected
+                );
+                assert_eq!(
+                    <_ as MatrixLike<Gf2mElement>>::get(&right_owned, r, c),
+                    expected
+                );
             }
         }
 
         // Shape is preserved.
-        assert_eq!(right_ref.shape(), (3, 3));
-        assert_eq!(right_owned.shape(), (3, 3));
+        assert_eq!(<_ as MatrixLike<Gf2mElement>>::shape(&right_ref), (3, 3));
+        assert_eq!(<_ as MatrixLike<Gf2mElement>>::shape(&right_owned), (3, 3));
     }
 
     #[test]
@@ -2919,7 +2787,7 @@ mod tests {
         // with backing storage of length 6, not an inconsistent empty buffer.
         let a = FieldMatrix::<F>::zeros(3, 0);
         let b = FieldMatrix::<F>::zeros(0, 2);
-        let out = &a * &b;
+        let out: FieldMatrix<F> = (&a * &b).into();
         assert_eq!(out.rows(), 3);
         assert_eq!(out.cols(), 2);
         for r in 0..3 {
@@ -2941,13 +2809,13 @@ mod tests {
         let field = gf16();
         let a_empty_rows = FieldMatrix::<Gf2mElement>::new(0, 3, field.element(0));
         let b = gf16_mat(&field, &[&[1, 2], &[3, 4], &[5, 6]]);
-        let out1 = &a_empty_rows * &b;
+        let out1 = crate::field::matrix::gemm(&a_empty_rows, &b);
         assert_eq!(out1.rows(), 0);
         assert_eq!(out1.cols(), 2);
 
         let a = gf16_mat(&field, &[&[1, 2, 3], &[4, 5, 6]]);
         let b_empty_cols = FieldMatrix::<Gf2mElement>::new(3, 0, field.element(0));
-        let out2 = &a * &b_empty_cols;
+        let out2 = crate::field::matrix::gemm(&a, &b_empty_cols);
         assert_eq!(out2.rows(), 2);
         assert_eq!(out2.cols(), 0);
     }
@@ -2956,11 +2824,13 @@ mod tests {
     fn test_gemm_panics_for_zero_inner_without_const_zero() {
         // (3, 0) * (0, 2) on Gf2mElement. Both factors are empty, so gemm
         // has no `F` witness to materialise the 3×2 zero output and must
-        // panic with the documented message.
+        // panic with the documented message. With the expression-template
+        // layer the panic fires at evaluation time (on `gemm(&a, &b)`), not
+        // at proxy construction.
         let field = gf16();
         let a = FieldMatrix::<Gf2mElement>::new(3, 0, field.element(0));
         let b = FieldMatrix::<Gf2mElement>::new(0, 2, field.element(0));
-        let result = std::panic::catch_unwind(|| &a * &b);
+        let result = std::panic::catch_unwind(|| crate::field::matrix::gemm(&a, &b));
         assert!(result.is_err(), "expected gemm to panic");
         let payload = result.err().unwrap();
         let msg = payload
@@ -3067,7 +2937,9 @@ mod tests {
         ) {
             let a = random_fp7_matrix(rows, cols, seed_a);
             let b = random_fp7_matrix(rows, cols, seed_b);
-            prop_assert_eq!(&a + &b, &b + &a);
+            let ab: FieldMatrix<F> = (&a + &b).into();
+            let ba: FieldMatrix<F> = (&b + &a).into();
+            prop_assert_eq!(ab, ba);
         }
 
         #[test]
@@ -3081,7 +2953,11 @@ mod tests {
             let a = random_fp7_matrix(rows, cols, seed_a);
             let b = random_fp7_matrix(rows, cols, seed_b);
             let c = random_fp7_matrix(rows, cols, seed_c);
-            prop_assert_eq!((&a + &b) + &c, &a + (&b + &c));
+            let t1: FieldMatrix<F> = (&a + &b).into();
+            let lhs: FieldMatrix<F> = (&t1 + &c).into();
+            let t2: FieldMatrix<F> = (&b + &c).into();
+            let rhs: FieldMatrix<F> = (&a + &t2).into();
+            prop_assert_eq!(lhs, rhs);
         }
 
         #[test]
@@ -3094,7 +2970,12 @@ mod tests {
             let a = random_fp7_matrix(n, n, seed_a);
             let b = random_fp7_matrix(n, n, seed_b);
             let c = random_fp7_matrix(n, n, seed_c);
-            prop_assert_eq!(&a * (&b + &c), &a * &b + &a * &c);
+            let bc: FieldMatrix<F> = (&b + &c).into();
+            let lhs: FieldMatrix<F> = (&a * &bc).into();
+            let ab: FieldMatrix<F> = (&a * &b).into();
+            let ac: FieldMatrix<F> = (&a * &c).into();
+            let rhs: FieldMatrix<F> = (&ab + &ac).into();
+            prop_assert_eq!(lhs, rhs);
         }
 
         #[test]
@@ -3114,8 +2995,10 @@ mod tests {
         ) {
             let a = random_fp7_matrix(n, n, seed);
             let id = FieldMatrix::<F>::identity(n);
-            prop_assert_eq!(&a * &id, a.clone());
-            prop_assert_eq!(&id * &a, a);
+            let aid: FieldMatrix<F> = (&a * &id).into();
+            let ida: FieldMatrix<F> = (&id * &a).into();
+            prop_assert_eq!(aid, a.clone());
+            prop_assert_eq!(ida, a);
         }
 
         #[test]
@@ -3129,7 +3012,7 @@ mod tests {
             let x_mat = random_fp7_matrix(cols, 1, seed_x);
             let x_vec: FieldVec<F> =
                 (0..cols).map(|i| x_mat.get(i, 0)).collect();
-            let ax = &a * &x_mat;
+            let ax: FieldMatrix<F> = (&a * &x_mat).into();
             let y = a.matvec(&x_vec);
             for i in 0..rows {
                 prop_assert_eq!(ax.get(i, 0), y[i]);
@@ -3146,7 +3029,17 @@ mod tests {
             let field = gf16();
             let a = random_gf16_matrix(&field, rows, cols, seed_a);
             let b = random_gf16_matrix(&field, rows, cols, seed_b);
-            prop_assert_eq!(&a + &b, &b + &a);
+            // Runtime-context field: compare element-wise via MatrixLike.
+            let ab = &a + &b;
+            let ba = &b + &a;
+            for r in 0..rows {
+                for c in 0..cols {
+                    prop_assert_eq!(
+                        <_ as MatrixLike<Gf2mElement>>::get(&ab, r, c),
+                        <_ as MatrixLike<Gf2mElement>>::get(&ba, r, c)
+                    );
+                }
+            }
         }
 
         #[test]
@@ -3161,7 +3054,18 @@ mod tests {
             let a = random_gf16_matrix(&field, rows, cols, seed_a);
             let b = random_gf16_matrix(&field, rows, cols, seed_b);
             let c = random_gf16_matrix(&field, rows, cols, seed_c);
-            prop_assert_eq!((&a + &b) + &c, &a + (&b + &c));
+            // (A+B)+C and A+(B+C) — element-wise, no ConstField available.
+            let ab = &a + &b;
+            let bc = &b + &c;
+            for r in 0..rows {
+                for col in 0..cols {
+                    let lhs = <_ as MatrixLike<Gf2mElement>>::get(&ab, r, col)
+                        + <_ as MatrixLike<Gf2mElement>>::get(&c, r, col);
+                    let rhs = <_ as MatrixLike<Gf2mElement>>::get(&a, r, col)
+                        + <_ as MatrixLike<Gf2mElement>>::get(&bc, r, col);
+                    prop_assert_eq!(lhs, rhs);
+                }
+            }
         }
 
         #[test]
@@ -3175,7 +3079,23 @@ mod tests {
             let a = random_gf16_matrix(&field, n, n, seed_a);
             let b = random_gf16_matrix(&field, n, n, seed_b);
             let c = random_gf16_matrix(&field, n, n, seed_c);
-            prop_assert_eq!(&a * (&b + &c), &a * &b + &a * &c);
+            // Distributivity over a runtime-context field: use `gemm`
+            // directly (no `.into()` bridge for non-ConstField).
+            let bc_proxy = &b + &c;
+            // Materialise `b+c` via a helper.
+            let bc = gf16_mat_from_proxy(n, n, &bc_proxy);
+            let a_bc = crate::field::matrix::gemm(&a, &bc);
+            let ab = crate::field::matrix::gemm(&a, &b);
+            let ac = crate::field::matrix::gemm(&a, &c);
+            let ab_ac_proxy = &ab + &ac;
+            for r in 0..n {
+                for col in 0..n {
+                    prop_assert_eq!(
+                        a_bc.get(r, col),
+                        <_ as MatrixLike<Gf2mElement>>::get(&ab_ac_proxy, r, col)
+                    );
+                }
+            }
         }
 
         #[test]
@@ -3188,6 +3108,23 @@ mod tests {
             let a = random_gf16_matrix(&field, rows, cols, seed);
             prop_assert_eq!(a.transpose().transpose(), a);
         }
+    }
+
+    // Helper: materialise a `MatrixLike` proxy over runtime-context
+    // `Gf2mElement` into an owned `FieldMatrix`. The public `From<Expr>`
+    // bridge is `ConstField`-only; this helper fills the runtime-context gap.
+    fn gf16_mat_from_proxy<M: MatrixLike<Gf2mElement>>(
+        rows: usize,
+        cols: usize,
+        m: &M,
+    ) -> FieldMatrix<Gf2mElement> {
+        let mut data = FieldVec::with_capacity(rows * cols);
+        for r in 0..rows {
+            for c in 0..cols {
+                data.push(m.get(r, c));
+            }
+        }
+        FieldMatrix::from_raw_parts(rows, cols, data)
     }
 
     // ─── 91c06222: blocked gemm regression suite ──────────────────────────
@@ -3294,7 +3231,8 @@ mod tests {
         for (m, k, n) in [(1, 1, 1), (2, 3, 4), (5, 5, 5), (7, 13, 3)] {
             let a = random_fp_matrix::<7>(m, k, 0xA1 ^ (m * k * n) as u64);
             let b = random_fp_matrix::<7>(k, n, 0xB2 ^ (m * k * n) as u64);
-            assert_eq!(&a * &b, naive_gemm(&a, &b), "{}x{}x{}", m, k, n);
+            let got: FieldMatrix<Fp<7>> = (&a * &b).into();
+            assert_eq!(got, naive_gemm(&a, &b), "{}x{}x{}", m, k, n);
         }
     }
 
@@ -3304,7 +3242,8 @@ mod tests {
         for (m, k, n) in [(1, 1, 1), (3, 5, 2), (7, 11, 5)] {
             let a = random_fp_matrix::<65521>(m, k, 0xCAFEu64 ^ (m * k) as u64);
             let b = random_fp_matrix::<65521>(k, n, 0xBEEFu64 ^ (k * n) as u64);
-            assert_eq!(&a * &b, naive_gemm(&a, &b), "{}x{}x{}", m, k, n);
+            let got: FieldMatrix<Fp<65521>> = (&a * &b).into();
+            assert_eq!(got, naive_gemm(&a, &b), "{}x{}x{}", m, k, n);
         }
     }
 
@@ -3316,7 +3255,8 @@ mod tests {
         for (m, k, n) in [(1, 1, 1), (4, 6, 3), (5, 17, 5)] {
             let a = random_fp_matrix::<M31>(m, k, 0xD00Du64 ^ (m * k) as u64);
             let b = random_fp_matrix::<M31>(k, n, 0xE11Eu64 ^ (k * n) as u64);
-            assert_eq!(&a * &b, naive_gemm(&a, &b), "{}x{}x{}", m, k, n);
+            let got: FieldMatrix<Fp<M31>> = (&a * &b).into();
+            assert_eq!(got, naive_gemm(&a, &b), "{}x{}x{}", m, k, n);
         }
     }
 
@@ -3326,7 +3266,8 @@ mod tests {
         for (m, k, n) in [(1, 1, 1), (3, 5, 2), (7, 11, 5)] {
             let a = random_gf2m8_matrix(m, k, 0xF00Du64 ^ (m * k) as u64);
             let b = random_gf2m8_matrix(k, n, 0x1234u64 ^ (k * n) as u64);
-            assert_eq!(&a * &b, naive_gemm(&a, &b), "{}x{}x{}", m, k, n);
+            let got: FieldMatrix<Gf2m8> = (&a * &b).into();
+            assert_eq!(got, naive_gemm(&a, &b), "{}x{}x{}", m, k, n);
         }
     }
 
@@ -3357,19 +3298,22 @@ mod tests {
         for (m, k, n) in [(1, 1, 1), (3, 5, 2), (7, 11, 5)] {
             let a = mk_mat(m, k, 0xAAu64 ^ (m * k) as u64);
             let b = mk_mat(k, n, 0xBBu64 ^ (k * n) as u64);
-            assert_eq!(&a * &b, naive_gemm(&a, &b), "{}x{}x{}", m, k, n);
+            let got: FieldMatrix<Gf2m16> = (&a * &b).into();
+            assert_eq!(got, naive_gemm(&a, &b), "{}x{}x{}", m, k, n);
         }
     }
 
     #[test]
     fn test_gemm_matches_naive_gf2m_element_runtime() {
         // Gf2mElement is the runtime-context field. Cross-check over
-        // GF(2^4) with polynomial x^4 + x + 1.
+        // GF(2^4) with polynomial x^4 + x + 1. Runtime-context fields have
+        // no `ConstField` bridge, so call `gemm` directly.
         let field = gf16();
         for (m, k, n) in [(1, 1, 1), (2, 3, 4), (5, 5, 5)] {
             let a = random_gf16_matrix(&field, m, k, 0x42u64 ^ (m * k) as u64);
             let b = random_gf16_matrix(&field, k, n, 0x43u64 ^ (k * n) as u64);
-            assert_eq!(&a * &b, naive_gemm(&a, &b), "{}x{}x{}", m, k, n);
+            let got = crate::field::matrix::gemm(&a, &b);
+            assert_eq!(got, naive_gemm(&a, &b), "{}x{}x{}", m, k, n);
         }
     }
 
@@ -3388,7 +3332,8 @@ mod tests {
         for (m, k, n) in cases {
             let a = random_fp_matrix::<7>(m, k, 0x77u64 ^ (m * n) as u64);
             let b = random_fp_matrix::<7>(k, n, 0x88u64 ^ (k * n) as u64);
-            assert_eq!(&a * &b, naive_gemm(&a, &b), "{}x{}x{}", m, k, n);
+            let got: FieldMatrix<Fp<7>> = (&a * &b).into();
+            assert_eq!(got, naive_gemm(&a, &b), "{}x{}x{}", m, k, n);
         }
     }
 
@@ -3403,7 +3348,8 @@ mod tests {
         let n = 2;
         let a = random_fp_matrix::<7>(m, k, 0x5A);
         let b = random_fp_matrix::<7>(k, n, 0xA5);
-        assert_eq!(&a * &b, naive_gemm(&a, &b));
+        let got: FieldMatrix<Fp<7>> = (&a * &b).into();
+        assert_eq!(got, naive_gemm(&a, &b));
     }
 
     #[test]
@@ -3434,7 +3380,7 @@ mod tests {
             a.set(0, i, Fpx::new(1));
             b.set(i, 0, Fpx::new(1));
         }
-        let out = &a * &b;
+        let out: FieldMatrix<Fpx> = (&a * &b).into();
         let expected = Fpx::new(k_inner as u64 % P);
         assert_eq!(out.get(0, 0), expected);
 
@@ -3447,7 +3393,7 @@ mod tests {
             a.set(0, i, Fpx::new(1));
             b.set(i, 0, Fpx::new(1));
         }
-        let out = &a * &b;
+        let out: FieldMatrix<Fpx> = (&a * &b).into();
         assert_eq!(out.get(0, 0), Fpx::new(k_inner as u64 % P));
     }
 
@@ -3457,7 +3403,7 @@ mod tests {
         // matrix; this catches any accidental divergence in the Mul impls.
         let a = random_fp_matrix::<7>(3, 3, 0xABCD);
         let b = random_fp_matrix::<7>(3, 3, 0xDCBA);
-        let r1 = &a * &b;
+        let r1: FieldMatrix<Fp<7>> = (&a * &b).into();
         let r2 = a.clone() * &b;
         let r3 = &a * b.clone();
         let r4 = a.clone() * b.clone();
@@ -3470,7 +3416,7 @@ mod tests {
     fn test_sub_all_four_owned_ref_combos_agree() {
         let a = random_fp_matrix::<7>(3, 4, 0x11);
         let b = random_fp_matrix::<7>(3, 4, 0x22);
-        let r1 = &a - &b;
+        let r1: FieldMatrix<Fp<7>> = &a - &b;
         let r2 = a.clone() - &b;
         let r3 = &a - b.clone();
         let r4 = a.clone() - b.clone();
@@ -3483,7 +3429,7 @@ mod tests {
     fn test_add_all_four_owned_ref_combos_agree() {
         let a = random_fp_matrix::<7>(3, 4, 0x33);
         let b = random_fp_matrix::<7>(3, 4, 0x44);
-        let r1 = &a + &b;
+        let r1: FieldMatrix<Fp<7>> = (&a + &b).into();
         let r2 = a.clone() + &b;
         let r3 = &a + b.clone();
         let r4 = a.clone() + b.clone();
@@ -3495,11 +3441,15 @@ mod tests {
     #[test]
     fn test_neg_owned_and_ref_agree() {
         let a = random_fp_matrix::<7>(3, 4, 0x55);
-        let r_owned = -a.clone();
-        let r_ref = -&a;
+        let r_owned: FieldMatrix<Fp<7>> = (-a.clone()).into();
+        let r_ref: FieldMatrix<Fp<7>> = (-&a).into();
         assert_eq!(r_owned, r_ref);
         // And it is self-inverse: -(-a) == a.
-        assert_eq!(-(-&a), a);
+        let twice_neg: FieldMatrix<Fp<7>> = {
+            let n1: FieldMatrix<Fp<7>> = (-&a).into();
+            (-&n1).into()
+        };
+        assert_eq!(twice_neg, a);
     }
 
     #[test]
@@ -3526,7 +3476,8 @@ mod tests {
         ) {
             let a = random_fp_matrix::<65521>(m, k, seed_a);
             let b = random_fp_matrix::<65521>(k, n, seed_b);
-            prop_assert_eq!(&a * &b, naive_gemm(&a, &b));
+            let got: FieldMatrix<Fp<65521>> = (&a * &b).into();
+            prop_assert_eq!(got, naive_gemm(&a, &b));
         }
 
         /// Mul is associative over Fp<7>: (A*B)*C == A*(B*C).
@@ -3543,7 +3494,11 @@ mod tests {
             let a = random_fp_matrix::<7>(m, k, seed_a);
             let b = random_fp_matrix::<7>(k, n, seed_b);
             let c = random_fp_matrix::<7>(n, p, seed_c);
-            prop_assert_eq!((&a * &b) * &c, &a * (&b * &c));
+            let ab: FieldMatrix<Fp<7>> = (&a * &b).into();
+            let bc: FieldMatrix<Fp<7>> = (&b * &c).into();
+            let lhs: FieldMatrix<Fp<7>> = (&ab * &c).into();
+            let rhs: FieldMatrix<Fp<7>> = (&a * &bc).into();
+            prop_assert_eq!(lhs, rhs);
         }
 
         /// Right distributivity over Fp<7>: (A + B) * C == A*C + B*C.
@@ -3559,7 +3514,12 @@ mod tests {
             let a = random_fp_matrix::<7>(m, k, seed_a);
             let b = random_fp_matrix::<7>(m, k, seed_b);
             let c = random_fp_matrix::<7>(k, n, seed_c);
-            prop_assert_eq!((&a + &b) * &c, &a * &c + &b * &c);
+            let apb: FieldMatrix<Fp<7>> = (&a + &b).into();
+            let lhs: FieldMatrix<Fp<7>> = (&apb * &c).into();
+            let ac: FieldMatrix<Fp<7>> = (&a * &c).into();
+            let bc: FieldMatrix<Fp<7>> = (&b * &c).into();
+            let rhs: FieldMatrix<Fp<7>> = (&ac + &bc).into();
+            prop_assert_eq!(lhs, rhs);
         }
 
         /// Mul matches naive over GF(2^8) via Gf2mWide.
@@ -3573,7 +3533,8 @@ mod tests {
         ) {
             let a = random_gf2m8_matrix(m, k, seed_a);
             let b = random_gf2m8_matrix(k, n, seed_b);
-            prop_assert_eq!(&a * &b, naive_gemm(&a, &b));
+            let got: FieldMatrix<Gf2m8> = (&a * &b).into();
+            prop_assert_eq!(got, naive_gemm(&a, &b));
         }
     }
 }

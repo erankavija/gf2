@@ -1577,7 +1577,7 @@ mod tests {
         let b = dense_random_fp::<7>(8, 4, 0.5, 0x202);
         let s = SparseFieldMatrix::from_dense(&a);
         let got = s.matmat(&b);
-        let expected = &a * &b;
+        let expected: FieldMatrix<F7> = (&a * &b).into();
         assert_eq!(got, expected);
     }
 
@@ -1586,7 +1586,8 @@ mod tests {
         let a = dense_random_fp::<65521>(4, 6, 0.25, 0x203);
         let b = dense_random_fp::<65521>(6, 3, 0.6, 0x204);
         let s = SparseFieldMatrix::from_dense(&a);
-        assert_eq!(s.matmat(&b), &a * &b);
+        let expected: FieldMatrix<Fp<65521>> = (&a * &b).into();
+        assert_eq!(s.matmat(&b), expected);
     }
 
     #[test]
@@ -1594,7 +1595,8 @@ mod tests {
         let a = dense_random_fp::<M31>(6, 7, 0.2, 0x205);
         let b = dense_random_fp::<M31>(7, 5, 0.4, 0x206);
         let s = SparseFieldMatrix::from_dense(&a);
-        assert_eq!(s.matmat(&b), &a * &b);
+        let expected: FieldMatrix<Fp<M31>> = (&a * &b).into();
+        assert_eq!(s.matmat(&b), expected);
     }
 
     #[test]
@@ -1602,7 +1604,8 @@ mod tests {
         let a = dense_random_g8(4, 6, 0.3, 0x207);
         let b = dense_random_g8(6, 5, 0.4, 0x208);
         let s = SparseFieldMatrix::from_dense(&a);
-        assert_eq!(s.matmat(&b), &a * &b);
+        let expected: FieldMatrix<_> = (&a * &b).into();
+        assert_eq!(s.matmat(&b), expected);
     }
 
     // ── Triplet canonicalisation ─────────────────────────────────────────
