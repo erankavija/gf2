@@ -202,6 +202,17 @@ impl<F: FiniteField> FieldMatrix<F> {
         self.data.as_slice()
     }
 
+    /// Crate-private mutable counterpart to [`Self::as_data_slice`].
+    ///
+    /// Used by the blocked fused-gemm kernels in
+    /// [`crate::field::expr`] (story `d48a3cfd/T2` R3) to write into the
+    /// output matrix row-block directly, matching T1's `gemm` inner loop
+    /// shape while folding `β·C` into the same store.
+    #[doc(hidden)]
+    pub(crate) fn as_data_mut_slice(&mut self) -> &mut [F] {
+        self.data.as_mut_slice()
+    }
+
     /// Constructs a matrix from a `Vec` of row vectors, one [`FieldVec<F>`] per row.
     ///
     /// # Arguments
@@ -2007,11 +2018,11 @@ impl<F: FiniteField + fmt::Display> fmt::Display for FieldMatrix<F> {
 // is a soft knob — correctness is independent of it, so it can be retuned
 // in issue `64c88ae4` (the terminal benchmark story) without touching
 // callers.
-const GEMM_ROW_TILE: usize = 32;
+pub(crate) const GEMM_ROW_TILE: usize = 32;
 
 // Column-tile width for the blocked classical gemm. See `GEMM_ROW_TILE`
 // for the tuning rationale.
-const GEMM_COL_TILE: usize = 64;
+pub(crate) const GEMM_COL_TILE: usize = 64;
 
 /// Classical blocked gemm over `F: FiniteField` with delayed reduction.
 ///
