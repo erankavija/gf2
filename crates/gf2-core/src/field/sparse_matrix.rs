@@ -40,7 +40,7 @@
 //! | `col_iter(col)` | [`SparseFieldMatrixCsc::col_iter`] | CSR does not expose `col_iter` natively; convert first via [`SparseFieldMatrix::to_csc`]. The CSC variant yields `(row, &value)` pairs directly. |
 //! | `transpose()` | [`SparseFieldMatrix::transpose`] | Field version materialises a dense transpose (see below). |
 //! | `matvec(&BitVec)` | [`SparseFieldMatrix::matvec`] | Row-by-row allocation-free SpMV with delayed reduction over `F::Wide`. |
-//! | — | [`SparseFieldMatrix::matvec_transpose`] | New: field SpMV^T, O(nnz) via CSC. |
+//! | — | [`SparseFieldMatrix::matvec_transpose`] | New: field SpMV^T, O(nnz) via CSR scatter (no CSC flip required). |
 //! | — | [`SparseFieldMatrix::matmat`] | New: SpMM (sparse × dense → dense). |
 //! | `save_image` (feature `visualization`) | — | N/A — not re-exposed on the field side (only the GF(2) crate ships the visualization path today). |
 //! | [`SpBitMatrixDual`](crate::sparse::SpBitMatrixDual) | [`SparseFieldMatrixCsc`] | GF(2) stores both layouts in one handle; over a general field the two layouts are split into separate types and converted on demand. |
