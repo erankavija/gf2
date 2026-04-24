@@ -148,6 +148,25 @@ impl<F: FiniteField> FieldMatrix<F> {
         Self { rows, cols, data }
     }
 
+    /// Crate-private: build a [`FieldMatrix`] directly from a pre-sized
+    /// [`FieldVec`] payload.
+    ///
+    /// Used by the sparse module (story `8a90882e`) to hand back a dense
+    /// matrix whose backing storage was allocated in one shot. The caller
+    /// must guarantee `data.len() == rows * cols` (or `data.len() == 0`
+    /// when either dimension is zero); this invariant is debug-asserted.
+    #[doc(hidden)]
+    pub(crate) fn from_raw_parts(rows: usize, cols: usize, data: FieldVec<F>) -> Self {
+        debug_assert!(
+            (rows == 0 || cols == 0) && data.is_empty() || data.len() == rows * cols,
+            "FieldMatrix::from_raw_parts: inconsistent data length {} for shape ({}, {})",
+            data.len(),
+            rows,
+            cols
+        );
+        Self { rows, cols, data }
+    }
+
     /// Builds a matrix by stacking `rows` into a rectangular shape.
     ///
     /// # Panics
@@ -1002,19 +1021,14 @@ impl<F: FiniteField> FieldMatrix<F> {
         }
     }
 
-    /// Converts this dense matrix into a sparse representation, keeping only
-    /// the non-zero entries.
-    ///
-    /// Story `8a90882e` replaces the returned
-    /// [`SparseFieldMatrix<F>`](crate::field::sparse_matrix::SparseFieldMatrix)
-    /// with a CSR-backed type; this method ships now only to honour the
-    /// `ab791e27` public-surface contract. The result is correct for any
-    /// finite field but is not optimised for performance.
+    /// Converts this dense matrix into a [`SparseFieldMatrix<F>`](crate::field::sparse_matrix::SparseFieldMatrix),
+    /// keeping only the non-zero entries. The returned matrix is in CSR
+    /// layout with column indices sorted ascending within each row.
     ///
     /// # Complexity
     ///
-    /// O(rows · cols) scalar comparisons; the output allocates one
-    /// `(row, col, value)` triplet per non-zero entry.
+    /// O(rows · cols) scalar comparisons; the output allocates `nnz`
+    /// `(col_idx, value)` pairs plus a `(rows + 1)` row-pointer array.
     ///
     /// # Examples
     ///
@@ -1030,21 +1044,7 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// assert_eq!(s.nnz(), 2);
     /// ```
     pub fn to_sparse(&self) -> crate::field::sparse_matrix::SparseFieldMatrix<F> {
-        let mut triplets: Vec<(usize, usize, F)> = Vec::new();
-        if self.rows != 0 && self.cols != 0 {
-            let zero = self.data.get(0).zero_like();
-            for r in 0..self.rows {
-                for c in 0..self.cols {
-                    let v = self.data.get(r * self.cols + c);
-                    if *v != zero {
-                        triplets.push((r, c, v.clone()));
-                    }
-                }
-            }
-        }
-        crate::field::sparse_matrix::SparseFieldMatrix::from_dense_stub(
-            self.rows, self.cols, triplets,
-        )
+        crate::field::sparse_matrix::SparseFieldMatrix::from_dense(self)
     }
 
     /// Returns a lazy transpose proxy borrowing `self`.
@@ -2838,7 +2838,7 @@ mod tests {
     }
 
     #[test]
-    fn test_to_sparse_emits_only_non_zero_triplets() {
+    fn test_to_sparse_emits_only_non_zero_entries() {
         let mut m = FieldMatrix::<F>::zeros(3, 3);
         m.set(0, 0, f(1));
         m.set(1, 2, f(5));
@@ -2846,11 +2846,11 @@ mod tests {
         let s = m.to_sparse();
         assert_eq!(s.shape(), (3, 3));
         assert_eq!(s.nnz(), 3);
-        let triplets = s.triplets();
-        // Triplets are in row-major order per `to_sparse` traversal.
-        assert_eq!(triplets[0], (0, 0, f(1)));
-        assert_eq!(triplets[1], (1, 2, f(5)));
-        assert_eq!(triplets[2], (2, 1, f(3)));
+        // CSR stores row-major; row_ptr marks row boundaries.
+        let (row_ptr, col_idx, values) = s.as_raw_parts();
+        assert_eq!(row_ptr, &[0, 1, 2, 3]);
+        assert_eq!(col_idx, &[0, 2, 1]);
+        assert_eq!(values, &[f(1), f(5), f(3)]);
     }
 
     #[test]
