@@ -200,13 +200,21 @@ impl<F: FiniteField> FieldMatrix<F> {
             data,
         }
     }
+}
 
-    /// Allocates an uninitialised shell with capacity for `rows * cols`
-    /// elements but length zero.
+impl<F: ConstField> FieldMatrix<F> {
+    /// Creates a `rows × cols` matrix initialised to zero.
     ///
-    /// Callers are responsible for filling the matrix before calling any
-    /// access method; most callers prefer [`FieldMatrix::zeros`] or
-    /// [`FieldMatrix::new`].
+    /// Named `with_capacity` for Armadillo parity (it mirrors
+    /// `arma::mat(rows, cols, fill::none)`); in safe Rust this is equivalent
+    /// to [`FieldMatrix::zeros`] because the `fill::none` no-init optimisation
+    /// cannot be expressed without `unsafe`, which `gf2-core` denies. Use
+    /// this when the caller will overwrite every element and the zero-fill
+    /// cost is acceptable.
+    ///
+    /// # Complexity
+    ///
+    /// O(rows · cols).
     ///
     /// # Examples
     ///
@@ -215,19 +223,14 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// use gf2_core::gfp::Fp;
     ///
     /// let m = FieldMatrix::<Fp<7>>::with_capacity(4, 4);
-    /// assert_eq!(m.rows(), 0);
-    /// assert_eq!(m.cols(), 0);
+    /// assert_eq!(m.rows(), 4);
+    /// assert_eq!(m.cols(), 4);
+    /// assert_eq!(m.get(0, 0), Fp::<7>::new(0));
     /// ```
     pub fn with_capacity(rows: usize, cols: usize) -> Self {
-        Self {
-            rows: 0,
-            cols: 0,
-            data: FieldVec::with_capacity(rows * cols),
-        }
+        Self::zeros(rows, cols)
     }
-}
 
-impl<F: ConstField> FieldMatrix<F> {
     /// Returns a `rows × cols` zero matrix.
     ///
     /// # Complexity
@@ -2290,6 +2293,27 @@ mod tests {
         let id = FieldMatrix::<F>::identity(3);
         assert_eq!(id.get(2, 2), f(1));
         assert_eq!(id.get(0, 2), f(0));
+    }
+
+    #[test]
+    fn test_with_capacity_honours_requested_shape() {
+        // Round-7 regression: `with_capacity(rows, cols)` must return a
+        // `rows × cols` matrix (zero-initialised in safe Rust), not a
+        // permanent `0 × 0` matrix with only reserved backing storage.
+        let m = FieldMatrix::<F>::with_capacity(4, 5);
+        assert_eq!(m.shape(), (4, 5));
+        assert_eq!(m.rows(), 4);
+        assert_eq!(m.cols(), 5);
+        for r in 0..4 {
+            for c in 0..5 {
+                assert_eq!(m.get(r, c), f(0));
+            }
+        }
+        // Writes through the normal `set()` path must succeed for every
+        // advertised cell (the earlier bug caused `set(3, 4, ..)` to panic).
+        let mut m = FieldMatrix::<F>::with_capacity(4, 5);
+        m.set(3, 4, f(2));
+        assert_eq!(m.get(3, 4), f(2));
     }
 
     #[test]
