@@ -48,6 +48,7 @@ pub mod sparse_matrix;
 mod traits;
 pub mod two_adic;
 pub mod vec;
+pub mod winograd;
 
 #[cfg(any(test, feature = "test-support"))]
 pub mod axiom_tests;

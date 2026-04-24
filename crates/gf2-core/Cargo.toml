@@ -192,3 +192,8 @@ required-features = ["rand"]
 name = "field_sparse_matrix"
 harness = false
 required-features = ["rand"]
+
+[[bench]]
+name = "strassen_threshold"
+harness = false
+required-features = ["rand"]
