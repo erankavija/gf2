@@ -54,11 +54,15 @@
 //! values in `[0, p − 1]`) trivially respects the bound. The
 //! complementary Wide-shadow proptest
 //! `prop_winograd_wide_shadow_respects_theorem_4_bound_fp31` mirrors
-//! the recursion but carries S/T operand magnitudes as **unreduced**
-//! `u128` integers (summing absolute integer magnitudes across every
-//! add/sub performed by Winograd's peel), so it exercises exactly the
-//! unreduced-arithmetic growth theorem 4 talks about, not just the
-//! trivially-bounded canonical residues.
+//! the recursion but carries **every intermediate** — pre-multiply
+//! S/T operands, the seven recursive Mi products, and the U-assembly
+//! sums of products (`U2, U3, U4, C11, C12, C21, C22`) — as
+//! **unreduced** `i128` integers (summing absolute integer magnitudes
+//! across every add/sub/multiply performed by Winograd's peel). The
+//! S/T operands are checked at level `ℓ+1` (pre-multiply bound); the
+//! U-assembly intermediates are checked at level `ℓ` (post-multiply
+//! bound). Together they cover every value the step produces, which
+//! is the exact hard-criterion wording.
 //!
 //! # Bit-exact correctness
 //!
@@ -1180,6 +1184,33 @@ mod tests {
         let c12 = u4.add(&m3);
         let c21 = u3.sub(&m4);
         let c22 = u3.add(&m5);
+        // **Wide-shadow theorem-4 assertion (U-assembly intermediates)**:
+        // the sums-of-products produced between the seven recursive
+        // multiplies and the stitched quarters must also respect the
+        // theorem-4 bound at this level. This closes the "every
+        // intermediate" wording of the hard criterion — S/T blocks were
+        // checked pre-multiply above; U_i and final quarters C_ij are
+        // checked post-multiply here.
+        let bound_here = theorem_4_bound(level, k_top, p_minus_1);
+        for (name, blk) in [
+            ("U2", &u2),
+            ("U3", &u3),
+            ("U4", &u4),
+            ("C11", &c11),
+            ("C12", &c12),
+            ("C21", &c21),
+            ("C22", &c22),
+        ] {
+            let observed = blk.max_abs();
+            assert!(
+                observed <= bound_here,
+                "wide-shadow level {} assembly {} observed {} > theorem_4_bound = {}",
+                level,
+                name,
+                observed,
+                bound_here
+            );
+        }
         // Stitch quarters. Returning the padded shadow is fine — the
         // outer scaffold only reads max_abs.
         let mut c = I128Mat::zeros(2 * mh, 2 * nh);

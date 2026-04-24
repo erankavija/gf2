@@ -92,20 +92,33 @@ Winograd trades against one of the seven multiplies pay off earlier
 and more dramatically. **The `[aspirational]` criterion is met at
 every `n ≥ 256` on GF(2^8) as well.**
 
-## Bound-propagation check
+## Bound-propagation check (every intermediate)
 
-The committed proptest
-`prop_winograd_bound_propagates_across_levels_fp31` in
-`src/field/winograd.rs` mirrors the Winograd recursion with a small
-threshold (`4`) to force at least two levels of recursion at
-`n = 16` on Mersenne-31. At every recursion level it asserts each of
-the eight S / T block operands (the actual matrices fed into the
-seven half-size multiplies) has canonical values within
-`theorem_4_bound(ℓ+1, k, p − 1)`. Canonical values fit `[0, p − 1]`,
-which is strictly ≤ `theorem_4_bound(ℓ, …)` for every `ℓ ≥ 0`, so
-the assertion is the correct-sign guard: if canonical operands
-respect the bound, the unreduced arithmetic inside the base-case
-gemm trivially does too.
+Two proptests in `src/field/winograd.rs` verify the theorem-4 bound
+at every recursion level against **every intermediate** the Winograd
+step produces, not just the final output:
+
+1. `prop_winograd_bound_propagates_across_levels_fp31` operates on
+   canonical `Fp<M31>` residues. It mirrors the Winograd recursion
+   with `threshold = 4` at `n = 16` to force ≥ 2 recursion levels and
+   asserts each of the eight S/T operands has canonical values within
+   `theorem_4_bound(ℓ+1, k, p−1)`. Canonical values fit `[0, p−1]`
+   which is strictly ≤ `theorem_4_bound(ℓ, …)` for every `ℓ ≥ 0`, so
+   the assertion is the correct-sign guard on the operands entering
+   the next recursive multiply.
+
+2. `prop_winograd_wide_shadow_respects_theorem_4_bound_fp31`
+   operates on **unreduced `i128` shadows**: for each Winograd step
+   it adds, subtracts, and multiplies in `i128` without ever
+   reducing, and asserts the theorem-4 bound on **every** S/T/U
+   intermediate at every level. Specifically the eight pre-multiply
+   operands `S1..S4, T1..T4` are checked at level `ℓ+1`, and the
+   seven post-multiply / assembly intermediates `U2, U3, U4, C11,
+   C12, C21, C22` are checked at level `ℓ` (the current-level
+   bound). This captures the exact hard-criterion wording
+   ("every intermediate's value within the theorem-4 bound") —
+   pre-multiply operands, the recursive products themselves, and
+   the U-assembly sums of products are all covered.
 
 A second case in the same proptest also exercises the production
 path at `n = 4 · WINOGRAD_THRESHOLD = 512` on Mersenne-31 and
@@ -133,7 +146,7 @@ round-trip is additionally checked in
 | `[hard]` bit-exact with `gemm` | Pass — 18 unit + 2 proptest cases. |
 | `[hard]` theorem-4 bound verified across levels | Pass — `prop_winograd_bound_propagates_across_levels_fp31`. |
 | `[hard]` threshold picked from bench at n = 2048 | Pass — sweep table above. |
-| `[hard]` n = 2048 and n = 4096 measured | Pass — M31 and GF(2^8) both measured at both sizes (M31 `n = 4096` via `benches/strassen_threshold.rs`; GF(2^8) `n = 4096` via `examples/strassen_gf2m8_4096.rs` — single-shot because Criterion would spend ≈ 15 h warming). |
+| `[hard]` n = 2048 and n = 4096 measured | Pass — M31 and GF(2^8) both measured at both sizes. M31 `n ∈ {256, …, 4096}` via Criterion bench `benches/strassen_threshold.rs`; GF(2^8) `n ∈ {256, …, 2048}` via the same Criterion bench; GF(2^8) `n = 4096` via the dedicated single-shot Cargo `[[bench]]` target `benches/strassen_gf2m8_4096.rs` (Criterion's minimum `sample_size = 10` × ≈ 91 min/sample ≈ 15 h at this size — statistical averaging is uninformative when the 91-min-per-iter variance is well below Criterion's noise threshold). Both are `[[bench]]` targets in `Cargo.toml` and run via `cargo bench`. |
 | `[hard]` per-field configurable threshold | Pass — `FiniteField::WINOGRAD_THRESHOLD` trait associated const. |
 | `[hard]` odd-dim coverage | Pass — 5 dedicated tests. |
 | `[aspirational]` ≥ 1.2× speedup | **Met** on both fields at `n ≥ 256`. 1.21×–2.23× measured (M31 peaks 1.96× at `n = 4096`; GF(2^8) peaks 2.23× at `n = 4096`). |
