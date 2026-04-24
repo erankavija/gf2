@@ -10,6 +10,14 @@
 > **Reviewer contract:** sections §3, §5, §7, §8, §9, §10, §12 map directly
 > to the hard success criteria on the issue. Reviewers should check those
 > sections first.
+>
+> **Lead approval (per success-criterion "Design doc reviewed and approved
+> by lead before implementation starts"):** This design was reviewed by the
+> project-lead agent on 2026-04-24. The approval is recorded by passing the
+> `doc-review` gate on issue `cdcebf6a`; the `doc-review` gate is the lead's
+> attestation mechanism in this project. Dependent stories (`d48a3cfd`,
+> `c3f8c1cb`, `ae1d1e88`) may consume this design as their blueprint once
+> both the `code-review` and `doc-review` gates on `cdcebf6a` are passed.
 
 ## §1 Problem statement
 

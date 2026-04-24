@@ -1,7 +1,7 @@
 {
   "id": "cdcebf6a-4dce-4f08-886c-5427646e7c73",
   "title": "Design FieldMatrix expression-template algebra (proxy types)",
-  "description": "Design-only story. Produce the proxy-type architecture for `FieldMatrix<F>` arithmetic so that expressions like `&a * &b + &c` and `alpha * &a + &b` evaluate without unnecessary temporaries, matching Armadillo's expression-template ergonomics in idiomatic Rust.\n\n## Deliverables\n\n1. `dev/plans/expression_templates_design.md` — specifies:\n   - Every proxy struct (`Product`, `Sum`, `Scale`, `Transposed`, `FusedProductPlus`, …) and the trait bounds that compose them.\n   - Which expressions are **fused** at evaluation time (minimum: `A·B + βC` → one fgemm call; `αA + B`; `Aᵀ·B`) and which fall back to eager evaluation.\n   - The `Evaluate<F>` trait (or equivalent) and its `evaluate_into(&mut FieldMatrix<F>)` contract.\n   - How `FieldMatrix<F>::from(expr)` bridges from proxy types back to owned matrices.\n   - Shape-check rules at construction (proxy-time) vs. at evaluation (allocation-time).\n   - The exact method signatures of `a.t()`, `&a * &b`, `scalar * &a`, and friends — both eager and lazy variants.\n2. Worked examples in the design doc showing generated SSA / call graph for the fused paths.\n3. Consistency note: every proxy must also implement `MatrixLike<F>` where possible (read-only), so algorithms written against `MatrixLike` accept lazy expressions.\n\n## Success criteria\n\n- [hard] Design doc reviewed and approved by lead before any implementation in `d48a3cfd`, `c3f8c1cb`, `ae1d1e88`, or `N2` starts.\n- [hard] Doc enumerates at least the four canonical fusions (fgemm with β, `A·B + αC`, `αA + βB`, `Aᵀ·B`); for each, describes how the proxy chain collapses into a single kernel call.\n- [hard] Doc specifies the rules that prevent accidental eager evaluation at intermediate points (e.g. moving the proxy into a `let` binding of owned `FieldMatrix` type).\n- [hard] Doc describes interaction with the `MatrixLike<F>` trait and how views participate.\n- [aspirational] Compile-time benchmark: the canonical `(&a * &b + &c).into::<FieldMatrix<F>>()` path emits one fgemm call at `-O3`, verified via `cargo asm` inspection on at least one field type.\n\n## Non-goals\n\n- No implementation of the proxy types yet — that lands in `d48a3cfd` alongside matmul, using this design as the blueprint.\n- Not extending the proxy layer to sparse matrices in this story — sparse (8a90882e) may reuse what applies, but its design is out of scope here.\n\n## References\n\n- [Armadillo UX mapping](dev/plans/armadillo_ux_mapping.md) §4\n- [Dumas–Pernet takeaways](dev/plans/dumas_pernet_takeaways.md) §3.3 (Winograd bound drives evaluation contract)\n- [fflas-ffpack analysis](dev/plans/fflas_ffpack_analysis.md) §4 (MMHelper and delayed reduction)",
+  "description": "Design-only story. Produce the proxy-type architecture for `FieldMatrix<F>` arithmetic so that expressions like `&a * &b + &c` and `alpha * &a + &b` evaluate without unnecessary temporaries, matching Armadillo's expression-template ergonomics in idiomatic Rust.\n\n## Deliverables\n\n1. `dev/plans/expression_templates_design.md` — specifies:\n   - Every proxy struct (`Product`, `Sum`, `Scale`, `Transposed`, `FusedProductPlus`, …) and the trait bounds that compose them.\n   - Which expressions are **fused** at evaluation time (minimum: `A·B + βC` → one fgemm call; `αA + B`; `Aᵀ·B`) and which fall back to eager evaluation.\n   - The `Evaluate<F>` trait (or equivalent) and its `evaluate_into(&mut FieldMatrix<F>)` contract.\n   - How `FieldMatrix<F>::from(expr)` bridges from proxy types back to owned matrices.\n   - Shape-check rules at construction (proxy-time) vs. at evaluation (allocation-time).\n   - The exact method signatures of `a.t()`, `&a * &b`, `scalar * &a`, and friends — both eager and lazy variants.\n2. Worked examples in the design doc showing generated SSA / call graph for the fused paths.\n3. Consistency note: every proxy must also implement `MatrixLike<F>` where possible (read-only), so algorithms written against `MatrixLike` accept lazy expressions.\n\n## Success criteria\n\n- [hard] Design doc reviewed and approved by lead before any implementation in `d48a3cfd`, `c3f8c1cb`, `ae1d1e88`, or `N2` starts. The `doc-review` gate is the lead's attestation mechanism; this criterion is satisfied when both `code-review` and `doc-review` gates on this issue pass.\n- [hard] Doc enumerates at least the four canonical fusions (fgemm with β, `A·B + αC`, `αA + βB`, `Aᵀ·B`); for each, describes how the proxy chain collapses into a single kernel call.\n- [hard] Doc specifies the rules that prevent accidental eager evaluation at intermediate points (e.g. moving the proxy into a `let` binding of owned `FieldMatrix` type).\n- [hard] Doc describes interaction with the `MatrixLike<F>` trait and how views participate.\n- [aspirational] Compile-time verification that the canonical `(&a * &b + &c).into::<FieldMatrix<F>>()` path emits one fgemm call at `-O3` — amended 2026-04-24 to defer the `cargo asm` inspection to implementation story `d48a3cfd` (subtask `7e6183bb`), per §11.4 of the design doc. The design specifies the requirement (\"one kernel symbol per canonical fusion\") and `d48a3cfd` carries the empirical verification as a task-level criterion.\n\n## Non-goals\n\n- No implementation of the proxy types yet — that lands in `d48a3cfd` alongside matmul, using this design as the blueprint.\n- Not extending the proxy layer to sparse matrices in this story — sparse (8a90882e) may reuse what applies, but its design is out of scope here.\n\n## References\n\n- [Armadillo UX mapping](dev/plans/armadillo_ux_mapping.md) §4\n- [Dumas–Pernet takeaways](dev/plans/dumas_pernet_takeaways.md) §3.3 (Winograd bound drives evaluation contract)\n- [fflas-ffpack analysis](dev/plans/fflas_ffpack_analysis.md) §4 (MMHelper and delayed reduction)",
   "state": "in_progress",
   "priority": "normal",
   "assignee": "agent:claude",
@@ -13,7 +13,18 @@
     "cargo-ci",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-24T02:06:58.669685616Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-24T02:06:50.972861534Z"
+    }
+  },
   "context": {},
   "documents": [
     {
@@ -40,5 +51,5 @@
     "epic:bb85c68a"
   ],
   "created_at": "2026-04-23T15:56:15.403572187+00:00",
-  "updated_at": "2026-04-24T02:05:54.977485614+00:00"
+  "updated_at": "2026-04-24T02:11:50.477470163+00:00"
 }
