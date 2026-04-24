@@ -724,11 +724,14 @@ users see the panic at the `+` or `*` source line, not deep inside
 When `evaluate_into` is called, the caller has already allocated `out`.
 Verify:
 
-- `out.shape() == self.shape()` — `debug_assert!` in release, `assert!` in
-  debug. The `From<E> for FieldMatrix<F>` bridge allocates `out` from
-  `self.shape()`, so this assertion is satisfied by construction for
-  that path. Direct callers of `evaluate_into` (tests, bespoke
-  buffer reuse) trip it if they pre-allocate incorrectly.
+- `out.shape() == self.shape()` — use `assert!` (fires in both release
+  and debug builds). Shape mismatch here is a caller contract violation
+  with no silent-wrong-answer path, so the runtime cost of the compare
+  is acceptable. The `From<E> for FieldMatrix<F>` bridge allocates
+  `out` from `self.shape()`, so this assertion is satisfied by
+  construction for that path; direct callers of `evaluate_into`
+  (tests, bespoke buffer reuse) trip it if they pre-allocate
+  incorrectly.
 
 ### 7.3 What does **not** get checked
 
