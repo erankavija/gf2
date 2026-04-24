@@ -1,14 +1,25 @@
-//! Single-shot wall-clock measurement of classical and Strassen-Winograd
-//! `gemm` at `n = 4096` over GF(2^8) (`Gf2mWide<1, AES>`). Output is one
-//! table row in the same format as
-//! `benches/strassen_threshold_results.md` (line 80+), matching the
-//! single-shot `std::time::Instant` methodology described in the file.
+//! Bench target: single-shot wall-clock measurement of classical and
+//! Strassen-Winograd `gemm` at `n = 4096` over GF(2^8)
+//! (`Gf2mWide<1, AES>`). Output is one table row in the same format as
+//! [`strassen_threshold_results.md`](./strassen_threshold_results.md)
+//! (line 80+), using `std::time::Instant` directly.
+//!
+//! Declared as a Cargo `[[bench]]` target (same convention as every
+//! other bench in this workspace) so it lives under `benches/` and is
+//! invoked via `cargo bench`. It deliberately does NOT use Criterion
+//! because Criterion's minimum `sample_size = 10` × ≈ 91 min/sample at
+//! this size would take ≈ 15 h of wall-clock, and the statistical
+//! averaging is not informative when the per-sample variance at a
+//! single iteration is already well below Criterion's noise threshold.
+//!
+//! For `n ≤ 2048` the sibling bench at
+//! [`strassen_threshold.rs`](./strassen_threshold.rs) IS Criterion-based
+//! (samples complete in seconds).
 //!
 //! Usage:
 //!
 //! ```bash
-//! cargo run -p gf2-core --release --example strassen_gf2m8_4096 \
-//!   --features rand
+//! cargo bench -p gf2-core --bench strassen_gf2m8_4096 --features rand
 //! ```
 
 use std::time::Instant;

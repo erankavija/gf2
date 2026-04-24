@@ -197,3 +197,8 @@ required-features = ["rand"]
 name = "strassen_threshold"
 harness = false
 required-features = ["rand"]
+
+[[bench]]
+name = "strassen_gf2m8_4096"
+harness = false
+required-features = ["rand"]
