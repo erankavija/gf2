@@ -284,6 +284,26 @@ pub trait FiniteField:
     /// assert!(k2 >= 1 && k2 < 100);
     /// ```
     fn max_unreduced_additions() -> usize;
+
+    /// Square-matrix size at or below which Strassen–Winograd recursion
+    /// falls back to the classical blocked `gemm`. Empirically tuned per
+    /// field: the default `128` is calibrated against Mersenne-31 and
+    /// `Gf2mWide<1, Gf2m8>` in `benches/strassen_threshold.rs` at
+    /// `n = 2048`, where both fields cross over at ≈ 128.
+    ///
+    /// Fields with materially heavier scalar MACs than Mersenne-31 — for
+    /// example `Goldilocks` (128-bit reduction path) — should override
+    /// this to a smaller value because a single multiply costs more, so
+    /// trading multiplies for block adds pays off earlier. Fields with
+    /// much lighter MACs (e.g. GF(2) bit-packed) should override upwards
+    /// because Winograd's block-add bookkeeping never beats the native
+    /// XOR-heavy inner loop at small sizes.
+    ///
+    /// This knob is **soft** — correctness is independent of it. The
+    /// Winograd implementation is bit-exact equal to the classical
+    /// `gemm` at every threshold value, as asserted by the property
+    /// tests in `src/field/winograd.rs`.
+    const WINOGRAD_THRESHOLD: usize = 128;
 }
 
 /// Extension of [`FiniteField`] for types that are `Copy` and have zero-cost identity constructors.
