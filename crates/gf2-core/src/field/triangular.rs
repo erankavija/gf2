@@ -24,9 +24,9 @@
 //!   triangular `A` (algorithm 2.2).
 //! - [`trtri_upper`] / [`trtri_lower`] — invert a triangular matrix in
 //!   place (algorithm 2.3).
-//! - [`trtrm`] — compute the in-place product `L · U` where `L` is unit
-//!   lower-triangular and `U` is upper-triangular, used by the PLE
-//!   decomposition (algorithm 2.4).
+//! - [`trtrm`] — compute the in-place product `U · L` where `U` is
+//!   upper-triangular and `L` is unit lower-triangular, used by the PLE
+//!   decomposition (algorithm 2.4). Output overwrites the `L`-view.
 //!
 //! # Recursion structure
 //!
@@ -76,12 +76,11 @@
 //!
 //! ## `trtrm(L, U)` (algorithm 2.4)
 //!
-//! Computes the in-place product `L ← L · U` where `L` is unit
-//! lower-triangular (the diagonal is implicitly `1` and is **not** read by
-//! the routine) and `U` is upper-triangular. The output overwrites `L` and
-//! is the dense product. This is the convention used by Dumas–Pernet §3
-//! PLE so the in-place compression in issue `c3f8c1cb` can call it
-//! directly.
+//! Computes the in-place product `A ← U · L` where `U` is upper-triangular
+//! and `L` is unit lower-triangular (the diagonal is implicitly `1` and is
+//! **not** read by the routine). The output dense product overwrites the
+//! `L`-view. This is the convention used by Dumas–Pernet §3 PLE so the
+//! in-place compression in issue `c3f8c1cb` can call it directly.
 //!
 //! # Allocation budget
 //!
@@ -97,11 +96,13 @@
 //!   `A12 := −A11 · A12 · A22` (algorithm 2.3). This is the only
 //!   matrix this routine materialises beyond the inputs.
 //! - `trtrm`: the recursion uses [`gemm_into_view`](crate::field::matrix::gemm_into_view)
-//!   to fold `L21 · U11` and `L11 · U12` directly into the destination
-//!   view; only the unit-diagonal materialisation of `L11` for the
-//!   `M12 = L11 · U12` step requires a single `h × h` scratch (snapshot
-//!   of the strictly-lower triangle plus the implicit unit diagonal)
-//!   per recursion level. Mirrors the trtri budget.
+//!   to fold `U22 · L21` (the only step whose write region aliases its
+//!   read region — both are the `L21` slot) into a single
+//!   `(m-h) × h` scratch per recursion level, then copies the staged
+//!   product back. The other off-diagonal step (`A12 = U12 · L22`)
+//!   writes into the unused top-right slot of the L-view via a per-cell
+//!   accumulation that handles `L22`'s implicit unit diagonal inline,
+//!   so it allocates nothing. Mirrors the trtri budget.
 //!
 //! Geometrically these scratch allocations sum to `O(m²)` cells over
 //! the full recursion tree, the same asymptotic budget as the
@@ -489,14 +490,15 @@ pub fn trtri_lower<F: FiniteField>(a: MatViewMut<'_, F>) {
     trtri_lower_inner(a);
 }
 
-/// In-place product of a unit lower-triangular `L` with an upper-triangular
-/// `U`.
+/// In-place product of an upper-triangular `U` with a unit lower-triangular
+/// `L`.
 ///
-/// Computes the dense `m × m` product `L · U` and writes it back into the
-/// `l` view. `L` is treated as **unit** lower-triangular: the diagonal
-/// cells are implicitly `1` and the routine does not read them. Cells
-/// strictly above `L`'s diagonal are likewise not read. `U` is upper
-/// triangular; cells strictly below `U`'s diagonal are not read.
+/// Computes the dense `m × m` product `A = U · L` and writes it into the
+/// `l` view (overwriting the original `L`). `L` is treated as **unit**
+/// lower-triangular: the diagonal cells are implicitly `1` and the routine
+/// does not read them. Cells strictly above `L`'s diagonal are likewise
+/// not read. `U` is upper-triangular; cells strictly below `U`'s diagonal
+/// are not read.
 ///
 /// This is the §2.1 algorithm 2.4 convention used by Dumas–Pernet's PLE
 /// decomposition (issue `c3f8c1cb`): the post-pivot in-place product
@@ -505,7 +507,8 @@ pub fn trtri_lower<F: FiniteField>(a: MatViewMut<'_, F>) {
 /// # Arguments
 ///
 /// * `l` — Square `m × m` view holding the **strictly lower-triangular**
-///   part of `L`. On return contains the dense product `L · U`.
+///   part of `L` (with implicit unit diagonal). On return contains the
+///   dense product `U · L`.
 /// * `u` — Square `m × m` upper-triangular view (unmodified).
 ///
 /// # Panics
@@ -535,13 +538,13 @@ pub fn trtri_lower<F: FiniteField>(a: MatViewMut<'_, F>) {
 /// u.set(0, 1, Fp::<7>::new(3));
 /// u.set(1, 1, Fp::<7>::new(5));
 ///
-/// // Compute L · U the slow way for the cross-check.
+/// // Compute U · L the slow way for the cross-check.
 /// let l_dense = {
 ///     let mut m = FieldMatrix::<Fp<7>>::identity(2);
 ///     m.set(1, 0, Fp::<7>::new(4));
 ///     m
 /// };
-/// let expected = gemm(&l_dense, &u);
+/// let expected = gemm(&u, &l_dense);
 ///
 /// trtrm(l_compressed.submat_mut(.., ..), u.submat(.., ..));
 /// assert_eq!(l_compressed, expected);
@@ -1074,38 +1077,39 @@ fn trtri_lower_base<F: FiniteField>(a: &mut MatViewMut<'_, F>) {
 
 // ─── trtrm ──────────────────────────────────────────────────────────────────
 
-/// In-place product `L ← L · U`, where `L` is unit lower-triangular (the
-/// diagonal is implicit `1`) and `U` is upper-triangular.
+/// In-place product `A ← U · L`, where `U` is upper-triangular and `L` is
+/// unit lower-triangular (the diagonal is implicit `1`). The dense product
+/// overwrites the `L`-view.
 ///
 /// Block split per Dumas–Pernet §2.1 algorithm 2.4 with
 ///
 /// ```text
-///     L = [[L11,   0],   U = [[U11, U12],
-///          [L21, L22]]        [  0, U22]]
+///     U = [[U11, U12],   L = [[L11,   0],
+///          [  0, U22]]        [L21, L22]]
 /// ```
 ///
-/// (`L11`, `L22` are themselves unit lower-triangular). The output blocks
-/// are
+/// (`L11`, `L22` are themselves unit lower-triangular; `U11`, `U22` are
+/// upper-triangular). The output blocks of `A = U · L` are
 ///
 /// ```text
-///     M11 = L11 · U11
-///     M12 = L11 · U12
-///     M21 = L21 · U11 + L22 · U21    // U21 ≡ 0 here, so this is L21 · U11
-///     M22 = L21 · U12 + L22 · U22
+///     A11 = U11 · L11 + U12 · L21
+///     A12 = U12 · L22
+///     A21 = U22 · L21
+///     A22 = U22 · L22
 /// ```
 ///
-/// The schedule writes `M22 → M21 → M12 → M11` so each step reads only
-/// un-overwritten cells of `L`. `M22` is built in two passes (recurse
-/// into `L22`, then add `L21 · U12`); `M21` requires a single
-/// `(m-h) × h` scratch buffer because `L21 := L21 · U11` aliases its
-/// own read region cell-by-cell (writing `M21[i, j]` clobbers
-/// `L21[i, j]` which is then read by `M21[i, j+1]`'s dot product);
-/// `M12` is computed directly into the destination using the implicit
-/// unit diagonal of `L11`; `M11` recurses with the original `L11`
-/// still intact in `L`.
+/// The schedule writes `A12 → A11 → A21 → A22` so each step reads only
+/// un-overwritten cells of `L`. `A12` lands in the unused upper-right
+/// slot of the L-view (per-cell with `L22`'s implicit unit diagonal,
+/// no allocation). `A11` recurses into the upper-left block (which
+/// computes `U11 · L11` in place via the trtrm contract) and then folds
+/// `U12 · L21` onto it (`L21` still intact). `A21 = U22 · L21` aliases
+/// its own read region (the write region IS `L21`), so we stage it in a
+/// single `(m-h) × h` scratch buffer and copy back. Finally `A22` recurses
+/// into the lower-right block.
 ///
 /// Allocation budget per recursion level: ONE scratch `FieldMatrix<F>`
-/// of shape `(m-h) × h` for the `L21 · U11` chain. Mirrors `trtri`'s
+/// of shape `(m-h) × h` for the `U22 · L21` chain. Mirrors `trtri`'s
 /// per-level scratch budget.
 fn trtrm_inner<F: FiniteField>(l: MatViewMut<'_, F>, u: MatView<'_, F>) {
     let m = l.rows();
@@ -1119,85 +1123,85 @@ fn trtrm_inner<F: FiniteField>(l: MatViewMut<'_, F>, u: MatView<'_, F>) {
     }
     let h = m / 2;
     // Split L horizontally at row h. `top` carries L11 (left h cols)
-    // and the to-be-written M12 (right m-h cols). `bot` carries L21
-    // (left h cols, also to be read for M21) and L22 / future M22
-    // (right m-h cols).
+    // and the to-be-written A12 (right m-h cols). `bot` carries L21
+    // (left h cols, future A21) and L22 / future A22 (right m-h cols).
     let (mut top, mut bot) = l.split_rows_mut(h);
 
-    // Step 1 — M22 = L21 · U12 + L22 · U22.
-    //   1a. Recurse into the lower-right block: L22 ← L22 · U22.
-    trtrm_inner(bot.submat_mut(0..(m - h), h..m), u.submat(h..m, h..m));
-    //   1b. Add L21 · U12 into the lower-right block (M22). L21 (left
-    //       h cols of `bot`) and M22 (right m-h cols of `bot`) are
-    //       disjoint column ranges; we read L21 cells and write M22
-    //       cells through the single `&mut bot` borrow, no scratch
-    //       and no allocation.
+    // Step 1 — A12 = U12 · L22. The destination is the upper-right
+    // slot of `top` (top[0..h, h..m]), which currently holds nothing
+    // we need to preserve. Reads come from U12 (a sub-view of `u`,
+    // unmodified) and L22 (right m-h cols of `bot`, still intact).
+    // `top` and `bot` are disjoint via `split_rows_mut`, so we can
+    // hold a `&mut top` and an immutable view of `bot` simultaneously.
+    // L22 is unit lower-triangular: L22[k, c] = 0 for k < c, L22[c, c]
+    // = 1 (implicit), L22[k, c] = stored cell for k > c. So
+    //     A12[i, c] = ∑_{k=c}^{m-h-1} U12[i, k] · L22[k, c]
+    //               = U12[i, c]                              (k = c, L22[c,c] = 1)
+    //               + ∑_{k=c+1}^{m-h-1} U12[i, k] · L22[k, c]
     {
         let u12 = u.submat(0..h, h..m);
-        for r in 0..(m - h) {
+        let l22_view = bot.submat(0..(m - h), h..m);
+        for i in 0..h {
             for c in 0..(m - h) {
-                // M22[r, c] += sum_{t=0}^{h-1} L21[r, t] · U12[t, c]
-                let mut acc = bot.get(r, h + c);
-                for t in 0..h {
-                    acc += bot.get(r, t) * u12.get(t, c);
+                let mut acc = u12.get(i, c); // k = c contributes U12[i, c] · 1
+                for k in (c + 1)..(m - h) {
+                    acc += u12.get(i, k) * l22_view.get(k, c);
                 }
-                bot.set(r, h + c, acc);
+                top.set(i, h + c, acc);
             }
         }
     }
 
-    // Step 2 — M21 = L21 · U11. The output region IS `L21`, so this
+    // Step 2 — A11 = U11 · L11 + U12 · L21.
+    //   2a. Recurse into the upper-left block: L11 ← U11 · L11. After
+    //       this, top[0..h, 0..h] holds U11·L11. L21 (in bot-left) is
+    //       untouched.
+    trtrm_inner(top.submat_mut(0..h, 0..h), u.submat(0..h, 0..h));
+    //   2b. Add U12 · L21 into the upper-left block (A11). U12 (sub-view
+    //       of `u`) and L21 (left h cols of `bot`) are read; the write
+    //       region (left h cols of `top`) is disjoint from `bot`, so
+    //       no scratch is needed.
+    {
+        let u12 = u.submat(0..h, h..m);
+        let l21_view = bot.submat(0..(m - h), 0..h);
+        for i in 0..h {
+            for c in 0..h {
+                // A11[i, c] += ∑_{k=0}^{m-h-1} U12[i, k] · L21[k, c]
+                let mut acc = top.get(i, c);
+                for k in 0..(m - h) {
+                    acc += u12.get(i, k) * l21_view.get(k, c);
+                }
+                top.set(i, c, acc);
+            }
+        }
+    }
+
+    // Step 3 — A21 = U22 · L21. The output region IS `L21`, so this
     // multiply aliases its own read inputs and a per-cell read-then-
     // write order is unsafe. Use a scratch of size (m-h) × h to stage
     // the product, then copy back. This is the only scratch this
     // recursion level allocates.
-    let zero: F = top.as_view().get(0, 0).zero_like();
+    let zero: F = bot.as_view().get(0, 0).zero_like();
     let mut scratch = FieldMatrix::<F>::new(m - h, h, zero);
     {
+        let u22 = u.submat(h..m, h..m);
         let l21 = bot.submat(0..(m - h), 0..h);
-        let u11 = u.submat(0..h, 0..h);
-        gemm_into_view(&l21, &u11, scratch.submat_mut(.., ..));
+        gemm_into_view(&u22, &l21, scratch.submat_mut(.., ..));
     }
     {
-        let mut m21 = bot.submat_mut(0..(m - h), 0..h);
+        let mut a21 = bot.submat_mut(0..(m - h), 0..h);
         for r in 0..(m - h) {
             for c in 0..h {
-                m21.set(r, c, scratch.get(r, c));
+                a21.set(r, c, scratch.get(r, c));
             }
         }
     }
 
-    // Step 3 — M12 = L11 · U12. L11 (left h cols of `top`) and M12
-    // (right m-h cols of `top`) are disjoint column ranges; we read
-    // L11 cells and write M12 cells through the single `&mut top`
-    // borrow (`get` + `set` interleaved). The unit diagonal of L11 is
-    // implicit, handled inline via `if k == i`.
-    {
-        let u12 = u.submat(0..h, h..m);
-        let zero_cell: F = u12.get(0, 0).zero_like();
-        let one: F = u12.get(0, 0).one_like();
-        // L11 is unit lower-triangular (diagonal implicit), so
-        //   M12[i, j] = ∑_{k=0}^{i} (k == i ? 1 : L11[i, k]) · U12[k, j]
-        // The reads of L11 come from `top[i, k]` for k ≤ i < h; the
-        // writes of M12 go to `top[i, h + j]` for j in 0..(m-h). The
-        // column ranges are disjoint, so the per-cell read-then-write
-        // schedule is safe.
-        for i in 0..h {
-            for j in 0..(m - h) {
-                let mut acc = zero_cell.clone();
-                for k in 0..=i {
-                    let l_ik = if k == i { one.clone() } else { top.get(i, k) };
-                    acc += l_ik * u12.get(k, j);
-                }
-                top.set(i, h + j, acc);
-            }
-        }
-    }
-
-    // Step 4 — M11 = L11 · U11. Recurse into the upper-left block of
-    // `top` — L11 is still intact (steps 2 and 3 wrote only to M21
-    // and M12, never to L11).
-    trtrm_inner(top.submat_mut(0..h, 0..h), u.submat(0..h, 0..h));
+    // Step 4 — A22 = U22 · L22. Recurse into the lower-right block of
+    // `bot` — L22 is still intact (steps 1, 2, 3 read L22 in step 1
+    // only and never wrote to it; the L21 destruction in step 3 is
+    // confined to the left h cols of `bot`).
+    trtrm_inner(bot.submat_mut(0..(m - h), h..m), u.submat(h..m, h..m));
 }
 
 fn trtrm_base<F: FiniteField>(l: &mut MatViewMut<'_, F>, u: &MatView<'_, F>) {
@@ -1205,36 +1209,34 @@ fn trtrm_base<F: FiniteField>(l: &mut MatViewMut<'_, F>, u: &MatView<'_, F>) {
     if m == 0 {
         return;
     }
-    // Compute (L · U)[i, j] = ∑_{k=0}^{min(i,j)} L[i, k] · U[k, j],
-    // with L[k, k] = 1 (implicit) and L[i, k] = 0 for k > i (strict-
-    // upper cells of L are not read), and U[k, j] = 0 for k > j
-    // (strict-lower cells of U are not read).
+    // Compute (U · L)[i, j] = ∑_{k=max(i,j)}^{m-1} U[i, k] · L[k, j],
+    // with L[k, k] = 1 (implicit), L[k, j] = 0 for k < j (strict-upper
+    // cells of L are not read), and U[i, k] = 0 for k < i (strict-
+    // lower cells of U are not read).
     //
-    // Iteration schedule: walk rows top-to-bottom, columns from j = m-1
-    // down to j = 0 within each row. At cell (i, j) we read L[i, k]
-    // for 0 ≤ k ≤ min(i, j) — these reads come from the *original*
-    // L because:
-    //   - cells with column index ≥ j+1 in row i have already been
-    //     overwritten (we walked j from m-1 down), but the read
-    //     window for (i, j) is k ≤ j, so it never touches those;
-    //   - cells with column index ≤ j in row i have not been
-    //     overwritten yet at the start of this iteration.
-    //   - cells in any prior row i' < i fall under the same property
-    //     because (i', k) writes are bounded by k ≤ i' < i, so the
-    //     row-i reads (which need k ≤ i, but more tightly k ≤ j) only
-    //     touch un-overwritten cells of L's strictly-lower triangle
-    //     plus the unit diagonal.
+    // Iteration schedule: walk columns left-to-right (j = 0..m), rows
+    // top-to-bottom (i = 0..m) within each column. At cell (i, j) we
+    // read L[k, j] for k = max(i, j)..m-1. These reads come from the
+    // *original* L because:
+    //   - in earlier columns (j' < j) writes were confined to column
+    //     j', not j, so column j is still pristine when we enter it;
+    //   - within column j, prior writes happened at rows 0..i-1, and
+    //     our read range is k ≥ max(i, j) ≥ i, so we never read those
+    //     overwritten cells;
+    //   - the cell L[j, j] (the implicit unit diagonal) is folded in
+    //     via `if k == j` rather than read from storage.
     // Therefore the loop is safe with no snapshot.
     let one: F = u.get(0, 0).one_like();
     let zero: F = u.get(0, 0).zero_like();
-    for i in 0..m {
-        for j in (0..m).rev() {
-            // Sum k from 0 to min(i, j), since U[k, j] = 0 for k > j.
-            let kmax = i.min(j);
+    for j in 0..m {
+        for i in 0..m {
+            // Sum k from max(i, j) to m-1, since U[i, k] = 0 for k < i
+            // and L[k, j] = 0 for k < j.
+            let kmin = i.max(j);
             let mut acc = zero.clone();
-            for k in 0..=kmax {
-                let l_ik = if i == k { one.clone() } else { l.get(i, k) };
-                acc += l_ik * u.get(k, j);
+            for k in kmin..m {
+                let l_kj = if k == j { one.clone() } else { l.get(k, j) };
+                acc += u.get(i, k) * l_kj;
             }
             l.set(i, j, acc);
         }
@@ -1700,7 +1702,8 @@ mod tests {
     // ─── trtrm correctness ───────────────────────────────────────────────
 
     fn check_trtrm_fp<const P: u64>(m: usize, seed: u64) {
-        // Build L (unit lower-triangular) and U (upper-triangular).
+        // Build L (unit lower-triangular, diagonal implicit in the
+        // compressed view) and U (upper-triangular).
         let mut l = random_fp::<P>(m, m, seed);
         for r in 0..m {
             for c in r..m {
@@ -1721,7 +1724,9 @@ mod tests {
             }
             tmp
         };
-        let expected = gemm(&l_dense, &u);
+        // trtrm computes A = U · L written into the L-view per the
+        // issue 83b1ad8b contract.
+        let expected = gemm(&u, &l_dense);
         let mut got = l.clone();
         trtrm(got.submat_mut(.., ..), u.submat(.., ..));
         assert_eq!(got, expected, "trtrm m={}", m);
@@ -1747,7 +1752,7 @@ mod tests {
             }
             tmp
         };
-        let expected = gemm(&l_dense, &u);
+        let expected = gemm(&u, &l_dense);
         let mut got = l.clone();
         trtrm(got.submat_mut(.., ..), u.submat(.., ..));
         assert_eq!(got, expected, "trtrm gf2m m={}", m);
@@ -1849,7 +1854,7 @@ mod tests {
             prop_assert_eq!(prod, id);
         }
 
-        /// trtrm matches dense gemm of L (with implicit unit diag) times U.
+        /// trtrm matches dense gemm of U times L (with implicit unit diag).
         #[test]
         fn prop_trtrm_fp7(m in 1usize..40, seed in 0u64..256) {
             let mut l = random_fp::<7>(m, m, seed);
@@ -1871,7 +1876,7 @@ mod tests {
                 }
                 tmp
             };
-            let expected = gemm(&l_dense, &u);
+            let expected = gemm(&u, &l_dense);
             let mut got = l.clone();
             trtrm(got.submat_mut(.., ..), u.submat(.., ..));
             prop_assert_eq!(got, expected);
@@ -1898,7 +1903,7 @@ mod tests {
                 }
                 tmp
             };
-            let expected = gemm(&l_dense, &u);
+            let expected = gemm(&u, &l_dense);
             let mut got = l.clone();
             trtrm(got.submat_mut(.., ..), u.submat(.., ..));
             prop_assert_eq!(got, expected);
