@@ -351,6 +351,26 @@ pub trait FiniteField:
     /// `gemm` at every threshold value, as asserted by the property
     /// tests in `src/field/winograd.rs`.
     const WINOGRAD_THRESHOLD: usize = 128;
+
+    /// Base-case threshold for the block-recursive triangular primitives
+    /// in [`crate::field::triangular`] (`trsm`, `trmm`, `trtri`, `trtrm`,
+    /// per Dumas–Pernet §2.1 algorithms 2.1–2.4). Recursion stops at sizes
+    /// `≤ TRI_BASE_THRESHOLD` and falls through to a small direct loop
+    /// (back-substitution for `trsm`, schoolbook for `trmm`/`trtri`).
+    ///
+    /// The default `32` is empirically chosen for Mersenne-31 and small
+    /// `Gf2mWide` instances; fields with materially heavier per-MAC cost
+    /// (e.g. `Fp<P>` with `P` close to `2^63`, or tower extensions) may
+    /// override this to a smaller value because the recursion's `gemm`
+    /// dispatch overhead is amortised over fewer cells. Lighter fields
+    /// (e.g. GF(2) bit-packed) may benefit from a larger threshold.
+    ///
+    /// Like [`Self::WINOGRAD_THRESHOLD`], this knob is **soft**:
+    /// correctness is independent of it. Property tests in
+    /// `src/field/triangular.rs` exercise `trsm`/`trmm`/`trtri`/`trtrm`
+    /// at sizes that straddle the threshold and assert bit-exact
+    /// agreement with the classical `gemm`-of-dense expansion.
+    const TRI_BASE_THRESHOLD: usize = 32;
 }
 
 /// Extension of [`FiniteField`] for types that are `Copy` and have zero-cost identity constructors.
