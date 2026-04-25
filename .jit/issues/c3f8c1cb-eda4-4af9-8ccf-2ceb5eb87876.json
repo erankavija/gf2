@@ -31,11 +31,19 @@
     }
   },
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/active/c3f8c1cb-ple-replan.md",
+      "commit": null,
+      "label": "PLE replanning artefact (R1 lessons + R2 contract)",
+      "doc_type": "design",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "component:gf2-core",
     "type:story"
   ],
   "created_at": "2026-02-23T19:20:28.213415862+00:00",
-  "updated_at": "2026-04-25T23:57:19.204506706+00:00"
+  "updated_at": "2026-04-25T23:59:38.319289187+00:00"
 }
