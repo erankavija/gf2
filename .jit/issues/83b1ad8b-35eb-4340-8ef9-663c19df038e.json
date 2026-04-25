@@ -2,7 +2,7 @@
   "id": "83b1ad8b-35eb-4340-8ef9-663c19df038e",
   "title": "Implement block-recursive trsm/trmm/trtri/trtrm triangular primitives",
   "description": "Block-recursive triangular primitives reducing to `gemm` per Dumas–Pernet §2.1 (algorithms 2.1–2.4). These are the shared building blocks of `inv`, `solve`, `rref`, and characteristic polynomial.\n\n## Operations\n\n```rust\n// All take matrix views and operate in-place where the paper permits.\npub fn trsm_upper<F: FiniteField>(a: MatView<F>, b: MatViewMut<F>);   // Upper A, solve AX = B\npub fn trsm_lower<F: FiniteField>(a: MatView<F>, b: MatViewMut<F>);   // Lower A, solve AX = B\npub fn trmm_upper<F: FiniteField>(a: MatView<F>, b: MatViewMut<F>);   // B ← A·B, A upper triangular\npub fn trmm_lower<F: FiniteField>(a: MatView<F>, b: MatViewMut<F>);   // B ← A·B, A lower triangular\npub fn trtri_upper<F: FiniteField>(a: MatViewMut<F>);                 // A ← A⁻¹, A upper triangular\npub fn trtri_lower<F: FiniteField>(a: MatViewMut<F>);                 // A ← A⁻¹, A lower triangular\npub fn trtrm<F: FiniteField>(l: MatViewMut<F>, u: MatView<F>);        // A = U·L written into L-view\n```\n\n## Algorithms\n\n- `trsm`: recurse halving the triangular dimension; inner block uses `gemm` (paper alg 2.1).\n- `trmm`: recurse halving the triangular dimension; inner block uses `gemm` (alg 2.2).\n- `trtri`: recursive inversion with two `trmm` calls (alg 2.3).\n- `trtrm`: upper-times-lower, uses `gemm` + recursive `trtrm` (alg 2.4).\n\n## Success criteria\n\n- [hard] All four operations implemented generically over `F: FiniteField`, dispatched through `FieldVec` / `gemm` under the hood.\n- [hard] Zero extra allocation beyond the input/output arguments (per paper §2.1 note). Use in-place `MatViewMut` throughout.  > **Amendment (R5, 2026-04-25):** the `[hard]` \"zero extra allocation\" contract is hereby clarified to mean \"zero per-recursion-level scratch matrices managed by the triangular primitives themselves\". The shared blocked-gemm kernels `gemm_axpy_into_view` and `gemm_into_view` intrinsically allocate ONE `b`-transpose `FieldMatrix<F>` per call — mirroring T1's classical `gemm`'s pattern; on a `MatView` operand that materialisation goes through `MatView::to_owned` followed by `FieldMatrix::transpose`, so the test-only allocation counter records **2** bumps per gemm call (both bypass `FieldMatrix::new` in production but each bumps the counter under `#[cfg(test)]` to mirror their real heap cost). The unit-diagonal kernel `gemm_axpy_into_view_diag` walks `b` cell-wise and adds **0** allocations. Because trsm/trmm/trtri/trtrm reduce to gemm (per Dumas–Pernet §2.1's whole point), they inherit this 1-allocation-per-gemm-call cost. The empirical counts at `MERSENNE_31`, threshold = 32 are: trsm/trmm at m=65 → 4 bumps (2 gemm calls × 2); trtri at base case m=32 → 1 (the inv buffer); trtri at m=64 → 7 (2 base inv + 1 chain scratch + 2 gemm × 2); trtrm at m=64 → 5 (1 chain scratch + 2 gemm_axpy_into_view + 2 gemm_into_view; the unit-diagonal step contributes 0). The 2 base-case inv buffers + the 1 chain-multiply scratch per recursion level for the `−A11·A12·A22`-style triple product (alg 2.3 / 2.4) are the **architectural exceptions** documented as out of `[hard]` scope; matrix multiply is not associative in-place. The actual allocation budgets are locked into runtime regression tests at `crates/gf2-core/src/field/triangular.rs:test_trsm_zero_allocation` through `test_trtrm_allocation_budget`. The thread-local counter (`crates/gf2-core/src/field/matrix.rs:FIELDMATRIX_NEW_COUNT`) avoids the parallel-test contamination that earlier process-global atomic counters exhibited under `cargo test --release`. The `[hard]` wording was originally written before the `gemm_axpy_into_view` kernel existed and assumed a \"rewrite the inner loop in the triangular module\" implementation strategy, which is rejected on SSOT grounds (see R3 reviewer feedback).\n- [hard] Property-based tests: for random `A` triangular and random `B`, `trsm(A, B)` then multiply-back equals `B`. Same for all four.\n- [hard] Edge cases covered: n = 0, 1, power-of-two boundaries, odd recursion splits, singular upper-triangular blocks (must panic with clear message, not silently return garbage).\n- [hard] Benchmarked via criterion at n = 64, 256, 1024 for GF(7), GF(2^31-1), GF(2^8). Benches compiled and runnable under `cargo bench -p gf2-core`.\n- [hard] API consistency: triangular primitives have the same naming conventions as the rest of `FieldMatrix`; signature style mirrors existing `BitMatrix` kernel utilities where applicable.\n- [hard] Documented at module level with the paper citation and the reduction-to-gemm sketch.\n- [aspirational] Crossover to base case (small-n direct code) tuned per field; `TRI_BASE_THRESHOLD` configurable.\n\n## Dependencies\n\n- Dense `FieldMatrix<F>` type (ab791e27) — must have `MatView` / `MatViewMut`.\n- Matrix multiplication (d48a3cfd) — `gemm` is the inner kernel.\n- Expression-template design (N1) — operator overloads for triangular views must match the broader expression algebra.\n\n## References\n\n- [Dumas–Pernet takeaways](dev/plans/dumas_pernet_takeaways.md) §3.2, §7\n- [fflas-ffpack analysis](dev/plans/fflas_ffpack_analysis.md) §6",
-  "state": "ready",
+  "state": "done",
   "priority": "normal",
   "assignee": null,
   "dependencies": [
@@ -15,14 +15,19 @@
   ],
   "gates_status": {
     "code-review": {
-      "status": "failed",
+      "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-04-25T19:41:47.784500403Z"
+      "updated_at": "2026-04-25T20:15:15.674147135Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-25T20:19:59.182404837Z"
     },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-04-25T19:41:39.688759297Z"
+      "updated_at": "2026-04-25T20:15:08.278662939Z"
     }
   },
   "context": {},
@@ -33,5 +38,5 @@
     "epic:bb85c68a"
   ],
   "created_at": "2026-04-23T15:56:35.298288069+00:00",
-  "updated_at": "2026-04-25T20:09:41.008693626+00:00"
+  "updated_at": "2026-04-25T20:19:59.977478005+00:00"
 }
