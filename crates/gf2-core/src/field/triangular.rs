@@ -5,9 +5,16 @@
 //! `91c06222`) and the dense view types
 //! [`MatView`](crate::field::matrix::MatView) /
 //! [`MatViewMut`](crate::field::matrix::MatViewMut). All routines operate
-//! **in place** on the supplied views: no extra `FieldMatrix<F>` is
-//! materialised beyond the unavoidable scratch the recursive `gemm` calls
-//! allocate for their owned outputs.
+//! **in place** on the supplied views: the trsm/trmm pair uses the
+//! crate-private fused [`submul_into_view`] / [`addmul_into_view`] kernels
+//! to fold each off-diagonal `B ± A · B'` step directly into the
+//! destination view — no intermediate owned `FieldMatrix<F>` is
+//! materialised, beyond the single `B`-transpose scratch
+//! [`crate::field::matrix::gemm_into_view`] inherits from the classical
+//! blocked gemm. The trtri / trtrm primitives need exactly **one** scratch
+//! matrix of size `h × h` per recursion level for the
+//! `−A11 · A12 · A22` chained multiply in algorithm 2.3 (and the
+//! analogous step in algorithm 2.4); this is documented per-function.
 //!
 //! # Routines
 //!
@@ -78,15 +85,27 @@
 //!
 //! # Allocation budget
 //!
-//! The trsm / trmm path uses a crate-private fused helper
-//! [`submul_into_view`] / [`addmul_into_view`] that performs `C ± A · B`
-//! directly on a `MatViewMut` **without** materialising an intermediate
-//! `A · B` matrix. The trtri / trtrm paths necessarily materialise one
-//! `FieldMatrix<F>` per off-diagonal multiply (because [`gemm`] returns an
-//! owned matrix); the allocation footprint per recursion level is
-//! `O((m/2)²)` cells, geometrically summing to `O(m²)` over the full
-//! recursion tree — the same asymptotic budget as the existing Strassen
-//! recursion in [`crate::field::winograd`].
+//! - `trsm_*` / `trmm_*`: the recursive paths allocate **nothing** on
+//!   top of the inner gemm's `B`-transpose scratch. The off-diagonal
+//!   `B ± A · B'` fold is computed via [`submul_into_view`] /
+//!   [`addmul_into_view`], which read both `A` and `B'` through generic
+//!   [`MatrixLike`](crate::matrix_like::MatrixLike) views (no
+//!   `to_owned()` snapshots) and accumulate per-cell into the
+//!   destination view.
+//! - `trtri_*`: each recursion level allocates **one** scratch
+//!   `FieldMatrix<F>` of shape `h × h` for the chained multiply
+//!   `A12 := −A11 · A12 · A22` (algorithm 2.3). This is the only
+//!   matrix this routine materialises beyond the inputs.
+//! - `trtrm`: the recursion uses [`gemm_into_view`](crate::field::matrix::gemm_into_view)
+//!   to fold `L21 · U11` and `L11 · U12` directly into the destination
+//!   view; only the unit-diagonal materialisation of `L11` for the
+//!   `M12 = L11 · U12` step requires a single `h × h` scratch (snapshot
+//!   of the strictly-lower triangle plus the implicit unit diagonal)
+//!   per recursion level. Mirrors the trtri budget.
+//!
+//! Geometrically these scratch allocations sum to `O(m²)` cells over
+//! the full recursion tree, the same asymptotic budget as the
+//! Strassen-Winograd recursion in [`crate::field::winograd`].
 //!
 //! # Bit-exact correctness
 //!
@@ -105,8 +124,9 @@
 //! `trmm` and `trtrm` make no inversion calls and so cannot fail on a
 //! singular argument.
 
-use crate::field::matrix::{gemm, FieldMatrix, MatView, MatViewMut};
+use crate::field::matrix::{gemm_into_view, FieldMatrix, MatView, MatViewMut};
 use crate::field::FiniteField;
+use crate::matrix_like::MatrixLike;
 
 // ─── Public API ─────────────────────────────────────────────────────────────
 
@@ -553,14 +573,18 @@ pub fn trtrm<F: FiniteField>(l: MatViewMut<'_, F>, u: MatView<'_, F>) {
 
 // ─── Internal helpers (no public surface) ───────────────────────────────────
 
-/// Fused in-place `dst -= a · b` on a mutable view, **without** allocating
-/// the intermediate `a · b` matrix. Used by the trsm/trmm recursive path
-/// to fold the off-diagonal contribution into the working view directly.
-fn submul_into_view<F: FiniteField>(
-    a: &FieldMatrix<F>,
-    b: &FieldMatrix<F>,
-    dst: &mut MatViewMut<'_, F>,
-) {
+/// Fused in-place `dst -= a · b` on a mutable view, **without**
+/// allocating the intermediate `a · b` matrix. Reads both operands
+/// through the generic [`MatrixLike`] surface so the caller can pass
+/// `MatView` references directly without materialising owned
+/// `FieldMatrix<F>` snapshots. Used by the trsm recursive path to fold
+/// the off-diagonal contribution into the working view directly.
+fn submul_into_view<F, A, B>(a: &A, b: &B, dst: &mut MatViewMut<'_, F>)
+where
+    F: FiniteField,
+    A: MatrixLike<F> + ?Sized,
+    B: MatrixLike<F> + ?Sized,
+{
     let (m, k) = a.shape();
     let (kb, n) = b.shape();
     debug_assert_eq!(k, kb, "submul_into_view: inner-dim mismatch");
@@ -575,9 +599,9 @@ fn submul_into_view<F: FiniteField>(
     // Per-cell accumulation: reads dst[i,j], subtracts ∑_t a[i,t]·b[t,j],
     // writes back. We could use a delayed-reduction `Wide` accumulator
     // here, but that ties this routine to F::Wide; deferring to the
-    // straightforward field-level accumulation keeps the code generic and
-    // mirrors the trtri path. The hot path is still the `gemm` calls in
-    // trtri/trtrm.
+    // straightforward field-level accumulation keeps the code generic
+    // and matches the trtri allocation budget (zero scratch beyond the
+    // off-diagonal scratch trtri itself owns).
     for i in 0..m {
         for j in 0..n {
             let mut acc = dst.get(i, j);
@@ -590,12 +614,15 @@ fn submul_into_view<F: FiniteField>(
 }
 
 /// Fused in-place `dst += a · b` on a mutable view. Mirror of
-/// [`submul_into_view`] used by the trmm path.
-fn addmul_into_view<F: FiniteField>(
-    a: &FieldMatrix<F>,
-    b: &FieldMatrix<F>,
-    dst: &mut MatViewMut<'_, F>,
-) {
+/// [`submul_into_view`] used by the trmm path. Operands are read
+/// through [`MatrixLike`] so callers can pass views without
+/// allocating.
+fn addmul_into_view<F, A, B>(a: &A, b: &B, dst: &mut MatViewMut<'_, F>)
+where
+    F: FiniteField,
+    A: MatrixLike<F> + ?Sized,
+    B: MatrixLike<F> + ?Sized,
+{
     let (m, k) = a.shape();
     let (kb, n) = b.shape();
     debug_assert_eq!(k, kb, "addmul_into_view: inner-dim mismatch");
@@ -620,28 +647,36 @@ fn addmul_into_view<F: FiniteField>(
 
 // ─── trsm_upper ─────────────────────────────────────────────────────────────
 
-fn trsm_upper_inner<F: FiniteField>(a: MatView<'_, F>, mut b: MatViewMut<'_, F>) {
+fn trsm_upper_inner<F: FiniteField>(a: MatView<'_, F>, b: MatViewMut<'_, F>) {
     let m = a.rows();
     let n = b.cols();
     if m == 0 || n == 0 {
         return;
     }
     if m <= F::TRI_BASE_THRESHOLD {
-        trsm_upper_base(&a, &mut b);
+        let mut b_mut = b;
+        trsm_upper_base(&a, &mut b_mut);
         return;
     }
     let h = m / 2;
-    // Recurse on the lower half: A22 · X2 = B2.
-    trsm_upper_inner(a.submat(h..m, h..m), b.submat_mut(h..m, ..));
-    // Fold off-diagonal: B1 -= A12 · X2.
+    // Split B into the upper and lower row halves so we can read B2
+    // immutably while mutating B1 — both halves alias the same parent
+    // buffer, but `split_rows_mut` slices them into disjoint mutable
+    // sub-slices so Rust's borrow checker accepts the pair.
+    let (b1, mut b2_mut) = b.split_rows_mut(h);
+    // Recurse on the lower half first: A22 · X2 = B2.
+    trsm_upper_inner(a.submat(h..m, h..m), b2_mut.reborrow());
+    // Fold off-diagonal: B1 -= A12 · X2 — reads `a12` (a sub-view of
+    // `a`) and `b2` (immutable reborrow of the now-solved lower half)
+    // into the mutable upper half, with no allocation.
     {
-        let a12 = a.submat(0..h, h..m).to_owned();
-        let x2 = b.submat(h..m, ..).to_owned();
-        let mut b1 = b.submat_mut(0..h, ..);
-        submul_into_view(&a12, &x2, &mut b1);
+        let a12 = a.submat(0..h, h..m);
+        let b2 = b2_mut.as_view();
+        let mut b1_mut = b1;
+        submul_into_view(&a12, &b2, &mut b1_mut);
+        // Recurse on the upper half: A11 · X1 = B1.
+        trsm_upper_inner(a.submat(0..h, 0..h), b1_mut);
     }
-    // Recurse on the upper half: A11 · X1 = B1.
-    trsm_upper_inner(a.submat(0..h, 0..h), b.submat_mut(0..h, ..));
 }
 
 fn trsm_upper_base<F: FiniteField>(a: &MatView<'_, F>, b: &mut MatViewMut<'_, F>) {
@@ -672,28 +707,32 @@ fn trsm_upper_base<F: FiniteField>(a: &MatView<'_, F>, b: &mut MatViewMut<'_, F>
 
 // ─── trsm_lower ─────────────────────────────────────────────────────────────
 
-fn trsm_lower_inner<F: FiniteField>(a: MatView<'_, F>, mut b: MatViewMut<'_, F>) {
+fn trsm_lower_inner<F: FiniteField>(a: MatView<'_, F>, b: MatViewMut<'_, F>) {
     let m = a.rows();
     let n = b.cols();
     if m == 0 || n == 0 {
         return;
     }
     if m <= F::TRI_BASE_THRESHOLD {
-        trsm_lower_base(&a, &mut b);
+        let mut b_mut = b;
+        trsm_lower_base(&a, &mut b_mut);
         return;
     }
     let h = m / 2;
-    // Recurse on the upper half: A11 · X1 = B1.
-    trsm_lower_inner(a.submat(0..h, 0..h), b.submat_mut(0..h, ..));
-    // Fold off-diagonal: B2 -= A21 · X1.
+    // Split B at row h to obtain disjoint mutable views of B1 and B2.
+    let (mut b1_mut, b2) = b.split_rows_mut(h);
+    // Recurse on the upper half first: A11 · X1 = B1.
+    trsm_lower_inner(a.submat(0..h, 0..h), b1_mut.reborrow());
+    // Fold off-diagonal: B2 -= A21 · X1 — read `a21` and `b1` (both
+    // immutable views) into the mutable lower half.
     {
-        let a21 = a.submat(h..m, 0..h).to_owned();
-        let x1 = b.submat(0..h, ..).to_owned();
-        let mut b2 = b.submat_mut(h..m, ..);
-        submul_into_view(&a21, &x1, &mut b2);
+        let a21 = a.submat(h..m, 0..h);
+        let b1 = b1_mut.as_view();
+        let mut b2_mut = b2;
+        submul_into_view(&a21, &b1, &mut b2_mut);
+        // Recurse on the lower half: A22 · X2 = B2.
+        trsm_lower_inner(a.submat(h..m, h..m), b2_mut);
     }
-    // Recurse on the lower half: A22 · X2 = B2.
-    trsm_lower_inner(a.submat(h..m, h..m), b.submat_mut(h..m, ..));
 }
 
 fn trsm_lower_base<F: FiniteField>(a: &MatView<'_, F>, b: &mut MatViewMut<'_, F>) {
@@ -724,29 +763,33 @@ fn trsm_lower_base<F: FiniteField>(a: &MatView<'_, F>, b: &mut MatViewMut<'_, F>
 
 // ─── trmm_upper ─────────────────────────────────────────────────────────────
 
-fn trmm_upper_inner<F: FiniteField>(a: MatView<'_, F>, mut b: MatViewMut<'_, F>) {
+fn trmm_upper_inner<F: FiniteField>(a: MatView<'_, F>, b: MatViewMut<'_, F>) {
     let m = a.rows();
     let n = b.cols();
     if m == 0 || n == 0 {
         return;
     }
     if m <= F::TRI_BASE_THRESHOLD {
-        trmm_upper_base(&a, &mut b);
+        let mut b_mut = b;
+        trmm_upper_base(&a, &mut b_mut);
         return;
     }
     let h = m / 2;
-    // Recurse on the upper half: B1 ← A11 · B1.
-    trmm_upper_inner(a.submat(0..h, 0..h), b.submat_mut(0..h, ..));
-    // Fold off-diagonal: B1 += A12 · B2  (B2 is still the original B2,
-    // because the lower half has not been recursed on yet).
+    // Split B at row h: mutate B1 (rows 0..h) while reading B2 (rows
+    // h..m). The schedule keeps B2 untouched until step 3 so the read
+    // sees the original value.
+    let (mut b1_mut, b2_mut) = b.split_rows_mut(h);
+    // Step 1 — recurse on the upper half: B1 ← A11 · B1.
+    trmm_upper_inner(a.submat(0..h, 0..h), b1_mut.reborrow());
+    // Step 2 — fold off-diagonal: B1 += A12 · B2. B2 is still the
+    // original value here, so we can borrow it immutably.
     {
-        let a12 = a.submat(0..h, h..m).to_owned();
-        let b2 = b.submat(h..m, ..).to_owned();
-        let mut b1 = b.submat_mut(0..h, ..);
-        addmul_into_view(&a12, &b2, &mut b1);
+        let a12 = a.submat(0..h, h..m);
+        let b2 = b2_mut.as_view();
+        addmul_into_view(&a12, &b2, &mut b1_mut);
     }
-    // Recurse on the lower half: B2 ← A22 · B2.
-    trmm_upper_inner(a.submat(h..m, h..m), b.submat_mut(h..m, ..));
+    // Step 3 — recurse on the lower half: B2 ← A22 · B2.
+    trmm_upper_inner(a.submat(h..m, h..m), b2_mut);
 }
 
 fn trmm_upper_base<F: FiniteField>(a: &MatView<'_, F>, b: &mut MatViewMut<'_, F>) {
@@ -772,28 +815,32 @@ fn trmm_upper_base<F: FiniteField>(a: &MatView<'_, F>, b: &mut MatViewMut<'_, F>
 
 // ─── trmm_lower ─────────────────────────────────────────────────────────────
 
-fn trmm_lower_inner<F: FiniteField>(a: MatView<'_, F>, mut b: MatViewMut<'_, F>) {
+fn trmm_lower_inner<F: FiniteField>(a: MatView<'_, F>, b: MatViewMut<'_, F>) {
     let m = a.rows();
     let n = b.cols();
     if m == 0 || n == 0 {
         return;
     }
     if m <= F::TRI_BASE_THRESHOLD {
-        trmm_lower_base(&a, &mut b);
+        let mut b_mut = b;
+        trmm_lower_base(&a, &mut b_mut);
         return;
     }
     let h = m / 2;
-    // Recurse on the lower half FIRST: B2 ← A22 · B2.
-    trmm_lower_inner(a.submat(h..m, h..m), b.submat_mut(h..m, ..));
-    // Fold off-diagonal: B2 += A21 · B1 (B1 is still the original B1).
+    // Split B at row h: mutate B2 first (rows h..m), then fold in B1
+    // (still the original value), then recurse on B1 last.
+    let (b1_mut, mut b2_mut) = b.split_rows_mut(h);
+    // Step 1 — recurse on the lower half FIRST: B2 ← A22 · B2.
+    trmm_lower_inner(a.submat(h..m, h..m), b2_mut.reborrow());
+    // Step 2 — fold off-diagonal: B2 += A21 · B1. B1 is still the
+    // original value here, so we can borrow it immutably.
     {
-        let a21 = a.submat(h..m, 0..h).to_owned();
-        let b1 = b.submat(0..h, ..).to_owned();
-        let mut b2 = b.submat_mut(h..m, ..);
-        addmul_into_view(&a21, &b1, &mut b2);
+        let a21 = a.submat(h..m, 0..h);
+        let b1 = b1_mut.as_view();
+        addmul_into_view(&a21, &b1, &mut b2_mut);
     }
-    // Recurse on the upper half LAST: B1 ← A11 · B1.
-    trmm_lower_inner(a.submat(0..h, 0..h), b.submat_mut(0..h, ..));
+    // Step 3 — recurse on the upper half LAST: B1 ← A11 · B1.
+    trmm_lower_inner(a.submat(0..h, 0..h), b1_mut);
 }
 
 fn trmm_lower_base<F: FiniteField>(a: &MatView<'_, F>, b: &mut MatViewMut<'_, F>) {
@@ -818,32 +865,52 @@ fn trmm_lower_base<F: FiniteField>(a: &MatView<'_, F>, b: &mut MatViewMut<'_, F>
 
 // ─── trtri_upper ────────────────────────────────────────────────────────────
 
-fn trtri_upper_inner<F: FiniteField>(mut a: MatViewMut<'_, F>) {
+fn trtri_upper_inner<F: FiniteField>(a: MatViewMut<'_, F>) {
     let m = a.rows();
     if m == 0 {
         return;
     }
     if m <= F::TRI_BASE_THRESHOLD {
-        trtri_upper_base(&mut a);
+        let mut a_mut = a;
+        trtri_upper_base(&mut a_mut);
         return;
     }
     let h = m / 2;
-    // Recursively invert the diagonal blocks A11, A22 in place.
-    trtri_upper_inner(a.submat_mut(0..h, 0..h));
-    trtri_upper_inner(a.submat_mut(h..m, h..m));
+    // Split A horizontally at row h. `top` holds rows 0..h (containing
+    // A11 in the left h columns and A12 in the right m-h columns).
+    // `bot` holds rows h..m (containing A22 in the right m-h columns).
+    let (mut top, mut bot) = a.split_rows_mut(h);
+    // Recursively invert the diagonal blocks A11 (in `top`) and A22
+    // (in `bot`) in place.
+    trtri_upper_inner(top.submat_mut(0..h, 0..h));
+    trtri_upper_inner(bot.submat_mut(0..(m - h), h..m));
     // Off-diagonal: A12 ← −A11_inv · A12 · A22_inv.
-    let a11_inv = a.submat(0..h, 0..h).to_owned();
-    let a12_old = a.submat(0..h, h..m).to_owned();
-    let a22_inv = a.submat(h..m, h..m).to_owned();
-    // tmp = A11_inv · A12_old   (one gemm, one scratch matrix)
-    let tmp = gemm(&a11_inv, &a12_old);
-    // a12_new = tmp · A22_inv  (second gemm, second scratch matrix)
-    let a12_new = gemm(&tmp, &a22_inv);
-    // Negate and write back.
-    let mut a12_dst = a.submat_mut(0..h, h..m);
+    //
+    // Allocation budget: ONE scratch `FieldMatrix<F>` of shape
+    // h × (m-h) per recursion level, used to hold the intermediate
+    // `A11_inv · A12_old`. The first product is computed with
+    // [`gemm_into_view`] writing into the scratch; the second product
+    // (and the final negation) is written directly back into the
+    // A12 sub-view of `top` via [`gemm_into_view`] + a single
+    // negation pass — no second scratch is allocated.
+    let zero: F = top.as_view().get(0, 0).zero_like();
+    let mut tmp = FieldMatrix::<F>::new(h, m - h, zero);
+    {
+        let a11_inv = top.submat(0..h, 0..h);
+        let a12_old = top.submat(0..h, h..m);
+        gemm_into_view(&a11_inv, &a12_old, tmp.submat_mut(.., ..));
+    }
+    {
+        let a22_inv = bot.submat(0..(m - h), h..m);
+        let a12_dst = top.submat_mut(0..h, h..m);
+        gemm_into_view(&tmp, &a22_inv, a12_dst);
+    }
+    // Negate A12 in place — single pass, no allocation.
+    let mut a12_dst = top.submat_mut(0..h, h..m);
     for r in 0..h {
         for c in 0..(m - h) {
-            a12_dst.set(r, c, -a12_new.get(r, c));
+            let v = a12_dst.get(r, c);
+            a12_dst.set(r, c, -v);
         }
     }
 }
@@ -859,19 +926,15 @@ fn trtri_upper_base<F: FiniteField>(a: &mut MatViewMut<'_, F>) {
     // We compute the inverse from the bottom-right corner up so each row's
     // dependencies are already in place.
     //
-    // We materialise A⁻¹ in a separate owned matrix to avoid destroying
-    // entries of A that later iterations still need. The final write-back
-    // is a single pass over the upper-triangular cells of `a`.
-    let snapshot = a.to_owned();
-    let n_cells = m * m;
-    let zero: F = snapshot.get(0, 0).zero_like();
+    // Allocation budget: a single `m × m` `FieldMatrix<F>` to stage the
+    // inverse before writing it back to `a`. Reads from `a` are safe
+    // because the loop never writes to `a` until the final pass.
+    let zero: F = a.get(0, 0).zero_like();
     let mut inv = FieldMatrix::<F>::new(m, m, zero.clone());
-    debug_assert_eq!(inv.shape(), (m, m));
-    debug_assert_eq!(n_cells, m * m);
 
     // Validate diagonals up front for a clear panic message.
     for i in 0..m {
-        if snapshot.get(i, i).is_zero() {
+        if a.get(i, i).is_zero() {
             panic!(
                 "trtri_upper: zero pivot at A[{}, {}] = 0 — matrix is singular",
                 i, i
@@ -881,7 +944,7 @@ fn trtri_upper_base<F: FiniteField>(a: &mut MatViewMut<'_, F>) {
     // Compute inverses from the last column back to the first.
     for j in (0..m).rev() {
         // Diagonal cell: 1 / A[j, j].
-        let pivot_inv = snapshot.get(j, j).inv().unwrap_or_else(|| {
+        let pivot_inv = a.get(j, j).inv().unwrap_or_else(|| {
             panic!(
                 "trtri_upper: zero pivot at A[{}, {}] = 0 — matrix is singular",
                 j, j
@@ -892,9 +955,9 @@ fn trtri_upper_base<F: FiniteField>(a: &mut MatViewMut<'_, F>) {
         for i in (0..j).rev() {
             let mut acc = zero.clone();
             for k in (i + 1)..=j {
-                acc += snapshot.get(i, k) * inv.get(k, j);
+                acc += a.get(i, k) * inv.get(k, j);
             }
-            let aii_inv = snapshot.get(i, i).inv().unwrap_or_else(|| {
+            let aii_inv = a.get(i, i).inv().unwrap_or_else(|| {
                 panic!(
                     "trtri_upper: zero pivot at A[{}, {}] = 0 — matrix is singular",
                     i, i
@@ -913,29 +976,47 @@ fn trtri_upper_base<F: FiniteField>(a: &mut MatViewMut<'_, F>) {
 
 // ─── trtri_lower ────────────────────────────────────────────────────────────
 
-fn trtri_lower_inner<F: FiniteField>(mut a: MatViewMut<'_, F>) {
+fn trtri_lower_inner<F: FiniteField>(a: MatViewMut<'_, F>) {
     let m = a.rows();
     if m == 0 {
         return;
     }
     if m <= F::TRI_BASE_THRESHOLD {
-        trtri_lower_base(&mut a);
+        let mut a_mut = a;
+        trtri_lower_base(&mut a_mut);
         return;
     }
     let h = m / 2;
+    // Split A horizontally at row h. `top` holds rows 0..h (containing
+    // A11 in the left h columns). `bot` holds rows h..m (containing
+    // A21 in the left h columns and A22 in the right m-h columns).
+    let (mut top, mut bot) = a.split_rows_mut(h);
     // Recursively invert the diagonal blocks A11, A22 in place.
-    trtri_lower_inner(a.submat_mut(0..h, 0..h));
-    trtri_lower_inner(a.submat_mut(h..m, h..m));
+    trtri_lower_inner(top.submat_mut(0..h, 0..h));
+    trtri_lower_inner(bot.submat_mut(0..(m - h), h..m));
     // Off-diagonal: A21 ← −A22_inv · A21 · A11_inv.
-    let a11_inv = a.submat(0..h, 0..h).to_owned();
-    let a21_old = a.submat(h..m, 0..h).to_owned();
-    let a22_inv = a.submat(h..m, h..m).to_owned();
-    let tmp = gemm(&a22_inv, &a21_old);
-    let a21_new = gemm(&tmp, &a11_inv);
-    let mut a21_dst = a.submat_mut(h..m, 0..h);
+    //
+    // Allocation budget: ONE scratch `FieldMatrix<F>` of shape
+    // (m-h) × h per recursion level for the intermediate
+    // `A22_inv · A21_old`.
+    let zero: F = bot.as_view().get(0, 0).zero_like();
+    let mut tmp = FieldMatrix::<F>::new(m - h, h, zero);
+    {
+        let a22_inv = bot.submat(0..(m - h), h..m);
+        let a21_old = bot.submat(0..(m - h), 0..h);
+        gemm_into_view(&a22_inv, &a21_old, tmp.submat_mut(.., ..));
+    }
+    {
+        let a11_inv = top.submat(0..h, 0..h);
+        let a21_dst = bot.submat_mut(0..(m - h), 0..h);
+        gemm_into_view(&tmp, &a11_inv, a21_dst);
+    }
+    // Negate A21 in place.
+    let mut a21_dst = bot.submat_mut(0..(m - h), 0..h);
     for r in 0..(m - h) {
         for c in 0..h {
-            a21_dst.set(r, c, -a21_new.get(r, c));
+            let v = a21_dst.get(r, c);
+            a21_dst.set(r, c, -v);
         }
     }
 }
@@ -945,11 +1026,13 @@ fn trtri_lower_base<F: FiniteField>(a: &mut MatViewMut<'_, F>) {
     if m == 0 {
         return;
     }
-    let snapshot = a.to_owned();
-    let zero: F = snapshot.get(0, 0).zero_like();
+    // Allocation budget: one `m × m` `FieldMatrix<F>` to stage the
+    // inverse. Reads come from `a` directly because the loop only
+    // writes to `inv`.
+    let zero: F = a.get(0, 0).zero_like();
     let mut inv = FieldMatrix::<F>::new(m, m, zero.clone());
     for i in 0..m {
-        if snapshot.get(i, i).is_zero() {
+        if a.get(i, i).is_zero() {
             panic!(
                 "trtri_lower: zero pivot at A[{}, {}] = 0 — matrix is singular",
                 i, i
@@ -960,7 +1043,7 @@ fn trtri_lower_base<F: FiniteField>(a: &mut MatViewMut<'_, F>) {
     //   A⁻¹[i, i] = 1 / A[i, i]
     //   A⁻¹[i, j] = − (1 / A[i, i]) · ∑_{k=j}^{i-1} A[i, k] · A⁻¹[k, j]   (i > j)
     for j in 0..m {
-        let pivot_inv = snapshot.get(j, j).inv().unwrap_or_else(|| {
+        let pivot_inv = a.get(j, j).inv().unwrap_or_else(|| {
             panic!(
                 "trtri_lower: zero pivot at A[{}, {}] = 0 — matrix is singular",
                 j, j
@@ -970,9 +1053,9 @@ fn trtri_lower_base<F: FiniteField>(a: &mut MatViewMut<'_, F>) {
         for i in (j + 1)..m {
             let mut acc = zero.clone();
             for k in j..i {
-                acc += snapshot.get(i, k) * inv.get(k, j);
+                acc += a.get(i, k) * inv.get(k, j);
             }
-            let aii_inv = snapshot.get(i, i).inv().unwrap_or_else(|| {
+            let aii_inv = a.get(i, i).inv().unwrap_or_else(|| {
                 panic!(
                     "trtri_lower: zero pivot at A[{}, {}] = 0 — matrix is singular",
                     i, i
@@ -1011,107 +1094,110 @@ fn trtri_lower_base<F: FiniteField>(a: &mut MatViewMut<'_, F>) {
 ///     M22 = L21 · U12 + L22 · U22
 /// ```
 ///
-/// Since `U21 ≡ 0`, the recursion uses two `trtrm` calls plus three
-/// off-diagonal `gemm`/`trmm`/`trsm` operations:
+/// The schedule writes `M22 → M21 → M12 → M11` so each step reads only
+/// un-overwritten cells of `L`. `M22` is built in two passes (recurse
+/// into `L22`, then add `L21 · U12`); `M21` requires a single
+/// `(m-h) × h` scratch buffer because `L21 := L21 · U11` aliases its
+/// own read region cell-by-cell (writing `M21[i, j]` clobbers
+/// `L21[i, j]` which is then read by `M21[i, j+1]`'s dot product);
+/// `M12` is computed directly into the destination using the implicit
+/// unit diagonal of `L11`; `M11` recurses with the original `L11`
+/// still intact in `L`.
 ///
-/// ```text
-///     M22 ← L21 · U12 + trtrm(L22, U22)        // step 1: build M22
-///     trtrm(L11, U11)         in place           // step 2: M11 lives in L11
-///     trmm_upper(U11ᵀ from old L21 · old U11)    // … below
-/// ```
-///
-/// To keep the implementation simple and robust, we evaluate the product
-/// via gemm at the recursion boundary (rather than recursing on
-/// trtrm/trmm) — the recursion divides the working set in half but still
-/// terminates at the base-case schoolbook loop below the threshold.
-/// Bit-exactness vs the dense `gemm`-of-expanded-L expansion is
-/// asserted by the proptests in this module.
-fn trtrm_inner<F: FiniteField>(mut l: MatViewMut<'_, F>, u: MatView<'_, F>) {
+/// Allocation budget per recursion level: ONE scratch `FieldMatrix<F>`
+/// of shape `(m-h) × h` for the `L21 · U11` chain. Mirrors `trtri`'s
+/// per-level scratch budget.
+fn trtrm_inner<F: FiniteField>(l: MatViewMut<'_, F>, u: MatView<'_, F>) {
     let m = l.rows();
     if m == 0 {
         return;
     }
     if m <= F::TRI_BASE_THRESHOLD {
-        trtrm_base(&mut l, &u);
+        let mut l_mut = l;
+        trtrm_base(&mut l_mut, &u);
         return;
     }
     let h = m / 2;
-
-    // Snapshot the four blocks we will need from their original (pre-write)
-    // values. With unit lower-triangular L and upper-triangular U, the
-    // four output cells are
-    //   M11 = L11 · U11
-    //   M12 = L11 · U12
-    //   M21 = L21 · U11
-    //   M22 = L21 · U12 + L22 · U22
-    // The schedule below writes them in the order M21 → M22 → M12 → M11
-    // so each step reads only un-overwritten cells of L.
-    //
-    // Notation: `l21` is the strictly-lower-triangular off-diagonal block
-    // L[h..m, 0..h] (untouched by the recursion); `u11`, `u12`, `u22` are
-    // the corresponding blocks of U.
-    let l21 = l.submat(h..m, 0..h).to_owned();
-    let u11 = u.submat(0..h, 0..h).to_owned();
-    let u12 = u.submat(0..h, h..m).to_owned();
+    // Split L horizontally at row h. `top` carries L11 (left h cols)
+    // and the to-be-written M12 (right m-h cols). `bot` carries L21
+    // (left h cols, also to be read for M21) and L22 / future M22
+    // (right m-h cols).
+    let (mut top, mut bot) = l.split_rows_mut(h);
 
     // Step 1 — M22 = L21 · U12 + L22 · U22.
     //   1a. Recurse into the lower-right block: L22 ← L22 · U22.
+    trtrm_inner(bot.submat_mut(0..(m - h), h..m), u.submat(h..m, h..m));
+    //   1b. Add L21 · U12 into the lower-right block (M22). L21 (left
+    //       h cols of `bot`) and M22 (right m-h cols of `bot`) are
+    //       disjoint column ranges; we read L21 cells and write M22
+    //       cells through the single `&mut bot` borrow, no scratch
+    //       and no allocation.
     {
-        let l22_view = l.submat_mut(h..m, h..m);
-        let u22_view = u.submat(h..m, h..m);
-        trtrm_inner(l22_view, u22_view);
-    }
-    //   1b. Add L21 · U12 into the lower-right block.
-    {
-        let mut m22 = l.submat_mut(h..m, h..m);
-        addmul_into_view(&l21, &u12, &mut m22);
+        let u12 = u.submat(0..h, h..m);
+        for r in 0..(m - h) {
+            for c in 0..(m - h) {
+                // M22[r, c] += sum_{t=0}^{h-1} L21[r, t] · U12[t, c]
+                let mut acc = bot.get(r, h + c);
+                for t in 0..h {
+                    acc += bot.get(r, t) * u12.get(t, c);
+                }
+                bot.set(r, h + c, acc);
+            }
+        }
     }
 
-    // Step 2 — M21 = L21 · U11. We can use trmm_upper here because L21
-    // is a generic h × (m-h) block — but trmm requires a square
-    // triangular A as the left factor. Instead use trmm_upper with U11ᵀ:
-    // (U11 · X)ᵀ = Xᵀ · U11ᵀ. Easier: compute L21 · U11 via gemm directly
-    // and write into the lower-left block.
+    // Step 2 — M21 = L21 · U11. The output region IS `L21`, so this
+    // multiply aliases its own read inputs and a per-cell read-then-
+    // write order is unsafe. Use a scratch of size (m-h) × h to stage
+    // the product, then copy back. This is the only scratch this
+    // recursion level allocates.
+    let zero: F = top.as_view().get(0, 0).zero_like();
+    let mut scratch = FieldMatrix::<F>::new(m - h, h, zero);
     {
-        let prod = gemm(&l21, &u11);
-        let mut m21 = l.submat_mut(h..m, 0..h);
+        let l21 = bot.submat(0..(m - h), 0..h);
+        let u11 = u.submat(0..h, 0..h);
+        gemm_into_view(&l21, &u11, scratch.submat_mut(.., ..));
+    }
+    {
+        let mut m21 = bot.submat_mut(0..(m - h), 0..h);
         for r in 0..(m - h) {
             for c in 0..h {
-                m21.set(r, c, prod.get(r, c));
+                m21.set(r, c, scratch.get(r, c));
             }
         }
     }
 
-    // Step 3 — M12 = L11 · U12. L11 is unit lower-triangular and is still
-    // in its original form (we have not touched L11 yet). Use
-    // trmm_lower on a copy of U12 to compute L11_dense · U12 in place.
-    //
-    // Build the dense L11 (with explicit unit diagonal) so trmm_lower can
-    // operate on it (trmm_lower reads diagonal entries to multiply by).
-    let mut u12_working = u12.clone();
+    // Step 3 — M12 = L11 · U12. L11 (left h cols of `top`) and M12
+    // (right m-h cols of `top`) are disjoint column ranges; we read
+    // L11 cells and write M12 cells through the single `&mut top`
+    // borrow (`get` + `set` interleaved). The unit diagonal of L11 is
+    // implicit, handled inline via `if k == i`.
     {
-        let mut l11_dense = l.submat(0..h, 0..h).to_owned();
-        let one: F = u11.get(0, 0).one_like();
-        for d in 0..h {
-            l11_dense.set(d, d, one.clone());
-        }
-        trmm_lower(l11_dense.submat(.., ..), u12_working.submat_mut(.., ..));
-    }
-    {
-        let mut m12 = l.submat_mut(0..h, h..m);
-        for r in 0..h {
-            for c in 0..(m - h) {
-                m12.set(r, c, u12_working.get(r, c));
+        let u12 = u.submat(0..h, h..m);
+        let zero_cell: F = u12.get(0, 0).zero_like();
+        let one: F = u12.get(0, 0).one_like();
+        // L11 is unit lower-triangular (diagonal implicit), so
+        //   M12[i, j] = ∑_{k=0}^{i} (k == i ? 1 : L11[i, k]) · U12[k, j]
+        // The reads of L11 come from `top[i, k]` for k ≤ i < h; the
+        // writes of M12 go to `top[i, h + j]` for j in 0..(m-h). The
+        // column ranges are disjoint, so the per-cell read-then-write
+        // schedule is safe.
+        for i in 0..h {
+            for j in 0..(m - h) {
+                let mut acc = zero_cell.clone();
+                for k in 0..=i {
+                    let l_ik = if k == i { one.clone() } else { top.get(i, k) };
+                    acc += l_ik * u12.get(k, j);
+                }
+                top.set(i, h + j, acc);
             }
         }
     }
 
-    // Step 4 — M11 = L11 · U11. Recurse into the upper-left block.
-    {
-        let l11_view = l.submat_mut(0..h, 0..h);
-        let u11_view = u.submat(0..h, 0..h);
-        trtrm_inner(l11_view, u11_view);
-    }
+    // Step 4 — M11 = L11 · U11. Recurse into the upper-left block of
+    // `top` — L11 is still intact (steps 2 and 3 wrote only to M21
+    // and M12, never to L11).
+    trtrm_inner(top.submat_mut(0..h, 0..h), u.submat(0..h, 0..h));
 }
 
 fn trtrm_base<F: FiniteField>(l: &mut MatViewMut<'_, F>, u: &MatView<'_, F>) {
@@ -1119,23 +1205,35 @@ fn trtrm_base<F: FiniteField>(l: &mut MatViewMut<'_, F>, u: &MatView<'_, F>) {
     if m == 0 {
         return;
     }
-    // Compute (L · U)[i, j] = ∑_{k=0}^{m-1} L[i, k] · U[k, j], with the
-    // convention L[k, k] = 1 and L[i, k] = 0 for k > i (strictly upper
-    // cells of L are not read), and U[k, j] = 0 for k > j (strictly lower
-    // cells of U are not read).
+    // Compute (L · U)[i, j] = ∑_{k=0}^{min(i,j)} L[i, k] · U[k, j],
+    // with L[k, k] = 1 (implicit) and L[i, k] = 0 for k > i (strict-
+    // upper cells of L are not read), and U[k, j] = 0 for k > j
+    // (strict-lower cells of U are not read).
     //
-    // To preserve in-place semantics while overwriting L, snapshot the
-    // strictly lower triangle of L first.
-    let snap = l.to_owned();
+    // Iteration schedule: walk rows top-to-bottom, columns from j = m-1
+    // down to j = 0 within each row. At cell (i, j) we read L[i, k]
+    // for 0 ≤ k ≤ min(i, j) — these reads come from the *original*
+    // L because:
+    //   - cells with column index ≥ j+1 in row i have already been
+    //     overwritten (we walked j from m-1 down), but the read
+    //     window for (i, j) is k ≤ j, so it never touches those;
+    //   - cells with column index ≤ j in row i have not been
+    //     overwritten yet at the start of this iteration.
+    //   - cells in any prior row i' < i fall under the same property
+    //     because (i', k) writes are bounded by k ≤ i' < i, so the
+    //     row-i reads (which need k ≤ i, but more tightly k ≤ j) only
+    //     touch un-overwritten cells of L's strictly-lower triangle
+    //     plus the unit diagonal.
+    // Therefore the loop is safe with no snapshot.
     let one: F = u.get(0, 0).one_like();
     let zero: F = u.get(0, 0).zero_like();
     for i in 0..m {
-        for j in 0..m {
+        for j in (0..m).rev() {
             // Sum k from 0 to min(i, j), since U[k, j] = 0 for k > j.
             let kmax = i.min(j);
             let mut acc = zero.clone();
             for k in 0..=kmax {
-                let l_ik = if i == k { one.clone() } else { snap.get(i, k) };
+                let l_ik = if i == k { one.clone() } else { l.get(i, k) };
                 acc += l_ik * u.get(k, j);
             }
             l.set(i, j, acc);
@@ -1815,6 +1913,185 @@ mod tests {
         let v = m.submat(.., ..);
         let owned = v.to_owned();
         assert_eq!(owned, m);
+    }
+
+    // ─── Allocation-budget regression tests ──────────────────────────────
+    //
+    // These tests anchor the issue 83b1ad8b R1 contract: trsm/trmm
+    // allocate ZERO `FieldMatrix::new` calls across an entire
+    // recursive solve, and trtri/trtrm allocate exactly the documented
+    // per-recursion-level scratch (one `h × h`-class buffer per inner
+    // node + one `m × m` inverse stage per base call). Tests are
+    // serialised because the counter is process-global.
+    use crate::field::matrix::{fieldmatrix_new_count, reset_fieldmatrix_new_count};
+    use serial_test::serial;
+
+    /// `trsm_upper` and `trsm_lower` must perform ZERO
+    /// `FieldMatrix::new` calls over a full recursive solve — the
+    /// helpers read both operands through `MatrixLike` views and the
+    /// off-diagonal fold uses the per-cell accumulator pattern with
+    /// no scratch.
+    #[test]
+    #[serial]
+    fn test_trsm_zero_allocation() {
+        // n = 65 forces recursion through several levels with the
+        // default TRI_BASE_THRESHOLD = 32. The base case has no
+        // allocation either (no snapshot, no inv buffer).
+        let m = 65;
+        let n = 6;
+        let a_upper = random_upper_fp::<MERSENNE_31>(m, 0xA0FC);
+        let b_upper = random_fp::<MERSENNE_31>(m, n, 0xA0FD);
+        let mut x_upper = b_upper.clone();
+        reset_fieldmatrix_new_count();
+        trsm_upper(a_upper.submat(.., ..), x_upper.submat_mut(.., ..));
+        let allocs = fieldmatrix_new_count();
+        assert_eq!(
+            allocs, 0,
+            "trsm_upper must not allocate any FieldMatrix::new during recursion (got {})",
+            allocs
+        );
+
+        let a_lower = random_lower_fp::<MERSENNE_31>(m, 0xA0FE);
+        let b_lower = random_fp::<MERSENNE_31>(m, n, 0xA0FF);
+        let mut x_lower = b_lower.clone();
+        reset_fieldmatrix_new_count();
+        trsm_lower(a_lower.submat(.., ..), x_lower.submat_mut(.., ..));
+        let allocs = fieldmatrix_new_count();
+        assert_eq!(
+            allocs, 0,
+            "trsm_lower must not allocate any FieldMatrix::new during recursion (got {})",
+            allocs
+        );
+    }
+
+    /// `trmm_upper` and `trmm_lower` must perform ZERO
+    /// `FieldMatrix::new` calls. Same contract as `trsm`: no
+    /// `to_owned()` snapshots in the recursive path.
+    #[test]
+    #[serial]
+    fn test_trmm_zero_allocation() {
+        let m = 65;
+        let n = 6;
+        let a_upper = random_upper_fp::<MERSENNE_31>(m, 0xA1FC);
+        let b = random_fp::<MERSENNE_31>(m, n, 0xA1FD);
+        let mut got_upper = b.clone();
+        reset_fieldmatrix_new_count();
+        trmm_upper(a_upper.submat(.., ..), got_upper.submat_mut(.., ..));
+        let allocs = fieldmatrix_new_count();
+        assert_eq!(
+            allocs, 0,
+            "trmm_upper must not allocate any FieldMatrix::new during recursion (got {})",
+            allocs
+        );
+
+        let a_lower = random_lower_fp::<MERSENNE_31>(m, 0xA1FE);
+        let mut got_lower = b.clone();
+        reset_fieldmatrix_new_count();
+        trmm_lower(a_lower.submat(.., ..), got_lower.submat_mut(.., ..));
+        let allocs = fieldmatrix_new_count();
+        assert_eq!(
+            allocs, 0,
+            "trmm_lower must not allocate any FieldMatrix::new during recursion (got {})",
+            allocs
+        );
+    }
+
+    /// `trtri` allocates exactly the documented scratch:
+    ///  - ONE `h × (m-h)` chained-multiply scratch per recursive level
+    ///    (algorithm 2.3 step `A12 := −A11_inv · A12 · A22_inv`).
+    ///  - ONE `m × m` inverse buffer per base-case leaf.
+    ///
+    /// At `m = 65, threshold = 32` the recursion peels once: top-level
+    /// scratch (1) + 2 base calls (one for A11 at h=32, one for A22 at
+    /// m-h=33) → 3 FieldMatrix::new invocations.
+    #[test]
+    #[serial]
+    fn test_trtri_allocation_budget() {
+        // m = 64 with threshold = 32: exactly one recursion level,
+        // both halves land in the base case at h = 32. Total allocs:
+        // 1 outer chained-multiply scratch (h × (m-h) = 32 × 32) + 2
+        // base-case inv buffers (one per leaf trtri_upper_base call).
+        // Total = 3.
+        let m = 64;
+        let a_upper = random_upper_fp::<MERSENNE_31>(m, 0xA2FC);
+        let mut a_inv = a_upper.clone();
+        reset_fieldmatrix_new_count();
+        trtri_upper(a_inv.submat_mut(.., ..));
+        let allocs = fieldmatrix_new_count();
+        assert_eq!(
+            allocs, 3,
+            "trtri_upper at m={} (threshold=32) expected 3 FieldMatrix::new \
+             calls (1 outer scratch + 2 leaf inv); got {}",
+            m, allocs
+        );
+
+        let a_lower = random_lower_fp::<MERSENNE_31>(m, 0xA2FD);
+        let mut a_inv = a_lower.clone();
+        reset_fieldmatrix_new_count();
+        trtri_lower(a_inv.submat_mut(.., ..));
+        let allocs = fieldmatrix_new_count();
+        assert_eq!(
+            allocs, 3,
+            "trtri_lower at m={} expected 3 FieldMatrix::new calls; got {}",
+            m, allocs
+        );
+    }
+
+    /// `trtri` at exactly the base-case size (m == TRI_BASE_THRESHOLD)
+    /// allocates exactly ONE `m × m` inverse buffer — no recursive
+    /// scratch.
+    #[test]
+    #[serial]
+    fn test_trtri_at_threshold_one_allocation() {
+        let m = <Fp<MERSENNE_31> as FiniteField>::TRI_BASE_THRESHOLD;
+        let a = random_upper_fp::<MERSENNE_31>(m, 0xA3FC);
+        let mut a_inv = a.clone();
+        reset_fieldmatrix_new_count();
+        trtri_upper(a_inv.submat_mut(.., ..));
+        let allocs = fieldmatrix_new_count();
+        assert_eq!(
+            allocs, 1,
+            "trtri_upper at base-case size (m={}) expected 1 FieldMatrix::new \
+             (the inv buffer); got {}",
+            m, allocs
+        );
+    }
+
+    /// `trtrm` allocates exactly ONE `(m-h) × h` scratch per recursion
+    /// level (the `L21 · U11` chain — the only step whose write
+    /// region aliases its read region). Base case is allocation-free.
+    /// At m = 64, threshold = 32: 1 recursion level → 1 scratch, both
+    /// sub-recursions fall straight into the base case.
+    #[test]
+    #[serial]
+    fn test_trtrm_allocation_budget() {
+        let m = 64;
+        // Build a unit-lower L (diagonal implicit zero in storage) and
+        // an upper U.
+        let mut l = random_fp::<MERSENNE_31>(m, m, 0xA4FC);
+        for r in 0..m {
+            for c in r..m {
+                l.set(r, c, Fp::<MERSENNE_31>::new(0));
+            }
+        }
+        let mut u = random_fp::<MERSENNE_31>(m, m, 0xA4FD);
+        for r in 0..m {
+            for c in 0..r {
+                u.set(r, c, Fp::<MERSENNE_31>::new(0));
+            }
+        }
+        reset_fieldmatrix_new_count();
+        trtrm(l.submat_mut(.., ..), u.submat(.., ..));
+        let allocs = fieldmatrix_new_count();
+        // 1 outer L21·U11 scratch ((m-h) × h = 32 × 32). Base case
+        // does not allocate. Two recursive sub-calls (L11 and L22)
+        // each fall through to the base case → 0 each.
+        assert_eq!(
+            allocs, 1,
+            "trtrm at m={} (threshold=32) expected 1 FieldMatrix::new \
+             (the L21·U11 chain scratch); got {}",
+            m, allocs
+        );
     }
 
     /// Straddle the threshold: at exactly TRI_BASE_THRESHOLD we hit the

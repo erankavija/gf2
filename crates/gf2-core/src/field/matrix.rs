@@ -33,6 +33,32 @@ use std::ops::{Bound, Index, RangeBounds};
 use crate::field::{ConstField, FieldVec, FiniteField};
 use crate::matrix_like::{MatrixLike, MatrixLikeMut};
 
+// ─── Test-only allocation counter ─────────────────────────────────────────────
+//
+// Exposed only under `#[cfg(test)]`; the production path is a single
+// atomic increment that LLVM can elide when the counter is dead. The
+// counter is bumped exactly once per `FieldMatrix::new` invocation —
+// the canonical "fresh allocation" entry point for trsm/trmm/trtri/
+// trtrm scratches and for test fixtures. The triangular-allocation
+// regression tests use this counter to certify the per-recursion-
+// level allocation budget.
+#[cfg(test)]
+static FIELDMATRIX_NEW_COUNT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+/// Test-only: returns the cumulative count of [`FieldMatrix::new`]
+/// allocations process-wide. Counter is monotonic; reset via
+/// [`reset_fieldmatrix_new_count`].
+#[cfg(test)]
+pub(crate) fn fieldmatrix_new_count() -> u64 {
+    FIELDMATRIX_NEW_COUNT.load(std::sync::atomic::Ordering::Relaxed)
+}
+
+/// Test-only: zeroes the [`FieldMatrix::new`] counter.
+#[cfg(test)]
+pub(crate) fn reset_fieldmatrix_new_count() {
+    FIELDMATRIX_NEW_COUNT.store(0, std::sync::atomic::Ordering::Relaxed);
+}
+
 // ─── Transposed proxy ─────────────────────────────────────────────────────────
 
 /// Minimal lazy-transpose proxy.
@@ -144,6 +170,8 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// assert_eq!(m.get(1, 2), Fp::<7>::new(2));
     /// ```
     pub fn new(rows: usize, cols: usize, fill: F) -> Self {
+        #[cfg(test)]
+        FIELDMATRIX_NEW_COUNT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         let data: FieldVec<F> = (0..rows * cols).map(|_| fill.clone()).collect();
         Self { rows, cols, data }
     }
@@ -1929,6 +1957,97 @@ impl<'a, F: FiniteField> MatViewMut<'a, F> {
             cols: self.cols,
         }
     }
+
+    /// Splits the view into two disjoint mutable views at row `mid`,
+    /// consuming `self`. Returns `(top, bot)` where `top` holds rows
+    /// `0..mid` and `bot` holds rows `mid..rows`. Because rows of a
+    /// row-major view are contiguous chunks of `parent_cols` cells, the
+    /// split is implemented as a `slice::split_at_mut` at the row
+    /// boundary, so the two halves borrow disjoint regions of the
+    /// backing store and can be passed to separate routines (or to one
+    /// routine as `&dst` + `&src`) without aliasing the same `FieldVec`.
+    ///
+    /// This is the zero-allocation primitive that the `triangular`
+    /// module's recursive primitives use to avoid `to_owned()`
+    /// snapshots when the recursion needs to read one half of `B` while
+    /// writing the other half.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `mid > self.rows()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::matrix::FieldMatrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let mut m = FieldMatrix::<Fp<7>>::zeros(4, 2);
+    /// let v = m.submat_mut(.., ..);
+    /// let (mut top, mut bot) = v.split_rows_mut(2);
+    /// top.set(0, 0, Fp::<7>::new(3));
+    /// bot.set(0, 0, Fp::<7>::new(5));
+    /// assert_eq!(m.get(0, 0), Fp::<7>::new(3));
+    /// assert_eq!(m.get(2, 0), Fp::<7>::new(5));
+    /// ```
+    pub fn split_rows_mut(self, mid: usize) -> (MatViewMut<'a, F>, MatViewMut<'a, F>) {
+        assert!(
+            mid <= self.rows,
+            "split_rows_mut: mid ({}) > rows ({})",
+            mid,
+            self.rows
+        );
+        let split_index = (self.row_offset + mid) * self.parent_cols;
+        let (top_data, bot_data) = self.data.split_at_mut(split_index);
+        let top = MatViewMut {
+            data: top_data,
+            parent_cols: self.parent_cols,
+            row_offset: self.row_offset,
+            col_offset: self.col_offset,
+            rows: mid,
+            cols: self.cols,
+        };
+        let bot = MatViewMut {
+            data: bot_data,
+            parent_cols: self.parent_cols,
+            row_offset: 0,
+            col_offset: self.col_offset,
+            rows: self.rows - mid,
+            cols: self.cols,
+        };
+        (top, bot)
+    }
+
+    /// Reborrows this mutable view as a fresh `MatViewMut<'_, F>` with
+    /// a shorter lifetime. Equivalent to `self.submat_mut(.., ..)`.
+    ///
+    /// Useful when a routine needs to pass a `MatViewMut` to a callee
+    /// without consuming the outer borrow.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::matrix::FieldMatrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let mut m = FieldMatrix::<Fp<7>>::zeros(2, 2);
+    /// let mut v = m.submat_mut(.., ..);
+    /// {
+    ///     let mut r = v.reborrow();
+    ///     r.set(0, 0, Fp::<7>::new(3));
+    /// }
+    /// assert_eq!(m.get(0, 0), Fp::<7>::new(3));
+    /// ```
+    pub fn reborrow(&mut self) -> MatViewMut<'_, F> {
+        MatViewMut {
+            data: self.data,
+            parent_cols: self.parent_cols,
+            row_offset: self.row_offset,
+            col_offset: self.col_offset,
+            rows: self.rows,
+            cols: self.cols,
+        }
+    }
 }
 
 impl<F: FiniteField> MatrixLike<F> for MatViewMut<'_, F> {
@@ -2323,6 +2442,93 @@ pub fn gemm<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldMatrix<F>) -> FieldMatr
         }
     }
     out
+}
+
+// ─── View-based gemm kernels (zero scratch beyond gemm's B-transpose) ─────────
+
+/// In-place gemm kernel `out ← A · B` writing into a [`MatViewMut`].
+///
+/// Mirrors [`gemm`]'s blocked traversal but lets the caller own `out`
+/// (so the routine itself returns nothing and allocates no
+/// `FieldMatrix` on top of `gemm`'s standard B-transpose scratch).
+///
+/// The single allocation this routine performs is the `B`-transpose
+/// scratch via `MatrixLike::transpose`, which mirrors the historical
+/// behaviour of [`gemm`]. No additional `FieldMatrix<F>` is
+/// materialised — `out` is overwritten cell by cell via the same
+/// `dot_product_slices` primitive [`gemm`] uses.
+///
+/// # Arguments
+///
+/// * `a` — left operand, shape `m × k`. Any [`MatrixLike<F>`].
+/// * `b` — right operand, shape `k × n`. Any [`MatrixLike<F>`].
+/// * `out` — destination view, shape `m × n`.
+///
+/// # Panics
+///
+/// Panics if `a.cols() != b.rows()`, `out.rows() != a.rows()`, or
+/// `out.cols() != b.cols()`.
+///
+/// # Complexity
+///
+/// `O(m · k · n)` field multiplications, plus the one-shot transpose of
+/// `B` for cache locality (`O(k · n)` clones).
+pub(crate) fn gemm_into_view<F, A, B>(a: &A, b: &B, mut out: MatViewMut<'_, F>)
+where
+    F: FiniteField,
+    A: MatrixLike<F> + ?Sized,
+    B: MatrixLike<F> + ?Sized,
+{
+    let (m, k) = a.shape();
+    let (kb, n) = b.shape();
+    assert_eq!(
+        k, kb,
+        "gemm_into_view: inner dimensions must match ({} vs {})",
+        k, kb
+    );
+    assert_eq!(
+        (m, n),
+        (out.rows(), out.cols()),
+        "gemm_into_view: output shape mismatch (expected {}×{}, got {}×{})",
+        m,
+        n,
+        out.rows(),
+        out.cols()
+    );
+    if m == 0 || n == 0 {
+        return;
+    }
+    if k == 0 {
+        // Empty inner dim: A·B is the zero matrix. Source a zero from
+        // `out` itself (which is non-empty here).
+        let zero = out.get(0, 0).zero_like();
+        for i in 0..m {
+            for j in 0..n {
+                out.set(i, j, zero.clone());
+            }
+        }
+        return;
+    }
+    let zero: F = a.get(0, 0).zero_like();
+    // Transpose `B` into an owned `B::Owned` so the inner dot product
+    // walks contiguous memory. This is the only allocation this kernel
+    // performs.
+    let b_t = b.transpose();
+    for i_blk in (0..m).step_by(GEMM_ROW_TILE) {
+        let i_end = (i_blk + GEMM_ROW_TILE).min(m);
+        for j_blk in (0..n).step_by(GEMM_COL_TILE) {
+            let j_end = (j_blk + GEMM_COL_TILE).min(n);
+            for i in i_blk..i_end {
+                for j in j_blk..j_end {
+                    let mut acc = zero.clone();
+                    for t in 0..k {
+                        acc += a.get(i, t) * b_t.get(j, t);
+                    }
+                    out.set(i, j, acc);
+                }
+            }
+        }
+    }
 }
 
 // NOTE: The eager `Mul` operator overloads that T1 (`91c06222`) provided
