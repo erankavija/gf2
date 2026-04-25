@@ -42,6 +42,7 @@ pub mod batch_ops;
 pub mod expr;
 pub mod matrix;
 pub mod ntt;
+pub mod ple;
 pub mod poly;
 pub mod poly_interpolate;
 pub mod sparse_matrix;
@@ -59,6 +60,7 @@ pub use batch_ops::{
     batch_inverse_skip_zeros_in_place, batch_inverse_with_scratch,
 };
 pub use ntt::ntt_inplace;
+pub use ple::Permutation;
 pub use poly::FieldPoly;
 pub use poly_interpolate::{
     formal_derivative, interpolate, interpolate_auto, interpolate_fast, InterpolationError,

@@ -202,3 +202,8 @@ required-features = ["rand"]
 name = "triangular"
 harness = false
 required-features = ["rand"]
+
+[[bench]]
+name = "ple"
+harness = false
+required-features = ["rand"]
