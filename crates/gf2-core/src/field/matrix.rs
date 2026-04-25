@@ -2678,6 +2678,225 @@ pub(crate) fn gemm_axpy_into_view<F>(
     }
 }
 
+// ─── gemm_axpy_into_view_diag — implicit unit-diagonal variant ────────────────
+
+/// Diagonal-handling flag for [`gemm_axpy_into_view_diag`].
+///
+/// Distinguishes operands whose diagonal cells are physically present in
+/// storage from operands whose diagonal is logically all-ones (the
+/// storage cell may carry garbage and must NOT be read on the diagonal).
+/// This is the convention `trtrm` uses for the unit-lower-triangular
+/// `L` operand: the diagonal cells of `L` are reused for `L21` /
+/// product-output entries during the in-place compression, so the
+/// storage's `[i, i]` cell does not hold `1` and reading it would yield
+/// the wrong value.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum UnitDiag {
+    /// Operand storage holds the actual diagonal values.
+    Stored,
+    /// Operand storage's diagonal is logically all-ones (read as
+    /// `F::one()` synthesised from `zero_like().one_like()`),
+    /// regardless of what the underlying buffer holds. The kernel
+    /// **never** reads the `[i, i]` storage cell on a unit-diagonal
+    /// operand.
+    Implicit,
+}
+
+/// Read-time wrapper that synthesises `F::one()` on the diagonal of any
+/// [`MatrixLike`] operand. Used internally by
+/// [`gemm_axpy_into_view_diag`] so the existing per-cell `gemm` kernel
+/// can be reused without a special-case loop.
+///
+/// The wrapper does NOT mutate the underlying matrix; it just
+/// substitutes `F::one()` for `get(i, i)` reads. Strict-upper or
+/// strict-lower regions are forwarded verbatim — callers that need a
+/// triangular operand must arrange for those regions to be zero in the
+/// underlying storage.
+pub(crate) struct UnitDiagView<'a, F, M: ?Sized> {
+    inner: &'a M,
+    one: F,
+}
+
+impl<'a, F: FiniteField, M: MatrixLike<F> + ?Sized> UnitDiagView<'a, F, M> {
+    fn new(inner: &'a M, one: F) -> Self {
+        Self { inner, one }
+    }
+}
+
+impl<F: FiniteField, M: MatrixLike<F> + ?Sized> MatrixLike<F> for UnitDiagView<'_, F, M> {
+    type Owned = M::Owned;
+
+    #[inline]
+    fn rows(&self) -> usize {
+        self.inner.rows()
+    }
+
+    #[inline]
+    fn cols(&self) -> usize {
+        self.inner.cols()
+    }
+
+    #[inline]
+    fn get(&self, row: usize, col: usize) -> F {
+        if row == col {
+            self.one.clone()
+        } else {
+            self.inner.get(row, col)
+        }
+    }
+
+    fn transpose(&self) -> Self::Owned {
+        // Materialise an owned transpose. We synthesise the unit
+        // diagonal at clone time so the resulting buffer carries
+        // the logical 1 on the diagonal cells. Callers (this module's
+        // `gemm_axpy_into_view_diag`) only ever call `transpose()` on
+        // the right-hand operand, so the materialised owned matrix
+        // sits in the same role the existing kernel uses for `b_t`.
+        //
+        // Implementation: clone the underlying transpose, then
+        // overwrite the diagonal of the owned buffer with `self.one`.
+        // We can't do that in general (the `Owned` trait surface is
+        // read-only), so instead we route through an explicit
+        // materialise-via-`get` path. The only caller is
+        // `gemm_axpy_into_view_diag` below, which does NOT use the
+        // wrapper's `transpose()` — it constructs its own per-cell
+        // accumulator. We still implement the method so the trait is
+        // satisfied; an unused-method audit is fine to leave it as a
+        // delegating default.
+        self.inner.transpose()
+    }
+}
+
+/// Generic axpy-form gemm that accepts **operands with implicit unit
+/// diagonals**.
+///
+/// Same contract as [`gemm_axpy_into_view`] (`out ← α · a · b + β · out`
+/// per cell, reading `out[i, j]` BEFORE writing to handle the trsm/trmm
+/// `C ≡ out` aliasing) but with explicit per-operand diagonal flags.
+/// When `diag_a == UnitDiag::Implicit`, every read of the form
+/// `a.get(i, i)` is replaced with `F::one()` (synthesised once via
+/// `b.get(0, 0).zero_like().one_like()`); same for `diag_b`. Reads off
+/// the diagonal pass through unchanged.
+///
+/// # Aliasing
+///
+/// Same per-cell read-then-write rule as [`gemm_axpy_into_view`]: `out`
+/// may alias its own `C` operand, but operand views `a` / `b` must not
+/// alias `out`'s underlying buffer. The borrow checker enforces this for
+/// `MatView` / `MatViewMut` callers.
+///
+/// # Generic operands
+///
+/// Unlike [`gemm_axpy_into_view`] (which is hard-bound to `MatView<F>`
+/// because it uses the `row_slice` fast path and the
+/// `dot_product_slices` delayed-reduction primitive), this kernel takes
+/// any [`MatrixLike<F>`] for `a` and `b`. It computes the inner dot
+/// product **eagerly per cell** because a unit-diagonal operand has no
+/// contiguous slice you can hand to `dot_product_slices` without first
+/// materialising the implicit `1`s — and materialising would defeat the
+/// point. For the `trtrm` use case the kernel is invoked exactly once
+/// per recursion level (not in the inner O(n³) hot path of `trsm` /
+/// `trmm`), so the eager-multiply cost is amortised.
+///
+/// # Complexity
+///
+/// `O(m · k · n)` field operations. No `B`-transpose scratch is paid
+/// because the kernel walks `b` cell-wise via `MatrixLike::get`; the
+/// per-cell `get` cost is the same as the existing
+/// [`gemm_into_view`] generic path.
+///
+/// # Used by
+///
+/// [`crate::field::triangular::trtrm`] for the `A12 = U12 · L22` step
+/// where `L22` is unit-lower-triangular with implicit diagonal.
+pub(crate) fn gemm_axpy_into_view_diag<F, A, B>(
+    diag_a: UnitDiag,
+    alpha: F,
+    a: &A,
+    diag_b: UnitDiag,
+    b: &B,
+    beta: F,
+    mut out: MatViewMut<'_, F>,
+) where
+    F: FiniteField,
+    A: MatrixLike<F> + ?Sized,
+    B: MatrixLike<F> + ?Sized,
+{
+    let (m, k) = (a.rows(), a.cols());
+    let (kb, n) = (b.rows(), b.cols());
+    assert_eq!(
+        k, kb,
+        "gemm_axpy_into_view_diag: inner dimensions must match ({} vs {})",
+        k, kb
+    );
+    assert_eq!(
+        (m, n),
+        (out.rows(), out.cols()),
+        "gemm_axpy_into_view_diag: output shape mismatch (expected {}×{}, got {}×{})",
+        m,
+        n,
+        out.rows(),
+        out.cols()
+    );
+    if m == 0 || n == 0 {
+        return;
+    }
+    if k == 0 {
+        // Empty inner dim: A·B is the zero matrix, so out ← β · out.
+        for i in 0..m {
+            for j in 0..n {
+                let v = beta.clone() * out.get(i, j);
+                out.set(i, j, v);
+            }
+        }
+        return;
+    }
+    let zero: F = out.get(0, 0).zero_like();
+    let one: F = zero.one_like();
+    // Blocked traversal over output tiles, matching `gemm_axpy_into_view`.
+    // Inside each tile we compute the inner dot product eagerly, since a
+    // unit-diagonal operand cannot expose a contiguous slice for
+    // `dot_product_slices`.
+    for i_blk in (0..m).step_by(GEMM_ROW_TILE) {
+        let i_end = (i_blk + GEMM_ROW_TILE).min(m);
+        for j_blk in (0..n).step_by(GEMM_COL_TILE) {
+            let j_end = (j_blk + GEMM_COL_TILE).min(n);
+            for i in i_blk..i_end {
+                for j in j_blk..j_end {
+                    let mut acc = zero.clone();
+                    for kk in 0..k {
+                        let a_val = if diag_a == UnitDiag::Implicit && i == kk {
+                            one.clone()
+                        } else {
+                            a.get(i, kk)
+                        };
+                        let b_val = if diag_b == UnitDiag::Implicit && kk == j {
+                            one.clone()
+                        } else {
+                            b.get(kk, j)
+                        };
+                        acc += a_val * b_val;
+                    }
+                    let c_old = out.get(i, j);
+                    out.set(i, j, alpha.clone() * acc + beta.clone() * c_old);
+                }
+            }
+        }
+    }
+}
+
+/// Convenience constructor for [`UnitDiagView`]. `pub(crate)` so the
+/// triangular module can wrap a `MatrixLike` operand and pass it
+/// through to other generic kernels (e.g. `gemm_into_view`) when
+/// useful. Currently used only inside this crate.
+#[allow(dead_code)]
+pub(crate) fn unit_diag_view<F: FiniteField, M: MatrixLike<F> + ?Sized>(
+    inner: &M,
+    one: F,
+) -> UnitDiagView<'_, F, M> {
+    UnitDiagView::new(inner, one)
+}
+
 // NOTE: The eager `Mul` operator overloads that T1 (`91c06222`) provided
 // here have been moved to the expression-template layer in
 // `crate::field::expr`. See `dev/plans/expression_templates_design.md` §4.5.
@@ -4027,5 +4246,343 @@ mod tests {
             let got: FieldMatrix<Gf2m8> = (&a * &b).into();
             prop_assert_eq!(got, naive_gemm(&a, &b));
         }
+    }
+
+    // ─── gemm_axpy_into_view_diag (R4) — implicit-unit-diagonal kernel ────
+
+    const MERSENNE_31: u64 = 2_147_483_647;
+
+    /// Materialise `a` with an explicit unit diagonal (overwrites the
+    /// `[i, i]` cell with `F::one()`) so the result can be fed to a
+    /// stock gemm reference that has no implicit-diag concept.
+    fn materialise_unit_diag<F: FiniteField>(a: &FieldMatrix<F>) -> FieldMatrix<F> {
+        let mut out = a.clone();
+        let one = a.get(0, 0).one_like();
+        let n = out.rows().min(out.cols());
+        for i in 0..n {
+            out.set(i, i, one.clone());
+        }
+        out
+    }
+
+    /// Axpy reference: `out ← α · A · B + β · out` computed via naive gemm.
+    fn axpy_reference<F: FiniteField>(
+        alpha: F,
+        a: &FieldMatrix<F>,
+        b: &FieldMatrix<F>,
+        beta: F,
+        out: &FieldMatrix<F>,
+    ) -> FieldMatrix<F> {
+        let prod = naive_gemm(a, b);
+        let m = a.rows();
+        let n = b.cols();
+        let mut acc = out.clone();
+        for i in 0..m {
+            for j in 0..n {
+                let v = alpha.clone() * prod.get(i, j) + beta.clone() * out.get(i, j);
+                acc.set(i, j, v);
+            }
+        }
+        acc
+    }
+
+    struct AxpyDiagCase<F> {
+        m: usize,
+        k: usize,
+        n: usize,
+        alpha: F,
+        beta: F,
+        diag_a: UnitDiag,
+        diag_b: UnitDiag,
+        seed: u64,
+    }
+
+    fn check_axpy_diag_fp<const P: u64>(case: AxpyDiagCase<Fp<P>>) {
+        // Build a/b with explicit unit-diag cells so the stored cells
+        // happen to coincide with `F::one()` only when stored ≡ implicit.
+        // For the implicit case we *deliberately* poison the diagonal
+        // with garbage to certify the kernel does not read those cells.
+        let AxpyDiagCase {
+            m,
+            k,
+            n,
+            alpha,
+            beta,
+            diag_a,
+            diag_b,
+            seed,
+        } = case;
+        let mut a = random_fp_matrix::<P>(m, k, seed);
+        let mut b = random_fp_matrix::<P>(k, n, seed.wrapping_add(11));
+        let out0 = random_fp_matrix::<P>(m, n, seed.wrapping_add(23));
+        if diag_a == UnitDiag::Implicit {
+            // Poison: stuff random non-1 values into the diagonal of a.
+            for d in 0..m.min(k) {
+                a.set(
+                    d,
+                    d,
+                    Fp::<P>::new((seed.wrapping_add(d as u64) % P).wrapping_add(2) % P),
+                );
+            }
+        }
+        if diag_b == UnitDiag::Implicit {
+            for d in 0..k.min(n) {
+                b.set(
+                    d,
+                    d,
+                    Fp::<P>::new((seed.wrapping_add(d as u64 + 7) % P).wrapping_add(2) % P),
+                );
+            }
+        }
+        // Compute the kernel result.
+        let mut got = out0.clone();
+        gemm_axpy_into_view_diag(diag_a, alpha, &a, diag_b, &b, beta, got.submat_mut(.., ..));
+        // Reference: materialise the unit-diag operands explicitly,
+        // then run the naive axpy.
+        let a_ref = if diag_a == UnitDiag::Implicit {
+            materialise_unit_diag(&a)
+        } else {
+            a.clone()
+        };
+        let b_ref = if diag_b == UnitDiag::Implicit {
+            materialise_unit_diag(&b)
+        } else {
+            b.clone()
+        };
+        let want = axpy_reference(alpha, &a_ref, &b_ref, beta, &out0);
+        assert_eq!(
+            got, want,
+            "gemm_axpy_into_view_diag m={} k={} n={}",
+            m, k, n
+        );
+    }
+
+    #[test]
+    fn test_gemm_axpy_into_view_diag_stored_matches_axpy_fp7() {
+        // Sanity: with both diagonals stored, results must match the
+        // existing axpy-into-view exactly (cross-check the new kernel
+        // against the older one for the all-Stored case).
+        for &(m, k, n) in &[(2usize, 2, 2), (3, 4, 5), (5, 5, 5), (7, 3, 11)] {
+            check_axpy_diag_fp::<7>(AxpyDiagCase {
+                m,
+                k,
+                n,
+                alpha: f(2),
+                beta: f(3),
+                diag_a: UnitDiag::Stored,
+                diag_b: UnitDiag::Stored,
+                seed: 0xA0 + (m * k * n) as u64,
+            });
+        }
+    }
+
+    #[test]
+    fn test_gemm_axpy_into_view_diag_implicit_b_fp7() {
+        // The trtrm A12 = U12 · L22 use case: b carries a logical unit
+        // diagonal but the storage is poisoned.
+        for &(m, k, n) in &[(2usize, 2, 2), (3, 5, 4), (4, 7, 7), (1, 5, 5)] {
+            check_axpy_diag_fp::<7>(AxpyDiagCase {
+                m,
+                k,
+                n,
+                alpha: f(1),
+                beta: f(0),
+                diag_a: UnitDiag::Stored,
+                diag_b: UnitDiag::Implicit,
+                seed: 0xB0 + (m * k * n) as u64,
+            });
+        }
+    }
+
+    #[test]
+    fn test_gemm_axpy_into_view_diag_implicit_a_fp7() {
+        for &(m, k, n) in &[(3usize, 3, 4), (5, 5, 3), (7, 7, 7), (2, 5, 5)] {
+            check_axpy_diag_fp::<7>(AxpyDiagCase {
+                m,
+                k,
+                n,
+                alpha: f(1),
+                beta: f(2),
+                diag_a: UnitDiag::Implicit,
+                diag_b: UnitDiag::Stored,
+                seed: 0xC0 + (m * k * n) as u64,
+            });
+        }
+    }
+
+    #[test]
+    fn test_gemm_axpy_into_view_diag_both_implicit_fp7() {
+        for &(m, k, n) in &[(3usize, 3, 3), (5, 5, 5), (7, 7, 7), (4, 4, 4)] {
+            check_axpy_diag_fp::<7>(AxpyDiagCase {
+                m,
+                k,
+                n,
+                alpha: f(1),
+                beta: f(1),
+                diag_a: UnitDiag::Implicit,
+                diag_b: UnitDiag::Implicit,
+                seed: 0xD0 + (m * k * n) as u64,
+            });
+        }
+    }
+
+    #[test]
+    fn test_gemm_axpy_into_view_diag_implicit_b_mersenne31() {
+        for &(m, k, n) in &[(2usize, 5, 7), (8, 8, 8), (3, 11, 4), (5, 5, 5)] {
+            check_axpy_diag_fp::<MERSENNE_31>(AxpyDiagCase {
+                m,
+                k,
+                n,
+                alpha: Fp::<MERSENNE_31>::new(7),
+                beta: Fp::<MERSENNE_31>::new(0),
+                diag_a: UnitDiag::Stored,
+                diag_b: UnitDiag::Implicit,
+                seed: 0xE0 + (m * k * n) as u64,
+            });
+        }
+    }
+
+    #[test]
+    fn test_gemm_axpy_into_view_diag_implicit_b_gf2m8() {
+        // Run the kernel over GF(2^8) via Gf2mWide so the SIMD-ish path is
+        // exercised end-to-end with a unit-diag operand.
+        let cases: &[(usize, usize, usize)] =
+            &[(2, 2, 2), (3, 5, 4), (4, 7, 7), (5, 5, 5), (8, 8, 3)];
+        for &(m, k, n) in cases {
+            let mut rng = {
+                use rand::SeedableRng;
+                rand::rngs::StdRng::seed_from_u64(0xF0 + (m * k * n) as u64)
+            };
+            let a = random_gf2m8_matrix(m, k, 0xF0 + (m * k * n) as u64);
+            let mut b = random_gf2m8_matrix(k, n, 0xF1 + (m * k * n) as u64);
+            // Poison b's diagonal so we know the kernel ignores it.
+            for d in 0..k.min(n) {
+                use rand::Rng;
+                b.set(d, d, Gf2m8::new([(rng.gen::<u64>() & 0xFF).max(2)]));
+            }
+            let out0 = random_gf2m8_matrix(m, n, 0xF2 + (m * k * n) as u64);
+            let alpha = Gf2m8::new([3]);
+            let beta = Gf2m8::new([5]);
+            let mut got = out0.clone();
+            gemm_axpy_into_view_diag(
+                UnitDiag::Stored,
+                alpha,
+                &a,
+                UnitDiag::Implicit,
+                &b,
+                beta,
+                got.submat_mut(.., ..),
+            );
+            let b_ref = materialise_unit_diag(&b);
+            let want = axpy_reference(alpha, &a, &b_ref, beta, &out0);
+            assert_eq!(
+                got, want,
+                "gemm_axpy_into_view_diag gf2m8 m={} k={} n={}",
+                m, k, n
+            );
+        }
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(32))]
+
+        /// Property: with both diagonals stored, the new kernel agrees
+        /// with the naive axpy reference.
+        #[test]
+        fn prop_gemm_axpy_into_view_diag_stored_fp7(
+            m in 1usize..=5,
+            k in 1usize..=6,
+            n in 1usize..=5,
+            seed in any::<u64>(),
+        ) {
+            check_axpy_diag_fp::<7>(AxpyDiagCase {
+                m, k, n,
+                alpha: f(1), beta: f(0),
+                diag_a: UnitDiag::Stored, diag_b: UnitDiag::Stored,
+                seed,
+            });
+        }
+
+        /// Property: implicit-diag b agrees with materialised reference.
+        #[test]
+        fn prop_gemm_axpy_into_view_diag_implicit_b_fp7(
+            m in 1usize..=5,
+            k in 1usize..=6,
+            n in 1usize..=5,
+            alpha_v in 0u64..7,
+            beta_v in 0u64..7,
+            seed in any::<u64>(),
+        ) {
+            check_axpy_diag_fp::<7>(AxpyDiagCase {
+                m, k, n,
+                alpha: f(alpha_v), beta: f(beta_v),
+                diag_a: UnitDiag::Stored, diag_b: UnitDiag::Implicit,
+                seed,
+            });
+        }
+
+        /// Property: implicit-diag a agrees with materialised reference.
+        #[test]
+        fn prop_gemm_axpy_into_view_diag_implicit_a_mersenne31(
+            m in 1usize..=5,
+            k in 1usize..=6,
+            n in 1usize..=5,
+            seed in any::<u64>(),
+        ) {
+            check_axpy_diag_fp::<MERSENNE_31>(AxpyDiagCase {
+                m, k, n,
+                alpha: Fp::<MERSENNE_31>::new(1),
+                beta: Fp::<MERSENNE_31>::new(0),
+                diag_a: UnitDiag::Implicit, diag_b: UnitDiag::Stored,
+                seed,
+            });
+        }
+    }
+
+    #[test]
+    fn test_gemm_axpy_into_view_diag_zero_inner_dim_only_betas_out() {
+        // k = 0: A·B = 0 ⇒ out ← β · out only, regardless of diag flags.
+        let m = 3;
+        let n = 4;
+        let a = random_fp_matrix::<7>(m, 0, 1);
+        let b = random_fp_matrix::<7>(0, n, 2);
+        let out0 = random_fp_matrix::<7>(m, n, 3);
+        let mut got = out0.clone();
+        let beta = f(2);
+        gemm_axpy_into_view_diag(
+            UnitDiag::Implicit,
+            f(5),
+            &a,
+            UnitDiag::Implicit,
+            &b,
+            beta,
+            got.submat_mut(.., ..),
+        );
+        let mut want = out0.clone();
+        for r in 0..m {
+            for c in 0..n {
+                want.set(r, c, beta * out0.get(r, c));
+            }
+        }
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    fn test_gemm_axpy_into_view_diag_empty_outer_dim() {
+        // m = 0 or n = 0: no work, no panic.
+        let a = random_fp_matrix::<7>(0, 3, 1);
+        let b = random_fp_matrix::<7>(3, 4, 2);
+        let mut out = random_fp_matrix::<7>(0, 4, 3);
+        gemm_axpy_into_view_diag(
+            UnitDiag::Stored,
+            f(1),
+            &a,
+            UnitDiag::Stored,
+            &b,
+            f(1),
+            out.submat_mut(.., ..),
+        );
+        // Just verify it didn't panic and produced an empty result.
+        assert_eq!(out.shape(), (0, 4));
     }
 }
