@@ -83,7 +83,7 @@ at least one field) is met at every `n ≥ 256` on Mersenne-31.**
 | 512   |   7638.00      |   5214.00     | 1.465×  |
 | 1024  |  61273.00      |  35980.00     | 1.703×  |
 | 2048  | 489813.00      | 252589.00     | 1.939×  |
-| 4096  | 3820355.58    | 1714239.85   | 2.229×  |
+| 4096  | 3705600.00    | 1672400.00   | 2.215×  |
 
 GF(2^8) has a considerably heavier per-MAC cost than Mersenne-31
 (each multiply does carryless-multiply + reduction instead of a
@@ -149,4 +149,4 @@ round-trip is additionally checked in
 | `[hard]` n = 2048 and n = 4096 measured | Pass — M31 and GF(2^8) both measured at both sizes via the Criterion bench `benches/strassen_threshold.rs`. GF(2^8) `n = 4096` requires ≈ 15 h of wall-clock (Criterion `sample_size = 10` × ≈ 91 min/sample) and must be invoked explicitly with a bench filter. The recorded numbers below are from a dedicated overnight run. |
 | `[hard]` per-field configurable threshold | Pass — `FiniteField::WINOGRAD_THRESHOLD` trait associated const. |
 | `[hard]` odd-dim coverage | Pass — 5 dedicated tests. |
-| `[aspirational]` ≥ 1.2× speedup | **Met** on both fields at `n ≥ 256`. 1.21×–2.23× measured (M31 peaks 1.96× at `n = 4096`; GF(2^8) peaks 2.23× at `n = 4096`). |
+| `[aspirational]` ≥ 1.2× speedup | **Met** on both fields at `n ≥ 256`. 1.21×–2.22× measured (M31 peaks 1.96× at `n = 4096`; GF(2^8) peaks 2.215× at `n = 4096` — Criterion 95% CI: 3705.1–3706.1 s classical, 1668.4–1679.1 s winograd, 1 high-severe outlier of 10 samples). |
