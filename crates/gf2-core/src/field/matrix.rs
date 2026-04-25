@@ -33,6 +33,13 @@ use std::ops::{Bound, Index, RangeBounds};
 use crate::field::{ConstField, FieldVec, FiniteField};
 use crate::matrix_like::{MatrixLike, MatrixLikeMut};
 
+// Re-export the PLE-decomposition permutation type so callers of
+// `field::matrix` (the natural module surface for matrix algorithms)
+// can refer to it without crossing module boundaries. The canonical
+// home is [`crate::field::ple::Permutation`]; PLE-derived methods on
+// [`FieldMatrix`] are implemented in that module.
+pub use crate::field::ple::Permutation;
+
 // ─── Test-only allocation counter ─────────────────────────────────────────────
 //
 // Exposed only under `#[cfg(test)]`; the production path is a single
