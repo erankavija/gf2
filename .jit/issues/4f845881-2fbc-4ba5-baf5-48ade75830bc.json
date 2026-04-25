@@ -1,7 +1,7 @@
 {
   "id": "4f845881-2fbc-4ba5-baf5-48ade75830bc",
   "title": "PPC compare harness + criterion-1.5x gate",
-  "description": "Add `dev/benchmarks/ppc-compare.sh <kernel-id>` that:\n\n1. Looks up the bench target from `dev/benchmarks/ppc-baselines.json` (I1).\n2. Re-runs the bench against the pinned baseline.\n3. Parses criterion's `estimates.json` for each benchmark in the target.\n4. Computes geomean(new/baseline) over the kernel's design size class (defined per-kernel in the manifest).\n5. Exits 0 if geomean ≥ 1.5×; exits 1 with a clear diff table otherwise.\n\nThen register a new JIT gate `criterion-1.5x` that invokes this script for the issue's kernel ID (kernel ID embedded in issue context or label).\n\n## Success criteria\n\n- [hard] `dev/benchmarks/ppc-compare.sh` is executable, has a unit-test exit-0 case (synthetic baseline + same-as-baseline run) and an exit-1 case (synthetic baseline + slower run).\n- [hard] `mcp__jit__jit_gate_define criterion-1.5x` registered in the JIT gate registry with `auto: true, stage: postcheck`.\n- [hard] Script tolerant to missing baseline (exits with clear error message, not stack trace).",
+  "description": "Add the geomean comparison harness `dev/benchmarks/ppc-compare.sh <kernel-id>` and register the `criterion-1.5x` JIT gate. The harness automates the proof-of-gain check at every spiral step.\n\n## Background\n\nEach Tier A–D task carries a $\\geq 1.5\\times$ geomean speedup target. Without an automated comparator, reviewers have to eyeball criterion JSON output for every PR — slow and error-prone. The harness:\n\n1. Looks up the bench target from `dev/benchmarks/ppc-baselines.json` (produced by I1).\n2. Re-runs the bench against the pinned baseline.\n3. Parses criterion's `estimates.json` for each benchmark in the target.\n4. Computes geomean(new/baseline) over the kernel's design size class (defined per-kernel in the manifest).\n5. Exits 0 if geomean $\\geq 1.5\\times$; exits 1 with a clear diff table otherwise.\n\nThe new JIT gate `criterion-1.5x` invokes this script for the issue's kernel ID. Gate definition: `auto: true, stage: postcheck`.\n\n## Success Criteria\n\n- [hard] `dev/benchmarks/ppc-compare.sh` is executable.\n- [hard] Unit tests cover the exit-0 case (synthetic baseline + same-as-baseline run) and the exit-1 case (synthetic baseline + slower run).\n- [hard] Script tolerant to missing baseline (clean error message, not stack trace).\n- [hard] JIT gate `criterion-1.5x` registered in the gate registry with `auto: true, stage: postcheck`.\n\n## Notes\n\nGeomean is over the design size class only — small sizes that are below the kernel's crossover threshold are excluded from the speedup check. Spec doc: `dev/plans/gf2_core_ppc_spiral.md`.",
   "state": "ready",
   "priority": "normal",
   "assignee": null,
@@ -20,5 +20,5 @@
     "story:ppc-infrastructure"
   ],
   "created_at": "2026-04-25T15:16:28.168842316+00:00",
-  "updated_at": "2026-04-25T18:44:34.953464693+00:00"
+  "updated_at": "2026-04-25T20:16:03.709982938+00:00"
 }

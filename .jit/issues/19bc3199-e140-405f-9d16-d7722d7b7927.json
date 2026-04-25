@@ -1,7 +1,7 @@
 {
   "id": "19bc3199-e140-405f-9d16-d7722d7b7927",
   "title": "M4RM block multiply register-tile + cache-block",
-  "description": "## Current\n\nM4RM `multiply` in `crates/gf2-core/src/alg/m4rm.rs` does straightforward block iteration. No register tile, no explicit prefetch; cache reuse is implicit.\n\n## Fix\n\nPPC walk:\n\n- V4 register tile: M=8 row-accumulators × N=4 column-words pinned in YMM regs through full Gray-table pass. The tile-reuse asm path reuses the transpose primitive added in B1.\n- V5 refined reuse: increase tile to 32 row accumulators if register pressure allows; tune via asm inspection.\n- V6 prefetch: software prefetch of next k-block table while consuming current one.\n\n## Per-kernel execution protocol\n\nSame as B1. Baseline already pinned by I1 (`matmul`, `m4rm_profile`).\n\n## Success criteria\n\n- [hard] Existing M4RM tests pass.\n- [hard] ASM artefact shows the M×N tile materialised in registers (no spills) at the chosen tile shape.\n- [hard] No regression at small sizes (below the M4RM crossover threshold).\n- [aspirational] ≥1.5× geomean on `matmul` bench at n ≥ 1024.",
+  "description": "Add register-tile + cache-block scheduling to the M4RM block multiply. The current implementation does straightforward block iteration with implicit cache reuse; explicit tiling pins accumulators in registers and reduces L1 traffic.\n\n## Background\n\nM4RM `multiply` in `crates/gf2-core/src/alg/m4rm.rs` does block iteration without an explicit register tile or software prefetch. For matrices that fit in L1, the lack of register tiling leaves cycles on the table.\n\nThe fix walks PPC steps:\n\n- V4 register tile: $M=8$ row-accumulators $\\times N=4$ column-words pinned in YMM regs through the full Gray-table pass. The tile-reuse asm path reuses the transpose primitive added in B1.\n- V5 refined reuse: increase the tile to 32 row accumulators if register pressure allows; tune via asm inspection.\n- V6 prefetch: software prefetch of the next $k$-block table while consuming the current one.\n\n## Success Criteria\n\n- [hard] Existing M4RM tests pass.\n- [hard] Sibling `*.asm.txt` artefact shows the $M \\times N$ tile materialised in registers (no spills) at the chosen tile shape.\n- [hard] No regression at small sizes below the M4RM crossover threshold.\n- [hard] `perf stat -r 10` capture before/after recorded.\n- [aspirational] $\\geq 1.5\\times$ geomean on `matmul` bench at $n \\geq 1024$.\n\n## Notes\n\nBench: `matmul`, `m4rm_profile` (existing, pinned by I1). Spec doc: `dev/plans/gf2_core_ppc_spiral.md`.",
   "state": "backlog",
   "priority": "normal",
   "assignee": null,
@@ -23,5 +23,5 @@
     "story:ppc-dense-bitmatrix"
   ],
   "created_at": "2026-04-25T15:18:01.395501318+00:00",
-  "updated_at": "2026-04-25T19:22:40.454978580+00:00"
+  "updated_at": "2026-04-25T20:17:38.436745680+00:00"
 }

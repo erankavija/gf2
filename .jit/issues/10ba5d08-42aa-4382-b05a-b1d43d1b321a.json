@@ -1,7 +1,7 @@
 {
   "id": "10ba5d08-42aa-4382-b05a-b1d43d1b321a",
   "title": "Rayon SoA chunks multithread for C4/C5 batch field ops",
-  "description": "## Current\n\nThe SoA scaffolding from C4/C5 is single-threaded.\n\n## Fix\n\nV10: introduce a new `crates/gf2-core/src/compute/field.rs` module that drives rayon-parallel iteration over SoA chunks (Karatsuba steps within a chunk are SIMD-batched per C4/C5).\n\n## Pre-flight check\n\nSame as E1. If C4/C5 single-thread is memory-bound at large batch sizes, multi-thread will not help — abort.\n\n## Per-kernel execution protocol\n\nSame as E1.\n\n## Success criteria\n\n- [hard] Bit-exact vs. single-threaded SoA path.\n- [hard] Strong-scaling efficiency ≥ 70% at 4 threads.\n- [aspirational] ≥3× over the post-C4/C5 single-thread baseline at 4 threads, design batch size.",
+  "description": "Apply rayon parallelism to the post-Tier-C SoA batch field ops (QuadraticExt, CubicExt). Same pre-flight cache-miss check as the dense-kernel multithread task.\n\n## Background\n\nThe SoA scaffolding from Tier C (QuadraticExt and CubicExt) is single-threaded. A new `crates/gf2-core/src/compute/field.rs` module drives rayon-parallel iteration over SoA chunks, where Karatsuba steps within a chunk are SIMD-batched per the Tier C kernels.\n\nPre-flight (mandatory before V10): run `perf stat -r 10` on the post-Tier-C single-thread SoA path. If `cache-misses / instructions $> 1\\%$` at the design batch size, the kernel is memory-bound — abort.\n\n## Success Criteria\n\n- [hard] Pre-flight `perf stat` cache-miss check executed and recorded.\n- [hard] Bit-exact vs. single-threaded SoA path.\n- [hard] Strong-scaling efficiency $\\geq 70\\%$ at 4 threads at the design batch size.\n- [hard] Strong-scaling measured at 1, 2, 4, 8 threads; numbers recorded.\n- [aspirational] $\\geq 3\\times$ total speedup over the post-Tier-C single-thread SoA baseline at 4 threads at design batch size.\n\n## Notes\n\nBench: `field_matrix_fusion`, `field_matrix_gemm` (extended with strong-scaling sweep). Spec doc: `dev/plans/gf2_core_ppc_spiral.md`.",
   "state": "backlog",
   "priority": "normal",
   "assignee": null,
@@ -22,5 +22,5 @@
     "story:ppc-multithread"
   ],
   "created_at": "2026-04-25T15:19:32.997709196+00:00",
-  "updated_at": "2026-04-25T19:23:59.051196626+00:00"
+  "updated_at": "2026-04-25T20:19:06.534296824+00:00"
 }

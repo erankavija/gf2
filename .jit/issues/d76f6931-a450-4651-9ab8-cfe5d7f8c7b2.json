@@ -1,7 +1,7 @@
 {
   "id": "d76f6931-a450-4651-9ab8-cfe5d7f8c7b2",
   "title": "Route scalar callers through existing SIMD dispatch",
-  "description": "Quick wins (V0→V3 in one hop) where the SIMD kernel already exists in `gf2-kernels-simd` but the scalar caller never dispatches through it.\n\n## Children (3 tasks)\n\n- **A1** — `BitMatrix::matvec` (`crates/gf2-core/src/matrix.rs:962-988`): scalar `count_ones() % 2` per row → route through `simd::maybe_simd().popcnt_fn` for rows above a width threshold.\n- **A2** — `BitMatrix::mul` non-M4RM path (`crates/gf2-core/src/matrix.rs:1165+`): scalar inner-product → route row-XOR through `LogicalFns::xor_fn`.\n- **A3** — `gfp::FieldVec` add/sub/mul fallback for `Fp<P>` not in `{65537, 2^31-1}` (`crates/gf2-core/src/gfp/simd_ops.rs`): extend the `SimdVecOps` dispatch to a generic Solinas-friendly form before the scalar fallback.\n\n## Why this story exists\n\nThe SIMD kernels already exist; the only work is wiring + bench + asm verify. Highest-ROI tasks in the epic.\n\n## Success criteria\n\n- [hard] Each task ships per the per-kernel execution protocol in the epic spec doc (baseline saved, asm inspected, perf-stat captured, proptest equivalence, ≥1.5× geomean).\n- [hard] No `unsafe` introduced outside `gf2-kernels-simd`.",
+  "description": "Quick wins where the SIMD kernel already exists in `gf2-kernels-simd` but the scalar caller never dispatches through it. Each task in this story is a V0→V3 jump in one hop — wire + bench + asm verify.\n\n## Background\n\n`gf2-core` has three places where existing AVX2 dispatch is bypassed: `BitMatrix::matvec` computes parity with scalar `count_ones() % 2` while `popcnt_fn` exists; `BitMatrix::mul` non-M4RM path uses scalar inner-product while `xor_fn` exists; and `gfp::FieldVec` falls back to scalar element-wise loops for any prime not in `{65537, 2^31-1}` despite the `SimdVecOps` infrastructure being in place.\n\nThis story has three child tasks (one per call-site). Each follows the per-kernel execution protocol from the epic spec doc: pinned baseline → asm artefact → perf-stat → proptest equivalence → $\\geq 1.5\\times$ geomean → single-step commit → lead-only gate transitions.\n\n## Success Criteria\n\n- [hard] Each child task ships per the per-kernel execution protocol (baseline saved, asm inspected, perf-stat captured, proptest equivalence, $\\geq 1.5\\times$ geomean at design size class).\n- [hard] No `unsafe` introduced outside `gf2-kernels-simd`.\n- [hard] No regression on existing benches at sizes below each kernel's crossover threshold.\n\n## Notes\n\nHighest-ROI tasks in the epic — the SIMD already exists, only routing is missing. Spec doc: `dev/plans/gf2_core_ppc_spiral.md`.",
   "state": "backlog",
   "priority": "normal",
   "assignee": null,
@@ -24,5 +24,5 @@
     "story:ppc-dispatch-routing"
   ],
   "created_at": "2026-04-25T15:15:21.137490908+00:00",
-  "updated_at": "2026-04-25T19:24:08.802481426+00:00"
+  "updated_at": "2026-04-25T20:14:58.103920678+00:00"
 }

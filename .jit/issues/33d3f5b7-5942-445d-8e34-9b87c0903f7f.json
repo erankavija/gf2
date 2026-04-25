@@ -1,7 +1,7 @@
 {
   "id": "33d3f5b7-5942-445d-8e34-9b87c0903f7f",
   "title": "CubicExt::mul Karatsuba SoA batched SIMD",
-  "description": "## Current\n\n`gfpn::CubicExt::mul` (`crates/gf2-core/src/gfpn/cubic.rs`) does Karatsuba-3 (6 base-field multiplications). No SoA batched path.\n\n## Fix\n\nApply the same V2 ILP + V3 SIMD + SoA scaffolding from C4 to the cubic case. Reuse C4's SoA module structure.\n\n## Per-kernel execution protocol\n\nSame as C1. Bench: `field_matrix_fusion.rs` and `field_matrix_gemm.rs` (the gemm bench already covers cubic).\n\n## Success criteria\n\n- [hard] Bit-exact vs. existing AoS `CubicExt::mul`.\n- [hard] AoS path unchanged.\n- [hard] SoA path covers add, sub, mul, square.\n- [aspirational] ≥1.5× geomean on `field_matrix_gemm` cubic-field row when both C3 + C4 + C5 land.",
+  "description": "Apply the QuadraticExt SoA pattern to `gfpn::CubicExt::mul`. Karatsuba-3 has 6 independent base-field multiplications per element — the same V2 ILP + V3 SIMD batched scaffolding wins again.\n\n## Background\n\n`gfpn::CubicExt::mul` in `crates/gf2-core/src/gfpn/cubic.rs` does Karatsuba-3: 6 base-field multiplications per element. No SoA batched path.\n\nThe fix applies the same V2 ILP + V3 SIMD + SoA scaffolding as `gfpn::QuadraticExt::mul`, reusing the SoA module structure introduced there. The 6 muls schedule across SIMD lanes once SoA is in place.\n\n## Success Criteria\n\n- [hard] Bit-exact vs. existing AoS `CubicExt::mul`.\n- [hard] AoS path unchanged.\n- [hard] SoA path covers add, sub, mul, square (all four ops).\n- [hard] Sibling `*.asm.txt` artefact regenerated.\n- [hard] `perf stat -r 10` capture before/after recorded.\n- [aspirational] $\\geq 1.5\\times$ geomean on `field_matrix_gemm` cubic-field row when the generic Fp batch + QuadraticExt SoA + this task have all landed.\n\n## Notes\n\nBench: `field_matrix_fusion`, `field_matrix_gemm` (existing, pinned by I1). Spec doc: `dev/plans/gf2_core_ppc_spiral.md`.",
   "state": "backlog",
   "priority": "normal",
   "assignee": null,
@@ -23,5 +23,5 @@
     "story:ppc-field-batch"
   ],
   "created_at": "2026-04-25T15:18:54.618594605+00:00",
-  "updated_at": "2026-04-25T19:23:28.799475171+00:00"
+  "updated_at": "2026-04-25T20:18:28.547807546+00:00"
 }
