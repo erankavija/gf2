@@ -1502,6 +1502,30 @@ impl<'a, F: FiniteField> MatView<'a, F> {
         self.data[(self.row_offset + r) * self.parent_cols + self.col_offset + c].clone()
     }
 
+    /// Crate-internal: returns the contiguous slice backing logical row
+    /// `r` of this view. Rows of a row-major view are contiguous in the
+    /// parent buffer at offset
+    /// `(row_offset + r) * parent_cols + col_offset`, length `cols`, so
+    /// no allocation is needed. Used by the in-place gemm kernels in
+    /// [`crate::field::matrix::gemm_axpy_into_view`] to feed
+    /// [`crate::field::vec::dot_product_slices`] without materialising a
+    /// per-row scratch buffer.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `r >= self.rows()`.
+    #[inline]
+    pub(crate) fn row_slice(&self, r: usize) -> &[F] {
+        assert!(
+            r < self.rows,
+            "MatView::row_slice index {} out of bounds (rows={})",
+            r,
+            self.rows
+        );
+        let start = (self.row_offset + r) * self.parent_cols + self.col_offset;
+        &self.data[start..start + self.cols]
+    }
+
     /// Materialises this view into a freshly allocated [`FieldMatrix<F>`].
     ///
     /// The returned matrix owns its storage, so it can outlive the parent
@@ -2525,6 +2549,129 @@ where
                         acc += a.get(i, t) * b_t.get(j, t);
                     }
                     out.set(i, j, acc);
+                }
+            }
+        }
+    }
+}
+
+/// Fused kernel `out ← α · A · B + β · out`.
+///
+/// In-place axpy form of [`gemm_into_view`] where the destination view
+/// doubles as the `C` operand of the classical `α · A · B + β · C`
+/// shape. Each cell is computed as
+///
+/// ```text
+///     out[i, j] := α · (A · B)[i, j] + β · out[i, j]
+/// ```
+///
+/// reading `out[i, j]` BEFORE writing the new value, so the kernel is
+/// safe even though `out` aliases its own `C` operand. This is the
+/// idiom the [`crate::field::triangular`] `trsm` and `trmm` routines
+/// need: `submul` is `α = −1, β = 1`, `addmul` is `α = 1, β = 1`. The
+/// caller-supplied [`MatViewMut`] lets the kernel write into a
+/// rectangular sub-window of a parent buffer without paying any
+/// `to_owned()` snapshot cost.
+///
+/// # Shape contract
+///
+/// * `a.cols() == b.rows()`
+/// * `out.shape() == (a.rows(), b.cols())`
+///
+/// Both are asserted with clear panic messages.
+///
+/// # Aliasing
+///
+/// The kernel is correct under the trsm/trmm idiom where `out`
+/// **doubles as `C`** (the kernel reads `out.get(i, j)` once before
+/// writing `out.set(i, j, …)` for the same cell). Aliasing `out`'s
+/// underlying buffer with the operand views `a` or `b` is **undefined**
+/// — the borrow checker will normally enforce this for `MatView` /
+/// `MatViewMut` callers because `MatView` borrows the parent buffer
+/// immutably while `MatViewMut` borrows it mutably; obtaining both for
+/// the same parent slice is impossible without going through
+/// [`MatViewMut::split_rows_mut`] (which returns disjoint windows).
+///
+/// # Delayed reduction
+///
+/// The inner accumulation is delegated to
+/// [`crate::field::vec::dot_product_slices`] — the same delayed-
+/// reduction primitive [`gemm`] uses — so the `Wide` accumulator
+/// chunks every `F::max_unreduced_additions()` MACs. The single
+/// allocation this kernel performs is the standard `B`-transpose
+/// scratch (the same one [`gemm`] and [`gemm_into_view`] pay), giving
+/// the inner kernel cache-friendly contiguous row·row dot products.
+///
+/// # Complexity
+///
+/// `O(m · k · n)` field multiplies plus the one-time `O(k · n)`
+/// transpose of `B` for cache locality. The β·out fold adds one
+/// extra mul + one extra read + one extra add per output cell,
+/// dominated by the inner dot product for any non-degenerate inner
+/// dim.
+pub(crate) fn gemm_axpy_into_view<F>(
+    alpha: F,
+    a: &MatView<'_, F>,
+    b: &MatView<'_, F>,
+    beta: F,
+    mut out: MatViewMut<'_, F>,
+) where
+    F: FiniteField,
+{
+    let (m, k) = (a.rows(), a.cols());
+    let (kb, n) = (b.rows(), b.cols());
+    assert_eq!(
+        k, kb,
+        "gemm_axpy_into_view: inner dimensions must match ({} vs {})",
+        k, kb
+    );
+    assert_eq!(
+        (m, n),
+        (out.rows(), out.cols()),
+        "gemm_axpy_into_view: output shape mismatch (expected {}×{}, got {}×{})",
+        m,
+        n,
+        out.rows(),
+        out.cols()
+    );
+    if m == 0 || n == 0 {
+        return;
+    }
+    if k == 0 {
+        // Empty inner dim: A·B is the zero matrix, so out ← β · out.
+        // Read each cell, scale by β, write back.
+        for i in 0..m {
+            for j in 0..n {
+                let v = beta.clone() * out.get(i, j);
+                out.set(i, j, v);
+            }
+        }
+        return;
+    }
+    let zero: F = a.get(0, 0).zero_like();
+    // Transpose `B` once so the inner kernel walks contiguous memory in
+    // both operands. Mirrors `gemm` / `gemm_into_view`. This is the
+    // single allocation this routine performs on top of the caller-
+    // supplied views.
+    let b_t = b.transpose();
+    // Blocked traversal over output tiles. The inner kernel is one
+    // `dot_product_slices` per cell — the same delayed-reduction
+    // primitive `gemm` uses. The `β · out[i, j]` fold reads the cell
+    // BEFORE writing the new value at (i, j), so the routine is safe
+    // even when `out` aliases its own `C` operand.
+    for i_blk in (0..m).step_by(GEMM_ROW_TILE) {
+        let i_end = (i_blk + GEMM_ROW_TILE).min(m);
+        for j_blk in (0..n).step_by(GEMM_COL_TILE) {
+            let j_end = (j_blk + GEMM_COL_TILE).min(n);
+            for i in i_blk..i_end {
+                let a_row = a.row_slice(i);
+                debug_assert_eq!(a_row.len(), k);
+                for j in j_blk..j_end {
+                    let b_col = b_t.row(j);
+                    debug_assert_eq!(b_col.len(), k);
+                    let prod = crate::field::vec::dot_product_slices(a_row, b_col, &zero);
+                    let c_old = out.get(i, j);
+                    out.set(i, j, alpha.clone() * prod + beta.clone() * c_old);
                 }
             }
         }
