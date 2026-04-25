@@ -36,27 +36,40 @@ use crate::matrix_like::{MatrixLike, MatrixLikeMut};
 // ─── Test-only allocation counter ─────────────────────────────────────────────
 //
 // Exposed only under `#[cfg(test)]`; the production path is a single
-// atomic increment that LLVM can elide when the counter is dead. The
-// counter is bumped exactly once per `FieldMatrix::new` invocation —
-// the canonical "fresh allocation" entry point for trsm/trmm/trtri/
+// thread-local increment that LLVM can elide when the counter is dead.
+// The counter is bumped exactly once per `FieldMatrix::new` invocation
+// — the canonical "fresh allocation" entry point for trsm/trmm/trtri/
 // trtrm scratches and for test fixtures. The triangular-allocation
 // regression tests use this counter to certify the per-recursion-
 // level allocation budget.
+//
+// **Thread-local on purpose.** Earlier the counter was a process-wide
+// `AtomicU64`; that races against any other test running in the same
+// `cargo test` worker pool because the JIT regression tests reset and
+// read the counter from the same thread that runs the
+// trsm/trmm/trtri/trtrm call. Making the counter `thread_local!`
+// scopes the count to the test's own thread, which matches the
+// recursive single-threaded execution model of the triangular
+// primitives and gives deterministic numbers under both `cargo
+// nextest` (process-per-test) and `cargo test --release` (thread pool).
 #[cfg(test)]
-static FIELDMATRIX_NEW_COUNT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
-
-/// Test-only: returns the cumulative count of [`FieldMatrix::new`]
-/// allocations process-wide. Counter is monotonic; reset via
-/// [`reset_fieldmatrix_new_count`].
-#[cfg(test)]
-pub(crate) fn fieldmatrix_new_count() -> u64 {
-    FIELDMATRIX_NEW_COUNT.load(std::sync::atomic::Ordering::Relaxed)
+thread_local! {
+    static FIELDMATRIX_NEW_COUNT: std::cell::Cell<u64> = const { std::cell::Cell::new(0) };
 }
 
-/// Test-only: zeroes the [`FieldMatrix::new`] counter.
+/// Test-only: returns the cumulative count of [`FieldMatrix::new`]
+/// allocations on **this thread** since the last
+/// [`reset_fieldmatrix_new_count`]. Thread-local so concurrent tests
+/// in `cargo test --release` do not contaminate each other's counts.
+#[cfg(test)]
+pub(crate) fn fieldmatrix_new_count() -> u64 {
+    FIELDMATRIX_NEW_COUNT.with(|c| c.get())
+}
+
+/// Test-only: zeroes the per-thread [`FieldMatrix::new`] counter.
 #[cfg(test)]
 pub(crate) fn reset_fieldmatrix_new_count() {
-    FIELDMATRIX_NEW_COUNT.store(0, std::sync::atomic::Ordering::Relaxed);
+    FIELDMATRIX_NEW_COUNT.with(|c| c.set(0));
 }
 
 // ─── Transposed proxy ─────────────────────────────────────────────────────────
@@ -171,7 +184,7 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// ```
     pub fn new(rows: usize, cols: usize, fill: F) -> Self {
         #[cfg(test)]
-        FIELDMATRIX_NEW_COUNT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        FIELDMATRIX_NEW_COUNT.with(|c| c.set(c.get() + 1));
         let data: FieldVec<F> = (0..rows * cols).map(|_| fill.clone()).collect();
         Self { rows, cols, data }
     }
@@ -1078,6 +1091,8 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// assert_eq!(t.get(2, 0), Fp::<7>::new(3));
     /// ```
     pub fn transpose(&self) -> Self {
+        #[cfg(test)]
+        FIELDMATRIX_NEW_COUNT.with(|c| c.set(c.get() + 1));
         if self.is_empty() {
             return Self {
                 rows: self.cols,
@@ -1548,6 +1563,8 @@ impl<'a, F: FiniteField> MatView<'a, F> {
     /// assert_eq!(owned.get(0, 0), Fp::<7>::new(1));
     /// ```
     pub fn to_owned(&self) -> FieldMatrix<F> {
+        #[cfg(test)]
+        FIELDMATRIX_NEW_COUNT.with(|c| c.set(c.get() + 1));
         if self.rows == 0 || self.cols == 0 {
             return FieldMatrix {
                 rows: self.rows,
@@ -1862,6 +1879,8 @@ impl<'a, F: FiniteField> MatViewMut<'a, F> {
     /// assert_eq!(owned.get(0, 0), Fp::<7>::new(1));
     /// ```
     pub fn to_owned(&self) -> FieldMatrix<F> {
+        #[cfg(test)]
+        FIELDMATRIX_NEW_COUNT.with(|c| c.set(c.get() + 1));
         if self.rows == 0 || self.cols == 0 {
             return FieldMatrix {
                 rows: self.rows,
