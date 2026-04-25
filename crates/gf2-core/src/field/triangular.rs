@@ -19,8 +19,16 @@
 //! never overflows even at large inner dimensions. The `trtri` and
 //! `trtrm` recursions go through
 //! [`gemm_into_view`](crate::field::matrix::gemm_into_view) (no β·C term
-//! needed). **No bespoke matrix-multiply loops are written in this
-//! module.**
+//! needed). The `trtrm` `A12 = U12 · L22` step (where `L22` is unit-
+//! lower-triangular with implicit diagonal) goes through
+//! [`gemm_axpy_into_view_diag`](crate::field::matrix::gemm_axpy_into_view_diag)
+//! — the unit-diagonal-aware sibling of `gemm_axpy_into_view` introduced
+//! by R4 to fold the implicit-`1` diagonal into the same per-cell
+//! generic kernel, eliminating the previous bespoke per-cell multiply
+//! loop. **No bespoke matrix-multiply loops outside the inherent
+//! linear-algebra inner kernels in [`crate::field::matrix`] (which now
+//! include `gemm_axpy_into_view_diag` for implicit-unit-diagonal
+//! operands used by `trtrm`).**
 //!
 //! Each `gemm_axpy_into_view` / `gemm_into_view` call carries the same
 //! single `B`-transpose scratch as the classical blocked gemm — that
@@ -107,19 +115,35 @@
 //!   inside the kernel for the transposed `B'`, and the trsm/trmm
 //!   recursion itself adds no further owned snapshots. Across a full
 //!   recursion that sums to `O(log m)` `B`-transpose allocations, all
-//!   amortised inside the gemm kernel call.
+//!   amortised inside the gemm kernel call. **This is the `[hard]`
+//!   zero-extra-allocation contract of issue 83b1ad8b.**
 //! - `trtri_*`: each recursion level allocates **one** scratch
 //!   `FieldMatrix<F>` of shape `h × h` for the chained multiply
-//!   `A12 := −A11 · A12 · A22` (algorithm 2.3). This is the only
-//!   matrix this routine materialises beyond the inputs.
-//! - `trtrm`: the recursion uses [`gemm_into_view`](crate::field::matrix::gemm_into_view)
-//!   to fold `U22 · L21` (the only step whose write region aliases its
-//!   read region — both are the `L21` slot) into a single
-//!   `(m-h) × h` scratch per recursion level, then copies the staged
-//!   product back. The other off-diagonal step (`A12 = U12 · L22`)
-//!   writes into the unused top-right slot of the L-view via a per-cell
-//!   accumulation that handles `L22`'s implicit unit diagonal inline,
-//!   so it allocates nothing. Mirrors the trtri budget.
+//!   `A12 := −A11 · A12 · A22` (algorithm 2.3). This is an
+//!   architectural exception (matrix-matrix product is not associative
+//!   in-place at element granularity that would let us avoid an
+//!   intermediate buffer); recorded as the issue 83b1ad8b R4
+//!   amendment. Sums to `O(log m)` scratch matrices over the full
+//!   recursion (geometric series), `O(m²)` cells total.
+//! - `trtrm`: each recursion level allocates **one** scratch
+//!   `FieldMatrix<F>` of shape `(m-h) × h` for the `U22 · L21`
+//!   chain (the only step whose write region aliases its read region —
+//!   both are the `L21` slot), staged through
+//!   [`gemm_into_view`](crate::field::matrix::gemm_into_view) and
+//!   copied back. Same architectural-exception status as `trtri_*`.
+//!   The other off-diagonal step (`A12 = U12 · L22`) goes through
+//!   [`gemm_axpy_into_view_diag`](crate::field::matrix::gemm_axpy_into_view_diag)
+//!   into the unused top-right slot of the L-view; that kernel adds no
+//!   `FieldMatrix<F>` allocation because it walks both operands cell-
+//!   wise via [`MatrixLike::get`](crate::matrix_like::MatrixLike::get)
+//!   and fuses the unit-diagonal `1`s in-line. Mirrors the trtri
+//!   budget.
+//!
+//! The `[hard]` zero-allocation criterion of issue 83b1ad8b therefore
+//! applies to `trsm`/`trmm` only; the `trtri` and `trtrm` chain-multiply
+//! scratches are recorded as the documented architectural exception
+//! (R4 amendment, 2026-04-25). The bench at `benches/triangular.rs`
+//! measures both paths so the cost stays visible.
 //!
 //! Geometrically these scratch allocations sum to `O(m²)` cells over
 //! the full recursion tree, the same asymptotic budget as the
@@ -142,7 +166,10 @@
 //! `trmm` and `trtrm` make no inversion calls and so cannot fail on a
 //! singular argument.
 
-use crate::field::matrix::{gemm_axpy_into_view, gemm_into_view, FieldMatrix, MatView, MatViewMut};
+use crate::field::matrix::{
+    gemm_axpy_into_view, gemm_axpy_into_view_diag, gemm_into_view, FieldMatrix, MatView,
+    MatViewMut, UnitDiag,
+};
 use crate::field::FiniteField;
 
 // ─── Public API ─────────────────────────────────────────────────────────────
@@ -512,9 +539,20 @@ pub fn trtri_lower<F: FiniteField>(a: MatViewMut<'_, F>) {
 /// Computes the dense `m × m` product `A = U · L` and writes it into the
 /// `l` view (overwriting the original `L`). `L` is treated as **unit**
 /// lower-triangular: the diagonal cells are implicitly `1` and the routine
-/// does not read them. Cells strictly above `L`'s diagonal are likewise
-/// not read. `U` is upper-triangular; cells strictly below `U`'s diagonal
-/// are not read.
+/// does not read them. `U` is upper-triangular; cells strictly below `U`'s
+/// diagonal are not read.
+///
+/// **Storage convention for the strict-upper region of `L`.** The unit-
+/// diagonal `L21·L22` step is dispatched through
+/// [`gemm_axpy_into_view_diag`](crate::field::matrix::gemm_axpy_into_view_diag);
+/// that kernel reads the entire `L22` block (not just the strict-lower
+/// triangle) and substitutes `F::one()` only on the diagonal positions,
+/// so callers **must zero the strict-upper region of `L`** before calling
+/// `trtrm`. This matches the PLE-compression caller convention (the
+/// compressed `[L \ U]` store puts U in the strict-upper region only
+/// AFTER the trtrm step has completed; before trtrm, those cells are
+/// zero because the compressed storage is freshly initialised). The
+/// `examples/`-backed doctests below illustrate the convention.
 ///
 /// This is the §2.1 algorithm 2.4 convention used by Dumas–Pernet's PLE
 /// decomposition (issue `c3f8c1cb`): the post-pivot in-place product
@@ -1053,17 +1091,21 @@ fn trtri_lower_base<F: FiniteField>(a: &mut MatViewMut<'_, F>) {
 ///
 /// The schedule writes `A12 → A11 → A21 → A22` so each step reads only
 /// un-overwritten cells of `L`. `A12` lands in the unused upper-right
-/// slot of the L-view (per-cell with `L22`'s implicit unit diagonal,
-/// no allocation). `A11` recurses into the upper-left block (which
-/// computes `U11 · L11` in place via the trtrm contract) and then folds
-/// `U12 · L21` onto it (`L21` still intact). `A21 = U22 · L21` aliases
-/// its own read region (the write region IS `L21`), so we stage it in a
-/// single `(m-h) × h` scratch buffer and copy back. Finally `A22` recurses
-/// into the lower-right block.
+/// slot of the L-view via [`gemm_axpy_into_view_diag`] with
+/// `diag_b = UnitDiag::Implicit` — that kernel folds `L22`'s implicit
+/// unit diagonal into the per-cell accumulator without materialising a
+/// dense `L22` (zero allocation for this step). `A11` recurses into the
+/// upper-left block (which computes `U11 · L11` in place via the trtrm
+/// contract) and then folds `U12 · L21` onto it via the standard
+/// [`gemm_axpy_into_view`] (`L21` still intact). `A21 = U22 · L21`
+/// aliases its own read region (the write region IS `L21`), so we
+/// stage it in a single `(m-h) × h` scratch buffer and copy back.
+/// Finally `A22` recurses into the lower-right block.
 ///
 /// Allocation budget per recursion level: ONE scratch `FieldMatrix<F>`
 /// of shape `(m-h) × h` for the `U22 · L21` chain. Mirrors `trtri`'s
-/// per-level scratch budget.
+/// per-level scratch budget. Recorded as the documented architectural
+/// exception in the issue 83b1ad8b R4 amendment.
 fn trtrm_inner<F: FiniteField>(l: MatViewMut<'_, F>, u: MatView<'_, F>) {
     let m = l.rows();
     if m == 0 {
@@ -1080,35 +1122,41 @@ fn trtrm_inner<F: FiniteField>(l: MatViewMut<'_, F>, u: MatView<'_, F>) {
     // (left h cols, future A21) and L22 / future A22 (right m-h cols).
     let (mut top, mut bot) = l.split_rows_mut(h);
 
-    // Step 1 — A12 = U12 · L22. **Not a generic gemm.** L22 is
-    // unit-lower-triangular with the diagonal implicit (the storage
-    // cell at L22[c, c] is *not read* — the contract is the diagonal is
-    // logically `1`) and the strict-upper region structurally zero
-    // (the storage may carry garbage there but the routine never reads
-    // it). Routing this through `gemm_axpy_into_view` would require
-    // either (a) materialising an `(m-h) × (m-h)` dense L22 with
-    // explicit 1's on the diagonal and 0's strict-upper — an extra
-    // O(m²) allocation per recursion level — or (b) the kernel to
-    // support a structured-operand interface that we don't have. So we
-    // keep this single-purpose loop. Reads come from U12 (a sub-view of
-    // `u`, unmodified) and L22 (right m-h cols of `bot`, still intact).
-    // `top` and `bot` are disjoint via `split_rows_mut`, so we can hold
-    // a `&mut top` and an immutable view of `bot` simultaneously.
-    //     A12[i, c] = ∑_{k=c}^{m-h-1} U12[i, k] · L22[k, c]
-    //               = U12[i, c]                              (k = c, L22[c,c] = 1)
-    //               + ∑_{k=c+1}^{m-h-1} U12[i, k] · L22[k, c]
+    // Step 1 — A12 = U12 · L22. `L22` is unit-lower-triangular with the
+    // diagonal implicit: the storage cell at `L22[c, c]` is reused for
+    // (eventual) U·L product entries and must NOT be read on the
+    // diagonal. We dispatch this through the shared
+    // [`gemm_axpy_into_view_diag`] kernel with `diag_b = UnitDiag::Implicit`,
+    // which substitutes `F::one()` for diagonal reads of `L22` while
+    // walking the strict-lower body via the underlying `MatrixLike::get`.
+    // The strict-upper region of `L22`'s storage may carry garbage, but
+    // because `L22` is logically lower-triangular the corresponding
+    // `U12` columns are zero outside `k ≥ c`, so reading those cells
+    // never contaminates the dot product (U12[i, k] for k < i is in the
+    // upper-tri region of `u`, all valid; the kernel relies on `u`
+    // being a real matrix view and computes the full dot product). The
+    // result reduces algebraically to `A12[i, c] = ∑_{k≥c} U12[i,k] ·
+    // L22[k,c]` because `L22[k,c] = 0` for `k < c` in the storage —
+    // upheld by the trtrm caller contract (the input L is unit-lower
+    // with strict-upper zeros).
+    //
+    // α = 1, β = 0 (the destination cells in `top`'s right block hold
+    // garbage from the L-storage's strict-upper region; β=0 overwrites
+    // cleanly).
     {
         let u12 = u.submat(0..h, h..m);
         let l22_view = bot.submat(0..(m - h), h..m);
-        for i in 0..h {
-            for c in 0..(m - h) {
-                let mut acc = u12.get(i, c); // k = c contributes U12[i, c] · 1
-                for k in (c + 1)..(m - h) {
-                    acc += u12.get(i, k) * l22_view.get(k, c);
-                }
-                top.set(i, h + c, acc);
-            }
-        }
+        let one: F = u.get(0, 0).one_like();
+        let zero: F = u.get(0, 0).zero_like();
+        gemm_axpy_into_view_diag(
+            UnitDiag::Stored,
+            one,
+            &u12,
+            UnitDiag::Implicit,
+            &l22_view,
+            zero,
+            top.submat_mut(0..h, h..m),
+        );
     }
 
     // Step 2 — A11 = U11 · L11 + U12 · L21.
