@@ -1,0 +1,24 @@
+{
+  "id": "2a0ffb18-eb7f-459a-855b-11faea76b733",
+  "title": "166b2691/I4: Proptest scaffolding for SIMD-vs-scalar equivalence",
+  "description": "Add a shared test helper that every new SIMD kernel uses to prove correctness equivalence with the scalar baseline.\n\n## Deliverables\n\n1. `crates/gf2-core/tests/simd_equiv/mod.rs` (new): exports `assert_simd_matches_scalar<F, G, T>(scalar: F, simd: G, gen: impl Strategy<Value = T>)` that runs proptest over the generator and asserts bit-exact equality.\n2. Word-boundary helper: `WORD_BOUNDARY_LENGTHS: &[usize] = &[0, 1, 63, 64, 65, 127, 128, 129, 255, 256, 257]`. Each new SIMD kernel adds a `#[test]` that iterates this list.\n3. Alignment helper: produces `&[u64]` slices at offsets 0..7 within an over-allocated buffer to exercise unaligned paths.\n4. Demo unit test exercising the helper against `LogicalFns::xor_fn` (scalar) vs. AVX2 `xor_inplace_avx2` (simd).\n\n## Success criteria\n\n- [hard] Helper compiles, fast-tier nextest passes.\n- [hard] Demo test catches a deliberate one-bit mutation in the scalar fn (verify the test actually tests).\n- [hard] No new dependencies added beyond what `gf2-core` and `proptest` already provide.",
+  "state": "ready",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [
+    "code-review",
+    "cargo-ci"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "epic:babcf05e",
+    "story:166b2691",
+    "component:gf2-core"
+  ],
+  "created_at": "2026-04-25T15:16:46.217721080+00:00",
+  "updated_at": "2026-04-25T15:16:46.217732490+00:00"
+}

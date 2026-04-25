@@ -1,0 +1,40 @@
+{
+  "id": "babcf05e-29e8-4c81-ba77-843ec6409cfa",
+  "title": "gf2-core PPC-spiral performance sweep",
+  "description": "Comprehensive sweep through every scalar gap in `gf2-core` using the Aalto PPC optimization spiral (V0 measure → V1 linearise → V2 ILP → V3 SIMD → V4 register tile → V4cache cache block → V5 reuse → V6 prefetch → V7 layout → V10 multithread). New SIMD kernels live in `gf2-kernels-simd` behind the `OnceLock` dispatch boundary; high-level code stays `#![deny(unsafe_code)]`.\n\n## Plan / spec doc\n\n`/home/vkaskivuo/.claude/plans/analyze-the-core-library-sprightly-sprout.md` — attached as the epic's design doc.\n\n## Stories (one per tier)\n\n- **S0** chore: PPC-spiral measurement infrastructure (I1–I4)\n- **SA** perf: route scalar callers through existing SIMD dispatch (A1–A3)\n- **SB** perf: dense bit-matrix SIMD kernels (B1–B3)\n- **SC** perf: field-arithmetic batch kernels (C1–C5)\n- **SD** perf: sparse matvec layout + prefetch (D1–D2)\n- **SE** perf: multithread scaled kernels (E1–E2)\n\n## Epic-level success criteria\n\n- [hard] Every Tier A–D kernel ships with: criterion bench, sibling `.asm.txt` artefact, scalar-vs-SIMD proptest equivalence, and ≥1.5× geomean over the pinned baseline at the kernel's design size class.\n- [hard] `cargo nextest run --workspace --all-features --release --profile ci` passes at fast tier (5 s/test cap).\n- [hard] `cargo clippy --workspace --all-targets --all-features -- -D warnings` clean.\n- [hard] No `unsafe` leaked outside `gf2-kernels-simd` (`#![deny(unsafe_code)]` preserved everywhere else).\n- [hard] MSRV stays at 1.80 unless explicitly user-approved per `escalation-policy.md` (only Tier-C C3 IFMA52 sub-task may need this, and only if AVX2 path is below the 1.5× bar).\n- [aspirational] Geomean speedup across all Tier A–D kernels ≥ 2× over the baseline (some kernels are cache-bound and will fall short of this on their own).\n\n## Execution\n\nPhase 2 of the plan is autonomous: invoke `/project-lead &lt;this-epic-short-id&gt;` once Phase 1 (issue scaffolding) completes. Project-lead breaks down stories further as needed via `jit-breakdown`, dispatches workers in worktrees for parallel-safe tasks, and runs holistic coherence review. Per memory `feedback_agents_no_gate_runs.md`, only the lead transitions JIT gate state.\n\n## Context\n\n- Plan-mode exploration confirmed 22 scalar kernels with obvious SIMD shape across `matrix.rs`, `sparse.rs`, `gf2m/`, `gfp/`, `gfpn/`, `alg/m4rm.rs`.\n- Existing dispatch pattern: `gf2_core::simd::maybe_simd()`, `maybe_gf2m()`, `maybe_mersenne()`, `maybe_fp65537()`, `maybe_gf2m_wide256()` all return `Option&lt;&amp;'static FnsStruct&gt;` via `OnceLock`.\n- Existing batch-field SIMD: `Fp&lt;65537&gt;` and `Fp&lt;2^31-1&gt;` only; this epic generalises to other primes.\n- Existing rayon-parallel layer: `crates/gf2-core/src/compute/cpu.rs`.\n- Recent baseline data lives under `target/criterion/` (Apr 18–25, 2026); I1 pins it.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "01afbd6d-791e-4867-81cf-0f6c5ae131d9",
+    "2c866544-1ec7-4ba4-94ad-f7bd7f7993d5",
+    "d76f6931-a450-4651-9ab8-cfe5d7f8c7b2",
+    "211102c6-d6ad-4a3c-b497-534165902c43",
+    "afc80980-350e-4e7f-8172-9929e7c5f350",
+    "166b2691-82a9-476a-b272-cacd71b58d4c"
+  ],
+  "gates_required": [
+    "code-review",
+    "cargo-ci",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [
+    {
+      "path": "dev/plans/gf2_core_ppc_spiral.md",
+      "commit": null,
+      "label": "PPC-spiral performance plan (full kernel inventory + per-step protocol)",
+      "doc_type": "design"
+    }
+  ],
+  "labels": [
+    "type:epic",
+    "component:gf2-core",
+    "component:gf2-kernels-simd",
+    "epic:babcf05e",
+    "milestone:b117c95e"
+  ],
+  "created_at": "2026-04-25T15:14:12.083946312+00:00",
+  "updated_at": "2026-04-25T15:23:58.629619714+00:00"
+}

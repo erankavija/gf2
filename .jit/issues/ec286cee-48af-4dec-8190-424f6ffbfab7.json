@@ -1,0 +1,30 @@
+{
+  "id": "ec286cee-48af-4dec-8190-424f6ffbfab7",
+  "title": "2c866544/C1: GF(2^m) batch mul/square m=8,16,32 via VPCLMULQDQ",
+  "description": "## Current\n\n`Gf2mField::mul` and `square` in `crates/gf2-core/src/gf2m/field.rs` are called per-element. No batch element-wise SIMD path even though VPCLMULQDQ-on-YMM can process two element pairs per instruction for m ≤ 32.\n\n## Fix\n\nAdd a new `Gf2mBatchFns` set in `gf2-kernels-simd` (sibling of existing `Gf2mFns`):\n\n- V3 SIMD: VPCLMULQDQ-on-YMM (2 element pairs / instr) + Barrett reduce in YMM. Reduction lookup table fits a YMM lane for m ≤ 32.\n- V4 unroll: 4-way unroll across the dependent reduce step for ILP.\n\nWire dispatch via new `simd::maybe_gf2m_batch()` accessor.\n\n## Per-kernel execution protocol (epic spec doc)\n\nPer A1's protocol, with bench targets `gf2m_mul_strategies` (existing — already compares 5+ strategies, add new batch entry).\n\n## Depends on\n\nI1, I2, I3, I4.\n\n## Success criteria\n\n- [hard] Bit-exact vs. all existing scalar strategies for m ∈ {8, 16, 32}.\n- [hard] Existing `gf2m_mul_strategies.rs` shows the new batch path on its strategy comparison table.\n- [hard] No `unsafe` outside `gf2-kernels-simd`.\n- [aspirational] ≥1.5× geomean over the fastest existing strategy for batches ≥ 256 elements.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "2a0ffb18-eb7f-459a-855b-11faea76b733",
+    "c3a9a4cb-7233-40dc-a56e-8e0d7936e8e9",
+    "4f845881-2fbc-4ba5-baf5-48ade75830bc",
+    "b2ecd2ff-7b1d-4072-aa8b-d0b2e8f04b64"
+  ],
+  "gates_required": [
+    "code-review",
+    "cargo-ci"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "epic:babcf05e",
+    "story:2c866544",
+    "component:gf2-core",
+    "component:gf2-kernels-simd"
+  ],
+  "created_at": "2026-04-25T15:18:18.984288190+00:00",
+  "updated_at": "2026-04-25T15:20:04.936796694+00:00"
+}

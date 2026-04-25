@@ -1,0 +1,30 @@
+{
+  "id": "3168d114-57f2-4a21-a28f-3c191833385d",
+  "title": "2c866544/C4: QuadraticExt::mul Karatsuba SoA batched SIMD",
+  "description": "## Current\n\n`gfpn::QuadraticExt::mul` (`crates/gf2-core/src/gfpn/quadratic.rs`) does Karatsuba (3 base-field multiplications + 2 additions per element). Scheduling is sequential; no SoA batched path.\n\n## Fix\n\nPPC walk:\n\n- V2 ILP: schedule the 3 independent base-field muls across registers so they run in parallel (no false dependency chain).\n- V3 SIMD batched: introduce a SoA `Vec<QuadraticExt<C>>` layout (separate `c0` and `c1` arrays); call into the C3 generic Fp batch path for each Karatsuba step.\n- Wire SoA scaffolding into `gfpn::compute` (new module if needed).\n\n## Per-kernel execution protocol\n\nSame as C1. Bench: `field_matrix_fusion.rs` (existing).\n\n## Depends on\n\nI1, I2, I3, I4. Stronger SoA gains require C3 (generic Fp batch); however, the V2-ILP step does not require C3 and can ship first.\n\n## Success criteria\n\n- [hard] Bit-exact vs. existing AoS `QuadraticExt::mul`.\n- [hard] AoS path unchanged and at least as fast (no regression for callers that do not use SoA).\n- [hard] SoA path covers add, sub, mul, square (all four ops, not just mul).\n- [aspirational] ≥1.5× geomean on `field_matrix_fusion` bench when both C3 (Fp batch) and C4 land.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "c3a9a4cb-7233-40dc-a56e-8e0d7936e8e9",
+    "4f845881-2fbc-4ba5-baf5-48ade75830bc",
+    "b2ecd2ff-7b1d-4072-aa8b-d0b2e8f04b64",
+    "2a0ffb18-eb7f-459a-855b-11faea76b733"
+  ],
+  "gates_required": [
+    "code-review",
+    "cargo-ci"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "epic:babcf05e",
+    "story:2c866544",
+    "component:gf2-core",
+    "component:gf2-kernels-simd"
+  ],
+  "created_at": "2026-04-25T15:18:50.030749583+00:00",
+  "updated_at": "2026-04-25T15:20:07.229547180+00:00"
+}

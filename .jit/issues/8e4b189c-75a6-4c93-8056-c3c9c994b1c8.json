@@ -1,0 +1,29 @@
+{
+  "id": "8e4b189c-75a6-4c93-8056-c3c9c994b1c8",
+  "title": "d76f6931/A1: Route BitMatrix::matvec through popcnt SIMD dispatch",
+  "description": "## Current\n\n`BitMatrix::matvec` at `crates/gf2-core/src/matrix.rs:962-988` computes parity per row with scalar `(row_word & x_word).count_ones() % 2`. The AVX2 popcount kernel (`LogicalFns::popcnt_fn`) already exists in `gf2-kernels-simd` but is never called from this path.\n\n## Fix\n\nAbove a width threshold (initially: row width ≥ 8 u64 = 512 bits; tune empirically), reduce the row using `xor_fn` then call `popcnt_fn` once per row. Below threshold, keep the scalar path.\n\n## PPC steps\n\nV0 baseline (existing `matrix_vector` bench) → V3 SIMD via existing kernel dispatch → V0 measurement again to prove the gain.\n\n## Per-kernel execution protocol (epic spec doc, all required)\n\n1. Baseline saved (`ppc-v0-2026-04-25` already pinned by I1).\n2. ASM artefact for the dispatched call site updated.\n3. `perf stat -r 10` before/after recorded.\n4. Proptest equivalence (I4 helper) for matvec on random matrices, all word-boundary widths.\n5. ≥1.5× geomean over baseline at the design size class (matrices ≥ 512×512); else revert and try a different transform.\n6. One commit `perf(jit:<this-short-id>): V3 — popcnt dispatch in BitMatrix::matvec`.\n7. Lead-only gate transitions.\n\n## Depends on\n\nI1, I2, I3, I4.\n\n## Success criteria\n\n- [hard] Existing `matrix.rs` tests pass; new word-boundary `#[test]` for matvec passes.\n- [hard] Proptest equivalence vs. scalar holds for all sizes 0..1024.\n- [hard] Crossover threshold documented in code with the bench data point that justifies it.\n- [aspirational] ≥1.5× at design size class.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "4f845881-2fbc-4ba5-baf5-48ade75830bc",
+    "b2ecd2ff-7b1d-4072-aa8b-d0b2e8f04b64",
+    "c3a9a4cb-7233-40dc-a56e-8e0d7936e8e9",
+    "2a0ffb18-eb7f-459a-855b-11faea76b733"
+  ],
+  "gates_required": [
+    "code-review",
+    "cargo-ci"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "epic:babcf05e",
+    "story:d76f6931",
+    "component:gf2-core"
+  ],
+  "created_at": "2026-04-25T15:17:06.452613859+00:00",
+  "updated_at": "2026-04-25T15:20:00.733050011+00:00"
+}

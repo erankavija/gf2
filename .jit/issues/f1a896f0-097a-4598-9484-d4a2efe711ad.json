@@ -1,0 +1,29 @@
+{
+  "id": "f1a896f0-097a-4598-9484-d4a2efe711ad",
+  "title": "01afbd6d/D1: SparseBitMatrix::matvec prefetch + block-CSR layout",
+  "description": "## Current\n\n`SparseBitMatrix::matvec` (`crates/gf2-core/src/sparse.rs`) does scalar CSR iteration. No prefetch, no block layout, gather pattern is index-driven (cache-unfriendly for LDPC parity-check sizes).\n\n## Fix\n\nPPC walk:\n\n- V6 prefetch: software prefetch of `col_idx[i + lookahead]` while processing entry `i`. Tune `lookahead` from L1 latency.\n- V7 layout: try block-CSR (4×64 dense bit-blocks within sparse rows). Add a one-shot transformer from CSR → block-CSR.\n- V3 SIMD: only inside dense blocks (XOR-reduce a u64 row of 4 packed columns).\n\n## Per-kernel execution protocol\n\nPer A1's protocol. Cache-bound nature means asm artefact must show prefetch instructions actually emitted; perf-stat must show L1d-miss rate drop.\n\n## Depends on\n\nI1, I2, I3, I4.\n\n## Success criteria\n\n- [hard] Bit-exact vs. existing CSR matvec.\n- [hard] Block-CSR transformer is a separate function, not silently replacing CSR (callers opt in).\n- [hard] L1d-miss rate drops on the LDPC-sized sparse bench (qualitative — exact threshold tuned by reviewer).\n- [aspirational] ≥1.5× geomean on `sparse.rs` bench at LDPC parity-check sizes.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "4f845881-2fbc-4ba5-baf5-48ade75830bc",
+    "b2ecd2ff-7b1d-4072-aa8b-d0b2e8f04b64",
+    "c3a9a4cb-7233-40dc-a56e-8e0d7936e8e9",
+    "2a0ffb18-eb7f-459a-855b-11faea76b733"
+  ],
+  "gates_required": [
+    "code-review",
+    "cargo-ci"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "epic:babcf05e",
+    "story:01afbd6d",
+    "component:gf2-core"
+  ],
+  "created_at": "2026-04-25T15:19:11.130623480+00:00",
+  "updated_at": "2026-04-25T15:20:08.724392477+00:00"
+}

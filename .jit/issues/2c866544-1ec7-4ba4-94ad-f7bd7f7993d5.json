@@ -1,0 +1,30 @@
+{
+  "id": "2c866544-1ec7-4ba4-94ad-f7bd7f7993d5",
+  "title": "babcf05e/SC: Field-arithmetic batch kernels",
+  "description": "Batched SIMD kernels for the field-arithmetic modules. Largest research-impact wins in the epic — extension-field tower ops have 3–6 independent base-field muls per element that schedule naturally onto SIMD lanes.\n\n## Children (5 tasks)\n\n- **C1** — GF(2^m) batch element-wise mul/square for m∈{8,16,32}. V3 SIMD via VPCLMULQDQ-on-YMM (2 element pairs/instr) + Barrett reduce in YMM → V4 unroll 4-way for ILP.\n- **C2** — GF(2^m) batch for m=571 (BCH/EC research path). V3 SIMD multi-word VPCLMULQDQ → V4 register tile across the 9 u64 words. Currently scalar multi-word.\n- **C3** — `Fp<P>` Montgomery batch for general 64-bit primes (SoA). V3 SIMD via 32×4 limb decomposition on AVX2. Sub-task: AVX-512 IFMA52 path (52-bit unsigned multiply-add) on a Rust-1.89 MSRV branch — only opened if AVX2 path is below 1.5×, and only after explicit user MSRV-bump approval per `escalation-policy.md`.\n- **C4** — `gfpn::QuadraticExt::mul` Karatsuba batched over a SoA `Vec<QuadraticExt<C>>`. V2 ILP (3 base-field muls already independent) → V3 SIMD batched. Benchmark target: `field_matrix_fusion.rs`.\n- **C5** — `gfpn::CubicExt::mul` analogous (6 independent base-field muls). Reuses C4's SoA scaffolding.\n\n## Depends on\n\nS0 (all four I-tasks). C4 must complete before C5 (shared SoA scaffolding).\n\n## Success criteria\n\nPer-task: per-kernel execution protocol from epic spec doc. C3 IFMA52 sub-task additionally gated on user MSRV approval.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "7c954fb5-1efe-440e-b29d-eed5270b8204",
+    "33d3f5b7-5942-445d-8e34-9b87c0903f7f",
+    "ec286cee-48af-4dec-8190-424f6ffbfab7",
+    "86c09a51-8d7e-4610-854b-6110ab830d4c"
+  ],
+  "gates_required": [
+    "code-review",
+    "cargo-ci"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:story",
+    "epic:babcf05e",
+    "component:gf2-core",
+    "component:gf2-kernels-simd",
+    "story:2c866544"
+  ],
+  "created_at": "2026-04-25T15:15:46.068240191+00:00",
+  "updated_at": "2026-04-25T15:21:16.146513547+00:00"
+}
