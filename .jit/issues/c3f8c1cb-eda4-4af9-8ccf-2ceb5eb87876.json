@@ -2,9 +2,9 @@
   "id": "c3f8c1cb-eda4-4af9-8ccf-2ceb5eb87876",
   "title": "Implement PLE decomposition and echelon forms over FiniteField",
   "description": "Block-recursive **PLE** (Permutation · Lower triangular · row-Echelon) decomposition per Dumas–Pernet §2.2 algorithm 2.5. PLE is the correct primitive over finite fields because input matrices frequently have non-generic rank profile; LU is derived as a projection of PLE.\n\nRow-echelon form (alg 2.6) and reduced row-echelon form (alg 2.7) are projections of PLE combined with `trsm/trtri/trtrm` (from story 83b1ad8b). Rank, nullspace, and LU are projections of PLE.\n\n## Operations\n\n```rust\npub struct Permutation { ... } // compact cycle representation\n\nimpl<F: FiniteField> FieldMatrix<F> {\n    /// PLE decomposition: A = P · L · E.\n    /// Returns (P, L, E, rank) where L is m × rank (lower triangular, unit diag),\n    /// and E is rank × n in row-echelon form with unit leading coefficients.\n    pub fn ple(&self) -> (Permutation, FieldMatrix<F>, FieldMatrix<F>, usize);\n\n    /// Row echelon form X·A = E (alg 2.6). Uses PLE + trsm + trtri internally.\n    pub fn row_echelon(&self) -> (FieldMatrix<F>, FieldMatrix<F>);\n\n    /// Reduced row echelon form Y·A = R (alg 2.7). Uses PLE + trsm + trtri + trtrm.\n    pub fn rref(&self) -> (FieldMatrix<F>, FieldMatrix<F>);\n\n    /// Rank — reads from PLE output.\n    pub fn rank(&self) -> usize;\n\n    /// Nullspace basis (kernel) as row vectors.\n    pub fn nullspace(&self) -> Vec<FieldVec<F>>;\n\n    /// LU decomposition derived from PLE. Returns None iff rank < min(rows, cols).\n    /// When defined, P·A = L·U with L lower triangular (unit diag), U upper.\n    pub fn lu(&self) -> Option<(Permutation, FieldMatrix<F>, FieldMatrix<F>)>;\n}\n```\n\n## Algorithm\n\nPaper algorithm 2.5:\n\n1. If `n == 1`: scan for first non-zero entry, permute it to the top, return.\n2. Else split `A = [A1 | A2]` column-wise into halves.\n3. Recurse on `A1` → `(P1, L1, E1, r1)`.\n4. Apply `P1` to `A2`, split `A2 = [A3; A4]` row-wise at `r1`.\n5. `A3 ← trsm_lower(L1_top, A3)`.\n6. `A4 ← A4 − L1_bot · A3` (via `gemm`).\n7. Recurse on `A4` → `(P2, L2, E2, r2)`.\n8. Assemble returned `(P, L, E, r1 + r2)`.\n\nThis reduces PLE to `gemm` + `trsm` and matches paper Table 2's complexity constants.\n\n## Success criteria\n\n- [hard] `ple()` returns a valid decomposition on random matrices across GF(7), GF(65521), GF(2^31-1), GF(2^8), GF(2^16); verified by reconstructing `P · L · E` and comparing to input.\n- [hard] Handles rank-deficient inputs correctly — `rank()` matches independently-computed rank for randomly rank-reduced matrices.\n- [hard] `row_echelon` / `rref` outputs are in the claimed forms (leading ones, zeros below/above leading ones).\n- [hard] `nullspace` basis vectors satisfy `A · v = 0` and are linearly independent; basis size equals `n − rank`.\n- [hard] `lu()` returns `Some` iff full-rank; returned `P`, `L`, `U` satisfy `P·A = L·U`.\n- [hard] Edge cases: zero matrix, identity, all-ones, single column, single row, wide (m < n), tall (m > n), rank = 0, rank = 1, rank = min-1, rank = min.\n- [hard] Criterion micro-benchmarks exist at n = 64, 256, 1024 for at least GF(2^31-1) and GF(2^8).\n- [hard] Implementation uses `MatView` / `MatViewMut` for recursive submatrices — no intermediate allocation beyond the output.\n- [hard] Uses `gemm` from `d48a3cfd` and `trsm` from `83b1ad8b`; does not reimplement either.\n\n## Dependencies\n\n- Dense `FieldMatrix<F>` + views (ab791e27).\n- Matrix multiplication (d48a3cfd) — `gemm` is the inner kernel.\n- Triangular primitives (83b1ad8b) — `trsm`, `trtri`, `trtrm` used by row_echelon and rref.\n\n## References\n\n- [Dumas–Pernet takeaways](dev/plans/dumas_pernet_takeaways.md) §3.1 (PLE is ground truth), §3.4\n- Paper §2.2 algorithm 2.5; §2.3 algorithms 2.6, 2.7; §2.3 Table 2",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [
     "83b1ad8b-35eb-4340-8ef9-663c19df038e"
   ],
@@ -15,19 +15,19 @@
   ],
   "gates_status": {
     "code-review": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-04-23T16:00:44.870878812Z"
-    },
-    "cargo-ci": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-04-23T16:00:44.870926852Z"
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-25T23:49:10.738703165Z"
     },
     "doc-review": {
       "status": "pending",
       "updated_by": null,
       "updated_at": "2026-04-23T16:00:44.870944022Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-25T23:48:58.733556400Z"
     }
   },
   "context": {},
@@ -37,5 +37,5 @@
     "type:story"
   ],
   "created_at": "2026-02-23T19:20:28.213415862+00:00",
-  "updated_at": "2026-04-25T20:20:00.474485607+00:00"
+  "updated_at": "2026-04-25T23:57:19.204506706+00:00"
 }
