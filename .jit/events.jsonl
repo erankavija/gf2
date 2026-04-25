@@ -2702,3 +2702,11 @@
 {"type":"issue_state_changed","id":"87a1ee6d-46b4-4736-af0c-64fcec38618e","issue_id":"d48a3cfd-3187-41c3-b4a5-78c4c6f8a967","timestamp":"2026-04-25T17:06:16.845021411Z","from":"in_progress","to":"done"}
 {"type":"issue_completed","id":"5305203c-9a97-48e8-807e-995f3f4312c5","issue_id":"d48a3cfd-3187-41c3-b4a5-78c4c6f8a967","timestamp":"2026-04-25T17:06:16.845102761Z"}
 {"type":"issue_state_changed","id":"00dc684c-9f21-4ecf-8d8f-619af5b4cb18","issue_id":"83b1ad8b-35eb-4340-8ef9-663c19df038e","timestamp":"2026-04-25T17:06:17.178500796Z","from":"backlog","to":"ready"}
+{"type":"issue_state_changed","id":"3fdddf21-82e1-42e9-bb72-addbbda33595","issue_id":"83b1ad8b-35eb-4340-8ef9-663c19df038e","timestamp":"2026-04-25T17:06:50.664757687Z","from":"ready","to":"in_progress"}
+{"type":"issue_claimed","id":"65482755-e006-4991-8374-02cd83f7a179","issue_id":"83b1ad8b-35eb-4340-8ef9-663c19df038e","timestamp":"2026-04-25T17:06:50.667572707Z","assignee":"agent:claude"}
+{"type":"gate_passed","id":"7422cbd6-f143-48eb-9f2e-595651f42d21","issue_id":"83b1ad8b-35eb-4340-8ef9-663c19df038e","timestamp":"2026-04-25T17:28:03.915826087Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"19689828-9625-4f21-8e82-9385639b4185","issue_id":"83b1ad8b-35eb-4340-8ef9-663c19df038e","timestamp":"2026-04-25T17:36:09.819430205Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"e3465c31-50fa-44b2-937d-c487a246373c","issue_id":"83b1ad8b-35eb-4340-8ef9-663c19df038e","timestamp":"2026-04-25T18:01:47.956279029Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"f767290d-7607-4911-948f-82af5754e9fe","issue_id":"83b1ad8b-35eb-4340-8ef9-663c19df038e","timestamp":"2026-04-25T18:12:42.975222951Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"c0b32884-75d8-497e-b0c9-c040b5af8841","issue_id":"83b1ad8b-35eb-4340-8ef9-663c19df038e","timestamp":"2026-04-25T18:24:53.352704994Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"97c73e6c-2a93-4bb1-984e-9c3883cb901a","issue_id":"83b1ad8b-35eb-4340-8ef9-663c19df038e","timestamp":"2026-04-25T18:38:35.172433928Z","gate_key":"code-review","updated_by":"auto:executor"}

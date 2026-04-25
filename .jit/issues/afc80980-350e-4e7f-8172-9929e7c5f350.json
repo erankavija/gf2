@@ -1,6 +1,6 @@
 {
   "id": "afc80980-350e-4e7f-8172-9929e7c5f350",
-  "title": "babcf05e/SE: Multithread scaled kernels",
+  "title": "Multithread scaled kernels",
   "description": "V10 multithread step. Only applied after the single-thread spiral is sharp on each target kernel — multithreading a memory-bound kernel just adds bus contention.\n\n## Children (2 tasks)\n\n- **E1** — Tier B1/B3 dense ops via rayon row-tile (`crates/gf2-core/src/compute/cpu.rs`). Pre-flight: confirm single-thread is not memory-bound by checking `perf stat` cache-miss rate on the post-Tier-B kernel.\n- **E2** — Tier C4/C5 batch field ops via rayon SoA chunks (new `compute/field.rs` module).\n\n## Depends on\n\nE1 blocks on all of SB. E2 blocks on C4 and C5.\n\n## Success criteria\n\n- [hard] Strong-scaling efficiency ≥ 70% at 4 threads on the design size class.\n- [hard] No correctness regression vs. single-threaded path.\n- [aspirational] ≥ 3× total speedup over the post-single-thread baseline at 4 threads.",
   "state": "backlog",
   "priority": "normal",
@@ -18,10 +18,10 @@
   "documents": [],
   "labels": [
     "type:story",
-    "epic:babcf05e",
     "component:gf2-core",
-    "story:afc80980"
+    "epic:gf2-core-ppc-spiral",
+    "story:ppc-multithread"
   ],
   "created_at": "2026-04-25T15:16:00.644323511+00:00",
-  "updated_at": "2026-04-25T15:21:17.105300581+00:00"
+  "updated_at": "2026-04-25T18:44:26.056471567+00:00"
 }

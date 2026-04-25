@@ -1,6 +1,6 @@
 {
   "id": "1f899836-f41c-419d-afde-773e8f10ce01",
-  "title": "afc80980/E1: Rayon row-tile multithread for B1/B3 dense kernels",
+  "title": "Rayon row-tile multithread for B1/B3 dense kernels",
   "description": "## Current\n\n`crates/gf2-core/src/compute/cpu.rs` already has rayon-parallel M4RM/RREF/rank, but the kernels delivered by SB (B1 transpose, B3 tile-reuse multiply) need their parallel scheduling tuned to the new tile shapes.\n\n## Pre-flight check (mandatory before V10)\n\nRun `perf stat -r 10` on the post-SB single-thread kernel. If `cache-misses / instructions` is above a threshold (heuristic: > 1%), the kernel is memory-bound and multithreading will hurt — abort and revert.\n\n## Fix\n\nV10: rayon row-tile parallelism over the post-SB tile shape. Use `rayon::ThreadPoolBuilder` with the project's existing thread-count convention.\n\n## Per-kernel execution protocol\n\nPer A1's protocol, plus:\n\n- Strong-scaling efficiency measured at 1, 2, 4, 8 threads.\n- False-sharing check: tile boundaries must align to 64-byte cache lines.\n\n## Depends on\n\nAll of SB (B1, B2, B3).\n\n## Success criteria\n\n- [hard] No correctness regression vs. single-threaded path.\n- [hard] Strong-scaling efficiency ≥ 70% at 4 threads at the design size class.\n- [aspirational] ≥3× total speedup over the post-SB single-thread baseline at 4 threads.",
   "state": "backlog",
   "priority": "normal",
@@ -18,10 +18,10 @@
   "documents": [],
   "labels": [
     "type:task",
-    "epic:babcf05e",
-    "story:afc80980",
-    "component:gf2-core"
+    "component:gf2-core",
+    "epic:gf2-core-ppc-spiral",
+    "story:ppc-multithread"
   ],
   "created_at": "2026-04-25T15:19:27.982645121+00:00",
-  "updated_at": "2026-04-25T15:20:10.264900628+00:00"
+  "updated_at": "2026-04-25T18:45:02.268298287+00:00"
 }

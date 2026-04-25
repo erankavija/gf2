@@ -1,6 +1,6 @@
 {
   "id": "b2ecd2ff-7b1d-4072-aa8b-d0b2e8f04b64",
-  "title": "166b2691/I1: Pin criterion baselines for all targeted kernels",
+  "title": "Pin criterion baselines for all targeted kernels",
   "description": "Run `cargo bench -p gf2-core --bench <kernel-bench> -- --save-baseline ppc-v0-2026-04-25` for every bench listed below and commit a JSON manifest at `dev/benchmarks/ppc-baselines.json` mapping each kernel ID (A1..D2) to its baseline name and the commit hash measured at.\n\n## Benches to baseline\n\n- `matrix_vector` — A1\n- `matmul` — A2, B3\n- `fp_specialized` + `fieldvec_dot_product` — A3, C3, C4, C5\n- `gf2m_mul_strategies`, `gf2m_wide_mul` — C1, C2\n- `m4rm_components`, `m4rm_profile` — B2, B3\n- `sparse` — D1, D2\n- (transpose has no dedicated bench yet → B1 task creates one before its first edit)\n\n## Success criteria\n\n- [hard] `dev/benchmarks/ppc-baselines.json` exists, valid JSON, contains an entry for every Tier A–D kernel ID with `baseline_name`, `commit_hash`, and `bench_target`.\n- [hard] All baselines actually exist under `target/criterion/<benchmark>/<baseline-name>/`.\n- [hard] Re-running `cargo bench -p gf2-core --bench <bench> -- --baseline ppc-v0-2026-04-25` succeeds without modification.",
   "state": "ready",
   "priority": "normal",
@@ -15,10 +15,10 @@
   "documents": [],
   "labels": [
     "type:task",
-    "epic:babcf05e",
-    "story:166b2691",
-    "component:gf2-core"
+    "component:gf2-core",
+    "epic:gf2-core-ppc-spiral",
+    "story:ppc-infrastructure"
   ],
   "created_at": "2026-04-25T15:16:20.305697666+00:00",
-  "updated_at": "2026-04-25T15:16:20.305709686+00:00"
+  "updated_at": "2026-04-25T18:44:33.429302777+00:00"
 }
