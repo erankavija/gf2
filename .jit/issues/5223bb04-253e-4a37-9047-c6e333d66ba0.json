@@ -1,7 +1,7 @@
 {
   "id": "5223bb04-253e-4a37-9047-c6e333d66ba0",
   "title": "Route BitMatrix::mul row-XOR through xor_fn dispatch",
-  "description": "## Current\n\n`BitMatrix::mul` non-M4RM path at `crates/gf2-core/src/matrix.rs:1165+` uses scalar inner-product per `(r,c)` pair. The AVX2 XOR kernel (`LogicalFns::xor_fn`) already exists but the row accumulation here does not call it.\n\n## Fix\n\nRefactor the non-M4RM path so row-XOR accumulation goes through `simd::maybe_simd().xor_fn` for rows above a width threshold (reuse the threshold tuning approach from `m4rm_components.rs`).\n\n## PPC steps\n\nV0 baseline (`matmul` bench) → V3 dispatch → asm verify (`vpxor` mnemonic in inner loop).\n\n## Per-kernel execution protocol\n\nSame as A1.\n\n## Depends on\n\nI1, I2, I3, I4.\n\n## Success criteria\n\n- [hard] Existing matmul tests + word-boundary `#[test]`s pass.\n- [hard] Proptest equivalence vs. scalar.\n- [hard] M4RM path crossover unchanged (this task touches the non-M4RM fallback only).\n- [aspirational] ≥1.5× at design size class.",
+  "description": "## Current\n\n`BitMatrix::mul` non-M4RM path at `crates/gf2-core/src/matrix.rs:1165+` uses scalar inner-product per `(r,c)` pair. The AVX2 XOR kernel (`LogicalFns::xor_fn`) already exists but the row accumulation here does not call it.\n\n## Fix\n\nRefactor the non-M4RM path so row-XOR accumulation goes through `simd::maybe_simd().xor_fn` for rows above a width threshold (reuse the threshold tuning approach from `m4rm_components.rs`).\n\n## PPC steps\n\nV0 baseline (`matmul` bench) → V3 dispatch → asm verify (`vpxor` mnemonic in inner loop).\n\n## Per-kernel execution protocol\n\nSame as A1.\n\n## Success criteria\n\n- [hard] Existing matmul tests + word-boundary `#[test]`s pass.\n- [hard] Proptest equivalence vs. scalar.\n- [hard] M4RM path crossover unchanged (this task touches the non-M4RM fallback only).\n- [aspirational] ≥1.5× at design size class.",
   "state": "backlog",
   "priority": "normal",
   "assignee": null,
@@ -22,5 +22,5 @@
     "story:ppc-dispatch-routing"
   ],
   "created_at": "2026-04-25T15:17:12.786762591+00:00",
-  "updated_at": "2026-04-25T19:18:15.362349486+00:00"
+  "updated_at": "2026-04-25T19:22:04.048711164+00:00"
 }

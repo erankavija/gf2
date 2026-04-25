@@ -1,7 +1,7 @@
 {
   "id": "01afbd6d-791e-4867-81cf-0f6c5ae131d9",
   "title": "Sparse matvec layout + prefetch",
-  "description": "Cache-bound sparse kernels. Target the LDPC parity-check matvec path where memory access patterns dominate.\n\n## Children (2 tasks)\n\n- **D1** — `SparseBitMatrix::matvec` CSR (`crates/gf2-core/src/sparse.rs::matvec`). PPC steps: V6 prefetch (look-ahead on `col_idx` array) → V7 layout: try block-CSR with 4×64 blocks → V3 SIMD only inside dense blocks. Gain bar ≥1.5× on the `sparse.rs` bench.\n- **D2** — `SparseBitMatrix` row reorder for cache. V7 layout-only: bandwidth minimization (Cuthill-McKee) before dispatch. One-shot pre-processing; amortises across many matvecs.\n\n## Depends on\n\nS0 (all four I-tasks).\n\n## Success criteria\n\nPer-task: per-kernel execution protocol from epic spec doc. Cache-bound steps may rely on cache-miss-rate improvement instead of IPC delta — the asm artefact must show the prefetch instructions actually emitted.",
+  "description": "Cache-bound sparse kernels. Target the LDPC parity-check matvec path where memory access patterns dominate.\n\n## Children (2 tasks)\n\n- **D1** — `SparseBitMatrix::matvec` CSR (`crates/gf2-core/src/sparse.rs::matvec`). PPC steps: V6 prefetch (look-ahead on `col_idx` array) → V7 layout: try block-CSR with 4×64 blocks → V3 SIMD only inside dense blocks. Gain bar ≥1.5× on the `sparse.rs` bench.\n- **D2** — `SparseBitMatrix` row reorder for cache. V7 layout-only: bandwidth minimization (Cuthill-McKee) before dispatch. One-shot pre-processing; amortises across many matvecs.\n\n## Success criteria\n\nPer-task: per-kernel execution protocol from epic spec doc. Cache-bound steps may rely on cache-miss-rate improvement instead of IPC delta — the asm artefact must show the prefetch instructions actually emitted.",
   "state": "backlog",
   "priority": "normal",
   "assignee": null,
@@ -23,5 +23,5 @@
     "story:ppc-sparse-layout"
   ],
   "created_at": "2026-04-25T15:15:53.732961134+00:00",
-  "updated_at": "2026-04-25T18:44:24.936027697+00:00"
+  "updated_at": "2026-04-25T19:24:35.320323613+00:00"
 }

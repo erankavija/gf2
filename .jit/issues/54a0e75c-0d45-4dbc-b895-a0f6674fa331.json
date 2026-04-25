@@ -1,7 +1,7 @@
 {
   "id": "54a0e75c-0d45-4dbc-b895-a0f6674fa331",
   "title": "M4RM Gray-code table build (ILP + SIMD)",
-  "description": "## Current\n\n`crates/gf2-core/src/alg/m4rm.rs::build_gray_table` builds a 2^k row table via scalar XOR sequence. Profiled in `m4rm_profile.rs` as a measurable fraction of M4RM total time.\n\n## Fix\n\nPPC walk:\n\n- V2 ILP: replace single accumulator with 8 independent table accumulators so the dependent XOR chain breaks.\n- V3 SIMD: batch the 8 accumulators across YMM lanes; reuse `LogicalFns::xor_fn` where possible.\n- V6 prefetch: prefetch the next column block's rows while building the current Gray-table.\n\n## Per-kernel execution protocol\n\nSame as B1. Baseline already pinned by I1 (`m4rm_profile`).\n\n## Depends on\n\nI1, I2, I3, I4.\n\n## Success criteria\n\n- [hard] M4RM end-to-end correctness unchanged (existing `m4rm.rs` tests pass).\n- [hard] ASM shows 8 independent accumulators and (V3) `vpxor` mnemonics.\n- [hard] No regression in M4RM total time on any size class measured by `m4rm_profile`.\n- [aspirational] ≥1.5× geomean on the table-build sub-bench.",
+  "description": "## Current\n\n`crates/gf2-core/src/alg/m4rm.rs::build_gray_table` builds a 2^k row table via scalar XOR sequence. Profiled in `m4rm_profile.rs` as a measurable fraction of M4RM total time.\n\n## Fix\n\nPPC walk:\n\n- V2 ILP: replace single accumulator with 8 independent table accumulators so the dependent XOR chain breaks.\n- V3 SIMD: batch the 8 accumulators across YMM lanes; reuse `LogicalFns::xor_fn` where possible.\n- V6 prefetch: prefetch the next column block's rows while building the current Gray-table.\n\n## Per-kernel execution protocol\n\nSame as B1. Baseline already pinned by I1 (`m4rm_profile`).\n\n## Success criteria\n\n- [hard] M4RM end-to-end correctness unchanged (existing `m4rm.rs` tests pass).\n- [hard] ASM shows 8 independent accumulators and (V3) `vpxor` mnemonics.\n- [hard] No regression in M4RM total time on any size class measured by `m4rm_profile`.\n- [aspirational] ≥1.5× geomean on the table-build sub-bench.",
   "state": "backlog",
   "priority": "normal",
   "assignee": null,
@@ -23,5 +23,5 @@
     "story:ppc-dense-bitmatrix"
   ],
   "created_at": "2026-04-25T15:17:53.741656798+00:00",
-  "updated_at": "2026-04-25T19:18:17.028665513+00:00"
+  "updated_at": "2026-04-25T19:22:35.643722623+00:00"
 }
