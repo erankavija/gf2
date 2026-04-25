@@ -1,17 +1,32 @@
 //! Block-recursive triangular primitives — `trsm`, `trmm`, `trtri`, `trtrm`.
 //!
-//! This module implements Dumas–Pernet §2.1 algorithms 2.1–2.4 on top of the
-//! existing classical [`gemm`](crate::field::matrix::gemm) (issue
-//! `91c06222`) and the dense view types
-//! [`MatView`](crate::field::matrix::MatView) /
+//! This module implements Dumas–Pernet §2.1 algorithms 2.1–2.4 as
+//! **reductions to `gemm`** on top of the existing classical
+//! [`gemm`](crate::field::matrix::gemm) (issue `91c06222`) and the dense
+//! view types [`MatView`](crate::field::matrix::MatView) /
 //! [`MatViewMut`](crate::field::matrix::MatViewMut). All routines operate
-//! **in place** on the supplied views: the trsm/trmm pair uses the
-//! crate-private fused [`submul_into_view`] / [`addmul_into_view`] kernels
-//! to fold each off-diagonal `B ± A · B'` step directly into the
-//! destination view — no intermediate owned `FieldMatrix<F>` is
-//! materialised, beyond the single `B`-transpose scratch
-//! [`crate::field::matrix::gemm_into_view`] inherits from the classical
-//! blocked gemm. The trtri / trtrm primitives need exactly **one** scratch
+//! **in place** on the supplied views.
+//!
+//! The `B ← B − A · X` and `B ← B + A · X` updates that drive `trsm` and
+//! `trmm` are dispatched through the shared
+//! [`gemm_axpy_into_view`](crate::field::matrix::gemm_axpy_into_view)
+//! kernel in [`crate::field::matrix`], which writes the result into a
+//! caller-supplied `MatViewMut` and inherits the same blocked,
+//! delayed-reduction structure as T1's classical
+//! [`gemm`](crate::field::matrix::gemm) — its inner kernel is
+//! [`crate::field::vec::dot_product_slices`] with the standard
+//! `F::max_unreduced_additions()` chunking, so the `Wide` accumulator
+//! never overflows even at large inner dimensions. The `trtri` and
+//! `trtrm` recursions go through
+//! [`gemm_into_view`](crate::field::matrix::gemm_into_view) (no β·C term
+//! needed). **No bespoke matrix-multiply loops are written in this
+//! module.**
+//!
+//! Each `gemm_axpy_into_view` / `gemm_into_view` call carries the same
+//! single `B`-transpose scratch as the classical blocked gemm — that
+//! single allocation is paid by the kernel itself, and the trsm/trmm
+//! recursive paths add no further owned `FieldMatrix<F>` snapshots.
+//! The trtri / trtrm primitives need exactly **one** extra scratch
 //! matrix of size `h × h` per recursion level for the
 //! `−A11 · A12 · A22` chained multiply in algorithm 2.3 (and the
 //! analogous step in algorithm 2.4); this is documented per-function.
@@ -85,12 +100,14 @@
 //! # Allocation budget
 //!
 //! - `trsm_*` / `trmm_*`: the recursive paths allocate **nothing** on
-//!   top of the inner gemm's `B`-transpose scratch. The off-diagonal
-//!   `B ± A · B'` fold is computed via [`submul_into_view`] /
-//!   [`addmul_into_view`], which read both `A` and `B'` through generic
-//!   [`MatrixLike`](crate::matrix_like::MatrixLike) views (no
-//!   `to_owned()` snapshots) and accumulate per-cell into the
-//!   destination view.
+//!   top of the shared
+//!   [`gemm_axpy_into_view`](crate::field::matrix::gemm_axpy_into_view)
+//!   kernel's standard `B`-transpose scratch — i.e. each off-diagonal
+//!   fold `B ± A · B'` pays exactly one `FieldMatrix<F>` allocation
+//!   inside the kernel for the transposed `B'`, and the trsm/trmm
+//!   recursion itself adds no further owned snapshots. Across a full
+//!   recursion that sums to `O(log m)` `B`-transpose allocations, all
+//!   amortised inside the gemm kernel call.
 //! - `trtri_*`: each recursion level allocates **one** scratch
 //!   `FieldMatrix<F>` of shape `h × h` for the chained multiply
 //!   `A12 := −A11 · A12 · A22` (algorithm 2.3). This is the only
@@ -125,9 +142,8 @@
 //! `trmm` and `trtrm` make no inversion calls and so cannot fail on a
 //! singular argument.
 
-use crate::field::matrix::{gemm_into_view, FieldMatrix, MatView, MatViewMut};
+use crate::field::matrix::{gemm_axpy_into_view, gemm_into_view, FieldMatrix, MatView, MatViewMut};
 use crate::field::FiniteField;
-use crate::matrix_like::MatrixLike;
 
 // ─── Public API ─────────────────────────────────────────────────────────────
 
@@ -574,80 +590,6 @@ pub fn trtrm<F: FiniteField>(l: MatViewMut<'_, F>, u: MatView<'_, F>) {
     trtrm_inner(l, u);
 }
 
-// ─── Internal helpers (no public surface) ───────────────────────────────────
-
-/// Fused in-place `dst -= a · b` on a mutable view, **without**
-/// allocating the intermediate `a · b` matrix. Reads both operands
-/// through the generic [`MatrixLike`] surface so the caller can pass
-/// `MatView` references directly without materialising owned
-/// `FieldMatrix<F>` snapshots. Used by the trsm recursive path to fold
-/// the off-diagonal contribution into the working view directly.
-fn submul_into_view<F, A, B>(a: &A, b: &B, dst: &mut MatViewMut<'_, F>)
-where
-    F: FiniteField,
-    A: MatrixLike<F> + ?Sized,
-    B: MatrixLike<F> + ?Sized,
-{
-    let (m, k) = a.shape();
-    let (kb, n) = b.shape();
-    debug_assert_eq!(k, kb, "submul_into_view: inner-dim mismatch");
-    debug_assert_eq!(
-        (m, n),
-        (dst.rows(), dst.cols()),
-        "submul_into_view: dst shape mismatch",
-    );
-    if m == 0 || n == 0 || k == 0 {
-        return;
-    }
-    // Per-cell accumulation: reads dst[i,j], subtracts ∑_t a[i,t]·b[t,j],
-    // writes back. We could use a delayed-reduction `Wide` accumulator
-    // here, but that ties this routine to F::Wide; deferring to the
-    // straightforward field-level accumulation keeps the code generic
-    // and matches the trtri allocation budget (zero scratch beyond the
-    // off-diagonal scratch trtri itself owns).
-    for i in 0..m {
-        for j in 0..n {
-            let mut acc = dst.get(i, j);
-            for t in 0..k {
-                acc += -(a.get(i, t) * b.get(t, j));
-            }
-            dst.set(i, j, acc);
-        }
-    }
-}
-
-/// Fused in-place `dst += a · b` on a mutable view. Mirror of
-/// [`submul_into_view`] used by the trmm path. Operands are read
-/// through [`MatrixLike`] so callers can pass views without
-/// allocating.
-fn addmul_into_view<F, A, B>(a: &A, b: &B, dst: &mut MatViewMut<'_, F>)
-where
-    F: FiniteField,
-    A: MatrixLike<F> + ?Sized,
-    B: MatrixLike<F> + ?Sized,
-{
-    let (m, k) = a.shape();
-    let (kb, n) = b.shape();
-    debug_assert_eq!(k, kb, "addmul_into_view: inner-dim mismatch");
-    debug_assert_eq!(
-        (m, n),
-        (dst.rows(), dst.cols()),
-        "addmul_into_view: dst shape mismatch",
-    );
-    if m == 0 || n == 0 || k == 0 {
-        return;
-    }
-    for i in 0..m {
-        for j in 0..n {
-            let mut acc = dst.get(i, j);
-            for t in 0..k {
-                acc += a.get(i, t) * b.get(t, j);
-            }
-            dst.set(i, j, acc);
-        }
-    }
-}
-
 // ─── trsm_upper ─────────────────────────────────────────────────────────────
 
 fn trsm_upper_inner<F: FiniteField>(a: MatView<'_, F>, b: MatViewMut<'_, F>) {
@@ -666,20 +608,23 @@ fn trsm_upper_inner<F: FiniteField>(a: MatView<'_, F>, b: MatViewMut<'_, F>) {
     // immutably while mutating B1 — both halves alias the same parent
     // buffer, but `split_rows_mut` slices them into disjoint mutable
     // sub-slices so Rust's borrow checker accepts the pair.
-    let (b1, mut b2_mut) = b.split_rows_mut(h);
+    let (mut b1_mut, mut b2_mut) = b.split_rows_mut(h);
     // Recurse on the lower half first: A22 · X2 = B2.
     trsm_upper_inner(a.submat(h..m, h..m), b2_mut.reborrow());
-    // Fold off-diagonal: B1 -= A12 · X2 — reads `a12` (a sub-view of
-    // `a`) and `b2` (immutable reborrow of the now-solved lower half)
-    // into the mutable upper half, with no allocation.
+    // Fold off-diagonal: B1 ← (−1) · A12 · X2 + 1 · B1 — i.e. the
+    // shared `gemm_axpy_into_view` kernel writing into B1 with B1
+    // itself doubling as the C operand. `b2` is the immutable view of
+    // the already-solved lower half (disjoint from `b1` via
+    // `split_rows_mut`); `a12` is a sub-view of the read-only `a`.
     {
         let a12 = a.submat(0..h, h..m);
         let b2 = b2_mut.as_view();
-        let mut b1_mut = b1;
-        submul_into_view(&a12, &b2, &mut b1_mut);
-        // Recurse on the upper half: A11 · X1 = B1.
-        trsm_upper_inner(a.submat(0..h, 0..h), b1_mut);
+        let one = a.get(0, 0).one_like();
+        let neg_one = -one.clone();
+        gemm_axpy_into_view(neg_one, &a12, &b2, one, b1_mut.reborrow());
     }
+    // Recurse on the upper half: A11 · X1 = B1.
+    trsm_upper_inner(a.submat(0..h, 0..h), b1_mut);
 }
 
 fn trsm_upper_base<F: FiniteField>(a: &MatView<'_, F>, b: &mut MatViewMut<'_, F>) {
@@ -723,19 +668,22 @@ fn trsm_lower_inner<F: FiniteField>(a: MatView<'_, F>, b: MatViewMut<'_, F>) {
     }
     let h = m / 2;
     // Split B at row h to obtain disjoint mutable views of B1 and B2.
-    let (mut b1_mut, b2) = b.split_rows_mut(h);
+    let (mut b1_mut, mut b2_mut) = b.split_rows_mut(h);
     // Recurse on the upper half first: A11 · X1 = B1.
     trsm_lower_inner(a.submat(0..h, 0..h), b1_mut.reborrow());
-    // Fold off-diagonal: B2 -= A21 · X1 — read `a21` and `b1` (both
-    // immutable views) into the mutable lower half.
+    // Fold off-diagonal: B2 ← (−1) · A21 · X1 + 1 · B2 via the shared
+    // `gemm_axpy_into_view` kernel, with `b2_mut` doubling as the
+    // destination and the C operand. `b1` (read-only view of the
+    // upper half) is disjoint from `b2_mut` thanks to `split_rows_mut`.
     {
         let a21 = a.submat(h..m, 0..h);
         let b1 = b1_mut.as_view();
-        let mut b2_mut = b2;
-        submul_into_view(&a21, &b1, &mut b2_mut);
-        // Recurse on the lower half: A22 · X2 = B2.
-        trsm_lower_inner(a.submat(h..m, h..m), b2_mut);
+        let one = a.get(0, 0).one_like();
+        let neg_one = -one.clone();
+        gemm_axpy_into_view(neg_one, &a21, &b1, one, b2_mut.reborrow());
     }
+    // Recurse on the lower half: A22 · X2 = B2.
+    trsm_lower_inner(a.submat(h..m, h..m), b2_mut);
 }
 
 fn trsm_lower_base<F: FiniteField>(a: &MatView<'_, F>, b: &mut MatViewMut<'_, F>) {
@@ -784,12 +732,15 @@ fn trmm_upper_inner<F: FiniteField>(a: MatView<'_, F>, b: MatViewMut<'_, F>) {
     let (mut b1_mut, b2_mut) = b.split_rows_mut(h);
     // Step 1 — recurse on the upper half: B1 ← A11 · B1.
     trmm_upper_inner(a.submat(0..h, 0..h), b1_mut.reborrow());
-    // Step 2 — fold off-diagonal: B1 += A12 · B2. B2 is still the
-    // original value here, so we can borrow it immutably.
+    // Step 2 — fold off-diagonal via the shared `gemm_axpy_into_view`:
+    // B1 ← 1 · A12 · B2 + 1 · B1. B2 is still the original value here
+    // (step 3 hasn't run), so its immutable view is disjoint from the
+    // mutable B1 thanks to `split_rows_mut`.
     {
         let a12 = a.submat(0..h, h..m);
         let b2 = b2_mut.as_view();
-        addmul_into_view(&a12, &b2, &mut b1_mut);
+        let one = a.get(0, 0).one_like();
+        gemm_axpy_into_view(one.clone(), &a12, &b2, one, b1_mut.reborrow());
     }
     // Step 3 — recurse on the lower half: B2 ← A22 · B2.
     trmm_upper_inner(a.submat(h..m, h..m), b2_mut);
@@ -835,12 +786,14 @@ fn trmm_lower_inner<F: FiniteField>(a: MatView<'_, F>, b: MatViewMut<'_, F>) {
     let (b1_mut, mut b2_mut) = b.split_rows_mut(h);
     // Step 1 — recurse on the lower half FIRST: B2 ← A22 · B2.
     trmm_lower_inner(a.submat(h..m, h..m), b2_mut.reborrow());
-    // Step 2 — fold off-diagonal: B2 += A21 · B1. B1 is still the
-    // original value here, so we can borrow it immutably.
+    // Step 2 — fold off-diagonal via the shared `gemm_axpy_into_view`:
+    // B2 ← 1 · A21 · B1 + 1 · B2. B1 is still the original value here
+    // (step 3 hasn't run), so its immutable view is disjoint from B2.
     {
         let a21 = a.submat(h..m, 0..h);
         let b1 = b1_mut.as_view();
-        addmul_into_view(&a21, &b1, &mut b2_mut);
+        let one = a.get(0, 0).one_like();
+        gemm_axpy_into_view(one.clone(), &a21, &b1, one, b2_mut.reborrow());
     }
     // Step 3 — recurse on the upper half LAST: B1 ← A11 · B1.
     trmm_lower_inner(a.submat(0..h, 0..h), b1_mut);
@@ -1127,14 +1080,20 @@ fn trtrm_inner<F: FiniteField>(l: MatViewMut<'_, F>, u: MatView<'_, F>) {
     // (left h cols, future A21) and L22 / future A22 (right m-h cols).
     let (mut top, mut bot) = l.split_rows_mut(h);
 
-    // Step 1 — A12 = U12 · L22. The destination is the upper-right
-    // slot of `top` (top[0..h, h..m]), which currently holds nothing
-    // we need to preserve. Reads come from U12 (a sub-view of `u`,
-    // unmodified) and L22 (right m-h cols of `bot`, still intact).
-    // `top` and `bot` are disjoint via `split_rows_mut`, so we can
-    // hold a `&mut top` and an immutable view of `bot` simultaneously.
-    // L22 is unit lower-triangular: L22[k, c] = 0 for k < c, L22[c, c]
-    // = 1 (implicit), L22[k, c] = stored cell for k > c. So
+    // Step 1 — A12 = U12 · L22. **Not a generic gemm.** L22 is
+    // unit-lower-triangular with the diagonal implicit (the storage
+    // cell at L22[c, c] is *not read* — the contract is the diagonal is
+    // logically `1`) and the strict-upper region structurally zero
+    // (the storage may carry garbage there but the routine never reads
+    // it). Routing this through `gemm_axpy_into_view` would require
+    // either (a) materialising an `(m-h) × (m-h)` dense L22 with
+    // explicit 1's on the diagonal and 0's strict-upper — an extra
+    // O(m²) allocation per recursion level — or (b) the kernel to
+    // support a structured-operand interface that we don't have. So we
+    // keep this single-purpose loop. Reads come from U12 (a sub-view of
+    // `u`, unmodified) and L22 (right m-h cols of `bot`, still intact).
+    // `top` and `bot` are disjoint via `split_rows_mut`, so we can hold
+    // a `&mut top` and an immutable view of `bot` simultaneously.
     //     A12[i, c] = ∑_{k=c}^{m-h-1} U12[i, k] · L22[k, c]
     //               = U12[i, c]                              (k = c, L22[c,c] = 1)
     //               + ∑_{k=c+1}^{m-h-1} U12[i, k] · L22[k, c]
@@ -1160,20 +1119,20 @@ fn trtrm_inner<F: FiniteField>(l: MatViewMut<'_, F>, u: MatView<'_, F>) {
     //   2b. Add U12 · L21 into the upper-left block (A11). U12 (sub-view
     //       of `u`) and L21 (left h cols of `bot`) are read; the write
     //       region (left h cols of `top`) is disjoint from `bot`, so
-    //       no scratch is needed.
+    //       no scratch is needed. Dispatch through the shared
+    //       `gemm_axpy_into_view` kernel — the destination doubles as
+    //       the C operand (β = 1), exactly the trsm/trmm idiom.
     {
         let u12 = u.submat(0..h, h..m);
         let l21_view = bot.submat(0..(m - h), 0..h);
-        for i in 0..h {
-            for c in 0..h {
-                // A11[i, c] += ∑_{k=0}^{m-h-1} U12[i, k] · L21[k, c]
-                let mut acc = top.get(i, c);
-                for k in 0..(m - h) {
-                    acc += u12.get(i, k) * l21_view.get(k, c);
-                }
-                top.set(i, c, acc);
-            }
-        }
+        let one = u.get(0, 0).one_like();
+        gemm_axpy_into_view(
+            one.clone(),
+            &u12,
+            &l21_view,
+            one,
+            top.submat_mut(0..h, 0..h),
+        );
     }
 
     // Step 3 — A21 = U22 · L21. The output region IS `L21`, so this
@@ -1932,10 +1891,13 @@ mod tests {
     use serial_test::serial;
 
     /// `trsm_upper` and `trsm_lower` must perform ZERO
-    /// `FieldMatrix::new` calls over a full recursive solve — the
-    /// helpers read both operands through `MatrixLike` views and the
-    /// off-diagonal fold uses the per-cell accumulator pattern with
-    /// no scratch.
+    /// `FieldMatrix::new` calls over a full recursive solve. The
+    /// off-diagonal fold goes through the shared
+    /// [`gemm_axpy_into_view`](crate::field::matrix::gemm_axpy_into_view)
+    /// kernel, which transposes `B` in place via direct struct
+    /// construction (`FieldMatrix::transpose` / `to_owned` bypass
+    /// `FieldMatrix::new`); only the per-cell counter bumps when the
+    /// caller materialises new matrices, and trsm/trmm don't.
     #[test]
     #[serial]
     fn test_trsm_zero_allocation() {
@@ -1970,8 +1932,11 @@ mod tests {
     }
 
     /// `trmm_upper` and `trmm_lower` must perform ZERO
-    /// `FieldMatrix::new` calls. Same contract as `trsm`: no
-    /// `to_owned()` snapshots in the recursive path.
+    /// `FieldMatrix::new` calls. Same contract as `trsm`: the
+    /// off-diagonal `B += A · B'` step goes through
+    /// [`gemm_axpy_into_view`](crate::field::matrix::gemm_axpy_into_view),
+    /// which only materialises a `B`-transpose via the direct-struct
+    /// path that bypasses the counter.
     #[test]
     #[serial]
     fn test_trmm_zero_allocation() {
