@@ -46,6 +46,7 @@ pub mod poly;
 pub mod poly_interpolate;
 pub mod sparse_matrix;
 mod traits;
+pub mod triangular;
 pub mod two_adic;
 pub mod vec;
 pub mod winograd;

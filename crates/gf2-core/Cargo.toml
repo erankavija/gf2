@@ -197,3 +197,8 @@ required-features = ["rand"]
 name = "strassen_threshold"
 harness = false
 required-features = ["rand"]
+
+[[bench]]
+name = "triangular"
+harness = false
+required-features = ["rand"]

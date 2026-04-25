@@ -1516,6 +1516,41 @@ impl<'a, F: FiniteField> MatView<'a, F> {
             data,
         }
     }
+
+    /// Returns a sub-view restricted to the rectangle `(rows, cols)`.
+    /// Mirrors [`FieldMatrix::submat`] but operates on an existing view.
+    ///
+    /// # Panics
+    ///
+    /// Panics if either range exceeds the view's dimensions.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::matrix::FieldMatrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let m = FieldMatrix::<Fp<7>>::identity(4);
+    /// let outer = m.submat(0..4, 0..4);
+    /// let inner = outer.submat(1..3, 1..3);
+    /// assert_eq!(inner.get(0, 0), Fp::<7>::new(1));
+    /// ```
+    pub fn submat(
+        &self,
+        rows: impl RangeBounds<usize>,
+        cols: impl RangeBounds<usize>,
+    ) -> MatView<'_, F> {
+        let (r0, r1) = resolve_range(rows, self.rows);
+        let (c0, c1) = resolve_range(cols, self.cols);
+        MatView {
+            data: self.data,
+            parent_cols: self.parent_cols,
+            row_offset: self.row_offset + r0,
+            col_offset: self.col_offset + c0,
+            rows: r1 - r0,
+            cols: c1 - c0,
+        }
+    }
 }
 
 impl<F: FiniteField> MatrixLike<F> for MatView<'_, F> {
@@ -1793,6 +1828,105 @@ impl<'a, F: FiniteField> MatViewMut<'a, F> {
             rows: self.rows,
             cols: self.cols,
             data,
+        }
+    }
+
+    /// Returns a sub-view restricted to the rectangle `(rows, cols)`,
+    /// borrowing the same backing storage. The borrow chain is
+    /// `MatViewMut → MatViewMut`, so the returned sub-view inherits the
+    /// parent's lifetime and write access.
+    ///
+    /// # Panics
+    ///
+    /// Panics if either range exceeds the view's dimensions.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::matrix::FieldMatrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let mut m = FieldMatrix::<Fp<7>>::zeros(4, 4);
+    /// let mut v = m.submat_mut(0..4, 0..4);
+    /// v.submat_mut(1..3, 1..3).fill(Fp::<7>::new(5));
+    /// assert_eq!(m.get(2, 2), Fp::<7>::new(5));
+    /// assert_eq!(m.get(0, 0), Fp::<7>::new(0));
+    /// ```
+    pub fn submat_mut(
+        &mut self,
+        rows: impl RangeBounds<usize>,
+        cols: impl RangeBounds<usize>,
+    ) -> MatViewMut<'_, F> {
+        let (r0, r1) = resolve_range(rows, self.rows);
+        let (c0, c1) = resolve_range(cols, self.cols);
+        MatViewMut {
+            data: self.data,
+            parent_cols: self.parent_cols,
+            row_offset: self.row_offset + r0,
+            col_offset: self.col_offset + c0,
+            rows: r1 - r0,
+            cols: c1 - c0,
+        }
+    }
+
+    /// Returns an immutable sub-view restricted to `(rows, cols)`. Useful
+    /// for passing the view as a read-only argument while retaining the
+    /// outer mutable borrow.
+    ///
+    /// # Panics
+    ///
+    /// Panics if either range exceeds the view's dimensions.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::matrix::FieldMatrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let mut m = FieldMatrix::<Fp<7>>::identity(4);
+    /// let v = m.submat_mut(0..4, 0..4);
+    /// let inner = v.submat(1..3, 1..3);
+    /// assert_eq!(inner.get(0, 0), Fp::<7>::new(1));
+    /// ```
+    pub fn submat(
+        &self,
+        rows: impl RangeBounds<usize>,
+        cols: impl RangeBounds<usize>,
+    ) -> MatView<'_, F> {
+        let (r0, r1) = resolve_range(rows, self.rows);
+        let (c0, c1) = resolve_range(cols, self.cols);
+        MatView {
+            data: self.data,
+            parent_cols: self.parent_cols,
+            row_offset: self.row_offset + r0,
+            col_offset: self.col_offset + c0,
+            rows: r1 - r0,
+            cols: c1 - c0,
+        }
+    }
+
+    /// Reborrows this mutable view as an immutable view over the same
+    /// rectangle. Equivalent to `self.submat(.., ..)` but more concise at
+    /// call sites that need to hand the view as a read-only argument.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::matrix::FieldMatrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let mut m = FieldMatrix::<Fp<7>>::identity(2);
+    /// let v = m.submat_mut(.., ..);
+    /// assert_eq!(v.as_view().get(1, 1), Fp::<7>::new(1));
+    /// ```
+    pub fn as_view(&self) -> MatView<'_, F> {
+        MatView {
+            data: self.data,
+            parent_cols: self.parent_cols,
+            row_offset: self.row_offset,
+            col_offset: self.col_offset,
+            rows: self.rows,
+            cols: self.cols,
         }
     }
 }
