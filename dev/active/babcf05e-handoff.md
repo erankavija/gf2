@@ -98,6 +98,6 @@ None.
   - `68f7c9f` — c7791a20 close + 2a0ffb18 claim
   - `1a2f6f9` — c7791a20: profile.release block (with empirical-falsification amendment)
   - `3d07769` — initial epic claim + wave-1 dispatch
-- New JIT gate registered: `asm-artefact-present` (auto, postcheck, `./scripts/asm-artefact-present.sh`). Future SIMD-source-touching tasks (Tier B kernels) should add this gate to their gate-set via `jit gate add <id> asm-artefact-present` at dispatch time.
+- New JIT gate registered: `asm-artefact-present` (auto, postcheck, `./scripts/asm-artefact-present.sh`). Already wired onto every kernel-touching task in commit `f55b2c0`: `bd00d76a` (audit, vacuous pass) + `cad241e6` (Tier A Solinas) + `1c1c4242`, `54a0e75c`, `19bc3199` (Tier B) + `ec286cee`, `7c954fb5`, `86c09a51`, `3168d114`, `33d3f5b7` (Tier C). Tier-A consumer-side tasks (`5223bb04`, `8e4b189c`, `c69d2055`) and Tier D/E tasks are deliberately not gated — their commits don't touch `crates/gf2-kernels-simd/src/x86/*.rs`, so the gate would only ever vacuously pass.
 - New JIT bug created: `1d230525` (regen-asm.sh fallback `--out-dir` duplicate); state ready, wired as S0 dep.
 - New JIT task created: `bd00d76a` (retrospective asm audit of all ~26 production SIMD entry points); state ready, wired as S0 dep. Created in response to user question post-c3a9a4cb close — establishes asm coverage for kernels that predate the I3 convention.
