@@ -174,9 +174,24 @@ emit_with_fallback() {
         if [[ -n "$target_cpu" ]]; then
             rustc_args+=(-C "target-cpu=$target_cpu")
         fi
-        RUSTFLAGS="$rustflags_value" \
-            cargo rustc --release --target-dir "$tmp" -p "$crate" --lib -- \
-                "${rustc_args[@]}" 2>&1 | head -5
+        # Buffer cargo output to a file so cargo's exit status and stdout
+        # are decoupled from `head -5`'s pipe-close behaviour. Under
+        # `set -euo pipefail`, the previous `cargo … 2>&1 | head -5`
+        # pipeline aborted with status 141 (SIGPIPE) whenever cargo
+        # emitted more than 5 lines — which is the normal case for a
+        # fresh `--target-dir`. With a file buffer, real cargo failures
+        # are surfaced as fallback failures and head only truncates the
+        # log dump.
+        local cargo_log="$tmp/cargo.out"
+        if ! RUSTFLAGS="$rustflags_value" \
+                cargo rustc --release --target-dir "$tmp" -p "$crate" --lib -- \
+                    "${rustc_args[@]}" >"$cargo_log" 2>&1; then
+            cat "$cargo_log"
+            echo
+            echo "; (cargo rustc failed for ${sym}; output above)"
+            return 1
+        fi
+        head -5 "$cargo_log"
         local asm_files
         asm_files=$(find "$tmp" -name '*.s' 2>/dev/null || true)
         if [[ -z "$asm_files" ]]; then
@@ -190,12 +205,18 @@ emit_with_fallback() {
         # verbatim inside the mangled string.
         local needle
         needle="${sym##*::}"
+        local found=0
         for f in $asm_files; do
             if grep -q "$needle" "$f" 2>/dev/null; then
                 grep -n -A 80 "$needle" "$f" | head -200
+                found=1
                 break
             fi
         done
+        if (( ! found )); then
+            echo "; (fallback: symbol ${needle} not found in any .s file under ${tmp})"
+            return 1
+        fi
     } >> "$out_path"
 }
 
