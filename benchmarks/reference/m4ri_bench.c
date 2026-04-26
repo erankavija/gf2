@@ -32,27 +32,18 @@
 
 #include <m4ri/m4ri.h>
 
-/* SplitMix64, identical to fflas_bench.cpp */
-static uint64_t splitmix64(uint64_t* state) {
-    *state += 0x9E3779B97F4A7C15ULL;
-    uint64_t z = *state;
-    z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9ULL;
-    z = (z ^ (z >> 27)) * 0x94D049BB133111EBULL;
-    return z ^ (z >> 31);
+#include "seed_helpers.h"
+
+/* Local thin wrappers around the shared helpers (so call-sites read
+ * naturally and the inlined definitions don't blow up the diff). */
+static inline uint64_t splitmix64(uint64_t* state) {
+    return gf2_bench_splitmix64(state);
 }
 
-static uint64_t derive_seed(uint64_t master, const char* tag,
-                            uint64_t op_idx, uint64_t size_idx,
-                            uint64_t regime_idx) {
-    uint64_t s = master;
-    for (const char* p = tag; *p != '\0'; ++p) {
-        s ^= (uint64_t)(unsigned char)*p;
-        (void)splitmix64(&s);
-    }
-    s ^= op_idx;     (void)splitmix64(&s);
-    s ^= size_idx;   (void)splitmix64(&s);
-    s ^= regime_idx; (void)splitmix64(&s);
-    return splitmix64(&s);
+static inline uint64_t derive_seed(uint64_t master, const char* tag,
+                                   uint64_t op_idx, uint64_t size_idx,
+                                   uint64_t regime_idx) {
+    return gf2_bench_derive_seed(master, tag, op_idx, size_idx, regime_idx);
 }
 
 /* Fill an m×n GF(2) matrix with deterministic random bits. */
