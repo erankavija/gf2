@@ -9,6 +9,41 @@ set -euo pipefail
 # Exit codes:
 #   0 — all steps passed
 #   1 — one or more steps failed
+#   2 — environment problem: no real cargo available on PATH
+
+# Resolve the real cargo binary. Some local setups place a debugging shim
+# at ~/.cargo/bin/cargo (or its rustup proxy target) that exits 0 for every
+# invocation; without this guard each cargo step below would silently
+# succeed, recording a false-positive gate PASS in milliseconds. Detect a
+# stub via the canonical `cargo X.Y.Z` version-probe pattern, then fall
+# back to a rustup toolchain binary when needed. Fail loudly (exit 2) if
+# no real cargo can be resolved — better an honest gate failure than a
+# silent rubber-stamp.
+#
+# Discovered in jit issue 941d1528 (cargo-ci gate silently false-passes
+# when cargo is a stub).
+ensure_real_cargo() {
+  local probe
+  probe=$(cargo --version 2>&1 || true)
+  if [[ "$probe" =~ ^cargo[[:space:]][0-9]+\.[0-9]+\.[0-9]+ ]]; then
+    return 0
+  fi
+  for tc_dir in "$HOME/.rustup/toolchains"/stable-*; do
+    [[ -d "$tc_dir" && -x "$tc_dir/bin/cargo" ]] || continue
+    export PATH="$tc_dir/bin:$PATH"
+    probe=$(cargo --version 2>&1 || true)
+    if [[ "$probe" =~ ^cargo[[:space:]][0-9]+\.[0-9]+\.[0-9]+ ]]; then
+      echo "cargo-ci: cargo on PATH was a stub; using $tc_dir/bin/cargo" >&2
+      return 0
+    fi
+  done
+  echo "ERROR: no real cargo available on PATH and no usable rustup stable toolchain found." >&2
+  echo "       cargo --version output: $probe" >&2
+  echo "       Restore ~/.cargo/bin/cargo or install a stable toolchain (rustup install stable)." >&2
+  exit 2
+}
+
+ensure_real_cargo
 
 TMPDIR=$(mktemp -d)
 trap 'rm -rf "$TMPDIR"' EXIT

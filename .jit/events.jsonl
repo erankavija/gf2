@@ -2906,3 +2906,8 @@
 {"type":"gate_added","id":"c130a0fc-3e9b-448e-9297-043ae9e37eda","issue_id":"33d3f5b7-5942-445d-8e34-9b87c0903f7f","timestamp":"2026-04-26T22:20:10.419366769Z","gate_key":"asm-artefact-present"}
 {"type":"issue_state_changed","id":"44857d53-f67e-4d2a-bfd1-cfe1360aed38","issue_id":"1d230525-3f47-4065-bf85-60a9584007d4","timestamp":"2026-04-26T22:22:50.005651587Z","from":"ready","to":"in_progress"}
 {"type":"issue_claimed","id":"949ba1dd-9f7c-490a-a6f4-2f29fea80d85","issue_id":"1d230525-3f47-4065-bf85-60a9584007d4","timestamp":"2026-04-26T22:22:50.005959907Z","assignee":"agent:claude"}
+{"type":"gate_passed","id":"6a76699e-f890-45cc-891f-d5e20016cc54","issue_id":"1d230525-3f47-4065-bf85-60a9584007d4","timestamp":"2026-04-26T22:48:06.534705660Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"e23faa86-9f58-418a-bf5a-2228de51eede","issue_id":"1d230525-3f47-4065-bf85-60a9584007d4","timestamp":"2026-04-26T22:51:32.348201023Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"issue_created","id":"ec34801b-44be-42dd-b500-6066162bb657","issue_id":"941d1528-0108-4cb1-a0a0-4dfc0cc4cd8c","timestamp":"2026-04-26T22:55:15.195515100Z","title":"cargo-ci gate silently false-passes when cargo is a stub","priority":"high"}
+{"type":"issue_state_changed","id":"9050895e-c82d-46f8-85fe-c77529ea47ae","issue_id":"941d1528-0108-4cb1-a0a0-4dfc0cc4cd8c","timestamp":"2026-04-26T22:55:24.111745901Z","from":"ready","to":"in_progress"}
+{"type":"issue_claimed","id":"617ddd9b-a7e9-488f-b029-7645e0e19ada","issue_id":"941d1528-0108-4cb1-a0a0-4dfc0cc4cd8c","timestamp":"2026-04-26T22:55:24.112040181Z","assignee":"agent:project-lead"}
