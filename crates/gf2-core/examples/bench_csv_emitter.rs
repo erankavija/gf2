@@ -74,7 +74,8 @@ use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
 use seed::{
     derive_seed, fp_matrix_from_seed, fp_rank_deficient_from_seed, fp_sparse_from_seed,
     fp_vec_from_seed, gf2m_wide_1_matrix_from_seed, gf2m_wide_1_rank_deficient_from_seed,
-    gf2m_wide_1_sparse_from_seed, gf2m_wide_1_vec_from_seed, ops_cubic, ops_gemm, tput, CSV_HEADER,
+    gf2m_wide_1_sparse_from_seed, gf2m_wide_1_vec_from_seed, ops_cubic, ops_gemm, ops_quartic,
+    tput, CSV_HEADER,
 };
 
 const PRIME_7: u64 = 7;
@@ -410,7 +411,7 @@ fn run_fp<const P: u64>(args: &Args, sink: &mut CsvSink, field_label: &str) -> s
             "uniform",
             seed_a,
             wall_ns,
-            tput(ops_cubic(n), wall_ns),
+            tput(ops_quartic(n), wall_ns),
         )?;
     }
 
@@ -671,7 +672,7 @@ fn run_gf2m<C: Gf2mWideConfig<1>>(
             "uniform",
             seed_a,
             wall_ns,
-            tput(ops_cubic(n), wall_ns),
+            tput(ops_quartic(n), wall_ns),
         )?;
     }
 

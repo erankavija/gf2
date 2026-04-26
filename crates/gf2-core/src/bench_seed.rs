@@ -369,6 +369,18 @@ pub fn ops_gemm(m: usize, k: usize, n: usize) -> f64 {
     2.0 * (m as f64) * (k as f64) * (n as f64)
 }
 
+/// Conventional op-count helper for square `n × n` `O(n⁴)` operations
+/// (currently: `minpoly`'s LCM-merge sweep, which runs `n` Krylov
+/// passes each costing `O(n²)` matvecs of length `O(n)`). Returns
+/// `n⁴`, kept as a separate helper so the throughput column in the
+/// CSV reflects the algorithm's actual dominant op-count rather than
+/// a wall-time-proxy.
+#[inline]
+pub fn ops_quartic(n: usize) -> f64 {
+    let nf = n as f64;
+    nf * nf * nf * nf
+}
+
 /// Throughput in dimensionless "ops per second" for the CSV column.
 #[inline]
 pub fn tput(ops: f64, wall_ns: u64) -> f64 {
