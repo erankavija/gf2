@@ -267,14 +267,23 @@ pub fn gf2m_wide_1_rank_deficient_from_seed<C: Gf2mWideConfig<1>>(
 /// is the conventional op-count (`2·m·k·n` for gemm, `n³` for square
 /// factorisations and charpoly, `nnz` for SpMV) divided by `wall_ns·1e-9`.
 pub struct CsvRow<'a> {
+    /// Operation tag (`"fgemm"`, `"pluq"`, `"echelon"`, `"invert"`, `"solve"`, `"charpoly"`, `"spmv"`, …).
     pub operation: &'a str,
+    /// Field label (e.g. `"Fp_M31"`, `"Gf2m8"`).
     pub field: &'a str,
+    /// Output / input row count.
     pub m: usize,
+    /// Inner / shared dimension.
     pub k: usize,
+    /// Output column count.
     pub n: usize,
+    /// `"uniform"` or `"deficient"` (rank = n/2) for factorization regimes; `"uniform"` for non-rank ops.
     pub rank_regime: &'a str,
+    /// Per-cell row seed (output of [`derive_seed`]).
     pub seed: u64,
+    /// Mean wall-clock nanoseconds per iteration.
     pub wall_ns: u64,
+    /// Conventional op count divided by `wall_ns · 1e-9` (operations per second).
     pub throughput_ops: f64,
 }
 

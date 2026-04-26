@@ -36,7 +36,6 @@
 //! ```
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
-use gf2_core::field::matrix::FieldMatrix;
 use gf2_core::field::sparse_matrix::SparseFieldMatrix;
 use gf2_core::field::vec::FieldVec;
 use gf2_core::field::FiniteField;
@@ -47,7 +46,8 @@ use gf2_core::gfp::Fp;
 mod seed;
 
 use seed::{
-    derive_seed, fp_sparse_from_seed, gf2m_wide_1_sparse_from_seed, splitmix64, MASTER_SEED,
+    derive_seed, fp_sparse_from_seed, fp_vec_from_seed, gf2m_wide_1_sparse_from_seed,
+    gf2m_wide_1_vec_from_seed, MASTER_SEED,
 };
 
 const PRIME_7: u64 = 7;
@@ -108,23 +108,16 @@ fn random_sparse_gf2m_wide_1<C: Gf2mWideConfig<1>>(
     gf2m_wide_1_sparse_from_seed::<C>(rows, cols, density, seed_val)
 }
 
+// Vector generators are imported from the shared `bench_seed` module
+// (re-exported via `seed::*`) — see R2 SSOT extraction note in the
+// `bench_seed` rustdoc. The thin wrappers below just match the
+// signatures expected by `run_field`'s `BuildVec: Fn(usize, u64)`.
 fn fp_vec<const P: u64>(n: usize, seed_val: u64) -> FieldVec<Fp<P>> {
-    let mut st = seed_val;
-    (0..n)
-        .map(|_| Fp::<P>::new(splitmix64(&mut st) % P))
-        .collect()
+    fp_vec_from_seed::<P>(n, seed_val)
 }
 
 fn gf2m_vec<C: Gf2mWideConfig<1>>(n: usize, seed_val: u64) -> FieldVec<Gf2mWide<1, C>> {
-    let mask: u64 = if C::M >= 64 {
-        u64::MAX
-    } else {
-        (1u64 << C::M) - 1
-    };
-    let mut st = seed_val;
-    (0..n)
-        .map(|_| Gf2mWide::<1, C>::new([splitmix64(&mut st) & mask]))
-        .collect()
+    gf2m_wide_1_vec_from_seed::<C>(n, seed_val)
 }
 
 fn run_field<F, BuildSparse, BuildVec>(
