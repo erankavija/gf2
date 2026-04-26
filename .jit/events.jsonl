@@ -2878,3 +2878,11 @@
 {"type":"issue_state_changed","id":"5091c53d-d34f-4de5-81ba-20d834cb6a8b","issue_id":"b2ecd2ff-7b1d-4072-aa8b-d0b2e8f04b64","timestamp":"2026-04-26T19:54:09.090513284Z","from":"backlog","to":"ready"}
 {"type":"issue_state_changed","id":"7d0f97ad-6f5a-4a68-84dc-3377c9264ef6","issue_id":"2a0ffb18-eb7f-459a-855b-11faea76b733","timestamp":"2026-04-26T19:54:52.717920996Z","from":"ready","to":"in_progress"}
 {"type":"issue_claimed","id":"2ca64808-4b56-4423-a480-37889f3e0490","issue_id":"2a0ffb18-eb7f-459a-855b-11faea76b733","timestamp":"2026-04-26T19:54:52.720750776Z","assignee":"agent:claude"}
+{"type":"gate_passed","id":"690e6db3-c319-4783-a365-56b8f6b587c4","issue_id":"2a0ffb18-eb7f-459a-855b-11faea76b733","timestamp":"2026-04-26T20:05:22.827764701Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"c4c04bc8-3e57-4241-b320-1b41c1681eb4","issue_id":"2a0ffb18-eb7f-459a-855b-11faea76b733","timestamp":"2026-04-26T20:13:10.869178609Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"d9047c63-666d-4ba1-b274-22755948e302","issue_id":"2a0ffb18-eb7f-459a-855b-11faea76b733","timestamp":"2026-04-26T20:25:27.032885267Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"071c361f-6d19-429f-8f66-145c745090b3","issue_id":"2a0ffb18-eb7f-459a-855b-11faea76b733","timestamp":"2026-04-26T20:27:47.261624887Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"issue_state_changed","id":"7c34f825-338a-4ed8-a0b1-197e1a4f096f","issue_id":"2a0ffb18-eb7f-459a-855b-11faea76b733","timestamp":"2026-04-26T20:28:05.788215697Z","from":"in_progress","to":"done"}
+{"type":"issue_completed","id":"ce17f19c-9d29-4e62-ae95-a7447c08235f","issue_id":"2a0ffb18-eb7f-459a-855b-11faea76b733","timestamp":"2026-04-26T20:28:05.788277657Z"}
+{"type":"issue_state_changed","id":"04fa2e66-3feb-4009-87f8-a36f7dbac7ce","issue_id":"c3a9a4cb-7233-40dc-a56e-8e0d7936e8e9","timestamp":"2026-04-26T20:28:06.597501319Z","from":"ready","to":"in_progress"}
+{"type":"issue_claimed","id":"3e4b6773-5cd5-4404-ab60-15afe24963e9","issue_id":"c3a9a4cb-7233-40dc-a56e-8e0d7936e8e9","timestamp":"2026-04-26T20:28:06.600330680Z","assignee":"agent:claude"}

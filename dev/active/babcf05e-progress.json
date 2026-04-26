@@ -4,9 +4,9 @@
   "title": "gf2-core PPC-spiral performance sweep",
   "claimed_by": "agent:project-lead",
   "started_at": "2026-04-26T22:30:00+00:00",
-  "last_updated": "2026-04-26T22:55:00+00:00",
+  "last_updated": "2026-04-26T23:30:00+00:00",
   "current_wave": 2,
-  "phase": "wave_2_in_progress; Wave 1 closed (c7791a20 done with user-approved Option-1 amendment after [hard] 1.3x criterion was empirically falsified to 0.91x); dispatching 2a0ffb18 (proptest scaffolding) as 1st of 4 Wave-2 sub-tasks",
+  "phase": "wave_2_in_progress; sub-wave 2a (2a0ffb18 proptest) DONE after R0+R1 (1 rework cycle for missing [[test]] required-features=simd gate + format!{:?} -> PartialEq); sub-wave 2b (c3a9a4cb asm convention) dispatched",
   "related_epic": "bb85c68a (FieldMatrix linear algebra) — at session-6 95% complete; uncompetitiveness profile from a9ab0a4f revealed gf2-core perf gaps that motivate this epic",
   "spec_doc": "dev/plans/gf2_core_ppc_spiral.md",
   "uncompetitiveness_doc": "dev/bench_results/2026-04-26-uncompetitiveness-profile.md",
@@ -31,7 +31,7 @@
         {"id": "b2ecd2ff-7b1d-4072-aa8b-d0b2e8f04b64", "short_id": "b2ecd2ff", "title": "Pin criterion baselines for all targeted kernels", "kind": "task", "classification": "implementation", "status": "pending", "state": "backlog", "note": "Sequential after c7791a20 done — must be measured with [profile.release] active."},
         {"id": "c3a9a4cb-7233-40dc-a56e-8e0d7936e8e9", "short_id": "c3a9a4cb", "title": "ASM-inspection convention + asm-artefact-present gate", "kind": "task", "classification": "implementation", "status": "pending", "state": "ready", "note": "Parallel-safe with 4f845881 and 2a0ffb18 via worktrees."},
         {"id": "4f845881-2fbc-4ba5-baf5-48ade75830bc", "short_id": "4f845881", "title": "PPC compare harness + criterion-1.5x gate", "kind": "task", "classification": "implementation", "status": "pending", "state": "ready", "note": "Registers new criterion-1.5x gate in JIT registry."},
-        {"id": "2a0ffb18-eb7f-459a-855b-11faea76b733", "short_id": "2a0ffb18", "title": "Proptest scaffolding for SIMD-vs-scalar equivalence", "kind": "task", "classification": "implementation", "status": "pending", "state": "ready"}
+        {"id": "2a0ffb18-eb7f-459a-855b-11faea76b733", "short_id": "2a0ffb18", "title": "Proptest scaffolding for SIMD-vs-scalar equivalence", "kind": "task", "classification": "implementation", "status": "done", "state": "done", "rework_cycles": 1, "final_commits": ["25a03ca", "1a7d1b2"], "gates": {"cargo-ci": "passed (8s)", "code-review": "passed R1 (137s, PASS verdict)"}, "notes": "R0 caught: (1) test imported gf2_core::kernels::simd::maybe_simd unconditionally but kernels::simd is feature-gated; required [[test]] required-features=simd in Cargo.toml; (2) format!({:?}) for state equality replaced with T: PartialEq + Debug bound. R1 closed both findings cleanly with workspace sweeps (no other instances)."
       ]
     },
     {

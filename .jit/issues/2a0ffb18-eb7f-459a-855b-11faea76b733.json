@@ -2,15 +2,26 @@
   "id": "2a0ffb18-eb7f-459a-855b-11faea76b733",
   "title": "Proptest scaffolding for SIMD-vs-scalar equivalence",
   "description": "Add a shared proptest helper that every new SIMD kernel uses to prove bit-exact equivalence with the scalar baseline. Without this scaffolding, each kernel author writes their own equivalence test — guaranteeing inconsistent coverage.\n\n## Background\n\nEvery Tier A–D task ships a SIMD kernel that must produce bit-exact output equal to the scalar reference for all valid inputs. The helper at `crates/gf2-core/tests/simd_equiv/mod.rs` provides:\n\n1. `assert_simd_matches_scalar<F, G, T>(scalar: F, simd: G, gen: impl Strategy<Value = T>)` — runs proptest over the generator, asserts bit-exact equality.\n2. Word-boundary helper: `WORD_BOUNDARY_LENGTHS: &[usize] = &[0, 1, 63, 64, 65, 127, 128, 129, 255, 256, 257]`. Each new SIMD kernel adds a `#[test]` iterating this list.\n3. Alignment helper: produces `&[u64]` slices at offsets $0..7$ within an over-allocated buffer to exercise unaligned paths.\n4. A demo unit test exercising the helper against `LogicalFns::xor_fn` (scalar) vs. AVX2 `xor_inplace_avx2` (SIMD).\n\n## Success Criteria\n\n- [hard] Helper compiles; fast-tier nextest passes.\n- [hard] Demo test catches a deliberate one-bit mutation in the scalar fn (mutation-tested to verify the test actually tests).\n- [hard] No new dependencies beyond what `gf2-core` and `proptest` already provide.\n\n## Notes\n\nSpec doc: `dev/plans/gf2_core_ppc_spiral.md`.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
-  "assignee": "agent:claude",
+  "assignee": null,
   "dependencies": [],
   "gates_required": [
     "code-review",
     "cargo-ci"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-26T20:25:30.171596405Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-26T20:25:19.509625805Z"
+    }
+  },
   "context": {},
   "documents": [
     {
@@ -28,5 +39,5 @@
     "story:ppc-infrastructure"
   ],
   "created_at": "2026-04-25T15:16:46.217721080+00:00",
-  "updated_at": "2026-04-26T19:55:09.700950924+00:00"
+  "updated_at": "2026-04-26T20:28:05.788323857+00:00"
 }
