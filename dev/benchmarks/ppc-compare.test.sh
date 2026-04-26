@@ -9,7 +9,7 @@
 #   ./dev/benchmarks/ppc-compare.test.sh
 #
 # Exit codes:
-#   0 — all 7 tests passed
+#   0 — all 8 tests passed
 #   1 — at least one test failed (set -e aborts on first failure)
 
 set -euo pipefail
@@ -24,7 +24,7 @@ SCRIPT="$THIS_DIR/ppc-compare.sh"
 # ---------------------------------------------------------------------------
 
 PASS_COUNT=0
-TOTAL=7
+TOTAL=8
 
 # Workdir scoped to this whole test process; cleaned on exit.
 WORKROOT="$(mktemp -d)"
@@ -288,6 +288,40 @@ t7_missing_current_estimates() {
 }
 
 # ---------------------------------------------------------------------------
+# T8: strictly slower run (speedup 0.8x at every size) → exit 1, FAIL.
+#
+# Satisfies the literal SC2 wording: "synthetic baseline + slower run" must
+# be exercised alongside the same-as-baseline exit-1 case (T1).
+# ---------------------------------------------------------------------------
+t8_slower_run() {
+  local name="T8 slower run (0.8x → FAIL)"
+  local dir="$WORKROOT/t8"
+  mkdir -p "$dir"
+  local manifest="$dir/manifest.json"
+  local crit="$dir/criterion"
+  write_manifest "$manifest" "K1" "ppc-v0-test" "1024" "4096"
+  # baseline 1000ns, new 1250ns → speedup = 1000/1250 = 0.8x at each size.
+  for sz in 1024 4096; do
+    write_estimates "$crit/fake_bench/$sz/ppc-v0-test/estimates.json" 1000.0
+    write_estimates "$crit/fake_bench/$sz/new/estimates.json" 1250.0
+  done
+
+  set +e
+  local out rc
+  out=$("$SCRIPT" K1 --manifest "$manifest" --criterion-dir "$crit" 2>&1)
+  rc=$?
+  set -e
+
+  assert_exit 1 "$rc" "$name" || return 1
+  assert_contains "$out" "FAIL" "$name" || return 1
+  assert_contains "$out" "geomean speedup: 0.800x" "$name" || return 1
+  # Per-row table must show a sub-1x speedup (e.g., "0.800x").
+  assert_contains "$out" "0.800x" "$name (per-row <1x)" || return 1
+  echo "PASS: $name"
+  PASS_COUNT=$((PASS_COUNT + 1))
+}
+
+# ---------------------------------------------------------------------------
 # Driver.
 # ---------------------------------------------------------------------------
 
@@ -298,6 +332,7 @@ t4_missing_kernel_id
 t5_baseline_tbd
 t6_missing_baseline_estimates
 t7_missing_current_estimates
+t8_slower_run
 
 echo
 echo "$PASS_COUNT/$TOTAL tests passed"

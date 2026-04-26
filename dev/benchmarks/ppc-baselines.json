@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "comment": "Maps PPC-spiral kernel IDs to criterion bench targets and design-size classes. Populated by jit:b2ecd2ff (I1) with commit-pinned baseline names. Consumed by dev/benchmarks/ppc-compare.sh and the criterion-1.5x JIT gate.",
+  "comment": "Maps PPC-spiral kernel IDs to criterion bench targets and design-size classes. Populated by jit:b2ecd2ff (I1) with commit-pinned baseline names. Consumed by dev/benchmarks/ppc-compare.sh and the criterion-1.5x JIT gate. Per-issue routing convention: each issue gated on a kernel must carry a `ppc-kernel:<id>` label (e.g. `ppc-kernel:A1`); scripts/criterion-1.5x.sh extracts the kernel-id from the label and forwards to ppc-compare.sh. Kernel-ids are the keys of `kernels` below: A1, A2, A3, B1, B2, B3, C1, C2, C3, C4, C5, D1, D2.",
   "kernels": {
     "A1": {
       "title": "BitMatrix::matvec popcnt SIMD",
