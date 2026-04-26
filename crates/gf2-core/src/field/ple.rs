@@ -732,7 +732,11 @@ impl<F: FiniteField> FieldMatrix<F> {
     ///
     /// # Panics
     ///
-    /// Does not panic on rank-deficient inputs.
+    /// Does not panic on rank-deficient inputs over `ConstField`. For
+    /// `m × 0` (zero-width) inputs over runtime-context fields without
+    /// a `zero_hint`, panics with a clear message — there is no `F`
+    /// witness to seed the identity `X`. Use `F: ConstField` or a
+    /// non-empty input.
     ///
     /// # Complexity
     ///
@@ -832,7 +836,12 @@ impl<F: FiniteField> FieldMatrix<F> {
     ///
     /// # Panics
     ///
-    /// Does not panic.
+    /// Does not panic on `ConstField` inputs of any shape, rank, or
+    /// pivot pattern. For `m × 0` (zero-width) inputs over
+    /// runtime-context fields without a `zero_hint` (e.g.
+    /// `Gf2mElement`), the inner [`row_echelon`](Self::row_echelon)
+    /// call panics with a clear message — there is no `F` witness
+    /// available to seed the identity `X`.
     ///
     /// # Complexity
     ///
@@ -1093,11 +1102,17 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// ```
     pub fn lu(&self) -> Option<(Permutation, FieldMatrix<F>, FieldMatrix<F>)> {
         let (m, n) = self.shape();
-        let (p, l, e, r) = self.ple();
+        let (p_ple, l, e, r) = self.ple();
         if r != m.min(n) {
             return None;
         }
-        Some((p, l, e))
+        // Contract orientation. PLE: `A = P_ple · L · E`. LU asks for
+        // `P_lu · A = L · U`, so `P_lu = P_ple^{-1}`. For involutive
+        // permutations these coincide, but for non-involutive `P_ple`
+        // (any non-trivial pivoting beyond a single swap), returning
+        // `p_ple` directly would silently violate the contract — the
+        // R3 reviewer caught this.
+        Some((p_ple.inverse(), l, e))
     }
 }
 
@@ -1577,6 +1592,109 @@ mod tests {
         if a.rank() < 4 {
             assert!(a.lu().is_none());
         }
+    }
+
+    /// Hand-crafted matrix that forces a NON-INVOLUTIVE permutation in
+    /// the PLE recursion. The 4×4 identity-shifted matrix
+    ///
+    ///   [ 0 0 0 1 ]
+    ///   [ 1 0 0 0 ]
+    ///   [ 0 1 0 0 ]
+    ///   [ 0 0 1 0 ]
+    ///
+    /// has rank 4. PLE's column-by-column pivoting must do a 4-cycle
+    /// (or compose three 2-cycles) on the rows. If `lu()` returns the
+    /// PLE permutation directly (the bug R3 caught), then `P · A` does
+    /// not equal `L · U`. This test fails on the buggy code and passes
+    /// on the orientation-corrected code.
+    #[test]
+    fn test_lu_non_involutive_permutation_fp_m31() {
+        type F = Fp<MERSENNE_31>;
+        let mut a = FieldMatrix::<F>::zeros(4, 4);
+        a.set(0, 3, F::new(1));
+        a.set(1, 0, F::new(1));
+        a.set(2, 1, F::new(1));
+        a.set(3, 2, F::new(1));
+        let (p, l, u) = a.lu().expect("rank == 4 so lu must be Some");
+        let pa = p.apply(&a);
+        let lu = gemm(&l, &u);
+        assert_eq!(pa, lu, "lu contract: P · A == L · U for non-involutive P");
+    }
+
+    // Proptest covering 50 random 5×5 matrices over Mersenne-31. Any
+    // non-trivial random matrix is expected to be full-rank with
+    // probability (1 − 1/p) · (1 − 1/p²) · … ≈ 1; whenever lu()
+    // returns Some, P · A == L · U must hold.
+    proptest::proptest! {
+        #![proptest_config(proptest::prelude::ProptestConfig::with_cases(50))]
+        #[test]
+        fn prop_lu_contract_random_5x5_fp_m31(seed in 0u64..1_000_000) {
+            type F = Fp<MERSENNE_31>;
+            let a = random_fp::<MERSENNE_31>(5, 5, seed);
+            if let Some((p, l, u)) = a.lu() {
+                let pa = p.apply(&a);
+                let lu = gemm(&l, &u);
+                proptest::prop_assert_eq!(pa, lu);
+                let _ = std::marker::PhantomData::<F>;
+            }
+        }
+    }
+
+    /// Independently-computed-rank check (reviewer-asked): build matrices
+    /// with a KNOWN rank by construction using DISTINCT canonical-basis
+    /// vectors (e_i ⊗ e_i pattern), then assert `m.rank() == known_rank`.
+    /// Using basis vectors guarantees the constructed rank equals the
+    /// number of outer products without depending on the field size or
+    /// PRNG quality.
+    #[test]
+    fn test_rank_matches_independent_construction_fp_m31() {
+        type F = Fp<MERSENNE_31>;
+        let m = 8;
+        let n = 6;
+        for &target_rank in &[1usize, 2, 3, 4, 5] {
+            let mut a = FieldMatrix::<F>::zeros(m, n);
+            for i in 0..target_rank {
+                // u_i = e_i (the i-th canonical basis vector in Fp^m),
+                // v_i = e_i (in Fp^n). The sum ∑ u_i ⊗ v_i is a
+                // rank-`target_rank` matrix with 1s on the leading
+                // diagonal and 0s elsewhere — independently rank-`r` by
+                // construction (the diagonal gives an r × r identity
+                // submatrix).
+                a.set(i, i, F::new(1));
+            }
+            assert_eq!(
+                a.rank(),
+                target_rank,
+                "rank mismatch: built {}-rank matrix from {} canonical-basis outer products, got rank()={}",
+                target_rank,
+                target_rank,
+                a.rank()
+            );
+        }
+
+        // Also cross-check on a non-trivial rank-2 matrix built from two
+        // random rank-1 outer products: a = u1 ⊗ v1 + u2 ⊗ v2 with u1
+        // and u2 linearly independent (and same for v1, v2). Use
+        // distinct canonical-basis-shifted vectors.
+        let u1: Vec<F> = (0..m).map(|j| F::new(j as u64 + 1)).collect();
+        let u2: Vec<F> = (0..m).map(|j| F::new(((m - j) as u64) * 7 + 13)).collect();
+        let v1: Vec<F> = (0..n).map(|j| F::new(j as u64 + 2)).collect();
+        let v2: Vec<F> = (0..n).map(|j| F::new(((n - j) as u64) * 5 + 17)).collect();
+        let mut a = FieldMatrix::<F>::zeros(m, n);
+        for r in 0..m {
+            for c in 0..n {
+                a.set(r, c, u1[r] * v1[c] + u2[r] * v2[c]);
+            }
+        }
+        // Two independent outer products → rank 2 (with probability ≈ 1
+        // for large fields and these specific seeds; verified at
+        // construction).
+        assert_eq!(
+            a.rank(),
+            2,
+            "rank mismatch: u1⊗v1 + u2⊗v2 should be rank 2, got rank()={}",
+            a.rank()
+        );
     }
 
     #[test]
