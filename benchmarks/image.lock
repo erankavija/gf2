@@ -5,29 +5,23 @@
 # `Containerfile` and re-asserted here as a single source of truth — a
 # mismatch between the two is a build-time failure (`sha256sum -c`).
 #
-# Two slots remain to be filled in on first build:
+# `[base].digest` is filled in (resolved 2026-04-26 against the Docker
+# Hub registry API). `[image].local_id` is per-host under -march=native
+# and is stamped automatically by `run.sh` after each successful build,
+# so it acts as a drift tripwire — the lead can compare future builds
+# against the recorded id, and a divergence means the host environment
+# changed.
 #
-#   [base].digest       — the registry digest of `debian:bookworm-20260421-slim`
-#                         at first-pull time. Until this is filled in,
-#                         only the dated tag pin protects us. See the
-#                         `TODO_DIGEST` comment in `Containerfile`.
-#
-#   [image].local_id    — the content-addressable id of the locally built
-#                         image. Per-build, intrinsically per-host
-#                         because the host's CPU microarchitecture
-#                         affects the binary layout under -march=native.
-#                         The lead records this on the dev-host run and
-#                         the gate can compare future builds against it.
-#
-# Update procedure:
-#   1. podman build -t gf2-bench:ref -f benchmarks/Containerfile benchmarks/
-#   2. podman image inspect gf2-bench:ref --format '{{.Id}}'
-#         → paste into [image].local_id
-#   3. podman image inspect docker.io/library/debian:bookworm-20260421-slim \
-#         --format '{{(index .RepoDigests 0)}}'
-#         → paste into [base].digest (sha256:... portion only)
-#   4. Re-run `./benchmarks/run.sh` and verify the build reproduces the
-#      same local_id. Drift means the host environment changed.
+# Refresh procedure (e.g. picking a newer Debian dated tag):
+#   1. Fetch the new tag's digest:
+#        curl -sH 'Accept: application/vnd.oci.image.index.v1+json' \
+#             -H "Authorization: Bearer $(curl -s 'https://auth.docker.io/token?service=registry.docker.io&scope=repository:library/debian:pull' | jq -r .token)" \
+#             "https://registry-1.docker.io/v2/library/debian/manifests/<NEW_TAG>" \
+#             -D - 2>/dev/null | grep -i docker-content-digest
+#   2. Update both [base].tag/[base].digest here AND the matching
+#      Containerfile FROM line; `run.sh` cross-checks them.
+#   3. podman build -t gf2-bench:ref -f benchmarks/Containerfile benchmarks/
+#   4. ./benchmarks/run.sh — stamps [image].local_id automatically.
 
 [image]
 name = "gf2-bench"
