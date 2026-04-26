@@ -16,9 +16,9 @@
   ],
   "gates_status": {
     "code-review": {
-      "status": "passed",
+      "status": "failed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-04-26T16:08:10.419463268Z"
+      "updated_at": "2026-04-26T17:42:02.626875525Z"
     },
     "doc-review": {
       "status": "passed",
@@ -28,7 +28,7 @@
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-04-26T16:07:45.864511873Z"
+      "updated_at": "2026-04-26T17:41:45.983822113Z"
     }
   },
   "context": {},
@@ -40,5 +40,5 @@
     "epic:bb85c68a"
   ],
   "created_at": "2026-04-23T16:30:39.735940337+00:00",
-  "updated_at": "2026-04-26T17:41:22.497254364+00:00"
+  "updated_at": "2026-04-26T17:44:11.212701564+00:00"
 }
