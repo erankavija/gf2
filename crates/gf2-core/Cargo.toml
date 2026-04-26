@@ -207,3 +207,8 @@ required-features = ["rand"]
 name = "ple"
 harness = false
 required-features = ["rand"]
+
+[[bench]]
+name = "inverse"
+harness = false
+required-features = ["rand"]
