@@ -118,10 +118,16 @@ fn bench_frobenius(c: &mut Criterion) {
 
 /// Dispatch-crossover bench (issue `1454ec2d`): runs the cubic and
 /// Keller–Gehrig paths side-by-side at
-/// `n ∈ {64, 128, 256, 512, 1024}` on `Fp<MERSENNE_31>`. The crossover
-/// `n` informs the [`gf2_core::field::charpoly::KG_DISPATCH_MIN_N`]
-/// threshold; the `[aspirational]` success criterion calls for
-/// sub-cubic to win at `n ≥ 256`.
+/// `n ∈ {64, 128, 256, 512, 1024}` on `Fp<MERSENNE_31>`.
+///
+/// Empirically the cubic path is currently ~173× faster than KG at
+/// `n = 256` (see `crates/gf2-core/src/field/charpoly.rs` module docs);
+/// public [`FieldMatrix::charpoly`] therefore always selects cubic
+/// under default dispatch (`KG_DISPATCH_MIN_N == usize::MAX`). The
+/// `dispatch` arm of this bench measures the public surface (i.e. the
+/// cubic baseline today) and is kept alongside the explicit `cubic`
+/// and `kg` arms so a future tuning of `KG_DISPATCH_MIN_N` can be
+/// validated against the same fixtures.
 ///
 /// Compiled and skip-runnable via `--test` so the bench harness stays
 /// healthy without paying the full `n = 1024` measurement cost.
