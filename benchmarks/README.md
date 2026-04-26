@@ -76,13 +76,13 @@ Every row in `results/<timestamp>.csv` has exactly **ten** columns:
 | Column           | Type     | Description                                                                                                                                |
 |------------------|----------|--------------------------------------------------------------------------------------------------------------------------------------------|
 | `lib`            | string   | Reference implementation: `fflas-ffpack` or `m4ri`.                                                                                        |
-| `operation`      | string   | One of `fgemm`, `pluq`, `echelon`, `invert`, `solve`, `charpoly`, `matmul` (m4ri spelling for `fgemm`).                                    |
+| `operation`      | string   | One of `fgemm`, `pluq`, `echelon`, `invert`, `solve`, `charpoly`, `minpoly`, `spmv`, `matmul` (m4ri spelling for `fgemm`).                |
 | `field`          | string   | Field tag, e.g. `GF(2^31-1)`, `GF(65521)`, `GF(251)`, `GF(7)`, `GF(2)`.                                                                   |
 | `m`, `k`, `n`    | usize    | Matrix shape passed to the kernel. For square ops `m = k = n`. For `fgemm` rectangular variants (deferred to T2), `m`, `k`, `n` differ.    |
 | `rank_regime`    | string   | `uniform` (sample i.i.d.) or `deficient` (rank exactly `n/2`, generated as L·R with shared inner dimension).                              |
 | `seed`           | uint64   | The 64-bit deterministic seed for *this row*'s matrix. Derived from the master seed via `SplitMix64(tag, op_idx, size_idx, regime_idx)`. |
 | `wall_ns`        | uint64   | Mean wall-clock nanoseconds per iteration (steady_clock / CLOCK_MONOTONIC, total wall time / `--iters`).                                  |
-| `throughput_ops` | float    | Conventional op-count divided by `wall_ns`. `fgemm`: `2·m·k·n`. Square `n×n` factorizations and charpoly: `n³`. M4RI matmul: `2·n³`.       |
+| `throughput_ops` | float    | Conventional op-count divided by `wall_ns`. `fgemm`: `2·m·k·n`. Square `n×n` factorizations and `charpoly`: `n³`. `minpoly`: `n⁴` (LCM-merge sweep over `n` Krylov passes). `spmv`: `nnz` (one mul + one add per stored entry). M4RI `matmul`: `2·n³`.       |
 
 A header row is emitted by `run.sh` exactly once per file. Both
 harnesses emit only data rows on stdout so they can be concatenated
