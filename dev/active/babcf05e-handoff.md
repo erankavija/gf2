@@ -9,7 +9,7 @@
 
 - Epic: `babcf05e` — state: **in_progress**, claimed by `agent:project-lead`
 - Wave in progress: **wave 2** (S0 measurement infrastructure) — 2 of 4 sub-tasks DONE; 2 remain
-- Children summary (epic's transitive task tree): **2 done** (`c7791a20`, `2a0ffb18`, `c3a9a4cb` — actually 3 done counting c7791a20 from wave 1), **0 in_progress**, **14 backlog** (Tier A–E tasks), **1 ready** (4f845881 + b2ecd2ff in wave 2; 1d230525 follow-up bug also ready)
+- Children summary (epic's transitive task tree): **3 done** (`c7791a20`, `2a0ffb18`, `c3a9a4cb`), **0 in_progress**, **14 backlog** (Tier A–E tasks), **4 ready** in S0 (`4f845881`, `b2ecd2ff`, `1d230525` follow-up bug, `bd00d76a` retrospective audit task)
 - Active claims: none (all wave-1+2a+2b workers released their claims after closure)
 - Open escalations: none
 - Progress file: `dev/active/babcf05e-progress.json`
@@ -25,7 +25,8 @@
 | `b2ecd2ff` | 2d | ready | Pin criterion baselines for all targeted kernels. Heavy bench-run task. NOT YET DISPATCHED |
 | `166b2691` (S0 story) | 2 | backlog | Story-level closure pending all 4 sub-tasks done |
 | **Tier A–E tasks** | 3–7 | backlog | Eleven leaf tasks plus three Tier-A/E parent stories (d76f6931, 211102c6, 2c866544, 01afbd6d, afc80980); all blocked on S0 completion |
-| `1d230525` | follow-up | ready | NEW bug created during c3a9a4cb R1: regen-asm.sh fallback `--out-dir` duplicate flag. NOT BLOCKING; opportunistic cleanup |
+| `1d230525` | S0 | ready | NEW bug created during c3a9a4cb R1: regen-asm.sh fallback `--out-dir` duplicate flag. Wired as S0 dep — small fix, single R0 cycle expected |
+| `bd00d76a` | S0 | ready | NEW task created post-c3a9a4cb close in response to user question "have we analyzed any asm we ship?". Retrospective asm audit of all ~26 production SIMD entry points; LTO-opacity check across all 5 dispatch tables. Wired as S0 dep |
 
 ## What just happened
 
@@ -46,7 +47,8 @@ In priority order:
 - [ ] **Dispatch sub-wave 2d (`b2ecd2ff`):** Pin criterion baselines. This is the heavy task — runs `cargo bench -p gf2-core --bench <kernel-bench> -- --save-baseline ppc-v0-2026-04-26` for every Tier-A–D bench (matrix_vector, matmul, fp_specialized, fieldvec_dot_product, gf2m_mul_strategies, gf2m_wide_mul, m4rm_components, m4rm_profile, sparse), commits `dev/benchmarks/ppc-baselines.json` mapping kernels to baseline name + commit hash. Will take 15–30 min wall-clock for the bench saves. Expect cache-warm rebuild after the LTO profile change.
 - [ ] **Close story `166b2691`** when all 4 sub-tasks (`c7791a20` ✓, `2a0ffb18` ✓, `c3a9a4cb` ✓, `4f845881`, `b2ecd2ff`) are done. Run cargo-ci + code-review at the story level, transition to done.
 - [ ] **Plan Wave 3 (Tier A — Dispatch routing):** 4 tasks (`c69d2055`, `5223bb04`, `8e4b189c`, `cad241e6`). Dispatch in parallel via worktrees if file-conflict map allows (see traps). **CRITICAL: `c69d2055`'s description embeds the now-falsified ThinLTO inlining claim** — lead must amend it before dispatch (see traps).
-- [ ] **Schedule bug `1d230525`** (regen-asm.sh fallback `--out-dir` duplicate) into a future wave or post-Wave-2 cleanup. NOT blocking.
+- [ ] **Dispatch `1d230525`** (regen-asm.sh fallback `--out-dir` duplicate). Small R0; can run in parallel with `4f845881` since file scopes don't overlap. Wired as S0 dep.
+- [ ] **Dispatch `bd00d76a`** (retrospective asm audit). Run AFTER `b2ecd2ff` finishes its bench saves to avoid cargo-cache contention (both hammer the build cache); can run in parallel with `4f845881` after sub-wave 2d. Worker should produce per-module asm artefacts + audit summary doc + LTO-opacity comparison + follow-up bugs for any "suspicious" findings.
 
 ## Traps — do not repeat these
 
@@ -97,4 +99,5 @@ None.
   - `1a2f6f9` — c7791a20: profile.release block (with empirical-falsification amendment)
   - `3d07769` — initial epic claim + wave-1 dispatch
 - New JIT gate registered: `asm-artefact-present` (auto, postcheck, `./scripts/asm-artefact-present.sh`). Future SIMD-source-touching tasks (Tier B kernels) should add this gate to their gate-set via `jit gate add <id> asm-artefact-present` at dispatch time.
-- New JIT bug created: `1d230525` (regen-asm.sh fallback `--out-dir` duplicate); state ready, not blocking.
+- New JIT bug created: `1d230525` (regen-asm.sh fallback `--out-dir` duplicate); state ready, wired as S0 dep.
+- New JIT task created: `bd00d76a` (retrospective asm audit of all ~26 production SIMD entry points); state ready, wired as S0 dep. Created in response to user question post-c3a9a4cb close — establishes asm coverage for kernels that predate the I3 convention.

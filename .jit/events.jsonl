@@ -2893,3 +2893,4 @@
 {"type":"issue_state_changed","id":"7d54b97a-da6e-4bd3-8da6-e43f850465c7","issue_id":"c3a9a4cb-7233-40dc-a56e-8e0d7936e8e9","timestamp":"2026-04-26T20:51:03.828713858Z","from":"in_progress","to":"done"}
 {"type":"issue_completed","id":"2d4dc81e-3b9d-4fa4-acfa-21f5a6548ecb","issue_id":"c3a9a4cb-7233-40dc-a56e-8e0d7936e8e9","timestamp":"2026-04-26T20:51:03.828775018Z"}
 {"type":"issue_created","id":"c57d2832-6fde-4b68-937c-02e63bdcadda","issue_id":"1d230525-3f47-4065-bf85-60a9584007d4","timestamp":"2026-04-26T20:51:23.272361391Z","title":"regen-asm.sh fallback path passes duplicate --out-dir to cargo rustc","priority":"normal"}
+{"type":"issue_created","id":"bcbc9586-a941-458b-8e59-cbe94d1e75d9","issue_id":"bd00d76a-75bc-494c-9f7a-7dd59e814b24","timestamp":"2026-04-26T22:14:08.095530888Z","title":"Retrospective asm audit of all gf2-kernels-simd entry points","priority":"normal"}
