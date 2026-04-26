@@ -76,7 +76,8 @@ pub const DEFAULT_CASES: u32 = 64;
 /// # Type parameters
 ///
 /// * `T` — the input fixture, must be `Clone + PartialEq + Debug` so
-///   the helper can fork the input and report mismatches via proptest.
+///   the helper can fork the input, compare the post-mutation state of
+///   the two clones directly, and report mismatches via proptest.
 /// * `R` — the output value compared for equality. For in-place
 ///   kernels (e.g. `xor_inplace`) this is typically `()` and the
 ///   verification compares the buffer state captured back through
@@ -110,7 +111,7 @@ pub const DEFAULT_CASES: u32 = 64;
 /// report. Panics also propagate from `scalar` or `simd` themselves.
 pub fn assert_simd_matches_scalar<T, R, F, G, S>(scalar: F, simd: G, gen: S)
 where
-    T: Clone + std::fmt::Debug,
+    T: Clone + PartialEq + std::fmt::Debug,
     R: PartialEq + std::fmt::Debug,
     F: Fn(&mut T) -> R,
     G: Fn(&mut T) -> R,
@@ -132,7 +133,7 @@ pub fn assert_simd_matches_scalar_with_config<T, R, F, G, S>(
     gen: S,
     config: Config,
 ) where
-    T: Clone + std::fmt::Debug,
+    T: Clone + PartialEq + std::fmt::Debug,
     R: PartialEq + std::fmt::Debug,
     F: Fn(&mut T) -> R,
     G: Fn(&mut T) -> R,
@@ -152,16 +153,15 @@ pub fn assert_simd_matches_scalar_with_config<T, R, F, G, S>(
                 )));
             }
             // For in-place kernels `T` carries the post-mutation state.
-            // Comparing `a` and `b` via `format!` keeps this generic
-            // over `T` without forcing `T: PartialEq` — the caller can
-            // always use a `T` whose `Debug` reflects the post-state.
-            // For the typical case (Vec<u64>), Debug is canonical.
-            let s_scalar = format!("{:?}", a);
-            let s_simd = format!("{:?}", b);
-            if s_scalar != s_simd {
+            // Compare the two post-mutation clones directly via
+            // `PartialEq`; this is canonical, avoids per-iteration
+            // `format!` overhead, and dodges any risk of false
+            // negatives from non-stable `Debug` implementations.
+            // `Debug` is still required so a counterexample renders.
+            if a != b {
                 return Err(TestCaseError::fail(format!(
-                    "post-state mismatch: scalar={} simd={} input={:?}",
-                    s_scalar, s_simd, input
+                    "post-state mismatch: scalar={:?} simd={:?} input={:?}",
+                    a, b, input
                 )));
             }
             Ok(())

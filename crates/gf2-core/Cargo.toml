@@ -257,3 +257,18 @@ required-features = ["rand"]
 [[example]]
 name = "bench_csv_emitter"
 required-features = ["rand"]
+
+# ── Issue `2a0ffb18` (story `166b2691`, epic `babcf05e` — gf2-core
+# PPC-spiral S0 measurement infrastructure) ──
+#
+# Demo driver for the SIMD-vs-scalar equivalence proptest helper at
+# `tests/simd_equiv/mod.rs`. The driver imports
+# `gf2_core::kernels::simd::maybe_simd`, which is itself
+# `#[cfg(feature = "simd")]`. Gate the integration test on the same
+# feature so a default-feature build (without `simd`) skips this target
+# entirely instead of failing to compile. Mirrors the SIMD-gated
+# `[[bench]]` entries above (`fp_specialized`, `soa_batch`,
+# `gf2m_wide_mul`).
+[[test]]
+name = "simd_equiv_demo"
+required-features = ["simd"]
