@@ -18,7 +18,10 @@
 #
 # Env knobs:
 #   TARGET_CPU       passed to RUSTFLAGS as -C target-cpu=$TARGET_CPU.
-#                    Default: native.
+#                    Default: <empty> (rely on #[target_feature] attributes
+#                    in the kernel sources; set explicitly e.g.
+#                    TARGET_CPU=x86-64-v3 for portable baselines, or
+#                    TARGET_CPU=native for host-tuned dumps).
 #   EXTRA_RUSTFLAGS  appended verbatim to RUSTFLAGS.
 #
 # Tooling: requires cargo-show-asm (https://github.com/pacak/cargo-show-asm).
@@ -148,11 +151,16 @@ emit_with_fallback() {
         echo "; symbol: ${sym} (cargo-rustc whole-crate fallback)"
         echo ";=========================================================="
         echo
-        # cargo rustc dumps the whole crate's asm under target/.../*.s
+        # cargo rustc dumps the whole crate's asm under target/.../*.s.
+        # Only pass -C target-cpu when explicitly set; otherwise omit the
+        # flag entirely so an empty value never reaches rustc.
+        local rustc_args=(--emit=asm --out-dir "$tmp")
+        if [[ -n "$target_cpu" ]]; then
+            rustc_args+=(-C "target-cpu=$target_cpu")
+        fi
         RUSTFLAGS="$rustflags_value" \
             cargo rustc --release -p "$crate" --lib -- \
-                --emit=asm -C target-cpu="$target_cpu" \
-                --out-dir "$tmp" 2>&1 | head -5
+                "${rustc_args[@]}" 2>&1 | head -5
         local asm_files
         asm_files=$(find "$tmp" -maxdepth 2 -name '*.s' 2>/dev/null || true)
         if [[ -z "$asm_files" ]]; then
