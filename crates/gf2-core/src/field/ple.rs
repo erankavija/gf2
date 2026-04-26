@@ -984,6 +984,15 @@ impl<F: FiniteField> FieldMatrix<F> {
     ///
     /// Dominated by [`rref`](Self::rref).
     ///
+    /// # Panics
+    ///
+    /// Does not panic on `ConstField` inputs of any shape, rank, or
+    /// pivot pattern. For `m = 0` (zero-row) inputs over runtime-context
+    /// fields without a `zero_hint` (e.g. `Gf2mElement`), panics with a
+    /// clear message — there is no `F` witness available to seed the
+    /// canonical basis vectors. Use `F: ConstField`, or pass a non-empty
+    /// input.
+    ///
     /// # Examples
     ///
     /// ```
