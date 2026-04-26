@@ -1,0 +1,24 @@
+{
+  "id": "1d230525-3f47-4065-bf85-60a9584007d4",
+  "title": "regen-asm.sh fallback path passes duplicate --out-dir to cargo rustc",
+  "description": "The `REGEN_ASM_FALLBACK=1` path of `dev/scripts/regen-asm.sh` invokes `cargo rustc --release -p $crate --lib -- --emit=asm --out-dir $tmp ...`, but `cargo rustc` already injects its own `--out-dir`. The duplicate triggers `error: Option 'out-dir' given more than once`.\n\n## Background\n\nDiscovered out-of-scope during c3a9a4cb R1 review (commit `3ccc023`). The R1 worker correctly declined to fix it without lead approval, since the rework brief explicitly limited scope to the two reviewer-cited findings.\n\nThe bug only affects the documented fallback path (`REGEN_ASM_FALLBACK=1`); the primary `cargo-show-asm` path is unaffected. The fallback is a defense-in-depth feature — it's documented as the workaround when `cargo install cargo-show-asm` fails (network/permissions). On the dev host, `cargo-show-asm` is installed (was installed during c3a9a4cb R0), so the fallback is unused in normal operation.\n\n## Reproduction\n\n```bash\n# Hide cargo-show-asm to force the fallback\nPATH=\"/tmp/sandbox_bin:...\" TARGET_CPU=\"\" REGEN_ASM_FALLBACK=1 \\\n  ./dev/scripts/regen-asm.sh gf2-kernels-simd \\\n  gf2_kernels_simd::x86::avx2::avx2_xor_into /tmp/test_fallback.txt\n# fails with: error: Option 'out-dir' given more than once\n```\n\n## Fix sketch\n\nEither:\n- Drop the `--out-dir $tmp` flag entirely; let cargo write to its default target dir, then locate and copy the emitted .s file from `target/release/deps/`. OR\n- Use `cargo rustc --target-dir $tmp --release ...` to redirect cargo's own output dir.\n\nThe first is simpler; the second avoids polluting the caller's target dir.\n\n## Success Criteria\n\n- [hard] `REGEN_ASM_FALLBACK=1 ./dev/scripts/regen-asm.sh ...` succeeds end-to-end (produces a populated artefact file with valid asm content) when `cargo-show-asm` is unavailable.\n- [hard] No regression on the primary `cargo-show-asm` path (existing tests still produce valid artefacts).\n- [hard] Add a smoke test or shellcheck-time assertion (or at least a comment explaining the chosen pattern) so future edits don't re-introduce the dup-flag.\n\n## Non-goals\n\n- Not introducing automated CI for the fallback path — `cargo-show-asm` is the documented primary path, and the fallback is opt-in.\n\n## Notes\n\nThis is a small follow-up to c3a9a4cb (commit `3ccc023`). Probably fits in one R0 cycle.",
+  "state": "ready",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [
+    "code-review",
+    "cargo-ci"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:bug",
+    "component:gf2-kernels-simd",
+    "epic:gf2-core-ppc-spiral",
+    "story:ppc-infrastructure"
+  ],
+  "created_at": "2026-04-26T20:51:23.271980191+00:00",
+  "updated_at": "2026-04-26T20:51:23.271986101+00:00"
+}

@@ -2886,3 +2886,10 @@
 {"type":"issue_completed","id":"ce17f19c-9d29-4e62-ae95-a7447c08235f","issue_id":"2a0ffb18-eb7f-459a-855b-11faea76b733","timestamp":"2026-04-26T20:28:05.788277657Z"}
 {"type":"issue_state_changed","id":"04fa2e66-3feb-4009-87f8-a36f7dbac7ce","issue_id":"c3a9a4cb-7233-40dc-a56e-8e0d7936e8e9","timestamp":"2026-04-26T20:28:06.597501319Z","from":"ready","to":"in_progress"}
 {"type":"issue_claimed","id":"3e4b6773-5cd5-4404-ab60-15afe24963e9","issue_id":"c3a9a4cb-7233-40dc-a56e-8e0d7936e8e9","timestamp":"2026-04-26T20:28:06.600330680Z","assignee":"agent:claude"}
+{"type":"gate_passed","id":"2521aa23-46bb-4295-a1dd-265f7582cf2f","issue_id":"c3a9a4cb-7233-40dc-a56e-8e0d7936e8e9","timestamp":"2026-04-26T20:37:48.649098485Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"c529e184-b017-4874-acea-11871155bb40","issue_id":"c3a9a4cb-7233-40dc-a56e-8e0d7936e8e9","timestamp":"2026-04-26T20:42:33.844698480Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"2267ed25-f2b2-4079-8e31-76b4f922c67d","issue_id":"c3a9a4cb-7233-40dc-a56e-8e0d7936e8e9","timestamp":"2026-04-26T20:47:26.344206095Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"a35aa7f0-0995-4139-bfea-2485ce1e2d86","issue_id":"c3a9a4cb-7233-40dc-a56e-8e0d7936e8e9","timestamp":"2026-04-26T20:50:44.105638505Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"issue_state_changed","id":"7d54b97a-da6e-4bd3-8da6-e43f850465c7","issue_id":"c3a9a4cb-7233-40dc-a56e-8e0d7936e8e9","timestamp":"2026-04-26T20:51:03.828713858Z","from":"in_progress","to":"done"}
+{"type":"issue_completed","id":"2d4dc81e-3b9d-4fa4-acfa-21f5a6548ecb","issue_id":"c3a9a4cb-7233-40dc-a56e-8e0d7936e8e9","timestamp":"2026-04-26T20:51:03.828775018Z"}
+{"type":"issue_created","id":"c57d2832-6fde-4b68-937c-02e63bdcadda","issue_id":"1d230525-3f47-4065-bf85-60a9584007d4","timestamp":"2026-04-26T20:51:23.272361391Z","title":"regen-asm.sh fallback path passes duplicate --out-dir to cargo rustc","priority":"normal"}

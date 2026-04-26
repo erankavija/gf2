@@ -1,58 +1,21 @@
 {
   "gates": {
-    "tests": {
+    "cargo-ci": {
       "version": 1,
-      "key": "tests",
-      "title": "All tests pass",
-      "description": "cargo test must pass",
+      "key": "cargo-ci",
+      "title": "Rust CI checks pass",
+      "description": "Full Rust workspace CI: build, test, clippy, fmt",
       "stage": "postcheck",
       "mode": "auto",
       "checker": {
         "type": "exec",
-        "command": "cargo test",
+        "command": "./scripts/cargo-ci.sh",
         "timeout_seconds": 300,
         "working_dir": null,
         "env": {},
         "pass_context": false
       },
-      "reserved": {},
-      "auto": true,
-      "example_integration": null
-    },
-    "lake-build": {
-      "version": 1,
-      "key": "lake-build",
-      "title": "Lean4 proofs compile",
-      "description": "lake build must succeed on all auto-generated and hand-written Lean4 proofs",
-      "stage": "postcheck",
-      "mode": "auto",
-      "checker": {
-        "type": "exec",
-        "command": "lake build",
-        "timeout_seconds": 600,
-        "working_dir": "proofs",
-        "env": {},
-        "pass_context": false
-      },
-      "reserved": {},
-      "auto": true,
-      "example_integration": null
-    },
-    "cargo-kani": {
-      "version": 1,
-      "key": "cargo-kani",
-      "title": "Kani proof harnesses pass",
-      "description": "cargo kani must pass all bounded model checking harnesses",
-      "stage": "postcheck",
-      "mode": "auto",
-      "checker": {
-        "type": "exec",
-        "command": "cargo kani",
-        "timeout_seconds": 1800,
-        "working_dir": null,
-        "env": {},
-        "pass_context": false
-      },
+      "priority": 100,
       "reserved": {},
       "auto": true,
       "example_integration": null
@@ -72,6 +35,7 @@
         "env": {},
         "pass_context": false
       },
+      "priority": 100,
       "reserved": {},
       "auto": true,
       "example_integration": null
@@ -91,6 +55,27 @@
         "env": {},
         "pass_context": false
       },
+      "priority": 100,
+      "reserved": {},
+      "auto": true,
+      "example_integration": null
+    },
+    "asm-artefact-present": {
+      "version": 1,
+      "key": "asm-artefact-present",
+      "title": "ASM artefact present",
+      "description": "Fails if SIMD source files are modified without a corresponding sibling *.asm.txt update",
+      "stage": "postcheck",
+      "mode": "auto",
+      "checker": {
+        "type": "exec",
+        "command": "./scripts/asm-artefact-present.sh",
+        "timeout_seconds": 300,
+        "working_dir": null,
+        "env": {},
+        "pass_context": false
+      },
+      "priority": 100,
       "reserved": {},
       "auto": true,
       "example_integration": null
@@ -102,8 +87,29 @@
       "description": "Confirm that necessary documentation updates were made: doc comments on public APIs (description, arguments, examples, panics, complexity), relevant design docs updated, and CLAUDE.md module map reflects any new modules.",
       "stage": "postcheck",
       "mode": "manual",
+      "priority": 100,
       "reserved": {},
       "auto": false,
+      "example_integration": null
+    },
+    "tests": {
+      "version": 1,
+      "key": "tests",
+      "title": "All tests pass",
+      "description": "cargo test must pass",
+      "stage": "postcheck",
+      "mode": "auto",
+      "checker": {
+        "type": "exec",
+        "command": "cargo test",
+        "timeout_seconds": 300,
+        "working_dir": null,
+        "env": {},
+        "pass_context": false
+      },
+      "priority": 100,
+      "reserved": {},
+      "auto": true,
       "example_integration": null
     },
     "code-review": {
@@ -124,25 +130,27 @@
         "pass_context": true,
         "prompt_file": "./scripts/code-review-prompt.md"
       },
+      "priority": 100,
       "reserved": {},
       "auto": true,
       "example_integration": null
     },
-    "cargo-ci": {
+    "lake-build": {
       "version": 1,
-      "key": "cargo-ci",
-      "title": "Rust CI checks pass",
-      "description": "Full Rust workspace CI: build, test, clippy, fmt",
+      "key": "lake-build",
+      "title": "Lean4 proofs compile",
+      "description": "lake build must succeed on all auto-generated and hand-written Lean4 proofs",
       "stage": "postcheck",
       "mode": "auto",
       "checker": {
         "type": "exec",
-        "command": "./scripts/cargo-ci.sh",
-        "timeout_seconds": 300,
-        "working_dir": null,
+        "command": "lake build",
+        "timeout_seconds": 600,
+        "working_dir": "proofs",
         "env": {},
         "pass_context": false
       },
+      "priority": 100,
       "reserved": {},
       "auto": true,
       "example_integration": null
@@ -154,8 +162,29 @@
       "description": "Reminder to write failing tests before implementation",
       "stage": "precheck",
       "mode": "manual",
+      "priority": 100,
       "reserved": {},
       "auto": false,
+      "example_integration": null
+    },
+    "cargo-kani": {
+      "version": 1,
+      "key": "cargo-kani",
+      "title": "Kani proof harnesses pass",
+      "description": "cargo kani must pass all bounded model checking harnesses",
+      "stage": "postcheck",
+      "mode": "auto",
+      "checker": {
+        "type": "exec",
+        "command": "cargo kani",
+        "timeout_seconds": 1800,
+        "working_dir": null,
+        "env": {},
+        "pass_context": false
+      },
+      "priority": 100,
+      "reserved": {},
+      "auto": true,
       "example_integration": null
     }
   }
