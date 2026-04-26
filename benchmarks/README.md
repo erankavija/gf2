@@ -212,7 +212,12 @@ under a minute per supported field.
 - Re-running with the same `--seed` produces *identical* matrices on
   every (field, op, size, regime) cell. Timing of course varies.
 - Re-building the image from the pinned Containerfile + `image.lock`
-  produces a binary-identical container modulo the base-image digest;
+  on the **same host** produces an identical local image-id (stamped
+  into `[image].local_id`); cross-host the digest will differ because
+  every C/C++ object is built with `-O3 -march=native` and is therefore
+  microarchitecture-specific. The library-source pins (base-image
+  digest, tarball sha256s, Debian apt versions) are reproducible across
+  hosts; only the final compiled binaries' content-id is host-specific.
   Debian's stable-release semantics guarantee no apt-side drift within
   bookworm's lifetime.
 - The harnesses use `clock_gettime(CLOCK_MONOTONIC)` /
@@ -253,5 +258,9 @@ gate job runner) must have:
    microarchitecture the gate runs on. The `host.txt` file at run time
    captures this.
 
-After a successful first build, update `image.lock`'s
-`[image].local_id` slot with the value `run.sh` prints to stderr.
+`run.sh` automatically stamps the new `[image].local_id` into
+`image.lock` after each successful build, so subsequent runs on the
+same host detect environment drift if the local id no longer matches.
+On a fresh checkout the slot is `sha256:TODO_FILL_AFTER_FIRST_BUILD`;
+the first `./benchmarks/run.sh` invocation overwrites that with the
+real id.
