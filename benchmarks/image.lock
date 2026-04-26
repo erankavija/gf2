@@ -1,36 +1,51 @@
 # benchmarks/image.lock
 #
 # Pinned image and library versions for the reference benchmark
-# environment. Replace the placeholder digests below after the first
-# successful `podman build`; until then, "best-effort" reproducibility
-# relies on the version + sha256 pins inside the Containerfile.
+# environment. The library tarballs are pinned by full sha256 inside
+# `Containerfile` and re-asserted here as a single source of truth — a
+# mismatch between the two is a build-time failure (`sha256sum -c`).
+#
+# Two slots remain to be filled in on first build:
+#
+#   [base].digest       — the registry digest of `debian:bookworm-20250113-slim`
+#                         at first-pull time. Until this is filled in,
+#                         only the dated tag pin protects us. See the
+#                         `TODO_DIGEST` comment in `Containerfile`.
+#
+#   [image].local_id    — the content-addressable id of the locally built
+#                         image. Per-build, intrinsically per-host
+#                         because the host's CPU microarchitecture
+#                         affects the binary layout under -march=native.
+#                         The lead records this on the dev-host run and
+#                         the gate can compare future builds against it.
 #
 # Update procedure:
 #   1. podman build -t gf2-bench:ref -f benchmarks/Containerfile benchmarks/
-#   2. podman image inspect gf2-bench:ref --format '{{.Id}}' \
-#         > /tmp/img-id  (this is the local image digest)
-#   3. podman inspect gf2-bench:ref \
-#         --format '{{(index .RepoDigests 0)}}' (after a push; optional)
-#   4. Edit this file to record both.
-#
-# The base image digest below is the bookworm-20250113-slim digest at the
-# time the Containerfile was authored. Re-build will refresh it; treat it
-# as advisory until the gate-job records its own.
+#   2. podman image inspect gf2-bench:ref --format '{{.Id}}'
+#         → paste into [image].local_id
+#   3. podman image inspect docker.io/library/debian:bookworm-20250113-slim \
+#         --format '{{(index .RepoDigests 0)}}'
+#         → paste into [base].digest (sha256:... portion only)
+#   4. Re-run `./benchmarks/run.sh` and verify the build reproduces the
+#      same local_id. Drift means the host environment changed.
 
 [image]
 name = "gf2-bench"
 tag  = "ref"
-# Local content-addressable id will be filled by the benchmark gate after
-# the first build. Until then the placeholder records the *intent* — the
-# tag is reproducible because the Containerfile pins everything.
-local_id = "sha256:PLACEHOLDER_FILL_AFTER_FIRST_BUILD"
+# `local_id` is intrinsically per-build because `-march=native` couples
+# the binary to the host microarchitecture; recording it gives the gate
+# a tripwire for "did anything change since we last validated?".
+local_id = "sha256:TODO_FILL_AFTER_FIRST_BUILD"
 
 [base]
 repository = "docker.io/library/debian"
 tag        = "bookworm-20250113-slim"
-# Authoritative digest as published by the Debian base-image maintainers.
-# Verify against https://hub.docker.com/_/debian/tags before bumping.
-digest     = "sha256:PLACEHOLDER_DEBIAN_BOOKWORM_20250113_SLIM"
+# Replace TODO_DIGEST with the sha256 from `podman image inspect ...`
+# after first pull. Verify against https://hub.docker.com/_/debian
+# before pasting. Until filled in, only the tag pin is in effect; the
+# tag is dated and Debian treats dated slim tags as immutable, so the
+# gap is small but present.
+digest     = "sha256:TODO_DIGEST_FILL_AFTER_FIRST_BUILD"
 
 [libs.gcc]
 version = "12.2.0-14"
