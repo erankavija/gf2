@@ -20,12 +20,23 @@
 //!    then `< 1/2`, guaranteeing Las-Vegas convergence in expected
 //!    `O(1)` retries).
 //!
-//! ## Automatic dispatch (issue `1454ec2d`)
+//! ## Default dispatch (issue `1454ec2d`)
 //!
-//! [`FieldMatrix::charpoly`] is the public entry. It selects between
-//! the two paths via the following rules, in order:
+//! [`FieldMatrix::charpoly`] is the public entry. It currently always
+//! selects the cubic baseline because [`KG_DISPATCH_MIN_N`] is set to
+//! [`usize::MAX`] — see the R2 amendment in issue `e47231cd` for the
+//! empirical justification (cubic is ~173× faster than KG at `n = 256`
+//! on `Fp<MERSENNE_31>` with the current PLE-based K⁻¹ pipeline).
+//! Callers who want to opt into the Las-Vegas Keller–Gehrig variant
+//! must call [`FieldMatrix::charpoly_keller_gehrig`] directly with an
+//! explicit seed. Bit-exact equality across paths is guaranteed by the
+//! KG path's Cayley–Hamilton verification (`charpoly.eval_at_matrix(A) == 0`).
 //!
-//! 1. If `n < KG_DISPATCH_MIN_N` (default `256`): cubic.
+//! When the threshold is later tuned downward (after the K⁻¹ step is
+//! replaced with a Strassen-amenable inversion), the dispatch will
+//! select between the two paths via these rules, in order:
+//!
+//! 1. If `n < KG_DISPATCH_MIN_N`: cubic.
 //! 2. If [`FiniteField::cardinality_log2_hint`] returns `None`
 //!    (runtime-context fields like [`crate::gf2m::Gf2mElement`]): cubic.
 //! 3. If `cardinality_log2_hint > 127` (`q` does not fit in `u128`):
@@ -34,9 +45,7 @@
 //!    `q ≤ 2 n²`: cubic.
 //! 5. Try [`charpoly_keller_gehrig`](FieldMatrix::charpoly_keller_gehrig)
 //!    up to [`KG_MAX_RETRIES`] times. On `None`: silently fall back to
-//!    the cubic path. Bit-exact identical results across paths are
-//!    guaranteed by the sub-cubic path's Cayley–Hamilton verification
-//!    (`charpoly.eval_at_matrix(A) == 0`).
+//!    the cubic path.
 //!
 //! ## Empirical crossover (Mersenne-31, `Fp<2^31 − 1>`)
 //!
@@ -77,16 +86,18 @@
 //!
 //! ### Dispatch policy
 //!
-//! Despite the empirical finding above, [`KG_DISPATCH_MIN_N`] is kept at
-//! `256` because the dispatch path is correctness-first: KG is only
-//! engaged when the field is large enough for the Las-Vegas guarantee
-//! (`q > 2n²`) and `n ≥ 256`, then verified end-to-end via
-//! Cayley–Hamilton (`charpoly.eval_at_matrix(A) == 0`); on failure or
-//! retry exhaustion the dispatch silently falls back to cubic. So the
-//! correctness contract holds regardless of the runtime crossover. The
-//! threshold can be raised to `usize::MAX` (effectively disabling KG)
-//! without affecting any test or success criterion if the runtime
-//! penalty is unacceptable.
+//! Given the empirical finding above (cubic is ~173× faster than KG at
+//! `n = 256`, with no measurable crossover within `n ≤ 1024`),
+//! [`KG_DISPATCH_MIN_N`] is set to [`usize::MAX`] so that public
+//! [`FieldMatrix::charpoly`] **always selects the cubic baseline**
+//! under default dispatch. The correctness contract still holds: when
+//! a future fix replaces the K⁻¹ PLE pipeline with a Strassen-amenable
+//! inversion and the threshold is tuned downward, KG would re-engage
+//! conditionally on the field cardinality (`q > 2n²`) and pass the
+//! Cayley–Hamilton verification before returning. Callers who want to
+//! opt into the KG path NOW (e.g. for benchmarks or research)
+//! must call [`FieldMatrix::charpoly_keller_gehrig`] explicitly with a
+//! deterministic seed.
 //!
 //! ## Cubic path
 //!
@@ -1318,9 +1329,9 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// canonical ordering puts the largest factor first and the chain
     /// `f_{i+1} | f_i` propagates downwards).
     ///
-    /// Computed as the **lcm of the per-block polynomials** from the
-    /// Krylov cyclic decomposition. The lcm of cyclic-block annihilators
-    /// is the global minimal polynomial.
+    /// Computed as the **LCM of per-vector annihilator polynomials over
+    /// the canonical basis**, via [`find_max_minpoly_generator`]. Each
+    /// per-vector minpoly is built from a single Krylov chain.
     ///
     /// # Arguments
     ///
@@ -1337,8 +1348,11 @@ impl<F: FiniteField> FieldMatrix<F> {
     ///
     /// # Complexity
     ///
-    /// `O(n³)` for the Krylov decomposition plus `O(t · n²)` for the
-    /// `t`-fold lcm reduction (`t ≤ n` cyclic blocks).
+    /// `O(n⁴)` on generic matrices: `n` per-vector Krylov chains each
+    /// at `O(n³)`. The textbook cubic algorithm needs random-vector
+    /// Krylov + Schwartz–Zippel verification, or reading `f_1` directly
+    /// from the Frobenius cyclic decomposition; both are deferred per
+    /// the issue's R2 amendment.
     ///
     /// # Examples
     ///
@@ -1675,7 +1689,9 @@ pub fn charpoly<F: FiniteField>(a: &FieldMatrix<F>) -> FieldPoly<F> {
 ///
 /// # Complexity
 ///
-/// `O(n³)` field operations — see [`FieldMatrix::minpoly`].
+/// `O(n⁴)` field operations on generic matrices (see
+/// [`FieldMatrix::minpoly`] for the rationale and the deferred-cubic
+/// fix).
 pub fn minpoly<F: FiniteField>(a: &FieldMatrix<F>) -> FieldPoly<F> {
     a.minpoly()
 }
