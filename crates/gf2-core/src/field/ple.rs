@@ -762,14 +762,26 @@ impl<F: FiniteField> FieldMatrix<F> {
             return (x, e);
         }
         if n == 0 {
-            // X is identity m×m, E is m×0.
-            let zero = self.get(0, 0).zero_like();
+            // X is identity m×m, E is m×0. With cols == 0 we cannot read
+            // a witness from `self`'s storage (it has no cells); fall
+            // back to F::zero_hint(), which is `Some(F::zero())` for
+            // every ConstField in the project. Runtime-context fields
+            // (`Gf2mElement`) return `None` from zero_hint and would need
+            // a witness from a non-empty `self`; with `cols == 0` and
+            // any rows, no witness exists, so the only sound result is
+            // to panic with a clear message — matching the locked
+            // `gemm`/`matvec` zero-inner-dim contract from `ab791e27`.
+            let zero = F::zero_hint().expect(
+                "row_echelon: cannot construct identity X for an m×0 input \
+                 over a runtime-context field (no F witness available); \
+                 use F: ConstField, or pass a non-empty input.",
+            );
             let one = zero.one_like();
             let mut x = FieldMatrix::new(m, m, zero);
             for i in 0..m {
                 x.set(i, i, one.clone());
             }
-            let e = zero_matrix_like(m, 0, self);
+            let e = FieldMatrix::new(m, 0, F::zero_hint().unwrap_or_else(|| x.get(0, 0)));
             return (x, e);
         }
 
@@ -1626,6 +1638,49 @@ mod tests {
         let a = FieldMatrix::<Fp<MERSENNE_31>>::zeros(5, 7);
         let (_p, _l, _e, r) = a.ple();
         assert_eq!(r, 0);
+    }
+
+    /// Zero-width input (`m × 0`) edge case: every public op must not
+    /// panic. `row_echelon` returns `(I_m, 0_m×0)`; `rref` forwards;
+    /// `lu` returns `Some` (rank == 0 == min(m, 0)); `nullspace` is
+    /// empty (n == 0).
+    #[test]
+    fn test_zero_width_edge_does_not_panic() {
+        let a = FieldMatrix::<Fp<MERSENNE_31>>::zeros(4, 0);
+        // ple
+        let (_p, l, e, r) = a.ple();
+        assert_eq!(r, 0);
+        assert_eq!(l.shape(), (4, 0));
+        assert_eq!(e.shape(), (0, 0));
+        // row_echelon: X = I_4, E = 0_{4×0}
+        let (x, e) = a.row_echelon();
+        assert_eq!(x.shape(), (4, 4));
+        assert_eq!(e.shape(), (4, 0));
+        for i in 0..4 {
+            for j in 0..4 {
+                let expected = if i == j {
+                    Fp::<MERSENNE_31>::new(1)
+                } else {
+                    Fp::<MERSENNE_31>::new(0)
+                };
+                assert_eq!(
+                    x.get(i, j),
+                    expected,
+                    "row_echelon X must be identity at ({i}, {j})"
+                );
+            }
+        }
+        // rref forwards to row_echelon for m × 0.
+        let (_x2, e2) = a.rref();
+        assert_eq!(e2.shape(), (4, 0));
+        // lu: rank == 0 == min(4, 0); Some.
+        let lu = a.lu();
+        assert!(lu.is_some(), "lu(m × 0) must return Some (rank == min)");
+        // nullspace is empty (n - rank == 0).
+        let ns = a.nullspace();
+        assert_eq!(ns.len(), 0);
+        // rank
+        assert_eq!(a.rank(), 0);
     }
 
     #[test]
