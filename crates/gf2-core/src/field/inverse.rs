@@ -153,10 +153,25 @@ impl<F: FiniteField> FieldMatrix<F> {
 
     /// Solves `A · x = b` for a single column `b`.
     ///
-    /// Returns `None` if `A` is singular. Otherwise returns the unique
-    /// solution `x = A⁻¹ · b` for square `A` (full-rank). For
-    /// rectangular or rank-deficient inputs this routine is undefined;
-    /// callers must pass a square invertible `A`.
+    /// Contract:
+    ///
+    /// * Returns `Some(x)` with `A · x == b` iff `A` is square and
+    ///   non-singular (`rank(A) == n`).
+    /// * Returns `None` iff `A` is square and rank-deficient
+    ///   (`rank(A) < n`). This is the entire singular-system signal —
+    ///   inconsistent rank-deficient systems and underdetermined
+    ///   compatible systems are not distinguished, both report `None`.
+    /// * Panics if `A` is non-square. Square inputs are a precondition
+    ///   not enforceable in Rust's type system, so the violation is
+    ///   surfaced at the call site rather than swallowed.
+    ///
+    /// Callers needing least-squares or pseudo-inverse semantics over
+    /// rank-deficient compatible systems should compose
+    /// [`row_echelon`](crate::field::ple::FieldMatrix::row_echelon)
+    /// and
+    /// [`nullspace`](crate::field::ple::FieldMatrix::nullspace) from
+    /// the PLE module directly; the Moore–Penrose pseudo-inverse is
+    /// out of scope here (see "Non-square inputs" in the module docs).
     ///
     /// Implements Dumas–Pernet §2.3 Table 2 by composing
     /// [`solve_batch`](Self::solve_batch) with a `n × 1` right-hand side.
@@ -236,8 +251,15 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// `B`; the matrix path benefits from a single PLE + two `trsm`
     /// calls instead of `k` independent solves.
     ///
-    /// Returns `None` if `A` is singular. Otherwise returns the unique
-    /// solution `X = A⁻¹ · B` (all columns simultaneously).
+    /// Contract (mirrors [`solve`](Self::solve)):
+    ///
+    /// * Returns `Some(X)` with `A · X == B` iff `A` is square and
+    ///   non-singular.
+    /// * Returns `None` iff `A` is square and rank-deficient. As with
+    ///   [`solve`](Self::solve), this is the entire singular-system
+    ///   signal; rectangular / pseudo-inverse semantics are out of
+    ///   scope (see the module docs).
+    /// * Panics if `A` is non-square or if `B.rows() != A.rows()`.
     ///
     /// Implements Dumas–Pernet §2.3 Table 2:
     ///
@@ -739,7 +761,6 @@ mod tests {
             return a.get(0, 0);
         }
         let zero = a.get(0, 0).zero_like();
-        let one = zero.one_like();
         let mut acc = zero.clone();
         // Expand along row 0.
         for j in 0..n {
@@ -766,7 +787,6 @@ mod tests {
             } else {
                 acc = acc - term;
             }
-            let _ = one.clone();
         }
         acc
     }
