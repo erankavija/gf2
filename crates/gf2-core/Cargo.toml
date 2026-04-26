@@ -217,3 +217,43 @@ required-features = ["rand"]
 name = "charpoly"
 harness = false
 required-features = ["rand"]
+
+# ── Issue `6ed7f050` (story `64c88ae4`) — full-coverage criterion suite ──
+#
+# Each of these mirrors a subsection of the reference container harness
+# in `benchmarks/reference/fflas_bench.cpp`. They share matrix
+# generators with the reference harness via the SplitMix64 derivation
+# in `benches/common/seed.rs`; see issue `6ed7f050` for the
+# (operation, field, size, regime) coverage matrix.
+
+[[bench]]
+name = "fieldmatrix_gemm"
+harness = false
+required-features = ["rand"]
+
+[[bench]]
+name = "fieldmatrix_ple"
+harness = false
+required-features = ["rand"]
+
+[[bench]]
+name = "fieldmatrix_solve"
+harness = false
+required-features = ["rand"]
+
+[[bench]]
+name = "fieldmatrix_charpoly"
+harness = false
+required-features = ["rand"]
+
+[[bench]]
+name = "sparse_spmv"
+harness = false
+required-features = ["rand"]
+
+# Hand-rolled CSV emitter that writes T1-compatible rows; sister of the
+# criterion suite above. Lives under `examples/` so it builds with
+# `cargo build --release --example bench_csv_emitter`.
+[[example]]
+name = "bench_csv_emitter"
+required-features = ["rand"]
