@@ -56,6 +56,9 @@ pub mod winograd;
 #[cfg(any(test, feature = "test-support"))]
 pub mod axiom_tests;
 
+#[cfg(any(test, feature = "test-support"))]
+pub mod test_random_matrix;
+
 pub use batch_ops::{
     batch_inverse, batch_inverse_in_place, batch_inverse_skip_zeros,
     batch_inverse_skip_zeros_in_place, batch_inverse_with_scratch,

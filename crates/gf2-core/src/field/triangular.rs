@@ -1283,10 +1283,10 @@ fn trtrm_base<F: FiniteField>(l: &mut MatViewMut<'_, F>, u: &MatView<'_, F>) {
 mod tests {
     use super::*;
     use crate::field::matrix::gemm;
+    use crate::field::test_random_matrix::{random_fp, random_gf2m_wide_1};
     use crate::gf2m::{Gf2mWide, Gf2mWideConfig};
     use crate::gfp::Fp;
     use proptest::prelude::*;
-    use rand::{Rng, SeedableRng};
 
     // Test config: GF(2^8) with AES irreducible via `Gf2mWide<1>`.
     struct TriGf2m8Cfg;
@@ -1300,27 +1300,12 @@ mod tests {
     const MERSENNE_31: u64 = 2_147_483_647;
 
     // ─── Random matrix builders ──────────────────────────────────────────
-
-    fn random_fp<const P: u64>(rows: usize, cols: usize, seed: u64) -> FieldMatrix<Fp<P>> {
-        let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
-        let mut m = FieldMatrix::<Fp<P>>::zeros(rows, cols);
-        for r in 0..rows {
-            for c in 0..cols {
-                m.set(r, c, Fp::<P>::new(rng.gen::<u64>() % P));
-            }
-        }
-        m
-    }
+    //
+    // Local monomorphisations of the shared generic helpers in
+    // `field::test_random_matrix` for this module's `TriGf2m8` config.
 
     fn random_gf2m8(rows: usize, cols: usize, seed: u64) -> FieldMatrix<TriGf2m8> {
-        let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
-        let mut m = FieldMatrix::<TriGf2m8>::zeros(rows, cols);
-        for r in 0..rows {
-            for c in 0..cols {
-                m.set(r, c, TriGf2m8::new([rng.gen::<u64>() & 0xFF]));
-            }
-        }
-        m
+        random_gf2m_wide_1::<TriGf2m8Cfg>(rows, cols, seed)
     }
 
     /// Returns an upper-triangular `m × m` matrix with non-zero diagonal.
