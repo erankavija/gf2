@@ -72,10 +72,11 @@ use gf2_core::field::vec::FieldVec;
 use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
 
 use seed::{
-    derive_seed, fp_matrix_from_seed, fp_rank_deficient_from_seed, fp_sparse_from_seed,
-    fp_vec_from_seed, gf2m_wide_1_matrix_from_seed, gf2m_wide_1_rank_deficient_from_seed,
-    gf2m_wide_1_sparse_from_seed, gf2m_wide_1_vec_from_seed, ops_cubic, ops_gemm, ops_quartic,
-    tput, CSV_HEADER,
+    bitmatrix_from_seed, bitmatrix_rank_deficient_from_seed, bitmatrix_sparse_from_seed,
+    bitvec_from_seed, derive_seed, fp_matrix_from_seed, fp_rank_deficient_from_seed,
+    fp_sparse_from_seed, fp_vec_from_seed, gf2m_wide_1_matrix_from_seed,
+    gf2m_wide_1_rank_deficient_from_seed, gf2m_wide_1_sparse_from_seed, gf2m_wide_1_vec_from_seed,
+    ops_cubic, ops_gemm, ops_quartic, tput, CSV_HEADER,
 };
 
 const PRIME_7: u64 = 7;
@@ -792,6 +793,189 @@ fn run_gf2m_factorisation<C: Gf2mWideConfig<1>>(
     Ok(())
 }
 
+/// Benchmark the GF(2) `BitMatrix` family. Sizes mirror
+/// `benchmarks/reference/m4ri_bench.c` so cells line up byte-for-byte
+/// with the M4RI reference: matmul on `[64, 256, 1024, 4096]`,
+/// echelon on `[64, 256, 1024]`, both with `uniform` and `deficient`
+/// (rank `n/2`) regimes. `invert` (no M4RI counterpart in the current
+/// harness) covers the same `[64, 256, 1024]` uniform sweep so the
+/// gf2 absolute throughput is captured. SpMV uses the same
+/// `(size, density)` matrix as the `FieldMatrix` runners so a future
+/// LinBox sparse harness lines up cell-for-cell.
+fn run_bitmatrix(args: &Args, sink: &mut CsvSink) -> std::io::Result<()> {
+    let warmup = args.warmup;
+    let iters = args.iters;
+    let master = args.master_seed;
+    let filter = &args.filter;
+    let field_label = "GF(2)";
+
+    // ── matmul (`BitMatrix * BitMatrix` via M4RM in `gf2_core::alg::m4rm`) ─
+    const MATMUL_SIZES: &[usize] = &[64, 256, 1024, 4096];
+    for (si, &n) in MATMUL_SIZES.iter().enumerate() {
+        for (ri, &(regime, deficient)) in
+            [("uniform", false), ("deficient", true)].iter().enumerate()
+        {
+            let key = cell_key("matmul", field_label, n, regime);
+            if !cell_passes(filter, &key) {
+                continue;
+            }
+            let seed_a = derive_seed(master, "matmul", 12, si as u64, ri as u64);
+            let seed_b = derive_seed(master, "matmul_b", 12, si as u64, ri as u64);
+            let a = if deficient {
+                bitmatrix_rank_deficient_from_seed(n, n, n / 2, seed_a)
+            } else {
+                bitmatrix_from_seed(n, n, seed_a)
+            };
+            let b = bitmatrix_from_seed(n, n, seed_b);
+            eprintln!("[gf2-csv] {key}");
+            let (wall_ns, early) = time_op(
+                || {
+                    let _ = std::hint::black_box(gf2_core::alg::m4rm::multiply(&a, &b));
+                },
+                warmup,
+                iters,
+            );
+            if early {
+                eprintln!("[gf2-csv] WARN early_exit {key} wall_ns={wall_ns}");
+            }
+            sink.emit(
+                "matmul",
+                field_label,
+                n,
+                n,
+                n,
+                regime,
+                seed_a,
+                wall_ns,
+                tput(ops_gemm(n, n, n), wall_ns),
+            )?;
+        }
+    }
+
+    // ── echelon (RREF via `gf2_core::alg::rref`) ───────────────────────────
+    const ECHELON_SIZES: &[usize] = &[64, 256, 1024];
+    for (si, &n) in ECHELON_SIZES.iter().enumerate() {
+        for (ri, &(regime, deficient)) in
+            [("uniform", false), ("deficient", true)].iter().enumerate()
+        {
+            let key = cell_key("echelon", field_label, n, regime);
+            if !cell_passes(filter, &key) {
+                continue;
+            }
+            let seed_a = derive_seed(master, "echelon", 13, si as u64, ri as u64);
+            let a = if deficient {
+                bitmatrix_rank_deficient_from_seed(n, n, n / 2, seed_a)
+            } else {
+                bitmatrix_from_seed(n, n, seed_a)
+            };
+            eprintln!("[gf2-csv] {key}");
+            let (wall_ns, early) = time_op(
+                || {
+                    let r = std::hint::black_box(gf2_core::alg::rref::rref(
+                        std::hint::black_box(&a),
+                        false,
+                    ));
+                    std::hint::black_box(r);
+                },
+                warmup,
+                iters,
+            );
+            if early {
+                eprintln!("[gf2-csv] WARN early_exit {key} wall_ns={wall_ns}");
+            }
+            sink.emit(
+                "echelon",
+                field_label,
+                n,
+                n,
+                n,
+                regime,
+                seed_a,
+                wall_ns,
+                tput(ops_cubic(n), wall_ns),
+            )?;
+        }
+    }
+
+    // ── invert (Gauss–Jordan via `gf2_core::alg::gauss::invert`) ───────────
+    // Uniform only (the deficient regime is by construction non-invertible
+    // for the size set we benchmark, so the operation is N/A there).
+    const INVERT_SIZES: &[usize] = &[64, 256, 1024];
+    for (si, &n) in INVERT_SIZES.iter().enumerate() {
+        let key = cell_key("invert", field_label, n, "uniform");
+        if !cell_passes(filter, &key) {
+            continue;
+        }
+        let seed_a = derive_seed(master, "invert", 14, si as u64, 0);
+        let a = bitmatrix_from_seed(n, n, seed_a);
+        eprintln!("[gf2-csv] {key}");
+        let (wall_ns, early) = time_op(
+            || {
+                let r =
+                    std::hint::black_box(gf2_core::alg::gauss::invert(std::hint::black_box(&a)));
+                std::hint::black_box(r);
+            },
+            warmup,
+            iters,
+        );
+        if early {
+            eprintln!("[gf2-csv] WARN early_exit {key} wall_ns={wall_ns}");
+        }
+        sink.emit(
+            "invert",
+            field_label,
+            n,
+            n,
+            n,
+            "uniform",
+            seed_a,
+            wall_ns,
+            tput(ops_cubic(n), wall_ns),
+        )?;
+    }
+
+    // ── SpMV (CSR `SpBitMatrix` × dense `BitVec`) ──────────────────────────
+    for (di, &(density, density_label)) in SPMV_DENSITIES.iter().enumerate() {
+        for (si, &n) in SPMV_SIZES.iter().enumerate() {
+            let regime = format!("density_{density_label}");
+            let key = cell_key("spmv", field_label, n, &regime);
+            if !cell_passes(filter, &key) {
+                continue;
+            }
+            let row_seed = derive_seed(master, "spmv", 11, si as u64, di as u64);
+            let vec_seed = derive_seed(master, "spmv_vec", 11, si as u64, di as u64);
+            let a = bitmatrix_sparse_from_seed(n, n, density, row_seed);
+            let nnz = a.nnz() as f64;
+            let x = bitvec_from_seed(n, vec_seed);
+            eprintln!("[gf2-csv] {key}");
+            let (wall_ns, early) = time_op(
+                || {
+                    let y = std::hint::black_box(&a).matvec(std::hint::black_box(&x));
+                    std::hint::black_box(y);
+                },
+                warmup,
+                iters,
+            );
+            if early {
+                eprintln!("[gf2-csv] WARN early_exit {key} wall_ns={wall_ns}");
+            }
+            sink.emit(
+                "spmv",
+                field_label,
+                n,
+                n,
+                1,
+                &regime,
+                row_seed,
+                wall_ns,
+                tput(nnz, wall_ns),
+            )?;
+        }
+    }
+
+    Ok(())
+}
+
 fn main() -> std::io::Result<()> {
     let args = Args::parse();
     eprintln!(
@@ -810,6 +994,7 @@ fn main() -> std::io::Result<()> {
     run_fp::<MERSENNE_31>(&args, &mut sink, "GF(2^31-1)")?;
     run_gf2m::<EmitterGf2m8Cfg>(&args, &mut sink, "GF(2^8)")?;
     run_gf2m::<EmitterGf2m16Cfg>(&args, &mut sink, "GF(2^16)")?;
+    run_bitmatrix(&args, &mut sink)?;
 
     eprintln!("[gf2-csv] wrote {}", args.output.display());
     Ok(())

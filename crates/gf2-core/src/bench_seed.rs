@@ -48,6 +48,9 @@ use crate::field::sparse_matrix::SparseFieldMatrix;
 use crate::field::vec::FieldVec;
 use crate::gf2m::{Gf2mWide, Gf2mWideConfig};
 use crate::gfp::Fp;
+use crate::matrix::BitMatrix;
+use crate::sparse::SpBitMatrix;
+use crate::BitVec;
 
 /// Master seed pinned in `benchmarks/seeds/seed.txt`. Both the gf2-side
 /// criterion harness and the reference container harness consume this
@@ -256,6 +259,49 @@ pub fn gf2m_wide_1_rank_deficient_from_seed<C: Gf2mWideConfig<1>>(
     let l = gf2m_wide_1_matrix_from_seed::<C>(m, r, seed ^ RANK_DEF_L_SALT);
     let rmat = gf2m_wide_1_matrix_from_seed::<C>(r, n, seed ^ RANK_DEF_R_SALT);
     crate::field::matrix::gemm(&l, &rmat)
+}
+
+// ─── GF(2) `BitMatrix` / `BitVec` generators ───────────────────────────────
+
+/// Returns an `m × n` `BitMatrix` filled deterministically from `seed`.
+/// Mirrors `m4ri_bench.c::fill_uniform_gf2` byte-for-byte (both consume
+/// the same SplitMix64 stream from the same seed).
+pub fn bitmatrix_from_seed(m: usize, n: usize, seed: u64) -> BitMatrix {
+    BitMatrix::random_seeded(m, n, seed)
+}
+
+/// Returns an `n`-bit `BitVec` filled deterministically from `seed`.
+pub fn bitvec_from_seed(n: usize, seed: u64) -> BitVec {
+    BitVec::random_seeded(n, seed)
+}
+
+/// Returns an `m × n` `BitMatrix` of rank exactly `r` (when `r ≤
+/// min(m, n)`), constructed as `L · R` with the same salt convention as
+/// the `Fp` and `Gf2mWide` rank-deficient generators above.
+pub fn bitmatrix_rank_deficient_from_seed(m: usize, n: usize, r: usize, seed: u64) -> BitMatrix {
+    let l = bitmatrix_from_seed(m, r, seed ^ RANK_DEF_L_SALT);
+    let rmat = bitmatrix_from_seed(r, n, seed ^ RANK_DEF_R_SALT);
+    crate::alg::m4rm::multiply(&l, &rmat)
+}
+
+/// Returns an `m × n` `SpBitMatrix` whose dense form is a per-cell
+/// Bernoulli draw at probability `density` against the SplitMix64
+/// stream from `seed`. The stream and threshold rule mirror the
+/// `fp_sparse_from_seed` helper above — one SplitMix64 draw per cell,
+/// included if the draw is below `density * 2^64`. Then the dense
+/// `BitMatrix` is converted to CSR via `SpBitMatrix::from_dense`.
+pub fn bitmatrix_sparse_from_seed(m: usize, n: usize, density: f64, seed: u64) -> SpBitMatrix {
+    let mut st = seed;
+    let mut dense = BitMatrix::zeros(m, n);
+    let threshold = (density * (u64::MAX as f64 + 1.0)) as u64;
+    for r in 0..m {
+        for c in 0..n {
+            if splitmix64(&mut st) < threshold {
+                dense.set(r, c, true);
+            }
+        }
+    }
+    SpBitMatrix::from_dense(&dense)
 }
 
 // ─── CSV emission ───────────────────────────────────────────────────────────
