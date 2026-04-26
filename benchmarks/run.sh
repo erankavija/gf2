@@ -151,7 +151,65 @@ verify_sha() {
 verify_sha GIVARO_SHA256 libs.givaro
 verify_sha FFLAS_SHA256  libs.fflas-ffpack
 verify_sha M4RI_SHA256   libs.m4ri
-echo "[run.sh] verified Containerfile sha256 ARGs match image.lock" >&2
+
+# Verify the base-image digest in [base].digest matches the Containerfile
+# `FROM ...@sha256:...` line.
+verify_base_digest() {
+    local cf_digest lock_digest
+    cf_digest="$(grep -E '^FROM .+@sha256:[0-9a-f]+' "${CONTAINERFILE}" \
+                  | head -1 | sed -E 's/^.*@(sha256:[0-9a-f]+).*$/\1/')"
+    lock_digest="$(awk '
+        $0=="[base]" {in_sec=1; next}
+        /^\[/ {in_sec=0}
+        in_sec && /^digest/ {gsub(/[\"[:space:]]/,""); sub(/^digest=/,""); print; exit}
+    ' "${LOCK_FILE}")"
+    if [[ -z "${cf_digest}" || -z "${lock_digest}" ]]; then
+        echo "[run.sh] error: missing base digest in Containerfile or image.lock" >&2
+        exit 1
+    fi
+    if [[ "${cf_digest}" != "${lock_digest}" ]]; then
+        echo "[run.sh] error: base-image digest drift" >&2
+        echo "  Containerfile FROM = ${cf_digest}" >&2
+        echo "  image.lock [base]  = ${lock_digest}" >&2
+        exit 1
+    fi
+}
+verify_base_digest
+
+# Verify apt-pinned package versions in [libs.<name>] match the
+# `<package>=<version>` pins in the Containerfile's apt-get install
+# block. Three pins are tracked in image.lock today: gcc-12, openblas,
+# gmp.
+verify_apt_pin() {
+    local pkg_pattern="$1"   # apt-get install pattern, e.g. gcc-12
+    local lock_section="$2"  # e.g. libs.gcc
+    local cf_version lock_version
+    cf_version="$(grep -E "^[[:space:]]+${pkg_pattern}=" "${CONTAINERFILE}" \
+                    | head -1 | sed -E "s|^[[:space:]]+${pkg_pattern}=([^ \\\\]+).*\$|\1|")"
+    # Strip apt epoch prefix (e.g. "2:6.2.1..." -> "6.2.1...") so the
+    # lock file can store the upstream version unambiguously.
+    cf_version_no_epoch="${cf_version#*:}"
+    lock_version="$(awk -v sec="[${lock_section}]" '
+        $0==sec {in_sec=1; next}
+        /^\[/ {in_sec=0}
+        in_sec && /^version/ {gsub(/[\"[:space:]]/,""); sub(/^version=/,""); print; exit}
+    ' "${LOCK_FILE}")"
+    if [[ -z "${cf_version}" || -z "${lock_version}" ]]; then
+        echo "[run.sh] error: missing version for ${pkg_pattern}/${lock_section}" >&2
+        exit 1
+    fi
+    if [[ "${cf_version_no_epoch}" != "${lock_version}" ]]; then
+        echo "[run.sh] error: apt version drift for ${pkg_pattern}" >&2
+        echo "  Containerfile = ${cf_version} (after stripping apt epoch: ${cf_version_no_epoch})" >&2
+        echo "  [${lock_section}] = ${lock_version}" >&2
+        exit 1
+    fi
+}
+verify_apt_pin gcc-12         libs.gcc
+verify_apt_pin libopenblas-dev libs.openblas
+verify_apt_pin libgmp-dev      libs.gmp
+
+echo "[run.sh] verified Containerfile pins (sha256 ARGs + base digest + apt versions) match image.lock" >&2
 
 # ---- build the image ----------------------------------------------------
 if [[ "${SKIP_BUILD}" -eq 0 ]]; then
