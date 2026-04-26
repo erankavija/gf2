@@ -29,7 +29,7 @@ tag  = "ref"
 # `local_id` is intrinsically per-build because `-march=native` couples
 # the binary to the host microarchitecture; recording it gives the gate
 # a tripwire for "did anything change since we last validated?".
-local_id = "sha256:TODO_FILL_AFTER_FIRST_BUILD"
+local_id = "sha256:6c5d58a4f3a91a9f5013726e90e06e3aac6e7d23bbad3d00347e71fe2471d7b5"
 
 [base]
 repository = "docker.io/library/debian"
@@ -41,11 +41,11 @@ tag        = "bookworm-20260421-slim"
 digest     = "sha256:f9c6a2fd2ddbc23e336b6257a5245e31f996953ef06cd13a59fa0a1df2d5c252"
 
 [libs.gcc]
-version = "12.2.0-14"
+version = "12.2.0-14+deb12u1"
 source  = "debian-bookworm-apt"
 
 [libs.gpp]
-version = "12.2.0-14"
+version = "12.2.0-14+deb12u1"
 source  = "debian-bookworm-apt"
 
 [libs.openblas]
@@ -67,14 +67,14 @@ source  = "debian-bookworm-apt"
 [libs.givaro]
 version = "4.2.0"
 source  = "https://github.com/linbox-team/givaro/releases/download/v4.2.0/givaro-4.2.0.tar.gz"
-sha256  = "2c1cb2b1b9c1b1e3b62b6f7b4cbc2c34a18db5e2049b03d60e6c7ad3c98c9c5d"
+sha256  = "865e228812feca971dfb6e776a7bc7ac959cf63ebd52b4f05492730a46e1f189"
 
 [libs.fflas-ffpack]
 version = "2.5.0"
 source  = "https://github.com/linbox-team/fflas-ffpack/releases/download/v2.5.0/fflas-ffpack-2.5.0.tar.gz"
-sha256  = "51d49e16a1d2bd8b39b8a2dab9f4d9c4ae7bea7e3e76ff90b5b3a31e3f50a88e"
+sha256  = "dafb4c0835824d28e4f823748579be6e4c8889c9570c6ce9cce1e186c3ebbb23"
 
 [libs.m4ri]
-version = "20240729"
-source  = "https://github.com/malb/m4ri/releases/download/release-20240729/m4ri-20240729.tar.gz"
-sha256  = "8a83c01bca5375c1a64f5043d3a4d98c8a19a5dc8b3a3ff3b88b7b81bc15ae1b"
+version = "20260122"
+source  = "https://github.com/malb/m4ri/releases/download/20260122/m4ri-20260122.tar.gz"
+sha256  = "7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404"

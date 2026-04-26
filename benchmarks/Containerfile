@@ -44,8 +44,8 @@ RUN apt-get update \
         ca-certificates \
         cmake=3.25.1-1 \
         curl \
-        gcc-12=12.2.0-14 \
-        g++-12=12.2.0-14 \
+        gcc-12=12.2.0-14+deb12u1 \
+        g++-12=12.2.0-14+deb12u1 \
         libgmp-dev=2:6.2.1+dfsg1-1.1 \
         libopenblas-dev=0.3.21+ds-4 \
         liblapack-dev=3.11.0-2 \
@@ -70,7 +70,7 @@ ENV LDFLAGS=""
 # Givaro 4.2.0 — algebraic primitives layer (required by fflas-ffpack).
 # ---------------------------------------------------------------------------
 ARG GIVARO_VERSION=4.2.0
-ARG GIVARO_SHA256=2c1cb2b1b9c1b1e3b62b6f7b4cbc2c34a18db5e2049b03d60e6c7ad3c98c9c5d
+ARG GIVARO_SHA256=865e228812feca971dfb6e776a7bc7ac959cf63ebd52b4f05492730a46e1f189
 RUN curl -fsSL -o /tmp/givaro.tar.gz \
         https://github.com/linbox-team/givaro/releases/download/v${GIVARO_VERSION}/givaro-${GIVARO_VERSION}.tar.gz \
  && echo "${GIVARO_SHA256}  /tmp/givaro.tar.gz" | sha256sum -c - \
@@ -85,7 +85,7 @@ RUN curl -fsSL -o /tmp/givaro.tar.gz \
 # fflas-ffpack 2.5.0 — dense linear algebra over finite fields.
 # ---------------------------------------------------------------------------
 ARG FFLAS_VERSION=2.5.0
-ARG FFLAS_SHA256=51d49e16a1d2bd8b39b8a2dab9f4d9c4ae7bea7e3e76ff90b5b3a31e3f50a88e
+ARG FFLAS_SHA256=dafb4c0835824d28e4f823748579be6e4c8889c9570c6ce9cce1e186c3ebbb23
 RUN curl -fsSL -o /tmp/fflas.tar.gz \
         https://github.com/linbox-team/fflas-ffpack/releases/download/v${FFLAS_VERSION}/fflas-ffpack-${FFLAS_VERSION}.tar.gz \
  && echo "${FFLAS_SHA256}  /tmp/fflas.tar.gz" | sha256sum -c - \
@@ -102,10 +102,10 @@ RUN curl -fsSL -o /tmp/fflas.tar.gz \
 # ---------------------------------------------------------------------------
 # M4RI 20240729 — dense GF(2) linear algebra (the M4RM reference).
 # ---------------------------------------------------------------------------
-ARG M4RI_VERSION=20240729
-ARG M4RI_SHA256=8a83c01bca5375c1a64f5043d3a4d98c8a19a5dc8b3a3ff3b88b7b81bc15ae1b
+ARG M4RI_VERSION=20260122
+ARG M4RI_SHA256=7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404
 RUN curl -fsSL -o /tmp/m4ri.tar.gz \
-        https://github.com/malb/m4ri/releases/download/release-${M4RI_VERSION}/m4ri-${M4RI_VERSION}.tar.gz \
+        https://github.com/malb/m4ri/releases/download/${M4RI_VERSION}/m4ri-${M4RI_VERSION}.tar.gz \
  && echo "${M4RI_SHA256}  /tmp/m4ri.tar.gz" | sha256sum -c - \
  && tar -C /tmp -xf /tmp/m4ri.tar.gz \
  && cd /tmp/m4ri-${M4RI_VERSION} \
