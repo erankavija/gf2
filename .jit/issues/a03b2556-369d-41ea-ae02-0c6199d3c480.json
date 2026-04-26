@@ -2,15 +2,26 @@
   "id": "a03b2556-369d-41ea-ae02-0c6199d3c480",
   "title": "64c88ae4/T1: Benchmark container image + fflas-ffpack/M4RI reference harnesses",
   "description": "First task of story `64c88ae4`. Produces the reproducible container image and the reference-library benchmark harnesses. Emits CSV baseline numbers.\n\n## Deliverables\n\n- **`benchmarks/Dockerfile`** — Debian-slim + pinned gcc, OpenBLAS, GMP, Givaro, fflas-ffpack, M4RI. `-O3 -march=native` throughout.\n- **`benchmarks/Dockerfile.lock`** — image digest pinned for reproducibility.\n- **`benchmarks/run.sh`** — launches the container, captures host info in `benchmarks/host.txt`, runs the reference harnesses, drops CSV.\n- **`benchmarks/reference/fflas_bench.cpp`** — invokes fflas-ffpack `fgemm`, PLE, echelon, inv, solve, charpoly on identical seeded matrices for every (field, size) combination from the story.\n- **`benchmarks/reference/m4ri_bench.c`** — invokes M4RI matmul on GF(2) matrices (seeded identical to the gf2 side).\n- **CSV schema documented** in `benchmarks/README.md` — columns: `(lib, operation, field, m, k, n, rank_regime, seed, wall_ns, throughput_ops)`.\n\n## Success criteria\n\n- [hard] Container builds from a clean state with the pinned Dockerfile.\n- [hard] Harnesses run to completion and emit CSV for every (field, op, size) combination listed in the story.\n- [hard] Host hardware captured in `host.txt` at run time.\n- [hard] Bench seeds are deterministic; rerun produces identical matrices (even if timings differ).\n- [hard] Container image works on a host that has *no* fflas-ffpack / M4RI installed natively — i.e., nothing leaks from the host.\n\n## Depends on\n\n- None (can start in parallel with T2).",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [],
   "gates_required": [
     "code-review",
     "cargo-ci"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-26T10:32:43.452660808Z"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-26T10:34:08.392816060Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -20,5 +31,5 @@
     "epic:bb85c68a"
   ],
   "created_at": "2026-04-23T16:30:17.075812784+00:00",
-  "updated_at": "2026-04-23T16:30:17.075821384+00:00"
+  "updated_at": "2026-04-26T10:39:01.180051707+00:00"
 }
