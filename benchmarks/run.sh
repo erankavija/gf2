@@ -21,8 +21,10 @@
 #   GF2_BENCH_WARMUP=3
 #   GF2_BENCH_ITERS=5
 #
-# This script writes only into benchmarks/{host.txt,results/}; nothing
-# leaves the working tree.
+# This script writes into benchmarks/host.txt, benchmarks/results/, and
+# (after a successful build) stamps the image.lock [image].local_id slot
+# with the new build's content-addressable id; nothing leaves the
+# working tree.
 
 set -euo pipefail
 
