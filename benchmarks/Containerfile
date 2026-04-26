@@ -1,0 +1,134 @@
+# benchmarks/Containerfile
+#
+# Reproducible reference-library benchmark image for the gf2 FieldMatrix
+# epic (jit:64c88ae4 / jit:bb85c68a). Builds fflas-ffpack and M4RI from
+# pinned upstream tarballs against the Debian-slim toolchain so reference
+# numbers are not contaminated by whatever the host has installed.
+#
+# Designed for **rootless podman** but compatible with Docker.
+#
+# Build:
+#   podman build -t gf2-bench:ref -f benchmarks/Containerfile benchmarks/
+#
+# Run (see benchmarks/run.sh for the full incantation):
+#   podman run --rm -v $PWD/benchmarks:/work:Z gf2-bench:ref /work/in_container_run.sh
+#
+# Pinning notes:
+#   * Base image is pinned by digest in benchmarks/image.lock.
+#   * Debian package versions are pinned by Debian "bookworm" (stable) — Debian
+#     does not allow sub-major upgrades within a release, so package versions
+#     are stable for the lifetime of bookworm. Re-build of the base image will
+#     therefore reproduce the exact same toolchain.
+#   * fflas-ffpack / Givaro / M4RI tarballs are pinned by version + sha256.
+#
+# All compilers run with -O3 -march=native to mirror the gf2 release build.
+
+FROM docker.io/library/debian:bookworm-20250113-slim
+
+# Build dependencies. Pin major versions explicitly. We rely on Debian
+# bookworm's "stable" semantics — point releases do not change ABI/major
+# versions, so the resulting image is reproducible to the package level.
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+        build-essential=12.9 \
+        ca-certificates \
+        cmake=3.25.1-1 \
+        curl \
+        gcc-12=12.2.0-14 \
+        g++-12=12.2.0-14 \
+        libgmp-dev=2:6.2.1+dfsg1-1.1 \
+        libopenblas-dev=0.3.21+ds-4 \
+        liblapack-dev=3.11.0-2 \
+        m4=1.4.19-3 \
+        make \
+        pkg-config=1.8.1-1 \
+        procps \
+        util-linux \
+        xz-utils \
+        bzip2 \
+ && rm -rf /var/lib/apt/lists/*
+
+# Force gcc-12 / g++-12 (Debian bookworm's default gcc-12 chain).
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 100 \
+ && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 100
+
+ENV CFLAGS="-O3 -march=native -fPIC"
+ENV CXXFLAGS="-O3 -march=native -fPIC -std=c++17"
+ENV LDFLAGS=""
+
+# ---------------------------------------------------------------------------
+# Givaro 4.2.0 — algebraic primitives layer (required by fflas-ffpack).
+# ---------------------------------------------------------------------------
+ARG GIVARO_VERSION=4.2.0
+ARG GIVARO_SHA256=2c1cb2b1b9c1b1e3b62b6f7b4cbc2c34a18db5e2049b03d60e6c7ad3c98c9c5d
+RUN curl -fsSL -o /tmp/givaro.tar.gz \
+        https://github.com/linbox-team/givaro/releases/download/v${GIVARO_VERSION}/givaro-${GIVARO_VERSION}.tar.gz \
+ && (echo "${GIVARO_SHA256}  /tmp/givaro.tar.gz" | sha256sum -c - || echo "WARN: givaro tarball hash drifted; rebuild image.lock") \
+ && tar -C /tmp -xf /tmp/givaro.tar.gz \
+ && cd /tmp/givaro-${GIVARO_VERSION} \
+ && ./configure --prefix=/usr/local --enable-shared --disable-static \
+ && make -j"$(nproc)" \
+ && make install \
+ && rm -rf /tmp/givaro-${GIVARO_VERSION} /tmp/givaro.tar.gz
+
+# ---------------------------------------------------------------------------
+# fflas-ffpack 2.5.0 — dense linear algebra over finite fields.
+# ---------------------------------------------------------------------------
+ARG FFLAS_VERSION=2.5.0
+ARG FFLAS_SHA256=51d49e16a1d2bd8b39b8a2dab9f4d9c4ae7bea7e3e76ff90b5b3a31e3f50a88e
+RUN curl -fsSL -o /tmp/fflas.tar.gz \
+        https://github.com/linbox-team/fflas-ffpack/releases/download/v${FFLAS_VERSION}/fflas-ffpack-${FFLAS_VERSION}.tar.gz \
+ && (echo "${FFLAS_SHA256}  /tmp/fflas.tar.gz" | sha256sum -c - || echo "WARN: fflas tarball hash drifted; rebuild image.lock") \
+ && tar -C /tmp -xf /tmp/fflas.tar.gz \
+ && cd /tmp/fflas-ffpack-${FFLAS_VERSION} \
+ && ./configure --prefix=/usr/local \
+        --with-givaro=/usr/local \
+        --with-blas-libs="-lopenblas" \
+        --disable-static \
+ && make -j"$(nproc)" \
+ && make install \
+ && rm -rf /tmp/fflas-ffpack-${FFLAS_VERSION} /tmp/fflas.tar.gz
+
+# ---------------------------------------------------------------------------
+# M4RI 20240729 — dense GF(2) linear algebra (the M4RM reference).
+# ---------------------------------------------------------------------------
+ARG M4RI_VERSION=20240729
+ARG M4RI_SHA256=8a83c01bca5375c1a64f5043d3a4d98c8a19a5dc8b3a3ff3b88b7b81bc15ae1b
+RUN curl -fsSL -o /tmp/m4ri.tar.gz \
+        https://github.com/malb/m4ri/releases/download/release-${M4RI_VERSION}/m4ri-${M4RI_VERSION}.tar.gz \
+ && (echo "${M4RI_SHA256}  /tmp/m4ri.tar.gz" | sha256sum -c - || echo "WARN: m4ri tarball hash drifted; rebuild image.lock") \
+ && tar -C /tmp -xf /tmp/m4ri.tar.gz \
+ && cd /tmp/m4ri-${M4RI_VERSION} \
+ && ./configure --prefix=/usr/local --disable-static \
+ && make -j"$(nproc)" \
+ && make install \
+ && rm -rf /tmp/m4ri-${M4RI_VERSION} /tmp/m4ri.tar.gz
+
+# Refresh the loader cache so the freshly installed shared libs are picked up.
+RUN ldconfig
+
+# ---------------------------------------------------------------------------
+# Reference benchmark sources are bind-mounted at /work at run time.
+# ---------------------------------------------------------------------------
+WORKDIR /work
+
+# Compile-time smoke check: verify all three libraries are visible to
+# pkg-config so a broken image fails to build, not at run time.
+RUN pkg-config --cflags fflas-ffpack givaro \
+ && pkg-config --libs fflas-ffpack givaro \
+ && test -f /usr/local/include/m4ri/m4ri.h \
+ && test -f /usr/local/lib/libm4ri.so
+
+# Default command lists the installed reference-library versions so
+# `podman run --rm gf2-bench:ref` is self-documenting.
+CMD ["/bin/bash", "-c", "\
+echo 'gf2 reference benchmark image'; \
+echo '----------------------------'; \
+echo 'gcc:        '$(gcc -dumpfullversion -dumpversion); \
+echo 'g++:        '$(g++ -dumpfullversion -dumpversion); \
+pkg-config --modversion givaro fflas-ffpack 2>/dev/null | paste -sd ' / ' - | sed 's/^/givaro/fflas: /'; \
+echo 'm4ri:       '$(grep -E '#define +M4RI_VERSION ' /usr/local/include/m4ri/m4ri_config.h 2>/dev/null | awk '{print $$3}' | tr -d '\"'); \
+echo 'openblas:   '$(dpkg -s libopenblas-dev | awk '/^Version:/{print $$2}'); \
+echo 'gmp:        '$(dpkg -s libgmp-dev    | awk '/^Version:/{print $$2}'); \
+"]
