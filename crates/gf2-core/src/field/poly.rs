@@ -1176,6 +1176,120 @@ impl<F: FiniteField> FieldPoly<F> {
         points.iter().map(|x| self.eval(x)).collect()
     }
 
+    /// Evaluates the polynomial at a square matrix `A`, returning
+    /// `p(A) = c_d · A^d + c_{d-1} · A^{d-1} + … + c_1 · A + c_0 · I`.
+    ///
+    /// Implemented via Horner's scheme on matrices: starting with
+    /// `result = c_d · I`, repeatedly form `result := result · A + c_k · I`
+    /// for `k = d-1, …, 0`. Each step costs one full
+    /// [`gemm`](crate::field::matrix::gemm) plus an `O(n)` diagonal
+    /// update, so the overall cost is `O(d · n³)` field operations.
+    ///
+    /// The zero polynomial evaluates to the `n × n` zero matrix; the
+    /// constant polynomial `c` evaluates to `c · I`.
+    ///
+    /// # Arguments
+    ///
+    /// * `a` — square `n × n` matrix at which to evaluate.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `a` is not square.
+    ///
+    /// # Complexity
+    ///
+    /// `O(d · n³)` field operations, where `d = self.degree()`. `O(n²)`
+    /// (just an identity-scaled materialisation) on the zero polynomial.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::matrix::FieldMatrix;
+    /// use gf2_core::field::FieldPoly;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// // p(x) = x² + 1 over Fp<7>; A = identity ⇒ p(A) = 2 · I.
+    /// let p = FieldPoly::new(vec![
+    ///     Fp::<7>::new(1),
+    ///     Fp::<7>::new(0),
+    ///     Fp::<7>::new(1),
+    /// ]);
+    /// let id = FieldMatrix::<Fp<7>>::identity(3);
+    /// let pa = p.eval_at_matrix(&id);
+    /// assert_eq!(pa.get(0, 0), Fp::<7>::new(2));
+    /// assert_eq!(pa.get(1, 1), Fp::<7>::new(2));
+    /// assert_eq!(pa.get(2, 2), Fp::<7>::new(2));
+    /// assert_eq!(pa.get(0, 1), Fp::<7>::new(0));
+    /// ```
+    pub fn eval_at_matrix(
+        &self,
+        a: &crate::field::matrix::FieldMatrix<F>,
+    ) -> crate::field::matrix::FieldMatrix<F> {
+        use crate::field::matrix::{gemm_into_view, FieldMatrix};
+        let (m, n) = a.shape();
+        assert_eq!(
+            m, n,
+            "FieldPoly::eval_at_matrix: input must be square (got {}×{})",
+            m, n
+        );
+        // n == 0 ⇒ trivial 0×0 result. Use a matvec-style zero source
+        // chain so we never need a witness for empty inputs.
+        if n == 0 {
+            // 0×0 result: use any zero we can fabricate; if none is
+            // available, produce a hard-coded identity-shaped 0×0 with
+            // empty storage by routing through `FieldMatrix::zeros`
+            // when `F: ConstField` exists. For the runtime-context
+            // path, the zero polynomial would still have empty storage;
+            // we simply mirror the input shape.
+            let zero_opt: Option<F> = self
+                .coeffs
+                .first()
+                .map(|c| c.zero_like())
+                .or_else(F::zero_hint);
+            return match zero_opt {
+                Some(z) => FieldMatrix::<F>::new(0, 0, z),
+                // Fall back: A is 0×0 over a runtime-context field and
+                // self is the zero polynomial. Borrow A directly — it
+                // already has empty storage and the right shape.
+                None => a.clone(),
+            };
+        }
+        let zero: F = a.get(0, 0).zero_like();
+        // Zero polynomial ⇒ result = n × n zero matrix.
+        let Some(deg) = self.degree() else {
+            return FieldMatrix::new(n, n, zero);
+        };
+        // Initialise result with c_deg · I.
+        let mut result = FieldMatrix::<F>::new(n, n, zero.clone());
+        let lead = self.coeffs[deg].clone();
+        for i in 0..n {
+            result.set(i, i, lead.clone());
+        }
+        // Horner step: for k = deg-1, …, 0:
+        //   tmp := result · a       (gemm)
+        //   result := tmp + c_k · I (diagonal update)
+        let mut scratch = FieldMatrix::<F>::new(n, n, zero.clone());
+        for k in (0..deg).rev() {
+            // tmp = result · a
+            gemm_into_view(&result, a, scratch.submat_mut(.., ..));
+            // Add c_k on the diagonal.
+            let ck = self.coeffs[k].clone();
+            if !ck.is_zero() {
+                for i in 0..n {
+                    let cur = scratch.get(i, i);
+                    scratch.set(i, i, cur + ck.clone());
+                }
+            }
+            // Swap: result <-> scratch (avoids cloning the n×n result).
+            // After swap, `scratch` holds the previous `result` and is
+            // ready to be overwritten by the next gemm —
+            // [`gemm_into_view`] overwrites cell-by-cell, so the prior
+            // contents need no explicit reset.
+            std::mem::swap(&mut result, &mut scratch);
+        }
+        result
+    }
+
     /// Evaluates the polynomial at every point in `points` using a
     /// subproduct-tree algorithm, or the naive per-point Horner fallback
     /// when the inputs are below the [`SUBPRODUCT_THRESHOLD`] crossover.
