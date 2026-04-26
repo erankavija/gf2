@@ -557,6 +557,7 @@ mod tests {
     };
     use crate::gf2m::{Gf2mWide, Gf2mWideConfig};
     use crate::gfp::Fp;
+    use proptest::prelude::*;
     use serial_test::serial;
 
     const MERSENNE_31: u64 = 2_147_483_647;
@@ -1142,4 +1143,135 @@ mod tests {
     const EXPECTED_INV_N1024: u64 = 4569;
     const EXPECTED_SOLVE_N64: u64 = 260;
     const EXPECTED_DET_N64: u64 = 254;
+
+    // ── Property-based tests (proptest) ──────────────────────────────────────
+    //
+    // Per `CLAUDE.md` testing convention: TDD plus property-based
+    // tests for mathematical invariants. The block below sweeps many
+    // seeds at small bounded sizes (`n ∈ 1..=6`) so each case stays
+    // well under the 5 s per-test wall-clock cap, and the per-block
+    // `cases = 32` budget keeps the aggregate suite cost negligible.
+    //
+    // Invariants checked:
+    //   1. `A · A⁻¹ == I`           (inverse round-trip, full-rank `A`).
+    //   2. `A · solve(A, b) == b`   (solve round-trip).
+    //   3. `det(A · B) == det(A) · det(B)`  (multiplicativity).
+    //   4. `det(A) == 0  iff  rank(A) < n`  (singularity criterion).
+    //
+    // Both Fp<MERSENNE_31> (odd characteristic) and Gf2m8
+    // (characteristic 2) are exercised so any sign-related bug
+    // affecting only odd characteristics is caught alongside
+    // characteristic-2 specific failures.
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(32))]
+
+        /// `A · A⁻¹ == I` for full-rank `A` over Fp<MERSENNE_31>.
+        #[test]
+        fn proptest_inv_round_trip_fp_m31(
+            n in 1usize..=6,
+            seed in any::<u64>(),
+        ) {
+            let a = random_fp_invertible::<MERSENNE_31>(n, seed);
+            let inv = a.inv().expect("full-rank");
+            let prod = gemm(&a, &inv);
+            let id = FieldMatrix::<Fp<MERSENNE_31>>::identity(n);
+            prop_assert_eq!(prod, id);
+        }
+
+        /// `A · A⁻¹ == I` and `A⁻¹ · A == I` for full-rank `A` over Gf2m8.
+        #[test]
+        fn proptest_inv_round_trip_gf2m8(
+            n in 1usize..=6,
+            seed in any::<u64>(),
+        ) {
+            let a = random_gf2m8_invertible(n, seed);
+            let inv = a.inv().expect("full-rank");
+            let prod = gemm(&a, &inv);
+            let prod2 = gemm(&inv, &a);
+            // Compare to the identity element-wise. Gf2m8 is `Copy`,
+            // so the zero/one witnesses are cheap to use directly.
+            let zero = Gf2m8::new([0]);
+            let one = Gf2m8::new([1]);
+            for i in 0..n {
+                for j in 0..n {
+                    let expected = if i == j { one } else { zero };
+                    prop_assert_eq!(prod.get(i, j), expected);
+                    prop_assert_eq!(prod2.get(i, j), expected);
+                }
+            }
+        }
+
+        /// `A · solve(A, b) == b` for full-rank `A` and arbitrary `b`.
+        #[test]
+        fn proptest_solve_round_trip_fp_m31(
+            n in 1usize..=6,
+            seed_a in any::<u64>(),
+            seed_b in any::<u64>(),
+        ) {
+            let a = random_fp_invertible::<MERSENNE_31>(n, seed_a);
+            // Use the shared random_fp_vec helper to obtain an
+            // arbitrary right-hand side over the same field.
+            let b = crate::field::test_random_matrix::random_fp_vec::<MERSENNE_31>(n, seed_b);
+            let x = a.solve(&b).expect("full-rank");
+            let bb = a.matvec(&x);
+            prop_assert_eq!(bb, b);
+        }
+
+        /// `det(A · B) == det(A) · det(B)` for square `A`, `B`.
+        ///
+        /// `A` and `B` are arbitrary (possibly singular); the
+        /// identity holds in either case because both sides are zero
+        /// when either factor is singular.
+        #[test]
+        fn proptest_det_multiplicative_fp_m31(
+            n in 1usize..=5,
+            seed_a in any::<u64>(),
+            seed_b in any::<u64>(),
+        ) {
+            let a = random_fp::<MERSENNE_31>(n, n, seed_a);
+            let b = random_fp::<MERSENNE_31>(n, n, seed_b);
+            let ab = gemm(&a, &b);
+            let lhs = ab.det();
+            let rhs = a.det() * b.det();
+            prop_assert_eq!(lhs, rhs);
+        }
+
+        /// `det(A) == 0  iff  rank(A) < n` for square `A`.
+        #[test]
+        fn proptest_det_zero_iff_singular_fp_m31(
+            n in 1usize..=5,
+            seed in any::<u64>(),
+        ) {
+            let a = random_fp::<MERSENNE_31>(n, n, seed);
+            let d = a.det();
+            let r = a.rank();
+            let zero = Fp::<MERSENNE_31>::new(0);
+            if r < n {
+                prop_assert_eq!(d, zero, "rank {} < n {} but det != 0", r, n);
+            } else {
+                prop_assert_ne!(d, zero, "rank == n but det == 0");
+            }
+        }
+
+        /// `det(A) == 0  iff  rank(A) < n` for square `A` over Gf2m8.
+        ///
+        /// Independent of `proptest_det_zero_iff_singular_fp_m31` to
+        /// catch any characteristic-2-specific sign-handling bug.
+        #[test]
+        fn proptest_det_zero_iff_singular_gf2m8(
+            n in 1usize..=5,
+            seed in any::<u64>(),
+        ) {
+            let a = random_gf2m8(n, n, seed);
+            let d = a.det();
+            let r = a.rank();
+            let zero = a.get(0, 0).zero_like();
+            if r < n {
+                prop_assert_eq!(d, zero, "rank {} < n {} but det != 0", r, n);
+            } else {
+                prop_assert_ne!(d, zero, "rank == n but det == 0");
+            }
+        }
+    }
 }
