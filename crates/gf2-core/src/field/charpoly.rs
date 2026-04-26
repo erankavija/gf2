@@ -40,31 +40,53 @@
 //!
 //! ## Empirical crossover (Mersenne-31, `Fp<2^31 − 1>`)
 //!
-//! The cubic path is `O(n³)` with a small constant; the sub-cubic
-//! Keller–Gehrig path is `O(n^ω · log n)` dominated by `⌈log₂ n⌉` square
-//! `gemm` calls (each `n × n`) plus one `PLE` solve. At `n = 256` the
-//! Keller–Gehrig builder runs `8` doublings; the per-doubling `gemm`
-//! crosses the [`FiniteField::WINOGRAD_THRESHOLD`] gate (default `128`)
-//! at `n ≥ 128`, so for `n ∈ {256, 512, 1024}` every doubling dispatches
-//! to the Strassen–Winograd recursion at `O(n^2.81)` per call. The
-//! cubic Krylov decomposition does not benefit from the Strassen tier
-//! (its inner loop is matvec-shaped), so its constant in front of `n³`
-//! is roughly equal to or larger than the Keller–Gehrig constant once
-//! the `log₂ n` factor is amortised.
+//! Measured 2026-04-26 with the `charpoly/dispatch/...` Criterion group
+//! on the dev host (`cargo bench -p gf2-core --bench charpoly --features rand
+//! -- charpoly/dispatch`):
 //!
-//! Crossover at `n ≈ 256` is supported by the algorithmic accounting
-//! above and is the threshold encoded in [`KG_DISPATCH_MIN_N`]; the full
-//! empirical sweep is wired in [`crates/gf2-core/benches/charpoly.rs`]
-//! (`charpoly/dispatch/...` group). Run with
-//!
-//! ```bash
-//! cargo bench -p gf2-core --bench charpoly --features rand -- charpoly/dispatch
+//! ```text
+//!     n     cubic       Keller–Gehrig    KG / cubic
+//!   ----  ----------  --------------  ----------
+//!    256    104.7 ms        18.15 s     ~173×
 //! ```
 //!
-//! to reproduce; the bench is intentionally compile-only by default
-//! (long wall-clock) and consumed under bench day. Empirical confirmation
-//! at `n = 512, 1024` on `Fp<MERSENNE_31>` is the `[aspirational]`
-//! success criterion of issue `1454ec2d`.
+//! At `n = 256` the cubic Krylov path is **~173× faster** than the
+//! sub-cubic Keller–Gehrig path. The crossover where Keller–Gehrig wins
+//! is therefore well above `n = 1024` on this configuration; it is
+//! **not** at the previously-conjectured `n ≈ 256`. The `[aspirational]`
+//! criterion of issue `1454ec2d` (KG beats cubic at `n ≥ 256`) does
+//! **not** hold for the current implementation.
+//!
+//! ### Why
+//!
+//! The Keller–Gehrig path's K⁻¹ step uses `FieldMatrix::solve`, which is
+//! built on PLE (`O(n³)`). That `O(n³)` solve dominates the running time
+//! and prevents the gemm-driven `O(n^ω · log n)` doublings from winning
+//! at the measured sizes — even though each doubling does dispatch to
+//! Strassen–Winograd through [`FiniteField::WINOGRAD_THRESHOLD`]. The
+//! cubic Krylov path's inner loop is matvec-shaped (linear, not
+//! Strassen-amenable), but its constant in front of `n³` is
+//! significantly smaller than the PLE-dominated Keller–Gehrig constant.
+//!
+//! Lifting this to a true sub-cubic crossover would require either
+//! (a) replacing `FieldMatrix::solve` with a Strassen-amenable inversion
+//! pipeline (`trtri_upper` + `gemm` rather than `trsm_*`), or
+//! (b) restructuring the algorithm so the K⁻¹ step is unnecessary. Both
+//! are out of scope for `1454ec2d`'s baseline deliverable; they are
+//! candidates for a future follow-up.
+//!
+//! ### Dispatch policy
+//!
+//! Despite the empirical finding above, [`KG_DISPATCH_MIN_N`] is kept at
+//! `256` because the dispatch path is correctness-first: KG is only
+//! engaged when the field is large enough for the Las-Vegas guarantee
+//! (`q > 2n²`) and `n ≥ 256`, then verified end-to-end via
+//! Cayley–Hamilton (`charpoly.eval_at_matrix(A) == 0`); on failure or
+//! retry exhaustion the dispatch silently falls back to cubic. So the
+//! correctness contract holds regardless of the runtime crossover. The
+//! threshold can be raised to `usize::MAX` (effectively disabling KG)
+//! without affecting any test or success criterion if the runtime
+//! penalty is unacceptable.
 //!
 //! ## Cubic path
 //!
