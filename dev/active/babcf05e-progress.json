@@ -1,0 +1,90 @@
+{
+  "epic_id": "babcf05e-29e8-4c81-ba77-843ec6409cfa",
+  "epic_short_id": "babcf05e",
+  "title": "gf2-core PPC-spiral performance sweep",
+  "claimed_by": "agent:project-lead",
+  "started_at": "2026-04-26T22:30:00+00:00",
+  "last_updated": "2026-04-26T22:30:00+00:00",
+  "current_wave": 1,
+  "phase": "wave_1_starting; c7791a20 profile.release task to be dispatched",
+  "related_epic": "bb85c68a (FieldMatrix linear algebra) — at session-6 95% complete; uncompetitiveness profile from a9ab0a4f revealed gf2-core perf gaps that motivate this epic",
+  "spec_doc": "dev/plans/gf2_core_ppc_spiral.md",
+  "uncompetitiveness_doc": "dev/bench_results/2026-04-26-uncompetitiveness-profile.md",
+  "notes": [
+    "Session 1 (this session): scaffolding survey + Wave 1 dispatch. PPC-spiral epic has 6 stories and 16 child tasks already scaffolded by the user. Verified DAG: B1 transpose (1c1c4242) and C4 QuadraticExt (3168d114) exist transitively (B3→B1, C5→C4). Epic→S0 dep already transitive via Tier-A/B paths.",
+    "User invoked /project-lead with the framing 'epic babcf05e. This goes hand in hand with bb85c68a.' Interpretation: drive babcf05e; bb85c68a's open work (a9ab0a4f T3 published analysis, R3 fix landed) is being driven separately. Coherence with bb85c68a: any kernel work here must remain compatible with the bench_csv_emitter (crates/gf2-core/examples/bench_csv_emitter.rs) and bench_seed (crates/gf2-core/src/bench_seed.rs) infrastructure landed in Wave 4 of bb85c68a.",
+    "Wave 1 is c7791a20 alone (workspace [profile.release] block) because: (1) it is the foundational config change, (2) every subsequent Tier A-D baseline must be measured with it active per the issue spec, (3) its small Cargo.toml-only scope makes serial dispatch safe.",
+    "Reviewer-pattern carryover from bb85c68a: Tier 1.5 prior-findings regression check, Tier 2.5 stale-narrative sweep, Tier 2.75 deferred-items audit — all mandatory before each rework dispatch. 'Narrowing-interpretations' pattern (a03b2556 hit 7 cycles) — when reviewer findings get progressively cosmetic, apply user-directive lens rather than chase every finding."
+  ],
+  "waves": [
+    {
+      "wave_number": 1,
+      "label": "Profile-release foundation",
+      "issues": [
+        {"id": "c7791a20-28dd-4fdf-a5a4-78f4d38b3b19", "short_id": "c7791a20", "title": "Add workspace [profile.release] block (lto, codegen-units)", "kind": "task", "classification": "implementation", "status": "pending", "state": "ready"}
+      ]
+    },
+    {
+      "wave_number": 2,
+      "label": "S0 measurement infrastructure",
+      "issues": [
+        {"id": "b2ecd2ff-7b1d-4072-aa8b-d0b2e8f04b64", "short_id": "b2ecd2ff", "title": "Pin criterion baselines for all targeted kernels", "kind": "task", "classification": "implementation", "status": "pending", "state": "backlog", "note": "Sequential after c7791a20 done — must be measured with [profile.release] active."},
+        {"id": "c3a9a4cb-7233-40dc-a56e-8e0d7936e8e9", "short_id": "c3a9a4cb", "title": "ASM-inspection convention + asm-artefact-present gate", "kind": "task", "classification": "implementation", "status": "pending", "state": "ready", "note": "Parallel-safe with 4f845881 and 2a0ffb18 via worktrees."},
+        {"id": "4f845881-2fbc-4ba5-baf5-48ade75830bc", "short_id": "4f845881", "title": "PPC compare harness + criterion-1.5x gate", "kind": "task", "classification": "implementation", "status": "pending", "state": "ready", "note": "Registers new criterion-1.5x gate in JIT registry."},
+        {"id": "2a0ffb18-eb7f-459a-855b-11faea76b733", "short_id": "2a0ffb18", "title": "Proptest scaffolding for SIMD-vs-scalar equivalence", "kind": "task", "classification": "implementation", "status": "pending", "state": "ready"}
+      ]
+    },
+    {
+      "wave_number": 3,
+      "label": "Tier A — Dispatch routing",
+      "issues": [
+        {"id": "c69d2055-942d-4341-88ad-6020245fcc97", "short_id": "c69d2055", "title": "Hoist maybe_simd() out of xor_inplace hot path", "kind": "task", "classification": "implementation", "status": "pending", "state": "backlog"},
+        {"id": "5223bb04-253e-4a37-9047-c6e333d66ba0", "short_id": "5223bb04", "title": "Route BitMatrix::mul row-XOR through xor_fn dispatch", "kind": "task", "classification": "implementation", "status": "pending", "state": "backlog"},
+        {"id": "8e4b189c-75a6-4c93-8056-c3c9c994b1c8", "short_id": "8e4b189c", "title": "Route BitMatrix::matvec through popcnt SIMD dispatch", "kind": "task", "classification": "implementation", "status": "pending", "state": "backlog"},
+        {"id": "cad241e6-9606-47ff-96fc-20f38ed591aa", "short_id": "cad241e6", "title": "Generic Fp prime FieldVec batch dispatch (Solinas-friendly)", "kind": "task", "classification": "implementation", "status": "pending", "state": "backlog"}
+      ]
+    },
+    {
+      "wave_number": 4,
+      "label": "Tier B — Dense bit-matrix kernels",
+      "issues": [
+        {"id": "1c1c4242-78bb-4ae9-b791-f764b844f880", "short_id": "1c1c4242", "title": "BitMatrix::transpose 64x64 bit-block + AVX2", "kind": "task", "classification": "implementation", "status": "pending", "state": "backlog", "note": "B1 — must complete before B3 (19bc3199)."},
+        {"id": "54a0e75c-0d45-4dbc-b895-a0f6674fa331", "short_id": "54a0e75c", "title": "M4RM Gray-code table build (ILP + SIMD)", "kind": "task", "classification": "implementation", "status": "pending", "state": "backlog"},
+        {"id": "19bc3199-e140-405f-9d16-d7722d7b7927", "short_id": "19bc3199", "title": "M4RM block multiply register-tile + cache-block", "kind": "task", "classification": "implementation", "status": "pending", "state": "backlog", "note": "B3 — depends on B1 transitively."}
+      ]
+    },
+    {
+      "wave_number": 5,
+      "label": "Tier C — Field-arithmetic batch",
+      "issues": [
+        {"id": "3168d114-57f2-4a21-a28f-3c191833385d", "short_id": "3168d114", "title": "QuadraticExt::mul Karatsuba SoA batched SIMD", "kind": "task", "classification": "implementation", "status": "pending", "state": "backlog", "note": "C4 — blocks C5."},
+        {"id": "ec286cee-48af-4dec-8190-424f6ffbfab7", "short_id": "ec286cee", "title": "GF(2^m) batch mul/square m=8,16,32 via VPCLMULQDQ", "kind": "task", "classification": "implementation", "status": "pending", "state": "backlog"},
+        {"id": "7c954fb5-1efe-440e-b29d-eed5270b8204", "short_id": "7c954fb5", "title": "GF(2^571) batch mul via multi-word VPCLMULQDQ", "kind": "task", "classification": "implementation", "status": "pending", "state": "backlog"},
+        {"id": "86c09a51-8d7e-4610-854b-6110ab830d4c", "short_id": "86c09a51", "title": "Fp prime Montgomery batch SIMD for general 64-bit primes (AVX2)", "kind": "task", "classification": "implementation", "status": "pending", "state": "backlog", "note": "C3 — IFMA52 sub-task may be created later only if AVX2 falls below 1.5x AND user approves MSRV bump."},
+        {"id": "33d3f5b7-5942-445d-8e34-9b87c0903f7f", "short_id": "33d3f5b7", "title": "CubicExt::mul Karatsuba SoA batched SIMD", "kind": "task", "classification": "implementation", "status": "pending", "state": "backlog", "note": "C5 — depends on C4."}
+      ]
+    },
+    {
+      "wave_number": 6,
+      "label": "Tier D — Sparse layout",
+      "issues": [
+        {"id": "f1a896f0-097a-4598-9484-d4a2efe711ad", "short_id": "f1a896f0", "title": "SparseBitMatrix::matvec prefetch + block-CSR layout", "kind": "task", "classification": "implementation", "status": "pending", "state": "backlog"},
+        {"id": "cbf576d1-8694-4dde-bf29-d047381155c3", "short_id": "cbf576d1", "title": "SparseBitMatrix Cuthill-McKee row reorder", "kind": "task", "classification": "implementation", "status": "pending", "state": "backlog"}
+      ]
+    },
+    {
+      "wave_number": 7,
+      "label": "Tier E — Multithread",
+      "issues": [
+        {"id": "1f899836-f41c-419d-afde-773e8f10ce01", "short_id": "1f899836", "title": "Rayon row-tile multithread for B1/B3 dense kernels", "kind": "task", "classification": "implementation", "status": "pending", "state": "backlog", "note": "Pre-flight perf-stat cache-miss check mandatory; abort if memory-bound."},
+        {"id": "10ba5d08-42aa-4382-b05a-b1d43d1b321a", "short_id": "10ba5d08", "title": "Rayon SoA chunks multithread for C4/C5 batch field ops", "kind": "task", "classification": "implementation", "status": "pending", "state": "backlog", "note": "Pre-flight perf-stat cache-miss check mandatory."}
+      ]
+    }
+  ],
+  "created_during_execution": [],
+  "escalations": [],
+  "rework_counts": {},
+  "session_notes": {
+    "session_1_starting_state": "Epic babcf05e: backlog. 6 stories scaffolded. 16 child tasks scaffolded. c7791a20 (profile.release) and c69d2055 (dispatch hoist) added by user on 2026-04-26 in response to bb85c68a uncompetitiveness profile finding. b2ecd2ff/c3a9a4cb/4f845881/2a0ffb18 are S0 infrastructure tasks created during the original Apr 25 scaffolding."
+  }
+}

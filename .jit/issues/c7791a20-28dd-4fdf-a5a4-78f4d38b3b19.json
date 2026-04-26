@@ -2,9 +2,9 @@
   "id": "c7791a20-28dd-4fdf-a5a4-78f4d38b3b19",
   "title": "Add workspace [profile.release] block (lto, codegen-units)",
   "description": "The workspace `Cargo.toml` has no `[profile.release]` block, so all release builds inherit Cargo defaults (`lto = false`, `codegen-units = 16`). This prevents cross-crate inlining between `gf2-core` and `gf2-kernels-simd`, forcing every `xor_inplace` / `popcount` / `gf2m_mul` call to go through opaque function-pointer dispatch via `LogicalFns`.\n\n## Background\n\nEmpirical profiling on commit `0d2f284` (see `dev/bench_results/2026-04-26-uncompetitiveness-profile.md`): re-running the GF(2) BitMatrix matmul bench with `--features simd` only buys +16% at $n=1024$ and +24% at $n=4096$, vs. ~4× theoretical for `vpxor`-based 256-bit XOR. Most of the SIMD win is consumed by per-call dispatch overhead that LTO would inline away.\n\nThis change is foundational for the PPC-spiral epic: it **must land before I1 pins criterion baselines** (`b2ecd2ff`), otherwise every Tier A–E baseline is measured on the wrong profile and every subsequent $\\geq 1.5\\times$ claim has an artificially low floor.\n\nPPC walk: V0 measure (current bench numbers) → V0' re-measure with optimized profile → record delta. No code changes outside `Cargo.toml`.\n\n## Success Criteria\n\n- [hard] Workspace root `Cargo.toml` has a `[profile.release]` block with `lto = \"thin\"`, `codegen-units = 1`. `panic = \"abort\"` is OPTIONAL — defer to user preference.\n- [hard] `cargo build --workspace --all-features --release` completes without warnings.\n- [hard] `cargo nextest run --workspace --all-features --release --profile ci` passes within the 60 s wall-clock budget (per `CLAUDE.md` test rules).\n- [hard] BitMatrix matmul at $n=1024$ (`--features simd`) shows $\\geq 1.3\\times$ improvement over the no-LTO baseline, captured in `dev/bench_results/2026-04-26-profile-release-delta.md` with measured numbers and host context.\n- [hard] No regression on existing benches: every `target/criterion/` baseline that was already passing on commit `0d2f284` stays at the same wall-time geomean ±5% or better.\n\n## Notes\n\nThe `lto = \"thin\"` choice (vs. `\"fat\"`) is deliberate — fat LTO doubles compile time and gives marginally better inlining only for our pattern. Revisit only if `\"thin\"` doesn't close the expected gap. Spec doc: `dev/plans/gf2_core_ppc_spiral.md`.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [],
   "gates_required": [
     "code-review",
@@ -20,5 +20,5 @@
     "story:ppc-infrastructure"
   ],
   "created_at": "2026-04-26T19:09:27.589557770+00:00",
-  "updated_at": "2026-04-26T19:09:27.589568360+00:00"
+  "updated_at": "2026-04-26T19:25:55.473788156+00:00"
 }
