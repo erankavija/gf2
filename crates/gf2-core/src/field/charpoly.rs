@@ -190,11 +190,20 @@ use crate::field::FiniteField;
 
 /// Minimum matrix size at which [`FieldMatrix::charpoly`] considers the
 /// sub-cubic Keller–Gehrig path. See the module rustdoc for the
-/// empirical crossover discussion. Below this size the dispatch always
-/// chooses the cubic path because the `log₂(n)` factor in
-/// `O(n^ω · log n)` is not yet amortised by the Strassen-tier `gemm`
-/// kernel.
-pub const KG_DISPATCH_MIN_N: usize = 256;
+/// empirical crossover discussion.
+///
+/// Set to [`usize::MAX`] so that **`charpoly()` always routes to the
+/// cubic baseline** under default dispatch — the empirical measurement
+/// records cubic as ~173× faster than Keller–Gehrig at `n = 256` on
+/// `Fp<MERSENNE_31>` (the K⁻¹ step's PLE-backed solve is `O(n³)` and
+/// dominates), and we have no measurement above `n = 1024` showing a
+/// crossover. Callers who want to opt into KG explicitly can call
+/// [`FieldMatrix::charpoly_keller_gehrig`] directly.
+///
+/// Re-tune the threshold downward in a future ticket once the K⁻¹
+/// step is replaced with a Strassen-amenable inversion (`trtri_upper`
+/// + `gemm`) or the algorithm is restructured to avoid it.
+pub const KG_DISPATCH_MIN_N: usize = usize::MAX;
 
 /// Maximum number of Las-Vegas retries
 /// [`FieldMatrix::charpoly_keller_gehrig`] performs before returning
@@ -755,73 +764,6 @@ fn poly_div_exact<F: FiniteField>(numer: &FieldPoly<F>, denom: &FieldPoly<F>) ->
 /// leading coefficient 1).
 fn is_constant_one<F: FiniteField>(p: &FieldPoly<F>) -> bool {
     p.degree() == Some(0) && p.coeff(0).is_one()
-}
-
-/// Computes the minimal polynomial of a vector `v` with respect to the
-/// matrix `a`: the unique monic polynomial `p ∈ F[x]` of smallest
-/// degree with `p(A) · v = 0`.
-///
-/// Algorithm: build the Krylov chain `v, A·v, A²·v, …` and stop at
-/// the first iterate that is linearly dependent on its predecessors
-/// **in V** (no quotient by anything else). Track the chain as a list
-/// of pivot-reduced columns alongside their polynomial preimages
-/// (degree-`k` polynomials in `x`). At first dependence the
-/// polynomial relation in V gives `p(A) · v = 0`.
-fn vector_minpoly<F: FiniteField>(a: &FieldMatrix<F>, v: &FieldVec<F>) -> FieldPoly<F> {
-    let n = v.len();
-    if n == 0 {
-        let z = F::zero_hint()
-            .expect("vector_minpoly: cannot synthesise constant-1 polynomial for empty input");
-        return FieldPoly::one_like(&z);
-    }
-    let zero = v.get(0).zero_like();
-
-    // p(x) = 1 annihilates the zero vector trivially.
-    if v.iter().all(|c| c.is_zero()) {
-        return FieldPoly::one_like(&zero);
-    }
-
-    // chain[k] = residual of `A^k · v` after reducing against
-    // chain[0..k-1]. chain_polys[k] = polynomial expression of
-    // chain[k] in terms of v.
-    let mut chain: Vec<FieldVec<F>> = Vec::new();
-    let mut chain_polys: Vec<FieldPoly<F>> = Vec::new();
-    let mut col_at_pivot_row: Vec<Option<usize>> = vec![None; n];
-    let mut pivot_row_of_col: Vec<usize> = Vec::new();
-
-    append_to_basis(
-        v.clone(),
-        &mut chain,
-        &mut col_at_pivot_row,
-        &mut pivot_row_of_col,
-    );
-    chain_polys.push(FieldPoly::one_like(&zero));
-
-    loop {
-        let next_in_v = a.matvec(chain.last().unwrap());
-        let (residual_next, coeffs) = reduce(&next_in_v, &chain, &pivot_row_of_col);
-
-        let last = chain_polys.len() - 1;
-        let mut next_poly = poly_shift_x(&chain_polys[last]);
-        for j in 0..chain.len() {
-            let alpha = coeffs[j].clone();
-            if !alpha.is_zero() {
-                next_poly = &next_poly - &chain_polys[j].mul_scalar(&alpha);
-            }
-        }
-
-        if residual_next.iter().any(|c| !c.is_zero()) {
-            append_to_basis(
-                residual_next,
-                &mut chain,
-                &mut col_at_pivot_row,
-                &mut pivot_row_of_col,
-            );
-            chain_polys.push(next_poly);
-        } else {
-            return monic(next_poly);
-        }
-    }
 }
 
 /// Returns `x · p(x)` (degree increased by one).
@@ -1426,20 +1368,20 @@ impl<F: FiniteField> FieldMatrix<F> {
             );
             return FieldPoly::one_like(&zero);
         }
-        // minpoly(A) = lcm over a spanning set {v_1, …, v_n} of the
-        // per-vector annihilator polynomials minpoly_{v_i}(A). Using
-        // canonical basis vectors as a spanning set, this is `n`
-        // independent vector-Krylov chains, each costing O(n²) for a
-        // total of O(n³).
+        // The minpoly of A is the first invariant factor of its Frobenius
+        // form (the largest one in the divisibility chain). Delegate to
+        // `find_max_minpoly_generator` against the empty basis, which
+        // computes the LCM of per-vector minpolys over the canonical
+        // basis exactly once and returns it (no separate post-pass over
+        // basis vectors). For a true O(n³) implementation this would
+        // need a single random-vector Krylov chain plus generic-vector
+        // verification; the current implementation is O(n⁴) on generic
+        // matrices and is recorded as such in the issue's R2 amendment.
         let zero = self.get(0, 0).zero_like();
-        let mut acc = FieldPoly::one_like(&zero);
-        for i in 0..n {
-            let mut e = FieldVec::<F>::zeros_from(n, &zero);
-            e.set(i, zero.one_like());
-            let p = vector_minpoly(self, &e);
-            acc = poly_lcm(&acc, &p);
-        }
-        acc
+        let basis: Vec<FieldVec<F>> = Vec::new();
+        let pivot_row_of_col: Vec<usize> = Vec::new();
+        let (_gen, mp) = find_max_minpoly_generator(self, &basis, &pivot_row_of_col, &zero);
+        mp
     }
 
     /// Returns `(P, F)` such that `F = P⁻¹ · self · P` is the Frobenius
@@ -1840,6 +1782,74 @@ mod tests {
                 assert_eq!(m_pa.get(i, j), zero, "minpoly(A) at ({},{})", i, j);
             }
         }
+        // Independent reference cross-check: minpoly(A) is the LCM of
+        // the per-vector minpolys over a spanning set; using canonical
+        // basis vectors as the spanning set gives an O(n^4)
+        // implementation that does not share code paths with the
+        // production `find_max_minpoly_generator` (no combine search,
+        // no quotient logic). The two must agree exactly.
+        let ref_mp = ref_minpoly_via_basis_lcm(a);
+        assert_eq!(
+            mp, ref_mp,
+            "minpoly mismatch vs canonical-basis-LCM reference"
+        );
+    }
+
+    /// Independent minpoly reference: build the Krylov chain for each
+    /// canonical basis vector e_i, read off its annihilator polynomial,
+    /// and return the LCM. Used only by `check_cayley_hamilton` as an
+    /// independent cross-check; do not call from production paths.
+    fn ref_minpoly_via_basis_lcm<F: FiniteField>(a: &FieldMatrix<F>) -> FieldPoly<F> {
+        let n = a.rows();
+        if n == 0 {
+            let zero = F::zero_hint().expect("ref_minpoly: 0×0 needs zero_hint");
+            return FieldPoly::one_like(&zero);
+        }
+        let zero = a.get(0, 0).zero_like();
+        let one = zero.one_like();
+        let mut acc = FieldPoly::one_like(&zero);
+        for i in 0..n {
+            let mut v = FieldVec::<F>::zeros_from(n, &zero);
+            v.set(i, one.clone());
+            // Build Krylov chain v, A·v, A²·v, ... until linear
+            // dependence; record polynomial preimages alongside.
+            let mut chain: Vec<FieldVec<F>> = Vec::new();
+            let mut chain_polys: Vec<FieldPoly<F>> = Vec::new();
+            let mut col_at_pivot_row: Vec<Option<usize>> = vec![None; n];
+            let mut pivot_row_of_col: Vec<usize> = Vec::new();
+            append_to_basis(
+                v.clone(),
+                &mut chain,
+                &mut col_at_pivot_row,
+                &mut pivot_row_of_col,
+            );
+            chain_polys.push(FieldPoly::one_like(&zero));
+            let p = loop {
+                let next_in_v = a.matvec(chain.last().unwrap());
+                let (residual_next, coeffs) = reduce(&next_in_v, &chain, &pivot_row_of_col);
+                let last = chain_polys.len() - 1;
+                let mut next_poly = poly_shift_x(&chain_polys[last]);
+                for j in 0..chain.len() {
+                    let alpha = coeffs[j].clone();
+                    if !alpha.is_zero() {
+                        next_poly = &next_poly - &chain_polys[j].mul_scalar(&alpha);
+                    }
+                }
+                if residual_next.iter().any(|c| !c.is_zero()) {
+                    append_to_basis(
+                        residual_next,
+                        &mut chain,
+                        &mut col_at_pivot_row,
+                        &mut pivot_row_of_col,
+                    );
+                    chain_polys.push(next_poly);
+                } else {
+                    break monic(next_poly);
+                }
+            };
+            acc = poly_lcm(&acc, &p);
+        }
+        acc
     }
 
     // Verify charpoly via the reference path: the matrix `xI − A` over
