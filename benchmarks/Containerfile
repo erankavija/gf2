@@ -147,7 +147,7 @@ echo 'gf2 reference benchmark image'; \
 echo '----------------------------'; \
 echo 'gcc:        '$(gcc -dumpfullversion -dumpversion); \
 echo 'g++:        '$(g++ -dumpfullversion -dumpversion); \
-pkg-config --modversion givaro fflas-ffpack 2>/dev/null | paste -sd ' / ' - | sed 's/^/givaro/fflas: /'; \
+echo 'givaro/fflas: '$(pkg-config --modversion givaro fflas-ffpack 2>/dev/null | paste -sd ' / ' -); \
 echo 'm4ri:       '$(grep -E '#define +M4RI_VERSION ' /usr/local/include/m4ri/m4ri_config.h 2>/dev/null | awk '{print $$3}' | tr -d '\"'); \
 echo 'openblas:   '$(dpkg -s libopenblas-dev | awk '/^Version:/{print $$2}'); \
 echo 'gmp:        '$(dpkg -s libgmp-dev    | awk '/^Version:/{print $$2}'); \
