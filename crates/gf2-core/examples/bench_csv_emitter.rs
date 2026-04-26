@@ -254,6 +254,12 @@ impl CsvSink {
 // ─── Per-operation runners ─────────────────────────────────────────────────
 
 const SQUARE_SIZES: &[usize] = &[64, 256, 1024, 4096];
+/// Rectangular fgemm shapes — must match
+/// `crates/gf2-core/benches/fieldmatrix_gemm.rs::RECT_SHAPES` so the
+/// CSV emitter and the criterion bench cover the same `(m, k, n)`
+/// cells. The `size_idx` for these shapes is
+/// `SQUARE_SIZES.len() + rsi` (matching the bench's derivation).
+const RECT_SHAPES: &[(usize, usize, usize)] = &[(1024, 1024, 32), (1024, 1024, 8)];
 const CHARPOLY_SIZES: &[usize] = &[32, 128, 512];
 const SPMV_SIZES: &[usize] = &[256, 1024, 4096];
 const SPMV_DENSITIES: &[(f64, &str)] = &[(0.01, "0.01"), (0.05, "0.05")];
@@ -295,6 +301,41 @@ fn run_fp<const P: u64>(args: &Args, sink: &mut CsvSink, field_label: &str) -> s
             seed_a,
             wall_ns,
             tput(ops_gemm(n, n, n), wall_ns),
+        )?;
+    }
+
+    // ── fgemm rectangular (uniform only; same shape set as bench_rect) ───
+    for (rsi, &(m, k, n)) in RECT_SHAPES.iter().enumerate() {
+        let key = cell_key("fgemm", field_label, n, "uniform_rect");
+        if !cell_passes(filter, &key) {
+            continue;
+        }
+        let size_idx = (SQUARE_SIZES.len() + rsi) as u64;
+        let seed_a = derive_seed(master, "fgemm_rect", 0, size_idx, 0);
+        let seed_b = derive_seed(master, "fgemm_rect_b", 0, size_idx, 0);
+        let a = fp_matrix_from_seed::<P>(m, k, seed_a);
+        let b = fp_matrix_from_seed::<P>(k, n, seed_b);
+        eprintln!("[gf2-csv] {key} ({m}x{k}x{n})");
+        let (wall_ns, early) = time_op(
+            || {
+                let _ = std::hint::black_box(gemm(&a, &b));
+            },
+            warmup,
+            iters,
+        );
+        if early {
+            eprintln!("[gf2-csv] WARN early_exit {key} wall_ns={wall_ns}");
+        }
+        sink.emit(
+            "fgemm",
+            field_label,
+            m,
+            k,
+            n,
+            "uniform",
+            seed_a,
+            wall_ns,
+            tput(ops_gemm(m, k, n), wall_ns),
         )?;
     }
 
@@ -511,6 +552,41 @@ fn run_gf2m<C: Gf2mWideConfig<1>>(
             seed_a,
             wall_ns,
             tput(ops_gemm(n, n, n), wall_ns),
+        )?;
+    }
+
+    // ── fgemm rectangular (uniform only; same shape set as bench_rect) ───
+    for (rsi, &(m, k, n)) in RECT_SHAPES.iter().enumerate() {
+        let key = cell_key("fgemm", field_label, n, "uniform_rect");
+        if !cell_passes(&args.filter, &key) {
+            continue;
+        }
+        let size_idx = (SQUARE_SIZES.len() + rsi) as u64;
+        let seed_a = derive_seed(args.master_seed, "fgemm_rect", 0, size_idx, 0);
+        let seed_b = derive_seed(args.master_seed, "fgemm_rect_b", 0, size_idx, 0);
+        let a: FieldMatrix<Gf2mWide<1, C>> = gf2m_wide_1_matrix_from_seed::<C>(m, k, seed_a);
+        let b: FieldMatrix<Gf2mWide<1, C>> = gf2m_wide_1_matrix_from_seed::<C>(k, n, seed_b);
+        eprintln!("[gf2-csv] {key} ({m}x{k}x{n})");
+        let (wall_ns, early) = time_op(
+            || {
+                let _ = std::hint::black_box(gemm(&a, &b));
+            },
+            args.warmup,
+            args.iters,
+        );
+        if early {
+            eprintln!("[gf2-csv] WARN early_exit {key} wall_ns={wall_ns}");
+        }
+        sink.emit(
+            "fgemm",
+            field_label,
+            m,
+            k,
+            n,
+            "uniform",
+            seed_a,
+            wall_ns,
+            tput(ops_gemm(m, k, n), wall_ns),
         )?;
     }
 
