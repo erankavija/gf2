@@ -24,6 +24,9 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 export GF2_BENCH_WARMUP=0
 export GF2_BENCH_ITERS=1
+# run.sh reads GF2_CSV_PREFIX to prepend a tag to the output filename
+# so smoke runs do not silently overwrite the latest.csv symlink that
+# real timing runs emit.
+export GF2_CSV_PREFIX=smoke
 
-TS="$(date -u +%Y%m%dT%H%M%SZ)"
 exec "${HERE}/run.sh" --image-tag "gf2-bench:smoke" "$@"

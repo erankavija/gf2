@@ -58,6 +58,14 @@ source  = "debian-bookworm-apt"
 version = "6.2.1+dfsg1-1.1"
 source  = "debian-bookworm-apt"
 
+[libs.lapack]
+version = "3.11.0-2"
+source  = "debian-bookworm-apt"
+
+[libs.cmake]
+version = "3.25.1-1"
+source  = "debian-bookworm-apt"
+
 [libs.givaro]
 version = "4.2.0"
 source  = "https://github.com/linbox-team/givaro/releases/download/v4.2.0/givaro-4.2.0.tar.gz"

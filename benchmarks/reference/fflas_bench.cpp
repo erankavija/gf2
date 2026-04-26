@@ -497,7 +497,13 @@ static void bench_charpoly(const Field& F,
     using PolRing = Givaro::Poly1Dom<Field>;
     using Polynomial = typename PolRing::Element;
     PolRing R(F);
-    typename Field::RandIter G(F);
+    // Seed Givaro's RandIter from the per-cell SplitMix64 state instead
+    // of OS entropy so CharPoly's internal Las-Vegas / Schwartz-Zippel
+    // randomness is reproducible across reruns. Without this seed the
+    // reproducibility contract documented in benchmarks/README.md only
+    // applies to the input matrix, not to CharPoly's iteration count or
+    // wall-clock measurements.
+    typename Field::RandIter G(F, /*seed*/ static_cast<uint64_t>(seed));
 
     auto run_once = [&]() {
         FFLAS::fassign(F, n, n, A0, n, A, n);

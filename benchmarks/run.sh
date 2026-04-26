@@ -208,6 +208,8 @@ verify_apt_pin() {
 verify_apt_pin gcc-12         libs.gcc
 verify_apt_pin libopenblas-dev libs.openblas
 verify_apt_pin libgmp-dev      libs.gmp
+verify_apt_pin liblapack-dev   libs.lapack
+verify_apt_pin cmake           libs.cmake
 
 echo "[run.sh] verified Containerfile pins (sha256 ARGs + base digest + apt versions) match image.lock" >&2
 
@@ -250,7 +252,18 @@ fi
 
 # ---- run the harnesses --------------------------------------------------
 TS="$(date -u +%Y%m%dT%H%M%SZ)"
-CSV_OUT="${RESULTS_DIR}/${TS}.csv"
+# GF2_CSV_PREFIX (env-var, optional) namespaces the CSV file so that
+# `smoke.sh` runs cannot be confused with real timing runs. Empty / unset
+# means "real timing run" → results/<TS>.csv. Set means
+# results/<prefix>-<TS>.csv plus a separate <prefix>-latest.csv symlink.
+CSV_PREFIX="${GF2_CSV_PREFIX:-}"
+if [[ -n "${CSV_PREFIX}" ]]; then
+    CSV_OUT="${RESULTS_DIR}/${CSV_PREFIX}-${TS}.csv"
+    LATEST_LINK="${RESULTS_DIR}/${CSV_PREFIX}-latest.csv"
+else
+    CSV_OUT="${RESULTS_DIR}/${TS}.csv"
+    LATEST_LINK="${RESULTS_DIR}/latest.csv"
+fi
 
 # Mount options:
 #   :Z  — request a private SELinux relabel (rootless podman on
@@ -291,7 +304,7 @@ if [[ "${RUN_M4RI}" -eq 1 ]]; then
 fi
 
 # Convenience symlink to the most recent run.
-ln -sf "${TS}.csv" "${RESULTS_DIR}/latest.csv"
+ln -sf "$(basename "${CSV_OUT}")" "${LATEST_LINK}"
 
 echo "[run.sh] CSV written to ${CSV_OUT}" >&2
-echo "[run.sh] symlink: ${RESULTS_DIR}/latest.csv -> ${TS}.csv" >&2
+echo "[run.sh] symlink: ${LATEST_LINK} -> $(basename "${CSV_OUT}")" >&2
