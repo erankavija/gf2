@@ -46,7 +46,9 @@ use gf2_core::gfp::Fp;
 #[path = "common/seed.rs"]
 mod seed;
 
-use seed::{derive_seed, splitmix64, MASTER_SEED};
+use seed::{
+    derive_seed, fp_sparse_from_seed, gf2m_wide_1_sparse_from_seed, splitmix64, MASTER_SEED,
+};
 
 const PRIME_7: u64 = 7;
 const PRIME_251: u64 = 251;
@@ -85,27 +87,16 @@ const DENSITIES: &[(f64, &str)] = &[(0.01, "0.01"), (0.05, "0.05")];
 // matches the include-decision exactly: a 0-valued included cell would
 // not appear as a stored entry in the CSR conversion.
 
+// `fp_sparse_from_seed` and `gf2m_wide_1_sparse_from_seed` are imported
+// from the shared `gf2_core::bench_seed` module (re-exported via
+// `seed::*`); see R2 SSOT extraction note in the bench_seed rustdoc.
 fn random_sparse_fp<const P: u64>(
     rows: usize,
     cols: usize,
     density: f64,
     seed_val: u64,
 ) -> SparseFieldMatrix<Fp<P>> {
-    let mut st = seed_val;
-    let mut m = FieldMatrix::<Fp<P>>::zeros(rows, cols);
-    let threshold = (density * (u64::MAX as f64 + 1.0)) as u64;
-    for r in 0..rows {
-        for c in 0..cols {
-            let draw = splitmix64(&mut st);
-            if draw < threshold {
-                let v_raw = splitmix64(&mut st);
-                // Avoid zero so the included cell shows up in CSR.
-                let v = (v_raw % (P - 1)) + 1;
-                m.set(r, c, Fp::<P>::new(v));
-            }
-        }
-    }
-    SparseFieldMatrix::from_dense(&m)
+    fp_sparse_from_seed::<P>(rows, cols, density, seed_val)
 }
 
 fn random_sparse_gf2m_wide_1<C: Gf2mWideConfig<1>>(
@@ -114,25 +105,7 @@ fn random_sparse_gf2m_wide_1<C: Gf2mWideConfig<1>>(
     density: f64,
     seed_val: u64,
 ) -> SparseFieldMatrix<Gf2mWide<1, C>> {
-    let mask: u64 = if C::M >= 64 {
-        u64::MAX
-    } else {
-        (1u64 << C::M) - 1
-    };
-    let mut st = seed_val;
-    let mut m = FieldMatrix::<Gf2mWide<1, C>>::zeros(rows, cols);
-    let threshold = (density * (u64::MAX as f64 + 1.0)) as u64;
-    for r in 0..rows {
-        for c in 0..cols {
-            let draw = splitmix64(&mut st);
-            if draw < threshold {
-                let v_raw = splitmix64(&mut st) & mask;
-                let v = if v_raw == 0 { 1 } else { v_raw };
-                m.set(r, c, Gf2mWide::<1, C>::new([v]));
-            }
-        }
-    }
-    SparseFieldMatrix::from_dense(&m)
+    gf2m_wide_1_sparse_from_seed::<C>(rows, cols, density, seed_val)
 }
 
 fn fp_vec<const P: u64>(n: usize, seed_val: u64) -> FieldVec<Fp<P>> {

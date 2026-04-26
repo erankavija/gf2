@@ -57,6 +57,16 @@ pub mod sparse;
 
 pub mod rng;
 
+/// Deterministic SplitMix64-based seed and matrix-fill helpers shared by the
+/// gf2-core benchmark suite (`benches/`) and example CSV emitter
+/// (`examples/`). Mirrors `benchmarks/reference/seed_helpers.h`
+/// bit-for-bit so cross-library benchmark inputs match exactly.
+///
+/// Gated behind `cfg(any(test, feature = "test-support"))` so it never
+/// reaches release builds of downstream consumers.
+#[cfg(any(test, feature = "test-support"))]
+pub mod bench_seed;
+
 pub use bitslice::{BitSlice, BitSliceMut};
 pub use bitvec::BitVec;
 pub use matrix::BitMatrix;
