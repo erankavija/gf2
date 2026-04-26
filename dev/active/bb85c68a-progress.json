@@ -4,16 +4,16 @@
   "title": "Implement generic finite field linear algebra (FieldMatrix)",
   "claimed_by": "agent:project-lead",
   "started_at": "2026-04-23T16:00:00+00:00",
-  "last_updated": "2026-04-24T15:55:00+00:00",
+  "last_updated": "2026-04-26T07:30:00+00:00",
   "current_wave": 2,
-  "phase": "wave_2_partially_complete; T2 stuck on [hard] runtime-speedup criterion at n=1024; awaiting user scope decision",
+  "phase": "wave_2_partially_complete; c3f8c1cb (PLE) at R6 amendment — performance > SSOT directive applied; gate re-run in flight",
   "notes": [
-    "Session 4 (this session) dispatched T2 resume from stash → R1 rework (αAᵀ·B+βC fusion + serial test isolation) → R2 doc polish (lead-only commit c267f25) → R3 hit a hard-criterion miss (fused ~6.6% SLOWER than eager at n=1024). User chose 'rewrite the kernel in T2 scope'. Worker completed blocked rewrite of all three fused kernels (commit e94eb23). Bench improved fused 3.375s → 3.227s but eager is still 3.163s — ~2% gap remains.",
-    "Empirical finding from session 4: the [hard] 'fused must be measurably faster at n=1024' criterion may be physically unreachable for Mersenne-31 without SIMD / Strassen. At n=1024 the fusion saves ~4MB allocation + O(n²) memory traffic, dwarfed by O(n³) ≈ 10⁹ field-mul compute (ratio ~10⁻³).",
-    "Re-escalation pending: user previously rejected [aspirational] amendment; session-4 data may change that decision. See handoff-4 for the three options.",
+    "Session 6 (current): user directive 2026-04-26 — 'No performance shall be sacrificed for SSOT.' Encoded in scripts/code-review-prompt.md (user pre-edited at 10:12) AND in c3f8c1cb description as R6 amendment. Bespoke rref/row_echelon paths are now contractually allowed where strict trtri/trtrm composition would force redundant O(m^2) materialisations. Commits: e50af1f (R6 amendment + reviewer prompt), cd389bd (replan artefact alignment).",
+    "Session 5 closed d48a3cfd story (T3 done after 6 cycles, [aspirational] amendment for fflas-ffpack tag) and 83b1ad8b triangular (5 cycles — established the views-all-the-way-down + gemm-routing architectural pattern). Pushed c3f8c1cb through 7 review cycles (R0-R5).",
+    "Session 4 closed 7e6183bb (T2) via runtime-speedup [aspirational] amendment after blocked-kernel rewrite (e94eb23) reached the physical floor.",
     "Session 3 completed d48a3cfd/T1 (91c06222) and 8a90882e.",
     "Session 2 completed Wave 1 (ab791e27, cdcebf6a).",
-    "Worker rework pattern: 91c06222 and 8a90882e needed exactly 1 rework round each; 7e6183bb needed 3.",
+    "Worker rework pattern: 91c06222 and 8a90882e needed exactly 1 rework round each; 7e6183bb needed 3; ad597ede needed 6; 83b1ad8b needed 5; c3f8c1cb at 7+ rounds (R6 in flight).",
     "Added explicit dep edge c3f8c1cb → 83b1ad8b (PLE uses trsm per description's hard success criterion; edge was missing from the DAG). jit validate --fix cleaned up 3 transitive redundancies post-add."
   ],
   "waves": [
@@ -80,9 +80,12 @@
           "title": "Implement PLE decomposition and echelon forms over FiniteField",
           "kind": "story",
           "classification": "implementation",
-          "status": "pending",
-          "state": "ready",
-          "note": "Added dep edge c3f8c1cb → 83b1ad8b in session 3 (DAG was under-specified vs. the description's hard success criterion)."
+          "status": "done",
+          "state": "done",
+          "rework_cycles": 8,
+          "final_commits": ["474d180", "cd389bd", "e50af1f", "4522b17", "8ddde5a", "e34a761", "bbc0bff", "6df73ad", "16639d3", "bbf50d3", "74867c3"],
+          "session_completed": 6,
+          "note": "Sessions 5+6. R0-R5 reviews surfaced narrowing SSOT interpretations; R6 amendment applied user directive 'No performance shall be sacrificed for SSOT' allowing row_echelon to skip trtri_lower and rref to use bespoke pivot scaling/above-pivot zeroing. Final R7 review on 474d180 PASSED after a one-line # Panics rustdoc for nullspace()."
         },
         {
           "id": "83b1ad8b-35eb-4340-8ef9-663c19df038e",
@@ -168,7 +171,10 @@
   "rework_counts": {
     "91c06222": 1,
     "8a90882e": 1,
-    "7e6183bb": 3
+    "7e6183bb": 3,
+    "ad597ede": 6,
+    "83b1ad8b": 5,
+    "c3f8c1cb": 7
   },
   "gates_attached": {
     "story_standard_set": ["code-review", "cargo-ci", "doc-review"],
@@ -183,7 +189,7 @@
     "dev/active/ab791e27-design.md",
     "dev/plans/gpu_fieldmatrix_sketch.md"
   ],
-  "total_work_items": {"stories": 9, "tasks": 8, "total": 17, "done": 4, "remaining": 13},
+  "total_work_items": {"stories": 9, "tasks": 8, "total": 17, "done": 9, "remaining": 8, "wave_2_complete": true},
   "related_future_epics": [
     {"id": "16283d6f-99f2-42e9-8254-4e0604aadc43", "short_id": "16283d6f", "title": "GPU-accelerated FieldMatrix (HIP, dense matmul + SpMV)", "status": "backlog", "note": "Not in scope for this epic."}
   ],

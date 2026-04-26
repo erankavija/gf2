@@ -2,7 +2,7 @@
   "id": "f01298db-cebf-49c8-8b84-6dadcdf1d378",
   "title": "e47231cd/T1: Cubic Krylov baseline for charpoly/minpoly/Frobenius form",
   "description": "First task of story `e47231cd`. Deterministic cubic Krylov-iteration baseline per Dumas–Pernet theorem 13.1. Ships the correct-but-slow path.\n\n## Deliverables\n\n- **`FieldMatrix::charpoly()`** — characteristic polynomial via Krylov iteration; (2 + 2/3)·n³ field operations.\n- **`FieldMatrix::minpoly()`** — first invariant factor of the Frobenius form.\n- **`FieldMatrix::frobenius_form()`** — returns `(P, F)` with `F = P⁻¹ A P` block diagonal.\n- **Cayley-Hamilton property test**: `charpoly(A).evaluate_matrix(&A) == 0`.\n- **Invariant-factor divisibility test**: `f_{i+1} | f_i` across the blocks of Frobenius form.\n- **`minpoly | charpoly`** test.\n- **Criterion benches** at n = 32, 128, 512 on GF(65521) and GF(2^8).\n\n## Success criteria\n\n- [hard] Correct across GF(7), GF(65521), GF(2^31-1), GF(2^8), GF(2^16) on random matrices; verified by interpolating `det(xI - A)` at n+1 random field points.\n- [hard] Cayley-Hamilton holds.\n- [hard] `minpoly` divides `charpoly`.\n- [hard] Frobenius form's invariant factors divide (`f_{i+1} | f_i`).\n- [hard] Edge cases: identity, zero, diagonal, scalar multiple of identity, companion matrix, rank-deficient.\n- [hard] Reuses existing `FieldPolynomial<F>` from the `gfpn` stack — no new polynomial type.\n- [hard] Uses matmul (`d48a3cfd`) and PLE (`c3f8c1cb`) — no bespoke linear-algebra.\n\n## Depends on\n\n- `d48a3cfd` (matmul for Krylov iterates).\n- `c3f8c1cb` (PLE for Krylov rank detection).",
-  "state": "backlog",
+  "state": "ready",
   "priority": "normal",
   "assignee": null,
   "dependencies": [
@@ -22,5 +22,5 @@
     "epic:bb85c68a"
   ],
   "created_at": "2026-04-23T16:30:51.359884762+00:00",
-  "updated_at": "2026-04-24T07:08:40.002889258+00:00"
+  "updated_at": "2026-04-26T08:18:21.919275606+00:00"
 }
