@@ -117,7 +117,7 @@
       "wave_number": 3,
       "label": "Derived operations",
       "issues": [
-        {"id": "ae1d1e88-c3cc-4cbf-9d52-e65940b1efe0", "short_id": "ae1d1e88", "title": "Implement matrix inversion and linear system solving", "kind": "story", "classification": "implementation", "status": "pending", "state": "backlog"},
+        {"id": "ae1d1e88-c3cc-4cbf-9d52-e65940b1efe0", "short_id": "ae1d1e88", "title": "Implement matrix inversion and linear system solving", "kind": "story", "classification": "implementation", "status": "done", "state": "done", "rework_cycles": 1, "final_commits": ["cbf2814", "7955038", "a04102e", "f9cf685"], "session_completed": 6, "note": "Session 6. R0 → R1 rework on 3 findings: solve doc contradiction, SSOT random helpers (created shared test_random_matrix.rs module, eliminated duplication across ple/triangular/inverse), proptest coverage. R1 PASSED."},
         {
           "id": "e47231cd-7f4b-40d7-9164-033aa2be63bb",
           "short_id": "e47231cd",
@@ -174,7 +174,8 @@
     "7e6183bb": 3,
     "ad597ede": 6,
     "83b1ad8b": 5,
-    "c3f8c1cb": 7
+    "c3f8c1cb": 7,
+    "ae1d1e88": 1
   },
   "gates_attached": {
     "story_standard_set": ["code-review", "cargo-ci", "doc-review"],
@@ -189,7 +190,7 @@
     "dev/active/ab791e27-design.md",
     "dev/plans/gpu_fieldmatrix_sketch.md"
   ],
-  "total_work_items": {"stories": 9, "tasks": 8, "total": 17, "done": 9, "remaining": 8, "wave_2_complete": true},
+  "total_work_items": {"stories": 9, "tasks": 8, "total": 17, "done": 10, "remaining": 7, "wave_2_complete": true, "wave_3_in_progress": true},
   "related_future_epics": [
     {"id": "16283d6f-99f2-42e9-8254-4e0604aadc43", "short_id": "16283d6f", "title": "GPU-accelerated FieldMatrix (HIP, dense matmul + SpMV)", "status": "backlog", "note": "Not in scope for this epic."}
   ],
