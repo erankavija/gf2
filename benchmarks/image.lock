@@ -50,6 +50,10 @@ digest     = "sha256:f9c6a2fd2ddbc23e336b6257a5245e31f996953ef06cd13a59fa0a1df2d
 version = "12.2.0-14"
 source  = "debian-bookworm-apt"
 
+[libs.gpp]
+version = "12.2.0-14"
+source  = "debian-bookworm-apt"
+
 [libs.openblas]
 version = "0.3.21+ds-4"
 source  = "debian-bookworm-apt"

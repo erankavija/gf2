@@ -206,6 +206,7 @@ verify_apt_pin() {
     fi
 }
 verify_apt_pin gcc-12         libs.gcc
+verify_apt_pin g\+\+-12        libs.gpp
 verify_apt_pin libopenblas-dev libs.openblas
 verify_apt_pin libgmp-dev      libs.gmp
 verify_apt_pin liblapack-dev   libs.lapack
