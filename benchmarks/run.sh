@@ -118,6 +118,41 @@ HOST_TXT="${HERE}/host.txt"
 } > "${HOST_TXT}"
 echo "[run.sh] wrote ${HOST_TXT}" >&2
 
+# ---- enforce image.lock as the single source of truth -------------------
+# Containerfile carries `ARG <NAME>_SHA256=<hex>` lines for each upstream
+# tarball; image.lock carries the same hashes under [libs.<name>]. Drift
+# between the two would silently invalidate the lock file, so verify
+# them before any build runs.
+LOCK_FILE="${HERE}/image.lock"
+CONTAINERFILE="${HERE}/Containerfile"
+verify_sha() {
+    local arg_name="$1"   # e.g. GIVARO_SHA256
+    local lock_section="$2"  # e.g. libs.givaro
+    local cf_value lock_value
+    cf_value="$(grep -E "^ARG ${arg_name}=" "${CONTAINERFILE}" \
+                  | head -1 | sed -E 's/^ARG [^=]+=([0-9a-f]+).*$/\1/')"
+    lock_value="$(awk -v sec="[${lock_section}]" '
+        $0==sec {in_sec=1; next}
+        /^\[/ {in_sec=0}
+        in_sec && /^sha256/ {gsub(/[\"[:space:]]/,""); sub(/^sha256=/,""); print; exit}
+    ' "${LOCK_FILE}")"
+    if [[ -z "${cf_value}" || -z "${lock_value}" ]]; then
+        echo "[run.sh] error: missing sha for ${arg_name}/${lock_section}" >&2
+        exit 1
+    fi
+    if [[ "${cf_value}" != "${lock_value}" ]]; then
+        echo "[run.sh] error: sha drift between Containerfile and image.lock" >&2
+        echo "  ARG ${arg_name}      = ${cf_value}" >&2
+        echo "  [${lock_section}]    = ${lock_value}" >&2
+        echo "Update one or the other so the lock file is authoritative." >&2
+        exit 1
+    fi
+}
+verify_sha GIVARO_SHA256 libs.givaro
+verify_sha FFLAS_SHA256  libs.fflas-ffpack
+verify_sha M4RI_SHA256   libs.m4ri
+echo "[run.sh] verified Containerfile sha256 ARGs match image.lock" >&2
+
 # ---- build the image ----------------------------------------------------
 if [[ "${SKIP_BUILD}" -eq 0 ]]; then
     echo "[run.sh] ${RUNTIME} build -t ${IMAGE_TAG} -f benchmarks/Containerfile benchmarks/" >&2
