@@ -530,11 +530,11 @@ impl<F: FiniteField> FieldMatrix<F> {
 mod tests {
     use super::*;
     use crate::field::matrix::{fieldmatrix_new_count, gemm, reset_fieldmatrix_new_count};
-    use crate::gf2m::wide::Gf2mWide;
-    use crate::gf2m::wide_config::Gf2mWideConfig;
+    use crate::field::test_random_matrix::{
+        random_fp, random_fp_invertible, random_gf2m_wide_1, random_gf2m_wide_1_invertible,
+    };
+    use crate::gf2m::{Gf2mWide, Gf2mWideConfig};
     use crate::gfp::Fp;
-    use rand::rngs::StdRng;
-    use rand::{Rng, SeedableRng};
     use serial_test::serial;
 
     const MERSENNE_31: u64 = 2_147_483_647;
@@ -557,71 +557,17 @@ mod tests {
     }
     type Gf2m16 = Gf2mWide<1, InvGf2m16Cfg>;
 
-    fn random_fp<const P: u64>(rows: usize, cols: usize, seed: u64) -> FieldMatrix<Fp<P>> {
-        let mut rng = StdRng::seed_from_u64(seed);
-        let mut m = FieldMatrix::<Fp<P>>::zeros(rows, cols);
-        for r in 0..rows {
-            for c in 0..cols {
-                m.set(r, c, Fp::<P>::new(rng.gen::<u64>() % P));
-            }
-        }
-        m
-    }
-
+    // Convenience aliases that monomorphise the shared generic helpers
+    // in `field::test_random_matrix` to this module's configs. Keeping
+    // the call sites short below.
     fn random_gf2m8(rows: usize, cols: usize, seed: u64) -> FieldMatrix<Gf2m8> {
-        let mut rng = StdRng::seed_from_u64(seed);
-        let mut m = FieldMatrix::<Gf2m8>::zeros(rows, cols);
-        for r in 0..rows {
-            for c in 0..cols {
-                m.set(r, c, Gf2m8::new([rng.gen::<u64>() & 0xFF]));
-            }
-        }
-        m
+        random_gf2m_wide_1::<InvGf2m8Cfg>(rows, cols, seed)
     }
-
-    fn random_gf2m16(rows: usize, cols: usize, seed: u64) -> FieldMatrix<Gf2m16> {
-        let mut rng = StdRng::seed_from_u64(seed);
-        let mut m = FieldMatrix::<Gf2m16>::zeros(rows, cols);
-        for r in 0..rows {
-            for c in 0..cols {
-                m.set(r, c, Gf2m16::new([rng.gen::<u64>() & 0xFFFF]));
-            }
-        }
-        m
-    }
-
-    /// Returns a random `n × n` matrix over `Fp<P>` resampled until
-    /// invertible (rank == n). Fails fast at 8 attempts; for any
-    /// reasonable `P` and `n ≥ 1` the probability of singularity is
-    /// `1/P + O(1/P²)` so 8 attempts is overkill.
-    fn random_fp_invertible<const P: u64>(n: usize, seed: u64) -> FieldMatrix<Fp<P>> {
-        for k in 0..8 {
-            let m = random_fp::<P>(n, n, seed.wrapping_add(k));
-            if m.rank() == n {
-                return m;
-            }
-        }
-        panic!("random_fp_invertible: failed to find an invertible matrix after 8 attempts");
-    }
-
     fn random_gf2m8_invertible(n: usize, seed: u64) -> FieldMatrix<Gf2m8> {
-        for k in 0..16 {
-            let m = random_gf2m8(n, n, seed.wrapping_add(k));
-            if m.rank() == n {
-                return m;
-            }
-        }
-        panic!("random_gf2m8_invertible: failed to find invertible matrix");
+        random_gf2m_wide_1_invertible::<InvGf2m8Cfg>(n, seed)
     }
-
     fn random_gf2m16_invertible(n: usize, seed: u64) -> FieldMatrix<Gf2m16> {
-        for k in 0..16 {
-            let m = random_gf2m16(n, n, seed.wrapping_add(k));
-            if m.rank() == n {
-                return m;
-            }
-        }
-        panic!("random_gf2m16_invertible: failed to find invertible matrix");
+        random_gf2m_wide_1_invertible::<InvGf2m16Cfg>(n, seed)
     }
 
     // ── Hard SC#1 — A · A⁻¹ == I across five fields ───────────────────────────

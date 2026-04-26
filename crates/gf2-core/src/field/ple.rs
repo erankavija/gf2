@@ -1170,11 +1170,10 @@ fn pad_l_to_full<F: FiniteField>(
 mod tests {
     use super::*;
     use crate::field::matrix::{fieldmatrix_new_count, gemm, reset_fieldmatrix_new_count};
+    use crate::field::test_random_matrix::{random_fp, random_gf2m_wide_1};
     use crate::gf2m::wide::Gf2mWide;
     use crate::gf2m::wide_config::Gf2mWideConfig;
     use crate::gfp::Fp;
-    use rand::rngs::StdRng;
-    use rand::{Rng, SeedableRng};
     use serial_test::serial;
 
     const MERSENNE_31: u64 = 2_147_483_647;
@@ -1198,37 +1197,14 @@ mod tests {
     }
     type Gf2m16 = Gf2mWide<1, PleGf2m16Cfg>;
 
-    fn random_fp<const P: u64>(rows: usize, cols: usize, seed: u64) -> FieldMatrix<Fp<P>> {
-        let mut rng = StdRng::seed_from_u64(seed);
-        let mut m = FieldMatrix::<Fp<P>>::zeros(rows, cols);
-        for r in 0..rows {
-            for c in 0..cols {
-                m.set(r, c, Fp::<P>::new(rng.gen::<u64>() % P));
-            }
-        }
-        m
-    }
-
+    // Local convenience aliases that monomorphise the shared generic
+    // helpers in `field::test_random_matrix` to this module's configs.
     fn random_gf2m8(rows: usize, cols: usize, seed: u64) -> FieldMatrix<Gf2m8> {
-        let mut rng = StdRng::seed_from_u64(seed);
-        let mut m = FieldMatrix::<Gf2m8>::zeros(rows, cols);
-        for r in 0..rows {
-            for c in 0..cols {
-                m.set(r, c, Gf2m8::new([rng.gen::<u64>() & 0xFF]));
-            }
-        }
-        m
+        random_gf2m_wide_1::<PleGf2m8Cfg>(rows, cols, seed)
     }
 
     fn random_gf2m16(rows: usize, cols: usize, seed: u64) -> FieldMatrix<Gf2m16> {
-        let mut rng = StdRng::seed_from_u64(seed);
-        let mut m = FieldMatrix::<Gf2m16>::zeros(rows, cols);
-        for r in 0..rows {
-            for c in 0..cols {
-                m.set(r, c, Gf2m16::new([rng.gen::<u64>() & 0xFFFF]));
-            }
-        }
-        m
+        random_gf2m_wide_1::<PleGf2m16Cfg>(rows, cols, seed)
     }
 
     /// Reconstructs `P · L · E` and compares to `a`. Returns the rank.

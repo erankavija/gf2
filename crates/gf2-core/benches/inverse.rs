@@ -21,11 +21,12 @@
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use gf2_core::field::matrix::FieldMatrix;
+use gf2_core::field::test_random_matrix::{
+    random_fp, random_fp_invertible, random_fp_vec, random_gf2m_wide_1,
+    random_gf2m_wide_1_invertible, random_gf2m_wide_1_vec,
+};
 use gf2_core::field::vec::FieldVec;
 use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-use gf2_core::gfp::Fp;
-use rand::rngs::StdRng;
-use rand::{Rng, SeedableRng};
 
 const MERSENNE_31: u64 = 2_147_483_647;
 
@@ -41,60 +42,22 @@ type Gf2m8 = Gf2mWide<1, InvBenchGf2m8Cfg>;
 const SIZES: &[usize] = &[64, 256, 1024];
 
 // ─── Random matrix builders ──────────────────────────────────────────────────
-
-fn random_fp<const P: u64>(rows: usize, cols: usize, seed: u64) -> FieldMatrix<Fp<P>> {
-    let mut rng = StdRng::seed_from_u64(seed);
-    let mut m = FieldMatrix::<Fp<P>>::zeros(rows, cols);
-    for r in 0..rows {
-        for c in 0..cols {
-            m.set(r, c, Fp::<P>::new(rng.gen::<u64>() % P));
-        }
-    }
-    m
-}
+//
+// Thin local aliases that monomorphise the shared generic helpers in
+// `gf2_core::field::test_random_matrix` to this bench's `Gf2m8` config.
+// Tests, prior benches, and these benches all flow through the same
+// SSOT module — see `crates/gf2-core/src/field/test_random_matrix.rs`.
 
 fn random_gf2m8(rows: usize, cols: usize, seed: u64) -> FieldMatrix<Gf2m8> {
-    let mut rng = StdRng::seed_from_u64(seed);
-    let mut m = FieldMatrix::<Gf2m8>::zeros(rows, cols);
-    for r in 0..rows {
-        for c in 0..cols {
-            m.set(r, c, Gf2m8::new([rng.gen::<u64>() & 0xFF]));
-        }
-    }
-    m
-}
-
-/// Returns a random `n × n` matrix that is full-rank.
-fn random_fp_invertible<const P: u64>(n: usize, seed: u64) -> FieldMatrix<Fp<P>> {
-    for k in 0..16u64 {
-        let m = random_fp::<P>(n, n, seed.wrapping_add(k));
-        if m.rank() == n {
-            return m;
-        }
-    }
-    panic!("random_fp_invertible: failed to find an invertible matrix");
+    random_gf2m_wide_1::<InvBenchGf2m8Cfg>(rows, cols, seed)
 }
 
 fn random_gf2m8_invertible(n: usize, seed: u64) -> FieldMatrix<Gf2m8> {
-    for k in 0..16u64 {
-        let m = random_gf2m8(n, n, seed.wrapping_add(k));
-        if m.rank() == n {
-            return m;
-        }
-    }
-    panic!("random_gf2m8_invertible: failed to find an invertible matrix");
-}
-
-fn random_fp_vec<const P: u64>(n: usize, seed: u64) -> FieldVec<Fp<P>> {
-    let mut rng = StdRng::seed_from_u64(seed);
-    (0..n).map(|_| Fp::<P>::new(rng.gen::<u64>() % P)).collect()
+    random_gf2m_wide_1_invertible::<InvBenchGf2m8Cfg>(n, seed)
 }
 
 fn random_gf2m8_vec(n: usize, seed: u64) -> FieldVec<Gf2m8> {
-    let mut rng = StdRng::seed_from_u64(seed);
-    (0..n)
-        .map(|_| Gf2m8::new([rng.gen::<u64>() & 0xFF]))
-        .collect()
+    random_gf2m_wide_1_vec::<InvBenchGf2m8Cfg>(n, seed)
 }
 
 // ─── Benches ────────────────────────────────────────────────────────────────

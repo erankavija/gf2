@@ -22,10 +22,8 @@
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use gf2_core::field::matrix::FieldMatrix;
+use gf2_core::field::test_random_matrix::{random_fp, random_gf2m_wide_1};
 use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-use gf2_core::gfp::Fp;
-use rand::rngs::StdRng;
-use rand::{Rng, SeedableRng};
 
 const MERSENNE_31: u64 = 2_147_483_647;
 
@@ -41,27 +39,12 @@ type Gf2m8 = Gf2mWide<1, PleBenchGf2m8Cfg>;
 const SIZES: &[usize] = &[64, 256, 1024];
 
 // ─── Random matrix builders ──────────────────────────────────────────────────
-
-fn random_fp<const P: u64>(rows: usize, cols: usize, seed: u64) -> FieldMatrix<Fp<P>> {
-    let mut rng = StdRng::seed_from_u64(seed);
-    let mut m = FieldMatrix::<Fp<P>>::zeros(rows, cols);
-    for r in 0..rows {
-        for c in 0..cols {
-            m.set(r, c, Fp::<P>::new(rng.gen::<u64>() % P));
-        }
-    }
-    m
-}
+//
+// Thin local alias that monomorphises the shared generic helpers in
+// `gf2_core::field::test_random_matrix` to this bench's `Gf2m8` config.
 
 fn random_gf2m8(rows: usize, cols: usize, seed: u64) -> FieldMatrix<Gf2m8> {
-    let mut rng = StdRng::seed_from_u64(seed);
-    let mut m = FieldMatrix::<Gf2m8>::zeros(rows, cols);
-    for r in 0..rows {
-        for c in 0..cols {
-            m.set(r, c, Gf2m8::new([rng.gen::<u64>() & 0xFF]));
-        }
-    }
-    m
+    random_gf2m_wide_1::<PleBenchGf2m8Cfg>(rows, cols, seed)
 }
 
 // ─── Benches ────────────────────────────────────────────────────────────────
