@@ -74,9 +74,9 @@ use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
 use gf2_core::gfp::Fp;
 
 use seed::{
-    derive_seed, fp_matrix_from_seed, fp_rank_deficient_from_seed, fp_vec_from_seed,
-    gf2m_wide_1_matrix_from_seed, gf2m_wide_1_rank_deficient_from_seed, gf2m_wide_1_vec_from_seed,
-    ops_cubic, ops_gemm, splitmix64, tput, CSV_HEADER,
+    derive_seed, fp_matrix_from_seed, fp_rank_deficient_from_seed, fp_sparse_from_seed,
+    fp_vec_from_seed, gf2m_wide_1_matrix_from_seed, gf2m_wide_1_rank_deficient_from_seed,
+    gf2m_wide_1_sparse_from_seed, gf2m_wide_1_vec_from_seed, ops_cubic, ops_gemm, tput, CSV_HEADER,
 };
 
 const PRIME_7: u64 = 7;
@@ -387,7 +387,7 @@ fn run_fp<const P: u64>(args: &Args, sink: &mut CsvSink, field_label: &str) -> s
             }
             let row_seed = derive_seed(master, "spmv", 11, si as u64, di as u64);
             let vec_seed = derive_seed(master, "spmv_vec", 11, si as u64, di as u64);
-            let a = build_sparse_fp::<P>(n, n, density, row_seed);
+            let a = fp_sparse_from_seed::<P>(n, n, density, row_seed);
             let x = fp_vec_from_seed::<P>(n, vec_seed);
             eprintln!("[gf2-csv] {key}");
             let (wall_ns, early) = time_op(
@@ -492,28 +492,6 @@ fn run_fp_factorisation<const P: u64>(
         }
     }
     Ok(())
-}
-
-fn build_sparse_fp<const P: u64>(
-    rows: usize,
-    cols: usize,
-    density: f64,
-    seed_val: u64,
-) -> SparseFieldMatrix<Fp<P>> {
-    let mut st = seed_val;
-    let mut m = FieldMatrix::<Fp<P>>::zeros(rows, cols);
-    let threshold = (density * (u64::MAX as f64 + 1.0)) as u64;
-    for r in 0..rows {
-        for c in 0..cols {
-            let draw = splitmix64(&mut st);
-            if draw < threshold {
-                let v_raw = splitmix64(&mut st);
-                let v = (v_raw % (P - 1)) + 1;
-                m.set(r, c, Fp::<P>::new(v));
-            }
-        }
-    }
-    SparseFieldMatrix::from_dense(&m)
 }
 
 fn run_gf2m<C: Gf2mWideConfig<1>>(
@@ -638,7 +616,7 @@ fn run_gf2m<C: Gf2mWideConfig<1>>(
             }
             let row_seed = derive_seed(args.master_seed, "spmv", 11, si as u64, di as u64);
             let vec_seed = derive_seed(args.master_seed, "spmv_vec", 11, si as u64, di as u64);
-            let a = build_sparse_gf2m::<C>(n, n, density, row_seed);
+            let a = gf2m_wide_1_sparse_from_seed::<C>(n, n, density, row_seed);
             let x: FieldVec<Gf2mWide<1, C>> = gf2m_wide_1_vec_from_seed::<C>(n, vec_seed);
             eprintln!("[gf2-csv] {key}");
             let (wall_ns, early) = time_op(
@@ -742,33 +720,6 @@ fn run_gf2m_factorisation<C: Gf2mWideConfig<1>>(
         }
     }
     Ok(())
-}
-
-fn build_sparse_gf2m<C: Gf2mWideConfig<1>>(
-    rows: usize,
-    cols: usize,
-    density: f64,
-    seed_val: u64,
-) -> SparseFieldMatrix<Gf2mWide<1, C>> {
-    let mask: u64 = if C::M >= 64 {
-        u64::MAX
-    } else {
-        (1u64 << C::M) - 1
-    };
-    let mut st = seed_val;
-    let mut m = FieldMatrix::<Gf2mWide<1, C>>::zeros(rows, cols);
-    let threshold = (density * (u64::MAX as f64 + 1.0)) as u64;
-    for r in 0..rows {
-        for c in 0..cols {
-            let draw = splitmix64(&mut st);
-            if draw < threshold {
-                let v_raw = splitmix64(&mut st) & mask;
-                let v = if v_raw == 0 { 1 } else { v_raw };
-                m.set(r, c, Gf2mWide::<1, C>::new([v]));
-            }
-        }
-    }
-    SparseFieldMatrix::from_dense(&m)
 }
 
 fn main() -> std::io::Result<()> {
