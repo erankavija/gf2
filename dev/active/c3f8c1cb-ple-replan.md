@@ -155,11 +155,15 @@ A few points the reviewer will check:
 
 ### Derived operations
 
-- `row_echelon`: PLE then return `(L^{-1}_top, E)` where `L^{-1}_top` is the inverse of `L`'s top `r × r` block (use `trtri_lower`). One additional `r × r` allocation for the inverted block.
-- `rref`: `row_echelon` then zero above the leading 1s using one more `gemm`-into-view pass.
+**(R6 amendment, 2026-04-26 — supersedes the prior `trtri`/`trtrm` composition for derived ops; see the issue description for the full rationale.)** The user's standing directive — "No performance shall be sacrificed for SSOT" — overrides strict literal composition where it would force a measurable performance regression. The amended derived-op contract is:
+
+- `row_echelon`: PLE then build `L_full` (m × m unit lower-triangular by padding `L`'s `(m × r)` trapezoidal shape with an identity block) and `Pᵀ`, and solve `L_full · X = Pᵀ` in place via **one `trsm_lower` call** (no `trtri_lower`). Routing through `trtri_lower(L_top)` would force an O(m²) materialisation of `L_top_inv` purely for cosmetic SSOT compliance; the same end result `L_full · X = Pᵀ` is obtained in a single `trsm_lower` call without ever forming `L_top_inv`.
+- `rref`: `row_echelon` then **in-place pivot scaling and above-pivot elimination** (no `trtri_lower + trtrm` path). The bespoke loop is O(rank · (m + n)) field operations, dwarfed by `row_echelon`'s O(m · n · min(m, n)) PLE cost in the same function. Routing through `trtrm` would trade an O(m²) memory regression for cosmetic SSOT compliance (a second dense `m × m` materialisation of `L_top_inv` plus a `trtrm` chain-multiply scratch per pivot block).
 - `rank`: just the 4th return value of `ple()`.
 - `nullspace`: read non-pivot columns of E, build basis vectors. Each basis vector is one `FieldVec<F>` allocation. Total: `(n - rank)` `FieldVec` allocs, no `FieldMatrix` allocs.
 - `lu`: one PLE call. Returns `Some` iff rank == min(m, n). When `Some`, repackage the existing `L` and `E` as `(P, L, U)` (no extra allocations beyond what PLE already did).
+
+The `trtri_lower` / `trtrm` primitives from `83b1ad8b` remain available; downstream stories (`ae1d1e88` inverse / `e47231cd` charpoly) may use them where strict composition is performance-neutral or beneficial.
 
 ### Allocation regression test
 
