@@ -68,10 +68,8 @@ use std::path::PathBuf;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
 use gf2_core::field::matrix::{gemm, FieldMatrix};
-use gf2_core::field::sparse_matrix::SparseFieldMatrix;
 use gf2_core::field::vec::FieldVec;
 use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-use gf2_core::gfp::Fp;
 
 use seed::{
     derive_seed, fp_matrix_from_seed, fp_rank_deficient_from_seed, fp_sparse_from_seed,
