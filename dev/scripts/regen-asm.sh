@@ -144,32 +144,52 @@ emit_with_fallback() {
     local sym="$1"
     local tmp
     tmp=$(mktemp -d)
-    trap 'rm -rf "$tmp"' RETURN
+    # Clean up the temp dir on function return. Using an explicit
+    # `rm -rf -- "$tmp"` substituted into the trap body (rather than
+    # quoting `$tmp` for later expansion) avoids unbound-variable errors
+    # under `set -u` once the function returns and the local `$tmp` goes
+    # out of scope before the RETURN trap fires.
+    # shellcheck disable=SC2064  # intentional eager expansion
+    trap "rm -rf -- '$tmp'" RETURN
     {
         echo
         echo ";=========================================================="
         echo "; symbol: ${sym} (cargo-rustc whole-crate fallback)"
         echo ";=========================================================="
         echo
-        # cargo rustc dumps the whole crate's asm under target/.../*.s.
+        # cargo rustc dumps the whole crate's asm under <target-dir>/.../*.s.
+        #
+        # IMPORTANT: do NOT pass `--out-dir` in the trailing rustc args (i.e.
+        # after `--`). Cargo already injects its own `--out-dir` when invoking
+        # rustc; passing a second one triggers
+        #   error: Option 'out-dir' given more than once
+        # Instead, redirect cargo's own output via `--target-dir "$tmp"`,
+        # which isolates this asm dump from the caller's main `target/`
+        # without colliding with cargo's internal flag plumbing. Then locate
+        # the emitted `.s` file under "$tmp/release/deps/".
+        #
         # Only pass -C target-cpu when explicitly set; otherwise omit the
         # flag entirely so an empty value never reaches rustc.
-        local rustc_args=(--emit=asm --out-dir "$tmp")
+        local rustc_args=(--emit=asm)
         if [[ -n "$target_cpu" ]]; then
             rustc_args+=(-C "target-cpu=$target_cpu")
         fi
         RUSTFLAGS="$rustflags_value" \
-            cargo rustc --release -p "$crate" --lib -- \
+            cargo rustc --release --target-dir "$tmp" -p "$crate" --lib -- \
                 "${rustc_args[@]}" 2>&1 | head -5
         local asm_files
-        asm_files=$(find "$tmp" -maxdepth 2 -name '*.s' 2>/dev/null || true)
+        asm_files=$(find "$tmp" -name '*.s' 2>/dev/null || true)
         if [[ -z "$asm_files" ]]; then
             echo "; (no .s files produced by fallback)"
             return 1
         fi
-        # Demangle and grep neighbourhood of the requested symbol.
+        # Locate the symbol in the (Itanium-mangled) raw asm. The .s file
+        # contains names like `_ZN16gf2_kernels_simd3x864avx213avx2_xor_into...`,
+        # so we cannot grep for the unmangled `crate::path::name` form. Match
+        # on the function's basename (last `::` segment), which appears
+        # verbatim inside the mangled string.
         local needle
-        needle=$(echo "$sym" | tr -d ' ')
+        needle="${sym##*::}"
         for f in $asm_files; do
             if grep -q "$needle" "$f" 2>/dev/null; then
                 grep -n -A 80 "$needle" "$f" | head -200
