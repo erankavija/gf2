@@ -135,6 +135,24 @@ LOCAL_ID="$("${RUNTIME}" image inspect "${IMAGE_TAG}" \
                 --format '{{.Id}}' 2>/dev/null || true)"
 if [[ -n "${LOCAL_ID}" ]]; then
     echo "[run.sh] local image id: ${LOCAL_ID}" >&2
+    # Stamp image.lock's [image].local_id so subsequent invocations on
+    # the same host can detect environment drift. The file is committed
+    # with a "TODO_FILL_AFTER_FIRST_BUILD" placeholder; this in-place
+    # rewrite replaces it with the concrete sha256.
+    if [[ -f "${HERE}/image.lock" ]]; then
+        # Ensure local_id starts with sha256: prefix (podman returns it
+        # bare on some versions).
+        case "${LOCAL_ID}" in
+            sha256:*) LOCAL_ID_TAGGED="${LOCAL_ID}" ;;
+            *)        LOCAL_ID_TAGGED="sha256:${LOCAL_ID}" ;;
+        esac
+        # Use a tmpfile so a partial write cannot corrupt image.lock.
+        TMP_LOCK="$(mktemp)"
+        sed -E "s|^(local_id\\s*=\\s*\")[^\"]*\"|\\1${LOCAL_ID_TAGGED}\"|" \
+            "${HERE}/image.lock" > "${TMP_LOCK}"
+        mv "${TMP_LOCK}" "${HERE}/image.lock"
+        echo "[run.sh] stamped image.lock local_id = ${LOCAL_ID_TAGGED}" >&2
+    fi
 fi
 
 # ---- run the harnesses --------------------------------------------------
