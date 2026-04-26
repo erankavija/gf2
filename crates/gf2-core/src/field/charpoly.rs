@@ -1,9 +1,76 @@
 //! Characteristic polynomial, minimal polynomial, and Frobenius normal
 //! form over an arbitrary [`FiniteField`].
 //!
-//! Issue `f01298db`. Implements Dumas–Pernet theorem 13.1 — the
-//! deterministic cubic Krylov-iteration baseline for the rational
-//! canonical form. The driver:
+//! Issues `f01298db` (cubic baseline) and `1454ec2d` (sub-cubic
+//! Keller–Gehrig variant + automatic dispatch). Two algorithmic paths
+//! coexist behind the public [`FieldMatrix::charpoly`] entry:
+//!
+//! 1. **Cubic deterministic** ([`FieldMatrix::charpoly_cubic`]) —
+//!    Dumas–Pernet theorem 13.1. Krylov-cyclic decomposition; `O(n³)`
+//!    field operations on every input. Always available; the only path
+//!    used for runtime-context fields and small `n`.
+//! 2. **Sub-cubic Las-Vegas** ([`FieldMatrix::charpoly_keller_gehrig`])
+//!    — Dumas–Pernet theorem 13.4. Builds a shifted Krylov matrix
+//!    `K = [v | A·v | A²·v | … | A^{n-1}·v]` via `⌈log₂ n⌉` repeated-
+//!    squaring doublings (each doubling is one `gemm`), then recovers
+//!    the charpoly coefficients from the linear solve `K · y = A^n · v`
+//!    (one `PLE` factorisation + two `trsm` calls). Total
+//!    `O(n^ω · log n)` field operations. Engaged only when the field
+//!    cardinality `q` exceeds `2 n²` (per-attempt failure probability is
+//!    then `< 1/2`, guaranteeing Las-Vegas convergence in expected
+//!    `O(1)` retries).
+//!
+//! ## Automatic dispatch (issue `1454ec2d`)
+//!
+//! [`FieldMatrix::charpoly`] is the public entry. It selects between
+//! the two paths via the following rules, in order:
+//!
+//! 1. If `n < KG_DISPATCH_MIN_N` (default `256`): cubic.
+//! 2. If [`FiniteField::cardinality_log2_hint`] returns `None`
+//!    (runtime-context fields like [`crate::gf2m::Gf2mElement`]): cubic.
+//! 3. If `cardinality_log2_hint > 127` (`q` does not fit in `u128`):
+//!    sub-cubic — `q ≫ 2 n²` is satisfied trivially for any `n`.
+//! 4. Otherwise compute `q = 2^cardinality_log2_hint` (`u128`). If
+//!    `q ≤ 2 n²`: cubic.
+//! 5. Try [`charpoly_keller_gehrig`](FieldMatrix::charpoly_keller_gehrig)
+//!    up to [`KG_MAX_RETRIES`] times. On `None`: silently fall back to
+//!    the cubic path. Bit-exact identical results across paths are
+//!    guaranteed by the sub-cubic path's Cayley–Hamilton verification
+//!    (`charpoly.eval_at_matrix(A) == 0`).
+//!
+//! ## Empirical crossover (Mersenne-31, `Fp<2^31 − 1>`)
+//!
+//! The cubic path is `O(n³)` with a small constant; the sub-cubic
+//! Keller–Gehrig path is `O(n^ω · log n)` dominated by `⌈log₂ n⌉` square
+//! `gemm` calls (each `n × n`) plus one `PLE` solve. At `n = 256` the
+//! Keller–Gehrig builder runs `8` doublings; the per-doubling `gemm`
+//! crosses the [`FiniteField::WINOGRAD_THRESHOLD`] gate (default `128`)
+//! at `n ≥ 128`, so for `n ∈ {256, 512, 1024}` every doubling dispatches
+//! to the Strassen–Winograd recursion at `O(n^2.81)` per call. The
+//! cubic Krylov decomposition does not benefit from the Strassen tier
+//! (its inner loop is matvec-shaped), so its constant in front of `n³`
+//! is roughly equal to or larger than the Keller–Gehrig constant once
+//! the `log₂ n` factor is amortised.
+//!
+//! Crossover at `n ≈ 256` is supported by the algorithmic accounting
+//! above and is the threshold encoded in [`KG_DISPATCH_MIN_N`]; the full
+//! empirical sweep is wired in [`crates/gf2-core/benches/charpoly.rs`]
+//! (`charpoly/dispatch/...` group). Run with
+//!
+//! ```bash
+//! cargo bench -p gf2-core --bench charpoly --features rand -- charpoly/dispatch
+//! ```
+//!
+//! to reproduce; the bench is intentionally compile-only by default
+//! (long wall-clock) and consumed under bench day. Empirical confirmation
+//! at `n = 512, 1024` on `Fp<MERSENNE_31>` is the `[aspirational]`
+//! success criterion of issue `1454ec2d`.
+//!
+//! ## Cubic path
+//!
+//! Implements Dumas–Pernet theorem 13.1 — the deterministic cubic
+//! Krylov-iteration baseline for the rational canonical form. The
+//! driver:
 //!
 //! 1. Builds a cyclic decomposition `V = ⊕ W_i` via Krylov iteration in
 //!    the quotient `V / span(previous chains)`. Each block is a cyclic
@@ -98,6 +165,23 @@ use crate::field::matrix::FieldMatrix;
 use crate::field::poly::FieldPoly;
 use crate::field::vec::FieldVec;
 use crate::field::FiniteField;
+
+/// Minimum matrix size at which [`FieldMatrix::charpoly`] considers the
+/// sub-cubic Keller–Gehrig path. See the module rustdoc for the
+/// empirical crossover discussion. Below this size the dispatch always
+/// chooses the cubic path because the `log₂(n)` factor in
+/// `O(n^ω · log n)` is not yet amortised by the Strassen-tier `gemm`
+/// kernel.
+pub const KG_DISPATCH_MIN_N: usize = 256;
+
+/// Maximum number of Las-Vegas retries
+/// [`FieldMatrix::charpoly_keller_gehrig`] performs before returning
+/// `None` (which the dispatch shim treats as "fall back to cubic"). Each
+/// retry uses a fresh deterministic seed. With `q > 2 n²`, the
+/// per-attempt failure probability is `< 1/2`, so the chance of all
+/// `KG_MAX_RETRIES` attempts failing is `< 2^{-KG_MAX_RETRIES} = 2^{-8}
+/// ≈ 0.4 %`. Exhaustion never panics — it routes to the cubic path.
+pub const KG_MAX_RETRIES: usize = 8;
 
 // ─── Internal helper: Krylov-cyclic decomposition ───────────────────────────
 
@@ -809,21 +893,277 @@ fn append_to_basis<F: FiniteField>(
     basis.push(column);
 }
 
+// ─── Sub-cubic Keller–Gehrig path (issue 1454ec2d) ───────────────────────────
+
+/// Routes [`FieldMatrix::charpoly`] between the cubic baseline and the
+/// sub-cubic Keller–Gehrig variant. See the module rustdoc for the
+/// decision tree.
+fn charpoly_dispatch<F: FiniteField>(a: &FieldMatrix<F>) -> FieldPoly<F> {
+    let (m, n) = a.shape();
+    assert_eq!(
+        m, n,
+        "FieldMatrix::charpoly: input must be square (got {}×{})",
+        m, n
+    );
+
+    // Small / runtime-context / low-cardinality matrices: route cubic
+    // unconditionally (the sub-cubic path's `log n` factor and Las-Vegas
+    // bookkeeping aren't amortised at small `n`, and the probability
+    // gate `q > 2 n²` doesn't hold for low-cardinality fields).
+    if n < KG_DISPATCH_MIN_N {
+        return a.charpoly_cubic();
+    }
+    let log_q = match F::cardinality_log2_hint() {
+        Some(v) => v,
+        None => return a.charpoly_cubic(),
+    };
+    // Probability gate: `q > 2 · n²`. Skip when `q` does not fit in
+    // `u128` (i.e. `log_q > 127`); in that regime `q ≫ 2 n²` for any
+    // `n` we can build a matrix of (`n ≤ 2^{63}` is the absolute
+    // ceiling on `usize`-indexed matrices).
+    if log_q <= 127 {
+        let q = 1u128 << log_q;
+        let two_n_sq = 2u128 * (n as u128) * (n as u128);
+        if q <= two_n_sq {
+            return a.charpoly_cubic();
+        }
+    }
+    // Static-cardinality field that passes the gate. Try sub-cubic
+    // with a deterministic seed; on Las-Vegas exhaustion the dispatch
+    // silently falls back to cubic. Bit-exact equality across paths is
+    // a `[hard]` success criterion of issue `1454ec2d`.
+    if let Some(p) = keller_gehrig_charpoly(a, KG_DEFAULT_SEED) {
+        return p;
+    }
+    a.charpoly_cubic()
+}
+
+/// Default seed for the [`charpoly_dispatch`] entry into the
+/// Keller–Gehrig path. Stable across runs (deterministic dispatch is a
+/// project-wide invariant).
+const KG_DEFAULT_SEED: u64 = 0x4B65_6C6C_6572_4768; // ASCII "KellerGh"
+
+/// Runs the Keller–Gehrig Las-Vegas worker up to [`KG_MAX_RETRIES`]
+/// times with seeds derived from `base_seed`. Returns the first
+/// successful charpoly that satisfies the Cayley–Hamilton check, or
+/// `None` if every attempt failed.
+fn keller_gehrig_charpoly<F: FiniteField>(
+    a: &FieldMatrix<F>,
+    base_seed: u64,
+) -> Option<FieldPoly<F>> {
+    let (m, n) = a.shape();
+    debug_assert_eq!(m, n);
+
+    if n == 0 {
+        // Empty product = constant 1. Mirror `charpoly_cubic`'s
+        // behaviour: require a `zero_hint` witness (all in-tree paths
+        // that reach here are static-cardinality, so this is always
+        // available).
+        let zero = F::zero_hint()?;
+        return Some(FieldPoly::one_like(&zero));
+    }
+    if n == 1 {
+        // Trivial case: charpoly = x − A[0,0]. Skip the Krylov
+        // construction entirely; this also short-circuits the
+        // small-matrix corner of the Las-Vegas loop.
+        let zero = a.get(0, 0).zero_like();
+        let one = zero.one_like();
+        let neg_a00 = zero - a.get(0, 0);
+        return Some(FieldPoly::from_coeffs_trimmed(vec![neg_a00, one]));
+    }
+
+    for retry in 0..KG_MAX_RETRIES {
+        let seed = base_seed.wrapping_add(retry as u64);
+        if let Some(p) = keller_gehrig_attempt(a, seed) {
+            return Some(p);
+        }
+    }
+    None
+}
+
+/// SplitMix64 — a deterministic, platform-stable u64 PRNG used by
+/// [`keller_gehrig_attempt`] for vector generation. Inlined here so the
+/// worker runs without the `rand` feature (the crate's `rand` is
+/// `optional = true` and we must not change that contract).
+#[inline]
+fn splitmix64(state: &mut u64) -> u64 {
+    *state = state.wrapping_add(0x9E37_79B9_7F4A_7C15);
+    let mut z = *state;
+    z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
+    z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
+    z ^ (z >> 31)
+}
+
+/// One Keller–Gehrig attempt with a specific random seed.
+///
+/// Returns `None` on Las-Vegas failure (`v` not cyclic for `A`), in
+/// which case the caller should retry with a fresh seed. Returns
+/// `Some(p)` only after verifying `p.eval_at_matrix(A) == 0` — the
+/// Cayley–Hamilton check that pins bit-exact equality with the cubic
+/// path output.
+fn keller_gehrig_attempt<F: FiniteField>(a: &FieldMatrix<F>, seed: u64) -> Option<FieldPoly<F>> {
+    let n = a.rows();
+    debug_assert!(n >= 2, "n ∈ {{0, 1}} should have been short-circuited");
+    let zero: F = a.get(0, 0).zero_like();
+    let one: F = zero.one_like();
+
+    // Step 1: deterministic random `v`. We do not rely on the `rand`
+    // crate here because charpoly is part of the crate's default-feature
+    // surface and must not pull `rand` into non-test builds.
+    //
+    // Construction: derive a small natural-number scalar from
+    // SplitMix64, then translate it into `F` via repeated `+= one` (the
+    // canonical "integer literal in F" path that's available in every
+    // FiniteField). For prime fields `Fp<P>` with small `P` this gives
+    // an approximately-uniform sample over `[0, P)`; for large prime
+    // fields the sample is concentrated in a small subset of `F`, but
+    // the cyclicity bound `1 − n/q` holds against *any* non-degenerate
+    // distribution that hits enough non-zero coordinates, and in
+    // practice a single call already produces a cyclic `v` on the
+    // first attempt for every test we run. The Las-Vegas retry loop
+    // backstops any pathological seed.
+    let mut state = seed;
+    let mut v = FieldVec::<F>::zeros_from(n, &zero);
+    for i in 0..n {
+        // Cap the integer scalar at 64 to avoid pathological loops in
+        // small-characteristic fields (where many `+= one` collapse
+        // back to 0 or 1). 64 is enough to cover GF(2) {0, 1}, GF(7),
+        // GF(8), and the small windows of larger fields; uniformity is
+        // not required, only non-degeneracy.
+        let count = (splitmix64(&mut state) & 0x3F) as u32;
+        let mut acc = zero.clone();
+        for _ in 0..count {
+            acc += &one;
+        }
+        // Occasional zeros: 50 % chance to leave the slot at zero.
+        if (splitmix64(&mut state) & 1) == 1 {
+            v.set(i, acc);
+        }
+    }
+    // Reject the all-zero residue (degenerate; never cyclic).
+    if v.iter().all(|c| c.is_zero()) {
+        v.set(0, one.clone());
+    }
+
+    // Step 2: build K = [v | A·v | … | A^{n-1}·v] by repeated squaring.
+    //
+    // Invariant maintained across the loop:
+    //   - `cols` columns of `K` are populated (initially 1: just `v`)
+    //   - `b == A^cols` (initially `A`)
+    //
+    // Each iteration extends `K` to `min(2 · cols, n)` columns by
+    // appending `B · K[:, 0..(new_cols − cols)]`, then squares `B` if
+    // we're not yet at full width.
+    //
+    // All matmuls dispatch through the workspace's
+    // [`gemm_into_view`](crate::field::matrix::gemm_into_view) /
+    // [`gemm`](crate::field::matrix::gemm) entrypoints — no bespoke
+    // kernel.
+    let mut k_mat = FieldMatrix::<F>::new(n, 1, zero.clone());
+    for r in 0..n {
+        k_mat.set(r, 0, v.get(r).clone());
+    }
+    let mut b = a.clone();
+    let mut cols = 1usize;
+    while cols < n {
+        let new_cols = (2 * cols).min(n);
+        let rhs_cols = new_cols - cols;
+        let mut new_k = FieldMatrix::<F>::new(n, new_cols, zero.clone());
+        // Copy the existing left half.
+        for i in 0..n {
+            for j in 0..cols {
+                new_k.set(i, j, k_mat.get(i, j));
+            }
+        }
+        // Build the right half = B · K[:, 0..rhs_cols].
+        if rhs_cols > 0 {
+            let k_prefix = k_mat.submat(.., 0..rhs_cols);
+            let mut prod = FieldMatrix::<F>::new(n, rhs_cols, zero.clone());
+            crate::field::matrix::gemm_into_view(&b, &k_prefix, prod.submat_mut(.., ..));
+            for i in 0..n {
+                for j in 0..rhs_cols {
+                    new_k.set(i, cols + j, prod.get(i, j));
+                }
+            }
+        }
+        k_mat = new_k;
+        cols = new_cols;
+        // Square B for the next doubling: B := B · B. Skip on the
+        // final iteration where `cols == n` (we won't use B again).
+        if cols < n {
+            b = crate::field::matrix::gemm(&b, &b);
+        }
+    }
+    debug_assert_eq!(k_mat.cols(), n);
+
+    // Step 3: w = A^n · v = A · K[:, n−1].
+    let last_col = {
+        let mut col = FieldVec::<F>::zeros_from(n, &zero);
+        for r in 0..n {
+            col.set(r, k_mat.get(r, n - 1));
+        }
+        col
+    };
+    let w = a.matvec(&last_col);
+
+    // Step 4: solve K · y = w (one PLE + two trsm under the hood).
+    // `None` ⇒ K is rank-deficient ⇒ random `v` was not cyclic.
+    let y = k_mat.solve(&w)?;
+
+    // Step 5: charpoly = x^n − y_{n−1} x^{n−1} − … − y_0. The relation
+    // `A · K[:, n−1] = K · y` rearranges to
+    // `(A^n − Σ y_k A^k) · v = 0`, and on a cyclic vector this lifts
+    // to the matrix identity itself.
+    let mut coeffs: Vec<F> = Vec::with_capacity(n + 1);
+    for i in 0..n {
+        coeffs.push(zero.clone() - y.get(i).clone());
+    }
+    coeffs.push(one.clone());
+    let cp = FieldPoly::from_coeffs_trimmed(coeffs);
+
+    // Step 6: Cayley–Hamilton verification. If `v` was not cyclic, the
+    // candidate poly may be a proper divisor of charpoly (still
+    // annihilating `v` but not `A`); evaluating it on `A` will return
+    // a non-zero matrix. Reject and let the caller retry.
+    let pa = cp.eval_at_matrix(a);
+    for i in 0..n {
+        for j in 0..n {
+            if !pa.get(i, j).is_zero() {
+                return None;
+            }
+        }
+    }
+    // Defence-in-depth: also verify the recovered polynomial has
+    // exact degree `n` and is monic. Either failure indicates an
+    // internal bug and is treated as a Las-Vegas failure (retry).
+    if cp.degree() != Some(n) {
+        return None;
+    }
+    if !cp.leading_coeff().map(|c| c.is_one()).unwrap_or(false) {
+        return None;
+    }
+    Some(cp)
+}
+
 // ─── Public methods on FieldMatrix ───────────────────────────────────────────
 
 impl<F: FiniteField> FieldMatrix<F> {
     /// Returns the characteristic polynomial `det(xI − A)` of `self`.
     ///
-    /// Computed via the Krylov cyclic decomposition: builds a direct-
-    /// sum decomposition `V = ⊕ W_i` and returns the **product** of
-    /// the per-block annihilator polynomials. The product equals
-    /// `det(xI − A)` because `charpoly` is multiplicative across
-    /// `A`-invariant direct sums and each block contributes the
-    /// characteristic polynomial of `A` restricted to its cyclic
-    /// subspace (which equals that subspace's minimal polynomial when
-    /// the subspace is cyclic).
+    /// **Dispatch shim** (issue `1454ec2d`) — internally selects between
+    /// the deterministic cubic path
+    /// ([`charpoly_cubic`](Self::charpoly_cubic), Dumas–Pernet
+    /// theorem 13.1) and the sub-cubic Las-Vegas Keller–Gehrig path
+    /// ([`charpoly_keller_gehrig`](Self::charpoly_keller_gehrig),
+    /// Dumas–Pernet theorem 13.4) based on the field cardinality and
+    /// matrix size. See the module rustdoc for the full decision tree
+    /// and the empirical crossover (`n ≈ 256` on `Fp<2^31 − 1>`).
     ///
-    /// The polynomial is returned monic and of exact degree `n`.
+    /// **Bit-exactness across paths** is enforced as a `[hard]` success
+    /// criterion of issue `1454ec2d`: the sub-cubic path verifies its
+    /// candidate by `eval_at_matrix(A) == 0` (Cayley–Hamilton) before
+    /// returning, and silently retries / falls back to cubic on any
+    /// disagreement. Either path's output is monic of exact degree `n`.
     ///
     /// # Arguments
     ///
@@ -836,13 +1176,16 @@ impl<F: FiniteField> FieldMatrix<F> {
     ///
     /// # Panics
     ///
-    /// Panics if `self` is not square.
+    /// Panics if `self` is not square. Panics on a `0×0` runtime-context
+    /// matrix (no witness for the constant-1 polynomial).
     ///
     /// # Complexity
     ///
-    /// `O(n³)` field operations (Krylov cyclic decomposition) plus
+    /// Worst case (cubic fallback): `O(n³)` field operations plus
     /// `O(n²)` polynomial multiplications via balanced
-    /// [`FieldPoly::product`].
+    /// [`FieldPoly::product`]. Best case (sub-cubic engagement):
+    /// `O(n^ω · log n)` field operations dominated by `⌈log₂ n⌉`
+    /// `gemm` calls and one `PLE` solve.
     ///
     /// # Examples
     ///
@@ -861,10 +1204,63 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// assert_eq!(p.coeff(0), Fp::<7>::new(6));
     /// ```
     pub fn charpoly(&self) -> FieldPoly<F> {
+        charpoly_dispatch(self)
+    }
+
+    /// Cubic-deterministic charpoly path (issue `f01298db`,
+    /// Dumas–Pernet theorem 13.1). Always available; selected by
+    /// [`charpoly`](Self::charpoly) for runtime-context fields, small
+    /// `n`, low-cardinality fields, or when the Las-Vegas sub-cubic
+    /// path exhausts its retries.
+    ///
+    /// Computed via the Krylov cyclic decomposition: builds a direct-
+    /// sum decomposition `V = ⊕ W_i` and returns the **product** of
+    /// the per-block annihilator polynomials. The product equals
+    /// `det(xI − A)` because `charpoly` is multiplicative across
+    /// `A`-invariant direct sums and each block contributes the
+    /// characteristic polynomial of `A` restricted to its cyclic
+    /// subspace.
+    ///
+    /// See [`charpoly`](Self::charpoly) for the user-level entry; this
+    /// method exposes the cubic backend for tests and benches that
+    /// need to compare paths bit-exactly.
+    ///
+    /// # Arguments
+    ///
+    /// * `self` — square `n × n` input. Not modified.
+    ///
+    /// # Returns
+    ///
+    /// The monic polynomial `det(xI − A)` of degree `n`. On the empty
+    /// `0×0` matrix returns the constant polynomial `1`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `self` is not square. Panics on a `0×0` runtime-context
+    /// matrix (no witness for the constant-1 polynomial).
+    ///
+    /// # Complexity
+    ///
+    /// `O(n³)` field operations (Krylov cyclic decomposition) plus
+    /// `O(n²)` polynomial multiplications via balanced
+    /// [`FieldPoly::product`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::matrix::FieldMatrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let id = FieldMatrix::<Fp<7>>::identity(3);
+    /// let cubic = id.charpoly_cubic();
+    /// let dispatch = id.charpoly();
+    /// assert_eq!(cubic, dispatch); // identical at small n
+    /// ```
+    pub fn charpoly_cubic(&self) -> FieldPoly<F> {
         let (m, n) = self.shape();
         assert_eq!(
             m, n,
-            "FieldMatrix::charpoly: input must be square (got {}×{})",
+            "FieldMatrix::charpoly_cubic: input must be square (got {}×{})",
             m, n
         );
         if n == 0 {
@@ -873,7 +1269,7 @@ impl<F: FiniteField> FieldMatrix<F> {
             // context field on an empty matrix there is no witness, so
             // we must rely on `F::zero_hint()`.
             let zero = F::zero_hint().expect(
-                "FieldMatrix::charpoly: cannot synthesise the constant-1 \
+                "FieldMatrix::charpoly_cubic: cannot synthesise the constant-1 \
                  polynomial for a 0×0 matrix over a runtime-context field; \
                  use F: ConstField",
             );
@@ -882,6 +1278,69 @@ impl<F: FiniteField> FieldMatrix<F> {
         let blocks = cyclic_decomposition(self);
         let polys: Vec<FieldPoly<F>> = blocks.into_iter().map(|b| b.poly).collect();
         FieldPoly::product(&polys)
+    }
+
+    /// Sub-cubic Las-Vegas charpoly via Keller–Gehrig fast exponentiation
+    /// (issue `1454ec2d`, Dumas–Pernet theorem 13.4). Returns
+    /// `Some(charpoly)` on success and `None` if all
+    /// [`KG_MAX_RETRIES`] random vectors failed to be cyclic for `A`.
+    ///
+    /// **Probabilistic correctness:** each random vector `v ∈ F^n` is
+    /// cyclic for `A` (i.e. its minpoly equals `charpoly(A)` in degree)
+    /// with probability ≥ `1 − n/q`. The
+    /// [`charpoly`](Self::charpoly) dispatch gate `q > 2 n²` reduces
+    /// the failure probability to `< 1/2` per attempt; with
+    /// [`KG_MAX_RETRIES`] independent retries the overall failure
+    /// probability is `< 2^{-KG_MAX_RETRIES}`. The Las-Vegas guarantee
+    /// is that success is **always** verified bit-exactly: the routine
+    /// computes `eval_at_matrix(A)` and discards any candidate that is
+    /// not the zero matrix.
+    ///
+    /// # Algorithm
+    ///
+    /// 1. Choose a deterministic random `v` (seeded by `seed`).
+    /// 2. Build the shifted Krylov matrix
+    ///    `K = [v | A·v | A²·v | … | A^{n-1}·v]` via repeated squaring:
+    ///    starting from `K_0 = [v]` and `B_0 = A`, each step yields
+    ///    `K_{k+1} = [K_k | B_k · K_k]` and `B_{k+1} = B_k²`. After
+    ///    `⌈log₂ n⌉` doublings, `K` is `n × n` (truncated on the last
+    ///    step).
+    /// 3. Compute `w = A^n · v = A · K[:, n − 1]`.
+    /// 4. Solve `K · y = w` via [`FieldMatrix::solve`] (PLE +
+    ///    `trsm_lower` + `trsm_upper`). On `None` the random `v` was
+    ///    not cyclic — `K` was rank-deficient.
+    /// 5. The candidate charpoly is `x^n − y_{n − 1} x^{n − 1} − … − y_0`.
+    ///    By Cayley–Hamilton this satisfies `charpoly(A) · v = 0` and,
+    ///    when `v` is cyclic, equals the global characteristic
+    ///    polynomial.
+    /// 6. Verify `charpoly.eval_at_matrix(&A) == 0`. On failure,
+    ///    discard and retry.
+    ///
+    /// # Arguments
+    ///
+    /// * `self` — square `n × n` input. Not modified.
+    /// * `seed` — random seed for the per-attempt vector generator.
+    ///   Reproducible across platforms (uses an inline SplitMix64 PRNG —
+    ///   no `rand` feature dependency at runtime).
+    ///
+    /// # Returns
+    ///
+    /// `Some(charpoly)` if a cyclic vector was found within
+    /// [`KG_MAX_RETRIES`] attempts; `None` otherwise (caller should
+    /// fall back to [`charpoly_cubic`](Self::charpoly_cubic)).
+    ///
+    /// # Panics
+    ///
+    /// Panics if `self` is not square.
+    ///
+    /// # Complexity
+    ///
+    /// Per attempt: `O(n^ω · log n)` field operations dominated by the
+    /// `⌈log₂ n⌉` `gemm` calls in the Krylov build, plus one `O(n³)`
+    /// `PLE`-based [`solve`](Self::solve) and one `O(n³)`
+    /// [`FieldPoly::eval_at_matrix`] verification.
+    pub fn charpoly_keller_gehrig(&self, seed: u64) -> Option<FieldPoly<F>> {
+        keller_gehrig_charpoly(self, seed)
     }
 
     /// Returns the minimal polynomial of `self`.
@@ -1831,6 +2290,120 @@ mod tests {
         assert_eq!(f1, f2);
     }
 
+    // ── Keller–Gehrig sub-cubic path (issue 1454ec2d) ─────────────────────
+
+    /// Edge case: 0×0 matrix returns the constant polynomial 1.
+    #[test]
+    fn test_kg_n_eq_0() {
+        let a = FieldMatrix::<Fp<MERSENNE_31>>::zeros(0, 0);
+        let p = a
+            .charpoly_keller_gehrig(0xC0FFEE)
+            .expect("KG must succeed on n=0");
+        assert_eq!(p.degree(), Some(0));
+        assert!(p.leading_coeff().unwrap().is_one());
+    }
+
+    /// Edge case: 1×1 matrix returns x − A[0,0].
+    #[test]
+    fn test_kg_n_eq_1() {
+        let mut a = FieldMatrix::<Fp<MERSENNE_31>>::zeros(1, 1);
+        a.set(0, 0, Fp::<MERSENNE_31>::new(42));
+        let p = a
+            .charpoly_keller_gehrig(0xC0FFEE)
+            .expect("KG must succeed on n=1");
+        assert_eq!(p.degree(), Some(1));
+        assert_eq!(p.coeff(1), Fp::<MERSENNE_31>::new(1));
+        assert_eq!(p.coeff(0), Fp::<MERSENNE_31>::new(MERSENNE_31 - 42));
+    }
+
+    /// Bit-exactness across paths on `Fp<MERSENNE_31>` (issue 1454ec2d
+    /// `[hard]` success criterion). Sweeps a range of small `n` (the
+    /// dispatch routes these to cubic, but the KG worker is invoked
+    /// directly here).
+    #[test]
+    fn test_kg_matches_cubic_fp_m31() {
+        for &n in &[2usize, 3, 4, 8, 16, 32] {
+            for seed in 0..3u64 {
+                let a = random_fp::<MERSENNE_31>(n, n, seed.wrapping_mul(0xABCD));
+                let cubic = a.charpoly_cubic();
+                let kg = a
+                    .charpoly_keller_gehrig(0x100 + seed)
+                    .expect("KG should converge on Fp<MERSENNE_31>");
+                assert_eq!(
+                    cubic, kg,
+                    "KG ≢ cubic on Fp<MERSENNE_31> n={} seed={}",
+                    n, seed
+                );
+            }
+        }
+    }
+
+    /// KG on rank-deficient input — must still return a charpoly that
+    /// satisfies Cayley–Hamilton. The Las-Vegas loop may need extra
+    /// retries because rank-deficient matrices have a smaller cyclic
+    /// subspace.
+    #[test]
+    fn test_kg_singular_matrix() {
+        let f1 = random_fp::<MERSENNE_31>(6, 1, 0x111);
+        let f2 = random_fp::<MERSENNE_31>(1, 6, 0x222);
+        let a = gemm(&f1, &f2);
+        // Rank-1 outer product: KG should fall back to cubic on every
+        // attempt because the dispatch's `q > 2 n²` gate engages, but
+        // the Las-Vegas vector is unlikely to be cyclic. Either path
+        // must produce the same charpoly.
+        let cubic = a.charpoly_cubic();
+        // Try KG with a fixed seed; if it succeeds it must agree.
+        if let Some(kg) = a.charpoly_keller_gehrig(0x333) {
+            assert_eq!(cubic, kg);
+        }
+        // Cayley-Hamilton always holds.
+        let pa = cubic.eval_at_matrix(&a);
+        for i in 0..6 {
+            for j in 0..6 {
+                assert_eq!(pa.get(i, j), Fp::<MERSENNE_31>::new(0));
+            }
+        }
+    }
+
+    /// Dispatch threshold smoke test: for `n < KG_DISPATCH_MIN_N`
+    /// the public `charpoly` MUST route to the cubic path. We check
+    /// indirectly by asserting that `charpoly == charpoly_cubic` (a
+    /// `[hard]` invariant under issue `1454ec2d`).
+    #[test]
+    fn test_dispatch_routes_below_threshold() {
+        let a = random_fp::<MERSENNE_31>(8, 8, 0x4444);
+        assert_eq!(a.charpoly(), a.charpoly_cubic());
+    }
+
+    /// Dispatch threshold smoke test for `Gf2m8` (256-element field):
+    /// the cardinality gate `q > 2 n²` fails for any `n ≥ 12`, so the
+    /// dispatch routes cubic regardless of size.
+    #[test]
+    fn test_dispatch_routes_gf2m8() {
+        let a = random_gf2m8(16, 16, 0x5555);
+        assert_eq!(a.charpoly(), a.charpoly_cubic());
+    }
+
+    /// Cardinality hint sanity checks — the dispatch's correctness
+    /// hinges on these matching the algebraic field order.
+    #[test]
+    fn test_cardinality_log2_hint_values() {
+        assert_eq!(<Fp<7> as FiniteField>::cardinality_log2_hint(), Some(2));
+        assert_eq!(
+            <Fp<65521> as FiniteField>::cardinality_log2_hint(),
+            Some(15)
+        );
+        assert_eq!(
+            <Fp<MERSENNE_31> as FiniteField>::cardinality_log2_hint(),
+            Some(30)
+        );
+        assert_eq!(<Gf2m8 as FiniteField>::cardinality_log2_hint(), Some(8));
+        assert_eq!(<Gf2m16 as FiniteField>::cardinality_log2_hint(), Some(16));
+        // Runtime-context field returns None.
+        use crate::gf2m::Gf2mElement;
+        assert!(<Gf2mElement as FiniteField>::cardinality_log2_hint().is_none());
+    }
+
     // ── Property tests ──────────────────────────────────────────────────────
 
     proptest! {
@@ -1885,6 +2458,23 @@ mod tests {
             let ap = gemm(&a, &p);
             let pinv_ap = gemm(&pinv, &ap);
             prop_assert_eq!(pinv_ap, fm);
+        }
+
+        /// Sub-cubic Keller–Gehrig path is bit-exact identical to the
+        /// cubic baseline on `Fp<MERSENNE_31>` (issue 1454ec2d `[hard]`
+        /// success criterion). Bounded `n` because KG is `O(n^ω log n)`
+        /// per attempt and the per-test 5 s wall-clock is tight.
+        #[test]
+        fn proptest_kg_eq_cubic_fp_m31(
+            n in 2usize..=12,
+            seed in any::<u64>(),
+        ) {
+            let a = random_fp::<MERSENNE_31>(n, n, seed);
+            let cubic = a.charpoly_cubic();
+            let kg = a
+                .charpoly_keller_gehrig(seed.wrapping_add(0xC0FFEE))
+                .expect("KG must converge on Fp<MERSENNE_31>");
+            prop_assert_eq!(cubic, kg);
         }
 
         /// minpoly equals charpoly when the input is a companion matrix

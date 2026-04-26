@@ -1047,6 +1047,13 @@ impl FiniteField for GoldilocksFp {
         Some(Self(0))
     }
 
+    /// Static cardinality hint: `floor(log2(2^64 − 2^32 + 1)) = 63`. See
+    /// [`FiniteField::cardinality_log2_hint`].
+    #[inline]
+    fn cardinality_log2_hint() -> Option<u32> {
+        Some(u64::BITS - 1 - GOLDILOCKS_PRIME.leading_zeros())
+    }
+
     #[inline]
     fn to_wide(&self) -> u128 {
         self.0 as u128

@@ -585,6 +585,16 @@ impl<const P: u64> FiniteField for Fp<P> {
         Some(Self(0))
     }
 
+    /// Static cardinality hint: `floor(log2(P))`. See
+    /// [`FiniteField::cardinality_log2_hint`].
+    #[inline]
+    fn cardinality_log2_hint() -> Option<u32> {
+        // P is a const generic ≥ 2 (validated by `Self::VALIDATED`), so
+        // `(u64::BITS - 1) - P.leading_zeros()` is the same as
+        // `P.ilog2()` in stable Rust 1.80 and never panics.
+        Some(u64::BITS - 1 - P.leading_zeros())
+    }
+
     #[inline]
     fn to_wide(&self) -> u128 {
         self.value() as u128

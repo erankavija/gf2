@@ -633,6 +633,15 @@ impl<C: ExtConfig> FiniteField for QuadraticExt<C> {
         Some(<Self as ConstField>::zero())
     }
 
+    /// Static cardinality hint: `2 · log2(|BaseField|)` (since
+    /// `|F²| = |F|²`). Returns `None` only if the base field cannot
+    /// supply its own static hint. See
+    /// [`FiniteField::cardinality_log2_hint`].
+    #[inline]
+    fn cardinality_log2_hint() -> Option<u32> {
+        C::BaseField::cardinality_log2_hint().and_then(|b| b.checked_mul(2))
+    }
+
     /// Component-wise widening: each base coefficient is lifted via
     /// [`FiniteField::to_wide`].
     #[inline]

@@ -1,15 +1,24 @@
 //! Characteristic polynomial / minimal polynomial / Frobenius form —
 //! Criterion benches.
 //!
-//! Issue `f01298db`. Measures the public entry points
-//! [`FieldMatrix::charpoly`], [`FieldMatrix::minpoly`], and
-//! [`FieldMatrix::frobenius_form`] at `n ∈ {32, 128, 512}` for
-//! `Fp<65521>` and a small `Gf2mWide<8>` configuration.
+//! Issues `f01298db` (cubic baseline) and `1454ec2d` (sub-cubic
+//! Keller–Gehrig variant + dispatch crossover sweep).
+//!
+//! Measures the public entry points [`FieldMatrix::charpoly`],
+//! [`FieldMatrix::minpoly`], and [`FieldMatrix::frobenius_form`] at
+//! `n ∈ {32, 128, 512}` for `Fp<65521>` and a small `Gf2mWide<8>`
+//! configuration. Adds a `charpoly/dispatch/...` group at
+//! `n ∈ {64, 128, 256, 512, 1024}` on `Fp<MERSENNE_31>` that benches
+//! the cubic and Keller–Gehrig paths side-by-side; the empirical
+//! crossover for the `[aspirational]` success criterion of issue
+//! `1454ec2d` is read off this group.
 //!
 //! ```text
 //! charpoly/charpoly/Fp_65521/32
 //! charpoly/minpoly/Gf2m8/128
 //! charpoly/frobenius/Fp_65521/512
+//! charpoly/dispatch/cubic/256
+//! charpoly/dispatch/kg/256
 //! ```
 //!
 //! ## Usage
@@ -18,6 +27,7 @@
 //! cargo bench -p gf2-core --bench charpoly --features rand
 //! cargo bench -p gf2-core --bench charpoly --features rand -- --test
 //! cargo bench -p gf2-core --bench charpoly --features rand -- charpoly/charpoly/Fp_65521/32
+//! cargo bench -p gf2-core --bench charpoly --features rand -- charpoly/dispatch
 //! ```
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
@@ -26,6 +36,7 @@ use gf2_core::field::test_random_matrix::{random_fp, random_gf2m_wide_1};
 use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
 
 const PRIME_65521: u64 = 65521;
+const MERSENNE_31: u64 = 2_147_483_647;
 
 /// GF(2^8) AES irreducible.
 struct CpBenchGf2m8Cfg;
@@ -105,11 +116,52 @@ fn bench_frobenius(c: &mut Criterion) {
     group.finish();
 }
 
+/// Dispatch-crossover bench (issue `1454ec2d`): runs the cubic and
+/// Keller–Gehrig paths side-by-side at
+/// `n ∈ {64, 128, 256, 512, 1024}` on `Fp<MERSENNE_31>`. The crossover
+/// `n` informs the [`gf2_core::field::charpoly::KG_DISPATCH_MIN_N`]
+/// threshold; the `[aspirational]` success criterion calls for
+/// sub-cubic to win at `n ≥ 256`.
+///
+/// Compiled and skip-runnable via `--test` so the bench harness stays
+/// healthy without paying the full `n = 1024` measurement cost.
+fn bench_dispatch_crossover(c: &mut Criterion) {
+    let sizes: &[usize] = &[64, 128, 256, 512, 1024];
+    let mut group = c.benchmark_group("charpoly/dispatch");
+    group.sample_size(10);
+    for &n in sizes {
+        let a = random_fp::<MERSENNE_31>(n, n, 0xDEAD_BEEF);
+        group.bench_with_input(BenchmarkId::new("cubic", n), &n, |b, _| {
+            b.iter(|| {
+                let r = black_box(&a).charpoly_cubic();
+                black_box(r);
+            });
+        });
+        group.bench_with_input(BenchmarkId::new("kg", n), &n, |b, _| {
+            b.iter(|| {
+                let r = black_box(&a)
+                    .charpoly_keller_gehrig(0xC0FFEE)
+                    .expect("KG must converge on Fp<MERSENNE_31>");
+                black_box(r);
+            });
+        });
+        // Public dispatch — picks one of the two paths above based on
+        // the runtime decision tree.
+        group.bench_with_input(BenchmarkId::new("dispatch", n), &n, |b, _| {
+            b.iter(|| {
+                let r = black_box(&a).charpoly();
+                black_box(r);
+            });
+        });
+    }
+    group.finish();
+}
+
 criterion_group! {
     name = charpoly_benches;
     config = Criterion::default()
         .sample_size(10)
         .measurement_time(std::time::Duration::from_secs(5));
-    targets = bench_charpoly, bench_minpoly, bench_frobenius
+    targets = bench_charpoly, bench_minpoly, bench_frobenius, bench_dispatch_crossover
 }
 criterion_main!(charpoly_benches);
