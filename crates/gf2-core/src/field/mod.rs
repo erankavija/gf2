@@ -40,6 +40,7 @@
 
 pub mod batch_ops;
 pub mod expr;
+pub mod inverse;
 pub mod matrix;
 pub mod ntt;
 pub mod ple;
