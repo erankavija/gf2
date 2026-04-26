@@ -1,0 +1,13 @@
+# Master seed for the reference benchmark harnesses.
+#
+# This single 64-bit value drives every (field, op, size, rank_regime)
+# matrix on both the gf2 side (criterion benches in
+# crates/gf2-core/benches) and the reference side (fflas_bench /
+# m4ri_bench inside the pinned container). When the gf2 criterion
+# harness reads this file, it must use the SplitMix64 derivation scheme
+# documented in benchmarks/README.md so the matrices line up byte-for-
+# byte across implementations.
+#
+# Format: a single 64-bit hex literal, optionally with a 0x prefix.
+# Whitespace and comment lines (#) are ignored by run.sh.
+0x6F73AC91D31E4A7C

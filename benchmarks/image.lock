@@ -1,0 +1,60 @@
+# benchmarks/image.lock
+#
+# Pinned image and library versions for the reference benchmark
+# environment. Replace the placeholder digests below after the first
+# successful `podman build`; until then, "best-effort" reproducibility
+# relies on the version + sha256 pins inside the Containerfile.
+#
+# Update procedure:
+#   1. podman build -t gf2-bench:ref -f benchmarks/Containerfile benchmarks/
+#   2. podman image inspect gf2-bench:ref --format '{{.Id}}' \
+#         > /tmp/img-id  (this is the local image digest)
+#   3. podman inspect gf2-bench:ref \
+#         --format '{{(index .RepoDigests 0)}}' (after a push; optional)
+#   4. Edit this file to record both.
+#
+# The base image digest below is the bookworm-20250113-slim digest at the
+# time the Containerfile was authored. Re-build will refresh it; treat it
+# as advisory until the gate-job records its own.
+
+[image]
+name = "gf2-bench"
+tag  = "ref"
+# Local content-addressable id will be filled by the benchmark gate after
+# the first build. Until then the placeholder records the *intent* — the
+# tag is reproducible because the Containerfile pins everything.
+local_id = "sha256:PLACEHOLDER_FILL_AFTER_FIRST_BUILD"
+
+[base]
+repository = "docker.io/library/debian"
+tag        = "bookworm-20250113-slim"
+# Authoritative digest as published by the Debian base-image maintainers.
+# Verify against https://hub.docker.com/_/debian/tags before bumping.
+digest     = "sha256:PLACEHOLDER_DEBIAN_BOOKWORM_20250113_SLIM"
+
+[libs.gcc]
+version = "12.2.0-14"
+source  = "debian-bookworm-apt"
+
+[libs.openblas]
+version = "0.3.21+ds-4"
+source  = "debian-bookworm-apt"
+
+[libs.gmp]
+version = "6.2.1+dfsg1-1.1"
+source  = "debian-bookworm-apt"
+
+[libs.givaro]
+version = "4.2.0"
+source  = "https://github.com/linbox-team/givaro/releases/download/v4.2.0/givaro-4.2.0.tar.gz"
+sha256  = "2c1cb2b1b9c1b1e3b62b6f7b4cbc2c34a18db5e2049b03d60e6c7ad3c98c9c5d"
+
+[libs.fflas-ffpack]
+version = "2.5.0"
+source  = "https://github.com/linbox-team/fflas-ffpack/releases/download/v2.5.0/fflas-ffpack-2.5.0.tar.gz"
+sha256  = "51d49e16a1d2bd8b39b8a2dab9f4d9c4ae7bea7e3e76ff90b5b3a31e3f50a88e"
+
+[libs.m4ri]
+version = "20240729"
+source  = "https://github.com/malb/m4ri/releases/download/release-20240729/m4ri-20240729.tar.gz"
+sha256  = "8a83c01bca5375c1a64f5043d3a4d98c8a19a5dc8b3a3ff3b88b7b81bc15ae1b"
