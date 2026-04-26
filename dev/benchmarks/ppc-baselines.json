@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "comment": "Maps PPC-spiral kernel IDs to criterion bench targets and design-size classes. Populated by jit:b2ecd2ff (I1) with commit-pinned baseline names. Consumed by dev/benchmarks/ppc-compare.sh and the criterion-1.5x JIT gate.",
+  "kernels": {
+    "A1": {
+      "title": "BitMatrix::matvec popcnt SIMD",
+      "bench_target": "matrix_vector",
+      "baseline_name": "TBD-b2ecd2ff",
+      "commit_hash": "TBD-b2ecd2ff",
+      "design_size_class": ["1024", "4096"]
+    },
+    "A2": {
+      "title": "BitMatrix::mul row-XOR",
+      "bench_target": "matmul",
+      "baseline_name": "TBD-b2ecd2ff",
+      "commit_hash": "TBD-b2ecd2ff",
+      "design_size_class": ["1024", "4096"]
+    },
+    "A3": {
+      "title": "Generic Fp prime FieldVec batch",
+      "bench_target": "fieldvec_dot_product",
+      "baseline_name": "TBD-b2ecd2ff",
+      "commit_hash": "TBD-b2ecd2ff",
+      "design_size_class": ["256", "1024"]
+    },
+    "B1": {
+      "title": "BitMatrix::transpose 64x64 + AVX2",
+      "bench_target": "matrix_transpose",
+      "baseline_name": "TBD-b2ecd2ff",
+      "commit_hash": "TBD-b2ecd2ff",
+      "design_size_class": ["1024", "4096"]
+    },
+    "B2": {
+      "title": "M4RM Gray-code table build",
+      "bench_target": "m4rm_components",
+      "baseline_name": "TBD-b2ecd2ff",
+      "commit_hash": "TBD-b2ecd2ff",
+      "design_size_class": ["k_4_n_1024", "k_8_n_1024"]
+    },
+    "B3": {
+      "title": "M4RM block multiply tile",
+      "bench_target": "m4rm_profile",
+      "baseline_name": "TBD-b2ecd2ff",
+      "commit_hash": "TBD-b2ecd2ff",
+      "design_size_class": ["1024", "4096"]
+    },
+    "C1": {
+      "title": "GF(2^m) batch m=8/16/32 VPCLMULQDQ",
+      "bench_target": "gf2m_mul_strategies",
+      "baseline_name": "TBD-b2ecd2ff",
+      "commit_hash": "TBD-b2ecd2ff",
+      "design_size_class": ["m_8", "m_16", "m_32"]
+    },
+    "C2": {
+      "title": "GF(2^571) multi-word VPCLMULQDQ",
+      "bench_target": "gf2m_wide_mul",
+      "baseline_name": "TBD-b2ecd2ff",
+      "commit_hash": "TBD-b2ecd2ff",
+      "design_size_class": ["m_571"]
+    },
+    "C3": {
+      "title": "Fp Montgomery batch AVX2",
+      "bench_target": "fp_specialized",
+      "baseline_name": "TBD-b2ecd2ff",
+      "commit_hash": "TBD-b2ecd2ff",
+      "design_size_class": ["256", "1024"]
+    },
+    "C4": {
+      "title": "QuadraticExt Karatsuba SoA",
+      "bench_target": "fieldvec_dot_product",
+      "baseline_name": "TBD-b2ecd2ff",
+      "commit_hash": "TBD-b2ecd2ff",
+      "design_size_class": ["256", "1024"]
+    },
+    "C5": {
+      "title": "CubicExt Karatsuba SoA",
+      "bench_target": "fieldvec_dot_product",
+      "baseline_name": "TBD-b2ecd2ff",
+      "commit_hash": "TBD-b2ecd2ff",
+      "design_size_class": ["256", "1024"]
+    },
+    "D1": {
+      "title": "Sparse matvec block-CSR + prefetch",
+      "bench_target": "sparse",
+      "baseline_name": "TBD-b2ecd2ff",
+      "commit_hash": "TBD-b2ecd2ff",
+      "design_size_class": ["1024", "4096"]
+    },
+    "D2": {
+      "title": "Sparse Cuthill-McKee",
+      "bench_target": "sparse",
+      "baseline_name": "TBD-b2ecd2ff",
+      "commit_hash": "TBD-b2ecd2ff",
+      "design_size_class": ["1024", "4096"]
+    }
+  }
+}
