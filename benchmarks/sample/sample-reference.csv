@@ -1,0 +1,4 @@
+lib,operation,field,m,k,n,rank_regime,seed,wall_ns,throughput_ops
+fflas-ffpack,fgemm,GF(2^31-1),256,256,256,uniform,12131415,98765,3.400000e+08
+fflas-ffpack,charpoly,GF(2^31-1),64,64,64,uniform,20212223,1500000,1.750000e+05
+fflas-ffpack,pluq,GF(2^31-1),256,256,256,uniform,28293031,420000,4.000000e+07

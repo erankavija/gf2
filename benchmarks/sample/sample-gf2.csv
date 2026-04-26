@@ -1,0 +1,7 @@
+lib,operation,field,m,k,n,rank_regime,seed,wall_ns,throughput_ops
+gf2,fgemm,GF(2^31-1),256,256,256,uniform,12131415,123456,2.720000e+08
+gf2,fgemm,GF(2^31-1),1024,1024,1024,uniform,16171819,99999999,2.150000e+07
+gf2,charpoly,GF(2^31-1),64,64,64,uniform,20212223,2000000,1.310000e+05
+gf2,spmv,GF(2^31-1),1024,1024,1,density_0.01,24252627,55000,1.910000e+08
+gf2,pluq,GF(2^31-1),256,256,256,uniform,28293031,750000,2.240000e+07
+gf2,pluq,GF(2^31-1),256,256,256,deficient,32333435,790000,2.130000e+07
