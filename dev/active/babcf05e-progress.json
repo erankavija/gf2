@@ -4,9 +4,9 @@
   "title": "gf2-core PPC-spiral performance sweep",
   "claimed_by": "agent:project-lead",
   "started_at": "2026-04-26T22:30:00+00:00",
-  "last_updated": "2026-04-26T22:30:00+00:00",
-  "current_wave": 1,
-  "phase": "wave_1_starting; c7791a20 profile.release task to be dispatched",
+  "last_updated": "2026-04-26T22:55:00+00:00",
+  "current_wave": 2,
+  "phase": "wave_2_in_progress; Wave 1 closed (c7791a20 done with user-approved Option-1 amendment after [hard] 1.3x criterion was empirically falsified to 0.91x); dispatching 2a0ffb18 (proptest scaffolding) as 1st of 4 Wave-2 sub-tasks",
   "related_epic": "bb85c68a (FieldMatrix linear algebra) — at session-6 95% complete; uncompetitiveness profile from a9ab0a4f revealed gf2-core perf gaps that motivate this epic",
   "spec_doc": "dev/plans/gf2_core_ppc_spiral.md",
   "uncompetitiveness_doc": "dev/bench_results/2026-04-26-uncompetitiveness-profile.md",
@@ -21,7 +21,7 @@
       "wave_number": 1,
       "label": "Profile-release foundation",
       "issues": [
-        {"id": "c7791a20-28dd-4fdf-a5a4-78f4d38b3b19", "short_id": "c7791a20", "title": "Add workspace [profile.release] block (lto, codegen-units)", "kind": "task", "classification": "implementation", "status": "pending", "state": "ready"}
+        {"id": "c7791a20-28dd-4fdf-a5a4-78f4d38b3b19", "short_id": "c7791a20", "title": "Add workspace [profile.release] block (lto, codegen-units)", "kind": "task", "classification": "implementation", "status": "done", "state": "done", "rework_cycles": 0, "final_commit": "1a2f6f9", "amendment": "User-approved Option 1 (2026-04-26): the [hard] >=1.3x criterion was hypothesised pre-measurement; empirical data showed 0.91x at n=1024 SIMD matmul (regression). Description amended to require measured before/after documentation rather than a guessed speedup target. The Cargo.toml change ships as a profile-pinning foundation move; b2ecd2ff is the actual perf lever per measured evidence.", "tier_2_5_finding": "c69d2055's description embeds the now-falsified ThinLTO inlining claim — to be amended in Wave 3 dispatch prompt.", "gates": {"cargo-ci": "passed (15s)", "code-review": "passed (127s, PASS verdict)"}}
       ]
     },
     {
@@ -85,6 +85,7 @@
   "escalations": [],
   "rework_counts": {},
   "session_notes": {
-    "session_1_starting_state": "Epic babcf05e: backlog. 6 stories scaffolded. 16 child tasks scaffolded. c7791a20 (profile.release) and c69d2055 (dispatch hoist) added by user on 2026-04-26 in response to bb85c68a uncompetitiveness profile finding. b2ecd2ff/c3a9a4cb/4f845881/2a0ffb18 are S0 infrastructure tasks created during the original Apr 25 scaffolding."
+    "session_1_starting_state": "Epic babcf05e: backlog. 6 stories scaffolded. 16 child tasks scaffolded. c7791a20 (profile.release) and c69d2055 (dispatch hoist) added by user on 2026-04-26 in response to bb85c68a uncompetitiveness profile finding. b2ecd2ff/c3a9a4cb/4f845881/2a0ffb18 are S0 infrastructure tasks created during the original Apr 25 scaffolding.",
+    "session_1_wave_1_outcome": "Wave 1 (c7791a20) closed in 1 dispatch + 1 description-amendment escalation cycle. Worker measured before/after empirically: n=64 1.24x (improvement), n=256 1.00x, n=1024 0.91x (regression), n=4096 0.91x (regression). Hypothesis falsified. User chose Option 1 (amend criterion). Both gates green. New feedback memories saved: feedback_measurements_not_guesses.md, feedback_jit_doc_links.md."
   }
 }
