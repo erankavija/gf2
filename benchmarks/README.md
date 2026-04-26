@@ -126,28 +126,47 @@ both sides.
 
 ## What's covered in T1
 
-Per the parent story `64c88ae4`:
+Per the parent story `64c88ae4` and the R1 amendment dated 2026-04-26:
 
-| Operation              | T1 sizes (square) | Fields                                       |
-|------------------------|-------------------|----------------------------------------------|
-| fgemm                  | 64, 256, 1024     | GF(2^31-1), GF(65521), GF(251), GF(7)         |
-| PLUQ (≡ PLE)           | 64, 256, 1024     | GF(2^31-1), GF(65521), GF(251), GF(7)         |
-| RowEchelonForm         | 64, 256, 1024     | GF(2^31-1), GF(65521), GF(251), GF(7)         |
-| Invert                 | 64, 256, 1024     | GF(2^31-1), GF(65521), GF(251), GF(7)         |
-| Solve (Ax=b)           | 64, 256, 1024     | GF(2^31-1), GF(65521), GF(251), GF(7)         |
-| CharPoly               | 64, 256           | GF(2^31-1), GF(65521)                         |
-| M4RI mzd_mul (matmul)  | 64, 256, 1024, 4096 | GF(2)                                       |
-| M4RI echelonize        | 64, 256, 1024     | GF(2)                                        |
+| Operation              | T1 sizes (square)    | Fields                                       | Rank regimes        |
+|------------------------|----------------------|----------------------------------------------|---------------------|
+| fgemm                  | 64, 256, 1024, 4096  | GF(2^31-1), GF(65521), GF(251), GF(7)         | uniform             |
+| PLUQ (≡ PLE)           | 64, 256, 1024        | GF(2^31-1), GF(65521), GF(251), GF(7)         | uniform + deficient |
+| RowEchelonForm         | 64, 256, 1024        | GF(2^31-1), GF(65521), GF(251), GF(7)         | uniform + deficient |
+| Invert                 | 64, 256, 1024        | GF(2^31-1), GF(65521), GF(251), GF(7)         | uniform + deficient |
+| Solve (Ax=b)           | 64, 256, 1024        | GF(2^31-1), GF(65521), GF(251), GF(7)         | uniform + deficient |
+| CharPoly               | 64, 256              | GF(2^31-1), GF(65521), GF(251), GF(7)         | uniform             |
+| M4RI mzd_mul (matmul)  | 64, 256, 1024, 4096  | GF(2)                                         | uniform + deficient |
+| M4RI echelonize        | 64, 256, 1024        | GF(2)                                         | uniform + deficient |
 
-PLUQ and Echelon are run in **both** rank regimes (uniform full-rank +
-explicit rank=n/2). All other ops use uniform-random matrices only —
-solve/invert/charpoly are not meaningful on rank-deficient inputs.
+`uniform`        — i.i.d. samples from the field's canonical range.
+`deficient`      — exact rank `n/2`, generated as `L · R` with a shared
+                   inner dimension. For `invert` and `solve` this means
+                   the call hits its singular-matrix path; the timing
+                   measures the work fflas-ffpack does to detect that,
+                   which is the same PLUQ pass it would otherwise use
+                   to compute the inverse / solution.
+
+The harness applies a **per-cell wall-clock cap** of 30 s (configured
+in `fflas_bench.cpp` as `kCellBudgetNs`). Cells that exceed the cap
+emit an `early_exit` warning on stderr and a CSV row with the
+measurements taken so far; downstream consumers can filter on the
+warning when comparing.
+
+For `n = 4096` we keep `fgemm` only across all four GF(p) fields (the
+cheapest of the dense ops at that size, BLAS3 with peak microarch
+utilisation) — PLUQ / echelon / invert / solve / charpoly at 4096 are
+formally deferred (see below).
 
 ## Deferred to T2 / T3
 
-- **`n = 4096` for fflas-ffpack** dense ops: each iteration is multiple
-  seconds on the reference field; T2 will add an opt-in long-running
-  profile (`run.sh --large`).
+The R1 amendment (2026-04-26) formalises the following deferrals:
+
+- **PLUQ / echelon / invert / solve / charpoly at `n = 4096`**: each
+  cell is multi-second per iteration on most reference fields and the
+  full sweep would dominate the T1 wall-clock budget. The fgemm@4096
+  point is preserved on every field; the rest will land in T2 with
+  per-cell budgets relaxed.
 - **Rectangular fgemm** (`m × k × n` with skew aspect ratios): the
   Winograd-crossover sweep. The CSV schema already supports it.
 - **Sparse SpMV** (sparsity 1% / 5% at n = 1024, 4096): fflas-ffpack's
@@ -156,13 +175,37 @@ solve/invert/charpoly are not meaningful on rank-deficient inputs.
   story `8a90882e`.
 - **`Modular<int8_t>` proper**: fflas-ffpack does not ship an int8
   Modular template; `Modular<float>` over `[0, 251)` is the canonical
-  small-prime path. A native int8 path would require a custom field
-  wrapper and is not on the critical path for the epic.
+  small-prime path used in the upstream test corpus. A native int8 path
+  would require a custom field wrapper and is not on the critical path
+  for the epic.
 - **`Givaro::GFq` for GF(2^m)**: GF(2^m) reference numbers via Givaro
   are tracked separately. fflas-ffpack's GF(2^m) path goes through
   Modular<float> with a polynomial multiplication wrapper, which is
   not a fair comparison to gf2's PCLMULQDQ kernels. T2 will add a
-  Givaro::GFq harness.
+  Givaro::GFq harness if a fair-comparison framing is found.
+
+## Gate coverage
+
+`cargo-ci` (the workspace's lint/test gate) does **not** validate the
+container build or the harness binaries — the gate runner has no
+`podman` daemon. The criteria
+
+- "container builds from clean state with the pinned `Containerfile`",
+  and
+- "harnesses run to completion and emit CSV for every (field, op,
+  size) cell"
+
+are therefore validated **out-of-gate** by running
+`./benchmarks/run.sh` once on a real host (the dev workstation, the
+project lead's machine, or any contributor with rootless podman). The
+generated `benchmarks/results/<timestamp>.csv` and
+`benchmarks/host.txt` are the audit-trail artefacts the lead checks in
+to substantiate those criteria.
+
+For interactive verification without a full timing run, see
+`benchmarks/smoke.sh` — it builds the image and runs both harnesses
+with `--warmup 0 --iters 1` so a single end-to-end pass takes well
+under a minute per supported field.
 
 ## Determinism guarantees
 
