@@ -691,6 +691,15 @@ impl<C: ExtConfig> FiniteField for CubicExt<C> {
         Some(<Self as ConstField>::zero())
     }
 
+    /// Static cardinality hint: `3 · log2(|BaseField|)` (since
+    /// `|F³| = |F|³`). Returns `None` only if the base field cannot
+    /// supply its own static hint. See
+    /// [`FiniteField::cardinality_log2_hint`].
+    #[inline]
+    fn cardinality_log2_hint() -> Option<u32> {
+        C::BaseField::cardinality_log2_hint().and_then(|b| b.checked_mul(3))
+    }
+
     /// Component-wise widening: each base coefficient is lifted via
     /// [`FiniteField::to_wide`].
     #[inline]

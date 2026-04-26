@@ -148,6 +148,39 @@ pub trait FiniteField:
         None
     }
 
+    /// Returns `floor(log2(|F|))` when the field's cardinality can be
+    /// determined statically from the type, or `None` for runtime-context
+    /// fields (e.g. [`crate::gf2m::Gf2mElement`]) whose extension degree
+    /// is only known at runtime.
+    ///
+    /// This is a *static escape hatch* used by algorithms that branch on
+    /// the field cardinality `q` (e.g. the Las-Vegas Keller–Gehrig
+    /// charpoly path in [`crate::field::charpoly`], whose probabilistic
+    /// guarantee `q > 2 n²` is meaningless when `q` is unknown). Callers
+    /// receive `None` for any field that cannot supply a compile-time
+    /// cardinality and must fall back to a deterministic alternative.
+    ///
+    /// Every [`ConstField`] implementation in this crate overrides this
+    /// to return `Some(<Self as ConstField>::order_log2())`. Runtime-
+    /// context `FiniteField` impls keep the default `None`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::FiniteField;
+    /// use gf2_core::gfp::Fp;
+    /// use gf2_core::gf2m::Gf2mElement;
+    ///
+    /// // Compile-time field: cardinality known.
+    /// assert_eq!(<Fp<7> as FiniteField>::cardinality_log2_hint(), Some(2));
+    ///
+    /// // Runtime-context field: no static cardinality available.
+    /// assert!(<Gf2mElement as FiniteField>::cardinality_log2_hint().is_none());
+    /// ```
+    fn cardinality_log2_hint() -> Option<u32> {
+        None
+    }
+
     /// Converts this element to the wide accumulator type.
     ///
     /// For binary extension fields GF(2^m), `Wide = Self` so this is a clone.

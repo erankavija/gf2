@@ -1578,6 +1578,15 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> crate::field::FiniteField for Gf2mW
         Some(<Self as crate::field::ConstField>::zero())
     }
 
+    /// Static cardinality hint: `M` (since `|GF(2^M)| = 2^M`). Always
+    /// safe — never panics, even for `M >= 128` where
+    /// [`crate::field::ConstField::order`] would. See
+    /// [`crate::field::FiniteField::cardinality_log2_hint`].
+    #[inline]
+    fn cardinality_log2_hint() -> Option<u32> {
+        Some(Cfg::M as u32)
+    }
+
     /// Converts `self` to the wide accumulator type.
     ///
     /// For `GF(2^M)`, `Wide = Self` so this is a copy.
