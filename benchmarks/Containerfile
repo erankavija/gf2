@@ -23,26 +23,15 @@
 #
 # All compilers run with -O3 -march=native to mirror the gf2 release build.
 
-# Base image — pin by digest as soon as the lead has run the first
-# build on the dev host. Procedure:
-#
-#   podman pull docker.io/library/debian:bookworm-20260421-slim
-#   podman image inspect docker.io/library/debian:bookworm-20260421-slim \
-#       --format '{{(index .RepoDigests 0)}}'
-#
-# Take the `sha256:...` portion of the output, paste it into both
-# `image.lock` ([base].digest) AND replace the `# TODO_DIGEST` comment
-# below with `FROM docker.io/library/debian:bookworm-20260421-slim@sha256:<digest>`.
-#
-# The dated tag `bookworm-20260421-slim` is itself non-floating —
-# Debian's tag policy is that dated slim tags are immutable once
-# published — so the FROM line below is reproducible against the public
-# Docker Hub registry until that registry is rewritten. The digest pin
-# is defence in depth against registry mutation / mirror substitution.
-#
-# Resolved 2026-04-26 against docker.io/library/debian via the registry
-# API (OCI image index digest; podman resolves to the right
-# platform-specific manifest via the index).
+# Base image — pinned by digest. The dated tag `bookworm-20260421-slim`
+# is non-floating per Debian's tag policy (dated slim tags are immutable
+# once published); the `@sha256:...` digest is defence in depth against
+# registry mutation / mirror substitution. Resolved 2026-04-26 against
+# docker.io/library/debian via the registry API (OCI image index;
+# podman resolves to the right platform-specific manifest via the
+# index). To refresh: pick a newer dated tag, fetch its digest with
+# `podman manifest inspect ...`, and update both this line and
+# `image.lock` [base].digest in lockstep — `run.sh` cross-checks them.
 FROM docker.io/library/debian:bookworm-20260421-slim@sha256:f9c6a2fd2ddbc23e336b6257a5245e31f996953ef06cd13a59fa0a1df2d5c252
 
 # Build dependencies. Pin major versions explicitly. We rely on Debian
@@ -148,7 +137,7 @@ echo '----------------------------'; \
 echo 'gcc:        '$(gcc -dumpfullversion -dumpversion); \
 echo 'g++:        '$(g++ -dumpfullversion -dumpversion); \
 echo 'givaro/fflas: '$(pkg-config --modversion givaro fflas-ffpack 2>/dev/null | paste -sd ' / ' -); \
-echo 'm4ri:       '$(grep -E '#define +M4RI_VERSION ' /usr/local/include/m4ri/m4ri_config.h 2>/dev/null | awk '{print $$3}' | tr -d '\"'); \
-echo 'openblas:   '$(dpkg -s libopenblas-dev | awk '/^Version:/{print $$2}'); \
-echo 'gmp:        '$(dpkg -s libgmp-dev    | awk '/^Version:/{print $$2}'); \
+echo 'm4ri:       '$(grep -E '#define +M4RI_VERSION ' /usr/local/include/m4ri/m4ri_config.h 2>/dev/null | awk '{print $3}' | tr -d '\"'); \
+echo 'openblas:   '$(dpkg -s libopenblas-dev | awk '/^Version:/{print $2}'); \
+echo 'gmp:        '$(dpkg -s libgmp-dev    | awk '/^Version:/{print $2}'); \
 "]
