@@ -259,6 +259,13 @@ const SQUARE_SIZES: &[usize] = &[64, 256, 1024, 4096];
 /// `SQUARE_SIZES.len() + rsi` (matching the bench's derivation).
 const RECT_SHAPES: &[(usize, usize, usize)] = &[(1024, 1024, 32), (1024, 1024, 8)];
 const CHARPOLY_SIZES: &[usize] = &[32, 128, 512];
+/// `minpoly` sizes: subset of `CHARPOLY_SIZES`. The `n=512` cell is
+/// deferred to a bench-day re-run with a relaxed per-cell budget — at
+/// `n=512` `find_max_minpoly_generator`'s LCM-merge sweep iterates
+/// every canonical basis vector and the per-cell wall is a few minutes
+/// even on Fp(7); the published amendment to issue `a9ab0a4f` records
+/// the deferral alongside the `n=4096` charpoly cells.
+const MINPOLY_SIZES: &[usize] = &[32, 128];
 const SPMV_SIZES: &[usize] = &[256, 1024, 4096];
 const SPMV_DENSITIES: &[(f64, &str)] = &[(0.01, "0.01"), (0.05, "0.05")];
 
@@ -364,6 +371,38 @@ fn run_fp<const P: u64>(args: &Args, sink: &mut CsvSink, field_label: &str) -> s
         }
         sink.emit(
             "charpoly",
+            field_label,
+            n,
+            n,
+            n,
+            "uniform",
+            seed_a,
+            wall_ns,
+            tput(ops_cubic(n), wall_ns),
+        )?;
+    }
+
+    // ── minpoly (uniform only; n=32, 128 — n=512 deferred, see MINPOLY_SIZES) ─
+    for (si, &n) in MINPOLY_SIZES.iter().enumerate() {
+        let key = cell_key("minpoly", field_label, n, "uniform");
+        if !cell_passes(filter, &key) {
+            continue;
+        }
+        let seed_a = derive_seed(master, "minpoly", 10, si as u64, 0);
+        let a = fp_matrix_from_seed::<P>(n, n, seed_a);
+        eprintln!("[gf2-csv] {key}");
+        let (wall_ns, early) = time_op(
+            || {
+                let _ = std::hint::black_box(a.minpoly());
+            },
+            warmup,
+            iters,
+        );
+        if early {
+            eprintln!("[gf2-csv] WARN early_exit {key} wall_ns={wall_ns}");
+        }
+        sink.emit(
+            "minpoly",
             field_label,
             n,
             n,
@@ -593,6 +632,38 @@ fn run_gf2m<C: Gf2mWideConfig<1>>(
         }
         sink.emit(
             "charpoly",
+            field_label,
+            n,
+            n,
+            n,
+            "uniform",
+            seed_a,
+            wall_ns,
+            tput(ops_cubic(n), wall_ns),
+        )?;
+    }
+
+    // ── minpoly (uniform only; n=32, 128 — n=512 deferred, see MINPOLY_SIZES) ─
+    for (si, &n) in MINPOLY_SIZES.iter().enumerate() {
+        let key = cell_key("minpoly", field_label, n, "uniform");
+        if !cell_passes(&args.filter, &key) {
+            continue;
+        }
+        let seed_a = derive_seed(args.master_seed, "minpoly", 10, si as u64, 0);
+        let a: FieldMatrix<Gf2mWide<1, C>> = gf2m_wide_1_matrix_from_seed::<C>(n, n, seed_a);
+        eprintln!("[gf2-csv] {key}");
+        let (wall_ns, early) = time_op(
+            || {
+                let _ = std::hint::black_box(a.minpoly());
+            },
+            args.warmup,
+            args.iters,
+        );
+        if early {
+            eprintln!("[gf2-csv] WARN early_exit {key} wall_ns={wall_ns}");
+        }
+        sink.emit(
+            "minpoly",
             field_label,
             n,
             n,

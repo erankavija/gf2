@@ -64,6 +64,7 @@ OPERATION_ORDER = [
     "invert",
     "solve",
     "charpoly",
+    "minpoly",
     "spmv",
 ]
 
@@ -184,15 +185,38 @@ def _operation_sort_key(op: str) -> Tuple[int, str]:
     return (len(OPERATION_ORDER), op)
 
 
+# Field ordering inside each operation block: small Fp → large Fp → small
+# GF(2^m) → large GF(2^m) → GF(2). Falls back to alphabetical for any
+# unrecognised field value so the renderer stays defensive.
+FIELD_ORDER: List[str] = [
+    "GF(7)",
+    "GF(251)",
+    "GF(65521)",
+    "GF(2^31-1)",
+    "GF(2^8)",
+    "GF(2^16)",
+    "GF(2^32)",
+    "GF(2)",
+]
+
+
+def _field_sort_key(field: str) -> Tuple[int, str]:
+    if field in FIELD_ORDER:
+        return (FIELD_ORDER.index(field), field)
+    return (len(FIELD_ORDER), field)
+
+
 def group_by_op_field(rows: Iterable[CellRow]) -> "OrderedDict[Tuple[str, str], List[CellRow]]":
     """Bucket rows by `(operation, field)`, preserving a stable sort."""
     groups: Dict[Tuple[str, str], List[CellRow]] = defaultdict(list)
     for r in rows:
         groups[(r.cell.operation, r.cell.field)].append(r)
 
-    def grp_key(item: Tuple[Tuple[str, str], List[CellRow]]) -> Tuple[Tuple[int, str], str]:
+    def grp_key(
+        item: Tuple[Tuple[str, str], List[CellRow]],
+    ) -> Tuple[Tuple[int, str], Tuple[int, str]]:
         (op, field), _ = item
-        return (_operation_sort_key(op), field)
+        return (_operation_sort_key(op), _field_sort_key(field))
 
     sorted_items = sorted(groups.items(), key=grp_key)
     out: "OrderedDict[Tuple[str, str], List[CellRow]]" = OrderedDict()

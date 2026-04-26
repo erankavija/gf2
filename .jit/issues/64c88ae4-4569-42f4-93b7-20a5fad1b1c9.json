@@ -31,11 +31,19 @@
     }
   },
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/bench_results/2026-04-26.md",
+      "commit": null,
+      "label": "2026-04-26 bench results (gf2 side; reference deferred)",
+      "doc_type": "notes",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "component:gf2-core",
     "type:story"
   ],
   "created_at": "2026-02-23T19:20:28.214456832+00:00",
-  "updated_at": "2026-04-23T16:31:21.715616747+00:00"
+  "updated_at": "2026-04-26T15:11:58.883026254+00:00"
 }
