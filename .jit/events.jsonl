@@ -2894,3 +2894,13 @@
 {"type":"issue_completed","id":"2d4dc81e-3b9d-4fa4-acfa-21f5a6548ecb","issue_id":"c3a9a4cb-7233-40dc-a56e-8e0d7936e8e9","timestamp":"2026-04-26T20:51:03.828775018Z"}
 {"type":"issue_created","id":"c57d2832-6fde-4b68-937c-02e63bdcadda","issue_id":"1d230525-3f47-4065-bf85-60a9584007d4","timestamp":"2026-04-26T20:51:23.272361391Z","title":"regen-asm.sh fallback path passes duplicate --out-dir to cargo rustc","priority":"normal"}
 {"type":"issue_created","id":"bcbc9586-a941-458b-8e59-cbe94d1e75d9","issue_id":"bd00d76a-75bc-494c-9f7a-7dd59e814b24","timestamp":"2026-04-26T22:14:08.095530888Z","title":"Retrospective asm audit of all gf2-kernels-simd entry points","priority":"normal"}
+{"type":"gate_added","id":"964ad541-f533-43e2-914a-3683a8e391bf","issue_id":"bd00d76a-75bc-494c-9f7a-7dd59e814b24","timestamp":"2026-04-26T22:20:04.365257787Z","gate_key":"asm-artefact-present"}
+{"type":"gate_added","id":"07611df4-25dc-4276-9b55-7de77c4ced7d","issue_id":"cad241e6-9606-47ff-96fc-20f38ed591aa","timestamp":"2026-04-26T22:20:05.087837094Z","gate_key":"asm-artefact-present"}
+{"type":"gate_added","id":"a1174219-7628-4a82-b94a-e428b4de5ae0","issue_id":"1c1c4242-78bb-4ae9-b791-f764b844f880","timestamp":"2026-04-26T22:20:05.795819686Z","gate_key":"asm-artefact-present"}
+{"type":"gate_added","id":"db8ef1b6-077d-4eb7-a33c-8a111c9ae5e7","issue_id":"54a0e75c-0d45-4dbc-b895-a0f6674fa331","timestamp":"2026-04-26T22:20:06.624992114Z","gate_key":"asm-artefact-present"}
+{"type":"gate_added","id":"10848cc1-c3a9-4c84-ab6c-5d03c9154bc4","issue_id":"19bc3199-e140-405f-9d16-d7722d7b7927","timestamp":"2026-04-26T22:20:07.335755747Z","gate_key":"asm-artefact-present"}
+{"type":"gate_added","id":"fba071c2-3c4e-4930-ba2b-5c95b22d030a","issue_id":"ec286cee-48af-4dec-8190-424f6ffbfab7","timestamp":"2026-04-26T22:20:07.708659824Z","gate_key":"asm-artefact-present"}
+{"type":"gate_added","id":"667ffbe6-80ab-4e41-8f91-875d902d91ba","issue_id":"7c954fb5-1efe-440e-b29d-eed5270b8204","timestamp":"2026-04-26T22:20:08.532297529Z","gate_key":"asm-artefact-present"}
+{"type":"gate_added","id":"8f39c3f4-05fe-4c23-b392-2ab4654e6748","issue_id":"86c09a51-8d7e-4610-854b-6110ab830d4c","timestamp":"2026-04-26T22:20:09.294468717Z","gate_key":"asm-artefact-present"}
+{"type":"gate_added","id":"7612de03-e4a4-4d5e-9645-b3056965a6c5","issue_id":"3168d114-57f2-4a21-a28f-3c191833385d","timestamp":"2026-04-26T22:20:10.057192066Z","gate_key":"asm-artefact-present"}
+{"type":"gate_added","id":"c130a0fc-3e9b-448e-9297-043ae9e37eda","issue_id":"33d3f5b7-5942-445d-8e34-9b87c0903f7f","timestamp":"2026-04-26T22:20:10.419366769Z","gate_key":"asm-artefact-present"}

@@ -10,9 +10,16 @@
   ],
   "gates_required": [
     "code-review",
-    "cargo-ci"
+    "cargo-ci",
+    "asm-artefact-present"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "asm-artefact-present": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-04-26T22:20:05.087826744Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -22,5 +29,5 @@
     "story:ppc-dispatch-routing"
   ],
   "created_at": "2026-04-25T15:17:22.095369004+00:00",
-  "updated_at": "2026-04-25T20:16:59.770508167+00:00"
+  "updated_at": "2026-04-26T22:20:05.087916534+00:00"
 }

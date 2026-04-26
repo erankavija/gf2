@@ -10,9 +10,16 @@
   ],
   "gates_required": [
     "code-review",
-    "cargo-ci"
+    "cargo-ci",
+    "asm-artefact-present"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "asm-artefact-present": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-04-26T22:20:05.795803676Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -23,5 +30,5 @@
     "story:ppc-dense-bitmatrix"
   ],
   "created_at": "2026-04-25T15:17:45.194536413+00:00",
-  "updated_at": "2026-04-25T20:17:13.813810535+00:00"
+  "updated_at": "2026-04-26T22:20:05.795920556+00:00"
 }
