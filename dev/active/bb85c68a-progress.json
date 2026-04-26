@@ -4,16 +4,17 @@
   "title": "Implement generic finite field linear algebra (FieldMatrix)",
   "claimed_by": "agent:project-lead",
   "started_at": "2026-04-23T16:00:00+00:00",
-  "last_updated": "2026-04-26T07:30:00+00:00",
-  "current_wave": 2,
-  "phase": "wave_2_partially_complete; c3f8c1cb (PLE) at R6 amendment — performance > SSOT directive applied; gate re-run in flight",
+  "last_updated": "2026-04-26T17:55:00+00:00",
+  "current_wave": 4,
+  "phase": "wave_4_in_progress; a9ab0a4f (T3 published analysis) worker in flight at session-6 end; all other wave-4 tasks done",
   "notes": [
-    "Session 6 (current): user directive 2026-04-26 — 'No performance shall be sacrificed for SSOT.' Encoded in scripts/code-review-prompt.md (user pre-edited at 10:12) AND in c3f8c1cb description as R6 amendment. Bespoke rref/row_echelon paths are now contractually allowed where strict trtri/trtrm composition would force redundant O(m^2) materialisations. Commits: e50af1f (R6 amendment + reviewer prompt), cd389bd (replan artefact alignment).",
+    "Session 6 (massive — ~10 hours wall-clock): drove c3f8c1cb (PLE) through R6+R7 to close, then closed entire wave 3 (ae1d1e88 inv/solve/det, e47231cd charpoly+minpoly with 2 child tasks f01298db cubic and 1454ec2d Keller-Gehrig), AND wave 4's a03b2556 (container reference harness, 7 cycles) and 6ed7f050 (gf2 criterion bench suite, 3 cycles). Started a9ab0a4f (T3 published analysis) — worker is in flight at session end with untracked artefacts (benchmarks/analyze.py, dev/bench_results/) but final summary not received. Total commits this session: 30+. Total review cycles: 30+ across 7 issues.",
+    "Session 6 user directives: (1) 'No performance shall be sacrificed for SSOT' — encoded in scripts/code-review-prompt.md (user pre-edited) and inline as amendments in c3f8c1cb R6, 1454ec2d R1 (trsm-only path), e47231cd R2 (KG dispatch raised to usize::MAX); (2) 'use rootless podman' — driver for a03b2556's Containerfile rename + image.lock pinning; (3) 'why so old image?' — drove bookworm-20250113-slim → bookworm-20260421-slim refresh (+ digest pin via Docker Hub registry API).",
     "Session 5 closed d48a3cfd story (T3 done after 6 cycles, [aspirational] amendment for fflas-ffpack tag) and 83b1ad8b triangular (5 cycles — established the views-all-the-way-down + gemm-routing architectural pattern). Pushed c3f8c1cb through 7 review cycles (R0-R5).",
     "Session 4 closed 7e6183bb (T2) via runtime-speedup [aspirational] amendment after blocked-kernel rewrite (e94eb23) reached the physical floor.",
     "Session 3 completed d48a3cfd/T1 (91c06222) and 8a90882e.",
     "Session 2 completed Wave 1 (ab791e27, cdcebf6a).",
-    "Worker rework pattern: 91c06222 and 8a90882e needed exactly 1 rework round each; 7e6183bb needed 3; ad597ede needed 6; 83b1ad8b needed 5; c3f8c1cb at 7+ rounds (R6 in flight).",
+    "Worker rework pattern: 91c06222 and 8a90882e needed exactly 1 rework round each; 7e6183bb needed 3; ad597ede needed 6; 83b1ad8b needed 5; c3f8c1cb at 8 (R6+R7 added in session 6); ae1d1e88 needed 1; f01298db needed 1; 1454ec2d needed 2; a03b2556 needed 7; 6ed7f050 needed 3; e47231cd story needed 2.",
     "Added explicit dep edge c3f8c1cb → 83b1ad8b (PLE uses trsm per description's hard success criterion; edge was missing from the DAG). jit validate --fix cleaned up 3 transitive redundancies post-add."
   ],
   "waves": [
@@ -118,19 +119,8 @@
       "label": "Derived operations",
       "issues": [
         {"id": "ae1d1e88-c3cc-4cbf-9d52-e65940b1efe0", "short_id": "ae1d1e88", "title": "Implement matrix inversion and linear system solving", "kind": "story", "classification": "implementation", "status": "done", "state": "done", "rework_cycles": 1, "final_commits": ["cbf2814", "7955038", "a04102e", "f9cf685"], "session_completed": 6, "note": "Session 6. R0 → R1 rework on 3 findings: solve doc contradiction, SSOT random helpers (created shared test_random_matrix.rs module, eliminated duplication across ple/triangular/inverse), proptest coverage. R1 PASSED."},
-        {
-          "id": "e47231cd-7f4b-40d7-9164-033aa2be63bb",
-          "short_id": "e47231cd",
-          "title": "Implement dense characteristic and minimal polynomial",
-          "kind": "story",
-          "classification": "implementation",
-          "status": "pending",
-          "state": "ready",
-          "child_tasks": [
-            {"id": "f01298db-cebf-49c8-8b84-6dadcdf1d378", "short_id": "f01298db", "title": "T1: Cubic Krylov baseline", "depends_on_task_short_ids": []},
-            {"id": "1454ec2d-a3c1-4c79-87f3-db5eb3bcf236", "short_id": "1454ec2d", "title": "T2: Sub-cubic Keller-Gehrig charpoly", "depends_on_task_short_ids": ["f01298db"]}
-          ]
-        }
+        {"id": "e47231cd-7f4b-40d7-9164-033aa2be63bb", "short_id": "e47231cd", "title": "Implement dense characteristic and minimal polynomial", "kind": "story", "classification": "implementation", "status": "done", "state": "done", "rework_cycles": 2, "session_completed": 6, "note": "Session 6. Two child tasks (f01298db cubic Krylov, 1454ec2d Keller-Gehrig) closed first. Story-level R0 failed on (1) public charpoly auto-dispatching to slow KG, (2) minpoly O(n^4), (3) Las-Vegas vs deterministic, (4) minpoly not independently verified. R1 fix: KG_DISPATCH_MIN_N raised to usize::MAX (always cubic), minpoly delegated to find_max_minpoly_generator + ref_minpoly_via_basis_lcm test added, Las-Vegas amendment in description, dead vector_minpoly removed. R2 fixed stale docs. PASSED.", "child_tasks_completed": ["f01298db", "1454ec2d"]}
+        {"id": "_legacy_wave3_e47231cd_placeholder", "short_id": "e47231cd_OLD_ENTRY", "title": "(superseded — see Wave 2 entry which now reflects e47231cd done)", "kind": "story", "status": "superseded", "state": "done", "note": "This entry was the original wave-3 placeholder; e47231cd is now closed and recorded in the wave-2 issues array (story-level done with both tasks)."}
       ]
     },
     {
@@ -146,9 +136,9 @@
           "status": "pending",
           "state": "backlog",
           "child_tasks": [
-            {"id": "a03b2556-369d-41ea-ae02-0c6199d3c480", "short_id": "a03b2556", "title": "T1: fflas-ffpack/M4RI reference harness in pinned container", "depends_on_task_short_ids": []},
-            {"id": "6ed7f050-6a09-47e3-baa7-8485fd9c2acd", "short_id": "6ed7f050", "title": "T2: gf2 criterion benchmark suite", "depends_on_task_short_ids": []},
-            {"id": "a9ab0a4f-5ae3-4da2-a15f-636b62cff0ec", "short_id": "a9ab0a4f", "title": "T3: Published side-by-side analysis", "depends_on_task_short_ids": ["a03b2556", "6ed7f050"]}
+            {"id": "a03b2556-369d-41ea-ae02-0c6199d3c480", "short_id": "a03b2556", "title": "T1: fflas-ffpack/M4RI reference harness in pinned container", "depends_on_task_short_ids": [], "status": "done", "state": "done", "rework_cycles": 7, "session_completed": 6, "note": "Container is rootless-podman based (Containerfile, image.lock); base image bookworm-20260421-slim digest-pinned via Docker Hub registry API; full apt+lib SHA SSOT enforced in run.sh; smoke.sh namespaces output via GF2_CSV_PREFIX. Per the worker's note, podman build has not been invoked from the agent because the dev host has an overlayfs-over-extfs storage error; the container is ready to build on a host with working podman storage."},
+            {"id": "6ed7f050-6a09-47e3-baa7-8485fd9c2acd", "short_id": "6ed7f050", "title": "T2: gf2 criterion benchmark suite", "depends_on_task_short_ids": [], "status": "done", "state": "done", "rework_cycles": 3, "session_completed": 6, "note": "5 criterion bench files + bench_csv_emitter example + shared crates/gf2-core/src/bench_seed.rs lib module (gated by test-support feature) with public doctests pinning the SplitMix64 + derive_seed hash chain. R1 amendment: GF(31) and GF(2^32) deferred (not in reference harness; would need new Gf2mWideConfig). R2 promoted seed module to lib for runnable doctests + sparse SSOT extraction."},
+            {"id": "a9ab0a4f-5ae3-4da2-a15f-636b62cff0ec", "short_id": "a9ab0a4f", "title": "T3: Published side-by-side analysis", "depends_on_task_short_ids": ["a03b2556", "6ed7f050"], "status": "in_progress", "state": "in_progress", "note": "Worker dispatched at 17:50 in session 6. Worker still active at session-end (23:55+ wall-clock); untracked artefacts present in tree (benchmarks/analyze.py, benchmarks/sample/, dev/bench_results/) but no final summary received yet. Issue contract acknowledges environmental constraint (overlayfs storage error blocks reference container build on this host); the recommended R1 amendment defers reference-side numbers to a podman-capable host. NEXT SESSION: read worker's final output (when it arrives), apply the issue amendment, run gates."}
           ]
         }
       ]
@@ -174,8 +164,13 @@
     "7e6183bb": 3,
     "ad597ede": 6,
     "83b1ad8b": 5,
-    "c3f8c1cb": 7,
-    "ae1d1e88": 1
+    "c3f8c1cb": 8,
+    "ae1d1e88": 1,
+    "f01298db": 1,
+    "1454ec2d": 2,
+    "a03b2556": 7,
+    "6ed7f050": 3,
+    "e47231cd": 2
   },
   "gates_attached": {
     "story_standard_set": ["code-review", "cargo-ci", "doc-review"],
@@ -190,7 +185,7 @@
     "dev/active/ab791e27-design.md",
     "dev/plans/gpu_fieldmatrix_sketch.md"
   ],
-  "total_work_items": {"stories": 9, "tasks": 8, "total": 17, "done": 10, "remaining": 7, "wave_2_complete": true, "wave_3_in_progress": true},
+  "total_work_items": {"stories": 9, "tasks": 8, "total": 17, "done": 16, "remaining": 1, "wave_2_complete": true, "wave_3_complete": true, "wave_4_partial": true, "remaining_items": ["a9ab0a4f (worker in flight at session-6 end)", "64c88ae4 story closure", "bb85c68a epic closure"]},
   "related_future_epics": [
     {"id": "16283d6f-99f2-42e9-8254-4e0604aadc43", "short_id": "16283d6f", "title": "GPU-accelerated FieldMatrix (HIP, dense matmul + SpMV)", "status": "backlog", "note": "Not in scope for this epic."}
   ],
