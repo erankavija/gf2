@@ -1179,7 +1179,10 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// ([`charpoly_keller_gehrig`](Self::charpoly_keller_gehrig),
     /// Dumas–Pernet theorem 13.4) based on the field cardinality and
     /// matrix size. See the module rustdoc for the full decision tree
-    /// and the empirical crossover (`n ≈ 256` on `Fp<2^31 − 1>`).
+    /// and the empirical crossover; the measured crossover where KG
+    /// beats cubic is well above `n = 1024` on `Fp<2^31 − 1>` with the
+    /// current PLE-based K⁻¹ pipeline (cubic is ~173× faster at
+    /// `n = 256`).
     ///
     /// **Bit-exactness across paths** is enforced as a `[hard]` success
     /// criterion of issue `1454ec2d`: the sub-cubic path verifies its
