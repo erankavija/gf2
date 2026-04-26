@@ -2,7 +2,7 @@
   "id": "e47231cd-7f4b-40d7-9164-033aa2be63bb",
   "title": "Implement dense characteristic and minimal polynomial",
   "description": "Compute the characteristic and minimal polynomials of dense square `FieldMatrix<F>` via Krylov-basis methods (Dumas–Pernet §3).\n\n## Operations\n\n```rust\nimpl<F: FiniteField> FieldMatrix<F> {\n    /// Characteristic polynomial det(xI - A) ∈ F[x].\n    pub fn charpoly(&self) -> FieldPolynomial<F>;\n\n    /// Minimal polynomial — the first invariant factor of A.\n    pub fn minpoly(&self) -> FieldPolynomial<F>;\n\n    /// Frobenius normal form: diag(C_{f_1}, ..., C_{f_t}) with f_{i+1} | f_i.\n    pub fn frobenius_form(&self) -> (FieldMatrix<F>, FieldMatrix<F>); // (P, F) with F = P⁻¹ A P\n}\n```\n\n## Algorithms\n\nTwo implementations, both deterministic:\n\n1. **Baseline**: classical Krylov iteration (paper theorem 13.1). 6n³ field ops for Frobenius form; (2 + 2/3)n³ for charpoly alone. Cubic but small constant.\n2. **Sub-cubic over large fields**: Keller-Gehrig's fast exponentiation scheme (theorem 13.4) gives O(nω log n) for charpoly. Only engaged when the field is large enough (q > 2n² per theorem 13.4's Las-Vegas guarantee); for small fields, we stay with the cubic baseline.\n\nWe ship the cubic baseline first and make the sub-cubic path an explicit optimization pass.\n\n## Success criteria\n\n- [hard] `charpoly` and `minpoly` correct on random matrices across GF(7), GF(65521), GF(2^31-1), GF(2^8), GF(2^16); verified by independent computation (e.g. interpolating `det(xI - A)` at n+1 random points).\n- [hard] `frobenius_form` produces an invertible `P` such that `P⁻¹ A P` is block-diagonal with invariant factors on the blocks; invariant factors tested to divide.\n- [hard] Cayley-Hamilton property tested: `charpoly(A).evaluate(A) == 0` on random matrices.\n- [hard] Minimal polynomial divides characteristic polynomial.\n- [hard] Edge cases: identity, zero matrix, diagonal, scalar multiple of identity, companion matrix, rank-deficient.\n- [hard] Criterion benches at n = 32, 128, 512 for at least two fields.\n- [hard] Uses the existing `FieldPolynomial<F>` / `gfpn` polynomial infrastructure (no new polynomial types).\n- [aspirational] Sub-cubic path active on fields large enough; verified to beat cubic path at n ≥ 256 on GF(2^31-1).\n\n## Non-goals\n\n- Rational canonical form beyond what `frobenius_form` already gives.\n- Eigenvalue decomposition (not meaningful over finite fields).\n- Probabilistic/Monte-Carlo algorithms of theorem 13 (we stick to deterministic variants).\n\n## Dependencies\n\n- Matrix multiplication with delayed reduction (d48a3cfd) — Krylov iterates need `matvec`; sub-cubic path needs `gemm`.\n- PLE decomposition (c3f8c1cb) — needed to detect rank of Krylov matrices.\n- trsm/trmm/trtri (N2) — sub-cubic path uses these.\n\n## References\n\n- [Dumas–Pernet takeaways](dev/plans/dumas_pernet_takeaways.md) §2, §3 (paper §3, theorem 13)",
-  "state": "backlog",
+  "state": "ready",
   "priority": "normal",
   "assignee": null,
   "dependencies": [
@@ -13,7 +13,13 @@
     "cargo-ci",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-26T13:19:10.316524092Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -22,5 +28,5 @@
     "epic:bb85c68a"
   ],
   "created_at": "2026-04-23T15:56:49.898393786+00:00",
-  "updated_at": "2026-04-23T16:31:21.911789013+00:00"
+  "updated_at": "2026-04-26T13:19:17.230378100+00:00"
 }
