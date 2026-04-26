@@ -1,18 +1,51 @@
 {
   "id": "c7791a20-28dd-4fdf-a5a4-78f4d38b3b19",
   "title": "Add workspace [profile.release] block (lto, codegen-units)",
-  "description": "The workspace `Cargo.toml` has no `[profile.release]` block, so all release builds inherit Cargo defaults (`lto = false`, `codegen-units = 16`). This prevents cross-crate inlining between `gf2-core` and `gf2-kernels-simd`, forcing every `xor_inplace` / `popcount` / `gf2m_mul` call to go through opaque function-pointer dispatch via `LogicalFns`.\n\n## Background\n\nEmpirical profiling on commit `0d2f284` (see `dev/bench_results/2026-04-26-uncompetitiveness-profile.md`): re-running the GF(2) BitMatrix matmul bench with `--features simd` only buys +16% at $n=1024$ and +24% at $n=4096$, vs. ~4× theoretical for `vpxor`-based 256-bit XOR. Most of the SIMD win is consumed by per-call dispatch overhead that LTO would inline away.\n\nThis change is foundational for the PPC-spiral epic: it **must land before I1 pins criterion baselines** (`b2ecd2ff`), otherwise every Tier A–E baseline is measured on the wrong profile and every subsequent $\\geq 1.5\\times$ claim has an artificially low floor.\n\nPPC walk: V0 measure (current bench numbers) → V0' re-measure with optimized profile → record delta. No code changes outside `Cargo.toml`.\n\n## Success Criteria\n\n- [hard] Workspace root `Cargo.toml` has a `[profile.release]` block with `lto = \"thin\"`, `codegen-units = 1`. `panic = \"abort\"` is OPTIONAL — defer to user preference.\n- [hard] `cargo build --workspace --all-features --release` completes without warnings.\n- [hard] `cargo nextest run --workspace --all-features --release --profile ci` passes within the 60 s wall-clock budget (per `CLAUDE.md` test rules).\n- [hard] BitMatrix matmul at $n=1024$ (`--features simd`) shows $\\geq 1.3\\times$ improvement over the no-LTO baseline, captured in `dev/bench_results/2026-04-26-profile-release-delta.md` with measured numbers and host context.\n- [hard] No regression on existing benches: every `target/criterion/` baseline that was already passing on commit `0d2f284` stays at the same wall-time geomean ±5% or better.\n\n## Notes\n\nThe `lto = \"thin\"` choice (vs. `\"fat\"`) is deliberate — fat LTO doubles compile time and gives marginally better inlining only for our pattern. Revisit only if `\"thin\"` doesn't close the expected gap. Spec doc: `dev/plans/gf2_core_ppc_spiral.md`.",
-  "state": "in_progress",
+  "description": "The workspace `Cargo.toml` has no `[profile.release]` block, so all release builds inherit Cargo defaults (`lto = false`, `codegen-units = 16`). This prevents cross-crate inlining between `gf2-core` and `gf2-kernels-simd`, forcing every `xor_inplace` / `popcount` / `gf2m_mul` call to go through opaque function-pointer dispatch via `LogicalFns`.\n\n## Background\n\nEmpirical profiling on commit `0d2f284` (see attached *uncompetitiveness profile* note): re-running the GF(2) BitMatrix matmul bench with `--features simd` only buys +16% at n=1024 and +24% at n=4096, vs. ~4× theoretical for `vpxor`-based 256-bit XOR. Most of the SIMD win is consumed by per-call dispatch overhead that LTO would inline away.\n\nThis change is foundational for the PPC-spiral epic: it **must land before I1 pins criterion baselines** (`b2ecd2ff`), otherwise every Tier A–E baseline is measured on the wrong profile and every subsequent ≥1.5× claim has an artificially low floor.\n\nPPC walk: V0 measure (current bench numbers) → V0' re-measure with optimized profile → record delta. No code changes outside `Cargo.toml`.\n\n## Success Criteria\n\n- [hard] Workspace root `Cargo.toml` has a `[profile.release]` block with `lto = \"thin\"`, `codegen-units = 1`. `panic = \"abort\"` is OPTIONAL — defer to user preference.\n- [hard] `cargo build --workspace --all-features --release` completes without warnings.\n- [hard] `cargo nextest run --workspace --all-features --release --profile ci` passes within the 60 s wall-clock budget (per `CLAUDE.md` test rules).\n- [hard] BitMatrix matmul at n=1024 (`--features simd`) measured before+after and documented with host context, rustc version, and methodology in the attached *profile-release delta* note.\n- [hard] Any regression on existing benches greater than 5% is documented and reasoned in the delta note (regressions accepted only with explicit measured evidence and analysis, never silently).\n\n## Amendment (lead, 2026-04-26, user-approved per Option 1 escalation)\n\nThe original `[hard]` \"≥1.3× improvement at n=1024 SIMD\" criterion was hypothesised pre-measurement based on the uncompetitiveness profile §B reasoning that ThinLTO would devirtualize `LogicalFns`. Empirical data (medians of 4 runs, both thin AND fat LTO tested) falsified the hypothesis:\n\n| n    | ratio (after/before) | interpretation |\n|------|---------------------:|---|\n| 64   | 1.24× | small-n scalar path benefits from cross-crate inlining as predicted |\n| 256  | 1.00× | neutral |\n| 1024 | 0.91× | **regression** on SIMD path |\n| 4096 | 0.91× | **regression** on SIMD path |\n\n`OnceLock<Option<&'static LogicalFns>>` of `fn(_,_)` pointers is opaque to LTO regardless of mode. The actual perf lever is `b2ecd2ff` (hoist `maybe_simd()` out of hot path), which is already in the wave plan.\n\nThe `[profile.release]` change ships because:\n1. It pins a reproducible release profile for the I1 (`b2ecd2ff`) criterion baselines that follow — the PPC-spiral methodology requires baselines on a stable profile, not Cargo defaults.\n2. It does deliver the predicted scalar-path inlining win (+24% on small-n).\n\nUser directive (2026-04-26): *\"We do need to get some competitive numbers, but our work shall be based on measurements. Not guesses.\"* This amendment encodes that rule — the criterion now requires before/after measurements with documented numbers, not a guessed speedup target. Falsification is itself valuable output: it correctly redirected effort to b2ecd2ff.",
+  "state": "done",
   "priority": "normal",
-  "assignee": "agent:claude",
+  "assignee": null,
   "dependencies": [],
   "gates_required": [
     "code-review",
     "cargo-ci"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-26T19:51:08.175059423Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-26T19:50:09.912684264Z"
+    }
+  },
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/plans/gf2_core_ppc_spiral.md",
+      "commit": null,
+      "label": "PPC-spiral epic spec doc (per-step protocol + kernel inventory)",
+      "doc_type": "design",
+      "format": "markdown"
+    },
+    {
+      "path": "dev/bench_results/2026-04-26-uncompetitiveness-profile.md",
+      "commit": null,
+      "label": "Uncompetitiveness profile (motivation: ThinLTO hypothesis)",
+      "doc_type": "notes",
+      "format": "markdown"
+    },
+    {
+      "path": "dev/bench_results/2026-04-26-profile-release-delta.md",
+      "commit": null,
+      "label": "Measured profile.release delta (worker output, 0.91× on SIMD matmul)",
+      "doc_type": "notes",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:task",
     "component:gf2-core",
@@ -20,5 +53,5 @@
     "story:ppc-infrastructure"
   ],
   "created_at": "2026-04-26T19:09:27.589557770+00:00",
-  "updated_at": "2026-04-26T19:25:55.473788156+00:00"
+  "updated_at": "2026-04-26T19:54:08.722277208+00:00"
 }
