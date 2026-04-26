@@ -7,7 +7,7 @@
 #
 # Two slots remain to be filled in on first build:
 #
-#   [base].digest       — the registry digest of `debian:bookworm-20250113-slim`
+#   [base].digest       — the registry digest of `debian:bookworm-20260421-slim`
 #                         at first-pull time. Until this is filled in,
 #                         only the dated tag pin protects us. See the
 #                         `TODO_DIGEST` comment in `Containerfile`.
@@ -23,7 +23,7 @@
 #   1. podman build -t gf2-bench:ref -f benchmarks/Containerfile benchmarks/
 #   2. podman image inspect gf2-bench:ref --format '{{.Id}}'
 #         → paste into [image].local_id
-#   3. podman image inspect docker.io/library/debian:bookworm-20250113-slim \
+#   3. podman image inspect docker.io/library/debian:bookworm-20260421-slim \
 #         --format '{{(index .RepoDigests 0)}}'
 #         → paste into [base].digest (sha256:... portion only)
 #   4. Re-run `./benchmarks/run.sh` and verify the build reproduces the
@@ -39,13 +39,12 @@ local_id = "sha256:TODO_FILL_AFTER_FIRST_BUILD"
 
 [base]
 repository = "docker.io/library/debian"
-tag        = "bookworm-20250113-slim"
-# Replace TODO_DIGEST with the sha256 from `podman image inspect ...`
-# after first pull. Verify against https://hub.docker.com/_/debian
-# before pasting. Until filled in, only the tag pin is in effect; the
-# tag is dated and Debian treats dated slim tags as immutable, so the
-# gap is small but present.
-digest     = "sha256:TODO_DIGEST_FILL_AFTER_FIRST_BUILD"
+tag        = "bookworm-20260421-slim"
+# Resolved 2026-04-26 against docker.io/library/debian via the registry
+# API (OCI image index). The `Containerfile` FROM line carries the same
+# digest as defence in depth against registry mutation / mirror
+# substitution.
+digest     = "sha256:f9c6a2fd2ddbc23e336b6257a5245e31f996953ef06cd13a59fa0a1df2d5c252"
 
 [libs.gcc]
 version = "12.2.0-14"

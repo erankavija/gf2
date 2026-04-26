@@ -26,23 +26,24 @@
 # Base image — pin by digest as soon as the lead has run the first
 # build on the dev host. Procedure:
 #
-#   podman pull docker.io/library/debian:bookworm-20250113-slim
-#   podman image inspect docker.io/library/debian:bookworm-20250113-slim \
+#   podman pull docker.io/library/debian:bookworm-20260421-slim
+#   podman image inspect docker.io/library/debian:bookworm-20260421-slim \
 #       --format '{{(index .RepoDigests 0)}}'
 #
 # Take the `sha256:...` portion of the output, paste it into both
 # `image.lock` ([base].digest) AND replace the `# TODO_DIGEST` comment
-# below with `FROM docker.io/library/debian:bookworm-20250113-slim@sha256:<digest>`.
+# below with `FROM docker.io/library/debian:bookworm-20260421-slim@sha256:<digest>`.
 #
-# The dated tag `bookworm-20250113-slim` is itself non-floating —
+# The dated tag `bookworm-20260421-slim` is itself non-floating —
 # Debian's tag policy is that dated slim tags are immutable once
 # published — so the FROM line below is reproducible against the public
 # Docker Hub registry until that registry is rewritten. The digest pin
 # is defence in depth against registry mutation / mirror substitution.
 #
-# TODO_DIGEST: replace the line below with the digest-pinned variant
-# after first build. Tracked by the lead alongside image.lock fill-in.
-FROM docker.io/library/debian:bookworm-20250113-slim
+# Resolved 2026-04-26 against docker.io/library/debian via the registry
+# API (OCI image index digest; podman resolves to the right
+# platform-specific manifest via the index).
+FROM docker.io/library/debian:bookworm-20260421-slim@sha256:f9c6a2fd2ddbc23e336b6257a5245e31f996953ef06cd13a59fa0a1df2d5c252
 
 # Build dependencies. Pin major versions explicitly. We rely on Debian
 # bookworm's "stable" semantics — point releases do not change ABI/major
