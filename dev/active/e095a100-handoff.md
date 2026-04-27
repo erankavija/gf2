@@ -1,5 +1,11 @@
 # Epic e095a100 handoff — 2026-04-18
 
+> **Historical record.** This handoff was written on 2026-04-18 against
+> workspace MSRV 1.80. The workspace MSRV was subsequently bumped to 1.95
+> on 2026-04-27 (JIT issue `c7e91dfd`); MSRV references below reflect the
+> handoff's point-in-time state. The current MSRV is documented in
+> `CLAUDE.md`.
+
 Lead: agent:project-lead (session 1). Next lead: pick up from Wave 2.
 
 ## Epic state

@@ -1,5 +1,11 @@
 # Epic e095a100 — Completion Report
 
+> **Historical record.** This completion report was written on 2026-04-21
+> against workspace MSRV 1.80. The workspace MSRV was subsequently bumped
+> to 1.95 on 2026-04-27 (JIT issue `c7e91dfd`); MSRV references below
+> reflect the report's point-in-time state. The current MSRV is documented
+> in `CLAUDE.md`.
+
 **Epic:** Implement general Galois field GF(p^m) arithmetic
 **Final state:** done (2026-04-21)
 **Final branch tip:** `e00d775b` · 127+ commits ahead of origin/main
