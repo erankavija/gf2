@@ -146,7 +146,7 @@
 //!
 //! [`FieldPoly::batch_evaluate`] (the generic dispatcher on
 //! `F: FiniteField`) keeps schoolbook [`FieldPoly::div_rem`] for the
-//! reduction phase because Rust coherence on MSRV-1.80 does not permit
+//! reduction phase because Rust coherence does not permit
 //! a specialised `impl` that swaps in [`FieldPoly::div_rem_auto`] for
 //! [`TwoAdicField`] operands. Callers on [`TwoAdicField`] should
 //! prefer [`FieldPoly::batch_evaluate_auto`] (or the
@@ -2657,8 +2657,8 @@ impl<F: FiniteField> Mul<FieldPoly<F>> for FieldPoly<F> {
     /// `O(n^{log₂ 3})` in the Karatsuba regime, where `n = self.len()`
     /// and `m = rhs.len()`. The [`Mul`] operator deliberately stays on
     /// the Karatsuba path for every `F: FiniteField` because Rust
-    /// coherence (on MSRV-1.80, without the nightly `specialization`
-    /// feature) does not let us add a second, more-specific impl for
+    /// coherence (without the nightly `specialization` feature) does
+    /// not let us add a second, more-specific impl for
     /// `F: TwoAdicField`. Call sites that want the `O(N log N)` NTT
     /// convolution opt in via the free function
     /// [`poly::mul_fast`](crate::field::poly::mul_fast) or the inherent
@@ -2822,7 +2822,7 @@ impl<F: TwoAdicField> FieldPoly<F> {
 /// (via [`FieldPoly::mul_ntt`]).
 ///
 /// Rust coherence prevents us from specialising the blanket
-/// `impl Mul for FieldPoly<F>` on the stable MSRV-1.80 toolchain: we
+/// `impl Mul for FieldPoly<F>` on the stable toolchain: we
 /// cannot add a second, more-specific `impl<F: TwoAdicField>` without
 /// the nightly `specialization` feature. `mul_fast` is the escape
 /// valve — a free function constrained to [`TwoAdicField`] that every

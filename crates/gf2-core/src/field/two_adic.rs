@@ -34,8 +34,8 @@
 //!
 //! ## Why not `Fp<P>` for all `P`?
 //!
-//! The trait constant `TWO_ADICITY` must be compile-time, which (on MSRV
-//! 1.80 without nightly features) cannot be derived from the const-generic
+//! The trait constant `TWO_ADICITY` must be compile-time, which (on stable
+//! Rust without nightly features) cannot be derived from the const-generic
 //! `P` inside the trait impl itself. We therefore provide concrete impls
 //! only for the Proth primes currently used in the workspace; see the
 //! *workaround* note below for the per-prime helper that extracts
@@ -263,7 +263,7 @@ pub trait TwoAdicField: FiniteField {
 
 /// Compile-time extractor for the two-adicity of a Proth prime.
 ///
-/// This helper exists because Rust's MSRV-1.80 const-eval rules do not allow
+/// This helper exists because Rust's stable const-eval rules do not allow
 /// us to call [`classify`] directly inside the body of
 /// `TwoAdicField::TWO_ADICITY` when `P` is const-generic on the impl.
 /// By routing through a zero-sized helper whose associated constant is

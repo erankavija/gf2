@@ -911,7 +911,7 @@ fn is_high_bit_set<const N: usize>(a: &[u64; N], m: u32) -> bool {
 }
 
 /// Slice-based equivalent of [`wide_is_already_reduced`] for callers that
-/// cannot produce a `[u64; 2 * N]` under MSRV 1.80 stable generics. Asserts
+/// cannot produce a `[u64; 2 * N]` under stable-Rust generics. Asserts
 /// `product.len() == 2 * N` as a debug check.
 #[inline]
 fn slice_wide_is_already_reduced<const N: usize>(product: &[u64], m: u32) -> bool {

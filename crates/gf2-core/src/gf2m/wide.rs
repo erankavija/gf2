@@ -606,7 +606,7 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     /// `>= Cfg::M`.
     ///
     /// Used by the `debug_assert!` in [`Gf2mWide::from_words`]. Kept
-    /// separate so that path can stay `const fn` on stable Rust 1.80.
+    /// separate so that path can stay `const fn` on stable Rust.
     #[inline]
     const fn tail_is_masked(words: &[u64; N]) -> bool {
         if N == 0 {
@@ -759,7 +759,7 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Neg for Gf2mWide<N, Cfg> {
 // `BarrettReducerWide<N>` is deterministically derived from `Cfg::MODULUS` and
 // `Cfg::M`. Computing it is O(M²) (polynomial long division) and is therefore
 // cached after the first construction. Because Rust does not yet support
-// `static` items with generic const parameters on stable (MSRV 1.80), we use
+// `static` items with generic const parameters on stable, we use
 // a global `OnceLock<Mutex<HashMap<(TypeId, usize), Box<dyn Any + Send + Sync>>>>`
 // that maps `(TypeId::of::<Cfg>(), N)` to the corresponding
 // `BarrettReducerWide<N>`.
@@ -898,7 +898,7 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     pub fn mul_ref(&self, rhs: &Self) -> Self {
         // Step 1: carry-less multiply to get a 2N-word unreduced product.
         //
-        // MSRV 1.80 caveat: `[u64; 2 * N]` is rejected as an array-length
+        // Stable-Rust caveat: `[u64; 2 * N]` is rejected as an array-length
         // expression on stable because `N` is a const generic parameter.
         // We therefore use a `Vec<u64>` buffer and the slice-based helpers
         // [`clmul_wide_slice`] (schoolbook clmul) and
@@ -1832,9 +1832,9 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> crate::field::ConstField for Gf2mWi
 /// performed by [`crate::gf2m::barrett::BarrettReducerWide::reduce_slice`];
 /// see [`Gf2mWide::mul_ref`] for the combined clmul + Barrett path.
 ///
-/// # MSRV caveat: why two const parameters?
+/// # Stable-Rust caveat: why two const parameters?
 ///
-/// On stable Rust 1.80 the compiler cannot evaluate `2 * N` in an array-length
+/// On stable Rust the compiler cannot evaluate `2 * N` in an array-length
 /// position (`[u64; 2 * N]` is rejected). This function therefore takes a
 /// second const parameter `M` and asserts `M == 2 * N` at compile time. Pass
 /// the double manually: `clmul_wide::<N, {2 * N}>(a, b)`.
@@ -1883,7 +1883,7 @@ pub fn clmul_wide<const N: usize, const M: usize>(a: &[u64; N], b: &[u64; N]) ->
 }
 
 /// Slice-taking variant of [`clmul_wide`] for callers that cannot produce a
-/// `[u64; 2 * N]` output array under MSRV 1.80 stable generics.
+/// `[u64; 2 * N]` output array under stable-Rust generics.
 ///
 /// `out` must have length exactly `2 * N`. The function XOR-accumulates the
 /// schoolbook carry-less product `a * b` into `out`; callers are responsible

@@ -591,7 +591,7 @@ impl<const P: u64> FiniteField for Fp<P> {
     fn cardinality_log2_hint() -> Option<u32> {
         // P is a const generic ≥ 2 (validated by `Self::VALIDATED`), so
         // `(u64::BITS - 1) - P.leading_zeros()` is the same as
-        // `P.ilog2()` in stable Rust 1.80 and never panics.
+        // `P.ilog2()` and never panics.
         Some(u64::BITS - 1 - P.leading_zeros())
     }
 
