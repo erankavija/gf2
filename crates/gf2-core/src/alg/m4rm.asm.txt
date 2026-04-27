@@ -1,0 +1,615 @@
+; gf2-core PPC-spiral asm artefact
+; ---------------------------------------------------------
+; crate         : gf2-core
+; primary       : gf2_core::alg::m4rm::multiply
+; output        : crates/gf2-core/src/alg/m4rm.asm.txt
+; rustc         : rustc 1.95.0 (59807616e 2026-04-14)
+; target-cpu    : native
+; RUSTFLAGS     : -C target-cpu=native
+; commit        : generated from this commit source state
+; regenerated   : 2026-04-27T21:47:13Z
+; tool          : cargo-show-asm
+; audit         : hot row/table XOR calls use the hoisted function pointer at [rsp + 40]; OnceLock initialize is only on the cold resolver path.
+; ---------------------------------------------------------
+
+.section .text.gf2_core::alg::m4rm::multiply,"ax",@progbits
+	.globl	gf2_core::alg::m4rm::multiply
+	.p2align	4
+.type	gf2_core::alg::m4rm::multiply,@function
+gf2_core::alg::m4rm::multiply:
+	.cfi_startproc
+	.cfi_personality 155, DW.ref.rust_eh_personality
+	.cfi_lsda 27, .Lexception7
+	push rbp
+	.cfi_def_cfa_offset 16
+	push r15
+	.cfi_def_cfa_offset 24
+	push r14
+	.cfi_def_cfa_offset 32
+	push r13
+	.cfi_def_cfa_offset 40
+	push r12
+	.cfi_def_cfa_offset 48
+	push rbx
+	.cfi_def_cfa_offset 56
+	sub rsp, 312
+	.cfi_def_cfa_offset 368
+	.cfi_offset rbx, -56
+	.cfi_offset r12, -48
+	.cfi_offset r13, -40
+	.cfi_offset r14, -32
+	.cfi_offset r15, -24
+	.cfi_offset rbp, -16
+	mov rcx, qword ptr [rsi + 32]
+	mov rbp, qword ptr [rsi + 24]
+	mov r15, qword ptr [rdx + 32]
+	mov rax, qword ptr [rdx + 24]
+	mov qword ptr [rsp + 192], rbp
+	mov qword ptr [rsp + 80], rcx
+	mov qword ptr [rsp + 200], r15
+	mov qword ptr [rsp + 272], rax
+	mov qword ptr [rsp + 72], rcx
+	cmp rcx, rax
+	jne .LBB81_78
+	mov r14, rdi
+	test r15, r15
+	je .LBB81_3
+	mov eax, r15d
+	and eax, 63
+	mov r13, r15
+	shr r13, 6
+	cmp rax, 1
+	sbb r13, -1
+	jmp .LBB81_4
+.LBB81_3:
+	xor r13d, r13d
+.LBB81_4:
+	mov r12, r13
+	imul r12, rbp
+	movabs rcx, 9223372036854775800
+	lea rbx, [8*r12]
+	mov rax, r12
+	shr rax, 61
+	setne al
+	cmp rbx, rcx
+	seta cl
+	or cl, al
+	je .LBB81_7
+	xor r14d, r14d
+.LBB81_6:
+	mov rdi, r14
+	mov rsi, rbx
+	call qword ptr [rip + alloc::raw_vec::handle_error@GOTPCREL]
+.LBB81_7:
+	mov qword ptr [rsp + 40], rdx
+	mov qword ptr [rsp + 8], rsi
+	test rbx, rbx
+	je .LBB81_10
+	mov qword ptr [rsp + 64], rbp
+	mov rbp, r14
+	call qword ptr [rip + __rustc::__rust_no_alloc_shim_is_unstable_v2@GOTPCREL]
+	mov esi, 8
+	mov rdi, rbx
+	mov r14d, 8
+	call qword ptr [rip + __rustc::__rust_alloc_zeroed@GOTPCREL]
+	test rax, rax
+	je .LBB81_6
+	mov r14, rbp
+	mov rbp, qword ptr [rsp + 64]
+	mov rcx, r12
+	jmp .LBB81_11
+.LBB81_10:
+	mov eax, 8
+	xor ecx, ecx
+.LBB81_11:
+	test r15, r15
+	mov qword ptr [rsp + 88], rcx
+	mov qword ptr [rsp + 96], rax
+	mov qword ptr [rsp + 104], r12
+	mov qword ptr [rsp + 112], rbp
+	mov qword ptr [rsp + 120], r15
+	mov qword ptr [rsp + 128], r13
+	setne dl
+	test rbp, rbp
+	setne al
+	cmp qword ptr [rsp + 72], 0
+	setne cl
+	and cl, al
+	test cl, dl
+	jne .LBB81_14
+	mov r8, qword ptr [rsp + 112]
+	mov rax, qword ptr [rsp + 88]
+	mov rcx, qword ptr [rsp + 96]
+	mov rdi, qword ptr [rsp + 104]
+	mov r9, qword ptr [rsp + 120]
+	mov rdx, qword ptr [rsp + 104]
+	mov rsi, qword ptr [rsp + 112]
+	mov qword ptr [r14 + 24], r8
+	mov r8, qword ptr [rsp + 128]
+	mov qword ptr [r14 + 16], rdi
+	mov qword ptr [r14 + 32], r9
+	mov qword ptr [r14], rax
+	mov qword ptr [r14 + 8], rcx
+	mov qword ptr [r14 + 16], rdx
+	mov qword ptr [r14 + 24], rsi
+	mov qword ptr [r14 + 40], r8
+.LBB81_13:
+	mov rax, r14
+	add rsp, 312
+	.cfi_def_cfa_offset 56
+	pop rbx
+	.cfi_def_cfa_offset 48
+	pop r12
+	.cfi_def_cfa_offset 40
+	pop r13
+	.cfi_def_cfa_offset 32
+	pop r14
+	.cfi_def_cfa_offset 24
+	pop r15
+	.cfi_def_cfa_offset 16
+	pop rbp
+	.cfi_def_cfa_offset 8
+	vzeroupper
+	ret
+.LBB81_14:
+	.cfi_def_cfa_offset 368
+	mov rax, qword ptr [rsp + 8]
+	mov rcx, r15
+	and r15d, 63
+	shr rcx, 6
+	movabs rbx, 2305843009213693951
+	movabs r13, 9223372036854775800
+	cmp r15, 1
+	mov r15, rcx
+	mov ecx, 8
+	sbb r15, -1
+	xor esi, esi
+	add rax, 24
+	mov qword ptr [rsp + 208], rax
+	lea rax, [8*r15]
+	.p2align	4
+.LBB81_15:
+	mov r12d, 1
+	test sil, 1
+	jne .LBB81_18
+	mov rdx, rcx
+	test rcx, rcx
+	je .LBB81_18
+	mov rcx, rdx
+	dec rcx
+	shlx rdi, rax, rdx
+	mov r12, rdx
+	sete sil
+	cmove rcx, rdx
+	cmp rdi, 65537
+	setb dil
+	cmp rdx, qword ptr [rsp + 72]
+	setbe r8b
+	test dil, r8b
+	je .LBB81_15
+.LBB81_18:
+	mov qword ptr [rsp + 216], r14
+	cmp r15, 8
+	jb .LBB81_22
+	mov r14, qword ptr [rip + gf2_core::simd::FNS@GOTPCREL]
+	mov eax, dword ptr [r14 + 72]
+	test eax, eax
+	jne .LBB81_80
+.LBB81_20:
+	cmp qword ptr [r14], 0
+	je .LBB81_22
+	mov rax, qword ptr [r14 + 16]
+	jmp .LBB81_23
+.LBB81_22:
+	lea rax, [rip + gf2_core::kernels::ops::scalar_xor_inplace]
+.LBB81_23:
+	mov qword ptr [rsp + 40], rax
+	mov eax, r12d
+	and eax, 63
+	shlx rdx, r15, rax
+	lea r14, [8*rdx]
+	cmp rdx, rbx
+	seta al
+	cmp r14, r13
+	seta cl
+	or cl, al
+	je .LBB81_26
+	xor ebx, ebx
+.LBB81_25:
+	mov rdi, rbx
+	mov rsi, r14
+	call qword ptr [rip + alloc::raw_vec::handle_error@GOTPCREL]
+	jmp .LBB81_82
+.LBB81_26:
+	mov qword ptr [rsp + 24], rdx
+	mov qword ptr [rsp + 64], rbp
+	test r14, r14
+	je .LBB81_29
+	call qword ptr [rip + __rustc::__rust_no_alloc_shim_is_unstable_v2@GOTPCREL]
+	mov esi, 8
+	mov rdi, r14
+	mov ebx, 8
+	call qword ptr [rip + __rustc::__rust_alloc_zeroed@GOTPCREL]
+	mov qword ptr [rsp + 32], rax
+	test rax, rax
+	je .LBB81_25
+	mov rax, qword ptr [rsp + 24]
+	mov rbx, r15
+	mov qword ptr [rsp + 16], rax
+	mov rdx, qword ptr [rsp + 8]
+	mov r13, qword ptr [rsp + 80]
+	test r13, r13
+	jne .LBB81_30
+	jmp .LBB81_65
+.LBB81_29:
+	mov eax, 8
+	mov rbx, r15
+	mov qword ptr [rsp + 16], 0
+	mov qword ptr [rsp + 32], rax
+	mov rdx, qword ptr [rsp + 8]
+	mov r13, qword ptr [rsp + 80]
+	test r13, r13
+	je .LBB81_65
+.LBB81_30:
+	mov rcx, qword ptr [rsp + 40]
+	mov qword ptr [rsp + 224], r12
+	mov rax, qword ptr [rcx + 40]
+	mov qword ptr [rsp + 168], rax
+	mov rax, qword ptr [rcx + 8]
+	mov qword ptr [rsp + 248], rax
+	mov rax, qword ptr [rcx + 16]
+	mov rcx, qword ptr [rdx + 8]
+	mov qword ptr [rsp + 160], rax
+	mov rax, qword ptr [rdx + 40]
+	add rcx, 8
+	mov qword ptr [rsp + 232], rcx
+	mov qword ptr [rsp + 40], rax
+	mov rax, qword ptr [rdx + 16]
+	mov qword ptr [rsp + 184], rax
+	xor eax, eax
+	jmp .LBB81_32
+	.p2align	4
+.LBB81_31:
+	mov r12, qword ptr [rsp + 224]
+	mov rax, qword ptr [rsp + 48]
+	mov r13, qword ptr [rsp + 80]
+	add rax, r12
+	cmp rax, r13
+	jae .LBB81_65
+.LBB81_32:
+	sub r13, rax
+	mov qword ptr [rsp + 48], rax
+	mov rax, qword ptr [rsp + 200]
+	cmp r13, r12
+	cmovae r13, r12
+	test rax, rax
+	je .LBB81_35
+	mov r15, rax
+	and eax, 63
+	shr r15, 6
+	cmp rax, 1
+	sbb r15, -1
+	lea r14, [8*r15]
+	call qword ptr [rip + __rustc::__rust_no_alloc_shim_is_unstable_v2@GOTPCREL]
+	mov esi, 8
+	mov rdi, r14
+	call qword ptr [rip + __rustc::__rust_alloc_zeroed@GOTPCREL]
+	mov rdx, qword ptr [rsp + 24]
+	mov qword ptr [rsp + 8], rax
+	test rax, rax
+	je .LBB81_81
+	cmp r15, rdx
+	jbe .LBB81_36
+	jmp .LBB81_79
+.LBB81_35:
+	mov eax, 8
+	xor r15d, r15d
+	xor r14d, r14d
+	mov qword ptr [rsp + 8], rax
+.LBB81_36:
+	mov rdi, qword ptr [rsp + 32]
+	mov qword ptr [rsp + 240], r13
+	and r13d, 63
+	xor esi, esi
+	mov rdx, r14
+	call qword ptr [rip + memset@GOTPCREL]
+	mov rbp, r13
+	test r13, r13
+	je .LBB81_45
+	mov r12d, 1
+	xor r13d, r13d
+	.p2align	4
+.LBB81_38:
+	mov rax, r13
+	mov r13, r12
+	shr r13
+	xor r13, r12
+	xor rax, r13
+	tzcnt rdi, rax
+	add rdi, qword ptr [rsp + 48]
+	cmp rdi, qword ptr [rsp + 72]
+	jae .LBB81_42
+	mov rax, qword ptr [rsp + 168]
+	imul rdi, rax
+	mov rsi, rdi
+	add rsi, rax
+	jb .LBB81_77
+	cmp rsi, qword ptr [rsp + 160]
+	ja .LBB81_77
+	mov rax, qword ptr [rsp + 248]
+	lea rdx, [rax + 8*rdi]
+	mov rdi, qword ptr [rsp + 8]
+	mov rcx, qword ptr [rsp + 168]
+	mov rsi, r15
+	call qword ptr [rsp + 40]
+.LBB81_42:
+	mov rdi, r13
+	imul rdi, r15
+	mov rsi, rdi
+	add rsi, r15
+	jb .LBB81_69
+	cmp rsi, qword ptr [rsp + 24]
+	ja .LBB81_69
+	mov rax, qword ptr [rsp + 32]
+	mov rsi, qword ptr [rsp + 8]
+	inc r12
+	mov rdx, r14
+	lea rdi, [rax + 8*rdi]
+	call qword ptr [rip + memcpy@GOTPCREL]
+	shrx rax, r12, rbp
+	test rax, rax
+	je .LBB81_38
+.LBB81_45:
+	test r15, r15
+	je .LBB81_47
+	mov rdi, qword ptr [rsp + 8]
+	shl r15, 3
+	mov edx, 8
+	mov rsi, r15
+	call qword ptr [rip + __rustc::__rust_dealloc@GOTPCREL]
+.LBB81_47:
+	mov rcx, qword ptr [rsp + 48]
+	mov rax, qword ptr [rsp + 232]
+	mov rsi, qword ptr [rsp + 240]
+	mov rdx, qword ptr [rsp + 192]
+	mov r15d, ecx
+	mov r14, rcx
+	neg ecx
+	shr r14, 6
+	and r15d, 63
+	mov qword ptr [rsp + 8], rdx
+	and ecx, 63
+	lea rax, [rax + 8*r14]
+	cmp rsi, 64
+	lea rdx, [rsi + r15]
+	mov qword ptr [rsp + 256], rcx
+	mov rcx, -1
+	mov qword ptr [rsp + 264], rdx
+	shlx r12, rcx, rbp
+	mov qword ptr [rsp + 176], rax
+	not r12
+	cmove r12, rcx
+	xor edi, edi
+	xor ebp, ebp
+	.p2align	4
+.LBB81_48:
+	mov rsi, qword ptr [rsp + 40]
+	cmp qword ptr [rsp + 8], rbp
+	je .LBB81_31
+	mov qword ptr [rsp + 152], rbp
+	cmp qword ptr [rsp + 64], rbp
+	je .LBB81_70
+	mov r13, rsi
+	add r13, rdi
+	jb .LBB81_67
+	cmp r13, qword ptr [rsp + 184]
+	ja .LBB81_67
+	cmp r14, rsi
+	jae .LBB81_54
+	mov rax, qword ptr [rsp + 176]
+	mov rax, qword ptr [rax + 8*rdi - 8]
+	cmp qword ptr [rsp + 264], 65
+	shrx rax, rax, r15
+	jae .LBB81_55
+	jmp .LBB81_59
+	.p2align	4
+.LBB81_54:
+	xor eax, eax
+	cmp qword ptr [rsp + 264], 65
+	shrx rax, rax, r15
+	jb .LBB81_59
+.LBB81_55:
+	lea rcx, [r14 + 1]
+	cmp rcx, rsi
+	jae .LBB81_57
+	mov rcx, qword ptr [rsp + 176]
+	mov rcx, qword ptr [rcx + 8*rdi]
+	jmp .LBB81_58
+	.p2align	4
+.LBB81_57:
+	xor ecx, ecx
+.LBB81_58:
+	mov rdx, qword ptr [rsp + 256]
+	shlx rcx, rcx, rdx
+	or rax, rcx
+.LBB81_59:
+	and rax, r12
+	imul rax, rbx
+	mov rsi, rax
+	add rsi, rbx
+	jb .LBB81_68
+	cmp rsi, qword ptr [rsp + 24]
+	ja .LBB81_68
+	mov qword ptr [rsp + 152], rbp
+	cmp rbp, qword ptr [rsp + 112]
+	jae .LBB81_71
+	mov rcx, qword ptr [rsp + 128]
+	mov rdx, qword ptr [rsp + 104]
+	mov rdi, rcx
+	imul rdi, rbp
+	mov rsi, rdi
+	add rsi, rcx
+	jb .LBB81_75
+	cmp rsi, rdx
+	ja .LBB81_75
+	mov rdx, qword ptr [rsp + 32]
+	shl rdi, 3
+	add rdi, qword ptr [rsp + 96]
+	inc rbp
+	lea rdx, [rdx + 8*rax]
+	mov rsi, rcx
+	mov rcx, rbx
+	call qword ptr [rsp + 40]
+	mov rdi, r13
+	jmp .LBB81_48
+.LBB81_65:
+	vmovups ymm0, ymmword ptr [rsp + 88]
+	vmovups ymm1, ymmword ptr [rsp + 104]
+	mov r14, qword ptr [rsp + 216]
+	mov rsi, qword ptr [rsp + 16]
+	vmovups ymmword ptr [r14 + 16], ymm1
+	vmovups ymmword ptr [r14], ymm0
+	test rsi, rsi
+	je .LBB81_13
+	mov rdi, qword ptr [rsp + 32]
+	shl rsi, 3
+	mov edx, 8
+	vzeroupper
+	call qword ptr [rip + __rustc::__rust_dealloc@GOTPCREL]
+	jmp .LBB81_13
+.LBB81_67:
+	mov rdx, qword ptr [rsp + 184]
+	add rsi, rdi
+	lea rcx, [rip + .Lanon.c1c95b5badc199b805c72aab028cc532.226]
+	jmp .LBB81_76
+.LBB81_68:
+	mov rdx, qword ptr [rsp + 24]
+	mov r14, qword ptr [rsp + 16]
+	lea rcx, [rip + .Lanon.c1c95b5badc199b805c72aab028cc532.75]
+	mov rdi, rax
+	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
+	jmp .LBB81_82
+.LBB81_75:
+	lea rcx, [rip + .Lanon.c1c95b5badc199b805c72aab028cc532.194]
+.LBB81_76:
+	mov r14, qword ptr [rsp + 16]
+	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
+	jmp .LBB81_82
+.LBB81_69:
+	mov rdx, qword ptr [rsp + 24]
+	lea rcx, [rip + .Lanon.c1c95b5badc199b805c72aab028cc532.71]
+	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
+	jmp .LBB81_82
+.LBB81_70:
+	mov r14, qword ptr [rsp + 16]
+	mov rcx, qword ptr [rsp + 208]
+	lea rax, [rsp + 152]
+	lea rdx, [rip + .Lanon.c1c95b5badc199b805c72aab028cc532.225]
+	lea rsi, [rsp + 280]
+	jmp .LBB81_72
+.LBB81_71:
+	mov r14, qword ptr [rsp + 16]
+	lea rax, [rsp + 152]
+	lea rdx, [rip + .Lanon.c1c95b5badc199b805c72aab028cc532.193]
+	lea rsi, [rsp + 280]
+	lea rcx, [rsp + 112]
+.LBB81_72:
+	mov qword ptr [rsp + 280], rax
+	mov rax, qword ptr [rip + <usize as core::fmt::Display>::fmt@GOTPCREL]
+	mov qword ptr [rsi + 8], rax
+	mov qword ptr [rsi + 16], rcx
+	mov qword ptr [rsi + 24], rax
+	lea rdi, [rip + .Lanon.c1c95b5badc199b805c72aab028cc532.192]
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+	jmp .LBB81_82
+.LBB81_77:
+	mov rdx, qword ptr [rsp + 160]
+	lea rcx, [rip + .Lanon.c1c95b5badc199b805c72aab028cc532.226]
+	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
+	jmp .LBB81_82
+.LBB81_78:
+	mov r8, qword ptr [rip + <usize as core::fmt::Display>::fmt@GOTPCREL]
+	lea rcx, [rsp + 192]
+	lea rsi, [rsp + 80]
+	lea rdx, [rsp + 200]
+	lea r9, [rip + .Lanon.c1c95b5badc199b805c72aab028cc532.74]
+	mov qword ptr [rsp + 280], rax
+	xor edi, edi
+	mov qword ptr [rsp + 88], rcx
+	lea rcx, [rsp + 280]
+	mov qword ptr [rsp + 96], r8
+	mov qword ptr [rsp + 104], rsi
+	mov qword ptr [rsp + 112], r8
+	mov qword ptr [rsp + 120], rcx
+	mov qword ptr [rsp + 128], r8
+	mov qword ptr [rsp + 136], rdx
+	mov qword ptr [rsp + 144], r8
+	lea rcx, [rip + .Lanon.c1c95b5badc199b805c72aab028cc532.73]
+	lea rdx, [rsp + 272]
+	lea r8, [rsp + 88]
+	call qword ptr [rip + core::panicking::assert_failed::<usize, usize>@GOTPCREL]
+.LBB81_79:
+	lea rcx, [rip + .Lanon.c1c95b5badc199b805c72aab028cc532.72]
+	xor edi, edi
+	mov rsi, r15
+	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
+	jmp .LBB81_82
+.LBB81_80:
+	call std::sync::once_lock::OnceLock<T>::initialize
+	jmp .LBB81_20
+.LBB81_81:
+	mov rsi, r14
+	mov r14, qword ptr [rsp + 16]
+	mov edi, 8
+	call qword ptr [rip + alloc::raw_vec::handle_error@GOTPCREL]
+.LBB81_82:
+	ud2
+	jmp .LBB81_86
+	mov r14, qword ptr [rsp + 16]
+	jmp .LBB81_90
+.LBB81_86:
+	mov rbx, rax
+	test r15, r15
+	jne .LBB81_88
+	mov r14, qword ptr [rsp + 16]
+	jmp .LBB81_91
+.LBB81_88:
+	mov rdi, qword ptr [rsp + 8]
+	shl r15, 3
+	mov edx, 8
+	mov rsi, r15
+	call qword ptr [rip + __rustc::__rust_dealloc@GOTPCREL]
+	mov r14, qword ptr [rsp + 16]
+	jmp .LBB81_91
+.LBB81_90:
+	mov rbx, rax
+.LBB81_91:
+	test r14, r14
+	jne .LBB81_94
+	mov rsi, qword ptr [rsp + 88]
+	test rsi, rsi
+	jne .LBB81_96
+.LBB81_93:
+	mov rdi, rbx
+	call _Unwind_Resume@PLT
+.LBB81_94:
+	mov rdi, qword ptr [rsp + 32]
+	shl r14, 3
+	mov edx, 8
+	mov rsi, r14
+	call qword ptr [rip + __rustc::__rust_dealloc@GOTPCREL]
+	mov rsi, qword ptr [rsp + 88]
+	test rsi, rsi
+	je .LBB81_93
+	jmp .LBB81_96
+	mov rbx, rax
+	mov rsi, qword ptr [rsp + 88]
+	test rsi, rsi
+	je .LBB81_93
+.LBB81_96:
+	mov rdi, qword ptr [rsp + 96]
+	shl rsi, 3
+	mov edx, 8
+	call qword ptr [rip + __rustc::__rust_dealloc@GOTPCREL]
+	mov rdi, rbx
+	call _Unwind_Resume@PLT

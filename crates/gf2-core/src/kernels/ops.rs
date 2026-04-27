@@ -4,6 +4,80 @@
 //! Smart backend dispatch automatically selects scalar or SIMD implementations
 //! based on buffer size and CPU capabilities.
 
+/// Resolved in-place XOR operation for fixed-width hot loops.
+///
+/// Call [`resolve_xor_inplace`] once before entering a loop that repeatedly
+/// XORs rows with the same word width, then invoke the returned function
+/// pointer inside the loop. This hoists backend selection and SIMD runtime
+/// probing out of the hot path while preserving [`xor_inplace`] semantics.
+pub type XorInplaceFn = fn(&mut [u64], &[u64]);
+
+#[inline]
+fn scalar_xor_inplace(dst: &mut [u64], src: &[u64]) {
+    debug_assert_eq!(
+        dst.len(),
+        src.len(),
+        "xor_inplace: dst and src must have same length"
+    );
+
+    let len = dst.len().min(src.len());
+    let mut i = 0usize;
+    const UNROLL: usize = 4;
+    let limit = len - (len % UNROLL);
+    while i < limit {
+        dst[i] ^= src[i];
+        dst[i + 1] ^= src[i + 1];
+        dst[i + 2] ^= src[i + 2];
+        dst[i + 3] ^= src[i + 3];
+        i += UNROLL;
+    }
+    while i < len {
+        dst[i] ^= src[i];
+        i += 1;
+    }
+}
+
+/// Resolves the best in-place XOR implementation for `word_len` words.
+///
+/// The returned function pointer is either the scalar word-XOR loop or, when
+/// the `simd` feature is enabled and the runtime backend is available, the
+/// detected SIMD `LogicalFns::xor_fn`. Resolving once is preferable in
+/// repeated row-XOR loops because it avoids a per-call backend-size branch and
+/// SIMD detection probe.
+///
+/// # Arguments
+///
+/// * `word_len` - The fixed number of `u64` words that each later XOR call
+///   will process.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::kernels::ops::resolve_xor_inplace;
+///
+/// let xor = resolve_xor_inplace(2);
+/// let mut dst = vec![0xFF, 0x00];
+/// let src = vec![0x0F, 0xF0];
+/// xor(&mut dst, &src);
+/// assert_eq!(dst, vec![0xF0, 0xF0]);
+/// ```
+///
+/// # Complexity
+///
+/// O(1) to resolve; the returned function runs in O(`word_len`).
+#[inline]
+pub fn resolve_xor_inplace(word_len: usize) -> XorInplaceFn {
+    use crate::kernels::backend::select_backend_for_size;
+
+    match select_backend_for_size(word_len) {
+        #[cfg(feature = "simd")]
+        crate::kernels::backend::SelectedBackend::Simd => crate::simd::maybe_simd()
+            .map(|backend| backend.xor_fn)
+            .unwrap_or(scalar_xor_inplace),
+        crate::kernels::backend::SelectedBackend::Scalar => scalar_xor_inplace,
+    }
+}
+
 /// XORs source slice into destination slice in-place.
 ///
 /// This operation is used heavily in matrix algorithms (M4RM multiplication,
@@ -37,22 +111,8 @@ pub fn xor_inplace(dst: &mut [u64], src: &[u64]) {
         "xor_inplace: dst and src must have same length"
     );
 
-    use crate::kernels::{backend::select_backend_for_size, Backend};
-
-    match select_backend_for_size(dst.len()) {
-        #[cfg(feature = "simd")]
-        crate::kernels::backend::SelectedBackend::Simd => {
-            if let Some(backend) = crate::kernels::simd::maybe_simd() {
-                backend.xor(dst, src);
-            } else {
-                // Fallback if SIMD not available at runtime
-                crate::kernels::scalar::SCALAR_BACKEND.xor(dst, src);
-            }
-        }
-        crate::kernels::backend::SelectedBackend::Scalar => {
-            crate::kernels::scalar::SCALAR_BACKEND.xor(dst, src);
-        }
-    }
+    let xor = resolve_xor_inplace(dst.len());
+    xor(dst, src);
 }
 
 /// Performs bitwise AND: dst\[i\] &= src\[i\] for all i.

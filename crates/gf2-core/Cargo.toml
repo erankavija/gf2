@@ -272,3 +272,7 @@ required-features = ["rand"]
 [[test]]
 name = "simd_equiv_demo"
 required-features = ["simd"]
+
+[[test]]
+name = "simd_equiv_dispatch_hoist"
+required-features = ["simd"]
