@@ -60,6 +60,35 @@ mismatched generic arg counts for `CubicExt`/`QuadraticExt` (expected 4, got 7).
 These are harmless — Aeneas handles them correctly via Lean4 implicit argument
 inference.
 
+## ExtConfig associated const extraction
+
+Charon 0.1.173/0.1.174 rejects `ExtConfig::NON_RESIDUE` during trait
+declaration checking because the associated const's type is the associated type
+`Self::BaseField`; the diagnostic is "Found incorrect clause var" followed by a
+Charon stack overflow. During `scripts/verify-lean.sh` only, the script passes
+`--cfg=verify_lean`, and `ExtConfig` exposes the same β accessor as a trait
+method (`non_residue`) rather than that associated const. Normal Rust builds
+keep the public associated const API.
+
+The same Charon version can overflow after the const workaround when starting
+from the whole crate. `verify-lean.sh` therefore starts extraction from the
+proof-relevant modules (`gfp`, `gfpn`, and `gf2m::mul_raw`) instead of from
+`crate`. The `gfpn::batch`
+module remains opaque because it is a vectorized batching layer over the scalar
+quadratic/cubic arithmetic and pulls iterator models that this Aeneas pin does
+not provide. This keeps the intended production scalar field arithmetic
+transparent while avoiding unrelated public items.
+
+If Aeneas emits an opaque `Gf2mElement_` external signature that refers to the
+sealed `UintExt` trait, `verify-lean.sh` adds only that opaque trait axiom to
+`TypesExternal.lean` and removes any duplicate generated `UintExt` declaration
+from `Types.lean`. This is outside the `gfp/` and `gfpn/` proof target.
+
+The existing `Fp<P>` progress proofs cover the Montgomery-backed storage path.
+For `cfg(verify_lean)` only, `gfp::use_specialized_storage` returns `false` so
+the extracted `new`/`value`/`inv` bodies keep that proved path. Production Rust
+builds still use the specialized Mersenne/Proth classifier.
+
 ## gf2m/ selective extraction
 
 The `gf2m` module was originally fully opaque due to `Arc<FieldParams>` and
