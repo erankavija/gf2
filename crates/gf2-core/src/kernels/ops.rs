@@ -20,26 +20,12 @@ fn scalar_xor_inplace(dst: &mut [u64], src: &[u64]) {
         "xor_inplace: dst and src must have same length"
     );
 
-    let len = dst.len().min(src.len());
-    let mut i = 0usize;
-    const UNROLL: usize = 4;
-    let limit = len - (len % UNROLL);
-    while i < limit {
-        dst[i] ^= src[i];
-        dst[i + 1] ^= src[i + 1];
-        dst[i + 2] ^= src[i + 2];
-        dst[i + 3] ^= src[i + 3];
-        i += UNROLL;
-    }
-    while i < len {
-        dst[i] ^= src[i];
-        i += 1;
-    }
+    crate::kernels::Backend::xor(&crate::kernels::scalar::SCALAR_BACKEND, dst, src);
 }
 
 /// Resolves the best in-place XOR implementation for `word_len` words.
 ///
-/// The returned function pointer is either the scalar word-XOR loop or, when
+/// The returned function pointer is either the scalar backend XOR or, when
 /// the `simd` feature is enabled and the runtime backend is available, the
 /// detected SIMD `LogicalFns::xor_fn`. Resolving once is preferable in
 /// repeated row-XOR loops because it avoids a per-call backend-size branch and
