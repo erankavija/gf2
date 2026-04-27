@@ -4,9 +4,9 @@
   "title": "gf2-core PPC-spiral performance sweep",
   "claimed_by": "agent:project-lead",
   "started_at": "2026-04-26T22:30:00+00:00",
-  "last_updated": "2026-04-27T21:19:50+00:00",
+  "last_updated": "2026-04-27T22:30:34+00:00",
   "current_wave": 3,
-  "phase": "wave_2_DONE; story 166b2691 closed; bd00d76a closed (R4) with examples/lto_opacity_audit.rs harness — all 5 dispatch tables empirically confirmed opaque; c7e91dfd infra issue closed (MSRV 1.80 -> 1.95 + 24 clippy 1.95 lints + 30+ doc updates); e555c46d sse4.1 register-spill bug closed externally before session 4 resume. Wave 3-6 prep DONE: 13 ppc-kernel:<id> labels + 13 criterion-1.5x gates applied across all Tier A-D tasks (commit e1a8f0e). Session 4 strategic expansion approved by user: add benchmark-gap story 3abb755e and tasks 085cbd0b, 59c487c3, e7ab802d, 577b9e7f to target 64c88ae4 shortcomings (Strassen-Winograd, delayed-reduction FieldMatrix GF(p), GF(2^m) FieldMatrix batch path). Strategy task 085cbd0b closed with benchmark-gap doc linked to story and implementation tasks. Next dispatch: resume Wave 3 Tier A (recommended c69d2055 + cad241e6 sub-wave).",
+  "phase": "wave_2_DONE; story 166b2691 closed; bd00d76a closed (R4) with examples/lto_opacity_audit.rs harness — all 5 dispatch tables empirically confirmed opaque; c7e91dfd infra issue closed (MSRV 1.80 -> 1.95 + 24 clippy 1.95 lints + 30+ doc updates); e555c46d sse4.1 register-spill bug closed externally before session 4 resume. Wave 3-6 prep DONE: 13 ppc-kernel:<id> labels + 13 criterion-1.5x gates applied across all Tier A-D tasks (commit e1a8f0e). Session 4 strategic expansion approved by user: add benchmark-gap story 3abb755e and tasks 085cbd0b, 59c487c3, e7ab802d, 577b9e7f to target 64c88ae4 shortcomings (Strassen-Winograd, delayed-reduction FieldMatrix GF(p), GF(2^m) FieldMatrix batch path). Strategy task 085cbd0b closed with benchmark-gap doc linked to story and implementation tasks. Wave 3 Tier A started with c69d2055 closed after dispatch-hoist implementation, SSOT rework, criterion wrapper repair, and gates. cad241e6 is implemented in a worktree but awaits lead/user decision on baseline-identical Lean verification failure before merge.",
   "related_epic": "bb85c68a (FieldMatrix linear algebra)",
   "spec_doc": "dev/plans/gf2_core_ppc_spiral.md",
   "uncompetitiveness_doc": "dev/bench_results/2026-04-26-uncompetitiveness-profile.md",
@@ -45,7 +45,7 @@
       "wave_number": 3,
       "label": "Tier A — Dispatch routing",
       "issues": [
-        {"id": "c69d2055-942d-4341-88ad-6020245fcc97", "short_id": "c69d2055", "title": "Hoist maybe_simd() out of xor_inplace hot path", "kind": "task", "classification": "implementation", "status": "pending", "state": "backlog", "pre_dispatch_action": "Amend description: replace falsified ThinLTO inlining claim with measured evidence (LogicalFns is opaque to LTO regardless of mode, per c7791a20 commit 1a2f6f9 measurement). Map to ppc-kernel:A2 (xor_inplace is the underlying kernel of A2 BitMatrix::mul row-XOR). Also re-evaluate against post-Wave-2 ppc-v0 baseline (commit 52eaac8)."},
+        {"id": "c69d2055-942d-4341-88ad-6020245fcc97", "short_id": "c69d2055", "title": "Hoist maybe_simd() out of xor_inplace hot path", "kind": "task", "classification": "implementation", "status": "done", "state": "done", "rework_cycles": 1, "final_commits": ["15cb193", "e63ce50", "42b4dca"], "gates": {"cargo-ci": "passed", "criterion-1.5x": "passed (A2 geomean 4.169x vs target 1.5x)", "code-review": "passed"}, "notes": "Implemented hoisted XOR dispatch in m4rm::multiply and build_gray_table_flat with asm artefact and SIMD equivalence coverage. R1 fixed scalar fallback SSOT violation by delegating to SCALAR_BACKEND. Lead also fixed scripts/criterion-1.5x.sh to read ppc-kernel labels from JIT GateContext envelopes."},
         {"id": "5223bb04-253e-4a37-9047-c6e333d66ba0", "short_id": "5223bb04", "title": "Route BitMatrix::mul row-XOR through xor_fn dispatch", "kind": "task", "classification": "implementation", "status": "pending", "state": "backlog", "pre_dispatch_action": "Add label ppc-kernel:A2."},
         {"id": "8e4b189c-75a6-4c93-8056-c3c9c994b1c8", "short_id": "8e4b189c", "title": "Route BitMatrix::matvec through popcnt SIMD dispatch", "kind": "task", "classification": "implementation", "status": "pending", "state": "backlog", "pre_dispatch_action": "Add label ppc-kernel:A1."},
         {"id": "cad241e6-9606-47ff-96fc-20f38ed591aa", "short_id": "cad241e6", "title": "Generic Fp prime FieldVec batch dispatch (Solinas-friendly)", "kind": "task", "classification": "implementation", "status": "pending", "state": "backlog", "pre_dispatch_action": "Add label ppc-kernel:A3."}
@@ -130,7 +130,8 @@
     "085cbd0b": 0,
     "59c487c3": 0,
     "e7ab802d": 0,
-    "577b9e7f": 0
+    "577b9e7f": 0,
+    "c69d2055": 1
   },
   "session_notes": {
     "session_1_starting_state": "Epic babcf05e: backlog. 6 stories scaffolded. 16 child tasks scaffolded. c7791a20 (profile.release) and c69d2055 (dispatch hoist) added by user on 2026-04-26 in response to bb85c68a uncompetitiveness profile finding.",
@@ -141,6 +142,7 @@
     "session_3_outcome": "Wave 2 closed. bd00d76a (4 review cycles, scope-expanded with examples/lto_opacity_audit.rs harness to give all 5 dispatch tables direct asm evidence). c7e91dfd NEW (MSRV bump 1.80 -> 1.95 incl. rustup reinstall + clippy 1.95 lint fixes + extensive doc updates). e555c46d NEW bug filed from asm audit. Story 166b2691 closed at b04659d. Wave 3-6 prep: 13 ppc-kernel:<id> labels + 13 criterion-1.5x gates applied (commit e1a8f0e). Pre-dispatch criterion audit done — no Wave-3 blockers. Wave 3 dispatch deferred to session 4 to preserve context budget. Reviewer narrowing-interpretations pattern observed and documented in handoff-3 traps.",
     "session_4_starting_state": "Branch already contains completed e555c46d. User requested state-of-the-art performance and mentioned shortcomings found during jit 64c88ae4. Lead inspected 64c88ae4 bench report/profile and escalated strategic scope choice.",
     "session_4_expansion": "User selected 'Expand epic now with benchmark-gap tasks'. Lead created story 3abb755e with ready strategy task 085cbd0b plus backlog implementation tasks 59c487c3 (GF(2) Strassen-Winograd after B3), e7ab802d (GF(p) delayed-reduction FieldMatrix multiply after C3), and 577b9e7f (GF(2^m) FieldMatrix batch path after C1).",
-    "session_4_085cbd0b_outcome": "Strategy doc written at dev/active/085cbd0b-benchmark-gap-strategy.md (commit 0f93648), linked to 085cbd0b/3abb755e/59c487c3/e7ab802d/577b9e7f (commit f12defe), gates passed, issue closed. Lead review accepted deferred/follow-up strings in linked 64c88ae4 source reports as source-report context, not unclosed scope for 085cbd0b."
+    "session_4_085cbd0b_outcome": "Strategy doc written at dev/active/085cbd0b-benchmark-gap-strategy.md (commit 0f93648), linked to 085cbd0b/3abb755e/59c487c3/e7ab802d/577b9e7f (commit f12defe), gates passed, issue closed. Lead review accepted deferred/follow-up strings in linked 64c88ae4 source reports as source-report context, not unclosed scope for 085cbd0b.",
+    "session_4_c69d2055_outcome": "Closed c69d2055 after commits 15cb193 (dispatch hoist), e63ce50 (SSOT rework: scalar fallback delegates to SCALAR_BACKEND), and 42b4dca (criterion gate wrapper reads labels from GateContext envelopes). Gates passed: cargo-ci, criterion-1.5x (A2 geomean 4.169x), code-review. Issue description still contains the known stale ThinLTO premise by prior user-approved dispatch-as-is decision."
   }
 }
