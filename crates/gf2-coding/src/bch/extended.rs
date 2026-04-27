@@ -125,7 +125,7 @@ impl ExtendedBchCode {
                 }
             }
             // Set parity bit (last column) so total weight is even
-            if weight % 2 != 0 {
+            if !weight.is_multiple_of(2) {
                 g_ext.set(i, n_bch, true);
             }
         }

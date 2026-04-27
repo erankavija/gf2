@@ -1208,7 +1208,7 @@ impl PerBitLlrStats {
         );
         let m = self.bits_per_symbol as usize;
         assert!(
-            llrs.len() % m == 0,
+            llrs.len().is_multiple_of(m),
             "llrs.len() ({}) is not a multiple of bits_per_symbol ({})",
             llrs.len(),
             m

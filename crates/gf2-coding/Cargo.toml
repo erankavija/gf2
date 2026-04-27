@@ -7,7 +7,7 @@ description = "Error-correcting code constructions and compression research buil
 license = "MIT"
 keywords = ["coding-theory", "compression", "gf2"]
 categories = ["algorithms", "encoding", "mathematics"]
-rust-version = "1.80"
+rust-version = "1.95"
 
 [dependencies]
 gf2-core = { path = "../gf2-core" }

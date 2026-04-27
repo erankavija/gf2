@@ -176,7 +176,7 @@ Longer explanation if needed.
 
 ## MSRV
 
-Rust 1.80 (set in both `gf2-core` and `gf2-coding` `Cargo.toml`).
+Rust 1.95 (set in `gf2-core`, `gf2-coding`, `gf2-kernels-hip`, and `dev/research/rns_prototype` `Cargo.toml`). Bumped from 1.80 on 2026-04-27.
 
 ## Success-criterion maturity markers
 
@@ -196,12 +196,12 @@ This is a project-local convention — JIT itself does not read or enforce the m
 When an issue description mentions specific CPU intrinsics, SIMD lanes, unstable library features, or toolchain-version-dependent behaviour, verify MSRV compatibility **before** accepting the breakdown. Run:
 
 ```bash
-rustup run 1.80.0 cargo check --workspace --all-features
+rustup run 1.95.0 cargo check --workspace --all-features
 ```
 
-against a minimal stub that uses the intended intrinsic. If the intrinsic is unstable on MSRV 1.80 (e.g., several `_mm512_*` clmul/extract functions stabilised only in 1.89 — Rust issue #44839), the implementation must either: (a) restrict to stable intrinsics on the current MSRV, (b) compile-gate behind `#[cfg(all(target_arch = ..., target_feature = ...))]` with a scalar fallback on the default build, or (c) escalate to the user for MSRV bump approval before dispatch.
+against a minimal stub that uses the intended intrinsic. If the intrinsic is unstable on MSRV 1.95 (or only stabilised in a newer rustc), the implementation must either: (a) restrict to stable intrinsics on the current MSRV, (b) compile-gate behind `#[cfg(all(target_arch = ..., target_feature = ...))]` with a scalar fallback on the default build, or (c) escalate to the user for MSRV bump approval before dispatch.
 
-Previous incident: `afac2262` (AVX-512 ZMM lane) cost a rework cycle and a scope reduction because the intrinsic-feasibility check was not run during breakdown; the ZMM lane was requested on a host that has no AVX-512 hardware AND on an MSRV that does not stabilise the required intrinsics.
+Previous incident: `afac2262` (AVX-512 ZMM lane) cost a rework cycle and a scope reduction because the intrinsic-feasibility check was not run during breakdown; the ZMM lane was requested on a host that has no AVX-512 hardware AND on an MSRV (then 1.80) that did not stabilise the required intrinsics. MSRV was bumped to 1.95 on 2026-04-27 so those particular intrinsics are now stable; the procedural lesson stands.
 
 ## Verification work
 

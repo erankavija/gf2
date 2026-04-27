@@ -331,7 +331,7 @@ fn winograd_step<F: FiniteField>(
     let (m, k) = a.shape();
     let n = b.cols();
     debug_assert_eq!(a.cols(), b.rows());
-    debug_assert!(m % 2 == 0 && k % 2 == 0 && n % 2 == 0);
+    debug_assert!(m.is_multiple_of(2) && k.is_multiple_of(2) && n.is_multiple_of(2));
 
     let mh = m / 2;
     let kh = k / 2;
@@ -608,7 +608,7 @@ pub fn theorem_4_bound(levels: u32, k: usize, p_minus_1: u128) -> u128 {
     let three_pow_l: u128 = 3u128.pow(levels);
     let one_plus = 1u128 + three_pow_l;
     // ((1 + 3^l) / 2)² — divisible since 1 + 3^l is always even.
-    debug_assert!(one_plus % 2 == 0);
+    debug_assert!(one_plus.is_multiple_of(2));
     let half = one_plus / 2;
     let factor = half.saturating_mul(half);
 

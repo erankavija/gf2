@@ -235,7 +235,7 @@ impl BchComponentCode {
         );
         for row in &self.h_rows {
             let parity: usize = row.iter().filter(|&&col| word.get(col)).count();
-            if parity % 2 != 0 {
+            if !parity.is_multiple_of(2) {
                 return false;
             }
         }

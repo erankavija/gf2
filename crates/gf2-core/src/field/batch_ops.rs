@@ -334,7 +334,7 @@ pub fn batch_inverse_skip_zeros_in_place<F: FiniteField>(elements: &mut [F]) {
     batch_inverse_core(&mut compact, &mut scratch, InPlaceMode::Yes)
         .expect("batch_inverse_core cannot fail on a slice with no zero entries");
 
-    for (idx, inv) in nonzero_idx.iter().zip(compact.into_iter()) {
+    for (idx, inv) in nonzero_idx.iter().zip(compact) {
         elements[*idx] = inv;
     }
 }

@@ -61,7 +61,7 @@ impl SerializationFormat {
 
                 // If second line is all hex chars and length is a multiple of 16, it's hex format
                 // BUT: if it's only 0s and 1s, it's text format (ambiguous case)
-                if second_line.len() >= 16 && second_line.len() % 16 == 0 {
+                if second_line.len() >= 16 && second_line.len().is_multiple_of(16) {
                     let all_hex = second_line.iter().all(|&b| b.is_ascii_hexdigit());
                     let only_binary = second_line.iter().all(|&b| b == b'0' || b == b'1');
                     if all_hex && !only_binary {

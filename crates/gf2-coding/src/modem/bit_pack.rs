@@ -32,7 +32,7 @@ pub(crate) fn check_batch_lengths(
 ) -> usize {
     let m = bits_per_symbol as usize;
     assert!(
-        bits_len % m == 0,
+        bits_len.is_multiple_of(m),
         "{mapper_name}: bits length {bits_len} is not a multiple of bits_per_symbol {m}"
     );
     let num_symbols = bits_len / m;

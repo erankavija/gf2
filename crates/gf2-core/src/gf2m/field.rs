@@ -727,9 +727,9 @@ impl Gf2mField_ {
             if p * p > n {
                 break;
             }
-            if n % p == 0 {
+            if n.is_multiple_of(p) {
                 factors.push(p);
-                while n % p == 0 {
+                while n.is_multiple_of(p) {
                     n /= p;
                 }
             }
@@ -3019,7 +3019,7 @@ mod poly_tests {
                 // Create asymmetric bit pattern
                 let mut bits = crate::BitVec::new();
                 for i in 0..len {
-                    bits.push_bit((i * seed as usize) % 3 == 0);
+                    bits.push_bit((i * seed as usize).is_multiple_of(3));
                 }
 
                 // Skip symmetric patterns
@@ -3070,7 +3070,7 @@ mod poly_tests {
                 // Create polynomial
                 let coeffs: Vec<_> = (0..=deg)
                     .map(|i| {
-                        if (i as u64 * seed) % 3 == 0 {
+                        if (i as u64 * seed).is_multiple_of(3) {
                             field.one()
                         } else {
                             field.zero()

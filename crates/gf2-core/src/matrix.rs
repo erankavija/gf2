@@ -129,7 +129,7 @@ impl BitMatrix {
         let mut data = vec![!0u64; total_words];
 
         // Mask padding bits in last word of each row
-        if cols % 64 != 0 {
+        if !cols.is_multiple_of(64) {
             let used_bits = cols % 64;
             let mask = (1u64 << used_bits) - 1;
             for row in 0..rows {
