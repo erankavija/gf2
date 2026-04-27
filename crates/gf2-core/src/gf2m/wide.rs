@@ -42,10 +42,11 @@
 //! fabricate words from raw input must use [`Gf2mWide::new`] (which masks)
 //! rather than [`Gf2mWide::from_words`] (which only debug-asserts).
 //!
-//! # `clmul_wide` and the `[u64; 2*N]` Rust 1.80 caveat (Task 2)
+//! # `clmul_wide` and the `[u64; 2*N]` stable-Rust caveat (Task 2)
 //!
-//! Stable Rust 1.80 (our MSRV) does not support const arithmetic on generic
-//! parameters in array lengths — `[u64; 2 * N]` does not compile. Two
+//! Stable Rust does not yet support const arithmetic on generic parameters
+//! in array lengths — `[u64; 2 * N]` does not compile (the
+//! `generic_const_exprs` feature remains nightly-only). Two
 //! work-arounds are described in the issue specification:
 //!
 //! - **(a)** A second const parameter `M` with `const { assert!(M == 2 * N); }`.
@@ -276,7 +277,7 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     pub const fn from_words(words: [u64; N]) -> Self {
         // We can't call `tail_mask_top_word` in a `const fn` context
         // directly *and* `debug_assert!` the result matches the input in
-        // stable Rust 1.80 without monomorphisation surprises. Structure
+        // stable Rust without monomorphisation surprises. Structure
         // the check as a const-friendly bitwise comparison.
         debug_assert!(
             Self::tail_is_masked(&words),

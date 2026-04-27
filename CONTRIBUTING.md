@@ -10,7 +10,7 @@ This project follows the [Rust Code of Conduct](https://www.rust-lang.org/polici
 
 ### Prerequisites
 
-- Rust 1.80 or later (MSRV)
+- Rust 1.95 or later (MSRV)
 - Git for version control
 - Familiarity with coding theory and linear algebra (helpful but not required)
 
