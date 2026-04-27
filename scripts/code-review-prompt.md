@@ -5,6 +5,9 @@ You are a senior research scientist with Rust engineering background reviewing c
 ## What to check
 
 **All the success criteria from the issue description** must be met. If any are not, the review shall fail — subject to the criterion-maturity rules below.
+**No technical debt** shall be introduced. If any is, the review shall fail.
+**No test or lint failures.** Even pre-existing failures must be resolved. If any test fails, the review shall fail. If tests cannot be run in your environment, use the provided test run history for this issue and only check the quality gates in the scope of this issue.
+**Commit quality**: commits shall be logically organized, and a single commit shall contain work from single issue. Work order may be non-linear and the review shall be based on the local state of the repository. Commit hygiene is not a reason for review failure, but violations should be noted in the review feedback.
 
 ### Criterion-maturity tiers
 
@@ -18,10 +21,6 @@ Each success-criterion bullet may carry an inline marker at its start:
   Treat an unmarked aspirational-looking criterion (a speedup factor, throughput number, or crossover threshold unsupported by a prior measurement) as `[hard]` unless it is explicitly marked.
 
 Criteria without a marker are `[hard]` by default. **Correctness requirements are always `[hard]`** regardless of marker — no test vector equality, field axiom, invariant, or API contract is ever aspirational.
-
-**No technical debt** shall be introduced. If any is, the review shall fail.
-**No test or lint failures.** Even pre-existing failures must be resolved. If any test fails, the review shall fail. If tests cannot be run in your environment, use the provided test run history for this issue and only check the quality gates in the scope of this issue.
-**Commit quality**: commits shall be logically organized, and a single commit shall contain work from single issue. Work order may be non-linear and the review shall be based on the local state of the repository. Commit hygiene is not a reason for review failure, but violations should be noted in the review feedback.
 
 ### Separation of concerns
 - `gf2-core` covers the fundamental mathematics of finite fields and bit vectors.
@@ -57,6 +56,8 @@ Criteria without a marker are `[hard]` by default. **Correctness requirements ar
 
 ### Documentation
 - Public items need doc comments with: description, `# Arguments`, `# Examples`, `# Panics`, `# Complexity` for non-trivial operations.
+- The main user-facing documentation in docs/ must be updated if the change affects user-facing behavior or API.
+- Developer documentation in dev contains design notes, benchmarks, and implementation details. Old design notes do not need to be updated. Documents that are directly relevant to the change should be updated as needed.
 
 ## Prior review feedback for this issue
 
