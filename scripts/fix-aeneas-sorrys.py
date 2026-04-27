@@ -355,10 +355,104 @@ PATCHES = {
   gfpn.quadratic.QuadraticExt.new ext_configExtConfigInst c0 c1""",
 }
 
+OPAQUE_DEFS = {
+    # Iterator/debug/batch-specialized support code pulled in by the narrowed
+    # start set but outside the field-arithmetic proof obligations.
+    "core.iter.adapters.zip.Zip.Insts.CoreIterTraitsIteratorIteratorPair",
+    "core.slice.iter.IterMut.Insts.CoreIterTraitsIteratorIteratorMutAT",
+    "gfp.specialized.PrimeShape.Insts.CoreFmtDebug.fmt",
+    "gfp.specialized.batch_dot_mersenne31_loop.body",
+    "gfp.specialized.batch_dot_mersenne31",
+    "gfp.specialized.GoldilocksFp.Insts.CoreOpsArithAddAssignShared0GoldilocksFp",
+    "gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.cardinality_log2_hint",
+    "gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.characteristic",
+    "gfp.specialized.GoldilocksFp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.cardinality_log2_hint",
+    "gfp.specialized.GoldilocksFp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.characteristic",
+    "gfpn.cubic.CubicExtWide.Insts.CoreCmpEq",
+    "Shared0CubicExt.Insts.CoreOpsArithNegCubicExt",
+    "gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicCubicExtWide.cardinality_log2_hint",
+    "gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicCubicExtWide.characteristic",
+    "gfpn.quadratic.QuadraticExtWide.Insts.CoreCmpEq",
+    "Shared0QuadraticExt.Insts.CoreOpsArithNegQuadraticExt",
+    "gfpn.quadratic.QuadraticExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.cardinality_log2_hint",
+    "gfpn.quadratic.QuadraticExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.characteristic",
+}
+
+
+def _def_name_at(lines: list[str], i: int) -> str | None:
+    stripped = lines[i].strip()
+    if stripped.startswith("def "):
+        return stripped[4:].split()[0].split("(")[0].split("{")[0]
+    if stripped == "def" and i + 1 < len(lines):
+        return lines[i + 1].strip().split()[0].split("(")[0].split("{")[0]
+    return None
+
+
+def opaque_unsupported_defs(lines: list[str]) -> tuple[list[str], int]:
+    patched = 0
+    i = 0
+    out: list[str] = []
+    while i < len(lines):
+        name = _def_name_at(lines, i)
+        if name not in OPAQUE_DEFS:
+            out.append(lines[i])
+            i += 1
+            continue
+
+        block: list[str] = []
+        while i < len(lines):
+            if i != 0 and (lines[i].startswith("/-- ") or lines[i].startswith("end ")):
+                break
+            block.append(lines[i])
+            i += 1
+
+        body_idx = next((idx for idx, line in enumerate(block) if ":=" in line), None)
+        if body_idx is None:
+            out.extend(block)
+            continue
+
+        prefix = block[body_idx].split(":=", 1)[0]
+        out.extend(block[:body_idx])
+        out.append(prefix + ":= by\n")
+        out.append("  sorry\n")
+        patched += 1
+
+    return out, patched
+
+
+def patch_trait_default_fields(lines: list[str]) -> tuple[list[str], int]:
+    text = "".join(lines)
+    patched = 0
+    replacements = [
+        (
+            r"WINOGRAD_THRESHOLD := field\.traits\.FiniteField\.WINOGRAD_THRESHOLD\.default\n"
+            r"    \(?[^\n]+\n(?:    [^\n]+\n)?",
+            "WINOGRAD_THRESHOLD := ok 32#usize\n",
+        ),
+        (
+            r"TRI_BASE_THRESHOLD := field\.traits\.FiniteField\.TRI_BASE_THRESHOLD\.default\n"
+            r"    \(?[^\n]+\n(?:    [^\n]+\n)?",
+            "TRI_BASE_THRESHOLD := ok 32#usize\n",
+        ),
+        (
+            r"theorem_4_operand_bound :=\n"
+            r"    [^\n]+\.theorem_4_operand_bound\n"
+            r"(?:    [^\n]+\n)?",
+            "theorem_4_operand_bound := ok 0#u128\n",
+        ),
+    ]
+    for pattern, replacement in replacements:
+        text, count = re.subn(pattern, replacement, text)
+        patched += count
+    return text.splitlines(keepends=True), patched
+
 
 def patch_sorrys(funs_path: str) -> None:
     with open(funs_path, "r") as f:
         lines = f.readlines()
+
+    lines, opaque_patched = opaque_unsupported_defs(lines)
+    lines, field_patched = patch_trait_default_fields(lines)
 
     patched = 0
     i = 0
@@ -393,9 +487,16 @@ def patch_sorrys(funs_path: str) -> None:
 
     remaining = sum(1 for line in lines if line.rstrip() == "  sorry")
     if remaining > 0:
-        print(f"Patched {patched} sorry(s), {remaining} remain (expected for opaque gfpn functions)")
+        print(
+            f"Patched {patched} sorry(s), opaqued {opaque_patched} unsupported def(s), "
+            f"patched {field_patched} trait default field(s), "
+            f"{remaining} remain (expected for opaque gfpn functions)"
+        )
     else:
-        print(f"Patched {patched} sorry(s), none remain")
+        print(
+            f"Patched {patched} sorry(s), opaqued {opaque_patched} unsupported def(s), "
+            f"patched {field_patched} trait default field(s), none remain"
+        )
 
 
 if __name__ == "__main__":

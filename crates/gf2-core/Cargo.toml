@@ -10,7 +10,7 @@ categories = ["algorithms", "data-structures", "mathematics", "no-std"]
 rust-version = "1.95"
 
 [lints.rust]
-unexpected_cfgs = { level = "warn", check-cfg = ['cfg(kani)'] }
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(kani)', 'cfg(verify_lean)'] }
 
 [dependencies]
 # Non-optional: hosts the SSOT scalar `clmul_u64_scalar` that

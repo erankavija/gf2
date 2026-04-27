@@ -21,14 +21,26 @@ mkdir -p "$(dirname "$LLBC_FILE")"
 
 # Extract gf2-core with gfp/ and gfpn/ transparent; everything else opaque or excluded.
 # Using --preset aeneas for Aeneas-compatible output.
+#
+# Narrow Charon workaround: enable cfg(verify_lean) so ExtConfig exposes
+# non_residue as a trait method instead of an associated const during extraction.
+# Charon 0.1.173 rejects associated consts whose type is an associated type of
+# Self (Self::BaseField) before Aeneas sees the arithmetic. This keeps gfp/gfpn
+# production arithmetic transparent; only the config-level beta accessor shape is
+# changed for extraction and can be removed when Charon handles that pattern.
 charon cargo \
   --preset aeneas \
+  --rustc-arg=--cfg=verify_lean \
+  --start-from 'gf2_core::gfp' \
+  --start-from 'gf2_core::gfpn' \
+  --start-from 'gf2_core::gf2m::mul_raw' \
   --opaque 'gf2_core::field' \
   --opaque 'gf2_core::gf2m::field' \
   --opaque 'gf2_core::gf2m::generation' \
   --opaque 'gf2_core::gf2m::uint_ext' \
   --opaque 'gf2_core::gf2m::thread_safety_tests' \
   --opaque 'gf2_core::gf2m::barrett' \
+  --opaque 'gf2_core::gfpn::batch' \
   --opaque 'gf2_core::bitvec' \
   --opaque 'gf2_core::bitslice' \
   --opaque 'gf2_core::matrix' \
@@ -87,6 +99,34 @@ echo "=== Step 3: Post-processing ==="
 # See proofs/WORKAROUNDS.md for details.
 python3 "$REPO_ROOT/scripts/fix-aeneas-dupes.py" "$LEAN_DIR/Types.lean" "$LEAN_DIR/Funs.lean"
 
+# The narrowed extraction can leave an opaque gf2m external type in
+# TypesExternal.lean while also generating the out-of-scope UintExt trait in
+# Types.lean. Keep the opaque external axiom only; no verified gfp/gfpn code
+# projects fields from UintExt.
+python3 - "$LEAN_DIR/Types.lean" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+text = path.read_text()
+text = re.sub(
+    r"/-- Trait declaration: \[gf2_core::gf2m::uint_ext::private::Sealed\][\s\S]*?"
+    r"structure gf2m\.uint_ext\.private\.Sealed \(Self : Type\) where\n\n",
+    "",
+    text,
+    count=1,
+)
+text = re.sub(
+    r"/-- Trait declaration: \[gf2_core::gf2m::uint_ext::UintExt\][\s\S]*?"
+    r"  from_u16 : Std\.U16 → Result Self\n\n",
+    "",
+    text,
+    count=1,
+)
+path.write_text(text)
+PY
+
 # Workaround: Aeneas (1180be60) cannot translate 16 gfpn function bodies from
 # Charon (419f53b6+) LLBC. Restore known-good implementations from previous
 # working extraction. See fix-aeneas-sorrys.py docstring for details.
@@ -96,6 +136,25 @@ python3 "$REPO_ROOT/scripts/fix-aeneas-sorrys.py" "$LEAN_DIR/Funs.lean"
 # Always regenerate from template when present.
 if [ -f "$LEAN_DIR/TypesExternal_Template.lean" ]; then
   cp "$LEAN_DIR/TypesExternal_Template.lean" "$LEAN_DIR/TypesExternal.lean"
+  # The narrowed Charon start set can emit an opaque Gf2mElement_ external type
+  # whose signature mentions the sealed UintExt trait outside the extraction
+  # target. Add only that opaque external type dependency.
+  python3 - "$LEAN_DIR/TypesExternal.lean" <<'PY'
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+text = path.read_text()
+axiom = """\
+/-- Opaque declaration for the sealed GF(2^m) integer-width trait.
+    Added by scripts/verify-lean.sh for the narrowed Charon start-from set. -/
+axiom gf2m.uint_ext.UintExt (Self : Type) : Type
+
+"""
+marker = "/-- [gf2_core::gf2m::field::Gf2mElement_]"
+if "axiom gf2m.uint_ext.UintExt" not in text and marker in text:
+    path.write_text(text.replace(marker, axiom + marker, 1))
+PY
 fi
 
 # FunsExternal.lean contains hand-edited concrete definitions (wrapping_neg,
