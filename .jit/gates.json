@@ -1,65 +1,5 @@
 {
   "gates": {
-    "cargo-ci": {
-      "version": 1,
-      "key": "cargo-ci",
-      "title": "Rust CI checks pass",
-      "description": "Full Rust workspace CI: build, test, clippy, fmt",
-      "stage": "postcheck",
-      "mode": "auto",
-      "checker": {
-        "type": "exec",
-        "command": "./scripts/cargo-ci.sh",
-        "timeout_seconds": 300,
-        "working_dir": null,
-        "env": {},
-        "pass_context": false
-      },
-      "priority": 100,
-      "reserved": {},
-      "auto": true,
-      "example_integration": null
-    },
-    "clippy": {
-      "version": 1,
-      "key": "clippy",
-      "title": "Clippy lints pass",
-      "description": "No clippy warnings allowed",
-      "stage": "postcheck",
-      "mode": "auto",
-      "checker": {
-        "type": "exec",
-        "command": "cargo clippy --all-targets -- -D warnings",
-        "timeout_seconds": 120,
-        "working_dir": null,
-        "env": {},
-        "pass_context": false
-      },
-      "priority": 100,
-      "reserved": {},
-      "auto": true,
-      "example_integration": null
-    },
-    "fmt": {
-      "version": 1,
-      "key": "fmt",
-      "title": "Code formatted",
-      "description": "Code must be formatted with cargo fmt",
-      "stage": "postcheck",
-      "mode": "auto",
-      "checker": {
-        "type": "exec",
-        "command": "cargo fmt --check",
-        "timeout_seconds": 30,
-        "working_dir": null,
-        "env": {},
-        "pass_context": false
-      },
-      "priority": 100,
-      "reserved": {},
-      "auto": true,
-      "example_integration": null
-    },
     "asm-artefact-present": {
       "version": 1,
       "key": "asm-artefact-present",
@@ -80,29 +20,17 @@
       "auto": true,
       "example_integration": null
     },
-    "doc-review": {
+    "fmt": {
       "version": 1,
-      "key": "doc-review",
-      "title": "Documentation review completed",
-      "description": "Confirm that necessary documentation updates were made: doc comments on public APIs (description, arguments, examples, panics, complexity), relevant design docs updated, and CLAUDE.md module map reflects any new modules.",
-      "stage": "postcheck",
-      "mode": "manual",
-      "priority": 100,
-      "reserved": {},
-      "auto": false,
-      "example_integration": null
-    },
-    "tests": {
-      "version": 1,
-      "key": "tests",
-      "title": "All tests pass",
-      "description": "cargo test must pass",
+      "key": "fmt",
+      "title": "Code formatted",
+      "description": "Code must be formatted with cargo fmt",
       "stage": "postcheck",
       "mode": "auto",
       "checker": {
         "type": "exec",
-        "command": "cargo test",
-        "timeout_seconds": 300,
+        "command": "cargo fmt --check",
+        "timeout_seconds": 30,
         "working_dir": null,
         "env": {},
         "pass_context": false
@@ -135,6 +63,98 @@
       "auto": true,
       "example_integration": null
     },
+    "cargo-kani": {
+      "version": 1,
+      "key": "cargo-kani",
+      "title": "Kani proof harnesses pass",
+      "description": "cargo kani must pass all bounded model checking harnesses",
+      "stage": "postcheck",
+      "mode": "auto",
+      "checker": {
+        "type": "exec",
+        "command": "cargo kani",
+        "timeout_seconds": 1800,
+        "working_dir": null,
+        "env": {},
+        "pass_context": false
+      },
+      "priority": 100,
+      "reserved": {},
+      "auto": true,
+      "example_integration": null
+    },
+    "cargo-ci": {
+      "version": 1,
+      "key": "cargo-ci",
+      "title": "Rust CI checks pass",
+      "description": "Full Rust workspace CI: build, test, clippy, fmt",
+      "stage": "postcheck",
+      "mode": "auto",
+      "checker": {
+        "type": "exec",
+        "command": "./scripts/cargo-ci.sh",
+        "timeout_seconds": 300,
+        "working_dir": null,
+        "env": {},
+        "pass_context": false
+      },
+      "priority": 100,
+      "reserved": {},
+      "auto": true,
+      "example_integration": null
+    },
+    "tests": {
+      "version": 1,
+      "key": "tests",
+      "title": "All tests pass",
+      "description": "cargo test must pass",
+      "stage": "postcheck",
+      "mode": "auto",
+      "checker": {
+        "type": "exec",
+        "command": "cargo test",
+        "timeout_seconds": 300,
+        "working_dir": null,
+        "env": {},
+        "pass_context": false
+      },
+      "priority": 100,
+      "reserved": {},
+      "auto": true,
+      "example_integration": null
+    },
+    "clippy": {
+      "version": 1,
+      "key": "clippy",
+      "title": "Clippy lints pass",
+      "description": "No clippy warnings allowed",
+      "stage": "postcheck",
+      "mode": "auto",
+      "checker": {
+        "type": "exec",
+        "command": "cargo clippy --all-targets -- -D warnings",
+        "timeout_seconds": 120,
+        "working_dir": null,
+        "env": {},
+        "pass_context": false
+      },
+      "priority": 100,
+      "reserved": {},
+      "auto": true,
+      "example_integration": null
+    },
+    "doc-review": {
+      "version": 1,
+      "key": "doc-review",
+      "title": "Documentation review completed",
+      "description": "Confirm that necessary documentation updates were made: doc comments on public APIs (description, arguments, examples, panics, complexity), relevant design docs updated, and CLAUDE.md module map reflects any new modules.",
+      "stage": "postcheck",
+      "mode": "manual",
+      "priority": 100,
+      "reserved": {},
+      "auto": false,
+      "example_integration": null
+    },
     "lake-build": {
       "version": 1,
       "key": "lake-build",
@@ -155,6 +175,26 @@
       "auto": true,
       "example_integration": null
     },
+    "criterion-1.5x": {
+      "version": 1,
+      "key": "criterion-1.5x",
+      "title": "Criterion 1.5x speedup",
+      "description": "geomean speedup vs pinned baseline >= 1.5x for the kernel named by ppc-kernel:<id>",
+      "stage": "postcheck",
+      "mode": "auto",
+      "checker": {
+        "type": "exec",
+        "command": "./scripts/criterion-1.5x.sh",
+        "timeout_seconds": 300,
+        "working_dir": null,
+        "env": {},
+        "pass_context": true
+      },
+      "priority": 100,
+      "reserved": {},
+      "auto": true,
+      "example_integration": null
+    },
     "tdd-reminder": {
       "version": 1,
       "key": "tdd-reminder",
@@ -165,26 +205,6 @@
       "priority": 100,
       "reserved": {},
       "auto": false,
-      "example_integration": null
-    },
-    "cargo-kani": {
-      "version": 1,
-      "key": "cargo-kani",
-      "title": "Kani proof harnesses pass",
-      "description": "cargo kani must pass all bounded model checking harnesses",
-      "stage": "postcheck",
-      "mode": "auto",
-      "checker": {
-        "type": "exec",
-        "command": "cargo kani",
-        "timeout_seconds": 1800,
-        "working_dir": null,
-        "env": {},
-        "pass_context": false
-      },
-      "priority": 100,
-      "reserved": {},
-      "auto": true,
       "example_integration": null
     }
   }

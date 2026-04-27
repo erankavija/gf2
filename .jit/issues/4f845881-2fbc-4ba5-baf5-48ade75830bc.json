@@ -1,8 +1,8 @@
 {
   "id": "4f845881-2fbc-4ba5-baf5-48ade75830bc",
   "title": "PPC compare harness + criterion-1.5x gate",
-  "description": "Add the geomean comparison harness `dev/benchmarks/ppc-compare.sh <kernel-id>` and register the `criterion-1.5x` JIT gate. The harness automates the proof-of-gain check at every spiral step.\n\n## Background\n\nEach Tier A–D task carries a $\\geq 1.5\\times$ geomean speedup target. Without an automated comparator, reviewers have to eyeball criterion JSON output for every PR — slow and error-prone. The harness:\n\n1. Looks up the bench target from `dev/benchmarks/ppc-baselines.json` (produced by I1).\n2. Re-runs the bench against the pinned baseline.\n3. Parses criterion's `estimates.json` for each benchmark in the target.\n4. Computes geomean(new/baseline) over the kernel's design size class (defined per-kernel in the manifest).\n5. Exits 0 if geomean $\\geq 1.5\\times$; exits 1 with a clear diff table otherwise.\n\nThe new JIT gate `criterion-1.5x` invokes this script for the issue's kernel ID. Gate definition: `auto: true, stage: postcheck`.\n\n## Success Criteria\n\n- [hard] `dev/benchmarks/ppc-compare.sh` is executable.\n- [hard] Unit tests cover the exit-0 case (synthetic baseline + same-as-baseline run) and the exit-1 case (synthetic baseline + slower run).\n- [hard] Script tolerant to missing baseline (clean error message, not stack trace).\n- [hard] JIT gate `criterion-1.5x` registered in the gate registry with `auto: true, stage: postcheck`.\n\n## Notes\n\nGeomean is over the design size class only — small sizes that are below the kernel's crossover threshold are excluded from the speedup check. Spec doc: `dev/plans/gf2_core_ppc_spiral.md`.",
-  "state": "in_progress",
+  "description": "Add the geomean comparison harness `dev/benchmarks/ppc-compare.sh <kernel-id>` and register the `criterion-1.5x` JIT gate. The harness automates the proof-of-gain check at every spiral step.\n\n## Background\n\nEach Tier A–D task carries a $\\geq 1.5\\times$ geomean speedup target. Without an automated comparator, reviewers have to eyeball criterion JSON output for every PR — slow and error-prone. The harness:\n\n1. Looks up the bench target from `dev/benchmarks/ppc-baselines.json` (produced by I1).\n2. Re-runs the bench against the pinned baseline.\n3. Parses criterion's `estimates.json` for each benchmark in the target.\n4. Computes geomean(new/baseline) over the kernel's design size class (defined per-kernel in the manifest).\n5. Exits 0 if geomean $\\geq 1.5\\times$; exits 1 with a clear diff table otherwise.\n\nThe new JIT gate `criterion-1.5x` invokes this script for the issue's kernel ID. Gate definition: `auto: true, stage: postcheck`.\n\n## Success Criteria\n\n- [hard] `dev/benchmarks/ppc-compare.sh` is executable.\n- [hard] Unit tests cover the exit-0 case (synthetic baseline + $\\geq 1.5\\times$ faster run, e.g. 1.6×) and the exit-1 case (same-as-baseline AND/OR slower run, e.g. 1.0× and 0.8×). **User-approved amendment 2026-04-27 (session 2):** the original wording paired \\\"exit-0 case\\\" with \\\"same-as-baseline run,\\\" but same-as-baseline produces speedup = 1.0× < 1.5× → exit-1 under the script's actual threshold semantics, making the original phrasing internally contradictory. Per CLAUDE.md success-criterion-marker policy and `feedback_measurements_not_guesses.md`, the criterion is amended to match the script's implemented semantics.\n- [hard] Script tolerant to missing baseline (clean error message, not stack trace).\n- [hard] JIT gate `criterion-1.5x` registered in the gate registry with `auto: true, stage: postcheck`.\n\n## Notes\n\nGeomean is over the design size class only — small sizes that are below the kernel's crossover threshold are excluded from the speedup check. Spec doc: `dev/plans/gf2_core_ppc_spiral.md`.",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:claude",
   "dependencies": [],
@@ -10,7 +10,18 @@
     "code-review",
     "cargo-ci"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-26T23:28:51.347237806Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-27T05:21:09.113749688Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -20,5 +31,5 @@
     "story:ppc-infrastructure"
   ],
   "created_at": "2026-04-25T15:16:28.168842316+00:00",
-  "updated_at": "2026-04-26T23:11:01.971210555+00:00"
+  "updated_at": "2026-04-27T05:27:32.398841676+00:00"
 }
