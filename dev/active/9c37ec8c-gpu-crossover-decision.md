@@ -1,5 +1,11 @@
 # GPU crossover decision — JIT `9c37ec8c`
 
+> **Historical record.** This decision was recorded against workspace
+> MSRV 1.80. The workspace MSRV was subsequently bumped to 1.95 on
+> 2026-04-27 (JIT issue `c7e91dfd`); MSRV references below reflect the
+> decision's point-in-time state. The current MSRV is documented in
+> `CLAUDE.md`.
+
 **Decision:** **keep-experimental** — gate the GPU Gray-QAM demapper
 behind the existing `hip` Cargo feature and keep it as a research
 prototype for long-batch / high-order work. Do not route CPU users
