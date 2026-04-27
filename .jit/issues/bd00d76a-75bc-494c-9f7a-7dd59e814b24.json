@@ -13,9 +13,19 @@
   ],
   "gates_status": {
     "asm-artefact-present": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-04-26T22:20:04.365250977Z"
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-27T17:56:44.754506025Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-27T17:56:37.934519524Z"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-27T18:21:09.236740776Z"
     }
   },
   "context": {},
@@ -35,5 +45,5 @@
     "story:ppc-infrastructure"
   ],
   "created_at": "2026-04-26T22:14:08.095102387+00:00",
-  "updated_at": "2026-04-27T11:04:41.445972421+00:00"
+  "updated_at": "2026-04-27T18:24:20.551237952+00:00"
 }

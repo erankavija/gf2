@@ -1,8 +1,8 @@
 {
   "id": "c7e91dfd-3c9e-481a-9492-2c3b84495436",
   "title": "Bump MSRV from 1.80 to 1.95",
-  "description": "User directive 2026-04-27 ('Lets bump up our msrv too' / 'no need to use anything ancient'). Discovered during bd00d76a session work after restoring rustup shims (stub layer in ~/.cargo/bin/ was masking real cargo since 2025-11-09).\n\n## Background\n\nMSRV has been pinned at 1.80 since project init. Newly-installed stable is 1.95.0 (rustc 1.95.0 (59807616e 2026-04-14)). User wants the floor raised to remove the previous 'restrict to stable intrinsics on MSRV' option in CLAUDE.md's Breakdown-time feasibility check; e.g., AVX-512 _mm512_* clmul/extract intrinsics stabilised in 1.89 are now usable.\n\n## Files to update\n\n- crates/gf2-core/Cargo.toml: rust-version = '1.80' → '1.95'\n- crates/gf2-coding/Cargo.toml: rust-version = '1.80' → '1.95'\n- crates/gf2-kernels-hip/Cargo.toml: rust-version = '1.80' → '1.95'\n- dev/research/rns_prototype/Cargo.toml: rust-version = '1.80' → '1.95'\n- CLAUDE.md MSRV section (line 177-179): 'Rust 1.80' → 'Rust 1.95'\n- CLAUDE.md Breakdown-time feasibility check (line 196-204): '1.80.0' → '1.95.0' in the rustup run example; AVX-512 intrinsic example becomes a historical note rather than current constraint.\n- gf2-kernels-simd has no rust-version pin, no change needed there.\n\n## Success Criteria\n\n- [hard] cargo check --workspace --all-features passes on stable (1.95).\n- [hard] cargo nextest run --workspace --all-features --release --profile ci passes (fast tier).\n- [hard] cargo clippy --workspace --all-targets --all-features -- -D warnings clean.\n- [hard] CLAUDE.md MSRV section reflects new floor; Breakdown-time feasibility check example updated.\n- [hard] CI workflows (.github/workflows/*.yml) still use dtolnay/rust-toolchain@stable so they automatically track new MSRV.\n\n## Notes\n\nThis is a project-level housekeeping change, not part of any current epic. Adjacent to bd00d76a (asm audit) only by virtue of session timing.",
-  "state": "in_progress",
+  "description": "User directive 2026-04-27 ('Lets bump up our msrv too' / 'no need to use anything ancient'). Discovered during bd00d76a session work after restoring rustup shims (stub layer in ~/.cargo/bin/ was masking real cargo since 2025-11-09).\n\n## Background\n\nMSRV has been pinned at 1.80 since project init. Newly-installed stable is 1.95.0 (rustc 1.95.0 (59807616e 2026-04-14)). User wants the floor raised to remove the previous 'restrict to stable intrinsics on MSRV' option in CLAUDE.md's Breakdown-time feasibility check; e.g., AVX-512 _mm512_* clmul/extract intrinsics stabilised in 1.89 are now usable.\n\n## Files to update\n\n- crates/gf2-core/Cargo.toml: rust-version = '1.80' → '1.95'\n- crates/gf2-coding/Cargo.toml: rust-version = '1.80' → '1.95'\n- crates/gf2-kernels-hip/Cargo.toml: rust-version = '1.80' → '1.95'\n- dev/research/rns_prototype/Cargo.toml: rust-version = '1.80' → '1.95'\n- CLAUDE.md MSRV section (line 177-179): 'Rust 1.80' → 'Rust 1.95'\n- CLAUDE.md Breakdown-time feasibility check (line 196-204): '1.80.0' → '1.95.0' in the rustup run example; AVX-512 intrinsic example becomes a historical note rather than current constraint.\n- gf2-kernels-simd has no rust-version pin, no change needed there.\n\n## Success Criteria\n\n- [hard] cargo check --workspace --all-features passes on stable (1.95).\n- [hard] cargo nextest run --workspace --all-features --release --profile ci passes (fast tier).\n- [hard] cargo clippy --workspace --all-targets --all-features -- -D warnings clean.\n- [hard] CLAUDE.md MSRV section reflects new floor; Breakdown-time feasibility check example updated.\n- [hard] CI workflows (.github/workflows/*.yml) still use dtolnay/rust-toolchain@stable (or master) so they automatically track new MSRV.\n\n## Notes\n\nThis is a project-level housekeeping change, not part of any current epic. Adjacent to bd00d76a (asm audit) only by virtue of session timing.",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:project-lead",
   "dependencies": [],
@@ -10,7 +10,18 @@
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-27T17:51:57.991565171Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-27T11:40:10.965033232Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -18,5 +29,5 @@
     "component:tooling"
   ],
   "created_at": "2026-04-27T10:39:55.819796940+00:00",
-  "updated_at": "2026-04-27T10:40:02.331149213+00:00"
+  "updated_at": "2026-04-27T17:56:27.826397522+00:00"
 }
