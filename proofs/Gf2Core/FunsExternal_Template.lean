@@ -20,6 +20,50 @@ open gf2_core
   "core::cmp::impls::{core::cmp::Eq<u64>}::assert_receiver_is_total_eq"]
 axiom U64.Insts.CoreCmpEq.assert_receiver_is_total_eq : Std.U64 → Result Unit
 
+/-- [core::fmt::builders::{core::fmt::builders::DebugStruct<'a, 'b>}::field]:
+    Source: '/rustc/library/core/src/fmt/builders.rs', lines 132:4-132:76
+    Name pattern: [core::fmt::builders::{core::fmt::builders::DebugStruct<'a, 'b>}::field]
+    Visibility: public -/
+@[rust_fun
+  "core::fmt::builders::{core::fmt::builders::DebugStruct<'a, 'b>}::field"]
+axiom core.fmt.builders.DebugStruct.field
+  :
+  core.fmt.builders.DebugStruct → Str → Dyn (fun _dyn => core.fmt.Debug _dyn) →
+    Result (core.fmt.builders.DebugStruct × (core.fmt.builders.DebugStruct →
+    core.fmt.builders.DebugStruct))
+
+/-- [core::fmt::builders::{core::fmt::builders::DebugStruct<'a, 'b>}::finish]:
+    Source: '/rustc/library/core/src/fmt/builders.rs', lines 244:4-244:43
+    Name pattern: [core::fmt::builders::{core::fmt::builders::DebugStruct<'a, 'b>}::finish]
+    Visibility: public -/
+@[rust_fun
+  "core::fmt::builders::{core::fmt::builders::DebugStruct<'a, 'b>}::finish"]
+axiom core.fmt.builders.DebugStruct.finish
+  :
+  core.fmt.builders.DebugStruct → Result ((core.result.Result Unit
+    core.fmt.Error) × core.fmt.builders.DebugStruct)
+
+/-- [core::fmt::{core::fmt::Formatter<'a>}::debug_struct]:
+    Source: '/rustc/library/core/src/fmt/mod.rs', lines 2441:4-2441:76
+    Name pattern: [core::fmt::{core::fmt::Formatter<'a>}::debug_struct]
+    Visibility: public -/
+@[rust_fun "core::fmt::{core::fmt::Formatter<'a>}::debug_struct"]
+axiom core.fmt.Formatter.debug_struct
+  :
+  core.fmt.Formatter → Str → Result (core.fmt.builders.DebugStruct ×
+    core.fmt.Formatter)
+
+/-- [core::fmt::{core::fmt::Formatter<'a>}::debug_struct_field2_finish]:
+    Source: '/rustc/library/core/src/fmt/mod.rs', lines 2466:4-2473:15
+    Name pattern: [core::fmt::{core::fmt::Formatter<'a>}::debug_struct_field2_finish]
+    Visibility: public -/
+@[rust_fun "core::fmt::{core::fmt::Formatter<'a>}::debug_struct_field2_finish"]
+axiom core.fmt.Formatter.debug_struct_field2_finish
+  :
+  core.fmt.Formatter → Str → Str → Dyn (fun _dyn => core.fmt.Debug _dyn) → Str
+    → Dyn (fun _dyn => core.fmt.Debug _dyn) → Result ((core.result.Result Unit
+    core.fmt.Error) × core.fmt.Formatter)
+
 /-- [core::hash::impls::{core::hash::Hash for u64}::hash]:
     Source: '/rustc/library/core/src/hash/mod.rs', lines 812:16-812:56
     Name pattern: [core::hash::impls::{core::hash::Hash<u64>}::hash]
@@ -27,6 +71,68 @@ axiom U64.Insts.CoreCmpEq.assert_receiver_is_total_eq : Std.U64 → Result Unit
 @[rust_fun "core::hash::impls::{core::hash::Hash<u64>}::hash"]
 axiom U64.Insts.CoreHashHash.hash
   {H : Type} (HasherInst : core.hash.Hasher H) : Std.U64 → H → Result H
+
+/-- [core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<(Clause0_Item, Clause1_Item)> for core::iter::adapters::zip::Zip<A, B>}::next]:
+    Source: '/rustc/library/core/src/iter/adapters/zip.rs', lines 84:4-84:44
+    Name pattern: [core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<core::iter::adapters::zip::Zip<@A, @B>, (@Clause0_Item, @Clause1_Item)>}::next]
+    Visibility: public -/
+@[rust_fun
+  "core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<core::iter::adapters::zip::Zip<@A, @B>, (@Clause0_Item, @Clause1_Item)>}::next"]
+axiom core.iter.adapters.zip.Zip.Insts.CoreIterTraitsIteratorIteratorPair.next
+  {A : Type} {B : Type} {Clause0_Item : Type} {Clause1_Item : Type}
+  (traitsiteratorIteratorInst : core.iter.traits.iterator.Iterator A
+  Clause0_Item) (traitsiteratorIteratorInst1 :
+  core.iter.traits.iterator.Iterator B Clause1_Item) :
+  core.iter.adapters.zip.Zip A B → Result ((Option (Clause0_Item ×
+    Clause1_Item)) × (core.iter.adapters.zip.Zip A B))
+
+/-- [core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<(Clause0_Item, Clause1_Item)> for core::iter::adapters::zip::Zip<A, B>}::zip]:
+    Source: '/rustc/library/core/src/iter/adapters/zip.rs', lines 76:0-79:16
+    Name pattern: [core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<core::iter::adapters::zip::Zip<@A, @B>, (@Clause0_Item, @Clause1_Item)>}::zip]
+    Visibility: public -/
+@[rust_fun
+  "core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<core::iter::adapters::zip::Zip<@A, @B>, (@Clause0_Item, @Clause1_Item)>}::zip"]
+axiom core.iter.adapters.zip.Zip.Insts.CoreIterTraitsIteratorIteratorPair.zip
+  {A : Type} {B : Type} {U : Type} {Clause0_Item : Type} {Clause1_Item : Type}
+  {Clause2_Item : Type} {Clause2_IntoIter : Type} (traitsiteratorIteratorInst :
+  core.iter.traits.iterator.Iterator A Clause0_Item)
+  (traitsiteratorIteratorInst1 : core.iter.traits.iterator.Iterator B
+  Clause1_Item) (traitscollectIntoIteratorInst :
+  core.iter.traits.collect.IntoIterator U Clause2_Item Clause2_IntoIter) :
+  core.iter.adapters.zip.Zip A B → U → Result (core.iter.adapters.zip.Zip
+    (core.iter.adapters.zip.Zip A B) Clause2_IntoIter)
+
+/-- [core::iter::traits::iterator::Iterator::zip]:
+    Source: '/rustc/library/core/src/iter/traits/iterator.rs', lines 626:4-629:24
+    Name pattern: [core::iter::traits::iterator::Iterator::zip]
+    Visibility: public -/
+@[rust_fun "core::iter::traits::iterator::Iterator::zip"]
+axiom core.iter.traits.iterator.Iterator.zip.default
+  {Self : Type} {U : Type} {Clause0_Item : Type} {Clause1_Item : Type}
+  {Clause1_IntoIter : Type} (IteratorInst : core.iter.traits.iterator.Iterator
+  Self Clause0_Item) (collectIntoIteratorInst :
+  core.iter.traits.collect.IntoIterator U Clause1_Item Clause1_IntoIter) :
+  Self → U → Result (core.iter.adapters.zip.Zip Self Clause1_IntoIter)
+
+/-- [core::num::{u64}::BITS]
+    Source: '/rustc/library/core/src/num/uint_macros.rs', lines 58:8-58:27
+    Name pattern: [core::num::{u64}::BITS]
+    Visibility: public -/
+@[rust_const "core::num::{u64}::BITS"] axiom core.num.U64.BITS : Result Std.U32
+
+/-- [core::num::{u64}::trailing_zeros]:
+    Source: '/rustc/library/core/src/num/uint_macros.rs', lines 174:8-174:48
+    Name pattern: [core::num::{u64}::trailing_zeros]
+    Visibility: public -/
+@[rust_fun "core::num::{u64}::trailing_zeros"]
+axiom core.num.U64.trailing_zeros : Std.U64 → Result Std.U32
+
+/-- [core::num::{u128}::saturating_mul]:
+    Source: '/rustc/library/core/src/num/uint_macros.rs', lines 2330:8-2330:60
+    Name pattern: [core::num::{u128}::saturating_mul]
+    Visibility: public -/
+@[rust_fun "core::num::{u128}::saturating_mul"]
+axiom core.num.U128.saturating_mul : Std.U128 → Std.U128 → Result Std.U128
 
 /-- [core::num::{u64}::wrapping_neg]:
     Source: '/rustc/library/core/src/num/uint_macros.rs', lines 2606:8-2606:47
@@ -42,6 +148,13 @@ axiom core.num.U64.wrapping_neg : Std.U64 → Result Std.U64
 @[rust_fun "core::num::{u64}::overflowing_sub"]
 axiom core.num.U64.overflowing_sub
   : Std.U64 → Std.U64 → Result (Std.U64 × Bool)
+
+/-- [core::num::{u64}::is_power_of_two]:
+    Source: '/rustc/library/core/src/num/uint_macros.rs', lines 3701:8-3701:50
+    Name pattern: [core::num::{u64}::is_power_of_two]
+    Visibility: public -/
+@[rust_fun "core::num::{u64}::is_power_of_two"]
+axiom core.num.U64.is_power_of_two : Std.U64 → Result Bool
 
 /-- [core::ops::arith::{core::ops::arith::Add<u128, u128> for u128}::add]:
     Source: '/rustc/library/core/src/ops/arith.rs', lines 105:12-105:41
@@ -70,6 +183,16 @@ axiom core.option.Option.map
   core.ops.function.FnOnce F T U) :
   Option T → F → Result (Option U)
 
+/-- [core::option::{core::option::Option<T>}::and_then]:
+    Source: '/rustc/library/core/src/option.rs', lines 1541:4-1543:61
+    Name pattern: [core::option::{core::option::Option<@T>}::and_then]
+    Visibility: public -/
+@[rust_fun "core::option::{core::option::Option<@T>}::and_then"]
+axiom core.option.Option.and_then
+  {T : Type} {U : Type} {F : Type} (opsfunctionFnOnceFTupleTOptionInst :
+  core.ops.function.FnOnce F T (Option U)) :
+  Option T → F → Result (Option U)
+
 /-- [core::result::{core::ops::try_trait::Try<T, core::result::Result<core::convert::Infallible, E>> for core::result::Result<T, E>}::branch]:
     Source: '/rustc/library/core/src/result.rs', lines 2172:4-2172:64
     Name pattern: [core::result::{core::ops::try_trait::Try<core::result::Result<@T, @E>, @T, core::result::Result<core::convert::Infallible, @E>>}::branch]
@@ -93,8 +216,87 @@ axiom
   core.result.Result core.convert.Infallible E → Result (core.result.Result T
     F)
 
+/-- [core::slice::iter::{core::iter::traits::iterator::Iterator<&'a (T)> for core::slice::iter::Iter<'a, T>}::zip]:
+    Source: '/rustc/library/core/src/slice/iter/macros.rs', lines 153:8-153:45
+    Name pattern: [core::slice::iter::{core::iter::traits::iterator::Iterator<core::slice::iter::Iter<'a, @T>, &'a @T>}::zip]
+    Visibility: public -/
+@[rust_fun
+  "core::slice::iter::{core::iter::traits::iterator::Iterator<core::slice::iter::Iter<'a, @T>, &'a @T>}::zip"]
+axiom core.slice.iter.Iter.Insts.CoreIterTraitsIteratorIteratorSharedAT.zip
+  {T : Type} {U : Type} {Clause0_Item : Type} {Clause0_IntoIter : Type}
+  (itertraitscollectIntoIteratorInst : core.iter.traits.collect.IntoIterator U
+  Clause0_Item Clause0_IntoIter) :
+  core.slice.iter.Iter T → U → Result (core.iter.adapters.zip.Zip
+    (core.slice.iter.Iter T) Clause0_IntoIter)
+
+/-- [core::slice::iter::{core::iter::traits::iterator::Iterator<&'a mut (T)> for core::slice::iter::IterMut<'a, T>}::zip]:
+    Source: '/rustc/library/core/src/slice/iter/macros.rs', lines 153:8-153:45
+    Name pattern: [core::slice::iter::{core::iter::traits::iterator::Iterator<core::slice::iter::IterMut<'a, @T>, &'a mut @T>}::zip]
+    Visibility: public -/
+@[rust_fun
+  "core::slice::iter::{core::iter::traits::iterator::Iterator<core::slice::iter::IterMut<'a, @T>, &'a mut @T>}::zip"]
+axiom core.slice.iter.IterMut.Insts.CoreIterTraitsIteratorIteratorMutAT.zip
+  {T : Type} {U : Type} {Clause0_Item : Type} {Clause0_IntoIter : Type}
+  (itertraitscollectIntoIteratorInst : core.iter.traits.collect.IntoIterator U
+  Clause0_Item Clause0_IntoIter) :
+  core.slice.iter.IterMut T → U → Result ((core.iter.adapters.zip.Zip
+    (core.slice.iter.IterMut T) Clause0_IntoIter) × (core.iter.adapters.zip.Zip
+    (core.slice.iter.IterMut T) Clause0_IntoIter → core.slice.iter.IterMut T))
+
+/-- [gf2_core::field::traits::FiniteField::zero_hint]:
+    Source: 'crates/gf2-core/src/field/traits.rs', lines 147:4-149:5
+    Visibility: public -/
+axiom field.traits.FiniteField.zero_hint.default
+  {Self : Type} {Clause0_Characteristic : Type} {Clause0_Wide : Type}
+  (FiniteFieldInst : field.traits.FiniteField Self Clause0_Characteristic
+  Clause0_Wide) :
+  Result (Option Self)
+
+/-- [gf2_core::field::traits::FiniteField::cardinality_log2_hint]:
+    Source: 'crates/gf2-core/src/field/traits.rs', lines 180:4-182:5
+    Visibility: public -/
+axiom field.traits.FiniteField.cardinality_log2_hint.default
+  {Self : Type} {Clause0_Characteristic : Type} {Clause0_Wide : Type}
+  (FiniteFieldInst : field.traits.FiniteField Self Clause0_Characteristic
+  Clause0_Wide) :
+  Result (Option Std.U32)
+
+/-- [gf2_core::field::traits::FiniteField::theorem_4_operand_bound]:
+    Source: 'crates/gf2-core/src/field/traits.rs', lines 364:4-366:5
+    Visibility: public -/
+axiom field.traits.FiniteField.theorem_4_operand_bound.default
+  {Self : Type} {Clause0_Characteristic : Type} {Clause0_Wide : Type}
+  (FiniteFieldInst : field.traits.FiniteField Self Clause0_Characteristic
+  Clause0_Wide) :
+  Result Std.U128
+
+/-- [gf2_core::field::traits::FiniteField::WINOGRAD_THRESHOLD]
+    Source: 'crates/gf2-core/src/field/traits.rs', lines 386:4-386:42
+    Visibility: public -/
+@[trait_default]
+axiom field.traits.FiniteField.WINOGRAD_THRESHOLD.default {Self : Type}
+  {Clause0_Characteristic : Type} {Clause0_Wide : Type} (FiniteFieldInst :
+  field.traits.FiniteField Self Clause0_Characteristic Clause0_Wide)
+  : Result Std.Usize
+
+/-- [gf2_core::field::traits::FiniteField::TRI_BASE_THRESHOLD]
+    Source: 'crates/gf2-core/src/field/traits.rs', lines 406:4-406:41
+    Visibility: public -/
+@[trait_default]
+axiom field.traits.FiniteField.TRI_BASE_THRESHOLD.default {Self : Type}
+  {Clause0_Characteristic : Type} {Clause0_Wide : Type} (FiniteFieldInst :
+  field.traits.FiniteField Self Clause0_Characteristic Clause0_Wide)
+  : Result Std.Usize
+
+/-- [gf2_core::gfpn::cubic::{core::cmp::Eq for gf2_core::gfpn::cubic::CubicExtWide<W>}::assert_receiver_is_total_eq]:
+    Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 184:0-184:37
+    Visibility: public -/
+axiom gfpn.cubic.CubicExtWide.Insts.CoreCmpEq.assert_receiver_is_total_eq
+  {W : Type} (corecmpEqInst : core.cmp.Eq W) :
+  gfpn.cubic.CubicExtWide W → Result Unit
+
 /-- [gf2_core::gfpn::cubic::{core::cmp::Eq for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::assert_receiver_is_total_eq]:
-    Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 118:0-118:40
+    Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 275:0-275:40
     Visibility: public -/
 axiom gfpn.cubic.CubicExt.Insts.CoreCmpEq.assert_receiver_is_total_eq
   {C : Type} {Clause0_BaseField : Type} {Clause0_Clause0_Clause0_Characteristic
@@ -103,8 +305,27 @@ axiom gfpn.cubic.CubicExt.Insts.CoreCmpEq.assert_receiver_is_total_eq
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
   gfpn.cubic.CubicExt ext_configExtConfigInst → Result Unit
 
+/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::theorem_4_operand_bound]:
+    Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 633:0-741:1
+    Visibility: public -/
+axiom
+  gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicCubicExtWide.theorem_4_operand_bound
+  {C : Type} {Clause0_BaseField : Type} {Clause0_Clause0_Clause0_Characteristic
+  : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
+  gfpn.ext_config.ExtConfig C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result Std.U128
+
+/-- [gf2_core::gfpn::quadratic::{core::cmp::Eq for gf2_core::gfpn::quadratic::QuadraticExtWide<W>}::assert_receiver_is_total_eq]:
+    Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 167:0-167:41
+    Visibility: public -/
+axiom
+  gfpn.quadratic.QuadraticExtWide.Insts.CoreCmpEq.assert_receiver_is_total_eq
+  {W : Type} (corecmpEqInst : core.cmp.Eq W) :
+  gfpn.quadratic.QuadraticExtWide W → Result Unit
+
 /-- [gf2_core::gfpn::quadratic::{core::cmp::Eq for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::assert_receiver_is_total_eq]:
-    Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 109:0-109:44
+    Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 253:0-253:44
     Visibility: public -/
 axiom gfpn.quadratic.QuadraticExt.Insts.CoreCmpEq.assert_receiver_is_total_eq
   {C : Type} {Clause0_BaseField : Type} {Clause0_Clause0_Clause0_Characteristic
@@ -112,4 +333,15 @@ axiom gfpn.quadratic.QuadraticExt.Insts.CoreCmpEq.assert_receiver_is_total_eq
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
   gfpn.quadratic.QuadraticExt ext_configExtConfigInst → Result Unit
+
+/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::theorem_4_operand_bound]:
+    Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 582:0-686:1
+    Visibility: public -/
+axiom
+  gfpn.quadratic.QuadraticExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.theorem_4_operand_bound
+  {C : Type} {Clause0_BaseField : Type} {Clause0_Clause0_Clause0_Characteristic
+  : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
+  gfpn.ext_config.ExtConfig C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result Std.U128
 

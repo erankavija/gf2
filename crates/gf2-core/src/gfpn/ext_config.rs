@@ -54,7 +54,12 @@ use crate::field::ConstField;
 /// - β = −1: just negation
 /// - β = small constant: shift-and-add
 /// - β from a lower tower level: exploit structure
-pub trait ExtConfig: 'static {
+///
+/// The trait intentionally does not require a blanket `'static` supertrait
+/// bound. Extension element types only store base-field coefficients, not a
+/// value of the config type itself; code that specifically needs a static
+/// config can add that bound locally.
+pub trait ExtConfig {
     /// The base field being extended.
     ///
     /// Only [`ConstField`] is required at the algebra layer. The
@@ -69,7 +74,19 @@ pub trait ExtConfig: 'static {
     ///
     /// For quadratic extensions: the irreducible polynomial is x² − β.
     /// For cubic extensions: the irreducible polynomial is x³ − β.
+    #[cfg(not(verify_lean))]
     const NON_RESIDUE: Self::BaseField;
+
+    /// Returns the non-residue β defining the extension polynomial.
+    ///
+    /// This method-only shape is used only by `scripts/verify-lean.sh` so
+    /// Charon can continue extracting the quadratic and cubic arithmetic while
+    /// avoiding its associated-const type-checking bug. The uppercase name is
+    /// deliberate: Aeneas then generates the same Lean trait field name as the
+    /// normal associated const, keeping downstream proof workarounds stable.
+    #[cfg(verify_lean)]
+    #[allow(non_snake_case)]
+    fn NON_RESIDUE() -> Self::BaseField;
 
     /// Multiply a base field element by the non-residue β.
     ///
@@ -81,7 +98,14 @@ pub trait ExtConfig: 'static {
     /// * `x` - A base field element to multiply by β.
     #[inline]
     fn mul_by_non_residue(x: Self::BaseField) -> Self::BaseField {
-        x * Self::NON_RESIDUE
+        #[cfg(not(verify_lean))]
+        {
+            x * Self::NON_RESIDUE
+        }
+        #[cfg(verify_lean)]
+        {
+            x * Self::NON_RESIDUE()
+        }
     }
 }
 
