@@ -228,257 +228,6 @@ def gf2m.mul_raw.gf2m_inverse_raw
     let exp ← i - 2#u64
     gf2m.mul_raw.gf2m_pow_raw a exp m primitive_poly
 
-/-- [gf2_core::gfp::use_specialized_storage]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 76:0-102:1 -/
-def gfp.use_specialized_storage (p : Std.U64) : Result Bool := do
-  ok false
-
-/-- [gf2_core::gfp::{core::clone::Clone for gf2_core::gfp::Fp<P>}::clone]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 144:9-144:14
-    Visibility: public -/
-def gfp.Fp.Insts.CoreCloneClone.clone
-  {P : Std.U64} (self : gfp.Fp P) : Result (gfp.Fp P) := do
-  ok self
-
-/-- Trait implementation: [gf2_core::gfp::{core::clone::Clone for gf2_core::gfp::Fp<P>}]
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 144:9-144:14 -/
-@[reducible]
-def gfp.Fp.Insts.CoreCloneClone (P : Std.U64) : core.clone.Clone (gfp.Fp P)
-  := {
-  clone := gfp.Fp.Insts.CoreCloneClone.clone
-}
-
-/-- Trait implementation: [gf2_core::gfp::{core::marker::Copy for gf2_core::gfp::Fp<P>}]
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 144:16-144:20 -/
-@[reducible]
-def gfp.Fp.Insts.CoreMarkerCopy (P : Std.U64) : core.marker.Copy (gfp.Fp P)
-  := {
-  cloneInst := gfp.Fp.Insts.CoreCloneClone P
-}
-
-/-- Trait implementation: [gf2_core::gfp::{core::marker::StructuralPartialEq for gf2_core::gfp::Fp<P>}]
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 144:22-144:31 -/
-@[reducible]
-def gfp.Fp.Insts.CoreMarkerStructuralPartialEq (P : Std.U64) :
-  core.marker.StructuralPartialEq (gfp.Fp P) := {
-}
-
-/-- [gf2_core::gfp::{core::cmp::PartialEq<gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}::eq]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 144:22-144:31
-    Visibility: public -/
-def gfp.Fp.Insts.CoreCmpPartialEqFp.eq
-  {P : Std.U64} (self : gfp.Fp P) (other : gfp.Fp P) : Result Bool := do
-  ok (self = other)
-
-/-- Trait implementation: [gf2_core::gfp::{core::cmp::PartialEq<gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}]
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 144:22-144:31 -/
-@[reducible]
-def gfp.Fp.Insts.CoreCmpPartialEqFp (P : Std.U64) : core.cmp.PartialEq (gfp.Fp
-  P) (gfp.Fp P) := {
-  eq := gfp.Fp.Insts.CoreCmpPartialEqFp.eq
-}
-
-/-- [gf2_core::gfp::{core::cmp::Eq for gf2_core::gfp::Fp<P>}::assert_receiver_is_total_eq]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 144:33-144:35
-    Visibility: public -/
-def gfp.Fp.Insts.CoreCmpEq.assert_receiver_is_total_eq
-  {P : Std.U64} (self : gfp.Fp P) : Result Unit := do
-  ok ()
-
-/-- Trait implementation: [gf2_core::gfp::{core::cmp::Eq for gf2_core::gfp::Fp<P>}]
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 144:33-144:35 -/
-@[reducible]
-def gfp.Fp.Insts.CoreCmpEq (P : Std.U64) : core.cmp.Eq (gfp.Fp P) := {
-  partialEqInst := gfp.Fp.Insts.CoreCmpPartialEqFp P
-  assert_receiver_is_total_eq :=
-    gfp.Fp.Insts.CoreCmpEq.assert_receiver_is_total_eq
-}
-
-/-- [gf2_core::gfp::{core::hash::Hash for gf2_core::gfp::Fp<P>}::hash]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 144:37-144:41
-    Visibility: public -/
-def gfp.Fp.Insts.CoreHashHash.hash
-  {__H : Type} {P : Std.U64} (corehashHasherInst : core.hash.Hasher __H)
-  (self : gfp.Fp P) (state : __H) :
-  Result __H
-  := do
-  U64.Insts.CoreHashHash.hash corehashHasherInst self state
-
-/-- Trait implementation: [gf2_core::gfp::{core::hash::Hash for gf2_core::gfp::Fp<P>}]
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 144:37-144:41 -/
-@[reducible]
-def gfp.Fp.Insts.CoreHashHash (P : Std.U64) : core.hash.Hash (gfp.Fp P) := {
-  hash := fun {__H : Type} (corehashHasherInst : core.hash.Hasher __H) =>
-    gfp.Fp.Insts.CoreHashHash.hash corehashHasherInst
-}
-
-/-- [gf2_core::gfp::montgomery::compute_p_inv]: loop body 0:
-    Source: 'crates/gf2-core/src/gfp/montgomery.rs', lines 55:4-58:5 -/
-@[rust_loop_body]
-def gfp.montgomery.compute_p_inv_loop.body
-  (p : Std.U64) (inv : Std.U64) (i : Std.I32) :
-  Result (ControlFlow (Std.U64 × Std.I32) Std.U64)
-  := do
-  if i < 6#i32
-  then
-    let i1 ← lift (core.num.U64.wrapping_mul p inv)
-    let i2 ← lift (core.num.U64.wrapping_sub 2#u64 i1)
-    let inv1 ← lift (core.num.U64.wrapping_mul inv i2)
-    let i3 ← i + 1#i32
-    ok (cont (inv1, i3))
-  else ok (done inv)
-
-/-- [gf2_core::gfp::montgomery::compute_p_inv]: loop 0:
-    Source: 'crates/gf2-core/src/gfp/montgomery.rs', lines 55:4-58:5 -/
-@[rust_loop]
-def gfp.montgomery.compute_p_inv_loop
-  (p : Std.U64) (inv : Std.U64) (i : Std.I32) : Result Std.U64 := do
-  loop
-    (fun (inv1, i1) => gfp.montgomery.compute_p_inv_loop.body p inv1 i1)
-    (inv, i)
-
-/-- [gf2_core::gfp::montgomery::compute_p_inv]:
-    Source: 'crates/gf2-core/src/gfp/montgomery.rs', lines 52:0-61:1 -/
-def gfp.montgomery.compute_p_inv (p : Std.U64) : Result Std.U64 := do
-  let inv ← gfp.montgomery.compute_p_inv_loop p 1#u64 0#i32
-  core.num.U64.wrapping_neg inv
-
-/-- [gf2_core::gfp::montgomery::{gf2_core::gfp::montgomery::MontConsts<P>}::P_INV]
-    Source: 'crates/gf2-core/src/gfp/montgomery.rs', lines 22:4-22:44
-    Visibility: public -/
-@[global_simps, irreducible]
-def gfp.montgomery.MontConsts.P_INV (P : Std.U64) : Result Std.U64 :=
-  gfp.montgomery.compute_p_inv P
-
-/-- [gf2_core::gfp::montgomery::redc]:
-    Source: 'crates/gf2-core/src/gfp/montgomery.rs', lines 74:0-83:1 -/
-def gfp.montgomery.redc (P : Std.U64) (t : Std.U128) : Result Std.U64 := do
-  let t_lo ← lift (UScalar.cast .U64 t)
-  let i ← gfp.montgomery.MontConsts.P_INV P
-  let m ← lift (core.num.U64.wrapping_mul t_lo i)
-  let i1 ← lift (UScalar.cast .U128 m)
-  let i2 ← lift (UScalar.cast .U128 P)
-  let mp ← i1 * i2
-  let i3 ← t + mp
-  let i4 ← i3 >>> 64#i32
-  let u ← lift (UScalar.cast .U64 i4)
-  let (result, borrow) ← core.num.U64.overflowing_sub u P
-  let i5 ← lift (UScalar.cast_fromBool .U64 borrow)
-  let i6 ← core.num.U64.wrapping_neg i5
-  let correction ← lift (i6 &&& P)
-  ok (core.num.U64.wrapping_add result correction)
-
-/-- [gf2_core::gfp::montgomery::from_mont]:
-    Source: 'crates/gf2-core/src/gfp/montgomery.rs', lines 101:0-103:1 -/
-def gfp.montgomery.from_mont (P : Std.U64) (a : Std.U64) : Result Std.U64 := do
-  let i ← lift (UScalar.cast .U128 a)
-  gfp.montgomery.redc P i
-
-/-- [gf2_core::gfp::{gf2_core::gfp::Fp<P>}::value]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 201:4-207:5
-    Visibility: public -/
-def gfp.Fp.value {P : Std.U64} (self : gfp.Fp P) : Result Std.U64 := do
-  if P = 2#u64
-  then ok self
-  else
-    let b ← gfp.use_specialized_storage P
-    if b
-    then ok self
-    else gfp.montgomery.from_mont P self
-
-/-- [gf2_core::gfp::{core::fmt::Debug for gf2_core::gfp::Fp<P>}::fmt]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 148:4-150:5
-    Visibility: public -/
-def gfp.Fp.Insts.CoreFmtDebug.fmt
-  {P : Std.U64} (self : gfp.Fp P) (f : core.fmt.Formatter) :
-  Result ((core.result.Result Unit core.fmt.Error) × core.fmt.Formatter)
-  := do
-  let i ← gfp.Fp.value self
-  let a ← core.fmt.rt.Argument.new_display U64.Insts.CoreFmtDisplay P
-  let a1 ← core.fmt.rt.Argument.new_display U64.Insts.CoreFmtDisplay i
-  let a2 ←
-    core.fmt.Arguments.new
-      (Array.make 12#usize [
-        3#u8, 70#u8, 112#u8, 60#u8, 192#u8, 2#u8, 62#u8, 40#u8, 192#u8, 1#u8,
-        41#u8, 0#u8
-        ]) (Array.make 2#usize [ a, a1 ])
-  core.fmt.Formatter.write_fmt f a2
-
-/-- Trait implementation: [gf2_core::gfp::{core::fmt::Debug for gf2_core::gfp::Fp<P>}]
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 147:0-151:1 -/
-@[reducible]
-def gfp.Fp.Insts.CoreFmtDebug (P : Std.U64) : core.fmt.Debug (gfp.Fp P) := {
-  fmt := gfp.Fp.Insts.CoreFmtDebug.fmt
-}
-
-/-- [gf2_core::gfp::{gf2_core::gfp::Fp<P>}::VALIDATED]
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 155:4-161:6 -/
-@[global_simps, irreducible]
-def gfp.Fp.VALIDATED (P : Std.U64) : Result Unit := do
-  massert (P > 1#u64)
-  let i ← 1#u64 <<< 63#i32
-  massert (P <= i)
-
-/-- [gf2_core::gfp::montgomery::compute_r_mod_p]:
-    Source: 'crates/gf2-core/src/gfp/montgomery.rs', lines 30:0-32:1 -/
-def gfp.montgomery.compute_r_mod_p (p : Std.U64) : Result Std.U64 := do
-  let i ← 1#u128 <<< 64#i32
-  let i1 ← lift (UScalar.cast .U128 p)
-  let i2 ← i % i1
-  ok (UScalar.cast .U64 i2)
-
-/-- [gf2_core::gfp::montgomery::compute_r2_mod_p]:
-    Source: 'crates/gf2-core/src/gfp/montgomery.rs', lines 39:0-42:1 -/
-def gfp.montgomery.compute_r2_mod_p (p : Std.U64) : Result Std.U64 := do
-  let i ← gfp.montgomery.compute_r_mod_p p
-  let r ← lift (UScalar.cast .U128 i)
-  let i1 ← r * r
-  let i2 ← lift (UScalar.cast .U128 p)
-  let i3 ← i1 % i2
-  ok (UScalar.cast .U64 i3)
-
-/-- [gf2_core::gfp::montgomery::{gf2_core::gfp::montgomery::MontConsts<P>}::R2_MOD_P]
-    Source: 'crates/gf2-core/src/gfp/montgomery.rs', lines 19:4-19:50
-    Visibility: public -/
-@[global_simps, irreducible]
-def gfp.montgomery.MontConsts.R2_MOD_P (P : Std.U64) : Result Std.U64 :=
-  gfp.montgomery.compute_r2_mod_p P
-
-/-- [gf2_core::gfp::montgomery::to_mont]:
-    Source: 'crates/gf2-core/src/gfp/montgomery.rs', lines 91:0-93:1 -/
-def gfp.montgomery.to_mont (P : Std.U64) (a : Std.U64) : Result Std.U64 := do
-  let i ← lift (UScalar.cast .U128 a)
-  let i1 ← gfp.montgomery.MontConsts.R2_MOD_P P
-  let i2 ← lift (UScalar.cast .U128 i1)
-  let i3 ← i * i2
-  gfp.montgomery.redc P i3
-
-/-- [gf2_core::gfp::{gf2_core::gfp::Fp<P>}::new]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 178:4-189:5
-    Visibility: public -/
-def gfp.Fp.new (P : Std.U64) (value : Std.U64) : Result (gfp.Fp P) := do
-  gfp.Fp.VALIDATED P
-  let reduced ← value % P
-  if P = 2#u64
-  then ok reduced
-  else
-    let b ← gfp.use_specialized_storage P
-    if b
-    then ok reduced
-    else let i ← gfp.montgomery.to_mont P reduced
-         ok i
-
-/-- [gf2_core::gfp::{gf2_core::gfp::Fp<P>}::raw_storage]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 225:4-227:5 -/
-def gfp.Fp.raw_storage {P : Std.U64} (self : gfp.Fp P) : Result Std.U64 := do
-  ok self
-
-/-- [gf2_core::gfp::{gf2_core::gfp::Fp<P>}::from_raw_storage]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 241:4-243:5 -/
-def gfp.Fp.from_raw_storage
-  (P : Std.U64) (raw1 : Std.U64) : Result (gfp.Fp P) := do
-  ok raw1
-
 /-- [gf2_core::gfp::specialized::GOLDILOCKS_PRIME]
     Source: 'crates/gf2-core/src/gfp/specialized.rs', lines 126:0-126:56
     Visibility: public -/
@@ -585,6 +334,265 @@ def gfp.specialized.classify
         else ok gfp.specialized.PrimeShape.Generic
       else ok gfp.specialized.PrimeShape.Generic
 
+/-- [gf2_core::gfp::use_specialized_storage]:
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 76:0-91:1 -/
+def gfp.use_specialized_storage (p : Std.U64) : Result Bool := do
+  if p = 2#u64
+  then ok false
+  else
+    let ps ← gfp.specialized.classify p
+    match ps with
+    | gfp.specialized.PrimeShape.Mersenne n => ok (n >= 31#u32)
+    | gfp.specialized.PrimeShape.Proth _ n => ok (n >= 24#u32)
+    | gfp.specialized.PrimeShape.Goldilocks => ok false
+    | gfp.specialized.PrimeShape.Generic => ok false
+
+/-- [gf2_core::gfp::{core::clone::Clone for gf2_core::gfp::Fp<P>}::clone]:
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 133:9-133:14
+    Visibility: public -/
+def gfp.Fp.Insts.CoreCloneClone.clone
+  {P : Std.U64} (self : gfp.Fp P) : Result (gfp.Fp P) := do
+  ok self
+
+/-- Trait implementation: [gf2_core::gfp::{core::clone::Clone for gf2_core::gfp::Fp<P>}]
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 133:9-133:14 -/
+@[reducible]
+def gfp.Fp.Insts.CoreCloneClone (P : Std.U64) : core.clone.Clone (gfp.Fp P)
+  := {
+  clone := gfp.Fp.Insts.CoreCloneClone.clone
+}
+
+/-- Trait implementation: [gf2_core::gfp::{core::marker::Copy for gf2_core::gfp::Fp<P>}]
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 133:16-133:20 -/
+@[reducible]
+def gfp.Fp.Insts.CoreMarkerCopy (P : Std.U64) : core.marker.Copy (gfp.Fp P)
+  := {
+  cloneInst := gfp.Fp.Insts.CoreCloneClone P
+}
+
+/-- Trait implementation: [gf2_core::gfp::{core::marker::StructuralPartialEq for gf2_core::gfp::Fp<P>}]
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 133:22-133:31 -/
+@[reducible]
+def gfp.Fp.Insts.CoreMarkerStructuralPartialEq (P : Std.U64) :
+  core.marker.StructuralPartialEq (gfp.Fp P) := {
+}
+
+/-- [gf2_core::gfp::{core::cmp::PartialEq<gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}::eq]:
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 133:22-133:31
+    Visibility: public -/
+def gfp.Fp.Insts.CoreCmpPartialEqFp.eq
+  {P : Std.U64} (self : gfp.Fp P) (other : gfp.Fp P) : Result Bool := do
+  ok (self = other)
+
+/-- Trait implementation: [gf2_core::gfp::{core::cmp::PartialEq<gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}]
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 133:22-133:31 -/
+@[reducible]
+def gfp.Fp.Insts.CoreCmpPartialEqFp (P : Std.U64) : core.cmp.PartialEq (gfp.Fp
+  P) (gfp.Fp P) := {
+  eq := gfp.Fp.Insts.CoreCmpPartialEqFp.eq
+}
+
+/-- [gf2_core::gfp::{core::cmp::Eq for gf2_core::gfp::Fp<P>}::assert_receiver_is_total_eq]:
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 133:33-133:35
+    Visibility: public -/
+def gfp.Fp.Insts.CoreCmpEq.assert_receiver_is_total_eq
+  {P : Std.U64} (self : gfp.Fp P) : Result Unit := do
+  ok ()
+
+/-- Trait implementation: [gf2_core::gfp::{core::cmp::Eq for gf2_core::gfp::Fp<P>}]
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 133:33-133:35 -/
+@[reducible]
+def gfp.Fp.Insts.CoreCmpEq (P : Std.U64) : core.cmp.Eq (gfp.Fp P) := {
+  partialEqInst := gfp.Fp.Insts.CoreCmpPartialEqFp P
+  assert_receiver_is_total_eq :=
+    gfp.Fp.Insts.CoreCmpEq.assert_receiver_is_total_eq
+}
+
+/-- [gf2_core::gfp::{core::hash::Hash for gf2_core::gfp::Fp<P>}::hash]:
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 133:37-133:41
+    Visibility: public -/
+def gfp.Fp.Insts.CoreHashHash.hash
+  {__H : Type} {P : Std.U64} (corehashHasherInst : core.hash.Hasher __H)
+  (self : gfp.Fp P) (state : __H) :
+  Result __H
+  := do
+  U64.Insts.CoreHashHash.hash corehashHasherInst self state
+
+/-- Trait implementation: [gf2_core::gfp::{core::hash::Hash for gf2_core::gfp::Fp<P>}]
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 133:37-133:41 -/
+@[reducible]
+def gfp.Fp.Insts.CoreHashHash (P : Std.U64) : core.hash.Hash (gfp.Fp P) := {
+  hash := fun {__H : Type} (corehashHasherInst : core.hash.Hasher __H) =>
+    gfp.Fp.Insts.CoreHashHash.hash corehashHasherInst
+}
+
+/-- [gf2_core::gfp::montgomery::compute_p_inv]: loop body 0:
+    Source: 'crates/gf2-core/src/gfp/montgomery.rs', lines 55:4-58:5 -/
+@[rust_loop_body]
+def gfp.montgomery.compute_p_inv_loop.body
+  (p : Std.U64) (inv : Std.U64) (i : Std.I32) :
+  Result (ControlFlow (Std.U64 × Std.I32) Std.U64)
+  := do
+  if i < 6#i32
+  then
+    let i1 ← lift (core.num.U64.wrapping_mul p inv)
+    let i2 ← lift (core.num.U64.wrapping_sub 2#u64 i1)
+    let inv1 ← lift (core.num.U64.wrapping_mul inv i2)
+    let i3 ← i + 1#i32
+    ok (cont (inv1, i3))
+  else ok (done inv)
+
+/-- [gf2_core::gfp::montgomery::compute_p_inv]: loop 0:
+    Source: 'crates/gf2-core/src/gfp/montgomery.rs', lines 55:4-58:5 -/
+@[rust_loop]
+def gfp.montgomery.compute_p_inv_loop
+  (p : Std.U64) (inv : Std.U64) (i : Std.I32) : Result Std.U64 := do
+  loop
+    (fun (inv1, i1) => gfp.montgomery.compute_p_inv_loop.body p inv1 i1)
+    (inv, i)
+
+/-- [gf2_core::gfp::montgomery::compute_p_inv]:
+    Source: 'crates/gf2-core/src/gfp/montgomery.rs', lines 52:0-61:1 -/
+def gfp.montgomery.compute_p_inv (p : Std.U64) : Result Std.U64 := do
+  let inv ← gfp.montgomery.compute_p_inv_loop p 1#u64 0#i32
+  core.num.U64.wrapping_neg inv
+
+/-- [gf2_core::gfp::montgomery::{gf2_core::gfp::montgomery::MontConsts<P>}::P_INV]
+    Source: 'crates/gf2-core/src/gfp/montgomery.rs', lines 22:4-22:44
+    Visibility: public -/
+@[global_simps, irreducible]
+def gfp.montgomery.MontConsts.P_INV (P : Std.U64) : Result Std.U64 :=
+  gfp.montgomery.compute_p_inv P
+
+/-- [gf2_core::gfp::montgomery::redc]:
+    Source: 'crates/gf2-core/src/gfp/montgomery.rs', lines 74:0-83:1 -/
+def gfp.montgomery.redc (P : Std.U64) (t : Std.U128) : Result Std.U64 := do
+  let t_lo ← lift (UScalar.cast .U64 t)
+  let i ← gfp.montgomery.MontConsts.P_INV P
+  let m ← lift (core.num.U64.wrapping_mul t_lo i)
+  let i1 ← lift (UScalar.cast .U128 m)
+  let i2 ← lift (UScalar.cast .U128 P)
+  let mp ← i1 * i2
+  let i3 ← t + mp
+  let i4 ← i3 >>> 64#i32
+  let u ← lift (UScalar.cast .U64 i4)
+  let (result, borrow) ← core.num.U64.overflowing_sub u P
+  let i5 ← lift (UScalar.cast_fromBool .U64 borrow)
+  let i6 ← core.num.U64.wrapping_neg i5
+  let correction ← lift (i6 &&& P)
+  ok (core.num.U64.wrapping_add result correction)
+
+/-- [gf2_core::gfp::montgomery::from_mont]:
+    Source: 'crates/gf2-core/src/gfp/montgomery.rs', lines 101:0-103:1 -/
+def gfp.montgomery.from_mont (P : Std.U64) (a : Std.U64) : Result Std.U64 := do
+  let i ← lift (UScalar.cast .U128 a)
+  gfp.montgomery.redc P i
+
+/-- [gf2_core::gfp::{gf2_core::gfp::Fp<P>}::value]:
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 190:4-196:5
+    Visibility: public -/
+def gfp.Fp.value {P : Std.U64} (self : gfp.Fp P) : Result Std.U64 := do
+  if P = 2#u64
+  then ok self
+  else
+    let b ← gfp.use_specialized_storage P
+    if b
+    then ok self
+    else gfp.montgomery.from_mont P self
+
+/-- [gf2_core::gfp::{core::fmt::Debug for gf2_core::gfp::Fp<P>}::fmt]:
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 137:4-139:5
+    Visibility: public -/
+def gfp.Fp.Insts.CoreFmtDebug.fmt
+  {P : Std.U64} (self : gfp.Fp P) (f : core.fmt.Formatter) :
+  Result ((core.result.Result Unit core.fmt.Error) × core.fmt.Formatter)
+  := do
+  let i ← gfp.Fp.value self
+  let a ← core.fmt.rt.Argument.new_display U64.Insts.CoreFmtDisplay P
+  let a1 ← core.fmt.rt.Argument.new_display U64.Insts.CoreFmtDisplay i
+  let a2 ←
+    core.fmt.Arguments.new
+      (Array.make 12#usize [
+        3#u8, 70#u8, 112#u8, 60#u8, 192#u8, 2#u8, 62#u8, 40#u8, 192#u8, 1#u8,
+        41#u8, 0#u8
+        ]) (Array.make 2#usize [ a, a1 ])
+  core.fmt.Formatter.write_fmt f a2
+
+/-- Trait implementation: [gf2_core::gfp::{core::fmt::Debug for gf2_core::gfp::Fp<P>}]
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 136:0-140:1 -/
+@[reducible]
+def gfp.Fp.Insts.CoreFmtDebug (P : Std.U64) : core.fmt.Debug (gfp.Fp P) := {
+  fmt := gfp.Fp.Insts.CoreFmtDebug.fmt
+}
+
+/-- [gf2_core::gfp::{gf2_core::gfp::Fp<P>}::VALIDATED]
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 144:4-150:6 -/
+@[global_simps, irreducible]
+def gfp.Fp.VALIDATED (P : Std.U64) : Result Unit := do
+  massert (P > 1#u64)
+  let i ← 1#u64 <<< 63#i32
+  massert (P <= i)
+
+/-- [gf2_core::gfp::montgomery::compute_r_mod_p]:
+    Source: 'crates/gf2-core/src/gfp/montgomery.rs', lines 30:0-32:1 -/
+def gfp.montgomery.compute_r_mod_p (p : Std.U64) : Result Std.U64 := do
+  let i ← 1#u128 <<< 64#i32
+  let i1 ← lift (UScalar.cast .U128 p)
+  let i2 ← i % i1
+  ok (UScalar.cast .U64 i2)
+
+/-- [gf2_core::gfp::montgomery::compute_r2_mod_p]:
+    Source: 'crates/gf2-core/src/gfp/montgomery.rs', lines 39:0-42:1 -/
+def gfp.montgomery.compute_r2_mod_p (p : Std.U64) : Result Std.U64 := do
+  let i ← gfp.montgomery.compute_r_mod_p p
+  let r ← lift (UScalar.cast .U128 i)
+  let i1 ← r * r
+  let i2 ← lift (UScalar.cast .U128 p)
+  let i3 ← i1 % i2
+  ok (UScalar.cast .U64 i3)
+
+/-- [gf2_core::gfp::montgomery::{gf2_core::gfp::montgomery::MontConsts<P>}::R2_MOD_P]
+    Source: 'crates/gf2-core/src/gfp/montgomery.rs', lines 19:4-19:50
+    Visibility: public -/
+@[global_simps, irreducible]
+def gfp.montgomery.MontConsts.R2_MOD_P (P : Std.U64) : Result Std.U64 :=
+  gfp.montgomery.compute_r2_mod_p P
+
+/-- [gf2_core::gfp::montgomery::to_mont]:
+    Source: 'crates/gf2-core/src/gfp/montgomery.rs', lines 91:0-93:1 -/
+def gfp.montgomery.to_mont (P : Std.U64) (a : Std.U64) : Result Std.U64 := do
+  let i ← lift (UScalar.cast .U128 a)
+  let i1 ← gfp.montgomery.MontConsts.R2_MOD_P P
+  let i2 ← lift (UScalar.cast .U128 i1)
+  let i3 ← i * i2
+  gfp.montgomery.redc P i3
+
+/-- [gf2_core::gfp::{gf2_core::gfp::Fp<P>}::new]:
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 167:4-178:5
+    Visibility: public -/
+def gfp.Fp.new (P : Std.U64) (value : Std.U64) : Result (gfp.Fp P) := do
+  gfp.Fp.VALIDATED P
+  let reduced ← value % P
+  if P = 2#u64
+  then ok reduced
+  else
+    let b ← gfp.use_specialized_storage P
+    if b
+    then ok reduced
+    else let i ← gfp.montgomery.to_mont P reduced
+         ok i
+
+/-- [gf2_core::gfp::{gf2_core::gfp::Fp<P>}::raw_storage]:
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 214:4-216:5 -/
+def gfp.Fp.raw_storage {P : Std.U64} (self : gfp.Fp P) : Result Std.U64 := do
+  ok self
+
+/-- [gf2_core::gfp::{gf2_core::gfp::Fp<P>}::from_raw_storage]:
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 230:4-232:5 -/
+def gfp.Fp.from_raw_storage
+  (P : Std.U64) (raw1 : Std.U64) : Result (gfp.Fp P) := do
+  ok raw1
+
 /-- [gf2_core::gfp::specialized::proth_reduce_u64]:
     Source: 'crates/gf2-core/src/gfp/specialized.rs', lines 394:0-402:1
     Visibility: public -/
@@ -599,7 +607,7 @@ def gfp.specialized.proth_reduce_u64
   x % p
 
 /-- [gf2_core::gfp::dispatch_proth_mul]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 287:0-307:1 -/
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 276:0-296:1 -/
 def gfp.dispatch_proth_mul
   (k : Std.U64) (n : Std.U32) (a : Std.U64) (b : Std.U64) :
   Result Std.U64
@@ -712,7 +720,7 @@ def gfp.specialized.mersenne_reduce
     else ok sub
 
 /-- [gf2_core::gfp::dispatch_mersenne_mul]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 270:0-284:1 -/
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 259:0-273:1 -/
 def gfp.dispatch_mersenne_mul
   (n : Std.U32) (a : Std.U64) (b : Std.U64) : Result Std.U64 := do
   match n with
@@ -734,7 +742,7 @@ def gfp.dispatch_mersenne_mul
     ok (UScalar.cast .U64 i4)
 
 /-- [gf2_core::gfp::specialized_mul]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 250:0-264:1 -/
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 239:0-253:1 -/
 def gfp.specialized_mul
   (P : Std.U64) (a : Std.U64) (b : Std.U64) : Result Std.U64 := do
   let ps ← gfp.specialized.classify P
@@ -757,7 +765,7 @@ def gfp.specialized_mul
     ok (UScalar.cast .U64 i4)
 
 /-- [gf2_core::gfp::{core::fmt::Display for gf2_core::gfp::Fp<P>}::fmt]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 310:4-312:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 299:4-301:5
     Visibility: public -/
 def gfp.Fp.Insts.CoreFmtDisplay.fmt
   {P : Std.U64} (self : gfp.Fp P) (f : core.fmt.Formatter) :
@@ -771,7 +779,7 @@ def gfp.Fp.Insts.CoreFmtDisplay.fmt
   core.fmt.Formatter.write_fmt f a1
 
 /-- Trait implementation: [gf2_core::gfp::{core::fmt::Display for gf2_core::gfp::Fp<P>}]
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 309:0-313:1 -/
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 298:0-302:1 -/
 @[reducible]
 def gfp.Fp.Insts.CoreFmtDisplay (P : Std.U64) : core.fmt.Display (gfp.Fp P)
   := {
@@ -801,7 +809,7 @@ def gfp.montgomery.mont_add
   ok (core.num.U64.wrapping_add result correction)
 
 /-- [gf2_core::gfp::{core::ops::arith::Add<gf2_core::gfp::Fp<P>, gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}::add]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 333:4-339:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 322:4-328:5
     Visibility: public -/
 def gfp.Fp.Insts.CoreOpsArithAddFpFp.add
   {P : Std.U64} (self : gfp.Fp P) (rhs : gfp.Fp P) : Result (gfp.Fp P) := do
@@ -813,7 +821,7 @@ def gfp.Fp.Insts.CoreOpsArithAddFpFp.add
        ok i
 
 /-- Trait implementation: [gf2_core::gfp::{core::ops::arith::Add<gf2_core::gfp::Fp<P>, gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}]
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 319:0-340:1 -/
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 308:0-329:1 -/
 @[reducible]
 def gfp.Fp.Insts.CoreOpsArithAddFpFp (P : Std.U64) : core.ops.arith.Add (gfp.Fp
   P) (gfp.Fp P) (gfp.Fp P) := {
@@ -841,7 +849,7 @@ def gfp.montgomery.mont_sub
   ok (core.num.U64.wrapping_add result correction)
 
 /-- [gf2_core::gfp::{core::ops::arith::Sub<gf2_core::gfp::Fp<P>, gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}::sub]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 351:4-357:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 340:4-346:5
     Visibility: public -/
 def gfp.Fp.Insts.CoreOpsArithSubFpFp.sub
   {P : Std.U64} (self : gfp.Fp P) (rhs : gfp.Fp P) : Result (gfp.Fp P) := do
@@ -853,7 +861,7 @@ def gfp.Fp.Insts.CoreOpsArithSubFpFp.sub
        ok i
 
 /-- Trait implementation: [gf2_core::gfp::{core::ops::arith::Sub<gf2_core::gfp::Fp<P>, gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}]
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 342:0-358:1 -/
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 331:0-347:1 -/
 @[reducible]
 def gfp.Fp.Insts.CoreOpsArithSubFpFp (P : Std.U64) : core.ops.arith.Sub (gfp.Fp
   P) (gfp.Fp P) (gfp.Fp P) := {
@@ -861,7 +869,7 @@ def gfp.Fp.Insts.CoreOpsArithSubFpFp (P : Std.U64) : core.ops.arith.Sub (gfp.Fp
 }
 
 /-- [gf2_core::gfp::{core::ops::arith::Mul<gf2_core::gfp::Fp<P>, gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}::mul]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 374:4-382:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 363:4-371:5
     Visibility: public -/
 def gfp.Fp.Insts.CoreOpsArithMulFpFp.mul
   {P : Std.U64} (self : gfp.Fp P) (rhs : gfp.Fp P) : Result (gfp.Fp P) := do
@@ -881,7 +889,7 @@ def gfp.Fp.Insts.CoreOpsArithMulFpFp.mul
       ok i3
 
 /-- Trait implementation: [gf2_core::gfp::{core::ops::arith::Mul<gf2_core::gfp::Fp<P>, gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}]
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 360:0-383:1 -/
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 349:0-372:1 -/
 @[reducible]
 def gfp.Fp.Insts.CoreOpsArithMulFpFp (P : Std.U64) : core.ops.arith.Mul (gfp.Fp
   P) (gfp.Fp P) (gfp.Fp P) := {
@@ -889,7 +897,7 @@ def gfp.Fp.Insts.CoreOpsArithMulFpFp (P : Std.U64) : core.ops.arith.Mul (gfp.Fp
 }
 
 /-- [gf2_core::gfp::{core::ops::arith::Neg<gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}::neg]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 396:4-402:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 385:4-391:5
     Visibility: public -/
 def gfp.Fp.Insts.CoreOpsArithNegFp.neg
   {P : Std.U64} (self : gfp.Fp P) : Result (gfp.Fp P) := do
@@ -899,7 +907,7 @@ def gfp.Fp.Insts.CoreOpsArithNegFp.neg
        ok i
 
 /-- Trait implementation: [gf2_core::gfp::{core::ops::arith::Neg<gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}]
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 385:0-403:1 -/
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 374:0-392:1 -/
 @[reducible]
 def gfp.Fp.Insts.CoreOpsArithNegFp (P : Std.U64) : core.ops.arith.Neg (gfp.Fp
   P) (gfp.Fp P) := {
@@ -962,7 +970,7 @@ def gfp.montgomery.mod_pow_mont
   gfp.montgomery.mod_pow_mont_loop P base exp result
 
 /-- [gf2_core::gfp::{gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::inv]: loop body 0:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 565:12-573:13
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 554:12-562:13
     Visibility: public -/
 @[rust_loop_body]
 def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.inv_loop.body
@@ -985,7 +993,7 @@ def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.inv_loop.body
   else ok (done result)
 
 /-- [gf2_core::gfp::{gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::inv]: loop 0:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 565:12-573:13
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 554:12-562:13
     Visibility: public -/
 @[rust_loop]
 def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.inv_loop
@@ -999,7 +1007,7 @@ def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.inv_loop
     (result, base, e)
 
 /-- [gf2_core::gfp::{gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::inv]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 555:4-578:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 544:4-567:5
     Visibility: public -/
 def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.inv
   {P : Std.U64} (self : gfp.Fp P) : Result (Option (gfp.Fp P)) := do
@@ -1023,7 +1031,7 @@ def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.inv
         ok (some i1)
 
 /-- [gf2_core::gfp::{core::ops::arith::Div<gf2_core::gfp::Fp<P>, gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}::div]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 419:4-421:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 408:4-410:5
     Visibility: public -/
 def gfp.Fp.Insts.CoreOpsArithDivFpFp.div
   {P : Std.U64} (self : gfp.Fp P) (rhs : gfp.Fp P) : Result (gfp.Fp P) := do
@@ -1032,7 +1040,7 @@ def gfp.Fp.Insts.CoreOpsArithDivFpFp.div
   gfp.Fp.Insts.CoreOpsArithMulFpFp.mul self f
 
 /-- Trait implementation: [gf2_core::gfp::{core::ops::arith::Div<gf2_core::gfp::Fp<P>, gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}]
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 405:0-422:1 -/
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 394:0-411:1 -/
 @[reducible]
 def gfp.Fp.Insts.CoreOpsArithDivFpFp (P : Std.U64) : core.ops.arith.Div (gfp.Fp
   P) (gfp.Fp P) (gfp.Fp P) := {
@@ -1040,14 +1048,14 @@ def gfp.Fp.Insts.CoreOpsArithDivFpFp (P : Std.U64) : core.ops.arith.Div (gfp.Fp
 }
 
 /-- [gf2_core::gfp::{core::ops::arith::AddAssign<gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}::add_assign]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 430:4-432:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 419:4-421:5
     Visibility: public -/
 def gfp.Fp.Insts.CoreOpsArithAddAssignFp.add_assign
   {P : Std.U64} (self : gfp.Fp P) (rhs : gfp.Fp P) : Result (gfp.Fp P) := do
   gfp.Fp.Insts.CoreOpsArithAddFpFp.add self rhs
 
 /-- Trait implementation: [gf2_core::gfp::{core::ops::arith::AddAssign<gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}]
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 428:0-433:1 -/
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 417:0-422:1 -/
 @[reducible]
 def gfp.Fp.Insts.CoreOpsArithAddAssignFp (P : Std.U64) :
   core.ops.arith.AddAssign (gfp.Fp P) (gfp.Fp P) := {
@@ -1055,14 +1063,14 @@ def gfp.Fp.Insts.CoreOpsArithAddAssignFp (P : Std.U64) :
 }
 
 /-- [gf2_core::gfp::{core::ops::arith::AddAssign<&0 (gf2_core::gfp::Fp<P>)> for gf2_core::gfp::Fp<P>}::add_assign]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 437:4-439:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 426:4-428:5
     Visibility: public -/
 def gfp.Fp.Insts.CoreOpsArithAddAssignShared0Fp.add_assign
   {P : Std.U64} (self : gfp.Fp P) (rhs : gfp.Fp P) : Result (gfp.Fp P) := do
   gfp.Fp.Insts.CoreOpsArithAddFpFp.add self rhs
 
 /-- Trait implementation: [gf2_core::gfp::{core::ops::arith::AddAssign<&0 (gf2_core::gfp::Fp<P>)> for gf2_core::gfp::Fp<P>}]
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 435:0-440:1 -/
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 424:0-429:1 -/
 @[reducible]
 def gfp.Fp.Insts.CoreOpsArithAddAssignShared0Fp (P : Std.U64) :
   core.ops.arith.AddAssign (gfp.Fp P) (gfp.Fp P) := {
@@ -1070,14 +1078,14 @@ def gfp.Fp.Insts.CoreOpsArithAddAssignShared0Fp (P : Std.U64) :
 }
 
 /-- [gf2_core::gfp::{core::ops::arith::Add<&0 (gf2_core::gfp::Fp<P>), gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}::add]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 449:4-451:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 438:4-440:5
     Visibility: public -/
 def gfp.Fp.Insts.CoreOpsArithAddShared0FpFp.add
   {P : Std.U64} (self : gfp.Fp P) (rhs : gfp.Fp P) : Result (gfp.Fp P) := do
   gfp.Fp.Insts.CoreOpsArithAddFpFp.add self rhs
 
 /-- Trait implementation: [gf2_core::gfp::{core::ops::arith::Add<&0 (gf2_core::gfp::Fp<P>), gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}]
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 446:0-452:1 -/
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 435:0-441:1 -/
 @[reducible]
 def gfp.Fp.Insts.CoreOpsArithAddShared0FpFp (P : Std.U64) : core.ops.arith.Add
   (gfp.Fp P) (gfp.Fp P) (gfp.Fp P) := {
@@ -1085,14 +1093,14 @@ def gfp.Fp.Insts.CoreOpsArithAddShared0FpFp (P : Std.U64) : core.ops.arith.Add
 }
 
 /-- [gf2_core::gfp::{core::ops::arith::Add<&0 (gf2_core::gfp::Fp<P>), gf2_core::gfp::Fp<P>> for &0 (gf2_core::gfp::Fp<P>)}::add]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 457:4-459:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 446:4-448:5
     Visibility: public -/
 def Shared0Fp.Insts.CoreOpsArithAddShared0FpFp.add
   {P : Std.U64} (self : gfp.Fp P) (rhs : gfp.Fp P) : Result (gfp.Fp P) := do
   gfp.Fp.Insts.CoreOpsArithAddFpFp.add self rhs
 
 /-- Trait implementation: [gf2_core::gfp::{core::ops::arith::Add<&0 (gf2_core::gfp::Fp<P>), gf2_core::gfp::Fp<P>> for &0 (gf2_core::gfp::Fp<P>)}]
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 454:0-460:1 -/
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 443:0-449:1 -/
 @[reducible]
 def Shared0Fp.Insts.CoreOpsArithAddShared0FpFp (P : Std.U64) :
   core.ops.arith.Add (gfp.Fp P) (gfp.Fp P) (gfp.Fp P) := {
@@ -1100,14 +1108,14 @@ def Shared0Fp.Insts.CoreOpsArithAddShared0FpFp (P : Std.U64) :
 }
 
 /-- [gf2_core::gfp::{core::ops::arith::Sub<&0 (gf2_core::gfp::Fp<P>), gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}::sub]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 465:4-467:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 454:4-456:5
     Visibility: public -/
 def gfp.Fp.Insts.CoreOpsArithSubShared0FpFp.sub
   {P : Std.U64} (self : gfp.Fp P) (rhs : gfp.Fp P) : Result (gfp.Fp P) := do
   gfp.Fp.Insts.CoreOpsArithSubFpFp.sub self rhs
 
 /-- Trait implementation: [gf2_core::gfp::{core::ops::arith::Sub<&0 (gf2_core::gfp::Fp<P>), gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}]
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 462:0-468:1 -/
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 451:0-457:1 -/
 @[reducible]
 def gfp.Fp.Insts.CoreOpsArithSubShared0FpFp (P : Std.U64) : core.ops.arith.Sub
   (gfp.Fp P) (gfp.Fp P) (gfp.Fp P) := {
@@ -1115,14 +1123,14 @@ def gfp.Fp.Insts.CoreOpsArithSubShared0FpFp (P : Std.U64) : core.ops.arith.Sub
 }
 
 /-- [gf2_core::gfp::{core::ops::arith::Sub<&0 (gf2_core::gfp::Fp<P>), gf2_core::gfp::Fp<P>> for &0 (gf2_core::gfp::Fp<P>)}::sub]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 473:4-475:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 462:4-464:5
     Visibility: public -/
 def Shared0Fp.Insts.CoreOpsArithSubShared0FpFp.sub
   {P : Std.U64} (self : gfp.Fp P) (rhs : gfp.Fp P) : Result (gfp.Fp P) := do
   gfp.Fp.Insts.CoreOpsArithSubFpFp.sub self rhs
 
 /-- Trait implementation: [gf2_core::gfp::{core::ops::arith::Sub<&0 (gf2_core::gfp::Fp<P>), gf2_core::gfp::Fp<P>> for &0 (gf2_core::gfp::Fp<P>)}]
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 470:0-476:1 -/
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 459:0-465:1 -/
 @[reducible]
 def Shared0Fp.Insts.CoreOpsArithSubShared0FpFp (P : Std.U64) :
   core.ops.arith.Sub (gfp.Fp P) (gfp.Fp P) (gfp.Fp P) := {
@@ -1130,14 +1138,14 @@ def Shared0Fp.Insts.CoreOpsArithSubShared0FpFp (P : Std.U64) :
 }
 
 /-- [gf2_core::gfp::{core::ops::arith::Mul<&0 (gf2_core::gfp::Fp<P>), gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}::mul]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 481:4-483:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 470:4-472:5
     Visibility: public -/
 def gfp.Fp.Insts.CoreOpsArithMulShared0FpFp.mul
   {P : Std.U64} (self : gfp.Fp P) (rhs : gfp.Fp P) : Result (gfp.Fp P) := do
   gfp.Fp.Insts.CoreOpsArithMulFpFp.mul self rhs
 
 /-- Trait implementation: [gf2_core::gfp::{core::ops::arith::Mul<&0 (gf2_core::gfp::Fp<P>), gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}]
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 478:0-484:1 -/
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 467:0-473:1 -/
 @[reducible]
 def gfp.Fp.Insts.CoreOpsArithMulShared0FpFp (P : Std.U64) : core.ops.arith.Mul
   (gfp.Fp P) (gfp.Fp P) (gfp.Fp P) := {
@@ -1145,14 +1153,14 @@ def gfp.Fp.Insts.CoreOpsArithMulShared0FpFp (P : Std.U64) : core.ops.arith.Mul
 }
 
 /-- [gf2_core::gfp::{core::ops::arith::Mul<&0 (gf2_core::gfp::Fp<P>), gf2_core::gfp::Fp<P>> for &0 (gf2_core::gfp::Fp<P>)}::mul]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 489:4-491:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 478:4-480:5
     Visibility: public -/
 def Shared0Fp.Insts.CoreOpsArithMulShared0FpFp.mul
   {P : Std.U64} (self : gfp.Fp P) (rhs : gfp.Fp P) : Result (gfp.Fp P) := do
   gfp.Fp.Insts.CoreOpsArithMulFpFp.mul self rhs
 
 /-- Trait implementation: [gf2_core::gfp::{core::ops::arith::Mul<&0 (gf2_core::gfp::Fp<P>), gf2_core::gfp::Fp<P>> for &0 (gf2_core::gfp::Fp<P>)}]
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 486:0-492:1 -/
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 475:0-481:1 -/
 @[reducible]
 def Shared0Fp.Insts.CoreOpsArithMulShared0FpFp (P : Std.U64) :
   core.ops.arith.Mul (gfp.Fp P) (gfp.Fp P) (gfp.Fp P) := {
@@ -1160,14 +1168,14 @@ def Shared0Fp.Insts.CoreOpsArithMulShared0FpFp (P : Std.U64) :
 }
 
 /-- [gf2_core::gfp::{core::ops::arith::Div<&0 (gf2_core::gfp::Fp<P>), gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}::div]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 497:4-499:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 486:4-488:5
     Visibility: public -/
 def gfp.Fp.Insts.CoreOpsArithDivShared0FpFp.div
   {P : Std.U64} (self : gfp.Fp P) (rhs : gfp.Fp P) : Result (gfp.Fp P) := do
   gfp.Fp.Insts.CoreOpsArithDivFpFp.div self rhs
 
 /-- Trait implementation: [gf2_core::gfp::{core::ops::arith::Div<&0 (gf2_core::gfp::Fp<P>), gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}]
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 494:0-500:1 -/
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 483:0-489:1 -/
 @[reducible]
 def gfp.Fp.Insts.CoreOpsArithDivShared0FpFp (P : Std.U64) : core.ops.arith.Div
   (gfp.Fp P) (gfp.Fp P) (gfp.Fp P) := {
@@ -1175,14 +1183,14 @@ def gfp.Fp.Insts.CoreOpsArithDivShared0FpFp (P : Std.U64) : core.ops.arith.Div
 }
 
 /-- [gf2_core::gfp::{core::ops::arith::Div<&0 (gf2_core::gfp::Fp<P>), gf2_core::gfp::Fp<P>> for &0 (gf2_core::gfp::Fp<P>)}::div]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 505:4-507:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 494:4-496:5
     Visibility: public -/
 def Shared0Fp.Insts.CoreOpsArithDivShared0FpFp.div
   {P : Std.U64} (self : gfp.Fp P) (rhs : gfp.Fp P) : Result (gfp.Fp P) := do
   gfp.Fp.Insts.CoreOpsArithDivFpFp.div self rhs
 
 /-- Trait implementation: [gf2_core::gfp::{core::ops::arith::Div<&0 (gf2_core::gfp::Fp<P>), gf2_core::gfp::Fp<P>> for &0 (gf2_core::gfp::Fp<P>)}]
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 502:0-508:1 -/
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 491:0-497:1 -/
 @[reducible]
 def Shared0Fp.Insts.CoreOpsArithDivShared0FpFp (P : Std.U64) :
   core.ops.arith.Div (gfp.Fp P) (gfp.Fp P) (gfp.Fp P) := {
@@ -1190,14 +1198,14 @@ def Shared0Fp.Insts.CoreOpsArithDivShared0FpFp (P : Std.U64) :
 }
 
 /-- [gf2_core::gfp::{core::ops::arith::Neg<gf2_core::gfp::Fp<P>> for &0 (gf2_core::gfp::Fp<P>)}::neg]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 513:4-515:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 502:4-504:5
     Visibility: public -/
 def Shared0Fp.Insts.CoreOpsArithNegFp.neg
   {P : Std.U64} (self : gfp.Fp P) : Result (gfp.Fp P) := do
   gfp.Fp.Insts.CoreOpsArithNegFp.neg self
 
 /-- Trait implementation: [gf2_core::gfp::{core::ops::arith::Neg<gf2_core::gfp::Fp<P>> for &0 (gf2_core::gfp::Fp<P>)}]
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 510:0-516:1 -/
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 499:0-505:1 -/
 @[reducible]
 def Shared0Fp.Insts.CoreOpsArithNegFp (P : Std.U64) : core.ops.arith.Neg
   (gfp.Fp P) (gfp.Fp P) := {
@@ -1205,7 +1213,7 @@ def Shared0Fp.Insts.CoreOpsArithNegFp (P : Std.U64) : core.ops.arith.Neg
 }
 
 /-- [gf2_core::gfp::{gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::theorem_4_operand_bound]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 642:4-644:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 631:4-633:5
     Visibility: public -/
 def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.theorem_4_operand_bound
   (P : Std.U64) : Result Std.U128 := do
@@ -1213,7 +1221,7 @@ def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.theorem_4_operand_bound
   ok (core.num.U128.saturating_sub i 1#u128)
 
 /-- [gf2_core::gfp::{gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::max_unreduced_additions]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 624:4-635:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 613:4-624:5
     Visibility: public -/
 def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.max_unreduced_additions
   (P : Std.U64) : Result Std.Usize := do
@@ -1232,7 +1240,7 @@ def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.max_unreduced_additions
     else ok (UScalar.cast .Usize k)
 
 /-- [gf2_core::gfp::{gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::reduce_wide]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 620:4-622:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 609:4-611:5
     Visibility: public -/
 def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.reduce_wide
   (P : Std.U64) (wide : Std.U128) : Result (gfp.Fp P) := do
@@ -1242,7 +1250,7 @@ def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.reduce_wide
   gfp.Fp.new P i2
 
 /-- [gf2_core::gfp::{gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::mul_to_wide]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 615:4-617:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 604:4-606:5
     Visibility: public -/
 def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.mul_to_wide
   {P : Std.U64} (self : gfp.Fp P) (rhs : gfp.Fp P) : Result Std.U128 := do
@@ -1253,7 +1261,7 @@ def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.mul_to_wide
   i1 * i3
 
 /-- [gf2_core::gfp::{gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::to_wide]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 610:4-612:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 599:4-601:5
     Visibility: public -/
 def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.to_wide
   {P : Std.U64} (self : gfp.Fp P) : Result Std.U128 := do
@@ -1261,20 +1269,20 @@ def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.to_wide
   ok (UScalar.cast .U128 i)
 
 /-- [gf2_core::gfp::{gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::cardinality_log2_hint]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 602:4-607:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 591:4-596:5
     Visibility: public -/
 def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.cardinality_log2_hint
   (P : Std.U64) : Result (Option Std.U32) := by
   sorry
 /-- [gf2_core::gfp::{gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::zero_hint]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 595:4-597:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 584:4-586:5
     Visibility: public -/
 def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.zero_hint
   (P : Std.U64) : Result (Option (gfp.Fp P)) := do
   ok (some 0#u64)
 
 /-- [gf2_core::gfp::{gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::one_like]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 586:4-592:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 575:4-581:5
     Visibility: public -/
 def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.one_like
   {P : Std.U64} (self : gfp.Fp P) : Result (gfp.Fp P) := do
@@ -1288,14 +1296,14 @@ def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.one_like
          ok i
 
 /-- [gf2_core::gfp::{gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::zero_like]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 581:4-583:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 570:4-572:5
     Visibility: public -/
 def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.zero_like
   {P : Std.U64} (self : gfp.Fp P) : Result (gfp.Fp P) := do
   ok 0#u64
 
 /-- [gf2_core::gfp::{gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::is_one]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 542:4-548:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 531:4-537:5
     Visibility: public -/
 def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.is_one
   {P : Std.U64} (self : gfp.Fp P) : Result Bool := do
@@ -1309,27 +1317,27 @@ def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.is_one
          ok (self = i)
 
 /-- [gf2_core::gfp::{gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::is_zero]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 537:4-539:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 526:4-528:5
     Visibility: public -/
 def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.is_zero
   {P : Std.U64} (self : gfp.Fp P) : Result Bool := do
   ok (self = 0#u64)
 
 /-- [gf2_core::gfp::{gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::extension_degree]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 532:4-534:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 521:4-523:5
     Visibility: public -/
 def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.extension_degree
   {P : Std.U64} (self : gfp.Fp P) : Result Std.Usize := do
   ok 1#usize
 
 /-- [gf2_core::gfp::{gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::characteristic]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 527:4-529:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 516:4-518:5
     Visibility: public -/
 def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.characteristic
   {P : Std.U64} (self : gfp.Fp P) : Result Std.U64 := by
   sorry
 /-- Trait implementation: [gf2_core::gfp::{gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}]
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 522:0-645:1 -/
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 511:0-634:1 -/
 @[reducible]
 impl_def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128 (P : Std.U64) :
   field.traits.FiniteField (gfp.Fp P) Std.U64 Std.U128 := {
@@ -1386,14 +1394,14 @@ impl_def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128 (P : Std.U64) :
 }
 
 /-- [gf2_core::gfp::{gf2_core::field::traits::ConstField<u64, u128> for gf2_core::gfp::Fp<P>}::order]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 671:4-673:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 660:4-662:5
     Visibility: public -/
 def gfp.Fp.Insts.Gf2_coreFieldTraitsConstFieldU64U128.order
   (P : Std.U64) : Result Std.U128 := do
   ok (UScalar.cast .U128 P)
 
 /-- [gf2_core::gfp::{gf2_core::field::traits::ConstField<u64, u128> for gf2_core::gfp::Fp<P>}::one]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 660:4-668:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 649:4-657:5
     Visibility: public -/
 def gfp.Fp.Insts.Gf2_coreFieldTraitsConstFieldU64U128.one
   (P : Std.U64) : Result (gfp.Fp P) := do
@@ -1408,7 +1416,7 @@ def gfp.Fp.Insts.Gf2_coreFieldTraitsConstFieldU64U128.one
          ok i
 
 /-- [gf2_core::gfp::{gf2_core::field::traits::ConstField<u64, u128> for gf2_core::gfp::Fp<P>}::zero]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 653:4-657:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 642:4-646:5
     Visibility: public -/
 def gfp.Fp.Insts.Gf2_coreFieldTraitsConstFieldU64U128.zero
   (P : Std.U64) : Result (gfp.Fp P) := do
@@ -1416,7 +1424,7 @@ def gfp.Fp.Insts.Gf2_coreFieldTraitsConstFieldU64U128.zero
   ok 0#u64
 
 /-- Trait implementation: [gf2_core::gfp::{gf2_core::field::traits::ConstField<u64, u128> for gf2_core::gfp::Fp<P>}]
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 651:0-674:1 -/
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 640:0-663:1 -/
 @[reducible]
 def gfp.Fp.Insts.Gf2_coreFieldTraitsConstFieldU64U128 (P : Std.U64) :
   field.traits.ConstField (gfp.Fp P) Std.U64 Std.U128 := {

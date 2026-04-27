@@ -175,12 +175,6 @@ structure field.traits.ConstField (Self : Type) (Self_Clause0_Characteristic :
   one : Result Self
   order : Result Std.U128
 
-/-- [gf2_core::gfp::Fp]
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 145:0-145:33
-    Visibility: public -/
-@[reducible]
-def gfp.Fp (P : Std.U64) := Std.U64
-
 /-- [gf2_core::gfp::specialized::PrimeShape]
     Source: 'crates/gf2-core/src/gfp/specialized.rs', lines 102:0-121:1
     Visibility: public -/
@@ -190,6 +184,12 @@ inductive gfp.specialized.PrimeShape where
 | Proth : Std.U64 → Std.U32 → gfp.specialized.PrimeShape
 | Goldilocks : gfp.specialized.PrimeShape
 | Generic : gfp.specialized.PrimeShape
+
+/-- [gf2_core::gfp::Fp]
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 134:0-134:33
+    Visibility: public -/
+@[reducible]
+def gfp.Fp (P : Std.U64) := Std.U64
 
 /-- [gf2_core::gfp::montgomery::MontConsts]
     Source: 'crates/gf2-core/src/gfp/montgomery.rs', lines 12:0-12:43 -/

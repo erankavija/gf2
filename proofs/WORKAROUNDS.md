@@ -67,8 +67,10 @@ declaration checking because the associated const's type is the associated type
 `Self::BaseField`; the diagnostic is "Found incorrect clause var" followed by a
 Charon stack overflow. During `scripts/verify-lean.sh` only, the script passes
 `--cfg=verify_lean`, and `ExtConfig` exposes the same β accessor as a trait
-method (`non_residue`) rather than that associated const. Normal Rust builds
-keep the public associated const API.
+method (`NON_RESIDUE()`) rather than that associated const. The uppercase method
+name is deliberate: it preserves the generated Lean trait-field name used by the
+normal associated const, minimizing extraction-only proof drift. Normal Rust
+builds keep the public associated const API.
 
 The same Charon version can overflow after the const workaround when starting
 from the whole crate. `verify-lean.sh` therefore starts extraction from the
@@ -83,11 +85,6 @@ If Aeneas emits an opaque `Gf2mElement_` external signature that refers to the
 sealed `UintExt` trait, `verify-lean.sh` adds only that opaque trait axiom to
 `TypesExternal.lean` and removes any duplicate generated `UintExt` declaration
 from `Types.lean`. This is outside the `gfp/` and `gfpn/` proof target.
-
-The existing `Fp<P>` progress proofs cover the Montgomery-backed storage path.
-For `cfg(verify_lean)` only, `gfp::use_specialized_storage` returns `false` so
-the extracted `new`/`value`/`inv` bodies keep that proved path. Production Rust
-builds still use the specialized Mersenne/Proth classifier.
 
 ## gf2m/ selective extraction
 
