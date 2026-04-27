@@ -10,9 +10,16 @@
   ],
   "gates_required": [
     "cargo-ci",
-    "code-review"
+    "code-review",
+    "asm-artefact-present"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "asm-artefact-present": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-04-27T20:43:08.040467615Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -22,5 +29,5 @@
     "story:ppc-infrastructure"
   ],
   "created_at": "2026-04-27T10:49:35.910310106+00:00",
-  "updated_at": "2026-04-27T20:36:00.299469077+00:00"
+  "updated_at": "2026-04-27T20:43:08.040567675+00:00"
 }
