@@ -8,6 +8,7 @@ mod avx2;
 
 pub(crate) mod clmul;
 pub(crate) mod fp65537;
+pub(crate) mod fp_generic;
 pub(crate) mod gf2m_wide;
 pub(crate) mod mersenne;
 

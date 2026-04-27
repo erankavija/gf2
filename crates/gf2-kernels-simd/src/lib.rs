@@ -14,6 +14,7 @@ mod x86;
 
 pub mod clmul_scalar;
 pub mod fp65537;
+pub mod fp_generic;
 pub mod gf2m;
 pub mod gf2m_wide;
 pub mod llr;

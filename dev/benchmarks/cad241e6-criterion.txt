@@ -1,0 +1,49 @@
+   Compiling gf2-core v0.1.0 (/home/vkaskivuo/Projects/gf2/.claude/worktrees/agent-cad241e6/crates/gf2-core)
+    Finished `bench` profile [optimized] target(s) in 9.34s
+     Running benches/fp_specialized.rs (target-cad241e6/release/deps/fp_specialized-4fde1a7ae5d36753)
+Benchmarking fp_generic_near_m31_fieldvec_mul_dispatch
+Benchmarking fp_generic_near_m31_fieldvec_mul_dispatch: Warming up for 3.0000 s
+Benchmarking fp_generic_near_m31_fieldvec_mul_dispatch: Collecting 100 samples in estimated 5.0045 s (3.0M iterations)
+Benchmarking fp_generic_near_m31_fieldvec_mul_dispatch: Analyzing
+fp_generic_near_m31_fieldvec_mul_dispatch
+                        time:   [1.6595 µs 1.6630 µs 1.6667 µs]
+Found 12 outliers among 100 measurements (12.00%)
+  6 (6.00%) low mild
+  4 (4.00%) high mild
+  2 (2.00%) high severe
+
+Benchmarking fp_generic_near_m31_fieldvec_mul_scalar_loop
+Benchmarking fp_generic_near_m31_fieldvec_mul_scalar_loop: Warming up for 3.0000 s
+Benchmarking fp_generic_near_m31_fieldvec_mul_scalar_loop: Collecting 100 samples in estimated 5.0058 s (2.9M iterations)
+Benchmarking fp_generic_near_m31_fieldvec_mul_scalar_loop: Analyzing
+fp_generic_near_m31_fieldvec_mul_scalar_loop
+                        time:   [1.7039 µs 1.7456 µs 1.8032 µs]
+Found 15 outliers among 100 measurements (15.00%)
+  6 (6.00%) low mild
+  5 (5.00%) high mild
+  4 (4.00%) high severe
+
+   Compiling gf2-core v0.1.0 (/home/vkaskivuo/Projects/gf2/.claude/worktrees/agent-cad241e6/crates/gf2-core)
+    Finished `bench` profile [optimized] target(s) in 7.66s
+     Running benches/fp_specialized.rs (target-cad241e6/release/deps/fp_specialized-4fde1a7ae5d36753)
+Benchmarking fp_generic_near_m61_fieldvec_mul_dispatch
+Benchmarking fp_generic_near_m61_fieldvec_mul_dispatch: Warming up for 3.0000 s
+Benchmarking fp_generic_near_m61_fieldvec_mul_dispatch: Collecting 100 samples in estimated 5.0037 s (3.1M iterations)
+Benchmarking fp_generic_near_m61_fieldvec_mul_dispatch: Analyzing
+fp_generic_near_m61_fieldvec_mul_dispatch
+                        time:   [1.6193 µs 1.6234 µs 1.6286 µs]
+Found 8 outliers among 100 measurements (8.00%)
+  2 (2.00%) low severe
+  2 (2.00%) high mild
+  4 (4.00%) high severe
+
+Benchmarking fp_generic_near_m61_fieldvec_mul_scalar_loop
+Benchmarking fp_generic_near_m61_fieldvec_mul_scalar_loop: Warming up for 3.0000 s
+Benchmarking fp_generic_near_m61_fieldvec_mul_scalar_loop: Collecting 100 samples in estimated 5.0012 s (3.4M iterations)
+Benchmarking fp_generic_near_m61_fieldvec_mul_scalar_loop: Analyzing
+fp_generic_near_m61_fieldvec_mul_scalar_loop
+                        time:   [1.4570 µs 1.4608 µs 1.4646 µs]
+Found 11 outliers among 100 measurements (11.00%)
+  8 (8.00%) low mild
+  3 (3.00%) high severe
+
