@@ -63,7 +63,16 @@ if ! command -v jq >/dev/null 2>&1; then
 fi
 
 # Extract the first label of form `ppc-kernel:<id>`. Strip the prefix.
-KERNEL_ID=$(jq -r '.labels // [] | map(select(startswith("ppc-kernel:"))) | .[0] // empty | sub("^ppc-kernel:"; "")' "$JIT_CONTEXT_FILE")
+#
+# JIT's --pass-context serializes a GateContext envelope with issue data under
+# `.issue`, while direct/local smoke tests may pass a raw issue JSON object.
+# Accept both shapes so this wrapper remains usable in either mode.
+KERNEL_ID=$(jq -r '
+    ((.issue.labels? // .labels? // [])
+      | map(select(startswith("ppc-kernel:")))
+      | .[0] // empty
+      | sub("^ppc-kernel:"; ""))
+' "$JIT_CONTEXT_FILE")
 
 if [[ -z "$KERNEL_ID" ]]; then
     {
