@@ -250,7 +250,7 @@ let result = input.iter()
 
 ## MSRV and Dependencies
 
-- **Minimum Supported Rust Version (MSRV)**: 1.74
+- **Minimum Supported Rust Version (MSRV)**: 1.95
 - Keep dependencies minimal
 - Use standard library features when possible
 - Dev dependencies: `proptest` for property tests, `criterion` for benchmarks

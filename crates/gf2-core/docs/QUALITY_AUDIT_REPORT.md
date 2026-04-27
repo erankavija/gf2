@@ -1,5 +1,11 @@
 # Quality Audit Report - gf2-core
 
+> **Historical record.** This audit was conducted on 2025-12-01 against
+> workspace MSRV 1.80. The workspace MSRV was subsequently bumped to 1.95
+> on 2026-04-27 (JIT issue `c7e91dfd`); MSRV references below reflect the
+> audit's point-in-time state and are intentionally preserved for audit
+> traceability. The current MSRV is documented in `CLAUDE.md`.
+
 **Project Version**: 0.1.0  
 **Audit Started**: 2025-12-01  
 **Audit Status**: Phase 1 & 2 Complete ✅ (Phase 3 spot-checked)

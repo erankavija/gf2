@@ -180,12 +180,12 @@ fast path.
   benchmarked workload.
 
 - **`mul_fast` is the only NTT entry point.** `FieldPoly::mul_ntt` is
-  inherently specialised to `TwoAdicField`, and Rust coherence on
-  MSRV-1.80 prevents a second `impl Mul` variant that picks the NTT path
+  inherently specialised to `TwoAdicField`, and Rust coherence
+  prevents a second `impl Mul` variant that picks the NTT path
   automatically. Call sites on `TwoAdicField` that want the fast product
   must therefore reach for `mul_fast` (or `mul_ntt`) explicitly — the
-  `Mul` operator stays on the Karatsuba path. A future MSRV bump to a
-  stabilised `specialization` feature would let the dispatcher fold into
+  `Mul` operator stays on the Karatsuba path. A future stabilisation of
+  the `specialization` feature would let the dispatcher fold into
   the operator itself; until then, the free function is the canonical
   entry point. The same coherence constraint is why
   `FieldPoly::batch_evaluate_auto` lives under
@@ -205,7 +205,7 @@ fast path.
   unlocks the `O(n log² n)` asymptotic above `SUBPRODUCT_THRESHOLD`).
   `TwoAdicField` call-sites that want the threshold-tuned dispatch
   should use `interpolate_auto_two_adic`, the sibling dispatcher over
-  `interpolate` + `interpolate_fast_auto`. Rust coherence on MSRV-1.80
+  `interpolate` + `interpolate_fast_auto`. Rust coherence
   forbids a second `pub fn interpolate_auto` specialised on
   `TwoAdicField`, so the two dispatchers live under distinct names.
 
