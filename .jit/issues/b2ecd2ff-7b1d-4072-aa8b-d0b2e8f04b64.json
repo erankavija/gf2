@@ -2,9 +2,9 @@
   "id": "b2ecd2ff-7b1d-4072-aa8b-d0b2e8f04b64",
   "title": "Pin criterion baselines for all targeted kernels",
   "description": "Pin the current criterion baseline for every Tier A–D kernel and commit a JSON manifest mapping each kernel to its baseline name and measurement commit. This is the V0 reference against which every subsequent spiral step proves its gain.\n\n## Background\n\nThe PPC methodology requires a stable, version-pinned baseline so before/after measurements compare against an immutable reference. The committed `target/criterion/` directory has recent runs (Apr 18–25, 2026) but no version-pinning. This task runs `cargo bench -p gf2-core --bench <kernel-bench> -- --save-baseline ppc-v0-2026-04-25` for every targeted bench and records the manifest at `dev/benchmarks/ppc-baselines.json`.\n\nBenches to baseline: `matrix_vector` (A1), `matmul` (A2 and B3), `fp_specialized` + `fieldvec_dot_product` (A3, C3, C4, C5), `gf2m_mul_strategies` and `gf2m_wide_mul` (C1, C2), `m4rm_components` and `m4rm_profile` (B2, B3), `sparse` (D1, D2). The transpose kernel has no dedicated bench yet — B1 creates one before its first edit.\n\n## Success Criteria\n\n- [hard] `dev/benchmarks/ppc-baselines.json` exists, valid JSON, contains an entry for every Tier A–D kernel with `baseline_name`, `commit_hash`, `bench_target`, and design-size-class fields.\n- [hard] All baselines exist under `target/criterion/<benchmark>/<baseline-name>/`.\n- [hard] Re-running `cargo bench -p gf2-core --bench <bench> -- --baseline ppc-v0-2026-04-25` succeeds without modification.\n\n## Notes\n\nSpec doc: `dev/plans/gf2_core_ppc_spiral.md`.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [
     "c7791a20-28dd-4fdf-a5a4-78f4d38b3b19"
   ],
@@ -22,5 +22,5 @@
     "story:ppc-infrastructure"
   ],
   "created_at": "2026-04-25T15:16:20.305697666+00:00",
-  "updated_at": "2026-04-26T19:54:09.090198584+00:00"
+  "updated_at": "2026-04-27T05:28:06.076074881+00:00"
 }
