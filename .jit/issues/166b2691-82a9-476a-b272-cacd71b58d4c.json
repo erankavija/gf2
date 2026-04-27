@@ -2,7 +2,7 @@
   "id": "166b2691-82a9-476a-b272-cacd71b58d4c",
   "title": "PPC-spiral measurement infrastructure",
   "description": "Cross-cutting infrastructure that must land before any kernel work in the gf2-core PPC-spiral epic. Establishes the pinned baseline, the geomean-comparison harness, the asm-artefact convention, and the proptest equivalence helper.\n\n## Background\n\nThe PPC methodology requires four pieces of infrastructure to enforce proof-of-gain at every spiral step: (1) a pinned criterion baseline so before/after measurements compare against a stable reference, (2) a geomean-comparison harness that exits non-zero if a kernel falls below the $1.5\\times$ bar, (3) an asm-artefact convention so reviewers can confirm the expected mnemonics actually emitted, and (4) a proptest helper that proves bit-exact equivalence between scalar and SIMD paths.\n\nThis story has four child tasks: I1 pins baselines, I2 adds the compare harness and registers the `criterion-1.5x` gate, I3 adds the asm-regen script and registers the `asm-artefact-present` gate, I4 adds the proptest scaffolding. Without all four landed, no downstream tier task can prove its gain.\n\n## Success Criteria\n\n- [hard] `dev/benchmarks/ppc-baselines.json` exists, valid JSON, contains an entry for every Tier A–D kernel with `baseline_name`, `commit_hash`, `bench_target`.\n- [hard] `dev/benchmarks/ppc-compare.sh <kernel-id>` exits 0 if geomean speedup $\\geq 1.5\\times$, else exits 1 with a diff table.\n- [hard] JIT gates `criterion-1.5x` and `asm-artefact-present` are registered in the gate registry.\n- [hard] Proptest helper at `crates/gf2-core/tests/simd_equiv/mod.rs` compiles and is unit-tested with a trivial SIMD/scalar pair (the existing `LogicalFns::xor_fn`).\n\n## Notes\n\nWord-boundary lengths to test: `[0, 1, 63, 64, 65, 127, 128, 129, 255, 256, 257]`. Helper covers unaligned slice offsets 0..7 within an over-allocated buffer.",
-  "state": "backlog",
+  "state": "ready",
   "priority": "normal",
   "assignee": null,
   "dependencies": [
@@ -30,5 +30,5 @@
     "story:ppc-infrastructure"
   ],
   "created_at": "2026-04-25T15:15:09.453383205+00:00",
-  "updated_at": "2026-04-27T11:46:11.444947786+00:00"
+  "updated_at": "2026-04-27T18:55:23.896812499+00:00"
 }
