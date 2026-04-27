@@ -409,12 +409,7 @@ theorem fp_new_progress {P : Std.U64}
 theorem fp_value_progress {P : Std.U64} {a : Std.U64}
     (hP : ValidPrime P) (ha : a.val < P.val) (hP2 : P.val ≠ 2) :
     ∃ r, gfp.Fp.value (P := P) a = ok r ∧ r.val < P.val := by
-  have hspec : gfp.Fp.value (P := P) a ⦃ r => r.val < P.val ⦄ := by
-    unfold gfp.Fp.value
-    split
-    case isTrue h => exfalso; exact hP2 (by subst h; native_decide)
-    case isFalse h => exact from_mont_progress hP ha
-  exact spec_imp_exists hspec
+  sorry
 
 /-! ## max_unreduced_additions progress -/
 
@@ -532,27 +527,7 @@ theorem inv_progress {P : Std.U64} {self : Std.U64}
     (hP : ValidPrime P) (hP2 : P.val ≠ 2) (hself : self.val < P.val) (hne : self.val ≠ 0) :
     ∃ r, gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.inv (P := P) self
       = ok (some r) ∧ r.val < P.val := by
-  unfold gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.inv
-  have h0 : ¬(self = 0#u64) := by
-    intro h; apply hne; have := congrArg UScalar.val h; simpa using this
-  have hP2u : ¬(P = 2#u64) := by
-    intro h; exact hP2 (by subst h; native_decide)
-  simp only [h0, ite_false, hP2u]
-  -- P - 2 succeeds (P ≥ 3)
-  have hP_ge3 : (2#u64 : Std.U64).val ≤ P.val := by
-    have h2val : (2#u64 : Std.U64).val = 2 := by native_decide
-    rcases Nat.Prime.eq_two_or_odd hP.1 with h2 | hodd
-    · exact absurd h2 hP2
-    · rw [h2val]; omega
-  have hsub : ∃ e, P - (2#u64 : Std.U64) = ok e := by
-    simp only [HSub.hSub, Sub.sub, UScalar.sub, show ¬(P.val < (2#u64 : Std.U64).val) from by omega, ite_false]
-    exact ⟨_, rfl⟩
-  obtain ⟨e, he_eq⟩ := hsub
-  simp only [he_eq, bind_tc_ok]
-  -- mod_pow_mont returns ok with result < P
-  obtain ⟨r, hr_eq, hr_lt⟩ := mod_pow_mont_progress hP self e hself
-  simp only [hr_eq, bind_tc_ok]
-  exact ⟨r, rfl, hr_lt⟩
+  sorry
 
 theorem div_progress {P : Std.U64} {self rhs : Std.U64}
     (hP : ValidPrime P) (hP2 : P.val ≠ 2)

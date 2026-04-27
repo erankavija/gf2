@@ -4,9 +4,9 @@ Machine-checked correctness proofs for `gf2-core` finite-field arithmetic. Lean4
 
 ## Scope
 
-Currently extracted and verified:
+Currently extracted and checked:
 
-- **`gfp/`** — `Fp<const P: u64>` prime field with Montgomery multiplication, including the specialized Mersenne/Proth backends.
+- **`gfp/`** — `Fp<const P: u64>` prime field arithmetic. The extraction keeps the live `use_specialized_storage` classifier transparent, so the generated Lean code still contains the production Mersenne/Proth storage-selection branch instead of collapsing all primes to Montgomery form.
 - **`gfpn/`** — `QuadraticExt<C>` and `CubicExt<C>` tower extensions over the `ExtConfig` trait.
 - **`gf2m/`** — bit-level GF(2^m) arithmetic: addition, raw multiplication, inversion.
 
@@ -92,4 +92,4 @@ See `dev/lean4-verification-pipeline.md` for the full rebuild procedure and the 
 
 ## Status
 
-All committed proofs check with **zero `sorry`s and zero axioms** across the prime field, tower extensions, and GF(2^m). This includes the Newton-iteration `p_inv_value_spec` and the full `montgomery_roundtrip` chain — both previously tracked gaps are closed.
+The committed Lean project builds with `lake build`, and the full regeneration pipeline (`./scripts/verify-lean.sh`) succeeds with the toolchain described above. The generated extraction still uses a small set of documented external axioms for opaque standard-library/out-of-scope items, and some hand-written progress lemmas remain admitted with `sorry`; do not treat the current tree as a zero-axiom/zero-sorry proof corpus. The strongest completed prime-field results remain centered on the Montgomery-backed path (for example `montgomery_roundtrip` and related modular-arithmetic lemmas), while the extracted Rust surface now also exposes the specialized-prime selection path for future proof work.

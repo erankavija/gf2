@@ -74,20 +74,9 @@ use crate::field::{ConstField, FiniteField};
 /// round-trip. For generic primes (and for small primes such as `P = 2` or
 /// `P = 65537` where Montgomery is already competitive) this is `false`.
 const fn use_specialized_storage(p: u64) -> bool {
-    // The Lean proofs currently target the Montgomery-backed `Fp<P>` path.
-    // Keep that extraction stable; production Rust builds still exercise the
-    // specialized-storage classifier below.
-    #[cfg(verify_lean)]
-    {
-        let _ = p;
-        return false;
-    }
-
-    #[cfg(not(verify_lean))]
     if p == 2 {
         return false;
     }
-    #[cfg(not(verify_lean))]
     match classify(p) {
         PrimeShape::Mersenne { n } => n >= 31,
         // Proth primes with n >= 24 benefit because the divisor fits in
