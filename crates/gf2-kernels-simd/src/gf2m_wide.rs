@@ -17,8 +17,8 @@
 //!
 //! 1. **AVX2 + VPCLMULQDQ** (YMM, 256-bit) — 2 clmuls per instruction,
 //!    16-product schoolbook in 8 instructions. Primary path on Zen 3.
-//! 2. **PCLMULQDQ** (XMM, 128-bit) — 1 clmul per instruction, 16-product
-//!    schoolbook in 16 instructions. Universal x86_64 fallback.
+//! 2. **PCLMULQDQ + SSE4.1** (XMM, 128-bit) — 1 clmul per instruction,
+//!    16-product schoolbook in 16 instructions. Universal x86_64 fallback.
 //! 3. `None` — callers fall back to pure-Rust `clmul_wide` in `gf2-core`.
 //!
 //! A ZMM (AVX-512VL + VPCLMULQDQ) lane is out of scope while the test host
@@ -50,7 +50,7 @@ pub struct ClmulWide256Fns {
 /// Detect and return the best available 4-limb carry-less multiply kernel.
 ///
 /// Returns `None` on non-x86 targets, or when the runtime CPU lacks
-/// PCLMULQDQ entirely. The preference order matches the module-level
+/// PCLMULQDQ/SSE4.1 entirely. The preference order matches the module-level
 /// documentation.
 pub fn detect() -> Option<ClmulWide256Fns> {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
@@ -74,7 +74,7 @@ fn detect_x86() -> Option<ClmulWide256Fns> {
     }
 
     // 2. XMM (PCLMULQDQ scalar-lane) — universal x86_64 fallback.
-    if is_x86_feature_detected!("pclmulqdq") {
+    if is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1") {
         return Some(ClmulWide256Fns {
             clmul: clmul_wide4_xmm_safe,
             name: "pclmulqdq-scalar-xmm",
@@ -94,8 +94,9 @@ fn detect_x86() -> Option<ClmulWide256Fns> {
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn clmul_wide4_xmm_safe(a: &[u64; 4], b: &[u64; 4], out: &mut [u64; 8]) {
-    // SAFETY: `detect_x86` only returns this pointer when PCLMULQDQ is
-    // available. Callers who bypass `detect` must uphold that precondition.
+    // SAFETY: `detect_x86` only returns this pointer when PCLMULQDQ and
+    // SSE4.1 are available. Callers who bypass `detect` must uphold that
+    // precondition.
     unsafe { crate::x86::gf2m_wide::clmul_wide4_xmm(a, b, out) }
 }
 
@@ -138,7 +139,7 @@ mod tests {
         #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
         {
             use std::arch::is_x86_feature_detected;
-            if is_x86_feature_detected!("pclmulqdq") {
+            if is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1") {
                 let fns = fns.expect("expected PCLMULQDQ-backed kernel on this host");
                 // Name must reflect the lane.
                 assert!(

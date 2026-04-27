@@ -19,7 +19,8 @@
 ///
 /// # Safety
 ///
-/// Requires the PCLMULQDQ CPU feature. Caller must verify availability before calling.
+/// Requires the PCLMULQDQ and SSE4.1 CPU features. Caller must verify
+/// availability before calling.
 ///
 /// # Usage
 ///
@@ -34,7 +35,7 @@
 ///
 /// O(1) -- single hardware instruction.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-#[target_feature(enable = "pclmulqdq")]
+#[target_feature(enable = "pclmulqdq", enable = "sse4.1")]
 pub unsafe fn clmul_u64(a: u64, b: u64) -> u128 {
     #[cfg(target_arch = "x86")]
     use std::arch::x86::*;
@@ -69,7 +70,8 @@ pub unsafe fn clmul_u64(a: u64, b: u64) -> u128 {
 ///
 /// # Safety
 ///
-/// Requires the PCLMULQDQ CPU feature. Caller must verify availability before calling.
+/// Requires the PCLMULQDQ and SSE4.1 CPU features. Caller must verify
+/// availability before calling.
 ///
 /// # Usage
 ///
@@ -86,7 +88,7 @@ pub unsafe fn clmul_u64(a: u64, b: u64) -> u128 {
 ///
 /// O(n) where n is the slice length. With VPCLMULQDQ (256-bit), processes 2 elements per instruction.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-#[target_feature(enable = "pclmulqdq")]
+#[target_feature(enable = "pclmulqdq", enable = "sse4.1")]
 pub unsafe fn clmul_batch(a: &[u64], b: &[u64], out: &mut [u128]) {
     assert_eq!(a.len(), b.len(), "input slices must have equal length");
     assert_eq!(
@@ -111,7 +113,7 @@ pub unsafe fn clmul_batch(a: &[u64], b: &[u64], out: &mut [u128]) {
 
 /// Sequential PCLMULQDQ fallback for batch carry-less multiplication.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-#[target_feature(enable = "pclmulqdq")]
+#[target_feature(enable = "pclmulqdq", enable = "sse4.1")]
 unsafe fn clmul_batch_sequential(a: &[u64], b: &[u64], out: &mut [u128]) {
     for i in 0..a.len() {
         out[i] = clmul_u64(a[i], b[i]);
@@ -190,7 +192,7 @@ unsafe fn clmul_batch_vpclmul(a: &[u64], b: &[u64], out: &mut [u128]) {
 ///
 /// # Safety
 ///
-/// Requires the PCLMULQDQ CPU feature.
+/// Requires the PCLMULQDQ and SSE4.1 CPU features.
 ///
 /// # Usage
 ///
@@ -206,7 +208,7 @@ unsafe fn clmul_batch_vpclmul(a: &[u64], b: &[u64], out: &mut [u128]) {
 ///
 /// O(1) — three PCLMULQDQ instructions plus constant-time correction.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-#[target_feature(enable = "pclmulqdq")]
+#[target_feature(enable = "pclmulqdq", enable = "sse4.1")]
 pub unsafe fn clmul_barrett_reduce(a: u64, b: u64, mu: u64, modulus: u64, degree: u32) -> u64 {
     #[cfg(target_arch = "x86")]
     use std::arch::x86::*;
@@ -278,8 +280,8 @@ mod tests {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn test_clmul_u64_matches_scalar() {
         use std::arch::is_x86_feature_detected;
-        if !is_x86_feature_detected!("pclmulqdq") {
-            eprintln!("Skipping: PCLMULQDQ not available");
+        if !(is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1")) {
+            eprintln!("Skipping: PCLMULQDQ+SSE4.1 not available");
             return;
         }
 
@@ -315,7 +317,7 @@ mod tests {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn test_clmul_u64_commutative() {
         use std::arch::is_x86_feature_detected;
-        if !is_x86_feature_detected!("pclmulqdq") {
+        if !(is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1")) {
             return;
         }
 
@@ -336,7 +338,7 @@ mod tests {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn test_clmul_u64_exhaustive_small() {
         use std::arch::is_x86_feature_detected;
-        if !is_x86_feature_detected!("pclmulqdq") {
+        if !(is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1")) {
             return;
         }
 
@@ -357,7 +359,7 @@ mod tests {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn test_clmul_batch_matches_sequential() {
         use std::arch::is_x86_feature_detected;
-        if !is_x86_feature_detected!("pclmulqdq") {
+        if !(is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1")) {
             return;
         }
 
@@ -394,7 +396,7 @@ mod tests {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn test_clmul_batch_odd_length() {
         use std::arch::is_x86_feature_detected;
-        if !is_x86_feature_detected!("pclmulqdq") {
+        if !(is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1")) {
             return;
         }
 
@@ -415,7 +417,7 @@ mod tests {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn test_clmul_batch_empty() {
         use std::arch::is_x86_feature_detected;
-        if !is_x86_feature_detected!("pclmulqdq") {
+        if !(is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1")) {
             return;
         }
 
@@ -428,8 +430,8 @@ mod tests {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn test_clmul_barrett_reduce_matches_scalar() {
         use std::arch::is_x86_feature_detected;
-        if !is_x86_feature_detected!("pclmulqdq") {
-            eprintln!("Skipping: PCLMULQDQ not available");
+        if !(is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1")) {
+            eprintln!("Skipping: PCLMULQDQ+SSE4.1 not available");
             return;
         }
 

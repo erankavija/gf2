@@ -15,6 +15,8 @@
 #   gf2_kernels_simd::x86::avx2::avx2_xor_into
 # Pass additional symbols as further positional args; each is appended
 # to the same artefact under its own divider.
+# If cargo-show-asm reports multiple matches for a symbol, suffix the path
+# with #<index>, e.g. gf2_kernels_simd::x86::clmul::clmul_batch#0.
 #
 # Env knobs:
 #   TARGET_CPU       passed to RUSTFLAGS as -C target-cpu=$TARGET_CPU.
@@ -39,8 +41,9 @@ usage() {
 usage: regen-asm.sh <crate> <symbol> <output-path> [extra-symbol ...]
 
   <crate>            cargo package name (e.g. gf2-kernels-simd)
-  <symbol>           fully-qualified Rust path to the function
-                     (e.g. gf2_kernels_simd::x86::avx2::avx2_xor_into)
+    <symbol>           fully-qualified Rust path to the function
+                      (e.g. gf2_kernels_simd::x86::avx2::avx2_xor_into)
+                      Append #<index> to disambiguate cargo-show-asm matches.
   <output-path>      destination file; parent directory will be created
   [extra-symbol ...] further symbols appended to the same file
 USAGE
@@ -125,16 +128,24 @@ fi
 
 emit_with_show_asm() {
     local sym="$1"
+    local asm_sym="$sym"
+    local display_sym="$sym"
+    local selector_args=()
+    if [[ "$asm_sym" =~ ^(.+)#([0-9]+)$ ]]; then
+        asm_sym="${BASH_REMATCH[1]}"
+        selector_args=("${BASH_REMATCH[2]}")
+        display_sym="${asm_sym} (index ${BASH_REMATCH[2]})"
+    fi
     {
         echo
         echo ";=========================================================="
-        echo "; symbol: ${sym}"
+        echo "; symbol: ${display_sym}"
         echo ";=========================================================="
         echo
         if ! RUSTFLAGS="$rustflags_value" cargo asm \
-            -p "$crate" --lib "$sym" --simplify 2>&1; then
+            -p "$crate" --lib "$asm_sym" "${selector_args[@]}" --simplify 2>&1; then
             echo
-            echo "; (cargo asm failed for symbol ${sym}; output above)" >&2
+            echo "; (cargo asm failed for symbol ${display_sym}; output above)" >&2
             return 1
         fi
     } >> "$out_path"
@@ -142,6 +153,10 @@ emit_with_show_asm() {
 
 emit_with_fallback() {
     local sym="$1"
+    local asm_sym="$sym"
+    if [[ "$asm_sym" =~ ^(.+)#([0-9]+)$ ]]; then
+        asm_sym="${BASH_REMATCH[1]}"
+    fi
     local tmp
     tmp=$(mktemp -d)
     # Clean up the temp dir on function return. Using an explicit
@@ -204,7 +219,7 @@ emit_with_fallback() {
         # on the function's basename (last `::` segment), which appears
         # verbatim inside the mangled string.
         local needle
-        needle="${sym##*::}"
+        needle="${asm_sym##*::}"
         local found=0
         for f in $asm_files; do
             if grep -q "$needle" "$f" 2>/dev/null; then
