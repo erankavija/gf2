@@ -21,9 +21,11 @@
 //!    schoolbook in 16 instructions. Universal x86_64 fallback.
 //! 3. `None` — callers fall back to pure-Rust `clmul_wide` in `gf2-core`.
 //!
-//! A ZMM (AVX-512VL + VPCLMULQDQ) lane is out of scope until the project's
-//! MSRV moves to Rust ≥ 1.89, when the required 512-bit VPCLMULQDQ and
-//! 128-bit-lane extraction intrinsics become stable.
+//! A ZMM (AVX-512VL + VPCLMULQDQ) lane is out of scope while the test host
+//! is AVX2-only (Zen 3); the required `_mm512_*` carry-less-multiply and
+//! 128-bit-lane extraction intrinsics are stable since Rust 1.89, available
+//! under the current MSRV (1.95). Add the lane when AVX-512 hardware is in
+//! scope.
 
 /// Kernel signature: computes the 8-limb carry-less product of two 4-limb
 /// GF(2)-polynomial operands.

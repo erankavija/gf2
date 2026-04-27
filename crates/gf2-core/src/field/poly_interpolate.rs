@@ -27,8 +27,8 @@
 //! [`INTERPOLATE_THRESHOLD`] (currently 16). [`TwoAdicField`]
 //! call-sites should prefer [`interpolate_auto_two_adic`] so the
 //! `O(n log² n)` middle-step asymptotic fires automatically above
-//! [`crate::field::poly::SUBPRODUCT_THRESHOLD`]. Rust coherence on
-//! MSRV-1.80 forbids a
+//! [`crate::field::poly::SUBPRODUCT_THRESHOLD`]. Rust coherence
+//! forbids a
 //! second `pub fn interpolate_auto` specialised to [`TwoAdicField`],
 //! so the two sibling dispatchers live under different names. All
 //! four entry points share the same [`InterpolationError`] contract.
@@ -154,7 +154,7 @@ pub const INTERPOLATE_THRESHOLD: usize = 16;
 /// `n ≥ INTERPOLATE_THRESHOLD` and
 /// `n ≥ SUBPRODUCT_THRESHOLD` (Newton-iteration fast-division
 /// substrate from issue `ae0c7e1f`, subproduct-tree integration from
-/// issue `046f95c1`). Rust coherence on MSRV-1.80 forbids a second
+/// issue `046f95c1`). Rust coherence forbids a second
 /// `pub fn interpolate_auto` specialised to [`TwoAdicField`], so the
 /// `_two_adic` sibling is the stable-Rust dispatch mechanism.
 pub fn interpolate_auto<F: FiniteField>(
@@ -175,7 +175,7 @@ pub fn interpolate_auto<F: FiniteField>(
 /// [`FieldPoly::batch_evaluate_auto`] and picks up the Newton-iteration
 /// fast-division primitive [`FieldPoly::div_rem_auto`] above
 /// [`crate::field::poly::SUBPRODUCT_THRESHOLD`]. This is the
-/// trait-bounded sibling dispatcher: Rust coherence on MSRV-1.80
+/// trait-bounded sibling dispatcher: Rust coherence
 /// prevents `interpolate_auto` itself from specialising on
 /// [`TwoAdicField`], so [`TwoAdicField`] call-sites should prefer this
 /// entry point when they want the `O(n log² n)` asymptotic to fire

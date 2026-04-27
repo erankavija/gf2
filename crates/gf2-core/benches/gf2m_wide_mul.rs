@@ -12,8 +12,9 @@
 //!    suffixed with the kernel tag from `ClmulWide256Fns::name` so the
 //!    benchmark output identifies which lane ran. Falls back to scalar if
 //!    no PCLMULQDQ is present. An AVX-512VL+VPCLMULQDQ (ZMM) lane is out of
-//!    scope until MSRV moves to ≥ 1.89 (the `_mm512_*` carry-less-multiply
-//!    intrinsics are not stable on MSRV 1.80).
+//!    scope while the test host (Zen 3) is AVX2-only; the `_mm512_*`
+//!    carry-less-multiply intrinsics are stable since Rust 1.89 and
+//!    available under the current MSRV (1.95).
 //!
 //! # Running
 //!

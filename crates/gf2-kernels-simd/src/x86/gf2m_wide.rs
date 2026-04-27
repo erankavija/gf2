@@ -19,9 +19,10 @@
 //! the lo/hi halves of each 64×64 clmul. This matches the scalar
 //! `clmul_wide_slice::<4>` layout exactly.
 //!
-//! A ZMM (AVX-512VL + VPCLMULQDQ) lane is out of scope until the project's
-//! MSRV reaches Rust ≥ 1.89 (the required 512-bit VPCLMULQDQ and
-//! 128-bit-lane extraction intrinsics are not stable before then).
+//! A ZMM (AVX-512VL + VPCLMULQDQ) lane is out of scope while the test host
+//! is AVX2-only (Zen 3); the required `_mm512_*` carry-less-multiply and
+//! 128-bit-lane extraction intrinsics are stable since Rust 1.89, available
+//! under the current MSRV (1.95).
 
 #![allow(clippy::missing_safety_doc)]
 
