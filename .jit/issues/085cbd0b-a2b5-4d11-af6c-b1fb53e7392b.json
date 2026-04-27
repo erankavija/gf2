@@ -2,7 +2,7 @@
   "id": "085cbd0b-a2b5-4d11-af6c-b1fb53e7392b",
   "title": "Map 64c88ae4 benchmark gaps into PPC execution plan",
   "description": "Produce a short benchmark-gap strategy note that records how the new algorithmic tasks integrate with the existing PPC Tier A-D plan and prevents duplicated or contradictory work.\n\n## Background\n\nThe epic now contains both low-level PPC kernel tasks and higher-level algorithmic benchmark-gap tasks. Without an integration note, workers may optimize the same path twice or make incompatible crossover assumptions.\n\n## Success Criteria\n\n- [hard] A document under `dev/active/` maps each `64c88ae4` gap to the responsible JIT task(s), dependencies, benchmark evidence, and non-goals.\n- [hard] The document defines how Strassen/Winograd, delayed reduction, GF(2^m) matrix tiling, and existing Tier A-D kernels compose without conflicting public APIs.\n- [hard] The document explicitly records which decisions are measured locally vs. require user escalation.\n- [hard] The document is linked to this story and the three implementation tasks via `jit doc add`.\n- [hard] `code-review` and `doc-review` gates pass.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "high",
   "assignee": "agent:claude",
   "dependencies": [],
@@ -12,20 +12,20 @@
     "doc-review"
   ],
   "gates_status": {
-    "doc-review": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-04-27T21:07:47.380791507Z"
-    },
     "cargo-ci": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-04-27T21:07:47.345471357Z"
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-27T21:11:48.522460049Z"
     },
     "code-review": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-04-27T21:07:47.345415027Z"
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-27T21:15:12.770224634Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "project-lead",
+      "updated_at": "2026-04-27T21:11:48.524821459Z"
     }
   },
   "context": {},
@@ -59,5 +59,5 @@
     "story:ppc-benchmark-gap"
   ],
   "created_at": "2026-04-27T21:07:47.094768826+00:00",
-  "updated_at": "2026-04-27T21:11:41.700044607+00:00"
+  "updated_at": "2026-04-27T21:19:47.811384784+00:00"
 }
