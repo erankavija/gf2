@@ -3,7 +3,7 @@
 Isolated unsafe SIMD kernels (AVX2/AVX-512/AArch64) consumed by `gf2-core` via
 the `OnceLock`-dispatched `LogicalFns` boundary. All workspace `unsafe` lives
 here; the rest of the workspace is `#![deny(unsafe_code)]`. See `CLAUDE.md`
-for crate layout, MSRV (1.80), and the apex dispatch constraint.
+for crate layout, MSRV (1.95), and the apex dispatch constraint.
 
 ## ASM-inspection convention (PPC-spiral I3)
 

@@ -171,7 +171,7 @@ Test-suite wall-clock budget is 60 seconds. If it takes longer, something is wro
 - **Tail-masking invariant** — `BitVec` guarantees that padding bits beyond `len_bits` in the final `u64` word are zero. Every mutating operation calls `mask_tail()`. This is the single most critical correctness invariant.
 - **Functional at the API boundary, imperative inside kernels** — high-level code prefers pure functions and iterator combinators; `kernels/` and `compute/` use mutation and loops for speed.
 - **Unsafe isolation** — the only crates allowed to use `unsafe` are `gf2-kernels-simd` and `gf2-kernels-hip`. Runtime SIMD dispatch goes through `simd::maybe_simd()`.
-- **MSRV**: Rust 1.80.
+- **MSRV**: Rust 1.95.
 
 ## Documentation
 

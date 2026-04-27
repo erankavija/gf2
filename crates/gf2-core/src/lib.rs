@@ -137,9 +137,10 @@ pub(crate) mod simd {
     /// product; Barrett reduction is applied by the caller. Returns `None`
     /// when no PCLMULQDQ is present; callers must fall back to the pure-Rust
     /// scalar `clmul_wide` implementation. An AVX-512VL+VPCLMULQDQ (ZMM)
-    /// lane is not currently provided — the stable Rust `_mm512_*` carry-
-    /// less-multiply intrinsics only stabilised in Rust 1.89, after this
-    /// workspace's MSRV (1.80). Re-add once MSRV moves forward.
+    /// lane is not currently provided — the test host (Zen 3) has no
+    /// AVX-512 hardware. The required `_mm512_*` carry-less-multiply
+    /// intrinsics are stable since Rust 1.89, so the lane can be added
+    /// when AVX-512 hardware is in scope.
     #[inline]
     pub fn maybe_gf2m_wide256() -> Option<&'static ClmulWide256Fns> {
         GF2M_WIDE256_FNS

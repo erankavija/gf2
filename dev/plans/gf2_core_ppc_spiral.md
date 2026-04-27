@@ -22,7 +22,7 @@ Per memory `feedback_parallel_agent_isolation.md`, any tasks dispatched in paral
 
 User requirements (confirmed):
 - **Scope**: every scalar gap in `gf2-core` — comprehensive sweep, not a single kernel.
-- **MSRV**: stay on 1.80 by default; bump to 1.89 only if a specific kernel demonstrably needs AVX-512 VPCLMULQDQ-on-ZMM, IFMA52, or `_mm256_extracti128_si256`. Each MSRV-bumping kernel gates on user approval per the escalation policy.
+- **MSRV**: 1.95 (bumped from 1.80 on 2026-04-27, JIT issue `c7e91dfd`). The bump unblocks all `_mm512_*` carry-less-multiply, IFMA52, and `_mm256_extracti128_si256` intrinsics that previously required version gating; further MSRV moves still gate on user approval per the escalation policy.
 - **Gain bar**: ≥1.5× geomean over the committed `target/criterion/` baseline at the kernel's design size class. No merge below the bar.
 - **Apex constraint** (`CLAUDE.md`): all `unsafe` lives in `gf2-kernels-simd`; high-level code stays `#![deny(unsafe_code)]`. The dispatch boundary is `gf2_core::simd::maybe_<op>()` returning `Option<&'static <Op>Fns>`.
 
@@ -56,7 +56,7 @@ These are V0→V3 jumps that cost ~1 day each because the SIMD kernel already ex
 |---|---|---|---|---|
 | C1 | GF(2^m) batch element-wise mul/square for m∈{8,16,32} | `crates/gf2-core/src/gf2m/field.rs::Gf2mField::mul` (called per element) | V3 SIMD via VPCLMULQDQ-on-YMM (2 element pairs / instr) + Barrett reduce in YMM → V4 unroll 4 ways for ILP across the dependent reduce | extends existing `gf2m_wide.rs` to single-element batched layout. `m≤32` fits a single u64; reduction lookup-table fits a YMM lane |
 | C2 | GF(2^m) batch for m=571 (BCH/EC research path) | `crates/gf2-core/src/gf2m/wide.rs` | V3 SIMD multi-word VPCLMULQDQ → V4 register tile across the 9 u64 words | currently scalar multi-word. Needs a 2D-clmul scheduler |
-| C3 | `Fp<P>` Montgomery batch for general 64-bit primes (SoA) | `crates/gf2-core/src/gfp/simd_ops.rs` + callers in `gfpn/` dot-products | V3 SIMD via 32×4 limb decomposition on AVX2 → optionally V3' via AVX-512 IFMA52 (52-bit unsigned multiply-add) on a 1.89 MSRV branch | **MSRV-bump candidate**: IFMA52 path requires Rust 1.89. Land AVX2 path on 1.80 first; only escalate MSRV if IFMA52 measures ≥1.5× over the AVX2 path on the design size class |
+| C3 | `Fp<P>` Montgomery batch for general 64-bit primes (SoA) | `crates/gf2-core/src/gfp/simd_ops.rs` + callers in `gfpn/` dot-products | V3 SIMD via 32×4 limb decomposition on AVX2 → optionally V3' via AVX-512 IFMA52 (52-bit unsigned multiply-add) | IFMA52 intrinsics are stable since Rust 1.89, available under the current MSRV (1.95). Land AVX2 path first; only adopt the IFMA52 lane if it measures ≥1.5× over the AVX2 path on the design size class **and** AVX-512 hardware is available on the target host (the current Zen 3 dev host is AVX2-only). |
 | C4 | `gfpn::QuadraticExt::mul` Karatsuba batched | `crates/gf2-core/src/gfpn/quadratic.rs:mul` | V2 ILP (3 base-field muls already independent — schedule them across registers) → V3 SIMD batched over a SoA `Vec<QuadraticExt<C>>` | benchmark target: `field_matrix_fusion.rs`. Likely the largest research-impact win because Karatsuba = 3 independent muls per element |
 | C5 | `gfpn::CubicExt::mul` analogous | `crates/gf2-core/src/gfpn/cubic.rs:mul` | same shape as C4, 6 independent base-field muls | piggybacks on C4 once the SoA scaffolding lands |
 

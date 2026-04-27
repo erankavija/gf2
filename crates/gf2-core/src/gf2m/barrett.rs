@@ -33,10 +33,11 @@
 //!
 //! [`BarrettReducerWide`] is the N-word sibling. Key design decisions:
 //!
-//! ## `[u64; 2*N]` and the Rust 1.80 const-generics caveat
+//! ## `[u64; 2*N]` and the stable-Rust const-generics caveat
 //!
-//! On stable Rust 1.80 (our MSRV), `[u64; 2 * N]` is not permitted as an
-//! array-length expression in a function signature. The same workaround as
+//! On stable Rust, `[u64; 2 * N]` is not permitted as an array-length
+//! expression in a function signature (the `generic_const_exprs` feature
+//! remains nightly-only). The same workaround as
 //! [`super::wide::clmul_wide`] is used throughout this module:
 //!
 //! - **Pattern (a): two const parameters with a compile-time assertion.**
@@ -580,8 +581,9 @@ fn compute_mu_wide<const N: usize>(modulus_words: &[u64; N], m: u32) -> [u64; N]
 ///
 /// # MSRV caveat — `[u64; 2*N]` in function signatures
 ///
-/// Stable Rust 1.80 (the project MSRV) does not permit const arithmetic in
-/// array-length positions. [`BarrettReducerWide::reduce`] therefore takes a
+/// Stable Rust does not yet permit const arithmetic in array-length
+/// positions (the `generic_const_exprs` feature remains nightly-only).
+/// [`BarrettReducerWide::reduce`] therefore takes a
 /// second const parameter `M` with a compile-time assertion `M == 2 * N`:
 ///
 /// ```text
@@ -703,7 +705,7 @@ impl<const N: usize> BarrettReducerWide<N> {
     /// # MSRV caveat: second const parameter `M`
     ///
     /// Because `[u64; 2 * N]` is not legal as an array-length expression on
-    /// stable Rust 1.80, the product is passed as `&[u64; M]` where `M` is a
+    /// stable Rust, the product is passed as `&[u64; M]` where `M` is a
     /// separate const parameter. A compile-time assertion `M == 2 * N` is
     /// enforced. Callers must supply the turbofish:
     /// `reducer.reduce::<{2 * N}>(&product)`.
@@ -755,7 +757,7 @@ impl<const N: usize> BarrettReducerWide<N> {
     /// Slice-taking variant of [`BarrettReducerWide::reduce`] for callers that
     /// cannot construct a `[u64; 2 * N]` array at the call site.
     ///
-    /// Under MSRV 1.80 stable, generic const expressions of the form `{2 * N}`
+    /// Under stable Rust, generic const expressions of the form `{2 * N}`
     /// are not accepted in array-length position from a generic context, so
     /// callers that parameterise over `N` alone (notably
     /// [`crate::gf2m::Gf2mWide::mul_ref`]) cannot directly invoke the
