@@ -80,6 +80,31 @@ def core.option.Option.map
   | some t, f => do let r ← opsfunctionFnOnceFTupleTUInst.call_once f t; ok (some r)
   | none, _ => ok none
 
+/- Additional narrow externals needed by the Charon/Aeneas versions pinned for
+   verify-lean. They are outside the hand-proved gfp/gfpn arithmetic paths. -/
+@[rust_fun "core::num::{u64}::is_power_of_two"]
+axiom core.num.U64.is_power_of_two : Std.U64 → Result Bool
+
+@[rust_fun "core::num::{u64}::trailing_zeros"]
+axiom core.num.U64.trailing_zeros : Std.U64 → Result Std.U32
+
+@[rust_fun "core::num::{u64}::BITS"]
+axiom core.num.U64.BITS : Result Std.U32
+
+@[rust_fun "core::num::{u128}::saturating_mul"]
+axiom core.num.U128.saturating_mul : Std.U128 → Std.U128 → Result Std.U128
+
+axiom field.traits.FiniteField.WINOGRAD_THRESHOLD.default
+  {Self Char Wide : Type} : field.traits.FiniteField Self Char Wide → Result Std.Usize
+axiom field.traits.FiniteField.TRI_BASE_THRESHOLD.default
+  {Self Char Wide : Type} : field.traits.FiniteField Self Char Wide → Result Std.Usize
+
+@[rust_fun "core::option::{core::option::Option<@T>}::and_then"]
+axiom core.option.Option.and_then
+  {T U F : Type} (opsfunctionFnOnceFTupleTOptionUInst :
+    core.ops.function.FnOnce F T (Option U)) :
+  Option T → F → Result (Option U)
+
 /- [core::result::{core::ops::try_trait::Try<T, core::result::Result<core::convert::Infallible, E>> for core::result::Result<T, E>}::branch]:
    Source: '/rustc/library/core/src/result.rs', lines 2172:4-2172:64
    Name pattern: [core::result::{core::ops::try_trait::Try<core::result::Result<@T, @E>, @T, core::result::Result<core::convert::Infallible, @E>>}::branch] -/
@@ -118,4 +143,3 @@ axiom gfpn.quadratic.QuadraticExt.Insts.CoreCmpEq.assert_receiver_is_total_eq
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
   gfpn.quadratic.QuadraticExt ext_configExtConfigInst → Result Unit
-

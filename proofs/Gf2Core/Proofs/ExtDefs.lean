@@ -36,25 +36,25 @@ abbrev QAdd := gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithAddQuadraticExtQuad
 abbrev QSub := gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithSubQuadraticExtQuadraticExt.sub inst
 abbrev QMul := gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithMulQuadraticExtQuadraticExt.mul inst
 abbrev QNeg := gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithNegQuadraticExt.neg inst
-abbrev QInv := gfpn.quadratic.QuadraticExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicQuadraticExt.inv inst
+abbrev QInv := gfpn.quadratic.QuadraticExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.inv inst
 abbrev QNorm := gfpn.quadratic.QuadraticExt.norm inst
 abbrev QNew := gfpn.quadratic.QuadraticExt.new inst
 abbrev QConj := gfpn.quadratic.QuadraticExt.conjugate inst
 
 -- QuadraticExt order
-abbrev QOrder := gfpn.quadratic.QuadraticExt.Insts.Gf2_coreFieldTraitsConstFieldClause0_Clause0_Clause0_CharacteristicQuadraticExt.order inst
+abbrev QOrder := gfpn.quadratic.QuadraticExt.Insts.Gf2_coreFieldTraitsConstFieldClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.order inst
 
 -- CubicExt operations
 abbrev CAdd := gfpn.cubic.CubicExt.Insts.CoreOpsArithAddCubicExtCubicExt.add inst
 abbrev CSub := gfpn.cubic.CubicExt.Insts.CoreOpsArithSubCubicExtCubicExt.sub inst
 abbrev CMul := gfpn.cubic.CubicExt.Insts.CoreOpsArithMulCubicExtCubicExt.mul inst
 abbrev CNeg := gfpn.cubic.CubicExt.Insts.CoreOpsArithNegCubicExt.neg inst
-abbrev CInv := gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicCubicExt.inv inst
+abbrev CInv := gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicCubicExtWide.inv inst
 abbrev CNorm := gfpn.cubic.CubicExt.norm inst
 abbrev CNew := gfpn.cubic.CubicExt.new inst
 
 -- CubicExt order
-abbrev COrder := gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsConstFieldClause0_Clause0_Clause0_CharacteristicCubicExt.order inst
+abbrev COrder := gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsConstFieldClause0_Clause0_Clause0_CharacteristicCubicExtWide.order inst
 
 end ExtAbbrev
 
