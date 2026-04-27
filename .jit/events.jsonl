@@ -3064,3 +3064,5 @@
 {"type":"issue_state_changed","id":"c27ef540-3272-4516-b16e-aff4c367dd13","issue_id":"d4740d85-48c9-4948-8531-b4849cb13464","timestamp":"2026-04-27T23:52:21.986477974Z","from":"in_progress","to":"done"}
 {"type":"issue_completed","id":"9846ade9-8721-4164-9ad7-1112c52e2c45","issue_id":"d4740d85-48c9-4948-8531-b4849cb13464","timestamp":"2026-04-27T23:52:21.986542584Z"}
 {"type":"issue_state_changed","id":"7b574035-281a-4331-935f-3555778765bc","issue_id":"cad241e6-9606-47ff-96fc-20f38ed591aa","timestamp":"2026-04-27T23:52:22.371817604Z","from":"backlog","to":"ready"}
+{"type":"issue_state_changed","id":"fa11870c-3263-499d-b2b2-3315fbed117f","issue_id":"cad241e6-9606-47ff-96fc-20f38ed591aa","timestamp":"2026-04-27T23:53:21.300188664Z","from":"ready","to":"in_progress"}
+{"type":"issue_claimed","id":"31487ec4-017f-4162-afa9-b4c2761a6916","issue_id":"cad241e6-9606-47ff-96fc-20f38ed591aa","timestamp":"2026-04-27T23:53:21.300502514Z","assignee":"agent:claude-wt-cad241e6"}
