@@ -78,7 +78,9 @@ fn main() {
     #[cfg(feature = "simd")]
     {
         let a: Vec<Fp<65537>> = (0..32_u32).map(|x| Fp::<65537>::new(x as u64)).collect();
-        let b: Vec<Fp<65537>> = (0..32_u32).map(|x| Fp::<65537>::new((x + 1) as u64)).collect();
+        let b: Vec<Fp<65537>> = (0..32_u32)
+            .map(|x| Fp::<65537>::new((x + 1) as u64))
+            .collect();
         let ok = lto_opacity_callsite_fp65537(&a, &b);
         println!("fp65537 callsite ran: simd_taken = {ok}");
 
