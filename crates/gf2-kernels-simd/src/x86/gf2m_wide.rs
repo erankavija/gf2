@@ -44,8 +44,8 @@ use core::arch::x86_64::*;
 ///
 /// # Safety
 ///
-/// Requires the `pclmulqdq` CPU feature.
-#[target_feature(enable = "pclmulqdq")]
+/// Requires the `pclmulqdq` and `sse4.1` CPU features.
+#[target_feature(enable = "pclmulqdq", enable = "sse4.1")]
 pub unsafe fn clmul_wide4_xmm(a: &[u64; 4], b: &[u64; 4], out: &mut [u64; 8]) {
     // Zero out the accumulator.
     for slot in out.iter_mut() {
@@ -154,8 +154,8 @@ mod tests {
     #[test]
     fn xmm_matches_scalar_reference() {
         use std::arch::is_x86_feature_detected;
-        if !is_x86_feature_detected!("pclmulqdq") {
-            eprintln!("skipping: no PCLMULQDQ");
+        if !(is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1")) {
+            eprintln!("skipping: no PCLMULQDQ+SSE4.1");
             return;
         }
         for (a, b) in sample_vectors() {

@@ -1,40 +1,31 @@
 ; gf2-core PPC-spiral asm artefact
 ; ---------------------------------------------------------
 ; crate         : gf2-kernels-simd
+; primary       : gf2_kernels_simd::x86::clmul::clmul_u64
+; extra symbols : gf2_kernels_simd::x86::clmul::clmul_batch#0 gf2_kernels_simd::x86::clmul::clmul_batch_vpclmul gf2_kernels_simd::x86::clmul::clmul_barrett_reduce
 ; output        : crates/gf2-kernels-simd/src/x86/asm/clmul.asm.txt
 ; rustc         : rustc 1.95.0 (59807616e 2026-04-14)
 ; host triple   : x86_64-unknown-linux-gnu
 ; target-cpu    : <unset; rely on #[target_feature]>
-; commit        : afff922
-; regenerated   : 2026-04-27T10:38:18Z
+; RUSTFLAGS     : <empty>
+; commit        : cef0071
+; regenerated   : 2026-04-27T20:44:24Z
 ; tool          : cargo-show-asm
 ; ---------------------------------------------------------
+
 
 ;==========================================================
 ; symbol: gf2_kernels_simd::x86::clmul::clmul_u64
 ;==========================================================
 
-    Finished `release` profile [optimized] target(s) in 0.02s
+    Finished `release` profile [optimized] target(s) in 0.03s
 
 gf2_kernels_simd::x86::clmul::clmul_u64:
-	push rbx
-	sub rsp, 32
 	movq xmm0, rdi
 	movq xmm1, rsi
 	pclmulqdq xmm1, xmm0, 0
-	movdqa xmmword ptr [rsp + 16], xmm1
-	movdqa xmmword ptr [rsp], xmm1
-	mov rdi, rsp
-	call core::core_arch::x86_64::sse41::_mm_extract_epi64
-	mov rbx, rax
-	movaps xmm0, xmmword ptr [rsp + 16]
-	movaps xmmword ptr [rsp], xmm0
-	mov rdi, rsp
-	call core::core_arch::x86_64::sse41::_mm_extract_epi64
-	mov rdx, rax
-	mov rax, rbx
-	add rsp, 32
-	pop rbx
+	movq rax, xmm1
+	pextrq rdx, xmm1, 1
 	ret
 
 ;==========================================================
@@ -44,24 +35,20 @@ gf2_kernels_simd::x86::clmul::clmul_u64:
     Finished `release` profile [optimized] target(s) in 0.02s
 
 gf2_kernels_simd::x86::clmul::clmul_batch:
-	push rbp
 	push r15
 	push r14
 	push r13
 	push r12
 	push rbx
-	sub rsp, 88
-	mov qword ptr [rsp + 8], rdx
-	mov qword ptr [rsp + 40], rsi
-	mov qword ptr [rsp + 48], rcx
+	sub rsp, 32
+	mov qword ptr [rsp], rsi
+	mov qword ptr [rsp + 8], rcx
 	cmp rsi, rcx
 	jne .LBB29_15
 	mov qword ptr [rsp + 16], rsi
-	mov qword ptr [rsp + 56], r9
+	mov qword ptr [rsp + 24], r9
 	cmp rsi, r9
 	jne .LBB29_16
-	mov r14, r8
-	mov r12, rdi
 	mov rbx, qword ptr [rip + std_detect::detect::cache::CACHE@GOTPCREL]
 	mov rax, qword ptr [rbx]
 	test rax, rax
@@ -75,48 +62,33 @@ gf2_kernels_simd::x86::clmul::clmul_batch:
 	test eax, 33554432
 	jne .LBB29_14
 .LBB29_5:
-	mov qword ptr [rsp], rsi
 	test rsi, rsi
 	je .LBB29_9
-	mov rax, qword ptr [rsp]
-	lea rbx, [8*rax]
-	xor r15d, r15d
-	lea r13, [rsp + 16]
+	lea rax, [8*rsi]
+	xor ecx, ecx
 .LBB29_7:
-	cmp rbx, r15
+	cmp rax, rcx
 	je .LBB29_10
-	movq xmm0, qword ptr [r12 + r15]
-	mov rax, qword ptr [rsp + 8]
-	movq xmm1, qword ptr [rax + r15]
+	movq xmm0, qword ptr [rdi + rcx]
+	movq xmm1, qword ptr [rdx + rcx]
 	pclmulqdq xmm1, xmm0, 0
-	movdqa xmmword ptr [rsp + 64], xmm1
-	movdqa xmmword ptr [rsp + 16], xmm1
-	mov rdi, r13
-	call core::core_arch::x86_64::sse41::_mm_extract_epi64
-	mov rbp, rax
-	movaps xmm0, xmmword ptr [rsp + 64]
-	movaps xmmword ptr [rsp + 16], xmm0
-	mov rdi, r13
-	call core::core_arch::x86_64::sse41::_mm_extract_epi64
-	mov qword ptr [r14 + 2*r15 + 8], rax
-	mov qword ptr [r14 + 2*r15], rbp
-	add r15, 8
-	cmp rbx, r15
+	movdqa xmmword ptr [r8 + 2*rcx], xmm1
+	add rcx, 8
+	cmp rax, rcx
 	jne .LBB29_7
 .LBB29_9:
-	add rsp, 88
+	add rsp, 32
 	pop rbx
 	pop r12
 	pop r13
 	pop r14
 	pop r15
-	pop rbp
 	ret
 .LBB29_15:
 	lea rcx, [rip + .Lanon.abaf104465172f8be6876afe1da8e8ae.6]
 	lea r9, [rip + .Lanon.abaf104465172f8be6876afe1da8e8ae.8]
-	lea rsi, [rsp + 40]
-	lea rdx, [rsp + 48]
+	mov rsi, rsp
+	lea rdx, [rsp + 8]
 	mov r8d, 71
 	xor edi, edi
 	call qword ptr [rip + core::panicking::assert_failed::<usize, usize>@GOTPCREL]
@@ -124,41 +96,48 @@ gf2_kernels_simd::x86::clmul::clmul_batch:
 	lea rcx, [rip + .Lanon.abaf104465172f8be6876afe1da8e8ae.9]
 	lea r9, [rip + .Lanon.abaf104465172f8be6876afe1da8e8ae.10]
 	lea rsi, [rsp + 16]
-	lea rdx, [rsp + 56]
+	lea rdx, [rsp + 24]
 	mov r8d, 89
 	xor edi, edi
 	call qword ptr [rip + core::panicking::assert_failed::<usize, usize>@GOTPCREL]
 .LBB29_3:
-	mov r15, rsi
+	mov r14, rsi
+	mov r12, r8
+	mov r15, rdx
+	mov r13, rdi
 	call qword ptr [rip + std_detect::detect::cache::detect_and_initialize@GOTPCREL]
-	mov rsi, r15
+	mov rdi, r13
+	mov rdx, r15
+	mov r8, r12
+	mov rsi, r14
 	bt rax, 32
 	jb .LBB29_11
 	jmp .LBB29_5
 .LBB29_12:
 	mov rbx, rsi
+	mov r15, r8
+	mov r14, rdx
+	mov r12, rdi
 	call qword ptr [rip + std_detect::detect::cache::detect_and_initialize@GOTPCREL]
+	mov rdi, r12
+	mov rdx, r14
+	mov r8, r15
 	mov rsi, rbx
 	test eax, 33554432
 	je .LBB29_5
 .LBB29_14:
-	mov rdi, r12
 	mov rcx, rsi
-	mov rdx, qword ptr [rsp + 8]
-	mov r8, r14
 	mov r9, rsi
-	add rsp, 88
+	add rsp, 32
 	pop rbx
 	pop r12
 	pop r13
 	pop r14
 	pop r15
-	pop rbp
 	jmp gf2_kernels_simd::x86::clmul::clmul_batch_vpclmul
 .LBB29_10:
 	lea rdx, [rip + .Lanon.abaf104465172f8be6876afe1da8e8ae.17]
-	mov rdi, qword ptr [rsp]
-	mov rsi, rdi
+	mov rdi, rsi
 	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
 
 ;==========================================================
@@ -293,113 +272,67 @@ gf2_kernels_simd::x86::clmul::clmul_batch_vpclmul:
 gf2_kernels_simd::x86::clmul::clmul_barrett_reduce:
 	xor eax, eax
 	test rdi, rdi
-	je .LBB31_5
-	test rsi, rsi
-	je .LBB31_5
-	push rbp
-	push r15
-	push r14
-	push r13
-	push r12
-	push rbx
-	sub rsp, 40
-	mov ebp, r8d
-	mov rbx, rcx
-	mov r15, rdx
-	movq xmm0, rdi
-	movq xmm1, rsi
-	pclmulqdq xmm1, xmm0, 0
-	movdqa xmmword ptr [rsp + 16], xmm1
-	movdqa xmmword ptr [rsp], xmm1
-	mov rdi, rsp
-	call core::core_arch::x86_64::sse41::_mm_extract_epi64
-	mov r12, rax
-	movaps xmm0, xmmword ptr [rsp + 16]
-	movaps xmmword ptr [rsp], xmm0
-	mov rdi, rsp
-	call core::core_arch::x86_64::sse41::_mm_extract_epi64
-	mov r14, rax
-	mov rax, r12
-	mov ecx, ebp
-	and ecx, 127
-	mov rdx, r12
-	shrd rdx, r14, cl
-	mov rsi, r14
-	shr rsi, cl
-	xor edi, edi
-	test cl, 64
-	cmovne rdx, rsi
-	cmove rdi, rsi
-	or rdi, rdx
 	je .LBB31_4
-	movq xmm0, rdx
-	movq xmm1, r15
-	pclmulqdq xmm1, xmm0, 0
-	movdqa xmmword ptr [rsp + 16], xmm1
-	movdqa xmmword ptr [rsp], xmm1
-	mov rdi, rsp
-	mov r13, rax
-	mov r15d, ecx
-	call core::core_arch::x86_64::sse41::_mm_extract_epi64
-	mov r12, rax
-	movaps xmm0, xmmword ptr [rsp + 16]
-	movaps xmmword ptr [rsp], xmm0
-	mov rdi, rsp
-	call core::core_arch::x86_64::sse41::_mm_extract_epi64
-	mov ecx, r15d
-	shrd r12, rax, cl
-	shr rax, cl
-	test r15b, 64
-	cmove rax, r12
-	movq xmm0, rax
-	movq xmm1, rbx
-	pclmulqdq xmm1, xmm0, 0
-	movdqa xmmword ptr [rsp + 16], xmm1
-	movdqa xmmword ptr [rsp], xmm1
-	mov rdi, rsp
-	call core::core_arch::x86_64::sse41::_mm_extract_epi64
-	mov r12, rax
-	movaps xmm0, xmmword ptr [rsp + 16]
-	movaps xmmword ptr [rsp], xmm0
-	mov rdi, rsp
-	call core::core_arch::x86_64::sse41::_mm_extract_epi64
-	xor rax, r14
-	mov rdi, rax
-	mov ecx, r15d
+	test rsi, rsi
+	je .LBB31_4
+	mov r9, rcx
+	movq xmm1, rdi
+	movq xmm0, rsi
+	pclmulqdq xmm0, xmm1, 0
+	movq rax, xmm0
+	pextrq rdi, xmm0, 1
+	mov ecx, r8d
+	and ecx, 127
+	mov rsi, rax
+	shrd rsi, rdi, cl
 	shr rdi, cl
-	xor edx, edx
-	test r15b, 64
-	mov rsi, rdi
-	cmovne rsi, rdx
-	xor r12, r13
-	mov r8, r12
-	shrd r8, rax, cl
-	test r15b, 64
-	cmovne r8, rdi
-	or r8, rsi
-	mov r8, rbx
-	cmove r8, rdx
-	xor r8, r12
-	mov r9, r8
-	shrd r9, rax, cl
-	test r15b, 64
-	cmovne r9, rdi
-	mov rax, -1
-	mov ecx, ebp
-	shl rax, cl
-	or r9, rsi
-	cmove rbx, rdx
-	not rax
-	xor rbx, r8
-	and rbx, rax
-	mov rax, rbx
+	xor r10d, r10d
+	test cl, 64
+	cmovne rsi, rdi
+	cmove r10, rdi
+	or r10, rsi
+	je .LBB31_4
+	movq xmm1, rsi
+	movq xmm2, rdx
+	pclmulqdq xmm2, xmm1, 0
+	pextrq rax, xmm2, 1
+	movq rdx, xmm2
+	shrd rdx, rax, cl
+	shr rax, cl
+	test cl, 64
+	cmove rax, rdx
+	movq xmm1, rax
+	movq xmm2, r9
+	pclmulqdq xmm2, xmm1, 0
+	pxor xmm2, xmm0
+	pextrq rdx, xmm2, 1
+	mov rsi, rdx
+	shr rsi, cl
+	xor eax, eax
+	test cl, 64
+	movq rdi, xmm2
+	mov r10, rsi
+	cmovne r10, rax
+	mov r11, rdi
+	shrd r11, rdx, cl
+	test cl, 64
+	cmovne r11, rsi
+	or r11, r10
+	mov r11, r9
+	cmove r11, rax
+	xor r11, rdi
+	mov rdi, r11
+	shrd rdi, rdx, cl
+	test cl, 64
+	cmovne rdi, rsi
+	mov rdx, -1
+	mov ecx, r8d
+	shl rdx, cl
+	or rdi, r10
+	cmove r9, rax
+	not rdx
+	xor r9, r11
+	and r9, rdx
+	mov rax, r9
 .LBB31_4:
-	add rsp, 40
-	pop rbx
-	pop r12
-	pop r13
-	pop r14
-	pop r15
-	pop rbp
-.LBB31_5:
 	ret

@@ -88,7 +88,7 @@ pub fn detect() -> Option<Gf2mFns> {
 fn detect_x86() -> Option<Gf2mFns> {
     use std::arch::is_x86_feature_detected;
 
-    if is_x86_feature_detected!("pclmulqdq") {
+    if is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1") {
         Some(Gf2mFns {
             mul_fn: gf2m_mul_pclmul_safe,
             clmul_fn: Some(clmul_u64_safe),
@@ -246,7 +246,7 @@ mod tests {
         #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
         {
             use std::arch::is_x86_feature_detected;
-            if is_x86_feature_detected!("pclmulqdq") {
+            if is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1") {
                 assert!(fns.is_some());
             }
         }
@@ -257,8 +257,8 @@ mod tests {
     fn test_gf256_mul() {
         use std::arch::is_x86_feature_detected;
 
-        if !is_x86_feature_detected!("pclmulqdq") {
-            eprintln!("Skipping: PCLMULQDQ not available");
+        if !(is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1")) {
+            eprintln!("Skipping: PCLMULQDQ+SSE4.1 not available");
             return;
         }
 
@@ -289,7 +289,7 @@ mod tests {
     fn test_gf16_mul() {
         use std::arch::is_x86_feature_detected;
 
-        if !is_x86_feature_detected!("pclmulqdq") {
+        if !(is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1")) {
             return;
         }
 
