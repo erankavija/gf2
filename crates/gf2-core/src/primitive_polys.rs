@@ -417,9 +417,9 @@ mod tests {
         let mut q = 2u32;
         let mut primes_of_m: Vec<u32> = Vec::new();
         while q * q <= n {
-            if n % q == 0 {
+            if n.is_multiple_of(q) {
                 primes_of_m.push(q);
-                while n % q == 0 {
+                while n.is_multiple_of(q) {
                     n /= q;
                 }
             }

@@ -1603,7 +1603,7 @@ impl SnrAccumulator {
     }
 
     fn should_report(&self) -> bool {
-        self.total_frames % PROGRESS_INTERVAL == 0 && self.total_frames > 0
+        self.total_frames.is_multiple_of(PROGRESS_INTERVAL) && self.total_frames > 0
     }
 
     /// Returns `true` if enough wall-clock time has elapsed for a JSONL
@@ -3893,7 +3893,7 @@ mod tests {
         let r = &results[0];
         assert!(r.ber.is_finite());
         assert!(
-            r.num_bits % 2 == 0,
+            r.num_bits.is_multiple_of(2),
             "transmitted bits must stay aligned to the QPSK fading channel's 2-bit requirement"
         );
     }
@@ -3936,7 +3936,10 @@ mod tests {
         assert_eq!(results.len(), 1);
         let r = &results[0];
         assert!(r.ber.is_finite());
-        assert!(r.num_bits % 2 == 0, "transmitted bits must stay aligned");
+        assert!(
+            r.num_bits.is_multiple_of(2),
+            "transmitted bits must stay aligned"
+        );
     }
 
     // -------------------------------------------------------------------

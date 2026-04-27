@@ -1235,7 +1235,10 @@ impl ChannelModel for QpskRicianChannelModel {
         use rand_distr::{Distribution, Normal};
 
         let n = codeword.len();
-        assert!(n % 2 == 0, "QPSK requires even codeword length, got {n}");
+        assert!(
+            n.is_multiple_of(2),
+            "QPSK requires even codeword length, got {n}"
+        );
         assert!(
             n <= self.config.frame_bits(),
             "codeword length {n} exceeds frame capacity {} for this Rician config",

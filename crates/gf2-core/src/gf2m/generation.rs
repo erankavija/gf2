@@ -150,7 +150,7 @@ impl PrimitiveGenerator {
             // Skip even-weight polynomials
             // Primitive polynomials must have odd weight
             let weight = candidate.count_ones();
-            if weight % 2 == 0 {
+            if weight.is_multiple_of(2) {
                 continue;
             }
 
@@ -178,7 +178,7 @@ impl PrimitiveGenerator {
 
             // Skip even-weight polynomials
             let weight = candidate.count_ones();
-            if weight % 2 == 0 {
+            if weight.is_multiple_of(2) {
                 continue;
             }
 
@@ -204,7 +204,7 @@ impl PrimitiveGenerator {
             if gcd(m, k) > 1 {
                 continue;
             }
-            if m % 8 == 0 && k % 2 == 1 {
+            if m.is_multiple_of(8) && k % 2 == 1 {
                 continue;
             }
 

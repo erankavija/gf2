@@ -549,7 +549,7 @@ fn find_max_minpoly_generator<F: FiniteField>(
 
     // Greedy merge. Sort descending by minpoly degree so the seed has
     // the longest reachable annihilator.
-    candidates.sort_by(|a, b| b.1.degree().cmp(&a.1.degree()));
+    candidates.sort_by_key(|c| std::cmp::Reverse(c.1.degree()));
     let (mut u, mut u_min) = candidates[0].clone();
     for (v, v_min) in candidates.iter().skip(1) {
         if u_min == target_lcm {

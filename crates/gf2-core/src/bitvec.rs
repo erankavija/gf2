@@ -1028,7 +1028,7 @@ impl BitVec {
         }
 
         // Mask the last byte if needed
-        if self.len_bits % 8 != 0 {
+        if !self.len_bits.is_multiple_of(8) {
             let last_byte_bits = self.len_bits % 8;
             let mask = (1u8 << last_byte_bits) - 1;
             if let Some(last) = bytes.last_mut() {

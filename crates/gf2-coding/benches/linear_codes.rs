@@ -11,7 +11,7 @@ use gf2_core::BitVec;
 fn create_message(k: usize, pattern: usize) -> BitVec {
     let mut msg = BitVec::new();
     for i in 0..k {
-        msg.push_bit((i + pattern) % 3 == 0);
+        msg.push_bit((i + pattern).is_multiple_of(3));
     }
     msg
 }
