@@ -11,13 +11,19 @@
   "gates_required": [
     "code-review",
     "cargo-ci",
-    "asm-artefact-present"
+    "asm-artefact-present",
+    "criterion-1.5x"
   ],
   "gates_status": {
     "asm-artefact-present": {
       "status": "pending",
       "updated_by": null,
       "updated_at": "2026-04-26T22:20:09.294461237Z"
+    },
+    "criterion-1.5x": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-04-27T19:16:17.277338054Z"
     }
   },
   "context": {},
@@ -27,8 +33,9 @@
     "component:gf2-core",
     "component:gf2-kernels-simd",
     "epic:gf2-core-ppc-spiral",
-    "story:ppc-field-batch"
+    "story:ppc-field-batch",
+    "ppc-kernel:C3"
   ],
   "created_at": "2026-04-25T15:18:40.508830459+00:00",
-  "updated_at": "2026-04-27T19:14:43.294817515+00:00"
+  "updated_at": "2026-04-27T19:16:17.277980294+00:00"
 }

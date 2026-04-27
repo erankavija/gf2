@@ -10,17 +10,25 @@
   ],
   "gates_required": [
     "code-review",
-    "cargo-ci"
+    "cargo-ci",
+    "criterion-1.5x"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "criterion-1.5x": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-04-27T19:15:46.241671745Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
     "type:task",
     "component:gf2-core",
     "epic:gf2-core-ppc-spiral",
-    "story:ppc-dispatch-routing"
+    "story:ppc-dispatch-routing",
+    "ppc-kernel:A1"
   ],
   "created_at": "2026-04-25T15:17:06.452613859+00:00",
-  "updated_at": "2026-04-27T19:14:43.306379269+00:00"
+  "updated_at": "2026-04-27T19:15:46.242330245+00:00"
 }
