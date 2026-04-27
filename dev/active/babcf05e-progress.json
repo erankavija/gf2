@@ -4,9 +4,9 @@
   "title": "gf2-core PPC-spiral performance sweep",
   "claimed_by": "agent:project-lead",
   "started_at": "2026-04-26T22:30:00+00:00",
-  "last_updated": "2026-04-27T19:30:00+00:00",
+  "last_updated": "2026-04-27T21:04:50+00:00",
   "current_wave": 3,
-  "phase": "wave_2_DONE; story 166b2691 closed; bd00d76a closed (R4) with examples/lto_opacity_audit.rs harness — all 5 dispatch tables empirically confirmed opaque; c7e91dfd NEW infra issue closed (MSRV 1.80 -> 1.95 + 24 clippy 1.95 lints + 30+ doc updates); e555c46d NEW bug filed (sse4.1 register-spill on pclmulqdq wrappers, single root-cause). Wave 3-6 prep DONE: 13 ppc-kernel:<id> labels + 13 criterion-1.5x gates applied across all Tier A-D tasks (commit e1a8f0e). Pre-dispatch criterion audit on Wave-3 Tier-A: no blockers. Dispatch deferred to session 4.",
+  "phase": "wave_2_DONE; story 166b2691 closed; bd00d76a closed (R4) with examples/lto_opacity_audit.rs harness — all 5 dispatch tables empirically confirmed opaque; c7e91dfd infra issue closed (MSRV 1.80 -> 1.95 + 24 clippy 1.95 lints + 30+ doc updates); e555c46d sse4.1 register-spill bug closed externally before session 4 resume. Wave 3-6 prep DONE: 13 ppc-kernel:<id> labels + 13 criterion-1.5x gates applied across all Tier A-D tasks (commit e1a8f0e). Session 4 strategic expansion approved by user: add benchmark-gap story 3abb755e and tasks 085cbd0b, 59c487c3, e7ab802d, 577b9e7f to target 64c88ae4 shortcomings (Strassen-Winograd, delayed-reduction FieldMatrix GF(p), GF(2^m) FieldMatrix batch path). Next dispatch: 085cbd0b strategy note before implementation waves.",
   "related_epic": "bb85c68a (FieldMatrix linear algebra)",
   "spec_doc": "dev/plans/gf2_core_ppc_spiral.md",
   "uncompetitiveness_doc": "dev/bench_results/2026-04-26-uncompetitiveness-profile.md",
@@ -16,7 +16,8 @@
     "User feedback 2026-04-27 (saved as feedback_pre_dispatch_criterion_audit.md): 'I'm a bit dissatisfied on the amount of amendments that we need to do constantly. That is somewhat breaking the flow.' Three amendments landed this session (4f845881 SC2 same-as-baseline impossibility; b2ecd2ff A1 date; b2ecd2ff B1 TBD-kernels exception). Going forward: pre-dispatch criterion audit catches stale text BEFORE worker burns a cycle.",
     "User feedback 2026-04-27 (saved as feedback_pre_dispatch_criterion_audit.md continued): user prefers minimal lead env-bypass commands when invoking jit ('Why do we need to have some strange path additions in the command? jit gate pass should just work. Jit is installed in this system'). Fix: keep `jit gate pass` invocations clean; environment manipulation belongs inside the gate runner script (scripts/cargo-ci.sh now does this autonomously).",
     "11 of 13 Tier A-D kernels are now pinned to a real ppc-v0-2026-04-27 @ 52eaac8 baseline. Remaining 3 kernels (B1 transpose, C5 cubic SoA, D2 Cuthill-McKee) stay TBD because their benches are created by the kernel-implementation tasks themselves per spec doc.",
-    "Pinned criterion baselines and their map (from dev/benchmarks/ppc-baselines.json post-ca527db): A1 dense_matvec / [512, 1024]; A2 matmul_square / [1024, 2048]; A3 fieldvec_dot_fp_large / [1000, 10000]; B2 gray_table_generation_k8 / [.]; B3 m4rm_multiply / [256, 512, 1024]; C1 gf2m_mul_crossover/pclmulqdq_barrett / [8, 16]; C2 gf2m_wide4_simd_clmul_only[avx2+vpclmulqdq-ymm] / [.]; C3 fp_m31_batch_mul_simd / [.]; C4 soa_batch_mul_fq2_fp65537/batch_soa / [256, 1000]; D1 sparse_matvec/density_0.05 / [500, 1000]."
+    "Pinned criterion baselines and their map (from dev/benchmarks/ppc-baselines.json post-ca527db): A1 dense_matvec / [512, 1024]; A2 matmul_square / [1024, 2048]; A3 fieldvec_dot_fp_large / [1000, 10000]; B2 gray_table_generation_k8 / [.]; B3 m4rm_multiply / [256, 512, 1024]; C1 gf2m_mul_crossover/pclmulqdq_barrett / [8, 16]; C2 gf2m_wide4_simd_clmul_only[avx2+vpclmulqdq-ymm] / [.]; C3 fp_m31_batch_mul_simd / [.]; C4 soa_batch_mul_fq2_fp65537/batch_soa / [256, 1000]; D1 sparse_matvec/density_0.05 / [500, 1000].",
+    "Session 4 strategic decision: user approved expanding babcf05e to directly address 64c88ae4 benchmark shortcomings, rather than only continuing low-level PPC Tier A-D. New story 3abb755e adds strategy task 085cbd0b plus implementation tasks for GF(2) Strassen-Winograd (59c487c3), GF(p) delayed-reduction FieldMatrix multiply (e7ab802d), and GF(2^m) FieldMatrix batch/PCLMUL path (577b9e7f)."
   ],
   "waves": [
     {
@@ -85,6 +86,16 @@
         {"id": "1f899836-f41c-419d-afde-773e8f10ce01", "short_id": "1f899836", "title": "Rayon row-tile multithread for B1/B3 dense kernels", "kind": "task", "classification": "implementation", "status": "pending", "state": "backlog", "note": "Pre-flight perf-stat cache-miss check mandatory; abort if memory-bound."},
         {"id": "10ba5d08-42aa-4382-b05a-b1d43d1b321a", "short_id": "10ba5d08", "title": "Rayon SoA chunks multithread for C4/C5 batch field ops", "kind": "task", "classification": "implementation", "status": "pending", "state": "backlog", "note": "Pre-flight perf-stat cache-miss check mandatory."}
       ]
+    },
+    {
+      "wave_number": 8,
+      "label": "Algorithmic benchmark-gap closures from 64c88ae4",
+      "issues": [
+        {"id": "085cbd0b-a2b5-4d11-af6c-b1fb53e7392b", "short_id": "085cbd0b", "title": "Map 64c88ae4 benchmark gaps into PPC execution plan", "kind": "task", "classification": "documentation", "status": "pending", "state": "ready", "note": "Dispatch before further implementation so algorithmic tasks compose with existing Tier A-D work."},
+        {"id": "59c487c3-ff73-4b29-837a-748c53c5b7fa", "short_id": "59c487c3", "title": "Add Strassen-Winograd layer for GF(2) BitMatrix multiply", "kind": "task", "classification": "implementation", "status": "pending", "state": "backlog", "depends_on": ["085cbd0b", "19bc3199"]},
+        {"id": "e7ab802d-b99e-4efa-9304-f649f7c7ef68", "short_id": "e7ab802d", "title": "Add delayed-reduction blocked FieldMatrix multiply for GF(p)", "kind": "task", "classification": "implementation", "status": "pending", "state": "backlog", "depends_on": ["085cbd0b", "86c09a51"]},
+        {"id": "577b9e7f-06e9-42cc-b9d3-f669b2b63fa4", "short_id": "577b9e7f", "title": "Wire GF(2^m) batch kernels into FieldMatrix multiply", "kind": "task", "classification": "implementation", "status": "pending", "state": "backlog", "depends_on": ["085cbd0b", "ec286cee"]}
+      ]
     }
   ],
   "created_during_execution": [
@@ -93,12 +104,18 @@
     {"id": "941d1528-0108-4cb1-a0a0-4dfc0cc4cd8c", "short_id": "941d1528", "kind": "bug", "title": "cargo-ci gate silently false-passes when cargo is a stub", "state": "done", "discovered_during": "session 2 (1d230525 review). FIX: scripts/cargo-ci.sh ensure_real_cargo() guard. CRITICAL: every cargo-ci PASS recorded BEFORE commit b402f6c was a stub-pass false positive (sub-second duration). All gate runs from b402f6c forward record real ~7s pipeline durations."},
     {"id": "986ddc44-63da-4d9c-9fc1-ebb035da9e3b", "short_id": "986ddc44", "kind": "bug", "title": "criterion-1.5x gate needs JIT-context wrapper for per-issue kernel-id resolution", "state": "rejected", "discovered_during": "session 2 (4f845881 R0 close). REJECTED as duplicate — folded into 4f845881 R1 (commit fc687ed) which delivers the wrapper + label convention."},
     {"id": "c7e91dfd-3c9e-481a-9492-2c3b84495436", "short_id": "c7e91dfd", "kind": "task", "title": "Bump MSRV from 1.80 to 1.95", "state": "done", "discovered_during": "session 3. Lead found ~/.cargo/bin/cargo was a 3-line stub layer; reinstalling rustup officially exposed clippy 1.95 lints; user said 'no need to use anything ancient' — bumped MSRV to current stable. Added as dep of 166b2691."},
-    {"id": "e555c46d-cb1d-45d4-91a6-871f32866ad0", "short_id": "e555c46d", "kind": "bug", "title": "asm-audit-finding: clmul wrappers spill to out-of-line _mm_extract_epi64 due to missing sse4.1 target_feature", "state": "ready", "discovered_during": "session 3 (bd00d76a asm audit). Single root cause affecting clmul_u64, clmul_batch, clmul_barrett_reduce, clmul_wide4_xmm. Fix: add sse4.1 to target_feature on 5 wrappers."}
+    {"id": "e555c46d-cb1d-45d4-91a6-871f32866ad0", "short_id": "e555c46d", "kind": "bug", "title": "asm-audit-finding: clmul wrappers spill to out-of-line _mm_extract_epi64 due to missing sse4.1 target_feature", "state": "done", "discovered_during": "session 3 (bd00d76a asm audit). Closed externally before session 4 resume at commits 4f91da9..854b37d."},
+    {"id": "3abb755e-39d7-40fd-bceb-0ca7bb310083", "short_id": "3abb755e", "kind": "story", "title": "Close algorithmic benchmark gaps from 64c88ae4", "state": "backlog", "discovered_during": "session 4 strategic expansion approved by user to target state-of-the-art performance beyond the existing PPC Tier A-D SIMD plan."},
+    {"id": "085cbd0b-a2b5-4d11-af6c-b1fb53e7392b", "short_id": "085cbd0b", "kind": "task", "title": "Map 64c88ae4 benchmark gaps into PPC execution plan", "state": "ready", "discovered_during": "session 4 expansion; strategy prerequisite for new benchmark-gap implementation tasks."},
+    {"id": "59c487c3-ff73-4b29-837a-748c53c5b7fa", "short_id": "59c487c3", "kind": "task", "title": "Add Strassen-Winograd layer for GF(2) BitMatrix multiply", "state": "backlog", "discovered_during": "session 4 expansion; depends on strategy task and B3 dense-kernel work."},
+    {"id": "e7ab802d-b99e-4efa-9304-f649f7c7ef68", "short_id": "e7ab802d", "kind": "task", "title": "Add delayed-reduction blocked FieldMatrix multiply for GF(p)", "state": "backlog", "discovered_during": "session 4 expansion; depends on strategy task and C3 general-prime SIMD work."},
+    {"id": "577b9e7f-06e9-42cc-b9d3-f669b2b63fa4", "short_id": "577b9e7f", "kind": "task", "title": "Wire GF(2^m) batch kernels into FieldMatrix multiply", "state": "backlog", "discovered_during": "session 4 expansion; depends on strategy task and C1 GF(2^m) batch-kernel work."}
   ],
   "escalations": [
     {"date": "2026-04-26", "issue": "c7791a20", "topic": "[hard] 1.3x criterion falsified to 0.91x at n=1024 (SIMD matmul regression)", "options_offered": ["amend", "revert"], "user_choice": "amend (Option 1)", "outcome": "Description amended; closed."},
     {"date": "2026-04-27", "issue": "4f845881", "topic": "SC2 'same-as-baseline = exit-0' is internally contradictory under >=1.5x threshold semantics", "options_offered": ["amend wording", "force literal", "revert+resequence"], "user_choice": "amend (Option A)", "outcome": "Description amended; R2 PASS."},
-    {"date": "2026-04-27", "issue": "b2ecd2ff", "topic": "(A) baseline date placeholder ppc-v0-2026-04-25 vs measured 2026-04-27; (B) 'all baselines exist' contradicts spec doc's TBD-bench exceptions", "options_offered": ["A1 amend issue / A2 rename dirs", "B1 amend criterion / B2 synthesize benches now"], "user_choice": "A1+B1", "outcome": "Description amended on both points; R2 PASS. User flagged that mid-flight amendments are breaking the flow — saved as feedback_pre_dispatch_criterion_audit.md."}
+    {"date": "2026-04-27", "issue": "b2ecd2ff", "topic": "(A) baseline date placeholder ppc-v0-2026-04-25 vs measured 2026-04-27; (B) 'all baselines exist' contradicts spec doc's TBD-bench exceptions", "options_offered": ["A1 amend issue / A2 rename dirs", "B1 amend criterion / B2 synthesize benches now"], "user_choice": "A1+B1", "outcome": "Description amended on both points; R2 PASS. User flagged that mid-flight amendments are breaking the flow — saved as feedback_pre_dispatch_criterion_audit.md."},
+    {"date": "2026-04-27", "issue": "babcf05e", "topic": "64c88ae4 benchmark findings showed current PPC Tier A-D plan will not by itself close state-of-the-art gaps: missing Strassen-Winograd, delayed reduction/blocked GF(p) matrix multiply, and GF(2^m) matrix-level batching.", "options_offered": ["expand epic now", "keep existing PPC scope", "pause for revised roadmap"], "user_choice": "expand epic now", "outcome": "Created story 3abb755e and tasks 085cbd0b, 59c487c3, e7ab802d, 577b9e7f; wired into DAG and progress plan."}
   ],
   "rework_counts": {
     "c3a9a4cb": 1,
@@ -109,7 +126,11 @@
     "b2ecd2ff": 1,
     "bd00d76a": 4,
     "c7e91dfd": 4,
-    "166b2691": 0
+    "166b2691": 0,
+    "085cbd0b": 0,
+    "59c487c3": 0,
+    "e7ab802d": 0,
+    "577b9e7f": 0
   },
   "session_notes": {
     "session_1_starting_state": "Epic babcf05e: backlog. 6 stories scaffolded. 16 child tasks scaffolded. c7791a20 (profile.release) and c69d2055 (dispatch hoist) added by user on 2026-04-26 in response to bb85c68a uncompetitiveness profile finding.",
@@ -117,6 +138,8 @@
     "session_2_starting_state": "Wave 2 sub-waves 2c (4f845881), 2d (b2ecd2ff), follow-up bug 1d230525, retrospective audit bd00d76a all in ready state. Story 166b2691 backlog (3 of 4 sub-tasks done).",
     "session_2_outcome": "All Wave 2 sub-tasks closed except bd00d76a (deferred). Two new infra issues created: 941d1528 (cargo-ci stub guard, closed; gate runs are now real) and 986ddc44 (criterion-1.5x wrapper, rejected as duplicate folded into 4f845881 R1). Three user-approved amendments landed (one for each task). Memory feedback_pre_dispatch_criterion_audit.md added in response to user feedback that constant amendments break flow.",
     "session_3_starting_state": "Wave 2 still open — bd00d76a (retrospective asm audit) ready, story 166b2691 backlog. 13 Tier A-D backlog tasks unprepped (no ppc-kernel labels, no criterion-1.5x gates).",
-    "session_3_outcome": "Wave 2 closed. bd00d76a (4 review cycles, scope-expanded with examples/lto_opacity_audit.rs harness to give all 5 dispatch tables direct asm evidence). c7e91dfd NEW (MSRV bump 1.80 -> 1.95 incl. rustup reinstall + clippy 1.95 lint fixes + extensive doc updates). e555c46d NEW bug filed from asm audit. Story 166b2691 closed at b04659d. Wave 3-6 prep: 13 ppc-kernel:<id> labels + 13 criterion-1.5x gates applied (commit e1a8f0e). Pre-dispatch criterion audit done — no Wave-3 blockers. Wave 3 dispatch deferred to session 4 to preserve context budget. Reviewer narrowing-interpretations pattern observed and documented in handoff-3 traps."
+    "session_3_outcome": "Wave 2 closed. bd00d76a (4 review cycles, scope-expanded with examples/lto_opacity_audit.rs harness to give all 5 dispatch tables direct asm evidence). c7e91dfd NEW (MSRV bump 1.80 -> 1.95 incl. rustup reinstall + clippy 1.95 lint fixes + extensive doc updates). e555c46d NEW bug filed from asm audit. Story 166b2691 closed at b04659d. Wave 3-6 prep: 13 ppc-kernel:<id> labels + 13 criterion-1.5x gates applied (commit e1a8f0e). Pre-dispatch criterion audit done — no Wave-3 blockers. Wave 3 dispatch deferred to session 4 to preserve context budget. Reviewer narrowing-interpretations pattern observed and documented in handoff-3 traps.",
+    "session_4_starting_state": "Branch already contains completed e555c46d. User requested state-of-the-art performance and mentioned shortcomings found during jit 64c88ae4. Lead inspected 64c88ae4 bench report/profile and escalated strategic scope choice.",
+    "session_4_expansion": "User selected 'Expand epic now with benchmark-gap tasks'. Lead created story 3abb755e with ready strategy task 085cbd0b plus backlog implementation tasks 59c487c3 (GF(2) Strassen-Winograd after B3), e7ab802d (GF(p) delayed-reduction FieldMatrix multiply after C3), and 577b9e7f (GF(2^m) FieldMatrix batch path after C1)."
   }
 }

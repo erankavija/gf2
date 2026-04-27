@@ -3012,3 +3012,24 @@
 {"type":"gate_passed","id":"856be819-ffdd-4b60-b5ce-970fce86401d","issue_id":"e555c46d-cb1d-45d4-91a6-871f32866ad0","timestamp":"2026-04-27T20:54:07.704649016Z","gate_key":"code-review","updated_by":"auto:executor"}
 {"type":"issue_state_changed","id":"c20d5638-fe07-4197-a2bc-797f8614280d","issue_id":"e555c46d-cb1d-45d4-91a6-871f32866ad0","timestamp":"2026-04-27T20:54:18.403129317Z","from":"in_progress","to":"done"}
 {"type":"issue_completed","id":"4e25f6a8-99a2-458e-ace7-c0d5dc0714b8","issue_id":"e555c46d-cb1d-45d4-91a6-871f32866ad0","timestamp":"2026-04-27T20:54:18.403202597Z"}
+{"type":"issue_created","id":"52299e51-1b22-46b7-b8fd-c15b91c6d384","issue_id":"3abb755e-39d7-40fd-bceb-0ca7bb310083","timestamp":"2026-04-27T21:07:47.090928345Z","title":"Close algorithmic benchmark gaps from 64c88ae4","priority":"high"}
+{"type":"issue_created","id":"37e0355b-b1be-4405-ae61-731c25dc352d","issue_id":"085cbd0b-a2b5-4d11-af6c-b1fb53e7392b","timestamp":"2026-04-27T21:07:47.095066616Z","title":"Map 64c88ae4 benchmark gaps into PPC execution plan","priority":"high"}
+{"type":"issue_created","id":"ae9da48c-15b1-48bb-86af-01807088411f","issue_id":"59c487c3-ff73-4b29-837a-748c53c5b7fa","timestamp":"2026-04-27T21:07:47.099400367Z","title":"Add Strassen-Winograd layer for GF(2) BitMatrix multiply","priority":"high"}
+{"type":"issue_created","id":"6e48c58a-d58d-4677-8993-08410bd45d11","issue_id":"e7ab802d-b99e-4efa-9304-f649f7c7ef68","timestamp":"2026-04-27T21:07:47.103274538Z","title":"Add delayed-reduction blocked FieldMatrix multiply for GF(p)","priority":"high"}
+{"type":"issue_created","id":"b0ffb23c-3773-4e6c-89a4-bb5f0494f05c","issue_id":"577b9e7f-06e9-42cc-b9d3-f669b2b63fa4","timestamp":"2026-04-27T21:07:47.106984809Z","title":"Wire GF(2^m) batch kernels into FieldMatrix multiply","priority":"high"}
+{"type":"issue_state_changed","id":"aee6f8b1-31b8-4c2c-94b6-e79bd3ff4a9e","issue_id":"3abb755e-39d7-40fd-bceb-0ca7bb310083","timestamp":"2026-04-27T21:07:47.124043814Z","from":"ready","to":"backlog"}
+{"type":"issue_state_changed","id":"2cc8da57-7db4-410c-a607-bc31cafac170","issue_id":"59c487c3-ff73-4b29-837a-748c53c5b7fa","timestamp":"2026-04-27T21:07:47.206951508Z","from":"ready","to":"backlog"}
+{"type":"issue_state_changed","id":"cdac76ab-b0a4-4558-9f54-e59dfdd35282","issue_id":"e7ab802d-b99e-4efa-9304-f649f7c7ef68","timestamp":"2026-04-27T21:07:47.272122596Z","from":"ready","to":"backlog"}
+{"type":"issue_state_changed","id":"4c56ce91-c348-4a7d-8235-39e6af519194","issue_id":"577b9e7f-06e9-42cc-b9d3-f669b2b63fa4","timestamp":"2026-04-27T21:07:47.308541467Z","from":"ready","to":"backlog"}
+{"type":"gate_added","id":"b730135a-f7e1-440c-8862-df9a53a65d67","issue_id":"3abb755e-39d7-40fd-bceb-0ca7bb310083","timestamp":"2026-04-27T21:07:47.336462995Z","gate_key":"code-review"}
+{"type":"gate_added","id":"7353a9ad-cbb6-4377-9071-7cc5ed3b4fd0","issue_id":"3abb755e-39d7-40fd-bceb-0ca7bb310083","timestamp":"2026-04-27T21:07:47.336526065Z","gate_key":"cargo-ci"}
+{"type":"gate_added","id":"1067bc9d-b7fb-4e8f-b518-789baba76266","issue_id":"085cbd0b-a2b5-4d11-af6c-b1fb53e7392b","timestamp":"2026-04-27T21:07:47.345419487Z","gate_key":"code-review"}
+{"type":"gate_added","id":"9403829a-f584-4b2a-9bc6-e3bff5915f9d","issue_id":"085cbd0b-a2b5-4d11-af6c-b1fb53e7392b","timestamp":"2026-04-27T21:07:47.345471737Z","gate_key":"cargo-ci"}
+{"type":"gate_added","id":"3eece8a0-ff51-49dd-bc13-3ea02f9c719f","issue_id":"59c487c3-ff73-4b29-837a-748c53c5b7fa","timestamp":"2026-04-27T21:07:47.355010040Z","gate_key":"code-review"}
+{"type":"gate_added","id":"b3ab61f8-5e72-4d9f-9b61-ac5d9bdd519d","issue_id":"59c487c3-ff73-4b29-837a-748c53c5b7fa","timestamp":"2026-04-27T21:07:47.355061710Z","gate_key":"cargo-ci"}
+{"type":"gate_added","id":"8eaee4f7-3915-4d28-9969-b70024adb3e1","issue_id":"e7ab802d-b99e-4efa-9304-f649f7c7ef68","timestamp":"2026-04-27T21:07:47.364334003Z","gate_key":"code-review"}
+{"type":"gate_added","id":"b7fec3f2-2dfb-4179-bb90-e0d10a98d97c","issue_id":"e7ab802d-b99e-4efa-9304-f649f7c7ef68","timestamp":"2026-04-27T21:07:47.364395973Z","gate_key":"cargo-ci"}
+{"type":"gate_added","id":"daea0472-9b2a-43c1-ae89-c4308ca47474","issue_id":"577b9e7f-06e9-42cc-b9d3-f669b2b63fa4","timestamp":"2026-04-27T21:07:47.373217675Z","gate_key":"code-review"}
+{"type":"gate_added","id":"d0d9f7d0-1a61-4202-b3de-a0438c791449","issue_id":"577b9e7f-06e9-42cc-b9d3-f669b2b63fa4","timestamp":"2026-04-27T21:07:47.373284945Z","gate_key":"cargo-ci"}
+{"type":"gate_added","id":"40025a73-d7fc-48ce-af2c-f950aeb03aef","issue_id":"3abb755e-39d7-40fd-bceb-0ca7bb310083","timestamp":"2026-04-27T21:07:47.376961936Z","gate_key":"doc-review"}
+{"type":"gate_added","id":"3b2ceb04-0d0c-4913-b2cb-831c91cf127e","issue_id":"085cbd0b-a2b5-4d11-af6c-b1fb53e7392b","timestamp":"2026-04-27T21:07:47.380793647Z","gate_key":"doc-review"}
