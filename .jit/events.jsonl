@@ -3053,3 +3053,5 @@
 {"type":"issue_completed","id":"b5a118cc-225f-4fc8-9fc4-b7ca68d6880e","issue_id":"c69d2055-942d-4341-88ad-6020245fcc97","timestamp":"2026-04-27T22:30:34.055647564Z"}
 {"type":"issue_created","id":"75cd1815-d700-4766-9ac0-3739e3a86189","issue_id":"d4740d85-48c9-4948-8531-b4849cb13464","timestamp":"2026-04-27T22:36:17.000496281Z","title":"Fix verify-lean Charon extraction failure in gfpn ext config","priority":"normal"}
 {"type":"issue_state_changed","id":"f3a33006-0302-469f-8bf4-ae69e489e219","issue_id":"cad241e6-9606-47ff-96fc-20f38ed591aa","timestamp":"2026-04-27T22:36:22.004550423Z","from":"ready","to":"backlog"}
+{"type":"issue_state_changed","id":"d5295d4c-6386-4805-905b-a3eec56bc10d","issue_id":"d4740d85-48c9-4948-8531-b4849cb13464","timestamp":"2026-04-27T22:36:48.165961328Z","from":"ready","to":"in_progress"}
+{"type":"issue_claimed","id":"7f305a36-6d69-486e-a72d-7767718cc125","issue_id":"d4740d85-48c9-4948-8531-b4849cb13464","timestamp":"2026-04-27T22:36:48.168949589Z","assignee":"agent:claude-wt-d4740d85"}

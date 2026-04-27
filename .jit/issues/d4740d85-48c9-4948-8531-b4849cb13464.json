@@ -2,9 +2,9 @@
   "id": "d4740d85-48c9-4948-8531-b4849cb13464",
   "title": "Fix verify-lean Charon extraction failure in gfpn ext config",
   "description": "`./scripts/verify-lean.sh` currently fails on mainline before the `cad241e6` SIMD work is merged. The observed failure is during Charon extraction of `gf2-core` with `--no-default-features`, around `crates/gf2-core/src/gfpn/ext_config.rs:57`, with a Charon type error followed by stack overflow. Because `cad241e6` has a hard criterion that the Lean4 verification pipeline still builds, it must remain blocked until the baseline pipeline is fixed.\n\n## Background\n\nThe `cad241e6` worktree rework demonstrated that the failure is baseline-identical on the branch base (`0c4e2fb`) and that the new SIMD code is gated behind `#[cfg(feature = \"simd\")]`, while `scripts/verify-lean.sh` extracts `gf2-core` with `--no-default-features`. That makes this a verification-tooling blocker rather than a `cad241e6` implementation defect.\n\nThe fix should preserve the production verification contract: the full `./scripts/verify-lean.sh` pipeline must run from repository root and complete successfully, including Charon extraction, Aeneas translation/post-processing, and `lake build`.\n\n## Success Criteria\n\n- [hard] `./scripts/verify-lean.sh` passes from the repository root on the current mainline branch.\n- [hard] The fix keeps exercising the intended production `gfp/` and `gfpn/` code paths; it must not hide the relevant field arithmetic behind a broad opaque/exclude rule just to make extraction pass.\n- [hard] If a Charon/Aeneas compatibility workaround is required, it is narrowly scoped, documented in the relevant script or proof workaround file, and includes enough context to remove it later.\n- [hard] Existing committed Lean files still build with `cd proofs && lake build`.\n- [hard] `cargo nextest run -p gf2-core --all-features --release --profile ci` passes.\n- [hard] `cargo clippy -p gf2-core --all-targets --all-features -- -D warnings` passes.\n\n## Notes\n\nThis is a blocker for `cad241e6` only because that task requires the Lean4 proof pipeline to remain green. Do not merge `cad241e6` until this issue is done.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude-wt-d4740d85",
   "dependencies": [],
   "gates_required": [
     "cargo-ci",
@@ -21,5 +21,5 @@
     "story:ppc-dispatch-routing"
   ],
   "created_at": "2026-04-27T22:36:17.000063951+00:00",
-  "updated_at": "2026-04-27T22:36:17.000071581+00:00"
+  "updated_at": "2026-04-27T22:36:48.166062068+00:00"
 }
