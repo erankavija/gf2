@@ -67,6 +67,11 @@ description = "Reason for issue closure (used with rejected state)."
 unique = true
 examples = ["resolution:wont-fix", "resolution:duplicate", "resolution:obsolete"]
 
+[namespaces.ppc-kernel]
+description = "PPC-spiral kernel ID (Tier A-D from dev/plans/gf2_core_ppc_spiral.md). Consumed by scripts/criterion-1.5x.sh to look up the kernel's bench target + size leaves in dev/benchmarks/ppc-baselines.json."
+unique = true
+examples = ["ppc-kernel:A1", "ppc-kernel:A2", "ppc-kernel:A3", "ppc-kernel:B1", "ppc-kernel:B2", "ppc-kernel:B3", "ppc-kernel:C1", "ppc-kernel:C2", "ppc-kernel:C3", "ppc-kernel:C4", "ppc-kernel:C5", "ppc-kernel:D1", "ppc-kernel:D2"]
+
 # =============================================================================
 # ADVANCED (uncomment to enable)
 # =============================================================================
