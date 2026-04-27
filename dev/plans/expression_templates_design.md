@@ -1050,7 +1050,7 @@ scope) or **escalate** (needs lead or user input).
 
 - **Item F. MSRV feasibility for const generics.**
   Tag: **defer-to-d48a3cfd**. Scope: every proxy struct is non-const-generic,
-  so MSRV 1.80 is not at risk from this design. If `d48a3cfd` introduces
+  so the current MSRV is not at risk from this design. If `d48a3cfd` introduces
   `Product<A, B, const TRANS_A: bool, const TRANS_B: bool>` as an
   optimisation later, the MSRV check per CLAUDE.md's breakdown-time
   feasibility rule applies then, not now.

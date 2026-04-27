@@ -1,5 +1,11 @@
 # Quality Audit Plan for gf2-core
 
+> **Historical record.** This audit plan was drafted on 2025-12-01 against
+> workspace MSRV 1.80. The workspace MSRV was subsequently bumped to 1.95
+> on 2026-04-27 (JIT issue `c7e91dfd`); MSRV references below reflect the
+> plan's point-in-time state and are intentionally preserved for audit
+> traceability. The current MSRV is documented in `CLAUDE.md`.
+
 **Date Created**: 2025-12-01  
 **Project Version**: 0.1.0  
 **Total Estimated Time**: 58 hours (7-8 working days)

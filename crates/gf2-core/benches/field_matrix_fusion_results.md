@@ -107,10 +107,11 @@ scope for T2 and for the current d48a3cfd / T3 implementation pair:
    the fused path will win decisively. Characterise the crossover and
    redefine a `[hard]` runtime target at the crossover size, rather
    than pinning it at n = 1024.
-5. **MSRV bump to ≥ 1.89 to unlock AVX-512 IFMA kernels.** The
-   workspace is pinned to Rust 1.80, which blocks the
-   `_mm512_madd52lo_epu64` / `_mm512_madd52hi_epu64` intrinsics that
-   landed stable in 1.89. Those would let a Mersenne-31 gemm execute
+5. **AVX-512 IFMA kernels are unblocked by the 2026-04-27 MSRV bump
+   (1.80 → 1.95).** The `_mm512_madd52lo_epu64` /
+   `_mm512_madd52hi_epu64` intrinsics landed stable in 1.89 and are
+   now available under the current MSRV. Those would let a
+   Mersenne-31 gemm execute
    8 × 52-bit MACs per instruction, bringing n = 1024 compute from
    ~3 s toward ~0.1–0.2 s. At that point the O(n²) fusion saving
    (~8 MB of memory traffic ≈ 0.4 ms) moves from ~10⁻³ of runtime to
@@ -128,7 +129,7 @@ commit — file them as children of `d48a3cfd` or as follow-ons to
 
 A global allocator wrapper (e.g. `stats-alloc`) would catch both the
 owned matrices and the internal `FieldVec` scratch buffers. The
-workspace MSRV is 1.80 and the project policy in `CLAUDE.md` bars
+project policy in `CLAUDE.md` bars
 pulling in dev-dependencies that are not strictly necessary for the
 headline claim. The `KernelCounts`-based verification gives exact
 evidence for the `[hard]` allocation claim, which is what the
