@@ -7,7 +7,7 @@
 //! When the `simd` feature is enabled, row XOR operations automatically use AVX2
 //! vectorization for large matrices, providing significant speedups.
 
-use crate::kernels::ops::xor_inplace;
+use crate::kernels::ops::{resolve_xor_inplace, XorInplaceFn};
 use crate::matrix::BitMatrix;
 
 /// Chooses an appropriate block size k for M4RM based on matrix dimensions.
@@ -96,7 +96,7 @@ fn build_gray_table(b: &BitMatrix, row_start: usize, k_block: usize, n: usize) -
         // XOR in (or out) the corresponding row
         if row_start + bit_pos < b.rows() {
             let row_words = b.row_words(row_start + bit_pos);
-            xor_inplace(&mut current, row_words);
+            crate::kernels::ops::xor_inplace(&mut current, row_words);
         }
 
         // Store in table at the Gray code position
@@ -124,6 +124,7 @@ fn build_gray_table(b: &BitMatrix, row_start: usize, k_block: usize, n: usize) -
 /// * `n` - Number of columns in B
 /// * `buffer` - Pre-allocated flat buffer to write table into
 ///   Must have length >= (2^k_block) * stride_words
+/// * `xor` - Pre-resolved row XOR operation for `stride_words`-wide rows
 ///
 /// # Layout
 ///
@@ -137,6 +138,7 @@ fn build_gray_table_flat(
     k_block: usize,
     n: usize,
     buffer: &mut [u64],
+    xor: XorInplaceFn,
 ) {
     let table_size = 1usize << k_block;
     let stride_words = if n == 0 { 0 } else { n.div_ceil(64) };
@@ -159,7 +161,7 @@ fn build_gray_table_flat(
         // XOR in (or out) the corresponding row
         if row_start + bit_pos < b.rows() {
             let row_words = b.row_words(row_start + bit_pos);
-            xor_inplace(&mut current, row_words);
+            xor(&mut current, row_words);
         }
 
         // Copy to buffer at the correct position
@@ -170,21 +172,30 @@ fn build_gray_table_flat(
     }
 }
 
-/// Extracts k_block consecutive bits from a row of matrix A starting at column col_start.
+/// Extracts k_block consecutive bits from a bit-packed row starting at column col_start.
 ///
 /// Returns an index into the Gray code table (0..2^k_block).
-fn extract_bits(a: &BitMatrix, row: usize, col_start: usize, k_block: usize) -> usize {
-    let mut result = 0usize;
-    let max_col = a.cols();
+fn extract_bits_from_row_words(row_words: &[u64], col_start: usize, k_block: usize) -> usize {
+    debug_assert!(k_block <= usize::BITS as usize);
 
-    for bit_idx in 0..k_block {
-        let col = col_start + bit_idx;
-        if col < max_col && a.get(row, col) {
-            result |= 1usize << bit_idx;
-        }
+    if k_block == 0 {
+        return 0;
     }
 
-    result
+    let word_idx = col_start >> 6;
+    let bit_offset = col_start & 63;
+    let mut bits = row_words.get(word_idx).copied().unwrap_or(0) >> bit_offset;
+
+    if bit_offset + k_block > 64 {
+        bits |= row_words.get(word_idx + 1).copied().unwrap_or(0) << (64 - bit_offset);
+    }
+
+    let mask = if k_block == 64 {
+        u64::MAX
+    } else {
+        (1u64 << k_block) - 1
+    };
+    (bits & mask) as usize
 }
 
 /// Multiplies two matrices over GF(2) using the M4RM algorithm.
@@ -245,6 +256,7 @@ pub fn multiply(a: &BitMatrix, b: &BitMatrix) -> BitMatrix {
     let k_block = choose_k_block(k, n);
     let table_size = 1usize << k_block;
     let stride_words = n.div_ceil(64);
+    let xor = resolve_xor_inplace(stride_words);
 
     // Pre-allocate flat buffer for Gray code table (reused across all panels)
     // This eliminates ~33 MB of allocation churn for 1024×1024 matrices
@@ -256,12 +268,12 @@ pub fn multiply(a: &BitMatrix, b: &BitMatrix) -> BitMatrix {
         let panel_size = k_block.min(k - panel_start);
 
         // Rebuild table in the flat buffer (no need to clear - gray code overwrites all)
-        build_gray_table_flat(b, panel_start, panel_size, n, &mut table_buffer);
+        build_gray_table_flat(b, panel_start, panel_size, n, &mut table_buffer, xor);
 
         // For each row of A
         for i in 0..m {
             // Extract k_block bits from row i of A starting at panel_start
-            let idx = extract_bits(a, i, panel_start, panel_size);
+            let idx = extract_bits_from_row_words(a.row_words(i), panel_start, panel_size);
 
             // XOR the corresponding table entry into row i of C
             let entry_start = idx * stride_words;
@@ -269,7 +281,7 @@ pub fn multiply(a: &BitMatrix, b: &BitMatrix) -> BitMatrix {
             let table_entry = &table_buffer[entry_start..entry_end];
 
             let c_row = c.row_words_mut(i);
-            xor_inplace(c_row, table_entry);
+            xor(c_row, table_entry);
         }
 
         panel_start += k_block;
@@ -281,6 +293,7 @@ pub fn multiply(a: &BitMatrix, b: &BitMatrix) -> BitMatrix {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::kernels::ops::xor_inplace;
 
     #[test]
     fn test_choose_k_block() {
@@ -300,8 +313,19 @@ mod tests {
         a.set(0, 3, true);
 
         // Extract bits 0-3: should get binary 1010 = 10
-        let bits = extract_bits(&a, 0, 0, 4);
+        let bits = extract_bits_from_row_words(a.row_words(0), 0, 4);
         assert_eq!(bits, 0b1010);
+    }
+
+    #[test]
+    fn test_extract_bits_crosses_word_boundary() {
+        let mut a = BitMatrix::zeros(1, 130);
+        a.set(0, 63, true);
+        a.set(0, 64, true);
+        a.set(0, 66, true);
+
+        let bits = extract_bits_from_row_words(a.row_words(0), 63, 5);
+        assert_eq!(bits, 0b01011);
     }
 
     #[test]
@@ -391,7 +415,8 @@ mod tests {
         let table_size = 256;
         let stride_words = 128_usize.div_ceil(64);
         let mut table_flat = vec![0u64; table_size * stride_words];
-        build_gray_table_flat(&b, 0, 8, 128, &mut table_flat);
+        let xor = resolve_xor_inplace(stride_words);
+        build_gray_table_flat(&b, 0, 8, 128, &mut table_flat, xor);
 
         // Compare all entries
         for (idx, vec_entry) in table_vec.iter().enumerate() {
