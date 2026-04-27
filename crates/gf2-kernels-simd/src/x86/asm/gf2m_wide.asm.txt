@@ -1,0 +1,411 @@
+; gf2-core PPC-spiral asm artefact
+; ---------------------------------------------------------
+; crate         : gf2-kernels-simd
+; primary       : gf2_kernels_simd::x86::gf2m_wide::clmul_wide4_xmm
+; extra symbols : gf2_kernels_simd::x86::gf2m_wide::clmul_wide4_ymm
+; output        : crates/gf2-kernels-simd/src/x86/asm/gf2m_wide.asm.txt
+; rustc         : rustc 1.91.0 (f8297e351 2025-10-28)
+; host triple   : x86_64-unknown-linux-gnu
+; target-cpu    : <unset; rely on #[target_feature]>
+; RUSTFLAGS     : <empty>
+; commit        : afff922
+; regenerated   : 2026-04-27T10:30:16Z
+; tool          : cargo-show-asm
+; ---------------------------------------------------------
+
+
+;==========================================================
+; symbol: gf2_kernels_simd::x86::gf2m_wide::clmul_wide4_xmm
+;==========================================================
+
+    Finished `release` profile [optimized] target(s) in 0.02s
+
+gf2_kernels_simd::x86::gf2m_wide::clmul_wide4_xmm:
+	push rbp
+	push r15
+	push r14
+	push r13
+	push r12
+	push rbx
+	sub rsp, 168
+	mov qword ptr [rsp + 48], rdi
+	xorps xmm0, xmm0
+	movups xmmword ptr [rdx + 40], xmm0
+	mov qword ptr [rdx + 56], 0
+	mov r12, rdx
+	mov qword ptr [rsp + 136], rdx
+	movdqu xmm1, xmmword ptr [rdi]
+	movdqa xmmword ptr [rsp + 16], xmm1
+	movdqu xmm0, xmmword ptr [rsi]
+	movdqa xmmword ptr [rsp + 64], xmm0
+	mov r13, rsi
+	pclmulqdq xmm1, xmm0, 0
+	movdqa xmmword ptr [rsp + 32], xmm1
+	movdqa xmmword ptr [rsp], xmm1
+	mov rbp, rsp
+	mov rdi, rbp
+	call core::core_arch::x86_64::sse41::_mm_extract_epi64
+	mov r14, rax
+	movaps xmm0, xmmword ptr [rsp + 32]
+	movaps xmmword ptr [rsp], xmm0
+	mov rbx, rsp
+	mov rdi, rbx
+	call core::core_arch::x86_64::sse41::_mm_extract_epi64
+	mov r15, rax
+	mov qword ptr [r12], r14
+	mov r12, r13
+	mov qword ptr [rsp + 144], r13
+	movdqu xmm0, xmmword ptr [r13 + 8]
+	movdqa xmmword ptr [rsp + 80], xmm0
+	movdqa xmm1, xmmword ptr [rsp + 16]
+	pclmulqdq xmm1, xmm0, 0
+	movdqa xmmword ptr [rsp + 32], xmm1
+	movdqa xmmword ptr [rsp], xmm1
+	mov rdi, rbp
+	call core::core_arch::x86_64::sse41::_mm_extract_epi64
+	mov r13, rax
+	movaps xmm0, xmmword ptr [rsp + 32]
+	movaps xmmword ptr [rsp], xmm0
+	mov rdi, rbx
+	call core::core_arch::x86_64::sse41::_mm_extract_epi64
+	mov r14, rax
+	xor r13, r15
+	movdqu xmm0, xmmword ptr [r12 + 16]
+	movdqa xmmword ptr [rsp + 32], xmm0
+	movdqa xmm1, xmmword ptr [rsp + 16]
+	pclmulqdq xmm1, xmm0, 0
+	movdqa xmmword ptr [rsp + 112], xmm1
+	movdqa xmmword ptr [rsp], xmm1
+	mov r12, rbp
+	mov rdi, rbp
+	call core::core_arch::x86_64::sse41::_mm_extract_epi64
+	mov r15, rax
+	movaps xmm0, xmmword ptr [rsp + 112]
+	movaps xmmword ptr [rsp], xmm0
+	mov rdi, rbx
+	call core::core_arch::x86_64::sse41::_mm_extract_epi64
+	mov rbp, rax
+	xor r15, r14
+	pshufd xmm0, xmmword ptr [rsp + 32], 238
+	movdqa xmmword ptr [rsp + 112], xmm0
+	movdqa xmm1, xmmword ptr [rsp + 16]
+	pclmulqdq xmm1, xmm0, 0
+	movdqa xmmword ptr [rsp + 16], xmm1
+	movdqa xmmword ptr [rsp], xmm1
+	mov rdi, r12
+	call core::core_arch::x86_64::sse41::_mm_extract_epi64
+	mov r14, rax
+	movaps xmm0, xmmword ptr [rsp + 16]
+	movaps xmmword ptr [rsp], xmm0
+	mov rdi, rbx
+	call core::core_arch::x86_64::sse41::_mm_extract_epi64
+	mov qword ptr [rsp + 104], rax
+	xor r14, rbp
+	mov rax, qword ptr [rsp + 48]
+	movdqu xmm1, xmmword ptr [rax + 8]
+	movdqa xmmword ptr [rsp + 16], xmm1
+	movdqa xmm0, xmmword ptr [rsp + 64]
+	pclmulqdq xmm0, xmm1, 0
+	movdqa xmmword ptr [rsp + 64], xmm0
+	movdqa xmmword ptr [rsp], xmm0
+	mov rdi, r12
+	call core::core_arch::x86_64::sse41::_mm_extract_epi64
+	mov rbp, rax
+	movaps xmm0, xmmword ptr [rsp + 64]
+	movaps xmmword ptr [rsp], xmm0
+	mov rdi, rbx
+	call core::core_arch::x86_64::sse41::_mm_extract_epi64
+	mov r12, rax
+	xor rbp, r13
+	mov r13, qword ptr [rsp + 136]
+	mov qword ptr [r13 + 8], rbp
+	movdqa xmm0, xmmword ptr [rsp + 80]
+	pclmulqdq xmm0, xmmword ptr [rsp + 16], 0
+	movdqa xmmword ptr [rsp + 80], xmm0
+	movdqa xmmword ptr [rsp], xmm0
+	mov rdi, rsp
+	call core::core_arch::x86_64::sse41::_mm_extract_epi64
+	mov rbp, rax
+	movaps xmm0, xmmword ptr [rsp + 80]
+	movaps xmmword ptr [rsp], xmm0
+	mov rdi, rbx
+	call core::core_arch::x86_64::sse41::_mm_extract_epi64
+	mov rbx, rax
+	xor rbp, r12
+	xor rbp, r15
+	movdqa xmm0, xmmword ptr [rsp + 32]
+	pclmulqdq xmm0, xmmword ptr [rsp + 16], 0
+	movdqa xmmword ptr [rsp + 32], xmm0
+	movdqa xmmword ptr [rsp], xmm0
+	mov rdi, rsp
+	call core::core_arch::x86_64::sse41::_mm_extract_epi64
+	mov r12, rax
+	movaps xmm0, xmmword ptr [rsp + 32]
+	movaps xmmword ptr [rsp], xmm0
+	mov rdi, rsp
+	call core::core_arch::x86_64::sse41::_mm_extract_epi64
+	mov r15, rax
+	xor r12, rbx
+	xor r12, r14
+	mov qword ptr [rsp + 160], r12
+	xor r15, qword ptr [rsp + 104]
+	movdqa xmm0, xmmword ptr [rsp + 16]
+	pclmulqdq xmm0, xmmword ptr [rsp + 112], 0
+	movdqa xmmword ptr [rsp + 16], xmm0
+	movdqa xmmword ptr [rsp], xmm0
+	mov rbx, rsp
+	mov rdi, rbx
+	call core::core_arch::x86_64::sse41::_mm_extract_epi64
+	mov qword ptr [rsp + 32], rax
+	movaps xmm0, xmmword ptr [rsp + 16]
+	movaps xmmword ptr [rsp], xmm0
+	mov r12, rsp
+	mov rdi, r12
+	call core::core_arch::x86_64::sse41::_mm_extract_epi64
+	xor rax, qword ptr [r13 + 40]
+	mov qword ptr [rsp + 112], rax
+	mov rax, qword ptr [rsp + 48]
+	movdqu xmm0, xmmword ptr [rax + 16]
+	movdqa xmmword ptr [rsp + 16], xmm0
+	mov r14, qword ptr [rsp + 144]
+	movdqu xmm1, xmmword ptr [r14]
+	movdqa xmmword ptr [rsp + 80], xmm1
+	pclmulqdq xmm0, xmm1, 0
+	movdqa xmmword ptr [rsp + 64], xmm0
+	movdqa xmmword ptr [rsp], xmm0
+	mov rdi, rbx
+	call core::core_arch::x86_64::sse41::_mm_extract_epi64
+	mov rbx, rax
+	movaps xmm0, xmmword ptr [rsp + 64]
+	movaps xmmword ptr [rsp], xmm0
+	mov rdi, r12
+	call core::core_arch::x86_64::sse41::_mm_extract_epi64
+	mov r12, rax
+	xor rbx, rbp
+	mov qword ptr [r13 + 16], rbx
+	movdqu xmm0, xmmword ptr [r14 + 8]
+	movdqa xmmword ptr [rsp + 64], xmm0
+	mov rbx, r14
+	movdqa xmm1, xmmword ptr [rsp + 16]
+	pclmulqdq xmm1, xmm0, 0
+	movdqa xmmword ptr [rsp + 48], xmm1
+	movdqa xmmword ptr [rsp], xmm1
+	mov rdi, rsp
+	call core::core_arch::x86_64::sse41::_mm_extract_epi64
+	mov r14, rax
+	movaps xmm0, xmmword ptr [rsp + 48]
+	movaps xmmword ptr [rsp], xmm0
+	mov r13, rsp
+	mov rdi, r13
+	call core::core_arch::x86_64::sse41::_mm_extract_epi64
+	mov rbp, rax
+	xor r14, r12
+	xor rbp, qword ptr [rsp + 32]
+	xor rbp, r15
+	movdqu xmm0, xmmword ptr [rbx + 16]
+	movdqa xmmword ptr [rsp + 32], xmm0
+	movdqa xmm1, xmmword ptr [rsp + 16]
+	pclmulqdq xmm1, xmm0, 0
+	movdqa xmmword ptr [rsp + 48], xmm1
+	movdqa xmmword ptr [rsp], xmm1
+	mov rdi, rsp
+	mov r12, rdi
+	call core::core_arch::x86_64::sse41::_mm_extract_epi64
+	mov qword ptr [rsp + 104], rax
+	movaps xmm0, xmmword ptr [rsp + 48]
+	movaps xmmword ptr [rsp], xmm0
+	mov rdi, r13
+	call core::core_arch::x86_64::sse41::_mm_extract_epi64
+	mov rbx, rax
+	pshufd xmm0, xmmword ptr [rsp + 32], 238
+	movdqa xmmword ptr [rsp + 144], xmm0
+	movdqa xmm1, xmmword ptr [rsp + 16]
+	pclmulqdq xmm1, xmm0, 0
+	movdqa xmmword ptr [rsp + 48], xmm1
+	movdqa xmmword ptr [rsp], xmm1
+	mov rdi, r12
+	call core::core_arch::x86_64::sse41::_mm_extract_epi64
+	mov r15, rax
+	movaps xmm0, xmmword ptr [rsp + 48]
+	movaps xmmword ptr [rsp], xmm0
+	mov rdi, r13
+	call core::core_arch::x86_64::sse41::_mm_extract_epi64
+	mov r13, qword ptr [rsp + 136]
+	xor rax, qword ptr [r13 + 48]
+	mov qword ptr [rsp + 48], rax
+	xor r15, rbx
+	pshufd xmm1, xmmword ptr [rsp + 16], 238
+	movdqa xmmword ptr [rsp + 16], xmm1
+	movdqa xmm0, xmmword ptr [rsp + 80]
+	pclmulqdq xmm0, xmm1, 0
+	movdqa xmmword ptr [rsp + 80], xmm0
+	movdqa xmmword ptr [rsp], xmm0
+	mov rdi, r12
+	call core::core_arch::x86_64::sse41::_mm_extract_epi64
+	mov rbx, rax
+	movaps xmm0, xmmword ptr [rsp + 80]
+	movaps xmmword ptr [rsp], xmm0
+	mov rdi, rsp
+	call core::core_arch::x86_64::sse41::_mm_extract_epi64
+	mov r12, rax
+	xor rbx, r14
+	xor rbx, qword ptr [rsp + 160]
+	mov qword ptr [r13 + 24], rbx
+	xor r12, qword ptr [rsp + 104]
+	movdqa xmm0, xmmword ptr [rsp + 64]
+	pclmulqdq xmm0, xmmword ptr [rsp + 16], 0
+	movdqa xmmword ptr [rsp + 64], xmm0
+	movdqa xmmword ptr [rsp], xmm0
+	mov rdi, rsp
+	call core::core_arch::x86_64::sse41::_mm_extract_epi64
+	mov rbx, rax
+	movaps xmm0, xmmword ptr [rsp + 64]
+	movaps xmmword ptr [rsp], xmm0
+	mov rdi, rsp
+	call core::core_arch::x86_64::sse41::_mm_extract_epi64
+	mov r14, rax
+	xor rbx, r12
+	xor rbx, rbp
+	mov r12, r13
+	mov qword ptr [r13 + 32], rbx
+	xor r14, r15
+	movdqa xmm0, xmmword ptr [rsp + 32]
+	pclmulqdq xmm0, xmmword ptr [rsp + 16], 0
+	movdqa xmmword ptr [rsp + 32], xmm0
+	movdqa xmmword ptr [rsp], xmm0
+	mov rdi, rsp
+	mov rbp, rdi
+	call core::core_arch::x86_64::sse41::_mm_extract_epi64
+	mov rbx, rax
+	movaps xmm0, xmmword ptr [rsp + 32]
+	movaps xmmword ptr [rsp], xmm0
+	mov rdi, rsp
+	mov r13, rdi
+	call core::core_arch::x86_64::sse41::_mm_extract_epi64
+	mov r15, rax
+	xor rbx, r14
+	xor rbx, qword ptr [rsp + 112]
+	mov qword ptr [r12 + 40], rbx
+	movdqa xmm0, xmmword ptr [rsp + 16]
+	pclmulqdq xmm0, xmmword ptr [rsp + 144], 0
+	movdqa xmmword ptr [rsp + 16], xmm0
+	movdqa xmmword ptr [rsp], xmm0
+	mov rdi, rbp
+	call core::core_arch::x86_64::sse41::_mm_extract_epi64
+	mov rbx, rax
+	movaps xmm0, xmmword ptr [rsp + 16]
+	movaps xmmword ptr [rsp], xmm0
+	mov rdi, r13
+	call core::core_arch::x86_64::sse41::_mm_extract_epi64
+	xor rbx, r15
+	xor rbx, qword ptr [rsp + 48]
+	mov qword ptr [r12 + 48], rbx
+	xor qword ptr [r12 + 56], rax
+	add rsp, 168
+	pop rbx
+	pop r12
+	pop r13
+	pop r14
+	pop r15
+	pop rbp
+	ret
+
+;==========================================================
+; symbol: gf2_kernels_simd::x86::gf2m_wide::clmul_wide4_ymm
+;==========================================================
+
+    Finished `release` profile [optimized] target(s) in 0.02s
+
+gf2_kernels_simd::x86::gf2m_wide::clmul_wide4_ymm:
+	vpbroadcastq ymm4, qword ptr [rdi]
+	vmovdqu ymm3, ymmword ptr [rsi]
+	vpbroadcastq ymm0, qword ptr [rsi + 8]
+	vpblendd ymm0, ymm3, ymm0, 48
+	vpclmulqdq ymm1, ymm4, ymm0, 0
+	vpextrq rax, xmm1, 1
+	vmovdqu xmm5, xmmword ptr [rsi + 16]
+	vbroadcasti128 ymm2, xmmword ptr [rdi + 16]
+	vpalignr xmm6, xmm2, xmmword ptr [rdi], 8
+	vpbroadcastq ymm7, qword ptr [rsi + 24]
+	vpbroadcastq ymm0, qword ptr [rdi + 24]
+	vmovq qword ptr [rdx], xmm1
+	vextracti128 xmm1, ymm1, 1
+	vmovq rcx, xmm1
+	xor rcx, rax
+	vpextrq rax, xmm1, 1
+	vpblendd ymm1, ymm5, ymm7, 240
+	vpclmulqdq ymm4, ymm4, ymm1, 0
+	vmovq rdi, xmm4
+	xor rdi, rax
+	vpextrq rax, xmm4, 1
+	vextracti128 xmm4, ymm4, 1
+	vmovq r8, xmm4
+	vpextrq rsi, xmm4, 1
+	xor r8, rax
+	vinserti128 ymm4, ymm6, xmm6, 1
+	vpermq ymm3, ymm3, 212
+	vpclmulqdq ymm5, ymm4, ymm3, 0
+	vmovq rax, xmm5
+	xor rax, rcx
+	vpextrq rcx, xmm5, 1
+	mov qword ptr [rdx + 8], rax
+	vextracti128 xmm5, ymm5, 1
+	vmovq r9, xmm5
+	xor r9, rcx
+	vpextrq rax, xmm5, 1
+	vpclmulqdq ymm4, ymm4, ymm1, 0
+	vmovq rcx, xmm4
+	xor rcx, r8
+	xor rcx, rax
+	vpextrq r8, xmm4, 1
+	vextracti128 xmm4, ymm4, 1
+	vmovq r10, xmm4
+	vpextrq rax, xmm4, 1
+	xor r10, r8
+	vpclmulqdq ymm4, ymm2, ymm3, 0
+	vmovq r8, xmm4
+	xor r8, rdi
+	xor r8, r9
+	vpextrq rdi, xmm4, 1
+	mov qword ptr [rdx + 16], r8
+	vextracti128 xmm4, ymm4, 1
+	vmovq r8, xmm4
+	vpextrq r9, xmm4, 1
+	xor r8, rdi
+	xor r9, rsi
+	vpclmulqdq ymm2, ymm2, ymm1, 0
+	vmovq rdi, xmm2
+	xor rdi, r9
+	xor rdi, r10
+	vpextrq r9, xmm2, 1
+	vextracti128 xmm2, ymm2, 1
+	vmovq r10, xmm2
+	vpextrq rsi, xmm2, 1
+	xor r10, r9
+	vpclmulqdq ymm2, ymm0, ymm3, 0
+	vmovq r9, xmm2
+	xor r9, r8
+	xor r9, rcx
+	vpextrq rcx, xmm2, 1
+	mov qword ptr [rdx + 24], r9
+	vextracti128 xmm2, ymm2, 1
+	vmovq r8, xmm2
+	xor r8, rcx
+	xor r8, rdi
+	mov qword ptr [rdx + 32], r8
+	vpextrq rcx, xmm2, 1
+	xor rcx, r10
+	vpclmulqdq ymm0, ymm0, ymm1, 0
+	vmovq rdi, xmm0
+	xor rdi, rcx
+	xor rdi, rax
+	vpextrq rax, xmm0, 1
+	mov qword ptr [rdx + 40], rdi
+	vextracti128 xmm0, ymm0, 1
+	vmovq rcx, xmm0
+	xor rcx, rax
+	xor rcx, rsi
+	mov qword ptr [rdx + 48], rcx
+	vpextrq qword ptr [rdx + 56], xmm0, 1
+	vzeroupper
+	ret
