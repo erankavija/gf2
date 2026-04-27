@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "comment": "Maps PPC-spiral kernel IDs to the criterion bench-target / size leaves they will compare against. Pinned by jit:b2ecd2ff (session 2 of babcf05e) using `cargo bench --save-baseline ppc-v0-2026-04-27` against HEAD=52eaac8. Consumed by dev/benchmarks/ppc-compare.sh and the criterion-1.5x JIT gate via scripts/criterion-1.5x.sh; the gate is per-issue keyed by a `ppc-kernel:<id>` label (id is one of A1, A2, A3, B1, B2, B3, C1, C2, C3, C4, C5, D1, D2). Path resolution: `$CRITERION_DIR/$bench_target/$size/$baseline_name/estimates.json` — `bench_target` may include slashes for nested groups (e.g., `gf2m_mul_crossover/pclmulqdq_barrett`), and `size` may be `.` for leaf benches with no parameter. Entries marked TBD-* have no current bench in `crates/gf2-core/benches/`; the kernel-implementing task is expected to add a dedicated bench before its first spiral edit.",
+  "comment": "Maps PPC-spiral kernel IDs to the criterion bench-target / size leaves they will compare against. Pinned by jit:b2ecd2ff (session 2 of babcf05e) using `cargo bench --save-baseline ppc-v0-2026-04-27` against HEAD=52eaac8. The bench inventory under `crates/gf2-core/benches/` was swept end-to-end at pin time; pinned kernels reflect the full set of bench files extant at HEAD that map to a Tier-A/B/C/D kernel. Consumed by dev/benchmarks/ppc-compare.sh and the criterion-1.5x JIT gate via scripts/criterion-1.5x.sh; the gate is per-issue keyed by a `ppc-kernel:<id>` label (id is one of A1, A2, A3, B1, B2, B3, C1, C2, C3, C4, C5, D1, D2). Path resolution: `$CRITERION_DIR/$bench_target/$size/$baseline_name/estimates.json` — `bench_target` may include slashes for nested groups (e.g., `gf2m_mul_crossover/pclmulqdq_barrett`), and `size` may be `.` for leaf benches with no parameter. Entries marked TBD-* have no current bench in `crates/gf2-core/benches/`; the kernel-implementing task is expected to add a dedicated bench before its first spiral edit. Currently TBD: B1 (no `matrix_transpose` bench), C5 (CubicExt has no SoA bench; `soa_batch.rs` covers QuadraticExt only), D2 (no Cuthill-McKee reorder bench).",
   "kernels": {
     "A1": {
       "title": "BitMatrix::matvec popcnt SIMD",
@@ -68,11 +68,10 @@
     },
     "C4": {
       "title": "QuadraticExt::mul Karatsuba SoA batched SIMD",
-      "bench_target": "TBD-C4-needs-soa-bench",
-      "baseline_name": "TBD-C4-needs-soa-bench",
-      "commit_hash": "TBD-C4-needs-soa-bench",
-      "design_size_class": ["100", "1000", "10000"],
-      "tbd_reason": "No dedicated QuadraticExt SoA bench at HEAD; field_matrix_fusion uses it indirectly. C4 task adds the SoA-shaped bench before its first edit."
+      "bench_target": "soa_batch_mul_fq2_fp65537/batch_soa",
+      "baseline_name": "ppc-v0-2026-04-27",
+      "commit_hash": "52eaac8",
+      "design_size_class": ["256", "1000"]
     },
     "C5": {
       "title": "CubicExt::mul Karatsuba SoA batched SIMD",
@@ -84,10 +83,10 @@
     },
     "D1": {
       "title": "SparseBitMatrix::matvec block-CSR + prefetch",
-      "bench_target": "matvec_by_density",
+      "bench_target": "sparse_matvec/density_0.05",
       "baseline_name": "ppc-v0-2026-04-27",
       "commit_hash": "52eaac8",
-      "design_size_class": ["0.1", "0.3", "0.5"]
+      "design_size_class": ["500", "1000"]
     },
     "D2": {
       "title": "SparseBitMatrix Cuthill-McKee row reorder",
