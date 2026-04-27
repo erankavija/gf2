@@ -47,3 +47,9 @@ Found 11 outliers among 100 measurements (11.00%)
   8 (8.00%) low mild
   3 (3.00%) high severe
 
+Rework note (2026-04-27): these measurements do not meet the aspirational
+1.5x speedup target. The near-M31 dispatch path is only about 1.05x faster in
+this capture, and the near-M61 path is slower than the scalar loop. The branch
+is still useful as a correctness-tested generic FieldVec dispatch foundation
+for later delayed-reduction or blocked FieldMatrix work, but it should not be
+reported as a standalone throughput win for generic Montgomery primes.
