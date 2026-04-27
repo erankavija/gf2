@@ -1,97 +1,101 @@
 {
   "schema_version": 1,
-  "comment": "Maps PPC-spiral kernel IDs to criterion bench targets and design-size classes. Populated by jit:b2ecd2ff (I1) with commit-pinned baseline names. Consumed by dev/benchmarks/ppc-compare.sh and the criterion-1.5x JIT gate. Per-issue routing convention: each issue gated on a kernel must carry a `ppc-kernel:<id>` label (e.g. `ppc-kernel:A1`); scripts/criterion-1.5x.sh extracts the kernel-id from the label and forwards to ppc-compare.sh. Kernel-ids are the keys of `kernels` below: A1, A2, A3, B1, B2, B3, C1, C2, C3, C4, C5, D1, D2.",
+  "comment": "Maps PPC-spiral kernel IDs to the criterion bench-target / size leaves they will compare against. Pinned by jit:b2ecd2ff (session 2 of babcf05e) using `cargo bench --save-baseline ppc-v0-2026-04-27` against HEAD=52eaac8. Consumed by dev/benchmarks/ppc-compare.sh and the criterion-1.5x JIT gate via scripts/criterion-1.5x.sh; the gate is per-issue keyed by a `ppc-kernel:<id>` label (id is one of A1, A2, A3, B1, B2, B3, C1, C2, C3, C4, C5, D1, D2). Path resolution: `$CRITERION_DIR/$bench_target/$size/$baseline_name/estimates.json` — `bench_target` may include slashes for nested groups (e.g., `gf2m_mul_crossover/pclmulqdq_barrett`), and `size` may be `.` for leaf benches with no parameter. Entries marked TBD-* have no current bench in `crates/gf2-core/benches/`; the kernel-implementing task is expected to add a dedicated bench before its first spiral edit.",
   "kernels": {
     "A1": {
       "title": "BitMatrix::matvec popcnt SIMD",
-      "bench_target": "matrix_vector",
-      "baseline_name": "TBD-b2ecd2ff",
-      "commit_hash": "TBD-b2ecd2ff",
-      "design_size_class": ["1024", "4096"]
+      "bench_target": "dense_matvec",
+      "baseline_name": "ppc-v0-2026-04-27",
+      "commit_hash": "52eaac8",
+      "design_size_class": ["512", "1024"]
     },
     "A2": {
-      "title": "BitMatrix::mul row-XOR",
-      "bench_target": "matmul",
-      "baseline_name": "TBD-b2ecd2ff",
-      "commit_hash": "TBD-b2ecd2ff",
-      "design_size_class": ["1024", "4096"]
+      "title": "BitMatrix::mul row-XOR (non-M4RM path)",
+      "bench_target": "matmul_square",
+      "baseline_name": "ppc-v0-2026-04-27",
+      "commit_hash": "52eaac8",
+      "design_size_class": ["1024", "2048"]
     },
     "A3": {
-      "title": "Generic Fp prime FieldVec batch",
-      "bench_target": "fieldvec_dot_product",
-      "baseline_name": "TBD-b2ecd2ff",
-      "commit_hash": "TBD-b2ecd2ff",
-      "design_size_class": ["256", "1024"]
+      "title": "Generic Fp prime FieldVec batch dispatch (Solinas-friendly)",
+      "bench_target": "fieldvec_dot_fp_large",
+      "baseline_name": "ppc-v0-2026-04-27",
+      "commit_hash": "52eaac8",
+      "design_size_class": ["1000", "10000"]
     },
     "B1": {
-      "title": "BitMatrix::transpose 64x64 + AVX2",
-      "bench_target": "matrix_transpose",
-      "baseline_name": "TBD-b2ecd2ff",
-      "commit_hash": "TBD-b2ecd2ff",
-      "design_size_class": ["1024", "4096"]
+      "title": "BitMatrix::transpose 64x64 bit-block + AVX2",
+      "bench_target": "TBD-B1-needs-bench",
+      "baseline_name": "TBD-B1-needs-bench",
+      "commit_hash": "TBD-B1-needs-bench",
+      "design_size_class": ["1024", "4096"],
+      "tbd_reason": "No matrix_transpose bench in crates/gf2-core/benches at HEAD=52eaac8. B1 task creates the bench before its first spiral edit per dev/plans/gf2_core_ppc_spiral.md § Tier B."
     },
     "B2": {
-      "title": "M4RM Gray-code table build",
-      "bench_target": "m4rm_components",
-      "baseline_name": "TBD-b2ecd2ff",
-      "commit_hash": "TBD-b2ecd2ff",
-      "design_size_class": ["k_4_n_1024", "k_8_n_1024"]
+      "title": "M4RM Gray-code table build (ILP + SIMD)",
+      "bench_target": "gray_table_generation_k8",
+      "baseline_name": "ppc-v0-2026-04-27",
+      "commit_hash": "52eaac8",
+      "design_size_class": ["."]
     },
     "B3": {
-      "title": "M4RM block multiply tile",
-      "bench_target": "m4rm_profile",
-      "baseline_name": "TBD-b2ecd2ff",
-      "commit_hash": "TBD-b2ecd2ff",
-      "design_size_class": ["1024", "4096"]
+      "title": "M4RM block multiply register-tile + cache-block",
+      "bench_target": "m4rm_multiply",
+      "baseline_name": "ppc-v0-2026-04-27",
+      "commit_hash": "52eaac8",
+      "design_size_class": ["256", "512", "1024"]
     },
     "C1": {
-      "title": "GF(2^m) batch m=8/16/32 VPCLMULQDQ",
-      "bench_target": "gf2m_mul_strategies",
-      "baseline_name": "TBD-b2ecd2ff",
-      "commit_hash": "TBD-b2ecd2ff",
-      "design_size_class": ["m_8", "m_16", "m_32"]
+      "title": "GF(2^m) batch m=8/16/32 via VPCLMULQDQ",
+      "bench_target": "gf2m_mul_crossover/pclmulqdq_barrett",
+      "baseline_name": "ppc-v0-2026-04-27",
+      "commit_hash": "52eaac8",
+      "design_size_class": ["8", "16"]
     },
     "C2": {
       "title": "GF(2^571) multi-word VPCLMULQDQ",
-      "bench_target": "gf2m_wide_mul",
-      "baseline_name": "TBD-b2ecd2ff",
-      "commit_hash": "TBD-b2ecd2ff",
-      "design_size_class": ["m_571"]
+      "bench_target": "gf2m_wide4_simd_clmul_only[avx2+vpclmulqdq-ymm]",
+      "baseline_name": "ppc-v0-2026-04-27",
+      "commit_hash": "52eaac8",
+      "design_size_class": ["."]
     },
     "C3": {
-      "title": "Fp Montgomery batch AVX2",
-      "bench_target": "fp_specialized",
-      "baseline_name": "TBD-b2ecd2ff",
-      "commit_hash": "TBD-b2ecd2ff",
-      "design_size_class": ["256", "1024"]
+      "title": "Fp prime Montgomery batch SIMD (AVX2)",
+      "bench_target": "fp_m31_batch_mul_simd",
+      "baseline_name": "ppc-v0-2026-04-27",
+      "commit_hash": "52eaac8",
+      "design_size_class": ["."]
     },
     "C4": {
-      "title": "QuadraticExt Karatsuba SoA",
-      "bench_target": "fieldvec_dot_product",
-      "baseline_name": "TBD-b2ecd2ff",
-      "commit_hash": "TBD-b2ecd2ff",
-      "design_size_class": ["256", "1024"]
+      "title": "QuadraticExt::mul Karatsuba SoA batched SIMD",
+      "bench_target": "TBD-C4-needs-soa-bench",
+      "baseline_name": "TBD-C4-needs-soa-bench",
+      "commit_hash": "TBD-C4-needs-soa-bench",
+      "design_size_class": ["100", "1000", "10000"],
+      "tbd_reason": "No dedicated QuadraticExt SoA bench at HEAD; field_matrix_fusion uses it indirectly. C4 task adds the SoA-shaped bench before its first edit."
     },
     "C5": {
-      "title": "CubicExt Karatsuba SoA",
-      "bench_target": "fieldvec_dot_product",
-      "baseline_name": "TBD-b2ecd2ff",
-      "commit_hash": "TBD-b2ecd2ff",
-      "design_size_class": ["256", "1024"]
+      "title": "CubicExt::mul Karatsuba SoA batched SIMD",
+      "bench_target": "TBD-C5-needs-soa-bench",
+      "baseline_name": "TBD-C5-needs-soa-bench",
+      "commit_hash": "TBD-C5-needs-soa-bench",
+      "design_size_class": ["100", "1000", "10000"],
+      "tbd_reason": "Depends on C4 SoA scaffolding; bench piggybacks on C4's once C4 lands."
     },
     "D1": {
-      "title": "Sparse matvec block-CSR + prefetch",
-      "bench_target": "sparse",
-      "baseline_name": "TBD-b2ecd2ff",
-      "commit_hash": "TBD-b2ecd2ff",
-      "design_size_class": ["1024", "4096"]
+      "title": "SparseBitMatrix::matvec block-CSR + prefetch",
+      "bench_target": "matvec_by_density",
+      "baseline_name": "ppc-v0-2026-04-27",
+      "commit_hash": "52eaac8",
+      "design_size_class": ["0.1", "0.3", "0.5"]
     },
     "D2": {
-      "title": "Sparse Cuthill-McKee",
-      "bench_target": "sparse",
-      "baseline_name": "TBD-b2ecd2ff",
-      "commit_hash": "TBD-b2ecd2ff",
-      "design_size_class": ["1024", "4096"]
+      "title": "SparseBitMatrix Cuthill-McKee row reorder",
+      "bench_target": "TBD-D2-needs-bench",
+      "baseline_name": "TBD-D2-needs-bench",
+      "commit_hash": "TBD-D2-needs-bench",
+      "design_size_class": ["1024", "4096"],
+      "tbd_reason": "Cuthill-McKee one-shot reorder bench doesn't exist at HEAD. D2 task adds it (amortise-many-matvecs measurement) before its first edit."
     }
   }
 }
