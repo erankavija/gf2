@@ -2,7 +2,7 @@
   "id": "3168d114-57f2-4a21-a28f-3c191833385d",
   "title": "QuadraticExt::mul Karatsuba SoA batched SIMD",
   "description": "Restructure `gfpn::QuadraticExt::mul` for ILP and SoA-batched SIMD. The 3 base-field multiplications inside Karatsuba are independent and schedule onto SIMD lanes naturally once a SoA layout exists.\n\n## Background\n\n`gfpn::QuadraticExt::mul` in `crates/gf2-core/src/gfpn/quadratic.rs` does Karatsuba: 3 base-field multiplications and 2 additions per element. Scheduling is sequential and there is no SoA batched path despite the muls being independent.\n\nThe fix walks PPC steps:\n\n- V2 ILP: schedule the 3 independent base-field muls across registers so they run in parallel (no false dependency chain). This step can ship before the generic Fp batch path lands.\n- V3 SIMD batched: introduce a SoA `Vec<QuadraticExt<C>>` layout (separate `c0` and `c1` arrays); call into the generic Fp batch path for each Karatsuba step. Stronger gains here require the generic Fp batch task to have landed first.\n- Wire the SoA scaffolding into a new `gfpn::compute` module.\n\n## Success Criteria\n\n- [hard] Bit-exact vs. existing AoS `QuadraticExt::mul`.\n- [hard] AoS path unchanged and at least as fast (no regression for callers that do not opt into SoA).\n- [hard] SoA path covers add, sub, mul, square (all four ops, not just mul).\n- [hard] Sibling `*.asm.txt` artefact regenerated.\n- [hard] `perf stat -r 10` capture before/after recorded.\n- [aspirational] $\\geq 1.5\\times$ geomean on `field_matrix_fusion` bench when both the generic Fp batch task and this task have landed.\n\n## Notes\n\nBench: `field_matrix_fusion` (existing, pinned by I1). Spec doc: `dev/plans/gf2_core_ppc_spiral.md`.",
-  "state": "backlog",
+  "state": "ready",
   "priority": "normal",
   "assignee": null,
   "dependencies": [
@@ -30,5 +30,5 @@
     "story:ppc-field-batch"
   ],
   "created_at": "2026-04-25T15:18:50.030749583+00:00",
-  "updated_at": "2026-04-26T22:20:10.057280426+00:00"
+  "updated_at": "2026-04-27T19:14:43.175305251+00:00"
 }

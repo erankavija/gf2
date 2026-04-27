@@ -2,7 +2,7 @@
   "id": "cbf576d1-8694-4dde-bf29-d047381155c3",
   "title": "SparseBitMatrix Cuthill-McKee row reorder",
   "description": "Add a Cuthill-McKee row/column permutation to `SparseBitMatrix`. One-shot pre-processing that minimises matrix bandwidth, amortising cache-reuse gains across many matvecs.\n\n## Background\n\nLDPC parity-check matrices in `gf2-coding` have irregular row spans that hurt cache reuse during repeated matvecs. No bandwidth-minimization preprocessing currently exists.\n\nThe fix is V7 layout-only: implement Cuthill-McKee (or reverse Cuthill-McKee, RCM) row/column permutation. Apply once before dispatch; amortises across many matvecs.\n\nAPI: `SparseBitMatrix::reorder_rcm() -> (SparseBitMatrix, RowPermutation)` so callers can recover the original row order on output.\n\n## Success Criteria\n\n- [hard] Reordered + permuted result is bit-exact to original CSR matvec.\n- [hard] Permutation roundtrip (apply then unapply) is identity for arbitrary input.\n- [hard] Bench measures **amortised** matvec cost over $\\geq 100$ calls (single-call cost is dominated by the reorder itself).\n- [hard] `perf stat -r 10` capture before/after recorded for the amortised case.\n- [aspirational] $\\geq 1.5\\times$ amortised geomean on LDPC parity-check matrix sizes.\n\n## Notes\n\nBench: `sparse` (existing, pinned by I1) extended with an amortised-matvec measurement. Spec doc: `dev/plans/gf2_core_ppc_spiral.md`.",
-  "state": "backlog",
+  "state": "ready",
   "priority": "normal",
   "assignee": null,
   "dependencies": [
@@ -22,5 +22,5 @@
     "story:ppc-sparse-layout"
   ],
   "created_at": "2026-04-25T15:19:18.458200136+00:00",
-  "updated_at": "2026-04-25T20:18:48.931098058+00:00"
+  "updated_at": "2026-04-27T19:14:43.445516849+00:00"
 }
