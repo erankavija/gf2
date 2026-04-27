@@ -148,7 +148,7 @@ impl<const P: u64> SimdVecOps for Fp<P> {
 #[cfg(feature = "simd")]
 #[inline]
 fn fp_generic_enabled<const P: u64>() -> bool {
-    P > 2 && !use_specialized_storage(P)
+    P > 2 && P <= (1u64 << 63) && P != 65537 && !use_specialized_storage(P)
 }
 
 #[cfg(feature = "simd")]
@@ -378,8 +378,38 @@ mod tests {
 
     #[test]
     #[cfg(feature = "simd")]
+    fn generic_montgomery_guard_excludes_unsupported_moduli() {
+        // `Fp<P>` itself rejects `P > 2^63`, but keep the SIMD guard equally
+        // strict so this private dispatch layer can never reach the AVX2
+        // Montgomery kernel's `modulus <= 2^63` assertion for out-of-range
+        // const parameters.
+        assert!(!fp_generic_enabled::<2>());
+        assert!(!fp_generic_enabled::<{ (1u64 << 63) + 25 }>());
+    }
+
+    #[test]
+    #[cfg(feature = "simd")]
     fn specialized_primes_do_not_use_generic_montgomery_path() {
+        assert!(!fp_generic_enabled::<65537>());
         assert!(!fp_generic_enabled::<{ (1u64 << 31) - 1 }>());
         assert!(!fp_generic_enabled::<{ (1u64 << 61) - 1 }>());
+
+        let a65537 = [Fp::<65537>::new(3), Fp::<65537>::new(5)];
+        let b65537 = [Fp::<65537>::new(7), Fp::<65537>::new(11)];
+        if crate::simd::maybe_fp65537().is_some() {
+            assert!(<Fp<65537> as SimdVecOps>::try_simd_mul_vec(&a65537, &b65537).is_some());
+        }
+
+        let m31_a = [Fp::<{ (1u64 << 31) - 1 }>::new(3)];
+        let m31_b = [Fp::<{ (1u64 << 31) - 1 }>::new(7)];
+        assert!(
+            <Fp<{ (1u64 << 31) - 1 }> as SimdVecOps>::try_simd_mul_vec(&m31_a, &m31_b).is_none()
+        );
+
+        let m61_a = [Fp::<{ (1u64 << 61) - 1 }>::new(3)];
+        let m61_b = [Fp::<{ (1u64 << 61) - 1 }>::new(7)];
+        assert!(
+            <Fp<{ (1u64 << 61) - 1 }> as SimdVecOps>::try_simd_mul_vec(&m61_a, &m61_b).is_none()
+        );
     }
 }
