@@ -78,6 +78,7 @@ pub use sparse::{SpBitMatrix, SpBitMatrixDual};
 #[cfg(feature = "simd")]
 pub(crate) mod simd {
     use gf2_kernels_simd::fp65537::Fp65537Fns;
+    use gf2_kernels_simd::fp_generic::FpGenericFns;
     use gf2_kernels_simd::gf2m::Gf2mFns;
     use gf2_kernels_simd::gf2m_wide::ClmulWide256Fns;
     use gf2_kernels_simd::mersenne::MersenneFns;
@@ -88,6 +89,7 @@ pub(crate) mod simd {
     static GF2M_FNS: OnceLock<Option<Gf2mFns>> = OnceLock::new();
     static MERSENNE_FNS: OnceLock<Option<MersenneFns>> = OnceLock::new();
     static FP65537_FNS: OnceLock<Option<Fp65537Fns>> = OnceLock::new();
+    static FP_GENERIC_FNS: OnceLock<Option<FpGenericFns>> = OnceLock::new();
     static GF2M_WIDE256_FNS: OnceLock<Option<ClmulWide256Fns>> = OnceLock::new();
 
     #[inline]
@@ -129,6 +131,18 @@ pub(crate) mod simd {
             .as_ref()
     }
 
+    /// Returns the best available generic Montgomery `Fp<P>` SIMD batch kernels, if any.
+    ///
+    /// Provides AVX2 lane-parallel add/sub/mul over internal Montgomery storage
+    /// words for odd primes with `P <= 2^63`. Specialised Fermat/Mersenne
+    /// kernels remain separate and should be preferred by callers.
+    #[inline]
+    pub fn maybe_fp_generic() -> Option<&'static FpGenericFns> {
+        FP_GENERIC_FNS
+            .get_or_init(gf2_kernels_simd::fp_generic::detect)
+            .as_ref()
+    }
+
     /// Returns the best available 4-limb (GF(2^256)) carry-less multiply
     /// kernel, if any.
     ///
@@ -166,6 +180,12 @@ pub(crate) mod simd {
     #[allow(dead_code)]
     #[inline]
     pub fn maybe_fp65537() -> Option<()> {
+        None
+    }
+
+    #[allow(dead_code)]
+    #[inline]
+    pub fn maybe_fp_generic() -> Option<()> {
         None
     }
 

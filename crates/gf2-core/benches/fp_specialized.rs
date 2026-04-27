@@ -17,6 +17,7 @@
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use gf2_core::field::two_adic::BABYBEAR_P;
+use gf2_core::field::FieldVec;
 use gf2_core::field::{ConstField, FiniteField};
 use gf2_core::gfp::specialized::{
     batch_dot_mersenne31, batch_mul_mersenne31, goldilocks_reduce_fast, mersenne_reduce,
@@ -279,6 +280,74 @@ fn bench_fp_m31_batch_mul_scalar_montgomery(c: &mut Criterion) {
     });
 }
 
+fn bench_fp_generic_near_m31_fieldvec_mul_dispatch(c: &mut Criterion) {
+    let a = FieldVec::from(
+        (0..BATCH_LEN as u64)
+            .map(|i| Fp::<M31_LIKE_GENERIC>::new(i * 17 + 1))
+            .collect::<Vec<_>>(),
+    );
+    let b = FieldVec::from(
+        (0..BATCH_LEN as u64)
+            .map(|i| Fp::<M31_LIKE_GENERIC>::new(i * 23 + 5))
+            .collect::<Vec<_>>(),
+    );
+    c.bench_function("fp_generic_near_m31_fieldvec_mul_dispatch", |bench| {
+        bench.iter(|| black_box(&a).mul_vec(black_box(&b)))
+    });
+}
+
+fn bench_fp_generic_near_m31_fieldvec_mul_scalar_loop(c: &mut Criterion) {
+    let a: Vec<Fp<M31_LIKE_GENERIC>> = (0..BATCH_LEN as u64)
+        .map(|i| Fp::<M31_LIKE_GENERIC>::new(i * 17 + 1))
+        .collect();
+    let b: Vec<Fp<M31_LIKE_GENERIC>> = (0..BATCH_LEN as u64)
+        .map(|i| Fp::<M31_LIKE_GENERIC>::new(i * 23 + 5))
+        .collect();
+    let mut out = vec![Fp::<M31_LIKE_GENERIC>::new(0); BATCH_LEN];
+    c.bench_function("fp_generic_near_m31_fieldvec_mul_scalar_loop", |bench| {
+        bench.iter(|| {
+            for i in 0..BATCH_LEN {
+                out[i] = black_box(a[i]) * black_box(b[i]);
+            }
+            black_box(&out);
+        })
+    });
+}
+
+fn bench_fp_generic_near_m61_fieldvec_mul_dispatch(c: &mut Criterion) {
+    let a = FieldVec::from(
+        (0..BATCH_LEN as u64)
+            .map(|i| Fp::<M61_LIKE_GENERIC>::new(i * 1_000_003 + 17))
+            .collect::<Vec<_>>(),
+    );
+    let b = FieldVec::from(
+        (0..BATCH_LEN as u64)
+            .map(|i| Fp::<M61_LIKE_GENERIC>::new(i * 2_000_033 + 23))
+            .collect::<Vec<_>>(),
+    );
+    c.bench_function("fp_generic_near_m61_fieldvec_mul_dispatch", |bench| {
+        bench.iter(|| black_box(&a).mul_vec(black_box(&b)))
+    });
+}
+
+fn bench_fp_generic_near_m61_fieldvec_mul_scalar_loop(c: &mut Criterion) {
+    let a: Vec<Fp<M61_LIKE_GENERIC>> = (0..BATCH_LEN as u64)
+        .map(|i| Fp::<M61_LIKE_GENERIC>::new(i * 1_000_003 + 17))
+        .collect();
+    let b: Vec<Fp<M61_LIKE_GENERIC>> = (0..BATCH_LEN as u64)
+        .map(|i| Fp::<M61_LIKE_GENERIC>::new(i * 2_000_033 + 23))
+        .collect();
+    let mut out = vec![Fp::<M61_LIKE_GENERIC>::new(0); BATCH_LEN];
+    c.bench_function("fp_generic_near_m61_fieldvec_mul_scalar_loop", |bench| {
+        bench.iter(|| {
+            for i in 0..BATCH_LEN {
+                out[i] = black_box(a[i]) * black_box(b[i]);
+            }
+            black_box(&out);
+        })
+    });
+}
+
 fn bench_fp_m31_batch_dot_simd(c: &mut Criterion) {
     let m31 = M31 as u32;
     let a: Vec<u32> = (0..BATCH_LEN as u32).map(|i| (i * 17 + 1) % m31).collect();
@@ -311,6 +380,10 @@ criterion_group!(
     bench_fp_m31_batch_mul_simd,
     bench_fp_m31_batch_mul_scalar_specialized,
     bench_fp_m31_batch_mul_scalar_montgomery,
+    bench_fp_generic_near_m31_fieldvec_mul_dispatch,
+    bench_fp_generic_near_m31_fieldvec_mul_scalar_loop,
+    bench_fp_generic_near_m61_fieldvec_mul_dispatch,
+    bench_fp_generic_near_m61_fieldvec_mul_scalar_loop,
     bench_fp_m31_batch_dot_simd,
 );
 criterion_main!(specialized);

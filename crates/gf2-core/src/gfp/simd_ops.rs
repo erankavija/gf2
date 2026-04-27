@@ -19,6 +19,8 @@
 //! the scalar element-wise path.
 
 use super::Fp;
+#[cfg(feature = "simd")]
+use super::{montgomery::MontConsts, use_specialized_storage};
 
 // ---------------------------------------------------------------------------
 // SimdVecOps trait
@@ -110,7 +112,7 @@ pub trait SimdVecOps: Sized {
 impl<V: crate::gf2m::UintExt> SimdVecOps for crate::gf2m::Gf2mElement_<V> {}
 
 // ---------------------------------------------------------------------------
-// Blanket impl for Fp<P>: compile-time P == 65537 routes into the AVX2 path.
+// Blanket impl for Fp<P>: exact specialisations win, then generic Montgomery.
 // ---------------------------------------------------------------------------
 
 impl<const P: u64> SimdVecOps for Fp<P> {
@@ -119,7 +121,7 @@ impl<const P: u64> SimdVecOps for Fp<P> {
         if P == 65537 {
             return fp65537_try_mul_vec::<P>(a, b);
         }
-        None
+        fp_generic_try_mul_vec::<P>(a, b)
     }
 
     #[inline]
@@ -127,7 +129,7 @@ impl<const P: u64> SimdVecOps for Fp<P> {
         if P == 65537 {
             return fp65537_try_add_vec::<P>(a, b);
         }
-        None
+        fp_generic_try_add_vec::<P>(a, b)
     }
 
     #[inline]
@@ -135,8 +137,90 @@ impl<const P: u64> SimdVecOps for Fp<P> {
         if P == 65537 {
             return fp65537_try_sub_vec::<P>(a, b);
         }
-        None
+        fp_generic_try_sub_vec::<P>(a, b)
     }
+}
+
+// ---------------------------------------------------------------------------
+// Generic Montgomery SIMD helpers.
+// ---------------------------------------------------------------------------
+
+#[cfg(feature = "simd")]
+#[inline]
+fn fp_generic_enabled<const P: u64>() -> bool {
+    P > 2 && !use_specialized_storage(P)
+}
+
+#[cfg(feature = "simd")]
+#[inline]
+fn fp_generic_pack<const P: u64>(xs: &[Fp<P>]) -> Vec<u64> {
+    xs.iter().map(|x| x.raw_storage()).collect()
+}
+
+#[cfg(feature = "simd")]
+#[inline]
+fn fp_generic_unpack<const P: u64>(xs: &[u64]) -> Vec<Fp<P>> {
+    xs.iter().map(|&x| Fp::<P>::from_raw_storage(x)).collect()
+}
+
+#[cfg(feature = "simd")]
+fn fp_generic_try_mul_vec<const P: u64>(a: &[Fp<P>], b: &[Fp<P>]) -> Option<Vec<Fp<P>>> {
+    if !fp_generic_enabled::<P>() {
+        return None;
+    }
+    let fns = crate::simd::maybe_fp_generic()?;
+    let n = a.len();
+    let a_u64 = fp_generic_pack::<P>(a);
+    let b_u64 = fp_generic_pack::<P>(b);
+    let mut out = vec![0u64; n];
+    (fns.batch_mul_fn)(&a_u64, &b_u64, P, MontConsts::<P>::P_INV, &mut out);
+    Some(fp_generic_unpack::<P>(&out))
+}
+
+#[cfg(feature = "simd")]
+fn fp_generic_try_add_vec<const P: u64>(a: &[Fp<P>], b: &[Fp<P>]) -> Option<Vec<Fp<P>>> {
+    if !fp_generic_enabled::<P>() {
+        return None;
+    }
+    let fns = crate::simd::maybe_fp_generic()?;
+    let n = a.len();
+    let a_u64 = fp_generic_pack::<P>(a);
+    let b_u64 = fp_generic_pack::<P>(b);
+    let mut out = vec![0u64; n];
+    (fns.batch_add_fn)(&a_u64, &b_u64, P, &mut out);
+    Some(fp_generic_unpack::<P>(&out))
+}
+
+#[cfg(feature = "simd")]
+fn fp_generic_try_sub_vec<const P: u64>(a: &[Fp<P>], b: &[Fp<P>]) -> Option<Vec<Fp<P>>> {
+    if !fp_generic_enabled::<P>() {
+        return None;
+    }
+    let fns = crate::simd::maybe_fp_generic()?;
+    let n = a.len();
+    let a_u64 = fp_generic_pack::<P>(a);
+    let b_u64 = fp_generic_pack::<P>(b);
+    let mut out = vec![0u64; n];
+    (fns.batch_sub_fn)(&a_u64, &b_u64, P, &mut out);
+    Some(fp_generic_unpack::<P>(&out))
+}
+
+#[cfg(not(feature = "simd"))]
+#[inline]
+fn fp_generic_try_mul_vec<const P: u64>(_a: &[Fp<P>], _b: &[Fp<P>]) -> Option<Vec<Fp<P>>> {
+    None
+}
+
+#[cfg(not(feature = "simd"))]
+#[inline]
+fn fp_generic_try_add_vec<const P: u64>(_a: &[Fp<P>], _b: &[Fp<P>]) -> Option<Vec<Fp<P>>> {
+    None
+}
+
+#[cfg(not(feature = "simd"))]
+#[inline]
+fn fp_generic_try_sub_vec<const P: u64>(_a: &[Fp<P>], _b: &[Fp<P>]) -> Option<Vec<Fp<P>>> {
+    None
 }
 
 // ---------------------------------------------------------------------------
@@ -238,4 +322,64 @@ fn fp65537_try_add_vec<const P: u64>(_a: &[Fp<P>], _b: &[Fp<P>]) -> Option<Vec<F
 #[inline]
 fn fp65537_try_sub_vec<const P: u64>(_a: &[Fp<P>], _b: &[Fp<P>]) -> Option<Vec<Fp<P>>> {
     None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const WORD_BOUNDARY_LENS: &[usize] = &[0, 1, 63, 64, 65, 127, 128, 129, 255, 256, 257];
+
+    fn check_generic_prime<const P: u64>() {
+        #[cfg(feature = "simd")]
+        if crate::simd::maybe_fp_generic().is_none() {
+            return;
+        }
+        #[cfg(not(feature = "simd"))]
+        {
+            return;
+        }
+
+        for &len in WORD_BOUNDARY_LENS {
+            let a: Vec<Fp<P>> = (0..len as u64)
+                .map(|i| Fp::<P>::new(i.wrapping_mul(1_000_003).wrapping_add(17)))
+                .collect();
+            let b: Vec<Fp<P>> = (0..len as u64)
+                .map(|i| Fp::<P>::new(i.wrapping_mul(2_000_033).wrapping_add(23)))
+                .collect();
+
+            let got_add =
+                <Fp<P> as SimdVecOps>::try_simd_add_vec(&a, &b).expect("generic SIMD add");
+            let got_sub =
+                <Fp<P> as SimdVecOps>::try_simd_sub_vec(&a, &b).expect("generic SIMD sub");
+            let got_mul =
+                <Fp<P> as SimdVecOps>::try_simd_mul_vec(&a, &b).expect("generic SIMD mul");
+
+            for i in 0..len {
+                assert_eq!(got_add[i], a[i] + b[i], "add P={P}, len={len}, i={i}");
+                assert_eq!(got_sub[i], a[i] - b[i], "sub P={P}, len={len}, i={i}");
+                assert_eq!(got_mul[i], a[i] * b[i], "mul P={P}, len={len}, i={i}");
+            }
+        }
+    }
+
+    #[test]
+    fn generic_simd_matches_scalar_for_proof_suite_primes() {
+        check_generic_prime::<3>();
+        check_generic_prime::<5>();
+        check_generic_prime::<7>();
+        check_generic_prime::<11>();
+        check_generic_prime::<13>();
+        check_generic_prime::<17>();
+        check_generic_prime::<2_147_483_629>();
+        check_generic_prime::<2_305_843_009_213_693_907>();
+        check_generic_prime::<9_223_372_036_854_775_783>();
+    }
+
+    #[test]
+    #[cfg(feature = "simd")]
+    fn specialized_primes_do_not_use_generic_montgomery_path() {
+        assert!(!fp_generic_enabled::<{ (1u64 << 31) - 1 }>());
+        assert!(!fp_generic_enabled::<{ (1u64 << 61) - 1 }>());
+    }
 }
