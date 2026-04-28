@@ -247,16 +247,20 @@ pub fn multiply(a: &BitMatrix, b: &BitMatrix) -> BitMatrix {
         n
     );
 
-    let mut c = BitMatrix::zeros(m, n);
-
     if m == 0 || k == 0 || n == 0 {
-        return c;
+        return BitMatrix::zeros(m, n);
     }
 
     let k_block = choose_k_block(k, n);
     let table_size = 1usize << k_block;
     let stride_words = n.div_ceil(64);
     let xor = resolve_xor_inplace(stride_words);
+
+    if k_block == 1 {
+        return a.mul_row_xor_dispatch(b);
+    }
+
+    let mut c = BitMatrix::zeros(m, n);
 
     // Pre-allocate flat buffer for Gray code table (reused across all panels)
     // This eliminates ~33 MB of allocation churn for 1024×1024 matrices

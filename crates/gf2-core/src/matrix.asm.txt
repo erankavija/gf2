@@ -1,4 +1,4 @@
-; gf2-core PPC-spiral asm artefact for jit:8e4b189c R1
+; gf2-core PPC-spiral asm artefact for jit:8e4b189c R1 + jit:5223bb04
 ; ---------------------------------------------------------
 ; crate         : gf2-core + gf2-kernels-simd
 ; primary       : gf2_core::matrix::BitMatrix::matvec_simd
@@ -89,3 +89,65 @@
 ;  1d59cc: vpaddb %ymm5,%ymm9,%ymm5
 ;  1d59d0: vpsadbw %ymm1,%ymm5,%ymm5
 ;  1d59d4: vpaddq %ymm4,%ymm5,%ymm4
+
+;==========================================================
+; symbol: gf2_core::matrix::BitMatrix::mul_row_xor_dispatch
+;==========================================================
+; JIT 5223bb04 adds the direct non-M4RM row-XOR fallback. It resolves the row
+; accumulator once before the sparse-row loop. At stride_words >= 8 the resolved
+; function pointer comes from LogicalFns::xor_fn (offset 0x10 in the bundle);
+; otherwise it falls back to scalar_xor_inplace. The hot set-bit loop calls the
+; resolved function pointer from the stack slot, so the row accumulator goes
+; through the same AVX2 XOR kernel used by M4RM.
+;
+; binary: target-5223bb04/release/deps/matmul-c7b92b0083fb8471
+; tool  : objdump -d --demangle --no-show-raw-insn
+;
+; Production BitMatrix::mul shape 512x1x8192 first reaches alg::m4rm::multiply;
+; because choose_k_block(k=1, n=8192) is forced to k_block=1, multiply branches
+; to this non-M4RM fallback:
+;
+;  1d1836: call   1d1900 <gf2_core::matrix::BitMatrix::mul_row_xor_dispatch>
+;
+; In the fallback, rhs.cols=8192 gives stride_words=128. The resolver compares
+; the row width with the 8-word SIMD cutoff, loads LogicalFns::xor_fn from bundle
+; offset 0x10, and stores it once for the set-bit loop:
+;
+;  1d19fe: cmp    $0x7,%rbp
+;  1d1a02: jbe    1d1adf <...+0x1df>      ; < 8 words => scalar fallback
+;  1d1a08: mov    0x1292b9(%rip),%rbx     ; gf2_core::simd::FNS / LogicalFns
+;  1d1a1a: cmpq   $0x0,(%rbx)
+;  1d1a1e: je     1d1adf <...+0x1df>
+;  1d1a24: mov    0x10(%rbx),%rax         ; LogicalFns::xor_fn
+;  1d1a2c: mov    %rax,0x50(%rsp)         ; hoisted row-XOR fn pointer
+;  ...
+;  1d1c37: tzcnt  %r15,%rdi               ; next set bit in lhs row
+;  1d1c46: imul   %r12,%rdi               ; rhs row offset
+;  1d1c60: lea    (%rax,%rdi,8),%rdx      ; src = rhs.row_words(k)
+;  1d1c64: mov    %r13,%rdi               ; dst = output row
+;  1d1c67: mov    %rbp,%rsi               ; dst len
+;  1d1c6a: mov    %r12,%rcx               ; src len
+;  1d1c6d: call   *0x50(%rsp)             ; xor_fn(out_row, rhs_row)
+
+;==========================================================
+; symbol: gf2_kernels_simd::x86::avx2::fns::xor_fn
+;==========================================================
+; The dispatched x86_64 AVX2 XOR kernel uses vector XOR instructions in the
+; full-vector loop. rustc encodes the integer XOR intrinsic as vxorps on this
+; target; it is the same 256-bit register operation as the expected vpxor-class
+; packed XOR for bitwise data.
+;
+;  1d3510: vmovups -0xe0(%rdx,%r10,1),%ymm0
+;  1d351e: vxorps -0xe0(%rdi,%r10,1),%ymm0,%ymm0
+;  1d3528: vmovups %ymm0,-0xe0(%rdi,%r10,1)
+;  1d35c2: vmovups (%rdx,%r10,1),%ymm0
+;  1d35c8: vxorps (%rdi,%r10,1),%ymm0,%ymm0
+;  1d35ce: vmovups %ymm0,(%rdi,%r10,1)
+;
+; Literal vpxor mnemonics are present in the same inspected AVX2 logical bundle
+; (adjacent gf2-kernels-simd logical codegen), while xor_fn itself uses vxorps:
+;
+;  3fe20: vpxor  -0x60(%r8),%ymm0,%ymm1
+;  3fe2c: vpxor  -0x40(%r8),%ymm0,%ymm1
+;  3fe38: vpxor  -0x20(%r8),%ymm0,%ymm1
+;  3fe44: vpxor  (%r8),%ymm0,%ymm1

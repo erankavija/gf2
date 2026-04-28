@@ -50,6 +50,66 @@ pub struct BitMatrix {
 }
 
 impl BitMatrix {
+    /// Multiplies two matrices with the direct row-XOR accumulator.
+    ///
+    /// This is the non-M4RM fallback used when the Four Russians table would
+    /// degenerate to single-row entries. It computes each output row as the XOR
+    /// of rows of `rhs` selected by set bits in the corresponding row of `self`.
+    /// For wide output rows, the row accumulation uses the same hoisted
+    /// `LogicalFns::xor_fn` dispatch as the M4RM hot path.
+    ///
+    /// # Complexity
+    ///
+    /// O(nnz(`self`) × `rhs.cols().div_ceil(64)`) word operations. Dense inputs
+    /// should use the M4RM path; this fallback is for narrow/degenerate panels
+    /// where table precomputation does not buy reuse.
+    #[inline(never)]
+    pub(crate) fn mul_row_xor_dispatch(&self, rhs: &BitMatrix) -> BitMatrix {
+        assert_eq!(
+            self.cols,
+            rhs.rows(),
+            "incompatible dimensions: A is {}×{} but B is {}×{}",
+            self.rows,
+            self.cols,
+            rhs.rows(),
+            rhs.cols()
+        );
+
+        let mut out = BitMatrix::zeros(self.rows, rhs.cols());
+
+        if self.rows == 0 || self.cols == 0 || rhs.cols() == 0 {
+            return out;
+        }
+
+        let xor = crate::kernels::ops::resolve_xor_inplace(out.stride_words);
+
+        for row in 0..self.rows {
+            let lhs_row = self.row_words(row);
+            let out_row = out.row_words_mut(row);
+
+            for (word_idx, &word) in lhs_row.iter().enumerate() {
+                let mut bits = word;
+                while bits != 0 {
+                    let bit = bits.trailing_zeros() as usize;
+                    let rhs_row = (word_idx << 6) + bit;
+                    if rhs_row < self.cols {
+                        xor(out_row, rhs.row_words(rhs_row));
+                    }
+                    bits &= bits - 1;
+                }
+            }
+        }
+
+        out
+    }
+
+    /// Test-support hook for exercising the non-M4RM row-XOR multiplier.
+    #[doc(hidden)]
+    #[cfg(any(test, feature = "test-support"))]
+    pub fn mul_row_xor_for_test(&self, rhs: &BitMatrix) -> BitMatrix {
+        self.mul_row_xor_dispatch(rhs)
+    }
+
     /// Creates a new zero-initialized matrix with the given dimensions.
     ///
     /// # Arguments
