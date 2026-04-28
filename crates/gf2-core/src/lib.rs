@@ -83,6 +83,7 @@ pub(crate) mod simd {
     use gf2_kernels_simd::gf2m_batch::Gf2mBatchFns;
     use gf2_kernels_simd::gf2m_wide::ClmulWide256Fns;
     use gf2_kernels_simd::mersenne::MersenneFns;
+    use gf2_kernels_simd::transpose::TransposeFns;
     use gf2_kernels_simd::LogicalFns;
     use std::sync::OnceLock;
 
@@ -93,10 +94,28 @@ pub(crate) mod simd {
     static FP65537_FNS: OnceLock<Option<Fp65537Fns>> = OnceLock::new();
     static FP_GENERIC_FNS: OnceLock<Option<FpGenericFns>> = OnceLock::new();
     static GF2M_WIDE256_FNS: OnceLock<Option<ClmulWide256Fns>> = OnceLock::new();
+    static TRANSPOSE_FNS: OnceLock<Option<TransposeFns>> = OnceLock::new();
 
     #[inline]
     pub fn maybe_simd() -> Option<&'static LogicalFns> {
         FNS.get_or_init(gf2_kernels_simd::detect).as_ref()
+    }
+
+    /// Returns the best available 64×64 bit-block transpose kernels, if any.
+    ///
+    /// On x86_64 with AVX2 this returns the PSHUFB-based byte-tile lane;
+    /// otherwise the scalar Hacker's Delight bit-twiddle lane is published
+    /// (always available). Returns `None` only if the host platform has
+    /// no implementation at all (currently impossible on supported targets).
+    ///
+    /// The returned [`TransposeFns::transpose_64x64`] operates on
+    /// fixed-size `&[u64; 64]` blocks; callers tile arbitrary
+    /// `rows × cols` matrices on top of this primitive.
+    #[inline]
+    pub fn maybe_transpose() -> Option<&'static TransposeFns> {
+        TRANSPOSE_FNS
+            .get_or_init(gf2_kernels_simd::transpose::detect)
+            .as_ref()
     }
 
     /// Returns the best available GF(2^m) SIMD function bundle, if any.
@@ -215,6 +234,12 @@ pub(crate) mod simd {
     #[allow(dead_code)]
     #[inline]
     pub fn maybe_gf2m_batch() -> Option<()> {
+        None
+    }
+
+    #[allow(dead_code)]
+    #[inline]
+    pub fn maybe_transpose() -> Option<()> {
         None
     }
 }

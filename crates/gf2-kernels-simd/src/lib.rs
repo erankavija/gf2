@@ -21,6 +21,7 @@ pub mod gf2m_wide;
 pub mod llr;
 pub mod mersenne;
 pub mod modem;
+pub mod transpose;
 
 pub use clmul_scalar::clmul_u64_scalar;
 
