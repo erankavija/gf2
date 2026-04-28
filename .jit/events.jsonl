@@ -3071,3 +3071,12 @@
 {"type":"gate_failed","id":"555cab15-6967-48ad-92ed-a84ebd5208e2","issue_id":"cad241e6-9606-47ff-96fc-20f38ed591aa","timestamp":"2026-04-27T23:58:33.162486028Z","gate_key":"criterion-1.5x","updated_by":"auto:executor"}
 {"type":"gate_failed","id":"18b52453-acbc-45e0-b2eb-b3b65b72dd7c","issue_id":"cad241e6-9606-47ff-96fc-20f38ed591aa","timestamp":"2026-04-28T00:02:21.223167377Z","gate_key":"code-review","updated_by":"auto:executor"}
 {"type":"gate_removed","id":"239cfca7-6545-4fa6-9ddc-e1a6245a0d35","issue_id":"cad241e6-9606-47ff-96fc-20f38ed591aa","timestamp":"2026-04-28T00:03:34.578265984Z","gate_key":"criterion-1.5x"}
+{"type":"gate_passed","id":"0928d501-9e6d-46d2-a07b-70d82cf5996a","issue_id":"cad241e6-9606-47ff-96fc-20f38ed591aa","timestamp":"2026-04-28T00:08:29.293150033Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"93f244c0-6369-4e67-bbf0-469f28b55955","issue_id":"cad241e6-9606-47ff-96fc-20f38ed591aa","timestamp":"2026-04-28T00:11:28.112870553Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"d71e793d-fdc5-42fe-ad06-26f0cf660bfa","issue_id":"cad241e6-9606-47ff-96fc-20f38ed591aa","timestamp":"2026-04-28T00:16:21.414202887Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"0948252b-200f-4242-9f90-a9289d3aacda","issue_id":"cad241e6-9606-47ff-96fc-20f38ed591aa","timestamp":"2026-04-28T00:35:31.760676944Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"af776247-a526-4571-abc6-351d7d6b4cd4","issue_id":"cad241e6-9606-47ff-96fc-20f38ed591aa","timestamp":"2026-04-28T00:43:40.625137789Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"9efcb05a-6202-454a-aed1-0da6e62a4988","issue_id":"cad241e6-9606-47ff-96fc-20f38ed591aa","timestamp":"2026-04-28T00:43:53.587781418Z","gate_key":"asm-artefact-present","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"9dcf6fef-9429-4d70-bbdc-943838b340c9","issue_id":"cad241e6-9606-47ff-96fc-20f38ed591aa","timestamp":"2026-04-28T00:46:17.436793204Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"issue_state_changed","id":"8d1acaab-2f76-403e-9781-3a0a655cc7da","issue_id":"cad241e6-9606-47ff-96fc-20f38ed591aa","timestamp":"2026-04-28T00:46:27.693173648Z","from":"in_progress","to":"done"}
+{"type":"issue_completed","id":"3c34fb83-2bb5-48bc-94bd-c20d55cce74d","issue_id":"cad241e6-9606-47ff-96fc-20f38ed591aa","timestamp":"2026-04-28T00:46:27.693238658Z"}
