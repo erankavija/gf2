@@ -1,0 +1,134 @@
+# perf stat -r 10 capture for jit:86c09a51 recovery C3
+# Date: 2026-04-28
+# Worktree: recovery-86c09a51-20260428
+# Baseline code: current-main 299f047 plus C3 bench instrumentation
+# Bench: fp_general_64bit_batch_mul_simd
+# Bench harness: criterion --profile-time 1
+
+## Before kernel edit: existing fp_generic AVX2 (BENCH_FORCE_SCALAR unset)
+    Finished `bench` profile [optimized] target(s) in 0.06s
+     Running benches/fp_specialized.rs (target/recovery-c3/release/deps/fp_specialized-4fde1a7ae5d36753)
+Benchmarking fp_general_64bit_batch_mul_simd: Profiling for 1.0000 s
+Benchmarking fp_general_64bit_batch_mul_simd: Complete (Analysis Disabled)
+
+    Finished `bench` profile [optimized] target(s) in 0.06s
+     Running benches/fp_specialized.rs (target/recovery-c3/release/deps/fp_specialized-4fde1a7ae5d36753)
+Benchmarking fp_general_64bit_batch_mul_simd: Profiling for 1.0000 s
+Benchmarking fp_general_64bit_batch_mul_simd: Complete (Analysis Disabled)
+
+    Finished `bench` profile [optimized] target(s) in 0.05s
+     Running benches/fp_specialized.rs (target/recovery-c3/release/deps/fp_specialized-4fde1a7ae5d36753)
+Benchmarking fp_general_64bit_batch_mul_simd: Profiling for 1.0000 s
+Benchmarking fp_general_64bit_batch_mul_simd: Complete (Analysis Disabled)
+
+    Finished `bench` profile [optimized] target(s) in 0.06s
+     Running benches/fp_specialized.rs (target/recovery-c3/release/deps/fp_specialized-4fde1a7ae5d36753)
+Benchmarking fp_general_64bit_batch_mul_simd: Profiling for 1.0000 s
+Benchmarking fp_general_64bit_batch_mul_simd: Complete (Analysis Disabled)
+
+    Finished `bench` profile [optimized] target(s) in 0.05s
+     Running benches/fp_specialized.rs (target/recovery-c3/release/deps/fp_specialized-4fde1a7ae5d36753)
+Benchmarking fp_general_64bit_batch_mul_simd: Profiling for 1.0000 s
+Benchmarking fp_general_64bit_batch_mul_simd: Complete (Analysis Disabled)
+
+    Finished `bench` profile [optimized] target(s) in 0.06s
+     Running benches/fp_specialized.rs (target/recovery-c3/release/deps/fp_specialized-4fde1a7ae5d36753)
+Benchmarking fp_general_64bit_batch_mul_simd: Profiling for 1.0000 s
+Benchmarking fp_general_64bit_batch_mul_simd: Complete (Analysis Disabled)
+
+    Finished `bench` profile [optimized] target(s) in 0.05s
+     Running benches/fp_specialized.rs (target/recovery-c3/release/deps/fp_specialized-4fde1a7ae5d36753)
+Benchmarking fp_general_64bit_batch_mul_simd: Profiling for 1.0000 s
+Benchmarking fp_general_64bit_batch_mul_simd: Complete (Analysis Disabled)
+
+    Finished `bench` profile [optimized] target(s) in 0.05s
+     Running benches/fp_specialized.rs (target/recovery-c3/release/deps/fp_specialized-4fde1a7ae5d36753)
+Benchmarking fp_general_64bit_batch_mul_simd: Profiling for 1.0000 s
+Benchmarking fp_general_64bit_batch_mul_simd: Complete (Analysis Disabled)
+
+    Finished `bench` profile [optimized] target(s) in 0.06s
+     Running benches/fp_specialized.rs (target/recovery-c3/release/deps/fp_specialized-4fde1a7ae5d36753)
+Benchmarking fp_general_64bit_batch_mul_simd: Profiling for 1.0000 s
+Benchmarking fp_general_64bit_batch_mul_simd: Complete (Analysis Disabled)
+
+    Finished `bench` profile [optimized] target(s) in 0.05s
+     Running benches/fp_specialized.rs (target/recovery-c3/release/deps/fp_specialized-4fde1a7ae5d36753)
+Benchmarking fp_general_64bit_batch_mul_simd: Profiling for 1.0000 s
+Benchmarking fp_general_64bit_batch_mul_simd: Complete (Analysis Disabled)
+
+
+ Performance counter stats for 'cargo bench --manifest-path Cargo.toml -p gf2-core --features simd --bench fp_specialized -- --profile-time 1 fp_general_64bit_batch_mul_simd' (10 runs):
+
+     6,886,513,094      cycles:u                                                                ( +-  1.82% )
+    18,574,610,560      instructions:u                                                          ( +-  0.00% )
+         9,386,353      cache-misses:u                                                          ( +-  8.66% )
+         3,262,366      branch-misses:u                                                         ( +-  0.28% )
+          1,582.43 msec task-clock:u                                                            ( +-  1.62% )
+       375,819,390      branches:u                                                              ( +-  0.00% )
+
+       1.622144449 +- 0.027533813 seconds time elapsed  ( +-  1.70% )
+
+
+## Scalar fallback baseline (BENCH_FORCE_SCALAR=1)
+    Finished `bench` profile [optimized] target(s) in 0.05s
+     Running benches/fp_specialized.rs (target/recovery-c3/release/deps/fp_specialized-4fde1a7ae5d36753)
+Benchmarking fp_general_64bit_batch_mul_simd: Profiling for 1.0000 s
+Benchmarking fp_general_64bit_batch_mul_simd: Complete (Analysis Disabled)
+
+    Finished `bench` profile [optimized] target(s) in 0.05s
+     Running benches/fp_specialized.rs (target/recovery-c3/release/deps/fp_specialized-4fde1a7ae5d36753)
+Benchmarking fp_general_64bit_batch_mul_simd: Profiling for 1.0000 s
+Benchmarking fp_general_64bit_batch_mul_simd: Complete (Analysis Disabled)
+
+    Finished `bench` profile [optimized] target(s) in 0.07s
+     Running benches/fp_specialized.rs (target/recovery-c3/release/deps/fp_specialized-4fde1a7ae5d36753)
+Benchmarking fp_general_64bit_batch_mul_simd: Profiling for 1.0000 s
+Benchmarking fp_general_64bit_batch_mul_simd: Complete (Analysis Disabled)
+
+    Finished `bench` profile [optimized] target(s) in 0.06s
+     Running benches/fp_specialized.rs (target/recovery-c3/release/deps/fp_specialized-4fde1a7ae5d36753)
+Benchmarking fp_general_64bit_batch_mul_simd: Profiling for 1.0000 s
+Benchmarking fp_general_64bit_batch_mul_simd: Complete (Analysis Disabled)
+
+    Finished `bench` profile [optimized] target(s) in 0.05s
+     Running benches/fp_specialized.rs (target/recovery-c3/release/deps/fp_specialized-4fde1a7ae5d36753)
+Benchmarking fp_general_64bit_batch_mul_simd: Profiling for 1.0000 s
+Benchmarking fp_general_64bit_batch_mul_simd: Complete (Analysis Disabled)
+
+    Finished `bench` profile [optimized] target(s) in 0.05s
+     Running benches/fp_specialized.rs (target/recovery-c3/release/deps/fp_specialized-4fde1a7ae5d36753)
+Benchmarking fp_general_64bit_batch_mul_simd: Profiling for 1.0000 s
+Benchmarking fp_general_64bit_batch_mul_simd: Complete (Analysis Disabled)
+
+    Finished `bench` profile [optimized] target(s) in 0.05s
+     Running benches/fp_specialized.rs (target/recovery-c3/release/deps/fp_specialized-4fde1a7ae5d36753)
+Benchmarking fp_general_64bit_batch_mul_simd: Profiling for 1.0000 s
+Benchmarking fp_general_64bit_batch_mul_simd: Complete (Analysis Disabled)
+
+    Finished `bench` profile [optimized] target(s) in 0.06s
+     Running benches/fp_specialized.rs (target/recovery-c3/release/deps/fp_specialized-4fde1a7ae5d36753)
+Benchmarking fp_general_64bit_batch_mul_simd: Profiling for 1.0000 s
+Benchmarking fp_general_64bit_batch_mul_simd: Complete (Analysis Disabled)
+
+    Finished `bench` profile [optimized] target(s) in 0.05s
+     Running benches/fp_specialized.rs (target/recovery-c3/release/deps/fp_specialized-4fde1a7ae5d36753)
+Benchmarking fp_general_64bit_batch_mul_simd: Profiling for 1.0000 s
+Benchmarking fp_general_64bit_batch_mul_simd: Complete (Analysis Disabled)
+
+    Finished `bench` profile [optimized] target(s) in 0.06s
+     Running benches/fp_specialized.rs (target/recovery-c3/release/deps/fp_specialized-4fde1a7ae5d36753)
+Benchmarking fp_general_64bit_batch_mul_simd: Profiling for 1.0000 s
+Benchmarking fp_general_64bit_batch_mul_simd: Complete (Analysis Disabled)
+
+
+ Performance counter stats for 'cargo bench --manifest-path Cargo.toml -p gf2-core --features simd --bench fp_specialized -- --profile-time 1 fp_general_64bit_batch_mul_simd' (10 runs):
+
+     5,514,141,469      cycles:u                                                                ( +-  8.04% )
+    18,233,872,340      instructions:u                                                          ( +-  8.84% )
+         7,893,180      cache-misses:u                                                          ( +-  2.85% )
+         2,796,333      branch-misses:u                                                         ( +-  1.99% )
+          1,287.70 msec task-clock:u                                                            ( +-  7.83% )
+     2,460,284,041      branches:u                                                              ( +-  8.73% )
+
+       1.304626855 +- 0.100765266 seconds time elapsed  ( +-  7.72% )
+
