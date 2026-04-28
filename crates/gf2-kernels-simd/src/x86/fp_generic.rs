@@ -67,25 +67,48 @@ unsafe fn mul_wide_u64x4(a: __m256i, b: __m256i) -> (__m256i, __m256i) {
     let a1 = _mm256_srli_epi64(a, 32);
     let b1 = _mm256_srli_epi64(b, 32);
 
-    let p0 = _mm256_mul_epu32(a0, b0);
-    let p1 = _mm256_mul_epu32(a0, b1);
-    let p2 = _mm256_mul_epu32(a1, b0);
-    let p3 = _mm256_mul_epu32(a1, b1);
+    let ll = _mm256_mul_epu32(a0, b0);
+    let lh = _mm256_mul_epu32(a0, b1);
+    let hl = _mm256_mul_epu32(a1, b0);
+    let hh = _mm256_mul_epu32(a1, b1);
 
-    let p1_lo = _mm256_slli_epi64(p1, 32);
-    let lo1 = _mm256_add_epi64(p0, p1_lo);
-    let carry1 = _mm256_and_si256(unsigned_lt_epi64(lo1, p0), _mm256_set1_epi64x(1));
+    let ll_hi = _mm256_srli_epi64(ll, 32);
+    let lh_lo = _mm256_and_si256(lh, mask32);
+    let hl_lo = _mm256_and_si256(hl, mask32);
+    let mid = _mm256_add_epi64(_mm256_add_epi64(ll_hi, lh_lo), hl_lo);
 
-    let p2_lo = _mm256_slli_epi64(p2, 32);
-    let lo = _mm256_add_epi64(lo1, p2_lo);
-    let carry2 = _mm256_and_si256(unsigned_lt_epi64(lo, lo1), _mm256_set1_epi64x(1));
-
+    let lo = _mm256_or_si256(_mm256_slli_epi64(mid, 32), _mm256_and_si256(ll, mask32));
     let hi = _mm256_add_epi64(
-        _mm256_add_epi64(p3, _mm256_srli_epi64(p1, 32)),
-        _mm256_add_epi64(_mm256_srli_epi64(p2, 32), _mm256_add_epi64(carry1, carry2)),
+        _mm256_add_epi64(hh, _mm256_srli_epi64(lh, 32)),
+        _mm256_add_epi64(_mm256_srli_epi64(hl, 32), _mm256_srli_epi64(mid, 32)),
     );
 
     (lo, hi)
+}
+
+#[inline]
+#[target_feature(enable = "avx2")]
+unsafe fn mul_hi_u64x4(a: __m256i, b: __m256i) -> __m256i {
+    let mask32 = _mm256_set1_epi64x(0xFFFF_FFFF);
+    let a0 = _mm256_and_si256(a, mask32);
+    let b0 = _mm256_and_si256(b, mask32);
+    let a1 = _mm256_srli_epi64(a, 32);
+    let b1 = _mm256_srli_epi64(b, 32);
+
+    let ll = _mm256_mul_epu32(a0, b0);
+    let lh = _mm256_mul_epu32(a0, b1);
+    let hl = _mm256_mul_epu32(a1, b0);
+    let hh = _mm256_mul_epu32(a1, b1);
+
+    let mid = _mm256_add_epi64(
+        _mm256_add_epi64(_mm256_srli_epi64(ll, 32), _mm256_and_si256(lh, mask32)),
+        _mm256_and_si256(hl, mask32),
+    );
+
+    _mm256_add_epi64(
+        _mm256_add_epi64(hh, _mm256_srli_epi64(lh, 32)),
+        _mm256_add_epi64(_mm256_srli_epi64(hl, 32), _mm256_srli_epi64(mid, 32)),
+    )
 }
 
 #[inline]
@@ -97,9 +120,12 @@ unsafe fn montgomery_redc_u64x4(
     p_inv: __m256i,
 ) -> __m256i {
     let m = mul_lo_u64x4(t_lo, p_inv);
-    let (mp_lo, mp_hi) = mul_wide_u64x4(m, p);
-    let sum_lo = _mm256_add_epi64(t_lo, mp_lo);
-    let carry = _mm256_and_si256(unsigned_lt_epi64(sum_lo, t_lo), _mm256_set1_epi64x(1));
+    let mp_hi = mul_hi_u64x4(m, p);
+
+    // Montgomery construction makes t_lo + (m * p)_lo either 0 (no carry) or
+    // 2^64 (carry 1), so the carry into the high half is exactly t_lo != 0.
+    let zero = _mm256_setzero_si256();
+    let carry = _mm256_andnot_si256(_mm256_cmpeq_epi64(t_lo, zero), _mm256_set1_epi64x(1));
     let u = _mm256_add_epi64(_mm256_add_epi64(t_hi, mp_hi), carry);
     let u_minus_p = _mm256_sub_epi64(u, p);
     select_epi64(unsigned_lt_epi64(u, p), u, u_minus_p)
