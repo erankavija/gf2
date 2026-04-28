@@ -11,10 +11,11 @@
     },
     "A2": {
       "title": "BitMatrix::mul row-XOR (non-M4RM path)",
-      "bench_target": "matmul_square",
-      "baseline_name": "ppc-v0-2026-04-27",
-      "commit_hash": "52eaac8",
-      "design_size_class": ["1024", "2048"]
+      "bench_target": "matmul_row_xor_fallback/production_mul",
+      "baseline_bench_target": "matmul_row_xor_fallback/scalar_backend",
+      "baseline_name": "current-scalar-backend",
+      "commit_hash": "dfa42df",
+      "design_size_class": ["512x1x8192"]
     },
     "A3": {
       "title": "Generic Fp prime FieldVec batch dispatch (Solinas-friendly)",
