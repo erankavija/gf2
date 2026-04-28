@@ -1,0 +1,99 @@
+JIT 5223bb04 BitMatrix::mul row-XOR dispatch evidence (R1)
+
+Environment:
+- Worktree: /home/vkaskivuo/Projects/gf2/.claude/worktrees/agent-5223bb04
+- Cargo target: /home/vkaskivuo/Projects/gf2/.claude/worktrees/target-5223bb04
+- Build flags for benchmark/asm: RUSTFLAGS='-C target-cpu=native'
+- SIMD route: AVX2 LogicalFns::xor_fn is selected at row width >= 8 words.
+
+Implementation/path statement:
+- BitMatrix::mul_row_xor_dispatch is the direct non-M4RM row-XOR accumulator.
+  It resolves crate::kernels::ops::resolve_xor_inplace once before scanning lhs
+  set bits, then calls the resolved function pointer for each selected rhs row.
+- alg::m4rm::multiply keeps choose_k_block unchanged. When choose_k_block
+  degenerates to 1, table precomputation has no reuse advantage, so the
+  non-M4RM row-XOR fallback handles the product.
+- R1 moved the M4RM output allocation after the k_block == 1 fallback branch, so
+  the production fallback no longer allocates and discards an unused M4RM output
+  before calling BitMatrix::mul_row_xor_dispatch. The M4RM crossover and
+  choose_k_block logic are unchanged.
+- For matmul_square/1024 and /2048, choose_k_block remains 8 (stride_words 16
+  and 32 respectively; 256-entry tables fit under the existing 64 KiB target),
+  so those design sizes still use the M4RM route rather than the non-M4RM
+  fallback. They are retained only as a non-regression smoke check for the
+  pre-existing M4RM path.
+
+Dedicated fallback benchmark:
+- Criterion leaf: matmul_row_xor_fallback/{scalar_backend,dispatch_helper,production_mul}/512x1x8192
+- Shape: lhs 512x1, rhs 1x8192, output row width 8192 bits = 128 u64 words.
+- Fallback proof:
+  - choose_k_block(k=1, n=8192) must return 1 because the selector never
+    returns a block size greater than k.
+  - alg::m4rm::multiply therefore branches to BitMatrix::mul_row_xor_dispatch.
+  - stride_words = 8192 / 64 = 128, which is >= the 8-word SIMD threshold, so
+    resolve_xor_inplace selects LogicalFns::xor_fn when the simd feature detects
+    an AVX2 backend.
+- Benchmark variants:
+  - scalar_backend: same row-XOR fallback loop, but each selected rhs row is
+    accumulated with SCALAR_BACKEND.xor.
+  - dispatch_helper: test-support hook calling BitMatrix::mul_row_xor_dispatch
+    directly.
+  - production_mul: public production path through alg::m4rm::multiply and its
+    k_block == 1 fallback branch.
+
+Criterion commands:
+- Fallback route:
+  CARGO_TARGET_DIR=/home/vkaskivuo/Projects/gf2/.claude/worktrees/target-5223bb04 RUSTFLAGS='-C target-cpu=native' cargo bench -p gf2-core --features simd --bench matmul -- matmul_row_xor_fallback
+- M4RM non-regression smoke:
+  CARGO_TARGET_DIR=/home/vkaskivuo/Projects/gf2/.claude/worktrees/target-5223bb04 RUSTFLAGS='-C target-cpu=native' cargo bench -p gf2-core --features simd --bench matmul -- matmul_square/1024
+  CARGO_TARGET_DIR=/home/vkaskivuo/Projects/gf2/.claude/worktrees/target-5223bb04 RUSTFLAGS='-C target-cpu=native' cargo bench -p gf2-core --features simd --bench matmul -- matmul_square/2048
+
+Current Criterion results (median):
+| bench | current median | path | SIMD routing |
+|---|---:|---|---|
+| matmul_row_xor_fallback/scalar_backend/512x1x8192 | 26.804 us | bench scalar fallback comparator | no; SCALAR_BACKEND.xor |
+| matmul_row_xor_fallback/dispatch_helper/512x1x8192 | 14.033 us | direct non-M4RM row-XOR fallback | yes; resolve_xor_inplace -> LogicalFns::xor_fn |
+| matmul_row_xor_fallback/production_mul/512x1x8192 | 12.745 us | BitMatrix::mul/m4rm::multiply k_block=1 fallback | yes; resolve_xor_inplace -> LogicalFns::xor_fn |
+| matmul_square/1024 | 845.96 us | M4RM, k_block=8 | yes, M4RM row XOR calls resolved xor_fn |
+| matmul_square/2048 | 4.1375 ms | M4RM, k_block=8 | yes, M4RM row XOR calls resolved xor_fn |
+
+Fallback speedups:
+- production_mul vs scalar_backend: 26.804 / 12.745 = 2.10x.
+- dispatch_helper vs scalar_backend: 26.804 / 14.033 = 1.91x.
+
+perf stat -r 10 captures:
+- Scalar fallback comparator command:
+  perf stat -r 10 /home/vkaskivuo/Projects/gf2/.claude/worktrees/target-5223bb04/release/deps/matmul-c7b92b0083fb8471 --profile-time 1 'matmul_row_xor_fallback/scalar_backend/512x1x8192'
+- Scalar fallback comparator result:
+  task-clock:u 253.18 msec (+- 0.37%); cycles 1,170,911,703; instructions
+  1,843,375,406; IPC 1.6; branch-misses 24,885,970; elapsed
+  0.255080650 +- 0.000954239 s.
+- Production dispatched fallback command:
+  perf stat -r 10 /home/vkaskivuo/Projects/gf2/.claude/worktrees/target-5223bb04/release/deps/matmul-c7b92b0083fb8471 --profile-time 1 'matmul_row_xor_fallback/production_mul/512x1x8192'
+- Production dispatched fallback result:
+  task-clock:u 254.79 msec (+- 0.39%); cycles 1,168,862,654; instructions
+  1,841,195,150; IPC 1.6; branch-misses 24,875,774; elapsed
+  0.256652447 +- 0.000969137 s.
+- Note: Criterion --profile-time runs each selected routine for a fixed profiling
+  duration, so the speed gate is the Criterion median table above; perf stat is
+  retained for repeatable counter capture under the same filtered benchmark leaf.
+
+Assembly evidence:
+- crates/gf2-core/src/matrix.asm.txt contains the production multiply branch to
+  BitMatrix::mul_row_xor_dispatch for the 512x1x8192 fallback shape.
+- The same artifact shows the row-XOR fallback call site: stride_words is checked
+  against the 8-word cutoff, LogicalFns::xor_fn is loaded from bundle offset
+  0x10, stored in a stack slot, and called from the set-bit loop.
+- The inspected AVX2 xor_fn kernel contains vector XOR instructions. On this
+  toolchain the exact full-vector XOR mnemonic is vxorps for the xor_fn body;
+  vxorps is bitwise-equivalent on YMM registers and is the inspected vector XOR
+  for this fallback call site. Adjacent vpxor mnemonics in the same binary are
+  not used as the proof for this call site.
+
+Validation commands/results:
+- CARGO_TARGET_DIR=/home/vkaskivuo/Projects/gf2/.claude/worktrees/target-5223bb04 cargo fmt -p gf2-core -p gf2-kernels-simd -p gf2-coding -- --check
+  Result: pass.
+- CARGO_TARGET_DIR=/home/vkaskivuo/Projects/gf2/.claude/worktrees/target-5223bb04 cargo nextest run -p gf2-core --all-features --release --profile ci -E 'test(matmul) | test(mul)'
+  Result: pass; rerun with --show-progress none reported 215 tests run: 215 passed, 1632 skipped.
+- CARGO_TARGET_DIR=/home/vkaskivuo/Projects/gf2/.claude/worktrees/target-5223bb04 cargo clippy -p gf2-core --all-targets --all-features -- -D warnings
+  Result: pass.

@@ -1,8 +1,14 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use gf2_core::alg::m4rm::multiply;
+use gf2_core::kernels::scalar::SCALAR_BACKEND;
+use gf2_core::kernels::Backend;
 use gf2_core::matrix::BitMatrix;
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
+
+const FALLBACK_ROWS: usize = 512;
+const FALLBACK_INNER: usize = 1;
+const FALLBACK_COLS: usize = 8_192;
 
 fn random_matrix(rows: usize, cols: usize, seed: u64) -> BitMatrix {
     let mut rng = StdRng::seed_from_u64(seed);
@@ -17,6 +23,52 @@ fn random_matrix(rows: usize, cols: usize, seed: u64) -> BitMatrix {
     }
 
     m
+}
+
+fn row_xor_fallback_inputs() -> (BitMatrix, BitMatrix) {
+    // Production-path proof for this benchmark:
+    // - choose_k_block(k=1, n=8192) must return 1 because the M4RM selector
+    //   cannot choose any k_block > k.
+    // - n=8192 is 128 words, well above the >=8-word SIMD dispatch threshold.
+    assert_eq!(FALLBACK_INNER, 1);
+    assert!(FALLBACK_COLS.div_ceil(64) >= 8);
+
+    let mut lhs = BitMatrix::zeros(FALLBACK_ROWS, FALLBACK_INNER);
+    for row in 0..FALLBACK_ROWS {
+        lhs.set(row, 0, true);
+    }
+
+    let rhs = random_matrix(FALLBACK_INNER, FALLBACK_COLS, 0x5223_bb04);
+    (lhs, rhs)
+}
+
+#[inline(never)]
+fn scalar_backend_row_xor_mul(lhs: &BitMatrix, rhs: &BitMatrix) -> BitMatrix {
+    assert_eq!(lhs.cols(), rhs.rows());
+
+    let mut out = BitMatrix::zeros(lhs.rows(), rhs.cols());
+    if lhs.rows() == 0 || lhs.cols() == 0 || rhs.cols() == 0 {
+        return out;
+    }
+
+    for row in 0..lhs.rows() {
+        let lhs_row = lhs.row_words(row);
+        let out_row = out.row_words_mut(row);
+
+        for (word_idx, &word) in lhs_row.iter().enumerate() {
+            let mut bits = word;
+            while bits != 0 {
+                let bit = bits.trailing_zeros() as usize;
+                let rhs_row = (word_idx << 6) + bit;
+                if rhs_row < lhs.cols() {
+                    SCALAR_BACKEND.xor(out_row, rhs.row_words(rhs_row));
+                }
+                bits &= bits - 1;
+            }
+        }
+    }
+
+    out
 }
 
 fn bench_matmul_square(c: &mut Criterion) {
@@ -56,5 +108,35 @@ fn bench_matmul_rectangular(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(benches, bench_matmul_square, bench_matmul_rectangular);
+fn bench_row_xor_fallback(c: &mut Criterion) {
+    let mut group = c.benchmark_group("matmul_row_xor_fallback");
+    let (lhs, rhs) = row_xor_fallback_inputs();
+
+    group.bench_function(BenchmarkId::new("scalar_backend", "512x1x8192"), |bench| {
+        bench.iter(|| {
+            let _result = scalar_backend_row_xor_mul(black_box(&lhs), black_box(&rhs));
+        });
+    });
+
+    group.bench_function(BenchmarkId::new("dispatch_helper", "512x1x8192"), |bench| {
+        bench.iter(|| {
+            let _result = black_box(&lhs).mul_row_xor_for_test(black_box(&rhs));
+        });
+    });
+
+    group.bench_function(BenchmarkId::new("production_mul", "512x1x8192"), |bench| {
+        bench.iter(|| {
+            let _result = multiply(black_box(&lhs), black_box(&rhs));
+        });
+    });
+
+    group.finish();
+}
+
+criterion_group!(
+    benches,
+    bench_matmul_square,
+    bench_matmul_rectangular,
+    bench_row_xor_fallback
+);
 criterion_main!(benches);
