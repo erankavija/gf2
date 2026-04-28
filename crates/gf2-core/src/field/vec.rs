@@ -581,9 +581,9 @@ impl<F: FiniteField> FieldVec<F> {
 impl<F: FiniteField + SimdVecOps> FieldVec<F> {
     /// Returns `self[i] + rhs[i]` element-wise.
     ///
-    /// For base fields with a SIMD kernel (currently `Fp<65537>` on AVX2
-    /// hosts with the `simd` feature) this dispatches through
-    /// [`SimdVecOps::try_simd_add_vec`]; other base fields, non-AVX2
+    /// For base fields with a SIMD kernel (including supported `Fp<P>` primes
+    /// on AVX2 hosts with the `simd` feature) this dispatches through
+    /// [`SimdVecOps::try_simd_add_vec`]; other base fields, unsupported
     /// hardware, and `simd`-disabled builds fall back to the scalar
     /// element-wise loop.
     ///
@@ -627,9 +627,9 @@ impl<F: FiniteField + SimdVecOps> FieldVec<F> {
 
     /// Returns `self[i] - rhs[i]` element-wise.
     ///
-    /// For base fields with a SIMD kernel (currently `Fp<65537>` on AVX2
-    /// hosts with the `simd` feature) this dispatches through
-    /// [`SimdVecOps::try_simd_sub_vec`]; other base fields, non-AVX2
+    /// For base fields with a SIMD kernel (including supported `Fp<P>` primes
+    /// on AVX2 hosts with the `simd` feature) this dispatches through
+    /// [`SimdVecOps::try_simd_sub_vec`]; other base fields, unsupported
     /// hardware, and `simd`-disabled builds fall back to the scalar
     /// element-wise loop.
     ///
@@ -673,9 +673,9 @@ impl<F: FiniteField + SimdVecOps> FieldVec<F> {
 
     /// Returns the Hadamard product `self[i] * rhs[i]` element-wise.
     ///
-    /// For base fields with a SIMD kernel (currently `Fp<65537>` on AVX2
-    /// hosts with the `simd` feature) this dispatches through
-    /// [`SimdVecOps::try_simd_mul_vec`]; other base fields, non-AVX2
+    /// For base fields with a SIMD kernel (including supported `Fp<P>` primes
+    /// on AVX2 hosts with the `simd` feature) this dispatches through
+    /// [`SimdVecOps::try_simd_mul_vec`]; other base fields, unsupported
     /// hardware, and `simd`-disabled builds fall back to the scalar
     /// element-wise loop.
     ///
@@ -907,10 +907,9 @@ impl<'a, F> Iterator for StridedIter<'a, F> {
 // `None` (the default, giving scalar behaviour) or override the hook to
 // route through a kernel in `gf2-kernels-simd`.
 //
-// Currently only `Fp<65537>` has a non-trivial implementation, routed to
-// the AVX2 kernel via the central helpers in [`crate::gfp::simd_ops`].
-// Other `Fp<P>` primes inherit the `None` default through the same
-// blanket impl.
+// `Fp<65537>` and supported Montgomery `Fp<P>` primes route to AVX2 kernels
+// through the central helpers in [`crate::gfp::simd_ops`]. Unsupported fields
+// inherit the `None` default through the same blanket impl.
 
 pub use crate::gfp::SimdVecOps;
 
