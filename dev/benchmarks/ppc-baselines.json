@@ -28,7 +28,7 @@
       "title": "BitMatrix::transpose 64x64 bit-block + AVX2",
       "bench_target": "matrix_transpose",
       "baseline_name": "ppc-v0-2026-04-27",
-      "commit_hash": "b701557",
+      "commit_hash": "49fa2b4",
       "design_size_class": ["1024", "4096"]
     },
     "B2": {
