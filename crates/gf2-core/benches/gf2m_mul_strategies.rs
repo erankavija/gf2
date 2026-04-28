@@ -872,10 +872,9 @@ fn bench_gf2m_batch_pclmulqdq_unroll4(c: &mut Criterion) {
         None => return,
     };
 
-    // Manifest design size class: m ∈ {8, 16}; we additionally measure m = 32
-    // because the new batch kernel covers it (and the strategy comparison
-    // table needs to show it). The criterion-1.5x gate only reads m ∈ {8,
-    // 16} per the manifest's `design_size_class`.
+    // Keep this sweep aligned with the C1 manifest design-size class:
+    // m ∈ {8, 16, 32}. The criterion-1.5x gate reads these leaves from the
+    // `gf2m_batch_unroll4` and `pclmulqdq_barrett_loop_v0` benchmark IDs.
     let sweep_fields: &[(usize, u64)] = &[(8, POLY_8), (16, POLY_16), (32, POLY_32)];
     const BATCH_SIZE: usize = 1024;
 
