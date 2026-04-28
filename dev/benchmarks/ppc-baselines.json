@@ -63,10 +63,11 @@
     },
     "C3": {
       "title": "Fp prime Montgomery batch SIMD (AVX2)",
-      "bench_target": "fp_m31_batch_mul_simd",
+      "bench_target": "fp_general_64bit_batch_mul_simd",
       "baseline_name": "ppc-v0-2026-04-27",
-      "commit_hash": "52eaac8",
-      "design_size_class": ["."]
+      "commit_hash": "299f047",
+      "design_size_class": ["."],
+      "rationale": "C3 measures a generic 64-bit Montgomery batch (P=M61_LIKE_GENERIC=2^61-45, neither Mersenne nor Proth), exercising the generic-Fp AVX2 kernel through gf2-kernels-simd::fp_generic::detect(). The previous M31 leaf measured the M31 specialised path, not the general Montgomery batch."
     },
     "C4": {
       "title": "QuadraticExt::mul Karatsuba SoA batched SIMD",

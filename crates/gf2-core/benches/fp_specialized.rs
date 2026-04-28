@@ -348,6 +348,81 @@ fn bench_fp_generic_near_m61_fieldvec_mul_scalar_loop(c: &mut Criterion) {
     });
 }
 
+// ---------------------------------------------------------------------------
+// General 64-bit prime Montgomery batch — the C3 success-criterion leaf.
+//
+// This is the criterion-1.5x gate target for issue 86c09a51. It exercises
+// the production generic-Fp SIMD path from cad241e6 (`fp_generic::detect`)
+// rather than the stale WIP's separate Montgomery dispatch tree. The modulus
+// is a ~61-bit generic prime that does not use the Mersenne/Proth storage
+// specialisations, so operands and outputs are Montgomery-form `u64` words.
+// ---------------------------------------------------------------------------
+
+fn bench_fp_general_64bit_batch_mul_simd(c: &mut Criterion) {
+    fn p_inv(p: u64) -> u64 {
+        let mut inv: u64 = 1;
+        for _ in 0..6 {
+            inv = inv.wrapping_mul(2u64.wrapping_sub(p.wrapping_mul(inv)));
+        }
+        inv.wrapping_neg()
+    }
+
+    fn r2_mod_p(p: u64) -> u64 {
+        let r = ((1u128 << 64) % p as u128) as u64;
+        ((r as u128 * r as u128) % p as u128) as u64
+    }
+
+    fn scalar_redc(t: u128, p: u64, p_inv: u64) -> u64 {
+        let m = (t as u64).wrapping_mul(p_inv);
+        let u = ((t + m as u128 * p as u128) >> 64) as u64;
+        if u >= p {
+            u - p
+        } else {
+            u
+        }
+    }
+
+    fn to_mont(x: u64, p: u64, p_inv: u64) -> u64 {
+        scalar_redc(x as u128 * r2_mod_p(p) as u128, p, p_inv)
+    }
+
+    let p = M61_LIKE_GENERIC;
+    let p_inv = p_inv(p);
+    let a_raw: Vec<u64> = (0..BATCH_LEN as u64)
+        .map(|i| to_mont((i.wrapping_mul(0x9E37_79B9_7F4A_7C15) ^ 1) % p, p, p_inv))
+        .collect();
+    let b_raw: Vec<u64> = (0..BATCH_LEN as u64)
+        .map(|i| to_mont((i.wrapping_mul(0xBF58_476D_1CE4_E5B9) ^ 7) % p, p, p_inv))
+        .collect();
+    let mut out_raw = vec![0u64; BATCH_LEN];
+
+    let force_scalar = std::env::var("BENCH_FORCE_SCALAR").is_ok();
+    let maybe_fns = if force_scalar {
+        None
+    } else {
+        gf2_kernels_simd::fp_generic::detect()
+    };
+
+    c.bench_function("fp_general_64bit_batch_mul_simd", |bench| {
+        bench.iter(|| {
+            if let Some(fns) = maybe_fns {
+                (fns.batch_mul_fn)(
+                    black_box(&a_raw),
+                    black_box(&b_raw),
+                    p,
+                    p_inv,
+                    black_box(&mut out_raw),
+                );
+            } else {
+                for i in 0..BATCH_LEN {
+                    out_raw[i] = scalar_redc(a_raw[i] as u128 * b_raw[i] as u128, p, p_inv);
+                }
+                black_box(&out_raw);
+            }
+        })
+    });
+}
+
 fn bench_fp_m31_batch_dot_simd(c: &mut Criterion) {
     let m31 = M31 as u32;
     let a: Vec<u32> = (0..BATCH_LEN as u32).map(|i| (i * 17 + 1) % m31).collect();
@@ -384,6 +459,7 @@ criterion_group!(
     bench_fp_generic_near_m31_fieldvec_mul_scalar_loop,
     bench_fp_generic_near_m61_fieldvec_mul_dispatch,
     bench_fp_generic_near_m61_fieldvec_mul_scalar_loop,
+    bench_fp_general_64bit_batch_mul_simd,
     bench_fp_m31_batch_dot_simd,
 );
 criterion_main!(specialized);
