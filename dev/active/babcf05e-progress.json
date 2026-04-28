@@ -4,9 +4,9 @@
   "title": "gf2-core PPC-spiral performance sweep",
   "claimed_by": "agent:project-lead",
   "started_at": "2026-04-26T22:30:00+00:00",
-  "last_updated": "2026-04-28T15:38:28+00:00",
-  "current_wave": 3,
-  "phase": "wave_2_DONE; story 166b2691 closed; bd00d76a closed (R4) with examples/lto_opacity_audit.rs harness — all 5 dispatch tables empirically confirmed opaque; c7e91dfd infra issue closed (MSRV 1.80 -> 1.95 + 24 clippy 1.95 lints + 30+ doc updates); e555c46d sse4.1 register-spill bug closed externally before session 4 resume. Wave 3-6 prep DONE: 13 ppc-kernel:<id> labels + 13 criterion-1.5x gates applied across all Tier A-D tasks (commit e1a8f0e). Session 4 strategic expansion approved by user: add benchmark-gap story 3abb755e and tasks 085cbd0b, 59c487c3, e7ab802d, 577b9e7f to target 64c88ae4 shortcomings (Strassen-Winograd, delayed-reduction FieldMatrix GF(p), GF(2^m) FieldMatrix batch path). Strategy task 085cbd0b closed with benchmark-gap doc linked to story and implementation tasks. Wave 3 Tier A dispatch-routing story d76f6931 is closed; c69d2055, cad241e6, 8e4b189c, and 5223bb04 are done, with d4740d85 Lean blocker also closed.",
+  "last_updated": "2026-04-28T17:00:00+00:00",
+  "current_wave": 4,
+  "phase": "wave_3_DONE; Tier A dispatch-routing story d76f6931 closed at 5a9393c. Session 6 dispatch sub-wave 4a in flight: C1 (ec286cee), C3 (86c09a51), B1 (1c1c4242), B2 (54a0e75c) parallel via worktrees — algorithmic-value-first sequencing (B1 unblocks B3 → 59c487c3 Strassen; C3 → e7ab802d delayed reduction; C1 → 577b9e7f GF(2^m) FieldMatrix). Per user direction 2026-04-28: criterion-1.5x gate is operative threshold; [aspirational] wording in Tier B/C/D issue text stays as-is, no mid-flight amendments. Sub-wave 4b/5 next: C2 (7c954fb5), C4 (3168d114), B3 (19bc3199, unblocked after B1).",
   "related_epic": "bb85c68a (FieldMatrix linear algebra)",
   "spec_doc": "dev/plans/gf2_core_ppc_spiral.md",
   "uncompetitiveness_doc": "dev/bench_results/2026-04-26-uncompetitiveness-profile.md",
@@ -20,7 +20,8 @@
     "Session 4 strategic decision: user approved expanding babcf05e to directly address 64c88ae4 benchmark shortcomings, rather than only continuing low-level PPC Tier A-D. New story 3abb755e adds strategy task 085cbd0b plus implementation tasks for GF(2) Strassen-Winograd (59c487c3), GF(p) delayed-reduction FieldMatrix multiply (e7ab802d), and GF(2^m) FieldMatrix batch/PCLMUL path (577b9e7f).",
     "Session 5: 8e4b189c closed after one lead-requested rework. R0 was rejected because 512/1024-column speedup came from scalar ILP, not SIMD routing. User approved R1 scope amendment to add fused LogicalFns::and_popcnt_fn in gf2-kernels-simd; final A1 criterion geomean 2.636x vs 1.5x target.",
     "Session 5: 5223bb04 R0 rejected before merge. Worker implemented a non-M4RM fallback but benchmarked matmul_square/1024 and /2048, which still use M4RM k_block=8 and therefore measure the prior c69d2055 path rather than the fallback. User selected rework: add/route a benchmark that actually exercises the non-M4RM fallback and gate performance on that. R1 closed with dedicated 512x1x8192 fallback benchmark and A2 comparator current-leaf mode; final geomean 2.015x vs scalar fallback.",
-    "Session 5: d76f6931 story closed after user-approved aggregate amendment for A3/cad241e6. Story gates passed on the amended contract: A1 and A2 retain explicit speed gates; A3 inherits its child-level approved performance exception while preserving specialized M31 dispatch and generic Montgomery coverage."
+    "Session 5: d76f6931 story closed after user-approved aggregate amendment for A3/cad241e6. Story gates passed on the amended contract: A1 and A2 retain explicit speed gates; A3 inherits its child-level approved performance exception while preserving specialized M31 dispatch and generic Montgomery coverage.",
+    "Session 6 (2026-04-28) start: branch on main at 5a9393c, 41 commits ahead of origin. Tier-A worktrees from sessions 5/4 (5223bb04, 8e4b189c, cad241e6, d4740d85) cleaned up. Untracked dev/bench_results/2026-04-26-gf2-simd.csv deleted per user. Strategic interview: wave priority = algorithmic-value-first (Tier-C parallel + B1+B2 alongside); criterion-1.5x stance = keep gate as operative threshold, no [aspirational] amendments; CSV = delete. Sub-wave 4a dispatch: C1, C3, B1, B2 parallel via worktrees. B1's [hard] criterion literally quotes 'ppc-v0-2026-04-25' but canonical baseline naming is 'ppc-v0-2026-04-27' per b2ecd2ff session-2 amendment — clarification routed via dispatch prompt, no JIT description amendment per user's gate-as-operative-threshold preference."
   ],
   "waves": [
     {
@@ -60,22 +61,33 @@
     },
     {
       "wave_number": 4,
-      "label": "Tier B — Dense bit-matrix kernels",
+      "label": "Tier B + Tier C interleaved (algorithmic-value-first; session 6)",
+      "sub_waves": {
+        "4a": {
+          "label": "Parallel dispatch (worktrees): C1+C3 unblock Wave-8 closures; B1+B2 unblock B3",
+          "dispatched_at": "2026-04-28",
+          "issues": ["ec286cee", "86c09a51", "1c1c4242", "54a0e75c"]
+        },
+        "4b": {
+          "label": "After 4a closes: B3 + C2 + C4 parallel",
+          "issues": ["19bc3199", "7c954fb5", "3168d114"]
+        }
+      },
       "issues": [
-        {"id": "1c1c4242-78bb-4ae9-b791-f764b844f880", "short_id": "1c1c4242", "title": "BitMatrix::transpose 64x64 bit-block + AVX2", "kind": "task", "classification": "implementation", "status": "pending", "state": "backlog", "pre_dispatch_action": "Add label ppc-kernel:B1. Worker MUST add a matrix_transpose bench BEFORE the first spiral edit (per spec doc § Tier B + b2ecd2ff manifest TBD note). After bench exists, worker pins the baseline themselves before the SIMD edit (V0 measurement)."},
-        {"id": "54a0e75c-0d45-4dbc-b895-a0f6674fa331", "short_id": "54a0e75c", "title": "M4RM Gray-code table build (ILP + SIMD)", "kind": "task", "classification": "implementation", "status": "pending", "state": "backlog", "pre_dispatch_action": "Add label ppc-kernel:B2."},
-        {"id": "19bc3199-e140-405f-9d16-d7722d7b7927", "short_id": "19bc3199", "title": "M4RM block multiply register-tile + cache-block", "kind": "task", "classification": "implementation", "status": "pending", "state": "backlog", "pre_dispatch_action": "Add label ppc-kernel:B3. Depends on B1 transitively."}
+        {"id": "1c1c4242-78bb-4ae9-b791-f764b844f880", "short_id": "1c1c4242", "title": "BitMatrix::transpose 64x64 bit-block + AVX2", "kind": "task", "classification": "implementation", "status": "in_progress", "state": "ready", "sub_wave": "4a", "pre_dispatch_note": "B1 has no bench yet; worker creates matrix_transpose bench before first SIMD edit (V0 measurement). Baseline name: 'ppc-v0-2026-04-27' (canonical per b2ecd2ff). [hard] criterion literally quotes '2026-04-25' — pre-amendment placeholder; route via dispatch prompt, no JIT description amendment (user's gate-as-operative-threshold preference)."},
+        {"id": "54a0e75c-0d45-4dbc-b895-a0f6674fa331", "short_id": "54a0e75c", "title": "M4RM Gray-code table build (ILP + SIMD)", "kind": "task", "classification": "implementation", "status": "in_progress", "state": "ready", "sub_wave": "4a", "pre_dispatch_note": "Baseline gray_table_generation_k8 pinned at ppc-v0-2026-04-27."},
+        {"id": "19bc3199-e140-405f-9d16-d7722d7b7927", "short_id": "19bc3199", "title": "M4RM block multiply register-tile + cache-block", "kind": "task", "classification": "implementation", "status": "pending", "state": "backlog", "sub_wave": "4b", "pre_dispatch_action": "Depends on B1 (1c1c4242). Promote ready when B1 closes."}
       ]
     },
     {
       "wave_number": 5,
-      "label": "Tier C — Field-arithmetic batch",
+      "label": "Tier C — Field-arithmetic batch (interleaved with Wave 4 in session 6)",
       "issues": [
-        {"id": "ec286cee-48af-4dec-8190-424f6ffbfab7", "short_id": "ec286cee", "title": "GF(2^m) batch mul/square m=8,16,32 via VPCLMULQDQ", "kind": "task", "classification": "implementation", "status": "pending", "state": "backlog", "pre_dispatch_action": "Add label ppc-kernel:C1."},
-        {"id": "7c954fb5-1efe-440e-b29d-eed5270b8204", "short_id": "7c954fb5", "title": "GF(2^571) batch mul via multi-word VPCLMULQDQ", "kind": "task", "classification": "implementation", "status": "pending", "state": "backlog", "pre_dispatch_action": "Add label ppc-kernel:C2."},
-        {"id": "86c09a51-8d7e-4610-854b-6110ab830d4c", "short_id": "86c09a51", "title": "Fp prime Montgomery batch SIMD for general 64-bit primes (AVX2)", "kind": "task", "classification": "implementation", "status": "pending", "state": "backlog", "pre_dispatch_action": "Add label ppc-kernel:C3."},
-        {"id": "3168d114-57f2-4a21-a28f-3c191833385d", "short_id": "3168d114", "title": "QuadraticExt::mul Karatsuba SoA batched SIMD", "kind": "task", "classification": "implementation", "status": "pending", "state": "backlog", "pre_dispatch_action": "Add label ppc-kernel:C4. C4 baseline ALREADY PINNED via soa_batch_mul_fq2_fp65537/batch_soa."},
-        {"id": "33d3f5b7-5942-445d-8e34-9b87c0903f7f", "short_id": "33d3f5b7", "title": "CubicExt::mul Karatsuba SoA batched SIMD", "kind": "task", "classification": "implementation", "status": "pending", "state": "backlog", "pre_dispatch_action": "Add label ppc-kernel:C5. Worker MUST add a CubicExt SoA bench BEFORE the first edit (soa_batch.rs only covers QuadraticExt). Depends on C4."}
+        {"id": "ec286cee-48af-4dec-8190-424f6ffbfab7", "short_id": "ec286cee", "title": "GF(2^m) batch mul/square m=8,16,32 via VPCLMULQDQ", "kind": "task", "classification": "implementation", "status": "in_progress", "state": "ready", "sub_wave": "4a", "pre_dispatch_note": "C1 manifest entry pinned at gf2m_mul_crossover/pclmulqdq_barrett @ ppc-v0-2026-04-27. Issue Notes section says 'gf2m_mul_strategies' but manifest is the canonical reference."},
+        {"id": "7c954fb5-1efe-440e-b29d-eed5270b8204", "short_id": "7c954fb5", "title": "GF(2^571) batch mul via multi-word VPCLMULQDQ", "kind": "task", "classification": "implementation", "status": "pending", "state": "ready", "sub_wave": "4b", "pre_dispatch_note": "C2 manifest pinned at gf2m_wide4_simd_clmul_only[avx2+vpclmulqdq-ymm]. Defer to sub-wave 4b to bound concurrent worktree count."},
+        {"id": "86c09a51-8d7e-4610-854b-6110ab830d4c", "short_id": "86c09a51", "title": "Fp prime Montgomery batch SIMD for general 64-bit primes (AVX2)", "kind": "task", "classification": "implementation", "status": "in_progress", "state": "ready", "sub_wave": "4a", "pre_dispatch_note": "C3 manifest pinned at fp_m31_batch_mul_simd. Issue Notes says 'fp_specialized + fieldvec_dot_product' — manifest is canonical (covers a baseline more representative of general-prime batch path)."},
+        {"id": "3168d114-57f2-4a21-a28f-3c191833385d", "short_id": "3168d114", "title": "QuadraticExt::mul Karatsuba SoA batched SIMD", "kind": "task", "classification": "implementation", "status": "pending", "state": "ready", "sub_wave": "4b", "pre_dispatch_note": "C4 manifest pinned at soa_batch_mul_fq2_fp65537/batch_soa. Issue Notes says 'field_matrix_fusion' — manifest is canonical."},
+        {"id": "33d3f5b7-5942-445d-8e34-9b87c0903f7f", "short_id": "33d3f5b7", "title": "CubicExt::mul Karatsuba SoA batched SIMD", "kind": "task", "classification": "implementation", "status": "pending", "state": "backlog", "pre_dispatch_action": "Worker MUST add a CubicExt SoA bench BEFORE the first edit. Depends on C4."}
       ]
     },
     {
