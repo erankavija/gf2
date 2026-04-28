@@ -197,7 +197,7 @@ def gfp.Fp (P : Std.U64) := Std.U64
 def gfp.montgomery.MontConsts (P : Std.U64) := Unit
 
 /-- Trait declaration: [gf2_core::gfp::simd_ops::SimdVecOps]
-    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 56:0-102:1
+    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 58:0-104:1
     Visibility: public -/
 structure gfp.simd_ops.SimdVecOps (Self : Type) where
   try_simd_mul_vec : Slice Self → Slice Self → Result (Option (alloc.vec.Vec
