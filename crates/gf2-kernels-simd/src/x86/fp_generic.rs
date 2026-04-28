@@ -133,9 +133,96 @@ unsafe fn montgomery_redc_u64x4(
 
 #[inline]
 #[target_feature(enable = "avx2")]
+unsafe fn montgomery_redc_u64x4_signed_final(
+    t_lo: __m256i,
+    t_hi: __m256i,
+    p: __m256i,
+    p_inv: __m256i,
+) -> __m256i {
+    let m = mul_lo_u64x4(t_lo, p_inv);
+    let mp_hi = mul_hi_u64x4(m, p);
+
+    let zero = _mm256_setzero_si256();
+    let carry = _mm256_andnot_si256(_mm256_cmpeq_epi64(t_lo, zero), _mm256_set1_epi64x(1));
+    let u = _mm256_add_epi64(_mm256_add_epi64(t_hi, mp_hi), carry);
+    let u_minus_p = _mm256_sub_epi64(u, p);
+    // For P <= 2^62, REDC gives u < 2P <= 2^63, so signed compares are exact.
+    select_epi64(_mm256_cmpgt_epi64(p, u), u, u_minus_p)
+}
+
+#[inline]
+#[target_feature(enable = "avx2")]
 pub unsafe fn fp_montgomery_mul4(a: __m256i, b: __m256i, p: __m256i, p_inv: __m256i) -> __m256i {
     let (t_lo, t_hi) = mul_wide_u64x4(a, b);
     montgomery_redc_u64x4(t_lo, t_hi, p, p_inv)
+}
+
+#[inline]
+#[target_feature(enable = "avx2")]
+unsafe fn fp_montgomery_mul4_signed_final(
+    a: __m256i,
+    b: __m256i,
+    p: __m256i,
+    p_inv: __m256i,
+) -> __m256i {
+    let (t_lo, t_hi) = mul_wide_u64x4(a, b);
+    montgomery_redc_u64x4_signed_final(t_lo, t_hi, p, p_inv)
+}
+
+#[inline]
+#[target_feature(enable = "avx2")]
+unsafe fn fp_montgomery_mul4_select<const SIGNED_FINAL: bool>(
+    a: __m256i,
+    b: __m256i,
+    p: __m256i,
+    p_inv: __m256i,
+) -> __m256i {
+    if SIGNED_FINAL {
+        fp_montgomery_mul4_signed_final(a, b, p, p_inv)
+    } else {
+        fp_montgomery_mul4(a, b, p, p_inv)
+    }
+}
+
+#[inline]
+#[target_feature(enable = "avx2")]
+unsafe fn fp_montgomery_batch_mul_vecs<const SIGNED_FINAL: bool>(
+    a_ptr: *const __m256i,
+    b_ptr: *const __m256i,
+    o_ptr: *mut __m256i,
+    nvec: usize,
+    p: __m256i,
+    p_inv: __m256i,
+) {
+    let unrolled = nvec / 4;
+    for i in 0..unrolled {
+        let base = i * 4;
+        let a0 = _mm256_loadu_si256(a_ptr.add(base));
+        let b0 = _mm256_loadu_si256(b_ptr.add(base));
+        let a1 = _mm256_loadu_si256(a_ptr.add(base + 1));
+        let b1 = _mm256_loadu_si256(b_ptr.add(base + 1));
+        let a2 = _mm256_loadu_si256(a_ptr.add(base + 2));
+        let b2 = _mm256_loadu_si256(b_ptr.add(base + 2));
+        let a3 = _mm256_loadu_si256(a_ptr.add(base + 3));
+        let b3 = _mm256_loadu_si256(b_ptr.add(base + 3));
+
+        let r0 = fp_montgomery_mul4_select::<SIGNED_FINAL>(a0, b0, p, p_inv);
+        let r1 = fp_montgomery_mul4_select::<SIGNED_FINAL>(a1, b1, p, p_inv);
+        let r2 = fp_montgomery_mul4_select::<SIGNED_FINAL>(a2, b2, p, p_inv);
+        let r3 = fp_montgomery_mul4_select::<SIGNED_FINAL>(a3, b3, p, p_inv);
+
+        _mm256_storeu_si256(o_ptr.add(base), r0);
+        _mm256_storeu_si256(o_ptr.add(base + 1), r1);
+        _mm256_storeu_si256(o_ptr.add(base + 2), r2);
+        _mm256_storeu_si256(o_ptr.add(base + 3), r3);
+    }
+
+    for i in (unrolled * 4)..nvec {
+        let av = _mm256_loadu_si256(a_ptr.add(i));
+        let bv = _mm256_loadu_si256(b_ptr.add(i));
+        let rv = fp_montgomery_mul4_select::<SIGNED_FINAL>(av, bv, p, p_inv);
+        _mm256_storeu_si256(o_ptr.add(i), rv);
+    }
 }
 
 #[target_feature(enable = "avx2")]
@@ -161,11 +248,10 @@ pub unsafe fn fp_montgomery_batch_mul(
     let b_ptr = b.as_ptr() as *const __m256i;
     let o_ptr = out.as_mut_ptr() as *mut __m256i;
 
-    for i in 0..nvec {
-        let av = _mm256_loadu_si256(a_ptr.add(i));
-        let bv = _mm256_loadu_si256(b_ptr.add(i));
-        let rv = fp_montgomery_mul4(av, bv, p, inv);
-        _mm256_storeu_si256(o_ptr.add(i), rv);
+    if modulus <= (1u64 << 62) {
+        fp_montgomery_batch_mul_vecs::<true>(a_ptr, b_ptr, o_ptr, nvec, p, inv);
+    } else {
+        fp_montgomery_batch_mul_vecs::<false>(a_ptr, b_ptr, o_ptr, nvec, p, inv);
     }
 
     for i in (nvec * 4)..n {
@@ -239,22 +325,24 @@ pub unsafe fn fp_montgomery_batch_sub(a: &[u64], b: &[u64], modulus: u64, out: &
 mod tests {
     use super::*;
 
-    const P: u64 = 9_223_372_036_854_775_783; // 2^63 - 25
-    const P_INV: u64 = {
+    const P61: u64 = 2_305_843_009_213_693_907; // 2^61 - 45
+    const P63: u64 = 9_223_372_036_854_775_783; // 2^63 - 25
+
+    const fn p_inv(p: u64) -> u64 {
         let mut inv: u64 = 1;
         let mut i = 0;
         while i < 6 {
-            inv = inv.wrapping_mul(2u64.wrapping_sub(P.wrapping_mul(inv)));
+            inv = inv.wrapping_mul(2u64.wrapping_sub(p.wrapping_mul(inv)));
             i += 1;
         }
         inv.wrapping_neg()
-    };
+    }
 
-    fn redc(t: u128) -> u64 {
-        let m = (t as u64).wrapping_mul(P_INV);
-        let u = ((t + m as u128 * P as u128) >> 64) as u64;
-        if u >= P {
-            u - P
+    fn redc(t: u128, p: u64, p_inv: u64) -> u64 {
+        let m = (t as u64).wrapping_mul(p_inv);
+        let u = ((t + m as u128 * p as u128) >> 64) as u64;
+        if u >= p {
+            u - p
         } else {
             u
         }
@@ -265,21 +353,24 @@ mod tests {
         if !std::arch::is_x86_feature_detected!("avx2") {
             return;
         }
-        for &len in &[0usize, 1, 63, 64, 65, 127, 128, 129, 255, 256, 257] {
-            let a: Vec<u64> = (0..len as u64)
-                .map(|i| (i.wrapping_mul(123_456_789_123) + 7) % P)
-                .collect();
-            let b: Vec<u64> = (0..len as u64)
-                .map(|i| (i.wrapping_mul(987_654_321_987) + 11) % P)
-                .collect();
-            let mut out = vec![0u64; len];
-            unsafe { fp_montgomery_batch_mul(&a, &b, P, P_INV, &mut out) };
-            for i in 0..len {
-                assert_eq!(
-                    out[i],
-                    redc(a[i] as u128 * b[i] as u128),
-                    "len={len}, i={i}"
-                );
+
+        for &(p, p_inv) in &[(P61, p_inv(P61)), (P63, p_inv(P63))] {
+            for &len in &[0usize, 1, 63, 64, 65, 127, 128, 129, 255, 256, 257] {
+                let a: Vec<u64> = (0..len as u64)
+                    .map(|i| (i.wrapping_mul(123_456_789_123) + 7) % p)
+                    .collect();
+                let b: Vec<u64> = (0..len as u64)
+                    .map(|i| (i.wrapping_mul(987_654_321_987) + 11) % p)
+                    .collect();
+                let mut out = vec![0u64; len];
+                unsafe { fp_montgomery_batch_mul(&a, &b, p, p_inv, &mut out) };
+                for i in 0..len {
+                    assert_eq!(
+                        out[i],
+                        redc(a[i] as u128 * b[i] as u128, p, p_inv),
+                        "p={p}, len={len}, i={i}"
+                    );
+                }
             }
         }
     }
