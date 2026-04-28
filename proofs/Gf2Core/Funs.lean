@@ -1519,7 +1519,7 @@ def gf2m.field.Gf2mElement_.Insts.Gf2_coreGfpSimd_opsSimdVecOps {V : Type}
 }
 
 /-- [gf2_core::gfp::simd_ops::fp65537_try_sub_vec]:
-    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 323:0-325:1 -/
+    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 366:0-368:1 -/
 def gfp.simd_ops.fp65537_try_sub_vec
   {P : Std.U64} (_a : Slice (gfp.Fp P)) (_b : Slice (gfp.Fp P)) :
   Result (Option (alloc.vec.Vec (gfp.Fp P)))
@@ -1527,7 +1527,7 @@ def gfp.simd_ops.fp65537_try_sub_vec
   ok none
 
 /-- [gf2_core::gfp::simd_ops::fp_generic_try_sub_vec]:
-    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 222:0-224:1 -/
+    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 265:0-267:1 -/
 def gfp.simd_ops.fp_generic_try_sub_vec
   {P : Std.U64} (_a : Slice (gfp.Fp P)) (_b : Slice (gfp.Fp P)) :
   Result (Option (alloc.vec.Vec (gfp.Fp P)))
@@ -1535,7 +1535,7 @@ def gfp.simd_ops.fp_generic_try_sub_vec
   ok none
 
 /-- [gf2_core::gfp::simd_ops::{gf2_core::gfp::simd_ops::SimdVecOps for gf2_core::gfp::Fp<P>}::try_simd_sub_vec]:
-    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 136:4-141:5
+    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 139:4-144:5
     Visibility: public -/
 def gfp.Fp.Insts.Gf2_coreGfpSimd_opsSimdVecOps.try_simd_sub_vec
   {P : Std.U64} (a : Slice (gfp.Fp P)) (b : Slice (gfp.Fp P)) :
@@ -1546,7 +1546,7 @@ def gfp.Fp.Insts.Gf2_coreGfpSimd_opsSimdVecOps.try_simd_sub_vec
   else gfp.simd_ops.fp_generic_try_sub_vec a b
 
 /-- [gf2_core::gfp::simd_ops::fp65537_try_add_vec]:
-    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 317:0-319:1 -/
+    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 360:0-362:1 -/
 def gfp.simd_ops.fp65537_try_add_vec
   {P : Std.U64} (_a : Slice (gfp.Fp P)) (_b : Slice (gfp.Fp P)) :
   Result (Option (alloc.vec.Vec (gfp.Fp P)))
@@ -1554,7 +1554,7 @@ def gfp.simd_ops.fp65537_try_add_vec
   ok none
 
 /-- [gf2_core::gfp::simd_ops::fp_generic_try_add_vec]:
-    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 216:0-218:1 -/
+    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 259:0-261:1 -/
 def gfp.simd_ops.fp_generic_try_add_vec
   {P : Std.U64} (_a : Slice (gfp.Fp P)) (_b : Slice (gfp.Fp P)) :
   Result (Option (alloc.vec.Vec (gfp.Fp P)))
@@ -1562,7 +1562,7 @@ def gfp.simd_ops.fp_generic_try_add_vec
   ok none
 
 /-- [gf2_core::gfp::simd_ops::{gf2_core::gfp::simd_ops::SimdVecOps for gf2_core::gfp::Fp<P>}::try_simd_add_vec]:
-    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 128:4-133:5
+    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 131:4-136:5
     Visibility: public -/
 def gfp.Fp.Insts.Gf2_coreGfpSimd_opsSimdVecOps.try_simd_add_vec
   {P : Std.U64} (a : Slice (gfp.Fp P)) (b : Slice (gfp.Fp P)) :
@@ -1573,7 +1573,7 @@ def gfp.Fp.Insts.Gf2_coreGfpSimd_opsSimdVecOps.try_simd_add_vec
   else gfp.simd_ops.fp_generic_try_add_vec a b
 
 /-- [gf2_core::gfp::simd_ops::fp65537_try_mul_vec]:
-    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 311:0-313:1 -/
+    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 354:0-356:1 -/
 def gfp.simd_ops.fp65537_try_mul_vec
   {P : Std.U64} (_a : Slice (gfp.Fp P)) (_b : Slice (gfp.Fp P)) :
   Result (Option (alloc.vec.Vec (gfp.Fp P)))
@@ -1581,15 +1581,29 @@ def gfp.simd_ops.fp65537_try_mul_vec
   ok none
 
 /-- [gf2_core::gfp::simd_ops::fp_generic_try_mul_vec]:
-    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 210:0-212:1 -/
+    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 253:0-255:1 -/
 def gfp.simd_ops.fp_generic_try_mul_vec
   {P : Std.U64} (_a : Slice (gfp.Fp P)) (_b : Slice (gfp.Fp P)) :
   Result (Option (alloc.vec.Vec (gfp.Fp P)))
   := do
   ok none
 
+/-- [gf2_core::gfp::simd_ops::fpm31_try_mul_vec]:
+    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 183:0-185:1 -/
+def gfp.simd_ops.fpm31_try_mul_vec
+  {P : Std.U64} (_a : Slice (gfp.Fp P)) (_b : Slice (gfp.Fp P)) :
+  Result (Option (alloc.vec.Vec (gfp.Fp P)))
+  := do
+  ok none
+
+/-- [gf2_core::gfp::simd_ops::M31]
+    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 151:0-151:34 -/
+@[global_simps, irreducible]
+def gfp.simd_ops.M31 : Result Std.U64 := do let i ← 1#u64 <<< 31#i32
+                                            i - 1#u64
+
 /-- [gf2_core::gfp::simd_ops::{gf2_core::gfp::simd_ops::SimdVecOps for gf2_core::gfp::Fp<P>}::try_simd_mul_vec]:
-    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 120:4-125:5
+    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 120:4-128:5
     Visibility: public -/
 def gfp.Fp.Insts.Gf2_coreGfpSimd_opsSimdVecOps.try_simd_mul_vec
   {P : Std.U64} (a : Slice (gfp.Fp P)) (b : Slice (gfp.Fp P)) :
@@ -1597,10 +1611,14 @@ def gfp.Fp.Insts.Gf2_coreGfpSimd_opsSimdVecOps.try_simd_mul_vec
   := do
   if P = 65537#u64
   then gfp.simd_ops.fp65537_try_mul_vec a b
-  else gfp.simd_ops.fp_generic_try_mul_vec a b
+  else
+    let i ← gfp.simd_ops.M31
+    if P = i
+    then gfp.simd_ops.fpm31_try_mul_vec a b
+    else gfp.simd_ops.fp_generic_try_mul_vec a b
 
 /-- Trait implementation: [gf2_core::gfp::simd_ops::{gf2_core::gfp::simd_ops::SimdVecOps for gf2_core::gfp::Fp<P>}]
-    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 118:0-142:1 -/
+    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 118:0-145:1 -/
 @[reducible]
 def gfp.Fp.Insts.Gf2_coreGfpSimd_opsSimdVecOps (P : Std.U64) :
   gfp.simd_ops.SimdVecOps (gfp.Fp P) := {
