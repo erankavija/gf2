@@ -48,10 +48,12 @@
     },
     "C1": {
       "title": "GF(2^m) batch m=8/16/32 via VPCLMULQDQ",
-      "bench_target": "gf2m_mul_crossover/pclmulqdq_barrett",
-      "baseline_name": "ppc-v0-2026-04-27",
-      "commit_hash": "52eaac8",
-      "design_size_class": ["8", "16"]
+      "bench_target": "gf2m_mul_crossover/gf2m_batch_unroll4",
+      "baseline_bench_target": "gf2m_mul_crossover/pclmulqdq_barrett_loop_v0",
+      "baseline_name": "current-pclmulqdq-loop-v0",
+      "commit_hash": "TBD-c1-impl",
+      "design_size_class": ["8", "16"],
+      "amendment_note": "Replaced bench_target `gf2m_mul_crossover/pclmulqdq_barrett` (single-shot per-element kernel) with the batch leaf `gf2m_mul_crossover/gf2m_batch_unroll4` and an apples-to-apples baseline leaf `gf2m_mul_crossover/pclmulqdq_barrett_loop_v0` (existing single-shot kernel called per-element in a tight loop over the same BATCH_SIZE=1024 inputs). Both leaves are produced by `bench_gf2m_batch_pclmulqdq_unroll4` in `crates/gf2-core/benches/gf2m_mul_strategies.rs`. ppc-compare.sh compares current-vs-current via `baseline_bench_target` rather than a saved-baseline lookup; pinning a saved baseline at the new leaf would not be apples-to-apples because the V0 path is also new (the old `pclmulqdq_barrett` leaf measured a different, single-multiplication workload)."
     },
     "C2": {
       "title": "GF(2^571) multi-word VPCLMULQDQ",
