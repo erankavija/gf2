@@ -18,7 +18,8 @@
     "11 of 13 Tier A-D kernels are now pinned to a real ppc-v0-2026-04-27 @ 52eaac8 baseline. Remaining 3 kernels (B1 transpose, C5 cubic SoA, D2 Cuthill-McKee) stay TBD because their benches are created by the kernel-implementation tasks themselves per spec doc.",
     "Pinned criterion baselines and their map (from dev/benchmarks/ppc-baselines.json post-ca527db): A1 dense_matvec / [512, 1024]; A2 matmul_square / [1024, 2048]; A3 fieldvec_dot_fp_large / [1000, 10000]; B2 gray_table_generation_k8 / [.]; B3 m4rm_multiply / [256, 512, 1024]; C1 gf2m_mul_crossover/pclmulqdq_barrett / [8, 16]; C2 gf2m_wide4_simd_clmul_only[avx2+vpclmulqdq-ymm] / [.]; C3 fp_m31_batch_mul_simd / [.]; C4 soa_batch_mul_fq2_fp65537/batch_soa / [256, 1000]; D1 sparse_matvec/density_0.05 / [500, 1000].",
     "Session 4 strategic decision: user approved expanding babcf05e to directly address 64c88ae4 benchmark shortcomings, rather than only continuing low-level PPC Tier A-D. New story 3abb755e adds strategy task 085cbd0b plus implementation tasks for GF(2) Strassen-Winograd (59c487c3), GF(p) delayed-reduction FieldMatrix multiply (e7ab802d), and GF(2^m) FieldMatrix batch/PCLMUL path (577b9e7f).",
-    "Session 5: 8e4b189c closed after one lead-requested rework. R0 was rejected because 512/1024-column speedup came from scalar ILP, not SIMD routing. User approved R1 scope amendment to add fused LogicalFns::and_popcnt_fn in gf2-kernels-simd; final A1 criterion geomean 2.636x vs 1.5x target."
+    "Session 5: 8e4b189c closed after one lead-requested rework. R0 was rejected because 512/1024-column speedup came from scalar ILP, not SIMD routing. User approved R1 scope amendment to add fused LogicalFns::and_popcnt_fn in gf2-kernels-simd; final A1 criterion geomean 2.636x vs 1.5x target.",
+    "Session 5: 5223bb04 R0 rejected before merge. Worker implemented a non-M4RM fallback but benchmarked matmul_square/1024 and /2048, which still use M4RM k_block=8 and therefore measure the prior c69d2055 path rather than the fallback. User selected rework: add/route a benchmark that actually exercises the non-M4RM fallback and gate performance on that."
   ],
   "waves": [
     {
@@ -135,7 +136,8 @@
     "e7ab802d": 0,
     "577b9e7f": 0,
     "c69d2055": 1,
-    "8e4b189c": 1
+    "8e4b189c": 1,
+    "5223bb04": 1
   },
   "session_notes": {
     "session_1_starting_state": "Epic babcf05e: backlog. 6 stories scaffolded. 16 child tasks scaffolded. c7791a20 (profile.release) and c69d2055 (dispatch hoist) added by user on 2026-04-26 in response to bb85c68a uncompetitiveness profile finding.",
