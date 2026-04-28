@@ -967,9 +967,18 @@ impl BitMatrix {
     /// Tiled transpose driver: walks 64×64 bit-blocks and dispatches each
     /// to `transpose_64x64`.
     ///
-    /// Factored out of [`Self::transpose`] so different spiral steps can
-    /// instrument the outer loop (V7 cache-tiling) without duplicating
-    /// the per-block bit-packing logic.
+    /// Beyond the [`Self::TRANSPOSE_CACHE_TILE_THRESHOLD_BLOCKS`] block
+    /// count, the driver imposes an L1-friendly outer macro-tile so
+    /// the (input row-band) × (output column-band) working set fits
+    /// in L1d. Below the threshold it uses the simple 2-level block
+    /// loop. The macro-tile size is chosen so that the input
+    /// row-strip + output column-strip fits in ~64 KiB on Zen 3
+    /// (32 KiB L1d × 2 ways shared between read + write).
+    ///
+    /// Factored out of [`Self::transpose`] so each PPC-spiral step
+    /// can instrument the outer loop (V4 — no tiling, V3 — same,
+    /// V7 — cache-tiled outer loop) without duplicating the per-block
+    /// bit-packing logic.
     fn transpose_blocked(&self, transpose_64x64: fn(&[u64; 64], &mut [u64; 64])) -> Self {
         let mut out = Self::zeros(self.cols, self.rows);
         let in_stride = self.stride_words;
@@ -978,26 +987,115 @@ impl BitMatrix {
         let n_row_blocks = self.rows.div_ceil(64);
         let n_col_blocks = self.cols.div_ceil(64);
 
+        // V7: pick a macro-tile when the matrix is large enough that
+        // the simple 2-level loop walks off L1. The threshold matches
+        // the "n > 8K" wording in `dev/plans/gf2_core_ppc_spiral.md`
+        // § Tier B: at 8192 rows × 8192 cols, in_stride = 128 words,
+        // so a single row-block of input is 64 × 128 × 8 = 64 KiB —
+        // exactly the boundary where Zen 3's L1d (32 KiB) starts to
+        // miss. Below this, the simple loop is at least as good.
+        const MACRO_TILE_BLOCKS: usize = 8;
+
+        if n_row_blocks <= Self::TRANSPOSE_CACHE_TILE_THRESHOLD_BLOCKS
+            && n_col_blocks <= Self::TRANSPOSE_CACHE_TILE_THRESHOLD_BLOCKS
+        {
+            Self::transpose_inner_loop(
+                &self.data,
+                &mut out.data,
+                in_stride,
+                out_stride,
+                self.rows,
+                self.cols,
+                0,
+                n_row_blocks,
+                0,
+                n_col_blocks,
+                transpose_64x64,
+            );
+        } else {
+            // Macro-tiled outer loop: process MACRO_TILE_BLOCKS ×
+            // MACRO_TILE_BLOCKS bit-blocks per macro-tile so the
+            // per-tile input/output footprint stays L1-resident.
+            let mut br_macro = 0usize;
+            while br_macro < n_row_blocks {
+                let br_end = (br_macro + MACRO_TILE_BLOCKS).min(n_row_blocks);
+                let mut bc_macro = 0usize;
+                while bc_macro < n_col_blocks {
+                    let bc_end = (bc_macro + MACRO_TILE_BLOCKS).min(n_col_blocks);
+                    Self::transpose_inner_loop(
+                        &self.data,
+                        &mut out.data,
+                        in_stride,
+                        out_stride,
+                        self.rows,
+                        self.cols,
+                        br_macro,
+                        br_end,
+                        bc_macro,
+                        bc_end,
+                        transpose_64x64,
+                    );
+                    bc_macro = bc_end;
+                }
+                br_macro = br_end;
+            }
+        }
+
+        // Mask the output's padding bits — the kernel may have written
+        // bits beyond row count `self.rows` into the high bits of the
+        // last `u64` of each output row; those must be zero per the
+        // tail-mask invariant.
+        out.mask_padding_bits();
+        out
+    }
+
+    /// Threshold (in 64×64 bit-blocks) below which the transpose
+    /// driver uses the simple 2-level block loop and above which it
+    /// engages the V7 macro-tile outer loop.
+    ///
+    /// Tuned for Zen 3's 32 KiB L1d: at 8 macro-blocks (= 512 cols
+    /// or 512 rows) the per-tile input row-strip is 64 KiB, the
+    /// boundary at which L1 misses dominate. Matrices below this in
+    /// both dimensions stay L1-resident under the simple loop.
+    const TRANSPOSE_CACHE_TILE_THRESHOLD_BLOCKS: usize = 16;
+
+    /// Inner loop over a (br, bc) range of 64×64 bit-blocks.
+    ///
+    /// Allocates a single tile pair on the stack per invocation;
+    /// shared across the macro-tile and direct-loop paths in
+    /// [`Self::transpose_blocked`].
+    #[allow(clippy::too_many_arguments)]
+    fn transpose_inner_loop(
+        in_data: &[u64],
+        out_data: &mut [u64],
+        in_stride: usize,
+        out_stride: usize,
+        rows: usize,
+        cols: usize,
+        br_start: usize,
+        br_end: usize,
+        bc_start: usize,
+        bc_end: usize,
+        transpose_64x64: fn(&[u64; 64], &mut [u64; 64]),
+    ) {
         let mut tile_in = [0u64; 64];
         let mut tile_out = [0u64; 64];
 
-        for br in 0..n_row_blocks {
+        for br in br_start..br_end {
             let row_start = br * 64;
-            let row_end = (row_start + 64).min(self.rows);
+            let row_end = (row_start + 64).min(rows);
             let block_rows = row_end - row_start;
 
-            for bc in 0..n_col_blocks {
+            for bc in bc_start..bc_end {
                 let col_start = bc * 64;
-                let col_end = (col_start + 64).min(self.cols);
+                let col_end = (col_start + 64).min(cols);
                 let block_cols = col_end - col_start;
 
                 // Load the input tile: bit (i, j) of the block lives in
                 // bit `j` of `data[(row_start + i) * in_stride + bc]`.
-                // Rows beyond the matrix end pad to zero (already
-                // initialised in `tile_in` from the prior iteration —
-                // we explicitly clear them below to be safe).
+                // Rows beyond the matrix end pad to zero.
                 for (i, slot) in tile_in.iter_mut().enumerate().take(block_rows) {
-                    *slot = self.data[(row_start + i) * in_stride + bc];
+                    *slot = in_data[(row_start + i) * in_stride + bc];
                 }
                 for slot in tile_in.iter_mut().take(64).skip(block_rows) {
                     *slot = 0;
@@ -1011,17 +1109,10 @@ impl BitMatrix {
                 // the output. Rows beyond `block_cols` aren't written
                 // because they don't exist in the transposed matrix.
                 for (j, &word) in tile_out.iter().enumerate().take(block_cols) {
-                    out.data[(col_start + j) * out_stride + br] = word;
+                    out_data[(col_start + j) * out_stride + br] = word;
                 }
             }
         }
-
-        // Mask the output's padding bits — the kernel may have written
-        // bits beyond row count `self.rows` into the high bits of the
-        // last `u64` of each output row; those must be zero per the
-        // tail-mask invariant.
-        out.mask_padding_bits();
-        out
     }
 
     /// Converts this dense matrix to a CSR SpBitMatrix.
