@@ -3082,3 +3082,7 @@
 {"type":"issue_completed","id":"3c34fb83-2bb5-48bc-94bd-c20d55cce74d","issue_id":"cad241e6-9606-47ff-96fc-20f38ed591aa","timestamp":"2026-04-28T00:46:27.693238658Z"}
 {"type":"issue_state_changed","id":"c07c21b4-2765-4c31-a071-44a73b36660c","issue_id":"8e4b189c-75a6-4c93-8056-c3c9c994b1c8","timestamp":"2026-04-28T09:49:37.080807114Z","from":"ready","to":"in_progress"}
 {"type":"issue_claimed","id":"e2ce4a2a-3e21-4cce-ae22-3c2e09ecedbb","issue_id":"8e4b189c-75a6-4c93-8056-c3c9c994b1c8","timestamp":"2026-04-28T09:49:37.081118004Z","assignee":"agent:claude-wt-8e4b189c"}
+{"type":"gate_passed","id":"4c62f90d-7135-4133-9bf8-bb4feddaddd5","issue_id":"8e4b189c-75a6-4c93-8056-c3c9c994b1c8","timestamp":"2026-04-28T12:53:40.839009277Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"86e81128-0036-43c4-9842-853d99cb7b24","issue_id":"8e4b189c-75a6-4c93-8056-c3c9c994b1c8","timestamp":"2026-04-28T12:54:09.139119474Z","gate_key":"criterion-1.5x","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"ff616511-bf51-4113-b628-2e7f4b27d36c","issue_id":"8e4b189c-75a6-4c93-8056-c3c9c994b1c8","timestamp":"2026-04-28T12:55:49.043837987Z","gate_key":"criterion-1.5x","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"245d5934-830b-4b2b-b1fc-8596380a0f34","issue_id":"8e4b189c-75a6-4c93-8056-c3c9c994b1c8","timestamp":"2026-04-28T13:03:24.220219644Z","gate_key":"code-review","updated_by":"auto:executor"}

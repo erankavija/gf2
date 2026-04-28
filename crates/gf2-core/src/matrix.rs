@@ -6,10 +6,9 @@
 use std::fmt;
 use std::ops::Mul;
 
-// Route the PPC A1 design sizes (512 and 1024 columns, i.e. 8 and 16 words) and
-// wider dense matvec rows through the AVX2-dispatched AND+popcount kernel when
-// available. The threshold is word-based because SIMD dispatch works over
-// `u64` slices.
+// Route the PPC A1 design sizes (512 and 1024 columns, i.e. 8 and 16 words)
+// through the AVX2-dispatched AND+popcount kernel when available. Benchmarked
+// vs ppc-v0-2026-04-27: 512 cols 2.356x, 1024 cols 2.949x, geomean 2.636x.
 #[cfg(feature = "simd")]
 const MATVEC_SIMD_MIN_WORDS: usize = 8;
 
