@@ -80,3 +80,18 @@ iters=200000 buffer_sum=18436593244922968064
 
        0.105929310 +- 0.001835166 seconds time elapsed  ( +-  1.73% )
 
+
+----------------------------------------------------------------
+V6 prefetch probe (not retained)
+----------------------------------------------------------------
+Tried one-Gray-step-ahead `_mm_prefetch(..., _MM_HINT_T0)` for the next
+16-word B row via a temporary gf2-kernels-simd hook. It regressed the B2
+component benchmark:
+
+  gray_table_generation_k8: [0.773, 0.774, 0.776] us
+  change versus V3: +39.989% to +41.916% (criterion, p < 0.05)
+
+Conclusion: the 8-row B panel is already resident/cache-hot at the 1024x1024
+B2 design point; extra next-row Gray arithmetic plus an indirect prefetch call
+costs more than it hides. V6 prefetch code was reverted and is intentionally
+not present in production.
