@@ -1,4 +1,5 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+use gf2_core::kernels::ops::resolve_xor_inplace;
 use gf2_core::matrix::BitMatrix;
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
@@ -16,32 +17,26 @@ fn random_matrix(rows: usize, cols: usize, seed: u64) -> BitMatrix {
     m
 }
 
-// Benchmark table generation (need to expose this function)
+// Benchmark table generation against the production Gray-code table builder.
 fn bench_table_generation(c: &mut Criterion) {
     let b = random_matrix(1024, 1024, 42);
+    let k_block = 8;
+    let table_size = 1usize << k_block;
+    let stride_words = 1024_usize.div_ceil(64);
+    let mut buffer = vec![0u64; table_size * stride_words];
+    let xor = resolve_xor_inplace(stride_words);
 
     c.bench_function("gray_table_generation_k8", |bench| {
         bench.iter(|| {
-            // Simulate building a gray table
-            // Since build_gray_table is private, we measure the pattern
-            let k_block = 8;
-            let table_size = 1usize << k_block;
-            let stride_words = 1024_usize.div_ceil(64);
-            let mut table = vec![vec![0u64; stride_words]; table_size];
-
-            // Binary enumeration (current implementation)
-            for (idx, entry) in table.iter_mut().enumerate() {
-                for bit in 0..k_block {
-                    if (idx & (1 << bit)) != 0 && bit < b.rows() {
-                        let row_words = b.row_words(bit);
-                        // Simulate XOR
-                        for (dst, &src) in entry.iter_mut().zip(row_words) {
-                            *dst ^= src;
-                        }
-                    }
-                }
-            }
-            black_box(&table);
+            gf2_core::alg::m4rm::build_gray_table_flat(
+                black_box(&b),
+                0,
+                k_block,
+                1024,
+                black_box(&mut buffer),
+                xor,
+            );
+            black_box(&buffer);
         });
     });
 }
