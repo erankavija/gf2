@@ -2,9 +2,9 @@
   "id": "ec286cee-48af-4dec-8190-424f6ffbfab7",
   "title": "GF(2^m) batch mul/square m=8,16,32 via VPCLMULQDQ",
   "description": "Add an AVX2 batch element-wise multiply/square kernel for GF($2^m$) at $m \\in \\{8, 16, 32\\}$. Per-element scalar dispatch leaves throughput on the table when VPCLMULQDQ-on-YMM can process two element pairs per instruction.\n\n## Background\n\n`Gf2mField::mul` and `square` in `crates/gf2-core/src/gf2m/field.rs` are called per-element. No batch element-wise SIMD path exists for $m \\leq 32$ even though VPCLMULQDQ-on-YMM can process two element pairs per instruction and the reduction lookup table fits in a single YMM lane for $m \\leq 32$.\n\nThe fix adds a new `Gf2mBatchFns` set in `gf2-kernels-simd` (sibling of the existing `Gf2mFns`) and a `simd::maybe_gf2m_batch()` accessor:\n\n- V3 SIMD: VPCLMULQDQ-on-YMM (2 element pairs per instruction) plus Barrett reduce in YMM.\n- V4 unroll: 4-way unroll across the dependent reduce step for ILP.\n\n## Success Criteria\n\n- [hard] Bit-exact vs. all existing scalar strategies for $m \\in \\{8, 16, 32\\}$.\n- [hard] Existing `gf2m_mul_strategies.rs` shows the new batch path on its strategy comparison table.\n- [hard] No `unsafe` outside `gf2-kernels-simd`.\n- [hard] Sibling `*.asm.txt` artefact regenerated and shows VPCLMULQDQ + Barrett reduce mnemonics.\n- [hard] `perf stat -r 10` capture before/after recorded.\n- [aspirational] $\\geq 1.5\\times$ geomean over the fastest existing strategy for batches $\\geq 256$ elements.\n\n## Notes\n\nBench: `gf2m_mul_strategies` (existing, pinned by I1). Spec doc: `dev/plans/gf2_core_ppc_spiral.md`.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude-wt-ec286cee",
   "dependencies": [
     "166b2691-82a9-476a-b272-cacd71b58d4c"
   ],
@@ -15,15 +15,15 @@
     "criterion-1.5x"
   ],
   "gates_status": {
-    "asm-artefact-present": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-04-26T22:20:07.708650034Z"
-    },
     "criterion-1.5x": {
       "status": "pending",
       "updated_by": null,
       "updated_at": "2026-04-27T19:16:11.102766738Z"
+    },
+    "asm-artefact-present": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-04-26T22:20:07.708650034Z"
     }
   },
   "context": {},
@@ -37,5 +37,5 @@
     "ppc-kernel:C1"
   ],
   "created_at": "2026-04-25T15:18:18.984288190+00:00",
-  "updated_at": "2026-04-27T19:16:11.106661659+00:00"
+  "updated_at": "2026-04-28T17:08:57.595319925+00:00"
 }

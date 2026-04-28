@@ -2,9 +2,9 @@
   "id": "1c1c4242-78bb-4ae9-b791-f764b844f880",
   "title": "BitMatrix::transpose 64x64 bit-block + AVX2",
   "description": "Add a SIMD-accelerated $64 \\times 64$ bit-block transpose kernel. The current implementation is naive $O(n^2)$ bit-by-bit and is a heavy hitter — many downstream operations transpose first.\n\n## Background\n\n`BitMatrix::transpose` at `crates/gf2-core/src/matrix.rs:858-870` is a naive double loop over individual bits. No SIMD, no register tiling.\n\nThe fix adds a new `transpose_fn` to the `LogicalFns` set (or a sibling `TransposeFns` registered via `simd::maybe_transpose()`):\n\n- Scalar fallback: $64 \\times 64$ bit-block transpose via Hacker's Delight ch. 7.3 (recursive bit-twiddle, $\\sim 7$ stages of mask + shift + XOR).\n- AVX2 SIMD: PSHUFB-based $8 \\times 8$ byte tiles within YMM, then assemble $64 \\times 64$ from 4 quadrants.\n- Cache-layout outer loop: for $n > 8\\text{K}$, drive a tiled outer loop that fits L1.\n\nPPC walk: V0 baseline (add a new `transpose` bench targeting $n \\in \\{64, 256, 1024, 4096\\}$ before any other edit) → V4 register tile + bit-twiddle → V3 SIMD via PSHUFB → V7 cache layout for large $n$. Target is $\\geq 10\\times$ on $n=4096$. If PSHUFB does not reach $10\\times$, document why (cache-bound, bench too small) and either tune V7 layout or revert.\n\n## Success Criteria\n\n- [hard] Proptest invariants hold: $\\text{transpose}(\\text{transpose}(M)) = M$, $M v$ matches $v^T M^T$ semantics.\n- [hard] Word-boundary `#[test]`s pass at $n \\in \\{0, 1, 63, 64, 65, 127, 128, 129\\}$.\n- [hard] No `unsafe` outside `gf2-kernels-simd`.\n- [hard] New `transpose` bench committed and pinned to baseline `ppc-v0-2026-04-25`.\n- [hard] Sibling `*.asm.txt` artefact for both bit-twiddle and PSHUFB paths committed.\n- [hard] One commit per spiral step (V4 / V3 / V7).\n- [aspirational] $\\geq 10\\times$ over baseline at $n=4096$.\n\n## Notes\n\nSpec doc: `dev/plans/gf2_core_ppc_spiral.md`.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude-wt-1c1c4242",
   "dependencies": [
     "166b2691-82a9-476a-b272-cacd71b58d4c"
   ],
@@ -15,15 +15,15 @@
     "criterion-1.5x"
   ],
   "gates_status": {
-    "asm-artefact-present": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-04-26T22:20:05.795803676Z"
-    },
     "criterion-1.5x": {
       "status": "pending",
       "updated_by": null,
       "updated_at": "2026-04-27T19:16:01.356700819Z"
+    },
+    "asm-artefact-present": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-04-26T22:20:05.795803676Z"
     }
   },
   "context": {},
@@ -37,5 +37,5 @@
     "ppc-kernel:B1"
   ],
   "created_at": "2026-04-25T15:17:45.194536413+00:00",
-  "updated_at": "2026-04-27T19:16:01.357459309+00:00"
+  "updated_at": "2026-04-28T17:08:58.735507332+00:00"
 }

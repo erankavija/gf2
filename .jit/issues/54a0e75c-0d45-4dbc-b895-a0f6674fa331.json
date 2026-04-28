@@ -2,9 +2,9 @@
   "id": "54a0e75c-0d45-4dbc-b895-a0f6674fa331",
   "title": "M4RM Gray-code table build (ILP + SIMD)",
   "description": "Optimize the M4RM Gray-code table-build inner loop. Profiling shows it as a measurable fraction of M4RM total time, and its long dependent XOR chain leaves ILP cycles unused.\n\n## Background\n\n`crates/gf2-core/src/alg/m4rm.rs::build_gray_table` builds a $2^k$-row table by XORing successive rows in Gray-code order. The current implementation has a single accumulator threaded through every iteration, so the dependent XOR chain serializes the work and breaks the CPU's ability to issue multiple ops per cycle.\n\nThe fix walks PPC steps:\n\n- V2 ILP: replace the single accumulator with 8 independent table accumulators so the dependent XOR chain breaks; each accumulator maintains its own Gray-code subsequence.\n- V3 SIMD: batch the 8 accumulators across YMM lanes; reuse `LogicalFns::xor_fn` where possible.\n- V6 prefetch: prefetch the next column block's rows while building the current Gray-table.\n\n## Success Criteria\n\n- [hard] M4RM end-to-end correctness unchanged (existing `m4rm.rs` tests pass).\n- [hard] Sibling `*.asm.txt` artefact shows 8 independent accumulators after V2 and `vpxor` mnemonics after V3.\n- [hard] No regression in M4RM total time on any size class measured by `m4rm_profile`.\n- [hard] `perf stat -r 10` capture before/after recorded.\n- [aspirational] $\\geq 1.5\\times$ geomean on the table-build sub-bench.\n\n## Notes\n\nBench: `m4rm_profile` (existing, pinned by I1). Spec doc: `dev/plans/gf2_core_ppc_spiral.md`.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude-wt-54a0e75c",
   "dependencies": [
     "166b2691-82a9-476a-b272-cacd71b58d4c"
   ],
@@ -37,5 +37,5 @@
     "ppc-kernel:B2"
   ],
   "created_at": "2026-04-25T15:17:53.741656798+00:00",
-  "updated_at": "2026-04-27T19:16:05.128097358+00:00"
+  "updated_at": "2026-04-28T17:08:59.367364672+00:00"
 }

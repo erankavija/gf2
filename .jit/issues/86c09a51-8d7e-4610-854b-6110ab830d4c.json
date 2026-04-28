@@ -2,9 +2,9 @@
   "id": "86c09a51-8d7e-4610-854b-6110ab830d4c",
   "title": "Fp prime Montgomery batch SIMD for general 64-bit primes (AVX2)",
   "description": "Add an AVX2 batch Montgomery kernel for `Fp<P>` at general 64-bit primes. Currently only `Fp<65537>` and `Fp<2^31-1>` have batch SIMD; everything else falls through to scalar element-wise. Stays on MSRV 1.80 — IFMA52 is a separate dependent task.\n\n## Background\n\nGeneric `Fp<P>` Montgomery batch ops fall back to scalar element-wise loops; only `Fp<65537>` and `Fp<2^{31}-1>` have batch SIMD. The 64-bit primes used by tower extensions (`gfpn`) have no batch path.\n\nThe fix adds a `MontgomeryFns` set in `gf2-kernels-simd` and a `simd::maybe_montgomery()` accessor:\n\n- V3 SIMD via $32 \\times 4$ limb decomposition on AVX2: split each 64-bit Montgomery operand into two 32-bit limbs, pack 4 elements per YMM, multiply with `_mm256_mul_epu32`, propagate carries explicitly.\n\nIf the AVX2 path measures below $1.5\\times$, a follow-up dependent task `C3-ifma52` may be opened that adds an AVX-512 IFMA52 path (52-bit unsigned multiply-add via `_mm512_madd52lo_epu64` / `_mm512_madd52hi_epu64`) on a Rust-1.89 branch. That sub-task requires explicit user MSRV-bump approval per `escalation-policy.md` and is compile-gated behind `#[cfg(all(target_arch = ..., target_feature = ...))]` with the AVX2 path as fallback.\n\n## Success Criteria\n\n- [hard] Bit-exact vs. scalar Montgomery for every prime in the existing `proofs/` test suite.\n- [hard] Existing Mersenne/Fermat specialisations unchanged.\n- [hard] Lean4 proofs still build (`./scripts/verify-lean.sh`).\n- [hard] No `unsafe` outside `gf2-kernels-simd`.\n- [hard] Sibling `*.asm.txt` artefact regenerated and shows `_mm256_mul_epu32` plus carry propagation.\n- [hard] `perf stat -r 10` capture before/after recorded.\n- [hard] No MSRV bump within this task — IFMA52 is a separate user-approval-gated task that is opened only on demonstrated need.\n- [aspirational] $\\geq 1.5\\times$ geomean over scalar fallback for at least one general 64-bit prime at the design batch size.\n\n## Notes\n\nBench: `fp_specialized`, `fieldvec_dot_product` (existing, pinned by I1). Spec doc: `dev/plans/gf2_core_ppc_spiral.md`.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude-wt-86c09a51",
   "dependencies": [
     "166b2691-82a9-476a-b272-cacd71b58d4c"
   ],
@@ -37,5 +37,5 @@
     "ppc-kernel:C3"
   ],
   "created_at": "2026-04-25T15:18:40.508830459+00:00",
-  "updated_at": "2026-04-27T19:16:17.277980294+00:00"
+  "updated_at": "2026-04-28T17:08:57.974211774+00:00"
 }
