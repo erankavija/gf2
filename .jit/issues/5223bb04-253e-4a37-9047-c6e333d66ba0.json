@@ -2,9 +2,9 @@
   "id": "5223bb04-253e-4a37-9047-c6e333d66ba0",
   "title": "Route BitMatrix::mul row-XOR through xor_fn dispatch",
   "description": "Route `BitMatrix::mul` non-M4RM path through the existing AVX2 XOR kernel. V0→V3 jump in one hop — `LogicalFns::xor_fn` exists but the row accumulation in this path doesn't call it.\n\n## Background\n\n`BitMatrix::mul` non-M4RM path at `crates/gf2-core/src/matrix.rs:1165+` uses scalar inner-product per `(r,c)` pair. The AVX2 XOR kernel `LogicalFns::xor_fn` is registered via `gf2_core::simd::maybe_simd()` but the row-XOR accumulation here does not call it.\n\nThe fix: refactor the non-M4RM path so row-XOR accumulation goes through `simd::maybe_simd().xor_fn` for rows above a width threshold (reuse the threshold tuning approach from `m4rm_components.rs`). The M4RM path crossover is unchanged — this task touches the non-M4RM fallback only.\n\nPPC walk: V0 baseline (`matmul` bench, pinned by I1) → V3 dispatch → asm verify (expecting `vpxor` mnemonic in the inner loop).\n\n## Success Criteria\n\n- [hard] Existing matmul tests + word-boundary `#[test]`s pass at $n \\in \\{0, 1, 63, 64, 65, 127, 128, 129\\}$.\n- [hard] Proptest equivalence vs. scalar via the I4 helper.\n- [hard] M4RM path crossover unchanged.\n- [hard] Sibling `*.asm.txt` artefact shows `vpxor` in the dispatched call site.\n- [hard] `perf stat -r 10` capture before/after recorded.\n- [aspirational] $\\geq 1.5\\times$ geomean over baseline at the non-M4RM design size class. Below the bar: revert.\n\n## Notes\n\nBench: `matmul` (existing, pinned by I1). Spec doc: `dev/plans/gf2_core_ppc_spiral.md`.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude-wt-5223bb04",
   "dependencies": [
     "166b2691-82a9-476a-b272-cacd71b58d4c"
   ],
@@ -21,7 +21,15 @@
     }
   },
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/plans/gf2_core_ppc_spiral.md",
+      "commit": null,
+      "label": "PPC spiral spec",
+      "doc_type": "design",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:task",
     "component:gf2-core",
@@ -30,5 +38,5 @@
     "ppc-kernel:A2"
   ],
   "created_at": "2026-04-25T15:17:12.786762591+00:00",
-  "updated_at": "2026-04-27T19:15:43.424281469+00:00"
+  "updated_at": "2026-04-28T13:23:36.084467591+00:00"
 }
