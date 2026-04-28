@@ -32,6 +32,7 @@ pub struct LogicalFns {
     pub and_fn: fn(&mut [u64], &[u64]),
     pub or_fn: fn(&mut [u64], &[u64]),
     pub xor_fn: fn(&mut [u64], &[u64]),
+    pub m4rm_gray_xor16_fn: fn(&mut [[u64; 8]; 2], &[u64]),
     pub not_fn: fn(&mut [u64]),
     pub popcnt_fn: fn(&[u64]) -> u64,
     pub and_popcnt_fn: fn(&[u64], &[u64]) -> u64,

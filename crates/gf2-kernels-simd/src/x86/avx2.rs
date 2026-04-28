@@ -33,6 +33,22 @@ unsafe fn avx2_xor_into(dst: &mut [u64], src: &[u64]) {
 }
 
 #[target_feature(enable = "avx2")]
+unsafe fn avx2_m4rm_gray_xor16(acc: &mut [[u64; 8]; 2], src: &[u64]) {
+    debug_assert!(src.len() >= 16);
+
+    let acc_ptr = acc.as_mut_ptr() as *mut u8;
+    let src_ptr = src.as_ptr() as *const u8;
+    let mut i = 0usize;
+    while i < 4 {
+        let off = (i * 32) as isize;
+        let a = loadu(acc_ptr.offset(off));
+        let b = loadu(src_ptr.offset(off));
+        storeu(acc_ptr.offset(off), _mm256_xor_si256(a, b));
+        i += 1;
+    }
+}
+
+#[target_feature(enable = "avx2")]
 unsafe fn avx2_and_into(dst: &mut [u64], src: &[u64]) {
     let len = dst.len().min(src.len());
     let nvec = len / 4;
@@ -415,6 +431,12 @@ pub(crate) fn fns() -> LogicalFns {
         }
         unsafe { avx2_xor_into(dst, src) }
     }
+    fn m4rm_gray_xor16_fn(acc: &mut [[u64; 8]; 2], src: &[u64]) {
+        if src.len() < 16 {
+            return;
+        }
+        unsafe { avx2_m4rm_gray_xor16(acc, src) }
+    }
     fn not_fn(dst: &mut [u64]) {
         if dst.is_empty() {
             return;
@@ -449,6 +471,7 @@ pub(crate) fn fns() -> LogicalFns {
         and_fn,
         or_fn,
         xor_fn,
+        m4rm_gray_xor16_fn,
         not_fn,
         popcnt_fn,
         and_popcnt_fn,
