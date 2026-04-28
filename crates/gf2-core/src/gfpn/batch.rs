@@ -46,13 +46,13 @@
 //! inner loop is branchless and cross-lane-dependency-free so LLVM's
 //! auto-vectoriser can widen it opportunistically.
 //!
-//! [`crate::field::FieldVec`] uses the *same* AVX2 `Fp<65537>` kernels
-//! at the element-wise level via the
-//! [`crate::gfp::SimdVecOps`] trait — `mul_vec`, `add_vec`, and
-//! `sub_vec` transparently route through `gf2-kernels-simd` on AVX2
-//! hosts. The pack/unpack helpers in
-//! [`crate::gfp::simd_ops`] are shared between the two surfaces so there
-//! is a single source of truth for the Montgomery-canonical fast path.
+//! [`crate::field::FieldVec`] uses the same [`crate::gfp::SimdVecOps`]
+//! dispatch surface at the element-wise level — `mul_vec`, `add_vec`,
+//! and `sub_vec` transparently route supported `Fp<P>` fields through
+//! `gf2-kernels-simd` on AVX2 hosts. The pack/unpack helpers in
+//! [`crate::gfp::simd_ops`] are shared between the extension-batch and
+//! element-wise surfaces so there is a single source of truth for
+//! Montgomery-canonical fast paths.
 //!
 //! # Measured performance
 //!
@@ -554,7 +554,8 @@ impl<F: ConstField + SimdKaratsubaHook> BatchExtField<F, 2> {
     /// 8-lane vector loop. For any other `F` (or when AVX2 is unavailable)
     /// the scalar straight-line combine runs element by element.
     /// [`crate::field::FieldVec`]'s element-wise ops share the same
-    /// `Fp<65537>` SIMD kernels via the [`crate::gfp::SimdVecOps`] trait.
+    /// [`crate::gfp::SimdVecOps`] dispatch surface, including supported
+    /// generic Montgomery `Fp<P>` kernels.
     /// Total cost: 3 base-field multiplications, 2 additions, 3
     /// subtractions, and one `mul_by_non_residue` per batch element.
     ///
