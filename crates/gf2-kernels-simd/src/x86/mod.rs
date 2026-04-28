@@ -12,6 +12,7 @@ pub(crate) mod fp_generic;
 pub(crate) mod gf2m_batch;
 pub(crate) mod gf2m_wide;
 pub(crate) mod mersenne;
+pub(crate) mod transpose;
 
 #[allow(dead_code)]
 pub(crate) fn detect_x86() -> Option<LogicalFns> {
