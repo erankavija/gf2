@@ -135,6 +135,11 @@ harness = false
 required-features = ["rand"]
 
 [[bench]]
+name = "matrix_transpose"
+harness = false
+required-features = ["rand"]
+
+[[bench]]
 name = "field_clone"
 harness = false
 

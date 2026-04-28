@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "comment": "Maps PPC-spiral kernel IDs to the criterion bench-target / size leaves they will compare against. Pinned by jit:b2ecd2ff (session 2 of babcf05e) using `cargo bench --save-baseline ppc-v0-2026-04-27` against HEAD=52eaac8. The bench inventory under `crates/gf2-core/benches/` was swept end-to-end at pin time; pinned kernels reflect the full set of bench files extant at HEAD that map to a Tier-A/B/C/D kernel. Consumed by dev/benchmarks/ppc-compare.sh and the criterion-1.5x JIT gate via scripts/criterion-1.5x.sh; the gate is per-issue keyed by a `ppc-kernel:<id>` label (id is one of A1, A2, A3, B1, B2, B3, C1, C2, C3, C4, C5, D1, D2). Path resolution: `$CRITERION_DIR/$bench_target/$size/$baseline_name/estimates.json` — `bench_target` may include slashes for nested groups (e.g., `gf2m_mul_crossover/pclmulqdq_barrett`), and `size` may be `.` for leaf benches with no parameter. Entries marked TBD-* have no current bench in `crates/gf2-core/benches/`; the kernel-implementing task is expected to add a dedicated bench before its first spiral edit. Currently TBD: B1 (no `matrix_transpose` bench), C5 (CubicExt has no SoA bench; `soa_batch.rs` covers QuadraticExt only), D2 (no Cuthill-McKee reorder bench).",
+  "comment": "Maps PPC-spiral kernel IDs to the criterion bench-target / size leaves they will compare against. Pinned by jit:b2ecd2ff (session 2 of babcf05e) using `cargo bench --save-baseline ppc-v0-2026-04-27` against HEAD=52eaac8. The bench inventory under `crates/gf2-core/benches/` was swept end-to-end at pin time; pinned kernels reflect the full set of bench files extant at HEAD that map to a Tier-A/B/C/D kernel. Consumed by dev/benchmarks/ppc-compare.sh and the criterion-1.5x JIT gate via scripts/criterion-1.5x.sh; the gate is per-issue keyed by a `ppc-kernel:<id>` label (id is one of A1, A2, A3, B1, B2, B3, C1, C2, C3, C4, C5, D1, D2). Path resolution: `$CRITERION_DIR/$bench_target/$size/$baseline_name/estimates.json` — `bench_target` may include slashes for nested groups (e.g., `gf2m_mul_crossover/pclmulqdq_barrett`), and `size` may be `.` for leaf benches with no parameter. Entries marked TBD-* have no current bench in `crates/gf2-core/benches/`; the kernel-implementing task is expected to add a dedicated bench before its first spiral edit. B1 was pinned in jit:1c1c4242 (V0 step) against the new `crates/gf2-core/benches/matrix_transpose.rs` bench. Currently TBD: C5 (CubicExt has no SoA bench; `soa_batch.rs` covers QuadraticExt only), D2 (no Cuthill-McKee reorder bench).",
   "kernels": {
     "A1": {
       "title": "BitMatrix::matvec popcnt SIMD",
@@ -26,11 +26,10 @@
     },
     "B1": {
       "title": "BitMatrix::transpose 64x64 bit-block + AVX2",
-      "bench_target": "TBD-B1-needs-bench",
-      "baseline_name": "TBD-B1-needs-bench",
-      "commit_hash": "TBD-B1-needs-bench",
-      "design_size_class": ["1024", "4096"],
-      "tbd_reason": "No matrix_transpose bench in crates/gf2-core/benches at HEAD=52eaac8. B1 task creates the bench before its first spiral edit per dev/plans/gf2_core_ppc_spiral.md § Tier B."
+      "bench_target": "matrix_transpose",
+      "baseline_name": "ppc-v0-2026-04-27",
+      "commit_hash": "1c1c4242-V0",
+      "design_size_class": ["1024", "4096"]
     },
     "B2": {
       "title": "M4RM Gray-code table build (ILP + SIMD)",
