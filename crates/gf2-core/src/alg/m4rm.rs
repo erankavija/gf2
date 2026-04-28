@@ -6,9 +6,24 @@
 //!
 //! When the `simd` feature is enabled, row XOR operations automatically use AVX2
 //! vectorization for large matrices, providing significant speedups.
+//!
+//! # Gray-code table build (kernel B2)
+//!
+//! [`build_gray_table_flat`] is the B2 hot loop in the M4RM PPC spiral.  The
+//! optimized path tiles each table row into 8-word chunks and keeps one running
+//! accumulator per chunk, exposing independent XOR chains while preserving the
+//! hoisted `XorInplaceFn` dispatch used by the surrounding M4RM row updates.
 
 use crate::kernels::ops::{resolve_xor_inplace, XorInplaceFn};
 use crate::matrix::BitMatrix;
+
+/// Column-word tile width for the V2 ILP Gray-table builder.
+///
+/// Eight `u64` words are 512 bits: enough independent scalar accumulators to
+/// break the single-vector dependency chain and a natural size for AVX2 codegen
+/// when LLVM batches the XOR/store loops.
+const B2_GRAY_TILE_WORDS: usize = 8;
+const B2_GRAY_MAX_TILES: usize = 4;
 
 /// Chooses an appropriate block size k for M4RM based on matrix dimensions.
 ///
@@ -133,6 +148,7 @@ fn build_gray_table(b: &BitMatrix, row_start: usize, k_block: usize, n: usize) -
 /// - Entry 1: buffer[stride_words..2*stride_words]
 /// - Entry i: buffer[i*stride_words..(i+1)*stride_words]
 #[doc(hidden)]
+#[inline(never)]
 pub fn build_gray_table_flat(
     b: &BitMatrix,
     row_start: usize,
@@ -144,28 +160,176 @@ pub fn build_gray_table_flat(
     let table_size = 1usize << k_block;
     let stride_words = if n == 0 { 0 } else { n.div_ceil(64) };
 
-    // Use Gray code ordering for efficient table generation
-    let mut current = vec![0u64; stride_words];
+    if stride_words == 0 || table_size == 0 {
+        return;
+    }
+
+    debug_assert!(
+        buffer.len() >= table_size * stride_words,
+        "build_gray_table_flat: buffer too small ({} < {} × {})",
+        buffer.len(),
+        table_size,
+        stride_words
+    );
+
+    if stride_words <= B2_GRAY_MAX_TILES * B2_GRAY_TILE_WORDS {
+        let tile_count = stride_words.div_ceil(B2_GRAY_TILE_WORDS);
+        let last_tile_words = stride_words - (tile_count - 1) * B2_GRAY_TILE_WORDS;
+
+        match (tile_count, last_tile_words) {
+            (1, B2_GRAY_TILE_WORDS) => {
+                gray_walk_full::<1>(b, row_start, table_size, stride_words, buffer)
+            }
+            (2, B2_GRAY_TILE_WORDS) => {
+                gray_walk_full::<2>(b, row_start, table_size, stride_words, buffer)
+            }
+            (3, B2_GRAY_TILE_WORDS) => {
+                gray_walk_full::<3>(b, row_start, table_size, stride_words, buffer)
+            }
+            (4, B2_GRAY_TILE_WORDS) => {
+                gray_walk_full::<4>(b, row_start, table_size, stride_words, buffer)
+            }
+            _ => gray_walk_partial(
+                b,
+                row_start,
+                table_size,
+                stride_words,
+                tile_count,
+                last_tile_words,
+                buffer,
+            ),
+        }
+    } else {
+        build_gray_table_flat_v0(b, row_start, table_size, stride_words, buffer, xor);
+    }
+}
+
+#[inline]
+fn gray_walk_full<const TILES: usize>(
+    b: &BitMatrix,
+    row_start: usize,
+    table_size: usize,
+    stride_words: usize,
+    buffer: &mut [u64],
+) {
+    debug_assert_eq!(stride_words, TILES * B2_GRAY_TILE_WORDS);
+
+    let mut acc = [[0u64; B2_GRAY_TILE_WORDS]; TILES];
+    buffer[..stride_words].fill(0);
+
     let mut prev_gray = 0usize;
-
-    // First entry (all zeros) - explicitly zero it
-    let entry_start = 0;
-    buffer[entry_start..entry_start + stride_words].fill(0);
-
     for i in 1..table_size {
-        let curr_gray = i ^ (i >> 1); // Gray code formula
-
-        // Find which bit flipped between previous and current Gray code
+        let curr_gray = i ^ (i >> 1);
         let diff = prev_gray ^ curr_gray;
         let bit_pos = diff.trailing_zeros() as usize;
 
-        // XOR in (or out) the corresponding row
+        let abs_row = row_start + bit_pos;
+        if abs_row < b.rows() {
+            let row_words = b.row_words(abs_row);
+            for t in 0..TILES {
+                let base = t * B2_GRAY_TILE_WORDS;
+                let src = &row_words[base..base + B2_GRAY_TILE_WORDS];
+                acc[t][0] ^= src[0];
+                acc[t][1] ^= src[1];
+                acc[t][2] ^= src[2];
+                acc[t][3] ^= src[3];
+                acc[t][4] ^= src[4];
+                acc[t][5] ^= src[5];
+                acc[t][6] ^= src[6];
+                acc[t][7] ^= src[7];
+            }
+        }
+
+        let entry_start = curr_gray * stride_words;
+        for t in 0..TILES {
+            let base = entry_start + t * B2_GRAY_TILE_WORDS;
+            buffer[base..base + B2_GRAY_TILE_WORDS].copy_from_slice(&acc[t]);
+        }
+
+        prev_gray = curr_gray;
+    }
+}
+
+#[inline]
+#[allow(clippy::too_many_arguments)]
+fn gray_walk_partial(
+    b: &BitMatrix,
+    row_start: usize,
+    table_size: usize,
+    stride_words: usize,
+    tile_count: usize,
+    last_tile_words: usize,
+    buffer: &mut [u64],
+) {
+    debug_assert!(tile_count > 0 && tile_count <= B2_GRAY_MAX_TILES);
+    debug_assert!((1..=B2_GRAY_TILE_WORDS).contains(&last_tile_words));
+
+    let mut acc = [[0u64; B2_GRAY_TILE_WORDS]; B2_GRAY_MAX_TILES];
+    buffer[..stride_words].fill(0);
+
+    let full_tiles = tile_count - 1;
+    let mut prev_gray = 0usize;
+    for i in 1..table_size {
+        let curr_gray = i ^ (i >> 1);
+        let diff = prev_gray ^ curr_gray;
+        let bit_pos = diff.trailing_zeros() as usize;
+
+        let abs_row = row_start + bit_pos;
+        if abs_row < b.rows() {
+            let row_words = b.row_words(abs_row);
+            for (t, tile_acc) in acc.iter_mut().take(full_tiles).enumerate() {
+                let base = t * B2_GRAY_TILE_WORDS;
+                let src = &row_words[base..base + B2_GRAY_TILE_WORDS];
+                for w in 0..B2_GRAY_TILE_WORDS {
+                    tile_acc[w] ^= src[w];
+                }
+            }
+
+            let last_base = full_tiles * B2_GRAY_TILE_WORDS;
+            let src = &row_words[last_base..last_base + last_tile_words];
+            for (dst, &src) in acc[full_tiles][..last_tile_words].iter_mut().zip(src) {
+                *dst ^= src;
+            }
+        }
+
+        let entry_start = curr_gray * stride_words;
+        for (t, tile_acc) in acc.iter().take(full_tiles).enumerate() {
+            let base = entry_start + t * B2_GRAY_TILE_WORDS;
+            buffer[base..base + B2_GRAY_TILE_WORDS].copy_from_slice(tile_acc);
+        }
+
+        let last_base = entry_start + full_tiles * B2_GRAY_TILE_WORDS;
+        buffer[last_base..last_base + last_tile_words]
+            .copy_from_slice(&acc[full_tiles][..last_tile_words]);
+
+        prev_gray = curr_gray;
+    }
+}
+
+fn build_gray_table_flat_v0(
+    b: &BitMatrix,
+    row_start: usize,
+    table_size: usize,
+    stride_words: usize,
+    buffer: &mut [u64],
+    xor: XorInplaceFn,
+) {
+    let mut current = vec![0u64; stride_words];
+    let mut prev_gray = 0usize;
+
+    buffer[..stride_words].fill(0);
+
+    for i in 1..table_size {
+        let curr_gray = i ^ (i >> 1);
+
+        let diff = prev_gray ^ curr_gray;
+        let bit_pos = diff.trailing_zeros() as usize;
+
         if row_start + bit_pos < b.rows() {
             let row_words = b.row_words(row_start + bit_pos);
             xor(&mut current, row_words);
         }
 
-        // Copy to buffer at the correct position
         let entry_start = curr_gray * stride_words;
         buffer[entry_start..entry_start + stride_words].copy_from_slice(&current);
 

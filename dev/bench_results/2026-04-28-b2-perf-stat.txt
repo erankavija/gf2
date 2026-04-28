@@ -1,0 +1,57 @@
+B2 perf stat capture — M4RM Gray-code table build (kernel B2)
+===============================================================
+Issue: 54a0e75c (epic babcf05e)
+Worktree: .claude/worktrees/recovery-b2-54a0e75c
+Branch: recovery-54a0e75c-20260428
+Baseline commit: 2ab4243 (current-main algorithm with measurement harness)
+Host: Linux fraktaali 6.19.11-arch1-1 #1 SMP PREEMPT_DYNAMIC Thu, 02 Apr 2026 23:33:01 +0000 x86_64 GNU/Linux
+Command: B2_PERFSTAT_ITERS=200000 perf stat -r 10 -e cycles,instructions,L1-dcache-load-misses,branch-misses target/recovery-b2-target/release/examples/m4rm_gray_table_perfstat
+
+----------------------------------------------------------------
+V0 baseline (current-main production build_gray_table_flat)
+----------------------------------------------------------------
+iters=200000 buffer_sum=18436593244922968064
+iters=200000 buffer_sum=18436593244922968064
+iters=200000 buffer_sum=18436593244922968064
+iters=200000 buffer_sum=18436593244922968064
+iters=200000 buffer_sum=18436593244922968064
+iters=200000 buffer_sum=18436593244922968064
+iters=200000 buffer_sum=18436593244922968064
+iters=200000 buffer_sum=18436593244922968064
+iters=200000 buffer_sum=18436593244922968064
+iters=200000 buffer_sum=18436593244922968064
+
+ Performance counter stats for 'target/recovery-b2-target/release/examples/m4rm_gray_table_perfstat' (10 runs):
+
+     2,764,467,255      cycles:u                                                                ( +-  5.91% )
+    12,407,057,587      instructions:u                                                          ( +-  0.00% )
+        57,578,660      L1-dcache-load-misses:u                                                 ( +- 18.09% )
+           743,723      branch-misses:u                                                         ( +-  0.13% )
+
+       0.667082045 +- 0.033747288 seconds time elapsed  ( +-  5.06% )
+
+
+----------------------------------------------------------------
+V2 ILP (8-word tiled independent accumulators, #[inline(never)] table builder)
+Criterion: gray_table_generation_k8 [0.769, 0.850, 0.935] us; m4rm_1024x1024 [1.476, 1.551, 1.717] ms
+----------------------------------------------------------------
+iters=200000 buffer_sum=18436593244922968064
+iters=200000 buffer_sum=18436593244922968064
+iters=200000 buffer_sum=18436593244922968064
+iters=200000 buffer_sum=18436593244922968064
+iters=200000 buffer_sum=18436593244922968064
+iters=200000 buffer_sum=18436593244922968064
+iters=200000 buffer_sum=18436593244922968064
+iters=200000 buffer_sum=18436593244922968064
+iters=200000 buffer_sum=18436593244922968064
+iters=200000 buffer_sum=18436593244922968064
+
+ Performance counter stats for 'target/recovery-b2-target/release/examples/m4rm_gray_table_perfstat' (10 runs):
+
+       666,214,991      cycles:u                                                                ( +-  1.06% )
+     2,038,440,588      instructions:u                                                          ( +-  0.00% )
+        68,004,283      L1-dcache-load-misses:u                                                 ( +-  2.61% )
+           734,634      branch-misses:u                                                         ( +-  0.07% )
+
+       0.231479310 +- 0.014448209 seconds time elapsed  ( +-  6.24% )
+
