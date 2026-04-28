@@ -69,6 +69,24 @@ use crate::gf2m::Gf2mField;
 ///
 /// Panics if `a.len() != b.len()` or `a.len() != out.len()`.
 ///
+/// # Examples
+///
+/// ```
+/// use gf2_core::gf2m::{batch::batch_mul, Gf2mField};
+///
+/// let field = Gf2mField::gf256();
+/// let a = [0x53, 0xca, 0x01, 0xff];
+/// let b = [0xca, 0x53, 0xff, 0x01];
+/// let mut out = [0; 4];
+///
+/// batch_mul(&field, &a, &b, &mut out);
+///
+/// for i in 0..a.len() {
+///     let expected = (&field.element(a[i]) * &field.element(b[i])).value();
+///     assert_eq!(out[i], expected);
+/// }
+/// ```
+///
 /// # Complexity
 ///
 /// O(n) field multiplications; the SIMD path completes 4 per outer
@@ -112,10 +130,10 @@ pub fn batch_mul(field: &Gf2mField, a: &[u64], b: &[u64], out: &mut [u64]) {
 
 /// Batch element-wise square: `out[i] = a[i] * a[i] mod P(x)`.
 ///
-/// SIMD-accelerated specialisation of [`batch_mul`] for the `b == a` case;
-/// avoids the second input load. Falls back to per-element scalar
-/// `field.element(a[i]) * field.element(a[i])` when no SIMD path is
-/// available.
+/// SIMD-accelerated specialisation of [`batch_mul`] for the `b == a` case,
+/// sharing the same AVX2 + VPCLMULQDQ dispatch path and scalar fallback.
+/// Falls back to per-element scalar `field.element(a[i]) * field.element(a[i])`
+/// when no SIMD path is available.
 ///
 /// # Arguments
 ///
@@ -128,9 +146,26 @@ pub fn batch_mul(field: &Gf2mField, a: &[u64], b: &[u64], out: &mut [u64]) {
 ///
 /// Panics if `a.len() != out.len()`.
 ///
+/// # Examples
+///
+/// ```
+/// use gf2_core::gf2m::{batch::{batch_mul, batch_square}, Gf2mField};
+///
+/// let field = Gf2mField::gf65536();
+/// let a = [0x1234, 0xabcd, 0x0001, 0xffff];
+/// let mut squared = [0; 4];
+/// let mut multiplied = [0; 4];
+///
+/// batch_square(&field, &a, &mut squared);
+/// batch_mul(&field, &a, &a, &mut multiplied);
+///
+/// assert_eq!(squared, multiplied);
+/// ```
+///
 /// # Complexity
 ///
-/// O(n).
+/// O(n) field squarings; the SIMD path completes 4 per outer iteration on
+/// AVX2 + VPCLMULQDQ hosts.
 pub fn batch_square(field: &Gf2mField, a: &[u64], out: &mut [u64]) {
     assert_eq!(
         a.len(),
