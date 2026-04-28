@@ -46,7 +46,28 @@ provided by `crate::gf2m::poly_helpers`, so they remain reachable through the
 
 1. **Table-based** (m ≤ 16): Log/antilog lookup — O(1)
 2. **SIMD** (u64 + `simd` feature): Hardware PCLMULQDQ acceleration
-3. **Schoolbook** (fallback): Polynomial multiplication with reduction
+3. **Batch SIMD** (u64 + `simd` feature, m ∈ {8, 16, 32}): `gf2m::batch::{batch_mul, batch_square}` dispatches batches through AVX2 + VPCLMULQDQ when available, with scalar per-element fallback.
+4. **Schoolbook** (fallback): Polynomial multiplication with reduction
+
+### Batch multiplication API
+
+For element-wise workloads, use the batch helpers instead of looping over
+single-element multiplication:
+
+```rust
+use gf2_core::gf2m::{batch::batch_mul, Gf2mField};
+
+let field = Gf2mField::gf256();
+let a = [0x53, 0xca, 0x01, 0xff];
+let b = [0xca, 0x53, 0xff, 0x01];
+let mut out = [0; 4];
+
+batch_mul(&field, &a, &b, &mut out);
+```
+
+With the `simd` feature on x86 hosts that support AVX2 + VPCLMULQDQ, `m` values
+8, 16, and 32 use the dedicated batch kernel. Other fields and unsupported
+hosts fall back to the existing scalar/single-shot path.
 
 ## Quick start
 

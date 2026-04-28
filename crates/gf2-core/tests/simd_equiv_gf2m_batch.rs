@@ -27,6 +27,10 @@ use proptest::prelude::any;
 use proptest::strategy::Strategy;
 use simd_equiv::{assert_simd_matches_scalar, WORD_BOUNDARY_LENGTHS};
 
+fn gf2m_batch_simd_available() -> bool {
+    gf2_core::kernels::simd::maybe_gf2m_batch().is_some()
+}
+
 // ---------------------------------------------------------------------------
 // Reference strategies
 // ---------------------------------------------------------------------------
@@ -94,8 +98,8 @@ impl LogExpOracle {
 // ---------------------------------------------------------------------------
 
 fn run_boundary_test(m: u32, poly: u64) {
-    if gf2_core::kernels::simd::maybe_simd().is_none() {
-        eprintln!("SIMD backend unavailable — skipping batch-mul boundary test");
+    if !gf2m_batch_simd_available() {
+        eprintln!("GF(2^m) batch SIMD backend unavailable — skipping batch-mul boundary test");
         return;
     }
 
@@ -195,7 +199,7 @@ fn batch_pair_strategy(
 
 #[test]
 fn proptest_gf2_8_batch_mul_matches_field_single_shot() {
-    if gf2_core::kernels::simd::maybe_simd().is_none() {
+    if !gf2m_batch_simd_available() {
         return;
     }
     let field = Gf2mField::new(8, 0b100011101);
@@ -222,7 +226,7 @@ fn proptest_gf2_8_batch_mul_matches_field_single_shot() {
 
 #[test]
 fn proptest_gf2_16_batch_mul_matches_field_single_shot() {
-    if gf2_core::kernels::simd::maybe_simd().is_none() {
+    if !gf2m_batch_simd_available() {
         return;
     }
     let field = Gf2mField::new(16, 0b1_0001_0000_0000_1011);
@@ -247,7 +251,7 @@ fn proptest_gf2_16_batch_mul_matches_field_single_shot() {
 
 #[test]
 fn proptest_gf2_32_batch_mul_matches_field_single_shot() {
-    if gf2_core::kernels::simd::maybe_simd().is_none() {
+    if !gf2m_batch_simd_available() {
         return;
     }
     let field = Gf2mField::new(32, 0b1_0000_0000_0100_0000_0000_0000_0000_0111);
@@ -276,7 +280,7 @@ fn proptest_gf2_32_batch_mul_matches_field_single_shot() {
 
 #[test]
 fn square_matches_mul_self_gf2_8() {
-    if gf2_core::kernels::simd::maybe_simd().is_none() {
+    if !gf2m_batch_simd_available() {
         return;
     }
     let field = Gf2mField::gf256();
@@ -294,7 +298,7 @@ fn square_matches_mul_self_gf2_8() {
 
 #[test]
 fn square_matches_mul_self_gf2_16_word_boundary_lengths() {
-    if gf2_core::kernels::simd::maybe_simd().is_none() {
+    if !gf2m_batch_simd_available() {
         return;
     }
     let field = Gf2mField::gf65536();
