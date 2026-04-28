@@ -55,3 +55,28 @@ iters=200000 buffer_sum=18436593244922968064
 
        0.231479310 +- 0.014448209 seconds time elapsed  ( +-  6.24% )
 
+
+----------------------------------------------------------------
+V3 SIMD batched XOR (AVX2 16-word accumulator update via gf2-kernels-simd)
+Criterion: gray_table_generation_k8 [0.546, 0.549, 0.551] us; m4rm_1024x1024 [1.444, 1.451, 1.457] ms
+----------------------------------------------------------------
+iters=200000 buffer_sum=18436593244922968064
+iters=200000 buffer_sum=18436593244922968064
+iters=200000 buffer_sum=18436593244922968064
+iters=200000 buffer_sum=18436593244922968064
+iters=200000 buffer_sum=18436593244922968064
+iters=200000 buffer_sum=18436593244922968064
+iters=200000 buffer_sum=18436593244922968064
+iters=200000 buffer_sum=18436593244922968064
+iters=200000 buffer_sum=18436593244922968064
+iters=200000 buffer_sum=18436593244922968064
+
+ Performance counter stats for 'target/recovery-b2-target/release/examples/m4rm_gray_table_perfstat' (10 runs):
+
+       433,614,761      cycles:u                                                                ( +-  1.93% )
+     2,038,440,270      instructions:u                                                          ( +-  0.00% )
+        27,282,728      L1-dcache-load-misses:u                                                 ( +-  5.02% )
+           732,345      branch-misses:u                                                         ( +-  0.02% )
+
+       0.105929310 +- 0.001835166 seconds time elapsed  ( +-  1.73% )
+

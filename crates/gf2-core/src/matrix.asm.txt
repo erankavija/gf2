@@ -19,8 +19,9 @@
 ;==========================================================
 ; symbol: gf2_core::matrix::BitMatrix::matvec_simd
 ;==========================================================
-; Relevant call-site excerpt. LogicalFns::and_popcnt_fn is the sixth function
-; pointer in the bundle, offset 0x28. The call below is therefore the dispatched
+; Relevant call-site excerpt. LogicalFns::and_popcnt_fn is the seventh function
+; pointer in the bundle, offset 0x30 after the M4RM Gray-code SIMD hook added
+; for issue 54a0e75c. The call below is therefore the dispatched
 ; SIMD row dot-product/popcount route used at stride_words >= 8.
 ;
 ;  1d2abb: sub    %rsi,%rbp
@@ -30,7 +31,7 @@
 ;  1d2ace: mov    0x12f74b(%rip),%rax    ; gf2_core::simd::FNS / LogicalFns
 ;  1d2ad5: mov    %r14,%rdi              ; row ptr
 ;  1d2ad8: mov    %rsi,%r13              ; row len
-;  1d2adb: call   *0x28(%rax)            ; LogicalFns::and_popcnt_fn(row, x_words)
+;  1d2adb: call   *0x30(%rax)            ; LogicalFns::and_popcnt_fn(row, x_words)
 ;  1d2ade: mov    %r15,%rbx
 ;  1d2ae1: and    $0x3f,%rbx
 ;  1d2ae5: mov    %rax,%r12              ; popcount result, parity uses low bit

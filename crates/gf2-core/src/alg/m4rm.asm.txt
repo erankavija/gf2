@@ -613,3 +613,74 @@ gf2_core::alg::m4rm::multiply:
 	call qword ptr [rip + __rustc::__rust_dealloc@GOTPCREL]
 	mov rdi, rbx
 	call _Unwind_Resume@PLT
+
+; -----------------------------------------------------------------------------
+; B2 recovery addendum (issue 54a0e75c, 2026-04-28)
+; -----------------------------------------------------------------------------
+; Artifact remains a sibling of `m4rm.rs`, matching `matrix.rs` /
+; `matrix.asm.txt` and avoiding the stale WIP's irregular `src/alg/asm/` path.
+;
+; Build commands used from recovery-b2-54a0e75c:
+;   CARGO_TARGET_DIR=$PWD/target/recovery-b2-target \
+;   RUSTFLAGS='-C target-cpu=native' \
+;   cargo rustc -p gf2-core --release --lib --features simd -- --emit=asm
+;
+;   CARGO_TARGET_DIR=$PWD/target/recovery-b2-target \
+;   RUSTFLAGS='-C target-cpu=native' \
+;   cargo rustc -p gf2-kernels-simd --release --lib -- --emit=asm
+;
+; V2 ILP evidence: full-tile fallback updates eight independent accumulator
+; registers in the Gray-code loop (excerpt from `build_gray_table_flat`):
+;
+;     xorq    (%rax,%rdi,8), %r11
+;     xorq    8(%rax,%rdi,8), %rbx
+;     xorq    16(%rax,%rdi,8), %r15
+;     xorq    24(%rax,%rdi,8), %r12
+;     xorq    32(%rax,%rdi,8), %r13
+;     xorq    40(%rax,%rdi,8), %rbp
+;     xorq    48(%rax,%rdi,8), %rcx
+;     xorq    56(%rax,%rdi,8), %rdx
+;
+; V3 call-site evidence: stride_words == 16 loads the SIMD bundle once, hoists
+; `LogicalFns::m4rm_gray_xor16_fn` to the stack, then calls it inside the
+; Gray-code loop; `multiply()` still separately hoists `resolve_xor_inplace` for
+; row/table XORs as audited above.
+;
+;     cmpq    $16, %r12
+;     jne     .LBB81_15
+;     movq    gf2_core::simd::FNS@GOTPCREL(%rip), %rbx
+;     ...
+;     movq    24(%rbx), %rax        ; LogicalFns::m4rm_gray_xor16_fn
+;     movq    %rax, 128(%rsp)       ; hoisted before the Gray-code loop
+;     ...
+; .LBB81_8:
+;     leaq    (%rax,%rdi,8), %rsi   ; B row words
+;     leaq    272(%rsp), %rdi       ; 16-word accumulator
+;     vzeroupper
+;     callq   *128(%rsp)
+;     vmovups 272(%rsp), %ymm0      ; batched table stores
+;     vmovups 304(%rsp), %ymm1
+;     vmovups %ymm1, 32(%r14,%rsi,8)
+;     vmovups %ymm0, (%r14,%rsi,8)
+;
+; V3 SIMD kernel evidence: unsafe AVX2 is isolated in `gf2-kernels-simd`.
+; `vxorps` is the emitted 256-bit bitwise XOR mnemonic; it is equivalent to
+; `vpxor` for the GF(2) row-word bit pattern.
+;
+; gf2_kernels_simd::x86::avx2::fns::m4rm_gray_xor16_fn:
+;     cmpq    $16, %rdx
+;     jb      .LBB10_2
+;     vmovups (%rsi), %ymm0
+;     vxorps  (%rdi), %ymm0, %ymm0
+;     vmovups %ymm0, (%rdi)
+;     vmovups 32(%rsi), %ymm0
+;     vxorps  32(%rdi), %ymm0, %ymm0
+;     vmovups %ymm0, 32(%rdi)
+;     vmovups 64(%rsi), %ymm0
+;     vxorps  64(%rdi), %ymm0, %ymm0
+;     vmovups %ymm0, 64(%rdi)
+;     vmovups 96(%rsi), %ymm0
+;     vxorps  96(%rdi), %ymm0, %ymm0
+;     vmovups %ymm0, 96(%rdi)
+;     vzeroupper
+;     retq

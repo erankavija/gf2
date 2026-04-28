@@ -172,6 +172,21 @@ pub fn build_gray_table_flat(
         stride_words
     );
 
+    #[cfg(feature = "simd")]
+    if stride_words == 2 * B2_GRAY_TILE_WORDS {
+        if let Some(fns) = crate::simd::maybe_simd() {
+            gray_walk_stride16_simd(
+                b,
+                row_start,
+                table_size,
+                stride_words,
+                buffer,
+                fns.m4rm_gray_xor16_fn,
+            );
+            return;
+        }
+    }
+
     if stride_words <= B2_GRAY_MAX_TILES * B2_GRAY_TILE_WORDS {
         let tile_count = stride_words.div_ceil(B2_GRAY_TILE_WORDS);
         let last_tile_words = stride_words - (tile_count - 1) * B2_GRAY_TILE_WORDS;
@@ -201,6 +216,41 @@ pub fn build_gray_table_flat(
         }
     } else {
         build_gray_table_flat_v0(b, row_start, table_size, stride_words, buffer, xor);
+    }
+}
+
+#[cfg(feature = "simd")]
+#[inline]
+fn gray_walk_stride16_simd(
+    b: &BitMatrix,
+    row_start: usize,
+    table_size: usize,
+    stride_words: usize,
+    buffer: &mut [u64],
+    xor16: fn(&mut [[u64; 8]; 2], &[u64]),
+) {
+    debug_assert_eq!(stride_words, 2 * B2_GRAY_TILE_WORDS);
+
+    let mut acc = [[0u64; B2_GRAY_TILE_WORDS]; 2];
+    buffer[..stride_words].fill(0);
+
+    let mut prev_gray = 0usize;
+    for i in 1..table_size {
+        let curr_gray = i ^ (i >> 1);
+        let diff = prev_gray ^ curr_gray;
+        let bit_pos = diff.trailing_zeros() as usize;
+
+        let abs_row = row_start + bit_pos;
+        if abs_row < b.rows() {
+            xor16(&mut acc, b.row_words(abs_row));
+        }
+
+        let entry_start = curr_gray * stride_words;
+        buffer[entry_start..entry_start + B2_GRAY_TILE_WORDS].copy_from_slice(&acc[0]);
+        buffer[entry_start + B2_GRAY_TILE_WORDS..entry_start + stride_words]
+            .copy_from_slice(&acc[1]);
+
+        prev_gray = curr_gray;
     }
 }
 
