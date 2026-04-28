@@ -839,6 +839,120 @@ fn bench_pclmulqdq_barrett(c: &mut Criterion) {
     }
 }
 
+// ---------------------------------------------------------------------------
+// C1 — Batch element-wise multiply via VPCLMULQDQ-on-YMM with Barrett reduce.
+// ---------------------------------------------------------------------------
+//
+// Issue jit:ec286cee. Adds the new batched-Barrett strategy
+// (`Gf2mBatchFns::mul_fn`, AVX2 + VPCLMULQDQ-on-YMM, 4-way unroll) alongside
+// the per-element `pclmulqdq_barrett` strategy, plus a per-element
+// `pclmulqdq_barrett_loop_v0` baseline that calls the existing single-shot
+// kernel inside a tight loop. The two leaves are wired to the criterion-1.5x
+// gate via the C1 entry in `dev/benchmarks/ppc-baselines.json`.
+//
+// The batch sizes ≥ 256 reflect the [aspirational] success criterion — the
+// kernel is designed for batched dispatch, not single multiplications. Each
+// bench function reports per-element ns by running `BATCH_SIZE`
+// multiplications and dividing the criterion-reported time by the batch
+// length via `Throughput::Elements(BATCH_SIZE)`.
+fn bench_gf2m_batch_pclmulqdq_unroll4(c: &mut Criterion) {
+    use gf2_core::gf2m::barrett::BarrettReducer;
+
+    // Detect both kernels. Skip silently if either is unavailable.
+    let single_fns = gf2_kernels_simd::gf2m::detect();
+    let batch_fns = gf2_kernels_simd::gf2m_batch::detect();
+
+    let single_kernel = match single_fns.as_ref().and_then(|f| f.clmul_barrett_fn) {
+        Some(f) => f,
+        None => return,
+    };
+    let batch_kernel = match batch_fns.as_ref() {
+        Some(f) => f.mul_fn,
+        None => return,
+    };
+
+    // Manifest design size class: m ∈ {8, 16}; we additionally measure m = 32
+    // because the new batch kernel covers it (and the strategy comparison
+    // table needs to show it). The criterion-1.5x gate only reads m ∈ {8,
+    // 16} per the manifest's `design_size_class`.
+    let sweep_fields: &[(usize, u64)] = &[(8, POLY_8), (16, POLY_16), (32, POLY_32)];
+    const BATCH_SIZE: usize = 1024;
+
+    for &(m, poly) in sweep_fields {
+        let reducer = BarrettReducer::new(poly as u128, m as u32);
+        let mu = reducer.mu() as u64;
+        let modulus = reducer.modulus() as u64;
+        let degree = reducer.degree();
+        let mask = (1u64 << m) - 1;
+
+        // Deterministic batch inputs. `random_elements` masks against `m`,
+        // returning canonical field elements.
+        let xs = random_elements(BATCH_SIZE, m);
+        let ys = random_elements(BATCH_SIZE, m);
+        let mut out = vec![0u64; BATCH_SIZE];
+
+        // V0 baseline: existing single-shot PCLMULQDQ + Barrett kernel called
+        // per-element inside a tight loop. This is the apples-to-apples
+        // pre-spiral measurement the criterion-1.5x gate compares against.
+        {
+            let mut group = c.benchmark_group("gf2m_mul_crossover");
+            group.throughput(Throughput::Elements(BATCH_SIZE as u64));
+            group.bench_with_input(
+                BenchmarkId::new("pclmulqdq_barrett_loop_v0", m),
+                &m,
+                |bench, _| {
+                    bench.iter(|| {
+                        out.iter_mut()
+                            .zip(xs.iter().zip(ys.iter()))
+                            .for_each(|(out, (&x, &y))| {
+                                *out = single_kernel(x, y, mu, modulus, degree);
+                            });
+                        black_box(&out);
+                    })
+                },
+            );
+            group.finish();
+        }
+
+        // V3+V4: batched VPCLMULQDQ-on-YMM, 4-way unroll. Per-element ns is
+        // exposed via `Throughput::Elements(BATCH_SIZE)`.
+        {
+            let mut group = c.benchmark_group("gf2m_mul_crossover");
+            group.throughput(Throughput::Elements(BATCH_SIZE as u64));
+            group.bench_with_input(BenchmarkId::new("gf2m_batch_unroll4", m), &m, |bench, _| {
+                bench.iter(|| {
+                    batch_kernel(&xs, &ys, &mut out, mu, modulus, degree);
+                    black_box(&out);
+                })
+            });
+            group.finish();
+        }
+
+        // Sanity check: both paths must produce identical canonical
+        // outputs. Catches bench-time regressions before they pollute
+        // criterion data.
+        let mut single_out = vec![0u64; BATCH_SIZE];
+        for i in 0..BATCH_SIZE {
+            single_out[i] = single_kernel(xs[i], ys[i], mu, modulus, degree);
+        }
+        let mut batch_out = vec![0u64; BATCH_SIZE];
+        batch_kernel(&xs, &ys, &mut batch_out, mu, modulus, degree);
+        for i in 0..BATCH_SIZE {
+            // Mask is redundant — both kernels produce canonical outputs —
+            // but kept as a defence-in-depth assertion against future
+            // changes.
+            assert_eq!(
+                single_out[i] & mask,
+                batch_out[i] & mask,
+                "C1 bench: batch kernel disagrees with single-shot at i={i}, m={m}",
+            );
+        }
+    }
+}
+
+/// Standard primitive polynomial for GF(2^32): x^32 + x^22 + x^2 + x + 1.
+const POLY_32: u64 = 0b1_0000_0000_0100_0000_0000_0000_0000_0111;
+
 criterion_group!(
     benches,
     bench_single_gf2_8,
@@ -851,6 +965,7 @@ criterion_group!(
     bench_dot_gf2_64,
     bench_crossover_sweep,
     bench_pclmulqdq_barrett,
+    bench_gf2m_batch_pclmulqdq_unroll4,
 );
 criterion_main!(benches);
 
