@@ -276,3 +276,9 @@ required-features = ["simd"]
 [[test]]
 name = "simd_equiv_dispatch_hoist"
 required-features = ["simd"]
+
+# ── Issue `ec286cee` (story `SC`, kernel C1) — GF(2^m) batch element-wise
+# multiply/square via VPCLMULQDQ-on-YMM.
+[[test]]
+name = "simd_equiv_gf2m_batch"
+required-features = ["simd"]
