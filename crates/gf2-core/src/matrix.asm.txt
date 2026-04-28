@@ -1,0 +1,91 @@
+; gf2-core PPC-spiral asm artefact for jit:8e4b189c R1
+; ---------------------------------------------------------
+; crate         : gf2-core + gf2-kernels-simd
+; primary       : gf2_core::matrix::BitMatrix::matvec_simd
+; dispatched    : gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+; supporting    : gf2_kernels_simd::x86::avx2::fns::popcnt_fn
+; output        : crates/gf2-core/src/matrix.asm.txt
+; rustc         : rustc 1.95.0 (59807616e 2026-04-14)
+; host triple   : x86_64-unknown-linux-gnu
+; target-cpu    : native for the inspected bench binary
+; tool          : objdump -d --demangle --no-show-raw-insn
+; binary        : target-8e4b189c/release/deps/matrix_vector-c88a53eeca0dc218
+; regenerated   : 2026-04-28
+; note          : matvec_simd uses runtime dispatch, so the call site is an
+;                 indirect call through LogicalFns. The exact AVX2 target
+;                 symbol and its popcount mnemonics are included below.
+; ---------------------------------------------------------
+
+;==========================================================
+; symbol: gf2_core::matrix::BitMatrix::matvec_simd
+;==========================================================
+; Relevant call-site excerpt. LogicalFns::and_popcnt_fn is the sixth function
+; pointer in the bundle, offset 0x28. The call below is therefore the dispatched
+; SIMD row dot-product/popcount route used at stride_words >= 8.
+;
+;  1d2abb: sub    %rsi,%rbp
+;  1d2abe: jb     1d2b73 <gf2_core::matrix::BitMatrix::matvec_simd+0x1f3>
+;  1d2ac4: mov    0x30(%rsp),%rdx        ; x_words ptr
+;  1d2ac9: mov    0x38(%rsp),%rcx        ; x_words len
+;  1d2ace: mov    0x12f74b(%rip),%rax    ; gf2_core::simd::FNS / LogicalFns
+;  1d2ad5: mov    %r14,%rdi              ; row ptr
+;  1d2ad8: mov    %rsi,%r13              ; row len
+;  1d2adb: call   *0x28(%rax)            ; LogicalFns::and_popcnt_fn(row, x_words)
+;  1d2ade: mov    %r15,%rbx
+;  1d2ae1: and    $0x3f,%rbx
+;  1d2ae5: mov    %rax,%r12              ; popcount result, parity uses low bit
+;  1d2aea: mov    %r13,%rsi
+;  1d2aed: test   $0x1,%r12b
+
+;==========================================================
+; symbol: gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+;==========================================================
+; Exact dispatched kernel symbol. It fuses row AND with the same AVX2 nibble-LUT
+; popcount structure used by popcnt_fn. Relevant mnemonics: vmovdqu, vpand,
+; vpsrlw, vpshufb, vpaddb, vpsadbw, vpaddq, vextracti128, vzeroupper.
+;
+;  1d43b0: cmp    %rsi,%rcx
+;  1d43b3: cmovb  %rcx,%rsi
+;  ...
+;  1d4420: vmovdqu -0x60(%rdx,%r10,1),%ymm5
+;  1d4427: vmovdqu -0x40(%rdx,%r10,1),%ymm6
+;  1d442e: vmovdqu -0x20(%rdx,%r10,1),%ymm7
+;  1d4435: vmovdqu (%rdx,%r10,1),%ymm8
+;  1d443f: vpand  -0x60(%rdi,%r10,1),%ymm5,%ymm5
+;  1d4446: vpsrlw $0x4,%ymm5,%ymm9
+;  1d444b: vpand  %ymm3,%ymm5,%ymm5
+;  1d4453: vpshufb %ymm5,%ymm4,%ymm5
+;  1d4458: vpshufb %ymm9,%ymm4,%ymm9
+;  1d445d: vpaddb %ymm5,%ymm9,%ymm5
+;  1d4461: vpsadbw %ymm2,%ymm5,%ymm5
+;  1d4465: vpaddq %ymm1,%ymm5,%ymm1
+;  ...
+;  1d4520: vmovdqu (%r9,%r10,1),%ymm4
+;  1d4526: vpand  (%rcx,%r10,1),%ymm4,%ymm4
+;  1d4530: vpsrlw $0x4,%ymm4,%ymm5
+;  1d453d: vpshufb %ymm4,%ymm3,%ymm4
+;  1d4547: vpaddb %ymm4,%ymm5,%ymm4
+;  1d454b: vpsadbw %ymm0,%ymm4,%ymm4
+;  1d454f: vpaddq %ymm1,%ymm4,%ymm1
+;  ...
+;  1d4558: vextracti128 $0x1,%ymm1,%xmm0
+;  1d456b: vpaddq %xmm1,%xmm0,%xmm0
+;  1d4578: vmovq  %xmm0,%rax
+
+;==========================================================
+; symbol: gf2_kernels_simd::x86::avx2::fns::popcnt_fn
+;==========================================================
+; Supporting evidence for the existing AVX2 popcount implementation that the
+; fused kernel mirrors. This symbol remains in the LogicalFns bundle for callers
+; that need popcount over an already materialized slice.
+;
+;  1d5920: test   %rsi,%rsi
+;  1d595c: vpbroadcastb ...,%ymm2
+;  1d5965: vbroadcasti128 ...,%ymm3
+;  1d5990: vmovdqu -0xe0(%r9),%ymm5
+;  1d59b5: vpsrlw $0x4,%ymm5,%ymm9
+;  1d59ba: vpand  %ymm2,%ymm5,%ymm5
+;  1d59c2: vpshufb %ymm5,%ymm3,%ymm5
+;  1d59cc: vpaddb %ymm5,%ymm9,%ymm5
+;  1d59d0: vpsadbw %ymm1,%ymm5,%ymm5
+;  1d59d4: vpaddq %ymm4,%ymm5,%ymm4

@@ -146,6 +146,55 @@ unsafe fn avx2_popcnt(buf: &[u64]) -> u64 {
     total
 }
 
+#[target_feature(enable = "avx2")]
+unsafe fn avx2_and_popcnt(lhs: &[u64], rhs: &[u64]) -> u64 {
+    let len = lhs.len().min(rhs.len());
+    if len == 0 {
+        return 0;
+    }
+
+    let lhs_ptr = lhs.as_ptr() as *const u8;
+    let rhs_ptr = rhs.as_ptr() as *const u8;
+    let nbytes = len * 8;
+
+    let lut = _mm256_setr_epi8(
+        0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3,
+        3, 4,
+    );
+    let mask0f = _mm256_set1_epi8(0x0f);
+    let zero = _mm256_setzero_si256();
+    let mut acc = zero;
+
+    let nvec = nbytes / 32;
+    let mut i = 0usize;
+    while i < nvec {
+        let off = (i * 32) as isize;
+        let lhs_v = loadu(lhs_ptr.offset(off));
+        let rhs_v = loadu(rhs_ptr.offset(off));
+        let v = _mm256_and_si256(lhs_v, rhs_v);
+        let lo = _mm256_and_si256(v, mask0f);
+        let hi = _mm256_and_si256(_mm256_srli_epi16(v, 4), mask0f);
+        let pc_lo = _mm256_shuffle_epi8(lut, lo);
+        let pc_hi = _mm256_shuffle_epi8(lut, hi);
+        let pc = _mm256_add_epi8(pc_lo, pc_hi);
+        acc = _mm256_add_epi64(acc, _mm256_sad_epu8(pc, zero));
+        i += 1;
+    }
+
+    let acc_lo = _mm256_castsi256_si128(acc);
+    let acc_hi = _mm256_extracti128_si256(acc, 1);
+    let acc128 = _mm_add_epi64(acc_lo, acc_hi);
+    let mut total = _mm_cvtsi128_si64(acc128) as u64;
+    let acc128_hi = _mm_srli_si128(acc128, 8);
+    total += _mm_cvtsi128_si64(acc128_hi) as u64;
+
+    for j in (nvec * 4)..len {
+        total += (*lhs.get_unchecked(j) & *rhs.get_unchecked(j)).count_ones() as u64;
+    }
+
+    total
+}
+
 /// Finds the index of the first set bit using AVX2.
 ///
 /// Strategy: Compare each vector against zero, extract movemask,
@@ -375,6 +424,9 @@ pub(crate) fn fns() -> LogicalFns {
     fn popcnt_fn(src: &[u64]) -> u64 {
         unsafe { avx2_popcnt(src) }
     }
+    fn and_popcnt_fn(lhs: &[u64], rhs: &[u64]) -> u64 {
+        unsafe { avx2_and_popcnt(lhs, rhs) }
+    }
     fn find_first_one_fn(src: &[u64]) -> Option<usize> {
         unsafe { avx2_find_first_one(src) }
     }
@@ -399,6 +451,7 @@ pub(crate) fn fns() -> LogicalFns {
         xor_fn,
         not_fn,
         popcnt_fn,
+        and_popcnt_fn,
         find_first_one_fn,
         find_first_zero_fn,
         shift_left_words_fn,

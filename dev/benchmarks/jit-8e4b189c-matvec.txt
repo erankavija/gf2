@@ -1,0 +1,65 @@
+JIT 8e4b189c BitMatrix::matvec SIMD-routing evidence (R1)
+
+Environment:
+- Worktree: /home/vkaskivuo/Projects/gf2/.claude/worktrees/agent-8e4b189c
+- Cargo target: /home/vkaskivuo/Projects/gf2/.claude/worktrees/target-8e4b189c
+- Host: x86_64, AVX2 detected through gf2_core::simd::maybe_simd()
+- Build flags for benchmarking: RUSTFLAGS='-C target-cpu=native'
+
+Implementation/path statement:
+- MATVEC_SIMD_MIN_WORDS = 8.
+- dense_matvec/512 has stride_words = 512 / 64 = 8, so with --all-features and AVX2 it enters BitMatrix::matvec_simd.
+- dense_matvec/1024 has stride_words = 1024 / 64 = 16, so with --all-features and AVX2 it also enters BitMatrix::matvec_simd.
+- The R1 SIMD path calls LogicalFns::and_popcnt_fn once per matrix row. That function is dispatched from gf2-kernels-simd and fuses row AND with the AVX2 nibble-LUT popcount sequence (vpand, vpshufb, vpsadbw, vpaddq). This avoids the rejected R0 scratch-buffer route (xor_fn + and_fn + popcnt_fn) while keeping unsafe SIMD isolated in gf2-kernels-simd.
+- Scalar ILP fallback remains only for rows below 8 words or for hosts without a SIMD backend; it is not the path used by the 512/1024 A1 design sizes on this host.
+
+Criterion command:
+RUSTFLAGS='-C target-cpu=native' CARGO_TARGET_DIR=/home/vkaskivuo/Projects/gf2/.claude/worktrees/target-8e4b189c cargo bench -p gf2-core --all-features --bench matrix_vector -- 'dense_matvec/(512|1024)'
+
+Pinned A1 baseline (ppc-v0-2026-04-27, saved-estimates mean retained from the original A1 baseline artifact):
+- dense_matvec/512:  3.8013 us
+- dense_matvec/1024: 14.7961 us
+
+R1 after, SIMD-routed fused AND+popcount path (Criterion mean from this rework):
+- dense_matvec/512:  1.7717 us (95% CI [1.7713, 1.7721] us)
+- dense_matvec/1024: 4.3345 us (95% CI [4.3314, 4.3379] us)
+
+A1 speedup using saved baseline mean / R1 mean:
+- 512:  3.8013 / 1.7717 = 2.146x
+- 1024: 14.7961 / 4.3345 = 3.414x
+- geomean: sqrt(2.146 * 3.414) = 2.707x (target >= 1.5x: PASS)
+
+Crossover/threshold note:
+- The rejected R0 route set the SIMD threshold to 32 words, which left 512/1024 on scalar ILP and was rejected by lead review.
+- R1 lowers the dispatch threshold to 8 words because the fused SIMD AND+popcount route is above the 1.5x A1 bar at the first A1 design size (512 columns / 8 words) and remains above the bar at 1024 columns / 16 words.
+- The scalar fallback can still be faster in absolute terms for some sizes, but the issue contract requires the 512/1024 speedup to come from SIMD routing; R1 intentionally routes those design sizes through SIMD and documents the measured SIMD result.
+
+ppc-compare note:
+- Command attempted with the required target dir:
+  dev/benchmarks/ppc-compare.sh A1 --criterion-dir /home/vkaskivuo/Projects/gf2/.claude/worktrees/target-8e4b189c/criterion
+- Result: infrastructure error because the pinned baseline JSON is not present in the isolated worktree target dir:
+  ERROR: missing baseline estimates: /home/vkaskivuo/Projects/gf2/.claude/worktrees/target-8e4b189c/criterion/dense_matvec/512/ppc-v0-2026-04-27/estimates.json
+- Therefore the speedup table above uses the pinned A1 baseline numbers retained in this issue artifact plus the R1 criterion run performed in the required target dir.
+
+perf stat -r 10 evidence:
+
+Before (pre-transform A1 baseline perf stat retained from the R0 artifact; bench binary run with --profile-time 1):
+- dense_matvec/512:
+  task-clock:u 1,646.72 msec (+- 9.62%); cycles 7,841,963,728; instructions 28,659,913,752; IPC 3.7; elapsed 1.648834236 +- 0.158433851 s.
+- dense_matvec/1024:
+  task-clock:u 1,799.87 msec (+- 1.79%); cycles 8,583,412,208; instructions 31,989,786,831; IPC 3.7; elapsed 1.802012654 +- 0.032136800 s.
+
+After R1 (SIMD-routed fused AND+popcount path):
+Command:
+perf stat -r 10 /home/vkaskivuo/Projects/gf2/.claude/worktrees/target-8e4b189c/release/deps/matrix_vector-c88a53eeca0dc218 --bench 'dense_matvec/512' --profile-time 1
+- dense_matvec/512:
+  task-clock:u 1,931.52 msec (+- 0.22%); cycles 9,178,731,655; instructions 47,826,074,590; IPC 5.2; elapsed 1.933668333 +- 0.004307532 s.
+
+Command:
+perf stat -r 10 /home/vkaskivuo/Projects/gf2/.claude/worktrees/target-8e4b189c/release/deps/matrix_vector-c88a53eeca0dc218 --bench 'dense_matvec/1024' --profile-time 1
+- dense_matvec/1024:
+  task-clock:u 1,181.15 msec (+- 0.16%); cycles 5,585,455,595; instructions 28,810,989,455; IPC 5.2; elapsed 1.183225150 +- 0.001845080 s.
+
+Validation performed during rework:
+- cargo fmt --all: attempted, but cargo fmt descends into excluded crates/gf2-kernels-hip and, because this worktree is nested under the main repository, Cargo incorrectly associates that excluded crate with /home/vkaskivuo/Projects/gf2/Cargo.toml. Exact error recorded in the session output. Fallback formatting command succeeded: cargo fmt -p gf2-core -p gf2-kernels-simd -p gf2-coding.
+- CARGO_TARGET_DIR=/home/vkaskivuo/Projects/gf2/.claude/worktrees/target-8e4b189c cargo nextest run -p gf2-core --all-features --release --profile ci -E 'test(matvec)': 53 passed, 1792 skipped.

@@ -6,6 +6,13 @@
 use std::fmt;
 use std::ops::Mul;
 
+// Route the PPC A1 design sizes (512 and 1024 columns, i.e. 8 and 16 words) and
+// wider dense matvec rows through the AVX2-dispatched AND+popcount kernel when
+// available. The threshold is word-based because SIMD dispatch works over
+// `u64` slices.
+#[cfg(feature = "simd")]
+const MATVEC_SIMD_MIN_WORDS: usize = 8;
+
 /// A row-major, bit-packed boolean matrix.
 ///
 /// # Storage Layout
@@ -962,26 +969,64 @@ impl BitMatrix {
     pub fn matvec(&self, x: &crate::BitVec) -> crate::BitVec {
         assert_eq!(x.len(), self.cols, "input BitVec length must equal cols");
 
+        #[cfg(feature = "simd")]
+        if self.stride_words >= MATVEC_SIMD_MIN_WORDS {
+            if let Some(fns) = crate::simd::maybe_simd() {
+                return self.matvec_simd(x, fns);
+            }
+        }
+
+        self.matvec_scalar(x)
+    }
+
+    #[inline]
+    fn matvec_scalar(&self, x: &crate::BitVec) -> crate::BitVec {
         let mut y = crate::BitVec::with_capacity(self.rows);
 
         for r in 0..self.rows {
             let row_offset = r * self.stride_words;
-            let mut acc = 0u64;
-
-            // XOR all words in this row ANDed with input vector
-            for w in 0..self.stride_words {
-                let row_word = self.data[row_offset + w];
-                let x_word = if w < x.words().len() {
-                    x.words()[w]
-                } else {
-                    0u64
-                };
-                acc ^= row_word & x_word;
-            }
-
-            // Compute parity of accumulated word
-            let bit = acc.count_ones() % 2 == 1;
+            let row = &self.data[row_offset..row_offset + self.stride_words];
+            let bit = Self::row_dot_parity_scalar(row, x.words());
             y.push_bit(bit);
+        }
+
+        y
+    }
+
+    #[inline]
+    fn row_dot_parity_scalar(row: &[u64], x_words: &[u64]) -> bool {
+        let mut acc0 = 0u64;
+        let mut acc1 = 0u64;
+        let mut acc2 = 0u64;
+        let mut acc3 = 0u64;
+
+        let mut chunks = row.chunks_exact(4);
+        let mut x_chunks = x_words.chunks_exact(4);
+        for (r, x) in chunks.by_ref().zip(x_chunks.by_ref()) {
+            acc0 ^= r[0] & x[0];
+            acc1 ^= r[1] & x[1];
+            acc2 ^= r[2] & x[2];
+            acc3 ^= r[3] & x[3];
+        }
+
+        let mut acc = acc0 ^ acc1 ^ acc2 ^ acc3;
+        for (&r, &x) in chunks.remainder().iter().zip(x_chunks.remainder()) {
+            acc ^= r & x;
+        }
+
+        acc.count_ones() & 1 == 1
+    }
+
+    #[cfg(feature = "simd")]
+    #[inline(never)]
+    fn matvec_simd(&self, x: &crate::BitVec, fns: &gf2_kernels_simd::LogicalFns) -> crate::BitVec {
+        let x_words = x.words();
+        debug_assert_eq!(x_words.len(), self.stride_words);
+
+        let mut y = crate::BitVec::with_capacity(self.rows);
+
+        for row in self.data.chunks_exact(self.stride_words).take(self.rows) {
+            y.push_bit((fns.and_popcnt_fn)(row, x_words) & 1 == 1);
         }
 
         y
