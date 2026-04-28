@@ -3,6 +3,7 @@
 //! This module is re-exported from the field submodule for backward compatibility.
 
 pub mod barrett;
+pub mod batch;
 mod field;
 pub mod generation;
 /// Monomorphized u64 GF(2^m) multiplication for formal verification via Charon/Aeneas.
