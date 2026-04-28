@@ -684,3 +684,9 @@ gf2_core::alg::m4rm::multiply:
 ;     vmovups %ymm0, 96(%rdi)
 ;     vzeroupper
 ;     retq
+;
+; V6 prefetch probe (not retained): a one-Gray-step-ahead `_mm_prefetch` of the
+; next 16-word B row was tested through gf2-kernels-simd and regressed
+; `gray_table_generation_k8` from V3 [0.546, 0.549, 0.551] us to
+; [0.773, 0.774, 0.776] us. The B panel is cache-hot; prefetch is not useful
+; for this size class and no V6 prefetch instructions are intentionally present.
