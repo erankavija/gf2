@@ -80,6 +80,7 @@ pub(crate) mod simd {
     use gf2_kernels_simd::fp65537::Fp65537Fns;
     use gf2_kernels_simd::fp_generic::FpGenericFns;
     use gf2_kernels_simd::gf2m::Gf2mFns;
+    use gf2_kernels_simd::gf2m_batch::Gf2mBatchFns;
     use gf2_kernels_simd::gf2m_wide::ClmulWide256Fns;
     use gf2_kernels_simd::mersenne::MersenneFns;
     use gf2_kernels_simd::LogicalFns;
@@ -87,6 +88,7 @@ pub(crate) mod simd {
 
     static FNS: OnceLock<Option<LogicalFns>> = OnceLock::new();
     static GF2M_FNS: OnceLock<Option<Gf2mFns>> = OnceLock::new();
+    static GF2M_BATCH_FNS: OnceLock<Option<Gf2mBatchFns>> = OnceLock::new();
     static MERSENNE_FNS: OnceLock<Option<MersenneFns>> = OnceLock::new();
     static FP65537_FNS: OnceLock<Option<Fp65537Fns>> = OnceLock::new();
     static FP_GENERIC_FNS: OnceLock<Option<FpGenericFns>> = OnceLock::new();
@@ -105,6 +107,21 @@ pub(crate) mod simd {
     pub fn maybe_gf2m() -> Option<&'static Gf2mFns> {
         GF2M_FNS
             .get_or_init(gf2_kernels_simd::gf2m::detect)
+            .as_ref()
+    }
+
+    /// Returns the best available batch element-wise GF(2^m) multiply/square
+    /// SIMD kernel for `m ∈ {8, 16, 32}`, if any.
+    ///
+    /// Provides AVX2 + VPCLMULQDQ-on-YMM kernels that pack 2 element pairs
+    /// per VPCLMULQDQ instruction with Barrett reduction in YMM lanes; the
+    /// outer loop unrolls 4 ways for ILP across the dependent reduce step.
+    /// Returns `None` on hosts lacking `avx2 + vpclmulqdq + sse4.1`; callers
+    /// must fall back to per-element [`maybe_gf2m`] dispatch or pure-Rust.
+    #[inline]
+    pub fn maybe_gf2m_batch() -> Option<&'static Gf2mBatchFns> {
+        GF2M_BATCH_FNS
+            .get_or_init(gf2_kernels_simd::gf2m_batch::detect)
             .as_ref()
     }
 
@@ -192,6 +209,12 @@ pub(crate) mod simd {
     #[allow(dead_code)]
     #[inline]
     pub fn maybe_gf2m_wide256() -> Option<()> {
+        None
+    }
+
+    #[allow(dead_code)]
+    #[inline]
+    pub fn maybe_gf2m_batch() -> Option<()> {
         None
     }
 }
