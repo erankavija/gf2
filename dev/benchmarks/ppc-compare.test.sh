@@ -9,7 +9,7 @@
 #   ./dev/benchmarks/ppc-compare.test.sh
 #
 # Exit codes:
-#   0 — all 8 tests passed
+#   0 — all 9 tests passed
 #   1 — at least one test failed (set -e aborts on first failure)
 
 set -euo pipefail
@@ -24,7 +24,7 @@ SCRIPT="$THIS_DIR/ppc-compare.sh"
 # ---------------------------------------------------------------------------
 
 PASS_COUNT=0
-TOTAL=8
+TOTAL=9
 
 # Workdir scoped to this whole test process; cleaned on exit.
 WORKROOT="$(mktemp -d)"
@@ -72,6 +72,28 @@ write_manifest() {
       "baseline_name": "$baseline",
       "commit_hash": "0000000",
       "design_size_class": $sizes_json
+    }
+  }
+}
+EOF
+}
+
+# write_current_leaf_manifest <path> <kernel_id> <baseline_target> <new_target> <size>
+# Writes a manifest entry that compares two current Criterion leaves.
+write_current_leaf_manifest() {
+  local path="$1" kernel="$2" baseline_target="$3" new_target="$4" size="$5"
+  cat >"$path" <<EOF
+{
+  "schema_version": 1,
+  "comment": "synthetic current-leaf test manifest",
+  "kernels": {
+    "$kernel": {
+      "title": "synthetic current-leaf kernel",
+      "bench_target": "$new_target",
+      "baseline_bench_target": "$baseline_target",
+      "baseline_name": "current-baseline-leaf",
+      "commit_hash": "0000000",
+      "design_size_class": ["$size"]
     }
   }
 }
@@ -322,6 +344,34 @@ t8_slower_run() {
 }
 
 # ---------------------------------------------------------------------------
+# T9: current-leaf baseline target → compares baseline_target/new against
+# bench_target/new, for benchmarks added after the pinned baseline commit.
+# ---------------------------------------------------------------------------
+t9_current_leaf_baseline() {
+  local name="T9 current-leaf baseline target (PASS)"
+  local dir="$WORKROOT/t9"
+  mkdir -p "$dir"
+  local manifest="$dir/manifest.json"
+  local crit="$dir/criterion"
+  write_current_leaf_manifest "$manifest" "K1" "fake_group/scalar" "fake_group/dispatch" "512x1x8192"
+  write_estimates "$crit/fake_group/scalar/512x1x8192/new/estimates.json" 2100.0
+  write_estimates "$crit/fake_group/dispatch/512x1x8192/new/estimates.json" 1000.0
+
+  set +e
+  local out rc
+  out=$("$SCRIPT" K1 --manifest "$manifest" --criterion-dir "$crit" 2>&1)
+  rc=$?
+  set -e
+
+  assert_exit 0 "$rc" "$name" || return 1
+  assert_contains "$out" "current leaf fake_group/scalar" "$name" || return 1
+  assert_contains "$out" "geomean speedup: 2.100x" "$name" || return 1
+  assert_contains "$out" "PASS" "$name" || return 1
+  echo "PASS: $name"
+  PASS_COUNT=$((PASS_COUNT + 1))
+}
+
+# ---------------------------------------------------------------------------
 # Driver.
 # ---------------------------------------------------------------------------
 
@@ -333,6 +383,7 @@ t5_baseline_tbd
 t6_missing_baseline_estimates
 t7_missing_current_estimates
 t8_slower_run
+t9_current_leaf_baseline
 
 echo
 echo "$PASS_COUNT/$TOTAL tests passed"

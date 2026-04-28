@@ -97,3 +97,12 @@ Validation commands/results:
   Result: pass; rerun with --show-progress none reported 215 tests run: 215 passed, 1632 skipped.
 - CARGO_TARGET_DIR=/home/vkaskivuo/Projects/gf2/.claude/worktrees/target-5223bb04 cargo clippy -p gf2-core --all-targets --all-features -- -D warnings
   Result: pass.
+- Lead-side comparator amendment:
+  dev/benchmarks/ppc-baselines.json now maps A2 to
+  matmul_row_xor_fallback/production_mul with
+  baseline_bench_target=matmul_row_xor_fallback/scalar_backend. The
+  ppc-compare harness supports this current-leaf baseline mode for benchmark
+  leaves created after the pinned ppc-v0 baseline commit.
+- Verified comparator command:
+  ./dev/benchmarks/ppc-compare.sh A2 --criterion-dir /home/vkaskivuo/Projects/gf2/.claude/worktrees/target-5223bb04/criterion
+  Result: PASS, geomean speedup 2.104x.

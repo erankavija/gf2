@@ -4,6 +4,9 @@
 # Reads a kernel→bench mapping from dev/benchmarks/ppc-baselines.json,
 # parses criterion estimates.json files for each design size, and reports
 # the geomean speedup (baseline_ns / new_ns). Exits 0 iff geomean >= 1.5.
+# Most kernels compare a pinned saved baseline against the current `new/`
+# estimate. Entries that add a new benchmark leaf after baseline pinning may
+# instead set `baseline_bench_target` to compare two current leaves.
 #
 # Usage:
 #   ./dev/benchmarks/ppc-compare.sh <kernel-id> [--manifest path]
@@ -107,6 +110,7 @@ fi
 TITLE=$(jq -r --arg k "$KERNEL_ID" '.kernels[$k].title' "$MANIFEST")
 BENCH_TARGET=$(jq -r --arg k "$KERNEL_ID" '.kernels[$k].bench_target' "$MANIFEST")
 BASELINE_NAME=$(jq -r --arg k "$KERNEL_ID" '.kernels[$k].baseline_name' "$MANIFEST")
+BASELINE_BENCH_TARGET=$(jq -r --arg k "$KERNEL_ID" '.kernels[$k].baseline_bench_target // ""' "$MANIFEST")
 COMMIT_HASH=$(jq -r --arg k "$KERNEL_ID" '.kernels[$k].commit_hash' "$MANIFEST")
 # Read sizes as a newline-delimited list to survive size labels with
 # spaces or unusual characters.
@@ -138,13 +142,22 @@ declare -a SPEEDUPS=()
 declare -a TABLE_ROWS=()
 
 for size in "${SIZES[@]}"; do
-  baseline_path="$CRITERION_DIR/$BENCH_TARGET/$size/$BASELINE_NAME/estimates.json"
+  if [[ -n "$BASELINE_BENCH_TARGET" ]]; then
+    baseline_path="$CRITERION_DIR/$BASELINE_BENCH_TARGET/$size/new/estimates.json"
+  else
+    baseline_path="$CRITERION_DIR/$BENCH_TARGET/$size/$BASELINE_NAME/estimates.json"
+  fi
   new_path="$CRITERION_DIR/$BENCH_TARGET/$size/new/estimates.json"
 
   if [[ ! -f "$baseline_path" ]]; then
     echo "ERROR: missing baseline estimates: $baseline_path" >&2
-    echo "       Hint: jit:b2ecd2ff pins the baseline with" >&2
-    echo "             cargo bench --bench $BENCH_TARGET -- --save-baseline $BASELINE_NAME" >&2
+    if [[ -n "$BASELINE_BENCH_TARGET" ]]; then
+      echo "       Hint: run \`cargo bench\` for both current leaves:" >&2
+      echo "             $BASELINE_BENCH_TARGET and $BENCH_TARGET" >&2
+    else
+      echo "       Hint: jit:b2ecd2ff pins the baseline with" >&2
+      echo "             cargo bench --bench $BENCH_TARGET -- --save-baseline $BASELINE_NAME" >&2
+    fi
     exit 2
   fi
   if [[ ! -f "$new_path" ]]; then
@@ -198,7 +211,11 @@ sizes_csv=${sizes_csv//,/, }
 
 printf 'PPC compare — kernel %s (%s)\n' "$KERNEL_ID" "$TITLE"
 printf '  bench_target:  %s\n' "$BENCH_TARGET"
-printf '  baseline:      %s @ %s\n' "$BASELINE_NAME" "$COMMIT_HASH"
+if [[ -n "$BASELINE_BENCH_TARGET" ]]; then
+  printf '  baseline:      current leaf %s @ %s\n' "$BASELINE_BENCH_TARGET" "$COMMIT_HASH"
+else
+  printf '  baseline:      %s @ %s\n' "$BASELINE_NAME" "$COMMIT_HASH"
+fi
 printf '  design sizes:  %s\n' "$sizes_csv"
 printf '  -----------------------------------------\n'
 printf '  %-10s %12s  %12s  %8s\n' "size" "baseline_ns" "new_ns" "speedup"
