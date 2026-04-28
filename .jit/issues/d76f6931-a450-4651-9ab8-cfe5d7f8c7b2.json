@@ -2,9 +2,9 @@
   "id": "d76f6931-a450-4651-9ab8-cfe5d7f8c7b2",
   "title": "Route scalar callers through existing SIMD dispatch",
   "description": "Quick wins where the SIMD kernel already exists in `gf2-kernels-simd` but the scalar caller never dispatches through it. Each task in this story is a V0→V3 jump in one hop — wire + bench + asm verify.\n\n## Background\n\n`gf2-core` has three places where existing AVX2 dispatch is bypassed: `BitMatrix::matvec` computes parity with scalar `count_ones() % 2` while `popcnt_fn` exists; `BitMatrix::mul` non-M4RM path uses scalar inner-product while `xor_fn` exists; and `gfp::FieldVec` falls back to scalar element-wise loops for any prime not in `{65537, 2^31-1}` despite the `SimdVecOps` infrastructure being in place.\n\nThis story has three child tasks (one per call-site). Each follows the per-kernel execution protocol from the epic spec doc: pinned baseline → asm artefact → perf-stat → proptest equivalence → $\\geq 1.5\\times$ geomean → single-step commit → lead-only gate transitions.\n\n## Success Criteria\n\n- [hard] Each child task ships per the per-kernel execution protocol (baseline saved, asm inspected, perf-stat captured, proptest equivalence, $\\geq 1.5\\times$ geomean at design size class).\n- [hard] No `unsafe` introduced outside `gf2-kernels-simd`.\n- [hard] No regression on existing benches at sizes below each kernel's crossover threshold.\n\n## Notes\n\nHighest-ROI tasks in the epic — the SIMD already exists, only routing is missing. Spec doc: `dev/plans/gf2_core_ppc_spiral.md`.",
-  "state": "backlog",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:project-lead",
   "dependencies": [
     "5223bb04-253e-4a37-9047-c6e333d66ba0",
     "8e4b189c-75a6-4c93-8056-c3c9c994b1c8",
@@ -25,5 +25,5 @@
     "story:ppc-dispatch-routing"
   ],
   "created_at": "2026-04-25T15:15:21.137490908+00:00",
-  "updated_at": "2026-04-26T19:10:06.125469715+00:00"
+  "updated_at": "2026-04-28T15:01:00.606306682+00:00"
 }
