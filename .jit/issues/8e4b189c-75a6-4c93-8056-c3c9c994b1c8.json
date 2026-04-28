@@ -2,9 +2,9 @@
   "id": "8e4b189c-75a6-4c93-8056-c3c9c994b1c8",
   "title": "Route BitMatrix::matvec through popcnt SIMD dispatch",
   "description": "Route `BitMatrix::matvec` through the existing AVX2 popcount kernel. This is a V0→V3 jump in one hop — the SIMD path already exists in `gf2-kernels-simd`, only the dispatch is missing.\n\n## Background\n\n`BitMatrix::matvec` at `crates/gf2-core/src/matrix.rs:962-988` computes parity per row with scalar `(row_word & x_word).count_ones() % 2`. The AVX2 popcount kernel `LogicalFns::popcnt_fn` is already registered via `gf2_core::simd::maybe_simd()` but never called from this path.\n\nThe fix: above a width threshold (initially: row width $\\geq 8$ u64 = 512 bits; tune empirically), reduce the row using `xor_fn` then call `popcnt_fn` once per row. Below threshold, keep the scalar path. The crossover threshold is documented in the source with the bench data point that justifies it.\n\nThe PPC walk is V0 baseline (existing `matrix_vector` bench, pinned by Infrastructure I1) → V3 SIMD via existing kernel dispatch → final measurement. No new SIMD code is written; this is a routing task.\n\n## Success Criteria\n\n- [hard] Existing `matrix.rs` tests pass; new word-boundary `#[test]` for matvec passes at $n \\in \\{0, 1, 63, 64, 65, 127, 128, 129\\}$.\n- [hard] Proptest equivalence vs. scalar holds for all sizes $0..1024$ via the I4 helper.\n- [hard] Crossover threshold documented in code with the bench data point that justifies it.\n- [hard] Sibling `*.asm.txt` artefact regenerated and shows `vpxor` and popcount mnemonics in the dispatched call site.\n- [hard] `perf stat -r 10` capture before/after recorded in the JIT issue.\n- [aspirational] $\\geq 1.5\\times$ geomean over baseline at design size class (matrices $\\geq 512 \\times 512$). Below the bar: revert and try a different transform; do not merge.\n\n## Notes\n\nBench: `matrix_vector` (existing, pinned by I1). Commit message: `perf(jit:8e4b189c): V3 — popcnt dispatch in BitMatrix::matvec`. Spec doc: `dev/plans/gf2_core_ppc_spiral.md`.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude-wt-8e4b189c",
   "dependencies": [
     "166b2691-82a9-476a-b272-cacd71b58d4c"
   ],
@@ -21,7 +21,15 @@
     }
   },
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/plans/gf2_core_ppc_spiral.md",
+      "commit": null,
+      "label": "PPC spiral spec",
+      "doc_type": "design",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:task",
     "component:gf2-core",
@@ -30,5 +38,5 @@
     "ppc-kernel:A1"
   ],
   "created_at": "2026-04-25T15:17:06.452613859+00:00",
-  "updated_at": "2026-04-27T19:15:46.242330245+00:00"
+  "updated_at": "2026-04-28T09:49:37.080924454+00:00"
 }
