@@ -82,9 +82,17 @@ pub fn detect() -> Option<TransposeFns> {
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn detect_x86() -> Option<TransposeFns> {
-    // V4: only scalar lane is published until V3 lands the AVX2 PSHUFB
-    // path. The scalar bit-twiddle path is always available regardless
-    // of CPU features.
+    use std::arch::is_x86_feature_detected;
+
+    // V3: prefer the AVX2 YMM bit-twiddle lane.
+    if is_x86_feature_detected!("avx2") {
+        return Some(TransposeFns {
+            transpose_64x64: transpose_64x64_avx2_safe,
+            name: "avx2-bit-twiddle",
+        });
+    }
+
+    // V4 fallback: scalar Hacker's Delight bit-twiddle (always available).
     Some(TransposeFns {
         transpose_64x64: transpose_64x64_scalar_safe,
         name: "scalar-bit-twiddle",
@@ -94,6 +102,14 @@ fn detect_x86() -> Option<TransposeFns> {
 // ---------------------------------------------------------------------------
 // Safe function-pointer wrappers
 // ---------------------------------------------------------------------------
+
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+fn transpose_64x64_avx2_safe(input: &[u64; 64], output: &mut [u64; 64]) {
+    // SAFETY: `detect_x86` only returns this pointer when AVX2 is
+    // available at runtime. Callers who bypass `detect` must uphold
+    // that precondition.
+    unsafe { crate::x86::transpose::transpose_64x64_avx2(input, output) }
+}
 
 fn transpose_64x64_scalar_safe(input: &[u64; 64], output: &mut [u64; 64]) {
     transpose_64x64_scalar(input, output)
