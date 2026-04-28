@@ -132,7 +132,8 @@ fn build_gray_table(b: &BitMatrix, row_start: usize, k_block: usize, n: usize) -
 /// - Entry 0: buffer[0..stride_words]
 /// - Entry 1: buffer[stride_words..2*stride_words]
 /// - Entry i: buffer[i*stride_words..(i+1)*stride_words]
-fn build_gray_table_flat(
+#[doc(hidden)]
+pub fn build_gray_table_flat(
     b: &BitMatrix,
     row_start: usize,
     k_block: usize,
