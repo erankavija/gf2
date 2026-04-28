@@ -276,24 +276,24 @@ fn gray_walk_full<const TILES: usize>(
         let abs_row = row_start + bit_pos;
         if abs_row < b.rows() {
             let row_words = b.row_words(abs_row);
-            for t in 0..TILES {
+            for (t, tile_acc) in acc.iter_mut().enumerate().take(TILES) {
                 let base = t * B2_GRAY_TILE_WORDS;
                 let src = &row_words[base..base + B2_GRAY_TILE_WORDS];
-                acc[t][0] ^= src[0];
-                acc[t][1] ^= src[1];
-                acc[t][2] ^= src[2];
-                acc[t][3] ^= src[3];
-                acc[t][4] ^= src[4];
-                acc[t][5] ^= src[5];
-                acc[t][6] ^= src[6];
-                acc[t][7] ^= src[7];
+                tile_acc[0] ^= src[0];
+                tile_acc[1] ^= src[1];
+                tile_acc[2] ^= src[2];
+                tile_acc[3] ^= src[3];
+                tile_acc[4] ^= src[4];
+                tile_acc[5] ^= src[5];
+                tile_acc[6] ^= src[6];
+                tile_acc[7] ^= src[7];
             }
         }
 
         let entry_start = curr_gray * stride_words;
-        for t in 0..TILES {
+        for (t, tile_acc) in acc.iter().enumerate().take(TILES) {
             let base = entry_start + t * B2_GRAY_TILE_WORDS;
-            buffer[base..base + B2_GRAY_TILE_WORDS].copy_from_slice(&acc[t]);
+            buffer[base..base + B2_GRAY_TILE_WORDS].copy_from_slice(tile_acc);
         }
 
         prev_gray = curr_gray;
