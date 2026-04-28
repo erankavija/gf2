@@ -27,14 +27,15 @@
 //!
 //! # Strategies benchmarked
 //!
-//! | Strategy | GF(2^8) | GF(2^16) | GF(2^63) | GF(2^64) |
-//! |----------|---------|----------|----------|----------|
-//! | Naive shift-and-add | yes | yes | yes | yes (u64 specialised) |
-//! | Direct LUT (256x256) | yes (64 KB) | no | no | no |
-//! | Split LUT (2x 256x256) | no | yes (128 KB) | no | no |
-//! | Log/exp tables | yes (2x256) | yes (2x65536) | no | no |
-//! | Existing Gf2mField | yes | yes | yes | yes (via `Gf2mField_<u128>`) |
-//! | PCLMULQDQ + Barrett | yes | yes | yes | m <= 63 (multi-word support deferred to JIT issue `6fb4abad`) |
+//! | Strategy | GF(2^8) | GF(2^16) | GF(2^32) | GF(2^63) | GF(2^64) |
+//! |----------|---------|----------|----------|----------|----------|
+//! | Naive shift-and-add | yes | yes | yes | yes | yes (u64 specialised) |
+//! | Direct LUT (256x256) | yes (64 KB) | no | no | no | no |
+//! | Split LUT (2x 256x256) | no | yes (128 KB) | no | no | no |
+//! | Log/exp tables | yes (2x256) | yes (2x65536) | no | no | no |
+//! | Existing Gf2mField | yes | yes | yes | yes | yes (via `Gf2mField_<u128>`) |
+//! | PCLMULQDQ + Barrett | yes | yes | yes | yes | m <= 63 (multi-word support deferred to JIT issue `6fb4abad`) |
+//! | AVX2 + VPCLMULQDQ batch unroll4 | yes | yes | yes | no | no |
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use gf2_core::gf2m::{Gf2mField, Gf2mField_};
