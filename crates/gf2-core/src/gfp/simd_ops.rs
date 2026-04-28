@@ -7,12 +7,12 @@
 //! specific primes override the hooks to route through AVX2 kernels in
 //! `gf2-kernels-simd`.
 //!
-//! The only currently specialised prime is `Fp<65537>` (the fifth
-//! Fermat prime), which uses the Montgomery-canonical coincidence
-//! `R = 2^64 ≡ 1 (mod 65537)` to read and write canonical `u32` values
-//! without REDC round-trips. The shared packing and unpacking helpers
-//! live here so that `FieldVec` and `BatchExtField` share the same
-//! implementation.
+//! Specialised primes are routed before the generic Montgomery path:
+//! `Fp<65537>` uses the Fermat-prime AVX2 kernels, `Fp<2^31 - 1>` uses
+//! the existing Mersenne multiply kernel, and eligible non-special
+//! Montgomery primes use the generic `u64` AVX2 kernels. The shared
+//! packing and unpacking helpers live here so that `FieldVec` and
+//! `BatchExtField` share the same implementation.
 //!
 //! When the `simd` feature is disabled or AVX2 is unavailable at
 //! runtime, every `try_*` hook returns `None` and callers fall back to
@@ -121,6 +121,9 @@ impl<const P: u64> SimdVecOps for Fp<P> {
         if P == 65537 {
             return fp65537_try_mul_vec::<P>(a, b);
         }
+        if P == M31 {
+            return fpm31_try_mul_vec::<P>(a, b);
+        }
         fp_generic_try_mul_vec::<P>(a, b)
     }
 
@@ -139,6 +142,46 @@ impl<const P: u64> SimdVecOps for Fp<P> {
         }
         fp_generic_try_sub_vec::<P>(a, b)
     }
+}
+
+// ---------------------------------------------------------------------------
+// Fp<2^31 - 1> SIMD helpers.
+// ---------------------------------------------------------------------------
+
+const M31: u64 = (1u64 << 31) - 1;
+
+#[cfg(feature = "simd")]
+#[inline]
+fn fpm31_pack<const P: u64>(xs: &[Fp<P>]) -> Vec<u32> {
+    debug_assert_eq!(P, M31, "fpm31_pack: P must be 2^31 - 1");
+    xs.iter().map(|x| x.raw_storage() as u32).collect()
+}
+
+#[cfg(feature = "simd")]
+#[inline]
+fn fpm31_unpack<const P: u64>(xs: &[u32]) -> Vec<Fp<P>> {
+    debug_assert_eq!(P, M31, "fpm31_unpack: P must be 2^31 - 1");
+    xs.iter()
+        .map(|&x| Fp::<P>::from_raw_storage(x as u64))
+        .collect()
+}
+
+#[cfg(feature = "simd")]
+fn fpm31_try_mul_vec<const P: u64>(a: &[Fp<P>], b: &[Fp<P>]) -> Option<Vec<Fp<P>>> {
+    debug_assert_eq!(P, M31, "fpm31_try_mul_vec: P must be 2^31 - 1");
+    let fns = crate::simd::maybe_mersenne()?;
+    let n = a.len();
+    let a_u32 = fpm31_pack::<P>(a);
+    let b_u32 = fpm31_pack::<P>(b);
+    let mut out = vec![0u32; n];
+    (fns.m31_batch_mul_fn)(&a_u32, &b_u32, &mut out);
+    Some(fpm31_unpack::<P>(&out))
+}
+
+#[cfg(not(feature = "simd"))]
+#[inline]
+fn fpm31_try_mul_vec<const P: u64>(_a: &[Fp<P>], _b: &[Fp<P>]) -> Option<Vec<Fp<P>>> {
+    None
 }
 
 // ---------------------------------------------------------------------------
@@ -402,9 +445,11 @@ mod tests {
 
         let m31_a = [Fp::<{ (1u64 << 31) - 1 }>::new(3)];
         let m31_b = [Fp::<{ (1u64 << 31) - 1 }>::new(7)];
-        assert!(
-            <Fp<{ (1u64 << 31) - 1 }> as SimdVecOps>::try_simd_mul_vec(&m31_a, &m31_b).is_none()
-        );
+        if crate::simd::maybe_mersenne().is_some() {
+            let got = <Fp<{ (1u64 << 31) - 1 }> as SimdVecOps>::try_simd_mul_vec(&m31_a, &m31_b)
+                .expect("M31 SIMD multiply");
+            assert_eq!(got, vec![m31_a[0] * m31_b[0]]);
+        }
 
         let m61_a = [Fp::<{ (1u64 << 61) - 1 }>::new(3)];
         let m61_b = [Fp::<{ (1u64 << 61) - 1 }>::new(7)];
