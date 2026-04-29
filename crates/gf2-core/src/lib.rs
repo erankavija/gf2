@@ -70,7 +70,9 @@ pub mod bench_seed;
 pub use bitslice::{BitSlice, BitSliceMut};
 pub use bitvec::BitVec;
 pub use matrix::BitMatrix;
-pub use sparse::{SpBitMatrix, SpBitMatrixBlockCsr, SpBitMatrixDual};
+pub use sparse::{
+    RowPermutation, SpBitMatrix, SpBitMatrixBlockCsr, SpBitMatrixDual, SparseBitMatrix,
+};
 
 // Optional SIMD accessor: compiled only when the "simd" feature is enabled.
 // This module contains no unsafe code; unsafe is isolated in the separate
