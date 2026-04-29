@@ -56,10 +56,12 @@
     },
     "C2": {
       "title": "GF(2^571) multi-word VPCLMULQDQ",
-      "bench_target": "gf2m_wide4_simd_clmul_only[avx2+vpclmulqdq-ymm]",
-      "baseline_name": "ppc-v0-2026-04-27",
-      "commit_hash": "52eaac8",
-      "design_size_class": ["."]
+      "bench_target": "gf2m_wide9_m571_mul_dispatched[avx2+vpclmulqdq-ymm]",
+      "baseline_bench_target": "gf2m_wide9_m571_scalar_clmul_barrett",
+      "baseline_name": "current-scalar-clmul-barrett",
+      "commit_hash": "7c954fb5",
+      "design_size_class": ["."],
+      "rationale": "C2's success criterion is the GF(2^571) size class. The earlier manifest entry still pointed at the pre-existing 4-limb raw-clmul leaf, so it measured an unchanged helper and reported 1.0x. The C2 implementation adds the m=571 dispatched and scalar Barrett leaves in `gf2m_wide_mul`; compare those current leaves apples-to-apples because the pinned ppc-v0 baseline did not contain the m=571 leaf."
     },
     "C3": {
       "title": "Fp prime Montgomery batch SIMD (AVX2)",
