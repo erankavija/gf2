@@ -1840,6 +1840,11 @@ mod tests {
         (0..65537u64, 0..65537u64).prop_map(|(c0, c1)| Fq2Big::new(Fp::new(c0), Fp::new(c1)))
     }
 
+    fn fq3_big_strategy() -> impl Strategy<Value = Fq3Big> {
+        (0..65537u64, 0..65537u64, 0..65537u64)
+            .prop_map(|(c0, c1, c2)| Fq3Big::new(Fp::new(c0), Fp::new(c1), Fp::new(c2)))
+    }
+
     proptest! {
         #![proptest_config(ProptestConfig::with_cases(100))]
 
@@ -1877,6 +1882,42 @@ mod tests {
             let batch = BatchExtField::<Fp<65537>, 2>::from_quadratic::<CfgBeta3>(&xs);
             prop_assert!(batch.is_valid());
             let round = batch.to_quadratic::<CfgBeta3>();
+            prop_assert_eq!(round, xs);
+        }
+
+        #[test]
+        fn prop_cubic_batch_mul_matches_scalar_fp65537(
+            pairs in proptest::collection::vec((fq3_big_strategy(), fq3_big_strategy()), 1..=64)
+        ) {
+            let a: Vec<Fq3Big> = pairs.iter().map(|(x, _)| *x).collect();
+            let b: Vec<Fq3Big> = pairs.iter().map(|(_, y)| *y).collect();
+            let expected: Vec<Fq3Big> = a.iter().zip(b.iter()).map(|(x, y)| *x * *y).collect();
+
+            let ba = BatchExtField::<Fp<65537>, 3>::from_cubic::<CfgCubicBeta3>(&a);
+            let bb = BatchExtField::<Fp<65537>, 3>::from_cubic::<CfgCubicBeta3>(&b);
+            let got = ba.batch_mul_cubic::<CfgCubicBeta3>(&bb).to_cubic::<CfgCubicBeta3>();
+
+            prop_assert_eq!(got, expected);
+        }
+
+        #[test]
+        fn prop_cubic_batch_square_matches_scalar_fp65537(
+            xs in proptest::collection::vec(fq3_big_strategy(), 0..=64)
+        ) {
+            let expected: Vec<Fq3Big> = xs.iter().map(|x| *x * *x).collect();
+            let batch = BatchExtField::<Fp<65537>, 3>::from_cubic::<CfgCubicBeta3>(&xs);
+            let got = batch.batch_square_cubic::<CfgCubicBeta3>().to_cubic::<CfgCubicBeta3>();
+
+            prop_assert_eq!(got, expected);
+        }
+
+        #[test]
+        fn prop_cubic_roundtrip_fp65537(
+            xs in proptest::collection::vec(fq3_big_strategy(), 0..=64)
+        ) {
+            let batch = BatchExtField::<Fp<65537>, 3>::from_cubic::<CfgCubicBeta3>(&xs);
+            prop_assert!(batch.is_valid());
+            let round = batch.to_cubic::<CfgCubicBeta3>();
             prop_assert_eq!(round, xs);
         }
     }
