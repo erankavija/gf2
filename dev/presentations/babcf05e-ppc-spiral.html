@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>gf2-core PPC Spiral Performance Sweep</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/black.css">
+  <style>
+    :root {
+      --accent: #58a6ff;
+      --good: #3fb950;
+      --warn: #d29922;
+      --muted: #8b949e;
+    }
+    .reveal {
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #f0f6fc;
+    }
+    .reveal h1, .reveal h2, .reveal h3 {
+      letter-spacing: -0.03em;
+      text-transform: none;
+    }
+    .reveal h1 {
+      font-size: 2.1em;
+    }
+    .reveal h2 {
+      font-size: 1.55em;
+      color: var(--accent);
+    }
+    .reveal h3 {
+      font-size: 1.05em;
+      color: #f0f6fc;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.72em;
+    }
+    .grid {
+      display: grid;
+      gap: 0.55em;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: stretch;
+    }
+    .grid.three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .card {
+      background: rgba(13, 17, 23, 0.78);
+      border: 1px solid rgba(88, 166, 255, 0.24);
+      border-radius: 16px;
+      padding: 0.65em;
+      text-align: left;
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.25);
+    }
+    .metric {
+      color: var(--good);
+      display: block;
+      font-size: 1.65em;
+      font-weight: 750;
+      line-height: 1;
+      margin-bottom: 0.12em;
+    }
+    .metric.warn {
+      color: var(--warn);
+    }
+    .small {
+      color: var(--muted);
+      font-size: 0.58em;
+      line-height: 1.25;
+    }
+    .reveal table {
+      font-size: 0.48em;
+      margin-top: 0.5em;
+    }
+    .reveal table th {
+      color: var(--accent);
+    }
+    .reveal ul {
+      font-size: 0.7em;
+      line-height: 1.3;
+    }
+    .pill {
+      display: inline-block;
+      margin: 0.15em 0.25em 0 0;
+      padding: 0.18em 0.45em;
+      border: 1px solid rgba(88, 166, 255, 0.42);
+      border-radius: 999px;
+      color: #c9d1d9;
+      font-size: 0.45em;
+    }
+    .bar-row {
+      align-items: center;
+      display: grid;
+      gap: 0.45em;
+      grid-template-columns: 8.5em 1fr 4em;
+      font-size: 0.55em;
+      margin: 0.22em 0;
+    }
+    .bar {
+      background: rgba(139, 148, 158, 0.22);
+      border-radius: 999px;
+      height: 0.9em;
+      overflow: hidden;
+    }
+    .bar span {
+      background: linear-gradient(90deg, #1f6feb, #3fb950);
+      display: block;
+      height: 100%;
+    }
+    .footer {
+      color: var(--muted);
+      font-size: 0.38em;
+      margin-top: 1.1em;
+    }
+    .ok { color: var(--good); }
+    .warn { color: var(--warn); }
+  </style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+  <section>
+    <h1>gf2-core PPC Spiral Performance Sweep</h1>
+    <p class="subtitle">Epic babcf05e: measure, inspect, optimize, and document every scalar performance gap in gf2-core.</p>
+    <p>
+      <span class="pill">Rust 1.95</span>
+      <span class="pill">AMD Ryzen 9 5900X evidence host</span>
+      <span class="pill">safe high-level APIs</span>
+      <span class="pill">SIMD isolated in kernel crates</span>
+    </p>
+  </section>
+
+  <section>
+    <h2>What changed</h2>
+    <div class="grid">
+      <div class="card">
+        <span class="metric">Dispatch</span>
+        <div>Scalar callers now route through existing SIMD dispatch where the evidence showed clear wins.</div>
+        <p class="small">OnceLock runtime dispatch remains the single pattern for CPU feature selection.</p>
+      </div>
+      <div class="card">
+        <span class="metric">Dense kernels</span>
+        <div>Transpose and M4RM paths gained SIMD-aware and register-reuse tuning, with assembly artifacts and criterion evidence.</div>
+      </div>
+      <div class="card">
+        <span class="metric">Field batches</span>
+        <div>GF(2^m), GF(p), and extension-field SoA paths now expose batched product-sum kernels to production callers.</div>
+      </div>
+      <div class="card">
+        <span class="metric">Evidence</span>
+        <div>Negative benchmark results were recorded where the spiral said "do not dispatch this yet".</div>
+        <p class="small">Strassen and dense multithread are deliberately no-go production paths today.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Epic completion map</h2>
+    <table>
+      <thead>
+        <tr><th>Story</th><th>Status</th><th>Outcome</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>d76f6931</td><td class="ok">done</td><td>Route scalar callers through SIMD dispatch.</td></tr>
+        <tr><td>211102c6</td><td class="ok">done</td><td>Dense bit-matrix SIMD kernels and evidence.</td></tr>
+        <tr><td>2c866544</td><td class="ok">done</td><td>Field batch kernels, including GF(p) and extension fields.</td></tr>
+        <tr><td>01afbd6d</td><td class="ok">done</td><td>Sparse layout and prefetch scaffolds with measured outcomes.</td></tr>
+        <tr><td>afc80980</td><td class="ok">done</td><td>SoA rayon scaling delivered; dense threading rejected by preflight.</td></tr>
+        <tr><td>3abb755e</td><td class="ok">done</td><td>Algorithmic benchmark gaps mapped and closed with evidence.</td></tr>
+        <tr><td>cd356d0b</td><td class="ok">done</td><td>Full verify-lean extraction restored.</td></tr>
+        <tr><td>e555c46d</td><td class="ok">done</td><td>CLMUL wrapper spill fixed by target-feature correction.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>GF(2) dense matrix results</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>M4RM production path</h3>
+        <p>Tier-A/B improvements moved the current 4096 square multiply baseline from the pinned 2026-04-26 result of <strong>125.756 ms</strong> to <strong>35.667 ms</strong>.</p>
+        <p class="small">Throughput improved from 1,092.904 Gop/s to 1,927 Gop/s in the Strassen crossover evidence.</p>
+      </div>
+      <div class="card">
+        <h3>Strassen policy</h3>
+        <p>Forced one-level Strassen was still slower than M4RM through n=8192, so production dispatch remains M4RM-only.</p>
+        <p class="small">This is a measured no-go, not an unimplemented branch.</p>
+      </div>
+    </div>
+    <table>
+      <thead><tr><th>n</th><th>M4RM mean</th><th>Forced Strassen mean</th><th>Forced / M4RM</th><th>Policy</th></tr></thead>
+      <tbody>
+        <tr><td>2048</td><td>5.241 ms</td><td>6.278 ms</td><td>0.83x</td><td>M4RM</td></tr>
+        <tr><td>4096</td><td>35.900 ms</td><td>41.820 ms</td><td>0.86x</td><td>M4RM</td></tr>
+        <tr><td>8192</td><td>256.700 ms</td><td>290.310 ms</td><td>0.88x</td><td>M4RM</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>GF(2^m) FieldMatrix GEMM</h2>
+    <p class="subtitle">Production FieldMatrix::gemm now routes supported single-word GF(2^m) dot products through the batched carry-less multiply hook.</p>
+    <div class="bar-row"><div>GF(2^8) 64^3</div><div class="bar"><span style="width: 43%"></span></div><div>7.61x</div></div>
+    <div class="bar-row"><div>GF(2^8) 128x32x128</div><div class="bar"><span style="width: 76%"></span></div><div>13.36x</div></div>
+    <div class="bar-row"><div>GF(2^16) 64^3</div><div class="bar"><span style="width: 99%"></span></div><div>17.41x</div></div>
+    <div class="bar-row"><div>GF(2^32) 64^3</div><div class="bar"><span style="width: 100%"></span></div><div>17.65x</div></div>
+    <p class="footer">Evidence: dev/bench_results/2026-04-29-gf2m-batch-fieldmatrix-gemm.md</p>
+  </section>
+
+  <section>
+    <h2>GF(p) FieldMatrix GEMM</h2>
+    <p class="subtitle">Delayed reduction produced broad gf2-side speedups, but small-prime fflas parity remains future work.</p>
+    <table>
+      <thead><tr><th>Field</th><th>Shape</th><th>Published gf2</th><th>Post-epic gf2</th><th>Speedup</th><th>gf2 / pinned fflas</th></tr></thead>
+      <tbody>
+        <tr><td>GF(7)</td><td>256^3</td><td>0.528</td><td>3.708</td><td>7.02x</td><td>0.073x</td></tr>
+        <tr><td>GF(251)</td><td>256^3</td><td>0.593</td><td>3.704</td><td>6.25x</td><td>0.029x</td></tr>
+        <tr><td>GF(65521)</td><td>256^3</td><td>0.590</td><td>3.695</td><td>6.27x</td><td>0.117x</td></tr>
+        <tr><td>GF(2^31-1)</td><td>1024^3</td><td>0.590</td><td>3.822</td><td>6.48x</td><td>1.633x</td></tr>
+      </tbody>
+    </table>
+    <p class="small">Throughput is GEMM Gop/s. Within-10x fflas is met for GF(65521) at 256^3 and for GF(2^31-1) at 256^3/1024^3.</p>
+  </section>
+
+  <section>
+    <h2>Extension-field SoA rayon scaling</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>Pre-flight</h3>
+        <p>Fq2 and Fq3 design workloads both measured <strong>0.181%</strong> cache-misses / instructions.</p>
+        <p class="small">Below the 1% memory-bound abort threshold, so V10 threading was allowed.</p>
+      </div>
+      <div class="card">
+        <h3>4-thread result</h3>
+        <p><strong>Fq2:</strong> 9.3433 ms to 2.9548 ms, <span class="ok">3.16x</span>.</p>
+        <p><strong>Fq3:</strong> 15.509 ms to 2.3810 ms, <span class="ok">6.51x</span>.</p>
+      </div>
+    </div>
+    <table>
+      <thead><tr><th>Workload</th><th>1 thread</th><th>4 threads</th><th>Speedup</th><th>Efficiency</th></tr></thead>
+      <tbody>
+        <tr><td>Fq2 batch_soa/1,048,576</td><td>9.3433 ms</td><td>2.9548 ms</td><td>3.16x</td><td>79.1%</td></tr>
+        <tr><td>Fq3 batch_soa/1,048,576</td><td>15.509 ms</td><td>2.3810 ms</td><td>6.51x</td><td>163%</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Where the spiral said "stop"</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>Dense multithread</h3>
+        <p>Mandatory pre-flight rejected V10 row-tile rayon for dense transpose and M4RM.</p>
+        <p class="small">Cache miss ratios: 2.0071% for transpose/4096 and 1.4102% for m4rm_1024x1024, both above the 1% threshold.</p>
+      </div>
+      <div class="card">
+        <h3>Sparse layout</h3>
+        <p>Block-CSR, RCM, and prefetch scaffolds landed with honest negative/limited benchmark evidence.</p>
+        <p class="small">Kept as infrastructure and measurement foundation rather than overstated speedup claims.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Verification and safety</h2>
+    <div class="grid three">
+      <div class="card">
+        <span class="metric">0</span>
+        <div>unsafe leaks into gf2-core high-level code.</div>
+      </div>
+      <div class="card">
+        <span class="metric">1.95</span>
+        <div>Current user-approved Rust baseline.</div>
+      </div>
+      <div class="card">
+        <span class="metric">pass</span>
+        <div>Full verify-lean extraction restored after field hook fixes.</div>
+      </div>
+    </div>
+    <p class="small">SIMD and target-feature details remain isolated in gf2-kernels-simd; high-level APIs stay safe and composable.</p>
+  </section>
+
+  <section>
+    <h2>Future work</h2>
+    <ul>
+      <li>Design a lower-overhead GF(2) Strassen/Winograd path with view-native M4RM leaves before enabling any production crossover.</li>
+      <li>Extend the fflas reference harness to rectangular GF(p) cells and schedule slow 4096^3 sweeps outside the agent fast lane.</li>
+      <li>Attack small-prime GF(p) GEMM parity, especially GF(7) and GF(251), where fflas remains far ahead.</li>
+      <li>Batch multiple GF(2^m) FieldMatrix output cells per panel to reduce dot setup/export overhead.</li>
+      <li>Revisit sparse matvec layout after workload-specific matrix corpora and hardware-counter-guided blocking choices are available.</li>
+      <li>Consider GPU offload only after CPU paths are compute-bound and reuse is high enough to amortize transfer costs.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Takeaway</h2>
+    <div class="card">
+      <p>The epic delivered measurable speedups where the PPC spiral found compute-bound work, and it deliberately avoided production dispatch where measurement showed slower or memory-bound paths.</p>
+      <p class="small">That leaves gf2-core faster, better instrumented, and clearer about the next research-grade performance problems.</p>
+    </div>
+  </section>
+</div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true,
+    slideNumber: true,
+    controlsTutorial: false,
+    transition: "fade"
+  });
+</script>
+</body>
+</html>
