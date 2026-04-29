@@ -4,9 +4,9 @@
   "title": "gf2-core PPC-spiral performance sweep",
   "claimed_by": "agent:project-lead",
   "started_at": "2026-04-26T22:30:00+00:00",
-  "last_updated": "2026-04-29 recovery close",
+  "last_updated": "2026-04-29 sub-wave 4b dispatch",
   "current_wave": 4,
-  "phase": "sub-wave 4a RECOVERED AND CLOSED after stale-worktree incident. C1, B1, C3, and B2 were rebased/restarted from current main, integrated, reworked through JIT gates, and marked done. Recovery added focused fixes: C1 batch SIMD review docs/tests/evidence; B1 transpose property tests + PSHUFB artefact lane; C3 generic Montgomery unroll rework; B2 unsafe safety note + user-approved vxorps/vpxor-equivalence amendment. Next wave remains undispatched.",
+  "phase": "sub-wave 4b dispatch in progress. B3 (19bc3199), C2 (7c954fb5), and C4 (3168d114) are claimed for manual current-main worktree dispatch after sub-wave 4a recovery closure.",
   "related_epic": "bb85c68a (FieldMatrix linear algebra)",
   "spec_doc": "dev/plans/gf2_core_ppc_spiral.md",
   "uncompetitiveness_doc": "dev/bench_results/2026-04-26-uncompetitiveness-profile.md",
@@ -23,7 +23,8 @@
     "Session 5: d76f6931 story closed after user-approved aggregate amendment for A3/cad241e6. Story gates passed on the amended contract: A1 and A2 retain explicit speed gates; A3 inherits its child-level approved performance exception while preserving specialized M31 dispatch and generic Montgomery coverage.",
     "Session 6 (2026-04-28) start: branch on main at 5a9393c, 41 commits ahead of origin. Tier-A worktrees from sessions 5/4 (5223bb04, 8e4b189c, cad241e6, d4740d85) cleaned up. Untracked dev/bench_results/2026-04-26-gf2-simd.csv deleted per user. Strategic interview: wave priority = algorithmic-value-first (Tier-C parallel + B1+B2 alongside); criterion-1.5x stance = keep gate as operative threshold, no [aspirational] amendments; CSV = delete. Sub-wave 4a dispatch: C1, C3, B1, B2 parallel via worktrees. B1's [hard] criterion literally quotes 'ppc-v0-2026-04-25' but canonical baseline naming is 'ppc-v0-2026-04-27' per b2ecd2ff session-2 amendment — clarification routed via dispatch prompt, no JIT description amendment per user's gate-as-operative-threshold preference.",
     "Session 6 (2026-04-28) dispatch outcome: all 4 workers completed with API 529 (auth service unavailable), losing final narrative reports but leaving on-disk worktree state. Per user directive 'Do not merge — just create a handoff document', no integration to main this session. Lead-preserve commits applied to 3 of 4 worktrees so uncommitted WIP survives across sessions: C3 worktree got 16dbba3, B1 got d773986 (V7 cache-tile), B2 got 5e7c138 (288-line m4rm.rs blob). C1 worktree was already clean. CRITICAL TRAP 1 documented in handoff-4: Agent isolation=worktree branched from 854b37d (session 3) instead of current main c8d71af — all 4 worker branches are 41 commits behind main. Naïve merge would clobber Wave-3 closures (cad241e6 fp_generic, c69d2055 hoist, A2 manifest amendment, etc.). Mitigation in handoff: rebase each worktree onto main BEFORE any integration; expected hot conflicts on gf2-kernels-simd/src/lib.rs (C3 vs cad241e6 fp_generic), gf2-core/src/alg/m4rm.rs (B2 vs c69d2055 hoist), gf2-core/src/matrix.rs (B1 vs 8e4b189c/5223bb04), and dev/benchmarks/ppc-baselines.json (all workers vs A2 amendment). Per-worker observations: C1 looks complete (4 commits, V3+V4 bundled but production-ready), B1 reports ~65× at n=4096 + V7 in WIP, C3 has Lean-build [hard] unverified, B2 placed asm artefact at irregular gf2-core/src/alg/asm/ path that asm-artefact-present gate won't see.",
-    "Session 7 recovery close: sub-wave 4a stale-worktree recovery completed. User-approved decisions during recovery: salvage C1+B1 and restart C3+B2; accept B1 baseline amendment to ppc-v0-2026-04-27; implement B1 PSHUFB lane rather than amend hard artefact criterion; accept B2 vxorps as vpxor-equivalent hard-criterion amendment. Helper scripts accidentally committed to gf2 were reverted and belong under ~/.claude/skills."
+    "Session 7 recovery close: sub-wave 4a stale-worktree recovery completed. User-approved decisions during recovery: salvage C1+B1 and restart C3+B2; accept B1 baseline amendment to ppc-v0-2026-04-27; implement B1 PSHUFB lane rather than amend hard artefact criterion; accept B2 vxorps as vpxor-equivalent hard-criterion amendment. Helper scripts accidentally committed to gf2 were reverted and belong under ~/.claude/skills.",
+    "Session 8 dispatch: B3 (19bc3199), C2 (7c954fb5), and C4 (3168d114) selected as sub-wave 4b. Direct dependencies are done; workers must use manual worktrees pinned to current main and must not modify .jit state."
   ],
   "waves": [
     {
@@ -445,8 +446,8 @@
           "title": "M4RM block multiply register-tile + cache-block",
           "kind": "task",
           "classification": "implementation",
-          "status": "pending",
-          "state": "backlog",
+          "status": "in_progress",
+          "state": "in_progress",
           "sub_wave": "4b",
           "pre_dispatch_action": "Depends on B1 (1c1c4242). Promote ready when B1 closes."
         }
@@ -499,8 +500,8 @@
           "title": "GF(2^571) batch mul via multi-word VPCLMULQDQ",
           "kind": "task",
           "classification": "implementation",
-          "status": "pending",
-          "state": "ready",
+          "status": "in_progress",
+          "state": "in_progress",
           "sub_wave": "4b",
           "pre_dispatch_note": "C2 manifest pinned at gf2m_wide4_simd_clmul_only[avx2+vpclmulqdq-ymm]. Defer to sub-wave 4b to bound concurrent worktree count."
         },
@@ -540,8 +541,8 @@
           "title": "QuadraticExt::mul Karatsuba SoA batched SIMD",
           "kind": "task",
           "classification": "implementation",
-          "status": "pending",
-          "state": "ready",
+          "status": "in_progress",
+          "state": "in_progress",
           "sub_wave": "4b",
           "pre_dispatch_note": "C4 manifest pinned at soa_batch_mul_fq2_fp65537/batch_soa. Issue Notes says 'field_matrix_fusion' — manifest is canonical."
         },
