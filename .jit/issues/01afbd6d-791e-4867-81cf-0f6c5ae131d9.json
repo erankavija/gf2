@@ -2,7 +2,7 @@
   "id": "01afbd6d-791e-4867-81cf-0f6c5ae131d9",
   "title": "Sparse matvec layout + prefetch",
   "description": "Cache-bound sparse kernels targeting the LDPC parity-check matvec path where memory access patterns dominate. Two complementary approaches: software prefetch + block-CSR layout for runtime gains, and one-shot Cuthill-McKee row reorder for amortised cache-reuse gains.\n\n## Background\n\n`SparseBitMatrix::matvec` is scalar CSR iteration with no prefetch and no block layout. The gather pattern is index-driven, which is cache-unfriendly for LDPC parity-check matrices that have irregular row spans. Two distinct layout-level wins are available: (1) D1 — software prefetch on `col_idx[i + lookahead]` plus block-CSR ($4\\times 64$ dense bit-blocks within sparse rows) plus SIMD inside dense blocks; (2) D2 — Cuthill-McKee (RCM) row/column permutation applied once before dispatch, amortising across many matvecs.\n\nD1 measures speedup per single matvec call; D2 measures amortised speedup over $\\geq 100$ matvec calls (single-call cost is dominated by the reorder itself).\n\n## Success Criteria\n\n- [hard] Each child task ships per the per-kernel execution protocol from the epic spec doc.\n- [hard] Bit-exact result vs. existing CSR matvec (D1 raw, D2 after permutation roundtrip).\n- [hard] D1 asm artefact shows prefetch instructions actually emitted; perf-stat shows L1d-miss rate drops.\n- [hard] D2 permutation roundtrip (apply then unapply) is identity.\n\n## Notes\n\nBench target: existing `sparse.rs` bench at LDPC parity-check matrix sizes. Cache-bound kernels may rely on cache-miss-rate improvement instead of pure IPC delta. Spec doc: `dev/plans/gf2_core_ppc_spiral.md`.",
-  "state": "backlog",
+  "state": "ready",
   "priority": "normal",
   "assignee": null,
   "dependencies": [
@@ -23,5 +23,5 @@
     "story:ppc-sparse-layout"
   ],
   "created_at": "2026-04-25T15:15:53.732961134+00:00",
-  "updated_at": "2026-04-25T20:15:27.139120935+00:00"
+  "updated_at": "2026-04-29T18:41:59.747127323+00:00"
 }
