@@ -36,6 +36,9 @@ unsafe fn avx2_xor_into(dst: &mut [u64], src: &[u64]) {
 unsafe fn avx2_m4rm_gray_xor16(acc: &mut [[u64; 8]; 2], src: &[u64]) {
     debug_assert!(src.len() >= 16);
 
+    // SAFETY: callers pass a fixed 16-word accumulator and at least 16 source
+    // words. The loop performs four unaligned 32-byte loads/stores inside those
+    // bounds and never aliases `src` mutably.
     let acc_ptr = acc.as_mut_ptr() as *mut u8;
     let src_ptr = src.as_ptr() as *const u8;
     let mut i = 0usize;
