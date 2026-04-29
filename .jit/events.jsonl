@@ -3284,3 +3284,7 @@
 {"type":"issue_completed","id":"e1e7d413-c139-4052-8c77-0e79d40e3296","issue_id":"01afbd6d-791e-4867-81cf-0f6c5ae131d9","timestamp":"2026-04-29T19:04:59.902196038Z"}
 {"type":"issue_created","id":"53725bee-3cf4-4122-882e-c5174c002137","issue_id":"cd356d0b-cfee-4951-a1dd-8fbac708f1fc","timestamp":"2026-04-29T19:19:34.337865826Z","title":"Fix verify-lean extraction after field delayed product-sum hooks","priority":"normal"}
 {"type":"dependency_reduced","id":"4350e8e5-40bc-4074-a9f4-9c6ca4cf8b3f","issue_id":"3abb755e-39d7-40fd-bceb-0ca7bb310083","timestamp":"2026-04-29T19:24:16.404437676Z","old_count":4,"new_count":3,"removed_deps":["e7ab802d-b99e-4efa-9304-f649f7c7ef68"]}
+{"type":"gate_passed","id":"85c49345-c63e-4896-9065-b041e10f7fdc","issue_id":"2c866544-1ec7-4ba4-94ad-f7bd7f7993d5","timestamp":"2026-04-29T19:34:12.007287889Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"48e4a408-f963-4fa6-b793-d916932419a2","issue_id":"2c866544-1ec7-4ba4-94ad-f7bd7f7993d5","timestamp":"2026-04-29T19:42:32.411673746Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"issue_state_changed","id":"618b227d-4d2d-4888-a0a6-95e3bd2197db","issue_id":"2c866544-1ec7-4ba4-94ad-f7bd7f7993d5","timestamp":"2026-04-29T19:43:00.767366519Z","from":"ready","to":"done"}
+{"type":"issue_completed","id":"5c123191-689b-4f37-aad5-a31fb6d31447","issue_id":"2c866544-1ec7-4ba4-94ad-f7bd7f7993d5","timestamp":"2026-04-29T19:43:00.767436269Z"}

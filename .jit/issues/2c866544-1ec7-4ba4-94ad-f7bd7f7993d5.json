@@ -2,7 +2,7 @@
   "id": "2c866544-1ec7-4ba4-94ad-f7bd7f7993d5",
   "title": "Field-arithmetic batch kernels",
   "description": "Batched SIMD kernels for the field-arithmetic modules. The largest research-impact wins in the epic — extension-field tower ops have 3–6 independent base-field muls per element that schedule naturally onto SIMD lanes.\n\n## Background\n\nFive field-arithmetic kernels lack batched SIMD. (1) GF($2^m$) for $m \\in \\{8, 16, 32\\}$ is per-element scalar even though VPCLMULQDQ-on-YMM can process two element pairs per instruction. (2) GF($2^{571}$) — used for NIST B-571/K-571 EC research — is scalar multi-word with $9 \\times 9$ word-pair XORs and shifts. (3) `Fp<P>` Montgomery batch is specialized only for `Fp<65537>` and `Fp<2^{31}-1>`; all other primes (including the 64-bit primes used by tower extensions) fall through to scalar. (4) `gfpn::QuadraticExt::mul` has 3 independent base-field muls per Karatsuba but no SoA layout. (5) `gfpn::CubicExt::mul` has 6.\n\nThis story covers five child tasks: C1 GF($2^m$) batch, C2 GF($2^{571}$) wide batch, C3 generic 64-bit Montgomery batch, C4 QuadraticExt SoA, C5 CubicExt SoA. The JIT dependency graph keeps C4 reachable through C5 rather than adding a redundant direct edge, because C5 reuses C4's SoA scaffolding. C3 carries an explicit MSRV escalation gate: an AVX-512 IFMA52 sub-task may be opened only if AVX2 falls below $1.5\\times$ and only after explicit user MSRV-bump approval per `escalation-policy.md`.\n\n## Success Criteria\n\n- [hard] Each child task ships per the per-kernel execution protocol from the epic spec doc.\n- [hard] Existing Mersenne/Fermat specialisations and AoS paths remain unchanged and at least as fast.\n- [hard] Committed Lean4 proofs still build (`cd proofs && lake build`) for kernels touching `gfp/`; the full extraction pipeline regression is tracked separately by `cd356d0b`.\n- [hard] No MSRV bump without explicit user approval — C3 IFMA52 sub-task opens only on demonstrated need.\n\n## User-approved closure amendment\n\nPer user decision during parent closure, accept committed `cd proofs && lake build` evidence for this story and track restoration of the full `./scripts/verify-lean.sh` Charon -> Aeneas -> Lake extraction pipeline in `cd356d0b`. The lead attempted the full script after fixing a Rust `verify_lean` cfg compile regression in `gfpn::batch`; the script then reached Aeneas/Lake and failed on generated delayed product-sum `FiniteField` projections (`mul_product_sum_wide` / `reduce_product_sum_wide`). The committed Lean sources build successfully after restoring failed generated artifacts.\n\nThe C3 standalone `dev/benchmarks/cad241e6-criterion.txt` capture was an intermediate rework note, not the final criterion gate basis; the final C3 gate passed against the manifest leaf `fp_general_64bit_batch_mul_simd` and review accepted the unchanged Mersenne/Fermat and AoS paths. C4 (`3168d114`) remains represented in the graph as an upstream dependency of C5, which is why `jit dep add 2c866544 3168d114` reports it as already reachable and skips the redundant edge.\n\n## Notes\n\nBench targets: `gf2m_mul_strategies`, `gf2m_wide_mul`, `fp_specialized`, `fieldvec_dot_product`, `field_matrix_fusion`, `field_matrix_gemm`. Spec doc: `dev/plans/gf2_core_ppc_spiral.md`.",
-  "state": "ready",
+  "state": "done",
   "priority": "normal",
   "assignee": null,
   "dependencies": [
@@ -16,15 +16,15 @@
     "cargo-ci"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-29T18:50:55.631918310Z"
-    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-04-29T18:50:49.268931100Z"
+      "updated_at": "2026-04-29T19:30:46.463302363Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-29T19:34:26.243974922Z"
     }
   },
   "context": {},
@@ -37,5 +37,5 @@
     "story:ppc-field-batch"
   ],
   "created_at": "2026-04-25T15:15:46.068240191+00:00",
-  "updated_at": "2026-04-29T19:20:14.542964879+00:00"
+  "updated_at": "2026-04-29T19:43:00.767485119+00:00"
 }
