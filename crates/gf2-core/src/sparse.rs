@@ -40,7 +40,7 @@ use gf2_kernels_simd::prefetch_read_l1;
 use std::fmt;
 
 const DEFAULT_BLOCK_ROWS: usize = 32;
-const DEFAULT_PREFETCH_DISTANCE: usize = 16;
+const DEFAULT_PREFETCH_DISTANCE: usize = 0;
 
 /// A row-major sparse matrix in Compressed Sparse Row (CSR) format over GF(2).
 ///
@@ -86,7 +86,7 @@ pub struct SpBitMatrix {
 /// Rows are partitioned into fixed-size blocks. Each block stores row offsets
 /// relative to the block's first nonzero and keeps the column stream contiguous
 /// within each block. Matvec therefore keeps the public GF(2) API clean while
-/// the hot loop avoids per-edge bounds checks and issues best-effort L1
+/// the hot loop avoids per-edge bounds checks and can issue best-effort L1
 /// software prefetches for future input-vector words.
 ///
 /// # Complexity
@@ -191,8 +191,8 @@ impl SpBitMatrixBlockCsr {
         self.block_rows
     }
 
-    /// Matrix-vector product y = A · x over GF(2) using the default prefetch
-    /// lookahead.
+    /// Matrix-vector product y = A · x over GF(2) using the default block-CSR
+    /// schedule.
     ///
     /// # Panics
     ///
@@ -200,9 +200,11 @@ impl SpBitMatrixBlockCsr {
     ///
     /// # Complexity
     ///
-    /// O(rows + nnz). The gather stream issues best-effort L1 prefetch hints
-    /// ahead of the current edge on targets supported by `gf2-kernels-simd`;
-    /// unsupported targets compile the hint to a no-op.
+    /// O(rows + nnz). The default schedule uses block-local row metadata and
+    /// direct word-level gathers without software prefetch. Call
+    /// [`matvec_with_prefetch_distance`](Self::matvec_with_prefetch_distance)
+    /// with a nonzero distance to additionally issue best-effort L1 prefetch
+    /// hints on targets supported by `gf2-kernels-simd`.
     #[inline]
     pub fn matvec(&self, x: &BitVec) -> BitVec {
         self.matvec_with_prefetch_distance(x, DEFAULT_PREFETCH_DISTANCE)

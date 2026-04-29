@@ -5,6 +5,11 @@ Host command prefix:
   cd /home/vkaskivuo/Projects/gf2/.claude/worktrees/agent-f1a896f0 &&
   CARGO_TARGET_DIR=target/agent-f1a896f0 RUSTFLAGS='-C target-cpu=native'
 
+Host/toolchain:
+  Host: Linux fraktaali 6.19.11-arch1-1 x86_64
+  rustc: 1.95.0 (59807616e 2026-04-14), LLVM 22.1.2
+  cargo: 1.95.0 (f2d3ce0bd 2026-03-21)
+
 Baseline before implementation:
   cargo bench -p gf2-core --bench sparse --features rand -- \
     sparse_matvec/density_0.01/1000 --warm-up-time 1 --measurement-time 2 --sample-size 10
@@ -12,34 +17,42 @@ Baseline before implementation:
   sparse_matvec/density_0.01/1000
     time: [6.1548 µs 6.1738 µs 6.1931 µs]
 
-Post-change LDPC block-CSR comparison:
+Rework Criterion command:
   cargo bench -p gf2-core --bench sparse --features rand -- \
     sparse_matvec_ldpc_block_csr --warm-up-time 1 --measurement-time 2 --sample-size 10
 
+Rework note:
+  The benchmark now calls `matvec_with_prefetch_distance(x, 16)` explicitly for
+  `block_csr_prefetch`. The public block-CSR `matvec()` default was changed to
+  no software prefetch because all measured prefetch distances hurt wall time on
+  this LDPC-sized fixture.
+
+Post-rework LDPC block-CSR comparison:
   sparse_matvec_ldpc_block_csr/csr/4096x8192_w6
-    time: [20.740 µs 20.773 µs 20.814 µs]
+    time: [18.382 µs 19.528 µs 20.311 µs]
   sparse_matvec_ldpc_block_csr/block_csr_prefetch/4096x8192_w6
-    time: [26.807 µs 26.847 µs 26.915 µs]
+    time: [24.391 µs 24.400 µs 24.410 µs]
   sparse_matvec_ldpc_block_csr/block_csr_no_prefetch/4096x8192_w6
-    time: [20.061 µs 20.067 µs 20.071 µs]
+    time: [19.893 µs 19.902 µs 19.918 µs]
 
   sparse_matvec_ldpc_block_csr/csr/8192x16384_w6
-    time: [35.160 µs 35.188 µs 35.229 µs]
+    time: [34.309 µs 35.393 µs 36.993 µs]
   sparse_matvec_ldpc_block_csr/block_csr_prefetch/8192x16384_w6
-    time: [53.781 µs 53.803 µs 53.827 µs]
+    time: [48.869 µs 48.897 µs 48.930 µs]
   sparse_matvec_ldpc_block_csr/block_csr_no_prefetch/8192x16384_w6
-    time: [40.335 µs 40.342 µs 40.353 µs]
+    time: [40.224 µs 40.231 µs 40.242 µs]
 
   sparse_matvec_ldpc_block_csr/csr/4096x32768_w32
-    time: [73.832 µs 73.858 µs 73.884 µs]
+    time: [73.771 µs 73.800 µs 73.855 µs]
   sparse_matvec_ldpc_block_csr/block_csr_prefetch/4096x32768_w32
-    time: [118.02 µs 118.04 µs 118.06 µs]
+    time: [117.46 µs 117.54 µs 117.63 µs]
   sparse_matvec_ldpc_block_csr/block_csr_no_prefetch/4096x32768_w32
-    time: [79.682 µs 79.775 µs 79.894 µs]
+    time: [79.759 µs 79.773 µs 79.790 µs]
 
-Notes:
-  * The opt-in no-prefetch block layout is competitive on row_weight=6 and
-    improved the 4096-row case slightly in this run.
+Interpretation:
+  * CSR remains faster on the measured LDPC-sized fixtures.
+  * The no-prefetch block layout is close on 4096x8192_w6 but is still slower
+    than CSR in this rework run.
   * Software prefetch instructions are emitted (see crates/gf2-core/src/sparse.asm.txt)
-    but are not a wall-time win on this host/fixture; the intrinsic and future-index
-    loads cost more than they hide for these row weights.
+    and prefetch improves block-CSR L1d miss rate versus no-prefetch in the
+    fixed-iteration harness, but it consistently hurts wall time.
