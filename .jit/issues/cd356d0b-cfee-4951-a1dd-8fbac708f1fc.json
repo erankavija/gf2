@@ -2,9 +2,9 @@
   "id": "cd356d0b-cfee-4951-a1dd-8fbac708f1fc",
   "title": "Fix verify-lean extraction after field delayed product-sum hooks",
   "description": "`./scripts/verify-lean.sh` currently reaches Charon/Aeneas after the field-batch work, but the generated Lean build fails around `mul_product_sum_wide` / `reduce_product_sum_wide` projections for `FiniteField` implementations. `cd proofs && lake build` passes on the committed Lean sources after restoring failed generated artifacts, so this is a full extraction/post-processing regression rather than a committed-proof build failure.\n\n## Background\n\nThe field-batch parent `2c866544` and C3 `86c09a51` touched `gfp/` and field delayed-reduction hooks. A parent-story review required full `./scripts/verify-lean.sh` evidence. The lead fixed a Rust `verify_lean` cfg compile regression in `gfpn::batch`, after which the script reached Aeneas/Lake but failed on generated Lean projection errors involving the new delayed product-sum trait methods.\n\nPer user decision, the field-batch parent may close using committed `cd proofs && lake build` evidence, while this issue tracks restoring the full Charon -> Aeneas -> Lake extraction pipeline.\n\n## Success Criteria\n\n- [hard] `./scripts/verify-lean.sh` passes from repository root on current mainline.\n- [hard] The fix keeps exercising intended production `gfp/` and `gfpn/` arithmetic; do not hide relevant field arithmetic behind broad opaque/exclude rules just to make extraction pass.\n- [hard] Any Aeneas/Charon compatibility workaround is narrowly scoped and documented in `scripts/verify-lean.sh` and/or `proofs/WORKAROUNDS.md`.\n- [hard] `cd proofs && lake build` still passes.\n- [hard] `cargo nextest run -p gf2-core --all-features --release --profile ci` passes.\n- [hard] `cargo clippy -p gf2-core --all-targets --all-features -- -D warnings` passes.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude-wt-cd356d0b",
   "dependencies": [],
   "gates_required": [
     "cargo-ci",
@@ -21,5 +21,5 @@
     "story:ppc-verification"
   ],
   "created_at": "2026-04-29T19:19:34.337468476+00:00",
-  "updated_at": "2026-04-29T19:19:34.337474826+00:00"
+  "updated_at": "2026-04-29T19:43:45.369661129+00:00"
 }
