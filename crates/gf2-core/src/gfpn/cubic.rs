@@ -721,6 +721,11 @@ impl<C: ExtConfig> FiniteField for CubicExt<C> {
         (*self * *rhs).to_wide()
     }
 
+    #[inline]
+    fn mul_product_sum_wide(&self, rhs: &Self) -> Self::Wide {
+        self.mul_to_wide(rhs)
+    }
+
     /// Reduces a wide accumulator component-wise via the base field's
     /// [`FiniteField::reduce_wide`].
     #[inline]
@@ -730,6 +735,11 @@ impl<C: ExtConfig> FiniteField for CubicExt<C> {
             C::BaseField::reduce_wide(&wide.c1),
             C::BaseField::reduce_wide(&wide.c2),
         )
+    }
+
+    #[inline]
+    fn reduce_product_sum_wide(wide: &Self::Wide) -> Self {
+        Self::reduce_wide(wide)
     }
 
     /// Delegates to the base field. Because each tower coefficient accumulates
@@ -1158,6 +1168,40 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn test_product_sum_hooks_match_canonical_wide_path() {
+        let pairs = [
+            (
+                Fq3::new(Fp::new(1), Fp::new(2), Fp::new(3)),
+                Fq3::new(Fp::new(4), Fp::new(5), Fp::new(6)),
+            ),
+            (
+                Fq3::new(Fp::new(6), Fp::new(0), Fp::new(2)),
+                Fq3::new(Fp::new(3), Fp::new(1), Fp::new(4)),
+            ),
+        ];
+
+        let mut product_sum = <Fq3 as FiniteField>::Wide::default();
+        let mut canonical_sum = <Fq3 as FiniteField>::Wide::default();
+        let mut expected = Fq3::zero();
+
+        for (a, b) in pairs {
+            product_sum += a.mul_product_sum_wide(&b);
+            canonical_sum += a.mul_to_wide(&b);
+            expected += a * b;
+        }
+
+        assert_eq!(product_sum, canonical_sum);
+        assert_eq!(
+            <Fq3 as FiniteField>::reduce_product_sum_wide(&product_sum),
+            <Fq3 as FiniteField>::reduce_wide(&canonical_sum)
+        );
+        assert_eq!(
+            <Fq3 as FiniteField>::reduce_product_sum_wide(&product_sum),
+            expected
+        );
     }
 
     /// Dot-product accumulation over random cases.

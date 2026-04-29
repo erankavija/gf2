@@ -261,8 +261,26 @@ axiom field.traits.FiniteField.cardinality_log2_hint.default
   Clause0_Wide) :
   Result (Option Std.U32)
 
+/-- [gf2_core::field::traits::FiniteField::mul_product_sum_wide]:
+    Source: 'crates/gf2-core/src/field/traits.rs', lines 270:4-272:5
+    Visibility: public -/
+axiom field.traits.FiniteField.mul_product_sum_wide.default
+  {Self : Type} {Clause0_Characteristic : Type} {Clause0_Wide : Type}
+  (FiniteFieldInst : field.traits.FiniteField Self Clause0_Characteristic
+  Clause0_Wide) :
+  Self → Self → Result Clause0_Wide
+
+/-- [gf2_core::field::traits::FiniteField::reduce_product_sum_wide]:
+    Source: 'crates/gf2-core/src/field/traits.rs', lines 320:4-322:5
+    Visibility: public -/
+axiom field.traits.FiniteField.reduce_product_sum_wide.default
+  {Self : Type} {Clause0_Characteristic : Type} {Clause0_Wide : Type}
+  (FiniteFieldInst : field.traits.FiniteField Self Clause0_Characteristic
+  Clause0_Wide) :
+  Clause0_Wide → Result Self
+
 /-- [gf2_core::field::traits::FiniteField::theorem_4_operand_bound]:
-    Source: 'crates/gf2-core/src/field/traits.rs', lines 364:4-366:5
+    Source: 'crates/gf2-core/src/field/traits.rs', lines 425:4-427:5
     Visibility: public -/
 axiom field.traits.FiniteField.theorem_4_operand_bound.default
   {Self : Type} {Clause0_Characteristic : Type} {Clause0_Wide : Type}
@@ -271,7 +289,7 @@ axiom field.traits.FiniteField.theorem_4_operand_bound.default
   Result Std.U128
 
 /-- [gf2_core::field::traits::FiniteField::WINOGRAD_THRESHOLD]
-    Source: 'crates/gf2-core/src/field/traits.rs', lines 386:4-386:42
+    Source: 'crates/gf2-core/src/field/traits.rs', lines 447:4-447:42
     Visibility: public -/
 @[trait_default]
 axiom field.traits.FiniteField.WINOGRAD_THRESHOLD.default {Self : Type}
@@ -280,7 +298,7 @@ axiom field.traits.FiniteField.WINOGRAD_THRESHOLD.default {Self : Type}
   : Result Std.Usize
 
 /-- [gf2_core::field::traits::FiniteField::TRI_BASE_THRESHOLD]
-    Source: 'crates/gf2-core/src/field/traits.rs', lines 406:4-406:41
+    Source: 'crates/gf2-core/src/field/traits.rs', lines 467:4-467:41
     Visibility: public -/
 @[trait_default]
 axiom field.traits.FiniteField.TRI_BASE_THRESHOLD.default {Self : Type}
@@ -306,7 +324,7 @@ axiom gfpn.cubic.CubicExt.Insts.CoreCmpEq.assert_receiver_is_total_eq
   gfpn.cubic.CubicExt ext_configExtConfigInst → Result Unit
 
 /-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::theorem_4_operand_bound]:
-    Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 633:0-741:1
+    Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 633:0-751:1
     Visibility: public -/
 axiom
   gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicCubicExtWide.theorem_4_operand_bound
@@ -335,7 +353,7 @@ axiom gfpn.quadratic.QuadraticExt.Insts.CoreCmpEq.assert_receiver_is_total_eq
   gfpn.quadratic.QuadraticExt ext_configExtConfigInst → Result Unit
 
 /-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::theorem_4_operand_bound]:
-    Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 582:0-686:1
+    Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 582:0-696:1
     Visibility: public -/
 axiom
   gfpn.quadratic.QuadraticExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.theorem_4_operand_bound

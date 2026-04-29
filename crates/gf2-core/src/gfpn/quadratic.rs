@@ -667,6 +667,11 @@ impl<C: ExtConfig> FiniteField for QuadraticExt<C> {
         (*self * *rhs).to_wide()
     }
 
+    #[inline]
+    fn mul_product_sum_wide(&self, rhs: &Self) -> Self::Wide {
+        self.mul_to_wide(rhs)
+    }
+
     /// Reduces a wide accumulator component-wise via the base field's
     /// [`FiniteField::reduce_wide`].
     #[inline]
@@ -675,6 +680,11 @@ impl<C: ExtConfig> FiniteField for QuadraticExt<C> {
             C::BaseField::reduce_wide(&wide.c0),
             C::BaseField::reduce_wide(&wide.c1),
         )
+    }
+
+    #[inline]
+    fn reduce_product_sum_wide(wide: &Self::Wide) -> Self {
+        Self::reduce_wide(wide)
     }
 
     /// Delegates to the base field: because each tower component accumulates
@@ -1076,6 +1086,40 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn test_product_sum_hooks_match_canonical_wide_path() {
+        let pairs = [
+            (
+                Fq2::new(Fp::new(1), Fp::new(2)),
+                Fq2::new(Fp::new(3), Fp::new(4)),
+            ),
+            (
+                Fq2::new(Fp::new(5), Fp::new(6)),
+                Fq2::new(Fp::new(2), Fp::new(1)),
+            ),
+        ];
+
+        let mut product_sum = <Fq2 as FiniteField>::Wide::default();
+        let mut canonical_sum = <Fq2 as FiniteField>::Wide::default();
+        let mut expected = Fq2::zero();
+
+        for (a, b) in pairs {
+            product_sum += a.mul_product_sum_wide(&b);
+            canonical_sum += a.mul_to_wide(&b);
+            expected += a * b;
+        }
+
+        assert_eq!(product_sum, canonical_sum);
+        assert_eq!(
+            <Fq2 as FiniteField>::reduce_product_sum_wide(&product_sum),
+            <Fq2 as FiniteField>::reduce_wide(&canonical_sum)
+        );
+        assert_eq!(
+            <Fq2 as FiniteField>::reduce_product_sum_wide(&product_sum),
+            expected
+        );
     }
 
     /// Dot-product accumulation: N products summed in wide, reduced once,

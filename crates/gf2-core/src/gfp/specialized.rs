@@ -1065,8 +1065,18 @@ impl FiniteField for GoldilocksFp {
     }
 
     #[inline]
+    fn mul_product_sum_wide(&self, rhs: &Self) -> u128 {
+        self.mul_to_wide(rhs)
+    }
+
+    #[inline]
     fn reduce_wide(wide: &u128) -> Self {
         Self(goldilocks_reduce_fast(*wide))
+    }
+
+    #[inline]
+    fn reduce_product_sum_wide(wide: &u128) -> Self {
+        Self::reduce_wide(wide)
     }
 
     fn max_unreduced_additions() -> usize {
@@ -1271,6 +1281,23 @@ mod tests {
         let b = GoldilocksFp::new(987654321);
         let expected = (123456789u128 * 987654321u128 % GoldilocksFp::PRIME as u128) as u64;
         assert_eq!((a * b).value(), expected);
+    }
+
+    #[test]
+    fn goldilocks_product_sum_hooks_match_canonical_wide_path() {
+        let a = GoldilocksFp::new(123456789);
+        let b = GoldilocksFp::new(987654321);
+        let c = GoldilocksFp::new(42);
+        let d = GoldilocksFp::new(314159);
+
+        let product_sum = a.mul_product_sum_wide(&b) + c.mul_product_sum_wide(&d);
+        let canonical_sum = a.mul_to_wide(&b) + c.mul_to_wide(&d);
+
+        assert_eq!(product_sum, canonical_sum);
+        assert_eq!(
+            GoldilocksFp::reduce_product_sum_wide(&product_sum),
+            GoldilocksFp::reduce_wide(&canonical_sum)
+        );
     }
 
     #[test]
