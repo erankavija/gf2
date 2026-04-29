@@ -62,6 +62,7 @@
 
 pub mod backend;
 pub mod cpu;
+pub mod field;
 
 #[cfg(test)]
 mod batch_tests;
