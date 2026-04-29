@@ -2,9 +2,9 @@
   "id": "211102c6-d6ad-4a3c-b497-534165902c43",
   "title": "Dense bit-matrix SIMD kernels",
   "description": "New SIMD kernels for dense bit-matrix operations. Each kernel adds a `maybe_<op>()` accessor to `gf2_core::simd` and an unsafe AVX2 implementation in `gf2-kernels-simd/src/x86/`, following the established `OnceLock` dispatch pattern.\n\n## Background\n\nThree dense bit-matrix kernels lack any SIMD path. (1) `BitMatrix::transpose` is currently a naive $O(n^2)$ bit-by-bit double loop and is the heaviest hitter — many downstream operations transpose first. (2) M4RM Gray-code table construction has a long dependent XOR chain that breaks ILP. (3) M4RM block multiply does no register tiling, which leaves cycles on the table for any matrix that fits in L1.\n\nThis story has three child tasks: B1 transpose (PSHUFB-based 8×8 byte tiles within YMM, target $\\geq 10\\times$ on $n=4096$), B2 Gray-table build (V2 ILP + V3 SIMD batched XOR + V6 prefetch), B3 block multiply (V4 register tile + V5 reuse 32-row tile + V6 prefetch). B3 reuses the transpose primitive added in B1.\n\n## Success Criteria\n\n- [hard] Each child task ships per the per-kernel execution protocol from the epic spec doc.\n- [hard] No `unsafe` outside `gf2-kernels-simd`.\n- [hard] No regression at small sizes below each kernel's crossover threshold.\n\n## Notes\n\nBench targets: existing `matmul`, `m4rm_components`, `m4rm_profile`. B1 adds a new `transpose` bench targeting $n \\in \\{64, 256, 1024, 4096\\}$ before any other edit. Spec doc: `dev/plans/gf2_core_ppc_spiral.md`.",
-  "state": "ready",
+  "state": "done",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:project-lead",
   "dependencies": [
     "19bc3199-e140-405f-9d16-d7722d7b7927",
     "54a0e75c-0d45-4dbc-b895-a0f6674fa331"
@@ -13,7 +13,18 @@
     "code-review",
     "cargo-ci"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-29T09:15:34.012872049Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-29T09:18:49.358863468Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -24,5 +35,5 @@
     "story:ppc-dense-bitmatrix"
   ],
   "created_at": "2026-04-25T15:15:32.306300293+00:00",
-  "updated_at": "2026-04-29T09:00:14.435088156+00:00"
+  "updated_at": "2026-04-29T09:28:52.691515442+00:00"
 }
