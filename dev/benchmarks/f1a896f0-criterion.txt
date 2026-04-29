@@ -1,0 +1,45 @@
+f1a896f0 sparse block-CSR Criterion evidence
+=============================================
+
+Host command prefix:
+  cd /home/vkaskivuo/Projects/gf2/.claude/worktrees/agent-f1a896f0 &&
+  CARGO_TARGET_DIR=target/agent-f1a896f0 RUSTFLAGS='-C target-cpu=native'
+
+Baseline before implementation:
+  cargo bench -p gf2-core --bench sparse --features rand -- \
+    sparse_matvec/density_0.01/1000 --warm-up-time 1 --measurement-time 2 --sample-size 10
+
+  sparse_matvec/density_0.01/1000
+    time: [6.1548 µs 6.1738 µs 6.1931 µs]
+
+Post-change LDPC block-CSR comparison:
+  cargo bench -p gf2-core --bench sparse --features rand -- \
+    sparse_matvec_ldpc_block_csr --warm-up-time 1 --measurement-time 2 --sample-size 10
+
+  sparse_matvec_ldpc_block_csr/csr/4096x8192_w6
+    time: [20.740 µs 20.773 µs 20.814 µs]
+  sparse_matvec_ldpc_block_csr/block_csr_prefetch/4096x8192_w6
+    time: [26.807 µs 26.847 µs 26.915 µs]
+  sparse_matvec_ldpc_block_csr/block_csr_no_prefetch/4096x8192_w6
+    time: [20.061 µs 20.067 µs 20.071 µs]
+
+  sparse_matvec_ldpc_block_csr/csr/8192x16384_w6
+    time: [35.160 µs 35.188 µs 35.229 µs]
+  sparse_matvec_ldpc_block_csr/block_csr_prefetch/8192x16384_w6
+    time: [53.781 µs 53.803 µs 53.827 µs]
+  sparse_matvec_ldpc_block_csr/block_csr_no_prefetch/8192x16384_w6
+    time: [40.335 µs 40.342 µs 40.353 µs]
+
+  sparse_matvec_ldpc_block_csr/csr/4096x32768_w32
+    time: [73.832 µs 73.858 µs 73.884 µs]
+  sparse_matvec_ldpc_block_csr/block_csr_prefetch/4096x32768_w32
+    time: [118.02 µs 118.04 µs 118.06 µs]
+  sparse_matvec_ldpc_block_csr/block_csr_no_prefetch/4096x32768_w32
+    time: [79.682 µs 79.775 µs 79.894 µs]
+
+Notes:
+  * The opt-in no-prefetch block layout is competitive on row_weight=6 and
+    improved the 4096-row case slightly in this run.
+  * Software prefetch instructions are emitted (see crates/gf2-core/src/sparse.asm.txt)
+    but are not a wall-time win on this host/fixture; the intrinsic and future-index
+    loads cost more than they hide for these row weights.

@@ -1,4 +1,4 @@
-use gf2_core::sparse::SpBitMatrix;
+use gf2_core::sparse::{block_csr_from_csr, SpBitMatrix};
 use gf2_core::{matrix::BitMatrix, BitVec};
 
 #[test]
@@ -66,6 +66,61 @@ fn test_sparse_matvec() {
     assert!(y.get(1));
     // Row 2: x2 = 1
     assert!(y.get(2));
+}
+
+#[test]
+fn test_block_csr_matvec_matches_csr_word_boundaries() {
+    let cols_cases = [0usize, 1, 63, 64, 65, 127, 128, 129];
+    let block_cases = [1usize, 2, 3, 8];
+
+    for &cols in &cols_cases {
+        let rows = 7;
+        let mut entries = Vec::new();
+        for r in 0..rows {
+            for &c in &[0usize, 1, 62, 63, 64, 65, 126, 127, 128] {
+                if c < cols && (r + c).count_ones() % 2 == 0 {
+                    entries.push((r, c));
+                }
+            }
+        }
+
+        let csr = SpBitMatrix::from_coo(rows, cols, &entries);
+        let mut x = BitVec::with_capacity(cols);
+        for i in 0..cols {
+            x.push_bit((i % 3) == 1 || i == 63 || i == 64 || i == 128);
+        }
+
+        let expected = csr.matvec(&x);
+        for &block_rows in &block_cases {
+            let blocked = block_csr_from_csr(&csr, block_rows);
+            assert_eq!(blocked.rows(), csr.rows());
+            assert_eq!(blocked.cols(), csr.cols());
+            assert_eq!(blocked.nnz(), csr.nnz());
+            assert_eq!(
+                blocked.matvec(&x),
+                expected,
+                "cols={cols} block_rows={block_rows}"
+            );
+            assert_eq!(
+                blocked.matvec_with_prefetch_distance(&x, 0),
+                expected,
+                "no-prefetch cols={cols} block_rows={block_rows}"
+            );
+        }
+    }
+}
+
+#[test]
+fn test_block_csr_transformer_handles_empty_rows_and_tail_block() {
+    let csr = SpBitMatrix::from_coo(6, 130, &[(0, 0), (0, 64), (3, 129), (5, 63)]);
+    let blocked = csr.to_block_csr(4);
+    let mut x = BitVec::with_capacity(130);
+    for i in 0..130 {
+        x.push_bit(matches!(i, 0 | 63 | 64 | 129));
+    }
+
+    assert_eq!(blocked.block_rows(), 4);
+    assert_eq!(blocked.matvec(&x), csr.matvec(&x));
 }
 
 // ============================================================================

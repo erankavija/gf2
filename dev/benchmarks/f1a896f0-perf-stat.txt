@@ -1,0 +1,55 @@
+f1a896f0 sparse block-CSR perf stat evidence
+============================================
+
+Binary:
+  target/agent-f1a896f0/release/deps/sparse-6a327f0e9389e1aa
+
+Counters:
+  perf stat -r 10 -e L1-dcache-loads,L1-dcache-load-misses
+
+CSR path:
+  Command:
+    perf stat -r 10 -e L1-dcache-loads,L1-dcache-load-misses \
+      target/agent-f1a896f0/release/deps/sparse-6a327f0e9389e1aa \
+      sparse_matvec_ldpc_block_csr/csr/8192x16384_w6 --bench \
+      --warm-up-time 1 --measurement-time 1 --sample-size 10
+
+  Performance counter stats (10 runs):
+    49,144,046,869 L1-dcache-loads:u        (+- 1.09%)
+     1,190,346,318 L1-dcache-load-misses:u  (+- 1.04%)
+     4.700320348 +- 0.042093313 seconds time elapsed (+- 0.90%)
+
+Block CSR, prefetch enabled:
+  Command:
+    perf stat -r 10 -e L1-dcache-loads,L1-dcache-load-misses \
+      target/agent-f1a896f0/release/deps/sparse-6a327f0e9389e1aa \
+      sparse_matvec_ldpc_block_csr/block_csr_prefetch/8192x16384_w6 --bench \
+      --warm-up-time 1 --measurement-time 1 --sample-size 10
+
+  Performance counter stats (10 runs):
+    36,059,754,787 L1-dcache-loads:u        (+- 1.41%)
+     1,030,815,542 L1-dcache-load-misses:u  (+- 1.10%)
+     5.135686744 +- 0.023812433 seconds time elapsed (+- 0.46%)
+
+Block CSR, prefetch disabled:
+  Command:
+    perf stat -r 10 -e L1-dcache-loads,L1-dcache-load-misses \
+      target/agent-f1a896f0/release/deps/sparse-6a327f0e9389e1aa \
+      sparse_matvec_ldpc_block_csr/block_csr_no_prefetch/8192x16384_w6 --bench \
+      --warm-up-time 1 --measurement-time 1 --sample-size 10
+
+  Performance counter stats (10 runs):
+    36,257,550,115 L1-dcache-loads:u        (+- 1.35%)
+     1,132,460,908 L1-dcache-load-misses:u  (+- 1.04%)
+     4.811020776 +- 0.007846995 seconds time elapsed (+- 0.16%)
+
+Interpretation:
+  * Prefetch-enabled block CSR reduced absolute L1-dcache-load-misses versus CSR
+    in this Criterion-filtered perf run: 1.1903e9 -> 1.0308e9 (-13.4%).
+  * The miss rate versus CSR did not improve because total retired L1 loads also
+    changed under Criterion's adaptive iteration counts:
+      CSR:      1.1903e9 / 49.1440e9 = 2.42%
+      prefetch: 1.0308e9 / 36.0598e9 = 2.86%
+  * Prefetch did reduce misses relative to the same block layout without prefetch:
+      no-prefetch: 1.1325e9 / 36.2576e9 = 3.12%
+      prefetch:    1.0308e9 / 36.0598e9 = 2.86%

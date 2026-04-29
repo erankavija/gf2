@@ -36,7 +36,11 @@
 //! ```
 
 use crate::{matrix::BitMatrix, BitVec};
+use gf2_kernels_simd::prefetch_read_l1;
 use std::fmt;
+
+const DEFAULT_BLOCK_ROWS: usize = 32;
+const DEFAULT_PREFETCH_DISTANCE: usize = 16;
 
 /// A row-major sparse matrix in Compressed Sparse Row (CSR) format over GF(2).
 ///
@@ -69,6 +73,182 @@ pub struct SpBitMatrix {
     cols: usize,
     indptr: Vec<usize>,
     indices: Vec<usize>,
+}
+
+/// A row-blocked CSR representation for repeated sparse GF(2) matvecs.
+///
+/// `SpBitMatrix` keeps the classic scalar CSR path unchanged. Convert explicitly
+/// with [`block_csr_from_csr`] or [`SpBitMatrix::to_block_csr`] when an LDPC-style
+/// workload repeatedly multiplies the same sparse matrix by dense bit vectors.
+///
+/// # Storage layout
+///
+/// Rows are partitioned into fixed-size blocks. Each block stores row offsets
+/// relative to the block's first nonzero and keeps the column stream contiguous
+/// within each block. Matvec therefore keeps the public GF(2) API clean while
+/// the hot loop avoids per-edge bounds checks and issues best-effort L1
+/// software prefetches for future input-vector words.
+///
+/// # Complexity
+///
+/// Construction is O(rows + nnz). Matvec is O(rows + nnz) and preserves the same
+/// little-endian bit numbering and tail masking invariants as [`BitVec`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SpBitMatrixBlockCsr {
+    rows: usize,
+    cols: usize,
+    block_rows: usize,
+    block_ptr: Vec<usize>,
+    block_nnz_ptr: Vec<usize>,
+    row_offsets: Vec<usize>,
+    indices: Vec<usize>,
+}
+
+/// Converts a classic CSR sparse matrix into the opt-in block-CSR layout.
+///
+/// The existing [`SpBitMatrix::matvec`] path is intentionally not changed by
+/// this transformer; callers choose the blocked representation explicitly.
+///
+/// # Panics
+///
+/// Panics if `block_rows == 0`.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::sparse::{block_csr_from_csr, SpBitMatrix};
+/// use gf2_core::BitVec;
+///
+/// let a = SpBitMatrix::from_coo(2, 65, &[(0, 0), (0, 64), (1, 63)]);
+/// let blocked = block_csr_from_csr(&a, 2);
+/// let x = BitVec::ones(65);
+/// assert_eq!(blocked.matvec(&x), a.matvec(&x));
+/// ```
+///
+/// # Complexity
+///
+/// O(rows + nnz) time and O(rows + nnz) additional memory.
+pub fn block_csr_from_csr(csr: &SpBitMatrix, block_rows: usize) -> SpBitMatrixBlockCsr {
+    assert!(block_rows > 0, "block_rows must be non-zero");
+
+    let num_blocks = csr.rows.div_ceil(block_rows);
+    let mut block_ptr = Vec::with_capacity(num_blocks + 1);
+    let mut block_nnz_ptr = Vec::with_capacity(num_blocks + 1);
+    let mut row_offsets = Vec::with_capacity(csr.rows + num_blocks);
+    let mut indices = Vec::with_capacity(csr.nnz());
+
+    for block in 0..num_blocks {
+        let row_start = block * block_rows;
+        let row_end = (row_start + block_rows).min(csr.rows);
+        block_ptr.push(row_offsets.len());
+        block_nnz_ptr.push(indices.len());
+        row_offsets.push(0);
+
+        for row in row_start..row_end {
+            let start = csr.indptr[row];
+            let end = csr.indptr[row + 1];
+            indices.extend_from_slice(&csr.indices[start..end]);
+            row_offsets.push(indices.len() - block_nnz_ptr[block]);
+        }
+    }
+
+    block_ptr.push(row_offsets.len());
+    block_nnz_ptr.push(indices.len());
+
+    SpBitMatrixBlockCsr {
+        rows: csr.rows,
+        cols: csr.cols,
+        block_rows,
+        block_ptr,
+        block_nnz_ptr,
+        row_offsets,
+        indices,
+    }
+}
+
+impl SpBitMatrixBlockCsr {
+    /// Returns number of rows.
+    #[inline]
+    pub fn rows(&self) -> usize {
+        self.rows
+    }
+
+    /// Returns number of cols.
+    #[inline]
+    pub fn cols(&self) -> usize {
+        self.cols
+    }
+
+    /// Returns number of nonzeros.
+    #[inline]
+    pub fn nnz(&self) -> usize {
+        self.indices.len()
+    }
+
+    /// Returns the row-block height used by this layout.
+    #[inline]
+    pub fn block_rows(&self) -> usize {
+        self.block_rows
+    }
+
+    /// Matrix-vector product y = A · x over GF(2) using the default prefetch
+    /// lookahead.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `x.len() != self.cols()`.
+    ///
+    /// # Complexity
+    ///
+    /// O(rows + nnz). The gather stream issues best-effort L1 prefetch hints
+    /// ahead of the current edge on targets supported by `gf2-kernels-simd`;
+    /// unsupported targets compile the hint to a no-op.
+    #[inline]
+    pub fn matvec(&self, x: &BitVec) -> BitVec {
+        self.matvec_with_prefetch_distance(x, DEFAULT_PREFETCH_DISTANCE)
+    }
+
+    /// Matrix-vector product y = A · x with an explicit prefetch lookahead.
+    ///
+    /// `prefetch_distance` is counted in nonzero entries within a row. A distance
+    /// of zero disables software prefetch while retaining the block-CSR layout.
+    pub fn matvec_with_prefetch_distance(&self, x: &BitVec, prefetch_distance: usize) -> BitVec {
+        assert_eq!(x.len(), self.cols, "input BitVec length must equal cols");
+
+        let x_words = x.words();
+        let mut y = BitVec::with_capacity(self.rows);
+        let num_blocks = self.block_nnz_ptr.len() - 1;
+
+        for block in 0..num_blocks {
+            let row_base = block * self.block_rows;
+            let rows_in_block = (self.rows - row_base).min(self.block_rows);
+            let offset_start = self.block_ptr[block];
+            let nnz_base = self.block_nnz_ptr[block];
+            let offsets = &self.row_offsets[offset_start..offset_start + rows_in_block + 1];
+
+            for local_row in 0..rows_in_block {
+                let start = nnz_base + offsets[local_row];
+                let end = nnz_base + offsets[local_row + 1];
+                let mut acc = 0u64;
+
+                for edge in start..end {
+                    let future = edge + prefetch_distance;
+                    if prefetch_distance != 0 && future < end {
+                        let future_word = self.indices[future] >> 6;
+                        let ptr = x_words.as_ptr().wrapping_add(future_word).cast::<u8>();
+                        prefetch_read_l1(ptr);
+                    }
+
+                    let col = self.indices[edge];
+                    acc ^= ((x_words[col >> 6] & (1u64 << (col & 63))) != 0) as u64;
+                }
+
+                y.push_bit((acc & 1) != 0);
+            }
+        }
+
+        y
+    }
 }
 
 impl SpBitMatrix {
@@ -360,6 +540,45 @@ impl SpBitMatrix {
     #[inline]
     pub fn nnz(&self) -> usize {
         self.indices.len()
+    }
+
+    /// Converts this CSR matrix to the opt-in block-CSR matvec layout.
+    ///
+    /// Existing callers of [`matvec`](Self::matvec) continue to use the classic
+    /// scalar CSR path. This method is for workloads that repeatedly multiply
+    /// the same sparse matrix and can amortize the O(rows + nnz) transformation.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `block_rows == 0`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::sparse::SpBitMatrix;
+    /// use gf2_core::BitVec;
+    ///
+    /// let a = SpBitMatrix::from_coo(2, 66, &[(0, 1), (0, 65), (1, 64)]);
+    /// let blocked = a.to_block_csr(2);
+    /// let x = BitVec::ones(66);
+    /// assert_eq!(blocked.matvec(&x), a.matvec(&x));
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(rows + nnz) time and memory.
+    #[inline]
+    pub fn to_block_csr(&self, block_rows: usize) -> SpBitMatrixBlockCsr {
+        block_csr_from_csr(self, block_rows)
+    }
+
+    /// Converts this CSR matrix to the default block-CSR matvec layout.
+    ///
+    /// Uses a 32-row block, which keeps per-block row metadata compact while
+    /// preserving row order for bit-exact parity with CSR.
+    #[inline]
+    pub fn to_default_block_csr(&self) -> SpBitMatrixBlockCsr {
+        self.to_block_csr(DEFAULT_BLOCK_ROWS)
     }
 
     /// Matrix-vector product y = A · x over GF(2).
