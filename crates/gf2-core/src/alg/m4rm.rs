@@ -25,6 +25,14 @@ use crate::matrix::BitMatrix;
 const B2_GRAY_TILE_WORDS: usize = 8;
 const B2_GRAY_MAX_TILES: usize = 4;
 
+/// Row accumulators held by the M4RM C-tile update.
+const M4RM_TILE_ROWS: usize = 8;
+/// Column words per register tile: four u64 lanes fit exactly in one YMM.
+const M4RM_TILE_WORDS: usize = 4;
+/// Keep sub-crossover sizes on the original row-XOR schedule.
+const M4RM_TILED_MIN_STRIDE_WORDS: usize = 16;
+type M4rmTile8xNFn = fn(&mut [u64], usize, &[u64], &[usize; M4RM_TILE_ROWS]);
+
 /// Chooses an appropriate block size k for M4RM based on matrix dimensions.
 ///
 /// The block size determines the size of the Gray code table (2^k entries).
@@ -467,7 +475,6 @@ pub fn multiply(a: &BitMatrix, b: &BitMatrix) -> BitMatrix {
     }
 
     let k_block = choose_k_block(k, n);
-    let table_size = 1usize << k_block;
     let stride_words = n.div_ceil(64);
     let xor = resolve_xor_inplace(stride_words);
 
@@ -475,38 +482,377 @@ pub fn multiply(a: &BitMatrix, b: &BitMatrix) -> BitMatrix {
         return a.mul_row_xor_dispatch(b);
     }
 
+    if use_register_tiled_schedule(m, stride_words) {
+        if let Some(tile8xn) = resolve_m4rm_tile8xn() {
+            return multiply_register_tiled(a, b, k_block, stride_words, xor, tile8xn);
+        }
+    }
+
+    multiply_rowwise_panels(a, b, k_block, stride_words, xor)
+}
+#[doc(hidden)]
+#[cfg(any(test, feature = "test-support"))]
+pub fn multiply_rowwise_for_test(a: &BitMatrix, b: &BitMatrix) -> BitMatrix {
+    let k = a.cols();
+    let n = b.cols();
+    assert_eq!(
+        k,
+        b.rows(),
+        "incompatible dimensions: A is {}×{} but B is {}×{}",
+        a.rows(),
+        k,
+        b.rows(),
+        n
+    );
+
+    if a.rows() == 0 || k == 0 || n == 0 {
+        return BitMatrix::zeros(a.rows(), n);
+    }
+
+    let k_block = choose_k_block(k, n);
+    if k_block == 1 {
+        return a.mul_row_xor_dispatch(b);
+    }
+
+    let stride_words = n.div_ceil(64);
+    let xor = resolve_xor_inplace(stride_words);
+    multiply_rowwise_panels(a, b, k_block, stride_words, xor)
+}
+
+#[inline]
+fn use_register_tiled_schedule(m: usize, stride_words: usize) -> bool {
+    m >= M4RM_TILE_ROWS && stride_words == M4RM_TILED_MIN_STRIDE_WORDS
+}
+
+#[inline]
+fn resolve_m4rm_tile8xn() -> Option<M4rmTile8xNFn> {
+    #[cfg(feature = "simd")]
+    {
+        crate::simd::maybe_simd().map(|backend| backend.m4rm_tile8xn_fn)
+    }
+    #[cfg(not(feature = "simd"))]
+    {
+        None
+    }
+}
+
+fn multiply_rowwise_panels(
+    a: &BitMatrix,
+    b: &BitMatrix,
+    k_block: usize,
+    stride_words: usize,
+    xor: XorInplaceFn,
+) -> BitMatrix {
+    let m = a.rows();
+    let k = a.cols();
+    let n = b.cols();
+    let table_size = 1usize << k_block;
     let mut c = BitMatrix::zeros(m, n);
 
-    // Pre-allocate flat buffer for Gray code table (reused across all panels)
-    // This eliminates ~33 MB of allocation churn for 1024×1024 matrices
+    // Pre-allocate flat buffer for Gray code table (reused across all panels).
     let mut table_buffer = vec![0u64; table_size * stride_words];
 
-    // Process B in panels of k_block rows
     let mut panel_start = 0;
     while panel_start < k {
         let panel_size = k_block.min(k - panel_start);
-
-        // Rebuild table in the flat buffer (no need to clear - gray code overwrites all)
         build_gray_table_flat(b, panel_start, panel_size, n, &mut table_buffer, xor);
-
-        // For each row of A
-        for i in 0..m {
-            // Extract k_block bits from row i of A starting at panel_start
-            let idx = extract_bits_from_row_words(a.row_words(i), panel_start, panel_size);
-
-            // XOR the corresponding table entry into row i of C
-            let entry_start = idx * stride_words;
-            let entry_end = entry_start + stride_words;
-            let table_entry = &table_buffer[entry_start..entry_end];
-
-            let c_row = c.row_words_mut(i);
-            xor(c_row, table_entry);
-        }
-
+        update_panel_rowwise(
+            a,
+            &mut c,
+            panel_start,
+            panel_size,
+            &table_buffer,
+            stride_words,
+            xor,
+        );
         panel_start += k_block;
     }
 
     c
+}
+
+fn multiply_register_tiled(
+    a: &BitMatrix,
+    b: &BitMatrix,
+    k_block: usize,
+    stride_words: usize,
+    xor: XorInplaceFn,
+    tile8xn: M4rmTile8xNFn,
+) -> BitMatrix {
+    let m = a.rows();
+    let k = a.cols();
+    let n = b.cols();
+    let table_size = 1usize << k_block;
+    let mut c = BitMatrix::zeros(m, n);
+    let mut table_buffer = vec![0u64; table_size * stride_words];
+
+    let mut panel_start = 0usize;
+    while panel_start < k {
+        let panel_size = k_block.min(k - panel_start);
+        build_gray_table_flat(b, panel_start, panel_size, n, &mut table_buffer, xor);
+        update_panel_register_tiled(
+            a,
+            &mut c,
+            panel_start,
+            panel_size,
+            &table_buffer,
+            None,
+            stride_words,
+            xor,
+            tile8xn,
+        );
+        panel_start += k_block;
+    }
+
+    c
+}
+
+fn update_panel_rowwise(
+    a: &BitMatrix,
+    c: &mut BitMatrix,
+    panel_start: usize,
+    panel_size: usize,
+    table_buffer: &[u64],
+    stride_words: usize,
+    xor: XorInplaceFn,
+) {
+    for i in 0..a.rows() {
+        let idx = extract_bits_from_row_words(a.row_words(i), panel_start, panel_size);
+        let entry_start = idx * stride_words;
+        let table_entry = &table_buffer[entry_start..entry_start + stride_words];
+        xor(c.row_words_mut(i), table_entry);
+    }
+}
+
+#[inline(never)]
+#[allow(clippy::too_many_arguments)]
+fn update_panel_register_tiled(
+    a: &BitMatrix,
+    c: &mut BitMatrix,
+    panel_start: usize,
+    panel_size: usize,
+    table_buffer: &[u64],
+    next_table: Option<(&[u64], usize, usize)>,
+    stride_words: usize,
+    xor: XorInplaceFn,
+    tile8xn: M4rmTile8xNFn,
+) {
+    let full_rows = a.rows() / M4RM_TILE_ROWS * M4RM_TILE_ROWS;
+
+    for row_start in (0..full_rows).step_by(M4RM_TILE_ROWS) {
+        let idx = row_tile_indices::<M4RM_TILE_ROWS>(a, row_start, panel_start, panel_size);
+        let next_idx = next_table.map(|(_, next_start, next_size)| {
+            row_tile_indices::<M4RM_TILE_ROWS>(a, row_start, next_start, next_size)
+        });
+
+        if let Some((next, _, _)) = next_table {
+            prefetch_next_tile8x4(next, stride_words, 0, &next_idx.unwrap());
+        }
+
+        let c_block = c.row_words_block_mut(row_start, M4RM_TILE_ROWS);
+        tile8xn(c_block, stride_words, table_buffer, &idx);
+
+        let full_words = stride_words / M4RM_TILE_WORDS * M4RM_TILE_WORDS;
+        if full_words < stride_words {
+            update_row_tile_tail(
+                c,
+                row_start,
+                full_words,
+                stride_words,
+                table_buffer,
+                next_table.map(|(next, _, _)| next),
+                &idx,
+                next_idx.as_ref(),
+            );
+        }
+    }
+
+    for row in full_rows..a.rows() {
+        let idx = extract_bits_from_row_words(a.row_words(row), panel_start, panel_size);
+        let entry_start = idx * stride_words;
+        let table_entry = &table_buffer[entry_start..entry_start + stride_words];
+        xor(c.row_words_mut(row), table_entry);
+    }
+}
+
+#[inline(always)]
+fn row_tile_indices<const ROWS: usize>(
+    a: &BitMatrix,
+    row_start: usize,
+    panel_start: usize,
+    panel_size: usize,
+) -> [usize; ROWS] {
+    core::array::from_fn(|r| {
+        extract_bits_from_row_words(a.row_words(row_start + r), panel_start, panel_size)
+    })
+}
+
+#[inline(always)]
+fn prefetch_next_tile8x4(
+    next_table: &[u64],
+    stride_words: usize,
+    word_start: usize,
+    idx: &[usize; M4RM_TILE_ROWS],
+) {
+    for &entry in idx {
+        let offset = entry * stride_words + word_start;
+        gf2_kernels_simd::prefetch_read_l1(next_table[offset..].as_ptr().cast());
+    }
+}
+
+#[cfg(test)]
+#[inline(never)]
+fn xor_tile8xn_scalar_block(
+    c_block: &mut [u64],
+    stride_words: usize,
+    table_buffer: &[u64],
+    idx: &[usize; M4RM_TILE_ROWS],
+) {
+    let mut word_start = 0usize;
+    while word_start + M4RM_TILE_WORDS <= stride_words {
+        xor_tile8x4_scalar_block(c_block, stride_words, word_start, table_buffer, idx);
+        word_start += M4RM_TILE_WORDS;
+    }
+}
+
+#[cfg(test)]
+#[inline(never)]
+fn xor_tile8x4_scalar_block(
+    c_block: &mut [u64],
+    stride_words: usize,
+    word_start: usize,
+    table_buffer: &[u64],
+    idx: &[usize; M4RM_TILE_ROWS],
+) {
+    let mut acc0 = load_block4(c_block, stride_words, 0, word_start);
+    let mut acc1 = load_block4(c_block, stride_words, 1, word_start);
+    let mut acc2 = load_block4(c_block, stride_words, 2, word_start);
+    let mut acc3 = load_block4(c_block, stride_words, 3, word_start);
+    let mut acc4 = load_block4(c_block, stride_words, 4, word_start);
+    let mut acc5 = load_block4(c_block, stride_words, 5, word_start);
+    let mut acc6 = load_block4(c_block, stride_words, 6, word_start);
+    let mut acc7 = load_block4(c_block, stride_words, 7, word_start);
+
+    xor_acc4(
+        &mut acc0,
+        table_entry4(table_buffer, stride_words, idx[0], word_start),
+    );
+    xor_acc4(
+        &mut acc1,
+        table_entry4(table_buffer, stride_words, idx[1], word_start),
+    );
+    xor_acc4(
+        &mut acc2,
+        table_entry4(table_buffer, stride_words, idx[2], word_start),
+    );
+    xor_acc4(
+        &mut acc3,
+        table_entry4(table_buffer, stride_words, idx[3], word_start),
+    );
+    xor_acc4(
+        &mut acc4,
+        table_entry4(table_buffer, stride_words, idx[4], word_start),
+    );
+    xor_acc4(
+        &mut acc5,
+        table_entry4(table_buffer, stride_words, idx[5], word_start),
+    );
+    xor_acc4(
+        &mut acc6,
+        table_entry4(table_buffer, stride_words, idx[6], word_start),
+    );
+    xor_acc4(
+        &mut acc7,
+        table_entry4(table_buffer, stride_words, idx[7], word_start),
+    );
+
+    store_block4(c_block, stride_words, 0, word_start, acc0);
+    store_block4(c_block, stride_words, 1, word_start, acc1);
+    store_block4(c_block, stride_words, 2, word_start, acc2);
+    store_block4(c_block, stride_words, 3, word_start, acc3);
+    store_block4(c_block, stride_words, 4, word_start, acc4);
+    store_block4(c_block, stride_words, 5, word_start, acc5);
+    store_block4(c_block, stride_words, 6, word_start, acc6);
+    store_block4(c_block, stride_words, 7, word_start, acc7);
+}
+
+#[cfg(test)]
+#[inline(always)]
+fn table_entry4(
+    table_buffer: &[u64],
+    stride_words: usize,
+    idx: usize,
+    word_start: usize,
+) -> &[u64] {
+    let start = idx * stride_words + word_start;
+    &table_buffer[start..start + M4RM_TILE_WORDS]
+}
+
+#[cfg(test)]
+#[inline(always)]
+fn load_block4(
+    c_block: &[u64],
+    stride_words: usize,
+    row: usize,
+    word_start: usize,
+) -> [u64; M4RM_TILE_WORDS] {
+    let start = row * stride_words + word_start;
+    [
+        c_block[start],
+        c_block[start + 1],
+        c_block[start + 2],
+        c_block[start + 3],
+    ]
+}
+
+#[cfg(test)]
+#[inline(always)]
+fn store_block4(
+    c_block: &mut [u64],
+    stride_words: usize,
+    row: usize,
+    word_start: usize,
+    acc: [u64; M4RM_TILE_WORDS],
+) {
+    let start = row * stride_words + word_start;
+    c_block[start..start + M4RM_TILE_WORDS].copy_from_slice(&acc);
+}
+
+#[cfg(test)]
+#[inline(always)]
+fn xor_acc4(acc: &mut [u64; M4RM_TILE_WORDS], src: &[u64]) {
+    acc[0] ^= src[0];
+    acc[1] ^= src[1];
+    acc[2] ^= src[2];
+    acc[3] ^= src[3];
+}
+
+#[allow(clippy::too_many_arguments)]
+fn update_row_tile_tail(
+    c: &mut BitMatrix,
+    row_start: usize,
+    word_start: usize,
+    stride_words: usize,
+    table_buffer: &[u64],
+    next_table: Option<&[u64]>,
+    idx: &[usize; M4RM_TILE_ROWS],
+    next_idx: Option<&[usize; M4RM_TILE_ROWS]>,
+) {
+    for r in 0..M4RM_TILE_ROWS {
+        if let (Some(next), Some(next_idx)) = (next_table, next_idx) {
+            gf2_kernels_simd::prefetch_read_l1(
+                next[next_idx[r] * stride_words + word_start..]
+                    .as_ptr()
+                    .cast(),
+            );
+        }
+        let start = idx[r] * stride_words + word_start;
+        let table_entry = &table_buffer[start..idx[r] * stride_words + stride_words];
+        let c_tail = &mut c.row_words_mut(row_start + r)[word_start..stride_words];
+        for (dst, &src) in c_tail.iter_mut().zip(table_entry) {
+            *dst ^= src;
+        }
+    }
 }
 
 #[cfg(test)]
@@ -649,6 +995,57 @@ mod tests {
                 "Entry {} mismatch between flat and Vec<Vec<>> versions",
                 idx
             );
+        }
+    }
+
+    #[test]
+    fn test_register_tiled_schedule_threshold_preserves_small_sizes() {
+        assert!(!use_register_tiled_schedule(7, 16));
+        assert!(!use_register_tiled_schedule(64, 8));
+        assert!(!use_register_tiled_schedule(8, 32));
+        assert!(use_register_tiled_schedule(8, 16));
+    }
+
+    #[test]
+    fn test_register_tiled_multiply_matches_naive_with_remainders() {
+        use rand::rngs::StdRng;
+        use rand::{Rng, SeedableRng};
+
+        let mut rng = StdRng::seed_from_u64(0x19bc_3199);
+        let (m, k, n) = (9, 17, 260);
+        let mut a = BitMatrix::zeros(m, k);
+        let mut b = BitMatrix::zeros(k, n);
+
+        for r in 0..m {
+            for c in 0..k {
+                if rng.gen_bool(0.5) {
+                    a.set(r, c, true);
+                }
+            }
+        }
+        for r in 0..k {
+            for c in 0..n {
+                if rng.gen_bool(0.5) {
+                    b.set(r, c, true);
+                }
+            }
+        }
+
+        let k_block = choose_k_block(k, n);
+        let stride_words = n.div_ceil(64);
+        let xor = resolve_xor_inplace(stride_words);
+        let tiled =
+            multiply_register_tiled(&a, &b, k_block, stride_words, xor, xor_tile8xn_scalar_block);
+
+        for r in 0..m {
+            for c in 0..n {
+                let expected = (0..k).fold(false, |acc, kk| acc ^ (a.get(r, kk) && b.get(kk, c)));
+                assert_eq!(
+                    tiled.get(r, c),
+                    expected,
+                    "register-tiled mismatch at ({r}, {c})"
+                );
+            }
         }
     }
 
