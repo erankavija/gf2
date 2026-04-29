@@ -2,9 +2,9 @@
   "id": "7c954fb5-1efe-440e-b29d-eed5270b8204",
   "title": "GF(2^571) batch mul via multi-word VPCLMULQDQ",
   "description": "Add SIMD multi-word multiply for GF($2^{571}$). Used in NIST B-571 / K-571 elliptic-curve research; currently zero SIMD path despite VPCLMULQDQ-on-YMM being well-suited to multi-word polynomial products.\n\n## Background\n\n`crates/gf2-core/src/gf2m/wide.rs` handles GF($2^m$) for $m > 64$ via scalar multi-word arithmetic. At $m = 571$ every multiply is $9 \\times 9$ word-pair scalar XORs and shifts.\n\nThe fix walks PPC steps:\n\n- V3 SIMD: 2D VPCLMULQDQ scheduler — process pairs of u64 word products per VPCLMULQDQ-on-YMM instruction, accumulate the partial-product matrix.\n- V4 register tile: schedule the $9 \\times 9$ word-pair fan to keep partial products in YMM registers as long as possible.\n\nWire via `simd::maybe_gf2m_wide()` (extend the existing `maybe_gf2m_wide256` if applicable, or add new).\n\n## Success Criteria\n\n- [hard] Bit-exact vs. scalar wide multiply at $m = 571$ across the existing test suite.\n- [hard] Reduction polynomial handling unchanged (uses `primitive_polys` table).\n- [hard] No `unsafe` outside `gf2-kernels-simd`.\n- [hard] Sibling `*.asm.txt` artefact regenerated and shows VPCLMULQDQ on YMM.\n- [hard] `perf stat -r 10` capture before/after recorded.\n- [aspirational] $\\geq 1.5\\times$ geomean on `gf2m_wide_mul` bench at the $m=571$ size class.\n\n## Notes\n\nBench: `gf2m_wide_mul` (existing, pinned by I1). Spec doc: `dev/plans/gf2_core_ppc_spiral.md`.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [
     "166b2691-82a9-476a-b272-cacd71b58d4c"
   ],
@@ -37,5 +37,5 @@
     "ppc-kernel:C2"
   ],
   "created_at": "2026-04-25T15:18:27.081202707+00:00",
-  "updated_at": "2026-04-27T19:16:13.949604922+00:00"
+  "updated_at": "2026-04-29T05:15:19.899652599+00:00"
 }
