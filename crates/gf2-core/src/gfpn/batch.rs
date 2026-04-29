@@ -29,7 +29,8 @@
 //!
 //! # SIMD integration
 //!
-//! [`BatchExtField::batch_mul_quadratic`] dispatches through the
+//! [`BatchExtField::batch_mul_quadratic`] and
+//! [`BatchExtField::batch_square_quadratic`] dispatch through the
 //! [`SimdKaratsubaHook`] trait. For the specialised case
 //! `F = Fp<65537>` on AVX2 hosts the trait routes into the fused AVX2
 //! Karatsuba kernel exposed by `gf2-kernels-simd::fp65537`
@@ -40,11 +41,14 @@
 //! and a single `lo + P - hi` fold plus one branchless canonicalisation
 //! delivers a canonical u32 per lane.
 //!
-//! For any other base field (or when AVX2 is unavailable, the `simd`
-//! feature is disabled, or we build on a non-x86 target) the trait's
-//! default `None` arm triggers the scalar straight-line combine, whose
-//! inner loop is branchless and cross-lane-dependency-free so LLVM's
-//! auto-vectoriser can widen it opportunistically.
+//! For other Montgomery-stored `Fp<P>` fields supported by the generic
+//! base-field batch path, the hook composes the shared
+//! [`crate::gfp::SimdVecOps`] add/sub/mul kernels over the SoA lanes. For
+//! any other base field (or when AVX2 is unavailable, the `simd` feature
+//! is disabled, or we build on a non-x86 target) the trait's default
+//! `None` arm triggers the scalar straight-line combine, whose inner loop
+//! is branchless and cross-lane-dependency-free so LLVM's auto-vectoriser
+//! can widen it opportunistically.
 //!
 //! [`crate::field::FieldVec`] uses the same [`crate::gfp::SimdVecOps`]
 //! dispatch surface at the element-wise level — `mul_vec`, `add_vec`,
@@ -113,7 +117,7 @@
 use std::array;
 
 use crate::field::{ConstField, FiniteField};
-use crate::gfp::Fp;
+use crate::gfp::{Fp, SimdVecOps};
 use crate::gfpn::{ExtConfig, QuadraticExt};
 
 // ---------------------------------------------------------------------------
@@ -551,11 +555,12 @@ impl<F: ConstField + SimdKaratsubaHook> BatchExtField<F, 2> {
     /// `simd` feature, the implementation routes through the fused AVX2
     /// Karatsuba kernel in `gf2-kernels-simd::fp65537::batch_karatsuba_fn`
     /// — all seven Karatsuba intermediates stay in registers across the
-    /// 8-lane vector loop. For any other `F` (or when AVX2 is unavailable)
-    /// the scalar straight-line combine runs element by element.
-    /// [`crate::field::FieldVec`]'s element-wise ops share the same
-    /// [`crate::gfp::SimdVecOps`] dispatch surface, including supported
-    /// generic Montgomery `Fp<P>` kernels.
+    /// 8-lane vector loop. For other supported Montgomery `Fp<P>` bases,
+    /// the implementation composes the generic base-field batch kernels
+    /// exposed by [`crate::gfp::SimdVecOps`]. [`crate::field::FieldVec`]'s
+    /// element-wise ops share that same dispatch surface. Any other `F`
+    /// (or unsupported runtime) falls back to the scalar straight-line
+    /// combine.
     /// Total cost: 3 base-field multiplications, 2 additions, 3
     /// subtractions, and one `mul_by_non_residue` per batch element.
     ///
@@ -618,6 +623,49 @@ impl<F: ConstField + SimdKaratsubaHook> BatchExtField<F, 2> {
             coeffs: [out_c0, out_c1],
         }
     }
+
+    /// Element-wise squaring for batched quadratic-extension elements.
+    ///
+    /// For each batch index `i`, computes `self[i]²` using the same SoA
+    /// Karatsuba backend as [`Self::batch_mul_quadratic`], with the left
+    /// and right input lanes aliased. This keeps the square path on the
+    /// fused `Fp<65537>` AVX2 kernel and on the generic `Fp<P>` batch
+    /// composition whenever those backends are available.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `C` — extension config supplying the non-residue β.
+    ///
+    /// # Complexity
+    ///
+    /// `O(len)`: same asymptotic cost as batched multiplication.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::gfp::Fp;
+    /// use gf2_core::gfpn::{BatchExtField, ExtConfig, QuadraticExt};
+    ///
+    /// struct Cfg;
+    /// impl ExtConfig for Cfg {
+    ///     type BaseField = Fp<7>;
+    ///     const NON_RESIDUE: Fp<7> = Fp::<7>::new(6);
+    /// }
+    /// type Fq2 = QuadraticExt<Cfg>;
+    ///
+    /// let xs = vec![Fq2::new(Fp::new(3), Fp::new(2))];
+    /// let batch = BatchExtField::<Fp<7>, 2>::from_quadratic::<Cfg>(&xs);
+    /// let squares = batch.batch_square_quadratic::<Cfg>().to_quadratic::<Cfg>();
+    /// assert_eq!(squares[0], xs[0] * xs[0]);
+    /// ```
+    pub fn batch_square_quadratic<C: ExtConfig<BaseField = F>>(&self) -> Self {
+        let a0 = self.coeff(0);
+        let a1 = self.coeff(1);
+        let (out_c0, out_c1) = batch_karatsuba::<F, C>(a0, a1, a0, a1);
+        Self {
+            coeffs: [out_c0, out_c1],
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -644,11 +692,14 @@ where
         let b0i = b0[i];
         let b1i = b1[i];
 
+        let sum_a = a0i + a1i;
+        let sum_b = b0i + b1i;
         let v0 = a0i * b0i;
         let v1 = a1i * b1i;
-        let cross = (a0i + a1i) * (b0i + b1i);
+        let cross = sum_a * sum_b;
+        let beta_v1 = C::mul_by_non_residue(v1);
 
-        out_c0.push(v0 + C::mul_by_non_residue(v1));
+        out_c0.push(v0 + beta_v1);
         out_c1.push(cross - v0 - v1);
     }
     (out_c0, out_c1)
@@ -656,11 +707,11 @@ where
 
 /// Top-level Karatsuba combine, generic over any `F: ConstField`.
 ///
-/// Dispatches through the sealed [`SimdKaratsubaHook`] trait: the default
-/// impl for every `ConstField` returns `None`, and a specialised impl for
-/// `Fp<65537>` invokes the AVX2 kernel in `gf2-kernels-simd` when
-/// available. Other `F` and other runtime configurations fall back to
-/// [`scalar_karatsuba`].
+/// Dispatches through the sealed [`SimdKaratsubaHook`] trait: `Fp<65537>`
+/// invokes the fused AVX2 kernel in `gf2-kernels-simd` when available, and
+/// other eligible `Fp<P>` fields compose the generic base-field batch
+/// kernels from [`crate::gfp::SimdVecOps`]. Other `F` and other runtime
+/// configurations fall back to [`scalar_karatsuba`].
 #[inline]
 fn batch_karatsuba<F, C>(a0: &[F], a1: &[F], b0: &[F], b1: &[F]) -> (Vec<F>, Vec<F>)
 where
@@ -678,9 +729,10 @@ where
 ///
 /// Every implementation returns `None` by default (scalar fallback).
 /// `Fp<P>` provides a blanket impl that transparently routes through the
-/// AVX2 kernel in `gf2-kernels-simd` when `P = 65537`, and returns
-/// `None` for every other prime; the non-specialised path then runs the
-/// scalar straight-line Karatsuba.
+/// fused AVX2 kernel in `gf2-kernels-simd` when `P = 65537`, otherwise
+/// tries the shared generic-Fp batch add/sub/mul hooks before returning
+/// `None`; the non-specialised path then runs the scalar straight-line
+/// Karatsuba.
 ///
 /// This trait exists only to enable dispatch; it is a crate-internal
 /// extension point. External users should treat it as sealed — the
@@ -762,8 +814,45 @@ impl<const P: u64> SimdKaratsubaHook for Fp<P> {
         if P == 65537 {
             return fp65537_simd_impl::<P, C>(a0, a1, b0, b1);
         }
-        None
+        fp_simd_composed_impl::<P, C>(a0, a1, b0, b1)
     }
+}
+
+/// Generic `Fp<P>` Karatsuba composition over the shared base-field SIMD hooks.
+///
+/// This path is selected for Montgomery-stored primes covered by the C3
+/// generic batch kernels. It deliberately returns `None` if any base-field
+/// add/sub/mul hook declines, preserving the scalar fallback for unsupported
+/// primes, non-AVX2 hosts, and `simd`-disabled builds.
+#[inline]
+fn fp_simd_composed_impl<const P: u64, C: ExtConfig<BaseField = Fp<P>>>(
+    a0: &[Fp<P>],
+    a1: &[Fp<P>],
+    b0: &[Fp<P>],
+    b1: &[Fp<P>],
+) -> Option<(Vec<Fp<P>>, Vec<Fp<P>>)> {
+    let n = a0.len();
+    let sum_a = <Fp<P> as SimdVecOps>::try_simd_add_vec(a0, a1)?;
+    let sum_b = <Fp<P> as SimdVecOps>::try_simd_add_vec(b0, b1)?;
+
+    let v0 = <Fp<P> as SimdVecOps>::try_simd_mul_vec(a0, b0)?;
+    let v1 = <Fp<P> as SimdVecOps>::try_simd_mul_vec(a1, b1)?;
+    let cross = <Fp<P> as SimdVecOps>::try_simd_mul_vec(&sum_a, &sum_b)?;
+
+    let beta_v1 = if C::NON_RESIDUE.is_zero() {
+        vec![Fp::<P>::zero(); n]
+    } else if C::NON_RESIDUE.is_one() {
+        v1.clone()
+    } else {
+        let beta = vec![C::NON_RESIDUE; n];
+        <Fp<P> as SimdVecOps>::try_simd_mul_vec(&v1, &beta)?
+    };
+
+    let out_c0 = <Fp<P> as SimdVecOps>::try_simd_add_vec(&v0, &beta_v1)?;
+    let tmp = <Fp<P> as SimdVecOps>::try_simd_sub_vec(&cross, &v0)?;
+    let out_c1 = <Fp<P> as SimdVecOps>::try_simd_sub_vec(&tmp, &v1)?;
+
+    Some((out_c0, out_c1))
 }
 
 /// AVX2 Karatsuba combine for `Fp<P>` specialised at `P = 65537`.
@@ -871,6 +960,15 @@ mod tests {
         }
     }
     type Fq2Small = QuadraticExt<CfgNeg1>;
+
+    const GENERIC_P: u64 = 2_147_483_629;
+
+    struct CfgGeneric;
+    impl ExtConfig for CfgGeneric {
+        type BaseField = Fp<GENERIC_P>;
+        const NON_RESIDUE: Fp<GENERIC_P> = Fp::<GENERIC_P>::new(5);
+    }
+    type Fq2Generic = QuadraticExt<CfgGeneric>;
 
     // -----------------------------------------------------------------------
     // Constructor / invariant tests
@@ -1067,6 +1165,96 @@ mod tests {
         }
     }
 
+    #[test]
+    fn test_batch_square_matches_scalar() {
+        let xs = vec![
+            Fq2Small::new(Fp::new(0), Fp::new(0)),
+            Fq2Small::new(Fp::new(1), Fp::new(6)),
+            Fq2Small::new(Fp::new(3), Fp::new(4)),
+            Fq2Small::new(Fp::new(5), Fp::new(2)),
+        ];
+        let batch = BatchExtField::<Fp<7>, 2>::from_quadratic::<CfgNeg1>(&xs);
+        let got = batch
+            .batch_square_quadratic::<CfgNeg1>()
+            .to_quadratic::<CfgNeg1>();
+        for i in 0..xs.len() {
+            assert_eq!(got[i], xs[i] * xs[i], "square mismatch at index {i}");
+        }
+    }
+
+    #[test]
+    fn test_batch_all_ops_match_scalar_fp65537() {
+        let a: Vec<Fq2Big> = (0..17u64)
+            .map(|i| Fq2Big::new(Fp::new(i * 97 + 3), Fp::new(i * 193 + 5)))
+            .collect();
+        let b: Vec<Fq2Big> = (0..17u64)
+            .map(|i| Fq2Big::new(Fp::new(i * 389 + 7), Fp::new(i * 769 + 11)))
+            .collect();
+
+        let ba = BatchExtField::<Fp<65537>, 2>::from_quadratic::<CfgBeta3>(&a);
+        let bb = BatchExtField::<Fp<65537>, 2>::from_quadratic::<CfgBeta3>(&b);
+
+        let add = ba.batch_add(&bb).to_quadratic::<CfgBeta3>();
+        let sub = ba.batch_sub(&bb).to_quadratic::<CfgBeta3>();
+        let mul = ba
+            .batch_mul_quadratic::<CfgBeta3>(&bb)
+            .to_quadratic::<CfgBeta3>();
+        let sqr = ba
+            .batch_square_quadratic::<CfgBeta3>()
+            .to_quadratic::<CfgBeta3>();
+
+        for i in 0..a.len() {
+            assert_eq!(add[i], a[i] + b[i], "add mismatch at index {i}");
+            assert_eq!(sub[i], a[i] - b[i], "sub mismatch at index {i}");
+            assert_eq!(mul[i], a[i] * b[i], "mul mismatch at index {i}");
+            assert_eq!(sqr[i], a[i] * a[i], "square mismatch at index {i}");
+        }
+    }
+
+    #[test]
+    fn test_generic_fp_batch_mul_matches_scalar_and_hook_when_available() {
+        let a: Vec<Fq2Generic> = (0..65u64)
+            .map(|i| {
+                Fq2Generic::new(
+                    Fp::<GENERIC_P>::new(i.wrapping_mul(1_000_003).wrapping_add(17)),
+                    Fp::<GENERIC_P>::new(i.wrapping_mul(3_000_017).wrapping_add(19)),
+                )
+            })
+            .collect();
+        let b: Vec<Fq2Generic> = (0..65u64)
+            .map(|i| {
+                Fq2Generic::new(
+                    Fp::<GENERIC_P>::new(i.wrapping_mul(5_000_021).wrapping_add(23)),
+                    Fp::<GENERIC_P>::new(i.wrapping_mul(7_000_027).wrapping_add(29)),
+                )
+            })
+            .collect();
+
+        let ba = BatchExtField::<Fp<GENERIC_P>, 2>::from_quadratic::<CfgGeneric>(&a);
+        let bb = BatchExtField::<Fp<GENERIC_P>, 2>::from_quadratic::<CfgGeneric>(&b);
+        let got = ba
+            .batch_mul_quadratic::<CfgGeneric>(&bb)
+            .to_quadratic::<CfgGeneric>();
+        for i in 0..a.len() {
+            assert_eq!(
+                got[i],
+                a[i] * b[i],
+                "generic batch mul mismatch at index {i}"
+            );
+        }
+
+        #[cfg(feature = "simd")]
+        if crate::simd::maybe_fp_generic().is_some() {
+            let (out_c0, out_c1) = <Fp<GENERIC_P> as SimdKaratsubaHook>::try_simd_karatsuba::<
+                CfgGeneric,
+            >(ba.coeff(0), ba.coeff(1), bb.coeff(0), bb.coeff(1))
+            .expect("generic Fp SIMD Karatsuba hook should compose C3 batch ops");
+            let via_hook = BatchExtField::<Fp<GENERIC_P>, 2>::new([out_c0, out_c1])
+                .to_quadratic::<CfgGeneric>();
+            assert_eq!(via_hook, got);
+        }
+    }
+
     // -----------------------------------------------------------------------
     // Proptest: Fp<65537>, β = 3 (matches the issue's success criterion)
     // -----------------------------------------------------------------------
@@ -1092,6 +1280,17 @@ mod tests {
             let c = bc.to_quadratic::<CfgBeta3>();
 
             prop_assert_eq!(c, expected);
+        }
+
+        #[test]
+        fn prop_batch_square_matches_scalar_fp65537(
+            xs in proptest::collection::vec(fq2_big_strategy(), 0..=64)
+        ) {
+            let expected: Vec<Fq2Big> = xs.iter().map(|x| *x * *x).collect();
+            let batch = BatchExtField::<Fp<65537>, 2>::from_quadratic::<CfgBeta3>(&xs);
+            let got = batch.batch_square_quadratic::<CfgBeta3>().to_quadratic::<CfgBeta3>();
+
+            prop_assert_eq!(got, expected);
         }
 
         #[test]
