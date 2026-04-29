@@ -8,8 +8,8 @@
 ; host triple   : x86_64-unknown-linux-gnu
 ; target-cpu    : <unset; rely on #[target_feature]>
 ; RUSTFLAGS     : <empty>
-; commit        : ee2e2c8
-; regenerated   : 2026-04-28T22:07:32Z
+; commit        : 4c547f1
+; regenerated   : 2026-04-29T05:40:12Z
 ; tool          : cargo-show-asm
 ; ---------------------------------------------------------
 
@@ -18,9 +18,8 @@
 ; symbol: gf2_kernels_simd::x86::fp_generic::fp_montgomery_batch_mul
 ;==========================================================
 
-   Compiling gf2-kernels-simd v0.1.0 (/home/vkaskivuo/Projects/gf2/.claude/worktrees/rework-c3-86c09a51-r1/crates/gf2-kernels-simd)
-    Finished
- `release` profile [optimized] target(s) in 0.51s
+    Finished `release` profile [optimized] target(s) in 0.06s
+
 gf2_kernels_simd::x86::fp_generic::fp_montgomery_batch_mul:
 	push rbp
 	push r15
@@ -773,24 +772,24 @@ gf2_kernels_simd::x86::fp_generic::fp_montgomery_batch_mul:
 	vzeroupper
 	ret
 .LBB19_20:
-	lea rcx, [rip + .Lanon.a9974d717be727302204f2941462b4b8.6]
-	lea r9, [rip + .Lanon.a9974d717be727302204f2941462b4b8.7]
+	lea rcx, [rip + .Lanon.0915e733c4c871a12e54ddd283e1103b.6]
+	lea r9, [rip + .Lanon.0915e733c4c871a12e54ddd283e1103b.7]
 	lea rsi, [rsp + 48]
 	lea rdx, [rsp + 56]
 	mov r8d, 81
 	xor edi, edi
 	call qword ptr [rip + core::panicking::assert_failed::<usize, usize>@GOTPCREL]
 .LBB19_21:
-	lea rcx, [rip + .Lanon.a9974d717be727302204f2941462b4b8.8]
-	lea r9, [rip + .Lanon.a9974d717be727302204f2941462b4b8.9]
+	lea rcx, [rip + .Lanon.0915e733c4c871a12e54ddd283e1103b.8]
+	lea r9, [rip + .Lanon.0915e733c4c871a12e54ddd283e1103b.9]
 	lea rsi, [rsp + 64]
 	lea rdx, [rsp + 72]
 	mov r8d, 77
 	xor edi, edi
 	call qword ptr [rip + core::panicking::assert_failed::<usize, usize>@GOTPCREL]
 .LBB19_22:
-	lea rdi, [rip + .Lanon.a9974d717be727302204f2941462b4b8.10]
-	lea rdx, [rip + .Lanon.a9974d717be727302204f2941462b4b8.11]
+	lea rdi, [rip + .Lanon.0915e733c4c871a12e54ddd283e1103b.10]
+	lea rdx, [rip + .Lanon.0915e733c4c871a12e54ddd283e1103b.11]
 	mov esi, 85
 	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
 
@@ -798,7 +797,7 @@ gf2_kernels_simd::x86::fp_generic::fp_montgomery_batch_mul:
 ; symbol: gf2_kernels_simd::x86::fp_generic::fp_montgomery_batch_add
 ;==========================================================
 
-    Finished `release` profile [optimized] target(s) in 0.02s
+    Finished `release` profile [optimized] target(s) in 0.05s
 
 gf2_kernels_simd::x86::fp_generic::fp_montgomery_batch_add:
 	push rbx
@@ -863,16 +862,16 @@ gf2_kernels_simd::x86::fp_generic::fp_montgomery_batch_add:
 	xor r11d, r11d
 	jmp .LBB18_8
 .LBB18_10:
-	lea rcx, [rip + .Lanon.a9974d717be727302204f2941462b4b8.1]
-	lea r9, [rip + .Lanon.a9974d717be727302204f2941462b4b8.3]
+	lea rcx, [rip + .Lanon.0915e733c4c871a12e54ddd283e1103b.1]
+	lea r9, [rip + .Lanon.0915e733c4c871a12e54ddd283e1103b.3]
 	mov rsi, rsp
 	lea rdx, [rsp + 8]
 	mov r8d, 81
 	xor edi, edi
 	call qword ptr [rip + core::panicking::assert_failed::<usize, usize>@GOTPCREL]
 .LBB18_11:
-	lea rcx, [rip + .Lanon.a9974d717be727302204f2941462b4b8.4]
-	lea r9, [rip + .Lanon.a9974d717be727302204f2941462b4b8.5]
+	lea rcx, [rip + .Lanon.0915e733c4c871a12e54ddd283e1103b.4]
+	lea r9, [rip + .Lanon.0915e733c4c871a12e54ddd283e1103b.5]
 	lea rsi, [rsp + 16]
 	lea rdx, [rsp + 24]
 	mov r8d, 77
@@ -883,8 +882,8 @@ gf2_kernels_simd::x86::fp_generic::fp_montgomery_batch_add:
 ; symbol: gf2_kernels_simd::x86::fp_generic::fp_montgomery_batch_sub
 ;==========================================================
 
-    Finished `release` profile [optimized] target(s) in 0.02s
 
+    Finished `release` profile [optimized] target(s) in 0.05s
 gf2_kernels_simd::x86::fp_generic::fp_montgomery_batch_sub:
 	sub rsp, 40
 	mov qword ptr [rsp + 8], rsi
@@ -937,16 +936,16 @@ gf2_kernels_simd::x86::fp_generic::fp_montgomery_batch_sub:
 	vzeroupper
 	ret
 .LBB20_8:
-	lea rcx, [rip + .Lanon.a9974d717be727302204f2941462b4b8.12]
-	lea r9, [rip + .Lanon.a9974d717be727302204f2941462b4b8.13]
+	lea rcx, [rip + .Lanon.0915e733c4c871a12e54ddd283e1103b.12]
+	lea r9, [rip + .Lanon.0915e733c4c871a12e54ddd283e1103b.13]
 	lea rsi, [rsp + 8]
 	lea rdx, [rsp + 16]
 	mov r8d, 81
 	xor edi, edi
 	call qword ptr [rip + core::panicking::assert_failed::<usize, usize>@GOTPCREL]
 .LBB20_9:
-	lea rcx, [rip + .Lanon.a9974d717be727302204f2941462b4b8.14]
-	lea r9, [rip + .Lanon.a9974d717be727302204f2941462b4b8.15]
+	lea rcx, [rip + .Lanon.0915e733c4c871a12e54ddd283e1103b.14]
+	lea r9, [rip + .Lanon.0915e733c4c871a12e54ddd283e1103b.15]
 	lea rsi, [rsp + 24]
 	lea rdx, [rsp + 32]
 	mov r8d, 77
