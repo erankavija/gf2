@@ -278,3 +278,378 @@ Found 5 outliers among 100 measurements (5.00%)
 
       11.271336060 +- 1.710636059 seconds time elapsed  ( +- 15.18% )
 
+
+3168d114 after perf stat capture
+date: 2026-04-29T05:31:14Z
+commit: cae74c7
+command: CARGO_TARGET_DIR=target/agent-3168d114 RUSTFLAGS="-C target-cpu=native" perf stat -r 10 cargo bench -p gf2-core --features simd --bench soa_batch soa_batch_mul_fq2_fp65537/batch_soa/1000
+   Compiling gf2-core v0.1.0 (/home/vkaskivuo/Projects/gf2/.claude/worktrees/agent-3168d114/crates/gf2-core)
+    Finished `bench` profile [optimized] target(s) in 8.32s
+     Running benches/soa_batch.rs (target/agent-3168d114/release/deps/soa_batch-2c02319c68719dcf)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Warming up for 3.0000 s
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Collecting 100 samples in estimated 5.0059 s (3.0M iterations)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Analyzing
+soa_batch_mul_fq2_fp65537/batch_soa/1000
+                        time:   [1.6856 µs 1.7400 µs 1.8016 µs]
+                        thrpt:  [555.06 Melem/s 574.70 Melem/s 593.28 Melem/s]
+Found 13 outliers among 100 measurements (13.00%)
+  1 (1.00%) high mild
+  12 (12.00%) high severe
+
+    Finished `bench` profile [optimized] target(s) in 0.05s
+     Running benches/soa_batch.rs (target/agent-3168d114/release/deps/soa_batch-2c02319c68719dcf)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Warming up for 3.0000 s
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Collecting 100 samples in estimated 5.0047 s (2.9M iterations)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Analyzing
+soa_batch_mul_fq2_fp65537/batch_soa/1000
+                        time:   [1.6165 µs 1.6175 µs 1.6186 µs]
+                        thrpt:  [617.81 Melem/s 618.24 Melem/s 618.61 Melem/s]
+                 change:
+                        time:   [-6.2225% -3.9325% -1.8518%] (p = 0.00 < 0.05)
+                        thrpt:  [+1.8867% +4.0935% +6.6354%]
+                        Performance has improved.
+Found 4 outliers among 100 measurements (4.00%)
+  1 (1.00%) high mild
+  3 (3.00%) high severe
+
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Finished `bench` profile [optimized] target(s) in 0.07s
+     Running benches/soa_batch.rs (target/agent-3168d114/release/deps/soa_batch-2c02319c68719dcf)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Warming up for 3.0000 s
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Collecting 100 samples in estimated 5.0022 s (2.9M iterations)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Analyzing
+soa_batch_mul_fq2_fp65537/batch_soa/1000
+                        time:   [1.6557 µs 1.6571 µs 1.6588 µs]
+                        thrpt:  [602.86 Melem/s 603.45 Melem/s 603.98 Melem/s]
+                 change:
+                        time:   [+1.6865% +1.9687% +2.2349%] (p = 0.00 < 0.05)
+                        thrpt:  [-2.1860% -1.9307% -1.6585%]
+                        Performance has regressed.
+Found 12 outliers among 100 measurements (12.00%)
+  7 (7.00%) high mild
+  5 (5.00%) high severe
+
+    Finished `bench` profile [optimized] target(s) in 0.11s
+     Running benches/soa_batch.rs (target/agent-3168d114/release/deps/soa_batch-2c02319c68719dcf)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Warming up for 3.0000 s
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Collecting 100 samples in estimated 5.0062 s (1.7M iterations)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Analyzing
+soa_batch_mul_fq2_fp65537/batch_soa/1000
+                        time:   [2.4896 µs 2.5311 µs 2.5913 µs]
+                        thrpt:  [385.91 Melem/s 395.08 Melem/s 401.67 Melem/s]
+                 change:
+                        time:   [+55.664% +63.130% +71.222%] (p = 0.00 < 0.05)
+                        thrpt:  [-41.596% -38.699% -35.759%]
+                        Performance has regressed.
+Found 20 outliers among 100 measurements (20.00%)
+  1 (1.00%) low severe
+  4 (4.00%) low mild
+  3 (3.00%) high mild
+  12 (12.00%) high severe
+
+    Finished `bench` profile [optimized] target(s) in 0.12s
+     Running benches/soa_batch.rs (target/agent-3168d114/release/deps/soa_batch-2c02319c68719dcf)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Warming up for 3.0000 s
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Collecting 100 samples in estimated 5.0101 s (1.8M iterations)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Analyzing
+soa_batch_mul_fq2_fp65537/batch_soa/1000
+                        time:   [2.4729 µs 2.4918 µs 2.5100 µs]
+                        thrpt:  [398.40 Melem/s 401.31 Melem/s 404.38 Melem/s]
+                 change:
+                        time:   [-12.038% -7.3149% -2.8231%] (p = 0.00 < 0.05)
+                        thrpt:  [+2.9051% +7.8922% +13.685%]
+                        Performance has improved.
+Found 10 outliers among 100 measurements (10.00%)
+  1 (1.00%) low severe
+  5 (5.00%) low mild
+  3 (3.00%) high mild
+  1 (1.00%) high severe
+
+    Finished `bench` profile [optimized] target(s) in 0.10s
+     Running benches/soa_batch.rs (target/agent-3168d114/release/deps/soa_batch-2c02319c68719dcf)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Warming up for 3.0000 s
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Collecting 100 samples in estimated 5.0130 s (1.9M iterations)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Analyzing
+soa_batch_mul_fq2_fp65537/batch_soa/1000
+                        time:   [2.5273 µs 2.5438 µs 2.5591 µs]
+                        thrpt:  [390.77 Melem/s 393.12 Melem/s 395.67 Melem/s]
+                 change:
+                        time:   [-0.9773% +0.2252% +1.3746%] (p = 0.71 > 0.05)
+                        thrpt:  [-1.3559% -0.2247% +0.9869%]
+                        No change in performance detected.
+Found 8 outliers among 100 measurements (8.00%)
+  4 (4.00%) low severe
+  4 (4.00%) low mild
+
+    Finished `bench` profile [optimized] target(s) in 0.11s
+     Running benches/soa_batch.rs (target/agent-3168d114/release/deps/soa_batch-2c02319c68719dcf)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Warming up for 3.0000 s
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Collecting 100 samples in estimated 5.0116 s (1.8M iterations)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Analyzing
+soa_batch_mul_fq2_fp65537/batch_soa/1000
+                        time:   [2.5350 µs 2.5635 µs 2.6001 µs]
+                        thrpt:  [384.60 Melem/s 390.09 Melem/s 394.48 Melem/s]
+                 change:
+                        time:   [-0.1277% +2.2331% +5.2492%] (p = 0.11 > 0.05)
+                        thrpt:  [-4.9874% -2.1843% +0.1278%]
+                        No change in performance detected.
+Found 10 outliers among 100 measurements (10.00%)
+  5 (5.00%) low mild
+  1 (1.00%) high mild
+  4 (4.00%) high severe
+
+    Finished `bench` profile [optimized] target(s) in 0.10s
+     Running benches/soa_batch.rs (target/agent-3168d114/release/deps/soa_batch-2c02319c68719dcf)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Warming up for 3.0000 s
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Collecting 100 samples in estimated 5.0052 s (1.8M iterations)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Analyzing
+soa_batch_mul_fq2_fp65537/batch_soa/1000
+                        time:   [2.4898 µs 2.5083 µs 2.5270 µs]
+                        thrpt:  [395.73 Melem/s 398.68 Melem/s 401.65 Melem/s]
+                 change:
+                        time:   [+1.8945% +27.469% +72.782%] (p = 0.09 > 0.05)
+                        thrpt:  [-42.124% -21.549% -1.8593%]
+                        No change in performance detected.
+Found 17 outliers among 100 measurements (17.00%)
+  2 (2.00%) low severe
+  4 (4.00%) low mild
+  11 (11.00%) high severe
+
+    Finished `bench` profile [optimized] target(s) in 0.09s
+     Running benches/soa_batch.rs (target/agent-3168d114/release/deps/soa_batch-2c02319c68719dcf)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Warming up for 3.0000 s
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Collecting 100 samples in estimated 5.0055 s (3.0M iterations)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Analyzing
+soa_batch_mul_fq2_fp65537/batch_soa/1000
+                        time:   [1.6091 µs 1.6104 µs 1.6122 µs]
+                        thrpt:  [620.29 Melem/s 620.96 Melem/s 621.48 Melem/s]
+                 change:
+                        time:   [-62.222% -50.428% -38.030%] (p = 0.00 < 0.05)
+                        thrpt:  [+61.368% +101.73% +164.71%]
+                        Performance has improved.
+
+    Finished `bench` profile [optimized] target(s) in 0.05s
+     Running benches/soa_batch.rs (target/agent-3168d114/release/deps/soa_batch-2c02319c68719dcf)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Warming up for 3.0000 s
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Collecting 100 samples in estimated 5.0016 s (3.1M iterations)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Analyzing
+soa_batch_mul_fq2_fp65537/batch_soa/1000
+                        time:   [1.6621 µs 1.7018 µs 1.7527 µs]
+                        thrpt:  [570.55 Melem/s 587.60 Melem/s 601.65 Melem/s]
+                 change:
+                        time:   [+1.1428% +2.1226% +3.6698%] (p = 0.00 < 0.05)
+                        thrpt:  [-3.5398% -2.0785% -1.1299%]
+                        Performance has regressed.
+Found 11 outliers among 100 measurements (11.00%)
+  11 (11.00%) high severe
+
+
+ Performance counter stats for 'cargo bench -p gf2-core --features simd --bench soa_batch soa_batch_mul_fq2_fp65537/batch_soa/1000' (10 runs):
+
+                 0      context-switches:u               #      0.0 cs/sec  cs_per_second     
+                 0      cpu-migrations:u                 #      0.0 migrations/sec  migrations_per_second
+            72,197      page-faults:u                    #   3592.2 faults/sec  page_faults_per_second  ( +- 10.23% )
+         20,098.27 msec task-clock:u                     #      1.7 CPUs  CPUs_utilized         ( +-  7.96% )
+       321,507,286      branch-misses:u                  #      2.0 %  branch_miss_rate         ( +- 32.48% )  (50.03%)
+    16,060,536,939      branches:u                       #    799.1 M/sec  branch_frequency     ( +- 13.98% )  (49.98%)
+    82,064,342,334      cpu-cycles:u                     #      4.1 GHz  cycles_frequency       ( +-  9.08% )  (66.69%)
+   164,430,868,489      instructions:u                   #      2.0 instructions  insn_per_cycle  ( +-  7.92% )  (50.05%)
+     4,360,229,943      stalled-cycles-frontend:u        #     0.05 frontend_cycles_idle        ( +- 39.04% )  (50.12%)
+
+      11.575147469 +- 0.824066310 seconds time elapsed  ( +-  7.12% )
+
+
+3168d114 final after perf stat capture
+date: 2026-04-29T05:40:20Z
+commit: 4c547f1
+command: CARGO_TARGET_DIR=target/agent-3168d114 RUSTFLAGS="-C target-cpu=native" perf stat -r 10 cargo bench -p gf2-core --features simd --bench soa_batch soa_batch_mul_fq2_fp65537/batch_soa/1000
+   Compiling gf2-core v0.1.0 (/home/vkaskivuo/Projects/gf2/.claude/worktrees/agent-3168d114/crates/gf2-core)
+    Finished `bench` profile [optimized] target(s) in 16.06s
+     Running benches/soa_batch.rs (target/agent-3168d114/release/deps/soa_batch-2c02319c68719dcf)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Warming up for 3.0000 s
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Collecting 100 samples in estimated 5.0047 s (2.7M iterations)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Analyzing
+soa_batch_mul_fq2_fp65537/batch_soa/1000
+                        time:   [1.6071 µs 1.6097 µs 1.6129 µs]
+                        thrpt:  [619.99 Melem/s 621.25 Melem/s 622.23 Melem/s]
+                 change:
+                        time:   [-4.4416% -4.1829% -3.9173%] (p = 0.00 < 0.05)
+                        thrpt:  [+4.0770% +4.3655% +4.6481%]
+                        Performance has improved.
+
+    Finished `bench` profile [optimized] target(s) in 0.06s
+     Running benches/soa_batch.rs (target/agent-3168d114/release/deps/soa_batch-2c02319c68719dcf)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Warming up for 3.0000 s
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Collecting 100 samples in estimated 5.0052 s (3.1M iterations)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Analyzing
+soa_batch_mul_fq2_fp65537/batch_soa/1000
+                        time:   [1.6090 µs 1.6125 µs 1.6163 µs]
+                        thrpt:  [618.68 Melem/s 620.14 Melem/s 621.51 Melem/s]
+                 change:
+                        time:   [-1.1816% -0.9177% -0.6544%] (p = 0.00 < 0.05)
+                        thrpt:  [+0.6587% +0.9262% +1.1958%]
+                        Change within noise threshold.
+Found 10 outliers among 100 measurements (10.00%)
+  8 (8.00%) high mild
+  2 (2.00%) high severe
+
+    Finished `bench` profile [optimized] target(s) in 0.05s
+     Running benches/soa_batch.rs (target/agent-3168d114/release/deps/soa_batch-2c02319c68719dcf)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Warming up for 3.0000 s
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Collecting 100 samples in estimated 5.0014 s (3.1M iterations)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Analyzing
+soa_batch_mul_fq2_fp65537/batch_soa/1000
+                        time:   [1.6173 µs 1.6186 µs 1.6201 µs]
+                        thrpt:  [617.26 Melem/s 617.81 Melem/s 618.30 Melem/s]
+                 change:
+                        time:   [+0.4136% +0.5964% +0.7870%] (p = 0.00 < 0.05)
+                        thrpt:  [-0.7809% -0.5929% -0.4119%]
+                        Change within noise threshold.
+Found 4 outliers among 100 measurements (4.00%)
+  2 (2.00%) high mild
+  2 (2.00%) high severe
+
+    Finished `bench` profile [optimized] target(s) in 0.05s
+     Running benches/soa_batch.rs (target/agent-3168d114/release/deps/soa_batch-2c02319c68719dcf)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Warming up for 3.0000 s
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Collecting 100 samples in estimated 5.0051 s (3.1M iterations)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Analyzing
+soa_batch_mul_fq2_fp65537/batch_soa/1000
+                        time:   [1.6575 µs 1.6833 µs 1.7165 µs]
+                        thrpt:  [582.59 Melem/s 594.06 Melem/s 603.32 Melem/s]
+                 change:
+                        time:   [+0.6226% +1.5436% +2.8658%] (p = 0.00 < 0.05)
+                        thrpt:  [-2.7860% -1.5201% -0.6188%]
+                        Change within noise threshold.
+Found 14 outliers among 100 measurements (14.00%)
+  8 (8.00%) high mild
+  6 (6.00%) high severe
+
+    Finished `bench` profile [optimized] target(s) in 0.05s
+     Running benches/soa_batch.rs (target/agent-3168d114/release/deps/soa_batch-2c02319c68719dcf)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Warming up for 3.0000 s
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Collecting 100 samples in estimated 5.0063 s (3.1M iterations)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Analyzing
+soa_batch_mul_fq2_fp65537/batch_soa/1000
+                        time:   [1.6068 µs 1.6087 µs 1.6122 µs]
+                        thrpt:  [620.28 Melem/s 621.61 Melem/s 622.34 Melem/s]
+                 change:
+                        time:   [-3.2695% -2.1173% -1.2420%] (p = 0.00 < 0.05)
+                        thrpt:  [+1.2576% +2.1631% +3.3800%]
+                        Performance has improved.
+Found 6 outliers among 100 measurements (6.00%)
+  4 (4.00%) high mild
+  2 (2.00%) high severe
+
+    Finished `bench` profile [optimized] target(s) in 0.05s
+     Running benches/soa_batch.rs (target/agent-3168d114/release/deps/soa_batch-2c02319c68719dcf)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Warming up for 3.0000 s
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Collecting 100 samples in estimated 5.0027 s (3.1M iterations)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Analyzing
+soa_batch_mul_fq2_fp65537/batch_soa/1000
+                        time:   [1.6096 µs 1.6130 µs 1.6167 µs]
+                        thrpt:  [618.56 Melem/s 619.97 Melem/s 621.29 Melem/s]
+                 change:
+                        time:   [+0.0386% +0.1858% +0.3432%] (p = 0.02 < 0.05)
+                        thrpt:  [-0.3420% -0.1855% -0.0386%]
+                        Change within noise threshold.
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) high mild
+
+    Finished `bench` profile [optimized] target(s) in 0.05s
+     Running benches/soa_batch.rs (target/agent-3168d114/release/deps/soa_batch-2c02319c68719dcf)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Warming up for 3.0000 s
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Collecting 100 samples in estimated 5.0004 s (2.8M iterations)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Analyzing
+soa_batch_mul_fq2_fp65537/batch_soa/1000
+                        time:   [1.6073 µs 1.6106 µs 1.6149 µs]
+                        thrpt:  [619.23 Melem/s 620.89 Melem/s 622.18 Melem/s]
+                 change:
+                        time:   [+0.6501% +0.9134% +1.1967%] (p = 0.00 < 0.05)
+                        thrpt:  [-1.1826% -0.9052% -0.6459%]
+                        Change within noise threshold.
+
+    Finished `bench` profile [optimized] target(s) in 0.05s
+     Running benches/soa_batch.rs (target/agent-3168d114/release/deps/soa_batch-2c02319c68719dcf)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Warming up for 3.0000 s
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Collecting 100 samples in estimated 5.0025 s (3.0M iterations)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Analyzing
+soa_batch_mul_fq2_fp65537/batch_soa/1000
+                        time:   [1.6619 µs 1.6937 µs 1.7341 µs]
+                        thrpt:  [576.68 Melem/s 590.43 Melem/s 601.72 Melem/s]
+                 change:
+                        time:   [+3.5253% +6.0593% +8.2628%] (p = 0.00 < 0.05)
+                        thrpt:  [-7.6321% -5.7131% -3.4052%]
+                        Performance has regressed.
+Found 40 outliers among 100 measurements (40.00%)
+  13 (13.00%) low severe
+  10 (10.00%) low mild
+  17 (17.00%) high severe
+
+    Finished `bench` profile [optimized] target(s) in 0.05s
+     Running benches/soa_batch.rs (target/agent-3168d114/release/deps/soa_batch-2c02319c68719dcf)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Warming up for 3.0000 s
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Collecting 100 samples in estimated 5.0028 s (3.1M iterations)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Analyzing
+soa_batch_mul_fq2_fp65537/batch_soa/1000
+                        time:   [1.6004 µs 1.6019 µs 1.6036 µs]
+                        thrpt:  [623.60 Melem/s 624.24 Melem/s 624.84 Melem/s]
+                 change:
+                        time:   [-9.4956% -7.2226% -5.0862%] (p = 0.00 < 0.05)
+                        thrpt:  [+5.3587% +7.7848% +10.492%]
+                        Performance has improved.
+Found 4 outliers among 100 measurements (4.00%)
+  3 (3.00%) high mild
+  1 (1.00%) high severe
+
+    Finished `bench` profile [optimized] target(s) in 0.06s
+     Running benches/soa_batch.rs (target/agent-3168d114/release/deps/soa_batch-2c02319c68719dcf)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Warming up for 3.0000 s
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Collecting 100 samples in estimated 5.0049 s (2.9M iterations)
+Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Analyzing
+soa_batch_mul_fq2_fp65537/batch_soa/1000
+                        time:   [1.6661 µs 1.6765 µs 1.6944 µs]
+                        thrpt:  [590.19 Melem/s 596.48 Melem/s 600.22 Melem/s]
+                 change:
+                        time:   [+4.5780% +4.9470% +5.3386%] (p = 0.00 < 0.05)
+                        thrpt:  [-5.0680% -4.7138% -4.3776%]
+                        Performance has regressed.
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) high severe
+
+
+ Performance counter stats for 'cargo bench -p gf2-core --features simd --bench soa_batch soa_batch_mul_fq2_fp65537/batch_soa/1000' (10 runs):
+
+                 0      context-switches:u               #      0.0 cs/sec  cs_per_second     
+                 0      cpu-migrations:u                 #      0.0 migrations/sec  migrations_per_second
+           101,871      page-faults:u                    #   4821.0 faults/sec  page_faults_per_second  ( +- 10.48% )
+         21,130.48 msec task-clock:u                     #      1.9 CPUs  CPUs_utilized         ( +- 15.14% )
+       337,009,278      branch-misses:u                  #      1.9 %  branch_miss_rate         ( +- 35.55% )  (50.12%)
+    17,707,857,982      branches:u                       #    838.0 M/sec  branch_frequency     ( +- 13.00% )  (50.02%)
+    88,316,949,411      cpu-cycles:u                     #      4.2 GHz  cycles_frequency       ( +- 14.25% )  (66.83%)
+   182,873,039,751      instructions:u                   #      2.1 instructions  insn_per_cycle  ( +-  6.20% )  (50.03%)
+     4,965,930,406      stalled-cycles-frontend:u        #     0.06 frontend_cycles_idle        ( +- 62.94% )  (50.14%)
+
+      10.857694416 +- 1.577578476 seconds time elapsed  ( +- 14.53% )
+
