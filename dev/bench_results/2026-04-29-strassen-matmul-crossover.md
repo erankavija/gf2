@@ -82,13 +82,14 @@ not change the production decision.
 ## Status against the issue criterion
 
 This branch preserves correctness of the Strassen-family implementation and
-keeps existing M4RM/scalar fallbacks available. It still does **not** meet the
-hard production-path crossover criterion: the focused scratch/view rework found
-no measured winning crossover within the feasible measurement budget recorded
-here. Meeting that criterion likely requires a deeper design, such as an M4RM
-leaf that consumes square views directly without materialising leaf quadrants,
-a lower-addition Winograd schedule that wins empirically, or a different
-matrix-level algorithm.
+keeps existing M4RM/scalar fallbacks available. After user-approved amendment
+of `59c487c3`, this satisfies the revised scaffold/no-dispatch scope: the
+focused scratch/view rework found no measured winning crossover within the
+feasible measurement budget recorded here, so production dispatch remains
+M4RM-only. A future production Strassen task would need a deeper design, such
+as an M4RM leaf that consumes square views directly without materialising leaf
+quadrants, a lower-addition Winograd schedule that wins empirically, or a
+different matrix-level algorithm.
 
 ## Comparison to pinned `64c88ae4` report
 

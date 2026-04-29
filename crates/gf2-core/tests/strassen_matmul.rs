@@ -89,17 +89,20 @@ fn forced_strassen_matches_m4rm_at_word_boundaries() {
 }
 
 #[test]
-fn forced_strassen_release_validation_512() {
+fn forced_strassen_release_validation_512_and_1024() {
     if cfg!(debug_assertions) {
         return;
     }
 
-    let lhs = patterned_square(512, 5);
-    let rhs = patterned_square(512, 6);
-    let actual = lhs.strassen_mul_for_test(&rhs, 128, 2);
-    let expected = m4rm_multiply(&lhs, &rhs);
+    for n in [512usize, 1024] {
+        let lhs = patterned_square(n, 5);
+        let rhs = patterned_square(n, 6);
+        let actual = lhs.strassen_mul_for_test(&rhs, 128, 2);
+        let expected = m4rm_multiply(&lhs, &rhs);
 
-    assert_eq!(actual, expected);
+        assert_eq!(actual, expected, "forced Strassen diverged at n={n}");
+        assert_tail_masked(&actual);
+    }
 }
 
 proptest! {
