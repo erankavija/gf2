@@ -4,4 +4,6 @@
 
 pub mod gauss;
 pub mod m4rm;
+pub(crate) mod matmul;
 pub mod rref;
+pub(crate) mod strassen;

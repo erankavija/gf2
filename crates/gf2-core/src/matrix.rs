@@ -110,6 +110,22 @@ impl BitMatrix {
         self.mul_row_xor_dispatch(rhs)
     }
 
+    /// Test-support hook for exercising the Strassen-family multiplier.
+    #[doc(hidden)]
+    #[cfg(any(test, feature = "test-support"))]
+    pub fn strassen_mul_for_test(
+        &self,
+        rhs: &BitMatrix,
+        leaf_n: usize,
+        max_depth: usize,
+    ) -> BitMatrix {
+        crate::alg::strassen::multiply_square_with_config(
+            self,
+            rhs,
+            crate::alg::strassen::StrassenConfig { leaf_n, max_depth },
+        )
+    }
+
     /// Creates a new zero-initialized matrix with the given dimensions.
     ///
     /// # Arguments
@@ -1472,7 +1488,7 @@ impl Mul<BitMatrix> for BitMatrix {
     /// assert_eq!(c, BitMatrix::identity(3));
     /// ```
     fn mul(self, rhs: BitMatrix) -> BitMatrix {
-        crate::alg::m4rm::multiply(&self, &rhs)
+        crate::alg::matmul::multiply(&self, &rhs)
     }
 }
 
@@ -1480,7 +1496,7 @@ impl Mul<&BitMatrix> for BitMatrix {
     type Output = BitMatrix;
 
     fn mul(self, rhs: &BitMatrix) -> BitMatrix {
-        crate::alg::m4rm::multiply(&self, rhs)
+        crate::alg::matmul::multiply(&self, rhs)
     }
 }
 
@@ -1488,7 +1504,7 @@ impl Mul<BitMatrix> for &BitMatrix {
     type Output = BitMatrix;
 
     fn mul(self, rhs: BitMatrix) -> BitMatrix {
-        crate::alg::m4rm::multiply(self, &rhs)
+        crate::alg::matmul::multiply(self, &rhs)
     }
 }
 
@@ -1496,7 +1512,7 @@ impl Mul<&BitMatrix> for &BitMatrix {
     type Output = BitMatrix;
 
     fn mul(self, rhs: &BitMatrix) -> BitMatrix {
-        crate::alg::m4rm::multiply(self, rhs)
+        crate::alg::matmul::multiply(self, rhs)
     }
 }
 

@@ -1,5 +1,5 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
-use gf2_core::alg::m4rm::multiply;
+use gf2_core::alg::m4rm::multiply as m4rm_multiply;
 use gf2_core::kernels::scalar::SCALAR_BACKEND;
 use gf2_core::kernels::Backend;
 use gf2_core::matrix::BitMatrix;
@@ -80,9 +80,46 @@ fn bench_matmul_square(c: &mut Criterion) {
 
         group.bench_with_input(BenchmarkId::from_parameter(size), size, |bench, _| {
             bench.iter(|| {
-                let _result = multiply(black_box(&a), black_box(&b));
+                let _result = m4rm_multiply(black_box(&a), black_box(&b));
             });
         });
+    }
+
+    group.finish();
+}
+
+fn bench_matmul_square_strassen_compare(c: &mut Criterion) {
+    let mut group = c.benchmark_group("matmul_square_strassen_compare");
+    group.sample_size(10);
+
+    for size in [1024, 2048, 4096, 8192].iter() {
+        let a = random_matrix(*size, *size, 0x59c4_87c3);
+        let b = random_matrix(*size, *size, 0x59c4_87c4);
+
+        group.bench_with_input(BenchmarkId::new("m4rm_base", size), size, |bench, _| {
+            bench.iter(|| {
+                let _result = m4rm_multiply(black_box(&a), black_box(&b));
+            });
+        });
+
+        group.bench_with_input(BenchmarkId::new("auto_dispatch", size), size, |bench, _| {
+            bench.iter(|| {
+                let _result = black_box(&a) * black_box(&b);
+            });
+        });
+
+        if *size >= 2048 {
+            group.bench_with_input(
+                BenchmarkId::new("strassen_forced_1", size),
+                size,
+                |bench, _| {
+                    bench.iter(|| {
+                        let _result =
+                            black_box(&a).strassen_mul_for_test(black_box(&b), size / 2, 1);
+                    });
+                },
+            );
+        }
     }
 
     group.finish();
@@ -100,7 +137,7 @@ fn bench_matmul_rectangular(c: &mut Criterion) {
         let label = format!("{}x{}x{}", m, k, n);
         group.bench_with_input(BenchmarkId::new("dims", &label), &label, |bench, _| {
             bench.iter(|| {
-                let _result = multiply(black_box(&a), black_box(&b));
+                let _result = m4rm_multiply(black_box(&a), black_box(&b));
             });
         });
     }
@@ -126,7 +163,7 @@ fn bench_row_xor_fallback(c: &mut Criterion) {
 
     group.bench_function(BenchmarkId::new("production_mul", "512x1x8192"), |bench| {
         bench.iter(|| {
-            let _result = multiply(black_box(&lhs), black_box(&rhs));
+            let _result = m4rm_multiply(black_box(&lhs), black_box(&rhs));
         });
     });
 
@@ -136,6 +173,7 @@ fn bench_row_xor_fallback(c: &mut Criterion) {
 criterion_group!(
     benches,
     bench_matmul_square,
+    bench_matmul_square_strassen_compare,
     bench_matmul_rectangular,
     bench_row_xor_fallback
 );
