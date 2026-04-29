@@ -1,8 +1,8 @@
 {
   "id": "01afbd6d-791e-4867-81cf-0f6c5ae131d9",
   "title": "Sparse matvec layout + prefetch",
-  "description": "Cache-bound sparse kernels targeting the LDPC parity-check matvec path where memory access patterns dominate. Two complementary approaches: software prefetch + block-CSR layout for runtime gains, and one-shot Cuthill-McKee row reorder for amortised cache-reuse gains.\n\n## Background\n\n`SparseBitMatrix::matvec` is scalar CSR iteration with no prefetch and no block layout. The gather pattern is index-driven, which is cache-unfriendly for LDPC parity-check matrices that have irregular row spans. Two distinct layout-level wins are available: (1) D1 — software prefetch on `col_idx[i + lookahead]` plus block-CSR ($4\\times 64$ dense bit-blocks within sparse rows) plus SIMD inside dense blocks; (2) D2 — Cuthill-McKee (RCM) row/column permutation applied once before dispatch, amortising across many matvecs.\n\nD1 measures speedup per single matvec call; D2 measures amortised speedup over $\\geq 100$ matvec calls (single-call cost is dominated by the reorder itself).\n\n## Success Criteria\n\n- [hard] Each child task ships per the per-kernel execution protocol from the epic spec doc.\n- [hard] Bit-exact result vs. existing CSR matvec (D1 raw, D2 after permutation roundtrip).\n- [hard] D1 asm artefact shows prefetch instructions actually emitted; perf-stat shows L1d-miss rate drops.\n- [hard] D2 permutation roundtrip (apply then unapply) is identity.\n\n## Notes\n\nBench target: existing `sparse.rs` bench at LDPC parity-check matrix sizes. Cache-bound kernels may rely on cache-miss-rate improvement instead of pure IPC delta. Spec doc: `dev/plans/gf2_core_ppc_spiral.md`.",
-  "state": "ready",
+  "description": "Cache-bound sparse kernels targeting the LDPC parity-check matvec path where memory access patterns dominate. Two complementary approaches: software prefetch + block-CSR layout for runtime gains, and one-shot Cuthill-McKee row reorder for amortised cache-reuse gains.\n\n## Background\n\n`SparseBitMatrix::matvec` is scalar CSR iteration with no prefetch and no block layout. The gather pattern is index-driven, which is cache-unfriendly for LDPC parity-check matrices that have irregular row spans. Two distinct layout-level wins are available: (1) D1 — software prefetch on `col_idx[i + lookahead]` plus block-CSR ($4\\times 64$ dense bit-blocks within sparse rows) plus SIMD inside dense blocks; (2) D2 — Cuthill-McKee (RCM) row/column permutation applied once before dispatch, amortising across many matvecs.\n\nD1 measures speedup per single matvec call; D2 measures amortised speedup over $\\geq 100$ matvec calls (single-call cost is dominated by the reorder itself).\n\n## Success Criteria\n\n- [hard] Each child task ships per the per-kernel execution protocol from the epic spec doc.\n- [hard] Bit-exact result vs. existing CSR matvec (D1 raw, D2 after permutation roundtrip).\n- [hard] D1 asm artefact shows prefetch instructions actually emitted; perf-stat evidence is recorded for CSR, block-CSR without prefetch, and block-CSR with explicit prefetch.\n- [hard] D2 permutation roundtrip (apply then unapply) is identity.\n\n## User-approved amendment\n\nD1 and D2 both shipped correctness-tested opt-in sparse-layout scaffolds, but measured evidence showed the existing CSR path remains faster on the deterministic LDPC-like fixtures. Per user-approved child amendments, accept the opt-in block-CSR/prefetch and RCM scaffolds plus committed evidence, keep CSR as the default production sparse matvec path, and treat sparse layout/prefetch speedup as future work rather than a closure blocker for this story.\n\n## Notes\n\nBench target: existing `sparse.rs` bench at LDPC parity-check matrix sizes. Cache-bound kernels may rely on cache-miss-rate improvement instead of pure IPC delta. Spec doc: `dev/plans/gf2_core_ppc_spiral.md`.",
+  "state": "done",
   "priority": "normal",
   "assignee": null,
   "dependencies": [
@@ -13,7 +13,18 @@
     "code-review",
     "cargo-ci"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-29T18:43:39.239872318Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-29T18:43:32.976817196Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -23,5 +34,5 @@
     "story:ppc-sparse-layout"
   ],
   "created_at": "2026-04-25T15:15:53.732961134+00:00",
-  "updated_at": "2026-04-29T18:41:59.747127323+00:00"
+  "updated_at": "2026-04-29T19:04:59.902241858+00:00"
 }

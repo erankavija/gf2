@@ -3276,3 +3276,11 @@
 {"type":"issue_state_changed","id":"63499c5e-2343-4c9f-a531-abfd0d8b6bb7","issue_id":"cbf576d1-8694-4dde-bf29-d047381155c3","timestamp":"2026-04-29T18:41:59.710285142Z","from":"in_progress","to":"done"}
 {"type":"issue_completed","id":"cdd99c50-95df-4144-8548-5ca0b0d601db","issue_id":"cbf576d1-8694-4dde-bf29-d047381155c3","timestamp":"2026-04-29T18:41:59.710339562Z"}
 {"type":"issue_state_changed","id":"bca95570-14fe-4cec-b37b-d806f41ba3f4","issue_id":"01afbd6d-791e-4867-81cf-0f6c5ae131d9","timestamp":"2026-04-29T18:41:59.747526763Z","from":"backlog","to":"ready"}
+{"type":"gate_passed","id":"2e0b61b2-6516-4ee4-b7b0-8711f9de1d5a","issue_id":"01afbd6d-791e-4867-81cf-0f6c5ae131d9","timestamp":"2026-04-29T18:43:39.186197752Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"e888f660-f907-4e20-ba69-809728632cb1","issue_id":"01afbd6d-791e-4867-81cf-0f6c5ae131d9","timestamp":"2026-04-29T18:50:40.131558796Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"f7b3a606-0902-445c-967d-4328d6aa6df0","issue_id":"2c866544-1ec7-4ba4-94ad-f7bd7f7993d5","timestamp":"2026-04-29T18:50:55.577849455Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"da5fae0e-6982-4e56-bebd-59772324130c","issue_id":"2c866544-1ec7-4ba4-94ad-f7bd7f7993d5","timestamp":"2026-04-29T19:00:01.482340459Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"issue_state_changed","id":"af180f65-fa33-4653-8945-62d18d09f183","issue_id":"01afbd6d-791e-4867-81cf-0f6c5ae131d9","timestamp":"2026-04-29T19:04:59.902126218Z","from":"ready","to":"done"}
+{"type":"issue_completed","id":"e1e7d413-c139-4052-8c77-0e79d40e3296","issue_id":"01afbd6d-791e-4867-81cf-0f6c5ae131d9","timestamp":"2026-04-29T19:04:59.902196038Z"}
+{"type":"issue_created","id":"53725bee-3cf4-4122-882e-c5174c002137","issue_id":"cd356d0b-cfee-4951-a1dd-8fbac708f1fc","timestamp":"2026-04-29T19:19:34.337865826Z","title":"Fix verify-lean extraction after field delayed product-sum hooks","priority":"normal"}
+{"type":"dependency_reduced","id":"4350e8e5-40bc-4074-a9f4-9c6ca4cf8b3f","issue_id":"3abb755e-39d7-40fd-bceb-0ca7bb310083","timestamp":"2026-04-29T19:24:16.404437676Z","old_count":4,"new_count":3,"removed_deps":["e7ab802d-b99e-4efa-9304-f649f7c7ef68"]}

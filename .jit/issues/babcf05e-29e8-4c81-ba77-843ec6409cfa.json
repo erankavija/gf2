@@ -6,13 +6,14 @@
   "priority": "normal",
   "assignee": "agent:project-lead",
   "dependencies": [
-    "2c866544-1ec7-4ba4-94ad-f7bd7f7993d5",
-    "d76f6931-a450-4651-9ab8-cfe5d7f8c7b2",
     "afc80980-350e-4e7f-8172-9929e7c5f350",
-    "e555c46d-cb1d-45d4-91a6-871f32866ad0",
     "01afbd6d-791e-4867-81cf-0f6c5ae131d9",
+    "d76f6931-a450-4651-9ab8-cfe5d7f8c7b2",
+    "cd356d0b-cfee-4951-a1dd-8fbac708f1fc",
+    "211102c6-d6ad-4a3c-b497-534165902c43",
+    "2c866544-1ec7-4ba4-94ad-f7bd7f7993d5",
     "3abb755e-39d7-40fd-bceb-0ca7bb310083",
-    "211102c6-d6ad-4a3c-b497-534165902c43"
+    "e555c46d-cb1d-45d4-91a6-871f32866ad0"
   ],
   "gates_required": [
     "code-review",
@@ -37,5 +38,5 @@
     "milestone:gf2-core-perf"
   ],
   "created_at": "2026-04-25T15:14:12.083946312+00:00",
-  "updated_at": "2026-04-27T21:07:47.177756239+00:00"
+  "updated_at": "2026-04-29T19:23:54.363134180+00:00"
 }
