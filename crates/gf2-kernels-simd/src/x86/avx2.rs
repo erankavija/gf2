@@ -52,6 +52,55 @@ unsafe fn avx2_m4rm_gray_xor16(acc: &mut [[u64; 8]; 2], src: &[u64]) {
 }
 
 #[target_feature(enable = "avx2")]
+unsafe fn avx2_m4rm_tile8x4(
+    c_block: &mut [u64],
+    stride_words: usize,
+    word_start: usize,
+    table_buffer: &[u64],
+    idx: &[usize; 8],
+) {
+    debug_assert!(c_block.len() >= 8 * stride_words);
+    debug_assert!(word_start + 4 <= stride_words);
+
+    let c = c_block.as_mut_ptr();
+    let table = table_buffer.as_ptr();
+    let load_c = |row: usize| loadu(c.add(row * stride_words + word_start).cast::<u8>());
+    let load_t = |row: usize| loadu(table.add(idx[row] * stride_words + word_start).cast::<u8>());
+
+    let acc0 = _mm256_xor_si256(load_c(0), load_t(0));
+    let acc1 = _mm256_xor_si256(load_c(1), load_t(1));
+    let acc2 = _mm256_xor_si256(load_c(2), load_t(2));
+    let acc3 = _mm256_xor_si256(load_c(3), load_t(3));
+    let acc4 = _mm256_xor_si256(load_c(4), load_t(4));
+    let acc5 = _mm256_xor_si256(load_c(5), load_t(5));
+    let acc6 = _mm256_xor_si256(load_c(6), load_t(6));
+    let acc7 = _mm256_xor_si256(load_c(7), load_t(7));
+
+    storeu(c.add(word_start).cast::<u8>(), acc0);
+    storeu(c.add(stride_words + word_start).cast::<u8>(), acc1);
+    storeu(c.add(2 * stride_words + word_start).cast::<u8>(), acc2);
+    storeu(c.add(3 * stride_words + word_start).cast::<u8>(), acc3);
+    storeu(c.add(4 * stride_words + word_start).cast::<u8>(), acc4);
+    storeu(c.add(5 * stride_words + word_start).cast::<u8>(), acc5);
+    storeu(c.add(6 * stride_words + word_start).cast::<u8>(), acc6);
+    storeu(c.add(7 * stride_words + word_start).cast::<u8>(), acc7);
+}
+
+#[target_feature(enable = "avx2")]
+unsafe fn avx2_m4rm_tile8xn(
+    c_block: &mut [u64],
+    stride_words: usize,
+    table_buffer: &[u64],
+    idx: &[usize; 8],
+) {
+    let mut word_start = 0usize;
+    while word_start + 4 <= stride_words {
+        avx2_m4rm_tile8x4(c_block, stride_words, word_start, table_buffer, idx);
+        word_start += 4;
+    }
+}
+
+#[target_feature(enable = "avx2")]
 unsafe fn avx2_and_into(dst: &mut [u64], src: &[u64]) {
     let len = dst.len().min(src.len());
     let nvec = len / 4;
@@ -440,6 +489,29 @@ pub(crate) fn fns() -> LogicalFns {
         }
         unsafe { avx2_m4rm_gray_xor16(acc, src) }
     }
+    fn m4rm_tile8x4_fn(
+        c_block: &mut [u64],
+        stride_words: usize,
+        word_start: usize,
+        table_buffer: &[u64],
+        idx: &[usize; 8],
+    ) {
+        if c_block.len() < 8 * stride_words || word_start + 4 > stride_words {
+            return;
+        }
+        unsafe { avx2_m4rm_tile8x4(c_block, stride_words, word_start, table_buffer, idx) }
+    }
+    fn m4rm_tile8xn_fn(
+        c_block: &mut [u64],
+        stride_words: usize,
+        table_buffer: &[u64],
+        idx: &[usize; 8],
+    ) {
+        if c_block.len() < 8 * stride_words {
+            return;
+        }
+        unsafe { avx2_m4rm_tile8xn(c_block, stride_words, table_buffer, idx) }
+    }
     fn not_fn(dst: &mut [u64]) {
         if dst.is_empty() {
             return;
@@ -475,6 +547,8 @@ pub(crate) fn fns() -> LogicalFns {
         or_fn,
         xor_fn,
         m4rm_gray_xor16_fn,
+        m4rm_tile8x4_fn,
+        m4rm_tile8xn_fn,
         not_fn,
         popcnt_fn,
         and_popcnt_fn,

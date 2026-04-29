@@ -596,6 +596,19 @@ impl BitMatrix {
         &mut self.data[start..start + self.stride_words]
     }
 
+    #[inline]
+    pub(crate) fn row_words_block_mut(&mut self, row_start: usize, row_count: usize) -> &mut [u64] {
+        assert!(
+            row_start <= self.rows && row_count <= self.rows - row_start,
+            "row block {}..{} out of bounds (rows={})",
+            row_start,
+            row_start + row_count,
+            self.rows
+        );
+        let start = row_start * self.stride_words;
+        &mut self.data[start..start + row_count * self.stride_words]
+    }
+
     /// Extracts a row as a BitVec.
     ///
     /// Creates a new BitVec containing all column values from the specified row.

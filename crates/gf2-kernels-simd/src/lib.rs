@@ -21,9 +21,24 @@ pub mod gf2m_wide;
 pub mod llr;
 pub mod mersenne;
 pub mod modem;
+pub mod prefetch;
 pub mod transpose;
 
 pub use clmul_scalar::clmul_u64_scalar;
+pub use prefetch::prefetch_read_l1;
+
+/// Register-tiled M4RM 8×4 C-update function.
+///
+/// `c_block` contains eight contiguous output rows with `stride_words` words per
+/// row. The function XORs four words beginning at `word_start` from each indexed
+/// Gray-table entry into the matching output row.
+pub type M4rmTile8x4Fn = fn(&mut [u64], usize, usize, &[u64], &[usize; 8]);
+
+/// Register-tiled M4RM full-row C-update function.
+///
+/// Processes a row block as repeated 8×4 YMM tiles across the full row width,
+/// leaving any non-multiple-of-four tail to the safe caller.
+pub type M4rmTile8xNFn = fn(&mut [u64], usize, &[u64], &[usize; 8]);
 
 /// Set of accelerated logical operations. Each function must have identical
 /// semantics to the scalar implementation (in-place dst modification, slice length min).
@@ -33,6 +48,8 @@ pub struct LogicalFns {
     pub or_fn: fn(&mut [u64], &[u64]),
     pub xor_fn: fn(&mut [u64], &[u64]),
     pub m4rm_gray_xor16_fn: fn(&mut [[u64; 8]; 2], &[u64]),
+    pub m4rm_tile8x4_fn: M4rmTile8x4Fn,
+    pub m4rm_tile8xn_fn: M4rmTile8xNFn,
     pub not_fn: fn(&mut [u64]),
     pub popcnt_fn: fn(&[u64]) -> u64,
     pub and_popcnt_fn: fn(&[u64], &[u64]) -> u64,
