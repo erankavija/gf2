@@ -2,9 +2,9 @@
   "id": "59c487c3-ff73-4b29-837a-748c53c5b7fa",
   "title": "Add Strassen-Winograd layer for GF(2) BitMatrix multiply",
   "description": "Add a Strassen-Winograd layer above the existing GF(2) M4RM matrix multiplication path, with benchmark-driven crossover selection.\n\n## Background\n\n`64c88ae4` and `dev/bench_results/2026-04-26-uncompetitiveness-profile.md` show GF(2) matrix multiplication at n=1024..4096 is only about 0.13-0.21x of M4RI. M4RI switches to Strassen-Winograd at large sizes; gf2-core currently uses pure schoolbook/M4RM. SIMD routing helps but cannot close the algorithmic exponent gap by itself.\n\n## Success Criteria\n\n- [hard] A Strassen-Winograd multiplication path exists for square GF(2) `BitMatrix` multiplication above an empirically selected crossover, while existing M4RM/scalar fallbacks remain available below the crossover.\n- [hard] Correctness is covered by deterministic edge tests and property tests against the existing `BitMatrix::mul` semantics, including n in {0, 1, 63, 64, 65, 127, 128, 129, 256, 512} and at least one larger release-only benchmark validation size.\n- [hard] The implementation preserves tail masking and introduces no `unsafe` outside `gf2-kernels-simd`.\n- [hard] Benchmark evidence records the selected crossover and compares pre/post throughput against the pinned gf2 baseline and the `64c88ae4` M4RI ratios where available.\n- [hard] `cargo-ci` and `code-review` gates pass.\n- [aspirational] GF(2) matmul at n>=1024 closes at least half of the residual gap to M4RI after the Tier-A/B kernel work lands.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "high",
-  "assignee": null,
+  "assignee": "agent:claude-wt-59c487c3",
   "dependencies": [
     "085cbd0b-a2b5-4d11-af6c-b1fb53e7392b",
     "19bc3199-e140-405f-9d16-d7722d7b7927"
@@ -14,15 +14,15 @@
     "cargo-ci"
   ],
   "gates_status": {
-    "cargo-ci": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-04-27T21:07:47.355061340Z"
-    },
     "code-review": {
       "status": "pending",
       "updated_by": null,
       "updated_at": "2026-04-27T21:07:47.355001790Z"
+    },
+    "cargo-ci": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-04-27T21:07:47.355061340Z"
     }
   },
   "context": {},
@@ -56,5 +56,5 @@
     "story:ppc-benchmark-gap"
   ],
   "created_at": "2026-04-27T21:07:47.099043297+00:00",
-  "updated_at": "2026-04-29T09:00:14.544226717+00:00"
+  "updated_at": "2026-04-29T09:44:55.756094007+00:00"
 }
