@@ -62,6 +62,7 @@
 
 pub mod backend;
 pub mod cpu;
+#[cfg(feature = "parallel")]
 pub mod field;
 
 #[cfg(test)]
