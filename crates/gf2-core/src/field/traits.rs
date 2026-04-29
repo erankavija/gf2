@@ -250,6 +250,27 @@ pub trait FiniteField:
     /// ```
     fn mul_to_wide(&self, rhs: &Self) -> Self::Wide;
 
+    /// Multiplies two elements in the representation preferred by delayed
+    /// product-sum kernels.
+    ///
+    /// The default implementation is the canonical unreduced product from
+    /// [`mul_to_wide`](Self::mul_to_wide). Prime fields whose storage is not
+    /// canonical (for example Montgomery-form [`crate::gfp::Fp`]) may override
+    /// this to accumulate raw storage products instead, provided
+    /// [`reduce_product_sum_wide`](Self::reduce_product_sum_wide) converts the
+    /// accumulated representation back to a valid field element.
+    ///
+    /// # Correctness contract
+    ///
+    /// The magnitude of each returned product must be bounded by
+    /// `theorem_4_operand_bound()²`, so summing at most
+    /// [`max_unreduced_additions`](Self::max_unreduced_additions) such products
+    /// cannot overflow `Self::Wide`.
+    #[inline]
+    fn mul_product_sum_wide(&self, rhs: &Self) -> Self::Wide {
+        self.mul_to_wide(rhs)
+    }
+
     /// Reduces a wide accumulator back to a field element.
     ///
     /// After accumulating up to [`max_unreduced_additions`](Self::max_unreduced_additions)
@@ -286,6 +307,19 @@ pub trait FiniteField:
     /// assert_eq!(Fp::<7>::reduce_wide(&wide), Fp::<7>::new(3));
     /// ```
     fn reduce_wide(wide: &Self::Wide) -> Self;
+
+    /// Reduces a delayed product-sum accumulator back to a field element.
+    ///
+    /// This is paired with
+    /// [`mul_product_sum_wide`](Self::mul_product_sum_wide). The default
+    /// implementation reduces the same canonical accumulator as
+    /// [`reduce_wide`](Self::reduce_wide). Implementations that accumulate a
+    /// storage-domain product sum must override both methods together and
+    /// document the representation-specific proof.
+    #[inline]
+    fn reduce_product_sum_wide(wide: &Self::Wide) -> Self {
+        Self::reduce_wide(wide)
+    }
 
     /// Maximum number of wide-type additions before reduction is required to avoid overflow.
     ///

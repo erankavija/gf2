@@ -440,7 +440,12 @@ impl<F: FiniteField> FieldVec<F> {
 /// accumulates at most
 /// [`FiniteField::max_unreduced_additions`](crate::field::FiniteField::max_unreduced_additions)
 /// wide products before reducing, so the `Wide` accumulator never overflows
-/// for any finite field this crate models.
+/// for any finite field this crate models. For `Fp<P>` this uses the
+/// storage-domain product-sum hook: Montgomery fields accumulate raw
+/// `(aR)·(bR)` products and do one modulo-`P` plus one REDC per chunk,
+/// rather than converting both operands out of Montgomery form on every
+/// multiply. The product bound is unchanged because every raw storage word
+/// is still `< P`.
 ///
 /// # Arguments
 ///
@@ -468,11 +473,11 @@ pub(crate) fn dot_product_slices<F: FiniteField>(a: &[F], b: &[F], zero: &F) -> 
 
     if kmax == usize::MAX {
         // Fast path: no overflow possible (e.g., GF(2^m) where Wide = Self).
-        let mut acc = a[0].mul_to_wide(&b[0]);
+        let mut acc = a[0].mul_product_sum_wide(&b[0]);
         for (x, y) in a[1..].iter().zip(b[1..].iter()) {
-            acc += x.mul_to_wide(y);
+            acc += x.mul_product_sum_wide(y);
         }
-        F::reduce_wide(&acc)
+        F::reduce_product_sum_wide(&acc)
     } else if kmax == 0 {
         // Degenerate: reduce after every multiply.
         let mut acc = a[0].clone() * b[0].clone();
@@ -494,11 +499,11 @@ pub(crate) fn dot_product_slices<F: FiniteField>(a: &[F], b: &[F], zero: &F) -> 
                 chunk_size,
                 kmax
             );
-            let mut acc = a[offset].mul_to_wide(&b[offset]);
+            let mut acc = a[offset].mul_product_sum_wide(&b[offset]);
             for i in 1..chunk_size {
-                acc += a[offset + i].mul_to_wide(&b[offset + i]);
+                acc += a[offset + i].mul_product_sum_wide(&b[offset + i]);
             }
-            result += &F::reduce_wide(&acc);
+            result += &F::reduce_product_sum_wide(&acc);
             offset += chunk_size;
         }
         result

@@ -24,8 +24,9 @@
 //!
 //! All four owned/ref combinations are provided for `Add`, `Sub`, and `Mul`,
 //! plus `Neg`, scalar `F * &M` / `&M * F`, and `Index<(usize, usize)>`.
-//! The `Mul` body is a classical O(n³) `gemm`; delayed-reduction dot-product
-//! kernels and Strassen-Winograd are reserved for story `d48a3cfd`.
+//! The `Mul` body is a classical O(n³) cache-blocked `gemm` backed by
+//! delayed-reduction dot-product kernels; Strassen-Winograd is layered above
+//! this base case in the field algorithms.
 
 use std::fmt;
 use std::ops::{Bound, Index, RangeBounds};
