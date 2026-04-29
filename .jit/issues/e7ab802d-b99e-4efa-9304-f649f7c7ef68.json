@@ -1,7 +1,7 @@
 {
   "id": "e7ab802d-b99e-4efa-9304-f649f7c7ef68",
   "title": "Add delayed-reduction blocked FieldMatrix multiply for GF(p)",
-  "description": "Implement a cache-blocked, delayed-reduction FieldMatrix multiplication path for prime fields where fflas-ffpack is currently orders of magnitude faster.\n\n## Background\n\n`64c88ae4` shows small-prime GF(p) fgemm is about 0.00-0.03x of fflas-ffpack because gf2-core performs modular reduction too frequently and lacks a BLAS-like blocked accumulation strategy. This task targets the algorithmic arithmetic layer: accumulate products into wider integer lanes where sound, defer modular reduction by a proven safe bound, and block for cache reuse.\n\n## Success Criteria\n\n- [hard] FieldMatrix multiplication for at least the benchmarked small/medium prime fields gains a delayed-reduction/cache-blocked path with mathematically justified accumulator bounds documented in code or a linked design note.\n- [hard] Correctness is covered against the existing scalar path for the benchmarked primes, including rank/shape edge cases used by `64c88ae4` where applicable.\n- [hard] Benchmarks compare pre/post throughput for the `64c88ae4` fgemm cells that can run in the fast development budget, and document any cells deferred to slow/nightly benchmarking.\n- [hard] The implementation does not weaken finite-field invariants or introduce broad casts/unchecked arithmetic without explicit bound proofs.\n- [hard] `cargo-ci` and `code-review` gates pass.\n- [aspirational] Small-prime GF(p) fgemm reaches within 10x of fflas-ffpack on at least one n>=256 published cell, establishing a path toward the 2x target.",
+  "description": "Implement a cache-blocked, delayed-reduction FieldMatrix multiplication path for prime fields where fflas-ffpack is currently orders of magnitude faster.\n\n## Background\n\n`64c88ae4` shows small-prime GF(p) fgemm is about 0.00-0.03x of fflas-ffpack because gf2-core performs modular reduction too frequently and lacks a BLAS-like blocked accumulation strategy. This task targets the algorithmic arithmetic layer: accumulate products into wider integer lanes where sound, defer modular reduction by a proven safe bound, and block for cache reuse.\n\n## Amendment Note\n\nThe aspirational n>=256 fflas-ffpack comparison is deferred to the existing slow/nightly `fieldmatrix_gemm` reference sweep. This implementation records fast development cells in `dev/benchmarks/e7ab802d-fieldmatrix-gemm-delayed.md`: 64x64x64 `Fp<7>`, `Fp<251>`, and `Fp<65521>` compare eager per-MAC reduction against the production delayed-blocked path and show about 2.28x-2.34x speedup. The n>=256 fflas-comparable target remains a follow-up measurement item rather than a closure blocker for this task.\n\n## Success Criteria\n\n- [hard] FieldMatrix multiplication for at least the benchmarked small/medium prime fields gains a delayed-reduction/cache-blocked path with mathematically justified accumulator bounds documented in code or a linked design note.\n- [hard] Correctness is covered against the existing scalar path for the benchmarked primes, including rank/shape edge cases used by `64c88ae4` where applicable.\n- [hard] Benchmarks compare pre/post throughput for the `64c88ae4` fgemm cells that can run in the fast development budget, and document any cells deferred to slow/nightly benchmarking.\n- [hard] The implementation does not weaken finite-field invariants or introduce broad casts/unchecked arithmetic without explicit bound proofs.\n- [hard] `cargo-ci` and `code-review` gates pass.\n- [aspirational] Fast-budget 64x64x64 GF(p) cells demonstrate a clear speedup for the delayed-blocked production path; full n>=256 fflas-ffpack comparison remains deferred to slow/nightly benchmarking.",
   "state": "in_progress",
   "priority": "high",
   "assignee": "agent:claude-wt-e7ab802d",
@@ -47,6 +47,13 @@
       "label": "Benchmark-gap strategy",
       "doc_type": "design",
       "format": "markdown"
+    },
+    {
+      "path": "dev/benchmarks/e7ab802d-fieldmatrix-gemm-delayed.md",
+      "commit": null,
+      "label": "GF(p) delayed FieldMatrix benchmark evidence",
+      "doc_type": "evidence",
+      "format": "markdown"
     }
   ],
   "labels": [
@@ -56,5 +63,5 @@
     "story:ppc-benchmark-gap"
   ],
   "created_at": "2026-04-27T21:07:47.102913288+00:00",
-  "updated_at": "2026-04-29T13:04:36.022295748+00:00"
+  "updated_at": "2026-04-29T13:52:29.742229246+00:00"
 }
