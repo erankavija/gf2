@@ -81,7 +81,7 @@ pub(crate) mod simd {
     use gf2_kernels_simd::fp_generic::FpGenericFns;
     use gf2_kernels_simd::gf2m::Gf2mFns;
     use gf2_kernels_simd::gf2m_batch::Gf2mBatchFns;
-    use gf2_kernels_simd::gf2m_wide::ClmulWide256Fns;
+    use gf2_kernels_simd::gf2m_wide::{ClmulWide256Fns, ClmulWide571Fns, Gf2mWideFns};
     use gf2_kernels_simd::mersenne::MersenneFns;
     use gf2_kernels_simd::transpose::TransposeFns;
     use gf2_kernels_simd::LogicalFns;
@@ -93,7 +93,7 @@ pub(crate) mod simd {
     static MERSENNE_FNS: OnceLock<Option<MersenneFns>> = OnceLock::new();
     static FP65537_FNS: OnceLock<Option<Fp65537Fns>> = OnceLock::new();
     static FP_GENERIC_FNS: OnceLock<Option<FpGenericFns>> = OnceLock::new();
-    static GF2M_WIDE256_FNS: OnceLock<Option<ClmulWide256Fns>> = OnceLock::new();
+    static GF2M_WIDE_FNS: OnceLock<Option<Gf2mWideFns>> = OnceLock::new();
     static TRANSPOSE_FNS: OnceLock<Option<TransposeFns>> = OnceLock::new();
 
     #[inline]
@@ -180,23 +180,31 @@ pub(crate) mod simd {
             .as_ref()
     }
 
+    /// Returns the best available fixed-size wide GF(2^m) carry-less multiply
+    /// kernels, if any.
+    ///
+    /// Preference order: AVX2+VPCLMULQDQ (YMM) → PCLMULQDQ scalar-lane (XMM).
+    /// Kernels produce only unreduced carry-less products; Barrett reduction is
+    /// applied by the caller. Returns `None` when no PCLMULQDQ is present.
+    #[inline]
+    pub fn maybe_gf2m_wide() -> Option<&'static Gf2mWideFns> {
+        GF2M_WIDE_FNS
+            .get_or_init(gf2_kernels_simd::gf2m_wide::detect_wide)
+            .as_ref()
+    }
+
     /// Returns the best available 4-limb (GF(2^256)) carry-less multiply
     /// kernel, if any.
-    ///
-    /// Preference order: AVX2+VPCLMULQDQ (YMM) → PCLMULQDQ scalar-lane
-    /// (XMM). The kernel produces only the unreduced 8-limb carry-less
-    /// product; Barrett reduction is applied by the caller. Returns `None`
-    /// when no PCLMULQDQ is present; callers must fall back to the pure-Rust
-    /// scalar `clmul_wide` implementation. An AVX-512VL+VPCLMULQDQ (ZMM)
-    /// lane is not currently provided — the test host (Zen 3) has no
-    /// AVX-512 hardware. The required `_mm512_*` carry-less-multiply
-    /// intrinsics are stable since Rust 1.89, so the lane can be added
-    /// when AVX-512 hardware is in scope.
     #[inline]
     pub fn maybe_gf2m_wide256() -> Option<&'static ClmulWide256Fns> {
-        GF2M_WIDE256_FNS
-            .get_or_init(gf2_kernels_simd::gf2m_wide::detect)
-            .as_ref()
+        maybe_gf2m_wide().map(|fns| &fns.wide256)
+    }
+
+    /// Returns the best available 9-limb (GF(2^571)) carry-less multiply
+    /// kernel, if any.
+    #[inline]
+    pub fn maybe_gf2m_wide571() -> Option<&'static ClmulWide571Fns> {
+        maybe_gf2m_wide().map(|fns| &fns.wide571)
     }
 }
 
@@ -228,7 +236,19 @@ pub(crate) mod simd {
 
     #[allow(dead_code)]
     #[inline]
+    pub fn maybe_gf2m_wide() -> Option<()> {
+        None
+    }
+
+    #[allow(dead_code)]
+    #[inline]
     pub fn maybe_gf2m_wide256() -> Option<()> {
+        None
+    }
+
+    #[allow(dead_code)]
+    #[inline]
+    pub fn maybe_gf2m_wide571() -> Option<()> {
         None
     }
 

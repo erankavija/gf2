@@ -953,7 +953,7 @@ fn slice_wide_shr_2n_to_n<const N: usize>(a: &[u64], shift: u32) -> [u64; N] {
 }
 
 /// Slice-based equivalent of [`clmul_wide_with_implicit_high`] — writes the
-/// product into `out: &mut [u64]` (length `2 * N`) via XOR accumulation.
+/// product into `out: &mut [u64]` (length `2 * N`).
 #[inline]
 fn slice_clmul_wide_with_implicit_high<const N: usize>(
     a: &[u64; N],
@@ -962,14 +962,12 @@ fn slice_clmul_wide_with_implicit_high<const N: usize>(
     out: &mut [u64],
 ) {
     debug_assert_eq!(out.len(), 2 * N);
-    // Main product a * b_stored via schoolbook carry-less multiply.
-    for i in 0..N {
-        for j in 0..N {
-            let p: u128 = clmul(a[i], b_stored[j]);
-            out[i + j] ^= p as u64;
-            out[i + j + 1] ^= (p >> 64) as u64;
-        }
-    }
+    // Main product a * b_stored via the shared wide-product helper. This keeps
+    // the Barrett algorithm and polynomial handling unchanged while allowing
+    // fixed-size SIMD clmul kernels (currently N = 4 and N = 9) to accelerate
+    // the two reduction multiplications as well as the caller's initial
+    // product.
+    super::wide::clmul_wide_slice_product::<N>(a, b_stored, out);
     // Add contribution from implicit leading bit: a * x^b_implicit_bit.
     let word_shift = (b_implicit_bit / 64) as usize;
     let bit_shift = b_implicit_bit % 64;
