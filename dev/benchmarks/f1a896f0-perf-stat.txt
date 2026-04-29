@@ -1,8 +1,24 @@
 f1a896f0 sparse block-CSR perf stat evidence
 ============================================
 
-Binary:
-  target/agent-f1a896f0/release/deps/sparse-6a327f0e9389e1aa
+Host/toolchain:
+  Host: Linux fraktaali 6.19.11-arch1-1 x86_64
+  rustc: 1.95.0 (59807616e 2026-04-14), LLVM 22.1.2
+  cargo: 1.95.0 (f2d3ce0bd 2026-03-21)
+  perf: 7.0-3
+
+Build:
+  cd /home/vkaskivuo/Projects/gf2/.claude/worktrees/agent-f1a896f0
+  CARGO_TARGET_DIR=target/agent-f1a896f0 RUSTFLAGS='-C target-cpu=native' \
+    cargo build -p gf2-core --release --example sparse_block_csr_perfstat
+
+Fixed-iteration methodology:
+  Criterion adapts iteration counts per function, so L1d rates from filtered
+  Criterion binaries were not apples-to-apples per matvec. The rework adds
+  crates/gf2-core/examples/sparse_block_csr_perfstat.rs, which constructs the
+  same deterministic LDPC-like 8192x16384 row_weight=6 matrix, verifies
+  block-CSR output against CSR once, then executes exactly 50,000 matvec calls.
+  Each perf invocation below uses the same operation count and `perf stat -r 10`.
 
 Counters:
   perf stat -r 10 -e L1-dcache-loads,L1-dcache-load-misses
@@ -10,46 +26,71 @@ Counters:
 CSR path:
   Command:
     perf stat -r 10 -e L1-dcache-loads,L1-dcache-load-misses \
-      target/agent-f1a896f0/release/deps/sparse-6a327f0e9389e1aa \
-      sparse_matvec_ldpc_block_csr/csr/8192x16384_w6 --bench \
-      --warm-up-time 1 --measurement-time 1 --sample-size 10
+      target/agent-f1a896f0/release/examples/sparse_block_csr_perfstat \
+      --mode csr --rows 8192 --cols 16384 --row-weight 6 \
+      --block-rows 32 --prefetch-distance 16 --iters 50000
 
   Performance counter stats (10 runs):
-    49,144,046,869 L1-dcache-loads:u        (+- 1.09%)
-     1,190,346,318 L1-dcache-load-misses:u  (+- 1.04%)
-     4.700320348 +- 0.042093313 seconds time elapsed (+- 0.90%)
+    13,911,749,366 L1-dcache-loads:u        (+- 0.02%)
+       363,748,282 L1-dcache-load-misses:u  (+- 0.14%)
+       1.739124553 +- 0.001730065 seconds time elapsed (+- 0.10%)
 
-Block CSR, prefetch enabled:
-  Command:
-    perf stat -r 10 -e L1-dcache-loads,L1-dcache-load-misses \
-      target/agent-f1a896f0/release/deps/sparse-6a327f0e9389e1aa \
-      sparse_matvec_ldpc_block_csr/block_csr_prefetch/8192x16384_w6 --bench \
-      --warm-up-time 1 --measurement-time 1 --sample-size 10
-
-  Performance counter stats (10 runs):
-    36,059,754,787 L1-dcache-loads:u        (+- 1.41%)
-     1,030,815,542 L1-dcache-load-misses:u  (+- 1.10%)
-     5.135686744 +- 0.023812433 seconds time elapsed (+- 0.46%)
+  L1d miss rate:
+    363,748,282 / 13,911,749,366 = 2.61%
 
 Block CSR, prefetch disabled:
   Command:
     perf stat -r 10 -e L1-dcache-loads,L1-dcache-load-misses \
-      target/agent-f1a896f0/release/deps/sparse-6a327f0e9389e1aa \
-      sparse_matvec_ldpc_block_csr/block_csr_no_prefetch/8192x16384_w6 --bench \
-      --warm-up-time 1 --measurement-time 1 --sample-size 10
+      target/agent-f1a896f0/release/examples/sparse_block_csr_perfstat \
+      --mode block_csr_no_prefetch --rows 8192 --cols 16384 --row-weight 6 \
+      --block-rows 32 --prefetch-distance 16 --iters 50000
 
   Performance counter stats (10 runs):
-    36,257,550,115 L1-dcache-loads:u        (+- 1.35%)
-     1,132,460,908 L1-dcache-load-misses:u  (+- 1.04%)
-     4.811020776 +- 0.007846995 seconds time elapsed (+- 0.16%)
+     9,477,889,058 L1-dcache-loads:u        (+- 0.03%)
+       371,969,627 L1-dcache-load-misses:u  (+- 0.08%)
+       2.027157802 +- 0.002446799 seconds time elapsed (+- 0.12%)
 
-Interpretation:
-  * Prefetch-enabled block CSR reduced absolute L1-dcache-load-misses versus CSR
-    in this Criterion-filtered perf run: 1.1903e9 -> 1.0308e9 (-13.4%).
-  * The miss rate versus CSR did not improve because total retired L1 loads also
-    changed under Criterion's adaptive iteration counts:
-      CSR:      1.1903e9 / 49.1440e9 = 2.42%
-      prefetch: 1.0308e9 / 36.0598e9 = 2.86%
-  * Prefetch did reduce misses relative to the same block layout without prefetch:
-      no-prefetch: 1.1325e9 / 36.2576e9 = 3.12%
-      prefetch:    1.0308e9 / 36.0598e9 = 2.86%
+  L1d miss rate:
+    371,969,627 / 9,477,889,058 = 3.92%
+
+Block CSR, prefetch distance 16:
+  Command:
+    perf stat -r 10 -e L1-dcache-loads,L1-dcache-load-misses \
+      target/agent-f1a896f0/release/examples/sparse_block_csr_perfstat \
+      --mode block_csr_prefetch --rows 8192 --cols 16384 --row-weight 6 \
+      --block-rows 32 --prefetch-distance 16 --iters 50000
+
+  Performance counter stats (10 runs):
+    10,840,568,867 L1-dcache-loads:u        (+- 0.02%)
+       372,239,836 L1-dcache-load-misses:u  (+- 0.08%)
+       2.513091336 +- 0.003585895 seconds time elapsed (+- 0.14%)
+
+  L1d miss rate:
+    372,239,836 / 10,840,568,867 = 3.43%
+
+Tuning notes:
+  Quick fixed-iteration timing across block_rows={16,32,64} did not show a
+  useful wall-time difference for no-prefetch block CSR on this fixture:
+    block_rows=16: 815.9 ms / 20,000 matvecs
+    block_rows=32: 809.9 ms / 20,000 matvecs
+    block_rows=64: 806.4 ms / 20,000 matvecs
+    CSR:           694.4 ms / 20,000 matvecs
+  Prefetch-distance quick timing at block_rows=32 and 20,000 matvecs:
+    d=4:  1018.2 ms
+    d=8:  1001.8 ms
+    d=16: 1008.7 ms
+    d=32: 1048.0 ms
+    d=64: 1004.3 ms
+
+Conclusion:
+  The fixed-iteration harness removes Criterion's adaptive-iteration confounder.
+  On the LDPC-sized 8192x16384_w6 fixture, block CSR does not satisfy the hard
+  L1d miss-rate criterion versus existing CSR:
+    CSR:                 2.61%
+    block no-prefetch:   3.92%
+    block prefetch d=16: 3.43%
+  Absolute L1d misses per 50,000 matvecs are also slightly higher for block CSR
+  than CSR in this fair fixed-iteration comparison. Prefetch lowers the block
+  layout's miss rate versus no-prefetch, but wall time worsens. The rework
+  therefore disables software prefetch in the default block-CSR `matvec()` and
+  leaves prefetch available only through explicit `matvec_with_prefetch_distance`.

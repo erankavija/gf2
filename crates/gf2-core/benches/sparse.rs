@@ -235,7 +235,7 @@ fn bench_ldpc_block_csr_matvec(c: &mut Criterion) {
         group.bench_with_input(
             BenchmarkId::new("block_csr_prefetch", &case),
             &(&block, &x),
-            |b, (block, x)| b.iter(|| black_box(block.matvec(x))),
+            |b, (block, x)| b.iter(|| black_box(block.matvec_with_prefetch_distance(x, 16))),
         );
         group.bench_with_input(
             BenchmarkId::new("block_csr_no_prefetch", &case),
