@@ -15,6 +15,10 @@ use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criteri
 use gf2_core::gfp::Fp;
 use gf2_core::gfpn::{BatchExtField, CubicExt, ExtConfig, QuadraticExt};
 
+/// V10 multithread design point: large enough to amortise rayon scheduling
+/// while still fitting the hot coefficient lanes in LLC on commodity CPUs.
+const DESIGN_BATCH_LEN: usize = 1 << 20;
+
 struct QuadCfg;
 impl ExtConfig for QuadCfg {
     type BaseField = Fp<65537>;
@@ -155,9 +159,53 @@ fn bench_cubic_soa_vs_sequential(c: &mut Criterion) {
     group.finish();
 }
 
+fn bench_quadratic_soa_design_size(c: &mut Criterion) {
+    let mut group = c.benchmark_group("soa_batch_mul_fq2_fp65537_design");
+    group.sample_size(10);
+    group.throughput(Throughput::Elements(DESIGN_BATCH_LEN as u64));
+
+    let xs = make_fq2_inputs(DESIGN_BATCH_LEN, 101);
+    let ys = make_fq2_inputs(DESIGN_BATCH_LEN, 211);
+    let bxs = BatchExtField::<Fp<65537>, 2>::from_quadratic::<QuadCfg>(&xs);
+    let bys = BatchExtField::<Fp<65537>, 2>::from_quadratic::<QuadCfg>(&ys);
+
+    group.bench_with_input(
+        BenchmarkId::new("batch_soa", DESIGN_BATCH_LEN),
+        &(bxs, bys),
+        |bench, (bxs, bys)| {
+            bench.iter(|| black_box(bxs.batch_mul_quadratic::<QuadCfg>(black_box(bys))));
+        },
+    );
+
+    group.finish();
+}
+
+fn bench_cubic_soa_design_size(c: &mut Criterion) {
+    let mut group = c.benchmark_group("soa_batch_mul_fq3_fp65537_design");
+    group.sample_size(10);
+    group.throughput(Throughput::Elements(DESIGN_BATCH_LEN as u64));
+
+    let xs = make_fq3_inputs(DESIGN_BATCH_LEN, 307);
+    let ys = make_fq3_inputs(DESIGN_BATCH_LEN, 401);
+    let bxs = BatchExtField::<Fp<65537>, 3>::from_cubic::<CubicCfg>(&xs);
+    let bys = BatchExtField::<Fp<65537>, 3>::from_cubic::<CubicCfg>(&ys);
+
+    group.bench_with_input(
+        BenchmarkId::new("batch_soa", DESIGN_BATCH_LEN),
+        &(bxs, bys),
+        |bench, (bxs, bys)| {
+            bench.iter(|| black_box(bxs.batch_mul_cubic::<CubicCfg>(black_box(bys))));
+        },
+    );
+
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_quadratic_soa_vs_sequential,
-    bench_cubic_soa_vs_sequential
+    bench_cubic_soa_vs_sequential,
+    bench_quadratic_soa_design_size,
+    bench_cubic_soa_design_size
 );
 criterion_main!(benches);

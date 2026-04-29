@@ -466,7 +466,7 @@ impl<F: FiniteField, const N: usize> BatchExtField<F, N> {
 // Quadratic extension specialisations (N = 2)
 // ---------------------------------------------------------------------------
 
-impl<F: ConstField + SimdKaratsubaHook> BatchExtField<F, 2> {
+impl<F: ConstField + SimdKaratsubaHook + Send + Sync> BatchExtField<F, 2> {
     /// Converts a slice of [`QuadraticExt<C>`] elements into SoA form.
     ///
     /// This is the AoS→SoA transpose. Cost is `O(len)` base-field copies
@@ -631,6 +631,11 @@ impl<F: ConstField + SimdKaratsubaHook> BatchExtField<F, 2> {
             other.len()
         );
 
+        #[cfg(feature = "parallel")]
+        if crate::compute::field::should_parallelize_soa_batch(self.len()) {
+            return crate::compute::field::batch_mul_quadratic_parallel::<F, C>(self, other);
+        }
+
         let a0 = self.coeff(0);
         let a1 = self.coeff(1);
         let b0 = other.coeff(0);
@@ -677,6 +682,11 @@ impl<F: ConstField + SimdKaratsubaHook> BatchExtField<F, 2> {
     /// assert_eq!(squares[0], xs[0] * xs[0]);
     /// ```
     pub fn batch_square_quadratic<C: ExtConfig<BaseField = F>>(&self) -> Self {
+        #[cfg(feature = "parallel")]
+        if crate::compute::field::should_parallelize_soa_batch(self.len()) {
+            return crate::compute::field::batch_square_quadratic_parallel::<F, C>(self);
+        }
+
         let a0 = self.coeff(0);
         let a1 = self.coeff(1);
         let (out_c0, out_c1) = batch_karatsuba::<F, C>(a0, a1, a0, a1);
@@ -690,7 +700,7 @@ impl<F: ConstField + SimdKaratsubaHook> BatchExtField<F, 2> {
 // Cubic extension specialisations (N = 3)
 // ---------------------------------------------------------------------------
 
-impl<F: ConstField + SimdKaratsubaHook> BatchExtField<F, 3> {
+impl<F: ConstField + SimdKaratsubaHook + Send + Sync> BatchExtField<F, 3> {
     /// Converts a slice of [`CubicExt<C>`] elements into SoA form.
     ///
     /// This is the AoS→SoA transpose for cubic-extension elements. Cost is
@@ -828,6 +838,11 @@ impl<F: ConstField + SimdKaratsubaHook> BatchExtField<F, 3> {
             other.len()
         );
 
+        #[cfg(feature = "parallel")]
+        if crate::compute::field::should_parallelize_soa_batch(self.len()) {
+            return crate::compute::field::batch_mul_cubic_parallel::<F, C>(self, other);
+        }
+
         let coeffs = batch_cubic_karatsuba::<F, C>(
             self.coeff(0),
             self.coeff(1),
@@ -873,6 +888,11 @@ impl<F: ConstField + SimdKaratsubaHook> BatchExtField<F, 3> {
     /// assert_eq!(squares[0], xs[0] * xs[0]);
     /// ```
     pub fn batch_square_cubic<C: ExtConfig<BaseField = F>>(&self) -> Self {
+        #[cfg(feature = "parallel")]
+        if crate::compute::field::should_parallelize_soa_batch(self.len()) {
+            return crate::compute::field::batch_square_cubic_parallel::<F, C>(self);
+        }
+
         let coeffs = batch_cubic_karatsuba::<F, C>(
             self.coeff(0),
             self.coeff(1),
@@ -1978,6 +1998,108 @@ mod tests {
             prop_assert!(batch.is_valid());
             let round = batch.to_cubic::<CfgCubicBeta3>();
             prop_assert_eq!(round, xs);
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "parallel")]
+    fn parallel_quadratic_chunks_are_bit_exact() {
+        for &len in &[
+            0usize,
+            1,
+            63,
+            64,
+            65,
+            crate::compute::field::SOA_PARALLEL_CHUNK_LEN - 1,
+            crate::compute::field::SOA_PARALLEL_CHUNK_LEN,
+            crate::compute::field::SOA_PARALLEL_CHUNK_LEN + 17,
+            crate::compute::field::SOA_PARALLEL_MIN_LEN + 19,
+        ] {
+            let a: Vec<Fq2Big> = (0..len)
+                .map(|i| {
+                    Fq2Big::new(
+                        Fp::new((17 * i as u64 + 3) % 65537),
+                        Fp::new((29 * i as u64 + 5) % 65537),
+                    )
+                })
+                .collect();
+            let b: Vec<Fq2Big> = (0..len)
+                .map(|i| {
+                    Fq2Big::new(
+                        Fp::new((31 * i as u64 + 7) % 65537),
+                        Fp::new((43 * i as u64 + 11) % 65537),
+                    )
+                })
+                .collect();
+
+            let ba = BatchExtField::<Fp<65537>, 2>::from_quadratic::<CfgBeta3>(&a);
+            let bb = BatchExtField::<Fp<65537>, 2>::from_quadratic::<CfgBeta3>(&b);
+            let expected_mul: Vec<Fq2Big> = a.iter().zip(b.iter()).map(|(x, y)| *x * *y).collect();
+            let expected_square: Vec<Fq2Big> = a.iter().map(|x| *x * *x).collect();
+
+            let got_mul =
+                crate::compute::field::batch_mul_quadratic_parallel::<Fp<65537>, CfgBeta3>(
+                    &ba, &bb,
+                )
+                .to_quadratic::<CfgBeta3>();
+            let got_square =
+                crate::compute::field::batch_square_quadratic_parallel::<Fp<65537>, CfgBeta3>(&ba)
+                    .to_quadratic::<CfgBeta3>();
+
+            assert_eq!(got_mul, expected_mul, "parallel Fq2 mul len {len}");
+            assert_eq!(got_square, expected_square, "parallel Fq2 square len {len}");
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "parallel")]
+    fn parallel_cubic_chunks_are_bit_exact() {
+        for &len in &[
+            0usize,
+            1,
+            63,
+            64,
+            65,
+            crate::compute::field::SOA_PARALLEL_CHUNK_LEN - 1,
+            crate::compute::field::SOA_PARALLEL_CHUNK_LEN,
+            crate::compute::field::SOA_PARALLEL_CHUNK_LEN + 17,
+            crate::compute::field::SOA_PARALLEL_MIN_LEN + 19,
+        ] {
+            let a: Vec<Fq3Big> = (0..len)
+                .map(|i| {
+                    Fq3Big::new(
+                        Fp::new((17 * i as u64 + 3) % 65537),
+                        Fp::new((29 * i as u64 + 5) % 65537),
+                        Fp::new((37 * i as u64 + 13) % 65537),
+                    )
+                })
+                .collect();
+            let b: Vec<Fq3Big> = (0..len)
+                .map(|i| {
+                    Fq3Big::new(
+                        Fp::new((31 * i as u64 + 7) % 65537),
+                        Fp::new((43 * i as u64 + 11) % 65537),
+                        Fp::new((47 * i as u64 + 19) % 65537),
+                    )
+                })
+                .collect();
+
+            let ba = BatchExtField::<Fp<65537>, 3>::from_cubic::<CfgCubicBeta3>(&a);
+            let bb = BatchExtField::<Fp<65537>, 3>::from_cubic::<CfgCubicBeta3>(&b);
+            let expected_mul: Vec<Fq3Big> = a.iter().zip(b.iter()).map(|(x, y)| *x * *y).collect();
+            let expected_square: Vec<Fq3Big> = a.iter().map(|x| *x * *x).collect();
+
+            let got_mul =
+                crate::compute::field::batch_mul_cubic_parallel::<Fp<65537>, CfgCubicBeta3>(
+                    &ba, &bb,
+                )
+                .to_cubic::<CfgCubicBeta3>();
+            let got_square =
+                crate::compute::field::batch_square_cubic_parallel::<Fp<65537>, CfgCubicBeta3>(&ba)
+                    .to_cubic::<CfgCubicBeta3>();
+
+            assert_eq!(got_mul, expected_mul, "parallel Fq3 mul len {len}");
+            assert_eq!(got_square, expected_square, "parallel Fq3 square len {len}");
         }
     }
 }
