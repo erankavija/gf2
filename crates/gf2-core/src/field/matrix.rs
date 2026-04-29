@@ -4168,6 +4168,19 @@ mod tests {
 
     #[test]
     fn test_gf2m_batch_gemm_covers_64c88ae4_rectangular_shapes() {
+        struct RectGf2m16Cfg;
+        impl crate::gf2m::Gf2mWideConfig<1> for RectGf2m16Cfg {
+            const M: usize = 16;
+            const MODULUS: [u64; 1] = [0x100B];
+            const NAME: &'static str = "RectGf2m16Cfg";
+        }
+        type RectGf2m16 = crate::gf2m::Gf2mWide<1, RectGf2m16Cfg>;
+        impl FromGf2mU64 for RectGf2m16 {
+            fn from_gf2m_u64(value: u64) -> Self {
+                RectGf2m16::from_u64(value)
+            }
+        }
+
         fn check<F>(label: &str, mask: u64)
         where
             F: crate::field::ConstField + FromGf2mU64,
@@ -4195,6 +4208,7 @@ mod tests {
         }
 
         check::<Gf2m8>("GF(2^8)", 0xFF);
+        check::<RectGf2m16>("GF(2^16)", 0xFFFF);
     }
 
     #[test]
