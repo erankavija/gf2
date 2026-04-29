@@ -3249,3 +3249,4 @@
 {"type":"issue_state_changed","id":"03609034-eedf-466a-87e4-eb999e40487e","issue_id":"e7ab802d-b99e-4efa-9304-f649f7c7ef68","timestamp":"2026-04-29T14:11:57.685482597Z","from":"in_progress","to":"done"}
 {"type":"issue_completed","id":"605878c2-a3e4-4197-8bad-817ab0b4ffd5","issue_id":"e7ab802d-b99e-4efa-9304-f649f7c7ef68","timestamp":"2026-04-29T14:11:57.685570567Z"}
 {"type":"issue_state_changed","id":"046e0c99-d2e2-4b39-a42d-84201b965ca9","issue_id":"2598b981-d2fb-4f24-9b89-7adafa2ad827","timestamp":"2026-04-29T14:11:57.797915179Z","from":"backlog","to":"ready"}
+{"type":"gate_removed","id":"79461c15-d6cb-4d70-83a9-cc50b2223b56","issue_id":"f1a896f0-097a-4598-9484-d4a2efe711ad","timestamp":"2026-04-29T15:39:56.412458652Z","gate_key":"criterion-1.5x"}
