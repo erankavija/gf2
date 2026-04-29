@@ -321,6 +321,33 @@ pub trait FiniteField:
         Self::reduce_wide(wide)
     }
 
+    /// Hidden matrix-kernel hook for GF(2^m) batch product sums.
+    ///
+    /// Most fields return `None` and continue through the generic
+    /// [`mul_product_sum_wide`](Self::mul_product_sum_wide) delayed-reduction
+    /// path. Single-word GF(2^m) implementations for `m ∈ {8, 16, 32}` may
+    /// override this hook to export operands to canonical `u64` lanes, call the
+    /// batched carry-less multiply kernel once for the whole dot product, and
+    /// XOR-reduce the products back into one field element. The scratch buffers
+    /// are caller-owned so matrix multiplication can reuse allocations across
+    /// output cells.
+    ///
+    /// This is crate-internal API surface for `FieldMatrix` performance work;
+    /// downstream code should use the public matrix/vector APIs instead.
+    #[doc(hidden)]
+    #[inline]
+    fn try_gf2m_u64_batch_dot_product(
+        a: &[Self],
+        b: &[Self],
+        zero: &Self,
+        scratch_a: &mut Vec<u64>,
+        scratch_b: &mut Vec<u64>,
+        scratch_products: &mut Vec<u64>,
+    ) -> Option<Self> {
+        let _ = (a, b, zero, scratch_a, scratch_b, scratch_products);
+        None
+    }
+
     /// Maximum number of wide-type additions before reduction is required to avoid overflow.
     ///
     /// Returns `usize::MAX` if overflow is impossible (e.g., binary fields where addition is XOR).

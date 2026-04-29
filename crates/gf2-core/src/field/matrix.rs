@@ -2338,10 +2338,14 @@ pub(crate) const GEMM_COL_TILE: usize = 64;
 /// overflows; this function asserts (in debug builds) that the inner
 /// dimension either fits under kmax or is correctly chunked downstream.
 ///
-/// SIMD — where available — is inherited from `FieldVec::dot_product`'s
-/// path (epic `e095a100`): this function does not dispatch to SIMD itself,
-/// it delegates. Strassen–Winograd recursion is explicitly out of scope
-/// (that is issue `ad597ede`).
+/// SIMD — where available — is inherited from the slice product-sum kernels.
+/// Single-word GF(2^m) fields with `m ∈ {8, 16, 32}` additionally use a
+/// matrix-level batch hook that exports each row/column dot product to `u64`
+/// lanes and calls the VPCLMULQDQ-aware batch multiply kernel once per output
+/// cell, reusing scratch buffers across the blocked traversal. Other fields,
+/// unsupported GF(2^m) degrees, and builds without a detected SIMD kernel keep
+/// the scalar/delayed-reduction fallback. Strassen–Winograd recursion is
+/// explicitly out of scope (that is issue `ad597ede`).
 ///
 /// # Arguments
 ///
@@ -2474,6 +2478,9 @@ pub fn gemm<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldMatrix<F>) -> FieldMatr
     // both operands. `b_t` is `b.cols × b.rows` row-major, so `b_t` row `j`
     // is exactly column `j` of `b`.
     let b_t = b.transpose();
+    let mut scratch_a = Vec::<u64>::new();
+    let mut scratch_b = Vec::<u64>::new();
+    let mut scratch_products = Vec::<u64>::new();
 
     // Blocked traversal over output tiles. The inner kernel is a single
     // `dot_product_slices` call per output cell.
@@ -2487,7 +2494,18 @@ pub fn gemm<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldMatrix<F>) -> FieldMatr
                 for (j, out_cell) in out_row.iter_mut().enumerate().take(j_end).skip(j_blk) {
                     let b_col = &b_t.data.as_slice()[j * b_t.cols..(j + 1) * b_t.cols];
                     debug_assert_eq!(a_row.len(), b_col.len());
-                    *out_cell = crate::field::vec::dot_product_slices(a_row, b_col, &zero);
+                    if let Some(value) = F::try_gf2m_u64_batch_dot_product(
+                        a_row,
+                        b_col,
+                        &zero,
+                        &mut scratch_a,
+                        &mut scratch_b,
+                        &mut scratch_products,
+                    ) {
+                        *out_cell = value;
+                    } else {
+                        *out_cell = crate::field::vec::dot_product_slices(a_row, b_col, &zero);
+                    }
                 }
             }
         }
@@ -3963,6 +3981,31 @@ mod tests {
         m
     }
 
+    fn random_gf2m_wide1_matrix<F>(rows: usize, cols: usize, seed: u64, mask: u64) -> FieldMatrix<F>
+    where
+        F: crate::field::ConstField + FromGf2mU64,
+    {
+        use rand::{Rng, SeedableRng};
+        let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
+        let mut m = FieldMatrix::<F>::zeros(rows, cols);
+        for r in 0..rows {
+            for c in 0..cols {
+                m.set(r, c, F::from_gf2m_u64(rng.gen::<u64>() & mask));
+            }
+        }
+        m
+    }
+
+    trait FromGf2mU64 {
+        fn from_gf2m_u64(value: u64) -> Self;
+    }
+
+    impl FromGf2mU64 for Gf2m8 {
+        fn from_gf2m_u64(value: u64) -> Self {
+            Gf2m8::from_u64(value)
+        }
+    }
+
     #[test]
     fn test_gemm_matches_naive_fp7_small() {
         for (m, k, n) in [(1, 1, 1), (2, 3, 4), (5, 5, 5), (7, 13, 3)] {
@@ -4037,6 +4080,75 @@ mod tests {
             let b = mk_mat(k, n, 0xBBu64 ^ (k * n) as u64);
             let got: FieldMatrix<Gf2m16> = (&a * &b).into();
             assert_eq!(got, naive_gemm(&a, &b), "{}x{}x{}", m, k, n);
+        }
+    }
+
+    #[test]
+    fn test_gf2m_batch_gemm_matches_scalar_for_supported_degrees_and_boundaries() {
+        struct MatGf2m16Cfg;
+        impl crate::gf2m::Gf2mWideConfig<1> for MatGf2m16Cfg {
+            const M: usize = 16;
+            const MODULUS: [u64; 1] = [0x100B];
+            const NAME: &'static str = "MatGf2m16Cfg";
+        }
+        type Gf2m16 = crate::gf2m::Gf2mWide<1, MatGf2m16Cfg>;
+        impl FromGf2mU64 for Gf2m16 {
+            fn from_gf2m_u64(value: u64) -> Self {
+                Gf2m16::from_u64(value)
+            }
+        }
+
+        struct MatGf2m32Cfg;
+        impl crate::gf2m::Gf2mWideConfig<1> for MatGf2m32Cfg {
+            const M: usize = 32;
+            const MODULUS: [u64; 1] = [0x0040_0007];
+            const NAME: &'static str = "MatGf2m32Cfg";
+        }
+        type Gf2m32 = crate::gf2m::Gf2mWide<1, MatGf2m32Cfg>;
+        impl FromGf2mU64 for Gf2m32 {
+            fn from_gf2m_u64(value: u64) -> Self {
+                Gf2m32::from_u64(value)
+            }
+        }
+
+        fn check<F>(label: &str, mask: u64)
+        where
+            F: crate::field::ConstField + FromGf2mU64,
+        {
+            // Includes 64c88ae4's rectangular inner dimensions k={8,32}
+            // and output tile boundaries around 32 rows / 64 columns.
+            for (m, k, n) in [
+                (GEMM_ROW_TILE - 1, 8, GEMM_COL_TILE - 1),
+                (GEMM_ROW_TILE, 8, GEMM_COL_TILE),
+                (GEMM_ROW_TILE + 1, 8, GEMM_COL_TILE + 1),
+                (17, 32, 65),
+                (65, 32, 17),
+            ] {
+                let seed = 0x577B_9E7Fu64 ^ ((m as u64) << 32) ^ ((k as u64) << 16) ^ n as u64;
+                let a = random_gf2m_wide1_matrix::<F>(m, k, seed, mask);
+                let b = random_gf2m_wide1_matrix::<F>(k, n, seed.rotate_left(17), mask);
+                let got = gemm(&a, &b);
+                assert_eq!(got, naive_gemm(&a, &b), "{label}: {m}x{k}x{n}");
+            }
+        }
+
+        check::<Gf2m8>("GF(2^8)", 0xFF);
+        check::<Gf2m16>("GF(2^16)", 0xFFFF);
+        check::<Gf2m32>("GF(2^32)", 0xFFFF_FFFF);
+    }
+
+    #[test]
+    fn test_runtime_gf2m_batch_gemm_matches_scalar_for_rectangular_shapes() {
+        for field in [
+            crate::gf2m::Gf2mField::gf256(),
+            crate::gf2m::Gf2mField::gf65536(),
+        ] {
+            for (m, k, n) in [(9, 8, 7), (7, 32, 9), (GEMM_ROW_TILE + 1, 8, 11)] {
+                let a = random_gf16_matrix(&field, m, k, 0xABCDu64 ^ (m * k) as u64);
+                let b = random_gf16_matrix(&field, k, n, 0xDCBAu64 ^ (k * n) as u64);
+                let got = gemm(&a, &b);
+                assert_eq!(got, naive_gemm(&a, &b), "{}x{}x{}", m, k, n);
+            }
         }
     }
 

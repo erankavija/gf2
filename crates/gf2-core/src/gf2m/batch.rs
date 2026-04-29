@@ -53,8 +53,8 @@ use crate::gf2m::Gf2mField;
 /// Batch element-wise multiply: `out[i] = a[i] * b[i] mod P(x)`.
 ///
 /// Routes through the SIMD-dispatched VPCLMULQDQ-on-YMM batch kernel when
-/// available, falling back to per-element [`Gf2mField`] dispatch. All slices
-/// must be the same length; otherwise the function panics.
+/// available, falling back to an allocation-free raw schoolbook loop. All
+/// slices must be the same length; otherwise the function panics.
 ///
 /// # Arguments
 ///
@@ -92,6 +92,15 @@ use crate::gf2m::Gf2mField;
 /// O(n) field multiplications; the SIMD path completes 4 per outer
 /// iteration on AVX2 + VPCLMULQDQ hosts.
 pub fn batch_mul(field: &Gf2mField, a: &[u64], b: &[u64], out: &mut [u64]) {
+    batch_mul_raw(field.degree(), field.primitive_polynomial(), a, b, out);
+}
+
+/// Crate-internal raw counterpart to [`batch_mul`].
+///
+/// Takes the field parameters directly so matrix kernels can hoist element
+/// context handling out of their dot-product hot path. `primitive_poly` must
+/// include the degree-`m` leading bit, matching [`Gf2mField::new`].
+pub(crate) fn batch_mul_raw(m: usize, primitive_poly: u64, a: &[u64], b: &[u64], out: &mut [u64]) {
     assert_eq!(a.len(), b.len(), "input slices must have equal length");
     assert_eq!(
         a.len(),
@@ -101,10 +110,10 @@ pub fn batch_mul(field: &Gf2mField, a: &[u64], b: &[u64], out: &mut [u64]) {
 
     #[cfg(feature = "simd")]
     {
-        let m = field.degree() as u32;
-        if matches!(m, 8 | 16 | 32) {
+        let m_u32 = m as u32;
+        if matches!(m_u32, 8 | 16 | 32) {
             if let Some(fns) = crate::simd::maybe_gf2m_batch() {
-                let reducer = BarrettReducer::new(field.primitive_polynomial() as u128, m);
+                let reducer = BarrettReducer::new(primitive_poly as u128, m_u32);
                 (fns.mul_fn)(
                     a,
                     b,
@@ -118,13 +127,11 @@ pub fn batch_mul(field: &Gf2mField, a: &[u64], b: &[u64], out: &mut [u64]) {
         }
     }
 
-    // Scalar fallback — per-element dispatch through `Gf2mField`'s `Mul`
-    // impl, which itself routes through the best available SIMD path
-    // (table-based / PCLMULQDQ-Barrett single-shot / scalar).
+    // Scalar fallback — allocation-free raw schoolbook multiplication.
+    // `Gf2mField::Mul` may have faster per-element table paths for tiny m, but
+    // the raw path is the most predictable fallback for matrix hot loops.
     for i in 0..a.len() {
-        let ea = field.element(a[i]);
-        let eb = field.element(b[i]);
-        out[i] = (&ea * &eb).value();
+        out[i] = crate::gf2m::mul_raw::gf2m_mul_raw(a[i], b[i], m, primitive_poly);
     }
 }
 
