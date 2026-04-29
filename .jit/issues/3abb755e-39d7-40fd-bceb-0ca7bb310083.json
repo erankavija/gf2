@@ -2,7 +2,7 @@
   "id": "3abb755e-39d7-40fd-bceb-0ca7bb310083",
   "title": "Close algorithmic benchmark gaps from 64c88ae4",
   "description": "Close the algorithmic performance gaps surfaced by `64c88ae4` that are outside the existing Tier A-D SIMD-routing/kernel plan: GF(2) matrix multiply needs a Strassen-Winograd layer above M4RM, GF(p) FieldMatrix multiplication needs delayed-reduction/cache-blocked arithmetic comparable to fflas-ffpack, and GF(2^m) FieldMatrix multiplication needs a batch/PCLMUL-aware matrix path rather than scalar per-element multiplication.\n\n## Background\n\n`dev/bench_results/2026-04-26.md` and `dev/bench_results/2026-04-26-uncompetitiveness-profile.md` show gf2 is far from state-of-the-art on the benchmark suite: GF(2) matmul is about 0.07-0.21x of M4RI, small-prime GF(p) fgemm is about 0.00-0.03x of fflas-ffpack, and GF(2^m) matrix multiplication is dominated by scalar per-element multiplication. The existing PPC Tier A-D plan is necessary but not sufficient: SIMD routing removes dispatch and kernel overhead, but does not add the algorithmic layers used by specialized systems.\n\n## Success Criteria\n\n- [hard] Every child task is completed or explicitly rejected with a reason recorded in JIT.\n- [hard] The story-level review maps each `64c88ae4` benchmark-gap finding to a landed implementation, a measured non-viability result, or a follow-up issue outside this epic.\n- [hard] `cargo-ci` and `code-review` gates pass at story closure.\n- [hard] No `unsafe` is introduced outside `gf2-kernels-simd`.\n- [aspirational] The combined work materially improves the worst published `64c88ae4` ratios: GF(2) matmul at n>=1024, small-prime GF(p) fgemm, and GF(2^m) fgemm.",
-  "state": "ready",
+  "state": "done",
   "priority": "high",
   "assignee": null,
   "dependencies": [
@@ -16,11 +16,6 @@
     "doc-review"
   ],
   "gates_status": {
-    "doc-review": {
-      "status": "passed",
-      "updated_by": null,
-      "updated_at": "2026-04-29T22:28:01.083334901Z"
-    },
     "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
@@ -30,6 +25,11 @@
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-29T22:27:54.866249602Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": null,
+      "updated_at": "2026-04-29T22:28:01.083334901Z"
     }
   },
   "context": {},
@@ -70,5 +70,5 @@
     "story:ppc-benchmark-gap"
   ],
   "created_at": "2026-04-27T21:07:47.090492414+00:00",
-  "updated_at": "2026-04-29T22:36:14.106095026+00:00"
+  "updated_at": "2026-04-29T22:38:36.778769385+00:00"
 }
