@@ -74,11 +74,47 @@ pub type Fp65537BatchKaratsubaFn = fn(&[u32], &[u32], &[u32], &[u32], u32, &mut 
 /// `Fp<65537>`.
 ///
 /// Computes six independent base-field products per element and writes the
-/// three output coefficient lanes in SoA order.
+/// three output coefficient lanes in SoA order for
+/// `Fp<65537>[X] / (X^3 - beta)`.
+///
+/// # Arguments
+///
+/// * `a0`, `a1`, `a2` - The three input coefficient lanes for the left batch.
+/// * `b0`, `b1`, `b2` - The three input coefficient lanes for the right batch.
+/// * `beta` - The cubic non-residue used by the extension-field configuration.
+/// * `out_c0`, `out_c1`, `out_c2` - Output coefficient lanes; each must have
+///   the same length as `a0`.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_kernels_simd::fp65537;
+///
+/// if let Some(fns) = fp65537::detect() {
+///     let a0 = [1, 2, 3, 4];
+///     let a1 = [5, 6, 7, 8];
+///     let a2 = [9, 10, 11, 12];
+///     let b0 = [13, 14, 15, 16];
+///     let b1 = [17, 18, 19, 20];
+///     let b2 = [21, 22, 23, 24];
+///     let mut c0 = [0; 4];
+///     let mut c1 = [0; 4];
+///     let mut c2 = [0; 4];
+///
+///     (fns.batch_cubic_karatsuba_fn)(
+///         &a0, &a1, &a2, &b0, &b1, &b2, 3, &mut c0, &mut c1, &mut c2,
+///     );
+/// }
+/// ```
 ///
 /// # Panics
 ///
 /// Panics if any input or output slice has a different length from `a0`.
+///
+/// # Complexity
+///
+/// `O(n)` modular operations, processed in 8-lane AVX2 chunks with a scalar
+/// tail for lengths that are not multiples of eight.
 pub type Fp65537BatchCubicKaratsubaFn =
     fn(&[u32], &[u32], &[u32], &[u32], &[u32], &[u32], u32, &mut [u32], &mut [u32], &mut [u32]);
 
