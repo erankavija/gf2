@@ -75,6 +75,395 @@ pub struct SpBitMatrix {
     indices: Vec<usize>,
 }
 
+/// Descriptive alias for [`SpBitMatrix`].
+///
+/// All inherent methods, including [`SpBitMatrix::reorder_rcm`], are available
+/// through this alias as `SparseBitMatrix::reorder_rcm`.
+pub type SparseBitMatrix = SpBitMatrix;
+
+/// Row and column permutation produced by [`SpBitMatrix::reorder_rcm`].
+///
+/// The reordered matrix stores rows and columns in Reverse Cuthill-McKee
+/// order. This type uses a destination-to-source convention: `old_*_by_new[i]`
+/// is the original index now stored at reordered index `i`. For an original
+/// input vector `x`, call [`apply_cols`](Self::apply_cols) before multiplying
+/// by the reordered matrix, then call [`unapply_rows`](Self::unapply_rows) on
+/// the result if the caller needs original row order.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::sparse::SpBitMatrix;
+/// use gf2_core::BitVec;
+///
+/// let a = SpBitMatrix::from_coo(3, 4, &[(0, 3), (1, 0), (2, 1), (2, 3)]);
+/// let (reordered, permutation) = a.reorder_rcm();
+/// let x = BitVec::ones(4);
+///
+/// let y = a.matvec(&x);
+/// let y_rcm = reordered.matvec(&permutation.apply_cols(&x));
+/// assert_eq!(permutation.unapply_rows(&y_rcm), y);
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RowPermutation {
+    old_rows_by_new: Vec<usize>,
+    new_rows_by_old: Vec<usize>,
+    old_cols_by_new: Vec<usize>,
+    new_cols_by_old: Vec<usize>,
+}
+
+impl RowPermutation {
+    fn from_old_orders(old_rows_by_new: Vec<usize>, old_cols_by_new: Vec<usize>) -> Self {
+        let new_rows_by_old = invert_permutation(&old_rows_by_new);
+        let new_cols_by_old = invert_permutation(&old_cols_by_new);
+        Self {
+            old_rows_by_new,
+            new_rows_by_old,
+            old_cols_by_new,
+            new_cols_by_old,
+        }
+    }
+
+    /// Number of matrix rows covered by this permutation.
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
+    #[inline]
+    pub fn rows_len(&self) -> usize {
+        self.old_rows_by_new.len()
+    }
+
+    /// Number of matrix columns covered by this permutation.
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
+    #[inline]
+    pub fn cols_len(&self) -> usize {
+        self.old_cols_by_new.len()
+    }
+
+    /// Returns the original row index stored at `new_row` in the reordered matrix.
+    ///
+    /// This is the destination-to-source row mapping used by
+    /// [`apply_rows`](Self::apply_rows).
+    ///
+    /// # Panics
+    ///
+    /// Panics if `new_row >= self.rows_len()`.
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
+    #[inline]
+    pub fn old_row_for_new(&self, new_row: usize) -> usize {
+        self.old_rows_by_new[new_row]
+    }
+
+    /// Returns the reordered row index for an original row.
+    ///
+    /// This is the inverse of [`old_row_for_new`](Self::old_row_for_new).
+    ///
+    /// # Panics
+    ///
+    /// Panics if `old_row >= self.rows_len()`.
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
+    #[inline]
+    pub fn new_row_for_old(&self, old_row: usize) -> usize {
+        self.new_rows_by_old[old_row]
+    }
+
+    /// Returns the original column index stored at `new_col` in the reordered matrix.
+    ///
+    /// This is the destination-to-source column mapping used by
+    /// [`apply_cols`](Self::apply_cols).
+    ///
+    /// # Panics
+    ///
+    /// Panics if `new_col >= self.cols_len()`.
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
+    #[inline]
+    pub fn old_col_for_new(&self, new_col: usize) -> usize {
+        self.old_cols_by_new[new_col]
+    }
+
+    /// Returns the reordered column index for an original column.
+    ///
+    /// This is the inverse of [`old_col_for_new`](Self::old_col_for_new).
+    ///
+    /// # Panics
+    ///
+    /// Panics if `old_col >= self.cols_len()`.
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
+    #[inline]
+    pub fn new_col_for_old(&self, old_col: usize) -> usize {
+        self.new_cols_by_old[old_col]
+    }
+
+    /// Applies the row permutation to a vector in original row order.
+    ///
+    /// The returned vector is in reordered row order: output bit `new_row`
+    /// equals input bit `old_row_for_new(new_row)`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::sparse::SpBitMatrix;
+    /// use gf2_core::BitVec;
+    ///
+    /// let a = SpBitMatrix::from_coo(3, 3, &[(0, 2), (1, 1), (2, 0)]);
+    /// let (_reordered, perm) = a.reorder_rcm();
+    /// let rows = BitVec::ones(3);
+    /// assert_eq!(perm.unapply_rows(&perm.apply_rows(&rows)), rows);
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics if `bits.len() != self.rows_len()`.
+    ///
+    /// # Complexity
+    ///
+    /// O(rows) time and O(rows) output storage.
+    pub fn apply_rows(&self, bits: &BitVec) -> BitVec {
+        apply_bitvec_permutation(bits, &self.old_rows_by_new, "row")
+    }
+
+    /// Restores a row vector from reordered row order to original row order.
+    ///
+    /// The returned vector is in original row order; use this on a reordered
+    /// matrix-vector product when callers require the same order as
+    /// [`SpBitMatrix::matvec`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::sparse::SpBitMatrix;
+    /// use gf2_core::BitVec;
+    ///
+    /// let a = SpBitMatrix::from_coo(2, 3, &[(0, 0), (1, 2)]);
+    /// let (reordered, perm) = a.reorder_rcm();
+    /// let x = BitVec::ones(3);
+    /// let y_rcm = reordered.matvec(&perm.apply_cols(&x));
+    /// assert_eq!(perm.unapply_rows(&y_rcm), a.matvec(&x));
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics if `bits.len() != self.rows_len()`.
+    ///
+    /// # Complexity
+    ///
+    /// O(rows) time and O(rows) output storage.
+    pub fn unapply_rows(&self, bits: &BitVec) -> BitVec {
+        unapply_bitvec_permutation(bits, &self.old_rows_by_new, "row")
+    }
+
+    /// Applies the column permutation to a vector in original column order.
+    ///
+    /// The returned vector is in reordered column order: output bit `new_col`
+    /// equals input bit `old_col_for_new(new_col)`.
+    ///
+    /// Use this on the input vector before calling `matvec` on the matrix
+    /// returned by [`SpBitMatrix::reorder_rcm`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::sparse::SpBitMatrix;
+    /// use gf2_core::BitVec;
+    ///
+    /// let a = SpBitMatrix::from_coo(2, 4, &[(0, 3), (1, 0)]);
+    /// let (_reordered, perm) = a.reorder_rcm();
+    /// let cols = BitVec::ones(4);
+    /// assert_eq!(perm.unapply_cols(&perm.apply_cols(&cols)), cols);
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics if `bits.len() != self.cols_len()`.
+    ///
+    /// # Complexity
+    ///
+    /// O(cols) time and O(cols) output storage.
+    pub fn apply_cols(&self, bits: &BitVec) -> BitVec {
+        apply_bitvec_permutation(bits, &self.old_cols_by_new, "column")
+    }
+
+    /// Restores a column vector from reordered column order to original column order.
+    ///
+    /// This is the inverse of [`apply_cols`](Self::apply_cols).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::sparse::SpBitMatrix;
+    /// use gf2_core::BitVec;
+    ///
+    /// let a = SpBitMatrix::from_coo(2, 4, &[(0, 3), (1, 0)]);
+    /// let (_reordered, perm) = a.reorder_rcm();
+    /// let cols = BitVec::ones(4);
+    /// assert_eq!(perm.apply_cols(&perm.unapply_cols(&cols)), cols);
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics if `bits.len() != self.cols_len()`.
+    ///
+    /// # Complexity
+    ///
+    /// O(cols) time and O(cols) output storage.
+    pub fn unapply_cols(&self, bits: &BitVec) -> BitVec {
+        unapply_bitvec_permutation(bits, &self.old_cols_by_new, "column")
+    }
+}
+
+fn apply_bitvec_permutation(bits: &BitVec, old_by_new: &[usize], axis: &str) -> BitVec {
+    assert_eq!(
+        bits.len(),
+        old_by_new.len(),
+        "input BitVec length must equal {axis} permutation length"
+    );
+    let mut out = BitVec::with_capacity(old_by_new.len());
+    for &old in old_by_new {
+        out.push_bit(bits.get(old));
+    }
+    out
+}
+
+fn unapply_bitvec_permutation(bits: &BitVec, old_by_new: &[usize], axis: &str) -> BitVec {
+    assert_eq!(
+        bits.len(),
+        old_by_new.len(),
+        "input BitVec length must equal {axis} permutation length"
+    );
+    let mut out = BitVec::zeros(old_by_new.len());
+    for (new, &old) in old_by_new.iter().enumerate() {
+        if bits.get(new) {
+            out.set(old, true);
+        }
+    }
+    out
+}
+
+fn invert_permutation(old_by_new: &[usize]) -> Vec<usize> {
+    let mut new_by_old = vec![usize::MAX; old_by_new.len()];
+    for (new, &old) in old_by_new.iter().enumerate() {
+        assert!(old < old_by_new.len(), "permutation index out of bounds");
+        assert_eq!(
+            new_by_old[old],
+            usize::MAX,
+            "duplicate index in permutation"
+        );
+        new_by_old[old] = new;
+    }
+    debug_assert!(new_by_old.iter().all(|&new| new != usize::MAX));
+    new_by_old
+}
+
+fn rcm_bipartite_orders(csr: &SpBitMatrix) -> (Vec<usize>, Vec<usize>) {
+    let nodes = csr.rows + csr.cols;
+    if nodes == 0 {
+        return (Vec::new(), Vec::new());
+    }
+
+    let mut row_degrees = Vec::with_capacity(csr.rows);
+    for row in 0..csr.rows {
+        row_degrees.push(csr.indptr[row + 1] - csr.indptr[row]);
+    }
+
+    let mut col_degrees = vec![0usize; csr.cols];
+    for &col in &csr.indices {
+        col_degrees[col] += 1;
+    }
+
+    let mut col_rows = vec![Vec::<usize>::new(); csr.cols];
+    for row in 0..csr.rows {
+        for &col in &csr.indices[csr.indptr[row]..csr.indptr[row + 1]] {
+            col_rows[col].push(row);
+        }
+    }
+
+    let degree = |node: usize| -> usize {
+        if node < csr.rows {
+            row_degrees[node]
+        } else {
+            col_degrees[node - csr.rows]
+        }
+    };
+
+    let mut node_order: Vec<usize> = (0..nodes).collect();
+    node_order.sort_by_key(|&node| (degree(node), node));
+
+    let mut visited = vec![false; nodes];
+    let mut cm_order = Vec::with_capacity(nodes);
+    let mut queue = Vec::new();
+    let mut neighbors = Vec::new();
+
+    for &start in &node_order {
+        if visited[start] {
+            continue;
+        }
+        visited[start] = true;
+        queue.clear();
+        queue.push(start);
+        let mut head = 0;
+
+        while head < queue.len() {
+            let node = queue[head];
+            head += 1;
+            cm_order.push(node);
+
+            neighbors.clear();
+            if node < csr.rows {
+                for &col in &csr.indices[csr.indptr[node]..csr.indptr[node + 1]] {
+                    let next = csr.rows + col;
+                    if !visited[next] {
+                        neighbors.push(next);
+                    }
+                }
+            } else {
+                let col = node - csr.rows;
+                for &row in &col_rows[col] {
+                    if !visited[row] {
+                        neighbors.push(row);
+                    }
+                }
+            }
+
+            neighbors.sort_by_key(|&next| (degree(next), next));
+            for &next in &neighbors {
+                visited[next] = true;
+                queue.push(next);
+            }
+        }
+    }
+
+    cm_order.reverse();
+    let mut old_rows_by_new = Vec::with_capacity(csr.rows);
+    let mut old_cols_by_new = Vec::with_capacity(csr.cols);
+    for node in cm_order {
+        if node < csr.rows {
+            old_rows_by_new.push(node);
+        } else {
+            old_cols_by_new.push(node - csr.rows);
+        }
+    }
+
+    debug_assert_eq!(old_rows_by_new.len(), csr.rows);
+    debug_assert_eq!(old_cols_by_new.len(), csr.cols);
+    (old_rows_by_new, old_cols_by_new)
+}
+
 /// A row-blocked CSR representation for repeated sparse GF(2) matvecs.
 ///
 /// `SpBitMatrix` keeps the classic scalar CSR path unchanged. Convert explicitly
@@ -656,6 +1045,68 @@ impl SpBitMatrix {
         self.to_block_csr(DEFAULT_BLOCK_ROWS)
     }
 
+    /// Returns a Reverse Cuthill-McKee row/column reordered copy of this matrix.
+    ///
+    /// The ordering is computed on the bipartite graph with one node per row,
+    /// one node per column, and edges for nonzero matrix entries. The matrix
+    /// returned by this method stores both rows and columns in reverse
+    /// Cuthill-McKee (RCM) order, which tends to reduce sparse-matrix bandwidth
+    /// and improve cache reuse for repeated LDPC-style matvecs. The default CSR
+    /// layout and [`matvec`](Self::matvec) behavior are unchanged; this is an
+    /// explicit one-shot preprocessing step for workloads that can amortize the
+    /// O(rows + cols + nnz) reorder cost over many multiplies.
+    ///
+    /// For an original input `x`, compute with the reordered matrix as:
+    /// `perm.unapply_rows(&reordered.matvec(&perm.apply_cols(&x)))`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::sparse::SpBitMatrix;
+    /// use gf2_core::BitVec;
+    ///
+    /// let a = SpBitMatrix::from_coo(3, 4, &[(0, 0), (0, 3), (1, 1), (2, 3)]);
+    /// let (reordered, perm) = a.reorder_rcm();
+    /// let x = BitVec::ones(4);
+    /// let y = a.matvec(&x);
+    /// let y_rcm = reordered.matvec(&perm.apply_cols(&x));
+    /// assert_eq!(perm.unapply_rows(&y_rcm), y);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(rows + cols + nnz + sum(d(v) log d(v))) time for RCM neighbor ordering,
+    /// where d(v) is graph degree, and O(rows + cols + nnz) additional memory.
+    pub fn reorder_rcm(&self) -> (Self, RowPermutation) {
+        let (old_rows_by_new, old_cols_by_new) = rcm_bipartite_orders(self);
+        let permutation = RowPermutation::from_old_orders(old_rows_by_new, old_cols_by_new);
+
+        let mut indptr = Vec::with_capacity(self.rows + 1);
+        let mut indices = Vec::with_capacity(self.nnz());
+        indptr.push(0);
+
+        for &old_row in &permutation.old_rows_by_new {
+            let start = self.indptr[old_row];
+            let end = self.indptr[old_row + 1];
+            let row_start = indices.len();
+            for &old_col in &self.indices[start..end] {
+                indices.push(permutation.new_cols_by_old[old_col]);
+            }
+            indices[row_start..].sort_unstable();
+            indptr.push(indices.len());
+        }
+
+        (
+            Self {
+                rows: self.rows,
+                cols: self.cols,
+                indptr,
+                indices,
+            },
+            permutation,
+        )
+    }
+
     /// Matrix-vector product y = A · x over GF(2).
     /// x length must equal cols, y length equals rows.
     pub fn matvec(&self, x: &BitVec) -> BitVec {
@@ -1000,6 +1451,143 @@ impl fmt::Display for SpBitMatrixDual {
     /// ```
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Display::fmt(&self.csr, f)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use proptest::prelude::*;
+
+    fn bitvec_from_pattern(len: usize, salt: usize) -> BitVec {
+        let mut bits = BitVec::with_capacity(len);
+        for i in 0..len {
+            bits.push_bit(((i.wrapping_mul(17) ^ salt.wrapping_mul(31) ^ (i >> 2)) & 3) != 0);
+        }
+        bits
+    }
+
+    fn assert_rcm_matvec_roundtrip(matrix: &SpBitMatrix, x: &BitVec) {
+        let (reordered, permutation) = matrix.reorder_rcm();
+        assert_eq!(permutation.rows_len(), matrix.rows());
+        assert_eq!(permutation.cols_len(), matrix.cols());
+
+        let y = matrix.matvec(x);
+        let x_rcm = permutation.apply_cols(x);
+        let y_rcm = reordered.matvec(&x_rcm);
+        assert_eq!(permutation.unapply_rows(&y_rcm), y);
+    }
+
+    #[test]
+    fn rcm_matvec_matches_original_for_edge_shapes() {
+        let cases = [
+            SpBitMatrix::zeros(0, 0),
+            SpBitMatrix::zeros(1, 0),
+            SpBitMatrix::zeros(0, 1),
+            SpBitMatrix::from_coo(1, 1, &[(0, 0)]),
+            SpBitMatrix::from_coo(2, 65, &[(0, 0), (0, 64), (1, 63)]),
+            SpBitMatrix::from_coo(65, 66, &[(0, 65), (1, 0), (63, 64), (64, 1), (64, 65)]),
+        ];
+
+        for matrix in cases {
+            let x = bitvec_from_pattern(matrix.cols(), matrix.rows());
+            assert_rcm_matvec_roundtrip(&matrix, &x);
+        }
+    }
+
+    #[test]
+    fn rcm_permutation_roundtrip_identity_for_boundaries() {
+        let matrix = SpBitMatrix::from_coo(
+            65,
+            67,
+            &[
+                (0, 66),
+                (1, 0),
+                (2, 65),
+                (31, 32),
+                (63, 64),
+                (64, 1),
+                (64, 66),
+            ],
+        );
+        let (_reordered, permutation) = matrix.reorder_rcm();
+
+        let rows = bitvec_from_pattern(permutation.rows_len(), 11);
+        let cols = bitvec_from_pattern(permutation.cols_len(), 29);
+
+        assert_eq!(
+            permutation.unapply_rows(&permutation.apply_rows(&rows)),
+            rows
+        );
+        assert_eq!(
+            permutation.apply_rows(&permutation.unapply_rows(&rows)),
+            rows
+        );
+        assert_eq!(
+            permutation.unapply_cols(&permutation.apply_cols(&cols)),
+            cols
+        );
+        assert_eq!(
+            permutation.apply_cols(&permutation.unapply_cols(&cols)),
+            cols
+        );
+    }
+
+    #[test]
+    fn rcm_maps_indices_bijectively() {
+        let matrix = deterministic_ldpc_like_fixture(128, 257, 6);
+        let (_reordered, permutation) = matrix.reorder_rcm();
+
+        let mut rows_seen = vec![false; permutation.rows_len()];
+        for new_row in 0..permutation.rows_len() {
+            let old_row = permutation.old_row_for_new(new_row);
+            assert_eq!(permutation.new_row_for_old(old_row), new_row);
+            rows_seen[old_row] = true;
+        }
+        assert!(rows_seen.into_iter().all(|seen| seen));
+
+        let mut cols_seen = vec![false; permutation.cols_len()];
+        for new_col in 0..permutation.cols_len() {
+            let old_col = permutation.old_col_for_new(new_col);
+            assert_eq!(permutation.new_col_for_old(old_col), new_col);
+            cols_seen[old_col] = true;
+        }
+        assert!(cols_seen.into_iter().all(|seen| seen));
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(96))]
+
+        #[test]
+        fn proptest_rcm_matvec_matches_original(
+            rows in 0usize..24,
+            cols in 0usize..24,
+            raw_entries in proptest::collection::vec((0usize..24, 0usize..24), 0..160),
+            salt in any::<usize>(),
+        ) {
+            let entries: Vec<_> = raw_entries
+                .into_iter()
+                .filter_map(|(r, c)| {
+                    if rows == 0 || cols == 0 {
+                        None
+                    } else {
+                        Some((r % rows, c % cols))
+                    }
+                })
+                .collect();
+            let matrix = SpBitMatrix::from_coo(rows, cols, &entries);
+            let x = bitvec_from_pattern(cols, salt);
+
+            let y = matrix.matvec(&x);
+            let (reordered, permutation) = matrix.reorder_rcm();
+            let y_rcm = reordered.matvec(&permutation.apply_cols(&x));
+
+            prop_assert_eq!(permutation.unapply_rows(&y_rcm), y);
+            prop_assert_eq!(permutation.unapply_cols(&permutation.apply_cols(&x)), x);
+
+            let row_bits = bitvec_from_pattern(rows, salt.rotate_left(7));
+            prop_assert_eq!(permutation.unapply_rows(&permutation.apply_rows(&row_bits)), row_bits);
+        }
     }
 }
 
