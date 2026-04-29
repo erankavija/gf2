@@ -1,12 +1,11 @@
-    Finished `bench` profile [optimized] target(s) in 0.04s
-     Running benches/matmul.rs (target/agent-19bc3199/release/deps/matmul-c7b92b0083fb8471)
-Benchmarking matmul_square/2048
-Benchmarking matmul_square/2048: Warming up for 1.0000 s
-Benchmarking matmul_square/2048: Collecting 10 samples in estimated 2.1422 s (660 iterations)
-Benchmarking matmul_square/2048: Analyzing
-matmul_square/2048      time:   [3.2485 ms 3.2493 ms 3.2497 ms]
-                        change: [-27.293% -27.176% -27.083%] (p = 0.00 < 0.05)
-                        Performance has improved.
-Found 1 outliers among 10 measurements (10.00%)
-  1 (10.00%) high severe
+R1 2048-column matmul Criterion evidence (jit:19bc3199)
+Command:
+  CARGO_TARGET_DIR=target/agent-19bc3199 RUSTFLAGS='-C target-cpu=native' cargo bench -p gf2-core --all-features --bench matmul -- matmul_square/2048
 
+Benchmarking matmul_square/2048
+matmul_square/2048      time:   [5.4853 ms 5.4883 ms 5.4917 ms]
+Found 5 outliers among 100 measurements (5.00%)
+  4 (4.00%) high mild
+  1 (1.00%) high severe
+
+This width has stride_words=32, so it exercises the production V6 two-table next-panel prefetch path added in R1.
