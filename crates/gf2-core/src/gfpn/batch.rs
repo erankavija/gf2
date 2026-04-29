@@ -335,7 +335,7 @@ impl<F: FiniteField, const N: usize> BatchExtField<F, N> {
 // Element-wise (coefficient-by-coefficient) arithmetic
 // ---------------------------------------------------------------------------
 
-impl<F: FiniteField + SimdVecOps, const N: usize> BatchExtField<F, N> {
+impl<F: FiniteField, const N: usize> BatchExtField<F, N> {
     /// Element-wise addition across the batch.
     ///
     /// Returns a new batch whose `i`-th element equals `self[i] + other[i]`.
@@ -353,8 +353,7 @@ impl<F: FiniteField + SimdVecOps, const N: usize> BatchExtField<F, N> {
     ///
     /// # Complexity
     ///
-    /// `O(N · len)` base-field additions. Supported base fields route each
-    /// coefficient lane through [`crate::gfp::SimdVecOps`].
+    /// `O(N · len)` base-field additions.
     ///
     /// # Examples
     ///
@@ -383,13 +382,11 @@ impl<F: FiniteField + SimdVecOps, const N: usize> BatchExtField<F, N> {
             other.len()
         );
         let coeffs: [Vec<F>; N] = array::from_fn(|i| {
-            F::try_simd_add_vec(&self.coeffs[i], &other.coeffs[i]).unwrap_or_else(|| {
-                self.coeffs[i]
-                    .iter()
-                    .zip(other.coeffs[i].iter())
-                    .map(|(x, y)| x.clone() + y.clone())
-                    .collect()
-            })
+            self.coeffs[i]
+                .iter()
+                .zip(other.coeffs[i].iter())
+                .map(|(x, y)| x.clone() + y.clone())
+                .collect()
         });
         Self { coeffs }
     }
@@ -408,8 +405,7 @@ impl<F: FiniteField + SimdVecOps, const N: usize> BatchExtField<F, N> {
     ///
     /// # Complexity
     ///
-    /// `O(N · len)` base-field subtractions. Supported base fields route each
-    /// coefficient lane through [`crate::gfp::SimdVecOps`].
+    /// `O(N · len)` base-field subtractions.
     ///
     /// # Examples
     ///
@@ -438,13 +434,11 @@ impl<F: FiniteField + SimdVecOps, const N: usize> BatchExtField<F, N> {
             other.len()
         );
         let coeffs: [Vec<F>; N] = array::from_fn(|i| {
-            F::try_simd_sub_vec(&self.coeffs[i], &other.coeffs[i]).unwrap_or_else(|| {
-                self.coeffs[i]
-                    .iter()
-                    .zip(other.coeffs[i].iter())
-                    .map(|(x, y)| x.clone() - y.clone())
-                    .collect()
-            })
+            self.coeffs[i]
+                .iter()
+                .zip(other.coeffs[i].iter())
+                .map(|(x, y)| x.clone() - y.clone())
+                .collect()
         });
         Self { coeffs }
     }
@@ -1169,6 +1163,28 @@ mod tests {
         for i in 0..a.len() {
             assert_eq!(c[i], a[i] - b[i]);
         }
+    }
+
+    #[test]
+    fn test_batch_add_sub_available_for_non_simd_field() {
+        use crate::gfp::specialized::GoldilocksFp;
+
+        let a = BatchExtField::<GoldilocksFp, 2>::new([
+            vec![GoldilocksFp::new(1), GoldilocksFp::new(2)],
+            vec![GoldilocksFp::new(3), GoldilocksFp::new(4)],
+        ]);
+        let b = BatchExtField::<GoldilocksFp, 2>::new([
+            vec![GoldilocksFp::new(5), GoldilocksFp::new(6)],
+            vec![GoldilocksFp::new(7), GoldilocksFp::new(8)],
+        ]);
+
+        let sum = a.batch_add(&b);
+        let diff = sum.batch_sub(&b);
+
+        assert_eq!(sum.coeff(0)[0], GoldilocksFp::new(6));
+        assert_eq!(sum.coeff(1)[1], GoldilocksFp::new(12));
+        assert_eq!(diff.coeff(0), a.coeff(0));
+        assert_eq!(diff.coeff(1), a.coeff(1));
     }
 
     #[test]

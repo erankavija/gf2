@@ -266,7 +266,7 @@ Found 5 outliers among 100 measurements (5.00%)
 
  Performance counter stats for 'cargo bench -p gf2-core --features simd --bench soa_batch soa_batch_mul_fq2_fp65537/batch_soa/1000' (10 runs):
 
-                 0      context-switches:u               #      0.0 cs/sec  cs_per_second     
+                 0      context-switches:u               #      0.0 cs/sec  cs_per_second
                  0      cpu-migrations:u                 #      0.0 migrations/sec  migrations_per_second
            151,834      page-faults:u                    #   6264.4 faults/sec  page_faults_per_second  ( +- 57.22% )
          24,237.50 msec task-clock:u                     #      2.1 CPUs  CPUs_utilized         ( +- 26.96% )
@@ -457,7 +457,7 @@ Found 11 outliers among 100 measurements (11.00%)
 
  Performance counter stats for 'cargo bench -p gf2-core --features simd --bench soa_batch soa_batch_mul_fq2_fp65537/batch_soa/1000' (10 runs):
 
-                 0      context-switches:u               #      0.0 cs/sec  cs_per_second     
+                 0      context-switches:u               #      0.0 cs/sec  cs_per_second
                  0      cpu-migrations:u                 #      0.0 migrations/sec  migrations_per_second
             72,197      page-faults:u                    #   3592.2 faults/sec  page_faults_per_second  ( +- 10.23% )
          20,098.27 msec task-clock:u                     #      1.7 CPUs  CPUs_utilized         ( +-  7.96% )
@@ -641,7 +641,7 @@ Found 1 outliers among 100 measurements (1.00%)
 
  Performance counter stats for 'cargo bench -p gf2-core --features simd --bench soa_batch soa_batch_mul_fq2_fp65537/batch_soa/1000' (10 runs):
 
-                 0      context-switches:u               #      0.0 cs/sec  cs_per_second     
+                 0      context-switches:u               #      0.0 cs/sec  cs_per_second
                  0      cpu-migrations:u                 #      0.0 migrations/sec  migrations_per_second
            101,871      page-faults:u                    #   4821.0 faults/sec  page_faults_per_second  ( +- 10.48% )
          21,130.48 msec task-clock:u                     #      1.9 CPUs  CPUs_utilized         ( +- 15.14% )
@@ -652,4 +652,3 @@ Found 1 outliers among 100 measurements (1.00%)
      4,965,930,406      stalled-cycles-frontend:u        #     0.06 frontend_cycles_idle        ( +- 62.94% )  (50.14%)
 
       10.857694416 +- 1.577578476 seconds time elapsed  ( +- 14.53% )
-

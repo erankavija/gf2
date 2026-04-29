@@ -458,13 +458,10 @@ impl<C: ExtConfig> Mul for QuadraticExt<C> {
     /// 3M + 5A + 1B (M = base mul, A = add/sub, B = mul_by_non_residue).
     #[inline]
     fn mul(self, rhs: Self) -> Self {
-        let lhs_sum = self.c0 + self.c1;
-        let rhs_sum = rhs.c0 + rhs.c1;
         let v0 = self.c0 * rhs.c0;
         let v1 = self.c1 * rhs.c1;
-        let cross = lhs_sum * rhs_sum;
         let c0 = v0 + C::mul_by_non_residue(v1);
-        let c1 = cross - v0 - v1;
+        let c1 = (self.c0 + self.c1) * (rhs.c0 + rhs.c1) - v0 - v1;
         Self::new(c0, c1)
     }
 }
