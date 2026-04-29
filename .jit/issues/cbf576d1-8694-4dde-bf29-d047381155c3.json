@@ -2,7 +2,7 @@
   "id": "cbf576d1-8694-4dde-bf29-d047381155c3",
   "title": "SparseBitMatrix Cuthill-McKee row reorder",
   "description": "Add a Cuthill-McKee row/column permutation to `SparseBitMatrix`. One-shot pre-processing that minimises matrix bandwidth, amortising cache-reuse gains across many matvecs.\n\n## Background\n\nLDPC parity-check matrices in `gf2-coding` have irregular row spans that hurt cache reuse during repeated matvecs. No bandwidth-minimization preprocessing currently exists.\n\nThe fix is V7 layout-only: implement Cuthill-McKee (or reverse Cuthill-McKee, RCM) row/column permutation. Apply once before dispatch; amortises across many matvecs.\n\nAPI: `SparseBitMatrix::reorder_rcm() -> (SparseBitMatrix, RowPermutation)` so callers can recover the original row order on output.\n\n## Success Criteria\n\n- [hard] Reordered + permuted result is bit-exact to original CSR matvec.\n- [hard] Permutation roundtrip (apply then unapply) is identity for arbitrary input.\n- [hard] Bench measures **amortised** matvec cost over $\\geq 100$ calls (single-call cost is dominated by the reorder itself).\n- [hard] `perf stat -r 10` capture before/after recorded for the amortised case.\n- [aspirational] $\\geq 1.5\\times$ amortised geomean on LDPC parity-check matrix sizes.\n\n## User-approved amendment\n\nThe original aspirational 1.5x amortised speedup target and associated `criterion-1.5x` gate are not met on the deterministic LDPC-like fixtures after one focused rework. Evidence in `dev/bench_results/cbf576d1-rcm-sparse-matvec.md` shows the opt-in RCM reordered-output path at 0.856x geomean versus CSR. Per user approval, accept the correctness-tested opt-in RCM scaffold, benchmark/perf evidence, and explicit result that the existing CSR path remains faster on the measured fixtures; keep CSR as the default production path.\n\n## Notes\n\nBench: `sparse` (existing, pinned by I1) extended with an amortised-matvec measurement. Spec doc: `dev/plans/gf2_core_ppc_spiral.md`.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:claude-wt-cbf576d1",
   "dependencies": [
@@ -12,7 +12,18 @@
     "code-review",
     "cargo-ci"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-29T18:38:04.453013754Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-29T18:37:57.886638776Z"
+    }
+  },
   "context": {},
   "documents": [
     {
@@ -31,5 +42,5 @@
     "ppc-kernel:D2"
   ],
   "created_at": "2026-04-25T15:19:18.458200136+00:00",
-  "updated_at": "2026-04-29T17:35:17.163196274+00:00"
+  "updated_at": "2026-04-29T18:41:59.710385902+00:00"
 }
