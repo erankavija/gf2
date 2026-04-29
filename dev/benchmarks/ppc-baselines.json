@@ -74,9 +74,11 @@
     "C4": {
       "title": "QuadraticExt::mul Karatsuba SoA batched SIMD",
       "bench_target": "soa_batch_mul_fq2_fp65537/batch_soa",
-      "baseline_name": "ppc-v0-2026-04-27",
-      "commit_hash": "52eaac8",
-      "design_size_class": ["256", "1000"]
+      "baseline_bench_target": "soa_batch_mul_fq2_fp65537/sequential_aos",
+      "baseline_name": "current-sequential-aos",
+      "commit_hash": "3168d114",
+      "design_size_class": ["256", "1000"],
+      "rationale": "C4's SoA benchmark is defined as a current SoA-vs-AoS comparison: `batch_soa` excludes transposition cost for data already in SoA form, and `sequential_aos` calls the unchanged `QuadraticExt::mul` path. The pinned ppc-v0 saved-baseline leaf was unavailable/polluted for this new SoA path, so compare the two current leaves apples-to-apples."
     },
     "C5": {
       "title": "CubicExt::mul Karatsuba SoA batched SIMD",
