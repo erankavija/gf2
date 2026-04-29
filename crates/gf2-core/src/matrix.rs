@@ -910,11 +910,11 @@ impl BitMatrix {
     ///
     /// Uses a 64×64 bit-block transpose primitive driven from
     /// [`gf2_kernels_simd::transpose`]: an O(N log N) Hacker's Delight
-    /// recursive bit-twiddle (V4) on the scalar fallback, or an AVX2
-    /// PSHUFB-based byte-tile lane (V3) on x86_64 hosts that report
-    /// AVX2 at runtime. Both are dispatched through
-    /// [`crate::simd::maybe_transpose`] so the same code path runs on
-    /// every supported target.
+    /// recursive bit-twiddle (V4) on the scalar fallback, and the measured
+    /// AVX2 YMM bit-twiddle lane on x86_64 hosts that report AVX2 at
+    /// runtime. A separate AVX2 PSHUFB byte-tile lane is kept in the SIMD
+    /// crate for B1 artefact inspection, but production dispatch uses the
+    /// faster measured bit-twiddle lane.
     ///
     /// The outer driver tiles the matrix into 64×64 bit-blocks, calls
     /// the kernel once per block, and writes the transposed block at
@@ -987,13 +987,11 @@ impl BitMatrix {
         let n_row_blocks = self.rows.div_ceil(64);
         let n_col_blocks = self.cols.div_ceil(64);
 
-        // V7: pick a macro-tile when the matrix is large enough that
-        // the simple 2-level loop walks off L1. The threshold matches
-        // the "n > 8K" wording in `dev/plans/gf2_core_ppc_spiral.md`
-        // § Tier B: at 8192 rows × 8192 cols, in_stride = 128 words,
-        // so a single row-block of input is 64 × 128 × 8 = 64 KiB —
-        // exactly the boundary where Zen 3's L1d (32 KiB) starts to
-        // miss. Below this, the simple loop is at least as good.
+        // V7: pick a macro-tile once either dimension spans enough
+        // 64×64 blocks that the simple 2-level loop starts losing
+        // cache locality. The threshold below is empirical for the B1
+        // recovery measurements; small and medium matrices stay on the
+        // simpler path.
         const MACRO_TILE_BLOCKS: usize = 8;
 
         if n_row_blocks <= Self::TRANSPOSE_CACHE_TILE_THRESHOLD_BLOCKS
@@ -1053,10 +1051,9 @@ impl BitMatrix {
     /// driver uses the simple 2-level block loop and above which it
     /// engages the V7 macro-tile outer loop.
     ///
-    /// Tuned for Zen 3's 32 KiB L1d: at 8 macro-blocks (= 512 cols
-    /// or 512 rows) the per-tile input row-strip is 64 KiB, the
-    /// boundary at which L1 misses dominate. Matrices below this in
-    /// both dimensions stay L1-resident under the simple loop.
+    /// Tuned from the recovered B1 benchmark sweep: matrices up to
+    /// 16 blocks (= 1024 rows/cols) in both dimensions use the simple
+    /// loop, while larger matrices use the macro-tiled driver.
     const TRANSPOSE_CACHE_TILE_THRESHOLD_BLOCKS: usize = 16;
 
     /// Inner loop over a (br, bc) range of 64×64 bit-blocks.
@@ -1829,7 +1826,38 @@ mod tests {
 
     use proptest::prelude::*;
 
+    fn random_bitvec(len: usize, seed: u64) -> crate::BitVec {
+        crate::BitVec::random_seeded(len, seed)
+    }
+
     proptest! {
+        #[test]
+        fn prop_transpose_double_is_identity(
+            rows in 0..130usize,
+            cols in 0..130usize,
+            seed in any::<u64>()
+        ) {
+            let m = BitMatrix::random_seeded(rows, cols, seed);
+            let transposed_twice = m.transpose().transpose();
+            prop_assert_eq!(transposed_twice, m);
+        }
+
+        #[test]
+        fn prop_transpose_matvec_semantics(
+            rows in 0..130usize,
+            cols in 0..130usize,
+            matrix_seed in any::<u64>(),
+            vector_seed in any::<u64>()
+        ) {
+            let m = BitMatrix::random_seeded(rows, cols, matrix_seed);
+            let v = random_bitvec(cols, vector_seed);
+
+            let direct = m.matvec(&v);
+            let via_transpose = m.transpose().matvec_transpose(&v);
+
+            prop_assert_eq!(via_transpose, direct);
+        }
+
         #[test]
         fn prop_row_extraction_preserves_values(
             rows in 1..20usize,

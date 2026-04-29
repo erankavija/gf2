@@ -259,6 +259,28 @@ fn test_transpose_identity() {
 }
 
 #[test]
+fn test_transpose_word_boundaries() {
+    for &n in &[0usize, 1, 63, 64, 65, 127, 128, 129] {
+        let m = BitMatrix::random_seeded(n, n, 0xB17B_10C0 ^ n as u64);
+        let mt = m.transpose();
+
+        assert_eq!(mt.rows(), n);
+        assert_eq!(mt.cols(), n);
+        assert_eq!(mt.transpose(), m, "transpose(transpose(M)) != M for n={n}");
+
+        for r in 0..n {
+            for c in 0..n {
+                assert_eq!(
+                    mt.get(c, r),
+                    m.get(r, c),
+                    "transpose mismatch at n={n}, row={r}, col={c}"
+                );
+            }
+        }
+    }
+}
+
+#[test]
 #[should_panic]
 fn test_get_out_of_bounds_row() {
     let m = BitMatrix::zeros(3, 4);
