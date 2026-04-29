@@ -237,6 +237,11 @@ harness = false
 required-features = ["rand"]
 
 [[bench]]
+name = "fieldmatrix_gemm_delayed"
+harness = false
+required-features = ["rand"]
+
+[[bench]]
 name = "fieldmatrix_ple"
 harness = false
 required-features = ["rand"]

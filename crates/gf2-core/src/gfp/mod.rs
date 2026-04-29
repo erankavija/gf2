@@ -605,9 +605,44 @@ impl<const P: u64> FiniteField for Fp<P> {
         self.value() as u128 * rhs.value() as u128
     }
 
+    /// Storage-domain product for delayed prime-field dot products.
+    ///
+    /// Bound proof: every `Fp<P>` storage word is in `[0, P)`, both in
+    /// canonical form and in Montgomery form (`aR mod P`). Therefore each raw
+    /// product is `< (P - 1)^2`, exactly the bound used by
+    /// [`FiniteField::max_unreduced_additions`]. A chunk of at most `kmax`
+    /// products fits in `u128` without wrapping.
+    ///
+    /// Representation proof:
+    ///
+    /// - canonical/specialized storage (`P = 2`, Mersenne, Proth):
+    ///   `Σ raw(aᵢ) raw(bᵢ) = Σ aᵢbᵢ`, so reducing modulo `P` is enough.
+    /// - Montgomery storage: `raw(a) = aR` and `raw(b) = bR`, hence the chunk
+    ///   accumulator is `R² Σ aᵢbᵢ (mod P)`. Reducing it modulo `P` and
+    ///   applying one REDC multiplies by `R⁻¹`, yielding `R Σ aᵢbᵢ`, the
+    ///   correct Montgomery storage of the dot product.
+    ///
+    /// This removes two per-product Montgomery-to-canonical conversions from
+    /// `FieldVec::dot_product`/`FieldMatrix::gemm`; reduction still happens at
+    /// chunk boundaries only.
+    #[inline]
+    fn mul_product_sum_wide(&self, rhs: &Self) -> u128 {
+        self.0 as u128 * rhs.0 as u128
+    }
+
     #[inline]
     fn reduce_wide(wide: &u128) -> Self {
         Self::new((*wide % P as u128) as u64)
+    }
+
+    #[inline]
+    fn reduce_product_sum_wide(wide: &u128) -> Self {
+        let reduced = (*wide % P as u128) as u64;
+        if P == 2 || use_specialized_storage(P) {
+            Self(reduced)
+        } else {
+            Self(redc::<P>(reduced as u128))
+        }
     }
 
     fn max_unreduced_additions() -> usize {
@@ -813,6 +848,33 @@ mod tests {
         let wide = a.mul_to_wide(&b);
         assert_eq!(wide, 30u128); // unreduced
         assert_eq!(Fp::<7>::reduce_wide(&wide), Fp::<7>::new(2)); // 30 mod 7
+    }
+
+    #[test]
+    fn test_storage_domain_product_sum_matches_canonical_dot() {
+        fn check<const P: u64>(xs: &[u64], ys: &[u64]) {
+            let mut storage_acc = 0u128;
+            let mut canonical_acc = 0u128;
+            for (&x, &y) in xs.iter().zip(ys.iter()) {
+                let a = Fp::<P>::new(x);
+                let b = Fp::<P>::new(y);
+                storage_acc += a.mul_product_sum_wide(&b);
+                canonical_acc += a.mul_to_wide(&b);
+            }
+            assert_eq!(
+                Fp::<P>::reduce_product_sum_wide(&storage_acc),
+                Fp::<P>::reduce_wide(&canonical_acc),
+                "P={P}"
+            );
+        }
+
+        let xs = [0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89];
+        let ys = [1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89];
+        check::<2>(&xs, &ys);
+        check::<7>(&xs, &ys);
+        check::<251>(&xs, &ys);
+        check::<65521>(&xs, &ys);
+        check::<2_147_483_647>(&xs, &ys);
     }
 
     #[test]
