@@ -1312,6 +1312,51 @@ impl<V: UintExt> crate::field::FiniteField for Gf2mElement_<V> {
     fn max_unreduced_additions() -> usize {
         usize::MAX
     }
+
+    fn try_gf2m_u64_batch_dot_product(
+        a: &[Self],
+        b: &[Self],
+        zero: &Self,
+        scratch_a: &mut Vec<u64>,
+        scratch_b: &mut Vec<u64>,
+        scratch_products: &mut Vec<u64>,
+    ) -> Option<Self> {
+        debug_assert_eq!(a.len(), b.len());
+        if !V::IS_U64 || !matches!(zero.params.m, 8 | 16 | 32) {
+            return None;
+        }
+        if !a.iter().all(|x| Arc::ptr_eq(&x.params, &zero.params))
+            || !b.iter().all(|y| Arc::ptr_eq(&y.params, &zero.params))
+        {
+            // Preserve the scalar path's field-context assertion semantics.
+            return None;
+        }
+
+        scratch_a.clear();
+        scratch_b.clear();
+        scratch_products.clear();
+        scratch_a.reserve(a.len());
+        scratch_b.reserve(b.len());
+        scratch_products.resize(a.len(), 0);
+
+        for (x, y) in a.iter().zip(b.iter()) {
+            scratch_a.push(x.value.as_u64_truncated());
+            scratch_b.push(y.value.as_u64_truncated());
+        }
+
+        crate::gf2m::batch::batch_mul_raw(
+            zero.params.m,
+            zero.params.primitive_poly.as_u64_truncated(),
+            scratch_a,
+            scratch_b,
+            scratch_products,
+        );
+        let value = scratch_products.iter().fold(0u64, |acc, &x| acc ^ x);
+        Some(Gf2mElement_ {
+            value: V::from_u64(value),
+            params: Arc::clone(&zero.params),
+        })
+    }
 }
 
 #[cfg(test)]

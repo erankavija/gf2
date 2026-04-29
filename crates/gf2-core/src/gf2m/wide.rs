@@ -1617,6 +1617,37 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> crate::field::FiniteField for Gf2mW
     fn max_unreduced_additions() -> usize {
         usize::MAX
     }
+
+    fn try_gf2m_u64_batch_dot_product(
+        a: &[Self],
+        b: &[Self],
+        _zero: &Self,
+        scratch_a: &mut Vec<u64>,
+        scratch_b: &mut Vec<u64>,
+        scratch_products: &mut Vec<u64>,
+    ) -> Option<Self> {
+        debug_assert_eq!(a.len(), b.len());
+        if N != 1 || !matches!(Cfg::M, 8 | 16 | 32) {
+            return None;
+        }
+
+        scratch_a.clear();
+        scratch_b.clear();
+        scratch_products.clear();
+        scratch_a.reserve(a.len());
+        scratch_b.reserve(b.len());
+        scratch_products.resize(a.len(), 0);
+
+        for (x, y) in a.iter().zip(b.iter()) {
+            scratch_a.push(x.words[0]);
+            scratch_b.push(y.words[0]);
+        }
+
+        let modulus = (1u64 << Cfg::M) | Cfg::MODULUS[0];
+        crate::gf2m::batch::batch_mul_raw(Cfg::M, modulus, scratch_a, scratch_b, scratch_products);
+        let value = scratch_products.iter().fold(0u64, |acc, &x| acc ^ x);
+        Some(Self::from_u64(value))
+    }
 }
 
 // ---------------------------------------------------------------------------

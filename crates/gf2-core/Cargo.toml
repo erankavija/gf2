@@ -242,6 +242,11 @@ harness = false
 required-features = ["rand"]
 
 [[bench]]
+name = "fieldmatrix_gf2m_batch_gemm"
+harness = false
+required-features = ["rand"]
+
+[[bench]]
 name = "fieldmatrix_ple"
 harness = false
 required-features = ["rand"]
