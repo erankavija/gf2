@@ -8,8 +8,8 @@
 ; host triple   : x86_64-unknown-linux-gnu
 ; target-cpu    : <unset; rely on #[target_feature]>
 ; RUSTFLAGS     : <empty>
-; commit        : 67b8cc4
-; regenerated   : 2026-04-29T05:39:02Z
+; commit        : c5f6fd7
+; regenerated   : 2026-04-29T08:38:41Z
 ; tool          : cargo-show-asm
 ; ---------------------------------------------------------
 
@@ -18,9 +18,9 @@
 ; symbol: gf2_kernels_simd::x86::avx2::avx2_xor_into
 ;==========================================================
 
-   Compiling gf2-kernels-simd v0.1.0 (/home/vkaskivuo/Projects/gf2/.claude/worktrees/agent-19bc3199/crates/gf2-kernels-simd)
+   Compiling gf2-kernels-simd v0.1.0 (/home/vkaskivuo/Projects/gf2/crates/gf2-kernels-simd)
 
-    Finished `release` profile [optimized] target(s) in 0.53s
+    Finished `release` profile [optimized] target(s) in 0.59s
 gf2_kernels_simd::x86::avx2::avx2_xor_into:
 	cmp rcx, rsi
 	cmovb rsi, rcx
@@ -91,7 +91,7 @@ gf2_kernels_simd::x86::avx2::avx2_and_into:
 ; symbol: gf2_kernels_simd::x86::avx2::avx2_or_into
 ;==========================================================
 
-    Finished `release` profile [optimized] target(s) in 0.03s
+    Finished `release` profile [optimized] target(s) in 0.02s
 
 gf2_kernels_simd::x86::avx2::avx2_or_into:
 	cmp rcx, rsi
@@ -224,7 +224,7 @@ gf2_kernels_simd::x86::avx2::avx2_popcnt:
 ; symbol: gf2_kernels_simd::x86::avx2::avx2_find_first_one
 ;==========================================================
 
-    Finished `release` profile [optimized] target(s) in 0.03s
+    Finished `release` profile [optimized] target(s) in 0.02s
 
 gf2_kernels_simd::x86::avx2::avx2_find_first_one:
 	test rsi, rsi
@@ -308,7 +308,7 @@ gf2_kernels_simd::x86::avx2::avx2_find_first_one:
 	mov r8d, 4
 	sub r8, rax
 	neg rax
-	lea rcx, [rip + .Lanon.aa72d2d3b4db988482119445e9d9f815.35]
+	lea rcx, [rip + .Lanon.8074b01f77d3cf5a05d1d708d68017f9.35]
 	mov rdi, rax
 	mov rdx, rsi
 	mov rsi, r8
@@ -406,7 +406,7 @@ gf2_kernels_simd::x86::avx2::avx2_find_first_zero:
 	mov r8d, 4
 	sub r8, rax
 	neg rax
-	lea rcx, [rip + .Lanon.aa72d2d3b4db988482119445e9d9f815.36]
+	lea rcx, [rip + .Lanon.8074b01f77d3cf5a05d1d708d68017f9.36]
 	mov rdi, rax
 	mov rdx, rsi
 	mov rsi, r8
@@ -512,14 +512,14 @@ gf2_kernels_simd::x86::avx2::avx2_shift_left_words:
 	pop r15
 	jmp qword ptr [rip + memset@GOTPCREL]
 .LBB34_16:
-	lea rdx, [rip + .Lanon.aa72d2d3b4db988482119445e9d9f815.38]
+	lea rdx, [rip + .Lanon.8074b01f77d3cf5a05d1d708d68017f9.38]
 	mov rdi, rax
 	mov rsi, rbx
 	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
 .LBB34_15:
 	not rdx
 	add rdx, r10
-	lea rax, [rip + .Lanon.aa72d2d3b4db988482119445e9d9f815.37]
+	lea rax, [rip + .Lanon.8074b01f77d3cf5a05d1d708d68017f9.37]
 	mov rdi, rdx
 	mov rsi, rbx
 	mov rdx, rax
@@ -534,89 +534,89 @@ gf2_kernels_simd::x86::avx2::avx2_shift_left_words:
 gf2_kernels_simd::x86::avx2::avx2_shift_right_words:
 	push rax
 	test rdx, rdx
-	je .LBB35_19
+	je .LBB36_19
 	mov rcx, rsi
 	sub rcx, rdx
-	jbe .LBB35_21
+	jbe .LBB36_21
 	mov rax, rcx
 	shr rax, 2
-	je .LBB35_5
+	je .LBB36_5
 	mov r8, rdi
-.LBB35_4:
+.LBB36_4:
 	vmovups ymm0, ymmword ptr [r8 + 8*rdx]
 	vmovups ymmword ptr [r8], ymm0
 	add r8, 32
 	dec rax
-	jne .LBB35_4
-.LBB35_5:
+	jne .LBB36_4
+.LBB36_5:
 	movabs r8, 1152921504606846972
 	and r8, rcx
 	cmp r8, rcx
-	je .LBB35_9
+	je .LBB36_9
 	lea r9, [rdi + 8*rdx]
-.LBB35_7:
+.LBB36_7:
 	lea rax, [rdx + r8]
 	cmp rax, rsi
-	jae .LBB35_20
+	jae .LBB36_20
 	mov rax, qword ptr [r9 + 8*r8]
 	mov qword ptr [rdi + 8*r8], rax
 	inc r8
 	cmp r8, rcx
-	jb .LBB35_7
-.LBB35_9:
+	jb .LBB36_7
+.LBB36_9:
 	mov rax, rdx
 	shr rax, 2
-	je .LBB35_14
+	je .LBB36_14
 	lea r8, [rcx + 4]
 	vxorps xmm0, xmm0, xmm0
-	jmp .LBB35_11
-.LBB35_13:
+	jmp .LBB36_11
+.LBB36_13:
 	add r8, 4
 	dec rax
-	je .LBB35_14
-.LBB35_11:
+	je .LBB36_14
+.LBB36_11:
 	cmp r8, rsi
-	ja .LBB35_13
+	ja .LBB36_13
 	vmovups ymmword ptr [rdi + 8*r8 - 32], ymm0
-	jmp .LBB35_13
-.LBB35_21:
+	jmp .LBB36_13
+.LBB36_21:
 	shl rsi, 3
 	mov rdx, rsi
 	xor esi, esi
 	pop rax
 	jmp qword ptr [rip + memset@GOTPCREL]
-.LBB35_14:
+.LBB36_14:
 	and rdx, -4
 	mov r8, rsi
 	mov rax, rdi
 	add rcx, rdx
-	je .LBB35_17
+	je .LBB36_17
 	lea rax, [rcx - 1]
 	cmp rsi, rax
-	jbe .LBB35_19
+	jbe .LBB36_19
 	mov r8, rsi
 	sub r8, rcx
 	lea rax, [rdi + 8*rax]
 	add rax, 8
-.LBB35_17:
+.LBB36_17:
 	lea rdx, [rdi + 8*rsi]
 	sub rdx, rax
 	shr rdx, 3
 	cmp rdx, r8
 	cmovae rdx, r8
 	test rdx, rdx
-	je .LBB35_19
+	je .LBB36_19
 	shl rdx, 3
 	mov rdi, rax
 	xor esi, esi
 	vzeroupper
 	call qword ptr [rip + memset@GOTPCREL]
-.LBB35_19:
+.LBB36_19:
 	pop rax
 	vzeroupper
 	ret
-.LBB35_20:
-	lea rdx, [rip + .Lanon.aa72d2d3b4db988482119445e9d9f815.39]
+.LBB36_20:
+	lea rdx, [rip + .Lanon.8074b01f77d3cf5a05d1d708d68017f9.39]
 	mov rdi, rax
 	vzeroupper
 	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
@@ -625,7 +625,7 @@ gf2_kernels_simd::x86::avx2::avx2_shift_right_words:
 ; symbol: gf2_kernels_simd::x86::avx2::avx2_m4rm_tile8x4
 ;==========================================================
 
-    Finished `release` profile [optimized] target(s) in 0.03s
+    Finished `release` profile [optimized] target(s) in 0.02s
 
 gf2_kernels_simd::x86::avx2::avx2_m4rm_tile8x4:
 	push r15

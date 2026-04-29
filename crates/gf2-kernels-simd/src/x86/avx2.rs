@@ -2,6 +2,9 @@
 use crate::LogicalFns;
 use core::arch::x86_64::*;
 
+const M4RM_TILE_ROWS: usize = 8;
+const M4RM_TILE_WORDS: usize = 4;
+
 #[inline(always)]
 unsafe fn loadu(ptr: *const u8) -> __m256i {
     _mm256_loadu_si256(ptr as *const __m256i)
@@ -57,7 +60,7 @@ unsafe fn avx2_m4rm_tile8x4(
     stride_words: usize,
     word_start: usize,
     table_buffer: &[u64],
-    idx: &[usize; 8],
+    idx: &[usize; M4RM_TILE_ROWS],
 ) {
     debug_assert!(c_block.len() >= 8 * stride_words);
     debug_assert!(word_start + 4 <= stride_words);
@@ -91,12 +94,12 @@ unsafe fn avx2_m4rm_tile8xn(
     c_block: &mut [u64],
     stride_words: usize,
     table_buffer: &[u64],
-    idx: &[usize; 8],
+    idx: &[usize; M4RM_TILE_ROWS],
 ) {
     let mut word_start = 0usize;
-    while word_start + 4 <= stride_words {
+    while word_start + M4RM_TILE_WORDS <= stride_words {
         avx2_m4rm_tile8x4(c_block, stride_words, word_start, table_buffer, idx);
-        word_start += 4;
+        word_start += M4RM_TILE_WORDS;
     }
 }
 
@@ -494,22 +497,49 @@ pub(crate) fn fns() -> LogicalFns {
         stride_words: usize,
         word_start: usize,
         table_buffer: &[u64],
-        idx: &[usize; 8],
+        idx: &[usize; M4RM_TILE_ROWS],
     ) {
-        if c_block.len() < 8 * stride_words || word_start + 4 > stride_words {
-            return;
-        }
+        assert!(
+            m4rm_c_block_covers_rows(c_block.len(), stride_words),
+            "m4rm_tile8x4: c_block must contain 8 rows of stride_words words"
+        );
+        assert!(
+            word_start
+                .checked_add(M4RM_TILE_WORDS)
+                .is_some_and(|end| end <= stride_words),
+            "m4rm_tile8x4: word_start + 4 must be within stride_words"
+        );
+        assert!(
+            m4rm_table_rows_cover(
+                table_buffer.len(),
+                stride_words,
+                word_start,
+                M4RM_TILE_WORDS,
+                idx,
+            ),
+            "m4rm_tile8x4: table_buffer must cover all indexed 8x4 table rows"
+        );
         unsafe { avx2_m4rm_tile8x4(c_block, stride_words, word_start, table_buffer, idx) }
     }
     fn m4rm_tile8xn_fn(
         c_block: &mut [u64],
         stride_words: usize,
         table_buffer: &[u64],
-        idx: &[usize; 8],
+        idx: &[usize; M4RM_TILE_ROWS],
     ) {
-        if c_block.len() < 8 * stride_words {
+        assert!(
+            m4rm_c_block_covers_rows(c_block.len(), stride_words),
+            "m4rm_tile8xn: c_block must contain 8 rows of stride_words words"
+        );
+
+        let full_words = stride_words / M4RM_TILE_WORDS * M4RM_TILE_WORDS;
+        if full_words == 0 {
             return;
         }
+        assert!(
+            m4rm_table_rows_cover(table_buffer.len(), stride_words, 0, full_words, idx),
+            "m4rm_tile8xn: table_buffer must cover all indexed 8xN table rows"
+        );
         unsafe { avx2_m4rm_tile8xn(c_block, stride_words, table_buffer, idx) }
     }
     fn not_fn(dst: &mut [u64]) {
@@ -556,5 +586,71 @@ pub(crate) fn fns() -> LogicalFns {
         find_first_zero_fn,
         shift_left_words_fn,
         shift_right_words_fn,
+    }
+}
+
+#[inline]
+fn m4rm_c_block_covers_rows(c_block_len: usize, stride_words: usize) -> bool {
+    stride_words
+        .checked_mul(M4RM_TILE_ROWS)
+        .is_some_and(|required| c_block_len >= required)
+}
+
+#[inline]
+fn m4rm_table_rows_cover(
+    table_len: usize,
+    stride_words: usize,
+    word_start: usize,
+    word_count: usize,
+    idx: &[usize; M4RM_TILE_ROWS],
+) -> bool {
+    if word_count == 0 {
+        return true;
+    }
+    match word_start.checked_add(word_count) {
+        Some(end) if end <= stride_words => {}
+        _ => return false,
+    }
+
+    idx.iter().all(|&entry| {
+        entry
+            .checked_mul(stride_words)
+            .and_then(|base| base.checked_add(word_start))
+            .and_then(|start| start.checked_add(word_count))
+            .is_some_and(|end| end <= table_len)
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_m4rm_table_rows_cover_accepts_valid_tile() {
+        let idx = [0, 1, 2, 3, 4, 5, 6, 7];
+        assert!(m4rm_table_rows_cover(8 * 16, 16, 12, 4, &idx));
+        assert!(m4rm_table_rows_cover(8 * 16, 16, 0, 16, &idx));
+    }
+
+    #[test]
+    fn test_m4rm_table_rows_cover_rejects_short_buffer() {
+        let idx = [0, 1, 2, 3, 4, 5, 6, 7];
+        assert!(!m4rm_table_rows_cover(8 * 16 - 1, 16, 12, 4, &idx));
+    }
+
+    #[test]
+    fn test_m4rm_table_rows_cover_rejects_overflowing_index() {
+        let idx = [usize::MAX, 1, 2, 3, 4, 5, 6, 7];
+        assert!(!m4rm_table_rows_cover(8 * 16, 16, 0, 4, &idx));
+    }
+
+    #[test]
+    #[should_panic(expected = "table_buffer must cover")]
+    fn test_m4rm_tile8x4_wrapper_panics_on_invalid_table() {
+        let fns = fns();
+        let mut c_block = vec![0u64; 8 * 16];
+        let table = vec![0u64; 16];
+        let idx = [0, 1, 2, 3, 4, 5, 6, 7];
+        (fns.m4rm_tile8x4_fn)(&mut c_block, 16, 0, &table, &idx);
     }
 }

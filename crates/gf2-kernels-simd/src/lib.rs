@@ -32,12 +32,24 @@ pub use prefetch::prefetch_read_l1;
 /// `c_block` contains eight contiguous output rows with `stride_words` words per
 /// row. The function XORs four words beginning at `word_start` from each indexed
 /// Gray-table entry into the matching output row.
+///
+/// # Panics
+///
+/// Panics if `c_block` does not contain eight full rows, if `word_start..word_start+4`
+/// is outside the row stride, or if `table_buffer` does not cover every indexed
+/// Gray-table row.
 pub type M4rmTile8x4Fn = fn(&mut [u64], usize, usize, &[u64], &[usize; 8]);
 
 /// Register-tiled M4RM full-row C-update function.
 ///
 /// Processes a row block as repeated 8×4 YMM tiles across the full row width,
 /// leaving any non-multiple-of-four tail to the safe caller.
+///
+/// # Panics
+///
+/// Panics if `c_block` does not contain eight full rows or if `table_buffer`
+/// does not cover every indexed Gray-table row up to the largest processed
+/// multiple-of-four word offset.
 pub type M4rmTile8xNFn = fn(&mut [u64], usize, &[u64], &[usize; 8]);
 
 /// Set of accelerated logical operations. Each function must have identical
