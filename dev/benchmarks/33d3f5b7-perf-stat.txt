@@ -174,7 +174,7 @@ Found 4 outliers among 100 measurements (4.00%)
 
  Performance counter stats for 'cargo bench -p gf2-core --features simd --bench soa_batch soa_batch_mul_fq3_fp65537/sequential_aos/1000' (10 runs):
 
-                 0      context-switches:u               #      0.0 cs/sec  cs_per_second     
+                 0      context-switches:u               #      0.0 cs/sec  cs_per_second
                  0      cpu-migrations:u                 #      0.0 migrations/sec  migrations_per_second
             91,349      page-faults:u                    #   5186.8 faults/sec  page_faults_per_second  ( +-  0.09% )
          17,611.82 msec task-clock:u                     #      2.0 CPUs  CPUs_utilized         ( +-  0.18% )
@@ -359,7 +359,7 @@ Found 13 outliers among 100 measurements (13.00%)
 
  Performance counter stats for 'cargo bench -p gf2-core --features simd --bench soa_batch soa_batch_mul_fq3_fp65537/batch_soa/1000' (10 runs):
 
-                 0      context-switches:u               #      0.0 cs/sec  cs_per_second     
+                 0      context-switches:u               #      0.0 cs/sec  cs_per_second
                  0      cpu-migrations:u                 #      0.0 migrations/sec  migrations_per_second
             91,366      page-faults:u                    #   5173.6 faults/sec  page_faults_per_second  ( +-  0.06% )
          17,660.20 msec task-clock:u                     #      2.0 CPUs  CPUs_utilized         ( +-  0.38% )
@@ -370,4 +370,3 @@ Found 13 outliers among 100 measurements (13.00%)
      1,661,458,753      stalled-cycles-frontend:u        #     0.02 frontend_cycles_idle        ( +-  1.43% )  (50.04%)
 
        8.968892873 +- 0.044265749 seconds time elapsed  ( +-  0.49% )
-
