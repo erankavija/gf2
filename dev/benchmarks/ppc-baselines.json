@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "comment": "Maps PPC-spiral kernel IDs to the criterion bench-target / size leaves they will compare against. Pinned by jit:b2ecd2ff (session 2 of babcf05e) using `cargo bench --save-baseline ppc-v0-2026-04-27` against HEAD=52eaac8. The bench inventory under `crates/gf2-core/benches/` was swept end-to-end at pin time; pinned kernels reflect the full set of bench files extant at HEAD that map to a Tier-A/B/C/D kernel. Consumed by dev/benchmarks/ppc-compare.sh and the criterion-1.5x JIT gate via scripts/criterion-1.5x.sh; the gate is per-issue keyed by a `ppc-kernel:<id>` label (id is one of A1, A2, A3, B1, B2, B3, C1, C2, C3, C4, C5, D1, D2). Path resolution: `$CRITERION_DIR/$bench_target/$size/$baseline_name/estimates.json` — `bench_target` may include slashes for nested groups (e.g., `gf2m_mul_crossover/pclmulqdq_barrett`), and `size` may be `.` for leaf benches with no parameter. Entries marked TBD-* have no current bench in `crates/gf2-core/benches/`; the kernel-implementing task is expected to add a dedicated bench before its first spiral edit. B1 was pinned in jit:1c1c4242 (V0 step) against the new `crates/gf2-core/benches/matrix_transpose.rs` bench. Currently TBD: D2 (no Cuthill-McKee reorder bench).",
+  "comment": "Maps PPC-spiral kernel IDs to the criterion bench-target / size leaves they will compare against. Pinned by jit:b2ecd2ff (session 2 of babcf05e) using `cargo bench --save-baseline ppc-v0-2026-04-27` against HEAD=52eaac8. The bench inventory under `crates/gf2-core/benches/` was swept end-to-end at pin time; pinned kernels reflect the full set of bench files extant at HEAD that map to a Tier-A/B/C/D kernel. Consumed by dev/benchmarks/ppc-compare.sh and the criterion-1.5x JIT gate via scripts/criterion-1.5x.sh; the gate is per-issue keyed by a `ppc-kernel:<id>` label (id is one of A1, A2, A3, B1, B2, B3, C1, C2, C3, C4, C5, D1, D2). Path resolution: `$CRITERION_DIR/$bench_target/$size/$baseline_name/estimates.json` — `bench_target` may include slashes for nested groups (e.g., `gf2m_mul_crossover/pclmulqdq_barrett`), and `size` may be `.` for leaf benches with no parameter. Entries marked TBD-* have no current bench in `crates/gf2-core/benches/`; the kernel-implementing task is expected to add a dedicated bench before its first spiral edit. B1 was pinned in jit:1c1c4242 (V0 step) against the new `crates/gf2-core/benches/matrix_transpose.rs` bench. New benchmark leaves added after pinning, such as D2, may use `baseline_bench_target` for current-vs-current comparisons when that is the only apples-to-apples baseline.",
   "kernels": {
     "A1": {
       "title": "BitMatrix::matvec popcnt SIMD",
@@ -98,11 +98,12 @@
     },
     "D2": {
       "title": "SparseBitMatrix Cuthill-McKee row reorder",
-      "bench_target": "TBD-D2-needs-bench",
-      "baseline_name": "TBD-D2-needs-bench",
-      "commit_hash": "TBD-D2-needs-bench",
-      "design_size_class": ["1024", "4096"],
-      "tbd_reason": "Cuthill-McKee one-shot reorder bench doesn't exist at HEAD. D2 task adds it (amortise-many-matvecs measurement) before its first edit."
+      "bench_target": "sparse_matvec_ldpc_rcm_amortized_128/rcm_reordered_output",
+      "baseline_bench_target": "sparse_matvec_ldpc_rcm_amortized_128/csr",
+      "baseline_name": "current-csr",
+      "commit_hash": "03b9806d2a8a55bb0dd6228fc8b9fdd768909261",
+      "design_size_class": ["4096x8192_w6", "8192x16384_w6", "4096x32768_w32"],
+      "rationale": "D2 adds this benchmark leaf, so compare current RCM against current CSR rather than a missing saved baseline. The optimized leaf keeps vectors and results in reordered coordinates after one-time RCM preprocessing; the separate `rcm_original_output` Criterion leaf and unit/property tests document and verify the extra `unapply_rows` path for callers that require original row order."
     }
   }
 }

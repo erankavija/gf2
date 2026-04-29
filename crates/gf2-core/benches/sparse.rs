@@ -229,9 +229,15 @@ fn bench_ldpc_block_csr_matvec(c: &mut Criterion) {
 /// LDPC-sized amortized Reverse Cuthill-McKee preprocessing benchmark.
 ///
 /// Compares the unchanged CSR path with the opt-in RCM row/column layout over
-/// 128 repeated matvecs. The one-shot `reorder_rcm` transformation is performed
-/// outside the timed loop to model dispatch paths that reuse the same parity
-/// check matrix for many codeword/syndrome evaluations.
+/// 128 repeated matvecs. The one-shot `reorder_rcm` transformation and input
+/// vector column permutation are performed outside the timed loop to model
+/// dispatch paths that keep vectors and syndromes in reordered coordinates.
+///
+/// The `rcm_reordered_output` leaf measures the amortized hot path in that
+/// reordered layout. The separate `rcm_original_output` leaf includes result
+/// unpermutation for callers that require original row order after every call.
+/// Correctness tests in `sparse.rs` check that `unapply_rows` recovers the exact
+/// original CSR matvec output.
 fn bench_ldpc_rcm_amortized_matvec(c: &mut Criterion) {
     const CALLS: usize = 128;
 
@@ -265,7 +271,21 @@ fn bench_ldpc_rcm_amortized_matvec(c: &mut Criterion) {
         );
 
         group.bench_with_input(
-            BenchmarkId::new("rcm", &case),
+            BenchmarkId::new("rcm_reordered_output", &case),
+            &(&rcm, &x_rcm),
+            |b, (rcm, x_rcm)| {
+                b.iter(|| {
+                    let mut last = BitVec::with_capacity(rcm.rows());
+                    for _ in 0..CALLS {
+                        last = black_box(rcm).matvec(black_box(x_rcm));
+                    }
+                    black_box(last)
+                });
+            },
+        );
+
+        group.bench_with_input(
+            BenchmarkId::new("rcm_original_output", &case),
             &(&rcm, &permutation, &x_rcm),
             |b, (rcm, permutation, x_rcm)| {
                 b.iter(|| {
