@@ -86,6 +86,21 @@ sealed `UintExt` trait, `verify-lean.sh` adds only that opaque trait axiom to
 `TypesExternal.lean` and removes any duplicate generated `UintExt` declaration
 from `Types.lean`. This is outside the `gfp/` and `gfpn/` proof target.
 
+## FiniteField default method projection extraction
+
+Aeneas 1180be60 can generate `FiniteField` implementation records that project
+default trait methods from impl-specific constants it never emitted. This showed
+up after adding delayed product-sum hooks as missing
+`mul_product_sum_wide`/`reduce_product_sum_wide` definitions for
+`GoldilocksFp`, `QuadraticExt`, and `CubicExt`.
+
+The production Rust impls for those three field families now explicitly forward
+the hooks to the same canonical wide path used by the trait defaults:
+`mul_product_sum_wide` calls `mul_to_wide`, and `reduce_product_sum_wide` calls
+`reduce_wide`. This is intentionally narrow: `gfp/` and scalar `gfpn/`
+arithmetic remain transparent to Charon/Aeneas, and the specialized
+storage-domain product-sum override for generic `Fp<P>` remains unchanged.
+
 ## gf2m/ selective extraction
 
 The `gf2m` module was originally fully opaque due to `Arc<FieldParams>` and
