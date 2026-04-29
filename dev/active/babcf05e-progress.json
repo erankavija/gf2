@@ -4,9 +4,9 @@
   "title": "gf2-core PPC-spiral performance sweep",
   "claimed_by": "agent:project-lead",
   "started_at": "2026-04-26T22:30:00+00:00",
-  "last_updated": "2026-04-29 sub-wave 4b B3 R1",
+  "last_updated": "2026-04-29 sub-wave 4b C4 R1",
   "current_wave": 4,
-  "phase": "sub-wave 4b in progress; B3 preliminary lead review failed and R1 rework dispatched, C2 preliminary review passed, C4 still running.",
+  "phase": "sub-wave 4b in progress; B3 R1 and C4 R1 reworks dispatched, C2 preliminary review passed.",
   "related_epic": "bb85c68a (FieldMatrix linear algebra)",
   "spec_doc": "dev/plans/gf2_core_ppc_spiral.md",
   "uncompetitiveness_doc": "dev/bench_results/2026-04-26-uncompetitiveness-profile.md",
@@ -543,10 +543,12 @@
           "title": "QuadraticExt::mul Karatsuba SoA batched SIMD",
           "kind": "task",
           "classification": "implementation",
-          "status": "in_progress",
+          "status": "rework_r1_dispatched",
           "state": "in_progress",
           "sub_wave": "4b",
-          "pre_dispatch_note": "C4 manifest pinned at soa_batch_mul_fq2_fp65537/batch_soa. Issue Notes says 'field_matrix_fusion' \u2014 manifest is canonical."
+          "pre_dispatch_note": "C4 manifest pinned at soa_batch_mul_fq2_fp65537/batch_soa. Issue Notes says 'field_matrix_fusion' \u2014 manifest is canonical.",
+          "rework_cycles": 1,
+          "review_notes": "R0 preliminary lead review failed: evidence whitespace, AoS regression evidence, and generic batch_add/batch_sub API narrowing."
         },
         {
           "id": "33d3f5b7-5942-445d-8e34-9b87c0903f7f",
@@ -842,7 +844,8 @@
     "1c1c4242": 1,
     "86c09a51": 1,
     "54a0e75c": 1,
-    "19bc3199": 1
+    "19bc3199": 1,
+    "3168d114": 1
   },
   "session_notes": {
     "session_1_starting_state": "Epic babcf05e: backlog. 6 stories scaffolded. 16 child tasks scaffolded. c7791a20 (profile.release) and c69d2055 (dispatch hoist) added by user on 2026-04-26 in response to bb85c68a uncompetitiveness profile finding.",
@@ -857,6 +860,7 @@
     "session_4_c69d2055_outcome": "Closed c69d2055 after commits 15cb193 (dispatch hoist), e63ce50 (SSOT rework: scalar fallback delegates to SCALAR_BACKEND), and 42b4dca (criterion gate wrapper reads labels from GateContext envelopes). Gates passed: cargo-ci, criterion-1.5x (A2 geomean 4.169x), code-review. Issue description still contains the known stale ThinLTO premise by prior user-approved dispatch-as-is decision.",
     "session_4_cad241e6_blocker": "cad241e6 worker branch worktree-agent-cad241e6 reached bcd2bdb after safety rework: generic path guards P <= 2^63, excludes Fermat/Mersenne specialisations, records aspirational benchmark miss. Because ./scripts/verify-lean.sh still failed baseline-identically and user selected 'Block cad241e6 and create/dispatch a separate Lean tooling fix first', lead created d4740d85, wired cad241e6 -> d4740d85, claimed it as agent:claude-wt-d4740d85, and dispatched worktree-agent-d4740d85. d4740d85 closed after commits 7bfb62c and aec32c4; full verify-lean passed. cad241e6 then integrated on main, amended its aspirational 1.5x criterion based on observed near-parity/regressive results, fixed stale dispatch docs, restored M31 FieldVec multiply dispatch through the existing Mersenne SIMD bundle, passed cargo-ci/asm/code-review, and closed.",
     "session_7_recovery_outcome": "Recovered stale 4a worktrees after session-6 base mistake. Backup refs created, C1/B1 salvaged, C3/B2 restarted, all four integrated on main and closed with passing cargo-ci, asm, criterion, and code-review gates. Additional review fixes landed: C1 SIMD-test gating/docs/evidence, B1 PSHUFB lane/tests/asm, B2 safety comment + vxorps amendment. Next work should dispatch sub-wave 4b only from current main with clean worktree-base verification.",
-    "session_8_b3_r0_review": "B3 R0 branch had useful M4RM tile work but failed preliminary lead review before integration: V6 prefetch path was dead (next_table always None), tiled schedule was limited to stride_words == 16 rather than all relevant n>=1024/output-width cases, evidence files failed git diff --check, and 1.5x criterion evidence was not established. R1 rework dispatched in the same worktree."
+    "session_8_b3_r0_review": "B3 R0 branch had useful M4RM tile work but failed preliminary lead review before integration: V6 prefetch path was dead (next_table always None), tiled schedule was limited to stride_words == 16 rather than all relevant n>=1024/output-width cases, evidence files failed git diff --check, and 1.5x criterion evidence was not established. R1 rework dispatched in the same worktree.",
+    "session_8_c4_r0_review": "C4 R0 branch delivered substantial SoA batching, but failed preliminary lead review before integration: dev/benchmarks/3168d114-perf-stat.txt failed git diff --check; final criterion capture reported sequential_aos regressions, conflicting with the hard AoS unchanged/at-least-as-fast criterion; and batch_add/batch_sub were narrowed from FiniteField to FiniteField + SimdVecOps, a generic API regression for BatchExtField. R1 rework dispatched in the same worktree."
   }
 }
