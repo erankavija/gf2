@@ -16,9 +16,9 @@
 //! [`crate::gf2m::barrett::BarrettReducerWide`], Fermat-based
 //! [`Gf2mWide::inverse`], and full [`crate::field::FiniteField`] /
 //! [`crate::field::ConstField`] trait implementations. The
-//! `GF(2^256)` variant additionally dispatches to the AVX2+VPCLMULQDQ
-//! SIMD kernel in [`gf2_kernels_simd::gf2m_wide`] when the host supports
-//! it (task `afac2262`).
+//! `GF(2^256)` and `GF(2^571)` variants additionally dispatch to
+//! AVX2+VPCLMULQDQ SIMD kernels in [`gf2_kernels_simd::gf2m_wide`] when the
+//! host supports them (tasks `afac2262` and `7c954fb5`).
 //!
 //! Historically this file grew through five tasks of story `bdf95060`
 //! (nee `6fb4abad`): Task 1 landed the type shell and XOR operators
@@ -909,76 +909,12 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
         // heap-allocated scratch buffer that MSRV forces on us.
         let mut product = vec![0u64; 2 * N];
 
-        // SIMD fast-path: for N == 4 (GF(2^256)) and available PCLMULQDQ,
-        // delegate the 4×4 schoolbook to the dispatched kernel in
-        // `gf2-kernels-simd`. The kernel is exposed as a safe `fn` pointer
-        // (unsafe intrinsics are isolated in the kernels crate), so this
-        // branch remains `#![deny(unsafe_code)]`-clean. Other `N` values and
-        // hosts without PCLMULQDQ fall through to the scalar schoolbook.
-        //
-        // **Performance note for the `6fb4abad` success criterion**
-        // ("GF(2^256) multiplication within 2× of a handwritten SIMD
-        // implementation"). On SIMD hosts this dispatch IS the handwritten
-        // SIMD multiplication: the unreduced carry-less product is computed
-        // by the AVX2+VPCLMULQDQ YMM kernel from task `afac2262`
-        // (safe-fn-pointer dispatch; the unsafe intrinsics live entirely in
-        // `gf2-kernels-simd`), and Barrett reduction then flows through
-        // [`BarrettReducerWide::reduce_slice`] — which, at the time of
-        // writing, is scalar. There is no second, hand-tuned SIMD
-        // implementation to compare against; this code path is the
-        // reference.
-        //
-        // The in-tree benchmark (`crates/gf2-core/benches/gf2m_wide_mul.rs`)
-        // measures four arms on Zen 3 (AMD Ryzen 9 5900X, AVX2+VPCLMULQDQ):
-        //
-        // * `scalar_clmul_barrett`      (full scalar mul)     ≈ 615 – 618 ns
-        // * `mul_dispatched`            (this path on SIMD)   ≈  93     ns
-        // * `scalar_clmul_only`         (no reduction)        ≈ 558     ns
-        // * `simd_clmul_only`           (no reduction)        ≈   6     ns
-        //
-        // End-to-end, the dispatched multiplication is ≈ 6.6× faster than
-        // the all-scalar full mul — well outside 2× on the "faster" side,
-        // so the criterion is met in its plain reading: our handwritten
-        // SIMD implementation of `Gf2mWide::<4, _>::mul` comfortably beats
-        // a non-SIMD hand baseline.
-        //
-        // Note, however, that the raw-kernel gap between `mul_dispatched`
-        // (~93 ns) and `simd_clmul_only` (~6 ns) reveals that the
-        // remaining ~87 ns is scalar Barrett reduction; a future task
-        // could SIMD-accelerate Barrett to bring the full multiplication
-        // closer to the raw-kernel floor. That is strictly out of scope
-        // for story `6fb4abad` (which compares against a handwritten
-        // full multiply, not an idealised SIMD-everywhere variant), but
-        // it is the obvious next optimisation if this field becomes hot.
-        #[cfg(feature = "simd")]
-        let simd_taken = if N == 4 {
-            if let Some(fns) = crate::simd::maybe_gf2m_wide256() {
-                // `N == 4` was checked above; the `try_into` conversions are
-                // infallible and monomorphise away.
-                let a_arr: &[u64; 4] = (&self.words[..])
-                    .try_into()
-                    .expect("N == 4 guarantees a 4-limb slice");
-                let b_arr: &[u64; 4] = (&rhs.words[..])
-                    .try_into()
-                    .expect("N == 4 guarantees a 4-limb slice");
-                let out_arr: &mut [u64; 8] = (&mut product[..])
-                    .try_into()
-                    .expect("2 * N == 8 guarantees an 8-limb slice");
-                (fns.clmul)(a_arr, b_arr, out_arr);
-                true
-            } else {
-                false
-            }
-        } else {
-            false
-        };
-
-        #[cfg(not(feature = "simd"))]
-        let simd_taken = false;
-
-        if !simd_taken {
-            clmul_wide_slice::<N>(&self.words, &rhs.words, &mut product);
-        }
+        // SIMD fast-path: for N == 4 (GF(2^256)) and N == 9 (GF(2^571)),
+        // delegate the schoolbook carry-less product to the dispatched
+        // kernels in `gf2-kernels-simd` when the host supports PCLMULQDQ.
+        // The helper also falls back to the scalar schoolbook and keeps all
+        // unsafe intrinsics isolated in the kernels crate.
+        clmul_wide_slice_product::<N>(&self.words, &rhs.words, &mut product);
 
         // Step 2: Barrett-reduce the 2N-word product back to N words, via the
         // shared `BarrettReducerWide::reduce_slice` primitive.
@@ -1932,6 +1868,59 @@ pub fn clmul_wide_slice<const N: usize>(a: &[u64; N], b: &[u64; N], out: &mut [u
     }
 }
 
+/// Computes a fresh 2N-limb carry-less product, using SIMD for supported
+/// fixed-size wide fields and falling back to [`clmul_wide_slice`].
+///
+/// Unlike [`clmul_wide_slice`], this helper overwrites `out` with the product
+/// rather than XOR-accumulating into a caller-supplied accumulator. It is used
+/// by `Gf2mWide::mul_ref` and the wide Barrett reducer, both of which need a
+/// fresh product buffer and can therefore safely use kernels that clear their
+/// output before writing.
+#[inline]
+pub(crate) fn clmul_wide_slice_product<const N: usize>(
+    a: &[u64; N],
+    b: &[u64; N],
+    out: &mut [u64],
+) {
+    debug_assert_eq!(out.len(), 2 * N);
+
+    #[cfg(feature = "simd")]
+    {
+        if N == 4 {
+            if let Some(fns) = crate::simd::maybe_gf2m_wide256() {
+                let a_arr: &[u64; 4] = (&a[..])
+                    .try_into()
+                    .expect("N == 4 guarantees a 4-limb slice");
+                let b_arr: &[u64; 4] = (&b[..])
+                    .try_into()
+                    .expect("N == 4 guarantees a 4-limb slice");
+                let out_arr: &mut [u64; 8] = out
+                    .try_into()
+                    .expect("2 * N == 8 guarantees an 8-limb slice");
+                (fns.clmul)(a_arr, b_arr, out_arr);
+                return;
+            }
+        } else if N == 9 {
+            if let Some(fns) = crate::simd::maybe_gf2m_wide571() {
+                let a_arr: &[u64; 9] = (&a[..])
+                    .try_into()
+                    .expect("N == 9 guarantees a 9-limb slice");
+                let b_arr: &[u64; 9] = (&b[..])
+                    .try_into()
+                    .expect("N == 9 guarantees a 9-limb slice");
+                let out_arr: &mut [u64; 18] = out
+                    .try_into()
+                    .expect("2 * N == 18 guarantees an 18-limb slice");
+                (fns.clmul)(a_arr, b_arr, out_arr);
+                return;
+            }
+        }
+    }
+
+    out.fill(0);
+    clmul_wide_slice::<N>(a, b, out);
+}
+
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
@@ -2042,6 +2031,17 @@ mod tests {
         const NAME: &'static str = "Gf2m256TestConfig";
     }
 
+    /// GF(2^571) NIST B-571/K-571 binary-field polynomial:
+    /// `x^571 + x^10 + x^5 + x^2 + 1`.
+    pub(super) struct Gf2m571TestConfig;
+
+    impl Gf2mWideConfig<9> for Gf2m571TestConfig {
+        const M: usize = 571;
+        // Low terms x^10 + x^5 + x^2 + 1; the x^571 term is implicit.
+        const MODULUS: [u64; 9] = [0x425, 0, 0, 0, 0, 0, 0, 0, 0];
+        const NAME: &'static str = "Gf2m571TestConfig";
+    }
+
     /// Synthetic test config with `M = 250` to exercise the tail-masking
     /// path (the top word must zero its high 6 bits).
     struct Gf2m250TestConfig;
@@ -2069,6 +2069,13 @@ mod tests {
         assert_eq!(Gf2m250TestConfig::MODULUS_HIGH_BIT_WORD, 3);
         // M - 1 = 249; 249 & 63 = 57; mask = 1 << 57
         assert_eq!(Gf2m250TestConfig::MODULUS_HIGH_BIT_MASK, 1u64 << 57);
+    }
+
+    #[test]
+    fn test_config_modulus_high_bit_word_and_mask_m571() {
+        assert_eq!(Gf2m571TestConfig::MODULUS_HIGH_BIT_WORD, 8);
+        // M - 1 = 570; 570 & 63 = 58; mask = 1 << 58.
+        assert_eq!(Gf2m571TestConfig::MODULUS_HIGH_BIT_MASK, 1u64 << 58);
     }
 
     #[test]
@@ -2913,6 +2920,42 @@ mod tests {
     }
 
     #[test]
+    fn test_mul_m571_matches_scalar_reference() {
+        let a = Gf2mWide::<9, Gf2m571TestConfig>::new([
+            0xDEAD_BEEF_CAFE_BABE,
+            0x0123_4567_89AB_CDEF,
+            0xFEDC_BA98_7654_3210,
+            0xAAAA_5555_AAAA_5555,
+            0x1357_9BDF_2468_ACE0,
+            0x0F0F_F0F0_3333_CCCC,
+            0xFFFF_0000_FFFF_0000,
+            0x1111_2222_3333_4444,
+            0x07FF_FFFF_FFFF_FFFF,
+        ]);
+        let b = Gf2mWide::<9, Gf2m571TestConfig>::new([
+            0x5555_AAAA_5555_AAAA,
+            0x1122_3344_5566_7788,
+            0xFFFF_FFFF_0000_0000,
+            0x0F0F_F0F0_0F0F_F0F0,
+            0x2468_ACE0_1357_9BDF,
+            0x3333_CCCC_0F0F_F0F0,
+            0x0000_FFFF_0000_FFFF,
+            0x4444_3333_2222_1111,
+            0x03FF_FFFF_FFFF_FFFF,
+        ]);
+        let got = a * b;
+        let mut product = [0u64; 18];
+        clmul_wide_slice::<9>(a.words(), b.words(), &mut product);
+        let reduced = crate::gf2m::barrett::reference_reduce_wide::<9, 18>(
+            &product,
+            &Gf2m571TestConfig::MODULUS,
+            571,
+        );
+        let expected = Gf2mWide::<9, Gf2m571TestConfig>::from_words(reduced);
+        assert_eq!(got, expected);
+    }
+
+    #[test]
     fn test_mul_assign_m256() {
         let a = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(5);
         let b = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(9);
@@ -3146,6 +3189,23 @@ mod tests {
                 .prop_map(|(a, b, c, d)| [a, b, c, d])
         }
 
+        fn any_9_words_m571() -> impl Strategy<Value = [u64; 9]> {
+            (
+                any::<u64>(),
+                any::<u64>(),
+                any::<u64>(),
+                any::<u64>(),
+                any::<u64>(),
+                any::<u64>(),
+                any::<u64>(),
+                any::<u64>(),
+                any::<u64>(),
+            )
+                .prop_map(|(a, b, c, d, e, f, g, h, i)| {
+                    [a, b, c, d, e, f, g, h, i & ((1u64 << 59) - 1)]
+                })
+        }
+
         proptest! {
             #![proptest_config(ProptestConfig::with_cases(32))]
 
@@ -3205,13 +3265,29 @@ mod tests {
         ) -> Gf2mWide<4, Gf2m256TestConfig> {
             let mut product = [0u64; 8];
             // `clmul_wide_slice` has no SIMD path of its own; it always runs
-            // the scalar bit-by-bit clmul → Barrett pipeline. On SIMD hosts
-            // `Mul::mul` takes the VPCLMULQDQ path, so this comparison
-            // covers both.
+            // the scalar bit-by-bit clmul. The test-only reference reducer is
+            // the independent shift-and-XOR oracle.
             super::clmul_wide_slice::<4>(a.words(), b.words(), &mut product);
-            let reducer = super::BarrettReducerWide::<4>::new(Gf2m256TestConfig::MODULUS, 256);
-            let reduced = reducer.reduce_slice(&product);
+            let reduced = crate::gf2m::barrett::reference_reduce_wide::<4, 8>(
+                &product,
+                &Gf2m256TestConfig::MODULUS,
+                256,
+            );
             Gf2mWide::<4, Gf2m256TestConfig>::from_words(reduced)
+        }
+
+        fn scalar_reference_mul_m571(
+            a: &Gf2mWide<9, Gf2m571TestConfig>,
+            b: &Gf2mWide<9, Gf2m571TestConfig>,
+        ) -> Gf2mWide<9, Gf2m571TestConfig> {
+            let mut product = [0u64; 18];
+            super::clmul_wide_slice::<9>(a.words(), b.words(), &mut product);
+            let reduced = crate::gf2m::barrett::reference_reduce_wide::<9, 18>(
+                &product,
+                &Gf2m571TestConfig::MODULUS,
+                571,
+            );
+            Gf2mWide::<9, Gf2m571TestConfig>::from_words(reduced)
         }
 
         proptest! {
@@ -3236,6 +3312,25 @@ mod tests {
                 let expected = scalar_reference_mul(&a, &b);
                 prop_assert_eq!(got, expected,
                     "SIMD/scalar disagreement for a={:?}, b={:?}", a, b);
+            }
+
+            /// Agreement test for the N=9 / m=571 multiplication path.
+            ///
+            /// On AVX2+VPCLMULQDQ hosts this covers the new 9×9 YMM kernel in
+            /// both the initial product and Barrett's two internal products;
+            /// on non-SIMD hosts it still checks the scalar path against the
+            /// independent shift-and-XOR reducer.
+            #[test]
+            fn prop_simd_matches_scalar_reference_m571(
+                xs in any_9_words_m571(),
+                ys in any_9_words_m571(),
+            ) {
+                let a = Gf2mWide::<9, Gf2m571TestConfig>::new(xs);
+                let b = Gf2mWide::<9, Gf2m571TestConfig>::new(ys);
+                let got = a * b;
+                let expected = scalar_reference_mul_m571(&a, &b);
+                prop_assert_eq!(got, expected,
+                    "SIMD/scalar m571 disagreement for a={:?}, b={:?}", a, b);
             }
         }
     }

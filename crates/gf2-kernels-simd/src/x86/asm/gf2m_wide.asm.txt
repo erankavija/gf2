@@ -2,14 +2,14 @@
 ; ---------------------------------------------------------
 ; crate         : gf2-kernels-simd
 ; primary       : gf2_kernels_simd::x86::gf2m_wide::clmul_wide4_xmm
-; extra symbols : gf2_kernels_simd::x86::gf2m_wide::clmul_wide4_ymm
+; extra symbols : gf2_kernels_simd::x86::gf2m_wide::clmul_wide4_ymm gf2_kernels_simd::x86::gf2m_wide::clmul_wide9_xmm gf2_kernels_simd::x86::gf2m_wide::clmul_wide9_ymm
 ; output        : crates/gf2-kernels-simd/src/x86/asm/gf2m_wide.asm.txt
 ; rustc         : rustc 1.95.0 (59807616e 2026-04-14)
 ; host triple   : x86_64-unknown-linux-gnu
 ; target-cpu    : <unset; rely on #[target_feature]>
 ; RUSTFLAGS     : <empty>
-; commit        : cef0071
-; regenerated   : 2026-04-27T20:44:24Z
+; commit        : 67b8cc4
+; regenerated   : 2026-04-29T05:44:09Z
 ; tool          : cargo-show-asm
 ; ---------------------------------------------------------
 
@@ -18,8 +18,9 @@
 ; symbol: gf2_kernels_simd::x86::gf2m_wide::clmul_wide4_xmm
 ;==========================================================
 
-    Finished `release` profile [optimized] target(s) in 0.02s
+   Compiling gf2-kernels-simd v0.1.0 (/home/vkaskivuo/Projects/gf2/.claude/worktrees/agent-7c954fb5/crates/gf2-kernels-simd)
 
+    Finished `release` profile [optimized] target(s) in 0.56s
 gf2_kernels_simd::x86::gf2m_wide::clmul_wide4_xmm:
 	xorps xmm0, xmm0
 	movups xmmword ptr [rdx + 48], xmm0
@@ -220,5 +221,387 @@ gf2_kernels_simd::x86::gf2m_wide::clmul_wide4_ymm:
 	xor rcx, rsi
 	mov qword ptr [rdx + 48], rcx
 	vpextrq qword ptr [rdx + 56], xmm0, 1
+	vzeroupper
+	ret
+
+;==========================================================
+; symbol: gf2_kernels_simd::x86::gf2m_wide::clmul_wide9_xmm
+;==========================================================
+
+    Finished `release` profile [optimized] target(s) in 0.02s
+
+gf2_kernels_simd::x86::gf2m_wide::clmul_wide9_xmm:
+	push r15
+	push r14
+	push rbx
+	sub rsp, 272
+	mov rbx, rdx
+	mov r15, rsi
+	mov r14, rdi
+	mov rdi, rsp
+	mov edx, 272
+	xor esi, esi
+	call qword ptr [rip + memset@GOTPCREL]
+	movdqu xmm0, xmmword ptr [r15]
+	movdqu xmm1, xmmword ptr [r15 + 8]
+	movdqu xmm2, xmmword ptr [r15 + 16]
+	movdqu xmm3, xmmword ptr [r15 + 24]
+	movdqu xmm4, xmmword ptr [r15 + 32]
+	movdqu xmm5, xmmword ptr [r15 + 40]
+	movdqu xmm6, xmmword ptr [r15 + 48]
+	movdqu xmm7, xmmword ptr [r15 + 56]
+	pshufd xmm8, xmm7, 238
+	mov eax, 64
+.LBB58_1:
+	movq xmm9, qword ptr [r14 + rax - 64]
+	movdqa xmm10, xmm9
+	pclmulqdq xmm10, xmm0, 0
+	pxor xmm10, xmmword ptr [rsp + 2*rax - 128]
+	movdqa xmmword ptr [rsp + 2*rax - 128], xmm10
+	movdqa xmm10, xmm9
+	pclmulqdq xmm10, xmm1, 0
+	pxor xmm10, xmmword ptr [rsp + 2*rax - 112]
+	movdqa xmmword ptr [rsp + 2*rax - 112], xmm10
+	movdqa xmm10, xmm9
+	pclmulqdq xmm10, xmm2, 0
+	pxor xmm10, xmmword ptr [rsp + 2*rax - 96]
+	movdqa xmmword ptr [rsp + 2*rax - 96], xmm10
+	movdqa xmm10, xmm9
+	pclmulqdq xmm10, xmm3, 0
+	pxor xmm10, xmmword ptr [rsp + 2*rax - 80]
+	movdqa xmmword ptr [rsp + 2*rax - 80], xmm10
+	movdqa xmm10, xmm9
+	pclmulqdq xmm10, xmm4, 0
+	pxor xmm10, xmmword ptr [rsp + 2*rax - 64]
+	movdqa xmmword ptr [rsp + 2*rax - 64], xmm10
+	movdqa xmm10, xmm9
+	pclmulqdq xmm10, xmm5, 0
+	pxor xmm10, xmmword ptr [rsp + 2*rax - 48]
+	movdqa xmmword ptr [rsp + 2*rax - 48], xmm10
+	movdqa xmm10, xmm9
+	pclmulqdq xmm10, xmm6, 0
+	pxor xmm10, xmmword ptr [rsp + 2*rax - 32]
+	movdqa xmmword ptr [rsp + 2*rax - 32], xmm10
+	movdqa xmm10, xmm9
+	pclmulqdq xmm10, xmm7, 0
+	pxor xmm10, xmmword ptr [rsp + 2*rax - 16]
+	movdqa xmmword ptr [rsp + 2*rax - 16], xmm10
+	pclmulqdq xmm9, xmm8, 0
+	pxor xmm9, xmmword ptr [rsp + 2*rax]
+	movdqa xmmword ptr [rsp + 2*rax], xmm9
+	add rax, 8
+	cmp rax, 136
+	jne .LBB58_1
+	mov rax, qword ptr [rsp]
+	mov rcx, qword ptr [rsp + 16]
+	xor rcx, qword ptr [rsp + 8]
+	mov qword ptr [rbx], rax
+	mov rax, qword ptr [rsp + 32]
+	xor rax, qword ptr [rsp + 24]
+	mov qword ptr [rbx + 8], rcx
+	mov rcx, qword ptr [rsp + 48]
+	xor rcx, qword ptr [rsp + 40]
+	mov qword ptr [rbx + 16], rax
+	mov rax, qword ptr [rsp + 64]
+	xor rax, qword ptr [rsp + 56]
+	mov qword ptr [rbx + 24], rcx
+	mov rcx, qword ptr [rsp + 80]
+	xor rcx, qword ptr [rsp + 72]
+	mov qword ptr [rbx + 32], rax
+	mov rax, qword ptr [rsp + 96]
+	xor rax, qword ptr [rsp + 88]
+	mov qword ptr [rbx + 40], rcx
+	mov rcx, qword ptr [rsp + 112]
+	xor rcx, qword ptr [rsp + 104]
+	mov qword ptr [rbx + 48], rax
+	mov rax, qword ptr [rsp + 128]
+	xor rax, qword ptr [rsp + 120]
+	mov qword ptr [rbx + 56], rcx
+	mov rcx, qword ptr [rsp + 144]
+	xor rcx, qword ptr [rsp + 136]
+	mov qword ptr [rbx + 64], rax
+	mov rax, qword ptr [rsp + 160]
+	xor rax, qword ptr [rsp + 152]
+	mov qword ptr [rbx + 72], rcx
+	mov rcx, qword ptr [rsp + 176]
+	xor rcx, qword ptr [rsp + 168]
+	mov qword ptr [rbx + 80], rax
+	mov rax, qword ptr [rsp + 192]
+	xor rax, qword ptr [rsp + 184]
+	mov qword ptr [rbx + 88], rcx
+	mov rcx, qword ptr [rsp + 208]
+	xor rcx, qword ptr [rsp + 200]
+	mov qword ptr [rbx + 96], rax
+	mov rax, qword ptr [rsp + 224]
+	xor rax, qword ptr [rsp + 216]
+	mov qword ptr [rbx + 104], rcx
+	mov rcx, qword ptr [rsp + 240]
+	xor rcx, qword ptr [rsp + 232]
+	mov qword ptr [rbx + 112], rax
+	mov rax, qword ptr [rsp + 256]
+	xor rax, qword ptr [rsp + 248]
+	mov qword ptr [rbx + 120], rcx
+	mov qword ptr [rbx + 128], rax
+	mov rax, qword ptr [rsp + 264]
+	mov qword ptr [rbx + 136], rax
+	add rsp, 272
+	pop rbx
+	pop r14
+	pop r15
+	ret
+
+;==========================================================
+; symbol: gf2_kernels_simd::x86::gf2m_wide::clmul_wide9_ymm
+;==========================================================
+
+    Finished `release` profile [optimized] target(s) in 0.03s
+
+gf2_kernels_simd::x86::gf2m_wide::clmul_wide9_ymm:
+	push rbp
+	push r15
+	push r14
+	push r13
+	push r12
+	push rbx
+	sub rsp, 200
+	vpbroadcastq ymm0, qword ptr [rdi]
+	vmovq xmm1, xmm0
+	vpxor xmm2, xmm2, xmm2
+	vpblendd ymm2, ymm0, ymm2, 204
+	vmovq xmm0, qword ptr [rsi]
+	vmovq xmm4, qword ptr [rsi + 8]
+	vinserti128 ymm3, ymm0, xmm4, 1
+	vmovq xmm0, qword ptr [rsi + 16]
+	vmovq xmm6, qword ptr [rsi + 24]
+	vinserti128 ymm5, ymm0, xmm6, 1
+	vpclmulqdq ymm8, ymm2, ymm5, 0
+	vmovq xmm9, qword ptr [rsi + 32]
+	vmovq xmm10, qword ptr [rsi + 40]
+	vinserti128 ymm7, ymm9, xmm10, 1
+	vpclmulqdq ymm13, ymm2, ymm7, 0
+	vmovdqu ymmword ptr [rsp + 128], ymm2
+	vmovq xmm14, qword ptr [rsi + 48]
+	vmovq xmm15, qword ptr [rsi + 56]
+	vpbroadcastq ymm11, qword ptr [rdi + 8]
+	vpblendd ymm1, ymm1, ymm11, 48
+	vmovdqu ymmword ptr [rsp - 64], ymm1
+	vmovq xmm1, qword ptr [rdi + 8]
+	vinserti128 ymm1, ymm1, xmm1, 1
+	vinserti128 ymm11, ymm4, xmm0, 1
+	vpclmulqdq ymm0, ymm1, ymm11, 0
+	vpxor ymm0, ymm8, ymm0
+	vinserti128 ymm8, ymm14, xmm15, 1
+	vinserti128 ymm12, ymm6, xmm9, 1
+	vpclmulqdq ymm4, ymm1, ymm12, 0
+	vpxor ymm4, ymm13, ymm4
+	vpclmulqdq ymm6, ymm2, ymm8, 0
+	vinserti128 ymm13, ymm10, xmm14, 1
+	vpclmulqdq ymm9, ymm1, ymm13, 0
+	vpxor ymm6, ymm9, ymm6
+	vmovq xmm9, qword ptr [rsi + 64]
+	vinserti128 ymm14, ymm15, xmm9, 1
+	vpbroadcastq ymm9, qword ptr [rdi + 16]
+	vpxor xmm2, xmm2, xmm2
+	vpblendd ymm10, ymm9, ymm2, 204
+	vmovdqu ymmword ptr [rsp - 32], ymm3
+	vpclmulqdq ymm15, ymm10, ymm3, 0
+	vpxor ymm0, ymm15, ymm0
+	vmovdqu ymmword ptr [rsp + 160], ymm0
+	vmovq xmm0, xmm9
+	vpbroadcastq ymm9, qword ptr [rdi + 24]
+	vpblendd ymm0, ymm0, ymm9, 48
+	vmovdqu ymmword ptr [rsp - 96], ymm0
+	vmovq xmm0, qword ptr [rdi + 24]
+	vinserti128 ymm2, ymm0, xmm0, 1
+	vpclmulqdq ymm9, ymm10, ymm5, 0
+	vmovdqu ymmword ptr [rsp], ymm5
+	vpclmulqdq ymm15, ymm2, ymm11, 0
+	vpxor ymm9, ymm9, ymm15
+	vpxor ymm9, ymm9, ymm4
+	vpclmulqdq ymm4, ymm10, ymm7, 0
+	vpclmulqdq ymm15, ymm2, ymm12, 0
+	vpxor ymm4, ymm15, ymm4
+	vpxor ymm0, ymm6, ymm4
+	vmovdqu ymmword ptr [rsp - 128], ymm0
+	vpclmulqdq ymm1, ymm1, ymm14, 0
+	vpclmulqdq ymm6, ymm2, ymm13, 0
+	vpxor ymm1, ymm1, ymm6
+	vpclmulqdq ymm6, ymm10, ymm8, 0
+	vpxor ymm15, ymm6, ymm1
+	vpbroadcastq ymm1, qword ptr [rdi + 32]
+	vpxor xmm0, xmm0, xmm0
+	vpblendd ymm0, ymm1, ymm0, 204
+	vpclmulqdq ymm6, ymm0, ymm3, 0
+	vpxor ymm3, ymm9, ymm6
+	vmovdqu ymmword ptr [rsp + 96], ymm3
+	vmovq xmm1, xmm1
+	vpbroadcastq ymm6, qword ptr [rdi + 40]
+	vpblendd ymm6, ymm1, ymm6, 48
+	vmovq xmm1, qword ptr [rdi + 40]
+	vinserti128 ymm1, ymm1, xmm1, 1
+	vpclmulqdq ymm9, ymm0, ymm5, 0
+	vpclmulqdq ymm4, ymm1, ymm11, 0
+	vpxor ymm4, ymm9, ymm4
+	vpclmulqdq ymm9, ymm0, ymm7, 0
+	vpclmulqdq ymm10, ymm1, ymm12, 0
+	vpxor ymm9, ymm9, ymm10
+	vpxor ymm3, ymm15, ymm9
+	vmovdqu ymmword ptr [rsp + 32], ymm3
+	vpclmulqdq ymm2, ymm2, ymm14, 0
+	vpclmulqdq ymm10, ymm1, ymm13, 0
+	vpxor ymm2, ymm10, ymm2
+	vpclmulqdq ymm0, ymm0, ymm8, 0
+	vpbroadcastq ymm10, qword ptr [rdi + 48]
+	vpxor ymm3, ymm0, ymm2
+	vpxor xmm0, xmm0, xmm0
+	vpblendd ymm15, ymm10, ymm0, 204
+	vmovdqu ymm2, ymmword ptr [rsp - 32]
+	vpclmulqdq ymm0, ymm15, ymm2, 0
+	vpxor ymm0, ymm4, ymm0
+	vpxor ymm0, ymm0, ymmword ptr [rsp - 128]
+	vmovdqu ymmword ptr [rsp - 128], ymm0
+	vmovq xmm0, xmm10
+	vpbroadcastq ymm10, qword ptr [rdi + 56]
+	vpblendd ymm10, ymm0, ymm10, 48
+	vpbroadcastq ymm0, qword ptr [rsi]
+	vmovq xmm4, qword ptr [rsi + 64]
+	vpblendd ymm0, ymm4, ymm0, 48
+	vpclmulqdq ymm9, ymm0, ymmword ptr [rsp - 64], 0
+	vpclmulqdq ymm5, ymm0, ymmword ptr [rsp - 96], 0
+	vmovdqu ymmword ptr [rsp + 64], ymm5
+	vpclmulqdq ymm6, ymm6, ymm0, 0
+	vmovdqu ymmword ptr [rsp - 96], ymm6
+	vpclmulqdq ymm0, ymm10, ymm0, 0
+	vmovdqu ymmword ptr [rsp - 64], ymm0
+	vmovq xmm0, qword ptr [rdi + 56]
+	vinserti128 ymm0, ymm0, xmm0, 1
+	vpclmulqdq ymm6, ymm0, ymm11, 0
+	vmovdqu ymm5, ymmword ptr [rsp]
+	vpclmulqdq ymm10, ymm15, ymm5, 0
+	vpxor ymm6, ymm10, ymm6
+	vpclmulqdq ymm10, ymm0, ymm12, 0
+	vpclmulqdq ymm11, ymm15, ymm7, 0
+	vpxor ymm10, ymm11, ymm10
+	vpxor ymm3, ymm10, ymm3
+	vpclmulqdq ymm1, ymm1, ymm14, 0
+	vpclmulqdq ymm10, ymm0, ymm13, 0
+	vpxor ymm1, ymm10, ymm1
+	vpclmulqdq ymm10, ymm15, ymm8, 0
+	vpxor ymm1, ymm10, ymm1
+	vpclmulqdq ymm10, ymm0, ymm14, 0
+	vpbroadcastq ymm0, qword ptr [rdi + 64]
+	vpxor xmm11, xmm11, xmm11
+	vpblendd ymm12, ymm0, ymm11, 204
+	vpclmulqdq ymm13, ymm2, ymmword ptr [rsp + 128], 0
+	vpclmulqdq ymm0, ymm12, ymm2, 0
+	vpxor ymm0, ymm6, ymm0
+	vpxor ymm11, ymm0, ymmword ptr [rsp + 32]
+	vpclmulqdq ymm0, ymm12, ymm5, 0
+	vpxor ymm3, ymm3, ymm0
+	vpclmulqdq ymm0, ymm12, ymm7, 0
+	vpxor ymm0, ymm1, ymm0
+	vpclmulqdq ymm1, ymm12, ymm8, 0
+	vpxor ymm1, ymm10, ymm1
+	vmovq xmm5, qword ptr [rdi + 64]
+	vpclmulqdq ymm5, ymm5, ymm4, 0
+	vmovq qword ptr [rdx], xmm13
+	vpextrq rax, xmm13, 1
+	vextracti128 xmm2, ymm13, 1
+	vextracti128 xmm6, ymm9, 1
+	vpxor xmm2, xmm6, xmm2
+	vmovq rcx, xmm2
+	vpextrq rbx, xmm2, 1
+	vmovdqu ymm2, ymmword ptr [rsp + 160]
+	vmovq rsi, xmm2
+	vpextrq r14, xmm2, 1
+	vextracti128 xmm2, ymm2, 1
+	vmovdqu ymm8, ymmword ptr [rsp + 64]
+	vextracti128 xmm6, ymm8, 1
+	vpxor xmm2, xmm2, xmm6
+	vpextrq r13, xmm2, 1
+	vmovq rbp, xmm2
+	vmovdqu ymm2, ymmword ptr [rsp + 96]
+	vmovq r8, xmm2
+	vpextrq r15, xmm2, 1
+	vextracti128 xmm2, ymm2, 1
+	vmovdqu ymm7, ymmword ptr [rsp - 96]
+	vextracti128 xmm6, ymm7, 1
+	vpxor xmm2, xmm2, xmm6
+	vmovq r9, xmm2
+	vpextrq r12, xmm2, 1
+	vmovdqu ymm2, ymmword ptr [rsp - 128]
+	vpextrq rdi, xmm2, 1
+	vmovq r10, xmm2
+	vextracti128 xmm2, ymm2, 1
+	vmovdqu ymm6, ymmword ptr [rsp - 64]
+	vextracti128 xmm4, ymm6, 1
+	vpxor xmm2, xmm2, xmm4
+	xor rcx, rax
+	vmovq rax, xmm2
+	vpextrq r11, xmm2, 1
+	mov qword ptr [rdx + 8], rcx
+	xor rsi, rbx
+	vpxor xmm2, xmm11, xmm9
+	vmovq rcx, xmm2
+	vpextrq rbx, xmm2, 1
+	mov qword ptr [rdx + 16], rsi
+	xor rbp, r14
+	vextracti128 xmm2, ymm11, 1
+	vmovq rsi, xmm2
+	vpextrq r14, xmm2, 1
+	mov qword ptr [rdx + 24], rbp
+	xor r8, r13
+	vpxor xmm2, xmm8, xmm3
+	vmovq r13, xmm2
+	vpextrq rbp, xmm2, 1
+	mov qword ptr [rdx + 32], r8
+	xor r9, r15
+	vextracti128 xmm2, ymm3, 1
+	vmovq r8, xmm2
+	vpextrq r15, xmm2, 1
+	mov qword ptr [rdx + 40], r9
+	xor r10, r12
+	vpxor xmm2, xmm0, xmm7
+	vmovq r9, xmm2
+	vpextrq r12, xmm2, 1
+	mov qword ptr [rdx + 48], r10
+	xor rax, rdi
+	vextracti128 xmm0, ymm0, 1
+	vmovq rdi, xmm0
+	vpextrq r10, xmm0, 1
+	mov qword ptr [rdx + 56], rax
+	xor rcx, r11
+	vpxor xmm0, xmm1, xmm6
+	vmovq rax, xmm0
+	vpextrq r11, xmm0, 1
+	mov qword ptr [rdx + 64], rcx
+	xor rsi, rbx
+	vextracti128 xmm0, ymm1, 1
+	vmovq rcx, xmm0
+	vpextrq rbx, xmm0, 1
+	mov qword ptr [rdx + 72], rsi
+	xor r13, r14
+	mov qword ptr [rdx + 80], r13
+	xor r8, rbp
+	mov qword ptr [rdx + 88], r8
+	xor r9, r15
+	mov qword ptr [rdx + 96], r9
+	xor rdi, r12
+	mov qword ptr [rdx + 104], rdi
+	xor rax, r10
+	mov qword ptr [rdx + 112], rax
+	xor rcx, r11
+	mov qword ptr [rdx + 120], rcx
+	vmovq rax, xmm5
+	xor rax, rbx
+	mov qword ptr [rdx + 128], rax
+	vpextrq qword ptr [rdx + 136], xmm5, 1
+	add rsp, 200
+	pop rbx
+	pop r12
+	pop r13
+	pop r14
+	pop r15
+	pop rbp
 	vzeroupper
 	ret
