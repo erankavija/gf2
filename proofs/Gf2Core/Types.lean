@@ -118,7 +118,7 @@ structure core.ops.bit.BitXorAssign (Self : Type) (Rhs : Type) where
   bitxor_assign : Self → Rhs → Result Self
 
 /-- Trait declaration: [gf2_core::field::traits::FiniteField]
-    Source: 'crates/gf2-core/src/field/traits.rs', lines 44:0-407:1
+    Source: 'crates/gf2-core/src/field/traits.rs', lines 44:0-468:1
     Visibility: public -/
 structure field.traits.FiniteField (Self : Type) (Self_Characteristic : Type)
   (Self_Wide : Type) where
@@ -159,12 +159,14 @@ structure field.traits.FiniteField (Self : Type) (Self_Characteristic : Type)
   cardinality_log2_hint : Result (Option Std.U32)
   to_wide : Self → Result Self_Wide
   mul_to_wide : Self → Self → Result Self_Wide
+  mul_product_sum_wide : Self → Self → Result Self_Wide
   reduce_wide : Self_Wide → Result Self
+  reduce_product_sum_wide : Self_Wide → Result Self
   max_unreduced_additions : Result Std.Usize
   theorem_4_operand_bound : Result Std.U128
 
 /-- Trait declaration: [gf2_core::field::traits::ConstField]
-    Source: 'crates/gf2-core/src/field/traits.rs', lines 413:0-452:1
+    Source: 'crates/gf2-core/src/field/traits.rs', lines 474:0-513:1
     Visibility: public -/
 structure field.traits.ConstField (Self : Type) (Self_Clause0_Characteristic :
   Type) (Self_Clause0_Wide : Type) where
