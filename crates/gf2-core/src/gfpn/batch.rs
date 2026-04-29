@@ -335,7 +335,7 @@ impl<F: FiniteField, const N: usize> BatchExtField<F, N> {
 // Element-wise (coefficient-by-coefficient) arithmetic
 // ---------------------------------------------------------------------------
 
-impl<F: FiniteField, const N: usize> BatchExtField<F, N> {
+impl<F: FiniteField + SimdVecOps, const N: usize> BatchExtField<F, N> {
     /// Element-wise addition across the batch.
     ///
     /// Returns a new batch whose `i`-th element equals `self[i] + other[i]`.
@@ -353,7 +353,8 @@ impl<F: FiniteField, const N: usize> BatchExtField<F, N> {
     ///
     /// # Complexity
     ///
-    /// `O(N · len)` base-field additions.
+    /// `O(N · len)` base-field additions. Supported base fields route each
+    /// coefficient lane through [`crate::gfp::SimdVecOps`].
     ///
     /// # Examples
     ///
@@ -382,11 +383,13 @@ impl<F: FiniteField, const N: usize> BatchExtField<F, N> {
             other.len()
         );
         let coeffs: [Vec<F>; N] = array::from_fn(|i| {
-            self.coeffs[i]
-                .iter()
-                .zip(other.coeffs[i].iter())
-                .map(|(x, y)| x.clone() + y.clone())
-                .collect()
+            F::try_simd_add_vec(&self.coeffs[i], &other.coeffs[i]).unwrap_or_else(|| {
+                self.coeffs[i]
+                    .iter()
+                    .zip(other.coeffs[i].iter())
+                    .map(|(x, y)| x.clone() + y.clone())
+                    .collect()
+            })
         });
         Self { coeffs }
     }
@@ -405,7 +408,8 @@ impl<F: FiniteField, const N: usize> BatchExtField<F, N> {
     ///
     /// # Complexity
     ///
-    /// `O(N · len)` base-field subtractions.
+    /// `O(N · len)` base-field subtractions. Supported base fields route each
+    /// coefficient lane through [`crate::gfp::SimdVecOps`].
     ///
     /// # Examples
     ///
@@ -434,11 +438,13 @@ impl<F: FiniteField, const N: usize> BatchExtField<F, N> {
             other.len()
         );
         let coeffs: [Vec<F>; N] = array::from_fn(|i| {
-            self.coeffs[i]
-                .iter()
-                .zip(other.coeffs[i].iter())
-                .map(|(x, y)| x.clone() - y.clone())
-                .collect()
+            F::try_simd_sub_vec(&self.coeffs[i], &other.coeffs[i]).unwrap_or_else(|| {
+                self.coeffs[i]
+                    .iter()
+                    .zip(other.coeffs[i].iter())
+                    .map(|(x, y)| x.clone() - y.clone())
+                    .collect()
+            })
         });
         Self { coeffs }
     }
