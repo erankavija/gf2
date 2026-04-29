@@ -84,10 +84,11 @@ pub type SparseBitMatrix = SpBitMatrix;
 /// Row and column permutation produced by [`SpBitMatrix::reorder_rcm`].
 ///
 /// The reordered matrix stores rows and columns in Reverse Cuthill-McKee
-/// order. For an original input vector `x`, call [`apply_cols`](Self::apply_cols)
-/// before multiplying by the reordered matrix, then call
-/// [`unapply_rows`](Self::unapply_rows) on the result to recover the original
-/// row order.
+/// order. This type uses a destination-to-source convention: `old_*_by_new[i]`
+/// is the original index now stored at reordered index `i`. For an original
+/// input vector `x`, call [`apply_cols`](Self::apply_cols) before multiplying
+/// by the reordered matrix, then call [`unapply_rows`](Self::unapply_rows) on
+/// the result if the caller needs original row order.
 ///
 /// # Examples
 ///
@@ -124,12 +125,20 @@ impl RowPermutation {
     }
 
     /// Number of matrix rows covered by this permutation.
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
     #[inline]
     pub fn rows_len(&self) -> usize {
         self.old_rows_by_new.len()
     }
 
     /// Number of matrix columns covered by this permutation.
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
     #[inline]
     pub fn cols_len(&self) -> usize {
         self.old_cols_by_new.len()
@@ -137,9 +146,16 @@ impl RowPermutation {
 
     /// Returns the original row index stored at `new_row` in the reordered matrix.
     ///
+    /// This is the destination-to-source row mapping used by
+    /// [`apply_rows`](Self::apply_rows).
+    ///
     /// # Panics
     ///
     /// Panics if `new_row >= self.rows_len()`.
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
     #[inline]
     pub fn old_row_for_new(&self, new_row: usize) -> usize {
         self.old_rows_by_new[new_row]
@@ -147,9 +163,15 @@ impl RowPermutation {
 
     /// Returns the reordered row index for an original row.
     ///
+    /// This is the inverse of [`old_row_for_new`](Self::old_row_for_new).
+    ///
     /// # Panics
     ///
     /// Panics if `old_row >= self.rows_len()`.
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
     #[inline]
     pub fn new_row_for_old(&self, old_row: usize) -> usize {
         self.new_rows_by_old[old_row]
@@ -157,9 +179,16 @@ impl RowPermutation {
 
     /// Returns the original column index stored at `new_col` in the reordered matrix.
     ///
+    /// This is the destination-to-source column mapping used by
+    /// [`apply_cols`](Self::apply_cols).
+    ///
     /// # Panics
     ///
     /// Panics if `new_col >= self.cols_len()`.
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
     #[inline]
     pub fn old_col_for_new(&self, new_col: usize) -> usize {
         self.old_cols_by_new[new_col]
@@ -167,15 +196,36 @@ impl RowPermutation {
 
     /// Returns the reordered column index for an original column.
     ///
+    /// This is the inverse of [`old_col_for_new`](Self::old_col_for_new).
+    ///
     /// # Panics
     ///
     /// Panics if `old_col >= self.cols_len()`.
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
     #[inline]
     pub fn new_col_for_old(&self, old_col: usize) -> usize {
         self.new_cols_by_old[old_col]
     }
 
     /// Applies the row permutation to a vector in original row order.
+    ///
+    /// The returned vector is in reordered row order: output bit `new_row`
+    /// equals input bit `old_row_for_new(new_row)`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::sparse::SpBitMatrix;
+    /// use gf2_core::BitVec;
+    ///
+    /// let a = SpBitMatrix::from_coo(3, 3, &[(0, 2), (1, 1), (2, 0)]);
+    /// let (_reordered, perm) = a.reorder_rcm();
+    /// let rows = BitVec::ones(3);
+    /// assert_eq!(perm.unapply_rows(&perm.apply_rows(&rows)), rows);
+    /// ```
     ///
     /// # Panics
     ///
@@ -190,6 +240,23 @@ impl RowPermutation {
 
     /// Restores a row vector from reordered row order to original row order.
     ///
+    /// The returned vector is in original row order; use this on a reordered
+    /// matrix-vector product when callers require the same order as
+    /// [`SpBitMatrix::matvec`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::sparse::SpBitMatrix;
+    /// use gf2_core::BitVec;
+    ///
+    /// let a = SpBitMatrix::from_coo(2, 3, &[(0, 0), (1, 2)]);
+    /// let (reordered, perm) = a.reorder_rcm();
+    /// let x = BitVec::ones(3);
+    /// let y_rcm = reordered.matvec(&perm.apply_cols(&x));
+    /// assert_eq!(perm.unapply_rows(&y_rcm), a.matvec(&x));
+    /// ```
+    ///
     /// # Panics
     ///
     /// Panics if `bits.len() != self.rows_len()`.
@@ -203,8 +270,23 @@ impl RowPermutation {
 
     /// Applies the column permutation to a vector in original column order.
     ///
+    /// The returned vector is in reordered column order: output bit `new_col`
+    /// equals input bit `old_col_for_new(new_col)`.
+    ///
     /// Use this on the input vector before calling `matvec` on the matrix
     /// returned by [`SpBitMatrix::reorder_rcm`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::sparse::SpBitMatrix;
+    /// use gf2_core::BitVec;
+    ///
+    /// let a = SpBitMatrix::from_coo(2, 4, &[(0, 3), (1, 0)]);
+    /// let (_reordered, perm) = a.reorder_rcm();
+    /// let cols = BitVec::ones(4);
+    /// assert_eq!(perm.unapply_cols(&perm.apply_cols(&cols)), cols);
+    /// ```
     ///
     /// # Panics
     ///
@@ -218,6 +300,20 @@ impl RowPermutation {
     }
 
     /// Restores a column vector from reordered column order to original column order.
+    ///
+    /// This is the inverse of [`apply_cols`](Self::apply_cols).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::sparse::SpBitMatrix;
+    /// use gf2_core::BitVec;
+    ///
+    /// let a = SpBitMatrix::from_coo(2, 4, &[(0, 3), (1, 0)]);
+    /// let (_reordered, perm) = a.reorder_rcm();
+    /// let cols = BitVec::ones(4);
+    /// assert_eq!(perm.apply_cols(&perm.unapply_cols(&cols)), cols);
+    /// ```
     ///
     /// # Panics
     ///
@@ -250,13 +346,11 @@ fn unapply_bitvec_permutation(bits: &BitVec, old_by_new: &[usize], axis: &str) -
         old_by_new.len(),
         "input BitVec length must equal {axis} permutation length"
     );
-    let mut values = vec![false; old_by_new.len()];
+    let mut out = BitVec::zeros(old_by_new.len());
     for (new, &old) in old_by_new.iter().enumerate() {
-        values[old] = bits.get(new);
-    }
-    let mut out = BitVec::with_capacity(values.len());
-    for value in values {
-        out.push_bit(value);
+        if bits.get(new) {
+            out.set(old, true);
+        }
     }
     out
 }
