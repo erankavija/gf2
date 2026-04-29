@@ -46,7 +46,8 @@ The benchmark compares:
   product-sum hook and reusing scratch buffers across output cells.
 
 The correctness suite includes the exact `64c88ae4` rectangular shapes
-`1024×1024×8` and `1024×1024×32` via a structured diagonal-left reference in
+`1024×1024×8` and `1024×1024×32` for both GF(2^8) and GF(2^16) via a
+structured diagonal-left reference in
 `test_gf2m_batch_gemm_covers_64c88ae4_rectangular_shapes`. That keeps the fast
 CI tier below the per-test budget while still forcing the production GEMM path
 to execute the full skinny-output dot-product geometry.
