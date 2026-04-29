@@ -104,147 +104,17 @@ size 64: sequential_aos=394.8 ns, batch_soa=151.9 ns, speedup=2.598x, with_trans
 size 256: sequential_aos=1599.4 ns, batch_soa=481.9 ns, speedup=3.319x, with_transpose=1135.7 ns, end_to_end_speedup=1.408x
 size 1000: sequential_aos=6210.6 ns, batch_soa=1692.5 ns, speedup=3.669x, with_transpose=4042.6 ns, end_to_end_speedup=1.536x
 
-3168d114 final criterion capture
-date: 2026-04-29T05:42:21Z
-commit: 4c547f1
-command: CARGO_TARGET_DIR=target/agent-3168d114 RUSTFLAGS="-C target-cpu=native" cargo bench -p gf2-core --features simd --bench soa_batch
-    Finished `bench` profile [optimized] target(s) in 0.17s
-     Running benches/soa_batch.rs (target/agent-3168d114/release/deps/soa_batch-2c02319c68719dcf)
-Benchmarking soa_batch_mul_fq2_fp65537/sequential_aos/64
-Benchmarking soa_batch_mul_fq2_fp65537/sequential_aos/64: Warming up for 3.0000 s
-Benchmarking soa_batch_mul_fq2_fp65537/sequential_aos/64: Collecting 100 samples in estimated 5.0008 s (6.3M iterations)
-Benchmarking soa_batch_mul_fq2_fp65537/sequential_aos/64: Analyzing
+3168d114 R1 AoS restoration evidence
+date: 2026-04-29T06:12:42Z
+code check: crates/gf2-core/src/gfpn/quadratic.rs has no diff from 67b8cc4 after R1, so QuadraticExt::mul is restored to the pre-C4 AoS implementation.
+command: CARGO_TARGET_DIR=target/agent-3168d114 RUSTFLAGS="-C target-cpu=native" cargo bench -p gf2-core --features simd --bench soa_batch sequential_aos
 soa_batch_mul_fq2_fp65537/sequential_aos/64
-                        time:   [737.49 ns 743.14 ns 748.85 ns]
-                        thrpt:  [85.464 Melem/s 86.121 Melem/s 86.781 Melem/s]
-                 change:
-                        time:   [+87.025% +87.827% +88.710%] (p = 0.00 < 0.05)
-                        thrpt:  [-47.009% -46.759% -46.531%]
-                        Performance has regressed.
-Found 7 outliers among 100 measurements (7.00%)
-  1 (1.00%) low severe
-  1 (1.00%) low mild
-  4 (4.00%) high mild
-  1 (1.00%) high severe
-Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/64
-Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/64: Warming up for 3.0000 s
-Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/64: Collecting 100 samples in estimated 5.0002 s (19M iterations)
-Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/64: Analyzing
-soa_batch_mul_fq2_fp65537/batch_soa/64
-                        time:   [256.46 ns 263.30 ns 271.81 ns]
-                        thrpt:  [235.46 Melem/s 243.07 Melem/s 249.55 Melem/s]
-                 change:
-                        time:   [+71.232% +75.694% +80.603%] (p = 0.00 < 0.05)
-                        thrpt:  [-44.630% -43.083% -41.600%]
-                        Performance has regressed.
-Found 19 outliers among 100 measurements (19.00%)
-  2 (2.00%) low severe
-  4 (4.00%) low mild
-  4 (4.00%) high mild
-  9 (9.00%) high severe
-Benchmarking soa_batch_mul_fq2_fp65537/batch_soa_with_transpose/64
-Benchmarking soa_batch_mul_fq2_fp65537/batch_soa_with_transpose/64: Warming up for 3.0000 s
-Benchmarking soa_batch_mul_fq2_fp65537/batch_soa_with_transpose/64: Collecting 100 samples in estimated 5.0012 s (7.7M iterations)
-Benchmarking soa_batch_mul_fq2_fp65537/batch_soa_with_transpose/64: Analyzing
-soa_batch_mul_fq2_fp65537/batch_soa_with_transpose/64
-                        time:   [603.75 ns 616.62 ns 629.80 ns]
-                        thrpt:  [101.62 Melem/s 103.79 Melem/s 106.00 Melem/s]
-                 change:
-                        time:   [+95.481% +98.560% +101.73%] (p = 0.00 < 0.05)
-                        thrpt:  [-50.429% -49.637% -48.844%]
-                        Performance has regressed.
-Found 19 outliers among 100 measurements (19.00%)
-  5 (5.00%) low severe
-  4 (4.00%) low mild
-  1 (1.00%) high mild
-  9 (9.00%) high severe
-Benchmarking soa_batch_mul_fq2_fp65537/sequential_aos/256
-Benchmarking soa_batch_mul_fq2_fp65537/sequential_aos/256: Warming up for 3.0000 s
-Benchmarking soa_batch_mul_fq2_fp65537/sequential_aos/256: Collecting 100 samples in estimated 5.0103 s (1.6M iterations)
-Benchmarking soa_batch_mul_fq2_fp65537/sequential_aos/256: Analyzing
+                        time:   [457.67 ns 457.88 ns 458.10 ns]
+                        thrpt:  [139.71 Melem/s 139.77 Melem/s 139.84 Melem/s]
 soa_batch_mul_fq2_fp65537/sequential_aos/256
-                        time:   [3.0534 µs 3.1135 µs 3.1899 µs]
-                        thrpt:  [80.253 Melem/s 82.223 Melem/s 83.840 Melem/s]
-                 change:
-                        time:   [+90.117% +94.925% +101.36%] (p = 0.00 < 0.05)
-                        thrpt:  [-50.337% -48.698% -47.401%]
-                        Performance has regressed.
-Found 7 outliers among 100 measurements (7.00%)
-  7 (7.00%) high severe
-Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/256
-Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/256: Warming up for 3.0000 s
-Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/256: Collecting 100 samples in estimated 5.0004 s (8.7M iterations)
-Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/256: Analyzing
-soa_batch_mul_fq2_fp65537/batch_soa/256
-                        time:   [482.28 ns 482.36 ns 482.44 ns]
-                        thrpt:  [530.64 Melem/s 530.73 Melem/s 530.81 Melem/s]
-                 change:
-                        time:   [-13.691% -10.060% -6.4703%] (p = 0.00 < 0.05)
-                        thrpt:  [+6.9179% +11.185% +15.863%]
-                        Performance has improved.
-Found 7 outliers among 100 measurements (7.00%)
-  1 (1.00%) low severe
-  1 (1.00%) low mild
-  2 (2.00%) high mild
-  3 (3.00%) high severe
-Benchmarking soa_batch_mul_fq2_fp65537/batch_soa_with_transpose/256
-Benchmarking soa_batch_mul_fq2_fp65537/batch_soa_with_transpose/256: Warming up for 3.0000 s
-Benchmarking soa_batch_mul_fq2_fp65537/batch_soa_with_transpose/256: Collecting 100 samples in estimated 5.0008 s (4.3M iterations)
-Benchmarking soa_batch_mul_fq2_fp65537/batch_soa_with_transpose/256: Analyzing
-soa_batch_mul_fq2_fp65537/batch_soa_with_transpose/256
-                        time:   [1.1388 µs 1.1405 µs 1.1427 µs]
-                        thrpt:  [224.03 Melem/s 224.46 Melem/s 224.80 Melem/s]
-                 change:
-                        time:   [+0.6285% +0.8846% +1.1331%] (p = 0.00 < 0.05)
-                        thrpt:  [-1.1204% -0.8768% -0.6246%]
-                        Change within noise threshold.
-Benchmarking soa_batch_mul_fq2_fp65537/sequential_aos/1000
-Benchmarking soa_batch_mul_fq2_fp65537/sequential_aos/1000: Warming up for 3.0000 s
-Benchmarking soa_batch_mul_fq2_fp65537/sequential_aos/1000: Collecting 100 samples in estimated 5.0390 s (434k iterations)
-Benchmarking soa_batch_mul_fq2_fp65537/sequential_aos/1000: Analyzing
+                        time:   [1.8680 µs 1.8687 µs 1.8695 µs]
+                        thrpt:  [136.94 Melem/s 136.99 Melem/s 137.04 Melem/s]
 soa_batch_mul_fq2_fp65537/sequential_aos/1000
-                        time:   [6.4124 µs 6.4706 µs 6.5470 µs]
-                        thrpt:  [152.74 Melem/s 154.55 Melem/s 155.95 Melem/s]
-                 change:
-                        time:   [+19.101% +25.742% +32.638%] (p = 0.00 < 0.05)
-                        thrpt:  [-24.607% -20.472% -16.037%]
-                        Performance has regressed.
-Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000
-Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Warming up for 3.0000 s
-Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Collecting 100 samples in estimated 5.0059 s (2.9M iterations)
-Benchmarking soa_batch_mul_fq2_fp65537/batch_soa/1000: Analyzing
-soa_batch_mul_fq2_fp65537/batch_soa/1000
-                        time:   [1.7066 µs 1.7078 µs 1.7093 µs]
-                        thrpt:  [585.05 Melem/s 585.54 Melem/s 585.97 Melem/s]
-                 change:
-                        time:   [+1.2028% +1.6400% +2.0017%] (p = 0.00 < 0.05)
-                        thrpt:  [-1.9624% -1.6135% -1.1885%]
-                        Performance has regressed.
-Found 2 outliers among 100 measurements (2.00%)
-  2 (2.00%) high severe
-Benchmarking soa_batch_mul_fq2_fp65537/batch_soa_with_transpose/1000
-Benchmarking soa_batch_mul_fq2_fp65537/batch_soa_with_transpose/1000: Warming up for 3.0000 s
-Benchmarking soa_batch_mul_fq2_fp65537/batch_soa_with_transpose/1000: Collecting 100 samples in estimated 5.0161 s (1.2M iterations)
-Benchmarking soa_batch_mul_fq2_fp65537/batch_soa_with_transpose/1000: Analyzing
-soa_batch_mul_fq2_fp65537/batch_soa_with_transpose/1000
-                        time:   [4.0177 µs 4.0193 µs 4.0210 µs]
-                        thrpt:  [248.69 Melem/s 248.80 Melem/s 248.90 Melem/s]
-                 change:
-                        time:   [-4.8345% -2.8817% -1.4408%] (p = 0.00 < 0.05)
-                        thrpt:  [+1.4618% +2.9672% +5.0801%]
-                        Performance has improved.
-Found 2 outliers among 100 measurements (2.00%)
-  2 (2.00%) high mild
-
-
-ppc-compare C4 against pinned manifest (final)
-date: 2026-04-29T05:43:49Z
-command: ./dev/benchmarks/ppc-compare.sh C4 --criterion-dir crates/gf2-core/target/agent-3168d114/criterion
-ERROR: missing baseline estimates: crates/gf2-core/target/agent-3168d114/criterion/soa_batch_mul_fq2_fp65537/batch_soa/256/ppc-v0-2026-04-27/estimates.json
-       Hint: jit:b2ecd2ff pins the baseline with
-             cargo bench --bench soa_batch_mul_fq2_fp65537/batch_soa -- --save-baseline ppc-v0-2026-04-27
-
-Final derived speedup summary (current criterion medians)
-size 64: sequential_aos=740.9 ns, batch_soa=260.2 ns, speedup=2.847x, with_transpose=613.8 ns, end_to_end_speedup=1.207x
-size 256: sequential_aos=3025.2 ns, batch_soa=482.3 ns, speedup=6.272x, with_transpose=1156.8 ns, end_to_end_speedup=2.615x
-size 1000: sequential_aos=6470.8 ns, batch_soa=1705.6 ns, speedup=3.794x, with_transpose=4015.6 ns, end_to_end_speedup=1.611x
+                        time:   [7.1727 µs 7.1750 µs 7.1773 µs]
+                        thrpt:  [139.33 Melem/s 139.37 Melem/s 139.42 Melem/s]
+Interpretation: this is a targeted local spot check after restoring the AoS source. The pinned criterion baseline estimates are not present in this worktree, so this block is not a pinned-baseline gate result; the non-regression argument for callers that do not opt into SoA is that the AoS implementation is source-identical to 67b8cc4.
