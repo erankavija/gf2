@@ -4179,13 +4179,13 @@ mod tests {
 
                 for i in 0..rows {
                     let diagonal = F::from_gf2m_u64((((i as u64) * 13 + 1) & mask).max(1));
-                    left.set(i, i, diagonal.clone());
+                    left.set(i, i, diagonal);
                     for j in 0..cols {
                         let value = F::from_gf2m_u64(
                             (((i as u64) * 17) ^ ((j as u64) * 29) ^ 0x577B_9E7F) & mask,
                         );
-                        right.set(i, j, value.clone());
-                        expected.set(i, j, diagonal.clone() * value);
+                        right.set(i, j, value);
+                        expected.set(i, j, diagonal * value);
                     }
                 }
 
