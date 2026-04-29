@@ -422,6 +422,198 @@ fn scalar_tail_sub(a: u64, b: u64) -> u64 {
     }
 }
 
+#[inline]
+#[target_feature(enable = "avx2")]
+unsafe fn fp65537_add8(a: __m256i, b: __m256i, p_vec: __m256i) -> __m256i {
+    let s = _mm256_add_epi32(a, b);
+    _mm256_min_epu32(s, _mm256_sub_epi32(s, p_vec))
+}
+
+#[inline]
+#[target_feature(enable = "avx2")]
+unsafe fn fp65537_sub8(a: __m256i, b: __m256i, p_vec: __m256i) -> __m256i {
+    let a_plus_p = _mm256_add_epi32(a, p_vec);
+    let diff = _mm256_sub_epi32(a_plus_p, b);
+    _mm256_min_epu32(diff, _mm256_sub_epi32(diff, p_vec))
+}
+
+#[inline]
+#[target_feature(enable = "avx2")]
+unsafe fn fp65537_mul_beta8(x: __m256i, beta: u32, beta_vec: __m256i) -> __m256i {
+    if beta == 0 {
+        _mm256_setzero_si256()
+    } else if beta == 1 {
+        x
+    } else {
+        fp65537_batch_mul8(x, beta_vec)
+    }
+}
+
+/// Fused batch Karatsuba-3 combine for `GF(p³)` element-wise multiplication
+/// over `Fp<65537>`.
+///
+/// For every `i`, computes the same six-product formula as
+/// `CubicExt::mul`, with inputs and outputs in SoA coefficient-lane order.
+/// All vector-loop intermediates stay in AVX2 registers.
+///
+/// # Safety
+///
+/// Caller must ensure AVX2 is available and inputs are canonical
+/// (`< 65537`).
+///
+/// # Panics
+///
+/// Panics if any input/output slice length differs from `a0.len()`.
+///
+/// # Complexity
+///
+/// `O(n)` with 8-lane vectorisation. Six base-field multiplies and the
+/// fixed Karatsuba add/sub schedule per 8-lane chunk.
+#[target_feature(enable = "avx2")]
+#[allow(clippy::too_many_arguments)]
+pub unsafe fn fp65537_batch_cubic_karatsuba(
+    a0: &[u32],
+    a1: &[u32],
+    a2: &[u32],
+    b0: &[u32],
+    b1: &[u32],
+    b2: &[u32],
+    beta: u32,
+    out_c0: &mut [u32],
+    out_c1: &mut [u32],
+    out_c2: &mut [u32],
+) {
+    let n = a0.len();
+    assert_eq!(a1.len(), n, "fp65537_batch_cubic_karatsuba: a1 length");
+    assert_eq!(a2.len(), n, "fp65537_batch_cubic_karatsuba: a2 length");
+    assert_eq!(b0.len(), n, "fp65537_batch_cubic_karatsuba: b0 length");
+    assert_eq!(b1.len(), n, "fp65537_batch_cubic_karatsuba: b1 length");
+    assert_eq!(b2.len(), n, "fp65537_batch_cubic_karatsuba: b2 length");
+    assert_eq!(
+        out_c0.len(),
+        n,
+        "fp65537_batch_cubic_karatsuba: out_c0 length"
+    );
+    assert_eq!(
+        out_c1.len(),
+        n,
+        "fp65537_batch_cubic_karatsuba: out_c1 length"
+    );
+    assert_eq!(
+        out_c2.len(),
+        n,
+        "fp65537_batch_cubic_karatsuba: out_c2 length"
+    );
+
+    let nvec = n / 8;
+
+    let a0_ptr = a0.as_ptr() as *const __m256i;
+    let a1_ptr = a1.as_ptr() as *const __m256i;
+    let a2_ptr = a2.as_ptr() as *const __m256i;
+    let b0_ptr = b0.as_ptr() as *const __m256i;
+    let b1_ptr = b1.as_ptr() as *const __m256i;
+    let b2_ptr = b2.as_ptr() as *const __m256i;
+    let c0_ptr = out_c0.as_mut_ptr() as *mut __m256i;
+    let c1_ptr = out_c1.as_mut_ptr() as *mut __m256i;
+    let c2_ptr = out_c2.as_mut_ptr() as *mut __m256i;
+
+    let p_vec = _mm256_set1_epi32(65537i32);
+    let beta_vec = _mm256_set1_epi32(beta as i32);
+
+    for i in 0..nvec {
+        let a0v = _mm256_loadu_si256(a0_ptr.add(i));
+        let a1v = _mm256_loadu_si256(a1_ptr.add(i));
+        let a2v = _mm256_loadu_si256(a2_ptr.add(i));
+        let b0v = _mm256_loadu_si256(b0_ptr.add(i));
+        let b1v = _mm256_loadu_si256(b1_ptr.add(i));
+        let b2v = _mm256_loadu_si256(b2_ptr.add(i));
+
+        let v0 = fp65537_batch_mul8(a0v, b0v);
+        let v1 = fp65537_batch_mul8(a1v, b1v);
+        let v2 = fp65537_batch_mul8(a2v, b2v);
+
+        let x_cross =
+            fp65537_batch_mul8(fp65537_add8(a1v, a2v, p_vec), fp65537_add8(b1v, b2v, p_vec));
+        let x = fp65537_sub8(fp65537_sub8(x_cross, v1, p_vec), v2, p_vec);
+
+        let y_cross =
+            fp65537_batch_mul8(fp65537_add8(a0v, a1v, p_vec), fp65537_add8(b0v, b1v, p_vec));
+        let y = fp65537_sub8(fp65537_sub8(y_cross, v0, p_vec), v1, p_vec);
+
+        let z_cross =
+            fp65537_batch_mul8(fp65537_add8(a0v, a2v, p_vec), fp65537_add8(b0v, b2v, p_vec));
+        let z = fp65537_sub8(
+            fp65537_add8(fp65537_sub8(z_cross, v0, p_vec), v1, p_vec),
+            v2,
+            p_vec,
+        );
+
+        let c0 = fp65537_add8(v0, fp65537_mul_beta8(x, beta, beta_vec), p_vec);
+        let c1 = fp65537_add8(y, fp65537_mul_beta8(v2, beta, beta_vec), p_vec);
+
+        _mm256_storeu_si256(c0_ptr.add(i), c0);
+        _mm256_storeu_si256(c1_ptr.add(i), c1);
+        _mm256_storeu_si256(c2_ptr.add(i), z);
+    }
+
+    let tail_start = nvec * 8;
+    for i in tail_start..n {
+        let a0i = *a0.get_unchecked(i) as u64;
+        let a1i = *a1.get_unchecked(i) as u64;
+        let a2i = *a2.get_unchecked(i) as u64;
+        let b0i = *b0.get_unchecked(i) as u64;
+        let b1i = *b1.get_unchecked(i) as u64;
+        let b2i = *b2.get_unchecked(i) as u64;
+        let beta_u = beta as u64;
+
+        let v0 = scalar_tail_mul(a0i, b0i);
+        let v1 = scalar_tail_mul(a1i, b1i);
+        let v2 = scalar_tail_mul(a2i, b2i);
+        let x = scalar_tail_sub(
+            scalar_tail_sub(
+                scalar_tail_mul(scalar_tail_add(a1i, a2i), scalar_tail_add(b1i, b2i)),
+                v1,
+            ),
+            v2,
+        );
+        let y = scalar_tail_sub(
+            scalar_tail_sub(
+                scalar_tail_mul(scalar_tail_add(a0i, a1i), scalar_tail_add(b0i, b1i)),
+                v0,
+            ),
+            v1,
+        );
+        let z = scalar_tail_sub(
+            scalar_tail_add(
+                scalar_tail_sub(
+                    scalar_tail_mul(scalar_tail_add(a0i, a2i), scalar_tail_add(b0i, b2i)),
+                    v0,
+                ),
+                v1,
+            ),
+            v2,
+        );
+        let beta_x = if beta == 0 {
+            0
+        } else if beta == 1 {
+            x
+        } else {
+            scalar_tail_mul(x, beta_u)
+        };
+        let beta_v2 = if beta == 0 {
+            0
+        } else if beta == 1 {
+            v2
+        } else {
+            scalar_tail_mul(v2, beta_u)
+        };
+
+        *out_c0.get_unchecked_mut(i) = scalar_tail_add(v0, beta_x) as u32;
+        *out_c1.get_unchecked_mut(i) = scalar_tail_add(y, beta_v2) as u32;
+        *out_c2.get_unchecked_mut(i) = z as u32;
+    }
+}
+
 /// Batch lane-wise subtraction for `Fp<65537>`.
 ///
 /// Computes `out[i] = (a[i] - b[i]) mod 65537` with the result in
@@ -634,6 +826,75 @@ mod tests {
                 let expected_c1 = scalar_sub(tmp, v1);
                 assert_eq!(out_c0[i], expected_c0, "c0 mismatch n={n} i={i}");
                 assert_eq!(out_c1[i], expected_c1, "c1 mismatch n={n} i={i}");
+            }
+        }
+    }
+
+    #[test]
+    fn batch_cubic_karatsuba_matches_scalar() {
+        if !std::arch::is_x86_feature_detected!("avx2") {
+            return;
+        }
+        for &n in &[0usize, 1, 7, 8, 9, 16, 17, 100, 1000] {
+            let a0: Vec<u32> = (0..n as u32).map(|i| (i * 17) % 65537).collect();
+            let a1: Vec<u32> = (0..n as u32).map(|i| (i * 23 + 5) % 65537).collect();
+            let a2: Vec<u32> = (0..n as u32).map(|i| (i * 37 + 13) % 65537).collect();
+            let b0: Vec<u32> = (0..n as u32).map(|i| (i * 29 + 7) % 65537).collect();
+            let b1: Vec<u32> = (0..n as u32).map(|i| (i * 31 + 11) % 65537).collect();
+            let b2: Vec<u32> = (0..n as u32).map(|i| (i * 41 + 19) % 65537).collect();
+            let beta = 3u32;
+
+            let mut out_c0 = vec![0u32; n];
+            let mut out_c1 = vec![0u32; n];
+            let mut out_c2 = vec![0u32; n];
+            unsafe {
+                fp65537_batch_cubic_karatsuba(
+                    &a0,
+                    &a1,
+                    &a2,
+                    &b0,
+                    &b1,
+                    &b2,
+                    beta,
+                    &mut out_c0,
+                    &mut out_c1,
+                    &mut out_c2,
+                );
+            }
+
+            for i in 0..n {
+                let v0 = scalar_mul(a0[i], b0[i]);
+                let v1 = scalar_mul(a1[i], b1[i]);
+                let v2 = scalar_mul(a2[i], b2[i]);
+                let x = scalar_sub(
+                    scalar_sub(
+                        scalar_mul(scalar_add(a1[i], a2[i]), scalar_add(b1[i], b2[i])),
+                        v1,
+                    ),
+                    v2,
+                );
+                let y = scalar_sub(
+                    scalar_sub(
+                        scalar_mul(scalar_add(a0[i], a1[i]), scalar_add(b0[i], b1[i])),
+                        v0,
+                    ),
+                    v1,
+                );
+                let z = scalar_sub(
+                    scalar_add(
+                        scalar_sub(
+                            scalar_mul(scalar_add(a0[i], a2[i]), scalar_add(b0[i], b2[i])),
+                            v0,
+                        ),
+                        v1,
+                    ),
+                    v2,
+                );
+                let expected_c0 = scalar_add(v0, scalar_mul(beta, x));
+                let expected_c1 = scalar_add(y, scalar_mul(beta, v2));
+                assert_eq!(out_c0[i], expected_c0, "c0 mismatch n={n} i={i}");
+                assert_eq!(out_c1[i], expected_c1, "c1 mismatch n={n} i={i}");
+                assert_eq!(out_c2[i], z, "c2 mismatch n={n} i={i}");
             }
         }
     }

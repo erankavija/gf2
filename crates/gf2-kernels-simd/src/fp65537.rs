@@ -70,6 +70,18 @@ pub type Fp65537BatchSubFn = fn(&[u32], &[u32], &mut [u32]);
 /// Panics if any input or output slice has a different length from `a0`.
 pub type Fp65537BatchKaratsubaFn = fn(&[u32], &[u32], &[u32], &[u32], u32, &mut [u32], &mut [u32]);
 
+/// Fused Karatsuba-3 combine for `GF(p³)` element-wise multiplication over
+/// `Fp<65537>`.
+///
+/// Computes six independent base-field products per element and writes the
+/// three output coefficient lanes in SoA order.
+///
+/// # Panics
+///
+/// Panics if any input or output slice has a different length from `a0`.
+pub type Fp65537BatchCubicKaratsubaFn =
+    fn(&[u32], &[u32], &[u32], &[u32], &[u32], &[u32], u32, &mut [u32], &mut [u32], &mut [u32]);
+
 /// Bundle of `Fp<65537>` SIMD batch operations.
 ///
 /// Populated at runtime by [`detect`] when AVX2 is available. All entries
@@ -102,6 +114,8 @@ pub struct Fp65537Fns {
     /// allocations that a pass-per-op composition would otherwise need,
     /// and is the main source of the measured throughput win.
     pub batch_karatsuba_fn: Fp65537BatchKaratsubaFn,
+    /// Fused Karatsuba-3 combine for `GF(p³) / Fp<65537>`.
+    pub batch_cubic_karatsuba_fn: Fp65537BatchCubicKaratsubaFn,
 }
 
 /// Detect and return the best available `Fp<65537>` SIMD function bundle.
@@ -135,6 +149,7 @@ fn detect_x86() -> Option<Fp65537Fns> {
             batch_add_fn: batch_add_safe,
             batch_sub_fn: batch_sub_safe,
             batch_karatsuba_fn: batch_karatsuba_safe,
+            batch_cubic_karatsuba_fn: batch_cubic_karatsuba_safe,
         })
     } else {
         None
@@ -171,6 +186,28 @@ fn batch_karatsuba_safe(
 ) {
     // Safety: `detect_x86` only returns these pointers when AVX2 is available.
     unsafe { crate::x86::fp65537::fp65537_batch_karatsuba(a0, a1, b0, b1, beta, out_c0, out_c1) }
+}
+
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[allow(clippy::too_many_arguments)]
+fn batch_cubic_karatsuba_safe(
+    a0: &[u32],
+    a1: &[u32],
+    a2: &[u32],
+    b0: &[u32],
+    b1: &[u32],
+    b2: &[u32],
+    beta: u32,
+    out_c0: &mut [u32],
+    out_c1: &mut [u32],
+    out_c2: &mut [u32],
+) {
+    // Safety: `detect_x86` only returns these pointers when AVX2 is available.
+    unsafe {
+        crate::x86::fp65537::fp65537_batch_cubic_karatsuba(
+            a0, a1, a2, b0, b1, b2, beta, out_c0, out_c1, out_c2,
+        )
+    }
 }
 
 #[cfg(test)]
@@ -269,6 +306,59 @@ mod tests {
                 let expected_c1 = ((cross + 65537 - v0) % 65537 + 65537 - v1) % 65537;
                 assert_eq!(out_c0[i], expected_c0, "c0 mismatch n={n} i={i}");
                 assert_eq!(out_c1[i], expected_c1, "c1 mismatch n={n} i={i}");
+            }
+        }
+    }
+
+    #[test]
+    fn safe_wrapper_matches_scalar_batch_cubic_karatsuba() {
+        let fns = match detect() {
+            Some(f) => f,
+            None => return,
+        };
+        for &n in &[0usize, 1, 7, 8, 9, 16, 17, 100, 1000] {
+            let a0: Vec<u32> = (0..n as u32).map(|i| (i * 17) % 65537).collect();
+            let a1: Vec<u32> = (0..n as u32).map(|i| (i * 23 + 5) % 65537).collect();
+            let a2: Vec<u32> = (0..n as u32).map(|i| (i * 37 + 13) % 65537).collect();
+            let b0: Vec<u32> = (0..n as u32).map(|i| (i * 29 + 7) % 65537).collect();
+            let b1: Vec<u32> = (0..n as u32).map(|i| (i * 31 + 11) % 65537).collect();
+            let b2: Vec<u32> = (0..n as u32).map(|i| (i * 41 + 19) % 65537).collect();
+            let beta = 3u32;
+
+            let mut out_c0 = vec![0u32; n];
+            let mut out_c1 = vec![0u32; n];
+            let mut out_c2 = vec![0u32; n];
+            (fns.batch_cubic_karatsuba_fn)(
+                &a0,
+                &a1,
+                &a2,
+                &b0,
+                &b1,
+                &b2,
+                beta,
+                &mut out_c0,
+                &mut out_c1,
+                &mut out_c2,
+            );
+
+            for i in 0..n {
+                let v0 = ((a0[i] as u64 * b0[i] as u64) % 65537) as u32;
+                let v1 = ((a1[i] as u64 * b1[i] as u64) % 65537) as u32;
+                let v2 = ((a2[i] as u64 * b2[i] as u64) % 65537) as u32;
+                let x = ((((a1[i] + a2[i]) % 65537) as u64 * ((b1[i] + b2[i]) % 65537) as u64)
+                    % 65537) as u32;
+                let x = ((x + 65537 - v1) % 65537 + 65537 - v2) % 65537;
+                let y = ((((a0[i] + a1[i]) % 65537) as u64 * ((b0[i] + b1[i]) % 65537) as u64)
+                    % 65537) as u32;
+                let y = ((y + 65537 - v0) % 65537 + 65537 - v1) % 65537;
+                let z = ((((a0[i] + a2[i]) % 65537) as u64 * ((b0[i] + b2[i]) % 65537) as u64)
+                    % 65537) as u32;
+                let z = (((z + 65537 - v0) % 65537 + v1) % 65537 + 65537 - v2) % 65537;
+                let expected_c0 = (v0 + ((beta as u64 * x as u64) % 65537) as u32) % 65537;
+                let expected_c1 = (y + ((beta as u64 * v2 as u64) % 65537) as u32) % 65537;
+                assert_eq!(out_c0[i], expected_c0, "c0 mismatch n={n} i={i}");
+                assert_eq!(out_c1[i], expected_c1, "c1 mismatch n={n} i={i}");
+                assert_eq!(out_c2[i], z, "c2 mismatch n={n} i={i}");
             }
         }
     }

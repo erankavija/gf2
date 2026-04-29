@@ -1,0 +1,143 @@
+33d3f5b7 criterion capture
+date: 2026-04-29T10:06:36Z
+commit: 06729b4 (pre-commit worktree)
+command: CARGO_TARGET_DIR=target/agent-33d3f5b7 RUSTFLAGS="-C target-cpu=native" cargo bench -p gf2-core --features simd --bench soa_batch soa_batch_mul_fq3_fp65537
+   Compiling gf2-kernels-simd v0.1.0 (/home/vkaskivuo/Projects/gf2/.claude/worktrees/agent-33d3f5b7/crates/gf2-kernels-simd)
+   Compiling gf2-core v0.1.0 (/home/vkaskivuo/Projects/gf2/.claude/worktrees/agent-33d3f5b7/crates/gf2-core)
+    Finished `bench` profile [optimized] target(s) in 8.33s
+     Running benches/soa_batch.rs (target/agent-33d3f5b7/release/deps/soa_batch-2c02319c68719dcf)
+Benchmarking soa_batch_mul_fq3_fp65537/sequential_aos/64
+Benchmarking soa_batch_mul_fq3_fp65537/sequential_aos/64: Warming up for 3.0000 s
+Benchmarking soa_batch_mul_fq3_fp65537/sequential_aos/64: Collecting 100 samples in estimated 5.0026 s (6.1M iterations)
+Benchmarking soa_batch_mul_fq3_fp65537/sequential_aos/64: Analyzing
+soa_batch_mul_fq3_fp65537/sequential_aos/64
+                        time:   [814.65 ns 815.88 ns 817.51 ns]
+                        thrpt:  [78.286 Melem/s 78.443 Melem/s 78.562 Melem/s]
+                 change:
+                        time:   [-1.1711% -1.0466% -0.9164%] (p = 0.00 < 0.05)
+                        thrpt:  [+0.9249% +1.0577% +1.1850%]
+                        Change within noise threshold.
+Found 7 outliers among 100 measurements (7.00%)
+  5 (5.00%) high mild
+  2 (2.00%) high severe
+Benchmarking soa_batch_mul_fq3_fp65537/batch_soa/64
+Benchmarking soa_batch_mul_fq3_fp65537/batch_soa/64: Warming up for 3.0000 s
+Benchmarking soa_batch_mul_fq3_fp65537/batch_soa/64: Collecting 100 samples in estimated 5.0003 s (18M iterations)
+Benchmarking soa_batch_mul_fq3_fp65537/batch_soa/64: Analyzing
+soa_batch_mul_fq3_fp65537/batch_soa/64
+                        time:   [271.53 ns 271.92 ns 272.43 ns]
+                        thrpt:  [234.92 Melem/s 235.37 Melem/s 235.70 Melem/s]
+                 change:
+                        time:   [-80.881% -80.835% -80.797%] (p = 0.00 < 0.05)
+                        thrpt:  [+420.76% +421.78% +423.05%]
+                        Performance has improved.
+Found 7 outliers among 100 measurements (7.00%)
+  1 (1.00%) low mild
+  4 (4.00%) high mild
+  2 (2.00%) high severe
+Benchmarking soa_batch_mul_fq3_fp65537/batch_soa_with_transpose/64
+Benchmarking soa_batch_mul_fq3_fp65537/batch_soa_with_transpose/64: Warming up for 3.0000 s
+Benchmarking soa_batch_mul_fq3_fp65537/batch_soa_with_transpose/64: Collecting 100 samples in estimated 5.0027 s (9.2M iterations)
+Benchmarking soa_batch_mul_fq3_fp65537/batch_soa_with_transpose/64: Analyzing
+soa_batch_mul_fq3_fp65537/batch_soa_with_transpose/64
+                        time:   [792.49 ns 863.09 ns 924.30 ns]
+                        thrpt:  [69.241 Melem/s 74.152 Melem/s 80.758 Melem/s]
+                 change:
+                        time:   [-63.883% -61.407% -58.804%] (p = 0.00 < 0.05)
+                        thrpt:  [+142.74% +159.11% +176.88%]
+                        Performance has improved.
+Benchmarking soa_batch_mul_fq3_fp65537/sequential_aos/256
+Benchmarking soa_batch_mul_fq3_fp65537/sequential_aos/256: Warming up for 3.0000 s
+Benchmarking soa_batch_mul_fq3_fp65537/sequential_aos/256: Collecting 100 samples in estimated 5.0323 s (768k iterations)
+Benchmarking soa_batch_mul_fq3_fp65537/sequential_aos/256: Analyzing
+soa_batch_mul_fq3_fp65537/sequential_aos/256
+                        time:   [6.3134 µs 6.3591 µs 6.3991 µs]
+                        thrpt:  [40.006 Melem/s 40.258 Melem/s 40.549 Melem/s]
+                 change:
+                        time:   [+82.961% +88.761% +94.130%] (p = 0.00 < 0.05)
+                        thrpt:  [-48.488% -47.023% -45.344%]
+                        Performance has regressed.
+Found 8 outliers among 100 measurements (8.00%)
+  3 (3.00%) low severe
+  1 (1.00%) low mild
+  3 (3.00%) high mild
+  1 (1.00%) high severe
+Benchmarking soa_batch_mul_fq3_fp65537/batch_soa/256
+Benchmarking soa_batch_mul_fq3_fp65537/batch_soa/256: Warming up for 3.0000 s
+Benchmarking soa_batch_mul_fq3_fp65537/batch_soa/256: Collecting 100 samples in estimated 5.0017 s (3.3M iterations)
+Benchmarking soa_batch_mul_fq3_fp65537/batch_soa/256: Analyzing
+soa_batch_mul_fq3_fp65537/batch_soa/256
+                        time:   [925.91 ns 932.76 ns 941.90 ns]
+                        thrpt:  [271.79 Melem/s 274.45 Melem/s 276.48 Melem/s]
+                 change:
+                        time:   [-69.977% -68.582% -66.941%] (p = 0.00 < 0.05)
+                        thrpt:  [+202.49% +218.29% +233.08%]
+                        Performance has improved.
+Found 24 outliers among 100 measurements (24.00%)
+  24 (24.00%) high mild
+Benchmarking soa_batch_mul_fq3_fp65537/batch_soa_with_transpose/256
+Benchmarking soa_batch_mul_fq3_fp65537/batch_soa_with_transpose/256: Warming up for 3.0000 s
+Benchmarking soa_batch_mul_fq3_fp65537/batch_soa_with_transpose/256: Collecting 100 samples in estimated 5.0048 s (2.4M iterations)
+Benchmarking soa_batch_mul_fq3_fp65537/batch_soa_with_transpose/256: Analyzing
+soa_batch_mul_fq3_fp65537/batch_soa_with_transpose/256
+                        time:   [2.0485 µs 2.0491 µs 2.0495 µs]
+                        thrpt:  [124.91 Melem/s 124.94 Melem/s 124.97 Melem/s]
+                 change:
+                        time:   [-54.885% -54.850% -54.816%] (p = 0.00 < 0.05)
+                        thrpt:  [+121.32% +121.48% +121.66%]
+                        Performance has improved.
+Benchmarking soa_batch_mul_fq3_fp65537/sequential_aos/1000
+Benchmarking soa_batch_mul_fq3_fp65537/sequential_aos/1000: Warming up for 3.0000 s
+Benchmarking soa_batch_mul_fq3_fp65537/sequential_aos/1000: Collecting 100 samples in estimated 5.0418 s (399k iterations)
+Benchmarking soa_batch_mul_fq3_fp65537/sequential_aos/1000: Analyzing
+soa_batch_mul_fq3_fp65537/sequential_aos/1000
+                        time:   [12.560 µs 12.567 µs 12.574 µs]
+                        thrpt:  [79.529 Melem/s 79.574 Melem/s 79.616 Melem/s]
+                 change:
+                        time:   [-6.8649% -3.6437% -0.8661%] (p = 0.01 < 0.05)
+                        thrpt:  [+0.8737% +3.7815% +7.3709%]
+                        Change within noise threshold.
+Found 3 outliers among 100 measurements (3.00%)
+  3 (3.00%) high mild
+Benchmarking soa_batch_mul_fq3_fp65537/batch_soa/1000
+Benchmarking soa_batch_mul_fq3_fp65537/batch_soa/1000: Warming up for 3.0000 s
+Benchmarking soa_batch_mul_fq3_fp65537/batch_soa/1000: Collecting 100 samples in estimated 5.0012 s (1.5M iterations)
+Benchmarking soa_batch_mul_fq3_fp65537/batch_soa/1000: Analyzing
+soa_batch_mul_fq3_fp65537/batch_soa/1000
+                        time:   [3.3051 µs 3.3063 µs 3.3075 µs]
+                        thrpt:  [302.34 Melem/s 302.45 Melem/s 302.56 Melem/s]
+                 change:
+                        time:   [-68.601% -67.927% -67.385%] (p = 0.00 < 0.05)
+                        thrpt:  [+206.61% +211.79% +218.48%]
+                        Performance has improved.
+Found 6 outliers among 100 measurements (6.00%)
+  2 (2.00%) high mild
+  4 (4.00%) high severe
+Benchmarking soa_batch_mul_fq3_fp65537/batch_soa_with_transpose/1000
+Benchmarking soa_batch_mul_fq3_fp65537/batch_soa_with_transpose/1000: Warming up for 3.0000 s
+Benchmarking soa_batch_mul_fq3_fp65537/batch_soa_with_transpose/1000: Collecting 100 samples in estimated 5.0325 s (697k iterations)
+Benchmarking soa_batch_mul_fq3_fp65537/batch_soa_with_transpose/1000: Analyzing
+soa_batch_mul_fq3_fp65537/batch_soa_with_transpose/1000
+                        time:   [7.1881 µs 7.1907 µs 7.1935 µs]
+                        thrpt:  [139.01 Melem/s 139.07 Melem/s 139.12 Melem/s]
+                 change:
+                        time:   [-50.723% -49.819% -49.116%] (p = 0.00 < 0.05)
+                        thrpt:  [+96.524% +99.279% +102.93%]
+                        Performance has improved.
+Found 2 outliers among 100 measurements (2.00%)
+  2 (2.00%) high mild
+
+
+ppc-compare C5 against current AoS baseline
+command: ./dev/benchmarks/ppc-compare.sh C5 --criterion-dir crates/gf2-core/target/agent-33d3f5b7/criterion
+PPC compare — kernel C5 (CubicExt::mul Karatsuba SoA batched SIMD)
+  bench_target:  soa_batch_mul_fq3_fp65537/batch_soa
+  baseline:      current leaf soa_batch_mul_fq3_fp65537/sequential_aos @ 33d3f5b7
+  design sizes:  256, 1000
+  -----------------------------------------
+  size        baseline_ns        new_ns   speedup
+  256              6418.6         954.2    6.726x
+  1000            12565.9        3304.7    3.802x
+  -----------------------------------------
+  geomean speedup: 5.057x   (target >= 1.500x)
+PASS

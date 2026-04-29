@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "comment": "Maps PPC-spiral kernel IDs to the criterion bench-target / size leaves they will compare against. Pinned by jit:b2ecd2ff (session 2 of babcf05e) using `cargo bench --save-baseline ppc-v0-2026-04-27` against HEAD=52eaac8. The bench inventory under `crates/gf2-core/benches/` was swept end-to-end at pin time; pinned kernels reflect the full set of bench files extant at HEAD that map to a Tier-A/B/C/D kernel. Consumed by dev/benchmarks/ppc-compare.sh and the criterion-1.5x JIT gate via scripts/criterion-1.5x.sh; the gate is per-issue keyed by a `ppc-kernel:<id>` label (id is one of A1, A2, A3, B1, B2, B3, C1, C2, C3, C4, C5, D1, D2). Path resolution: `$CRITERION_DIR/$bench_target/$size/$baseline_name/estimates.json` — `bench_target` may include slashes for nested groups (e.g., `gf2m_mul_crossover/pclmulqdq_barrett`), and `size` may be `.` for leaf benches with no parameter. Entries marked TBD-* have no current bench in `crates/gf2-core/benches/`; the kernel-implementing task is expected to add a dedicated bench before its first spiral edit. B1 was pinned in jit:1c1c4242 (V0 step) against the new `crates/gf2-core/benches/matrix_transpose.rs` bench. Currently TBD: C5 (CubicExt has no SoA bench; `soa_batch.rs` covers QuadraticExt only), D2 (no Cuthill-McKee reorder bench).",
+  "comment": "Maps PPC-spiral kernel IDs to the criterion bench-target / size leaves they will compare against. Pinned by jit:b2ecd2ff (session 2 of babcf05e) using `cargo bench --save-baseline ppc-v0-2026-04-27` against HEAD=52eaac8. The bench inventory under `crates/gf2-core/benches/` was swept end-to-end at pin time; pinned kernels reflect the full set of bench files extant at HEAD that map to a Tier-A/B/C/D kernel. Consumed by dev/benchmarks/ppc-compare.sh and the criterion-1.5x JIT gate via scripts/criterion-1.5x.sh; the gate is per-issue keyed by a `ppc-kernel:<id>` label (id is one of A1, A2, A3, B1, B2, B3, C1, C2, C3, C4, C5, D1, D2). Path resolution: `$CRITERION_DIR/$bench_target/$size/$baseline_name/estimates.json` — `bench_target` may include slashes for nested groups (e.g., `gf2m_mul_crossover/pclmulqdq_barrett`), and `size` may be `.` for leaf benches with no parameter. Entries marked TBD-* have no current bench in `crates/gf2-core/benches/`; the kernel-implementing task is expected to add a dedicated bench before its first spiral edit. B1 was pinned in jit:1c1c4242 (V0 step) against the new `crates/gf2-core/benches/matrix_transpose.rs` bench. Currently TBD: D2 (no Cuthill-McKee reorder bench).",
   "kernels": {
     "A1": {
       "title": "BitMatrix::matvec popcnt SIMD",
@@ -82,11 +82,12 @@
     },
     "C5": {
       "title": "CubicExt::mul Karatsuba SoA batched SIMD",
-      "bench_target": "TBD-C5-needs-soa-bench",
-      "baseline_name": "TBD-C5-needs-soa-bench",
-      "commit_hash": "TBD-C5-needs-soa-bench",
-      "design_size_class": ["100", "1000", "10000"],
-      "tbd_reason": "Depends on C4 SoA scaffolding; bench piggybacks on C4's once C4 lands."
+      "bench_target": "soa_batch_mul_fq3_fp65537/batch_soa",
+      "baseline_bench_target": "soa_batch_mul_fq3_fp65537/sequential_aos",
+      "baseline_name": "current-sequential-aos",
+      "commit_hash": "33d3f5b7",
+      "design_size_class": ["256", "1000"],
+      "rationale": "C5's SoA benchmark mirrors C4: `batch_soa` excludes transposition cost for data already in SoA form, and `sequential_aos` calls the unchanged CubicExt::mul AoS path. The C5 bench leaf was added with the implementation, so compare the two current leaves apples-to-apples rather than a missing saved baseline."
     },
     "D1": {
       "title": "SparseBitMatrix::matvec block-CSR + prefetch",
