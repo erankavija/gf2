@@ -7,7 +7,10 @@
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use gf2_core::matrix::BitMatrix;
-use gf2_core::sparse::{SpBitMatrix, SpBitMatrixDual};
+use gf2_core::sparse::{
+    deterministic_ldpc_like_fixture, deterministic_sparse_bitvec_fixture, SpBitMatrix,
+    SpBitMatrixDual,
+};
 use gf2_core::BitVec;
 use rand::SeedableRng;
 
@@ -180,30 +183,6 @@ fn bench_dual_matvec_transpose(c: &mut Criterion) {
     group.finish();
 }
 
-fn deterministic_ldpc_like(rows: usize, cols: usize, row_weight: usize) -> SpBitMatrix {
-    let mut entries = Vec::with_capacity(rows * row_weight);
-    for r in 0..rows {
-        let base = r.wrapping_mul(1_315_423_911usize) ^ rows.rotate_left(7);
-        for k in 0..row_weight {
-            let stride = 2 * k + 1;
-            let col = base
-                .wrapping_add(k.wrapping_mul(97_531))
-                .wrapping_add(r.wrapping_mul(stride))
-                % cols;
-            entries.push((r, col));
-        }
-    }
-    SpBitMatrix::from_coo_deduplicated(rows, cols, &entries)
-}
-
-fn deterministic_bitvec(len: usize) -> BitVec {
-    let mut x = BitVec::with_capacity(len);
-    for i in 0..len {
-        x.push_bit(((i.wrapping_mul(0x9E37_79B1) ^ (i >> 3)) & 7) < 3);
-    }
-    x
-}
-
 /// LDPC-sized opt-in block-CSR matvec benchmark.
 ///
 /// Compare:
@@ -222,9 +201,9 @@ fn bench_ldpc_block_csr_matvec(c: &mut Criterion) {
         (8192, 16384, 6),
         (4096, 32768, 32),
     ] {
-        let csr = deterministic_ldpc_like(rows, cols, row_weight);
+        let csr = deterministic_ldpc_like_fixture(rows, cols, row_weight);
         let block = csr.to_default_block_csr();
-        let x = deterministic_bitvec(cols);
+        let x = deterministic_sparse_bitvec_fixture(cols);
         let case = format!("{rows}x{cols}_w{row_weight}");
 
         group.bench_with_input(
