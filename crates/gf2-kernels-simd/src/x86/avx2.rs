@@ -487,9 +487,10 @@ pub(crate) fn fns() -> LogicalFns {
         unsafe { avx2_xor_into(dst, src) }
     }
     fn m4rm_gray_xor16_fn(acc: &mut [[u64; 8]; 2], src: &[u64]) {
-        if src.len() < 16 {
-            return;
-        }
+        assert!(
+            src.len() >= 16,
+            "m4rm_gray_xor16: src must contain at least 16 words"
+        );
         unsafe { avx2_m4rm_gray_xor16(acc, src) }
     }
     fn m4rm_tile8x4_fn(
@@ -652,5 +653,14 @@ mod tests {
         let table = vec![0u64; 16];
         let idx = [0, 1, 2, 3, 4, 5, 6, 7];
         (fns.m4rm_tile8x4_fn)(&mut c_block, 16, 0, &table, &idx);
+    }
+
+    #[test]
+    #[should_panic(expected = "src must contain at least 16 words")]
+    fn test_m4rm_gray_xor16_wrapper_panics_on_short_src() {
+        let fns = fns();
+        let mut acc = [[0u64; 8]; 2];
+        let src = [0u64; 15];
+        (fns.m4rm_gray_xor16_fn)(&mut acc, &src);
     }
 }
