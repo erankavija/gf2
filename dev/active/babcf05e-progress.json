@@ -4,15 +4,15 @@
   "title": "gf2-core PPC-spiral performance sweep",
   "claimed_by": "agent:project-lead",
   "started_at": "2026-04-26T22:30:00+00:00",
-  "last_updated": "2026-04-29 sub-wave 4b dispatch",
+  "last_updated": "2026-04-29 sub-wave 4b B3 R1",
   "current_wave": 4,
-  "phase": "sub-wave 4b dispatch in progress. B3 (19bc3199), C2 (7c954fb5), and C4 (3168d114) are claimed for manual current-main worktree dispatch after sub-wave 4a recovery closure.",
+  "phase": "sub-wave 4b in progress; B3 preliminary lead review failed and R1 rework dispatched, C2 preliminary review passed, C4 still running.",
   "related_epic": "bb85c68a (FieldMatrix linear algebra)",
   "spec_doc": "dev/plans/gf2_core_ppc_spiral.md",
   "uncompetitiveness_doc": "dev/bench_results/2026-04-26-uncompetitiveness-profile.md",
   "notes": [
     "Session 1 (2026-04-26): Wave 1 (c7791a20) + Wave 2 sub-waves 2a (2a0ffb18) and 2b (c3a9a4cb) closed. asm-artefact-present gate registered. Tier-2.5 sweep flagged the c69d2055 ThinLTO claim as falsified.",
-    "Session 2 (2026-04-27): Wave 2 sub-waves 2c (4f845881) and 2d (b2ecd2ff) closed plus follow-up bug 1d230525 closed. Two new infra issues created and resolved: 941d1528 (cargo-ci stub false-pass — fixed by adding ensure_real_cargo() guard to scripts/cargo-ci.sh that detects the ~/.cargo/bin/rustup stub and falls back to ~/.rustup/toolchains/stable-*/bin/cargo) and 986ddc44 (criterion-1.5x JIT-context wrapper — folded into 4f845881 R1 and rejected as duplicate). criterion-1.5x gate now correctly registered with --pass-context --checker-command './scripts/criterion-1.5x.sh'.",
+    "Session 2 (2026-04-27): Wave 2 sub-waves 2c (4f845881) and 2d (b2ecd2ff) closed plus follow-up bug 1d230525 closed. Two new infra issues created and resolved: 941d1528 (cargo-ci stub false-pass \u2014 fixed by adding ensure_real_cargo() guard to scripts/cargo-ci.sh that detects the ~/.cargo/bin/rustup stub and falls back to ~/.rustup/toolchains/stable-*/bin/cargo) and 986ddc44 (criterion-1.5x JIT-context wrapper \u2014 folded into 4f845881 R1 and rejected as duplicate). criterion-1.5x gate now correctly registered with --pass-context --checker-command './scripts/criterion-1.5x.sh'.",
     "User feedback 2026-04-27 (saved as feedback_pre_dispatch_criterion_audit.md): 'I'm a bit dissatisfied on the amount of amendments that we need to do constantly. That is somewhat breaking the flow.' Three amendments landed this session (4f845881 SC2 same-as-baseline impossibility; b2ecd2ff A1 date; b2ecd2ff B1 TBD-kernels exception). Going forward: pre-dispatch criterion audit catches stale text BEFORE worker burns a cycle.",
     "User feedback 2026-04-27 (saved as feedback_pre_dispatch_criterion_audit.md continued): user prefers minimal lead env-bypass commands when invoking jit ('Why do we need to have some strange path additions in the command? jit gate pass should just work. Jit is installed in this system'). Fix: keep `jit gate pass` invocations clean; environment manipulation belongs inside the gate runner script (scripts/cargo-ci.sh now does this autonomously).",
     "11 of 13 Tier A-D kernels are now pinned to a real ppc-v0-2026-04-27 @ 52eaac8 baseline. Remaining 3 kernels (B1 transpose, C5 cubic SoA, D2 Cuthill-McKee) stay TBD because their benches are created by the kernel-implementation tasks themselves per spec doc.",
@@ -21,8 +21,8 @@
     "Session 5: 8e4b189c closed after one lead-requested rework. R0 was rejected because 512/1024-column speedup came from scalar ILP, not SIMD routing. User approved R1 scope amendment to add fused LogicalFns::and_popcnt_fn in gf2-kernels-simd; final A1 criterion geomean 2.636x vs 1.5x target.",
     "Session 5: 5223bb04 R0 rejected before merge. Worker implemented a non-M4RM fallback but benchmarked matmul_square/1024 and /2048, which still use M4RM k_block=8 and therefore measure the prior c69d2055 path rather than the fallback. User selected rework: add/route a benchmark that actually exercises the non-M4RM fallback and gate performance on that. R1 closed with dedicated 512x1x8192 fallback benchmark and A2 comparator current-leaf mode; final geomean 2.015x vs scalar fallback.",
     "Session 5: d76f6931 story closed after user-approved aggregate amendment for A3/cad241e6. Story gates passed on the amended contract: A1 and A2 retain explicit speed gates; A3 inherits its child-level approved performance exception while preserving specialized M31 dispatch and generic Montgomery coverage.",
-    "Session 6 (2026-04-28) start: branch on main at 5a9393c, 41 commits ahead of origin. Tier-A worktrees from sessions 5/4 (5223bb04, 8e4b189c, cad241e6, d4740d85) cleaned up. Untracked dev/bench_results/2026-04-26-gf2-simd.csv deleted per user. Strategic interview: wave priority = algorithmic-value-first (Tier-C parallel + B1+B2 alongside); criterion-1.5x stance = keep gate as operative threshold, no [aspirational] amendments; CSV = delete. Sub-wave 4a dispatch: C1, C3, B1, B2 parallel via worktrees. B1's [hard] criterion literally quotes 'ppc-v0-2026-04-25' but canonical baseline naming is 'ppc-v0-2026-04-27' per b2ecd2ff session-2 amendment — clarification routed via dispatch prompt, no JIT description amendment per user's gate-as-operative-threshold preference.",
-    "Session 6 (2026-04-28) dispatch outcome: all 4 workers completed with API 529 (auth service unavailable), losing final narrative reports but leaving on-disk worktree state. Per user directive 'Do not merge — just create a handoff document', no integration to main this session. Lead-preserve commits applied to 3 of 4 worktrees so uncommitted WIP survives across sessions: C3 worktree got 16dbba3, B1 got d773986 (V7 cache-tile), B2 got 5e7c138 (288-line m4rm.rs blob). C1 worktree was already clean. CRITICAL TRAP 1 documented in handoff-4: Agent isolation=worktree branched from 854b37d (session 3) instead of current main c8d71af — all 4 worker branches are 41 commits behind main. Naïve merge would clobber Wave-3 closures (cad241e6 fp_generic, c69d2055 hoist, A2 manifest amendment, etc.). Mitigation in handoff: rebase each worktree onto main BEFORE any integration; expected hot conflicts on gf2-kernels-simd/src/lib.rs (C3 vs cad241e6 fp_generic), gf2-core/src/alg/m4rm.rs (B2 vs c69d2055 hoist), gf2-core/src/matrix.rs (B1 vs 8e4b189c/5223bb04), and dev/benchmarks/ppc-baselines.json (all workers vs A2 amendment). Per-worker observations: C1 looks complete (4 commits, V3+V4 bundled but production-ready), B1 reports ~65× at n=4096 + V7 in WIP, C3 has Lean-build [hard] unverified, B2 placed asm artefact at irregular gf2-core/src/alg/asm/ path that asm-artefact-present gate won't see.",
+    "Session 6 (2026-04-28) start: branch on main at 5a9393c, 41 commits ahead of origin. Tier-A worktrees from sessions 5/4 (5223bb04, 8e4b189c, cad241e6, d4740d85) cleaned up. Untracked dev/bench_results/2026-04-26-gf2-simd.csv deleted per user. Strategic interview: wave priority = algorithmic-value-first (Tier-C parallel + B1+B2 alongside); criterion-1.5x stance = keep gate as operative threshold, no [aspirational] amendments; CSV = delete. Sub-wave 4a dispatch: C1, C3, B1, B2 parallel via worktrees. B1's [hard] criterion literally quotes 'ppc-v0-2026-04-25' but canonical baseline naming is 'ppc-v0-2026-04-27' per b2ecd2ff session-2 amendment \u2014 clarification routed via dispatch prompt, no JIT description amendment per user's gate-as-operative-threshold preference.",
+    "Session 6 (2026-04-28) dispatch outcome: all 4 workers completed with API 529 (auth service unavailable), losing final narrative reports but leaving on-disk worktree state. Per user directive 'Do not merge \u2014 just create a handoff document', no integration to main this session. Lead-preserve commits applied to 3 of 4 worktrees so uncommitted WIP survives across sessions: C3 worktree got 16dbba3, B1 got d773986 (V7 cache-tile), B2 got 5e7c138 (288-line m4rm.rs blob). C1 worktree was already clean. CRITICAL TRAP 1 documented in handoff-4: Agent isolation=worktree branched from 854b37d (session 3) instead of current main c8d71af \u2014 all 4 worker branches are 41 commits behind main. Na\u00efve merge would clobber Wave-3 closures (cad241e6 fp_generic, c69d2055 hoist, A2 manifest amendment, etc.). Mitigation in handoff: rebase each worktree onto main BEFORE any integration; expected hot conflicts on gf2-kernels-simd/src/lib.rs (C3 vs cad241e6 fp_generic), gf2-core/src/alg/m4rm.rs (B2 vs c69d2055 hoist), gf2-core/src/matrix.rs (B1 vs 8e4b189c/5223bb04), and dev/benchmarks/ppc-baselines.json (all workers vs A2 amendment). Per-worker observations: C1 looks complete (4 commits, V3+V4 bundled but production-ready), B1 reports ~65\u00d7 at n=4096 + V7 in WIP, C3 has Lean-build [hard] unverified, B2 placed asm artefact at irregular gf2-core/src/alg/asm/ path that asm-artefact-present gate won't see.",
     "Session 7 recovery close: sub-wave 4a stale-worktree recovery completed. User-approved decisions during recovery: salvage C1+B1 and restart C3+B2; accept B1 baseline amendment to ppc-v0-2026-04-27; implement B1 PSHUFB lane rather than amend hard artefact criterion; accept B2 vxorps as vpxor-equivalent hard-criterion amendment. Helper scripts accidentally committed to gf2 were reverted and belong under ~/.claude/skills.",
     "Session 8 dispatch: B3 (19bc3199), C2 (7c954fb5), and C4 (3168d114) selected as sub-wave 4b. Direct dependencies are done; workers must use manual worktrees pinned to current main and must not modify .jit state."
   ],
@@ -42,9 +42,9 @@
           "rework_cycles": 0,
           "final_commit": "1a2f6f9",
           "amendment": "User-approved Option 1 (2026-04-26): the [hard] >=1.3x criterion was hypothesised pre-measurement; empirical data showed 0.91x at n=1024 SIMD matmul (regression).",
-          "tier_2_5_finding": "c69d2055's description embeds the now-falsified ThinLTO inlining claim — to be amended in Wave 3 dispatch prompt.",
+          "tier_2_5_finding": "c69d2055's description embeds the now-falsified ThinLTO inlining claim \u2014 to be amended in Wave 3 dispatch prompt.",
           "gates": {
-            "cargo-ci": "passed (15s, stub-pass — re-validated post-941d1528)",
+            "cargo-ci": "passed (15s, stub-pass \u2014 re-validated post-941d1528)",
             "code-review": "passed (127s, PASS verdict)"
           }
         }
@@ -125,7 +125,7 @@
             "149423f",
             "ca527db"
           ],
-          "amendment": "Two user-approved amendments (Option A1+B1, 2026-04-27): A1 baseline date placeholder ppc-v0-2026-04-25 -> ppc-v0-2026-04-27 (matches measurement day); B1 'all baselines exist' -> 'all baselines exist for kernels whose bench exists at HEAD' (matches spec doc § Tier B/C/D documented exceptions).",
+          "amendment": "Two user-approved amendments (Option A1+B1, 2026-04-27): A1 baseline date placeholder ppc-v0-2026-04-25 -> ppc-v0-2026-04-27 (matches measurement day); B1 'all baselines exist' -> 'all baselines exist for kernels whose bench exists at HEAD' (matches spec doc \u00a7 Tier B/C/D documented exceptions).",
           "gates": {
             "cargo-ci": "passed (6.7s real)",
             "code-review": "passed R2 (191s, PASS verdict on commit ca527db)"
@@ -169,7 +169,7 @@
             "cargo-ci": "passed (8s)",
             "code-review": "passed R4 (140s)"
           },
-          "notes": "session-3 close. Built dedicated examples/lto_opacity_audit.rs harness with #[no_mangle] pub fn wrappers to dump direct asm for Fp65537Fns + ClmulWide256Fns dispatch tables which had no public lib-symbol callers — all 5 dispatch tables now empirically confirmed LTO-opaque. R4 fmt fix + LTO-conclusion doc reconciliation. Bug e555c46d filed for sse4.1 register-spill defect."
+          "notes": "session-3 close. Built dedicated examples/lto_opacity_audit.rs harness with #[no_mangle] pub fn wrappers to dump direct asm for Fp65537Fns + ClmulWide256Fns dispatch tables which had no public lib-symbol callers \u2014 all 5 dispatch tables now empirically confirmed LTO-opaque. R4 fmt fix + LTO-conclusion doc reconciliation. Bug e555c46d filed for sse4.1 register-spill defect."
         },
         {
           "id": "166b2691-82a9-476a-b272-cacd71b58d4c",
@@ -206,7 +206,7 @@
     },
     {
       "wave_number": 3,
-      "label": "Tier A — Dispatch routing",
+      "label": "Tier A \u2014 Dispatch routing",
       "status": "done",
       "state": "done",
       "story": {
@@ -446,16 +446,18 @@
           "title": "M4RM block multiply register-tile + cache-block",
           "kind": "task",
           "classification": "implementation",
-          "status": "in_progress",
+          "status": "rework_r1_dispatched",
           "state": "in_progress",
           "sub_wave": "4b",
-          "pre_dispatch_action": "Depends on B1 (1c1c4242). Promote ready when B1 closes."
+          "pre_dispatch_action": "Depends on B1 (1c1c4242). Promote ready when B1 closes.",
+          "rework_cycles": 1,
+          "review_notes": "R0 preliminary lead review failed: dead V6 prefetch path, exact-1024-only tiled schedule, whitespace issues in evidence, criterion risk."
         }
       ]
     },
     {
       "wave_number": 5,
-      "label": "Tier C — Field-arithmetic batch (interleaved with Wave 4 in session 6)",
+      "label": "Tier C \u2014 Field-arithmetic batch (interleaved with Wave 4 in session 6)",
       "issues": [
         {
           "id": "ec286cee-48af-4dec-8190-424f6ffbfab7",
@@ -517,7 +519,7 @@
           "worktree_branch": "worktree-agent-ad855fb0f45a05064",
           "worktree_path": ".claude/worktrees/agent-ad855fb0f45a05064",
           "worker_commits": [
-            "9c0b0fc V0 — pin general 64-bit Montgomery batch baseline"
+            "9c0b0fc V0 \u2014 pin general 64-bit Montgomery batch baseline"
           ],
           "lead_preserve_commit": "16dbba3 (1034-line WIP: full montgomery.rs kernel + x86/montgomery.rs + asm artefact + perf-stat + dispatch wiring + manifest pin C3 leaf to fp_general_64bit_batch_mul_simd)",
           "session_6_status": "Mixed. V0 cleanly committed; bulk of V3 SIMD work bundled into the lead-preserve WIP. [hard] Lean-build criterion is unverified (no proofs/ re-extraction nor verify-lean.sh confirmation in any commit). HIGH RISK on TRAP 1: cad241e6 already shipped gf2-kernels-simd/src/fp_generic.rs as a sibling generic-Fp SIMD path on main; worker did not see it and added a parallel montgomery.rs. On rebase the integration must unify or coexist with fp_generic. Recommendation: heavy review or re-dispatch with cad241e6 fp_generic cited as starting point.",
@@ -544,7 +546,7 @@
           "status": "in_progress",
           "state": "in_progress",
           "sub_wave": "4b",
-          "pre_dispatch_note": "C4 manifest pinned at soa_batch_mul_fq2_fp65537/batch_soa. Issue Notes says 'field_matrix_fusion' — manifest is canonical."
+          "pre_dispatch_note": "C4 manifest pinned at soa_batch_mul_fq2_fp65537/batch_soa. Issue Notes says 'field_matrix_fusion' \u2014 manifest is canonical."
         },
         {
           "id": "33d3f5b7-5942-445d-8e34-9b87c0903f7f",
@@ -560,7 +562,7 @@
     },
     {
       "wave_number": 6,
-      "label": "Tier D — Sparse layout",
+      "label": "Tier D \u2014 Sparse layout",
       "issues": [
         {
           "id": "f1a896f0-097a-4598-9484-d4a2efe711ad",
@@ -586,7 +588,7 @@
     },
     {
       "wave_number": 7,
-      "label": "Tier E — Multithread",
+      "label": "Tier E \u2014 Multithread",
       "issues": [
         {
           "id": "1f899836-f41c-419d-afde-773e8f10ce01",
@@ -704,7 +706,7 @@
       "kind": "bug",
       "title": "criterion-1.5x gate needs JIT-context wrapper for per-issue kernel-id resolution",
       "state": "rejected",
-      "discovered_during": "session 2 (4f845881 R0 close). REJECTED as duplicate — folded into 4f845881 R1 (commit fc687ed) which delivers the wrapper + label convention."
+      "discovered_during": "session 2 (4f845881 R0 close). REJECTED as duplicate \u2014 folded into 4f845881 R1 (commit fc687ed) which delivers the wrapper + label convention."
     },
     {
       "id": "c7e91dfd-3c9e-481a-9492-2c3b84495436",
@@ -712,7 +714,7 @@
       "kind": "task",
       "title": "Bump MSRV from 1.80 to 1.95",
       "state": "done",
-      "discovered_during": "session 3. Lead found ~/.cargo/bin/cargo was a 3-line stub layer; reinstalling rustup officially exposed clippy 1.95 lints; user said 'no need to use anything ancient' — bumped MSRV to current stable. Added as dep of 166b2691."
+      "discovered_during": "session 3. Lead found ~/.cargo/bin/cargo was a 3-line stub layer; reinstalling rustup officially exposed clippy 1.95 lints; user said 'no need to use anything ancient' \u2014 bumped MSRV to current stable. Added as dep of 166b2691."
     },
     {
       "id": "e555c46d-cb1d-45d4-91a6-871f32866ad0",
@@ -804,7 +806,7 @@
         "B1 amend criterion / B2 synthesize benches now"
       ],
       "user_choice": "A1+B1",
-      "outcome": "Description amended on both points; R2 PASS. User flagged that mid-flight amendments are breaking the flow — saved as feedback_pre_dispatch_criterion_audit.md."
+      "outcome": "Description amended on both points; R2 PASS. User flagged that mid-flight amendments are breaking the flow \u2014 saved as feedback_pre_dispatch_criterion_audit.md."
     },
     {
       "date": "2026-04-27",
@@ -839,20 +841,22 @@
     "ec286cee": 3,
     "1c1c4242": 1,
     "86c09a51": 1,
-    "54a0e75c": 1
+    "54a0e75c": 1,
+    "19bc3199": 1
   },
   "session_notes": {
     "session_1_starting_state": "Epic babcf05e: backlog. 6 stories scaffolded. 16 child tasks scaffolded. c7791a20 (profile.release) and c69d2055 (dispatch hoist) added by user on 2026-04-26 in response to bb85c68a uncompetitiveness profile finding.",
     "session_1_outcome": "Wave 1 (c7791a20) closed with empirical falsification + amendment. Wave 2 sub-waves 2a (2a0ffb18) and 2b (c3a9a4cb) closed. asm-artefact-present gate registered.",
     "session_2_starting_state": "Wave 2 sub-waves 2c (4f845881), 2d (b2ecd2ff), follow-up bug 1d230525, retrospective audit bd00d76a all in ready state. Story 166b2691 backlog (3 of 4 sub-tasks done).",
     "session_2_outcome": "All Wave 2 sub-tasks closed except bd00d76a (deferred). Two new infra issues created: 941d1528 (cargo-ci stub guard, closed; gate runs are now real) and 986ddc44 (criterion-1.5x wrapper, rejected as duplicate folded into 4f845881 R1). Three user-approved amendments landed (one for each task). Memory feedback_pre_dispatch_criterion_audit.md added in response to user feedback that constant amendments break flow.",
-    "session_3_starting_state": "Wave 2 still open — bd00d76a (retrospective asm audit) ready, story 166b2691 backlog. 13 Tier A-D backlog tasks unprepped (no ppc-kernel labels, no criterion-1.5x gates).",
-    "session_3_outcome": "Wave 2 closed. bd00d76a (4 review cycles, scope-expanded with examples/lto_opacity_audit.rs harness to give all 5 dispatch tables direct asm evidence). c7e91dfd NEW (MSRV bump 1.80 -> 1.95 incl. rustup reinstall + clippy 1.95 lint fixes + extensive doc updates). e555c46d NEW bug filed from asm audit. Story 166b2691 closed at b04659d. Wave 3-6 prep: 13 ppc-kernel:<id> labels + 13 criterion-1.5x gates applied (commit e1a8f0e). Pre-dispatch criterion audit done — no Wave-3 blockers. Wave 3 dispatch deferred to session 4 to preserve context budget. Reviewer narrowing-interpretations pattern observed and documented in handoff-3 traps.",
+    "session_3_starting_state": "Wave 2 still open \u2014 bd00d76a (retrospective asm audit) ready, story 166b2691 backlog. 13 Tier A-D backlog tasks unprepped (no ppc-kernel labels, no criterion-1.5x gates).",
+    "session_3_outcome": "Wave 2 closed. bd00d76a (4 review cycles, scope-expanded with examples/lto_opacity_audit.rs harness to give all 5 dispatch tables direct asm evidence). c7e91dfd NEW (MSRV bump 1.80 -> 1.95 incl. rustup reinstall + clippy 1.95 lint fixes + extensive doc updates). e555c46d NEW bug filed from asm audit. Story 166b2691 closed at b04659d. Wave 3-6 prep: 13 ppc-kernel:<id> labels + 13 criterion-1.5x gates applied (commit e1a8f0e). Pre-dispatch criterion audit done \u2014 no Wave-3 blockers. Wave 3 dispatch deferred to session 4 to preserve context budget. Reviewer narrowing-interpretations pattern observed and documented in handoff-3 traps.",
     "session_4_starting_state": "Branch already contains completed e555c46d. User requested state-of-the-art performance and mentioned shortcomings found during jit 64c88ae4. Lead inspected 64c88ae4 bench report/profile and escalated strategic scope choice.",
     "session_4_expansion": "User selected 'Expand epic now with benchmark-gap tasks'. Lead created story 3abb755e with ready strategy task 085cbd0b plus backlog implementation tasks 59c487c3 (GF(2) Strassen-Winograd after B3), e7ab802d (GF(p) delayed-reduction FieldMatrix multiply after C3), and 577b9e7f (GF(2^m) FieldMatrix batch path after C1).",
     "session_4_085cbd0b_outcome": "Strategy doc written at dev/active/085cbd0b-benchmark-gap-strategy.md (commit 0f93648), linked to 085cbd0b/3abb755e/59c487c3/e7ab802d/577b9e7f (commit f12defe), gates passed, issue closed. Lead review accepted deferred/follow-up strings in linked 64c88ae4 source reports as source-report context, not unclosed scope for 085cbd0b.",
     "session_4_c69d2055_outcome": "Closed c69d2055 after commits 15cb193 (dispatch hoist), e63ce50 (SSOT rework: scalar fallback delegates to SCALAR_BACKEND), and 42b4dca (criterion gate wrapper reads labels from GateContext envelopes). Gates passed: cargo-ci, criterion-1.5x (A2 geomean 4.169x), code-review. Issue description still contains the known stale ThinLTO premise by prior user-approved dispatch-as-is decision.",
     "session_4_cad241e6_blocker": "cad241e6 worker branch worktree-agent-cad241e6 reached bcd2bdb after safety rework: generic path guards P <= 2^63, excludes Fermat/Mersenne specialisations, records aspirational benchmark miss. Because ./scripts/verify-lean.sh still failed baseline-identically and user selected 'Block cad241e6 and create/dispatch a separate Lean tooling fix first', lead created d4740d85, wired cad241e6 -> d4740d85, claimed it as agent:claude-wt-d4740d85, and dispatched worktree-agent-d4740d85. d4740d85 closed after commits 7bfb62c and aec32c4; full verify-lean passed. cad241e6 then integrated on main, amended its aspirational 1.5x criterion based on observed near-parity/regressive results, fixed stale dispatch docs, restored M31 FieldVec multiply dispatch through the existing Mersenne SIMD bundle, passed cargo-ci/asm/code-review, and closed.",
-    "session_7_recovery_outcome": "Recovered stale 4a worktrees after session-6 base mistake. Backup refs created, C1/B1 salvaged, C3/B2 restarted, all four integrated on main and closed with passing cargo-ci, asm, criterion, and code-review gates. Additional review fixes landed: C1 SIMD-test gating/docs/evidence, B1 PSHUFB lane/tests/asm, B2 safety comment + vxorps amendment. Next work should dispatch sub-wave 4b only from current main with clean worktree-base verification."
+    "session_7_recovery_outcome": "Recovered stale 4a worktrees after session-6 base mistake. Backup refs created, C1/B1 salvaged, C3/B2 restarted, all four integrated on main and closed with passing cargo-ci, asm, criterion, and code-review gates. Additional review fixes landed: C1 SIMD-test gating/docs/evidence, B1 PSHUFB lane/tests/asm, B2 safety comment + vxorps amendment. Next work should dispatch sub-wave 4b only from current main with clean worktree-base verification.",
+    "session_8_b3_r0_review": "B3 R0 branch had useful M4RM tile work but failed preliminary lead review before integration: V6 prefetch path was dead (next_table always None), tiled schedule was limited to stride_words == 16 rather than all relevant n>=1024/output-width cases, evidence files failed git diff --check, and 1.5x criterion evidence was not established. R1 rework dispatched in the same worktree."
   }
 }
