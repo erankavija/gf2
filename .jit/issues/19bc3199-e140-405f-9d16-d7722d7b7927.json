@@ -2,7 +2,7 @@
   "id": "19bc3199-e140-405f-9d16-d7722d7b7927",
   "title": "M4RM block multiply register-tile + cache-block",
   "description": "Add register-tile + cache-block scheduling to the M4RM block multiply. The current implementation does straightforward block iteration with implicit cache reuse; explicit tiling pins accumulators in registers and reduces L1 traffic.\n\n## Background\n\nM4RM `multiply` in `crates/gf2-core/src/alg/m4rm.rs` does block iteration without an explicit register tile or software prefetch. For matrices that fit in L1, the lack of register tiling leaves cycles on the table.\n\nThe fix walks PPC steps:\n\n- V4 register tile: $M=8$ row-accumulators $\\times N=4$ column-words pinned in YMM regs through the full Gray-table pass. The tile-reuse asm path reuses the transpose primitive added in B1.\n- V5 refined reuse: increase the tile to 32 row accumulators if register pressure allows; tune via asm inspection.\n- V6 prefetch: software prefetch of the next $k$-block table while consuming the current one.\n\n## Success Criteria\n\n- [hard] Existing M4RM tests pass.\n- [hard] Sibling `*.asm.txt` artefact shows the $M \\times N$ tile materialised in registers (no spills) at the chosen tile shape.\n- [hard] No regression at small sizes below the M4RM crossover threshold.\n- [hard] `perf stat -r 10` capture before/after recorded.\n- [aspirational] $\\geq 1.5\\times$ geomean on `matmul` bench at $n \\geq 1024$.\n\n## Notes\n\nBench: `matmul`, `m4rm_profile` (existing, pinned by I1). Spec doc: `dev/plans/gf2_core_ppc_spiral.md`.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:claude",
   "dependencies": [
@@ -15,15 +15,25 @@
     "criterion-1.5x"
   ],
   "gates_status": {
-    "asm-artefact-present": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-04-26T22:20:07.335741227Z"
-    },
     "criterion-1.5x": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-04-27T19:16:07.749140378Z"
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-29T08:43:35.664039205Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-29T08:43:29.290949982Z"
+    },
+    "asm-artefact-present": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-29T08:43:35.506730980Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-29T08:43:46.738637603Z"
     }
   },
   "context": {},
@@ -37,5 +47,5 @@
     "ppc-kernel:B3"
   ],
   "created_at": "2026-04-25T15:18:01.395501318+00:00",
-  "updated_at": "2026-04-29T05:15:19.883555804+00:00"
+  "updated_at": "2026-04-29T09:00:14.333810907+00:00"
 }

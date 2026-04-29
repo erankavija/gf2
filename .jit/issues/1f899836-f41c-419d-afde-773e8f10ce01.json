@@ -2,7 +2,7 @@
   "id": "1f899836-f41c-419d-afde-773e8f10ce01",
   "title": "Rayon row-tile multithread for B1/B3 dense kernels",
   "description": "Apply rayon row-tile parallelism to the post-Tier-B dense kernels (transpose, M4RM tile-reuse multiply). Pre-flight cache-miss check is mandatory — multithreading a memory-bound kernel adds bus contention without throughput.\n\n## Background\n\n`crates/gf2-core/src/compute/cpu.rs` already has rayon-parallel M4RM/RREF/rank, but the kernels delivered by Tier B (transpose, M4RM tile-reuse multiply) need their parallel scheduling tuned to the new tile shapes.\n\nPre-flight (mandatory before V10): run `perf stat -r 10` on the post-Tier-B single-thread kernel. If `cache-misses / instructions $> 1\\%$` the kernel is memory-bound and multithreading will hurt — abort and revert.\n\nIf pre-flight passes, V10 applies rayon row-tile parallelism over the post-Tier-B tile shape using `rayon::ThreadPoolBuilder` with the project's existing thread-count convention. Tile boundaries align to 64-byte cache lines to avoid false sharing.\n\n## Success Criteria\n\n- [hard] Pre-flight `perf stat` cache-miss check executed and recorded in the JIT issue.\n- [hard] No correctness regression vs. single-threaded path (existing tests pass under multi-thread).\n- [hard] Strong-scaling efficiency $\\geq 70\\%$ at 4 threads at the design size class.\n- [hard] False-sharing check: tile boundaries align to 64-byte cache lines.\n- [hard] Strong-scaling measured at 1, 2, 4, 8 threads; numbers recorded.\n- [aspirational] $\\geq 3\\times$ total speedup over the post-Tier-B single-thread baseline at 4 threads.\n\n## Notes\n\nBench: post-Tier-B variants of `matmul` and the new `transpose` bench. Spec doc: `dev/plans/gf2_core_ppc_spiral.md`.",
-  "state": "backlog",
+  "state": "ready",
   "priority": "normal",
   "assignee": null,
   "dependencies": [
@@ -23,5 +23,5 @@
     "story:ppc-multithread"
   ],
   "created_at": "2026-04-25T15:19:27.982645121+00:00",
-  "updated_at": "2026-04-25T20:19:00.732955915+00:00"
+  "updated_at": "2026-04-29T09:00:14.421537722+00:00"
 }
