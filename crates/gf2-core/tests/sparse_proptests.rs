@@ -23,6 +23,25 @@ proptest! {
     }
 
     #[test]
+    fn block_csr_matvec_matches_csr(
+        rows in 0usize..16,
+        cols in 0usize..160,
+        block_rows in 1usize..8,
+        p in 0.0f64..0.25,
+        seed in any::<u64>(),
+    ) {
+        let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
+        let m = BitMatrix::random_with_probability(rows, cols, p, &mut rng);
+        let csr = SpBitMatrix::from_dense(&m);
+        let x = BitVec::random(cols, &mut rng);
+
+        let blocked = csr.to_block_csr(block_rows);
+
+        prop_assert_eq!(blocked.matvec(&x), csr.matvec(&x));
+        prop_assert_eq!(blocked.matvec_with_prefetch_distance(&x, 0), csr.matvec(&x));
+    }
+
+    #[test]
     fn dual_roundtrip_equivalence(
         rows in 0usize..8,
         cols in 0usize..8,

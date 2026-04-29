@@ -180,6 +180,73 @@ fn bench_dual_matvec_transpose(c: &mut Criterion) {
     group.finish();
 }
 
+fn deterministic_ldpc_like(rows: usize, cols: usize, row_weight: usize) -> SpBitMatrix {
+    let mut entries = Vec::with_capacity(rows * row_weight);
+    for r in 0..rows {
+        let base = r.wrapping_mul(1_315_423_911usize) ^ rows.rotate_left(7);
+        for k in 0..row_weight {
+            let stride = 2 * k + 1;
+            let col = base
+                .wrapping_add(k.wrapping_mul(97_531))
+                .wrapping_add(r.wrapping_mul(stride))
+                % cols;
+            entries.push((r, col));
+        }
+    }
+    SpBitMatrix::from_coo_deduplicated(rows, cols, &entries)
+}
+
+fn deterministic_bitvec(len: usize) -> BitVec {
+    let mut x = BitVec::with_capacity(len);
+    for i in 0..len {
+        x.push_bit(((i.wrapping_mul(0x9E37_79B1) ^ (i >> 3)) & 7) < 3);
+    }
+    x
+}
+
+/// LDPC-sized opt-in block-CSR matvec benchmark.
+///
+/// Compare:
+/// - `csr`: existing caller-visible scalar CSR path, unchanged.
+/// - `block_csr_prefetch`: transformed block-CSR layout with predecoded bit
+///   gathers and software prefetch.
+/// - `block_csr_no_prefetch`: same layout with the prefetch distance set to 0,
+///   used to isolate the prefetch hint from the cache-layout transform.
+fn bench_ldpc_block_csr_matvec(c: &mut Criterion) {
+    let mut group = c.benchmark_group("sparse_matvec_ldpc_block_csr");
+    group.sample_size(10);
+    group.measurement_time(std::time::Duration::from_secs(3));
+
+    for &(rows, cols, row_weight) in &[
+        (4096usize, 8192usize, 6usize),
+        (8192, 16384, 6),
+        (4096, 32768, 32),
+    ] {
+        let csr = deterministic_ldpc_like(rows, cols, row_weight);
+        let block = csr.to_default_block_csr();
+        let x = deterministic_bitvec(cols);
+        let case = format!("{rows}x{cols}_w{row_weight}");
+
+        group.bench_with_input(
+            BenchmarkId::new("csr", &case),
+            &(&csr, &x),
+            |b, (csr, x)| b.iter(|| black_box(csr.matvec(x))),
+        );
+        group.bench_with_input(
+            BenchmarkId::new("block_csr_prefetch", &case),
+            &(&block, &x),
+            |b, (block, x)| b.iter(|| black_box(block.matvec(x))),
+        );
+        group.bench_with_input(
+            BenchmarkId::new("block_csr_no_prefetch", &case),
+            &(&block, &x),
+            |b, (block, x)| b.iter(|| black_box(block.matvec_with_prefetch_distance(x, 0))),
+        );
+    }
+
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_sparse_matvec,
@@ -187,6 +254,7 @@ criterion_group!(
     bench_sparse_transpose,
     bench_dual_col_iter_vs_transpose,
     bench_bidirectional_sweep,
-    bench_dual_matvec_transpose
+    bench_dual_matvec_transpose,
+    bench_ldpc_block_csr_matvec
 );
 criterion_main!(benches);
