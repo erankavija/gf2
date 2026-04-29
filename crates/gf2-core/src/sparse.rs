@@ -166,6 +166,40 @@ pub fn block_csr_from_csr(csr: &SpBitMatrix, block_rows: usize) -> SpBitMatrixBl
     }
 }
 
+/// Deterministic LDPC-like sparse fixture shared by sparse benches and examples.
+///
+/// This is hidden from generated API docs because it exists only to keep
+/// performance evidence harnesses on one deterministic input pattern.
+#[doc(hidden)]
+pub fn deterministic_ldpc_like_fixture(rows: usize, cols: usize, row_weight: usize) -> SpBitMatrix {
+    let mut entries = Vec::with_capacity(rows * row_weight);
+    for r in 0..rows {
+        let base = r.wrapping_mul(1_315_423_911usize) ^ rows.rotate_left(7);
+        for k in 0..row_weight {
+            let stride = 2 * k + 1;
+            let col = base
+                .wrapping_add(k.wrapping_mul(97_531))
+                .wrapping_add(r.wrapping_mul(stride))
+                % cols;
+            entries.push((r, col));
+        }
+    }
+    SpBitMatrix::from_coo_deduplicated(rows, cols, &entries)
+}
+
+/// Deterministic input bit-vector fixture shared by sparse benches and examples.
+///
+/// This is hidden from generated API docs because it exists only to keep
+/// performance evidence harnesses on one deterministic input pattern.
+#[doc(hidden)]
+pub fn deterministic_sparse_bitvec_fixture(len: usize) -> BitVec {
+    let mut x = BitVec::with_capacity(len);
+    for i in 0..len {
+        x.push_bit(((i.wrapping_mul(0x9E37_79B1) ^ (i >> 3)) & 7) < 3);
+    }
+    x
+}
+
 impl SpBitMatrixBlockCsr {
     /// Returns number of rows.
     #[inline]
@@ -214,6 +248,29 @@ impl SpBitMatrixBlockCsr {
     ///
     /// `prefetch_distance` is counted in nonzero entries within a row. A distance
     /// of zero disables software prefetch while retaining the block-CSR layout.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `x.len() != self.cols()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::sparse::SpBitMatrix;
+    /// use gf2_core::BitVec;
+    ///
+    /// let a = SpBitMatrix::from_coo(2, 66, &[(0, 1), (0, 65), (1, 64)]);
+    /// let blocked = a.to_block_csr(2);
+    /// let x = BitVec::ones(66);
+    ///
+    /// assert_eq!(blocked.matvec_with_prefetch_distance(&x, 0), a.matvec(&x));
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(rows + nnz) time and O(rows) output storage. A nonzero
+    /// `prefetch_distance` additionally issues best-effort L1 prefetch hints
+    /// while preserving identical GF(2) results.
     pub fn matvec_with_prefetch_distance(&self, x: &BitVec, prefetch_distance: usize) -> BitVec {
         assert_eq!(x.len(), self.cols, "input BitVec length must equal cols");
 
@@ -578,6 +635,22 @@ impl SpBitMatrix {
     ///
     /// Uses a 32-row block, which keeps per-block row metadata compact while
     /// preserving row order for bit-exact parity with CSR.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::sparse::SpBitMatrix;
+    /// use gf2_core::BitVec;
+    ///
+    /// let a = SpBitMatrix::from_coo(2, 66, &[(0, 1), (0, 65), (1, 64)]);
+    /// let blocked = a.to_default_block_csr();
+    /// let x = BitVec::ones(66);
+    /// assert_eq!(blocked.matvec(&x), a.matvec(&x));
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(rows + nnz) time and memory.
     #[inline]
     pub fn to_default_block_csr(&self) -> SpBitMatrixBlockCsr {
         self.to_block_csr(DEFAULT_BLOCK_ROWS)
@@ -843,6 +916,53 @@ impl fmt::Display for SpBitMatrix {
         for r in 0..self.rows {
             write!(f, "  │ ")?;
             let row_cols: Vec<usize> = self.row_iter(r).collect();
+            for c in 0..self.cols {
+                if row_cols.contains(&c) {
+                    write!(f, "1")?;
+                } else {
+                    write!(f, "0")?;
+                }
+                if c < self.cols - 1 {
+                    write!(f, " ")?;
+                }
+            }
+            writeln!(f, " │")?;
+        }
+
+        write!(f, "  └{}┘", " ".repeat(border_width))
+    }
+}
+
+impl fmt::Display for SpBitMatrixBlockCsr {
+    /// Formats the `SpBitMatrixBlockCsr` in nalgebra-like style.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::sparse::SpBitMatrix;
+    ///
+    /// let coo = vec![(0, 0), (0, 3), (1, 1), (2, 2)];
+    /// let s = SpBitMatrix::from_coo(3, 4, &coo).to_block_csr(2);
+    /// println!("{}", s);
+    /// ```
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if self.rows == 0 || self.cols == 0 {
+            return write!(f, "[ ]");
+        }
+
+        let border_width = self.cols * 2 + 1;
+        writeln!(f, "  ┌{}┐", " ".repeat(border_width))?;
+
+        for r in 0..self.rows {
+            let block = r / self.block_rows;
+            let local_row = r - block * self.block_rows;
+            let offset_start = self.block_ptr[block];
+            let nnz_base = self.block_nnz_ptr[block];
+            let start = nnz_base + self.row_offsets[offset_start + local_row];
+            let end = nnz_base + self.row_offsets[offset_start + local_row + 1];
+            let row_cols = &self.indices[start..end];
+
+            write!(f, "  │ ")?;
             for c in 0..self.cols {
                 if row_cols.contains(&c) {
                     write!(f, "1")?;

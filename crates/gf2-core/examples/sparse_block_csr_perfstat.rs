@@ -5,35 +5,10 @@
 //! executes exactly the requested number of LDPC-sized matvecs for each mode so
 //! `perf stat -r 10` compares the same operation count.
 
-use gf2_core::sparse::SpBitMatrix;
-use gf2_core::BitVec;
+use gf2_core::sparse::{deterministic_ldpc_like_fixture, deterministic_sparse_bitvec_fixture};
 use std::env;
 use std::hint::black_box;
 use std::time::Instant;
-
-fn deterministic_ldpc_like(rows: usize, cols: usize, row_weight: usize) -> SpBitMatrix {
-    let mut entries = Vec::with_capacity(rows * row_weight);
-    for r in 0..rows {
-        let base = r.wrapping_mul(1_315_423_911usize) ^ rows.rotate_left(7);
-        for k in 0..row_weight {
-            let stride = 2 * k + 1;
-            let col = base
-                .wrapping_add(k.wrapping_mul(97_531))
-                .wrapping_add(r.wrapping_mul(stride))
-                % cols;
-            entries.push((r, col));
-        }
-    }
-    SpBitMatrix::from_coo_deduplicated(rows, cols, &entries)
-}
-
-fn deterministic_bitvec(len: usize) -> BitVec {
-    let mut x = BitVec::with_capacity(len);
-    for i in 0..len {
-        x.push_bit(((i.wrapping_mul(0x9E37_79B1) ^ (i >> 3)) & 7) < 3);
-    }
-    x
-}
 
 fn parse_arg(args: &[String], name: &str, default: usize) -> usize {
     args.windows(2)
@@ -58,9 +33,9 @@ fn main() {
     let prefetch_distance = parse_arg(&args, "--prefetch-distance", 16);
     let iters = parse_arg(&args, "--iters", 100_000);
 
-    let csr = deterministic_ldpc_like(rows, cols, row_weight);
+    let csr = deterministic_ldpc_like_fixture(rows, cols, row_weight);
     let block = csr.to_block_csr(block_rows);
-    let x = deterministic_bitvec(cols);
+    let x = deterministic_sparse_bitvec_fixture(cols);
     assert_eq!(
         block.matvec_with_prefetch_distance(&x, 0),
         csr.matvec(&x),
