@@ -3260,3 +3260,4 @@
 {"type":"issue_claimed","id":"e8d51e95-1925-45f5-9ba4-6ac9bed1b42c","issue_id":"cbf576d1-8694-4dde-bf29-d047381155c3","timestamp":"2026-04-29T16:06:22.970741050Z","assignee":"agent:claude-wt-cbf576d1"}
 {"type":"issue_state_changed","id":"4a8a07a5-b2be-407a-b646-d6ba0650f481","issue_id":"577b9e7f-06e9-42cc-b9d3-f669b2b63fa4","timestamp":"2026-04-29T16:06:22.978453952Z","from":"ready","to":"in_progress"}
 {"type":"issue_claimed","id":"43303409-ad7f-4c62-ad50-b9cda84f66d0","issue_id":"577b9e7f-06e9-42cc-b9d3-f669b2b63fa4","timestamp":"2026-04-29T16:06:22.978786622Z","assignee":"agent:claude-wt-577b9e7f"}
+{"type":"gate_removed","id":"5a2ff8d8-709f-4d0c-a0ba-1b20a97713ee","issue_id":"cbf576d1-8694-4dde-bf29-d047381155c3","timestamp":"2026-04-29T17:35:17.162590934Z","gate_key":"criterion-1.5x"}
