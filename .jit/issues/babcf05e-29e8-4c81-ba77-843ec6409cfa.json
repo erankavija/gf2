@@ -2,7 +2,7 @@
   "id": "babcf05e-29e8-4c81-ba77-843ec6409cfa",
   "title": "gf2-core PPC-spiral performance sweep",
   "description": "Comprehensive sweep through every scalar gap in `gf2-core` using the Aalto PPC optimization spiral, with proof-of-gain at every step. Each new SIMD kernel lives behind the existing `OnceLock` dispatch boundary in `gf2-kernels-simd`; all high-level code stays `#![deny(unsafe_code)]`.\n\n## Background\n\nPhase-1 exploration confirmed three classes of state in `gf2-core`:\n\n1. Already SIMD-accelerated via `OnceLock` dispatch: bitwise XOR/AND/OR/popcount (AVX2), `Fp<65537>` and `Fp<2^31-1>` batch ops, single-shot CLMUL and 4×4 wide CLMUL (VPCLMULQDQ on YMM).\n2. Already parallel via rayon: `compute/cpu.rs` row-parallel M4RM/RREF/rank.\n3. Scalar gaps with obvious SIMD shape — the targets of this epic.\n\nThe epic walks the canonical PPC spiral (V0 measure → V1 linearise → V2 ILP → V3 SIMD → V4 register tile → V4cache cache block → V5 reuse → V6 prefetch → V7 layout → V10 multithread). V11 GPU offload is out of scope for `gf2-core` — HIP work lives in `gf2-kernels-hip`.\n\nThe work is organised into six stories:\n\n- **Infrastructure** — pin baselines, compare harness, asm-artefact convention, proptest scaffolding (must land before any tier).\n- **Dispatch routing** — Tier A: route scalar callers through existing SIMD dispatch (V0→V3 in one hop).\n- **Dense bit-matrix kernels** — Tier B: new SIMD kernels for transpose, M4RM table build, M4RM block multiply.\n- **Field-arithmetic batch** — Tier C: GF($2^m$) batch, `Fp<P>` Montgomery batch, extension-field SoA.\n- **Sparse layout** — Tier D: prefetch + block-CSR + Cuthill-McKee.\n- **Multithread** — Tier E: rayon scaling for kernels that are not memory-bound after single-thread tuning.\n\nThe full per-kernel execution protocol (V0 baseline → asm artefact → perf-stat → proptest equivalence → $\\geq 1.5\\times$ geomean → commit → lead-only gate transitions) is documented in the epic's spec doc at `dev/plans/gf2_core_ppc_spiral.md`.\n\n## Success Criteria\n\n- [hard] Every Tier A–D kernel ships a criterion bench, sibling `*.asm.txt` artefact, scalar-vs-SIMD proptest equivalence, and $\\geq 1.5\\times$ geomean over the pinned baseline at the kernel's design size class.\n- [hard] `cargo nextest run --workspace --all-features --release --profile ci` passes at fast tier (5 s/test cap).\n- [hard] `cargo clippy --workspace --all-targets --all-features -- -D warnings` clean.\n- [hard] No `unsafe` leaked outside `gf2-kernels-simd` (`#![deny(unsafe_code)]` preserved everywhere else).\n- [hard] MSRV stays at 1.80 unless explicitly user-approved per `escalation-policy.md`.\n- [aspirational] Geomean speedup across all Tier A–D kernels $\\geq 2\\times$ over the baseline.\n\n## Notes\n\nSpec doc with full kernel inventory and per-step protocol: `dev/plans/gf2_core_ppc_spiral.md`. Existing dispatch pattern: `gf2_core::simd::maybe_simd()`, `maybe_gf2m()`, `maybe_mersenne()`, `maybe_fp65537()`, `maybe_gf2m_wide256()` all return `Option<&'static FnsStruct>` via `OnceLock`. New kernels follow the same pattern. Recent baseline data lives under `target/criterion/` (Apr 18–25, 2026); Infrastructure story I1 pins it.\n\n## User-approved closure amendment\n\nApproved at epic closure: the original hard success criteria are interpreted through the child-level empirical amendments and no-go evidence recorded during execution.\n\n- Sparse layout Tier D retains the delivered block-CSR / RCM / prefetch scaffolds and evidence even where measured kernels did not meet the original >=1.5x target; those outcomes are accepted as documented no-go/negative benchmark results rather than failed correctness work.\n- Dense multithread Tier E is accepted with `1f899836` rejected under the mandatory memory-bound pre-flight rule and SoA extension-field batching delivered by `10ba5d08`.\n- Strassen/algorithmic benchmark-gap work is accepted with the production path remaining M4RM-only after measured no crossover through n=8192.\n- The MSRV criterion is updated from the original Rust 1.80 wording to the current user-approved Rust 1.95 project baseline.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:project-lead",
   "dependencies": [
@@ -24,17 +24,17 @@
     "doc-review": {
       "status": "passed",
       "updated_by": null,
-      "updated_at": "2026-04-29T22:44:47.699856536Z"
+      "updated_at": "2026-04-29T23:01:45.694985827Z"
     },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-04-29T22:44:36.886237112Z"
+      "updated_at": "2026-04-29T22:58:21.584752700Z"
     },
     "code-review": {
-      "status": "failed",
+      "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-04-29T22:44:47.757788303Z"
+      "updated_at": "2026-04-29T23:16:05.710550679Z"
     }
   },
   "context": {},
@@ -87,5 +87,5 @@
     "milestone:gf2-core-perf"
   ],
   "created_at": "2026-04-25T15:14:12.083946312+00:00",
-  "updated_at": "2026-04-29T22:57:58.011622316+00:00"
+  "updated_at": "2026-04-29T23:24:31.431835117+00:00"
 }
