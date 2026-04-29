@@ -15,7 +15,14 @@
   ],
   "gates_status": {},
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/benchmarks/1f899836-preflight-abort.txt",
+      "commit": null,
+      "label": "Dense multithread preflight abort",
+      "doc_type": "evidence"
+    }
+  ],
   "labels": [
     "type:task",
     "component:gf2-core",
@@ -24,5 +31,5 @@
     "resolution:preflight-memory-bound"
   ],
   "created_at": "2026-04-25T15:19:27.982645121+00:00",
-  "updated_at": "2026-04-29T20:21:43.419020144+00:00"
+  "updated_at": "2026-04-29T22:36:30.094433900+00:00"
 }

@@ -26,7 +26,21 @@
     }
   },
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/benchmarks/1f899836-preflight-abort.txt",
+      "commit": null,
+      "label": "Dense preflight abort evidence",
+      "doc_type": "evidence"
+    },
+    {
+      "path": "dev/bench_results/2026-04-29-soa-rayon-scaling.md",
+      "commit": null,
+      "label": "SoA Rayon scaling evidence",
+      "doc_type": "evidence",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:story",
     "component:gf2-core",
@@ -34,5 +48,5 @@
     "story:ppc-multithread"
   ],
   "created_at": "2026-04-25T15:16:00.644323511+00:00",
-  "updated_at": "2026-04-29T21:58:25.754036735+00:00"
+  "updated_at": "2026-04-29T22:36:57.231694624+00:00"
 }

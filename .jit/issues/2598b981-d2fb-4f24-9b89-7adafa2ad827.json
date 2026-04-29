@@ -26,6 +26,13 @@
       "label": "Deferred GF(p) benchmark context",
       "doc_type": "evidence",
       "format": "markdown"
+    },
+    {
+      "path": "dev/bench_results/2026-04-29-2598b981-fieldmatrix-gemm-fflas-sweep.md",
+      "commit": null,
+      "label": "GFp fflas sweep evidence",
+      "doc_type": "evidence",
+      "format": "markdown"
     }
   ],
   "labels": [
@@ -35,5 +42,5 @@
     "story:ppc-benchmark-gap"
   ],
   "created_at": "2026-04-29T14:10:43.520036798+00:00",
-  "updated_at": "2026-04-29T22:27:03.132236411+00:00"
+  "updated_at": "2026-04-29T22:36:30.100773912+00:00"
 }
