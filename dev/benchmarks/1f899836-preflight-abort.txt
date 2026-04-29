@@ -1,0 +1,45 @@
+JIT issue: 1f899836
+Title: Rayon row-tile multithread for B1/B3 dense kernels
+Date: 2026-04-29
+Worktree branch: worktree-agent-1f899836
+
+Decision: ABORTED before V10 implementation.
+
+Mandatory pre-flight rule from issue:
+  Run perf stat -r 10 on the post-Tier-B single-thread kernel.
+  If cache-misses / instructions > 1%, the kernel is memory-bound and
+  multithreading will hurt; abort and revert.
+
+Target identification:
+  B1 dense transpose: BitMatrix::transpose, bench leaf matrix_transpose/4096.
+  B3 dense M4RM tile-reuse multiply: alg::m4rm::multiply register-tiled path,
+    bench leaf m4rm_1024x1024.
+
+Build commands:
+  RUSTFLAGS='-C target-cpu=native' cargo bench -p gf2-core --features simd --bench matrix_transpose --no-run
+  RUSTFLAGS='-C target-cpu=native' cargo bench -p gf2-core --features simd --bench m4rm_profile --no-run
+
+Pre-flight perf command 1:
+  RAYON_NUM_THREADS=1 perf stat -r 10 -e instructions,cache-misses target/release/deps/matrix_transpose-ddab0f558c37e698 matrix_transpose/4096 --noplot --warm-up-time 0.1 --measurement-time 0.2 --sample-size 10
+
+Pre-flight perf result 1:
+  instructions:u  = 213,985,925 (+- 0.00%)
+  cache-misses:u  =   4,294,883 (+- 3.15%)
+  time elapsed    = 0.036757490 +- 0.000473623 seconds (+- 1.29%)
+  miss/instruction ratio = 4,294,883 / 213,985,925 = 2.0071%
+  Verdict: FAILS 1% threshold.
+
+Pre-flight perf command 2:
+  RAYON_NUM_THREADS=1 perf stat -r 10 -e instructions,cache-misses target/release/deps/m4rm_profile-06984b701fd0f7b2 m4rm_1024x1024 --noplot --warm-up-time 0.1 --measurement-time 0.2 --sample-size 10
+
+Pre-flight perf result 2:
+  instructions:u  = 283,078,738 (+- 0.00%)
+  cache-misses:u  =   3,992,010 (+- 1.42%)
+  time elapsed    = 0.046374667 +- 0.000484411 seconds (+- 1.04%)
+  miss/instruction ratio = 3,992,010 / 283,078,738 = 1.4102%
+  Verdict: FAILS 1% threshold.
+
+Outcome:
+  Both mandatory target kernels exceed the 1% cache-miss/instruction threshold.
+  Per issue instructions, V10 row-tile rayon parallelism was not implemented,
+  scaling was not measured, and no code paths were changed.
