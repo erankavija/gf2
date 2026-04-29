@@ -1,0 +1,27 @@
+gf2m_wide9_m571_scalar_clmul_barrett
+                        time:   [2.7659 µs 2.7775 µs 2.7909 µs]
+Found 23 outliers among 100 measurements (23.00%)
+  20 (20.00%) low mild
+  3 (3.00%) high mild
+
+gf2m_wide9_m571_mul_dispatched[avx2+vpclmulqdq-ymm]
+                        time:   [163.27 ns 163.52 ns 163.80 ns]
+Found 2 outliers among 100 measurements (2.00%)
+  2 (2.00%) high severe
+
+gf2m_wide9_m571_scalar_clmul_only
+                        time:   [2.6180 µs 2.6191 µs 2.6202 µs]
+Found 8 outliers among 100 measurements (8.00%)
+  6 (6.00%) high mild
+  2 (2.00%) high severe
+
+gf2m_wide9_m571_simd_clmul_only[avx2+vpclmulqdq-ymm]
+                        time:   [22.321 ns 22.335 ns 22.353 ns]
+Found 5 outliers among 100 measurements (5.00%)
+  2 (2.00%) high mild
+  3 (3.00%) high severe
+
+
+# Summary (median point estimates)
+# full multiply+Barrett: scalar 2.7775 µs / dispatched 163.52 ns = 16.99x speedup
+# raw clmul only: scalar 2.6191 µs / VPCLMULQDQ-YMM 22.335 ns = 117.26x speedup
