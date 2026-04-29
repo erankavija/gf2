@@ -2,9 +2,9 @@
   "id": "f1a896f0-097a-4598-9484-d4a2efe711ad",
   "title": "SparseBitMatrix::matvec prefetch + block-CSR layout",
   "description": "Add software prefetch and a block-CSR layout to `SparseBitMatrix::matvec`. Currently scalar CSR with no prefetch; the gather pattern is index-driven and cache-unfriendly for LDPC parity-check matrices.\n\n## Background\n\n`SparseBitMatrix::matvec` in `crates/gf2-core/src/sparse.rs` does scalar CSR iteration. No prefetch, no block layout. The gather pattern reads `col_idx[i]` and follows it into the input vector — a memory access pattern that misses L1 frequently for LDPC-sized matrices.\n\nThe fix walks PPC steps:\n\n- V6 prefetch: software prefetch of `col_idx[i + lookahead]` while processing entry $i$. Tune `lookahead` from L1 latency.\n- V7 layout: block-CSR with $4 \\times 64$ dense bit-blocks within sparse rows. Add a one-shot transformer from CSR to block-CSR. The transformer is a separate function — callers opt in.\n- V3 SIMD: only inside dense blocks (XOR-reduce a u64 row of 4 packed columns).\n\n## Success Criteria\n\n- [hard] Bit-exact vs. existing CSR matvec.\n- [hard] Block-CSR transformer is a separate function; existing CSR path unchanged for callers that do not opt in.\n- [hard] Sibling `*.asm.txt` artefact shows prefetch instructions actually emitted.\n- [hard] `perf stat -r 10` capture shows L1d-miss rate drops on the LDPC-sized sparse bench.\n- [hard] Word-boundary `#[test]`s pass for the transformer.\n- [aspirational] $\\geq 1.5\\times$ geomean on `sparse.rs` bench at LDPC parity-check sizes.\n\n## Notes\n\nCache-bound kernel: rely on cache-miss-rate improvement when IPC delta is small but L1d-miss drops materially. Bench: `sparse` (existing, pinned by I1). Spec doc: `dev/plans/gf2_core_ppc_spiral.md`.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude-wt-f1a896f0",
   "dependencies": [
     "166b2691-82a9-476a-b272-cacd71b58d4c"
   ],
@@ -30,5 +30,5 @@
     "ppc-kernel:D1"
   ],
   "created_at": "2026-04-25T15:19:11.130623480+00:00",
-  "updated_at": "2026-04-27T19:16:26.832106568+00:00"
+  "updated_at": "2026-04-29T13:04:36.014462366+00:00"
 }
