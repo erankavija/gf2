@@ -226,6 +226,63 @@ fn bench_ldpc_block_csr_matvec(c: &mut Criterion) {
     group.finish();
 }
 
+/// LDPC-sized amortized Reverse Cuthill-McKee preprocessing benchmark.
+///
+/// Compares the unchanged CSR path with the opt-in RCM row/column layout over
+/// 128 repeated matvecs. The one-shot `reorder_rcm` transformation is performed
+/// outside the timed loop to model dispatch paths that reuse the same parity
+/// check matrix for many codeword/syndrome evaluations.
+fn bench_ldpc_rcm_amortized_matvec(c: &mut Criterion) {
+    const CALLS: usize = 128;
+
+    let mut group = c.benchmark_group("sparse_matvec_ldpc_rcm_amortized_128");
+    group.sample_size(10);
+    group.measurement_time(std::time::Duration::from_secs(3));
+
+    for &(rows, cols, row_weight) in &[
+        (4096usize, 8192usize, 6usize),
+        (8192, 16384, 6),
+        (4096, 32768, 32),
+    ] {
+        let csr = deterministic_ldpc_like_fixture(rows, cols, row_weight);
+        let (rcm, permutation) = csr.reorder_rcm();
+        let x = deterministic_sparse_bitvec_fixture(cols);
+        let x_rcm = permutation.apply_cols(&x);
+        let case = format!("{rows}x{cols}_w{row_weight}");
+
+        group.bench_with_input(
+            BenchmarkId::new("csr", &case),
+            &(&csr, &x),
+            |b, (csr, x)| {
+                b.iter(|| {
+                    let mut last = BitVec::with_capacity(csr.rows());
+                    for _ in 0..CALLS {
+                        last = black_box(csr).matvec(black_box(x));
+                    }
+                    black_box(last)
+                });
+            },
+        );
+
+        group.bench_with_input(
+            BenchmarkId::new("rcm", &case),
+            &(&rcm, &permutation, &x_rcm),
+            |b, (rcm, permutation, x_rcm)| {
+                b.iter(|| {
+                    let mut last = BitVec::with_capacity(rcm.rows());
+                    for _ in 0..CALLS {
+                        let y_rcm = black_box(rcm).matvec(black_box(x_rcm));
+                        last = permutation.unapply_rows(&y_rcm);
+                    }
+                    black_box(last)
+                });
+            },
+        );
+    }
+
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_sparse_matvec,
@@ -234,6 +291,7 @@ criterion_group!(
     bench_dual_col_iter_vs_transpose,
     bench_bidirectional_sweep,
     bench_dual_matvec_transpose,
-    bench_ldpc_block_csr_matvec
+    bench_ldpc_block_csr_matvec,
+    bench_ldpc_rcm_amortized_matvec
 );
 criterion_main!(benches);
