@@ -3,9 +3,10 @@
 JIT issue: `59c487c3`.
 
 This run measures the new safe Rust Strassen-family layer for square GF(2)
-`BitMatrix` multiplication against the existing M4RM leaf path.  The layer is
-wired through `BitMatrix`'s `Mul` implementations, while `alg::m4rm::multiply`
-remains the explicit M4RM baseline.
+`BitMatrix` multiplication against the existing M4RM leaf path. The Strassen
+implementation is retained as a forced correctness/benchmark hook, while
+production `BitMatrix` multiplication remains on M4RM until a measured crossover
+shows Strassen winning.
 
 ## Command
 
@@ -17,19 +18,23 @@ RUSTFLAGS="-C target-cpu=native" \
 
 Host-side notes: Criterion emitted wide confidence intervals at the largest
 sizes because the requested two-second measurement window allowed only ten
-8192×8192 samples. Treat 8192 as crossover guardrail evidence, not a precise
-throughput claim.
+8192×8192 samples. Treat the 8192 row as evidence that this implementation has
+not crossed over by that size, not as a precise throughput claim.
 
-## Final policy
+## Final policy after rework
 
-Selected automatic crossover: **n ≥ 16,384**, square power-of-two matrices only,
-one Strassen-family level with M4RM leaves.
+Selected automatic crossover: **none**.
 
-Reason: forced one-level Strassen did **not** beat M4RM through n=8192. The
-automatic dispatcher therefore preserves the existing M4RM/scalar fallback in
-all measured sizes and only enables the Strassen-family path above the measured
-non-crossover range. Rectangular, non-square, and non-power-of-two inputs always
-fall back to M4RM.
+Reason: forced one-level Strassen did **not** beat M4RM through n=8192, and no
+measurement on this branch shows n=16,384 or any larger size winning. A threshold
+above the largest measured non-crossover would be an unproven production route
+into a potentially slower path. Production `BitMatrix` multiplication therefore
+keeps the existing M4RM/scalar fallback behavior for all real workloads.
+
+The safe Rust Strassen-family implementation remains available only through
+`#[cfg(any(test, feature = "test-support"))]` correctness and benchmark hooks
+so future scratch/view optimization work can reuse the implementation without
+changing public APIs.
 
 ## Criterion results from this branch
 
@@ -40,13 +45,20 @@ fall back to M4RM.
 | 4096 | 42.399 ms | 42.378 ms | 46.264 ms | 1,622 Gops/s |
 | 8192 | 325.788 ms | 308.086 ms | 312.986 ms | 1,784 Gops/s |
 
-The auto column is M4RM for all rows in this table under the final n≥16384
-policy. The small auto/base differences are benchmark noise and run-order
-effects; the dispatch predicate is covered by unit tests. The hard production
-path exists above the conservative threshold, but the measured-size speedup is
-from the M4RM/Tier-A/B leaf improvements rather than from Strassen; future work
-that wants a lower crossover should revisit scratch/view optimization instead
-of forcing Strassen onto these measured sizes.
+The auto column was M4RM for all measured rows. The small auto/base differences
+are benchmark noise and run-order effects; after this rework auto dispatch is
+M4RM for all production sizes because the branch has no empirically selected
+Strassen crossover.
+
+## Status against the issue criterion
+
+This branch proves correctness of the Strassen-family implementation and keeps
+existing M4RM/scalar fallbacks available. It does **not** meet the hard
+production-path crossover criterion: the copy-based Strassen layer has no
+measured winning crossover within the feasible measurement budget recorded here.
+Meeting that criterion requires a follow-up design decision, likely scratch/view
+temporaries or another lower-allocation Strassen-Winograd schedule, followed by
+new measurements that identify a real crossover.
 
 ## Comparison to pinned `64c88ae4` report
 
@@ -60,6 +72,5 @@ M4RI ratios are available there for n=1024 and n=4096.
 
 Interpretation: current Tier-A/B leaf improvements substantially improved the
 baseline available to Strassen leaves, but this copy-based high-level Strassen
-layer still does not cross over by n=8192. The conservative threshold avoids
-regressing measured production sizes while keeping the recursive path available
-for larger square powers of two and future scratch/view optimizations.
+layer still does not cross over by n=8192. Production dispatch deliberately
+stays on M4RM rather than guessing a larger unmeasured crossover.

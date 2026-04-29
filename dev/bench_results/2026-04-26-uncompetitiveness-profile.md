@@ -26,8 +26,8 @@ Three compounding causes, ranked by remediation ease ↘ payoff ↗:
    implementation note: `59c487c3` added a safe Rust Strassen-family
    `BitMatrix` path, but `dev/bench_results/2026-04-29-strassen-matmul-crossover.md`
    found forced Strassen did not beat M4RM through `8192`; production
-   dispatch therefore keeps M4RM for measured sizes and enables Strassen
-   only for square power-of-two `n >= 16_384`.
+   dispatch therefore stays on M4RM for all sizes pending a measured
+   winning crossover.
 
 A direct test confirms (1)+(2): enabling `--features simd` on the
 emitter only buys **+16% at n=1024 and +24% at n=4096**, vs. the ~4×
@@ -124,12 +124,11 @@ sign-off). Recommend a new perf epic with at least these stories:
    compile-time branch with a runtime-gated wrapper at the binary
    crate level.
 3. **`perf:m4rm-strassen-layer`** — Historical recommendation,
-   implemented by `59c487c3` as a conservative Strassen-family
+   partially implemented by `59c487c3` as a test-support Strassen-family
    `BitMatrix` layer. The originally expected n ≥ 1024 crossover did
    not materialize in the 2026-04-29 evidence: forced one-level
    Strassen did not beat M4RM through `8192`, so production dispatch
-   keeps M4RM for measured sizes and reserves Strassen for square
-   power-of-two `n >= 16_384`.
+   stays on M4RM for all sizes until a measured winning crossover exists.
 4. **`perf:fp-delayed-reduction`** — Out of scope for the GF(2) gap
    but flagged here for completeness: fflas-ffpack `Fp<P>` for small
    primes batches multiplications into accumulators that defer modular
