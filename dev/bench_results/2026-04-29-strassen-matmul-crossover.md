@@ -42,7 +42,11 @@ fall back to M4RM.
 
 The auto column is M4RM for all rows in this table under the final n≥16384
 policy. The small auto/base differences are benchmark noise and run-order
-effects; the dispatch predicate is covered by unit tests.
+effects; the dispatch predicate is covered by unit tests. The hard production
+path exists above the conservative threshold, but the measured-size speedup is
+from the M4RM/Tier-A/B leaf improvements rather than from Strassen; future work
+that wants a lower crossover should revisit scratch/view optimization instead
+of forcing Strassen onto these measured sizes.
 
 ## Comparison to pinned `64c88ae4` report
 
