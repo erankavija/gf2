@@ -20,9 +20,14 @@ Three compounding causes, ranked by remediation ease ↘ payoff ↗:
    loaded per `xor_inplace` call. The hot M4RM path performs ~1M–17M
    `xor_inplace` calls per matmul depending on n; each pays a load +
    pointer call regardless of buffer size.
-3. **No Strassen layer in `gf2-core::alg`.** M4RI auto-switches to
-   Strassen-Winograd at n ≥ 1024 by default. Our M4RM is pure
-   schoolbook.
+3. **Historical: no Strassen layer in `gf2-core::alg` at the time of
+   this profile.** M4RI auto-switched to Strassen-Winograd at n ≥ 1024
+   by default, while gf2's M4RM path was pure schoolbook. Superseded
+   implementation note: `59c487c3` added a safe Rust Strassen-family
+   `BitMatrix` path, but `dev/bench_results/2026-04-29-strassen-matmul-crossover.md`
+   found forced Strassen did not beat M4RM through `8192`; production
+   dispatch therefore stays on M4RM for all sizes pending a measured
+   winning crossover.
 
 A direct test confirms (1)+(2): enabling `--features simd` on the
 emitter only buys **+16% at n=1024 and +24% at n=4096**, vs. the ~4×
@@ -118,10 +123,12 @@ sign-off). Recommend a new perf epic with at least these stories:
    can devirtualize, OR with a `cfg!(target_feature = "avx2")`
    compile-time branch with a runtime-gated wrapper at the binary
    crate level.
-3. **`perf:m4rm-strassen-layer`** — Add Strassen-Winograd recursion
-   to `gf2-core::alg::m4rm` for n ≥ 1024 (parameter-tunable). Expected
-   payoff: ~12% per recursion level, so 3-level switch at n=4096 ≈
-   1.4× on top of the inlining wins. Closes most of the n=4096 gap.
+3. **`perf:m4rm-strassen-layer`** — Historical recommendation,
+   partially implemented by `59c487c3` as a test-support Strassen-family
+   `BitMatrix` layer. The originally expected n ≥ 1024 crossover did
+   not materialize in the 2026-04-29 evidence: forced one-level
+   Strassen did not beat M4RM through `8192`, so production dispatch
+   stays on M4RM for all sizes until a measured winning crossover exists.
 4. **`perf:fp-delayed-reduction`** — Out of scope for the GF(2) gap
    but flagged here for completeness: fflas-ffpack `Fp<P>` for small
    primes batches multiplications into accumulators that defer modular

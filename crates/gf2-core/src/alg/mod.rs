@@ -4,4 +4,7 @@
 
 pub mod gauss;
 pub mod m4rm;
+pub(crate) mod matmul;
 pub mod rref;
+#[cfg(any(test, feature = "test-support"))]
+pub(crate) mod strassen;
