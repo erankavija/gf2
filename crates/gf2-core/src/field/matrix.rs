@@ -3508,17 +3508,18 @@ mod tests {
         m
     }
 
-    fn random_gf16_matrix(
+    fn random_gf2m_matrix_with_mask(
         field: &Gf2mField,
         rows: usize,
         cols: usize,
         seed: u64,
+        mask: u64,
     ) -> FieldMatrix<Gf2mElement> {
         use rand::{Rng, SeedableRng};
         let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
         let mut data = FieldVec::with_capacity(rows * cols);
         for _ in 0..(rows * cols) {
-            data.push(field.element(rng.gen::<u64>() & 0xF));
+            data.push(field.element(rng.gen::<u64>() & mask));
         }
         // Construct row-by-row via from_rows to avoid touching the
         // ConstField-only `zeros` constructor.
@@ -3532,6 +3533,15 @@ mod tests {
             rows_vec.push(row);
         }
         FieldMatrix::from_rows(rows_vec)
+    }
+
+    fn random_gf16_matrix(
+        field: &Gf2mField,
+        rows: usize,
+        cols: usize,
+        seed: u64,
+    ) -> FieldMatrix<Gf2mElement> {
+        random_gf2m_matrix_with_mask(field, rows, cols, seed, 0xF)
     }
 
     // ─── Degenerate-dimension correctness tests ───────────────────────────
@@ -4115,8 +4125,10 @@ mod tests {
         where
             F: crate::field::ConstField + FromGf2mU64,
         {
-            // Includes 64c88ae4's rectangular inner dimensions k={8,32}
-            // and output tile boundaries around 32 rows / 64 columns.
+            // Covers skinny-inner development cells plus output tile
+            // boundaries around 32 rows / 64 columns. The exact
+            // 64c88ae4 skinny-output shapes are covered separately below
+            // with a structured diagonal-left reference.
             for (m, k, n) in [
                 (GEMM_ROW_TILE - 1, 8, GEMM_COL_TILE - 1),
                 (GEMM_ROW_TILE, 8, GEMM_COL_TILE),
@@ -4139,17 +4151,50 @@ mod tests {
 
     #[test]
     fn test_runtime_gf2m_batch_gemm_matches_scalar_for_rectangular_shapes() {
-        for field in [
-            crate::gf2m::Gf2mField::gf256(),
-            crate::gf2m::Gf2mField::gf65536(),
+        for (field, mask) in [
+            (crate::gf2m::Gf2mField::gf256(), 0xFF),
+            (crate::gf2m::Gf2mField::gf65536(), 0xFFFF),
         ] {
             for (m, k, n) in [(9, 8, 7), (7, 32, 9), (GEMM_ROW_TILE + 1, 8, 11)] {
-                let a = random_gf16_matrix(&field, m, k, 0xABCDu64 ^ (m * k) as u64);
-                let b = random_gf16_matrix(&field, k, n, 0xDCBAu64 ^ (k * n) as u64);
+                let a =
+                    random_gf2m_matrix_with_mask(&field, m, k, 0xABCDu64 ^ (m * k) as u64, mask);
+                let b =
+                    random_gf2m_matrix_with_mask(&field, k, n, 0xDCBAu64 ^ (k * n) as u64, mask);
                 let got = gemm(&a, &b);
                 assert_eq!(got, naive_gemm(&a, &b), "{}x{}x{}", m, k, n);
             }
         }
+    }
+
+    #[test]
+    fn test_gf2m_batch_gemm_covers_64c88ae4_rectangular_shapes() {
+        fn check<F>(label: &str, mask: u64)
+        where
+            F: crate::field::ConstField + FromGf2mU64,
+        {
+            for (rows, cols) in [(1024usize, 8usize), (1024, 32)] {
+                let mut left = FieldMatrix::<F>::zeros(rows, rows);
+                let mut right = FieldMatrix::<F>::zeros(rows, cols);
+                let mut expected = FieldMatrix::<F>::zeros(rows, cols);
+
+                for i in 0..rows {
+                    let diagonal = F::from_gf2m_u64((((i as u64) * 13 + 1) & mask).max(1));
+                    left.set(i, i, diagonal.clone());
+                    for j in 0..cols {
+                        let value = F::from_gf2m_u64(
+                            (((i as u64) * 17) ^ ((j as u64) * 29) ^ 0x577B_9E7F) & mask,
+                        );
+                        right.set(i, j, value.clone());
+                        expected.set(i, j, diagonal.clone() * value);
+                    }
+                }
+
+                let got = gemm(&left, &right);
+                assert_eq!(got, expected, "{label}: 1024x1024x{cols}");
+            }
+        }
+
+        check::<Gf2m8>("GF(2^8)", 0xFF);
     }
 
     #[test]

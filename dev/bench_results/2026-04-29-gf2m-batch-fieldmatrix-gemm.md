@@ -23,6 +23,7 @@ CARGO_TARGET_DIR=target-577b9e7f cargo fmt -p gf2-core -- --check
 CARGO_TARGET_DIR=target-577b9e7f cargo check -p gf2-core --release --lib --features simd,rand
 CARGO_TARGET_DIR=target-577b9e7f cargo test -p gf2-core --release --lib --features simd,rand gf2m_batch_gemm -- --nocapture
 CARGO_TARGET_DIR=target-577b9e7f cargo test -p gf2-core --release --lib --features simd,rand gemm_matches_naive_gf2 -- --nocapture
+CARGO_TARGET_DIR=target-577b9e7f cargo test -p gf2-core --release --lib --features simd,rand test_gf2m_batch_gemm_covers_64c88ae4_rectangular_shapes -- --nocapture
 CARGO_TARGET_DIR=target-577b9e7f cargo check -p gf2-core --release --bench fieldmatrix_gf2m_batch_gemm --features simd,rand
 CARGO_TARGET_DIR=target-577b9e7f cargo clippy -p gf2-core --release --lib --features simd,rand -- -D warnings
 CARGO_TARGET_DIR=target-577b9e7f cargo nextest run -p gf2-core --release --profile ci --features simd,rand
@@ -44,6 +45,12 @@ The benchmark compares:
   single-word GF(2^m) dot products through the batched VPCLMULQDQ-aware
   product-sum hook and reusing scratch buffers across output cells.
 
+The correctness suite includes the exact `64c88ae4` rectangular shapes
+`1024×1024×8` and `1024×1024×32` via a structured diagonal-left reference in
+`test_gf2m_batch_gemm_covers_64c88ae4_rectangular_shapes`. That keeps the fast
+CI tier below the per-test budget while still forcing the production GEMM path
+to execute the full skinny-output dot-product geometry.
+
 ## Results
 
 Criterion median throughput:
@@ -60,16 +67,17 @@ Criterion median throughput:
 | GF(2^32) | `128×8×128` | 18.181 Mops/s | 133.25 Mops/s | 7.33× |
 | GF(2^32) | `128×32×128` | 17.897 Mops/s | 275.80 Mops/s | 15.41× |
 
-Against the `64c88ae4` published gf2-side baselines:
+Against the `64c88ae4` published gf2-side square baselines:
 
-| field / published shape | `64c88ae4` baseline | nearest new measured shape | new throughput | ratio |
+| field / published shape | `64c88ae4` baseline | new measured shape | new throughput | ratio |
 |---|---:|---:|---:|---:|
 | GF(2^8), `n=64` | 36.455 Mops/s | `64×64×64` | 182.48 Mops/s | 5.01× |
 | GF(2^16), `n=64` | 32.548 Mops/s | `64×64×64` | 186.88 Mops/s | 5.74× |
-| GF(2^8), `1024×1024×8` | 36.429 Mops/s | `128×8×128` | 89.101 Mops/s | 2.45× |
-| GF(2^16), `1024×1024×8` | 32.479 Mops/s | `128×8×128` | 124.71 Mops/s | 3.84× |
-| GF(2^8), `1024×1024×32` | 36.269 Mops/s | `128×32×128` | 164.72 Mops/s | 4.54× |
-| GF(2^16), `1024×1024×32` | 32.646 Mops/s | `128×32×128` | 297.05 Mops/s | 9.10× |
+
+The published skinny-output cells (`1024×1024×8` and `1024×1024×32`) are
+covered for correctness by the release test above. They are not used for the
+fast-budget scalar-eager benchmark table because a dense scalar triple-loop
+reference at those shapes is too expensive for the normal agent lane.
 
 ## Compute-bound vs memory-bound interpretation
 
