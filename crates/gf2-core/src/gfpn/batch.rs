@@ -29,14 +29,20 @@
 //!
 //! # SIMD integration
 //!
-//! [`BatchExtField::batch_mul_quadratic`] and
-//! [`BatchExtField::batch_square_quadratic`] dispatch through the
+//! [`BatchExtField::batch_mul_quadratic`],
+//! [`BatchExtField::batch_square_quadratic`],
+//! [`BatchExtField::batch_mul_cubic`], and
+//! [`BatchExtField::batch_square_cubic`] dispatch through the
 //! [`SimdKaratsubaHook`] trait. For the specialised case
-//! `F = Fp<65537>` on AVX2 hosts the trait routes into the fused AVX2
-//! Karatsuba kernel exposed by `gf2-kernels-simd::fp65537`
+//! `F = Fp<65537>` on AVX2 hosts the quadratic trait route uses the fused
+//! AVX2 Karatsuba kernel exposed by `gf2-kernels-simd::fp65537`
 //! (`batch_karatsuba_fn`): every 8-lane 256-bit vector iteration reads
 //! `a0, a1, b0, b1` once, keeps the seven Karatsuba intermediates in
-//! registers, and writes `out_c0, out_c1` once. The reduction exploits
+//! registers, and writes `out_c0, out_c1` once. The cubic `Fp<65537>` route
+//! uses the sibling fused AVX2 Karatsuba-3 kernel, while other supported
+//! `Fp<P>` bases compose the same base-field add/sub/mul SIMD hooks over
+//! three coefficient lanes and six independent Karatsuba products. The
+//! reduction exploits
 //! `2^16 ≡ -1 (mod 65537)` — the product splits at the 16-bit boundary
 //! and a single `lo + P - hi` fold plus one branchless canonicalisation
 //! delivers a canonical u32 per lane.
@@ -118,7 +124,7 @@ use std::array;
 
 use crate::field::{ConstField, FiniteField};
 use crate::gfp::{Fp, SimdVecOps};
-use crate::gfpn::{ExtConfig, QuadraticExt};
+use crate::gfpn::{CubicExt, ExtConfig, QuadraticExt};
 
 // ---------------------------------------------------------------------------
 // Core SoA batch container
@@ -669,6 +675,307 @@ impl<F: ConstField + SimdKaratsubaHook> BatchExtField<F, 2> {
 }
 
 // ---------------------------------------------------------------------------
+// Cubic extension specialisations (N = 3)
+// ---------------------------------------------------------------------------
+
+impl<F: ConstField + SimdKaratsubaHook> BatchExtField<F, 3> {
+    /// Converts a slice of [`CubicExt<C>`] elements into SoA form.
+    ///
+    /// This is the AoS→SoA transpose for cubic-extension elements. Cost is
+    /// `O(len)` base-field copies and three allocations (one per coefficient
+    /// lane).
+    ///
+    /// # Type Parameters
+    ///
+    /// * `C` — extension config whose base field matches `F`.
+    ///
+    /// # Arguments
+    ///
+    /// * `elements` — slice of scalar cubic-extension elements.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::gfp::Fp;
+    /// use gf2_core::gfpn::{BatchExtField, CubicExt, ExtConfig};
+    ///
+    /// struct Cfg;
+    /// impl ExtConfig for Cfg {
+    ///     type BaseField = Fp<7>;
+    ///     const NON_RESIDUE: Fp<7> = Fp::<7>::new(3);
+    /// }
+    /// type Fq3 = CubicExt<Cfg>;
+    ///
+    /// let xs = vec![Fq3::new(Fp::new(1), Fp::new(2), Fp::new(3))];
+    /// let batch = BatchExtField::<Fp<7>, 3>::from_cubic::<Cfg>(&xs);
+    /// assert_eq!(batch.coeff(2)[0].value(), 3);
+    /// ```
+    pub fn from_cubic<C: ExtConfig<BaseField = F>>(elements: &[CubicExt<C>]) -> Self {
+        let len = elements.len();
+        let mut c0 = Vec::with_capacity(len);
+        let mut c1 = Vec::with_capacity(len);
+        let mut c2 = Vec::with_capacity(len);
+        for e in elements {
+            c0.push(e.c0());
+            c1.push(e.c1());
+            c2.push(e.c2());
+        }
+        Self {
+            coeffs: [c0, c1, c2],
+        }
+    }
+
+    /// Converts a cubic SoA batch back into an AoS `Vec<CubicExt<C>>`.
+    ///
+    /// This is the SoA→AoS transpose. Cost is `O(len)` base-field copies and
+    /// one allocation.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `C` — extension config whose base field matches `F`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::gfp::Fp;
+    /// use gf2_core::gfpn::{BatchExtField, CubicExt, ExtConfig};
+    ///
+    /// struct Cfg;
+    /// impl ExtConfig for Cfg {
+    ///     type BaseField = Fp<7>;
+    ///     const NON_RESIDUE: Fp<7> = Fp::<7>::new(3);
+    /// }
+    /// type Fq3 = CubicExt<Cfg>;
+    ///
+    /// let xs = vec![Fq3::new(Fp::new(1), Fp::new(2), Fp::new(3))];
+    /// let roundtrip = BatchExtField::<Fp<7>, 3>::from_cubic::<Cfg>(&xs).to_cubic::<Cfg>();
+    /// assert_eq!(roundtrip, xs);
+    /// ```
+    pub fn to_cubic<C: ExtConfig<BaseField = F>>(&self) -> Vec<CubicExt<C>> {
+        self.coeffs[0]
+            .iter()
+            .zip(self.coeffs[1].iter())
+            .zip(self.coeffs[2].iter())
+            .map(|((c0, c1), c2)| CubicExt::<C>::new(*c0, *c1, *c2))
+            .collect()
+    }
+
+    /// Element-wise Karatsuba-3 multiplication for batched cubic-extension
+    /// elements.
+    ///
+    /// For each batch index `i`, computes `self[i] * other[i]` using the same
+    /// six-product formula as [`CubicExt::mul`], but over coefficient lanes in
+    /// Structure-of-Arrays order. For `Fp<P>` bases the six independent
+    /// products and the surrounding adds/subs route through the shared
+    /// [`crate::gfp::SimdVecOps`] hooks when they are available; otherwise the
+    /// straight-line scalar lane combine preserves the same bit-exact result.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `C` — extension config supplying the non-residue β.
+    ///
+    /// # Arguments
+    ///
+    /// * `other` — right-hand batch. Must match `self` in batch size.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `self.len() != other.len()`.
+    ///
+    /// # Complexity
+    ///
+    /// `O(len)`: 6 base-field multiplications, 6 additions, 7 subtractions,
+    /// and two non-residue scales per lane.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::gfp::Fp;
+    /// use gf2_core::gfpn::{BatchExtField, CubicExt, ExtConfig};
+    ///
+    /// struct Cfg;
+    /// impl ExtConfig for Cfg {
+    ///     type BaseField = Fp<7>;
+    ///     const NON_RESIDUE: Fp<7> = Fp::<7>::new(3);
+    /// }
+    /// type Fq3 = CubicExt<Cfg>;
+    ///
+    /// let a = vec![Fq3::new(Fp::new(1), Fp::new(2), Fp::new(3))];
+    /// let b = vec![Fq3::new(Fp::new(4), Fp::new(5), Fp::new(6))];
+    /// let ba = BatchExtField::<Fp<7>, 3>::from_cubic::<Cfg>(&a);
+    /// let bb = BatchExtField::<Fp<7>, 3>::from_cubic::<Cfg>(&b);
+    /// let got = ba.batch_mul_cubic::<Cfg>(&bb).to_cubic::<Cfg>();
+    /// assert_eq!(got[0], a[0] * b[0]);
+    /// ```
+    pub fn batch_mul_cubic<C: ExtConfig<BaseField = F>>(&self, other: &Self) -> Self {
+        assert_eq!(
+            self.len(),
+            other.len(),
+            "batch_mul_cubic: length mismatch ({} vs {})",
+            self.len(),
+            other.len()
+        );
+
+        let coeffs = batch_cubic_karatsuba::<F, C>(
+            self.coeff(0),
+            self.coeff(1),
+            self.coeff(2),
+            other.coeff(0),
+            other.coeff(1),
+            other.coeff(2),
+        );
+        Self { coeffs }
+    }
+
+    /// Element-wise squaring for batched cubic-extension elements.
+    ///
+    /// Computes `self[i]²` by applying the cubic SoA Karatsuba-3 combine with
+    /// the left and right coefficient lanes aliased. This keeps the square path
+    /// on the same SIMD-composed base-field kernels as
+    /// [`Self::batch_mul_cubic`].
+    ///
+    /// # Type Parameters
+    ///
+    /// * `C` — extension config supplying the non-residue β.
+    ///
+    /// # Complexity
+    ///
+    /// `O(len)`: same asymptotic cost as batched cubic multiplication.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::gfp::Fp;
+    /// use gf2_core::gfpn::{BatchExtField, CubicExt, ExtConfig};
+    ///
+    /// struct Cfg;
+    /// impl ExtConfig for Cfg {
+    ///     type BaseField = Fp<7>;
+    ///     const NON_RESIDUE: Fp<7> = Fp::<7>::new(3);
+    /// }
+    /// type Fq3 = CubicExt<Cfg>;
+    ///
+    /// let xs = vec![Fq3::new(Fp::new(1), Fp::new(2), Fp::new(3))];
+    /// let batch = BatchExtField::<Fp<7>, 3>::from_cubic::<Cfg>(&xs);
+    /// let squares = batch.batch_square_cubic::<Cfg>().to_cubic::<Cfg>();
+    /// assert_eq!(squares[0], xs[0] * xs[0]);
+    /// ```
+    pub fn batch_square_cubic<C: ExtConfig<BaseField = F>>(&self) -> Self {
+        let coeffs = batch_cubic_karatsuba::<F, C>(
+            self.coeff(0),
+            self.coeff(1),
+            self.coeff(2),
+            self.coeff(0),
+            self.coeff(1),
+            self.coeff(2),
+        );
+        Self { coeffs }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Base-lane and Karatsuba back-ends: scalar and SIMD-composed
+// ---------------------------------------------------------------------------
+
+#[inline]
+fn batch_add_lane<F>(a: &[F], b: &[F]) -> Vec<F>
+where
+    F: ConstField + SimdKaratsubaHook,
+{
+    debug_assert_eq!(a.len(), b.len());
+    if let Some(out) = F::try_simd_add_vec(a, b) {
+        return out;
+    }
+    a.iter().zip(b.iter()).map(|(x, y)| *x + *y).collect()
+}
+
+#[inline]
+fn batch_sub_lane<F>(a: &[F], b: &[F]) -> Vec<F>
+where
+    F: ConstField + SimdKaratsubaHook,
+{
+    debug_assert_eq!(a.len(), b.len());
+    if let Some(out) = F::try_simd_sub_vec(a, b) {
+        return out;
+    }
+    a.iter().zip(b.iter()).map(|(x, y)| *x - *y).collect()
+}
+
+#[inline]
+fn batch_mul_lane<F>(a: &[F], b: &[F]) -> Vec<F>
+where
+    F: ConstField + SimdKaratsubaHook,
+{
+    debug_assert_eq!(a.len(), b.len());
+    if let Some(out) = F::try_simd_mul_vec(a, b) {
+        return out;
+    }
+    a.iter().zip(b.iter()).map(|(x, y)| *x * *y).collect()
+}
+
+#[inline]
+fn batch_mul_by_non_residue_lane<F, C>(xs: &[F]) -> Vec<F>
+where
+    F: ConstField + SimdKaratsubaHook,
+    C: ExtConfig<BaseField = F>,
+{
+    let beta = vec![C::NON_RESIDUE; xs.len()];
+    if let Some(out) = F::try_simd_mul_vec(xs, &beta) {
+        return out;
+    }
+    xs.iter().map(|x| C::mul_by_non_residue(*x)).collect()
+}
+
+#[inline]
+#[allow(clippy::too_many_arguments)]
+fn batch_cubic_karatsuba<F, C>(
+    a0: &[F],
+    a1: &[F],
+    a2: &[F],
+    b0: &[F],
+    b1: &[F],
+    b2: &[F],
+) -> [Vec<F>; 3]
+where
+    F: ConstField + SimdKaratsubaHook,
+    C: ExtConfig<BaseField = F>,
+{
+    if let Some(out) = F::try_simd_cubic_karatsuba::<C>(a0, a1, a2, b0, b1, b2) {
+        return out;
+    }
+
+    let v0 = batch_mul_lane(a0, b0);
+    let v1 = batch_mul_lane(a1, b1);
+    let v2 = batch_mul_lane(a2, b2);
+
+    let a1_plus_a2 = batch_add_lane(a1, a2);
+    let b1_plus_b2 = batch_add_lane(b1, b2);
+    let cross12 = batch_mul_lane(&a1_plus_a2, &b1_plus_b2);
+    let x_minus_v1 = batch_sub_lane(&cross12, &v1);
+    let x = batch_sub_lane(&x_minus_v1, &v2);
+
+    let a0_plus_a1 = batch_add_lane(a0, a1);
+    let b0_plus_b1 = batch_add_lane(b0, b1);
+    let cross01 = batch_mul_lane(&a0_plus_a1, &b0_plus_b1);
+    let y_minus_v0 = batch_sub_lane(&cross01, &v0);
+    let y = batch_sub_lane(&y_minus_v0, &v1);
+
+    let a0_plus_a2 = batch_add_lane(a0, a2);
+    let b0_plus_b2 = batch_add_lane(b0, b2);
+    let cross02 = batch_mul_lane(&a0_plus_a2, &b0_plus_b2);
+    let z_minus_v0 = batch_sub_lane(&cross02, &v0);
+    let z_plus_v1 = batch_add_lane(&z_minus_v0, &v1);
+    let z = batch_sub_lane(&z_plus_v1, &v2);
+
+    let beta_x = batch_mul_by_non_residue_lane::<F, C>(&x);
+    let beta_v2 = batch_mul_by_non_residue_lane::<F, C>(&v2);
+    let c0 = batch_add_lane(&v0, &beta_x);
+    let c1 = batch_add_lane(&y, &beta_v2);
+
+    [c0, c1, z]
+}
+
+// ---------------------------------------------------------------------------
 // Karatsuba back-ends: scalar (generic) and SIMD-specialised (Fp<65537>)
 // ---------------------------------------------------------------------------
 
@@ -791,6 +1098,38 @@ pub trait SimdKaratsubaHook: ConstField {
     ) -> Option<(Vec<Self>, Vec<Self>)> {
         None
     }
+
+    /// Attempts a fused SIMD Karatsuba-3 combine for cubic-extension batches.
+    #[inline]
+    #[allow(clippy::too_many_arguments)]
+    fn try_simd_cubic_karatsuba<C: ExtConfig<BaseField = Self>>(
+        _a0: &[Self],
+        _a1: &[Self],
+        _a2: &[Self],
+        _b0: &[Self],
+        _b1: &[Self],
+        _b2: &[Self],
+    ) -> Option<[Vec<Self>; 3]> {
+        None
+    }
+
+    /// Attempts a SIMD batch addition over one base-field coefficient lane.
+    #[inline]
+    fn try_simd_add_vec(_a: &[Self], _b: &[Self]) -> Option<Vec<Self>> {
+        None
+    }
+
+    /// Attempts a SIMD batch subtraction over one base-field coefficient lane.
+    #[inline]
+    fn try_simd_sub_vec(_a: &[Self], _b: &[Self]) -> Option<Vec<Self>> {
+        None
+    }
+
+    /// Attempts a SIMD batch multiplication over one base-field coefficient lane.
+    #[inline]
+    fn try_simd_mul_vec(_a: &[Self], _b: &[Self]) -> Option<Vec<Self>> {
+        None
+    }
 }
 
 /// Blanket default-None impl for every `Fp<P>` except the overridden
@@ -815,6 +1154,37 @@ impl<const P: u64> SimdKaratsubaHook for Fp<P> {
             return fp65537_simd_impl::<P, C>(a0, a1, b0, b1);
         }
         fp_simd_composed_impl::<P, C>(a0, a1, b0, b1)
+    }
+
+    #[inline]
+    #[allow(clippy::too_many_arguments)]
+    fn try_simd_cubic_karatsuba<C: ExtConfig<BaseField = Self>>(
+        a0: &[Self],
+        a1: &[Self],
+        a2: &[Self],
+        b0: &[Self],
+        b1: &[Self],
+        b2: &[Self],
+    ) -> Option<[Vec<Self>; 3]> {
+        if P == 65537 {
+            return fp65537_simd_cubic_impl::<P, C>(a0, a1, a2, b0, b1, b2);
+        }
+        None
+    }
+
+    #[inline]
+    fn try_simd_add_vec(a: &[Self], b: &[Self]) -> Option<Vec<Self>> {
+        <Self as SimdVecOps>::try_simd_add_vec(a, b)
+    }
+
+    #[inline]
+    fn try_simd_sub_vec(a: &[Self], b: &[Self]) -> Option<Vec<Self>> {
+        <Self as SimdVecOps>::try_simd_sub_vec(a, b)
+    }
+
+    #[inline]
+    fn try_simd_mul_vec(a: &[Self], b: &[Self]) -> Option<Vec<Self>> {
+        <Self as SimdVecOps>::try_simd_mul_vec(a, b)
     }
 }
 
@@ -914,6 +1284,67 @@ fn fp65537_simd_impl<const P: u64, C: ExtConfig<BaseField = Fp<P>>>(
     Some((fp65537_unpack::<P>(&out_c0), fp65537_unpack::<P>(&out_c1)))
 }
 
+#[cfg(feature = "simd")]
+#[allow(clippy::too_many_arguments)]
+fn fp65537_simd_cubic_impl<const P: u64, C: ExtConfig<BaseField = Fp<P>>>(
+    a0: &[Fp<P>],
+    a1: &[Fp<P>],
+    a2: &[Fp<P>],
+    b0: &[Fp<P>],
+    b1: &[Fp<P>],
+    b2: &[Fp<P>],
+) -> Option<[Vec<Fp<P>>; 3]> {
+    use crate::gfp::simd_ops::{fp65537_pack, fp65537_unpack};
+    debug_assert_eq!(P, 65537, "fp65537_simd_cubic_impl requires P = 65537");
+
+    let fns = crate::simd::maybe_fp65537()?;
+    let n = a0.len();
+
+    let a0_u32 = fp65537_pack::<P>(a0);
+    let a1_u32 = fp65537_pack::<P>(a1);
+    let a2_u32 = fp65537_pack::<P>(a2);
+    let b0_u32 = fp65537_pack::<P>(b0);
+    let b1_u32 = fp65537_pack::<P>(b1);
+    let b2_u32 = fp65537_pack::<P>(b2);
+
+    let beta_u32 = C::NON_RESIDUE.raw_storage() as u32;
+    let mut out_c0 = vec![0u32; n];
+    let mut out_c1 = vec![0u32; n];
+    let mut out_c2 = vec![0u32; n];
+    (fns.batch_cubic_karatsuba_fn)(
+        &a0_u32,
+        &a1_u32,
+        &a2_u32,
+        &b0_u32,
+        &b1_u32,
+        &b2_u32,
+        beta_u32,
+        &mut out_c0,
+        &mut out_c1,
+        &mut out_c2,
+    );
+
+    Some([
+        fp65537_unpack::<P>(&out_c0),
+        fp65537_unpack::<P>(&out_c1),
+        fp65537_unpack::<P>(&out_c2),
+    ])
+}
+
+#[cfg(not(feature = "simd"))]
+#[inline]
+#[allow(clippy::extra_unused_type_parameters, clippy::too_many_arguments)]
+fn fp65537_simd_cubic_impl<const P: u64, C: ExtConfig<BaseField = Fp<P>>>(
+    _a0: &[Fp<P>],
+    _a1: &[Fp<P>],
+    _a2: &[Fp<P>],
+    _b0: &[Fp<P>],
+    _b1: &[Fp<P>],
+    _b2: &[Fp<P>],
+) -> Option<[Vec<Fp<P>>; 3]> {
+    None
+}
+
 #[cfg(not(feature = "simd"))]
 #[inline]
 #[allow(clippy::extra_unused_type_parameters)]
@@ -969,6 +1400,20 @@ mod tests {
         const NON_RESIDUE: Fp<GENERIC_P> = Fp::<GENERIC_P>::new(5);
     }
     type Fq2Generic = QuadraticExt<CfgGeneric>;
+
+    struct CfgCubicSmall;
+    impl ExtConfig for CfgCubicSmall {
+        type BaseField = Fp<7>;
+        const NON_RESIDUE: Fp<7> = Fp::<7>::new(3);
+    }
+    type Fq3Small = CubicExt<CfgCubicSmall>;
+
+    struct CfgCubicBeta3;
+    impl ExtConfig for CfgCubicBeta3 {
+        type BaseField = Fp<65537>;
+        const NON_RESIDUE: Fp<65537> = Fp::<65537>::new(3);
+    }
+    type Fq3Big = CubicExt<CfgCubicBeta3>;
 
     // -----------------------------------------------------------------------
     // Constructor / invariant tests
@@ -1275,6 +1720,116 @@ mod tests {
                 .to_quadratic::<CfgGeneric>();
             assert_eq!(via_hook, got);
         }
+    }
+
+    // -----------------------------------------------------------------------
+    // CubicExt SoA batch operations (jit:33d3f5b7)
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn test_cubic_roundtrip_edge_lengths() {
+        for &len in &[0usize, 1, 2, 7, 8, 17, 64, 65] {
+            let xs: Vec<Fq3Big> = (0..len as u64)
+                .map(|i| Fq3Big::new(Fp::new(i + 1), Fp::new(3 * i + 2), Fp::new(5 * i + 3)))
+                .collect();
+            let batch = BatchExtField::<Fp<65537>, 3>::from_cubic::<CfgCubicBeta3>(&xs);
+            assert_eq!(batch.len(), len);
+            assert!(batch.is_valid());
+            assert_eq!(batch.to_cubic::<CfgCubicBeta3>(), xs);
+        }
+    }
+
+    #[test]
+    fn test_cubic_batch_all_ops_match_scalar_fp7_handcrafted() {
+        let a = vec![
+            Fq3Small::new(Fp::new(0), Fp::new(0), Fp::new(0)),
+            Fq3Small::new(Fp::new(1), Fp::new(2), Fp::new(3)),
+            Fq3Small::new(Fp::new(6), Fp::new(5), Fp::new(4)),
+        ];
+        let b = vec![
+            Fq3Small::new(Fp::new(1), Fp::new(0), Fp::new(6)),
+            Fq3Small::new(Fp::new(4), Fp::new(3), Fp::new(2)),
+            Fq3Small::new(Fp::new(0), Fp::new(1), Fp::new(2)),
+        ];
+
+        let ba = BatchExtField::<Fp<7>, 3>::from_cubic::<CfgCubicSmall>(&a);
+        let bb = BatchExtField::<Fp<7>, 3>::from_cubic::<CfgCubicSmall>(&b);
+
+        let add = ba.batch_add(&bb).to_cubic::<CfgCubicSmall>();
+        let sub = ba.batch_sub(&bb).to_cubic::<CfgCubicSmall>();
+        let mul = ba
+            .batch_mul_cubic::<CfgCubicSmall>(&bb)
+            .to_cubic::<CfgCubicSmall>();
+        let sqr = ba
+            .batch_square_cubic::<CfgCubicSmall>()
+            .to_cubic::<CfgCubicSmall>();
+
+        for i in 0..a.len() {
+            assert_eq!(add[i], a[i] + b[i], "cubic add mismatch at index {i}");
+            assert_eq!(sub[i], a[i] - b[i], "cubic sub mismatch at index {i}");
+            assert_eq!(mul[i], a[i] * b[i], "cubic mul mismatch at index {i}");
+            assert_eq!(sqr[i], a[i] * a[i], "cubic square mismatch at index {i}");
+        }
+    }
+
+    #[test]
+    fn test_cubic_batch_all_ops_match_scalar_fp65537_boundaries() {
+        for &len in &[1usize, 7, 8, 15, 16, 17, 63, 64, 65] {
+            let a: Vec<Fq3Big> = (0..len as u64)
+                .map(|i| {
+                    Fq3Big::new(
+                        Fp::new(i.wrapping_mul(97).wrapping_add(3)),
+                        Fp::new(i.wrapping_mul(193).wrapping_add(5)),
+                        Fp::new(i.wrapping_mul(389).wrapping_add(7)),
+                    )
+                })
+                .collect();
+            let b: Vec<Fq3Big> = (0..len as u64)
+                .map(|i| {
+                    Fq3Big::new(
+                        Fp::new(i.wrapping_mul(769).wrapping_add(11)),
+                        Fp::new(i.wrapping_mul(1543).wrapping_add(13)),
+                        Fp::new(i.wrapping_mul(3079).wrapping_add(17)),
+                    )
+                })
+                .collect();
+
+            let ba = BatchExtField::<Fp<65537>, 3>::from_cubic::<CfgCubicBeta3>(&a);
+            let bb = BatchExtField::<Fp<65537>, 3>::from_cubic::<CfgCubicBeta3>(&b);
+
+            let add = ba.batch_add(&bb).to_cubic::<CfgCubicBeta3>();
+            let sub = ba.batch_sub(&bb).to_cubic::<CfgCubicBeta3>();
+            let mul = ba
+                .batch_mul_cubic::<CfgCubicBeta3>(&bb)
+                .to_cubic::<CfgCubicBeta3>();
+            let sqr = ba
+                .batch_square_cubic::<CfgCubicBeta3>()
+                .to_cubic::<CfgCubicBeta3>();
+
+            for i in 0..len {
+                assert_eq!(add[i], a[i] + b[i], "add mismatch at len {len}, index {i}");
+                assert_eq!(sub[i], a[i] - b[i], "sub mismatch at len {len}, index {i}");
+                assert_eq!(mul[i], a[i] * b[i], "mul mismatch at len {len}, index {i}");
+                assert_eq!(
+                    sqr[i],
+                    a[i] * a[i],
+                    "square mismatch at len {len}, index {i}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "batch_mul_cubic: length mismatch")]
+    fn test_cubic_batch_mul_panics_on_length_mismatch() {
+        let a =
+            BatchExtField::<Fp<7>, 3>::new([vec![Fp::new(1)], vec![Fp::new(2)], vec![Fp::new(3)]]);
+        let b = BatchExtField::<Fp<7>, 3>::new([
+            vec![Fp::new(4), Fp::new(5)],
+            vec![Fp::new(6), Fp::new(0)],
+            vec![Fp::new(1), Fp::new(2)],
+        ]);
+        let _ = a.batch_mul_cubic::<CfgCubicSmall>(&b);
     }
 
     // -----------------------------------------------------------------------
