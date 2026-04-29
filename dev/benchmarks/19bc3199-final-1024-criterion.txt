@@ -1,0 +1,11 @@
+   Compiling gf2-core v0.1.0 (/home/vkaskivuo/Projects/gf2/.claude/worktrees/agent-19bc3199/crates/gf2-core)
+    Finished `bench` profile [optimized] target(s) in 7.75s
+     Running benches/matmul.rs (target/agent-19bc3199/release/deps/matmul-c7b92b0083fb8471)
+Benchmarking matmul_square/1024
+Benchmarking matmul_square/1024: Warming up for 1.0000 s
+Benchmarking matmul_square/1024: Collecting 10 samples in estimated 2.0286 s (2915 iterations)
+Benchmarking matmul_square/1024: Analyzing
+matmul_square/1024      time:   [728.70 µs 729.95 µs 730.79 µs]
+                        change: [-23.541% -23.409% -23.287%] (p = 0.00 < 0.05)
+                        Performance has improved.
+

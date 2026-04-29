@@ -5,688 +5,795 @@
 ; output        : crates/gf2-core/src/alg/m4rm.asm.txt
 ; rustc         : rustc 1.95.0 (59807616e 2026-04-14)
 ; target-cpu    : native
+; features      : simd
 ; RUSTFLAGS     : -C target-cpu=native
-; commit        : generated from this commit source state
-; regenerated   : 2026-04-27T21:47:13Z
-; tool          : cargo-show-asm
-; audit         : hot row/table XOR calls use the hoisted function pointer at [rsp + 40]; OnceLock initialize is only on the cold resolver path.
+; commit        : 67b8cc4
+; regenerated   : 2026-04-29T05:47:53Z
+; tool          : cargo-show-asm (cargo asm)
+; audit         : SIMD build resolves LogicalFns::m4rm_tile8xn_fn and calls it from the tiled 1024-column schedule; the concrete 8x4 YMM tile body is in crates/gf2-kernels-simd/src/x86/asm/avx2.asm.txt.
 ; ---------------------------------------------------------
 
-.section .text.gf2_core::alg::m4rm::multiply,"ax",@progbits
-	.globl	gf2_core::alg::m4rm::multiply
-	.p2align	4
-.type	gf2_core::alg::m4rm::multiply,@function
 gf2_core::alg::m4rm::multiply:
-	.cfi_startproc
-	.cfi_personality 155, DW.ref.rust_eh_personality
-	.cfi_lsda 27, .Lexception7
 	push rbp
-	.cfi_def_cfa_offset 16
 	push r15
-	.cfi_def_cfa_offset 24
 	push r14
-	.cfi_def_cfa_offset 32
 	push r13
-	.cfi_def_cfa_offset 40
 	push r12
-	.cfi_def_cfa_offset 48
 	push rbx
-	.cfi_def_cfa_offset 56
-	sub rsp, 312
-	.cfi_def_cfa_offset 368
-	.cfi_offset rbx, -56
-	.cfi_offset r12, -48
-	.cfi_offset r13, -40
-	.cfi_offset r14, -32
-	.cfi_offset r15, -24
-	.cfi_offset rbp, -16
-	mov rcx, qword ptr [rsi + 32]
-	mov rbp, qword ptr [rsi + 24]
-	mov r15, qword ptr [rdx + 32]
+	sub rsp, 344
+	mov r12, qword ptr [rsi + 24]
+	mov r15, qword ptr [rsi + 32]
+	mov rbp, qword ptr [rdx + 32]
 	mov rax, qword ptr [rdx + 24]
-	mov qword ptr [rsp + 192], rbp
-	mov qword ptr [rsp + 80], rcx
-	mov qword ptr [rsp + 200], r15
-	mov qword ptr [rsp + 272], rax
-	mov qword ptr [rsp + 72], rcx
-	cmp rcx, rax
-	jne .LBB81_78
-	mov r14, rdi
+	mov qword ptr [rsp + 144], rdx
+	mov qword ptr [rsp + 240], r12
+	mov qword ptr [rsp + 320], r15
+	mov qword ptr [rsp + 328], rbp
+	mov qword ptr [rsp + 336], rax
+	cmp r15, rax
+	jne .LBB92_43
+	test r12, r12
+	mov qword ptr [rsp + 40], r12
+	setne al
 	test r15, r15
-	je .LBB81_3
-	mov eax, r15d
+	setne cl
+	and cl, al
+	test rbp, rbp
+	setne al
+	test cl, al
+	jne .LBB92_4
+	test rbp, rbp
+	je .LBB92_21
+	mov eax, ebp
 	and eax, 63
-	mov r13, r15
-	shr r13, 6
+	mov r12, rbp
+	shr r12, 6
 	cmp rax, 1
-	sbb r13, -1
-	jmp .LBB81_4
-.LBB81_3:
-	xor r13d, r13d
-.LBB81_4:
-	mov r12, r13
-	imul r12, rbp
+	sbb r12, -1
+	jmp .LBB92_22
+.LBB92_4:
+	mov eax, ebp
+	and eax, 63
+	mov rbx, rbp
+	shr rbx, 6
+	mov r13, rsi
+	mov qword ptr [rsp + 136], rdi
+	mov qword ptr [rsp + 120], rbp
+	cmp rax, 1
+	mov eax, 8
+	sbb rbx, -1
+	xor edx, edx
+.LBB92_5:
+	mov r8d, 1
+	test dl, 1
+	jne .LBB92_8
+	mov rcx, rax
+	test rax, rax
+	je .LBB92_8
+	lea rsi, [8*rbx]
+	mov rax, rcx
+	dec rax
+	mov r8, rcx
+	sete dl
+	cmove rax, rcx
+	shlx rsi, rsi, rcx
+	cmp rsi, 65537
+	setb sil
+	cmp rcx, r15
+	setbe dil
+	and dil, sil
+	cmp dil, 1
+	jne .LBB92_5
+.LBB92_8:
+	mov qword ptr [rsp + 72], r8
+	cmp rbx, 7
+	jbe .LBB92_12
+	mov r14, qword ptr [rip + gf2_core::simd::FNS@GOTPCREL]
+	mov eax, dword ptr [r14 + 104]
+	test eax, eax
+	jne .LBB92_44
+	cmp qword ptr [r14], 0
+	je .LBB92_45
+.LBB92_11:
+	mov rsi, qword ptr [r14 + 16]
+	mov r8, qword ptr [rsp + 72]
+	cmp r8, 1
+	jne .LBB92_13
+	jmp .LBB92_47
+.LBB92_12:
+	lea rsi, [rip + gf2_core::kernels::ops::scalar_xor_inplace]
+	cmp r8, 1
+	jne .LBB92_13
+.LBB92_47:
+	mov rbx, qword ptr [rsp + 136]
+	mov rdx, qword ptr [rsp + 144]
+	mov rsi, r13
+	mov rdi, rbx
+	call gf2_core::matrix::BitMatrix::mul_row_xor_dispatch
+	mov rax, rbx
+	jmp .LBB92_48
+.LBB92_21:
+	xor r12d, r12d
+.LBB92_22:
+	mov r13, r12
+	imul r13, qword ptr [rsp + 40]
 	movabs rcx, 9223372036854775800
-	lea rbx, [8*r12]
-	mov rax, r12
+	lea r15, [8*r13]
+	mov rax, r13
 	shr rax, 61
 	setne al
-	cmp rbx, rcx
+	cmp r15, rcx
 	seta cl
 	or cl, al
-	je .LBB81_7
-	xor r14d, r14d
-.LBB81_6:
-	mov rdi, r14
-	mov rsi, rbx
-	call qword ptr [rip + alloc::raw_vec::handle_error@GOTPCREL]
-.LBB81_7:
-	mov qword ptr [rsp + 40], rdx
-	mov qword ptr [rsp + 8], rsi
-	test rbx, rbx
-	je .LBB81_10
-	mov qword ptr [rsp + 64], rbp
-	mov rbp, r14
+	jne .LBB92_51
+	test r15, r15
+	je .LBB92_26
+	mov rbx, rdi
 	call qword ptr [rip + __rustc::__rust_no_alloc_shim_is_unstable_v2@GOTPCREL]
 	mov esi, 8
-	mov rdi, rbx
+	mov rdi, r15
 	mov r14d, 8
 	call qword ptr [rip + __rustc::__rust_alloc_zeroed@GOTPCREL]
 	test rax, rax
-	je .LBB81_6
-	mov r14, rbp
-	mov rbp, qword ptr [rsp + 64]
-	mov rcx, r12
-	jmp .LBB81_11
-.LBB81_10:
+	je .LBB92_52
+	mov rcx, r13
+	mov rdi, rbx
+	jmp .LBB92_27
+.LBB92_26:
 	mov eax, 8
 	xor ecx, ecx
-.LBB81_11:
-	test r15, r15
-	mov qword ptr [rsp + 88], rcx
-	mov qword ptr [rsp + 96], rax
-	mov qword ptr [rsp + 104], r12
-	mov qword ptr [rsp + 112], rbp
-	mov qword ptr [rsp + 120], r15
-	mov qword ptr [rsp + 128], r13
-	setne dl
-	test rbp, rbp
-	setne al
-	cmp qword ptr [rsp + 72], 0
-	setne cl
-	and cl, al
-	test cl, dl
-	jne .LBB81_14
-	mov r8, qword ptr [rsp + 112]
-	mov rax, qword ptr [rsp + 88]
-	mov rcx, qword ptr [rsp + 96]
-	mov rdi, qword ptr [rsp + 104]
-	mov r9, qword ptr [rsp + 120]
-	mov rdx, qword ptr [rsp + 104]
-	mov rsi, qword ptr [rsp + 112]
-	mov qword ptr [r14 + 24], r8
-	mov r8, qword ptr [rsp + 128]
-	mov qword ptr [r14 + 16], rdi
-	mov qword ptr [r14 + 32], r9
-	mov qword ptr [r14], rax
-	mov qword ptr [r14 + 8], rcx
-	mov qword ptr [r14 + 16], rdx
-	mov qword ptr [r14 + 24], rsi
-	mov qword ptr [r14 + 40], r8
-.LBB81_13:
-	mov rax, r14
-	add rsp, 312
-	.cfi_def_cfa_offset 56
+.LBB92_27:
+	mov qword ptr [rdi], rcx
+	mov rcx, qword ptr [rsp + 40]
+	mov qword ptr [rdi + 8], rax
+	mov qword ptr [rdi + 16], r13
+	mov qword ptr [rdi + 24], rcx
+	mov qword ptr [rdi + 32], rbp
+	mov qword ptr [rdi + 40], r12
+.LBB92_28:
+	mov rax, rdi
+.LBB92_48:
+	add rsp, 344
 	pop rbx
-	.cfi_def_cfa_offset 48
 	pop r12
-	.cfi_def_cfa_offset 40
 	pop r13
-	.cfi_def_cfa_offset 32
 	pop r14
-	.cfi_def_cfa_offset 24
 	pop r15
-	.cfi_def_cfa_offset 16
 	pop rbp
-	.cfi_def_cfa_offset 8
 	vzeroupper
 	ret
-.LBB81_14:
-	.cfi_def_cfa_offset 368
-	mov rax, qword ptr [rsp + 8]
-	mov rcx, r15
-	and r15d, 63
-	shr rcx, 6
-	movabs rbx, 2305843009213693951
-	movabs r13, 9223372036854775800
-	cmp r15, 1
-	mov r15, rcx
-	mov ecx, 8
-	sbb r15, -1
-	xor esi, esi
-	add rax, 24
-	mov qword ptr [rsp + 208], rax
-	lea rax, [8*r15]
-	.p2align	4
-.LBB81_15:
-	mov r12d, 1
-	test sil, 1
-	jne .LBB81_18
-	mov rdx, rcx
-	test rcx, rcx
-	je .LBB81_18
-	mov rcx, rdx
-	dec rcx
-	shlx rdi, rax, rdx
-	mov r12, rdx
-	sete sil
-	cmove rcx, rdx
-	cmp rdi, 65537
-	setb dil
-	cmp rdx, qword ptr [rsp + 72]
-	setbe r8b
-	test dil, r8b
-	je .LBB81_15
-.LBB81_18:
-	mov qword ptr [rsp + 216], r14
-	cmp r15, 8
-	jb .LBB81_22
-	mov r14, qword ptr [rip + gf2_core::simd::FNS@GOTPCREL]
-	mov eax, dword ptr [r14 + 72]
-	test eax, eax
-	jne .LBB81_80
-.LBB81_20:
+.LBB92_43:
+	mov r8, qword ptr [rip + <usize as core::fmt::Display>::fmt@GOTPCREL]
+	lea rcx, [rsp + 240]
+	lea rsi, [rsp + 320]
+	lea rdx, [rsp + 328]
+	lea r9, [rip + .Lanon.c61c31bbccbfeefcc4fb90e0c0110674.97]
+	mov qword ptr [rsp + 248], rax
+	xor edi, edi
+	mov qword ptr [rsp + 152], rcx
+	lea rcx, [rsp + 248]
+	mov qword ptr [rsp + 160], r8
+	mov qword ptr [rsp + 168], rsi
+	mov qword ptr [rsp + 176], r8
+	mov qword ptr [rsp + 184], rcx
+	mov qword ptr [rsp + 192], r8
+	mov qword ptr [rsp + 200], rdx
+	mov qword ptr [rsp + 208], r8
+	lea rcx, [rip + .Lanon.c61c31bbccbfeefcc4fb90e0c0110674.96]
+	lea rdx, [rsp + 336]
+	lea r8, [rsp + 152]
+	call qword ptr [rip + core::panicking::assert_failed::<usize, usize>@GOTPCREL]
+.LBB92_44:
+	call std::sync::once_lock::OnceLock<T>::initialize
 	cmp qword ptr [r14], 0
-	je .LBB81_22
-	mov rax, qword ptr [r14 + 16]
-	jmp .LBB81_23
-.LBB81_22:
-	lea rax, [rip + gf2_core::kernels::ops::scalar_xor_inplace]
-.LBB81_23:
-	mov qword ptr [rsp + 40], rax
-	mov eax, r12d
-	and eax, 63
-	shlx rdx, r15, rax
-	lea r14, [8*rdx]
-	cmp rdx, rbx
+	jne .LBB92_11
+.LBB92_45:
+	lea rsi, [rip + gf2_core::kernels::ops::scalar_xor_inplace]
+	mov r8, qword ptr [rsp + 72]
+	cmp r8, 1
+	je .LBB92_47
+.LBB92_13:
+	movabs r9, 9223372036854775800
+	movabs r10, 2305843009213693951
+	mov qword ptr [rsp + 104], r15
+	cmp rbx, 16
+	jne .LBB92_50
+	cmp qword ptr [rsp + 240], 8
+	jb .LBB92_50
+	mov r14, qword ptr [rip + gf2_core::simd::FNS@GOTPCREL]
+	mov eax, dword ptr [r14 + 104]
+	test eax, eax
+	jne .LBB92_49
+	cmp qword ptr [r14], 0
+	je .LBB92_50
+.LBB92_17:
+	mov r15, r12
+	shl r12, 4
+	shl r15, 7
+	cmp r12, r10
 	seta al
-	cmp r14, r13
+	cmp r15, r9
 	seta cl
 	or cl, al
-	je .LBB81_26
-	xor ebx, ebx
-.LBB81_25:
-	mov rdi, rbx
+	jne .LBB92_51
+	mov rax, qword ptr [r14 + 40]
+	mov qword ptr [rsp + 56], rax
+	test r15, r15
+	je .LBB92_29
+	mov rbx, rsi
+	call qword ptr [rip + __rustc::__rust_no_alloc_shim_is_unstable_v2@GOTPCREL]
+	mov esi, 8
+	mov rdi, r15
+	mov r14d, 8
+	call qword ptr [rip + __rustc::__rust_alloc_zeroed@GOTPCREL]
+	test rax, rax
+	je .LBB92_52
+	movabs r9, 9223372036854775800
+	movabs r10, 2305843009213693951
+	mov rdx, r12
+	mov rsi, rbx
+	jmp .LBB92_30
+.LBB92_29:
+	mov eax, 8
+	xor edx, edx
+.LBB92_30:
+	mov rcx, qword ptr [rsp + 72]
+	mov qword ptr [rsp + 152], rdx
+	mov qword ptr [rsp + 160], rax
+	and ecx, 63
+	mov eax, 16
+	mov r8, qword ptr [rsp + 40]
+	mov rdi, qword ptr [rsp + 120]
+	mov qword ptr [rsp + 168], r12
+	shlx rbx, rax, rcx
+	mov eax, 128
+	shlx r14, rax, rcx
+	cmp rbx, r10
+	seta al
+	cmp r14, r9
+	seta dl
+	or dl, al
+	mov qword ptr [rsp + 176], r8
+	mov qword ptr [rsp + 184], rdi
+	mov qword ptr [rsp + 192], 16
+	je .LBB92_33
+	xor r13d, r13d
+.LBB92_32:
+	mov rdi, r13
 	mov rsi, r14
 	call qword ptr [rip + alloc::raw_vec::handle_error@GOTPCREL]
-	jmp .LBB81_82
-.LBB81_26:
-	mov qword ptr [rsp + 24], rdx
-	mov qword ptr [rsp + 64], rbp
-	test r14, r14
-	je .LBB81_29
+	jmp .LBB92_121
+.LBB92_33:
+	mov qword ptr [rsp + 48], r13
+	cmp ecx, 56
+	jbe .LBB92_35
+	mov ebp, 8
+	mov qword ptr [rsp + 40], 0
+	jmp .LBB92_37
+.LBB92_35:
+	mov r15, rsi
 	call qword ptr [rip + __rustc::__rust_no_alloc_shim_is_unstable_v2@GOTPCREL]
 	mov esi, 8
 	mov rdi, r14
-	mov ebx, 8
+	mov r13d, 8
 	call qword ptr [rip + __rustc::__rust_alloc_zeroed@GOTPCREL]
-	mov qword ptr [rsp + 32], rax
 	test rax, rax
-	je .LBB81_25
-	mov rax, qword ptr [rsp + 24]
-	mov rbx, r15
-	mov qword ptr [rsp + 16], rax
-	mov rdx, qword ptr [rsp + 8]
-	mov r13, qword ptr [rsp + 80]
-	test r13, r13
-	jne .LBB81_30
-	jmp .LBB81_65
-.LBB81_29:
-	mov eax, 8
-	mov rbx, r15
-	mov qword ptr [rsp + 16], 0
-	mov qword ptr [rsp + 32], rax
-	mov rdx, qword ptr [rsp + 8]
-	mov r13, qword ptr [rsp + 80]
-	test r13, r13
-	je .LBB81_65
-.LBB81_30:
-	mov rcx, qword ptr [rsp + 40]
-	mov qword ptr [rsp + 224], r12
-	mov rax, qword ptr [rcx + 40]
-	mov qword ptr [rsp + 168], rax
-	mov rax, qword ptr [rcx + 8]
-	mov qword ptr [rsp + 248], rax
-	mov rax, qword ptr [rcx + 16]
-	mov rcx, qword ptr [rdx + 8]
-	mov qword ptr [rsp + 160], rax
-	mov rax, qword ptr [rdx + 40]
-	add rcx, 8
-	mov qword ptr [rsp + 232], rcx
-	mov qword ptr [rsp + 40], rax
-	mov rax, qword ptr [rdx + 16]
-	mov qword ptr [rsp + 184], rax
-	xor eax, eax
-	jmp .LBB81_32
-	.p2align	4
-.LBB81_31:
-	mov r12, qword ptr [rsp + 224]
-	mov rax, qword ptr [rsp + 48]
-	mov r13, qword ptr [rsp + 80]
-	add rax, r12
-	cmp rax, r13
-	jae .LBB81_65
-.LBB81_32:
-	sub r13, rax
-	mov qword ptr [rsp + 48], rax
-	mov rax, qword ptr [rsp + 200]
-	cmp r13, r12
-	cmovae r13, r12
-	test rax, rax
-	je .LBB81_35
-	mov r15, rax
-	and eax, 63
-	shr r15, 6
-	cmp rax, 1
-	sbb r15, -1
-	lea r14, [8*r15]
-	call qword ptr [rip + __rustc::__rust_no_alloc_shim_is_unstable_v2@GOTPCREL]
-	mov esi, 8
-	mov rdi, r14
-	call qword ptr [rip + __rustc::__rust_alloc_zeroed@GOTPCREL]
-	mov rdx, qword ptr [rsp + 24]
-	mov qword ptr [rsp + 8], rax
-	test rax, rax
-	je .LBB81_81
-	cmp r15, rdx
-	jbe .LBB81_36
-	jmp .LBB81_79
-.LBB81_35:
-	mov eax, 8
-	xor r15d, r15d
+	je .LBB92_32
+	mov rbp, rax
+	mov rsi, r15
+	mov qword ptr [rsp + 40], rbx
+.LBB92_37:
+	mov r15, qword ptr [rsp + 104]
+	mov rax, qword ptr [rsp + 72]
 	xor r14d, r14d
-	mov qword ptr [rsp + 8], rax
-.LBB81_36:
-	mov rdi, qword ptr [rsp + 32]
-	mov qword ptr [rsp + 240], r13
-	and r13d, 63
-	xor esi, esi
+.LBB92_38:
+	mov r13, r15
+	sub r15, rax
+	cmovae r13, rax
+	mov rdi, qword ptr [rsp + 144]
+	mov rcx, qword ptr [rsp + 120]
+	mov qword ptr [rsp], rsi
+	mov r12, rsi
+	mov rsi, r14
+	mov rdx, r13
+	mov r8, rbp
+	mov r9, rbx
+	call qword ptr [rip + gf2_core::alg::m4rm::build_gray_table_flat@GOTPCREL]
+	mov qword ptr [rsp + 248], 0
+	mov rax, qword ptr [rsp + 56]
+	mov rdi, qword ptr [rsp + 48]
+	lea rcx, [rsp + 248]
+	lea rsi, [rsp + 152]
+	mov qword ptr [rsp + 8], r12
 	mov rdx, r14
-	call qword ptr [rip + memset@GOTPCREL]
-	mov rbp, r13
-	test r13, r13
-	je .LBB81_45
-	mov r12d, 1
-	xor r13d, r13d
-	.p2align	4
-.LBB81_38:
-	mov rax, r13
-	mov r13, r12
-	shr r13
-	xor r13, r12
-	xor rax, r13
-	tzcnt rdi, rax
-	add rdi, qword ptr [rsp + 48]
-	cmp rdi, qword ptr [rsp + 72]
-	jae .LBB81_42
-	mov rax, qword ptr [rsp + 168]
-	imul rdi, rax
-	mov rsi, rdi
-	add rsi, rax
-	jb .LBB81_77
-	cmp rsi, qword ptr [rsp + 160]
-	ja .LBB81_77
-	mov rax, qword ptr [rsp + 248]
-	lea rdx, [rax + 8*rdi]
-	mov rdi, qword ptr [rsp + 8]
-	mov rcx, qword ptr [rsp + 168]
-	mov rsi, r15
-	call qword ptr [rsp + 40]
-.LBB81_42:
-	mov rdi, r13
-	imul rdi, r15
-	mov rsi, rdi
-	add rsi, r15
-	jb .LBB81_69
-	cmp rsi, qword ptr [rsp + 24]
-	ja .LBB81_69
-	mov rax, qword ptr [rsp + 32]
-	mov rsi, qword ptr [rsp + 8]
-	inc r12
-	mov rdx, r14
-	lea rdi, [rax + 8*rdi]
-	call qword ptr [rip + memcpy@GOTPCREL]
-	shrx rax, r12, rbp
-	test rax, rax
-	je .LBB81_38
-.LBB81_45:
-	test r15, r15
-	je .LBB81_47
-	mov rdi, qword ptr [rsp + 8]
-	shl r15, 3
-	mov edx, 8
-	mov rsi, r15
-	call qword ptr [rip + __rustc::__rust_dealloc@GOTPCREL]
-.LBB81_47:
-	mov rcx, qword ptr [rsp + 48]
-	mov rax, qword ptr [rsp + 232]
-	mov rsi, qword ptr [rsp + 240]
-	mov rdx, qword ptr [rsp + 192]
-	mov r15d, ecx
-	mov r14, rcx
-	neg ecx
-	shr r14, 6
-	and r15d, 63
-	mov qword ptr [rsp + 8], rdx
-	and ecx, 63
-	lea rax, [rax + 8*r14]
-	cmp rsi, 64
-	lea rdx, [rsi + r15]
-	mov qword ptr [rsp + 256], rcx
-	mov rcx, -1
-	mov qword ptr [rsp + 264], rdx
-	shlx r12, rcx, rbp
-	mov qword ptr [rsp + 176], rax
-	not r12
-	cmove r12, rcx
-	xor edi, edi
-	xor ebp, ebp
-	.p2align	4
-.LBB81_48:
+	mov r8, rbp
+	mov r9, rbx
+	mov qword ptr [rsp], rcx
+	mov rcx, r13
+	mov qword ptr [rsp + 16], rax
+	call gf2_core::alg::m4rm::update_panel_register_tiled
+	mov rax, qword ptr [rsp + 72]
+	mov rsi, r12
+	add r14, rax
+	cmp r14, qword ptr [rsp + 104]
+	jb .LBB92_38
+	vmovups ymm0, ymmword ptr [rsp + 152]
+	vmovups ymm1, ymmword ptr [rsp + 168]
+	mov rdi, qword ptr [rsp + 136]
 	mov rsi, qword ptr [rsp + 40]
-	cmp qword ptr [rsp + 8], rbp
-	je .LBB81_31
-	mov qword ptr [rsp + 152], rbp
-	cmp qword ptr [rsp + 64], rbp
-	je .LBB81_70
-	mov r13, rsi
-	add r13, rdi
-	jb .LBB81_67
-	cmp r13, qword ptr [rsp + 184]
-	ja .LBB81_67
-	cmp r14, rsi
-	jae .LBB81_54
-	mov rax, qword ptr [rsp + 176]
-	mov rax, qword ptr [rax + 8*rdi - 8]
-	cmp qword ptr [rsp + 264], 65
-	shrx rax, rax, r15
-	jae .LBB81_55
-	jmp .LBB81_59
-	.p2align	4
-.LBB81_54:
-	xor eax, eax
-	cmp qword ptr [rsp + 264], 65
-	shrx rax, rax, r15
-	jb .LBB81_59
-.LBB81_55:
-	lea rcx, [r14 + 1]
-	cmp rcx, rsi
-	jae .LBB81_57
-	mov rcx, qword ptr [rsp + 176]
-	mov rcx, qword ptr [rcx + 8*rdi]
-	jmp .LBB81_58
-	.p2align	4
-.LBB81_57:
-	xor ecx, ecx
-.LBB81_58:
-	mov rdx, qword ptr [rsp + 256]
-	shlx rcx, rcx, rdx
-	or rax, rcx
-.LBB81_59:
-	and rax, r12
-	imul rax, rbx
-	mov rsi, rax
-	add rsi, rbx
-	jb .LBB81_68
-	cmp rsi, qword ptr [rsp + 24]
-	ja .LBB81_68
-	mov qword ptr [rsp + 152], rbp
-	cmp rbp, qword ptr [rsp + 112]
-	jae .LBB81_71
-	mov rcx, qword ptr [rsp + 128]
-	mov rdx, qword ptr [rsp + 104]
-	mov rdi, rcx
-	imul rdi, rbp
-	mov rsi, rdi
-	add rsi, rcx
-	jb .LBB81_75
-	cmp rsi, rdx
-	ja .LBB81_75
-	mov rdx, qword ptr [rsp + 32]
-	shl rdi, 3
-	add rdi, qword ptr [rsp + 96]
-	inc rbp
-	lea rdx, [rdx + 8*rax]
-	mov rsi, rcx
-	mov rcx, rbx
-	call qword ptr [rsp + 40]
-	mov rdi, r13
-	jmp .LBB81_48
-.LBB81_65:
-	vmovups ymm0, ymmword ptr [rsp + 88]
-	vmovups ymm1, ymmword ptr [rsp + 104]
-	mov r14, qword ptr [rsp + 216]
-	mov rsi, qword ptr [rsp + 16]
-	vmovups ymmword ptr [r14 + 16], ymm1
-	vmovups ymmword ptr [r14], ymm0
+	vmovups ymmword ptr [rdi + 16], ymm1
+	vmovups ymmword ptr [rdi], ymm0
 	test rsi, rsi
-	je .LBB81_13
-	mov rdi, qword ptr [rsp + 32]
+	je .LBB92_28
 	shl rsi, 3
 	mov edx, 8
+	mov rbx, rdi
+	mov rdi, rbp
+	jmp .LBB92_119
+.LBB92_49:
+	mov r15, rsi
+	call std::sync::once_lock::OnceLock<T>::initialize
+	movabs r10, 2305843009213693951
+	movabs r9, 9223372036854775800
+	mov rsi, r15
+	cmp qword ptr [r14], 0
+	jne .LBB92_17
+.LBB92_50:
+	mov rdi, rbx
+	imul rdi, r12
+	lea r15, [8*rdi]
+	cmp rdi, r10
+	seta al
+	cmp r15, r9
+	seta cl
+	or cl, al
+	je .LBB92_53
+.LBB92_51:
+	xor r14d, r14d
+.LBB92_52:
+	mov rdi, r14
+	mov rsi, r15
+	call qword ptr [rip + alloc::raw_vec::handle_error@GOTPCREL]
+.LBB92_53:
+	mov qword ptr [rsp + 96], rsi
+	mov qword ptr [rsp + 48], r13
+	test r15, r15
+	je .LBB92_56
+	mov r13, rdi
+	call qword ptr [rip + __rustc::__rust_no_alloc_shim_is_unstable_v2@GOTPCREL]
+	mov esi, 8
+	mov rdi, r15
+	mov r14d, 8
+	call qword ptr [rip + __rustc::__rust_alloc_zeroed@GOTPCREL]
+	test rax, rax
+	je .LBB92_52
+	mov r8, rax
+	mov rdi, r13
+	mov rax, r13
+	mov rsi, qword ptr [rsp + 96]
+	mov r13, qword ptr [rsp + 48]
+	movabs r9, 9223372036854775800
+	movabs r10, 2305843009213693951
+	jmp .LBB92_57
+.LBB92_56:
+	mov r8d, 8
+	xor eax, eax
+.LBB92_57:
+	mov r11, qword ptr [rsp + 72]
+	mov qword ptr [rsp + 152], rax
+	mov rax, qword ptr [rsp + 120]
+	mov qword ptr [rsp + 160], r8
+	mov qword ptr [rsp + 168], rdi
+	mov qword ptr [rsp + 176], r12
+	mov ecx, r11d
+	and ecx, 63
+	mov qword ptr [rsp + 184], rax
+	mov qword ptr [rsp + 192], rbx
+	shlx rdx, rbx, rcx
+	lea r15, [8*rdx]
+	cmp rdx, r10
+	seta al
+	cmp r15, r9
+	seta cl
+	or cl, al
+	je .LBB92_60
+	xor r14d, r14d
+.LBB92_59:
+	mov rdi, r14
+	mov rsi, r15
+	call qword ptr [rip + alloc::raw_vec::handle_error@GOTPCREL]
+	jmp .LBB92_121
+.LBB92_60:
+	mov qword ptr [rsp + 112], r8
+	mov qword ptr [rsp + 80], rdi
+	mov qword ptr [rsp + 64], rdx
+	test r15, r15
+	je .LBB92_63
+	mov r13, rsi
+	call qword ptr [rip + __rustc::__rust_no_alloc_shim_is_unstable_v2@GOTPCREL]
+	mov esi, 8
+	mov rdi, r15
+	mov r14d, 8
+	call qword ptr [rip + __rustc::__rust_alloc_zeroed@GOTPCREL]
+	mov r12, qword ptr [rsp + 104]
+	mov qword ptr [rsp + 56], rax
+	test rax, rax
+	je .LBB92_59
+	mov rax, qword ptr [rsp + 64]
+	mov rsi, r13
+	mov r13, qword ptr [rsp + 48]
+	mov r11, qword ptr [rsp + 72]
+	mov qword ptr [rsp + 32], rax
+	jmp .LBB92_64
+.LBB92_63:
+	mov r12, qword ptr [rsp + 104]
+	mov eax, 8
+	mov qword ptr [rsp + 32], 0
+	mov qword ptr [rsp + 56], rax
+.LBB92_64:
+	mov rcx, qword ptr [r13 + 8]
+	mov rax, qword ptr [r13 + 40]
+	mov rdx, qword ptr [r13 + 16]
+	xor r13d, r13d
+	mov qword ptr [rsp + 280], rcx
+	add rcx, 8
+	mov qword ptr [rsp + 88], rax
+	mov qword ptr [rsp + 48], rdx
+	mov qword ptr [rsp + 288], rcx
+	jmp .LBB92_66
+.LBB92_65:
+	mov r13, qword ptr [rsp + 296]
+	mov r11, qword ptr [rsp + 72]
+	mov r12, qword ptr [rsp + 104]
+	mov rsi, qword ptr [rsp + 96]
+	add r13, r11
+	cmp r13, r12
+	jae .LBB92_117
+.LBB92_66:
+	mov r14, r12
+	sub r14, r13
+	cmp r14, r11
+	cmovae r14, r11
+	mov r15, qword ptr [rsp + 64]
+	mov rdi, qword ptr [rsp + 144]
+	mov rcx, qword ptr [rsp + 120]
+	mov r8, qword ptr [rsp + 56]
+	mov qword ptr [rsp], rsi
+	mov rsi, r13
+	mov rdx, r14
+	mov r9, r15
+	call qword ptr [rip + gf2_core::alg::m4rm::build_gray_table_flat@GOTPCREL]
+	mov rax, -1
+	cmp r14, 64
+	mov qword ptr [rsp + 296], r13
+	shlx rcx, rax, r14
+	not rcx
+	cmove rcx, rax
+	mov qword ptr [rsp + 232], rcx
+	cmp r12, r13
+	jne .LBB92_77
+	mov rcx, qword ptr [rsp + 40]
+	mov rsi, qword ptr [rsp + 88]
+	mov r14, qword ptr [rsp + 112]
+	cmp rbx, r15
+	ja .LBB92_125
+	xor edi, edi
+	xor eax, eax
+	xor r15d, r15d
+.LBB92_70:
+	mov rdx, qword ptr [rsp + 48]
+	mov r13, rsi
+	add r13, rdi
+	jb .LBB92_113
+	cmp r13, rdx
+	ja .LBB92_113
+	mov qword ptr [rsp + 128], r15
+	cmp rcx, r15
+	je .LBB92_120
+	mov r12, rbx
+	add r12, rax
+	jb .LBB92_114
+	cmp r12, qword ptr [rsp + 80]
+	ja .LBB92_114
+	mov rdx, qword ptr [rsp + 56]
+	mov rdi, r14
+	mov rsi, rbx
+	mov rcx, rbx
+	call qword ptr [rsp + 96]
+	mov rcx, qword ptr [rsp + 40]
+	mov rsi, qword ptr [rsp + 88]
+	lea rax, [8*rbx]
+	inc r15
+	mov rdi, r13
+	add r14, rax
+	mov rax, r12
+	cmp rcx, r15
+	jne .LBB92_70
+	jmp .LBB92_65
+.LBB92_77:
+	mov r8, qword ptr [rsp + 40]
+	mov rsi, qword ptr [rsp + 88]
+	mov eax, r13d
+	and eax, 63
+	mov rbp, r13
+	shr rbp, 6
+	add r14, rax
+	mov qword ptr [rsp + 224], rax
+	cmp r14, 65
+	jb .LBB92_93
+	mov rax, qword ptr [rsp + 288]
+	mov r14, qword ptr [rsp + 112]
+	neg r13d
+	xor edi, edi
+	and r13d, 63
+	mov qword ptr [rsp + 304], r13
+	xor r13d, r13d
+	lea rax, [rax + 8*rbp]
+	mov qword ptr [rsp + 216], rax
+	lea rax, [rbp + 1]
+	mov qword ptr [rsp + 312], rax
+	xor eax, eax
+.LBB92_79:
+	mov rdx, qword ptr [rsp + 48]
+	mov r15, rsi
+	add r15, rdi
+	jb .LBB92_113
+	cmp r15, rdx
+	ja .LBB92_113
+	cmp rbp, rsi
+	jae .LBB92_84
+	mov rcx, qword ptr [rsp + 216]
+	mov rcx, qword ptr [rcx + 8*rdi - 8]
+	cmp qword ptr [rsp + 312], rsi
+	jb .LBB92_85
+.LBB92_83:
+	xor edx, edx
+	jmp .LBB92_86
+.LBB92_84:
+	xor ecx, ecx
+	cmp qword ptr [rsp + 312], rsi
+	jae .LBB92_83
+.LBB92_85:
+	mov rdx, qword ptr [rsp + 216]
+	mov rdx, qword ptr [rdx + 8*rdi]
+.LBB92_86:
+	mov rdi, qword ptr [rsp + 304]
+	mov rsi, qword ptr [rsp + 224]
+	shrx rcx, rcx, rsi
+	shlx rdi, rdx, rdi
+	or rdi, rcx
+	and rdi, qword ptr [rsp + 232]
+	imul rdi, rbx
+	mov rcx, rdi
+	add rcx, rbx
+	jb .LBB92_122
+	cmp rcx, qword ptr [rsp + 64]
+	ja .LBB92_122
+	mov qword ptr [rsp + 128], r13
+	cmp r8, r13
+	je .LBB92_120
+	mov r12, rbx
+	add r12, rax
+	jb .LBB92_114
+	cmp r12, qword ptr [rsp + 80]
+	ja .LBB92_114
+	mov rax, qword ptr [rsp + 56]
+	lea rdx, [rax + 8*rdi]
+	mov rdi, r14
+	mov rsi, rbx
+	mov rcx, rbx
+	call qword ptr [rsp + 96]
+	mov r8, qword ptr [rsp + 40]
+	mov rsi, qword ptr [rsp + 88]
+	lea rax, [8*rbx]
+	inc r13
+	mov rdi, r15
+	add r14, rax
+	mov rax, r12
+	cmp r8, r13
+	jne .LBB92_79
+	jmp .LBB92_65
+.LBB92_93:
+	cmp rbp, rsi
+	jae .LBB92_104
+	mov rax, qword ptr [rsp + 280]
+	mov r14, qword ptr [rsp + 112]
+	xor edi, edi
+	xor r13d, r13d
+	lea rbp, [rax + 8*rbp]
+	xor eax, eax
+.LBB92_95:
+	mov rdx, qword ptr [rsp + 48]
+	mov r15, rsi
+	add r15, rdi
+	jb .LBB92_113
+	cmp r15, rdx
+	ja .LBB92_113
+	mov rcx, qword ptr [rsp + 224]
+	shrx rdi, qword ptr [rbp + 8*rdi], rcx
+	and rdi, qword ptr [rsp + 232]
+	imul rdi, rbx
+	mov rcx, rdi
+	add rcx, rbx
+	jb .LBB92_122
+	cmp rcx, qword ptr [rsp + 64]
+	ja .LBB92_122
+	mov qword ptr [rsp + 128], r13
+	cmp r8, r13
+	je .LBB92_120
+	mov r12, rbx
+	add r12, rax
+	jb .LBB92_114
+	cmp r12, qword ptr [rsp + 80]
+	ja .LBB92_114
+	mov rax, qword ptr [rsp + 56]
+	lea rdx, [rax + 8*rdi]
+	mov rdi, r14
+	mov rsi, rbx
+	mov rcx, rbx
+	call qword ptr [rsp + 96]
+	mov r8, qword ptr [rsp + 40]
+	mov rsi, qword ptr [rsp + 88]
+	lea rax, [8*rbx]
+	inc r13
+	mov rdi, r15
+	add r14, rax
+	mov rax, r12
+	cmp r8, r13
+	jne .LBB92_95
+	jmp .LBB92_65
+.LBB92_104:
+	xor edi, edi
+	cmp rbx, r15
+	ja .LBB92_127
+	mov r14, qword ptr [rsp + 112]
+	xor eax, eax
+	xor r15d, r15d
+.LBB92_106:
+	mov rdx, qword ptr [rsp + 48]
+	mov r13, rsi
+	add r13, rdi
+	jb .LBB92_113
+	cmp r13, rdx
+	ja .LBB92_113
+	mov qword ptr [rsp + 128], r15
+	cmp r8, r15
+	je .LBB92_120
+	mov r12, rbx
+	add r12, rax
+	jb .LBB92_114
+	cmp r12, qword ptr [rsp + 80]
+	ja .LBB92_114
+	mov rdx, qword ptr [rsp + 56]
+	mov rdi, r14
+	mov rsi, rbx
+	mov rcx, rbx
+	call qword ptr [rsp + 96]
+	mov r8, qword ptr [rsp + 40]
+	mov rsi, qword ptr [rsp + 88]
+	lea rax, [8*rbx]
+	inc r15
+	mov rdi, r13
+	add r14, rax
+	mov rax, r12
+	cmp r8, r15
+	jne .LBB92_106
+	jmp .LBB92_65
+.LBB92_113:
+	add rsi, rdi
+	lea rcx, [rip + .Lanon.c61c31bbccbfeefcc4fb90e0c0110674.263]
+	mov r15, rdx
+	jmp .LBB92_115
+.LBB92_114:
+	mov r15, qword ptr [rsp + 80]
+	add rbx, rax
+	lea rcx, [rip + .Lanon.c61c31bbccbfeefcc4fb90e0c0110674.226]
+	mov rdi, rax
+	mov rsi, rbx
+.LBB92_115:
+	mov r14, qword ptr [rsp + 32]
+.LBB92_116:
+	mov rdx, r15
+	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
+	jmp .LBB92_121
+.LBB92_117:
+	vmovups ymm0, ymmword ptr [rsp + 152]
+	vmovups ymm1, ymmword ptr [rsp + 168]
+	mov rdi, qword ptr [rsp + 136]
+	mov rsi, qword ptr [rsp + 32]
+	vmovups ymmword ptr [rdi + 16], ymm1
+	vmovups ymmword ptr [rdi], ymm0
+	test rsi, rsi
+	je .LBB92_28
+	mov rbx, rdi
+	mov rdi, qword ptr [rsp + 56]
+	shl rsi, 3
+	mov edx, 8
+.LBB92_119:
 	vzeroupper
 	call qword ptr [rip + __rustc::__rust_dealloc@GOTPCREL]
-	jmp .LBB81_13
-.LBB81_67:
-	mov rdx, qword ptr [rsp + 184]
-	add rsi, rdi
-	lea rcx, [rip + .Lanon.c1c95b5badc199b805c72aab028cc532.226]
-	jmp .LBB81_76
-.LBB81_68:
-	mov rdx, qword ptr [rsp + 24]
-	mov r14, qword ptr [rsp + 16]
-	lea rcx, [rip + .Lanon.c1c95b5badc199b805c72aab028cc532.75]
-	mov rdi, rax
-	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
-	jmp .LBB81_82
-.LBB81_75:
-	lea rcx, [rip + .Lanon.c1c95b5badc199b805c72aab028cc532.194]
-.LBB81_76:
-	mov r14, qword ptr [rsp + 16]
-	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
-	jmp .LBB81_82
-.LBB81_69:
-	mov rdx, qword ptr [rsp + 24]
-	lea rcx, [rip + .Lanon.c1c95b5badc199b805c72aab028cc532.71]
-	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
-	jmp .LBB81_82
-.LBB81_70:
-	mov r14, qword ptr [rsp + 16]
-	mov rcx, qword ptr [rsp + 208]
-	lea rax, [rsp + 152]
-	lea rdx, [rip + .Lanon.c1c95b5badc199b805c72aab028cc532.225]
-	lea rsi, [rsp + 280]
-	jmp .LBB81_72
-.LBB81_71:
-	mov r14, qword ptr [rsp + 16]
-	lea rax, [rsp + 152]
-	lea rdx, [rip + .Lanon.c1c95b5badc199b805c72aab028cc532.193]
-	lea rsi, [rsp + 280]
-	lea rcx, [rsp + 112]
-.LBB81_72:
-	mov qword ptr [rsp + 280], rax
-	mov rax, qword ptr [rip + <usize as core::fmt::Display>::fmt@GOTPCREL]
-	mov qword ptr [rsi + 8], rax
-	mov qword ptr [rsi + 16], rcx
-	mov qword ptr [rsi + 24], rax
-	lea rdi, [rip + .Lanon.c1c95b5badc199b805c72aab028cc532.192]
-	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
-	jmp .LBB81_82
-.LBB81_77:
-	mov rdx, qword ptr [rsp + 160]
-	lea rcx, [rip + .Lanon.c1c95b5badc199b805c72aab028cc532.226]
-	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
-	jmp .LBB81_82
-.LBB81_78:
-	mov r8, qword ptr [rip + <usize as core::fmt::Display>::fmt@GOTPCREL]
-	lea rcx, [rsp + 192]
-	lea rsi, [rsp + 80]
-	lea rdx, [rsp + 200]
-	lea r9, [rip + .Lanon.c1c95b5badc199b805c72aab028cc532.74]
-	mov qword ptr [rsp + 280], rax
-	xor edi, edi
-	mov qword ptr [rsp + 88], rcx
-	lea rcx, [rsp + 280]
-	mov qword ptr [rsp + 96], r8
-	mov qword ptr [rsp + 104], rsi
-	mov qword ptr [rsp + 112], r8
-	mov qword ptr [rsp + 120], rcx
-	mov qword ptr [rsp + 128], r8
-	mov qword ptr [rsp + 136], rdx
-	mov qword ptr [rsp + 144], r8
-	lea rcx, [rip + .Lanon.c1c95b5badc199b805c72aab028cc532.73]
-	lea rdx, [rsp + 272]
-	lea r8, [rsp + 88]
-	call qword ptr [rip + core::panicking::assert_failed::<usize, usize>@GOTPCREL]
-.LBB81_79:
-	lea rcx, [rip + .Lanon.c1c95b5badc199b805c72aab028cc532.72]
-	xor edi, edi
-	mov rsi, r15
-	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
-	jmp .LBB81_82
-.LBB81_80:
-	call std::sync::once_lock::OnceLock<T>::initialize
-	jmp .LBB81_20
-.LBB81_81:
-	mov rsi, r14
-	mov r14, qword ptr [rsp + 16]
-	mov edi, 8
-	call qword ptr [rip + alloc::raw_vec::handle_error@GOTPCREL]
-.LBB81_82:
-	ud2
-	jmp .LBB81_86
-	mov r14, qword ptr [rsp + 16]
-	jmp .LBB81_90
-.LBB81_86:
-	mov rbx, rax
-	test r15, r15
-	jne .LBB81_88
-	mov r14, qword ptr [rsp + 16]
-	jmp .LBB81_91
-.LBB81_88:
-	mov rdi, qword ptr [rsp + 8]
-	shl r15, 3
-	mov edx, 8
-	mov rsi, r15
-	call qword ptr [rip + __rustc::__rust_dealloc@GOTPCREL]
-	mov r14, qword ptr [rsp + 16]
-	jmp .LBB81_91
-.LBB81_90:
-	mov rbx, rax
-.LBB81_91:
-	test r14, r14
-	jne .LBB81_94
-	mov rsi, qword ptr [rsp + 88]
-	test rsi, rsi
-	jne .LBB81_96
-.LBB81_93:
 	mov rdi, rbx
-	call _Unwind_Resume@PLT
-.LBB81_94:
-	mov rdi, qword ptr [rsp + 32]
+	jmp .LBB92_28
+.LBB92_120:
+	mov r8, qword ptr [rip + <usize as core::fmt::Display>::fmt@GOTPCREL]
+	lea rax, [rsp + 128]
+	lea rcx, [rsp + 176]
+	mov qword ptr [rsp + 248], rax
+	mov qword ptr [rsp + 256], r8
+	mov qword ptr [rsp + 264], rcx
+	mov qword ptr [rsp + 272], r8
+	mov r14, qword ptr [rsp + 32]
+	lea rdi, [rip + .Lanon.c61c31bbccbfeefcc4fb90e0c0110674.224]
+	lea rdx, [rip + .Lanon.c61c31bbccbfeefcc4fb90e0c0110674.225]
+	lea rsi, [rsp + 248]
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+.LBB92_121:
+	ud2
+.LBB92_122:
+	mov rbx, rcx
+.LBB92_123:
+	mov r14, qword ptr [rsp + 32]
+	mov r15, qword ptr [rsp + 64]
+.LBB92_124:
+	lea rcx, [rip + .Lanon.c61c31bbccbfeefcc4fb90e0c0110674.88]
+	mov rsi, rbx
+	jmp .LBB92_116
+.LBB92_125:
+	mov rax, qword ptr [rsp + 48]
+	xor edi, edi
+	cmp rsi, rax
+	ja .LBB92_129
+	mov r14, qword ptr [rsp + 32]
+	jmp .LBB92_124
+.LBB92_127:
+	cmp rsi, qword ptr [rsp + 48]
+	jbe .LBB92_123
+	mov r15, qword ptr [rsp + 48]
+	mov r14, qword ptr [rsp + 32]
+	mov rsi, qword ptr [rsp + 88]
+	lea rcx, [rip + .Lanon.c61c31bbccbfeefcc4fb90e0c0110674.263]
+	jmp .LBB92_116
+.LBB92_129:
+	lea rcx, [rip + .Lanon.c61c31bbccbfeefcc4fb90e0c0110674.263]
+	mov r15, rax
+	jmp .LBB92_115
+	jmp .LBB92_137
+	cmp qword ptr [rsp + 40], 0
+	mov rbx, rax
+	je .LBB92_144
+	mov rsi, qword ptr [rsp + 40]
+	mov edx, 8
+	mov rdi, rbp
+	shl rsi, 3
+	call qword ptr [rip + __rustc::__rust_dealloc@GOTPCREL]
+	jmp .LBB92_144
+	jmp .LBB92_137
+	jmp .LBB92_137
+	jmp .LBB92_137
+.LBB92_137:
+	mov r14, qword ptr [rsp + 32]
+	jmp .LBB92_140
+	jmp .LBB92_143
+.LBB92_140:
+	mov rbx, rax
+	test r14, r14
+	je .LBB92_144
+	mov rdi, qword ptr [rsp + 56]
 	shl r14, 3
 	mov edx, 8
 	mov rsi, r14
 	call qword ptr [rip + __rustc::__rust_dealloc@GOTPCREL]
-	mov rsi, qword ptr [rsp + 88]
-	test rsi, rsi
-	je .LBB81_93
-	jmp .LBB81_96
+	jmp .LBB92_144
+.LBB92_143:
 	mov rbx, rax
-	mov rsi, qword ptr [rsp + 88]
+.LBB92_144:
+	mov rsi, qword ptr [rsp + 152]
 	test rsi, rsi
-	je .LBB81_93
-.LBB81_96:
-	mov rdi, qword ptr [rsp + 96]
+	je .LBB92_146
+	mov rdi, qword ptr [rsp + 160]
 	shl rsi, 3
 	mov edx, 8
 	call qword ptr [rip + __rustc::__rust_dealloc@GOTPCREL]
+.LBB92_146:
 	mov rdi, rbx
 	call _Unwind_Resume@PLT
-
-; -----------------------------------------------------------------------------
-; B2 recovery addendum (issue 54a0e75c, 2026-04-28)
-; -----------------------------------------------------------------------------
-; Artifact remains a sibling of `m4rm.rs`, matching `matrix.rs` /
-; `matrix.asm.txt` and avoiding the stale WIP's irregular `src/alg/asm/` path.
-;
-; Build commands used from recovery-b2-54a0e75c:
-;   CARGO_TARGET_DIR=$PWD/target/recovery-b2-target \
-;   RUSTFLAGS='-C target-cpu=native' \
-;   cargo rustc -p gf2-core --release --lib --features simd -- --emit=asm
-;
-;   CARGO_TARGET_DIR=$PWD/target/recovery-b2-target \
-;   RUSTFLAGS='-C target-cpu=native' \
-;   cargo rustc -p gf2-kernels-simd --release --lib -- --emit=asm
-;
-; V2 ILP evidence: full-tile fallback updates eight independent accumulator
-; registers in the Gray-code loop (excerpt from `build_gray_table_flat`):
-;
-;     xorq    (%rax,%rdi,8), %r11
-;     xorq    8(%rax,%rdi,8), %rbx
-;     xorq    16(%rax,%rdi,8), %r15
-;     xorq    24(%rax,%rdi,8), %r12
-;     xorq    32(%rax,%rdi,8), %r13
-;     xorq    40(%rax,%rdi,8), %rbp
-;     xorq    48(%rax,%rdi,8), %rcx
-;     xorq    56(%rax,%rdi,8), %rdx
-;
-; V3 call-site evidence: stride_words == 16 loads the SIMD bundle once, hoists
-; `LogicalFns::m4rm_gray_xor16_fn` to the stack, then calls it inside the
-; Gray-code loop; `multiply()` still separately hoists `resolve_xor_inplace` for
-; row/table XORs as audited above.
-;
-;     cmpq    $16, %r12
-;     jne     .LBB81_15
-;     movq    gf2_core::simd::FNS@GOTPCREL(%rip), %rbx
-;     ...
-;     movq    24(%rbx), %rax        ; LogicalFns::m4rm_gray_xor16_fn
-;     movq    %rax, 128(%rsp)       ; hoisted before the Gray-code loop
-;     ...
-; .LBB81_8:
-;     leaq    (%rax,%rdi,8), %rsi   ; B row words
-;     leaq    272(%rsp), %rdi       ; 16-word accumulator
-;     vzeroupper
-;     callq   *128(%rsp)
-;     vmovups 272(%rsp), %ymm0      ; batched table stores
-;     vmovups 304(%rsp), %ymm1
-;     vmovups %ymm1, 32(%r14,%rsi,8)
-;     vmovups %ymm0, (%r14,%rsi,8)
-;
-; V3 SIMD kernel evidence: unsafe AVX2 is isolated in `gf2-kernels-simd`.
-; `vxorps` is the emitted 256-bit bitwise XOR mnemonic; it is equivalent to
-; `vpxor` for the GF(2) row-word bit pattern.
-;
-; gf2_kernels_simd::x86::avx2::fns::m4rm_gray_xor16_fn:
-;     cmpq    $16, %rdx
-;     jb      .LBB10_2
-;     vmovups (%rsi), %ymm0
-;     vxorps  (%rdi), %ymm0, %ymm0
-;     vmovups %ymm0, (%rdi)
-;     vmovups 32(%rsi), %ymm0
-;     vxorps  32(%rdi), %ymm0, %ymm0
-;     vmovups %ymm0, 32(%rdi)
-;     vmovups 64(%rsi), %ymm0
-;     vxorps  64(%rdi), %ymm0, %ymm0
-;     vmovups %ymm0, 64(%rdi)
-;     vmovups 96(%rsi), %ymm0
-;     vxorps  96(%rdi), %ymm0, %ymm0
-;     vmovups %ymm0, 96(%rdi)
-;     vzeroupper
-;     retq
-;
-; V6 prefetch probe (not retained): a one-Gray-step-ahead `_mm_prefetch` of the
-; next 16-word B row was tested through gf2-kernels-simd and regressed
-; `gray_table_generation_k8` from V3 [0.546, 0.549, 0.551] us to
-; [0.773, 0.774, 0.776] us. The B panel is cache-hot; prefetch is not useful
-; for this size class and no V6 prefetch instructions are intentionally present.

@@ -1,0 +1,55 @@
+B3 perf stat capture — M4RM block multiply register-tile (jit:19bc3199)
+
+BEFORE rowwise schedule:
+mode=rowwise iters=200 checksum=0
+mode=rowwise iters=200 checksum=0
+mode=rowwise iters=200 checksum=0
+mode=rowwise iters=200 checksum=0
+mode=rowwise iters=200 checksum=0
+mode=rowwise iters=200 checksum=0
+mode=rowwise iters=200 checksum=0
+mode=rowwise iters=200 checksum=0
+mode=rowwise iters=200 checksum=0
+mode=rowwise iters=200 checksum=0
+
+ Performance counter stats for '/home/vkaskivuo/Projects/gf2/.claude/worktrees/agent-19bc3199/target/agent-19bc3199/release/examples/m4rm_multiply_perfstat' (10 runs):
+
+                 0      context-switches:u               #      0.0 cs/sec  cs_per_second     
+                 0      cpu-migrations:u                 #      0.0 migrations/sec  migrations_per_second
+             2,339      page-faults:u                    #  11191.3 faults/sec  page_faults_per_second  ( +-  0.02% )
+            209.00 msec task-clock:u                     #      1.0 CPUs  CPUs_utilized         ( +-  0.46% )
+         1,207,912      branch-misses:u                  #      0.2 %  branch_miss_rate         ( +-  1.09% )  (49.47%)
+       710,426,947      branches:u                       #   3399.2 M/sec  branch_frequency     ( +-  0.20% )  (49.91%)
+       916,720,024      cpu-cycles:u                     #      4.4 GHz  cycles_frequency       ( +-  0.53% )  (66.81%)
+     3,521,635,881      instructions:u                   #      3.8 instructions  insn_per_cycle  ( +-  0.16% )  (50.53%)
+        10,948,692      stalled-cycles-frontend:u        #     0.01 frontend_cycles_idle        ( +-  7.24% )  (50.09%)
+
+       0.209637579 +- 0.000991903 seconds time elapsed  ( +-  0.47% )
+
+
+AFTER register-tiled schedule:
+mode=tiled iters=200 checksum=0
+mode=tiled iters=200 checksum=0
+mode=tiled iters=200 checksum=0
+mode=tiled iters=200 checksum=0
+mode=tiled iters=200 checksum=0
+mode=tiled iters=200 checksum=0
+mode=tiled iters=200 checksum=0
+mode=tiled iters=200 checksum=0
+mode=tiled iters=200 checksum=0
+mode=tiled iters=200 checksum=0
+
+ Performance counter stats for '/home/vkaskivuo/Projects/gf2/.claude/worktrees/agent-19bc3199/target/agent-19bc3199/release/examples/m4rm_multiply_perfstat' (10 runs):
+
+                 0      context-switches:u               #      0.0 cs/sec  cs_per_second     
+                 0      cpu-migrations:u                 #      0.0 migrations/sec  migrations_per_second
+             2,339      page-faults:u                    #  11158.9 faults/sec  page_faults_per_second  ( +-  0.02% )
+            209.61 msec task-clock:u                     #      1.0 CPUs  CPUs_utilized         ( +-  0.72% )
+         1,205,015      branch-misses:u                  #      0.3 %  branch_miss_rate         ( +-  1.18% )  (49.60%)
+       394,780,019      branches:u                       #   1883.4 M/sec  branch_frequency     ( +-  0.17% )  (49.77%)
+       934,358,798      cpu-cycles:u                     #      4.5 GHz  cycles_frequency       ( +-  0.73% )  (66.57%)
+     2,942,336,177      instructions:u                   #      3.1 instructions  insn_per_cycle  ( +-  0.14% )  (50.40%)
+        11,697,964      stalled-cycles-frontend:u        #     0.01 frontend_cycles_idle        ( +- 18.15% )  (50.23%)
+
+       0.210238169 +- 0.001510502 seconds time elapsed  ( +-  0.72% )
+
