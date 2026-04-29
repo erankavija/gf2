@@ -1100,6 +1100,52 @@ pub trait SimdKaratsubaHook: ConstField {
     }
 
     /// Attempts a fused SIMD Karatsuba-3 combine for cubic-extension batches.
+    ///
+    /// Implementations may use a backend-specific kernel to compute all three
+    /// output coefficient lanes for element-wise multiplication in
+    /// `BaseField[X] / (X^3 - C::NON_RESIDUE)`. Returning `None` asks the
+    /// generic SoA path to compose the operation from base-field batch add,
+    /// sub, and multiplication hooks instead.
+    ///
+    /// # Arguments
+    ///
+    /// * `a0`, `a1`, `a2` - The three SoA coefficient lanes of the left batch.
+    /// * `b0`, `b1`, `b2` - The three SoA coefficient lanes of the right batch.
+    ///
+    /// # Returns
+    ///
+    /// `Some([c0, c1, c2])` when a specialised SIMD implementation handles the
+    /// full batch, or `None` when the caller should use the generic fallback.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::gfp::Fp;
+    /// use gf2_core::gfpn::{ExtConfig, SimdKaratsubaHook};
+    ///
+    /// struct Cfg;
+    /// impl ExtConfig for Cfg {
+    ///     type BaseField = Fp<65537>;
+    ///     const NON_RESIDUE: Fp<65537> = Fp::<65537>::new(3);
+    /// }
+    ///
+    /// let a0 = vec![Fp::<65537>::new(1), Fp::<65537>::new(2)];
+    /// let a1 = vec![Fp::<65537>::new(3), Fp::<65537>::new(4)];
+    /// let a2 = vec![Fp::<65537>::new(5), Fp::<65537>::new(6)];
+    /// let b0 = vec![Fp::<65537>::new(7), Fp::<65537>::new(8)];
+    /// let b1 = vec![Fp::<65537>::new(9), Fp::<65537>::new(10)];
+    /// let b2 = vec![Fp::<65537>::new(11), Fp::<65537>::new(12)];
+    ///
+    /// let _ = <Fp<65537> as SimdKaratsubaHook>::try_simd_cubic_karatsuba::<Cfg>(
+    ///     &a0, &a1, &a2, &b0, &b1, &b2,
+    /// );
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(n)` base-field operations. A fused implementation performs six
+    /// independent base-field multiplications plus the Karatsuba-3 linear
+    /// combines per element, typically in SIMD lanes.
     #[inline]
     #[allow(clippy::too_many_arguments)]
     fn try_simd_cubic_karatsuba<C: ExtConfig<BaseField = Self>>(
