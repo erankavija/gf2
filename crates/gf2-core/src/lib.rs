@@ -103,10 +103,11 @@ pub(crate) mod simd {
 
     /// Returns the best available 64×64 bit-block transpose kernels, if any.
     ///
-    /// On x86_64 with AVX2 this returns the PSHUFB-based byte-tile lane;
-    /// otherwise the scalar Hacker's Delight bit-twiddle lane is published
-    /// (always available). Returns `None` only if the host platform has
-    /// no implementation at all (currently impossible on supported targets).
+    /// On x86_64 with AVX2 this returns the measured production
+    /// bit-twiddle lane; otherwise the scalar Hacker's Delight
+    /// bit-twiddle lane is published (always available). Returns `None`
+    /// only if the host platform has no implementation at all (currently
+    /// impossible on supported targets).
     ///
     /// The returned [`TransposeFns::transpose_64x64`] operates on
     /// fixed-size `&[u64; 64]` blocks; callers tile arbitrary

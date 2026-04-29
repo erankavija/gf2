@@ -17,8 +17,11 @@
 //! - **V0**: criterion baseline pinned via `crates/gf2-core/benches/matrix_transpose.rs`.
 //! - **V4**: register-tiled bit-twiddle 64×64 transpose
 //!   ([`transpose_64x64_scalar`], based on Hacker's Delight ch. 7-3).
-//! - **V3**: AVX2 PSHUFB-based 8×8 byte tiles within YMM registers
-//!   ([`crate::x86::transpose::transpose_64x64_avx2`]).
+//! - **V3a**: AVX2 PSHUFB-based 8×8 byte tiles within YMM registers
+//!   ([`detect_pshufb`], committed for artefact inspection).
+//! - **V3b**: AVX2 YMM bit-twiddle lane
+//!   ([`crate::x86::transpose::transpose_64x64_avx2`]), used by default after
+//!   measurement because it outperforms the PSHUFB lane on the recovery host.
 //! - **V7**: optional cache-tiling outer loop for very large
 //!   matrices (driven from the `gf2-core` side).
 //!
@@ -27,6 +30,9 @@
 //! interpreted as the matrix entry at column `j`. The transpose writes
 //! 64 output words where bit `i` of word `j` equals bit `j` of input
 //! word `i`.
+
+/// Safe 64×64 bit-block transpose function pointer.
+pub type Transpose64x64Fn = fn(&[u64; 64], &mut [u64; 64]);
 
 /// Bundle of dispatched bit-matrix-transpose kernels.
 ///
@@ -37,9 +43,9 @@ pub struct TransposeFns {
     /// In-place 64×64 bit-block transpose, reading from 64 input words
     /// and writing 64 output words. The input and output buffers must
     /// not overlap.
-    pub transpose_64x64: fn(&[u64; 64], &mut [u64; 64]),
+    pub transpose_64x64: Transpose64x64Fn,
     /// Human-readable tag of the chosen lane. One of
-    /// `"avx2-pshufb"` or `"scalar-bit-twiddle"`.
+    /// `"avx2-bit-twiddle"` or `"scalar-bit-twiddle"`.
     pub name: &'static str,
 }
 
@@ -49,7 +55,7 @@ pub struct TransposeFns {
 /// instead always use [`transpose_64x64_scalar`] directly, which has
 /// no CPU feature requirement.
 ///
-/// On x86_64, prefers AVX2 PSHUFB → scalar fallback.
+/// On x86_64, prefers AVX2 bit-twiddle → scalar fallback.
 ///
 /// # Examples
 ///
@@ -99,6 +105,24 @@ fn detect_x86() -> Option<TransposeFns> {
     })
 }
 
+/// Detect and return the AVX2 PSHUFB transpose lane when available.
+///
+/// This lane exists as the explicit B1 PSHUFB implementation and asm artefact
+/// target. The main [`detect`] function may still choose a faster AVX2
+/// bit-twiddle lane for production dispatch.
+pub fn detect_pshufb() -> Option<Transpose64x64Fn> {
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    {
+        use std::arch::is_x86_feature_detected;
+
+        if is_x86_feature_detected!("avx2") {
+            return Some(transpose_64x64_avx2_pshufb_safe);
+        }
+    }
+    #[allow(unreachable_code)]
+    None
+}
+
 // ---------------------------------------------------------------------------
 // Safe function-pointer wrappers
 // ---------------------------------------------------------------------------
@@ -109,6 +133,14 @@ fn transpose_64x64_avx2_safe(input: &[u64; 64], output: &mut [u64; 64]) {
     // available at runtime. Callers who bypass `detect` must uphold
     // that precondition.
     unsafe { crate::x86::transpose::transpose_64x64_avx2(input, output) }
+}
+
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+fn transpose_64x64_avx2_pshufb_safe(input: &[u64; 64], output: &mut [u64; 64]) {
+    // SAFETY: `detect_pshufb` only returns this pointer when AVX2 is
+    // available at runtime. Callers who bypass `detect_pshufb` must uphold
+    // that precondition.
+    unsafe { crate::x86::transpose::transpose_64x64_avx2_pshufb(input, output) }
 }
 
 fn transpose_64x64_scalar_safe(input: &[u64; 64], output: &mut [u64; 64]) {
@@ -347,6 +379,31 @@ mod tests {
             transpose_64x64_scalar(&input, &mut a);
             (fns.transpose_64x64)(&input, &mut b);
             assert_eq!(a, b, "dispatched lane '{}' diverged from scalar", fns.name);
+        }
+    }
+
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    #[test]
+    fn test_pshufb_kernel_matches_scalar() {
+        let Some(pshufb) = detect_pshufb() else {
+            return;
+        };
+        let mut rng = 0x1234_5678_9ABC_DEF0u64;
+        for _ in 0..32 {
+            let mut input = [0u64; 64];
+            for slot in input.iter_mut() {
+                rng = rng.wrapping_add(0x9E37_79B9_7F4A_7C15);
+                let mut z = rng;
+                z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
+                z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
+                z ^= z >> 31;
+                *slot = z;
+            }
+            let mut expected = [0u64; 64];
+            let mut actual = [0u64; 64];
+            transpose_64x64_scalar(&input, &mut expected);
+            pshufb(&input, &mut actual);
+            assert_eq!(expected, actual, "PSHUFB lane diverged from scalar");
         }
     }
 }

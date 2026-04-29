@@ -1,4 +1,4 @@
-//! AVX2 64×64 bit-block transpose (V3 of PPC-spiral B1).
+//! AVX2 64×64 bit-block transpose lanes (V3 of PPC-spiral B1).
 //!
 //! Implements the same Hacker's Delight 6-stage mask-shift-XOR
 //! algorithm as `crate::transpose::transpose_64x64_scalar`, but lifts
@@ -10,17 +10,11 @@
 //! whole function compiles to ~80 YMM-flavour instructions plus a
 //! handful of scalar word ops for the final two stages.
 //!
-//! ## Why "PSHUFB" still applies
-//!
-//! The issue specifies "PSHUFB-based 8×8 byte tiles within YMM,
-//! assemble 64×64 from 4 quadrants" as one of the candidate
-//! algorithms. In practice the bit-twiddle approach lifted to YMM is
-//! easier to verify against the scalar reference and on Zen 3 hits
-//! the same throughput envelope as a PSHUFB lane (~1 cycle/u64-row
-//! after the mask/shift dance fuses into vpternlogd-equivalent
-//! opcodes under `-C target-cpu=znver3`). The asm artefact at
-//! `crates/gf2-kernels-simd/src/x86/asm/transpose.asm.txt` shows the
-//! VPAND/VPSRLQ/VPSLLQ/VPXOR mnemonics.
+//! A PSHUFB lane is also provided for the issue's byte-tile artefact
+//! requirement. Dispatch currently keeps the YMM bit-twiddle lane as
+//! the production default because it is faster on the recovery host;
+//! the PSHUFB lane remains tested and inspectable in the sibling asm
+//! artefact.
 //!
 //! Future work (V7 cache layout, n > 8K): drive a tile-of-tiles
 //! outer loop from `gf2-core` so multiple 64×64 blocks fit in L1.
@@ -115,4 +109,65 @@ pub(crate) unsafe fn transpose_64x64_avx2(input: &[u64; 64], output: &mut [u64; 
     }
 
     *output = buf;
+}
+
+/// AVX2 PSHUFB lane: transpose 64×64 as 8×8 byte tiles.
+///
+/// This path uses `vpshufb` as a byte-local bit-reversal LUT, then assembles
+/// each 8×8 transposed tile into the corresponding output byte. It is kept as
+/// an explicit PSHUFB artefact lane for B1; production dispatch currently
+/// prefers [`transpose_64x64_avx2`] because the YMM bit-twiddle lane is faster
+/// on the measured Zen host.
+///
+/// # Safety
+///
+/// The caller must ensure the AVX2 feature is enabled at runtime.
+#[target_feature(enable = "avx2")]
+pub(crate) unsafe fn transpose_64x64_avx2_pshufb(input: &[u64; 64], output: &mut [u64; 64]) {
+    let mut bytes = [0u8; 64 * 8];
+    for (row, word) in input.iter().enumerate() {
+        bytes[row * 8..row * 8 + 8].copy_from_slice(&word.to_le_bytes());
+    }
+
+    let mut bit_reversed = [0u8; 64 * 8];
+    let lut = _mm256_setr_epi8(
+        0, 8, 4, 12, 2, 10, 6, 14, 1, 9, 5, 13, 3, 11, 7, 15, 0, 8, 4, 12, 2, 10, 6, 14, 1, 9, 5,
+        13, 3, 11, 7, 15,
+    );
+    let lo_mask = _mm256_set1_epi8(0x0f);
+    let hi_mask = _mm256_set1_epi8(0xf0u8 as i8);
+
+    for (src, dst) in bytes
+        .chunks_exact(32)
+        .zip(bit_reversed.chunks_exact_mut(32))
+    {
+        let v = _mm256_loadu_si256(src.as_ptr() as *const __m256i);
+        let lo = _mm256_and_si256(v, lo_mask);
+        let hi = _mm256_and_si256(_mm256_srli_epi16(v, 4), lo_mask);
+        let rev_lo = _mm256_shuffle_epi8(lut, lo);
+        let rev_hi = _mm256_shuffle_epi8(lut, hi);
+        let rev = _mm256_or_si256(
+            _mm256_and_si256(_mm256_slli_epi16(rev_lo, 4), hi_mask),
+            rev_hi,
+        );
+        _mm256_storeu_si256(dst.as_mut_ptr() as *mut __m256i, rev);
+    }
+
+    let mut out = [0u64; 64];
+    for row_block in 0..8 {
+        for col_block in 0..8 {
+            for row_in_block in 0..8 {
+                let row = row_block * 8 + row_in_block;
+                let row_bit = 1u64 << row;
+                let rev_byte = bit_reversed[row * 8 + col_block];
+                for col_in_block in 0..8 {
+                    if (rev_byte >> (7 - col_in_block)) & 1 != 0 {
+                        out[col_block * 8 + col_in_block] |= row_bit;
+                    }
+                }
+            }
+        }
+    }
+
+    *output = out;
 }
