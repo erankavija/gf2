@@ -4,9 +4,9 @@
   "title": "gf2-core PPC-spiral performance sweep",
   "claimed_by": "agent:project-lead",
   "started_at": "2026-04-26T22:30:00+00:00",
-  "last_updated": "2026-04-29 sub-wave 4b closed",
+  "last_updated": "2026-04-29 sub-wave 4b and dense story closed",
   "current_wave": 4,
-  "phase": "sub-wave 4b closed: B3, C2, and C4 integrated on main with all required gates passed.",
+  "phase": "sub-wave 4b and dense bit-matrix SIMD story closed; next ready work includes C5, Strassen, and dense multithreading.",
   "related_epic": "bb85c68a (FieldMatrix linear algebra)",
   "spec_doc": "dev/plans/gf2_core_ppc_spiral.md",
   "uncompetitiveness_doc": "dev/bench_results/2026-04-26-uncompetitiveness-profile.md",
@@ -25,7 +25,8 @@
     "Session 6 (2026-04-28) dispatch outcome: all 4 workers completed with API 529 (auth service unavailable), losing final narrative reports but leaving on-disk worktree state. Per user directive 'Do not merge \u2014 just create a handoff document', no integration to main this session. Lead-preserve commits applied to 3 of 4 worktrees so uncommitted WIP survives across sessions: C3 worktree got 16dbba3, B1 got d773986 (V7 cache-tile), B2 got 5e7c138 (288-line m4rm.rs blob). C1 worktree was already clean. CRITICAL TRAP 1 documented in handoff-4: Agent isolation=worktree branched from 854b37d (session 3) instead of current main c8d71af \u2014 all 4 worker branches are 41 commits behind main. Na\u00efve merge would clobber Wave-3 closures (cad241e6 fp_generic, c69d2055 hoist, A2 manifest amendment, etc.). Mitigation in handoff: rebase each worktree onto main BEFORE any integration; expected hot conflicts on gf2-kernels-simd/src/lib.rs (C3 vs cad241e6 fp_generic), gf2-core/src/alg/m4rm.rs (B2 vs c69d2055 hoist), gf2-core/src/matrix.rs (B1 vs 8e4b189c/5223bb04), and dev/benchmarks/ppc-baselines.json (all workers vs A2 amendment). Per-worker observations: C1 looks complete (4 commits, V3+V4 bundled but production-ready), B1 reports ~65\u00d7 at n=4096 + V7 in WIP, C3 has Lean-build [hard] unverified, B2 placed asm artefact at irregular gf2-core/src/alg/asm/ path that asm-artefact-present gate won't see.",
     "Session 7 recovery close: sub-wave 4a stale-worktree recovery completed. User-approved decisions during recovery: salvage C1+B1 and restart C3+B2; accept B1 baseline amendment to ppc-v0-2026-04-27; implement B1 PSHUFB lane rather than amend hard artefact criterion; accept B2 vxorps as vpxor-equivalent hard-criterion amendment. Helper scripts accidentally committed to gf2 were reverted and belong under ~/.claude/skills.",
     "Session 8 dispatch: B3 (19bc3199), C2 (7c954fb5), and C4 (3168d114) selected as sub-wave 4b. Direct dependencies are done; workers must use manual worktrees pinned to current main and must not modify .jit state.",
-    "Session 8 close: sub-wave 4b integrated and gated. C2 closed at 17.215x after fixing the C2 criterion manifest to measure m=571 instead of the stale wide4 leaf. C4 closed after user-approved aspirational amendment from field_matrix_fusion to SoA batch_soa vs unchanged sequential_aos, 4.045x geomean. B3 closed at 5.623x after code-review found and lead fixed safe-wrapper UB risk in M4RM tile function pointers by validating c_block/table/index bounds before AVX2 dispatch."
+    "Session 8 close: sub-wave 4b integrated and gated. C2 closed at 17.215x after fixing the C2 criterion manifest to measure m=571 instead of the stale wide4 leaf. C4 closed after user-approved aspirational amendment from field_matrix_fusion to SoA batch_soa vs unchanged sequential_aos, 4.045x geomean. B3 closed at 5.623x after code-review found and lead fixed safe-wrapper UB risk in M4RM tile function pointers by validating c_block/table/index bounds before AVX2 dispatch.",
+    "Session 8 parent close: dense bit-matrix SIMD story 211102c6 closed after B1/B2/B3 were done. Parent code-review initially found a B2 wrapper silent no-op on short Gray-table source; lead fixed it by panicking on the invalid precondition and adding a regression test, with avx2.asm.txt regenerated. Parent cargo-ci and code-review gates passed."
   ],
   "waves": [
     {
