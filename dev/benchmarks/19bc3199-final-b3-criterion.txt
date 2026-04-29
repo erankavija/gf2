@@ -1,32 +1,30 @@
-   Compiling gf2-core v0.1.0 (/home/vkaskivuo/Projects/gf2/.claude/worktrees/agent-19bc3199/crates/gf2-core)
-    Finished `bench` profile [optimized] target(s) in 5.92s
-     Running benches/m4rm_components.rs (target/agent-19bc3199/release/deps/m4rm_components-575234ffe0022e67)
-Benchmarking m4rm_multiply/256
-Benchmarking m4rm_multiply/256: Warming up for 1.0000 s
-Benchmarking m4rm_multiply/256: Collecting 10 samples in estimated 2.0004 s (28k iterations)
-Benchmarking m4rm_multiply/256: Analyzing
-m4rm_multiply/256       time:   [71.724 µs 71.796 µs 71.846 µs]
-                        change: [-0.4239% +0.1597% +0.6393%] (p = 0.59 > 0.05)
-                        No change in performance detected.
-Found 2 outliers among 10 measurements (20.00%)
-  1 (10.00%) low mild
-  1 (10.00%) high mild
-Benchmarking m4rm_multiply/512
-Benchmarking m4rm_multiply/512: Warming up for 1.0000 s
-Benchmarking m4rm_multiply/512: Collecting 10 samples in estimated 2.0066 s (16k iterations)
-Benchmarking m4rm_multiply/512: Analyzing
-m4rm_multiply/512       time:   [118.59 µs 118.63 µs 118.67 µs]
-                        change: [-6.8125% -6.6113% -6.4363%] (p = 0.00 < 0.05)
-                        Performance has improved.
-Found 1 outliers among 10 measurements (10.00%)
-  1 (10.00%) high mild
-Benchmarking m4rm_multiply/1024
-Benchmarking m4rm_multiply/1024: Warming up for 1.0000 s
-Benchmarking m4rm_multiply/1024: Collecting 10 samples in estimated 2.0215 s (2750 iterations)
-Benchmarking m4rm_multiply/1024: Analyzing
-m4rm_multiply/1024      time:   [754.01 µs 768.64 µs 784.49 µs]
-                        change: [-37.895% -37.327% -36.407%] (p = 0.00 < 0.05)
-                        Performance has improved.
-Found 1 outliers among 10 measurements (10.00%)
-  1 (10.00%) high severe
+R1 B3 Criterion evidence (jit:19bc3199)
+Command:
+  CARGO_TARGET_DIR=target/agent-19bc3199 RUSTFLAGS='-C target-cpu=native' cargo bench -p gf2-core --all-features --bench m4rm_components -- m4rm_multiply
 
+Benchmarking m4rm_multiply/256
+m4rm_multiply/256       time:   [77.256 µs 77.315 µs 77.386 µs]
+Found 5 outliers among 100 measurements (5.00%)
+  2 (2.00%) high mild
+  3 (3.00%) high severe
+
+Benchmarking m4rm_multiply/512
+m4rm_multiply/512       time:   [128.39 µs 128.44 µs 128.48 µs]
+Found 6 outliers among 100 measurements (6.00%)
+  3 (3.00%) high mild
+  3 (3.00%) high severe
+
+Benchmarking m4rm_multiply/1024
+m4rm_multiply/1024      time:   [738.51 µs 738.75 µs 738.99 µs]
+                        change: [-5.9342% -3.2789% -0.8594%] (p = 0.01 < 0.05)
+                        Change within noise threshold.
+Found 13 outliers among 100 measurements (13.00%)
+  2 (2.00%) low mild
+  8 (8.00%) high mild
+  3 (3.00%) high severe
+
+Criterion gate harness check:
+  ./dev/benchmarks/ppc-compare.sh B3 --criterion-dir crates/gf2-core/target/agent-19bc3199/criterion
+  ERROR: missing baseline estimates: crates/gf2-core/target/agent-19bc3199/criterion/m4rm_multiply/256/ppc-v0-2026-04-27/estimates.json
+
+Result: current estimates populated for the B3 design sizes, but this worktree does not contain the saved ppc-v0-2026-04-27 baseline estimates needed to prove the >=1.5x geomean gate locally.

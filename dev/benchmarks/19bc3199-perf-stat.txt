@@ -1,55 +1,41 @@
 B3 perf stat capture — M4RM block multiply register-tile (jit:19bc3199)
+Command:
+  CARGO_TARGET_DIR=target/agent-19bc3199 RUSTFLAGS='-C target-cpu=native' cargo build -p gf2-core --all-features --release --example m4rm_multiply_perfstat
+  B3_PERFSTAT_MODE=rowwise B3_PERFSTAT_ITERS=200 perf stat -r 5 -d target/agent-19bc3199/release/examples/m4rm_multiply_perfstat
+  B3_PERFSTAT_ITERS=200 perf stat -r 5 -d target/agent-19bc3199/release/examples/m4rm_multiply_perfstat
 
-BEFORE rowwise schedule:
-mode=rowwise iters=200 checksum=0
-mode=rowwise iters=200 checksum=0
-mode=rowwise iters=200 checksum=0
-mode=rowwise iters=200 checksum=0
-mode=rowwise iters=200 checksum=0
-mode=rowwise iters=200 checksum=0
-mode=rowwise iters=200 checksum=0
-mode=rowwise iters=200 checksum=0
-mode=rowwise iters=200 checksum=0
+rowwise output:
 mode=rowwise iters=200 checksum=0
 
- Performance counter stats for '/home/vkaskivuo/Projects/gf2/.claude/worktrees/agent-19bc3199/target/agent-19bc3199/release/examples/m4rm_multiply_perfstat' (10 runs):
+Performance counter stats for 'target/agent-19bc3199/release/examples/m4rm_multiply_perfstat' (5 runs):
 
-                 0      context-switches:u               #      0.0 cs/sec  cs_per_second     
+                 0      context-switches:u               #      0.0 cs/sec  cs_per_second
                  0      cpu-migrations:u                 #      0.0 migrations/sec  migrations_per_second
-             2,339      page-faults:u                    #  11191.3 faults/sec  page_faults_per_second  ( +-  0.02% )
-            209.00 msec task-clock:u                     #      1.0 CPUs  CPUs_utilized         ( +-  0.46% )
-         1,207,912      branch-misses:u                  #      0.2 %  branch_miss_rate         ( +-  1.09% )  (49.47%)
-       710,426,947      branches:u                       #   3399.2 M/sec  branch_frequency     ( +-  0.20% )  (49.91%)
-       916,720,024      cpu-cycles:u                     #      4.4 GHz  cycles_frequency       ( +-  0.53% )  (66.81%)
-     3,521,635,881      instructions:u                   #      3.8 instructions  insn_per_cycle  ( +-  0.16% )  (50.53%)
-        10,948,692      stalled-cycles-frontend:u        #     0.01 frontend_cycles_idle        ( +-  7.24% )  (50.09%)
+             2,338      page-faults:u                    #  11383.9 faults/sec  page_faults_per_second  ( +-  0.01% )
+            205.38 msec task-clock:u                     #      1.0 CPUs  CPUs_utilized         ( +-  0.87% )
+       196,373,100      L1-dcache-load-misses:u          #     16.5 %  l1d_miss_rate            ( +-  0.64% )  (42.29%)
+         1,020,865      branch-misses:u                  #      0.1 %  branch_miss_rate         ( +-  3.54% )  (42.53%)
+       708,957,970      branches:u                       #   3452.0 M/sec  branch_frequency     ( +-  0.36% )  (43.02%)
+       915,309,654      cpu-cycles:u                     #      4.5 GHz  cycles_frequency       ( +-  0.90% )  (43.28%)
+     3,516,607,019      instructions:u                   #      3.8 instructions  insn_per_cycle  ( +-  0.40% )  (43.29%)
+        10,178,248      stalled-cycles-frontend:u        #     0.01 frontend_cycles_idle        ( +- 10.00% )  (43.05%)
 
-       0.209637579 +- 0.000991903 seconds time elapsed  ( +-  0.47% )
+       0.206160065 +- 0.001773068 seconds time elapsed  ( +-  0.86% )
 
-
-AFTER register-tiled schedule:
-mode=tiled iters=200 checksum=0
-mode=tiled iters=200 checksum=0
-mode=tiled iters=200 checksum=0
-mode=tiled iters=200 checksum=0
-mode=tiled iters=200 checksum=0
-mode=tiled iters=200 checksum=0
-mode=tiled iters=200 checksum=0
-mode=tiled iters=200 checksum=0
-mode=tiled iters=200 checksum=0
+tiled output:
 mode=tiled iters=200 checksum=0
 
- Performance counter stats for '/home/vkaskivuo/Projects/gf2/.claude/worktrees/agent-19bc3199/target/agent-19bc3199/release/examples/m4rm_multiply_perfstat' (10 runs):
+Performance counter stats for 'target/agent-19bc3199/release/examples/m4rm_multiply_perfstat' (5 runs):
 
-                 0      context-switches:u               #      0.0 cs/sec  cs_per_second     
+                 0      context-switches:u               #      0.0 cs/sec  cs_per_second
                  0      cpu-migrations:u                 #      0.0 migrations/sec  migrations_per_second
-             2,339      page-faults:u                    #  11158.9 faults/sec  page_faults_per_second  ( +-  0.02% )
-            209.61 msec task-clock:u                     #      1.0 CPUs  CPUs_utilized         ( +-  0.72% )
-         1,205,015      branch-misses:u                  #      0.3 %  branch_miss_rate         ( +-  1.18% )  (49.60%)
-       394,780,019      branches:u                       #   1883.4 M/sec  branch_frequency     ( +-  0.17% )  (49.77%)
-       934,358,798      cpu-cycles:u                     #      4.5 GHz  cycles_frequency       ( +-  0.73% )  (66.57%)
-     2,942,336,177      instructions:u                   #      3.1 instructions  insn_per_cycle  ( +-  0.14% )  (50.40%)
-        11,697,964      stalled-cycles-frontend:u        #     0.01 frontend_cycles_idle        ( +- 18.15% )  (50.23%)
+             2,339      page-faults:u                    #  10992.5 faults/sec  page_faults_per_second  ( +-  0.02% )
+            212.78 msec task-clock:u                     #      1.0 CPUs  CPUs_utilized         ( +-  0.66% )
+       205,879,534      L1-dcache-load-misses:u          #     18.5 %  l1d_miss_rate            ( +-  0.29% )  (42.26%)
+         1,018,224      branch-misses:u                  #      0.3 %  branch_miss_rate         ( +-  3.76% )  (42.68%)
+       394,577,778      branches:u                       #   1854.4 M/sec  branch_frequency     ( +-  0.07% )  (43.17%)
+       952,473,350      cpu-cycles:u                     #      4.5 GHz  cycles_frequency       ( +-  0.31% )  (43.30%)
+     2,941,556,220      instructions:u                   #      3.1 instructions  insn_per_cycle  ( +-  0.28% )  (43.33%)
+        10,009,794      stalled-cycles-frontend:u        #     0.01 frontend_cycles_idle        ( +- 13.58% )  (42.87%)
 
-       0.210238169 +- 0.001510502 seconds time elapsed  ( +-  0.72% )
-
+       0.213535051 +- 0.001402338 seconds time elapsed  ( +-  0.66% )

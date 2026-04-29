@@ -521,7 +521,14 @@ pub fn multiply_rowwise_for_test(a: &BitMatrix, b: &BitMatrix) -> BitMatrix {
 
 #[inline]
 fn use_register_tiled_schedule(m: usize, stride_words: usize) -> bool {
-    m >= M4RM_TILE_ROWS && stride_words == M4RM_TILED_MIN_STRIDE_WORDS
+    m >= M4RM_TILE_ROWS && stride_words >= M4RM_TILED_MIN_STRIDE_WORDS
+}
+
+#[inline]
+fn use_next_panel_prefetch(stride_words: usize) -> bool {
+    // Keeping both 1024-column tables resident evicts the just-built current
+    // table from L1 on the pinned B3 design size; enable V6 for wider tiles.
+    stride_words > M4RM_TILED_MIN_STRIDE_WORDS
 }
 
 #[inline]
@@ -584,24 +591,85 @@ fn multiply_register_tiled(
     let n = b.cols();
     let table_size = 1usize << k_block;
     let mut c = BitMatrix::zeros(m, n);
-    let mut table_buffer = vec![0u64; table_size * stride_words];
 
+    if !use_next_panel_prefetch(stride_words) {
+        let mut table_buffer = vec![0u64; table_size * stride_words];
+
+        let mut panel_start = 0usize;
+        while panel_start < k {
+            let panel_size = k_block.min(k - panel_start);
+            build_gray_table_flat(b, panel_start, panel_size, n, &mut table_buffer, xor);
+            update_panel_register_tiled(
+                a,
+                &mut c,
+                panel_start,
+                panel_size,
+                &table_buffer,
+                None,
+                stride_words,
+                xor,
+                tile8xn,
+            );
+            panel_start += k_block;
+        }
+
+        return c;
+    }
+
+    let mut table_buffers = [
+        vec![0u64; table_size * stride_words],
+        vec![0u64; table_size * stride_words],
+    ];
+
+    let mut current_slot = 0usize;
     let mut panel_start = 0usize;
-    while panel_start < k {
-        let panel_size = k_block.min(k - panel_start);
-        build_gray_table_flat(b, panel_start, panel_size, n, &mut table_buffer, xor);
+    let mut panel_size = k_block.min(k - panel_start);
+    build_gray_table_flat(
+        b,
+        panel_start,
+        panel_size,
+        n,
+        &mut table_buffers[current_slot],
+        xor,
+    );
+
+    loop {
+        let next_panel_start = panel_start + k_block;
+        let next_meta = (next_panel_start < k).then(|| {
+            let next_slot = current_slot ^ 1;
+            let next_panel_size = k_block.min(k - next_panel_start);
+            build_gray_table_flat(
+                b,
+                next_panel_start,
+                next_panel_size,
+                n,
+                &mut table_buffers[next_slot],
+                xor,
+            );
+            (next_slot, next_panel_start, next_panel_size)
+        });
+
+        let next_table =
+            next_meta.map(|(slot, start, size)| (&table_buffers[slot][..], start, size));
         update_panel_register_tiled(
             a,
             &mut c,
             panel_start,
             panel_size,
-            &table_buffer,
-            None,
+            &table_buffers[current_slot],
+            next_table,
             stride_words,
             xor,
             tile8xn,
         );
-        panel_start += k_block;
+
+        if let Some((slot, start, size)) = next_meta {
+            current_slot = slot;
+            panel_start = start;
+            panel_size = size;
+        } else {
+            break;
+        }
     }
 
     c
@@ -644,9 +712,8 @@ fn update_panel_register_tiled(
         let next_idx = next_table.map(|(_, next_start, next_size)| {
             row_tile_indices::<M4RM_TILE_ROWS>(a, row_start, next_start, next_size)
         });
-
-        if let Some((next, _, _)) = next_table {
-            prefetch_next_tile8x4(next, stride_words, 0, &next_idx.unwrap());
+        if let (Some((next, _, _)), Some(next_idx)) = (next_table, next_idx.as_ref()) {
+            prefetch_next_tile8x4(next, stride_words, 0, next_idx);
         }
 
         let c_block = c.row_words_block_mut(row_start, M4RM_TILE_ROWS);
@@ -1002,17 +1069,19 @@ mod tests {
     fn test_register_tiled_schedule_threshold_preserves_small_sizes() {
         assert!(!use_register_tiled_schedule(7, 16));
         assert!(!use_register_tiled_schedule(64, 8));
-        assert!(!use_register_tiled_schedule(8, 32));
         assert!(use_register_tiled_schedule(8, 16));
+        assert!(use_register_tiled_schedule(8, 32));
+        assert!(!use_next_panel_prefetch(16));
+        assert!(use_next_panel_prefetch(32));
     }
 
     #[test]
-    fn test_register_tiled_multiply_matches_naive_with_remainders() {
+    fn test_register_tiled_multiply_matches_naive_with_wide_remainders() {
         use rand::rngs::StdRng;
         use rand::{Rng, SeedableRng};
 
         let mut rng = StdRng::seed_from_u64(0x19bc_3199);
-        let (m, k, n) = (9, 17, 260);
+        let (m, k, n) = (9, 17, 2048);
         let mut a = BitMatrix::zeros(m, k);
         let mut b = BitMatrix::zeros(k, n);
 
