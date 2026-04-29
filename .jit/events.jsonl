@@ -3242,3 +3242,10 @@
 {"type":"issue_claimed","id":"6489b58c-ddd1-4720-a927-404a3d7723f7","issue_id":"f1a896f0-097a-4598-9484-d4a2efe711ad","timestamp":"2026-04-29T13:04:36.014653596Z","assignee":"agent:claude-wt-f1a896f0"}
 {"type":"issue_state_changed","id":"005b470e-9407-4af2-a537-12db12aa7fff","issue_id":"e7ab802d-b99e-4efa-9304-f649f7c7ef68","timestamp":"2026-04-29T13:04:36.022183628Z","from":"ready","to":"in_progress"}
 {"type":"issue_claimed","id":"fd5d72d3-25b3-4629-837b-8407f8aacb5c","issue_id":"e7ab802d-b99e-4efa-9304-f649f7c7ef68","timestamp":"2026-04-29T13:04:36.022492578Z","assignee":"agent:claude-wt-e7ab802d"}
+{"type":"gate_passed","id":"eafbefc6-3272-4945-90e4-3564ef71405e","issue_id":"e7ab802d-b99e-4efa-9304-f649f7c7ef68","timestamp":"2026-04-29T13:56:31.712143324Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"issue_created","id":"87b65982-5723-49ff-9ff4-ba4c077673aa","issue_id":"2598b981-d2fb-4f24-9b89-7adafa2ad827","timestamp":"2026-04-29T14:10:43.520488788Z","title":"Run full GF(p) FieldMatrix fflas-comparable benchmark sweep","priority":"normal"}
+{"type":"issue_state_changed","id":"8c2dd709-a108-462b-a7de-74b0be151972","issue_id":"2598b981-d2fb-4f24-9b89-7adafa2ad827","timestamp":"2026-04-29T14:10:53.114260773Z","from":"ready","to":"backlog"}
+{"type":"gate_passed","id":"86e3f89d-accd-4719-b6f6-7cfb557d82eb","issue_id":"e7ab802d-b99e-4efa-9304-f649f7c7ef68","timestamp":"2026-04-29T14:11:39.126111937Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"issue_state_changed","id":"03609034-eedf-466a-87e4-eb999e40487e","issue_id":"e7ab802d-b99e-4efa-9304-f649f7c7ef68","timestamp":"2026-04-29T14:11:57.685482597Z","from":"in_progress","to":"done"}
+{"type":"issue_completed","id":"605878c2-a3e4-4197-8bad-817ab0b4ffd5","issue_id":"e7ab802d-b99e-4efa-9304-f649f7c7ef68","timestamp":"2026-04-29T14:11:57.685570567Z"}
+{"type":"issue_state_changed","id":"046e0c99-d2e2-4b39-a42d-84201b965ca9","issue_id":"2598b981-d2fb-4f24-9b89-7adafa2ad827","timestamp":"2026-04-29T14:11:57.797915179Z","from":"backlog","to":"ready"}

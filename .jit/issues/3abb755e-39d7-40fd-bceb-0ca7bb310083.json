@@ -6,8 +6,9 @@
   "priority": "high",
   "assignee": null,
   "dependencies": [
-    "e7ab802d-b99e-4efa-9304-f649f7c7ef68",
     "59c487c3-ff73-4b29-837a-748c53c5b7fa",
+    "e7ab802d-b99e-4efa-9304-f649f7c7ef68",
+    "2598b981-d2fb-4f24-9b89-7adafa2ad827",
     "577b9e7f-06e9-42cc-b9d3-f669b2b63fa4"
   ],
   "gates_required": [
@@ -63,5 +64,5 @@
     "story:ppc-benchmark-gap"
   ],
   "created_at": "2026-04-27T21:07:47.090492414+00:00",
-  "updated_at": "2026-04-27T21:11:41.706837269+00:00"
+  "updated_at": "2026-04-29T14:10:53.106288111+00:00"
 }
