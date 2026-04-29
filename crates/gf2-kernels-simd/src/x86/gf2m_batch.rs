@@ -508,10 +508,10 @@ mod tests {
         let mask = (1u64 << m) - 1;
 
         let a: Vec<u64> = (0..32u64)
-            .map(|i| ((i + 1) * 0x9E37_79B9_7F4A_7C15) & mask)
+            .map(|i| (i + 1).wrapping_mul(0x9E37_79B9_7F4A_7C15) & mask)
             .collect();
         let b: Vec<u64> = (0..32u64)
-            .map(|i| ((i + 1) * 0x6C62_272E_07BB_0142) & mask)
+            .map(|i| (i + 1).wrapping_mul(0x6C62_272E_07BB_0142) & mask)
             .collect();
         let mut got = vec![0u64; 32];
         unsafe { gf2m_batch_mul_ymm_unroll4(&a, &b, &mut got, mu, poly, m) };

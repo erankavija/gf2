@@ -126,6 +126,18 @@ use crate::field::{ConstField, FiniteField};
 use crate::gfp::{Fp, SimdVecOps};
 use crate::gfpn::{CubicExt, ExtConfig, QuadraticExt};
 
+#[inline]
+fn ext_non_residue<C: ExtConfig>() -> C::BaseField {
+    #[cfg(not(verify_lean))]
+    {
+        C::NON_RESIDUE
+    }
+    #[cfg(verify_lean)]
+    {
+        C::NON_RESIDUE()
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Core SoA batch container
 // ---------------------------------------------------------------------------
@@ -919,7 +931,7 @@ where
     F: ConstField + SimdKaratsubaHook,
     C: ExtConfig<BaseField = F>,
 {
-    let beta = vec![C::NON_RESIDUE; xs.len()];
+    let beta = vec![ext_non_residue::<C>(); xs.len()];
     if let Some(out) = F::try_simd_mul_vec(xs, &beta) {
         return out;
     }
@@ -1255,13 +1267,14 @@ fn fp_simd_composed_impl<const P: u64, C: ExtConfig<BaseField = Fp<P>>>(
     let v1 = <Fp<P> as SimdVecOps>::try_simd_mul_vec(a1, b1)?;
     let cross = <Fp<P> as SimdVecOps>::try_simd_mul_vec(&sum_a, &sum_b)?;
 
-    let beta_v1 = if C::NON_RESIDUE.is_zero() {
+    let beta = ext_non_residue::<C>();
+    let beta_v1 = if beta.is_zero() {
         vec![Fp::<P>::zero(); n]
-    } else if C::NON_RESIDUE.is_one() {
+    } else if beta.is_one() {
         v1.clone()
     } else {
-        let beta = vec![C::NON_RESIDUE; n];
-        <Fp<P> as SimdVecOps>::try_simd_mul_vec(&v1, &beta)?
+        let beta_vec = vec![beta; n];
+        <Fp<P> as SimdVecOps>::try_simd_mul_vec(&v1, &beta_vec)?
     };
 
     let out_c0 = <Fp<P> as SimdVecOps>::try_simd_add_vec(&v0, &beta_v1)?;
@@ -1314,7 +1327,7 @@ fn fp65537_simd_impl<const P: u64, C: ExtConfig<BaseField = Fp<P>>>(
     // of the measured speedup. FieldVec's element-wise ops still route
     // through the same underlying `Fp65537Fns` table via `SimdVecOps`,
     // so the two surfaces stay consistent.
-    let beta_u32 = C::NON_RESIDUE.raw_storage() as u32;
+    let beta_u32 = ext_non_residue::<C>().raw_storage() as u32;
     let mut out_c0 = vec![0u32; n];
     let mut out_c1 = vec![0u32; n];
     (fns.batch_karatsuba_fn)(
@@ -1353,7 +1366,7 @@ fn fp65537_simd_cubic_impl<const P: u64, C: ExtConfig<BaseField = Fp<P>>>(
     let b1_u32 = fp65537_pack::<P>(b1);
     let b2_u32 = fp65537_pack::<P>(b2);
 
-    let beta_u32 = C::NON_RESIDUE.raw_storage() as u32;
+    let beta_u32 = ext_non_residue::<C>().raw_storage() as u32;
     let mut out_c0 = vec![0u32; n];
     let mut out_c1 = vec![0u32; n];
     let mut out_c2 = vec![0u32; n];

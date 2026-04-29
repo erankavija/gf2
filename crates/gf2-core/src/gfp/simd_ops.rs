@@ -374,34 +374,36 @@ mod tests {
     const WORD_BOUNDARY_LENS: &[usize] = &[0, 1, 63, 64, 65, 127, 128, 129, 255, 256, 257];
 
     fn check_generic_prime<const P: u64>() {
-        #[cfg(feature = "simd")]
-        if crate::simd::maybe_fp_generic().is_none() {
-            return;
-        }
         #[cfg(not(feature = "simd"))]
         {
             return;
         }
+        #[cfg(feature = "simd")]
+        {
+            if crate::simd::maybe_fp_generic().is_none() {
+                return;
+            }
 
-        for &len in WORD_BOUNDARY_LENS {
-            let a: Vec<Fp<P>> = (0..len as u64)
-                .map(|i| Fp::<P>::new(i.wrapping_mul(1_000_003).wrapping_add(17)))
-                .collect();
-            let b: Vec<Fp<P>> = (0..len as u64)
-                .map(|i| Fp::<P>::new(i.wrapping_mul(2_000_033).wrapping_add(23)))
-                .collect();
+            for &len in WORD_BOUNDARY_LENS {
+                let a: Vec<Fp<P>> = (0..len as u64)
+                    .map(|i| Fp::<P>::new(i.wrapping_mul(1_000_003).wrapping_add(17)))
+                    .collect();
+                let b: Vec<Fp<P>> = (0..len as u64)
+                    .map(|i| Fp::<P>::new(i.wrapping_mul(2_000_033).wrapping_add(23)))
+                    .collect();
 
-            let got_add =
-                <Fp<P> as SimdVecOps>::try_simd_add_vec(&a, &b).expect("generic SIMD add");
-            let got_sub =
-                <Fp<P> as SimdVecOps>::try_simd_sub_vec(&a, &b).expect("generic SIMD sub");
-            let got_mul =
-                <Fp<P> as SimdVecOps>::try_simd_mul_vec(&a, &b).expect("generic SIMD mul");
+                let got_add =
+                    <Fp<P> as SimdVecOps>::try_simd_add_vec(&a, &b).expect("generic SIMD add");
+                let got_sub =
+                    <Fp<P> as SimdVecOps>::try_simd_sub_vec(&a, &b).expect("generic SIMD sub");
+                let got_mul =
+                    <Fp<P> as SimdVecOps>::try_simd_mul_vec(&a, &b).expect("generic SIMD mul");
 
-            for i in 0..len {
-                assert_eq!(got_add[i], a[i] + b[i], "add P={P}, len={len}, i={i}");
-                assert_eq!(got_sub[i], a[i] - b[i], "sub P={P}, len={len}, i={i}");
-                assert_eq!(got_mul[i], a[i] * b[i], "mul P={P}, len={len}, i={i}");
+                for i in 0..len {
+                    assert_eq!(got_add[i], a[i] + b[i], "add P={P}, len={len}, i={i}");
+                    assert_eq!(got_sub[i], a[i] - b[i], "sub P={P}, len={len}, i={i}");
+                    assert_eq!(got_mul[i], a[i] * b[i], "mul P={P}, len={len}, i={i}");
+                }
             }
         }
     }
