@@ -13,7 +13,36 @@
   ],
   "gates_status": {},
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "benchmarks/README.md",
+      "commit": null,
+      "label": "Bench env README (synchronized)",
+      "doc_type": "documentation",
+      "format": "markdown"
+    },
+    {
+      "path": "benchmarks/image.lock",
+      "commit": null,
+      "label": "R3 image pin (canonical)",
+      "doc_type": "evidence",
+      "format": "markdown"
+    },
+    {
+      "path": "benchmarks/Containerfile",
+      "commit": null,
+      "label": "Bench Containerfile (synchronized)",
+      "doc_type": "evidence",
+      "format": "markdown"
+    },
+    {
+      "path": "benchmarks/run.sh",
+      "commit": null,
+      "label": "Bench run.sh (apt-pin comment synchronized)",
+      "doc_type": "evidence",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:task",
     "component:gf2-core",
@@ -21,5 +50,5 @@
     "story:sota-baseline-scorecard"
   ],
   "created_at": "2026-04-30T06:43:02.550321746+00:00",
-  "updated_at": "2026-04-30T15:21:42.903316218+00:00"
+  "updated_at": "2026-04-30T15:26:17.507697103+00:00"
 }

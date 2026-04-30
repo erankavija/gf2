@@ -13,8 +13,9 @@ matrix is identical on both sides.
 
 ```
 benchmarks/
-├── Containerfile            # Debian-slim + pinned gcc / OpenBLAS / GMP /
-│                            # Givaro / fflas-ffpack / M4RI
+├── Containerfile            # Debian-slim + pinned gcc-12 / g++-12 /
+│                            # OpenBLAS / GMP / LAPACK / CMake (apt) +
+│                            # Givaro / fflas-ffpack / M4RI (tarballs)
 ├── image.lock               # version + sha256 pins (lock file)
 ├── run.sh                   # build + run driver (rootless podman default)
 ├── reference/
