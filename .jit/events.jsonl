@@ -3550,3 +3550,5 @@
 {"type":"issue_created","id":"dbcb849b-0d27-4872-b64b-ac0fe827b48e","issue_id":"c7542983-7f94-4c76-9323-29d82e7251ad","timestamp":"2026-04-30T21:40:26.758657243Z","title":"SIMD batching strategy: generic framework vs per-prime kernels","priority":"normal"}
 {"type":"issue_state_changed","id":"57fbabf5-da8b-45ed-895b-7b4e1bb25df5","issue_id":"9fe275d3-0b8d-49ed-99bf-42142d63d5d9","timestamp":"2026-04-30T21:40:40.871960701Z","from":"ready","to":"backlog"}
 {"type":"issue_state_changed","id":"923a7dce-c053-4c09-ba1f-27d26758299b","issue_id":"4fced99b-37bb-48e1-bb92-8c01bc7c9ecd","timestamp":"2026-04-30T21:40:41.118787052Z","from":"ready","to":"backlog"}
+{"type":"issue_state_changed","id":"e6a66fc3-f02e-4b13-91dd-e7a98a18e27d","issue_id":"ae82bd73-741d-4007-811f-914dac00bae8","timestamp":"2026-04-30T21:49:39.841272542Z","from":"ready","to":"backlog"}
+{"type":"issue_state_changed","id":"4baf1a76-6994-4f16-9dc7-e650aedc4951","issue_id":"c7542983-7f94-4c76-9323-29d82e7251ad","timestamp":"2026-04-30T21:49:40.069161027Z","from":"ready","to":"backlog"}
