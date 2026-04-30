@@ -32,7 +32,15 @@
     }
   },
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/bench_results/2026-04-26.md",
+      "commit": null,
+      "label": "2026-04-26 bench results (gf2 + reference baseline)",
+      "doc_type": "notes",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:task",
     "component:gf2-core",
@@ -40,5 +48,5 @@
     "epic:bb85c68a"
   ],
   "created_at": "2026-04-23T16:30:39.735940337+00:00",
-  "updated_at": "2026-04-30T06:58:58.999355038+00:00"
+  "updated_at": "2026-04-30T07:06:09.825501069+00:00"
 }
