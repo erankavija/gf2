@@ -4,9 +4,9 @@
   "title": "Implement generic finite field linear algebra (FieldMatrix)",
   "claimed_by": "agent:project-lead",
   "started_at": "2026-04-23T16:00:00+00:00",
-  "last_updated": "2026-04-26T17:55:00+00:00",
-  "current_wave": 4,
-  "phase": "wave_4_in_progress; a9ab0a4f (T3 published analysis) worker in flight at session-6 end; all other wave-4 tasks done",
+  "last_updated": "2026-04-30T08:05:00+00:00",
+  "current_wave": 5,
+  "phase": "complete; all child stories/tasks done or rejected and epic closure in progress",
   "notes": [
     "Session 6 (massive — ~10 hours wall-clock): drove c3f8c1cb (PLE) through R6+R7 to close, then closed entire wave 3 (ae1d1e88 inv/solve/det, e47231cd charpoly+minpoly with 2 child tasks f01298db cubic and 1454ec2d Keller-Gehrig), AND wave 4's a03b2556 (container reference harness, 7 cycles) and 6ed7f050 (gf2 criterion bench suite, 3 cycles). Started a9ab0a4f (T3 published analysis) — worker is in flight at session end with untracked artefacts (benchmarks/analyze.py, dev/bench_results/) but final summary not received. Total commits this session: 30+. Total review cycles: 30+ across 7 issues.",
     "Session 6 user directives: (1) 'No performance shall be sacrificed for SSOT' — encoded in scripts/code-review-prompt.md (user pre-edited) and inline as amendments in c3f8c1cb R6, 1454ec2d R1 (trsm-only path), e47231cd R2 (KG dispatch raised to usize::MAX); (2) 'use rootless podman' — driver for a03b2556's Containerfile rename + image.lock pinning; (3) 'why so old image?' — drove bookworm-20250113-slim → bookworm-20260421-slim refresh (+ digest pin via Docker Hub registry API).",
@@ -185,7 +185,7 @@
     "dev/active/ab791e27-design.md",
     "dev/plans/gpu_fieldmatrix_sketch.md"
   ],
-  "total_work_items": {"stories": 9, "tasks": 8, "total": 17, "done": 16, "remaining": 1, "wave_2_complete": true, "wave_3_complete": true, "wave_4_partial": true, "remaining_items": ["a9ab0a4f (worker in flight at session-6 end)", "64c88ae4 story closure", "bb85c68a epic closure"]},
+  "total_work_items": {"stories": 9, "tasks": 8, "total": 17, "done": 17, "remaining": 0, "wave_2_complete": true, "wave_3_complete": true, "wave_4_complete": true, "remaining_items": []},
   "related_future_epics": [
     {"id": "16283d6f-99f2-42e9-8254-4e0604aadc43", "short_id": "16283d6f", "title": "GPU-accelerated FieldMatrix (HIP, dense matmul + SpMV)", "status": "backlog", "note": "Not in scope for this epic."}
   ],
