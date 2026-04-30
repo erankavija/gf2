@@ -2,7 +2,7 @@
   "id": "1d6043e8-49da-4ec4-adac-5be67bb8b443",
   "title": "Define SOTA reference acceptance protocol",
   "description": "Define what makes a reference implementation acceptable as a hard performance target.\n\n## Success Criteria\n\n- [hard] The protocol requires reproducible build, same hardware, comparable semantics, shared data shape, and CSV merge support.\n- [hard] The protocol is linked as a design doc to the reference-matrix story.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "high",
   "assignee": "agent:claude-wt-1d6043e8",
   "dependencies": [],
@@ -11,7 +11,23 @@
     "cargo-ci",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-30T15:12:40.379813391Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-30T15:13:53.762959376Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-30T15:12:50.496781235Z"
+    }
+  },
   "context": {},
   "documents": [
     {
@@ -29,5 +45,5 @@
     "story:sota-reference-matrix"
   ],
   "created_at": "2026-04-30T06:43:02.588180557+00:00",
-  "updated_at": "2026-04-30T14:53:23.112892954+00:00"
+  "updated_at": "2026-04-30T15:14:34.048484292+00:00"
 }

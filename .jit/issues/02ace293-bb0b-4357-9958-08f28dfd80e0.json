@@ -2,7 +2,7 @@
   "id": "02ace293-bb0b-4357-9958-08f28dfd80e0",
   "title": "Fix benchmark report cell-status semantics",
   "description": "Correct the legacy benchmark report so every table status has a precise meaning.\n\n## Success Criteria\n\n- [hard] The report distinguishes measured, N/A, slow/nightly, harness-scope gap, and optimization-gap cells consistently.\n- [hard] code-review no longer flags contradictory PENDING semantics.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "high",
   "assignee": "agent:claude-wt-02ace293",
   "dependencies": [],
@@ -11,7 +11,23 @@
     "cargo-ci",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-30T15:20:49.862114263Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-30T15:17:11.981281687Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-30T15:17:18.465178112Z"
+    }
+  },
   "context": {},
   "documents": [
     {
@@ -29,5 +45,5 @@
     "story:sota-baseline-scorecard"
   ],
   "created_at": "2026-04-30T06:43:02.540864604+00:00",
-  "updated_at": "2026-04-30T14:56:38.460309614+00:00"
+  "updated_at": "2026-04-30T15:20:49.910903207+00:00"
 }
