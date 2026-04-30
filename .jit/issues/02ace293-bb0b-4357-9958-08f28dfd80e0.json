@@ -13,7 +13,15 @@
   ],
   "gates_status": {},
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/bench_results/2026-04-26.md",
+      "commit": null,
+      "label": "Legacy benchmark report (status legend fixed)",
+      "doc_type": "evidence",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:task",
     "component:gf2-core",
@@ -21,5 +29,5 @@
     "story:sota-baseline-scorecard"
   ],
   "created_at": "2026-04-30T06:43:02.540864604+00:00",
-  "updated_at": "2026-04-30T14:47:19.974928290+00:00"
+  "updated_at": "2026-04-30T14:56:38.460309614+00:00"
 }
