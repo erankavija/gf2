@@ -2,9 +2,9 @@
   "id": "b8189dbf-10c4-4e35-88fa-2e8828f41715",
   "title": "Publish post-PPC benchmark delta appendix",
   "description": "Overlay PPC results on the original 64c88ae4 report so the baseline reflects current main.\n\n## Success Criteria\n\n- [hard] The appendix or new report includes GF(2), GF(p), and GF(2^m) post-PPC deltas with ratios.\n- [hard] Existing PPC evidence docs are cited instead of duplicating raw methodology.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude-wt-b8189dbf",
   "dependencies": [],
   "gates_required": [
     "code-review",
@@ -21,5 +21,5 @@
     "story:sota-baseline-scorecard"
   ],
   "created_at": "2026-04-30T06:43:02.560026419+00:00",
-  "updated_at": "2026-04-30T06:43:02.560031749+00:00"
+  "updated_at": "2026-04-30T14:47:20.347236156+00:00"
 }
