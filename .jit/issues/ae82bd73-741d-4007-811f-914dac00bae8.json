@@ -3,7 +3,7 @@
   "title": "Fast matrix permanents over F_3 / F_5 / F_7 via packed bipedal arithmetic",
   "description": "## Context\n\nReproduce and beat the results of Scheinerman, *Fast computation of permanents over F₃ via F₂ arithmetic* (arxiv 2407.20205v2, Aug 2024). The paper uses a \"bipedal\" map encoding F₃ⁿ as a pair of F₂ⁿ vectors, implements add/sub/mul/div in 1–6 bitwise ops, and combines this with Ryser's permanent formula in Gray-code order to achieve a reported 86.9× speedup over a naive Ryser implementation in Julia, single-thread, on a 4.20 GHz desktop. The paper does not exploit SIMD, multicore, or GPU.\n\nThis epic introduces a new top-level workspace crate `gf2-algebra` that:\n\n1. Reproduces the paper's `permanent_mod3` algorithm in Rust as an in-tree baseline.\n2. Beats it by ≥ 50× single-thread via AVX2 (and AVX-512 where available) bipedal SIMD kernels in `gf2-kernels-simd`.\n3. Adds rayon parallel scaling and HIP/ROCm GPU kernels in `gf2-kernels-hip`.\n4. Generalises to F₅ and F₇ via best-effort encoding research (`type:simulation` children R1, R2).\n5. Mechanically verifies (Lean4 via Charon/Aeneas) the bipedal F₃ arithmetic and Ryser's formula on the project's `FiniteField` trait, scoped to the bounded n ≤ 63 single-`u64` regime.\n6. Produces a publication-grade benchmark artefact (criterion + plots + reproducible scripts).\n\nThe full design is in the linked design doc, including the wave plan (W0..W7, ~48 children), the `PackedField<F>` trait surface, the F₃/F₅/F₇ encoding plans, the hardware envelope (dev host: AMD Ryzen 9 5900X, AVX2 only — AVX-512 paths are `[aspirational]`), and the risk register.\n\n## Non-goals\n\n- General-purpose char-3 linear algebra (det, rank, char-poly, Smith normal form) — natural follow-up, out of scope here.\n- Permanents over F₂ (= determinant; already trivial via existing rank/RREF code).\n- Primes p ≥ 11.\n- Proof of unbounded-n Ryser (requires formalising arbitrary-arity sums; would explode V2 scope).\n- Reproducing the paper's n=50 / 832-CPU-hour 128-core run literally — we'll do a smaller analogous run that demonstrates the speedup factor.\n\n## Success Criteria\n\n1. [hard] A new workspace crate `gf2-algebra` exists, builds clean under `cargo nextest run --workspace --all-features --release --profile ci`, and is registered in the workspace `Cargo.toml`.\n\n2. [hard] `gf2-algebra::permanent::permanent_bipedal3` produces values bit-identical to the generic `permanent_ryser` over `Fp<3>` on 1000 random matrices for every n ∈ {1..16} and on 100 random matrices for n=20, 24, 28, 32.\n\n3. [hard] `gf2-algebra::permanent::permanent_bipedal3` (single-thread, AVX2 path) runs n=36 random {-1,0,1} matrices ≥ 50× faster than the in-tree `permanent_mod3_reference` (faithful Rust port of paper Julia) on the same machine.\n\n4. [aspirational] Same comparison vs the paper's published Julia number on a documented Zen 4/5 reference host: ≥ 50× speedup at n=36.\n\n5. [hard for n ≥ 28] `permanent_bipedal3` parallel scaling factor is ≥ 0.85× per physical core up to the host's physical core count, measured by simulation child S2.\n\n6. [hard] F₅ and F₇ packed permanents return values matching `permanent_ryser` over the corresponding `Fp<P>` on 1000 random matrices for n ∈ {1..14}.\n\n7. [hard] Lean4 proof V1 (bipedal F₃ correctness vs `Fp<3>`) builds with `lake build` and contains no `sorry`.\n\n8. [hard] Lean4 proof V2 (Ryser's formula on `FiniteField`, bounded n ≤ 63) builds with `lake build` and contains no `sorry`.\n\n9. [hard] A reproducible benchmark artefact (S6) lives in `dev/benchmarks/gf2_algebra_permanent/`, with criterion JSONs, hardware fingerprint, seed pins, and `scripts/permanent-repro.sh` runs end-to-end.\n\n10. [aspirational] GPU permanent crossover at n ≥ 40 for F₃ on gfx1030 (S5).\n\n11. [hard] Root `CLAUDE.md` and `ROADMAP.md` are updated to reference `gf2-algebra`.\n\n12. [hard] `cargo run -p gf2-algebra --example permanent_demo --release` produces the headline numbers from S6 within ±5%.",
   "state": "backlog",
-  "priority": "normal",
+  "priority": "high",
   "assignee": null,
   "dependencies": [
     "4c534d31-d5c6-4ff8-9664-7e022042a670",
@@ -15,10 +15,7 @@
     "4aaa6e4d-7287-4ee1-bf0f-3dd294a6cd6f",
     "4fced99b-37bb-48e1-bb92-8c01bc7c9ecd"
   ],
-  "gates_required": [
-    "cargo-ci",
-    "code-review"
-  ],
+  "gates_required": [],
   "gates_status": {},
   "context": {},
   "documents": [
@@ -36,5 +33,5 @@
     "component:gf2-algebra"
   ],
   "created_at": "2026-04-30T21:38:13.417650534+00:00",
-  "updated_at": "2026-04-30T21:49:40.039451248+00:00"
+  "updated_at": "2026-04-30T22:39:08.614663334+00:00"
 }
