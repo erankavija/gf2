@@ -53,7 +53,7 @@
         "timeout_seconds": 1800,
         "working_dir": null,
         "env": {
-          "REVIEWER_AGENT": "copilot -s --model gpt-5.5 --effort high --allow-tool \"shell(cargo test)\" --allow-tool \"shell(cargo clippy)\" --allow-tool \"shell(cargo fmt)\" --allow-tool \"shell(cargo bench)\""
+          "REVIEWER_AGENT": "copilot -s --model gpt-5.4 --allow-tool \"shell(cargo test)\" --allow-tool \"shell(cargo clippy)\" --allow-tool \"shell(cargo fmt)\" --allow-tool \"shell(cargo bench)\""
         },
         "pass_context": true,
         "prompt_file": "./scripts/code-review-prompt.md"
