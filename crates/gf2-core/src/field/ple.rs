@@ -352,9 +352,9 @@ fn zero_matrix_like<F: FiniteField>(
     template: &FieldMatrix<F>,
 ) -> FieldMatrix<F> {
     if r == 0 || c == 0 {
-        // Empty FieldMatrix: zero-storage, doesn't read any cell. Use
-        // `F::zero_hint()` for ConstField; otherwise fabricate from
-        // template (template may be empty so we may panic).
+        // Empty FieldMatrix: zero-storage, doesn't read any cell. Prefer
+        // a template witness when present, then ConstField's zero hint,
+        // otherwise build raw empty storage for runtime-context fields.
         let zero = if !template.is_empty() {
             template.get(0, 0).zero_like()
         } else if let Some(z) = F::zero_hint() {
