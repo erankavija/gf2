@@ -2,9 +2,9 @@
   "id": "5102d87a-313f-4416-9d85-3b9d59eb1f32",
   "title": "Synchronize benchmark environment documentation",
   "description": "Bring benchmark environment docs and issue labels back into sync with the actual R3 reference state.\n\n## Success Criteria\n\n- [hard] Container/image pin documentation agrees across README, Containerfile comments, image.lock, and report text.\n- [hard] No linked JIT document label claims the reference side is deferred when it is not.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude-wt-5102d87a",
   "dependencies": [],
   "gates_required": [
     "code-review",
@@ -21,5 +21,5 @@
     "story:sota-baseline-scorecard"
   ],
   "created_at": "2026-04-30T06:43:02.550321746+00:00",
-  "updated_at": "2026-04-30T06:43:02.550327106+00:00"
+  "updated_at": "2026-04-30T15:21:42.903316218+00:00"
 }
