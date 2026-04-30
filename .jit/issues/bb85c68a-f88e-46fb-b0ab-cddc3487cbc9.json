@@ -2,7 +2,7 @@
   "id": "bb85c68a-f88e-46fb-b0ab-cddc3487cbc9",
   "title": "Implement generic finite field linear algebra (FieldMatrix)",
   "description": "Generic dense and sparse linear algebra over arbitrary finite fields, built on `FieldVec<F: FiniteField>` from the GF(p^n) epic (e095a100). Competes with Magma/Sage on ergonomics and with fflas-ffpack on throughput.\n\n## Primary goals\n\n1. **UX ergonomics**: Armadillo-style API — operator overloads (`*`, `+`, `-`, scalar), `.t()`, `submat`, free functions (`solve`, `inv`, `det`, `rank`), Display pretty-printing, expression-template proxy types so `&a * &b + &c` fuses into one `fgemm`. API parity with `BitMatrix` via a shared `MatrixLike<Elem>` trait. See `dev/plans/armadillo_ux_mapping.md`.\n2. **Performance**: delayed-reduction kernels (bounds via `FiniteField::Wide`), SIMD dispatch, blocked + Strassen-Winograd matmul, block-recursive factorizations reducing everything to `gemm`. See `dev/plans/fflas_ffpack_analysis.md` + `dev/plans/dumas_pernet_takeaways.md`.\n\n## Success Criteria\n\n- [hard] **Dense `FieldMatrix<F>`** with the full BitMatrix-parity public surface and Armadillo-shape free functions, shared `MatrixLike<Elem>` trait implemented by both `BitMatrix` and `FieldMatrix<F>`. No behavior change to existing `BitMatrix` users.\n- [hard] **Expression-template algebra** designed and implemented — canonical fusions (`A·B + βC`, `αA + βB`, `Aᵀ·B`) collapse to a single kernel call.\n- [hard] **Matrix multiplication** with delayed reduction (Dumas–Pernet §1.2) and Strassen–Winograd (§1.4) with correct bound propagation (theorem 4). All four owned/ref operator combos supported.\n- [hard] **PLE decomposition** (§2.2, algorithm 2.5) with block-recursion reducing to `gemm` + `trsm`. Handles non-generic rank profile correctly. LU / row-echelon / RRE / rank / nullspace are projections of PLE.\n- [hard] **Triangular primitives** `trsm / trmm / trtri / trtrm` as first-class, block-recursive kernels (§2.1, algorithms 2.1–2.4).\n- [hard] **Matrix inversion, solve, determinant** built on PLE + triangular primitives. No bespoke LU.\n- [hard] **Characteristic & minimal polynomial** (§3) — deterministic cubic baseline + sub-cubic Las-Vegas variant where the field permits.\n- [hard] **Sparse `FieldMatrix`** with CSR/CSC representations, SpMV/SpMM, naming parity with `SpBitMatrix`.\n- [hard] **Benchmarking** — per-story criterion micro-benchmarks at every implementation story; terminal benchmark story (64c88ae4) produces a published run against `fflas-ffpack` (GF(p), GF(2^m)) and `M4RI` (GF(2)) from a pinned container image.\n- [hard] **Correctness on rank-deficient inputs** — PLE and derivatives (inv returning None, rank, nullspace) tested on explicitly rank-deficient matrices.\n- [hard] All public items documented with `# Examples` doctests, `# Complexity`, `# Panics` where applicable.\n- [hard] All `cargo-ci`, `code-review`, `doc-review` gates pass on every child story.\n- [aspirational] GF(p): within 2× of `fflas-ffpack` on matmul / PLE / solve at n = 1024.\n- [aspirational] GF(2^m): exceed `fflas-ffpack` on matmul at n ≥ 256 (direct PCLMULQDQ vs. float-BLAS).\n- [aspirational] GF(2): within 1.5× of `M4RI` on matmul at n = 1024.\n\n## Architecture\n\n- Lives in `crates/gf2-core/src/field/matrix.rs` (dense), `field/sparse_matrix.rs` (sparse), plus `matrix_like.rs` (shared trait).\n- `BitMatrix` remains the specialized GF(2) path; gains only a trivial `MatrixLike<bool>` impl. No behavior change.\n- Matrix multiply dispatches to `FieldVec::dot_product` as the inner kernel; SIMD and delayed reduction happen in the vec layer.\n- Block-recursive factorizations (PLE, echelon, inv, solve, charpoly) reduce to `gemm` + `trsm/trmm/trtri/trtrm` — paper's central thesis.\n- Expression-template proxy layer fuses `A·B + βC` and friends into one `gemm` call.\n\n## Non-goals\n\n- Eigenvalue decomposition (not meaningful over finite fields).\n- Floating-point BLAS integration — we use direct SIMD kernels.\n- Replacing `BitMatrix` for GF(2).\n- Blackbox iterative methods (Wiedemann, Lanczos) — Dumas–Pernet §4, deferred.\n- Sparse matrix reordering (Markowitz, minimum-degree) — §5, deferred.\n- RNS for large primes — research task `0a7e2555` already DONE; revisit when needed.\n- Bitslicing for F₃, F₅, F₇ — §1.1; no current downstream consumer.\n\n## References\n\n- [Dumas–Pernet paper takeaways](dev/plans/dumas_pernet_takeaways.md) — arXiv:1204.3735\n- [Armadillo UX mapping](dev/plans/armadillo_ux_mapping.md)\n- [fflas-ffpack analysis](dev/plans/fflas_ffpack_analysis.md)\n\n## Child stories\n\n| Short ID | Story | Wave |\n|---|---|---|\n| `ab791e27` | Design dense `FieldMatrix<F>` + `MatrixLike` trait | 1 |\n| `cdcebf6a` | Design expression-template algebra (proxy types) | 1 |\n| `d48a3cfd` | Matmul + delayed reduction + Winograd + proxy impl | 2 |\n| `c3f8c1cb` | PLE + echelon + LU + rank + nullspace | 2 |\n| `83b1ad8b` | `trsm / trmm / trtri / trtrm` block-recursive primitives | 2 |\n| `8a90882e` | Sparse CSR/CSC `FieldMatrix` + SpMV/SpMM | 2 |\n| `ae1d1e88` | Inverse + solve + det (on PLE + trsm) | 3 |\n| `e47231cd` | Characteristic + minimal polynomial | 3 |\n| `64c88ae4` | Benchmark vs fflas-ffpack + M4RI (container-pinned) | 4 |\n\n## Scope Amendment — SOTA closure moved to `97bf0879`\n\nThe FieldMatrix implementation epic closes on API completeness, correctness, documentation, and a truthful baseline/post-PPC benchmark publication. It does **not** require final state-of-the-art parity against external systems.\n\nThe benchmarking success criterion is now interpreted as: `64c88ae4` publishes a reproducible baseline/post-PPC scorecard that identifies performance gaps and links the raw evidence. The new epic `97bf0879` (\"Close gf2-core SOTA performance gaps\") owns the work needed to close those gaps to the 1.5x SOTA threshold.\n\nThe three aspirational performance bullets in this epic are therefore checkpoint goals for `b117c95e` and `97bf0879`, not blockers for closing `bb85c68a` once its implementation and baseline publication children pass their gates.",
-  "state": "backlog",
+  "state": "ready",
   "priority": "normal",
   "assignee": "agent:project-lead",
   "dependencies": [
@@ -14,11 +14,6 @@
     "doc-review"
   ],
   "gates_status": {
-    "doc-review": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-04-23T16:00:43.805950127Z"
-    },
     "code-review": {
       "status": "pending",
       "updated_by": null,
@@ -28,6 +23,11 @@
       "status": "pending",
       "updated_by": null,
       "updated_at": "2026-04-23T16:00:43.805928357Z"
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-04-23T16:00:43.805950127Z"
     }
   },
   "context": {},
@@ -72,6 +72,13 @@
           "is_shared": false
         }
       ]
+    },
+    {
+      "path": "dev/active/bb85c68a-completion-report.md",
+      "commit": null,
+      "label": "FieldMatrix epic completion report",
+      "doc_type": "report",
+      "format": "markdown"
     }
   ],
   "labels": [
@@ -79,5 +86,5 @@
     "component:gf2-core"
   ],
   "created_at": "2026-02-23T19:19:40.625724847+00:00",
-  "updated_at": "2026-04-30T06:58:58.983802924+00:00"
+  "updated_at": "2026-04-30T08:06:27.161702647+00:00"
 }
