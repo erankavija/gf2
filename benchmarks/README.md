@@ -55,7 +55,7 @@ Rootless podman quirks worth noting:
 | `gcc-12`, `g++-12`, `libopenblas-dev`, `libgmp-dev`, `liblapack-dev`, `cmake` | Debian bookworm apt versions (`image.lock`) |
 | `givaro 4.2.0`                         | upstream tarball + sha256 (`image.lock`) |
 | `fflas-ffpack 2.5.0`                   | upstream tarball + sha256 (`image.lock`) |
-| `m4ri 20240729`                        | upstream tarball + sha256 (`image.lock`) |
+| `m4ri 20260122`                        | upstream tarball + sha256 (`image.lock`) |
 
 The Containerfile compiles every C and C++ artefact with
 `-O3 -march=native` so timings reflect what production code on the
@@ -64,10 +64,10 @@ not portable across host CPUs — `host.txt` captures the CPU model,
 microarchitecture flags, and cache topology so any reader can verify
 the substrate before drawing conclusions.
 
-The first time the image is built, the local content-addressable id can
-be recorded into `image.lock` (the `[image].local_id` slot). The
-placeholder that ships with the repo is intentionally not a real
-digest; the gate-job will fill it on first build.
+After a successful image build, `run.sh` records the local
+content-addressable id into `image.lock` (the `[image].local_id` slot).
+The committed baseline includes the `2026-04-26` bench-day local id so
+re-runs can detect environment drift.
 
 ## CSV schema
 
@@ -260,7 +260,7 @@ gate job runner) must have:
 
 `run.sh` automatically stamps the new `[image].local_id` into
 `image.lock` after each successful build, so subsequent runs on the
-same host detect environment drift if the local id no longer matches.
-On a fresh checkout the slot is `sha256:TODO_FILL_AFTER_FIRST_BUILD`;
-the first `./benchmarks/run.sh` invocation overwrites that with the
-real id.
+same host detect environment drift if the local id no longer matches
+the committed bench-day baseline. If a future refresh intentionally
+rebuilds the image on different hardware, commit the newly stamped id
+together with the refreshed results.
