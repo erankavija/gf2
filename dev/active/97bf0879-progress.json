@@ -4,7 +4,10 @@
   "epic_title": "Close gf2-core SOTA performance gaps",
   "started_at": "2026-04-30T14:15:00Z",
   "session": 1,
-  "current_wave": 1,
+  "current_wave": 2,
+  "session_1_closed_at": "2026-04-30T15:38Z",
+  "session_1_handoff": "dev/active/97bf0879-handoff.md",
+  "next_session_first_action": "Read dev/active/97bf0879-handoff.md (especially Traps section), then dispatch Wave 2 per the 'What to do next' list.",
   "lead": "agent:project-lead",
   "predecessor_epic": "babcf05e",
   "notes": [
@@ -226,7 +229,41 @@
       ],
       "in_main_directly": [
         {"short_id": "d3c2cc8f", "completed_at": "2026-04-30T14:46Z", "rationale": "JIT description amendment; lead-only operation. Closed cleanly through cargo-ci + claude reviewer + manual doc-review."}
+      ],
+      "outcome": "WAVE 1A CLOSED 2026-04-30T15:21Z",
+      "closed_issues_in_1A": [
+        {"short_id": "d3c2cc8f", "title": "Amend 64c88ae4 benchmark scope", "method": "lead-direct"},
+        {"short_id": "1d6043e8", "title": "Define SOTA reference acceptance protocol", "commit": "521c51e", "verdict": "PASS — both [hard] criteria met"},
+        {"short_id": "b8189dbf", "title": "Publish post-PPC benchmark delta appendix", "commit": "f39785c", "verdict": "PASS — every number verified against source [E1]–[E8]"},
+        {"short_id": "02ace293", "title": "Fix benchmark report cell-status semantics", "commit": "419bfbe", "verdict": "PASS — PENDING tokens 152→0 (table cells); five-token legend authoritative"}
+      ]
+    },
+    {
+      "wave": 1,
+      "sub_wave": "1B",
+      "ts": "2026-04-30T15:21Z",
+      "main_anchor_sha": "8a3bf120d2770cad30d3950ffc63605954f091ed",
+      "issues": [
+        {"short_id": "5102d87a", "branch": "worktree-agent-5102d87a", "agent_id": "a760e3d1b51e1fc8e", "classification": "documentation", "doc_target": "benchmarks/{Containerfile,image.lock,README.md} + dev/bench_results/2026-04-26.md env-metadata + JIT doc-label cleanup"}
+      ],
+      "rationale": "Serialized after wave 1A because 02ace293 also edited dev/bench_results/2026-04-26.md; 5102d87a's environment-metadata edits to the same file would have conflicted. Now that 02ace293 is merged, 5102d87a's worker can edit the file's environment section cleanly.",
+      "outcome": "WAVE 1B CLOSED 2026-04-30T15:37Z",
+      "closed_issues_in_1B": [
+        {"short_id": "5102d87a", "title": "Synchronize benchmark environment documentation", "commit": "f72e0a5", "verdict": "PASS — 12-pin cross-check across README, image.lock, Containerfile, run.sh, report all agree; 0 stale 'Deferred' doc labels found in audit of 12 issues"}
       ]
     }
-  ]
+  ],
+  "wave_1_summary": {
+    "issues_closed": 5,
+    "via_workers": ["1d6043e8", "02ace293", "b8189dbf", "5102d87a"],
+    "via_lead_direct": ["d3c2cc8f"],
+    "key_artefacts": [
+      {"path": "dev/plans/sota_reference_acceptance_protocol.md", "purpose": "Wave 2 dispatch contract — five-criterion mechanical checklist + Mermaid workflow + worked examples"},
+      {"path": "dev/bench_results/2026-04-30-post-ppc-delta-appendix.md", "purpose": "GF(2)/GF(p)/GF(2^m) post-PPC deltas with E1-E8 citations"},
+      {"path": "dev/bench_results/2026-04-26.md", "purpose": "Cell-status legend formalised (5 tokens); 0 PENDING tokens remain in tables"}
+    ],
+    "side_effect_promotions": [
+      {"short_id": "d0ca9482", "from": "backlog", "to": "ready", "reason": "All upstream Wave-1 deps closed"}
+    ]
+  }
 }
