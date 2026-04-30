@@ -1,25 +1,55 @@
 {
   "id": "806eb14e-dc3d-4a1c-b4bf-5f30b9cfa923",
   "title": "Prototype GPU acceleration for belief propagation",
-  "description": "Investigate GPU acceleration for LDPC belief propagation decoding. The BP loop is 70% of decoding time and highly data-parallel, making it a strong candidate for GPU offload. Key research questions: Is BP memory-bound or compute-bound on GPU? What is the crossover point vs 24-core CPU? Decision criteria: Go if GPU >3x faster than CPU for batch size >100, Investigate if 1.5-3x, Abandon if <1.5x.",
+  "description": "Prototype a HIP/ROCm GPU acceleration wave for coding workloads and decide, from measured evidence, whether LDPC BP and BCH syndrome evaluation should move toward production GPU backends.\n\n## Background\n\nThe current epic mixes newer HIP/ROCm work with older Vulkan/GLSL tasks and a downstream production-backend epic. The confirmed direction for this epic is HIP/ROCm only, using the existing `gf2-kernels-hip` unsafe-isolation pattern. The epic covers a prototype and feasibility decision, not production backend rollout.\n\nThe target evidence environment is AMD RX 6950 XT / `gfx1030` with ROCm 7.2 and `hipcc` at `/opt/rocm/bin/hipcc`. GPU performance claims compare against the best existing production CPU path at the same batch or campaign shape, including rayon where production uses rayon.\n\n## Success Criteria\n\n- [hard] The epic uses HIP/ROCm as the only GPU backend direction; Vulkan/GLSL children are rewritten or closed as superseded.\n- [hard] LDPC BP has a HIP prototype with CPU/GPU correctness evidence and at least 3x speedup versus the best production CPU path at the selected design workload.\n- [hard] BCH syndrome evaluation has a HIP prototype with exact CPU/GPU syndrome equivalence and at least 5x speedup versus the best production CPU path at the selected design workload.\n- [hard] Shared HIP scheduling work quantifies direct per-thread/default-stream submission versus a shared scheduler and demonstrates measurable end-to-end throughput improvement.\n- [hard] The final feasibility report states go/investigate/abandon for LDPC BP and BCH syndrome evaluation, with raw evidence paths and downstream production recommendations.\n- [hard] Default workspace CI remains green without ROCm installed; HIP-only checks are isolated to the `gf2-kernels-hip` crate or `gf2-coding --features hip` on ROCm hosts.\n- [hard] No unsafe code leaks outside `gf2-kernels-hip`.\n\n## Notes\n\nSpec doc: `dev/plans/hip_gpu_prototype_wave.md`.\n\nNon-goals: Vulkan/GLSL, CUDA, production multi-backend selection, and production GPU backend rollout for all code types. Production work remains downstream of this prototype epic's final decision.",
   "state": "backlog",
   "priority": "high",
   "assignee": null,
   "dependencies": [
-    "795c156e-7cb8-4223-93d9-7c232d79fdeb",
-    "9012f8a0-e4bd-40d1-8aac-bbdfb9eae3f0",
-    "37e0b235-9fc6-48cd-93e0-0f35f1d3e545",
-    "92acd7b5-fb62-4721-bb7d-a0ac553831f9"
+    "bfd1aa89-e0d8-4fdc-8750-0d1b6b294df9",
+    "dc32270e-cb5a-4b98-8efc-06eb343ae847",
+    "86a363aa-a824-4e59-a43c-c3688fbb0b92",
+    "719fb8de-5620-4496-b0b6-dc0fbd163e60",
+    "aeab2ee4-e860-418a-a3eb-9a55ff204a3f"
   ],
-  "gates_required": [],
-  "gates_status": {},
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "cargo-ci": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-04-29T22:49:05.414950269Z"
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-04-29T22:49:05.415024009Z"
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-04-29T22:49:05.415077799Z"
+    }
+  },
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/plans/hip_gpu_prototype_wave.md",
+      "commit": null,
+      "label": "HIP/ROCm GPU prototype wave plan",
+      "doc_type": "design",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:epic",
     "component:gf2-coding",
-    "component:gf2-kernels-simd"
+    "component:gf2-kernels-hip",
+    "epic:hip-gpu-prototype"
   ],
   "created_at": "2026-02-21T19:35:51.589062719+00:00",
-  "updated_at": "2026-04-11T15:33:48.284593057+00:00"
+  "updated_at": "2026-04-29T22:57:09.170853453+00:00"
 }

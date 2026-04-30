@@ -1,20 +1,26 @@
 {
   "id": "9012f8a0-e4bd-40d1-8aac-bbdfb9eae3f0",
   "title": "HIP/ROCm GPU-accelerated batch BCH syndrome evaluation",
-  "description": "## Problem\n\nBCH syndrome evaluation is the computational bottleneck of BCH decoding. For each received codeword, the decoder must evaluate the received polynomial r(x) at 2t points (α, α², ..., α^(2t)) in GF(2^m) using Horner's method. Each evaluation requires n multiply-accumulate steps in GF(2^m).\n\nFor DVB-T2 Normal (n=32400, t=12, m=16): 24 evaluations × 32400 field ops = 777,600 GF(2^m) operations per codeword. `decode_batch()` uses rayon for cross-codeword parallelism, but the 2t within-codeword evaluations are serial, and each Horner chain is serial.\n\n## Solution\n\nImplement a HIP kernel that batches syndrome evaluation across both codewords and evaluation points. Each GPU thread handles one (codeword, syndrome_index) pair, performing the full Horner evaluation independently. GF(2^m) multiplication uses log/exp table lookup in device memory (cached by Infinity Cache).\n\nExtends `gf2-kernels-hip` crate. Berlekamp-Massey and Chien search remain on CPU (O(t²) and O(n×t) respectively — negligible vs syndrome's O(n×2t)).\n\n## Acceptance Criteria\n\n1. **GF(2^m) multiply correctness**: For GF(2^4), GPU `gf_mul` matches CPU `Gf2mField::mul` for all 256 element pairs (exhaustive). Must match exactly (integer arithmetic).\n2. **Horner evaluation correctness**: For GF(2^4), evaluate a degree-14 polynomial at all 15 nonzero field elements on GPU. Must match CPU `Gf2mPoly::eval()` exactly.\n3. **Single-codeword syndrome (small)**: For BCH(15,7,2) over GF(2^4), compute syndromes of 10 known codewords. Must match CPU `compute_syndromes()` exactly.\n4. **DVB-T2 short syndrome**: For BCH(7200,7032,12) over GF(2^14), compute syndromes of 10 codewords (5 error-free, 5 with injected errors). Must match CPU exactly.\n5. **DVB-T2 normal syndrome**: For BCH(32400,32208,12) over GF(2^16), compute syndromes of 10 codewords. Must match CPU exactly.\n6. **Batch correctness**: `compute_syndromes_batch(128 codewords)` on BCH(7200,7032,12) produces results identical to 128 individual CPU `compute_syndromes()` calls.\n7. **Zero-syndrome property**: For 20 valid DVB-T2 short codewords (no errors), all 2t=24 GPU syndromes are zero.\n8. **Error-syndrome property**: For 20 DVB-T2 short codewords with 1..t injected errors, at least one GPU syndrome is nonzero.\n9. **Full decode pipeline**: GPU syndromes fed to CPU Berlekamp-Massey + Chien search correctly decode 20 codewords with 1..5 errors. Decoded result matches CPU-only pipeline exactly.\n10. **Throughput improvement**: GPU batch-128 syndrome evaluation of DVB-T2 short BCH(7200,7032,12) is at least 5x faster than 128 serial CPU syndrome evaluations.\n11. **Property test (small)**: For random received words on BCH(15,7,2), GPU and CPU syndromes match exactly (proptest).\n12. **Property test (batch)**: For random batch sizes 1-32 on BCH(15,7,2), GPU batch result matches CPU serial result exactly (proptest).\n13. **Feature-gated**: All HIP code behind `hip` feature flag. `cargo build --workspace` succeeds without ROCm installed.\n\n## Architecture\n\n- `gf2-kernels-hip/hip/bch_syndrome_kernel.hip` — Horner evaluation kernel with log/exp table GF(2^m) multiply\n- `gf2-kernels-hip/src/lib.rs` — `GpuGf2mTables`, `GpuBchSyndromeBatch` safe wrappers\n- `gf2-coding/src/bch/core.rs` — GPU path in `decode_batch()` (cfg-gated)\n- Thread mapping: one thread per (codeword, syndrome_index), block size = warp (32)\n- Log/exp tables in global memory, Infinity Cache provides constant-memory-like access\n- Integer arithmetic only — exact match with CPU (no floating-point tolerance needed)\n\n## References\n\nSee attached design doc for kernel pseudocode, memory budget, GF(2^m) multiplication strategies, and performance estimates.",
+  "description": "Implement and evaluate a HIP/ROCm batch BCH syndrome-evaluation prototype.\n\n## Background\n\nBCH syndrome evaluation is parallel across codewords and syndrome points. The prototype keeps Berlekamp-Massey and Chien search on CPU unless evidence shows they dominate, while proving exact syndrome equivalence and measuring speed against the best current production CPU path at the same workload shape, including rayon where production uses rayon.\n\nExisting design doc: `dev/active/gpu-batch-bch-syndrome-plan.md`. Epic spec: `dev/plans/hip_gpu_prototype_wave.md`.\n\n## Success Criteria\n\n- [hard] GPU GF($2^m$) multiplication support matches CPU `Gf2mField` arithmetic exactly for the required table-backed fields, including exhaustive GF($2^4$) checks.\n- [hard] HIP Horner syndrome evaluation matches CPU polynomial evaluation exactly on small BCH fixtures.\n- [hard] DVB-T2 short and normal BCH syndrome fixtures match CPU exactly for valid codewords and injected-error codewords.\n- [hard] Batch correctness covers the selected design workload and at least one smaller fixture; GPU batch syndromes match the CPU comparator exactly.\n- [hard] GPU syndromes fed into the CPU Berlekamp-Massey and Chien pipeline decode the same received words as the CPU-only pipeline.\n- [hard] Safe Rust wrappers in `gf2-kernels-hip` and feature-gated `gf2-coding` integration compile only behind the `hip` feature; default workspace builds succeed without ROCm installed.\n- [hard] Performance evidence records hardware metadata, ROCm version, benchmark command, raw result paths, batch-size sweep, and phase timing where practical.\n- [hard] GPU BCH syndrome evaluation is at least 5x faster than the best existing production CPU path at the selected design workload.\n\n## Notes\n\nTarget environment: AMD RX 6950 XT / `gfx1030`, ROCm 7.2, `/opt/rocm/bin/hipcc`. Do not compare only against an artificially serial CPU loop unless the best production CPU path is also reported and used for the hard speed criterion.",
   "state": "ready",
   "priority": "high",
   "assignee": null,
   "dependencies": [],
   "gates_required": [
     "cargo-ci",
-    "code-review"
+    "code-review",
+    "doc-review"
   ],
   "gates_status": {
     "code-review": {
       "status": "pending",
       "updated_by": null,
       "updated_at": "2026-04-11T15:33:50.139515106Z"
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-04-29T22:50:44.666832185Z"
     },
     "cargo-ci": {
       "status": "pending",
@@ -34,10 +40,11 @@
   ],
   "labels": [
     "type:task",
-    "epic:grand",
     "component:gf2-kernels-hip",
-    "component:gf2-coding"
+    "component:gf2-coding",
+    "epic:hip-gpu-prototype",
+    "story:gpu-bch-syndrome"
   ],
   "created_at": "2026-04-11T15:33:39.428069767+00:00",
-  "updated_at": "2026-04-11T15:33:52.602398117+00:00"
+  "updated_at": "2026-04-29T22:56:56.146862176+00:00"
 }

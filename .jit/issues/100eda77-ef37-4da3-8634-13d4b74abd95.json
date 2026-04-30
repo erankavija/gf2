@@ -1,0 +1,26 @@
+{
+  "id": "100eda77-ef37-4da3-8634-13d4b74abd95",
+  "title": "Add GPU speed-threshold checks",
+  "description": "Add automated or clearly documented manual checks for GPU speed thresholds.\n\n## Background\n\nLDPC BP and BCH syndrome tasks have hard speed criteria, and scheduler work must demonstrate measurable throughput improvement. The checker should be analogous in purpose to `criterion-1.5x` but must support GPU-specific metadata and thresholds.\n\n## Success Criteria\n\n- [hard] LDPC threshold checking can verify at least 3x speedup versus the recorded best production CPU comparator.\n- [hard] BCH threshold checking can verify at least 5x speedup versus the recorded best production CPU comparator.\n- [hard] Scheduler threshold checking can verify measurable end-to-end throughput improvement versus direct per-thread/default-stream submission.\n- [hard] Checker failures are actionable: output names the missing artifact, wrong comparator, insufficient speedup, or unsupported environment.\n- [hard] If any check must remain manual because ROCm hardware is not available in default CI, the manual gate procedure and required artifacts are documented.\n\n## Notes\n\nPart of story `dc32270e` and spec `dev/plans/hip_gpu_prototype_wave.md`.",
+  "state": "ready",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "epic:hip-gpu-prototype",
+    "story:gpu-evidence-infra",
+    "component:gf2-coding",
+    "component:gf2-kernels-hip"
+  ],
+  "created_at": "2026-04-29T22:50:16.031055132+00:00",
+  "updated_at": "2026-04-29T22:50:16.031062792+00:00"
+}
