@@ -180,8 +180,8 @@ verify_base_digest
 
 # Verify apt-pinned package versions in [libs.<name>] match the
 # `<package>=<version>` pins in the Containerfile's apt-get install
-# block. Three pins are tracked in image.lock today: gcc-12, openblas,
-# gmp.
+# block. Six apt pins are tracked in image.lock today: gcc-12, g++-12,
+# openblas, gmp, lapack, cmake.
 verify_apt_pin() {
     local pkg_pattern="$1"   # apt-get install pattern, e.g. gcc-12
     local lock_section="$2"  # e.g. libs.gcc
