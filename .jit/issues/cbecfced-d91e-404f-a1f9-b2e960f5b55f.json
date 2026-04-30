@@ -1,0 +1,28 @@
+{
+  "id": "cbecfced-d91e-404f-a1f9-b2e960f5b55f",
+  "title": "Define reproducible gf2-core SOTA reference matrix",
+  "description": "Define the reproducible SOTA reference matrix for gf2-core finite-field and linear-algebra performance.\n\n## Background\n\nfflas-ffpack and M4RI are primary hard references, but GF(2^m), charpoly/minpoly, and sparse operations may require M4RIE, LinBox, NTL, or FLINT. Only reproducible and comparable references become hard targets.\n\n## Success Criteria\n\n- [hard] A linked design doc defines the reference acceptance protocol and the reference owner for every in-scope operation/field family.\n- [hard] fflas-ffpack and M4RI lanes are hardened for the primary GF(p) and GF(2) comparisons.\n- [hard] M4RIE, LinBox, NTL, and FLINT are either promoted to hard references with working harnesses or rejected with evidence.",
+  "state": "backlog",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [
+    "4c0d0202-bb1c-40cc-910c-412f33fc95f4",
+    "b0434149-9385-4149-8fec-dc2b4663333f"
+  ],
+  "gates_required": [
+    "code-review",
+    "cargo-ci",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:story",
+    "component:gf2-core",
+    "epic:gf2-core-sota-performance",
+    "story:sota-reference-matrix"
+  ],
+  "created_at": "2026-04-30T06:43:02.433953673+00:00",
+  "updated_at": "2026-04-30T06:43:49.098875294+00:00"
+}

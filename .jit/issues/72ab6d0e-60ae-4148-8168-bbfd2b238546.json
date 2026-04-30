@@ -1,0 +1,30 @@
+{
+  "id": "72ab6d0e-60ae-4148-8168-bbfd2b238546",
+  "title": "Close dense factorization and solve gaps",
+  "description": "Close dense factorization and solve gaps after GEMM parity work lands.\n\n## Background\n\nPLE, echelon, invert, solve, determinant, and rank-deficient regimes must inherit the optimized GEMM/TRSM paths rather than remaining separate bottlenecks.\n\n## Success Criteria\n\n- [hard] PLE/echelon/invert/solve target rows are within 1.5x of the best accepted reference or faster.\n- [hard] Rank-deficient regimes are measured and optimized separately from full-rank regimes.\n- [hard] A final dense linear-algebra report records raw numbers, ratios, and block-size/dispatch policy.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "2c7548ae-c35b-4a78-b0dc-8aacfd550e93",
+    "cc5de315-109f-4178-999c-a47460a571c2",
+    "974a85bd-cb5d-48d2-94a4-7a15364ea2a0",
+    "4eb105f7-ea4f-4ec9-8003-df75ef48ce15"
+  ],
+  "gates_required": [
+    "code-review",
+    "cargo-ci",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:story",
+    "component:gf2-core",
+    "epic:gf2-core-sota-performance",
+    "story:sota-dense-la"
+  ],
+  "created_at": "2026-04-30T06:43:02.503836063+00:00",
+  "updated_at": "2026-04-30T06:43:49.237038623+00:00"
+}

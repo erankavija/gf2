@@ -1,0 +1,30 @@
+{
+  "id": "01ae4c20-aae4-4940-9889-ea7070bd4377",
+  "title": "Publish final gf2-core SOTA closure report",
+  "description": "Publish the final gf2-core SOTA closure report and presentation.\n\n## Background\n\nThe epic should close with a single authoritative scorecard, raw CSVs, linked evidence, and a Reveal.js presentation summarizing achieved ratios and remaining non-goal boundaries.\n\n## Success Criteria\n\n- [hard] Final raw CSVs and markdown scorecard cover every in-scope benchmark cell and reference owner.\n- [hard] A Reveal.js presentation is linked to the epic and summarizes ratios, algorithms, no-go decisions, and future research.\n- [hard] All child stories are done, gates pass, and the epic can serve as the SOTA checkpoint for b117c95e.",
+  "state": "backlog",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [
+    "8f3fdc34-66aa-4c94-8919-a31bdd94ebb3",
+    "54fd3f0b-60d9-439c-90d1-e54c470f2563",
+    "66190ccd-60aa-4675-bb59-153f1834b92e",
+    "72ab6d0e-60ae-4148-8168-bbfd2b238546"
+  ],
+  "gates_required": [
+    "code-review",
+    "cargo-ci",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:story",
+    "component:gf2-core",
+    "epic:gf2-core-sota-performance",
+    "story:sota-final-scorecard"
+  ],
+  "created_at": "2026-04-30T06:43:02.531571131+00:00",
+  "updated_at": "2026-04-30T06:43:49.461556198+00:00"
+}

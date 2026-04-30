@@ -1,0 +1,25 @@
+{
+  "id": "79388011-0d65-4ae3-8a7f-8dc961157429",
+  "title": "Evaluate LinBox for exact linear algebra references",
+  "description": "Determine whether LinBox can cover exact linear algebra, charpoly, and minpoly reference rows.\n\n## Success Criteria\n\n- [hard] A reproducible LinBox harness exists or a rejection note explains why it is not viable.\n- [hard] The target matrix uses or explicitly excludes LinBox based on evidence.",
+  "state": "ready",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [
+    "code-review",
+    "cargo-ci",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "epic:gf2-core-sota-performance",
+    "story:sota-reference-matrix"
+  ],
+  "created_at": "2026-04-30T06:43:02.616799375+00:00",
+  "updated_at": "2026-04-30T06:43:02.616807095+00:00"
+}

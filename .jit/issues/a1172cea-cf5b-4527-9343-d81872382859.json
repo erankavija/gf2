@@ -1,0 +1,27 @@
+{
+  "id": "a1172cea-cf5b-4527-9343-d81872382859",
+  "title": "Measure GF(2^m) post-PPC GEMM against reference",
+  "description": "Run comparable GF(2^m) benchmark rows against the selected reference.\n\n## Success Criteria\n\n- [hard] GF(2^m) gf2 and reference CSV rows use comparable shapes and inputs.\n- [hard] The scorecard identifies all remaining GF(2^m) gaps.",
+  "state": "backlog",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [
+    "9a715d75-eb45-4f37-a031-5c83bfae8556"
+  ],
+  "gates_required": [
+    "code-review",
+    "cargo-ci",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "epic:gf2-core-sota-performance",
+    "story:sota-gf2m-reference"
+  ],
+  "created_at": "2026-04-30T06:43:02.758636806+00:00",
+  "updated_at": "2026-04-30T06:43:48.406336286+00:00"
+}

@@ -1,0 +1,28 @@
+{
+  "id": "1726270d-d495-4aae-bdb4-d8e69b954eee",
+  "title": "Publish sparse parity evidence",
+  "description": "Publish final sparse evidence.\n\n## Success Criteria\n\n- [hard] Raw CSVs and ratio tables are linked to the story.\n- [hard] CPU/GPU non-goal boundaries are documented.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "3a37e0f6-4f21-43d4-a1c0-452265c3f888",
+    "3643923d-cb72-4cdd-9be2-20a66c0d4c43"
+  ],
+  "gates_required": [
+    "code-review",
+    "cargo-ci",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "epic:gf2-core-sota-performance",
+    "story:sota-sparse-fieldmatrix"
+  ],
+  "created_at": "2026-04-30T06:43:02.927979274+00:00",
+  "updated_at": "2026-04-30T06:43:48.907690839+00:00"
+}

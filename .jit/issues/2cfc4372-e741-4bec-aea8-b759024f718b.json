@@ -1,0 +1,27 @@
+{
+  "id": "2cfc4372-e741-4bec-aea8-b759024f718b",
+  "title": "Render final SOTA markdown scorecard",
+  "description": "Produce the authoritative final markdown report.\n\n## Success Criteria\n\n- [hard] Every in-scope cell has reference owner, gf2 number, reference number, ratio, and closure status.\n- [hard] The report cites all source evidence docs.",
+  "state": "backlog",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [
+    "dece4e73-eafb-4519-b68a-e6b3f6580487"
+  ],
+  "gates_required": [
+    "code-review",
+    "cargo-ci",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "epic:gf2-core-sota-performance",
+    "story:sota-final-scorecard"
+  ],
+  "created_at": "2026-04-30T06:43:02.946758140+00:00",
+  "updated_at": "2026-04-30T06:43:48.935649177+00:00"
+}

@@ -1,0 +1,25 @@
+{
+  "id": "5dea7457-2843-478a-895f-b7295ce612e0",
+  "title": "Harden fflas-ffpack and M4RI reference lanes",
+  "description": "Audit and extend the primary hard reference lanes.\n\n## Success Criteria\n\n- [hard] GF(p) fflas-ffpack rows cover all in-scope dense operations supported by fflas.\n- [hard] GF(2) M4RI rows cover all in-scope GF(2) operations supported by M4RI.",
+  "state": "ready",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [
+    "code-review",
+    "cargo-ci",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "epic:gf2-core-sota-performance",
+    "story:sota-reference-matrix"
+  ],
+  "created_at": "2026-04-30T06:43:02.597611330+00:00",
+  "updated_at": "2026-04-30T06:43:02.597617870+00:00"
+}

@@ -1,0 +1,25 @@
+{
+  "id": "a3412e15-e73d-4556-a2aa-e4296677cfa5",
+  "title": "Select sparse benchmark corpus and references",
+  "description": "Define meaningful sparse FieldMatrix comparisons.\n\n## Success Criteria\n\n- [hard] The corpus includes random, structured, and coding-theory sparse matrices.\n- [hard] Accepted references support comparable finite-field semantics.",
+  "state": "ready",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [
+    "code-review",
+    "cargo-ci",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "epic:gf2-core-sota-performance",
+    "story:sota-sparse-fieldmatrix"
+  ],
+  "created_at": "2026-04-30T06:43:02.890544374+00:00",
+  "updated_at": "2026-04-30T06:43:02.890548274+00:00"
+}

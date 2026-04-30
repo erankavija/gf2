@@ -1,0 +1,27 @@
+{
+  "id": "f00fd873-bd25-45c6-ac8e-7a0ab2a2fe68",
+  "title": "Create SOTA closure Reveal.js deck",
+  "description": "Create the final presentation for the SOTA epic.\n\n## Success Criteria\n\n- [hard] The deck summarizes achieved ratios, key algorithms, no-go decisions, and future research.\n- [hard] The deck is suitable for linking as a JIT presentation document.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "2cfc4372-e741-4bec-aea8-b759024f718b"
+  ],
+  "gates_required": [
+    "code-review",
+    "cargo-ci",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "epic:gf2-core-sota-performance",
+    "story:sota-final-scorecard"
+  ],
+  "created_at": "2026-04-30T06:43:02.955460362+00:00",
+  "updated_at": "2026-04-30T06:43:48.963407325+00:00"
+}

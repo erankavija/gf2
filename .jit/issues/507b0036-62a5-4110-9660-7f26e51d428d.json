@@ -1,0 +1,25 @@
+{
+  "id": "507b0036-62a5-4110-9660-7f26e51d428d",
+  "title": "Evaluate M4RIE for GF(2^m) references",
+  "description": "Determine whether M4RIE can be a hard reference for GF(2^m) matrix operations.\n\n## Success Criteria\n\n- [hard] A reproducible M4RIE harness exists or a rejection note explains why it is not viable.\n- [hard] The GF(2^m) target matrix uses or explicitly excludes M4RIE based on evidence.",
+  "state": "ready",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [
+    "code-review",
+    "cargo-ci",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "epic:gf2-core-sota-performance",
+    "story:sota-reference-matrix"
+  ],
+  "created_at": "2026-04-30T06:43:02.607136933+00:00",
+  "updated_at": "2026-04-30T06:43:02.607140813+00:00"
+}

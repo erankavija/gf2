@@ -1,0 +1,27 @@
+{
+  "id": "fb271c41-d797-455d-916b-0d698e092d73",
+  "title": "Evaluate GFNI and AVX-512 follow-on routing",
+  "description": "Decide whether GFNI/AVX-512 backlog work is required for SOTA closure.\n\n## Success Criteria\n\n- [hard] The decision cites benchmark or feasibility evidence.\n- [hard] Required platform work is wired under this epic; non-required work remains outside.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "a1172cea-cf5b-4527-9343-d81872382859"
+  ],
+  "gates_required": [
+    "code-review",
+    "cargo-ci",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "epic:gf2-core-sota-performance",
+    "story:sota-gf2m-reference"
+  ],
+  "created_at": "2026-04-30T06:43:02.777617191+00:00",
+  "updated_at": "2026-04-30T06:43:48.461155001+00:00"
+}

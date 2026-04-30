@@ -1,0 +1,27 @@
+{
+  "id": "111a3967-dfa8-4b9a-8b1d-880dfc3c2d48",
+  "title": "Publish GF(2) parity evidence",
+  "description": "Publish the final GF(2) parity evidence.\n\n## Success Criteria\n\n- [hard] Raw CSVs and ratio tables are linked to the story.\n- [hard] Production dispatch policy is documented.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "366dbbcd-4485-4865-bcc4-42c0838eb822"
+  ],
+  "gates_required": [
+    "code-review",
+    "cargo-ci",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "epic:gf2-core-sota-performance",
+    "story:sota-gf2-m4ri"
+  ],
+  "created_at": "2026-04-30T06:43:02.683744974+00:00",
+  "updated_at": "2026-04-30T06:43:48.197121696+00:00"
+}

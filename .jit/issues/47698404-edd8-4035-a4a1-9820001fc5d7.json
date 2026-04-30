@@ -1,0 +1,27 @@
+{
+  "id": "47698404-edd8-4035-a4a1-9820001fc5d7",
+  "title": "Re-run sparse post-PPC scorecard",
+  "description": "Measure sparse CPU paths against accepted references.\n\n## Success Criteria\n\n- [hard] CSR/CSC, block-CSR, RCM, and prefetch variants are represented where relevant.\n- [hard] The report identifies feasible CPU gaps and no-go cases.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "a3412e15-e73d-4556-a2aa-e4296677cfa5"
+  ],
+  "gates_required": [
+    "code-review",
+    "cargo-ci",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "epic:gf2-core-sota-performance",
+    "story:sota-sparse-fieldmatrix"
+  ],
+  "created_at": "2026-04-30T06:43:02.900080306+00:00",
+  "updated_at": "2026-04-30T06:43:48.803273349+00:00"
+}

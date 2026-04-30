@@ -1,0 +1,28 @@
+{
+  "id": "7e41400f-187f-4d28-b316-49cbb127189d",
+  "title": "Close inversion solve determinant rows",
+  "description": "Verify derived dense operations inherit optimized primitives.\n\n## Success Criteria\n\n- [hard] invert/solve/determinant rows meet the 1.5x threshold or have approved follow-up scope.\n- [hard] Correctness tests cover singular and rank-deficient inputs.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "2c52bcf6-eeff-485d-b4d2-2bcc01078ea3",
+    "73ec5da3-96a0-4282-b66f-5fc305f54ec5"
+  ],
+  "gates_required": [
+    "code-review",
+    "cargo-ci",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "epic:gf2-core-sota-performance",
+    "story:sota-dense-la"
+  ],
+  "created_at": "2026-04-30T06:43:02.826144835+00:00",
+  "updated_at": "2026-04-30T06:43:48.619376697+00:00"
+}

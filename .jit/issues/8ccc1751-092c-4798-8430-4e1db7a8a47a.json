@@ -1,0 +1,28 @@
+{
+  "id": "8ccc1751-092c-4798-8430-4e1db7a8a47a",
+  "title": "Publish polynomial parity evidence",
+  "description": "Publish final charpoly/minpoly evidence.\n\n## Success Criteria\n\n- [hard] Raw CSVs and ratio tables are linked to the story.\n- [hard] Algorithmic dispatch and non-goal boundaries are documented.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "d1dd266c-ae4a-4d9f-843c-e138618677f3",
+    "b87362a3-a021-4508-a544-0228ff5c8665"
+  ],
+  "gates_required": [
+    "code-review",
+    "cargo-ci",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "epic:gf2-core-sota-performance",
+    "story:sota-polynomial-invariants"
+  ],
+  "created_at": "2026-04-30T06:43:02.881646211+00:00",
+  "updated_at": "2026-04-30T06:43:48.776844112+00:00"
+}

@@ -1,0 +1,31 @@
+{
+  "id": "4c0d0202-bb1c-40cc-910c-412f33fc95f4",
+  "title": "Publish SOTA target matrix design doc",
+  "description": "Publish the authoritative target matrix consumed by every optimization story.\n\n## Success Criteria\n\n- [hard] Every in-scope operation/field family has a reference owner or an explicit exclusion.\n- [hard] The design doc is linked to the SOTA epic and reference-matrix story.",
+  "state": "backlog",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [
+    "1d6043e8-49da-4ec4-adac-5be67bb8b443",
+    "5dea7457-2843-478a-895f-b7295ce612e0",
+    "73ab8eef-7ef3-4bf0-93d1-9fc48fde9bac",
+    "79388011-0d65-4ae3-8a7f-8dc961157429",
+    "507b0036-62a5-4110-9660-7f26e51d428d"
+  ],
+  "gates_required": [
+    "code-review",
+    "cargo-ci",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "epic:gf2-core-sota-performance",
+    "story:sota-reference-matrix"
+  ],
+  "created_at": "2026-04-30T06:43:02.636426111+00:00",
+  "updated_at": "2026-04-30T06:43:48.063971598+00:00"
+}

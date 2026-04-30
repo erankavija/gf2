@@ -1,0 +1,27 @@
+{
+  "id": "3d06224c-0171-47c0-ae7e-8ce6addf3c8f",
+  "title": "Protect Mersenne fast path",
+  "description": "Ensure Mersenne31 remains competitive after GF(p) refactors.\n\n## Success Criteria\n\n- [hard] Mersenne31 rows remain within 1.5x of fflas or faster.\n- [hard] Regression tests or benchmarks guard the Mersenne dispatch path.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "5cacaec5-9676-41f7-adb1-e47b832876bb"
+  ],
+  "gates_required": [
+    "code-review",
+    "cargo-ci",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "epic:gf2-core-sota-performance",
+    "story:sota-gfp-fflas"
+  ],
+  "created_at": "2026-04-30T06:43:02.731055478+00:00",
+  "updated_at": "2026-04-30T06:43:48.305818007+00:00"
+}

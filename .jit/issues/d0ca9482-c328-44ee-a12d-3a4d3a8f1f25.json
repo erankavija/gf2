@@ -1,0 +1,30 @@
+{
+  "id": "d0ca9482-c328-44ee-a12d-3a4d3a8f1f25",
+  "title": "Close benchmark report child after cleanup",
+  "description": "Complete a9ab0a4f after report and documentation consistency issues are fixed.\n\n## Success Criteria\n\n- [hard] a9ab0a4f cargo-ci, code-review, and doc-review gates pass.\n- [hard] a9ab0a4f is transitioned to done without broad optimization scope creep.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "d3c2cc8f-4371-4558-a5eb-3b3a30b06e3e",
+    "5102d87a-313f-4416-9d85-3b9d59eb1f32",
+    "02ace293-bb0b-4357-9958-08f28dfd80e0",
+    "b8189dbf-10c4-4e35-88fa-2e8828f41715"
+  ],
+  "gates_required": [
+    "code-review",
+    "cargo-ci",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "epic:gf2-core-sota-performance",
+    "story:sota-baseline-scorecard"
+  ],
+  "created_at": "2026-04-30T06:43:02.578865074+00:00",
+  "updated_at": "2026-04-30T06:43:47.910422774+00:00"
+}

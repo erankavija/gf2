@@ -1,0 +1,28 @@
+{
+  "id": "54fd3f0b-60d9-439c-90d1-e54c470f2563",
+  "title": "Close sparse FieldMatrix SpMV and SpMM gaps",
+  "description": "Define and close sparse FieldMatrix SpMV/SpMM performance gaps.\n\n## Background\n\nSparse PPC work produced scaffolds and negative/no-go evidence, but sparse SOTA parity needs a target corpus, comparable references, and hardware-counter-driven layout work.\n\n## Success Criteria\n\n- [hard] A sparse benchmark corpus and reference set are defined for finite-field SpMV/SpMM.\n- [hard] CPU sparse target rows are within 1.5x of accepted references where feasible.\n- [hard] Any remaining sparse gap has an explicit CPU no-go analysis and, if needed, a user-approved GPU follow-up dependency.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "1726270d-d495-4aae-bdb4-d8e69b954eee",
+    "cbecfced-d91e-404f-a1f9-b2e960f5b55f"
+  ],
+  "gates_required": [
+    "code-review",
+    "cargo-ci",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:story",
+    "component:gf2-core",
+    "epic:gf2-core-sota-performance",
+    "story:sota-sparse-fieldmatrix"
+  ],
+  "created_at": "2026-04-30T06:43:02.522262388+00:00",
+  "updated_at": "2026-04-30T06:43:49.329398660+00:00"
+}

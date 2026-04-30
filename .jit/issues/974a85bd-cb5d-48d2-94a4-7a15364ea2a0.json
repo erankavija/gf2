@@ -1,0 +1,28 @@
+{
+  "id": "974a85bd-cb5d-48d2-94a4-7a15364ea2a0",
+  "title": "Close GF(2) BitMatrix gaps to M4RI",
+  "description": "Close GF(2) BitMatrix performance gaps to M4RI.\n\n## Background\n\nPost-PPC matmul improved substantially but remains about 0.42x M4RI at n=1024 and 0.31x at n=4096. One-level Strassen did not cross over through n=8192, so the next work must target M4RI-style table/cache scheduling and related GF(2) operations.\n\n## Success Criteria\n\n- [hard] GF(2) matmul target rows are within 1.5x of M4RI or faster.\n- [hard] GF(2) echelon/rank rows required by the target matrix are measured and within threshold or have user-approved scope amendments.\n- [hard] A final GF(2) parity report records raw numbers, ratios, and production dispatch policy.",
+  "state": "backlog",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [
+    "111a3967-dfa8-4b9a-8b1d-880dfc3c2d48",
+    "cbecfced-d91e-404f-a1f9-b2e960f5b55f"
+  ],
+  "gates_required": [
+    "code-review",
+    "cargo-ci",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:story",
+    "component:gf2-core",
+    "epic:gf2-core-sota-performance",
+    "story:sota-gf2-m4ri"
+  ],
+  "created_at": "2026-04-30T06:43:02.444480246+00:00",
+  "updated_at": "2026-04-30T06:43:49.124609531+00:00"
+}
