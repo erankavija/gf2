@@ -1,0 +1,23 @@
+{
+  "id": "60c30e2d-f332-4ef5-bad3-548fa7753b6f",
+  "title": "Multi-word streaming column-sum cache-blocking design",
+  "description": "## Context\n\nFor n > 64 the permanent's column-sum vector spans multiple `u64`-pairs and the Ryser inner loop walks down a column at each Gray-code step. Without cache blocking, large-n permanents will be memory-bound. This issue produces the cache-blocking and layout design that W3's T14 implements.\n\nInputs:\n\n- Matrix layout: column-major bipedal pairs (uniform with the n ≤ 64 single-word path).\n- Inner loop: `column_sum[w] ±= A.col(flip)[w]` for `w in 0..ceil(n/64)`, then `prod = fold_mul(column_sum)`.\n- L1 footprint target: column_sum + touched column ≤ 32 KiB (Zen 3 L1d).\n- Roofline analysis: peak bytes/sec from L1 vs the inner loop's bytes/iteration.\n\nOutput: `dev/plans/r3_multi_word_streaming.md`, including:\n\n1. Memory layout diagram for `Bipedal3Matrix` row-major vs column-major (we want column-major; justify).\n2. Cache-blocking strategy for n > 64 (e.g., chunk size for inner loop iteration).\n3. Roofline estimate (bytes/iteration, expected GB/s).\n4. The exact Rust pseudocode for the multi-word streaming inner loop that T14 will implement.\n\n## Success Criteria\n\n1. [hard] `dev/plans/r3_multi_word_streaming.md` lands and is attached via `jit doc add`.\n2. [hard] Doc includes a memory-layout decision (column-major vs row-major) with rationale.\n3. [hard] Doc includes a roofline estimate citing Zen 3 L1/L2/L3 and DRAM bandwidth numbers.\n4. [hard] Doc presents Rust pseudocode for the streaming inner loop precise enough that T14 can implement directly.",
+  "state": "ready",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "epic:gf2-algebra-permanent",
+    "component:gf2-algebra"
+  ],
+  "created_at": "2026-04-30T21:40:17.463505824+00:00",
+  "updated_at": "2026-04-30T21:40:17.463514624+00:00"
+}

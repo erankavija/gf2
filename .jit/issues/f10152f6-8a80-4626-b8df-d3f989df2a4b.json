@@ -1,0 +1,23 @@
+{
+  "id": "f10152f6-8a80-4626-b8df-d3f989df2a4b",
+  "title": "Research best-effort F_7 packed encoding",
+  "description": "## Context\n\n⚠ **User approval required** before selecting the winning encoding — this is the input contract for W4 implementation issues T19/T20.\n\nF₇ has 7 elements; the simplest baseline is 3-bit-per-element packed with one redundant codeword (16 elements per `u64`) and a 2¹⁶ LUT for mul. F₇* is cyclic of order 6, which suggests a (log mod 6, zero) representation may permit cheaper multiplication than mul-via-LUT. A 4-bit packed representation (8 elements per `u64`) may also let multiplication exploit XOR-structure on a non-redundant codeword.\n\nThis issue prototypes 2–4 candidate encodings in `dev/research/f7_packing/`, measures cycles/op, and produces a decision document.\n\nHard fallback if no novel encoding beats LUT baseline by ≥ 1.5×: select the 3-bit + LUT baseline.\n\n## Success Criteria\n\n1. [hard] `dev/research/f7_packing/` exists, builds with `cargo build -p f7-packing-prototype --release`.\n2. [hard] At least 2 candidate encodings are implemented and benchmarked.\n3. [hard] `dev/plans/r2_f7_encoding_decision.md` lands and is attached via `jit doc add`, naming the winning candidate.\n4. [hard] Decision doc documents bitwise op counts for add, sub, mul, div on the chosen encoding.\n5. [hard] User has signed off (recorded as a comment) before transitioning to `done`.",
+  "state": "ready",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:simulation",
+    "epic:gf2-algebra-permanent",
+    "component:gf2-algebra"
+  ],
+  "created_at": "2026-04-30T21:40:05.894555544+00:00",
+  "updated_at": "2026-04-30T21:40:05.894566934+00:00"
+}

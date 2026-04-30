@@ -1,0 +1,23 @@
+{
+  "id": "a0c0a45f-66a9-400b-bd54-153b1b835b1d",
+  "title": "Lean4 proof sketch: bipedal F_3 arithmetic correctness vs Fp&lt;3&gt;",
+  "description": "## Context\n\n⚠ **User approval required before this issue can close** — per CLAUDE.md §Verification work, all Lean4 proof sketches must be approved before implementation work is dispatched. This sketch governs implementation issue V1 (W6).\n\nStatement to be proved (informal): for all pairs `(m₁, s₁), (m₂, s₂) ∈ F₂⁶⁴ × F₂⁶⁴`, the bipedal `add`/`sub`/`mul`/`div` formulas (paper Theorem 2.1) applied to the pair, then decoded via ψ, equal canonical `Fp<3>` add/sub/mul/div on the decoded scalars, lane-wise.\n\nThe sketch must follow the format in CLAUDE.md §Verification work:\n\n1. Lemmas to be proved (statement form only; no proofs).\n2. Intended proof strategy per lemma (one line: tactic shape — `bv_decide`, `decide`, `scalar_tac`, etc.).\n3. Exact production code path each Charon extraction targets (`Bipedal3::{add,sub,mul,div}` in `crates/gf2-algebra/src/packed/bipedal3.rs` or wherever D1a places it).\n4. Expected Aeneas-generated def names.\n\nOutput: `dev/plans/d2_lean_bipedal3_sketch.md`, attached to this issue.\n\n## Success Criteria\n\n1. [hard] `dev/plans/d2_lean_bipedal3_sketch.md` lands and is attached via `jit doc add`.\n2. [hard] Sketch enumerates lemmas for all four operations (add, sub, mul, div), plus auxiliary lemmas for the decoder ψ.\n3. [hard] Each lemma carries a one-line tactic strategy.\n4. [hard] Sketch identifies the exact Rust function signatures to be Charon-extracted.\n5. [hard] User has signed off on the sketch (recorded as a comment / approval note) before transitioning to `done`.",
+  "state": "ready",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "epic:gf2-algebra-permanent",
+    "component:proofs"
+  ],
+  "created_at": "2026-04-30T21:39:25.730707963+00:00",
+  "updated_at": "2026-04-30T21:39:25.730716513+00:00"
+}
