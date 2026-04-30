@@ -360,10 +360,7 @@ fn zero_matrix_like<F: FiniteField>(
         } else if let Some(z) = F::zero_hint() {
             z
         } else {
-            panic!(
-                "ple/zero_matrix_like: cannot synthesise zero element for \
-                 empty template with runtime-context field"
-            );
+            return FieldMatrix::from_raw_parts(r, c, FieldVec::new());
         };
         return FieldMatrix::new(r, c, zero);
     }
@@ -1173,6 +1170,7 @@ mod tests {
     use crate::field::test_random_matrix::{random_fp, random_gf2m_wide_1};
     use crate::gf2m::wide::Gf2mWide;
     use crate::gf2m::wide_config::Gf2mWideConfig;
+    use crate::gf2m::{Gf2mElement, Gf2mField};
     use crate::gfp::Fp;
     use serial_test::serial;
 
@@ -1784,6 +1782,29 @@ mod tests {
         assert_eq!(ns.len(), 0);
         // rank
         assert_eq!(a.rank(), 0);
+    }
+
+    #[test]
+    fn test_ple_empty_runtime_field_edges_do_not_panic() {
+        let field = Gf2mField::new(4, 0b10011);
+
+        let zero_rows = FieldMatrix::<Gf2mElement>::new(0, 3, field.element(0));
+        let (p, l, e, r) = zero_rows.ple();
+        assert_eq!(r, 0);
+        assert_eq!(p.len(), 0);
+        assert_eq!(l.shape(), (0, 0));
+        assert_eq!(e.shape(), (0, 3));
+
+        let (x, echelon) = zero_rows.row_echelon();
+        assert_eq!(x.shape(), (0, 0));
+        assert_eq!(echelon.shape(), (0, 3));
+
+        let zero_cols = FieldMatrix::<Gf2mElement>::new(3, 0, field.element(0));
+        let (p, l, e, r) = zero_cols.ple();
+        assert_eq!(r, 0);
+        assert_eq!(p.len(), 3);
+        assert_eq!(l.shape(), (3, 0));
+        assert_eq!(e.shape(), (0, 0));
     }
 
     #[test]
