@@ -2,7 +2,7 @@
   "id": "d3c2cc8f-4371-4558-a5eb-3b3a30b06e3e",
   "title": "Amend 64c88ae4 benchmark scope",
   "description": "Update the legacy benchmark story so it owns baseline publication rather than all future SOTA closure.\n\n## Success Criteria\n\n- [hard] 64c88ae4 success criteria match the baseline/report deliverable actually provided.\n- [hard] The issue description points SOTA gap closure to the new epic.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "high",
   "assignee": "agent:project-lead",
   "dependencies": [],
@@ -11,7 +11,23 @@
     "cargo-ci",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-30T14:18:42.358692636Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-30T14:21:38.702559818Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-30T14:44:18.638926829Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -21,5 +37,5 @@
     "story:sota-baseline-scorecard"
   ],
   "created_at": "2026-04-30T06:43:02.569548952+00:00",
-  "updated_at": "2026-04-30T14:16:46.471499930+00:00"
+  "updated_at": "2026-04-30T14:46:16.198214173+00:00"
 }

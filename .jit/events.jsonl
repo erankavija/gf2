@@ -3501,3 +3501,10 @@
 {"type":"issue_state_changed","id":"a742481e-24cf-42b0-bef0-3e8eaafc4aa6","issue_id":"97bf0879-357e-4151-bdeb-781987cd0902","timestamp":"2026-04-30T14:15:19.328473099Z","from":"backlog","to":"in_progress"}
 {"type":"issue_state_changed","id":"af34f3d4-55f6-47c1-97dc-928ad39f6886","issue_id":"d3c2cc8f-4371-4558-a5eb-3b3a30b06e3e","timestamp":"2026-04-30T14:16:46.471391310Z","from":"ready","to":"in_progress"}
 {"type":"issue_claimed","id":"7c5fbb14-0f89-419a-9291-d978a32ab832","issue_id":"d3c2cc8f-4371-4558-a5eb-3b3a30b06e3e","timestamp":"2026-04-30T14:16:46.471695150Z","assignee":"agent:project-lead"}
+{"type":"gate_passed","id":"e0d9a962-4921-4ad4-aff6-8fd4a8fd8cde","issue_id":"d3c2cc8f-4371-4558-a5eb-3b3a30b06e3e","timestamp":"2026-04-30T14:18:48.770341330Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"97ccfb35-6a79-4864-8118-b0cc5d5a9846","issue_id":"d3c2cc8f-4371-4558-a5eb-3b3a30b06e3e","timestamp":"2026-04-30T14:21:38.683241523Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"f83aead6-a6c9-499a-9686-fc15bb560c8b","issue_id":"d3c2cc8f-4371-4558-a5eb-3b3a30b06e3e","timestamp":"2026-04-30T14:21:38.702812048Z","gate_key":"doc-review","updated_by":"agent:project-lead"}
+{"type":"gate_failed","id":"0f2573bb-0697-4133-bb3b-7a6deb4b46fd","issue_id":"d3c2cc8f-4371-4558-a5eb-3b3a30b06e3e","timestamp":"2026-04-30T14:43:43.082496256Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"bd315ca2-c741-4d1a-beba-45d6caa29324","issue_id":"d3c2cc8f-4371-4558-a5eb-3b3a30b06e3e","timestamp":"2026-04-30T14:46:03.923140591Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"issue_state_changed","id":"5e99fb94-eb62-4685-bc0d-97e0918a098a","issue_id":"d3c2cc8f-4371-4558-a5eb-3b3a30b06e3e","timestamp":"2026-04-30T14:46:16.198077163Z","from":"in_progress","to":"done"}
+{"type":"issue_completed","id":"1816e8a0-f2a0-48a1-92d3-30673eed9887","issue_id":"d3c2cc8f-4371-4558-a5eb-3b3a30b06e3e","timestamp":"2026-04-30T14:46:16.198155483Z"}
