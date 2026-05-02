@@ -1,0 +1,22 @@
+[package]
+name = "f5-packing-prototype"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "Standalone F_5 packed-encoding prototype for JIT issue 6b3f6054 (R1) — not part of the gf2 workspace"
+rust-version = "1.95"
+
+[[bin]]
+name = "f5-packing-prototype"
+path = "src/main.rs"
+
+[dev-dependencies]
+proptest = "1"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+
+# This standalone research prototype is intentionally not a workspace member.
+[workspace]
