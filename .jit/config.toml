@@ -8,10 +8,10 @@ schema = 2
 
 [type_hierarchy]
 # Issue types and their hierarchy level (lower number = more strategic).
-types = { milestone = 1, epic = 2, simulation = 2, story = 3, task = 4, bug = 4 }
+types = { milestone = 1, epic = 2, story = 3, simulation = 4, task = 4, bug = 4 }
 
 # Types shown by `jit query strategic`.
-strategic_types = ["milestone", "epic", "simulation"]
+strategic_types = ["milestone", "epic"]
 
 # Maps each parent type to its membership label namespace.
 # E.g. issues belonging to an epic carry an "epic:<name>" label.
