@@ -10,13 +10,31 @@
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-02T22:33:53.538336636Z"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-02T22:34:54.916991737Z"
+    }
+  },
   "context": {},
   "documents": [
     {
       "path": "dev/plans/r2_f7_encoding_decision.md",
       "commit": null,
       "label": "R2 F_7 encoding decision",
+      "doc_type": "design",
+      "format": "markdown"
+    },
+    {
+      "path": "dev/plans/r2_f3_f5_f7_cross_prime_comparison.md",
+      "commit": null,
+      "label": "F_3/F_5/F_7 cross-prime comparison",
       "doc_type": "design",
       "format": "markdown"
     }
@@ -27,5 +45,5 @@
     "component:gf2-algebra"
   ],
   "created_at": "2026-04-30T21:40:05.894555544+00:00",
-  "updated_at": "2026-05-02T22:30:52.212925979+00:00"
+  "updated_at": "2026-05-02T23:54:16.371303359+00:00"
 }
