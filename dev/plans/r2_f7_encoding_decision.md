@@ -6,12 +6,21 @@
 
 ## 1. Summary
 
-**Winner — Candidate A (3-bit + $2^{16}$-entry LUT, baseline).**
+**Winner — Candidate A (3-bit + $2^{16}$-entry LUT, baseline).** Ratified
+under both the original §8 rule (≥ 1.5× margin or fallback) and the
+revised rule (see `dev/plans/r2_packed_encoding_generalizations.md` §5):
 
-Hard-fallback applies as documented in
-`dev/plans/gf2_algebra_permanent.md` §8: no novel candidate beats Candidate A
-by the required ≥ 1.5× margin on a workload representative of Gray-code
-Ryser permanent evaluation. **Candidate A is the chosen encoding for W4.**
+- **Original rule**: no candidate cleared 1.5× on a Ryser-weighted mix.
+  A wins by hard-fallback.
+- **Revised rule clause 1** (no per-op regression + faster on at least
+  one op): D is 9.5× faster on add but **regresses 1.7× on mul** →
+  fails clause 1.
+- **Revised rule clause 2** (≥ 1.10× Ryser-weighted speedup at $n = 36$):
+  D's Ryser-weighted speedup is **0.62×** (mul dominates) → fails
+  clause 2.
+
+D fails both clauses; A wins. **Candidate A is the chosen encoding for
+W4.**
 
 | Op  | Per-element ns (Candidate A) | Per-`u64` work (16 elements) |
 |-----|------------------------------|-------------------------------|
@@ -226,5 +235,16 @@ $\mathbb{F}_5$ or $\mathbb{F}_7$.
 
 ## 9. User sign-off
 
-(populated by the lead after the user comments approval on JIT f10152f6
-per the success-criterion "user has signed off on the chosen encoding")
+User signed off via direct directive 2026-05-03: "close then both F_5
+and F_7 issues by doing what's recommended", following review of the
+cross-prime comparison and generalization analysis. The directive
+concurrently authorised:
+
+1. amending R1 (F_5) to Candidate D under the revised §8 rule;
+2. ratifying R2 (F_7) at Candidate A under the revised §8 rule;
+3. updating the epic §8 fallback rule itself in
+   `dev/plans/gf2_algebra_permanent.md`.
+
+(Historical placeholder text from before sign-off: "populated by the
+lead after the user comments approval on JIT f10152f6 per the
+success-criterion 'user has signed off on the chosen encoding'".)

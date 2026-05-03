@@ -274,7 +274,17 @@ The Gray-code iterator is shared with generic `permanent_ryser<F>` — no duplic
 
 The two encoding-research issues are `type:simulation` and prototype candidate encodings in `dev/research/{f5,f7}_packing/` (mirroring `dev/research/rns_prototype/`), measure cycles/op, and produce a decision document selecting the winning candidate. **User approval required** before they close — these are best-effort research items where the encoding choice has wide impact on the implementation phase.
 
-**Hard fallback** if the research issues do not yield novel encodings beating the LUT baseline: 3-bit-per-element packed + $2^{16}$ LUT mul. This still gives a useful speedup on top of `Fp<5>`/`Fp<7>` Montgomery arithmetic and lets the GPU phase proceed without blocking.
+**Selection rule** (revised 2026-05-03 after R1 + R2 + cross-prime study; the original "≥ 1.5× speedup or fallback" was mis-calibrated — see `dev/plans/r2_packed_encoding_generalizations.md` §5). A candidate $C$ wins over LUT-A iff **either**
+
+1. $C$ has no per-op regression vs LUT-A AND is faster on at least one op, **OR**
+2. $C$ achieves $\ge 1.10\times$ speedup on a Gray-code-Ryser-weighted mix at the epic's target $n$ (currently $n = 36$).
+
+If both clauses disqualify every candidate, fall back to LUT-A. The fallback still gives a useful speedup on top of `Fp<5>`/`Fp<7>` Montgomery arithmetic and lets the GPU phase proceed without blocking.
+
+**Empirical outcomes under the revised rule** (full data in the cross-prime generalizations doc):
+
+- $\mathbb{F}_5$: D bit-sliced wins by clause 1 (uniform 1.10–1.20× over A, no regression).
+- $\mathbb{F}_7$: A LUT wins (D regresses 1.7× on mul → fails clause 1; Ryser-weighted is 0.62× of A → fails clause 2).
 
 ## 9. Multi-word streaming column-sum ($n > 64$)
 
