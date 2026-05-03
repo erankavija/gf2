@@ -101,9 +101,65 @@ Speedup vs Candidate A (>1.0 = faster than A):
 | C: 4-bit + 2^8 LUT (nibble-pair)        |  0.50×  |  0.50×  |  0.50×  |  0.50×  |
 | D: bit-sliced 3-plane Boolean           |  1.20×  |  1.20×  |  1.10×  |  1.10×  |
 
-## 5. Bitwise op-count derivation — Candidate A (chosen winner)
+## 5. Bitwise op-count derivation — Candidate D (chosen winner)
 
-Layout: each `u64` packs 16 elements at 4-bit-aligned slots; the high bit of
+Layout: three parallel `Vec<u64>` bit-planes `(b_0, b_1, b_2)` carry the
+canonical 3-bit value of each F_5 element. One `u64`-triple covers
+**64 elements**. Canonical values are `0..=4`; codepoints `5..=7` are
+redundant and never produced by canonical packings (decode of any
+non-canonical codepoint maps to 0).
+
+Every binary op uses a **5-way decode** of each operand into mutually-
+exclusive selectors `e_0..e_4` (where `e_i = 1` iff the element equals
+`i`), followed by a **5×5 cross-product** that gates `e_a[i] & e_b[j]`
+into per-result-value selectors `r_0..r_4` (where `r_k = 1` iff the
+result equals `k`), and finally an **encode** that combines `r_0..r_4`
+into output bit-planes `(c_0, c_1, c_2)`.
+
+Decode (per operand): 11 ops (3 NOTs + 8 ANDs, with shared sub-
+expressions). 22 ops total for both operands.
+
+Cross-product cells producing result `0` need no AND because they
+contribute nothing to any output bit-plane (the canonical `0` has
+all three bits zero). Out of 25 cells per op, the fraction whose
+result is non-zero varies by op:
+
+| Op  | Cells producing 0 | Cells producing ≠ 0 | Cross-product ANDs |
+|-----|------------------:|--------------------:|-------------------:|
+| add |                 5 |                  20 |                 20 |
+| sub |                 5 |                  20 |                 20 |
+| mul |                 9 |                  16 |                 16 |
+| div |                 9 |                  16 |                 16 |
+
+Per `u64`-triple (= 64 F_5 ops):
+
+| Step                                                   | add  | sub  | mul  | div  |
+|--------------------------------------------------------|-----:|-----:|-----:|-----:|
+| Decode `e_a` (3 NOTs + 8 ANDs)                         |   11 |   11 |   11 |   11 |
+| Decode `e_b` (same, sharing sub-expressions)           |   11 |   11 |   11 |   11 |
+| Cross-product ANDs                                     |   20 |   20 |   16 |   16 |
+| Result-tree ORs to assemble `r_0..r_4`                 |   16 |   16 |   12 |   12 |
+| Encode `c_0 = r_1 \| r_3`, `c_1 = r_2 \| r_3`, `c_2 = r_4` |  2 |  2 |  2 |  2 |
+| **Total per `u64`-triple (64 elements)**               | **60** | **60** | **52** | **52** |
+| **Per element**                                        | 0.94 | 0.94 | 0.81 | 0.81 |
+
+**LUT footprint**: 0 KiB. The 5×5 truth tables live as `[[u8; 5]; 5]`
+constants (25 bytes each, four ops = 100 bytes total) which the
+compiler folds into the cross-product Boolean expressions at compile
+time — no runtime memory accesses.
+
+Compared with Candidate A's **0.5 LUT loads + 4 ALU ops per element**,
+D is **structurally heavier in raw ALU ops/element** (~0.9 ops/elem)
+but eliminates LUT memory traffic entirely. The net wall-clock
+advantage on the bench host (Zen 3, AVX2, 64 KiB L1d) is 1.10–1.20×
+across the four ops — measured in §4. D's lead is expected to grow
+under SIMD widening because each `u64` plane SIMD-widens trivially
+to AVX2 256-bit lanes, while A's gather-against-64-KiB-LUT does not
+vectorise cleanly on Zen 3.
+
+### Op-count derivation for Candidate A (runner-up; preserved as historical record)
+
+Each `u64` packs 16 elements at 4-bit-aligned slots; the high bit of
 each slot is reserved (canonical values are `0..=4`, never `≥ 5`). Binary
 ops use a single 64 KiB lookup table keyed by a packed 16-bit
 `(a_byte) | (b_byte << 8)` index, where each input byte holds two adjacent
