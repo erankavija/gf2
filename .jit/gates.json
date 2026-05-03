@@ -53,7 +53,7 @@
         "timeout_seconds": 1800,
         "working_dir": null,
         "env": {
-          "REVIEWER_AGENT": "claude --model sonnet -p --allowed-tools \"Bash(cargo test:*) Bash(cargo clippy:*) Bash(cargo fmt:*) Bash(cargo bench:*) Bash(cargo nextest:*) Bash(git diff:*) Bash(git log:*) Bash(git status:*) Bash(rg:*) Bash(grep:*) Read Glob\""
+          "REVIEWER_AGENT": "copilot -s --model gpt-5.4 --allow-tool \"shell(cargo test)\" --allow-tool \"shell(cargo clippy)\" --allow-tool \"shell(cargo fmt)\" --allow-tool \"shell(cargo bench)\""
         },
         "pass_context": true,
         "prompt_file": "./scripts/code-review-prompt.md"
