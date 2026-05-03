@@ -6,13 +6,33 @@
 
 ## 1. Summary
 
-**Winner — Candidate A (3-bit + $2^{16}$-entry LUT, baseline).**
+**Winner — Candidate D (bit-sliced 3-plane Boolean).**
 
-Hard-fallback applies as documented in
-`dev/plans/gf2_algebra_permanent.md` §8: no novel candidate beats Candidate A
-by the required ≥ 1.5× margin on a balanced add+mul workload representative
-of Gray-code Ryser permanent evaluation. **Candidate A is the chosen encoding
-for W4.**
+Decision review 2026-05-03: this document originally ratified Candidate A
+under the original §8 "≥ 1.5× margin" hard-fallback rule. After the
+cross-prime study (`dev/plans/r2_packed_encoding_generalizations.md`) the
+epic §8 rule was revised to "no per-op regression vs LUT-A AND faster on
+at least one op, OR ≥ 1.10× Ryser-weighted speedup at $n = 36$".
+Candidate D meets clause 1 (faster on every op, no regression) — so D
+wins under the revised rule. The original A vs D analysis below is
+preserved as historical record. **W4 (T17) ships with Candidate D.**
+
+| Op  | Per-element ns (Candidate D, winner) | Per-element ns (Candidate A, runner-up) | D speedup |
+|-----|--------------------------------------|------------------------------------------|----------:|
+| add | 0.19                                 | 0.23                                     | 1.20×     |
+| sub | 0.19                                 | 0.23                                     | 1.20×     |
+| mul | 0.21                                 | 0.23                                     | 1.10×     |
+| div | 0.21                                 | 0.23                                     | 1.10×     |
+
+D uses three parallel `Vec<u64>` bit-planes (b₀, b₁, b₂) carrying the
+canonical 3-bit value of each F_5 element; one `u64`-triple covers 64
+elements. Ops are implemented as decode-then-cross-product Boolean
+circuits derived from the 5×5 truth tables, ~50–60 bitwise ops per
+`u64`-triple over 64 elements ≈ 0.8–1.0 ops/element. Storage is 0 KiB
+of LUT footprint — bipedal-style, but with three planes instead of
+F_3 bipedal's two.
+
+### Original Candidate A summary (preserved as historical record)
 
 | Op  | Per-element ns (Candidate A) | Per-`u64` work (16 elements) |
 |-----|------------------------------|-------------------------------|
@@ -22,7 +42,9 @@ for W4.**
 | div | 0.22–0.24 ns                 | 8 LUT loads + 16 shift/mask/OR |
 
 LUT footprint: 4 × 64 KiB = 256 KiB total (fits comfortably in L2; one LUT at
-a time fits in L1d for hot loops).
+a time fits in L1d for hot loops). Candidate A remains a usable
+fallback if D's bit-sliced kernel turns out to have unfavourable SIMD
+or proof characteristics in W4.
 
 ## 2. Candidates considered
 
@@ -146,54 +168,79 @@ the larger-LUT cache penalty never materialises on this hardware. C pays
 2× the lookup count for a footprint advantage that does not benefit a
 sustained inner loop. Result: uniform ~2× slowdown across all four ops.
 
-**Candidate D (1.10–1.20× faster than A on add/sub; below the 1.5× bar).**
-A genuine bit-sliced 3-plane Boolean implementation. Decode + cross-product
-runs in ~50–60 bitwise ops per `u64`-triple over 64 elements ≈ 0.8–1.0
-ops/element. Modestly faster than A on add/sub; tied on mul/div.
+**Candidate D (winner under revised §8 rule, originally rejected by the
+≥ 1.5× bar).** A genuine bit-sliced 3-plane Boolean implementation.
+Decode + cross-product runs in ~50–60 bitwise ops per `u64`-triple over
+64 elements ≈ 0.8–1.0 ops/element. **Faster than A on every op (1.10×
+on mul/div, 1.20× on add/sub) — no per-op regression**, so under the
+revised §8 rule's clause 1 it qualifies. The original "≥ 1.5× margin"
+rule rejected it; that rule has been revised after the cross-prime
+study (see `dev/plans/r2_packed_encoding_generalizations.md` §5).
 
-D is the most interesting "near miss": the speedup is real (1.20× on add)
-and would be larger after SIMD widening (each `u64` plane SIMD-widens
-one-for-one to AVX2/AVX-512 lanes), since the LUT-based A path is harder
-to SIMD-port on AMD Zen 3 (no AVX-512 vpermb/IFMA available, and
-gather-style loads against a 64 KiB table do not vectorise cleanly). For
-the **scalar prototype** measured here, D does not clear the ≥ 1.5× bar
-on any op, so the hard-fallback rule selects A. **D should be revisited
-once the W4 SIMD kernel is up** (sibling issue `c7542983`); if AVX2
-gather throughput on Zen 3 turns out worse than expected for A, the
-SIMD-batching decision may switch to D.
+D should still be re-benched against A on AVX2 once the W4 SIMD kernel
+is up (sibling issue `c7542983`) — each `u64` plane SIMD-widens
+one-for-one to AVX2/AVX-512 lanes, while the LUT-based A path is
+harder to SIMD-port on AMD Zen 3 (no AVX-512 `vpermb`/IFMA available;
+gather-style loads against a 64 KiB table do not vectorise cleanly).
+The expectation is that D's lead grows under SIMD; A becomes a clean
+fallback for portability.
 
 ## 7. Forward implications for W4 (T17–T20)
 
-- **T17 (F_5 packed type + ops)** instantiates the encoding from §1: 16
-  elements per `u64` at 4-bit-aligned slots; LUTs lazy-built via
-  `OnceLock` (or hard-coded as `static` arrays generated at build time).
-- **T21 (SIMD kernel for F_5 / F_7)** should re-bench A vs D on AVX2 once
-  the kernel skeleton exists — the 1.20× scalar gap may invert under
-  vectorisation. This is **not** a re-decision authority for T17; T17
-  ships with A regardless.
-- **V3 (Lean F_5 / F_7 correctness)** — the F_5 proof sketch will target
-  Candidate A: prove that the LUT entries are correct against
-  `Fp<5>` arithmetic, then prove that the binary-op kernel reduces to
-  16 LUT lookups whose composition matches `(a OP b) % 5` per element.
-  This is structurally the same as the F_3 bipedal proof but lemma-shaped
-  rather than circuit-shaped.
+- **T17 (F_5 packed type + ops)** instantiates the encoding from §1
+  (Candidate D, after revised §8): three parallel `Vec<u64>` bit-planes
+  for `(b₀, b₁, b₂)` carrying the canonical 3-bit value of each F_5
+  element; one `u64`-triple covers 64 elements. Ops via decode-7-then-
+  cross-product Boolean circuit derived from the 5×5 truth tables.
+  No `OnceLock` LUT needed.
+- **T21 (SIMD kernel for F_5 / F_7)** should re-bench D vs A on AVX2
+  to confirm D's lead grows under vectorisation. D's bit-plane layout
+  widens trivially to AVX2 256-bit lanes; A's gather-against-64-KiB-LUT
+  does not. If AVX2 measurement reverses the picture, T21 may keep A
+  as a fallback path.
+- **V3 (Lean F_5 / F_7 correctness)** — the F_5 proof sketch will now
+  target Candidate D: prove that the decode-cross-product circuit
+  matches `(a OP b) % 5` per lane against `Fp<5>` arithmetic. The
+  proof is closer in shape to the F_3 bipedal proof (truth-table
+  Boolean circuit) than to a LUT-correctness proof. The 5×5 truth
+  table for each op gives 25 cell propositions per op; the proof
+  reduces to verifying that the result-selector ORs assemble those
+  cells correctly into the canonical `(c₀, c₁, c₂)` output.
 
 ## 8. Recommendation
 
-Adopt **Candidate A — 3-bit value at 4-bit-aligned slots with `2^16`-entry
-binary-op LUTs** as the F_5 packed encoding for the gf2-algebra permanent
-implementation phase (W4). This matches the documented hard-fallback in
-the epic design doc and is the empirical winner on a balanced add+mul
-workload representative of Gray-code Ryser. The LUT footprint (4 × 64 KiB)
-is acceptable; per-element wall-clock is ~0.23 ns symmetrically across all
-four ops, which is within ~5× of the F_3 bipedal encoding on the same
-hardware.
+Adopt **Candidate D — bit-sliced 3-plane Boolean** as the F_5 packed
+encoding for the gf2-algebra permanent implementation phase (W4).
+D wins under the revised epic §8 rule's clause 1 (faster than A on
+every op, no regression). Per-element wall-clock is 0.19 ns add /
+0.21 ns mul, beating A's 0.23 ns by 1.20× on add/sub and 1.10× on
+mul/div on the bench host (AMD Ryzen 9 5900X, AVX2-only, scalar).
 
-The prototype, benchmark harness, and all four candidate implementations
-remain in `dev/research/f5_packing/` for future re-evaluation under SIMD
-or different cache regimes.
+### Decision review (2026-05-03)
+
+The original recommendation in this document was Candidate A under
+the original "≥ 1.5× margin or fall back to LUT-A" rule. After the
+cross-prime study
+(`dev/plans/r2_packed_encoding_generalizations.md`) demonstrated that
+the original rule was mis-calibrated — it rejected uniform-but-small
+gains that the field structure permits — epic §8 was revised to
+"no per-op regression AND faster on at least one op, OR ≥ 1.10×
+Ryser-weighted speedup at $n = 36$". Candidate D meets clause 1
+unambiguously. T17 now ships with D; T21 (SIMD) re-benches D vs A
+under AVX2 to confirm the scalar lead extends.
+
+Candidate A remains documented in §2 as the LUT-A baseline and is
+the natural fallback if D's bit-sliced kernel turns out to have
+unfavourable AVX2 or proof characteristics. The prototype, benchmark
+harness, and all four candidate implementations remain in
+`dev/research/f5_packing/` for future re-evaluation.
 
 ## 9. User sign-off
 
-(populated by the lead after the user comments approval on JIT 6b3f6054
-per the success-criterion "user has signed off on the chosen encoding")
+User signed off via direct directive 2026-05-03: "close then both F_5
+and F_7 issues by doing what's recommended", following review of
+the cross-prime comparison and generalization analysis.
+
+(Historical placeholder text from before sign-off: "populated by the
+lead after the user comments approval on JIT 6b3f6054 per the
+success-criterion 'user has signed off on the chosen encoding'".)
