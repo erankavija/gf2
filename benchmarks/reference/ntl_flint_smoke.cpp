@@ -28,15 +28,17 @@
 // cell to stderr; emits no stdout (so the smoke runner can ignore
 // this binary's output entirely).
 //
-// Singular-resample policy (inv, solve): a uniform-random n=16 matrix
-// over GF(p) is non-singular with probability ~1 - O(1/p), but the
-// seeded sample CAN turn out singular for the smallest primes in
-// scope. To eliminate silent skips we re-derive the seed via
-// SplitMix64 and retry up to 3 times. If all 3 attempts are singular
-// the cell counts as FAIL — at n=16 the probability of three
-// independent failures is bounded by (1/p)^3 ≤ (1/7)^3 ≈ 3·10^-3
-// for the worst case GF(7), and far smaller for the other fields,
-// so a triple miss is treated as a real bug, not a non-event.
+// Singular-resample policy (inv, solve): a uniform-random n×n matrix
+// over GF(p) is non-singular with probability ∏_{i=1}^n (1 - p^{-i}).
+// At n=16 this product converges close to its n→∞ asymptote,
+// 1 - P_∞ where P_∞ = 1 - ∏_{i=1}^∞ (1 - p^{-i}) is the singularity
+// rate. For the worst-case prime in scope (GF(7)) P_∞ ≈ 0.163, so
+// triple-miss probability ≈ 0.163³ ≈ 4·10^-3; smaller primes have
+// smaller bounds (GF(251) ≈ 4·10^-3 → 6·10^-8; larger still for
+// GF(65521) and GF(2^31-1)). To eliminate silent skips we re-derive
+// the seed via SplitMix64 and retry up to 3 times; if all 3 attempts
+// are singular the cell counts as FAIL — a triple miss is treated as
+// a real bug, not a non-event.
 //
 // Build: see benchmarks/reference/Makefile target ntl_flint_smoke.
 
