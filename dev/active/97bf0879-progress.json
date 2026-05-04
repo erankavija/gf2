@@ -9,9 +9,9 @@
   "session_1_handoff": "dev/active/97bf0879-handoff.md",
   "session_2_closed_at": "2026-05-04T07:05Z",
   "session_2_handoff": "dev/active/97bf0879-handoff-2.md",
-  "session_3_closed_at": "2026-05-04T13:00Z (provisional — set on commit)",
+  "session_3_closed_at": "2026-05-04T14:55Z",
   "session_3_handoff": "dev/active/97bf0879-handoff-3.md",
-  "next_session_first_action": "Read dev/active/97bf0879-handoff-3.md (Traps section: 6 new from session 3; carry-forward from session 1, 2, + babcf05e). Confirm bench-day completion (background bash task b8aeqwmly), then update 609855d9 + 3b762764 docs with the new pinned rows, run gates, close those two issues. After that, decide whether to dispatch b13799ac / 2403c054 / eb57f944 (which unblock 9a715d75 + a3412e15) inside this epic or as separate sessions.",
+  "next_session_first_action": "Read dev/active/97bf0879-handoff-3.md (Traps section: 6 new from session 3; carry-forward from session 1, 2, + babcf05e). Wave 3 closed 4 of 6 issues; the remaining two (9a715d75, a3412e15) stay OPEN per user decision until their downstream impl tasks (b13799ac, 2403c054, eb57f944) close — those impl tasks themselves block on 47698404 (analyze.py protocol §9 update) and dece4e73 (GF(2^32) ring oracle harness) per JIT graph. Decide: continue Wave 3 close-out by dispatching the prerequisite impl tasks, or proceed to Wave 4 (4c0d0202 SOTA target matrix design doc) which is independent of the held-open Wave 3 issues. Wave 4 path is recommended to keep critical-path moving while Wave 3 blockers are resolved in parallel.",
   "lead": "agent:project-lead",
   "predecessor_epic": "babcf05e",
   "notes": [
@@ -300,8 +300,8 @@
     ]
   },
   "wave_3_summary": {
-    "issues_closed_so_far": 2,
-    "issues_pending_bench": ["609855d9", "3b762764"],
+    "issues_closed_so_far": 4,
+    "issues_pending_bench": [],
     "issues_blocked_on_new_impl_tasks": {"9a715d75": "blocks on b13799ac", "a3412e15": "blocks on 2403c054 + eb57f944"},
     "via_workers": ["0fd48627", "9a715d75", "a3412e15", "609855d9", "3b762764"],
     "via_lead_direct": ["c3e79272 (lead-finalized worker WIP after rate-limit truncation)"],
@@ -310,8 +310,8 @@
       "c3e79272": {"rounds": 1, "outcome": "PASS r1 after lead lead-preserved + finalized worker WIP; closed"},
       "9a715d75": {"rounds": 4, "outcome": "OPEN — user picked 'keep open until b13799ac closes' after 4 strict-reviewer rejections of candidate-pool framing"},
       "a3412e15": {"rounds": 1, "outcome": "OPEN — user picked 'keep open until 2403c054 + eb57f944 close' (same pattern as 9a715d75)"},
-      "609855d9": {"rounds": 1, "outcome": "PENDING-BENCH — fresh GF(31) row from in-flight bench-day will close"},
-      "3b762764": {"rounds": 1, "outcome": "PENDING-BENCH — fresh dense-LA rows from in-flight bench-day will close"}
+      "609855d9": {"rounds": 2, "outcome": "PASS r2 after lead-direct GF(31) bench-day rerun; closed 2026-05-04"},
+      "3b762764": {"rounds": 5, "outcome": "PASS r5 after lead-direct dense-LA bench-day rerun + worker-scope clarification on baseline-aggregation framing; closed 2026-05-04"}
     },
     "user_decisions": [
       {"ts": "2026-05-04T11:42Z", "topic": "9a715d75 closure path", "decision": "Harness GF(2^32) instead of excluding it (extend scope); 18/19 exclusions approved + 2 new protocol § 9 classes approved"},
