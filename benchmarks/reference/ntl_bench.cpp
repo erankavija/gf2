@@ -22,6 +22,21 @@
 //     kCellBudgetNs to avoid runaway on hosts where NTL is materially
 //     slower than fflas-ffpack on the same cell.
 //
+// GF(2^32) extension lane (jit:b13799ac, 2026-05-04)
+// --------------------------------------------------
+// In addition to the four GF(p) primes, this harness emits one
+// `matmul × GF(2^32)` row per size via NTL's `mat_GF2E` type. The
+// extension field is initialised from the GF(2^32) Conway polynomial
+// hard-coded in `crates/gf2-core/src/primitive_polys.rs::standard(32)`
+// (`x^32 + x^15 + x^9 + x^7 + x^4 + x^3 + 1`, hex `0x1_0000_8299`),
+// the same polynomial gf2-core's production `Gf2mWide<1, _>` path uses
+// when an external reference is built against this harness. Because
+// both libraries store an extension element as a polynomial of degree
+// < 32 with coefficient `c_i` at bit `i`, **no basis-change matrix is
+// required** — gf2-core element bytes load directly into NTL via
+// `GF2XFromBytes`. See `dev/bench_results/2026-05-04-b13799ac-gf2pow32-promotion.md`
+// for the criterion #3 evidence.
+//
 // Determinism: NTL `zz_p` arithmetic is deterministic; the only
 // random step (CharPoly's internal Las-Vegas variant in some NTL
 // versions) is seeded via NTL::SetSeed so output is bit-stable across
