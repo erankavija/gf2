@@ -64,3 +64,6 @@ crates/gf2-kernels-hip/target/
 # sim_runner transient progress logs (final results live in
 # .csv / .json next to them)
 dev/simulation_results/*.progress.jsonl
+benchmarks/reference/fflas_sparse_bench
+benchmarks/reference/linbox_sparse_bench
+benchmarks/reference/sparse_smoke

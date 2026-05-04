@@ -238,6 +238,34 @@ fn cell_passes(filter: &Option<String>, key: &str) -> bool {
     }
 }
 
+/// Format `density` using the C printf `%.6e` convention (zero-padded
+/// 2-digit exponent), so the regime strings emitted here byte-match the
+/// fflas / linbox C++ harnesses' `std::snprintf("%.6e", ...)` output.
+/// Rust's default `{:.6e}` strips leading zeros from the exponent
+/// (`9.765625e-3` instead of `9.765625e-03`), which would split the
+/// `(operation, field)` cell groups in `analyze.py`.
+fn fmt_density_c(density: f64) -> String {
+    let raw = format!("{density:.6e}");
+    // Split into mantissa and exponent.
+    if let Some((m, e)) = raw.split_once('e') {
+        let (sign, digits) = if let Some(stripped) = e.strip_prefix('-') {
+            ("-", stripped)
+        } else if let Some(stripped) = e.strip_prefix('+') {
+            ("+", stripped)
+        } else {
+            ("+", e)
+        };
+        let digits_padded = if digits.len() < 2 {
+            format!("0{digits}")
+        } else {
+            digits.to_string()
+        };
+        format!("{m}e{sign}{digits_padded}")
+    } else {
+        raw
+    }
+}
+
 struct CsvSink {
     out: BufWriter<File>,
 }
@@ -279,7 +307,7 @@ fn run_gf2_random_er(args: &Args, sink: &mut CsvSink, sizes: &[usize]) -> std::i
     for (si, &n) in sizes.iter().enumerate() {
         // d = 10/n is the canonical sparse-design density per § 3.1.
         let density = 10.0 / (n as f64);
-        let regime = format!("density_{density:.6e}_csr");
+        let regime = format!("density_{}_csr");
         let key = format!("spmv/{field}/{n}/csr");
         if !cell_passes(&args.filter, &key) {
             continue;
@@ -333,7 +361,7 @@ fn run_gf2_random_er(args: &Args, sink: &mut CsvSink, sizes: &[usize]) -> std::i
                 n,
                 n,
                 1,
-                &format!("density_{density:.6e}_csc"),
+                &format!("density_{}_csc"),
                 row_seed,
                 wall_dual,
                 tput(nnz as f64, wall_dual),
@@ -358,7 +386,7 @@ fn run_gf2_random_er(args: &Args, sink: &mut CsvSink, sizes: &[usize]) -> std::i
                 n,
                 n,
                 1,
-                &format!("density_{density:.6e}_block-csr"),
+                &format!("density_{}_block-csr"),
                 row_seed,
                 wall_blk,
                 tput(nnz as f64, wall_blk),
@@ -383,7 +411,7 @@ fn run_gf2_random_er(args: &Args, sink: &mut CsvSink, sizes: &[usize]) -> std::i
                     n,
                     n,
                     1,
-                    &format!("density_{density:.6e}_prefetch-d8"),
+                    &format!("density_{}_prefetch-d8"),
                     row_seed,
                     wall_pf,
                     tput(nnz as f64, wall_pf),
@@ -415,7 +443,7 @@ fn run_gf2_random_er(args: &Args, sink: &mut CsvSink, sizes: &[usize]) -> std::i
                 n,
                 n,
                 1,
-                &format!("density_{density:.6e}_rcm-reordered"),
+                &format!("density_{}_rcm-reordered"),
                 row_seed,
                 wall_rcm,
                 tput(nnz as f64, wall_rcm),
@@ -442,7 +470,7 @@ fn run_gf2_random_er(args: &Args, sink: &mut CsvSink, sizes: &[usize]) -> std::i
                 n,
                 n,
                 n,
-                &format!("density_{density:.6e}_csr"),
+                &format!("density_{}_csr"),
                 row_seed,
                 wall_mm,
                 tput(nnz_total, wall_mm),
@@ -474,7 +502,7 @@ fn run_fp_random_er<const P: u64>(
 ) -> std::io::Result<()> {
     for (si, &n) in sizes.iter().enumerate() {
         let density = 10.0 / (n as f64);
-        let regime = format!("density_{density:.6e}_csr");
+        let regime = format!("density_{}_csr");
         let row_seed = derive_seed(args.master_seed, "spmv-er", 0, si as u64, 1);
         let vec_seed = derive_seed(args.master_seed, "spmv-er-vec", 0, si as u64, 1);
         let a = fp_sparse_from_seed::<P>(n, n, density, row_seed);
@@ -525,7 +553,7 @@ fn run_fp_random_er<const P: u64>(
                 n,
                 n,
                 n,
-                &format!("density_{density:.6e}_csr"),
+                &format!("density_{}_csr"),
                 row_seed,
                 wall_mm,
                 tput(nnz_total, wall_mm),
@@ -553,7 +581,7 @@ fn run_fp_random_er<const P: u64>(
                 n,
                 n,
                 n,
-                &format!("density_{density:.6e}_csr"),
+                &format!("density_{}_csr"),
                 row_seed,
                 wall_sd,
                 tput(work_ops, wall_sd),
@@ -600,7 +628,7 @@ fn run_gf2m_random_er<C: Gf2mWideConfig<1>>(
 ) -> std::io::Result<()> {
     for (si, &n) in sizes.iter().enumerate() {
         let density = 10.0 / (n as f64);
-        let regime = format!("density_{density:.6e}_csr");
+        let regime = format!("density_{}_csr");
         let row_seed = derive_seed(args.master_seed, "spmv-er", 0, si as u64, 1);
         let vec_seed = derive_seed(args.master_seed, "spmv-er-vec", 0, si as u64, 1);
         let a = gf2m_wide_1_sparse_from_seed::<C>(n, n, density, row_seed);
@@ -649,7 +677,7 @@ fn run_gf2m_random_er<C: Gf2mWideConfig<1>>(
                 n,
                 n,
                 n,
-                &format!("density_{density:.6e}_csr"),
+                &format!("density_{}_csr"),
                 row_seed,
                 wall_mm,
                 tput(nnz_total, wall_mm),
@@ -675,7 +703,7 @@ fn run_gf2m_random_er<C: Gf2mWideConfig<1>>(
                 n,
                 n,
                 n,
-                &format!("density_{density:.6e}_csr"),
+                &format!("density_{}_csr"),
                 row_seed,
                 wall_sd,
                 tput(work_ops, wall_sd),

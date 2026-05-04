@@ -203,4 +203,20 @@ if [[ "${GF2_SKIP_CHARPOLY_MINPOLY_SMOKE:-0}" -eq 0 ]]; then
 fi
 # === c3e79272 charpoly/minpoly cross-library smoke end ===
 
+# === 47698404 sparse cross-equality oracle begin ===
+# Cross-equality oracle for sparse cells at n=16 (issue 47698404,
+# protocol § 6). Compares fflas-ffpack `fspmv` to an in-harness scalar
+# SpMV reference for every (op, field) cell the sparse harnesses claim
+# to cover. Exits non-zero on bitwise mismatch.
+if [[ "${GF2_SKIP_SPARSE_SMOKE:-0}" -eq 0 ]]; then
+    echo "[smoke.sh] running sparse_smoke (sparse cross-equality oracle)" >&2
+    "${RUNTIME}" run --rm \
+        --security-opt label=disable \
+        -v "${HERE}:/work${MOUNT_OPTS}" \
+        "${IMAGE_TAG}" \
+        bash -c "set -e; cd /work/reference && make sparse_smoke >/dev/null && ./sparse_smoke" \
+        >&2
+fi
+# === 47698404 sparse cross-equality oracle end ===
+
 echo "[smoke.sh] OK — smoke CSV at ${TARGET_CSV}" >&2
