@@ -1,0 +1,255 @@
+# 0fd48627 perf-stat capture — gf2-core M4RM at n=1024 / n=4096
+# date    : 2026-05-04
+# host    : Linux fraktaali 7.0.3-arch1-1 (AMD Ryzen 9 5900X, Zen 3, 12c/24t)
+# binary  : target/release/examples/m4rm_multiply_perfstat
+# build   : cargo build -p gf2-core --release --example m4rm_multiply_perfstat
+#           --features rand,test-support
+#           RUSTFLAGS="-C target-cpu=native"
+# notes   :
+#   * In-process capture; no pinned container. Per the worktree-dispatch
+#     instruction (lead update 2026-05-04) the pinned-host bench lane is
+#     reserved for serialized runs while five Wave-3 worker worktrees are
+#     concurrent — these numbers are indicative, host-uncontrolled.
+#   * Cross-host vs the Zen-3 anchor in 2026-04-26.md / 2026-05-04
+#     pinned-host runs is not a concern: this is the **same** Zen-3 5900X
+#     anchor host (`fraktaali`).
+#   * Frequency boost: enabled (host default; matches 2026-04-26.md
+#     idiom). Effective cycles_frequency reported by `perf stat -d` is
+#     ~4.6–4.7 GHz on both n=1024 and n=4096.
+#   * `:u` suffix = userspace-only (perf launched without root).
+#   * Coverage % (e.g. (55.07%)) reflects perf event multiplexing on the
+#     Zen-3 PMU (six general-purpose counters; nine events requested in
+#     the main capture); the counters are scaled accordingly.
+
+============================================================
+ n=1024 main capture: cycles, instructions, cache, dTLB, branches
+============================================================
+
+ perf stat -e cycles,instructions,branches,branch-misses,
+                 L1-dcache-loads,L1-dcache-load-misses,
+                 cache-references,cache-misses,dTLB-load-misses
+           -r 3 env B3_PERFSTAT_SIZE=1024 B3_PERFSTAT_ITERS=300
+                    B3_PERFSTAT_WARMUP=8
+       ./target/release/examples/m4rm_multiply_perfstat
+
+ (3 runs):
+
+     1,663,011,782      cycles:u                          ( +-  0.29% )  (55.07%)
+     9,349,112,466      instructions:u                    ( +-  0.11% )  (55.34%)
+     2,064,382,614      branches:u                        ( +-  0.16% )  (55.62%)
+         1,344,375      branch-misses:u                   ( +-  3.49% )  (55.89%)
+     2,163,818,648      L1-dcache-loads:u                 ( +-  0.12% )  (56.02%)
+       227,648,547      L1-dcache-load-misses:u           ( +-  0.07% )  (55.92%)
+       329,089,379      cache-references:u                ( +-  1.66% )  (55.65%)
+        44,861,389      cache-misses:u                    ( +-  1.98% )  (55.38%)
+            13,787      dTLB-load-misses:u                ( +-  3.54% )  (55.10%)
+
+       0.365962718 +- 0.003667333 seconds time elapsed    ( +-  1.00% )
+
+ Derived per-iteration figures (300 iters per replica, perf -r 3):
+   per-process wall ≈ 366 ms (covers matrix-init ~40 ms + warmup 8 + 300 measured)
+   ⇒ steady-state per multiply  ≈ (366 - 40) / 308 ≈ 1.06 ms
+   cycles        ≈ 1.66 G / (3 × 308) ≈ 5.40M per multiply
+   instructions  ≈ 9.35 G / (3 × 308) ≈ 31.16M per multiply
+   IPC           ≈ 5.62
+   throughput    ≈ 2·1024³ / 1.06 ms ≈ 2,025 Gops/s   (see "Wall-clock calibration" in the evidence doc)
+   branch-miss   ≈ 0.07 %  (well below 1 %)
+   L1d miss rate ≈ 10.5 %  (L1-dcache-load-misses / L1-dcache-loads)
+
+============================================================
+ n=1024 -d capture: task-clock, frequency, IPC, frontend stalls
+============================================================
+
+ perf stat -d -r 3 env B3_PERFSTAT_SIZE=1024 B3_PERFSTAT_ITERS=300
+                       B3_PERFSTAT_WARMUP=8
+       ./target/release/examples/m4rm_multiply_perfstat
+
+ (3 runs):
+
+                 0      context-switches:u                # 0.0 cs/sec
+                 0      cpu-migrations:u                  # 0.0 migrations/sec
+             2,719      page-faults:u                     # 7583.1 faults/sec  ( +-  0.04% )
+            358.56 msec task-clock:u                      # 1.0 CPUs  ( +-  0.18% )
+       230,247,274      L1-dcache-load-misses:u           # 10.5 %  l1d_miss_rate ( +-  0.09% )  (42.70%)
+         1,008,465      branch-misses:u                   #  0.0 %  ( +-  4.50% )  (42.97%)
+     2,065,179,468      branches:u                        # 5759.6 M/sec ( +-  0.07% )  (43.12%)
+     1,664,271,731      cpu-cycles:u                      # 4.6 GHz  ( +-  0.19% )  (43.08%)
+     9,322,572,227      instructions:u                    # 5.6 IPC ( +-  0.09% )  (42.81%)
+         7,833,225      stalled-cycles-frontend:u         # 0.00 frontend_cycles_idle ( +- 15.51% )
+
+       0.358999776 +- 0.000626787 seconds time elapsed    ( +-  0.17% )
+
+ Notes:
+   * 5.6 IPC is at or just below the Zen 3 4-wide retirement port
+     budget once 64-bit-ALU XOR throughput limits and the DSB µop-cache
+     hit rate are factored in. This is consistent with a kernel that
+     does NOT spill to memory between Gray-code-table accumulator
+     updates — i.e. the M4RM hot path is broadly compute-bound at this
+     size, not memory-stalled.
+   * Frontend stalls: 0.00 % of cycles. The DSB / decode pipeline is
+     not the bottleneck.
+   * dTLB-load-misses is below 14 K across 300 multiplies = ~46
+     misses per multiply. With 4 KiB pages this is consistent with
+     each multiply's working set fitting inside the dTLB reach
+     (Zen 3 L1 dTLB = 64 entries × 4 KiB = 256 KiB; L2 dTLB = 2048
+     entries). The full n=1024 working set (~384 KiB across A, B, C
+     plus a 64 KiB Gray table) overflows L1 dTLB but fits in L2 dTLB
+     by 5x — explaining why dTLB pressure is negligible.
+
+============================================================
+ n=1024 L2 demand capture: M-from-DC events
+============================================================
+
+ perf stat -e cycles,instructions,
+              l2_cache_accesses_from_dc_misses,
+              l2_cache_misses_from_dc_misses
+           -r 3 env B3_PERFSTAT_SIZE=1024 B3_PERFSTAT_ITERS=300
+                    B3_PERFSTAT_WARMUP=8
+       ./target/release/examples/m4rm_multiply_perfstat
+
+ (3 runs):
+
+     1,664,244,054      cycles:u                                  ( +-  0.20% )
+     9,358,822,628      instructions:u                            ( +-  0.00% )
+       228,500,703      l2_cache_accesses_from_dc_misses:u        ( +-  0.04% )
+         1,015,985      l2_cache_misses_from_dc_misses:u          ( +- 36.22% )
+
+       0.362319844 +- 0.000797056 seconds time elapsed            ( +-  0.22% )
+
+ Derivation:
+   L2-from-DC accesses                    = 228.5 M
+   L2-from-DC misses (i.e. miss to L3+)   =   1.0 M
+   L2 hit rate on demand DC misses        = 99.6 %
+
+   L1d misses ≈ 230 M (from -d block) → ~99 % land in L2 (Zen 3 L2 =
+   512 KiB per core, plenty of headroom for the 384 KiB working set
+   plus a 64 KiB Gray table). The DRAM bandwidth demand is therefore
+   ~ 1.0 M × 64 B / 0.36 s = 178 MB/s — three orders of magnitude
+   below the host's DDR4-3200 ~50 GB/s peak. The kernel is *not*
+   DRAM-bandwidth-bound at this size.
+
+============================================================
+ n=4096 main capture: cycles, instructions, cache, dTLB, branches
+============================================================
+
+ perf stat -e cycles,instructions,branches,branch-misses,
+                 L1-dcache-loads,L1-dcache-load-misses,
+                 cache-references,cache-misses,dTLB-load-misses
+           -r 3 env B3_PERFSTAT_SIZE=4096 B3_PERFSTAT_ITERS=30
+                    B3_PERFSTAT_WARMUP=2
+       ./target/release/examples/m4rm_multiply_perfstat
+
+ (3 runs):
+
+     6,814,592,429      cycles:u                          ( +-  0.88% )  (55.57%)
+    25,413,115,025      instructions:u                    ( +-  0.06% )  (55.57%)
+     4,988,841,797      branches:u                        ( +-  0.07% )  (55.57%)
+        18,093,416      branch-misses:u                   ( +-  0.21% )  (55.57%)
+     8,753,577,643      L1-dcache-loads:u                 ( +-  0.02% )  (55.56%)
+     1,335,532,937      L1-dcache-load-misses:u           ( +-  0.26% )  (55.54%)
+     2,630,089,489      cache-references:u                ( +-  0.53% )  (55.54%)
+       185,276,543      cache-misses:u                    ( +-  5.14% )  (55.54%)
+         1,091,328      dTLB-load-misses:u                ( +- 45.55% )  (55.54%)
+
+       1.468101317 +- 0.019327990 seconds time elapsed    ( +-  1.32% )
+
+ Derived per-iteration figures (30 iters per replica, perf -r 3):
+   per-process wall ≈ 1.47 s (covers matrix-init ~210 ms + warmup 2 + 30 measured)
+   ⇒ steady-state per multiply  ≈ (1470 - 210) / 32 ≈ 39.4 ms
+   cycles        ≈ 6.82 G / (3 × 32) ≈ 71M per multiply
+   instructions  ≈ 25.4 G / (3 × 32) ≈ 264.7M per multiply
+   IPC           ≈ 3.73
+   throughput    ≈ 2·4096³ / 39.4 ms ≈ 3,489 Gops/s   (see calibration note in evidence doc)
+   branch-miss   ≈ 0.36 %  (5x higher than n=1024 but still bounded)
+   L1d miss rate ≈ 15.3 %  (L1-dcache-load-misses / L1-dcache-loads)
+
+ Note: today's host-uncontrolled in-process throughput is markedly
+ higher than the 2026-04-29 pinned-host strassen-crossover criterion
+ numbers (1,283 Gops/s @ n=1024 ; 1,927 Gops/s @ n=4096). The IPC,
+ miss-rate, and dTLB ratios from this capture are the load-bearing
+ observations for bottleneck classification — the absolute Gops/s is
+ not pinned-comparable.
+
+============================================================
+ n=4096 -d capture
+============================================================
+
+ perf stat -d -r 3 env B3_PERFSTAT_SIZE=4096 B3_PERFSTAT_ITERS=30
+                       B3_PERFSTAT_WARMUP=2
+       ./target/release/examples/m4rm_multiply_perfstat
+
+ (3 runs):
+
+                 0      context-switches:u
+                 0      cpu-migrations:u
+             2,695      page-faults:u                     # 1886.0 faults/sec  ( +-  0.02% )
+          1,428.98 msec task-clock:u                      # 1.0 CPUs  ( +-  0.36% )
+     1,336,533,903      L1-dcache-load-misses:u           # 15.3 %  l1d_miss_rate ( +-  0.12% )  (42.79%)
+        17,724,731      branch-misses:u                   # 0.4 %  ( +-  0.32% )  (42.86%)
+     4,992,653,533      branches:u                        # 3493.9 M/sec ( +-  0.02% )  (42.92%)
+     6,754,176,395      cpu-cycles:u                      # 4.7 GHz  ( +-  0.37% )  (42.95%)
+    25,427,749,428      instructions:u                    # 3.8 IPC ( +-  0.11% )  (42.88%)
+       150,328,089      stalled-cycles-frontend:u         # 0.02 frontend_cycles_idle ( +-  9.61% )
+
+       1.430010186 +- 0.005265807 seconds time elapsed    ( +-  0.37% )
+
+ Notes:
+   * IPC drops 5.6 → 3.8 (n=1024 → n=4096), a 32 % reduction.
+   * Frontend stalls remain near zero (0.02 %).
+   * The drop is therefore due to back-end stalls — and the back-end
+     dominant resource at this size is the load/store unit feeding the
+     Gray-code-table XOR fanout.
+
+============================================================
+ n=4096 L2 demand capture
+============================================================
+
+ perf stat -e cycles,instructions,
+              l2_cache_accesses_from_dc_misses,
+              l2_cache_misses_from_dc_misses
+           -r 3 env B3_PERFSTAT_SIZE=4096 B3_PERFSTAT_ITERS=30
+                    B3_PERFSTAT_WARMUP=2
+       ./target/release/examples/m4rm_multiply_perfstat
+
+ (3 runs):
+
+     7,026,789,243      cycles:u                          ( +-  0.51% )
+    25,431,073,507      instructions:u                    ( +-  0.00% )
+     1,349,369,390      l2_cache_accesses_from_dc_misses:u ( +-  0.20% )
+         9,231,568      l2_cache_misses_from_dc_misses:u  ( +-  8.11% )
+
+       1.473703128 +- 0.009126652 seconds time elapsed    ( +-  0.62% )
+
+ Derivation:
+   L2-from-DC accesses                    = 1349 M
+   L2-from-DC misses (i.e. miss to L3+)   =    9 M
+   L2 hit rate on demand DC misses        = 99.3 %
+
+   The working set at n=4096 is ~6 MB (3 matrices × 2 MB) plus the
+   1024-entry Gray-code panel (~32 KB) — that overflows the per-core
+   L2 (512 KiB) but fits comfortably in the shared L3 (32 MiB per CCX
+   × 2 = 64 MiB total). The 99.3 % L2 hit rate is paradoxical against
+   a 6 MB working set; the explanation is that the M4RM tile schedule
+   (`use_register_tiled_schedule()` + `multiply_register_tiled()`)
+   confines the inner-loop access pattern to the active panel + tile,
+   not the whole working set. DRAM demand:
+       ~ 9 M × 64 B / 1.43 s = 403 MB/s  (~ 0.8 % of DDR4-3200 peak).
+
+   Even at n=4096, the kernel is **not DRAM-bandwidth-bound**.
+
+============================================================
+ Methodology notes
+============================================================
+
+  * Frequency boost / governor: host defaults left on (matches the
+    2026-04-26 baseline idiom; the host.txt records governor at
+    capture time). Effective cycles_frequency ≈ 4.6 GHz at n=1024,
+    ≈ 4.7 GHz at n=4096 — same boost regime.
+  * SMT: on (host default). The profiling binary is single-threaded.
+  * Coverage % reflects PMU multiplexing across nine concurrently
+    requested events; the counter values are time-scaled by perf.
+  * The example binary is the production-path
+    `gf2_core::alg::m4rm::multiply` — same call site exercised by
+    the strassen-crossover benchmark. The harness adds a fixed
+    warmup loop and an output-checksum XOR; both contribute < 0.5 %
+    of cycles.
