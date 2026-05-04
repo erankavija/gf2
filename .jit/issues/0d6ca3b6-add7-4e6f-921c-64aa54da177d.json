@@ -1,0 +1,25 @@
+{
+  "id": "0d6ca3b6-add7-4e6f-921c-64aa54da177d",
+  "title": "Wire sparse-elim emitter for GF(2) and GF(p)",
+  "description": "Extend `crates/gf2-coding/examples/bench_sparse_csv_emitter.rs` to emit `sparse-elim,GF(2)` and `sparse-elim,GF(p)` rows for each prime in `{7, 251, 65521, 2^31-1}`. Closes the 10 sparse-elim PENDING rows in `dev/bench_results/2026-05-04-47698404-sparse-tables.md` left by the 47698404 scorecard.\n\n## Background\n\n47698404's bench emitter currently wires sparse-elim ONLY for GF(2^m) (gated behind `--full`). The GF(2) elim path via `SpBitMatrixDual` does not have a public `rref()` exposed and the GF(p) path via `SparseFieldMatrix::<Fp<P>>::rref()` (`crates/gf2-core/src/field/sparse_matrix.rs:1257`) is not called from the emitter. LinBox numbers for these cells are already in `dev/bench_results/2026-05-04-47698404-sparse-reference.csv:11-24`, awaiting the gf2-side companion.\n\nPer scorecard § 5 #3, this is a `not-yet-harnessed` marker per protocol § 9 Amendment 2.\n\n## Success Criteria\n\n- [hard] `bench_sparse_csv_emitter.rs --quick` emits `sparse-elim,GF(2)` rows at n ∈ {256, 1024} matching the LinBox reference shape (from `linbox_sparse_bench.cpp:248-272`).\n- [hard] `bench_sparse_csv_emitter.rs --quick` emits `sparse-elim,GF(p)` rows for each prime in {GF(7), GF(251), GF(65521), GF(2^31-1)} at n ∈ {256, 1024}.\n- [hard] If `SpBitMatrixDual::rref` (or equivalent GF(2) sparse RREF entry-point) is missing, add it as part of this task with doctests.\n- [hard] After regenerating `2026-05-04-47698404-sparse.csv` and `2026-05-04-47698404-sparse-tables.md`, all 10 sparse-elim gf2-side PENDING entries clear.\n- [hard] Smoke at n=16 for sparse-elim cells (gf2-core RREF vs LinBox `Method::SparseElimination`) extends `benchmarks/reference/sparse_smoke.cpp` per protocol § 6.\n- [hard] `cargo-ci`, `code-review`, `doc-review` pass.\n\n## References\n\n- 47698404 scorecard § 5 #3: `dev/bench_results/2026-05-04-47698404-sparse-scorecard.md`\n- Existing GF(2^m) elim wiring: `bench_sparse_csv_emitter.rs:715-744` (gated behind `--full`)\n- GF(p) RREF method: `crates/gf2-core/src/field/sparse_matrix.rs:1257`\n- LinBox reference rows: `dev/bench_results/2026-05-04-47698404-sparse-reference.csv:11-24`",
+  "state": "ready",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [
+    "code-review",
+    "cargo-ci",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "epic:gf2-core-sota-performance",
+    "story:sota-sparse-fieldmatrix"
+  ],
+  "created_at": "2026-05-04T22:04:11.861757447+00:00",
+  "updated_at": "2026-05-04T22:04:11.861766597+00:00"
+}

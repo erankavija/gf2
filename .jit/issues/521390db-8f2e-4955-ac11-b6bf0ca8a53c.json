@@ -1,0 +1,25 @@
+{
+  "id": "521390db-8f2e-4955-ac11-b6bf0ca8a53c",
+  "title": "gf2-core SpBitMatrix sparse-dense matmat for GF(2)",
+  "description": "Add a public `SpBitMatrix::matmat(&self, b: &BitMatrix) -> BitMatrix` method (sparse × dense → dense over GF(2)) and wire it into `bench_sparse_csv_emitter.rs` as a `sparse_dense,GF(2)` row. Closes the `sparse×dense × GF(2)` cell currently marked `not-yet-harnessed` on both sides per 47698404 scorecard § 5 #6.\n\n## Background\n\n47698404 surfaced that `SpBitMatrix` exposes no sparse×dense entry-point — only `SpBitMatrix::matmul` (sparse × sparse). The closest path is round-trip through `to_dense()` and `BitMatrix::gemm`, which is dense×dense and not the same algorithm. The design doc (`dev/plans/sparse_benchmark_corpus.md:168`) names this cell as a hard reference cell with LinBox `applyLeft` as canonical reference.\n\nThis task implements the gf2-core side; the LinBox-side reference harness extension is a sibling follow-up.\n\n## Success Criteria\n\n- [hard] `SpBitMatrix::matmat(&self, b: &BitMatrix) -> BitMatrix` lands in `crates/gf2-core/src/sparse.rs` with doctests.\n- [hard] Tests cover word-boundary cases (n ∈ {0, 1, 63, 64, 65, 1023, 1024, 1025}) and verify equality vs `self.to_dense().matmul(b)`.\n- [hard] Property test (proptest) over random sparse + random dense matrices verifies bitwise equality with the round-trip-dense path on n ∈ [1, 256].\n- [hard] `bench_sparse_csv_emitter.rs --quick` emits a `sparse_dense,GF(2)` row at n=1024.\n- [hard] Smoke at n=16 in `benchmarks/reference/sparse_smoke.cpp` cross-checks the new `SpBitMatrix::matmat` output against an in-harness scalar reference (or via the gf2-core integration follow-up if that lands first).\n- [hard] `cargo-ci`, `code-review`, `doc-review` pass.\n\n## References\n\n- 47698404 scorecard § 5 #6: `dev/bench_results/2026-05-04-47698404-sparse-scorecard.md`\n- Design doc § 4 cell row: `dev/plans/sparse_benchmark_corpus.md:168`\n- Sibling: LinBox sparse harness extension (LinBox-side `applyLeft` row + smoke).",
+  "state": "ready",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [
+    "code-review",
+    "cargo-ci",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "epic:gf2-core-sota-performance",
+    "story:sota-sparse-fieldmatrix"
+  ],
+  "created_at": "2026-05-04T22:04:24.770438540+00:00",
+  "updated_at": "2026-05-04T22:04:24.770444280+00:00"
+}
