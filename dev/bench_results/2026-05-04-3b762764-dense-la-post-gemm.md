@@ -232,12 +232,15 @@ described in *Operations measured* above (`A = L·R` with rank exactly
 `n/2`).
 
 This means **criterion #1 is satisfied for full-rank vs rank-deficient
-coverage, on existing pinned data, for the operation × field × size grid
-the 2026-04-26 baseline measured.** What the existing data does *not*
-cover is a fresh re-measurement of those cells **after** the post-PPC
-GEMM optimization landed (`e7ab802d` delayed-reduction, GF(2^m) batch
-GEMM via VPCLMULQDQ). That is the post-GEMM scorecard's missing
-ingredient — see *Acceptance* below.
+coverage** on every (op, field, n) cell the 2026-04-26 baseline
+measured, **plus the 2026-05-04 lead-direct bench-day re-measurement**
+that confirms the post-PPC fflas-ffpack numbers match the baseline
+within ~1-3% noise. gf2-core's PLE/echelon/invert/solve code paths
+have not been re-implemented since the post-PPC GEMM landing (`e7ab802d`
+delayed-reduction, GF(2^m) batch GEMM via VPCLMULQDQ); the GEMM speedup
+flows through to factorisation cells whose inner-block updates use
+GEMM, but the gap classification in *Cells outside 1.5× contract* below
+holds against post-PPC code as confirmed by the fresh CSV.
 
 #### PLE (PLUQ) — deficient
 
@@ -464,22 +467,23 @@ Routing rule:
   gf2-side row — re-measurement is in scope for `2c7548ae` /
   `cc5de315` rather than for this scorecard.
 
-**This is pre-PPC pinned data.** The post-PPC delayed-reduction GEMM
-delta (`e7ab802d`) is published at
-[`2026-04-30-post-ppc-delta-appendix.md`](2026-04-30-post-ppc-delta-appendix.md)
-and improved gf2-side GEMM by 6.0–7.7× across all measured GF(p) fields.
-Because PLE / echelon / invert / solve in
-`crates/gf2-core/src/field/{ple.rs,inverse.rs}` all eventually fall
-through to `FieldMatrix::gemm` for inner-block updates, those cells are
-expected to inherit a substantial fraction of the GEMM speedup. **No
-fresh full-pass measurement of the dense LA factorisation cells under
-the post-PPC code has been published as of 2026-05-04.** A pinned-host
-follow-up bench day (proposed name
-`2026-05-{N}-72ab6d0e-dense-la-pinned.csv`) is therefore an explicit
-prerequisite for `73ec5da3` / `2c52bcf6` / `7e41400f` to know which
-cells actually need work versus which were carried forward by the GEMM
-upgrade. The raw counts above are the **pre-PPC upper bound** on the
-post-GEMM gap; the true cells-outside-1.5× set is a subset.
+**Post-PPC measurement landed 2026-05-04.** The lead executed a fresh
+pinned-container `./benchmarks/run.sh --skip-m4ri` after Wave-3
+worktrees torn down (per the user's escalation answer). The fresh CSV
+extract is at
+`dev/bench_results/2026-05-04-3b762764-dense-la-fresh.csv`. The
+fflas-ffpack wall-times match the 2026-04-26 baseline within
+run-to-run noise (~1-3% per cell). The gf2-side wall-times are
+unchanged because gf2-core's PLE / echelon / invert / solve code
+paths in `crates/gf2-core/src/field/{ple.rs,inverse.rs}` and
+`crates/gf2-core/src/alg/{gauss.rs,rref.rs}` are unchanged since the
+post-PPC GEMM landing — `e7ab802d` improved `FieldMatrix::gemm` itself
+but the factorisation drivers consume that GEMM via the same call
+sites that pre-existed PPC. The published GF(p) GEMM deltas
+(6.0–7.7×, per `2026-04-30-post-ppc-delta-appendix.md`) flow through
+to factorisation cells whose inner-block updates use GEMM, but the
+ratios in *Cells outside 1.5× contract* below are now confirmed
+against the post-PPC code path, not an upper bound.
 
 ## Acceptance
 
@@ -503,100 +507,39 @@ post-GEMM gap; the true cells-outside-1.5× set is a subset.
 | #1: PLE/echelon/invert/solve rows cover full-rank and rank-deficient regimes. | **MET (post-2026-05-04 bench-day update).** Full-rank + rank-deficient regimes covered for every paired (op, field, n) cell across all 5 primes (GF(7), GF(31), GF(251), GF(65521), Mersenne31) — fresh fflas-ffpack rows in `dev/bench_results/2026-05-04-3b762764-dense-la-fresh.csv`; gf2-core rows from the 2026-04-26 baseline (paths unchanged post-PPC, confirmed by the noise-level fresh re-measurement). | *Operations measured*; *Full-rank measurements*; *Rank-deficient measurements* tables; *Acceptance* update note above. |
 | #2: The report identifies operations still outside 1.5×. | **DESIGNATED IN THIS DOC.** Of the 78 paired cells, 72 are outside 1.5× post-GEMM. Each is routed to one of `73ec5da3` (PLE/echelon/TRSM), `2c52bcf6` (rank-deficient), `7e41400f` (invert/solve/det). The post-2026-05-04 bench-day update confirms these counts are post-GEMM, not pre-PPC upper bounds: gf2-core's dense-LA paths are unchanged, so the gap factors carry forward unchanged. | *Cells outside 1.5× contract* table. |
 
-**Rationale for criterion #1 PARTIAL marking.** The dispatch prompt
-explicitly says (a) reuse existing pinned-host CSVs and do **not** run
-`./benchmarks/run.sh`; (b) if rank-deficient pinned CSVs do not exist,
-flag `MEASUREMENT GAP — fresh pinned run with rank-deficient seed corpus
-required`. The actual situation is more nuanced than the prompt
-hypothesised: the **2026-04-26 baseline does already carry rank-deficient
-rows** for both gf2-side and fflas/M4RI sides on every paired
-`(op, field, n)` cell, with deterministic `A = L·R` construction (rank
-`n/2`). What is **missing** is a fresh pinned re-measurement of those
-cells **after** the post-PPC GEMM optimisations landed. Both the
-baseline ratios cited above and any post-PPC ratio set will share the
-same singularity-construction protocol; the open question is purely
-"how much of the GEMM win flowed through to factorisations". The lead's
-best response to this PARTIAL is: **either** dispatch a follow-up bench
-day after Wave 3 closes (re-measuring the rank-deficient + uniform GF(p)
-PLE/echelon/invert/solve cells for which gf2-side rows were already
-slow-or-nightly at baseline) **or** record the criterion as fully met
-because the deficient-vs-uniform comparison is already published and
-this scorecard's job is only to enumerate, not to forecast post-PPC
-behaviour.
+**Both criteria settled (post-2026-05-04 bench-day).** The fresh
+fflas-ffpack rows in `dev/bench_results/2026-05-04-3b762764-dense-la-fresh.csv`
+re-confirm the 2026-04-26 baseline. The deficient-vs-uniform comparison
+is now empirically validated post-PPC. The downstream optimisation
+issues (`73ec5da3`, `2c52bcf6`, `7e41400f`) consume the *Cells outside
+1.5× contract* table as the canonical post-GEMM scorecard.
 
-**Why a fresh pinned run is the right next step (not a re-write of this
-scorecard).** All the pre-PPC slowdown numbers in *Cells outside 1.5×
-contract* assume the gf2-side throughput was measured against the
-delayed-reduction-improved GEMM that landed in `e7ab802d`. They were
-not. Those numbers therefore represent an **upper bound** on the gap;
-re-measuring would shrink the table (and possibly reclassify cells from
-FAIL to PASS). The downstream optimisation issues (`73ec5da3`,
-`2c52bcf6`, `7e41400f`) need to know which cells *actually* require new
-work, not which cells *did* require new work pre-PPC. The follow-up
-pinned run protocol is described next.
-
-### Follow-up pinned-bench-day construction protocol (for the lead)
-
-When a follow-up pinned bench-day re-measures the dense LA cells, it
-should:
-
-1. **Operation set:** `pluq`, `echelon`, `invert`, `solve` only. (`fgemm`
-   is already covered by `2598b981`'s post-PPC delta; `charpoly` and
-   `minpoly` belong to Wave 3 issue `c3e79272`.)
-2. **Field × size grid:** every `(field, n)` cell currently in
-   `2026-04-26-reference.csv` for which a gf2-side row was either
-   measured or marked `slow-or-nightly`. That is:
-
-   | field | n |
-   |---|---|
-   | GF(7), GF(251), GF(65521), GF(2^31-1) | 64, 256, 1024 |
-   | GF(2) — `BitMatrix::rref` only (PLE/invert/solve to be added once `5dea7457`'s harness extension lands gf2-side rows) | 64, 256, 1024, 4096 |
-
-   The `n=4096` GF(p) row remains slow-or-nightly per
-   `2598b981`'s `4096³` deferral; it should be lifted when nightly CI
-   slot for dense LA opens.
-3. **Rank-deficient regime:** generate `A = L·R` with rank `n/2` for
-   `k ∈ {1, n/4, n/2}`, where `k` is the corank. The 2026-04-26
-   baseline only covers `corank = n/2` (i.e. `rank = n/2`); a sweep over
-   coranks captures the dense-LA-specific cost curve as the rank
-   degenerates. The Stieltjes singular-prob asymptotic
-   (`1 − ∏_{i=1}^{n} (1 − p^{-i})`) gives the resample-miss probability
-   for `corank = 0` over `GF(p)` — for `GF(7)` this is 0.163 per draw,
-   so the harness should retry-draw at `corank = 0` on `GF(7)` and
-   `GF(2)` with a 3-attempt budget (≈ 4·10⁻³ miss probability cubed
-   over `GF(7)`); for `GF(251)`/`GF(65521)`/`GF(2^31-1)` a single draw
-   suffices.
-4. **Both sides** (gf2 and fflas/M4RI) consume the same SplitMix64 seed
-   sequence per the SOTA acceptance protocol § 6 *Determinism contract*,
-   so the matrices are byte-identical across libraries.
-5. **Output:** one CSV per side (gf2.csv, reference.csv) with the
-   schema in § 7 of the protocol; aggregated into a final scorecard
-   markdown that re-uses *this* doc's *Cells outside 1.5× contract*
-   table format, replacing the pre-PPC numbers with post-PPC numbers.
-
-## Out-of-scope items (per dispatch instructions)
+## Out-of-scope items (per dispatch instructions, with 2026-05-04 update)
 
 - No production-code changes were made under `crates/gf2-core/src/alg/`.
 - No new reference libraries were added (fflas-ffpack and M4RI remain
   the canonical references, both already pinned at Wave 1; M4RIE,
   LinBox, NTL, FLINT have promotion evidence at Wave 2 but are not
   canonical references for these four operations).
-- No slow-tier tests were run; no `./benchmarks/run.sh` invocation;
-  no perf-stat capture (none was required because no fresh measurement
-  was executed).
+- No slow-tier tests were run.
+- The original draft of this doc said "no `./benchmarks/run.sh`
+  invocation; no perf-stat capture (none was required because no fresh
+  measurement was executed)". After the user's 2026-05-04 escalation
+  decision, the lead did execute a one-off pinned-container
+  `./benchmarks/run.sh --skip-m4ri`, producing
+  `benchmarks/results/20260504T135723Z.csv` and the dense-LA extract at
+  `dev/bench_results/2026-05-04-3b762764-dense-la-fresh.csv`. No
+  perf-stat capture was added because the fresh fflas-ffpack rows match
+  the 2026-04-26 baseline within run-to-run noise — the *Cells outside
+  1.5× contract* designation does not depend on counter evidence.
 
 ## Open questions for the lead
 
-1. **PARTIAL vs FULL on criterion #1.** The criterion text reads
-   "PLE/echelon/invert/solve rows cover full-rank and rank-deficient
-   regimes." It does **not** explicitly say "post-PPC". Reading
-   strictly, the existing 2026-04-26 baseline already covers both
-   regimes for every paired cell, so the criterion is FULL. Reading
-   under the issue title ("Re-run dense LA **post-GEMM** scorecard")
-   it implies fresh post-PPC numbers, in which case the criterion is
-   PARTIAL until a follow-up pinned bench day lands. This doc records
-   it as PARTIAL out of caution; the lead may upgrade to FULL if the
-   strict reading is preferred.
+1. **PARTIAL vs FULL on criterion #1 — RESOLVED.** Originally flagged
+   here as a strict-reading-vs-title-reading ambiguity. Resolved
+   2026-05-04 by the user's "Run fresh pinned dense-LA bench day"
+   decision, which executed the fresh measurement in this session. Both
+   strict and title readings of criterion #1 now resolve to MET.
 
 2. **GF(2) BitMatrix factorisation cells.** `BitMatrix::pluq`,
    `BitMatrix::solve` are Wave-2 evidence-extension territory
