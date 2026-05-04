@@ -158,6 +158,10 @@ verify_sha() {
 verify_sha GIVARO_SHA256 libs.givaro
 verify_sha FFLAS_SHA256  libs.fflas-ffpack
 verify_sha M4RI_SHA256   libs.m4ri
+verify_sha LINBOX_SHA256 libs.linbox
+verify_sha M4RIE_SHA256  libs.m4rie
+verify_sha NTL_SHA256    libs.ntl
+verify_sha FLINT_SHA256  libs.flint
 
 # Verify the base-image digest in [base].digest matches the Containerfile
 # `FROM ...@sha256:...` line.
@@ -218,6 +222,7 @@ verify_apt_pin libopenblas-dev  libs.openblas
 verify_apt_pin libgmp-dev      libs.gmp
 verify_apt_pin liblapack-dev   libs.lapack
 verify_apt_pin cmake           libs.cmake
+verify_apt_pin libmpfr-dev     libs.mpfr
 
 echo "[run.sh] verified Containerfile pins (sha256 ARGs + base digest + apt versions) match image.lock" >&2
 
