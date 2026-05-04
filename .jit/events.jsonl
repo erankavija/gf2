@@ -3730,3 +3730,9 @@
 {"type":"issue_created","id":"d02b4ab4-9b2d-4c3c-8775-d2e2358fd6fc","issue_id":"521390db-8f2e-4955-ac11-b6bf0ca8a53c","timestamp":"2026-05-04T22:04:24.770732630Z","title":"gf2-core SpBitMatrix sparse-dense matmat for GF(2)","priority":"normal"}
 {"type":"issue_created","id":"760c0386-afe5-4a24-842f-e0fe9e786faf","issue_id":"0f708b36-5b37-44cb-8176-fdfc5b871f86","timestamp":"2026-05-04T22:04:37.363358553Z","title":"Extend LinBox sparse harness with sparse_dense rows + spmv smoke","priority":"normal"}
 {"type":"issue_created","id":"654abca1-1daa-489d-b3cd-ddcaad756d14","issue_id":"96fde7c7-e05b-4a2a-90a6-99cece36db7c","timestamp":"2026-05-04T22:04:54.287202775Z","title":"sparse_smoke gf2-core integration design + impl","priority":"high"}
+{"type":"issue_state_changed","id":"7fb8f997-8b63-4514-ab60-f36df0d2a83c","issue_id":"521390db-8f2e-4955-ac11-b6bf0ca8a53c","timestamp":"2026-05-04T22:12:24.489490269Z","from":"ready","to":"in_progress"}
+{"type":"issue_claimed","id":"5bd41215-56e8-499a-ae2d-fc290799ef2e","issue_id":"521390db-8f2e-4955-ac11-b6bf0ca8a53c","timestamp":"2026-05-04T22:12:24.492460200Z","assignee":"agent:claude"}
+{"type":"issue_state_changed","id":"8e8954eb-8166-4ae3-a892-aef25706430f","issue_id":"0d6ca3b6-add7-4e6f-921c-64aa54da177d","timestamp":"2026-05-04T22:12:25.229281951Z","from":"ready","to":"in_progress"}
+{"type":"issue_claimed","id":"871f86b4-ff53-4b03-af54-8b5b9075d8fd","issue_id":"0d6ca3b6-add7-4e6f-921c-64aa54da177d","timestamp":"2026-05-04T22:12:25.232127201Z","assignee":"agent:claude"}
+{"type":"issue_state_changed","id":"b2c94c6b-2395-468a-9ab1-0dd3938c63ee","issue_id":"0f708b36-5b37-44cb-8176-fdfc5b871f86","timestamp":"2026-05-04T22:12:25.380726654Z","from":"ready","to":"in_progress"}
+{"type":"issue_claimed","id":"ed4524b5-2105-4197-bbe7-d58bed2445b9","issue_id":"0f708b36-5b37-44cb-8176-fdfc5b871f86","timestamp":"2026-05-04T22:12:25.381935624Z","assignee":"agent:claude"}
