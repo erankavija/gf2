@@ -927,5 +927,16 @@ int main(int argc, char** argv) {
                   /*fgemm_only_at_max=*/true);
     }
 
+    // ---- GF(31): 5-bit prime — bridge between GF(7) tiny-prime and
+    //              GF(251) byte families. Added 2026-05-04 per issue
+    //              609855d9 to close the prime-family classification. ----
+    {
+        using Field = Givaro::Modular<int64_t>;
+        Field F(31);
+        run_field(F, "GF(31)", master_seed ^ 0x44ULL, warmup, iters,
+                  dense_sizes, charpoly_sizes, minpoly_sizes,
+                  /*fgemm_only_at_max=*/true);
+    }
+
     return 0;
 }

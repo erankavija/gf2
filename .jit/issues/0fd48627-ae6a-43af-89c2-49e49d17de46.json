@@ -2,7 +2,7 @@
   "id": "0fd48627-ae6a-43af-89c2-49e49d17de46",
   "title": "Profile post-PPC GF(2) M4RI gap",
   "description": "Measure the remaining GF(2) gap with benchmarks and hardware counters.\n\n## Success Criteria\n\n- [hard] The report covers n=1024, n=4096, and target-matrix sizes for M4RM vs M4RI.\n- [hard] The report identifies the primary bottleneck category.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "high",
   "assignee": "agent:project-lead",
   "dependencies": [],
@@ -12,15 +12,20 @@
     "doc-review"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-04T10:48:17.373962158Z"
+    },
     "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-05-04T12:45:45.156078844Z"
     },
-    "cargo-ci": {
+    "doc-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-04T10:48:17.373962158Z"
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-05-04T13:54:15.391015782Z"
     }
   },
   "context": {},
@@ -126,5 +131,5 @@
     "story:sota-gf2-m4ri"
   ],
   "created_at": "2026-04-30T06:43:02.646215124+00:00",
-  "updated_at": "2026-05-04T12:53:31.240418412+00:00"
+  "updated_at": "2026-05-04T13:54:21.538427980+00:00"
 }

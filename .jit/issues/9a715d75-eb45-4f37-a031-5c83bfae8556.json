@@ -5,7 +5,9 @@
   "state": "in_progress",
   "priority": "high",
   "assignee": "agent:project-lead",
-  "dependencies": [],
+  "dependencies": [
+    "b13799ac-c493-4554-9da3-78142769b7c5"
+  ],
   "gates_required": [
     "code-review",
     "cargo-ci",
@@ -15,7 +17,7 @@
     "code-review": {
       "status": "failed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-04T13:08:55.731397551Z"
+      "updated_at": "2026-05-04T13:17:42.633865029Z"
     },
     "cargo-ci": {
       "status": "passed",
@@ -40,5 +42,5 @@
     "story:sota-gf2m-reference"
   ],
   "created_at": "2026-04-30T06:43:02.749599713+00:00",
-  "updated_at": "2026-05-04T13:16:39.026511601+00:00"
+  "updated_at": "2026-05-04T13:53:52.680192254+00:00"
 }
