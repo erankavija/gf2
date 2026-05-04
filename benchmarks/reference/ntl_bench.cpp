@@ -85,6 +85,7 @@
 #include <NTL/GF2XFactoring.h>
 #include <NTL/mat_GF2E.h>
 
+#include "gf2pow32_constants.h"
 #include "seed_helpers.h"
 
 namespace {
@@ -296,6 +297,13 @@ static void bench_charpoly(const char* field_label, long n, uint64_t seed,
 
 // ----- GF(2^32) extension lane (jit:b13799ac) -----------------------------
 //
+// The Conway polynomial bits and the scalar reference multiplier are both
+// pulled from the shared SSOT header `gf2pow32_constants.h` so that this
+// harness, `ntl_gf2pow32_smoke.cpp`, and any future m=32 lane (m4rie/flint
+// extension) all consume the same constants. The header is in turn drift-
+// checked against `crates/gf2-core/src/primitive_polys.rs::standard(32)` by
+// `crates/gf2-core/tests/gf2pow32_constant_drift.rs`.
+//
 // Conway polynomial bits hard-coded from
 // `crates/gf2-core/src/primitive_polys.rs::standard(32)`. Drift on either
 // side is caught at smoke time by `ntl_gf2pow32_smoke.cpp`.
@@ -305,7 +313,9 @@ static void bench_charpoly(const char* field_label, long n, uint64_t seed,
 // endian as a `u32`; NTL's `GF2XFromBytes(buf, 4)` consumes exactly that
 // 4-byte payload. No basis-change matrix is required because gf2-core
 // uses the same polynomial.
-static constexpr uint64_t kGf2coreConwayM32 = 0x1'0000'8299ULL;
+// kGf2coreConwayM32 lives in `gf2pow32_constants.h` (SSOT) — pull it into
+// this TU's namespace for the existing call sites below.
+using gf2_bench::kGf2coreConwayM32;
 
 // Initialise NTL's `GF2E` modulus to GF(2^32) defined by the Conway
 // polynomial. Aborts if the polynomial is reducible (catch a
