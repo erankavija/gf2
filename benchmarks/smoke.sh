@@ -166,6 +166,26 @@ echo "[smoke.sh] running ntl_flint_smoke equality oracle" >&2
     >&2
 # === flint end ===
 
+# === b13799ac GF(2^32) NTL bitwise-equality smoke begin ===
+# NTL `mat_GF2E` matmul over GF(2^32) ↔ self-contained scalar reference
+# bitwise-equality oracle at n=16. Implements the protocol § 6
+# correctness contract for the Wave-3 GF(2^32) matmul promotion (issue
+# b13799ac). The scalar reference is purely defined from the
+# Conway-polynomial bits in
+# `crates/gf2-core/src/primitive_polys.rs::standard(32)`, so a
+# polynomial drift on the gf2-core side fails this oracle before any
+# timing run. Skipped silently when the image was built without NTL.
+if [[ "${GF2_SKIP_NTL_GF2POW32_SMOKE:-0}" -eq 0 ]]; then
+    echo "[smoke.sh] running ntl_gf2pow32_smoke (GF(2^32) NTL ↔ scalar ref)" >&2
+    "${RUNTIME}" run --rm \
+        --security-opt label=disable \
+        -v "${HERE}:/work${MOUNT_OPTS}" \
+        "${IMAGE_TAG}" \
+        bash -c "set -e; cd /work/reference && make ntl_gf2pow32_smoke >/dev/null && ./ntl_gf2pow32_smoke" \
+        >&2
+fi
+# === b13799ac GF(2^32) NTL bitwise-equality smoke end ===
+
 # === c3e79272 charpoly/minpoly cross-library smoke begin ===
 # LinBox ↔ FLINT bitwise polynomial-coefficient equality oracle for
 # charpoly + minpoly at n=16 across the four reference primes (issue

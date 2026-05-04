@@ -72,6 +72,12 @@
 #include <NTL/vec_lzz_p.h>
 #include <NTL/ZZ.h>
 
+// GF(2^32) extension lane includes (jit:b13799ac).
+#include <NTL/GF2E.h>
+#include <NTL/GF2X.h>
+#include <NTL/GF2XFactoring.h>
+#include <NTL/mat_GF2E.h>
+
 #include "seed_helpers.h"
 
 namespace {
@@ -281,6 +287,124 @@ static void bench_charpoly(const char* field_label, long n, uint64_t seed,
     emit_csv("charpoly", field_label, n, n, n, "uniform", seed, mean_ns, tput);
 }
 
+// ----- GF(2^32) extension lane (jit:b13799ac) -----------------------------
+//
+// Conway polynomial bits hard-coded from
+// `crates/gf2-core/src/primitive_polys.rs::standard(32)`. Drift on either
+// side is caught at smoke time by `ntl_gf2pow32_smoke.cpp`.
+//
+// Using the byte-level protocol described in `ntl_gf2pow32_smoke.cpp`:
+// each GF(2^32) element is a polynomial of degree < 32 stored little-
+// endian as a `u32`; NTL's `GF2XFromBytes(buf, 4)` consumes exactly that
+// 4-byte payload. No basis-change matrix is required because gf2-core
+// uses the same polynomial.
+static constexpr uint64_t kGf2coreConwayM32 = 0x1'0000'8299ULL;
+
+// Initialise NTL's `GF2E` modulus to GF(2^32) defined by the Conway
+// polynomial. Aborts if the polynomial is reducible (catch a
+// constant-drift bug before the bench loop runs).
+static void init_gf2pow32() {
+    NTL::GF2X p;
+    for (long i = 0; i <= 32; ++i) {
+        if ((kGf2coreConwayM32 >> i) & 1ULL) {
+            NTL::SetCoeff(p, i);
+        }
+    }
+    if (NTL::deg(p) != 32 || !NTL::IterIrredTest(p)) {
+        std::fprintf(stderr,
+                     "[ntl_bench] FATAL: GF(2^32) Conway polynomial 0x%llx "
+                     "is not irreducible — primitive_polys.rs::standard(32) "
+                     "drift?\n",
+                     (unsigned long long)kGf2coreConwayM32);
+        std::exit(1);
+    }
+    NTL::GF2E::init(p);
+}
+
+// Promote a 32-bit packed element (low 32 bits significant) to NTL
+// `GF2E` via the byte-level protocol. Mirrors `gf2e_from_u32` in the
+// smoke harness so the two binaries cannot disagree on encoding.
+static NTL::GF2E gf2e_from_u32(uint32_t v) {
+    unsigned char buf[4];
+    buf[0] = (unsigned char)(v & 0xFFu);
+    buf[1] = (unsigned char)((v >> 8) & 0xFFu);
+    buf[2] = (unsigned char)((v >> 16) & 0xFFu);
+    buf[3] = (unsigned char)((v >> 24) & 0xFFu);
+    NTL::GF2X x;
+    NTL::GF2XFromBytes(x, buf, 4);
+    return NTL::to_GF2E(x);
+}
+
+// Fill an n×n NTL `mat_GF2E` with deterministic uniform GF(2^32)
+// entries. Each draw consumes one full SplitMix64 step; the high 32
+// bits of the draw are discarded. `GF2E::init` must already have been
+// called.
+static void fill_uniform_gf2e(NTL::mat_GF2E& A, long n, uint64_t seed) {
+    A.SetDims(n, n);
+    uint64_t st = seed;
+    for (long i = 0; i < n; ++i) {
+        for (long j = 0; j < n; ++j) {
+            uint64_t draw = splitmix64(st);
+            A[i][j] = gf2e_from_u32(static_cast<uint32_t>(draw & 0xFFFFFFFFULL));
+        }
+    }
+}
+
+// Time NTL `mul(C, A, B)` over GF(2^32) at the given size and emit a
+// `matmul,GF(2^32)` CSV row using the same throughput normalizer the
+// fflas/m4ri/m4rie matmul rows use (2 * n^3).
+static void bench_mul_gf2pow32(long n, uint64_t seed,
+                               int warmup, int iters) {
+    NTL::mat_GF2E A, B, C;
+    fill_uniform_gf2e(A, n, seed);
+    fill_uniform_gf2e(B, n, seed ^ 0x1111111111111111ULL);
+
+    for (int i = 0; i < warmup; ++i) NTL::mul(C, A, B);
+
+    uint64_t total_ns = 0;
+    int actual_iters = 0;
+    bool early_exit = false;
+    for (int i = 0; i < iters; ++i) {
+        uint64_t t0 = monotonic_ns();
+        NTL::mul(C, A, B);
+        total_ns += monotonic_ns() - t0;
+        ++actual_iters;
+        if (total_ns >= kCellBudgetNs) { early_exit = true; break; }
+    }
+    uint64_t mean_ns = total_ns / static_cast<uint64_t>(actual_iters);
+    double tput = (2.0 * static_cast<double>(n)
+                   * static_cast<double>(n) * static_cast<double>(n))
+                  / (static_cast<double>(mean_ns) * 1.0e-9);
+
+    if (early_exit) warn_early_exit("matmul", "GF(2^32)", n, "uniform", total_ns);
+    // CSV uses `matmul` to align with the m4rie matmul rows already in
+    // the protocol § 7 allowed-values list. analyze.py aliases matmul
+    // to fgemm for cross-merge.
+    emit_csv("matmul", "GF(2^32)", n, n, n, "uniform", seed, mean_ns, tput);
+}
+
+// Driver for the GF(2^32) lane: emits one `matmul,GF(2^32)` row per
+// size in `dense_sizes`. The lane covers matmul only — see
+// `dev/plans/gf2m_reference_lane_selection.md` for the Wave-3 scope
+// decision (b13799ac promotes matmul; non-matmul GF(2^m) cells were
+// excluded under `no-independent-oracle`).
+static void run_gf2pow32(uint64_t master_seed,
+                         int warmup, int iters,
+                         const std::vector<long>& dense_sizes) {
+    init_gf2pow32();
+    std::fprintf(stderr,
+                 "[ntl_bench] field=GF(2^32) Conway=0x%llx dense_sizes=",
+                 (unsigned long long)kGf2coreConwayM32);
+    for (long n : dense_sizes) std::fprintf(stderr, "%ld ", n);
+    std::fprintf(stderr, "\n");
+    for (size_t si = 0; si < dense_sizes.size(); ++si) {
+        long n = dense_sizes[si];
+        bench_mul_gf2pow32(n,
+                            derive_seed(master_seed, "matmul", 0, si, 0),
+                            warmup, iters);
+    }
+}
+
 // ----- per-field driver ---------------------------------------------------
 
 static void run_field(long p, const char* field_label,
@@ -375,6 +499,13 @@ int main(int argc, char** argv) {
               warmup, iters, dense_sizes, charpoly_sizes);
     run_field((1L << 31)-1, "GF(2^31-1)",   master_seed,
               warmup, iters, dense_sizes, charpoly_sizes);
+
+    // GF(2^32) extension lane (jit:b13799ac) — matmul only. Salt the
+    // master seed so the GF(2^32) stream is disjoint from every GF(p)
+    // stream above. The salt mirrors the `^0x33`/`^0x22`/`^0x11`
+    // pattern with a fresh nibble outside the existing run_field
+    // alphabet so future GF(p) cells can claim 0x44.../0x55... etc.
+    run_gf2pow32(master_seed ^ 0x77ULL, warmup, iters, dense_sizes);
 
     return 0;
 }
