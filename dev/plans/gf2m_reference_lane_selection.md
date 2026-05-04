@@ -288,20 +288,22 @@ the Zen-3 anchor host).
 
 ## 6. Acceptance — mapping to issue 9a715d75 [hard] criteria
 
-| Issue criterion | Where this doc satisfies it |
-|---|---|
-| **#1 [hard]** "The selected lane covers GF(2^8), GF(2^16), and GF(2^32) where feasible." | § 3 covers all three fields across all `FieldMatrix` operations. **GF(2^8) and GF(2^16) `matmul` are covered by M4RIE 20250128** (already promoted in Wave 2 — citation in § 3). **GF(2^32) `matmul` is declared infeasible without further harness work** and recorded as an exclusion (§ 4 proposal #1). The "where feasible" qualifier in the criterion is read as: the cell is covered when a candidate is feasible per the protocol's five criteria; otherwise an exclusion is documented. § 3 names a feasible reference for every cell that has one (2 cells), and proposes a documented exclusion for every cell that does not (19 cells). |
-| **#2 [hard]** "If no hard reference is viable, the exclusion is user-approved and documented." | § 4 names every exclusion (4 grouped proposals covering 19 cells), gives each a precise exclusion class and a one-paragraph rationale, and supplies recommended verbatim phrasing the lead can use to seek user approval. **This document cannot itself grant user approval** — it is an evidence and proposal artefact. The criterion is therefore *partially* satisfied here: the exclusions are documented (the "and documented" half), and the proposal phrasing is ready for the lead to escalate (the "user-approved" half is unblocked but not yet executed). The consumer issue `4c0d0202` (Publish SOTA target matrix design doc) must wait for the lead's escalation outcome before ingesting the exclusions. |
+> **User decision recorded 2026-05-04 (Wave-3 closure escalation).** The
+> user **rejected proposal #1's exclusion** and elected to extend the
+> epic scope by harnessing GF(2^32) matmul; **approved proposals #2,
+> #3, #4** under the new exclusion classes; **approved the protocol § 8
+> registry extension** to add `not-yet-harnessed` and
+> `no-independent-oracle` as recognized exclusion classes (open
+> question #1 resolved); and **delegated the GF(2^32) primitive-poly
+> selection** to the new harness task (open question #3). New task
+> filed: `b13799ac` ("Build GF(2^32) matmul reference harness"), wired
+> as a Wave-12-aggregation prerequisite. Open question #2 resolved by
+> filing the harness task now (during Wave 3 closure).
 
-The two-step gating around criterion #2 (document here, escalate from
-the lead, ingest in `4c0d0202`) matches the lead's escalation policy
-at `.claude/skills/project-lead/references/escalation-policy.md` and
-the project memory entry
-`feedback_hard_criterion_self_satisfaction.md`: the [hard] criterion
-is self-satisfied **in this document** (we name every exclusion here,
-not deferred to the consumer); the user-approval transition is the
-only piece this document cannot self-execute, and is explicitly
-flagged for the lead.
+| Issue criterion | Status | Evidence in this document |
+|---|---|---|
+| **#1 [hard]** "The selected lane covers GF(2^8), GF(2^16), and GF(2^32) where feasible." | **MET** | § 3 covers all three fields across all `FieldMatrix` operations. GF(2^8) and GF(2^16) `matmul` are covered by M4RIE 20250128 (Wave-2-promoted; citations in § 3). GF(2^32) `matmul` was originally proposed for exclusion (§ 4 proposal #1) but the user has rejected the exclusion in favour of harnessing the cell — see new task `b13799ac` (Build GF(2^32) matmul reference harness, story `2c7548ae`). 9a715d75 closes with criterion #1 satisfied because the lane *selection* is complete; the *harness work* is delegated to `b13799ac` (Wave-12 aggregation depends on it). |
+| **#2 [hard]** "If no hard reference is viable, the exclusion is user-approved and documented." | **MET** | § 4 names every exclusion (3 surviving grouped proposals — #2 echelon/invert/solve, #3 charpoly/minpoly, #4 spmv-deferred — covering 18 cells). Each has a precise exclusion class and a one-paragraph rationale. **User approval recorded 2026-05-04** for proposals #2, #3, #4 plus the protocol § 8 registry extension adding `not-yet-harnessed` (used by `b13799ac`'s open exclusion-not-yet-resolved status until that task closes) and `no-independent-oracle` (used by proposals #2 and #3). The exclusions are now both user-approved (this section) and documented (§ 4). |
 
 ## 7. Open questions for the lead (read before escalating)
 
