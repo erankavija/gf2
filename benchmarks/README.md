@@ -77,7 +77,7 @@ Every row in `results/<timestamp>.csv` has exactly **ten** columns:
 | Column           | Type     | Description                                                                                                                                |
 |------------------|----------|--------------------------------------------------------------------------------------------------------------------------------------------|
 | `lib`            | string   | Reference implementation: `fflas-ffpack` or `m4ri`.                                                                                        |
-| `operation`      | string   | One of `fgemm`, `pluq`, `echelon`, `invert`, `solve`, `charpoly`, `minpoly`, `spmv`, `matmul` (m4ri spelling for `fgemm`).                |
+| `operation`      | string   | One of `fgemm`, `pluq`, `echelon`, `invert`, `solve`, `charpoly`, `minpoly`, `spmv`, `matmul` (m4ri spelling for `fgemm`), or one of the sparse ops added by protocol Amendment 2 (`sparse-matmul`, `sparse×dense`, `sparse-elim`).                |
 | `field`          | string   | Field tag, e.g. `GF(2^31-1)`, `GF(65521)`, `GF(251)`, `GF(7)`, `GF(2)`.                                                                   |
 | `m`, `k`, `n`    | usize    | Matrix shape passed to the kernel. For square ops `m = k = n`. For `fgemm` rectangular variants (deferred to T2), `m`, `k`, `n` differ.    |
 | `rank_regime`    | string   | `uniform` (sample i.i.d.) or `deficient` (rank exactly `n/2`, generated as L·R with shared inner dimension).                              |
