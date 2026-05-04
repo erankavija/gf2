@@ -68,9 +68,9 @@ use std::time::{Instant, SystemTime, UNIX_EPOCH};
 use gf2_coding::ldpc::{LdpcCode, QuasiCyclicLdpc};
 use gf2_coding::CodeRate;
 use gf2_core::bench_seed::{
-    bitmatrix_sparse_from_seed, bitvec_from_seed, derive_seed, fp_sparse_from_seed,
-    fp_vec_from_seed, gf2m_wide_1_sparse_from_seed, gf2m_wide_1_vec_from_seed, splitmix64, tput,
-    CSV_HEADER,
+    bitmatrix_from_seed, bitmatrix_sparse_from_seed, bitvec_from_seed, derive_seed,
+    fp_sparse_from_seed, fp_vec_from_seed, gf2m_wide_1_sparse_from_seed, gf2m_wide_1_vec_from_seed,
+    splitmix64, tput, CSV_HEADER,
 };
 use gf2_core::field::matrix::FieldMatrix;
 use gf2_core::field::vec::FieldVec;
@@ -472,6 +472,38 @@ fn run_gf2_random_er(args: &Args, sink: &mut CsvSink, sizes: &[usize]) -> std::i
                 row_seed,
                 wall_mm,
                 tput(nnz_total, wall_mm),
+            )?;
+        }
+
+        // ── sparse×dense (CSR · dense BitMatrix → dense BitMatrix) ────────
+        // Closes scorecard § 5 #6 by emitting the gf2-core side of the
+        // `sparse×dense × GF(2)` cell. Uses `SpBitMatrix::matmat` against a
+        // dense `BitMatrix` of shape `n × n`. Throughput counted as
+        // `nnz(A) · n` word-XOR work (each nonzero contributes one row-XOR
+        // of length n bits into the output row).
+        let sd_key = format!("sparse×dense/{field}/{n}/csr");
+        if cell_passes(&args.filter, &sd_key) {
+            let dense_seed = derive_seed(args.master_seed, "spdn-b", 2, si as u64, 1);
+            let b_dense = bitmatrix_from_seed(n, n, dense_seed);
+            eprintln!("[gf2-sparse] {sd_key}");
+            let (wall_sd, _) = time_op(
+                || {
+                    let _ = std::hint::black_box(a.matmat(std::hint::black_box(&b_dense)));
+                },
+                args.warmup,
+                args.iters,
+            );
+            let work_ops = (a.nnz() as f64) * (n as f64);
+            sink.emit(
+                "sparse×dense",
+                field,
+                n,
+                n,
+                n,
+                &format!("density_{}_csr", fmt_density_c(density)),
+                row_seed,
+                wall_sd,
+                tput(work_ops, wall_sd),
             )?;
         }
     }
