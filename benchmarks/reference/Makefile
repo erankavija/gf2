@@ -74,7 +74,7 @@ sparse_smoke: sparse_smoke.cpp
 m4ri_bench: m4ri_bench.c
 	@$(CC) $(CSTD) $(OPT) $(M4RI_CFLAGS) $< $(M4RI_LIBS) -o $@
 
-ntl_bench: ntl_bench.cpp
+ntl_bench: ntl_bench.cpp gf2pow32_constants.h
 	@$(CXX) $(CXXSTD) $(OPT) $(NTL_CFLAGS) $< $(NTL_LIBS) -o $@
 
 flint_bench: flint_bench.c
@@ -91,7 +91,7 @@ ntl_flint_smoke: ntl_flint_smoke.cpp
 # `mat_GF2E` matmul at n=16 against an independent scalar reference
 # defined purely from the gf2-core Conway-polynomial bits. Linked
 # against NTL only — the scalar reference is self-contained.
-ntl_gf2pow32_smoke: ntl_gf2pow32_smoke.cpp
+ntl_gf2pow32_smoke: ntl_gf2pow32_smoke.cpp gf2pow32_constants.h
 	@$(CXX) $(CXXSTD) $(OPT) $(NTL_CFLAGS) $< $(NTL_LIBS) -o $@
 
 linbox_bench: linbox_bench.cpp

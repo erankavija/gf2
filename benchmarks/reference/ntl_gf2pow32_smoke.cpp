@@ -69,24 +69,21 @@
 #include <cstring>
 #include <vector>
 
+#include "gf2pow32_constants.h"
 #include "seed_helpers.h"
 
 namespace {
 
-// GF(2^32) Conway polynomial bits, mirroring
-// `crates/gf2-core/src/primitive_polys.rs::standard(32)`. The leading
-// bit at position 32 is implicit in the gf2-core convention (the database
-// returns the *full* polynomial including bit 32, hex 0x1_0000_8299),
-// but NTL's `GF2X` constructor expects every coefficient including the
-// leading 1 — so we hand it the full 33-bit bitfield.
-//
-// Bits set: 0, 3, 4, 7, 9, 15, 32.
-//   0x1 << 32 | 0x8299
-// = 0x1_0000_8299
-constexpr uint64_t kGf2coreConwayM32 = 0x1'0000'8299ULL;
-
-// Number of bytes per GF(2^32) element on the wire.
-constexpr size_t kGf2pow32Bytes = 4;
+// GF(2^32) Conway polynomial constants and the scalar reference multiplier
+// live in the shared `gf2pow32_constants.h` header so that this smoke,
+// `ntl_bench.cpp`, and any future m=32 lane consume a single source of
+// truth. The header is in turn drift-checked against
+// `crates/gf2-core/src/primitive_polys.rs::standard(32)` by
+// `crates/gf2-core/tests/gf2pow32_constant_drift.rs`. Pull the shared names
+// into this TU's anonymous namespace for the existing call sites below.
+using gf2_bench::kGf2coreConwayM32;
+using gf2_bench::kGf2pow32Bytes;
+using gf2_bench::ref_gf2pow32_mul;
 
 // Initialise NTL `GF2E` to operate over GF(2^32) defined by the Conway
 // polynomial. Must be called before any `GF2E` value is touched.
@@ -124,36 +121,6 @@ void init_gf2pow32() {
         std::exit(1);
     }
     NTL::GF2E::init(p);
-}
-
-// Schoolbook scalar GF(2^32) multiply, shift-and-reduce. Independent of
-// NTL — uses only the polynomial bits in `kGf2coreConwayM32` to perform
-// reduction. Mirrors `m4rie_bench.c::ref_gf2m_mul` for the m=32 case.
-//
-// Inputs and outputs use the same little-endian-`u32` element encoding
-// described in the header comment. The high 32 bits of `a` and `b` MUST
-// be zero (the function masks defensively).
-uint32_t ref_gf2pow32_mul(uint32_t a, uint32_t b) {
-    // Low 32 bits of the polynomial (bit 32 is the implicit leading 1
-    // and is *not* part of the reduction step's XOR).
-    constexpr uint32_t kReducePoly = (uint32_t)(kGf2coreConwayM32 & 0xFFFFFFFFULL);
-    uint32_t result = 0;
-    uint32_t lhs = a;
-    uint32_t rhs = b;
-    for (int i = 0; i < 32; ++i) {
-        if (rhs & 1u) {
-            result ^= lhs;
-        }
-        // Test the bit that will leave the field after the next shift,
-        // i.e. the current high bit (degree 31).
-        const uint32_t carry = lhs >> 31;
-        lhs <<= 1;
-        if (carry) {
-            lhs ^= kReducePoly;
-        }
-        rhs >>= 1;
-    }
-    return result;
 }
 
 // Convert a `uint32_t` element to a NTL `GF2E` via the documented
