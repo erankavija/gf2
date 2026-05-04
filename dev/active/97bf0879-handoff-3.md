@@ -7,18 +7,21 @@
 - `dev/active/97bf0879-handoff-2.md` (session 2, 2026-05-04 morning) — Wave 2 closure + Wave 3 dispatch plan.
 - Predecessor PPC epic: `dev/active/babcf05e-handoff{,-2,-3,-4,-5}.md` — read at minimum the **Traps** sections of `babcf05e-handoff-5.md`. All prior-session traps remain in force.
 
-## Current state
+## Current state (post-session-3b extension, 2026-05-04T17:40Z)
 
 - Epic: `97bf0879` — state: **in_progress**, claimed by `agent:project-lead`.
-- Wave 3 status: **partial close (4/6 closed).** Closed: `0fd48627`, `c3e79272`, `609855d9`, `3b762764`. Open: `9a715d75`, `a3412e15` (gated on new impl tasks per user decision).
+- Wave 3 + impl follow-ups status: **7 of 9 closed.** Closed: `0fd48627`, `c3e79272`, `609855d9`, `3b762764`, `2403c054`, `eb57f944`, `a3412e15`. **Open: `9a715d75`, `b13799ac`** — both held per user escalation decisions until `47698404` (the consumer issue) closes.
 - Bench-day reconciliation completed 2026-05-04 — pinned bench produced `benchmarks/results/20260504T135723Z.csv`, both 609855d9 and 3b762764 closed cleanly on the post-bench-day evidence.
-- New scope work: 3 new tasks created from user-approved Wave-3 escalation:
-  - `b13799ac` — Build GF(2^32) matmul reference harness (story `2c7548ae`); blocks closure of `9a715d75`.
-  - `2403c054` — gf2-core `SpBitMatrix::matmul` (GF(2) sparse-sparse) (story `54fd3f0b`); blocks closure of `a3412e15`.
-  - `eb57f944` — gf2-core `SparseFieldMatrix` sparse-matmul + sparse-rref over GF(p) and GF(2^m) (story `54fd3f0b`); blocks closure of `a3412e15`.
-- Open escalations: none currently blocking.
-- Branch state: `main` will be at the post-bench-day commit when this session ends.
-- Progress file: `dev/active/97bf0879-progress.json` (12-wave plan; updated by lead at session close).
+- Session-3b extension (continuation of the same conversation past 14:55Z):
+  - Dispatched `b13799ac`, `2403c054`, `eb57f944` in parallel via worktree protocol. Quota truncation on first attempt; lead-preserved WIP, re-dispatched continuation workers after reset. All three workers eventually produced substantial output.
+  - Merged all three to main; cargo-ci passed cleanly.
+  - Code-review: `2403c054` PASS R1, `eb57f944` PASS R2, `b13799ac` FAIL R4 (4 rounds, persistent strict-protocol findings).
+  - Per-cell `analyze.py::reference_lib_for(field, operation=None)` extended for sparse cells (LinBox for sparse-elim × {GF(2), GF(p)}, gf2 self-reference for GF(2^m), etc.); README operation list extended with sparse ops.
+  - `a3412e15` closed after R7 (analyze.py per-cell sparse mappings + README updates resolved the consumer-contract finding the strict reviewer kept flagging).
+  - User escalation 2026-05-04T17:35Z: `b13799ac` → "Keep open until 47698404 closes" (same pattern as session-3's 9a715d75 escalation); `a3412e15` → "Land all consumer-contract changes here" (delivered in R7).
+- Open escalations: none currently blocking; both held-open issues (`9a715d75`, `b13799ac`) chained to `47698404`.
+- Branch state: `main` at HEAD `09ef4b6` includes all session-3b commits.
+- Progress file: `dev/active/97bf0879-progress.json` updated with `session_3b_extension_at` + `session_3b_extension_summary` block.
 
 ## What just happened (session 3 narrative)
 
@@ -94,15 +97,16 @@ In priority order:
 - [x] ~~Confirm bench day completed cleanly.~~ (done — `benchmarks/results/20260504T135723Z.csv`)
 - [x] ~~Update 609855d9 evidence doc with the GF(31) row.~~ (done — closed 2026-05-04)
 - [x] ~~Update 3b762764 evidence doc with the post-PPC dense-LA rows.~~ (done — closed 2026-05-04 after R5)
-- [ ] **Decide whether to dispatch `b13799ac` / `2403c054` / `eb57f944` in this session or next.** They are substantial implementation tasks (1-3 days each). The immediate Wave-3 critical path is now resolved (4/6 closed); the remaining 2 (`9a715d75` + `a3412e15`) wait on these impl tasks but do **not** block Wave 4 — `4c0d0202` (Wave 4) depends on all 6 Wave 3 issues, so Wave 4 dispatch must wait. Recommended path: dispatch `b13799ac` in next session as a focused implementation wave (it's also blocked on `dece4e73`'s GF(2^32) ring oracle harness, so order is `dece4e73` → `b13799ac` → close `9a715d75`). `2403c054` + `eb57f944` similarly chain on `47698404` (analyze.py protocol §9 update).
+- [x] ~~Dispatch the three new impl tasks~~ (done in session-3b extension; `2403c054` + `eb57f944` closed; `a3412e15` closed after R7 added consumer-contract glue; `b13799ac` held open).
+- [ ] **Decide whether to amend `4c0d0202`'s deps to remove the `9a715d75` blocker.** With `a3412e15` done, the only original Wave-3 issue still preventing `4c0d0202` is `9a715d75` (held open until `b13799ac` closes, which in turn is held until `47698404` closes). The `4c0d0202` work is the SOTA target-matrix design doc — it doesn't actually depend on `9a715d75`'s GF(2^m) lane choice if the design defers GF(2^32) per-cell routing notes to its consumer. Recommended: amend `4c0d0202` deps to remove `9a715d75` and dispatch Wave 4 in parallel with the held-open `9a715d75` / `b13799ac`. Alternative: leave the chain serialised and wait.
+- [ ] **Decide whether `47698404` should be promoted to a near-term wave** so `9a715d75` and `b13799ac` can close. `47698404` (Re-run sparse post-PPC scorecard) is currently in `backlog` with deps on `a3412e15`, `2403c054`, `eb57f944` — all three are now done. So `47698404` is unblocked. Dispatching it as a next-session priority would free up the held-open Wave-3 closures and the dispatch chain through Wave 4.
 
 ## Wave 4 readiness
 
-- `4c0d0202` (Publish SOTA target matrix design doc) is wired to depend on all 6 Wave 3 issues. It cannot dispatch until `9a715d75` and `a3412e15` close, which in turn requires `b13799ac` / `2403c054` / `eb57f944` to land.
-- The dependency chain that gates Wave 4:
-  - `b13799ac` blocks on `dece4e73` (Wave-12 ring-oracle harness — actually classified as Wave-2-style infrastructure, currently `ready`).
-  - `2403c054` + `eb57f944` block on `47698404` (Wave-10 sparse scorecard analyze.py update).
-- Realistic Wave 4 dispatch window: after `b13799ac` / `2403c054` / `eb57f944` close (3-7 days of impl + review across two parallel sub-waves).
+- `4c0d0202` (Publish SOTA target matrix design doc) deps as recorded in JIT: all 6 original Wave-3 issues. Currently 5 of 6 done; `9a715d75` open and held.
+- Critical-path option A (amend deps): Remove `9a715d75` from `4c0d0202`'s deps and dispatch Wave 4 immediately in parallel with the held-open issues. Rationale: `4c0d0202`'s work doesn't load-bear on the GF(2^m) lane selection — that's a Wave-6 concern.
+- Critical-path option B (preserve deps, dispatch 47698404): Promote `47698404` out of backlog and dispatch it as the next-session priority. When it closes, `9a715d75` and `b13799ac` unblock; Wave 4 then dispatches cleanly. Slower but preserves the original wave structure.
+- Either option works; the lead's call.
 
 ## Traps — do not repeat these
 
@@ -124,6 +128,12 @@ New traps from session 3:
 6. **Reviewer `cargo nextest run` flakes on 5s timeouts under host contention.** During the parallel rework window (two background workers building/testing concurrently with the lead's code-review run), `test_fig1_drm_product_encode_decode` and `test_inv_allocation_budget_n1024_fp_m31` timed out at the 5s threshold. They passed cleanly on a serial re-run after the workers finished. The workers' worktrees ran their own `cargo nextest` for self-validation — this contention is the cause. **Workaround:** serialize cargo runs across worktrees (or trust the per-worker self-validation as the authoritative test signal).
 
 7. **Strict AI reviewer cross-references CSV header comments and host.txt notes against the markdown's acceptance section.** On 3b762764 R3+R4, the markdown was correctly updated to "DELIVERY COMPLETE" / "post-bench-day" but the companion `-dense-la-reference.csv` header still said "no fresh measurement was executed" and `-dense-la-host.txt` line 3 said "this worker did NOT execute a fresh ./benchmarks/run.sh". The reviewer flagged this as a single-source-of-truth violation. Fix: scope the worker's "no fresh run" framing **explicitly to the original baseline aggregation worker** (not the issue overall) and add forward-pointers to the post-bench-day fresh CSV. R5 PASS after the scoping commit `8c3fe9e`. **Lesson:** when a worker writes "I did not run X" in any companion artefact, the lead must update that exact line on every closure path, not only the markdown.
+
+8. **`cargo fmt --all -- --check` fails inside worktrees because `gf2-kernels-hip` is excluded from the workspace.** When running `./scripts/cargo-ci.sh` from `.claude/worktrees/agent-<id>/`, the `fmt` step exits non-zero with a `cargo metadata` error citing `gf2-kernels-hip/Cargo.toml`'s workspace inheritance — even though the actual code is correctly formatted. From `main` (or after merging the worktree branch back), the same command exits 0. **Fix:** treat the worker's worktree-side `cargo-ci` as advisory; the authoritative gate run is on `main` after the merge. (Diagnosed during 2403c054 R0 review.)
+
+9. **Build inside container, run perf-stat outside.** When the Wave-2 reference container is built with old source (e.g. before a follow-up issue's lane is wired into ntl_bench.cpp), the in-container `make` will report "up to date" because mtimes line up with the binary baked in at image-build time. Force-rebuild via direct `g++` inside the container with `--security-opt label=disable -v $(pwd)/benchmarks:/work:Z` works (the binary lands on the host filesystem via the bind mount). Then run `perf stat` over the local binary on the host. **Critical**: host-side `make ntl_bench` is denied by project policy ("building NTL outside pinned container"); the in-container approach is the protocol-approved path. (Diagnosed during b13799ac perf-stat capture.)
+
+10. **The strict reviewer keeps flagging the same pattern across rounds: literal-protocol vs design-intent gap.** On b13799ac specifically: criterion #3 says "smoke check between the chosen reference and gf2-core" and the reviewer reads "between" as direct binary-to-binary equality, rejecting transitive equality through a shared scalar reference. Criterion #5 cites `benchmarks/results/<ts>.csv` literally even though that path is gitignored and committed evidence in this project lives in `dev/bench_results/`. The session-3 escalation pattern (user-approved "keep open until consumer issue closes") was applied again at session-3b for `b13799ac`. **Lesson:** when the reviewer's strict reading conflicts with established project convention, the loop won't terminate without user-approved scope amendment OR escalating to the consumer issue's closure path. After ~3 review rounds with the same family of findings, escalate.
 
 ## Reference artefacts (this session)
 
