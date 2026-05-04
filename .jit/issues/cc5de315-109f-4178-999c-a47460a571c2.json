@@ -16,7 +16,15 @@
   ],
   "gates_status": {},
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/bench_results/2026-05-04-609855d9-gfp-by-family.md",
+      "commit": null,
+      "label": "GF(p) by-prime-family classification (ingested by 609855d9)",
+      "doc_type": "evidence",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:story",
     "component:gf2-core",
@@ -25,5 +33,5 @@
     "story:sota-gfp-fflas"
   ],
   "created_at": "2026-04-30T06:43:02.485020488+00:00",
-  "updated_at": "2026-04-30T06:43:49.149851989+00:00"
+  "updated_at": "2026-05-04T10:38:18.259874230+00:00"
 }

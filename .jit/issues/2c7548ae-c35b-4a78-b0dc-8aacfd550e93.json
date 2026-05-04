@@ -16,7 +16,15 @@
   ],
   "gates_status": {},
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/plans/gf2m_reference_lane_selection.md",
+      "commit": null,
+      "label": "GF(2^m) reference lane decision (ingested by 9a715d75)",
+      "doc_type": "design",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:story",
     "component:gf2-core",
@@ -25,5 +33,5 @@
     "story:sota-gf2m-reference"
   ],
   "created_at": "2026-04-30T06:43:02.494673140+00:00",
-  "updated_at": "2026-04-30T06:43:49.172996135+00:00"
+  "updated_at": "2026-05-04T10:38:18.220410589+00:00"
 }

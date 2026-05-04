@@ -16,7 +16,15 @@
   ],
   "gates_status": {},
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/plans/sparse_benchmark_corpus.md",
+      "commit": null,
+      "label": "Sparse benchmark corpus + references (ingested by a3412e15)",
+      "doc_type": "design",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:story",
     "component:gf2-core",
@@ -24,5 +32,5 @@
     "story:sota-sparse-fieldmatrix"
   ],
   "created_at": "2026-04-30T06:43:02.522262388+00:00",
-  "updated_at": "2026-04-30T06:43:49.329398660+00:00"
+  "updated_at": "2026-05-04T10:38:18.233821703+00:00"
 }
