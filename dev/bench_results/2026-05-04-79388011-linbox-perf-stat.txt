@@ -1,0 +1,46 @@
+# linbox bench perf-stat — issue 79388011
+# generated: 2026-05-04T04:50:22Z
+# host: AMD Ryzen 9 5900X (Zen 3), Linux 7.0.3-arch1-1
+# image: gf2-bench:linbox (LinBox 1.7.1 + fflas-ffpack 2.5.0 + Givaro 4.2.0)
+# representative cells captured: full in-scope sweep (charpoly@{64,256}, minpoly@{64,256}, solve@{64,256,1024}×{uniform,deficient}) across all four GF(p) fields — single binary invocation, --warmup 0 --iters 1
+# events: cycles,instructions,branches,branch-misses,L1-dcache-loads,L1-dcache-load-misses
+# repeat: -r 5 (variance estimate via stddev)
+# wall budget: ~6 min (5 reps × ~70 s each)
+
+[linbox_bench] master_seed=0x6f73ac91d31e4a7c warmup=0 iters=1 smoke=0
+[linbox_bench] field=GF(2^31-1) charpoly_sizes=64 256 minpoly_sizes=64 256 solve_sizes=64 256 1024 
+[linbox_bench] field=GF(65521) charpoly_sizes=64 256 minpoly_sizes=64 256 solve_sizes=64 256 1024 
+[linbox_bench] field=GF(251) charpoly_sizes=64 256 minpoly_sizes=64 256 solve_sizes=64 256 1024 
+[linbox_bench] field=GF(7) charpoly_sizes=64 256 minpoly_sizes=64 256 solve_sizes=64 256 1024 
+[linbox_bench] master_seed=0x6f73ac91d31e4a7c warmup=0 iters=1 smoke=0
+[linbox_bench] field=GF(2^31-1) charpoly_sizes=64 256 minpoly_sizes=64 256 solve_sizes=64 256 1024 
+[linbox_bench] field=GF(65521) charpoly_sizes=64 256 minpoly_sizes=64 256 solve_sizes=64 256 1024 
+[linbox_bench] field=GF(251) charpoly_sizes=64 256 minpoly_sizes=64 256 solve_sizes=64 256 1024 
+[linbox_bench] field=GF(7) charpoly_sizes=64 256 minpoly_sizes=64 256 solve_sizes=64 256 1024 
+[linbox_bench] master_seed=0x6f73ac91d31e4a7c warmup=0 iters=1 smoke=0
+[linbox_bench] field=GF(2^31-1) charpoly_sizes=64 256 minpoly_sizes=64 256 solve_sizes=64 256 1024 
+[linbox_bench] field=GF(65521) charpoly_sizes=64 256 minpoly_sizes=64 256 solve_sizes=64 256 1024 
+[linbox_bench] field=GF(251) charpoly_sizes=64 256 minpoly_sizes=64 256 solve_sizes=64 256 1024 
+[linbox_bench] field=GF(7) charpoly_sizes=64 256 minpoly_sizes=64 256 solve_sizes=64 256 1024 
+[linbox_bench] master_seed=0x6f73ac91d31e4a7c warmup=0 iters=1 smoke=0
+[linbox_bench] field=GF(2^31-1) charpoly_sizes=64 256 minpoly_sizes=64 256 solve_sizes=64 256 1024 
+[linbox_bench] field=GF(65521) charpoly_sizes=64 256 minpoly_sizes=64 256 solve_sizes=64 256 1024 
+[linbox_bench] field=GF(251) charpoly_sizes=64 256 minpoly_sizes=64 256 solve_sizes=64 256 1024 
+[linbox_bench] field=GF(7) charpoly_sizes=64 256 minpoly_sizes=64 256 solve_sizes=64 256 1024 
+[linbox_bench] master_seed=0x6f73ac91d31e4a7c warmup=0 iters=1 smoke=0
+[linbox_bench] field=GF(2^31-1) charpoly_sizes=64 256 minpoly_sizes=64 256 solve_sizes=64 256 1024 
+[linbox_bench] field=GF(65521) charpoly_sizes=64 256 minpoly_sizes=64 256 solve_sizes=64 256 1024 
+[linbox_bench] field=GF(251) charpoly_sizes=64 256 minpoly_sizes=64 256 solve_sizes=64 256 1024 
+[linbox_bench] field=GF(7) charpoly_sizes=64 256 minpoly_sizes=64 256 solve_sizes=64 256 1024 
+
+ Performance counter stats for 'podman run --rm --security-opt label=disable -v /home/vkaskivuo/Projects/gf2/.claude/worktrees/agent-79388011/benchmarks:/work:Z,U gf2-bench:linbox bash -c cd /work/reference && ./linbox_bench --seed 0x6F73AC91D31E4A7C --warmup 0 --iters 1 >/dev/null' (5 runs):
+
+    11,138,260,569      cycles:u                                                                ( +-  0.90% )  (83.50%)
+    22,431,179,363      instructions:u                                                          ( +-  0.19% )  (83.43%)
+     1,704,996,558      branches:u                                                              ( +-  0.39% )  (83.06%)
+        25,242,805      branch-misses:u                                                         ( +-  1.08% )  (83.50%)
+     6,066,702,688      L1-dcache-loads:u                                                       ( +-  0.37% )  (83.16%)
+       471,421,463      L1-dcache-load-misses:u                                                 ( +-  0.39% )  (83.46%)
+
+       2.796350298 +- 0.030211631 seconds time elapsed  ( +-  1.08% )
+

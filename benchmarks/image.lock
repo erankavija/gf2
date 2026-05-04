@@ -78,3 +78,8 @@ sha256  = "dafb4c0835824d28e4f823748579be6e4c8889c9570c6ce9cce1e186c3ebbb23"
 version = "20260122"
 source  = "https://github.com/malb/m4ri/releases/download/20260122/m4ri-20260122.tar.gz"
 sha256  = "7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404"
+
+[libs.linbox]
+version = "1.7.1"
+source  = "https://github.com/linbox-team/linbox/releases/download/v1.7.1/linbox-1.7.1.tar.gz"
+sha256  = "a2b5f910a54a46fa75b03f38ad603cae1afa973c95455813d85cf72c27553bd8"

@@ -114,6 +114,38 @@ RUN curl -fsSL -o /tmp/m4ri.tar.gz \
  && make install \
  && rm -rf /tmp/m4ri-${M4RI_VERSION} /tmp/m4ri.tar.gz
 
+# === linbox begin ===
+# ---------------------------------------------------------------------------
+# LinBox 1.7.1 — exact linear algebra over finite fields, used as the
+# reference for charpoly / minpoly / solve cells where fflas-ffpack does
+# not expose a directly comparable solution-level API. Builds on top of
+# the already-pinned Givaro 4.2.0 / fflas-ffpack 2.5.0 stack; LinBox's
+# only mandatory dependency is fflas-ffpack ≥ 2.5.0 (per its
+# configure.ac), and the optional NTL/FLINT/IML/MPFR pieces are not
+# needed for our finite-field-only scope.
+#
+# `--disable-openmp` mirrors the existing fflas posture and ensures the
+# single-thread requirement of the SOTA acceptance protocol § 5 is met
+# without runtime ENV overrides. `--disable-static` matches sibling pins.
+# ---------------------------------------------------------------------------
+ARG LINBOX_VERSION=1.7.1
+ARG LINBOX_SHA256=a2b5f910a54a46fa75b03f38ad603cae1afa973c95455813d85cf72c27553bd8
+RUN curl -fsSL -o /tmp/linbox.tar.gz \
+        https://github.com/linbox-team/linbox/releases/download/v${LINBOX_VERSION}/linbox-${LINBOX_VERSION}.tar.gz \
+ && echo "${LINBOX_SHA256}  /tmp/linbox.tar.gz" | sha256sum -c - \
+ && tar -C /tmp -xf /tmp/linbox.tar.gz \
+ && cd /tmp/linbox-${LINBOX_VERSION} \
+ && ./configure --prefix=/usr/local \
+        --with-givaro=/usr/local \
+        --with-fflas-ffpack=/usr/local \
+        --with-blas-libs="-lopenblas" \
+        --disable-openmp \
+        --disable-static \
+ && make -j"$(nproc)" \
+ && make install \
+ && rm -rf /tmp/linbox-${LINBOX_VERSION} /tmp/linbox.tar.gz
+# === linbox end ===
+
 # Refresh the loader cache so the freshly installed shared libs are picked up.
 RUN ldconfig
 
