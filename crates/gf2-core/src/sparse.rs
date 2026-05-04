@@ -2619,25 +2619,24 @@ mod tests {
     }
 
     proptest! {
-        #![proptest_config(ProptestConfig::with_cases(48))]
+        #![proptest_config(ProptestConfig::with_cases(32))]
 
         #[test]
         fn proptest_matmat_matches_dense(
-            ar in 0usize..32,
-            ak in 0usize..32,
-            bc in 0usize..256,
-            a_raw in proptest::collection::vec((0usize..32, 0usize..32), 0..120),
+            // Per the 521390db hard criterion: cover n ∈ [1, 256]. The
+            // outer dimensions (ar, ak, bc) sweep the full range so the
+            // proptest exercises the range the issue mandates. Sparse
+            // entry density is kept ~0.5% so the per-case wall time
+            // stays well under the 5 s nextest budget at the upper end.
+            ar in 1usize..=256,
+            ak in 1usize..=256,
+            bc in 1usize..=256,
+            a_raw in proptest::collection::vec((0usize..256, 0usize..256), 0..256),
             b_seed in any::<u64>(),
         ) {
             let a_entries: Vec<_> = a_raw
                 .into_iter()
-                .filter_map(|(r, c)| {
-                    if ar == 0 || ak == 0 {
-                        None
-                    } else {
-                        Some((r % ar, c % ak))
-                    }
-                })
+                .map(|(r, c)| (r % ar, c % ak))
                 .collect();
 
             let a = SpBitMatrix::from_coo(ar, ak, &a_entries);
