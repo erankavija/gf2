@@ -26,11 +26,11 @@
 //! relevant". Today the layout-variant inventory in `gf2-core` is:
 //!
 //!   - GF(2)    : CSR (`SpBitMatrix`), CSC-dual (`SpBitMatrixDual`),
-//!                block-CSR (`SpBitMatrixBlockCsr`), RCM (`reorder_rcm`),
-//!                prefetch (`matvec_with_prefetch_distance`).
+//!     block-CSR (`SpBitMatrixBlockCsr`), RCM (`reorder_rcm`),
+//!     prefetch (`matvec_with_prefetch_distance`).
 //!   - GF(p)    : CSR (`SparseFieldMatrix<Fp<P>>`), CSC (`SparseFieldMatrixCsc`).
-//!                No block-CSR / RCM / prefetch yet — classified
-//!                `not-yet-harnessed` in the scorecard.
+//!     No block-CSR / RCM / prefetch yet — classified
+//!     `not-yet-harnessed` in the scorecard.
 //!   - GF(2^m)  : Same as GF(p): CSR + CSC only.
 //!
 //! For each `(operation, field)` cell we emit the CSR row as the canonical
@@ -307,7 +307,7 @@ fn run_gf2_random_er(args: &Args, sink: &mut CsvSink, sizes: &[usize]) -> std::i
     for (si, &n) in sizes.iter().enumerate() {
         // d = 10/n is the canonical sparse-design density per § 3.1.
         let density = 10.0 / (n as f64);
-        let regime = format!("density_{}_csr");
+        let regime = format!("density_{}_csr", fmt_density_c(density));
         let key = format!("spmv/{field}/{n}/csr");
         if !cell_passes(&args.filter, &key) {
             continue;
@@ -361,7 +361,7 @@ fn run_gf2_random_er(args: &Args, sink: &mut CsvSink, sizes: &[usize]) -> std::i
                 n,
                 n,
                 1,
-                &format!("density_{}_csc"),
+                &format!("density_{}_csc", fmt_density_c(density)),
                 row_seed,
                 wall_dual,
                 tput(nnz as f64, wall_dual),
@@ -386,7 +386,7 @@ fn run_gf2_random_er(args: &Args, sink: &mut CsvSink, sizes: &[usize]) -> std::i
                 n,
                 n,
                 1,
-                &format!("density_{}_block-csr"),
+                &format!("density_{}_block-csr", fmt_density_c(density)),
                 row_seed,
                 wall_blk,
                 tput(nnz as f64, wall_blk),
@@ -411,7 +411,7 @@ fn run_gf2_random_er(args: &Args, sink: &mut CsvSink, sizes: &[usize]) -> std::i
                     n,
                     n,
                     1,
-                    &format!("density_{}_prefetch-d8"),
+                    &format!("density_{}_prefetch-d8", fmt_density_c(density)),
                     row_seed,
                     wall_pf,
                     tput(nnz as f64, wall_pf),
@@ -443,7 +443,7 @@ fn run_gf2_random_er(args: &Args, sink: &mut CsvSink, sizes: &[usize]) -> std::i
                 n,
                 n,
                 1,
-                &format!("density_{}_rcm-reordered"),
+                &format!("density_{}_rcm-reordered", fmt_density_c(density)),
                 row_seed,
                 wall_rcm,
                 tput(nnz as f64, wall_rcm),
@@ -470,7 +470,7 @@ fn run_gf2_random_er(args: &Args, sink: &mut CsvSink, sizes: &[usize]) -> std::i
                 n,
                 n,
                 n,
-                &format!("density_{}_csr"),
+                &format!("density_{}_csr", fmt_density_c(density)),
                 row_seed,
                 wall_mm,
                 tput(nnz_total, wall_mm),
@@ -502,7 +502,7 @@ fn run_fp_random_er<const P: u64>(
 ) -> std::io::Result<()> {
     for (si, &n) in sizes.iter().enumerate() {
         let density = 10.0 / (n as f64);
-        let regime = format!("density_{}_csr");
+        let regime = format!("density_{}_csr", fmt_density_c(density));
         let row_seed = derive_seed(args.master_seed, "spmv-er", 0, si as u64, 1);
         let vec_seed = derive_seed(args.master_seed, "spmv-er-vec", 0, si as u64, 1);
         let a = fp_sparse_from_seed::<P>(n, n, density, row_seed);
@@ -553,7 +553,7 @@ fn run_fp_random_er<const P: u64>(
                 n,
                 n,
                 n,
-                &format!("density_{}_csr"),
+                &format!("density_{}_csr", fmt_density_c(density)),
                 row_seed,
                 wall_mm,
                 tput(nnz_total, wall_mm),
@@ -581,7 +581,7 @@ fn run_fp_random_er<const P: u64>(
                 n,
                 n,
                 n,
-                &format!("density_{}_csr"),
+                &format!("density_{}_csr", fmt_density_c(density)),
                 row_seed,
                 wall_sd,
                 tput(work_ops, wall_sd),
@@ -628,7 +628,7 @@ fn run_gf2m_random_er<C: Gf2mWideConfig<1>>(
 ) -> std::io::Result<()> {
     for (si, &n) in sizes.iter().enumerate() {
         let density = 10.0 / (n as f64);
-        let regime = format!("density_{}_csr");
+        let regime = format!("density_{}_csr", fmt_density_c(density));
         let row_seed = derive_seed(args.master_seed, "spmv-er", 0, si as u64, 1);
         let vec_seed = derive_seed(args.master_seed, "spmv-er-vec", 0, si as u64, 1);
         let a = gf2m_wide_1_sparse_from_seed::<C>(n, n, density, row_seed);
@@ -677,7 +677,7 @@ fn run_gf2m_random_er<C: Gf2mWideConfig<1>>(
                 n,
                 n,
                 n,
-                &format!("density_{}_csr"),
+                &format!("density_{}_csr", fmt_density_c(density)),
                 row_seed,
                 wall_mm,
                 tput(nnz_total, wall_mm),
@@ -703,7 +703,7 @@ fn run_gf2m_random_er<C: Gf2mWideConfig<1>>(
                 n,
                 n,
                 n,
-                &format!("density_{}_csr"),
+                &format!("density_{}_csr", fmt_density_c(density)),
                 row_seed,
                 wall_sd,
                 tput(work_ops, wall_sd),
