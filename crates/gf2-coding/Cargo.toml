@@ -41,11 +41,20 @@ visualization = ["gf2-core/visualization"]
 llr-f64 = []
 # HIP/ROCm GPU acceleration (requires hipcc and AMD GPU)
 hip = ["dep:gf2-kernels-hip"]
+# Bench-csv emitter support (jit:47698404). Pulls in `gf2-core/test-support`
+# which exposes the `bench_seed` module used by the sparse CSV harness.
+bench-csv = ["gf2-core/test-support"]
 
 # Binaries are auto-discovered in src/bin/
 # - generate_ldpc_cache: Generate DVB-T2 LDPC encoding cache files
 # - validate_ldpc_cache: Comprehensive LDPC validation with error correction
 # - check_encoding: Quick encoding sanity check
+
+# Sparse-side CSV emitter for the post-PPC scorecard (jit:47698404).
+# Mirrors the dense emitter's example layout in `crates/gf2-core/examples/`.
+[[example]]
+name = "bench_sparse_csv_emitter"
+required-features = ["bench-csv"]
 
 [[bench]]
 name = "linear_codes"
