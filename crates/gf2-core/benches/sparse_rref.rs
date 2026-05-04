@@ -1,8 +1,8 @@
 //! Criterion micro-benchmarks for [`SparseFieldMatrix::rref`] over the
 //! field types called out in issue `eb57f944` §4. RREF is generic over
-//! `F: FiniteField`, so the suite covers `Fp<7>`, plus the two GF(2^m)
-//! surrogates for `Gf2mWide<u8>` (GF(2^8) AES) and `Gf2mWide<u32>` (GF(2^32)
-//! single-word Conway).
+//! `F: FiniteField`, so the suite covers `Fp<7>`, `Fp<65521>`, plus the
+//! two GF(2^m) surrogates for `Gf2mWide<u8>` (GF(2^8) AES) and
+//! `Gf2mWide<u32>` (GF(2^32) single-word Conway).
 //!
 //! ## Coverage
 //!
@@ -138,6 +138,10 @@ fn bench_fp7(c: &mut Criterion) {
     bench_with_label::<Fp<7>, _>(c, "Fp_7", random_sparse_fp::<7>);
 }
 
+fn bench_fp65521(c: &mut Criterion) {
+    bench_with_label::<Fp<65521>, _>(c, "Fp_65521", random_sparse_fp::<65521>);
+}
+
 fn bench_gf2m8(c: &mut Criterion) {
     bench_with_label::<Gf2m8, _>(c, "Gf2m_u8_AES", random_sparse_gf2m8);
 }
@@ -146,5 +150,5 @@ fn bench_gf2m32(c: &mut Criterion) {
     bench_with_label::<Gf2m32, _>(c, "Gf2m_u32_Conway", random_sparse_gf2m32);
 }
 
-criterion_group!(benches, bench_fp7, bench_gf2m8, bench_gf2m32);
+criterion_group!(benches, bench_fp7, bench_fp65521, bench_gf2m8, bench_gf2m32);
 criterion_main!(benches);

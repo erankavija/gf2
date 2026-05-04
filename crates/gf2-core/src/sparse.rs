@@ -1132,6 +1132,12 @@ impl SpBitMatrix {
     /// distinct `k` indices accumulate by XOR, so an even number of touches at
     /// the same output coordinate cancels.
     ///
+    /// # Arguments
+    ///
+    /// * `other` — right-hand-side sparse matrix `B`. Must satisfy
+    ///   `self.cols() == other.rows()`; otherwise the call panics (see
+    ///   *Panics* below).
+    ///
     /// # Algorithm
     ///
     /// Row-by-row CSR multiply with a dense word-packed XOR accumulator:

@@ -1,0 +1,40 @@
+# b13799ac NTL GF(2^32) perf-stat capture
+# date    : 2026-05-04T16:33:59Z
+# host    : Linux fraktaali 7.0.3-arch1-1 #1 SMP PREEMPT_DYNAMIC Thu, 30 Apr 2026 18:41:12 +0000 x86_64 GNU/Linux
+#           AMD Ryzen 9 5900X (Zen-3, 12c/24t, AVX2/BMI2/VAES/VPCLMULQDQ; no AVX-512)
+# binary  : ./benchmarks/reference/ntl_bench  (compiled inside pinned
+#           container localhost/gf2-bench:ref via
+#           `g++ -std=c++17 -O3 -march=native ntl_bench.cpp -lntl -lgmp -lm -lpthread`,
+#           output bind-mounted out to host filesystem)
+# events  : cycles,instructions,branches,branch-misses,L1-dcache-loads,L1-dcache-load-misses
+# repeats : -r 5
+# notes   : default-size invocation (no --large). Bench iterates GF(7),
+#           GF(251), GF(65521), GF(2^31-1), and the new GF(2^32) lane —
+#           all at n=64, with `--warmup 3 --iters 5`. The GF(2^32) lane
+#           is wired via `init_gf2pow32` + `bench_mul_gf2pow32` and
+#           emits one `ntl,matmul,GF(2^32),64,64,64,uniform,...` row.
+#           Counter values below cover the entire bench run; the
+#           GF(2^32) lane contributes the per-cell wall_ns reported in
+#           the bench CSV (~6.7 ms on this run).
+#
+# Required by protocol §5 (criterion #2 of the five-criterion
+# checklist). Same hardware-class anchor as the 2026-04-26 dense-LA
+# baseline and the 2026-05-04 73ab8eef NTL Wave-2 perf-stat
+# (`dev/bench_results/2026-05-04-73ab8eef-ntl-perf-stat.txt`).
+
+
+ Performance counter stats for 'bash -c ./benchmarks/reference/ntl_bench --seed 0x6F73AC91D31E4A7C --warmup 3 --iters 5 >/dev/null 2>&1' (5 runs):
+
+       413,676,643      cycles:u                                                                ( +-  0.12% )  (83.04%)
+     1,586,325,635      instructions:u                                                          ( +-  0.19% )  (83.15%)
+       186,150,384      branches:u                                                               ( +-  0.08% )  (83.14%)
+           161,308      branch-misses:u                                                         ( +-  1.94% )  (83.15%)
+       483,922,109      L1-dcache-loads:u                                                       ( +-  0.15% )  (84.16%)
+         3,410,865      L1-dcache-load-misses:u                                                 ( +-  0.75% )  (83.98%)
+
+       0.090915148 +- 0.000810668 seconds time elapsed  ( +-  0.89% )
+
+# Sample bench-row produced during this perf-stat run (largest GF(2^32) cell at default sizes):
+#   ntl,matmul,GF(2^32),64,64,64,uniform,17158103737143628803,6706932,7.817106e+07
+# (lib=ntl, op=matmul, field=GF(2^32), m=k=n=64, regime=uniform, seed=...,
+#  wall_ns=6.706932 ms, throughput=78.17 Gop/s)
