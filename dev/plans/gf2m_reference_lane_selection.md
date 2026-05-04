@@ -92,12 +92,12 @@ for user approval).
 | `minpoly` | EXCLUDED:`no-independent-oracle`:no independent GF(2^m) minimal-polynomial reference is harnessed. NTL provides only `MinPolyMod` for polynomials, not `MinPoly(mat_GF2E)`; FLINT's `fq_nmod_mat_minpoly` is a candidate but has no harness. See § 4 proposal #3. | same as GF(2^8). | same as GF(2^8) — compounds with proposal #1. |
 | `spmv` (sparse) | EXCLUDED:`not-performance-relevant`-adjacent / `no-independent-oracle`:no GF(2^m) sparse reference is harnessed today; sparse-corpus selection is the subject of issue `a3412e15` (Wave 3). The cell is deferred pending that issue's output. | same as GF(2^8). | same as GF(2^8). |
 
-**Read.** Of 21 cells, **2 are selected** (M4RIE matmul over GF(2^8) and
-GF(2^16)) and **19 are proposed for exclusion**. The proposed
-exclusions cluster into three reasons:
+**Read (post-2026-05-04 user decision).** Of 21 cells, **3 are
+selected** (M4RIE matmul over GF(2^8) and GF(2^16); NTL/FLINT
+candidate pool for matmul over GF(2^32) — final pick decided in
+`b13799ac`'s harness work) and **18 are excluded** (per protocol
+§ 9). The exclusions cluster into two reasons:
 
-* **Reason A (1 cell):** `(matmul, GF(2^32))` — no candidate harness
-  exists; M4RIE is bounded at m ≤ 16. Proposal #1 in § 4 below.
 * **Reason B (15 cells):** non-matmul × any GF(2^m) — no independent
   bitwise oracle exists. Proposal #2 (echelon) and proposal #3
   (invert/solve/charpoly/minpoly) in § 4 below.

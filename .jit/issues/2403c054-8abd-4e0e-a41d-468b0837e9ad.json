@@ -1,0 +1,25 @@
+{
+  "id": "2403c054-8abd-4e0e-a41d-468b0837e9ad",
+  "title": "gf2-core SpBitMatrix::matmul (GF(2) sparse-sparse multiply)",
+  "description": "Implement sparse × sparse matrix multiplication on `gf2-core`'s `SpBitMatrix` over GF(2). Filed per user decision on 2026-05-04 in response to a3412e15's exclusion proposal #2: rather than excluding the (sparse-matmul × GF(2)) cell as `schema-violation`, implement gf2-core's own SpMM so the cell becomes a self-reference (no external library lacks the symbol — none provides public sparse × sparse matmul over GF(2), so gf2-core's path becomes the canonical reference for this cell).\n\n## Background\n\nThe sparse benchmark corpus design (a3412e15) flagged that no public sparse × sparse matmul exists in fflas-ffpack, LinBox, M4RI, NTL, or FLINT. Without an external reference, the cell either gets excluded or becomes a self-reference cell (gf2-core's own implementation is the canonical numbers). This task implements the gf2-core path so the cell can be filled with a self-reference number rather than excluded.\n\n## Success Criteria\n\n- [hard] `SpBitMatrix::matmul(&self, other: &SpBitMatrix) -> SpBitMatrix` exists and produces the canonical CSR output.\n- [hard] Output is bitwise-equal to `(self.to_dense() * other.to_dense()).to_sparse()` for tested input ranges.\n- [hard] At least one benchmark in `crates/gf2-core/benches/sparse_matmul.rs` covers `(n, density) ∈ {(1024, 1/n), (4096, log(n)/n)}`.\n- [hard] Tail-masking invariant preserved (per CLAUDE.md key invariant 1).\n- [hard] No unsafe in this module — sparse matmul stays in `gf2-core` proper, not the kernels crates.\n- [hard] `cargo-ci`, `code-review`, `doc-review` pass.\n\n## References\n\n- `dev/plans/sparse_benchmark_corpus.md` § 6 proposal #2 (the exclusion this task replaces).\n- `crates/gf2-core/src/sparse/` for the existing CSR structure.",
+  "state": "ready",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [
+    "code-review",
+    "cargo-ci",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "epic:gf2-core-sota-performance",
+    "story:sota-sparse-fieldmatrix"
+  ],
+  "created_at": "2026-05-04T12:43:36.905856022+00:00",
+  "updated_at": "2026-05-04T12:43:36.905864292+00:00"
+}

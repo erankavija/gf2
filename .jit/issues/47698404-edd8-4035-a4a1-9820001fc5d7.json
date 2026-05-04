@@ -6,7 +6,9 @@
   "priority": "normal",
   "assignee": null,
   "dependencies": [
-    "a3412e15-e73d-4556-a2aa-e4296677cfa5"
+    "a3412e15-e73d-4556-a2aa-e4296677cfa5",
+    "eb57f944-9d82-4bbe-8b58-68eae7622654",
+    "2403c054-8abd-4e0e-a41d-468b0837e9ad"
   ],
   "gates_required": [
     "code-review",
@@ -23,5 +25,5 @@
     "story:sota-sparse-fieldmatrix"
   ],
   "created_at": "2026-04-30T06:43:02.900080306+00:00",
-  "updated_at": "2026-04-30T06:43:48.803273349+00:00"
+  "updated_at": "2026-05-04T12:44:06.882256778+00:00"
 }
