@@ -167,6 +167,59 @@ RUN curl -fsSL -o /tmp/m4rie.tar.gz \
  && rm -rf /tmp/m4rie-${M4RIE_VERSION} /tmp/m4rie.tar.gz
 # === m4rie end ===
 
+# === ntl begin ===
+# ---------------------------------------------------------------------------
+# NTL 11.6.0 — number-theoretic library (Victor Shoup). Used as a
+# secondary GF(p) reference for fgemm/inv/solve/charpoly via the
+# single-precision `zz_p` matrix path (NTL_SP_BOUND ≥ 2^31-1 covers
+# all four reference primes). Promoted by jit:73ab8eef.
+#
+# NTL is configured with NTL_GMP_LIP=on so big-integer ops route to
+# GMP (already present from libgmp-dev); shared-lib install lands at
+# /usr/local/lib/libntl.so. License: LGPL-2.1-or-later.
+# ---------------------------------------------------------------------------
+ARG NTL_VERSION=11.6.0
+ARG NTL_SHA256=bc0ef9aceb075a6a0673ac8d8f47d5f8458c72fe806e4468fbd5d3daff056182
+RUN curl -fsSL -o /tmp/ntl.tar.gz \
+        https://libntl.org/ntl-${NTL_VERSION}.tar.gz \
+ && echo "${NTL_SHA256}  /tmp/ntl.tar.gz" | sha256sum -c - \
+ && tar -C /tmp -xf /tmp/ntl.tar.gz \
+ && cd /tmp/ntl-${NTL_VERSION}/src \
+ && ./configure PREFIX=/usr/local SHARED=on NTL_GMP_LIP=on \
+ && make -j"$(nproc)" \
+ && make install \
+ && rm -rf /tmp/ntl-${NTL_VERSION} /tmp/ntl.tar.gz
+# === ntl end ===
+
+# === flint begin ===
+# ---------------------------------------------------------------------------
+# FLINT 3.5.0 — fast library for number theory. Used as a secondary
+# GF(p) reference for fgemm/pluq/echelon/inv/solve/charpoly/minpoly
+# via `nmod_mat` (single-word modular matrices, modulus up to 2^63-1
+# covers all four reference primes). Promoted by jit:73ab8eef.
+#
+# FLINT depends on GMP (already installed) and MPFR. We add the
+# matching apt-pinned `libmpfr-dev` here so the FLINT layer remains
+# fully reproducible. License: LGPL-3.0-or-later.
+# ---------------------------------------------------------------------------
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+        libmpfr-dev=4.2.0-1 \
+ && rm -rf /var/lib/apt/lists/*
+
+ARG FLINT_VERSION=3.5.0
+ARG FLINT_SHA256=3982f385f00610a944e0152eb0a29893b2366fa640e8f5f3076c47564cf7e2a6
+RUN curl -fsSL -o /tmp/flint.tar.gz \
+        https://www.flintlib.org/download/flint-${FLINT_VERSION}.tar.gz \
+ && echo "${FLINT_SHA256}  /tmp/flint.tar.gz" | sha256sum -c - \
+ && tar -C /tmp -xf /tmp/flint.tar.gz \
+ && cd /tmp/flint-${FLINT_VERSION} \
+ && ./configure --prefix=/usr/local --disable-static \
+ && make -j"$(nproc)" \
+ && make install \
+ && rm -rf /tmp/flint-${FLINT_VERSION} /tmp/flint.tar.gz
+# === flint end ===
+
 # Refresh the loader cache so the freshly installed shared libs are picked up.
 RUN ldconfig
 
@@ -175,15 +228,20 @@ RUN ldconfig
 # ---------------------------------------------------------------------------
 WORKDIR /work
 
-# Compile-time smoke check: verify all four libraries are visible to
-# pkg-config or as raw header/library files, so a broken image fails to
-# build, not at run time.
+# Compile-time smoke check: verify all installed libraries are visible
+# at the expected paths so a broken image fails to build, not at run
+# time. fflas-ffpack/givaro use pkg-config; m4ri/m4rie/linbox/ntl/flint
+# are plain Autoconf installs and exposed by header path / library file.
 RUN pkg-config --cflags fflas-ffpack givaro \
  && pkg-config --libs fflas-ffpack givaro \
  && test -f /usr/local/include/m4ri/m4ri.h \
  && test -f /usr/local/lib/libm4ri.so \
  && test -f /usr/local/include/m4rie/m4rie.h \
- && test -f /usr/local/lib/libm4rie.so
+ && test -f /usr/local/lib/libm4rie.so \
+ && test -f /usr/local/include/NTL/mat_lzz_p.h \
+ && test -f /usr/local/lib/libntl.so \
+ && test -f /usr/local/include/flint/nmod_mat.h \
+ && test -f /usr/local/lib/libflint.so
 
 # Default command lists the installed reference-library versions so
 # `podman run --rm gf2-bench:ref` is self-documenting.
@@ -195,6 +253,9 @@ echo 'g++:        '$(g++ -dumpfullversion -dumpversion); \
 echo 'givaro/fflas: '$(pkg-config --modversion givaro fflas-ffpack 2>/dev/null | paste -sd ' / ' -); \
 echo 'm4ri:       '$(grep -E '#define +M4RI_VERSION ' /usr/local/include/m4ri/m4ri_config.h 2>/dev/null | awk '{print $3}' | tr -d '\"'); \
 echo 'm4rie:      '$(grep -E '#define +M4RIE_VERSION ' /usr/local/include/m4rie/m4rie.h 2>/dev/null | awk '{print $3}' | tr -d '\"'); \
+echo 'ntl:        '$(grep -E 'NTL_VERSION ' /usr/local/include/NTL/version.h 2>/dev/null | awk '{print $3}' | tr -d '\"'); \
+echo 'flint:      '$(grep -E '#define +FLINT_VERSION ' /usr/local/include/flint/flint.h 2>/dev/null | awk '{print $3}' | tr -d '\"'); \
 echo 'openblas:   '$(dpkg -s libopenblas-dev | awk '/^Version:/{print $2}'); \
 echo 'gmp:        '$(dpkg -s libgmp-dev    | awk '/^Version:/{print $2}'); \
+echo 'mpfr:       '$(dpkg -s libmpfr-dev    | awk '/^Version:/{print $2}'); \
 "]

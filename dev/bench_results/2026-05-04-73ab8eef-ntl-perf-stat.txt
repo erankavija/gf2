@@ -1,0 +1,19 @@
+# 73ab8eef NTL perf-stat capture
+# date    : 2026-05-04T05:01:48Z
+# host    : Linux fraktaali 7.0.3-arch1-1 #1 SMP PREEMPT_DYNAMIC Thu, 30 Apr 2026 18:41:12 +0000 x86_64 GNU/Linux
+# binary  : podman run --rm gf2-bench:73ab8eef ./ntl_bench --seed 0x6F73AC91D31E4A7C --warmup 3 --iters 5
+# events  : cycles,instructions,branches,branch-misses,L1-dcache-loads,L1-dcache-load-misses
+# notes   : -r 5 repeats; podman shell process layer included; n=64 across 4 GF(p) fields.
+
+
+ Performance counter stats for 'podman run --rm --security-opt label=disable -v ./benchmarks:/work:Z localhost/gf2-bench:73ab8eef bash -c cd /work/reference && ./ntl_bench --seed 0x6F73AC91D31E4A7C --warmup 3 --iters 5 >/dev/null 2>&1' (5 runs):
+
+       465,692,561      cycles:u                                                                ( +-  3.99% )  (86.06%)
+       929,806,943      instructions:u                                                          ( +-  2.75% )  (87.54%)
+       159,967,074      branches:u                                                              ( +-  3.92% )  (83.87%)
+         1,884,068      branch-misses:u                                                         ( +-  2.21% )  (79.57%)
+       329,820,758      L1-dcache-loads:u                                                       ( +-  3.47% )  (81.62%)
+         6,753,242      L1-dcache-load-misses:u                                                 ( +-  1.38% )  (83.28%)
+
+       0.354264019 +- 0.014582730 seconds time elapsed  ( +-  4.12% )
+

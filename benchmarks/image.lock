@@ -88,3 +88,32 @@ sha256  = "a2b5f910a54a46fa75b03f38ad603cae1afa973c95455813d85cf72c27553bd8"
 version = "20250128"
 source  = "https://github.com/malb/m4rie/releases/download/20250128/m4rie-20250128.tar.gz"
 sha256  = "96f1adafd50e6a0b51dc3aa1cb56cb6c1361ae7c10d97dc35c3fa70822a55bd7"
+
+# === ntl begin ===
+# Promoted by jit:73ab8eef. NTL provides a single-precision modular
+# field path (`zz_p` / `mat_zz_p`) that complements fflas-ffpack as a
+# secondary GF(p) reference for fgemm / inv / solve / charpoly.
+# License: LGPL-2.1-or-later (see ntl-11.6.0/doc/copying.txt).
+[libs.ntl]
+version = "11.6.0"
+source  = "https://libntl.org/ntl-11.6.0.tar.gz"
+sha256  = "bc0ef9aceb075a6a0673ac8d8f47d5f8458c72fe806e4468fbd5d3daff056182"
+# === ntl end ===
+
+# === flint begin ===
+# Promoted by jit:73ab8eef. FLINT provides `nmod_mat` (single-word
+# modular matrices) covering fgemm/pluq/echelon/inv/solve plus
+# `nmod_mat_charpoly` and `nmod_mat_minpoly` — a wider operation
+# surface than NTL's mat_zz_p. License: LGPL-3.0-or-later
+# (see flint-3.5.0/README.md).
+#
+# FLINT depends on libmpfr-dev (also pinned below).
+[libs.flint]
+version = "3.5.0"
+source  = "https://www.flintlib.org/download/flint-3.5.0.tar.gz"
+sha256  = "3982f385f00610a944e0152eb0a29893b2366fa640e8f5f3076c47564cf7e2a6"
+
+[libs.mpfr]
+version = "4.2.0-1"
+source  = "debian-bookworm-apt"
+# === flint end ===
