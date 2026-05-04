@@ -18,9 +18,10 @@
  * Run:
  *   ./m4rie_one_cell [iters]   # default iters=10
  *
- * Inputs are seeded deterministically via SplitMix64 (the same algorithm
- * shared by `seed_helpers.h`, copied inline here so the cell driver has
- * no external header dependency on the sibling harnesses).
+ * Inputs are seeded deterministically via SplitMix64. The driver pulls
+ * the canonical implementation from `seed_helpers.h` (single source of
+ * truth shared with `m4rie_bench.c`, `m4ri_bench.c`, `fflas_bench.cpp`,
+ * etc.) — see jit:507b0036 R2 (rework against e3592fe code-review).
  */
 #define _POSIX_C_SOURCE 200809L
 #include <stdio.h>
@@ -29,17 +30,13 @@
 #include <string.h>
 #include <m4ri/m4ri.h>
 #include <m4rie/m4rie.h>
-static inline uint64_t splitmix64(uint64_t* s){
-    *s += 0x9E3779B97F4A7C15ULL; uint64_t z=*s;
-    z=(z^(z>>30))*0xBF58476D1CE4E5B9ULL;
-    z=(z^(z>>27))*0x94D049BB133111EBULL;
-    return z^(z>>31);
-}
+#include "seed_helpers.h"
+
 static void fill(mzed_t* M, int m, uint64_t s){
     word mask = ((word)1<<m)-1;
     uint64_t st=s;
     for (rci_t r=0;r<M->nrows;++r) for (rci_t c=0;c<M->ncols;++c) {
-        uint64_t v=splitmix64(&st);
+        uint64_t v=gf2_bench_splitmix64(&st);
         mzed_write_elem(M,r,c,(word)(v&mask));
     }
 }
