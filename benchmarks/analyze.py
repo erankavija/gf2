@@ -6,7 +6,13 @@ Both inputs share the schema documented in `benchmarks/README.md`:
 
     lib,operation,field,m,k,n,rank_regime,seed,wall_ns,throughput_ops
 
-Where `lib` is one of {"gf2", "fflas-ffpack", "m4ri"}.
+Where `lib` is one of {"gf2", "fflas-ffpack", "m4ri", "m4rie",
+"linbox", "ntl", "flint"}. The first two are the canonical references
+selected by `reference_lib_for()` for GF(p) (fflas-ffpack), GF(2)
+(m4ri), and GF(2^m) for m≥2 (m4rie). The remaining libs (linbox, ntl,
+flint) are secondary references — their rows merge into the CSV
+without changing canonical selection, available for explicit per-cell
+designations by the target-matrix story.
 
 Usage
 -----
@@ -380,7 +386,7 @@ def main() -> int:
     parser.add_argument(
         "--reference",
         type=Path,
-        help="Path to reference-side CSV (lib=fflas-ffpack or m4ri)",
+        help="Path to reference-side CSV (lib=fflas-ffpack/m4ri/m4rie + optional linbox/ntl/flint secondary rows)",
     )
     parser.add_argument(
         "--out",
