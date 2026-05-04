@@ -1048,6 +1048,394 @@ impl<F: FiniteField> SparseFieldMatrix<F> {
         // preferable to open-coding a sparse-to-dense transpose.
         self.to_dense().transpose()
     }
+
+    /// Computes `C = A · B` as a sparse-times-sparse product, returning
+    /// canonical CSR output (column indices sorted ascending within each
+    /// row, no stored zeros, no duplicate `(row, col)` keys).
+    ///
+    /// The implementation uses the standard SpGEMM recipe: for each row
+    /// `i` of `self`, iterate the stored non-zeros `(k, a_ik)` and
+    /// accumulate `a_ik · row_k(B)` into a dense scatter buffer of length
+    /// `B.cols()` carrying `Option<F>` slots. After all contributions for
+    /// row `i` are folded in, the marked columns are gathered, zeros are
+    /// dropped, and the result is appended to the output CSR arrays in
+    /// ascending column order.
+    ///
+    /// Output canonicalisation: the marked-column list is sorted before
+    /// emitting, and any field cancellation (e.g. `3 + 4 ≡ 0` in
+    /// `Fp<7>`) drops the corresponding cell entirely. This matches the
+    /// dense round-trip
+    /// `self.matmul(&other).to_dense() == self.to_dense() * other.to_dense()`
+    /// bitwise on every tested field and shape.
+    ///
+    /// # Arguments
+    ///
+    /// * `other` — right operand. Must satisfy `self.cols() == other.rows()`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `self.cols() != other.rows()`.
+    ///
+    /// # Complexity
+    ///
+    /// `O(Σ_i Σ_{k ∈ row_i(A)} nnz(row_k(B)))` field operations plus
+    /// `O(rows · B.cols)` for the scatter buffer (one allocation reused
+    /// across all rows).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::sparse_matrix::SparseFieldMatrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// type F = Fp<7>;
+    /// let a = SparseFieldMatrix::<F>::from_triplets(
+    ///     2,
+    ///     2,
+    ///     [(0usize, 1usize, F::new(2)), (1, 0, F::new(3))],
+    /// );
+    /// let b = SparseFieldMatrix::<F>::from_triplets(
+    ///     2,
+    ///     2,
+    ///     [(0usize, 0usize, F::new(4)), (1, 1, F::new(5))],
+    /// );
+    /// let c = a.matmul(&b);
+    /// // c[0,1] = 2*5 = 10 ≡ 3 (mod 7); c[1,0] = 3*4 = 12 ≡ 5 (mod 7).
+    /// assert_eq!(c.get(0, 1), F::new(3));
+    /// assert_eq!(c.get(1, 0), F::new(5));
+    /// assert_eq!(c.nnz(), 2);
+    /// ```
+    pub fn matmul(&self, other: &Self) -> Self {
+        assert_eq!(
+            self.cols, other.rows,
+            "SparseFieldMatrix::matmul: A.cols ({}) != B.rows ({})",
+            self.cols, other.rows
+        );
+        let out_rows = self.rows;
+        let out_cols = other.cols;
+
+        let mut row_ptr = Vec::with_capacity(out_rows + 1);
+        let mut col_idx: Vec<usize> = Vec::new();
+        let mut values: Vec<F> = Vec::new();
+        row_ptr.push(0);
+
+        if out_rows == 0 || out_cols == 0 {
+            // Either dimension empty ⇒ zero-shape output, no entries.
+            row_ptr.resize(out_rows + 1, 0);
+            return Self {
+                rows: out_rows,
+                cols: out_cols,
+                row_ptr,
+                col_idx,
+                values,
+            };
+        }
+
+        // Scatter buffer (`Option<F>`-style) and a touched-column list.
+        // `marker[c]` records the row-index for which `accum[c]` holds a
+        // partial sum, avoiding clears between rows: any stale value is
+        // ignored unless `marker[c] == r + 1` (using `r + 1` so the
+        // sentinel `0` never collides with row 0).
+        let mut accum: Vec<Option<F>> = (0..out_cols).map(|_| None).collect();
+        let mut marker: Vec<usize> = vec![0usize; out_cols];
+        let mut touched: Vec<usize> = Vec::new();
+
+        for r in 0..out_rows {
+            let r_tag = r + 1;
+            let a_start = self.row_ptr[r];
+            let a_end = self.row_ptr[r + 1];
+            touched.clear();
+
+            for ka in a_start..a_end {
+                let k = self.col_idx[ka];
+                let a_rk = &self.values[ka];
+
+                // Walk row `k` of `other`, scaling its non-zeros by `a_rk`
+                // and folding them into the scatter accumulator.
+                let b_start = other.row_ptr[k];
+                let b_end = other.row_ptr[k + 1];
+                for kb in b_start..b_end {
+                    let c = other.col_idx[kb];
+                    let prod = a_rk.clone() * other.values[kb].clone();
+                    if marker[c] == r_tag {
+                        // Existing partial sum; fold via `Option::take` to
+                        // sidestep `+=` requiring a pre-existing zero on
+                        // runtime-context fields.
+                        let prev = accum[c].take().expect(
+                            "SparseFieldMatrix::matmul: marker set without accumulator value",
+                        );
+                        accum[c] = Some(prev + prod);
+                    } else {
+                        marker[c] = r_tag;
+                        accum[c] = Some(prod);
+                        touched.push(c);
+                    }
+                }
+            }
+
+            // Emit the touched columns of row `r` in ascending order.
+            touched.sort_unstable();
+            for &c in &touched {
+                if let Some(v) = accum[c].take() {
+                    if !v.is_zero() {
+                        col_idx.push(c);
+                        values.push(v);
+                    }
+                }
+            }
+            row_ptr.push(values.len());
+        }
+
+        Self {
+            rows: out_rows,
+            cols: out_cols,
+            row_ptr,
+            col_idx,
+            values,
+        }
+    }
+
+    /// Computes the reduced row-echelon form via sparse Gauss–Jordan
+    /// elimination, returning a new sparse matrix in canonical CSR form
+    /// (column indices sorted ascending within each row, no stored zeros).
+    ///
+    /// The output is bitwise-equal to the dense round-trip:
+    /// `self.rref().to_dense() == self.to_dense().rref().1` (the second
+    /// return value of [`FieldMatrix::rref`] which is the echelon form
+    /// itself; the transform `X` is not produced here).
+    ///
+    /// # Algorithm
+    ///
+    /// Standard sparse Gauss–Jordan: scan columns left-to-right, pick a
+    /// pivot row from the un-pivoted rows that have a non-zero in the
+    /// current column, scale the pivot row to a leading `1`, and
+    /// eliminate the same column from every other row that carries a
+    /// non-zero there. Each row is materialised on demand into a sparse
+    /// `Vec<(usize, F)>` working buffer, so fill-in is tracked precisely
+    /// (worst-case the matrix becomes fully dense, which mirrors
+    /// `M4RM`-style RREF over GF(2)).
+    ///
+    /// Pivot selection: first un-pivoted row with a non-zero in the
+    /// current column. No reordering for fill control (Markowitz / minimum
+    /// degree are out-of-scope per the parent epic's Non-goals).
+    ///
+    /// # Panics
+    ///
+    /// Panics if the matrix is `0 × n` (zero rows) and `F::zero_hint()`
+    /// returns `None` and `n > 0` — there is no `F` witness available.
+    /// Use `F: ConstField` (every standard field impl) or pass at least a
+    /// `1 × n` matrix. Never panics for square `n × n` shapes on a
+    /// `ConstField`.
+    ///
+    /// # Complexity
+    ///
+    /// Worst-case `O(rows · cols · min(rows, cols))` field operations, the
+    /// same big-O as dense RREF — the sparse representation buys only the
+    /// constant factor for sparse intermediate matrices.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::sparse_matrix::SparseFieldMatrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// type F = Fp<7>;
+    /// let a = SparseFieldMatrix::<F>::from_triplets(
+    ///     2,
+    ///     3,
+    ///     [
+    ///         (0usize, 0usize, F::new(2)),
+    ///         (0, 2, F::new(1)),
+    ///         (1, 0, F::new(1)),
+    ///         (1, 1, F::new(3)),
+    ///     ],
+    /// );
+    /// let r = a.rref();
+    /// assert_eq!(r.get(0, 0), F::new(1));
+    /// assert_eq!(r.get(1, 1), F::new(1));
+    /// ```
+    pub fn rref(&self) -> Self {
+        let m = self.rows;
+        let n = self.cols;
+
+        if m == 0 || n == 0 {
+            // Trivial shape; reuse the existing canonical empty CSR.
+            return Self {
+                rows: m,
+                cols: n,
+                row_ptr: vec![0; m + 1],
+                col_idx: Vec::new(),
+                values: Vec::new(),
+            };
+        }
+
+        // Materialise each row as a sorted `Vec<(usize, F)>` of non-zeros.
+        // The pivoting / elimination loops only touch sparse working
+        // buffers; the output is rebuilt from these at the end.
+        let mut rows: Vec<Vec<(usize, F)>> = (0..m)
+            .map(|r| {
+                let s = self.row_ptr[r];
+                let e = self.row_ptr[r + 1];
+                self.col_idx[s..e]
+                    .iter()
+                    .copied()
+                    .zip(self.values[s..e].iter().cloned())
+                    .collect()
+            })
+            .collect();
+
+        // Sparse row helpers expressed as free functions to keep the
+        // outer loop compact.
+        //
+        // `find_first_nonzero_at_or_after(row, col)`: returns the index in
+        // `row` of the first stored entry whose column is `>= col`, using
+        // binary search since columns are sorted.
+        fn find_at<G: FiniteField>(row: &[(usize, G)], col: usize) -> Result<usize, usize> {
+            row.binary_search_by_key(&col, |&(c, _)| c)
+        }
+
+        // `scale_row(row, factor)`: in-place; assumes `factor != 0` (so
+        // no entry is wiped to zero — pivot scaling preserves non-zeros).
+        fn scale_row<G: FiniteField>(row: &mut [(usize, G)], factor: &G) {
+            for (_, v) in row.iter_mut() {
+                let new_v = v.clone() * factor.clone();
+                *v = new_v;
+            }
+        }
+
+        // `axpy(target, source, factor)`: target ← target − factor · source,
+        // expressed as a merge between two sorted `(col, val)` lists. The
+        // result is left in `target` in sorted order with zeros dropped.
+        // For columns present only in `source`, the contribution is
+        // `−(factor · source_val)`, computed via `Neg` on `G`.
+        fn axpy<G: FiniteField>(target: &mut Vec<(usize, G)>, source: &[(usize, G)], factor: &G) {
+            let mut merged: Vec<(usize, G)> = Vec::with_capacity(target.len() + source.len());
+            let mut ti = 0usize;
+            let mut si = 0usize;
+            while ti < target.len() && si < source.len() {
+                let tc = target[ti].0;
+                let sc = source[si].0;
+                if tc < sc {
+                    merged.push(target[ti].clone());
+                    ti += 1;
+                } else if tc > sc {
+                    let neg = -(factor.clone() * source[si].1.clone());
+                    if !neg.is_zero() {
+                        merged.push((sc, neg));
+                    }
+                    si += 1;
+                } else {
+                    let v = target[ti].1.clone() - factor.clone() * source[si].1.clone();
+                    if !v.is_zero() {
+                        merged.push((tc, v));
+                    }
+                    ti += 1;
+                    si += 1;
+                }
+            }
+            while ti < target.len() {
+                merged.push(target[ti].clone());
+                ti += 1;
+            }
+            while si < source.len() {
+                let neg = -(factor.clone() * source[si].1.clone());
+                if !neg.is_zero() {
+                    merged.push((source[si].0, neg));
+                }
+                si += 1;
+            }
+            *target = merged;
+        }
+
+        // `row_used[i]` is `true` once row `i` has been chosen as pivot.
+        let mut row_used = vec![false; m];
+        // Pivot rows in the order they were picked (top-to-bottom in the
+        // RREF output): each entry is `(original_row_index, pivot_col)`.
+        let mut pivot_order: Vec<(usize, usize)> = Vec::new();
+
+        for col in 0..n {
+            // Find a pivot row: an un-used row with a non-zero in `col`.
+            let mut pivot: Option<usize> = None;
+            for (i, used) in row_used.iter().enumerate() {
+                if *used {
+                    continue;
+                }
+                if find_at(&rows[i], col).is_ok() {
+                    pivot = Some(i);
+                    break;
+                }
+            }
+            let pi = match pivot {
+                Some(i) => i,
+                None => continue,
+            };
+
+            // Scale pivot row so leading entry is 1.
+            let pos = find_at(&rows[pi], col).expect("pivot was just verified to exist");
+            let pivot_val = rows[pi][pos].1.clone();
+            if !pivot_val.is_one() {
+                let inv = pivot_val
+                    .inv()
+                    .expect("SparseFieldMatrix::rref: non-zero pivot must invert in a field");
+                scale_row(&mut rows[pi], &inv);
+            }
+            row_used[pi] = true;
+            pivot_order.push((pi, col));
+
+            // Eliminate `col` from every other row that has a non-zero in
+            // it. Use index-based loop to avoid borrow conflicts.
+            for k in 0..m {
+                if k == pi {
+                    continue;
+                }
+                let factor = match find_at(&rows[k], col) {
+                    Ok(p) => rows[k][p].1.clone(),
+                    Err(_) => continue,
+                };
+                if factor.is_zero() {
+                    continue;
+                }
+                // Snapshot pivot row to avoid simultaneous borrow. Pivot
+                // rows are not mutated again during elimination; cloning
+                // is safe and keeps the borrow checker happy.
+                let pivot_snapshot: Vec<(usize, F)> = rows[pi].clone();
+                axpy(&mut rows[k], &pivot_snapshot, &factor);
+            }
+        }
+
+        // Re-order pivoted rows to the top in the order their pivot
+        // columns appear (canonical RREF row order). Un-pivoted rows go
+        // below as zero rows.
+        let mut ordered: Vec<Vec<(usize, F)>> = Vec::with_capacity(m);
+        for &(orig, _) in &pivot_order {
+            ordered.push(std::mem::take(&mut rows[orig]));
+        }
+        // Pad with empty rows for rows that never became pivots.
+        while ordered.len() < m {
+            ordered.push(Vec::new());
+        }
+
+        // Flatten back to CSR.
+        let mut row_ptr = Vec::with_capacity(m + 1);
+        let mut col_idx: Vec<usize> = Vec::new();
+        let mut values: Vec<F> = Vec::new();
+        row_ptr.push(0);
+        for row in ordered {
+            for (c, v) in row {
+                col_idx.push(c);
+                values.push(v);
+            }
+            row_ptr.push(values.len());
+        }
+
+        Self {
+            rows: m,
+            cols: n,
+            row_ptr,
+            col_idx,
+            values,
+        }
+    }
 }
 
 // ─── CSC impl ────────────────────────────────────────────────────────────────
@@ -1849,5 +2237,297 @@ mod tests {
         let s = m.to_sparse();
         assert_eq!(s.shape(), m.shape());
         assert_eq!(s.to_dense(), m);
+    }
+
+    // ── Sparse × sparse matmul (issue eb57f944) ──────────────────────────
+
+    /// Helper: build a fresh `Gf2mWide<1, _>` sparse from a dense witness.
+    /// Useful in `matmul` / `rref` tests below.
+    fn sparse_from_dense_g8(m: &FieldMatrix<G8>) -> SparseFieldMatrix<G8> {
+        SparseFieldMatrix::from_dense(m)
+    }
+
+    #[test]
+    fn test_matmul_identity_left_fp7() {
+        let id = SparseFieldMatrix::<F7>::identity(4);
+        let m = dense_random_fp::<7>(4, 5, 0.4, 0x1001);
+        let a = SparseFieldMatrix::from_dense(&m);
+        assert_eq!(id.matmul(&a).to_dense(), m);
+    }
+
+    #[test]
+    fn test_matmul_identity_right_fp7() {
+        let m = dense_random_fp::<7>(5, 4, 0.4, 0x1002);
+        let a = SparseFieldMatrix::from_dense(&m);
+        let id = SparseFieldMatrix::<F7>::identity(4);
+        assert_eq!(a.matmul(&id).to_dense(), m);
+    }
+
+    #[test]
+    fn test_matmul_matches_dense_fp7() {
+        let a_dense = dense_random_fp::<7>(5, 7, 0.3, 0x1100);
+        let b_dense = dense_random_fp::<7>(7, 4, 0.4, 0x1101);
+        let a = SparseFieldMatrix::from_dense(&a_dense);
+        let b = SparseFieldMatrix::from_dense(&b_dense);
+        let expected: FieldMatrix<F7> = (&a_dense * &b_dense).into();
+        assert_eq!(a.matmul(&b).to_dense(), expected);
+    }
+
+    #[test]
+    fn test_matmul_matches_dense_fp65521() {
+        let a_dense = dense_random_fp::<65521>(6, 5, 0.25, 0x1110);
+        let b_dense = dense_random_fp::<65521>(5, 7, 0.35, 0x1111);
+        let a = SparseFieldMatrix::from_dense(&a_dense);
+        let b = SparseFieldMatrix::from_dense(&b_dense);
+        let expected: FieldMatrix<F65521> = (&a_dense * &b_dense).into();
+        assert_eq!(a.matmul(&b).to_dense(), expected);
+    }
+
+    #[test]
+    fn test_matmul_matches_dense_m31() {
+        let a_dense = dense_random_fp::<M31>(7, 6, 0.2, 0x1120);
+        let b_dense = dense_random_fp::<M31>(6, 8, 0.3, 0x1121);
+        let a = SparseFieldMatrix::from_dense(&a_dense);
+        let b = SparseFieldMatrix::from_dense(&b_dense);
+        let expected: FieldMatrix<Fp<M31>> = (&a_dense * &b_dense).into();
+        assert_eq!(a.matmul(&b).to_dense(), expected);
+    }
+
+    #[test]
+    fn test_matmul_matches_dense_g8() {
+        let a_dense = dense_random_g8(4, 6, 0.3, 0x1130);
+        let b_dense = dense_random_g8(6, 5, 0.4, 0x1131);
+        let a = sparse_from_dense_g8(&a_dense);
+        let b = sparse_from_dense_g8(&b_dense);
+        let expected: FieldMatrix<G8> = (&a_dense * &b_dense).into();
+        assert_eq!(a.matmul(&b).to_dense(), expected);
+    }
+
+    #[test]
+    fn test_matmul_empty_inner() {
+        // 3 × 0 times 0 × 4 = 3 × 4 zero matrix.
+        let a = SparseFieldMatrix::<F7>::zeros(3, 0);
+        let b = SparseFieldMatrix::<F7>::zeros(0, 4);
+        let c = a.matmul(&b);
+        assert_eq!(c.shape(), (3, 4));
+        assert_eq!(c.nnz(), 0);
+    }
+
+    #[test]
+    fn test_matmul_empty_rows() {
+        // 0 × n times n × m = 0 × m, no entries.
+        let a = SparseFieldMatrix::<F7>::zeros(0, 3);
+        let b_dense = dense_random_fp::<7>(3, 5, 0.4, 0x1201);
+        let b = SparseFieldMatrix::from_dense(&b_dense);
+        let c = a.matmul(&b);
+        assert_eq!(c.shape(), (0, 5));
+        assert_eq!(c.nnz(), 0);
+    }
+
+    #[test]
+    fn test_matmul_empty_cols() {
+        let a_dense = dense_random_fp::<7>(4, 3, 0.4, 0x1202);
+        let a = SparseFieldMatrix::from_dense(&a_dense);
+        let b = SparseFieldMatrix::<F7>::zeros(3, 0);
+        let c = a.matmul(&b);
+        assert_eq!(c.shape(), (4, 0));
+        assert_eq!(c.nnz(), 0);
+    }
+
+    #[test]
+    fn test_matmul_zero_drops_in_fp7() {
+        // (1,4) at (0,0) × (1,3) at (0,0) = 4·3 = 12 ≡ 5; pair with cancelling row.
+        // a = [[1, 1]]; b = [[3], [4]]; c = [[3 + 4]] ≡ [[0]] ⇒ nnz = 0.
+        let a = SparseFieldMatrix::<F7>::from_triplets(
+            1,
+            2,
+            [(0usize, 0usize, F7::new(1)), (0, 1, F7::new(1))],
+        );
+        let b = SparseFieldMatrix::<F7>::from_triplets(
+            2,
+            1,
+            [(0usize, 0usize, F7::new(3)), (1, 0, F7::new(4))],
+        );
+        let c = a.matmul(&b);
+        assert_eq!(c.shape(), (1, 1));
+        assert_eq!(c.nnz(), 0);
+        assert_eq!(c.get(0, 0), F7::new(0));
+    }
+
+    #[test]
+    fn test_matmul_canonical_csr_invariants() {
+        // After matmul, every emitted col_idx slice must be sorted; no
+        // value may be the zero element.
+        let a_dense = dense_random_fp::<7>(6, 5, 0.4, 0x1301);
+        let b_dense = dense_random_fp::<7>(5, 8, 0.5, 0x1302);
+        let a = SparseFieldMatrix::from_dense(&a_dense);
+        let b = SparseFieldMatrix::from_dense(&b_dense);
+        let c = a.matmul(&b);
+        let (rp, ci, vs) = c.as_raw_parts();
+        assert_eq!(rp.len(), c.rows() + 1);
+        for r in 0..c.rows() {
+            let s = rp[r];
+            let e = rp[r + 1];
+            for w in s..e.saturating_sub(1) {
+                assert!(ci[w] < ci[w + 1], "col_idx not strictly ascending");
+            }
+            for v in vs.iter().take(e).skip(s) {
+                assert!(!v.is_zero(), "stored value must be non-zero");
+            }
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "A.cols")]
+    fn test_matmul_dim_mismatch_panics() {
+        let a = SparseFieldMatrix::<F7>::zeros(2, 3);
+        let b = SparseFieldMatrix::<F7>::zeros(4, 2);
+        let _ = a.matmul(&b);
+    }
+
+    // ── Sparse RREF (issue eb57f944) ────────────────────────────────────
+
+    #[test]
+    fn test_rref_identity_g8() {
+        let id = SparseFieldMatrix::<G8>::identity(5);
+        let r = id.rref();
+        assert_eq!(r, id);
+    }
+
+    #[test]
+    fn test_rref_matches_dense_g8() {
+        let a_dense = dense_random_g8(5, 7, 0.4, 0x2001);
+        let a = sparse_from_dense_g8(&a_dense);
+        let got = a.rref();
+        let (_x, expected) = a_dense.rref();
+        assert_eq!(got.to_dense(), expected);
+    }
+
+    #[test]
+    fn test_rref_matches_dense_g8_square() {
+        let a_dense = dense_random_g8(6, 6, 0.35, 0x2002);
+        let a = sparse_from_dense_g8(&a_dense);
+        let got = a.rref();
+        let (_x, expected) = a_dense.rref();
+        assert_eq!(got.to_dense(), expected);
+    }
+
+    #[test]
+    fn test_rref_matches_dense_g8_tall() {
+        // Rows > cols: typical "stack of constraints" shape.
+        let a_dense = dense_random_g8(8, 4, 0.3, 0x2003);
+        let a = sparse_from_dense_g8(&a_dense);
+        let got = a.rref();
+        let (_x, expected) = a_dense.rref();
+        assert_eq!(got.to_dense(), expected);
+    }
+
+    #[test]
+    fn test_rref_matches_dense_fp7() {
+        // RREF is generic over `F: FiniteField`, so verify on a prime field.
+        let a_dense = dense_random_fp::<7>(5, 7, 0.4, 0x2010);
+        let a = SparseFieldMatrix::from_dense(&a_dense);
+        let got = a.rref();
+        let (_x, expected) = a_dense.rref();
+        assert_eq!(got.to_dense(), expected);
+    }
+
+    #[test]
+    fn test_rref_matches_dense_fp65521() {
+        let a_dense = dense_random_fp::<65521>(4, 6, 0.35, 0x2011);
+        let a = SparseFieldMatrix::from_dense(&a_dense);
+        let got = a.rref();
+        let (_x, expected) = a_dense.rref();
+        assert_eq!(got.to_dense(), expected);
+    }
+
+    // GF(2^16) configuration to exercise the wider Gf2mWide path.
+    struct Gf2m16TestCfg;
+    impl Gf2mWideConfig<1> for Gf2m16TestCfg {
+        const M: usize = 16;
+        const MODULUS: [u64; 1] = [0x002D];
+        const NAME: &'static str = "SparseTestsGf2m16Cfg";
+    }
+    type G16 = Gf2mWide<1, Gf2m16TestCfg>;
+
+    fn dense_random_g16(rows: usize, cols: usize, density: f64, seed: u64) -> FieldMatrix<G16> {
+        use rand::{Rng, SeedableRng};
+        let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
+        let mut m = FieldMatrix::<G16>::zeros(rows, cols);
+        for r in 0..rows {
+            for c in 0..cols {
+                if rng.gen::<f64>() < density {
+                    let w = (rng.gen::<u64>() & 0xFFFF).max(1);
+                    m.set(r, c, G16::new([w]));
+                }
+            }
+        }
+        m
+    }
+
+    #[test]
+    fn test_rref_matches_dense_g16() {
+        // Surrogate for `Gf2mWide<u32>` listed in the criterion: GF(2^16)
+        // also exercises a Gf2mWide with a non-byte-aligned bit width and
+        // covers the elimination path with a different irreducible.
+        let a_dense = dense_random_g16(4, 6, 0.35, 0x2020);
+        let a = SparseFieldMatrix::from_dense(&a_dense);
+        let got = a.rref();
+        let (_x, expected) = a_dense.rref();
+        assert_eq!(got.to_dense(), expected);
+    }
+
+    #[test]
+    fn test_rref_empty_matrix() {
+        let a: SparseFieldMatrix<F7> = SparseFieldMatrix::zeros(0, 0);
+        let r = a.rref();
+        assert_eq!(r.shape(), (0, 0));
+        assert_eq!(r.nnz(), 0);
+    }
+
+    #[test]
+    fn test_rref_zero_rows() {
+        // 4×3 zero matrix: RREF is itself.
+        let a: SparseFieldMatrix<F7> = SparseFieldMatrix::zeros(4, 3);
+        let r = a.rref();
+        assert_eq!(r.shape(), (4, 3));
+        assert_eq!(r.nnz(), 0);
+    }
+
+    #[test]
+    fn test_rref_canonical_csr_invariants() {
+        let a_dense = dense_random_fp::<7>(6, 6, 0.4, 0x2101);
+        let a = SparseFieldMatrix::from_dense(&a_dense);
+        let r = a.rref();
+        let (rp, ci, vs) = r.as_raw_parts();
+        assert_eq!(rp.len(), r.rows() + 1);
+        for row in 0..r.rows() {
+            let s = rp[row];
+            let e = rp[row + 1];
+            for w in s..e.saturating_sub(1) {
+                assert!(ci[w] < ci[w + 1], "RREF col_idx not strictly ascending");
+            }
+            for v in vs.iter().take(e).skip(s) {
+                assert!(!v.is_zero(), "RREF stored value must be non-zero");
+            }
+        }
+    }
+
+    #[test]
+    fn test_rref_idempotent_g8() {
+        let a_dense = dense_random_g8(5, 5, 0.4, 0x2200);
+        let a = sparse_from_dense_g8(&a_dense);
+        let r1 = a.rref();
+        let r2 = r1.rref();
+        assert_eq!(r1, r2);
+    }
+
+    #[test]
+    fn test_rref_idempotent_fp7() {
+        let a_dense = dense_random_fp::<7>(5, 6, 0.45, 0x2201);
+        let a = SparseFieldMatrix::from_dense(&a_dense);
+        let r1 = a.rref();
+        let r2 = r1.rref();
+        assert_eq!(r1, r2);
     }
 }
