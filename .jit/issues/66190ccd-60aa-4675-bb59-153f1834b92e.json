@@ -17,7 +17,15 @@
   ],
   "gates_status": {},
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/bench_results/2026-05-04-c3e79272-charpoly-minpoly-refs.md",
+      "commit": null,
+      "label": "charpoly/minpoly reference-lane evidence (c3e79272)",
+      "doc_type": "evidence",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:story",
     "component:gf2-core",
@@ -25,5 +33,5 @@
     "story:sota-polynomial-invariants"
   ],
   "created_at": "2026-04-30T06:43:02.512938576+00:00",
-  "updated_at": "2026-04-30T06:43:49.305143943+00:00"
+  "updated_at": "2026-05-04T10:35:20.539786204+00:00"
 }

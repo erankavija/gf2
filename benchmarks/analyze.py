@@ -244,6 +244,31 @@ def reference_lib_for(field_value: str) -> str:
     presentation-only decision — multiple libs may legitimately
     co-exist in the same CSV, and `render_table` will surface
     whichever the canonical reference is for that field.
+
+    Per-cell routing decisions for charpoly + minpoly (issue c3e79272):
+
+    * charpoly × GF(p): canonical = fflas-ffpack. fflas-ffpack
+      promotes charpoly via FFPACK::CharPoly with the n^3 normalizer,
+      already published in 2026-04-26-reference.csv across all four
+      reference primes at n ∈ {64, 256}. LinBox + FLINT + NTL rows
+      exist as secondary-reference cross-checks (issues 79388011,
+      73ab8eef) — they merge into the reference CSV stream but
+      analyze.py renders only the fflas-ffpack column to keep the
+      side-by-side narrow.
+
+    * minpoly × GF(p): canonical = fflas-ffpack. fflas-ffpack
+      promotes minpoly via FFPACK::MinPoly (added in 2026-05-04
+      issue 5dea7457; rows in 2026-05-04-5dea7457-reference-extension.csv
+      across all four primes at n ∈ {64, 256, 1024}). Before 5dea7457
+      no fflas-ffpack minpoly rows existed; LinBox + FLINT minpoly
+      rows continue to exist as secondary-reference cross-checks
+      (LinBox 79388011, FLINT 73ab8eef). NTL is excluded from minpoly
+      because it does not expose a user-facing matrix-minpoly API.
+
+    A future per-cell override (e.g. designating LinBox as canonical
+    for a specific charpoly cell where it is materially faster than
+    fflas-ffpack) is not made here; that designation is owned by the
+    SOTA target-matrix story (4c0d0202).
     """
     if field_value == "GF(2)":
         return "m4ri"

@@ -166,4 +166,21 @@ echo "[smoke.sh] running ntl_flint_smoke equality oracle" >&2
     >&2
 # === flint end ===
 
+# === c3e79272 charpoly/minpoly cross-library smoke begin ===
+# LinBox ↔ FLINT bitwise polynomial-coefficient equality oracle for
+# charpoly + minpoly at n=16 across the four reference primes (issue
+# c3e79272). Complements ntl_flint_smoke by adding the minpoly cross-
+# check (NTL has no user-facing matrix-minpoly API). Skipped silently
+# if the image was built without LinBox + FLINT both installed.
+if [[ "${GF2_SKIP_CHARPOLY_MINPOLY_SMOKE:-0}" -eq 0 ]]; then
+    echo "[smoke.sh] running charpoly_minpoly_smoke (LinBox ↔ FLINT)" >&2
+    "${RUNTIME}" run --rm \
+        --security-opt label=disable \
+        -v "${HERE}:/work${MOUNT_OPTS}" \
+        "${IMAGE_TAG}" \
+        bash -c "set -e; cd /work/reference && make charpoly_minpoly_smoke >/dev/null && ./charpoly_minpoly_smoke" \
+        >&2
+fi
+# === c3e79272 charpoly/minpoly cross-library smoke end ===
+
 echo "[smoke.sh] OK — smoke CSV at ${TARGET_CSV}" >&2

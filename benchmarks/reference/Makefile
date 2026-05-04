@@ -52,7 +52,7 @@ FLINT_CFLAGS := -I/usr/local/include
 FLINT_LIBS   := -L/usr/local/lib -lflint -lmpfr -lgmp -lm
 
 .PHONY: all clean
-all: fflas_bench m4ri_bench linbox_bench m4rie_bench ntl_bench flint_bench ntl_flint_smoke
+all: fflas_bench m4ri_bench linbox_bench m4rie_bench ntl_bench flint_bench ntl_flint_smoke charpoly_minpoly_smoke
 
 fflas_bench: fflas_bench.cpp
 	@$(CXX) $(CXXSTD) $(OPT) -fopenmp $(FFLAS_CFLAGS) $< $(FFLAS_LIBS) -lopenblas -o $@
@@ -84,5 +84,14 @@ m4rie_bench: m4rie_bench.c
 m4rie_one_cell: m4rie_one_cell.c
 	@$(CC) $(CSTD) $(OPT) $(M4RIE_CFLAGS) $< $(M4RIE_LIBS) -o $@
 
+# Cross-library bitwise-equality oracle for charpoly + minpoly between
+# LinBox and FLINT (issue c3e79272). Complements ntl_flint_smoke (which
+# covers charpoly NTL ↔ FLINT) by adding the minpoly cross-check, since
+# NTL does not expose a user-facing matrix-minpoly API. Linked against
+# both LinBox and FLINT.
+charpoly_minpoly_smoke: charpoly_minpoly_smoke.cpp
+	@$(CXX) $(CXXSTD) $(OPT) -fopenmp $(LINBOX_CFLAGS) $(FFLAS_CFLAGS) $(FLINT_CFLAGS) $< \
+	  $(LINBOX_LIBS) $(FFLAS_LIBS) $(FLINT_LIBS) -lopenblas -o $@
+
 clean:
-	rm -f fflas_bench m4ri_bench linbox_bench m4rie_bench m4rie_one_cell ntl_bench flint_bench ntl_flint_smoke
+	rm -f fflas_bench m4ri_bench linbox_bench m4rie_bench m4rie_one_cell ntl_bench flint_bench ntl_flint_smoke charpoly_minpoly_smoke
