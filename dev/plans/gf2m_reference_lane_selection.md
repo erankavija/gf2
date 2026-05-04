@@ -84,7 +84,7 @@ for user approval).
 
 | Operation | GF(2^8) | GF(2^16) | GF(2^32) |
 |---|---|---|---|
-| `matmul` (`fgemm`) | **m4rie 20250128** (`dev/plans/m4rie_promotion_evidence.md` *Target-matrix designation*; CSV rows in `dev/bench_results/2026-05-04-507b0036-m4rie-reference.csv` lines 8-13 for GF(2^8) and 14-19 for GF(2^16)) | **m4rie 20250128** (same evidence doc; CSV rows lines 14-19 for GF(2^16)) | **{NTL `mat_GF2E`, FLINT `fq_nmod_mat`} candidate pool** (both libraries are pinned in `benchmarks/Containerfile` and the harness work is filed as task `b13799ac`; final pick within the pool is one of `b13799ac`'s `[hard]` criteria — both candidates support `m=32` and either is acceptable per the protocol § 3 five-criteria checklist). The canonical-reference designation in `analyze.py`'s `reference_lib_for(field='gf2m', m=32)` is set when `b13799ac` lands. Marker: `not-yet-harnessed` until then (per protocol § 9 amendment 2). |
+| `matmul` (`fgemm`) | **m4rie 20250128** (`dev/plans/m4rie_promotion_evidence.md` *Target-matrix designation*; CSV rows in `dev/bench_results/2026-05-04-507b0036-m4rie-reference.csv` lines 8-13 for GF(2^8) and 14-19 for GF(2^16)) | **m4rie 20250128** (same evidence doc; CSV rows lines 14-19 for GF(2^16)) | **NTL 11.6.0 `mat_GF2E`** — promoted by task `b13799ac` (`dev/bench_results/2026-05-04-b13799ac-gf2pow32-promotion.md`). Conway polynomial `x^32 + x^15 + x^9 + x^7 + x^4 + x^3 + 1` (`0x1_0000_8299`, Frank Lübeck's database) shared between gf2-core (`crates/gf2-core/src/primitive_polys.rs::standard(32)`) and NTL `GF2E::init`; no basis-change matrix required. Bitwise-equality oracle at `n=16` lives in `benchmarks/reference/ntl_gf2pow32_smoke.cpp` (NTL `mat_GF2E::mul` ↔ self-contained scalar schoolbook reference) plus a Rust-side companion test at `crates/gf2-core/tests/gf2pow32_matmul.rs` exercising `FieldMatrix<Gf2mWide<1, _>>::gemm`. |
 | `echelon` (RREF) | EXCLUDED:`no-independent-oracle`:protocol § 6 requires bitwise canonical RREF equality vs an *independent* reference; no scalar GF(2^m) RREF exists in the workspace, and M4RIE was explicitly down-scoped out of echelon in Wave 2. See § 4 proposal #2. | same as GF(2^8). | same as GF(2^8) — and additionally M4RIE itself is unsupported at m > 16 (compounds with proposal #1 / #2). |
 | `invert` | EXCLUDED:`no-independent-oracle`:protocol § 6 row "invert" requires bitwise equality of `A^{-1}` after canonical reduction vs an independent reference; no GF(2^m) inverse oracle is harnessed. M4RIE provides `mzed_invert` but cannot serve as its own oracle. | same as GF(2^8). | same as GF(2^8) — compounds with proposal #1. |
 | `solve` (`Ax=b`) | EXCLUDED:`no-independent-oracle`:protocol § 6 row "solve" requires equality of `x` after canonical reduction; no independent GF(2^m) solver oracle is harnessed. | same as GF(2^8). | same as GF(2^8) — compounds with proposal #1. |
@@ -92,11 +92,13 @@ for user approval).
 | `minpoly` | EXCLUDED:`no-independent-oracle`:no independent GF(2^m) minimal-polynomial reference is harnessed. NTL provides only `MinPolyMod` for polynomials, not `MinPoly(mat_GF2E)`; FLINT's `fq_nmod_mat_minpoly` is a candidate but has no harness. See § 4 proposal #3. | same as GF(2^8). | same as GF(2^8) — compounds with proposal #1. |
 | `spmv` (sparse) | EXCLUDED:`not-performance-relevant`-adjacent / `no-independent-oracle`:no GF(2^m) sparse reference is harnessed today; sparse-corpus selection is the subject of issue `a3412e15` (Wave 3). The cell is deferred pending that issue's output. | same as GF(2^8). | same as GF(2^8). |
 
-**Read (post-2026-05-04 user decision).** Of 21 cells, **3 are
-selected** (M4RIE matmul over GF(2^8) and GF(2^16); NTL/FLINT
-candidate pool for matmul over GF(2^32) — final pick decided in
-`b13799ac`'s harness work) and **18 are excluded** (per protocol
-§ 9). The exclusions cluster into two reasons:
+**Read (post-2026-05-04 user decision; b13799ac landed 2026-05-04).** Of
+21 cells, **3 are selected** (M4RIE matmul over GF(2^8) and GF(2^16);
+NTL 11.6.0 `mat_GF2E` matmul over GF(2^32) — promoted by task
+`b13799ac`, evidence at
+`dev/bench_results/2026-05-04-b13799ac-gf2pow32-promotion.md`) and **18
+are excluded** (per protocol § 9). The exclusions cluster into two
+reasons:
 
 * **Reason B (15 cells):** non-matmul × any GF(2^m) — no independent
   bitwise oracle exists. Proposal #2 (echelon) and proposal #3
@@ -306,7 +308,7 @@ the Zen-3 anchor host).
 
 | Issue criterion | Status | Evidence in this document |
 |---|---|---|
-| **#1 [hard]** "The selected lane covers GF(2^8), GF(2^16), and GF(2^32) where feasible." | **MET** | § 3 covers all three fields across all `FieldMatrix` operations. GF(2^8) and GF(2^16) `matmul` are covered by M4RIE 20250128 (Wave-2-promoted; citations in § 3). GF(2^32) `matmul` was originally proposed for exclusion (§ 4 proposal #1) but the user has rejected the exclusion in favour of harnessing the cell — see new task `b13799ac` (Build GF(2^32) matmul reference harness, story `2c7548ae`). 9a715d75 closes with criterion #1 satisfied because the lane *selection* is complete; the *harness work* is delegated to `b13799ac` (Wave-12 aggregation depends on it). |
+| **#1 [hard]** "The selected lane covers GF(2^8), GF(2^16), and GF(2^32) where feasible." | **MET** | § 3 covers all three fields across all `FieldMatrix` operations. GF(2^8) and GF(2^16) `matmul` are covered by M4RIE 20250128 (Wave-2-promoted; citations in § 3). GF(2^32) `matmul` was originally proposed for exclusion (§ 4 proposal #1) but the user rejected the exclusion in favour of harnessing the cell. Task `b13799ac` (Build GF(2^32) matmul reference harness, story `2c7548ae`) **landed 2026-05-04** with NTL 11.6.0 `mat_GF2E` promoted under the Conway polynomial `0x1_0000_8299`; evidence in `dev/bench_results/2026-05-04-b13799ac-gf2pow32-promotion.md`. 9a715d75 closes with criterion #1 satisfied. |
 | **#2 [hard]** "If no hard reference is viable, the exclusion is user-approved and documented." | **MET** | § 4 names every exclusion (3 surviving grouped proposals — #2 echelon/invert/solve, #3 charpoly/minpoly, #4 spmv-deferred — covering 18 cells). Each has a precise exclusion class and a one-paragraph rationale. **User approval recorded 2026-05-04** for proposals #2, #3, #4 plus the protocol § 8 registry extension adding `not-yet-harnessed` (used by `b13799ac`'s open exclusion-not-yet-resolved status until that task closes) and `no-independent-oracle` (used by proposals #2 and #3). The exclusions are now both user-approved (this section) and documented (§ 4). |
 
 ## 7. Open questions — resolved 2026-05-04
