@@ -77,6 +77,7 @@ FIELD_FAMILY = {
     "GF(251)": "gfp_small",
     "GF(65521)": "gfp_medium",
     "GF(2^31-1)": "gfp_medium",
+    "GF(2^4)": "gf2m",
     "GF(2^8)": "gf2m",
     "GF(2^16)": "gf2m",
     "GF(2^32)": "gf2m",
@@ -232,12 +233,17 @@ def group_by_op_field(rows: Iterable[CellRow]) -> "OrderedDict[Tuple[str, str], 
 def reference_lib_for(field_value: str) -> str:
     """Pick the reference lib name we expect for a given field.
 
-    GF(2) goes to M4RI; everything else to fflas-ffpack. This is a
-    presentation-only decision — both libs may legitimately co-exist
-    in the same CSV, and `render_table` will surface either when
-    present.
+    GF(2) goes to M4RI, GF(2^m) for m ≥ 2 goes to M4RIE, everything
+    else (GF(p) families) goes to fflas-ffpack. This is a
+    presentation-only decision — multiple libs may legitimately
+    co-exist in the same CSV, and `render_table` will surface
+    whichever the canonical reference is for that field.
     """
-    return "m4ri" if field_value == "GF(2)" else "fflas-ffpack"
+    if field_value == "GF(2)":
+        return "m4ri"
+    if FIELD_FAMILY.get(field_value) == "gf2m":
+        return "m4rie"
+    return "fflas-ffpack"
 
 
 def _fmt_ns(x: Optional[float]) -> str:
