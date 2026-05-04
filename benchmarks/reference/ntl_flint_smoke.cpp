@@ -28,6 +28,16 @@
 // cell to stderr; emits no stdout (so the smoke runner can ignore
 // this binary's output entirely).
 //
+// Singular-resample policy (inv, solve): a uniform-random n=16 matrix
+// over GF(p) is non-singular with probability ~1 - O(1/p), but the
+// seeded sample CAN turn out singular for the smallest primes in
+// scope. To eliminate silent skips we re-derive the seed via
+// SplitMix64 and retry up to 3 times. If all 3 attempts are singular
+// the cell counts as FAIL — at n=16 the probability of three
+// independent failures is bounded by (1/p)^3 ≤ (1/7)^3 ≈ 3·10^-3
+// for the worst case GF(7), and far smaller for the other fields,
+// so a triple miss is treated as a real bug, not a non-event.
+//
 // Build: see benchmarks/reference/Makefile target ntl_flint_smoke.
 
 #include <NTL/lzz_p.h>
@@ -117,26 +127,47 @@ int check_field(long p, const char* label) {
     }
 
     // ----- inv -----
+    //
+    // Singular-resample policy: at n=16 over GF(p) a uniform-random
+    // matrix is non-singular with overwhelming probability (~1 - 1/p
+    // for the smallest prime in scope), but it is not impossible. To
+    // ensure every cell either passes or fails (no silent skips), we
+    // re-derive the seed via SplitMix64 on each retry up to 3 attempts.
+    // If all 3 are singular we count the cell as FAIL — at n=16 the
+    // probability is astronomically small, so a triple miss indicates
+    // a real bug (e.g., a bench library returning singular for a
+    // valid input) and must surface, not skip.
     {
         mat_zz_p A_n, X_n;
         nmod_mat_t A_f, X_f;
         nmod_mat_init(A_f, n, n, static_cast<ulong>(p));
         nmod_mat_init(X_f, n, n, static_cast<ulong>(p));
-        fill_both(A_n, A_f, n, 0xC3C3C3C3ULL);
-        bool ntl_ok = true;
-        try {
-            inv(X_n, A_n);
-        } catch (...) {
-            ntl_ok = false;
+        const int max_retries = 3;
+        int attempt = 0;
+        bool ntl_ok = false;
+        int flint_ok = 0;
+        uint64_t inv_seed = 0xC3C3C3C3ULL;
+        for (; attempt < max_retries; ++attempt) {
+            fill_both(A_n, A_f, n, inv_seed);
+            ntl_ok = true;
+            try { inv(X_n, A_n); } catch (...) { ntl_ok = false; }
+            flint_ok = nmod_mat_inv(X_f, A_f);
+            if (ntl_ok && flint_ok) break;
+            // Re-derive the seed deterministically before retry.
+            uint64_t st = inv_seed;
+            inv_seed = gf2_bench_splitmix64(&st);
         }
-        int flint_ok = nmod_mat_inv(X_f, A_f);
         if (!ntl_ok || !flint_ok) {
             std::fprintf(stderr,
-                "[smoke] %s inv         : skipped (singular: ntl=%d flint=%d)\n",
-                label, !ntl_ok, !flint_ok);
+                "[smoke] %s inv         : FAIL (singular after %d retries: "
+                "ntl=%d flint=%d)\n",
+                label, max_retries, !ntl_ok, !flint_ok);
+            ++fails;
         } else {
             bool ok = mat_equal(X_n, X_f, n);
-            std::fprintf(stderr, "[smoke] %s inv         : %s\n", label, ok ? "ok" : "FAIL");
+            std::fprintf(stderr,
+                "[smoke] %s inv         : %s (attempt=%d)\n",
+                label, ok ? "ok" : "FAIL", attempt + 1);
             if (!ok) ++fails;
         }
         nmod_mat_clear(A_f);
@@ -163,25 +194,44 @@ int check_field(long p, const char* label) {
         nmod_mat_init(B_f, n, 1, static_cast<ulong>(p));
         nmod_mat_init(X_f, n, 1, static_cast<ulong>(p));
         nmod_mat_init(R_f, n, 1, static_cast<ulong>(p));
-        fill_both(A_n, A_f, n, 0xD4D4D4D4ULL);
-        ulong b_arr[16];
-        fill_both_vec(b_n, b_arr, n, 0xE5E5E5E5ULL);
-        for (long i = 0; i < n; ++i)
-            nmod_mat_set_entry(B_f, i, 0, b_arr[i]);
-        zz_p d_ntl;
+        // Singular-resample policy mirrors the inv block above. Both A
+        // and the RHS b are re-derived together on retry so the (A, b)
+        // pair stays correlated to a single seed pair as the harness
+        // documents in `seed_helpers.h`.
+        const int max_retries = 3;
+        int attempt = 0;
         bool ntl_ok = false;
-        try {
-            // Column-vector convention: solve(d, A, x, b) computes
-            // x with A*x = b. The other overload (d, x, A, b) does
-            // the row-vector x*A = b which is NOT what the protocol
-            // §6 contract describes. See NTL doc/mat_lzz_p.txt.
-            solve(d_ntl, A_n, x_n, b_n);
-            ntl_ok = (rep(d_ntl) != 0);
-        } catch (...) { ntl_ok = false; }
-        int flint_ok = nmod_mat_solve(X_f, A_f, B_f);
+        int flint_ok = 0;
+        uint64_t a_seed = 0xD4D4D4D4ULL;
+        uint64_t b_seed = 0xE5E5E5E5ULL;
+        ulong b_arr[16];
+        zz_p d_ntl;
+        for (; attempt < max_retries; ++attempt) {
+            fill_both(A_n, A_f, n, a_seed);
+            fill_both_vec(b_n, b_arr, n, b_seed);
+            for (long i = 0; i < n; ++i)
+                nmod_mat_set_entry(B_f, i, 0, b_arr[i]);
+            ntl_ok = false;
+            try {
+                // Column-vector convention: solve(d, A, x, b) computes
+                // x with A*x = b. The other overload (d, x, A, b) does
+                // the row-vector x*A = b which is NOT what the protocol
+                // §6 contract describes. See NTL doc/mat_lzz_p.txt.
+                solve(d_ntl, A_n, x_n, b_n);
+                ntl_ok = (rep(d_ntl) != 0);
+            } catch (...) { ntl_ok = false; }
+            flint_ok = nmod_mat_solve(X_f, A_f, B_f);
+            if (ntl_ok && flint_ok) break;
+            uint64_t sa = a_seed, sb = b_seed;
+            a_seed = gf2_bench_splitmix64(&sa);
+            b_seed = gf2_bench_splitmix64(&sb);
+        }
         if (!ntl_ok || !flint_ok) {
             std::fprintf(stderr,
-                "[smoke] %s solve       : skipped (singular)\n", label);
+                "[smoke] %s solve       : FAIL (singular after %d retries: "
+                "ntl=%d flint=%d)\n",
+                label, max_retries, !ntl_ok, !flint_ok);
+            ++fails;
         } else {
             // NTL residual: A·x - b
             bool ntl_resid_ok = true;
@@ -209,8 +259,9 @@ int check_field(long p, const char* label) {
             }
             bool ok = ntl_resid_ok && flint_resid_ok && ntl_eq_flint;
             std::fprintf(stderr,
-                "[smoke] %s solve       : %s (ntl_residual=%d flint_residual=%d "
-                "x_ntl==x_flint=%d)\n", label, ok ? "ok" : "FAIL",
+                "[smoke] %s solve       : %s (attempt=%d ntl_residual=%d "
+                "flint_residual=%d x_ntl==x_flint=%d)\n",
+                label, ok ? "ok" : "FAIL", attempt + 1,
                 (int)ntl_resid_ok, (int)flint_resid_ok, (int)ntl_eq_flint);
             if (!ok) ++fails;
         }
