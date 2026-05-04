@@ -1245,6 +1245,86 @@ impl SpBitMatrix {
             indices,
         }
     }
+
+    /// Sparse × dense matrix multiplication `C = A · B` over GF(2).
+    ///
+    /// `self` is a CSR sparse matrix; `b` is a row-major bit-packed dense
+    /// `BitMatrix`. The result is a dense `BitMatrix` of shape
+    /// `self.rows() × b.cols()`. GF(2) semantics apply: contributions from
+    /// distinct `k` indices accumulate by XOR.
+    ///
+    /// This is the canonical sparse×dense entry-point for benchmarking
+    /// against external libraries (LinBox `applyLeft`, fflas-ffpack `fspmm`).
+    /// It is bit-equal to `self.to_dense() * b` (dense×dense) but operates
+    /// directly on CSR row indices, skipping zero columns of `A` entirely.
+    ///
+    /// # Arguments
+    ///
+    /// * `b` — right-hand-side dense matrix. Must satisfy
+    ///   `self.cols() == b.rows()`; otherwise the call panics.
+    ///
+    /// # Algorithm
+    ///
+    /// For each output row `i`, walk the CSR row of `A`: for each non-zero
+    /// column `k`, XOR-accumulate the entire `k`-th row of `B` (as a packed
+    /// `&[u64]`) into the output row. This is `O(nnz(A) · stride_words(B))`
+    /// word-XOR work, equivalent in shape to the row-XOR fallback used by
+    /// dense `BitMatrix::matmul` but driven by sparse row indices.
+    ///
+    /// When `self.rows() == 0`, the result is an empty `0 × b.cols()` matrix.
+    /// When `b.cols() == 0`, the result is `self.rows() × 0`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `self.cols() != b.rows()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::sparse::SpBitMatrix;
+    /// use gf2_core::matrix::BitMatrix;
+    ///
+    /// // A = [[1 0 1] [0 1 0]] over GF(2)
+    /// let a = SpBitMatrix::from_coo(2, 3, &[(0, 0), (0, 2), (1, 1)]);
+    /// // B = I_3 (dense)
+    /// let b = BitMatrix::identity(3);
+    /// let c = a.matmat(&b);
+    /// assert_eq!(c, a.to_dense());
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(nnz(A) · ⌈cols(B) / 64⌉) word-XOR operations. Memory is
+    /// O(rows(A) · ⌈cols(B) / 64⌉) for the output (no auxiliary buffers).
+    pub fn matmat(&self, b: &BitMatrix) -> BitMatrix {
+        assert_eq!(
+            self.cols,
+            b.rows(),
+            "matmat inner dimensions must match: lhs.cols={} rhs.rows={}",
+            self.cols,
+            b.rows(),
+        );
+
+        let mut out = BitMatrix::zeros(self.rows, b.cols());
+        if self.rows == 0 || b.cols() == 0 || self.cols == 0 {
+            return out;
+        }
+
+        let xor = crate::kernels::ops::resolve_xor_inplace(out.stride_words());
+
+        for i in 0..self.rows {
+            let start = self.indptr[i];
+            let end = self.indptr[i + 1];
+            if start == end {
+                continue;
+            }
+            let out_row = out.row_words_mut(i);
+            for &k in &self.indices[start..end] {
+                xor(out_row, b.row_words(k));
+            }
+        }
+        out
+    }
 }
 
 /// Dual representation storing both CSR and CSC formats for efficient bidirectional access.
@@ -2027,6 +2107,217 @@ mod tests {
             let c = a.matmul(&b);
             assert_csr_canonical(&c);
             prop_assert_eq!(c, dense_matmul_reference(&a, &b));
+        }
+    }
+
+    // ─── matmat (sparse × dense → dense) tests ────────────────────────────────
+
+    /// Reference oracle: `a.matmat(b)` must equal `a.to_dense() * b`
+    /// (dense×dense over GF(2)) bitwise.
+    fn matmat_dense_reference(a: &SpBitMatrix, b: &BitMatrix) -> BitMatrix {
+        a.to_dense() * b.clone()
+    }
+
+    /// Build a deterministic sparse `m × n` matrix at approximate density
+    /// `density` from a SplitMix64-style stream.
+    fn matmat_sparse_from_seed(m: usize, n: usize, density: f64, seed: u64) -> SpBitMatrix {
+        let mut entries: Vec<(usize, usize)> = Vec::new();
+        let mut st = seed;
+        let threshold = if density >= 1.0 {
+            u64::MAX
+        } else {
+            (density * (u64::MAX as f64 + 1.0)) as u64
+        };
+        for r in 0..m {
+            for c in 0..n {
+                st = st
+                    .wrapping_mul(6364136223846793005)
+                    .wrapping_add(1442695040888963407);
+                let mix = st ^ (st >> 31);
+                if mix < threshold {
+                    entries.push((r, c));
+                }
+            }
+        }
+        SpBitMatrix::from_coo(m, n, &entries)
+    }
+
+    /// Build a deterministic dense `BitMatrix` of shape `m × n` with bits
+    /// drawn from the same SplitMix64-style stream as
+    /// [`matmat_sparse_from_seed`].
+    fn matmat_dense_from_seed(m: usize, n: usize, seed: u64) -> BitMatrix {
+        let mut out = BitMatrix::zeros(m, n);
+        let mut st = seed;
+        for r in 0..m {
+            for c in 0..n {
+                st = st
+                    .wrapping_mul(6364136223846793005)
+                    .wrapping_add(1442695040888963407);
+                if (st >> 33) & 1 == 1 {
+                    out.set(r, c, true);
+                }
+            }
+        }
+        out
+    }
+
+    #[test]
+    fn test_matmat_empty() {
+        // Both axes empty: 0 × 0 sparse times 0 × 0 dense.
+        let a = SpBitMatrix::zeros(0, 0);
+        let b = BitMatrix::zeros(0, 0);
+        let c = a.matmat(&b);
+        assert_eq!(c.rows(), 0);
+        assert_eq!(c.cols(), 0);
+        assert_eq!(c, matmat_dense_reference(&a, &b));
+
+        // Empty rows but non-trivial inner/output cols.
+        let a2 = SpBitMatrix::zeros(0, 5);
+        let b2 = BitMatrix::zeros(5, 7);
+        let c2 = a2.matmat(&b2);
+        assert_eq!(c2.rows(), 0);
+        assert_eq!(c2.cols(), 7);
+        assert_eq!(c2, matmat_dense_reference(&a2, &b2));
+
+        // Zero output cols.
+        let a3 = SpBitMatrix::identity(3);
+        let b3 = BitMatrix::zeros(3, 0);
+        let c3 = a3.matmat(&b3);
+        assert_eq!(c3.rows(), 3);
+        assert_eq!(c3.cols(), 0);
+        assert_eq!(c3, matmat_dense_reference(&a3, &b3));
+    }
+
+    #[test]
+    fn test_matmat_single_bit() {
+        // 1×1 sparse × 1×k dense for k ∈ {1, 64, 65}.
+        for &k in &[1usize, 64, 65] {
+            // A = [[1]] (sparse 1×1).
+            let a = SpBitMatrix::from_coo(1, 1, &[(0, 0)]);
+            let b = matmat_dense_from_seed(1, k, 0xA5A5_5A5A_C3C3_3C3C ^ k as u64);
+            let c = a.matmat(&b);
+            assert_eq!(c.rows(), 1);
+            assert_eq!(c.cols(), k);
+            assert_eq!(c, matmat_dense_reference(&a, &b));
+
+            // A = [[0]] (sparse 1×1, empty).
+            let a_zero = SpBitMatrix::zeros(1, 1);
+            let c_zero = a_zero.matmat(&b);
+            assert_eq!(c_zero.rows(), 1);
+            assert_eq!(c_zero.cols(), k);
+            assert_eq!(c_zero, matmat_dense_reference(&a_zero, &b));
+        }
+    }
+
+    fn run_word_boundary_case(n: usize, seed: u64) {
+        let density = if n == 0 {
+            0.0
+        } else {
+            8.0 / (n as f64).max(1.0)
+        };
+        let a = matmat_sparse_from_seed(n.max(1), n.max(1), density.min(1.0), seed);
+        let b = matmat_dense_from_seed(n.max(1), n, seed ^ 0xDEAD_BEEF);
+        let c = a.matmat(&b);
+        assert_eq!(c.rows(), a.rows());
+        assert_eq!(c.cols(), b.cols());
+        assert_eq!(c, matmat_dense_reference(&a, &b));
+    }
+
+    #[test]
+    fn test_matmat_word_boundary_below() {
+        run_word_boundary_case(63, 0x1111_2222_3333_4444);
+    }
+
+    #[test]
+    fn test_matmat_exact_word() {
+        run_word_boundary_case(64, 0x5555_6666_7777_8888);
+    }
+
+    #[test]
+    fn test_matmat_word_boundary_above() {
+        run_word_boundary_case(65, 0x9999_AAAA_BBBB_CCCC);
+    }
+
+    #[test]
+    fn test_matmat_two_words_below() {
+        run_word_boundary_case(1023, 0x0102_0304_0506_0708);
+    }
+
+    #[test]
+    fn test_matmat_two_words_exact() {
+        run_word_boundary_case(1024, 0x1020_3040_5060_7080);
+    }
+
+    #[test]
+    fn test_matmat_two_words_above() {
+        run_word_boundary_case(1025, 0xFEDC_BA98_7654_3210);
+    }
+
+    #[test]
+    fn test_matmat_xor_cancellation() {
+        // A = [[1, 1, 0]]; B = [[1, 0], [1, 0], [0, 1]].
+        // A·B = [[1+1, 0+0]] = [[0, 0]] (XOR).
+        let a = SpBitMatrix::from_coo(1, 3, &[(0, 0), (0, 1)]);
+        let mut b = BitMatrix::zeros(3, 2);
+        b.set(0, 0, true);
+        b.set(1, 0, true);
+        b.set(2, 1, true);
+        let c = a.matmat(&b);
+        assert_eq!(c.rows(), 1);
+        assert_eq!(c.cols(), 2);
+        assert!(!c.get(0, 0));
+        assert!(!c.get(0, 1));
+        assert_eq!(c, matmat_dense_reference(&a, &b));
+    }
+
+    #[test]
+    fn test_matmat_identity_left() {
+        // I_n · B == B for various n straddling word boundaries.
+        for &n in &[1usize, 63, 64, 65] {
+            let i = SpBitMatrix::identity(n);
+            let b = matmat_dense_from_seed(n, n + 7, 0xDEAD_BEEF_DEAD_BEEF ^ n as u64);
+            let c = i.matmat(&b);
+            assert_eq!(c, b);
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "matmat inner dimensions must match")]
+    fn test_matmat_dimension_mismatch_panics() {
+        let a = SpBitMatrix::zeros(2, 3);
+        let b = BitMatrix::zeros(4, 5);
+        let _ = a.matmat(&b);
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(48))]
+
+        #[test]
+        fn proptest_matmat_matches_dense(
+            ar in 0usize..32,
+            ak in 0usize..32,
+            bc in 0usize..256,
+            a_raw in proptest::collection::vec((0usize..32, 0usize..32), 0..120),
+            b_seed in any::<u64>(),
+        ) {
+            let a_entries: Vec<_> = a_raw
+                .into_iter()
+                .filter_map(|(r, c)| {
+                    if ar == 0 || ak == 0 {
+                        None
+                    } else {
+                        Some((r % ar, c % ak))
+                    }
+                })
+                .collect();
+
+            let a = SpBitMatrix::from_coo(ar, ak, &a_entries);
+            let b = matmat_dense_from_seed(ak, bc, b_seed);
+
+            let c = a.matmat(&b);
+            prop_assert_eq!(c.rows(), ar);
+            prop_assert_eq!(c.cols(), bc);
+            prop_assert_eq!(c, matmat_dense_reference(&a, &b));
         }
     }
 }
