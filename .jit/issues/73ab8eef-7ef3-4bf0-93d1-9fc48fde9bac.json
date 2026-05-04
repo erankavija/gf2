@@ -2,7 +2,7 @@
   "id": "73ab8eef-7ef3-4bf0-93d1-9fc48fde9bac",
   "title": "Evaluate NTL and FLINT references",
   "description": "Determine whether NTL and FLINT provide relevant performance references for field or polynomial kernels.\n\n## Success Criteria\n\n- [hard] Accepted NTL/FLINT lanes emit compatible CSV rows.\n- [hard] Rejected NTL/FLINT lanes have evidence explaining non-comparability or build infeasibility.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:claude",
   "dependencies": [],
@@ -12,10 +12,15 @@
     "doc-review"
   ],
   "gates_status": {
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-05-04T06:47:59.803819180Z"
+    },
     "code-review": {
-      "status": "failed",
+      "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-04T06:32:24.573051308Z"
+      "updated_at": "2026-05-04T06:42:27.814676027Z"
     },
     "cargo-ci": {
       "status": "passed",
@@ -45,5 +50,5 @@
     "story:sota-reference-matrix"
   ],
   "created_at": "2026-04-30T06:43:02.626708198+00:00",
-  "updated_at": "2026-05-04T06:37:25.662524120+00:00"
+  "updated_at": "2026-05-04T06:48:00.508073881+00:00"
 }
