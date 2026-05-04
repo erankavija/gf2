@@ -304,6 +304,40 @@ impl CsvSink {
 
 fn run_gf2_random_er(args: &Args, sink: &mut CsvSink, sizes: &[usize]) -> std::io::Result<()> {
     let field = "GF(2)";
+    // sparse-elim cells use a separate seed walk and a separate size list
+    // so the LinBox cross-library reference at n ∈ {256, 1024} (matching
+    // `linbox_sparse_bench --quick`) gets a gf2-side companion regardless
+    // of the spmv `sizes` selection above. This re-uses the
+    // `derive_seed("spelim-er", 3, si, 1)` convention that
+    // `linbox_sparse_bench.cpp:269-271` already emits against.
+    for (si, &elim_n) in [256usize, 1024].iter().enumerate() {
+        let elim_density = 10.0 / (elim_n as f64);
+        let elim_key = format!("sparse-elim/{field}/{elim_n}/csr");
+        if !cell_passes(&args.filter, &elim_key) {
+            continue;
+        }
+        let elim_seed = derive_seed(args.master_seed, "spelim-er", 3, si as u64, 1);
+        let m = bitmatrix_sparse_from_seed(elim_n, elim_n, elim_density, elim_seed);
+        eprintln!("[gf2-sparse] {elim_key}");
+        let (wall_e, _) = time_op(
+            || {
+                let _ = std::hint::black_box(m.rref());
+            },
+            args.warmup,
+            args.iters,
+        );
+        sink.emit(
+            "sparse-elim",
+            field,
+            elim_n,
+            elim_n,
+            elim_n,
+            &format!("density_{}_csr", fmt_density_c(elim_density)),
+            elim_seed,
+            wall_e,
+            tput((elim_n * elim_n * elim_n) as f64, wall_e),
+        )?;
+    }
     for (si, &n) in sizes.iter().enumerate() {
         // d = 10/n is the canonical sparse-design density per § 3.1.
         let density = 10.0 / (n as f64);
@@ -530,6 +564,38 @@ fn run_fp_random_er<const P: u64>(
     field_label: &str,
     sizes: &[usize],
 ) -> std::io::Result<()> {
+    // sparse-elim cells (GF(p)). Mirrors the GF(2) emitter block above and
+    // the LinBox `Method::SparseElimination` rows in
+    // `linbox_sparse_bench.cpp:269-271`. SparseFieldMatrix::<Fp<P>>::rref
+    // is the gf2-core entry-point exercised here.
+    for (si, &elim_n) in [256usize, 1024].iter().enumerate() {
+        let elim_density = 10.0 / (elim_n as f64);
+        let elim_key = format!("sparse-elim/{field_label}/{elim_n}/csr");
+        if !cell_passes(&args.filter, &elim_key) {
+            continue;
+        }
+        let elim_seed = derive_seed(args.master_seed, "spelim-er", 3, si as u64, 1);
+        let m = fp_sparse_from_seed::<P>(elim_n, elim_n, elim_density, elim_seed);
+        eprintln!("[gf2-sparse] {elim_key}");
+        let (wall_e, _) = time_op(
+            || {
+                let _ = std::hint::black_box(m.rref());
+            },
+            args.warmup,
+            args.iters,
+        );
+        sink.emit(
+            "sparse-elim",
+            field_label,
+            elim_n,
+            elim_n,
+            elim_n,
+            &format!("density_{}_csr", fmt_density_c(elim_density)),
+            elim_seed,
+            wall_e,
+            tput((elim_n * elim_n * elim_n) as f64, wall_e),
+        )?;
+    }
     for (si, &n) in sizes.iter().enumerate() {
         let density = 10.0 / (n as f64);
         let regime = format!("density_{}_csr", fmt_density_c(density));
