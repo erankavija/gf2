@@ -13,7 +13,39 @@
   ],
   "gates_status": {},
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/bench_results/2026-05-04-3b762764-dense-la-post-gemm.md",
+      "commit": null,
+      "label": "Dense LA post-GEMM scorecard (3b762764)",
+      "doc_type": "evidence",
+      "format": "markdown",
+      "assets": [
+        {
+          "original_path": "2026-04-30-post-ppc-delta-appendix.md",
+          "resolved_path": "dev/bench_results/2026-04-30-post-ppc-delta-appendix.md",
+          "asset_type": "local",
+          "mime_type": "text/markdown",
+          "content_hash": "81df3f98a7ad3a9318e2a8e03f85435b0af524c347eff6e509435941b4981ec4",
+          "is_shared": false
+        }
+      ]
+    },
+    {
+      "path": "dev/bench_results/2026-05-04-3b762764-dense-la-host.txt",
+      "commit": null,
+      "label": "3b762764 worktree host capture",
+      "doc_type": "evidence",
+      "format": "markdown"
+    },
+    {
+      "path": "dev/bench_results/2026-05-04-3b762764-dense-la-reference.csv",
+      "commit": null,
+      "label": "Dense LA aggregated reference CSV (3b762764)",
+      "doc_type": "evidence",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:task",
     "component:gf2-core",
@@ -21,5 +53,5 @@
     "story:sota-dense-la"
   ],
   "created_at": "2026-04-30T06:43:02.797812087+00:00",
-  "updated_at": "2026-04-30T06:43:02.797821027+00:00"
+  "updated_at": "2026-05-04T10:47:25.683180069+00:00"
 }

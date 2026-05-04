@@ -18,7 +18,25 @@
   ],
   "gates_status": {},
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/bench_results/2026-05-04-3b762764-dense-la-post-gemm.md",
+      "commit": null,
+      "label": "Dense LA post-GEMM scorecard (ingested by 3b762764)",
+      "doc_type": "evidence",
+      "format": "markdown",
+      "assets": [
+        {
+          "original_path": "2026-04-30-post-ppc-delta-appendix.md",
+          "resolved_path": "dev/bench_results/2026-04-30-post-ppc-delta-appendix.md",
+          "asset_type": "local",
+          "mime_type": "text/markdown",
+          "content_hash": "81df3f98a7ad3a9318e2a8e03f85435b0af524c347eff6e509435941b4981ec4",
+          "is_shared": false
+        }
+      ]
+    }
+  ],
   "labels": [
     "type:story",
     "component:gf2-core",
@@ -26,5 +44,5 @@
     "story:sota-dense-la"
   ],
   "created_at": "2026-04-30T06:43:02.503836063+00:00",
-  "updated_at": "2026-04-30T06:43:49.237038623+00:00"
+  "updated_at": "2026-05-04T10:47:25.690376282+00:00"
 }
