@@ -52,7 +52,7 @@ FLINT_CFLAGS := -I/usr/local/include
 FLINT_LIBS   := -L/usr/local/lib -lflint -lmpfr -lgmp -lm
 
 .PHONY: all clean
-all: fflas_bench m4ri_bench linbox_bench m4rie_bench ntl_bench flint_bench ntl_flint_smoke charpoly_minpoly_smoke
+all: fflas_bench m4ri_bench linbox_bench m4rie_bench ntl_bench flint_bench ntl_flint_smoke charpoly_minpoly_smoke ntl_gf2pow32_smoke
 
 fflas_bench: fflas_bench.cpp
 	@$(CXX) $(CXXSTD) $(OPT) -fopenmp $(FFLAS_CFLAGS) $< $(FFLAS_LIBS) -lopenblas -o $@
@@ -72,6 +72,13 @@ flint_bench: flint_bench.c
 ntl_flint_smoke: ntl_flint_smoke.cpp
 	@$(CXX) $(CXXSTD) $(OPT) $(NTL_CFLAGS) $(FLINT_CFLAGS) $< \
 	  $(NTL_LIBS) $(FLINT_LIBS) -o $@
+
+# GF(2^32) bitwise-equality oracle (jit:b13799ac). Cross-checks NTL
+# `mat_GF2E` matmul at n=16 against an independent scalar reference
+# defined purely from the gf2-core Conway-polynomial bits. Linked
+# against NTL only — the scalar reference is self-contained.
+ntl_gf2pow32_smoke: ntl_gf2pow32_smoke.cpp
+	@$(CXX) $(CXXSTD) $(OPT) $(NTL_CFLAGS) $< $(NTL_LIBS) -o $@
 
 linbox_bench: linbox_bench.cpp
 	@$(CXX) $(CXXSTD) $(OPT) -fopenmp $(LINBOX_CFLAGS) $(FFLAS_CFLAGS) $< $(LINBOX_LIBS) $(FFLAS_LIBS) -lopenblas -o $@
@@ -94,4 +101,4 @@ charpoly_minpoly_smoke: charpoly_minpoly_smoke.cpp
 	  $(LINBOX_LIBS) $(FFLAS_LIBS) $(FLINT_LIBS) -lopenblas -o $@
 
 clean:
-	rm -f fflas_bench m4ri_bench linbox_bench m4rie_bench m4rie_one_cell ntl_bench flint_bench ntl_flint_smoke charpoly_minpoly_smoke
+	rm -f fflas_bench m4ri_bench linbox_bench m4rie_bench m4rie_one_cell ntl_bench flint_bench ntl_flint_smoke charpoly_minpoly_smoke ntl_gf2pow32_smoke

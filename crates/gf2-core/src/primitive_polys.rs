@@ -94,6 +94,41 @@ impl PrimitivePolynomialDatabase {
             14 => Some(0b100000000101011),   // x^14 + x^5 + x^3 + x + 1 (DVB-T2)
             15 => Some(0b1000000000000011),  // x^15 + x + 1
             16 => Some(0b10000000000101101), // x^16 + x^5 + x^3 + x^2 + 1 (DVB-T2)
+            // m = 32: x^32 + x^15 + x^9 + x^7 + x^4 + x^3 + 1.
+            //
+            // Source — Conway polynomial database (Frank Lübeck),
+            // <https://www.math.rwth-aachen.de/~Frank.Luebeck/data/ConwayPol/CP2.html>,
+            // table row `f_{2,32}` (constant term first; the implicit
+            // "1" at index 32 is the leading coefficient). Coefficients
+            // equal 1 at positions {0, 3, 4, 7, 9, 15, 32}; all other
+            // positions are 0.
+            //
+            // Conway polynomials are primitive by construction
+            // (Lübeck, *Conway polynomials for finite fields*, 2003), so
+            // the multiplicative-order test is automatically satisfied —
+            // x has order 2^32 - 1 = 4294967295. The polynomial is in
+            // canonical compatibility form across SageMath, Magma, GAP,
+            // and FLINT (`nmod_poly_init_conway` returns the same bits),
+            // which makes it a natural choice when interoperating with
+            // external GF(2^32) reference implementations such as NTL
+            // `mat_GF2E` or FLINT `fq_nmod_mat`.
+            //
+            // Hex form: 0x1_0000_8299u64. The leading 0x1_0000_0000
+            // carries bit 32; the low half-word 0x8299 = 0b1000_0010_1001_1001
+            // sets bits 0, 3, 4, 7, 9, 15. The polynomial fits in `u64`
+            // (degree < 64).
+            //
+            // We do not run the project's u64-based `verify_primitive`
+            // multiplicative-order check on this entry because that
+            // helper iterates 2^m - 1 elements; for m = 32 that is
+            // ~4.3 billion iterations and would dominate the test
+            // suite. The Conway-polynomial citation above is the
+            // primary correctness witness; the irreducibility test in
+            // `test_standard_m32_is_irreducible` (this module's `tests`
+            // submodule) re-verifies the irreducibility half of the
+            // contract via the same `is_irreducible_u128` helper used
+            // for the `m >= 64` entries.
+            32 => Some(0x1_0000_8299u64), // x^32 + x^15 + x^9 + x^7 + x^4 + x^3 + 1
             _ => None,
         }
     }
@@ -540,5 +575,40 @@ mod tests {
     fn test_trinomials_gf8() {
         let trinomials = PrimitivePolynomialDatabase::trinomials(8);
         assert!(trinomials.contains(&0b100010001));
+    }
+
+    #[test]
+    fn test_standard_m32_value() {
+        // x^32 + x^15 + x^9 + x^7 + x^4 + x^3 + 1 — Conway polynomial for
+        // GF(2^32) (Frank Lübeck's Conway polynomial database, table
+        // row `f_{2,32}`).
+        // Bits set: 0, 3, 4, 7, 9, 15, 32 → 0x1_0000_8299.
+        let poly = PrimitivePolynomialDatabase::standard(32).expect("m=32 entry");
+        assert_eq!(poly, 0x1_0000_8299u64);
+        // Sanity-check the bit set against the textual form.
+        let expected_bits = [0u32, 3, 4, 7, 9, 15, 32];
+        let mut got_bits: Vec<u32> = (0..64).filter(|i| (poly >> i) & 1 == 1).collect();
+        got_bits.sort_unstable();
+        assert_eq!(got_bits, expected_bits);
+    }
+
+    #[test]
+    fn test_standard_m32_is_irreducible() {
+        // Verify the GF(2^32) Conway-polynomial entry is irreducible
+        // over GF(2). Conway polynomials are primitive by construction;
+        // primitivity implies irreducibility, so this test re-checks
+        // the weaker (but cheap-to-verify) half of the contract via the
+        // same Rabin-style helper used for the `m >= 64` entries.
+        // Running the multiplicative-order test for m = 32 would require
+        // walking 2^32 - 1 ≈ 4.3 billion elements, which is impractical
+        // in CI; the Conway citation in `standard()`'s comment carries
+        // the primitivity claim.
+        let poly = PrimitivePolynomialDatabase::standard(32).expect("m=32 entry");
+        assert!(
+            is_irreducible_u128(poly as u128, 32),
+            "GF(2^32) Conway polynomial {:#x} is not irreducible — \
+             database entry has drifted from the cited Lübeck table",
+            poly
+        );
     }
 }
