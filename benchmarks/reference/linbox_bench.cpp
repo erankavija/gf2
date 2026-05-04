@@ -387,7 +387,10 @@ static void bench_solve(const Field& F,
 //   * charpoly: monic (leading coeff = 1), degree exactly n, satisfies
 //     Cayley-Hamilton (p(A) = 0).
 //   * minpoly: monic, degree ≤ n, divides charpoly, satisfies p(A) = 0.
-//   * solve  (uniform): A·x ≡ b (canonical equality bitwise).
+//   * solve  (uniform + deficient): A·x ≡ b (canonical equality
+//     bitwise). Both regimes force consistency via b = A·x0 so the
+//     check holds even when A is rank-deficient (b ∈ colspace(A) by
+//     construction; LinBox returns the FFPACK particular-solution).
 //
 // All checks use FFLAS::fgemm + element-wise compare on the same raw
 // buffer the timing path consumes. Failure exits non-zero with a
@@ -546,16 +549,24 @@ template <typename Field>
 static int smoke_solve(const Field& F,
                        const char* field_label,
                        size_t n,
+                       const char* regime,
                        uint64_t seed) {
-    // Uniform regime only at smoke time: deficient-regime solve is
-    // covered by the timing path (where consistency is forced via
-    // b = A·x0). Here we still force consistency the same way so the
-    // smoke check works at small primes where uniform-random A is
+    // Smoke covers both regimes that the timing path emits to CSV.
+    // Consistency is forced via b = A·x0 in either regime so the
+    // smoke check works at small primes where a uniform-random A is
     // singular with non-trivial probability (e.g. GF(7) with p^{-1} ≈
-    // 0.14 chance of det(A)=0 at n=16).
+    // 0.14 chance of det(A)=0 at n=16) and at deficient inputs where
+    // A has rank < n by construction (ker(A) is non-trivial; the
+    // particular-solution path is what we are exercising).
+    const size_t rank_target = (std::strcmp(regime, "deficient") == 0)
+                                   ? n / 2 : n;
     typename Field::Element_ptr A_buf = FFLAS::fflas_new(F, n * n);
     typename Field::Element_ptr B_buf = FFLAS::fflas_new(F, n);
-    fill_uniform_buf(F, A_buf, n * n, seed);
+    if (rank_target == n) {
+        fill_uniform_buf(F, A_buf, n * n, seed);
+    } else {
+        fill_rank_deficient_buf(F, A_buf, n, n, rank_target, seed);
+    }
     {
         typename Field::Element_ptr X0 = FFLAS::fflas_new(F, n);
         fill_uniform_buf(F, X0, n, seed ^ 0xC0DEBABEDEADBEEFULL);
@@ -577,13 +588,17 @@ static int smoke_solve(const Field& F,
         LinBox::solve(x, M, b, LinBox::Method::DenseElimination());
     } catch (const std::exception& e) {
         std::fprintf(stderr,
-                     "[smoke] FAIL solve threw: field=%s n=%zu what=%s\n",
-                     field_label, n, e.what());
+                     "[smoke] FAIL solve threw: field=%s n=%zu regime=%s "
+                     "what=%s\n",
+                     field_label, n, regime, e.what());
         rc = 1;
     }
 
     if (rc == 0) {
-        // Reconstruct b' = A·x and compare to b element-wise.
+        // Reconstruct b' = A·x and compare to b element-wise. The
+        // identity A·x ≡ b holds in both regimes because b was
+        // constructed via b = A·x0 (uniform: A full-rank; deficient:
+        // A = L·R with rank n/2, b ∈ colspace(A) by construction).
         typename Field::Element_ptr X_buf = FFLAS::fflas_new(F, n);
         typename Field::Element_ptr Y_buf = FFLAS::fflas_new(F, n);
         for (size_t i = 0; i < n; ++i) X_buf[i] = x.getEntry(i);
@@ -597,8 +612,8 @@ static int smoke_solve(const Field& F,
             if (!F.areEqual(Y_buf[i], B_buf[i])) {
                 std::fprintf(stderr,
                              "[smoke] FAIL solve A·x != b: field=%s n=%zu "
-                             "row=%zu\n",
-                             field_label, n, i);
+                             "regime=%s row=%zu\n",
+                             field_label, n, regime, i);
                 rc = 1;
                 break;
             }
@@ -610,8 +625,8 @@ static int smoke_solve(const Field& F,
     FFLAS::fflas_delete(B_buf);
     if (rc == 0) {
         std::fprintf(stderr,
-                     "[smoke] OK solve field=%s n=%zu\n",
-                     field_label, n);
+                     "[smoke] OK solve field=%s n=%zu regime=%s\n",
+                     field_label, n, regime);
     }
     return rc;
 }
@@ -667,8 +682,15 @@ static int smoke_field(const Field& F,
                          derive_seed(master_seed, "charpoly", 5, 0, 0));
     rc |= smoke_minpoly(F, field_label, n,
                         derive_seed(master_seed, "minpoly", 6, 0, 0));
-    rc |= smoke_solve(F, field_label, n,
+    // Smoke covers both regimes the timing path emits to CSV; the
+    // regime_idx values (0 = uniform, 1 = deficient) match the
+    // derive_seed contract used by bench_solve in run_field below so
+    // the smoke and timing seeds for the same (field, n=16, regime)
+    // tuple are identical (cf. SOTA acceptance protocol § 6).
+    rc |= smoke_solve(F, field_label, n, "uniform",
                       derive_seed(master_seed, "solve", 4, 0, 0));
+    rc |= smoke_solve(F, field_label, n, "deficient",
+                      derive_seed(master_seed, "solve", 4, 0, 1));
     return rc;
 }
 

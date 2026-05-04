@@ -1,0 +1,18 @@
+[linbox_bench] master_seed=0x6f73ac91d31e4a7c warmup=3 iters=5 smoke=1
+[smoke] OK charpoly field=GF(2^31-1) n=16
+[smoke] OK minpoly field=GF(2^31-1) n=16
+[smoke] OK solve field=GF(2^31-1) n=16 regime=uniform
+[smoke] OK solve field=GF(2^31-1) n=16 regime=deficient
+[smoke] OK charpoly field=GF(65521) n=16
+[smoke] OK minpoly field=GF(65521) n=16
+[smoke] OK solve field=GF(65521) n=16 regime=uniform
+[smoke] OK solve field=GF(65521) n=16 regime=deficient
+[smoke] OK charpoly field=GF(251) n=16
+[smoke] OK minpoly field=GF(251) n=16
+[smoke] OK solve field=GF(251) n=16 regime=uniform
+[smoke] OK solve field=GF(251) n=16 regime=deficient
+[smoke] OK charpoly field=GF(7) n=16
+[smoke] OK minpoly field=GF(7) n=16
+[smoke] OK solve field=GF(7) n=16 regime=uniform
+[smoke] OK solve field=GF(7) n=16 regime=deficient
+[linbox_bench] smoke PASS
