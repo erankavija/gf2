@@ -29,7 +29,7 @@ tag  = "ref"
 # `local_id` is intrinsically per-build because `-march=native` couples
 # the binary to the host microarchitecture; recording it gives the gate
 # a tripwire for "did anything change since we last validated?".
-local_id = "sha256:42c9c356b142bbbc8c6cdf7bf7c8ab1f3b3db3ad25c9453247e5ac3a04c7c57c"
+local_id = "sha256:8c4b2fc03c78bf4ffc11ba8aa77f15a1ca7df03d795227917b4bd04c01ff88f4"
 
 [base]
 repository = "docker.io/library/debian"

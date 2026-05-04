@@ -9,7 +9,9 @@
   "session_1_handoff": "dev/active/97bf0879-handoff.md",
   "session_2_closed_at": "2026-05-04T07:05Z",
   "session_2_handoff": "dev/active/97bf0879-handoff-2.md",
-  "next_session_first_action": "Read dev/active/97bf0879-handoff-2.md (especially Traps section — 6 new traps from session 2; carry-forward from session 1 + babcf05e), then dispatch Wave 3 per the 'What to do next' list.",
+  "session_3_closed_at": "2026-05-04T13:00Z (provisional — set on commit)",
+  "session_3_handoff": "dev/active/97bf0879-handoff-3.md",
+  "next_session_first_action": "Read dev/active/97bf0879-handoff-3.md (Traps section: 6 new from session 3; carry-forward from session 1, 2, + babcf05e). Confirm bench-day completion (background bash task b8aeqwmly), then update 609855d9 + 3b762764 docs with the new pinned rows, run gates, close those two issues. After that, decide whether to dispatch b13799ac / 2403c054 / eb57f944 (which unblock 9a715d75 + a3412e15) inside this epic or as separate sessions.",
   "lead": "agent:project-lead",
   "predecessor_epic": "babcf05e",
   "notes": [
@@ -296,5 +298,55 @@
     "side_effect_promotions": [
       {"short_id": "4c0d0202", "from": "backlog", "to": "ready", "reason": "All upstream Wave-2 deps closed; SOTA target matrix design doc ready for Wave 4"}
     ]
+  },
+  "wave_3_summary": {
+    "issues_closed_so_far": 2,
+    "issues_pending_bench": ["609855d9", "3b762764"],
+    "issues_blocked_on_new_impl_tasks": {"9a715d75": "blocks on b13799ac", "a3412e15": "blocks on 2403c054 + eb57f944"},
+    "via_workers": ["0fd48627", "9a715d75", "a3412e15", "609855d9", "3b762764"],
+    "via_lead_direct": ["c3e79272 (lead-finalized worker WIP after rate-limit truncation)"],
+    "rework_summary": {
+      "0fd48627": {"rounds": 2, "outcome": "PASS r2 after lead-direct CSV-citation fixes; closed"},
+      "c3e79272": {"rounds": 1, "outcome": "PASS r1 after lead lead-preserved + finalized worker WIP; closed"},
+      "9a715d75": {"rounds": 4, "outcome": "OPEN — user picked 'keep open until b13799ac closes' after 4 strict-reviewer rejections of candidate-pool framing"},
+      "a3412e15": {"rounds": 1, "outcome": "OPEN — user picked 'keep open until 2403c054 + eb57f944 close' (same pattern as 9a715d75)"},
+      "609855d9": {"rounds": 1, "outcome": "PENDING-BENCH — fresh GF(31) row from in-flight bench-day will close"},
+      "3b762764": {"rounds": 1, "outcome": "PENDING-BENCH — fresh dense-LA rows from in-flight bench-day will close"}
+    },
+    "user_decisions": [
+      {"ts": "2026-05-04T11:42Z", "topic": "9a715d75 closure path", "decision": "Harness GF(2^32) instead of excluding it (extend scope); 18/19 exclusions approved + 2 new protocol § 9 classes approved"},
+      {"ts": "2026-05-04T11:42Z", "topic": "609855d9 closure path", "decision": "Lead runs one-off pinned GF(31) bench"},
+      {"ts": "2026-05-04T11:42Z", "topic": "3b762764 closure path", "decision": "Run fresh pinned dense-LA bench day"},
+      {"ts": "2026-05-04T11:42Z", "topic": "a3412e15 closure path", "decision": "File gf2-core sparse-impl follow-ups inside epic (extend scope)"},
+      {"ts": "2026-05-04T12:55Z", "topic": "9a715d75 + a3412e15 closure timing", "decision": "Keep both open until their respective new impl tasks close (rather than amend criterion text in-flight)"}
+    ],
+    "new_issues_filed": [
+      {"short_id": "b13799ac", "title": "Build GF(2^32) matmul reference harness", "story": "2c7548ae", "wave": "8 (impl)"},
+      {"short_id": "2403c054", "title": "gf2-core SpBitMatrix::matmul (GF(2) sparse-sparse multiply)", "story": "54fd3f0b", "wave": "10 (impl)"},
+      {"short_id": "eb57f944", "title": "gf2-core SparseFieldMatrix sparse-matmul + sparse-rref over GF(p) and GF(2^m)", "story": "54fd3f0b", "wave": "10 (impl)"}
+    ],
+    "new_jit_deps_wired": [
+      {"from": "9a715d75", "to": "b13799ac"},
+      {"from": "a3412e15", "to": "2403c054"},
+      {"from": "a3412e15", "to": "eb57f944"},
+      {"from": "47698404", "to": "2403c054"},
+      {"from": "47698404", "to": "eb57f944"},
+      {"from": "dece4e73", "to": "b13799ac"},
+      {"from": "4c0d0202", "to": "9a715d75"},
+      {"from": "4c0d0202", "to": "a3412e15"},
+      {"from": "4c0d0202", "to": "c3e79272"},
+      {"from": "4c0d0202", "to": "609855d9"},
+      {"from": "4c0d0202", "to": "0fd48627"},
+      {"from": "4c0d0202", "to": "3b762764"}
+    ],
+    "protocol_amendment_2": {
+      "doc": "dev/plans/sota_reference_acceptance_protocol.md",
+      "section": "§ 14 (legacy §14 renumbered to §15)",
+      "patches": [
+        "§ 7 operation list extended with sparse-matmul, sparse×dense, sparse-elim",
+        "§ 9 exclusion classes registry gained not-yet-harnessed and no-independent-oracle"
+      ],
+      "downstream_consumer": "47698404 (analyze.py validator update)"
+    }
   }
 }
