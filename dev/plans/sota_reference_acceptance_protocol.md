@@ -269,7 +269,7 @@ lib,operation,field,m,k,n,rank_regime,seed,wall_ns,throughput_ops
 | Column | Type | Allowed values / convention |
 |---|---|---|
 | `lib` | string | The candidate's name as a stable identifier — lowercase, no spaces. New values: `m4rie`, `linbox`, `ntl`, `flint`. **The string is added to `benchmarks/analyze.py`'s implicit lib registry by appearing in at least one row; no code change is required.** |
-| `operation` | string | Member of `{fgemm, matmul, pluq, echelon, invert, solve, charpoly, minpoly, spmv}`. M4RI uses `matmul`; `analyze.py` already aliases it to `fgemm` for cross-merge. |
+| `operation` | string | Member of `{fgemm, matmul, pluq, echelon, invert, solve, charpoly, minpoly, spmv, sparse-matmul, sparse×dense, sparse-elim}`. M4RI uses `matmul`; `analyze.py` already aliases it to `fgemm` for cross-merge. **The three sparse operation values were added by Amendment 2 (2026-05-04) — see § 14.** |
 | `field` | string | Member of `{GF(2), GF(7), GF(251), GF(65521), GF(2^31-1), GF(2^8), GF(2^16), GF(2^32)}`. New field tags require updating `FIELD_FAMILY` in `analyze.py` (cross-cutting change; flag for the lead). |
 | `m, k, n` | usize | Matrix shape. Square ops emit `m == k == n`. Rectangular `fgemm` emits the actual values. |
 | `rank_regime` | string | `uniform` or `deficient`. Operations that have no notion of rank deficiency emit `uniform` only. |
@@ -429,6 +429,8 @@ does not fit one of these classes must escalate to the lead per
 | `not-performance-relevant` | Candidate is reproducible and correct, but every in-scope cell shows it ≥ 100x slower than an existing promoted reference. **Marker, not a fail-fast.** Evidence is still archived because future scope may revive the candidate. | A library that targets arbitrary precision and is not competitive at machine-word sizes. |
 | `basis-incompatibility` | GF(2^m) candidate cannot expose its primitive polynomial. | Specific to GF(2^m). |
 | `license-incompatible` | Upstream license forbids redistribution alongside `gf2-core` or its citation in evidence docs. | Hypothetical; LGPL/MIT/GPL-2 are fine. |
+| `not-yet-harnessed` | Candidate or candidate cell has no harness in `benchmarks/reference/` yet. The cell may be promoted in a future task that lands the harness; until then, the cell is excluded with this marker. **Marker, not a fail-fast.** Added by Amendment 2 (2026-05-04). | A future GF(2^32) NTL/FLINT harness — see issue `b13799ac`. |
+| `no-independent-oracle` | Candidate is buildable, fast, and reproducible, but no *second* harness covers the same cell, so the protocol's § 6 bitwise-equality oracle cannot be applied. **Marker, not a fail-fast.** A library may legitimately be the *only* candidate for a cell; the marker records that a sibling oracle is missing. Added by Amendment 2 (2026-05-04). | LinBox `Method::SparseElimination` over GF(p) when no other library exposes a sparse Gauss-Jordan symbol — fflas-ffpack, FLINT, NTL, M4RI all lack the path. |
 
 **Re-evaluation policy.** A rejected candidate may be re-evaluated when
 the rejecting class no longer applies (e.g. a future upstream release
@@ -584,7 +586,40 @@ them rather than guess in-loop:
    so future runs can detect host-state drift mechanically. Out of
    scope for this protocol; flag for follow-up.
 
-## 14. Mapping to issue 1d6043e8 success criteria
+## 14. Amendment 2 (2026-05-04) — sparse operations + new exclusion classes
+
+**JIT origin.** Wave 3 closure of epic `97bf0879`. User-approval recorded
+in `dev/plans/gf2m_reference_lane_selection.md` § 6 and
+`dev/plans/sparse_benchmark_corpus.md` § 9. Issues `9a715d75` and
+`a3412e15` generated the failing real-world cases: 9a715d75 produced 18
+GF(2^m) cells with no second harness available (resolved by the new
+`no-independent-oracle` class) plus a deferred GF(2^32) cell now scoped
+into task `b13799ac` (resolved by the new `not-yet-harnessed` class);
+a3412e15 produced 12 sparse cells whose operation values
+(`sparse-matmul`, `sparse×dense`, `sparse-elim`) were not in § 7's
+allowed list.
+
+**Patches applied to this protocol in the same commit:**
+
+1. § 7 *CSV schema* — `operation` allowed-values list extended to
+   `{fgemm, matmul, pluq, echelon, invert, solve, charpoly, minpoly,
+   spmv, sparse-matmul, sparse×dense, sparse-elim}`.
+2. § 9 *Exclusion class registry* — two new entries:
+   - `not-yet-harnessed` (marker for a cell that lacks a harness today
+     but is on the roadmap to land one).
+   - `no-independent-oracle` (marker for a cell where a single
+     candidate is the only harnessed option, so § 6 bitwise-equality
+     against a sibling cannot be enforced).
+3. **Downstream `analyze.py` validator update** — owned by issue
+   `47698404` (Re-run sparse post-PPC scorecard). Until 47698404
+   lands, the `analyze.py` schema validator will reject sparse rows;
+   this is acknowledged in 47698404's scope.
+
+**No prior protocol behaviour is invalidated.** The five mandatory
+acceptance criteria (§ 3) are unchanged; the existing exclusion
+classes are unchanged; the seed-helper contract is unchanged.
+
+## 15. Mapping to issue 1d6043e8 success criteria
 
 For reviewer convenience, the two `[hard]` criteria of this issue map
 to specific sections above:

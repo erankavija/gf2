@@ -305,35 +305,26 @@ the Zen-3 anchor host).
 | **#1 [hard]** "The selected lane covers GF(2^8), GF(2^16), and GF(2^32) where feasible." | **MET** | § 3 covers all three fields across all `FieldMatrix` operations. GF(2^8) and GF(2^16) `matmul` are covered by M4RIE 20250128 (Wave-2-promoted; citations in § 3). GF(2^32) `matmul` was originally proposed for exclusion (§ 4 proposal #1) but the user has rejected the exclusion in favour of harnessing the cell — see new task `b13799ac` (Build GF(2^32) matmul reference harness, story `2c7548ae`). 9a715d75 closes with criterion #1 satisfied because the lane *selection* is complete; the *harness work* is delegated to `b13799ac` (Wave-12 aggregation depends on it). |
 | **#2 [hard]** "If no hard reference is viable, the exclusion is user-approved and documented." | **MET** | § 4 names every exclusion (3 surviving grouped proposals — #2 echelon/invert/solve, #3 charpoly/minpoly, #4 spmv-deferred — covering 18 cells). Each has a precise exclusion class and a one-paragraph rationale. **User approval recorded 2026-05-04** for proposals #2, #3, #4 plus the protocol § 8 registry extension adding `not-yet-harnessed` (used by `b13799ac`'s open exclusion-not-yet-resolved status until that task closes) and `no-independent-oracle` (used by proposals #2 and #3). The exclusions are now both user-approved (this section) and documented (§ 4). |
 
-## 7. Open questions for the lead (read before escalating)
+## 7. Open questions — resolved 2026-05-04
 
-1. **Exclusion-class registry extension.** The protocol § 8 list is
-   currently exhaustive (per § 8 "The list is exhaustive; a rejection
-   that does not fit one of these classes must escalate"). This doc
-   proposes two new classes — `not-yet-harnessed` (proposal #1) and
-   `no-independent-oracle` (proposals #2 / #3) — both of which are
-   coverage-gaps rather than rejections of an evaluated candidate.
-   The lead should decide whether to (a) extend § 8 with these two
-   classes via a protocol Amendment, (b) shoehorn them into existing
-   classes (`unbuildable-on-R3-container` for #1,
-   `not-performance-relevant` for the rest as a marker only), or (c)
-   escalate the registry extension to the user as part of the same
-   escalation that approves the exclusions themselves.
-2. **Sequence of follow-up issues.** Proposals #1, #2, and #3 each
-   describe a follow-up issue to harness a missing reference. The lead
-   should decide whether to file them now (Wave 4 prep) or after
-   `4c0d0202` ingests the exclusions. Filing them now lets them
-   appear in the same handoff; filing them later keeps the wave-4
-   scope clean.
-3. **GF(2^32) primitive-polynomial choice.** gf2-core's
-   `primitive_polys.rs::standard()` returns `None` for `m = 32`. If
-   GF(2^32) matmul is harnessed via NTL or FLINT (proposal #1), the
-   user must nominate a primitive polynomial. A common choice is
-   `x^32 + x^7 + x^3 + x^2 + 1` (Hansen-Mullen tables); a
-   trinomial option (e.g. `x^32 + x^22 + 1` if it is primitive — to
-   be checked; if not, `x^32 + x^15 + 1` is a common irreducible
-   trinomial) may be preferable for benchmarking simplicity. Defer
-   this to the user at the same time as proposal #1.
+All three open questions originally listed here were resolved by the
+2026-05-04 Wave-3 closure escalation:
+
+1. **Exclusion-class registry extension. — RESOLVED.** Option (a)
+   selected: protocol § 9 (formerly § 8) extended via Amendment 2 in
+   `dev/plans/sota_reference_acceptance_protocol.md` § 14, adding
+   `not-yet-harnessed` and `no-independent-oracle` as recognized
+   exclusion classes.
+2. **Sequence of follow-up issues. — RESOLVED.** Filed concurrently
+   with the user-approval escalation: `b13799ac` (Build GF(2^32)
+   matmul reference harness) is now an open task under story
+   `2c7548ae`, wired as a Wave-12-aggregation prerequisite via
+   `dece4e73`'s JIT dep edge.
+3. **GF(2^32) primitive-polynomial choice. — DELEGATED.** Carried
+   into the new `b13799ac` task as one of its `[hard]` criteria;
+   its dispatch prompt will surface the candidate polynomials
+   (`x^32 + x^7 + x^3 + x^2 + 1` from Hansen-Mullen, or a trinomial
+   alternative) for user nomination before harness work begins.
 
 ## 8. Files referenced (for reviewer convenience)
 
