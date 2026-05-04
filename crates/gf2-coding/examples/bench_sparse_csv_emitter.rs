@@ -65,6 +65,8 @@ use std::io::{BufWriter, Write};
 use std::path::PathBuf;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
+use gf2_coding::ldpc::{LdpcCode, QuasiCyclicLdpc};
+use gf2_coding::CodeRate;
 use gf2_core::bench_seed::{
     bitmatrix_sparse_from_seed, bitvec_from_seed, derive_seed, fp_sparse_from_seed,
     fp_vec_from_seed, gf2m_wide_1_sparse_from_seed, gf2m_wide_1_vec_from_seed, splitmix64, tput,
@@ -74,8 +76,6 @@ use gf2_core::field::matrix::FieldMatrix;
 use gf2_core::field::vec::FieldVec;
 use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
 use gf2_core::sparse::SpBitMatrix;
-use gf2_coding::ldpc::{LdpcCode, QuasiCyclicLdpc};
-use gf2_coding::CodeRate;
 
 const PRIME_7: u64 = 7;
 const PRIME_251: u64 = 251;
@@ -430,9 +430,7 @@ fn run_gf2_random_er(args: &Args, sink: &mut CsvSink, sizes: &[usize]) -> std::i
             eprintln!("[gf2-sparse] {rcm_key}");
             let (wall_rcm, _) = time_op(
                 || {
-                    let _ = std::hint::black_box(
-                        reordered.matvec(std::hint::black_box(&x_perm)),
-                    );
+                    let _ = std::hint::black_box(reordered.matvec(std::hint::black_box(&x_perm)));
                 },
                 args.warmup,
                 args.iters,
@@ -591,7 +589,11 @@ fn run_fp_random_er<const P: u64>(
     Ok(())
 }
 
-fn build_fp_dense<const P: u64>(rows: usize, cols: usize, seed: u64) -> FieldMatrix<gf2_core::gfp::Fp<P>> {
+fn build_fp_dense<const P: u64>(
+    rows: usize,
+    cols: usize,
+    seed: u64,
+) -> FieldMatrix<gf2_core::gfp::Fp<P>> {
     let mut m = FieldMatrix::<gf2_core::gfp::Fp<P>>::zeros(rows, cols);
     let mut st = seed;
     for r in 0..rows {
@@ -608,7 +610,11 @@ fn build_gf2m_dense<C: Gf2mWideConfig<1>>(
     cols: usize,
     seed: u64,
 ) -> FieldMatrix<Gf2mWide<1, C>> {
-    let mask: u64 = if C::M >= 64 { u64::MAX } else { (1u64 << C::M) - 1 };
+    let mask: u64 = if C::M >= 64 {
+        u64::MAX
+    } else {
+        (1u64 << C::M) - 1
+    };
     let mut m = FieldMatrix::<Gf2mWide<1, C>>::zeros(rows, cols);
     let mut st = seed;
     for r in 0..rows {
@@ -718,9 +724,13 @@ fn run_gf2m_random_er<C: Gf2mWideConfig<1>>(
             let elim_n = 256;
             let elim_key = format!("sparse-elim/{field_label}/{elim_n}/csr");
             if cell_passes(&args.filter, &elim_key) {
-                let elim_seed =
-                    derive_seed(args.master_seed, "spelim-er", 3, si as u64, 1);
-                let m = gf2m_wide_1_sparse_from_seed::<C>(elim_n, elim_n, 10.0 / (elim_n as f64), elim_seed);
+                let elim_seed = derive_seed(args.master_seed, "spelim-er", 3, si as u64, 1);
+                let m = gf2m_wide_1_sparse_from_seed::<C>(
+                    elim_n,
+                    elim_n,
+                    10.0 / (elim_n as f64),
+                    elim_seed,
+                );
                 eprintln!("[gf2-sparse] {elim_key}");
                 let (wall_e, _) = time_op(
                     || {
@@ -764,7 +774,10 @@ fn run_coding_theory(args: &Args, sink: &mut CsvSink) -> std::io::Result<()> {
         n_cols,
         h.nnz()
     );
-    let x = bitvec_from_seed(n_cols, derive_seed(args.master_seed, "ct-x-dvb-short", 0, 0, 0));
+    let x = bitvec_from_seed(
+        n_cols,
+        derive_seed(args.master_seed, "ct-x-dvb-short", 0, 0, 0),
+    );
     let (wall, _) = time_op(
         || {
             let _ = std::hint::black_box(h.matvec(std::hint::black_box(&x)));
@@ -795,7 +808,10 @@ fn run_coding_theory(args: &Args, sink: &mut CsvSink) -> std::io::Result<()> {
         n_cols,
         h.nnz()
     );
-    let x = bitvec_from_seed(n_cols, derive_seed(args.master_seed, "ct-x-dvb-normal", 0, 1, 0));
+    let x = bitvec_from_seed(
+        n_cols,
+        derive_seed(args.master_seed, "ct-x-dvb-normal", 0, 1, 0),
+    );
     let (wall, _) = time_op(
         || {
             let _ = std::hint::black_box(h.matvec(std::hint::black_box(&x)));
@@ -918,7 +934,10 @@ fn run_structured(args: &Args, sink: &mut CsvSink, sizes: &[usize]) -> std::io::
         let key = format!("spmv/{field}/{n}/banded-w8");
         if cell_passes(&args.filter, &key) {
             let h = build_banded(n, 8);
-            let x = bitvec_from_seed(n, derive_seed(args.master_seed, "struct-banded-x", 0, si as u64, 0));
+            let x = bitvec_from_seed(
+                n,
+                derive_seed(args.master_seed, "struct-banded-x", 0, si as u64, 0),
+            );
             eprintln!("[gf2-sparse] {key} nnz={}", h.nnz());
             let (wall, _) = time_op(
                 || {
@@ -944,7 +963,10 @@ fn run_structured(args: &Args, sink: &mut CsvSink, sizes: &[usize]) -> std::io::
         let key = format!("spmv/{field}/{n}/banded-w64");
         if cell_passes(&args.filter, &key) {
             let h = build_banded(n, 64);
-            let x = bitvec_from_seed(n, derive_seed(args.master_seed, "struct-banded64-x", 0, si as u64, 0));
+            let x = bitvec_from_seed(
+                n,
+                derive_seed(args.master_seed, "struct-banded64-x", 0, si as u64, 0),
+            );
             eprintln!("[gf2-sparse] {key} nnz={}", h.nnz());
             let (wall, _) = time_op(
                 || {
@@ -969,8 +991,15 @@ fn run_structured(args: &Args, sink: &mut CsvSink, sizes: &[usize]) -> std::io::
         // circulant-w8
         let key = format!("spmv/{field}/{n}/circulant-w8");
         if cell_passes(&args.filter, &key) {
-            let h = build_circulant(n, 8, derive_seed(args.master_seed, "struct-circulant-c", 0, si as u64, 0));
-            let x = bitvec_from_seed(n, derive_seed(args.master_seed, "struct-circulant-x", 0, si as u64, 0));
+            let h = build_circulant(
+                n,
+                8,
+                derive_seed(args.master_seed, "struct-circulant-c", 0, si as u64, 0),
+            );
+            let x = bitvec_from_seed(
+                n,
+                derive_seed(args.master_seed, "struct-circulant-x", 0, si as u64, 0),
+            );
             eprintln!("[gf2-sparse] {key} nnz={}", h.nnz());
             let (wall, _) = time_op(
                 || {
@@ -1009,9 +1038,7 @@ fn run_structured(args: &Args, sink: &mut CsvSink, sizes: &[usize]) -> std::io::
             eprintln!("[gf2-sparse] {key} nnz={}", reordered.nnz());
             let (wall, _) = time_op(
                 || {
-                    let _ = std::hint::black_box(
-                        reordered.matvec(std::hint::black_box(&x_perm)),
-                    );
+                    let _ = std::hint::black_box(reordered.matvec(std::hint::black_box(&x_perm)));
                 },
                 args.warmup,
                 args.iters,
