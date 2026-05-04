@@ -13,7 +13,14 @@
   ],
   "gates_status": {},
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/plans/linbox_promotion_evidence.md",
+      "commit": null,
+      "label": "linbox promotion evidence",
+      "doc_type": "evidence"
+    }
+  ],
   "labels": [
     "type:task",
     "component:gf2-core",
@@ -21,5 +28,5 @@
     "story:sota-reference-matrix"
   ],
   "created_at": "2026-04-30T06:43:02.616799375+00:00",
-  "updated_at": "2026-05-04T04:35:49.950985131+00:00"
+  "updated_at": "2026-05-04T04:59:41.368110903+00:00"
 }

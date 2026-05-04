@@ -23,6 +23,30 @@
       "label": "SOTA reference acceptance protocol",
       "doc_type": "design",
       "format": "markdown"
+    },
+    {
+      "path": "dev/plans/linbox_promotion_evidence.md",
+      "commit": null,
+      "label": "linbox promotion evidence",
+      "doc_type": "evidence"
+    },
+    {
+      "path": "dev/plans/ntl_promotion_evidence.md",
+      "commit": "435dd0f",
+      "label": "ntl promotion evidence",
+      "doc_type": "evidence"
+    },
+    {
+      "path": "dev/plans/flint_promotion_evidence.md",
+      "commit": "435dd0f",
+      "label": "flint promotion evidence",
+      "doc_type": "evidence"
+    },
+    {
+      "path": "dev/plans/m4rie_promotion_evidence.md",
+      "commit": null,
+      "label": "m4rie promotion evidence",
+      "doc_type": "evidence"
     }
   ],
   "labels": [
@@ -32,5 +56,5 @@
     "story:sota-reference-matrix"
   ],
   "created_at": "2026-04-30T06:43:02.433953673+00:00",
-  "updated_at": "2026-04-30T14:53:24.189708572+00:00"
+  "updated_at": "2026-05-04T05:12:10.561055059+00:00"
 }
