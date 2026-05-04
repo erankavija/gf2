@@ -68,11 +68,14 @@ linbox_sparse_bench: linbox_sparse_bench.cpp
 	@$(CXX) $(CXXSTD) $(OPT) -fopenmp $(LINBOX_CFLAGS) $(FFLAS_CFLAGS) $< $(LINBOX_LIBS) $(FFLAS_LIBS) -lopenblas -o $@
 
 # Cross-equality oracle for sparse cells at n=16 (jit:47698404, protocol § 6).
-# jit:0f708b36 added a LinBox-side `linbox_oracle_spmv` so the smoke chain
-# has two independent witnesses (fflas + LinBox) for the GF(2) spmv cell;
-# this is why the link line now also pulls in $(LINBOX_LIBS).
+# Links LinBox in addition to fflas-ffpack so the smoke chain has two
+# independent witnesses for the cells the design names: jit:0f708b36
+# added `linbox_oracle_spmv` (GF(2) spmv cross-check); jit:0d6ca3b6 added
+# `oracle_sparse_elim` using `GaussDomain::NoReordering` as the second-
+# library witness for sparse-elim cells. `-fopenmp` is required because
+# LinBox's GaussDomain uses OpenMP-parallelised inner loops on this host.
 sparse_smoke: sparse_smoke.cpp
-	@$(CXX) $(CXXSTD) $(OPT) $(LINBOX_CFLAGS) $(FFLAS_CFLAGS) $< $(LINBOX_LIBS) $(FFLAS_LIBS) -lopenblas -o $@
+	@$(CXX) $(CXXSTD) $(OPT) -fopenmp $(LINBOX_CFLAGS) $(FFLAS_CFLAGS) $< $(LINBOX_LIBS) $(FFLAS_LIBS) -lopenblas -o $@
 
 m4ri_bench: m4ri_bench.c
 	@$(CC) $(CSTD) $(OPT) $(M4RI_CFLAGS) $< $(M4RI_LIBS) -o $@
