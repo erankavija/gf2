@@ -920,6 +920,193 @@ impl SpBitMatrix {
         m
     }
 
+    /// Computes the reduced row echelon form (RREF) over GF(2) using a
+    /// sparse-native column-elimination algorithm.
+    ///
+    /// The output is a CSR matrix in canonical RREF: pivot rows appear at
+    /// the top in pivot-column order, followed by zero rows. The result
+    /// satisfies the standard RREF invariants — each pivot row's leading
+    /// entry is the only non-zero in its pivot column, and pivot columns
+    /// are strictly increasing top-to-bottom.
+    ///
+    /// # Algorithm
+    ///
+    /// Walks columns left-to-right. For each column, picks the first
+    /// not-yet-pivoted row containing it, then eliminates that column
+    /// from every other row by XOR (the GF(2) analogue of the GF(p)
+    /// `axpy` step in [`crate::field::sparse_matrix::SparseFieldMatrix::rref`]).
+    /// Each row is held as a sorted `Vec<usize>` of column indices; the
+    /// XOR of two sorted lists is computed as a symmetric-difference
+    /// merge in `O(|target| + |source|)`.
+    ///
+    /// # Complexity
+    ///
+    /// Worst case `O(m·n·avg_row_nnz)` for an `m × n` matrix. For sparse
+    /// matrices with bounded row-weight `w` and rank `r`, the cost is
+    /// `O(r·m·w)`, much smaller than the dense `O(m²·n / 64)` path of
+    /// [`crate::alg::rref::rref`] when `n` is large.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::sparse::SpBitMatrix;
+    ///
+    /// // 2 × 3 matrix
+    /// // [1 0 1]
+    /// // [1 1 1]
+    /// // RREF:
+    /// // [1 0 1]
+    /// // [0 1 0]
+    /// let m = SpBitMatrix::from_coo(2, 3, &[(0, 0), (0, 2), (1, 0), (1, 1), (1, 2)]);
+    /// let r = m.rref();
+    /// let d = r.to_dense();
+    /// assert_eq!(d.get(0, 0), true);
+    /// assert_eq!(d.get(0, 2), true);
+    /// assert_eq!(d.get(0, 1), false);
+    /// assert_eq!(d.get(1, 1), true);
+    /// assert_eq!(d.get(1, 0), false);
+    /// assert_eq!(d.get(1, 2), false);
+    /// ```
+    pub fn rref(&self) -> Self {
+        let m = self.rows;
+        let n = self.cols;
+
+        if m == 0 || n == 0 {
+            return Self {
+                rows: m,
+                cols: n,
+                indptr: vec![0; m + 1],
+                indices: Vec::new(),
+            };
+        }
+
+        // Materialise each row as a sorted Vec<usize> of non-zero column
+        // indices. The CSR storage already satisfies the sorted-and-unique
+        // invariant, so this is a straightforward slice copy.
+        let mut rows: Vec<Vec<usize>> = (0..m)
+            .map(|r| {
+                let s = self.indptr[r];
+                let e = self.indptr[r + 1];
+                self.indices[s..e].to_vec()
+            })
+            .collect();
+
+        // Symmetric difference of two sorted, strictly-ascending column
+        // lists, written into `target`. This is the GF(2) `axpy` step:
+        // `target ← target XOR source`.
+        fn xor_into(target: &mut Vec<usize>, source: &[usize]) {
+            let mut merged: Vec<usize> = Vec::with_capacity(target.len() + source.len());
+            let mut ti = 0usize;
+            let mut si = 0usize;
+            while ti < target.len() && si < source.len() {
+                let tc = target[ti];
+                let sc = source[si];
+                match tc.cmp(&sc) {
+                    std::cmp::Ordering::Less => {
+                        merged.push(tc);
+                        ti += 1;
+                    }
+                    std::cmp::Ordering::Greater => {
+                        merged.push(sc);
+                        si += 1;
+                    }
+                    std::cmp::Ordering::Equal => {
+                        // tc == sc: cancels in GF(2)
+                        ti += 1;
+                        si += 1;
+                    }
+                }
+            }
+            while ti < target.len() {
+                merged.push(target[ti]);
+                ti += 1;
+            }
+            while si < source.len() {
+                merged.push(source[si]);
+                si += 1;
+            }
+            *target = merged;
+        }
+
+        // `row_used[i]` tracks whether row `i` has been chosen as a pivot.
+        let mut row_used = vec![false; m];
+        // Order in which pivots were picked: each entry is the original
+        // row index. Pivot column equals first index of that row at
+        // pick-time.
+        let mut pivot_order: Vec<usize> = Vec::new();
+
+        for col in 0..n {
+            // Find an un-used row whose first stored entry equals `col`.
+            // (Because pivot columns are processed in ascending order and
+            // each elimination step removes earlier columns from the
+            // un-pivoted rows, every un-used row's leading entry is `>=
+            // col`.)
+            let mut pivot: Option<usize> = None;
+            for (i, used) in row_used.iter().enumerate() {
+                if *used {
+                    continue;
+                }
+                if rows[i].first().copied() == Some(col) {
+                    pivot = Some(i);
+                    break;
+                }
+            }
+            let pi = match pivot {
+                Some(i) => i,
+                None => continue,
+            };
+
+            row_used[pi] = true;
+            pivot_order.push(pi);
+
+            // Eliminate `col` from every other row that has a non-zero
+            // there. We need both already-pivoted rows (so the pivot
+            // column ends up canonical above-pivot-zeros) and not-yet-
+            // pivoted rows (forward elimination).
+            for k in 0..m {
+                if k == pi {
+                    continue;
+                }
+                // Quick check: does row k contain `col`?
+                // For un-used rows the leading entry is `>= col` so a
+                // simple binary search is fine; for used rows the entry
+                // could be anywhere because previous pivot columns are
+                // smaller. Use binary search uniformly.
+                if rows[k].binary_search(&col).is_err() {
+                    continue;
+                }
+                let pivot_snapshot: Vec<usize> = rows[pi].clone();
+                xor_into(&mut rows[k], &pivot_snapshot);
+            }
+        }
+
+        // Re-order pivoted rows to the top in the order they were picked.
+        // Un-pivoted rows go below as zero rows.
+        let mut ordered: Vec<Vec<usize>> = Vec::with_capacity(m);
+        for &orig in &pivot_order {
+            ordered.push(std::mem::take(&mut rows[orig]));
+        }
+        while ordered.len() < m {
+            ordered.push(Vec::new());
+        }
+
+        // Flatten back to CSR.
+        let mut indptr = Vec::with_capacity(m + 1);
+        let mut indices: Vec<usize> = Vec::new();
+        indptr.push(0);
+        for row in ordered {
+            indices.extend_from_slice(&row);
+            indptr.push(indices.len());
+        }
+
+        Self {
+            rows: m,
+            cols: n,
+            indptr,
+            indices,
+        }
+    }
+
     /// Returns the transpose of this CSR matrix as CSR of the transposed shape.
     /// This is O(nnz + rows + cols) and stable by column order.
     pub fn transpose(&self) -> Self {
@@ -1465,6 +1652,31 @@ impl SpBitMatrixDual {
     #[inline]
     pub fn matvec(&self, x: &BitVec) -> BitVec {
         self.csr.matvec(x)
+    }
+
+    /// Reduced row echelon form (RREF) of `self` over GF(2).
+    ///
+    /// Delegates to [`SpBitMatrix::rref`] on the inner CSR side and rebuilds
+    /// a fresh dual representation around the result. The CSC half of the
+    /// returned dual is recomputed via [`SpBitMatrix::transpose`] so both
+    /// halves stay coherent.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::sparse::SpBitMatrixDual;
+    ///
+    /// let m = SpBitMatrixDual::from_coo(2, 2, &[(0, 0), (0, 1), (1, 0)]);
+    /// let r = m.rref();
+    /// let d = r.to_dense();
+    /// // RREF of [[1,1],[1,0]] is [[1,0],[0,1]] (identity).
+    /// assert!(d.get(0, 0) && d.get(1, 1));
+    /// assert!(!d.get(0, 1) && !d.get(1, 0));
+    /// ```
+    pub fn rref(&self) -> Self {
+        let csr = self.csr.rref();
+        let csc = csr.transpose();
+        Self { csr, csc }
     }
 
     /// Transpose-vector product y = A^T · x over GF(2).
@@ -2281,12 +2493,129 @@ mod tests {
         }
     }
 
+    // ─── RREF over GF(2) (sparse-native) ──────────────────────────────────
+
+    /// Reference oracle: dense GF(2) RREF via `crate::alg::rref::rref`,
+    /// rebuilt as a CSR. Used to cross-check the sparse-native
+    /// `SpBitMatrix::rref` output for shape and content equivalence.
+    fn dense_rref_reference(m: &SpBitMatrix) -> SpBitMatrix {
+        let r = crate::alg::rref::rref(&m.to_dense(), false);
+        SpBitMatrix::from_dense(&r.reduced)
+    }
+
+    #[test]
+    fn test_rref_empty_shapes() {
+        for (r, c) in [(0usize, 0usize), (0, 5), (5, 0)] {
+            let m = SpBitMatrix::zeros(r, c);
+            let out = m.rref();
+            assert_eq!(out.rows(), r);
+            assert_eq!(out.cols(), c);
+            assert_eq!(out.nnz(), 0);
+            assert_csr_canonical(&out);
+        }
+    }
+
     #[test]
     #[should_panic(expected = "matmat inner dimensions must match")]
     fn test_matmat_dimension_mismatch_panics() {
         let a = SpBitMatrix::zeros(2, 3);
         let b = BitMatrix::zeros(4, 5);
         let _ = a.matmat(&b);
+    }
+
+    #[test]
+    fn test_rref_single_row_single_col_one() {
+        let m = SpBitMatrix::from_coo(1, 1, &[(0, 0)]);
+        let out = m.rref();
+        assert_eq!(out.nnz(), 1);
+        assert_eq!(out.to_dense(), m.to_dense());
+        assert_csr_canonical(&out);
+    }
+
+    #[test]
+    fn test_rref_single_row_single_col_zero() {
+        let m = SpBitMatrix::zeros(1, 1);
+        let out = m.rref();
+        assert_eq!(out.nnz(), 0);
+        assert_csr_canonical(&out);
+    }
+
+    #[test]
+    fn test_rref_identity_is_idempotent() {
+        for n in [1usize, 63, 64, 65] {
+            let id = SpBitMatrix::identity(n);
+            let out = id.rref();
+            assert_eq!(out.nnz(), n);
+            assert_eq!(out, id);
+            assert_csr_canonical(&out);
+        }
+    }
+
+    #[test]
+    fn test_rref_singular_matrix_drops_dependent_row() {
+        // [[1,0,1],[0,1,1],[1,1,0]] — third row equals row1+row2 in GF(2),
+        // so RREF should have rank 2 with last row zero.
+        let entries = [(0, 0), (0, 2), (1, 1), (1, 2), (2, 0), (2, 1)];
+        let m = SpBitMatrix::from_coo(3, 3, &entries);
+        let out = m.rref();
+        assert_csr_canonical(&out);
+        // Rank is 2: only first 2 rows have non-zeros after canonical reorder.
+        let nnz_per_row: Vec<usize> = (0..out.rows())
+            .map(|r| out.indptr[r + 1] - out.indptr[r])
+            .collect();
+        assert!(nnz_per_row[2] == 0, "third row should be zero post-RREF");
+        assert_eq!(out, dense_rref_reference(&m));
+    }
+
+    #[test]
+    fn test_rref_word_boundary_n64() {
+        // Identity-ish matrix of width 64 (word-boundary edge).
+        let mut entries: Vec<(usize, usize)> = (0..64).map(|i| (i, i)).collect();
+        // Add a few stray entries that depend on earlier rows.
+        entries.push((0, 32));
+        entries.push((32, 63));
+        let m = SpBitMatrix::from_coo(64, 64, &entries);
+        let out = m.rref();
+        assert_csr_canonical(&out);
+        assert_eq!(out, dense_rref_reference(&m));
+    }
+
+    #[test]
+    fn test_rref_word_boundary_n65() {
+        let mut entries: Vec<(usize, usize)> = (0..65).map(|i| (i, i)).collect();
+        entries.push((0, 64));
+        entries.push((64, 0));
+        let m = SpBitMatrix::from_coo(65, 65, &entries);
+        let out = m.rref();
+        assert_csr_canonical(&out);
+        assert_eq!(out, dense_rref_reference(&m));
+    }
+
+    #[test]
+    fn test_rref_random_seeded_n1024_matches_dense() {
+        // Matches the n=1024, density 9.77e-3 emitter cell — the cross-
+        // library comparison target. This must agree with the dense RREF
+        // path on the same input. We use the bench_seed helpers for the
+        // matrix so the seeded input is byte-identical to what the
+        // emitter's spmv-er row at n=1024 ingests.
+        let n = 1024usize;
+        let density = 10.0 / n as f64;
+        let seed = crate::bench_seed::derive_seed(0xDEAD_BEEF, "spelim-test", 0, 0, 1);
+        let m = crate::bench_seed::bitmatrix_sparse_from_seed(n, n, density, seed);
+        let out = m.rref();
+        assert_csr_canonical(&out);
+        // Equality with dense reference is the strict correctness oracle.
+        assert_eq!(out, dense_rref_reference(&m));
+    }
+
+    #[test]
+    fn test_rref_dual_matches_csr_path() {
+        let entries = [(0, 0), (0, 2), (1, 1), (1, 2), (2, 0), (2, 1)];
+        let csr = SpBitMatrix::from_coo(3, 3, &entries);
+        let dual = SpBitMatrixDual::from_coo(3, 3, &entries);
+        let out_csr = csr.rref();
+        let out_dual = dual.rref();
+        assert_eq!(out_csr.to_dense(), out_dual.to_dense());
     }
 
     proptest! {
@@ -2318,6 +2647,28 @@ mod tests {
             prop_assert_eq!(c.rows(), ar);
             prop_assert_eq!(c.cols(), bc);
             prop_assert_eq!(c, matmat_dense_reference(&a, &b));
+        }
+
+        #[test]
+        fn proptest_rref_matches_dense_reference(
+            rows in 0usize..16,
+            cols in 0usize..16,
+            raw_entries in proptest::collection::vec((0usize..16, 0usize..16), 0..80),
+        ) {
+            let entries: Vec<_> = raw_entries
+                .into_iter()
+                .filter_map(|(r, c)| {
+                    if rows == 0 || cols == 0 {
+                        None
+                    } else {
+                        Some((r % rows, c % cols))
+                    }
+                })
+                .collect();
+            let m = SpBitMatrix::from_coo(rows, cols, &entries);
+            let out = m.rref();
+            assert_csr_canonical(&out);
+            prop_assert_eq!(out, dense_rref_reference(&m));
         }
     }
 }
