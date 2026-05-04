@@ -37,6 +37,9 @@
 #include <givaro/modular.h>
 #include <fflas-ffpack/fflas/fflas.h>
 #include <fflas-ffpack/fflas/fflas_sparse.h>
+#include <linbox/matrix/sparse-matrix.h>
+#include <linbox/algorithms/gauss.h>
+#include <linbox/util/commentator.h>
 
 #include <linbox/ring/modular.h>
 #include <linbox/matrix/sparse-matrix.h>
@@ -345,9 +348,162 @@ static int oracle_sparse_dense(const Field& F, const char* field_label, uint64_t
     return rc;
 }
 
+// Independent scalar Gauss-Jordan over `Field` to obtain the reduced row
+// echelon form (RREF). Mutates `A_dense` in place and returns the rank.
+// Layout: row-major, ld = n_cols. All arithmetic in canonical [0, card)
+// via Field::init/add/mul/inv.
+//
+// This kernel is intentionally independent of LinBox's `GaussDomain` and
+// of fflas-ffpack so that the smoke oracle has a true second witness for
+// `sparse-elim` cells: rank equality between LinBox's
+// `GaussDomain::NoReordering` and this scalar reference is the protocol
+// § 6 invariant we enforce.
+//
+// Note (protocol § 6 limitations):
+//   1. `GaussDomain::NoReordering` zeros each pivot row in-place after
+//      elimination (`LigneA[k] = Vzer;` in
+//      `linbox/algorithms/gauss/gauss.inl:813`); the matrix content is
+//      destroyed and only `rank` / `det` are exported. Bitwise RREF
+//      content equality is therefore not feasible against this LinBox
+//      entry-point — we compare rank only.
+//   2. LinBox `solutions/echelon.h` in 1.7.1 has the narrow-coverage
+//      problem documented in `linbox_sparse_bench.cpp:25-26`, and
+//      `Method::Blackbox` is not an RREF path. Strengthening to two
+//      distinct LinBox elimination engines emitting full RREF content
+//      (so we can compare matrix entries, not just rank) is tracked in
+//      96fde7c7.
+//   3. The Rust-side gf2-core RREF candidate is exercised in
+//      `crates/gf2-core/src/sparse.rs::tests::*rref*` against the
+//      independent dense `crate::alg::rref::rref` reference. The
+//      C++ smoke layer here is the cross-library witness; the Rust
+//      tests are the in-language witness. Together they give the
+//      multi-witness coverage protocol § 6 calls for.
+template <typename Field>
+static size_t scalar_rref(const Field& F,
+                          size_t m_rows, size_t n_cols,
+                          typename Field::Element_ptr A) {
+    size_t pivot_row = 0;
+    for (size_t col = 0; col < n_cols && pivot_row < m_rows; ++col) {
+        // Find a pivot row at or below `pivot_row` with non-zero in `col`.
+        size_t found = m_rows;
+        for (size_t r = pivot_row; r < m_rows; ++r) {
+            if (!F.isZero(A[r * n_cols + col])) {
+                found = r;
+                break;
+            }
+        }
+        if (found == m_rows) continue;
+
+        // Swap into position.
+        if (found != pivot_row) {
+            for (size_t j = 0; j < n_cols; ++j) {
+                typename Field::Element t = A[pivot_row * n_cols + j];
+                A[pivot_row * n_cols + j] = A[found * n_cols + j];
+                A[found * n_cols + j] = t;
+            }
+        }
+
+        // Scale pivot row so leading entry is 1.
+        typename Field::Element inv;
+        F.inv(inv, A[pivot_row * n_cols + col]);
+        for (size_t j = 0; j < n_cols; ++j) {
+            F.mulin(A[pivot_row * n_cols + j], inv);
+        }
+
+        // Eliminate `col` from every other row.
+        for (size_t r = 0; r < m_rows; ++r) {
+            if (r == pivot_row) continue;
+            typename Field::Element factor = A[r * n_cols + col];
+            if (F.isZero(factor)) continue;
+            for (size_t j = 0; j < n_cols; ++j) {
+                typename Field::Element prod;
+                F.mul(prod, factor, A[pivot_row * n_cols + j]);
+                F.subin(A[r * n_cols + j], prod);
+            }
+        }
+        ++pivot_row;
+    }
+    return pivot_row;
+}
+
+template <typename Field>
+static int oracle_sparse_elim(const Field& F, const char* field_label, uint64_t seed) {
+    constexpr size_t n = 16;
+    constexpr double density = 0.25;
+
+    // Build a CSR support deterministically (same as oracle_spmv /
+    // oracle_sparse_dense), then materialise it as a dense row-major
+    // buffer for the scalar reference and as a LinBox SparseMatrix for
+    // the LinBox path.
+    std::vector<uint64_t> row_idx_full;
+    std::vector<uint64_t> col_idx;
+    std::vector<typename Field::Element> values;
+    build_csr(F, n, n, density, seed, row_idx_full, col_idx, values);
+    if (values.empty()) {
+        std::fprintf(stderr,
+                     "[sparse_smoke] WARN nnz=0 op=sparse_elim field=%s\n", field_label);
+        return 0;
+    }
+
+    // Independent scalar reference: dense row-major Gauss-Jordan.
+    typename Field::Element_ptr A_scalar = FFLAS::fflas_new(F, n * n);
+    for (size_t i = 0; i < n * n; ++i) F.init(A_scalar[i], 0);
+    for (size_t k = 0; k < values.size(); ++k) {
+        size_t i = row_idx_full[k];
+        size_t j = col_idx[k];
+        A_scalar[i * n + j] = values[k];
+    }
+
+    // ── LinBox sparse Gauss-Jordan via GaussDomain::NoReordering ──────
+    //
+    // `NoReordering` is in-place and destructive: it zeros each pivot
+    // row after elimination (see linbox/algorithms/gauss/gauss.inl
+    // line 813, `LigneA[k] = Vzer;`). Only `rank` and `det` are
+    // exported as cross-checkable invariants; the matrix-content output
+    // is not useful as an RREF witness. Rank-equality across the two
+    // independent libraries is the protocol § 6 invariant we enforce
+    // here.
+    using LBMatrix = LinBox::SparseMatrix<Field>;
+    LBMatrix A_linbox(F, n, n);
+    for (size_t k = 0; k < values.size(); ++k) {
+        A_linbox.setEntry(row_idx_full[k], col_idx[k], values[k]);
+    }
+    LinBox::GaussDomain<Field> G(F);
+    LinBox::size_t rank_linbox = 0;
+    typename Field::Element det;
+    F.init(det, 1);
+    G.NoReordering(rank_linbox, det, A_linbox, A_linbox.rowdim(), A_linbox.coldim());
+
+    // Independent scalar Gauss-Jordan reference (full RREF).
+    size_t rank_scalar = scalar_rref(F, n, n, A_scalar);
+
+    int rc = 0;
+    if (static_cast<size_t>(rank_linbox) != rank_scalar) {
+        std::fprintf(stderr,
+                     "[sparse_smoke] FAIL sparse_elim field=%s "
+                     "rank linbox=%zu scalar=%zu\n",
+                     field_label, static_cast<size_t>(rank_linbox), rank_scalar);
+        rc = 1;
+    } else {
+        std::fprintf(stderr,
+                     "[sparse_smoke] OK sparse_elim field=%s nnz=%zu rank=%zu\n",
+                     field_label, values.size(), rank_scalar);
+    }
+
+    FFLAS::fflas_delete(A_scalar);
+    return rc;
+}
+
 }  // namespace
 
 int main(int argc, char** argv) {
+    // Silence LinBox's commentator (chatty by default; goes to stderr
+    // and would corrupt the smoke harness's `[sparse_smoke] OK …` lines
+    // if left enabled).
+    LinBox::commentator().setMaxDetailLevel(-1);
+    LinBox::commentator().setMaxDepth(0);
+    LinBox::commentator().setReportStream(std::cerr);
+
     uint64_t master_seed = 0x6F73AC91D31E4A7CULL;
     for (int i = 1; i < argc; ++i) {
         if (std::strcmp(argv[i], "--seed") == 0 && i + 1 < argc) {
@@ -472,6 +628,42 @@ int main(int argc, char** argv) {
         Field F(2);
         rc |= oracle_sparse_dense(F, "GF(2)",
                                   gf2_bench_derive_seed(master_seed ^ 0x55ULL, "smoke-spmm", 0, 0, 0));
+    }
+
+    // sparse-elim × {GF(2), GF(p)} — LinBox `GaussDomain::NoReordering`
+    // (sparse Gauss-Jordan) cross-checked against an in-harness scalar
+    // Gauss-Jordan reference. See `oracle_sparse_elim` for the protocol
+    // § 6 limitation note (single second-library witness; full multi-
+    // library coverage tracked in 96fde7c7).
+    {
+        using Field = Givaro::Modular<int64_t>;
+        Field F((1LL << 31) - 1);
+        rc |= oracle_sparse_elim(F, "GF(2^31-1)",
+                                 gf2_bench_derive_seed(master_seed, "smoke-spelim", 0, 0, 0));
+    }
+    {
+        using Field = Givaro::Modular<int64_t>;
+        Field F(65521);
+        rc |= oracle_sparse_elim(F, "GF(65521)",
+                                 gf2_bench_derive_seed(master_seed ^ 0x11ULL, "smoke-spelim", 0, 0, 0));
+    }
+    {
+        using Field = Givaro::Modular<int64_t>;
+        Field F(251);
+        rc |= oracle_sparse_elim(F, "GF(251)",
+                                 gf2_bench_derive_seed(master_seed ^ 0x22ULL, "smoke-spelim", 0, 0, 0));
+    }
+    {
+        using Field = Givaro::Modular<int64_t>;
+        Field F(7);
+        rc |= oracle_sparse_elim(F, "GF(7)",
+                                 gf2_bench_derive_seed(master_seed ^ 0x33ULL, "smoke-spelim", 0, 0, 0));
+    }
+    {
+        using Field = Givaro::Modular<int64_t>;
+        Field F(2);
+        rc |= oracle_sparse_elim(F, "GF(2)",
+                                 gf2_bench_derive_seed(master_seed ^ 0x55ULL, "smoke-spelim", 0, 0, 0));
     }
 
     if (rc != 0) {
