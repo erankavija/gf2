@@ -114,14 +114,19 @@ fn test_gf2pow32_fieldmatrix_gemm_matches_scalar_reference() {
     // n=16 mirrors the protocol § 6 smoke contract; the C++ harness uses
     // the same size for the NTL `mat_GF2E` cross-check.
     let n: usize = 16;
-    // Master seed and tag derivation match `ntl_gf2pow32_smoke.cpp` so a
-    // future merged-stream comparison can be done byte-for-byte. We use
-    // simple constants here rather than `derive_seed` because the C++
-    // harness already exercises the `derive_seed` path; the gf2-core test
-    // only needs to verify that gf2-core's matmul agrees with the scalar
-    // reference on whatever input we hand it.
-    let a_seed: u64 = 0x0123_4567_89AB_CDEF;
-    let b_seed: u64 = 0xFEDC_BA98_7654_3210;
+    // Master seed and tag derivation match `ntl_gf2pow32_smoke.cpp::main`
+    // so the two harnesses build BYTE-IDENTICAL input matrices. The C++
+    // smoke uses
+    //   a_seed = gf2_bench_derive_seed(kMaster, "matmul", 0, 0, 0)
+    //          ^ ((uint64_t)32) * 0x9E3779B97F4A7C15ULL
+    //   b_seed = a_seed ^ 0x1111111111111111ULL
+    // The Rust side mirrors this exactly via gf2_core::bench_seed::derive_seed.
+    use gf2_core::bench_seed::derive_seed;
+    const K_MASTER: u64 = 0x6F73AC91D31E4A7Cu64;
+    const PHI: u64 = 0x9E3779B97F4A7C15u64;
+    let a_seed: u64 =
+        derive_seed(K_MASTER, "matmul", 0, 0, 0) ^ (32u64).wrapping_mul(PHI);
+    let b_seed: u64 = a_seed ^ 0x1111_1111_1111_1111u64;
 
     let a_bytes = fill_uniform_u32(n, a_seed);
     let b_bytes = fill_uniform_u32(n, b_seed);

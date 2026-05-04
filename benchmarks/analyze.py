@@ -72,6 +72,12 @@ OPERATION_ORDER = [
     "charpoly",
     "minpoly",
     "spmv",
+    # Sparse ops added by protocol Amendment 2 (2026-05-04, jit:a3412e15).
+    # Validator support is owned by 47698404, but presentation order is
+    # set here so the rendered tables put related ops next to each other.
+    "sparse-matmul",
+    "sparse×dense",
+    "sparse-elim",
 ]
 
 # Field families. Mapping from the CSV `field` value to the family the
