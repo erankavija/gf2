@@ -82,6 +82,11 @@ harness = false
 required-features = ["rand"]
 
 [[bench]]
+name = "sparse_matmul"
+harness = false
+required-features = ["rand"]
+
+[[bench]]
 name = "polynomial"
 harness = false
 
