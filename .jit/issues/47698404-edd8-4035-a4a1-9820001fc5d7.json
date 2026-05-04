@@ -15,9 +15,107 @@
     "cargo-ci",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-04T20:58:10.731863189Z"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-04T20:58:20.069295640Z"
+    }
+  },
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/bench_results/2026-05-04-47698404-sparse-scorecard.md",
+      "commit": null,
+      "label": "47698404 sparse post-PPC scorecard",
+      "doc_type": "evidence",
+      "format": "markdown"
+    },
+    {
+      "path": "dev/bench_results/2026-05-04-47698404-sparse-tables.md",
+      "commit": null,
+      "label": "47698404 sparse-tables (analyze.py output)",
+      "doc_type": "evidence",
+      "format": "markdown"
+    },
+    {
+      "path": "dev/bench_results/2026-05-04-47698404-sparse.csv",
+      "commit": null,
+      "label": "47698404 sparse gf2-side CSV",
+      "doc_type": "evidence"
+    },
+    {
+      "path": "dev/bench_results/2026-05-04-47698404-sparse-extended.csv",
+      "commit": null,
+      "label": "47698404 sparse gf2-side CSV (re-run)",
+      "doc_type": "evidence"
+    },
+    {
+      "path": "dev/bench_results/2026-05-04-47698404-sparse-reference.csv",
+      "commit": null,
+      "label": "47698404 sparse reference CSV (fflas-ffpack + LinBox)",
+      "doc_type": "evidence"
+    },
+    {
+      "path": "dev/bench_results/2026-05-04-47698404-sparse-host.txt",
+      "commit": null,
+      "label": "47698404 host capture",
+      "doc_type": "evidence",
+      "format": "markdown"
+    },
+    {
+      "path": "crates/gf2-coding/examples/bench_sparse_csv_emitter.rs",
+      "commit": null,
+      "label": "47698404 Rust bench harness",
+      "doc_type": "harness",
+      "format": "markdown"
+    },
+    {
+      "path": "benchmarks/reference/fflas_sparse_bench.cpp",
+      "commit": null,
+      "label": "47698404 fflas/ffpack sparse harness",
+      "doc_type": "harness",
+      "format": "markdown",
+      "assets": [
+        {
+          "original_path": "std::chrono::nanoseconds",
+          "resolved_path": "benchmarks/reference/std::chrono::nanoseconds",
+          "asset_type": "missing",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        }
+      ]
+    },
+    {
+      "path": "benchmarks/reference/linbox_sparse_bench.cpp",
+      "commit": null,
+      "label": "47698404 LinBox sparse harness",
+      "doc_type": "harness",
+      "format": "markdown",
+      "assets": [
+        {
+          "original_path": "std::chrono::nanoseconds",
+          "resolved_path": "benchmarks/reference/std::chrono::nanoseconds",
+          "asset_type": "missing",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        }
+      ]
+    },
+    {
+      "path": "benchmarks/reference/sparse_smoke.cpp",
+      "commit": null,
+      "label": "47698404 sparse smoke oracle (n=16)",
+      "doc_type": "harness"
+    }
+  ],
   "labels": [
     "type:task",
     "component:gf2-core",
@@ -25,5 +123,5 @@
     "story:sota-sparse-fieldmatrix"
   ],
   "created_at": "2026-04-30T06:43:02.900080306+00:00",
-  "updated_at": "2026-05-04T18:11:38.343707395+00:00"
+  "updated_at": "2026-05-04T21:04:23.737845157+00:00"
 }
