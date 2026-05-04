@@ -4,13 +4,16 @@
 # cannot run podman).
 #
 # Behaviour:
+#   * Engages each harness's `--smoke` mode first so the per-operation
+#     algebraic-equality oracles (issue 5dea7457; protocol § 6) run at
+#     n=16 before any timing pass. A failed oracle exits 1 immediately.
 #   * Forces warmup=0, iters=1 so the harness produces one CSV row per
 #     (field, op, size, regime) cell as cheaply as possible.
 #   * Builds the image (or reuses if already built).
 #   * Writes the CSV under benchmarks/results/smoke-<timestamp>.csv so
 #     it does not get confused with a real timing run.
-#   * Returns non-zero if any podman / build / run step fails — useful
-#     for `./benchmarks/smoke.sh && echo OK` in a pre-PR script.
+#   * Returns non-zero if any podman / build / run / smoke step fails —
+#     useful for `./benchmarks/smoke.sh && echo OK` in a pre-PR script.
 #
 # This is the script the lead runs to substantiate the
 # "container builds from clean state" + "harnesses run to completion"
@@ -33,9 +36,11 @@ export GF2_CSV_PREFIX=smoke
 
 # Drive the canonical fflas + m4ri smoke through run.sh, then layer on
 # the secondary references (linbox, m4rie, ntl, flint) and the
-# cross-equality oracle. We do not modify run.sh: each new lane either
-# appends its CSV rows to the smoke CSV file run.sh wrote, or runs as
-# a hard equality oracle whose exit code gates the whole smoke run.
+# cross-equality oracle. We do not modify run.sh further: each new lane
+# either appends its CSV rows to the smoke CSV file run.sh wrote, or
+# runs as a hard equality oracle whose exit code gates the whole smoke
+# run. The fflas/m4ri per-op equality contracts are exercised by
+# run.sh's own --smoke-equality flag (added by jit:5dea7457).
 SEED_OVERRIDE=""
 # Pre-parse so we can pass through to run.sh and reuse the same image
 # for the secondary lanes.
@@ -53,7 +58,9 @@ for ((i=1; i<=$#; i++)); do
 done
 
 # Run the canonical smoke (fflas + m4ri) — non-exec so we keep going.
-"${HERE}/run.sh" --image-tag "${IMAGE_TAG}" "${ARGS[@]}"
+# `--smoke-equality` engages the per-op n=16 algebraic-equality oracle
+# (jit:5dea7457) before the timing pass.
+"${HERE}/run.sh" --image-tag "${IMAGE_TAG}" --smoke-equality "${ARGS[@]}"
 
 # Locate the CSV run.sh just wrote (smoke-<TS>.csv plus a
 # smoke-latest.csv symlink). The symlink path is the canonical handle.
