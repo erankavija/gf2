@@ -41,8 +41,12 @@ benchmarks/host.txt
 benchmarks/results/
 benchmarks/reference/fflas_bench
 benchmarks/reference/m4ri_bench
+benchmarks/reference/linbox_bench
 benchmarks/reference/m4rie_bench
 benchmarks/reference/m4rie_one_cell
+benchmarks/reference/ntl_bench
+benchmarks/reference/flint_bench
+benchmarks/reference/ntl_flint_smoke
 
 # Charon intermediate output
 target/charon/

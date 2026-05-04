@@ -1,0 +1,19 @@
+# 73ab8eef FLINT perf-stat capture
+# date    : 2026-05-04T05:02:00Z
+# host    : Linux fraktaali 7.0.3-arch1-1 #1 SMP PREEMPT_DYNAMIC Thu, 30 Apr 2026 18:41:12 +0000 x86_64 GNU/Linux
+# binary  : podman run --rm gf2-bench:73ab8eef ./flint_bench --seed 0x6F73AC91D31E4A7C --warmup 3 --iters 5
+# events  : cycles,instructions,branches,branch-misses,L1-dcache-loads,L1-dcache-load-misses
+# notes   : -r 5 repeats; podman shell process layer included; n=64 across 4 GF(p) fields, 7 ops each.
+
+
+ Performance counter stats for 'podman run --rm --security-opt label=disable -v ./benchmarks:/work:Z localhost/gf2-bench:73ab8eef bash -c cd /work/reference && ./flint_bench --seed 0x6F73AC91D31E4A7C --warmup 3 --iters 5 >/dev/null 2>&1' (5 runs):
+
+       492,170,820      cycles:u                                                                ( +-  3.99% )  (86.27%)
+       987,630,367      instructions:u                                                          ( +-  3.49% )  (85.81%)
+       166,723,455      branches:u                                                              ( +-  6.80% )  (87.62%)
+         2,010,154      branch-misses:u                                                         ( +-  2.15% )  (78.40%)
+       312,745,215      L1-dcache-loads:u                                                       ( +-  3.25% )  (81.53%)
+         8,143,786      L1-dcache-load-misses:u                                                 ( +-  1.44% )  (82.29%)
+
+       0.352126179 +- 0.008352417 seconds time elapsed  ( +-  2.37% )
+

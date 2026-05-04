@@ -31,24 +31,64 @@ export GF2_BENCH_ITERS=1
 # real timing runs emit.
 export GF2_CSV_PREFIX=smoke
 
-"${HERE}/run.sh" --image-tag "${IMAGE_TAG}" "$@"
+# Drive the canonical fflas + m4ri smoke through run.sh, then layer on
+# the secondary references (linbox, m4rie, ntl, flint) and the
+# cross-equality oracle. We do not modify run.sh: each new lane either
+# appends its CSV rows to the smoke CSV file run.sh wrote, or runs as
+# a hard equality oracle whose exit code gates the whole smoke run.
+SEED_OVERRIDE=""
+# Pre-parse so we can pass through to run.sh and reuse the same image
+# for the secondary lanes.
+ARGS=()
+for ((i=1; i<=$#; i++)); do
+    arg="${!i}"
+    case "${arg}" in
+        --image-tag)
+            j=$((i+1)); IMAGE_TAG="${!j}"; ARGS+=("${arg}" "${IMAGE_TAG}"); ((i++)) ;;
+        --seed)
+            j=$((i+1)); SEED_OVERRIDE="${!j}"; ARGS+=("${arg}" "${SEED_OVERRIDE}"); ((i++)) ;;
+        *)
+            ARGS+=("${arg}") ;;
+    esac
+done
 
-# === linbox begin ===
-# Per SOTA reference acceptance protocol § 6 *Correctness-oracle harness*,
-# additionally invoke linbox_bench --smoke to assert the n=16 per-op
-# equality contract (charpoly Cayley-Hamilton, minpoly annihilation,
-# solve A·x ≡ b) for every (op, field) cell the LinBox harness covers.
-# A non-zero exit here is a hard semantics-mismatch failure per § 9.
-if [[ "${GF2_SKIP_LINBOX_SMOKE:-0}" -eq 0 ]]; then
+# Run the canonical smoke (fflas + m4ri) — non-exec so we keep going.
+"${HERE}/run.sh" --image-tag "${IMAGE_TAG}" "${ARGS[@]}"
+
+# Locate the CSV run.sh just wrote (smoke-<TS>.csv plus a
+# smoke-latest.csv symlink). The symlink path is the canonical handle.
+LATEST_CSV="${HERE}/results/smoke-latest.csv"
+if [[ ! -L "${LATEST_CSV}" && ! -f "${LATEST_CSV}" ]]; then
+    echo "[smoke.sh] expected smoke-latest.csv missing; aborting" >&2
+    exit 1
+fi
+TARGET_CSV="$(readlink -f "${LATEST_CSV}")"
+echo "[smoke.sh] appending secondary-reference rows to ${TARGET_CSV}" >&2
+
+# Resolve master seed the same way run.sh does (first non-comment line
+# of seeds/seed.txt, unless --seed N was passed).
+if [[ -n "${SEED_OVERRIDE}" ]]; then
+    SEED="${SEED_OVERRIDE}"
+else
     SEED="$(grep -v '^[[:space:]]*#' "${HERE}/seeds/seed.txt" \
               | grep -v '^[[:space:]]*$' \
               | head -n 1 \
               | tr -d '[:space:]')"
+fi
+
+MOUNT_OPTS=":Z,U"
+if [[ "${RUNTIME}" == "docker" ]]; then
+    MOUNT_OPTS=""
+fi
+
+# === linbox begin ===
+# Per SOTA reference acceptance protocol § 6 *Correctness-oracle harness*,
+# invoke linbox_bench --smoke to assert the n=16 per-op equality
+# contract (charpoly Cayley-Hamilton, minpoly annihilation, solve
+# A·x ≡ b) for every (op, field) cell the LinBox harness covers.
+# A non-zero exit here is a hard semantics-mismatch failure per § 9.
+if [[ "${GF2_SKIP_LINBOX_SMOKE:-0}" -eq 0 ]]; then
     echo "[smoke.sh] running linbox_bench --smoke inside ${IMAGE_TAG}" >&2
-    MOUNT_OPTS=":Z,U"
-    if [[ "${RUNTIME}" == "docker" ]]; then
-        MOUNT_OPTS=""
-    fi
     "${RUNTIME}" run --rm \
         --security-opt label=disable \
         -v "${HERE}:/work${MOUNT_OPTS}" \
@@ -70,11 +110,6 @@ fi
 #
 # Skipped silently when the image hasn't been rebuilt against the new
 # Containerfile (e.g. --skip-build with a pre-507b0036 image).
-MOUNT_OPTS=":Z,U"
-if [[ "${RUNTIME}" == "docker" ]]; then
-    MOUNT_OPTS=""
-fi
-
 if "${RUNTIME}" image inspect "${IMAGE_TAG}" >/dev/null 2>&1; then
     if "${RUNTIME}" run --rm \
         --security-opt label=disable \
@@ -91,3 +126,37 @@ else
     echo "[smoke.sh] note: ${IMAGE_TAG} not present; skipping m4rie smoke" >&2
 fi
 # === m4rie end ===
+
+# === ntl begin ===
+# Append NTL smoke rows.
+echo "[smoke.sh] running ntl_bench --smoke inside ${IMAGE_TAG}" >&2
+"${RUNTIME}" run --rm \
+    --security-opt label=disable \
+    -v "${HERE}:/work${MOUNT_OPTS}" \
+    "${IMAGE_TAG}" \
+    bash -c "set -e; cd /work/reference && make ntl_bench >/dev/null && ./ntl_bench --seed ${SEED} --smoke" \
+    >> "${TARGET_CSV}"
+# === ntl end ===
+
+# === flint begin ===
+# Append FLINT smoke rows.
+echo "[smoke.sh] running flint_bench --smoke inside ${IMAGE_TAG}" >&2
+"${RUNTIME}" run --rm \
+    --security-opt label=disable \
+    -v "${HERE}:/work${MOUNT_OPTS}" \
+    "${IMAGE_TAG}" \
+    bash -c "set -e; cd /work/reference && make flint_bench >/dev/null && ./flint_bench --seed ${SEED} --smoke" \
+    >> "${TARGET_CSV}"
+
+# Cross-equality oracle (per protocol §6). Emits no CSV rows; exits
+# non-zero on any (op, field) mismatch at n=16.
+echo "[smoke.sh] running ntl_flint_smoke equality oracle" >&2
+"${RUNTIME}" run --rm \
+    --security-opt label=disable \
+    -v "${HERE}:/work${MOUNT_OPTS}" \
+    "${IMAGE_TAG}" \
+    bash -c "set -e; cd /work/reference && make ntl_flint_smoke >/dev/null && ./ntl_flint_smoke" \
+    >&2
+# === flint end ===
+
+echo "[smoke.sh] OK — smoke CSV at ${TARGET_CSV}" >&2
