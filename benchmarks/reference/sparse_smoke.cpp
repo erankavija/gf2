@@ -9,13 +9,17 @@
 //     scalar reference (independent O(n²) kernel that does not call
 //     fflas-ffpack), exact equality after canonical [0, p) reduction.
 //   - `spmv × GF(2)` — same scheme using `Modular<int64_t>(2)` for the
-//     fflas side; LinBox cross-check via `SparseMatrix::apply` is
-//     implicit (we exercise it in `linbox_sparse_bench --smoke` future
-//     work). Today we run the fflas-side oracle.
+//     fflas side; jit:0f708b36 added a LinBox oracle alongside the
+//     fflas one so the smoke chain has two independent witnesses for
+//     the GF(2) spmv cell.
 //   - `sparse×dense × GF(p)` — fflas-ffpack `fspmm` against an
 //     in-harness scalar reference. Same field set as `spmv × GF(p)`;
 //     blockSize = n so the cross-check exercises the full
 //     `C = A·B` shape promoted in scorecard § 3.
+//   - `linbox_spmv × GF(*)` — LinBox `SparseMatrix::apply(y, x)` against
+//     the same in-harness scalar reference, providing an independent
+//     witness for both `spmv × GF(2)` (per `dev/plans/
+//     sparse_benchmark_corpus.md:162`) and the GF(p) cells.
 //
 // The harness exits non-zero on any mismatch with a stderr trace
 // identifying the (op, field, cell) pair.
@@ -33,6 +37,10 @@
 #include <givaro/modular.h>
 #include <fflas-ffpack/fflas/fflas.h>
 #include <fflas-ffpack/fflas/fflas_sparse.h>
+
+#include <linbox/ring/modular.h>
+#include <linbox/matrix/sparse-matrix.h>
+#include <linbox/util/commentator.h>
 
 #include "seed_helpers.h"
 
@@ -157,6 +165,85 @@ static int oracle_spmv(const Field& F, const char* field_label, uint64_t seed) {
     return rc;
 }
 
+// LinBox-side spmv oracle (jit:0f708b36) — independent witness alongside
+// `oracle_spmv`. Builds a `LinBox::SparseMatrix<Field>` (default storage,
+// `SparseSeq` of (col, val) pairs) from the same byte-equivalent CSR
+// triples the fflas oracle uses, runs `apply(y, x)`, and bitwise-compares
+// the output against the same in-harness `scalar_spmv` reference.
+//
+// Together with `oracle_spmv` this gives the smoke chain two independent
+// library-side witnesses (fflas + LinBox) for every GF(*) `spmv` cell —
+// closing the gap recorded in `dev/plans/sparse_benchmark_corpus.md:162`
+// for GF(2) and providing redundant coverage for the GF(p) cells.
+template <typename Field>
+static int linbox_oracle_spmv(const Field& F,
+                              const char* field_label,
+                              uint64_t seed) {
+    constexpr size_t n = 16;
+    constexpr double density = 0.25;
+
+    std::vector<uint64_t> row_idx_full;
+    std::vector<uint64_t> col_idx;
+    std::vector<typename Field::Element> values;
+    build_csr(F, n, n, density, seed, row_idx_full, col_idx, values);
+    if (values.empty()) {
+        std::fprintf(stderr,
+                     "[sparse_smoke] WARN nnz=0 op=linbox_spmv field=%s\n", field_label);
+        return 0;
+    }
+
+    // Allocate the in-harness reference + input via fflas_new so the
+    // canonical [0, card) representation matches the existing oracle.
+    typename Field::Element_ptr x = FFLAS::fflas_new(F, n);
+    typename Field::Element_ptr y_scalar = FFLAS::fflas_new(F, n);
+    {
+        uint64_t st = seed ^ 0xCAFEBABEULL;
+        typename Field::Residu_t card = F.cardinality();
+        for (size_t i = 0; i < n; ++i) {
+            uint64_t r = splitmix64(st);
+            typename Field::Element xi;
+            F.init(xi, static_cast<int64_t>(r % static_cast<uint64_t>(card)));
+            x[i] = xi;
+        }
+    }
+
+    // Build the LinBox sparse matrix from the same triples, then apply.
+    using LBMatrix = LinBox::SparseMatrix<Field>;
+    LBMatrix A(F, n, n);
+    for (size_t k = 0; k < values.size(); ++k) {
+        A.setEntry(row_idx_full[k], col_idx[k], values[k]);
+    }
+
+    using Vec = typename LinBox::DenseVector<Field>;
+    Vec x_lb(F, n);
+    Vec y_lb(F, n);
+    for (size_t i = 0; i < n; ++i) {
+        x_lb[i] = x[i];
+    }
+    A.apply(y_lb, x_lb);
+
+    scalar_spmv(F, n, n, row_idx_full, col_idx, values, x, y_scalar);
+
+    int rc = 0;
+    for (size_t i = 0; i < n; ++i) {
+        if (!F.areEqual(y_lb[i], y_scalar[i])) {
+            std::fprintf(stderr,
+                         "[sparse_smoke] FAIL linbox_spmv field=%s i=%zu linbox != scalar\n",
+                         field_label, i);
+            rc = 1;
+            break;
+        }
+    }
+    if (rc == 0) {
+        std::fprintf(stderr, "[sparse_smoke] OK linbox_spmv field=%s nnz=%zu\n",
+                     field_label, values.size());
+    }
+
+    FFLAS::fflas_delete(x);
+    FFLAS::fflas_delete(y_scalar);
+    return rc;
+}
+
 // Independent scalar sparse×dense: C = A·B with A sparse (m×n) and
 // B dense (n×blockSize). Loops over non-zeros first, then over the
 // columns of B/C — does not call fflas. All arithmetic in canonical
@@ -268,6 +355,12 @@ int main(int argc, char** argv) {
         }
     }
 
+    // Silence LinBox commentator chatter (it goes to stderr by default and
+    // pollutes the smoke trace).
+    LinBox::commentator().setMaxDetailLevel(-1);
+    LinBox::commentator().setMaxDepth(0);
+    LinBox::commentator().setReportStream(std::cerr);
+
     int rc = 0;
     {
         using Field = Givaro::Modular<int64_t>;
@@ -298,6 +391,43 @@ int main(int argc, char** argv) {
         Field F(2);
         rc |= oracle_spmv(F, "GF(2)",
                           gf2_bench_derive_seed(master_seed ^ 0x55ULL, "smoke-spmv", 0, 0, 0));
+    }
+
+    // LinBox-side spmv oracle (jit:0f708b36). Independent witness alongside
+    // the fflas oracles above. GF(2) is the explicit gap-closing target
+    // from `dev/plans/sparse_benchmark_corpus.md:162`; the GF(p) cells get
+    // redundant coverage for free since LinBox's `SparseMatrix::apply` is
+    // a separate code path from fflas-ffpack's `fspmv`. Seeds match the
+    // fflas oracle calls so both witnesses see the same triples + RHS.
+    {
+        using Field = Givaro::Modular<int64_t>;
+        Field F((1LL << 31) - 1);
+        rc |= linbox_oracle_spmv(F, "GF(2^31-1)",
+                                 gf2_bench_derive_seed(master_seed, "smoke-spmv", 0, 0, 0));
+    }
+    {
+        using Field = Givaro::Modular<int64_t>;
+        Field F(65521);
+        rc |= linbox_oracle_spmv(F, "GF(65521)",
+                                 gf2_bench_derive_seed(master_seed ^ 0x11ULL, "smoke-spmv", 0, 0, 0));
+    }
+    {
+        using Field = Givaro::Modular<int64_t>;
+        Field F(251);
+        rc |= linbox_oracle_spmv(F, "GF(251)",
+                                 gf2_bench_derive_seed(master_seed ^ 0x22ULL, "smoke-spmv", 0, 0, 0));
+    }
+    {
+        using Field = Givaro::Modular<int64_t>;
+        Field F(7);
+        rc |= linbox_oracle_spmv(F, "GF(7)",
+                                 gf2_bench_derive_seed(master_seed ^ 0x33ULL, "smoke-spmv", 0, 0, 0));
+    }
+    {
+        using Field = Givaro::Modular<int64_t>;
+        Field F(2);
+        rc |= linbox_oracle_spmv(F, "GF(2)",
+                                 gf2_bench_derive_seed(master_seed ^ 0x55ULL, "smoke-spmv", 0, 0, 0));
     }
 
     // sparse×dense × GF(p) — fspmm cross-equality oracle for the four
