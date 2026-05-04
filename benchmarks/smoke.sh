@@ -56,3 +56,38 @@ if [[ "${GF2_SKIP_LINBOX_SMOKE:-0}" -eq 0 ]]; then
         bash -c "set -e; cd /work/reference && make linbox_bench >/dev/null && /work/reference/linbox_bench --seed ${SEED} --smoke"
 fi
 # === linbox end ===
+
+# === m4rie begin ===
+# M4RIE smoke gate (jit:507b0036).
+#
+# `run.sh` doesn't yet wire m4rie_bench into the timing flow (the
+# dispatch contract for 507b0036 is read-only on run.sh), so we run
+# m4rie's correctness-oracle path directly here. This invokes the
+# container's `m4rie_bench --smoke` to satisfy the per-cell n=16
+# bitwise-equality check required by `dev/plans/sota_reference_acceptance_protocol.md`
+# § 6 for every claimed (op, field) cell — currently matmul over GF(2^4),
+# GF(2^8), GF(2^16). Failure exits non-zero and fails the smoke gate.
+#
+# Skipped silently when the image hasn't been rebuilt against the new
+# Containerfile (e.g. --skip-build with a pre-507b0036 image).
+MOUNT_OPTS=":Z,U"
+if [[ "${RUNTIME}" == "docker" ]]; then
+    MOUNT_OPTS=""
+fi
+
+if "${RUNTIME}" image inspect "${IMAGE_TAG}" >/dev/null 2>&1; then
+    if "${RUNTIME}" run --rm \
+        --security-opt label=disable \
+        -v "${HERE}:/work${MOUNT_OPTS}" \
+        "${IMAGE_TAG}" \
+        bash -c 'set -e; cd /work/reference && make -B m4rie_bench >/dev/null && /work/reference/m4rie_bench --smoke' \
+        ; then
+        echo "[smoke.sh] m4rie smoke OK" >&2
+    else
+        echo "[smoke.sh] m4rie smoke FAILED" >&2
+        exit 1
+    fi
+else
+    echo "[smoke.sh] note: ${IMAGE_TAG} not present; skipping m4rie smoke" >&2
+fi
+# === m4rie end ===

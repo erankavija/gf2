@@ -1,0 +1,25 @@
+# 507b0036 perf stat capture: M4RIE matmul GF(2^16) n=1024 uniform
+# date    : 2026-05-04T05:05:41Z
+# host    : Linux fraktaali 7.0.3-arch1-1 #1 SMP PREEMPT_DYNAMIC Thu, 30 Apr 2026 18:41:12 +0000 x86_64 GNU/Linux
+# binary  : /tmp/m4rie_one_cell_host (3 inner iters per invocation, -r 3 repeats)
+# library : libm4rie.so.1 -> /usr/lib/libm4rie.so (host install, version 20250128 — same upstream tag as the pinned-container build)
+# events  : cycles,instructions,branches,branch-misses,L1-dcache-loads,L1-dcache-load-misses
+# note    : Captured outside the container because rootless podman blocks 'cycles' on this host;
+#           the host m4rie is the same upstream tag (20250128, sha256 96f1adafd5..) as the
+#           pinned-container build, which is the relevant invariant for criterion #2.
+# co-tenants: parallel agent worker 5dea7457 was running perf stat on fflas_bench during the
+#             initial -r 10 attempt; this -r 3 capture was retaken after that worker's load
+#             dropped to keep the cycle counts representative.
+
+
+ Performance counter stats for '/tmp/m4rie_one_cell_host 3' (3 runs):
+
+ 3,423,538,693,153      cycles:u                                                                ( +-  1.61% )  (83.33%)
+   404,233,794,050      instructions:u                                                          ( +-  1.41% )  (83.33%)
+   100,217,293,770      branches:u                                                              ( +-  1.62% )  (83.33%)
+         2,333,136      branch-misses:u                                                         ( +- 14.53% )  (83.33%)
+    58,433,906,718      L1-dcache-loads:u                                                       ( +-  1.38% )  (83.33%)
+       319,516,502      L1-dcache-load-misses:u                                                 ( +-  1.52% )  (83.33%)
+
+      46.465352944 +- 7.407255326 seconds time elapsed  ( +- 15.94% )
+

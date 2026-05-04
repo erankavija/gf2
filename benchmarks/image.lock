@@ -29,7 +29,7 @@ tag  = "ref"
 # `local_id` is intrinsically per-build because `-march=native` couples
 # the binary to the host microarchitecture; recording it gives the gate
 # a tripwire for "did anything change since we last validated?".
-local_id = "sha256:6c5d58a4f3a91a9f5013726e90e06e3aac6e7d23bbad3d00347e71fe2471d7b5"
+local_id = "sha256:42c9c356b142bbbc8c6cdf7bf7c8ab1f3b3db3ad25c9453247e5ac3a04c7c57c"
 
 [base]
 repository = "docker.io/library/debian"
@@ -83,3 +83,8 @@ sha256  = "7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404"
 version = "1.7.1"
 source  = "https://github.com/linbox-team/linbox/releases/download/v1.7.1/linbox-1.7.1.tar.gz"
 sha256  = "a2b5f910a54a46fa75b03f38ad603cae1afa973c95455813d85cf72c27553bd8"
+
+[libs.m4rie]
+version = "20250128"
+source  = "https://github.com/malb/m4rie/releases/download/20250128/m4rie-20250128.tar.gz"
+sha256  = "96f1adafd50e6a0b51dc3aa1cb56cb6c1361ae7c10d97dc35c3fa70822a55bd7"
