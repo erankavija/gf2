@@ -432,13 +432,11 @@ int main(int argc, char** argv) {
 
     // sparse×dense × GF(p) — fspmm cross-equality oracle for the four
     // GF(p) primes the design doc promotes fflas-ffpack as canonical
-    // for. GF(2) is excluded because the cell is `not-yet-harnessed`
-    // on both sides: gf2-core has no `SpBitMatrix::matmat` /
-    // `SpBitMatrix::spmm` entry-point (only `SpBitMatrix::matmul`,
-    // sparse×sparse), and `linbox_sparse_bench.cpp` does not emit
-    // `sparse_dense,GF(2)` rows. See scorecard § 5 #6 (`dev/bench_results/
-    // 2026-05-04-47698404-sparse-scorecard.md`) for the explicit
-    // documentation of that gap.
+    // for, plus GF(2) (jit:521390db). The oracle_sparse_dense template
+    // calls fflas-ffpack's `fspmm` against an in-harness scalar
+    // reference (`scalar_sparse_dense`), satisfying protocol § 6
+    // *Comparable semantics* without depending on the gf2-core
+    // integration follow-up (96fde7c7, upstream design work).
     {
         using Field = Givaro::Modular<int64_t>;
         Field F((1LL << 31) - 1);
@@ -462,6 +460,18 @@ int main(int argc, char** argv) {
         Field F(7);
         rc |= oracle_sparse_dense(F, "GF(7)",
                                   gf2_bench_derive_seed(master_seed ^ 0x33ULL, "smoke-spmm", 0, 0, 0));
+    }
+    // GF(2) sparse×dense — added jit:521390db. Uses `Modular<int64_t>(2)`
+    // to match the GF(2) spmv smoke above; the in-harness scalar
+    // reference (`scalar_sparse_dense`) provides the canonical semantic
+    // anchor against fflas's `fspmm`. The gf2-core side now exposes
+    // `SpBitMatrix::matmat`; the LinBox-side `applyLeft` reference is
+    // still tracked as `not-yet-harnessed` (sibling 0f708b36).
+    {
+        using Field = Givaro::Modular<int64_t>;
+        Field F(2);
+        rc |= oracle_sparse_dense(F, "GF(2)",
+                                  gf2_bench_derive_seed(master_seed ^ 0x55ULL, "smoke-spmm", 0, 0, 0));
     }
 
     if (rc != 0) {
