@@ -2,9 +2,9 @@
   "id": "47698404-edd8-4035-a4a1-9820001fc5d7",
   "title": "Re-run sparse post-PPC scorecard",
   "description": "Measure sparse CPU paths against accepted references.\n\n## Success Criteria\n\n- [hard] CSR/CSC, block-CSR, RCM, and prefetch variants are represented where relevant.\n- [hard] The report identifies feasible CPU gaps and no-go cases.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude-wt-47698404",
   "dependencies": [
     "a3412e15-e73d-4556-a2aa-e4296677cfa5",
     "eb57f944-9d82-4bbe-8b58-68eae7622654",
@@ -25,5 +25,5 @@
     "story:sota-sparse-fieldmatrix"
   ],
   "created_at": "2026-04-30T06:43:02.900080306+00:00",
-  "updated_at": "2026-05-04T17:38:42.222831812+00:00"
+  "updated_at": "2026-05-04T18:11:38.343707395+00:00"
 }
