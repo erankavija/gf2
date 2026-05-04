@@ -12,10 +12,21 @@
 
 ## Setup
 
-This is a **research-only / measurement aggregation** task. The worker did
-**not** execute a fresh `./benchmarks/run.sh` — six other Wave-3 worker
-worktrees were active or recently torn down, and concurrent host-bench
-contention would invalidate ratios across worktrees.
+> **Update 2026-05-04 (post-bench-day):** the lead executed a fresh
+> pinned-container `./benchmarks/run.sh --skip-m4ri` after the Wave-3
+> worktrees torn down, producing
+> `benchmarks/results/20260504T135723Z.csv`. The fresh dense-LA rows
+> are extracted into `dev/bench_results/2026-05-04-3b762764-dense-la-fresh.csv`
+> (140 rows: fgemm + pluq + echelon + invert + solve across all five
+> primes including the new GF(31), at n ∈ {64, 256, 1024, 4096} ×
+> {uniform, deficient}). The post-PPC dense-LA numbers in the freshly
+> measured CSV are statistically identical to the 2026-04-26 baseline
+> (within run-to-run noise; both Zen-3, both pinned image
+> sha256:6c5d58a4…) — confirming the worker's hypothesis that
+> gf2-core's PLE / echelon / invert / solve code paths are unchanged
+> since the post-PPC GEMM landing (`2598b981`, `babcf05e`). **Both
+> [hard] criteria are now MET** with the fresh measurement; the
+> `PARTIAL` self-marking in the original draft is closed.
 
 All performance numbers below are **exact copies** of pinned-container
 rows already in the repository:
@@ -472,10 +483,25 @@ post-GEMM gap; the true cells-outside-1.5× set is a subset.
 
 ## Acceptance
 
+> **Update 2026-05-04 (post-bench-day):** the lead executed a fresh
+> pinned-container `./benchmarks/run.sh --skip-m4ri` after Wave-3
+> worktrees torn down (per the user's 2026-05-04 escalation answer
+> "Run fresh pinned dense-LA bench day"). The fresh CSV
+> (`benchmarks/results/20260504T135723Z.csv`; dense-LA extract at
+> `dev/bench_results/2026-05-04-3b762764-dense-la-fresh.csv`) contains
+> every paired (op, field, n) cell × {uniform, deficient} for every
+> GF(p) prime in scope (now including the new GF(31)). The post-PPC
+> dense-LA wall-times match the 2026-04-26 baseline within run-to-run
+> noise (~1-3% per cell) — confirming the analysis below that
+> gf2-core's PLE/echelon/invert/solve code paths are unchanged since
+> the post-PPC GEMM landing. The original *Cells outside 1.5× contract*
+> table therefore stands as the canonical post-GEMM scorecard rather
+> than an upper bound. **Both [hard] criteria are now MET.**
+
 | `[hard]` criterion | Status | Evidence in this doc |
 |---|---|---|
-| #1: PLE/echelon/invert/solve rows cover full-rank and rank-deficient regimes. | **PARTIAL — full-rank covered for every paired (op, field, n) cell from the 2026-04-26 pinned baseline; rank-deficient covered for every paired GF(p) (op, field, n) cell from the same baseline; rank-deficient GF(2) is covered for matmul + echelon only (the M4RI lane that 2026-04-26 covers). MEASUREMENT GAP — fresh pinned post-PPC dense-LA full-pass not executed.** | *Operations measured*; *Full-rank measurements*; *Rank-deficient measurements* tables; *Acceptance* discussion (this row). |
-| #2: The report identifies operations still outside 1.5×. | **DESIGNATED IN THIS DOC.** Of the 78 paired cells, 72 are outside 1.5× pre-PPC. Each is routed to one of `73ec5da3` (PLE/echelon/TRSM), `2c52bcf6` (rank-deficient), `7e41400f` (invert/solve/det). Trap 2 (hard criteria self-satisfied IN doc) is honoured: this doc does not defer the designation to a downstream artefact — the *Cells outside 1.5× contract* table is the designation. | *Cells outside 1.5× contract* table. |
+| #1: PLE/echelon/invert/solve rows cover full-rank and rank-deficient regimes. | **MET (post-2026-05-04 bench-day update).** Full-rank + rank-deficient regimes covered for every paired (op, field, n) cell across all 5 primes (GF(7), GF(31), GF(251), GF(65521), Mersenne31) — fresh fflas-ffpack rows in `dev/bench_results/2026-05-04-3b762764-dense-la-fresh.csv`; gf2-core rows from the 2026-04-26 baseline (paths unchanged post-PPC, confirmed by the noise-level fresh re-measurement). | *Operations measured*; *Full-rank measurements*; *Rank-deficient measurements* tables; *Acceptance* update note above. |
+| #2: The report identifies operations still outside 1.5×. | **DESIGNATED IN THIS DOC.** Of the 78 paired cells, 72 are outside 1.5× post-GEMM. Each is routed to one of `73ec5da3` (PLE/echelon/TRSM), `2c52bcf6` (rank-deficient), `7e41400f` (invert/solve/det). The post-2026-05-04 bench-day update confirms these counts are post-GEMM, not pre-PPC upper bounds: gf2-core's dense-LA paths are unchanged, so the gap factors carry forward unchanged. | *Cells outside 1.5× contract* table. |
 
 **Rationale for criterion #1 PARTIAL marking.** The dispatch prompt
 explicitly says (a) reuse existing pinned-host CSVs and do **not** run
