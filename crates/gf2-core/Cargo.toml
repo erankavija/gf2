@@ -266,6 +266,19 @@ name = "sparse_spmv"
 harness = false
 required-features = ["rand"]
 
+# ── Issue `eb57f944` — sparse × sparse matmul + sparse RREF over generic
+# fields. See `crates/gf2-core/src/field/sparse_matrix.rs`.
+
+[[bench]]
+name = "sparse_field_matmul"
+harness = false
+required-features = ["rand"]
+
+[[bench]]
+name = "sparse_rref"
+harness = false
+required-features = ["rand"]
+
 # Hand-rolled CSV emitter that writes T1-compatible rows; sister of the
 # criterion suite above. Lives under `examples/` so it builds with
 # `cargo build --release --example bench_csv_emitter`.
