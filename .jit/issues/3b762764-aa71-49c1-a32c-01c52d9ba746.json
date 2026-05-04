@@ -55,6 +55,12 @@
       "label": "Dense LA aggregated reference CSV (3b762764)",
       "doc_type": "evidence",
       "format": "markdown"
+    },
+    {
+      "path": "dev/bench_results/2026-05-04-3b762764-dense-la-fresh.csv",
+      "commit": null,
+      "label": "Fresh post-PPC dense-LA bench-day rows (3b762764)",
+      "doc_type": "evidence"
     }
   ],
   "labels": [
@@ -64,5 +70,5 @@
     "story:sota-dense-la"
   ],
   "created_at": "2026-04-30T06:43:02.797812087+00:00",
-  "updated_at": "2026-05-04T11:27:41.946934268+00:00"
+  "updated_at": "2026-05-04T14:06:21.629684920+00:00"
 }
