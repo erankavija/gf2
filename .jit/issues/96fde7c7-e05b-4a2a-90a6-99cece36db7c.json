@@ -13,7 +13,15 @@
   ],
   "gates_status": {},
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/plans/sparse_smoke_gf2core_integration_sketch.md",
+      "commit": null,
+      "label": "96fde7c7 pre-impl design sketch (verification work)",
+      "doc_type": null,
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:task",
     "component:gf2-core",
@@ -21,5 +29,5 @@
     "story:sota-sparse-fieldmatrix"
   ],
   "created_at": "2026-05-04T22:04:54.286908805+00:00",
-  "updated_at": "2026-05-04T22:04:54.286913905+00:00"
+  "updated_at": "2026-05-04T22:28:00.920050744+00:00"
 }
