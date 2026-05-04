@@ -15,15 +15,15 @@
     "doc-review"
   ],
   "gates_status": {
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-04T10:47:58.204454214Z"
-    },
     "code-review": {
       "status": "failed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-04T16:57:53.148478596Z"
+      "updated_at": "2026-05-04T17:04:33.656089553Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-04T17:04:22.273364366Z"
     }
   },
   "context": {},
@@ -43,5 +43,5 @@
     "story:sota-sparse-fieldmatrix"
   ],
   "created_at": "2026-04-30T06:43:02.890544374+00:00",
-  "updated_at": "2026-05-04T17:00:49.441288774+00:00"
+  "updated_at": "2026-05-04T17:06:42.119396546+00:00"
 }

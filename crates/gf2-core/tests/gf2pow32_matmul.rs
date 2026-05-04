@@ -124,8 +124,7 @@ fn test_gf2pow32_fieldmatrix_gemm_matches_scalar_reference() {
     use gf2_core::bench_seed::derive_seed;
     const K_MASTER: u64 = 0x6F73AC91D31E4A7Cu64;
     const PHI: u64 = 0x9E3779B97F4A7C15u64;
-    let a_seed: u64 =
-        derive_seed(K_MASTER, "matmul", 0, 0, 0) ^ (32u64).wrapping_mul(PHI);
+    let a_seed: u64 = derive_seed(K_MASTER, "matmul", 0, 0, 0) ^ (32u64).wrapping_mul(PHI);
     let b_seed: u64 = a_seed ^ 0x1111_1111_1111_1111u64;
 
     let a_bytes = fill_uniform_u32(n, a_seed);
