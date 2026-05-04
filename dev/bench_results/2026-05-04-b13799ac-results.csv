@@ -1,0 +1,16 @@
+# dev/bench_results/2026-05-04-b13799ac-results.csv
+# captured: 2026-05-04T16:50:00Z
+# bench   : ./benchmarks/reference/ntl_bench --seed 0x6F73AC91D31E4A7C --warmup 3 --iters 5
+#           (built inside pinned container localhost/gf2-bench:ref)
+# host    : see dev/bench_results/2026-05-04-b13799ac-host.txt
+# perf    : see dev/bench_results/2026-05-04-b13799ac-perf-stat.txt
+#
+# Protocol § 5 results-CSV companion artefact for the (matmul, GF(2^32))
+# promotion. Filtered to the GF(2^32) lane only — the full pinned bench
+# day output for 2026-05-04 lives in `benchmarks/results/20260504T135723Z.csv`
+# (predates this lane) and will pick the GF(2^32) row up on the next
+# `./benchmarks/run.sh` invocation. analyze.py merges this CSV via the
+# standard 10-column schema (`lib,operation,field,m,k,n,rank_regime,seed,
+# wall_ns,throughput_ops`).
+lib,operation,field,m,k,n,rank_regime,seed,wall_ns,throughput_ops
+ntl,matmul,GF(2^32),64,64,64,uniform,17158103737143628803,8597444,6.098185e+07

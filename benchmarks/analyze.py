@@ -236,14 +236,20 @@ def group_by_op_field(rows: Iterable[CellRow]) -> "OrderedDict[Tuple[str, str], 
     return out
 
 
-def reference_lib_for(field_value: str) -> str:
-    """Pick the reference lib name we expect for a given field.
+def reference_lib_for(field_value: str, operation: Optional[str] = None) -> str:
+    """Pick the reference lib name we expect for a given (operation, field) cell.
 
     GF(2) goes to M4RI, GF(2^m) for m ≥ 2 goes to M4RIE, everything
     else (GF(p) families) goes to fflas-ffpack. This is a
     presentation-only decision — multiple libs may legitimately
     co-exist in the same CSV, and `render_table` will surface
     whichever the canonical reference is for that field.
+
+    Per-cell overrides are applied first when `operation` is supplied:
+    the (matmul, GF(2^32)) cell is promoted to NTL by issue
+    `b13799ac` (M4RIE caps at m ≤ 16). Calls without `operation`
+    keep the field-only routing for backwards compatibility — they
+    do not trigger the per-cell override path.
 
     Per-cell routing decisions for charpoly + minpoly (issue c3e79272):
 
@@ -270,15 +276,20 @@ def reference_lib_for(field_value: str) -> str:
     fflas-ffpack) is not made here; that designation is owned by the
     SOTA target-matrix story (4c0d0202).
     """
+    # Per-cell overrides — only applied when the caller supplied an
+    # operation. Each entry corresponds to a single promoted
+    # (operation, field) cell from a JIT issue's evidence doc.
+    if operation == "matmul" and field_value == "GF(2^32)":
+        # Promoted 2026-05-04 (jit:b13799ac). M4RIE caps at m ≤ 16, so
+        # the (matmul, GF(2^32)) cell cannot share the GF(2^m)
+        # reference and is routed to NTL `mat_GF2E` instead. See
+        # `dev/bench_results/2026-05-04-b13799ac-gf2pow32-promotion.md`.
+        # Other GF(2^32) operations (invert, solve, charpoly, …) fall
+        # through to the field-default rule below; they have no
+        # promoted reference yet.
+        return "ntl"
     if field_value == "GF(2)":
         return "m4ri"
-    if field_value == "GF(2^32)":
-        # Promoted 2026-05-04 (jit:b13799ac). M4RIE caps at m ≤ 16, so
-        # GF(2^32) cannot share the GF(2^m) reference and is routed
-        # to NTL `mat_GF2E` instead. See
-        # `dev/bench_results/2026-05-04-b13799ac-gf2pow32-promotion.md`
-        # for the protocol § 3 evidence.
-        return "ntl"
     if FIELD_FAMILY.get(field_value) == "gf2m":
         return "m4rie"
     return "fflas-ffpack"
@@ -317,7 +328,7 @@ def _fmt_ratio(gf2: Optional[float], ref: Optional[float]) -> str:
 
 
 def render_table(op: str, field_value: str, rows: List[CellRow]) -> str:
-    ref_lib = reference_lib_for(field_value)
+    ref_lib = reference_lib_for(field_value, operation=op)
     buf = io.StringIO()
     buf.write(f"### {op} × {field_value}\n\n")
     buf.write(
