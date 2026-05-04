@@ -4,10 +4,12 @@
   "epic_title": "Close gf2-core SOTA performance gaps",
   "started_at": "2026-04-30T14:15:00Z",
   "session": 1,
-  "current_wave": 2,
+  "current_wave": 3,
   "session_1_closed_at": "2026-04-30T15:38Z",
   "session_1_handoff": "dev/active/97bf0879-handoff.md",
-  "next_session_first_action": "Read dev/active/97bf0879-handoff.md (especially Traps section), then dispatch Wave 2 per the 'What to do next' list.",
+  "session_2_closed_at": "2026-05-04T07:05Z",
+  "session_2_handoff": "dev/active/97bf0879-handoff-2.md",
+  "next_session_first_action": "Read dev/active/97bf0879-handoff-2.md (especially Traps section — 6 new traps from session 2; carry-forward from session 1 + babcf05e), then dispatch Wave 3 per the 'What to do next' list.",
   "lead": "agent:project-lead",
   "predecessor_epic": "babcf05e",
   "notes": [
@@ -264,6 +266,35 @@
     ],
     "side_effect_promotions": [
       {"short_id": "d0ca9482", "from": "backlog", "to": "ready", "reason": "All upstream Wave-1 deps closed"}
+    ]
+  },
+  "wave_2_summary": {
+    "issues_closed": 4,
+    "via_workers": ["5dea7457", "73ab8eef", "79388011", "507b0036"],
+    "via_lead_direct": [],
+    "lead_cleanup_commits": [
+      {"sha": "e3592fe", "purpose": "Wired secondary references into run.sh + analyze.py (verify_sha + FIELD_FAMILY routing)"},
+      {"sha": "cbe73e2", "purpose": "Documented secondary references in analyze.py reference_lib_for"},
+      {"sha": "5871ecc", "purpose": "Corrected singular-probability formula in ntl_flint_smoke.cpp"},
+      {"sha": "b4c659d", "purpose": "Refreshed M4RIE evidence verify_sha note after R3 down-scope"}
+    ],
+    "rework_summary": {
+      "5dea7457": {"rounds": 1, "outcome": "PASS first time"},
+      "73ab8eef": {"rounds": 3, "outcome": "PASS after R2 lead-direct formula fix"},
+      "79388011": {"rounds": 4, "outcome": "PASS after R3 cumulative fixes"},
+      "507b0036": {"rounds": 4, "outcome": "PASS after R3 down-scope to matmul-only (echelon excluded; protocol §6 bitwise contract requires independent GF(2^m) RREF reference not yet available)"}
+    },
+    "key_artefacts": [
+      {"path": "dev/plans/linbox_promotion_evidence.md", "purpose": "LinBox 1.7.1 charpoly/minpoly/solve secondary reference"},
+      {"path": "dev/plans/m4rie_promotion_evidence.md", "purpose": "M4RIE 20250128 GF(2^m) matmul canonical reference (echelon down-scoped)"},
+      {"path": "dev/plans/ntl_promotion_evidence.md", "purpose": "NTL 11.6.0 GF(p) secondary reference (fgemm/invert/solve/charpoly)"},
+      {"path": "dev/plans/flint_promotion_evidence.md", "purpose": "FLINT 3.5.0 GF(p) secondary reference (widest non-fflas surface incl. minpoly)"},
+      {"path": "benchmarks/Containerfile", "purpose": "4 SHA-pinned library stanzas added (linbox/m4rie/ntl/flint)"},
+      {"path": "benchmarks/reference/ntl_flint_smoke.cpp", "purpose": "Cross-equality oracle NTL ↔ FLINT with singular-resample policy at n=16"},
+      {"path": "benchmarks/analyze.py", "purpose": "FIELD_FAMILY routing: gf2 → m4ri, gf2m → m4rie, else → fflas-ffpack"}
+    ],
+    "side_effect_promotions": [
+      {"short_id": "4c0d0202", "from": "backlog", "to": "ready", "reason": "All upstream Wave-2 deps closed; SOTA target matrix design doc ready for Wave 4"}
     ]
   }
 }
