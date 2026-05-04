@@ -300,13 +300,15 @@ int main(int argc, char** argv) {
                           gf2_bench_derive_seed(master_seed ^ 0x55ULL, "smoke-spmv", 0, 0, 0));
     }
 
-    // sparse×dense × GF(p) — fspmm cross-equality oracle. GF(2) is
-    // intentionally excluded: fflas-ffpack `fspmm` over `Modular<int64_t>(2)`
-    // does not match the gf2-core sparse×dense path's GF(2) semantics
-    // (gf2-core dispatches through `BitMatrix::gemm`-tier code paths,
-    // not a Modular<int> sparse multiply); the GF(2) sparse×dense cell
-    // is recorded as self-canonical in scorecard § 3 and does not
-    // require the fflas oracle.
+    // sparse×dense × GF(p) — fspmm cross-equality oracle for the four
+    // GF(p) primes the design doc promotes fflas-ffpack as canonical
+    // for. GF(2) is excluded because the cell is `not-yet-harnessed`
+    // on both sides: gf2-core has no `SpBitMatrix::matmat` /
+    // `SpBitMatrix::spmm` entry-point (only `SpBitMatrix::matmul`,
+    // sparse×sparse), and `linbox_sparse_bench.cpp` does not emit
+    // `sparse_dense,GF(2)` rows. See scorecard § 5 #6 (`dev/bench_results/
+    // 2026-05-04-47698404-sparse-scorecard.md`) for the explicit
+    // documentation of that gap.
     {
         using Field = Givaro::Modular<int64_t>;
         Field F((1LL << 31) - 1);
