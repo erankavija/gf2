@@ -12,6 +12,10 @@
 //     fflas side; LinBox cross-check via `SparseMatrix::apply` is
 //     implicit (we exercise it in `linbox_sparse_bench --smoke` future
 //     work). Today we run the fflas-side oracle.
+//   - `sparse×dense × GF(p)` — fflas-ffpack `fspmm` against an
+//     in-harness scalar reference. Same field set as `spmv × GF(p)`;
+//     blockSize = n so the cross-check exercises the full
+//     `C = A·B` shape promoted in scorecard § 3.
 //
 // The harness exits non-zero on any mismatch with a stderr trace
 // identifying the (op, field, cell) pair.
@@ -153,6 +157,107 @@ static int oracle_spmv(const Field& F, const char* field_label, uint64_t seed) {
     return rc;
 }
 
+// Independent scalar sparse×dense: C = A·B with A sparse (m×n) and
+// B dense (n×blockSize). Loops over non-zeros first, then over the
+// columns of B/C — does not call fflas. All arithmetic in canonical
+// [0, card) via Field::init/add/mul.
+template <typename Field>
+static void scalar_sparse_dense(const Field& F,
+                                size_t m_rows,
+                                size_t blockSize,
+                                const std::vector<uint64_t>& row_idx_full,
+                                const std::vector<uint64_t>& col_idx,
+                                const std::vector<typename Field::Element>& values,
+                                const typename Field::Element_ptr B,
+                                size_t ldb,
+                                typename Field::Element_ptr C,
+                                size_t ldc) {
+    for (size_t i = 0; i < m_rows; ++i) {
+        for (size_t j = 0; j < blockSize; ++j) {
+            F.init(C[i * ldc + j], 0);
+        }
+    }
+    for (size_t k = 0; k < values.size(); ++k) {
+        size_t i = row_idx_full[k];
+        size_t kk = col_idx[k];
+        for (size_t j = 0; j < blockSize; ++j) {
+            typename Field::Element prod;
+            F.mul(prod, values[k], B[kk * ldb + j]);
+            F.addin(C[i * ldc + j], prod);
+        }
+    }
+}
+
+template <typename Field>
+static int oracle_sparse_dense(const Field& F, const char* field_label, uint64_t seed) {
+    constexpr size_t n = 16;
+    constexpr double density = 0.25;
+
+    std::vector<uint64_t> row_idx_full;
+    std::vector<uint64_t> col_idx;
+    std::vector<typename Field::Element> values;
+    build_csr(F, n, n, density, seed, row_idx_full, col_idx, values);
+    if (values.empty()) {
+        std::fprintf(stderr,
+                     "[sparse_smoke] WARN nnz=0 op=sparse_dense field=%s\n", field_label);
+        return 0;
+    }
+
+    typename Field::Element_ptr B = FFLAS::fflas_new(F, n * n);
+    typename Field::Element_ptr C_fflas = FFLAS::fflas_new(F, n * n);
+    typename Field::Element_ptr C_scalar = FFLAS::fflas_new(F, n * n);
+    {
+        uint64_t st = seed ^ 0xDEADBEEFULL;
+        typename Field::Residu_t card = F.cardinality();
+        for (size_t i = 0; i < n * n; ++i) {
+            uint64_t r = splitmix64(st);
+            typename Field::Element bi;
+            F.init(bi, static_cast<int64_t>(r % static_cast<uint64_t>(card)));
+            B[i] = bi;
+        }
+    }
+
+    using FFLAS::Sparse;
+    using FFLAS::SparseMatrix_t;
+    Sparse<Field, SparseMatrix_t::CSR> A;
+    FFLAS::sparse_init(F, A,
+                       row_idx_full.data(),
+                       col_idx.data(),
+                       values.data(),
+                       static_cast<uint64_t>(n),
+                       static_cast<uint64_t>(n),
+                       values.size());
+
+    FFLAS::fzero(F, n, n, C_fflas, n);
+    FFLAS::fspmm(F, A, n, B, static_cast<int>(n), F.zero, C_fflas, static_cast<int>(n));
+    scalar_sparse_dense(F, n, n, row_idx_full, col_idx, values, B, n, C_scalar, n);
+
+    int rc = 0;
+    for (size_t i = 0; i < n; ++i) {
+        for (size_t j = 0; j < n; ++j) {
+            if (!F.areEqual(C_fflas[i * n + j], C_scalar[i * n + j])) {
+                std::fprintf(stderr,
+                             "[sparse_smoke] FAIL sparse_dense field=%s "
+                             "i=%zu j=%zu fflas != scalar\n",
+                             field_label, i, j);
+                rc = 1;
+                break;
+            }
+        }
+        if (rc) break;
+    }
+    if (rc == 0) {
+        std::fprintf(stderr, "[sparse_smoke] OK sparse_dense field=%s nnz=%zu\n",
+                     field_label, values.size());
+    }
+
+    FFLAS::sparse_delete(A);
+    FFLAS::fflas_delete(B);
+    FFLAS::fflas_delete(C_fflas);
+    FFLAS::fflas_delete(C_scalar);
+    return rc;
+}
+
 }  // namespace
 
 int main(int argc, char** argv) {
@@ -193,6 +298,38 @@ int main(int argc, char** argv) {
         Field F(2);
         rc |= oracle_spmv(F, "GF(2)",
                           gf2_bench_derive_seed(master_seed ^ 0x55ULL, "smoke-spmv", 0, 0, 0));
+    }
+
+    // sparse×dense × GF(p) — fspmm cross-equality oracle. GF(2) is
+    // intentionally excluded: fflas-ffpack `fspmm` over `Modular<int64_t>(2)`
+    // does not match the gf2-core sparse×dense path's GF(2) semantics
+    // (gf2-core dispatches through `BitMatrix::gemm`-tier code paths,
+    // not a Modular<int> sparse multiply); the GF(2) sparse×dense cell
+    // is recorded as self-canonical in scorecard § 3 and does not
+    // require the fflas oracle.
+    {
+        using Field = Givaro::Modular<int64_t>;
+        Field F((1LL << 31) - 1);
+        rc |= oracle_sparse_dense(F, "GF(2^31-1)",
+                                  gf2_bench_derive_seed(master_seed, "smoke-spmm", 0, 0, 0));
+    }
+    {
+        using Field = Givaro::Modular<int64_t>;
+        Field F(65521);
+        rc |= oracle_sparse_dense(F, "GF(65521)",
+                                  gf2_bench_derive_seed(master_seed ^ 0x11ULL, "smoke-spmm", 0, 0, 0));
+    }
+    {
+        using Field = Givaro::Modular<float>;
+        Field F(251.0f);
+        rc |= oracle_sparse_dense(F, "GF(251)",
+                                  gf2_bench_derive_seed(master_seed ^ 0x22ULL, "smoke-spmm", 0, 0, 0));
+    }
+    {
+        using Field = Givaro::Modular<int64_t>;
+        Field F(7);
+        rc |= oracle_sparse_dense(F, "GF(7)",
+                                  gf2_bench_derive_seed(master_seed ^ 0x33ULL, "smoke-spmm", 0, 0, 0));
     }
 
     if (rc != 0) {
