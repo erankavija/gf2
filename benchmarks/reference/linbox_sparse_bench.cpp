@@ -38,6 +38,8 @@
 #include <givaro/modular.h>
 #include <linbox/ring/modular.h>
 #include <linbox/matrix/sparse-matrix.h>
+#include <linbox/matrix/dense-matrix.h>
+#include <linbox/matrix/sparsematrix/sparse-tpl-matrix.h>
 #include <linbox/blackbox/zero-one.h>
 #include <linbox/algorithms/gauss.h>
 #include <linbox/util/commentator.h>
@@ -245,13 +247,114 @@ static void bench_spmv(const Field& F,
     emit_csv("spmv", field_label, n, n, 1, regime_buf, seed, mean_ns, tput);
 }
 
+// ----- sparse×dense over GF(p) (LinBox cross-check; canonical fflas-ffpack)
+//
+// Uses the `SparseMatrix<Field, SparseMatrixFormat::TPL>` triples-format
+// matrix because `applyLeft(Y, X)` (sparse × dense → dense) is only
+// declared on the TPL specialisation in LinBox 1.7.1
+// (`linbox/matrix/sparsematrix/sparse-tpl-matrix.h:112`). The CSR
+// specialisation has a `SparseMatrixDomain` wrapper that exposes
+// `applyLeft(Y, X, alpha)` but its OOO/AVX dispatch path is gated on
+// `Givaro::Modular<double>` only — for the int64-modular fields used by
+// this harness it falls back to the same underlying saxpy loop, so
+// timing parity with the TPL path is acceptable.
+//
+// The triples are walked once per `applyLeft` and dispatched via
+// `MatrixDomain::saxpyin(Y_row, t.elt, X_row)`, matching the row-block
+// strategy in `dev/plans/sparse_benchmark_corpus.md:169`.
+template <typename Field>
+static void bench_sparse_dense(const Field& F,
+                               const char* field_label,
+                               size_t n,
+                               double density,
+                               uint64_t seed,
+                               int warmup, int iters) {
+    using TplMatrix = LinBox::SparseMatrix<Field, LinBox::SparseMatrixFormat::TPL>;
+    using DenseMat = LinBox::DenseMatrix<Field>;
+
+    TplMatrix A(F, n, n);
+    uint64_t st = seed;
+    typename Field::Residu_t card = F.cardinality();
+    uint64_t threshold = static_cast<uint64_t>(density * 1.844674407370955e19);
+    uint64_t nnz = 0;
+    for (size_t i = 0; i < n; ++i) {
+        for (size_t j = 0; j < n; ++j) {
+            uint64_t draw = splitmix64(st);
+            if (draw < threshold) {
+                uint64_t v_raw = splitmix64(st);
+                uint64_t v = (v_raw % static_cast<uint64_t>(card - 1)) + 1;
+                typename Field::Element x;
+                F.init(x, static_cast<int64_t>(v));
+                A.setEntry(i, j, x);
+                ++nnz;
+            }
+        }
+    }
+    if (nnz == 0) {
+        return;
+    }
+    A.finalize(TplMatrix::cacheOpt);
+
+    // Block size matches `fflas_sparse_bench`'s sparse_dense column
+    // count (n) so the cross-library numbers can be compared at parity.
+    size_t blockSize = n;
+    DenseMat B(F, n, blockSize);
+    DenseMat C(F, n, blockSize);
+    {
+        uint64_t st2 = seed ^ 0xDEADBEEFULL;
+        for (size_t i = 0; i < n; ++i) {
+            for (size_t j = 0; j < blockSize; ++j) {
+                uint64_t r = splitmix64(st2);
+                typename Field::Element xij;
+                F.init(xij, static_cast<int64_t>(r % static_cast<uint64_t>(card)));
+                B.setEntry(i, j, xij);
+            }
+        }
+    }
+
+    auto run_once = [&]() {
+        A.applyLeft(C, B);
+    };
+
+    for (int i = 0; i < warmup; ++i) run_once();
+
+    uint64_t total_ns = 0;
+    int actual_iters = 0;
+    bool early_exit = false;
+    for (int i = 0; i < iters; ++i) {
+        uint64_t t0 = monotonic_ns();
+        run_once();
+        total_ns += monotonic_ns() - t0;
+        ++actual_iters;
+        if (total_ns >= kCellBudgetNs) {
+            early_exit = true;
+            break;
+        }
+    }
+    uint64_t mean_ns = total_ns / static_cast<uint64_t>(actual_iters);
+    // Throughput: each non-zero contributes one saxpy across `blockSize`
+    // dense columns, so the dominant op count is nnz * blockSize.
+    double tput = static_cast<double>(nnz) * static_cast<double>(blockSize)
+                  / (static_cast<double>(mean_ns) * 1.0e-9);
+
+    char regime_buf[64];
+    std::snprintf(regime_buf, sizeof(regime_buf), "density_%.6e_csr", density);
+    if (early_exit) {
+        std::fprintf(stderr,
+                     "[linbox_sparse_bench] WARN early_exit op=sparse_dense field=%s n=%zu\n",
+                     field_label, n);
+    }
+    emit_csv("sparse_dense", field_label, n, n, blockSize, regime_buf, seed, mean_ns, tput);
+}
+
 template <typename Field>
 static void run_field(const Field& F,
                       const char* field_label,
                       uint64_t master_seed,
                       int warmup, int iters,
                       const std::vector<size_t>& sizes,
-                      const std::vector<size_t>& elim_sizes) {
+                      const std::vector<size_t>& elim_sizes,
+                      const std::vector<size_t>& sparse_dense_sizes) {
     std::fprintf(stderr, "[linbox_sparse_bench] field=%s\n", field_label);
 
     for (size_t si = 0; si < sizes.size(); ++si) {
@@ -261,6 +364,14 @@ static void run_field(const Field& F,
         bench_spmv(F, field_label, n, density,
                    derive_seed(master_seed, "spmv-er", 0, si, 1),
                    warmup, iters);
+    }
+
+    for (size_t si = 0; si < sparse_dense_sizes.size(); ++si) {
+        size_t n = sparse_dense_sizes[si];
+        double density = 10.0 / static_cast<double>(n);
+        bench_sparse_dense(F, field_label, n, density,
+                           derive_seed(master_seed, "spdense-er", 1, si, 1),
+                           warmup, iters);
     }
 
     for (size_t si = 0; si < elim_sizes.size(); ++si) {
@@ -320,32 +431,41 @@ int main(int argc, char** argv) {
     // sparse-elim wall is dominated by the build (n×n cell scan) at
     // n=4096, so the elim sweep stops at n=1024 in --quick. The
     // sweep at --full extends to n=4096; n=16384 is deferred.
+    //
+    // sparse_dense uses {1024, 4096} unconditionally to satisfy
+    // jit:0f708b36 success criterion 1; 4096 fits within the 30s
+    // per-cell budget enforced by `kCellBudgetNs`.
     const std::vector<size_t> quick_sizes = {1024};
     const std::vector<size_t> full_sizes  = {1024, 4096};
     const std::vector<size_t> elim_quick  = {256, 1024};
     const std::vector<size_t> elim_full   = {256, 1024, 4096};
+    const std::vector<size_t> sparse_dense_sizes = {1024, 4096};
     const auto& sizes = full ? full_sizes : quick_sizes;
     const auto& elim_sizes = full ? elim_full : elim_quick;
 
     {
         using Field = Givaro::Modular<int64_t>;
         Field F((1LL << 31) - 1);
-        run_field(F, "GF(2^31-1)", master_seed, warmup, iters, sizes, elim_sizes);
+        run_field(F, "GF(2^31-1)", master_seed, warmup, iters,
+                  sizes, elim_sizes, sparse_dense_sizes);
     }
     {
         using Field = Givaro::Modular<int64_t>;
         Field F(65521);
-        run_field(F, "GF(65521)", master_seed ^ 0x11ULL, warmup, iters, sizes, elim_sizes);
+        run_field(F, "GF(65521)", master_seed ^ 0x11ULL, warmup, iters,
+                  sizes, elim_sizes, sparse_dense_sizes);
     }
     {
         using Field = Givaro::Modular<int64_t>;
         Field F(251);
-        run_field(F, "GF(251)", master_seed ^ 0x22ULL, warmup, iters, sizes, elim_sizes);
+        run_field(F, "GF(251)", master_seed ^ 0x22ULL, warmup, iters,
+                  sizes, elim_sizes, sparse_dense_sizes);
     }
     {
         using Field = Givaro::Modular<int64_t>;
         Field F(7);
-        run_field(F, "GF(7)", master_seed ^ 0x33ULL, warmup, iters, sizes, elim_sizes);
+        run_field(F, "GF(7)", master_seed ^ 0x33ULL, warmup, iters,
+                  sizes, elim_sizes, sparse_dense_sizes);
     }
 
     // GF(2) sparse-elim via Givaro::Modular<int64_t>(2) — uses a one-bit
@@ -354,10 +474,18 @@ int main(int argc, char** argv) {
     // faster but its public header surface is narrower; the int64-mod-2
     // path runs through the same GaussDomain code generator and produces
     // numbers comparable to the GF(p) cells.
+    //
+    // GF(2) is intentionally excluded from `sparse_dense_sizes` here:
+    // the design doc (`dev/plans/sparse_benchmark_corpus.md`) promotes
+    // fflas-ffpack as canonical for `sparse×dense × GF(p)`, and the
+    // gf2-core side has no `SpBitMatrix::matmat` entry-point for a
+    // GF(2) cross-check (scorecard § 5 #6).
     {
         using Field = Givaro::Modular<int64_t>;
         Field F(2);
-        run_field(F, "GF(2)", master_seed ^ 0x55ULL, warmup, iters, sizes, elim_sizes);
+        const std::vector<size_t> empty_sd;
+        run_field(F, "GF(2)", master_seed ^ 0x55ULL, warmup, iters,
+                  sizes, elim_sizes, empty_sd);
     }
 
     return 0;
