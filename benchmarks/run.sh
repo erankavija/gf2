@@ -324,6 +324,26 @@ if [[ "${RUN_SMOKE_EQUALITY}" -eq 1 ]]; then
             "${IMAGE_TAG}" \
             bash -c "${COMPILE_CMD} && /work/reference/m4ri_bench --seed ${SEED} --smoke"
     fi
+    # Cross-library bitwise-equality oracles (issue c3e79272). Each runs
+    # protocol §6 polynomial-coefficient equality between two refs that
+    # both support the same (op, field, n) cell at n=16:
+    #   * ntl_flint_smoke         — NTL ↔ FLINT for fgemm/inv/solve/charpoly
+    #     (FLINT-only invariants for pluq/echelon/minpoly).
+    #   * charpoly_minpoly_smoke  — LinBox ↔ FLINT for charpoly + minpoly
+    #     (NTL has no user-facing matrix-minpoly API).
+    # A non-zero exit on either is a hard semantics-mismatch FAIL.
+    echo "[run.sh] running ntl_flint_smoke (NTL ↔ FLINT) inside ${IMAGE_TAG}" >&2
+    "${RUNTIME}" run --rm \
+        --security-opt label=disable \
+        -v "${HERE}:/work${MOUNT_OPTS}" \
+        "${IMAGE_TAG}" \
+        bash -c "${COMPILE_CMD} && /work/reference/ntl_flint_smoke"
+    echo "[run.sh] running charpoly_minpoly_smoke (LinBox ↔ FLINT) inside ${IMAGE_TAG}" >&2
+    "${RUNTIME}" run --rm \
+        --security-opt label=disable \
+        -v "${HERE}:/work${MOUNT_OPTS}" \
+        "${IMAGE_TAG}" \
+        bash -c "${COMPILE_CMD} && /work/reference/charpoly_minpoly_smoke"
 fi
 
 if [[ "${RUN_FFLAS}" -eq 1 ]]; then
