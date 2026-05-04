@@ -10,8 +10,8 @@
 ## Current state
 
 - Epic: `97bf0879` — state: **in_progress**, claimed by `agent:project-lead`.
-- Wave 3 status: **partial close.** 4 of 6 issues closed (`0fd48627`, `c3e79272`, `609855d9`*, `3b762764`*). 2 issues stay open (`9a715d75`, `a3412e15`) gated on new impl tasks per user decision.
-  - *609855d9 + 3b762764 closure depends on the in-flight pinned bench day completing — see *What just happened* below.
+- Wave 3 status: **partial close (4/6 closed).** Closed: `0fd48627`, `c3e79272`, `609855d9`, `3b762764`. Open: `9a715d75`, `a3412e15` (gated on new impl tasks per user decision).
+- Bench-day reconciliation completed 2026-05-04 — pinned bench produced `benchmarks/results/20260504T135723Z.csv`, both 609855d9 and 3b762764 closed cleanly on the post-bench-day evidence.
 - New scope work: 3 new tasks created from user-approved Wave-3 escalation:
   - `b13799ac` — Build GF(2^32) matmul reference harness (story `2c7548ae`); blocks closure of `9a715d75`.
   - `2403c054` — gf2-core `SpBitMatrix::matmul` (GF(2) sparse-sparse) (story `54fd3f0b`); blocks closure of `a3412e15`.
@@ -82,8 +82,8 @@ When the bench completes:
 |---|---|---|---|
 | `0fd48627` | Profile post-PPC GF(2) M4RI gap | `1e7d7d1` (worker) + `166afbd` (lead-direct citations) | DONE |
 | `c3e79272` | Build charpoly minpoly reference lane | `e84ecc4` (lead-finalized worker WIP) | DONE |
-| `609855d9` | Classify GF(p) gap by prime family | `42b584d` (worker) + post-bench addendum (this session, after bench completes) | PENDING-BENCH |
-| `3b762764` | Re-run dense LA post-GEMM scorecard | `5772839` (worker) + post-bench addendum (this session, after bench completes) | PENDING-BENCH |
+| `609855d9` | Classify GF(p) gap by prime family | `42b584d` (worker) + post-bench-day GF(31) reconciliation + R2 review pass | DONE |
+| `3b762764` | Re-run dense LA post-GEMM scorecard | `5772839` (worker) + post-bench-day fresh-CSV + worker-scope clarification on baseline-aggregation framing + R5 review pass (`a1523ea`) | DONE |
 | `9a715d75` | Select GF(2^m) reference lane | `92c838c` (worker) + 4 lead-direct re-frame commits | OPEN — blocks on `b13799ac` |
 | `a3412e15` | Select sparse benchmark corpus and references | `9aaaa2e` (worker) + 2 lead-direct re-frame commits | OPEN — blocks on `2403c054` + `eb57f944` |
 
@@ -91,15 +91,18 @@ When the bench completes:
 
 In priority order:
 
-- [ ] **Confirm bench day completed cleanly.** Check that the background bash task `b8aeqwmly` exited with code 0. If FAILED, re-run with diagnostic flags. The bench is on the Zen-3 anchor host; cross-host posture is unchanged.
-- [ ] **Update 609855d9 evidence doc** with the new GF(31) row from the bench output. Re-run code-review (now that the `MEASUREMENT GAP` is resolved). If PASS, run `doc-review` (manual), transition to `done`.
-- [ ] **Update 3b762764 evidence doc** with the post-PPC fflas dense-LA rows. The expectation is that the rows match the 2026-04-26 baseline within run-to-run noise (because gf2-core's dense-LA paths haven't been re-implemented post-PPC). Re-run code-review. If PASS, run `doc-review`, transition to `done`.
-- [ ] **Decide whether to dispatch `b13799ac`/`2403c054`/`eb57f944` in this session or next.** They're substantial implementation tasks (1-3 days each). Likely belong in the next session's wave plan. The immediate Wave-3 closure work is the bench-day reconciliation above.
+- [x] ~~Confirm bench day completed cleanly.~~ (done — `benchmarks/results/20260504T135723Z.csv`)
+- [x] ~~Update 609855d9 evidence doc with the GF(31) row.~~ (done — closed 2026-05-04)
+- [x] ~~Update 3b762764 evidence doc with the post-PPC dense-LA rows.~~ (done — closed 2026-05-04 after R5)
+- [ ] **Decide whether to dispatch `b13799ac` / `2403c054` / `eb57f944` in this session or next.** They are substantial implementation tasks (1-3 days each). The immediate Wave-3 critical path is now resolved (4/6 closed); the remaining 2 (`9a715d75` + `a3412e15`) wait on these impl tasks but do **not** block Wave 4 — `4c0d0202` (Wave 4) depends on all 6 Wave 3 issues, so Wave 4 dispatch must wait. Recommended path: dispatch `b13799ac` in next session as a focused implementation wave (it's also blocked on `dece4e73`'s GF(2^32) ring oracle harness, so order is `dece4e73` → `b13799ac` → close `9a715d75`). `2403c054` + `eb57f944` similarly chain on `47698404` (analyze.py protocol §9 update).
 
 ## Wave 4 readiness
 
-- `4c0d0202` (Publish SOTA target matrix design doc) is now wired to depend on all 6 Wave 3 issues. It cannot dispatch until `9a715d75` and `a3412e15` close, which in turn requires `b13799ac` / `2403c054` / `eb57f944` to land.
-- Realistic Wave 4 dispatch window: after the new impl tasks close (3-7 days of impl + review).
+- `4c0d0202` (Publish SOTA target matrix design doc) is wired to depend on all 6 Wave 3 issues. It cannot dispatch until `9a715d75` and `a3412e15` close, which in turn requires `b13799ac` / `2403c054` / `eb57f944` to land.
+- The dependency chain that gates Wave 4:
+  - `b13799ac` blocks on `dece4e73` (Wave-12 ring-oracle harness — actually classified as Wave-2-style infrastructure, currently `ready`).
+  - `2403c054` + `eb57f944` block on `47698404` (Wave-10 sparse scorecard analyze.py update).
+- Realistic Wave 4 dispatch window: after `b13799ac` / `2403c054` / `eb57f944` close (3-7 days of impl + review across two parallel sub-waves).
 
 ## Traps — do not repeat these
 
@@ -120,6 +123,8 @@ New traps from session 3:
 
 6. **Reviewer `cargo nextest run` flakes on 5s timeouts under host contention.** During the parallel rework window (two background workers building/testing concurrently with the lead's code-review run), `test_fig1_drm_product_encode_decode` and `test_inv_allocation_budget_n1024_fp_m31` timed out at the 5s threshold. They passed cleanly on a serial re-run after the workers finished. The workers' worktrees ran their own `cargo nextest` for self-validation — this contention is the cause. **Workaround:** serialize cargo runs across worktrees (or trust the per-worker self-validation as the authoritative test signal).
 
+7. **Strict AI reviewer cross-references CSV header comments and host.txt notes against the markdown's acceptance section.** On 3b762764 R3+R4, the markdown was correctly updated to "DELIVERY COMPLETE" / "post-bench-day" but the companion `-dense-la-reference.csv` header still said "no fresh measurement was executed" and `-dense-la-host.txt` line 3 said "this worker did NOT execute a fresh ./benchmarks/run.sh". The reviewer flagged this as a single-source-of-truth violation. Fix: scope the worker's "no fresh run" framing **explicitly to the original baseline aggregation worker** (not the issue overall) and add forward-pointers to the post-bench-day fresh CSV. R5 PASS after the scoping commit `8c3fe9e`. **Lesson:** when a worker writes "I did not run X" in any companion artefact, the lead must update that exact line on every closure path, not only the markdown.
+
 ## Reference artefacts (this session)
 
 - This handoff: `dev/active/97bf0879-handoff-3.md`
@@ -129,11 +134,12 @@ New traps from session 3:
 - Protocol amendment: `dev/plans/sota_reference_acceptance_protocol.md` § 14
 - Wave 3 evidence docs (closed-issue side): `dev/bench_results/2026-05-04-{0fd48627,c3e79272,609855d9,3b762764}-*.{md,csv,txt}`
 - Wave 3 design docs (open-issue side): `dev/plans/{gf2m_reference_lane_selection,sparse_benchmark_corpus}.md`
-- In-flight bench output: `benchmarks/results/<timestamp>.csv` (named when the run completes)
+- Bench output: `benchmarks/results/20260504T135723Z.csv` (post-PPC pinned bench, completed 2026-05-04)
+- Bench-day extracts: `dev/bench_results/2026-05-04-609855d9-gf31-supplement.csv`, `dev/bench_results/2026-05-04-3b762764-dense-la-fresh.csv`
 - Worktree dispatch protocol: `.claude/skills/project-lead/references/worktree-dispatch-protocol.md`
 
 ## Open questions for the next session
 
-None blocking. The immediate next-session work is mechanical: wait for the bench day, update the two evidence docs, run gates, close 609855d9 + 3b762764, then write the next handoff.
+None blocking. Wave-3 critical path is closed (4/6); the remaining 2 (`9a715d75`, `a3412e15`) sit blocked on impl tasks per user decision and do not gate any other Wave-3 work.
 
-After that, the lead must decide whether to dispatch `b13799ac` / `2403c054` / `eb57f944` (which together unblock 9a715d75 + a3412e15 → Wave 4) inside this epic, or whether to handoff each as its own session.
+The lead must decide whether to dispatch `b13799ac` / `2403c054` / `eb57f944` (which together unblock 9a715d75 + a3412e15 → Wave 4) inside this epic, or whether to handoff each as its own session. Recommended ordering: `dece4e73` → `b13799ac` (sequential), in parallel with `47698404` → {`2403c054`, `eb57f944`}.
