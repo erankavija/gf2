@@ -52,10 +52,24 @@ FLINT_CFLAGS := -I/usr/local/include
 FLINT_LIBS   := -L/usr/local/lib -lflint -lmpfr -lgmp -lm
 
 .PHONY: all clean
-all: fflas_bench m4ri_bench linbox_bench m4rie_bench ntl_bench flint_bench ntl_flint_smoke charpoly_minpoly_smoke ntl_gf2pow32_smoke
+all: fflas_bench m4ri_bench linbox_bench m4rie_bench ntl_bench flint_bench ntl_flint_smoke charpoly_minpoly_smoke ntl_gf2pow32_smoke fflas_sparse_bench linbox_sparse_bench sparse_smoke
 
 fflas_bench: fflas_bench.cpp
 	@$(CXX) $(CXXSTD) $(OPT) -fopenmp $(FFLAS_CFLAGS) $< $(FFLAS_LIBS) -lopenblas -o $@
+
+# fflas-ffpack sparse SpMV / SpMM harness (jit:47698404). Same link line
+# as `fflas_bench` since both pull in fflas-ffpack + givaro + openblas.
+fflas_sparse_bench: fflas_sparse_bench.cpp
+	@$(CXX) $(CXXSTD) $(OPT) -fopenmp $(FFLAS_CFLAGS) $< $(FFLAS_LIBS) -lopenblas -o $@
+
+# LinBox sparse harness (jit:47698404) — sparse-elim canonical, SpMV
+# cross-check. Uses the same link line as `linbox_bench`.
+linbox_sparse_bench: linbox_sparse_bench.cpp
+	@$(CXX) $(CXXSTD) $(OPT) -fopenmp $(LINBOX_CFLAGS) $(FFLAS_CFLAGS) $< $(LINBOX_LIBS) $(FFLAS_LIBS) -lopenblas -o $@
+
+# Cross-equality oracle for sparse cells at n=16 (jit:47698404, protocol § 6).
+sparse_smoke: sparse_smoke.cpp
+	@$(CXX) $(CXXSTD) $(OPT) $(FFLAS_CFLAGS) $< $(FFLAS_LIBS) -lopenblas -o $@
 
 m4ri_bench: m4ri_bench.c
 	@$(CC) $(CSTD) $(OPT) $(M4RI_CFLAGS) $< $(M4RI_LIBS) -o $@
@@ -101,4 +115,4 @@ charpoly_minpoly_smoke: charpoly_minpoly_smoke.cpp
 	  $(LINBOX_LIBS) $(FFLAS_LIBS) $(FLINT_LIBS) -lopenblas -o $@
 
 clean:
-	rm -f fflas_bench m4ri_bench linbox_bench m4rie_bench m4rie_one_cell ntl_bench flint_bench ntl_flint_smoke charpoly_minpoly_smoke ntl_gf2pow32_smoke
+	rm -f fflas_bench m4ri_bench linbox_bench m4rie_bench m4rie_one_cell ntl_bench flint_bench ntl_flint_smoke charpoly_minpoly_smoke ntl_gf2pow32_smoke fflas_sparse_bench linbox_sparse_bench sparse_smoke
