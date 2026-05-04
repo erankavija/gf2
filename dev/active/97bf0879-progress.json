@@ -4,7 +4,7 @@
   "epic_title": "Close gf2-core SOTA performance gaps",
   "started_at": "2026-04-30T14:15:00Z",
   "session": 1,
-  "current_wave": 3,
+  "current_wave": 4,
   "session_1_closed_at": "2026-04-30T15:38Z",
   "session_1_handoff": "dev/active/97bf0879-handoff.md",
   "session_2_closed_at": "2026-05-04T07:05Z",
@@ -12,14 +12,14 @@
   "session_3_closed_at": "2026-05-04T14:55Z",
   "session_3_handoff": "dev/active/97bf0879-handoff-3.md",
   "session_3b_extension_at": "2026-05-04T17:40Z",
-  "session_3b_extension_summary": "Same conversation continued past the original 14:55Z handoff. Dispatched the three new impl tasks (b13799ac, 2403c054, eb57f944) in parallel via worktree protocol; 2403c054 + eb57f944 closed cleanly (R1, R2 reviews respectively); a3412e15 closed cleanly after R7 review (R7 added analyze.py per-cell sparse routing + README sparse ops list, mirroring §4 of the design). b13799ac and 9a715d75 remain OPEN per user escalation decision (held until 47698404 closes — same pattern as session-3's original 9a715d75 escalation). The b13799ac evidence work is in main; the strict reviewer rejected on (a) transitive vs direct smoke contract, (b) results CSV path convention, (c) cross-language Conway poly duplication after R4 review.",
+  "session_3b_extension_summary": "Same conversation continued past the original 14:55Z handoff. Dispatched the three new impl tasks (b13799ac, 2403c054, eb57f944) in parallel via worktree protocol; 2403c054 + eb57f944 closed cleanly (R1, R2 reviews respectively); a3412e15 closed cleanly after R7 review (R7 added analyze.py per-cell sparse routing + README sparse ops list, mirroring \u00a74 of the design). b13799ac and 9a715d75 remain OPEN per user escalation decision (held until 47698404 closes \u2014 same pattern as session-3's original 9a715d75 escalation). The b13799ac evidence work is in main; the strict reviewer rejected on (a) transitive vs direct smoke contract, (b) results CSV path convention, (c) cross-language Conway poly duplication after R4 review.",
   "session_4_closed_at": "2026-05-04T18:30Z",
   "session_4_handoff": "dev/active/97bf0879-handoff-4.md",
   "session_4_summary": "Closed d0ca9482 lead-direct (Wave-1 leftover, baseline-scorecard child) at af6b7bc. Dispatched 47698404 (sparse post-PPC scorecard) via worktree-agent-47698404; worker hit Anthropic rate limit (resets 11:30pm Helsinki) after producing 2 substantive commits + WIP. Lead-preserved worker WIP at 7251db4 on the worktree branch (smoke.sh wiring + density-format fix + initial bench output). Worker self-fixed the e-3/e-03 join-key bug via fmt_density_c() shim. Outstanding for next session: regen tables.md, write the scorecard markdown, run gates. Branch state: main clean at fa5f1f6.",
   "session_5_closed_at": "2026-05-05T00:10Z",
   "session_5_handoff": "dev/active/97bf0879-handoff-5.md",
-  "session_5_summary": "Re-dispatched 47698404 continuation worker (agent a21dda8b6d1792b62) — worker found and fixed a critical bug in lead-preserve commit 7251db4 (fmt_density_c() shim added but call sites left empty {}, example didn't compile), regenerated bench output, wrote the §0-§7 scorecard at d335231. Lead cherry-picked 4 worker commits onto main (c21b700 + 005ceaa + c50e0bc + ce57a8b), applied cargo fmt fix at ed960bb. Code-review went through 4 rework cycles (R1-R4) finding progressively deeper protocol/design-doc gaps: R1 missing sparse×dense oracle (fixed: oracle_sparse_dense in sparse_smoke.cpp), R2 missing sparse×dense × GF(2) cell (fixed: explicit not-yet-harnessed scorecard entry), R3 LinBox cross-check overclaim (fixed: § 5 #7 documents the gap), R4 protocol § 6 requires smoke vs gf2-core (NOT scalar reference — structural protocol gap, not closeable by doc edits). Same ratchet pattern as b13799ac/a3412e15 in sessions 3-3b. User escalation: chose path 1 — file follow-up impl tasks, hold 47698404 open. Filed 4 new sparse-impl follow-ups (0d6ca3b6, 521390db, 0f708b36, 96fde7c7) wired as 47698404 deps.",
-  "next_session_first_action": "Read dev/active/97bf0879-handoff-5.md. The 4 new sparse-impl follow-ups (0d6ca3b6, 521390db, 0f708b36, 96fde7c7) are ready to dispatch in Wave 4-impl. They can run in parallel with each other (different files / minimal overlap). 96fde7c7 (sparse_smoke gf2-core integration) is verification work and needs a pre-approved design sketch first. After all 4 close: 47698404 re-review (lead-direct fold of new LinBox numbers + gf2-core integration into scorecard). Then b13799ac re-review (SSOT Conway poly extraction still pending — lead-direct cleanup OR fresh user escalation). Then 9a715d75 re-review. Then Wave 4 (4c0d0202).",
+  "session_5_summary": "Re-dispatched 47698404 continuation worker (agent a21dda8b6d1792b62) \u2014 worker found and fixed a critical bug in lead-preserve commit 7251db4 (fmt_density_c() shim added but call sites left empty {}, example didn't compile), regenerated bench output, wrote the \u00a70-\u00a77 scorecard at d335231. Lead cherry-picked 4 worker commits onto main (c21b700 + 005ceaa + c50e0bc + ce57a8b), applied cargo fmt fix at ed960bb. Code-review went through 4 rework cycles (R1-R4) finding progressively deeper protocol/design-doc gaps: R1 missing sparse\u00d7dense oracle (fixed: oracle_sparse_dense in sparse_smoke.cpp), R2 missing sparse\u00d7dense \u00d7 GF(2) cell (fixed: explicit not-yet-harnessed scorecard entry), R3 LinBox cross-check overclaim (fixed: \u00a7 5 #7 documents the gap), R4 protocol \u00a7 6 requires smoke vs gf2-core (NOT scalar reference \u2014 structural protocol gap, not closeable by doc edits). Same ratchet pattern as b13799ac/a3412e15 in sessions 3-3b. User escalation: chose path 1 \u2014 file follow-up impl tasks, hold 47698404 open. Filed 4 new sparse-impl follow-ups (0d6ca3b6, 521390db, 0f708b36, 96fde7c7) wired as 47698404 deps.",
+  "next_session_first_action": "Read dev/active/97bf0879-handoff-6.md. Wave 4-impl mechanical closure: regen the 3 47698404 evidence CSVs from new bench binaries on host (per handoff \u00a7 Open work item 1), update 47698404 scorecard to fold new numbers (item 2), pass doc-review (manual) on 3 follow-ups (item 3), re-run code-review (item 4), mark each done. Then dispatch 96fde7c7 impl per the approved sketch. Then chain re-reviews on b13799ac, 47698404, 9a715d75. Then Wave 4 (4c0d0202).",
   "lead": "agent:project-lead",
   "predecessor_epic": "babcf05e",
   "notes": [
@@ -31,47 +31,103 @@
     "sota-reference-matrix": {
       "story_id": "cbecfced",
       "title": "Define reproducible gf2-core SOTA reference matrix",
-      "tasks": ["1d6043e8", "5dea7457", "73ab8eef", "79388011", "507b0036", "4c0d0202"]
+      "tasks": [
+        "1d6043e8",
+        "5dea7457",
+        "73ab8eef",
+        "79388011",
+        "507b0036",
+        "4c0d0202"
+      ]
     },
     "sota-baseline-scorecard": {
       "story_id": "b0434149",
       "title": "Publish post-PPC gf2-core SOTA baseline scorecard",
-      "tasks": ["02ace293", "5102d87a", "b8189dbf", "d3c2cc8f", "d0ca9482"]
+      "tasks": [
+        "02ace293",
+        "5102d87a",
+        "b8189dbf",
+        "d3c2cc8f",
+        "d0ca9482"
+      ]
     },
     "sota-gf2-m4ri": {
       "story_id": "974a85bd",
       "title": "Close GF(2) BitMatrix gaps to M4RI",
-      "tasks": ["0fd48627", "380e041a", "8e305c21", "366dbbcd", "111a3967"]
+      "tasks": [
+        "0fd48627",
+        "380e041a",
+        "8e305c21",
+        "366dbbcd",
+        "111a3967"
+      ]
     },
     "sota-gfp-fflas": {
       "story_id": "cc5de315",
       "title": "Close GF(p) FieldMatrix gaps to fflas-ffpack",
-      "tasks": ["609855d9", "5cacaec5", "662f7a15", "9e12659b", "3d06224c", "7a106fe4"]
+      "tasks": [
+        "609855d9",
+        "5cacaec5",
+        "662f7a15",
+        "9e12659b",
+        "3d06224c",
+        "7a106fe4"
+      ]
     },
     "sota-gf2m-reference": {
       "story_id": "2c7548ae",
       "title": "Close GF(2^m) FieldMatrix gaps to best reference",
-      "tasks": ["9a715d75", "a1172cea", "e24f7839", "fb271c41", "d82c00a3"]
+      "tasks": [
+        "9a715d75",
+        "a1172cea",
+        "e24f7839",
+        "fb271c41",
+        "d82c00a3"
+      ]
     },
     "sota-dense-la": {
       "story_id": "72ab6d0e",
       "title": "Close dense factorization and solve gaps",
-      "tasks": ["3b762764", "73ec5da3", "7e41400f", "2c52bcf6", "4eb105f7"]
+      "tasks": [
+        "3b762764",
+        "73ec5da3",
+        "7e41400f",
+        "2c52bcf6",
+        "4eb105f7"
+      ]
     },
     "sota-polynomial-invariants": {
       "story_id": "66190ccd",
       "title": "Close charpoly and minpoly gaps",
-      "tasks": ["c3e79272", "b87362a3", "d1dd266c", "4a59d1f9", "8ccc1751"]
+      "tasks": [
+        "c3e79272",
+        "b87362a3",
+        "d1dd266c",
+        "4a59d1f9",
+        "8ccc1751"
+      ]
     },
     "sota-sparse-fieldmatrix": {
       "story_id": "54fd3f0b",
       "title": "Close sparse FieldMatrix SpMV and SpMM gaps",
-      "tasks": ["a3412e15", "47698404", "3a37e0f6", "3643923d", "1726270d"]
+      "tasks": [
+        "a3412e15",
+        "47698404",
+        "3a37e0f6",
+        "3643923d",
+        "1726270d"
+      ]
     },
     "sota-final-scorecard": {
       "story_id": "01ae4c20",
       "title": "Publish final gf2-core SOTA closure report",
-      "tasks": ["dece4e73", "2cfc4372", "f00fd873", "39f02525", "8f3fdc34"]
+      "tasks": [
+        "dece4e73",
+        "2cfc4372",
+        "f00fd873",
+        "39f02525",
+        "8f3fdc34"
+      ]
     }
   },
   "waves": [
@@ -80,11 +136,47 @@
       "name": "Foundation: reference acceptance protocol + legacy doc cleanup",
       "rationale": "These are the prerequisites that unblock the SOTA target matrix design doc (4c0d0202) and the post-PPC baseline scorecard (b0434149). All are document-only work with no code conflicts.",
       "issues": [
-        {"short_id": "1d6043e8", "title": "Define SOTA reference acceptance protocol", "classification": "design", "status": "pending", "priority": "high", "lead_handles_directly": false},
-        {"short_id": "02ace293", "title": "Fix benchmark report cell-status semantics", "classification": "documentation", "status": "pending", "priority": "high", "lead_handles_directly": false},
-        {"short_id": "5102d87a", "title": "Synchronize benchmark environment documentation", "classification": "documentation", "status": "pending", "priority": "normal", "lead_handles_directly": false},
-        {"short_id": "b8189dbf", "title": "Publish post-PPC benchmark delta appendix", "classification": "documentation", "status": "pending", "priority": "normal", "lead_handles_directly": false},
-        {"short_id": "d3c2cc8f", "title": "Amend 64c88ae4 benchmark scope", "classification": "documentation", "status": "pending", "priority": "high", "lead_handles_directly": true, "note": "JIT description amendment of 64c88ae4 — lead-only operation per project-lead invariant 4 + jit state-edit rule"}
+        {
+          "short_id": "1d6043e8",
+          "title": "Define SOTA reference acceptance protocol",
+          "classification": "design",
+          "status": "pending",
+          "priority": "high",
+          "lead_handles_directly": false
+        },
+        {
+          "short_id": "02ace293",
+          "title": "Fix benchmark report cell-status semantics",
+          "classification": "documentation",
+          "status": "pending",
+          "priority": "high",
+          "lead_handles_directly": false
+        },
+        {
+          "short_id": "5102d87a",
+          "title": "Synchronize benchmark environment documentation",
+          "classification": "documentation",
+          "status": "pending",
+          "priority": "normal",
+          "lead_handles_directly": false
+        },
+        {
+          "short_id": "b8189dbf",
+          "title": "Publish post-PPC benchmark delta appendix",
+          "classification": "documentation",
+          "status": "pending",
+          "priority": "normal",
+          "lead_handles_directly": false
+        },
+        {
+          "short_id": "d3c2cc8f",
+          "title": "Amend 64c88ae4 benchmark scope",
+          "classification": "documentation",
+          "status": "pending",
+          "priority": "high",
+          "lead_handles_directly": true,
+          "note": "JIT description amendment of 64c88ae4 \u2014 lead-only operation per project-lead invariant 4 + jit state-edit rule"
+        }
       ]
     },
     {
@@ -92,10 +184,34 @@
       "name": "Reference evaluations + reference lane hardening",
       "rationale": "After the acceptance protocol from wave 1, evaluate candidate references against it. Harden fflas-ffpack/M4RI as primary references.",
       "issues": [
-        {"short_id": "5dea7457", "title": "Harden fflas-ffpack and M4RI reference lanes", "classification": "implementation", "status": "pending", "priority": "high"},
-        {"short_id": "73ab8eef", "title": "Evaluate NTL and FLINT references", "classification": "research", "status": "pending", "priority": "normal"},
-        {"short_id": "79388011", "title": "Evaluate LinBox for exact linear algebra references", "classification": "research", "status": "pending", "priority": "normal"},
-        {"short_id": "507b0036", "title": "Evaluate M4RIE for GF(2^m) references", "classification": "research", "status": "pending", "priority": "normal"}
+        {
+          "short_id": "5dea7457",
+          "title": "Harden fflas-ffpack and M4RI reference lanes",
+          "classification": "implementation",
+          "status": "pending",
+          "priority": "high"
+        },
+        {
+          "short_id": "73ab8eef",
+          "title": "Evaluate NTL and FLINT references",
+          "classification": "research",
+          "status": "pending",
+          "priority": "normal"
+        },
+        {
+          "short_id": "79388011",
+          "title": "Evaluate LinBox for exact linear algebra references",
+          "classification": "research",
+          "status": "pending",
+          "priority": "normal"
+        },
+        {
+          "short_id": "507b0036",
+          "title": "Evaluate M4RIE for GF(2^m) references",
+          "classification": "research",
+          "status": "pending",
+          "priority": "normal"
+        }
       ]
     },
     {
@@ -103,12 +219,48 @@
       "name": "Profile + classify gaps + select reference lanes",
       "rationale": "With references hardened, profile measured gaps and decide per-family/per-lane references. Outputs feed the SOTA target matrix design doc (4c0d0202).",
       "issues": [
-        {"short_id": "0fd48627", "title": "Profile post-PPC GF(2) M4RI gap", "classification": "research", "status": "pending", "priority": "high"},
-        {"short_id": "609855d9", "title": "Classify GF(p) gap by prime family", "classification": "research", "status": "pending", "priority": "high"},
-        {"short_id": "9a715d75", "title": "Select GF(2^m) reference lane", "classification": "design", "status": "pending", "priority": "high"},
-        {"short_id": "a3412e15", "title": "Select sparse benchmark corpus and references", "classification": "design", "status": "pending", "priority": "high"},
-        {"short_id": "c3e79272", "title": "Build charpoly minpoly reference lane", "classification": "implementation", "status": "pending", "priority": "high"},
-        {"short_id": "3b762764", "title": "Re-run dense LA post-GEMM scorecard", "classification": "research", "status": "pending", "priority": "high"}
+        {
+          "short_id": "0fd48627",
+          "title": "Profile post-PPC GF(2) M4RI gap",
+          "classification": "research",
+          "status": "pending",
+          "priority": "high"
+        },
+        {
+          "short_id": "609855d9",
+          "title": "Classify GF(p) gap by prime family",
+          "classification": "research",
+          "status": "pending",
+          "priority": "high"
+        },
+        {
+          "short_id": "9a715d75",
+          "title": "Select GF(2^m) reference lane",
+          "classification": "design",
+          "status": "pending",
+          "priority": "high"
+        },
+        {
+          "short_id": "a3412e15",
+          "title": "Select sparse benchmark corpus and references",
+          "classification": "design",
+          "status": "pending",
+          "priority": "high"
+        },
+        {
+          "short_id": "c3e79272",
+          "title": "Build charpoly minpoly reference lane",
+          "classification": "implementation",
+          "status": "pending",
+          "priority": "high"
+        },
+        {
+          "short_id": "3b762764",
+          "title": "Re-run dense LA post-GEMM scorecard",
+          "classification": "research",
+          "status": "pending",
+          "priority": "high"
+        }
       ]
     },
     {
@@ -116,8 +268,20 @@
       "name": "Target matrix design doc + baseline scorecard cleanup",
       "rationale": "Synthesize wave 1-3 outputs into the authoritative SOTA target matrix and clean up the legacy benchmark report.",
       "issues": [
-        {"short_id": "4c0d0202", "title": "Publish SOTA target matrix design doc", "classification": "design", "status": "pending", "priority": "high"},
-        {"short_id": "d0ca9482", "title": "Close benchmark report child after cleanup", "classification": "documentation", "status": "pending", "priority": "normal"}
+        {
+          "short_id": "4c0d0202",
+          "title": "Publish SOTA target matrix design doc",
+          "classification": "design",
+          "status": "pending",
+          "priority": "high"
+        },
+        {
+          "short_id": "d0ca9482",
+          "title": "Close benchmark report child after cleanup",
+          "classification": "documentation",
+          "status": "pending",
+          "priority": "normal"
+        }
       ]
     },
     {
@@ -125,8 +289,18 @@
       "name": "Story closure: reference matrix + baseline scorecard",
       "rationale": "Close the two foundational stories.",
       "issues": [
-        {"short_id": "cbecfced", "title": "Define reproducible gf2-core SOTA reference matrix [STORY]", "classification": "documentation", "status": "pending"},
-        {"short_id": "b0434149", "title": "Publish post-PPC gf2-core SOTA baseline scorecard [STORY]", "classification": "documentation", "status": "pending"}
+        {
+          "short_id": "cbecfced",
+          "title": "Define reproducible gf2-core SOTA reference matrix [STORY]",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "short_id": "b0434149",
+          "title": "Publish post-PPC gf2-core SOTA baseline scorecard [STORY]",
+          "classification": "documentation",
+          "status": "pending"
+        }
       ]
     },
     {
@@ -134,11 +308,36 @@
       "name": "GF(p) optimization implementation",
       "rationale": "Address GF(p) small/medium-prime GEMM gap. Wave 3 profiling identifies which prime families need new kernels.",
       "issues": [
-        {"short_id": "5cacaec5", "title": "Design small-prime packed kernel strategy", "classification": "design", "status": "pending"},
-        {"short_id": "662f7a15", "title": "Implement small-prime GEMM kernels", "classification": "implementation", "status": "pending"},
-        {"short_id": "9e12659b", "title": "Implement generic-prime panelized GEMM improvements", "classification": "implementation", "status": "pending"},
-        {"short_id": "3d06224c", "title": "Protect Mersenne fast path", "classification": "implementation", "status": "pending"},
-        {"short_id": "7a106fe4", "title": "Publish GF(p) parity evidence", "classification": "documentation", "status": "pending"}
+        {
+          "short_id": "5cacaec5",
+          "title": "Design small-prime packed kernel strategy",
+          "classification": "design",
+          "status": "pending"
+        },
+        {
+          "short_id": "662f7a15",
+          "title": "Implement small-prime GEMM kernels",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "short_id": "9e12659b",
+          "title": "Implement generic-prime panelized GEMM improvements",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "short_id": "3d06224c",
+          "title": "Protect Mersenne fast path",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "short_id": "7a106fe4",
+          "title": "Publish GF(p) parity evidence",
+          "classification": "documentation",
+          "status": "pending"
+        }
       ]
     },
     {
@@ -146,10 +345,30 @@
       "name": "GF(2) M4RI gap closure",
       "rationale": "M4RM-style table scheduling and any remaining echelon/rank work to close the M4RI gap.",
       "issues": [
-        {"short_id": "380e041a", "title": "Prototype M4RI-style table scheduling", "classification": "implementation", "status": "pending"},
-        {"short_id": "8e305c21", "title": "Implement production GF(2) matmul improvement", "classification": "implementation", "status": "pending"},
-        {"short_id": "366dbbcd", "title": "Close GF(2) echelon and rank rows", "classification": "implementation", "status": "pending"},
-        {"short_id": "111a3967", "title": "Publish GF(2) parity evidence", "classification": "documentation", "status": "pending"}
+        {
+          "short_id": "380e041a",
+          "title": "Prototype M4RI-style table scheduling",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "short_id": "8e305c21",
+          "title": "Implement production GF(2) matmul improvement",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "short_id": "366dbbcd",
+          "title": "Close GF(2) echelon and rank rows",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "short_id": "111a3967",
+          "title": "Publish GF(2) parity evidence",
+          "classification": "documentation",
+          "status": "pending"
+        }
       ]
     },
     {
@@ -157,10 +376,30 @@
       "name": "GF(2^m) reference + optimization",
       "rationale": "Measure post-PPC GF(2^m) against selected reference; panelized GEMM if needed.",
       "issues": [
-        {"short_id": "a1172cea", "title": "Measure GF(2^m) post-PPC GEMM against reference", "classification": "research", "status": "pending"},
-        {"short_id": "e24f7839", "title": "Implement panelized GF(2^m) GEMM", "classification": "implementation", "status": "pending"},
-        {"short_id": "fb271c41", "title": "Evaluate GFNI and AVX-512 follow-on routing", "classification": "research", "status": "pending"},
-        {"short_id": "d82c00a3", "title": "Publish GF(2^m) parity evidence", "classification": "documentation", "status": "pending"}
+        {
+          "short_id": "a1172cea",
+          "title": "Measure GF(2^m) post-PPC GEMM against reference",
+          "classification": "research",
+          "status": "pending"
+        },
+        {
+          "short_id": "e24f7839",
+          "title": "Implement panelized GF(2^m) GEMM",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "short_id": "fb271c41",
+          "title": "Evaluate GFNI and AVX-512 follow-on routing",
+          "classification": "research",
+          "status": "pending"
+        },
+        {
+          "short_id": "d82c00a3",
+          "title": "Publish GF(2^m) parity evidence",
+          "classification": "documentation",
+          "status": "pending"
+        }
       ]
     },
     {
@@ -168,10 +407,30 @@
       "name": "Dense factorization/solve closure",
       "rationale": "PLE/TRSM block tuning, rank-deficient paths, inversion/solve/det rows.",
       "issues": [
-        {"short_id": "73ec5da3", "title": "Tune PLE and TRSM block integration", "classification": "implementation", "status": "pending"},
-        {"short_id": "2c52bcf6", "title": "Optimize rank-deficient dense paths", "classification": "implementation", "status": "pending"},
-        {"short_id": "7e41400f", "title": "Close inversion solve determinant rows", "classification": "implementation", "status": "pending"},
-        {"short_id": "4eb105f7", "title": "Publish dense LA parity evidence", "classification": "documentation", "status": "pending"}
+        {
+          "short_id": "73ec5da3",
+          "title": "Tune PLE and TRSM block integration",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "short_id": "2c52bcf6",
+          "title": "Optimize rank-deficient dense paths",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "short_id": "7e41400f",
+          "title": "Close inversion solve determinant rows",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "short_id": "4eb105f7",
+          "title": "Publish dense LA parity evidence",
+          "classification": "documentation",
+          "status": "pending"
+        }
       ]
     },
     {
@@ -179,26 +438,90 @@
       "name": "Polynomial invariants + sparse closure",
       "rationale": "Charpoly/minpoly tuning + sparse layout work.",
       "issues": [
-        {"short_id": "b87362a3", "title": "Implement winning charpoly dispatch", "classification": "implementation", "status": "pending"},
-        {"short_id": "d1dd266c", "title": "Tune minimal polynomial path", "classification": "implementation", "status": "pending"},
-        {"short_id": "4a59d1f9", "title": "Reassess Keller-Gehrig crossover", "classification": "research", "status": "pending"},
-        {"short_id": "8ccc1751", "title": "Publish polynomial parity evidence", "classification": "documentation", "status": "pending"},
-        {"short_id": "47698404", "title": "Re-run sparse post-PPC scorecard", "classification": "research", "status": "pending"},
-        {"short_id": "3a37e0f6", "title": "Optimize sparse layout and traversal", "classification": "implementation", "status": "pending"},
-        {"short_id": "3643923d", "title": "Decide CPU versus GPU handoff for sparse gaps", "classification": "design", "status": "pending"},
-        {"short_id": "1726270d", "title": "Publish sparse parity evidence", "classification": "documentation", "status": "pending"}
+        {
+          "short_id": "b87362a3",
+          "title": "Implement winning charpoly dispatch",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "short_id": "d1dd266c",
+          "title": "Tune minimal polynomial path",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "short_id": "4a59d1f9",
+          "title": "Reassess Keller-Gehrig crossover",
+          "classification": "research",
+          "status": "pending"
+        },
+        {
+          "short_id": "8ccc1751",
+          "title": "Publish polynomial parity evidence",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "short_id": "47698404",
+          "title": "Re-run sparse post-PPC scorecard",
+          "classification": "research",
+          "status": "pending"
+        },
+        {
+          "short_id": "3a37e0f6",
+          "title": "Optimize sparse layout and traversal",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "short_id": "3643923d",
+          "title": "Decide CPU versus GPU handoff for sparse gaps",
+          "classification": "design",
+          "status": "pending"
+        },
+        {
+          "short_id": "1726270d",
+          "title": "Publish sparse parity evidence",
+          "classification": "documentation",
+          "status": "pending"
+        }
       ]
     },
     {
       "wave_number": 11,
       "name": "Story closure: optimization stories",
       "issues": [
-        {"short_id": "974a85bd", "title": "Close GF(2) BitMatrix gaps to M4RI [STORY]", "status": "pending"},
-        {"short_id": "cc5de315", "title": "Close GF(p) FieldMatrix gaps to fflas-ffpack [STORY]", "status": "pending"},
-        {"short_id": "2c7548ae", "title": "Close GF(2^m) FieldMatrix gaps to best reference [STORY]", "status": "pending"},
-        {"short_id": "72ab6d0e", "title": "Close dense factorization and solve gaps [STORY]", "status": "pending"},
-        {"short_id": "66190ccd", "title": "Close charpoly and minpoly gaps [STORY]", "status": "pending"},
-        {"short_id": "54fd3f0b", "title": "Close sparse FieldMatrix SpMV and SpMM gaps [STORY]", "status": "pending"}
+        {
+          "short_id": "974a85bd",
+          "title": "Close GF(2) BitMatrix gaps to M4RI [STORY]",
+          "status": "pending"
+        },
+        {
+          "short_id": "cc5de315",
+          "title": "Close GF(p) FieldMatrix gaps to fflas-ffpack [STORY]",
+          "status": "pending"
+        },
+        {
+          "short_id": "2c7548ae",
+          "title": "Close GF(2^m) FieldMatrix gaps to best reference [STORY]",
+          "status": "pending"
+        },
+        {
+          "short_id": "72ab6d0e",
+          "title": "Close dense factorization and solve gaps [STORY]",
+          "status": "pending"
+        },
+        {
+          "short_id": "66190ccd",
+          "title": "Close charpoly and minpoly gaps [STORY]",
+          "status": "pending"
+        },
+        {
+          "short_id": "54fd3f0b",
+          "title": "Close sparse FieldMatrix SpMV and SpMM gaps [STORY]",
+          "status": "pending"
+        }
       ]
     },
     {
@@ -206,12 +529,36 @@
       "name": "Final aggregation + presentation",
       "rationale": "Aggregate raw CSVs, render scorecard, build Reveal.js deck, link evidence.",
       "issues": [
-        {"short_id": "dece4e73", "title": "Aggregate final SOTA raw CSVs", "status": "pending"},
-        {"short_id": "2cfc4372", "title": "Render final SOTA markdown scorecard", "status": "pending"},
-        {"short_id": "f00fd873", "title": "Create SOTA closure Reveal.js deck", "status": "pending"},
-        {"short_id": "39f02525", "title": "Link final SOTA evidence docs", "status": "pending"},
-        {"short_id": "8f3fdc34", "title": "Close SOTA epic after gates", "status": "pending"},
-        {"short_id": "01ae4c20", "title": "Publish final gf2-core SOTA closure report [STORY]", "status": "pending"}
+        {
+          "short_id": "dece4e73",
+          "title": "Aggregate final SOTA raw CSVs",
+          "status": "pending"
+        },
+        {
+          "short_id": "2cfc4372",
+          "title": "Render final SOTA markdown scorecard",
+          "status": "pending"
+        },
+        {
+          "short_id": "f00fd873",
+          "title": "Create SOTA closure Reveal.js deck",
+          "status": "pending"
+        },
+        {
+          "short_id": "39f02525",
+          "title": "Link final SOTA evidence docs",
+          "status": "pending"
+        },
+        {
+          "short_id": "8f3fdc34",
+          "title": "Close SOTA epic after gates",
+          "status": "pending"
+        },
+        {
+          "short_id": "01ae4c20",
+          "title": "Publish final gf2-core SOTA closure report [STORY]",
+          "status": "pending"
+        }
       ]
     }
   ],
@@ -226,7 +573,11 @@
   ],
   "created_during_execution": [],
   "user_decisions": [
-    {"ts": "2026-04-30T14:40Z", "topic": "code-review reviewer agent", "decision": "Edit .jit/gates.json to use claude CLI in -p mode (after gpt-5.4 drop failed)"}
+    {
+      "ts": "2026-04-30T14:40Z",
+      "topic": "code-review reviewer agent",
+      "decision": "Edit .jit/gates.json to use claude CLI in -p mode (after gpt-5.4 drop failed)"
+    }
   ],
   "wave_dispatches": [
     {
@@ -235,19 +586,60 @@
       "ts": "2026-04-30T14:50Z",
       "main_anchor_sha": "c7ca65bf328872e56e4b3327d42341b2d362cf01",
       "issues": [
-        {"short_id": "1d6043e8", "branch": "worktree-agent-1d6043e8", "agent_id": "afe9a320f2aa480f2", "classification": "design", "doc_target": "dev/plans/sota_reference_acceptance_protocol.md"},
-        {"short_id": "02ace293", "branch": "worktree-agent-02ace293", "agent_id": "a55e15653917d1cd3", "classification": "documentation", "doc_target": "dev/bench_results/2026-04-26.md (in-place legend fix)"},
-        {"short_id": "b8189dbf", "branch": "worktree-agent-b8189dbf", "agent_id": "af73ad657c72a42b4", "classification": "documentation", "doc_target": "dev/bench_results/2026-04-30-post-ppc-delta-appendix.md"}
+        {
+          "short_id": "1d6043e8",
+          "branch": "worktree-agent-1d6043e8",
+          "agent_id": "afe9a320f2aa480f2",
+          "classification": "design",
+          "doc_target": "dev/plans/sota_reference_acceptance_protocol.md"
+        },
+        {
+          "short_id": "02ace293",
+          "branch": "worktree-agent-02ace293",
+          "agent_id": "a55e15653917d1cd3",
+          "classification": "documentation",
+          "doc_target": "dev/bench_results/2026-04-26.md (in-place legend fix)"
+        },
+        {
+          "short_id": "b8189dbf",
+          "branch": "worktree-agent-b8189dbf",
+          "agent_id": "af73ad657c72a42b4",
+          "classification": "documentation",
+          "doc_target": "dev/bench_results/2026-04-30-post-ppc-delta-appendix.md"
+        }
       ],
       "in_main_directly": [
-        {"short_id": "d3c2cc8f", "completed_at": "2026-04-30T14:46Z", "rationale": "JIT description amendment; lead-only operation. Closed cleanly through cargo-ci + claude reviewer + manual doc-review."}
+        {
+          "short_id": "d3c2cc8f",
+          "completed_at": "2026-04-30T14:46Z",
+          "rationale": "JIT description amendment; lead-only operation. Closed cleanly through cargo-ci + claude reviewer + manual doc-review."
+        }
       ],
       "outcome": "WAVE 1A CLOSED 2026-04-30T15:21Z",
       "closed_issues_in_1A": [
-        {"short_id": "d3c2cc8f", "title": "Amend 64c88ae4 benchmark scope", "method": "lead-direct"},
-        {"short_id": "1d6043e8", "title": "Define SOTA reference acceptance protocol", "commit": "521c51e", "verdict": "PASS — both [hard] criteria met"},
-        {"short_id": "b8189dbf", "title": "Publish post-PPC benchmark delta appendix", "commit": "f39785c", "verdict": "PASS — every number verified against source [E1]–[E8]"},
-        {"short_id": "02ace293", "title": "Fix benchmark report cell-status semantics", "commit": "419bfbe", "verdict": "PASS — PENDING tokens 152→0 (table cells); five-token legend authoritative"}
+        {
+          "short_id": "d3c2cc8f",
+          "title": "Amend 64c88ae4 benchmark scope",
+          "method": "lead-direct"
+        },
+        {
+          "short_id": "1d6043e8",
+          "title": "Define SOTA reference acceptance protocol",
+          "commit": "521c51e",
+          "verdict": "PASS \u2014 both [hard] criteria met"
+        },
+        {
+          "short_id": "b8189dbf",
+          "title": "Publish post-PPC benchmark delta appendix",
+          "commit": "f39785c",
+          "verdict": "PASS \u2014 every number verified against source [E1]\u2013[E8]"
+        },
+        {
+          "short_id": "02ace293",
+          "title": "Fix benchmark report cell-status semantics",
+          "commit": "419bfbe",
+          "verdict": "PASS \u2014 PENDING tokens 152\u21920 (table cells); five-token legend authoritative"
+        }
       ]
     },
     {
@@ -256,105 +648,295 @@
       "ts": "2026-04-30T15:21Z",
       "main_anchor_sha": "8a3bf120d2770cad30d3950ffc63605954f091ed",
       "issues": [
-        {"short_id": "5102d87a", "branch": "worktree-agent-5102d87a", "agent_id": "a760e3d1b51e1fc8e", "classification": "documentation", "doc_target": "benchmarks/{Containerfile,image.lock,README.md} + dev/bench_results/2026-04-26.md env-metadata + JIT doc-label cleanup"}
+        {
+          "short_id": "5102d87a",
+          "branch": "worktree-agent-5102d87a",
+          "agent_id": "a760e3d1b51e1fc8e",
+          "classification": "documentation",
+          "doc_target": "benchmarks/{Containerfile,image.lock,README.md} + dev/bench_results/2026-04-26.md env-metadata + JIT doc-label cleanup"
+        }
       ],
       "rationale": "Serialized after wave 1A because 02ace293 also edited dev/bench_results/2026-04-26.md; 5102d87a's environment-metadata edits to the same file would have conflicted. Now that 02ace293 is merged, 5102d87a's worker can edit the file's environment section cleanly.",
       "outcome": "WAVE 1B CLOSED 2026-04-30T15:37Z",
       "closed_issues_in_1B": [
-        {"short_id": "5102d87a", "title": "Synchronize benchmark environment documentation", "commit": "f72e0a5", "verdict": "PASS — 12-pin cross-check across README, image.lock, Containerfile, run.sh, report all agree; 0 stale 'Deferred' doc labels found in audit of 12 issues"}
+        {
+          "short_id": "5102d87a",
+          "title": "Synchronize benchmark environment documentation",
+          "commit": "f72e0a5",
+          "verdict": "PASS \u2014 12-pin cross-check across README, image.lock, Containerfile, run.sh, report all agree; 0 stale 'Deferred' doc labels found in audit of 12 issues"
+        }
       ]
     }
   ],
   "wave_1_summary": {
     "issues_closed": 5,
-    "via_workers": ["1d6043e8", "02ace293", "b8189dbf", "5102d87a"],
-    "via_lead_direct": ["d3c2cc8f"],
+    "via_workers": [
+      "1d6043e8",
+      "02ace293",
+      "b8189dbf",
+      "5102d87a"
+    ],
+    "via_lead_direct": [
+      "d3c2cc8f"
+    ],
     "key_artefacts": [
-      {"path": "dev/plans/sota_reference_acceptance_protocol.md", "purpose": "Wave 2 dispatch contract — five-criterion mechanical checklist + Mermaid workflow + worked examples"},
-      {"path": "dev/bench_results/2026-04-30-post-ppc-delta-appendix.md", "purpose": "GF(2)/GF(p)/GF(2^m) post-PPC deltas with E1-E8 citations"},
-      {"path": "dev/bench_results/2026-04-26.md", "purpose": "Cell-status legend formalised (5 tokens); 0 PENDING tokens remain in tables"}
+      {
+        "path": "dev/plans/sota_reference_acceptance_protocol.md",
+        "purpose": "Wave 2 dispatch contract \u2014 five-criterion mechanical checklist + Mermaid workflow + worked examples"
+      },
+      {
+        "path": "dev/bench_results/2026-04-30-post-ppc-delta-appendix.md",
+        "purpose": "GF(2)/GF(p)/GF(2^m) post-PPC deltas with E1-E8 citations"
+      },
+      {
+        "path": "dev/bench_results/2026-04-26.md",
+        "purpose": "Cell-status legend formalised (5 tokens); 0 PENDING tokens remain in tables"
+      }
     ],
     "side_effect_promotions": [
-      {"short_id": "d0ca9482", "from": "backlog", "to": "ready", "reason": "All upstream Wave-1 deps closed"}
+      {
+        "short_id": "d0ca9482",
+        "from": "backlog",
+        "to": "ready",
+        "reason": "All upstream Wave-1 deps closed"
+      }
     ]
   },
   "wave_2_summary": {
     "issues_closed": 4,
-    "via_workers": ["5dea7457", "73ab8eef", "79388011", "507b0036"],
+    "via_workers": [
+      "5dea7457",
+      "73ab8eef",
+      "79388011",
+      "507b0036"
+    ],
     "via_lead_direct": [],
     "lead_cleanup_commits": [
-      {"sha": "e3592fe", "purpose": "Wired secondary references into run.sh + analyze.py (verify_sha + FIELD_FAMILY routing)"},
-      {"sha": "cbe73e2", "purpose": "Documented secondary references in analyze.py reference_lib_for"},
-      {"sha": "5871ecc", "purpose": "Corrected singular-probability formula in ntl_flint_smoke.cpp"},
-      {"sha": "b4c659d", "purpose": "Refreshed M4RIE evidence verify_sha note after R3 down-scope"}
+      {
+        "sha": "e3592fe",
+        "purpose": "Wired secondary references into run.sh + analyze.py (verify_sha + FIELD_FAMILY routing)"
+      },
+      {
+        "sha": "cbe73e2",
+        "purpose": "Documented secondary references in analyze.py reference_lib_for"
+      },
+      {
+        "sha": "5871ecc",
+        "purpose": "Corrected singular-probability formula in ntl_flint_smoke.cpp"
+      },
+      {
+        "sha": "b4c659d",
+        "purpose": "Refreshed M4RIE evidence verify_sha note after R3 down-scope"
+      }
     ],
     "rework_summary": {
-      "5dea7457": {"rounds": 1, "outcome": "PASS first time"},
-      "73ab8eef": {"rounds": 3, "outcome": "PASS after R2 lead-direct formula fix"},
-      "79388011": {"rounds": 4, "outcome": "PASS after R3 cumulative fixes"},
-      "507b0036": {"rounds": 4, "outcome": "PASS after R3 down-scope to matmul-only (echelon excluded; protocol §6 bitwise contract requires independent GF(2^m) RREF reference not yet available)"}
+      "5dea7457": {
+        "rounds": 1,
+        "outcome": "PASS first time"
+      },
+      "73ab8eef": {
+        "rounds": 3,
+        "outcome": "PASS after R2 lead-direct formula fix"
+      },
+      "79388011": {
+        "rounds": 4,
+        "outcome": "PASS after R3 cumulative fixes"
+      },
+      "507b0036": {
+        "rounds": 4,
+        "outcome": "PASS after R3 down-scope to matmul-only (echelon excluded; protocol \u00a76 bitwise contract requires independent GF(2^m) RREF reference not yet available)"
+      }
     },
     "key_artefacts": [
-      {"path": "dev/plans/linbox_promotion_evidence.md", "purpose": "LinBox 1.7.1 charpoly/minpoly/solve secondary reference"},
-      {"path": "dev/plans/m4rie_promotion_evidence.md", "purpose": "M4RIE 20250128 GF(2^m) matmul canonical reference (echelon down-scoped)"},
-      {"path": "dev/plans/ntl_promotion_evidence.md", "purpose": "NTL 11.6.0 GF(p) secondary reference (fgemm/invert/solve/charpoly)"},
-      {"path": "dev/plans/flint_promotion_evidence.md", "purpose": "FLINT 3.5.0 GF(p) secondary reference (widest non-fflas surface incl. minpoly)"},
-      {"path": "benchmarks/Containerfile", "purpose": "4 SHA-pinned library stanzas added (linbox/m4rie/ntl/flint)"},
-      {"path": "benchmarks/reference/ntl_flint_smoke.cpp", "purpose": "Cross-equality oracle NTL ↔ FLINT with singular-resample policy at n=16"},
-      {"path": "benchmarks/analyze.py", "purpose": "FIELD_FAMILY routing: gf2 → m4ri, gf2m → m4rie, else → fflas-ffpack"}
+      {
+        "path": "dev/plans/linbox_promotion_evidence.md",
+        "purpose": "LinBox 1.7.1 charpoly/minpoly/solve secondary reference"
+      },
+      {
+        "path": "dev/plans/m4rie_promotion_evidence.md",
+        "purpose": "M4RIE 20250128 GF(2^m) matmul canonical reference (echelon down-scoped)"
+      },
+      {
+        "path": "dev/plans/ntl_promotion_evidence.md",
+        "purpose": "NTL 11.6.0 GF(p) secondary reference (fgemm/invert/solve/charpoly)"
+      },
+      {
+        "path": "dev/plans/flint_promotion_evidence.md",
+        "purpose": "FLINT 3.5.0 GF(p) secondary reference (widest non-fflas surface incl. minpoly)"
+      },
+      {
+        "path": "benchmarks/Containerfile",
+        "purpose": "4 SHA-pinned library stanzas added (linbox/m4rie/ntl/flint)"
+      },
+      {
+        "path": "benchmarks/reference/ntl_flint_smoke.cpp",
+        "purpose": "Cross-equality oracle NTL \u2194 FLINT with singular-resample policy at n=16"
+      },
+      {
+        "path": "benchmarks/analyze.py",
+        "purpose": "FIELD_FAMILY routing: gf2 \u2192 m4ri, gf2m \u2192 m4rie, else \u2192 fflas-ffpack"
+      }
     ],
     "side_effect_promotions": [
-      {"short_id": "4c0d0202", "from": "backlog", "to": "ready", "reason": "All upstream Wave-2 deps closed; SOTA target matrix design doc ready for Wave 4"}
+      {
+        "short_id": "4c0d0202",
+        "from": "backlog",
+        "to": "ready",
+        "reason": "All upstream Wave-2 deps closed; SOTA target matrix design doc ready for Wave 4"
+      }
     ]
   },
   "wave_3_summary": {
     "issues_closed_so_far": 4,
     "issues_pending_bench": [],
-    "issues_blocked_on_new_impl_tasks": {"9a715d75": "blocks on b13799ac", "a3412e15": "blocks on 2403c054 + eb57f944"},
-    "via_workers": ["0fd48627", "9a715d75", "a3412e15", "609855d9", "3b762764"],
-    "via_lead_direct": ["c3e79272 (lead-finalized worker WIP after rate-limit truncation)"],
+    "issues_blocked_on_new_impl_tasks": {
+      "9a715d75": "blocks on b13799ac",
+      "a3412e15": "blocks on 2403c054 + eb57f944"
+    },
+    "via_workers": [
+      "0fd48627",
+      "9a715d75",
+      "a3412e15",
+      "609855d9",
+      "3b762764"
+    ],
+    "via_lead_direct": [
+      "c3e79272 (lead-finalized worker WIP after rate-limit truncation)"
+    ],
     "rework_summary": {
-      "0fd48627": {"rounds": 2, "outcome": "PASS r2 after lead-direct CSV-citation fixes; closed"},
-      "c3e79272": {"rounds": 1, "outcome": "PASS r1 after lead lead-preserved + finalized worker WIP; closed"},
-      "9a715d75": {"rounds": 4, "outcome": "OPEN — user picked 'keep open until b13799ac closes' after 4 strict-reviewer rejections of candidate-pool framing"},
-      "a3412e15": {"rounds": 1, "outcome": "OPEN — user picked 'keep open until 2403c054 + eb57f944 close' (same pattern as 9a715d75)"},
-      "609855d9": {"rounds": 2, "outcome": "PASS r2 after lead-direct GF(31) bench-day rerun; closed 2026-05-04"},
-      "3b762764": {"rounds": 5, "outcome": "PASS r5 after lead-direct dense-LA bench-day rerun + worker-scope clarification on baseline-aggregation framing; closed 2026-05-04"}
+      "0fd48627": {
+        "rounds": 2,
+        "outcome": "PASS r2 after lead-direct CSV-citation fixes; closed"
+      },
+      "c3e79272": {
+        "rounds": 1,
+        "outcome": "PASS r1 after lead lead-preserved + finalized worker WIP; closed"
+      },
+      "9a715d75": {
+        "rounds": 4,
+        "outcome": "OPEN \u2014 user picked 'keep open until b13799ac closes' after 4 strict-reviewer rejections of candidate-pool framing"
+      },
+      "a3412e15": {
+        "rounds": 1,
+        "outcome": "OPEN \u2014 user picked 'keep open until 2403c054 + eb57f944 close' (same pattern as 9a715d75)"
+      },
+      "609855d9": {
+        "rounds": 2,
+        "outcome": "PASS r2 after lead-direct GF(31) bench-day rerun; closed 2026-05-04"
+      },
+      "3b762764": {
+        "rounds": 5,
+        "outcome": "PASS r5 after lead-direct dense-LA bench-day rerun + worker-scope clarification on baseline-aggregation framing; closed 2026-05-04"
+      }
     },
     "user_decisions": [
-      {"ts": "2026-05-04T11:42Z", "topic": "9a715d75 closure path", "decision": "Harness GF(2^32) instead of excluding it (extend scope); 18/19 exclusions approved + 2 new protocol § 9 classes approved"},
-      {"ts": "2026-05-04T11:42Z", "topic": "609855d9 closure path", "decision": "Lead runs one-off pinned GF(31) bench"},
-      {"ts": "2026-05-04T11:42Z", "topic": "3b762764 closure path", "decision": "Run fresh pinned dense-LA bench day"},
-      {"ts": "2026-05-04T11:42Z", "topic": "a3412e15 closure path", "decision": "File gf2-core sparse-impl follow-ups inside epic (extend scope)"},
-      {"ts": "2026-05-04T12:55Z", "topic": "9a715d75 + a3412e15 closure timing", "decision": "Keep both open until their respective new impl tasks close (rather than amend criterion text in-flight)"}
+      {
+        "ts": "2026-05-04T11:42Z",
+        "topic": "9a715d75 closure path",
+        "decision": "Harness GF(2^32) instead of excluding it (extend scope); 18/19 exclusions approved + 2 new protocol \u00a7 9 classes approved"
+      },
+      {
+        "ts": "2026-05-04T11:42Z",
+        "topic": "609855d9 closure path",
+        "decision": "Lead runs one-off pinned GF(31) bench"
+      },
+      {
+        "ts": "2026-05-04T11:42Z",
+        "topic": "3b762764 closure path",
+        "decision": "Run fresh pinned dense-LA bench day"
+      },
+      {
+        "ts": "2026-05-04T11:42Z",
+        "topic": "a3412e15 closure path",
+        "decision": "File gf2-core sparse-impl follow-ups inside epic (extend scope)"
+      },
+      {
+        "ts": "2026-05-04T12:55Z",
+        "topic": "9a715d75 + a3412e15 closure timing",
+        "decision": "Keep both open until their respective new impl tasks close (rather than amend criterion text in-flight)"
+      }
     ],
     "new_issues_filed": [
-      {"short_id": "b13799ac", "title": "Build GF(2^32) matmul reference harness", "story": "2c7548ae", "wave": "8 (impl)"},
-      {"short_id": "2403c054", "title": "gf2-core SpBitMatrix::matmul (GF(2) sparse-sparse multiply)", "story": "54fd3f0b", "wave": "10 (impl)"},
-      {"short_id": "eb57f944", "title": "gf2-core SparseFieldMatrix sparse-matmul + sparse-rref over GF(p) and GF(2^m)", "story": "54fd3f0b", "wave": "10 (impl)"}
+      {
+        "short_id": "b13799ac",
+        "title": "Build GF(2^32) matmul reference harness",
+        "story": "2c7548ae",
+        "wave": "8 (impl)"
+      },
+      {
+        "short_id": "2403c054",
+        "title": "gf2-core SpBitMatrix::matmul (GF(2) sparse-sparse multiply)",
+        "story": "54fd3f0b",
+        "wave": "10 (impl)"
+      },
+      {
+        "short_id": "eb57f944",
+        "title": "gf2-core SparseFieldMatrix sparse-matmul + sparse-rref over GF(p) and GF(2^m)",
+        "story": "54fd3f0b",
+        "wave": "10 (impl)"
+      }
     ],
     "new_jit_deps_wired": [
-      {"from": "9a715d75", "to": "b13799ac"},
-      {"from": "a3412e15", "to": "2403c054"},
-      {"from": "a3412e15", "to": "eb57f944"},
-      {"from": "47698404", "to": "2403c054"},
-      {"from": "47698404", "to": "eb57f944"},
-      {"from": "dece4e73", "to": "b13799ac"},
-      {"from": "4c0d0202", "to": "9a715d75"},
-      {"from": "4c0d0202", "to": "a3412e15"},
-      {"from": "4c0d0202", "to": "c3e79272"},
-      {"from": "4c0d0202", "to": "609855d9"},
-      {"from": "4c0d0202", "to": "0fd48627"},
-      {"from": "4c0d0202", "to": "3b762764"}
+      {
+        "from": "9a715d75",
+        "to": "b13799ac"
+      },
+      {
+        "from": "a3412e15",
+        "to": "2403c054"
+      },
+      {
+        "from": "a3412e15",
+        "to": "eb57f944"
+      },
+      {
+        "from": "47698404",
+        "to": "2403c054"
+      },
+      {
+        "from": "47698404",
+        "to": "eb57f944"
+      },
+      {
+        "from": "dece4e73",
+        "to": "b13799ac"
+      },
+      {
+        "from": "4c0d0202",
+        "to": "9a715d75"
+      },
+      {
+        "from": "4c0d0202",
+        "to": "a3412e15"
+      },
+      {
+        "from": "4c0d0202",
+        "to": "c3e79272"
+      },
+      {
+        "from": "4c0d0202",
+        "to": "609855d9"
+      },
+      {
+        "from": "4c0d0202",
+        "to": "0fd48627"
+      },
+      {
+        "from": "4c0d0202",
+        "to": "3b762764"
+      }
     ],
     "protocol_amendment_2": {
       "doc": "dev/plans/sota_reference_acceptance_protocol.md",
-      "section": "§ 14 (legacy §14 renumbered to §15)",
+      "section": "\u00a7 14 (legacy \u00a714 renumbered to \u00a715)",
       "patches": [
-        "§ 7 operation list extended with sparse-matmul, sparse×dense, sparse-elim",
-        "§ 9 exclusion classes registry gained not-yet-harnessed and no-independent-oracle"
+        "\u00a7 7 operation list extended with sparse-matmul, sparse\u00d7dense, sparse-elim",
+        "\u00a7 9 exclusion classes registry gained not-yet-harnessed and no-independent-oracle"
       ],
       "downstream_consumer": "47698404 (analyze.py validator update)"
     }
-  }
+  },
+  "session_6_closed_at": "2026-05-05T01:50Z",
+  "session_6_handoff": "dev/active/97bf0879-handoff-6.md",
+  "session_6_summary": "Wave 4-impl/A: 3 sparse-impl workers (521390db, 0d6ca3b6, 0f708b36) dispatched in parallel via dispatch-worker-worktree.sh, all 3 integrated to main via cherry-pick (sparse.rs and Makefile conflicts resolved). Lead-direct concurrent: 96fde7c7 design sketch landed (mechanism (b) ground-truth file recommended, awaiting user approval); b13799ac SSOT extraction landed (Conway-32 + scalar mul C++ header + Rust drift-check test); b13799ac \u2192 96fde7c7 dep wired. cargo-ci passes for all 3 follow-ups. code-review R1 cycles: 521390db R2 reached 5/6 substantive PASS with criterion-6 tautology remaining; 0d6ca3b6 R1 false-failed on diff scope; 0f708b36 R1 flagged real evidence-drift findings (reference CSV not regenerated, scorecard stale). Handed off to session 7 for: regen pass, scorecard fold, doc-review attestation, code-review R2/R3 cycles, then 96fde7c7 dispatch + re-review chain."
 }
