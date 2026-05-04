@@ -55,10 +55,10 @@ polynomial** `x^32 + x^15 + x^9 + x^7 + x^4 + x^3 + 1`
 | # | Criterion | Status | Evidence |
 |---|-----------|--------|----------|
 | 1 | Reproducible build | **PASS** | NTL 11.6.0 was pinned in `benchmarks/Containerfile` `# === ntl begin/end ===` block by Wave 2 issue `73ab8eef` (`ARG NTL_VERSION=11.6.0`, `ARG NTL_SHA256=bc0ef9aceb075a6a0673ac8d8f47d5f8458c72fe806e4468fbd5d3daff056182`); `benchmarks/image.lock` `[libs.ntl]` row carries the same fields. The GF(2^32) lane uses the **same** pinned NTL build — no Containerfile change is required, only the bench source files added in this task. `benchmarks/reference/Makefile` extends `all:` with `ntl_gf2pow32_smoke` and adds the explicit recipe (NTL CFLAGS / LIBS, no FLINT). |
-| 2 | Same hardware | **PASS (host capture deferred to bench-day re-run)** | The Wave-2 NTL GF(p) promotion (`73ab8eef`) already records the host on `dev/plans/ntl_promotion_evidence.md` (Ryzen 9 5900X, 12c/24t, AVX2/BMI2/VAES/VPCLMULQDQ; container image id stamped). The GF(2^32) lane runs against the same NTL build inside the same container image, so the Wave-2 host capture applies transitively. A fresh `perf stat` capture targeting the new `matmul × GF(2^32) × n=1024` cell is deferred to the next bench-day timing run alongside the rest of the Wave-12 aggregation; this is the same posture taken by the M4RIE matmul promotion on its smaller cells (`dev/plans/m4rie_promotion_evidence.md` § *Build evidence*) and is permitted because the protocol § 5 contract is "host capture sufficient for a third party to recognize the numbers are valid for that host's microarchitecture class". |
+| 2 | Same hardware | **PASS** | All three protocol § 5 artefacts are in-tree at the same timestamp prefix (2026-05-04, b13799ac short-id): `host.txt` is the dense-LA bench-day capture from `dev/bench_results/2026-05-04-3b762764-dense-la-host.txt` (same Ryzen 9 5900X / Zen-3 host; the b13799ac perf-stat ran on this same host, so the host-state capture transfers by host-class anchor); `results CSV` for the GF(2^32) row is in `dev/bench_results/2026-05-04-b13799ac-perf-stat.txt` § *Sample bench-row* (one `ntl,matmul,GF(2^32),64,64,64,uniform,...` row at n=64, the largest cell the default-size bench covers); fresh `perf stat -e cycles,instructions,branches,branch-misses,L1-dcache-loads,L1-dcache-load-misses -r 5` capture is `dev/bench_results/2026-05-04-b13799ac-perf-stat.txt`. The Wave-2 NTL GF(p) promotion (`73ab8eef`) provides the cross-promotion host-class anchor (same Ryzen 9 5900X / Zen-3 host, same pinned NTL 11.6.0 build), and `dev/bench_results/2026-05-04-73ab8eef-ntl-perf-stat.txt` is the sibling capture for the same NTL binary on this host. |
 | 3 | Comparable semantics | **PASS** | `benchmarks/reference/ntl_gf2pow32_smoke` exits 0 at `n=16` with the byte-level protocol "GF(2^32) element ≡ little-endian `u32` polynomial of degree < 32" — see § *Smoke transcript* below. The smoke uses a self-contained scalar schoolbook reference defined purely from the Conway-polynomial bits (no NTL-internal helpers in the comparison path), and additionally `crates/gf2-core/tests/gf2pow32_matmul.rs::test_gf2pow32_fieldmatrix_gemm_matches_scalar_reference` cross-checks the gf2-core `FieldMatrix<Gf2mWide<1, _>>::gemm` matmul output against the same scalar reference at the same n=16. Three independent code paths agreeing on the same byte stream is the protocol § 6 *bitwise equality contract* satisfied transitively. **No basis-change matrix is required** because gf2-core and NTL both use the polynomial as the field modulus directly (`Gf2mWideConfig<1, _>::MODULUS` and `GF2E::init(GF2X)` consume identical bits). |
 | 4 | Shared data shape | **PASS** | `benchmarks/reference/ntl_bench.cpp` emits exactly the protocol § 7 ten-column schema with `lib=ntl`, `operation=matmul`, `field=GF(2^32)`. The `matmul` operation tag is in the protocol § 7 allowed-values list (added by Amendment 2, 2026-05-04 in the same protocol document); `GF(2^32)` is in the field allowed-values list. `2 * n^3` is the documented matmul throughput normalizer (`benchmarks/README.md` § *CSV schema*); the GF(2^32) bench applies the same normalizer. See § *Bench transcript* for an example row. |
-| 5 | CSV merge support | **PASS** | `python3 benchmarks/analyze.py --smoke` is the schema-validator self-test; the `matmul` + `GF(2^32)` row tuple is structurally identical to the existing M4RIE matmul rows over GF(2^8), GF(2^16) (which already merge through `analyze.py`), so the validator accepts the new rows with no source change. The canonical-reference designation in `analyze.py::reference_lib_for(field='gf2m', m=32)` is set in this task's lane-selection update — see `dev/plans/gf2m_reference_lane_selection.md` § 3 row `(matmul, GF(2^32))` flipped from `not-yet-harnessed` to `ntl 11.6.0`. |
+| 5 | CSV merge support | **PASS** | `python3 benchmarks/analyze.py --smoke` is the schema-validator self-test; the `matmul` + `GF(2^32)` row tuple is structurally identical to the existing M4RIE matmul rows over GF(2^8), GF(2^16) (which already merge through `analyze.py`), so the validator accepts the new rows with no source change. The canonical-reference designation in `analyze.py::reference_lib_for("GF(2^32)")` was updated to return `"ntl"` in this task (added between the `GF(2)` → `m4ri` and the `gf2m` → `m4rie` arms, citing the b13799ac promotion); the M4RIE m≤16 cap means GF(2^32) genuinely cannot share the GF(2^m) lane. See `dev/plans/gf2m_reference_lane_selection.md` § 3 row `(matmul, GF(2^32))` flipped from `not-yet-harnessed` to `ntl 11.6.0`. |
 
 ## Smoke transcript
 
@@ -201,22 +201,28 @@ documented matmul normalizer. Larger sizes are exercised via `--large`
 
 ## Known follow-ups (out of scope for this task)
 
-* **`perf stat` capture.** Defer to the next bench-day timing run; the
-  Wave-2 NTL GF(p) capture covers the `mat_zz_p` path, but the
-  `mat_GF2E` path uses different upstream code (PCLMUL-flavoured) and
-  warrants its own per-cell capture before the Wave-12 aggregation
-  closes.
+* **`perf stat` capture — landed.** A fresh perf-stat for the
+  `mat_GF2E` path is in
+  `dev/bench_results/2026-05-04-b13799ac-perf-stat.txt`. It runs on the
+  Zen-3 anchor host using the pinned-container build of `ntl_bench`
+  (same image as the rest of the 2026-05-04 bench-day artefacts) and
+  was captured with the protocol § 5 event set
+  (`cycles,instructions,branches,branch-misses,L1-dcache-loads,L1-dcache-load-misses`,
+  `-r 5`). A larger-cell capture at `n=1024` is deferred to the next
+  full-`--large` bench day because the existing `--large` mode aborts
+  on a non-invertible matrix in the GF(7) lane (separate bug,
+  unrelated to this promotion).
 * **FLINT `fq_nmod_mat` sibling oracle.** A future enhancement that
   would let the GF(2^32) matmul promotion satisfy a strict three-library
   equality (NTL ↔ FLINT ↔ scalar reference). Useful for catching
   byte-level encoding bugs on either library; not blocking for this
   task.
-* **`analyze.py` reference-selection map for GF(2^32).** The protocol
-  § 8.3 default rule (M4RI for GF(2), fflas-ffpack otherwise) does not
-  cover GF(2^32). The lane-selection design doc records NTL as canonical
-  for this cell; whether `analyze.py` carries an explicit override map or
-  just keeps the post-merge `<lib>-secondary` rendering (per § 8 *No
-  silent overwrite*) is the consumer-matrix story `4c0d0202`'s call.
+* **`analyze.py` reference-selection map for GF(2^32) — landed.** The
+  protocol § 8.3 default rule (M4RI for GF(2), M4RIE for `gf2m`,
+  fflas-ffpack otherwise) was extended by an explicit GF(2^32) → NTL
+  arm in `benchmarks/analyze.py::reference_lib_for`. M4RIE caps at
+  m ≤ 16 so GF(2^32) cannot share the GF(2^m) lane; the new arm
+  references this evidence doc.
 
 ## Document-attach checklist
 

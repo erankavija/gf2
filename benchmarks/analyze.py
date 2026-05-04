@@ -272,6 +272,13 @@ def reference_lib_for(field_value: str) -> str:
     """
     if field_value == "GF(2)":
         return "m4ri"
+    if field_value == "GF(2^32)":
+        # Promoted 2026-05-04 (jit:b13799ac). M4RIE caps at m ≤ 16, so
+        # GF(2^32) cannot share the GF(2^m) reference and is routed
+        # to NTL `mat_GF2E` instead. See
+        # `dev/bench_results/2026-05-04-b13799ac-gf2pow32-promotion.md`
+        # for the protocol § 3 evidence.
+        return "ntl"
     if FIELD_FAMILY.get(field_value) == "gf2m":
         return "m4rie"
     return "fflas-ffpack"
