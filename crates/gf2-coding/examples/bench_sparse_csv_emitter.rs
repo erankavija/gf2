@@ -814,21 +814,19 @@ fn run_gf2m_random_er<C: Gf2mWideConfig<1>>(
             )?;
         }
 
-        // sparse-elim (rref). Smaller smoke n only — the field-typed
-        // sparse rref dominates wall budget at n>=512, and the scorecard
-        // uses these numbers as evidence that the path runs, not as a
-        // headline-throughput cell.
+        // sparse-elim (rref). GF(2^m) is `not-yet-harnessed` in the
+        // LinBox/fflas reference — `linbox_sparse_bench.cpp` does not
+        // emit sparse-elim,GF(2^m) rows, so these gf2-side numbers are
+        // evidence-only (path runs) rather than a side-by-side cell.
+        // Kept gated behind `--full` so the default `--quick` profile
+        // stays focused on the GF(2)/GF(p) cells the scorecard owes.
         if args.full {
             let elim_n = 256;
             let elim_key = format!("sparse-elim/{field_label}/{elim_n}/csr");
             if cell_passes(&args.filter, &elim_key) {
+                let elim_density = 10.0 / (elim_n as f64);
                 let elim_seed = derive_seed(args.master_seed, "spelim-er", 3, si as u64, 1);
-                let m = gf2m_wide_1_sparse_from_seed::<C>(
-                    elim_n,
-                    elim_n,
-                    10.0 / (elim_n as f64),
-                    elim_seed,
-                );
+                let m = gf2m_wide_1_sparse_from_seed::<C>(elim_n, elim_n, elim_density, elim_seed);
                 eprintln!("[gf2-sparse] {elim_key}");
                 let (wall_e, _) = time_op(
                     || {
@@ -843,7 +841,7 @@ fn run_gf2m_random_er<C: Gf2mWideConfig<1>>(
                     elim_n,
                     elim_n,
                     elim_n,
-                    "density_3.91e-2_csr",
+                    &format!("density_{}_csr", fmt_density_c(elim_density)),
                     elim_seed,
                     wall_e,
                     tput((elim_n * elim_n * elim_n) as f64, wall_e),
