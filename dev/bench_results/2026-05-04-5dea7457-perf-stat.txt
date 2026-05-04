@@ -1,0 +1,90 @@
+# 5dea7457 perf-stat capture (issue: extend fflas-ffpack + M4RI lanes)
+# date    : 2026-05-04T05:04:00Z (approximate; perf runs interleaved across morning)
+# host    : Linux fraktaali 6.19.11-arch1-1 #1 SMP PREEMPT_DYNAMIC Thu, 02 Apr 2026 23:33:01 +0000 x86_64 GNU/Linux
+# image   : localhost/gf2-bench:ref @ sha256:6c5d58a4f3a91a9f5013726e90e06e3aac6e7d23bbad3d00347e71fe2471d7b5
+# events  : cycles,instructions,branches,branch-misses,L1-dcache-loads,L1-dcache-load-misses
+
+Per protocol § 5 the perf-stat capture must cover at least one in-scope
+representative cell per new operation. Each harness binary in this
+issue runs every supported (op, field, n) cell in a single invocation,
+so a single `perf stat -r N` run over the binary yields aggregate
+counters that include each new operation's contribution. The largest
+square cell each new op covers is reachable in this dispatch:
+
+  fflas-ffpack:  minpoly  at n=1024 (covered)
+  M4RI:          pluq, invert, solve at n=1024 (covered)
+
+Per-cell wall-clock decomposition is preserved in the CSV
+(`dev/bench_results/2026-05-04-5dea7457-reference-extension.csv`); the
+counter aggregates below are paired with that CSV for downstream
+attribution.
+
+============================================================
+ fflas_bench : full reference run (warmup=2, iters=3, 3 perf-stat replicas)
+============================================================
+
+Performance counter stats for 'podman run --rm --security-opt
+label=disable -v $PWD/benchmarks:/work:Z,U localhost/gf2-bench:ref
+bash -c /work/reference/fflas_bench --warmup 2 --iters 3 > /dev/null'
+(3 runs):
+
+ 1,277,153,687,128      cycles:u                                  ( +-  1.43% )  (83.34%)
+ 2,734,840,302,816      instructions:u                            ( +-  0.01% )  (83.34%)
+   157,204,424,864      branches:u                                ( +-  0.01% )  (83.33%)
+     1,292,667,460      branch-misses:u                           ( +-  0.30% )  (83.33%)
+   665,641,908,842      L1-dcache-loads:u                         ( +-  0.05% )  (83.33%)
+    55,732,215,380      L1-dcache-load-misses:u                   ( +-  0.90% )  (83.34%)
+
+   293.416918900 +- 5.656225043 seconds time elapsed              ( +-  1.93% )
+
+The minpoly-specific contribution is bounded above by the
+`fflas-ffpack,minpoly,*` rows in the extension CSV (4 fields × 3 sizes
+× 1 regime = 12 rows). At n=1024 a single minpoly call wall-clock
+ranges from ~190 ms (GF(7)) to ~615 ms (GF(2^31-1)) per the CSV; the
+aggregate counter total above includes the corresponding cycles and
+L1 misses for those rows.
+
+============================================================
+ m4ri_bench : full reference run (warmup=2, iters=3, 3 perf-stat replicas)
+============================================================
+
+Performance counter stats for 'podman run --rm --security-opt
+label=disable -v $PWD/benchmarks:/work:Z,U localhost/gf2-bench:ref
+bash -c /work/reference/m4ri_bench --warmup 2 --iters 3 > /dev/null'
+(3 runs):
+
+     2,663,416,859      cycles:u                                  ( +-  2.43% )  (84.08%)
+     5,520,379,648      instructions:u                            ( +-  0.57% )  (81.78%)
+       323,032,925      branches:u                                ( +-  4.82% )  (83.01%)
+         3,255,022      branch-misses:u                           ( +-  0.74% )  (83.00%)
+     2,066,554,029      L1-dcache-loads:u                         ( +-  0.78% )  (84.61%)
+       369,227,819      L1-dcache-load-misses:u                   ( +-  0.19% )  (84.17%)
+
+       0.889704531 +- 0.060858059 seconds time elapsed             ( +-  6.84% )
+
+The pluq / invert / solve contributions are bounded above by the
+`m4ri,pluq,*` / `m4ri,invert,*` / `m4ri,solve,*` rows in the extension
+CSV (1 field × 3 sizes × 2 regimes = 6 rows per op). At n=1024 a
+single pluq call wall-clock is ~30 ms (uniform) per CSV; invert and
+solve are similar in magnitude. The aggregate counter total above
+includes the corresponding cycles and L1 misses for those rows.
+
+============================================================
+ Methodology notes
+============================================================
+
+  * Frequency boost / governor: left at host defaults (frequency boost
+    on; same idiom as the 2026-04-26 baseline). See `host.txt` for the
+    governor reading at capture time.
+  * SMT: on (host default). Per-cell numbers in the CSV are
+    single-threaded by virtue of `OMP_NUM_THREADS=1` being inherited
+    from the container's environment (fflas-ffpack defaults to
+    single-thread when the env-var is absent on Modular<int64_t> /
+    Modular<float> kernels).
+  * `:u` suffix on every counter = userspace-only (perf was launched
+    without root; kernel-mode counters were not collected). The
+    aggregate is dominated by user time so the truncation is
+    immaterial.
+  * Coverage % (e.g. (83.34%)) reflects perf event multiplexing on
+    the Zen-3 PMU (six events vs four general-purpose counters); the
+    counters are scaled accordingly.

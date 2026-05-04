@@ -13,23 +13,32 @@
 //     with cardinality <=251 is the canonical small-prime path used in
 //     the linbox test corpus.
 //   * Operations: fgemm, PLUQ (PLE), RowEchelonForm, Invert, Solve,
-//     CharPoly. PLUQ / RowEchelonForm / Invert / Solve run in both
-//     `uniform` (i.i.d.) and `deficient` (rank exactly n/2) regimes;
-//     fgemm and CharPoly run uniform only.
+//     CharPoly, MinPoly. PLUQ / RowEchelonForm / Invert / Solve run in
+//     both `uniform` (i.i.d.) and `deficient` (rank exactly n/2) regimes;
+//     fgemm, CharPoly, and MinPoly run uniform only.
 //   * Sizes 64, 256, 1024 for the full dense sweep on every GF(p)
 //     field. fgemm additionally runs at n=4096 on each field; the
 //     remaining ops at 4096 are deferred to T2 (per R1 amendment of
 //     `a03b2556`). A per-cell wall-clock cap (kCellBudgetNs) is
 //     enforced so a slow host degrades gracefully rather than stalling.
 //   * CharPoly runs at n in {64, 256} across all four GF(p) fields.
+//   * MinPoly (issue 5dea7457) runs at n in {64, 256, 1024} across
+//     all four GF(p) fields; n=4096 is deferred per protocol § 10.
+//
+// CLI:
+//   fflas_bench [--seed N] [--warmup K] [--iters K] [--smoke]
+//
+// `--smoke` runs every operation at n=16 with single warmup/iter and
+// performs an internal correctness oracle for each new operation
+// row (per `dev/plans/sota_reference_acceptance_protocol.md` § 6):
+// minpoly is verified monic and divides charpoly. Smoke output is
+// still emitted as CSV; the protocol's gf2-core cross-check runs in
+// the parent process (`benchmarks/smoke.sh`).
 //
 // Determinism: every (field, op, size, regime) entry is seeded with a
 // 64-bit splittable seed derived from a fixed master seed (see
 // benchmarks/seeds/seed.txt). Re-running with the same master produces
 // the same matrices byte-for-byte.
-//
-// CLI:
-//   fflas_bench [--seed N] [--warmup K] [--iters K]
 //
 // All output goes to stdout; status messages go to stderr so the caller
 // can redirect cleanly into a CSV file.
@@ -544,6 +553,159 @@ static void bench_charpoly(const Field& F,
     FFLAS::fflas_delete(A);
 }
 
+// ----- minpoly (issue 5dea7457) ------------------------------------------
+//
+// Times fflas-ffpack's MinPoly via the `MatVecMinPoly`-backed Krylov
+// path (see `ffpack_minpoly.inl`). The polynomial returned is monic,
+// in canonical [0,p) form for GF(p), with coefficients in ascending
+// degree order and length `deg(minpoly)+1`.
+//
+// Conventional throughput op-count: `n^4` (LCM-merge sweep over n
+// Krylov passes) — matches the README CSV-schema rationale.
+template <typename Field>
+static void bench_minpoly(const Field& F,
+                          const char* field_label,
+                          size_t n,
+                          uint64_t seed,
+                          int warmup, int iters) {
+    typename Field::Element_ptr A0 = FFLAS::fflas_new(F, n * n);
+    typename Field::Element_ptr A  = FFLAS::fflas_new(F, n * n);
+    fill_uniform(F, A0, n * n, seed);
+
+    using PolRing = Givaro::Poly1Dom<Field>;
+    using Polynomial = typename PolRing::Element;
+    PolRing R(F);
+    // Same RandIter-seeding approach as bench_charpoly: derive the
+    // randomness from the per-cell SplitMix64 stream so the wall-clock
+    // measurement is reproducible. fflas-ffpack's MinPoly uses a
+    // random non-zero starting vector for the Krylov chain.
+    typename Field::RandIter G(F, /*seed*/ static_cast<uint64_t>(seed));
+
+    auto run_once = [&]() {
+        FFLAS::fassign(F, n, n, A0, n, A, n);
+        Polynomial minP;
+        FFPACK::MinPoly(F, minP, n, A, n, G);
+    };
+
+    for (int i = 0; i < warmup; ++i) run_once();
+
+    uint64_t total_ns = 0;
+    int actual_iters = 0;
+    bool early_exit = false;
+    for (int i = 0; i < iters; ++i) {
+        uint64_t t0 = monotonic_ns();
+        run_once();
+        total_ns += monotonic_ns() - t0;
+        ++actual_iters;
+        if (total_ns >= kCellBudgetNs) {
+            early_exit = true;
+            break;
+        }
+    }
+    uint64_t mean_ns = total_ns / static_cast<uint64_t>(actual_iters);
+    // n^4 dominant-term op-count per benchmarks/README.md § CSV schema.
+    double tput = (static_cast<double>(n) * static_cast<double>(n)
+                   * static_cast<double>(n) * static_cast<double>(n))
+                  / (static_cast<double>(mean_ns) * 1.0e-9);
+
+    if (early_exit) {
+        warn_early_exit("minpoly", field_label, n, "uniform", total_ns);
+    }
+    emit_csv("fflas-ffpack", "minpoly", field_label, n, n, n,
+             "uniform", seed, mean_ns, tput);
+
+    FFLAS::fflas_delete(A0);
+    FFLAS::fflas_delete(A);
+}
+
+// Smoke equality oracle for minpoly (issue 5dea7457): per protocol § 6
+// the per-operation contract is: minpoly is monic and is a divisor of
+// charpoly. We compute both polynomials on the same fixed-seeded n=16
+// input, verify monicity (leading coefficient == 1), and verify that
+// `charpoly mod minpoly == 0` via Givaro's Poly1Dom::divmod. A failed
+// invariant raises a hard exit(1).
+template <typename Field>
+static int smoke_minpoly_equality(const Field& F,
+                                  const char* field_label,
+                                  uint64_t seed) {
+    constexpr size_t n = 16;
+    typename Field::Element_ptr A  = FFLAS::fflas_new(F, n * n);
+    typename Field::Element_ptr A2 = FFLAS::fflas_new(F, n * n);
+    fill_uniform(F, A,  n * n, seed);
+    fill_uniform(F, A2, n * n, seed);  // identical seeded copy
+
+    using PolRing = Givaro::Poly1Dom<Field>;
+    using Polynomial = typename PolRing::Element;
+    PolRing R(F);
+    typename Field::RandIter G(F, /*seed*/ static_cast<uint64_t>(seed));
+
+    Polynomial charP(n + 1);
+    typename Field::Element_ptr A_for_char = FFLAS::fflas_new(F, n * n);
+    FFLAS::fassign(F, n, n, A2, n, A_for_char, n);
+    FFPACK::CharPoly(R, charP, n, A_for_char, n, G, FFPACK::FfpackAuto);
+
+    Polynomial minP;
+    typename Field::Element_ptr A_for_min = FFLAS::fflas_new(F, n * n);
+    FFLAS::fassign(F, n, n, A, n, A_for_min, n);
+    FFPACK::MinPoly(F, minP, n, A_for_min, n, G);
+
+    // Monicity check: leading coefficient of minP equals F.one.
+    if (minP.size() == 0) {
+        std::fprintf(stderr,
+                     "[fflas_bench] SMOKE FAIL minpoly empty field=%s\n",
+                     field_label);
+        FFLAS::fflas_delete(A);
+        FFLAS::fflas_delete(A2);
+        FFLAS::fflas_delete(A_for_char);
+        FFLAS::fflas_delete(A_for_min);
+        return 1;
+    }
+    typename Field::Element lead = minP[minP.size() - 1];
+    if (!F.isOne(lead)) {
+        std::fprintf(stderr,
+                     "[fflas_bench] SMOKE FAIL minpoly not monic "
+                     "field=%s leading_coef!=1\n",
+                     field_label);
+        FFLAS::fflas_delete(A);
+        FFLAS::fflas_delete(A2);
+        FFLAS::fflas_delete(A_for_char);
+        FFLAS::fflas_delete(A_for_min);
+        return 1;
+    }
+
+    // Divisibility check: charpoly mod minpoly == 0.
+    Polynomial q, rem;
+    R.divmod(q, rem, charP, minP);
+    bool rem_is_zero = true;
+    for (size_t i = 0; i < rem.size(); ++i) {
+        if (!F.isZero(rem[i])) { rem_is_zero = false; break; }
+    }
+    if (!rem_is_zero) {
+        std::fprintf(stderr,
+                     "[fflas_bench] SMOKE FAIL minpoly does not divide "
+                     "charpoly field=%s\n",
+                     field_label);
+        FFLAS::fflas_delete(A);
+        FFLAS::fflas_delete(A2);
+        FFLAS::fflas_delete(A_for_char);
+        FFLAS::fflas_delete(A_for_min);
+        return 1;
+    }
+
+    std::fprintf(stderr,
+                 "[fflas_bench] SMOKE OK minpoly field=%s "
+                 "deg=%zu charpoly_deg=%zu\n",
+                 field_label,
+                 minP.size() ? minP.size() - 1 : 0,
+                 charP.size() ? charP.size() - 1 : 0);
+
+    FFLAS::fflas_delete(A);
+    FFLAS::fflas_delete(A2);
+    FFLAS::fflas_delete(A_for_char);
+    FFLAS::fflas_delete(A_for_min);
+    return 0;
+}
+
 // ----- per-field driver --------------------------------------------------
 
 // A single field driver runs the full op suite at the configured sizes
@@ -558,6 +720,9 @@ static void bench_charpoly(const Field& F,
 // `dense_sizes`     drives fgemm / pluq / echelon / invert / solve.
 // `charpoly_sizes`  drives charpoly only (smaller because the algorithm
 //                    superlinearly grows with n on these inputs).
+// `minpoly_sizes`   drives minpoly only (issue 5dea7457). Matches the
+//                    dense-sweep range {64, 256, 1024} per the issue
+//                    contract; n=4096 deferred to T2.
 template <typename Field>
 static void run_field(const Field& F,
                       const char* field_label,
@@ -565,11 +730,14 @@ static void run_field(const Field& F,
                       int warmup, int iters,
                       const std::vector<size_t>& dense_sizes,
                       const std::vector<size_t>& charpoly_sizes,
+                      const std::vector<size_t>& minpoly_sizes,
                       bool fgemm_only_at_max) {
     std::fprintf(stderr, "[fflas_bench] field=%s dense_sizes=", field_label);
     for (size_t n : dense_sizes) std::fprintf(stderr, "%zu ", n);
     std::fprintf(stderr, "charpoly_sizes=");
     for (size_t n : charpoly_sizes) std::fprintf(stderr, "%zu ", n);
+    std::fprintf(stderr, "minpoly_sizes=");
+    for (size_t n : minpoly_sizes) std::fprintf(stderr, "%zu ", n);
     std::fprintf(stderr, "\n");
 
     // The story budget caps factorization wall-clock at a few seconds
@@ -627,6 +795,15 @@ static void run_field(const Field& F,
                        derive_seed(master_seed, "charpoly", 5, ci, 0),
                        warmup, iters);
     }
+
+    // Minpoly (issue 5dea7457): own size sweep matching the dense-op
+    // range. The kCellBudgetNs cap shields any host where n=1024
+    // exceeds the per-cell budget on this field.
+    for (size_t mi = 0; mi < minpoly_sizes.size(); ++mi) {
+        bench_minpoly(F, field_label, minpoly_sizes[mi],
+                      derive_seed(master_seed, "minpoly", 6, mi, 0),
+                      warmup, iters);
+    }
 }
 
 }  // namespace
@@ -635,6 +812,7 @@ int main(int argc, char** argv) {
     uint64_t master_seed = 0x6F73AC91D31E4A7CULL;
     int warmup = 3;
     int iters  = 5;
+    bool smoke = false;
 
     for (int i = 1; i < argc; ++i) {
         if (std::strcmp(argv[i], "--seed") == 0 && i + 1 < argc) {
@@ -643,9 +821,11 @@ int main(int argc, char** argv) {
             warmup = static_cast<int>(std::strtol(argv[++i], nullptr, 10));
         } else if (std::strcmp(argv[i], "--iters") == 0 && i + 1 < argc) {
             iters = static_cast<int>(std::strtol(argv[++i], nullptr, 10));
+        } else if (std::strcmp(argv[i], "--smoke") == 0) {
+            smoke = true;
         } else {
             std::fprintf(stderr,
-                         "usage: fflas_bench [--seed N] [--warmup K] [--iters K]\n");
+                         "usage: fflas_bench [--seed N] [--warmup K] [--iters K] [--smoke]\n");
             return 2;
         }
     }
@@ -653,12 +833,52 @@ int main(int argc, char** argv) {
     // CSV header is emitted by run.sh; this binary only emits rows so it
     // can be concatenated with the m4ri output.
     std::fprintf(stderr,
-                 "[fflas_bench] master_seed=0x%llx warmup=%d iters=%d\n",
-                 static_cast<unsigned long long>(master_seed), warmup, iters);
+                 "[fflas_bench] master_seed=0x%llx warmup=%d iters=%d smoke=%d\n",
+                 static_cast<unsigned long long>(master_seed), warmup, iters,
+                 smoke ? 1 : 0);
+
+    // Smoke-mode equality oracle for new operations (issue 5dea7457).
+    // Per protocol § 6 the per-operation correctness contract is enforced
+    // at n=16 against a fixed seeded input. For minpoly: monic + divides
+    // charpoly. We exit non-zero on any failure so smoke.sh fails fast.
+    if (smoke) {
+        int rc = 0;
+        {
+            using Field = Givaro::Modular<int64_t>;
+            Field F((1LL << 31) - 1);
+            rc |= smoke_minpoly_equality(F, "GF(2^31-1)",
+                                         derive_seed(master_seed, "minpoly_smoke", 6, 0, 0));
+        }
+        {
+            using Field = Givaro::Modular<int64_t>;
+            Field F(65521);
+            rc |= smoke_minpoly_equality(F, "GF(65521)",
+                                         derive_seed(master_seed ^ 0x11ULL, "minpoly_smoke", 6, 0, 0));
+        }
+        {
+            using Field = Givaro::Modular<float>;
+            Field F(251.0f);
+            rc |= smoke_minpoly_equality(F, "GF(251)",
+                                         derive_seed(master_seed ^ 0x22ULL, "minpoly_smoke", 6, 0, 0));
+        }
+        {
+            using Field = Givaro::Modular<int64_t>;
+            Field F(7);
+            rc |= smoke_minpoly_equality(F, "GF(7)",
+                                         derive_seed(master_seed ^ 0x33ULL, "minpoly_smoke", 6, 0, 0));
+        }
+        if (rc != 0) {
+            std::fprintf(stderr, "[fflas_bench] smoke failed (rc=%d)\n", rc);
+            return 1;
+        }
+        std::fprintf(stderr, "[fflas_bench] smoke OK\n");
+        return 0;
+    }
 
     // Dense sizes for T1. The story matrix specifies
     //   n in {64, 256, 1024, 4096} for fgemm/pluq/echelon/invert/solve,
     //   n in {64, 256}             for charpoly,
+    //   n in {64, 256, 1024}       for minpoly (issue 5dea7457; 4096 deferred),
     // across all four GF(p) reference fields.
     //
     // We honour 4096 for fgemm (the cheapest at that size) on every
@@ -669,13 +889,14 @@ int main(int argc, char** argv) {
     // it managed to take, so consumers can downstream-filter.
     const std::vector<size_t> dense_sizes    = {64, 256, 1024, 4096};
     const std::vector<size_t> charpoly_sizes = {64, 256};
+    const std::vector<size_t> minpoly_sizes  = {64, 256, 1024};
 
     // ---- GF(2^31 - 1): the canonical Mersenne field for fflas-ffpack ----
     {
         using Field = Givaro::Modular<int64_t>;
         Field F((1LL << 31) - 1);
         run_field(F, "GF(2^31-1)", master_seed, warmup, iters,
-                  dense_sizes, charpoly_sizes,
+                  dense_sizes, charpoly_sizes, minpoly_sizes,
                   /*fgemm_only_at_max=*/true);
     }
 
@@ -684,7 +905,7 @@ int main(int argc, char** argv) {
         using Field = Givaro::Modular<int64_t>;
         Field F(65521);
         run_field(F, "GF(65521)", master_seed ^ 0x11ULL, warmup, iters,
-                  dense_sizes, charpoly_sizes,
+                  dense_sizes, charpoly_sizes, minpoly_sizes,
                   /*fgemm_only_at_max=*/true);
     }
 
@@ -693,7 +914,7 @@ int main(int argc, char** argv) {
         using Field = Givaro::Modular<float>;
         Field F(251.0f);
         run_field(F, "GF(251)", master_seed ^ 0x22ULL, warmup, iters,
-                  dense_sizes, charpoly_sizes,
+                  dense_sizes, charpoly_sizes, minpoly_sizes,
                   /*fgemm_only_at_max=*/true);
     }
 
@@ -702,7 +923,7 @@ int main(int argc, char** argv) {
         using Field = Givaro::Modular<int64_t>;
         Field F(7);
         run_field(F, "GF(7)", master_seed ^ 0x33ULL, warmup, iters,
-                  dense_sizes, charpoly_sizes,
+                  dense_sizes, charpoly_sizes, minpoly_sizes,
                   /*fgemm_only_at_max=*/true);
     }
 

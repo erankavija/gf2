@@ -14,6 +14,9 @@
 #   ./benchmarks/run.sh --skip-fflas      # M4RI only (CI smoke run)
 #   ./benchmarks/run.sh --skip-m4ri       # fflas-ffpack only
 #   ./benchmarks/run.sh --image-tag T     # use a non-default tag
+#   ./benchmarks/run.sh --smoke-equality  # run each harness's --smoke
+#                                          # equality oracle before the
+#                                          # CSV pass (issue 5dea7457)
 #
 # Environment overrides:
 #   GF2_RUNTIME=podman|docker             # default: podman
@@ -41,17 +44,19 @@ ITERS="${GF2_BENCH_ITERS:-5}"
 SKIP_BUILD=0
 RUN_FFLAS=1
 RUN_M4RI=1
+RUN_SMOKE_EQUALITY=0
 SEED_OVERRIDE=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --seed)         SEED_OVERRIDE="$2"; shift 2 ;;
-        --skip-build)   SKIP_BUILD=1; shift ;;
-        --skip-fflas)   RUN_FFLAS=0; shift ;;
-        --skip-m4ri)    RUN_M4RI=0; shift ;;
-        --image-tag)    IMAGE_TAG="$2"; shift 2 ;;
-        --warmup)       WARMUP="$2"; shift 2 ;;
-        --iters)        ITERS="$2"; shift 2 ;;
+        --seed)            SEED_OVERRIDE="$2"; shift 2 ;;
+        --skip-build)      SKIP_BUILD=1; shift ;;
+        --skip-fflas)      RUN_FFLAS=0; shift ;;
+        --skip-m4ri)       RUN_M4RI=0; shift ;;
+        --image-tag)       IMAGE_TAG="$2"; shift 2 ;;
+        --warmup)          WARMUP="$2"; shift 2 ;;
+        --iters)           ITERS="$2"; shift 2 ;;
+        --smoke-equality)  RUN_SMOKE_EQUALITY=1; shift ;;
         -h|--help)
             sed -n '2,32p' "${BASH_SOURCE[0]}"
             exit 0
@@ -284,7 +289,37 @@ echo "lib,operation,field,m,k,n,rank_regime,seed,wall_ns,throughput_ops" \
 
 # We always (re)compile the harnesses inside the container so the host's
 # /work bind mount stays clean between runs.
-COMPILE_CMD='set -e; cd /work/reference && make -B'
+# `make`'s compile-command echo goes to stderr so it cannot leak into
+# the CSV stream that the harness binaries write to stdout. The previous
+# run.sh let `make -B` emit on stdout, which silently corrupted any CSV
+# produced after a forced rebuild (issue 5dea7457).
+COMPILE_CMD='set -e; cd /work/reference && make -B 1>&2'
+
+# Smoke-equality oracle pass (issue 5dea7457). When enabled, each
+# harness runs its `--smoke` mode first and exits non-zero on any
+# operation-specific algebraic-equality failure (per
+# `dev/plans/sota_reference_acceptance_protocol.md` § 6). The smoke
+# pass writes only to stderr; the CSV file is unaffected. This is what
+# `benchmarks/smoke.sh` engages so the gate can certify the n=16
+# correctness contracts before measurement.
+if [[ "${RUN_SMOKE_EQUALITY}" -eq 1 ]]; then
+    if [[ "${RUN_FFLAS}" -eq 1 ]]; then
+        echo "[run.sh] running fflas_bench --smoke inside ${IMAGE_TAG}" >&2
+        "${RUNTIME}" run --rm \
+            --security-opt label=disable \
+            -v "${HERE}:/work${MOUNT_OPTS}" \
+            "${IMAGE_TAG}" \
+            bash -c "${COMPILE_CMD} && /work/reference/fflas_bench --seed ${SEED} --smoke"
+    fi
+    if [[ "${RUN_M4RI}" -eq 1 ]]; then
+        echo "[run.sh] running m4ri_bench --smoke inside ${IMAGE_TAG}" >&2
+        "${RUNTIME}" run --rm \
+            --security-opt label=disable \
+            -v "${HERE}:/work${MOUNT_OPTS}" \
+            "${IMAGE_TAG}" \
+            bash -c "${COMPILE_CMD} && /work/reference/m4ri_bench --seed ${SEED} --smoke"
+    fi
+fi
 
 if [[ "${RUN_FFLAS}" -eq 1 ]]; then
     echo "[run.sh] running fflas_bench inside ${IMAGE_TAG}" >&2

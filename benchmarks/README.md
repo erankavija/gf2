@@ -137,8 +137,12 @@ Per the parent story `64c88ae4` and the R1 amendment dated 2026-04-26:
 | Invert                 | 64, 256, 1024        | GF(2^31-1), GF(65521), GF(251), GF(7)         | uniform + deficient |
 | Solve (Ax=b)           | 64, 256, 1024        | GF(2^31-1), GF(65521), GF(251), GF(7)         | uniform + deficient |
 | CharPoly               | 64, 256              | GF(2^31-1), GF(65521), GF(251), GF(7)         | uniform             |
+| MinPoly                | 64, 256, 1024        | GF(2^31-1), GF(65521), GF(251), GF(7)         | uniform             |
 | M4RI mzd_mul (matmul)  | 64, 256, 1024, 4096  | GF(2)                                         | uniform + deficient |
 | M4RI echelonize        | 64, 256, 1024        | GF(2)                                         | uniform + deficient |
+| M4RI pluq              | 64, 256, 1024        | GF(2)                                         | uniform + deficient |
+| M4RI invert            | 64, 256, 1024        | GF(2)                                         | uniform + deficient |
+| M4RI solve (Ax=b)      | 64, 256, 1024        | GF(2)                                         | uniform + deficient |
 
 `uniform`        — i.i.d. samples from the field's canonical range.
 `deficient`      — exact rank `n/2`, generated as `L · R` with a shared
@@ -156,8 +160,18 @@ warning when comparing.
 
 For `n = 4096` we keep `fgemm` only across all four GF(p) fields (the
 cheapest of the dense ops at that size, BLAS3 with peak microarch
-utilisation) — PLUQ / echelon / invert / solve / charpoly at 4096 are
-formally deferred (see below).
+utilisation) — PLUQ / echelon / invert / solve / charpoly / minpoly
+at 4096 are formally deferred (see below).
+
+**M4RI scope exclusions.** The M4RI library does not expose a
+`charpoly` or `minpoly` interface. Per the protocol's `not-supported-
+by-library` exclusion class (`dev/plans/sota_reference_acceptance_
+protocol.md` § 8), those operations are documented as having no
+M4RI lane and are sourced from a different reference (today: gf2-core
+itself; future: LinBox per `jit:79388011`). M4RI's `mzd_addmul`
+(rectangular fgemm) and sparse paths remain out of scope for this
+issue — see `jit:cbecfced` for the canonical-reference designation
+roadmap.
 
 ## Deferred to T2 / T3
 
