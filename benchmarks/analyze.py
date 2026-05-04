@@ -294,6 +294,38 @@ def reference_lib_for(field_value: str, operation: Optional[str] = None) -> str:
         # through to the field-default rule below; they have no
         # promoted reference yet.
         return "ntl"
+    if operation == "sparse-matmul":
+        # Per jit:a3412e15 § 4: no public sparse × sparse matmul exists
+        # in fflas-ffpack, LinBox, M4RI/M4RIE, NTL, or FLINT. gf2-core's
+        # SpBitMatrix::matmul (jit:2403c054) and SparseFieldMatrix::matmul
+        # (jit:eb57f944) are the canonical references for every field.
+        return "gf2"
+    if operation == "spmv" and FIELD_FAMILY.get(field_value) == "gf2m":
+        # Per jit:a3412e15 § 4: fflas-ffpack / LinBox sparse over GF(2^m)
+        # ride GivaroExtension polynomial multiplication and are not
+        # performance-comparable to gf2-core's PCLMULQDQ-backed
+        # Gf2mWide. M4RIE has no public sparse type. gf2-core's
+        # SparseFieldMatrix<Gf2mWide<…>>::matvec is the canonical
+        # reference.
+        return "gf2"
+    if operation == "sparse×dense":
+        # Per jit:a3412e15 § 4: GF(2) / GF(2^m) cells fall back to
+        # gf2-core's SparseFieldMatrix::matmat (no comparable external
+        # path); GF(p) routes to fflas-ffpack `fspmm` (canonical).
+        if field_value == "GF(2)" or FIELD_FAMILY.get(field_value) == "gf2m":
+            return "gf2"
+        # GF(p) cells fall through to the field-default rule.
+    if operation == "sparse-elim":
+        # Per jit:a3412e15 § 4: LinBox `Method::SparseElimination` is
+        # canonical for sparse-elim × {GF(2), GF(p)} (LinBox 1.7.1, Wave-2
+        # promotion). GF(2^m) falls back to gf2-core's
+        # SparseFieldMatrix::rref (jit:eb57f944) because LinBox over
+        # GivaroExtension is not performance-comparable.
+        if field_value == "GF(2)":
+            return "linbox"
+        if FIELD_FAMILY.get(field_value) == "gf2m":
+            return "gf2"
+        return "linbox"
     if field_value == "GF(2)":
         return "m4ri"
     if FIELD_FAMILY.get(field_value) == "gf2m":
