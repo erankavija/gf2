@@ -228,16 +228,14 @@ historical record of the cross-cutting flag and its disposition.
    convention, matching the promotion decision recorded at the head
    of this document.
 
-3. **`run.sh verify_sha M4RIE_SHA256 libs.m4rie` is missing.** The
-   dispatch contract said `verify_sha` "already iterates `[libs.*]`"
-   but it does not — the three existing calls are explicit and
-   per-library. Adding a fourth call would have required editing
-   `run.sh`, which the dispatch forbade. Until the lead either (a)
-   modifies `run.sh` to add the fourth call, or (b) refactors
-   `verify_sha` to actually iterate, the M4RIE pin is checked only
-   by `sha256sum -c` inside the `RUN curl … && echo … | sha256sum -c`
-   step — which is sufficient to catch tarball mutation but does not
-   cross-check Containerfile-vs-image.lock drift.
+3. **`run.sh verify_sha M4RIE_SHA256 libs.m4rie` — added by lead in
+   commit `e3592fe`.** The dispatch contract for `507b0036` was
+   read-only on `run.sh`; the lead consolidated the cross-cutting
+   plumbing for all four wave-2 secondary references (linbox, m4rie,
+   ntl, flint) into a single follow-up commit. M4RIE pin drift is now
+   caught both by `sha256sum -c` inside the `RUN curl …` step and by
+   the explicit `verify_sha M4RIE_SHA256 libs.m4rie` Containerfile-
+   vs-image.lock cross-check (`benchmarks/run.sh:163`).
 
 4. **`run.sh` does not invoke `m4rie_bench` in the timing path.** The
    dispatch contract was read-only on `run.sh`, so the M4RIE timing
