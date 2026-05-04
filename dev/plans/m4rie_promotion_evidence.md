@@ -37,9 +37,9 @@ dispatch contract for wave 2.
 |---|-----------|--------|----------|
 | 1 | Reproducible build | **PASS** | `benchmarks/Containerfile` `# === m4rie begin/end ===` stanza pinning `M4RIE_VERSION=20250128` and `M4RIE_SHA256=96f1adafd50e6a0b51dc3aa1cb56cb6c1361ae7c10d97dc35c3fa70822a55bd7`. `benchmarks/image.lock` `[libs.m4rie]` block carries the same fields. `benchmarks/run.sh verify_sha` is unchanged (its three explicit `verify_sha` calls cover the existing GIVARO/FFLAS/M4RI pins; M4RIE's pin is asserted only between Containerfile and image.lock — adding a fourth `verify_sha` call would have required modifying `run.sh`, which the dispatch contract for `507b0036` forbids; see § 12 *Open question* below). The container builds cleanly: image id `sha256:42c9c356b142bbbc8c6cdf7bf7c8ab1f3b3db3ad25c9453247e5ac3a04c7c57c` (host: 5900X / Linux 7.0.3-arch1-1, 2026-05-04). |
 | 2 | Same hardware | **PASS** | `dev/bench_results/2026-05-04-507b0036-m4rie-host.txt` records the host (Ryzen 9 5900X, 12c/24t, AVX2/BMI2/VAES/VPCLMULQDQ, kernel 7.0.3, podman 5.8.2) and the local image id. `dev/bench_results/2026-05-04-507b0036-m4rie-perf-stat.txt` carries the `perf stat -r 10 -e cycles,instructions,branches,branch-misses,L1-dcache-loads,L1-dcache-load-misses` capture for the in-scope cell **matmul GF(2^16) n=1024 uniform** (10 inner iters × 10 repeats). |
-| 3 | Comparable semantics | **PASS** | `m4rie_bench --smoke` runs the n=16 bitwise-equality contract for matmul over GF(2^4), GF(2^8), GF(2^16) against an independent scalar reference (`ref_gf2m_mul`) plus M4RIE's own internal scalar (`ff->mul`); both pass for all three fields. **No basis-change matrix is required** because `gf2e_init(minpoly)` accepts an arbitrary polynomial — gf2-core's `0x13`, `0x11d`, `0x1002d` are passed in directly and are also present in M4RIE's `irreducible_polynomials[]` table at `m4rie/gf2e.c` line 68+. See § 5 below. |
+| 3 | Comparable semantics | **PASS** | `m4rie_bench --smoke` runs the n=16 bitwise-equality contract for matmul over GF(2^4), GF(2^8), GF(2^16) against an independent scalar reference (`ref_gf2m_mul`) plus M4RIE's own internal scalar (`ff->mul`); both pass for all three fields. The same `--smoke` flow now also runs an n=16 RREF-invariant oracle for echelon over the same three fields × {uniform, deficient} regimes (6 cells) — pivot value, pivot column monotonicity, isolated pivot columns, and zero rows below rank are checked per protocol § 6 / table § 4 (`echelon` row); the oracle passes for all 6 cells. **No basis-change matrix is required** because `gf2e_init(minpoly)` accepts an arbitrary polynomial — gf2-core's `0x13`, `0x11d`, `0x1002d` are passed in directly and are also present in M4RIE's `irreducible_polynomials[]` table at `m4rie/gf2e.c` line 68+. See § 5 below. |
 | 4 | Shared data shape | **PASS** | `benchmarks/reference/m4rie_bench.c` emits exactly the 10-column schema with `lib=m4rie` and `field ∈ {GF(2^4), GF(2^8), GF(2^16)}`. The `GF(2^4)` tag is new (see § 8 below for the cross-cutting `analyze.py FIELD_FAMILY` flag); `GF(2^8)` and `GF(2^16)` are already declared in the schema § 7 of the protocol. `dev/bench_results/2026-05-04-507b0036-m4rie-reference.csv` carries 36 timing rows (3 fields × 2 ops × 3 sizes × 2 regimes). |
-| 5 | CSV merge support | **PASS** | `python3 benchmarks/analyze.py --smoke` exits 0 with the 36 new rows present in the input. `python3 benchmarks/analyze.py --gf2 dev/bench_results/2026-04-26-gf2.csv --reference dev/bench_results/2026-05-04-507b0036-m4rie-reference.csv --out /tmp/m4rie-tables.md` parses 239 cells without error. Note: under the current `analyze.py reference_lib_for()` heuristic, the m4rie rows are surfaced under `### matmul × GF(2^N)` headers but the per-cell column header still reads `fflas-ffpack` because `reference_lib_for()` does not yet learn that GF(2^m) families should default to m4rie. This is presentation-only (the CSV merge itself is correct) and is flagged as cross-cutting in § 8. |
+| 5 | CSV merge support | **PASS** | `python3 benchmarks/analyze.py --smoke` exits 0 with the 36 new rows present in the input. `python3 benchmarks/analyze.py --gf2 dev/bench_results/2026-04-26-gf2.csv --reference dev/bench_results/2026-05-04-507b0036-m4rie-reference.csv --out /tmp/m4rie-tables.md` parses 239 cells without error. Per-cell column header now reads `m4rie` for GF(2^m) families: the cross-cutting `reference_lib_for()` change landed in commit `e3592fe` (see § 8 item 2). |
 
 ## Build evidence
 
@@ -56,9 +56,15 @@ podman build -t gf2-bench:m4rie-507b0036 -f benchmarks/Containerfile benchmarks/
 podman run --rm --security-opt label=disable \
     -v "$PWD/benchmarks:/work:Z,U" gf2-bench:m4rie-507b0036 \
     bash -c 'cd /work/reference && make m4rie_bench && ./m4rie_bench --smoke'
-# [m4rie_bench --smoke] GF(2^4) (minpoly=0x13)   OK
-# [m4rie_bench --smoke] GF(2^8) (minpoly=0x11d)  OK
+# [m4rie_bench --smoke] GF(2^4) (minpoly=0x13)    OK
+# [m4rie_bench --smoke] GF(2^8) (minpoly=0x11d)   OK
 # [m4rie_bench --smoke] GF(2^16) (minpoly=0x1002d) OK
+# [m4rie_bench --smoke] echelon GF(2^4) regime=uniform   OK (rank=16)
+# [m4rie_bench --smoke] echelon GF(2^4) regime=deficient OK (rank=8)
+# [m4rie_bench --smoke] echelon GF(2^8) regime=uniform   OK (rank=16)
+# [m4rie_bench --smoke] echelon GF(2^8) regime=deficient OK (rank=8)
+# [m4rie_bench --smoke] echelon GF(2^16) regime=uniform   OK (rank=16)
+# [m4rie_bench --smoke] echelon GF(2^16) regime=deficient OK (rank=8)
 
 # Timing sweep (criteria #2/#4/#5):
 podman run --rm --security-opt label=disable \
@@ -189,43 +195,38 @@ shows M4RIE running roughly **three orders of magnitude** faster than
 the `gf2-core` `FieldMatrix<Gf2mField>::gemm` published baseline. M4RIE
 is therefore performance-relevant.
 
-The full side-by-side rendering will populate when (a) `gf2-core` adds
-a `matmul`-named GF(2^m) row at the same sizes and (b) `analyze.py`'s
-`reference_lib_for(field)` is taught to pick `m4rie` for GF(2^m) — both
-flagged as cross-cutting in § 8 below.
+The full side-by-side rendering will populate when `gf2-core` adds a
+`matmul`-named GF(2^m) row at the same sizes; the `analyze.py`
+`reference_lib_for(field)` change required for the side-by-side
+columns to read `m4rie` for GF(2^m) **landed in commit `e3592fe`**
+(see § 8 item 2 below).
 
 ## Cross-cutting findings flagged for the lead
 
-These are out of scope for `jit:507b0036` per the dispatch contract
+These were out of scope for `jit:507b0036` per the dispatch contract
 ("**No `analyze.py` mods.** Even if you discover `FIELD_FAMILY` needs a
-new entry — stop and flag.") and are recorded here so the lead can
-dispatch the follow-up.
+new entry — stop and flag.") and were recorded here so the lead could
+dispatch the follow-up. **Items 1 and 2 below were completed by the
+lead in commit `e3592fe`** (chore(jit:97bf0879): wire wave 2 secondary
+references into run.sh + analyze.py); the entries are kept here as a
+historical record of the cross-cutting flag and its disposition.
 
-1. **`analyze.py FIELD_FAMILY` needs `GF(2^4)`.** The 36 m4rie rows
-   include `field=GF(2^4)`, which is not declared in the
-   `FIELD_FAMILY` dict (currently `GF(2^8) / GF(2^16) / GF(2^32)` only).
-   Today this is benign — `FIELD_FAMILY` is *defined* but *unused* in
-   `analyze.py`'s rendering code path — but a future cell-bucketing
-   change would silently drop GF(2^4) rows. Suggested one-line fix:
-   add `"GF(2^4)": "gf2m"` between `"GF(2^31-1)"` and `"GF(2^8)"` in
-   the dict.
+1. **`analyze.py FIELD_FAMILY` needed `GF(2^4)`.** *Completed by lead
+   in commit `e3592fe`.* The `FIELD_FAMILY` dict in
+   `benchmarks/analyze.py` now includes `"GF(2^4)": "gf2m"` alongside
+   the existing `GF(2^8) / GF(2^16) / GF(2^32)` entries, so the 36
+   m4rie rows that carry `field=GF(2^4)` are no longer silently
+   skipped by future cell-bucketing changes.
 
-2. **`analyze.py reference_lib_for()` needs to learn GF(2^m) → m4rie.**
-   Currently `reference_lib_for(field) == "m4ri" if field == "GF(2)"
-   else "fflas-ffpack"`. After M4RIE promotion, the canonical reference
-   for GF(2^m) is `m4rie`, so `reference_lib_for("GF(2^4)" /
-   "GF(2^8)" / "GF(2^16)") == "m4rie"` should hold. Suggested fix:
-   ```python
-   def reference_lib_for(field_value: str) -> str:
-       if field_value == "GF(2)":
-           return "m4ri"
-       if field_value in ("GF(2^4)", "GF(2^8)", "GF(2^16)", "GF(2^32)"):
-           return "m4rie"
-       return "fflas-ffpack"
-   ```
-   Until this lands, the side-by-side renderer surfaces m4rie rows in
-   the `### matmul × GF(2^N)` table block but its column header reads
-   `fflas-ffpack` — presentation-only, no merge correctness impact.
+2. **`analyze.py reference_lib_for()` learned GF(2^m) → m4rie.**
+   *Completed by lead in commit `e3592fe`.* `benchmarks/analyze.py`
+   now routes any field with `FIELD_FAMILY[field] == "gf2m"` to
+   `m4rie`; concretely, `reference_lib_for("GF(2^4)") ==
+   reference_lib_for("GF(2^8)") == reference_lib_for("GF(2^16)") ==
+   "m4rie"`. M4RIE is therefore the canonical reference for GF(2^4),
+   GF(2^8), GF(2^16) per the side-by-side renderer's column-header
+   convention, matching the promotion decision recorded at the head
+   of this document.
 
 3. **`run.sh verify_sha M4RIE_SHA256 libs.m4rie` is missing.** The
    dispatch contract said `verify_sha` "already iterates `[libs.*]`"
