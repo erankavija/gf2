@@ -45,7 +45,11 @@ const CELLS: &[(&str, usize, f64)] = &[
     // density = 1 / 1024 ≈ 9.7656e-4
     ("n_1024_density_1_over_n", 1024, 1.0 / 1024.0),
     // density = ln(4096) / 4096 = 8.317766166719343 / 4096 ≈ 2.0307e-3
-    ("n_4096_density_lnn_over_n", 4096, 8.317_766_166_719_343 / 4096.0),
+    (
+        "n_4096_density_lnn_over_n",
+        4096,
+        8.317_766_166_719_343 / 4096.0,
+    ),
 ];
 
 fn bench_sparse_matmul(c: &mut Criterion) {
@@ -59,8 +63,20 @@ fn bench_sparse_matmul(c: &mut Criterion) {
     group.measurement_time(std::time::Duration::from_secs(5));
 
     for (cell_idx, &(label, n, density)) in CELLS.iter().enumerate() {
-        let lhs_seed = derive_seed(MASTER_SEED, "sparse_matmul_lhs", 0, n as u64, cell_idx as u64);
-        let rhs_seed = derive_seed(MASTER_SEED, "sparse_matmul_rhs", 1, n as u64, cell_idx as u64);
+        let lhs_seed = derive_seed(
+            MASTER_SEED,
+            "sparse_matmul_lhs",
+            0,
+            n as u64,
+            cell_idx as u64,
+        );
+        let rhs_seed = derive_seed(
+            MASTER_SEED,
+            "sparse_matmul_rhs",
+            1,
+            n as u64,
+            cell_idx as u64,
+        );
         let a = bitmatrix_sparse_from_seed(n, n, density, lhs_seed);
         let b = bitmatrix_sparse_from_seed(n, n, density, rhs_seed);
 

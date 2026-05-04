@@ -1915,7 +1915,8 @@ mod tests {
             (5, 7, 128),
             (5, 7, 129),
         ] {
-            let a_entries: Vec<(usize, usize)> = (0..ar).flat_map(|r| (0..ak).map(move |k| (r, k))).collect();
+            let a_entries: Vec<(usize, usize)> =
+                (0..ar).flat_map(|r| (0..ak).map(move |k| (r, k))).collect();
             let a = SpBitMatrix::from_coo(ar, ak, &a_entries);
             let b_entries: Vec<(usize, usize)> = (0..ak)
                 .map(|k| (k, k.wrapping_mul(0x9E37_79B1) % bc))
@@ -1944,7 +1945,9 @@ mod tests {
             let mut x = seed;
             for r in 0..ar {
                 for k in 0..ak {
-                    x = x.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+                    x = x
+                        .wrapping_mul(6364136223846793005)
+                        .wrapping_add(1442695040888963407);
                     if (x >> 60) & 0xF == 0 {
                         a_entries.push((r, k));
                     }
@@ -1956,7 +1959,9 @@ mod tests {
             let mut y = !seed;
             for k in 0..ak {
                 for c in 0..bc {
-                    y = y.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+                    y = y
+                        .wrapping_mul(6364136223846793005)
+                        .wrapping_add(1442695040888963407);
                     if (y >> 60) & 0xF == 0 {
                         b_entries.push((k, c));
                     }
