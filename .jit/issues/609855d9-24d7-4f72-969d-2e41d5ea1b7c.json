@@ -2,7 +2,7 @@
   "id": "609855d9-24d7-4f72-969d-2e41d5ea1b7c",
   "title": "Classify GF(p) gap by prime family",
   "description": "Re-run GF(p) post-PPC rows and separate small-prime, medium-prime, and Mersenne behavior.\n\n## Success Criteria\n\n- [hard] GF(7), GF(31), GF(251), GF(65521), and Mersenne31 rows are measured against fflas.\n- [hard] The report identifies which prime families need new kernels.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "high",
   "assignee": "agent:project-lead",
   "dependencies": [],
@@ -12,15 +12,20 @@
     "doc-review"
   ],
   "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-04T14:25:17.352991043Z"
+    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-05-04T10:48:10.853495123Z"
     },
-    "code-review": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-04T11:11:03.760860295Z"
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-05-04T14:29:18.109756404Z"
     }
   },
   "context": {},
@@ -59,5 +64,5 @@
     "story:sota-gfp-fflas"
   ],
   "created_at": "2026-04-30T06:43:02.693388177+00:00",
-  "updated_at": "2026-05-04T14:06:21.623187578+00:00"
+  "updated_at": "2026-05-04T14:29:21.616779048+00:00"
 }
