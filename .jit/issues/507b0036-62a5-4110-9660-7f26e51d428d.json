@@ -11,7 +11,18 @@
     "cargo-ci",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-04T05:26:09.175585888Z"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-04T05:38:45.205547110Z"
+    }
+  },
   "context": {},
   "documents": [
     {
@@ -28,5 +39,5 @@
     "story:sota-reference-matrix"
   ],
   "created_at": "2026-04-30T06:43:02.607136933+00:00",
-  "updated_at": "2026-05-04T05:12:09.678165656+00:00"
+  "updated_at": "2026-05-04T05:47:06.239320317+00:00"
 }
