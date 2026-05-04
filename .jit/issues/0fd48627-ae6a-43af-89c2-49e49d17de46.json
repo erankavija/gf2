@@ -13,7 +13,101 @@
   ],
   "gates_status": {},
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/bench_results/2026-05-04-0fd48627-gf2-m4ri-profile.md",
+      "commit": null,
+      "label": "GF(2) M4RI gap profile (0fd48627)",
+      "doc_type": "evidence",
+      "format": "markdown",
+      "assets": [
+        {
+          "original_path": "2026-04-29-strassen-matmul-crossover.md",
+          "resolved_path": "dev/bench_results/2026-04-29-strassen-matmul-crossover.md",
+          "asset_type": "local",
+          "mime_type": "text/markdown",
+          "content_hash": "f44b0e0c34d05e232b69d637e8c5ac7b0023868b4dbd38311628e44e874df804",
+          "is_shared": false
+        },
+        {
+          "original_path": "../../crates/gf2-core/examples/m4rm_multiply_perfstat.rs",
+          "resolved_path": "crates/gf2-core/examples/m4rm_multiply_perfstat.rs",
+          "asset_type": "local",
+          "mime_type": null,
+          "content_hash": "c224b6d2899c41883185ca28546f4f4ab719521a44a77ae716dbc08caa82acaa",
+          "is_shared": false
+        },
+        {
+          "original_path": "2026-04-26-reference.csv",
+          "resolved_path": "dev/bench_results/2026-04-26-reference.csv",
+          "asset_type": "local",
+          "mime_type": null,
+          "content_hash": "ef6488dc80414b41246a4cad24216ac48a6f1e68effd95dc7eef43a2788904a5",
+          "is_shared": false
+        },
+        {
+          "original_path": "../active/97bf0879-handoff-2.md",
+          "resolved_path": "dev/active/97bf0879-handoff-2.md",
+          "asset_type": "local",
+          "mime_type": "text/markdown",
+          "content_hash": "35a8f42e7c105c6f021172c788a5bf82aeed5492611d57adb755632c5dcad423",
+          "is_shared": false
+        },
+        {
+          "original_path": "2026-05-04-0fd48627-gf2-m4ri-host.txt",
+          "resolved_path": "dev/bench_results/2026-05-04-0fd48627-gf2-m4ri-host.txt",
+          "asset_type": "local",
+          "mime_type": "text/plain",
+          "content_hash": "35b331d8b77fe514a30e836ef3a142c2e5345383ddaf540b0129afd1b9de3ec1",
+          "is_shared": false
+        },
+        {
+          "original_path": "2026-04-26-gf2.csv",
+          "resolved_path": "dev/bench_results/2026-04-26-gf2.csv",
+          "asset_type": "local",
+          "mime_type": null,
+          "content_hash": "59e860e297705230a28c8baf6ab8d4c8abc68e28d5ce2d9d7871feb73f0a0254",
+          "is_shared": false
+        },
+        {
+          "original_path": "2026-04-30-post-ppc-delta-appendix.md",
+          "resolved_path": "dev/bench_results/2026-04-30-post-ppc-delta-appendix.md",
+          "asset_type": "local",
+          "mime_type": "text/markdown",
+          "content_hash": "81df3f98a7ad3a9318e2a8e03f85435b0af524c347eff6e509435941b4981ec4",
+          "is_shared": false
+        },
+        {
+          "original_path": "2026-05-04-0fd48627-gf2-m4ri-perf-stat.txt",
+          "resolved_path": "dev/bench_results/2026-05-04-0fd48627-gf2-m4ri-perf-stat.txt",
+          "asset_type": "local",
+          "mime_type": "text/plain",
+          "content_hash": "0a17b6eee99267fab6c3aa30386015ef86af1ed947d205e581bdd78fac27a63e",
+          "is_shared": false
+        }
+      ]
+    },
+    {
+      "path": "dev/bench_results/2026-05-04-0fd48627-gf2-m4ri-host.txt",
+      "commit": null,
+      "label": "0fd48627 worktree host capture",
+      "doc_type": "evidence",
+      "format": "markdown"
+    },
+    {
+      "path": "dev/bench_results/2026-05-04-0fd48627-gf2-m4ri-perf-stat.txt",
+      "commit": null,
+      "label": "0fd48627 perf-stat captures (n=1024, n=4096)",
+      "doc_type": "evidence",
+      "format": "markdown"
+    },
+    {
+      "path": "crates/gf2-core/examples/m4rm_multiply_perfstat.rs",
+      "commit": null,
+      "label": "0fd48627 perf-stat helper example",
+      "doc_type": "evidence"
+    }
+  ],
   "labels": [
     "type:task",
     "component:gf2-core",
@@ -21,5 +115,5 @@
     "story:sota-gf2-m4ri"
   ],
   "created_at": "2026-04-30T06:43:02.646215124+00:00",
-  "updated_at": "2026-04-30T06:43:02.646221454+00:00"
+  "updated_at": "2026-05-04T10:44:13.783812767+00:00"
 }
