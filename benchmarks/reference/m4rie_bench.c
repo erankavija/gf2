@@ -13,9 +13,21 @@
  * matrices when the master seed is shared.
  *
  * Operations: dense matmul (mzed_mul, Method-of-the-Four-Russians +
- * Newton-John tables) at n in {64, 256, 1024}, plus echelonize at the
- * same sizes. Both ops also run a `deficient` regime where one input is
- * built as L*R with rank n/2.
+ * Newton-John tables) at n in {64, 256, 1024}. The `deficient` regime
+ * builds A as L*R with rank n/2; the `uniform` regime fills A from the
+ * SplitMix64 stream directly.
+ *
+ * Scope note (jit:507b0036, R2 rework after round-3 review)
+ * --------------------------------------------------------
+ * M4RIE is promoted **for matmul only**. An earlier revision included
+ * `mzed_echelonize` (full RREF) cells, but the protocol § 6 contract
+ * for echelon requires *bitwise canonical RREF equality* against an
+ * independent RREF reference. A standalone scalar GF(2^m) RREF
+ * reference does not yet exist in this harness (cf. the working
+ * `ref_gf2m_mul` cross-check we have for matmul), so the echelon path
+ * has been removed pending a future task that adds such a reference.
+ * See `dev/plans/m4rie_promotion_evidence.md` *Target-matrix
+ * designation* for the full rationale.
  *
  * Field convention
  * ----------------
@@ -44,9 +56,8 @@
  * Smoke contract
  * --------------
  * `m4rie_bench --smoke` runs an `n=16` correctness oracle for matmul
- * AND echelon over each (m=4, m=8, m=16) cell.
- *
- * For matmul it computes the same matrix product three ways:
+ * over each (m=4, m=8, m=16) cell. It computes the same matrix product
+ * three ways:
  *
  *   1. M4RIE `mzed_mul`   (Newton-John, the operation we are timing).
  *   2. A naive scalar reference using `gf2e_mul` directly (single-element
@@ -57,26 +68,15 @@
  *      the canonical-form witness against which both #1 and #2 are
  *      compared.
  *
- * For echelon it computes `R = mzed_echelonize(A, full=1)` (full RREF)
- * and asserts the canonical RREF invariants from
- * `dev/plans/sota_reference_acceptance_protocol.md` § 6 / table § 4
- * (operation `echelon`):
+ * The matmul cross-check is bitwise: `mzed_mul`'s output is compared
+ * element-by-element against the independent `ref_gf2m_mul` reduction,
+ * satisfying protocol § 6's *Bitwise equality of every element of
+ * A·B over the field* contract for matmul.
  *
- *   (i)   Unit pivots — every pivot element of `R` equals `1`
- *         (GF(2^m) has identity 0x1, i.e. the polynomial `1`).
- *   (ii)  Zero rows below rank — rows `r ∈ [rank, n)` of `R` are zero.
- *   (iii) Strictly increasing pivot columns — pivot column for row `r+1`
- *         is strictly greater than pivot column for row `r`.
- *   (iv)  Zero column above-and-below each pivot — every entry in a
- *         pivot column other than the pivot row is `0` (full RREF).
+ * Echelon is intentionally not exercised. See the *Scope note* above.
  *
- * The invariant set (i)-(iv) uniquely characterises RREF over a field,
- * so we do not need a second-source RREF reference; an oracle that
- * checks these four invariants is bitwise-tight.
- *
- * If any of the matmul comparisons disagree on any single element OR
- * any echelon invariant fails, the smoke run prints a diagnostic to
- * stderr and exits 1.
+ * If any matmul comparison disagrees on any single element, the smoke
+ * run prints a diagnostic to stderr and exits 1.
  *
  * Build
  * -----
@@ -247,41 +247,6 @@ static void bench_matmul(const gf2e* ff, int m_field, rci_t n,
     mzed_free(C);
 }
 
-/* echelon: full RREF (mzed_echelonize, full=1). Throughput normalizer
- * is n^3 (the dominant-term op count for elimination). */
-static void bench_echelonize(const gf2e* ff, int m_field, rci_t n,
-                             const char* regime, uint64_t seed,
-                             int warmup, int iters) {
-    rci_t rank = (strcmp(regime, "deficient") == 0) ? n / 2 : n;
-
-    mzed_t* A0 = (rank == n) ? mzed_init(ff, n, n)
-                             : alloc_rank_deficient(ff, m_field, n, rank, seed);
-    if (rank == n) fill_uniform_gf2m(A0, m_field, seed);
-    mzed_t* A = mzed_init(ff, n, n);
-
-    for (int i = 0; i < warmup; ++i) {
-        mzed_copy(A, A0);
-        (void)mzed_echelonize(A, 1);
-    }
-
-    uint64_t total_ns = 0;
-    for (int i = 0; i < iters; ++i) {
-        mzed_copy(A, A0);
-        uint64_t t0 = monotonic_ns();
-        (void)mzed_echelonize(A, 1);
-        total_ns += monotonic_ns() - t0;
-    }
-    uint64_t mean_ns = total_ns / (uint64_t)iters;
-    double tput = (double)n * (double)n * (double)n
-                  / ((double)mean_ns * 1.0e-9);
-
-    emit_csv("echelon", m_field, (size_t)n, (size_t)n, (size_t)n,
-             regime, seed, mean_ns, tput);
-
-    mzed_free(A0);
-    mzed_free(A);
-}
-
 /* ──────────────── smoke equality contract ───────────────────────────
  *
  * Per protocol § 6: every claimed cell at n=16 must match a canonical
@@ -402,197 +367,13 @@ static int smoke_one_field(int m_field, word minpoly, uint64_t master_seed) {
     return 0;
 }
 
-/* ──────────────── echelon RREF invariant oracle ────────────────────────
- *
- * Per protocol § 6 + § 4 (`echelon` row): every claimed echelon cell at
- * n=16 must satisfy the four canonical RREF invariants (see the file
- * header *Smoke contract* note). RREF is unique over a field, so this
- * invariant set is sufficient; we do not need a second-source
- * implementation to compare against.
- *
- * We seed A two ways:
- *   - regime "uniform"  : full-rank uniform fill (rank should be n).
- *   - regime "deficient": rank-(n/2) matrix built as L·R (rank should be
- *                         n/2).
- *
- * mzed_echelonize(A, 1) returns the rank as an `rci_t`. We assert the
- * returned rank matches the expected value, then verify (i)-(iv) on
- * the resulting matrix.
- *
- * Returns 0 on success, 1 on any invariant failure.
- */
-static int smoke_echelon_one_cell(int m_field, word minpoly,
-                                  uint64_t master_seed,
-                                  const char* regime,
-                                  uint64_t op_idx, uint64_t regime_idx) {
-    const rci_t n = 16;
-    const char* tag = field_tag_for_m(m_field);
-    fprintf(stderr,
-            "[m4rie_bench --smoke] echelon %s (minpoly=0x%llx) regime=%s ...\n",
-            tag, (unsigned long long)minpoly, regime);
-
-    gf2e* ff = gf2e_init(minpoly);
-    if (ff->degree != m_field) {
-        fprintf(stderr,
-                "[m4rie_bench --smoke] echelon: gf2e_init returned degree %d "
-                "for minpoly 0x%llx (expected %d)\n",
-                ff->degree, (unsigned long long)minpoly, m_field);
-        gf2e_free(ff);
-        return 1;
-    }
-
-    uint64_t row_seed = derive_seed(master_seed, "echelon", op_idx, 0,
-                                    regime_idx);
-    row_seed ^= ((uint64_t)m_field) * 0x9E3779B97F4A7C15ULL;
-
-    int is_deficient = (strcmp(regime, "deficient") == 0);
-    rci_t expected_rank = is_deficient ? n / 2 : n;
-
-    mzed_t* A = is_deficient
-                ? alloc_rank_deficient(ff, m_field, n, expected_rank, row_seed)
-                : mzed_init(ff, n, n);
-    if (!is_deficient) {
-        fill_uniform_gf2m(A, m_field, row_seed);
-    }
-
-    rci_t rank = mzed_echelonize(A, 1);
-
-    int errors = 0;
-
-    /* For the uniform regime, the random matrix is full-rank with
-     * overwhelming probability over GF(2^m) for our seeds; we assert
-     * rank == n. For the deficient regime we assert rank == n/2 by
-     * construction (alloc_rank_deficient builds A = L·R with that
-     * rank). A mismatch indicates either a deterministic seed that
-     * happened to produce a singular uniform matrix (re-seed) or a
-     * bug in mzed_echelonize. */
-    if (rank != expected_rank) {
-        fprintf(stderr,
-                "[m4rie_bench --smoke] echelon %s regime=%s: rank=%d "
-                "expected=%d\n",
-                tag, regime, (int)rank, (int)expected_rank);
-        ++errors;
-    }
-
-    /* Locate pivot column for each of the first `rank` rows. The pivot
-     * column of row r is the index of the leftmost non-zero entry in
-     * row r. */
-    rci_t pivots[16];  /* n=16 fixed */
-    int prev_pivot = -1;
-    for (rci_t r = 0; r < rank; ++r) {
-        rci_t pcol = -1;
-        for (rci_t c = 0; c < n; ++c) {
-            if (mzed_read_elem(A, r, c) != 0) {
-                pcol = c;
-                break;
-            }
-        }
-        if (pcol < 0) {
-            fprintf(stderr,
-                    "[m4rie_bench --smoke] echelon %s regime=%s: row %d in "
-                    "[0, rank=%d) has no non-zero entry\n",
-                    tag, regime, (int)r, (int)rank);
-            ++errors;
-            pivots[r] = -1;
-            continue;
-        }
-        pivots[r] = pcol;
-
-        /* Invariant (i): pivot value is 1. */
-        word pv = mzed_read_elem(A, r, pcol);
-        if (pv != (word)1) {
-            fprintf(stderr,
-                    "[m4rie_bench --smoke] echelon %s regime=%s: row %d "
-                    "pivot at col %d has value 0x%llx (expected 0x1)\n",
-                    tag, regime, (int)r, (int)pcol,
-                    (unsigned long long)pv);
-            ++errors;
-        }
-
-        /* Invariant (iii): pivot columns strictly increasing. */
-        if ((int)pcol <= prev_pivot) {
-            fprintf(stderr,
-                    "[m4rie_bench --smoke] echelon %s regime=%s: row %d "
-                    "pivot col %d not strictly greater than row %d pivot "
-                    "col %d\n",
-                    tag, regime, (int)r, (int)pcol, (int)r - 1, prev_pivot);
-            ++errors;
-        }
-        prev_pivot = (int)pcol;
-
-        /* Invariant (iv): every other entry in the pivot column is 0. */
-        for (rci_t rr = 0; rr < n; ++rr) {
-            if (rr == r) continue;
-            word v = mzed_read_elem(A, rr, pcol);
-            if (v != 0) {
-                fprintf(stderr,
-                        "[m4rie_bench --smoke] echelon %s regime=%s: pivot "
-                        "col %d (row %d) is not isolated: A[%d][%d]=0x%llx\n",
-                        tag, regime, (int)pcol, (int)r, (int)rr, (int)pcol,
-                        (unsigned long long)v);
-                ++errors;
-                if (errors > 16) goto report;  /* avoid log flood */
-            }
-        }
-    }
-
-    /* Invariant (ii): rows in [rank, n) are entirely zero. */
-    for (rci_t r = rank; r < n; ++r) {
-        for (rci_t c = 0; c < n; ++c) {
-            word v = mzed_read_elem(A, r, c);
-            if (v != 0) {
-                fprintf(stderr,
-                        "[m4rie_bench --smoke] echelon %s regime=%s: row %d "
-                        "below rank=%d is not zero: A[%d][%d]=0x%llx\n",
-                        tag, regime, (int)r, (int)rank, (int)r, (int)c,
-                        (unsigned long long)v);
-                ++errors;
-                if (errors > 16) goto report;
-            }
-        }
-    }
-
-report:
-    mzed_free(A);
-    gf2e_free(ff);
-
-    if (errors) {
-        fprintf(stderr,
-                "[m4rie_bench --smoke] echelon %s regime=%s FAIL: "
-                "%d invariant violations\n",
-                tag, regime, errors);
-        return 1;
-    }
-    fprintf(stderr,
-            "[m4rie_bench --smoke] echelon %s regime=%s OK (rank=%d)\n",
-            tag, regime, (int)rank);
-    return 0;
-}
-
 static int run_smoke(uint64_t master_seed) {
     int rc = 0;
-    /* matmul oracle (existing). */
+    /* matmul oracle. Echelon was removed in the R2 rework — see the
+     * file-header *Scope note* and `m4rie_promotion_evidence.md`. */
     rc |= smoke_one_field(4,  kGf2corePoly_m04, master_seed);
     rc |= smoke_one_field(8,  kGf2corePoly_m08, master_seed);
     rc |= smoke_one_field(16, kGf2corePoly_m16, master_seed);
-
-    /* echelon oracle. op_idx=1 (echelon), regime_idx=0 (uniform) and
-     * regime_idx=1 (deficient) — mirrors the timing-sweep ordering so
-     * the smoke and timing harnesses derive the same row seeds for the
-     * cells they share. */
-    static const struct { int m; word minpoly; } EFIELDS[] = {
-        {4,  0x13u},
-        {8,  0x11du},
-        {16, 0x1002du},
-    };
-    for (size_t fi = 0; fi < sizeof(EFIELDS) / sizeof(EFIELDS[0]); ++fi) {
-        rc |= smoke_echelon_one_cell(EFIELDS[fi].m, EFIELDS[fi].minpoly,
-                                     master_seed, "uniform",
-                                     /*op_idx=*/1, /*regime_idx=*/0);
-        rc |= smoke_echelon_one_cell(EFIELDS[fi].m, EFIELDS[fi].minpoly,
-                                     master_seed, "deficient",
-                                     /*op_idx=*/1, /*regime_idx=*/1);
-    }
     return rc;
 }
 
@@ -633,7 +414,11 @@ int main(int argc, char** argv) {
      *
      * For each m in {4, 8, 16}:
      *   * matmul at n in {64, 256, 1024} × {uniform, deficient}
-     *   * echelon at n in {64, 256, 1024} × {uniform, deficient}
+     *
+     * Echelon cells were removed in the R2 rework (jit:507b0036) —
+     * the protocol § 6 contract for echelon (bitwise canonical RREF
+     * equality) requires an independent RREF reference that this
+     * harness does not yet supply. See the file-header *Scope note*.
      *
      * n=4096 is deferred to T2 to keep the per-cell wall-clock budget
      * sane for the larger m values (m=16 storage is 16 bits per
@@ -665,18 +450,6 @@ int main(int argc, char** argv) {
                                          (uint64_t)si,
                                          (uint64_t)ri),
                              warmup, iters);
-            }
-        }
-
-        for (size_t si = 0; si < sizeof(SIZES) / sizeof(SIZES[0]); ++si) {
-            rci_t n = SIZES[si];
-            for (size_t ri = 0; ri < 2; ++ri) {
-                bench_echelonize(ff, m_field, n, REGIMES[ri],
-                                 derive_seed(master_seed, "echelon",
-                                             (uint64_t)fi,
-                                             (uint64_t)si,
-                                             (uint64_t)ri),
-                                 warmup, iters);
             }
         }
 
