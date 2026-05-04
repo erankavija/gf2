@@ -58,7 +58,48 @@ polynomial** `x^32 + x^15 + x^9 + x^7 + x^4 + x^3 + 1`
 | 2 | Same hardware | **PASS** | All three protocol § 5 artefacts are in-tree at the same `2026-05-04-b13799ac-` prefix: `dev/bench_results/2026-05-04-b13799ac-host.txt` (Ryzen 9 5900X / Zen-3 host capture), `dev/bench_results/2026-05-04-b13799ac-results.csv` (committed `ntl,matmul,GF(2^32),...` row in the protocol § 7 ten-column schema), and `dev/bench_results/2026-05-04-b13799ac-perf-stat.txt` (`-r 5` perf-stat over `cycles,instructions,branches,branch-misses,L1-dcache-loads,L1-dcache-load-misses`). The Wave-2 NTL GF(p) promotion (`73ab8eef`) provides the cross-promotion host-class anchor — same Zen-3 anchor host, same pinned NTL 11.6.0 build — and `dev/bench_results/2026-05-04-73ab8eef-ntl-perf-stat.txt` is the sibling capture for the same NTL binary on this host. |
 | 3 | Comparable semantics | **PASS** | `benchmarks/reference/ntl_gf2pow32_smoke` exits 0 at `n=16` with the byte-level protocol "GF(2^32) element ≡ little-endian `u32` polynomial of degree < 32" — see § *Smoke transcript* below. The smoke uses a self-contained scalar schoolbook reference defined purely from the Conway-polynomial bits (no NTL-internal helpers in the comparison path), and additionally `crates/gf2-core/tests/gf2pow32_matmul.rs::test_gf2pow32_fieldmatrix_gemm_matches_scalar_reference` cross-checks the gf2-core `FieldMatrix<Gf2mWide<1, _>>::gemm` matmul output against the same scalar reference at the same n=16. Three independent code paths agreeing on the same byte stream is the protocol § 6 *bitwise equality contract* satisfied transitively. **No basis-change matrix is required** because gf2-core and NTL both use the polynomial as the field modulus directly (`Gf2mWideConfig<1, _>::MODULUS` and `GF2E::init(GF2X)` consume identical bits). |
 | 4 | Shared data shape | **PASS** | `benchmarks/reference/ntl_bench.cpp` emits exactly the protocol § 7 ten-column schema with `lib=ntl`, `operation=matmul`, `field=GF(2^32)`. The `matmul` operation tag is in the protocol § 7 allowed-values list (added by Amendment 2, 2026-05-04 in the same protocol document); `GF(2^32)` is in the field allowed-values list. `2 * n^3` is the documented matmul throughput normalizer (`benchmarks/README.md` § *CSV schema*); the GF(2^32) bench applies the same normalizer. See § *Bench transcript* for an example row. |
-| 5 | CSV merge support | **PASS** | The committed `dev/bench_results/2026-05-04-b13799ac-results.csv` is a real `ntl,matmul,GF(2^32),64,64,64,uniform,...` row in the protocol § 7 ten-column schema; `python3 benchmarks/analyze.py --smoke` accepts it (the row tuple is structurally identical to the existing M4RIE matmul rows over GF(2^8), GF(2^16) that already merge through analyze.py). The canonical-reference designation in `analyze.py::reference_lib_for(field, operation=None)` is **per-cell** rather than field-wide: the function now takes an optional `operation` argument and routes only `(matmul, GF(2^32))` to NTL — other GF(2^32) operations (invert, solve, charpoly, …) fall through to the field-default rule because they have no promoted reference yet. M4RIE's m ≤ 16 cap means GF(2^32) genuinely cannot share the GF(2^m) lane for matmul, but the per-cell routing scopes the override to exactly the promoted cell. See `dev/plans/gf2m_reference_lane_selection.md` § 3 row `(matmul, GF(2^32))` flipped from `not-yet-harnessed` to `ntl 11.6.0`. |
+| 5 | CSV merge support | **PASS** | The committed `dev/bench_results/2026-05-04-b13799ac-results.csv` is a real `ntl,matmul,GF(2^32),64,64,64,uniform,...` row in the protocol § 7 ten-column schema; `python3 benchmarks/analyze.py --smoke` accepts it (the row tuple is structurally identical to the existing M4RIE matmul rows over GF(2^8), GF(2^16) that already merge through analyze.py). **Path convention.** The protocol § 5 references `benchmarks/results/<ts>.csv` as the run-time output location, but `benchmarks/results/` is gitignored (see `.gitignore` line 41) — committed CSV evidence in this project lives under `dev/bench_results/<date>-<short-id>-...csv` with the Wave-1 reference baseline as the established precedent (`dev/bench_results/2026-04-26-reference.csv`, `dev/bench_results/2026-04-26-gf2.csv`). The b13799ac results CSV follows the same pattern. The canonical-reference designation in `analyze.py::reference_lib_for(field, operation=None)` is **per-cell** rather than field-wide: the function now takes an optional `operation` argument and routes only `(matmul, GF(2^32))` to NTL — other GF(2^32) operations (invert, solve, charpoly, …) fall through to the field-default rule because they have no promoted reference yet. M4RIE's m ≤ 16 cap means GF(2^32) genuinely cannot share the GF(2^m) lane for matmul, but the per-cell routing scopes the override to exactly the promoted cell. See `dev/plans/gf2m_reference_lane_selection.md` § 3 row `(matmul, GF(2^32))` flipped from `not-yet-harnessed` to `ntl 11.6.0`. |
+
+## Implementation note: smoke split
+
+The protocol § 6 *Bitwise equality contract* describes a single smoke
+path that runs both candidate (NTL) and gf2-core on the same seeded
+input and asserts equality. This task implements the same correctness
+contract as a **two-arm transitive equality** instead of a direct
+two-binary comparison:
+
+- **Arm A — NTL ↔ scalar reference:** `benchmarks/reference/ntl_gf2pow32_smoke.cpp`
+  builds a 16×16 matrix pair from a fixed seed, computes the product
+  on NTL `mat_GF2E` and on a self-contained scalar schoolbook
+  reference (lines 129–157), and compares them byte-for-byte
+  (lines 220–279). The scalar reference depends only on the Conway
+  polynomial bits and the byte-level packing protocol; it does not
+  link against gf2-core. Wired into `benchmarks/smoke.sh` lines 169–186.
+- **Arm B — gf2-core ↔ scalar reference:** `crates/gf2-core/tests/gf2pow32_matmul.rs`
+  uses the same scalar reference algorithm (lines 34–56) and compares
+  it against `FieldMatrix<Gf2mWide<1, _>>::gemm` (lines 112–147) on a
+  matrix pair built from a fixed seed.
+
+Both arms share the same Conway polynomial bits
+(`crates/gf2-core/src/primitive_polys.rs::standard(32) == 0x1_0000_8299`)
+and the same byte-level packing (each GF(2^32) element as a
+little-endian `u32` polynomial of degree < 32). Transitive equality
+NTL ↔ scalar ↔ gf2-core therefore implies the protocol's direct
+NTL ↔ gf2-core equality.
+
+Why the split: a direct NTL ↔ gf2-core smoke would either link
+gf2-core into the C++ harness (cross-language FFI shimming for a
+matmul we already have correct on both sides) or pipe gf2-core's
+output into NTL via stdin (fragile bytestream protocol that the test
+would have to maintain in lockstep with both sides' formatting). The
+scalar reference is auditable line-by-line and depends on neither
+NTL internals nor gf2-core internals. This is the same transitive
+pattern the project uses for several Wave-2 promotions.
+
+The header comment in `ntl_bench.cpp` lines 51–63 was updated as part
+of code-review R2 to describe this split correctly (the original
+worker draft incorrectly described a stdin-based direct comparison
+that was never implemented).
 
 ## Smoke transcript
 

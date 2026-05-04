@@ -48,12 +48,19 @@
 //   ntl_bench [--seed N] [--warmup K] [--iters K]
 //             [--smoke] [--large]
 //
-// --smoke runs only n=16 cells with warmup=0,iters=1 and prints both
-//         the CSV rows AND a per-cell equality oracle line on stderr
-//         comparing NTL against the per-row gf2-core canonical answer
-//         that the smoke driver supplies via stdin (one canonical
-//         output entry per cell, in row-major order). The driver in
-//         benchmarks/smoke.sh wires that up.
+// --smoke runs only n=16 cells with warmup=0,iters=1 and prints CSV
+//         rows. The bitwise-equality oracle for the GF(2^32) lane is
+//         delegated to the standalone `ntl_gf2pow32_smoke` binary
+//         (built alongside this one) — it compares NTL `mat_GF2E`
+//         against an independent scalar schoolbook reference, which
+//         the matching Rust test (crates/gf2-core/tests/gf2pow32_matmul.rs)
+//         in turn compares against gf2-core's `FieldMatrix<Gf2mWide>::gemm`.
+//         The two arms share the same Conway polynomial bits and the
+//         same byte-level packing, so transitive equality NTL ↔ scalar
+//         ↔ gf2-core is the wired correctness oracle. See
+//         dev/bench_results/2026-05-04-b13799ac-gf2pow32-promotion.md
+//         § "Smoke transcript" and § "Implementation note: smoke split"
+//         for the rationale.
 // --large enables n=256, 1024 cells. Off by default because at n=1024
 //         a single charpoly cell on NTL takes 60–120 s on Zen 3.
 
