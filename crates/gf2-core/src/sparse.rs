@@ -1123,6 +1123,122 @@ impl SpBitMatrix {
         }
         y
     }
+
+    /// Sparse × sparse matrix multiplication `C = A · B` over GF(2).
+    ///
+    /// Both operands and the result are CSR matrices. Inner dimensions must
+    /// agree (`self.cols() == other.rows()`), and the output has shape
+    /// `self.rows() × other.cols()`. GF(2) semantics apply: contributions from
+    /// distinct `k` indices accumulate by XOR, so an even number of touches at
+    /// the same output coordinate cancels.
+    ///
+    /// # Algorithm
+    ///
+    /// Row-by-row CSR multiply with a dense word-packed XOR accumulator:
+    /// for each row `i` of `A`, for each nonzero column `k`, toggle every
+    /// nonzero column `j` of `B`'s row `k` in the accumulator. After all
+    /// contributions for output row `i` have been XOR-folded, the accumulator
+    /// is scanned via `trailing_zeros` to extract the canonical sorted column
+    /// indices, then the touched accumulator words are cleared in place for
+    /// reuse on the next row.
+    ///
+    /// The output is canonical CSR: column indices within each row are sorted
+    /// ascending and free of duplicates. This guarantees criterion #2 of the
+    /// API contract — the result is bit-equal to
+    /// `SpBitMatrix::from_dense(&(self.to_dense() * other.to_dense()))`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `self.cols() != other.rows()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::sparse::SpBitMatrix;
+    ///
+    /// // A = [[1 0 1] [0 1 0]] over GF(2)
+    /// let a = SpBitMatrix::from_coo(2, 3, &[(0, 0), (0, 2), (1, 1)]);
+    /// // B = I_3
+    /// let b = SpBitMatrix::identity(3);
+    /// let c = a.matmul(&b);
+    /// assert_eq!(c, a);
+    ///
+    /// // Multiplying by an identity on the left also reproduces A.
+    /// let lhs = SpBitMatrix::identity(2);
+    /// assert_eq!(lhs.matmul(&a), a);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(nnz(A · B-rows) + rows(A) · cols(B) / 64) where the first term is the
+    /// total flop work counted as `Σ_i Σ_{k ∈ A_row_i} nnz(B_row_k)` and the
+    /// second term covers the per-row accumulator scan and clear. Memory is
+    /// O(cols(B) / 64) for the accumulator plus O(nnz(C)) for the output.
+    pub fn matmul(&self, other: &Self) -> Self {
+        assert_eq!(
+            self.cols, other.rows,
+            "matmul inner dimensions must match: lhs.cols={} rhs.rows={}",
+            self.cols, other.rows,
+        );
+
+        let out_rows = self.rows;
+        let out_cols = other.cols;
+        let n_words = out_cols.div_ceil(64);
+
+        let mut indptr = Vec::with_capacity(out_rows + 1);
+        indptr.push(0);
+        let mut indices: Vec<usize> = Vec::new();
+
+        // Dense word-packed XOR accumulator, reused across output rows.
+        let mut acc = vec![0u64; n_words];
+        // Track which words were touched so we can clear lazily without
+        // sweeping the whole accumulator every row.
+        let mut touched: Vec<usize> = Vec::new();
+        let mut touched_seen = vec![false; n_words];
+
+        for i in 0..out_rows {
+            let a_start = self.indptr[i];
+            let a_end = self.indptr[i + 1];
+            for &k in &self.indices[a_start..a_end] {
+                let b_start = other.indptr[k];
+                let b_end = other.indptr[k + 1];
+                for &j in &other.indices[b_start..b_end] {
+                    let w = j >> 6;
+                    let bit = 1u64 << (j & 63);
+                    acc[w] ^= bit;
+                    if !touched_seen[w] {
+                        touched_seen[w] = true;
+                        touched.push(w);
+                    }
+                }
+            }
+
+            // Emit canonical, ascending column indices for output row i.
+            // Sort touched words so each row's emitted slice is monotone.
+            touched.sort_unstable();
+            for &w in &touched {
+                let mut word = acc[w];
+                let base = w << 6;
+                while word != 0 {
+                    let b = word.trailing_zeros() as usize;
+                    indices.push(base + b);
+                    word &= word - 1;
+                }
+                acc[w] = 0;
+                touched_seen[w] = false;
+            }
+            touched.clear();
+
+            indptr.push(indices.len());
+        }
+
+        Self {
+            rows: out_rows,
+            cols: out_cols,
+            indptr,
+            indices,
+        }
+    }
 }
 
 /// Dual representation storing both CSR and CSC formats for efficient bidirectional access.
@@ -1678,6 +1794,228 @@ mod tests {
 
             let row_bits = bitvec_from_pattern(rows, salt.rotate_left(7));
             prop_assert_eq!(permutation.unapply_rows(&permutation.apply_rows(&row_bits)), row_bits);
+        }
+    }
+
+    /// Reference oracle: reduce sparse-sparse matmul to dense matmul on
+    /// `BitMatrix`, then back to CSR. This is the reference for criterion #2
+    /// of the matmul contract.
+    fn dense_matmul_reference(a: &SpBitMatrix, b: &SpBitMatrix) -> SpBitMatrix {
+        let prod = a.to_dense() * b.to_dense();
+        SpBitMatrix::from_dense(&prod)
+    }
+
+    /// Verifies that the canonical CSR invariants hold on a freshly multiplied
+    /// matrix: indptr is monotone, indices within each row are strictly
+    /// ascending, every column index lies in range, and length agrees with
+    /// the final indptr value.
+    fn assert_csr_canonical(c: &SpBitMatrix) {
+        assert_eq!(c.indptr.len(), c.rows + 1, "indptr length must be rows + 1");
+        assert_eq!(*c.indptr.first().unwrap(), 0, "first indptr must be 0");
+        assert_eq!(
+            *c.indptr.last().unwrap(),
+            c.indices.len(),
+            "last indptr must equal indices length"
+        );
+        for r in 0..c.rows {
+            let s = c.indptr[r];
+            let e = c.indptr[r + 1];
+            assert!(s <= e, "indptr must be non-decreasing");
+            for w in s..e {
+                assert!(
+                    c.indices[w] < c.cols,
+                    "column index out of range: {} >= {}",
+                    c.indices[w],
+                    c.cols
+                );
+                if w > s {
+                    assert!(
+                        c.indices[w - 1] < c.indices[w],
+                        "row indices must be strictly ascending and dedup'd"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn matmul_empty_lhs() {
+        let a = SpBitMatrix::zeros(0, 5);
+        let b = SpBitMatrix::zeros(5, 7);
+        let c = a.matmul(&b);
+        assert_eq!(c.rows(), 0);
+        assert_eq!(c.cols(), 7);
+        assert_eq!(c.nnz(), 0);
+        assert_csr_canonical(&c);
+    }
+
+    #[test]
+    fn matmul_empty_rhs_cols() {
+        let a = SpBitMatrix::identity(3);
+        let b = SpBitMatrix::zeros(3, 0);
+        let c = a.matmul(&b);
+        assert_eq!(c.rows(), 3);
+        assert_eq!(c.cols(), 0);
+        assert_eq!(c.nnz(), 0);
+        assert_csr_canonical(&c);
+    }
+
+    #[test]
+    fn matmul_zero_inner_dim() {
+        let a = SpBitMatrix::zeros(2, 0);
+        let b = SpBitMatrix::zeros(0, 3);
+        let c = a.matmul(&b);
+        assert_eq!(c.rows(), 2);
+        assert_eq!(c.cols(), 3);
+        assert_eq!(c.nnz(), 0);
+        assert_csr_canonical(&c);
+    }
+
+    #[test]
+    fn matmul_identity_right_returns_lhs() {
+        let a = SpBitMatrix::from_coo(3, 4, &[(0, 0), (0, 3), (1, 2), (2, 1), (2, 3)]);
+        let i = SpBitMatrix::identity(4);
+        let c = a.matmul(&i);
+        assert_eq!(c, a);
+        assert_csr_canonical(&c);
+    }
+
+    #[test]
+    fn matmul_identity_left_returns_rhs() {
+        let b = SpBitMatrix::from_coo(4, 3, &[(0, 1), (1, 0), (2, 2), (3, 0), (3, 2)]);
+        let i = SpBitMatrix::identity(4);
+        let c = i.matmul(&b);
+        assert_eq!(c, b);
+        assert_csr_canonical(&c);
+    }
+
+    #[test]
+    fn matmul_xor_cancellation_at_output() {
+        // A · A^T where A has exactly two nonzeros in row 0 sharing the same
+        // pivot column with A^T's row 0 → contributions cancel under GF(2).
+        // A = [[1,1,0]] (1×3). A^T = [[1],[1],[0]] (3×1).
+        // (A · A^T)[0,0] = 1·1 + 1·1 + 0·0 = 0 (XOR).
+        let a = SpBitMatrix::from_coo(1, 3, &[(0, 0), (0, 1)]);
+        let at = a.transpose();
+        let c = a.matmul(&at);
+        assert_eq!(c.rows(), 1);
+        assert_eq!(c.cols(), 1);
+        assert_eq!(c.nnz(), 0, "GF(2) self-inner-product of even weight is 0");
+        assert_csr_canonical(&c);
+    }
+
+    #[test]
+    fn matmul_word_boundary_widths() {
+        // Cover output column counts spanning u64 word boundaries.
+        for &(ar, ak, bc) in &[
+            (2usize, 3usize, 63usize),
+            (2, 3, 64),
+            (2, 3, 65),
+            (5, 7, 127),
+            (5, 7, 128),
+            (5, 7, 129),
+        ] {
+            let a_entries: Vec<(usize, usize)> = (0..ar).flat_map(|r| (0..ak).map(move |k| (r, k))).collect();
+            let a = SpBitMatrix::from_coo(ar, ak, &a_entries);
+            let b_entries: Vec<(usize, usize)> = (0..ak)
+                .map(|k| (k, k.wrapping_mul(0x9E37_79B1) % bc))
+                .collect();
+            let b = SpBitMatrix::from_coo(ak, bc, &b_entries);
+
+            let c = a.matmul(&b);
+            assert_csr_canonical(&c);
+            assert_eq!(c, dense_matmul_reference(&a, &b));
+            // Sanity: serializing through to_dense round-trips identically.
+            assert_eq!(c, SpBitMatrix::from_dense(&c.to_dense()));
+        }
+    }
+
+    #[test]
+    fn matmul_random_seeded_cases() {
+        // Three deterministic, low-density inputs of moderate size.
+        let cases: &[(usize, usize, usize, u64)] = &[
+            (16, 24, 20, 0xA5A5_5A5A_C3C3_3C3C),
+            (37, 41, 53, 0xDEAD_BEEF_CAFE_BABE),
+            (65, 66, 67, 0x1234_5678_9ABC_DEF0),
+        ];
+        for &(ar, ak, bc, seed) in cases {
+            // Generate sparse A and B with a fixed pseudo-random pattern.
+            let mut a_entries = Vec::new();
+            let mut x = seed;
+            for r in 0..ar {
+                for k in 0..ak {
+                    x = x.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+                    if (x >> 60) & 0xF == 0 {
+                        a_entries.push((r, k));
+                    }
+                }
+            }
+            let a = SpBitMatrix::from_coo(ar, ak, &a_entries);
+
+            let mut b_entries = Vec::new();
+            let mut y = !seed;
+            for k in 0..ak {
+                for c in 0..bc {
+                    y = y.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+                    if (y >> 60) & 0xF == 0 {
+                        b_entries.push((k, c));
+                    }
+                }
+            }
+            let b = SpBitMatrix::from_coo(ak, bc, &b_entries);
+
+            let c = a.matmul(&b);
+            assert_csr_canonical(&c);
+            assert_eq!(c, dense_matmul_reference(&a, &b));
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "matmul inner dimensions must match")]
+    fn matmul_dimension_mismatch_panics() {
+        let a = SpBitMatrix::zeros(2, 3);
+        let b = SpBitMatrix::zeros(4, 5);
+        let _ = a.matmul(&b);
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(48))]
+
+        #[test]
+        fn proptest_matmul_matches_dense(
+            ar in 0usize..14,
+            ak in 0usize..14,
+            bc in 0usize..14,
+            a_raw in proptest::collection::vec((0usize..14, 0usize..14), 0..60),
+            b_raw in proptest::collection::vec((0usize..14, 0usize..14), 0..60),
+        ) {
+            let a_entries: Vec<_> = a_raw
+                .into_iter()
+                .filter_map(|(r, c)| {
+                    if ar == 0 || ak == 0 {
+                        None
+                    } else {
+                        Some((r % ar, c % ak))
+                    }
+                })
+                .collect();
+            let b_entries: Vec<_> = b_raw
+                .into_iter()
+                .filter_map(|(r, c)| {
+                    if ak == 0 || bc == 0 {
+                        None
+                    } else {
+                        Some((r % ak, c % bc))
+                    }
+                })
+                .collect();
+
+            let a = SpBitMatrix::from_coo(ar, ak, &a_entries);
+            let b = SpBitMatrix::from_coo(ak, bc, &b_entries);
+
+            let c = a.matmul(&b);
+            assert_csr_canonical(&c);
+            prop_assert_eq!(c, dense_matmul_reference(&a, &b));
         }
     }
 }
