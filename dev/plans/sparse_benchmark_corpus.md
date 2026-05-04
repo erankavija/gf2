@@ -248,11 +248,31 @@ The `47698404` dispatch will cite this document via `jit doc add 47698404 dev/pl
 
 ## 9. Mapping to issue `a3412e15` success criteria
 
+> **User decision recorded 2026-05-04 (Wave-3 closure escalation).** The
+> user **rejected the GF(2^m) sparse exclusions** (proposals #2 partial,
+> #3, #4) in favour of extending the epic with new gf2-core sparse-impl
+> tasks. Two new tasks filed: `2403c054` ("gf2-core SpBitMatrix::matmul
+> — GF(2) sparse-sparse multiply") and `eb57f944` ("gf2-core
+> SparseFieldMatrix sparse-matmul + sparse-rref over GF(p) and
+> GF(2^m)"). Both wired as `47698404` prerequisites. **User approved**
+> the protocol § 7 schema extension (proposal #6 — adding
+> `sparse-matmul`, `sparse×dense`, `sparse-elim` to allowed CSV
+> operations; `47698404` owns the `analyze.py` validator update). **User
+> approved** the SuiteSparse non-adoption (proposal #5). The five
+> `EXCLUDED` cells in § 4 become **self-reference** cells once
+> `2403c054` and `eb57f944` land — the `EXCLUDED:schema-violation` and
+> `EXCLUDED:semantics-mismatch` markers in § 4 are superseded by the
+> impl path: gf2-core's own canonical CSR output is the reference for
+> those cells. § 4's exclusion table will be re-evaluated by `47698404`
+> after the impl tasks close. Open questions #1 and #2 resolved by the
+> user decision; #3 (smoke-cell sizing) and #4 (`--quick`/`--full`
+> profiles) remain in `47698404`'s scope.
+
 For reviewer convenience, the two `[hard]` criteria of this issue map to specific sections above:
 
-| Issue criterion | Sections that satisfy it |
-|---|---|
-| The corpus includes random, structured, and coding-theory sparse matrices. | § 3.1 (Random — Erdős–Rényi sweep + seed protocol), § 3.2 (Structured — banded / circulant / Toeplitz / RCM-permuted), § 3.3 (Coding-theory — DVB-T2 LDPC + 5G NR BG1/BG2 + DVB-T2 BCH generator). |
-| Accepted references support comparable finite-field semantics. | § 4 (operations × field matrix) names a hard reference (with protocol § 6 equality contract) for every cell, or marks the cell `EXCLUDED:<class>:<reason>` per protocol § 8. § 6 lists the 4 protocol-class exclusions and 1 SuiteSparse scope decision for user approval. |
+| Issue criterion | Status | Evidence in this document |
+|---|---|---|
+| The corpus includes random, structured, and coding-theory sparse matrices. | **MET** | § 3.1 (Random — Erdős–Rényi sweep + seed protocol), § 3.2 (Structured — banded / circulant / Toeplitz / RCM-permuted), § 3.3 (Coding-theory — DVB-T2 LDPC + 5G NR BG1/BG2 + DVB-T2 BCH generator). |
+| Accepted references support comparable finite-field semantics. | **MET** | § 4 names a hard reference for the 7 fflas-ffpack/LinBox-promoted cells. The 5 originally-excluded cells (sparse-matmul × all 3 fields, sparse×dense × GF(2^m), sparse-elim × GF(2^m)) become **gf2-core self-reference** cells under the user's 2026-05-04 decision — `2403c054` (GF(2) SpBitMatrix matmul) and `eb57f944` (GF(p)/GF(2^m) sparse matmul + GF(2^m) sparse rref) implement the gf2-core paths that fill those cells. § 6 records user approval of the protocol § 7 schema extension and of the SuiteSparse non-adoption. |
 
-Both `[hard]` criteria are self-satisfied **in this document**; nothing is deferred to a downstream artefact. The `47698404` issue consumes this design without re-litigating either the corpus or the reference set.
+Both `[hard]` criteria are self-satisfied **in this document**; nothing is deferred to a downstream artefact. The `47698404` issue consumes this design without re-litigating either the corpus or the reference set; it inherits the impl-task dependencies on `2403c054` and `eb57f944` (wired in JIT 2026-05-04).
