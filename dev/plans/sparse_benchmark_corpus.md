@@ -33,7 +33,7 @@ Operations covered:
 * `spmv` — `y = A·x` (sparse matrix × dense vector).
 * `sparse-matmul` — `C = A·B` where `A` is sparse and `B` is sparse (sparse × sparse).
 * `sparse×dense` — `C = A·B` where `A` is sparse and `B` is dense (the `matmat` method on `SparseFieldMatrix`).
-* `sparse-elimination` — sparse Gauss-Jordan / RREF (currently only `SpBitMatrixDual`-style structure-aware elimination on GF(2) is implemented; cross-library coverage lives behind LinBox's `Method::SparseElimination`).
+* `sparse-elim` — sparse Gauss-Jordan / RREF (currently only `SpBitMatrixDual`-style structure-aware elimination on GF(2) is implemented; cross-library coverage lives behind LinBox's `Method::SparseElimination`). Used uniformly across the rest of this document.
 
 **Out of scope.** Dense-only operations (already covered by Wave 2's promotion docs); GPU sparse references (per `97bf0879` parent description); sparse Smith-form / Kalman-style algorithms specific to symbolic algebra (LinBox's `smith-form-sparseelim-*.h` is excluded as "not in epic scope" rather than via a protocol § 8 class).
 
@@ -76,13 +76,13 @@ Note that `log₂(n)/n` and `10/n` collapse at `n=1024`. The harness still emits
 
 These keep every cell well under 1 GiB of dense-equivalent storage and well under the 30 s `kCellBudgetNs` from protocol § 7.
 
-**Seed protocol.** Reuse the existing `gf2_bench_splitmix64` / `gf2_bench_derive_seed` helpers in `benchmarks/reference/seed_helpers.h` (master `0x6F73AC91D31E4A7C` from `benchmarks/seeds/seed.txt`). For sparse cells the derivation key is `gf2_bench_derive_seed(master, "spmv-er", op_idx, size_idx, density_idx)` — extending the existing dense convention (which keys on `(operation, size, regime)`) with a `density_idx` slot. The Rust side already uses an analogous derivation in `crates/gf2-core/benches/sparse_spmv.rs`'s `seed::derive_seed`; the Rust-side code path consumes the new `density_idx` directly. **The harness MUST call the C/C++ helpers from `benchmarks/reference/seed_helpers.h`** per protocol § 6 *Determinism contract*, so seed drift is structurally impossible across reference-library implementations.
+**Seed protocol.** Reuse the existing `gf2_bench_splitmix64` / `gf2_bench_derive_seed` helpers in `benchmarks/reference/seed_helpers.h` (master `0x6F73AC91D31E4A7C` from `benchmarks/seeds/seed.txt`). For sparse cells the derivation key is `gf2_bench_derive_seed(master, "spmv-er", op_idx, size_idx, regime_idx)` — extending the existing dense convention (which keys on `(operation, size, regime)`) with a `regime_idx` slot. The Rust side already uses an analogous derivation in `crates/gf2-core/benches/sparse_spmv.rs`'s `seed::derive_seed`; the Rust-side code path consumes the new `regime_idx` directly. **The harness MUST call the C/C++ helpers from `benchmarks/reference/seed_helpers.h`** per protocol § 6 *Determinism contract*, so seed drift is structurally impossible across reference-library implementations.
 
 **RNG construction.** Per cell:
 
-1. Compute `seed = gf2_bench_derive_seed(master, "spmv-er-supp", op_idx, size_idx, density_idx)`.
+1. Compute `seed = gf2_bench_derive_seed(master, "spmv-er-supp", op_idx, size_idx, regime_idx)`.
 2. Construct an `n²`-cell Bernoulli mask: walk SplitMix64 from `seed`, draw a `u64` per `(i, j)` (row-major), include if `(draw < threshold)` where `threshold = (d * 2⁶⁴)`. This is a single-pass support sample with `Bernoulli(d)` semantics, exact at f64 precision.
-3. Compute `value_seed = gf2_bench_derive_seed(master, "spmv-er-vals", op_idx, size_idx, density_idx)`.
+3. Compute `value_seed = gf2_bench_derive_seed(master, "spmv-er-vals", op_idx, size_idx, regime_idx)`.
 4. For each cell in the support, draw a uniformly-random non-zero field element from a SplitMix64 chain seeded with `value_seed`. The "non-zero" rejection layer is deterministic given the seed.
 
 Steps 1–2 produce a byte-identical support mask across the gf2-core Rust harness, the LinBox C++ harness, and the fflas-ffpack C++ harness — provided each implementation uses the same SplitMix64 walk order. This is enforced at protocol § 6 smoke time.
@@ -189,7 +189,7 @@ Per the dispatch contract, three options were considered: (a) generate inline at
 
 | Class | Mechanism | Storage budget |
 |---|---|---|
-| Random (§ 3.1) | Generate inline from `(master, op_idx, size_idx, density_idx)` seed via SplitMix64 + Bernoulli draw. No matrix committed. | 0 bytes on disk (regenerated per run). |
+| Random (§ 3.1) | Generate inline from `(master, op_idx, size_idx, regime_idx)` seed via SplitMix64 + Bernoulli draw. No matrix committed. | 0 bytes on disk (regenerated per run). |
 | Structured (§ 3.2) | Generate inline from `(master, matrix-id, n)` seed; deterministic constructions for banded / circulant / Toeplitz. RCM-permuted-er reuses § 3.1 matrix + RCM permutation. | 0 bytes on disk. |
 | Coding-theory (§ 3.3) | Use the existing `gf2-coding` constructors (`LdpcCode::dvb_t2_short`, `LdpcCode::dvb_t2_normal`, `QuasiCyclicLdpc::nr_5g`, `LinearBlockCode::generator_matrix`). Tables are already in the source tree under `crates/gf2-coding/src/ldpc/dvb_t2/` and `nr_5g/`. | Already paid (existing source). |
 
@@ -216,7 +216,9 @@ These exclusions are filed for explicit user approval before `47698404` dispatch
 
 5. **SuiteSparse Matrix Collection — not adopted as a corpus source.** The collection is rich but its pinning model does not fit the existing `image.lock` schema, and committing canonical `.mtx` files under `benchmarks/sparse-corpus/` would create a parallel pin mechanism. Filed as a non-protocol-class exclusion (closer to a scope decision than an exclusion-registry entry); approval requested via `97bf0879` lead authority.
 
-The four protocol-class exclusions above cover **5 of the 12 cells** in the operations × field matrix. The remaining 7 cells carry hard references (gf2-core self + LinBox cross-check, fflas-ffpack canonical + LinBox cross-check, etc.).
+6. **Protocol § 7 CSV-schema operation set must be extended.** The protocol's allowed `operation` values are `{fgemm, matmul, pluq, echelon, invert, solve, charpoly, minpoly, spmv}` (`dev/plans/sota_reference_acceptance_protocol.md` § 7 *CSV schema*). This document introduces three new operation values — `sparse-matmul`, `sparse×dense`, and `sparse-elim` — that the existing `analyze.py` schema validator does not accept. The downstream consumer issue `47698404` MUST land a protocol § 7 amendment that extends the allowed-values list to `{fgemm, matmul, pluq, echelon, invert, solve, charpoly, minpoly, spmv, sparse-matmul, sparse×dense, sparse-elim}`, accompanied by a matching `analyze.py` validator update. Without that amendment the sparse CSV rows produced by `47698404` will fail `analyze.py --smoke`. Approval requested for the schema extension as part of the Wave-3 closure.
+
+The four protocol-class exclusions in § 6.1–6.4 above cover **5 of the 12 cells** in the operations × field matrix. The remaining 7 cells carry hard references (gf2-core self + LinBox cross-check, fflas-ffpack canonical + LinBox cross-check, etc.).
 
 ## 7. Open questions — for the lead
 
