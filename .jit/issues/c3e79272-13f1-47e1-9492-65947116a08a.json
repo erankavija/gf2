@@ -2,16 +2,22 @@
   "id": "c3e79272-13f1-47e1-9492-65947116a08a",
   "title": "Build charpoly minpoly reference lane",
   "description": "Create accepted reference rows for charpoly and minpoly.\n\n## Success Criteria\n\n- [hard] LinBox/NTL/FLINT reference rows exist where accepted by S1.\n- [hard] Unsupported references are excluded with evidence.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "high",
-  "assignee": null,
+  "assignee": "agent:project-lead",
   "dependencies": [],
   "gates_required": [
     "code-review",
     "cargo-ci",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-04T10:48:04.527351223Z"
+    }
+  },
   "context": {},
   "documents": [
     {
@@ -47,5 +53,5 @@
     "story:sota-polynomial-invariants"
   ],
   "created_at": "2026-04-30T06:43:02.844003240+00:00",
-  "updated_at": "2026-05-04T10:35:20.532612312+00:00"
+  "updated_at": "2026-05-04T11:04:21.241876903+00:00"
 }
