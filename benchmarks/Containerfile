@@ -146,6 +146,27 @@ RUN curl -fsSL -o /tmp/linbox.tar.gz \
  && rm -rf /tmp/linbox-${LINBOX_VERSION} /tmp/linbox.tar.gz
 # === linbox end ===
 
+# === m4rie begin ===
+# ---------------------------------------------------------------------------
+# M4RIE 20250128 — dense GF(2^e) linear algebra (the M4RM-NJ reference) for
+# 2 ≤ e ≤ 16. Depends on M4RI (built directly above) for the underlying
+# GF(2) bit-matrix layer and the Newton-John tables. Promoted as the
+# canonical reference for GF(2^4)/GF(2^8)/GF(2^16) under the SOTA reference
+# acceptance protocol (jit:507b0036).
+# ---------------------------------------------------------------------------
+ARG M4RIE_VERSION=20250128
+ARG M4RIE_SHA256=96f1adafd50e6a0b51dc3aa1cb56cb6c1361ae7c10d97dc35c3fa70822a55bd7
+RUN curl -fsSL -o /tmp/m4rie.tar.gz \
+        https://github.com/malb/m4rie/releases/download/${M4RIE_VERSION}/m4rie-${M4RIE_VERSION}.tar.gz \
+ && echo "${M4RIE_SHA256}  /tmp/m4rie.tar.gz" | sha256sum -c - \
+ && tar -C /tmp -xf /tmp/m4rie.tar.gz \
+ && cd /tmp/m4rie-${M4RIE_VERSION} \
+ && ./configure --prefix=/usr/local --disable-static \
+ && make -j"$(nproc)" \
+ && make install \
+ && rm -rf /tmp/m4rie-${M4RIE_VERSION} /tmp/m4rie.tar.gz
+# === m4rie end ===
+
 # Refresh the loader cache so the freshly installed shared libs are picked up.
 RUN ldconfig
 
@@ -154,12 +175,15 @@ RUN ldconfig
 # ---------------------------------------------------------------------------
 WORKDIR /work
 
-# Compile-time smoke check: verify all three libraries are visible to
-# pkg-config so a broken image fails to build, not at run time.
+# Compile-time smoke check: verify all four libraries are visible to
+# pkg-config or as raw header/library files, so a broken image fails to
+# build, not at run time.
 RUN pkg-config --cflags fflas-ffpack givaro \
  && pkg-config --libs fflas-ffpack givaro \
  && test -f /usr/local/include/m4ri/m4ri.h \
- && test -f /usr/local/lib/libm4ri.so
+ && test -f /usr/local/lib/libm4ri.so \
+ && test -f /usr/local/include/m4rie/m4rie.h \
+ && test -f /usr/local/lib/libm4rie.so
 
 # Default command lists the installed reference-library versions so
 # `podman run --rm gf2-bench:ref` is self-documenting.
@@ -170,6 +194,7 @@ echo 'gcc:        '$(gcc -dumpfullversion -dumpversion); \
 echo 'g++:        '$(g++ -dumpfullversion -dumpversion); \
 echo 'givaro/fflas: '$(pkg-config --modversion givaro fflas-ffpack 2>/dev/null | paste -sd ' / ' -); \
 echo 'm4ri:       '$(grep -E '#define +M4RI_VERSION ' /usr/local/include/m4ri/m4ri_config.h 2>/dev/null | awk '{print $3}' | tr -d '\"'); \
+echo 'm4rie:      '$(grep -E '#define +M4RIE_VERSION ' /usr/local/include/m4rie/m4rie.h 2>/dev/null | awk '{print $3}' | tr -d '\"'); \
 echo 'openblas:   '$(dpkg -s libopenblas-dev | awk '/^Version:/{print $2}'); \
 echo 'gmp:        '$(dpkg -s libgmp-dev    | awk '/^Version:/{print $2}'); \
 "]
