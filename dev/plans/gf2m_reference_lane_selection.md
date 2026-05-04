@@ -6,9 +6,13 @@
 > **Authority:** `dev/plans/sota_reference_acceptance_protocol.md` (§ 3 five
 >   criteria, § 6 correctness oracle, § 8 / § 9 exclusion classes).
 > **Decision authority for exclusions:** the user, via the lead's escalation
->   path. This document **proposes** exclusions and surfaces precise
->   language for the lead to escalate; it does **not** itself grant user
->   approval.
+>   path. This document originally **proposed** exclusions for the lead to
+>   escalate; the lead executed the escalation on 2026-05-04 and the user's
+>   decisions are now recorded in § 6 (Acceptance) and § 7 (resolved Open
+>   questions). The proposals listed in § 4 are no longer pending — they
+>   are either approved-as-stated or have been re-shaped by the user
+>   (proposal #1 rejected in favour of harnessing GF(2^32) via task
+>   `b13799ac`).
 
 ## 1. Purpose
 
@@ -80,7 +84,7 @@ for user approval).
 
 | Operation | GF(2^8) | GF(2^16) | GF(2^32) |
 |---|---|---|---|
-| `matmul` (`fgemm`) | **m4rie 20250128** (`dev/plans/m4rie_promotion_evidence.md` *Target-matrix designation*; CSV rows in `dev/bench_results/2026-05-04-507b0036-m4rie-reference.csv` lines 8-13 for GF(2^8) and 14-19 for GF(2^16)) | **m4rie 20250128** (same evidence doc; CSV rows lines 14-19 for GF(2^16)) | EXCLUDED:`unbuildable-on-R3-container`:M4RIE's `gf2e_init` rejects `m > 16` (upstream `m4rie/gf2e.c` table covers only degrees 2-16). No candidate harness exists today. See § 4 proposal #1. |
+| `matmul` (`fgemm`) | **m4rie 20250128** (`dev/plans/m4rie_promotion_evidence.md` *Target-matrix designation*; CSV rows in `dev/bench_results/2026-05-04-507b0036-m4rie-reference.csv` lines 8-13 for GF(2^8) and 14-19 for GF(2^16)) | **m4rie 20250128** (same evidence doc; CSV rows lines 14-19 for GF(2^16)) | **{NTL `mat_GF2E`, FLINT `fq_nmod_mat`} candidate pool** (both libraries are pinned in `benchmarks/Containerfile` and the harness work is filed as task `b13799ac`; final pick within the pool is one of `b13799ac`'s `[hard]` criteria — both candidates support `m=32` and either is acceptable per the protocol § 3 five-criteria checklist). The canonical-reference designation in `analyze.py`'s `reference_lib_for(field='gf2m', m=32)` is set when `b13799ac` lands. Marker: `not-yet-harnessed` until then (per protocol § 9 amendment 2). |
 | `echelon` (RREF) | EXCLUDED:`no-independent-oracle`:protocol § 6 requires bitwise canonical RREF equality vs an *independent* reference; no scalar GF(2^m) RREF exists in the workspace, and M4RIE was explicitly down-scoped out of echelon in Wave 2. See § 4 proposal #2. | same as GF(2^8). | same as GF(2^8) — and additionally M4RIE itself is unsupported at m > 16 (compounds with proposal #1 / #2). |
 | `invert` | EXCLUDED:`no-independent-oracle`:protocol § 6 row "invert" requires bitwise equality of `A^{-1}` after canonical reduction vs an independent reference; no GF(2^m) inverse oracle is harnessed. M4RIE provides `mzed_invert` but cannot serve as its own oracle. | same as GF(2^8). | same as GF(2^8) — compounds with proposal #1. |
 | `solve` (`Ax=b`) | EXCLUDED:`no-independent-oracle`:protocol § 6 row "solve" requires equality of `x` after canonical reduction; no independent GF(2^m) solver oracle is harnessed. | same as GF(2^8). | same as GF(2^8) — compounds with proposal #1. |
@@ -361,6 +365,7 @@ Per the dispatch contract for `9a715d75`:
   --doc-type design --label "GF(2^m) reference lane decision"`
   (parent story).
 
-The consumer issue `4c0d0202` is *not* attached at this point — it
-ingests this document only after the lead's escalation resolves the
-exclusion proposals in § 4.
+The lead's 2026-05-04 escalation resolved the § 4 exclusion proposals
+(see § 6 *User decision recorded*), so consumer issue `4c0d0202` may
+attach this document and ingest its decisions as soon as Wave 4
+dispatches. The Wave-3 closure of 9a715d75 unblocks `4c0d0202`.
