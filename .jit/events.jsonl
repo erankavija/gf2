@@ -3669,3 +3669,4 @@
 {"type":"issue_claimed","id":"65481d94-e0d0-49af-87b8-60a9d7d474f1","issue_id":"2403c054-8abd-4e0e-a41d-468b0837e9ad","timestamp":"2026-05-04T15:07:17.730999749Z","assignee":"agent:claude-wt-2403c054"}
 {"type":"issue_state_changed","id":"8b1d9cbd-044a-41bd-81bf-e719bfcd1909","issue_id":"eb57f944-9d82-4bbe-8b58-68eae7622654","timestamp":"2026-05-04T15:07:20.104401168Z","from":"ready","to":"in_progress"}
 {"type":"issue_claimed","id":"17baa014-f48c-4d67-a831-ee1623296636","issue_id":"eb57f944-9d82-4bbe-8b58-68eae7622654","timestamp":"2026-05-04T15:07:20.107398719Z","assignee":"agent:claude-wt-eb57f944"}
+{"type":"gate_passed","id":"31512c6c-9fa3-42be-812d-fac86951049f","issue_id":"2403c054-8abd-4e0e-a41d-468b0837e9ad","timestamp":"2026-05-04T16:02:33.592428024Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
