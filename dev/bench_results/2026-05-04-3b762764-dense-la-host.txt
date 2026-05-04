@@ -1,10 +1,21 @@
 # dev/bench_results/2026-05-04-3b762764-dense-la-host.txt
 # captured: 2026-05-04T10:37:56Z (worktree-only context capture)
-# NOTE: this worker did NOT execute a fresh ./benchmarks/run.sh.
-#       All performance numbers in the companion evidence doc are sourced
-#       from existing pinned-container CSVs published in dev/bench_results.
-#       This file records the host the worker ran on, NOT the host that
-#       produced the cited measurements. See § Setup of the evidence doc.
+#
+# SCOPE: this file describes the host of the **original 2026-04-26
+#        baseline aggregation worker** for issue 3b762764. That worker
+#        did NOT run ./benchmarks/run.sh; the rows it cited live in
+#        2026-05-04-3b762764-dense-la-reference.csv and are exact copies
+#        of the 2026-04-26 pinned-container baseline.
+#
+#        A separate post-PPC pinned bench-day re-measurement landed on
+#        2026-05-04 and is published as
+#        dev/bench_results/2026-05-04-3b762764-dense-la-fresh.csv. That
+#        bench-day was executed under the same pinned container
+#        (gf2-bench:ref) on the same AMD Ryzen 9 5900X / Zen-3 host as
+#        the 2026-04-26 baseline — see the
+#        "Update 2026-05-04 (post-bench-day)" note in
+#        dev/bench_results/2026-05-04-3b762764-dense-la-post-gemm.md
+#        for the source of truth.
 
 ## uname
 Linux fraktaali 7.0.3-arch1-1 #1 SMP PREEMPT_DYNAMIC Thu, 30 Apr 2026 18:41:12 +0000 x86_64 GNU/Linux

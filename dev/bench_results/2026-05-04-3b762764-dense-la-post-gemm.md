@@ -55,11 +55,14 @@ are like-for-like across the 2026-04-26 pinned baseline (single-host,
 single-container, single-bench-day).
 
 **Cross-host posture (per session-2 handoff trap 2):** The 2026-04-26
-baseline pre-dates the perf-stat-on-promotion convention. No fresh
-perf-stat is captured here because no fresh measurement was executed.
-This document does not introduce a new perf-stat capture; the existing
-2026-04-28 perf-stat artefacts (`b2`, `c1`, `c3-recovery`) remain the
-canonical microarch-state evidence for the bench-day baseline.
+baseline pre-dates the perf-stat-on-promotion convention. The
+2026-05-04 lead-direct fresh measurement also runs on the Zen-3 anchor
+host but does not introduce a fresh perf-stat capture — counter
+evidence is not load-bearing for the *Cells outside 1.5× contract*
+designation, and the fresh fflas-ffpack rows match the 2026-04-26
+baseline within run-to-run noise (~1-3%). The existing 2026-04-28
+perf-stat artefacts (`b2`, `c1`, `c3-recovery`) remain the canonical
+microarch-state evidence for the bench-day cells.
 
 **Aggregated CSV artefact:**
 `dev/bench_results/2026-05-04-3b762764-dense-la-reference.csv` — combines

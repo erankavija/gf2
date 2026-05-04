@@ -3,11 +3,22 @@
 # JIT issue: 3b762764 — Re-run dense LA post-GEMM scorecard
 # Date: 2026-05-04
 #
+# Status (post-bench-day, 2026-05-04):
+#   This file is the **2026-04-26 baseline aggregation** assembled by the
+#   original worker on 2026-05-04. A separate post-PPC pinned bench-day
+#   re-measurement landed alongside it on the same date and is published
+#   as `dev/bench_results/2026-05-04-3b762764-dense-la-fresh.csv`. The
+#   evidence markdown
+#   (`dev/bench_results/2026-05-04-3b762764-dense-la-post-gemm.md`)
+#   reflects the post-bench-day state — see its
+#   "Update 2026-05-04 (post-bench-day)" note for the source of truth.
+#
 # Aggregated reference + gf2-side rows for the dense LA scorecard
 # (operations: pluq/PLE, echelon, invert, solve; full-rank `uniform` and
-# rank-deficient `deficient` regimes). No fresh benchmark run was executed
-# by this worker — every row below is an exact copy of an existing
-# pinned-container row from the 2026-04-26 baseline pair:
+# rank-deficient `deficient` regimes). The worker that produced this CSV
+# did NOT run `./benchmarks/run.sh` itself — every row below is an exact
+# copy of an existing pinned-container row from the 2026-04-26 baseline
+# pair:
 #
 #   * Reference rows (lib in {fflas-ffpack, m4ri}):
 #     dev/bench_results/2026-04-26-reference.csv
@@ -40,9 +51,13 @@
 # Cross-host posture (per `dev/active/97bf0879-handoff-2.md`):
 #   The 2026-04-26 baseline was captured under run.sh inside the pinned
 #   container on AMD Ryzen 9 5900X (Zen 3). All Wave 2/3 reference re-runs
-#   on this same host are like-for-like comparable. This worker's host
-#   metadata is in the companion `2026-05-04-3b762764-dense-la-host.txt`,
-#   recorded for completeness only — no fresh measurement was executed.
+#   on this same host are like-for-like comparable. The original
+#   aggregation worker's host metadata is in the companion
+#   `2026-05-04-3b762764-dense-la-host.txt`; that host record describes
+#   the worker's machine, not the host that produced the cited rows. The
+#   2026-05-04 post-PPC bench-day re-measurement was executed on the same
+#   pinned container and host as the 2026-04-26 baseline and is published
+#   as `2026-05-04-3b762764-dense-la-fresh.csv`.
 #
 # Schema (from benchmarks/README.md § CSV schema):
 #   lib,operation,field,m,k,n,rank_regime,seed,wall_ns,throughput_ops
