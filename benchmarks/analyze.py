@@ -86,6 +86,7 @@ OPERATION_ORDER = [
 FIELD_FAMILY = {
     "GF(2)": "gf2",
     "GF(7)": "gfp_small",
+    "GF(31)": "gfp_small",
     "GF(251)": "gfp_small",
     "GF(65521)": "gfp_medium",
     "GF(2^31-1)": "gfp_medium",
@@ -203,6 +204,7 @@ def _operation_sort_key(op: str) -> Tuple[int, str]:
 # unrecognised field value so the renderer stays defensive.
 FIELD_ORDER: List[str] = [
     "GF(7)",
+    "GF(31)",
     "GF(251)",
     "GF(65521)",
     "GF(2^31-1)",
