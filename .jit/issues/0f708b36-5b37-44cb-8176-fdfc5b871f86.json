@@ -2,7 +2,7 @@
   "id": "0f708b36-5b37-44cb-8176-fdfc5b871f86",
   "title": "Extend LinBox sparse harness with sparse_dense rows + spmv smoke",
   "description": "Extend `benchmarks/reference/linbox_sparse_bench.cpp` with `sparse_dense,GF(p)` rows via `SparseMatrix::applyLeft` against a dense `BlasMatrix` for each prime in `{7, 251, 65521, 2^31-1}`. Add a LinBox-side spmv × GF(2) smoke oracle to `benchmarks/reference/sparse_smoke.cpp` so the smoke chain has two independent witnesses (fflas + LinBox) for the GF(2) spmv cell. Closes the LinBox cross-check gaps left by 47698404 scorecard § 5 #7.\n\n## Background\n\n47698404's scorecard § 5 #7 documents two LinBox cross-check gaps the design doc named but the harness doesn't currently emit:\n- `sparse×dense × GF(p)` LinBox `applyLeft` cross-check (design `dev/plans/sparse_benchmark_corpus.md:169`)\n- `spmv × GF(2)` LinBox smoke at n=16 (design `dev/plans/sparse_benchmark_corpus.md:162`)\n\nToday `linbox_sparse_bench.cpp:248-272` emits `spmv` and `sparse-elim` rows only. `sparse_smoke.cpp` uses fflas + scalar reference for GF(2) spmv.\n\n## Success Criteria\n\n- [hard] `linbox_sparse_bench.cpp` gains a `bench_sparse_dense<Field>` template emitting `sparse_dense,GF(*)` rows for {GF(7), GF(251), GF(65521), GF(2^31-1)} at n ∈ {1024, 4096}.\n- [hard] `sparse_smoke.cpp` gains a `linbox_oracle_spmv` template wired into `main` for GF(2), independent witness alongside the existing fflas oracle.\n- [hard] After regenerating `2026-05-04-47698404-sparse-reference.csv`, the file contains `linbox,sparse_dense,GF(7)` / `linbox,sparse_dense,GF(251)` / `linbox,sparse_dense,GF(65521)` / `linbox,sparse_dense,GF(2^31-1)` rows.\n- [hard] `benchmarks/smoke.sh` invocation passes with the extended sparse_smoke.\n- [hard] 47698404 scorecard updated to fold the LinBox numbers into § 3 sparse×dense × GF(p) tables and § 6 verdict cells.\n- [hard] `cargo-ci`, `code-review`, `doc-review` pass.\n\n## References\n\n- 47698404 scorecard § 5 #7: `dev/bench_results/2026-05-04-47698404-sparse-scorecard.md`\n- Design doc § 4: `dev/plans/sparse_benchmark_corpus.md:162,169`\n- Existing LinBox harness: `benchmarks/reference/linbox_sparse_bench.cpp:248-272`",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:claude",
   "dependencies": [],
@@ -12,6 +12,11 @@
     "doc-review"
   ],
   "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-05T04:44:14.610398487Z"
+    },
     "doc-review": {
       "status": "passed",
       "updated_by": "agent:project-lead",
@@ -21,11 +26,6 @@
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-05-04T22:39:43.168817759Z"
-    },
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-05T04:44:14.610398487Z"
     }
   },
   "context": {},
@@ -37,5 +37,5 @@
     "story:sota-sparse-fieldmatrix"
   ],
   "created_at": "2026-05-04T22:04:37.363067033+00:00",
-  "updated_at": "2026-05-05T04:52:14.770210731+00:00"
+  "updated_at": "2026-05-05T04:56:51.541864626+00:00"
 }
