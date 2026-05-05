@@ -115,6 +115,30 @@ impl<V: crate::gf2m::UintExt> SimdVecOps for crate::gf2m::Gf2mElement_<V> {}
 // Blanket impl for Fp<P>: exact specialisations win, then generic Montgomery.
 // ---------------------------------------------------------------------------
 
+// IMPORTANT — dispatch ordering invariant (Issue 3d06224c, regression guard).
+//
+// The `try_simd_*_vec` methods below dispatch most-specific first to preserve
+// the Mersenne31 (`P = 2^31 − 1`) and Fermat-prime (`P = 65537`) fast paths
+// over the generic Montgomery AVX2 lane. The `if P == M31` and
+// `if P == 65537` exact tests MUST remain ABOVE the generic
+// `fp_generic_try_*` fallback (which itself is internally guarded by
+// `fp_generic_enabled` so it never claims either specialised prime).
+//
+// New per-prime dispatch branches (e.g. small-prime packed kernel for
+// `p ≤ 251`, u16-packed kernel for `p < 65536`) MUST be inserted BELOW the
+// existing exact-prime tests but ABOVE the generic fallback, and MUST also
+// be excluded by `fp_generic_enabled` so the dispatch lattice stays sound.
+// Re-ordering or removing the existing exact tests would silently route
+// Mersenne31 / Fermat traffic through the generic Montgomery kernel and
+// regress the `WITHIN_1.5X` family verdict in
+// `dev/bench_results/2026-05-04-609855d9-gfp-by-family.md`.
+//
+// The regression test `m31_simd_mul_matches_scalar_across_boundary_lens`
+// and the dispatch-classification test
+// `specialized_primes_do_not_use_generic_montgomery_path` in this file's
+// `tests` module guard this invariant at the unit level; the criterion
+// benchmark `mersenne_gemm_regression` (`benches/mersenne_gemm_regression.rs`)
+// guards it at the throughput level.
 impl<const P: u64> SimdVecOps for Fp<P> {
     #[inline]
     fn try_simd_mul_vec(a: &[Self], b: &[Self]) -> Option<Vec<Self>> {
@@ -430,6 +454,56 @@ mod tests {
         // const parameters.
         assert!(!fp_generic_enabled::<2>());
         assert!(!fp_generic_enabled::<{ (1u64 << 63) + 25 }>());
+    }
+
+    /// Regression guard for issue `3d06224c` (story `cc5de315`, "Protect
+    /// Mersenne fast path"). Asserts that the `if P == M31` dispatch
+    /// branch in `<Fp<P> as SimdVecOps>::try_simd_mul_vec` is reachable on
+    /// AVX2 hosts and that, on every word-boundary-relevant length, the
+    /// SIMD-batched Mersenne31 multiply matches the scalar element-wise
+    /// product bit-exactly. Sibling issues `662f7a15` and `9e12659b`
+    /// concurrently extend the dispatch ladder; this test fails if either
+    /// of them accidentally re-orders the ladder so Mersenne31 traffic is
+    /// routed through the generic Montgomery AVX2 kernel (which would
+    /// regress the `WITHIN_1.5X` family verdict per
+    /// `dev/bench_results/2026-05-04-609855d9-gfp-by-family.md`).
+    #[test]
+    #[cfg(feature = "simd")]
+    fn m31_simd_mul_matches_scalar_across_boundary_lens() {
+        if crate::simd::maybe_mersenne().is_none() {
+            // Non-AVX2 host; the fast path is genuinely unreachable here
+            // and the dispatch ordering is therefore moot at runtime.
+            return;
+        }
+
+        const P: u64 = M31;
+
+        for &len in WORD_BOUNDARY_LENS {
+            let a: Vec<Fp<P>> = (0..len as u64)
+                .map(|i| Fp::<P>::new(i.wrapping_mul(2_654_435_761).wrapping_add(11)))
+                .collect();
+            let b: Vec<Fp<P>> = (0..len as u64)
+                .map(|i| Fp::<P>::new(i.wrapping_mul(40_503).wrapping_add(7)))
+                .collect();
+
+            // Dispatch must reach the M31-specialised SIMD path, never
+            // the generic Montgomery AVX2 lane.
+            let got = <Fp<P> as SimdVecOps>::try_simd_mul_vec(&a, &b)
+                .expect("M31 dispatch must yield Some on AVX2 host");
+            assert_eq!(
+                got.len(),
+                len,
+                "len mismatch on M31 SIMD multiply, len={len}",
+            );
+
+            for i in 0..len {
+                let expected = a[i] * b[i];
+                assert_eq!(
+                    got[i], expected,
+                    "M31 SIMD multiply diverges from scalar at len={len}, i={i}",
+                );
+            }
+        }
     }
 
     #[test]
