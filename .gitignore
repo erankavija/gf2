@@ -55,6 +55,7 @@ benchmarks/reference/ntl_bench
 benchmarks/reference/flint_bench
 benchmarks/reference/ntl_flint_smoke
 benchmarks/reference/charpoly_minpoly_smoke
+benchmarks/reference/ntl_gf2pow32_smoke
 
 # Charon intermediate output
 target/charon/
