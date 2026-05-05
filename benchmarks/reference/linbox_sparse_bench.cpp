@@ -341,10 +341,10 @@ static void bench_sparse_dense(const Field& F,
     std::snprintf(regime_buf, sizeof(regime_buf), "density_%.6e_csr", density);
     if (early_exit) {
         std::fprintf(stderr,
-                     "[linbox_sparse_bench] WARN early_exit op=sparse_dense field=%s n=%zu\n",
+                     "[linbox_sparse_bench] WARN early_exit op=sparse×dense field=%s n=%zu\n",
                      field_label, n);
     }
-    emit_csv("sparse_dense", field_label, n, n, blockSize, regime_buf, seed, mean_ns, tput);
+    emit_csv("sparse×dense", field_label, n, n, blockSize, regime_buf, seed, mean_ns, tput);
 }
 
 template <typename Field>
