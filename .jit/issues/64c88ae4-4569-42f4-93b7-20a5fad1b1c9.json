@@ -38,6 +38,95 @@
       "label": "2026-04-26 bench results (gf2 + reference baseline)",
       "doc_type": "notes",
       "format": "markdown"
+    },
+    {
+      "path": "dev/bench_results/2026-04-30-post-ppc-delta-appendix.md",
+      "commit": null,
+      "label": "Post-PPC delta appendix (corrected scorecard)",
+      "doc_type": "evidence",
+      "format": "markdown",
+      "assets": [
+        {
+          "original_path": "2026-04-26-profile-release-delta.md",
+          "resolved_path": "dev/bench_results/2026-04-26-profile-release-delta.md",
+          "asset_type": "local",
+          "mime_type": "text/markdown",
+          "content_hash": "f4110bc8e6fb9530b148ca0bb5c0b6d8f10a2d8facbcddf495913ea405cc2372",
+          "is_shared": false
+        },
+        {
+          "original_path": "2026-04-29-2598b981-fieldmatrix-gemm-fflas-sweep.md",
+          "resolved_path": "dev/bench_results/2026-04-29-2598b981-fieldmatrix-gemm-fflas-sweep.md",
+          "asset_type": "local",
+          "mime_type": "text/markdown",
+          "content_hash": "c39f868fc494bfe0b9feac4d41c3527b2612d42fd2c3d2daf9465a782e41b242",
+          "is_shared": false
+        },
+        {
+          "original_path": "2026-04-29-strassen-matmul-crossover.md",
+          "resolved_path": "dev/bench_results/2026-04-29-strassen-matmul-crossover.md",
+          "asset_type": "local",
+          "mime_type": "text/markdown",
+          "content_hash": "f44b0e0c34d05e232b69d637e8c5ac7b0023868b4dbd38311628e44e874df804",
+          "is_shared": false
+        },
+        {
+          "original_path": "2026-04-26.md",
+          "resolved_path": "dev/bench_results/2026-04-26.md",
+          "asset_type": "local",
+          "mime_type": "text/markdown",
+          "content_hash": "f22f42270c983790cf99951479babb69169ccf4425dabc9bf6f55389423d3da9",
+          "is_shared": false
+        },
+        {
+          "original_path": "2026-04-29-7c954fb5-criterion.txt",
+          "resolved_path": "dev/bench_results/2026-04-29-7c954fb5-criterion.txt",
+          "asset_type": "local",
+          "mime_type": "text/plain",
+          "content_hash": "79aac44afac9cc8f3d3cde08bf0680603f2a14e2872819e554f052b7537a3b38",
+          "is_shared": false
+        },
+        {
+          "original_path": "2026-04-29-gf2m-batch-fieldmatrix-gemm.md",
+          "resolved_path": "dev/bench_results/2026-04-29-gf2m-batch-fieldmatrix-gemm.md",
+          "asset_type": "local",
+          "mime_type": "text/markdown",
+          "content_hash": "c61f7d463421a9730102085745afa4a0631c07014c6d871f0760f6a6c71dfc97",
+          "is_shared": false
+        },
+        {
+          "original_path": "2026-04-27-asm-audit.md",
+          "resolved_path": "dev/bench_results/2026-04-27-asm-audit.md",
+          "asset_type": "local",
+          "mime_type": "text/markdown",
+          "content_hash": "f8a0f2a5226e5d78b1eb31ff8e33e339ace2ac79e58ce733292760e3d1d2770e",
+          "is_shared": false
+        },
+        {
+          "original_path": "2026-04-29-3abb755e-benchmark-gap-closure.md",
+          "resolved_path": "dev/bench_results/2026-04-29-3abb755e-benchmark-gap-closure.md",
+          "asset_type": "local",
+          "mime_type": "text/markdown",
+          "content_hash": "6c9fe00bcb214820043e64da80fa05657e6a83e94cb8d56d1e8d58bab5082295",
+          "is_shared": false
+        },
+        {
+          "original_path": "2026-04-26-uncompetitiveness-profile.md",
+          "resolved_path": "dev/bench_results/2026-04-26-uncompetitiveness-profile.md",
+          "asset_type": "local",
+          "mime_type": "text/markdown",
+          "content_hash": "227a57cfae3e0ab8e1fbf6959cbd0962405b3d38570032c899c70c484d27c169",
+          "is_shared": false
+        },
+        {
+          "original_path": "../active/babcf05e-handoff-5.md",
+          "resolved_path": "dev/active/babcf05e-handoff-5.md",
+          "asset_type": "local",
+          "mime_type": "text/markdown",
+          "content_hash": "036d0cffac8fe40d7ab192048e4859cebec517089e3ea75e604aec1ef9c113e6",
+          "is_shared": false
+        }
+      ]
     }
   ],
   "labels": [
@@ -45,5 +134,5 @@
     "type:story"
   ],
   "created_at": "2026-02-23T19:20:28.214456832+00:00",
-  "updated_at": "2026-04-30T14:18:03.409520033+00:00"
+  "updated_at": "2026-05-05T11:06:35.694327151+00:00"
 }

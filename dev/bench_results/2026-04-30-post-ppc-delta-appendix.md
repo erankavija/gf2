@@ -51,7 +51,7 @@ row links to its source-of-truth evidence document:
 
 This appendix uses the same five-token cell-status vocabulary that
 [`2026-04-26.md`](2026-04-26.md) is updated to publish under JIT
-`02ace293`: **measured**, **N/A**, **slow/nightly**, **harness-scope
+`02ace293`: **measured**, **N/A**, **slow-or-nightly**, **harness-scope
 gap**, **optimization gap**. See the legend section in
 [`2026-04-26.md`](2026-04-26.md) for the canonical definitions; this
 document does not redefine them.
@@ -87,9 +87,9 @@ Reference: `M4RI` (same column as in
 |---|---|---:|---:|---:|---:|---:|---|---|
 | matmul | n=1024 (uniform) | 387.462 Gops/s | 1,283 Gops/s | 3.31× | 3,020.762 Gops/s | 0.42× | optimization gap | [E2] |
 | matmul | n=4096 (uniform) | 1,092.904 Gops/s | 1,927 Gops/s | 1.76× | 6,272.592 Gops/s | 0.31× | optimization gap | [E2] |
-| matmul | n=2048 (auto dispatch) | harness-scope gap (size not in [`2026-04-26.md`](2026-04-26.md)) | 1,622 Gops/s | n/a | not measured at n=2048 in [`2026-04-26.md`](2026-04-26.md) | n/a | measured (PPC-only size) | [E2] |
-| matmul | n=8192 (auto dispatch) | harness-scope gap (size not in [`2026-04-26.md`](2026-04-26.md)) | 2,134 Gops/s | n/a | not measured at n=8192 in [`2026-04-26.md`](2026-04-26.md) | n/a | measured (PPC-only size) | [E2] |
-| transpose | n=4096 | harness-scope gap (no transpose row in [`2026-04-26.md`](2026-04-26.md)) | ≥10× criterion-gate met (worker-reported ~65× over `ppc-v0-2026-04-27`) | ≥65× over the PPC-baseline transpose, no entry in pre-PPC row | N/A (no M4RI transpose comparison populated) | n/a | measured (PPC-only operation) | [E8] |
+| matmul | n=2048 (auto dispatch) | harness-scope gap (size not in [`2026-04-26.md`](2026-04-26.md)) | 1,622 Gops/s | n/a | not measured at n=2048 in [`2026-04-26.md`](2026-04-26.md) | n/a | measured | [E2] |
+| matmul | n=8192 (auto dispatch) | harness-scope gap (size not in [`2026-04-26.md`](2026-04-26.md)) | 2,134 Gops/s | n/a | not measured at n=8192 in [`2026-04-26.md`](2026-04-26.md) | n/a | measured | [E2] |
+| transpose | n=4096 | harness-scope gap (no transpose row in [`2026-04-26.md`](2026-04-26.md)) | ≥10× criterion-gate met (worker-reported ~65× over `ppc-v0-2026-04-27`) | ≥65× over the PPC-baseline transpose, no entry in pre-PPC row | N/A (no M4RI transpose comparison populated) | n/a | measured | [E8] |
 
 Notes:
 
@@ -133,15 +133,15 @@ used in [`2026-04-26.md`](2026-04-26.md)).
 |---|---|---|---:|---:|---:|---:|---:|---|---|
 | fgemm | 256³ | GF(7) | 0.528 Gops/s | 3.708 Gops/s | 7.02× | 50.752 Gops/s | 0.073× | optimization gap | [E3] |
 | fgemm | 256³ | GF(251) | 0.593 Gops/s | 3.704 Gops/s | 6.25× | 128.480 Gops/s | 0.029× | optimization gap | [E3] |
-| fgemm | 256³ | GF(65521) | 0.590 Gops/s | 3.695 Gops/s | 6.27× | 31.615 Gops/s | 0.117× | within 10× | [E3] |
-| fgemm | 256³ | GF(2^31-1) | 0.595 Gops/s | 3.696 Gops/s | 6.21× | 2.126 Gops/s | 1.739× | measured (gf2 ahead of pinned fflas) | [E3] |
+| fgemm | 256³ | GF(65521) | 0.590 Gops/s | 3.695 Gops/s | 6.27× | 31.615 Gops/s | 0.117× | optimization gap | [E3] |
+| fgemm | 256³ | GF(2^31-1) | 0.595 Gops/s | 3.696 Gops/s | 6.21× | 2.126 Gops/s | 1.739× | measured | [E3] |
 | fgemm | 1024³ | GF(7) | 0.527 Gops/s | 3.838 Gops/s | 7.29× | 96.233 Gops/s | 0.040× | optimization gap | [E3] |
 | fgemm | 1024³ | GF(251) | 0.590 Gops/s | 3.838 Gops/s | 6.50× | 138.317 Gops/s | 0.028× | optimization gap | [E3] |
 | fgemm | 1024³ | GF(65521) | 0.557 Gops/s | 3.842 Gops/s | 6.89× | 43.381 Gops/s | 0.089× | optimization gap | [E3] |
-| fgemm | 1024³ | GF(2^31-1) | 0.590 Gops/s | 3.822 Gops/s | 6.48× | 2.341 Gops/s | 1.633× | measured (gf2 ahead of pinned fflas) | [E3] |
-| fgemm | 1024×1024×8 | GF(2^31-1) | 0.644 Gops/s | 3.860 Gops/s | 6.00× | harness-scope gap (rectangular not covered by `fflas_bench.cpp`) | n/a | measured (no rectangular reference) | [E3] |
-| fgemm | 1024×1024×32 | GF(2^31-1) | 0.627 Gops/s | 3.867 Gops/s | 6.17× | harness-scope gap (rectangular not covered by `fflas_bench.cpp`) | n/a | measured (no rectangular reference) | [E3] |
-| fgemm | 4096³ | GF(7) / GF(251) / GF(65521) / GF(2^31-1) | PENDING in [`2026-04-26.md`](2026-04-26.md) (deferred at baseline) | slow/nightly: not re-measured for this appendix | n/a | varies (see [`2026-04-26.md`](2026-04-26.md)) | n/a | slow/nightly | [E3] |
+| fgemm | 1024³ | GF(2^31-1) | 0.590 Gops/s | 3.822 Gops/s | 6.48× | 2.341 Gops/s | 1.633× | measured | [E3] |
+| fgemm | 1024×1024×8 | GF(2^31-1) | 0.644 Gops/s | 3.860 Gops/s | 6.00× | harness-scope gap (rectangular not covered by `fflas_bench.cpp`) | n/a | measured | [E3] |
+| fgemm | 1024×1024×32 | GF(2^31-1) | 0.627 Gops/s | 3.867 Gops/s | 6.17× | harness-scope gap (rectangular not covered by `fflas_bench.cpp`) | n/a | measured | [E3] |
+| fgemm | 4096³ | GF(7) / GF(251) / GF(65521) / GF(2^31-1) | PENDING in [`2026-04-26.md`](2026-04-26.md) (deferred at baseline) | slow-or-nightly: not re-measured for this appendix | n/a | varies (see [`2026-04-26.md`](2026-04-26.md)) | n/a | slow-or-nightly | [E3] |
 
 Notes:
 
@@ -164,7 +164,7 @@ Notes:
   numbers from [`2026-04-26.md`](2026-04-26.md) for like-for-like
   comparison with the original baseline, even though `[E3]` also
   reports a host-fflas column.
-- The `fgemm/4096³` row is `slow/nightly` per `[E3]`'s Deferred-cells
+- The `fgemm/4096³` row is `slow-or-nightly` per `[E3]`'s Deferred-cells
   section — Criterion would need ≥ 36 s per iteration on this host.
 
 ## GF(2^m) deltas (`FieldMatrix::gemm` and batch wide-clmul)
@@ -184,15 +184,15 @@ The deltas below are therefore composed against:
 
 | operation | shape | field | pre (gf2-core) | post-PPC (gf2-core) | delta ratio (post / pre) | external reference | gf2-core / reference | cell status | source |
 |---|---|---|---:|---:|---:|---:|---:|---|---|
-| fgemm | n=64 | GF(2^8) | 36.455 Mops/s | 182.48 Mops/s (`64×64×64` `batch_gemm`) | 5.01× | no comparable hard reference yet (fflas does not enumerate GF(2^m)) | n/a | measured (no external reference) | [E4] |
-| fgemm | n=64 | GF(2^16) | 32.548 Mops/s | 186.88 Mops/s (`64×64×64` `batch_gemm`) | 5.74× | no comparable hard reference yet | n/a | measured (no external reference) | [E4] |
-| fgemm | `128×32×128` | GF(2^8) | harness-scope gap (no `128×32×128` cell at baseline) | 164.72 Mops/s | n/a | reference column: `scalar_eager` 12.326 Mops/s, batch / scalar = **13.36×** | n/a | measured (PPC-only shape) | [E4] |
-| fgemm | `128×32×128` | GF(2^16) | harness-scope gap (no `128×32×128` cell at baseline) | 297.05 Mops/s | n/a | reference column: `scalar_eager` 19.523 Mops/s, batch / scalar = **15.22×** | n/a | measured (PPC-only shape) | [E4] |
-| fgemm | `128×32×128` | GF(2^32) | harness-scope gap (`GF(2^32)` is one of the two field-coverages explicitly handed off from `64c88ae4` to `97bf0879`) | 275.80 Mops/s | n/a | reference column: `scalar_eager` 17.897 Mops/s, batch / scalar = **15.41×** | n/a | measured (PPC-only field + shape) | [E4] |
-| fgemm | n=1024 / n=256 / `1024×1024×{8,32}` | GF(2^8) / GF(2^16) | 36.075–36.429 Mops/s ([`2026-04-26.md`](2026-04-26.md) § `fgemm × GF(2^8)`) | slow/nightly: a `scalar_eager` reference at `n=1024` is too expensive for the fast agent lane; correctness covered by `test_gf2m_batch_gemm_covers_64c88ae4_rectangular_shapes` per `[E4]` | n/a | no comparable hard reference yet | n/a | slow/nightly (production path covered by correctness test, not by speed bench in this evidence pass) | [E4] |
-| C1 batch wide-clmul mul/square (geomean) | m ∈ {8, 16, 32} | GF(2^m) (kernel-level, not `FieldMatrix`) | `pclmulqdq_barrett_loop_v0` baseline (criterion-1.5x gate) | `gf2m_batch_unroll4` | **5.131× geomean** over `pclmulqdq_barrett_loop_v0` (criterion-1.5x gate) | reference column: `pclmulqdq_barrett_loop_v0` is the same kernel path before PPC | n/a | measured (kernel level) | [E8] |
-| C2-style wide-clmul full mul+Barrett | `gf2m_wide9_m571` | GF(2^571) | 2.7775 µs (scalar) | 163.52 ns (`avx2+vpclmulqdq-ymm`) | **16.99×** | reference column: `gf2m_wide9_m571_scalar_clmul_barrett` is the pre-dispatch path | n/a | measured (kernel level) | [E7] |
-| C2-style raw clmul only | `gf2m_wide9_m571` | GF(2^571) | 2.6191 µs (scalar) | 22.335 ns (`avx2+vpclmulqdq-ymm`) | **117.26×** | reference column: `gf2m_wide9_m571_scalar_clmul_only` is the pre-dispatch path | n/a | measured (kernel level) | [E7] |
+| fgemm | n=64 | GF(2^8) | 36.455 Mops/s | 182.48 Mops/s (`64×64×64` `batch_gemm`) | 5.01× | no comparable hard reference yet (fflas does not enumerate GF(2^m)) | n/a | measured | [E4] |
+| fgemm | n=64 | GF(2^16) | 32.548 Mops/s | 186.88 Mops/s (`64×64×64` `batch_gemm`) | 5.74× | no comparable hard reference yet | n/a | measured | [E4] |
+| fgemm | `128×32×128` | GF(2^8) | harness-scope gap (no `128×32×128` cell at baseline) | 164.72 Mops/s | n/a | reference column: `scalar_eager` 12.326 Mops/s, batch / scalar = **13.36×** | n/a | measured | [E4] |
+| fgemm | `128×32×128` | GF(2^16) | harness-scope gap (no `128×32×128` cell at baseline) | 297.05 Mops/s | n/a | reference column: `scalar_eager` 19.523 Mops/s, batch / scalar = **15.22×** | n/a | measured | [E4] |
+| fgemm | `128×32×128` | GF(2^32) | harness-scope gap (`GF(2^32)` is one of the two field-coverages explicitly handed off from `64c88ae4` to `97bf0879`) | 275.80 Mops/s | n/a | reference column: `scalar_eager` 17.897 Mops/s, batch / scalar = **15.41×** | n/a | measured | [E4] |
+| fgemm | n=1024 / n=256 / `1024×1024×{8,32}` | GF(2^8) / GF(2^16) | 36.075–36.429 Mops/s ([`2026-04-26.md`](2026-04-26.md) § `fgemm × GF(2^8)`) | slow-or-nightly: a `scalar_eager` reference at `n=1024` is too expensive for the fast agent lane; correctness covered by `test_gf2m_batch_gemm_covers_64c88ae4_rectangular_shapes` per `[E4]` | n/a | no comparable hard reference yet | n/a | slow-or-nightly | [E4] |
+| C1 batch wide-clmul mul/square (geomean) | m ∈ {8, 16, 32} | GF(2^m) (kernel-level, not `FieldMatrix`) | `pclmulqdq_barrett_loop_v0` baseline (criterion-1.5x gate) | `gf2m_batch_unroll4` | **5.131× geomean** over `pclmulqdq_barrett_loop_v0` (criterion-1.5x gate) | reference column: `pclmulqdq_barrett_loop_v0` is the same kernel path before PPC | n/a | measured | [E8] |
+| C2-style wide-clmul full mul+Barrett | `gf2m_wide9_m571` | GF(2^571) | 2.7775 µs (scalar) | 163.52 ns (`avx2+vpclmulqdq-ymm`) | **16.99×** | reference column: `gf2m_wide9_m571_scalar_clmul_barrett` is the pre-dispatch path | n/a | measured | [E7] |
+| C2-style raw clmul only | `gf2m_wide9_m571` | GF(2^571) | 2.6191 µs (scalar) | 22.335 ns (`avx2+vpclmulqdq-ymm`) | **117.26×** | reference column: `gf2m_wide9_m571_scalar_clmul_only` is the pre-dispatch path | n/a | measured | [E7] |
 
 Notes:
 
@@ -207,7 +207,7 @@ Notes:
   issue brief's instruction for the GF(2^m) reference column. M4RIE
   is **not** cited because no PPC evidence document used it.
 - The `n=1024` / rectangular-`{8,32}` cells from [`2026-04-26.md`](2026-04-26.md)
-  § `fgemm × GF(2^m)` are classified `slow/nightly` rather than
+  § `fgemm × GF(2^m)` are classified `slow-or-nightly` rather than
   invented: `[E4]` explicitly states "they are not used for the
   fast-budget scalar-eager benchmark table because a dense scalar
   triple-loop reference at those shapes is too expensive for the
