@@ -67,3 +67,9 @@ dev/simulation_results/*.progress.jsonl
 benchmarks/reference/fflas_sparse_bench
 benchmarks/reference/linbox_sparse_bench
 benchmarks/reference/sparse_smoke
+
+# Sparse-smoke ground-truth artefact (jit:96fde7c7). Regenerated on
+# every `benchmarks/smoke.sh` invocation by the
+# `sparse_smoke_emit_expected` Cargo example. .gitignored so a stale
+# committed copy cannot mask gf2-core regressions.
+benchmarks/expected/sparse_smoke_n16.bin

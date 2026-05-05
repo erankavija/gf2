@@ -228,6 +228,19 @@ RUN ldconfig
 # ---------------------------------------------------------------------------
 WORKDIR /work
 
+# Note (jit:96fde7c7): the sparse cross-equality smoke
+# (`benchmarks/reference/sparse_smoke.cpp`) loads a gf2-core-emitted
+# ground-truth binary at `/work/expected/sparse_smoke_n16.bin` at
+# runtime. The image deliberately does NOT install a Rust toolchain
+# — that would inflate the image considerably and the regen path
+# (`cargo run --release -p gf2-coding --example
+# sparse_smoke_emit_expected --features bench-csv`) runs on the host
+# in `benchmarks/smoke.sh` (Step 0) and produces the ground-truth
+# file on disk; the bind-mount makes it visible inside the container.
+# Build-time validation of the gf2-core path is not needed in this
+# image — the `cargo-ci` gate validates gf2-core; this image only
+# carries the C++ reference libraries.
+
 # Compile-time smoke check: verify all installed libraries are visible
 # at the expected paths so a broken image fails to build, not at run
 # time. fflas-ffpack/givaro use pkg-config; m4ri/m4rie/linbox/ntl/flint
