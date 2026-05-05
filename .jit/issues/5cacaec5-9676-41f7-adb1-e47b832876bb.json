@@ -13,7 +13,18 @@
     "cargo-ci",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-05T12:09:01.390696613Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-05T12:08:54.610202694Z"
+    }
+  },
   "context": {},
   "documents": [
     {
@@ -30,5 +41,5 @@
     "story:sota-gfp-fflas"
   ],
   "created_at": "2026-04-30T06:43:02.702881720+00:00",
-  "updated_at": "2026-05-05T11:48:12.718236675+00:00"
+  "updated_at": "2026-05-05T12:09:50.946580521+00:00"
 }
