@@ -65,6 +65,15 @@ required-features = ["bench-csv"]
 name = "sparse_smoke_emit_expected"
 required-features = ["bench-csv"]
 
+# GF(2^32) matmul smoke ground-truth emitter (jit:b13799ac R2). Emits
+# `benchmarks/expected/gf2pow32_smoke_n16.bin` consumed by the C++
+# `benchmarks/reference/ntl_gf2pow32_smoke.cpp` direct gf2-core ↔ NTL
+# bitwise-equality oracle. Same `bench-csv` gate as the sparse emitter
+# so both share the `gf2-core/test-support` (bench_seed) dependency.
+[[example]]
+name = "gf2pow32_smoke_emit_expected"
+required-features = ["bench-csv"]
+
 [[bench]]
 name = "linear_codes"
 harness = false

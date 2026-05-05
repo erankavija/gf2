@@ -44,6 +44,7 @@ ITERS="${GF2_BENCH_ITERS:-5}"
 SKIP_BUILD=0
 RUN_FFLAS=1
 RUN_M4RI=1
+RUN_NTL=1
 RUN_SMOKE_EQUALITY=0
 SEED_OVERRIDE=""
 
@@ -53,6 +54,7 @@ while [[ $# -gt 0 ]]; do
         --skip-build)      SKIP_BUILD=1; shift ;;
         --skip-fflas)      RUN_FFLAS=0; shift ;;
         --skip-m4ri)       RUN_M4RI=0; shift ;;
+        --skip-ntl)        RUN_NTL=0; shift ;;
         --image-tag)       IMAGE_TAG="$2"; shift 2 ;;
         --warmup)          WARMUP="$2"; shift 2 ;;
         --iters)           ITERS="$2"; shift 2 ;;
@@ -344,6 +346,25 @@ if [[ "${RUN_SMOKE_EQUALITY}" -eq 1 ]]; then
         -v "${HERE}:/work${MOUNT_OPTS}" \
         "${IMAGE_TAG}" \
         bash -c "${COMPILE_CMD} && /work/reference/charpoly_minpoly_smoke"
+    # GF(2^32) direct smoke (issue b13799ac) — gf2-core ↔ NTL byte-equality
+    # at n=16 via the gf2-core ground-truth file mechanism. The Cargo
+    # example `gf2pow32_smoke_emit_expected` writes the gf2-core matmul
+    # output bytes; `ntl_gf2pow32_smoke` loads them and compares against
+    # NTL's `mat_GF2E` output. Direct `reference ↔ gf2-core` per the
+    # protocol § 6 criterion-3 contract.
+    if [[ "${RUN_NTL}" -eq 1 ]]; then
+        echo "[run.sh] regenerating gf2pow32_smoke_n16.bin (gf2-core ground-truth)" >&2
+        (cd "${HERE}/.." && \
+            cargo run --release -p gf2-core --features bench-csv \
+                --example gf2pow32_smoke_emit_expected \
+                -- --output benchmarks/expected/gf2pow32_smoke_n16.bin)
+        echo "[run.sh] running ntl_gf2pow32_smoke (gf2-core ↔ NTL) inside ${IMAGE_TAG}" >&2
+        "${RUNTIME}" run --rm \
+            --security-opt label=disable \
+            -v "${HERE}:/work${MOUNT_OPTS}" \
+            "${IMAGE_TAG}" \
+            bash -c "${COMPILE_CMD} && /work/reference/ntl_gf2pow32_smoke --expected /work/expected/gf2pow32_smoke_n16.bin"
+    fi
 fi
 
 if [[ "${RUN_FFLAS}" -eq 1 ]]; then
@@ -363,6 +384,24 @@ if [[ "${RUN_M4RI}" -eq 1 ]]; then
         -v "${HERE}:/work${MOUNT_OPTS}" \
         "${IMAGE_TAG}" \
         bash -c "${COMPILE_CMD} && /work/reference/m4ri_bench --seed ${SEED} --warmup ${WARMUP} --iters ${ITERS}" \
+        >> "${CSV_OUT}"
+fi
+
+# NTL bench (issue b13799ac) — emits the GF(2^32) `matmul` row plus the
+# GF(p) dense `fgemm`/`invert`/`solve`/`charpoly` rows that `analyze.py`
+# treats as cross-checks against fflas-ffpack. The harness's GF(2^32)
+# lane uses the Conway polynomial from
+# `crates/gf2-core/src/primitive_polys.rs::standard(32)` via the shared
+# C++ header `benchmarks/reference/gf2pow32_constants.h`; the drift
+# check `crates/gf2-core/tests/gf2pow32_constant_drift.rs` keeps the
+# header byte-equal to the Rust SSOT.
+if [[ "${RUN_NTL}" -eq 1 ]]; then
+    echo "[run.sh] running ntl_bench inside ${IMAGE_TAG}" >&2
+    "${RUNTIME}" run --rm \
+        --security-opt label=disable \
+        -v "${HERE}:/work${MOUNT_OPTS}" \
+        "${IMAGE_TAG}" \
+        bash -c "${COMPILE_CMD} && /work/reference/ntl_bench --seed ${SEED} --warmup ${WARMUP} --iters ${ITERS}" \
         >> "${CSV_OUT}"
 fi
 
