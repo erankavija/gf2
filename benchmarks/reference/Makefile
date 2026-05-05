@@ -74,6 +74,18 @@ linbox_sparse_bench: linbox_sparse_bench.cpp
 # `oracle_sparse_elim` using `GaussDomain::NoReordering` as the second-
 # library witness for sparse-elim cells. `-fopenmp` is required because
 # LinBox's GaussDomain uses OpenMP-parallelised inner loops on this host.
+#
+# Runtime dependency (jit:96fde7c7): the binary loads
+# `benchmarks/expected/sparse_smoke_n16.bin` at startup and asserts
+# byte-equality between the candidate output and the gf2-core
+# ground-truth recorded there. The ground-truth file is regenerated
+# on every `benchmarks/smoke.sh` run via:
+#   cargo run --release -p gf2-coding \
+#     --example sparse_smoke_emit_expected --features bench-csv \
+#     -- --output benchmarks/expected/sparse_smoke_n16.bin
+# The path can be overridden via `--expected PATH` or the
+# `GF2_SPARSE_SMOKE_EXPECTED` env var. Use `./sparse_smoke --self-test`
+# to verify the file structure parses without running candidates.
 sparse_smoke: sparse_smoke.cpp
 	@$(CXX) $(CXXSTD) $(OPT) -fopenmp $(LINBOX_CFLAGS) $(FFLAS_CFLAGS) $< $(LINBOX_LIBS) $(FFLAS_LIBS) -lopenblas -o $@
 
