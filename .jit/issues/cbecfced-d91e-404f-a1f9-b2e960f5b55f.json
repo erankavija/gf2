@@ -50,7 +50,7 @@
     },
     {
       "path": "dev/plans/sota_target_matrix.md",
-      "commit": null,
+      "commit": "47e4525",
       "label": "SOTA target matrix",
       "doc_type": "design",
       "format": "markdown"
@@ -63,5 +63,5 @@
     "story:sota-reference-matrix"
   ],
   "created_at": "2026-04-30T06:43:02.433953673+00:00",
-  "updated_at": "2026-05-05T10:36:50.832035108+00:00"
+  "updated_at": "2026-05-05T10:50:22.887535469+00:00"
 }

@@ -2,9 +2,9 @@
   "id": "4c0d0202-bb1c-40cc-910c-412f33fc95f4",
   "title": "Publish SOTA target matrix design doc",
   "description": "Publish the authoritative target matrix consumed by every optimization story.\n\n## Success Criteria\n\n- [hard] Every in-scope operation/field family has a reference owner or an explicit exclusion.\n- [hard] The design doc is linked to the SOTA epic and reference-matrix story.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "high",
-  "assignee": null,
+  "assignee": "agent:project-lead",
   "dependencies": [
     "3b762764-aa71-49c1-a32c-01c52d9ba746",
     "73ab8eef-7ef3-4bf0-93d1-9fc48fde9bac",
@@ -23,12 +23,23 @@
     "cargo-ci",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-05T10:40:13.556423638Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-05T10:39:57.974690670Z"
+    }
+  },
   "context": {},
   "documents": [
     {
       "path": "dev/plans/sota_target_matrix.md",
-      "commit": null,
+      "commit": "47e4525",
       "label": "SOTA target matrix",
       "doc_type": "design",
       "format": "markdown"
@@ -41,5 +52,5 @@
     "story:sota-reference-matrix"
   ],
   "created_at": "2026-04-30T06:43:02.636426111+00:00",
-  "updated_at": "2026-05-05T10:36:37.780251924+00:00"
+  "updated_at": "2026-05-05T10:50:21.732206729+00:00"
 }
