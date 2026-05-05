@@ -2,7 +2,7 @@
   "id": "dece4e73-eafb-4519-b68a-e6b3f6580487",
   "title": "Aggregate final SOTA raw CSVs",
   "description": "Collect all gf2 and reference benchmark rows for final publication.\n\n## Success Criteria\n\n- [hard] Versioned CSV files cover every in-scope cell.\n- [hard] CSV schemas are compatible with the analysis renderer.",
-  "state": "backlog",
+  "state": "ready",
   "priority": "high",
   "assignee": null,
   "dependencies": [
@@ -23,5 +23,5 @@
     "story:sota-final-scorecard"
   ],
   "created_at": "2026-04-30T06:43:02.936851387+00:00",
-  "updated_at": "2026-05-04T12:44:07.387758833+00:00"
+  "updated_at": "2026-05-05T09:36:37.419893893+00:00"
 }

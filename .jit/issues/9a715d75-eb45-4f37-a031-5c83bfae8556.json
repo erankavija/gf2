@@ -2,7 +2,7 @@
   "id": "9a715d75-eb45-4f37-a031-5c83bfae8556",
   "title": "Select GF(2^m) reference lane",
   "description": "Choose the accepted GF(2^m) reference based on the target matrix story.\n\n## Success Criteria\n\n- [hard] The selected lane covers GF(2^8), GF(2^16), and GF(2^32) where feasible.\n- [hard] If no hard reference is viable, the exclusion is user-approved and documented.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "high",
   "assignee": "agent:project-lead",
   "dependencies": [
@@ -14,15 +14,20 @@
     "doc-review"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-04T13:17:42.633865029Z"
-    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-04T10:47:47.853721533Z"
+      "updated_at": "2026-05-05T09:41:13.865020575Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-05T09:47:50.563926001Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": null,
+      "updated_at": "2026-05-05T09:45:11.122592605Z"
     }
   },
   "context": {},
@@ -42,5 +47,5 @@
     "story:sota-gf2m-reference"
   ],
   "created_at": "2026-04-30T06:43:02.749599713+00:00",
-  "updated_at": "2026-05-04T13:53:52.680192254+00:00"
+  "updated_at": "2026-05-05T09:50:01.302805926+00:00"
 }

@@ -2,7 +2,7 @@
   "id": "b13799ac-c493-4554-9da3-78142769b7c5",
   "title": "Build GF(2^32) matmul reference harness",
   "description": "Add a pinned-container reference harness for `matmul × GF(2^32)` so the SOTA target matrix has a hard reference for that cell. Filed per user decision on 2026-05-04 in response to 9a715d75's exclusion proposal #1: rather than excluding the (matmul, GF(2^32)) cell as `not-yet-harnessed`, harness it. This task is a Wave-8 follow-up to 9a715d75.\n\n## Background\n\nM4RIE caps at `m ≤ 16` so it cannot serve as the GF(2^32) reference. Candidates are NTL `mat_GF2E` and FLINT `fq_nmod_mat`. Both are already SHA-pinned in `benchmarks/Containerfile` (Wave 2 promotion). gf2-core supports `m=32` arithmetic via `Gf2mWide<u64>`, but `crates/gf2-core/src/primitive_polys.rs::standard()` returns `None` for `m=32`, so a primitive polynomial must be nominated as part of this task.\n\n## Success Criteria\n\n- [hard] A primitive polynomial for GF(2^32) is selected and documented in `crates/gf2-core/src/primitive_polys.rs` (with a citation to a published source — Conway polynomial database, FLINT's primitive_polynomials, or similar).\n- [hard] One of NTL `mat_GF2E` or FLINT `fq_nmod_mat` is wired into `benchmarks/reference/{ntl,flint}_bench.{cpp,c}` to emit a `matmul,GF(2^32)` row.\n- [hard] A bitwise-equality smoke check at `n=16` between the chosen reference and `gf2-core`'s `FieldMatrix<Gf2mWide<u64>>::matmul` is added (analogue of `ntl_flint_smoke.cpp`).\n- [hard] The five-criterion checklist from `dev/plans/sota_reference_acceptance_protocol.md` § 3 passes for the promoted `(matmul, GF(2^32))` cell.\n- [hard] `cargo-ci`, `code-review`, `doc-review` pass.\n\n## References\n\n- `dev/plans/gf2m_reference_lane_selection.md` § 4 proposal #1 (the exclusion this task replaces).\n- `dev/plans/sota_reference_acceptance_protocol.md` § 3 (five-criterion checklist).\n- Wave-2 NTL/FLINT promotion evidence in `dev/plans/{ntl,flint}_promotion_evidence.md`.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "high",
   "assignee": "agent:claude-wt-b13799ac",
   "dependencies": [
@@ -15,14 +15,19 @@
   ],
   "gates_status": {
     "code-review": {
-      "status": "failed",
+      "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-04T17:10:38.551347230Z"
+      "updated_at": "2026-05-05T09:33:32.752730029Z"
     },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-04T17:10:22.050654429Z"
+      "updated_at": "2026-05-05T09:26:58.706270942Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": null,
+      "updated_at": "2026-05-05T09:36:36.878697238Z"
     }
   },
   "context": {},
@@ -53,5 +58,5 @@
     "story:sota-gf2m-reference"
   ],
   "created_at": "2026-05-04T12:43:25.036898476+00:00",
-  "updated_at": "2026-05-04T22:30:35.517621514+00:00"
+  "updated_at": "2026-05-05T09:36:36.895658283+00:00"
 }
