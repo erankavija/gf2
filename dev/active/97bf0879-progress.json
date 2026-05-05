@@ -986,5 +986,30 @@
   "session_7_closed_at": "2026-05-05T10:14:06Z",
   "session_7_handoff": "dev/active/97bf0879-handoff-7.md",
   "session_7_summary": "Closed three held-open issues: 47698404 (R5-R11, 7 cycles; landed Amendment 3 to acceptance protocol), b13799ac (R2-R3 with R2-wire intermediate; replaced transitive smoke with direct gf2-core-NTL via ground-truth file), 9a715d75 (R2-R4; refreshed lane-selection doc post-b13799ac landing). Skill update: added No-argue discipline paragraph to project-lead/SKILL.md section 7. Deferred-improvements doc landed at dev/plans/project_lead_skill_improvements.md. Wave 4 dispatch (4c0d0202) ready for next session; all 11 deps done.",
-  "session_8_started_at": null
+  "session_8_started_at": "2026-05-05T10:18Z",
+  "session_8_closed_at": "2026-05-05T13:55Z",
+  "session_8_handoff": "dev/active/97bf0879-handoff-8.md",
+  "session_8_summary": "Wave 4 closed (4c0d0202, R2 PASS). Wave 5 closed (b0434149 R2 PASS, cbecfced R3 PASS). Wave 6A closed (5cacaec5 R4 PASS, with user-approved [hard]→[aspirational] amendment on GF(251) row of both 5cacaec5 and 662f7a15 — Path A from AskUserQuestion: Candidate C SIMD-lane AVX2 selected, GF(251) accepted under per-host envelope target since 1.5x of fflas requires 107% of AVX2-MAC peak on Zen-3). GF(p^n) follow-up epic 47c1538f filed as placeholder (user-flagged scope-loss; depends on 97bf0879 closing). Wave 6B (662f7a15 + 9e12659b + 3d06224c parallel impls) ready for next session.",
+  "session_9_started_at": null,
+  "session_8_decisions": [
+    {
+      "ts": "2026-05-05T13:43Z",
+      "topic": "5cacaec5 GF(251) feasibility blocker",
+      "decision": "Path A — amend 662f7a15 GF(251) [hard]→[aspirational] upfront, then amend 5cacaec5's own criterion #2 to allow per-prime maturity-marker scoping. Empirical basis: AVX2 16-bit-MAC peak (80 Gop/s) < 1.5x of fflas's 128 Gop/s GF(251) cell (85.3 Gop/s). Soft re-escalation threshold: ~3.2x of fflas (~40 Gop/s)."
+    },
+    {
+      "ts": "2026-05-05T11:30Z",
+      "topic": "GF(p^n) scope-loss in 97bf0879",
+      "decision": "Create placeholder epic 47c1538f as follow-up to 97bf0879. Codebase has partial GF(p^n) infrastructure (max degree 3 via QuadraticExt + CubicExt). Successor epic enumerates 9 [hard] criteria and three implementation work-streams. Not broken down at filing time — /jit-breakdown 47c1538f runs after 97bf0879 closes."
+    }
+  ],
+  "session_8_new_issues_filed": [
+    {
+      "short_id": "47c1538f",
+      "title": "Close gf2-core GF(p^n) extension-field SOTA gaps",
+      "type": "epic",
+      "depends_on": ["97bf0879"],
+      "purpose": "Successor placeholder; addresses GF(p^n) scope-loss surfaced during 4c0d0202 review."
+    }
+  ]
 }
