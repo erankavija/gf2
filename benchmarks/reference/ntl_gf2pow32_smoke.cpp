@@ -1,60 +1,62 @@
 // benchmarks/reference/ntl_gf2pow32_smoke.cpp
 //
-// Bitwise-equality oracle for matmul over GF(2^32) at n=16. Cross-checks
-// NTL's `mat_GF2E` matrix multiply against an independent, self-contained
-// scalar reference reimplementation. The scalar reference uses the same
-// primitive polynomial bits gf2-core's
-// `crates/gf2-core/src/primitive_polys.rs::standard(32)` exposes — the
-// Conway polynomial `x^32 + x^15 + x^9 + x^7 + x^4 + x^3 + 1`
-// (`0x1_0000_8299`) — so a polynomial drift on the gf2-core side or in
-// the NTL setup will fail this binary at compile or link time before
-// any timing run begins.
+// Direct gf2-core ↔ NTL bitwise-equality oracle for matmul over
+// GF(2^32) at n=16 (jit:b13799ac criterion 3, R2 rewrite). Loads the
+// gf2-core ground-truth file emitted by the Cargo example
+// `gf2pow32_smoke_emit_expected` (`crates/gf2-coding/examples/gf2pow32_smoke_emit_expected.rs`)
+// and asserts byte-equality between NTL `mat_GF2E::mul` output and the
+// gf2-core `FieldMatrix<Gf2mWide<1, _>>::gemm` output.
 //
-// This binary plays the role that `ntl_flint_smoke.cpp` plays for GF(p)
-// cells: it is a hard equality oracle invoked from `benchmarks/smoke.sh`
-// and exits non-zero on any mismatch. It emits no stdout (so the smoke
-// CSV stream stays clean); status messages go to stderr.
+// Replaces the prior R1 implementation that used a transitive smoke
+// (NTL ↔ scalar reference + gf2-core ↔ scalar reference in
+// `crates/gf2-core/tests/gf2pow32_matmul.rs`). The protocol § 6
+// criterion-3 contract names the reference and gf2-core directly; the
+// transitive form did not satisfy the literal text and burned a review
+// cycle. The Rust-side gf2-core ↔ scalar test (`gf2pow32_matmul.rs`)
+// is retained as an additional Rust-internal witness — it is not
+// load-bearing for this oracle.
 //
-// ## Why a scalar reimplementation, not a second library
+// File format (matches `gf2pow32_smoke_emit_expected.rs`, little-endian):
 //
-// FLINT's `fq_nmod_mat` is the natural sibling oracle but its primitive
-// polynomial is implicit in FLINT's internal Conway-polynomial database
-// — the bytes are the same as ours by construction (Conway polynomials
-// are unique, so SageMath, Magma, GAP, and FLINT all return the same
-// 0x1_0000_8299 for GF(2^32)) but verifying that on the C-side adds a
-// separate dependency without raising the assurance level. The scalar
-// schoolbook GF(2^32) multiply below is ~30 lines of code, depends only
-// on the polynomial bits, and is auditable line-by-line. This mirrors
-// the `m4rie_bench --smoke` pattern (`benchmarks/reference/m4rie_bench.c`
-// lines 128-144 `ref_gf2m_mul`).
+//   magic   : 8 bytes ASCII "GF2P32M0"
+//   n       : u32                  (matrix dimension; expected 16)
+//   a_seed  : u64                  (informational; not used to derive A here)
+//   b_seed  : u64                  (informational)
+//   conway  : u64                  (full Conway polynomial bits incl. bit 32)
+//   a_bytes : 4 * n * n bytes      (row-major u32 LE for A)
+//   b_bytes : 4 * n * n bytes      (row-major u32 LE for B)
+//   c_bytes : 4 * n * n bytes      (row-major u32 LE for C = A * B from gf2-core)
 //
-// ## Byte-level bit-pattern protocol (for cross-language reuse)
+// Element encoding: each GF(2^32) element is a polynomial of degree < 32
+// over GF(2) with coefficient `c_i` at bit position `i` (little-endian
+// within a `u32`). NTL's `GF2XFromBytes(buf, 4)` consumes a 4-byte
+// little-endian payload and produces the matching `GF2X`; this is
+// exactly the byte order the emitter uses, so no basis-change is required.
 //
-// Each GF(2^32) element is a polynomial of degree < 32 over GF(2) with
-// coefficient `c_i` at bit position `i` (little-endian within a `u32`):
-//
-//     element = sum_{i=0..31} c_i * x^i,   c_i ∈ {0, 1}
-//
-// On the wire (and in serialized inputs/outputs) elements are packed as
-// little-endian `u32` values. NTL's `GF2XFromBytes(buf, 4)` consumes a
-// 4-byte little-endian payload and produces the matching `GF2X`; this is
-// exactly the byte order this harness uses, so no basis-change matrix is
-// required. The same convention is the gf2-core `Gf2mWide<1, _>`
-// `to_le_bytes()` convention (one `u64` word, low 32 bits significant,
-// high 32 bits guaranteed zero by the `Gf2mWide` tail-masking invariant).
-//
-// ## Build
+// Build:
 //
 //     make ntl_gf2pow32_smoke
 //
 // from `benchmarks/reference/`. Linked against NTL only (no FLINT, no
 // gf2-core) so the harness builds inside the pinned container without
-// pulling in extra layers.
+// pulling in extra layers. The gf2-core side runs as a Cargo example
+// outside the container before this binary is invoked.
 //
-// ## Exit status
+// Usage:
 //
-//   0 — every n=16 cell matched bit-identically.
-//   1 — any cell mismatched, or NTL setup failed.
+//     ntl_gf2pow32_smoke --expected <path-to-gf2pow32_smoke_n16.bin>
+//
+// Default path is `benchmarks/expected/gf2pow32_smoke_n16.bin` (relative
+// to PWD); override via `--expected` or the `GF2_GF2POW32_SMOKE_EXPECTED`
+// environment variable.
+//
+// Exit status:
+//
+//   0 — every n=16 cell matched bit-identically, polynomial bits agree
+//       with the embedded `kGf2coreConwayM32` constant, and the file
+//       parsed cleanly.
+//   1 — any cell mismatched, polynomial drift, or the file failed to
+//       parse / open.
 
 #include <NTL/GF2E.h>
 #include <NTL/GF2X.h>
@@ -67,43 +69,28 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <fstream>
+#include <string>
 #include <vector>
 
 #include "gf2pow32_constants.h"
-#include "seed_helpers.h"
 
 namespace {
 
-// GF(2^32) Conway polynomial constants and the scalar reference multiplier
-// live in the shared `gf2pow32_constants.h` header so that this smoke,
-// `ntl_bench.cpp`, and any future m=32 lane consume a single source of
-// truth. The header is in turn drift-checked against
-// `crates/gf2-core/src/primitive_polys.rs::standard(32)` by
-// `crates/gf2-core/tests/gf2pow32_constant_drift.rs`. Pull the shared names
-// into this TU's anonymous namespace for the existing call sites below.
 using gf2_bench::kGf2coreConwayM32;
 using gf2_bench::kGf2pow32Bytes;
-using gf2_bench::ref_gf2pow32_mul;
 
 // Initialise NTL `GF2E` to operate over GF(2^32) defined by the Conway
-// polynomial. Must be called before any `GF2E` value is touched.
-//
-// Aborts the process on any NTL setup failure (e.g. the polynomial is
-// reducible — which would indicate a Conway-polynomial-bits drift in
-// the constant above). The check is cheap (NTL caches the modulus in
-// thread-local state) and pays for itself the first time someone fat-
-// fingers the constant.
+// polynomial. Aborts the process on any NTL setup failure (e.g. the
+// polynomial is reducible — which would indicate Conway-polynomial-bits
+// drift in the constant above).
 void init_gf2pow32() {
     NTL::GF2X p;
-    // Build the polynomial coefficient-by-coefficient. SetCoeff(p, i)
-    // sets the coefficient at degree i to 1 (the two-arg form defaults
-    // to 1; the three-arg form takes an explicit GF(2) value).
     for (long i = 0; i <= 32; ++i) {
         if ((kGf2coreConwayM32 >> i) & 1ULL) {
             NTL::SetCoeff(p, i);
         }
     }
-    // Assert the build matches the well-known Conway-polynomial bits.
     if (NTL::deg(p) != 32) {
         std::fprintf(stderr,
                      "[ntl_gf2pow32_smoke] FATAL: built GF2X has degree %ld, "
@@ -123,10 +110,6 @@ void init_gf2pow32() {
     NTL::GF2E::init(p);
 }
 
-// Convert a `uint32_t` element to a NTL `GF2E` via the documented
-// little-endian byte protocol. NTL's `GF2XFromBytes` consumes raw bytes
-// and produces a `GF2X` of degree at most `8*n - 1`; we then promote it
-// to `GF2E` against the previously-installed modulus.
 NTL::GF2E gf2e_from_u32(uint32_t v) {
     unsigned char buf[kGf2pow32Bytes];
     buf[0] = (unsigned char)(v & 0xFFu);
@@ -138,14 +121,9 @@ NTL::GF2E gf2e_from_u32(uint32_t v) {
     return NTL::to_GF2E(x);
 }
 
-// Convert a NTL `GF2E` back to its `u32` packed representation. The
-// inverse of `gf2e_from_u32`: extracts the underlying `GF2X`, dumps its
-// raw byte buffer, and reads back the four little-endian bytes.
 uint32_t u32_from_gf2e(const NTL::GF2E& e) {
     unsigned char buf[kGf2pow32Bytes] = {0, 0, 0, 0};
     const NTL::GF2X& x = NTL::rep(e);
-    // BytesFromGF2X writes up to `n` bytes; trailing zeros are correct
-    // for elements whose top GF(2) coefficients are zero.
     NTL::BytesFromGF2X(buf, x, (long)kGf2pow32Bytes);
     return (uint32_t)buf[0]
         | ((uint32_t)buf[1] << 8)
@@ -153,28 +131,6 @@ uint32_t u32_from_gf2e(const NTL::GF2E& e) {
         | ((uint32_t)buf[3] << 24);
 }
 
-// Fill an n×n byte-level matrix with deterministic SplitMix64-derived
-// GF(2^32) elements. Each element consumes one full SplitMix64 draw and
-// is masked to its low 32 bits (the high 32 bits of the draw are
-// discarded). This mirrors `m4rie_bench.c::fill_uniform_gf2m` and the
-// `gf2_core::bench_seed::gf2m_wide_1_matrix_from_seed` Rust path so
-// that a future Rust-side cross-check would consume bit-identical
-// inputs at the same seed.
-void fill_uniform_u32(std::vector<uint32_t>& A, long n, uint64_t seed) {
-    A.assign((size_t)(n * n), 0u);
-    uint64_t st = seed;
-    for (long i = 0; i < n; ++i) {
-        for (long j = 0; j < n; ++j) {
-            uint64_t draw = gf2_bench_splitmix64(&st);
-            A[(size_t)(i * n + j)] = (uint32_t)(draw & 0xFFFFFFFFULL);
-        }
-    }
-}
-
-// Fill a NTL `mat_GF2E` from a `vector<uint32_t>` row-major source. The
-// element encoding is the documented little-endian-`u32` protocol; each
-// scalar goes through `gf2e_from_u32` so the encoding is shared with
-// the smoke comparison.
 void load_mat(NTL::mat_GF2E& M, const std::vector<uint32_t>& src, long n) {
     M.SetDims(n, n);
     for (long i = 0; i < n; ++i) {
@@ -184,55 +140,133 @@ void load_mat(NTL::mat_GF2E& M, const std::vector<uint32_t>& src, long n) {
     }
 }
 
-// Compute the n×n matmul C = A * B via the scalar reference. Operates
-// purely on packed-`u32` elements; uses `ref_gf2pow32_mul` for the
-// inner product. XOR is the GF(2^32) addition (characteristic 2). This
-// is the canonical witness against which NTL's output is compared.
-void scalar_matmul(const std::vector<uint32_t>& A,
-                   const std::vector<uint32_t>& B,
-                   std::vector<uint32_t>& C,
-                   long n) {
-    C.assign((size_t)(n * n), 0u);
-    for (long i = 0; i < n; ++i) {
-        for (long j = 0; j < n; ++j) {
-            uint32_t acc = 0;
-            for (long k = 0; k < n; ++k) {
-                acc ^= ref_gf2pow32_mul(A[(size_t)(i * n + k)],
-                                         B[(size_t)(k * n + j)]);
-            }
-            C[(size_t)(i * n + j)] = acc;
-        }
-    }
+// Read exactly `n` bytes from the stream into `dst`. Aborts on short read.
+bool read_exact(std::ifstream& f, void* dst, size_t n) {
+    f.read(reinterpret_cast<char*>(dst), (std::streamsize)n);
+    return (size_t)f.gcount() == n;
 }
 
-// Run the smoke for one n=16 (A, B, C = A*B) cell. Returns 0 on bitwise
-// agreement, 1 on any disagreement.
-int run_one_cell(uint64_t a_seed, uint64_t b_seed) {
-    constexpr long n = 16;
+bool read_u32_le(std::ifstream& f, uint32_t& out) {
+    unsigned char b[4];
+    if (!read_exact(f, b, 4)) return false;
+    out = (uint32_t)b[0] | ((uint32_t)b[1] << 8) | ((uint32_t)b[2] << 16) | ((uint32_t)b[3] << 24);
+    return true;
+}
 
-    // Independent reference inputs.
-    std::vector<uint32_t> A_ref, B_ref, C_ref;
-    fill_uniform_u32(A_ref, n, a_seed);
-    fill_uniform_u32(B_ref, n, b_seed);
-    scalar_matmul(A_ref, B_ref, C_ref, n);
+bool read_u64_le(std::ifstream& f, uint64_t& out) {
+    unsigned char b[8];
+    if (!read_exact(f, b, 8)) return false;
+    out = 0;
+    for (int i = 0; i < 8; ++i) out |= (uint64_t)b[i] << (8 * i);
+    return true;
+}
 
-    // NTL inputs: same byte stream, fed through `gf2e_from_u32`.
+bool read_u32_block(std::ifstream& f, std::vector<uint32_t>& out, size_t count) {
+    out.resize(count);
+    for (size_t i = 0; i < count; ++i) {
+        if (!read_u32_le(f, out[i])) return false;
+    }
+    return true;
+}
+
+}  // namespace
+
+int main(int argc, char** argv) {
+    init_gf2pow32();
+
+    // Default file location (relative to PWD); overridable via
+    // `--expected` or the `GF2_GF2POW32_SMOKE_EXPECTED` env var so
+    // run.sh / smoke.sh can invoke the binary inside the container with
+    // a `/work/expected/...` path.
+    std::string expected_path = "benchmarks/expected/gf2pow32_smoke_n16.bin";
+    if (const char* env = std::getenv("GF2_GF2POW32_SMOKE_EXPECTED")) {
+        expected_path = env;
+    }
+    for (int i = 1; i < argc; ++i) {
+        if (std::strcmp(argv[i], "--expected") == 0 && i + 1 < argc) {
+            expected_path = argv[++i];
+        } else if (std::strcmp(argv[i], "--help") == 0 || std::strcmp(argv[i], "-h") == 0) {
+            std::fprintf(stderr,
+                         "usage: ntl_gf2pow32_smoke [--expected <path>]\n"
+                         "  default path: benchmarks/expected/gf2pow32_smoke_n16.bin\n"
+                         "  env var GF2_GF2POW32_SMOKE_EXPECTED is also honoured.\n");
+            return 0;
+        }
+    }
+
+    std::ifstream f(expected_path, std::ios::binary);
+    if (!f) {
+        std::fprintf(stderr,
+                     "[ntl_gf2pow32_smoke] FATAL: cannot open expected file %s\n",
+                     expected_path.c_str());
+        return 1;
+    }
+
+    char magic[8];
+    if (!read_exact(f, magic, 8) || std::memcmp(magic, "GF2P32M0", 8) != 0) {
+        std::fprintf(stderr,
+                     "[ntl_gf2pow32_smoke] FATAL: bad magic in %s (expected GF2P32M0)\n",
+                     expected_path.c_str());
+        return 1;
+    }
+
+    uint32_t n = 0;
+    if (!read_u32_le(f, n) || n != 16) {
+        std::fprintf(stderr,
+                     "[ntl_gf2pow32_smoke] FATAL: ground-truth file declares "
+                     "n=%u, expected 16\n", n);
+        return 1;
+    }
+
+    uint64_t a_seed = 0, b_seed = 0, conway_in_file = 0;
+    if (!read_u64_le(f, a_seed) || !read_u64_le(f, b_seed)
+            || !read_u64_le(f, conway_in_file)) {
+        std::fprintf(stderr, "[ntl_gf2pow32_smoke] FATAL: short header\n");
+        return 1;
+    }
+    if (conway_in_file != kGf2coreConwayM32) {
+        std::fprintf(stderr,
+                     "[ntl_gf2pow32_smoke] FATAL: Conway polynomial drift "
+                     "(file=0x%llx, header=0x%llx) — primitive_polys.rs "
+                     "and gf2pow32_constants.h disagree on m=32 SSOT\n",
+                     (unsigned long long)conway_in_file,
+                     (unsigned long long)kGf2coreConwayM32);
+        return 1;
+    }
+
+    std::vector<uint32_t> A_bytes, B_bytes, C_expected;
+    if (!read_u32_block(f, A_bytes, (size_t)n * n)
+            || !read_u32_block(f, B_bytes, (size_t)n * n)
+            || !read_u32_block(f, C_expected, (size_t)n * n)) {
+        std::fprintf(stderr, "[ntl_gf2pow32_smoke] FATAL: short matrix block\n");
+        return 1;
+    }
+
+    std::fprintf(stderr,
+                 "[ntl_gf2pow32_smoke] GF(2^32) Conway poly=0x%llx "
+                 "(n=%u, a_seed=0x%llx, b_seed=0x%llx) ...\n",
+                 (unsigned long long)kGf2coreConwayM32,
+                 n,
+                 (unsigned long long)a_seed,
+                 (unsigned long long)b_seed);
+
+    // NTL inputs: same byte stream the gf2-core emitter wrote.
     NTL::mat_GF2E A_n, B_n, C_n;
-    load_mat(A_n, A_ref, n);
-    load_mat(B_n, B_ref, n);
+    load_mat(A_n, A_bytes, (long)n);
+    load_mat(B_n, B_bytes, (long)n);
     NTL::mul(C_n, A_n, B_n);
 
-    // Element-by-element comparison.
+    // Direct comparison: NTL output bytes vs gf2-core ground-truth bytes.
     int errors = 0;
-    for (long i = 0; i < n; ++i) {
-        for (long j = 0; j < n; ++j) {
+    for (long i = 0; i < (long)n; ++i) {
+        for (long j = 0; j < (long)n; ++j) {
             uint32_t got = u32_from_gf2e(C_n[i][j]);
-            uint32_t want = C_ref[(size_t)(i * n + j)];
+            uint32_t want = C_expected[(size_t)(i * n + j)];
             if (got != want) {
                 if (errors < 5) {
                     std::fprintf(stderr,
                                  "[ntl_gf2pow32_smoke] mismatch at (%ld,%ld) "
-                                 "GF(2^32): ntl=0x%08x ref=0x%08x\n",
+                                 "GF(2^32): ntl=0x%08x gf2-core=0x%08x\n",
                                  i, j, got, want);
                 }
                 ++errors;
@@ -242,45 +276,9 @@ int run_one_cell(uint64_t a_seed, uint64_t b_seed) {
     if (errors > 0) {
         std::fprintf(stderr,
                      "[ntl_gf2pow32_smoke] GF(2^32) FAIL: %d / %ld mismatches\n",
-                     errors, (long)(n * n));
+                     errors, (long)((long)n * n));
         return 1;
     }
-    return 0;
-}
-
-}  // namespace
-
-int main() {
-    init_gf2pow32();
-
-    // Use the master seed convention shared with `ntl_bench.cpp` and
-    // `m4rie_bench.c` so the smoke and the timing harness draw the same
-    // input matrix when both are seeded from the same master value.
-    constexpr uint64_t kMaster = 0x6F73AC91D31E4A7CULL;
-    // Mirror the in-protocol seed-derivation idiom: tag = "matmul",
-    // op_idx = 0, size_idx = 0, regime_idx = 0. We then mix in the
-    // field tag bits the same way `m4rie_bench.c::smoke_one_field`
-    // does, so that GF(2^32) draws a disjoint stream from GF(2^4) /
-    // GF(2^8) / GF(2^16) at the same (op, size, regime) tuple.
-    uint64_t a_seed = gf2_bench_derive_seed(kMaster, "matmul", 0, 0, 0);
-    a_seed ^= ((uint64_t)32) * 0x9E3779B97F4A7C15ULL;
-    // B-seed: traditional "salt with 0x1111…" convention used by every
-    // other smoke harness in this directory (m4rie, ntl_flint).
-    uint64_t b_seed = a_seed ^ 0x1111111111111111ULL;
-
-    std::fprintf(stderr,
-                 "[ntl_gf2pow32_smoke] GF(2^32) Conway poly=0x%llx "
-                 "(master=0x%llx a_seed=0x%llx b_seed=0x%llx) ...\n",
-                 (unsigned long long)kGf2coreConwayM32,
-                 (unsigned long long)kMaster,
-                 (unsigned long long)a_seed,
-                 (unsigned long long)b_seed);
-
-    int rc = run_one_cell(a_seed, b_seed);
-    if (rc != 0) {
-        std::fprintf(stderr, "[ntl_gf2pow32_smoke] FAILED\n");
-        return 1;
-    }
-    std::fprintf(stderr, "[ntl_gf2pow32_smoke] OK\n");
+    std::fprintf(stderr, "[ntl_gf2pow32_smoke] OK gf2-core ↔ NTL\n");
     return 0;
 }

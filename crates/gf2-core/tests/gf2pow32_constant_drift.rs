@@ -8,10 +8,17 @@
 //! Rust SSOT — so a drift in either direction fails CI before the
 //! mismatch can reach a benchmark or smoke run.
 //!
-//! Pairs with `gf2pow32_matmul.rs::ref_gf2pow32_mul` — the two scalar
-//! reference multipliers (one Rust, one C++) are intentionally
-//! independent implementations that share only the polynomial bits;
-//! that intentional duplication is documented in both sources.
+//! As of jit:b13799ac R2, the C++ side no longer carries a scalar
+//! GF(2^32) reference multiplier (the smoke is now a direct
+//! gf2-core ↔ NTL byte-equality oracle via the ground-truth file
+//! emitted by `gf2pow32_smoke_emit_expected`), so this drift check
+//! covers the only remaining cross-language SSOT for m=32: the
+//! polynomial bits themselves.
+//!
+//! The Rust scalar reference `gf2pow32_matmul.rs::ref_gf2pow32_mul` is
+//! retained as a Rust-internal gf2-core ↔ scalar witness; it does not
+//! participate in this drift check (its SSOT is the in-file
+//! `CONWAY_LOW32` constant, derived from the same database value).
 //!
 //! Issue: jit:b13799ac (SSOT extraction follow-on after R2 review).
 

@@ -20,24 +20,38 @@ use gf2_core::field::matrix::{gemm, FieldMatrix};
 use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
 use gf2_core::primitive_polys::PrimitivePolynomialDatabase;
 
+/// Low 32 bits of the GF(2^32) Conway polynomial — the in-file SSOT for
+/// this test module. Both `Gf2m32ConwayCfg::MODULUS[0]` and the scalar
+/// reference multiplier below dereference this single constant so a
+/// drift can only happen at one point. The cross-language SSOT against
+/// `crates/gf2-core/src/primitive_polys.rs::standard(32)` and the C++
+/// `benchmarks/reference/gf2pow32_constants.h::kGf2coreConwayM32` is
+/// enforced by `tests/gf2pow32_constant_drift.rs` (which parses the
+/// header at test time and `PrimitivePolynomialDatabase::standard(32)`
+/// at runtime, and asserts both equal `(1u64 << 32) | u64(CONWAY_LOW32)`).
+///
+/// The implicit leading 1 at bit 32 is the reduction trigger and is not
+/// part of this 32-bit mask.
+const CONWAY_LOW32: u32 = 0x0000_8299;
+
 /// GF(2^32) configuration using the Conway polynomial. The MODULUS holds
 /// the low 32 bits of the polynomial; bit 32 is implicit and equal to 1
-/// (per the `Gf2mWideConfig` contract). The Conway polynomial bits are
-/// `0x1_0000_8299` (database) → low 32 bits `0x0000_8299`.
+/// per the `Gf2mWideConfig` contract.
 struct Gf2m32ConwayCfg;
 impl Gf2mWideConfig<1> for Gf2m32ConwayCfg {
     const M: usize = 32;
-    const MODULUS: [u64; 1] = [0x0000_8299];
+    const MODULUS: [u64; 1] = [CONWAY_LOW32 as u64];
     const NAME: &'static str = "Gf2m32Conway";
 }
 
 /// Scalar schoolbook GF(2^32) multiply, shift-and-reduce. Uses only the
-/// polynomial bits below — independent of `Gf2mWide` arithmetic — to act
-/// as the bitwise reference oracle for the matmul cross-check.
+/// polynomial bits in `CONWAY_LOW32` — independent of `Gf2mWide`
+/// arithmetic — to act as the in-Rust gf2-core ↔ scalar witness against
+/// `Gf2mWide<1, _>::mul`. (The protocol § 6 candidate-vs-gf2-core direct
+/// smoke at the C++ side is `benchmarks/reference/ntl_gf2pow32_smoke.cpp`,
+/// which loads the gf2-core ground-truth file emitted by the
+/// `gf2pow32_smoke_emit_expected` Cargo example.)
 fn ref_gf2pow32_mul(a: u32, b: u32) -> u32 {
-    // Low 32 bits of the Conway polynomial; the implicit leading 1 at bit 32
-    // is the reduction trigger and not included in the XOR mask.
-    const REDUCE_POLY: u32 = 0x0000_8299;
     let mut result: u32 = 0;
     let mut lhs = a;
     let mut rhs = b;
@@ -48,7 +62,7 @@ fn ref_gf2pow32_mul(a: u32, b: u32) -> u32 {
         let carry = lhs >> 31;
         lhs = lhs.wrapping_shl(1);
         if carry != 0 {
-            lhs ^= REDUCE_POLY;
+            lhs ^= CONWAY_LOW32;
         }
         rhs >>= 1;
     }

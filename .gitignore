@@ -38,7 +38,14 @@ benches/fflas_fdot_bench
 # compiled reference binaries are produced inside the container and
 # bind-mounted out into reference/.
 benchmarks/host.txt
-benchmarks/results/
+# Per-run CSV output; ad-hoc bench runs stay local. Specific evidence
+# CSVs that are linked to JIT issues are unignored below.
+benchmarks/results/*
+benchmarks/results/.*
+# Exception (jit:b13799ac R2): the canonical b13799ac evidence CSV
+# carries the protocol § 5 `(matmul, GF(2^32))` row and must be
+# tracked per protocol contract.
+!benchmarks/results/20260505T091600Z.csv
 benchmarks/reference/fflas_bench
 benchmarks/reference/m4ri_bench
 benchmarks/reference/linbox_bench
@@ -73,3 +80,10 @@ benchmarks/reference/sparse_smoke
 # `sparse_smoke_emit_expected` Cargo example. .gitignored so a stale
 # committed copy cannot mask gf2-core regressions.
 benchmarks/expected/sparse_smoke_n16.bin
+
+# GF(2^32) smoke ground-truth artefact (jit:b13799ac R2). Regenerated on
+# every `benchmarks/smoke.sh` / `run.sh --smoke-equality` invocation by
+# the `gf2pow32_smoke_emit_expected` Cargo example. .gitignored so a
+# stale committed copy cannot mask gf2-core regressions in the
+# GF(2^32) matmul path.
+benchmarks/expected/gf2pow32_smoke_n16.bin
