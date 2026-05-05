@@ -9,11 +9,29 @@
 //! issue `662f7a15`; primes `P ≥ 65536` are served by the generic
 //! 64-bit Montgomery kernel in `fp_generic.rs`.
 //!
+//! # Input contract per kernel
+//!
+//! All kernels accept u16 lanes in `[0, P) ⊆ [0, 2^16)`. The two kernel
+//! families differ in how they interpret those lanes:
+//!
+//! * **`fp_medium_batch_add` / `fp_medium_batch_sub`** — accept any
+//!   in-range u16, **canonical residue or Montgomery raw storage**. The
+//!   modular arithmetic is identical for both interpretations because
+//!   addition and subtraction are linear in the Montgomery domain
+//!   (`aR + bR = (a+b)R mod P`). The caller in
+//!   `gf2-core/src/gfp/simd_ops.rs::fp_medium_try_add_vec` exploits this
+//!   to feed Montgomery raw storage via `fp_medium_pack_raw` (a pure
+//!   `u64 → u16` truncation, no REDC), which is the throughput win.
+//! * **`fp_medium_batch_mul` / `fp_medium_batch_dot`** — require
+//!   **canonical** residues. Modular multiplication is **not** linear in
+//!   the Montgomery domain (feeding `aR, bR` would compute `abR² mod P`,
+//!   not `ab mod P`), so callers must pack canonical via
+//!   `Fp::value()` / `fp_medium_pack_canonical`.
+//!
 //! # Algorithm
 //!
-//! The kernels operate on **canonical** u16 lanes (`a, b ∈ [0, P) ⊆
-//! [0, 2^16)`). Reduction is via Barrett's algorithm with a
-//! compile-time-derived magic constant `m = floor(2^32 / P)`:
+//! Reduction is via Barrett's algorithm with a compile-time-derived
+//! magic constant `m = floor(2^32 / P)`:
 //!
 //! ```text
 //!   q = (x * m) >> 32        // approximation of floor(x / P)
@@ -197,16 +215,22 @@ unsafe fn fp_medium_sub16(a: __m256i, b: __m256i, p: __m256i) -> __m256i {
 ///
 /// # Arguments
 ///
-/// * `a`, `b` — input slices of canonical values (`< P`); same length.
+/// * `a`, `b` — input slices of **canonical** residues in `[0, P)`; same
+///   length. Unlike the add/sub kernels, mul is **not** linear in the
+///   Montgomery domain (`aR · bR mod P = abR² mod P`, not `abR mod P`),
+///   so callers feeding Montgomery storage would silently compute the
+///   wrong product.
 /// * `p` — the prime modulus; must be in `(1, 2^16)`.
 /// * `barrett_m` — `floor(2^32 / p)`, the Barrett magic constant.
-/// * `out` — output slice (same length).
+/// * `out` — output slice of canonical results in `[0, P)` (same length).
 ///
 /// # Safety
 ///
 /// Caller must ensure AVX2 is available at runtime, all input values are
 /// `< p`, and `barrett_m == floor(2^32 / p)`. Behaviour is undefined
-/// otherwise.
+/// otherwise. Inputs in Montgomery raw storage are *not* an unsoundness
+/// hazard but produce a wrong-domain result — see the module-level
+/// "Input contract per kernel" section.
 ///
 /// # Panics
 ///
@@ -246,6 +270,20 @@ pub unsafe fn fp_medium_batch_mul(a: &[u16], b: &[u16], p: u16, barrett_m: u32, 
 }
 
 /// Batch lane-wise addition for `Fp<P>` with `P < 2^16`.
+///
+/// # Arguments
+///
+/// * `a`, `b` — input slices of u16 lanes in `[0, P)`. May be canonical
+///   residues **or** Montgomery raw storage; the result is in the same
+///   domain as the inputs (addition is linear, so
+///   `aR + bR = (a+b)R mod P`).
+/// * `p` — the prime modulus; must be in `(1, 2^16)`.
+/// * `out` — output slice (same length).
+///
+/// # Safety
+///
+/// Caller must ensure AVX2 is available at runtime and all input values
+/// are `< p`. Behaviour is undefined otherwise.
 #[target_feature(enable = "avx2")]
 pub unsafe fn fp_medium_batch_add(a: &[u16], b: &[u16], p: u16, out: &mut [u16]) {
     assert_eq!(a.len(), b.len(), "fp_medium_batch_add: length mismatch");
@@ -275,6 +313,20 @@ pub unsafe fn fp_medium_batch_add(a: &[u16], b: &[u16], p: u16, out: &mut [u16])
 }
 
 /// Batch lane-wise subtraction for `Fp<P>` with `P < 2^16`.
+///
+/// # Arguments
+///
+/// * `a`, `b` — input slices of u16 lanes in `[0, P)`. May be canonical
+///   residues **or** Montgomery raw storage; the result is in the same
+///   domain as the inputs (subtraction is linear, so
+///   `aR - bR = (a-b)R mod P`).
+/// * `p` — the prime modulus; must be in `(1, 2^16)`.
+/// * `out` — output slice (same length).
+///
+/// # Safety
+///
+/// Caller must ensure AVX2 is available at runtime and all input values
+/// are `< p`. Behaviour is undefined otherwise.
 #[target_feature(enable = "avx2")]
 pub unsafe fn fp_medium_batch_sub(a: &[u16], b: &[u16], p: u16, out: &mut [u16]) {
     assert_eq!(a.len(), b.len(), "fp_medium_batch_sub: length mismatch");
@@ -321,7 +373,11 @@ pub unsafe fn fp_medium_batch_sub(a: &[u16], b: &[u16], p: u16, out: &mut [u16])
 ///
 /// # Arguments
 ///
-/// * `a`, `b` — input slices of canonical values (`< p`); same length.
+/// * `a`, `b` — input slices of **canonical** residues in `[0, p)`; same
+///   length. As with `fp_medium_batch_mul`, dot is **not** linear in the
+///   Montgomery domain (the per-lane multiply is the same primitive); the
+///   caller in `gf2-core/src/gfp/simd_ops.rs::try_fp_simd_dot_packed_u16`
+///   packs canonical via `fp_medium_pack_canonical`.
 /// * `p` — the prime modulus.
 ///
 /// # Returns
@@ -331,6 +387,9 @@ pub unsafe fn fp_medium_batch_sub(a: &[u16], b: &[u16], p: u16, out: &mut [u16])
 /// # Safety
 ///
 /// Caller must ensure AVX2 is available and all input values are `< p`.
+/// Inputs in Montgomery raw storage are not an unsoundness hazard but
+/// produce a wrong-domain result — see the module-level "Input contract
+/// per kernel" section.
 ///
 /// # Panics
 ///
