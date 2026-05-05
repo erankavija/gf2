@@ -86,6 +86,28 @@ pub type SmallPrimeBatchSubFn = fn(&[u8], &[u8], u8, &mut [u8]);
 /// Panics if `a.len() != b.len()`.
 pub type SmallPrimeBatchDotFn = fn(&[u8], &[u8], u8) -> u8;
 
+/// Whole-row gemm panel for `Fp<P>` with `P <= 251`.
+///
+/// Computes `out[j] = (∑_t a[t] * bt[j*k + t]) mod p` for `j ∈ [0, n)`,
+/// where `a` is one length-`k` row and `bt` is the `n × k` row-major
+/// transpose of the right operand. The kernel reuses each loaded
+/// 16-byte block of `a` against four B-transpose rows simultaneously,
+/// amortising the AVX2 lane-broadcast and constant-table overhead
+/// across four output cells per inner pass.
+///
+/// # Arguments
+///
+/// * `a` — left-row input slice of length `k`.
+/// * `bt` — row-major B-transpose of length `n * k`.
+/// * `k`, `n` — panel inner and outer dims.
+/// * `p` — odd prime in `[3, 251]`.
+/// * `out` — destination slice of length `n`.
+///
+/// # Panics
+///
+/// Panics if any slice length disagrees with `k`, `n`.
+pub type SmallPrimeGemmRowPanelFn = fn(&[u8], &[u8], usize, usize, u8, &mut [u8]);
+
 /// Bundle of small-prime SIMD batch operations.
 ///
 /// Populated at runtime by [`detect`] when AVX2 is available. All
@@ -106,6 +128,8 @@ pub struct SmallPrimeFns {
     pub batch_sub_fn: SmallPrimeBatchSubFn,
     /// Batch dot product reduced to scalar for `Fp<P>` with `P <= 251`.
     pub batch_dot_fn: SmallPrimeBatchDotFn,
+    /// Whole-row gemm panel for `Fp<P>` with `P <= 251`.
+    pub gemm_row_panel_fn: SmallPrimeGemmRowPanelFn,
 }
 
 /// Detect and return the best available small-prime SIMD function bundle.
@@ -145,6 +169,7 @@ fn detect_x86() -> Option<SmallPrimeFns> {
             batch_add_fn: batch_add_safe,
             batch_sub_fn: batch_sub_safe,
             batch_dot_fn: batch_dot_safe,
+            gemm_row_panel_fn: gemm_row_panel_safe,
         })
     } else {
         None
@@ -173,6 +198,12 @@ fn batch_sub_safe(a: &[u8], b: &[u8], p: u8, out: &mut [u8]) {
 fn batch_dot_safe(a: &[u8], b: &[u8], p: u8) -> u8 {
     // Safety: `detect_x86` only returns these pointers when AVX2 is available.
     unsafe { crate::x86::fp_small::fp_small_batch_dot(a, b, p) }
+}
+
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+fn gemm_row_panel_safe(a: &[u8], bt: &[u8], k: usize, n: usize, p: u8, out: &mut [u8]) {
+    // Safety: `detect_x86` only returns these pointers when AVX2 is available.
+    unsafe { crate::x86::fp_small::fp_small_gemm_row_panel(a, bt, k, n, p, out) }
 }
 
 #[cfg(test)]

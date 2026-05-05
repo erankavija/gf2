@@ -80,6 +80,7 @@ use seed::{
 };
 
 const PRIME_7: u64 = 7;
+const PRIME_31: u64 = 31;
 const PRIME_251: u64 = 251;
 const PRIME_65521: u64 = 65521;
 const MERSENNE_31: u64 = 2_147_483_647;
@@ -989,6 +990,7 @@ fn main() -> std::io::Result<()> {
     let mut sink = CsvSink::new(&args.output)?;
 
     run_fp::<PRIME_7>(&args, &mut sink, "GF(7)")?;
+    run_fp::<PRIME_31>(&args, &mut sink, "GF(31)")?;
     run_fp::<PRIME_251>(&args, &mut sink, "GF(251)")?;
     run_fp::<PRIME_65521>(&args, &mut sink, "GF(65521)")?;
     run_fp::<MERSENNE_31>(&args, &mut sink, "GF(2^31-1)")?;
