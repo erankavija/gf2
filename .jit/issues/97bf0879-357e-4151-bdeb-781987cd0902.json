@@ -90,6 +90,13 @@
       "label": "project-lead skill improvements (deferred from 47698404 post-mortem)",
       "doc_type": "meta",
       "format": "markdown"
+    },
+    {
+      "path": "dev/plans/sota_target_matrix.md",
+      "commit": null,
+      "label": "SOTA target matrix",
+      "doc_type": "design",
+      "format": "markdown"
     }
   ],
   "labels": [
@@ -100,5 +107,5 @@
     "epic:gf2-core-sota-performance"
   ],
   "created_at": "2026-04-30T06:43:02.414572597+00:00",
-  "updated_at": "2026-05-05T09:09:37.988860790+00:00"
+  "updated_at": "2026-05-05T10:36:50.839612551+00:00"
 }
