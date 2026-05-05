@@ -240,13 +240,29 @@ impossible. New language harnesses (e.g. a Rust-side LinBox harness)
 re-implement the same algorithm against an in-line test that proves
 byte-equivalence with the reference C/C++ implementation.
 
-**Correctness-oracle harness.** Each candidate's harness must include a
-`--smoke` mode that, for each `(operation, field, shape)` cell at
-`n = 16`, runs both the candidate and the gf2-core implementation on the
-same seeded input and asserts the per-operation equality contract above.
-Failure is a hard `exit(1)`. The smoke run must be invoked by
+**Correctness-oracle harness.** For each `(operation, field, shape)` cell
+at `n = 16`, the candidate and the gf2-core implementation are run on the
+same seeded input and the per-operation equality contract above is
+asserted. Failure is a hard `exit(1)`. The smoke run must be invoked by
 `benchmarks/smoke.sh` so the existing CI smoke path covers the new
-candidate.
+candidate. **The smoke witness may be hosted in either form** (clarified
+by Amendment 3 — see § 15):
+
+1. A `--smoke` mode in the candidate's own benchmark harness (the
+   original pattern, used by e.g. `fflas_bench --smoke`,
+   `linbox_bench --smoke`, `m4ri_bench --smoke` for the dense-matmul
+   cells).
+2. A dedicated shared smoke harness (e.g.
+   `benchmarks/reference/sparse_smoke.cpp`) that hosts oracle functions
+   for each `(operation, field, shape)` cell across multiple candidate
+   libraries and is itself invoked by `benchmarks/smoke.sh`. In this
+   form, each candidate's bench harness may implement its own `--smoke`
+   as a no-op pointer to the shared harness, provided the shared
+   harness has dispatch coverage for every cell the bench harness
+   claims a hard reference for.
+
+Both forms satisfy criterion #3 as long as the per-cell equality contract
+is asserted at `n = 16` in the path that `benchmarks/smoke.sh` runs.
 
 **Rejection trigger.** Any equality contract above failing on a single
 seeded `n = 16` cell → criterion #3 fails with exclusion class
@@ -619,7 +635,47 @@ allowed list.
 acceptance criteria (§ 3) are unchanged; the existing exclusion
 classes are unchanged; the seed-helper contract is unchanged.
 
-## 15. Mapping to issue 1d6043e8 success criteria
+## 15. Amendment 3 (2026-05-05) — shared smoke-harness clarification
+
+**JIT origin.** Wave 3-4 closure of epic `97bf0879`, specifically issue
+`47698404` (Re-run sparse post-PPC scorecard) under code-review R10. The
+sparse work landed a dedicated shared smoke harness
+(`benchmarks/reference/sparse_smoke.cpp`) that hosts oracle functions
+for fflas-ffpack, LinBox, and self-canonical paths across all sparse
+cells the bench harnesses claim. The corresponding bench harnesses
+(`fflas_sparse_bench`, `linbox_sparse_bench`) implement `--smoke` as
+no-op pointers to the shared harness. The design doc
+(`dev/plans/sparse_benchmark_corpus.md` § 4 "extend
+`benchmarks/reference/ntl_flint_smoke.cpp` (or add
+`benchmarks/reference/sparse_smoke.cpp`)") already anticipated this
+shape. This amendment brings the protocol's § 6 *Correctness-oracle
+harness* paragraph into alignment with the implemented architecture so
+reviewers can verify criterion #3 against the actual code path
+`benchmarks/smoke.sh` runs.
+
+**Patch applied to this protocol in the same commit:**
+
+§ 6 *Correctness-oracle harness* — replaced "Each candidate's harness
+must include a `--smoke` mode" with a two-form contract: the smoke
+witness may be hosted either in-bench (form 1, the original pattern) or
+in a dedicated shared smoke harness invoked by `benchmarks/smoke.sh`
+(form 2). The per-cell equality contract at `n = 16` and the "failure is
+hard `exit(1)`" semantics are unchanged. The existing in-bench `--smoke`
+implementations (`fflas_bench`, `linbox_bench`, `m4ri_bench`,
+`m4rie_bench`, `ntl_bench`, `flint_bench`) continue to satisfy criterion
+#3 under form 1.
+
+**No prior protocol behaviour is invalidated.** The five mandatory
+acceptance criteria (§ 3) are unchanged; existing dense-matmul harnesses
+that implement form-1 in-bench `--smoke` continue to pass; the
+seed-helper contract is unchanged. The sparse harnesses are explicitly
+permitted to use form 2 because their cell coverage spans multiple
+candidate libraries (fflas, LinBox, scalar reference for GF(2^m)) plus
+the gf2-core ground-truth file mechanism (`96fde7c7`), and a single
+shared harness loading the ground-truth once is more efficient and less
+duplicative than emitting an embedded smoke per bench.
+
+## 16. Mapping to issue 1d6043e8 success criteria
 
 For reviewer convenience, the two `[hard]` criteria of this issue map
 to specific sections above:
