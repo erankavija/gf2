@@ -309,11 +309,23 @@ def reference_lib_for(field_value: str, operation: Optional[str] = None) -> str:
         # reference.
         return "gf2"
     if operation == "sparse×dense":
-        # Per jit:a3412e15 § 4: GF(2) / GF(2^m) cells fall back to
-        # gf2-core's SparseFieldMatrix::matmat (no comparable external
-        # path); GF(p) routes to fflas-ffpack `fspmm` (canonical).
-        if field_value == "GF(2)" or FIELD_FAMILY.get(field_value) == "gf2m":
+        # Per jit:a3412e15 § 4: GF(p) routes to fflas-ffpack `fspmm`
+        # (canonical). GF(2^m) cells fall back to gf2-core's
+        # SparseFieldMatrix::matmat (no comparable external path —
+        # GivaroExtension is `semantics-mismatch` per protocol § 9). GF(2)
+        # routes to LinBox `applyLeft × Modular<int64_t>(2)` per the
+        # design doc's hard-reference designation; gf2-core's
+        # SpBitMatrix::matmat (jit:521390db) is the candidate, LinBox is
+        # canonical (note throughput-unit normalisation: gf2-core
+        # measures bit ops in u64 packed words; LinBox measures
+        # int-modular ops).
+        if FIELD_FAMILY.get(field_value) == "gf2m":
             return "gf2"
+        # GF(p) and GF(2) cells fall through to the field-default rule
+        # (which routes GF(2) → m4ri by default; we override to linbox
+        # below since m4ri has no sparse type).
+        if field_value == "GF(2)":
+            return "linbox"
         # GF(p) cells fall through to the field-default rule.
     if operation == "sparse-elim":
         # Per jit:a3412e15 § 4: LinBox `Method::SparseElimination` is
