@@ -10,6 +10,7 @@ pub(crate) mod clmul;
 pub(crate) mod fp65537;
 pub(crate) mod fp_generic;
 pub(crate) mod fp_medium;
+pub(crate) mod fp_small;
 pub(crate) mod gf2m_batch;
 pub(crate) mod gf2m_wide;
 pub(crate) mod mersenne;

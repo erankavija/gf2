@@ -413,6 +413,39 @@ pub trait FiniteField:
         None
     }
 
+    /// Hidden matrix-kernel hook for SIMD-accelerated `Fp<P>` dot products
+    /// over small primes (`P <= 251`).
+    ///
+    /// Most fields return `None` and continue through the generic
+    /// [`mul_product_sum_wide`](Self::mul_product_sum_wide) delayed-reduction
+    /// path. The small-prime byte-lane SIMD kernel for `Fp<P>` with
+    /// `P <= 251` overrides this hook to call the AVX2
+    /// `_mm256_madd_epi16`-based dot kernel directly, returning the
+    /// canonical reduced sum as one scalar.
+    ///
+    /// This is crate-internal API surface for `FieldMatrix` performance work
+    /// — it lets the gemm and matvec hot loops dispatch through one virtual
+    /// call without forcing every generic `gemm` caller to add a
+    /// `SimdVecOps` bound. Downstream code should use the public
+    /// matrix/vector APIs instead.
+    ///
+    /// # Arguments
+    ///
+    /// * `a`, `b` — same-length element slices.
+    ///
+    /// # Returns
+    ///
+    /// `Some(scalar)` — the canonical reduced dot product — when a SIMD
+    /// kernel is available; `None` (the default) otherwise, in which case
+    /// the caller falls back to the chunked-`Wide` `dot_product_slices`
+    /// loop.
+    #[doc(hidden)]
+    #[inline]
+    fn try_simd_dot_product(a: &[Self], b: &[Self]) -> Option<Self> {
+        let _ = (a, b);
+        None
+    }
+
     /// Maximum number of wide-type additions before reduction is required to avoid overflow.
     ///
     /// Returns `usize::MAX` if overflow is impossible (e.g., binary fields where addition is XOR).

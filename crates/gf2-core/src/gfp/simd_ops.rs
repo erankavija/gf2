@@ -101,6 +101,31 @@ pub trait SimdVecOps: Sized {
     fn try_simd_sub_vec(_a: &[Self], _b: &[Self]) -> Option<Vec<Self>> {
         None
     }
+
+    /// Attempts a SIMD-accelerated dot product `∑ a[i] · b[i]`; returns
+    /// `None` to defer to the scalar `mul_product_sum_wide` chunked
+    /// loop in [`crate::field::vec::dot_product_slices`].
+    ///
+    /// The returned value is the canonical reduced sum, equivalent to
+    /// the scalar `dot_product_slices` result. Implementors that
+    /// vectorise this hook can typically eliminate the
+    /// pack/unpack round-trip that
+    /// [`Self::try_simd_mul_vec`] + scalar reduction would otherwise
+    /// pay, because the kernel reduces the 32-bit-lane accumulator
+    /// directly to a scalar at the panel boundary.
+    ///
+    /// # Arguments
+    ///
+    /// * `a`, `b` — same-length element slices.
+    ///
+    /// # Complexity
+    ///
+    /// `O(n)` base-field MACs; lane-parallel via `_mm256_madd_epi16`
+    /// when specialised on the small-prime byte-lane path.
+    #[inline]
+    fn try_simd_dot_vec(_a: &[Self], _b: &[Self]) -> Option<Self> {
+        None
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -110,6 +135,27 @@ pub trait SimdVecOps: Sized {
 // ---------------------------------------------------------------------------
 
 impl<V: crate::gf2m::UintExt> SimdVecOps for crate::gf2m::Gf2mElement_<V> {}
+
+// `Gf2mWide` participates in `FieldMatrix::gemm` paths but has no
+// dedicated SIMD batch hooks (its multiply is already vectorised via
+// `gf2_kernels_simd::gf2m_wide`).
+impl<const N: usize, Cfg: crate::gf2m::Gf2mWideConfig<N>> SimdVecOps
+    for crate::gf2m::Gf2mWide<N, Cfg>
+{
+}
+
+// Goldilocks uses the dedicated `GoldilocksFp` scalar reducer; no
+// byte/word-lane SIMD batch path applies because the storage is a full
+// `u64` Goldilocks residue.
+impl SimdVecOps for crate::gfp::specialized::GoldilocksFp {}
+
+// Tower extensions over `Fp<P>` route through `BatchExtField`'s SoA
+// kernels rather than the element-wise `SimdVecOps` hooks; the trait is
+// still implemented (with the default `None` returns) so the
+// `dot_product_slices` bound is satisfied for `FieldMatrix::<QuadraticExt<C>>`
+// and `FieldMatrix::<CubicExt<C>>`.
+impl<C: crate::gfpn::ExtConfig> SimdVecOps for crate::gfpn::QuadraticExt<C> {}
+impl<C: crate::gfpn::ExtConfig> SimdVecOps for crate::gfpn::CubicExt<C> {}
 
 // ---------------------------------------------------------------------------
 // Blanket impl for Fp<P>: exact specialisations win, then generic Montgomery.
@@ -148,6 +194,9 @@ impl<const P: u64> SimdVecOps for Fp<P> {
         if P == M31 {
             return fpm31_try_mul_vec::<P>(a, b);
         }
+        if P <= 251 {
+            return fp_small_try_mul_vec::<P>(a, b);
+        }
         if P >= 252 && P < 65536 {
             return fp_medium_try_mul_vec::<P>(a, b);
         }
@@ -158,6 +207,9 @@ impl<const P: u64> SimdVecOps for Fp<P> {
     fn try_simd_add_vec(a: &[Self], b: &[Self]) -> Option<Vec<Self>> {
         if P == 65537 {
             return fp65537_try_add_vec::<P>(a, b);
+        }
+        if P <= 251 {
+            return fp_small_try_add_vec::<P>(a, b);
         }
         if P >= 252 && P < 65536 {
             return fp_medium_try_add_vec::<P>(a, b);
@@ -170,10 +222,21 @@ impl<const P: u64> SimdVecOps for Fp<P> {
         if P == 65537 {
             return fp65537_try_sub_vec::<P>(a, b);
         }
+        if P <= 251 {
+            return fp_small_try_sub_vec::<P>(a, b);
+        }
         if P >= 252 && P < 65536 {
             return fp_medium_try_sub_vec::<P>(a, b);
         }
         fp_generic_try_sub_vec::<P>(a, b)
+    }
+
+    #[inline]
+    fn try_simd_dot_vec(a: &[Self], b: &[Self]) -> Option<Self> {
+        if P <= 251 && P >= 3 {
+            return fp_small_try_dot_vec::<P>(a, b);
+        }
+        None
     }
 }
 
@@ -218,6 +281,128 @@ fn fpm31_try_mul_vec<const P: u64>(_a: &[Fp<P>], _b: &[Fp<P>]) -> Option<Vec<Fp<
 }
 
 // ---------------------------------------------------------------------------
+// Small-prime (P <= 251) SIMD helpers.
+//
+// Operates on canonical bytes ([0, P)). For Montgomery-stored primes
+// (P <= 251 means use_specialized_storage is false, so storage is
+// Montgomery), we round-trip via .value() / Fp::new() at pack/unpack
+// boundaries. The pack/unpack cost is O(n) and is amortised against
+// the AVX2 16-element-per-iteration multiply / add / sub.
+// ---------------------------------------------------------------------------
+
+/// Returns `true` when the small-prime AVX2 byte-lane dispatch handles
+/// `P` (odd prime, `3 <= P <= 251`).
+///
+/// `P = 2` is excluded because the byte-lane Barrett constant assumes
+/// `p ≥ 3`; `P = 2` already has its own bitwise-XOR / bitwise-AND fast
+/// path through `Fp<2>`'s scalar arithmetic and does not benefit from
+/// byte-lane SIMD.
+#[cfg(feature = "simd")]
+#[inline]
+fn fp_small_enabled<const P: u64>() -> bool {
+    P >= 3 && P <= 251
+}
+
+/// Packs a slice of `Fp<P>` (Montgomery-stored, `P <= 251`) into
+/// canonical bytes in `[0, P)`.
+#[cfg(feature = "simd")]
+#[inline]
+fn fp_small_pack<const P: u64>(xs: &[Fp<P>]) -> Vec<u8> {
+    debug_assert!(fp_small_enabled::<P>());
+    xs.iter().map(|x| x.value() as u8).collect()
+}
+
+/// Unpacks a slice of canonical bytes back into `Vec<Fp<P>>` via
+/// `Fp::new`, restoring Montgomery storage for non-specialised primes.
+#[cfg(feature = "simd")]
+#[inline]
+fn fp_small_unpack<const P: u64>(xs: &[u8]) -> Vec<Fp<P>> {
+    debug_assert!(fp_small_enabled::<P>());
+    xs.iter().map(|&x| Fp::<P>::new(x as u64)).collect()
+}
+
+#[cfg(feature = "simd")]
+fn fp_small_try_mul_vec<const P: u64>(a: &[Fp<P>], b: &[Fp<P>]) -> Option<Vec<Fp<P>>> {
+    if !fp_small_enabled::<P>() {
+        return None;
+    }
+    let fns = crate::simd::maybe_fp_small()?;
+    let n = a.len();
+    let a_u8 = fp_small_pack::<P>(a);
+    let b_u8 = fp_small_pack::<P>(b);
+    let mut out = vec![0u8; n];
+    (fns.batch_mul_fn)(&a_u8, &b_u8, P as u8, &mut out);
+    Some(fp_small_unpack::<P>(&out))
+}
+
+#[cfg(feature = "simd")]
+fn fp_small_try_add_vec<const P: u64>(a: &[Fp<P>], b: &[Fp<P>]) -> Option<Vec<Fp<P>>> {
+    if !fp_small_enabled::<P>() {
+        return None;
+    }
+    let fns = crate::simd::maybe_fp_small()?;
+    let n = a.len();
+    let a_u8 = fp_small_pack::<P>(a);
+    let b_u8 = fp_small_pack::<P>(b);
+    let mut out = vec![0u8; n];
+    (fns.batch_add_fn)(&a_u8, &b_u8, P as u8, &mut out);
+    Some(fp_small_unpack::<P>(&out))
+}
+
+#[cfg(feature = "simd")]
+fn fp_small_try_sub_vec<const P: u64>(a: &[Fp<P>], b: &[Fp<P>]) -> Option<Vec<Fp<P>>> {
+    if !fp_small_enabled::<P>() {
+        return None;
+    }
+    let fns = crate::simd::maybe_fp_small()?;
+    let n = a.len();
+    let a_u8 = fp_small_pack::<P>(a);
+    let b_u8 = fp_small_pack::<P>(b);
+    let mut out = vec![0u8; n];
+    (fns.batch_sub_fn)(&a_u8, &b_u8, P as u8, &mut out);
+    Some(fp_small_unpack::<P>(&out))
+}
+
+#[cfg(not(feature = "simd"))]
+#[inline]
+fn fp_small_try_mul_vec<const P: u64>(_a: &[Fp<P>], _b: &[Fp<P>]) -> Option<Vec<Fp<P>>> {
+    None
+}
+
+#[cfg(not(feature = "simd"))]
+#[inline]
+fn fp_small_try_add_vec<const P: u64>(_a: &[Fp<P>], _b: &[Fp<P>]) -> Option<Vec<Fp<P>>> {
+    None
+}
+
+#[cfg(not(feature = "simd"))]
+#[inline]
+fn fp_small_try_sub_vec<const P: u64>(_a: &[Fp<P>], _b: &[Fp<P>]) -> Option<Vec<Fp<P>>> {
+    None
+}
+
+#[cfg(feature = "simd")]
+fn fp_small_try_dot_vec<const P: u64>(a: &[Fp<P>], b: &[Fp<P>]) -> Option<Fp<P>> {
+    if !fp_small_enabled::<P>() {
+        return None;
+    }
+    let fns = crate::simd::maybe_fp_small()?;
+    if a.is_empty() {
+        return Some(Fp::<P>::new(0));
+    }
+    let a_u8 = fp_small_pack::<P>(a);
+    let b_u8 = fp_small_pack::<P>(b);
+    let canonical = (fns.batch_dot_fn)(&a_u8, &b_u8, P as u8);
+    Some(Fp::<P>::new(canonical as u64))
+}
+
+#[cfg(not(feature = "simd"))]
+#[inline]
+fn fp_small_try_dot_vec<const P: u64>(_a: &[Fp<P>], _b: &[Fp<P>]) -> Option<Fp<P>> {
+    None
+}
+
+// ---------------------------------------------------------------------------
 // Generic Montgomery SIMD helpers.
 // ---------------------------------------------------------------------------
 
@@ -227,6 +412,8 @@ fn fp_generic_enabled<const P: u64>() -> bool {
     // Generic Montgomery covers all eligible primes EXCEPT the ones owned
     // by specialised kernels:
     //   * `P = 65537` → Fp65537 Fermat-prime kernel (`fp65537_*_vec`).
+    //   * `P <= 251` → small-prime byte-lane Barrett kernel
+    //     (`fp_small_*_vec`).
     //   * `P ∈ (251, 65536)` → medium-prime u16 Barrett kernel
     //     (`fp_medium_*_vec`).
     //   * specialised-storage primes (Mersenne `n ≥ 31`, Proth `n ≥ 24`)
@@ -234,6 +421,7 @@ fn fp_generic_enabled<const P: u64>() -> bool {
     P > 2
         && P <= (1u64 << 63)
         && P != 65537
+        && P > 251
         && !(P >= 252 && P < 65536)
         && !use_specialized_storage(P)
 }

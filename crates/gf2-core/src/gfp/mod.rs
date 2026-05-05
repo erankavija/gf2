@@ -690,6 +690,16 @@ impl<const P: u64> FiniteField for Fp<P> {
     fn theorem_4_operand_bound() -> u128 {
         (P as u128).saturating_sub(1)
     }
+
+    /// Routes the small-prime AVX2 byte-lane dot kernel for
+    /// `Fp<P>` with `P ≤ 251`. Returns `None` for primes outside that
+    /// range (the chunked-Wide loop in
+    /// [`crate::field::vec::dot_product_slices`] handles them
+    /// correctly).
+    #[inline]
+    fn try_simd_dot_product(a: &[Self], b: &[Self]) -> Option<Self> {
+        <Self as simd_ops::SimdVecOps>::try_simd_dot_vec(a, b)
+    }
 }
 
 // ---------------------------------------------------------------------------

@@ -82,6 +82,7 @@ pub(crate) mod simd {
     use gf2_kernels_simd::fp65537::Fp65537Fns;
     use gf2_kernels_simd::fp_generic::FpGenericFns;
     use gf2_kernels_simd::fp_medium::MediumPrimeFns;
+    use gf2_kernels_simd::fp_small::SmallPrimeFns;
     use gf2_kernels_simd::gf2m::Gf2mFns;
     use gf2_kernels_simd::gf2m_batch::Gf2mBatchFns;
     use gf2_kernels_simd::gf2m_wide::{ClmulWide256Fns, ClmulWide571Fns, Gf2mWideFns};
@@ -97,6 +98,7 @@ pub(crate) mod simd {
     static FP65537_FNS: OnceLock<Option<Fp65537Fns>> = OnceLock::new();
     static FP_GENERIC_FNS: OnceLock<Option<FpGenericFns>> = OnceLock::new();
     static FP_MEDIUM_FNS: OnceLock<Option<MediumPrimeFns>> = OnceLock::new();
+    static FP_SMALL_FNS: OnceLock<Option<SmallPrimeFns>> = OnceLock::new();
     static GF2M_WIDE_FNS: OnceLock<Option<Gf2mWideFns>> = OnceLock::new();
     static TRANSPOSE_FNS: OnceLock<Option<TransposeFns>> = OnceLock::new();
 
@@ -197,6 +199,23 @@ pub(crate) mod simd {
             .as_ref()
     }
 
+    /// Returns the best available small-prime `Fp<P>` SIMD batch kernels, if any.
+    ///
+    /// Provides AVX2 byte-lane multiply / add / sub / dot kernels for
+    /// odd primes with `P ≤ 251`. The kernels use 16-bit-lane Barrett
+    /// reduction in 32-byte AVX2 registers, processing 16 elements per
+    /// vector iteration (2× the throughput of the generic Montgomery
+    /// path's 4-lane u64 multiply on AVX2). Returns `None` on non-AVX2
+    /// hardware; callers must fall back to the generic Montgomery path
+    /// or scalar loops. Specialised Fermat / Mersenne kernels for
+    /// `P > 251` remain separate and dispatch above this branch.
+    #[inline]
+    pub fn maybe_fp_small() -> Option<&'static SmallPrimeFns> {
+        FP_SMALL_FNS
+            .get_or_init(gf2_kernels_simd::fp_small::detect)
+            .as_ref()
+    }
+
     /// Returns the best available fixed-size wide GF(2^m) carry-less multiply
     /// kernels, if any.
     ///
@@ -254,6 +273,12 @@ pub(crate) mod simd {
     #[allow(dead_code)]
     #[inline]
     pub fn maybe_fp_medium() -> Option<()> {
+        None
+    }
+
+    #[allow(dead_code)]
+    #[inline]
+    pub fn maybe_fp_small() -> Option<()> {
         None
     }
 
