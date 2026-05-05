@@ -148,6 +148,9 @@ impl<const P: u64> SimdVecOps for Fp<P> {
         if P == M31 {
             return fpm31_try_mul_vec::<P>(a, b);
         }
+        if P >= 252 && P < 65536 {
+            return fp_medium_try_mul_vec::<P>(a, b);
+        }
         fp_generic_try_mul_vec::<P>(a, b)
     }
 
@@ -156,6 +159,9 @@ impl<const P: u64> SimdVecOps for Fp<P> {
         if P == 65537 {
             return fp65537_try_add_vec::<P>(a, b);
         }
+        if P >= 252 && P < 65536 {
+            return fp_medium_try_add_vec::<P>(a, b);
+        }
         fp_generic_try_add_vec::<P>(a, b)
     }
 
@@ -163,6 +169,9 @@ impl<const P: u64> SimdVecOps for Fp<P> {
     fn try_simd_sub_vec(a: &[Self], b: &[Self]) -> Option<Vec<Self>> {
         if P == 65537 {
             return fp65537_try_sub_vec::<P>(a, b);
+        }
+        if P >= 252 && P < 65536 {
+            return fp_medium_try_sub_vec::<P>(a, b);
         }
         fp_generic_try_sub_vec::<P>(a, b)
     }
@@ -215,7 +224,18 @@ fn fpm31_try_mul_vec<const P: u64>(_a: &[Fp<P>], _b: &[Fp<P>]) -> Option<Vec<Fp<
 #[cfg(feature = "simd")]
 #[inline]
 fn fp_generic_enabled<const P: u64>() -> bool {
-    P > 2 && P <= (1u64 << 63) && P != 65537 && !use_specialized_storage(P)
+    // Generic Montgomery covers all eligible primes EXCEPT the ones owned
+    // by specialised kernels:
+    //   * `P = 65537` → Fp65537 Fermat-prime kernel (`fp65537_*_vec`).
+    //   * `P ∈ (251, 65536)` → medium-prime u16 Barrett kernel
+    //     (`fp_medium_*_vec`).
+    //   * specialised-storage primes (Mersenne `n ≥ 31`, Proth `n ≥ 24`)
+    //     keep canonical storage and bypass the Montgomery layer entirely.
+    P > 2
+        && P <= (1u64 << 63)
+        && P != 65537
+        && !(P >= 252 && P < 65536)
+        && !use_specialized_storage(P)
 }
 
 #[cfg(feature = "simd")]
@@ -391,6 +411,270 @@ fn fp65537_try_sub_vec<const P: u64>(_a: &[Fp<P>], _b: &[Fp<P>]) -> Option<Vec<F
     None
 }
 
+// ---------------------------------------------------------------------------
+// Fp<P> medium-prime SIMD helpers — `P ∈ (251, 65536)` (`word-fits-in-u16`).
+// ---------------------------------------------------------------------------
+//
+// The kernel operates on **canonical** u16 values. Add/sub are linear in the
+// Montgomery storage form (`aR + bR = (a+b)R`), so for those we pack/unpack
+// via raw_storage and avoid the REDC round-trip. Multiplication is not
+// linear in storage form, so we round-trip through `value()` / `Fp::new` to
+// expose canonical residues to the Barrett kernel.
+//
+// The `P >= 252 && P < 65536` guard mirrors the dispatch in `SimdVecOps`:
+// primes `P <= 251` are owned by the dedicated 8-bit small-prime kernel
+// (sibling issue `662f7a15`); primes `P >= 65536` route to the 64-bit
+// generic Montgomery kernel.
+
+#[cfg(feature = "simd")]
+#[inline]
+const fn fp_medium_eligible<const P: u64>() -> bool {
+    P >= 252 && P < 65536
+}
+
+#[cfg(feature = "simd")]
+#[inline]
+fn fp_medium_pack_canonical<const P: u64>(xs: &[Fp<P>]) -> Vec<u16> {
+    debug_assert!(
+        fp_medium_eligible::<P>(),
+        "fp_medium_pack_canonical: P out of range"
+    );
+    xs.iter().map(|x| x.value() as u16).collect()
+}
+
+#[cfg(feature = "simd")]
+#[inline]
+fn fp_medium_unpack_canonical<const P: u64>(xs: &[u16]) -> Vec<Fp<P>> {
+    debug_assert!(
+        fp_medium_eligible::<P>(),
+        "fp_medium_unpack_canonical: P out of range"
+    );
+    xs.iter().map(|&x| Fp::<P>::new(x as u64)).collect()
+}
+
+#[cfg(feature = "simd")]
+#[inline]
+fn fp_medium_pack_raw<const P: u64>(xs: &[Fp<P>]) -> Vec<u16> {
+    // Storage-domain pack: Montgomery residues are in `[0, P) ⊆ [0, 2^16)`,
+    // so a `u64 → u16` truncation is exact.
+    debug_assert!(
+        fp_medium_eligible::<P>(),
+        "fp_medium_pack_raw: P out of range"
+    );
+    xs.iter().map(|x| x.raw_storage() as u16).collect()
+}
+
+#[cfg(feature = "simd")]
+#[inline]
+fn fp_medium_unpack_raw<const P: u64>(xs: &[u16]) -> Vec<Fp<P>> {
+    debug_assert!(
+        fp_medium_eligible::<P>(),
+        "fp_medium_unpack_raw: P out of range"
+    );
+    xs.iter()
+        .map(|&x| Fp::<P>::from_raw_storage(x as u64))
+        .collect()
+}
+
+#[cfg(feature = "simd")]
+fn fp_medium_try_mul_vec<const P: u64>(a: &[Fp<P>], b: &[Fp<P>]) -> Option<Vec<Fp<P>>> {
+    if !fp_medium_eligible::<P>() {
+        return None;
+    }
+    let fns = crate::simd::maybe_fp_medium()?;
+    let n = a.len();
+    let a_u16 = fp_medium_pack_canonical::<P>(a);
+    let b_u16 = fp_medium_pack_canonical::<P>(b);
+    let mut out = vec![0u16; n];
+    let p16 = P as u16;
+    let m32 = gf2_kernels_simd::fp_medium::barrett_m32(p16);
+    (fns.batch_mul_fn)(&a_u16, &b_u16, p16, m32, &mut out);
+    Some(fp_medium_unpack_canonical::<P>(&out))
+}
+
+#[cfg(feature = "simd")]
+fn fp_medium_try_add_vec<const P: u64>(a: &[Fp<P>], b: &[Fp<P>]) -> Option<Vec<Fp<P>>> {
+    if !fp_medium_eligible::<P>() {
+        return None;
+    }
+    let fns = crate::simd::maybe_fp_medium()?;
+    let n = a.len();
+    // add/sub are linear in Montgomery storage: `aR + bR = (a+b)R`. Pack
+    // raw, run, unpack raw — saves two REDC round-trips per element.
+    let a_u16 = fp_medium_pack_raw::<P>(a);
+    let b_u16 = fp_medium_pack_raw::<P>(b);
+    let mut out = vec![0u16; n];
+    (fns.batch_add_fn)(&a_u16, &b_u16, P as u16, &mut out);
+    Some(fp_medium_unpack_raw::<P>(&out))
+}
+
+#[cfg(feature = "simd")]
+fn fp_medium_try_sub_vec<const P: u64>(a: &[Fp<P>], b: &[Fp<P>]) -> Option<Vec<Fp<P>>> {
+    if !fp_medium_eligible::<P>() {
+        return None;
+    }
+    let fns = crate::simd::maybe_fp_medium()?;
+    let n = a.len();
+    let a_u16 = fp_medium_pack_raw::<P>(a);
+    let b_u16 = fp_medium_pack_raw::<P>(b);
+    let mut out = vec![0u16; n];
+    (fns.batch_sub_fn)(&a_u16, &b_u16, P as u16, &mut out);
+    Some(fp_medium_unpack_raw::<P>(&out))
+}
+
+#[cfg(not(feature = "simd"))]
+#[inline]
+fn fp_medium_try_mul_vec<const P: u64>(_a: &[Fp<P>], _b: &[Fp<P>]) -> Option<Vec<Fp<P>>> {
+    None
+}
+
+#[cfg(not(feature = "simd"))]
+#[inline]
+fn fp_medium_try_add_vec<const P: u64>(_a: &[Fp<P>], _b: &[Fp<P>]) -> Option<Vec<Fp<P>>> {
+    None
+}
+
+#[cfg(not(feature = "simd"))]
+#[inline]
+fn fp_medium_try_sub_vec<const P: u64>(_a: &[Fp<P>], _b: &[Fp<P>]) -> Option<Vec<Fp<P>>> {
+    None
+}
+
+/// Crate-internal hook: SIMD batch dot product for `Fp<P>` with
+/// `P ∈ (251, 65536)`.
+///
+/// Returns `Σ a[i] · b[i]` (a `Fp<P>` element), or `None` when the
+/// runtime / compile-time prerequisites (AVX2, P-eligibility, simd
+/// feature) are not satisfied.
+///
+/// # Implementation
+///
+/// Operates entirely on **Montgomery raw storage** to avoid the per-
+/// element REDC round-trip that `value()` / `Fp::new` would impose.
+/// Storage words are in `[0, P) ⊆ [0, 2^16)`, so packing is a `u64 →
+/// u16` truncation. The kernel computes
+///
+/// ```text
+///   total = Σ raw(aᵢ) · raw(bᵢ)   (in u64, exact for n < 2^32)
+/// ```
+///
+/// which is congruent to `R² · Σ aᵢbᵢ (mod P)` because each raw word is
+/// the Montgomery image `aᵢR (mod P)` (see `Fp::mul_product_sum_wide`
+/// for the full representation proof). Reducing modulo `P` yields a
+/// value in `[0, P²)`; one Montgomery REDC then recovers `R · Σ aᵢbᵢ
+/// (mod P)`, which is exactly the Montgomery storage form of the dot
+/// product. This matches the storage-domain reduction performed by
+/// `Fp::reduce_product_sum_wide` for the scalar path, so the SIMD and
+/// scalar dots are bit-for-bit equivalent.
+///
+/// This is the hot path that `crate::field::vec::dot_product_slices`
+/// consults for medium primes; the GEMM kernel calls it once per output
+/// cell.
+#[cfg(feature = "simd")]
+pub(crate) fn fp_medium_try_dot_product<const P: u64>(
+    a: &[Fp<P>],
+    b: &[Fp<P>],
+    scratch_a: &mut Vec<u16>,
+    scratch_b: &mut Vec<u16>,
+) -> Option<Fp<P>> {
+    if !fp_medium_eligible::<P>() {
+        return None;
+    }
+    let fns = crate::simd::maybe_fp_medium()?;
+
+    // Pack Montgomery raw storage into the caller-owned scratches.
+    // Storage is already in [0, P), and P < 2^16, so the u64→u16
+    // truncation is exact. Reusing the scratches across the surrounding
+    // GEMM traversal is the difference between this path beating the
+    // scalar `mul_product_sum_wide` loop and merely matching it.
+    scratch_a.clear();
+    scratch_b.clear();
+    scratch_a.reserve(a.len());
+    scratch_b.reserve(b.len());
+    for x in a {
+        scratch_a.push(x.raw_storage() as u16);
+    }
+    for y in b {
+        scratch_b.push(y.raw_storage() as u16);
+    }
+
+    // batch_dot_fn returns a canonical-domain reduction
+    // `total % P ≡ R² · Σ aᵢbᵢ (mod P)`. We need the Montgomery storage
+    // form, so apply one REDC: `redc(R² · Σ aᵢbᵢ) = R · Σ aᵢbᵢ (mod P)`.
+    let r2_sum_mod_p = (fns.batch_dot_fn)(scratch_a, scratch_b, P as u16) as u64;
+    let r_sum_mod_p = super::montgomery::redc::<P>(r2_sum_mod_p as u128);
+    Some(Fp::<P>::from_raw_storage(r_sum_mod_p))
+}
+
+#[cfg(not(feature = "simd"))]
+#[inline]
+pub(crate) fn fp_medium_try_dot_product<const P: u64>(
+    _a: &[Fp<P>],
+    _b: &[Fp<P>],
+    _scratch_a: &mut Vec<u16>,
+    _scratch_b: &mut Vec<u16>,
+) -> Option<Fp<P>> {
+    None
+}
+
+/// GEMM helper: pack a slice of `Fp<P>` Montgomery raw storage as `Vec<u16>`
+/// when the medium-prime fast path is eligible. Returns `Some(())` on
+/// success; `None` if the field is not eligible (so the caller skips the
+/// medium-prime fast path entirely).
+///
+/// The pack pushes raw storage truncated to u16. See
+/// [`fp_medium_try_dot_packed`] for the dot kernel that consumes the
+/// packed slices and applies the final REDC.
+#[cfg(feature = "simd")]
+pub(crate) fn fp_medium_try_pack_u16<const P: u64>(xs: &[Fp<P>], out: &mut Vec<u16>) -> Option<()> {
+    if !fp_medium_eligible::<P>() {
+        return None;
+    }
+    crate::simd::maybe_fp_medium()?;
+    out.clear();
+    out.reserve(xs.len());
+    for x in xs {
+        out.push(x.raw_storage() as u16);
+    }
+    Some(())
+}
+
+#[cfg(not(feature = "simd"))]
+#[inline]
+pub(crate) fn fp_medium_try_pack_u16<const P: u64>(
+    _xs: &[Fp<P>],
+    _out: &mut Vec<u16>,
+) -> Option<()> {
+    None
+}
+
+/// GEMM helper: SIMD dot product on pre-packed u16 raw-storage slices for
+/// medium-prime `Fp<P>`. Mirrors [`fp_medium_try_dot_product`] but skips
+/// the per-call pack so the GEMM kernel pays the truncation cost once
+/// per matrix instead of once per output cell.
+#[cfg(feature = "simd")]
+pub(crate) fn fp_medium_try_dot_packed<const P: u64>(
+    a_packed: &[u16],
+    b_packed: &[u16],
+) -> Option<Fp<P>> {
+    if !fp_medium_eligible::<P>() {
+        return None;
+    }
+    let fns = crate::simd::maybe_fp_medium()?;
+    let r2_sum_mod_p = (fns.batch_dot_fn)(a_packed, b_packed, P as u16) as u64;
+    let r_sum_mod_p = super::montgomery::redc::<P>(r2_sum_mod_p as u128);
+    Some(Fp::<P>::from_raw_storage(r_sum_mod_p))
+}
+
+#[cfg(not(feature = "simd"))]
+#[inline]
+pub(crate) fn fp_medium_try_dot_packed<const P: u64>(
+    _a_packed: &[u16],
+    _b_packed: &[u16],
+) -> Option<Fp<P>> {
+    None
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -443,6 +727,69 @@ mod tests {
         check_generic_prime::<2_147_483_629>();
         check_generic_prime::<2_305_843_009_213_693_907>();
         check_generic_prime::<9_223_372_036_854_775_783>();
+    }
+
+    fn check_medium_prime<const P: u64>() {
+        #[cfg(not(feature = "simd"))]
+        {
+            return;
+        }
+        #[cfg(feature = "simd")]
+        {
+            if crate::simd::maybe_fp_medium().is_none() {
+                return;
+            }
+
+            for &len in WORD_BOUNDARY_LENS {
+                let a: Vec<Fp<P>> = (0..len as u64)
+                    .map(|i| Fp::<P>::new(i.wrapping_mul(1_000_003).wrapping_add(17)))
+                    .collect();
+                let b: Vec<Fp<P>> = (0..len as u64)
+                    .map(|i| Fp::<P>::new(i.wrapping_mul(2_000_033).wrapping_add(23)))
+                    .collect();
+
+                let got_add =
+                    <Fp<P> as SimdVecOps>::try_simd_add_vec(&a, &b).expect("medium SIMD add");
+                let got_sub =
+                    <Fp<P> as SimdVecOps>::try_simd_sub_vec(&a, &b).expect("medium SIMD sub");
+                let got_mul =
+                    <Fp<P> as SimdVecOps>::try_simd_mul_vec(&a, &b).expect("medium SIMD mul");
+
+                for i in 0..len {
+                    assert_eq!(got_add[i], a[i] + b[i], "add P={P}, len={len}, i={i}");
+                    assert_eq!(got_sub[i], a[i] - b[i], "sub P={P}, len={len}, i={i}");
+                    assert_eq!(got_mul[i], a[i] * b[i], "mul P={P}, len={len}, i={i}");
+                }
+
+                // Dot product hook: the SIMD path is bit-exact against a
+                // canonical scalar reference at the same word-boundary lens.
+                let mut scratch_a = Vec::<u16>::new();
+                let mut scratch_b = Vec::<u16>::new();
+                let got_dot =
+                    fp_medium_try_dot_product::<P>(&a, &b, &mut scratch_a, &mut scratch_b);
+                if let Some(got_dot) = got_dot {
+                    let mut expected = Fp::<P>::new(0);
+                    for i in 0..len {
+                        expected += a[i] * b[i];
+                    }
+                    assert_eq!(got_dot, expected, "dot P={P}, len={len}");
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn medium_simd_matches_scalar_word_boundaries() {
+        // Reference prime named in the [hard] criterion of issue 9e12659b.
+        check_medium_prime::<65521>();
+        // Sweep across the dispatch range (P ∈ (251, 65535]) to verify
+        // Barrett reduction generality. GF(257) is the smallest in-range
+        // prime; GF(509)/GF(1009)/GF(8191)/GF(32749) span small/large ends.
+        check_medium_prime::<257>();
+        check_medium_prime::<509>();
+        check_medium_prime::<1009>();
+        check_medium_prime::<8191>();
+        check_medium_prime::<32749>();
     }
 
     #[test]
@@ -512,6 +859,11 @@ mod tests {
         assert!(!fp_generic_enabled::<65537>());
         assert!(!fp_generic_enabled::<{ (1u64 << 31) - 1 }>());
         assert!(!fp_generic_enabled::<{ (1u64 << 61) - 1 }>());
+        // Medium primes route to the dedicated u16 Barrett kernel, not the
+        // 64-bit generic Montgomery path.
+        assert!(!fp_generic_enabled::<65521>());
+        assert!(!fp_generic_enabled::<257>());
+        assert!(!fp_generic_enabled::<32749>());
 
         let a65537 = [Fp::<65537>::new(3), Fp::<65537>::new(5)];
         let b65537 = [Fp::<65537>::new(7), Fp::<65537>::new(11)];

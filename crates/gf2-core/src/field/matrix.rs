@@ -2482,6 +2482,21 @@ pub fn gemm<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldMatrix<F>) -> FieldMatr
     let mut scratch_b = Vec::<u64>::new();
     let mut scratch_products = Vec::<u64>::new();
 
+    // Medium-prime fast path (`Fp<P>` with `P ∈ (251, 65536)`): pre-pack
+    // both operands into u16 raw-storage buffers once per gemm call, then
+    // run the AVX2 16-lane SIMD dot kernel per output cell. This amortises
+    // the `u64 → u16` truncation across all `m·n` output cells (`O(mk +
+    // kn)` packing vs `O(mn(k+k))` if we re-packed per cell).
+    //
+    // `try_pack_fp_medium_u16` returns `None` for every other field, so we
+    // never allocate the packed buffers unless we know the kernel will
+    // consume them.
+    let inner = a.cols;
+    let mut a_pack_buf: Vec<u16> = Vec::new();
+    let mut b_pack_buf: Vec<u16> = Vec::new();
+    let medium_pack_ok = F::try_pack_fp_medium_u16(a.data.as_slice(), &mut a_pack_buf).is_some()
+        && F::try_pack_fp_medium_u16(b_t.data.as_slice(), &mut b_pack_buf).is_some();
+
     // Blocked traversal over output tiles. The inner kernel is a single
     // `dot_product_slices` call per output cell.
     for i_blk in (0..a.rows).step_by(GEMM_ROW_TILE) {
@@ -2503,6 +2518,16 @@ pub fn gemm<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldMatrix<F>) -> FieldMatr
                         &mut scratch_products,
                     ) {
                         *out_cell = value;
+                    } else if medium_pack_ok {
+                        // Slice into the pre-packed buffers using the same
+                        // row/col indexing as the unpacked operands.
+                        let a_packed = &a_pack_buf[i * inner..(i + 1) * inner];
+                        let b_packed = &b_pack_buf[j * inner..(j + 1) * inner];
+                        if let Some(value) = F::try_fp_simd_dot_packed_u16(a_packed, b_packed) {
+                            *out_cell = value;
+                            continue;
+                        }
+                        *out_cell = crate::field::vec::dot_product_slices(a_row, b_col, &zero);
                     } else {
                         *out_cell = crate::field::vec::dot_product_slices(a_row, b_col, &zero);
                     }

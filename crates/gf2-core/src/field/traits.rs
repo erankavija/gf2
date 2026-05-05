@@ -348,6 +348,71 @@ pub trait FiniteField:
         None
     }
 
+    /// Hidden matrix-kernel hook for prime-field SIMD batch dot products.
+    ///
+    /// Companion to [`try_gf2m_u64_batch_dot_product`] for `Fp<P>` instead
+    /// of `GF(2^m)`. Most fields (including the GF(2^m) families and
+    /// generic-Montgomery primes) return `None` and the caller falls back
+    /// through the [`mul_product_sum_wide`](Self::mul_product_sum_wide)
+    /// delayed-reduction loop. The medium-prime `Fp<P>` impl
+    /// (`P ∈ (251, 65536)`) overrides this hook to route the dot through
+    /// the AVX2 16-lane u16 Barrett kernel in
+    /// `gf2-kernels-simd::fp_medium`, accumulating in 64-bit lanes and
+    /// reducing once at the very end.
+    ///
+    /// `scratch_a` / `scratch_b` are caller-owned packing buffers reused
+    /// across the surrounding GEMM traversal so the SIMD path pays its
+    /// `u64 → u16` truncation cost only once per matrix cell. The hook
+    /// is responsible for `clear()`-ing each buffer before use.
+    ///
+    /// This is crate-internal API surface for `FieldMatrix` performance
+    /// work; downstream code should use the public matrix/vector APIs.
+    #[doc(hidden)]
+    #[inline]
+    fn try_fp_simd_dot_product(
+        a: &[Self],
+        b: &[Self],
+        scratch_a: &mut Vec<u16>,
+        scratch_b: &mut Vec<u16>,
+    ) -> Option<Self> {
+        let _ = (a, b, scratch_a, scratch_b);
+        None
+    }
+
+    /// GEMM-internal hook: pack a slice of `Fp<P>` raw storage values
+    /// into `Vec<u16>` once, so the inner dot kernel can read pre-packed
+    /// canonical-storage lanes without re-truncating per cell.
+    ///
+    /// Returns `Some(())` if the field is eligible for the medium-prime
+    /// fast path (`Fp<P>` with `P ∈ (251, 65536)`); returns `None` for
+    /// every other field, signalling that the GEMM caller should not
+    /// attempt the pre-pack-then-SIMD-dot path. Implementations are
+    /// responsible for `clear()`-ing `out` before pushing.
+    ///
+    /// This is crate-internal API surface for `FieldMatrix` performance
+    /// work; downstream code should use the public matrix/vector APIs.
+    #[doc(hidden)]
+    #[inline]
+    fn try_pack_fp_medium_u16(xs: &[Self], out: &mut Vec<u16>) -> Option<()> {
+        let _ = (xs, out);
+        None
+    }
+
+    /// GEMM-internal hook: SIMD batch dot product using pre-packed u16
+    /// canonical-storage slices.
+    ///
+    /// Companion to [`try_pack_fp_medium_u16`]. Given two `&[u16]` slices
+    /// produced by the pack hook, computes the storage-domain dot
+    /// product, applies one Montgomery REDC, and returns the result as
+    /// a `Self`. Returns `None` for every field that does not implement
+    /// the medium-prime fast path.
+    #[doc(hidden)]
+    #[inline]
+    fn try_fp_simd_dot_packed_u16(a_packed: &[u16], b_packed: &[u16]) -> Option<Self> {
+        let _ = (a_packed, b_packed);
+        None
+    }
+
     /// Maximum number of wide-type additions before reduction is required to avoid overflow.
     ///
     /// Returns `usize::MAX` if overflow is impossible (e.g., binary fields where addition is XOR).

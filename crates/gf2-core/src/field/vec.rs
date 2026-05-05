@@ -469,6 +469,21 @@ pub(crate) fn dot_product_slices<F: FiniteField>(a: &[F], b: &[F], zero: &F) -> 
         return zero.zero_like();
     }
 
+    // Prime-field SIMD dot hook — overridden by `Fp<P>` for medium primes
+    // (`P ∈ (251, 65536)`) to route through the AVX2 16-lane u16 Barrett
+    // kernel in `gf2-kernels-simd::fp_medium`. For every other field the
+    // default returns `None` and we continue through the delayed-reduction
+    // path below.
+    //
+    // This entry point allocates scratch buffers locally; the GEMM kernel
+    // calls the hook directly with reused scratches to amortise the
+    // packing cost across many output cells.
+    let mut scratch_a: Vec<u16> = Vec::new();
+    let mut scratch_b: Vec<u16> = Vec::new();
+    if let Some(value) = F::try_fp_simd_dot_product(a, b, &mut scratch_a, &mut scratch_b) {
+        return value;
+    }
+
     let kmax = F::max_unreduced_additions();
 
     if kmax == usize::MAX {
