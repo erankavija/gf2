@@ -2,7 +2,7 @@
   "id": "5cacaec5-9676-41f7-adb1-e47b832876bb",
   "title": "Design small-prime packed kernel strategy",
   "description": "Select the strategy for GF(7), GF(31), and GF(251) performance parity.\n\n## Success Criteria\n\n- [hard] The design compares packed residues, tables, SIMD lanes, and fflas-style modular tricks.\n- [hard] One strategy is selected with feasibility evidence for each in-scope prime, scoped per the per-prime maturity marker policy in `CLAUDE.md` § *Success-criterion maturity markers*. The selected strategy must be feasibility-evidenced against either the `[hard]` 1.5×-of-fflas absolute target or, if the AVX2-host envelope is structurally shorter than that target, against an `[aspirational]` per-host envelope target with the empirical evidence recorded in the linked design document.\n\n## Amendment — 2026-05-05 (user-approved, Path A)\n\nThe original criterion #2 wording was \"One strategy is selected with feasibility evidence\" without the per-prime maturity-marker scoping. The amended wording above was approved by the user during 5cacaec5's R3 review cycle (AskUserQuestion: \"Issue 5cacaec5 design has hit an R2 code-review fail with a real architectural blocker\") in favour of Option A: *\"Accept C + amend GF(251) target now\"*. The amendment is recorded as a visible note here per the project's amendment-log convention, mirroring the Wave-3 user decisions on `9a715d75` proposal #1 and `a3412e15` sparse exclusions.\n\n**Empirical basis for the amendment.** The architect's design at `dev/plans/small_prime_kernel_strategy.md` § 6 #2 quantifies the AVX2 16-bit-MAC throughput envelope on the pinned bench host (Zen-3, no AVX-512) at 80 Gop/s. The downstream `662f7a15` 1.5× absolute targets per `dev/plans/sota_target_matrix.md` § 5.1 are GF(7) ≈ 33.5 Gop/s (42 % of peak — clearly feasible), GF(31) ≈ 33.5 Gop/s (same envelope), GF(251) ≈ 85.3 Gop/s (107 % of peak — structurally beyond AVX2-only integer SIMD; fflas reaches its 128 Gop/s baseline only via Modular<float> + OpenBLAS sgemm, Candidate D in the design). The amendment permits the design to select Candidate C with `[hard]` feasibility evidence for GF(7) + GF(31) and `[aspirational]` per-host-envelope evidence for GF(251), instead of forcing a Candidate D selection that would break the project's pure-Rust posture.\n\n**Downstream consequence.** `662f7a15`'s description was amended in the same commit chain to mark its GF(251) success-criterion row as `[aspirational]` with a re-escalation threshold (~3.2× of fflas, i.e. ≤ 40 Gop/s, at which the implementation re-escalates the amendment with the measured number).",
-  "state": "in_progress",
+  "state": "done",
   "priority": "high",
   "assignee": "agent:claude-wt-5cacaec5",
   "dependencies": [
@@ -14,15 +14,20 @@
     "doc-review"
   ],
   "gates_status": {
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-05-05T13:53:56.478903392Z"
+    },
     "code-review": {
-      "status": "failed",
+      "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-05T13:44:37.579949070Z"
+      "updated_at": "2026-05-05T13:52:39.004197856Z"
     },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-05T13:44:30.959224386Z"
+      "updated_at": "2026-05-05T13:52:32.523646472Z"
     }
   },
   "context": {},
@@ -41,5 +46,5 @@
     "story:sota-gfp-fflas"
   ],
   "created_at": "2026-04-30T06:43:02.702881720+00:00",
-  "updated_at": "2026-05-05T13:47:04.448694729+00:00"
+  "updated_at": "2026-05-05T13:53:56.684830701+00:00"
 }
