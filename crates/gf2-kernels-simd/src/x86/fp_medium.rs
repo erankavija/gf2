@@ -11,8 +11,8 @@
 //!
 //! # Input contract per kernel
 //!
-//! All kernels accept u16 lanes in `[0, P) ⊆ [0, 2^16)`. The two kernel
-//! families differ in how they interpret those lanes:
+//! All kernels accept u16 lanes in `[0, P) ⊆ [0, 2^16)`. The kernels
+//! differ in how they interpret those lanes:
 //!
 //! * **`fp_medium_batch_add` / `fp_medium_batch_sub`** — accept any
 //!   in-range u16, **canonical residue or Montgomery raw storage**. The
@@ -22,11 +22,26 @@
 //!   `gf2-core/src/gfp/simd_ops.rs::fp_medium_try_add_vec` exploits this
 //!   to feed Montgomery raw storage via `fp_medium_pack_raw` (a pure
 //!   `u64 → u16` truncation, no REDC), which is the throughput win.
-//! * **`fp_medium_batch_mul` / `fp_medium_batch_dot`** — require
-//!   **canonical** residues. Modular multiplication is **not** linear in
-//!   the Montgomery domain (feeding `aR, bR` would compute `abR² mod P`,
-//!   not `ab mod P`), so callers must pack canonical via
-//!   `Fp::value()` / `fp_medium_pack_canonical`.
+//! * **`fp_medium_batch_mul`** — requires **canonical** residues. The
+//!   per-cell output is written back in the input domain with no
+//!   post-correction, so feeding `aR, bR` would silently produce
+//!   `abR² mod P` instead of `ab mod P`. The mul caller
+//!   (`fp_medium_try_mul_vec` in `gf2-core/src/gfp/simd_ops.rs`) packs
+//!   canonical via `fp_medium_pack_canonical` accordingly.
+//! * **`fp_medium_batch_dot`** — domain-agnostic at the kernel level:
+//!   the kernel computes the unsigned 16-bit MAC sum
+//!   `(Σ a[i] * b[i]) mod P` whether the lanes are canonical or
+//!   Montgomery storage; only the *meaning* of the result differs by an
+//!   `R²` factor. Standalone callers feeding canonical lanes get the
+//!   canonical dot product. The GEMM caller in
+//!   `gf2-core/src/gfp/simd_ops.rs::fp_medium_try_dot_packed` (line 632,
+//!   with operands packed by `fp_medium_try_pack_u16` at line 605)
+//!   feeds **Montgomery raw storage** truncated `u64 → u16`; the
+//!   kernel returns `R² · Σ aᵢbᵢ mod P`, and the caller then applies one
+//!   Montgomery REDC to recover the canonical Montgomery storage of the
+//!   dot product. The pack-as-Montgomery path is the GEMM throughput
+//!   win — it skips a per-cell `Fp::value()` call (one REDC per lane)
+//!   in favour of a pure `u64 → u16` truncation.
 //!
 //! # Algorithm
 //!
@@ -216,10 +231,15 @@ unsafe fn fp_medium_sub16(a: __m256i, b: __m256i, p: __m256i) -> __m256i {
 /// # Arguments
 ///
 /// * `a`, `b` — input slices of **canonical** residues in `[0, P)`; same
-///   length. Unlike the add/sub kernels, mul is **not** linear in the
-///   Montgomery domain (`aR · bR mod P = abR² mod P`, not `abR mod P`),
-///   so callers feeding Montgomery storage would silently compute the
-///   wrong product.
+///   length. Unlike the add/sub kernels and unlike `fp_medium_batch_dot`,
+///   the *per-cell* `batch_mul` writes back canonical residues, so the
+///   caller must pre-pack canonical (no post-REDC step). Modular
+///   multiplication is not linear in the Montgomery domain (`aR · bR mod
+///   P = abR² mod P`, not `abR mod P`), so feeding Montgomery raw
+///   storage would silently produce wrong-domain output without any
+///   subsequent REDC fix-up. The `gf2-core` caller
+///   `fp_medium_try_mul_vec` (`crates/gf2-core/src/gfp/simd_ops.rs:456`)
+///   packs canonical via `fp_medium_pack_canonical` accordingly.
 /// * `p` — the prime modulus; must be in `(1, 2^16)`.
 /// * `barrett_m` — `floor(2^32 / p)`, the Barrett magic constant.
 /// * `out` — output slice of canonical results in `[0, P)` (same length).
@@ -357,39 +377,69 @@ pub unsafe fn fp_medium_batch_sub(a: &[u16], b: &[u16], p: u16, out: &mut [u16])
     }
 }
 
-/// Batch dot product for `Fp<P>` with `P < 2^16`, returning the canonical
-/// reduced sum.
+/// Batch dot product for `Fp<P>` with `P < 2^16`, returning the
+/// reduced sum `(Σ a[i] * b[i]) mod p` in the same domain interpretation
+/// as the inputs.
 ///
-/// Note: `_mm256_madd_epi16` would be the natural fused-MAC primitive
-/// here, but it operates on **signed** 16-bit lanes. For `P = 65521`
-/// canonical values reach up to `65520 = 0xFFF0`, which the signed
-/// interpretation reads as `-16`, producing wrong products. We
-/// therefore widen u16 → u32 first, multiply with
-/// `_mm256_mullo_epi32` (low 32 bits of the signed product, exact for
-/// any `(P-1)² < 2^32`), and accumulate the 32-bit lane outputs into
-/// 64-bit lanes. Eight unsigned MACs per 16-lane chunk; `k_max =
-/// 2^64 / (P-1)² ≈ 4.3 × 10^9` keeps the accumulator non-wrapping for
-/// any realistic panel size.
+/// # Domain semantics
+///
+/// The kernel computes the unsigned 16-bit dot product
+/// `(Σ a[i] * b[i]) mod p`. The result's *meaning* depends on the
+/// caller's input domain:
+///
+/// * Standalone callers feeding **canonical** lanes (e.g. via
+///   `fp_medium_pack_canonical`) get the canonical dot product
+///   `(Σ aᵢbᵢ) mod p`.
+/// * The GEMM caller (`gf2-core/src/gfp/simd_ops.rs::fp_medium_try_dot_packed`,
+///   line 632, with operands packed by `fp_medium_try_pack_u16`,
+///   line 605) feeds **Montgomery raw storage** `aR mod p` truncated to
+///   u16. The kernel's output is then `(R² · Σ aᵢbᵢ) mod p`, and the
+///   caller applies one Montgomery REDC to recover the canonical
+///   Montgomery storage `R · Σ aᵢbᵢ mod p`. The kernel itself is
+///   domain-agnostic — the same MAC primitive serves both interpretations
+///   (see module-level "Input contract per kernel" section).
+///
+/// # Algorithm
+///
+/// Two implementation paths share a public entry point, dispatched on
+/// `p`:
+///
+/// * **`p ≤ 32767`** (signed-`madd_epi16` path) — `_mm256_madd_epi16`
+///   fuses two adjacent u16 × u16 products into a single signed-i32 lane
+///   sum, giving 8 paired MACs per 256-bit vector iteration. Signed
+///   interpretation is safe because canonical lanes are in `[0, p) ⊆
+///   [0, 2^15)`, so signed and unsigned interpretations coincide. The
+///   per-pair MAC bound is `2 · (p-1)² < 2^31`, so a u32 lane absorbs
+///   `K_PANEL_PAIRS = floor(2^32 / (2 · (p-1)²))` pair-MACs before
+///   needing to drain to u64. For GF(8191) this gives K ≈ 32 pairs per
+///   panel = 4 vector chunks per panel; for GF(257) ≈ 32k pairs (no
+///   draining ever required at the gemm cell sizes in scope).
+/// * **`p > 32767`** (mulhi+mullo path) — `_mm256_madd_epi16` would
+///   misinterpret canonical lanes ≥ 2^15 as negative. The fallback uses
+///   `_mm256_mullo_epi16` + `_mm256_mulhi_epu16` to reconstruct the full
+///   u32 product, then widens to u64 every iteration (no panel
+///   accumulation is possible — a single full u32 product can already
+///   approach 2^32 for P near 2^16). This is the original `9e12659b`
+///   implementation; performance is the same for the reference prime
+///   GF(65521).
 ///
 /// # Arguments
 ///
-/// * `a`, `b` — input slices of **canonical** residues in `[0, p)`; same
-///   length. As with `fp_medium_batch_mul`, dot is **not** linear in the
-///   Montgomery domain (the per-lane multiply is the same primitive); the
-///   caller in `gf2-core/src/gfp/simd_ops.rs::try_fp_simd_dot_packed_u16`
-///   packs canonical via `fp_medium_pack_canonical`.
-/// * `p` — the prime modulus.
+/// * `a`, `b` — input slices of u16 lanes in `[0, p)`; same length. The
+///   kernel computes `Σ a[i] * b[i] mod p` regardless of whether the
+///   lanes are canonical residues or Montgomery raw storage; the result
+///   *value* differs by an `R²` factor between the two domains, and the
+///   GEMM caller applies a post-REDC to land in Montgomery storage. See
+///   the module-level "Input contract per kernel" section.
+/// * `p` — the prime modulus. Selects the algorithm path internally.
 ///
 /// # Returns
 ///
-/// The canonical dot product `(Σ a[i] * b[i]) mod p` in `[0, p)`.
+/// The reduced dot product `(Σ a[i] * b[i]) mod p` in `[0, p)`.
 ///
 /// # Safety
 ///
 /// Caller must ensure AVX2 is available and all input values are `< p`.
-/// Inputs in Montgomery raw storage are not an unsoundness hazard but
-/// produce a wrong-domain result — see the module-level "Input contract
-/// per kernel" section.
 ///
 /// # Panics
 ///
@@ -397,12 +447,105 @@ pub unsafe fn fp_medium_batch_sub(a: &[u16], b: &[u16], p: u16, out: &mut [u16])
 ///
 /// # Complexity
 ///
-/// O(n) with 16-u16-lane vectorisation (eight 32-bit-lane MACs per
-/// 256-bit vector iteration) and a single end-of-loop reduction.
+/// O(n) with 16-u16-lane vectorisation. The fast path (`p ≤ 32767`)
+/// runs at one `madd_epi16` per 16 inputs plus one u32 add per panel
+/// stride; the fallback path runs four ops per 16 inputs (mullo+mulhi+
+/// 2× unpack) plus four u64 adds per chunk.
 #[target_feature(enable = "avx2")]
 pub unsafe fn fp_medium_batch_dot(a: &[u16], b: &[u16], p: u16) -> u32 {
     assert_eq!(a.len(), b.len(), "fp_medium_batch_dot: length mismatch");
 
+    if p <= 32_767 {
+        fp_medium_batch_dot_madd(a, b, p)
+    } else {
+        fp_medium_batch_dot_mulhi(a, b, p)
+    }
+}
+
+/// Fast path for `p ≤ 32767`: signed `_mm256_madd_epi16` with per-prime
+/// panel-size accumulation in u32 lanes before draining to u64.
+#[inline]
+#[target_feature(enable = "avx2")]
+unsafe fn fp_medium_batch_dot_madd(a: &[u16], b: &[u16], p: u16) -> u32 {
+    debug_assert!(p > 0 && p <= 32_767);
+
+    let n = a.len();
+    let nvec = n / 16;
+
+    let a_ptr = a.as_ptr() as *const __m256i;
+    let b_ptr = b.as_ptr() as *const __m256i;
+
+    // Each madd_epi16 chunk produces 8 i32 lanes, each holding the sum
+    // of 2 unsigned products `a[2i]*b[2i] + a[2i+1]*b[2i+1]`. Per-lane
+    // bound is `2 * (p-1)²`. The u32 panel capacity is therefore
+    // `K_PANEL_CHUNKS = floor(2^32 / (16 * (p-1)²))` 16-u16 chunks
+    // (each chunk contributes 2*(p-1)² per u32 lane × 8 lanes per chunk;
+    // we only need to bound the per-lane sum, so the divisor is
+    // `2 * (p-1)²` per chunk). Using a saturating-floor and clamping to
+    // 1 below gives a safe per-prime panel size; for p=8191 this is 32,
+    // for p=257 it overflows usize (treated as nvec). After each panel,
+    // u32 lanes are widened to u64 and accumulated into a single
+    // u64-lane vector accumulator that absorbs the full sweep.
+    let pair_bound = 2u64 * (p as u64 - 1) * (p as u64 - 1);
+    let panel_chunks: usize = match (1u64 << 32).checked_div(pair_bound) {
+        // raw is "max chunks per u32 lane such that no overflow". One
+        // chunk contributes one MAC pair per lane, so panel_chunks = raw.
+        // Clamp to ≥ 1 (guaranteed when p > 1; pair_bound ≤ 2*32767² <
+        // 2^31).
+        Some(raw) => raw.max(1) as usize,
+        None => usize::MAX,
+    };
+
+    let zero = _mm256_setzero_si256();
+    let mut acc_u64 = _mm256_setzero_si256(); // 4 × u64 accumulators
+
+    let mut chunk = 0usize;
+    while chunk < nvec {
+        let panel_end = (chunk + panel_chunks).min(nvec);
+        let mut acc_u32 = _mm256_setzero_si256(); // 8 × u32 lane sums
+
+        while chunk < panel_end {
+            let av = _mm256_loadu_si256(a_ptr.add(chunk));
+            let bv = _mm256_loadu_si256(b_ptr.add(chunk));
+            // Each i32 lane = a[2i]*b[2i] + a[2i+1]*b[2i+1], unsigned-safe
+            // because a, b < p ≤ 2^15 keeps both factors and the sum in
+            // i32 positive range.
+            let m = _mm256_madd_epi16(av, bv);
+            acc_u32 = _mm256_add_epi32(acc_u32, m);
+            chunk += 1;
+        }
+
+        // Drain u32 panel sum into the u64 accumulator. Widen 8 × u32
+        // → 8 × u64 split across two vectors.
+        let lo = _mm256_unpacklo_epi32(acc_u32, zero);
+        let hi = _mm256_unpackhi_epi32(acc_u32, zero);
+        acc_u64 = _mm256_add_epi64(acc_u64, lo);
+        acc_u64 = _mm256_add_epi64(acc_u64, hi);
+    }
+
+    // Horizontal sum across the u64 accumulator's four lanes.
+    let mut tmp = [0u64; 4];
+    _mm256_storeu_si256(tmp.as_mut_ptr() as *mut __m256i, acc_u64);
+    let mut total: u64 = tmp[0]
+        .wrapping_add(tmp[1])
+        .wrapping_add(tmp[2])
+        .wrapping_add(tmp[3]);
+
+    // Scalar tail.
+    let tail_start = nvec * 16;
+    for i in tail_start..n {
+        total = total.wrapping_add((*a.get_unchecked(i) as u64) * (*b.get_unchecked(i) as u64));
+    }
+
+    (total % p as u64) as u32
+}
+
+/// Fallback path for `p > 32767`: full u32 products via mullo + mulhi,
+/// widened to u64 per chunk. No panel batching possible (a single u32
+/// product can approach 2^32).
+#[inline]
+#[target_feature(enable = "avx2")]
+unsafe fn fp_medium_batch_dot_mulhi(a: &[u16], b: &[u16], p: u16) -> u32 {
     let n = a.len();
     let nvec = n / 16;
 
