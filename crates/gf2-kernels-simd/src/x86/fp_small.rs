@@ -364,6 +364,121 @@ pub unsafe fn fp_small_batch_dot(a: &[u8], b: &[u8], p: u8) -> u8 {
     total as u8
 }
 
+/// Whole-row gemm panel. Computes `out[j] = (∑_t a[t] * bt[j*k + t]) mod p`
+/// for `j ∈ [0, n)`, where `a` is one length-`k` row of the left
+/// matrix and `bt` is the row-major B-transpose (`n` rows × `k`
+/// columns). Output is `n` canonical bytes written to `out`.
+///
+/// The kernel loads each 16-byte block of `a` once and reuses it
+/// against four B^T rows simultaneously, amortising the AVX2 lane
+/// broadcasts and constant-table loads across four output cells per
+/// pass. Fixed prime-`p` constants are loaded once at the head of
+/// the function.
+///
+/// # Safety
+///
+/// Caller must ensure AVX2 is available, `p` is an odd prime in
+/// `[3, 251]`, and all input bytes are canonical (`< p`).
+///
+/// # Panics
+///
+/// Panics if `bt.len() != n * k` or `out.len() != n`.
+#[target_feature(enable = "avx2")]
+pub unsafe fn fp_small_gemm_row_panel(
+    a: &[u8],
+    bt: &[u8],
+    k: usize,
+    n: usize,
+    p: u8,
+    out: &mut [u8],
+) {
+    assert_eq!(a.len(), k, "fp_small_gemm_row_panel: a.len() != k");
+    assert_eq!(
+        bt.len(),
+        n * k,
+        "fp_small_gemm_row_panel: bt.len() != n * k"
+    );
+    assert_eq!(out.len(), n, "fp_small_gemm_row_panel: out.len() != n");
+
+    let nvec = k / 16;
+    let p_u32 = p as u32;
+
+    // Process 4 output cells per inner sweep, sharing the loaded A
+    // chunks across four parallel accumulators.
+    let mut j = 0;
+    while j + 4 <= n {
+        let bt0 = bt.as_ptr().add(j * k);
+        let bt1 = bt.as_ptr().add((j + 1) * k);
+        let bt2 = bt.as_ptr().add((j + 2) * k);
+        let bt3 = bt.as_ptr().add((j + 3) * k);
+        let mut acc0 = _mm256_setzero_si256();
+        let mut acc1 = _mm256_setzero_si256();
+        let mut acc2 = _mm256_setzero_si256();
+        let mut acc3 = _mm256_setzero_si256();
+        for v in 0..nvec {
+            let av128 = _mm_loadu_si128(a.as_ptr().add(v * 16) as *const __m128i);
+            let av = _mm256_cvtepu8_epi16(av128);
+            let b0 = _mm256_cvtepu8_epi16(_mm_loadu_si128(bt0.add(v * 16) as *const __m128i));
+            let b1 = _mm256_cvtepu8_epi16(_mm_loadu_si128(bt1.add(v * 16) as *const __m128i));
+            let b2 = _mm256_cvtepu8_epi16(_mm_loadu_si128(bt2.add(v * 16) as *const __m128i));
+            let b3 = _mm256_cvtepu8_epi16(_mm_loadu_si128(bt3.add(v * 16) as *const __m128i));
+            acc0 = _mm256_add_epi32(acc0, _mm256_madd_epi16(av, b0));
+            acc1 = _mm256_add_epi32(acc1, _mm256_madd_epi16(av, b1));
+            acc2 = _mm256_add_epi32(acc2, _mm256_madd_epi16(av, b2));
+            acc3 = _mm256_add_epi32(acc3, _mm256_madd_epi16(av, b3));
+        }
+        // Horizontal-sum each accumulator and reduce mod p.
+        let sums = [
+            horizontal_sum_u32(acc0),
+            horizontal_sum_u32(acc1),
+            horizontal_sum_u32(acc2),
+            horizontal_sum_u32(acc3),
+        ];
+        let tail_start = nvec * 16;
+        for (jj, &sum) in sums.iter().enumerate() {
+            let mut total = sum as u64;
+            let bt_row = bt.as_ptr().add((j + jj) * k);
+            for t in tail_start..k {
+                total += (*a.get_unchecked(t) as u64) * (*bt_row.add(t) as u64);
+            }
+            *out.get_unchecked_mut(j + jj) = (total % p_u32 as u64) as u8;
+        }
+        j += 4;
+    }
+    // Scalar-loop tail for non-multiples of 4 in `n`.
+    while j < n {
+        let bt_row = bt.as_ptr().add(j * k);
+        let mut acc = _mm256_setzero_si256();
+        for v in 0..nvec {
+            let av =
+                _mm256_cvtepu8_epi16(_mm_loadu_si128(a.as_ptr().add(v * 16) as *const __m128i));
+            let bv = _mm256_cvtepu8_epi16(_mm_loadu_si128(bt_row.add(v * 16) as *const __m128i));
+            acc = _mm256_add_epi32(acc, _mm256_madd_epi16(av, bv));
+        }
+        let mut total = horizontal_sum_u32(acc) as u64;
+        let tail_start = nvec * 16;
+        for t in tail_start..k {
+            total += (*a.get_unchecked(t) as u64) * (*bt_row.add(t) as u64);
+        }
+        *out.get_unchecked_mut(j) = (total % p_u32 as u64) as u8;
+        j += 1;
+    }
+}
+
+#[inline]
+#[target_feature(enable = "avx2")]
+unsafe fn horizontal_sum_u32(v: __m256i) -> u32 {
+    let lo = _mm256_castsi256_si128(v);
+    let hi = _mm256_extracti128_si256::<1>(v);
+    let s = _mm_add_epi32(lo, hi);
+    let mut tmp = [0u32; 4];
+    _mm_storeu_si128(tmp.as_mut_ptr() as *mut __m128i, s);
+    tmp[0]
+        .wrapping_add(tmp[1])
+        .wrapping_add(tmp[2])
+        .wrapping_add(tmp[3])
+}
+
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
@@ -481,6 +596,34 @@ mod tests {
                     expected = (expected + a[i] as u64 * b[i] as u64) % p as u64;
                 }
                 assert_eq!(got as u64, expected, "p={p} len={len}");
+            }
+        });
+    }
+
+    #[test]
+    fn gemm_row_panel_matches_scalar() {
+        run_for_primes(|p| {
+            // Cover row counts that span both the 4-output-cell tile
+            // and the 1-cell tail, plus k values that exercise the
+            // SIMD body and the scalar tail.
+            let cases = [(7usize, 65usize), (16, 64), (15, 100), (32, 128)];
+            for &(n, k) in &cases {
+                let a: Vec<u8> = (0..k as u32)
+                    .map(|i| ((i * 11 + 7) % p as u32) as u8)
+                    .collect();
+                let bt: Vec<u8> = (0..(n * k) as u32)
+                    .map(|i| ((i * 19 + 3) % p as u32) as u8)
+                    .collect();
+                let mut out = vec![0u8; n];
+                unsafe { fp_small_gemm_row_panel(&a, &bt, k, n, p, &mut out) };
+                for j in 0..n {
+                    let mut expected: u64 = 0;
+                    for t in 0..k {
+                        expected += a[t] as u64 * bt[j * k + t] as u64;
+                    }
+                    expected %= p as u64;
+                    assert_eq!(out[j] as u64, expected, "p={p} k={k} n={n} j={j}");
+                }
             }
         });
     }

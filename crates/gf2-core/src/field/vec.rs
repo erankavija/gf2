@@ -420,6 +420,14 @@ impl<F: FiniteField> FieldVec<F> {
             rhs.len()
         );
         assert!(!self.is_empty(), "dot_product: vectors must not be empty");
+        // SIMD fast path: dispatches through
+        // `FiniteField::try_simd_dot_product` (currently the small-prime
+        // AVX2 byte-lane kernel for `Fp<P>` with `P <= 251`); falls back
+        // to the chunked-Wide kernel when no specialised SIMD path
+        // applies.
+        if let Some(value) = F::try_simd_dot_product(&self.data, &rhs.data) {
+            return value;
+        }
         // Delegate to the slice-based kernel. Using the first element as the
         // zero witness matches the previous behaviour exactly (`self.data[0]
         // .zero_like()`).
@@ -458,15 +466,6 @@ impl<F: FiniteField> FieldVec<F> {
 /// Panics in debug builds if `a.len() != b.len()`.
 #[inline]
 pub(crate) fn dot_product_slices<F: FiniteField>(a: &[F], b: &[F], zero: &F) -> F {
-    // SIMD fast path: when a kernel is registered through the
-    // `FiniteField::try_simd_dot_product` hook (currently the small-prime
-    // AVX2 byte-lane kernel for `Fp<P>` with `P <= 251`), bypass the
-    // chunked Wide-accumulator loop and return the kernel's scalar result
-    // directly. Falls through to the generic delayed-reduction path when
-    // the hook returns `None`.
-    if let Some(value) = F::try_simd_dot_product(a, b) {
-        return value;
-    }
     debug_assert_eq!(
         a.len(),
         b.len(),

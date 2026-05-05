@@ -700,6 +700,30 @@ impl<const P: u64> FiniteField for Fp<P> {
     fn try_simd_dot_product(a: &[Self], b: &[Self]) -> Option<Self> {
         <Self as simd_ops::SimdVecOps>::try_simd_dot_vec(a, b)
     }
+
+    /// Whole-gemm small-prime fast path. Pre-packs `a` and `b_t` to
+    /// canonical bytes once, calls the AVX2 byte-lane batch-dot
+    /// kernel for every output cell against the same packed buffers,
+    /// then unpacks. Amortises the Montgomery REDC pack overhead
+    /// across the `O(m·k·n)` inner work, eliminating the per-cell
+    /// pack thrash that blocks the `dot_product_slices`-level
+    /// dispatch from beating scalar at small `n`.
+    ///
+    /// Returns `false` (declining the fast path) when:
+    /// - `P > 251` or `P < 3` (out of byte-lane range);
+    /// - the `simd` feature is disabled;
+    /// - AVX2 is unavailable at runtime.
+    #[inline]
+    fn try_simd_gemm_classical(
+        a: &[Self],
+        b_t: &[Self],
+        m: usize,
+        k: usize,
+        n: usize,
+        out: &mut [Self],
+    ) -> bool {
+        simd_ops::fp_small_try_gemm_classical::<P>(a, b_t, m, k, n, out)
+    }
 }
 
 // ---------------------------------------------------------------------------

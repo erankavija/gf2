@@ -446,6 +446,43 @@ pub trait FiniteField:
         None
     }
 
+    /// Hidden whole-gemm hook for SIMD-accelerated `Fp<P>` matrix multiply.
+    ///
+    /// Lets `Fp<P>` (`P ≤ 251`) bypass the per-cell `dot_product_slices`
+    /// loop in [`crate::field::matrix::gemm`] and instead pre-pack the
+    /// entire `A` and `B^T` to canonical-byte slices once, run a fully
+    /// vectorised inner gemm at AVX2 byte/16-bit-lane width, and unpack
+    /// the output. The pack/unpack cost is `O(m·k + n·k + m·n)`,
+    /// amortising the per-element Montgomery REDC across the
+    /// `O(m·k·n)` inner kernel.
+    ///
+    /// # Arguments
+    ///
+    /// * `a` — `m × k` flattened row-major buffer.
+    /// * `b_t` — `n × k` flattened row-major buffer (already transposed
+    ///   so the inner product walks contiguous memory).
+    /// * `m`, `k`, `n` — matrix shapes; `a.len() == m * k`,
+    ///   `b_t.len() == n * k`.
+    /// * `out` — `m × n` flattened row-major destination.
+    ///
+    /// # Returns
+    ///
+    /// `true` when the kernel populated `out`, `false` (the default)
+    /// when the caller should fall back to the per-cell scalar path.
+    #[doc(hidden)]
+    #[inline]
+    fn try_simd_gemm_classical(
+        a: &[Self],
+        b_t: &[Self],
+        m: usize,
+        k: usize,
+        n: usize,
+        out: &mut [Self],
+    ) -> bool {
+        let _ = (a, b_t, m, k, n, out);
+        false
+    }
+
     /// Maximum number of wide-type additions before reduction is required to avoid overflow.
     ///
     /// Returns `usize::MAX` if overflow is impossible (e.g., binary fields where addition is XOR).

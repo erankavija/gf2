@@ -402,6 +402,78 @@ fn fp_small_try_dot_vec<const P: u64>(_a: &[Fp<P>], _b: &[Fp<P>]) -> Option<Fp<P
     None
 }
 
+/// Whole-gemm fast path. Pre-packs `a` (`m × k` row-major) and `b_t`
+/// (`n × k` row-major, already transposed by the caller) to
+/// canonical-byte SoA buffers and runs the AVX2 byte-lane batch-dot
+/// kernel for every output cell against the cached packs. Unpacks the
+/// output and writes it through `out` (`m × n` row-major).
+///
+/// Returns `true` when the fast path executed; `false` to defer to the
+/// caller's scalar `dot_product_slices` loop.
+#[cfg(feature = "simd")]
+pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
+    a: &[Fp<P>],
+    b_t: &[Fp<P>],
+    m: usize,
+    k: usize,
+    n: usize,
+    out: &mut [Fp<P>],
+) -> bool {
+    if !fp_small_enabled::<P>() {
+        return false;
+    }
+    let Some(fns) = crate::simd::maybe_fp_small() else {
+        return false;
+    };
+
+    debug_assert_eq!(a.len(), m * k, "fp_small_try_gemm_classical: a shape");
+    debug_assert_eq!(b_t.len(), n * k, "fp_small_try_gemm_classical: b_t shape");
+    debug_assert_eq!(out.len(), m * n, "fp_small_try_gemm_classical: out shape");
+
+    if k == 0 || m == 0 || n == 0 {
+        // The caller already handled the `k == 0` (output is the m×n zero
+        // matrix) and the `m == 0 || n == 0` (empty output) shapes; this
+        // is a defensive early-exit in case it ever doesn't.
+        return false;
+    }
+
+    // Pack A row-major, B-transpose row-major, both into canonical
+    // bytes. One Montgomery REDC per element via `Fp::value()`.
+    let a_u8: Vec<u8> = a.iter().map(|x| x.value() as u8).collect();
+    let bt_u8: Vec<u8> = b_t.iter().map(|x| x.value() as u8).collect();
+
+    // Whole-row inner kernel: each call computes one row of the
+    // output (`n` cells) against a fixed A row, processing four B-
+    // transpose rows per inner pass to amortise AVX2 broadcasts and
+    // constant-table loads.
+    let mut out_u8 = vec![0u8; m * n];
+    let p_u8 = P as u8;
+    for i in 0..m {
+        let a_row = &a_u8[i * k..(i + 1) * k];
+        let out_row = &mut out_u8[i * n..(i + 1) * n];
+        (fns.gemm_row_panel_fn)(a_row, &bt_u8, k, n, p_u8, out_row);
+    }
+
+    // Unpack canonical → Montgomery storage.
+    for (slot, &byte) in out.iter_mut().zip(out_u8.iter()) {
+        *slot = Fp::<P>::new(byte as u64);
+    }
+    true
+}
+
+#[cfg(not(feature = "simd"))]
+#[inline]
+pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
+    _a: &[Fp<P>],
+    _b_t: &[Fp<P>],
+    _m: usize,
+    _k: usize,
+    _n: usize,
+    _out: &mut [Fp<P>],
+) -> bool {
+    false
+}
+
 // ---------------------------------------------------------------------------
 // Generic Montgomery SIMD helpers.
 // ---------------------------------------------------------------------------
