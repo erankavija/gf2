@@ -241,6 +241,15 @@ name = "fieldmatrix_gemm"
 harness = false
 required-features = ["rand"]
 
+# Issue `3d06224c` (story `cc5de315`) — Mersenne31 GEMM regression guard.
+# Single 256³ cell carved out from `fieldmatrix_gemm` so future bench-day
+# comparisons can isolate the Mersenne fast-path number without sweeping
+# the whole field matrix. See `benches/mersenne_gemm_regression.rs`.
+[[bench]]
+name = "mersenne_gemm_regression"
+harness = false
+required-features = ["rand"]
+
 [[bench]]
 name = "fieldmatrix_gemm_delayed"
 harness = false
