@@ -114,7 +114,20 @@ Each item is phrased so the lead can copy it verbatim into an
 The four items are independent and may be approved (or rejected, or
 counter-proposed) one-at-a-time.
 
-### Proposal #1 — `(matmul, GF(2^32))`
+### Proposal #1 — `(matmul, GF(2^32))` — **REJECTED 2026-05-04 / RESOLVED via `b13799ac`**
+
+> **Status note (2026-05-05).** The user rejected this exclusion
+> proposal in favour of harnessing the cell. Task `b13799ac` (Build
+> GF(2^32) matmul reference harness) landed on 2026-05-04 with NTL
+> 11.6.0 `mat_GF2E` selected as the canonical reference under the
+> Conway polynomial `0x1_0000_8299`. Direct gf2-core ↔ NTL byte-equality
+> smoke at n=16 via the ground-truth file mechanism (`b13799ac` R2)
+> closes the protocol § 6 contract; canonical bench-day CSV row in
+> `benchmarks/results/20260505T091600Z.csv`. See
+> `dev/bench_results/2026-05-04-b13799ac-gf2pow32-promotion.md` for
+> the full evidence trail. The text below is retained for historical
+> context — it documents the original exclusion proposal that was
+> superseded by the harness decision.
 
 **Cell:** `matmul × GF(2^32)`.
 **Proposed exclusion class:** *new class* `not-yet-harnessed` (or, if
@@ -263,15 +276,17 @@ an exclusion. No user approval needed today; the consumer matrix
 
 | Proposal | Cells | Recommended decision in `4c0d0202` |
 |---|---|---|
-| #1 | `(matmul, GF(2^32))` (1 cell) | EXCLUDE with `not-yet-harnessed`; file follow-up to harness NTL or FLINT GF(2^32) lane *or* amend `2c7548ae` criterion #2 to drop GF(2^32). |
+| #1 | `(matmul, GF(2^32))` (1 cell) | **REJECTED 2026-05-04** — user opted to harness rather than exclude. Resolved by `b13799ac`: NTL 11.6.0 `mat_GF2E` promoted with Conway polynomial `0x1_0000_8299`; direct gf2-core ↔ NTL n=16 smoke via ground-truth file (R2); canonical bench row in `benchmarks/results/20260505T091600Z.csv`. |
 | #2 | echelon / invert / solve × all GF(2^m) (9 cells) | EXCLUDE with `no-independent-oracle`; file follow-up `Add scalar ref_gf2m_rref reference`. |
 | #3 | charpoly / minpoly × all GF(2^m) (6 cells) | EXCLUDE with `no-independent-oracle`; file follow-up `Extend FLINT harness with GF(2^m) lane`. |
 | #4 | spmv × all GF(2^m) (3 cells) | DEFER to `a3412e15`; consumer matrix ingests that issue's output. |
 
-The lead should escalate proposals #1, #2, #3 to the user before the
-consumer issue `4c0d0202` ingests them. Proposal #4 is a routing
-decision (defer to the parallel issue) and does not require user
-approval, only lead acknowledgement.
+**Status (2026-05-05).** Proposal #1 was rejected by the user on
+2026-05-04 in favour of harnessing — resolved via `b13799ac` (above).
+Proposals #2, #3, #4 were user-approved on 2026-05-04 (see § 6
+criterion #2 evidence row); the consumer issue `4c0d0202` will ingest
+those three exclusions plus the `(matmul, GF(2^32))` selection (NTL
+11.6.0 `mat_GF2E`).
 
 ## 5. Re-run cost estimate
 
