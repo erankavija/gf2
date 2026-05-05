@@ -2,17 +2,41 @@
   "id": "b9aed0d8-0a2a-4273-be7c-cf14a1d262b8",
   "title": "Design Candidate F — in-Rust f32-FMA cascade for small-prime GEMM",
   "description": "Add a new candidate strategy to the small-prime GEMM design (`dev/plans/small_prime_kernel_strategy.md`) and produce a per-(P, n) dispatch rule between it and the already-implemented Candidate C (16-bit-integer SIMD).\n\n## Context (why this is needed now)\n\nThe Wave-6B impl `662f7a15` landed Candidate C (AVX2 16-bit-integer-MAC SIMD) with measured GF(7)/GF(31) `[hard]` 1.5× FAIL at n ∈ {64, 256}³ (pass at n=1024³) and GF(251) `[aspirational]` soft-floor BREACH at n=256³ (28.7 Gop/s vs 40 Gop/s soft threshold). User-flagged 2026-05-06: the original Candidate D rejection (in-Rust f32 cascade) bundled the algorithm with the OpenBLAS dependency. A hand-rolled in-Rust AVX2 `_mm256_fmadd_ps` kernel uses the same f32-cascade algorithm without the OpenBLAS dep, and accesses Zen-3's 160 Gop/s f32-FMA peak (vs 80 Gop/s for the 16-bit-integer path).\n\n## Success Criteria\n\n- [hard] `dev/plans/small_prime_kernel_strategy.md` is amended with a new § 4.5 Candidate F section: in-Rust AVX2 `_mm256_fmadd_ps` f32 cascade for $p \\le 251$. The section follows the existing § 4.x structure (architectural pattern, mathematical sketch, inspiration, best fit). The amendment is added at-end with a \"Amendment — 2026-05-06 (user-approved post-Wave-6B)\" header in the new § block, mirroring the wave-6A amendment-block precedent.\n- [hard] § 5 (feasibility evidence) gains a § 5.5 Candidate F entry covering: (a) gf2-core kernels that would change, (b) MSRV / intrinsic-availability constraints, (c) interaction with Fp<P> Montgomery path, (d) interaction with kernel dispatch — same four-axis structure as § 5.1-§ 5.4.\n- [hard] § 6 (recommendation) gains an amendment block: instead of \"Selected: Candidate C\" being terminal, the recommendation becomes \"Selected: hybrid Candidate C + Candidate F\", with the per-(P, n) dispatch rule. The rule must be supplied as a concrete decision table (e.g., `n < N_thresh` → f32 cascade; `n ≥ N_thresh` → integer SIMD; with `N_thresh` determined by pack-amortization break-even analysis).\n- [hard] § 7 (implementation outline) is supplemented with § 7.4 covering Candidate F file-level changes (new `crates/gf2-kernels-simd/src/{fp_small_f32.rs, x86/fp_small_f32.rs}`, new `crate::simd::maybe_fp_small_f32` accessor, new dispatch branch in `try_simd_gemm_classical` keyed by `n` plus prime).\n- [hard] § 9 self-satisfies the new criteria using the same self-satisfaction convention used in the Wave-6A close: the design pass produces evidence in-document; downstream impl `662f7a15-rework` consumes the dispatch rule.\n\n## Out of scope\n\n- Candidate F implementation. That is `662f7a15`-rework.\n- f32 FMA kernel for $p > 251$ (medium-prime band) — that is `9e12659b` territory, which uses `_mm256_madd_epi16` u16-lane SIMD and is not blocked by this design pass.\n- f64-FMA cascade variants — only f32 is in scope here (matches fflas's `Modular<float>` path; f32 mantissa 23 bits accommodates $k \\cdot (p-1)^2 < 2^{23}$ for all $p \\le 251$).\n\n## Authority and references\n\n- **Authority document**: `dev/plans/small_prime_kernel_strategy.md` (commit `cd00161`+ R1-R4 fixes through `43393aa`). This issue amends it.\n- **Empirical motivation**: 662f7a15 worker bench output `dev/bench_results/2026-05-05-662f7a15-small-prime-gemm.csv` (the failing measurements). Cite verbatim.\n- **fflas algorithmic reference**: `dev/plans/fflas_ffpack_analysis.md` § 3 (BLAS integration pipeline) and design § 3 (existing reference algorithm survey).\n- **Hardware peaks**: Zen-3 single-core AVX2 throughput per Agner Fog instruction tables. Cited in the existing design § 6 #2.\n- **Follow-up consumer**: `662f7a15` will be re-dispatched for impl rework against the amended design after this issue closes.\n\n## Deliverable shape\n\nA single commit on main amending `dev/plans/small_prime_kernel_strategy.md` with the new sections § 4.5, § 5.5, § 6 amendment, § 7.4, § 9 amendment. No source code changes. The amendment must use the existing maturity-marker convention (new criteria carry `[hard]` markers). After the design lands, `jit doc add` re-pins the doc to the new commit SHA on this issue, on `5cacaec5` (the parent design issue), on `662f7a15` (the impl), and on the parent epic `97bf0879`.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "high",
-  "assignee": null,
+  "assignee": "agent:claude-wt-b9aed0d8",
   "dependencies": [],
   "gates_required": [
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-05T21:50:27.272148751Z"
+    }
+  },
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/plans/small_prime_kernel_strategy.md",
+      "commit": "8e67686",
+      "label": "Small-prime kernel strategy (Cand C + Cand F amendment)",
+      "doc_type": "design",
+      "format": "markdown",
+      "assets": [
+        {
+          "original_path": "https://github.com/flame/blis/blob/master/docs/KernelsHowTo.md",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        }
+      ]
+    }
+  ],
   "labels": [
     "type:task",
     "component:gf2-core",
@@ -21,5 +45,5 @@
     "story:sota-gfp-fflas"
   ],
   "created_at": "2026-05-05T21:40:00.854007772+00:00",
-  "updated_at": "2026-05-05T21:40:00.854015052+00:00"
+  "updated_at": "2026-05-05T21:56:47.272119520+00:00"
 }
