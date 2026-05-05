@@ -3827,3 +3827,5 @@
 {"type":"gate_passed","id":"7f695368-24e8-458e-a815-fe988093e4b0","issue_id":"cbecfced-d91e-404f-a1f9-b2e960f5b55f","timestamp":"2026-05-05T11:28:41.156528029Z","gate_key":"doc-review","updated_by":"agent:project-lead"}
 {"type":"issue_state_changed","id":"14bd3a3b-8bb1-4a72-beb0-707c16db1f39","issue_id":"cbecfced-d91e-404f-a1f9-b2e960f5b55f","timestamp":"2026-05-05T11:28:41.578884810Z","from":"in_progress","to":"done"}
 {"type":"issue_completed","id":"70563d6f-748c-42e6-9f4f-5ef035a89cfb","issue_id":"cbecfced-d91e-404f-a1f9-b2e960f5b55f","timestamp":"2026-05-05T11:28:41.578917620Z"}
+{"type":"issue_created","id":"aff20f8e-8d99-4cf9-aa34-1af3850b364e","issue_id":"47c1538f-14df-4f2c-9ff9-9ab90b121fa3","timestamp":"2026-05-05T11:30:14.149276545Z","title":"Close gf2-core GF(p^n) extension-field SOTA gaps","priority":"high"}
+{"type":"issue_state_changed","id":"63160182-295f-4efe-b7e0-6296f0128817","issue_id":"47c1538f-14df-4f2c-9ff9-9ab90b121fa3","timestamp":"2026-05-05T11:30:18.190877281Z","from":"ready","to":"backlog"}
