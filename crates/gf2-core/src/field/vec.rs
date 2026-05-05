@@ -458,6 +458,15 @@ impl<F: FiniteField> FieldVec<F> {
 /// Panics in debug builds if `a.len() != b.len()`.
 #[inline]
 pub(crate) fn dot_product_slices<F: FiniteField>(a: &[F], b: &[F], zero: &F) -> F {
+    // SIMD fast path: when a kernel is registered through the
+    // `FiniteField::try_simd_dot_product` hook (currently the small-prime
+    // AVX2 byte-lane kernel for `Fp<P>` with `P <= 251`), bypass the
+    // chunked Wide-accumulator loop and return the kernel's scalar result
+    // directly. Falls through to the generic delayed-reduction path when
+    // the hook returns `None`.
+    if let Some(value) = F::try_simd_dot_product(a, b) {
+        return value;
+    }
     debug_assert_eq!(
         a.len(),
         b.len(),
