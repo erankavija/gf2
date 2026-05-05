@@ -83,6 +83,13 @@
       "label": "FieldMatrix baseline handoff from 64c88ae4",
       "doc_type": "evidence",
       "format": "markdown"
+    },
+    {
+      "path": "dev/plans/project_lead_skill_improvements.md",
+      "commit": null,
+      "label": "project-lead skill improvements (deferred from 47698404 post-mortem)",
+      "doc_type": "meta",
+      "format": "markdown"
     }
   ],
   "labels": [
@@ -93,5 +100,5 @@
     "epic:gf2-core-sota-performance"
   ],
   "created_at": "2026-04-30T06:43:02.414572597+00:00",
-  "updated_at": "2026-04-30T14:15:19.328549449+00:00"
+  "updated_at": "2026-05-05T09:09:37.988860790+00:00"
 }
