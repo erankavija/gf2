@@ -77,6 +77,8 @@
 
 #include <linbox/ring/modular.h>
 #include <linbox/matrix/sparse-matrix.h>
+#include <linbox/matrix/dense-matrix.h>
+#include <linbox/matrix/sparsematrix/sparse-tpl-matrix.h>
 #include <linbox/util/commentator.h>
 
 #include "seed_helpers.h"
@@ -819,6 +821,113 @@ static int oracle_sparse_dense(const Field& F, const char* field_label, uint64_t
     return rc;
 }
 
+// LinBox-side sparse×dense oracle (jit:47698404 R9). Mirrors
+// `linbox_oracle_spmv` but for the `sparse_dense` cell: builds a
+// `LinBox::SparseMatrix<Field, SparseMatrixFormat::TPL>` from the same
+// triples the fflas oracle uses, calls `applyLeft(C, B)` (the canonical
+// sparse×dense kernel per `dev/plans/sparse_benchmark_corpus.md:168-169`
+// — `applyLeft × Modular<int8_t>` for GF(2), `applyLeft × Modular<int64_t>`
+// for GF(p), both routing through the same TPL saxpyin engine), and
+// asserts byte-equality between the LinBox output and the gf2-core
+// ground-truth recorded in `benchmarks/expected/sparse_smoke_n16.bin`.
+// Closes the protocol § criterion-3 candidate-specific smoke contract
+// for the LinBox-canonical `sparse×dense × GF(2)` cell.
+template <typename Field>
+static int linbox_oracle_sparse_dense(const Field& F,
+                                      const char* field_label,
+                                      uint64_t seed,
+                                      const ExpectedTable& et) {
+    constexpr size_t n = 16;
+    constexpr double density = 0.25;
+
+    std::string tag = std::string("sparse_dense,") + field_label;
+    auto it = et.find(tag);
+    if (it == et.end()) {
+        std::fprintf(stderr,
+                     "[sparse_smoke] FAIL %s missing from ground-truth file "
+                     "(linbox_sparse_dense path)\n", tag.c_str());
+        return 1;
+    }
+
+    std::vector<uint64_t> row_idx_full;
+    std::vector<uint64_t> col_idx;
+    std::vector<typename Field::Element> values;
+    build_csr(F, n, n, density, seed, row_idx_full, col_idx, values);
+    if (values.empty()) {
+        std::fprintf(stderr,
+                     "[sparse_smoke] WARN nnz=0 op=linbox_sparse_dense field=%s\n",
+                     field_label);
+        return 0;
+    }
+
+    typename Field::Element_ptr B = FFLAS::fflas_new(F, n * n);
+    {
+        uint64_t st = seed ^ 0xDEADBEEFULL;
+        typename Field::Residu_t card = F.cardinality();
+        for (size_t i = 0; i < n * n; ++i) {
+            uint64_t r = splitmix64(st);
+            typename Field::Element bi;
+            F.init(bi, static_cast<int64_t>(r % static_cast<uint64_t>(card)));
+            B[i] = bi;
+        }
+    }
+
+    // L1: assert local input == ground-truth (seed-walk equivalence).
+    auto local_in = serialise_sparse_dense_input(F, row_idx_full, col_idx, values, B, n, n);
+    if (local_in != it->second.in) {
+        FFLAS::fflas_delete(B);
+        return fail_l1_drift(tag);
+    }
+
+    // Build the LinBox TPL sparse matrix (matches `linbox_sparse_bench`'s
+    // `bench_sparse_dense<Field>` so the smoke exercises the same code
+    // path as the recorded throughput numbers).
+    using TplMatrix = LinBox::SparseMatrix<Field, LinBox::SparseMatrixFormat::TPL>;
+    using DenseMat = LinBox::DenseMatrix<Field>;
+    TplMatrix A(F, n, n);
+    for (size_t k = 0; k < values.size(); ++k) {
+        A.setEntry(row_idx_full[k], col_idx[k], values[k]);
+    }
+    A.finalize(TplMatrix::cacheOpt);
+
+    DenseMat B_lb(F, n, n);
+    DenseMat C_lb(F, n, n);
+    for (size_t i = 0; i < n; ++i) {
+        for (size_t j = 0; j < n; ++j) {
+            B_lb.setEntry(i, j, B[i * n + j]);
+        }
+    }
+    A.applyLeft(C_lb, B_lb);
+
+    // L2: serialise LinBox output bytes (same row-major u64 layout the
+    // ground-truth file records) and compare bytewise.
+    std::vector<uint8_t> local_out;
+    local_out.reserve(16 + 8 * n * n);
+    append_u64_le(local_out, n);
+    append_u64_le(local_out, n);
+    for (size_t i = 0; i < n; ++i) {
+        for (size_t j = 0; j < n; ++j) {
+            int64_t r;
+            typename Field::Element e;
+            C_lb.getEntry(e, i, j);
+            F.convert(r, e);
+            append_u64_le(local_out, static_cast<uint64_t>(r));
+        }
+    }
+
+    int rc = 0;
+    if (local_out != it->second.out) {
+        rc = fail_output_mismatch("linbox_sparse_dense", field_label, tag);
+    } else {
+        std::fprintf(stderr,
+                     "[sparse_smoke] OK linbox_sparse_dense field=%s nnz=%zu\n",
+                     field_label, values.size());
+    }
+
+    FFLAS::fflas_delete(B);
+    return rc;
+}
+
 // Internal-consistency oracle for `sparse_matmul × {GF(p), GF(2)}`
 // (jit:96fde7c7 R1 expansion). gf2-core sparse-sparse matmul has
 // `no-independent-oracle` per protocol § 9 (no external library
@@ -1478,6 +1587,45 @@ int main(int argc, char** argv) {
                                    gf2_bench_derive_seed(master_seed ^ 0x66ULL, "smoke-spmm", 0, 0, 0), et);
     rc |= oracle_sparse_dense_gf2m(GF2M16, "GF(2^16)",
                                    gf2_bench_derive_seed(master_seed ^ 0x77ULL, "smoke-spmm", 0, 0, 0), et);
+
+    // LinBox-side sparse×dense smoke oracle (jit:47698404 R9). Closes
+    // the protocol § criterion-3 candidate-specific smoke contract for
+    // the LinBox-canonical `sparse×dense × GF(2)` cell (design doc § 4)
+    // and provides a redundant second witness for the four GF(p) cells
+    // where LinBox is the secondary cross-check. Reuses the same
+    // ground-truth `sparse_dense,GF(*)` tag as `oracle_sparse_dense` so
+    // both candidates assert byte-equality against the same gf2-core
+    // production-path output bytes.
+    {
+        using Field = Givaro::Modular<int64_t>;
+        Field F((1LL << 31) - 1);
+        rc |= linbox_oracle_sparse_dense(F, "GF(2^31-1)",
+                                         gf2_bench_derive_seed(master_seed, "smoke-spmm", 0, 0, 0), et);
+    }
+    {
+        using Field = Givaro::Modular<int64_t>;
+        Field F(65521);
+        rc |= linbox_oracle_sparse_dense(F, "GF(65521)",
+                                         gf2_bench_derive_seed(master_seed ^ 0x11ULL, "smoke-spmm", 0, 0, 0), et);
+    }
+    {
+        using Field = Givaro::Modular<int64_t>;
+        Field F(251);
+        rc |= linbox_oracle_sparse_dense(F, "GF(251)",
+                                         gf2_bench_derive_seed(master_seed ^ 0x22ULL, "smoke-spmm", 0, 0, 0), et);
+    }
+    {
+        using Field = Givaro::Modular<int64_t>;
+        Field F(7);
+        rc |= linbox_oracle_sparse_dense(F, "GF(7)",
+                                         gf2_bench_derive_seed(master_seed ^ 0x33ULL, "smoke-spmm", 0, 0, 0), et);
+    }
+    {
+        using Field = Givaro::Modular<int64_t>;
+        Field F(2);
+        rc |= linbox_oracle_sparse_dense(F, "GF(2)",
+                                         gf2_bench_derive_seed(master_seed ^ 0x55ULL, "smoke-spmm", 0, 0, 0), et);
+    }
 
     // sparse-elim × {GF(2), GF(p)} — LinBox `GaussDomain::NoReordering`
     // (sparse Gauss-Jordan) cross-checked against the gf2-core
