@@ -1,6 +1,6 @@
 # Sparse-smoke gf2-core integration — design sketch (`jit:96fde7c7`)
 
-**Status:** sketch awaiting lead/user approval per CLAUDE.md § *Verification work*.
+**Status:** **APPROVED 2026-05-05** by project-lead (session 7, autonomous) under CLAUDE.md § *Verification work*. The lead's recommendation across § 11's three open questions: **mechanism (b) ground-truth file, .gitignored, include input bytes** is the dispatched design. Decision rationale: this is an integration-mechanism task (not a Lean/Coq/Kani formal proof), the trade-off table in § 2 makes (b) clearly preferable on the unsafe-isolation invariant + maintenance axes, and either mechanism is reversible. The user can override via session interrupt; until then, the impl proceeds on mechanism (b). All three prerequisite tasks (521390db, 0d6ca3b6, 0f708b36) closed in session 7 — § 7's blockers are now empty.
 **Author:** project-lead (autonomous), 2026-05-05.
 **Parent issue:** `96fde7c7` (sparse_smoke gf2-core integration design + impl).
 **Parent epic:** `97bf0879` (Close gf2-core SOTA performance gaps).
