@@ -3810,3 +3810,11 @@
 {"type":"issue_claimed","id":"872953bf-8647-4b9a-a1c4-ba4ef78a9985","issue_id":"b0434149-9385-4149-8fec-dc2b4663333f","timestamp":"2026-05-05T11:00:08.756360548Z","assignee":"agent:project-lead"}
 {"type":"gate_passed","id":"e0d3fd6f-64ed-4d48-b085-193bbf659e29","issue_id":"b0434149-9385-4149-8fec-dc2b4663333f","timestamp":"2026-05-05T11:00:29.419213069Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
 {"type":"gate_failed","id":"0b3ccf0d-4a70-4a6d-8484-35369d013f71","issue_id":"b0434149-9385-4149-8fec-dc2b4663333f","timestamp":"2026-05-05T11:04:55.309929241Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"76ea2e22-ac5f-46b0-b625-2fff6efaadc1","issue_id":"b0434149-9385-4149-8fec-dc2b4663333f","timestamp":"2026-05-05T11:07:05.464368009Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"40280ed4-3b89-42fd-a5c3-8a1bb55c1516","issue_id":"b0434149-9385-4149-8fec-dc2b4663333f","timestamp":"2026-05-05T11:09:58.713488746Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"9e2b1bfe-844c-42eb-b46a-5ff4e9f8cd13","issue_id":"b0434149-9385-4149-8fec-dc2b4663333f","timestamp":"2026-05-05T11:10:03.021804958Z","gate_key":"doc-review","updated_by":"agent:project-lead"}
+{"type":"issue_state_changed","id":"1511f37d-be91-4d93-b2a4-8ac8bba6a3af","issue_id":"b0434149-9385-4149-8fec-dc2b4663333f","timestamp":"2026-05-05T11:10:03.198215639Z","from":"in_progress","to":"done"}
+{"type":"issue_completed","id":"2c746d15-94e8-485b-9d72-4260f8e300bf","issue_id":"b0434149-9385-4149-8fec-dc2b4663333f","timestamp":"2026-05-05T11:10:03.198251959Z"}
+{"type":"issue_state_changed","id":"f563f69e-d5b7-4532-9a29-a96fb37b9630","issue_id":"cbecfced-d91e-404f-a1f9-b2e960f5b55f","timestamp":"2026-05-05T11:10:03.666196693Z","from":"backlog","to":"ready"}
+{"type":"issue_state_changed","id":"b56fd66c-ecf9-4d4e-851e-81108e9f37e9","issue_id":"cbecfced-d91e-404f-a1f9-b2e960f5b55f","timestamp":"2026-05-05T11:10:09.099296057Z","from":"ready","to":"in_progress"}
+{"type":"issue_claimed","id":"3cdcba49-3790-4334-ba17-72b4c3d738ea","issue_id":"cbecfced-d91e-404f-a1f9-b2e960f5b55f","timestamp":"2026-05-05T11:10:09.102256058Z","assignee":"agent:project-lead"}

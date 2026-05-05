@@ -2,7 +2,7 @@
   "id": "b0434149-9385-4149-8fec-dc2b4663333f",
   "title": "Publish post-PPC gf2-core SOTA baseline scorecard",
   "description": "Publish a truthful post-PPC baseline scorecard and clean up the legacy 64c88ae4 publication state.\n\n## Background\n\nThe original 64c88ae4 report predates the PPC follow-up evidence and its report child a9ab0a4f failed review on stale table semantics, stale environment docs, and stale reference-status labels.\n\n## Success Criteria\n\n- [hard] The benchmark publication distinguishes measured, N/A, slow/nightly, harness-scope gap, and optimization-gap cells without contradictory legends.\n- [hard] 64c88ae4 and a9ab0a4f descriptions and linked docs accurately state that baseline publication is separate from SOTA gap closure.\n- [hard] a9ab0a4f gates pass and the corrected scorecard is linked to the relevant JIT issues.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "high",
   "assignee": "agent:project-lead",
   "dependencies": [
@@ -14,15 +14,20 @@
     "doc-review"
   ],
   "gates_status": {
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-05-05T11:10:03.021585968Z"
+    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-05T11:00:13.887756996Z"
+      "updated_at": "2026-05-05T11:06:58.552555071Z"
     },
     "code-review": {
-      "status": "failed",
+      "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-05T11:00:29.482222247Z"
+      "updated_at": "2026-05-05T11:07:05.529969187Z"
     }
   },
   "context": {},
@@ -138,5 +143,5 @@
     "story:sota-baseline-scorecard"
   ],
   "created_at": "2026-04-30T06:43:02.424478750+00:00",
-  "updated_at": "2026-05-05T11:04:55.309728331+00:00"
+  "updated_at": "2026-05-05T11:10:03.198266609+00:00"
 }
