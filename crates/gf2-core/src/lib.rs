@@ -83,6 +83,7 @@ pub(crate) mod simd {
     use gf2_kernels_simd::fp_generic::FpGenericFns;
     use gf2_kernels_simd::fp_medium::MediumPrimeFns;
     use gf2_kernels_simd::fp_small::SmallPrimeFns;
+    use gf2_kernels_simd::fp_small_f32::SmallPrimeF32Fns;
     use gf2_kernels_simd::gf2m::Gf2mFns;
     use gf2_kernels_simd::gf2m_batch::Gf2mBatchFns;
     use gf2_kernels_simd::gf2m_wide::{ClmulWide256Fns, ClmulWide571Fns, Gf2mWideFns};
@@ -99,6 +100,7 @@ pub(crate) mod simd {
     static FP_GENERIC_FNS: OnceLock<Option<FpGenericFns>> = OnceLock::new();
     static FP_MEDIUM_FNS: OnceLock<Option<MediumPrimeFns>> = OnceLock::new();
     static FP_SMALL_FNS: OnceLock<Option<SmallPrimeFns>> = OnceLock::new();
+    static FP_SMALL_F32_FNS: OnceLock<Option<SmallPrimeF32Fns>> = OnceLock::new();
     static GF2M_WIDE_FNS: OnceLock<Option<Gf2mWideFns>> = OnceLock::new();
     static TRANSPOSE_FNS: OnceLock<Option<TransposeFns>> = OnceLock::new();
 
@@ -216,6 +218,29 @@ pub(crate) mod simd {
             .as_ref()
     }
 
+    /// Returns the best available small-prime `Fp<P>` AVX2 + FMA3
+    /// f32-cascade GEMM kernel, if any.
+    ///
+    /// Provides the **Candidate F** path from
+    /// `dev/plans/small_prime_kernel_strategy.md` § 4.5 / § 5.5 / § 6.1
+    /// — an in-Rust `_mm256_fmadd_ps`-based register-blocked sgemm
+    /// micro-kernel for canonical-byte `Fp<P>` operands with
+    /// `P ≤ 251`. On Zen-3 the FMA3 lane runs at 0.5-cycle reciprocal
+    /// throughput (twice Candidate C's `_mm256_madd_epi16`), so this
+    /// path is preferred whenever both AVX2 and FMA3 are available.
+    /// Returns `None` on hosts without FMA3, in which case callers
+    /// fall back to [`maybe_fp_small`] (the AVX2-only Candidate C
+    /// kernel) or scalar.
+    ///
+    /// Specialised Fermat / Mersenne kernels for `P > 251` remain
+    /// separate and dispatch above this branch.
+    #[inline]
+    pub fn maybe_fp_small_f32() -> Option<&'static SmallPrimeF32Fns> {
+        FP_SMALL_F32_FNS
+            .get_or_init(gf2_kernels_simd::fp_small_f32::detect)
+            .as_ref()
+    }
+
     /// Returns the best available fixed-size wide GF(2^m) carry-less multiply
     /// kernels, if any.
     ///
@@ -279,6 +304,12 @@ pub(crate) mod simd {
     #[allow(dead_code)]
     #[inline]
     pub fn maybe_fp_small() -> Option<()> {
+        None
+    }
+
+    #[allow(dead_code)]
+    #[inline]
+    pub fn maybe_fp_small_f32() -> Option<()> {
         None
     }
 

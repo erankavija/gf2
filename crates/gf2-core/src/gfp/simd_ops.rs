@@ -402,14 +402,43 @@ fn fp_small_try_dot_vec<const P: u64>(_a: &[Fp<P>], _b: &[Fp<P>]) -> Option<Fp<P
     None
 }
 
+/// Per-(P, m, k, n) Candidate-F selector.
+///
+/// Per the b9aed0d8 § 6.1 amendment (user-approved 2026-05-06): every
+/// `Fp<P>` cell with `P ≤ 251` routes to Candidate F when the host
+/// CPU supports AVX2 + FMA3. The `(m, k, n)` parameters are part of
+/// the per-(P, n) rule's signature and are forwarded for forward
+/// compatibility — a future amendment supported by fresh F bench data
+/// could refine the table without changing dispatch wiring.
+#[cfg(feature = "simd")]
+#[inline]
+const fn select_f32_path<const P: u64>(_m: usize, _k: usize, _n: usize) -> bool {
+    fp_small_enabled_const::<P>()
+}
+
+/// `fp_small_enabled` evaluated at compile time so it can be used in
+/// `const fn select_f32_path`. Mirrors the runtime predicate exactly.
+#[cfg(feature = "simd")]
+#[inline]
+const fn fp_small_enabled_const<const P: u64>() -> bool {
+    P >= 3 && P <= 251
+}
+
 /// Whole-gemm fast path. Pre-packs `a` (`m × k` row-major) and `b_t`
 /// (`n × k` row-major, already transposed by the caller) to
 /// canonical-byte SoA buffers and runs the AVX2 byte-lane batch-dot
 /// kernel for every output cell against the cached packs. Unpacks the
 /// output and writes it through `out` (`m × n` row-major).
 ///
-/// Returns `true` when the fast path executed; `false` to defer to the
-/// caller's scalar `dot_product_slices` loop.
+/// On FMA3-capable hosts the f32-cascade kernel (Candidate F per
+/// `dev/plans/small_prime_kernel_strategy.md` § 6.1) is preferred —
+/// it issues `_mm256_fmadd_ps` at twice the throughput of
+/// Candidate C's `_mm256_madd_epi16`. The Candidate C
+/// (`_mm256_madd_epi16`-based) path remains compiled in as the
+/// AVX2-only-no-FMA3 runtime fallback per the same amendment.
+///
+/// Returns `true` when one of the fast paths executed; `false` to
+/// defer to the caller's scalar `dot_product_slices` loop.
 #[cfg(feature = "simd")]
 pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
     a: &[Fp<P>],
@@ -422,9 +451,6 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
     if !fp_small_enabled::<P>() {
         return false;
     }
-    let Some(fns) = crate::simd::maybe_fp_small() else {
-        return false;
-    };
 
     debug_assert_eq!(a.len(), m * k, "fp_small_try_gemm_classical: a shape");
     debug_assert_eq!(b_t.len(), n * k, "fp_small_try_gemm_classical: b_t shape");
@@ -441,17 +467,36 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
     // bytes. One Montgomery REDC per element via `Fp::value()`.
     let a_u8: Vec<u8> = a.iter().map(|x| x.value() as u8).collect();
     let bt_u8: Vec<u8> = b_t.iter().map(|x| x.value() as u8).collect();
-
-    // Whole-row inner kernel: each call computes one row of the
-    // output (`n` cells) against a fixed A row, processing four B-
-    // transpose rows per inner pass to amortise AVX2 broadcasts and
-    // constant-table loads.
-    let mut out_u8 = vec![0u8; m * n];
     let p_u8 = P as u8;
-    for i in 0..m {
-        let a_row = &a_u8[i * k..(i + 1) * k];
-        let out_row = &mut out_u8[i * n..(i + 1) * n];
-        (fns.gemm_row_panel_fn)(a_row, &bt_u8, k, n, p_u8, out_row);
+    let mut out_u8 = vec![0u8; m * n];
+
+    // Candidate F (AVX2 + FMA3 f32-cascade) — preferred whenever the
+    // selector authorises this (P, m, k, n) cell AND the host supports
+    // FMA3 at runtime. Per § 6.1 amendment the selector resolves
+    // uniformly to `true` for every `P ≤ 251`, and FMA3 is present
+    // on every Zen-2+ AMD and every Haswell+ Intel part.
+    let f32_taken = if select_f32_path::<P>(m, k, n) {
+        if let Some(fns_f32) = crate::simd::maybe_fp_small_f32() {
+            (fns_f32.batch_gemm_fn)(&a_u8, &bt_u8, m, k, n, p_u8, &mut out_u8);
+            true
+        } else {
+            false
+        }
+    } else {
+        false
+    };
+
+    if !f32_taken {
+        // Candidate C (AVX2 16-bit-integer Barrett kernel) runtime
+        // fallback for AVX2-only-no-FMA3 hosts (Zen 1, Sandy Bridge).
+        let Some(fns) = crate::simd::maybe_fp_small() else {
+            return false;
+        };
+        for i in 0..m {
+            let a_row = &a_u8[i * k..(i + 1) * k];
+            let out_row = &mut out_u8[i * n..(i + 1) * n];
+            (fns.gemm_row_panel_fn)(a_row, &bt_u8, k, n, p_u8, out_row);
+        }
     }
 
     // Unpack canonical → Montgomery storage.
