@@ -2,7 +2,7 @@
   "id": "cbecfced-d91e-404f-a1f9-b2e960f5b55f",
   "title": "Define reproducible gf2-core SOTA reference matrix",
   "description": "Define the reproducible SOTA reference matrix for gf2-core finite-field and linear-algebra performance.\n\n## Background\n\nfflas-ffpack and M4RI are primary hard references, but GF(2^m), charpoly/minpoly, and sparse operations may require M4RIE, LinBox, NTL, or FLINT. Only reproducible and comparable references become hard targets.\n\n## Success Criteria\n\n- [hard] A linked design doc defines the reference acceptance protocol and the reference owner for every in-scope operation/field family.\n- [hard] fflas-ffpack and M4RI lanes are hardened for the primary GF(p) and GF(2) comparisons.\n- [hard] M4RIE, LinBox, NTL, and FLINT are either promoted to hard references with working harnesses or rejected with evidence.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "high",
   "assignee": "agent:project-lead",
   "dependencies": [
@@ -14,7 +14,23 @@
     "cargo-ci",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-05T11:22:26.008786668Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-05-05T11:28:41.156323419Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-05T11:22:32.692055801Z"
+    }
+  },
   "context": {},
   "documents": [
     {
@@ -63,5 +79,5 @@
     "story:sota-reference-matrix"
   ],
   "created_at": "2026-04-30T06:43:02.433953673+00:00",
-  "updated_at": "2026-05-05T11:10:09.529615050+00:00"
+  "updated_at": "2026-05-05T11:28:41.578930430+00:00"
 }
