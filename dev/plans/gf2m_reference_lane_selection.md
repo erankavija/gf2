@@ -41,11 +41,13 @@ exclusion class are recorded below.
   Barrett fallback. **GF(2^32) is therefore in production scope** and
   needs an external reference if at all reproducible.
 * **`crates/gf2-core/src/primitive_polys.rs::standard()`.** Returns a
-  primitive polynomial only for `m ∈ [2, 16]`. For `m = 32` the database
-  returns `None`, and the user must supply their own polynomial (the
-  CLAUDE.md `gf2m/` description and the `Gf2mField::new` constructor
-  both make this explicit). Any external reference at GF(2^32) must
-  also accept an arbitrary primitive polynomial so the basis matches.
+  primitive polynomial for `m ∈ [2, 16]` and (as of `b13799ac`,
+  2026-05-04) for `m = 32` — the latter being the Conway polynomial
+  `x^32 + x^15 + x^9 + x^7 + x^4 + x^3 + 1` (`0x1_0000_8299`, Frank
+  Lübeck's database). For other extension degrees the database returns
+  `None`, and the user must supply their own polynomial. Any external
+  reference at a `None`-degree must also accept an arbitrary primitive
+  polynomial so the basis matches.
 * **M4RIE matmul promotion (sealed in Wave 2).** `dev/plans/m4rie_promotion_evidence.md`
   promotes M4RIE 20250128 for **matmul only**, over GF(2^4), GF(2^8),
   GF(2^16). Echelon and m > 16 are explicitly out of scope and may not
@@ -336,16 +338,21 @@ All three open questions originally listed here were resolved by the
    `dev/plans/sota_reference_acceptance_protocol.md` § 14, adding
    `not-yet-harnessed` and `no-independent-oracle` as recognized
    exclusion classes.
-2. **Sequence of follow-up issues. — RESOLVED.** Filed concurrently
-   with the user-approval escalation: `b13799ac` (Build GF(2^32)
-   matmul reference harness) is now an open task under story
-   `2c7548ae`, wired as a Wave-12-aggregation prerequisite via
-   `dece4e73`'s JIT dep edge.
-3. **GF(2^32) primitive-polynomial choice. — DELEGATED.** Carried
-   into the new `b13799ac` task as one of its `[hard]` criteria;
-   its dispatch prompt will surface the candidate polynomials
-   (`x^32 + x^7 + x^3 + x^2 + 1` from Hansen-Mullen, or a trinomial
-   alternative) for user nomination before harness work begins.
+2. **Sequence of follow-up issues. — RESOLVED.** `b13799ac` (Build
+   GF(2^32) matmul reference harness) was filed under story
+   `2c7548ae` and wired as a Wave-12-aggregation prerequisite via
+   `dece4e73`'s JIT dep edge. **`b13799ac` is now `done` (2026-05-04
+   landing, R3 close 2026-05-05)** — NTL 11.6.0 `mat_GF2E` promoted
+   with all five protocol criteria PASS; evidence in
+   `dev/bench_results/2026-05-04-b13799ac-gf2pow32-promotion.md`.
+3. **GF(2^32) primitive-polynomial choice. — RESOLVED via `b13799ac`.**
+   The Conway polynomial `x^32 + x^15 + x^9 + x^7 + x^4 + x^3 + 1`
+   (`0x1_0000_8299`, Frank Lübeck's database, table row `f_{2,32}`)
+   was selected and is now the SSOT in
+   `crates/gf2-core/src/primitive_polys.rs::standard(32)`. The
+   alternative trinomial `x^32 + x^7 + x^3 + x^2 + 1` (Hansen-Mullen)
+   was considered but Conway was chosen for cross-library
+   compatibility (SageMath, Magma, GAP, FLINT all return Conway).
 
 ## 8. Files referenced (for reviewer convenience)
 
@@ -370,7 +377,8 @@ All three open questions originally listed here were resolved by the
   records the bitwise-RREF protocol contract and the M4RIE down-scope.
 * `crates/gf2-core/src/gf2m/` — production GF(2^m) module map.
 * `crates/gf2-core/src/primitive_polys.rs` — primitive polynomial
-  database; standard polys only for `m ∈ [2, 16]`.
+  database; standard polys for `m ∈ [2, 16]` and `m = 32` (Conway,
+  added by `b13799ac`).
 
 ## 9. Document-attach checklist
 
