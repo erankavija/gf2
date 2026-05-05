@@ -354,10 +354,10 @@ if [[ "${RUN_SMOKE_EQUALITY}" -eq 1 ]]; then
     # protocol § 6 criterion-3 contract.
     if [[ "${RUN_NTL}" -eq 1 ]]; then
         echo "[run.sh] regenerating gf2pow32_smoke_n16.bin (gf2-core ground-truth)" >&2
-        (cd "${HERE}/.." && \
-            cargo run --release -p gf2-core --features bench-csv \
-                --example gf2pow32_smoke_emit_expected \
-                -- --output benchmarks/expected/gf2pow32_smoke_n16.bin)
+        (cd "$(dirname "${HERE}")" && \
+            cargo run --release -p gf2-coding --example gf2pow32_smoke_emit_expected \
+                --features bench-csv -- \
+                --output benchmarks/expected/gf2pow32_smoke_n16.bin)
         echo "[run.sh] running ntl_gf2pow32_smoke (gf2-core ↔ NTL) inside ${IMAGE_TAG}" >&2
         "${RUNTIME}" run --rm \
             --security-opt label=disable \

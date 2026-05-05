@@ -51,16 +51,20 @@
 // --smoke runs only n=16 cells with warmup=0,iters=1 and prints CSV
 //         rows. The bitwise-equality oracle for the GF(2^32) lane is
 //         delegated to the standalone `ntl_gf2pow32_smoke` binary
-//         (built alongside this one) — it compares NTL `mat_GF2E`
-//         against an independent scalar schoolbook reference, which
-//         the matching Rust test (crates/gf2-core/tests/gf2pow32_matmul.rs)
-//         in turn compares against gf2-core's `FieldMatrix<Gf2mWide>::gemm`.
-//         The two arms share the same Conway polynomial bits and the
-//         same byte-level packing, so transitive equality NTL ↔ scalar
-//         ↔ gf2-core is the wired correctness oracle. See
-//         dev/bench_results/2026-05-04-b13799ac-gf2pow32-promotion.md
-//         § "Smoke transcript" and § "Implementation note: smoke split"
-//         for the rationale.
+//         (built alongside this one) — R2 rewrite (jit:b13799ac): direct
+//         gf2-core ↔ NTL byte-equality via the ground-truth file
+//         `benchmarks/expected/gf2pow32_smoke_n16.bin` emitted by the
+//         Cargo example
+//         `crates/gf2-coding/examples/gf2pow32_smoke_emit_expected.rs`.
+//         The C++ smoke loads the file and asserts byte-equality between
+//         NTL `mat_GF2E::mul` output and the gf2-core ground-truth
+//         (no scalar intermediary). The Rust test
+//         `crates/gf2-core/tests/gf2pow32_matmul.rs` is retained as a
+//         separate Rust-internal gf2-core ↔ scalar witness, but is no
+//         longer load-bearing for the cross-language smoke contract.
+//         See dev/bench_results/2026-05-04-b13799ac-gf2pow32-promotion.md
+//         § "Smoke transcript" and § "Implementation note: smoke
+//         architecture (R2 rewrite)" for the rationale.
 // --large enables n=256, 1024 cells. Off by default because at n=1024
 //         a single charpoly cell on NTL takes 60–120 s on Zen 3.
 
@@ -297,16 +301,18 @@ static void bench_charpoly(const char* field_label, long n, uint64_t seed,
 
 // ----- GF(2^32) extension lane (jit:b13799ac) -----------------------------
 //
-// The Conway polynomial bits and the scalar reference multiplier are both
-// pulled from the shared SSOT header `gf2pow32_constants.h` so that this
-// harness, `ntl_gf2pow32_smoke.cpp`, and any future m=32 lane (m4rie/flint
-// extension) all consume the same constants. The header is in turn drift-
-// checked against `crates/gf2-core/src/primitive_polys.rs::standard(32)` by
+// The Conway polynomial bits are pulled from the shared SSOT header
+// `gf2pow32_constants.h` so that this harness, `ntl_gf2pow32_smoke.cpp`,
+// and any future m=32 lane (m4rie/flint extension) all consume the same
+// constant. The header is drift-checked against
+// `crates/gf2-core/src/primitive_polys.rs::standard(32)` by
 // `crates/gf2-core/tests/gf2pow32_constant_drift.rs`.
 //
-// Conway polynomial bits hard-coded from
-// `crates/gf2-core/src/primitive_polys.rs::standard(32)`. Drift on either
-// side is caught at smoke time by `ntl_gf2pow32_smoke.cpp`.
+// Drift on either side is caught at smoke time by
+// `ntl_gf2pow32_smoke.cpp`'s direct gf2-core ↔ NTL oracle (R2): the
+// gf2-core ground-truth file's embedded Conway constant must match
+// `kGf2coreConwayM32` here, and the polynomial-bits-as-modulus check
+// runs on every smoke invocation.
 //
 // Using the byte-level protocol described in `ntl_gf2pow32_smoke.cpp`:
 // each GF(2^32) element is a polynomial of degree < 32 stored little-

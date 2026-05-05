@@ -167,21 +167,33 @@ echo "[smoke.sh] running ntl_flint_smoke equality oracle" >&2
 # === flint end ===
 
 # === b13799ac GF(2^32) NTL bitwise-equality smoke begin ===
-# NTL `mat_GF2E` matmul over GF(2^32) ↔ self-contained scalar reference
-# bitwise-equality oracle at n=16. Implements the protocol § 6
-# correctness contract for the Wave-3 GF(2^32) matmul promotion (issue
-# b13799ac). The scalar reference is purely defined from the
-# Conway-polynomial bits in
-# `crates/gf2-core/src/primitive_polys.rs::standard(32)`, so a
-# polynomial drift on the gf2-core side fails this oracle before any
-# timing run. Skipped silently when the image was built without NTL.
+# Direct gf2-core ↔ NTL byte-equality oracle for `mat_GF2E::mul` over
+# GF(2^32) at n=16 (issue b13799ac R2). Implements the protocol § 6
+# correctness contract via the ground-truth file mechanism jit:96fde7c7
+# established for the sparse smoke:
+#
+#   1. The gf2-core Cargo example `gf2pow32_smoke_emit_expected` runs
+#      `FieldMatrix<Gf2mWide<1, _>>::gemm` from current gf2-core code on
+#      seeded n=16 inputs and writes `benchmarks/expected/gf2pow32_smoke_n16.bin`.
+#   2. The C++ smoke loads the file and asserts byte-equality between
+#      NTL output and gf2-core ground-truth.
+#
+# This is the protocol § 6 candidate-vs-gf2-core direct contract; no
+# scalar intermediary. The R1 transitive form (NTL ↔ scalar +
+# gf2-core ↔ scalar) was rejected by code-review for not satisfying the
+# literal text. Skipped silently when the image was built without NTL.
 if [[ "${GF2_SKIP_NTL_GF2POW32_SMOKE:-0}" -eq 0 ]]; then
-    echo "[smoke.sh] running ntl_gf2pow32_smoke (GF(2^32) NTL ↔ scalar ref)" >&2
+    echo "[smoke.sh] regenerating gf2pow32_smoke_n16.bin (gf2-core ground-truth)" >&2
+    (cd "$(dirname "${HERE}")" && \
+        cargo run --release -p gf2-coding --example gf2pow32_smoke_emit_expected \
+            --features bench-csv -- \
+            --output benchmarks/expected/gf2pow32_smoke_n16.bin)
+    echo "[smoke.sh] running ntl_gf2pow32_smoke (gf2-core ↔ NTL)" >&2
     "${RUNTIME}" run --rm \
         --security-opt label=disable \
         -v "${HERE}:/work${MOUNT_OPTS}" \
         "${IMAGE_TAG}" \
-        bash -c "set -e; cd /work/reference && make ntl_gf2pow32_smoke >/dev/null && ./ntl_gf2pow32_smoke" \
+        bash -c "set -e; cd /work/reference && make ntl_gf2pow32_smoke >/dev/null && ./ntl_gf2pow32_smoke --expected /work/expected/gf2pow32_smoke_n16.bin" \
         >&2
 fi
 # === b13799ac GF(2^32) NTL bitwise-equality smoke end ===
