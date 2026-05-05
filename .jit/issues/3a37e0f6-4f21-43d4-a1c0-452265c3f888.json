@@ -2,7 +2,7 @@
   "id": "3a37e0f6-4f21-43d4-a1c0-452265c3f888",
   "title": "Optimize sparse layout and traversal",
   "description": "Land CPU sparse improvements where hardware counters show feasible gains.\n\n## Success Criteria\n\n- [hard] Target sparse rows meet the 1.5x threshold where CPU closure is feasible.\n- [hard] The implementation preserves sparse matrix correctness and API behavior.",
-  "state": "backlog",
+  "state": "ready",
   "priority": "normal",
   "assignee": null,
   "dependencies": [
@@ -23,5 +23,5 @@
     "story:sota-sparse-fieldmatrix"
   ],
   "created_at": "2026-04-30T06:43:02.909642359+00:00",
-  "updated_at": "2026-04-30T06:43:48.831533977+00:00"
+  "updated_at": "2026-05-05T08:44:04.376415610+00:00"
 }
