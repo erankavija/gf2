@@ -51,6 +51,20 @@ const PRIME_251: u64 = 251;
 const PRIME_65521: u64 = 65521;
 const MERSENNE_31: u64 = 2_147_483_647;
 
+// ----- Medium-prime sweep cells (issue 9e12659b R1) ------------------------
+// These three primes exercise the SIMD `fp_medium` AVX2 kernel across the
+// width of the eligibility window (P ∈ (251, 65536)):
+//   * 257   — just above the small-prime/Modular<float> cap
+//   * 8191  — Mersenne-shape mid-range (2^13 - 1) with a nontrivial Barrett m
+//   * 32749 — largest prime below 2^15, exercising the upper Barrett band
+// They share the SQUARE_SIZES_MEDIUM sweep (n ∈ {64, 256, 1024}); n=4096 is
+// not added here because the rework's evidence requirement ends at n=1024
+// per the reviewer's resolution note.
+const PRIME_257: u64 = 257;
+const PRIME_8191: u64 = 8191;
+const PRIME_32749: u64 = 32749;
+const SQUARE_SIZES_MEDIUM: &[usize] = &[64, 256, 1024];
+
 /// GF(2^8) AES irreducible `x^8 + x^4 + x^3 + x + 1`.
 struct GemmGf2m8Cfg;
 impl Gf2mWideConfig<1> for GemmGf2m8Cfg {
@@ -214,6 +228,36 @@ fn bench_gemm_fp_m31(c: &mut Criterion) {
     );
 }
 
+fn bench_gemm_fp_257(c: &mut Criterion) {
+    bench_square::<gf2_core::gfp::Fp<PRIME_257>, _>(
+        c,
+        "gemm/Fp_257",
+        "Fp_257",
+        SQUARE_SIZES_MEDIUM,
+        fp_matrix_from_seed::<PRIME_257>,
+    );
+}
+
+fn bench_gemm_fp_8191(c: &mut Criterion) {
+    bench_square::<gf2_core::gfp::Fp<PRIME_8191>, _>(
+        c,
+        "gemm/Fp_8191",
+        "Fp_8191",
+        SQUARE_SIZES_MEDIUM,
+        fp_matrix_from_seed::<PRIME_8191>,
+    );
+}
+
+fn bench_gemm_fp_32749(c: &mut Criterion) {
+    bench_square::<gf2_core::gfp::Fp<PRIME_32749>, _>(
+        c,
+        "gemm/Fp_32749",
+        "Fp_32749",
+        SQUARE_SIZES_MEDIUM,
+        fp_matrix_from_seed::<PRIME_32749>,
+    );
+}
+
 fn bench_gemm_gf2m8(c: &mut Criterion) {
     bench_square::<Gf2m8, _>(
         c,
@@ -256,6 +300,9 @@ criterion_group! {
     targets =
         bench_gemm_fp_7,
         bench_gemm_fp_251,
+        bench_gemm_fp_257,
+        bench_gemm_fp_8191,
+        bench_gemm_fp_32749,
         bench_gemm_fp_65521,
         bench_gemm_fp_m31,
         bench_gemm_gf2m8,
