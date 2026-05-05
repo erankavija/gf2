@@ -132,6 +132,9 @@ LinBox is **not canonical** for these cells. `analyze.py` resolves the canonical
 
 **Cells where LinBox is the primary reference.**
 
+> **Amendment — 2026-05-05 (jit:cbecfced).** This subsection is **superseded** by the SOTA target matrix (`dev/plans/sota_target_matrix.md` § 5.7) and the c3e79272 charpoly/minpoly evidence (`dev/bench_results/2026-05-04-c3e79272-charpoly-minpoly-refs.md` § 4). Background: when this evidence doc landed (Wave 2, 2026-05-04 morning), the fflas-ffpack harness did not emit `minpoly` rows. The Wave-3 c3e79272 work and the Wave-1 `5dea7457` lane-hardening work jointly extended fflas-ffpack with an explicit `minpoly × GF(p)` lane. **The canonical reference for `minpoly × GF(p)` is now fflas-ffpack 2.5.0**; LinBox 1.7.1 retains a `<lib>-secondary` role per `analyze.py::reference_lib_for()` and the target matrix § 5.7. The original Wave-2 text below is retained for historical context; consumers should consult the target matrix § 5.7 + § 9.3 #1 for the current canonical designation.
+>
+> *Original Wave-2 text:*
 LinBox is the **primary reference** for `minpoly` over `{GF(7), GF(251), GF(65521), GF(2^31-1)}` at `n ∈ {64, 256}` — 8 cells. The fflas-ffpack harness does not emit `minpoly` rows, so no canonical alternative exists today; LinBox occupies the operation slot uncontested. If story `4c0d0202` later adds a fflas-ffpack `minpoly` lane, the canonical-reference designation for these cells will need to be re-evaluated; until then LinBox's `minpoly` rows are the only reference rows in the matrix for that operation.
 
 **Cells where LinBox is explicitly excluded.**
@@ -142,7 +145,7 @@ LinBox is **excluded** from the following operations even though the upstream li
 - `spmv` and other sparse cells: deferred per the protocol § 8 dense-only scope of this story; sparse-reference promotion is tracked separately.
 - `n=4096` for every operation: deferred to T2 per the `benchmarks/README.md` § *Deferred to T2 / T3* posture inherited from the fflas-ffpack harness; out of scope for this story.
 
-**Summary.** LinBox is *used* (as primary reference) for `minpoly` over the four reference primes; LinBox is *used* (as secondary reference) for `charpoly` and `solve` over the same primes; LinBox is *explicitly excluded* from `fgemm`, `pluq`, `echelon`, `invert`, sparse operations, and the `n=4096` row class. This designation is final for issue `79388011` and is not deferred to any downstream story.
+**Summary.** LinBox is *used* as a **secondary reference** for `minpoly`, `charpoly`, and `solve` over `{GF(7), GF(251), GF(65521), GF(2^31-1)}` (per the 2026-05-05 amendment above and `dev/plans/sota_target_matrix.md` § 5.5–§ 5.7); LinBox is also canonical for `sparse-elim × {GF(2), GF(p)}` and for `sparse×dense × GF(2)` per `dev/plans/sparse_benchmark_corpus.md` § 4. LinBox is *explicitly excluded* from `fgemm`, `pluq`, `echelon`, `invert`, and the `n=4096` row class. This designation has been amended once (2026-05-05, see the subsection above for the `minpoly × GF(p)` canonical reassignment from LinBox to fflas-ffpack); the rest of this evidence document remains in force.
 
 ---
 
