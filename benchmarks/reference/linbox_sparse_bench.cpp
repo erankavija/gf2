@@ -468,24 +468,24 @@ int main(int argc, char** argv) {
                   sizes, elim_sizes, sparse_dense_sizes);
     }
 
-    // GF(2) sparse-elim via Givaro::Modular<int64_t>(2) — uses a one-bit
-    // value space which both LinBox and gf2-core handle as a regular
-    // GF(p) cell. The dedicated `linbox/algorithms/gauss-gf2.h` would be
-    // faster but its public header surface is narrower; the int64-mod-2
-    // path runs through the same GaussDomain code generator and produces
-    // numbers comparable to the GF(p) cells.
+    // GF(2) cells via Givaro::Modular<int64_t>(2) — uses a one-bit value
+    // space which both LinBox and gf2-core handle as a regular GF(p) cell.
+    // The dedicated `linbox/algorithms/gauss-gf2.h` would be faster but its
+    // public header surface is narrower; the int64-mod-2 path runs through
+    // the same GaussDomain code generator and produces numbers comparable
+    // to the GF(p) cells.
     //
-    // GF(2) is intentionally excluded from `sparse_dense_sizes` here:
-    // the design doc (`dev/plans/sparse_benchmark_corpus.md`) promotes
-    // fflas-ffpack as canonical for `sparse×dense × GF(p)`, and the
-    // gf2-core side has no `SpBitMatrix::matmat` entry-point for a
-    // GF(2) cross-check (scorecard § 5 #6).
+    // sparse-elim and sparse_dense are both wired for GF(2). The design doc
+    // (`dev/plans/sparse_benchmark_corpus.md:168`) names LinBox as canonical
+    // for `sparse×dense × GF(2)`; this provides the LinBox-canonical row.
+    // Throughput-unit comparison vs gf2-core's bit-packed `SpBitMatrix::matmat`
+    // requires normalisation (LinBox counts byte ops, gf2-core counts bit ops
+    // in u64 packed words) — the scorecard documents the comparator unit.
     {
         using Field = Givaro::Modular<int64_t>;
         Field F(2);
-        const std::vector<size_t> empty_sd;
         run_field(F, "GF(2)", master_seed ^ 0x55ULL, warmup, iters,
-                  sizes, elim_sizes, empty_sd);
+                  sizes, elim_sizes, sparse_dense_sizes);
     }
 
     return 0;
