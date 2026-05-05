@@ -8,7 +8,10 @@
 //!   - `spmv`           — `y = A·x` over GF(2), GF(p), GF(2^m)
 //!   - `sparse-matmul`  — `C = A·B` (sparse·sparse) over the same fields
 //!   - `sparse×dense`   — `C = A·B` (sparse·dense) over the same fields
-//!   - `sparse-elim`    — sparse RREF over GF(2) and GF(2^m)
+//!   - `sparse-elim`    — sparse RREF. In `--quick`, emitted for GF(2) and
+//!     each GF(p) prime in `{7, 251, 65521, 2^31-1}` at n ∈ `{256, 1024}`
+//!     (paired with the LinBox reference rows from `linbox_sparse_bench`).
+//!     The GF(2^m) sparse-elim sweep remains gated behind `--full`.
 //!
 //! Lives under `gf2-coding/examples/` because we need access to the
 //! gf2-coding LDPC / BCH constructors for the coding-theory corpus class
@@ -41,6 +44,8 @@
 //!
 //! `--quick`  (default in CI): `n = 1024 × d = 10/n × all 7 fields`.
 //!            (≈ 7 cells per operation; ≈ 30 s wall budget on Zen 3.)
+//!            For `sparse-elim`, `--quick` walks `n ∈ {256, 1024}` over
+//!            GF(2) + GF(p) (5 fields × 2 sizes); GF(2^m) is `--full`-gated.
 //! `--full`   : the full `n × d × field` sweep per § 3.1 of the design
 //!              doc — 63 cells per operation, plus the 6-matrix structured
 //!              class (§ 3.2) and 5-matrix coding-theory class (§ 3.3).
