@@ -3860,3 +3860,6 @@
 {"type":"gate_passed","id":"a0ed6896-38db-4488-8c18-ff73d47f3d1c","issue_id":"3d06224c-0171-47c0-ae7e-8ce6addf3c8f","timestamp":"2026-05-05T20:32:44.930608935Z","gate_key":"doc-review","updated_by":"agent:project-lead"}
 {"type":"issue_state_changed","id":"ce718269-60e9-46fa-9f27-cd7950423a98","issue_id":"3d06224c-0171-47c0-ae7e-8ce6addf3c8f","timestamp":"2026-05-05T20:32:47.444820764Z","from":"in_progress","to":"done"}
 {"type":"issue_completed","id":"17d8d76b-801c-4301-a899-36ebd6d4f23f","issue_id":"3d06224c-0171-47c0-ae7e-8ce6addf3c8f","timestamp":"2026-05-05T20:32:47.444849704Z"}
+{"type":"gate_passed","id":"787c08b5-4af4-43fb-b896-a062b521a795","issue_id":"9e12659b-5e26-4ce4-9461-853c25b51ba6","timestamp":"2026-05-05T21:24:11.496390748Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"39d2577d-d689-4e1a-b6f7-920534851567","issue_id":"9e12659b-5e26-4ce4-9461-853c25b51ba6","timestamp":"2026-05-05T21:32:57.948989688Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"issue_created","id":"b1a306cf-e401-4841-8a80-ce2e391c1904","issue_id":"b9aed0d8-0a2a-4273-be7c-cf14a1d262b8","timestamp":"2026-05-05T21:40:00.854480822Z","title":"Design Candidate F — in-Rust f32-FMA cascade for small-prime GEMM","priority":"high"}
