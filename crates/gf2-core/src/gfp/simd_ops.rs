@@ -104,7 +104,7 @@ pub trait SimdVecOps: Sized {
 
     /// Attempts a SIMD-accelerated dot product `∑ a[i] · b[i]`; returns
     /// `None` to defer to the scalar `mul_product_sum_wide` chunked
-    /// loop in [`crate::field::vec::dot_product_slices`].
+    /// loop in `crate::field::vec::dot_product_slices`.
     ///
     /// The returned value is the canonical reduced sum, equivalent to
     /// the scalar `dot_product_slices` result. Implementors that
