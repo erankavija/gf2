@@ -56,6 +56,15 @@ bench-csv = ["gf2-core/test-support"]
 name = "bench_sparse_csv_emitter"
 required-features = ["bench-csv"]
 
+# Sparse-smoke ground-truth emitter (jit:96fde7c7). Emits the binary
+# `benchmarks/expected/sparse_smoke_n16.bin` consumed by the C++
+# `benchmarks/reference/sparse_smoke.cpp` cross-equality oracle. Same
+# `bench-csv` gate as the CSV emitter so both share the
+# `gf2-core/test-support` (bench_seed module) dependency.
+[[example]]
+name = "sparse_smoke_emit_expected"
+required-features = ["bench-csv"]
+
 [[bench]]
 name = "linear_codes"
 harness = false
