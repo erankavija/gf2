@@ -727,6 +727,50 @@ mod tests {
         check_generic_prime::<2_147_483_629>();
         check_generic_prime::<2_305_843_009_213_693_907>();
         check_generic_prime::<9_223_372_036_854_775_783>();
+
+        // Small-prime AVX2 byte-lane kernels (P <= 251).
+        check_small_prime::<7>();
+        check_small_prime::<31>();
+        check_small_prime::<251>();
+    }
+
+    /// Property test: SIMD path matches scalar element-wise across
+    /// `WORD_BOUNDARY_LENS` for the small-prime byte-lane dispatch
+    /// (`P <= 251`). Mirrors [`check_generic_prime`] but exercises the
+    /// `fp_small_*` SIMD branch installed by `try_simd_*_vec`.
+    fn check_small_prime<const P: u64>() {
+        #[cfg(not(feature = "simd"))]
+        {
+            return;
+        }
+        #[cfg(feature = "simd")]
+        {
+            if crate::simd::maybe_fp_small().is_none() {
+                return;
+            }
+
+            for &len in WORD_BOUNDARY_LENS {
+                let a: Vec<Fp<P>> = (0..len as u64)
+                    .map(|i| Fp::<P>::new(i.wrapping_mul(1_000_003).wrapping_add(17)))
+                    .collect();
+                let b: Vec<Fp<P>> = (0..len as u64)
+                    .map(|i| Fp::<P>::new(i.wrapping_mul(2_000_033).wrapping_add(23)))
+                    .collect();
+
+                let got_add =
+                    <Fp<P> as SimdVecOps>::try_simd_add_vec(&a, &b).expect("small SIMD add");
+                let got_sub =
+                    <Fp<P> as SimdVecOps>::try_simd_sub_vec(&a, &b).expect("small SIMD sub");
+                let got_mul =
+                    <Fp<P> as SimdVecOps>::try_simd_mul_vec(&a, &b).expect("small SIMD mul");
+
+                for i in 0..len {
+                    assert_eq!(got_add[i], a[i] + b[i], "add P={P}, len={len}, i={i}");
+                    assert_eq!(got_sub[i], a[i] - b[i], "sub P={P}, len={len}, i={i}");
+                    assert_eq!(got_mul[i], a[i] * b[i], "mul P={P}, len={len}, i={i}");
+                }
+            }
+        }
     }
 
     fn check_medium_prime<const P: u64>() {
