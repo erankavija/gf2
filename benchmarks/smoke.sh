@@ -203,20 +203,36 @@ if [[ "${GF2_SKIP_CHARPOLY_MINPOLY_SMOKE:-0}" -eq 0 ]]; then
 fi
 # === c3e79272 charpoly/minpoly cross-library smoke end ===
 
-# === 47698404 sparse cross-equality oracle begin ===
-# Cross-equality oracle for sparse cells at n=16 (issue 47698404,
-# protocol § 6). Compares fflas-ffpack `fspmv` to an in-harness scalar
-# SpMV reference for every (op, field) cell the sparse harnesses claim
-# to cover. Exits non-zero on bitwise mismatch.
+# === 47698404 + 96fde7c7 sparse cross-equality oracle begin ===
+# Cross-equality oracle for sparse cells at n=16 (issues 47698404,
+# 96fde7c7; protocol § 6). Compares fflas-ffpack `fspmv` / `fspmm` and
+# LinBox `apply` / `GaussDomain::NoReordering` to the gf2-core
+# ground-truth output recorded in
+# `benchmarks/expected/sparse_smoke_n16.bin` for every (op, field) cell
+# the sparse harnesses claim to cover. Exits non-zero on bitwise
+# mismatch.
+#
+# Step 0 (host-side, jit:96fde7c7): regenerate the ground-truth file
+# from current gf2-core code via the `sparse_smoke_emit_expected`
+# Cargo example. The .gitignored binary is the byte-level oracle the
+# C++ smoke loads; regenerating each run forces the smoke to re-emit
+# from current gf2-core, so a regression in the production gf2-core
+# path is caught at smoke time.
 if [[ "${GF2_SKIP_SPARSE_SMOKE:-0}" -eq 0 ]]; then
+    echo "[smoke.sh] regenerating sparse_smoke_n16.bin (gf2-core ground-truth)" >&2
+    (cd "$(dirname "${HERE}")" && \
+        cargo run --release -p gf2-coding --example sparse_smoke_emit_expected \
+            --features bench-csv -- \
+            --output benchmarks/expected/sparse_smoke_n16.bin)
+
     echo "[smoke.sh] running sparse_smoke (sparse cross-equality oracle)" >&2
     "${RUNTIME}" run --rm \
         --security-opt label=disable \
         -v "${HERE}:/work${MOUNT_OPTS}" \
         "${IMAGE_TAG}" \
-        bash -c "set -e; cd /work/reference && make sparse_smoke >/dev/null && ./sparse_smoke" \
+        bash -c "set -e; cd /work/reference && make sparse_smoke >/dev/null && ./sparse_smoke --expected /work/expected/sparse_smoke_n16.bin" \
         >&2
 fi
-# === 47698404 sparse cross-equality oracle end ===
+# === 47698404 + 96fde7c7 sparse cross-equality oracle end ===
 
 echo "[smoke.sh] OK — smoke CSV at ${TARGET_CSV}" >&2
