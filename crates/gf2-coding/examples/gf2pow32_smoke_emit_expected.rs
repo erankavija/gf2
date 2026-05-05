@@ -121,9 +121,7 @@ fn parse_args() -> String {
     while let Some(a) = args.next() {
         match a.as_str() {
             "--output" => {
-                out = args
-                    .next()
-                    .expect("--output requires a path argument");
+                out = args.next().expect("--output requires a path argument");
             }
             other if other.starts_with("--") => {
                 panic!("unknown flag: {other}");
