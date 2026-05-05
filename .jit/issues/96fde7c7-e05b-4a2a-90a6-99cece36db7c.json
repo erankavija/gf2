@@ -2,7 +2,7 @@
   "id": "96fde7c7-e05b-4a2a-90a6-99cece36db7c",
   "title": "sparse_smoke gf2-core integration design + impl",
   "description": "Make `benchmarks/reference/sparse_smoke.cpp` compare candidate-vs-gf2-core per protocol § 6 (`dev/plans/sota_reference_acceptance_protocol.md:243-249`). Today the smoke uses an in-harness Givaro scalar reference, which the strict code-review gate flags as protocol-noncompliant. Two viable mechanisms: (a) FFI cdylib exposing gf2-core sparse routines from C++, (b) ground-truth-file mechanism where gf2-core writes expected output during build, smoke reads + compares.\n\nThis task is **verification work** — it requires a pre-approved design sketch before impl is dispatched (per CLAUDE.md § *Verification work*).\n\n## Background\n\nProtocol § 6 says: \"Each candidate's harness must include a `--smoke` mode that, for each `(operation, field, shape)` cell at `n = 16`, runs both the candidate and the gf2-core implementation on the same seeded input and asserts the per-operation equality contract.\" \n\n47698404's strict reviewer found that sparse_smoke's `oracle_spmv` and `oracle_sparse_dense` compare fflas-ffpack vs an in-harness scalar reference, NOT vs gf2-core. This is a real protocol gap not closeable by doc edits.\n\n## Pre-impl deliverable: design sketch\n\nBefore implementation is dispatched, a design sketch (`dev/plans/sparse_smoke_gf2core_integration_sketch.md`) must:\n1. Choose mechanism: (a) FFI cdylib, (b) ground-truth file via build.rs.\n2. List the C++/Rust API surface needed.\n3. List the build/link changes (Containerfile, Makefile, Cargo.toml).\n4. State which operations are covered (spmv, sparse-matmul, sparse×dense, sparse-elim) and per-field family.\n5. Identify any blockers (gf2-core public API gaps, FFI safety rules per the project's `unsafe` isolation invariant).\n\n## Success Criteria\n\n- [hard] Pre-approved design sketch lands at `dev/plans/sparse_smoke_gf2core_integration_sketch.md`.\n- [hard] After lead/user approval of the sketch, sparse_smoke is rewritten to compare candidate-vs-gf2-core for every claimed sparse cell.\n- [hard] `benchmarks/smoke.sh` passes with the gf2-core-integrated smoke.\n- [hard] 47698404 scorecard § 2 *Cross-equality oracle* updated to cite gf2-core as the equality witness instead of the in-harness scalar reference.\n- [hard] Protocol § 6 compliance verified: smoke compares candidate-vs-gf2-core for spmv × {GF(2), GF(p)}, sparse-matmul × {GF(2), GF(p), GF(2^m)}, sparse×dense × {GF(p), GF(2^m)}, sparse-elim × {GF(2), GF(p)}.\n- [hard] `cargo-ci`, `code-review`, `doc-review` pass.\n\n## References\n\n- Protocol § 6: `dev/plans/sota_reference_acceptance_protocol.md:243-249`\n- 47698404 scorecard § 2 + § 5 #7: `dev/bench_results/2026-05-04-47698404-sparse-scorecard.md`\n- CLAUDE.md § *Verification work* — sketch-first dispatch rule.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "high",
   "assignee": "agent:claude",
   "dependencies": [],
@@ -11,7 +11,23 @@
     "cargo-ci",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-05T05:40:03.503241282Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-05T05:39:57.129208849Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-05-05T05:17:51.177582701Z"
+    }
+  },
   "context": {},
   "documents": [
     {
@@ -29,5 +45,5 @@
     "story:sota-sparse-fieldmatrix"
   ],
   "created_at": "2026-05-04T22:04:54.286908805+00:00",
-  "updated_at": "2026-05-05T04:58:19.240789457+00:00"
+  "updated_at": "2026-05-05T05:41:59.359438749+00:00"
 }
