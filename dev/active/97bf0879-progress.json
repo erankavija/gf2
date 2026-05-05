@@ -19,7 +19,7 @@
   "session_5_closed_at": "2026-05-05T00:10Z",
   "session_5_handoff": "dev/active/97bf0879-handoff-5.md",
   "session_5_summary": "Re-dispatched 47698404 continuation worker (agent a21dda8b6d1792b62) \u2014 worker found and fixed a critical bug in lead-preserve commit 7251db4 (fmt_density_c() shim added but call sites left empty {}, example didn't compile), regenerated bench output, wrote the \u00a70-\u00a77 scorecard at d335231. Lead cherry-picked 4 worker commits onto main (c21b700 + 005ceaa + c50e0bc + ce57a8b), applied cargo fmt fix at ed960bb. Code-review went through 4 rework cycles (R1-R4) finding progressively deeper protocol/design-doc gaps: R1 missing sparse\u00d7dense oracle (fixed: oracle_sparse_dense in sparse_smoke.cpp), R2 missing sparse\u00d7dense \u00d7 GF(2) cell (fixed: explicit not-yet-harnessed scorecard entry), R3 LinBox cross-check overclaim (fixed: \u00a7 5 #7 documents the gap), R4 protocol \u00a7 6 requires smoke vs gf2-core (NOT scalar reference \u2014 structural protocol gap, not closeable by doc edits). Same ratchet pattern as b13799ac/a3412e15 in sessions 3-3b. User escalation: chose path 1 \u2014 file follow-up impl tasks, hold 47698404 open. Filed 4 new sparse-impl follow-ups (0d6ca3b6, 521390db, 0f708b36, 96fde7c7) wired as 47698404 deps.",
-  "next_session_first_action": "Read dev/active/97bf0879-handoff-6.md. Wave 4-impl mechanical closure: regen the 3 47698404 evidence CSVs from new bench binaries on host (per handoff \u00a7 Open work item 1), update 47698404 scorecard to fold new numbers (item 2), pass doc-review (manual) on 3 follow-ups (item 3), re-run code-review (item 4), mark each done. Then dispatch 96fde7c7 impl per the approved sketch. Then chain re-reviews on b13799ac, 47698404, 9a715d75. Then Wave 4 (4c0d0202).",
+  "next_session_first_action": "Read dev/active/97bf0879-handoff-7.md (especially the four new traps). Then dispatch 4c0d0202 (Publish SOTA target matrix design doc) per architect-agent-prompt.md. Wave 4 dep set is 11/11 complete.",
   "lead": "agent:project-lead",
   "predecessor_epic": "babcf05e",
   "notes": [
@@ -947,9 +947,21 @@
       "scorecard_fold_done": true,
       "scorecard_correction_commit": "3ab5cd8",
       "linbox_sparse_bench_typo_fix": "linbox_sparse_bench.cpp emit changed from `sparse_dense` to `sparse\u00d7dense` (canonical per protocol \u00a7 7)",
-      "doc_review_attested": ["521390db", "0d6ca3b6", "0f708b36"],
-      "code_review_passed": ["521390db", "0d6ca3b6", "0f708b36"],
-      "issues_closed": ["521390db", "0d6ca3b6", "0f708b36"],
+      "doc_review_attested": [
+        "521390db",
+        "0d6ca3b6",
+        "0f708b36"
+      ],
+      "code_review_passed": [
+        "521390db",
+        "0d6ca3b6",
+        "0f708b36"
+      ],
+      "issues_closed": [
+        "521390db",
+        "0d6ca3b6",
+        "0f708b36"
+      ],
       "criterion_amendments": {
         "0d6ca3b6": "criterion 5 amended in style of 521390db/2973bc5: scalar/LinBox + dense-Rust-reference branch active until 96fde7c7 lands"
       }
@@ -959,11 +971,20 @@
       "sketch_approval_commit": "a66c7f2",
       "sketch_decision": "mechanism (b) ground-truth file, .gitignored, include input bytes",
       "worker_dispatched": true,
-      "worker_first_pass_commits": ["73f13b1", "8bc5221", "5296ee3", "2db6793"],
+      "worker_first_pass_commits": [
+        "73f13b1",
+        "8bc5221",
+        "5296ee3",
+        "2db6793"
+      ],
       "code_review_R1_verdict": "FAIL",
       "code_review_R1_finding": "issue criterion 5 requires sparse-matmul + sparse\u00d7dense \u00d7 GF(2^m) coverage; worker delivered only 15 cells (3 ops \u00d7 5 fields), missing 9 cells (7 sparse-matmul + 2 sparse_dense \u00d7 GF(2^m))",
       "worker_continuation_sent": true,
       "worker_continuation_summary": "extend collect_cells() + sparse_smoke.cpp main() to cover sparse-matmul \u00d7 7 fields + sparse_dense \u00d7 GF(2^8|2^16) via internal-consistency oracles (CSR\u00d7CSR vs dense round-trip)"
     }
-  }
+  },
+  "session_7_closed_at": "2026-05-05T10:14:06Z",
+  "session_7_handoff": "dev/active/97bf0879-handoff-7.md",
+  "session_7_summary": "Closed three held-open issues: 47698404 (R5-R11, 7 cycles; landed Amendment 3 to acceptance protocol), b13799ac (R2-R3 with R2-wire intermediate; replaced transitive smoke with direct gf2-core-NTL via ground-truth file), 9a715d75 (R2-R4; refreshed lane-selection doc post-b13799ac landing). Skill update: added No-argue discipline paragraph to project-lead/SKILL.md section 7. Deferred-improvements doc landed at dev/plans/project_lead_skill_improvements.md. Wave 4 dispatch (4c0d0202) ready for next session; all 11 deps done.",
+  "session_8_started_at": null
 }
