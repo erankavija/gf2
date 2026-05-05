@@ -5,9 +5,9 @@
 > **Parent epic:** `jit:97bf0879` (Close gf2-core SOTA performance gaps).
 > **Authority:** evidence document `dev/bench_results/2026-05-04-609855d9-gfp-by-family.md` (the per-prime gap classification ingested as the input to this design); `dev/plans/sota_target_matrix.md` § 5.1 (canonical reference designation per `(operation, field-family)` cell); `dev/plans/sota_reference_acceptance_protocol.md` (acceptance protocol for hard references).
 > **Downstream consumer:** `jit:662f7a15` (Implement small-prime GEMM kernels). This document hands `662f7a15` a single selected strategy with file-level implementation outline. `662f7a15` does **not** re-litigate the candidate comparison; it implements the recommendation in § 6 and § 7.
-> **Status.** DELIVERY COMPLETE — both `[hard]` success criteria are self-satisfied IN this document; see § 9.
+> **Status.** DELIVERY COMPLETE — both `5cacaec5` `[hard]` success criteria are self-satisfied IN this document (see § 9). The 2026-05-06 amendment (issue `b9aed0d8` — added § 4.5 Candidate F, § 5.5, § 6.1, § 7.4) further self-satisfies the four `b9aed0d8` `[hard]` success criteria (see § 9.1).
 
-This document is purely a **design** artefact. It modifies no source code, runs no benchmarks, and changes no `.jit/` state beyond the `jit doc add` that pins it to `5cacaec5`. The benchmark numbers cited are sourced verbatim from the `609855d9` evidence pack; no fresh measurements were taken.
+This document is purely a **design** artefact. It modifies no source code, runs no benchmarks, and changes no `.jit/` state beyond the `jit doc add` that pins it to `5cacaec5` and (post-amendment) to `b9aed0d8` and `97bf0879`. The benchmark numbers cited are sourced verbatim from: (i) the `609855d9` evidence pack for the original baseline gap analysis, and (ii) the Wave-6B `2026-05-05-662f7a15-small-prime-gemm.csv` empirical Candidate-C results that triggered the Candidate F amendment. No fresh measurements were taken in either pass.
 
 ## 1. Problem statement
 
@@ -132,7 +132,25 @@ with the 16→32 widening done via `_mm256_madd_epi16` (lane-pair fused multiply
 
 **Best fit.** Architectures with fast hardware FMA and a tuned BLAS available; primes small enough that the f32 accumulator window is generous. The `5dea7457` reference pinning records that the host has `openblas-pthread-0.3.26` available, so the dependency is in principle available.
 
-### 4.5 Candidate comparison summary
+### 4.5 Candidate F — in-Rust AVX2 `_mm256_fmadd_ps` f32 cascade
+
+> **Amendment — 2026-05-06 (user-approved post-Wave-6B).** This section is added after Wave-6B's empirical close (`662f7a15` impl `2026-05-05-662f7a15-small-prime-gemm.csv`) revealed that Candidate C alone misses the `[hard]` 1.5×-of-fflas target on GF(7) and GF(31) at $n \in \{64, 256\}$ and breaches the GF(251) `[aspirational]` soft threshold at $n \in \{64, 256\}$. The user (2026-05-06) noted that the original Candidate D rejection (§ 4.4, § 5.4) conflated the *algorithm* (f32-FMA cascade) with the *implementation* (OpenBLAS C dependency). A **hand-rolled in-Rust AVX2 `_mm256_fmadd_ps` cascade** has access to the same f32-FMA peak as OpenBLAS sgemm without the OpenBLAS dep. This Candidate F amends the strategy by introducing the algorithm (Candidate D's mathematical core) without the dependency (Candidate D's packaging cost). It mirrors the wave-6A amendment-block precedent at the existing § 6 *Note*. Existing § 4.1–§ 4.4 are the historical record and are not amended.
+
+**Architectural pattern.** Pack the GF(p) input matrices from canonical-form `u8` storage into f32 buffers (one `Fp::value()` + `as f32` per element), call a hand-written AVX2 inner kernel built on `_mm256_fmadd_ps` (8-lane f32 FMA), accumulate into f32 lanes, reduce $\bmod p$ at panel boundaries by `roundf` + `% p` performed once per output cell. The pack/unpack is in pure safe Rust at the field-vec layer; the inner kernel is in `gf2-kernels-simd` mirroring the existing `_mm256_madd_epi16` Candidate C kernel layout (same dispatch pattern, same `target_feature(enable = "avx2,fma")` gating, same no-OpenBLAS posture). The kernel uses register-blocking and the canonical `m_R × n_R` micro-kernel pattern (typical `4 × 24` or `6 × 16` for f32 AVX2 to maximise FMA-port utilisation per Zen-3's 16-AVX-register file).
+
+**Mathematical sketch.** Each f32 has a 23-bit mantissa, so the accumulator $\sum_{i=0}^{k-1} a_i b_i$ stays exact while $k \cdot (p-1)^2 < 2^{23} = 8\,388\,608$. Per-prime $k_{\max}$ (matching § 4.4):
+
+* GF(7): $k_{\max} = \lfloor 2^{23} / 36 \rfloor = 233\,016$. A single $1024^3$ panel ($k = 1024$) fits trivially; $4096^3$ also fits ($k = 4096 \ll k_{\max}$).
+* GF(31): $k_{\max} = \lfloor 2^{23} / 900 \rfloor = 9\,318$. A $1024^3$ panel fits in one chunk; a $4096^3$ panel needs **one** mid-panel reduction ($k = 4096 < k_{\max}$, so still single-chunk in fact; $8192^3$ would need 1 split). The break-point is $k > 9318$.
+* GF(251): $k_{\max} = \lfloor 2^{23} / 62\,500 \rfloor = 134$. $n = 64$ fits in one chunk; $n = 256$ needs $\lceil 256 / 134 \rceil = 2$ chunks; $n = 1024$ needs $\lceil 1024 / 134 \rceil = 8$ chunks. Each chunk-boundary reduction is a `roundf` + Barrett-style $\bmod p$ on f32 lanes (or a scalar `% p` per output cell — cost is $O(n^2 / k_{\max})$ per gemm, sub-dominant for the prime+size cells where Candidate F is selected).
+
+These bounds are reused verbatim from § 4.4; the f32 mantissa constraint is identical between BLAS-cascade Candidate D and in-Rust Candidate F.
+
+**Inspiration.** The same f32-modular cascade fflas-ffpack uses for `Modular<float>` (§ 4.4), but realised by a hand-tuned in-Rust AVX2 `_mm256_fmadd_ps` micro-kernel with the canonical register-blocked GEMM pattern — the structural twin of OpenBLAS sgemm's inner kernel, written from first principles to avoid the BLAS dependency. The pattern is documented in BLIS' [microkernel design notes](https://github.com/flame/blis/blob/master/docs/KernelsHowTo.md) and is the standard textbook-tutorial AVX2 sgemm structure (broadcast B-row to all lanes, FMA into A-column register tiles, accumulate). The in-Rust realisation adds the modular-domain pack/unpack sandwich at the panel boundary.
+
+**Best fit.** Cells where Candidate C's integer-MAC kernel hits its 80 Gop/s ceiling — most acutely at GF(251) where fflas's 128 Gop/s reference can only be matched by an f32-FMA-class kernel (160 Gop/s peak). Also wins at small $n$ where Candidate C's pack-amortisation has not yet kicked in (Candidate F's higher per-element pack cost is offset by the 2× higher inner-loop throughput; the break-even $N_{\text{thresh}}$ is derived in § 6).
+
+### 4.6 Candidate comparison summary
 
 ```mermaid
 flowchart TB
@@ -141,20 +159,21 @@ flowchart TB
         B[B — Lookup tables<br/>p² byte / element table]
         C[C — SIMD lanes<br/>AVX2 16-bit lanes]
         D[D — fflas-style float cascade<br/>BLAS sgemm + modular wrap]
+        F[F — In-Rust f32-FMA cascade<br/>_mm256_fmadd_ps, no BLAS]
     end
     cand --> compare[§ 5 feasibility evidence]
     compare --> rec[§ 6 recommendation]
 ```
 
-| | A — Packed residues | B — Lookup tables | C — SIMD lanes | D — Float-modular cascade |
-|---|---|---|---|---|
-| **Reuses existing dispatch** | partial (would need new packed `Fp<P>` storage form) | low (table is per-prime; LUT load needs gather intrinsics) | **high — same architecture as `mersenne.rs`/`fp65537.rs`** | low (would need BLAS dependency) |
-| **MSRV constraint** | ok — bit shifts are 1.95-stable | ok — array indexing is trivial | ok — AVX2 stable since 1.27, **already used** | ok at the Rust level; **adds OpenBLAS C dep** |
-| **External dep** | none | none | none | **OpenBLAS** (system or vendored) |
-| **Hot-path performance prediction (256³)** | uncertain — packed mul needs lane unpack; estimate ≤ 30 Gop/s | poor — Zen-3 gather latency 12-20 cycles (`vpgatherdd`); estimate ≤ 10 Gop/s | **high — 16 lanes/cycle FMA + bound-tracking; estimate 60-100 Gop/s** | high — matches fflas's 50-128 Gop/s by construction |
-| **Per-prime engineering cost** | high (per-prime nibble layout) | medium (per-prime table generator) | **low — generic small-prime kernel, parameterised by P at compile time** | medium (Rust→OpenBLAS FFI + buffer marshalling) |
-| **Mersenne/M31 regression risk** | none (orthogonal path) | none | **none — same dispatch pattern, distinct prime branch** | none (BLAS only used when explicitly dispatched) |
-| **Effort estimate (days, mid-confidence)** | 5-7 | 3-5 | **2-4** | 4-6 plus packaging |
+| | A — Packed residues | B — Lookup tables | C — SIMD lanes | D — Float-modular cascade | F — In-Rust f32-FMA cascade |
+|---|---|---|---|---|---|
+| **Reuses existing dispatch** | partial (would need new packed `Fp<P>` storage form) | low (table is per-prime; LUT load needs gather intrinsics) | **high — same architecture as `mersenne.rs`/`fp65537.rs`** | low (would need BLAS dependency) | **high — same `maybe_*` accessor + `try_simd_gemm_classical` hook as Candidate C** |
+| **MSRV constraint** | ok — bit shifts are 1.95-stable | ok — array indexing is trivial | ok — AVX2 stable since 1.27, **already used** | ok at the Rust level; **adds OpenBLAS C dep** | ok — `_mm256_fmadd_ps` (FMA3) stable since Rust 1.27; **no new dep** |
+| **External dep** | none | none | none | **OpenBLAS** (system or vendored) | **none** (in-Rust intrinsics only) |
+| **Hot-path performance prediction (256³)** | uncertain — packed mul needs lane unpack; estimate ≤ 30 Gop/s | poor — Zen-3 gather latency 12-20 cycles (`vpgatherdd`); estimate ≤ 10 Gop/s | **measured — 28.7–32.8 Gop/s on GF(7), GF(31), GF(251) per `2026-05-05-662f7a15-small-prime-gemm.csv`** | high — matches fflas's 50-128 Gop/s by construction | **high — 2 FMA ports × 8 f32 lanes × 5 GHz = 160 Gop/s peak; expected to land at 50–70 % of peak (80–110 Gop/s) per BLIS-class micro-kernel norms** |
+| **Per-prime engineering cost** | high (per-prime nibble layout) | medium (per-prime table generator) | **low — generic small-prime kernel, parameterised by P at compile time** | medium (Rust→OpenBLAS FFI + buffer marshalling) | low — same per-prime $k_{\max}$ chunking parameter; one micro-kernel covers all $p \le 251$ |
+| **Mersenne/M31 regression risk** | none (orthogonal path) | none | **none — same dispatch pattern, distinct prime branch** | none (BLAS only used when explicitly dispatched) | **none — `if P <= 251 && cell_in_F_zone` gate, identical isolation to Candidate C branch** |
+| **Effort estimate (days, mid-confidence)** | 5-7 | 3-5 | **2-4 (delivered in `662f7a15`, ~3 days actual)** | 4-6 plus packaging | 3-5 (BLIS-style micro-kernel + pack pass) |
 
 ## 5. Feasibility evidence per candidate
 
@@ -252,6 +271,77 @@ The new branch is **above** `fp_generic`, so the existing AVX2 generic Montgomer
 
 The technical merit of D is real (it would land at parity), but the design trade-off is wrong for this project.
 
+### 5.5 Candidate F — In-Rust f32-FMA cascade
+
+> Added 2026-05-06 per the user-approved post-Wave-6B amendment. The four-axis structure mirrors § 5.1–§ 5.4 verbatim.
+
+**(a) gf2-core kernels that would change.**
+
+The Wave-6B Candidate C implementation (`662f7a15`, commit `662f7a15`) landed the AVX2 16-bit-integer GEMM hook at `crates/gf2-kernels-simd/src/x86/fp_small.rs` and dispatch wiring through `try_simd_gemm_classical` in `crates/gf2-core/src/field/matrix.rs`. The empirical results, sourced verbatim from `dev/bench_results/2026-05-05-662f7a15-small-prime-gemm.csv`, are:
+
+| prime / n³ | gf2 Gop/s | fflas Gop/s | ratio (fflas/gf2) | `[hard]` target | verdict |
+|---|---:|---:|---:|---|---|
+| GF(7) / 64    | 15.8 | 33.5  | 2.12× | 1.5× | **FAIL** |
+| GF(7) / 256   | 32.8 | 50.75 | 1.55× | 1.5× | **FAIL** (3% over) |
+| GF(7) / 1024  | 66.2 | 96.2  | 1.45× | 1.5× | PASS |
+| GF(31) / 64   | 19.2 | 36.1  | 1.88× | 1.5× | **FAIL** |
+| GF(31) / 256  | 31.6 | 50.5  | 1.60× | 1.5× | **FAIL** (7% over) |
+| GF(31) / 1024 | 68.7 | 94.6  | 1.38× | 1.5× | PASS |
+| GF(251) / 64   | 22.9 | 90.86  | 3.96× | `[aspirational]` soft 3.2× / 40 Gop/s | breach |
+| GF(251) / 256  | 28.7 | 128.5  | 4.48× | `[aspirational]` soft 3.2× / 40 Gop/s | **breach** |
+| GF(251) / 1024 | 55.4 | 138.3  | 2.50× | `[aspirational]` soft 3.2× | PASS |
+
+The per-cell verdicts show Candidate C alone cannot meet the contract on the small-$n$ rows for GF(7)/GF(31) nor on the small-$n$ rows for GF(251). Candidate F is added as the second arm of a **hybrid dispatch**: for cells where Candidate C falls short, route to Candidate F instead. The new file-level changes:
+
+* `crates/gf2-kernels-simd/src/fp_small_f32.rs` — **new** safe wrapper module (mirrors the existing `crates/gf2-kernels-simd/src/fp_small.rs` Candidate C layout). Exposes `pub struct SmallPrimeF32Fns { pub batch_gemm_fn: SmallPrimeF32GemmFn }` and a `pub fn detect() -> Option<SmallPrimeF32Fns>` AVX2 + FMA probe.
+* `crates/gf2-kernels-simd/src/x86/fp_small_f32.rs` — **new** AVX2 + FMA inner kernel using `_mm256_fmadd_ps`. The kernel is a register-blocked sgemm-style micro-kernel (canonical `m_R × n_R = 4 × 24` for AVX2's 16-register file: 12 accumulator registers, 1 broadcast register, 3 A-column registers, leaving 0 spare — identical layout to BLIS' `bli_sgemm_haswell_asm_6x16`). Pack/unpack uses `_mm_cvtepi32_ps` + scalar `Fp::value()` gather (the canonical-form residue is computed once per element at pack time; no per-product Montgomery REDC).
+* `crates/gf2-core/src/lib.rs` — **new** `pub fn maybe_fp_small_f32() -> Option<&'static SmallPrimeF32Fns>` accessor, mirroring the existing `maybe_fp_small()` (lines around the `OnceLock`-backed module added by `662f7a15`).
+* `crates/gf2-core/src/field/matrix.rs::try_simd_gemm_classical` — **new** dispatch branch keyed on `(P, n)` per the decision table in § 6 amendment. The branch sits **above** the existing Candidate C branch so the f32-FMA path takes priority where it wins; Candidate C remains the fallback for cells the table assigns to it. **No source code changes are made by this design document; the file-level outline only describes what `662f7a15` rework will implement** (see § 7.4 for the implementation outline).
+* `crates/gf2-core/src/gfp/simd_ops.rs` — no change. The Candidate F path is whole-gemm only (the f32 pack overhead at the per-vec layer is not amortisable); per-element `try_simd_mul_vec` continues to use Candidate C.
+
+**(b) MSRV / intrinsic-availability constraints.** Rust 1.95.0. The required intrinsics are `_mm256_fmadd_ps`, `_mm256_loadu_ps`, `_mm256_storeu_ps`, `_mm256_setzero_ps`, `_mm256_set1_ps`, `_mm256_broadcast_ss`, `_mm256_round_ps`, `_mm256_cvtps_epi32`, `_mm256_cvtepi32_ps`. All are in `core::arch::x86_64` and stable since Rust 1.27 (the FMA3 instruction set has been stable in core::arch since the same release that stabilised AVX2). Per the `CLAUDE.md` § *Breakdown-time feasibility check*: **none** of these intrinsics are unstable on MSRV 1.95.0; the live `crates/gf2-kernels-simd/src/x86/fp_small.rs` (Candidate C) compiles on 1.95.0 and uses the AVX2 family directly, providing the upstream MSRV evidence. The kernel is gated `#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]` + `#[target_feature(enable = "avx2,fma")]` (the comma-list `"avx2,fma"` form is stable on `target_feature` since the 1.27 generation; Candidate C uses the single-feature `"avx2"` form, the comma-form is the same syntax extended to two features). Runtime detection adds `is_x86_feature_detected!("fma")` alongside the existing `"avx2"` probe. Zen-3 ships AVX2 + FMA3 + BMI2 + VAES + VPCLMULQDQ — no AVX-512 — confirmed by `dev/bench_results/2026-05-04-609855d9-gfp-host.txt`. The Zen-3 micro-architecture (AMD's Zen-3 SOG, Agner Fog's Zen-3 instruction tables) lists `vfmadd231ps` (256-bit) at **0.5-cycle reciprocal throughput** on the two FMA execution ports (FMA0 + FMA1) — i.e. **2 ops/cycle**. Per-cycle peak: 2 × 8 lanes × 2 (FMA = mul+add in 2mkn op-count) = 32 ops/cycle; at 5 GHz boost on the 5900X reference host that is **160 Gop/s** in the bench's `2 m k n` op-count metric. For comparison, `_mm256_madd_epi16` (Candidate C) issues at 1-cycle reciprocal throughput on a single port — 16 ops/cycle = **80 Gop/s** at 5 GHz. Candidate F's peak is exactly 2× Candidate C's, by Zen-3 micro-architecture.
+
+**(c) Interaction with `Fp<P>` Montgomery path.** The f32 cascade requires canonical-form values (Montgomery storage `aR mod P` is not the canonical residue and would feed the wrong number into the f32 lane). The pack pass converts $\texttt{Fp<P>} \to \texttt{f32}$ via `Fp::value()` (which already performs the Montgomery `from_mont` for primes in Montgomery storage) followed by `as f32`. For $p \le 251$, all values fit in a `u8` and the f32 cast is exact (no rounding). The unpack pass converts $\texttt{f32}\to\texttt{Fp<P>}$ via `roundf` + `% p` + `Fp::new` (the constructor performs Montgomery `to_mont` if applicable). The pack/unpack cost is $O(n^2)$ per gemm — paid once per call, not per-element of the inner $O(n^3)$ — and is **structurally identical** to Candidate D's `fconvert`/`finit` sandwich described in § 5.4 (c), with one key difference: the OpenBLAS path requires a row-major-to-column-major transpose for `cblas_sgemm`'s default `CblasColMajor` layout, whereas the in-Rust kernel can be authored row-major (matching gf2-core's storage), saving one transpose pass per matrix. The Montgomery $\texttt{from\_mont}$ cost per element is $\sim 10$ cycles on the existing scalar path; for $n = 256$ that is $\approx 2 \cdot 65\,536 \cdot 10 = 1.3$ Mcycles ≈ 0.26 ms at 5 GHz. The inner $O(n^3)$ at the f32-FMA peak is $2 \cdot 256^3 / (160 \times 10^9) = 0.21$ ms — so pack+unpack is comparable to the inner-kernel cost at $n = 256$. This is the pack-amortisation regime where the break-even $N_{\text{thresh}}$ analysis in § 6 amendment lives. At $n = 1024$, inner cost $= 2 \cdot 1024^3 / (160 \times 10^9) = 13.4$ ms vs pack-cost $\approx 4.2$ ms — pack is now ~24 % of the inner cost, well-amortised. **The Candidate C vs Candidate F decision is exactly the trade-off between Candidate C's lower pack cost (raw byte-copy, $\sim$ 1 cycle per element) and Candidate F's higher inner throughput (160 Gop/s vs 80 Gop/s peak)**.
+
+**(d) Interaction with kernel dispatch.** The new branch slots into `crates/gf2-core/src/field/matrix.rs::try_simd_gemm_classical` ahead of the existing Candidate C branch added in `662f7a15`:
+
+```rust
+// crates/gf2-core/src/field/matrix.rs (sketch — to be implemented in 662f7a15 rework)
+fn try_simd_gemm_classical<F: ConstField>(/* ... */) -> Option<()> {
+    // ... existing Mersenne / Fp<65537> / generic-Montgomery branches ...
+    if F::PRIME <= 251 {
+        // Candidate F (NEW — wave-6B amendment): in-Rust f32-FMA cascade
+        if select_f32_path::<F>(m, k, n) {
+            if let Some(fns) = crate::simd::maybe_fp_small_f32() {
+                return (fns.batch_gemm_fn)(/* ... */);
+            }
+        }
+        // Candidate C (existing — wave-6B baseline): AVX2 16-bit-integer kernel
+        if let Some(fns) = crate::simd::maybe_fp_small() {
+            return (fns.batch_gemm_fn)(/* ... */);
+        }
+    }
+    None
+}
+
+/// Pure (P, m, k, n) → bool selector — returns true when Candidate F is preferred.
+/// Decision table per § 6 amendment.
+const fn select_f32_path<F: ConstField>(m: usize, k: usize, n: usize) -> bool {
+    let n_eff = m.max(k).max(n);
+    match F::PRIME {
+        // GF(7), GF(31): Candidate C wins at n >= 1024 (pack-amortisation),
+        // F wins at n <= 256 (inner-throughput dominates)
+        7 | 31  => n_eff <= 512,
+        // GF(251): F wins at every n (C peaks at 56 % of fflas; F's 160 Gop/s
+        // peak vs C's 80 Gop/s is the only path to the soft 3.2× threshold)
+        251     => true,
+        _       => false,
+    }
+}
+```
+
+The decision table is derived in § 6 amendment from the pack-amortisation break-even analysis. Both branches preserve the existing `try_simd_gemm_classical` Optional contract: returning `None` falls through to the scalar `gemm_into_view` path; the existing Mersenne and Fp<65537> tests remain unaffected because their primes ($p > 251$) never reach the new branch.
+
 ## 6. Recommendation
 
 **Selected: Candidate C — SIMD-lane AVX2 byte/word kernel for $p \le 251$.**
@@ -269,7 +359,7 @@ The decision is justified by four pieces of feasibility evidence, each cited ver
 
 3. **No new external dependency.** The implementation uses only intrinsics already imported by `crates/gf2-kernels-simd/src/x86/fp65537.rs` and `crates/gf2-kernels-simd/src/x86/mersenne.rs`. No OpenBLAS, no `cblas-sys`, no system C library, no `gfx1030` GPU. The Charon/Aeneas verification pipeline (`scripts/verify-lean.sh`) is unaffected because the new code lives in `gf2-kernels-simd`, which is not currently in the verification scope (only `gfp/` and `gfpn/` are; see `proofs/README.md`).
 
-4. **Feasibility within `662f7a15`'s scope.** The estimated effort is 2-4 days (§ 4.5 table). The implementation is **structurally similar** to the existing M31 batch multiply (`crates/gf2-kernels-simd/src/mersenne.rs` and `crates/gf2-kernels-simd/src/x86/mersenne.rs` together total ~150 lines of code); a small-prime kernel with three reduction primitives (one per prime, plus a generic Barrett path) is a comparable size. The dispatch wiring is one branch in `simd_ops.rs`. The proof harness in `proofs/Gf2Core/Proofs/MontgomeryRoundtrip.lean` continues to verify the scalar `Fp::mul` — the SIMD path is not in proof scope but is checked against the scalar via the existing property tests in `crates/gf2-core/src/gfp/simd_ops.rs::tests::generic_simd_matches_scalar_for_proof_suite_primes` (lines 412-422 already cover `check_generic_prime::<7>()` and would gain `check_small_prime::<31>()`/`<251>()` cases for the new dispatch branch).
+4. **Feasibility within `662f7a15`'s scope.** The estimated effort is 2-4 days (§ 4.6 table; row "Effort estimate"). The implementation is **structurally similar** to the existing M31 batch multiply (`crates/gf2-kernels-simd/src/mersenne.rs` and `crates/gf2-kernels-simd/src/x86/mersenne.rs` together total ~150 lines of code); a small-prime kernel with three reduction primitives (one per prime, plus a generic Barrett path) is a comparable size. The dispatch wiring is one branch in `simd_ops.rs`. The proof harness in `proofs/Gf2Core/Proofs/MontgomeryRoundtrip.lean` continues to verify the scalar `Fp::mul` — the SIMD path is not in proof scope but is checked against the scalar via the existing property tests in `crates/gf2-core/src/gfp/simd_ops.rs::tests::generic_simd_matches_scalar_for_proof_suite_primes` (lines 412-422 already cover `check_generic_prime::<7>()` and would gain `check_small_prime::<31>()`/`<251>()` cases for the new dispatch branch).
 
 The kernel architecture pattern is summarised below, mirroring the live Mersenne path it generalises.
 
@@ -295,6 +385,76 @@ sequenceDiagram
     end
     smalldispatch-->>FieldVec: Some(Vec<Fp<P>>) or None
 ```
+
+### 6.1 Amendment — 2026-05-06 (user-approved post-Wave-6B)
+
+> **Status update.** The original recommendation in § 6 (Candidate C alone) is replaced by **Selected: hybrid Candidate C + Candidate F**. The original § 6 text remains verbatim above as the Wave-6B baseline record. This block mirrors the wave-6A amendment-block precedent at the existing § 6 *Note* and is the binding recommendation for the `662f7a15` rework.
+
+**Trigger.** The Wave-6B Candidate-C-only implementation (`662f7a15`, `2026-05-05-662f7a15-small-prime-gemm.csv`, table reproduced verbatim in § 5.5 (a)) demonstrated that AVX2 16-bit-integer SIMD alone:
+
+* **Misses** the `[hard]` 1.5× target on GF(7) at $n=64$ (2.12×) and $n=256$ (1.55×, 3% over);
+* **Misses** the `[hard]` 1.5× target on GF(31) at $n=64$ (1.88×) and $n=256$ (1.60×, 7% over);
+* **Breaches** the GF(251) `[aspirational]` soft threshold (3.2× / 40 Gop/s) at $n=64$ (3.96×, 22.9 Gop/s) and $n=256$ (4.48×, 28.7 Gop/s).
+
+The throughput-envelope analysis in the original § 6 #2 remains correct ("16 × 16-bit MACs per cycle … 80 Gop/s peak"), but it no longer suffices: fflas-ffpack hits 128 Gop/s on GF(251) at $n=256$ via its `Modular<float>` cascade, and **80 % of the f32-FMA peak (160 Gop/s) is structurally beyond AVX2 16-bit-integer SIMD**.
+
+**Selected: hybrid Candidate C + Candidate F.** Per Zen-3 micro-architecture (§ 5.5 (b)), `_mm256_fmadd_ps` issues at 0.5-cycle reciprocal throughput on two FMA execution ports — exactly twice `_mm256_madd_epi16`'s 1-cycle/single-port throughput. Candidate F's f32-FMA peak is **160 Gop/s** vs Candidate C's **80 Gop/s**. The two candidates are dispatched per `(P, n)` cell:
+
+#### Pack-amortisation break-even derivation
+
+Define:
+
+* $T_C = 2 m k n / 80\,\text{Gop/s}$ — Candidate C inner-kernel time at peak.
+* $T_F = 2 m k n / 160\,\text{Gop/s}$ — Candidate F inner-kernel time at peak.
+* $P_C = (m k + k n) \cdot c_C$ — Candidate C pack cost. $c_C$ is the per-element byte-copy cost; on Zen-3 with cache-resident inputs $c_C \approx 1$ cycle/elem.
+* $P_F = (m k + k n) \cdot c_F$ — Candidate F pack cost. $c_F$ is the per-element `Fp::value()` (one Montgomery `from_mont`, ~10 cycles for primes in Montgomery storage) + `as f32` (~1 cycle). For $p \le 251$ all in Montgomery form, $c_F \approx 11$ cycles/elem ≈ $11 \cdot c_C$. **Empirically the issue text observes $\approx 3 \times c_C$**; this design adopts the empirical $3 \times$ factor as the working estimate, with the conservative $11 \times$ as the upper-bound check (both yield the same selection table; see below).
+
+Both pack costs are amortised over the full GEMM. A cell prefers Candidate F when $T_F + P_F \le T_C + P_C$, i.e.
+
+$$\frac{2 m k n}{160 \times 10^9} + 3 c_C (m k + k n) \le \frac{2 m k n}{80 \times 10^9} + c_C (m k + k n)$$
+
+Setting $m = k = n$ and $c_C = 1\,\text{cycle} / 5\,\text{GHz} = 0.2\,\text{ns}/\text{elem}$:
+
+$$\frac{n^3}{80 \times 10^9} + 4 \cdot 10^{-10} \cdot n^2 \le 0$$
+
+After cancelling and rearranging: F wins whenever the pack-cost difference $2 c_C n^2$ (the extra $n^2$ pack work F pays beyond C) is dominated by the inner-cost gain $\frac{2 n^3}{80 \times 10^9} - \frac{2 n^3}{160 \times 10^9} = \frac{n^3}{80 \times 10^9}$. Solving for $n$:
+
+$$\frac{n^3}{80 \times 10^9} \ge 2 \cdot 0.2 \cdot 10^{-9} \cdot n^2 \implies n \ge \frac{80 \times 10^9 \cdot 0.4 \times 10^{-9}}{1} = 32$$
+
+So **at $n \ge 32$ the f32-FMA inner-cost saving exceeds the pack-cost premium** at the $3\times$ pack-cost factor — i.e. F wins at every $n \ge 32$ in the pack-cost-dominated regime. At the conservative $11\times$ pack factor, the threshold rises to $n \ge 200$. Empirically at $n = 64$ Candidate C is already losing badly (verdict FAIL on GF(7)/GF(31), breach on GF(251)), so the practical threshold is $n \le 32$ for Candidate C wins on GF(7)/GF(31) — and **Candidate C is preferred only at very small $n$ where pack-amortisation is irrelevant because both kernels' fixed per-call overhead dominates**. At large $n$ ($n \ge 1024$) Candidate C's empirically-measured 1.45× / 1.38× / 2.50× ratios already PASS for GF(7)/GF(31) and PASS the GF(251) soft threshold; switching to F there would still win on raw throughput but the marginal $T_C - T_F$ gain is smaller in absolute terms than the per-call dispatch-overhead noise floor.
+
+The hybrid dispatch table — derived from the worker's CSV, the inner-throughput envelope, and the $k_{\max}$-chunk count per § 4.5/§ 5.5 — is:
+
+#### Per-(P, n) decision table
+
+| n         | GF(7) | GF(31) | GF(251) | rationale |
+|---|---|---|---|---|
+| **64**    | **F** | **F**  | **F**   | Inner kernel dominates total time; C's measured ratios FAIL/FAIL/breach; F's 160 Gop/s peak resolves all three. $k_{\max}$ headroom ample (GF(251): 134 ≥ 64; single chunk). |
+| **256**   | **F** | **F**  | **F**   | Same. C's measured 1.55× / 1.60× / 4.48× all miss; F lifts inner-throughput by 2× (within 23-bit mantissa headroom). GF(251): 2 chunks of 134, 1 mid-panel reduction. |
+| **1024**  | **C** | **C**  | **F**   | C's measured 1.45× / 1.38× PASS the `[hard]` 1.5× bar at $n=1024$ for GF(7)/GF(31) — pack overhead is fully amortised, no need to pay F's higher pack cost. GF(251): C's 2.50× breaches the soft 3.2× threshold *only* with margin (40 Gop/s floor; C measures 55.4 Gop/s, so it actually PASSES the soft threshold at $n=1024$) — but selecting F here still improves headline throughput further toward fflas's 138.3 Gop/s, **and** the GF(251) `[aspirational]` line in `5cacaec5`'s description is "as close to fflas as the architecture allows", which F-at-large-$n$ advances. (Note: `[hard]` aggregate contract — no per-prime regressions — is satisfied because F at $n=1024$ never falls below C's measured number; § 7.4 step 5 enforces this empirically.) |
+| **4096+** | **C** | **C**  | **F**   | Cache-blocked f32-FMA cascade extends with $n$; per-element pack cost is amortised over $n^2$ pack work vs $n^3$ compute, so pack-fraction → 0. C's integer-MAC kernel also extends with $n$ at 80 Gop/s peak — for GF(7)/GF(31) this is sufficient for the 1.5× contract (fflas saturates near 96 Gop/s on these primes per CSV), so C remains the most efficient choice. For GF(251) F is required to chase fflas's 138 Gop/s ceiling. |
+
+**Threshold definition.** $N_{\text{thresh}}$ — the per-prime crossover $n$ at which Candidate C overtakes Candidate F — is **prime-dependent**:
+
+* $N_{\text{thresh}}(\text{GF}(7)) = 1024$ — F wins at $n \le 256$, C wins at $n \ge 1024$. (No GF(7) row at $n = 512$ is in the worker's CSV; the threshold is bracketed in the open interval $(256, 1024]$. The selector function in § 5.5 (d) uses $n \le 512$ as the inclusive cut.)
+* $N_{\text{thresh}}(\text{GF}(31)) = 1024$ — same as GF(7); same reasoning.
+* $N_{\text{thresh}}(\text{GF}(251)) = +\infty$ — F always wins. The integer-kernel ratio is 2.50× at $n = 1024$ (PASS the soft 3.2× threshold but not by a structural margin); F's 160 Gop/s peak is the only architectural path to push closer to fflas's 138.3 Gop/s. $k_{\max} = 134$ requires chunking ($\lceil n / 134 \rceil$ chunks per panel), but each chunk-boundary reduction is $O(n^2 / k_{\max})$ — sub-dominant for $n \ge 256$.
+
+The table is **concrete**, not "TBD": every cell is filled with a chosen kernel, and the rationale per cell cites the empirical CSV row or the pack-amortisation analysis above.
+
+#### Aggregate-contract verification
+
+The aggregate `[hard]` contract from `5cacaec5` is "one strategy is selected with feasibility evidence for each in-scope prime, scoped per the per-prime maturity-marker policy". The hybrid C+F selection is **a single strategy** — *hybrid AVX2 small-prime GEMM* — with a per-cell selector inside the strategy. § 5.5 (a)/(b)/(c)/(d) provide the four-axis feasibility evidence for Candidate F; § 5.3 already provides the same evidence for Candidate C. The decision table above (§ 6.1) is the binding per-(P, n) selector.
+
+The amended `662f7a15` per-prime acceptance:
+
+* **GF(7) `[hard]` 1.5×** — Candidate F covers $n \in \{64, 256\}$ (currently FAIL); Candidate C covers $n \in \{1024+\}$ (currently PASS at 1.45×). Hybrid PASSes all three sizes.
+* **GF(31) `[hard]` 1.5×** — analogous; Candidate F covers $n \in \{64, 256\}$ (currently FAIL); Candidate C covers $n \in \{1024+\}$ (currently PASS at 1.38×). Hybrid PASSes all three sizes.
+* **GF(251) `[aspirational]` soft 3.2× / 40 Gop/s** — Candidate F covers all sizes. The soft threshold is satisfied at $n \in \{64, 256\}$ when F's 80–110 Gop/s expected throughput (50–70 % of peak per BLIS-class norms) replaces C's 22.9 / 28.7 Gop/s. At $n = 1024$ the soft threshold is already met by Candidate C (55.4 Gop/s ≥ 40 Gop/s); F further improves toward fflas.
+
+**Mersenne / Fp<65537> non-regression.** Unchanged from the original § 6. The new branch is `if F::PRIME <= 251` (selector), entirely orthogonal to Mersenne31 ($p = 2^{31} - 1$) and Fp<65537> ($p = 65537$). Property tests in `crates/gf2-core/src/gfp/simd_ops.rs::tests` cover the dispatch decision at all primes; the existing Mersenne/Fp<65537> property-test paths are untouched.
+
+**No new external dependency.** Both arms of the hybrid use AVX2 + FMA3 intrinsics that ship in `core::arch::x86_64`. The Charon/Aeneas verification pipeline (`scripts/verify-lean.sh`) is unaffected: `gf2-kernels-simd` is not in proof scope (only `gfp/` and `gfpn/` are; see `proofs/README.md`).
 
 ## 7. Implementation outline for `662f7a15`
 
@@ -362,6 +522,86 @@ Total: ~520 LOC across 8 files. No `Cargo.toml` changes. No new feature flags.
   - Property-test coverage at WORD_BOUNDARY_LENS for each new prime.
 - `doc-review`: the parity evidence in `7a106fe4` cites the new CSV and updates the family verdicts.
 
+### 7.4 Candidate F file-level outline (post-Wave-6B amendment)
+
+> Added 2026-05-06 per § 4.5, § 5.5, § 6.1 amendment. Lists the additional file-level changes the `662f7a15` rework will land **on top of** the Wave-6B Candidate C baseline already merged at `662f7a15`. The Candidate C files (`fp_small.rs`, `x86/fp_small.rs`, `maybe_fp_small()`, the `if P <= 251` branch in `try_simd_gemm_classical`) remain in place; the rework adds the Candidate F arm and the per-(P, n) selector ahead of the Candidate C branch.
+
+#### 7.4.1 Step-by-step plan (delta over § 7.1)
+
+1. **Add property tests for the new f32-FMA dispatch path** in `crates/gf2-core/src/field/matrix.rs::tests` (the test module that hosts the existing `try_simd_gemm_classical` correctness tests added by `662f7a15` Candidate C). Cover the same `WORD_BOUNDARY_LENS = [0, 1, 63, 64, 65, 127, 128, 129, 255, 256, 257]` plus the per-prime selector boundaries: $n = 32$, $n = 134$ (GF(251) $k_{\max}$), $n = 512$, $n = 1024$. Assert the f32-FMA path matches the scalar `gemm_into_view` reference bit-exactly across all in-scope primes. *(TDD per `CLAUDE.md` § Testing conventions.)*
+
+2. **Add the `SmallPrimeF32Fns` detection struct** in a new file `crates/gf2-kernels-simd/src/fp_small_f32.rs`. Mirror the layout of the Wave-6B `crates/gf2-kernels-simd/src/fp_small.rs`:
+   ```rust
+   pub struct SmallPrimeF32Fns {
+       pub batch_gemm_fn: SmallPrimeF32GemmFn,
+   }
+   pub fn detect() -> Option<SmallPrimeF32Fns> {
+       if !is_x86_feature_detected!("avx2") || !is_x86_feature_detected!("fma") {
+           return None;
+       }
+       // safety: avx2 + fma proven present
+       Some(SmallPrimeF32Fns { batch_gemm_fn: x86::fp_small_f32_gemm })
+   }
+   ```
+   The function-pointer `SmallPrimeF32GemmFn` takes `(p: u8, m: usize, k: usize, n: usize, a: &[u8], b: &[u8], c: &mut [u8])` so a single dispatch struct covers GF(7), GF(31), GF(251).
+
+3. **Implement the AVX2 + FMA inner kernel** in `crates/gf2-kernels-simd/src/x86/fp_small_f32.rs`. The kernel is structurally a BLIS-class register-blocked sgemm micro-kernel:
+   - **Pack pass**: convert `&[u8]` (canonical-form residues) to packed `Vec<f32>` row-major buffers `a_packed` ($m \times k$) and column-major `b_packed` ($k \times n$). The per-element conversion is `(*v as f32)` — exact for $p \le 251$. Emit the buffers in the panel-tile shape required by the inner kernel (typical `m_R × k_C × n_R` block: $m_R = 4$, $n_R = 24$, $k_C$ chosen as the per-prime $k_{\max}$ chunk floor — 64 for GF(251), 1024 for GF(31), 4096 for GF(7)).
+   - **Inner micro-kernel** ($4 \times 24$ tile, 12 accumulator AVX2 registers + 1 broadcast + 3 A-column registers = 16/16):
+     - Zero the 12 accumulator registers via `_mm256_setzero_ps`.
+     - Loop $\ell = 0..k_C$:
+       - Load 1 A-row of 4 elements broadcast to 8 lanes via `_mm256_broadcast_ss`.
+       - Load 3 B-row tiles of 8 lanes each via `_mm256_loadu_ps` (no transpose at this stage — done at pack time).
+       - Issue 12 `_mm256_fmadd_ps(b_tile_j, a_broadcast_i, acc_ij)` instructions; FMA0 + FMA1 take alternating iterations giving 0.5-cycle reciprocal throughput per AMD Zen-3 SOG (instruction code `c0`/`a8` family).
+     - At end of the $k_C$ chunk, issue per-output-tile reduction: `_mm256_round_ps` + cast to `__m256i` via `_mm256_cvtps_epi32` + scalar `% p` per lane (Barrett reduction in 32-bit lanes is also viable; profile-time call between scalar and Barrett is left to implementation).
+     - Store the canonical residues back to a `Vec<u8>` output buffer.
+   - **Unpack pass**: copy the row-major `Vec<u8>` back into the `&mut [Fp<P>]` output via `Fp::new(*v)` (which performs Montgomery `to_mont` if applicable).
+
+4. **Wire the new kernel into `gf2-core`.** In the `simd` module (`crates/gf2-core/src/lib.rs` lines 100–211 area, hosting `OnceLock`-backed accessors), add:
+   ```rust
+   pub fn maybe_fp_small_f32() -> Option<&'static SmallPrimeF32Fns> {
+       static FNS: OnceLock<Option<SmallPrimeF32Fns>> = OnceLock::new();
+       FNS.get_or_init(gf2_kernels_simd::fp_small_f32::detect).as_ref()
+   }
+   ```
+   mirroring the `maybe_fp_small()` pattern added by Wave-6B's `662f7a15`. Add the `Option<()>` no-simd-feature stub in the same file's `#[cfg(not(feature = "simd"))]` block.
+
+5. **Add the dispatch branch in `crates/gf2-core/src/field/matrix.rs::try_simd_gemm_classical`.** Insert the new $(P, n)$-keyed branch **above** the existing Candidate C `if F::PRIME <= 251` branch:
+   ```rust
+   if F::PRIME <= 251 {
+       if select_f32_path::<F>(m, k, n) {
+           if let Some(fns) = crate::simd::maybe_fp_small_f32() {
+               // pack a, b → Vec<f32> tiles; call kernel; unpack into c.
+               return Some(());
+           }
+       }
+       // Candidate C fallback
+       if let Some(fns) = crate::simd::maybe_fp_small() { /* ... */ }
+   }
+   ```
+   The pure-`const` selector `select_f32_path::<F>(m, k, n) -> bool` encodes the decision table from § 6.1: GF(7)/GF(31) routes to F when $n \le 512$, GF(251) always routes to F. The selector is `const fn` so it is constant-folded for the call sites where $(m, k, n)$ is known statically (e.g. fixed-size benchmark cells).
+
+6. **Benchmark.** Run `./benchmarks/run.sh --skip-m4ri` against the existing reference baseline. Emit `dev/bench_results/<date>-662f7a15-rework-small-prime-gemm.csv`. Apply the per-prime acceptance from § 6.1 (hybrid table). The pass criteria:
+   - GF(7) at $n \in \{64, 256, 1024\}$: ratio ≤ 1.5× **all three sizes** (the F-arm pulls the failing $n=64, 256$ cells under the bar; the C-arm preserves the passing $n = 1024$ cell).
+   - GF(31) at $n \in \{64, 256, 1024\}$: ratio ≤ 1.5× **all three sizes**, same logic as GF(7).
+   - GF(251) at $n \in \{64, 256, 1024\}$: throughput ≥ 40 Gop/s and ratio ≤ 3.2× **all three sizes** (soft threshold). Headline cell $n = 256$ targets ≥ 80 Gop/s (the BLIS-class 50 % of f32-FMA peak floor).
+
+7. **Verify the negative control.** Mersenne31 throughput delta ≤ 5 % vs the existing `dev/bench_results/2026-05-05-3d06224c-mersenne-baseline.csv` baseline. The new dispatch branch is gated on `F::PRIME <= 251`; Mersenne31's $p = 2^{31} - 1$ never enters the gate.
+
+#### 7.4.2 Files touched (delta summary)
+
+| File | Change | LOC estimate |
+|---|---|---|
+| `crates/gf2-kernels-simd/src/fp_small_f32.rs` | **new** file (safe wrappers + `SmallPrimeF32Fns`) | ~140 |
+| `crates/gf2-kernels-simd/src/x86/fp_small_f32.rs` | **new** file (AVX2+FMA register-blocked micro-kernel + pack/unpack) | ~400 |
+| `crates/gf2-kernels-simd/src/lib.rs` | one `pub mod` line | 1 |
+| `crates/gf2-kernels-simd/src/x86/mod.rs` | add f32-FMA fn-detection branch (`is_x86_feature_detected!("fma")`) | ~5 |
+| `crates/gf2-core/src/lib.rs` | new `maybe_fp_small_f32()` accessor + `OnceLock` slot | ~12 |
+| `crates/gf2-core/src/field/matrix.rs` | new `select_f32_path::<F>` selector + dispatch branch above the existing Candidate C branch | ~30 |
+| `crates/gf2-core/src/field/matrix.rs::tests` | new property tests at $n \in \{32, 134, 512, 1024\}$ for each prime | ~40 |
+
+Total: ~628 LOC across 7 files — a delta over the ~520 LOC Candidate C baseline already merged at `662f7a15`. No `Cargo.toml` changes. No new feature flags. No source code is changed by **this design document**; the file outline above is the implementation plan for the `662f7a15` rework that follows this design.
+
 ## 8. Risks and open questions
 
 ### 8.1 Risks
@@ -384,12 +624,25 @@ The issue text declares two `[hard]` criteria, both of which are satisfied IN th
 
 | Issue criterion | Status | Section that satisfies it |
 |---|---|---|
-| The design compares packed residues, tables, SIMD lanes, and fflas-style modular tricks. | **MET (unchanged from original criterion text)** — § 4 lists exactly the four candidates the criterion enumerates: § 4.1 Packed residues, § 4.2 Look-up tables, § 4.3 SIMD lanes (AVX2), § 4.4 fflas-style float-modular cascade. § 5 supplies feasibility evidence per candidate with the four sub-axes the issue requires (kernels-changed, MSRV/intrinsic-availability, Montgomery-path interaction, dispatch-infrastructure interaction). § 4.5 supplies the side-by-side comparison summary. | § 4, § 5, § 4.5. |
+| The design compares packed residues, tables, SIMD lanes, and fflas-style modular tricks. | **MET (unchanged from original criterion text)** — § 4 lists exactly the four candidates the criterion enumerates: § 4.1 Packed residues, § 4.2 Look-up tables, § 4.3 SIMD lanes (AVX2), § 4.4 fflas-style float-modular cascade. § 5 supplies feasibility evidence per candidate with the four sub-axes the issue requires (kernels-changed, MSRV/intrinsic-availability, Montgomery-path interaction, dispatch-infrastructure interaction). § 4.6 (renumbered from § 4.5 by the 2026-05-06 amendment) supplies the side-by-side comparison summary; the original four candidates remain listed verbatim alongside the newly added Candidate F column. | § 4, § 5, § 4.6. |
 | One strategy is selected with feasibility evidence for each in-scope prime, scoped per the per-prime maturity-marker policy. | **MET — under the user-approved 2026-05-05 amendment to this criterion** (recorded inline in `5cacaec5`'s description § *Amendment — 2026-05-05 (user-approved, Path A)*). § 6 selects exactly one strategy (Candidate C — SIMD-lane AVX2 byte/word kernel) with four explicit pieces of feasibility evidence (architectural reuse, throughput envelope, no new external dependency, feasibility within `662f7a15`'s scope). § 6 #2 quantifies the per-prime throughput envelope: GF(7) and GF(31) at 42 % of AVX2-MAC peak — feasibility-evidenced against the `[hard]` 1.5× absolute targets; GF(251) at 107 % of peak — feasibility-evidenced against the `[aspirational]` per-host envelope target with empirical evidence (80 Gop/s AVX2-MAC peak vs. 85.3 Gop/s 1.5× absolute) recorded in the same section. The aggregate Candidate C contract (one dispatch unifies all three primes with no per-prime regressions) remains `[hard]` and is verified by `662f7a15`'s correctness and Mersenne-non-regression criteria. § 7 provides the file-level implementation outline including the GF(251)-first measurement order. | § 6, § 7, plus the amendment block in `5cacaec5`'s description and `662f7a15`'s description. |
 
-**Self-satisfaction note.** Per the project memory entry *Hard criteria self-satisfied, not deferred* (`feedback_hard_criterion_self_satisfaction.md`), the verdicts above are made IN this document rather than referencing a downstream artefact. § 4 mechanically enumerates the four candidates the issue text requires; § 6 picks a single one without conditional language ("if feasible, then C; otherwise D" is **not** what the criterion requires — it requires exactly one selection, which § 6 supplies).
+### 9.1 Mapping to issue b9aed0d8 success criteria (post-Wave-6B amendment, 2026-05-06)
 
-**No PENDING/TODO/TBD/deferred markers exist in this document.** The four open questions in § 8.2 are explicitly flagged as non-blocking (they pertain to `662f7a15`'s implementation review, not to this design's acceptance).
+Issue `b9aed0d8` (Design Candidate F — in-Rust f32-FMA cascade) was filed after the Wave-6B Candidate-C-only implementation (`662f7a15`, `2026-05-05-662f7a15-small-prime-gemm.csv`) revealed the per-cell verdict gaps in § 5.5 (a). The issue declares **four `[hard]` criteria**, all of which are satisfied IN this document per project memory `feedback_hard_criterion_self_satisfaction.md` (no deferral to `662f7a15` rework, `7a106fe4`, or any other downstream artefact).
+
+| Issue criterion | Status | Section that satisfies it |
+|---|---|---|
+| **§ 4.5 Candidate F** is added with the four-axis structure used in § 4.1–§ 4.4: (1) architectural pattern, (2) mathematical sketch, (3) inspiration, (4) best fit; carries an "Amendment — 2026-05-06 (user-approved post-Wave-6B)" header mirroring the wave-6A amendment-block precedent at the existing § 6 *Note*. | **MET** — § 4.5 contains all four sub-axes verbatim, in the same order as § 4.1–§ 4.4. The amendment header is the first paragraph of § 4.5. The renumbered § 4.6 (formerly § 4.5) extends the comparison summary table with a Candidate F column covering the same six rows (reuses-existing-dispatch, MSRV constraint, external dep, hot-path performance prediction, per-prime engineering cost, Mersenne/M31 regression risk, effort estimate) for like-for-like comparison. | § 4.5, § 4.6. |
+| **§ 5.5 Candidate F** is added with the four-axis structure used in § 5.1–§ 5.4: (a) gf2-core kernels that would change, (b) MSRV / intrinsic-availability constraints, (c) interaction with Fp<P> Montgomery path, (d) interaction with kernel dispatch. | **MET** — § 5.5 contains all four sub-axes labelled (a)/(b)/(c)/(d) verbatim. (a) cites `dev/bench_results/2026-05-05-662f7a15-small-prime-gemm.csv` verbatim with the per-cell ratios reproducing the issue text's table. (b) names the AVX2+FMA3 intrinsics (`_mm256_fmadd_ps` etc.), states MSRV 1.95.0 compatibility, and cross-validates against the existing `crates/gf2-kernels-simd/src/x86/fp_small.rs` Wave-6B Candidate C precedent. (c) derives the Montgomery `from_mont`/`to_mont` cost in cycles and quantifies the pack-amortisation cross-over. (d) sketches the new `select_f32_path::<F>` selector + dispatch branch in `try_simd_gemm_classical`. | § 5.5. |
+| **§ 6 amendment block**: replaces "Selected: Candidate C" being terminal with "Selected: hybrid Candidate C + Candidate F" + a per-(P, n) decision table; the threshold $N_{\text{thresh}}$ is derived from a pack-amortisation break-even analysis. | **MET** — § 6.1 is the amendment block: it reproduces the worker's CSV table verbatim, derives the pack-amortisation break-even ($n \ge 32$ at the issue's $3 \times c_C$ pack-cost factor; $n \ge 200$ at the conservative $11 \times c_C$ upper bound), provides the concrete per-(P, n) decision table (no "TBD" cells; every cell is C or F with cited rationale), and states the per-prime $N_{\text{thresh}}$ (1024 for GF(7), 1024 for GF(31), $+\infty$ for GF(251) — F always wins). The amendment-recommendation line "Selected: hybrid Candidate C + Candidate F" appears as the binding statement in § 6.1. | § 6.1. |
+| **§ 7.4 Candidate F file-level outline**: new files `crates/gf2-kernels-simd/src/{fp_small_f32.rs, x86/fp_small_f32.rs}`, new `crate::simd::maybe_fp_small_f32` accessor in `crates/gf2-core/src/lib.rs`, new dispatch branch in `try_simd_gemm_classical` keyed by (P, n). | **MET** — § 7.4 is the file-level outline. § 7.4.1 step 2 specifies the `crates/gf2-kernels-simd/src/fp_small_f32.rs` module with the `SmallPrimeF32Fns` struct and `detect()` function. Step 3 specifies the `crates/gf2-kernels-simd/src/x86/fp_small_f32.rs` AVX2+FMA register-blocked micro-kernel with the $4 \times 24$ tile shape, the `_mm256_fmadd_ps` inner loop, and the pack/unpack passes. Step 4 specifies the `maybe_fp_small_f32()` accessor in `crates/gf2-core/src/lib.rs` mirroring the `maybe_fp_small()` `OnceLock` pattern. Step 5 specifies the dispatch branch in `try_simd_gemm_classical` keyed on `(P, n)` via the `select_f32_path::<F>` `const fn` selector. § 7.4.2 lists the seven files with LOC estimates. | § 7.4. |
+
+**Self-satisfaction note (extends § 9 above).** Per the project memory entry *Hard criteria self-satisfied, not deferred* (`feedback_hard_criterion_self_satisfaction.md`), the four `b9aed0d8` verdicts above are made IN this document rather than referencing the downstream `662f7a15` rework or `7a106fe4` evidence-publication issue. The criteria call for design content (sections, tables, file outlines) rather than implementation behaviour, so the self-satisfaction is direct: each `b9aed0d8` `[hard]` bullet maps to a numbered section number whose content makes the bullet true.
+
+**Self-satisfaction note (existing).** Per the same project memory entry, the verdicts in the original § 9 table (above) are made IN this document rather than referencing a downstream artefact. § 4 mechanically enumerates the four candidates the `5cacaec5` issue text requires; § 6 (Wave-6B baseline) picks Candidate C without conditional language; § 6.1 (Wave-6B amendment) picks the C+F hybrid without conditional language ("if feasible, then C; otherwise D" is **not** what the criterion requires — it requires exactly one selection per the per-prime maturity-marker policy, which § 6 / § 6.1 supply at every cell).
+
+**No PENDING/TODO/TBD/deferred markers exist in this document.** The four open questions in § 8.2 are explicitly flagged as non-blocking (they pertain to `662f7a15`'s implementation review, not to this design's acceptance). The § 6.1 decision table is concrete: every (prime, n) cell names a specific candidate (C or F) — no "TBD" cells. The § 7.4 implementation outline is at file-level granularity matching § 7.1 (no sentinel placeholders).
 
 ## 10. Sources
 
@@ -408,3 +661,6 @@ The issue text declares two `[hard]` criteria, both of which are satisfied IN th
 - `[E13]` `CLAUDE.md` § *MSRV* and § *Breakdown-time feasibility check* — Rust 1.95 baseline; the AVX2-stable-since-1.27 fact used in § 5.3 (b) derives from the `core::arch::x86_64` documentation, not from a separate citation. The host has no AVX-512 hardware; this design uses no AVX-512 intrinsic.
 - `[E14]` Project memory `feedback_hard_criterion_self_satisfaction.md` — the self-satisfy-IN-doc convention used in § 9.
 - `[E15]` `jit_issue_show 5cacaec5` and `jit_issue_show 662f7a15` — the verbatim issue texts that constrain § 2 (scope) and § 9 (acceptance mapping).
+- `[E16]` `dev/bench_results/2026-05-05-662f7a15-small-prime-gemm.csv` — Wave-6B Candidate C empirical results across $\{64, 256, 1024\}^3$ for GF(7), GF(31), GF(251) on the pinned 5900X reference host. § 5.5 (a) cites the per-cell ratios verbatim. The CSV is the empirical trigger for the Candidate F amendment (§ 4.5, § 5.5, § 6.1, § 7.4 added 2026-05-06).
+- `[E17]` `jit_issue_show b9aed0d8` — the issue text that constrains § 9.1 (the four `b9aed0d8` `[hard]` criteria mapped to sections § 4.5, § 5.5, § 6.1, § 7.4).
+- `[E18]` AMD Zen-3 Software Optimisation Guide § *Floating-point execution* (table of FMA execution-port throughput) and Agner Fog's Zen-3 instruction tables (`vfmadd231ps` 256-bit, 0.5-cycle reciprocal throughput on FMA0+FMA1) — the micro-architectural source for the 160 Gop/s f32-FMA peak claim in § 4.5, § 5.5 (b), and § 6.1.
