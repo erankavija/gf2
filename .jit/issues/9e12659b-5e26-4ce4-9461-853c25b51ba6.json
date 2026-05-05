@@ -2,9 +2,9 @@
   "id": "9e12659b-5e26-4ce4-9461-853c25b51ba6",
   "title": "Implement generic-prime panelized GEMM improvements",
   "description": "Improve non-Mersenne medium-prime GEMM where delayed reduction is insufficient.\n\n## Success Criteria\n\n- [hard] GF(65521) and other medium-prime rows meet the 1.5x threshold.\n- [hard] The implementation preserves existing Mersenne fast paths.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "high",
-  "assignee": null,
+  "assignee": "agent:claude-wt-9e12659b",
   "dependencies": [
     "5cacaec5-9676-41f7-adb1-e47b832876bb"
   ],
@@ -13,7 +13,18 @@
     "cargo-ci",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-05T20:04:04.864138410Z"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-05T20:23:38.032420736Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -23,5 +34,5 @@
     "story:sota-gfp-fflas"
   ],
   "created_at": "2026-04-30T06:43:02.721974345+00:00",
-  "updated_at": "2026-05-05T13:53:57.048657495+00:00"
+  "updated_at": "2026-05-05T20:31:44.459955104+00:00"
 }

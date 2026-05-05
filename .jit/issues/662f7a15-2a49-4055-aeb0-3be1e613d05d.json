@@ -2,9 +2,9 @@
   "id": "662f7a15-2a49-4055-aeb0-3be1e613d05d",
   "title": "Implement small-prime GEMM kernels",
   "description": "Implement the selected small-prime GF(p) GEMM improvements per the design at `dev/plans/small_prime_kernel_strategy.md` (Candidate C — AVX2 16-bit-lane SIMD with Barrett reduction).\n\n## Success Criteria\n\n- [hard] GF(7) and GF(31) small-prime GEMM target rows at $n \\in \\{64, 256, 1024\\}^3$ are within 1.5× of fflas-ffpack 2.5.0 or faster, measured on the pinned bench host (AMD Ryzen 9 5900X, Zen-3, AVX2; no AVX-512).\n- [aspirational] GF(251) small-prime GEMM target rows at $n \\in \\{64, 256, 1024\\}^3$ are within 1.5× of fflas-ffpack 2.5.0 or faster on the same pinned host.\n  * **Empirical amendment basis (recorded at design time per `CLAUDE.md` § Success-criterion maturity markers):** fflas's GF(251) `n = 256³` cell hits 128 Gop/s via Modular<float> + OpenBLAS sgemm (Candidate D in the design); the 1.5× target is therefore 85.3 Gop/s. The AVX2 16-bit-MAC peak at 5 GHz on the pinned host is 80 Gop/s — reaching 85.3 Gop/s requires 107 % of theoretical peak, which AVX2-only integer SIMD cannot deliver. See `dev/plans/small_prime_kernel_strategy.md` § 6 #2 for the throughput-envelope derivation. The `[aspirational]` marker permits the implementation to ship with the best AVX2-feasible GF(251) number and have it reviewed against the empirical envelope rather than the (unattainable) 1.5× absolute target. The aggregate contract — Candidate C unifies GF(7), GF(31), GF(251) under one dispatch with no per-prime regressions — still holds.\n  * **At review time:** `662f7a15` records the measured GF(251) ratio. If the implementation closes within ~1.6×–2× of fflas, the amendment is honored. If it falls below ~50 % of AVX2-MAC peak (= 40 Gop/s, i.e. ratio worse than ~3.2× of fflas), escalate per the same policy with the measured number for re-amendment or scope decision.\n- [hard] Correctness is covered by property and reference tests at `WORD_BOUNDARY_LENS = [0, 1, 63, 64, 65, 127, 128, 129, 255, 256, 257]` for each new prime, asserting the SIMD path matches the scalar element-wise path bit-exactly. The new tests slot into `crates/gf2-core/src/gfp/simd_ops.rs::tests::generic_simd_matches_scalar_for_proof_suite_primes` per the design § 7 step 1.\n- [hard] Mersenne31 and Fp<65537> existing dispatch paths do not regress — `cargo bench -p gf2-core --bench fieldmatrix_gemm -- --filter mersenne` and `--filter fp65537` show throughput delta ≤ 5 % vs. the pre-implementation baseline.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "high",
-  "assignee": null,
+  "assignee": "agent:claude-wt-662f7a15",
   "dependencies": [
     "5cacaec5-9676-41f7-adb1-e47b832876bb"
   ],
@@ -23,5 +23,5 @@
     "story:sota-gfp-fflas"
   ],
   "created_at": "2026-04-30T06:43:02.712458303+00:00",
-  "updated_at": "2026-05-05T13:53:56.913158816+00:00"
+  "updated_at": "2026-05-05T14:02:23.294983593+00:00"
 }
