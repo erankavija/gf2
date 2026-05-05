@@ -645,6 +645,30 @@ impl<const P: u64> FiniteField for Fp<P> {
         }
     }
 
+    /// Routes the dot to the AVX2 16-lane u16 Barrett kernel for
+    /// medium primes (`P ∈ (251, 65536)`); other primes return `None` and
+    /// the caller continues through the generic delayed-reduction path
+    /// driven by [`mul_product_sum_wide`](Self::mul_product_sum_wide).
+    #[inline]
+    fn try_fp_simd_dot_product(
+        a: &[Self],
+        b: &[Self],
+        scratch_a: &mut Vec<u16>,
+        scratch_b: &mut Vec<u16>,
+    ) -> Option<Self> {
+        crate::gfp::simd_ops::fp_medium_try_dot_product::<P>(a, b, scratch_a, scratch_b)
+    }
+
+    #[inline]
+    fn try_pack_fp_medium_u16(xs: &[Self], out: &mut Vec<u16>) -> Option<()> {
+        crate::gfp::simd_ops::fp_medium_try_pack_u16::<P>(xs, out)
+    }
+
+    #[inline]
+    fn try_fp_simd_dot_packed_u16(a_packed: &[u16], b_packed: &[u16]) -> Option<Self> {
+        crate::gfp::simd_ops::fp_medium_try_dot_packed::<P>(a_packed, b_packed)
+    }
+
     fn max_unreduced_additions() -> usize {
         let max_product = (P as u128 - 1) * (P as u128 - 1);
         if max_product == 0 {

@@ -81,6 +81,7 @@ pub use sparse::{
 pub(crate) mod simd {
     use gf2_kernels_simd::fp65537::Fp65537Fns;
     use gf2_kernels_simd::fp_generic::FpGenericFns;
+    use gf2_kernels_simd::fp_medium::MediumPrimeFns;
     use gf2_kernels_simd::gf2m::Gf2mFns;
     use gf2_kernels_simd::gf2m_batch::Gf2mBatchFns;
     use gf2_kernels_simd::gf2m_wide::{ClmulWide256Fns, ClmulWide571Fns, Gf2mWideFns};
@@ -95,6 +96,7 @@ pub(crate) mod simd {
     static MERSENNE_FNS: OnceLock<Option<MersenneFns>> = OnceLock::new();
     static FP65537_FNS: OnceLock<Option<Fp65537Fns>> = OnceLock::new();
     static FP_GENERIC_FNS: OnceLock<Option<FpGenericFns>> = OnceLock::new();
+    static FP_MEDIUM_FNS: OnceLock<Option<MediumPrimeFns>> = OnceLock::new();
     static GF2M_WIDE_FNS: OnceLock<Option<Gf2mWideFns>> = OnceLock::new();
     static TRANSPOSE_FNS: OnceLock<Option<TransposeFns>> = OnceLock::new();
 
@@ -182,6 +184,19 @@ pub(crate) mod simd {
             .as_ref()
     }
 
+    /// Returns the best available medium-prime `Fp<P>` SIMD batch kernels, if any.
+    ///
+    /// Provides AVX2 16-lane u16 Barrett-reduction kernels for primes
+    /// `p ∈ (251, 65535]` (the `word-fits-in-u16` family — reference prime
+    /// `GF(65521)`). Returns `None` on non-AVX2 hardware; callers must
+    /// fall back to the generic Montgomery kernels or scalar loops.
+    #[inline]
+    pub fn maybe_fp_medium() -> Option<&'static MediumPrimeFns> {
+        FP_MEDIUM_FNS
+            .get_or_init(gf2_kernels_simd::fp_medium::detect)
+            .as_ref()
+    }
+
     /// Returns the best available fixed-size wide GF(2^m) carry-less multiply
     /// kernels, if any.
     ///
@@ -233,6 +248,12 @@ pub(crate) mod simd {
     #[allow(dead_code)]
     #[inline]
     pub fn maybe_fp_generic() -> Option<()> {
+        None
+    }
+
+    #[allow(dead_code)]
+    #[inline]
+    pub fn maybe_fp_medium() -> Option<()> {
         None
     }
 
