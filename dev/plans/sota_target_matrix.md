@@ -223,7 +223,7 @@ Citations are evidence-doc paths followed by the relevant CSV row group when app
 
 | Field | Canonical | Secondary | Citation |
 |---|---|---|---|
-| GF(2) | N/A (out-of-scope field family for this operation in this epic) | — | `dev/bench_results/2026-05-04-c3e79272-charpoly-minpoly-refs.md` § 4 row `charpoly × GF(2)`: tracked under Wave-10 issue `b87362a3` (gf2-core charpoly), not under c3e79272. |
+| GF(2) | EXCLUDED:`no-independent-oracle`:M4RI's public surface does not expose `charpoly` (per `dev/plans/5dea7457_lane_hardening_evidence.md` § 1.2 row 4); fflas-ffpack and FLINT have no GF(2) charpoly entry. The gf2-core path itself is tracked under Wave-10 issue `b87362a3`, but lacks an external reference oracle for the protocol § 6 bitwise-equality contract. | — | `dev/bench_results/2026-05-04-c3e79272-charpoly-minpoly-refs.md` § 4 row `charpoly × GF(2)`; `dev/plans/5dea7457_lane_hardening_evidence.md` § 1.2 (M4RI public-surface enumeration). See § 6.2 row 19. |
 | GF(7) | **fflas-ffpack 2.5.0** | LinBox 1.7.1, FLINT 3.5.0, NTL 11.6.0 | `2026-05-04-c3e79272-charpoly-reference.csv:9-10` (canonical). Secondaries: lines 24-25 (LinBox), 26 (FLINT), 30 (NTL). |
 | GF(31) | **fflas-ffpack 2.5.0** | — | `2026-05-04-609855d9-gf31-supplement.csv` (charpoly block). |
 | GF(251) | **fflas-ffpack 2.5.0** | LinBox 1.7.1, FLINT 3.5.0, NTL 11.6.0 | `2026-05-04-c3e79272-charpoly-reference.csv:7-8`; secondaries 22-23, 27, 31. |
@@ -235,7 +235,7 @@ Citations are evidence-doc paths followed by the relevant CSV row group when app
 
 | Field | Canonical | Secondary | Citation |
 |---|---|---|---|
-| GF(2) | N/A (Wave-10 `d1dd266c`) | — | `2026-05-04-c3e79272-charpoly-minpoly-refs.md` § 4 row `minpoly × GF(2)`. |
+| GF(2) | EXCLUDED:`no-independent-oracle`:M4RI does not expose `minpoly` (same public-surface enumeration as charpoly); fflas-ffpack and FLINT have no GF(2) minpoly entry. The gf2-core path is tracked under Wave-10 issue `d1dd266c`, but lacks an external reference oracle. | — | `2026-05-04-c3e79272-charpoly-minpoly-refs.md` § 4 row `minpoly × GF(2)`; `dev/plans/5dea7457_lane_hardening_evidence.md` § 1.2. See § 6.2 row 20. |
 | GF(7) | **fflas-ffpack 2.5.0** | LinBox 1.7.1, FLINT 3.5.0 | `2026-05-04-c3e79272-minpoly-reference.csv:11-13` (canonical). Secondaries: 20-21 (LinBox), 22 (FLINT). NTL excluded for this op — see § 6. |
 | GF(31) | **fflas-ffpack 2.5.0** | — | `2026-05-04-609855d9-gf31-supplement.csv` (minpoly block). |
 | GF(251) | **fflas-ffpack 2.5.0** | LinBox 1.7.1, FLINT 3.5.0 | Lines 8-10; secondaries 18-19, 23. |
@@ -307,19 +307,29 @@ The 15 cells below were proposed for exclusion by `dev/plans/gf2m_reference_lane
 | 14 | `minpoly × GF(2^{16})` | `no-independent-oracle` | Same as #13. | Same. |
 | 15 | `minpoly × GF(2^{32})` | `no-independent-oracle` (compound) | Same as #13. NTL has no `MinPoly(mat_GF2E)` even at $m=32$, so FLINT remains the sole candidate. | Same as #12 — extend FLINT with the GF($2^{32}$) extension-field lane. |
 
-### 6.2 Pluq × GF($2^m$) — same-rationale extension flag
+### 6.2 Same-rationale extensions (Wave-3 enumeration omissions + GF(2) charpoly/minpoly)
 
-Pluq × GF($2^m$) for $m \in \{8, 16, 32\}$ (3 cells) inherits the proposal #2 rationale by analogy (same library landscape, same protocol § 6 contract requiring independent reconstruction of $P, L, U, \text{rank}$) but is **not** separately enumerated in the upstream lane-selection doc's proposal #2/#3 list, which covered only echelon/invert/solve/charpoly/minpoly. This document treats the 3 pluq × GF($2^m$) cells as `EXCLUDED:no-independent-oracle` consistent with proposals #2/#3 because the underlying rationale (no scalar GF($2^m$) factorisation reference) is identical and the operation set was a Wave-3 omission, not a deliberate inclusion. **Flagged in § 9.3 for transparency.** No additional `[hard]` deliverable is implied.
+This sub-table holds 5 cells that share rationale with § 6.1 entries but were not separately enumerated in the upstream lane-selection or charpoly/minpoly evidence documents. Each is flagged in § 9.3 for transparency. No additional `[hard]` deliverable is implied.
+
+| # | Cell | Class | Rationale | What unblocks promotion |
+|---|---|---|---|---|
+| 16 | `pluq × GF(2^8)` | `no-independent-oracle` | Same library landscape as § 6.1 proposal #2 (M4RIE provides `mzed_pluq` upstream but cannot serve as its own oracle; fflas/M4RI/NTL/FLINT/LinBox have no GF($2^m$) factorisation oracle harnessed). The upstream lane-selection doc enumerated only echelon/invert/solve/charpoly/minpoly — pluq was a Wave-3 omission. | Same as § 6.1 rows #1–#3 (`ref_gf2m_rref` generalised to expose $P, L, U$ and rank). |
+| 17 | `pluq × GF(2^{16})` | `no-independent-oracle` | Same as #16. | Same. |
+| 18 | `pluq × GF(2^{32})` | `no-independent-oracle` (compound) | Same as #16; compounds with M4RIE $m \le 16$ limit. | Same as § 6.1 row #3 plus pluq-via-RREF reduction. |
+| 19 | `charpoly × GF(2)` | `no-independent-oracle` | M4RI's public surface does not expose `charpoly` (per `dev/plans/5dea7457_lane_hardening_evidence.md` § 1.2 row 4); fflas-ffpack `Charpoly` and FLINT `nmod_mat_charpoly` cover GF($p$) only, not GF(2). Upstream `2026-05-04-c3e79272-charpoly-minpoly-refs.md` § 4 lists this cell as out of c3e79272's scope, tracking the gf2-core path under Wave-10 issue `b87362a3` — but no external reference exists for the protocol § 6 bitwise-equality contract. | Add a scalar GF(2) `ref_gf2_charpoly` (Krylov-style sequence over GF(2), Berlekamp-Massey at the end) to `benchmarks/reference/`, then `b87362a3`'s output gains an oracle. Alternatively, extend M4RI upstream or harness FLINT `mod_mat_charpoly_p_2` if such an entry exists. |
+| 20 | `minpoly × GF(2)` | `no-independent-oracle` | Same library-surface rationale as #19; M4RI does not expose minpoly; fflas-ffpack and FLINT have no GF(2) minpoly entry. gf2-core path tracked under Wave-10 issue `d1dd266c`. | Add a scalar GF(2) `ref_gf2_minpoly` (Krylov + Berlekamp-Massey, as for charpoly), then `d1dd266c`'s output gains an oracle. |
 
 ### 6.3 Total exclusion count
 
 * **§ 6.1:** 15 cells over $m \in \{8, 16, 32\}$ (echelon + invert + solve + charpoly + minpoly = 5 ops × 3 m-values).
-* **§ 6.2:** 3 pluq × GF($2^m$) cells flagged as same-rationale extension (not in upstream's literal enumeration but rationale-equivalent).
-* **Total: 18 exclusion cells**, all GF($2^m$).
+* **§ 6.2:** 5 same-rationale extension cells:
+  * 3 pluq × GF($2^m$) cells (Wave-3 lane-selection enumeration omission).
+  * 2 charpoly/minpoly × GF(2) cells (Wave-3 c3e79272-evidence enumeration omission).
+* **Total: 20 exclusion cells.** 18 over GF($2^m$) (§ 6.1 + § 6.2 pluq rows) + 2 over GF(2) (§ 6.2 charpoly/minpoly rows).
 * **0 sparse exclusions** — per `dev/plans/sparse_benchmark_corpus.md` § 4 *Final cell-count tally*: "After resolution: 0 protocol-class exclusion cells in the 12-cell operations × field matrix." The Wave-3 user decision converted the originally-proposed sparse `EXCLUDED` cells (sparse-matmul × all 3 fields, sparse×dense × GF($2^m$), sparse-elim × GF($2^m$)) into self-canonical cells with diagnostic markers (`no-independent-oracle`, `semantics-mismatch`); markers are not exclusions per the design's tally.
 * **0 dense-LA exclusions** — the 72 paired cells outside 1.5× per `dev/bench_results/2026-05-04-3b762764-dense-la-post-gemm.md` § *Cells outside 1.5× contract* are `optimization gap` (cell-status legend), not protocol-class exclusions: every cell has a canonical reference and a measurement; the gap classification is downstream optimization scope per § 7.4.
 
-The 15-cell core tally (§ 6.1) matches `dev/plans/gf2m_reference_lane_selection.md` § 6 criterion #2 evidence verbatim. The additional 3 pluq cells in § 6.2 are the synthesis-time extension explicitly flagged in § 9.3.
+The 15-cell core tally (§ 6.1) matches `dev/plans/gf2m_reference_lane_selection.md` § 6 criterion #2 evidence verbatim. The 5 additional cells in § 6.2 are the synthesis-time extensions flagged in § 9.3.
 
 ### 6.4 Cell-status legend cross-reference
 
@@ -390,7 +400,7 @@ This section maps each `[hard]` criterion of issue 4c0d0202 to the section of th
 
 | Issue criterion | Status | Evidence in this document |
 |---|---|---|
-| **#1 [hard]** "Every in-scope operation/field family has a reference owner or an explicit exclusion." | **MET — self-satisfied IN this document.** § 5.1 through § 5.11 enumerate every in-scope $(operation, field\text{-}family)$ cell. Each cell is either named-canonical-with-citation (e.g. `M4RI 20260122` for `matmul × GF(2)`, citation `2026-04-26-reference.csv:122-129`) or `EXCLUDED:<class>:<reason>` (e.g. `echelon × GF(2^4)`, class `no-independent-oracle`, reason cited to `gf2m_reference_lane_selection.md` § 4 proposal #2). The 18-cell exclusion ledger in § 6.1 + § 6.2 collects every exclusion with a per-cell rationale and recovery path. Sparse cells affirm `sparse_benchmark_corpus.md` § 4 by citation per its § 7 *Open question* #2 recommendation; gf2m cells affirm `gf2m_reference_lane_selection.md` § 3 by citation. **Section: § 5 (matrix) + § 6 (exclusion ledger) + § 4 (library roster).** |
+| **#1 [hard]** "Every in-scope operation/field family has a reference owner or an explicit exclusion." | **MET — self-satisfied IN this document.** § 5.1 through § 5.11 enumerate every in-scope $(operation, field\text{-}family)$ cell. Each cell is either named-canonical-with-citation (e.g. `M4RI 20260122` for `matmul × GF(2)`, citation `2026-04-26-reference.csv:122-129`) or `EXCLUDED:<class>:<reason>` (e.g. `echelon × GF(2^8)`, class `no-independent-oracle`, reason cited to `gf2m_reference_lane_selection.md` § 4 proposal #2). The 20-cell exclusion ledger in § 6.1 + § 6.2 collects every exclusion with a per-cell rationale and recovery path. Sparse cells affirm `sparse_benchmark_corpus.md` § 4 by citation per its § 7 *Open question* #2 recommendation; gf2m cells affirm `gf2m_reference_lane_selection.md` § 3 by citation. **Section: § 5 (matrix) + § 6 (exclusion ledger) + § 4 (library roster).** |
 | **#2 [hard]** "The design doc is linked to the SOTA epic and reference-matrix story." | **MET — by the `jit doc add` invocations recorded in the document-attach checklist below.** This document is attached to the consumer issue `4c0d0202`, the parent story `cbecfced` (reference-matrix story), AND the parent epic `97bf0879` via three `jit doc add` calls (see workflow step 5–6 in the dispatch instructions). All three attachments use `--doc-type design --label "SOTA target matrix"`. **Section: this § 9 confirmation + the `jit doc add` invocations.** |
 
 ### 9.1 Self-satisfaction note
@@ -403,7 +413,7 @@ A reviewer can verify criterion #1 mechanically:
 
 * Every row in § 5.1–§ 5.11 has a `Citation` column.
 * Every cell value either names a canonical library + optional secondaries with a path-and-line citation, OR begins with `EXCLUDED:` and names a protocol § 9 / Amendment 2 § 14 class plus a one-line reason and an upstream-doc citation.
-* The exclusion ledger § 6 has 18 rows: 15 in § 6.1 (matching the user-approved count in `gf2m_reference_lane_selection.md` § 6 criterion #2 evidence — proposal #2 + #3 over $m \in \{8, 16, 32\}$) plus 3 in § 6.2 (the same-rationale `pluq × GF($2^m$)` extension flagged in § 9.3 #2). 0 sparse exclusions, 0 dense-LA exclusions.
+* The exclusion ledger § 6 has 20 rows: 15 in § 6.1 (matching the user-approved count in `gf2m_reference_lane_selection.md` § 6 criterion #2 evidence — proposal #2 + #3 over $m \in \{8, 16, 32\}$) plus 5 in § 6.2 (3 same-rationale `pluq × GF($2^m$)` cells flagged in § 9.3 #2; 2 same-rationale `charpoly × GF(2)` and `minpoly × GF(2)` cells flagged in § 9.3 #4). 0 sparse exclusions, 0 dense-LA exclusions.
 * GF(31) has its own row in every dense table (§ 5.1, § 5.2, § 5.3, § 5.4, § 5.5, § 5.6, § 5.7) and is folded into the existing GF(p) family for the sparse tables (§ 5.8–§ 5.11 inherit fflas-ffpack canonical for GF(31) via the tiny-prime family pattern).
 * GF($2^{32}$) has its own row in § 5.1 (`matmul`), with NTL 11.6.0 `mat_GF2E` named canonical; non-matmul GF($2^{32}$) rows are excluded with the compound rationale recorded inline in § 6.1 (rows #3, #6, #9, #12, #15) and the per-cell exclusion markers in § 5.2–§ 5.7.
 
@@ -417,7 +427,9 @@ Per the dispatch workflow ("If you find an inconsistency between two upstream do
 
 3. **GF($2^4$) and GF($2^{32}$) in non-matmul rows.** Upstream `gf2m_reference_lane_selection.md` § 3 enumerates GF($2^m$) rows over $m \in \{8, 16, 32\}$. M4RIE coverage extends to $m = 4$ for `matmul` only per `m4rie_promotion_evidence.md` § *Target-matrix designation*. **Resolution recorded in this matrix:** GF($2^4$) appears only in § 5.1 (matmul); non-matmul rows for GF($2^m$) cover $m \in \{8, 16, 32\}$ to match the upstream enumeration; sparse rows for GF($2^m$) cover $m \in \{8, 16\}$ to match the actual `bench_sparse_csv_emitter.rs` coverage. Each row is consistent with its respective upstream evidence.
 
-4. **No silent picks.** No cell in § 5 was resolved by a silent choice; every cell either has a unique upstream canonical designation or carries the cross-reference above.
+4. **`charpoly × GF(2)` and `minpoly × GF(2)` not in upstream c3e79272 evidence.** `dev/bench_results/2026-05-04-c3e79272-charpoly-minpoly-refs.md` § 4 lists `charpoly × {GF(2), GF($2^m$)}` and `minpoly × {GF(2), GF($2^m$)}` as "n/a (out of scope)" for the c3e79272 reference-lane issue, tracking the gf2-core implementation paths under Wave-10 issues `b87362a3` (charpoly) and `d1dd266c` (minpoly). The epic-level scope statement (`97bf0879` description: "characteristic/minimal polynomial ... surfaces each have a final scorecard section") includes GF(2) in the field-family taxonomy, so the cells are in scope at epic level even though the c3e79272 reference-lane evidence excluded them from its own scope. **Resolution recorded in this matrix:** § 5.6 row `charpoly × GF(2)` and § 5.7 row `minpoly × GF(2)` are marked `EXCLUDED:no-independent-oracle` because no external library exposes a public charpoly/minpoly entry over GF(2) (M4RI per `5dea7457_lane_hardening_evidence.md` § 1.2 row 4; fflas-ffpack and FLINT cover GF($p$) only). § 6.2 rows #19 / #20 record these cells in the exclusion ledger with the same `no-independent-oracle` class as the GF($2^m$) non-matmul rows. The Wave-10 gf2-core implementation path proceeds under `b87362a3` / `d1dd266c` regardless of the missing oracle; the matrix records the cells as excluded from the 1.5×-vs-reference contract while keeping them in the consumer matrix for reportability.
+
+5. **No silent picks.** No cell in § 5 was resolved by a silent choice; every cell either has a unique upstream canonical designation or carries the cross-reference above.
 
 ### 9.4 No additional `[hard]` criteria invented
 
