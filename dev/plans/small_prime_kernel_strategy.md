@@ -601,7 +601,7 @@ Total: ~520 LOC across 8 files. No `Cargo.toml` changes. No new feature flags.
 | `crates/gf2-kernels-simd/src/x86/mod.rs` | add f32-FMA fn-detection branch (`is_x86_feature_detected!("fma")`) | ~5 |
 | `crates/gf2-core/src/lib.rs` | new `maybe_fp_small_f32()` accessor + `OnceLock` slot | ~12 |
 | `crates/gf2-core/src/field/matrix.rs` | new `select_f32_path::<F>` selector + dispatch branch above the existing Candidate C branch | ~30 |
-| `crates/gf2-core/src/field/matrix.rs::tests` | new property tests at $n \in \{32, 134, 512, 1024\}$ for each prime | ~40 |
+| `crates/gf2-core/src/field/matrix.rs::tests` | new property tests at $n \in \{32, 134, 268, 512, 1024\}$ for each prime | ~40 |
 
 Total: ~628 LOC across 7 files — a delta over the ~520 LOC Candidate C baseline already merged at `662f7a15`. No `Cargo.toml` changes. No new feature flags. No source code is changed by **this design document**; the file outline above is the implementation plan for the `662f7a15` rework that follows this design.
 
