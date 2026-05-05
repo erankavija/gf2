@@ -14,14 +14,14 @@
     "code-review": {
       "status": "failed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-05T22:11:13.983652718Z"
+      "updated_at": "2026-05-05T22:19:37.427445795Z"
     }
   },
   "context": {},
   "documents": [
     {
       "path": "dev/plans/small_prime_kernel_strategy.md",
-      "commit": "8e67686",
+      "commit": "3f62600",
       "label": "Small-prime kernel strategy (Cand C + Cand F amendment)",
       "doc_type": "design",
       "format": "markdown",
@@ -45,5 +45,5 @@
     "story:sota-gfp-fflas"
   ],
   "created_at": "2026-05-05T21:40:00.854007772+00:00",
-  "updated_at": "2026-05-05T22:16:10.679614644+00:00"
+  "updated_at": "2026-05-05T22:21:56.012274534+00:00"
 }

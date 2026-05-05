@@ -97,6 +97,23 @@
       "label": "SOTA target matrix",
       "doc_type": "design",
       "format": "markdown"
+    },
+    {
+      "path": "dev/plans/small_prime_kernel_strategy.md",
+      "commit": "3f62600",
+      "label": "Small-prime kernel strategy (Cand C + Cand F amendment)",
+      "doc_type": "design",
+      "format": "markdown",
+      "assets": [
+        {
+          "original_path": "https://github.com/flame/blis/blob/master/docs/KernelsHowTo.md",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        }
+      ]
     }
   ],
   "labels": [
@@ -107,5 +124,5 @@
     "epic:gf2-core-sota-performance"
   ],
   "created_at": "2026-04-30T06:43:02.414572597+00:00",
-  "updated_at": "2026-05-05T10:50:23.650055437+00:00"
+  "updated_at": "2026-05-05T22:21:59.343107137+00:00"
 }

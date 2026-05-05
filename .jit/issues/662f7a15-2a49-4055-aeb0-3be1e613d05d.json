@@ -16,7 +16,25 @@
   ],
   "gates_status": {},
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/plans/small_prime_kernel_strategy.md",
+      "commit": "3f62600",
+      "label": "Small-prime kernel strategy (Cand C + Cand F amendment) — implementation contract",
+      "doc_type": "design",
+      "format": "markdown",
+      "assets": [
+        {
+          "original_path": "https://github.com/flame/blis/blob/master/docs/KernelsHowTo.md",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        }
+      ]
+    }
+  ],
   "labels": [
     "type:task",
     "component:gf2-core",
@@ -24,5 +42,5 @@
     "story:sota-gfp-fflas"
   ],
   "created_at": "2026-04-30T06:43:02.712458303+00:00",
-  "updated_at": "2026-05-05T21:40:05.207941017+00:00"
+  "updated_at": "2026-05-05T22:21:58.307464161+00:00"
 }

@@ -14,29 +14,40 @@
     "doc-review"
   ],
   "gates_status": {
-    "doc-review": {
+    "cargo-ci": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-05-05T13:53:56.478903392Z"
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-05T13:52:32.523646472Z"
     },
     "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-05-05T13:52:39.004197856Z"
     },
-    "cargo-ci": {
+    "doc-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-05T13:52:32.523646472Z"
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-05-05T13:53:56.478903392Z"
     }
   },
   "context": {},
   "documents": [
     {
       "path": "dev/plans/small_prime_kernel_strategy.md",
-      "commit": "cd00161ce5c687efbe09d31b1b2bb480b9938757",
-      "label": "Small-prime kernel strategy",
-      "doc_type": "design"
+      "commit": "3f62600",
+      "label": "Small-prime kernel strategy (Cand C + Cand F amendment)",
+      "doc_type": "design",
+      "format": "markdown",
+      "assets": [
+        {
+          "original_path": "https://github.com/flame/blis/blob/master/docs/KernelsHowTo.md",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        }
+      ]
     }
   ],
   "labels": [
@@ -46,5 +57,5 @@
     "story:sota-gfp-fflas"
   ],
   "created_at": "2026-04-30T06:43:02.702881720+00:00",
-  "updated_at": "2026-05-05T13:53:56.684830701+00:00"
+  "updated_at": "2026-05-05T22:21:57.156727271+00:00"
 }
