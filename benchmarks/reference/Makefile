@@ -105,10 +105,12 @@ ntl_flint_smoke: ntl_flint_smoke.cpp
 	@$(CXX) $(CXXSTD) $(OPT) $(NTL_CFLAGS) $(FLINT_CFLAGS) $< \
 	  $(NTL_LIBS) $(FLINT_LIBS) -o $@
 
-# GF(2^32) bitwise-equality oracle (jit:b13799ac). Cross-checks NTL
-# `mat_GF2E` matmul at n=16 against an independent scalar reference
-# defined purely from the gf2-core Conway-polynomial bits. Linked
-# against NTL only — the scalar reference is self-contained.
+# GF(2^32) bitwise-equality oracle (jit:b13799ac, R2 rewrite). Direct
+# gf2-core ↔ NTL byte-equality check at n=16: loads the ground-truth
+# file `benchmarks/expected/gf2pow32_smoke_n16.bin` emitted by the
+# Cargo example `gf2pow32_smoke_emit_expected` and asserts byte-equality
+# between NTL `mat_GF2E::mul` output and the gf2-core ground-truth.
+# Linked against NTL only.
 ntl_gf2pow32_smoke: ntl_gf2pow32_smoke.cpp gf2pow32_constants.h
 	@$(CXX) $(CXXSTD) $(OPT) $(NTL_CFLAGS) $< $(NTL_LIBS) -o $@
 
