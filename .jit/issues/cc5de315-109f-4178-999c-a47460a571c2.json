@@ -1,7 +1,7 @@
 {
   "id": "cc5de315-109f-4178-999c-a47460a571c2",
   "title": "Close GF(p) FieldMatrix gaps to fflas-ffpack",
-  "description": "Close GF(p) FieldMatrix performance gaps to fflas-ffpack.\n\n## Background\n\nMersenne31 is already strong in measured GEMM rows, but GF(7), GF(31), GF(251), and GF(65521) need dedicated small-prime and medium-prime work to meet the 1.5x threshold.\n\n## Success Criteria\n\n- [hard] GF(p) GEMM target rows are within 1.5x of fflas-ffpack or faster across all in-scope prime families.\n- [hard] Dense GF(p) rows downstream of GEMM have follow-up dependencies or evidence showing they inherit the optimized kernels.\n- [hard] A final GF(p) report records raw numbers, ratios, and field-family-specific decisions.",
+  "description": "Close GF(p) FieldMatrix performance gaps to fflas-ffpack.\n\n## Background\n\nMersenne31 is already strong in measured GEMM rows, but GF(7), GF(31), GF(251), and GF(65521) need dedicated small-prime and medium-prime work to meet the 1.5x threshold.\n\n## Success Criteria\n\n- [hard] GF(p) GEMM target rows are within 1.5x of fflas-ffpack or faster across all in-scope prime families, except rows explicitly amended to `[aspirational]` with user-approved empirical justification.\n- [hard] Dense GF(p) rows downstream of GEMM have follow-up dependencies or evidence showing they inherit the optimized kernels.\n- [hard] A final GF(p) report records raw numbers, ratios, and field-family-specific decisions.\n\n## Amendment — 2026-05-06 (user-approved)\n\nGF(251) rows are accepted as `[aspirational]` for this story. The measured GF(251) ratios remain below the 1.5x-of-fflas threshold because fflas-ffpack uses an OpenBLAS-backed float-modular cascade, while gf2-core's current path is a pure AVX2 hand-written packed-byte kernel. This amendment does not make the GF(251) gap uninteresting; it makes it non-blocking for `cc5de315` closure. Follow-up issue `615db3b9` tracks the requested push toward fflas-like GF(251) performance after this story closes.",
   "state": "in_progress",
   "priority": "high",
   "assignee": "agent:project-lead",
@@ -14,7 +14,18 @@
     "cargo-ci",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-06T11:47:53.686720422Z"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-06T11:48:00.351553499Z"
+    }
+  },
   "context": {},
   "documents": [
     {
@@ -30,6 +41,13 @@
       "label": "GF(p) parity evidence — final story-level synthesis",
       "doc_type": "evidence",
       "format": "markdown"
+    },
+    {
+      "path": "dev/bench_results/2026-05-06-7a106fe4-gfp-parity-evidence.md",
+      "commit": "4cde8a8",
+      "label": "GF(p) parity evidence — final story-level synthesis",
+      "doc_type": "evidence",
+      "format": "markdown"
     }
   ],
   "labels": [
@@ -40,5 +58,5 @@
     "story:sota-gfp-fflas"
   ],
   "created_at": "2026-04-30T06:43:02.485020488+00:00",
-  "updated_at": "2026-05-06T11:47:27.542964702+00:00"
+  "updated_at": "2026-05-06T12:19:40.912563043+00:00"
 }

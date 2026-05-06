@@ -3911,3 +3911,7 @@
 {"type":"issue_state_changed","id":"13d06536-d61b-4ae7-872f-0228ecf29e48","issue_id":"cc5de315-109f-4178-999c-a47460a571c2","timestamp":"2026-05-06T11:24:16.708969911Z","from":"backlog","to":"ready"}
 {"type":"issue_state_changed","id":"bed4ae0c-6fe3-452b-81c9-c77862e7ead3","issue_id":"cc5de315-109f-4178-999c-a47460a571c2","timestamp":"2026-05-06T11:47:27.542905342Z","from":"ready","to":"in_progress"}
 {"type":"issue_claimed","id":"c50bcafc-387c-482c-b783-b491939e038e","issue_id":"cc5de315-109f-4178-999c-a47460a571c2","timestamp":"2026-05-06T11:47:27.545871593Z","assignee":"agent:project-lead"}
+{"type":"gate_passed","id":"418a70c0-3a8d-4180-8e87-bc0bf4405f8a","issue_id":"cc5de315-109f-4178-999c-a47460a571c2","timestamp":"2026-05-06T11:48:00.299748064Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"398fab4a-6cdd-4c7e-aba7-fcbfdf7999bd","issue_id":"cc5de315-109f-4178-999c-a47460a571c2","timestamp":"2026-05-06T12:10:06.608442734Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"issue_created","id":"b39f7375-9570-4cc9-a97e-1448532b8dbd","issue_id":"615db3b9-9dbf-44b6-a9e4-7f60d6009a09","timestamp":"2026-05-06T12:18:36.366177166Z","title":"Pursue fflas-like GF(251) GEMM performance","priority":"normal"}
+{"type":"issue_state_changed","id":"78a45674-28eb-4189-adf6-15f97efbee3d","issue_id":"615db3b9-9dbf-44b6-a9e4-7f60d6009a09","timestamp":"2026-05-06T12:18:39.263089655Z","from":"ready","to":"backlog"}
