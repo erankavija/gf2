@@ -3985,3 +3985,11 @@
 {"type":"issue_claimed","id":"259c19ae-8705-4b3b-ac89-bc5ad7c638d3","issue_id":"615db3b9-9dbf-44b6-a9e4-7f60d6009a09","timestamp":"2026-05-06T19:19:04.987984021Z","assignee":"agent:copilot"}
 {"type":"issue_created","id":"a1e533b7-4b37-4d79-b2e5-0bfbc80386d2","issue_id":"c450f40b-bf33-4051-ba30-35d361ddb2cd","timestamp":"2026-05-06T20:11:31.724115729Z","title":"Implement Newton-John / M4RM-style GEMM for GF(2^8)","priority":"normal"}
 {"type":"issue_state_changed","id":"b4e3f70b-7b80-4505-9c6e-d4d23e11c4ec","issue_id":"c450f40b-bf33-4051-ba30-35d361ddb2cd","timestamp":"2026-05-06T20:12:48.678342816Z","from":"ready","to":"rejected"}
+{"type":"gate_passed","id":"482f5156-8ab6-45cb-8d13-ede9d43deed8","issue_id":"e24f7839-5460-4b5c-ac4d-9f656eeefb54","timestamp":"2026-05-06T20:19:24.997994534Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"2848804b-e71d-4dc6-8396-26dbbdc6659a","issue_id":"e24f7839-5460-4b5c-ac4d-9f656eeefb54","timestamp":"2026-05-06T20:31:08.162455091Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"bffe50a4-12a3-456b-bbe4-ea53d49c3471","issue_id":"e24f7839-5460-4b5c-ac4d-9f656eeefb54","timestamp":"2026-05-06T20:49:36.778816638Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"a6de275f-f419-4ab3-9ae0-9df082489b09","issue_id":"e24f7839-5460-4b5c-ac4d-9f656eeefb54","timestamp":"2026-05-06T21:09:42.816894548Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"aec1893c-dada-4794-b343-0d15dd3b162d","issue_id":"e24f7839-5460-4b5c-ac4d-9f656eeefb54","timestamp":"2026-05-06T21:09:53.134020710Z","gate_key":"doc-review","updated_by":"agent:project-lead"}
+{"type":"issue_state_changed","id":"687a402d-b17e-4bb6-8adc-12084990405e","issue_id":"e24f7839-5460-4b5c-ac4d-9f656eeefb54","timestamp":"2026-05-06T21:09:53.604625195Z","from":"in_progress","to":"done"}
+{"type":"issue_completed","id":"2628965e-6689-4fd4-a64f-df52f30e8a95","issue_id":"e24f7839-5460-4b5c-ac4d-9f656eeefb54","timestamp":"2026-05-06T21:09:53.604660655Z"}
+{"type":"issue_state_changed","id":"68772485-2323-4403-95df-014dfd80f05e","issue_id":"d82c00a3-9142-494f-900f-35b11fac7230","timestamp":"2026-05-06T21:09:54.040935950Z","from":"backlog","to":"ready"}

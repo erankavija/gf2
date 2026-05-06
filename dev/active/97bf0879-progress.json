@@ -1038,12 +1038,25 @@
       "commits": ["aa585e9", "336c9e1"],
       "doc": "dev/bench_results/2026-05-06-111a3967-gf2-parity-evidence.md"
     },
-    "wave_8a_in_progress": {
+    "wave_8a_closed": {
       "issue": "a1172cea",
       "title": "Measure GF(2^m) post-PPC GEMM against reference",
       "first_pass_commit": "bc4b45d",
+      "rework_commit": "c5402de",
+      "close_commit": "cdb0e87",
       "code_review_R1": "FAIL — 3 findings (GF(2^32) large-n unmeasured / count math / routing)",
-      "rework_count": 1
+      "code_review_R2": "PASS",
+      "rework_count": 1,
+      "outcome": "Path A succeeded — pinned-container NTL --large measured. 7 [hard] FAIL cells routed to Wave-8b e24f7839.",
+      "doc": "dev/bench_results/2026-05-06-a1172cea-gf2m-scorecard.md"
+    },
+    "wave_8b_dispatched": {
+      "ts": "2026-05-06T18:46Z",
+      "main_anchor_sha": "cdb0e87281801746e6ece0b48cd0382378530f50",
+      "issues": [
+        {"short_id": "e24f7839", "branch": "worktree-agent-e24f7839", "agent_id": "a5b72a1e8176e0c65", "classification": "implementation"},
+        {"short_id": "fb271c41", "branch": "worktree-agent-fb271c41", "agent_id": "a821adb62889a37b8", "classification": "research"}
+      ]
     }
   },
   "session_11_started_at": "2026-05-06T13:46Z",
