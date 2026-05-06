@@ -2,7 +2,7 @@
   "id": "cc5de315-109f-4178-999c-a47460a571c2",
   "title": "Close GF(p) FieldMatrix gaps to fflas-ffpack",
   "description": "Close GF(p) FieldMatrix performance gaps to fflas-ffpack.\n\n## Background\n\nMersenne31 is already strong in measured GEMM rows, but GF(7), GF(31), GF(251), and GF(65521) need dedicated small-prime and medium-prime work to meet the 1.5x threshold.\n\n## Success Criteria\n\n- [hard] GF(p) GEMM target rows are within 1.5x of fflas-ffpack or faster across all in-scope prime families.\n- [hard] Dense GF(p) rows downstream of GEMM have follow-up dependencies or evidence showing they inherit the optimized kernels.\n- [hard] A final GF(p) report records raw numbers, ratios, and field-family-specific decisions.",
-  "state": "backlog",
+  "state": "ready",
   "priority": "high",
   "assignee": null,
   "dependencies": [
@@ -40,5 +40,5 @@
     "story:sota-gfp-fflas"
   ],
   "created_at": "2026-04-30T06:43:02.485020488+00:00",
-  "updated_at": "2026-05-06T11:08:01.018937044+00:00"
+  "updated_at": "2026-05-06T11:24:16.708816831+00:00"
 }
