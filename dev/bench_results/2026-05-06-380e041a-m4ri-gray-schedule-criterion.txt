@@ -1,0 +1,132 @@
+   Compiling gf2-core v0.1.0 (/home/vkaskivuo/Projects/gf2/crates/gf2-core)
+    Finished `bench` profile [optimized] target(s) in 6.00s
+     Running benches/m4rm_gray_schedule.rs (target/release/deps/m4rm_gray_schedule-6f1f0fae3d16b4b7)
+Benchmarking m4rm_gray_schedule/production_64k_max8/1024
+Benchmarking m4rm_gray_schedule/production_64k_max8/1024: Warming up for 1.0000 s
+Benchmarking m4rm_gray_schedule/production_64k_max8/1024: Collecting 10 samples in estimated 2.0348 s (2310 iterations)
+Benchmarking m4rm_gray_schedule/production_64k_max8/1024: Analyzing
+m4rm_gray_schedule/production_64k_max8/1024
+                        time:   [900.39 µs 902.47 µs 905.22 µs]
+                        change: [+2.1662% +2.4564% +2.7489%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Benchmarking m4rm_gray_schedule/gray_64k_max10/1024
+Benchmarking m4rm_gray_schedule/gray_64k_max10/1024: Warming up for 1.0000 s
+Benchmarking m4rm_gray_schedule/gray_64k_max10/1024: Collecting 10 samples in estimated 2.0237 s (2145 iterations)
+Benchmarking m4rm_gray_schedule/gray_64k_max10/1024: Analyzing
+m4rm_gray_schedule/gray_64k_max10/1024
+                        time:   [893.09 µs 895.13 µs 898.74 µs]
+Benchmarking m4rm_gray_schedule/gray_128k_max10/1024
+Benchmarking m4rm_gray_schedule/gray_128k_max10/1024: Warming up for 1.0000 s
+Benchmarking m4rm_gray_schedule/gray_128k_max10/1024: Collecting 10 samples in estimated 2.0203 s (1870 iterations)
+Benchmarking m4rm_gray_schedule/gray_128k_max10/1024: Analyzing
+m4rm_gray_schedule/gray_128k_max10/1024
+                        time:   [1.0258 ms 1.0314 ms 1.0363 ms]
+                        change: [-2.8031% -2.4200% -2.0360%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking m4rm_gray_schedule/gray_256k_max10/1024
+Benchmarking m4rm_gray_schedule/gray_256k_max10/1024: Warming up for 1.0000 s
+Benchmarking m4rm_gray_schedule/gray_256k_max10/1024: Collecting 10 samples in estimated 2.0527 s (1870 iterations)
+Benchmarking m4rm_gray_schedule/gray_256k_max10/1024: Analyzing
+m4rm_gray_schedule/gray_256k_max10/1024
+                        time:   [1.0249 ms 1.0284 ms 1.0311 ms]
+                        change: [-6.1101% -5.6330% -5.1683%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Benchmarking m4rm_gray_schedule/gray_512k_max10/1024
+Benchmarking m4rm_gray_schedule/gray_512k_max10/1024: Warming up for 1.0000 s
+Benchmarking m4rm_gray_schedule/gray_512k_max10/1024: Collecting 10 samples in estimated 2.0279 s (1870 iterations)
+Benchmarking m4rm_gray_schedule/gray_512k_max10/1024: Analyzing
+m4rm_gray_schedule/gray_512k_max10/1024
+                        time:   [1.0370 ms 1.0418 ms 1.0512 ms]
+                        change: [-5.1071% -3.1716% -0.2372%] (p = 0.03 < 0.05)
+                        Change within noise threshold.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+Benchmarking m4rm_gray_schedule/production_64k_max8/2048
+Benchmarking m4rm_gray_schedule/production_64k_max8/2048: Warming up for 1.0000 s
+Benchmarking m4rm_gray_schedule/production_64k_max8/2048: Collecting 10 samples in estimated 2.0785 s (385 iterations)
+Benchmarking m4rm_gray_schedule/production_64k_max8/2048: Analyzing
+m4rm_gray_schedule/production_64k_max8/2048
+                        time:   [5.3841 ms 5.4050 ms 5.4238 ms]
+                        change: [-2.1422% -1.2930% -0.4577%] (p = 0.01 < 0.05)
+                        Change within noise threshold.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+Benchmarking m4rm_gray_schedule/gray_64k_max10/2048
+Benchmarking m4rm_gray_schedule/gray_64k_max10/2048: Warming up for 1.0000 s
+Benchmarking m4rm_gray_schedule/gray_64k_max10/2048: Collecting 10 samples in estimated 2.0947 s (385 iterations)
+Benchmarking m4rm_gray_schedule/gray_64k_max10/2048: Analyzing
+m4rm_gray_schedule/gray_64k_max10/2048
+                        time:   [5.4490 ms 5.4607 ms 5.4725 ms]
+Benchmarking m4rm_gray_schedule/gray_128k_max10/2048
+Benchmarking m4rm_gray_schedule/gray_128k_max10/2048: Warming up for 1.0000 s
+Benchmarking m4rm_gray_schedule/gray_128k_max10/2048: Collecting 10 samples in estimated 2.1308 s (385 iterations)
+Benchmarking m4rm_gray_schedule/gray_128k_max10/2048: Analyzing
+m4rm_gray_schedule/gray_128k_max10/2048
+                        time:   [5.4774 ms 5.4850 ms 5.4983 ms]
+                        change: [+1.9442% +2.9032% +3.8357%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking m4rm_gray_schedule/gray_256k_max10/2048
+Benchmarking m4rm_gray_schedule/gray_256k_max10/2048: Warming up for 1.0000 s
+Benchmarking m4rm_gray_schedule/gray_256k_max10/2048: Collecting 10 samples in estimated 2.0690 s (385 iterations)
+Benchmarking m4rm_gray_schedule/gray_256k_max10/2048: Analyzing
+m4rm_gray_schedule/gray_256k_max10/2048
+                        time:   [5.3426 ms 5.3682 ms 5.4173 ms]
+                        change: [-7.8391% -7.3498% -6.7475%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking m4rm_gray_schedule/gray_512k_max10/2048
+Benchmarking m4rm_gray_schedule/gray_512k_max10/2048: Warming up for 1.0000 s
+Benchmarking m4rm_gray_schedule/gray_512k_max10/2048: Collecting 10 samples in estimated 2.0700 s (385 iterations)
+Benchmarking m4rm_gray_schedule/gray_512k_max10/2048: Analyzing
+m4rm_gray_schedule/gray_512k_max10/2048
+                        time:   [5.3244 ms 5.3956 ms 5.4856 ms]
+                        change: [-7.4419% -6.7009% -5.6195%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 2 outliers among 10 measurements (20.00%)
+  2 (20.00%) high severe
+Benchmarking m4rm_gray_schedule/production_64k_max8/4096
+Benchmarking m4rm_gray_schedule/production_64k_max8/4096: Warming up for 1.0000 s
+Benchmarking m4rm_gray_schedule/production_64k_max8/4096: Collecting 10 samples in estimated 3.9693 s (110 iterations)
+Benchmarking m4rm_gray_schedule/production_64k_max8/4096: Analyzing
+m4rm_gray_schedule/production_64k_max8/4096
+                        time:   [35.615 ms 35.854 ms 36.098 ms]
+                        change: [-15.466% -14.938% -14.459%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Benchmarking m4rm_gray_schedule/gray_64k_max10/4096
+Benchmarking m4rm_gray_schedule/gray_64k_max10/4096: Warming up for 1.0000 s
+Benchmarking m4rm_gray_schedule/gray_64k_max10/4096: Collecting 10 samples in estimated 3.9612 s (110 iterations)
+Benchmarking m4rm_gray_schedule/gray_64k_max10/4096: Analyzing
+m4rm_gray_schedule/gray_64k_max10/4096
+                        time:   [35.914 ms 36.345 ms 36.815 ms]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking m4rm_gray_schedule/gray_128k_max10/4096
+Benchmarking m4rm_gray_schedule/gray_128k_max10/4096: Warming up for 1.0000 s
+Benchmarking m4rm_gray_schedule/gray_128k_max10/4096: Collecting 10 samples in estimated 3.9051 s (110 iterations)
+Benchmarking m4rm_gray_schedule/gray_128k_max10/4096: Analyzing
+m4rm_gray_schedule/gray_128k_max10/4096
+                        time:   [34.841 ms 35.081 ms 35.368 ms]
+                        change: [-12.347% -10.618% -9.0133%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Benchmarking m4rm_gray_schedule/gray_256k_max10/4096
+Benchmarking m4rm_gray_schedule/gray_256k_max10/4096: Warming up for 1.0000 s
+Benchmarking m4rm_gray_schedule/gray_256k_max10/4096: Collecting 10 samples in estimated 3.6140 s (110 iterations)
+Benchmarking m4rm_gray_schedule/gray_256k_max10/4096: Analyzing
+m4rm_gray_schedule/gray_256k_max10/4096
+                        time:   [33.218 ms 33.792 ms 34.296 ms]
+                        change: [-9.4361% -7.7001% -6.0735%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Benchmarking m4rm_gray_schedule/gray_512k_max10/4096
+Benchmarking m4rm_gray_schedule/gray_512k_max10/4096: Warming up for 1.0000 s
+Benchmarking m4rm_gray_schedule/gray_512k_max10/4096: Collecting 10 samples in estimated 3.7527 s (110 iterations)
+Benchmarking m4rm_gray_schedule/gray_512k_max10/4096: Analyzing
+m4rm_gray_schedule/gray_512k_max10/4096
+                        time:   [33.886 ms 34.018 ms 34.122 ms]
+                        change: [-9.1595% -8.3465% -7.4094%] (p = 0.00 < 0.05)
+                        Performance has improved.
+

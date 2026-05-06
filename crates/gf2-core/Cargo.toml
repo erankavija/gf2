@@ -127,6 +127,10 @@ name = "m4rm_components"
 harness = false
 
 [[bench]]
+name = "m4rm_gray_schedule"
+harness = false
+
+[[bench]]
 name = "rref"
 harness = false
 
