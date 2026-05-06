@@ -349,7 +349,7 @@
           "short_id": "380e041a",
           "title": "Prototype M4RI-style table scheduling",
           "classification": "implementation",
-          "status": "pending"
+          "status": "done"
         },
         {
           "short_id": "8e305c21",
@@ -1028,6 +1028,11 @@
   ],
   "session_10_new_issues_filed": [
     {"short_id": "615db3b9", "title": "Pursue fflas-like GF(251) GEMM performance", "type": "task", "depends_on": ["cc5de315"], "purpose": "User-requested follow-up after cc5de315 story-scope GF(251) amendment.", "state_at_handoff": "ready"}
+  ],
+  "session_11_started_at": "2026-05-06T13:46Z",
+  "session_11_summary": "Closed Wave-7 task 380e041a after M4RI-style Gray-table scheduling prototype, benchmark evidence, overflow hardening, test-support API docs, and shared production/test-support M4RM execution refactor. cargo-ci, code-review, and doc-review gates passed; 8e305c21 became ready as the next Wave-7 production GF(2) matmul improvement task.",
+  "session_11_decisions": [
+    {"ts": "2026-05-06T13:46Z", "topic": "380e041a M4RI-style table scheduling result", "decision": "Table scheduling alone is useful but insufficient: best same-session benchmark was k=9 / 256 KiB at n=4096 with about 1.061x over production, still directionally about 1.54x behind M4RI. Downstream 8e305c21 should treat it as evidence/input, not the sole production fix."}
   ],
   "session_8_decisions": [
     {
