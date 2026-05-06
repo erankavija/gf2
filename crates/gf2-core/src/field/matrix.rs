@@ -4830,19 +4830,26 @@ mod tests {
     // ─── Candidate F (AVX2+FMA f32-cascade) GEMM correctness tests ────────
     //
     // The Wave-6B amendment to issue 662f7a15 (b9aed0d8 design pass)
-    // routes every `Fp<P>` cell with `P <= 251` to the new f32-FMA
-    // small-prime kernel on FMA3-capable hosts. These tests assert the
-    // f32-FMA path matches the scalar `gemm` reference bit-exactly
-    // across `WORD_BOUNDARY_LENS` plus the pack-amortisation knee
-    // (`n = 32`) and the GF(251) `k_max`-chunk boundary at `n = 134`
-    // and its first multiple `n = 268` (mid-panel reduction case),
-    // plus `n = 512` and `n = 1024`.
+    // added the f32-FMA small-prime kernel for `P <= 251`. These tests
+    // assert the f32-FMA path matches the scalar `gemm` reference
+    // bit-exactly across `WORD_BOUNDARY_LENS` plus the pack-amortisation
+    // knee (`n = 32`) and the GF(251) `k_max`-chunk boundary at `n = 134`
+    // and its first multiple `n = 268` (mid-panel reduction case), plus
+    // `n = 512` and `n = 1024`.
     //
-    // The tests are no-ops on hosts without AVX2 or FMA3 — the
-    // production dispatch in `try_simd_gemm_classical` falls back to
-    // Candidate C (or scalar) automatically and the equality assertion
-    // above the gemm call still passes because both paths agree on
-    // canonical values.
+    // **Production-dispatch note** (per 662f7a15 Amendment C, 2026-05-06):
+    // Candidate F is not currently selected at runtime for `P <= 251` —
+    // `select_f32_path` returns false because 5-trial bench shows
+    // Candidate C beats Candidate F by 5–10 % on this host. Production
+    // routes through Candidate C. These tests therefore exercise the F
+    // kernel **only** when invoked directly via the kernel-crate test
+    // entry (see `gf2-kernels-simd/src/x86/fp_small_f32.rs::tests`); the
+    // production-path equality below is satisfied via Candidate C, which
+    // is bit-exact with the scalar reference on every shape covered.
+    //
+    // The tests are no-ops on hosts without AVX2 — the dispatch in
+    // `try_simd_gemm_classical` falls back to scalar automatically and
+    // the equality assertion still passes.
 
     /// Computes `a · b` element-by-element through the scalar `Fp<P>`
     /// arithmetic operators, bypassing every SIMD path. Used by the

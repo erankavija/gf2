@@ -218,19 +218,28 @@ pub(crate) mod simd {
             .as_ref()
     }
 
-    /// Returns the best available small-prime `Fp<P>` AVX2 + FMA3
-    /// f32-cascade GEMM kernel, if any.
+    /// Returns the small-prime `Fp<P>` AVX2 + FMA3 f32-cascade GEMM
+    /// kernel, if any.
     ///
     /// Provides the **Candidate F** path from
     /// `dev/plans/small_prime_kernel_strategy.md` § 4.5 / § 5.5 / § 6.1
     /// — an in-Rust `_mm256_fmadd_ps`-based register-blocked sgemm
-    /// micro-kernel for canonical-byte `Fp<P>` operands with
-    /// `P ≤ 251`. On Zen-3 the FMA3 lane runs at 0.5-cycle reciprocal
-    /// throughput (twice Candidate C's `_mm256_madd_epi16`), so this
-    /// path is preferred whenever both AVX2 and FMA3 are available.
-    /// Returns `None` on hosts without FMA3, in which case callers
-    /// fall back to [`maybe_fp_small`] (the AVX2-only Candidate C
-    /// kernel) or scalar.
+    /// micro-kernel for canonical-byte `Fp<P>` operands with `P ≤ 251`.
+    ///
+    /// **Status (per 662f7a15 Amendment C, 2026-05-06):** the kernel is
+    /// fully implemented and tested but **not currently selected at
+    /// runtime** on any in-scope cell. `select_f32_path::<P>` (in
+    /// `crates/gf2-core/src/gfp/simd_ops.rs`) returns `false` for every
+    /// `P ≤ 251` because empirical 5-trial CCX1-pinned bench at GF(7)..GF(251)
+    /// at n ∈ {256, 1024} (`dev/bench_results/2026-05-06-662f7a15-prime-sweep-aggregate.csv`)
+    /// shows Candidate C (the AVX2-only `_mm256_madd_epi16` kernel) beats
+    /// Candidate F at every cell by 5–10 %. Production therefore routes
+    /// to [`maybe_fp_small`] for these cells.
+    ///
+    /// Candidate F retains forward-compatibility value: a future amendment
+    /// supported by fresh bench data on a host where F dominates can lower
+    /// `N_THRESH_PRIME` without touching this accessor or the kernel itself.
+    /// Returns `None` on hosts without FMA3.
     ///
     /// Specialised Fermat / Mersenne kernels for `P > 251` remain
     /// separate and dispatch above this branch.
