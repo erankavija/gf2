@@ -469,6 +469,7 @@ int main(int argc, char** argv) {
     int iters  = 5;
     bool smoke = false;
     bool large = false;
+    bool gf2pow32_only = false;
 
     for (int i = 1; i < argc; ++i) {
         if (std::strcmp(argv[i], "--seed") == 0 && i + 1 < argc) {
@@ -481,10 +482,18 @@ int main(int argc, char** argv) {
             smoke = true;
         } else if (std::strcmp(argv[i], "--large") == 0) {
             large = true;
+        } else if (std::strcmp(argv[i], "--gf2pow32-only") == 0) {
+            // Skip the GF(p) lanes — used by the post-PPC GF(2^m)
+            // measurement (jit:a1172cea) to capture matmul × GF(2^32)
+            // rows at n={64,256,1024} without depending on the GF(p)
+            // lanes. The GF(p) lanes have a latent invert/charpoly
+            // failure at n=256 GF(7) on this image which we don't need
+            // to fix to obtain GF(2^32) numbers.
+            gf2pow32_only = true;
         } else {
             std::fprintf(stderr,
                          "usage: ntl_bench [--seed N] [--warmup K] [--iters K] "
-                         "[--smoke] [--large]\n");
+                         "[--smoke] [--large] [--gf2pow32-only]\n");
             return 2;
         }
     }
@@ -514,14 +523,16 @@ int main(int argc, char** argv) {
     }
 
     // Four GF(p) reference fields aligned with the fflas-ffpack harness.
-    run_field(7,            "GF(7)",        master_seed ^ 0x33ULL,
-              warmup, iters, dense_sizes, charpoly_sizes);
-    run_field(251,          "GF(251)",      master_seed ^ 0x22ULL,
-              warmup, iters, dense_sizes, charpoly_sizes);
-    run_field(65521,        "GF(65521)",    master_seed ^ 0x11ULL,
-              warmup, iters, dense_sizes, charpoly_sizes);
-    run_field((1L << 31)-1, "GF(2^31-1)",   master_seed,
-              warmup, iters, dense_sizes, charpoly_sizes);
+    if (!gf2pow32_only) {
+        run_field(7,            "GF(7)",        master_seed ^ 0x33ULL,
+                  warmup, iters, dense_sizes, charpoly_sizes);
+        run_field(251,          "GF(251)",      master_seed ^ 0x22ULL,
+                  warmup, iters, dense_sizes, charpoly_sizes);
+        run_field(65521,        "GF(65521)",    master_seed ^ 0x11ULL,
+                  warmup, iters, dense_sizes, charpoly_sizes);
+        run_field((1L << 31)-1, "GF(2^31-1)",   master_seed,
+                  warmup, iters, dense_sizes, charpoly_sizes);
+    }
 
     // GF(2^32) extension lane (jit:b13799ac) — matmul only. Salt the
     // master seed so the GF(2^32) stream is disjoint from every GF(p)

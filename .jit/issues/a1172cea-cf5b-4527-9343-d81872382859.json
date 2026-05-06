@@ -13,7 +13,18 @@
     "cargo-ci",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-06T18:16:09.637611995Z"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-06T18:16:30.023196507Z"
+    }
+  },
   "context": {},
   "documents": [
     {
@@ -28,6 +39,12 @@
       "commit": null,
       "label": "gf2-core GF(2^m) matmul rows (a1172cea)",
       "doc_type": "evidence"
+    },
+    {
+      "path": "dev/bench_results/2026-05-06-a1172cea-ntl-gf2pow32-large.csv",
+      "commit": null,
+      "label": "NTL GF(2^32) reference rows at n=64,256,1024 (path A)",
+      "doc_type": "evidence"
     }
   ],
   "labels": [
@@ -37,5 +54,5 @@
     "story:sota-gf2m-reference"
   ],
   "created_at": "2026-04-30T06:43:02.758636806+00:00",
-  "updated_at": "2026-05-06T18:15:17.754096761+00:00"
+  "updated_at": "2026-05-06T18:35:37.153621424+00:00"
 }

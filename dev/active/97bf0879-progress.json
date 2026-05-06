@@ -1029,6 +1029,23 @@
   "session_10_new_issues_filed": [
     {"short_id": "615db3b9", "title": "Pursue fflas-like GF(251) GEMM performance", "type": "task", "depends_on": ["cc5de315"], "purpose": "User-requested follow-up after cc5de315 story-scope GF(251) amendment.", "state_at_handoff": "ready"}
   ],
+  "session_12_started_at": "2026-05-06T17:30Z",
+  "session_12_progress": {
+    "wave_7_closed": {
+      "issue": "111a3967",
+      "title": "Publish GF(2) parity evidence",
+      "verdict": "R1 PASS",
+      "commits": ["aa585e9", "336c9e1"],
+      "doc": "dev/bench_results/2026-05-06-111a3967-gf2-parity-evidence.md"
+    },
+    "wave_8a_in_progress": {
+      "issue": "a1172cea",
+      "title": "Measure GF(2^m) post-PPC GEMM against reference",
+      "first_pass_commit": "bc4b45d",
+      "code_review_R1": "FAIL — 3 findings (GF(2^32) large-n unmeasured / count math / routing)",
+      "rework_count": 1
+    }
+  },
   "session_11_started_at": "2026-05-06T13:46Z",
   "session_11_summary": "Closed Wave-7 tasks 380e041a, 8e305c21, and 366dbbcd. 380e041a produced M4RI-style Gray-table scheduling evidence and showed table scheduling alone was insufficient. 8e305c21 landed the production GF(2) M4RM schedule improvement, removed the disabled two-table prefetch path after review, documented benchmark evidence in dev/bench_results/2026-05-06-8e305c21-production-m4rm.md, and passed gates. 366dbbcd landed blocked GF(2) RREF/echelon optimization, fixed right-pivot full-row compatibility after cargo-ci exposed the NR5G diagnostic regression, documented evidence in dev/bench_results/2026-05-06-366dbbcd-gf2-echelon-rank.md, and passed cargo-ci/code-review/doc-review gates. 111a3967 became ready as the next Wave-7 evidence publication task.",
   "session_11_decisions": [
