@@ -1,8 +1,13 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
-use gf2_core::alg::rref::rref;
+use gf2_core::alg::rref::{rref, rref_with_block_size_for_test};
 use gf2_core::matrix::BitMatrix;
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
+
+#[path = "common/seed.rs"]
+mod seed;
+
+use seed::{bitmatrix_from_seed, bitmatrix_rank_deficient_from_seed, derive_seed};
 
 /// Generate a random matrix for RREF benchmarking
 fn random_matrix(rows: usize, cols: usize, seed: u64) -> BitMatrix {
@@ -36,6 +41,47 @@ fn bench_rref_standard_sizes(c: &mut Criterion) {
                 });
             },
         );
+    }
+
+    group.finish();
+}
+
+fn bench_gf2_echelon_target_rows(c: &mut Criterion) {
+    let mut group = c.benchmark_group("gf2_echelon_target_rows");
+    group.sample_size(10);
+
+    const MASTER: u64 = 0x6F73_AC91_D31E_4A7C;
+    for (si, &n) in [64usize, 256, 1024].iter().enumerate() {
+        for (ri, &(regime, deficient)) in
+            [("uniform", false), ("deficient", true)].iter().enumerate()
+        {
+            let seed = derive_seed(MASTER, "echelon", 13, si as u64, ri as u64);
+            let matrix = if deficient {
+                bitmatrix_rank_deficient_from_seed(n, n, n / 2, seed)
+            } else {
+                bitmatrix_from_seed(n, n, seed)
+            };
+
+            group.bench_with_input(
+                BenchmarkId::new("baseline_block1", format!("{n}/{regime}")),
+                &matrix,
+                |bench, matrix| {
+                    bench.iter(|| {
+                        black_box(rref_with_block_size_for_test(black_box(matrix), false, 1));
+                    });
+                },
+            );
+
+            group.bench_with_input(
+                BenchmarkId::new("production_blocked", format!("{n}/{regime}")),
+                &matrix,
+                |bench, matrix| {
+                    bench.iter(|| {
+                        black_box(rref(black_box(matrix), false));
+                    });
+                },
+            );
+        }
     }
 
     group.finish();
@@ -103,6 +149,7 @@ fn bench_rref_dvb_t2(c: &mut Criterion) {
 
 criterion_group!(
     benches,
+    bench_gf2_echelon_target_rows,
     bench_rref_standard_sizes,
     bench_rref_rectangular,
     bench_rref_dvb_t2
