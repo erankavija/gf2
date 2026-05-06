@@ -268,7 +268,13 @@ All Wave-6B benchmarks were run on:
 
 ## 7. Story cc5de315 success criterion mapping
 
-The parent story `cc5de315` success criterion is: "GF(p) `fgemm` cells for GF(7), GF(31), GF(251), GF(65521), and Mersenne31 are within 1.5× of fflas-ffpack 2.5.0, or faster."
+The parent story `cc5de315` success criterion is amended as of 2026-05-06:
+"GF(p) GEMM target rows are within 1.5x of fflas-ffpack or faster across
+all in-scope prime families, except rows explicitly amended to
+`[aspirational]` with user-approved empirical justification." The GF(251)
+exception is user-approved at story scope and is recorded in the JIT issue
+description; follow-up issue `615db3b9` tracks the requested push toward
+fflas-like GF(251) performance after this story closes.
 
 | prime | best-measured n | ratio | criterion status |
 |---|---:|---:|---|
@@ -285,7 +291,25 @@ The parent story `cc5de315` success criterion is: "GF(p) `fgemm` cells for GF(7)
 
 Note: Mersenne31 gf2/fflas ratios computed from post-662f7a15 medians (3.470 Gop/s at n=256, 3.561 at n=1024) vs fflas baseline (2.126 Gop/s at n=256, 2.341 at n=1024 from `2026-04-26-reference.csv:15,20`).
 
-All five named primes at the headline n=256 and regression-check n=1024 cells meet the criterion. GF(251) required the Wave-6A `[aspirational]` amendment because the fflas float-modular BLAS cascade is architecturally inaccessible to a pure AVX2 hand-written kernel. n=64 cells for GF(7) and GF(31) are `[aspirational]` (per-call overhead, follow-up `27bb2f75`).
+All five named primes at the headline n=256 and regression-check n=1024
+cells meet the amended story criterion. GF(251) required the story-scope
+`[aspirational]` amendment because the fflas float-modular BLAS cascade is
+architecturally inaccessible to the current pure AVX2 hand-written kernel.
+n=64 cells for GF(7) and GF(31) are `[aspirational]` (per-call overhead,
+follow-up `27bb2f75`).
+
+### 7.1 Downstream dense-row inheritance and follow-up wiring
+
+The second story criterion requires dense GF(p) rows downstream of GEMM to
+have either follow-up dependencies or evidence that they inherit the optimized
+kernels. The current closure has both, split by call surface:
+
+| Surface | Status | Evidence / dependency |
+|---|---|---|
+| Direct dense `FieldMatrix::gemm` | Inherits optimized kernels | `FieldMatrix::gemm` calls `FiniteField::try_simd_gemm_classical` before the scalar per-cell path. `Fp<P>` implements that hook for the small-prime family (`P <= 251`) and routes medium primes through the packed-u16 dot hook. |
+| Dense vector dot products | Inherits optimized kernels where available | `FieldVec::dot` calls `FiniteField::try_simd_dot_product` before falling back to `dot_product_slices`; `Fp<P>` supplies the small-prime SIMD dot hook. |
+| PLE/TRSM/block-update dense rows | Follow-up dependencies are wired | The dense-factorization story `72ab6d0e` is blocked on `cc5de315` and contains `73ec5da3` (PLE/TRSM block integration), `2c52bcf6` (rank-deficient dense paths), `7e41400f` (inversion/solve/determinant rows), and `4eb105f7` (dense-LA parity evidence). These downstream tasks cover surfaces such as `gemm_axpy_into_view` that still route through scalar `dot_product_slices` today. |
+| GF(251) fflas-like parity beyond the amendment | Non-blocking follow-up is wired | `615db3b9` depends on `cc5de315`, so it starts only after this story closure and does not weaken the current amended story contract. |
 
 ---
 
@@ -314,12 +338,29 @@ All files are under `dev/bench_results/` or `dev/plans/` relative to the reposit
 
 ## 9. Self-satisfaction of success criteria
 
-Per project convention (CLAUDE.md § "Hard criteria self-satisfied, not deferred"), both criteria are satisfied explicitly here.
+Per project convention (CLAUDE.md § "Hard criteria self-satisfied, not
+deferred"), the story criteria are satisfied explicitly here.
 
-**Criterion #1 — Raw CSVs and ratio tables are linked to the story.**
+**Criterion #1 — GF(p) GEMM target rows meet the amended 1.5x contract.**
 
-Satisfied by § 4 (Raw CSV index) and § 1 (Headline verdict table). Every cell in the headline table cites the specific CSV file and row from which the gf2 number is drawn. The fflas reference rows are cited back to the canonical `2026-04-26-reference.csv` or `2026-05-04-609855d9-gf31-supplement.csv` with line-level row IDs in the parent evidence documents. All eight CSVs in the raw CSV index are present in the worktree at the paths listed.
+Satisfied by § 1 and § 7. GF(7), GF(31), GF(65521), and Mersenne31 meet the
+hard ratio threshold at the headline n=256 and regression-check n=1024 cells.
+GF(251) is explicitly story-amended to `[aspirational]` with the empirical
+cause recorded in § 3.1 and in the `cc5de315` issue description. Follow-up
+`615db3b9` tracks the requested post-story push toward fflas-like GF(251)
+performance.
 
-**Criterion #2 — Field-family-specific dispatch decisions are documented.**
+**Criterion #2 — Dense GF(p) downstream rows have inheritance evidence or
+follow-up dependencies.**
 
-Satisfied by § 2 (Field-family-specific dispatch decisions). Five subsections cover: Tiny+Byte family (Candidate C, `p ≤ 251`), Medium-prime family (medium kernel, `252 ≤ p < 65536`), Fermat prime Fp<65537> (exact-match branch, kernel unchanged), Mersenne31 (first exact-match branch, kernel unchanged), and Generic Montgomery (else fallback). Each subsection names the dispatch branch, kernel file, and evidence that the dispatch behaves as described.
+Satisfied by § 7.1. Direct dense GEMM and vector-dot surfaces inherit the new
+`FiniteField` SIMD hooks, while PLE/TRSM/rank-deficient/inversion/solve rows
+are covered by the downstream dense-factorization dependency chain
+(`72ab6d0e` and its leaf tasks).
+
+**Criterion #3 — Final GF(p) report records raw numbers, ratios, and
+field-family-specific decisions.**
+
+Satisfied by § 1 (raw numbers and ratio tables), § 2 (field-family-specific
+dispatch decisions), and § 4 (raw CSV index). Each dispatch subsection names
+the branch, kernel file, and evidence that the dispatch behaves as described.
