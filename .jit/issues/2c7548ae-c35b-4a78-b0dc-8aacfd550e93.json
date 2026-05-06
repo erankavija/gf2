@@ -2,7 +2,7 @@
   "id": "2c7548ae-c35b-4a78-b0dc-8aacfd550e93",
   "title": "Close GF(2^m) FieldMatrix gaps to best reference",
   "description": "Close GF(2^m) FieldMatrix performance gaps to the best reproducible reference.\n\n## Background\n\nThe PPC work delivered 5.01x-17.65x internal speedups, but GF(2^m) still needs a comparable external reference lane and likely panelized multi-output GEMM to become a credible SOTA claim.\n\n## Success Criteria\n\n- [hard] A GF(2^m) reference lane is selected from the accepted target matrix or explicitly declared unavailable with evidence.\n- [hard] GF(2^8), GF(2^16), and GF(2^32) target rows are within 1.5x of the selected reference or faster, scoped per-cell by the maturity markers recorded in the e24f7839 evidence doc.\n- [hard] A final GF(2^m) report records raw numbers, ratios, and any platform-specific dispatch decisions.\n\n## Amendment - 2026-05-06 (user-approved, Path A)\n\nPer AskUserQuestion 2026-05-06 (e24f7839 closure), criterion #2 is amended to permit per-cell maturity-marker scoping. The empirical basis is the e24f7839 panelized-GEMM evidence (`dev/bench_results/2026-05-06-e24f7839-panelized-gf2m-gemm.md`):\n\n- GF(2^32) at n in {64, 256, 1024}: [hard] PASS (5.7x-6.7x of NTL on Zen-3)\n- GF(2^16) at n in {64, 256}: [hard] PASS (35.6x-148.5x of M4RIE)\n- GF(2^16) at n=1024: [aspirational] (ratio 0.614, 8.5% below 0.667 threshold; close to single-core VPCLMULQDQ ceiling at the 3-CLMUL Barrett chain depth on AVX2 without GFNI/AVX-512)\n- GF(2^8) at n in {64, 256, 1024}: [aspirational] (M4RIE uses O(n^3/log n) Newton-John / Method of Four Russians algorithm with byte-level table lookups; gf2-core panelized GEMM is O(n^3) per-element CLMUL. Closing the gap requires a different algorithm class.)\n\nDeeper GF(2^m) algorithmic catch-up (including GF(2^8) Newton-John) is owned by the broader finite-field SOTA catch-up plan in issue `615db3b9`, not duplicated as separate follow-ups under this story.\n\nRe-escalation threshold: re-escalate to user when (a) `615db3b9` breakdown lands a Newton-John GF(2^8) sub-issue and that closes (revisit GF(2^8) cells), (b) GFNI/AVX-512 lane is harnessed for Zen-4+ host class (revisit GF(2^16) n=1024).",
-  "state": "backlog",
+  "state": "ready",
   "priority": "high",
   "assignee": null,
   "dependencies": [
@@ -40,5 +40,5 @@
     "story:sota-gf2m-reference"
   ],
   "created_at": "2026-04-30T06:43:02.494673140+00:00",
-  "updated_at": "2026-05-06T21:24:59.489375211+00:00"
+  "updated_at": "2026-05-06T21:27:11.746516960+00:00"
 }

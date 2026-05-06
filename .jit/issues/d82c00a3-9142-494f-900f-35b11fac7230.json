@@ -2,7 +2,7 @@
   "id": "d82c00a3-9142-494f-900f-35b11fac7230",
   "title": "Publish GF(2^m) parity evidence",
   "description": "Publish final GF(2^m) evidence.\n\n## Success Criteria\n\n- [hard] Raw CSVs and ratio tables are linked to the story.\n- [hard] Reference caveats and dispatch policy are documented.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:claude",
   "dependencies": [
@@ -15,15 +15,20 @@
     "doc-review"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-06T21:19:49.016386814Z"
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-05-06T21:27:11.238471744Z"
     },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-05-06T21:20:06.288188695Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-06T21:25:23.403996293Z"
     }
   },
   "context": {},
@@ -43,5 +48,5 @@
     "story:sota-gf2m-reference"
   ],
   "created_at": "2026-04-30T06:43:02.787652814+00:00",
-  "updated_at": "2026-05-06T21:24:09.504449640+00:00"
+  "updated_at": "2026-05-06T21:27:11.657448374+00:00"
 }
