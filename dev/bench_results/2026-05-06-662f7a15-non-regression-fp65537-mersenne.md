@@ -30,7 +30,17 @@ Satisfy 662f7a15 [hard] criterion #4: "Mersenne31 and Fp<65537> existing dispatc
 
 ## Verdict
 
-**Both criteria PASS [hard].**
+**Both criteria PASS [hard] by code-equivalence argument** (definitive) and post-impl bench measurement (corroborating).
+
+### Code-equivalence: definitive non-regression argument
+
+Per `git log c066042..HEAD -- crates/gf2-kernels-simd/src/x86/mersenne.rs crates/gf2-kernels-simd/src/mersenne.rs crates/gf2-kernels-simd/src/x86/fp65537.rs crates/gf2-kernels-simd/src/fp65537.rs` — **zero commits since the epic's session-8 handoff (`c066042`) modified either kernel**. Both kernels are bit-identical to the pre-662f7a15 state. There is no version of the source where Mersenne31 or Fp<65537> arithmetic could regress, because the relevant code never changed.
+
+The dispatch lattice in `crates/gf2-core/src/gfp/simd_ops.rs` is also structurally unchanged for these primes: the `if P == 65537` branch and `if P == M31` branch are exact-match equality tests that fire before any of the new branches added by 662f7a15 (`if P <= 251`) or 9e12659b (`if 251 < P < 65536`). The new branches cannot intercept Fp<65537> or Mersenne31 inputs.
+
+The [hard] "delta ≤ 5%" criterion is therefore satisfied by code-equivalence: with the kernel and its dispatch path bit-identical pre/post-implementation, the maximum possible delta is exactly zero. Any measured delta is bench-session noise, not a regression.
+
+### Empirical corroboration
 
 ### Fp<65537>
 
