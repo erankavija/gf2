@@ -518,7 +518,8 @@ pub fn multiply(a: &BitMatrix, b: &BitMatrix) -> BitMatrix {
 ///
 /// * `a` - Left-hand matrix with dimensions `m × k`.
 /// * `b` - Right-hand matrix with dimensions `k × n`.
-/// * `target_table_bytes` - Maximum byte budget for one Gray-code table panel.
+/// * `target_table_bytes` - Preferred byte budget for one Gray-code table panel;
+///   if no nonzero panel width fits, the helper falls back to `k_block = 1`.
 /// * `max_k_block` - Maximum candidate panel width in bits. Oversized values
 ///   are safely ignored when the implied table would exceed the byte budget.
 ///
