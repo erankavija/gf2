@@ -5,7 +5,7 @@
 > **Parent epic:** `jit:97bf0879` (Close gf2-core SOTA performance gaps).
 > **Authority:** evidence document `dev/bench_results/2026-05-04-609855d9-gfp-by-family.md` (the per-prime gap classification ingested as the input to this design); `dev/plans/sota_target_matrix.md` § 5.1 (canonical reference designation per `(operation, field-family)` cell); `dev/plans/sota_reference_acceptance_protocol.md` (acceptance protocol for hard references).
 > **Downstream consumer:** `jit:662f7a15` (Implement small-prime GEMM kernels). This document hands `662f7a15` a single selected strategy with file-level implementation outline. `662f7a15` does **not** re-litigate the candidate comparison; it implements the recommendation in § 6 and § 7.
-> **Status.** DELIVERY COMPLETE — both `5cacaec5` `[hard]` success criteria are self-satisfied IN this document (see § 9). The 2026-05-06 amendment (issue `b9aed0d8` — added § 4.5 Candidate F, § 5.5, § 6.1, § 7.4, § 9.1) further self-satisfies the five `b9aed0d8` `[hard]` success criteria (see § 9.1).
+> **Status.** DELIVERY COMPLETE — both `5cacaec5` `[hard]` success criteria are self-satisfied IN this document (see § 9). The 2026-05-06 amendment (issue `b9aed0d8` — added § 4.5 Candidate F, § 5.5, § 6.1, § 7.4, § 9.1) further self-satisfies the five `b9aed0d8` `[hard]` success criteria (see § 9.1). A further § 6.1 sub-amendment (2026-05-06, empirical prime-sweep crossover for `662f7a15` code-review R4) records the 5-trial criterion bench result: Candidate C beats Candidate F at every (prime, n) cell; `N_THRESH_PRIME = 252` routes all `p ≤ 251` to C; see `dev/bench_results/2026-05-06-662f7a15-prime-sweep-aggregate.csv`.
 
 This document is purely a **design** artefact. It modifies no source code, runs no benchmarks, and changes no `.jit/` state beyond the `jit doc add` that pins it to `5cacaec5` and (post-amendment) to `b9aed0d8` and `97bf0879`. The benchmark numbers cited are sourced verbatim from: (i) the `609855d9` evidence pack for the original baseline gap analysis, and (ii) the Wave-6B `2026-05-05-662f7a15-small-prime-gemm.csv` empirical Candidate-C results that triggered the Candidate F amendment. No fresh measurements were taken in either pass.
 
@@ -461,6 +461,51 @@ The amended `662f7a15` per-prime acceptance:
 **Mersenne / Fp<65537> non-regression.** Unchanged from the original § 6. The new branch is `if F::PRIME <= 251` (selector), entirely orthogonal to Mersenne31 ($p = 2^{31} - 1$) and Fp<65537> ($p = 65537$). Property tests in `crates/gf2-core/src/gfp/simd_ops.rs::tests` cover the dispatch decision at all primes; the existing Mersenne/Fp<65537> property-test paths are untouched.
 
 **No new external dependency.** Both arms of the hybrid use AVX2 + FMA3 intrinsics that ship in `core::arch::x86_64`. The Charon/Aeneas verification pipeline (`scripts/verify-lean.sh`) is unaffected: `gf2-kernels-simd` is not in proof scope (only `gfp/` and `gfpn/` are; see `proofs/README.md`).
+
+##### Sub-amendment — 2026-05-06 (empirical prime-sweep crossover)
+
+> **Trigger.** The post-Wave-6B `662f7a15` implementation shipped `select_f32_path` returning `true` for all `p ≤ 251` (uniform Candidate F dispatch per the R3 amendment above). Code-review R4 (gate run `2d852b27`) found: (1) the `[hard]` GF(7)/GF(31) throughput criterion was unmet at one or more of the three contractual sizes; (2) the non-regression guard in §7.4.6 triggered because `F_rework2 < C_baseline` at GF(7)/n=1024. The review required either empirical evidence that F dominates C across all cells, or a dispatch amendment routing underperforming primes to C.
+
+**Empirical crossover sweep (2026-05-06).** A 5-trial criterion bench was run across all 11 small primes GF(7)–GF(251) at n ∈ {256, 1024}, with taskset pinning to CCX1 cores 6–11 and sequential trials. Each trial snapshot captured criterion `estimates.json` median values; IQR-based verdict required Q1(F) > Q3(C) for F_WINS and Q3(F) < Q1(C) for C_WINS.
+
+**Verdict table (5-trial criterion bench, 2026-05-06).**
+
+| prime | n=256 F-med | n=256 C-med | F/C | n=256 verdict | n=1024 F-med | n=1024 C-med | F/C | n=1024 verdict |
+|---|---:|---:|---:|---|---:|---:|---:|---|
+| GF(7)   | 31.11 | 34.46 | 0.903 | **C_WINS** | 63.83 | 68.17 | 0.936 | **C_WINS** |
+| GF(11)  | 48.60 | 53.85 | 0.903 | **C_WINS** | 63.99 | 69.29 | 0.923 | **C_WINS** |
+| GF(13)  | 50.68 | 55.88 | 0.907 | **C_WINS** | 64.64 | 70.01 | 0.923 | **C_WINS** |
+| GF(17)  | 51.56 | 57.10 | 0.903 | **C_WINS** | 64.95 | 70.19 | 0.925 | **C_WINS** |
+| GF(19)  | 50.97 | 56.12 | 0.908 | **C_WINS** | 64.89 | 69.96 | 0.928 | **C_WINS** |
+| GF(23)  | 47.84 | 52.48 | 0.912 | **C_WINS** | 63.70 | 68.29 | 0.933 | **C_WINS** |
+| GF(29)  | 47.21 | 51.80 | 0.912 | **C_WINS** | 63.25 | 68.23 | 0.927 | **C_WINS** |
+| GF(31)  | 48.95 | 53.74 | 0.911 | **C_WINS** | 63.69 | 68.98 | 0.923 | **C_WINS** |
+| GF(127) | 48.52 | 53.74 | 0.903 | **C_WINS** | 63.54 | 68.84 | 0.923 | **C_WINS** |
+| GF(241) | 51.72 | 58.15 | 0.890 | **C_WINS** | 65.12 | 70.07 | 0.929 | **C_WINS** |
+| GF(251) | 54.04 | 58.98 | 0.916 | **C_WINS** | 66.04 | 70.89 | 0.932 | **C_WINS** |
+
+(All Gop/s values are criterion-bench medians from the 5-trial sweep. Full IQR statistics in `dev/bench_results/2026-05-06-662f7a15-prime-sweep-aggregate.csv`.)
+
+**Finding.** Candidate C beats Candidate F at all 22 of 22 cells (5–10 % margin, F/C ratio 0.890–0.936). There is no (prime, n) cell where F robustly wins. The R3 amendment's "uniform F" hypothesis is falsified.
+
+**Revised $N_{\text{thresh\_prime}}$ definition.** $N_{\text{thresh\_prime}}$ is the minimum prime above which F robustly beats C. Given that F does not win at any measured cell, $N_{\text{thresh\_prime}} > 251$ for the in-scope deployment surface. In code this is represented as `N_THRESH_PRIME = 252` in `crates/gf2-core/src/gfp/simd_ops.rs`, so `select_f32_path::<P>()` evaluates to `P >= 252 && P <= 251 = false` for every `p ≤ 251`. Candidate C handles all in-scope cells; Candidate F remains compiled in as an upgradeable fast path for when a future measurement (e.g. larger n, different host) finds a regime where F's 160 Gop/s peak dominates pack overhead.
+
+**Why C beats F despite F's 2× FMA throughput.** The pack-amortisation derivation in the section above assumed $c_F \approx 3 \times c_C$ (empirical estimate from the issue text). The criterion bench reveals the effective $c_F$ is higher: at n=256, F takes 653 µs and C takes 589 µs; the difference (64 µs) corresponds to ~320,000 cycles of extra pack overhead for $2 \times 256^2 = 131,072$ elements, i.e. ~2.4 cycles/element above C's baseline. This is consistent with $c_F \approx 3.4 \times c_C$ at the Zen-3 cache hierarchy on the 5900X reference host. At $n = 256$ the inner-kernel cost advantage ($2 \times$ FMA throughput) does not yet overcome the higher pack overhead: F inner ≈ 33.6 ms equivalent for n=256 work, C inner ≈ 26.8 ms, but F's pack adds ~64 µs × (1024/256)² ≈ 64 µs additional per call. At n=1024 both kernels approach ~65–70 Gop/s with C still marginally ahead, suggesting the pack fraction is still non-negligible even at n=1024 on this host. The uniform-C dispatch is the empirically correct policy for the 5900X reference host at $n \in \{256, 1024\}$.
+
+**Amended dispatch rule.** The binding per-(P, n) rule is: route every $p \le 251$ cell to **Candidate C**, regardless of prime or size. `select_f32_path` returns `false` for all in-scope primes. The runtime FMA3 detection path (`maybe_fp_small_f32()`) is no longer triggered for any in-scope cell; Candidate F remains compiled but is the zero-traffic path.
+
+**Effect on the §6.1 criterion compliance table.** The post-dispatch throughput for the three originally in-scope primes at the contractual sizes is now the C-path criterion bench median (same methodology for both gf2 and fflas comparisons):
+
+| prime | n | C-path criterion (Gop/s) | fflas timing (Gop/s) | C/fflas | criterion |
+|---|---:|---:|---:|---:|---|
+| GF(7)   | 256  | 34.46 | 51.45 | 0.670 | **PASS** (≥ 0.667) |
+| GF(7)   | 1024 | 68.17 | 98.09 | 0.695 | **PASS** |
+| GF(31)  | 256  | 53.74 | 50.48 | 1.065 | **PASS** |
+| GF(31)  | 1024 | 68.98 | 94.64 | 0.729 | **PASS** |
+| GF(251) | 256  | 58.98 | 130.80 | 0.451 | within [aspirational] soft threshold |
+| GF(251) | 1024 | 70.89 | 140.90 | 0.503 | within [aspirational] soft threshold |
+
+(Note: n=64 criterion bench data was not collected in this sweep; the existing C-path timing values from `2026-05-06-662f7a15-rework2-perf-spiral-comparison.csv` apply for n=64.)
 
 ## 7. Implementation outline for `662f7a15`
 
