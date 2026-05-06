@@ -67,11 +67,15 @@ fn choose_k_block_with_limit(
     }
 
     let largest_k = max_k_block.min(k).min(usize::BITS as usize - 1);
+    if bytes_per_entry == 0 {
+        return largest_k;
+    }
+
+    let max_table_entries = target_table_bytes / bytes_per_entry;
     for k_block in (1..=largest_k).rev() {
         let table_entries = 1usize << k_block;
-        let table_bytes = table_entries * bytes_per_entry;
 
-        if table_bytes <= target_table_bytes {
+        if table_entries <= max_table_entries {
             return k_block;
         }
     }
@@ -504,6 +508,24 @@ pub fn multiply(a: &BitMatrix, b: &BitMatrix) -> BitMatrix {
     multiply_rowwise_panels(a, b, k_block, stride_words, xor)
 }
 
+/// Multiplies two matrices with an experimental M4RI-style table schedule.
+///
+/// This is a test-support harness, not the production M4RM schedule-selection
+/// policy. It is intended to stay bit-exact with [`multiply`] while tests and
+/// benchmarks vary the Gray-table byte budget and maximum panel width.
+///
+/// # Arguments
+///
+/// * `a` - Left-hand matrix with dimensions `m × k`.
+/// * `b` - Right-hand matrix with dimensions `k × n`.
+/// * `target_table_bytes` - Maximum byte budget for one Gray-code table panel.
+/// * `max_k_block` - Maximum candidate panel width in bits. Oversized values
+///   are safely ignored when the implied table would exceed the byte budget.
+///
+/// # Panics
+///
+/// Panics if `a.cols() != b.rows()`, if `target_table_bytes` is zero, or if
+/// `max_k_block` is zero.
 #[doc(hidden)]
 #[cfg(any(test, feature = "test-support"))]
 pub fn multiply_with_table_schedule_for_test(
@@ -1005,6 +1027,22 @@ mod tests {
         assert_eq!(choose_k_block_with_limit(4096, 4096, 128 * 1024, 10), 8);
         assert_eq!(choose_k_block_with_limit(4096, 4096, 256 * 1024, 10), 9);
         assert_eq!(choose_k_block_with_limit(4096, 4096, 512 * 1024, 10), 10);
+    }
+
+    #[test]
+    fn test_m4ri_style_schedule_rejects_overflow_impossible_panel_width() {
+        let selected = choose_k_block_with_limit(
+            usize::BITS as usize - 1,
+            1,
+            usize::MAX,
+            usize::BITS as usize - 1,
+        );
+        let bytes_per_entry = 8;
+        let max_table_entries = usize::MAX / bytes_per_entry;
+
+        assert_eq!(selected, usize::BITS as usize - 4);
+        assert!((1usize << selected) <= max_table_entries);
+        assert!((1usize << (selected + 1)) > max_table_entries);
     }
 
     #[test]
