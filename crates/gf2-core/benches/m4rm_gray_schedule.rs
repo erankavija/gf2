@@ -26,11 +26,26 @@ fn bench_gray_schedule(c: &mut Criterion) {
         let b = random_matrix(size, size, 0x380e_041b);
 
         group.bench_with_input(
-            BenchmarkId::new("production_64k_max8", size),
+            BenchmarkId::new("production_auto", size),
             &size,
             |bench, _| {
                 bench.iter(|| {
                     let _result = multiply(black_box(&a), black_box(&b));
+                });
+            },
+        );
+
+        group.bench_with_input(
+            BenchmarkId::new("legacy_64k_max8", size),
+            &size,
+            |bench, _| {
+                bench.iter(|| {
+                    let _result = multiply_with_table_schedule_for_test(
+                        black_box(&a),
+                        black_box(&b),
+                        64 * 1024,
+                        8,
+                    );
                 });
             },
         );
