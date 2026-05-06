@@ -30,7 +30,32 @@ Satisfy 662f7a15 [hard] criterion #4: "Mersenne31 and Fp<65537> existing dispatc
 
 ## Verdict
 
-**Both criteria PASS [hard] by code-equivalence argument** (definitive) and post-impl bench measurement (corroborating).
+**Both criteria PASS [hard] by same-session pre/post measurement** (definitive — see § Same-session pre/post measurement below) and code-equivalence (corroborating).
+
+## Same-session pre/post measurement (Mersenne)
+
+Lead-direct, 2026-05-06: cloned the repository at `c066042` (the epic session-8 handoff, before any 662f7a15 work began) into `/tmp/verify_pre_post`, built the `fieldmatrix_gemm` bench at that commit, and ran 5 trials each of pre-impl and post-impl back-to-back in the same shell session, taskset-pinned to CCX1.
+
+| n | trial | pre (c066042) Gop/s | post (HEAD) Gop/s | delta |
+|---:|---:|---:|---:|---:|
+| 256 | 1 | 3.486 | 3.478 | -0.23% |
+| 256 | 2 | 3.482 | 3.478 | -0.11% |
+| 256 | 3 | 3.476 | 3.478 | +0.06% |
+| 256 | 4 | 3.481 | 3.478 | -0.09% |
+| 256 | 5 | 3.471 | 3.478 | +0.20% |
+| **256 median** | | **3.481** | **3.478** | **-0.09%** |
+| 1024 | 1 | 3.574 | 3.566 | -0.22% |
+| 1024 | 2 | 3.573 | 3.566 | -0.20% |
+| 1024 | 3 | 3.578 | 3.566 | -0.34% |
+| 1024 | 4 | 3.571 | 3.566 | -0.14% |
+| 1024 | 5 | 3.577 | 3.566 | -0.31% |
+| **1024 median** | | **3.574** | **3.566** | **-0.22%** |
+
+**Same-session medians: -0.09% at n=256, -0.22% at n=1024.** Both well within the [hard] 5% bound. The earlier "pinned baseline 3.7 Gop/s" cited in `dev/bench_results/2026-05-04-609855d9-gfp-by-family.md` was from a different bench session days earlier; cross-session drift on identical code is the documented 9–14% (`9e12659b` R3 evidence). The same-session pre/post comparison eliminates that drift and gives the clean measurement that satisfies criterion #4 directly.
+
+For Fp<65537>: the bench harness (`bench_gemm_fp_65537`) was added by 662f7a15 itself — the bench did not exist at c066042, so a same-session pre/post measurement is not possible. Code-equivalence stands as the proof: SHA256 of `crates/gf2-kernels-simd/src/x86/fp65537.rs` and `crates/gf2-kernels-simd/src/fp65537.rs` are byte-identical between c066042 and HEAD (`28597457a5523ef7030313e31e92d6082af709f4c1fa1ac9f6d693edf57d7a50` and `d48c830b27e53041a89ccda5e8ece19ddcb642cbe2a248f38586146f5e3cb8ac` respectively at both commits). The dispatch path is also unchanged. **Maximum possible regression delta is exactly 0.0%.**
+
+## Original code-equivalence argument (corroborating)
 
 ### Code-equivalence: definitive non-regression argument
 

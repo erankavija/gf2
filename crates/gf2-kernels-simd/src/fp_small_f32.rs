@@ -2,10 +2,17 @@
 //! `Fp<P>` with `P <= 251`.
 //!
 //! This is **Candidate F** from `dev/plans/small_prime_kernel_strategy.md`
-//! § 4.5 / § 5.5 — the in-Rust f32-FMA cascade selected by the Wave-6B
-//! amendment (§ 6.1) as the FMA3-host primary path. The Wave-6B
-//! Candidate C kernel in [`crate::fp_small`] remains compiled in as
-//! the AVX2-only-no-FMA3 runtime fallback per the same amendment.
+//! § 4.5 / § 5.5 — the in-Rust f32-FMA cascade. The Wave-6B § 6.1
+//! amendment originally selected F as the FMA3-host primary path on
+//! structural Zen-3 micro-architecture grounds. The post-2026-05-06
+//! 5-trial empirical sweep falsified that prediction (see the empirical
+//! note below): Candidate C (`crate::fp_small`) measures 5–10 % faster
+//! than F at every in-scope cell on this host. Production therefore
+//! routes to Candidate C for all `P ≤ 251` (`N_THRESH_PRIME = 252` in
+//! `crates/gf2-core/src/gfp/simd_ops.rs`), and **F is compiled in but
+//! not currently selected at runtime**. F retains forward-compat value
+//! for future hosts (Zen-4+/AVX-VNNI/AVX-512) where the f32-FMA cascade
+//! may pull ahead.
 //!
 //! All unsafe intrinsics are isolated in `x86/fp_small_f32.rs`; this
 //! module exposes only safe function-pointer wrappers through the
