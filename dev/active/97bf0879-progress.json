@@ -4,7 +4,7 @@
   "epic_title": "Close gf2-core SOTA performance gaps",
   "started_at": "2026-04-30T14:15:00Z",
   "session": 1,
-  "current_wave": 4,
+  "current_wave": 7,
   "session_1_closed_at": "2026-04-30T15:38Z",
   "session_1_handoff": "dev/active/97bf0879-handoff.md",
   "session_2_closed_at": "2026-05-04T07:05Z",
@@ -312,31 +312,31 @@
           "short_id": "5cacaec5",
           "title": "Design small-prime packed kernel strategy",
           "classification": "design",
-          "status": "pending"
+          "status": "done"
         },
         {
           "short_id": "662f7a15",
           "title": "Implement small-prime GEMM kernels",
           "classification": "implementation",
-          "status": "pending"
+          "status": "done"
         },
         {
           "short_id": "9e12659b",
           "title": "Implement generic-prime panelized GEMM improvements",
           "classification": "implementation",
-          "status": "pending"
+          "status": "done"
         },
         {
           "short_id": "3d06224c",
           "title": "Protect Mersenne fast path",
           "classification": "implementation",
-          "status": "pending"
+          "status": "done"
         },
         {
           "short_id": "7a106fe4",
           "title": "Publish GF(p) parity evidence",
           "classification": "documentation",
-          "status": "pending"
+          "status": "done"
         }
       ]
     },
@@ -500,7 +500,7 @@
         {
           "short_id": "cc5de315",
           "title": "Close GF(p) FieldMatrix gaps to fflas-ffpack [STORY]",
-          "status": "pending"
+          "status": "done"
         },
         {
           "short_id": "2c7548ae",
@@ -571,7 +571,24 @@
       "user_decision": "Drop --model gpt-5.4; failed (account-wide limit). Lead followed up by switching reviewer to 'claude --model sonnet -p' which works. Authorized as in-scope of the original config-edit approval."
     }
   ],
-  "created_during_execution": [],
+  "created_during_execution": [
+    {
+      "short_id": "27bb2f75",
+      "title": "Optimize small-n GEMM dispatch path (n≤128) to close per-call-overhead gap",
+      "type": "task",
+      "depends_on": ["cc5de315"],
+      "purpose": "Non-blocking follow-up for GF(7)/GF(31) n=64 per-call-overhead aspirational amendment.",
+      "state": "ready"
+    },
+    {
+      "short_id": "615db3b9",
+      "title": "Pursue fflas-like GF(251) GEMM performance",
+      "type": "task",
+      "depends_on": ["cc5de315"],
+      "purpose": "User-requested non-blocking follow-up for pushing GF(251) toward fflas-like performance after the story-scope aspirational amendment.",
+      "state": "ready"
+    }
+  ],
   "user_decisions": [
     {
       "ts": "2026-04-30T14:40Z",
@@ -1002,7 +1019,15 @@
   ],
   "session_9_new_issues_filed": [
     {"short_id": "b9aed0d8", "title": "Design Candidate F — in-Rust f32-FMA cascade for small-prime GEMM", "type": "task", "depends_on": [], "purpose": "Design pass for Candidate F architecture; closed in same session.", "state_at_handoff": "done"},
-    {"short_id": "27bb2f75", "title": "Optimize small-n GEMM dispatch path (n≤128) to close per-call-overhead gap", "type": "task", "depends_on": [], "purpose": "Follow-up for n=64 [hard]→[aspirational] amendment in 662f7a15. Per-thread arena, inline dispatch, n≤128 special-case.", "state_at_handoff": "ready"}
+    {"short_id": "27bb2f75", "title": "Optimize small-n GEMM dispatch path (n≤128) to close per-call-overhead gap", "type": "task", "depends_on": ["cc5de315"], "purpose": "Follow-up for n=64 [hard]→[aspirational] amendment in 662f7a15. Per-thread arena, inline dispatch, n≤128 special-case.", "state_at_handoff": "ready"}
+  ],
+  "session_10_started_at": "2026-05-06T11:45Z",
+  "session_10_summary": "Closed story cc5de315 after user-approved story-scope GF(251) [aspirational] amendment, evidence repair in dev/bench_results/2026-05-06-7a106fe4-gfp-parity-evidence.md, and passing cargo-ci/code-review/doc-review gates. Created non-blocking follow-up 615db3b9 for fflas-like GF(251) performance and wired prior follow-up 27bb2f75 to depend on cc5de315 so the DAG validates.",
+  "session_10_decisions": [
+    {"ts": "2026-05-06T12:15Z", "topic": "cc5de315 GF(251) story-scope amendment", "decision": "User approved amending cc5de315 to accept GF(251) as [aspirational] with documented OpenBLAS float-modular cascade cause, while creating a non-blocking follow-up for fflas-like GF(251) performance."}
+  ],
+  "session_10_new_issues_filed": [
+    {"short_id": "615db3b9", "title": "Pursue fflas-like GF(251) GEMM performance", "type": "task", "depends_on": ["cc5de315"], "purpose": "User-requested follow-up after cc5de315 story-scope GF(251) amendment.", "state_at_handoff": "ready"}
   ],
   "session_8_decisions": [
     {
