@@ -97,7 +97,7 @@ Dispatch: exact-match branch `if P == 65537` in `crates/gf2-core/src/gfp/simd_op
 
 ### 1.4 Mersenne31 (p = 2^31 - 1) — dedicated kernel (non-regression)
 
-Dispatch: exact-match branch `if P == M31` in `crates/gf2-core/src/gfp/simd_ops.rs`, the first branch — fires before all Wave-6 branches. Regression-guard test added in `3d06224c`. Same-session pre/post measurement performed by lead-direct at 2026-05-06 (commit `c066042` baseline vs HEAD).
+Dispatch: exact-match branch `if P == M31` in `crates/gf2-core/src/gfp/simd_ops.rs`, second in the dispatch ladder (after `if P == 65537`) but structurally above all Wave-6 new branches (`if P <= 251` and `if P >= 252 && P < 65536`). Regression-guard test added in `3d06224c`. Same-session pre/post measurement performed by lead-direct at 2026-05-06 (commit `c066042` baseline vs HEAD).
 
 | n | gf2 Gop/s (5-trial median) | same-session delta | marker | evidence source |
 |---:|---:|---|---|---|
@@ -113,11 +113,11 @@ Dispatch: exact-match branch `if P == M31` in `crates/gf2-core/src/gfp/simd_ops.
 
 This section satisfies success criterion #2: "Field-family-specific dispatch decisions are documented."
 
-All dispatch logic is concentrated in `crates/gf2-core/src/gfp/simd_ops.rs` in the `select_simd_path` function. The branch order (top to bottom) is:
+All dispatch logic is concentrated in `crates/gf2-core/src/gfp/simd_ops.rs`, inlined into the `SimdVecOps for Fp<P>` blanket impl's `try_simd_mul_vec` / `try_simd_add_vec` / `try_simd_sub_vec` / `try_simd_dot_vec` methods (and the parallel `try_simd_gemm_classical` whole-gemm hook). The branch order (top to bottom, verified at HEAD lines 190–203 for `try_simd_mul_vec` and replicated in the sibling methods) is:
 
 ```
-if P == M31       → Mersenne31 kernel   (exact match, lowest prime)
-if P == 65537     → Fp<65537> kernel    (exact match, Fermat prime)
+if P == 65537     → Fp<65537> kernel    (exact match, Fermat prime — first)
+if P == M31       → Mersenne31 kernel   (exact match)
 if P <= 251       → Candidate C kernel  (byte family + tiny prime)
 if P >= 252       → medium kernel       (word-fits-in-u16)
   && P < 65536
@@ -164,7 +164,7 @@ The branch on `p` lives at the top of `fp_medium_batch_dot` in `fp_medium.rs`; b
 
 ### 2.4 Mersenne31 (p = 2^31 - 1): dedicated kernel, dispatch unchanged
 
-**Dispatch rule:** `if P == M31` exact-match branch, first in `select_simd_path` — fires before all other branches.
+**Dispatch rule:** `if P == M31` exact-match branch in `try_simd_mul_vec` and siblings, second in the dispatch ladder (after `if P == 65537`) — fires before all Wave-6 new branches.
 
 **Kernel:** `crates/gf2-kernels-simd/src/x86/mersenne.rs` — Mersenne-aware bit-trick reduction. Structurally unchanged by all Wave-6 issues. Regression-guard added in `3d06224c`: test `m31_simd_mul_matches_scalar_across_boundary_lens` in `crates/gf2-core/src/gfp/simd_ops.rs`.
 
