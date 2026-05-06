@@ -3983,3 +3983,5 @@
 {"type":"issue_completed","id":"46bf2d2f-c72d-4173-a1e4-197fbfe411cd","issue_id":"fb271c41-d797-455d-916b-0d698e092d73","timestamp":"2026-05-06T19:01:27.173247338Z"}
 {"type":"issue_state_changed","id":"01ab88b9-6926-44da-a207-88edb3318a50","issue_id":"615db3b9-9dbf-44b6-a9e4-7f60d6009a09","timestamp":"2026-05-06T19:19:04.985020900Z","from":"ready","to":"in_progress"}
 {"type":"issue_claimed","id":"259c19ae-8705-4b3b-ac89-bc5ad7c638d3","issue_id":"615db3b9-9dbf-44b6-a9e4-7f60d6009a09","timestamp":"2026-05-06T19:19:04.987984021Z","assignee":"agent:copilot"}
+{"type":"issue_created","id":"a1e533b7-4b37-4d79-b2e5-0bfbc80386d2","issue_id":"c450f40b-bf33-4051-ba30-35d361ddb2cd","timestamp":"2026-05-06T20:11:31.724115729Z","title":"Implement Newton-John / M4RM-style GEMM for GF(2^8)","priority":"normal"}
+{"type":"issue_state_changed","id":"b4e3f70b-7b80-4505-9c6e-d4d23e11c4ec","issue_id":"c450f40b-bf33-4051-ba30-35d361ddb2cd","timestamp":"2026-05-06T20:12:48.678342816Z","from":"ready","to":"rejected"}

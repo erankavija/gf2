@@ -1,0 +1,27 @@
+{
+  "id": "c450f40b-bf33-4051-ba30-35d361ddb2cd",
+  "title": "Implement Newton-John / M4RM-style GEMM for GF(2^8)",
+  "description": "Close the GF(2^8) algorithmic gap to M4RIE via Newton-John / Method of Four Russians.\n\n## Background\n\nPer `dev/bench_results/2026-05-06-e24f7839-panelized-gf2m-gemm.md` § 4 and `dev/bench_results/2026-05-06-a1172cea-gf2m-scorecard.md` § 4, GF(2^8) matmul against M4RIE shows a structural algorithmic gap that panelized GEMM (e24f7839) cannot close:\n\n- GF(2^8) n=64: gf2 1.593e9 ops/s vs M4RIE 4.052e9 ops/s (ratio 0.393, threshold 0.667)\n- GF(2^8) n=256: gf2 1.470e9 ops/s vs M4RIE 2.453e10 ops/s (ratio 0.060)\n- GF(2^8) n=1024: gf2 1.437e9 ops/s vs M4RIE 9.757e10 ops/s (ratio 0.015)\n\nM4RIE GF(2^8) throughput scales 4.1 -> 97.6 Gop/s from n=64 to n=1024 (24x), confirming it uses an O(n^3/log n) algorithm. gf2-core's per-element CLMUL is O(n^3) and stays flat at ~1.5 Gop/s.\n\n## Algorithm\n\nM4RIE-class Newton-John / Method of Four Russians for GF(2^8):\n1. Pack the right-hand matrix B into byte form (256 distinct values per byte).\n2. Precompute 16 word-level multiplication tables (one per nibble pair) using PSHUFB.\n3. The inner loop processes each row of A as a packed-byte vector and uses PSHUFB lookups to multiply against the precomputed table panels of B.\n4. Accumulate XORs across the panels.\n\nThe reference implementation is M4RIE's `mzed_mul` source. Reading m4rie source plus the algorithm paper is the recommended starting point.\n\n## Success Criteria\n\n- [hard] GF(2^8) FieldMatrix GEMM target rows at n in {64, 256, 1024} reach >= 0.667 of M4RIE throughput on the Zen-3 host class.\n- [hard] Bit-exact equivalence with the existing CLMUL path on randomized inputs (seed-controlled property tests).\n- [hard] No unsafe code outside `gf2-kernels-simd`. The new kernel may use AVX2 PSHUFB intrinsics inside the kernel crate; gf2-core remains `#![deny(unsafe_code)]`.\n- [hard] No regression on GF(2^16) or GF(2^32) panelized GEMM (cells already passing in e24f7839).\n\n## Notes\n\n- This task is non-blocking on epic 97bf0879. It is a follow-up to e24f7839 closure (Wave-8 amendment 2026-05-06). The epic closure path proceeds without this work.\n- The follow-up may overlap with a future GFNI / AVX-512 lane (`fb271c41` decision deferred those to Zen-4+ host classes); coordinate before dispatch.\n- Successor epic candidate: if Newton-John lands but other GF(2^m) optimization gaps surface, those move to a successor epic of `97bf0879`.",
+  "state": "rejected",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "component:gf2-kernels-simd",
+    "epic:gf2-core-sota-performance",
+    "story:sota-gf2m-reference",
+    "resolution:duplicate"
+  ],
+  "created_at": "2026-05-06T20:11:31.723767149+00:00",
+  "updated_at": "2026-05-06T20:12:48.681544427+00:00"
+}
