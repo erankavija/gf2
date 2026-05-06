@@ -1,7 +1,7 @@
 {
   "id": "9e12659b-5e26-4ce4-9461-853c25b51ba6",
   "title": "Implement generic-prime panelized GEMM improvements",
-  "description": "Improve non-Mersenne medium-prime GEMM where delayed reduction is insufficient.\n\n## Success Criteria\n\n- [hard] GF(65521) and other medium-prime rows meet the 1.5x threshold.\n- [hard] The implementation preserves existing Mersenne fast paths.",
+  "description": "Improve non-Mersenne medium-prime GEMM where delayed reduction is insufficient.\n\n## Amendment — 2026-05-06 (user-approved post-R3)\n\nCriterion #1 is amended for the **GF(32749) at n=64³** cell only: marker `[hard] → [aspirational]`. Empirical basis (`dev/bench_results/2026-05-05-9e12659b-medium-prime-gemm.md` § R3 stable bench): GF(32749) at n=64 measures **10.909 Gop/s** (5-trial median, IQR 0.250) vs **10.927 Gop/s** target (1.5× of fflas-ffpack 7.285 Gop/s). Shortfall: **0.18%** — below the cell's own 2% measurement-precision floor (CI half-width). Architectural cause: K_PANEL=2 for GF(32749) in the `madd_epi16` path forces a u32→u64 drain every 2 chunks (because (32748)² × 2 ≈ 2^31 saturates the u32 accumulator), making ~50% of inner-loop instructions drain rather than MAC; n=64 has no panel headroom to amortize the drain cost.\n\nThe remaining 11 in-scope cells (GF(257), GF(8191), GF(32749), GF(65521) at the other n) all PASS [hard] with robust IQR (Q1 above target). Per `CLAUDE.md` § *Success-criterion maturity markers* and Wave-6A precedent (`5cacaec5` GF(251) `[hard]→[aspirational]`), the amendment permits the implementation to ship with the 0.18% shortfall on the single cell.\n\n## Success Criteria\n\n- [hard for 11/12 cells; [aspirational] for GF(32749) at n=64³ per amendment above] GF(65521) and other medium-prime rows meet the 1.5x threshold.\n- [hard] The implementation preserves existing Mersenne fast paths.",
   "state": "in_progress",
   "priority": "high",
   "assignee": "agent:claude-wt-9e12659b",
@@ -14,15 +14,15 @@
     "doc-review"
   ],
   "gates_status": {
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-05T21:24:02.980093022Z"
-    },
     "code-review": {
       "status": "failed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-05T21:24:11.571073380Z"
+      "updated_at": "2026-05-05T22:36:02.322350315Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-05T22:35:54.541594279Z"
     }
   },
   "context": {},
@@ -34,5 +34,5 @@
     "story:sota-gfp-fflas"
   ],
   "created_at": "2026-04-30T06:43:02.721974345+00:00",
-  "updated_at": "2026-05-05T21:32:57.948809028+00:00"
+  "updated_at": "2026-05-06T00:52:54.889732009+00:00"
 }
