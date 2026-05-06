@@ -26,6 +26,16 @@ const B2_GRAY_TILE_WORDS: usize = 8;
 const B2_GRAY_MAX_TILES: usize = 4;
 const M4RM_DEFAULT_TABLE_BYTES: usize = 64 * 1024;
 const M4RM_DEFAULT_MAX_K: usize = 8;
+const M4RM_MID_TABLE_BYTES: usize = 128 * 1024;
+/// Wider schedule budget for LLC-streaming M4RM rows.
+///
+/// The production policy keeps rows narrower than the register-tiled threshold
+/// on the historical 64 KiB / k≤8 schedule.  At measured 1024+ column rows,
+/// same-session measurements for jit:8e305c21 show fewer, wider Gray panels
+/// recover the table-build and row-update overhead without letting the table
+/// grow beyond the 256 KiB L2 size class that regressed at small widths.
+const M4RM_WIDE_TABLE_BYTES: usize = 256 * 1024;
+const M4RM_WIDE_MAX_K: usize = 9;
 
 /// Row accumulators held by the M4RM C-tile update.
 const M4RM_TILE_ROWS: usize = 8;
@@ -38,7 +48,8 @@ type M4rmTile8xNFn = fn(&mut [u64], usize, &[u64], &[usize; M4RM_TILE_ROWS]);
 /// Chooses an appropriate block size k for M4RM based on matrix dimensions.
 ///
 /// The block size determines the size of the Gray code table (2^k entries).
-/// We aim to keep the table size reasonable for cache efficiency (target ~64 KiB).
+/// We keep each Gray table cache-sized: 64 KiB for narrow rows, 128 KiB for
+/// mid-width rows, and 256 KiB for the measured wide-row M4RM target.
 ///
 /// # Arguments
 ///
@@ -47,9 +58,25 @@ type M4rmTile8xNFn = fn(&mut [u64], usize, &[u64], &[usize; M4RM_TILE_ROWS]);
 ///
 /// # Returns
 ///
-/// Block size k_block (typically 6-8)
+/// Block size k_block (typically 6-9)
 fn choose_k_block(k: usize, n: usize) -> usize {
-    choose_k_block_with_limit(k, n, M4RM_DEFAULT_TABLE_BYTES, M4RM_DEFAULT_MAX_K)
+    let stride_words = if n == 0 { 0 } else { n.div_ceil(64) };
+    if stride_words >= M4RM_TILED_MIN_STRIDE_WORDS {
+        choose_k_block_with_limit(k, n, production_table_budget(stride_words), M4RM_WIDE_MAX_K)
+    } else {
+        choose_k_block_with_limit(k, n, M4RM_DEFAULT_TABLE_BYTES, M4RM_DEFAULT_MAX_K)
+    }
+}
+
+#[inline]
+fn production_table_budget(stride_words: usize) -> usize {
+    if stride_words >= 64 {
+        M4RM_WIDE_TABLE_BYTES
+    } else if stride_words >= 32 {
+        M4RM_MID_TABLE_BYTES
+    } else {
+        M4RM_DEFAULT_TABLE_BYTES
+    }
 }
 
 fn choose_k_block_with_limit(
@@ -605,9 +632,13 @@ fn use_register_tiled_schedule(m: usize, stride_words: usize) -> bool {
 
 #[inline]
 fn use_next_panel_prefetch(stride_words: usize) -> bool {
-    // Keeping both 1024-column tables resident evicts the just-built current
-    // table from L1 on the pinned B3 design size; enable V6 for wider tiles.
-    stride_words > M4RM_TILED_MIN_STRIDE_WORDS
+    // The earlier V6 prototype built the next Gray table before updating the
+    // current panel, then prefetched individual next-table rows.  jit:8e305c21
+    // measurements found that two resident tables plus prefetch traffic evict
+    // useful current-panel data on the target 2048/4096 rows.  Keep production
+    // on the single-table schedule until a future kernel proves a net win.
+    let _ = stride_words;
+    false
 }
 
 #[inline]
@@ -1018,6 +1049,24 @@ mod tests {
     }
 
     #[test]
+    fn test_production_schedule_policy_keeps_small_rows_and_widens_target_rows() {
+        for n in [0, 1, 63, 64, 65, 128, 129, 512] {
+            assert_eq!(
+                choose_k_block(4096, n),
+                choose_k_block_with_limit(4096, n, M4RM_DEFAULT_TABLE_BYTES, M4RM_DEFAULT_MAX_K),
+                "n={n} should stay on the historical schedule"
+            );
+        }
+
+        assert_eq!(choose_k_block(4096, 1024), 9);
+        assert_eq!(choose_k_block(4096, 2048), 9);
+        assert_eq!(choose_k_block(4096, 4096), 9);
+        assert_eq!(production_table_budget(16), M4RM_DEFAULT_TABLE_BYTES);
+        assert_eq!(production_table_budget(32), M4RM_MID_TABLE_BYTES);
+        assert_eq!(production_table_budget(64), M4RM_WIDE_TABLE_BYTES);
+    }
+
+    #[test]
     fn test_m4ri_style_schedule_selects_wider_panels_when_cache_budget_allows() {
         assert_eq!(choose_k_block_with_limit(4096, 4096, 64 * 1024, 8), 7);
         assert_eq!(choose_k_block_with_limit(4096, 4096, 128 * 1024, 10), 8);
@@ -1175,7 +1224,8 @@ mod tests {
         assert!(use_register_tiled_schedule(8, 16));
         assert!(use_register_tiled_schedule(8, 32));
         assert!(!use_next_panel_prefetch(16));
-        assert!(use_next_panel_prefetch(32));
+        assert!(!use_next_panel_prefetch(32));
+        assert!(!use_next_panel_prefetch(64));
     }
 
     #[test]
@@ -1308,6 +1358,52 @@ mod tests {
             assert_eq!(
                 wider_gray_table, production,
                 "m4ri-style schedule mismatch for {m}×{k} times {k}×{n}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_production_multiply_matches_legacy_schedule_on_boundary_shapes() {
+        use rand::rngs::StdRng;
+        use rand::{Rng, SeedableRng};
+
+        fn random_matrix(rows: usize, cols: usize, rng: &mut StdRng) -> BitMatrix {
+            let mut matrix = BitMatrix::zeros(rows, cols);
+            for r in 0..rows {
+                for c in 0..cols {
+                    if rng.gen_bool(0.5) {
+                        matrix.set(r, c, true);
+                    }
+                }
+            }
+            matrix
+        }
+
+        let mut rng = StdRng::seed_from_u64(0x8e30_5c21);
+        for (m, k, n) in [
+            (0, 13, 65),
+            (1, 1, 1),
+            (7, 63, 64),
+            (8, 64, 65),
+            (9, 65, 129),
+            (16, 128, 1024),
+            (17, 129, 2048),
+            (17, 129, 4096),
+        ] {
+            let a = random_matrix(m, k, &mut rng);
+            let b = random_matrix(k, n, &mut rng);
+
+            let production = multiply(&a, &b);
+            let legacy_schedule = multiply_with_table_schedule_for_test(
+                &a,
+                &b,
+                M4RM_DEFAULT_TABLE_BYTES,
+                M4RM_DEFAULT_MAX_K,
+            );
+
+            assert_eq!(
+                production, legacy_schedule,
+                "production policy mismatch for {m}×{k} times {k}×{n}"
             );
         }
     }
