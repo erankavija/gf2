@@ -390,6 +390,7 @@ fn ple_base_direct<F: FiniteField>(
     col_lo: usize,
     col_hi: usize,
     perm: &mut [usize],
+    pivot_cols: &mut Vec<usize>,
 ) -> usize {
     let m = a.rows();
     let zero = a.get(0, col_lo).zero_like();
@@ -446,6 +447,10 @@ fn ple_base_direct<F: FiniteField>(
             }
         }
 
+        // Record this pivot's absolute column index. `pivot_cols` is
+        // consumed by `split_compact` to skip the post-factorisation
+        // O(rank * n) pivot-rediscovery scan.
+        pivot_cols.push(col);
         rank += 1;
     }
 
@@ -465,19 +470,28 @@ fn ple_base_direct<F: FiniteField>(
 ///
 /// Returns the rank of the column window (i.e., the number of pivots
 /// found in those columns).
-fn ple_in_place<F: FiniteField>(mut a: MatViewMut<'_, F>, perm: &mut [usize]) -> usize {
+fn ple_in_place<F: FiniteField>(
+    mut a: MatViewMut<'_, F>,
+    perm: &mut [usize],
+    pivot_cols: &mut Vec<usize>,
+) -> usize {
     let n = a.cols();
-    ple_in_place_window(a.reborrow(), 0, n, perm)
+    ple_in_place_window(a.reborrow(), 0, n, perm, pivot_cols)
 }
 
 /// Inner driver — see [`ple_in_place`]. The window `[col_lo, col_hi)`
 /// is the column range to process; cells outside this window are not
 /// modified by the elimination but DO get permuted by `swap_rows`.
+///
+/// Appends discovered pivot columns (absolute column indices into the
+/// full working matrix) to `pivot_cols` in the order they are found.
+/// On return `pivot_cols.len()` increases by the rank of this window.
 fn ple_in_place_window<F: FiniteField>(
     mut a: MatViewMut<'_, F>,
     col_lo: usize,
     col_hi: usize,
     perm: &mut [usize],
+    pivot_cols: &mut Vec<usize>,
 ) -> usize {
     let m = a.rows();
     let win = col_hi.saturating_sub(col_lo);
@@ -497,7 +511,7 @@ fn ple_in_place_window<F: FiniteField>(
     //
     // Complexity: O(m · win²) element operations per call.
     if win <= F::PLE_BASE_COLS {
-        return ple_base_direct(&mut a, col_lo, col_hi, perm);
+        return ple_base_direct(&mut a, col_lo, col_hi, perm, pivot_cols);
     }
 
     let h = win / 2;
@@ -505,7 +519,7 @@ fn ple_in_place_window<F: FiniteField>(
 
     // Step 1 — recurse on the left half. `a` continues to span the
     // full parent column range; we restrict only via the col window.
-    let r1 = ple_in_place_window(a.reborrow(), col_lo, mid, perm);
+    let r1 = ple_in_place_window(a.reborrow(), col_lo, mid, perm, pivot_cols);
 
     // Steps 2 & 3 — trsm and gemm on the right half.
     //
@@ -542,9 +556,14 @@ fn ple_in_place_window<F: FiniteField>(
     // Use split_rows_mut so the recursive view spans the full parent
     // column range (preserving full-row swap semantics) but only rows
     // r1..m. The recursion processes the column window [mid, col_hi).
+    //
+    // Rank-deficient early exit: when r1 == m all rows have been assigned
+    // pivots in the left half, so the bottom-right block is empty. Skip
+    // the recursion entirely (avoids the function-call overhead on
+    // inputs that exhibit early-termination rank-deficiency).
     let r2 = if r1 < m && mid < col_hi {
         let (_top, a4) = a.split_rows_mut(r1);
-        ple_in_place_window(a4, mid, col_hi, &mut perm[r1..])
+        ple_in_place_window(a4, mid, col_hi, &mut perm[r1..], pivot_cols)
     } else {
         0
     };
@@ -604,17 +623,29 @@ fn materialise_block<F: FiniteField>(
 /// computed by the recursion: `working[i, *]` corresponds to the original
 /// matrix's row `perm[i]` after permutation.
 ///
-/// **Important pivot-column subtlety.** The PLE recursion's compact
-/// storage means E's pivots may NOT lie on the leading diagonal of
-/// `working[0..rank, 0..rank]` when the matrix is rank-deficient: the
-/// pivot for E's row `i` is at the column where the recursion's left-
-/// half PLE found a leading non-zero. We scan each row of `working[0..rank,
-/// :]` left-to-right to identify pivot columns and assemble L row-by-row
-/// from the multipliers stored in the columns BEFORE each pivot.
+/// **Rank-deficient optimisation.** `pivot_cols` is pre-filled by
+/// `ple_in_place` during the factorisation — one entry per pivot, in
+/// left-to-right order. Providing them here eliminates the O(rank * n)
+/// row-scan that the naive approach would use to rediscover them from
+/// the compact storage.
+///
+/// For an `n x n` rank-`r` matrix the saving is `O(r * (n - c_last))`
+/// comparisons where `c_last` is the rightmost pivot column. In the
+/// rank-deficient regime (`r = n/2`, all pivots in the left half,
+/// `c_last ~= n/2`) this removes approximately `n/2 * n/2 = n^2/4`
+/// comparisons from the post-factorisation extraction path.
 fn split_compact<F: FiniteField>(
     working: &FieldMatrix<F>,
     rank: usize,
+    pivot_cols: &[usize],
 ) -> (FieldMatrix<F>, FieldMatrix<F>) {
+    debug_assert_eq!(
+        pivot_cols.len(),
+        rank,
+        "split_compact: pivot_cols length {} != rank {}",
+        pivot_cols.len(),
+        rank
+    );
     let m = working.rows();
     let n = working.cols();
     if rank == 0 {
@@ -624,28 +655,6 @@ fn split_compact<F: FiniteField>(
     }
     let zero = working.get(0, 0).zero_like();
     let one = zero.one_like();
-
-    // Identify pivot columns: scan each of the first `rank` rows for the
-    // first non-zero entry, restricted to columns strictly to the right
-    // of the previous pivot. The compact storage guarantees this exists.
-    let mut pivot_cols: Vec<usize> = Vec::with_capacity(rank);
-    let mut last: isize = -1;
-    for i in 0..rank {
-        let start = (last + 1).max(0) as usize;
-        let mut found: Option<usize> = None;
-        for j in start..n {
-            if working.get(i, j) != zero {
-                found = Some(j);
-                break;
-            }
-        }
-        let p = found.expect(
-            "split_compact: rank row missing leading non-zero \
-             (compact storage invariant violated)",
-        );
-        pivot_cols.push(p);
-        last = p as isize;
-    }
 
     // E: rank × n, in row-echelon form.
     //
@@ -757,12 +766,18 @@ impl<F: FiniteField> FieldMatrix<F> {
         let mut working = self.clone();
         // 0 matrix allocs: identity permutation in a Vec<usize>.
         let mut perm: Vec<usize> = (0..m).collect();
+        // Pivot-column accumulator filled by ple_in_place; reused by
+        // split_compact to skip the O(rank * n) post-factorisation scan.
+        let max_rank = m.min(n);
+        let mut pivot_cols: Vec<usize> = Vec::with_capacity(max_rank);
         // Run the in-place driver. Per-level allocations come from
         // materialised L1/L1_bot operands and the gemm/trsm B-transpose
         // scratches. See module rustdoc for the budget.
-        let rank = ple_in_place(working.submat_mut(.., ..), &mut perm);
+        let rank = ple_in_place(working.submat_mut(.., ..), &mut perm, &mut pivot_cols);
         // 2 allocs: split working's compact storage into owned L and E.
-        let (l, e) = split_compact(&working, rank);
+        // pivot_cols is already populated by ple_in_place, so split_compact
+        // does no rediscovery scan.
+        let (l, e) = split_compact(&working, rank, &pivot_cols);
         // The recursion's `perm` is the destination → source map: applying
         // it to `self` row-wise gives the matrix that decomposes as L · E.
         // The contract `P · L · E = self` requires the inverse permutation.
