@@ -58,6 +58,7 @@ const PRIME_127: u64 = 127;
 const PRIME_241: u64 = 241;
 const PRIME_251: u64 = 251;
 const PRIME_65521: u64 = 65521;
+const PRIME_65537: u64 = 65537;
 const MERSENNE_31: u64 = 2_147_483_647;
 
 /// Sizes for the small-prime sweep (issue 662f7a15): n ∈ {256, 1024}.
@@ -319,6 +320,23 @@ fn bench_gemm_fp_65521(c: &mut Criterion) {
     );
 }
 
+fn bench_gemm_fp_65537(c: &mut Criterion) {
+    bench_square::<gf2_core::gfp::Fp<PRIME_65537>, _>(
+        c,
+        "gemm/Fp_65537",
+        "Fp_65537",
+        SQUARE_SIZES,
+        fp_matrix_from_seed::<PRIME_65537>,
+    );
+    bench_rect::<gf2_core::gfp::Fp<PRIME_65537>, _>(
+        c,
+        "gemm_rect/Fp_65537",
+        "Fp_65537",
+        RECT_SHAPES,
+        fp_matrix_from_seed::<PRIME_65537>,
+    );
+}
+
 fn bench_gemm_fp_m31(c: &mut Criterion) {
     bench_square::<gf2_core::gfp::Fp<MERSENNE_31>, _>(
         c,
@@ -421,6 +439,7 @@ criterion_group! {
         bench_gemm_fp_8191,
         bench_gemm_fp_32749,
         bench_gemm_fp_65521,
+        bench_gemm_fp_65537,
         bench_gemm_fp_m31,
         bench_gemm_gf2m8,
         bench_gemm_gf2m16
