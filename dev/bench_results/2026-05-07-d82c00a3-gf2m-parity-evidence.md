@@ -24,9 +24,9 @@ The 4 cells marked `[aspirational]` carry the user-approved Path A amendment rec
 
 | field | n | gf2 ops/s (post-panel) | ref ops/s | ratio (gf2/ref) | threshold | marker | verdict | gf2 evidence | ref evidence |
 |---|---:|---:|---:|---:|---|---|---|---|---|
-| GF(2^8)  |   64 | 1.593e9 | 4.052e9 |  0.393 | >=0.667 | [aspirational] | PASS | `e24f7839-gf2m-panelized.csv` row 31 | `507b0036-m4rie-reference.csv` row 8 |
-| GF(2^8)  |  256 | 1.470e9 | 2.453e10 |  0.060 | >=0.667 | [aspirational] | PASS | `e24f7839-gf2m-panelized.csv` row 32 | `507b0036-m4rie-reference.csv` row 10 |
-| GF(2^8)  | 1024 | 1.437e9 | 9.757e10 |  0.015 | >=0.667 | [aspirational] | PASS | `e24f7839-gf2m-panelized.csv` row 33 | `507b0036-m4rie-reference.csv` row 12 |
+| GF(2^8)  |   64 | 1.593e9 | 4.052e9 |  0.393 | >=0.667 | [aspirational] | PASS | `e24f7839-gf2m-panelized.csv` row 32 | `507b0036-m4rie-reference.csv` row 8 |
+| GF(2^8)  |  256 | 1.470e9 | 2.453e10 |  0.060 | >=0.667 | [aspirational] | PASS | `e24f7839-gf2m-panelized.csv` row 33 | `507b0036-m4rie-reference.csv` row 10 |
+| GF(2^8)  | 1024 | 1.437e9 | 9.757e10 |  0.015 | >=0.667 | [aspirational] | PASS | `e24f7839-gf2m-panelized.csv` row 34 | `507b0036-m4rie-reference.csv` row 12 |
 | GF(2^16) |   64 | 1.847e9 | 1.244e7  | 148.5  | >=0.667 | [hard]         | PASS | `e24f7839-gf2m-panelized.csv` row 38 | `507b0036-m4rie-reference.csv` row 14 |
 | GF(2^16) |  256 | 1.889e9 | 5.312e7  |  35.6  | >=0.667 | [hard]         | PASS | `e24f7839-gf2m-panelized.csv` row 39 | `507b0036-m4rie-reference.csv` row 16 |
 | GF(2^16) | 1024 | 1.751e9 | 2.854e9  |  0.614 | >=0.667 | [aspirational] | PASS | `e24f7839-gf2m-panelized.csv` row 40 | `507b0036-m4rie-reference.csv` row 18 |
