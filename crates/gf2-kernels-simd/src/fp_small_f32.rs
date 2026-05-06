@@ -38,11 +38,12 @@
 //!    The k-loop is split into chunks of `k_C` per outer iteration,
 //!    where `k_C = min(k, k_max(p), K_CHUNK_CAP)`. `k_max(p)` is the
 //!    largest number of `(p-1)²`-magnitude products that f32 can
-//!    absorb without rounding loss; `K_CHUNK_CAP = 256` keeps each
-//!    f32 B-panel slice (`24 KB`) inside Zen-3's 32 KB L1d so the
-//!    inner FMAs are not stalled on demand-loads from L2.
-//!    For `p ∈ {7, 31, 251}`, `k_C ∈ {256, 256, 256}` respectively
-//!    (the per-prime `k_max(251) = 268` is already at the cap).
+//!    absorb without rounding loss; `K_CHUNK_CAP = 1024` keeps
+//!    the f32 B-panel slice (`96 KB`) in Zen-3's 512 KB L2 — large
+//!    enough to amortise the pack cost while staying within the L2
+//!    working-set at the target sizes (`n ∈ {256, 1024}`).
+//!    For `p ∈ {7, 31, 251}`, `k_C ∈ {1024, 1024, 268}` respectively
+//!    (the per-prime `k_max(251) = 268` caps the GF(251) chunk).
 //!
 //! 3. **Reduction.** At the end of every `k_C` chunk, the 12
 //!    accumulator vectors are rounded to nearest integer via
@@ -71,6 +72,17 @@
 //! observed for fflas-ffpack `Modular<float>` at GF(251)/n=1024).
 //! The `2/n` pre-pack overhead amortises away by `n ≥ 256` (0.78%)
 //! and is invisible by `n ≥ 1024` (0.2%).
+//!
+//! **Empirical note (2026-05-06 prime-sweep):** A 5-trial criterion bench
+//! across GF(7)–GF(251) at n ∈ {256, 1024} on the Zen-3 5900X reference
+//! host showed Candidate C beating Candidate F by 5–10 % at every cell.
+//! The effective pack cost $c_F ≈ 3.4 \times c_C$ (higher than the $3\times$
+//! estimate in § 5.5 (c) of the design doc), so the pack-amortisation knee
+//! is above the measured sizes on this host. As a result, `select_f32_path`
+//! currently routes all `p ≤ 251` cells to Candidate C (`N_THRESH_PRIME =
+//! 252` in `crates/gf2-core/src/gfp/simd_ops.rs`); this kernel is compiled
+//! in as an upgrade path for future measurement on larger n or a different
+//! host. See `dev/plans/small_prime_kernel_strategy.md` § 6.1 sub-amendment.
 //!
 //! # Soundness for `p ≤ 251`
 //!

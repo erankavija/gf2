@@ -47,9 +47,23 @@ use seed::{derive_seed, fp_matrix_from_seed, gf2m_wide_1_matrix_from_seed, MASTE
 // ─── Field configurations ───────────────────────────────────────────────────
 
 const PRIME_7: u64 = 7;
+const PRIME_11: u64 = 11;
+const PRIME_13: u64 = 13;
+const PRIME_17: u64 = 17;
+const PRIME_19: u64 = 19;
+const PRIME_23: u64 = 23;
+const PRIME_29: u64 = 29;
+const PRIME_31: u64 = 31;
+const PRIME_127: u64 = 127;
+const PRIME_241: u64 = 241;
 const PRIME_251: u64 = 251;
 const PRIME_65521: u64 = 65521;
 const MERSENNE_31: u64 = 2_147_483_647;
+
+/// Sizes for the small-prime sweep (issue 662f7a15): n ∈ {256, 1024}.
+/// n=64 is omitted — small-n is harness-overhead-dominated and does not
+/// inform the structural crossover question.
+const SQUARE_SIZES_SMALL_PRIME: &[usize] = &[256, 1024];
 
 // ----- Medium-prime sweep cells (issue 9e12659b R1) ------------------------
 // These three primes exercise the SIMD `fp_medium` AVX2 kernel across the
@@ -177,6 +191,100 @@ fn bench_gemm_fp_7(c: &mut Criterion) {
     );
 }
 
+// ─── Small-prime sweep (issue 662f7a15): GF(11)..GF(241) ────────────────────
+// These bench functions measure square gemm at n ∈ {256, 1024} only —
+// the structural crossover question requires n≥256 for meaningful data.
+
+fn bench_gemm_fp_11(c: &mut Criterion) {
+    bench_square::<gf2_core::gfp::Fp<PRIME_11>, _>(
+        c,
+        "gemm/Fp_11",
+        "Fp_11",
+        SQUARE_SIZES_SMALL_PRIME,
+        fp_matrix_from_seed::<PRIME_11>,
+    );
+}
+
+fn bench_gemm_fp_13(c: &mut Criterion) {
+    bench_square::<gf2_core::gfp::Fp<PRIME_13>, _>(
+        c,
+        "gemm/Fp_13",
+        "Fp_13",
+        SQUARE_SIZES_SMALL_PRIME,
+        fp_matrix_from_seed::<PRIME_13>,
+    );
+}
+
+fn bench_gemm_fp_17(c: &mut Criterion) {
+    bench_square::<gf2_core::gfp::Fp<PRIME_17>, _>(
+        c,
+        "gemm/Fp_17",
+        "Fp_17",
+        SQUARE_SIZES_SMALL_PRIME,
+        fp_matrix_from_seed::<PRIME_17>,
+    );
+}
+
+fn bench_gemm_fp_19(c: &mut Criterion) {
+    bench_square::<gf2_core::gfp::Fp<PRIME_19>, _>(
+        c,
+        "gemm/Fp_19",
+        "Fp_19",
+        SQUARE_SIZES_SMALL_PRIME,
+        fp_matrix_from_seed::<PRIME_19>,
+    );
+}
+
+fn bench_gemm_fp_23(c: &mut Criterion) {
+    bench_square::<gf2_core::gfp::Fp<PRIME_23>, _>(
+        c,
+        "gemm/Fp_23",
+        "Fp_23",
+        SQUARE_SIZES_SMALL_PRIME,
+        fp_matrix_from_seed::<PRIME_23>,
+    );
+}
+
+fn bench_gemm_fp_29(c: &mut Criterion) {
+    bench_square::<gf2_core::gfp::Fp<PRIME_29>, _>(
+        c,
+        "gemm/Fp_29",
+        "Fp_29",
+        SQUARE_SIZES_SMALL_PRIME,
+        fp_matrix_from_seed::<PRIME_29>,
+    );
+}
+
+fn bench_gemm_fp_31(c: &mut Criterion) {
+    bench_square::<gf2_core::gfp::Fp<PRIME_31>, _>(
+        c,
+        "gemm/Fp_31",
+        "Fp_31",
+        SQUARE_SIZES_SMALL_PRIME,
+        fp_matrix_from_seed::<PRIME_31>,
+    );
+}
+
+fn bench_gemm_fp_127(c: &mut Criterion) {
+    bench_square::<gf2_core::gfp::Fp<PRIME_127>, _>(
+        c,
+        "gemm/Fp_127",
+        "Fp_127",
+        SQUARE_SIZES_SMALL_PRIME,
+        fp_matrix_from_seed::<PRIME_127>,
+    );
+}
+
+fn bench_gemm_fp_241(c: &mut Criterion) {
+    bench_square::<gf2_core::gfp::Fp<PRIME_241>, _>(
+        c,
+        "gemm/Fp_241",
+        "Fp_241",
+        SQUARE_SIZES_SMALL_PRIME,
+        fp_matrix_from_seed::<PRIME_241>,
+    );
+}
+
 fn bench_gemm_fp_251(c: &mut Criterion) {
     bench_square::<gf2_core::gfp::Fp<PRIME_251>, _>(
         c,
@@ -299,6 +407,15 @@ criterion_group! {
         .measurement_time(std::time::Duration::from_secs(5));
     targets =
         bench_gemm_fp_7,
+        bench_gemm_fp_11,
+        bench_gemm_fp_13,
+        bench_gemm_fp_17,
+        bench_gemm_fp_19,
+        bench_gemm_fp_23,
+        bench_gemm_fp_29,
+        bench_gemm_fp_31,
+        bench_gemm_fp_127,
+        bench_gemm_fp_241,
         bench_gemm_fp_251,
         bench_gemm_fp_257,
         bench_gemm_fp_8191,

@@ -402,26 +402,38 @@ fn fp_small_try_dot_vec<const P: u64>(_a: &[Fp<P>], _b: &[Fp<P>]) -> Option<Fp<P
     None
 }
 
+/// Minimum prime for which Candidate F (f32-FMA cascade) is preferred
+/// over Candidate C (AVX2 16-bit Barrett).
+///
+/// Set to 252 (above every in-scope small prime) based on the 5-trial
+/// empirical criterion sweep on 2026-05-06 covering GF(7)–GF(251) at
+/// n ∈ {256, 1024}: Candidate C beat Candidate F at every (prime, n) cell
+/// by 5–10 % (IQR-based verdict: C_WINS at all 22 of 22 cells).
+/// See `dev/bench_results/2026-05-06-662f7a15-prime-sweep-aggregate.csv`
+/// and the §6.1 sub-amendment in `dev/plans/small_prime_kernel_strategy.md`
+/// for the full verdict table and rationale.
+///
+/// To select F for primes ≥ some threshold, lower this constant (e.g.
+/// `N_THRESH_PRIME = 11` would route GF(7) to C and GF(11)+ to F). The
+/// dispatch wiring is forward-compatible; amending this constant is the
+/// only code change needed when fresh data supports a lower threshold.
+#[cfg(feature = "simd")]
+const N_THRESH_PRIME: u64 = 252;
+
 /// Per-(P, m, k, n) Candidate-F selector.
 ///
-/// Per the b9aed0d8 § 6.1 amendment (user-approved 2026-05-06): every
-/// `Fp<P>` cell with `P ≤ 251` routes to Candidate F when the host
-/// CPU supports AVX2 + FMA3. The `(m, k, n)` parameters are part of
-/// the per-(P, n) rule's signature and are forwarded for forward
-/// compatibility — a future amendment supported by fresh F bench data
-/// could refine the table without changing dispatch wiring.
+/// Returns `true` iff `P ≥ N_THRESH_PRIME && P ≤ 251`. With
+/// `N_THRESH_PRIME = 252` (empirically set — see its doc comment) this
+/// evaluates to `false` for every in-scope small prime, routing all
+/// `p ≤ 251` cells to Candidate C. The `(m, k, n)` parameters are part
+/// of the per-(P, n) rule's signature and are forwarded for forward
+/// compatibility — a future amendment can refine the threshold without
+/// changing the dispatch wiring.
 #[cfg(feature = "simd")]
 #[inline]
+#[allow(clippy::impossible_comparisons)] // intentional: N_THRESH_PRIME=252 makes this always false
 const fn select_f32_path<const P: u64>(_m: usize, _k: usize, _n: usize) -> bool {
-    fp_small_enabled_const::<P>()
-}
-
-/// `fp_small_enabled` evaluated at compile time so it can be used in
-/// `const fn select_f32_path`. Mirrors the runtime predicate exactly.
-#[cfg(feature = "simd")]
-#[inline]
-const fn fp_small_enabled_const<const P: u64>() -> bool {
-    P >= 3 && P <= 251
+    P >= N_THRESH_PRIME && P <= 251
 }
 
 /// Whole-gemm fast path. Pre-packs `a` (`m × k` row-major) and `b_t`
@@ -430,12 +442,13 @@ const fn fp_small_enabled_const<const P: u64>() -> bool {
 /// kernel for every output cell against the cached packs. Unpacks the
 /// output and writes it through `out` (`m × n` row-major).
 ///
-/// On FMA3-capable hosts the f32-cascade kernel (Candidate F per
-/// `dev/plans/small_prime_kernel_strategy.md` § 6.1) is preferred —
-/// it issues `_mm256_fmadd_ps` at twice the throughput of
-/// Candidate C's `_mm256_madd_epi16`. The Candidate C
-/// (`_mm256_madd_epi16`-based) path remains compiled in as the
-/// AVX2-only-no-FMA3 runtime fallback per the same amendment.
+/// **Dispatch policy (2026-05-06 prime-sweep sub-amendment):** Candidate C
+/// (`_mm256_madd_epi16`-based) handles all `p ≤ 251` cells on both
+/// AVX2-only and AVX2+FMA3 hosts. The 5-trial criterion sweep over
+/// GF(7)–GF(251) at n ∈ {256, 1024} showed C beats F by 5–10 % at every
+/// cell; `select_f32_path` returns `false` for all in-scope primes
+/// (`N_THRESH_PRIME = 252`). Candidate F remains compiled in as an upgrade
+/// path for future measurement on a different host or at larger n.
 ///
 /// Returns `true` when one of the fast paths executed; `false` to
 /// defer to the caller's scalar `dot_product_slices` loop.
@@ -466,20 +479,11 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
     let p_u8 = P as u8;
     let mut out_u8 = vec![0u8; m * n];
 
-    // Candidate F (AVX2 + FMA3 f32-cascade) — preferred whenever the
-    // selector authorises this (P, m, k, n) cell AND the host supports
-    // FMA3 at runtime. Per § 6.1 amendment the selector resolves
-    // uniformly to `true` for every `P ≤ 251`, and FMA3 is present
-    // on every Zen-2+ AMD and every Haswell+ Intel part.
-    //
-    // The F path packs `&[Fp<P>]` directly to `Vec<f32>` ONCE per gemm
-    // call (one canonical-residue extraction `Fp::value()` per
-    // element, then `as f32`). The kernel's inner loop is pure-f32
-    // FMA: NO cvt instructions in the hot path, matching the
-    // OpenBLAS / fflas-ffpack `Modular<float>` micro-kernel structure.
-    // The pre-pack cost is `2 n²` cvts vs `n³` FMAs in the inner loop
-    // — invisible at `n ≥ 256` (≤ 0.78 % overhead) and amortised away
-    // by `n ≥ 1024`.
+    // Candidate F (AVX2 + FMA3 f32-cascade) — compiled in as upgrade path;
+    // currently not selected at any `P ≤ 251` cell (N_THRESH_PRIME = 252,
+    // see select_f32_path doc). The selector returns `false` for all
+    // in-scope small primes per the 2026-05-06 prime-sweep sub-amendment
+    // (§ 6.1 of the design doc): C_WINS at every (prime, n) cell.
     let f32_taken = if select_f32_path::<P>(m, k, n) {
         if let Some(fns_f32) = crate::simd::maybe_fp_small_f32() {
             let a_f32: Vec<f32> = a.iter().map(|x| x.value() as f32).collect();
@@ -494,8 +498,10 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
     };
 
     if !f32_taken {
-        // Candidate C (AVX2 16-bit-integer Barrett kernel) runtime
-        // fallback for AVX2-only-no-FMA3 hosts (Zen 1, Sandy Bridge).
+        // Candidate C (AVX2 16-bit-integer Barrett kernel) — primary path
+        // for all `p ≤ 251` cells per the 2026-05-06 prime-sweep amendment
+        // (N_THRESH_PRIME = 252, select_f32_path always returns false).
+        // Also the fallback for AVX2-only-no-FMA3 hosts (Zen 1, Sandy Bridge).
         let Some(fns) = crate::simd::maybe_fp_small() else {
             return false;
         };
