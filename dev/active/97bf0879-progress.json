@@ -990,7 +990,20 @@
   "session_8_closed_at": "2026-05-05T13:55Z",
   "session_8_handoff": "dev/active/97bf0879-handoff-8.md",
   "session_8_summary": "Wave 4 closed (4c0d0202, R2 PASS). Wave 5 closed (b0434149 R2 PASS, cbecfced R3 PASS). Wave 6A closed (5cacaec5 R4 PASS, with user-approved [hard]→[aspirational] amendment on GF(251) row of both 5cacaec5 and 662f7a15 — Path A from AskUserQuestion: Candidate C SIMD-lane AVX2 selected, GF(251) accepted under per-host envelope target since 1.5x of fflas requires 107% of AVX2-MAC peak on Zen-3). GF(p^n) follow-up epic 47c1538f filed as placeholder (user-flagged scope-loss; depends on 97bf0879 closing). Wave 6B (662f7a15 + 9e12659b + 3d06224c parallel impls) ready for next session.",
-  "session_9_started_at": null,
+  "session_9_started_at": "2026-05-05T14:00Z",
+  "session_9_closed_at": "2026-05-06T11:30Z",
+  "session_9_handoff": "dev/active/97bf0879-handoff-9.md",
+  "session_9_summary": "Wave 6B closed: 3d06224c R1 PASS (Mersenne regression guard), 9e12659b R6 PASS (medium-prime AVX2 GEMM, GF(32749)/n=64 [hard]→[aspirational] amendment), 662f7a15 R-final-3 PASS after extensive review chain (small-prime AVX2 GEMM; Candidate C primary; Candidate F implemented but not selected per N_THRESH_PRIME=252; GF(7)/GF(31)/n=64 [hard]→[aspirational] amendment). Wave 6C closed: 7a106fe4 R2 PASS (GF(p) parity evidence synthesis). Filed b9aed0d8 (Candidate F design pass — user-approved uniform-F amendment falsified by 5-trial bench, then closed) and 27bb2f75 (small-n GEMM dispatch path optimization follow-up). Story cc5de315 ready to close (Wave 11) — all 7 leaf tasks done.",
+  "session_9_decisions": [
+    {"ts": "2026-05-05T14:30Z", "topic": "b9aed0d8 criterion #3 amendment", "decision": "Path A — amend per-(P, n) hybrid table requirement to permit degenerate uniform-F when one candidate dominates at every cell. Falsified by structural Zen-3 architecture analysis."},
+    {"ts": "2026-05-06T01:00Z", "topic": "9e12659b GF(32749)/n=64 [hard]→[aspirational]", "decision": "Approved per Wave-6A precedent. K_PANEL=2 architectural floor; 0.18% shortfall within 2% measurement-precision."},
+    {"ts": "2026-05-06T10:00Z", "topic": "662f7a15 path forward (post empirical falsification of F wins)", "decision": "Loop F on perf-spiral: in-place lane-load + prefetch tuning. Result: F still loses to C uniformly. Filed 27bb2f75 follow-up."},
+    {"ts": "2026-05-06T10:08Z", "topic": "662f7a15 GF(7)/GF(31)/n=64 [hard]→[aspirational]", "decision": "Approved per Wave-6A and 9e12659b/GF(32749)/n=64 precedents. Per-call constant overhead-bound, not algorithm-bound. Follow-up 27bb2f75 filed for structural fix."}
+  ],
+  "session_9_new_issues_filed": [
+    {"short_id": "b9aed0d8", "title": "Design Candidate F — in-Rust f32-FMA cascade for small-prime GEMM", "type": "task", "depends_on": [], "purpose": "Design pass for Candidate F architecture; closed in same session.", "state_at_handoff": "done"},
+    {"short_id": "27bb2f75", "title": "Optimize small-n GEMM dispatch path (n≤128) to close per-call-overhead gap", "type": "task", "depends_on": [], "purpose": "Follow-up for n=64 [hard]→[aspirational] amendment in 662f7a15. Per-thread arena, inline dispatch, n≤128 special-case.", "state_at_handoff": "ready"}
+  ],
   "session_8_decisions": [
     {
       "ts": "2026-05-05T13:43Z",
