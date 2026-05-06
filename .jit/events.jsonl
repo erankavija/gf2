@@ -3946,3 +3946,10 @@
 {"type":"issue_state_changed","id":"fe6da76f-f962-4c2c-b28d-8fae1f439fa9","issue_id":"366dbbcd-4485-4865-bcc4-42c0838eb822","timestamp":"2026-05-06T15:24:29.047245453Z","from":"backlog","to":"ready"}
 {"type":"issue_state_changed","id":"3ed72c5a-2eb7-4833-af5b-0fc2eeeacf3f","issue_id":"366dbbcd-4485-4865-bcc4-42c0838eb822","timestamp":"2026-05-06T15:26:09.877739681Z","from":"ready","to":"in_progress"}
 {"type":"issue_claimed","id":"c1846090-4603-4edd-89c0-3e340af53dbd","issue_id":"366dbbcd-4485-4865-bcc4-42c0838eb822","timestamp":"2026-05-06T15:26:09.877941311Z","assignee":"agent:claude"}
+{"type":"gate_failed","id":"e2d20e22-73c5-470d-b851-e0f552855e06","issue_id":"366dbbcd-4485-4865-bcc4-42c0838eb822","timestamp":"2026-05-06T16:19:45.172622664Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"e8eab13c-3ea8-49b8-8d15-de839674f9ae","issue_id":"366dbbcd-4485-4865-bcc4-42c0838eb822","timestamp":"2026-05-06T16:31:02.062000154Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"66b42af6-ae7a-471d-a457-22af90f66c8b","issue_id":"366dbbcd-4485-4865-bcc4-42c0838eb822","timestamp":"2026-05-06T16:49:16.276618841Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"039a9433-c723-4f53-a55a-736732e0cc9d","issue_id":"366dbbcd-4485-4865-bcc4-42c0838eb822","timestamp":"2026-05-06T16:49:16.284201803Z","gate_key":"doc-review","updated_by":"agent:project-lead"}
+{"type":"issue_state_changed","id":"4e242c0a-02b8-4e0c-8f13-ddf1e74f2851","issue_id":"366dbbcd-4485-4865-bcc4-42c0838eb822","timestamp":"2026-05-06T16:49:33.172234755Z","from":"in_progress","to":"done"}
+{"type":"issue_completed","id":"e610d89d-322a-4aaf-a6fb-99bae52b5a3f","issue_id":"366dbbcd-4485-4865-bcc4-42c0838eb822","timestamp":"2026-05-06T16:49:33.172282785Z"}
+{"type":"issue_state_changed","id":"c0d12b59-6fe5-4d63-937d-2baa4e179f61","issue_id":"111a3967-dfa8-4b9a-8b1d-880dfc3c2d48","timestamp":"2026-05-06T16:49:33.220541298Z","from":"backlog","to":"ready"}
