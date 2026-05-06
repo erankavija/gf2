@@ -13,6 +13,7 @@ pub(crate) mod fp_medium;
 pub(crate) mod fp_small;
 pub(crate) mod fp_small_f32;
 pub(crate) mod gf2m_batch;
+pub(crate) mod gf2m_common;
 pub(crate) mod gf2m_gemm;
 pub(crate) mod gf2m_wide;
 pub(crate) mod mersenne;

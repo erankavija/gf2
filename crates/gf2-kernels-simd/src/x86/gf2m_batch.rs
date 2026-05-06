@@ -47,64 +47,13 @@ use core::arch::x86::*;
 use core::arch::x86_64::*;
 
 // ---------------------------------------------------------------------------
-// Helper: scalar single-element multiply + Barrett reduce, kept inside the
-// outer `#[target_feature]` scope so tail handling avoids call-pointer
-// overhead.
+// Shared Barrett-reduction helpers live in `super::gf2m_common`; both this
+// module and `super::gf2m_gemm` import them from there. The single source
+// of truth for the algorithm is `gf2m_common::clmul_barrett_scalar` /
+// `ymm_barrett_reduce` / `correct`.
 // ---------------------------------------------------------------------------
 
-/// Single-element multiply+reduce inlined for tail handling. Mirrors the
-/// algorithm in `crate::x86::clmul::clmul_barrett_reduce`.
-#[inline(always)]
-unsafe fn clmul_barrett_reduce_inline(a: u64, b: u64, mu: u64, modulus: u64, degree: u32) -> u64 {
-    if a == 0 || b == 0 {
-        return 0;
-    }
-
-    let field_mask = if degree == 64 {
-        u64::MAX
-    } else {
-        (1u64 << degree) - 1
-    };
-
-    let a_reg = _mm_set_epi64x(0, a as i64);
-    let b_reg = _mm_set_epi64x(0, b as i64);
-    let product_reg = _mm_clmulepi64_si128::<0x00>(a_reg, b_reg);
-
-    let prod_lo = _mm_extract_epi64::<0>(product_reg) as u64;
-    let prod_hi = _mm_extract_epi64::<1>(product_reg) as u64;
-    let product = ((prod_hi as u128) << 64) | prod_lo as u128;
-
-    if product >> degree == 0 {
-        return product as u64;
-    }
-
-    let c_high = (product >> degree) as u64;
-    let c_high_reg = _mm_set_epi64x(0, c_high as i64);
-    let mu_reg = _mm_set_epi64x(0, mu as i64);
-    let q_full_reg = _mm_clmulepi64_si128::<0x00>(c_high_reg, mu_reg);
-
-    let q_lo = _mm_extract_epi64::<0>(q_full_reg) as u64;
-    let q_hi = _mm_extract_epi64::<1>(q_full_reg) as u64;
-    let q_full = ((q_hi as u128) << 64) | q_lo as u128;
-    let q = (q_full >> degree) as u64;
-
-    let q_reg = _mm_set_epi64x(0, q as i64);
-    let mod_reg = _mm_set_epi64x(0, modulus as i64);
-    let qp_reg = _mm_clmulepi64_si128::<0x00>(q_reg, mod_reg);
-
-    let qp_lo = _mm_extract_epi64::<0>(qp_reg) as u64;
-    let qp_hi = _mm_extract_epi64::<1>(qp_reg) as u64;
-    let qp = ((qp_hi as u128) << 64) | qp_lo as u128;
-
-    let mut r = product ^ qp;
-    if r >> degree != 0 {
-        r ^= modulus as u128;
-    }
-    if r >> degree != 0 {
-        r ^= modulus as u128;
-    }
-    (r as u64) & field_mask
-}
+use super::gf2m_common::{clmul_barrett_scalar as clmul_barrett_reduce_inline, ymm_barrett_reduce};
 
 // ---------------------------------------------------------------------------
 // YMM-resident Barrett reduction core.
@@ -164,50 +113,6 @@ unsafe fn extract_quad_hi(r_lo: __m256i, r_hi: __m256i) -> (u64, u64, u64, u64) 
     )
 }
 
-/// Performs the YMM-resident Barrett reduction for the 4 products carried
-/// by `(prod_lo, prod_hi)`, returning the 4 reduced values as a pair of
-/// `__m256i`. The `mu_ymm` and `mod_ymm` operands carry the broadcast
-/// Barrett constants. The `degree` parameter selects the static byte-shift
-/// constant via `m / 8`.
-///
-/// # Safety
-/// Requires `avx2`, `vpclmulqdq`, `pclmulqdq`, and `sse4.1`. Caller must
-/// also guarantee `m ∈ {8, 16, 32}`; the byte-shift constants are
-/// hard-coded for those values.
-#[inline(always)]
-unsafe fn ymm_barrett_reduce<const SHIFT_BYTES: i32>(
-    prod_lo: __m256i,
-    prod_hi: __m256i,
-    mu_ymm: __m256i,
-    mod_ymm: __m256i,
-) -> (__m256i, __m256i) {
-    // c_high = product >> m. For m ∈ {8, 16, 32}, m / 8 ∈ {1, 2, 4} bytes,
-    // and `_mm256_srli_si256` performs a per-128-bit-lane byte shift that
-    // matches our lane layout exactly.
-    let c_high_lo = _mm256_srli_si256::<SHIFT_BYTES>(prod_lo);
-    let c_high_hi = _mm256_srli_si256::<SHIFT_BYTES>(prod_hi);
-
-    // q_full = c_high · mu (carry-less). VPCLMULQDQ on the low halves of
-    // each 128-bit lane.
-    let q_full_lo = _mm256_clmulepi64_epi128::<0x00>(c_high_lo, mu_ymm);
-    let q_full_hi = _mm256_clmulepi64_epi128::<0x00>(c_high_hi, mu_ymm);
-
-    // q = q_full >> m.
-    let q_lo = _mm256_srli_si256::<SHIFT_BYTES>(q_full_lo);
-    let q_hi = _mm256_srli_si256::<SHIFT_BYTES>(q_full_hi);
-
-    // qp = q · modulus.
-    let qp_lo = _mm256_clmulepi64_epi128::<0x00>(q_lo, mod_ymm);
-    let qp_hi = _mm256_clmulepi64_epi128::<0x00>(q_hi, mod_ymm);
-
-    // r = product XOR qp. Since 2m ≤ 64, the high 64 bits of every lane
-    // are zero on both sides; XORing the full YMM is correct.
-    let r_lo = _mm256_xor_si256(prod_lo, qp_lo);
-    let r_hi = _mm256_xor_si256(prod_hi, qp_hi);
-
-    (r_lo, r_hi)
-}
-
 // ---------------------------------------------------------------------------
 // Public kernels
 // ---------------------------------------------------------------------------
@@ -259,21 +164,7 @@ unsafe fn modulus_from_ymm(mod_ymm: __m256i) -> u64 {
     _mm_extract_epi64::<0>(lane0) as u64
 }
 
-/// Final correction: r ∈ `[0, 2P)` → r ∈ `[0, P)` by conditional XOR with
-/// modulus when the degree-m bit is set, plus a defensive second pass.
-/// `SHIFT` is `m / 8`, so the degree-m bit lives at byte position `SHIFT`,
-/// bit 0.
-#[inline(always)]
-fn correct(mut r: u64, modulus: u64, shift_bytes: i32, mask: u64) -> u64 {
-    let degree = (shift_bytes as u32) * 8;
-    if (r >> degree) != 0 {
-        r ^= modulus;
-    }
-    if (r >> degree) != 0 {
-        r ^= modulus;
-    }
-    r & mask
-}
+use super::gf2m_common::correct;
 
 /// Batch element-wise multiply, 4-way unrolled YMM-resident Barrett.
 ///
