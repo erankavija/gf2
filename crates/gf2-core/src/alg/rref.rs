@@ -314,7 +314,7 @@ fn rref_unblocked_right_to_left(matrix: &BitMatrix) -> RrefResult {
 
             for r in 0..m {
                 if r != current_row && work.get_unchecked(r, col) {
-                    work.row_xor_from(r, current_row, col / 64);
+                    work.row_xor(r, current_row);
                 }
             }
 
@@ -586,6 +586,27 @@ mod tests {
         assert_eq!(result.rank, 2);
         // With right-to-left pivoting, should select columns 2, 1 (in that search order)
         // But pivot_cols should still be ordered by when found
+    }
+
+    #[test]
+    fn test_rref_pivot_from_right_preserves_lower_columns_across_words() {
+        let mut m = BitMatrix::zeros(2, 65);
+        m.set(0, 0, true);
+        m.set(0, 64, true);
+        m.set(1, 1, true);
+        m.set(1, 64, true);
+
+        let result = rref(&m, true);
+
+        assert_eq!(result.rank, 2);
+        assert_eq!(result.pivot_cols, vec![1, 64]);
+        assert!(
+            result.reduced.get(0, 0),
+            "right-to-left row elimination must update lower columns in earlier words"
+        );
+        assert!(result.reduced.get(0, 1));
+        assert!(result.reduced.get(1, 0));
+        assert!(result.reduced.get(1, 64));
     }
 
     // Property-based tests
