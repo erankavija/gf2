@@ -2,7 +2,7 @@
   "id": "380e041a-7931-4bfc-8f95-982f103c51bf",
   "title": "Prototype M4RI-style table scheduling",
   "description": "Prototype or benchmark M4RI-style Gray-code table scheduling for BitMatrix matmul.\n\n## Success Criteria\n\n- [hard] The prototype is bit-exact against existing BitMatrix multiplication.\n- [hard] Benchmark evidence shows whether the approach can close the 1.5x gap.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "high",
   "assignee": "agent:claude",
   "dependencies": [
@@ -13,7 +13,23 @@
     "cargo-ci",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-06T13:39:51.845593932Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-05-06T13:46:10.200738630Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-06T13:35:47.903324319Z"
+    }
+  },
   "context": {},
   "documents": [
     {
@@ -31,5 +47,5 @@
     "story:sota-gf2-m4ri"
   ],
   "created_at": "2026-04-30T06:43:02.655809466+00:00",
-  "updated_at": "2026-05-06T12:48:15.784314732+00:00"
+  "updated_at": "2026-05-06T13:46:36.626517611+00:00"
 }
