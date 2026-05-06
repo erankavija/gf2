@@ -268,13 +268,7 @@ argument:
    fflas-ffpack would deliver at GF(257), GF(8191), GF(32749) on this
    host.
 
-**[hard] criterion 1 verdict (R3):** 11 of 12 medium-prime cells PASS
-the 1.5× target on the 5-trial median, with robust IQR (Q1 above
-target). The single failing cell — GF(32749) at n = 64 — misses by
-0.18 %, an architectural shortfall driven by the K_PANEL = 2 drain
-frequency; falling back to scalar would deepen the shortfall (scalar
-≈ 3.7 Gop/s, 66 % below SIMD), so Option (a) does not apply, and the
-0.18 % residue is escalated to lead per Option (b).
+**Criterion 1 verdict (R3) — 11/12 cells [hard] PASS; GF(32749)/n=64 amended to [aspirational] per user-approved 2026-05-06 amendment recorded in 9e12659b's description.** 11 of 12 medium-prime cells PASS the 1.5× target on the 5-trial median, with robust IQR (Q1 above target). The single failing cell — GF(32749) at n = 64 — misses by 0.18 %, an architectural shortfall driven by the K_PANEL = 2 drain frequency; falling back to scalar would deepen the shortfall (scalar ≈ 3.7 Gop/s, 66 % below SIMD), so Option (a) does not apply. The lead escalated per Option (b) and the user approved a `[hard]→[aspirational]` amendment for this single cell at commit `50ca25d`, mirroring Wave-6A precedent (`5cacaec5` GF(251)).
 
 **fflas-ffpack source (GF(65521) only):**
 `dev/bench_results/2026-04-26-reference.csv` — rows
