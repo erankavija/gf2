@@ -463,10 +463,6 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
         return false;
     }
 
-    // Pack A row-major, B-transpose row-major, both into canonical
-    // bytes. One Montgomery REDC per element via `Fp::value()`.
-    let a_u8: Vec<u8> = a.iter().map(|x| x.value() as u8).collect();
-    let bt_u8: Vec<u8> = b_t.iter().map(|x| x.value() as u8).collect();
     let p_u8 = P as u8;
     let mut out_u8 = vec![0u8; m * n];
 
@@ -475,9 +471,20 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
     // FMA3 at runtime. Per § 6.1 amendment the selector resolves
     // uniformly to `true` for every `P ≤ 251`, and FMA3 is present
     // on every Zen-2+ AMD and every Haswell+ Intel part.
+    //
+    // The F path packs `&[Fp<P>]` directly to `Vec<f32>` ONCE per gemm
+    // call (one canonical-residue extraction `Fp::value()` per
+    // element, then `as f32`). The kernel's inner loop is pure-f32
+    // FMA: NO cvt instructions in the hot path, matching the
+    // OpenBLAS / fflas-ffpack `Modular<float>` micro-kernel structure.
+    // The pre-pack cost is `2 n²` cvts vs `n³` FMAs in the inner loop
+    // — invisible at `n ≥ 256` (≤ 0.78 % overhead) and amortised away
+    // by `n ≥ 1024`.
     let f32_taken = if select_f32_path::<P>(m, k, n) {
         if let Some(fns_f32) = crate::simd::maybe_fp_small_f32() {
-            (fns_f32.batch_gemm_fn)(&a_u8, &bt_u8, m, k, n, p_u8, &mut out_u8);
+            let a_f32: Vec<f32> = a.iter().map(|x| x.value() as f32).collect();
+            let bt_f32: Vec<f32> = b_t.iter().map(|x| x.value() as f32).collect();
+            (fns_f32.batch_gemm_fn)(&a_f32, &bt_f32, m, k, n, p_u8, &mut out_u8);
             true
         } else {
             false
@@ -492,6 +499,10 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
         let Some(fns) = crate::simd::maybe_fp_small() else {
             return false;
         };
+        // Pack A and B-transpose as canonical bytes for the integer
+        // kernel — one Montgomery REDC per element via `Fp::value()`.
+        let a_u8: Vec<u8> = a.iter().map(|x| x.value() as u8).collect();
+        let bt_u8: Vec<u8> = b_t.iter().map(|x| x.value() as u8).collect();
         for i in 0..m {
             let a_row = &a_u8[i * k..(i + 1) * k];
             let out_row = &mut out_u8[i * n..(i + 1) * n];

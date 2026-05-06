@@ -15,32 +15,34 @@
 //!
 //! # Algorithm
 //!
-//! For canonical inputs `a, b ∈ [0, P) ⊂ [0, 256)`, each gemm call:
+//! For canonical residues `a, b ∈ [0, P)` arriving as **`f32` lanes**
+//! (one residue per lane), each gemm call:
 //!
-//! 1. **Pack pass.** Repack `bt: &[u8]` (n × k row-major) into N-major
-//!    u8 panels of width `N_R = 24` (each panel `k × N_R` u8). `a` is
-//!    consumed in place — no auxiliary `Vec<f32>` is allocated. The
-//!    u8 → f32 conversion happens at register granularity inside the
-//!    inner kernel via `_mm256_cvtepu8_epi32` + `_mm256_cvtepi32_ps`,
-//!    eliminating the previous design's 4×-blown intermediate
-//!    `Vec<f32>` (which doubled both bandwidth and L1d footprint).
+//! 1. **Pack pass.** Repack `bt: &[f32]` (n × k row-major) into N-major
+//!    f32 panels of width `N_R = 24` (each panel `k × N_R` f32). `a` is
+//!    consumed in place — no auxiliary `Vec<f32>` is allocated for A.
+//!    Inputs arrive as f32 from the caller's outer pre-pack of
+//!    `&[Fp<P>]` → `Vec<f32>`; the kernel's inner loop performs **no
+//!    cvt instructions**, mirroring the OpenBLAS / fflas-ffpack
+//!    `Modular<float>` micro-kernel structure.
 //!
 //! 2. **Inner micro-kernel.** A BLIS-class register-blocked sgemm
 //!    micro-kernel with tile shape `m_R × n_R = 4 × 24` (12
 //!    accumulator AVX2 registers + 1 broadcast + 3 B-tile registers
 //!    = 16/16 register file). Each `_mm256_fmadd_ps(b_tile_j,
 //!    a_broadcast_i, acc_ij)` issues at 0.5-cycle reciprocal
-//!    throughput on Zen-3's two FMA execution ports — twice
-//!    Candidate C's `_mm256_madd_epi16` rate. Prefetch hints
-//!    (`_MM_HINT_T0`) on B-panel rows three steps ahead lift the
+//!    throughput on Zen-3's two FMA execution ports. Prefetch hints
+//!    (`_MM_HINT_T0`) on B-panel rows four steps ahead lift the
 //!    L1d-miss latency off the critical path on `n ≥ 1024` cells.
 //!
 //!    The k-loop is split into chunks of `k_C` per outer iteration,
 //!    where `k_C = min(k, k_max(p), K_CHUNK_CAP)`. `k_max(p)` is the
 //!    largest number of `(p-1)²`-magnitude products that f32 can
-//!    absorb without rounding loss; `K_CHUNK_CAP = 1024` keeps each
-//!    u8 B-panel slice (`24 KB`) inside Zen-3's 32 KB L1d. For
-//!    `p ∈ {7, 31, 251}`, `k_C ∈ {1024, 1024, 268}` respectively.
+//!    absorb without rounding loss; `K_CHUNK_CAP = 256` keeps each
+//!    f32 B-panel slice (`24 KB`) inside Zen-3's 32 KB L1d so the
+//!    inner FMAs are not stalled on demand-loads from L2.
+//!    For `p ∈ {7, 31, 251}`, `k_C ∈ {256, 256, 256}` respectively
+//!    (the per-prime `k_max(251) = 268` is already at the cap).
 //!
 //! 3. **Reduction.** At the end of every `k_C` chunk, the 12
 //!    accumulator vectors are rounded to nearest integer via
@@ -52,8 +54,9 @@
 //!    are paid once per `k_C` chunk, not once per FMA — so they
 //!    amortise across the inner loop.
 //!
-//! 4. **Unpack pass.** Copy the canonical-byte output buffer back to
-//!    the caller's `&mut [u8]` storage.
+//! 4. **Unpack pass.** Output canonical bytes are written directly
+//!    to the caller's `&mut [u8]` storage; the caller is responsible
+//!    for converting back to `Fp<P>` via `Fp::new`.
 //!
 //! # Throughput envelope
 //!
@@ -61,9 +64,13 @@
 //! ports each retiring 8 f32 lanes per cycle = 32 ops/cycle in the
 //! bench's `2 m k n` op-count metric. At a 5 GHz boost on the 5900X
 //! reference host the peak is **160 Gop/s**, exactly twice
-//! Candidate C's `_mm256_madd_epi16` peak of 80 Gop/s. The
-//! pack-amortisation derivation in § 6.1 shows F overtakes C at
-//! `n ≥ 32` at the issue's empirical pack-cost factor.
+//! Candidate C's `_mm256_madd_epi16` peak of 80 Gop/s. With the
+//! pre-pack-once + pure-f32-inner-loop structure (no cvt instructions
+//! competing with the FMA back-end), the inner kernel approaches the
+//! OpenBLAS sgemm throughput on this exact host (~138 Gop/s
+//! observed for fflas-ffpack `Modular<float>` at GF(251)/n=1024).
+//! The `2/n` pre-pack overhead amortises away by `n ≥ 256` (0.78%)
+//! and is invisible by `n ≥ 1024` (0.2%).
 //!
 //! # Soundness for `p ≤ 251`
 //!
@@ -83,26 +90,30 @@
 
 #![allow(clippy::missing_safety_doc)]
 
-/// Whole-gemm fast path for canonical-byte `Fp<P>` operands with
+/// Whole-gemm fast path for canonical-residue `Fp<P>` operands with
 /// `P <= 251`, dispatched on AVX2 + FMA3 hosts.
 ///
 /// Computes `c[i*n + j] = (∑_t a[i*k + t] * bt[j*k + t]) mod p` for
 /// every `(i, j) ∈ [0, m) × [0, n)`, where `bt` is the row-major
-/// transpose of the right operand (length `n * k`). Inputs and
-/// outputs are canonical bytes in `[0, p)`.
+/// transpose of the right operand (length `n * k`). Inputs are `f32`
+/// lanes carrying canonical residues in `[0, p)`; outputs are
+/// canonical bytes in `[0, p)`.
 ///
 /// # Arguments
 ///
-/// * `a` — left input in row-major, length `m * k`.
-/// * `bt` — right operand's row-major transpose, length `n * k`.
+/// * `a` — left input in row-major, length `m * k`, canonical
+///   residues stored as `f32` (one residue per lane).
+/// * `bt` — right operand's row-major transpose, length `n * k`,
+///   canonical residues stored as `f32`.
 /// * `m`, `k`, `n` — matrix shapes.
 /// * `p` — odd prime in `[3, 251]`.
-/// * `c` — destination in row-major, length `m * n`. Caller-allocated.
+/// * `c` — destination in row-major, length `m * n`. Caller-allocated,
+///   written as canonical bytes.
 ///
 /// # Panics
 ///
 /// Panics if any slice length disagrees with `m`, `k`, `n`.
-pub type SmallPrimeF32GemmFn = fn(&[u8], &[u8], usize, usize, usize, u8, &mut [u8]);
+pub type SmallPrimeF32GemmFn = fn(&[f32], &[f32], usize, usize, usize, u8, &mut [u8]);
 
 /// Bundle of small-prime f32-FMA SIMD batch operations.
 ///
@@ -130,13 +141,13 @@ pub struct SmallPrimeF32Fns {
 ///
 /// if let Some(fns) = fp_small_f32::detect() {
 ///     // Compute `[1, 2, 3, 4] · diag([1, 1, 1, 1]) mod 7 = [1, 2, 3, 4]`.
-///     let a = [1u8, 2, 3, 4];
+///     let a = [1.0f32, 2.0, 3.0, 4.0];
 ///     // 4×4 identity transpose stored row-major (it equals itself).
 ///     let bt = [
-///         1u8, 0, 0, 0,
-///         0, 1, 0, 0,
-///         0, 0, 1, 0,
-///         0, 0, 0, 1,
+///         1.0f32, 0.0, 0.0, 0.0,
+///         0.0, 1.0, 0.0, 0.0,
+///         0.0, 0.0, 1.0, 0.0,
+///         0.0, 0.0, 0.0, 1.0,
 ///     ];
 ///     let mut out = [0u8; 4];
 ///     (fns.batch_gemm_fn)(&a, &bt, 1, 4, 4, 7, &mut out);
@@ -165,7 +176,7 @@ fn detect_x86() -> Option<SmallPrimeF32Fns> {
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-fn batch_gemm_safe(a: &[u8], bt: &[u8], m: usize, k: usize, n: usize, p: u8, c: &mut [u8]) {
+fn batch_gemm_safe(a: &[f32], bt: &[f32], m: usize, k: usize, n: usize, p: u8, c: &mut [u8]) {
     // Safety: `detect_x86` only returns this pointer when AVX2 + FMA3
     // are both available at runtime.
     unsafe { crate::x86::fp_small_f32::fp_small_f32_gemm(a, bt, m, k, n, p, c) }
@@ -204,6 +215,10 @@ mod tests {
         out
     }
 
+    fn u8_to_f32(xs: &[u8]) -> Vec<f32> {
+        xs.iter().map(|&b| b as f32).collect()
+    }
+
     #[test]
     fn safe_wrapper_matches_scalar_gemm() {
         let fns = match detect() {
@@ -227,8 +242,10 @@ mod tests {
                 let bt: Vec<u8> = (0..(n * k) as u32)
                     .map(|i| ((i * 23 + 5) % p as u32) as u8)
                     .collect();
+                let a_f = u8_to_f32(&a);
+                let bt_f = u8_to_f32(&bt);
                 let mut got = vec![0u8; m * n];
-                (fns.batch_gemm_fn)(&a, &bt, m, k, n, p, &mut got);
+                (fns.batch_gemm_fn)(&a_f, &bt_f, m, k, n, p, &mut got);
                 let expected = scalar_gemm(&a, &bt, m, k, n, p);
                 assert_eq!(got, expected, "p={p} m={m} k={k} n={n}");
             }
@@ -242,8 +259,8 @@ mod tests {
             None => return,
         };
         // `m == 0` or `n == 0` → output is empty; kernel must not panic.
-        let a: Vec<u8> = vec![];
-        let bt: Vec<u8> = vec![];
+        let a: Vec<f32> = vec![];
+        let bt: Vec<f32> = vec![];
         let mut out: Vec<u8> = vec![];
         (fns.batch_gemm_fn)(&a, &bt, 0, 0, 0, 7, &mut out);
         assert!(out.is_empty());
