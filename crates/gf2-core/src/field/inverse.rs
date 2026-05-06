@@ -1075,6 +1075,7 @@ mod tests {
 
     #[test]
     #[serial]
+    #[ignore = "slow: inv(1024×1024) over Fp<MERSENNE_31> takes >5 s on CI hardware"]
     fn test_inv_allocation_budget_n1024_fp_m31() {
         let a = random_fp_invertible::<MERSENNE_31>(1024, 0xC0E0);
         reset_fieldmatrix_new_count();
@@ -1137,7 +1138,8 @@ mod tests {
     // The empirical numbers are the sum of these per-call costs at
     // the chosen recursion thresholds. Numbers below match the
     // post-c3f8c1cb PLE budget (EXPECTED_PLE_N64 = 254 etc.) plus the
-    // small additions above.
+    // small additions above. PLE_BASE_COLS=1 (jit:73ec5da3 sweep
+    // confirmed this as optimal) leaves allocation counts unchanged.
     const EXPECTED_INV_N4: u64 = 19;
     const EXPECTED_INV_N64: u64 = 271;
     const EXPECTED_INV_N1024: u64 = 4569;

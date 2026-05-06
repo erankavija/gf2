@@ -600,6 +600,40 @@ pub trait FiniteField:
     /// at sizes that straddle the threshold and assert bit-exact
     /// agreement with the classical `gemm`-of-dense expansion.
     const TRI_BASE_THRESHOLD: usize = 32;
+
+    /// Column-window width at which [`FieldMatrix::ple`]'s block-recursive
+    /// driver switches from the recursive trsm+gemm strategy to a direct
+    /// column-by-column Gaussian elimination base case.
+    ///
+    /// Increasing this threshold reduces the overhead of the trsm and
+    /// matrix-materialisation calls at deep recursion levels, at the cost
+    /// of using a simpler O(m · win²) schoolbook loop instead of a cache-
+    /// friendly blocked GEMM. The optimal value depends on the field's
+    /// per-element arithmetic cost relative to GEMM dispatch overhead.
+    ///
+    /// `PLE_BASE_COLS = 1` was selected by same-session Criterion sweep
+    /// over GF(2^31-1) at n ∈ {64, 256, 1024}, uniform and deficient
+    /// regimes (see `dev/bench_results/2026-05-07-73ec5da3-ple-trsm-tuning.md`):
+    /// values 1, 4, 8, and 16 were tried; 1 (current baseline — pure
+    /// block-recursive trsm+gemm at all levels) gave the best combined
+    /// result for Mersenne-31 because the blocked GEMM uses delayed u128
+    /// reduction that outperforms the schoolbook scalar loop.
+    ///
+    /// This knob is **soft** — correctness is independent of it. The PLE
+    /// property tests in `src/field/ple.rs` exercise correctness at all
+    /// input sizes regardless of threshold.
+    ///
+    /// # Override guidance
+    ///
+    /// - Large-prime fields with fast GEMM (e.g. Mersenne-31 with delayed
+    ///   reduction) prefer the default 1 — the blocked GEMM is faster than
+    ///   any scalar schoolbook loop.
+    /// - Small-prime fields (`p ≤ 251`) with AVX2 acceleration may benefit
+    ///   from larger values (up to 32) if profiling confirms the schoolbook
+    ///   base case beats the recursive dispatch overhead.
+    /// - GF(2^m) fields (XOR arithmetic) may prefer larger values since
+    ///   element ops are near-free compared to function call overhead.
+    const PLE_BASE_COLS: usize = 1;
 }
 
 /// Extension of [`FiniteField`] for types that are `Copy` and have zero-cost identity constructors.
