@@ -129,4 +129,3 @@ m4rm_gray_schedule/gray_512k_max10/4096
                         time:   [33.886 ms 34.018 ms 34.122 ms]
                         change: [-9.1595% -8.3465% -7.4094%] (p = 0.00 < 0.05)
                         Performance has improved.
-
