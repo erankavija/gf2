@@ -2,7 +2,7 @@
   "id": "a1172cea-cf5b-4527-9343-d81872382859",
   "title": "Measure GF(2^m) post-PPC GEMM against reference",
   "description": "Run comparable GF(2^m) benchmark rows against the selected reference.\n\n## Success Criteria\n\n- [hard] GF(2^m) gf2 and reference CSV rows use comparable shapes and inputs.\n- [hard] The scorecard identifies all remaining GF(2^m) gaps.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "high",
   "assignee": "agent:claude",
   "dependencies": [
@@ -14,15 +14,20 @@
     "doc-review"
   ],
   "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-06T18:36:27.570334648Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-05-06T18:45:36.253577678Z"
+    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-05-06T18:16:09.637611995Z"
-    },
-    "code-review": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-06T18:16:30.023196507Z"
     }
   },
   "context": {},
@@ -54,5 +59,5 @@
     "story:sota-gf2m-reference"
   ],
   "created_at": "2026-04-30T06:43:02.758636806+00:00",
-  "updated_at": "2026-05-06T18:35:37.153621424+00:00"
+  "updated_at": "2026-05-06T18:45:36.378000163+00:00"
 }
