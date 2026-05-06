@@ -9,25 +9,34 @@
 
 ## Optimization applied
 
-`split_compact` previously performed an O(rank × n) post-factorisation scan
-to rediscover pivot columns from the compact working matrix. The pivot column
-at position `c` was found by scanning column `c` from row 0 downward until
-a `1` in an above-diagonal position was found — O(rank) comparisons per column,
-O(rank × n) total for n columns.
+`split_compact` previously performed an O(rank * n) post-factorisation scan
+to rediscover pivot columns from the compact working matrix. The pivot
+column for E's row `i` was found by scanning the row left-to-right from
+the column strictly to the right of the previous pivot until a non-zero
+entry was found -- O(n) comparisons per row in the worst case, O(rank * n)
+total across the first `rank` rows.
 
 The fix threads a `Vec<usize> pivot_cols` accumulator through the
-`ple_in_place` recursion. Each call to `ple_in_place_window` appends `col_lo`
-to `pivot_cols` exactly once per rank contribution (at the base-case pivot
-discovery). `split_compact` receives `pivot_cols: &[usize]` instead of
-rediscovering them by scan.
+`ple_in_place` recursion. Each pivot discovered by the base case
+(`ple_base_direct`) appends its absolute column index to `pivot_cols`,
+preserving left-to-right order. `split_compact` receives
+`pivot_cols: &[usize]` instead of rediscovering them by scan.
 
 Changed lines:
 - `ple_in_place` signature: added `pivot_cols: &mut Vec<usize>` parameter.
-- `ple_in_place_window` base case: `pivot_cols.push(col_lo)` after pivot found.
-- `ple_in_place_window` recursive path: `pivot_cols` threaded through both halves.
-- `split_compact` signature: replaced scan loop with direct use of `pivot_cols`.
-- `FieldMatrix::ple`: allocates `Vec::with_capacity(max_rank)` and passes it
-  through `ple_in_place` → `split_compact`.
+- `ple_base_direct` base case: `pivot_cols.push(col)` once per pivot
+  discovered, where `col` is the loop variable iterating
+  `col_lo..col_hi`. With the project default `PLE_BASE_COLS = 1` (single-
+  column window), `col == col_lo` per call; the pushed value remains a
+  monotone increasing sequence even if `PLE_BASE_COLS` is later widened
+  for fields with cheap per-element arithmetic, because the inner
+  `for col in col_lo..col_hi` loop visits the window in order.
+- `ple_in_place_window` recursive path: `pivot_cols` threaded through
+  both the left-half and bottom-right recursion sites.
+- `split_compact` signature: replaced the scan loop with direct use of
+  `pivot_cols` plus a `debug_assert_eq!(pivot_cols.len(), rank)`.
+- `FieldMatrix::ple`: allocates `Vec::with_capacity(max_rank)` and passes
+  it through `ple_in_place` -> `split_compact`.
 
 The extra `Vec<usize>` allocation is small (8 bytes per rank entry, capacity
 `min(m, n)`) and does not affect `fieldmatrix_new_count`, so the existing
