@@ -538,7 +538,9 @@ mod tests {
             // AVX2 vector boundary and a scalar tail.
             let len = 48;
             let a: Vec<u8> = (0..len).map(|i| (i as u8) % p).collect();
-            let b: Vec<u8> = (0..len).map(|i| ((i as u32 * 7 + 3) % p as u32) as u8).collect();
+            let b: Vec<u8> = (0..len)
+                .map(|i| ((i as u32 * 7 + 3) % p as u32) as u8)
+                .collect();
             let mut out = vec![0u8; len];
             unsafe { fp_small_batch_mul(&a, &b, p, &mut out) };
             for i in 0..len {
