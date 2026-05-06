@@ -881,6 +881,82 @@ impl BitMatrix {
         }
     }
 
+    /// XORs row `src` into row `dst`, starting at `start_word`.
+    ///
+    /// This is the row-operation kernel used by blocked elimination. Skipping
+    /// words before the active pivot is valid once earlier pivot columns have
+    /// already been cleared, and halves the average row traffic on square RREF
+    /// workloads. This intentionally uses an inline scalar loop: the RREF
+    /// target rows are short enough (4–16 words) that avoiding a backend
+    /// function call beats SIMD dispatch overhead in the measured hot loop.
+    pub(crate) fn row_xor_from(&mut self, dst: usize, src: usize, start_word: usize) {
+        debug_assert!(dst < self.rows, "dst row {} out of bounds", dst);
+        debug_assert!(src < self.rows, "src row {} out of bounds", src);
+        debug_assert!(
+            start_word <= self.stride_words,
+            "start_word {} out of bounds for stride {}",
+            start_word,
+            self.stride_words
+        );
+
+        if dst == src || start_word == self.stride_words {
+            return;
+        }
+
+        let start_dst = dst * self.stride_words;
+        let start_src = src * self.stride_words;
+        let len = self.stride_words - start_word;
+
+        if start_dst < start_src {
+            let (left, right) = self.data.split_at_mut(start_src);
+            for (d, &s) in left[start_dst + start_word..start_dst + start_word + len]
+                .iter_mut()
+                .zip(&right[start_word..start_word + len])
+            {
+                *d ^= s;
+            }
+        } else {
+            let (left, right) = self.data.split_at_mut(start_dst);
+            for (d, &s) in right[start_word..start_word + len]
+                .iter_mut()
+                .zip(&left[start_src + start_word..start_src + start_word + len])
+            {
+                *d ^= s;
+            }
+        }
+    }
+
+    /// XORs a precomputed row slice into row `dst`, starting at `start_word`.
+    ///
+    /// Used by M4RI-style Gray-table elimination where `src` is a row
+    /// combination stored outside the matrix.
+    pub(crate) fn row_xor_slice_from(&mut self, dst: usize, start_word: usize, src: &[u64]) {
+        debug_assert!(dst < self.rows, "dst row {} out of bounds", dst);
+        debug_assert!(
+            start_word <= self.stride_words,
+            "start_word {} out of bounds for stride {}",
+            start_word,
+            self.stride_words
+        );
+        debug_assert_eq!(
+            src.len(),
+            self.stride_words - start_word,
+            "row_xor_slice_from source length must match suffix length"
+        );
+
+        if src.is_empty() {
+            return;
+        }
+
+        let start_dst = dst * self.stride_words + start_word;
+        for (d, &s) in self.data[start_dst..start_dst + src.len()]
+            .iter_mut()
+            .zip(src)
+        {
+            *d ^= s;
+        }
+    }
+
     /// Find the first row >= start_row that has a 1 in the given column.
     ///
     /// Uses word-level access for better performance than repeated get() calls.
