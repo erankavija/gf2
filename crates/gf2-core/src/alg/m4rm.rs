@@ -24,6 +24,8 @@ use crate::matrix::BitMatrix;
 /// when LLVM batches the XOR/store loops.
 const B2_GRAY_TILE_WORDS: usize = 8;
 const B2_GRAY_MAX_TILES: usize = 4;
+const M4RM_DEFAULT_TABLE_BYTES: usize = 64 * 1024;
+const M4RM_DEFAULT_MAX_K: usize = 8;
 
 /// Row accumulators held by the M4RM C-tile update.
 const M4RM_TILE_ROWS: usize = 8;
@@ -47,18 +49,29 @@ type M4rmTile8xNFn = fn(&mut [u64], usize, &[u64], &[usize; M4RM_TILE_ROWS]);
 ///
 /// Block size k_block (typically 6-8)
 fn choose_k_block(k: usize, n: usize) -> usize {
+    choose_k_block_with_limit(k, n, M4RM_DEFAULT_TABLE_BYTES, M4RM_DEFAULT_MAX_K)
+}
+
+fn choose_k_block_with_limit(
+    k: usize,
+    n: usize,
+    target_table_bytes: usize,
+    max_k_block: usize,
+) -> usize {
     // Each table entry is a row of n bits, stored in stride_words u64s
     let stride_words = if n == 0 { 0 } else { n.div_ceil(64) };
     let bytes_per_entry = stride_words * 8;
 
-    // Try different block sizes and pick the largest that fits in cache
-    const TARGET_TABLE_BYTES: usize = 64 * 1024; // 64 KiB target
+    if k == 0 || max_k_block == 0 {
+        return 0;
+    }
 
-    for k_block in (1..=8).rev() {
+    let largest_k = max_k_block.min(k).min(usize::BITS as usize - 1);
+    for k_block in (1..=largest_k).rev() {
         let table_entries = 1usize << k_block;
         let table_bytes = table_entries * bytes_per_entry;
 
-        if table_bytes <= TARGET_TABLE_BYTES && k_block <= k {
+        if table_bytes <= target_table_bytes {
             return k_block;
         }
     }
@@ -475,6 +488,54 @@ pub fn multiply(a: &BitMatrix, b: &BitMatrix) -> BitMatrix {
     }
 
     let k_block = choose_k_block(k, n);
+    let stride_words = n.div_ceil(64);
+    let xor = resolve_xor_inplace(stride_words);
+
+    if k_block == 1 {
+        return a.mul_row_xor_dispatch(b);
+    }
+
+    if use_register_tiled_schedule(m, stride_words) {
+        if let Some(tile8xn) = resolve_m4rm_tile8xn() {
+            return multiply_register_tiled(a, b, k_block, stride_words, xor, tile8xn);
+        }
+    }
+
+    multiply_rowwise_panels(a, b, k_block, stride_words, xor)
+}
+
+#[doc(hidden)]
+#[cfg(any(test, feature = "test-support"))]
+pub fn multiply_with_table_schedule_for_test(
+    a: &BitMatrix,
+    b: &BitMatrix,
+    target_table_bytes: usize,
+    max_k_block: usize,
+) -> BitMatrix {
+    let m = a.rows();
+    let k = a.cols();
+    let n = b.cols();
+
+    assert_eq!(
+        k,
+        b.rows(),
+        "incompatible dimensions: A is {}×{} but B is {}×{}",
+        m,
+        k,
+        b.rows(),
+        n
+    );
+    assert!(
+        target_table_bytes > 0,
+        "target_table_bytes must be positive"
+    );
+    assert!(max_k_block > 0, "max_k_block must be positive");
+
+    if m == 0 || k == 0 || n == 0 {
+        return BitMatrix::zeros(m, n);
+    }
+
+    let k_block = choose_k_block_with_limit(k, n, target_table_bytes, max_k_block);
     let stride_words = n.div_ceil(64);
     let xor = resolve_xor_inplace(stride_words);
 
@@ -939,6 +1000,14 @@ mod tests {
     }
 
     #[test]
+    fn test_m4ri_style_schedule_selects_wider_panels_when_cache_budget_allows() {
+        assert_eq!(choose_k_block_with_limit(4096, 4096, 64 * 1024, 8), 7);
+        assert_eq!(choose_k_block_with_limit(4096, 4096, 128 * 1024, 10), 8);
+        assert_eq!(choose_k_block_with_limit(4096, 4096, 256 * 1024, 10), 9);
+        assert_eq!(choose_k_block_with_limit(4096, 4096, 512 * 1024, 10), 10);
+    }
+
+    #[test]
     fn test_extract_bits() {
         let mut a = BitMatrix::zeros(1, 8);
         a.set(0, 1, true);
@@ -1167,6 +1236,45 @@ mod tests {
                     );
                 }
             }
+        }
+    }
+
+    #[test]
+    fn test_m4ri_style_schedule_matches_production_on_boundary_shapes() {
+        use rand::rngs::StdRng;
+        use rand::{Rng, SeedableRng};
+
+        fn random_matrix(rows: usize, cols: usize, rng: &mut StdRng) -> BitMatrix {
+            let mut matrix = BitMatrix::zeros(rows, cols);
+            for r in 0..rows {
+                for c in 0..cols {
+                    if rng.gen_bool(0.5) {
+                        matrix.set(r, c, true);
+                    }
+                }
+            }
+            matrix
+        }
+
+        let mut rng = StdRng::seed_from_u64(0x380e_041a);
+        for (m, k, n) in [
+            (0, 13, 65),
+            (1, 1, 1),
+            (7, 63, 64),
+            (8, 64, 65),
+            (9, 65, 129),
+            (16, 257, 512),
+        ] {
+            let a = random_matrix(m, k, &mut rng);
+            let b = random_matrix(k, n, &mut rng);
+
+            let production = multiply(&a, &b);
+            let wider_gray_table = multiply_with_table_schedule_for_test(&a, &b, 256 * 1024, 10);
+
+            assert_eq!(
+                wider_gray_table, production,
+                "m4ri-style schedule mismatch for {m}×{k} times {k}×{n}"
+            );
         }
     }
 }
