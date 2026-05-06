@@ -99,6 +99,18 @@ impl Gf2mWideConfig<1> for EmitterGf2m16Cfg {
     const NAME: &'static str = "Gf2m16";
 }
 
+/// GF(2^32) using the Conway polynomial x^32 + x^15 + x^9 + x^7 + x^4 + x^3 + 1
+/// (0x1_0000_8299). The MODULUS holds the lower 32 bits (0x0000_8299) per the
+/// Gf2mWideConfig contract; the leading x^32 term is implicit. Source:
+/// Frank Lubeck's Conway-polynomial database, f_{2,32}. Also the SSOT
+/// in `crates/gf2-core/src/primitive_polys.rs::standard(32)`.
+struct EmitterGf2m32Cfg;
+impl Gf2mWideConfig<1> for EmitterGf2m32Cfg {
+    const M: usize = 32;
+    const MODULUS: [u64; 1] = [0x0000_8299];
+    const NAME: &'static str = "Gf2m32Conway";
+}
+
 const CELL_BUDGET_NS: u64 = 30 * 1_000_000_000;
 
 #[derive(Clone)]
@@ -977,6 +989,58 @@ fn run_bitmatrix(args: &Args, sink: &mut CsvSink) -> std::io::Result<()> {
     Ok(())
 }
 
+/// Emit GF(2^32) matmul (square, `n ∈ {64, 256, 1024}`, uniform only) using the
+/// `"matmul"` operation tag. Seed derivation mirrors the NTL bench in
+/// `benchmarks/reference/ntl_bench.cpp` exactly: the NTL bench XORs the master
+/// seed with `0x77` before deriving per-cell seeds so the GF(2^32) stream is
+/// disjoint from all GF(p) streams. At `si=0` (n=64) with the project master
+/// seed `0x6F73AC91D31E4A7C` this produces seed `17158103737143628803`, which
+/// is the NTL canonical row seed from `benchmarks/results/20260505T091600Z.csv`.
+/// The B-matrix seed uses the `^0x1111...` convention shared by the reference
+/// harness (see `ntl_bench.cpp` `fill_uniform` B call).
+fn run_gf2m32_matmul(args: &Args, sink: &mut CsvSink) -> std::io::Result<()> {
+    const GF2M32_SIZES: &[usize] = &[64, 256, 1024];
+    let field_label = "GF(2^32)";
+    // Mirror the NTL bench's `master_seed ^ 0x77ULL` salt (ntl_bench.cpp
+    // `run_gf2pow32` call site) so seeds align byte-for-byte with the NTL rows.
+    let salted_master = args.master_seed ^ 0x77u64;
+    for (si, &n) in GF2M32_SIZES.iter().enumerate() {
+        let key = cell_key("matmul", field_label, n, "uniform");
+        if !cell_passes(&args.filter, &key) {
+            continue;
+        }
+        let seed_a = derive_seed(salted_master, "matmul", 0, si as u64, 0);
+        let seed_b = seed_a ^ 0x1111_1111_1111_1111u64;
+        let a: FieldMatrix<Gf2mWide<1, EmitterGf2m32Cfg>> =
+            gf2m_wide_1_matrix_from_seed::<EmitterGf2m32Cfg>(n, n, seed_a);
+        let b: FieldMatrix<Gf2mWide<1, EmitterGf2m32Cfg>> =
+            gf2m_wide_1_matrix_from_seed::<EmitterGf2m32Cfg>(n, n, seed_b);
+        eprintln!("[gf2-csv] {key} seed={seed_a}");
+        let (wall_ns, early) = time_op(
+            || {
+                let _ = std::hint::black_box(gemm(&a, &b));
+            },
+            args.warmup,
+            args.iters,
+        );
+        if early {
+            eprintln!("[gf2-csv] WARN early_exit {key} wall_ns={wall_ns}");
+        }
+        sink.emit(
+            "matmul",
+            field_label,
+            n,
+            n,
+            n,
+            "uniform",
+            seed_a,
+            wall_ns,
+            tput(ops_gemm(n, n, n), wall_ns),
+        )?;
+    }
+    Ok(())
+}
+
 fn main() -> std::io::Result<()> {
     let args = Args::parse();
     eprintln!(
@@ -996,6 +1060,7 @@ fn main() -> std::io::Result<()> {
     run_fp::<MERSENNE_31>(&args, &mut sink, "GF(2^31-1)")?;
     run_gf2m::<EmitterGf2m8Cfg>(&args, &mut sink, "GF(2^8)")?;
     run_gf2m::<EmitterGf2m16Cfg>(&args, &mut sink, "GF(2^16)")?;
+    run_gf2m32_matmul(&args, &mut sink)?;
     run_bitmatrix(&args, &mut sink)?;
 
     eprintln!("[gf2-csv] wrote {}", args.output.display());

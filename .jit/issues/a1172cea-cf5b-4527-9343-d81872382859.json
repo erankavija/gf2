@@ -2,9 +2,9 @@
   "id": "a1172cea-cf5b-4527-9343-d81872382859",
   "title": "Measure GF(2^m) post-PPC GEMM against reference",
   "description": "Run comparable GF(2^m) benchmark rows against the selected reference.\n\n## Success Criteria\n\n- [hard] GF(2^m) gf2 and reference CSV rows use comparable shapes and inputs.\n- [hard] The scorecard identifies all remaining GF(2^m) gaps.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "high",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [
     "9a715d75-eb45-4f37-a031-5c83bfae8556"
   ],
@@ -15,7 +15,21 @@
   ],
   "gates_status": {},
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/bench_results/2026-05-06-a1172cea-gf2m-scorecard.md",
+      "commit": null,
+      "label": "GF(2^m) post-PPC scorecard",
+      "doc_type": "evidence",
+      "format": "markdown"
+    },
+    {
+      "path": "dev/bench_results/2026-05-06-a1172cea-gf2m-gf2-rows.csv",
+      "commit": null,
+      "label": "gf2-core GF(2^m) matmul rows (a1172cea)",
+      "doc_type": "evidence"
+    }
+  ],
   "labels": [
     "type:task",
     "component:gf2-core",
@@ -23,5 +37,5 @@
     "story:sota-gf2m-reference"
   ],
   "created_at": "2026-04-30T06:43:02.758636806+00:00",
-  "updated_at": "2026-05-05T09:50:01.670842041+00:00"
+  "updated_at": "2026-05-06T18:15:17.754096761+00:00"
 }
