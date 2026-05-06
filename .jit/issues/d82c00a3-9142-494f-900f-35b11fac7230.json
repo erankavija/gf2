@@ -14,7 +14,18 @@
     "cargo-ci",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-06T21:19:49.016386814Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-06T21:20:06.288188695Z"
+    }
+  },
   "context": {},
   "documents": [
     {
@@ -32,5 +43,5 @@
     "story:sota-gf2m-reference"
   ],
   "created_at": "2026-04-30T06:43:02.787652814+00:00",
-  "updated_at": "2026-05-06T21:14:14.415385963+00:00"
+  "updated_at": "2026-05-06T21:24:09.504449640+00:00"
 }

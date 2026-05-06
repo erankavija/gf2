@@ -23,6 +23,13 @@
       "label": "GF(2^m) reference lane decision (ingested by 9a715d75)",
       "doc_type": "design",
       "format": "markdown"
+    },
+    {
+      "path": "dev/bench_results/2026-05-07-d82c00a3-gf2m-parity-evidence.md",
+      "commit": null,
+      "label": "GF(2^m) parity evidence (story 2c7548ae closure)",
+      "doc_type": "evidence",
+      "format": "markdown"
     }
   ],
   "labels": [
@@ -33,5 +40,5 @@
     "story:sota-gf2m-reference"
   ],
   "created_at": "2026-04-30T06:43:02.494673140+00:00",
-  "updated_at": "2026-05-06T20:12:38.218559263+00:00"
+  "updated_at": "2026-05-06T21:24:59.489375211+00:00"
 }
