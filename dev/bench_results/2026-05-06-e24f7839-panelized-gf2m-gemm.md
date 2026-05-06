@@ -12,7 +12,7 @@
 | gf2 CSV (GF(2^8)/GF(2^16)) | `dev/bench_results/2026-05-06-e24f7839-gf2m-panelized.csv` |
 | gf2 CSV (GF(2^32)) | `dev/bench_results/2026-05-06-e24f7839-gf2pow32-panelized.csv` |
 | Commit range | `cdb0e87` (baseline) → HEAD (panelized GEMM, I_TILE=4) |
-| Status | PARTIAL -- GF(2^32) all PASS; GF(2^16) improved but n=1024 misses 0.667 threshold (0.614); GF(2^8) structural algorithmic gap remains |
+| Status | DELIVERY COMPLETE under user-approved Path A amendment (2026-05-06). GF(2^32) all PASS [hard]; GF(2^16) at n in {64, 256} PASS [hard]; GF(2^16) n=1024 + GF(2^8) all sizes [aspirational] with documented architectural cause. See § 5 and the issue description amendment. |
 
 ---
 
@@ -146,19 +146,37 @@ GF(2^8)-specific Newton-John). No criterion amendment is proposed here.
 
 ---
 
-## 5. Escalation note
+## 5. Escalation outcome (Path A amendment, user-approved 2026-05-06)
 
-Two `[hard]` success criterion cells remain FAIL after this implementation:
+The 4 cells that did not meet the original `[hard]` 0.667 threshold were
+escalated via AskUserQuestion at e24f7839 closure. The user approved
+**Path A**: amend the per-cell maturity markers so the four cells are
+`[aspirational]` with documented architectural cause, and delegate the
+deeper algorithmic catch-up to the broader finite-field SOTA plan in
+issue `615db3b9` (`dev/active/615db3b9-finite-field-la-sota-plan.md`).
 
-1. **GF(2^16) n=1024**: ratio 0.614 vs threshold 0.667 (8.5% below). The observed
-   throughput is close to the single-core VPCLMULQDQ ceiling for this chain depth.
-   Further gain requires a different algorithm (Barrett table precompute for m=16,
-   GFNI path, or AVX-512) -- all out of scope for panelized GEMM.
+The amendments are recorded in the issue descriptions for `e24f7839` and
+parent story `2c7548ae`. Concretely:
 
-2. **GF(2^8) all sizes**: structural algorithmic gap (M4RIE is O(n^3/log n) vs
-   gf2-core O(n^3)). Panelized GEMM does not change the algorithm class.
+1. **GF(2^16) n=1024 [aspirational]**: ratio 0.614 vs threshold 0.667
+   (8.5% below). The observed throughput is close to the single-core
+   VPCLMULQDQ ceiling for the 3-CLMUL Barrett chain depth. Closing
+   requires GFNI (`vgf2p8mulb`) or AVX-512 ZMM, neither available on
+   the Zen-3 host class. Per `fb271c41` decision, those are documented
+   as future direction for Zen-4+ hosts and not in scope for this epic.
 
-Per the project escalation policy, `[hard]` criterion failures that cannot be closed
-without out-of-scope work must be escalated to the lead. The code changes in this issue
-are committed and all validation gates pass (fmt, test, clippy, doc). Lead decision
-needed on criterion disposition for the 4 remaining FAIL cells.
+2. **GF(2^8) all sizes [aspirational]**: structural algorithmic gap
+   (M4RIE is O(n^3 / log n) Newton-John / Method of Four Russians vs
+   gf2-core O(n^3) per-element CLMUL). Panelized GEMM does not change
+   the algorithm class. The Newton-John follow-up is owned by the
+   `615db3b9` plan, not by a duplicate impl issue under this story.
+
+3. **Re-escalation thresholds** (recorded in the JIT amendment): revisit
+   GF(2^8) cells when the `615db3b9` Newton-John sub-issue lands;
+   revisit GF(2^16) n=1024 when GFNI / AVX-512 ZMM is harnessed for a
+   Zen-4+ host class.
+
+All validation gates pass (fmt, test, clippy, doc) and the panelized
+GEMM commits are merged into `main`. The issue closes with the four
+amended cells documented above; no further code work is required for
+this issue.

@@ -63,37 +63,35 @@ impl Backend for SimdBackend {
 /// Global SIMD backend instance, lazily initialized on first access.
 pub static SIMD_BACKEND: LazyLock<Option<SimdBackend>> = LazyLock::new(SimdBackend::detect);
 
-/// Global GF(2^m) batch SIMD function bundle, lazily initialized on first access.
-pub static GF2M_BATCH_FNS: LazyLock<Option<gf2_kernels_simd::gf2m_batch::Gf2mBatchFns>> =
-    LazyLock::new(gf2_kernels_simd::gf2m_batch::detect);
-
-/// Global GF(2^m) panelized GEMM SIMD function bundle, lazily initialized.
-pub static GF2M_GEMM_FNS: LazyLock<Option<gf2_kernels_simd::gf2m_gemm::Gf2mGemmFns>> =
-    LazyLock::new(gf2_kernels_simd::gf2m_gemm::detect);
-
 /// Get the SIMD backend if available.
 #[inline]
 pub fn maybe_simd() -> Option<&'static SimdBackend> {
     SIMD_BACKEND.as_ref()
 }
 
+// The GF(2^m) kernel accessors below are thin pass-throughs to the
+// canonical `crate::simd` accessors (defined in lib.rs). The kernel
+// detection state lives in OnceLocks on that canonical path; these
+// public re-exports exist only because `crate::simd` is `pub(crate)`
+// and external test crates need a reachable accessor. Do not add new
+// per-kernel statics here; extend `crate::simd` instead.
+
 /// Get the GF(2^m) batch SIMD function bundle if available.
 ///
-/// This is stricter than [`maybe_simd`]: the general logical SIMD backend only
-/// requires AVX2 on x86, while the GF(2^m) batch kernels require carry-less
-/// multiply support (`vpclmulqdq`/`pclmulqdq`) as well.
+/// Stricter than [`maybe_simd`]: requires `vpclmulqdq` / `pclmulqdq`
+/// in addition to AVX2.
 #[inline]
 pub fn maybe_gf2m_batch() -> Option<&'static gf2_kernels_simd::gf2m_batch::Gf2mBatchFns> {
-    GF2M_BATCH_FNS.as_ref()
+    crate::simd::maybe_gf2m_batch()
 }
 
 /// Get the GF(2^m) panelized GEMM SIMD function bundle if available.
 ///
-/// Same feature requirements as [`maybe_gf2m_batch`]: avx2 + vpclmulqdq +
-/// pclmulqdq + sse4.1. Returns `None` when the host lacks these features.
+/// Same feature requirements as [`maybe_gf2m_batch`]. Returns `None`
+/// when the host lacks `avx2 + vpclmulqdq + pclmulqdq + sse4.1`.
 #[inline]
 pub fn maybe_gf2m_gemm() -> Option<&'static gf2_kernels_simd::gf2m_gemm::Gf2mGemmFns> {
-    GF2M_GEMM_FNS.as_ref()
+    crate::simd::maybe_gf2m_gemm()
 }
 
 #[cfg(test)]

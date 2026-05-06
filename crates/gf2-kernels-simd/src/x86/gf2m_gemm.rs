@@ -41,104 +41,12 @@ use core::arch::x86::*;
 use core::arch::x86_64::*;
 
 // ---------------------------------------------------------------------------
-// Helpers — local copies of private helpers from gf2m_batch.rs so this
-// module is self-contained without importing private sibling symbols.
+// Shared Barrett-reduction helpers live in `super::gf2m_common`; both this
+// module and `super::gf2m_batch` import them from there. Single source of
+// truth for the carry-less multiply + Barrett reduce algorithm.
 // ---------------------------------------------------------------------------
 
-/// Single-element carry-less multiply + Barrett reduce. Inline for tail
-/// handling without call-pointer overhead.
-#[inline(always)]
-unsafe fn clmul_barrett_scalar(a: u64, b: u64, mu: u64, modulus: u64, degree: u32) -> u64 {
-    if a == 0 || b == 0 {
-        return 0;
-    }
-    let field_mask = if degree == 64 {
-        u64::MAX
-    } else {
-        (1u64 << degree) - 1
-    };
-
-    let a_reg = _mm_set_epi64x(0, a as i64);
-    let b_reg = _mm_set_epi64x(0, b as i64);
-    let product_reg = _mm_clmulepi64_si128::<0x00>(a_reg, b_reg);
-
-    let prod_lo = _mm_extract_epi64::<0>(product_reg) as u64;
-    let prod_hi = _mm_extract_epi64::<1>(product_reg) as u64;
-    let product = ((prod_hi as u128) << 64) | prod_lo as u128;
-
-    if product >> degree == 0 {
-        return product as u64;
-    }
-
-    let c_high = (product >> degree) as u64;
-    let c_high_reg = _mm_set_epi64x(0, c_high as i64);
-    let mu_reg = _mm_set_epi64x(0, mu as i64);
-    let q_full_reg = _mm_clmulepi64_si128::<0x00>(c_high_reg, mu_reg);
-
-    let q_lo = _mm_extract_epi64::<0>(q_full_reg) as u64;
-    let q_hi = _mm_extract_epi64::<1>(q_full_reg) as u64;
-    let q_full = ((q_hi as u128) << 64) | q_lo as u128;
-    let q = (q_full >> degree) as u64;
-
-    let q_reg = _mm_set_epi64x(0, q as i64);
-    let mod_reg = _mm_set_epi64x(0, modulus as i64);
-    let qp_reg = _mm_clmulepi64_si128::<0x00>(q_reg, mod_reg);
-
-    let qp_lo = _mm_extract_epi64::<0>(qp_reg) as u64;
-    let qp_hi = _mm_extract_epi64::<1>(qp_reg) as u64;
-    let qp = ((qp_hi as u128) << 64) | qp_lo as u128;
-
-    let mut r = product ^ qp;
-    if r >> degree != 0 {
-        r ^= modulus as u128;
-    }
-    if r >> degree != 0 {
-        r ^= modulus as u128;
-    }
-    (r as u64) & field_mask
-}
-
-/// YMM-resident Barrett reduction on two 256-bit registers, each holding
-/// two 128-bit lanes of carry-less products for `m ∈ {8, 16, 32}`.
-///
-/// `SHIFT_BYTES = m / 8`: 1 for m=8, 2 for m=16, 4 for m=32.
-#[inline(always)]
-unsafe fn ymm_barrett_reduce<const SHIFT_BYTES: i32>(
-    prod_lo: __m256i,
-    prod_hi: __m256i,
-    mu_ymm: __m256i,
-    mod_ymm: __m256i,
-) -> (__m256i, __m256i) {
-    let c_high_lo = _mm256_srli_si256::<SHIFT_BYTES>(prod_lo);
-    let c_high_hi = _mm256_srli_si256::<SHIFT_BYTES>(prod_hi);
-
-    let q_full_lo = _mm256_clmulepi64_epi128::<0x00>(c_high_lo, mu_ymm);
-    let q_full_hi = _mm256_clmulepi64_epi128::<0x00>(c_high_hi, mu_ymm);
-
-    let q_lo = _mm256_srli_si256::<SHIFT_BYTES>(q_full_lo);
-    let q_hi = _mm256_srli_si256::<SHIFT_BYTES>(q_full_hi);
-
-    let qp_lo = _mm256_clmulepi64_epi128::<0x00>(q_lo, mod_ymm);
-    let qp_hi = _mm256_clmulepi64_epi128::<0x00>(q_hi, mod_ymm);
-
-    let r_lo = _mm256_xor_si256(prod_lo, qp_lo);
-    let r_hi = _mm256_xor_si256(prod_hi, qp_hi);
-
-    (r_lo, r_hi)
-}
-
-/// Final correction: r ∈ `[0, 2P)` → r ∈ `[0, P)`.
-#[inline(always)]
-fn correct(mut r: u64, modulus: u64, shift_bytes: i32, mask: u64) -> u64 {
-    let degree = (shift_bytes as u32) * 8;
-    if (r >> degree) != 0 {
-        r ^= modulus;
-    }
-    if (r >> degree) != 0 {
-        r ^= modulus;
-    }
-    r & mask
-}
+use super::gf2m_common::{clmul_barrett_scalar, correct, ymm_barrett_reduce};
 
 // ---------------------------------------------------------------------------
 // Main kernel: broadcast-multiply-accumulate
