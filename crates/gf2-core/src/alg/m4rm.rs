@@ -631,17 +631,6 @@ fn use_register_tiled_schedule(m: usize, stride_words: usize) -> bool {
 }
 
 #[inline]
-fn use_next_panel_prefetch(stride_words: usize) -> bool {
-    // The earlier V6 prototype built the next Gray table before updating the
-    // current panel, then prefetched individual next-table rows.  jit:8e305c21
-    // measurements found that two resident tables plus prefetch traffic evict
-    // useful current-panel data on the target 2048/4096 rows.  Keep production
-    // on the single-table schedule until a future kernel proves a net win.
-    let _ = stride_words;
-    false
-}
-
-#[inline]
 fn resolve_m4rm_tile8xn() -> Option<M4rmTile8xNFn> {
     #[cfg(feature = "simd")]
     {
@@ -701,85 +690,23 @@ fn multiply_register_tiled(
     let n = b.cols();
     let table_size = 1usize << k_block;
     let mut c = BitMatrix::zeros(m, n);
+    let mut table_buffer = vec![0u64; table_size * stride_words];
 
-    if !use_next_panel_prefetch(stride_words) {
-        let mut table_buffer = vec![0u64; table_size * stride_words];
-
-        let mut panel_start = 0usize;
-        while panel_start < k {
-            let panel_size = k_block.min(k - panel_start);
-            build_gray_table_flat(b, panel_start, panel_size, n, &mut table_buffer, xor);
-            update_panel_register_tiled(
-                a,
-                &mut c,
-                panel_start,
-                panel_size,
-                &table_buffer,
-                None,
-                stride_words,
-                xor,
-                tile8xn,
-            );
-            panel_start += k_block;
-        }
-
-        return c;
-    }
-
-    let mut table_buffers = [
-        vec![0u64; table_size * stride_words],
-        vec![0u64; table_size * stride_words],
-    ];
-
-    let mut current_slot = 0usize;
     let mut panel_start = 0usize;
-    let mut panel_size = k_block.min(k - panel_start);
-    build_gray_table_flat(
-        b,
-        panel_start,
-        panel_size,
-        n,
-        &mut table_buffers[current_slot],
-        xor,
-    );
-
-    loop {
-        let next_panel_start = panel_start + k_block;
-        let next_meta = (next_panel_start < k).then(|| {
-            let next_slot = current_slot ^ 1;
-            let next_panel_size = k_block.min(k - next_panel_start);
-            build_gray_table_flat(
-                b,
-                next_panel_start,
-                next_panel_size,
-                n,
-                &mut table_buffers[next_slot],
-                xor,
-            );
-            (next_slot, next_panel_start, next_panel_size)
-        });
-
-        let next_table =
-            next_meta.map(|(slot, start, size)| (&table_buffers[slot][..], start, size));
+    while panel_start < k {
+        let panel_size = k_block.min(k - panel_start);
+        build_gray_table_flat(b, panel_start, panel_size, n, &mut table_buffer, xor);
         update_panel_register_tiled(
             a,
             &mut c,
             panel_start,
             panel_size,
-            &table_buffers[current_slot],
-            next_table,
+            &table_buffer,
             stride_words,
             xor,
             tile8xn,
         );
-
-        if let Some((slot, start, size)) = next_meta {
-            current_slot = slot;
-            panel_start = start;
-            panel_size = size;
-        } else {
-            break;
-        }
+        panel_start += k_block;
     }
 
     c
@@ -810,7 +737,6 @@ fn update_panel_register_tiled(
     panel_start: usize,
     panel_size: usize,
     table_buffer: &[u64],
-    next_table: Option<(&[u64], usize, usize)>,
     stride_words: usize,
     xor: XorInplaceFn,
     tile8xn: M4rmTile8xNFn,
@@ -819,28 +745,13 @@ fn update_panel_register_tiled(
 
     for row_start in (0..full_rows).step_by(M4RM_TILE_ROWS) {
         let idx = row_tile_indices::<M4RM_TILE_ROWS>(a, row_start, panel_start, panel_size);
-        let next_idx = next_table.map(|(_, next_start, next_size)| {
-            row_tile_indices::<M4RM_TILE_ROWS>(a, row_start, next_start, next_size)
-        });
-        if let (Some((next, _, _)), Some(next_idx)) = (next_table, next_idx.as_ref()) {
-            prefetch_next_tile8x4(next, stride_words, 0, next_idx);
-        }
 
         let c_block = c.row_words_block_mut(row_start, M4RM_TILE_ROWS);
         tile8xn(c_block, stride_words, table_buffer, &idx);
 
         let full_words = stride_words / M4RM_TILE_WORDS * M4RM_TILE_WORDS;
         if full_words < stride_words {
-            update_row_tile_tail(
-                c,
-                row_start,
-                full_words,
-                stride_words,
-                table_buffer,
-                next_table.map(|(next, _, _)| next),
-                &idx,
-                next_idx.as_ref(),
-            );
+            update_row_tile_tail(c, row_start, full_words, stride_words, table_buffer, &idx);
         }
     }
 
@@ -862,19 +773,6 @@ fn row_tile_indices<const ROWS: usize>(
     core::array::from_fn(|r| {
         extract_bits_from_row_words(a.row_words(row_start + r), panel_start, panel_size)
     })
-}
-
-#[inline(always)]
-fn prefetch_next_tile8x4(
-    next_table: &[u64],
-    stride_words: usize,
-    word_start: usize,
-    idx: &[usize; M4RM_TILE_ROWS],
-) {
-    for &entry in idx {
-        let offset = entry * stride_words + word_start;
-        gf2_kernels_simd::prefetch_read_l1(next_table[offset..].as_ptr().cast());
-    }
 }
 
 #[cfg(test)]
@@ -1011,18 +909,9 @@ fn update_row_tile_tail(
     word_start: usize,
     stride_words: usize,
     table_buffer: &[u64],
-    next_table: Option<&[u64]>,
     idx: &[usize; M4RM_TILE_ROWS],
-    next_idx: Option<&[usize; M4RM_TILE_ROWS]>,
 ) {
     for r in 0..M4RM_TILE_ROWS {
-        if let (Some(next), Some(next_idx)) = (next_table, next_idx) {
-            gf2_kernels_simd::prefetch_read_l1(
-                next[next_idx[r] * stride_words + word_start..]
-                    .as_ptr()
-                    .cast(),
-            );
-        }
         let start = idx[r] * stride_words + word_start;
         let table_entry = &table_buffer[start..idx[r] * stride_words + stride_words];
         let c_tail = &mut c.row_words_mut(row_start + r)[word_start..stride_words];
@@ -1223,9 +1112,6 @@ mod tests {
         assert!(!use_register_tiled_schedule(64, 8));
         assert!(use_register_tiled_schedule(8, 16));
         assert!(use_register_tiled_schedule(8, 32));
-        assert!(!use_next_panel_prefetch(16));
-        assert!(!use_next_panel_prefetch(32));
-        assert!(!use_next_panel_prefetch(64));
     }
 
     #[test]
