@@ -2,9 +2,9 @@
   "id": "d82c00a3-9142-494f-900f-35b11fac7230",
   "title": "Publish GF(2^m) parity evidence",
   "description": "Publish final GF(2^m) evidence.\n\n## Success Criteria\n\n- [hard] Raw CSVs and ratio tables are linked to the story.\n- [hard] Reference caveats and dispatch policy are documented.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [
     "e24f7839-5460-4b5c-ac4d-9f656eeefb54",
     "fb271c41-d797-455d-916b-0d698e092d73"
@@ -16,7 +16,15 @@
   ],
   "gates_status": {},
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/bench_results/2026-05-07-d82c00a3-gf2m-parity-evidence.md",
+      "commit": null,
+      "label": "GF(2^m) parity evidence (story 2c7548ae closure)",
+      "doc_type": "evidence",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:task",
     "component:gf2-core",
@@ -24,5 +32,5 @@
     "story:sota-gf2m-reference"
   ],
   "created_at": "2026-04-30T06:43:02.787652814+00:00",
-  "updated_at": "2026-05-06T21:09:54.037714999+00:00"
+  "updated_at": "2026-05-06T21:14:14.415385963+00:00"
 }
