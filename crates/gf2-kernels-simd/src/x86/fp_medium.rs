@@ -34,8 +34,8 @@
 //!   Montgomery storage; only the *meaning* of the result differs by an
 //!   `R²` factor. Standalone callers feeding canonical lanes get the
 //!   canonical dot product. The GEMM caller in
-//!   `gf2-core/src/gfp/simd_ops.rs::fp_medium_try_dot_packed` (line 656,
-//!   with operands packed by `fp_medium_try_pack_u16` at line 629)
+//!   `gf2-core/src/gfp/simd_ops.rs::fp_medium_try_dot_packed` (with
+//!   operands packed by `fp_medium_try_pack_u16`)
 //!   feeds **Montgomery raw storage** truncated `u64 → u16`; the
 //!   kernel returns `R² · Σ aᵢbᵢ mod P`, and the caller then applies one
 //!   Montgomery REDC to recover the canonical Montgomery storage of the
@@ -238,7 +238,7 @@ unsafe fn fp_medium_sub16(a: __m256i, b: __m256i, p: __m256i) -> __m256i {
 ///   P = abR² mod P`, not `abR mod P`), so feeding Montgomery raw
 ///   storage would silently produce wrong-domain output without any
 ///   subsequent REDC fix-up. The `gf2-core` caller
-///   `fp_medium_try_mul_vec` (`crates/gf2-core/src/gfp/simd_ops.rs:456`)
+///   `fp_medium_try_mul_vec` (in `crates/gf2-core/src/gfp/simd_ops.rs`)
 ///   packs canonical via `fp_medium_pack_canonical` accordingly.
 /// * `p` — the prime modulus; must be in `(1, 2^16)`.
 /// * `barrett_m` — `floor(2^32 / p)`, the Barrett magic constant.
@@ -391,8 +391,8 @@ pub unsafe fn fp_medium_batch_sub(a: &[u16], b: &[u16], p: u16, out: &mut [u16])
 ///   `fp_medium_pack_canonical`) get the canonical dot product
 ///   `(Σ aᵢbᵢ) mod p`.
 /// * The GEMM caller (`gf2-core/src/gfp/simd_ops.rs::fp_medium_try_dot_packed`,
-///   line 656, with operands packed by `fp_medium_try_pack_u16`,
-///   line 629) feeds **Montgomery raw storage** `aR mod p` truncated to
+///   with operands packed by `fp_medium_try_pack_u16`) feeds
+///   **Montgomery raw storage** `aR mod p` truncated to
 ///   u16. The kernel's output is then `(R² · Σ aᵢbᵢ) mod p`, and the
 ///   caller applies one Montgomery REDC to recover the canonical
 ///   Montgomery storage `R · Σ aᵢbᵢ mod p`. The kernel itself is

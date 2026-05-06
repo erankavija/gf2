@@ -311,15 +311,15 @@ The kernels accept u16 lanes in `[0, P)`. Per-kernel interpretation:
   agnostic. Modular addition and subtraction are linear, so the same
   kernel computes either `(a + b) mod P` on canonical residues or
   `(aR + bR) mod P = (a + b)R mod P` on Montgomery storage. The caller
-  in `gf2-core/src/gfp/simd_ops.rs::fp_medium_try_add_vec` (lines
-  471-485) feeds Montgomery raw storage via `fp_medium_pack_raw`; the
+  in `gf2-core/src/gfp/simd_ops.rs::fp_medium_try_add_vec` feeds
+  Montgomery raw storage via `fp_medium_pack_raw`; the
   storage-domain pack is a `u64 → u16` truncation (no REDC), which is
   the throughput win.
 * `fp_medium_batch_mul`: lanes **must** be canonical residues. The
   per-cell output is written back in the input domain with no
   post-correction, so feeding `aR, bR` would silently produce `abR² mod
   P` instead of `ab mod P`. The mul caller `fp_medium_try_mul_vec` in
-  `gf2-core/src/gfp/simd_ops.rs:456` packs canonical via
+  `gf2-core/src/gfp/simd_ops.rs` packs canonical via
   `fp_medium_pack_canonical` accordingly.
 * `fp_medium_batch_dot`: domain-agnostic at the kernel level — the
   kernel computes the unsigned 16-bit MAC sum `(Σ a[i]·b[i]) mod P`
@@ -327,8 +327,8 @@ The kernels accept u16 lanes in `[0, P)`. Per-kernel interpretation:
   *meaning* of the result differs by an `R²` factor. Standalone callers
   feeding canonical lanes get the canonical dot product. **The GEMM
   caller** in `gf2-core/src/gfp/simd_ops.rs::fp_medium_try_dot_packed`
-  (line 632, with operands packed by `fp_medium_try_pack_u16` at line
-  605) feeds **Montgomery raw storage** truncated `u64 → u16`; the
+  (with operands packed by `fp_medium_try_pack_u16`)
+  feeds **Montgomery raw storage** truncated `u64 → u16`; the
   kernel returns `R² · Σ aᵢbᵢ mod P`, and the caller then applies one
   Montgomery REDC to recover the canonical Montgomery storage of the
   dot product. The pack-as-Montgomery path is the GEMM throughput
