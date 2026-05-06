@@ -17,28 +17,30 @@
 //!
 //! For canonical inputs `a, b ∈ [0, P) ⊂ [0, 256)`, each gemm call:
 //!
-//! 1. **Pack pass.** Convert `&[u8]` (canonical-form residues) into
-//!    `Vec<f32>` row-major buffers `a_packed` (`m × k`) and
-//!    column-major `b_packed` (`k × n`). The per-element conversion
-//!    is `(*v as f32)` — exact for `p ≤ 251` because every value
-//!    fits in 8 bits, comfortably below f32's 24-bit mantissa.
+//! 1. **Pack pass.** Repack `bt: &[u8]` (n × k row-major) into N-major
+//!    u8 panels of width `N_R = 24` (each panel `k × N_R` u8). `a` is
+//!    consumed in place — no auxiliary `Vec<f32>` is allocated. The
+//!    u8 → f32 conversion happens at register granularity inside the
+//!    inner kernel via `_mm256_cvtepu8_epi32` + `_mm256_cvtepi32_ps`,
+//!    eliminating the previous design's 4×-blown intermediate
+//!    `Vec<f32>` (which doubled both bandwidth and L1d footprint).
 //!
 //! 2. **Inner micro-kernel.** A BLIS-class register-blocked sgemm
 //!    micro-kernel with tile shape `m_R × n_R = 4 × 24` (12
-//!    accumulator AVX2 registers + 1 broadcast + 3 A-column registers
+//!    accumulator AVX2 registers + 1 broadcast + 3 B-tile registers
 //!    = 16/16 register file). Each `_mm256_fmadd_ps(b_tile_j,
 //!    a_broadcast_i, acc_ij)` issues at 0.5-cycle reciprocal
 //!    throughput on Zen-3's two FMA execution ports — twice
-//!    Candidate C's `_mm256_madd_epi16` rate.
+//!    Candidate C's `_mm256_madd_epi16` rate. Prefetch hints
+//!    (`_MM_HINT_T0`) on B-panel rows three steps ahead lift the
+//!    L1d-miss latency off the critical path on `n ≥ 1024` cells.
 //!
 //!    The k-loop is split into chunks of `k_C` per outer iteration,
-//!    where `k_C` is the per-prime `k_max` — the largest number of
-//!    `(p-1)²`-magnitude products that f32 can absorb without
-//!    rounding loss. For `p ∈ {7, 31, 251}`, `k_max ∈ {4096, 1024, 64}`
-//!    respectively. The current implementation uses a uniform
-//!    `K_CHUNK = 64` so a single code path covers all in-scope primes
-//!    safely; the ILP from FMA-port pipelining is preserved by the
-//!    inner-tile fan-out.
+//!    where `k_C = min(k, k_max(p), K_CHUNK_CAP)`. `k_max(p)` is the
+//!    largest number of `(p-1)²`-magnitude products that f32 can
+//!    absorb without rounding loss; `K_CHUNK_CAP = 1024` keeps each
+//!    u8 B-panel slice (`24 KB`) inside Zen-3's 32 KB L1d. For
+//!    `p ∈ {7, 31, 251}`, `k_C ∈ {1024, 1024, 268}` respectively.
 //!
 //! 3. **Reduction.** At the end of every `k_C` chunk, the 12
 //!    accumulator vectors are rounded to nearest integer via
@@ -65,17 +67,19 @@
 //!
 //! # Soundness for `p ≤ 251`
 //!
-//! After `k_C = 64` FMAs of pairs in `[0, 250]`, every accumulator
-//! lane holds a non-negative integer ≤ `64 · 250² = 4 000 000`,
-//! comfortably below f32's exact-integer range `[0, 2^24] = [0,
-//! 16 777 216]`. Each `_mm256_fmadd_ps` therefore produces an exact
+//! For each prime, `k_C ≤ floor(2^24 / (p-1)²)`, so after `k_C` FMAs
+//! every accumulator lane holds a non-negative integer ≤ `2^24`.
+//! Concretely, `p = 251` ⇒ `k_C = 268` ⇒ ≤ `268 · 250² = 16 750 000
+//! < 16 777 216 = 2^24`; `p = 31` ⇒ `k_C = 1024` ⇒ ≤ `1024 · 30² =
+//! 921 600 < 2^24`; `p = 7` ⇒ `k_C = 1024` ⇒ ≤ `1024 · 6² = 36 864
+//! < 2^24`. Each `_mm256_fmadd_ps` therefore produces an exact
 //! integer result — no rounding occurs in the inner loop — and the
 //! `_mm256_round_ps(_, _MM_FROUND_TO_NEAREST_INT)` + `cvtps_epi32`
-//! at chunk end is a no-op semantically (the value is already an
+//! at chunk end is semantically a no-op (the value is already an
 //! integer). Reductions are computed in `i32` lanes via scalar
 //! `% p`, and the `i32` accumulator further absorbs the cross-chunk
-//! sum without overflow because `n / 64 · 4 000 000 < 2^31` for
-//! every `n ≤ 1024`.
+//! sum without overflow because `k · (p-1)² ≤ 4096 · 250² = 2.56 ·
+//! 10^8 < 2^31` for every `k ≤ 4096`.
 
 #![allow(clippy::missing_safety_doc)]
 
