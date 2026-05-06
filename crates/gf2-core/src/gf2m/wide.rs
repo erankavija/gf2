@@ -1711,55 +1711,103 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> crate::field::FiniteField for Gf2mW
 
         // Scalar fallback panelized GEMM (safe, no SIMD required).
         // This path runs when the simd feature is off or when no AVX2+VPCLMULQDQ
-        // kernel is available. It uses the same (i,k,j) loop order as the SIMD
-        // path to amortise per-element overhead.
+        // kernel is available. The body is shared with
+        // `try_simd_gemm_classical_scalar_only_for_test` (test entry point)
+        // via the inline implementation below.
         if N == 1 && matches!(Cfg::M, 8 | 16 | 32) {
-            let modulus = (1u64 << Cfg::M) | Cfg::MODULUS[0];
-
-            // Pre-extract A to u64.
-            let mut a_flat: Vec<u64> = Vec::with_capacity(m * k);
-            for e in a.iter() {
-                a_flat.push(e.words[0]);
-            }
-
-            // Re-transpose b_t (n×k) to b_flat (k×n).
-            let mut b_flat: Vec<u64> = vec![0u64; k * n];
-            for j in 0..n {
-                for ki in 0..k {
-                    b_flat[ki * n + j] = b_t[j * k + ki].words[0];
-                }
-            }
-
-            // Zero output.
-            for e in out.iter_mut() {
-                *e = Self::zero();
-            }
-
-            let degree = Cfg::M;
-            // Use the raw multiply helper.
-            for i in 0..m {
-                let out_row = &mut out[i * n..(i + 1) * n];
-                for ki in 0..k {
-                    let a_ik = a_flat[i * k + ki];
-                    if a_ik == 0 {
-                        continue;
-                    }
-                    let b_row = &b_flat[ki * n..(ki + 1) * n];
-                    for (j, &b_kj) in b_row.iter().enumerate() {
-                        if b_kj != 0 {
-                            let p = crate::gf2m::mul_raw::gf2m_mul_raw(a_ik, b_kj, degree, modulus);
-                            // XOR-accumulate.
-                            let cur = out_row[j].words[0];
-                            out_row[j] = Self::from_u64(cur ^ p);
-                        }
-                    }
-                }
-            }
-
+            Self::scalar_panelized_gemm_fallback_inline(a, b_t, m, k, n, out);
             return true;
         }
 
         false
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Inherent helpers: scalar panelized GEMM fallback (with test entry point)
+// ---------------------------------------------------------------------------
+
+impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
+    /// Body of the scalar (no-SIMD) panelized GEMM fallback. Pulled out
+    /// of `try_simd_gemm_classical` into a private associated function
+    /// so the unit test below can exercise this branch directly without
+    /// depending on runtime SIMD detection. Callers must guarantee
+    /// `N == 1` and `Cfg::M in {8, 16, 32}`; both are enforced by
+    /// debug-assert.
+    fn scalar_panelized_gemm_fallback_inline(
+        a: &[Self],
+        b_t: &[Self],
+        m: usize,
+        k: usize,
+        n: usize,
+        out: &mut [Self],
+    ) {
+        debug_assert_eq!(N, 1);
+        debug_assert!(matches!(Cfg::M, 8 | 16 | 32));
+        let modulus = (1u64 << Cfg::M) | Cfg::MODULUS[0];
+
+        // Pre-extract A to u64.
+        let mut a_flat: Vec<u64> = Vec::with_capacity(m * k);
+        for e in a.iter() {
+            a_flat.push(e.words[0]);
+        }
+
+        // Re-transpose b_t (n*k) to b_flat (k*n).
+        let mut b_flat: Vec<u64> = vec![0u64; k * n];
+        for j in 0..n {
+            for ki in 0..k {
+                b_flat[ki * n + j] = b_t[j * k + ki].words[0];
+            }
+        }
+
+        // Zero output.
+        for e in out.iter_mut() {
+            *e = <Self as crate::field::ConstField>::zero();
+        }
+
+        let degree = Cfg::M;
+        for i in 0..m {
+            let out_row = &mut out[i * n..(i + 1) * n];
+            for ki in 0..k {
+                let a_ik = a_flat[i * k + ki];
+                if a_ik == 0 {
+                    continue;
+                }
+                let b_row = &b_flat[ki * n..(ki + 1) * n];
+                for (j, &b_kj) in b_row.iter().enumerate() {
+                    if b_kj != 0 {
+                        let p = crate::gf2m::mul_raw::gf2m_mul_raw(a_ik, b_kj, degree, modulus);
+                        let cur = out_row[j].words[0];
+                        out_row[j] = Self::from_u64(cur ^ p);
+                    }
+                }
+            }
+        }
+    }
+
+    /// Test-only entry point that exercises the scalar fallback path
+    /// directly, bypassing the SIMD branch in
+    /// `try_simd_gemm_classical`. This lets the unit test cover the
+    /// fallback even on AVX2+VPCLMULQDQ-capable hosts where the SIMD
+    /// branch would otherwise win first.
+    ///
+    /// Available under `#[cfg(any(test, feature = "test-support"))]`
+    /// only; production callers must use `try_simd_gemm_classical`.
+    #[cfg(any(test, feature = "test-support"))]
+    pub fn scalar_panelized_gemm_fallback_for_test(
+        a: &[Self],
+        b_t: &[Self],
+        m: usize,
+        k: usize,
+        n: usize,
+        out: &mut [Self],
+    ) -> bool {
+        if N == 1 && matches!(Cfg::M, 8 | 16 | 32) {
+            Self::scalar_panelized_gemm_fallback_inline(a, b_t, m, k, n, out);
+            true
+        } else {
+            false
+        }
     }
 }
 
@@ -2125,6 +2173,152 @@ mod tests {
         for h in handles {
             h.join()
                 .expect("thread panicked during concurrent reducer access");
+        }
+    }
+
+    /// Tiny GF(2^8) config (Rijndael polynomial) used by the scalar
+    /// fallback panelized GEMM tests below. Mirrors `EmitterGf2m8Cfg`
+    /// from `crates/gf2-core/examples/bench_csv_emitter.rs`.
+    struct ScalarFallbackGf2m8Cfg;
+    impl Gf2mWideConfig<1> for ScalarFallbackGf2m8Cfg {
+        const M: usize = 8;
+        const MODULUS: [u64; 1] = [0x1B];
+    }
+
+    /// Tiny GF(2^16) config used by the scalar fallback tests. Same
+    /// polynomial as `EmitterGf2m16Cfg`.
+    struct ScalarFallbackGf2m16Cfg;
+    impl Gf2mWideConfig<1> for ScalarFallbackGf2m16Cfg {
+        const M: usize = 16;
+        const MODULUS: [u64; 1] = [0x002D];
+    }
+
+    /// Tiny GF(2^32) config (Conway polynomial) used by the scalar
+    /// fallback tests. Same polynomial as `EmitterGf2m32Cfg`.
+    struct ScalarFallbackGf2m32Cfg;
+    impl Gf2mWideConfig<1> for ScalarFallbackGf2m32Cfg {
+        const M: usize = 32;
+        const MODULUS: [u64; 1] = [0x0000_8299];
+    }
+
+    /// Naive triple-loop reference GEMM for `Gf2mWide<1, Cfg>`. Used by
+    /// the scalar fallback tests to cross-check the panelized scalar
+    /// helper against the simplest possible implementation.
+    fn naive_gf2m_gemm<Cfg: Gf2mWideConfig<1>>(
+        a: &[Gf2mWide<1, Cfg>],
+        b: &[Gf2mWide<1, Cfg>],
+        m: usize,
+        k: usize,
+        n: usize,
+    ) -> Vec<Gf2mWide<1, Cfg>> {
+        let mut out = vec![<Gf2mWide<1, Cfg> as crate::field::ConstField>::zero(); m * n];
+        for i in 0..m {
+            for j in 0..n {
+                let mut acc = <Gf2mWide<1, Cfg> as crate::field::ConstField>::zero();
+                for ki in 0..k {
+                    acc += a[i * k + ki] * b[ki * n + j];
+                }
+                out[i * n + j] = acc;
+            }
+        }
+        out
+    }
+
+    /// Build a deterministic test matrix for `Gf2mWide<1, Cfg>` with
+    /// element values derived from a counter; ensures every cell has a
+    /// non-trivial GF(2^m) value within the field's representable range.
+    fn build_test_matrix<Cfg: Gf2mWideConfig<1>>(
+        rows: usize,
+        cols: usize,
+        seed: u64,
+    ) -> Vec<Gf2mWide<1, Cfg>> {
+        let mask = if Cfg::M == 64 {
+            u64::MAX
+        } else {
+            (1u64 << Cfg::M) - 1
+        };
+        let mut out = Vec::with_capacity(rows * cols);
+        // Simple linear-congruential pattern keeps values reproducible
+        // across hosts without pulling in an RNG dependency.
+        let mut x = seed;
+        for _ in 0..rows * cols {
+            x = x
+                .wrapping_mul(6364136223846793005)
+                .wrapping_add(1442695040888963407);
+            let v = x & mask;
+            out.push(<Gf2mWide<1, Cfg>>::from_u64(v));
+        }
+        out
+    }
+
+    /// Transpose `b` from row-major `(k, n)` to row-major `(n, k)` —
+    /// the form `try_simd_gemm_classical` and the scalar fallback
+    /// expect for the right-hand operand.
+    fn transpose_for_gemm<Cfg: Gf2mWideConfig<1>>(
+        b: &[Gf2mWide<1, Cfg>],
+        k: usize,
+        n: usize,
+    ) -> Vec<Gf2mWide<1, Cfg>> {
+        let mut b_t = vec![<Gf2mWide<1, Cfg> as crate::field::ConstField>::zero(); n * k];
+        for ki in 0..k {
+            for j in 0..n {
+                b_t[j * k + ki] = b[ki * n + j];
+            }
+        }
+        b_t
+    }
+
+    /// Exercise the scalar panelized GEMM fallback on every supported
+    /// `m in {8, 16, 32}` and several non-trivial shapes. The test
+    /// calls `scalar_panelized_gemm_fallback_for_test` (test-only entry
+    /// point) which bypasses the SIMD branch entirely, so it runs even
+    /// on hosts that do have AVX2+VPCLMULQDQ.
+    #[test]
+    fn test_scalar_panelized_gemm_fallback_matches_naive() {
+        fn check<Cfg: Gf2mWideConfig<1>>(m: usize, k: usize, n: usize, seed: u64) {
+            let a = build_test_matrix::<Cfg>(m, k, seed);
+            let b = build_test_matrix::<Cfg>(k, n, seed.wrapping_add(0x1234_5678));
+            let b_t = transpose_for_gemm::<Cfg>(&b, k, n);
+            let mut got = vec![<Gf2mWide<1, Cfg> as crate::field::ConstField>::zero(); m * n];
+            let used = Gf2mWide::<1, Cfg>::scalar_panelized_gemm_fallback_for_test(
+                &a, &b_t, m, k, n, &mut got,
+            );
+            assert!(used, "scalar fallback should run for m={m} k={k} n={n}");
+            let want = naive_gf2m_gemm::<Cfg>(&a, &b, m, k, n);
+            assert_eq!(got, want, "scalar fallback mismatch on m={m} k={k} n={n}");
+        }
+        // GF(2^8): square + rectangular shapes.
+        check::<ScalarFallbackGf2m8Cfg>(4, 4, 4, 0xA1);
+        check::<ScalarFallbackGf2m8Cfg>(8, 16, 8, 0xA2);
+        check::<ScalarFallbackGf2m8Cfg>(13, 7, 11, 0xA3);
+        // GF(2^16): square + rectangular shapes.
+        check::<ScalarFallbackGf2m16Cfg>(4, 4, 4, 0xB1);
+        check::<ScalarFallbackGf2m16Cfg>(8, 16, 8, 0xB2);
+        check::<ScalarFallbackGf2m16Cfg>(11, 9, 13, 0xB3);
+        // GF(2^32): square + rectangular shapes.
+        check::<ScalarFallbackGf2m32Cfg>(4, 4, 4, 0xC1);
+        check::<ScalarFallbackGf2m32Cfg>(8, 16, 8, 0xC2);
+        check::<ScalarFallbackGf2m32Cfg>(7, 11, 9, 0xC3);
+    }
+
+    /// Edge case: zero rows in `A` or zero columns in `B` must still
+    /// produce a correctly-zeroed output of the right shape.
+    #[test]
+    fn test_scalar_panelized_gemm_fallback_zero_input_zero_output() {
+        type Cfg = ScalarFallbackGf2m8Cfg;
+        let m = 4;
+        let k = 4;
+        let n = 4;
+        let zero = <Gf2mWide<1, Cfg> as crate::field::ConstField>::zero();
+        let a = vec![zero; m * k];
+        let b_t = vec![zero; n * k];
+        let mut got = vec![<Gf2mWide<1, Cfg>>::from_u64(0xFF); m * n];
+        let used = Gf2mWide::<1, Cfg>::scalar_panelized_gemm_fallback_for_test(
+            &a, &b_t, m, k, n, &mut got,
+        );
+        assert!(used, "scalar fallback should run for the all-zero case");
+        for cell in got.iter() {
+            assert_eq!(*cell, zero, "zero inputs must produce zero output");
         }
     }
 
