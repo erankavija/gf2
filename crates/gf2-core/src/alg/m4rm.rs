@@ -492,6 +492,18 @@ pub fn multiply(a: &BitMatrix, b: &BitMatrix) -> BitMatrix {
     }
 
     let k_block = choose_k_block(k, n);
+    multiply_with_k_block(a, b, k_block)
+}
+
+fn multiply_with_k_block(a: &BitMatrix, b: &BitMatrix, k_block: usize) -> BitMatrix {
+    let m = a.rows();
+    let k = a.cols();
+    let n = b.cols();
+
+    if m == 0 || k == 0 || n == 0 {
+        return BitMatrix::zeros(m, n);
+    }
+
     let stride_words = n.div_ceil(64);
     let xor = resolve_xor_inplace(stride_words);
 
@@ -554,25 +566,8 @@ pub fn multiply_with_table_schedule_for_test(
     );
     assert!(max_k_block > 0, "max_k_block must be positive");
 
-    if m == 0 || k == 0 || n == 0 {
-        return BitMatrix::zeros(m, n);
-    }
-
     let k_block = choose_k_block_with_limit(k, n, target_table_bytes, max_k_block);
-    let stride_words = n.div_ceil(64);
-    let xor = resolve_xor_inplace(stride_words);
-
-    if k_block == 1 {
-        return a.mul_row_xor_dispatch(b);
-    }
-
-    if use_register_tiled_schedule(m, stride_words) {
-        if let Some(tile8xn) = resolve_m4rm_tile8xn() {
-            return multiply_register_tiled(a, b, k_block, stride_words, xor, tile8xn);
-        }
-    }
-
-    multiply_rowwise_panels(a, b, k_block, stride_words, xor)
+    multiply_with_k_block(a, b, k_block)
 }
 #[doc(hidden)]
 #[cfg(any(test, feature = "test-support"))]
