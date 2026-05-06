@@ -2,7 +2,7 @@
   "id": "8e305c21-1a25-42af-a208-3126d3eb6206",
   "title": "Implement production GF(2) matmul improvement",
   "description": "Land the selected GF(2) matmul improvement behind existing safe APIs.\n\n## Success Criteria\n\n- [hard] Target matmul rows are within 1.5x of M4RI or faster.\n- [hard] Existing BitMatrix behavior and tests remain compatible.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "high",
   "assignee": "agent:claude",
   "dependencies": [
@@ -13,9 +13,33 @@
     "cargo-ci",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-06T15:10:44.243846415Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-06T15:10:28.697919537Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-05-06T15:23:30.649316225Z"
+    }
+  },
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/bench_results/2026-05-06-8e305c21-production-m4rm.md",
+      "commit": "885c904",
+      "label": "Production M4RM schedule improvement evidence",
+      "doc_type": "evidence",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:task",
     "component:gf2-core",
@@ -23,5 +47,5 @@
     "story:sota-gf2-m4ri"
   ],
   "created_at": "2026-04-30T06:43:02.664988249+00:00",
-  "updated_at": "2026-05-06T13:48:19.043209342+00:00"
+  "updated_at": "2026-05-06T15:25:12.634936904+00:00"
 }
