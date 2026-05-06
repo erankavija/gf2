@@ -114,6 +114,13 @@
           "is_shared": false
         }
       ]
+    },
+    {
+      "path": "dev/bench_results/2026-05-06-7a106fe4-gfp-parity-evidence.md",
+      "commit": "11be30f",
+      "label": "GF(p) parity evidence (story cc5de315 closure)",
+      "doc_type": "evidence",
+      "format": "markdown"
     }
   ],
   "labels": [
@@ -124,5 +131,5 @@
     "epic:gf2-core-sota-performance"
   ],
   "created_at": "2026-04-30T06:43:02.414572597+00:00",
-  "updated_at": "2026-05-05T22:21:59.343107137+00:00"
+  "updated_at": "2026-05-06T11:08:01.042390641+00:00"
 }
