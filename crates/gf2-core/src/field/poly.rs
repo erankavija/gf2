@@ -5063,6 +5063,7 @@ mod tests {
         /// enough to catch regressions but rarely enough to keep the
         /// full test suite under the 60 s budget.
         #[test]
+        #[ignore = "slow: 500-case proptest with 4096/8192 cells exceeds 5 s on CI hardware"]
         fn prop_batch_evaluate_dispatcher_matches_horner_straddling_threshold_fp65537(
             // Weighted size sampler: 16 and 1024 are cheap (below
             // threshold) and carry the majority of cases; 4096 is

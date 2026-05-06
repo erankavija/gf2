@@ -46,18 +46,14 @@
 //!
 //! # Algorithm
 //!
-//! Block-recursive (Dumas–Pernet §2.2 alg. 2.5), splitting on columns:
+//! Block-recursive (Dumas–Pernet §2.2 alg. 2.5), splitting on columns, with
+//! a direct-elimination base case when the column window reaches
+//! [`FiniteField::PLE_BASE_COLS`] (default 1 — the single-column leaf):
 //!
 //! ```text
 //! ple(A):  // A is m × n
-//!     if n == 1:
-//!         scan A[0..m, 0] for the first non-zero entry at row p
-//!         if none: return (identity, empty L (m×0), empty E (0×1), 0)
-//!         else:
-//!             swap row 0 ↔ row p (full-row swap, all columns of `a`)
-//!             pivot = A[0, 0]
-//!             for k in 1..m: A[k, 0] = A[k, 0] / pivot   (compact L)
-//!             return rank=1
+//!     if n <= PLE_BASE_COLS:
+//!         direct column-by-column Gaussian elimination (ple_base_direct)
 //!     else:
 //!         h = n / 2
 //!         r1 = ple(A[:, 0..h])                 (recurse on the left)
@@ -68,6 +64,14 @@
 //!         r2 = ple(A[r1..m, h..n])
 //!         return r1 + r2
 //! ```
+//!
+//! The default `PLE_BASE_COLS = 1` uses the block-recursive trsm+gemm path
+//! for all window widths > 1. This is optimal for large-prime fields (e.g.
+//! Mersenne-31) where the blocked GEMM with delayed u128 reduction
+//! significantly outperforms any scalar schoolbook loop. Fields with cheap
+//! per-element arithmetic (e.g. GF(2^m)) or small primes (p ≤ 251 with AVX2)
+//! may benefit from a larger `PLE_BASE_COLS` override if profiling confirms
+//! the schoolbook base case beats the recursive dispatch overhead.
 //!
 //! Compact storage: after the recursion, `working[0..r, j]` for `j` in
 //! the pivot columns holds `E`'s entries; `working[i, 0..r]` for `i ≥ r`
@@ -370,6 +374,84 @@ fn zero_matrix_like<F: FiniteField>(
 
 // ─── PLE in-place driver ─────────────────────────────────────────────────────
 
+/// Direct column-by-column Gaussian elimination base case for small windows.
+///
+/// Called by [`ple_in_place_window`] when `win <= F::PLE_BASE_COLS`. Processes
+/// the column window `[col_lo, col_hi)` of the full matrix view `a` using a
+/// simple left-to-right partial-pivoting elimination. Maintains compact storage
+/// convention: pivot values stay in row `rank`'s diagonal entry; the entries
+/// below each pivot column are scaled to L's multipliers.
+///
+/// # Returns
+///
+/// Number of pivots found (rank contribution from this window).
+fn ple_base_direct<F: FiniteField>(
+    a: &mut MatViewMut<'_, F>,
+    col_lo: usize,
+    col_hi: usize,
+    perm: &mut [usize],
+) -> usize {
+    let m = a.rows();
+    let zero = a.get(0, col_lo).zero_like();
+    let mut rank = 0usize; // next available pivot row
+
+    for col in col_lo..col_hi {
+        if rank >= m {
+            break;
+        }
+        // Step 1: find pivot in rows [rank..m] of column `col`.
+        let mut pivot_row: Option<usize> = None;
+        for i in rank..m {
+            if a.get(i, col) != zero {
+                pivot_row = Some(i);
+                break;
+            }
+        }
+        let Some(p) = pivot_row else {
+            // No pivot in this column — zero column, skip.
+            continue;
+        };
+
+        // Step 2: swap row `p` into row `rank` (full-row swap for permutation
+        // consistency across all already-processed columns).
+        if p != rank {
+            a.swap_rows(rank, p);
+            perm.swap(rank, p);
+        }
+
+        // Step 3: scale. Compact storage keeps a[rank, col] = pivot value
+        // (the E entry); all a[k, col] for k > rank become L's multipliers.
+        let pivot = a.get(rank, col);
+        let inv = pivot.inv().unwrap_or_else(|| {
+            panic!("ple_base_direct: pivot a[{rank}, {col}] failed to invert (zero pivot)")
+        });
+        for k in (rank + 1)..m {
+            let v = a.get(k, col) * inv.clone();
+            a.set(k, col, v);
+        }
+
+        // Step 4: eliminate — for every column `c` strictly right of `col`
+        // in the window, subtract multiplier[k] * a[rank, c] from a[k, c].
+        // This performs the Schur-complement update within the window,
+        // keeping the remaining columns in reduced form.
+        for c in (col + 1)..col_hi {
+            let pivot_c = a.get(rank, c);
+            if pivot_c == zero {
+                continue;
+            }
+            for k in (rank + 1)..m {
+                let mult = a.get(k, col); // L's multiplier at (k, col)
+                let v = a.get(k, c) - mult.clone() * pivot_c.clone();
+                a.set(k, c, v);
+            }
+        }
+
+        rank += 1;
+    }
+
+    rank
+}
+
 /// In-place PLE on the supplied [`MatViewMut`]. Records destination →
 /// source row swaps in `perm` (caller-managed). Writes the L-factor's
 /// strict-lower entries directly into `a`'s storage; the leading pivot
@@ -404,36 +486,18 @@ fn ple_in_place_window<F: FiniteField>(
         return 0;
     }
 
-    // Base case: single column.
-    if win == 1 {
-        let zero = a.get(0, col_lo).zero_like();
-        let mut pivot_row: Option<usize> = None;
-        for i in 0..m {
-            if a.get(i, col_lo) != zero {
-                pivot_row = Some(i);
-                break;
-            }
-        }
-        let Some(p) = pivot_row else {
-            return 0;
-        };
-        if p != 0 {
-            a.swap_rows(0, p);
-            perm.swap(0, p);
-        }
-        let pivot = a.get(0, col_lo);
-        let inv = pivot
-            .inv()
-            .unwrap_or_else(|| panic!("ple: pivot a[0, {}] failed to invert (zero pivot)", col_lo));
-        // Compact storage: leave a[0, col_lo] = pivot (this is E[0, col_lo]),
-        // overwrite a[k, col_lo] = a[k, col_lo] / pivot for k >= 1
-        // (these are L's multipliers; the unit diagonal at k=0 is
-        // synthesised at extraction time).
-        for k in 1..m {
-            let v = a.get(k, col_lo) * inv.clone();
-            a.set(k, col_lo, v);
-        }
-        return 1;
+    // Base case: column window at or below `PLE_BASE_COLS`.
+    //
+    // When `win <= F::PLE_BASE_COLS`, use `ple_base_direct` — a direct
+    // column-by-column Gaussian elimination that avoids the per-level
+    // materialise_l1_unit / materialise_block / trsm dispatch overhead.
+    // The default `PLE_BASE_COLS = 1` restricts this to the single-column
+    // leaf, where the recursive path would recurse into an empty right half.
+    // Fields with cheap per-element arithmetic may override to a larger value.
+    //
+    // Complexity: O(m · win²) element operations per call.
+    if win <= F::PLE_BASE_COLS {
+        return ple_base_direct(&mut a, col_lo, col_hi, perm);
     }
 
     let h = win / 2;
@@ -1942,6 +2006,9 @@ mod tests {
     // the trsm's own recursion at each level. The observed 4192 is the
     // empirical reality; every byte of intermediate storage is
     // documented and accounted for here.
+    // Counts are unchanged from the anchor commit (jit:73ec5da3 sweep
+    // confirmed PLE_BASE_COLS=1 optimal; the block-recursive trsm+gemm
+    // path at all win > 1 levels matches the original allocation profile).
     const EXPECTED_PLE_N4: u64 = 14;
     const EXPECTED_PLE_N64: u64 = 254;
     const EXPECTED_PLE_N1024: u64 = 4192;
