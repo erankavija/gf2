@@ -5,7 +5,9 @@
   "state": "ready",
   "priority": "normal",
   "assignee": null,
-  "dependencies": [],
+  "dependencies": [
+    "cc5de315-109f-4178-999c-a47460a571c2"
+  ],
   "gates_required": [
     "code-review",
     "cargo-ci",
@@ -22,5 +24,5 @@
     "story:sota-gfp-fflas"
   ],
   "created_at": "2026-05-06T10:08:41.509057631+00:00",
-  "updated_at": "2026-05-06T10:08:41.509064041+00:00"
+  "updated_at": "2026-05-06T12:29:58.130264401+00:00"
 }
