@@ -22,6 +22,19 @@ Current issue criteria should be tightened to make the expanded scope explicit:
 - [hard] The plan defines a proposed JIT breakdown with dependency order, expected gates, benchmark criteria, and non-regression requirements.
 - [hard] Any production implementation spawned from this plan preserves correctness for GF(7), GF(31), GF(251), Mersenne31, Fp<65537>, the medium-prime band, and selected GF(2^m) fields, and does not regress already-passing GF(p) cells by more than 5% under same-session measurement.
 
+## Status update - 2026-05-06 (post-e24f7839 close)
+
+`e24f7839` (panelized GF(2^m) GEMM) closed in this session with a per-cell maturity-marker amendment user-approved via Path A. Concrete state at HEAD `0022a5f`:
+
+- **GF(2^32) at n in {64, 256, 1024}: PASS [hard].** The new panelized I_TILE=4 kernel reaches 1.6-1.9 Gop/s on Zen 3 (5.7x-6.7x of NTL `mat_GF2E`). Evidence: `dev/bench_results/2026-05-06-e24f7839-gf2pow32-panelized.csv` and `dev/bench_results/2026-05-06-e24f7839-panelized-gf2m-gemm.md` § 3.
+- **GF(2^16) at n in {64, 256}: PASS [hard].** Already passing pre-panelization; ratios improved 43x->149x and 11x->36x.
+- **GF(2^16) at n=1024: [aspirational].** Ratio 0.614, 8.5% below the 0.667 threshold. Single-core VPCLMULQDQ ceiling at the 3-CLMUL Barrett chain depth on AVX2 without GFNI/AVX-512 (per `fb271c41` evaluation, those are out of scope on Zen 3 host class).
+- **GF(2^8) at n in {64, 256, 1024}: [aspirational].** Ratios 0.393, 0.060, 0.015. Structural algorithmic gap: M4RIE uses Method of Four Russians / Newton-John (O(n^3/log n)) while gf2-core panelized GEMM is per-element CLMUL (O(n^3)).
+
+The deeper algorithmic catch-up for these 4 [aspirational] cells (GF(2^8) Newton-John, GF(2^16) n=1024 GFNI/AVX-512 ZMM follow-up) is now scoped to this plan's eventual breakdown (Phase 3 below). The amendments are recorded in `e24f7839` and parent story `2c7548ae` issue descriptions.
+
+GF(2^m) closure for epic `97bf0879` therefore proceeds without these cells; the epic-level `[hard]` GF(2^m) criterion is satisfied per the per-cell maturity marker amendments.
+
 ## What gf2 already has
 
 ### Dense matrix layer
@@ -211,14 +224,13 @@ After the GF(251) route is chosen:
 
 ### Phase 3: Coordinate the GF(2) and GF(2^m) SOTA gap
 
-Do not duplicate `e24f7839`; instead, make `615db3b9` the cross-family umbrella that records why GF(2^m) panelized GEMM is equally important to "catch up with fflas/SOTA".
+`e24f7839` closed 2026-05-06 with a per-cell maturity-marker amendment (see Status update above). It addressed the per-call-overhead and panelization-headroom aspects: GF(2^32) cells now PASS at 5.7x-6.7x of NTL, and GF(2^16) at small n stays PASS. Three structural-algorithmic gaps remain and are the cross-family deliverable for this plan:
 
-Expected `e24f7839` direction:
+- **GF(2^8) at n in {64, 256, 1024}** — Method of Four Russians / Newton-John panelization with byte-level PSHUFB tables. The reference algorithm is M4RIE's `mzed_mul`; gf2 must implement it independently from public references (per License and provenance guardrails above).
+- **GF(2^16) at n=1024** — either a precomputed Barrett table for m=16 (64K entries) or a GFNI/AVX-512 ZMM follow-up routed through Zen-4+ host classes. `fb271c41` evaluated and deferred GFNI/AVX-512 to Zen-4+; revisit when that host class is targeted.
+- **GF(2): M4RM table-size and XOR-loop review** — including k=16 table feasibility and AVX-512 VPTERNLOGD follow-up when hardware exists. Wave-7 closed the n in {1024, 4096} matmul cells against M4RI within 1.5x; the n=4096 margin is narrow (32.331 ms vs 32.867 ms threshold) and warrants a future perf-gate.
 
-- GF(2^8): matrix-level Gray-code/Four-Russians panelization, not per-output-cell CLMUL.
-- GF(2^16): panelized path that keeps the small-size wins and closes n=1024.
-- GF(2^32): matrix-level blocking around the existing VPCLMULQDQ primitive.
-- GF(2): M4RM table-size and XOR-loop review, including k=16 table feasibility and AVX-512 VPTERNLOGD follow-up when hardware exists.
+Each item above is a candidate Phase-3 child issue when `615db3b9` breaks down.
 
 ### Phase 4: Extension-field matrix GEMM
 
