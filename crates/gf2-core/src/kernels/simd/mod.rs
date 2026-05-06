@@ -67,6 +67,10 @@ pub static SIMD_BACKEND: LazyLock<Option<SimdBackend>> = LazyLock::new(SimdBacke
 pub static GF2M_BATCH_FNS: LazyLock<Option<gf2_kernels_simd::gf2m_batch::Gf2mBatchFns>> =
     LazyLock::new(gf2_kernels_simd::gf2m_batch::detect);
 
+/// Global GF(2^m) panelized GEMM SIMD function bundle, lazily initialized.
+pub static GF2M_GEMM_FNS: LazyLock<Option<gf2_kernels_simd::gf2m_gemm::Gf2mGemmFns>> =
+    LazyLock::new(gf2_kernels_simd::gf2m_gemm::detect);
+
 /// Get the SIMD backend if available.
 #[inline]
 pub fn maybe_simd() -> Option<&'static SimdBackend> {
@@ -81,6 +85,15 @@ pub fn maybe_simd() -> Option<&'static SimdBackend> {
 #[inline]
 pub fn maybe_gf2m_batch() -> Option<&'static gf2_kernels_simd::gf2m_batch::Gf2mBatchFns> {
     GF2M_BATCH_FNS.as_ref()
+}
+
+/// Get the GF(2^m) panelized GEMM SIMD function bundle if available.
+///
+/// Same feature requirements as [`maybe_gf2m_batch`]: avx2 + vpclmulqdq +
+/// pclmulqdq + sse4.1. Returns `None` when the host lacks these features.
+#[inline]
+pub fn maybe_gf2m_gemm() -> Option<&'static gf2_kernels_simd::gf2m_gemm::Gf2mGemmFns> {
+    GF2M_GEMM_FNS.as_ref()
 }
 
 #[cfg(test)]

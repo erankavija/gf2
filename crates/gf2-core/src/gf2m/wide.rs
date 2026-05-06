@@ -1648,6 +1648,119 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> crate::field::FiniteField for Gf2mW
         let value = scratch_products.iter().fold(0u64, |acc, &x| acc ^ x);
         Some(Self::from_u64(value))
     }
+
+    fn try_simd_gemm_classical(
+        a: &[Self],
+        b_t: &[Self],
+        m: usize,
+        k: usize,
+        n: usize,
+        out: &mut [Self],
+    ) -> bool {
+        // Only handle single-word GF(2^m) with m ∈ {8, 16, 32}.
+        if N != 1 || !matches!(Cfg::M, 8 | 16 | 32) {
+            return false;
+        }
+
+        #[cfg(feature = "simd")]
+        {
+            if let Some(fns) = crate::simd::maybe_gf2m_gemm() {
+                let modulus = (1u64 << Cfg::M) | Cfg::MODULUS[0];
+                let mu = crate::gf2m::barrett::BarrettReducer::new(modulus as u128, Cfg::M as u32)
+                    .mu() as u64;
+
+                // Extract A to flat u64 buffer: a_flat[i*k + ki] = A[i,ki].
+                let mut a_flat: Vec<u64> = Vec::with_capacity(m * k);
+                for e in a.iter() {
+                    a_flat.push(e.words[0]);
+                }
+
+                // b_t is n×k (B transposed, row-major): b_t[j*k + ki] = B[ki,j].
+                // We need b_flat (k×n, row-major): b_flat[ki*n + j] = B[ki,j].
+                // Re-transpose b_t to get b_flat.
+                let mut b_flat: Vec<u64> = vec![0u64; k * n];
+                for j in 0..n {
+                    for ki in 0..k {
+                        b_flat[ki * n + j] = b_t[j * k + ki].words[0];
+                    }
+                }
+
+                // Prepare zero-initialised output buffer.
+                let mut out_flat: Vec<u64> = vec![0u64; m * n];
+
+                (fns.gemm_fn)(
+                    &a_flat,
+                    &b_flat,
+                    &mut out_flat,
+                    m,
+                    k,
+                    n,
+                    mu,
+                    modulus,
+                    Cfg::M as u32,
+                );
+
+                // Write results back to the output slice.
+                for (i, val) in out_flat.into_iter().enumerate() {
+                    out[i] = Self::from_u64(val);
+                }
+
+                return true;
+            }
+        }
+
+        // Scalar fallback panelized GEMM (safe, no SIMD required).
+        // This path runs when the simd feature is off or when no AVX2+VPCLMULQDQ
+        // kernel is available. It uses the same (i,k,j) loop order as the SIMD
+        // path to amortise per-element overhead.
+        if N == 1 && matches!(Cfg::M, 8 | 16 | 32) {
+            let modulus = (1u64 << Cfg::M) | Cfg::MODULUS[0];
+
+            // Pre-extract A to u64.
+            let mut a_flat: Vec<u64> = Vec::with_capacity(m * k);
+            for e in a.iter() {
+                a_flat.push(e.words[0]);
+            }
+
+            // Re-transpose b_t (n×k) to b_flat (k×n).
+            let mut b_flat: Vec<u64> = vec![0u64; k * n];
+            for j in 0..n {
+                for ki in 0..k {
+                    b_flat[ki * n + j] = b_t[j * k + ki].words[0];
+                }
+            }
+
+            // Zero output.
+            for e in out.iter_mut() {
+                *e = Self::zero();
+            }
+
+            let degree = Cfg::M;
+            // Use the raw multiply helper.
+            for i in 0..m {
+                let out_row = &mut out[i * n..(i + 1) * n];
+                for ki in 0..k {
+                    let a_ik = a_flat[i * k + ki];
+                    if a_ik == 0 {
+                        continue;
+                    }
+                    let b_row = &b_flat[ki * n..(ki + 1) * n];
+                    for (j, &b_kj) in b_row.iter().enumerate() {
+                        if b_kj != 0 {
+                            let p = crate::gf2m::mul_raw::gf2m_mul_raw(a_ik, b_kj, degree, modulus);
+                            // XOR-accumulate.
+                            let cur = out_row[j].words[0];
+                            out_row[j] = Self::from_u64(cur ^ p);
+                        }
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        false
+    }
 }
 
 // ---------------------------------------------------------------------------

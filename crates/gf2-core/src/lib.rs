@@ -86,6 +86,7 @@ pub(crate) mod simd {
     use gf2_kernels_simd::fp_small_f32::SmallPrimeF32Fns;
     use gf2_kernels_simd::gf2m::Gf2mFns;
     use gf2_kernels_simd::gf2m_batch::Gf2mBatchFns;
+    use gf2_kernels_simd::gf2m_gemm::Gf2mGemmFns;
     use gf2_kernels_simd::gf2m_wide::{ClmulWide256Fns, ClmulWide571Fns, Gf2mWideFns};
     use gf2_kernels_simd::mersenne::MersenneFns;
     use gf2_kernels_simd::transpose::TransposeFns;
@@ -95,6 +96,7 @@ pub(crate) mod simd {
     static FNS: OnceLock<Option<LogicalFns>> = OnceLock::new();
     static GF2M_FNS: OnceLock<Option<Gf2mFns>> = OnceLock::new();
     static GF2M_BATCH_FNS: OnceLock<Option<Gf2mBatchFns>> = OnceLock::new();
+    static GF2M_GEMM_FNS: OnceLock<Option<Gf2mGemmFns>> = OnceLock::new();
     static MERSENNE_FNS: OnceLock<Option<MersenneFns>> = OnceLock::new();
     static FP65537_FNS: OnceLock<Option<Fp65537Fns>> = OnceLock::new();
     static FP_GENERIC_FNS: OnceLock<Option<FpGenericFns>> = OnceLock::new();
@@ -150,6 +152,19 @@ pub(crate) mod simd {
     pub fn maybe_gf2m_batch() -> Option<&'static Gf2mBatchFns> {
         GF2M_BATCH_FNS
             .get_or_init(gf2_kernels_simd::gf2m_batch::detect)
+            .as_ref()
+    }
+
+    /// Returns the best available panelized GF(2^m) GEMM kernel, if any.
+    ///
+    /// Provides the AVX2 + VPCLMULQDQ broadcast-multiply-accumulate GEMM
+    /// that replaces the per-output-cell `try_gf2m_u64_batch_dot_product`
+    /// path. Returns `None` on non-AVX2 hosts; callers fall back to the
+    /// existing per-cell path.
+    #[inline]
+    pub fn maybe_gf2m_gemm() -> Option<&'static Gf2mGemmFns> {
+        GF2M_GEMM_FNS
+            .get_or_init(gf2_kernels_simd::gf2m_gemm::detect)
             .as_ref()
     }
 
@@ -343,6 +358,12 @@ pub(crate) mod simd {
     #[allow(dead_code)]
     #[inline]
     pub fn maybe_gf2m_batch() -> Option<()> {
+        None
+    }
+
+    #[allow(dead_code)]
+    #[inline]
+    pub fn maybe_gf2m_gemm() -> Option<()> {
         None
     }
 
