@@ -1050,13 +1050,21 @@
       "outcome": "Path A succeeded — pinned-container NTL --large measured. 7 [hard] FAIL cells routed to Wave-8b e24f7839.",
       "doc": "dev/bench_results/2026-05-06-a1172cea-gf2m-scorecard.md"
     },
-    "wave_8b_dispatched": {
-      "ts": "2026-05-06T18:46Z",
+    "wave_8b_closed": {
+      "ts": "2026-05-06T21:09Z",
       "main_anchor_sha": "cdb0e87281801746e6ece0b48cd0382378530f50",
       "issues": [
-        {"short_id": "e24f7839", "branch": "worktree-agent-e24f7839", "agent_id": "a5b72a1e8176e0c65", "classification": "implementation"},
-        {"short_id": "fb271c41", "branch": "worktree-agent-fb271c41", "agent_id": "a821adb62889a37b8", "classification": "research"}
-      ]
+        {"short_id": "e24f7839", "rework_count": 2, "verdict": "R3 PASS after panelized GEMM landing + helper consolidation + scalar-fallback test coverage"},
+        {"short_id": "fb271c41", "rework_count": 0, "verdict": "R1 PASS — GFNI/AVX-512 NOT REQUIRED on Zen-3"}
+      ],
+      "user_amendment": "Path A (2026-05-06): 4 cells [hard]->[aspirational] (GF(2^8) all sizes, GF(2^16) n=1024)",
+      "follow_up_routed_to": "615db3b9 plan (rejected duplicate c450f40b)"
+    },
+    "wave_8c_closed": {
+      "ts": "2026-05-06T21:27Z",
+      "issue": "d82c00a3",
+      "rework_count": 1,
+      "verdict": "R2 PASS — published GF(2^m) parity evidence at dev/bench_results/2026-05-07-d82c00a3-gf2m-parity-evidence.md, attached to story 2c7548ae"
     }
   },
   "session_11_started_at": "2026-05-06T13:46Z",
