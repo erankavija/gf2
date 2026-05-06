@@ -4874,8 +4874,11 @@ mod tests {
 
     /// Verifies that for every `n` in the F-path coverage set, the
     /// production `gemm(a, b)` (which dispatches through
-    /// `try_simd_gemm_classical` and may take the f32-FMA path on
-    /// FMA3 hosts) matches the scalar reference bit-exactly.
+    /// `try_simd_gemm_classical` and currently routes to Candidate C
+    /// for `P ≤ 251` per `N_THRESH_PRIME = 252` — see 662f7a15
+    /// Amendment C) matches the scalar reference bit-exactly. The
+    /// F-path itself is exercised directly via the kernel-crate tests
+    /// in `gf2-kernels-simd/src/x86/fp_small_f32.rs::tests`.
     ///
     /// The set covers:
     /// - `WORD_BOUNDARY_LENS` (0, 1, 63, 64, 65, 127, 128, 129, 255, 256, 257)
