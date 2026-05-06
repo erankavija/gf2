@@ -361,7 +361,7 @@
           "short_id": "366dbbcd",
           "title": "Close GF(2) echelon and rank rows",
           "classification": "implementation",
-          "status": "pending"
+          "status": "done"
         },
         {
           "short_id": "111a3967",
@@ -1030,10 +1030,11 @@
     {"short_id": "615db3b9", "title": "Pursue fflas-like GF(251) GEMM performance", "type": "task", "depends_on": ["cc5de315"], "purpose": "User-requested follow-up after cc5de315 story-scope GF(251) amendment.", "state_at_handoff": "ready"}
   ],
   "session_11_started_at": "2026-05-06T13:46Z",
-  "session_11_summary": "Closed Wave-7 tasks 380e041a and 8e305c21. 380e041a produced M4RI-style Gray-table scheduling evidence and showed table scheduling alone was insufficient. 8e305c21 landed the production GF(2) M4RM schedule improvement, removed the disabled two-table prefetch path after review, documented benchmark evidence in dev/bench_results/2026-05-06-8e305c21-production-m4rm.md, and passed cargo-ci/code-review/doc-review gates. 366dbbcd became ready as the next Wave-7 echelon/rank task.",
+  "session_11_summary": "Closed Wave-7 tasks 380e041a, 8e305c21, and 366dbbcd. 380e041a produced M4RI-style Gray-table scheduling evidence and showed table scheduling alone was insufficient. 8e305c21 landed the production GF(2) M4RM schedule improvement, removed the disabled two-table prefetch path after review, documented benchmark evidence in dev/bench_results/2026-05-06-8e305c21-production-m4rm.md, and passed gates. 366dbbcd landed blocked GF(2) RREF/echelon optimization, fixed right-pivot full-row compatibility after cargo-ci exposed the NR5G diagnostic regression, documented evidence in dev/bench_results/2026-05-06-366dbbcd-gf2-echelon-rank.md, and passed cargo-ci/code-review/doc-review gates. 111a3967 became ready as the next Wave-7 evidence publication task.",
   "session_11_decisions": [
     {"ts": "2026-05-06T13:46Z", "topic": "380e041a M4RI-style table scheduling result", "decision": "Table scheduling alone is useful but insufficient: best same-session benchmark was k=9 / 256 KiB at n=4096 with about 1.061x over production, still directionally about 1.54x behind M4RI. Downstream 8e305c21 should treat it as evidence/input, not the sole production fix."},
-    {"ts": "2026-05-06T15:24Z", "topic": "8e305c21 production GF(2) matmul closure", "decision": "Production M4RM now uses adaptive target-row Gray-table budgets and a single-table update path. Evidence shows n=1024 at 1.18x slower than M4RI and n=4096 at the 1.50x threshold on the longer repeat run; margin is narrow and should be tracked by future perf gates."}
+    {"ts": "2026-05-06T15:24Z", "topic": "8e305c21 production GF(2) matmul closure", "decision": "Production M4RM now uses adaptive target-row Gray-table budgets and a single-table update path. Evidence shows n=1024 at 1.18x slower than M4RI and n=4096 at the 1.50x threshold on the longer repeat run; margin is narrow and should be tracked by future perf gates."},
+    {"ts": "2026-05-06T16:49Z", "topic": "366dbbcd GF(2) echelon/rank closure", "decision": "Blocked left-to-right RREF closes all pinned GF(2) echelon rows for n in {64,256,1024} across uniform and rank-deficient regimes. Right-to-left pivoting must keep full-row XOR semantics for generator/parity compatibility; suffix-only XOR is valid only for the left-to-right blocked path."}
   ],
   "session_8_decisions": [
     {
