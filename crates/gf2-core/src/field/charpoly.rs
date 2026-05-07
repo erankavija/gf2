@@ -49,52 +49,63 @@
 //!
 //! ## Empirical crossover (Mersenne-31, `Fp<2^31 − 1>`)
 //!
-//! Measured 2026-04-26 with the `charpoly/dispatch/...` Criterion group
-//! on the dev host (`cargo bench -p gf2-core --bench charpoly --features rand
-//! -- charpoly/dispatch`):
+//! **Latest measurement: 2026-05-07** (issue `4a59d1f9`, post-Wave-9
+//! kernels: `TRI_BASE_THRESHOLD = 8`, `PLE_BASE_COLS = 1`, delayed-u128
+//! GEMM). Criterion group `charpoly/dispatch`, 10 samples, AMD Ryzen 9
+//! 5900X (Zen 3), `rustc 1.95.0`, `RUSTFLAGS="-C target-cpu=native"`:
 //!
 //! ```text
-//!     n     cubic       Keller–Gehrig    KG / cubic
-//!   ----  ----------  --------------  ----------
-//!    256    104.7 ms        18.15 s     ~173×
+//!     n     cubic       Keller-Gehrig    KG / cubic
+//!   ----  ----------  ---------------  ----------
+//!     64    0.729 ms         23.0 ms     ~31.6x
+//!    128    5.25 ms         348 ms       ~66.3x
+//!    256    37.1 ms          5.51 s     ~148x
+//!    512   279 ms           94.2 s      ~337x
+//!   1024     2.14 s       ~1500 s (ext)  ~700x (ext)
 //! ```
 //!
-//! At `n = 256` the cubic Krylov path is **~173× faster** than the
-//! sub-cubic Keller–Gehrig path. The crossover where Keller–Gehrig wins
-//! is therefore well above `n = 1024` on this configuration; it is
-//! **not** at the previously-conjectured `n ≈ 256`. The `[aspirational]`
-//! criterion of issue `1454ec2d` (KG beats cubic at `n ≥ 256`) does
-//! **not** hold for the current implementation.
+//! Previous measurement (2026-04-26, pre-Wave-9): cubic 104.7 ms,
+//! KG 18.15 s at n = 256 (ratio ~173x). Post-Wave-9 cubic is 2.82x
+//! faster (37.1 ms) and KG is 3.30x faster (5.51 s); the ratio
+//! improved only 1.17x because both paths benefited proportionally.
+//!
+//! The crossover where Keller-Gehrig wins is **not visible** at any
+//! measured size. Both the pre-Wave-9 and post-Wave-9 data confirm the
+//! same structural bottleneck: the K^{-1} step uses `FieldMatrix::solve`
+//! which is backed by `O(n^3)` PLE. No amount of PLE/TRSM constant-factor
+//! tuning can close the 31-700x gap; only replacing the solve with a
+//! sub-cubic inversion path would shift the crossover.
 //!
 //! ### Why
 //!
-//! The Keller–Gehrig path's K⁻¹ step uses `FieldMatrix::solve`, which is
-//! built on PLE (`O(n³)`). That `O(n³)` solve dominates the running time
-//! and prevents the gemm-driven `O(n^ω · log n)` doublings from winning
+//! The Keller-Gehrig path's K^{-1} step uses `FieldMatrix::solve`, which is
+//! built on PLE (`O(n^3)`). That `O(n^3)` solve dominates the running time
+//! and prevents the gemm-driven `O(n^omega * log n)` doublings from winning
 //! at the measured sizes — even though each doubling does dispatch to
-//! Strassen–Winograd through [`FiniteField::WINOGRAD_THRESHOLD`]. The
+//! Strassen-Winograd through [`FiniteField::WINOGRAD_THRESHOLD`]. The
 //! cubic Krylov path's inner loop is matvec-shaped (linear, not
-//! Strassen-amenable), but its constant in front of `n³` is
-//! significantly smaller than the PLE-dominated Keller–Gehrig constant.
+//! Strassen-amenable), but its constant in front of `n^3` is
+//! significantly smaller than the PLE-dominated Keller-Gehrig constant.
 //!
 //! Lifting this to a true sub-cubic crossover would require either
 //! (a) replacing `FieldMatrix::solve` with a Strassen-amenable inversion
 //! pipeline (`trtri_upper` + `gemm` rather than `trsm_*`), or
-//! (b) restructuring the algorithm so the K⁻¹ step is unnecessary. Both
+//! (b) restructuring the algorithm so the K^{-1} step is unnecessary. Both
 //! are out of scope for `1454ec2d`'s baseline deliverable; they are
 //! candidates for a future follow-up.
 //!
 //! ### Dispatch policy
 //!
-//! Given the empirical finding above (cubic is ~173× faster than KG at
-//! `n = 256`, with no measurable crossover within `n ≤ 1024`),
-//! [`KG_DISPATCH_MIN_N`] is set to [`usize::MAX`] so that public
-//! [`FieldMatrix::charpoly`] **always selects the cubic baseline**
+//! Given the empirical finding above (cubic is 31-700x faster than KG at
+//! `n` in {64..1024}, with no measurable crossover; confirmed by both the
+//! 2026-04-26 pre-Wave-9 and 2026-05-07 post-Wave-9 sweeps per issue
+//! `4a59d1f9`), [`KG_DISPATCH_MIN_N`] is set to [`usize::MAX`] so that
+//! public [`FieldMatrix::charpoly`] **always selects the cubic baseline**
 //! under default dispatch. The correctness contract still holds: when
-//! a future fix replaces the K⁻¹ PLE pipeline with a Strassen-amenable
+//! a future fix replaces the K^{-1} PLE pipeline with a Strassen-amenable
 //! inversion and the threshold is tuned downward, KG would re-engage
-//! conditionally on the field cardinality (`q > 2n²`) and pass the
-//! Cayley–Hamilton verification before returning. Callers who want to
+//! conditionally on the field cardinality (`q > 2n^2`) and pass the
+//! Cayley-Hamilton verification before returning. Callers who want to
 //! opt into the KG path NOW (e.g. for benchmarks or research)
 //! must call [`FieldMatrix::charpoly_keller_gehrig`] explicitly with a
 //! deterministic seed.
@@ -200,18 +211,19 @@ use crate::field::vec::FieldVec;
 use crate::field::FiniteField;
 
 /// Minimum matrix size at which [`FieldMatrix::charpoly`] considers the
-/// sub-cubic Keller–Gehrig path. See the module rustdoc for the
+/// sub-cubic Keller-Gehrig path. See the module rustdoc for the
 /// empirical crossover discussion.
 ///
 /// Set to [`usize::MAX`] so that **`charpoly()` always routes to the
-/// cubic baseline** under default dispatch — the empirical measurement
-/// records cubic as ~173× faster than Keller–Gehrig at `n = 256` on
-/// `Fp<MERSENNE_31>` (the K⁻¹ step's PLE-backed solve is `O(n³)` and
-/// dominates), and we have no measurement above `n = 1024` showing a
-/// crossover. Callers who want to opt into KG explicitly can call
-/// [`FieldMatrix::charpoly_keller_gehrig`] directly.
+/// cubic baseline** under default dispatch. The empirical measurements
+/// (issue `4a59d1f9`, post-Wave-9 kernels, 2026-05-07) confirm cubic
+/// is 31-337x faster than Keller-Gehrig at n in {64..512} on
+/// `Fp<MERSENNE_31>`; ratio grows monotonically with n. No crossover
+/// is visible in the measured range. The K^{-1} step's PLE-backed solve
+/// is `O(n^3)` and dominates. Callers who want to opt into KG explicitly
+/// can call [`FieldMatrix::charpoly_keller_gehrig`] directly.
 ///
-/// Re-tune the threshold downward in a future ticket once the K⁻¹
+/// Re-tune the threshold downward in a future ticket once the K^{-1}
 /// step is replaced with a Strassen-amenable inversion (`trtri_upper`
 /// + `gemm`) or the algorithm is restructured to avoid it.
 pub const KG_DISPATCH_MIN_N: usize = usize::MAX;
