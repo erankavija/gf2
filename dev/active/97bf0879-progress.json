@@ -1065,8 +1065,41 @@
       "issue": "d82c00a3",
       "rework_count": 1,
       "verdict": "R2 PASS — published GF(2^m) parity evidence at dev/bench_results/2026-05-07-d82c00a3-gf2m-parity-evidence.md, attached to story 2c7548ae"
-    }
+    },
+    "wave_10a_closed_pre_compaction": {
+      "ts": "2026-05-07T07:23Z",
+      "issues": [
+        {"short_id": "974a85bd", "verdict": "story-close (R1) committed at ac6d94d"},
+        {"short_id": "2c7548ae", "verdict": "story-close (R1) committed at ac6d94d"},
+        {"short_id": "3643923d", "verdict": "PASS — CPU vs GPU handoff decision; cell count + GPU epic citation fixed"},
+        {"short_id": "73ec5da3", "verdict": "PASS — PLE/TRSM tuning"},
+        {"short_id": "2c52bcf6", "verdict": "PASS — rank-deficient dense"},
+        {"short_id": "7e41400f", "verdict": "PASS after R1 — invert/solve/det rows + Path A amendment"},
+        {"short_id": "4eb105f7", "verdict": "PASS — dense LA parity evidence"}
+      ]
+    },
+    "wave_10b_session_12_post_compaction": {
+      "ts": "2026-05-07T11:50Z",
+      "main_anchor_sha": "52fb4a0",
+      "issues": [
+        {"short_id": "4a59d1f9", "verdict": "R3 PASS after 2 reworks (R1 SSOT + stale comment, R2 doc internal-contradiction at n=512 + doc-vs-code drift). Closed at ce40993."},
+        {"short_id": "3a37e0f6", "verdict": "R1 PASS — Path A (lazy-reduction layout) + Path B (packed-int AVX2 SpMM kernel for Fp<P> Montgomery primes ≤ 65521). All 8 GF(p) sparse cells PASS the 1.5x contract. Closed at 36cde8e."},
+        {"short_id": "1726270d", "verdict": "R3 PASS after 2 reworks (R1 transient .claude/worktrees/ paths in §§ 1.2/1.3/2.1/2.3/4, R2 GF(2^31-1) ratio arithmetic 1.30/1.57 vs measured 1.62/1.71 + 44/43 row count). Closed at 7e274fd. 8 docs/CSVs attached to story 54fd3f0b via jit doc add."},
+        {"short_id": "d1dd266c", "verdict": "OPEN — Wiedemann O(n^3) implementation landed at bda98cd. 4/8 reference cells PASS [hard]; 4 cells fail 1.5x. User directive (2026-05-07): no scope-narrowing or aspirational amendments. Performance gap analysis written to dev/plans/d1dd266c-minpoly-performance-gaps.md and attached. User will dispatch a specialist."},
+        {"short_id": "54fd3f0b", "verdict": "R1 FAIL (in-flight). Story closure code-review failed at run 0d3aaecd-... — verdict not yet inspected before user requested handoff. Hold for next session."}
+      ]
+    },
+    "session_12_user_decisions": [
+      {"ts": "2026-05-07T11:50Z", "topic": "d1dd266c minpoly disposition", "decision": "User refused scope-narrowing/aspirational paths. Document the unclosed cells in a planning doc, link to the issue, and wait for user to dispatch specialist. No follow-up issue filed in 97bf0879 — the small-field minpoly + SIMD matvec work belongs to the broader 615db3b9 finite-field LA plan."}
+    ],
+    "session_12_jit_discipline_slips": [
+      {"slip": "d1dd266c never claimed before worker dispatch", "fixed_at": "2026-05-07T12:09Z by lead-direct claim+state=in_progress; saved memory feedback at feedback_jit_claim_before_dispatch.md"},
+      {"slip": "1726270d closed without ever transitioning through in_progress (lead ran update --state done from ready directly)", "fixed_at": "n/a — historical, cannot retroactively repair without manipulating events. Memory saved to prevent future occurrence."}
+    ]
   },
+  "session_12_closed_at": "2026-05-07T12:10Z",
+  "session_12_handoff": "dev/active/97bf0879-handoff-11.md",
+  "session_12_summary": "Closed Wave 10b: 4a59d1f9 (R3 PASS), 3a37e0f6 (Path B SpMM, R1 PASS — all 8 GF(p) sparse cells PASS), 1726270d (R3 PASS — 8 docs attached to sparse story). d1dd266c implementation landed at bda98cd (Wiedemann O(n^3)) but 4/8 cells still fail 1.5x. User refused scope-narrowing/aspirational amendments per epic philosophy (catching up with SOTA, no more tech debt). Performance gap analysis dev/plans/d1dd266c-minpoly-performance-gaps.md written + attached; user will dispatch a specialist. 54fd3f0b story-closure R1 failed and rolled to next session. d1dd266c claim slip retroactively fixed.",
   "session_11_started_at": "2026-05-06T13:46Z",
   "session_11_summary": "Closed Wave-7 tasks 380e041a, 8e305c21, and 366dbbcd. 380e041a produced M4RI-style Gray-table scheduling evidence and showed table scheduling alone was insufficient. 8e305c21 landed the production GF(2) M4RM schedule improvement, removed the disabled two-table prefetch path after review, documented benchmark evidence in dev/bench_results/2026-05-06-8e305c21-production-m4rm.md, and passed gates. 366dbbcd landed blocked GF(2) RREF/echelon optimization, fixed right-pivot full-row compatibility after cargo-ci exposed the NR5G diagnostic regression, documented evidence in dev/bench_results/2026-05-06-366dbbcd-gf2-echelon-rank.md, and passed cargo-ci/code-review/doc-review gates. 111a3967 became ready as the next Wave-7 evidence publication task.",
   "session_11_decisions": [
