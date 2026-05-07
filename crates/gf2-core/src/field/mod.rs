@@ -41,6 +41,7 @@
 pub mod batch_ops;
 pub mod charpoly;
 pub mod expr;
+pub mod extension_wiedemann;
 pub mod inverse;
 pub mod matrix;
 pub mod ntt;

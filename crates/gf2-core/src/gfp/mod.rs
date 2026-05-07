@@ -811,6 +811,18 @@ impl<const P: u64> FiniteField for Fp<P> {
     ) -> bool {
         simd_ops::fp_try_spmm::<P>(a_row_ptr, a_col_idx, a_values, b, b_rows, n, out)
     }
+
+    /// Routes to the extension-field scalar Wiedemann minimal-polynomial
+    /// path for the supported low-cardinality primes (issue `6c926de0`).
+    /// `P ∈ {7, 251}` engages a quadratic or cubic extension large enough
+    /// that `|E| > n` for the project's bench sizes (n ≤ 256); other
+    /// primes fall through to the default `None`.
+    #[inline]
+    fn try_extension_wiedemann_minpoly(
+        a: &crate::field::matrix::FieldMatrix<Self>,
+    ) -> Option<crate::field::poly::FieldPoly<Self>> {
+        crate::field::extension_wiedemann::try_extension_wiedemann_fp::<P>(a)
+    }
 }
 
 // ---------------------------------------------------------------------------

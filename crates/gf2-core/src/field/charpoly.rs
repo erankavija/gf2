@@ -1977,6 +1977,20 @@ fn minpoly_dispatch<F: FiniteField>(
                     }
                 }
                 // Wiedemann exhausted — fall through to cyclic-LCM.
+            } else {
+                // Low-cardinality fields where the base-field gate fails:
+                // try the extension-field scalar Wiedemann path first
+                // (issue `6c926de0`). The hook is `None` by default and
+                // is overridden for `Fp<P>` (`P ∈ {7, 251}`) where a
+                // small algebraic extension lifts the per-attempt
+                // success probability above the deterministic ceiling
+                // and so a single attempt almost always succeeds.
+                if let Some(m) = F::try_extension_wiedemann_minpoly(a) {
+                    return m;
+                }
+                // Extension path unavailable or did not converge — fall
+                // through to the multi-seed Wiedemann inside
+                // `cyclic_lcm_minpoly`.
             }
         }
     }
