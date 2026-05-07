@@ -1972,8 +1972,19 @@ mod tests {
         for &k in lens {
             for &m in lens {
                 if k == 0 || m == 0 {
-                    // zero-dim matvec is trivially handled by the caller;
-                    // try_prepack_matvec returns None for k=0.
+                    // Zero-dim case: y is either empty (m=0) or all zeros
+                    // (k=0 vacuous sum). Verify the prepack matvec matches
+                    // the scalar semantics rather than skipping the
+                    // boundary.
+                    let a: Vec<Fp<P>> = vec![Fp::<P>::new(0); m * k];
+                    let x: Vec<Fp<P>> = vec![Fp::<P>::new(0); k];
+                    if let Some(packed) = fp_try_prepack_matvec::<P>(&a, m, k) {
+                        let mut y_simd = vec![Fp::<P>::new(0); m];
+                        packed.matvec(&x, &mut y_simd);
+                        for &y_i in &y_simd {
+                            assert_eq!(y_i, Fp::<P>::new(0), "P={P} m={m} k={k}");
+                        }
+                    }
                     continue;
                 }
                 // Build a deterministic m×k matrix.
@@ -2050,6 +2061,66 @@ mod tests {
         {
             check_small_prime_prepack_matvec::<251>(BOUNDARY_LENS);
             check_small_prime_prepack_matvec::<7>(BOUNDARY_LENS);
+        }
+    }
+
+    proptest::proptest! {
+        #![proptest_config(proptest::prelude::ProptestConfig::with_cases(48))]
+
+        /// Property: the inlined/cached small-prime prepack matvec path
+        /// returns the same result as the scalar reference for any
+        /// `(m, k)` shape with each dimension in
+        /// `{0, 1, 15, 16, 17, 63, 64, 65}`. Issue `70766cb1` review
+        /// feedback (R1) explicitly required a proptest over these
+        /// boundary lengths, distinct from the deterministic
+        /// `test_small_prime_prepack_matvec_boundary_lengths` unit test.
+        #[test]
+        fn proptest_small_prime_prepack_matvec_boundary_fp251(
+            m_idx in 0usize..8,
+            k_idx in 0usize..8,
+            seed in proptest::prelude::any::<u64>(),
+        ) {
+            const BOUNDARY_LENS: &[usize] = &[0, 1, 15, 16, 17, 63, 64, 65];
+            let m = BOUNDARY_LENS[m_idx];
+            let k = BOUNDARY_LENS[k_idx];
+            #[cfg(feature = "simd")]
+            {
+                if crate::simd::maybe_fp_small().is_none() {
+                    return Ok(()); // non-AVX2 host — fast path unreachable
+                }
+                if m == 0 || k == 0 {
+                    let a: Vec<Fp<251>> = vec![Fp::<251>::new(0); m * k];
+                    let x: Vec<Fp<251>> = vec![Fp::<251>::new(0); k];
+                    if let Some(packed) = fp_try_prepack_matvec::<251>(&a, m, k) {
+                        let mut y_simd = vec![Fp::<251>::new(0); m];
+                        packed.matvec(&x, &mut y_simd);
+                        for &y_i in &y_simd {
+                            proptest::prop_assert_eq!(y_i, Fp::<251>::new(0));
+                        }
+                    }
+                    return Ok(());
+                }
+                let mut s = seed;
+                let a: Vec<Fp<251>> = (0..m * k)
+                    .map(|_| { s = s.wrapping_mul(2_654_435_761).wrapping_add(0x9E37_79B9); Fp::<251>::new(s) })
+                    .collect();
+                let x: Vec<Fp<251>> = (0..k)
+                    .map(|_| { s = s.wrapping_mul(2_654_435_761).wrapping_add(0x9E37_79B9); Fp::<251>::new(s) })
+                    .collect();
+                let mut y_ref = vec![Fp::<251>::new(0); m];
+                for i in 0..m {
+                    let mut acc = Fp::<251>::new(0);
+                    for j in 0..k { acc += a[i * k + j] * x[j]; }
+                    y_ref[i] = acc;
+                }
+                let packed = fp_try_prepack_matvec::<251>(&a, m, k).unwrap();
+                let mut y_simd = vec![Fp::<251>::new(0); m];
+                packed.matvec(&x, &mut y_simd);
+                for i in 0..m {
+                    proptest::prop_assert_eq!(y_simd[i], y_ref[i]);
+                }
+            }
+            let _ = (m, k, seed);
         }
     }
 
