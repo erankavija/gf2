@@ -26,11 +26,17 @@
   and uniform/4096) were produced by a concurrent
   `bench fieldmatrix_solve -- "^solve/Fp_M31"` run. All solve cells are
   from this session.
-- **Estimated values** (marked E): For `det` cells and `invert/deficient`
-  cells (which return None after PLE), values are derived from PLE criterion
-  data collected at 03:59 on the same host (a prior session earlier this
-  morning). The 9–14% cross-session drift bound applies. Even with maximum
-  14% drift in the unfavourable direction, these cells beat fflas by 2–3x.
+- **Proxy measurements** (marked P): For `invert/deficient` cells (which
+  return None after PLE), values are taken from the directly measured
+  `solve/deficient` cells at the same size. Both `invert/deficient` and
+  `solve/deficient` execute the same code path: PLE followed by a rank < n
+  check that returns None. The solve/deficient cells were measured in this
+  session. The difference between invert/deficient and solve/deficient
+  wall time is negligible (one conditional branch plus None allocation).
+- **Estimated values** (marked E): For `det` cells, values are derived from
+  PLE criterion data collected at 03:59 on the same host (a prior session
+  earlier this morning). The 9–14% cross-session drift bound applies. Even
+  with maximum 14% drift, these cells beat fflas pluq by 1.5–2x.
 - **fflas-ffpack reference**: `dev/bench_results/2026-04-26-reference.csv`,
   `wall_ns` column for `GF(2^31-1)`. There are no `det` rows in the
   reference CSV; fflas-ffpack's reference harness does not benchmark `det`.
@@ -48,9 +54,9 @@
 | 64 | uniform | 0.698 | 1.043 | **0.67x** | PASS | D |
 | 256 | uniform | 36.759 | 20.495 | **1.79x** | **FAIL** | D |
 | 1024 | uniform | 2257.791 | 1137.5 | **1.98x** | **FAIL** | D |
-| 64 | deficient | ~0.07 | 0.532 | **~0.13x** | PASS | E |
-| 256 | deficient | ~3.6 | 10.289 | **~0.35x** | PASS | E |
-| 1024 | deficient | ~187 | 591.5 | **~0.32x** | PASS | E |
+| 64 | deficient | ~0.096 | 0.532 | **~0.18x** | PASS | P |
+| 256 | deficient | ~3.5 | 10.289 | **~0.34x** | PASS | P |
+| 1024 | deficient | ~188 | 591.5 | **~0.32x** | PASS | P |
 
 ### GF(2^31-1) — `solve`
 
@@ -63,6 +69,7 @@
 | 64 | deficient | 0.096 | 0.407 | **0.24x** | PASS | D |
 | 256 | deficient | 3.489 | 6.208 | **0.56x** | PASS | D |
 | 1024 | deficient | 188.462 | 322.4 | **0.58x** | PASS | D |
+| 4096 | deficient | 11341.609 | ~20634 (extrap.) | **~0.55x** | PASS | D |
 
 ### GF(2^31-1) — `det`
 
@@ -88,7 +95,7 @@ is within 1% of PLE for n ≥ 64. The same PLE cells that beat fflas-ffpack
 
 - `solve` (all n, all regimes): **all PASS** — gf2 is 0.24–0.60x of fflas (direct measurements).
 - `det` (all n, all regimes): **all PASS** — gf2 ≈ PLE, which beats fflas pluq by 1.8x (estimates from same-day PLE data).
-- `invert/deficient` (all n): **all PASS** — returns None after PLE, ~0.13–0.35x (estimates from same-day PLE data).
+- `invert/deficient` (all n): **all PASS** — returns None after PLE, ~0.18–0.34x (proxied from solve/deficient direct measurements).
 - `invert/uniform/n=64`: **PASS** — 0.67x (faster than fflas).
 - `invert/uniform/n=256`: **FAIL** — 1.79x.
 - `invert/uniform/n=1024`: **FAIL** — 1.98x.
@@ -216,6 +223,7 @@ All tests pass: `cargo nextest run --workspace --all-features --release --profil
 | Criterion: solve/Fp_M31/deficient/64 | `target/criterion/solve_Fp_M31_deficient/64/new/estimates.json` |
 | Criterion: solve/Fp_M31/deficient/256 | `target/criterion/solve_Fp_M31_deficient/256/new/estimates.json` |
 | Criterion: solve/Fp_M31/deficient/1024 | `target/criterion/solve_Fp_M31_deficient/1024/new/estimates.json` |
+| Criterion: solve/Fp_M31/deficient/4096 | `target/criterion/solve_Fp_M31_deficient/4096/new/estimates.json` |
 | Criterion: pluq/Fp_M31/uniform/256 | `target/criterion/pluq_Fp_M31_uniform/256/new/estimates.json` |
 | Criterion: pluq/Fp_M31/uniform/1024 | `target/criterion/pluq_Fp_M31_uniform/1024/new/estimates.json` |
 | Criterion: pluq/Fp_M31/deficient/256 | `target/criterion/pluq_Fp_M31_deficient/256/new/estimates.json` |
@@ -236,7 +244,7 @@ All tests pass: `cargo nextest run --workspace --all-features --release --profil
 - `invert/uniform/n=64`: PASS (0.67x, direct). SC#1 satisfied.
 - `invert/uniform/n=256`: **FAIL (1.79x, direct)**. SC#1 not satisfied.
 - `invert/uniform/n=1024`: **FAIL (1.98x, direct)**. SC#1 not satisfied.
-- `invert/deficient` (all n): PASS (estimated ~0.13–0.35x from same-day PLE data). SC#1 satisfied.
+- `invert/deficient` (all n): PASS (~0.18–0.34x, proxied from solve/deficient direct measurements). SC#1 satisfied.
 
 **Root cause of invert/uniform FAIL**: The `inv()` driver (Dumas-Pernet
 Table 2) performs PLE + 2×trtri + 1 n×n gemm + permutation. The PLE and
