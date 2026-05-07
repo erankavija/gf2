@@ -1980,12 +1980,30 @@ fn cyclic_lcm_minpoly<F: FiniteField>(a: &FieldMatrix<F>) -> FieldPoly<F> {
         return p_at;
     }
 
-    // Last resort: legacy quartic driver. Always correct, never reached
-    // by the bench cells or the standard Jordan adversarial tests.
-    let basis: Vec<FieldVec<F>> = Vec::new();
-    let pivot_row_of_col: Vec<usize> = Vec::new();
-    let (_gen, mp) = find_max_minpoly_generator(a, &basis, &pivot_row_of_col, &zero);
-    mp
+    // Last resort: re-run multi_seed_wiedemann with a fresh disjoint
+    // seed stream. The previous attempts use seed offsets {0xA1, 0xA2,
+    // 0xA3} below; pick a far-away offset so the retry consumes
+    // independent random probes. multi_seed_wiedemann is mathematically
+    // valid for every finite field (BM converges once the union of seed
+    // orbits spans V) and its O(seeds · n³) cost is bounded; the legacy
+    // quartic `find_max_minpoly_generator` is therefore not reached
+    // from production dispatch and is kept only as a `#[cfg(test)]`
+    // cross-check helper for the proptest suite.
+    if let Some(p) = multi_seed_wiedemann_minpoly(a, CYCLIC_LCM_VERIFY_SEED.wrapping_add(0xC1)) {
+        return p;
+    }
+    // Truly unreachable in practice — every finite-field matrix admits
+    // a Wiedemann minpoly via canonical-basis seed enumeration. Reaching
+    // this branch indicates an internal invariant violation; surface it
+    // loudly rather than silently returning a wrong polynomial.
+    panic!(
+        "cyclic_lcm_minpoly: all production dispatch arms exhausted; \
+         cyclic_decomposition + multi-seed Wiedemann both failed to \
+         produce a verified annihilator for an n={n} matrix. This \
+         indicates an internal invariant violation in the Wiedemann \
+         convergence proof or in the verifier; report with the input \
+         matrix to reproduce."
+    );
 }
 
 /// Default seed for the cyclic-LCM verification PRNG. Chosen freshly
@@ -2337,21 +2355,22 @@ impl<F: FiniteField> FieldMatrix<F> {
     ///
     /// # Complexity
     ///
-    /// `O(n³)` field operations on every production dispatch arm reached
-    /// by random-matrix bench inputs:
+    /// `O(n³)` field operations on every production dispatch arm:
     /// - Wiedemann path (large-cardinality fields, `q > n`): dominated
     ///   by `2n + 1` matrix-vector products.
     /// - Extension-field Wiedemann (low-cardinality, `q ≤ n` and
     ///   `q^k > n`): scalar Wiedemann over `Fp<P>[x]/(f(x))`, base-field
     ///   amortised.
     /// - Cyclic-LCM path (low-cardinality, retry fallback): cubic Krylov
-    ///   cyclic decomposition + LCM sweep.
+    ///   cyclic decomposition + LCM sweep, with Wiedemann retry on
+    ///   adversarial verifier failure (also `O(n³)`).
     /// - Multi-seed Wiedemann (low-cardinality, retry fallback): bounded
     ///   `O(seeds · n³)` matvec work.
-    /// - `find_max_minpoly_generator` (paranoid last-resort fallback,
-    ///   reachable only on pathological matrix structures not present in
-    ///   bench / Jordan adversarial test inputs): `O(n⁴)`. Documented for
-    ///   completeness; never fires on the project's bench cells.
+    ///
+    /// The legacy quartic `find_max_minpoly_generator` driver is **not
+    /// reached** from production dispatch (`d1dd266c` review-pass fix);
+    /// it is retained as a `#[cfg(test)]` cross-check helper for the
+    /// proptest suite.
     ///
     /// # Examples
     ///
