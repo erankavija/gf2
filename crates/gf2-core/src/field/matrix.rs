@@ -41,6 +41,25 @@ use crate::matrix_like::{MatrixLike, MatrixLikeMut};
 // [`FieldMatrix`] are implemented in that module.
 pub use crate::field::ple::Permutation;
 
+/// Crate-internal trait for pre-packed matvec caches (issue `d1dd266c`).
+///
+/// `cyclic_decomposition` and `wiedemann_minpoly_attempt` perform
+/// `O(n)` matvec operations on the same matrix. Repacking the matrix
+/// per call would add an `O(n^3)` overhead to every minpoly /
+/// charpoly call. This trait gives them an opaque handle they can
+/// build once and reuse for every matvec.
+///
+/// Implementations live in the `Fp<P>` SIMD layer
+/// (`crate::gfp::simd_ops::PackedFpMatrix`); other fields return
+/// `None` from `try_prepack_matvec` and the iterative drivers fall
+/// back to the per-row scalar matvec chain.
+pub trait PackedMatvec<F: FiniteField>: Send {
+    /// Computes `out = A · x` using the pre-packed matrix. The caller
+    /// guarantees `x.len() == k` and `out.len() == m` where `m, k` were
+    /// the shape passed to `try_prepack_matvec`.
+    fn matvec(&self, x: &[F], out: &mut [F]);
+}
+
 // ─── Test-only allocation counter ─────────────────────────────────────────────
 //
 // Exposed only under `#[cfg(test)]`; the production path is a single
@@ -1311,6 +1330,21 @@ impl<F: FiniteField> FieldMatrix<F> {
             );
         };
         let mut y: FieldVec<F> = FieldVec::zeros_from(self.rows, &zero);
+        // SIMD whole-matvec fast path for `Fp<P>` with `P ≤ 65521`
+        // (issue `d1dd266c`). Falls through to the per-row scalar
+        // chain when the field is out of range, the `simd` feature is
+        // disabled, or AVX2 is unavailable at runtime.
+        if self.cols > 0
+            && F::try_simd_matvec(
+                self.data.as_slice(),
+                x.as_slice(),
+                self.rows,
+                self.cols,
+                y.as_mut_slice(),
+            )
+        {
+            return y;
+        }
         // Delegate each row to the delayed-reduction dot-product kernel so
         // large-prime fields (where a naive running accumulator would have
         // to reduce on every multiply) and GF(2^m) (where Wide = Self so a

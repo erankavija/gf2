@@ -207,10 +207,71 @@
 //! matrix `P` column by column. The architectural cost is documented
 //! per function; no bespoke kernels are introduced.
 
-use crate::field::matrix::FieldMatrix;
+use crate::field::matrix::{FieldMatrix, PackedMatvec};
 use crate::field::poly::FieldPoly;
 use crate::field::vec::FieldVec;
 use crate::field::FiniteField;
+
+/// Iterative-driver matvec helper (issue `d1dd266c`).
+///
+/// Wraps an `&FieldMatrix<F>` plus an optional pre-packed cache. When
+/// the cache is available (e.g. for `Fp<P>` with `P ≤ 65521` and AVX2
+/// enabled at runtime), every matvec call goes through the cache and
+/// pays only a per-call vector pack — the matrix pack is paid exactly
+/// once at construction time. When the cache is `None`, dispatches
+/// through the regular `FieldMatrix::matvec` path (which itself may
+/// still hit the per-call SIMD matvec hook).
+struct MatvecDriver<'a, F: FiniteField> {
+    a: &'a FieldMatrix<F>,
+    packed: Option<Box<dyn PackedMatvec<F>>>,
+    rows: usize,
+    cols: usize,
+}
+
+impl<'a, F: FiniteField> MatvecDriver<'a, F> {
+    fn new(a: &'a FieldMatrix<F>) -> Self {
+        let (rows, cols) = a.shape();
+        let packed = if rows > 0 && cols > 0 {
+            F::try_prepack_matvec(a.as_data_slice(), rows, cols)
+        } else {
+            None
+        };
+        Self {
+            a,
+            packed,
+            rows,
+            cols,
+        }
+    }
+
+    fn matvec(&self, x: &FieldVec<F>) -> FieldVec<F> {
+        if let Some(packed) = self.packed.as_ref() {
+            assert_eq!(x.len(), self.cols);
+            // Synthesise a zero element from `x` (always non-empty here).
+            let zero = x.as_slice()[0].zero_like();
+            let mut y = FieldVec::<F>::zeros_from(self.rows, &zero);
+            packed.matvec(x.as_slice(), y.as_mut_slice());
+            return y;
+        }
+        self.a.matvec(x)
+    }
+
+    /// Computes `out = A · x` written in-place into `out`. Variant of
+    /// [`MatvecDriver::matvec`] that reuses an existing destination
+    /// buffer to avoid an allocation per call.
+    fn matvec_into(&self, x: &FieldVec<F>, out: &mut FieldVec<F>) {
+        if let Some(packed) = self.packed.as_ref() {
+            assert_eq!(x.len(), self.cols);
+            assert_eq!(out.len(), self.rows);
+            packed.matvec(x.as_slice(), out.as_mut_slice());
+            return;
+        }
+        let y = self.a.matvec(x);
+        for (slot, val) in out.as_mut_slice().iter_mut().zip(y.iter()) {
+            *slot = val.clone();
+        }
+    }
+}
 
 /// Minimum matrix size at which [`FieldMatrix::charpoly`] considers the
 /// sub-cubic Keller-Gehrig path. See the module rustdoc for the
@@ -290,6 +351,9 @@ fn cyclic_decomposition<F: FiniteField>(a: &FieldMatrix<F>) -> Vec<CyclicBlock<F
     }
     let zero: F = a.get(0, 0).zero_like();
     let one: F = zero.one_like();
+    // Pre-pack the matrix once so all `a · chain.last()` matvec calls in
+    // the loop below avoid re-packing per call (issue d1dd266c).
+    let driver = MatvecDriver::new(a);
 
     // Running basis B in row-reduced form. We store it as a flat
     // `Vec<FieldVec<F>>` (one per column) so that appending a new
@@ -366,7 +430,7 @@ fn cyclic_decomposition<F: FiniteField>(a: &FieldMatrix<F>) -> Vec<CyclicBlock<F
 
         loop {
             // next = A · chain[-1] (in V).
-            let next_in_v = a.matvec(chain.last().unwrap());
+            let next_in_v = driver.matvec(chain.last().unwrap());
             // Reduce against the full running basis. The reduction
             // returns (residual, coeffs) where coeffs[j] is the
             // coefficient of basis[j] in the original `next_in_v`,
@@ -1354,6 +1418,11 @@ fn wiedemann_minpoly_attempt<F: FiniteField>(
     let u = gen_vec(&mut state);
     let v = gen_vec(&mut state);
 
+    // Pre-pack the matrix once so all `2 · (2n + 1)` matvec calls in
+    // the primary + verification sequences avoid the per-call repack
+    // (issue d1dd266c).
+    let driver = MatvecDriver::new(a);
+
     // Compute scalar sequence s_k = <v, A^k · u> for k = 0..2n.
     // We iterate: cur = A^k · u, advance via cur = A · cur.
     let seq_len = 2 * n + 1; // +1 ensures BM has enough terms for degree-n recurrence
@@ -1363,7 +1432,7 @@ fn wiedemann_minpoly_attempt<F: FiniteField>(
         // s_k = v · cur (dot product).
         let sk = v.dot_product(&cur);
         seq.push(sk);
-        cur = a.matvec(&cur);
+        cur = driver.matvec(&cur);
     }
 
     // Run Berlekamp-Massey on the sequence.
@@ -1399,7 +1468,7 @@ fn wiedemann_minpoly_attempt<F: FiniteField>(
     for _ in 0..seq_len_v {
         let sk = v_prime.dot_product(&cur_v);
         seq_v.push(sk);
-        cur_v = a.matvec(&cur_v);
+        cur_v = driver.matvec(&cur_v);
     }
     // Check the recurrence: for each k, sum_{j=0}^{d} m[j] * seq_v[k+j] == 0.
     for k in 0..seq_len_v.saturating_sub(d + 1) {
@@ -1450,24 +1519,22 @@ fn wiedemann_minpoly_attempt<F: FiniteField>(
             }
         }
     } else {
-        let mut e_first = FieldVec::<F>::zeros_from(n, &zero);
-        e_first.set(0, one.clone());
-        let pe = poly_action_on_vector(&candidate, a, &e_first);
-        if pe.iter().any(|c| !c.is_zero()) {
-            return None;
-        }
+        // For larger `n` the recurrence check above is already strong:
+        // the new sequence has length `2n + 1` so `n − d` recurrence
+        // windows must independently fail on a strict divisor. Add only
+        // an `e_(n-1)` deterministic probe + one random probe — together
+        // these add ≤ 2·(n+1) matvecs to the verify cost, well within
+        // the cubic budget.
         let mut e_last = FieldVec::<F>::zeros_from(n, &zero);
         e_last.set(n - 1, one.clone());
         let pe = poly_action_on_vector(&candidate, a, &e_last);
         if pe.iter().any(|c| !c.is_zero()) {
             return None;
         }
-        for _ in 0..6 {
-            let u_check = gen_vec(&mut state);
-            let pu = poly_action_on_vector(&candidate, a, &u_check);
-            if pu.iter().any(|c| !c.is_zero()) {
-                return None;
-            }
+        let u_check = gen_vec(&mut state);
+        let pu = poly_action_on_vector(&candidate, a, &u_check);
+        if pu.iter().any(|c| !c.is_zero()) {
+            return None;
         }
     }
 

@@ -598,6 +598,13 @@ impl<F: FiniteField> FieldVec<F> {
             self.len(),
             rhs.len()
         );
+        // SIMD fast path for `Fp<P>` with `P ≤ 65521` (issue d1dd266c).
+        // Falls through to the scalar zip-loop when no kernel is
+        // registered for the field, when AVX2 is unavailable at
+        // runtime, or when the `simd` feature is disabled.
+        if F::try_simd_axpy(self.data.as_mut_slice(), a, rhs.data.as_slice()) {
+            return;
+        }
         for (y, x) in self.data.iter_mut().zip(rhs.data.iter()) {
             *y += a.clone() * x.clone();
         }
