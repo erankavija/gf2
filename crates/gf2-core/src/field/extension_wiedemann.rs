@@ -69,7 +69,7 @@
 //! [`crate::field::traits::FiniteField::try_extension_wiedemann_minpoly`]
 //! (overridden for `Fp<P>`).
 
-use crate::field::charpoly::{berlekamp_massey, poly_action_on_vector, poly_lcm, splitmix64};
+use crate::field::charpoly::{berlekamp_massey, poly_lcm, splitmix64};
 use crate::field::matrix::FieldMatrix;
 use crate::field::poly::FieldPoly;
 use crate::field::vec::FieldVec;
@@ -455,57 +455,16 @@ where
 
 // ─── Final base-field annihilation check ────────────────────────────────────
 
-/// Las-Vegas verifier: returns `true` iff `p(A) = 0` over the base
-/// field, with **zero false-accept probability**.
+/// Thin alias around the shared Las-Vegas verifier
+/// [`crate::field::charpoly::poly_annihilates_a_lasvegas`].
 ///
-/// **Strategy.**
-///
-/// 1. **Degree-`n` fast-path.** A monic divisor of the minpoly with
-///    degree exactly `n` must be the minpoly (the minpoly divides the
-///    charpoly of degree `n`, and any proper divisor would have degree
-///    `< n`), so the call is trivially `true`. Almost every Wiedemann
-///    candidate hits this branch on random inputs.
-///
-/// 2. **Exhaustive standard-basis sweep.** For `deg(p) < n` we probe
-///    every canonical basis vector `e_0, …, e_{n-1}`. If
-///    `p(A) · e_i = 0` for all `i`, then `p(A) · v = 0` for every
-///    `v ∈ F^n` because `{e_i}` spans the space, hence `p(A) = 0`. No
-///    randomness, no false accepts.
-///
-/// **Performance.** The fast-path is `O(n)` (degree check). The
-/// exhaustive sweep is `O(n · deg(p) · n²) ≤ O(n^4)` — same order as
-/// `eval_at_matrix`, but only reached on the rare derogatory inputs
-/// where the candidate has strict-divisor degree. Production benches
-/// (`GF(7)/n ∈ {64,256}`, `GF(251)/n=256`) exclusively hit the
-/// fast-path on random matrices, so the worst-case `O(n^4)` cost is
-/// not on any measured throughput contract.
-///
-/// The `_seed` parameter is retained for ABI stability with prior
-/// callers; the verifier itself is fully deterministic.
-fn p_annihilates_a<F: FiniteField>(p: &FieldPoly<F>, a: &FieldMatrix<F>, _seed: u64) -> bool {
-    let n = a.rows();
-    if n == 0 {
-        return true;
-    }
-
-    // Fast-path: deg(p) == n forces p == minpoly because minpoly | charpoly.
-    if p.degree() == Some(n) {
-        return true;
-    }
-
-    let zero: F = a.get(0, 0).zero_like();
-    let one: F = zero.one_like();
-
-    // Exhaustive standard-basis sweep — Las-Vegas certain.
-    for i in 0..n {
-        let mut e_i = FieldVec::<F>::zeros_from(n, &zero);
-        e_i.set(i, one.clone());
-        let pe = poly_action_on_vector(p, a, &e_i);
-        if pe.iter().any(|c| !c.is_zero()) {
-            return false;
-        }
-    }
-    true
+/// The two callers (`run_quadratic_generic`, `run_cubic_generic`) keep
+/// their own naming for readability, but the implementation lives in
+/// `charpoly.rs` so the verifier stays a single source of truth (R6
+/// review fix).
+#[inline]
+fn p_annihilates_a<F: FiniteField>(p: &FieldPoly<F>, a: &FieldMatrix<F>, seed: u64) -> bool {
+    crate::field::charpoly::poly_annihilates_a_lasvegas(p, a, seed)
 }
 
 // ─── Public entry: Fp<P>-typed dispatch ─────────────────────────────────────
@@ -525,7 +484,9 @@ fn p_annihilates_a<F: FiniteField>(p: &FieldPoly<F>, a: &FieldMatrix<F>, _seed: 
 ///    base-field embedding of the extension (zero α / α² components
 ///    after lifting via `QuadraticExt::new` / `CubicExt::new`).
 /// 4. The descended polynomial annihilates `A` over the base field
-///    ([`p_annihilates_a`] random-probe verification).
+///    ([`p_annihilates_a`] — Las-Vegas verification with zero false
+///    accepts; degree-`n` fast-path or exhaustive standard-basis
+///    sweep).
 ///
 /// Returns `None` otherwise. The caller (`minpoly_dispatch`) treats `None`
 /// as "fall through to the base-field multi-seed Wiedemann inside

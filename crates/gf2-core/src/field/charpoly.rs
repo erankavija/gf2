@@ -797,26 +797,37 @@ pub(crate) fn poly_action_on_vector<F: FiniteField>(
     a: &FieldMatrix<F>,
     v: &FieldVec<F>,
 ) -> FieldVec<F> {
+    let driver = MatvecDriver::new(a);
+    poly_action_on_vector_via_driver(p, &driver, v)
+}
+
+/// Same as [`poly_action_on_vector`] but threads the matvec calls
+/// through a pre-built [`MatvecDriver`], so the per-call repack cost
+/// of `FieldMatrix::matvec` is avoided across multiple Horner runs on
+/// the same matrix.
+fn poly_action_on_vector_via_driver<F: FiniteField>(
+    p: &FieldPoly<F>,
+    driver: &MatvecDriver<'_, F>,
+    v: &FieldVec<F>,
+) -> FieldVec<F> {
     let n = v.len();
     let zero: F = if n > 0 {
         v.get(0).zero_like()
     } else {
-        F::zero_hint().expect("poly_action_on_vector: cannot synthesise zero for empty vector")
+        F::zero_hint()
+            .expect("poly_action_on_vector_via_driver: cannot synthesise zero for empty vector")
     };
     if p.is_zero() {
         return FieldVec::<F>::zeros_from(n, &zero);
     }
     let deg = p.degree().expect("non-zero polynomial has a degree");
-    // Initialise with c_deg · v.
     let mut acc = FieldVec::<F>::zeros_from(n, &zero);
     let lead = p.coeff(deg);
     if !lead.is_zero() {
         acc.axpy(&lead, v);
     }
-    // Horner step: acc <- A · acc + c_k · v. When c_k is zero, the
-    // axpy is a no-op and acc already equals A · prev_acc after matvec.
     for k in (0..deg).rev() {
-        acc = a.matvec(&acc);
+        acc = driver.matvec(&acc);
         let ck = p.coeff(k);
         if !ck.is_zero() {
             acc.axpy(&ck, v);
@@ -1684,7 +1695,7 @@ const WIEDEMANN_DETERMINISTIC_VERIFY_N: usize = 32;
 /// `seed` parameter retained for ABI compatibility with the prior
 /// probabilistic interface but is unused; the verifier is now fully
 /// deterministic Las Vegas.
-fn poly_annihilates_a_lasvegas<F: FiniteField>(
+pub(crate) fn poly_annihilates_a_lasvegas<F: FiniteField>(
     p: &FieldPoly<F>,
     a: &FieldMatrix<F>,
     _seed: u64,
@@ -1693,8 +1704,6 @@ fn poly_annihilates_a_lasvegas<F: FiniteField>(
     if n == 0 {
         return true;
     }
-    let zero: F = a.get(0, 0).zero_like();
-    let one: F = zero.one_like();
 
     // (1) Fast-path: deg(p) == n implies p == charpoly == minpoly.
     if let Some(d) = p.degree() {
@@ -1703,14 +1712,20 @@ fn poly_annihilates_a_lasvegas<F: FiniteField>(
         }
     }
 
+    let zero: F = a.get(0, 0).zero_like();
+    let one: F = zero.one_like();
+
     // (2) Exhaustive standard-basis sweep — Las-Vegas certain across
     // all `n` regimes. Issue `d1dd266c` review feedback (R4) explicitly
     // required removing the probabilistic fallback so production
-    // acceptance is deterministic for every input.
+    // acceptance is deterministic for every input. The matrix is packed
+    // exactly once via `MatvecDriver`; each of the `n` Horner passes
+    // reuses that cache (R6 perf-debt fix).
+    let driver = MatvecDriver::new(a);
     for i in 0..n {
         let mut e_i = FieldVec::<F>::zeros_from(n, &zero);
         e_i.set(i, one.clone());
-        let pe = poly_action_on_vector(p, a, &e_i);
+        let pe = poly_action_on_vector_via_driver(p, &driver, &e_i);
         if pe.iter().any(|c| !c.is_zero()) {
             return false;
         }
@@ -2360,9 +2375,12 @@ impl<F: FiniteField> FieldMatrix<F> {
         }
         // Route through the dispatch shim that selects per the cardinality
         // gate: scalar Wiedemann (q > n), extension-field Wiedemann (q ≤ n
-        // and q^k > n via gfpn extensions), then cyclic-LCM / multi-seed /
-        // legacy quartic fallbacks. See `minpoly_dispatch` for the order.
-        // The empty-basis arguments are injected here for the legacy path.
+        // and q^k > n via gfpn extensions), then cyclic-LCM with multi-seed
+        // retry. The legacy quartic `find_max_minpoly_generator` driver is
+        // **not** reached from `minpoly()` — it remains in the crate only
+        // to serve `frobenius_form()`. See `minpoly_dispatch` for the
+        // order. The empty-basis arguments are injected here purely as a
+        // legacy signature artifact (unused by the cubic-class arms).
         let zero = self.get(0, 0).zero_like();
         let basis: Vec<FieldVec<F>> = Vec::new();
         let pivot_row_of_col: Vec<usize> = Vec::new();
