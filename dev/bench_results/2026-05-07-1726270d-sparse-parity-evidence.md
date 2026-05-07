@@ -93,13 +93,13 @@ CSV row sources (fflas reference):
 - GF(65521): `dev/bench_results/2026-05-04-47698404-sparse-reference.csv` line 4
 - GF(2^31-1): `dev/bench_results/2026-05-04-47698404-sparse-reference.csv` line 2 (sparse×dense row)
 
-CSV row sources (Path A — `.claude/worktrees/agent-3a37e0f6/bench_results/`):
-- All 4 fields: `gf2-sparse-1778136354.csv` lines 2–5
+CSV row sources (Path A — `dev/bench_results/`):
+- All 4 fields: `2026-05-07-3a37e0f6-sparse-dense-path-a.csv` lines 2–5
 
-CSV row sources (Path B final — `.claude/worktrees/agent-3a37e0f6/bench_results/`):
-- All 4 fields: `gf2-sparse-1778138911.csv` lines 2–5
+CSV row sources (Path B final — `dev/bench_results/`):
+- All 4 fields: `2026-05-07-3a37e0f6-sparse-dense-path-b-final.csv` lines 2–5
 
-Note: GF(2^31-1) row in Path B CSV (`gf2-sparse-1778138911.csv` line 5) shows 8.488 ms vs Path A
+Note: GF(2^31-1) row in Path B CSV (`2026-05-07-3a37e0f6-sparse-dense-path-b-final.csv` line 5) shows 8.488 ms vs Path A
 7.852 ms — a ~5% wall-time increase from system noise. The SIMD hook returns `false` for
 Mersenne-31, so the same Path-A code path runs. GF(2^31-1) remains well above the 1.5x contract
 at 1.57x (vs the 0.667x floor). The contract clause "0.667x floor convention" applied:
@@ -122,7 +122,7 @@ gf2/fflas = 1.199 Gops/s / 702 Mops/s = 1.57x, PASS.
 
 Throughput data for self-canonical GF(2^m) cells (regression tracking only, no pass/fail
 contract):
-- sparse×dense × GF(2^8): 546.8 ms (Path B CSV `gf2-sparse-1778138911.csv` line 6, 18.6 Mops/s)
+- sparse×dense × GF(2^8): 546.8 ms (Path B CSV `2026-05-07-3a37e0f6-sparse-dense-path-b-final.csv` line 6, 18.6 Mops/s)
 - sparse×dense × GF(2^16): 617.6 ms (Path B CSV line 7, 16.5 Mops/s)
 
 These numbers are unchanged from Path A (no kernel modification for GF(2^m) cells).
@@ -137,9 +137,9 @@ These numbers are unchanged from Path A (no kernel modification for GF(2^m) cell
 |---|---|---|
 | fflas + LinBox reference | `dev/bench_results/2026-05-04-47698404-sparse-reference.csv` | 33 rows: fflas-ffpack spmv + sparse×dense (8 rows), LinBox spmv + sparse×dense + sparse-elim (25 rows), all at n=1024/4096 |
 | gf2-core pre-Wave-3 baseline | `dev/bench_results/2026-05-04-47698404-sparse.csv` | 44 rows: full scorecard run including GF(2) layout variants, structured, coding-theory matrices |
-| gf2-core Path-A spmv | `.claude/worktrees/agent-3a37e0f6/bench_results/gf2-sparse-1778136375.csv` | 11 rows: spmv for GF(2) variants + 4 GF(p) fields |
-| gf2-core Path-A sparse×dense | `.claude/worktrees/agent-3a37e0f6/bench_results/gf2-sparse-1778136354.csv` | 6 rows: sparse×dense for 4 GF(p) fields + 2 GF(2^m) |
-| gf2-core Path-B sparse×dense (final) | `.claude/worktrees/agent-3a37e0f6/bench_results/gf2-sparse-1778138911.csv` | 6 rows: sparse×dense for 4 GF(p) fields + 2 GF(2^m) |
+| gf2-core Path-A spmv | `dev/bench_results/2026-05-07-3a37e0f6-spmv-path-a.csv` | 11 rows: spmv for GF(2) variants + 4 GF(p) fields |
+| gf2-core Path-A sparse×dense | `dev/bench_results/2026-05-07-3a37e0f6-sparse-dense-path-a.csv` | 6 rows: sparse×dense for 4 GF(p) fields + 2 GF(2^m) |
+| gf2-core Path-B sparse×dense (final) | `dev/bench_results/2026-05-07-3a37e0f6-sparse-dense-path-b-final.csv` | 6 rows: sparse×dense for 4 GF(p) fields + 2 GF(2^m) |
 
 ### § 2.2 Ratio table — final state (gf2-core / fflas-ffpack)
 
@@ -171,8 +171,8 @@ The analyze.py ratio table is generated from the canonical CSVs by:
 cd benchmarks
 python3 analyze.py \
   --ref dev/bench_results/2026-05-04-47698404-sparse-reference.csv \
-  --gf2 .claude/worktrees/agent-3a37e0f6/bench_results/gf2-sparse-1778138911.csv \
-  --gf2 .claude/worktrees/agent-3a37e0f6/bench_results/gf2-sparse-1778136375.csv \
+  --gf2 dev/bench_results/2026-05-07-3a37e0f6-sparse-dense-path-b-final.csv \
+  --gf2 dev/bench_results/2026-05-07-3a37e0f6-spmv-path-a.csv \
   --threshold 0.667
 ```
 
@@ -321,8 +321,9 @@ The bench emitter uses master seed `0x6F73AC91D31E4A7C` and C-printf density for
 
 The canonical sparse reference CSV (`dev/bench_results/2026-05-04-47698404-sparse-reference.csv`),
 the pre-Wave-3 gf2-core baseline CSV (`dev/bench_results/2026-05-04-47698404-sparse.csv`),
-the Path-A measurement CSVs (`gf2-sparse-1778136354.csv`, `gf2-sparse-1778136375.csv`), and
-the Path-B final measurement CSV (`gf2-sparse-1778138911.csv`) are documented in § 2.1 with
+the Path-A measurement CSVs (`dev/bench_results/2026-05-07-3a37e0f6-sparse-dense-path-a.csv`,
+`dev/bench_results/2026-05-07-3a37e0f6-spmv-path-a.csv`), and the Path-B final measurement CSV
+(`dev/bench_results/2026-05-07-3a37e0f6-sparse-dense-path-b-final.csv`) are documented in § 2.1 with
 exact file paths, line number references, and the ratio table in § 2.2. This document is
 attached to story `54fd3f0b` via `jit doc add` (see "Lead actions" below). The ratio table
 (§ 2.2) derives from the same data as reported in `dev/bench_results/2026-05-07-3a37e0f6-sparse-layout.md`
