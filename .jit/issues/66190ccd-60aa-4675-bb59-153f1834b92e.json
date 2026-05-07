@@ -2,7 +2,7 @@
   "id": "66190ccd-60aa-4675-bb59-153f1834b92e",
   "title": "Close charpoly and minpoly gaps",
   "description": "Close characteristic and minimal polynomial performance gaps.\n\n## Background\n\nThe original report found Keller-Gehrig/sub-cubic choices and minpoly normalizers needed careful handling. This story makes charpoly/minpoly comparable against accepted exact-algebra references.\n\n## Success Criteria\n\n- [hard] charpoly and minpoly reference lanes are reproducible for every in-scope field family or explicitly excluded with evidence.\n- [hard] Production charpoly/minpoly dispatch selects the empirically winning algorithm per target regime.\n- [hard] Final charpoly/minpoly rows are within 1.5x of the accepted reference or have user-approved scope amendments.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:project-lead",
   "dependencies": [
@@ -16,10 +16,20 @@
     "doc-review"
   ],
   "gates_status": {
+    "doc-review": {
+      "status": "passed",
+      "updated_by": null,
+      "updated_at": "2026-05-07T21:31:11.191496837Z"
+    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-05-07T21:08:48.224587321Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-07T21:23:12.587440307Z"
     }
   },
   "context": {},
@@ -39,5 +49,5 @@
     "story:sota-polynomial-invariants"
   ],
   "created_at": "2026-04-30T06:43:02.512938576+00:00",
-  "updated_at": "2026-05-07T21:08:54.540766738+00:00"
+  "updated_at": "2026-05-07T21:31:11.209936442+00:00"
 }
