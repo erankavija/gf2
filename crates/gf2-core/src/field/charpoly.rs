@@ -1658,54 +1658,37 @@ fn wiedemann_minpoly_attempt<F: FiniteField>(
 /// (`n = 64, 256`) keep the cubic verification cost.
 const WIEDEMANN_DETERMINISTIC_VERIFY_N: usize = 32;
 
-/// Number of independent random vectors used to verify a candidate
-/// minimal polynomial `p` annihilates `A` on the large-`n` arm of
-/// [`poly_annihilates_a_lasvegas`] (when `n > WIEDEMANN_DETERMINISTIC_VERIFY_N`).
-/// With `k = CYCLIC_LCM_VERIFY_TRIALS` trials the false-positive
-/// probability (accepting a strict divisor of the true minpoly) is at
-/// most `q^(-k)` per the rank-of-kernel argument.
-///
-/// `k = 2` gives `7^(-2) ≈ 2e-2` for `Fp<7>`, `251^(-2) ≈ 1.6e-5` for
-/// `Fp<251>`, and tighter still for the medium / large primes. The
-/// deterministic `e_0` and `e_(n-1)` probes added in addition catch
-/// the structured upper- and lower-Jordan adversarial cases that the
-/// random distribution may miss; for `n ≤ 32` the verifier sweeps the
-/// full standard basis (Las-Vegas, no false accepts at all). The
-/// combined verification keeps total cost at `O(n³)`.
-const CYCLIC_LCM_VERIFY_TRIALS: usize = 2;
 
 /// Verifies that the candidate polynomial `p` annihilates `A` (i.e.
-/// `p(A) = 0`).  Acceptance is deterministic on the bench-relevant
-/// cases:
+/// `p(A) = 0`) deterministically. **No false accepts.** Acceptance:
 ///
 /// 1. `deg(p) == n` — fast-path accept. `p` is a divisor of
 ///    `charpoly(A)` of degree `n`; the only such divisor is
 ///    `charpoly(A)` itself, so `p = charpoly = minpoly` (the algorithm
 ///    only constructs `p` as a divisor of `minpoly(A)`, which always
-///    divides `charpoly(A)`).
-/// 2. `n <= WIEDEMANN_DETERMINISTIC_VERIFY_N` — exhaustive deterministic
-///    sweep over every standard basis vector `e_i, i ∈ [0, n)`.
-///    Catches every strict divisor with full certainty: if `p(A) ≠ 0`,
-///    some `e_i` is not in `ker(p(A))` and the sweep detects it.
-/// 3. Otherwise — deterministic `e_0` + `e_(n-1)` probes plus
-///    `CYCLIC_LCM_VERIFY_TRIALS` random probes.  Documented residual
-///    false-accept probability ≤ `q^(-CYCLIC_LCM_VERIFY_TRIALS)`; with
-///    the deterministic basis-vector probes added, structured
-///    Jordan-block adversarials are also caught.
+///    divides `charpoly(A)`). For random-matrix bench inputs the
+///    minpoly equals the charpoly with overwhelming probability and
+///    this branch fires; the basis sweep is skipped entirely.
+/// 2. Otherwise — exhaustive deterministic sweep over every standard
+///    basis vector `e_i, i ∈ [0, n)`. Catches every strict divisor with
+///    full certainty: `p(A) = 0` iff `p(A) · e_i = 0` for all `i`, so a
+///    miss on any `e_i` yields `false`.
 ///
-/// Returns `true` on every-trial pass, `false` on first miss.
+/// Returns `true` on every-`e_i` pass, `false` on first miss.
 ///
 /// # Complexity
 ///
-/// Worst case `n × O(deg(p) · n²) = O(deg(p) · n³)` for the small-`n`
-/// exhaustive arm; `(2 + CYCLIC_LCM_VERIFY_TRIALS) × O(deg(p) · n²)`
-/// for the large-`n` arm. With the `deg(p) == n` fast path, random-
-/// matrix bench inputs (where `minpoly = charpoly` so `deg = n`) skip
-/// the per-call probe sweep entirely.
+/// `O(deg(p) · n³)` worst case for the basis sweep (on inputs whose
+/// minpoly is a strict divisor of charpoly). Random-matrix bench
+/// inputs hit the fast path and pay zero verification cost.
+///
+/// `seed` parameter retained for ABI compatibility with the prior
+/// probabilistic interface but is unused; the verifier is now fully
+/// deterministic Las Vegas.
 fn poly_annihilates_a_lasvegas<F: FiniteField>(
     p: &FieldPoly<F>,
     a: &FieldMatrix<F>,
-    seed: u64,
+    _seed: u64,
 ) -> bool {
     let n = a.rows();
     if n == 0 {
@@ -1721,50 +1704,15 @@ fn poly_annihilates_a_lasvegas<F: FiniteField>(
         }
     }
 
-    // (2) Small-n exhaustive sweep — Las Vegas certain.
-    if n <= WIEDEMANN_DETERMINISTIC_VERIFY_N {
-        for i in 0..n {
-            let mut e_i = FieldVec::<F>::zeros_from(n, &zero);
-            e_i.set(i, one.clone());
-            let pe = poly_action_on_vector(p, a, &e_i);
-            if pe.iter().any(|c| !c.is_zero()) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    // (3) Large-n deterministic edges + random probes.  Deterministic
-    // probes catch upper- and lower-Jordan adversarial structures that
-    // a random distribution might miss; the random probes bound the
-    // residual false-accept probability for unstructured strict
-    // divisors at ≤ q^(-CYCLIC_LCM_VERIFY_TRIALS).
-    for &idx in &[0usize, n - 1] {
-        let mut e = FieldVec::<F>::zeros_from(n, &zero);
-        e.set(idx, one.clone());
-        let pe = poly_action_on_vector(p, a, &e);
+    // (2) Exhaustive standard-basis sweep — Las-Vegas certain across
+    // all `n` regimes. Issue `d1dd266c` review feedback (R4) explicitly
+    // required removing the probabilistic fallback so production
+    // acceptance is deterministic for every input.
+    for i in 0..n {
+        let mut e_i = FieldVec::<F>::zeros_from(n, &zero);
+        e_i.set(i, one.clone());
+        let pe = poly_action_on_vector(p, a, &e_i);
         if pe.iter().any(|c| !c.is_zero()) {
-            return false;
-        }
-    }
-    let mut state = seed;
-    for _ in 0..CYCLIC_LCM_VERIFY_TRIALS {
-        let mut u = FieldVec::<F>::zeros_from(n, &zero);
-        for i in 0..n {
-            let count = (splitmix64(&mut state) & 0x3F) as u32;
-            let mut acc = zero.clone();
-            for _ in 0..count {
-                acc += one.clone();
-            }
-            if (splitmix64(&mut state) & 1) == 1 {
-                u.set(i, acc);
-            }
-        }
-        if u.iter().all(|c| c.is_zero()) {
-            u.set(0, one.clone());
-        }
-        let pu = poly_action_on_vector(p, a, &u);
-        if pu.iter().any(|c| !c.is_zero()) {
             return false;
         }
     }
@@ -1989,8 +1937,9 @@ fn cyclic_lcm_minpoly<F: FiniteField>(a: &FieldMatrix<F>) -> FieldPoly<F> {
     // valid for every finite field (BM converges once the union of seed
     // orbits spans V) and its O(seeds · n³) cost is bounded; the legacy
     // quartic `find_max_minpoly_generator` is therefore not reached
-    // from production dispatch and is kept only as a `#[cfg(test)]`
-    // cross-check helper for the proptest suite.
+    // from this `minpoly()` dispatch path. The function itself remains
+    // in the crate (called by the unrelated `frobenius_form()` helper at
+    // `O(n⁴)` cost), but the `minpoly()` hot path no longer touches it.
     if let Some(p) = multi_seed_wiedemann_minpoly(a, CYCLIC_LCM_VERIFY_SEED.wrapping_add(0xC1)) {
         return p;
     }
@@ -2028,8 +1977,9 @@ const CYCLIC_LCM_VERIFY_SEED: u64 = 0xCAFEF00DD15EA5E5;
 ///    valid for every finite field — see [`cyclic_lcm_minpoly`].
 ///
 /// The legacy quartic [`find_max_minpoly_generator`] path is no longer
-/// reached from production dispatch; it is retained internally as an
-/// independent test reference.
+/// reached from this `minpoly()` dispatch shim. The function itself
+/// still exists and is called by the unrelated `frobenius_form()`
+/// helper, but the `minpoly()` hot path no longer touches it.
 fn minpoly_dispatch<F: FiniteField>(
     a: &FieldMatrix<F>,
     _basis: &[FieldVec<F>],
@@ -2079,7 +2029,9 @@ fn minpoly_dispatch<F: FiniteField>(
     // Deterministic cubic cyclic-LCM fallback, used for small-cardinality
     // fields where Wiedemann is unsafe and on the rare retry-exhaustion
     // path. Replaces the prior quartic `find_max_minpoly_generator`
-    // dispatch (issue d1dd266c).
+    // dispatch from this `minpoly()` path (issue d1dd266c). The
+    // quartic helper is still called by the unrelated `frobenius_form()`
+    // method on `FieldMatrix`.
     cyclic_lcm_minpoly(a)
 }
 
@@ -2340,7 +2292,9 @@ impl<F: FiniteField> FieldMatrix<F> {
     ///    LCM of the per-block annihilator polynomials. Mathematically
     ///    valid for every finite field. The legacy quartic
     ///    [`find_max_minpoly_generator`]-based path is no longer reached
-    ///    from production dispatch and is retained as a test reference.
+    ///    from this `minpoly()` dispatch shim, although the function
+    ///    itself remains in the crate and is still invoked by the
+    ///    independent `frobenius_form()` helper at `O(n⁴)` cost.
     ///
     /// # Arguments
     ///
@@ -2370,9 +2324,11 @@ impl<F: FiniteField> FieldMatrix<F> {
     ///   `O(seeds · n³)` matvec work.
     ///
     /// The legacy quartic `find_max_minpoly_generator` driver is **not
-    /// reached** from production dispatch (`d1dd266c` review-pass fix);
-    /// it is retained as a `#[cfg(test)]` cross-check helper for the
-    /// proptest suite.
+    /// reached** from this `minpoly()` dispatch shim (`d1dd266c`
+    /// review-pass fix). The function itself still exists in the crate
+    /// and is invoked by the separate [`Self::frobenius_form`] helper at
+    /// `O(n⁴)` cost; only the `minpoly()` hot path was decoupled from
+    /// it.
     ///
     /// # Examples
     ///
@@ -3102,8 +3058,9 @@ mod tests {
     }
 
     /// Random small-matrix coverage for the cyclic-LCM dispatch path.
-    /// Compares `a.minpoly()` against the independent quartic
-    /// `find_max_minpoly_generator` reference (used only by tests).
+    /// Compares `a.minpoly()` against an independent reference computed
+    /// via per-basis-vector minpoly LCM (`ref_minpoly_via_basis_lcm`,
+    /// `#[cfg(test)]` only).
     fn cyclic_lcm_random_check<const P: u64>(n: usize, seeds: &[u64]) {
         for &seed in seeds {
             let a = random_fp::<P>(n, n, seed);

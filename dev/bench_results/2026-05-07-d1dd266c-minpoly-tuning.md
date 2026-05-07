@@ -185,11 +185,16 @@ ceiling). Every dispatch arm in this implementation is `O(n³)`:
 | Multi-seed Wiedemann (low-cardinality fields, q ≤ n) | `O(seeds · n³)` matvec-dominated | `n³` |
 | `cyclic_decomposition` LCM | `O(n³)` reduce + matvec | `n³` |
 | `charpoly_cubic` (= `cyclic_decomposition` product) | `O(n³)` | `n³` |
-| Legacy quartic `find_max_minpoly_generator` | `O(n⁴)` | `n⁴` (never reached in production paths) |
+| Legacy quartic `find_max_minpoly_generator` | `O(n⁴)` | `n⁴` (no longer reached from `minpoly()`; still reached from `frobenius_form()`) |
 
-The legacy `n⁴` row remains in the throughput normalizer table only to cover
-the rare `cyclic_lcm_minpoly` last-resort fallback, which empirically does
-not fire on any random matrix at the bench sizes.
+The legacy `n⁴` row is no longer hit on the `minpoly()` dispatch path —
+`cyclic_lcm_minpoly` now falls through to a `multi_seed_wiedemann_minpoly`
+re-attempt with a fresh disjoint seed stream, and panics if even that
+fails to converge (an outcome that does not occur on any random or
+adversarial matrix in the test suite). The function itself remains in
+the crate because the unrelated `FieldMatrix::frobenius_form` helper still
+calls it at `O(n⁴)` cost; that public method was out of scope for this
+issue and continues to drive `find_max_minpoly_generator` on every call.
 
 ## § 5 Correctness coverage
 
@@ -403,11 +408,18 @@ the production helpers on synthetic non-zero α / α² extension elements.
 
 ### SC#2 (production path uses non-quartic algorithm for low-cardinality): MET
 
-The legacy `find_max_minpoly_generator` quartic path is no longer reached
-from `minpoly_dispatch` on any bench cell. All paths are `O(n³)`:
-multi_seed_wiedemann (preferred for q ≤ n), cyclic_decomposition with
-packed cache (fallback), find_max_minpoly_generator (paranoid last
-resort, never fires for random or Jordan adversarial inputs).
+The legacy `find_max_minpoly_generator` quartic helper is no longer
+reached from `minpoly_dispatch` on any bench cell. All `minpoly()` paths
+are `O(n³)`: scalar Wiedemann (large fields, q > n), extension-field
+Wiedemann (small Fp where q ≤ n but q^k > n), `multi_seed_wiedemann`
+(low-cardinality preferred path inside `cyclic_lcm_minpoly`), and
+`cyclic_decomposition` with packed cache (deterministic fallback).
+`cyclic_lcm_minpoly`'s last-resort branch is itself another
+`multi_seed_wiedemann` retry on a disjoint seed stream — followed by a
+hard panic, not a quartic fallback. The `find_max_minpoly_generator`
+function itself remains in the crate because the separate
+`FieldMatrix::frobenius_form` helper still drives it at `O(n⁴)` cost;
+`frobenius_form()` was out of scope for this issue.
 
 ### SC#3 (packed prime-field matvec/sequence used for small/medium primes): MET
 
@@ -423,8 +435,10 @@ test functions added; all 3277 workspace tests pass post-integration.
 
 ### SC#5 (throughput normalization aligned with algorithm class per row): MET
 
-Every cell in § 3 is `n³` algorithm class. The legacy `n⁴` quartic path
-is documented for completeness but is not reached at any bench cell.
+Every cell in § 3 is `n³` algorithm class. The `n⁴` row in the § 4 table
+is documented for completeness — `find_max_minpoly_generator` is still
+reachable from `frobenius_form()`, but `frobenius_form()` is not measured
+in this scorecard, so no bench cell uses an `n⁴` normalizer.
 
 ### SC#6 (final evidence records raw wall, ratios, algorithm class, normalizer): MET
 
