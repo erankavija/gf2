@@ -651,6 +651,39 @@ pub trait FiniteField:
         false
     }
 
+    /// Hidden hook for the extension-field scalar Wiedemann minimal-
+    /// polynomial path (issue `6c926de0`).
+    ///
+    /// Lets specific prime-field types (`Fp<P>` with `P ∈ {7, 251}`)
+    /// bypass the base-field multi-seed Wiedemann path of
+    /// [`crate::field::charpoly::minpoly_dispatch`] and instead embed
+    /// the matrix into a small extension `E = Fp<P>[α] / (f)` where
+    /// `|E| > n`, run a single scalar Wiedemann attempt over `E`, and
+    /// descend the result back to the base field.
+    ///
+    /// The default returns `None` so the caller falls back to the base-
+    /// field path. Overrides must verify the descended polynomial
+    /// annihilates `A` over the base field before returning `Some`.
+    ///
+    /// # Arguments
+    ///
+    /// * `a` — square matrix whose minpoly is sought.
+    ///
+    /// # Returns
+    ///
+    /// `Some(p)` when the extension-field path produced a polynomial
+    /// that descends to the base field and annihilates `A`. `None`
+    /// otherwise (no override available, embedding not beneficial,
+    /// extension Wiedemann failed, descent or verification failed).
+    #[doc(hidden)]
+    #[inline]
+    fn try_extension_wiedemann_minpoly(
+        a: &crate::field::matrix::FieldMatrix<Self>,
+    ) -> Option<crate::field::poly::FieldPoly<Self>> {
+        let _ = a;
+        None
+    }
+
     /// Maximum number of wide-type additions before reduction is required to avoid overflow.
     ///
     /// Returns `usize::MAX` if overflow is impossible (e.g., binary fields where addition is XOR).
