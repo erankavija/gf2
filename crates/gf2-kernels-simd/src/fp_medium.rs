@@ -50,6 +50,16 @@ pub type MediumPrimeBatchSubFn = fn(&[u16], &[u16], u16, &mut [u16]);
 /// reduced sum.
 pub type MediumPrimeBatchDotFn = fn(&[u16], &[u16], u16) -> u32;
 
+/// Sparse-times-dense row kernel for medium-prime `Fp<P>` with
+/// `P ∈ (251, 65535]`.
+///
+/// Writes `out[j] = (∑_h a_vals[h] * b[a_cols[h] * b_stride + j]) mod p`
+/// for `j ∈ [0, n)`. The sparse left row is given as `(a_vals,
+/// a_cols)` with canonical u16 lanes; `b` is a row-major dense u16
+/// matrix with row stride `b_stride`. `out` is the dense output row of
+/// length `n`.
+pub type MediumPrimeSpmmRowFn = fn(&[u16], &[usize], &[u16], usize, usize, u16, &mut [u16]);
+
 /// Bundle of AVX2 batch operations for medium-prime `Fp<P>`.
 ///
 /// Populated at runtime by [`detect`] when AVX2 is available. All
@@ -80,6 +90,8 @@ pub struct MediumPrimeFns {
     pub batch_sub_fn: MediumPrimeBatchSubFn,
     /// Batch dot product reduced to a canonical scalar.
     pub batch_dot_fn: MediumPrimeBatchDotFn,
+    /// Sparse-times-dense row kernel.
+    pub spmm_row_fn: MediumPrimeSpmmRowFn,
 }
 
 /// Detect and return the best available medium-prime SIMD bundle.
@@ -104,6 +116,7 @@ fn detect_x86() -> Option<MediumPrimeFns> {
             batch_add_fn: batch_add_safe,
             batch_sub_fn: batch_sub_safe,
             batch_dot_fn: batch_dot_safe,
+            spmm_row_fn: spmm_row_safe,
         })
     } else {
         None
@@ -132,6 +145,20 @@ fn batch_sub_safe(a: &[u16], b: &[u16], p: u16, out: &mut [u16]) {
 fn batch_dot_safe(a: &[u16], b: &[u16], p: u16) -> u32 {
     // Safety: `detect_x86` only returns these pointers when AVX2 is available.
     unsafe { crate::x86::fp_medium::fp_medium_batch_dot(a, b, p) }
+}
+
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+fn spmm_row_safe(
+    a_vals: &[u16],
+    a_cols: &[usize],
+    b: &[u16],
+    b_stride: usize,
+    n: usize,
+    p: u16,
+    out: &mut [u16],
+) {
+    // Safety: `detect_x86` only returns these pointers when AVX2 is available.
+    unsafe { crate::x86::fp_medium::fp_medium_spmm_row(a_vals, a_cols, b, b_stride, n, p, out) }
 }
 
 #[cfg(test)]

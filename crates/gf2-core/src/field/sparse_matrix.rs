@@ -997,6 +997,34 @@ impl<F: FiniteField> SparseFieldMatrix<F> {
                  or supply at least one non-zero operand"
             );
         };
+        // SIMD fast path (jit:3a37e0f6 packed-int continuation): for
+        // `Fp<P>` with `P ≤ 65521`, route the whole sparse-times-dense
+        // matmat through the AVX2 byte / 16-bit-lane SpMM kernel. The
+        // hook packs the dense `b` once into canonical bytes (or u16),
+        // sweeps every row of `A` through the kernel, and unpacks the
+        // output. For other fields (Mersenne-31, GF(2^m)), or when the
+        // `simd` feature is disabled / AVX2 is unavailable, the hook
+        // returns `false` and we fall back to the per-row Wide
+        // accumulator path below.
+        {
+            let mut out_buf: Vec<F> = vec![zero.clone(); self.rows * out_cols];
+            if F::try_simd_spmm(
+                &self.row_ptr,
+                &self.col_idx,
+                &self.values,
+                b.as_data_slice(),
+                b.rows(),
+                out_cols,
+                &mut out_buf,
+            ) {
+                return FieldMatrix::<F>::from_raw_parts(
+                    self.rows,
+                    out_cols,
+                    FieldVec::from(out_buf),
+                );
+            }
+        }
+
         // Layout optimization (jit:3a37e0f6): per-row Wide accumulator.
         //
         // Strategy: maintain a Vec<F::Wide> of length `out_cols` for each

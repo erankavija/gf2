@@ -536,6 +536,123 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
     false
 }
 
+/// Sparse-times-dense whole-matmat dispatcher for `Fp<P>`.
+///
+/// Packs `b` once into a canonical-byte (`P ≤ 251`) or canonical-u16
+/// (`P ∈ (251, 65535]`) buffer, sweeps every row of the sparse left
+/// matrix through the AVX2 SpMM kernel against the shared `b` pack,
+/// and unpacks the output back to `Fp<P>` storage. Returns `false`
+/// when `P` is outside the supported range, when the `simd` feature
+/// is disabled, or when AVX2 is unavailable; in those cases the
+/// caller falls back to the generic Wide-accumulator scatter path
+/// in `SparseFieldMatrix::matmat`.
+///
+/// # Returns
+///
+/// `true` when the SIMD kernel populated `out`, `false` to fall back.
+#[cfg(feature = "simd")]
+pub(crate) fn fp_try_spmm<const P: u64>(
+    a_row_ptr: &[usize],
+    a_col_idx: &[usize],
+    a_values: &[Fp<P>],
+    b: &[Fp<P>],
+    b_rows: usize,
+    n: usize,
+    out: &mut [Fp<P>],
+) -> bool {
+    let m = a_row_ptr.len().saturating_sub(1);
+    debug_assert_eq!(a_col_idx.len(), a_values.len());
+    debug_assert_eq!(b.len(), b_rows * n);
+    debug_assert_eq!(out.len(), m * n);
+
+    if m == 0 || n == 0 {
+        return true;
+    }
+
+    if fp_small_enabled::<P>() {
+        let Some(fns) = crate::simd::maybe_fp_small() else {
+            return false;
+        };
+        // Pack b canonical bytes once.
+        let b_u8: Vec<u8> = b.iter().map(|x| x.value() as u8).collect();
+        // Pack all a_values canonical bytes once.
+        let a_vals_u8: Vec<u8> = a_values.iter().map(|x| x.value() as u8).collect();
+        let mut out_u8 = vec![0u8; n];
+        for r in 0..m {
+            let start = a_row_ptr[r];
+            let end = a_row_ptr[r + 1];
+            // Cleared per-row scratch.
+            for slot in out_u8.iter_mut() {
+                *slot = 0;
+            }
+            if start != end {
+                (fns.spmm_row_fn)(
+                    &a_vals_u8[start..end],
+                    &a_col_idx[start..end],
+                    &b_u8,
+                    n,
+                    n,
+                    P as u8,
+                    &mut out_u8,
+                );
+            }
+            let out_row = &mut out[r * n..(r + 1) * n];
+            for (slot, &byte) in out_row.iter_mut().zip(out_u8.iter()) {
+                *slot = Fp::<P>::new(byte as u64);
+            }
+        }
+        return true;
+    }
+
+    if fp_medium_eligible::<P>() {
+        let Some(fns) = crate::simd::maybe_fp_medium() else {
+            return false;
+        };
+        let b_u16: Vec<u16> = b.iter().map(|x| x.value() as u16).collect();
+        let a_vals_u16: Vec<u16> = a_values.iter().map(|x| x.value() as u16).collect();
+        let mut out_u16 = vec![0u16; n];
+        for r in 0..m {
+            let start = a_row_ptr[r];
+            let end = a_row_ptr[r + 1];
+            for slot in out_u16.iter_mut() {
+                *slot = 0;
+            }
+            if start != end {
+                (fns.spmm_row_fn)(
+                    &a_vals_u16[start..end],
+                    &a_col_idx[start..end],
+                    &b_u16,
+                    n,
+                    n,
+                    P as u16,
+                    &mut out_u16,
+                );
+            }
+            let out_row = &mut out[r * n..(r + 1) * n];
+            for (slot, &word) in out_row.iter_mut().zip(out_u16.iter()) {
+                *slot = Fp::<P>::new(word as u64);
+            }
+        }
+        return true;
+    }
+
+    false
+}
+
+#[cfg(not(feature = "simd"))]
+#[inline]
+pub(crate) fn fp_try_spmm<const P: u64>(
+    _a_row_ptr: &[usize],
+    _a_col_idx: &[usize],
+    _a_values: &[Fp<P>],
+    _b: &[Fp<P>],
+    _b_rows: usize,
+    _n: usize,
+    _out: &mut [Fp<P>],
+) -> bool {
+    false
+}
+
 // ---------------------------------------------------------------------------
 // Generic Montgomery SIMD helpers.
 // ---------------------------------------------------------------------------

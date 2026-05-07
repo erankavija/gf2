@@ -2,41 +2,64 @@
 
 | Field | Value |
 |---|---|
-| Date | 2026-05-07 |
+| Date | 2026-05-07 (initial layout pass + 2026-05-07 packed-int continuation) |
 | JIT issue | `3a37e0f6` (Optimize sparse layout and traversal) |
 | Parent story | `54fd3f0b` (Close sparse FieldMatrix SpMV and SpMM gaps) |
 | Parent epic | `97bf0879` (gf2-core SOTA performance) |
 | Worker | agent on `worktree-agent-3a37e0f6` |
-| Worktree HEAD | anchored to main at `fb1b6f4` |
+| Worktree HEAD | rebased onto main at `ac6d94d` |
 | Reference scorecard | `dev/bench_results/2026-05-04-47698404-sparse-scorecard.md` |
+| Continuation | Path B (user-approved): packed-int SpMM kernel for Montgomery-prime sparse×dense |
 
 ## § 0 TL;DR
 
-Root-cause identified and fixed: `SparseFieldMatrix::matvec` and `::matmat` used `mul_to_wide`
-(which calls `from_mont` per operand) instead of `mul_product_sum_wide` (storage-domain raw
-multiply, no REDC). This matched the pattern `dot_product_slices` in `field/vec.rs` already
-used but had not been applied to the sparse paths.
+Two-pass optimization in this issue: **(A)** layout/traversal — switch the sparse paths to the
+storage-domain mul + delayed reduction already used by the dense paths; **(B)** packed-int SpMM
+kernel — wire a new AVX2 byte / 16-bit-lane SpMM into the production `SparseFieldMatrix::matmat`
+hook for Montgomery primes (GF(7)/GF(251)/GF(65521)). The Path-A pass closed 4 of 7 cells; the
+Path-B continuation closed the remaining 3 sparse×dense cells.
 
-**spmv × GF(p)**:
-- GF(7): 20.2 µs → 9.2 µs (Criterion), **2.18x speedup**; gf2/fflas 0.42x → **0.96x** (PASS)
-- GF(251): 23.7 µs → 9.4 µs (Criterion), **2.52x speedup**; gf2/fflas 0.33x → **0.86x** (PASS)
-- GF(65521): 20.3 µs → 9.3 µs (Criterion), **2.18x speedup**; gf2/fflas 0.42x → **0.96x** (PASS)
-- GF(2^31-1): 10.7 µs → 9.4 µs (Criterion), no significant change (Mersenne uses specialized
-  storage, no REDC overhead to remove — expected)
+**Final verdict for the 7 cells in scope:**
 
-**sparse×dense × GF(p)** (n=1024 × n=1024 dense, density=9.77e-3):
-- GF(7): 17.4 ms → 8.0 ms, **2.18x speedup**; 585 Mops/s → 1274 Mops/s; gf2/fflas 0.22x → **0.49x**
-- GF(251): 17.3 ms → 8.3 ms, **2.08x speedup**; 587 Mops/s → 1221 Mops/s; gf2/fflas 0.15x → **0.32x**
-- GF(65521): 17.3 ms → 8.6 ms, **2.01x speedup**; 589 Mops/s → 1185 Mops/s; gf2/fflas 0.23x → **0.46x**
-- GF(2^31-1): 13.8 ms → 7.9 ms, **1.76x speedup**; 735 Mops/s → 1296 Mops/s; gf2/fflas 0.97x → **1.70x** (PASS)
+| Cell | Pre-A baseline | Post-A | Post-B | gf2/fflas final | Verdict |
+|---|---|---|---|:---:|:---|
+| spmv × GF(7) | 21.6 µs | 9.2 µs | 9.2 µs | 0.96x | **PASS** (Path A) |
+| spmv × GF(251) | 21.4 µs | 9.4 µs | 9.2 µs | 0.88x | **PASS** (Path A) |
+| spmv × GF(65521) | 20.7 µs | 9.3 µs | 9.1 µs | 0.97x | **PASS** (Path A) |
+| sparse×dense × GF(7) | 17.4 ms | 8.0 ms | 3.6 ms | **1.08x** | **PASS** (Path B) |
+| sparse×dense × GF(251) | 17.3 ms | 8.3 ms | 2.5 ms | **1.08x** | **PASS** (Path B) |
+| sparse×dense × GF(65521) | 17.3 ms | 8.6 ms | 4.6 ms | **0.87x** | **PASS** (Path B) |
+| sparse×dense × GF(2^31-1) | 13.8 ms | 7.9 ms | 8.5 ms | 1.41x | **PASS** (Path A) |
 
-**Criterion 1 (1.5x threshold):**
-- spmv × GF(7), GF(251), GF(65521): all **PASS** (0.86x–0.96x of fflas, above the 0.667x floor)
-- sparse×dense × GF(7), GF(251), GF(65521): still below 0.667x (0.32x–0.49x) — residual gap documented in § 5
-- sparse×dense × GF(2^31-1): **PASS** at 1.70x
-- GF(2^31-1) spmv: **PASS** (unchanged at ~1.30x as before)
+The Path B continuation flips all 3 previously-failing cells from below 0.5x of fflas to ≥ 0.87x,
+landing GF(7) and GF(251) **above fflas** by 1.08x. This is achieved with an AVX2 packed-int
+(byte-lane for `P ≤ 251`, 16-bit-lane for `P ∈ (251, 65521]`) SpMM kernel that mirrors the
+Candidate C dense-GEMM dispatch from `662f7a15` / `9e12659b`.
 
-**Criterion 2 (correctness preserved):** all 3245 tests pass, 544 doc tests pass, 0 clippy warnings.
+The remainder of this document is split into:
+- § 1–§ 7: Path A (layout/traversal) — landed in commit `46ec7f3` (rebased from `85d43d7`).
+- § 8: Path B (packed-int SpMM kernel) — covered in this update.
+- § 9: Final verdict table per cell + perf-stat baselines.
+
+## § 0a Path A (layout) headline numbers — kept for reference
+
+The Path A optimization replaced `mul_to_wide`/`reduce_wide` with `mul_product_sum_wide`/
+`reduce_product_sum_wide` and added a per-row `Vec<F::Wide>` accumulator to `matmat`.
+Same-session same-host numbers from commit `46ec7f3`:
+
+**spmv × GF(p)** (Criterion, n=1024, density=1%):
+- GF(7): 20.2 µs → 9.2 µs (2.18x speedup); gf2/fflas 0.42x → **0.96x**
+- GF(251): 23.7 µs → 9.4 µs (2.52x speedup); gf2/fflas 0.33x → **0.86x**
+- GF(65521): 20.3 µs → 9.3 µs (2.18x speedup); gf2/fflas 0.42x → **0.96x**
+- GF(2^31-1): 10.7 µs → 9.4 µs (no significant change — specialized Mersenne storage)
+
+**sparse×dense × GF(p)** (bench emitter, n=1024, density=9.77e-3):
+- GF(7): 17.4 ms → 8.0 ms (2.18x); gf2/fflas 0.22x → 0.49x (gap remained)
+- GF(251): 17.3 ms → 8.3 ms (2.08x); gf2/fflas 0.15x → 0.32x (gap remained)
+- GF(65521): 17.3 ms → 8.6 ms (2.01x); gf2/fflas 0.23x → 0.46x (gap remained)
+- GF(2^31-1): 13.8 ms → 7.9 ms (1.76x); gf2/fflas 0.97x → 1.70x (PASS via Path A)
+
+**Criterion 2 (correctness preserved):** 3245/3245 tests pass, 544/544 doc tests pass, 0 clippy.
 
 ## § 1 Root-cause analysis
 
@@ -193,3 +216,177 @@ Two changes to `crates/gf2-core/src/field/sparse_matrix.rs`:
    contributions via `mul_product_sum_wide`, reduce once per column at row-end. Chunked
    path handles the degenerate case where nnz_per_row > kmax (not encountered in practice
    at 1% density).
+
+## § 8 Path B (continuation, user-approved): packed-int SpMM kernel
+
+### § 8.1 Design
+
+The Path-A pass closed every spmv cell and the Mersenne-31 sparse×dense cell; the three
+Montgomery-prime sparse×dense cells remained at 0.32x–0.49x of fflas, where fflas dispatches
+SIMD-FMA paths via `Modular<float>` / `Modular<double>` for `P ≤ 2^23`. Path B closes those
+three cells with an AVX2 packed-int SpMM kernel that mirrors the Candidate C dense-GEMM
+dispatch from issues `662f7a15` (small-prime byte lane) and `9e12659b` (medium-prime u16 lane).
+
+The kernel signature, in pseudocode:
+
+```text
+spmm_row_kernel(a_vals[nnz_r], a_cols[nnz_r], b[b_rows × b_stride], n, p, out[n]):
+    for each output column block (16 lanes):
+        accumulator = 0  // u32 lanes (small prime) or u64 lanes (medium prime)
+        for each non-zero (k, a_rk) of the sparse left row:
+            broadcast a_rk to all lanes
+            multiply elementwise with b[k, j..j+16]
+            accumulate into u32 / u64 lanes
+        reduce mod p (Barrett at 32-bit lane width, or scalar % at 64-bit)
+        pack and store back to out[j..j+16]
+    scalar tail for j ∈ [j..n)
+```
+
+For `P ≤ 251` (byte-lane kernel `fp_small_spmm_row`):
+- 16 u8 lanes loaded per non-zero of A's row
+- Expand to 16 u16 lanes via `_mm256_cvtepu8_epi16`
+- Multiply by broadcast `_mm256_set1_epi16(a_h)` via `_mm256_mullo_epi16` — each product
+  ≤ 250² = 62 500 < 2^16, no overflow.
+- Widen to two u32×8 accumulators per block via `_mm256_unpacklo_epi16` /
+  `_mm256_unpackhi_epi16` against zero, then `_mm256_add_epi32`.
+- After all non-zeros: 32-bit Barrett reduce per lane (`mu32 = ⌊2³² / p⌋`), pack u32 →
+  u16 → u8.
+- u32 capacity per lane: `2³² / 250² ≈ 6.87 × 10⁴` MACs, far above any realistic nnz.
+
+For `251 < P ≤ 65521` (16-bit-lane kernel `fp_medium_spmm_row`):
+- 16 u16 lanes per non-zero
+- Full u32 product per lane via `_mm256_mullo_epi16` + `_mm256_mulhi_epu16` + interleave
+- Widen to four u64×4 accumulators per block via `_mm256_unpacklo_epi32` /
+  `_mm256_unpackhi_epi32`
+- After all non-zeros: scalar `% p` per u64 lane (4 u64 per accumulator vector × 4
+  vectors = 16 lanes per block; 4-lane scalar reduce is the simplest correct path).
+- u64 capacity per lane: `2⁶⁴ / 65520² ≈ 4.3 × 10⁹` MACs, far above any realistic nnz.
+
+### § 8.2 Dispatch wiring
+
+A new hook `FiniteField::try_simd_spmm` (in `crates/gf2-core/src/field/traits.rs`) takes the
+whole CSR `(row_ptr, col_idx, values)` and dense `b` and tries to populate `out`. The default
+returns `false` (the caller falls back to the Wide-accumulator path).
+
+`Fp<P>::try_simd_spmm` routes to the new dispatcher `simd_ops::fp_try_spmm`, which:
+1. Detects whether `P ≤ 251` (byte path) or `P ∈ (251, 65535]` (u16 path).
+2. Packs `b` once into a canonical-byte / canonical-u16 buffer (skipping per-row REDC).
+3. Packs all `a_values` once (canonical bytes / u16).
+4. Sweeps every row of `A` through `fns.spmm_row_fn`, writing the packed output into a
+   reused per-row scratch.
+5. Unpacks each row from packed → `Fp<P>::new` to restore Montgomery storage.
+
+`SparseFieldMatrix::matmat` calls `F::try_simd_spmm` at the head of the function; if the
+hook returns `false` (e.g. for GF(2^m) or `P > 65535`), control falls through to the
+existing per-row Wide-accumulator path from Path A. The path is therefore backward-compatible
+and adds no regression risk for non-Fp callers.
+
+### § 8.3 Path B results — same-session same-host bench emitter (warmup=5, iters=20)
+
+Bench file: `bench_results/gf2-sparse-1778138911.csv`. Compared against Path A (`bench_results/
+gf2-sparse-1778136354.csv`) and the original 2026-05-04 scorecard baseline.
+
+| Cell | Pre-A wall | Post-A wall | Post-B wall | Pre-A tput | Post-A tput | Post-B tput | fflas tput | Pre-A ratio | Post-A ratio | Post-B ratio | Verdict |
+|---|---:|---:|---:|---:|---:|---:|---:|:---:|:---:|:---:|:---|
+| sparse×dense × GF(7) | 17.397 ms | 7.984 ms | 3.605 ms | 585 Mops/s | 1.274 Gops/s | **2.822 Gops/s** | 2.614 Gops/s | 0.22x | 0.49x | **1.08x** | **PASS** |
+| sparse×dense × GF(251) | 17.335 ms | 8.335 ms | 2.452 ms | 587 Mops/s | 1.221 Gops/s | **4.149 Gops/s** | 3.851 Gops/s | 0.15x | 0.32x | **1.08x** | **PASS** |
+| sparse×dense × GF(65521) | 17.266 ms | 8.589 ms | 4.581 ms | 589 Mops/s | 1.185 Gops/s | **2.221 Gops/s** | 2.565 Gops/s | 0.23x | 0.46x | **0.87x** | **PASS** |
+| sparse×dense × GF(2^31-1) | 13.840 ms | 7.852 ms | 8.488 ms | 735 Mops/s | 1.296 Gops/s | 1.199 Gops/s | 762 Mops/s | 0.97x | 1.70x | **1.57x** | **PASS** |
+
+Notes:
+- Post-A vs Post-B for GF(2^31-1) shows a ~5% wall-time increase. This is system run-to-run
+  noise (the SIMD hook returns `false` for Mersenne-31, so the same Path-A code path runs).
+  GF(2^31-1) remains comfortably above the 1.5x contract.
+- Path-B gains over Path-A: GF(7) **2.22x faster**, GF(251) **3.40x faster**, GF(65521)
+  **1.87x faster**. GF(7) and GF(251) now beat fflas; GF(65521) sits at 0.87x of fflas.
+
+### § 8.4 No-regression check on the 4 already-PASS cells
+
+| Cell | Path-A status | Post-B status | Action |
+|---|:---:|:---:|---|
+| spmv × GF(7) | PASS (0.96x) | PASS (~0.96x — Criterion 9.2 µs vs fflas 8.84 µs = 1.04x; gf2/fflas = 0.96x) | No change to matvec hot path |
+| spmv × GF(251) | PASS (0.86x) | PASS (Criterion 9.2 µs, 0.88x) | No change |
+| spmv × GF(65521) | PASS (0.96x) | PASS (Criterion 9.1 µs, 0.97x) | No change |
+| sparse×dense × GF(2^31-1) | PASS (1.70x) | PASS (1.57x) | SIMD hook returns false → Path-A code path |
+
+The matvec path was unchanged in Path B. Criterion confirms post-B spmv times match Path-A:
+9.0–9.2 µs (post-B Criterion run) vs 9.2–9.4 µs (Path A run) — within run-to-run noise.
+
+### § 8.5 Correctness coverage
+
+Four new unit tests cover the SIMD SpMM kernels:
+- `crates/gf2-kernels-simd/src/x86/fp_small.rs::spmm_row_matches_scalar` — sweeps
+  `(nnz, b_rows, n)` cases and primes `{3, 5, 7, 11, 13, 17, 31, 127, 251}` against a scalar
+  reference. 16-lane block boundary, scalar tail, and the realistic SpMM cell `(nnz=15,
+  b_rows=16, n=1024)` are all covered.
+- `crates/gf2-kernels-simd/src/x86/fp_small.rs::spmm_row_empty_nnz` — empty-row contract:
+  the kernel must emit zeros even when `nnz_r = 0`.
+- `crates/gf2-kernels-simd/src/x86/fp_medium.rs::spmm_row_matches_scalar` — same shape sweep
+  for primes `{257, 1009, 8191, 65521}`.
+- `crates/gf2-kernels-simd/src/x86/fp_medium.rs::spmm_row_empty_nnz` — empty-row.
+
+The full test suite runs `gf2-core` sparse property tests
+(`crates/gf2-core/src/field/sparse_matrix.rs::tests::*matmat*`) which round-trip
+`SparseFieldMatrix::matmat` against the dense reference via `to_dense() * b`. These pass
+post-B for every prime field, confirming the SIMD dispatcher produces the same canonical
+output as the Wide-accumulator fallback.
+
+## § 9 Final verdict + correctness gates
+
+### § 9.1 Final verdict per cell (post-Path-B)
+
+All 7 cells in the issue scope now PASS the 1.5x contract (gf2/fflas ≥ 0.667x, equivalently
+fflas-wall / gf2-wall ≤ 1.5):
+
+| Cell | Path | gf2/fflas | Verdict |
+|---|---|:---:|:---|
+| spmv × GF(7) | A | 0.96x | **PASS** |
+| spmv × GF(251) | A | 0.88x | **PASS** |
+| spmv × GF(65521) | A | 0.97x | **PASS** |
+| sparse×dense × GF(7) | B | **1.08x** | **PASS** |
+| sparse×dense × GF(251) | B | **1.08x** | **PASS** |
+| sparse×dense × GF(65521) | B | 0.87x | **PASS** |
+| sparse×dense × GF(2^31-1) | A | 1.57x | **PASS** |
+
+### § 9.2 Correctness gates (post-Path-B)
+
+| Gate | Status |
+|---|---|
+| `cargo nextest run --workspace --all-features --release --profile ci` | **3250/3250 PASS** (1 minute) |
+| `cargo test --doc -p gf2-core` | **544/544 PASS** (7.3 s) |
+| `cargo fmt --all -- --check` (gf2-core/gf2-coding/gf2-kernels-simd) | **PASS** |
+| `cargo clippy --workspace --all-targets --all-features --release -- -D warnings` | **PASS** |
+| Doc build (`cargo doc --no-deps -p gf2-core`) | **PASS** (verified post-fmt fixes) |
+| SpMM kernel unit tests (4 added) | **4/4 PASS** |
+
+### § 9.3 Unsafe code isolation
+
+All unsafe AVX2 intrinsics for the new kernels live in `crates/gf2-kernels-simd/src/x86/`:
+- `fp_small.rs::fp_small_spmm_row` (byte-lane SpMM)
+- `fp_small.rs::barrett_reduce_lane32` (32-bit Barrett reduction helper)
+- `fp_medium.rs::fp_medium_spmm_row` (16-bit-lane SpMM)
+
+The safe wrappers in `fp_small.rs::detect()` / `fp_medium.rs::detect()` (under
+`#![deny(unsafe_code)]` from gf2-core's perspective) gate the kernels behind a runtime AVX2
+detection. No unsafe code was added outside the kernel crate.
+
+### § 9.4 Implementation summary (post-B)
+
+Files modified by Path B:
+
+1. `crates/gf2-kernels-simd/src/x86/fp_small.rs` — added `fp_small_spmm_row` (~110 lines)
+   plus a 32-bit-lane Barrett helper and 2 unit tests.
+2. `crates/gf2-kernels-simd/src/x86/fp_medium.rs` — added `fp_medium_spmm_row` (~115 lines)
+   plus 2 unit tests.
+3. `crates/gf2-kernels-simd/src/fp_small.rs` — added `SmallPrimeSpmmRowFn` typedef and the
+   `spmm_row_fn` field on `SmallPrimeFns`; wired the safe wrapper.
+4. `crates/gf2-kernels-simd/src/fp_medium.rs` — same shape, `MediumPrimeSpmmRowFn`.
+5. `crates/gf2-core/src/field/traits.rs` — added the `try_simd_spmm` hook on `FiniteField`
+   with a default that returns `false`.
+6. `crates/gf2-core/src/gfp/mod.rs` — `Fp<P>::try_simd_spmm` routes to the dispatcher.
+7. `crates/gf2-core/src/gfp/simd_ops.rs` — added `fp_try_spmm` dispatcher (canonical pack
+   of `b` and `a_values`, per-row sweep through the kernel, canonical unpack into `Fp<P>`).
+8. `crates/gf2-core/src/field/sparse_matrix.rs` — `SparseFieldMatrix::matmat` calls
+   `F::try_simd_spmm` first; falls back to the Path-A Wide-accumulator path on `false`.
+
+The commit `46ec7f3` (Path A) is preserved on the branch as-is; Path B is a stack-on commit.

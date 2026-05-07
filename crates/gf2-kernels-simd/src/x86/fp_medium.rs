@@ -607,6 +607,158 @@ unsafe fn fp_medium_batch_dot_mulhi(a: &[u16], b: &[u16], p: u16) -> u32 {
     (total % p as u64) as u32
 }
 
+/// Sparse-times-dense row kernel for medium-prime `Fp<P>` with
+/// `P ∈ (251, 65535]`.
+///
+/// Writes `out[j] = (∑_h a_vals[h] * b[a_cols[h] * b_stride + j]) mod p`
+/// for `j ∈ [0, n)`. The sparse left row is given as `(a_vals, a_cols)`
+/// with canonical u16 lanes; `b` is a row-major dense u16 matrix with
+/// row stride `b_stride`. `out` is the dense output row of length `n`.
+///
+/// The kernel iterates output blocks of 16 u16 lanes; for each block
+/// it sweeps every non-zero of the sparse row, broadcasts `a_vals[h]`,
+/// computes the full 16×u32 product via `mullo_epi16 + mulhi_epu16`,
+/// widens each u32 lane to u64, and accumulates into four u64-lane
+/// vectors. After the sparse-row sweep, each u64 lane is reduced
+/// modulo `p` scalarly and written back to the output as a u16. The
+/// u64 accumulator capacity `2^64 / (p-1)² ≈ 4.3 × 10^9` (at `p =
+/// 65521`) is orders of magnitude larger than any realistic
+/// nnz-per-row, so no chunked reduction is needed.
+///
+/// # Safety
+///
+/// Caller must ensure AVX2 is available, `p` is an odd prime in
+/// `(251, 65535]`, every input lane is canonical (`< p`), and:
+/// - `a_vals.len() == a_cols.len()`,
+/// - every `a_cols[h] * b_stride + n <= b.len()`,
+/// - `out.len() == n`.
+///
+/// # Panics
+///
+/// Panics if `a_vals.len() != a_cols.len()` or `out.len() != n`.
+#[target_feature(enable = "avx2")]
+pub unsafe fn fp_medium_spmm_row(
+    a_vals: &[u16],
+    a_cols: &[usize],
+    b: &[u16],
+    b_stride: usize,
+    n: usize,
+    p: u16,
+    out: &mut [u16],
+) {
+    assert_eq!(
+        a_vals.len(),
+        a_cols.len(),
+        "fp_medium_spmm_row: a_vals/a_cols length mismatch"
+    );
+    assert_eq!(out.len(), n, "fp_medium_spmm_row: out.len() != n");
+
+    let nnz = a_vals.len();
+    let p_u64 = p as u64;
+    let zero = _mm256_setzero_si256();
+
+    let mut j = 0;
+    while j + 16 <= n {
+        // 16 u32 products → widened to 16 u64 lanes split into 4 ymm.
+        let mut acc0 = _mm256_setzero_si256(); // u64 lanes 0..3 (B-cols j..j+3)
+        let mut acc1 = _mm256_setzero_si256(); // u64 lanes 4..7 (B-cols j+4..j+7)
+        let mut acc2 = _mm256_setzero_si256(); // u64 lanes 8..11
+        let mut acc3 = _mm256_setzero_si256(); // u64 lanes 12..15
+        for h in 0..nnz {
+            let a_h = *a_vals.get_unchecked(h);
+            let col = *a_cols.get_unchecked(h);
+            // Load 16 u16 lanes from B[col, j..j+16] (32 bytes).
+            let b_row_ptr = b.as_ptr().add(col * b_stride + j) as *const __m256i;
+            let bv = _mm256_loadu_si256(b_row_ptr);
+            // Broadcast a_h to all 16 u16 lanes.
+            let av = _mm256_set1_epi16(a_h as i16);
+            // 16-lane u16 × u16 → u32 product via mullo + mulhi.
+            // unpack{lo,hi}_epi16 reconstructs eight u32 products per
+            // 256-bit half.
+            let prod_lo16 = _mm256_mullo_epi16(av, bv);
+            let prod_hi16 = _mm256_mulhi_epu16(av, bv);
+            let prod_full_lo = _mm256_unpacklo_epi16(prod_lo16, prod_hi16);
+            let prod_full_hi = _mm256_unpackhi_epi16(prod_lo16, prod_hi16);
+            // Widen 32-bit-lane products → 64-bit lanes (zero-extend).
+            // unpacklo/unpackhi_epi32 are in-lane (per 128-bit half).
+            //
+            // Lane mapping (per 128-bit half of bv):
+            //   bv low half  = lanes 0..7 of B[col, j..j+8]
+            //   bv high half = lanes 8..15 of B[col, j+8..j+16]
+            //   prod_full_lo low  = u32 lanes [0,1,2,3]      (B-cols j+0..j+3)
+            //   prod_full_lo high = u32 lanes [8,9,10,11]    (B-cols j+8..j+11)
+            //   prod_full_hi low  = u32 lanes [4,5,6,7]      (B-cols j+4..j+7)
+            //   prod_full_hi high = u32 lanes [12,13,14,15]  (B-cols j+12..j+15)
+            let p_lo_l = _mm256_unpacklo_epi32(prod_full_lo, zero);
+            let p_lo_h = _mm256_unpackhi_epi32(prod_full_lo, zero);
+            let p_hi_l = _mm256_unpacklo_epi32(prod_full_hi, zero);
+            let p_hi_h = _mm256_unpackhi_epi32(prod_full_hi, zero);
+            // Map each widened u64 vector to the right output cells.
+            // Each unpack-{lo,hi}_epi32 is per-128-bit-half:
+            //   p_lo_l low  = u64 lanes [B-col j+0, B-col j+1]
+            //   p_lo_l high = u64 lanes [B-col j+8, B-col j+9]
+            //   p_lo_h low  = u64 lanes [B-col j+2, B-col j+3]
+            //   p_lo_h high = u64 lanes [B-col j+10, B-col j+11]
+            //   p_hi_l low  = u64 lanes [B-col j+4, B-col j+5]
+            //   p_hi_l high = u64 lanes [B-col j+12, B-col j+13]
+            //   p_hi_h low  = u64 lanes [B-col j+6, B-col j+7]
+            //   p_hi_h high = u64 lanes [B-col j+14, B-col j+15]
+            //
+            // Group into 4 accumulators of 4 u64 lanes each so each
+            // accumulator vector covers 4 contiguous output cells:
+            //   acc0 → B-cols j+0..j+3 from { p_lo_l_lo (j+0,j+1) ; p_lo_h_lo (j+2,j+3) }
+            //   acc1 → B-cols j+4..j+7 from { p_hi_l_lo (j+4,j+5) ; p_hi_h_lo (j+6,j+7) }
+            //   acc2 → B-cols j+8..j+11 from { p_lo_l_hi ; p_lo_h_hi }
+            //   acc3 → B-cols j+12..j+15 from { p_hi_l_hi ; p_hi_h_hi }
+            //
+            // Compose: take the low 128 of one and the low 128 of
+            // another into a single ymm using inserti128.
+            let lo01 = _mm256_castsi256_si128(p_lo_l);
+            let lo23 = _mm256_castsi256_si128(p_lo_h);
+            let lo45 = _mm256_castsi256_si128(p_hi_l);
+            let lo67 = _mm256_castsi256_si128(p_hi_h);
+            let hi89 = _mm256_extracti128_si256::<1>(p_lo_l);
+            let hi1011 = _mm256_extracti128_si256::<1>(p_lo_h);
+            let hi1213 = _mm256_extracti128_si256::<1>(p_hi_l);
+            let hi1415 = _mm256_extracti128_si256::<1>(p_hi_h);
+            let v0 = _mm256_inserti128_si256::<1>(_mm256_castsi128_si256(lo01), lo23);
+            let v1 = _mm256_inserti128_si256::<1>(_mm256_castsi128_si256(lo45), lo67);
+            let v2 = _mm256_inserti128_si256::<1>(_mm256_castsi128_si256(hi89), hi1011);
+            let v3 = _mm256_inserti128_si256::<1>(_mm256_castsi128_si256(hi1213), hi1415);
+            acc0 = _mm256_add_epi64(acc0, v0);
+            acc1 = _mm256_add_epi64(acc1, v1);
+            acc2 = _mm256_add_epi64(acc2, v2);
+            acc3 = _mm256_add_epi64(acc3, v3);
+        }
+        // Reduce each u64 lane mod p scalarly (4 u64 lanes per
+        // accumulator vector). Stores 16 reduced lanes back to `out`.
+        let mut tmp = [0u64; 4];
+        for (acc, base) in [acc0, acc1, acc2, acc3]
+            .iter()
+            .enumerate()
+            .map(|(i, v)| (v, j + 4 * i))
+        {
+            _mm256_storeu_si256(tmp.as_mut_ptr() as *mut __m256i, *acc);
+            for (k, &t) in tmp.iter().enumerate() {
+                *out.get_unchecked_mut(base + k) = (t % p_u64) as u16;
+            }
+        }
+        j += 16;
+    }
+    // Scalar tail for j ∈ [j..n).
+    while j < n {
+        let mut total: u64 = 0;
+        for h in 0..nnz {
+            let a_h = *a_vals.get_unchecked(h) as u64;
+            let col = *a_cols.get_unchecked(h);
+            let b_kj = *b.get_unchecked(col * b_stride + j) as u64;
+            total = total.wrapping_add(a_h * b_kj);
+        }
+        *out.get_unchecked_mut(j) = (total % p_u64) as u16;
+        j += 1;
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
@@ -785,6 +937,69 @@ mod tests {
                 expected += (a[i] as u64) * (b[i] as u64);
             }
             assert_eq!(got as u64, expected % p as u64, "dot p={p}");
+        }
+    }
+
+    #[test]
+    fn spmm_row_matches_scalar() {
+        if !std::arch::is_x86_feature_detected!("avx2") {
+            return;
+        }
+        // Cover P at the small/large medium boundary plus the
+        // reference 65521 prime; sweep (nnz, b_rows, n) shapes that
+        // hit the SIMD body and the scalar tail.
+        for &p in &[257u16, 65521, 8191, 1009] {
+            let cases = [
+                (1usize, 16usize, 8usize),
+                (5, 16, 32),
+                (7, 16, 33),
+                (10, 16, 64),
+                (1, 16, 17),
+                (20, 16, 100),
+                (3, 8, 16),
+                (10, 32, 128),
+                (15, 16, 1024),
+            ];
+            for &(nnz, b_rows, n) in &cases {
+                let a_vals: Vec<u16> = (0..nnz as u32)
+                    .map(|h| ((h * 13 + 1) % p as u32) as u16)
+                    .collect();
+                let a_cols: Vec<usize> = (0..nnz).map(|h| (h * 7) % b_rows).collect();
+                let b: Vec<u16> = (0..(b_rows * n) as u32)
+                    .map(|i| ((i * 23 + 5) % p as u32) as u16)
+                    .collect();
+                let mut out = vec![0u16; n];
+                unsafe { fp_medium_spmm_row(&a_vals, &a_cols, &b, n, n, p, &mut out) };
+                for (j, &val) in out.iter().enumerate() {
+                    let mut expected: u64 = 0;
+                    for h in 0..nnz {
+                        let col = a_cols[h];
+                        expected = expected.wrapping_add(a_vals[h] as u64 * b[col * n + j] as u64);
+                    }
+                    expected %= p as u64;
+                    assert_eq!(
+                        val as u64, expected,
+                        "p={p} nnz={nnz} b_rows={b_rows} n={n} j={j}"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn spmm_row_empty_nnz() {
+        if !std::arch::is_x86_feature_detected!("avx2") {
+            return;
+        }
+        let p = 65521u16;
+        let n = 64;
+        let a_vals: Vec<u16> = vec![];
+        let a_cols: Vec<usize> = vec![];
+        let b: Vec<u16> = (0..n).map(|i| ((i as u32 * 7) % p as u32) as u16).collect();
+        let mut out = vec![5u16; n];
+        unsafe { fp_medium_spmm_row(&a_vals, &a_cols, &b, n, n, p, &mut out) };
+        for (j, &val) in out.iter().enumerate().take(n) {
+            assert_eq!(val, 0, "j={j}");
         }
     }
 }
