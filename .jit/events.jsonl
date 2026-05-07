@@ -4202,3 +4202,11 @@
 {"type":"gate_passed","id":"633caa8e-2c95-4fa8-8f17-72f063679353","issue_id":"d1a5fea8-6277-4ce4-b433-3d32d92d509e","timestamp":"2026-05-07T21:03:47.514848427Z","gate_key":"doc-review","updated_by":null}
 {"type":"issue_state_changed","id":"10631d7b-6aef-48e7-9e4c-4a4dc74c9708","issue_id":"d1a5fea8-6277-4ce4-b433-3d32d92d509e","timestamp":"2026-05-07T21:03:47.532102252Z","from":"in_progress","to":"done"}
 {"type":"issue_completed","id":"4c817d11-c6bc-4f88-85e4-da5606b50e18","issue_id":"d1a5fea8-6277-4ce4-b433-3d32d92d509e","timestamp":"2026-05-07T21:03:47.532142202Z"}
+{"type":"gate_passed","id":"316351f0-25a8-493c-9ddf-f5af269ace6d","issue_id":"8ccc1751-092c-4798-8430-4e1db7a8a47a","timestamp":"2026-05-07T21:08:33.378549353Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"639c35ba-abcd-466c-98e9-cd8bced983e5","issue_id":"8ccc1751-092c-4798-8430-4e1db7a8a47a","timestamp":"2026-05-07T21:08:40.656497935Z","gate_key":"doc-review","updated_by":null}
+{"type":"issue_state_changed","id":"dd02ae55-f7b0-4cb2-a587-1af2cb6f5d2c","issue_id":"8ccc1751-092c-4798-8430-4e1db7a8a47a","timestamp":"2026-05-07T21:08:40.674733381Z","from":"in_progress","to":"done"}
+{"type":"issue_completed","id":"e69167f8-a358-439d-b69b-0550df0166dd","issue_id":"8ccc1751-092c-4798-8430-4e1db7a8a47a","timestamp":"2026-05-07T21:08:40.674765631Z"}
+{"type":"issue_state_changed","id":"ea97fc3e-18df-4a67-ad62-b983c3759def","issue_id":"66190ccd-60aa-4675-bb59-153f1834b92e","timestamp":"2026-05-07T21:08:40.818622502Z","from":"backlog","to":"ready"}
+{"type":"issue_state_changed","id":"557efcf0-63ab-4660-b585-1353ee429d06","issue_id":"66190ccd-60aa-4675-bb59-153f1834b92e","timestamp":"2026-05-07T21:08:48.208093666Z","from":"ready","to":"in_progress"}
+{"type":"issue_claimed","id":"01acae27-a4b2-4920-a73a-dee1b6377b43","issue_id":"66190ccd-60aa-4675-bb59-153f1834b92e","timestamp":"2026-05-07T21:08:48.210920387Z","assignee":"agent:project-lead"}
+{"type":"gate_passed","id":"bd922343-1d6f-4970-870c-67a3937a5474","issue_id":"66190ccd-60aa-4675-bb59-153f1834b92e","timestamp":"2026-05-07T21:08:54.540950268Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
