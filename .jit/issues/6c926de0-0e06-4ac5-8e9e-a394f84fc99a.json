@@ -1,0 +1,25 @@
+{
+  "id": "6c926de0-0e06-4ac5-8e9e-a394f84fc99a",
+  "title": "Extension-field Wiedemann for low-cardinality minpoly",
+  "description": "Implement scalar Wiedemann over a degree-`k` extension `Fp<P>[x]/(f(x))` to close the low-cardinality minpoly cells where `q ≤ n` forces multi-seed Wiedemann (currently runs ~16 attempts × n³ matvecs and fails the 1.5x ceiling).\n\n## Background\n\n`d1dd266c` landed packed Fp matvec + cubic cyclic-LCM minpoly fallback + multi-seed Wiedemann. Of the 8 minpoly target rows:\n\n- 5 PASS (GF(2^31-1)/64+256, GF(65521)/64+256, GF(7)/64).\n- 3 FAIL with multi-seed Wiedemann scaling: **GF(251)/n=256 (23.6x)**, **GF(7)/n=256 (2.06x)**. (GF(251)/n=64 minpoly fails for a different reason — panel-kernel overhead — handled by sibling task.)\n\nPer the binding plan `dev/active/d1dd266c-minpoly-sota-plan.md` § 4 escalation order, the next step before block Wiedemann is extension-field Wiedemann:\n\n1. Embed the base-field matrix in `Fp<P>[x]/(f(x))` with `q^k > n`.\n2. Run scalar Wiedemann over the extension (where the q > n gate is satisfied — single Wiedemann pass, not multi-seed).\n3. Verify the result descends to base-field coefficients and annihilates the original matrix over the base field.\n\n## Hard ceilings (fflas-ffpack reference)\n\n| Cell | fflas wall | 1.5x ceiling | Current gf2 wall | Current ratio |\n|---|---:|---:|---:|---:|\n| GF(251)/n=256 minpoly | 1.634 ms | 2.451 ms | 38.5 ms | 23.6x FAIL |\n| GF(7)/n=256 minpoly | 20.290 ms | 30.435 ms | 41.7 ms | 2.06x FAIL |\n\n## Success Criteria\n\n- [hard] Extension-field Wiedemann is engaged from `minpoly_dispatch` for `Fp<P>` whenever `q ≤ n` and `q^k > n` for the chosen extension degree `k`. The previous `multi_seed_wiedemann_minpoly` path is retained as a fallback only when extension-field Wiedemann cannot construct a usable extension.\n- [hard] Both target rows above meet the 1.5x ceiling on the current Zen 3 host with the production dispatch.\n- [hard] Correctness: the returned polynomial annihilates `A` over the base field, divides `charpoly(A)`, and matches the existing `cyclic_decomposition` LCM reference for adversarial Jordan-block + randomized small-matrix tests over `Fp<7>` and `Fp<251>`.\n- [hard] Coefficient-descent step is verified by a per-call check that the extension polynomial has all coefficients in the base field; if the descent fails, fall back to the existing multi-seed path.\n- [hard] Final evidence updates `dev/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md` (or a successor doc) with raw Criterion medians for the two target cells, recording the algorithm class as \"extension-field Wiedemann (degree k=...)\" per row.\n\n## Notes\n\nThe plan's § 5 escalation to block Wiedemann is reserved for the case where extension-field Wiedemann cannot meet correctness or wall-time targets. Block Wiedemann is significantly more involved (Coppersmith / Villard) and out of scope for this task.\n\nThis task plus its sibling tasks (panel-kernel inline + canonical-byte polynomial arithmetic) collectively close the four residual `d1dd266c` cells. `d1dd266c` is blocked on all three siblings.",
+  "state": "ready",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [
+    "code-review",
+    "cargo-ci",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "epic:gf2-core-sota-performance",
+    "story:sota-polynomial-invariants"
+  ],
+  "created_at": "2026-05-07T13:18:18.091699777+00:00",
+  "updated_at": "2026-05-07T13:18:18.091707577+00:00"
+}

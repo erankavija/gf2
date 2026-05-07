@@ -6,7 +6,10 @@
   "priority": "normal",
   "assignee": "agent:claude",
   "dependencies": [
-    "c3e79272-13f1-47e1-9492-65947116a08a"
+    "70766cb1-2d79-4194-becd-7e17984310d0",
+    "5a3dbd5b-3827-4052-9d50-8033773aa867",
+    "c3e79272-13f1-47e1-9492-65947116a08a",
+    "6c926de0-0e06-4ac5-8e9e-a394f84fc99a"
   ],
   "gates_required": [
     "code-review",
@@ -45,5 +48,5 @@
     "story:sota-polynomial-invariants"
   ],
   "created_at": "2026-04-30T06:43:02.871775398+00:00",
-  "updated_at": "2026-05-07T09:44:38.004459922+00:00"
+  "updated_at": "2026-05-07T13:19:07.739331632+00:00"
 }
