@@ -1,645 +1,336 @@
-operation,field,n,density,wall_time_ms,implementation,host,seed,source_csv,bench_run_date,jit_issue
-fgemm,GF(2^31-1),64,,0.405176,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5180433273409205583,2026-04-26-reference.csv,2026-04-26,3b762764
-pluq,GF(2^31-1),64,,0.419422,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",1253827771496180483,2026-04-26-reference.csv,2026-04-26,3b762764
-pluq,GF(2^31-1),64,,0.292126,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10238191392210833268,2026-04-26-reference.csv,2026-04-26,3b762764
-echelon,GF(2^31-1),64,,0.433538,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11803774076554546630,2026-04-26-reference.csv,2026-04-26,3b762764
-echelon,GF(2^31-1),64,,0.320738,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10403912173925513489,2026-04-26-reference.csv,2026-04-26,3b762764
-invert,GF(2^31-1),64,,1.042956,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5934371847120486591,2026-04-26-reference.csv,2026-04-26,3b762764
-invert,GF(2^31-1),64,,0.532158,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",18428513764158899361,2026-04-26-reference.csv,2026-04-26,3b762764
-solve,GF(2^31-1),64,,0.445224,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5507037633494828434,2026-04-26-reference.csv,2026-04-26,3b762764
-solve,GF(2^31-1),64,,0.407022,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9094553455404696733,2026-04-26-reference.csv,2026-04-26,3b762764
-fgemm,GF(2^31-1),256,,15.785032,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7392704192690275058,2026-04-26-reference.csv,2026-04-26,3b762764
-pluq,GF(2^31-1),256,,8.110320,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",17190311719824071345,2026-04-26-reference.csv,2026-04-26,3b762764
-pluq,GF(2^31-1),256,,6.190853,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",6513132282584046359,2026-04-26-reference.csv,2026-04-26,3b762764
-echelon,GF(2^31-1),256,,9.235114,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14841876512744768636,2026-04-26-reference.csv,2026-04-26,3b762764
-echelon,GF(2^31-1),256,,6.841316,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",15414661213738147629,2026-04-26-reference.csv,2026-04-26,3b762764
-invert,GF(2^31-1),256,,20.494605,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7987072257454603602,2026-04-26-reference.csv,2026-04-26,3b762764
-invert,GF(2^31-1),256,,10.288875,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11382297788580195442,2026-04-26-reference.csv,2026-04-26,3b762764
-solve,GF(2^31-1),256,,8.290466,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4210633436373302228,2026-04-26-reference.csv,2026-04-26,3b762764
-solve,GF(2^31-1),256,,6.207873,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14964916828173173308,2026-04-26-reference.csv,2026-04-26,3b762764
-fgemm,GF(2^31-1),1024,,917.413522,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",16021027940197092104,2026-04-26-reference.csv,2026-04-26,3b762764
-pluq,GF(2^31-1),1024,,375.621561,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",6513132282584046359,2026-04-26-reference.csv,2026-04-26,3b762764
-pluq,GF(2^31-1),1024,,322.216452,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",17190311719824071345,2026-04-26-reference.csv,2026-04-26,3b762764
-echelon,GF(2^31-1),1024,,553.450784,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7802675733600006652,2026-04-26-reference.csv,2026-04-26,3b762764
-echelon,GF(2^31-1),1024,,414.826136,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10393472745051128352,2026-04-26-reference.csv,2026-04-26,3b762764
-invert,GF(2^31-1),1024,,1137.519649,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",13331486115574067583,2026-04-26-reference.csv,2026-04-26,3b762764
-invert,GF(2^31-1),1024,,591.521225,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",2400478951954270886,2026-04-26-reference.csv,2026-04-26,3b762764
-solve,GF(2^31-1),1024,,381.817039,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14964916828173173308,2026-04-26-reference.csv,2026-04-26,3b762764
-solve,GF(2^31-1),1024,,322.441164,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4210633436373302228,2026-04-26-reference.csv,2026-04-26,3b762764
-fgemm,GF(2^31-1),4096,,45427.792647,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",16214413637036924079,2026-04-26-reference.csv,2026-04-26,3b762764
-charpoly,GF(2^31-1),64,,0.743458,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11506559259852285241,2026-04-26-reference.csv,2026-04-26,3b762764
-charpoly,GF(2^31-1),256,,43.919996,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",16108071587005897015,2026-04-26-reference.csv,2026-04-26,3b762764
-fgemm,GF(65521),64,,0.031984,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11351449802504212747,2026-04-26-reference.csv,2026-04-26,3b762764
-pluq,GF(65521),64,,0.125260,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14074756535924051,2026-04-26-reference.csv,2026-04-26,3b762764
-pluq,GF(65521),64,,0.099392,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11761241348116266917,2026-04-26-reference.csv,2026-04-26,3b762764
-echelon,GF(65521),64,,0.601810,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",12217383699880382746,2026-04-26-reference.csv,2026-04-26,3b762764
-echelon,GF(65521),64,,0.332560,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",15314050547340862590,2026-04-26-reference.csv,2026-04-26,3b762764
-invert,GF(65521),64,,1.168652,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5102690528911706662,2026-04-26-reference.csv,2026-04-26,3b762764
-invert,GF(65521),64,,0.584122,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",15406151386255282230,2026-04-26-reference.csv,2026-04-26,3b762764
-solve,GF(65521),64,,0.131798,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11948532817827256953,2026-04-26-reference.csv,2026-04-26,3b762764
-solve,GF(65521),64,,0.104280,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9947845925449458516,2026-04-26-reference.csv,2026-04-26,3b762764
-fgemm,GF(65521),256,,1.061350,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7548041127201783488,2026-04-26-reference.csv,2026-04-26,3b762764
-pluq,GF(65521),256,,2.925398,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9735799932641611804,2026-04-26-reference.csv,2026-04-26,3b762764
-pluq,GF(65521),256,,2.188806,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9479304147414010877,2026-04-26-reference.csv,2026-04-26,3b762764
-echelon,GF(65521),256,,6.520496,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",12342051697584108912,2026-04-26-reference.csv,2026-04-26,3b762764
-echelon,GF(65521),256,,4.002847,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7582717672197984421,2026-04-26-reference.csv,2026-04-26,3b762764
-invert,GF(65521),256,,13.050721,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",13449363234952904092,2026-04-26-reference.csv,2026-04-26,3b762764
-invert,GF(65521),256,,6.499595,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",17670832340716871520,2026-04-26-reference.csv,2026-04-26,3b762764
-solve,GF(65521),256,,2.949280,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7857228785775969460,2026-04-26-reference.csv,2026-04-26,3b762764
-solve,GF(65521),256,,2.190644,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9148240713706980683,2026-04-26-reference.csv,2026-04-26,3b762764
-fgemm,GF(65521),1024,,49.502894,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",17479486651528733404,2026-04-26-reference.csv,2026-04-26,3b762764
-pluq,GF(65521),1024,,62.411979,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9479304147414010877,2026-04-26-reference.csv,2026-04-26,3b762764
-pluq,GF(65521),1024,,48.426779,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9735799932641611804,2026-04-26-reference.csv,2026-04-26,3b762764
-echelon,GF(65521),1024,,116.188151,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7582717672197984421,2026-04-26-reference.csv,2026-04-26,3b762764
-echelon,GF(65521),1024,,76.033343,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",12342051697584108912,2026-04-26-reference.csv,2026-04-26,3b762764
-invert,GF(65521),1024,,143.541921,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",44378112332022522,2026-04-26-reference.csv,2026-04-26,3b762764
-invert,GF(65521),1024,,82.525665,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14533299266544624386,2026-04-26-reference.csv,2026-04-26,3b762764
-solve,GF(65521),1024,,61.911149,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",13907183692283982733,2026-04-26-reference.csv,2026-04-26,3b762764
-solve,GF(65521),1024,,47.646381,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11157325121996924885,2026-04-26-reference.csv,2026-04-26,3b762764
-fgemm,GF(65521),4096,,1971.324140,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4216526696668437758,2026-04-26-reference.csv,2026-04-26,3b762764
-charpoly,GF(65521),64,,0.674064,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9183273273419397006,2026-04-26-reference.csv,2026-04-26,3b762764
-charpoly,GF(65521),256,,12.377745,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",8373688313145165019,2026-04-26-reference.csv,2026-04-26,3b762764
-fgemm,GF(251),64,,0.005770,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",12707092751477068437,2026-04-26-reference.csv,2026-04-26,3b762764
-pluq,GF(251),64,,0.022756,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9903818464302766647,2026-04-26-reference.csv,2026-04-26,3b762764
-pluq,GF(251),64,,0.017192,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",2825415881964649573,2026-04-26-reference.csv,2026-04-26,3b762764
-echelon,GF(251),64,,0.103068,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",15612396963727573775,2026-04-26-reference.csv,2026-04-26,3b762764
-echelon,GF(251),64,,0.058814,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",6834237252344653719,2026-04-26-reference.csv,2026-04-26,3b762764
-invert,GF(251),64,,0.104534,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",17954810277715416078,2026-04-26-reference.csv,2026-04-26,3b762764
-invert,GF(251),64,,0.055502,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",18019032228134030376,2026-04-26-reference.csv,2026-04-26,3b762764
-solve,GF(251),64,,0.028144,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",3161924328900420527,2026-04-26-reference.csv,2026-04-26,3b762764
-solve,GF(251),64,,0.019112,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4599537089899667719,2026-04-26-reference.csv,2026-04-26,3b762764
-fgemm,GF(251),256,,0.261164,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",3118921564551205134,2026-04-26-reference.csv,2026-04-26,3b762764
-pluq,GF(251),256,,0.573744,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4928519569874895653,2026-04-26-reference.csv,2026-04-26,3b762764
-pluq,GF(251),256,,0.464728,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7506508480118126988,2026-04-26-reference.csv,2026-04-26,3b762764
-echelon,GF(251),256,,0.780788,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",12049470605909261752,2026-04-26-reference.csv,2026-04-26,3b762764
-echelon,GF(251),256,,0.505692,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",8463497029124751743,2026-04-26-reference.csv,2026-04-26,3b762764
-invert,GF(251),256,,1.090072,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",15703590869110377276,2026-04-26-reference.csv,2026-04-26,3b762764
-invert,GF(251),256,,0.660336,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",13673069791162062913,2026-04-26-reference.csv,2026-04-26,3b762764
-solve,GF(251),256,,0.618648,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",12425043119313690846,2026-04-26-reference.csv,2026-04-26,3b762764
-solve,GF(251),256,,0.466628,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",3166560285366626815,2026-04-26-reference.csv,2026-04-26,3b762764
-fgemm,GF(251),1024,,15.525858,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",2068729651824933807,2026-04-26-reference.csv,2026-04-26,3b762764
-pluq,GF(251),1024,,24.777733,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",16571496273683921727,2026-04-26-reference.csv,2026-04-26,3b762764
-pluq,GF(251),1024,,19.590061,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",3223957049289993305,2026-04-26-reference.csv,2026-04-26,3b762764
-echelon,GF(251),1024,,17.591343,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",8463497029124751743,2026-04-26-reference.csv,2026-04-26,3b762764
-echelon,GF(251),1024,,13.414904,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",12049470605909261752,2026-04-26-reference.csv,2026-04-26,3b762764
-invert,GF(251),1024,,33.798381,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",13673069791162062913,2026-04-26-reference.csv,2026-04-26,3b762764
-invert,GF(251),1024,,21.009098,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",15703590869110377276,2026-04-26-reference.csv,2026-04-26,3b762764
-solve,GF(251),1024,,24.094125,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",1343336825156874688,2026-04-26-reference.csv,2026-04-26,3b762764
-solve,GF(251),1024,,18.925337,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",8964874287244071616,2026-04-26-reference.csv,2026-04-26,3b762764
-fgemm,GF(251),4096,,864.594143,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",15696348782010540265,2026-04-26-reference.csv,2026-04-26,3b762764
-charpoly,GF(251),64,,0.476418,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",8751597996197025028,2026-04-26-reference.csv,2026-04-26,3b762764
-charpoly,GF(251),256,,1.316860,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",526247697690853768,2026-04-26-reference.csv,2026-04-26,3b762764
-fgemm,GF(7),64,,0.015666,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9934644842822421333,2026-04-26-reference.csv,2026-04-26,3b762764
-pluq,GF(7),64,,0.203506,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10652923087708408910,2026-04-26-reference.csv,2026-04-26,3b762764
-pluq,GF(7),64,,0.152932,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",6178451949024681137,2026-04-26-reference.csv,2026-04-26,3b762764
-echelon,GF(7),64,,0.560340,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",8094974281369898242,2026-04-26-reference.csv,2026-04-26,3b762764
-echelon,GF(7),64,,0.278536,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",859456799719183784,2026-04-26-reference.csv,2026-04-26,3b762764
-invert,GF(7),64,,1.224220,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",3146559891945559232,2026-04-26-reference.csv,2026-04-26,3b762764
-invert,GF(7),64,,0.623016,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",1289172924007512769,2026-04-26-reference.csv,2026-04-26,3b762764
-solve,GF(7),64,,0.209520,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",3839435461881424779,2026-04-26-reference.csv,2026-04-26,3b762764
-solve,GF(7),64,,0.160830,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11623384259863599264,2026-04-26-reference.csv,2026-04-26,3b762764
-fgemm,GF(7),256,,0.661148,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",1158200332714733675,2026-04-26-reference.csv,2026-04-26,3b762764
-pluq,GF(7),256,,3.116677,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7506508480118126988,2026-04-26-reference.csv,2026-04-26,3b762764
-pluq,GF(7),256,,2.087408,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4928519569874895653,2026-04-26-reference.csv,2026-04-26,3b762764
-echelon,GF(7),256,,5.452287,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",3928926321893258753,2026-04-26-reference.csv,2026-04-26,3b762764
-echelon,GF(7),256,,3.270937,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",8999588998998756453,2026-04-26-reference.csv,2026-04-26,3b762764
-invert,GF(7),256,,12.345363,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",501995117751203336,2026-04-26-reference.csv,2026-04-26,3b762764
-invert,GF(7),256,,5.871131,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",18157612406637340154,2026-04-26-reference.csv,2026-04-26,3b762764
-solve,GF(7),256,,3.134776,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",8239243928646303360,2026-04-26-reference.csv,2026-04-26,3b762764
-solve,GF(7),256,,2.088124,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",8431352122767374154,2026-04-26-reference.csv,2026-04-26,3b762764
-fgemm,GF(7),1024,,22.315562,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14659191246973044270,2026-04-26-reference.csv,2026-04-26,3b762764
-pluq,GF(7),1024,,53.280381,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",15953432159581399586,2026-04-26-reference.csv,2026-04-26,3b762764
-pluq,GF(7),1024,,37.324334,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9051882955726061138,2026-04-26-reference.csv,2026-04-26,3b762764
-echelon,GF(7),1024,,87.447925,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5519733480250526123,2026-04-26-reference.csv,2026-04-26,3b762764
-echelon,GF(7),1024,,56.635006,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4427741922488967881,2026-04-26-reference.csv,2026-04-26,3b762764
-invert,GF(7),1024,,115.340267,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",18157612406637340154,2026-04-26-reference.csv,2026-04-26,3b762764
-invert,GF(7),1024,,67.543741,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",501995117751203336,2026-04-26-reference.csv,2026-04-26,3b762764
-solve,GF(7),1024,,56.602794,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",8431352122767374154,2026-04-26-reference.csv,2026-04-26,3b762764
-solve,GF(7),1024,,36.748822,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",8239243928646303360,2026-04-26-reference.csv,2026-04-26,3b762764
-fgemm,GF(7),4096,,1005.131101,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7118573572673838493,2026-04-26-reference.csv,2026-04-26,3b762764
-charpoly,GF(7),64,,0.401970,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",8024433140722383444,2026-04-26-reference.csv,2026-04-26,3b762764
-charpoly,GF(7),256,,13.633042,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",13175743115641768480,2026-04-26-reference.csv,2026-04-26,3b762764
-matmul,GF(2),64,,0.003474,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",8005153246082202320,2026-04-26-reference.csv,2026-04-26,3b762764
-matmul,GF(2),64,,0.004116,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",12780262654461442454,2026-04-26-reference.csv,2026-04-26,3b762764
-matmul,GF(2),256,,0.029808,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11019564977554890073,2026-04-26-reference.csv,2026-04-26,3b762764
-matmul,GF(2),256,,0.043600,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",17070855054760512226,2026-04-26-reference.csv,2026-04-26,3b762764
-matmul,GF(2),1024,,0.710908,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",17070855054760512226,2026-04-26-reference.csv,2026-04-26,3b762764
-matmul,GF(2),1024,,0.626288,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11019564977554890073,2026-04-26-reference.csv,2026-04-26,3b762764
-matmul,GF(2),4096,,21.911030,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",1289172924007512769,2026-04-26-reference.csv,2026-04-26,3b762764
-matmul,GF(2),4096,,22.175838,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",3146559891945559232,2026-04-26-reference.csv,2026-04-26,3b762764
-echelon,GF(2),64,,0.004932,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14841876512744768636,2026-04-26-reference.csv,2026-04-26,3b762764
-echelon,GF(2),64,,0.002462,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",15414661213738147629,2026-04-26-reference.csv,2026-04-26,3b762764
-echelon,GF(2),256,,0.042676,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11803774076554546630,2026-04-26-reference.csv,2026-04-26,3b762764
-echelon,GF(2),256,,0.030824,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10403912173925513489,2026-04-26-reference.csv,2026-04-26,3b762764
-echelon,GF(2),1024,,0.603392,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10403912173925513489,2026-04-26-reference.csv,2026-04-26,3b762764
-echelon,GF(2),1024,,0.360096,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11803774076554546630,2026-04-26-reference.csv,2026-04-26,3b762764
-pluq,GF(7),64,,0.203506,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10652923087708408910,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-pluq,GF(7),64,,0.152932,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",6178451949024681137,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-echelon,GF(7),64,,0.560340,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",8094974281369898242,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-echelon,GF(7),64,,0.278536,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",859456799719183784,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-invert,GF(7),64,,1.224220,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",3146559891945559232,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-invert,GF(7),64,,0.623016,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",1289172924007512769,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-solve,GF(7),64,,0.209520,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",3839435461881424779,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-solve,GF(7),64,,0.160830,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11623384259863599264,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-pluq,GF(7),256,,3.116677,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7506508480118126988,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-pluq,GF(7),256,,2.087408,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4928519569874895653,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-echelon,GF(7),256,,5.452287,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",3928926321893258753,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-echelon,GF(7),256,,3.270937,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",8999588998998756453,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-invert,GF(7),256,,12.345363,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",501995117751203336,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-invert,GF(7),256,,5.871131,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",18157612406637340154,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-solve,GF(7),256,,3.134776,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",8239243928646303360,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-solve,GF(7),256,,2.088124,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",8431352122767374154,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-pluq,GF(7),1024,,53.280381,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",15953432159581399586,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-pluq,GF(7),1024,,37.324334,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9051882955726061138,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-echelon,GF(7),1024,,87.447925,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5519733480250526123,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-echelon,GF(7),1024,,56.635006,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4427741922488967881,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-invert,GF(7),1024,,115.340267,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",18157612406637340154,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-invert,GF(7),1024,,67.543741,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",501995117751203336,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-solve,GF(7),1024,,56.602794,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",8431352122767374154,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-solve,GF(7),1024,,36.748822,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",8239243928646303360,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-pluq,GF(251),64,,0.022756,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9903818464302766647,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-pluq,GF(251),64,,0.017192,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",2825415881964649573,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-echelon,GF(251),64,,0.103068,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",15612396963727573775,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-echelon,GF(251),64,,0.058814,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",6834237252344653719,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-invert,GF(251),64,,0.104534,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",17954810277715416078,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-invert,GF(251),64,,0.055502,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",18019032228134030376,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-solve,GF(251),64,,0.028144,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",3161924328900420527,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-solve,GF(251),64,,0.019112,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4599537089899667719,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-pluq,GF(251),256,,0.573744,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4928519569874895653,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-pluq,GF(251),256,,0.464728,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7506508480118126988,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-echelon,GF(251),256,,0.780788,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",12049470605909261752,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-echelon,GF(251),256,,0.505692,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",8463497029124751743,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-invert,GF(251),256,,1.090072,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",15703590869110377276,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-invert,GF(251),256,,0.660336,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",13673069791162062913,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-solve,GF(251),256,,0.618648,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",12425043119313690846,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-solve,GF(251),256,,0.466628,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",3166560285366626815,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-pluq,GF(251),1024,,24.777733,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",16571496273683921727,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-pluq,GF(251),1024,,19.590061,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",3223957049289993305,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-echelon,GF(251),1024,,17.591343,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",8463497029124751743,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-echelon,GF(251),1024,,13.414904,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",12049470605909261752,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-invert,GF(251),1024,,33.798381,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",13673069791162062913,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-invert,GF(251),1024,,21.009098,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",15703590869110377276,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-solve,GF(251),1024,,24.094125,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",1343336825156874688,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-solve,GF(251),1024,,18.925337,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",8964874287244071616,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-pluq,GF(65521),64,,0.125260,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14074756535924051,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-pluq,GF(65521),64,,0.099392,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11761241348116266917,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-echelon,GF(65521),64,,0.601810,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",12217383699880382746,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-echelon,GF(65521),64,,0.332560,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",15314050547340862590,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-invert,GF(65521),64,,1.168652,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5102690528911706662,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-invert,GF(65521),64,,0.584122,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",15406151386255282230,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-solve,GF(65521),64,,0.131798,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11948532817827256953,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-solve,GF(65521),64,,0.104280,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9947845925449458516,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-pluq,GF(65521),256,,2.925398,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9735799932641611804,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-pluq,GF(65521),256,,2.188806,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9479304147414010877,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-echelon,GF(65521),256,,6.520496,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",12342051697584108912,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-echelon,GF(65521),256,,4.002847,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7582717672197984421,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-invert,GF(65521),256,,13.050721,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",13449363234952904092,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-invert,GF(65521),256,,6.499595,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",17670832340716871520,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-solve,GF(65521),256,,2.949280,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7857228785775969460,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-solve,GF(65521),256,,2.190644,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9148240713706980683,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-pluq,GF(65521),1024,,62.411979,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9479304147414010877,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-pluq,GF(65521),1024,,48.426779,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9735799932641611804,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-echelon,GF(65521),1024,,116.188151,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7582717672197984421,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-echelon,GF(65521),1024,,76.033343,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",12342051697584108912,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-invert,GF(65521),1024,,143.541921,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",44378112332022522,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-invert,GF(65521),1024,,82.525665,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14533299266544624386,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-solve,GF(65521),1024,,61.911149,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",13907183692283982733,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-solve,GF(65521),1024,,47.646381,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11157325121996924885,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-pluq,GF(2^31-1),64,,0.419422,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",1253827771496180483,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-pluq,GF(2^31-1),64,,0.292126,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10238191392210833268,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-echelon,GF(2^31-1),64,,0.433538,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11803774076554546630,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-echelon,GF(2^31-1),64,,0.320738,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10403912173925513489,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-invert,GF(2^31-1),64,,1.042956,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5934371847120486591,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-invert,GF(2^31-1),64,,0.532158,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",18428513764158899361,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-solve,GF(2^31-1),64,,0.445224,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5507037633494828434,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-solve,GF(2^31-1),64,,0.407022,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9094553455404696733,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-pluq,GF(2^31-1),256,,8.110320,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",17190311719824071345,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-pluq,GF(2^31-1),256,,6.190853,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",6513132282584046359,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-echelon,GF(2^31-1),256,,9.235114,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14841876512744768636,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-echelon,GF(2^31-1),256,,6.841316,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",15414661213738147629,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-invert,GF(2^31-1),256,,20.494605,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7987072257454603602,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-invert,GF(2^31-1),256,,10.288875,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11382297788580195442,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-solve,GF(2^31-1),256,,8.290466,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4210633436373302228,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-solve,GF(2^31-1),256,,6.207873,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14964916828173173308,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-pluq,GF(2^31-1),1024,,375.621561,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",6513132282584046359,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-pluq,GF(2^31-1),1024,,322.216452,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",17190311719824071345,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-echelon,GF(2^31-1),1024,,553.450784,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7802675733600006652,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-echelon,GF(2^31-1),1024,,414.826136,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10393472745051128352,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-invert,GF(2^31-1),1024,,1137.519649,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",13331486115574067583,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-invert,GF(2^31-1),1024,,591.521225,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",2400478951954270886,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-solve,GF(2^31-1),1024,,381.817039,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14964916828173173308,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-solve,GF(2^31-1),1024,,322.441164,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4210633436373302228,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-matmul,GF(2),64,,0.003474,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",8005153246082202320,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-matmul,GF(2),64,,0.004116,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",12780262654461442454,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-matmul,GF(2),256,,0.029808,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11019564977554890073,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-matmul,GF(2),256,,0.043600,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",17070855054760512226,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-matmul,GF(2),1024,,0.710908,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",17070855054760512226,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-matmul,GF(2),1024,,0.626288,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11019564977554890073,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-matmul,GF(2),4096,,21.911030,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",1289172924007512769,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-matmul,GF(2),4096,,22.175838,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",3146559891945559232,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-echelon,GF(2),64,,0.004932,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14841876512744768636,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-echelon,GF(2),64,,0.002462,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",15414661213738147629,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-echelon,GF(2),256,,0.042676,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11803774076554546630,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-echelon,GF(2),256,,0.030824,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10403912173925513489,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-echelon,GF(2),1024,,0.603392,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10403912173925513489,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-echelon,GF(2),1024,,0.360096,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11803774076554546630,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
-fgemm,GF(2^31-1),64,,0.362223,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5180433273409205583,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-pluq,GF(2^31-1),64,,0.426053,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",1253827771496180483,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-pluq,GF(2^31-1),64,,0.295530,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10238191392210833268,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-echelon,GF(2^31-1),64,,0.429893,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11803774076554546630,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-echelon,GF(2^31-1),64,,0.305586,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10403912173925513489,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-invert,GF(2^31-1),64,,1.066496,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5934371847120486591,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-invert,GF(2^31-1),64,,0.540183,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",18428513764158899361,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-solve,GF(2^31-1),64,,0.465523,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5507037633494828434,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-solve,GF(2^31-1),64,,0.352003,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9094553455404696733,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-fgemm,GF(2^31-1),256,,16.748838,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7392704192690275058,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-pluq,GF(2^31-1),256,,8.015819,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",17190311719824071345,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-pluq,GF(2^31-1),256,,6.172691,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",6513132282584046359,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-echelon,GF(2^31-1),256,,9.206156,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14841876512744768636,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-echelon,GF(2^31-1),256,,6.859675,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",15414661213738147629,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-invert,GF(2^31-1),256,,20.284015,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7987072257454603602,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-invert,GF(2^31-1),256,,10.093903,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11382297788580195442,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-solve,GF(2^31-1),256,,8.194852,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4210633436373302228,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-solve,GF(2^31-1),256,,6.133635,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14964916828173173308,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-fgemm,GF(2^31-1),1024,,913.629374,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",16021027940197092104,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-pluq,GF(2^31-1),1024,,373.040253,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",6513132282584046359,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-pluq,GF(2^31-1),1024,,319.264251,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",17190311719824071345,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-echelon,GF(2^31-1),1024,,537.110300,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7802675733600006652,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-echelon,GF(2^31-1),1024,,410.742834,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10393472745051128352,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-invert,GF(2^31-1),1024,,1120.315670,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",13331486115574067583,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-invert,GF(2^31-1),1024,,587.967305,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",2400478951954270886,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-solve,GF(2^31-1),1024,,377.518401,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14964916828173173308,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-solve,GF(2^31-1),1024,,315.839417,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4210633436373302228,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-fgemm,GF(2^31-1),4096,,58772.894215,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",16214413637036924079,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-charpoly,GF(2^31-1),64,,0.974660,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11506559259852285241,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-charpoly,GF(2^31-1),256,,53.491615,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",16108071587005897015,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-minpoly,GF(2^31-1),64,,1.679344,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5165982229321961512,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-minpoly,GF(2^31-1),256,,81.531913,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",15188339206248424544,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-minpoly,GF(2^31-1),1024,,6374.570907,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",394202418011037415,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-fgemm,GF(65521),64,,0.065426,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11351449802504212747,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-pluq,GF(65521),64,,0.242970,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14074756535924051,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-pluq,GF(65521),64,,0.194446,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11761241348116266917,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-echelon,GF(65521),64,,1.220103,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",12217383699880382746,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-echelon,GF(65521),64,,0.688903,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",15314050547340862590,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-invert,GF(65521),64,,2.390240,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5102690528911706662,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-invert,GF(65521),64,,1.184733,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",15406151386255282230,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-solve,GF(65521),64,,0.255557,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11948532817827256953,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-solve,GF(65521),64,,0.306190,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9947845925449458516,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-fgemm,GF(65521),256,,1.515890,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7548041127201783488,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-pluq,GF(65521),256,,5.020658,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9735799932641611804,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-pluq,GF(65521),256,,3.707811,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9479304147414010877,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-echelon,GF(65521),256,,11.507476,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",12342051697584108912,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-echelon,GF(65521),256,,7.868969,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7582717672197984421,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-invert,GF(65521),256,,21.492993,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",13449363234952904092,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-invert,GF(65521),256,,10.716940,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",17670832340716871520,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-solve,GF(65521),256,,4.328128,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7857228785775969460,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-solve,GF(65521),256,,3.427471,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9148240713706980683,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-fgemm,GF(65521),1024,,70.969367,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",17479486651528733404,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-pluq,GF(65521),1024,,92.931110,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9479304147414010877,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-pluq,GF(65521),1024,,72.919857,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9735799932641611804,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-echelon,GF(65521),1024,,163.516316,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7582717672197984421,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-echelon,GF(65521),1024,,99.647342,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",12342051697584108912,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-invert,GF(65521),1024,,186.862267,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",44378112332022522,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-invert,GF(65521),1024,,109.136154,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14533299266544624386,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-solve,GF(65521),1024,,81.715676,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",13907183692283982733,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-solve,GF(65521),1024,,60.830854,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11157325121996924885,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-fgemm,GF(65521),4096,,2279.722525,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4216526696668437758,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-charpoly,GF(65521),64,,0.966280,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9183273273419397006,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-charpoly,GF(65521),256,,17.253221,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",8373688313145165019,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-minpoly,GF(65521),64,,0.522287,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",17437234336724684531,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-minpoly,GF(65521),256,,17.194554,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4237467502002085625,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-minpoly,GF(65521),1024,,884.391719,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4663744754393447646,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-fgemm,GF(251),64,,0.008363,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",12707092751477068437,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-pluq,GF(251),64,,0.046133,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9903818464302766647,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-pluq,GF(251),64,,0.033890,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",2825415881964649573,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-echelon,GF(251),64,,0.205490,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",15612396963727573775,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-echelon,GF(251),64,,0.116430,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",6834237252344653719,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-invert,GF(251),64,,0.157450,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",17954810277715416078,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-invert,GF(251),64,,0.085353,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",18019032228134030376,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-solve,GF(251),64,,0.042606,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",3161924328900420527,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-solve,GF(251),64,,0.065353,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4599537089899667719,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-fgemm,GF(251),256,,0.306026,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",3118921564551205134,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-pluq,GF(251),256,,0.772463,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4928519569874895653,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-pluq,GF(251),256,,0.747077,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7506508480118126988,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-echelon,GF(251),256,,1.427397,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",12049470605909261752,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-echelon,GF(251),256,,0.801680,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",8463497029124751743,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-invert,GF(251),256,,1.528690,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",15703590869110377276,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-invert,GF(251),256,,0.893270,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",13673069791162062913,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-solve,GF(251),256,,0.780607,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",12425043119313690846,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-solve,GF(251),256,,0.644743,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",3166560285366626815,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-fgemm,GF(251),1024,,17.052578,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",2068729651824933807,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-pluq,GF(251),1024,,25.834927,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",16571496273683921727,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-pluq,GF(251),1024,,20.269819,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",3223957049289993305,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-echelon,GF(251),1024,,20.498086,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",8463497029124751743,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-echelon,GF(251),1024,,15.281851,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",12049470605909261752,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-invert,GF(251),1024,,35.311740,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",13673069791162062913,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-invert,GF(251),1024,,21.728339,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",15703590869110377276,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-solve,GF(251),1024,,25.678927,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",1343336825156874688,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-solve,GF(251),1024,,20.393635,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",8964874287244071616,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-fgemm,GF(251),4096,,994.365011,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",15696348782010540265,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-charpoly,GF(251),64,,0.889983,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",8751597996197025028,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-charpoly,GF(251),256,,1.623267,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",526247697690853768,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-minpoly,GF(251),64,,0.134866,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",3897696420160141891,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-minpoly,GF(251),256,,1.633957,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",8140817630099691801,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-minpoly,GF(251),1024,,109.542044,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",16677532437108663844,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-fgemm,GF(7),64,,0.022903,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9934644842822421333,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-pluq,GF(7),64,,0.341796,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10652923087708408910,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-pluq,GF(7),64,,0.274000,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",6178451949024681137,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-echelon,GF(7),64,,0.833537,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",8094974281369898242,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-echelon,GF(7),64,,0.473633,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",859456799719183784,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-invert,GF(7),64,,1.949550,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",3146559891945559232,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-invert,GF(7),64,,1.048987,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",1289172924007512769,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-solve,GF(7),64,,0.439813,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",3839435461881424779,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-solve,GF(7),64,,0.329763,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11623384259863599264,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-fgemm,GF(7),256,,0.749926,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",1158200332714733675,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-pluq,GF(7),256,,4.271781,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7506508480118126988,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-pluq,GF(7),256,,2.983854,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4928519569874895653,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-echelon,GF(7),256,,7.430362,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",3928926321893258753,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-echelon,GF(7),256,,4.168787,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",8999588998998756453,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-invert,GF(7),256,,17.465941,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",501995117751203336,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-invert,GF(7),256,,7.351408,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",18157612406637340154,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-solve,GF(7),256,,3.980374,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",8239243928646303360,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-solve,GF(7),256,,2.659714,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",8431352122767374154,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-fgemm,GF(7),1024,,24.476410,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14659191246973044270,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-pluq,GF(7),1024,,61.624994,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",15953432159581399586,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-pluq,GF(7),1024,,43.132932,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9051882955726061138,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-echelon,GF(7),1024,,98.427368,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5519733480250526123,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-echelon,GF(7),1024,,64.090085,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4427741922488967881,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-invert,GF(7),1024,,135.064088,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",18157612406637340154,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-invert,GF(7),1024,,80.737126,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",501995117751203336,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-solve,GF(7),1024,,64.511575,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",8431352122767374154,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-solve,GF(7),1024,,42.025785,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",8239243928646303360,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-fgemm,GF(7),4096,,1135.059731,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7118573572673838493,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-charpoly,GF(7),64,,0.576710,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",8024433140722383444,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-charpoly,GF(7),256,,19.224802,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",13175743115641768480,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-minpoly,GF(7),64,,0.569273,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5346471385677182169,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-minpoly,GF(7),256,,20.290329,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14061946926221086388,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-minpoly,GF(7),1024,,1082.862283,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9041110833731990254,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-matmul,GF(2),64,,0.005333,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",8005153246082202320,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-matmul,GF(2),64,,0.004610,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",12780262654461442454,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-matmul,GF(2),256,,0.045966,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11019564977554890073,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-matmul,GF(2),256,,0.041466,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",17070855054760512226,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-matmul,GF(2),1024,,0.791790,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",17070855054760512226,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-matmul,GF(2),1024,,0.976657,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11019564977554890073,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-matmul,GF(2),4096,,30.479422,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",1289172924007512769,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-matmul,GF(2),4096,,27.515814,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",3146559891945559232,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-echelon,GF(2),64,,0.010133,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14841876512744768636,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-echelon,GF(2),64,,0.005016,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",15414661213738147629,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-echelon,GF(2),256,,0.089693,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11803774076554546630,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-echelon,GF(2),256,,0.053320,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10403912173925513489,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-echelon,GF(2),1024,,0.938803,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10403912173925513489,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-echelon,GF(2),1024,,0.441310,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11803774076554546630,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-pluq,GF(2),64,,0.011133,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10261922210861322963,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-pluq,GF(2),64,,0.010923,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9465344769023147811,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-pluq,GF(2),256,,0.068677,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",6007954890922135186,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-pluq,GF(2),256,,0.096406,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",12883867776209762168,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-pluq,GF(2),1024,,1.196823,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10238191392210833268,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-pluq,GF(2),1024,,1.237074,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",1253827771496180483,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-invert,GF(2),64,,0.011400,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5934371847120486591,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-invert,GF(2),64,,0.011406,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",18428513764158899361,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-invert,GF(2),256,,0.104323,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7987072257454603602,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-invert,GF(2),256,,0.119050,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11382297788580195442,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-invert,GF(2),1024,,1.460533,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",13331486115574067583,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-invert,GF(2),1024,,1.406203,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",2400478951954270886,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-solve,GF(2),64,,0.026943,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5507037633494828434,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-solve,GF(2),64,,0.021833,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9094553455404696733,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-solve,GF(2),256,,0.208776,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4210633436373302228,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-solve,GF(2),256,,0.145700,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14964916828173173308,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-solve,GF(2),1024,,2.825844,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14964916828173173308,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-solve,GF(2),1024,,1.612344,m4ri,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4210633436373302228,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
-matmul,GF(2^4),64,,0.036512,m4rie,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",8005153246082202320,2026-05-04-507b0036-m4rie-reference.csv,2026-05-04,507b0036
-matmul,GF(2^4),64,,0.036426,m4rie,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12780262654461442454,2026-05-04-507b0036-m4rie-reference.csv,2026-05-04,507b0036
-matmul,GF(2^4),256,,0.534494,m4rie,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",11019564977554890073,2026-05-04-507b0036-m4rie-reference.csv,2026-05-04,507b0036
-matmul,GF(2^4),256,,0.431312,m4rie,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",17070855054760512226,2026-05-04-507b0036-m4rie-reference.csv,2026-05-04,507b0036
-matmul,GF(2^4),1024,,7.043410,m4rie,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",17070855054760512226,2026-05-04-507b0036-m4rie-reference.csv,2026-05-04,507b0036
-matmul,GF(2^4),1024,,6.817024,m4rie,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",11019564977554890073,2026-05-04-507b0036-m4rie-reference.csv,2026-05-04,507b0036
-matmul,GF(2^8),64,,0.129400,m4rie,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12780262654461442454,2026-05-04-507b0036-m4rie-reference.csv,2026-05-04,507b0036
-matmul,GF(2^8),64,,0.130038,m4rie,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",8005153246082202320,2026-05-04-507b0036-m4rie-reference.csv,2026-05-04,507b0036
-matmul,GF(2^8),256,,1.367720,m4rie,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",17288899968106584123,2026-05-04-507b0036-m4rie-reference.csv,2026-05-04,507b0036
-matmul,GF(2^8),256,,1.388330,m4rie,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",9376932341968498384,2026-05-04-507b0036-m4rie-reference.csv,2026-05-04,507b0036
-matmul,GF(2^8),1024,,22.010016,m4rie,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",9376932341968498384,2026-05-04-507b0036-m4rie-reference.csv,2026-05-04,507b0036
-matmul,GF(2^8),1024,,21.852052,m4rie,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",17288899968106584123,2026-05-04-507b0036-m4rie-reference.csv,2026-05-04,507b0036
-matmul,GF(2^16),64,,42.133368,m4rie,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",17070855054760512226,2026-05-04-507b0036-m4rie-reference.csv,2026-05-04,507b0036
-matmul,GF(2^16),64,,41.021509,m4rie,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",11019564977554890073,2026-05-04-507b0036-m4rie-reference.csv,2026-05-04,507b0036
-matmul,GF(2^16),256,,631.645222,m4rie,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",1289172924007512769,2026-05-04-507b0036-m4rie-reference.csv,2026-05-04,507b0036
-matmul,GF(2^16),256,,624.481844,m4rie,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",3146559891945559232,2026-05-04-507b0036-m4rie-reference.csv,2026-05-04,507b0036
-matmul,GF(2^16),1024,,752.521985,m4rie,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",8005153246082202320,2026-05-04-507b0036-m4rie-reference.csv,2026-05-04,507b0036
-matmul,GF(2^16),1024,,762.643064,m4rie,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12780262654461442454,2026-05-04-507b0036-m4rie-reference.csv,2026-05-04,507b0036
-fgemm,GF(31),64,,0.014504,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14323512340655641377,2026-05-04-609855d9-gf31-supplement.csv,2026-05-04,609855d9
-pluq,GF(31),64,,0.198218,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7506508480118126988,2026-05-04-609855d9-gf31-supplement.csv,2026-05-04,609855d9
-pluq,GF(31),64,,0.155778,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4928519569874895653,2026-05-04-609855d9-gf31-supplement.csv,2026-05-04,609855d9
-echelon,GF(31),64,,0.548088,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",2821397349599916475,2026-05-04-609855d9-gf31-supplement.csv,2026-05-04,609855d9
-echelon,GF(31),64,,0.277184,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9495630098957437652,2026-05-04-609855d9-gf31-supplement.csv,2026-05-04,609855d9
-invert,GF(31),64,,1.224124,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",13878066725856136571,2026-05-04-609855d9-gf31-supplement.csv,2026-05-04,609855d9
-invert,GF(31),64,,0.624572,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",3104633220968842905,2026-05-04-609855d9-gf31-supplement.csv,2026-05-04,609855d9
-solve,GF(31),64,,0.205124,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",3166560285366626815,2026-05-04-609855d9-gf31-supplement.csv,2026-05-04,609855d9
-solve,GF(31),64,,0.158794,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",12425043119313690846,2026-05-04-609855d9-gf31-supplement.csv,2026-05-04,609855d9
-fgemm,GF(31),256,,0.664728,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11623384259863599264,2026-05-04-609855d9-gf31-supplement.csv,2026-05-04,609855d9
-pluq,GF(31),256,,3.128301,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10652923087708408910,2026-05-04-609855d9-gf31-supplement.csv,2026-05-04,609855d9
-pluq,GF(31),256,,2.077524,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",6178451949024681137,2026-05-04-609855d9-gf31-supplement.csv,2026-05-04,609855d9
-echelon,GF(31),256,,5.370191,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",12363509620279755137,2026-05-04-609855d9-gf31-supplement.csv,2026-05-04,609855d9
-echelon,GF(31),256,,3.236149,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5341297051937796081,2026-05-04-609855d9-gf31-supplement.csv,2026-05-04,609855d9
-invert,GF(31),256,,11.655361,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",18183780100566493528,2026-05-04-609855d9-gf31-supplement.csv,2026-05-04,609855d9
-invert,GF(31),256,,5.767723,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",15634453253979348078,2026-05-04-609855d9-gf31-supplement.csv,2026-05-04,609855d9
-solve,GF(31),256,,3.075740,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",3262761749070940282,2026-05-04-609855d9-gf31-supplement.csv,2026-05-04,609855d9
-solve,GF(31),256,,2.119196,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",1529737180240316900,2026-05-04-609855d9-gf31-supplement.csv,2026-05-04,609855d9
-fgemm,GF(31),1024,,22.690320,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",1238425660590645301,2026-05-04-609855d9-gf31-supplement.csv,2026-05-04,609855d9
-pluq,GF(31),1024,,48.435398,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",6178451949024681137,2026-05-04-609855d9-gf31-supplement.csv,2026-05-04,609855d9
-pluq,GF(31),1024,,36.734094,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10652923087708408910,2026-05-04-609855d9-gf31-supplement.csv,2026-05-04,609855d9
-echelon,GF(31),1024,,85.823888,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5887313847746209787,2026-05-04-609855d9-gf31-supplement.csv,2026-05-04,609855d9
-echelon,GF(31),1024,,56.114482,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7294555072076616303,2026-05-04-609855d9-gf31-supplement.csv,2026-05-04,609855d9
-invert,GF(31),1024,,118.120755,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",102606987439350854,2026-05-04-609855d9-gf31-supplement.csv,2026-05-04,609855d9
-invert,GF(31),1024,,66.697249,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",6634880308955931319,2026-05-04-609855d9-gf31-supplement.csv,2026-05-04,609855d9
-solve,GF(31),1024,,48.493085,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",1529737180240316900,2026-05-04-609855d9-gf31-supplement.csv,2026-05-04,609855d9
-solve,GF(31),1024,,37.512100,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",3262761749070940282,2026-05-04-609855d9-gf31-supplement.csv,2026-05-04,609855d9
-fgemm,GF(31),4096,,998.812587,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",8228559684819461347,2026-05-04-609855d9-gf31-supplement.csv,2026-05-04,609855d9
-charpoly,GF(31),64,,0.388738,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",16940899368719787582,2026-05-04-609855d9-gf31-supplement.csv,2026-05-04,609855d9
-charpoly,GF(31),256,,13.516977,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10012977464920248177,2026-05-04-609855d9-gf31-supplement.csv,2026-05-04,609855d9
-minpoly,GF(31),64,,0.397016,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10789710681556249357,2026-05-04-609855d9-gf31-supplement.csv,2026-05-04,609855d9
-minpoly,GF(31),256,,13.499663,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",12161711732463089897,2026-05-04-609855d9-gf31-supplement.csv,2026-05-04,609855d9
-minpoly,GF(31),1024,,760.480091,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",979732559413411625,2026-05-04-609855d9-gf31-supplement.csv,2026-05-04,609855d9
-fgemm,GF(7),256,,0.661148,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",1158200332714733675,2026-05-04-609855d9-gfp-reference.csv,2026-05-04,609855d9
-fgemm,GF(251),256,,0.261164,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",3118921564551205134,2026-05-04-609855d9-gfp-reference.csv,2026-05-04,609855d9
-fgemm,GF(65521),256,,1.061350,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7548041127201783488,2026-05-04-609855d9-gfp-reference.csv,2026-05-04,609855d9
-fgemm,GF(2^31-1),256,,15.785032,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7392704192690275058,2026-05-04-609855d9-gfp-reference.csv,2026-05-04,609855d9
-fgemm,GF(7),1024,,22.315562,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14659191246973044270,2026-05-04-609855d9-gfp-reference.csv,2026-05-04,609855d9
-fgemm,GF(251),1024,,15.525858,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",2068729651824933807,2026-05-04-609855d9-gfp-reference.csv,2026-05-04,609855d9
-fgemm,GF(65521),1024,,49.502894,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",17479486651528733404,2026-05-04-609855d9-gfp-reference.csv,2026-05-04,609855d9
-fgemm,GF(2^31-1),1024,,917.413522,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",16021027940197092104,2026-05-04-609855d9-gfp-reference.csv,2026-05-04,609855d9
-spmv,GF(2^31-1),1024,9.765625e-03,0.015043,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
-sparse×dense,GF(2^31-1),1024,9.765625e-03,14.919501,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",779162766254895299,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
-spmv,GF(65521),1024,9.765625e-03,0.008890,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",1455580355860529100,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
-sparse×dense,GF(65521),1024,9.765625e-03,4.047711,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",10315428954627216038,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
-spmv,GF(251),1024,9.765625e-03,0.008106,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",13587418131989727306,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
-sparse×dense,GF(251),1024,9.765625e-03,2.658417,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",4484327439351079882,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
-spmv,GF(7),1024,9.765625e-03,0.008650,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",10144710052807619915,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
-sparse×dense,GF(7),1024,9.765625e-03,4.068014,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",2735785682510659298,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
-spmv,GF(2^31-1),1024,9.765625e-03,0.007623,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
-sparse×dense,GF(2^31-1),1024,9.765625e-03,14.908697,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",8649192995272375280,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
-sparse×dense,GF(2^31-1),4096,2.441406e-03,249.361708,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",5415446191451566178,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
-sparse-elim,GF(2^31-1),256,3.906250e-02,7.570109,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",13671275229359443338,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
-sparse-elim,GF(2^31-1),1024,9.765625e-03,366.749558,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",14806907769766661618,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
-spmv,GF(65521),1024,9.765625e-03,0.008570,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",1455580355860529100,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
-sparse×dense,GF(65521),1024,9.765625e-03,15.299591,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",10716797487269202872,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
-sparse×dense,GF(65521),4096,2.441406e-03,254.492076,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",15924152076825123346,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
-sparse-elim,GF(65521),256,3.906250e-02,6.871125,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",15370756853855958952,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
-sparse-elim,GF(65521),1024,9.765625e-03,363.647751,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",8678874481367706039,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
-spmv,GF(251),1024,9.765625e-03,0.008666,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",13587418131989727306,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
-sparse×dense,GF(251),1024,9.765625e-03,15.524634,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",14001332438823922574,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
-sparse×dense,GF(251),4096,2.441406e-03,250.949355,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",15422940304204868804,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
-sparse-elim,GF(251),256,3.906250e-02,7.127422,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",7074116790747146452,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
-sparse-elim,GF(251),1024,9.765625e-03,363.645551,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",8143254596996940714,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
-spmv,GF(7),1024,9.765625e-03,0.009083,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",10144710052807619915,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
-sparse×dense,GF(7),1024,9.765625e-03,15.428714,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",13942683620842084390,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
-sparse×dense,GF(7),4096,2.441406e-03,248.518734,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",14601075346681003943,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
-sparse-elim,GF(7),256,3.906250e-02,8.217269,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",390602048035006410,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
-sparse-elim,GF(7),1024,9.765625e-03,478.156753,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",38101733392179866,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
-spmv,GF(2),1024,9.765625e-03,0.008616,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",15161729342310315399,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
-sparse×dense,GF(2),1024,9.765625e-03,15.114091,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",16680508550921739872,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
-sparse×dense,GF(2),4096,2.441406e-03,248.215054,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",18287151573257470365,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
-sparse-elim,GF(2),256,3.906250e-02,4.465081,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",6080485797099632427,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
-sparse-elim,GF(2),1024,9.765625e-03,228.006362,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",2239289689385539515,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
-charpoly,GF(2^31-1),64,,1.169618,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",11506559259852285241,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-charpoly,GF(2^31-1),256,,44.682256,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",16108071587005897015,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-minpoly,GF(2^31-1),64,,0.852488,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",5165982229321961512,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-minpoly,GF(2^31-1),256,,51.476406,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",15188339206248424544,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-solve,GF(2^31-1),64,,0.258202,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",5507037633494828434,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-solve,GF(2^31-1),64,,0.187312,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",9094553455404696733,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-solve,GF(2^31-1),256,,8.274662,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",4210633436373302228,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-solve,GF(2^31-1),256,,6.279189,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",14964916828173173308,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-solve,GF(2^31-1),1024,,399.903956,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",14964916828173173308,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-solve,GF(2^31-1),1024,,329.640714,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",4210633436373302228,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-charpoly,GF(65521),64,,0.684264,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",9183273273419397006,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-charpoly,GF(65521),256,,12.467707,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",8373688313145165019,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-minpoly,GF(65521),64,,0.367996,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",17437234336724684531,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-minpoly,GF(65521),256,,11.732485,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",4237467502002085625,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-solve,GF(65521),64,,0.177614,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",11948532817827256953,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-solve,GF(65521),64,,0.118750,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",9947845925449458516,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-solve,GF(65521),256,,3.068896,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",7857228785775969460,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-solve,GF(65521),256,,2.316184,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",9148240713706980683,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-solve,GF(65521),1024,,74.708825,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",13907183692283982733,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-solve,GF(65521),1024,,59.606419,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",11157325121996924885,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-charpoly,GF(251),64,,0.589426,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",8751597996197025028,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-charpoly,GF(251),256,,13.556627,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",526247697690853768,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-minpoly,GF(251),64,,0.401510,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",3897696420160141891,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-minpoly,GF(251),256,,13.529635,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",8140817630099691801,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-solve,GF(251),64,,0.252012,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",3161924328900420527,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-solve,GF(251),64,,0.175472,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",4599537089899667719,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-solve,GF(251),256,,3.194897,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12425043119313690846,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-solve,GF(251),256,,2.175756,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",3166560285366626815,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-solve,GF(251),1024,,58.967267,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",1343336825156874688,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-solve,GF(251),1024,,45.822467,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",8964874287244071616,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-charpoly,GF(7),64,,0.422622,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",8024433140722383444,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-charpoly,GF(7),256,,13.510353,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",13175743115641768480,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-minpoly,GF(7),64,,0.398472,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",5346471385677182169,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-minpoly,GF(7),256,,13.506493,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",14061946926221086388,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-solve,GF(7),64,,0.253014,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",3839435461881424779,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-solve,GF(7),64,,0.176378,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",11623384259863599264,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-solve,GF(7),256,,3.208810,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",8239243928646303360,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-solve,GF(7),256,,2.137190,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",8431352122767374154,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-solve,GF(7),1024,,65.453584,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",8431352122767374154,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-solve,GF(7),1024,,47.089051,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",8239243928646303360,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
-charpoly,GF(2^31-1),64,,0.743458,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",11506559259852285241,2026-05-04-c3e79272-charpoly-reference.csv,2026-05-04,c3e79272
-charpoly,GF(2^31-1),256,,43.919996,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",16108071587005897015,2026-05-04-c3e79272-charpoly-reference.csv,2026-05-04,c3e79272
-charpoly,GF(65521),64,,0.674064,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",9183273273419397006,2026-05-04-c3e79272-charpoly-reference.csv,2026-05-04,c3e79272
-charpoly,GF(65521),256,,12.377745,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",8373688313145165019,2026-05-04-c3e79272-charpoly-reference.csv,2026-05-04,c3e79272
-charpoly,GF(251),64,,0.476418,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",8751597996197025028,2026-05-04-c3e79272-charpoly-reference.csv,2026-05-04,c3e79272
-charpoly,GF(251),256,,1.316860,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",526247697690853768,2026-05-04-c3e79272-charpoly-reference.csv,2026-05-04,c3e79272
-charpoly,GF(7),64,,0.401970,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",8024433140722383444,2026-05-04-c3e79272-charpoly-reference.csv,2026-05-04,c3e79272
-charpoly,GF(7),256,,13.633042,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",13175743115641768480,2026-05-04-c3e79272-charpoly-reference.csv,2026-05-04,c3e79272
-charpoly,GF(2^31-1),64,,0.974660,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",11506559259852285241,2026-05-04-c3e79272-charpoly-reference.csv,2026-05-04,c3e79272
-charpoly,GF(2^31-1),256,,53.491615,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",16108071587005897015,2026-05-04-c3e79272-charpoly-reference.csv,2026-05-04,c3e79272
-charpoly,GF(65521),64,,0.966280,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",9183273273419397006,2026-05-04-c3e79272-charpoly-reference.csv,2026-05-04,c3e79272
-charpoly,GF(65521),256,,17.253221,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",8373688313145165019,2026-05-04-c3e79272-charpoly-reference.csv,2026-05-04,c3e79272
-charpoly,GF(251),64,,0.889983,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",8751597996197025028,2026-05-04-c3e79272-charpoly-reference.csv,2026-05-04,c3e79272
-charpoly,GF(251),256,,1.623267,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",526247697690853768,2026-05-04-c3e79272-charpoly-reference.csv,2026-05-04,c3e79272
-charpoly,GF(7),64,,0.576710,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",8024433140722383444,2026-05-04-c3e79272-charpoly-reference.csv,2026-05-04,c3e79272
-charpoly,GF(7),256,,19.224802,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",13175743115641768480,2026-05-04-c3e79272-charpoly-reference.csv,2026-05-04,c3e79272
-charpoly,GF(2^31-1),64,,1.169618,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",11506559259852285241,2026-05-04-c3e79272-charpoly-reference.csv,2026-05-04,c3e79272
-charpoly,GF(2^31-1),256,,44.682256,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",16108071587005897015,2026-05-04-c3e79272-charpoly-reference.csv,2026-05-04,c3e79272
-charpoly,GF(65521),64,,0.684264,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",9183273273419397006,2026-05-04-c3e79272-charpoly-reference.csv,2026-05-04,c3e79272
-charpoly,GF(65521),256,,12.467707,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",8373688313145165019,2026-05-04-c3e79272-charpoly-reference.csv,2026-05-04,c3e79272
-charpoly,GF(251),64,,0.589426,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",8751597996197025028,2026-05-04-c3e79272-charpoly-reference.csv,2026-05-04,c3e79272
-charpoly,GF(251),256,,13.556627,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",526247697690853768,2026-05-04-c3e79272-charpoly-reference.csv,2026-05-04,c3e79272
-charpoly,GF(7),64,,0.422622,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",8024433140722383444,2026-05-04-c3e79272-charpoly-reference.csv,2026-05-04,c3e79272
-charpoly,GF(7),256,,13.510353,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",13175743115641768480,2026-05-04-c3e79272-charpoly-reference.csv,2026-05-04,c3e79272
-charpoly,GF(7),64,,0.470168,flint,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",8024433140722383444,2026-05-04-c3e79272-charpoly-reference.csv,2026-05-04,c3e79272
-charpoly,GF(251),64,,0.469432,flint,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",8751597996197025028,2026-05-04-c3e79272-charpoly-reference.csv,2026-05-04,c3e79272
-charpoly,GF(65521),64,,0.471436,flint,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",9183273273419397006,2026-05-04-c3e79272-charpoly-reference.csv,2026-05-04,c3e79272
-charpoly,GF(2^31-1),64,,0.500552,flint,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",11506559259852285241,2026-05-04-c3e79272-charpoly-reference.csv,2026-05-04,c3e79272
-charpoly,GF(7),64,,0.857600,ntl,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",8024433140722383444,2026-05-04-c3e79272-charpoly-reference.csv,2026-05-04,c3e79272
-charpoly,GF(251),64,,0.873678,ntl,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",8751597996197025028,2026-05-04-c3e79272-charpoly-reference.csv,2026-05-04,c3e79272
-charpoly,GF(65521),64,,0.899268,ntl,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",9183273273419397006,2026-05-04-c3e79272-charpoly-reference.csv,2026-05-04,c3e79272
-charpoly,GF(2^31-1),64,,0.935114,ntl,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",11506559259852285241,2026-05-04-c3e79272-charpoly-reference.csv,2026-05-04,c3e79272
-minpoly,GF(2^31-1),64,,1.679344,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",5165982229321961512,2026-05-04-c3e79272-minpoly-reference.csv,2026-05-04,c3e79272
-minpoly,GF(2^31-1),256,,81.531913,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",15188339206248424544,2026-05-04-c3e79272-minpoly-reference.csv,2026-05-04,c3e79272
-minpoly,GF(2^31-1),1024,,6374.570907,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",394202418011037415,2026-05-04-c3e79272-minpoly-reference.csv,2026-05-04,c3e79272
-minpoly,GF(65521),64,,0.522287,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",17437234336724684531,2026-05-04-c3e79272-minpoly-reference.csv,2026-05-04,c3e79272
-minpoly,GF(65521),256,,17.194554,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",4237467502002085625,2026-05-04-c3e79272-minpoly-reference.csv,2026-05-04,c3e79272
-minpoly,GF(65521),1024,,884.391719,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",4663744754393447646,2026-05-04-c3e79272-minpoly-reference.csv,2026-05-04,c3e79272
-minpoly,GF(251),64,,0.134866,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",3897696420160141891,2026-05-04-c3e79272-minpoly-reference.csv,2026-05-04,c3e79272
-minpoly,GF(251),256,,1.633957,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",8140817630099691801,2026-05-04-c3e79272-minpoly-reference.csv,2026-05-04,c3e79272
-minpoly,GF(251),1024,,109.542044,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",16677532437108663844,2026-05-04-c3e79272-minpoly-reference.csv,2026-05-04,c3e79272
-minpoly,GF(7),64,,0.569273,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",5346471385677182169,2026-05-04-c3e79272-minpoly-reference.csv,2026-05-04,c3e79272
-minpoly,GF(7),256,,20.290329,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",14061946926221086388,2026-05-04-c3e79272-minpoly-reference.csv,2026-05-04,c3e79272
-minpoly,GF(7),1024,,1082.862283,fflas-ffpack,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",9041110833731990254,2026-05-04-c3e79272-minpoly-reference.csv,2026-05-04,c3e79272
-minpoly,GF(2^31-1),64,,0.852488,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",5165982229321961512,2026-05-04-c3e79272-minpoly-reference.csv,2026-05-04,c3e79272
-minpoly,GF(2^31-1),256,,51.476406,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",15188339206248424544,2026-05-04-c3e79272-minpoly-reference.csv,2026-05-04,c3e79272
-minpoly,GF(65521),64,,0.367996,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",17437234336724684531,2026-05-04-c3e79272-minpoly-reference.csv,2026-05-04,c3e79272
-minpoly,GF(65521),256,,11.732485,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",4237467502002085625,2026-05-04-c3e79272-minpoly-reference.csv,2026-05-04,c3e79272
-minpoly,GF(251),64,,0.401510,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",3897696420160141891,2026-05-04-c3e79272-minpoly-reference.csv,2026-05-04,c3e79272
-minpoly,GF(251),256,,13.529635,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",8140817630099691801,2026-05-04-c3e79272-minpoly-reference.csv,2026-05-04,c3e79272
-minpoly,GF(7),64,,0.398472,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",5346471385677182169,2026-05-04-c3e79272-minpoly-reference.csv,2026-05-04,c3e79272
-minpoly,GF(7),256,,13.506493,linbox,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",14061946926221086388,2026-05-04-c3e79272-minpoly-reference.csv,2026-05-04,c3e79272
-minpoly,GF(7),64,,0.218384,flint,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",5346471385677182169,2026-05-04-c3e79272-minpoly-reference.csv,2026-05-04,c3e79272
-minpoly,GF(251),64,,0.225478,flint,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",3897696420160141891,2026-05-04-c3e79272-minpoly-reference.csv,2026-05-04,c3e79272
-minpoly,GF(65521),64,,0.225692,flint,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",17437234336724684531,2026-05-04-c3e79272-minpoly-reference.csv,2026-05-04,c3e79272
-minpoly,GF(2^31-1),64,,0.337162,flint,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",5165982229321961512,2026-05-04-c3e79272-minpoly-reference.csv,2026-05-04,c3e79272
-fgemm,GF(7),64,,0.027830,flint,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",9934644842822421333,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
-pluq,GF(7),64,,0.024390,flint,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",10652923087708408910,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
-echelon,GF(7),64,,0.030880,flint,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",8094974281369898242,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
-invert,GF(7),64,,0.155688,flint,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",3146559891945559232,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
-solve,GF(7),64,,0.024884,flint,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",3839435461881424779,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
-charpoly,GF(7),64,,0.470168,flint,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",8024433140722383444,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
-minpoly,GF(7),64,,0.218384,flint,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",5346471385677182169,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
-fgemm,GF(251),64,,0.048784,flint,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12707092751477068437,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
-pluq,GF(251),64,,0.024406,flint,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",9903818464302766647,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
-echelon,GF(251),64,,0.030168,flint,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",15612396963727573775,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
-invert,GF(251),64,,0.161648,flint,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",17954810277715416078,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
-solve,GF(251),64,,0.028020,flint,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",3161924328900420527,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
-charpoly,GF(251),64,,0.469432,flint,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",8751597996197025028,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
-minpoly,GF(251),64,,0.225478,flint,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",3897696420160141891,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
-fgemm,GF(65521),64,,0.087360,flint,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",11351449802504212747,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
-pluq,GF(65521),64,,0.033714,flint,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",14074756535924051,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
-echelon,GF(65521),64,,0.031730,flint,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12217383699880382746,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
-invert,GF(65521),64,,0.191550,flint,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",5102690528911706662,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
-solve,GF(65521),64,,0.029592,flint,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",11948532817827256953,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
-charpoly,GF(65521),64,,0.471436,flint,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",9183273273419397006,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
-minpoly,GF(65521),64,,0.225692,flint,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",17437234336724684531,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
-fgemm,GF(2^31-1),64,,0.098258,flint,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",5180433273409205583,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
-pluq,GF(2^31-1),64,,0.068670,flint,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",1253827771496180483,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
-echelon,GF(2^31-1),64,,0.077148,flint,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",11803774076554546630,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
-invert,GF(2^31-1),64,,0.284822,flint,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",5934371847120486591,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
-solve,GF(2^31-1),64,,0.074122,flint,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",5507037633494828434,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
-charpoly,GF(2^31-1),64,,0.500552,flint,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",11506559259852285241,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
-minpoly,GF(2^31-1),64,,0.337162,flint,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",5165982229321961512,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
-fgemm,GF(7),64,,0.021282,ntl,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",9934644842822421333,2026-05-04-73ab8eef-ntl-reference.csv,2026-05-04,73ab8eef
-invert,GF(7),64,,0.068842,ntl,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",3146559891945559232,2026-05-04-73ab8eef-ntl-reference.csv,2026-05-04,73ab8eef
-solve,GF(7),64,,0.049496,ntl,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",3839435461881424779,2026-05-04-73ab8eef-ntl-reference.csv,2026-05-04,73ab8eef
-charpoly,GF(7),64,,0.857600,ntl,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",8024433140722383444,2026-05-04-73ab8eef-ntl-reference.csv,2026-05-04,73ab8eef
-fgemm,GF(251),64,,0.018456,ntl,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12707092751477068437,2026-05-04-73ab8eef-ntl-reference.csv,2026-05-04,73ab8eef
-invert,GF(251),64,,0.064744,ntl,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",17954810277715416078,2026-05-04-73ab8eef-ntl-reference.csv,2026-05-04,73ab8eef
-solve,GF(251),64,,0.065176,ntl,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",3161924328900420527,2026-05-04-73ab8eef-ntl-reference.csv,2026-05-04,73ab8eef
-charpoly,GF(251),64,,0.873678,ntl,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",8751597996197025028,2026-05-04-73ab8eef-ntl-reference.csv,2026-05-04,73ab8eef
-fgemm,GF(65521),64,,0.018436,ntl,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",11351449802504212747,2026-05-04-73ab8eef-ntl-reference.csv,2026-05-04,73ab8eef
-invert,GF(65521),64,,0.065904,ntl,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",5102690528911706662,2026-05-04-73ab8eef-ntl-reference.csv,2026-05-04,73ab8eef
-solve,GF(65521),64,,0.064694,ntl,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",11948532817827256953,2026-05-04-73ab8eef-ntl-reference.csv,2026-05-04,73ab8eef
-charpoly,GF(65521),64,,0.899268,ntl,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",9183273273419397006,2026-05-04-73ab8eef-ntl-reference.csv,2026-05-04,73ab8eef
-fgemm,GF(2^31-1),64,,0.112758,ntl,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",5180433273409205583,2026-05-04-73ab8eef-ntl-reference.csv,2026-05-04,73ab8eef
-invert,GF(2^31-1),64,,0.322422,ntl,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",5934371847120486591,2026-05-04-73ab8eef-ntl-reference.csv,2026-05-04,73ab8eef
-solve,GF(2^31-1),64,,0.124668,ntl,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",5507037633494828434,2026-05-04-73ab8eef-ntl-reference.csv,2026-05-04,73ab8eef
-charpoly,GF(2^31-1),64,,0.935114,ntl,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",11506559259852285241,2026-05-04-73ab8eef-ntl-reference.csv,2026-05-04,73ab8eef
-matmul,GF(2^32),64,,8.597444,ntl,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",17158103737143628803,2026-05-04-b13799ac-results.csv,2026-05-04,b13799ac
-matmul,GF(2^32),64,,1.960240,ntl,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",17158103737143628803,2026-05-06-a1172cea-ntl-gf2pow32-large.csv,2026-05-06,a1172cea
-matmul,GF(2^32),256,,119.608908,ntl,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",16610483722261398142,2026-05-06-a1172cea-ntl-gf2pow32-large.csv,2026-05-06,a1172cea
-matmul,GF(2^32),1024,,7591.131276,ntl,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",11382297788580195442,2026-05-06-a1172cea-ntl-gf2pow32-large.csv,2026-05-06,a1172cea
+lib,operation,field,m,k,n,rank_regime,seed,wall_ns,throughput_ops,source_csv,bench_run_date,jit_issue
+fflas-ffpack,fgemm,GF(2^31-1),64,64,64,uniform,5180433273409205583,556328,9.424081e+08,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,pluq,GF(2^31-1),64,64,64,uniform,1253827771496180483,427896,6.126348e+08,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,pluq,GF(2^31-1),64,64,64,deficient,10238191392210833268,290954,9.009809e+08,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,echelon,GF(2^31-1),64,64,64,uniform,11803774076554546630,443484,5.911014e+08,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,echelon,GF(2^31-1),64,64,64,deficient,10403912173925513489,307572,8.523012e+08,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,invert,GF(2^31-1),64,64,64,uniform,5934371847120486591,1066236,2.458593e+08,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,invert,GF(2^31-1),64,64,64,deficient,18428513764158899361,542330,4.833662e+08,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,solve,GF(2^31-1),64,64,64,uniform,5507037633494828434,454018,5.773868e+08,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,solve,GF(2^31-1),64,64,64,deficient,9094553455404696733,395476,6.628569e+08,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,fgemm,GF(2^31-1),256,256,256,uniform,7392704192690275058,15786874,2.125464e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,pluq,GF(2^31-1),256,256,256,uniform,17190311719824071345,8099882,2.071291e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,pluq,GF(2^31-1),256,256,256,deficient,6513132282584046359,6180263,2.714644e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,echelon,GF(2^31-1),256,256,256,uniform,14841876512744768636,9123948,1.838811e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,echelon,GF(2^31-1),256,256,256,deficient,15414661213738147629,6769184,2.478469e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,invert,GF(2^31-1),256,256,256,uniform,7987072257454603602,20351635,8.243670e+08,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,invert,GF(2^31-1),256,256,256,deficient,11382297788580195442,10239665,1.638454e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,solve,GF(2^31-1),256,256,256,uniform,4210633436373302228,8526610,1.967630e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,solve,GF(2^31-1),256,256,256,deficient,14964916828173173308,6179667,2.714906e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,fgemm,GF(2^31-1),1024,1024,1024,uniform,16021027940197092104,906263573,2.369602e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,pluq,GF(2^31-1),1024,1024,1024,uniform,6513132282584046359,375215251,2.861669e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,pluq,GF(2^31-1),1024,1024,1024,deficient,17190311719824071345,322621754,3.328176e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,echelon,GF(2^31-1),1024,1024,1024,uniform,7802675733600006652,544257013,1.972858e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,echelon,GF(2^31-1),1024,1024,1024,deficient,10393472745051128352,410728353,2.614238e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,invert,GF(2^31-1),1024,1024,1024,uniform,13331486115574067583,1120185008,9.585397e+08,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,invert,GF(2^31-1),1024,1024,1024,deficient,2400478951954270886,580238618,1.850518e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,solve,GF(2^31-1),1024,1024,1024,uniform,14964916828173173308,374094495,2.870242e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,solve,GF(2^31-1),1024,1024,1024,deficient,4210633436373302228,319534727,3.360329e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,fgemm,GF(2^31-1),4096,4096,4096,uniform,16214413637036924079,44974003027,3.055964e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,charpoly,GF(2^31-1),64,64,64,uniform,11506559259852285241,974660,2.689594e+08,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+fflas-ffpack,charpoly,GF(2^31-1),256,256,256,uniform,16108071587005897015,53491615,3.136420e+08,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+fflas-ffpack,fgemm,GF(65521),64,64,64,uniform,11351449802504212747,48656,1.077540e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,pluq,GF(65521),64,64,64,uniform,14074756535924051,141902,1.847359e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,pluq,GF(65521),64,64,64,deficient,11761241348116266917,112508,2.330003e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,echelon,GF(65521),64,64,64,uniform,12217383699880382746,605852,4.326865e+08,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,echelon,GF(65521),64,64,64,deficient,15314050547340862590,397588,6.593358e+08,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,invert,GF(65521),64,64,64,uniform,5102690528911706662,1156456,2.266787e+08,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,invert,GF(65521),64,64,64,deficient,15406151386255282230,603982,4.340262e+08,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,solve,GF(65521),64,64,64,uniform,11948532817827256953,127492,2.056160e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,solve,GF(65521),64,64,64,deficient,9947845925449458516,101434,2.584380e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,fgemm,GF(65521),256,256,256,uniform,7548041127201783488,1041698,3.221129e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,pluq,GF(65521),256,256,256,uniform,9735799932641611804,2904889,5.775510e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,pluq,GF(65521),256,256,256,deficient,9479304147414010877,2144012,7.825150e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,echelon,GF(65521),256,256,256,uniform,12342051697584108912,6369369,2.634047e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,echelon,GF(65521),256,256,256,deficient,7582717672197984421,3903735,4.297734e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,invert,GF(65521),256,256,256,uniform,13449363234952904092,12927219,1.297821e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,invert,GF(65521),256,256,256,deficient,17670832340716871520,6368355,2.634466e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,solve,GF(65521),256,256,256,uniform,7857228785775969460,2863512,5.858965e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,solve,GF(65521),256,256,256,deficient,9148240713706980683,2121862,7.906837e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,fgemm,GF(65521),1024,1024,1024,uniform,17479486651528733404,49092146,4.374394e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,pluq,GF(65521),1024,1024,1024,uniform,9479304147414010877,61485787,1.746325e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,pluq,GF(65521),1024,1024,1024,deficient,9735799932641611804,47579239,2.256744e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,echelon,GF(65521),1024,1024,1024,uniform,7582717672197984421,115031035,9.334366e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,echelon,GF(65521),1024,1024,1024,deficient,12342051697584108912,74554959,1.440202e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,invert,GF(65521),1024,1024,1024,uniform,44378112332022522,142247558,7.548403e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,invert,GF(65521),1024,1024,1024,deficient,14533299266544624386,82043219,1.308751e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,solve,GF(65521),1024,1024,1024,uniform,13907183692283982733,61017035,1.759741e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,solve,GF(65521),1024,1024,1024,deficient,11157325121996924885,47026441,2.283273e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,fgemm,GF(65521),4096,4096,4096,uniform,4216526696668437758,1945044488,7.066108e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,charpoly,GF(65521),64,64,64,uniform,9183273273419397006,966280,2.712920e+08,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+fflas-ffpack,charpoly,GF(65521),256,256,256,uniform,8373688313145165019,17253221,9.724107e+08,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+fflas-ffpack,fgemm,GF(251),64,64,64,uniform,12707092751477068437,8158,6.426673e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,pluq,GF(251),64,64,64,uniform,9903818464302766647,31470,8.329965e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,pluq,GF(251),64,64,64,deficient,2825415881964649573,23710,1.105626e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,echelon,GF(251),64,64,64,uniform,15612396963727573775,114940,2.280703e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,echelon,GF(251),64,64,64,deficient,6834237252344653719,64304,4.076636e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,invert,GF(251),64,64,64,uniform,17954810277715416078,110988,2.361913e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,invert,GF(251),64,64,64,deficient,18019032228134030376,60354,4.343440e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,solve,GF(251),64,64,64,uniform,3161924328900420527,28574,9.174214e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,solve,GF(251),64,64,64,deficient,4599537089899667719,19386,1.352234e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,fgemm,GF(251),256,256,256,uniform,3118921564551205134,256534,1.307992e+11,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,pluq,GF(251),256,256,256,uniform,4928519569874895653,567608,2.955775e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,pluq,GF(251),256,256,256,deficient,7506508480118126988,458752,3.657143e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,echelon,GF(251),256,256,256,uniform,12049470605909261752,787680,2.129953e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,echelon,GF(251),256,256,256,deficient,8463497029124751743,501394,3.346114e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,invert,GF(251),256,256,256,uniform,15703590869110377276,1074000,1.562124e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,invert,GF(251),256,256,256,deficient,13673069791162062913,652212,2.572356e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,solve,GF(251),256,256,256,uniform,12425043119313690846,606988,2.764011e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,solve,GF(251),256,256,256,deficient,3166560285366626815,469488,3.573513e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,fgemm,GF(251),1024,1024,1024,uniform,2068729651824933807,15241528,1.408969e+11,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,pluq,GF(251),1024,1024,1024,uniform,16571496273683921727,24388235,4.402704e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,pluq,GF(251),1024,1024,1024,deficient,3223957049289993305,19340143,5.551882e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,echelon,GF(251),1024,1024,1024,uniform,8463497029124751743,17674975,6.074927e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,echelon,GF(251),1024,1024,1024,deficient,12049470605909261752,13403909,8.010662e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,invert,GF(251),1024,1024,1024,uniform,13673069791162062913,33264101,3.227930e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,invert,GF(251),1024,1024,1024,deficient,15703590869110377276,20613165,5.209010e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,solve,GF(251),1024,1024,1024,uniform,1343336825156874688,24428085,4.395522e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,solve,GF(251),1024,1024,1024,deficient,8964874287244071616,19411061,5.531598e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,fgemm,GF(251),4096,4096,4096,uniform,15696348782010540265,855670560,1.606213e+11,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,charpoly,GF(251),64,64,64,uniform,8751597996197025028,889983,2.945494e+08,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+fflas-ffpack,charpoly,GF(251),256,256,256,uniform,526247697690853768,1623267,1.033546e+10,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+fflas-ffpack,fgemm,GF(7),64,64,64,uniform,9934644842822421333,14344,3.655103e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,pluq,GF(7),64,64,64,uniform,10652923087708408910,221194,1.185132e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,pluq,GF(7),64,64,64,deficient,6178451949024681137,156284,1.677357e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,echelon,GF(7),64,64,64,uniform,8094974281369898242,543680,4.821660e+08,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,echelon,GF(7),64,64,64,deficient,859456799719183784,273440,9.586893e+08,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,invert,GF(7),64,64,64,uniform,3146559891945559232,1212300,2.162369e+08,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,invert,GF(7),64,64,64,deficient,1289172924007512769,613632,4.272007e+08,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,solve,GF(7),64,64,64,uniform,3839435461881424779,205728,1.274226e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,solve,GF(7),64,64,64,deficient,11623384259863599264,159020,1.648497e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,fgemm,GF(7),256,256,256,uniform,1158200332714733675,652222,5.144634e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,pluq,GF(7),256,256,256,uniform,7506508480118126988,3041748,5.515650e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,pluq,GF(7),256,256,256,deficient,4928519569874895653,2026180,8.280220e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,echelon,GF(7),256,256,256,uniform,3928926321893258753,5254305,3.193042e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,echelon,GF(7),256,256,256,deficient,8999588998998756453,3184389,5.268582e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,invert,GF(7),256,256,256,uniform,501995117751203336,12017785,1.396032e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,invert,GF(7),256,256,256,deficient,18157612406637340154,5691487,2.947774e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,solve,GF(7),256,256,256,uniform,8239243928646303360,3036285,5.525574e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,solve,GF(7),256,256,256,deficient,8431352122767374154,2218920,7.560983e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,fgemm,GF(7),1024,1024,1024,uniform,14659191246973044270,21893632,9.808714e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,pluq,GF(7),1024,1024,1024,uniform,15953432159581399586,51544992,2.083116e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,pluq,GF(7),1024,1024,1024,deficient,9051882955726061138,36111406,2.973415e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,echelon,GF(7),1024,1024,1024,uniform,5519733480250526123,83494737,1.285999e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,echelon,GF(7),1024,1024,1024,deficient,4427741922488967881,54759417,1.960835e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,invert,GF(7),1024,1024,1024,uniform,18157612406637340154,112887674,9.511595e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,invert,GF(7),1024,1024,1024,deficient,501995117751203336,66448675,1.615897e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,solve,GF(7),1024,1024,1024,uniform,8431352122767374154,54818605,1.958718e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,solve,GF(7),1024,1024,1024,deficient,8239243928646303360,35509196,3.023842e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,fgemm,GF(7),4096,4096,4096,uniform,7118573572673838493,996894893,1.378670e+11,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,charpoly,GF(7),64,64,64,uniform,8024433140722383444,576710,4.545508e+08,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+fflas-ffpack,charpoly,GF(7),256,256,256,uniform,13175743115641768480,19224802,8.726860e+08,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+m4ri,matmul,GF(2),64,64,64,uniform,8005153246082202320,5333,9.831014e+10,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+m4ri,matmul,GF(2),64,64,64,deficient,12780262654461442454,4610,1.137284e+11,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+m4ri,matmul,GF(2),256,256,256,uniform,11019564977554890073,45966,7.299837e+11,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+m4ri,matmul,GF(2),256,256,256,deficient,17070855054760512226,41466,8.092035e+11,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+m4ri,matmul,GF(2),1024,1024,1024,uniform,17070855054760512226,791790,2.712188e+12,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+m4ri,matmul,GF(2),1024,1024,1024,deficient,11019564977554890073,976657,2.198810e+12,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+m4ri,matmul,GF(2),4096,4096,4096,uniform,1289172924007512769,30479422,4.509238e+12,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+m4ri,matmul,GF(2),4096,4096,4096,deficient,3146559891945559232,27515814,4.994908e+12,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+m4ri,echelon,GF(2),64,64,64,uniform,14841876512744768636,10133,2.587032e+10,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+m4ri,echelon,GF(2),64,64,64,deficient,15414661213738147629,5016,5.226156e+10,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+m4ri,echelon,GF(2),256,256,256,uniform,11803774076554546630,89693,1.870516e+11,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+m4ri,echelon,GF(2),256,256,256,deficient,10403912173925513489,53320,3.146515e+11,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+m4ri,echelon,GF(2),1024,1024,1024,uniform,10403912173925513489,938803,1.143735e+12,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+m4ri,echelon,GF(2),1024,1024,1024,deficient,11803774076554546630,441310,2.433078e+12,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+fflas-ffpack,fgemm,GF(31),64,64,64,uniform,14323512340655641377,14504,3.614782e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,pluq,GF(31),64,64,64,uniform,7506508480118126988,198218,1.322504e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,pluq,GF(31),64,64,64,deficient,4928519569874895653,155778,1.682805e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,echelon,GF(31),64,64,64,uniform,2821397349599916475,548088,4.782882e+08,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,echelon,GF(31),64,64,64,deficient,9495630098957437652,277184,9.457400e+08,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,invert,GF(31),64,64,64,uniform,13878066725856136571,1224124,2.141482e+08,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,invert,GF(31),64,64,64,deficient,3104633220968842905,624572,4.197178e+08,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,solve,GF(31),64,64,64,uniform,3166560285366626815,205124,1.277978e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,solve,GF(31),64,64,64,deficient,12425043119313690846,158794,1.650843e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,fgemm,GF(31),256,256,256,uniform,11623384259863599264,664728,5.047844e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,pluq,GF(31),256,256,256,uniform,10652923087708408910,3128301,5.363044e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,pluq,GF(31),256,256,256,deficient,6178451949024681137,2077524,8.075582e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,echelon,GF(31),256,256,256,uniform,12363509620279755137,5370191,3.124138e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,echelon,GF(31),256,256,256,deficient,5341297051937796081,3236149,5.184315e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,invert,GF(31),256,256,256,uniform,18183780100566493528,11655361,1.439442e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,invert,GF(31),256,256,256,deficient,15634453253979348078,5767723,2.908811e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,solve,GF(31),256,256,256,uniform,3262761749070940282,3075740,5.454693e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,solve,GF(31),256,256,256,deficient,1529737180240316900,2119196,7.916784e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,fgemm,GF(31),1024,1024,1024,uniform,1238425660590645301,22690320,9.464316e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,pluq,GF(31),1024,1024,1024,uniform,6178451949024681137,48435398,2.216854e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,pluq,GF(31),1024,1024,1024,deficient,10652923087708408910,36734094,2.923012e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,echelon,GF(31),1024,1024,1024,uniform,5887313847746209787,85823888,1.251099e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,echelon,GF(31),1024,1024,1024,deficient,7294555072076616303,56114482,1.913484e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,invert,GF(31),1024,1024,1024,uniform,102606987439350854,118120755,9.090205e+09,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,invert,GF(31),1024,1024,1024,deficient,6634880308955931319,66697249,1.609874e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,solve,GF(31),1024,1024,1024,uniform,1529737180240316900,48493085,2.214216e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,solve,GF(31),1024,1024,1024,deficient,3262761749070940282,37512100,2.862388e+10,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,fgemm,GF(31),4096,4096,4096,uniform,8228559684819461347,998812587,1.376023e+11,2026-05-04-3b762764-dense-la-fresh.csv,2026-05-04,3b762764
+fflas-ffpack,minpoly,GF(2^31-1),64,64,64,uniform,5165982229321961512,1679344,9.990339e+09,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+fflas-ffpack,minpoly,GF(2^31-1),256,256,256,uniform,15188339206248424544,81531913,5.267836e+10,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+fflas-ffpack,minpoly,GF(2^31-1),1024,1024,1024,uniform,394202418011037415,6374570907,1.724840e+11,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+fflas-ffpack,minpoly,GF(65521),64,64,64,uniform,17437234336724684531,522287,3.212260e+10,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+fflas-ffpack,minpoly,GF(65521),256,256,256,uniform,4237467502002085625,17194554,2.497865e+11,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+fflas-ffpack,minpoly,GF(65521),1024,1024,1024,uniform,4663744754393447646,884391719,1.243241e+12,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+fflas-ffpack,minpoly,GF(251),64,64,64,uniform,3897696420160141891,134866,1.243992e+11,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+fflas-ffpack,minpoly,GF(251),256,256,256,uniform,8140817630099691801,1633957,2.628568e+12,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+fflas-ffpack,minpoly,GF(251),1024,1024,1024,uniform,16677532437108663844,109542044,1.003735e+13,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+fflas-ffpack,minpoly,GF(7),64,64,64,uniform,5346471385677182169,569273,2.947130e+10,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+fflas-ffpack,minpoly,GF(7),256,256,256,uniform,14061946926221086388,20290329,2.116756e+11,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+fflas-ffpack,minpoly,GF(7),1024,1024,1024,uniform,9041110833731990254,1082862283,1.015375e+12,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+m4ri,pluq,GF(2),64,64,64,uniform,10261922210861322963,11133,2.354657e+10,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+m4ri,pluq,GF(2),64,64,64,deficient,9465344769023147811,10923,2.399927e+10,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+m4ri,pluq,GF(2),256,256,256,uniform,6007954890922135186,68677,2.442916e+11,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+m4ri,pluq,GF(2),256,256,256,deficient,12883867776209762168,96406,1.740267e+11,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+m4ri,pluq,GF(2),1024,1024,1024,uniform,10238191392210833268,1196823,8.971601e+11,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+m4ri,pluq,GF(2),1024,1024,1024,deficient,1253827771496180483,1237074,8.679690e+11,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+m4ri,invert,GF(2),64,64,64,uniform,5934371847120486591,11400,2.299509e+10,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+m4ri,invert,GF(2),64,64,64,deficient,18428513764158899361,11406,2.298299e+10,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+m4ri,invert,GF(2),256,256,256,uniform,7987072257454603602,104323,1.608199e+11,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+m4ri,invert,GF(2),256,256,256,deficient,11382297788580195442,119050,1.409258e+11,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+m4ri,invert,GF(2),1024,1024,1024,uniform,13331486115574067583,1460533,7.351712e+11,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+m4ri,invert,GF(2),1024,1024,1024,deficient,2400478951954270886,1406203,7.635753e+11,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+m4ri,solve,GF(2),64,64,64,uniform,5507037633494828434,26943,9.729577e+09,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+m4ri,solve,GF(2),64,64,64,deficient,9094553455404696733,21833,1.200678e+10,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+m4ri,solve,GF(2),256,256,256,uniform,4210633436373302228,208776,8.035989e+10,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+m4ri,solve,GF(2),256,256,256,deficient,14964916828173173308,145700,1.151490e+11,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+m4ri,solve,GF(2),1024,1024,1024,uniform,14964916828173173308,2825844,3.799721e+11,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+m4ri,solve,GF(2),1024,1024,1024,deficient,4210633436373302228,1612344,6.659508e+11,2026-05-04-5dea7457-reference-extension.csv,2026-05-04,5dea7457
+m4rie,matmul,GF(2^4),64,64,64,uniform,8005153246082202320,36512,1.435933e+10,2026-05-04-507b0036-m4rie-reference.csv,2026-05-04,507b0036
+m4rie,matmul,GF(2^4),64,64,64,deficient,12780262654461442454,36426,1.439324e+10,2026-05-04-507b0036-m4rie-reference.csv,2026-05-04,507b0036
+m4rie,matmul,GF(2^4),256,256,256,uniform,11019564977554890073,534494,6.277794e+10,2026-05-04-507b0036-m4rie-reference.csv,2026-05-04,507b0036
+m4rie,matmul,GF(2^4),256,256,256,deficient,17070855054760512226,431312,7.779619e+10,2026-05-04-507b0036-m4rie-reference.csv,2026-05-04,507b0036
+m4rie,matmul,GF(2^4),1024,1024,1024,uniform,17070855054760512226,7043410,3.048926e+11,2026-05-04-507b0036-m4rie-reference.csv,2026-05-04,507b0036
+m4rie,matmul,GF(2^4),1024,1024,1024,deficient,11019564977554890073,6817024,3.150178e+11,2026-05-04-507b0036-m4rie-reference.csv,2026-05-04,507b0036
+m4rie,matmul,GF(2^8),64,64,64,uniform,12780262654461442454,129400,4.051685e+09,2026-05-04-507b0036-m4rie-reference.csv,2026-05-04,507b0036
+m4rie,matmul,GF(2^8),64,64,64,deficient,8005153246082202320,130038,4.031806e+09,2026-05-04-507b0036-m4rie-reference.csv,2026-05-04,507b0036
+m4rie,matmul,GF(2^8),256,256,256,uniform,17288899968106584123,1367720,2.453311e+10,2026-05-04-507b0036-m4rie-reference.csv,2026-05-04,507b0036
+m4rie,matmul,GF(2^8),256,256,256,deficient,9376932341968498384,1388330,2.416892e+10,2026-05-04-507b0036-m4rie-reference.csv,2026-05-04,507b0036
+m4rie,matmul,GF(2^8),1024,1024,1024,uniform,9376932341968498384,22010016,9.756847e+10,2026-05-04-507b0036-m4rie-reference.csv,2026-05-04,507b0036
+m4rie,matmul,GF(2^8),1024,1024,1024,deficient,17288899968106584123,21852052,9.827378e+10,2026-05-04-507b0036-m4rie-reference.csv,2026-05-04,507b0036
+m4rie,matmul,GF(2^16),64,64,64,uniform,17070855054760512226,42133368,1.244353e+07,2026-05-04-507b0036-m4rie-reference.csv,2026-05-04,507b0036
+m4rie,matmul,GF(2^16),64,64,64,deficient,11019564977554890073,41021509,1.278081e+07,2026-05-04-507b0036-m4rie-reference.csv,2026-05-04,507b0036
+m4rie,matmul,GF(2^16),256,256,256,uniform,1289172924007512769,631645222,5.312228e+07,2026-05-04-507b0036-m4rie-reference.csv,2026-05-04,507b0036
+m4rie,matmul,GF(2^16),256,256,256,deficient,3146559891945559232,624481844,5.373164e+07,2026-05-04-507b0036-m4rie-reference.csv,2026-05-04,507b0036
+m4rie,matmul,GF(2^16),1024,1024,1024,uniform,8005153246082202320,752521985,2.853715e+09,2026-05-04-507b0036-m4rie-reference.csv,2026-05-04,507b0036
+m4rie,matmul,GF(2^16),1024,1024,1024,deficient,12780262654461442454,762643064,2.815844e+09,2026-05-04-507b0036-m4rie-reference.csv,2026-05-04,507b0036
+fflas-ffpack,charpoly,GF(31),64,64,64,uniform,16940899368719787582,388738,6.743462e+08,2026-05-04-609855d9-gf31-supplement.csv,2026-05-04,609855d9
+fflas-ffpack,charpoly,GF(31),256,256,256,uniform,10012977464920248177,13516977,1.241196e+09,2026-05-04-609855d9-gf31-supplement.csv,2026-05-04,609855d9
+fflas-ffpack,minpoly,GF(31),64,64,64,uniform,10789710681556249357,397016,4.225829e+10,2026-05-04-609855d9-gf31-supplement.csv,2026-05-04,609855d9
+fflas-ffpack,minpoly,GF(31),256,256,256,uniform,12161711732463089897,13499663,3.181537e+11,2026-05-04-609855d9-gf31-supplement.csv,2026-05-04,609855d9
+fflas-ffpack,minpoly,GF(31),1024,1024,1024,uniform,979732559413411625,760480091,1.445813e+12,2026-05-04-609855d9-gf31-supplement.csv,2026-05-04,609855d9
+flint,fgemm,GF(7),64,64,64,uniform,9934644842822421333,27830,1.883895e+10,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
+flint,pluq,GF(7),64,64,64,uniform,10652923087708408910,24390,1.074801e+10,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
+flint,echelon,GF(7),64,64,64,uniform,8094974281369898242,30880,8.489119e+09,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
+flint,invert,GF(7),64,64,64,uniform,3146559891945559232,155688,1.683778e+09,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
+flint,solve,GF(7),64,64,64,uniform,3839435461881424779,24884,1.053464e+10,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
+flint,charpoly,GF(7),64,64,64,uniform,8024433140722383444,470168,5.575539e+08,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
+flint,minpoly,GF(7),64,64,64,uniform,5346471385677182169,218384,7.682438e+10,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
+flint,fgemm,GF(251),64,64,64,uniform,12707092751477068437,48784,1.074713e+10,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
+flint,pluq,GF(251),64,64,64,uniform,9903818464302766647,24406,1.074097e+10,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
+flint,echelon,GF(251),64,64,64,uniform,15612396963727573775,30168,8.689472e+09,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
+flint,invert,GF(251),64,64,64,uniform,17954810277715416078,161648,1.621697e+09,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
+flint,solve,GF(251),64,64,64,uniform,3161924328900420527,28020,9.355603e+09,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
+flint,charpoly,GF(251),64,64,64,uniform,8751597996197025028,469432,5.584281e+08,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
+flint,minpoly,GF(251),64,64,64,uniform,3897696420160141891,225478,7.440733e+10,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
+flint,fgemm,GF(65521),64,64,64,uniform,11351449802504212747,87360,6.001465e+09,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
+flint,pluq,GF(65521),64,64,64,uniform,14074756535924051,33714,7.775524e+09,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
+flint,echelon,GF(65521),64,64,64,uniform,12217383699880382746,31730,8.261708e+09,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
+flint,invert,GF(65521),64,64,64,uniform,5102690528911706662,191550,1.368541e+09,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
+flint,solve,GF(65521),64,64,64,uniform,11948532817827256953,29592,8.858610e+09,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
+flint,charpoly,GF(65521),64,64,64,uniform,9183273273419397006,471436,5.560543e+08,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
+flint,minpoly,GF(65521),64,64,64,uniform,17437234336724684531,225692,7.433678e+10,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
+flint,fgemm,GF(2^31-1),64,64,64,uniform,5180433273409205583,98258,5.335830e+09,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
+flint,pluq,GF(2^31-1),64,64,64,uniform,1253827771496180483,68670,3.817446e+09,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
+flint,echelon,GF(2^31-1),64,64,64,uniform,11803774076554546630,77148,3.397936e+09,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
+flint,invert,GF(2^31-1),64,64,64,uniform,5934371847120486591,284822,9.203783e+08,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
+flint,solve,GF(2^31-1),64,64,64,uniform,5507037633494828434,74122,3.536656e+09,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
+flint,charpoly,GF(2^31-1),64,64,64,uniform,11506559259852285241,500552,5.237098e+08,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
+flint,minpoly,GF(2^31-1),64,64,64,uniform,5165982229321961512,337162,4.976010e+10,2026-05-04-73ab8eef-flint-reference.csv,2026-05-04,73ab8eef
+ntl,fgemm,GF(7),64,64,64,uniform,9934644842822421333,21282,2.463528e+10,2026-05-04-73ab8eef-ntl-reference.csv,2026-05-04,73ab8eef
+ntl,invert,GF(7),64,64,64,uniform,3146559891945559232,68842,3.807908e+09,2026-05-04-73ab8eef-ntl-reference.csv,2026-05-04,73ab8eef
+ntl,solve,GF(7),64,64,64,uniform,3839435461881424779,49496,5.296266e+09,2026-05-04-73ab8eef-ntl-reference.csv,2026-05-04,73ab8eef
+ntl,charpoly,GF(7),64,64,64,uniform,8024433140722383444,857600,3.056716e+08,2026-05-04-73ab8eef-ntl-reference.csv,2026-05-04,73ab8eef
+ntl,fgemm,GF(251),64,64,64,uniform,12707092751477068437,18456,2.840746e+10,2026-05-04-73ab8eef-ntl-reference.csv,2026-05-04,73ab8eef
+ntl,invert,GF(251),64,64,64,uniform,17954810277715416078,64744,4.048931e+09,2026-05-04-73ab8eef-ntl-reference.csv,2026-05-04,73ab8eef
+ntl,solve,GF(251),64,64,64,uniform,3161924328900420527,65176,4.022094e+09,2026-05-04-73ab8eef-ntl-reference.csv,2026-05-04,73ab8eef
+ntl,charpoly,GF(251),64,64,64,uniform,8751597996197025028,873678,3.000465e+08,2026-05-04-73ab8eef-ntl-reference.csv,2026-05-04,73ab8eef
+ntl,fgemm,GF(65521),64,64,64,uniform,11351449802504212747,18436,2.843827e+10,2026-05-04-73ab8eef-ntl-reference.csv,2026-05-04,73ab8eef
+ntl,invert,GF(65521),64,64,64,uniform,5102690528911706662,65904,3.977664e+09,2026-05-04-73ab8eef-ntl-reference.csv,2026-05-04,73ab8eef
+ntl,solve,GF(65521),64,64,64,uniform,11948532817827256953,64694,4.052060e+09,2026-05-04-73ab8eef-ntl-reference.csv,2026-05-04,73ab8eef
+ntl,charpoly,GF(65521),64,64,64,uniform,9183273273419397006,899268,2.915082e+08,2026-05-04-73ab8eef-ntl-reference.csv,2026-05-04,73ab8eef
+ntl,fgemm,GF(2^31-1),64,64,64,uniform,5180433273409205583,112758,4.649675e+09,2026-05-04-73ab8eef-ntl-reference.csv,2026-05-04,73ab8eef
+ntl,invert,GF(2^31-1),64,64,64,uniform,5934371847120486591,322422,8.130463e+08,2026-05-04-73ab8eef-ntl-reference.csv,2026-05-04,73ab8eef
+ntl,solve,GF(2^31-1),64,64,64,uniform,5507037633494828434,124668,2.102737e+09,2026-05-04-73ab8eef-ntl-reference.csv,2026-05-04,73ab8eef
+ntl,charpoly,GF(2^31-1),64,64,64,uniform,11506559259852285241,935114,2.803337e+08,2026-05-04-73ab8eef-ntl-reference.csv,2026-05-04,73ab8eef
+linbox,charpoly,GF(2^31-1),64,64,64,uniform,11506559259852285241,1169618,2.241279e+08,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+linbox,charpoly,GF(2^31-1),256,256,256,uniform,16108071587005897015,44682256,3.754783e+08,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+linbox,minpoly,GF(2^31-1),64,64,64,uniform,5165982229321961512,852488,1.968030e+10,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+linbox,minpoly,GF(2^31-1),256,256,256,uniform,15188339206248424544,51476406,8.343565e+10,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+linbox,solve,GF(2^31-1),64,64,64,uniform,5507037633494828434,258202,1.015267e+09,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+linbox,solve,GF(2^31-1),64,64,64,deficient,9094553455404696733,187312,1.399505e+09,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+linbox,solve,GF(2^31-1),256,256,256,uniform,4210633436373302228,8274662,2.027541e+09,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+linbox,solve,GF(2^31-1),256,256,256,deficient,14964916828173173308,6279189,2.671876e+09,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+linbox,solve,GF(2^31-1),1024,1024,1024,uniform,14964916828173173308,399903956,2.684999e+09,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+linbox,solve,GF(2^31-1),1024,1024,1024,deficient,4210633436373302228,329640714,3.257309e+09,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+linbox,charpoly,GF(65521),64,64,64,uniform,9183273273419397006,684264,3.831036e+08,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+linbox,charpoly,GF(65521),256,256,256,uniform,8373688313145165019,12467707,1.345654e+09,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+linbox,minpoly,GF(65521),64,64,64,uniform,17437234336724684531,367996,4.559076e+10,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+linbox,minpoly,GF(65521),256,256,256,uniform,4237467502002085625,11732485,3.660748e+11,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+linbox,solve,GF(65521),64,64,64,uniform,11948532817827256953,177614,1.475920e+09,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+linbox,solve,GF(65521),64,64,64,deficient,9947845925449458516,118750,2.207528e+09,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+linbox,solve,GF(65521),256,256,256,uniform,7857228785775969460,3068896,5.466857e+09,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+linbox,solve,GF(65521),256,256,256,deficient,9148240713706980683,2316184,7.243473e+09,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+linbox,solve,GF(65521),1024,1024,1024,uniform,13907183692283982733,74708825,1.437236e+10,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+linbox,solve,GF(65521),1024,1024,1024,deficient,11157325121996924885,59606419,1.801386e+10,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+linbox,charpoly,GF(251),64,64,64,uniform,8751597996197025028,589426,4.447445e+08,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+linbox,charpoly,GF(251),256,256,256,uniform,526247697690853768,13556627,1.237566e+09,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+linbox,minpoly,GF(251),64,64,64,uniform,3897696420160141891,401510,4.178530e+10,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+linbox,minpoly,GF(251),256,256,256,uniform,8140817630099691801,13529635,3.174489e+11,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+linbox,solve,GF(251),64,64,64,uniform,3161924328900420527,252012,1.040204e+09,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+linbox,solve,GF(251),64,64,64,deficient,4599537089899667719,175472,1.493936e+09,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+linbox,solve,GF(251),256,256,256,uniform,12425043119313690846,3194897,5.251254e+09,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+linbox,solve,GF(251),256,256,256,deficient,3166560285366626815,2175756,7.710982e+09,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+linbox,solve,GF(251),1024,1024,1024,uniform,1343336825156874688,58967267,1.820912e+10,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+linbox,solve,GF(251),1024,1024,1024,deficient,8964874287244071616,45822467,2.343265e+10,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+linbox,charpoly,GF(7),64,64,64,uniform,8024433140722383444,422622,6.202801e+08,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+linbox,charpoly,GF(7),256,256,256,uniform,13175743115641768480,13510353,1.241804e+09,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+linbox,minpoly,GF(7),64,64,64,uniform,5346471385677182169,398472,4.210388e+10,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+linbox,minpoly,GF(7),256,256,256,uniform,14061946926221086388,13506493,3.179928e+11,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+linbox,solve,GF(7),64,64,64,uniform,3839435461881424779,253014,1.036085e+09,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+linbox,solve,GF(7),64,64,64,deficient,11623384259863599264,176378,1.486262e+09,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+linbox,solve,GF(7),256,256,256,uniform,8239243928646303360,3208810,5.228485e+09,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+linbox,solve,GF(7),256,256,256,deficient,8431352122767374154,2137190,7.850128e+09,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+linbox,solve,GF(7),1024,1024,1024,uniform,8431352122767374154,65453584,1.640463e+10,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+linbox,solve,GF(7),1024,1024,1024,deficient,8239243928646303360,47089051,2.280237e+10,2026-05-04-79388011-linbox-reference.csv,2026-05-04,79388011
+ntl,matmul,GF(2^32),64,64,64,uniform,17158103737143628803,1960240,2.674611e+08,2026-05-06-a1172cea-ntl-gf2pow32-large.csv,2026-05-06,a1172cea
+fflas-ffpack,spmv,GF(2^31-1),1024,1024,1,density_9.765625e-03_csr,12777010762810534079,15043,6.605065e+08,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
+fflas-ffpack,sparse×dense,GF(2^31-1),1024,1024,1024,density_9.765625e-03_csr,779162766254895299,14919501,7.017243e+08,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
+fflas-ffpack,spmv,GF(65521),1024,1024,1,density_9.765625e-03_csr,1455580355860529100,8890,1.152981e+09,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
+fflas-ffpack,sparse×dense,GF(65521),1024,1024,1024,density_9.765625e-03_csr,10315428954627216038,4047711,2.576121e+09,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
+fflas-ffpack,spmv,GF(251),1024,1024,1,density_9.765625e-03_csr,13587418131989727306,8106,1.254009e+09,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
+fflas-ffpack,sparse×dense,GF(251),1024,1024,1024,density_9.765625e-03_csr,4484327439351079882,2658417,3.903147e+09,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
+fflas-ffpack,spmv,GF(7),1024,1024,1,density_9.765625e-03_csr,10144710052807619915,8650,1.184509e+09,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
+fflas-ffpack,sparse×dense,GF(7),1024,1024,1024,density_9.765625e-03_csr,2735785682510659298,4068014,2.563767e+09,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
+linbox,spmv,GF(2^31-1),1024,1024,1,density_9.765625e-03_csr,12777010762810534079,7623,1.303424e+09,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
+linbox,sparse×dense,GF(2^31-1),1024,1024,1024,density_9.765625e-03_csr,8649192995272375280,14908697,6.906251e+08,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
+linbox,sparse×dense,GF(2^31-1),4096,4096,4096,density_2.441406e-03_csr,5415446191451566178,249361708,6.709010e+08,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
+linbox,sparse-elim,GF(2^31-1),256,256,256,density_3.906250e-02_csr,13671275229359443338,7570109,2.216245e+09,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
+linbox,sparse-elim,GF(2^31-1),1024,1024,1024,density_9.765625e-03_csr,14806907769766661618,366749558,2.927725e+09,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
+linbox,spmv,GF(65521),1024,1024,1,density_9.765625e-03_csr,1455580355860529100,8570,1.196033e+09,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
+linbox,sparse×dense,GF(65521),1024,1024,1024,density_9.765625e-03_csr,10716797487269202872,15299591,6.856298e+08,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
+linbox,sparse×dense,GF(65521),4096,4096,4096,density_2.441406e-03_csr,15924152076825123346,254492076,6.625748e+08,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
+linbox,sparse-elim,GF(65521),256,256,256,density_3.906250e-02_csr,15370756853855958952,6871125,2.441699e+09,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
+linbox,sparse-elim,GF(65521),1024,1024,1024,density_9.765625e-03_csr,8678874481367706039,363647751,2.952698e+09,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
+linbox,spmv,GF(251),1024,1024,1,density_9.765625e-03_csr,13587418131989727306,8666,1.172975e+09,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
+linbox,sparse×dense,GF(251),1024,1024,1024,density_9.765625e-03_csr,14001332438823922574,15524634,6.883553e+08,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
+linbox,sparse×dense,GF(251),4096,4096,4096,density_2.441406e-03_csr,15422940304204868804,250949355,6.709166e+08,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
+linbox,sparse-elim,GF(251),256,256,256,density_3.906250e-02_csr,7074116790747146452,7127422,2.353897e+09,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
+linbox,sparse-elim,GF(251),1024,1024,1024,density_9.765625e-03_csr,8143254596996940714,363645551,2.952715e+09,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
+linbox,spmv,GF(7),1024,1024,1,density_9.765625e-03_csr,10144710052807619915,9083,1.128041e+09,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
+linbox,sparse×dense,GF(7),1024,1024,1024,density_9.765625e-03_csr,13942683620842084390,15428714,6.893827e+08,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
+linbox,sparse×dense,GF(7),4096,4096,4096,density_2.441406e-03_csr,14601075346681003943,248518734,6.697650e+08,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
+linbox,sparse-elim,GF(7),256,256,256,density_3.906250e-02_csr,390602048035006410,8217269,2.041702e+09,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
+linbox,sparse-elim,GF(7),1024,1024,1024,density_9.765625e-03_csr,38101733392179866,478156753,2.245585e+09,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
+linbox,spmv,GF(2),1024,1024,1,density_9.765625e-03_csr,15161729342310315399,8616,1.159355e+09,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
+linbox,sparse×dense,GF(2),1024,1024,1024,density_9.765625e-03_csr,16680508550921739872,15114091,6.882182e+08,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
+linbox,sparse×dense,GF(2),4096,4096,4096,density_2.441406e-03_csr,18287151573257470365,248215054,6.713930e+08,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
+linbox,sparse-elim,GF(2),256,256,256,density_3.906250e-02_csr,6080485797099632427,4465081,3.757427e+09,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
+linbox,sparse-elim,GF(2),1024,1024,1024,density_9.765625e-03_csr,2239289689385539515,228006362,4.709263e+09,2026-05-04-47698404-sparse-reference.csv,2026-05-04,47698404
+ntl,matmul,GF(2^32),256,256,256,uniform,16610483722261398142,119608908,2.805346e+08,2026-05-06-a1172cea-ntl-gf2pow32-large.csv,2026-05-06,a1172cea
+ntl,matmul,GF(2^32),1024,1024,1024,uniform,11382297788580195442,7591131276,2.828938e+08,2026-05-06-a1172cea-ntl-gf2pow32-large.csv,2026-05-06,a1172cea
