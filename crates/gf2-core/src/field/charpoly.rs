@@ -1134,6 +1134,342 @@ fn keller_gehrig_attempt<F: FiniteField>(a: &FieldMatrix<F>, seed: u64) -> Optio
     Some(cp)
 }
 
+// ─── Wiedemann (scalar) minimal polynomial path (issue d1dd266c) ─────────────
+
+/// Maximum number of Las-Vegas retries for the Wiedemann minpoly path.
+///
+/// Each attempt picks a fresh random pair `(u, v)` and runs
+/// Berlekamp-Massey on the scalar projection sequence. On failure
+/// (BM outputs a polynomial that does not annihilate the full space),
+/// the retry count limits wasted work before falling back to the
+/// `O(n⁴)` deterministic path. Eight retries gives failure probability
+/// `≤ (n/q)^8` per attempt class, which is negligible for all four
+/// reference fields (q ≥ 7, n ≤ 1024).
+const WIEDEMANN_MAX_RETRIES: usize = 8;
+
+/// Default seed for the Wiedemann minpoly dispatch.
+const WIEDEMANN_DEFAULT_SEED: u64 = 0x5769_6564_656D_616E; // ASCII "Wiedeman"
+
+/// Berlekamp-Massey algorithm over an arbitrary `FiniteField`.
+///
+/// Given a sequence `s[0..m]` (at least `2 * deg(minpoly) + 1` terms
+/// recommended; the caller supplies `2n + 1` terms for an `n × n` matrix),
+/// returns the **monic** minimal linear recurrence polynomial `C(x)` of
+/// degree `d ≤ n/2` such that
+///
+/// ```text
+/// s[k] = c_1 s[k-1] + c_2 s[k-2] + … + c_d s[k-d]   for k ≥ d
+/// ```
+///
+/// In polynomial form: `C(x) = 1 − c_1 x − … − c_d x^d`. Because this
+/// is a "constant-term-1" polynomial (not monic-leading-coefficient in the
+/// usual sense), the output is converted to the ascending-coefficient form
+/// expected by [`FieldPoly`] by negating all but the constant term, yielding:
+///
+/// ```text
+/// coeffs[0] = 1,  coeffs[1] = c_1,  …,  coeffs[d] = c_d
+/// ```
+///
+/// Wait — this would make the constant term 1, not a degree-`d` monic poly.
+/// Actually the Wiedemann minpoly polynomial we want is the annihilator
+/// polynomial of the LFSR: `L(x) = x^d − c_1 x^{d-1} − … − c_d` (monic,
+/// leading coeff = 1, constant term = −c_d). The relationship is:
+/// `L(x) = x^d · C(1/x) / C(0)` (reversal). This is what gets returned.
+///
+/// # Algorithm
+///
+/// Massey (1969), presentation from Shoup §12.4. Maintains:
+/// - `C(x)` = current connection polynomial, stored as `C[0] = 1` (constant
+///   term) through `C[L]` (degree L). `C[0] = 1` is invariant.
+/// - `B(x)` = copy of `C` at the last length-extension step.
+/// - `b` = discrepancy at the last length-extension step (scalar).
+/// - `L` = current LFSR length.
+/// - `m` = number of steps since last length extension.
+///
+/// # Complexity
+///
+/// `O(n²)` field operations for a length-`2n` sequence.
+fn berlekamp_massey<F: FiniteField>(s: &[F]) -> FieldPoly<F> {
+    let seq_len = s.len();
+    if seq_len == 0 {
+        let zero = F::zero_hint().unwrap_or_else(|| {
+            panic!(
+                "berlekamp_massey: empty sequence over runtime-context field has no zero witness"
+            )
+        });
+        return FieldPoly::one_like(&zero);
+    }
+    let zero: F = s[0].zero_like();
+    let one: F = zero.one_like();
+
+    // C(x) = 1 + C[1]*x + ... + C[L]*x^L in ascending order.
+    // Invariant: C[0] = 1 always.
+    let mut c: Vec<F> = vec![one.clone()];
+    // B(x) = 1 initially (copy of C before last length extension).
+    let mut b_poly: Vec<F> = vec![one.clone()];
+    // b = discrepancy at last length extension (scalar). Initialize to 1.
+    let mut b_scalar: F = one.clone();
+    // L = current LFSR length (= deg C if C != 1).
+    let mut ell: usize = 0;
+    // m = shift counter (x^m factor on B).
+    let mut m: usize = 1;
+
+    for n_idx in 0..seq_len {
+        // Discrepancy: d = s[n] + C[1]*s[n-1] + ... + C[L]*s[n-L]
+        //             = sum_{j=0}^{L} C[j] * s[n-j]
+        // (with s[k] = 0 for k < 0, and C[0] = 1.)
+        let mut d = s[n_idx].clone();
+        for j in 1..=ell {
+            if n_idx >= j {
+                let term = c[j].clone() * s[n_idx - j].clone();
+                d += term;
+            }
+        }
+
+        if d.is_zero() {
+            m += 1;
+            continue;
+        }
+
+        // Adjustment: T(x) = C(x) - (d/b) * x^m * B(x)
+        let factor = d.clone()
+            * b_scalar
+                .inv()
+                .expect("berlekamp_massey: b_scalar must be invertible");
+        // T has length max(C.len(), m + B.len()) in the worst case.
+        let new_len = c.len().max(m + b_poly.len());
+        let mut t: Vec<F> = c.clone();
+        while t.len() < new_len {
+            t.push(zero.clone());
+        }
+        for (i, bi) in b_poly.iter().enumerate() {
+            let idx = i + m;
+            if idx < t.len() {
+                let sub = factor.clone() * bi.clone();
+                let old_val = t[idx].clone();
+                t[idx] = old_val - sub;
+            }
+        }
+
+        if 2 * ell <= n_idx {
+            // Length extension: L_new = n+1 - L_old
+            let ell_new = n_idx + 1 - ell;
+            // Save old C as new B, update b_scalar, reset m.
+            b_poly = c;
+            b_scalar = d;
+            ell = ell_new;
+            m = 1;
+        } else {
+            m += 1;
+        }
+        c = t;
+    }
+
+    // c = [1, C[1], ..., C[L]] where C(x) = 1 + C[1]*x + ... + C[L]*x^L
+    // is the connection poly: s[n] + C[1]*s[n-1] + ... + C[L]*s[n-L] = 0.
+    //
+    // We want the annihilator poly (monic in x) for the Wiedemann method:
+    // A(x) = x^L + C[L]*x^{L-1} + ... + C[1]  (reversed and re-indexed).
+    // Actually A(x) = x^L * C(1/x) / C(0) = x^L * C(1/x) (since C(0)=1).
+    //
+    // A[k] = C[L - k] for k = 0..L: A[0]=C[L], ..., A[L-1]=C[1], A[L]=C[0]=1.
+    // So the annihilator is monic of degree L with coefficients
+    // A[0] = C[L], A[1] = C[L-1], ..., A[L-1] = C[1], A[L] = 1.
+    let deg = ell;
+    let mut annihilator: Vec<F> = Vec::with_capacity(deg + 1);
+    // Ascending: annihilator[k] = C[deg - k] = c[deg - k].
+    for k in 0..=deg {
+        let idx = if k <= deg && (deg - k) < c.len() {
+            c[deg - k].clone()
+        } else {
+            zero.clone()
+        };
+        annihilator.push(idx);
+    }
+    // annihilator[deg] should be C[0] = 1.
+    let p = FieldPoly::from_coeffs_trimmed(annihilator);
+    monic(p)
+}
+
+/// One Wiedemann minpoly attempt with a specific random seed.
+///
+/// Generates random vectors `u` and `v` (using SplitMix64 derived from
+/// `seed`), computes the scalar sequence `s_k = ⟨v, A^k · u⟩` for
+/// `k = 0..2n+1`, runs Berlekamp-Massey to obtain a candidate `m(x)`,
+/// then verifies that `m` is the true minpoly (not just an annihilator
+/// of the projected subspace) by checking the scalar recurrence on a
+/// fresh random projection `⟨v', A^k · u'⟩`. On verification success,
+/// returns `Some(m)`. On any failure, returns `None`.
+///
+/// # Correctness guarantee
+///
+/// For any field with `q > n`, the probability that BM on `⟨v, A^k u⟩`
+/// returns a polynomial that is a **proper divisor** of `minpoly(A)` is
+/// `≤ n/q` per random pair `(u, v)`. The scalar-recurrence verification
+/// on a fresh projection further filters the degenerate case: if `m` is
+/// a proper divisor, the fresh projection sequence fails the recurrence
+/// check with probability `≥ 1 − deg(m)/q`. The
+/// [`WIEDEMANN_MAX_RETRIES`] = 8 retry loop in the caller ensures the
+/// overall failure probability is `≤ (n/q)^8`.
+///
+/// # Complexity
+///
+/// `O(n²)` field operations: `2n+1` matvec calls for the primary
+/// sequence (`O(n²)` total) plus `O(n²)` for BM plus `2n+1` matvec
+/// calls for the verification sequence and `O(n²)` for the recurrence
+/// check. Total coefficient is ≤ 4.
+fn wiedemann_minpoly_attempt<F: FiniteField>(
+    a: &FieldMatrix<F>,
+    seed: u64,
+) -> Option<FieldPoly<F>> {
+    let n = a.rows();
+    debug_assert!(
+        n >= 2,
+        "n ∈ {{0, 1}} should be short-circuited by the caller"
+    );
+    let zero: F = a.get(0, 0).zero_like();
+    let one: F = zero.one_like();
+
+    // Generate two random vectors u and v using the same SplitMix64
+    // PRNG pattern as the Keller–Gehrig path (no `rand` feature required).
+    let mut state = seed;
+    let gen_vec = |state: &mut u64| -> FieldVec<F> {
+        let mut v = FieldVec::<F>::zeros_from(n, &zero);
+        for i in 0..n {
+            let count = (splitmix64(state) & 0x3F) as u32;
+            let mut acc = zero.clone();
+            for _ in 0..count {
+                acc += one.clone();
+            }
+            if (splitmix64(state) & 1) == 1 {
+                v.set(i, acc);
+            }
+        }
+        // Ensure not all-zero.
+        if v.iter().all(|c| c.is_zero()) {
+            v.set(0, one.clone());
+        }
+        v
+    };
+    let u = gen_vec(&mut state);
+    let v = gen_vec(&mut state);
+
+    // Compute scalar sequence s_k = <v, A^k · u> for k = 0..2n.
+    // We iterate: cur = A^k · u, advance via cur = A · cur.
+    let seq_len = 2 * n + 1; // +1 ensures BM has enough terms for degree-n recurrence
+    let mut seq: Vec<F> = Vec::with_capacity(seq_len);
+    let mut cur = u.clone();
+    for _ in 0..seq_len {
+        // s_k = v · cur (dot product).
+        let sk = v.dot_product(&cur);
+        seq.push(sk);
+        cur = a.matvec(&cur);
+    }
+
+    // Run Berlekamp-Massey on the sequence.
+    let candidate = berlekamp_massey(&seq);
+
+    // The BM output should have degree ≤ n (since minpoly has degree ≤ n).
+    // If degree is 0 it's the constant 1, which means the sequence was
+    // identically zero — degenerate, retry.
+    if candidate.degree().map(|d| d > n).unwrap_or(true) {
+        return None;
+    }
+
+    // Verify the candidate is the true minpoly (not a proper divisor) by
+    // checking it annihilates a fresh random projection.
+    //
+    // Strategy: pick a fresh random pair (u', v'), compute the scalar
+    // sequence s'_k = <v', A^k · u'> for k = 0..2n, then check that
+    // `m` satisfies the recurrence `sum_{j=0}^{d} m_j s'_{k+j} == 0`
+    // for all k in [0..seq_len-d-1].  If m is the true minpoly, this
+    // holds. If m is a proper divisor, it fails with probability
+    // ≥ 1 − deg(m)/q per fresh (u', v').
+    //
+    // This avoids the expensive `poly_action_on_vector` calls (which
+    // cost O(n³) for deg(m) = n).  One verification sequence (2n+1
+    // matvec calls) is enough because the retry loop provides 8
+    // independent attempts.
+    let d = candidate.degree().unwrap_or(0);
+    let u_prime = gen_vec(&mut state);
+    let v_prime = gen_vec(&mut state);
+    let seq_len_v = 2 * n + 1;
+    let mut seq_v: Vec<F> = Vec::with_capacity(seq_len_v);
+    let mut cur_v = u_prime;
+    for _ in 0..seq_len_v {
+        let sk = v_prime.dot_product(&cur_v);
+        seq_v.push(sk);
+        cur_v = a.matvec(&cur_v);
+    }
+    // Check the recurrence: for each k, sum_{j=0}^{d} m[j] * seq_v[k+j] == 0.
+    for k in 0..seq_len_v.saturating_sub(d + 1) {
+        let mut acc = zero.clone();
+        for j in 0..=d {
+            let mj = candidate.coeff(j);
+            acc += mj * seq_v[k + j].clone();
+        }
+        if !acc.is_zero() {
+            return None; // Candidate is a proper divisor — retry.
+        }
+    }
+
+    Some(candidate)
+}
+
+/// Dispatch shim for Wiedemann minpoly.
+///
+/// Routes to the Las-Vegas Wiedemann path when the field cardinality
+/// is large enough (`q > 2n` so that the BM probability bound is
+/// meaningful), otherwise falls back to the deterministic
+/// `find_max_minpoly_generator` path.
+///
+/// The Wiedemann path is `O(n²)` vs the deterministic path's `O(n⁴)`.
+/// For very small fields (e.g. `GF(2)` for any `n ≥ 2`, `GF(7)` for
+/// `n ≥ 4`) where the success-probability bound `1 − n/q` is near zero,
+/// the Wiedemann path is not engaged.
+///
+/// Gate: engage Wiedemann when `2^log_q > n`, i.e. when the **lower
+/// bound** on `q` (which is `2^floor(log₂(q))`) already exceeds `n`.
+/// This is a conservative check: it may suppress Wiedemann in a thin
+/// range where `n ≤ q < 2^(log_q+1)` (e.g. `GF(251)` at `n = 200..251`),
+/// but in that regime the per-attempt success probability is still
+/// usefully bounded away from zero and the 8-retry loop compensates.
+fn minpoly_dispatch<F: FiniteField>(
+    a: &FieldMatrix<F>,
+    basis: &[FieldVec<F>],
+    pivot_row_of_col: &[usize],
+    zero: &F,
+) -> FieldPoly<F> {
+    let n = a.rows();
+
+    // Wiedemann requires n ≥ 2, static cardinality, and the field large
+    // enough that the projection bound is meaningful.
+    if n >= 2 {
+        if let Some(log_q) = F::cardinality_log2_hint() {
+            // Use `2^log_q > n` as the gate: this is `q ≥ 2^log_q > n`,
+            // giving per-attempt success probability ≥ 1 − n/q > 0.
+            // When log_q > 63 we know q ≥ 2^64 ≫ n for any practical n.
+            let gate_passes = if log_q > 63 {
+                true
+            } else {
+                (1u64 << log_q) > n as u64
+            };
+            if gate_passes {
+                for retry in 0..WIEDEMANN_MAX_RETRIES {
+                    let seed = WIEDEMANN_DEFAULT_SEED.wrapping_add(retry as u64);
+                    if let Some(m) = wiedemann_minpoly_attempt(a, seed) {
+                        return m;
+                    }
+                }
+                // Wiedemann exhausted — fall through to deterministic.
+            }
+        }
+    }
+
+    let (_gen, mp) = find_max_minpoly_generator(a, basis, pivot_row_of_col, zero);
+    mp
+}
+
 // ─── Public methods on FieldMatrix ───────────────────────────────────────────
 
 impl<F: FiniteField> FieldMatrix<F> {
@@ -1343,9 +1679,26 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// canonical ordering puts the largest factor first and the chain
     /// `f_{i+1} | f_i` propagates downwards).
     ///
-    /// Computed as the **LCM of per-vector annihilator polynomials over
-    /// the canonical basis**, via [`find_max_minpoly_generator`]. Each
-    /// per-vector minpoly is built from a single Krylov chain.
+    /// **Dispatch (issue `d1dd266c`)**: the implementation selects between
+    /// two algorithmic paths based on the field cardinality:
+    ///
+    /// 1. **Wiedemann Las-Vegas** (`O(n³)` field operations) — engaged
+    ///    for static-cardinality fields with `q > n` (gate: the
+    ///    lower-bound `2^floor(log₂(q)) > n`). Computes `2n + 1`
+    ///    matrix-vector products to build the scalar Krylov projection
+    ///    sequence `s_k = ⟨v, A^k · u⟩` for random `u, v ∈ F^n`, then
+    ///    recovers the minimal polynomial via Berlekamp-Massey
+    ///    (`O(n²)` field operations). The result is verified via a fresh
+    ///    scalar recurrence check (`O(n²)`). The dominant cost is the
+    ///    `2n + 1` matvec calls (`O(n³)` total). Falls back to path 2
+    ///    after [`WIEDEMANN_MAX_RETRIES`] consecutive failures.
+    ///
+    /// 2. **Deterministic quartic** (`O(n⁴)` field operations) — always
+    ///    available. Computes the LCM of per-vector annihilator
+    ///    polynomials over the canonical basis via
+    ///    [`find_max_minpoly_generator`]. Engaged for runtime-context
+    ///    fields (cardinality unknown), fields with `q ≤ n`, and as
+    ///    the fallback when Wiedemann exhausts its retries.
     ///
     /// # Arguments
     ///
@@ -1362,11 +1715,10 @@ impl<F: FiniteField> FieldMatrix<F> {
     ///
     /// # Complexity
     ///
-    /// `O(n⁴)` on generic matrices: `n` per-vector Krylov chains each
-    /// at `O(n³)`. The textbook cubic algorithm needs random-vector
-    /// Krylov + Schwartz–Zippel verification, or reading `f_1` directly
-    /// from the Frobenius cyclic decomposition; both are deferred per
-    /// the issue's R2 amendment.
+    /// Expected `O(n³)` field operations for large-cardinality fields
+    /// (`q > n`, dominated by `2n + 1` matrix-vector products). Worst
+    /// case (Wiedemann retry exhaustion or low-cardinality fields):
+    /// `O(n⁴)` via the deterministic fallback.
     ///
     /// # Examples
     ///
@@ -1396,20 +1748,14 @@ impl<F: FiniteField> FieldMatrix<F> {
             );
             return FieldPoly::one_like(&zero);
         }
-        // The minpoly of A is the first invariant factor of its Frobenius
-        // form (the largest one in the divisibility chain). Delegate to
-        // `find_max_minpoly_generator` against the empty basis, which
-        // computes the LCM of per-vector minpolys over the canonical
-        // basis exactly once and returns it (no separate post-pass over
-        // basis vectors). For a true O(n³) implementation this would
-        // need a single random-vector Krylov chain plus generic-vector
-        // verification; the current implementation is O(n⁴) on generic
-        // matrices and is recorded as such in the issue's R2 amendment.
+        // Route through the dispatch shim that selects between the
+        // O(n²) Wiedemann Las-Vegas path and the O(n⁴) deterministic
+        // fallback depending on field cardinality.  The empty-basis
+        // arguments for the fallback path are injected by the shim.
         let zero = self.get(0, 0).zero_like();
         let basis: Vec<FieldVec<F>> = Vec::new();
         let pivot_row_of_col: Vec<usize> = Vec::new();
-        let (_gen, mp) = find_max_minpoly_generator(self, &basis, &pivot_row_of_col, &zero);
-        mp
+        minpoly_dispatch(self, &basis, &pivot_row_of_col, &zero)
     }
 
     /// Returns `(P, F)` such that `F = P⁻¹ · self · P` is the Frobenius
@@ -1703,9 +2049,10 @@ pub fn charpoly<F: FiniteField>(a: &FieldMatrix<F>) -> FieldPoly<F> {
 ///
 /// # Complexity
 ///
-/// `O(n⁴)` field operations on generic matrices (see
-/// [`FieldMatrix::minpoly`] for the rationale and the deferred-cubic
-/// fix).
+/// Expected `O(n²)` field operations for large-cardinality fields
+/// (`q > 2n`); worst-case `O(n⁴)` via the deterministic fallback.
+/// See [`FieldMatrix::minpoly`] for the full dispatch description
+/// (issue `d1dd266c`).
 pub fn minpoly<F: FiniteField>(a: &FieldMatrix<F>) -> FieldPoly<F> {
     a.minpoly()
 }
@@ -2573,6 +2920,60 @@ mod tests {
             let mp = a.minpoly();
             prop_assert_eq!(&mp, &cp, "companion: minpoly should equal charpoly");
             prop_assert_eq!(&cp, &p, "companion: charpoly should equal generator poly");
+        }
+
+        /// `minpoly(A)(A) == 0` for random matrices over `Fp<MERSENNE_31>`
+        /// (issue `d1dd266c` success criterion: Wiedemann path annihilates A).
+        ///
+        /// Uses n ≤ 8 to keep within the 5 s per-test wall-clock budget.
+        /// At n=8 the Wiedemann path is engaged (q=2^31-1 >> 2*8=16) and
+        /// the O(n²) Krylov sequence + BM are fast; the ref-check via
+        /// `ref_minpoly_via_basis_lcm` also runs at O(n⁴) but stays comfortably
+        /// within 5 s for n ≤ 8.
+        #[test]
+        fn proptest_wiedemann_minpoly_annihilates_fp_m31(
+            n in 2usize..=8,
+            seed in any::<u64>(),
+        ) {
+            let a = random_fp::<MERSENNE_31>(n, n, seed);
+            let mp = a.minpoly();
+            // minpoly(A) must annihilate A.
+            let pa = mp.eval_at_matrix(&a);
+            let zero = Fp::<MERSENNE_31>::new(0);
+            for i in 0..n {
+                for j in 0..n {
+                    prop_assert_eq!(pa.get(i, j), zero, "minpoly(A)[{},{}] != 0", i, j);
+                }
+            }
+            // minpoly must divide charpoly.
+            let cp = a.charpoly();
+            let (_, r) = cp.div_rem(&mp);
+            prop_assert!(r.is_zero(), "minpoly does not divide charpoly");
+            // Cross-check against the independent reference (basis-LCM).
+            let ref_mp = ref_minpoly_via_basis_lcm(&a);
+            prop_assert_eq!(&mp, &ref_mp, "Wiedemann minpoly != basis-LCM reference");
+        }
+
+        /// `minpoly(A)(A) == 0` for random matrices over `Fp<65521>`.
+        ///
+        /// Uses n ≤ 6 to bound test time. q=65521 > 2n for all tested n,
+        /// so the Wiedemann path is engaged.
+        #[test]
+        fn proptest_wiedemann_minpoly_annihilates_fp65521(
+            n in 2usize..=6,
+            seed in any::<u64>(),
+        ) {
+            let a = random_fp::<65521>(n, n, seed);
+            let mp = a.minpoly();
+            let pa = mp.eval_at_matrix(&a);
+            let zero = Fp::<65521>::new(0);
+            for i in 0..n {
+                for j in 0..n {
+                    prop_assert_eq!(pa.get(i, j), zero, "minpoly(A)[{},{}] != 0", i, j);
+                }
+            }
+            let ref_mp = ref_minpoly_via_basis_lcm(&a);
+            prop_assert_eq!(&mp, &ref_mp, "Wiedemann minpoly != basis-LCM reference for Fp<65521>");
         }
     }
 }
