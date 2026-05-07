@@ -2,9 +2,9 @@
   "id": "d1dd266c-ae4a-4d9f-843c-e138618677f3",
   "title": "Tune minimal polynomial path",
   "description": "Address minpoly-specific performance gaps and normalizer correctness.\n\n## Success Criteria\n\n- [hard] minpoly target rows meet the 1.5x threshold or have approved exclusions.\n- [hard] Throughput normalization remains aligned with documented complexity.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [
     "c3e79272-13f1-47e1-9492-65947116a08a"
   ],
@@ -15,7 +15,22 @@
   ],
   "gates_status": {},
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/plans/d1dd266c-minpoly-performance-gaps.md",
+      "commit": null,
+      "label": "Performance gap analysis (specialist task)",
+      "doc_type": "design",
+      "format": "markdown"
+    },
+    {
+      "path": "dev/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md",
+      "commit": null,
+      "label": "Wiedemann minpoly + measurement raw",
+      "doc_type": "evidence",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:task",
     "component:gf2-core",
@@ -23,5 +38,5 @@
     "story:sota-polynomial-invariants"
   ],
   "created_at": "2026-04-30T06:43:02.871775398+00:00",
-  "updated_at": "2026-05-04T13:54:22.800913112+00:00"
+  "updated_at": "2026-05-07T09:09:36.472664489+00:00"
 }
