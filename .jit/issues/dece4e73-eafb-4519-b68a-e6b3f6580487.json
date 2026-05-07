@@ -2,9 +2,9 @@
   "id": "dece4e73-eafb-4519-b68a-e6b3f6580487",
   "title": "Aggregate final SOTA raw CSVs",
   "description": "Collect all gf2 and reference benchmark rows for final publication.\n\n## Success Criteria\n\n- [hard] Versioned CSV files cover every in-scope cell.\n- [hard] CSV schemas are compatible with the analysis renderer.",
-  "state": "backlog",
+  "state": "in_progress",
   "priority": "high",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [
     "66190ccd-60aa-4675-bb59-153f1834b92e",
     "72ab6d0e-60ae-4148-8168-bbfd2b238546",
@@ -17,7 +17,27 @@
   ],
   "gates_status": {},
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/bench_results/2026-05-08-dece4e73-sota-aggregate-gf2.csv",
+      "commit": null,
+      "label": "SOTA aggregate gf2 measurements (459 rows)",
+      "doc_type": "data"
+    },
+    {
+      "path": "dev/bench_results/2026-05-08-dece4e73-sota-aggregate-reference.csv",
+      "commit": null,
+      "label": "SOTA aggregate reference measurements (644 rows)",
+      "doc_type": "data"
+    },
+    {
+      "path": "dev/bench_results/2026-05-08-dece4e73-sota-aggregate-schema.md",
+      "commit": null,
+      "label": "Aggregate CSV schema and renderer compatibility contract",
+      "doc_type": "design",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:task",
     "component:gf2-core",
@@ -25,5 +45,5 @@
     "story:sota-final-scorecard"
   ],
   "created_at": "2026-04-30T06:43:02.936851387+00:00",
-  "updated_at": "2026-05-07T18:17:04.625072648+00:00"
+  "updated_at": "2026-05-07T21:35:31.365572653+00:00"
 }

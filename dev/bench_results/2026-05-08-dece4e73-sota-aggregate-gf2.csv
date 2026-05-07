@@ -1,0 +1,460 @@
+operation,field,n,density,wall_time_ms,implementation,host,seed,source_csv,bench_run_date,jit_issue
+fgemm,GF(7),64,,1.111750,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5180433273409205583,2026-04-26-gf2.csv,2026-04-26,3b762764
+pluq,GF(7),64,,0.462675,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",1253827771496180483,2026-04-26-gf2.csv,2026-04-26,3b762764
+pluq,GF(7),64,,0.395120,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10238191392210833268,2026-04-26-gf2.csv,2026-04-26,3b762764
+echelon,GF(7),64,,1.054625,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11803774076554546630,2026-04-26-gf2.csv,2026-04-26,3b762764
+echelon,GF(7),64,,0.956980,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10403912173925513489,2026-04-26-gf2.csv,2026-04-26,3b762764
+invert,GF(7),64,,2.181010,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5934371847120486591,2026-04-26-gf2.csv,2026-04-26,3b762764
+invert,GF(7),64,,0.393280,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",18428513764158899361,2026-04-26-gf2.csv,2026-04-26,3b762764
+solve,GF(7),64,,0.467310,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5507037633494828434,2026-04-26-gf2.csv,2026-04-26,3b762764
+solve,GF(7),64,,0.379285,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9094553455404696733,2026-04-26-gf2.csv,2026-04-26,3b762764
+fgemm,GF(251),64,,0.914490,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5180433273409205583,2026-04-26-gf2.csv,2026-04-26,3b762764
+pluq,GF(251),64,,0.404375,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",1253827771496180483,2026-04-26-gf2.csv,2026-04-26,3b762764
+pluq,GF(251),64,,0.345050,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10238191392210833268,2026-04-26-gf2.csv,2026-04-26,3b762764
+echelon,GF(251),64,,0.935575,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11803774076554546630,2026-04-26-gf2.csv,2026-04-26,3b762764
+echelon,GF(251),64,,0.854440,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10403912173925513489,2026-04-26-gf2.csv,2026-04-26,3b762764
+invert,GF(251),64,,2.212546,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5934371847120486591,2026-04-26-gf2.csv,2026-04-26,3b762764
+invert,GF(251),64,,0.343745,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",18428513764158899361,2026-04-26-gf2.csv,2026-04-26,3b762764
+solve,GF(251),64,,0.425770,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5507037633494828434,2026-04-26-gf2.csv,2026-04-26,3b762764
+solve,GF(251),64,,0.342405,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9094553455404696733,2026-04-26-gf2.csv,2026-04-26,3b762764
+fgemm,GF(65521),64,,0.972070,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5180433273409205583,2026-04-26-gf2.csv,2026-04-26,3b762764
+pluq,GF(65521),64,,0.418295,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",1253827771496180483,2026-04-26-gf2.csv,2026-04-26,3b762764
+pluq,GF(65521),64,,0.350225,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10238191392210833268,2026-04-26-gf2.csv,2026-04-26,3b762764
+echelon,GF(65521),64,,0.949675,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11803774076554546630,2026-04-26-gf2.csv,2026-04-26,3b762764
+echelon,GF(65521),64,,0.865675,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10403912173925513489,2026-04-26-gf2.csv,2026-04-26,3b762764
+invert,GF(65521),64,,2.247350,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5934371847120486591,2026-04-26-gf2.csv,2026-04-26,3b762764
+invert,GF(65521),64,,0.353550,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",18428513764158899361,2026-04-26-gf2.csv,2026-04-26,3b762764
+solve,GF(65521),64,,0.440560,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5507037633494828434,2026-04-26-gf2.csv,2026-04-26,3b762764
+solve,GF(65521),64,,0.354020,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9094553455404696733,2026-04-26-gf2.csv,2026-04-26,3b762764
+fgemm,GF(2^31-1),64,,0.912480,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5180433273409205583,2026-04-26-gf2.csv,2026-04-26,3b762764
+pluq,GF(2^31-1),64,,0.456200,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",1253827771496180483,2026-04-26-gf2.csv,2026-04-26,3b762764
+pluq,GF(2^31-1),64,,0.364675,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10238191392210833268,2026-04-26-gf2.csv,2026-04-26,3b762764
+echelon,GF(2^31-1),64,,0.955625,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11803774076554546630,2026-04-26-gf2.csv,2026-04-26,3b762764
+echelon,GF(2^31-1),64,,0.871325,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10403912173925513489,2026-04-26-gf2.csv,2026-04-26,3b762764
+invert,GF(2^31-1),64,,2.285241,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5934371847120486591,2026-04-26-gf2.csv,2026-04-26,3b762764
+invert,GF(2^31-1),64,,0.359330,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",18428513764158899361,2026-04-26-gf2.csv,2026-04-26,3b762764
+solve,GF(2^31-1),64,,0.460560,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5507037633494828434,2026-04-26-gf2.csv,2026-04-26,3b762764
+solve,GF(2^31-1),64,,0.364510,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9094553455404696733,2026-04-26-gf2.csv,2026-04-26,3b762764
+fgemm,GF(2^8),64,,14.381809,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5180433273409205583,2026-04-26-gf2.csv,2026-04-26,3b762764
+pluq,GF(2^8),64,,5.368806,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",1253827771496180483,2026-04-26-gf2.csv,2026-04-26,3b762764
+pluq,GF(2^8),64,,4.651816,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10238191392210833268,2026-04-26-gf2.csv,2026-04-26,3b762764
+echelon,GF(2^8),64,,10.185763,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11803774076554546630,2026-04-26-gf2.csv,2026-04-26,3b762764
+echelon,GF(2^8),64,,8.941938,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10403912173925513489,2026-04-26-gf2.csv,2026-04-26,3b762764
+invert,GF(2^8),64,,23.133051,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5934371847120486591,2026-04-26-gf2.csv,2026-04-26,3b762764
+invert,GF(2^8),64,,4.611826,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",18428513764158899361,2026-04-26-gf2.csv,2026-04-26,3b762764
+solve,GF(2^8),64,,5.654661,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5507037633494828434,2026-04-26-gf2.csv,2026-04-26,3b762764
+solve,GF(2^8),64,,4.607791,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9094553455404696733,2026-04-26-gf2.csv,2026-04-26,3b762764
+fgemm,GF(2^16),64,,16.108154,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5180433273409205583,2026-04-26-gf2.csv,2026-04-26,3b762764
+pluq,GF(2^16),64,,6.247821,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",1253827771496180483,2026-04-26-gf2.csv,2026-04-26,3b762764
+pluq,GF(2^16),64,,5.309221,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10238191392210833268,2026-04-26-gf2.csv,2026-04-26,3b762764
+echelon,GF(2^16),64,,11.335723,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11803774076554546630,2026-04-26-gf2.csv,2026-04-26,3b762764
+echelon,GF(2^16),64,,9.811853,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10403912173925513489,2026-04-26-gf2.csv,2026-04-26,3b762764
+invert,GF(2^16),64,,27.225682,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5934371847120486591,2026-04-26-gf2.csv,2026-04-26,3b762764
+invert,GF(2^16),64,,5.303486,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",18428513764158899361,2026-04-26-gf2.csv,2026-04-26,3b762764
+solve,GF(2^16),64,,6.627577,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5507037633494828434,2026-04-26-gf2.csv,2026-04-26,3b762764
+solve,GF(2^16),64,,5.284897,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9094553455404696733,2026-04-26-gf2.csv,2026-04-26,3b762764
+fgemm,GF(7),256,,63.543348,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7392704192690275058,2026-04-26-gf2.csv,2026-04-26,3b762764
+pluq,GF(7),256,,23.594086,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",17190311719824071345,2026-04-26-gf2.csv,2026-04-26,3b762764
+pluq,GF(7),256,,20.431766,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",6513132282584046359,2026-04-26-gf2.csv,2026-04-26,3b762764
+echelon,GF(7),256,,57.433176,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14841876512744768636,2026-04-26-gf2.csv,2026-04-26,3b762764
+echelon,GF(7),256,,53.788785,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",15414661213738147629,2026-04-26-gf2.csv,2026-04-26,3b762764
+invert,GF(7),256,,136.022224,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7987072257454603602,2026-04-26-gf2.csv,2026-04-26,3b762764
+invert,GF(7),256,,20.158581,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11382297788580195442,2026-04-26-gf2.csv,2026-04-26,3b762764
+solve,GF(7),256,,23.690921,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4210633436373302228,2026-04-26-gf2.csv,2026-04-26,3b762764
+solve,GF(7),256,,22.045766,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14964916828173173308,2026-04-26-gf2.csv,2026-04-26,3b762764
+spmv,GF(7),256,density_0.01,0.004370,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",6081248749370559850,2026-04-26-gf2.csv,2026-04-26,3b762764
+spmv,GF(7),256,density_0.05,0.014560,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7632163516515065689,2026-04-26-gf2.csv,2026-04-26,3b762764
+fgemm,GF(251),256,,56.613606,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7392704192690275058,2026-04-26-gf2.csv,2026-04-26,3b762764
+pluq,GF(251),256,,21.380961,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",17190311719824071345,2026-04-26-gf2.csv,2026-04-26,3b762764
+pluq,GF(251),256,,18.352315,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",6513132282584046359,2026-04-26-gf2.csv,2026-04-26,3b762764
+echelon,GF(251),256,,51.839815,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14841876512744768636,2026-04-26-gf2.csv,2026-04-26,3b762764
+echelon,GF(251),256,,48.664304,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",15414661213738147629,2026-04-26-gf2.csv,2026-04-26,3b762764
+invert,GF(251),256,,135.897454,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7987072257454603602,2026-04-26-gf2.csv,2026-04-26,3b762764
+invert,GF(251),256,,18.410520,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11382297788580195442,2026-04-26-gf2.csv,2026-04-26,3b762764
+solve,GF(251),256,,21.856361,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4210633436373302228,2026-04-26-gf2.csv,2026-04-26,3b762764
+solve,GF(251),256,,18.465175,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14964916828173173308,2026-04-26-gf2.csv,2026-04-26,3b762764
+spmv,GF(251),256,density_0.01,0.004155,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",6081248749370559850,2026-04-26-gf2.csv,2026-04-26,3b762764
+spmv,GF(251),256,density_0.05,0.014165,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7632163516515065689,2026-04-26-gf2.csv,2026-04-26,3b762764
+fgemm,GF(65521),256,,56.912716,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7392704192690275058,2026-04-26-gf2.csv,2026-04-26,3b762764
+pluq,GF(65521),256,,21.316971,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",17190311719824071345,2026-04-26-gf2.csv,2026-04-26,3b762764
+pluq,GF(65521),256,,18.386305,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",6513132282584046359,2026-04-26-gf2.csv,2026-04-26,3b762764
+echelon,GF(65521),256,,51.563200,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14841876512744768636,2026-04-26-gf2.csv,2026-04-26,3b762764
+echelon,GF(65521),256,,48.303573,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",15414661213738147629,2026-04-26-gf2.csv,2026-04-26,3b762764
+invert,GF(65521),256,,134.264363,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7987072257454603602,2026-04-26-gf2.csv,2026-04-26,3b762764
+invert,GF(65521),256,,18.141090,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11382297788580195442,2026-04-26-gf2.csv,2026-04-26,3b762764
+solve,GF(65521),256,,21.747146,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4210633436373302228,2026-04-26-gf2.csv,2026-04-26,3b762764
+solve,GF(65521),256,,18.355840,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14964916828173173308,2026-04-26-gf2.csv,2026-04-26,3b762764
+spmv,GF(65521),256,density_0.01,0.004155,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",6081248749370559850,2026-04-26-gf2.csv,2026-04-26,3b762764
+spmv,GF(65521),256,density_0.05,0.014155,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7632163516515065689,2026-04-26-gf2.csv,2026-04-26,3b762764
+fgemm,GF(2^31-1),256,,56.366396,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7392704192690275058,2026-04-26-gf2.csv,2026-04-26,3b762764
+pluq,GF(2^31-1),256,,21.689961,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",17190311719824071345,2026-04-26-gf2.csv,2026-04-26,3b762764
+pluq,GF(2^31-1),256,,18.350590,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",6513132282584046359,2026-04-26-gf2.csv,2026-04-26,3b762764
+echelon,GF(2^31-1),256,,52.462415,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14841876512744768636,2026-04-26-gf2.csv,2026-04-26,3b762764
+echelon,GF(2^31-1),256,,48.751309,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",15414661213738147629,2026-04-26-gf2.csv,2026-04-26,3b762764
+invert,GF(2^31-1),256,,134.396473,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7987072257454603602,2026-04-26-gf2.csv,2026-04-26,3b762764
+invert,GF(2^31-1),256,,18.623530,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11382297788580195442,2026-04-26-gf2.csv,2026-04-26,3b762764
+solve,GF(2^31-1),256,,21.987636,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4210633436373302228,2026-04-26-gf2.csv,2026-04-26,3b762764
+solve,GF(2^31-1),256,,18.183810,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14964916828173173308,2026-04-26-gf2.csv,2026-04-26,3b762764
+spmv,GF(2^31-1),256,density_0.01,0.003820,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",6081248749370559850,2026-04-26-gf2.csv,2026-04-26,3b762764
+spmv,GF(2^31-1),256,density_0.05,0.012590,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7632163516515065689,2026-04-26-gf2.csv,2026-04-26,3b762764
+fgemm,GF(2^8),256,,923.359194,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7392704192690275058,2026-04-26-gf2.csv,2026-04-26,3b762764
+pluq,GF(2^8),256,,320.372761,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",17190311719824071345,2026-04-26-gf2.csv,2026-04-26,3b762764
+pluq,GF(2^8),256,,279.279885,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",6513132282584046359,2026-04-26-gf2.csv,2026-04-26,3b762764
+echelon,GF(2^8),256,,628.381975,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14841876512744768636,2026-04-26-gf2.csv,2026-04-26,3b762764
+echelon,GF(2^8),256,,552.112468,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",15414661213738147629,2026-04-26-gf2.csv,2026-04-26,3b762764
+invert,GF(2^8),256,,1438.665046,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7987072257454603602,2026-04-26-gf2.csv,2026-04-26,3b762764
+invert,GF(2^8),256,,278.208509,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11382297788580195442,2026-04-26-gf2.csv,2026-04-26,3b762764
+solve,GF(2^8),256,,330.715725,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4210633436373302228,2026-04-26-gf2.csv,2026-04-26,3b762764
+solve,GF(2^8),256,,281.256240,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14964916828173173308,2026-04-26-gf2.csv,2026-04-26,3b762764
+spmv,GF(2^8),256,density_0.01,0.037050,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",6081248749370559850,2026-04-26-gf2.csv,2026-04-26,3b762764
+spmv,GF(2^8),256,density_0.05,0.228200,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7632163516515065689,2026-04-26-gf2.csv,2026-04-26,3b762764
+fgemm,GF(2^16),256,,1036.898006,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7392704192690275058,2026-04-26-gf2.csv,2026-04-26,3b762764
+pluq,GF(2^16),256,,362.688249,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",17190311719824071345,2026-04-26-gf2.csv,2026-04-26,3b762764
+pluq,GF(2^16),256,,315.833630,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",6513132282584046359,2026-04-26-gf2.csv,2026-04-26,3b762764
+echelon,GF(2^16),256,,695.832139,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14841876512744768636,2026-04-26-gf2.csv,2026-04-26,3b762764
+echelon,GF(2^16),256,,607.761669,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",15414661213738147629,2026-04-26-gf2.csv,2026-04-26,3b762764
+invert,GF(2^16),256,,1594.600811,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7987072257454603602,2026-04-26-gf2.csv,2026-04-26,3b762764
+invert,GF(2^16),256,,316.473695,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11382297788580195442,2026-04-26-gf2.csv,2026-04-26,3b762764
+solve,GF(2^16),256,,366.831675,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4210633436373302228,2026-04-26-gf2.csv,2026-04-26,3b762764
+solve,GF(2^16),256,,313.884000,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14964916828173173308,2026-04-26-gf2.csv,2026-04-26,3b762764
+spmv,GF(2^16),256,density_0.01,0.039840,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",6081248749370559850,2026-04-26-gf2.csv,2026-04-26,3b762764
+spmv,GF(2^16),256,density_0.05,0.199600,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7632163516515065689,2026-04-26-gf2.csv,2026-04-26,3b762764
+charpoly,GF(7),32,,0.231525,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11506559259852285241,2026-04-26-gf2.csv,2026-04-26,3b762764
+charpoly,GF(7),128,,13.141298,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",16108071587005897015,2026-04-26-gf2.csv,2026-04-26,3b762764
+charpoly,GF(7),512,,810.873617,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",12919180291205843248,2026-04-26-gf2.csv,2026-04-26,3b762764
+charpoly,GF(251),32,,0.234935,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11506559259852285241,2026-04-26-gf2.csv,2026-04-26,3b762764
+charpoly,GF(251),128,,13.237203,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",16108071587005897015,2026-04-26-gf2.csv,2026-04-26,3b762764
+charpoly,GF(251),512,,777.644557,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",12919180291205843248,2026-04-26-gf2.csv,2026-04-26,3b762764
+charpoly,GF(65521),32,,0.240925,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11506559259852285241,2026-04-26-gf2.csv,2026-04-26,3b762764
+charpoly,GF(65521),128,,12.650448,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",16108071587005897015,2026-04-26-gf2.csv,2026-04-26,3b762764
+charpoly,GF(65521),512,,784.535144,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",12919180291205843248,2026-04-26-gf2.csv,2026-04-26,3b762764
+charpoly,GF(2^31-1),32,,0.269665,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11506559259852285241,2026-04-26-gf2.csv,2026-04-26,3b762764
+charpoly,GF(2^31-1),128,,13.018523,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",16108071587005897015,2026-04-26-gf2.csv,2026-04-26,3b762764
+charpoly,GF(2^31-1),512,,784.356834,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",12919180291205843248,2026-04-26-gf2.csv,2026-04-26,3b762764
+charpoly,GF(2^8),32,,2.713935,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11506559259852285241,2026-04-26-gf2.csv,2026-04-26,3b762764
+charpoly,GF(2^8),128,,155.942364,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",16108071587005897015,2026-04-26-gf2.csv,2026-04-26,3b762764
+charpoly,GF(2^8),512,,9796.399528,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",12919180291205843248,2026-04-26-gf2.csv,2026-04-26,3b762764
+charpoly,GF(2^16),32,,3.536321,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11506559259852285241,2026-04-26-gf2.csv,2026-04-26,3b762764
+charpoly,GF(2^16),128,,180.127806,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",16108071587005897015,2026-04-26-gf2.csv,2026-04-26,3b762764
+charpoly,GF(2^16),512,,10821.608466,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",12919180291205843248,2026-04-26-gf2.csv,2026-04-26,3b762764
+fgemm,GF(7),1024,,4077.024986,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",16021027940197092104,2026-04-26-gf2.csv,2026-04-26,3b762764
+fgemm,GF(251),1024,,3637.699225,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",16021027940197092104,2026-04-26-gf2.csv,2026-04-26,3b762764
+fgemm,GF(65521),1024,,3852.845407,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",16021027940197092104,2026-04-26-gf2.csv,2026-04-26,3b762764
+fgemm,GF(2^31-1),1024,,3642.475762,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",16021027940197092104,2026-04-26-gf2.csv,2026-04-26,3b762764
+fgemm,GF(2^8),1024,,59527.974631,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",16021027940197092104,2026-04-26-gf2.csv,2026-04-26,3b762764
+fgemm,GF(2^16),1024,,67040.967121,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",16021027940197092104,2026-04-26-gf2.csv,2026-04-26,3b762764
+spmv,GF(7),1024,density_0.01,0.049640,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9463162755457539587,2026-04-26-gf2.csv,2026-04-26,3b762764
+spmv,GF(7),1024,density_0.05,0.213700,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4964387151917631302,2026-04-26-gf2.csv,2026-04-26,3b762764
+spmv,GF(251),1024,density_0.01,0.052260,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9463162755457539587,2026-04-26-gf2.csv,2026-04-26,3b762764
+spmv,GF(251),1024,density_0.05,0.223535,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4964387151917631302,2026-04-26-gf2.csv,2026-04-26,3b762764
+spmv,GF(65521),1024,density_0.01,0.049025,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9463162755457539587,2026-04-26-gf2.csv,2026-04-26,3b762764
+spmv,GF(65521),1024,density_0.05,0.214925,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4964387151917631302,2026-04-26-gf2.csv,2026-04-26,3b762764
+spmv,GF(2^31-1),1024,density_0.01,0.043800,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9463162755457539587,2026-04-26-gf2.csv,2026-04-26,3b762764
+spmv,GF(2^31-1),1024,density_0.05,0.188960,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4964387151917631302,2026-04-26-gf2.csv,2026-04-26,3b762764
+spmv,GF(2^8),1024,density_0.01,0.659235,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9463162755457539587,2026-04-26-gf2.csv,2026-04-26,3b762764
+spmv,GF(2^8),1024,density_0.05,3.193581,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4964387151917631302,2026-04-26-gf2.csv,2026-04-26,3b762764
+spmv,GF(2^16),1024,density_0.01,0.775790,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9463162755457539587,2026-04-26-gf2.csv,2026-04-26,3b762764
+spmv,GF(2^16),1024,density_0.05,4.040671,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4964387151917631302,2026-04-26-gf2.csv,2026-04-26,3b762764
+pluq,GF(2^31-1),1024,,1264.887797,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",6513132282584046359,2026-04-26-gf2.csv,2026-04-26,3b762764
+pluq,GF(2^31-1),1024,,1092.886973,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",17190311719824071345,2026-04-26-gf2.csv,2026-04-26,3b762764
+echelon,GF(2^31-1),1024,,3108.628144,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7802675733600006652,2026-04-26-gf2.csv,2026-04-26,3b762764
+echelon,GF(2^31-1),1024,,2939.589016,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10393472745051128352,2026-04-26-gf2.csv,2026-04-26,3b762764
+invert,GF(2^31-1),1024,,8381.981088,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",13331486115574067583,2026-04-26-gf2.csv,2026-04-26,3b762764
+invert,GF(2^31-1),1024,,1093.215067,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",2400478951954270886,2026-04-26-gf2.csv,2026-04-26,3b762764
+solve,GF(2^31-1),1024,,1265.581212,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14964916828173173308,2026-04-26-gf2.csv,2026-04-26,3b762764
+solve,GF(2^31-1),1024,,1095.579493,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4210633436373302228,2026-04-26-gf2.csv,2026-04-26,3b762764
+minpoly,GF(7),32,,9.086583,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7124369455730547265,2026-04-26-gf2.csv,2026-04-26,3b762764
+minpoly,GF(7),128,,1787.804921,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",3030515438096318124,2026-04-26-gf2.csv,2026-04-26,3b762764
+minpoly,GF(251),32,,8.672993,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7124369455730547265,2026-04-26-gf2.csv,2026-04-26,3b762764
+minpoly,GF(251),128,,1865.441634,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",3030515438096318124,2026-04-26-gf2.csv,2026-04-26,3b762764
+minpoly,GF(65521),32,,8.940462,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7124369455730547265,2026-04-26-gf2.csv,2026-04-26,3b762764
+minpoly,GF(65521),128,,1828.751513,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",3030515438096318124,2026-04-26-gf2.csv,2026-04-26,3b762764
+minpoly,GF(2^31-1),32,,8.575883,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7124369455730547265,2026-04-26-gf2.csv,2026-04-26,3b762764
+minpoly,GF(2^31-1),128,,1746.523220,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",3030515438096318124,2026-04-26-gf2.csv,2026-04-26,3b762764
+minpoly,GF(2^8),32,,103.769349,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7124369455730547265,2026-04-26-gf2.csv,2026-04-26,3b762764
+minpoly,GF(2^8),128,,23066.403530,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",3030515438096318124,2026-04-26-gf2.csv,2026-04-26,3b762764
+minpoly,GF(2^16),32,,118.337484,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7124369455730547265,2026-04-26-gf2.csv,2026-04-26,3b762764
+minpoly,GF(2^16),128,,24041.546718,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",3030515438096318124,2026-04-26-gf2.csv,2026-04-26,3b762764
+fgemm,GF(7),32,,127.942006,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14755040838466217927,2026-04-26-gf2.csv,2026-04-26,3b762764
+fgemm,GF(7),8,,33.162144,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",2242115113139862418,2026-04-26-gf2.csv,2026-04-26,3b762764
+fgemm,GF(251),32,,127.095981,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14755040838466217927,2026-04-26-gf2.csv,2026-04-26,3b762764
+fgemm,GF(251),8,,31.344294,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",2242115113139862418,2026-04-26-gf2.csv,2026-04-26,3b762764
+fgemm,GF(65521),32,,126.023931,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14755040838466217927,2026-04-26-gf2.csv,2026-04-26,3b762764
+fgemm,GF(65521),8,,31.443384,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",2242115113139862418,2026-04-26-gf2.csv,2026-04-26,3b762764
+fgemm,GF(2^31-1),32,,107.096140,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14755040838466217927,2026-04-26-gf2.csv,2026-04-26,3b762764
+fgemm,GF(2^31-1),8,,26.069002,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",2242115113139862418,2026-04-26-gf2.csv,2026-04-26,3b762764
+fgemm,GF(2^8),32,,1850.329589,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14755040838466217927,2026-04-26-gf2.csv,2026-04-26,3b762764
+fgemm,GF(2^8),8,,460.548341,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",2242115113139862418,2026-04-26-gf2.csv,2026-04-26,3b762764
+fgemm,GF(2^16),32,,2055.643743,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14755040838466217927,2026-04-26-gf2.csv,2026-04-26,3b762764
+fgemm,GF(2^16),8,,516.559617,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",2242115113139862418,2026-04-26-gf2.csv,2026-04-26,3b762764
+matmul,GF(2),64,,0.023605,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",18019032228134030376,2026-04-26-gf2.csv,2026-04-26,3b762764
+matmul,GF(2),64,,0.020785,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",17954810277715416078,2026-04-26-gf2.csv,2026-04-26,3b762764
+matmul,GF(2),256,,0.404035,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5029001727799685242,2026-04-26-gf2.csv,2026-04-26,3b762764
+matmul,GF(2),256,,0.350555,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11077203353436578010,2026-04-26-gf2.csv,2026-04-26,3b762764
+matmul,GF(2),1024,,5.542437,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11077203353436578010,2026-04-26-gf2.csv,2026-04-26,3b762764
+matmul,GF(2),1024,,5.341111,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5029001727799685242,2026-04-26-gf2.csv,2026-04-26,3b762764
+matmul,GF(2),4096,,125.755731,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14642261630934287350,2026-04-26-gf2.csv,2026-04-26,3b762764
+matmul,GF(2),4096,,122.101340,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11240797206989852029,2026-04-26-gf2.csv,2026-04-26,3b762764
+echelon,GF(2),64,,0.022770,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",18083463544724802765,2026-04-26-gf2.csv,2026-04-26,3b762764
+echelon,GF(2),64,,0.010610,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",6958518776975921273,2026-04-26-gf2.csv,2026-04-26,3b762764
+echelon,GF(2),256,,0.388350,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11859318649777118390,2026-04-26-gf2.csv,2026-04-26,3b762764
+echelon,GF(2),256,,0.178445,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4417706408538007447,2026-04-26-gf2.csv,2026-04-26,3b762764
+echelon,GF(2),1024,,8.166637,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4417706408538007447,2026-04-26-gf2.csv,2026-04-26,3b762764
+echelon,GF(2),1024,,3.868381,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11859318649777118390,2026-04-26-gf2.csv,2026-04-26,3b762764
+invert,GF(2),64,,0.040450,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",12686674750602872377,2026-04-26-gf2.csv,2026-04-26,3b762764
+invert,GF(2),256,,0.871210,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10937053696568039402,2026-04-26-gf2.csv,2026-04-26,3b762764
+invert,GF(2),1024,,24.726737,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11240797206989852029,2026-04-26-gf2.csv,2026-04-26,3b762764
+spmv,GF(2),256,density_0.01,0.002325,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",6081248749370559850,2026-04-26-gf2.csv,2026-04-26,3b762764
+spmv,GF(2),1024,density_0.01,0.008685,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9463162755457539587,2026-04-26-gf2.csv,2026-04-26,3b762764
+spmv,GF(2),4096,density_0.01,0.187635,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4964387151917631302,2026-04-26-gf2.csv,2026-04-26,3b762764
+spmv,GF(2),256,density_0.05,0.004585,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7632163516515065689,2026-04-26-gf2.csv,2026-04-26,3b762764
+spmv,GF(2),1024,density_0.05,0.035620,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4964387151917631302,2026-04-26-gf2.csv,2026-04-26,3b762764
+spmv,GF(2),4096,density_0.05,0.498755,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9463162755457539587,2026-04-26-gf2.csv,2026-04-26,3b762764
+pluq,GF(7),64,,0.462675,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",1253827771496180483,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+pluq,GF(7),64,,0.395120,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10238191392210833268,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+echelon,GF(7),64,,1.054625,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11803774076554546630,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+echelon,GF(7),64,,0.956980,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10403912173925513489,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+invert,GF(7),64,,2.181010,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5934371847120486591,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+invert,GF(7),64,,0.393280,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",18428513764158899361,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+solve,GF(7),64,,0.467310,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5507037633494828434,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+solve,GF(7),64,,0.379285,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9094553455404696733,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+pluq,GF(251),64,,0.404375,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",1253827771496180483,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+pluq,GF(251),64,,0.345050,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10238191392210833268,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+echelon,GF(251),64,,0.935575,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11803774076554546630,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+echelon,GF(251),64,,0.854440,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10403912173925513489,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+invert,GF(251),64,,2.212546,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5934371847120486591,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+invert,GF(251),64,,0.343745,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",18428513764158899361,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+solve,GF(251),64,,0.425770,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5507037633494828434,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+solve,GF(251),64,,0.342405,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9094553455404696733,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+pluq,GF(65521),64,,0.418295,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",1253827771496180483,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+pluq,GF(65521),64,,0.350225,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10238191392210833268,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+echelon,GF(65521),64,,0.949675,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11803774076554546630,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+echelon,GF(65521),64,,0.865675,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10403912173925513489,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+invert,GF(65521),64,,2.247350,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5934371847120486591,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+invert,GF(65521),64,,0.353550,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",18428513764158899361,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+solve,GF(65521),64,,0.440560,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5507037633494828434,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+solve,GF(65521),64,,0.354020,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9094553455404696733,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+pluq,GF(2^31-1),64,,0.456200,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",1253827771496180483,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+pluq,GF(2^31-1),64,,0.364675,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10238191392210833268,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+echelon,GF(2^31-1),64,,0.955625,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11803774076554546630,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+echelon,GF(2^31-1),64,,0.871325,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10403912173925513489,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+invert,GF(2^31-1),64,,2.285241,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5934371847120486591,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+invert,GF(2^31-1),64,,0.359330,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",18428513764158899361,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+solve,GF(2^31-1),64,,0.460560,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5507037633494828434,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+solve,GF(2^31-1),64,,0.364510,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",9094553455404696733,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+pluq,GF(7),256,,23.594086,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",17190311719824071345,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+pluq,GF(7),256,,20.431766,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",6513132282584046359,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+echelon,GF(7),256,,57.433176,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14841876512744768636,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+echelon,GF(7),256,,53.788785,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",15414661213738147629,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+invert,GF(7),256,,136.022224,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7987072257454603602,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+invert,GF(7),256,,20.158581,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11382297788580195442,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+solve,GF(7),256,,23.690921,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4210633436373302228,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+solve,GF(7),256,,22.045766,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14964916828173173308,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+pluq,GF(251),256,,21.380961,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",17190311719824071345,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+pluq,GF(251),256,,18.352315,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",6513132282584046359,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+echelon,GF(251),256,,51.839815,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14841876512744768636,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+echelon,GF(251),256,,48.664304,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",15414661213738147629,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+invert,GF(251),256,,135.897454,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7987072257454603602,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+invert,GF(251),256,,18.410520,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11382297788580195442,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+solve,GF(251),256,,21.856361,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4210633436373302228,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+solve,GF(251),256,,18.465175,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14964916828173173308,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+pluq,GF(65521),256,,21.316971,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",17190311719824071345,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+pluq,GF(65521),256,,18.386305,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",6513132282584046359,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+echelon,GF(65521),256,,51.563200,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14841876512744768636,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+echelon,GF(65521),256,,48.303573,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",15414661213738147629,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+invert,GF(65521),256,,134.264363,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7987072257454603602,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+invert,GF(65521),256,,18.141090,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11382297788580195442,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+solve,GF(65521),256,,21.747146,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4210633436373302228,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+solve,GF(65521),256,,18.355840,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14964916828173173308,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+pluq,GF(2^31-1),256,,21.689961,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",17190311719824071345,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+pluq,GF(2^31-1),256,,18.350590,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",6513132282584046359,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+echelon,GF(2^31-1),256,,52.462415,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14841876512744768636,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+echelon,GF(2^31-1),256,,48.751309,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",15414661213738147629,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+invert,GF(2^31-1),256,,134.396473,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7987072257454603602,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+invert,GF(2^31-1),256,,18.623530,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11382297788580195442,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+solve,GF(2^31-1),256,,21.987636,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4210633436373302228,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+solve,GF(2^31-1),256,,18.183810,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14964916828173173308,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+pluq,GF(2^31-1),1024,,1264.887797,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",6513132282584046359,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+pluq,GF(2^31-1),1024,,1092.886973,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",17190311719824071345,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+echelon,GF(2^31-1),1024,,3108.628144,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",7802675733600006652,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+echelon,GF(2^31-1),1024,,2939.589016,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10393472745051128352,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+invert,GF(2^31-1),1024,,8381.981088,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",13331486115574067583,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+invert,GF(2^31-1),1024,,1093.215067,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",2400478951954270886,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+solve,GF(2^31-1),1024,,1265.581212,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14964916828173173308,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+solve,GF(2^31-1),1024,,1095.579493,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4210633436373302228,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+matmul,GF(2),64,,0.023605,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",18019032228134030376,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+matmul,GF(2),64,,0.020785,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",17954810277715416078,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+matmul,GF(2),256,,0.404035,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5029001727799685242,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+matmul,GF(2),256,,0.350555,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11077203353436578010,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+matmul,GF(2),1024,,5.542437,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11077203353436578010,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+matmul,GF(2),1024,,5.341111,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",5029001727799685242,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+matmul,GF(2),4096,,125.755731,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",14642261630934287350,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+matmul,GF(2),4096,,122.101340,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11240797206989852029,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+echelon,GF(2),64,,0.022770,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",18083463544724802765,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+echelon,GF(2),64,,0.010610,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",6958518776975921273,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+echelon,GF(2),256,,0.388350,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11859318649777118390,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+echelon,GF(2),256,,0.178445,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4417706408538007447,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+echelon,GF(2),1024,,8.166637,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",4417706408538007447,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+echelon,GF(2),1024,,3.868381,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11859318649777118390,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+invert,GF(2),64,,0.040450,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",12686674750602872377,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+invert,GF(2),256,,0.871210,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",10937053696568039402,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+invert,GF(2),1024,,24.726737,gf2,"AMD Ryzen 9 5900X (Zen 3), pinned container gf2-bench:ref",11240797206989852029,2026-05-04-3b762764-dense-la-reference.csv,2026-04-26,3b762764
+sparse-elim,GF(2),256,3.906250e-02,9.593009,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",13671275229359443338,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+sparse-elim,GF(2),1024,9.765625e-03,505.269928,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",14806907769766661618,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+spmv,GF(2),1024,9.765625e-03,0.009923,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+spmv,GF(2),1024,9.765625e-03,0.006803,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+spmv,GF(2),1024,9.765625e-03,0.011987,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+spmv,GF(2),1024,9.765625e-03,0.015793,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+spmv,GF(2),1024,9.765625e-03,0.007643,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+sparse-matmul,GF(2),1024,9.765625e-03,0.503103,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+sparse×dense,GF(2),1024,9.765625e-03,0.036680,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+sparse-elim,GF(7),256,3.906250e-02,21.423416,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",13671275229359443338,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+sparse-elim,GF(7),1024,9.765625e-03,1112.513938,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",14806907769766661618,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+spmv,GF(7),1024,9.765625e-03,0.020163,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+sparse-matmul,GF(7),1024,9.765625e-03,1.016633,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+sparse×dense,GF(7),1024,9.765625e-03,17.397411,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+sparse-elim,GF(251),256,3.906250e-02,16.761361,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",13671275229359443338,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+sparse-elim,GF(251),1024,9.765625e-03,776.362225,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",14806907769766661618,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+spmv,GF(251),1024,9.765625e-03,0.023713,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+sparse-matmul,GF(251),1024,9.765625e-03,1.026363,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+sparse×dense,GF(251),1024,9.765625e-03,17.335168,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+sparse-elim,GF(65521),256,3.906250e-02,15.643864,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",13671275229359443338,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+sparse-elim,GF(65521),1024,9.765625e-03,717.241325,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",14806907769766661618,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+spmv,GF(65521),1024,9.765625e-03,0.020326,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+sparse-matmul,GF(65521),1024,9.765625e-03,1.020553,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+sparse×dense,GF(65521),1024,9.765625e-03,17.265621,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+sparse-elim,GF(2^31-1),256,3.906250e-02,16.209991,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",13671275229359443338,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+sparse-elim,GF(2^31-1),1024,9.765625e-03,754.420032,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",14806907769766661618,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+spmv,GF(2^31-1),1024,9.765625e-03,0.010723,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+sparse-matmul,GF(2^31-1),1024,9.765625e-03,1.008220,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+sparse×dense,GF(2^31-1),1024,9.765625e-03,13.840414,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+spmv,GF(2^8),1024,9.765625e-03,0.505706,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+sparse-matmul,GF(2^8),1024,9.765625e-03,5.899298,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+sparse×dense,GF(2^8),1024,9.765625e-03,512.217206,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+spmv,GF(2^16),1024,9.765625e-03,0.570637,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+sparse-matmul,GF(2^16),1024,9.765625e-03,6.552382,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+sparse×dense,GF(2^16),1024,9.765625e-03,591.806672,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+spmv,GF(2),1024,structured_banded-w8,0.013173,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",0,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+spmv,GF(2),1024,structured_banded-w64,0.069533,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",0,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+spmv,GF(2),1024,structured_circulant-w8,0.006980,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",0,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+spmv,GF(2),1024,structured_rcm-permuted-er,0.007640,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+spmv,GF(2),9000,coding-theory_dvb-t2-short-r1_2,0.070050,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",0,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+spmv,GF(2),21600,coding-theory_dvb-t2-normal-r2_3,0.205663,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",0,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+spmv,GF(2),17664,coding-theory_nr-5g-bg1-z384,0.139113,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",0,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+spmv,GF(2),8736,coding-theory_nr-5g-bg2-z208,0.054540,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",0,2026-05-04-47698404-sparse-extended.csv,2026-05-04,47698404
+fgemm,GF(7),64,,0.029370,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",5180433273409205583,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(7),256,,0.992058,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",7392704192690275058,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(7),1024,,43.517810,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",16021027940197092104,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(7),4096,,1692.472726,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",16214413637036924079,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(7),32,,1.958100,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",14755040838466217927,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(7),8,,1.566660,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",2242115113139862418,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(31),64,,0.040768,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",5180433273409205583,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(31),256,,0.843096,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",7392704192690275058,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(31),1024,,32.361127,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",16021027940197092104,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(31),4096,,1758.850777,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",16214413637036924079,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(31),32,,2.114990,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",14755040838466217927,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(31),8,,1.676002,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",2242115113139862418,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(251),64,,0.034984,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",5180433273409205583,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(251),256,,0.767794,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",7392704192690275058,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(251),1024,,30.998807,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",16021027940197092104,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(251),4096,,1771.329158,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",16214413637036924079,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(251),32,,1.917594,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",14755040838466217927,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(251),8,,1.313308,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",2242115113139862418,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(65521),64,,0.080228,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",5180433273409205583,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(65521),256,,2.070182,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",7392704192690275058,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(65521),1024,,86.330106,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",16021027940197092104,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(65521),4096,,4905.851225,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",16214413637036924079,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(65521),32,,3.023544,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",14755040838466217927,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(65521),8,,1.446952,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",2242115113139862418,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(2^31-1),64,,0.188572,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",5180433273409205583,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(2^31-1),256,,10.507119,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",7392704192690275058,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(2^31-1),1024,,648.667453,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",16021027940197092104,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(2^31-1),4096,,50431.178989,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",16214413637036924079,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(2^31-1),32,,28.260268,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",14755040838466217927,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(2^31-1),8,,7.161446,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",2242115113139862418,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(2^8),64,,0.329134,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",5180433273409205583,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(2^8),256,,22.827146,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",7392704192690275058,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(2^8),1024,,1494.647251,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",16021027940197092104,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(2^8),4096,,75184.630130,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",16214413637036924079,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(2^8),32,,36.435416,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",14755040838466217927,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(2^8),8,,10.170155,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",2242115113139862418,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(2^16),64,,0.283922,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",5180433273409205583,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(2^16),256,,17.765497,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",7392704192690275058,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(2^16),1024,,1226.472883,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",16021027940197092104,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(2^16),4096,,77818.425775,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",16214413637036924079,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(2^16),32,,47.763519,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",14755040838466217927,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+fgemm,GF(2^16),8,,13.858418,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",2242115113139862418,2026-05-06-e24f7839-gf2m-panelized.csv,2026-05-06,e24f7839
+matmul,GF(2^32),64,,0.302524,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",17158103737143628803,2026-05-06-e24f7839-gf2pow32-panelized.csv,2026-05-06,e24f7839
+matmul,GF(2^32),256,,17.780457,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",16610483722261398142,2026-05-06-e24f7839-gf2pow32-panelized.csv,2026-05-06,e24f7839
+matmul,GF(2^32),1024,,1337.245920,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",11382297788580195442,2026-05-06-e24f7839-gf2pow32-panelized.csv,2026-05-06,e24f7839
+matmul,GF(2),64,,0.009530,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",18019032228134030376,2026-05-06-e24f7839-gf2pow32-panelized.csv,2026-05-06,e24f7839
+matmul,GF(2),64,,0.009526,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",17954810277715416078,2026-05-06-e24f7839-gf2pow32-panelized.csv,2026-05-06,e24f7839
+matmul,GF(2),256,,0.078946,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",5029001727799685242,2026-05-06-e24f7839-gf2pow32-panelized.csv,2026-05-06,e24f7839
+matmul,GF(2),256,,0.093116,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",11077203353436578010,2026-05-06-e24f7839-gf2pow32-panelized.csv,2026-05-06,e24f7839
+matmul,GF(2),1024,,0.868978,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",11077203353436578010,2026-05-06-e24f7839-gf2pow32-panelized.csv,2026-05-06,e24f7839
+matmul,GF(2),1024,,0.875456,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",5029001727799685242,2026-05-06-e24f7839-gf2pow32-panelized.csv,2026-05-06,e24f7839
+matmul,GF(2),4096,,34.072601,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",14642261630934287350,2026-05-06-e24f7839-gf2pow32-panelized.csv,2026-05-06,e24f7839
+matmul,GF(2),4096,,31.574319,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",11240797206989852029,2026-05-06-e24f7839-gf2pow32-panelized.csv,2026-05-06,e24f7839
+spmv,GF(2),1024,9.765625e-03,0.013650,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-07-3a37e0f6-spmv-path-a.csv,2026-05-07,3a37e0f6
+spmv,GF(2),1024,9.765625e-03,0.010520,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-07-3a37e0f6-spmv-path-a.csv,2026-05-07,3a37e0f6
+spmv,GF(2),1024,9.765625e-03,0.012110,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-07-3a37e0f6-spmv-path-a.csv,2026-05-07,3a37e0f6
+spmv,GF(2),1024,9.765625e-03,0.020213,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-07-3a37e0f6-spmv-path-a.csv,2026-05-07,3a37e0f6
+spmv,GF(2),1024,9.765625e-03,0.011033,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-07-3a37e0f6-spmv-path-a.csv,2026-05-07,3a37e0f6
+spmv,GF(7),1024,9.765625e-03,0.011623,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-07-3a37e0f6-spmv-path-a.csv,2026-05-07,3a37e0f6
+spmv,GF(251),1024,9.765625e-03,0.011566,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-07-3a37e0f6-spmv-path-a.csv,2026-05-07,3a37e0f6
+spmv,GF(65521),1024,9.765625e-03,0.011663,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-07-3a37e0f6-spmv-path-a.csv,2026-05-07,3a37e0f6
+spmv,GF(2^31-1),1024,9.765625e-03,0.011350,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-07-3a37e0f6-spmv-path-a.csv,2026-05-07,3a37e0f6
+spmv,GF(2^8),1024,9.765625e-03,0.547683,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-07-3a37e0f6-spmv-path-a.csv,2026-05-07,3a37e0f6
+spmv,GF(2^16),1024,9.765625e-03,0.625283,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-07-3a37e0f6-spmv-path-a.csv,2026-05-07,3a37e0f6
+sparse×dense,GF(7),1024,9.765625e-03,3.605255,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-07-3a37e0f6-sparse-dense-path-b-final.csv,2026-05-07,3a37e0f6
+sparse×dense,GF(251),1024,9.765625e-03,2.452018,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-07-3a37e0f6-sparse-dense-path-b-final.csv,2026-05-07,3a37e0f6
+sparse×dense,GF(65521),1024,9.765625e-03,4.580537,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-07-3a37e0f6-sparse-dense-path-b-final.csv,2026-05-07,3a37e0f6
+sparse×dense,GF(2^31-1),1024,9.765625e-03,8.487821,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-07-3a37e0f6-sparse-dense-path-b-final.csv,2026-05-07,3a37e0f6
+sparse×dense,GF(2^8),1024,9.765625e-03,546.806973,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-07-3a37e0f6-sparse-dense-path-b-final.csv,2026-05-07,3a37e0f6
+sparse×dense,GF(2^16),1024,9.765625e-03,617.572809,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",12777010762810534079,2026-05-07-3a37e0f6-sparse-dense-path-b-final.csv,2026-05-07,3a37e0f6
+fgemm,GF(2^8),64,,0.687038,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",5180433273409205583,2026-05-06-a1172cea-gf2m-gf2-rows.csv,2026-05-06,a1172cea
+fgemm,GF(2^8),256,,39.788387,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",7392704192690275058,2026-05-06-a1172cea-gf2m-gf2-rows.csv,2026-05-06,a1172cea
+fgemm,GF(2^8),1024,,2951.622042,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",16021027940197092104,2026-05-06-a1172cea-gf2m-gf2-rows.csv,2026-05-06,a1172cea
+fgemm,GF(2^8),4096,,176778.720067,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",16214413637036924079,2026-05-06-a1172cea-gf2m-gf2-rows.csv,2026-05-06,a1172cea
+fgemm,GF(2^8),32,,85.784806,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",14755040838466217927,2026-05-06-a1172cea-gf2m-gf2-rows.csv,2026-05-06,a1172cea
+fgemm,GF(2^8),8,,21.326062,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",2242115113139862418,2026-05-06-a1172cea-gf2m-gf2-rows.csv,2026-05-06,a1172cea
+fgemm,GF(2^16),64,,0.970566,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",5180433273409205583,2026-05-06-a1172cea-gf2m-gf2-rows.csv,2026-05-06,a1172cea
+fgemm,GF(2^16),256,,56.827482,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",7392704192690275058,2026-05-06-a1172cea-gf2m-gf2-rows.csv,2026-05-06,a1172cea
+fgemm,GF(2^16),1024,,3762.233182,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",16021027940197092104,2026-05-06-a1172cea-gf2m-gf2-rows.csv,2026-05-06,a1172cea
+matmul,GF(2^32),64,,5.861097,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",17158103737143628803,2026-05-06-a1172cea-gf2m-gf2-rows.csv,2026-05-06,a1172cea
+matmul,GF(2^32),256,,372.729688,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",16610483722261398142,2026-05-06-a1172cea-gf2m-gf2-rows.csv,2026-05-06,a1172cea
+matmul,GF(2^32),1024,,34591.756997,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",11382297788580195442,2026-05-06-a1172cea-gf2m-gf2-rows.csv,2026-05-06,a1172cea
+minpoly,GF(2^31-1),64,,0.942000,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",5165982229321961512,2026-05-07-d1dd266c-minpoly-tuning.md,2026-05-07,d1dd266c
+minpoly,GF(2^31-1),256,,57.150000,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",15188339206248424544,2026-05-07-d1dd266c-minpoly-tuning.md,2026-05-07,d1dd266c
+minpoly,GF(65521),64,,0.348000,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",17437234336724684531,2026-05-07-d1dd266c-minpoly-tuning.md,2026-05-07,d1dd266c
+minpoly,GF(65521),256,,12.290000,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",4237467502002085625,2026-05-07-d1dd266c-minpoly-tuning.md,2026-05-07,d1dd266c
+minpoly,GF(251),64,,0.559000,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",3897696420160141891,2026-05-07-d1dd266c-minpoly-tuning.md,2026-05-07,d1dd266c
+minpoly,GF(251),256,,2.235000,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",8140817630099691801,2026-05-07-d1dd266c-minpoly-tuning.md,2026-05-07,d1dd266c
+minpoly,GF(7),64,,0.159000,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",5346471385677182169,2026-05-07-d1dd266c-minpoly-tuning.md,2026-05-07,d1dd266c
+minpoly,GF(7),256,,3.411000,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",14061946926221086388,2026-05-07-d1dd266c-minpoly-tuning.md,2026-05-07,d1dd266c
+charpoly,GF(2^31-1),64,,0.485000,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",11506559259852285241,2026-05-07-d1dd266c-minpoly-tuning.md,2026-05-07,d1dd266c
+charpoly,GF(2^31-1),256,,21.760000,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",16108071587005897015,2026-05-07-d1dd266c-minpoly-tuning.md,2026-05-07,d1dd266c
+charpoly,GF(65521),64,,0.379000,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",9183273273419397006,2026-05-07-d1dd266c-minpoly-tuning.md,2026-05-07,d1dd266c
+charpoly,GF(65521),256,,14.790000,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",8373688313145165019,2026-05-07-d1dd266c-minpoly-tuning.md,2026-05-07,d1dd266c
+charpoly,GF(251),64,,0.165000,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",8751597996197025028,2026-05-07-d1dd266c-minpoly-tuning.md,2026-05-07,d1dd266c
+charpoly,GF(251),256,,4.200000,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",526247697690853768,2026-05-07-d1dd266c-minpoly-tuning.md,2026-05-07,d1dd266c
+charpoly,GF(7),64,,0.132000,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",8024433140722383444,2026-05-07-d1dd266c-minpoly-tuning.md,2026-05-07,d1dd266c
+charpoly,GF(7),256,,3.440000,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",13175743115641768480,2026-05-07-d1dd266c-minpoly-tuning.md,2026-05-07,d1dd266c
+invert,GF(2^31-1),64,uniform,0.513320,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",5934371847120486591,2026-05-07-d1a5fea8-invert-inplace.md,2026-05-07,d1a5fea8
+invert,GF(2^31-1),256,uniform,26.344000,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",7987072257454603602,2026-05-07-d1a5fea8-invert-inplace.md,2026-05-07,d1a5fea8
+invert,GF(2^31-1),1024,uniform,1643.500000,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",13331486115574067583,2026-05-07-d1a5fea8-invert-inplace.md,2026-05-07,d1a5fea8
+invert,GF(2^31-1),64,deficient,0.095157,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",18428513764158899361,2026-05-07-d1a5fea8-invert-inplace.md,2026-05-07,d1a5fea8
+invert,GF(2^31-1),256,deficient,3.510300,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",11382297788580195442,2026-05-07-d1a5fea8-invert-inplace.md,2026-05-07,d1a5fea8
+invert,GF(2^31-1),1024,deficient,187.250000,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",2400478951954270886,2026-05-07-d1a5fea8-invert-inplace.md,2026-05-07,d1a5fea8
+solve,GF(2^31-1),64,uniform,0.137870,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",5507037633494828434,2026-05-07-d1a5fea8-invert-inplace.md,2026-05-07,d1a5fea8
+solve,GF(2^31-1),256,uniform,4.313200,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",4210633436373302228,2026-05-07-d1a5fea8-invert-inplace.md,2026-05-07,d1a5fea8
+solve,GF(2^31-1),1024,uniform,229.140000,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",14964916828173173308,2026-05-07-d1a5fea8-invert-inplace.md,2026-05-07,d1a5fea8
+solve,GF(2^31-1),64,deficient,0.095860,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",9094553455404696733,2026-05-07-d1a5fea8-invert-inplace.md,2026-05-07,d1a5fea8
+solve,GF(2^31-1),256,deficient,3.563800,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",14964916828173173308,2026-05-07-d1a5fea8-invert-inplace.md,2026-05-07,d1a5fea8
+solve,GF(2^31-1),1024,deficient,196.480000,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",4210633436373302228,2026-05-07-d1a5fea8-invert-inplace.md,2026-05-07,d1a5fea8
+det,GF(2^31-1),64,uniform,0.124270,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",5934371847120486591,2026-05-07-d1a5fea8-invert-inplace.md,2026-05-07,d1a5fea8
+det,GF(2^31-1),256,uniform,4.270900,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",7987072257454603602,2026-05-07-d1a5fea8-invert-inplace.md,2026-05-07,d1a5fea8
+det,GF(2^31-1),1024,uniform,229.340000,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",13331486115574067583,2026-05-07-d1a5fea8-invert-inplace.md,2026-05-07,d1a5fea8
+det,GF(2^31-1),64,deficient,0.095860,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",18428513764158899361,2026-05-07-d1a5fea8-invert-inplace.md,2026-05-07,d1a5fea8
+det,GF(2^31-1),256,deficient,3.554000,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",11382297788580195442,2026-05-07-d1a5fea8-invert-inplace.md,2026-05-07,d1a5fea8
+det,GF(2^31-1),1024,deficient,249.230000,gf2,"AMD Ryzen 9 5900X (Zen 3), rustc 1.95.0 RUSTFLAGS=-C target-cpu=native",2400478951954270886,2026-05-07-d1a5fea8-invert-inplace.md,2026-05-07,d1a5fea8
