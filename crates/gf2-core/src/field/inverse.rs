@@ -1137,14 +1137,24 @@ mod tests {
     //
     // The empirical numbers are the sum of these per-call costs at
     // the chosen recursion thresholds. Numbers below match the
-    // post-c3f8c1cb PLE budget (EXPECTED_PLE_N64 = 254 etc.) plus the
-    // small additions above. PLE_BASE_COLS=1 (jit:73ec5da3 sweep
-    // confirmed this as optimal) leaves allocation counts unchanged.
+    // post-c3f8c1cb PLE budget plus the small additions above. The
+    // jit:73ec5da3 R1 rework dropped TRI_BASE_THRESHOLD from 32 to 8
+    // (selected by Criterion sweep on Mersenne-31; see the evidence
+    // doc); the deeper trsm recursion at threshold=8 inflates the
+    // allocation counts at small n by ~4–30% versus the threshold=32
+    // baseline, in exchange for 1–7% wall-time gains on the target
+    // PLE/TRSM cells.
     const EXPECTED_INV_N4: u64 = 19;
-    const EXPECTED_INV_N64: u64 = 271;
-    const EXPECTED_INV_N1024: u64 = 4569;
-    const EXPECTED_SOLVE_N64: u64 = 260;
-    const EXPECTED_DET_N64: u64 = 254;
+    const EXPECTED_INV_N64: u64 = 353;
+    // EXPECTED_INV_N1024 carries an extrapolated value (4569 ×
+    // 4736/4192 ≈ 5163) because the test that pins it is
+    // `#[ignore = "slow: ..."]` and was not re-measured under
+    // threshold=8 in this rework — the agent CLAUDE.md policy
+    // forbids running the slow tier in routine work. The slow-tier
+    // CI run will refine this value if the extrapolation is off.
+    const EXPECTED_INV_N1024: u64 = 5163;
+    const EXPECTED_SOLVE_N64: u64 = 294;
+    const EXPECTED_DET_N64: u64 = 264;
 
     // ── Property-based tests (proptest) ──────────────────────────────────────
     //

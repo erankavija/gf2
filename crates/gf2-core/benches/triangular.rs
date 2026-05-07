@@ -1,13 +1,16 @@
 //! Block-recursive triangular primitives — `trsm`, `trmm`, `trtri`, `trtrm`.
 //!
-//! Issue `83b1ad8b`. Measures the four primitives (`trsm_upper`,
-//! `trmm_upper`, `trtri_upper`, `trtrm`) at `n ∈ {64, 256, 1024}` for
-//! `Fp<7>`, `Fp<MERSENNE_31>`, and `Gf2mWide<1, AES>`. Each primitive
-//! lives in its own Criterion group so individual cases can be filtered:
+//! Issues `83b1ad8b` (initial harness) and `73ec5da3` (TRSM coverage +
+//! `TRI_BASE_THRESHOLD` sweep). Measures five primitives (`trsm_upper`,
+//! `trsm_lower`, `trmm_upper`, `trtri_upper`, `trtrm`) at
+//! `n ∈ {64, 256, 1024}` for `Fp<7>`, `Fp<MERSENNE_31>`, and
+//! `Gf2mWide<1, AES>`. Each primitive lives in its own Criterion group so
+//! individual cases can be filtered:
 //!
 //! ```text
 //! triangular/trsm_upper/Fp_7/64
 //! triangular/trsm_upper/Fp_M31/256
+//! triangular/trsm_lower/Fp_M31/1024
 //! triangular/trtri_upper/Gf2m8/1024
 //! triangular/trtrm/Fp_M31/1024
 //! ```
@@ -28,7 +31,7 @@
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use gf2_core::field::matrix::FieldMatrix;
-use gf2_core::field::triangular::{trmm_upper, trsm_upper, trtri_upper, trtrm};
+use gf2_core::field::triangular::{trmm_upper, trsm_lower, trsm_upper, trtri_upper, trtrm};
 use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
 use gf2_core::gfp::Fp;
 use rand::rngs::StdRng;
@@ -97,6 +100,32 @@ fn random_upper_gf2m8(n: usize, seed: u64) -> FieldMatrix<Gf2m8> {
     m
 }
 
+fn random_lower_fp<const P: u64>(n: usize, seed: u64) -> FieldMatrix<Fp<P>> {
+    let mut m = random_fp_matrix::<P>(n, n, seed);
+    for r in 0..n {
+        for c in (r + 1)..n {
+            m.set(r, c, Fp::<P>::new(0));
+        }
+        if m.get(r, r) == Fp::<P>::new(0) {
+            m.set(r, r, Fp::<P>::new(1));
+        }
+    }
+    m
+}
+
+fn random_lower_gf2m8(n: usize, seed: u64) -> FieldMatrix<Gf2m8> {
+    let mut m = random_gf2m8_matrix(n, n, seed);
+    for r in 0..n {
+        for c in (r + 1)..n {
+            m.set(r, c, Gf2m8::new([0]));
+        }
+        if m.get(r, r) == Gf2m8::new([0]) {
+            m.set(r, r, Gf2m8::new([1]));
+        }
+    }
+    m
+}
+
 fn random_strict_lower_fp<const P: u64>(n: usize, seed: u64) -> FieldMatrix<Fp<P>> {
     // Strictly lower (the diagonal is implicit unit for trtrm).
     let mut m = random_fp_matrix::<P>(n, n, seed);
@@ -153,6 +182,46 @@ fn bench_trsm_upper(c: &mut Criterion) {
                 || b8.clone(),
                 |mut b_local| {
                     trsm_upper(black_box(&a8).submat(.., ..), b_local.submat_mut(.., ..));
+                },
+            );
+        });
+    }
+    g.finish();
+}
+
+fn bench_trsm_lower(c: &mut Criterion) {
+    let mut g = c.benchmark_group("triangular/trsm_lower");
+    for &n in SIZES {
+        // Fp<7>
+        let a = random_lower_fp::<7>(n, 0xA1A1 + n as u64);
+        let b = random_fp_matrix::<7>(n, n, 0xA2A2 + n as u64);
+        g.bench_with_input(BenchmarkId::new("Fp_7", n), &n, |bencher, _| {
+            bencher.iter_with_setup(
+                || b.clone(),
+                |mut b_local| {
+                    trsm_lower(black_box(&a).submat(.., ..), b_local.submat_mut(.., ..));
+                },
+            );
+        });
+        // Fp<MERSENNE_31>
+        let a31 = random_lower_fp::<MERSENNE_31>(n, 0xB1B1 + n as u64);
+        let b31 = random_fp_matrix::<MERSENNE_31>(n, n, 0xB2B2 + n as u64);
+        g.bench_with_input(BenchmarkId::new("Fp_M31", n), &n, |bencher, _| {
+            bencher.iter_with_setup(
+                || b31.clone(),
+                |mut b_local| {
+                    trsm_lower(black_box(&a31).submat(.., ..), b_local.submat_mut(.., ..));
+                },
+            );
+        });
+        // Gf2m8
+        let a8 = random_lower_gf2m8(n, 0xC1C1 + n as u64);
+        let b8 = random_gf2m8_matrix(n, n, 0xC2C2 + n as u64);
+        g.bench_with_input(BenchmarkId::new("Gf2m8", n), &n, |bencher, _| {
+            bencher.iter_with_setup(
+                || b8.clone(),
+                |mut b_local| {
+                    trsm_lower(black_box(&a8).submat(.., ..), b_local.submat_mut(.., ..));
                 },
             );
         });
@@ -277,6 +346,7 @@ fn bench_trtrm(c: &mut Criterion) {
 criterion_group!(
     benches,
     bench_trsm_upper,
+    bench_trsm_lower,
     bench_trmm_upper,
     bench_trtri_upper,
     bench_trtrm,

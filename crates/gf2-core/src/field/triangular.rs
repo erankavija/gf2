@@ -133,9 +133,9 @@
 //! direct-struct materialisation in `MatView::to_owned` /
 //! `FieldMatrix::transpose`):
 //!
-//! - `trsm_*` / `trmm_*` at `m = 65`, threshold = 32: **4** counter
-//!   bumps. Two recursion levels × one gemm per level × 2 bumps per
-//!   gemm (`MatView::transpose` = `to_owned` + `FieldMatrix::transpose`).
+//! - `trsm_*` / `trmm_*` at `m = 65`, threshold = 8: **16** counter
+//!   bumps. Eight internal-recursion gemm calls × 2 bumps per gemm
+//!   (`MatView::transpose` = `to_owned` + `FieldMatrix::transpose`).
 //!   Pinned in
 //!   [`tests::test_trsm_zero_allocation`](self::tests::test_trsm_zero_allocation)
 //!   and
@@ -147,22 +147,25 @@
 //!   column back-substitution writes scalars in place into `inv` and
 //!   needs no per-iteration scratch. Pinned in
 //!   [`tests::test_trtri_at_threshold_one_allocation`](self::tests::test_trtri_at_threshold_one_allocation).
-//! - `trtri_*` at `m = 64`, threshold = 32 (one peel): **7** counter
-//!   bumps. Breakdown: 2 base-case `inv` buffers + 1 outer `tmp`
-//!   chain scratch + 2 gemm_into_view calls × 2 bumps per
-//!   `MatView::transpose` = 2 + 1 + 4 = 7. Pinned in
+//! - `trtri_*` at `m = 64`, threshold = 8: **43** counter bumps.
+//!   Breakdown: 8 base-case `inv` buffers (one per leaf at `m=8`) +
+//!   7 non-leaf levels × (1 chain scratch + 2 gemm_into_view × 2
+//!   transpose bumps) = 8 + 35 = 43. Pinned in
 //!   [`tests::test_trtri_allocation_budget`](self::tests::test_trtri_allocation_budget).
-//!   The 2 base-case `inv` buffers and the 1 outer chain scratch are
+//!   The base-case `inv` buffers and the per-level chain scratch are
 //!   the **architectural exceptions** (matrix multiply is not
-//!   associative in-place) recorded as the R5 amendment; the
-//!   remaining 4 bumps are the inherited gemm B-transpose cost.
-//! - `trtrm` at `m = 64`, threshold = 32 (one peel): **5** counter
-//!   bumps. Breakdown: step 1 (`U12 · L22` via
-//!   `gemm_axpy_into_view_diag`) → 0; step 2a (recurse `U11 · L11`,
-//!   base case) → 0; step 2b (`+ U12 · L21` via
-//!   `gemm_axpy_into_view`) → 2; step 3 (`U22 · L21`: 1 chain
-//!   scratch + 1 gemm_into_view × 2 bumps) → 3; step 4 (recurse
-//!   `U22 · L22`, base case) → 0. Total 5. Pinned in
+//!   associative in-place) recorded as the R5 amendment; the remaining
+//!   bumps are the inherited gemm B-transpose cost.
+//! - `trtrm` at `m = 64`, threshold = 8: **35** counter bumps.
+//!   Per non-leaf level the cost is **5** allocs (step 1 via
+//!   `gemm_axpy_into_view_diag` adds 0; step 2b `gemm_axpy_into_view`
+//!   adds 2; step 3 chain scratch + `gemm_into_view` × 2 transpose
+//!   bumps adds 3; recurses in steps 2a and 4 fold their costs into
+//!   sub-levels). At `m=64` with threshold=8 the recursion has 7
+//!   non-leaf levels (one at `m=64`, two at `m=32`, four at `m=16`);
+//!   each `m=8` leaf allocates 0 (`trtrm_base` walks `l` cell-wise).
+//!   Total counter bumps: seven levels times five allocs per level
+//!   gives 35. Pinned in
 //!   [`tests::test_trtrm_allocation_budget`](self::tests::test_trtrm_allocation_budget).
 //!
 //! Geometrically these scratch allocations sum to `O(m²)` cells over
@@ -1367,9 +1370,14 @@ mod tests {
 
     #[test]
     fn test_tri_threshold_default() {
-        assert_eq!(<Fp<7> as FiniteField>::TRI_BASE_THRESHOLD, 32);
-        assert_eq!(<Fp<MERSENNE_31> as FiniteField>::TRI_BASE_THRESHOLD, 32);
-        assert_eq!(<TriGf2m8 as FiniteField>::TRI_BASE_THRESHOLD, 32);
+        // Selected to 8 by `73ec5da3` Criterion sweep on Mersenne-31
+        // over candidate values {4, 8, 16, 32, 64}; see the
+        // `TRI_BASE_THRESHOLD` doc comment in `field/traits.rs` and the
+        // sweep table in
+        // `dev/bench_results/2026-05-07-73ec5da3-ple-trsm-tuning.md`.
+        assert_eq!(<Fp<7> as FiniteField>::TRI_BASE_THRESHOLD, 8);
+        assert_eq!(<Fp<MERSENNE_31> as FiniteField>::TRI_BASE_THRESHOLD, 8);
+        assert_eq!(<TriGf2m8 as FiniteField>::TRI_BASE_THRESHOLD, 8);
     }
 
     // ─── trsm_upper / trsm_lower correctness ─────────────────────────────
@@ -1954,7 +1962,8 @@ mod tests {
     // primitives.
     //
     // The numbers below are post-R5 empirical totals measured on
-    // `MERSENNE_31` / threshold = 32. They include the per-call
+    // `MERSENNE_31` / threshold = 8 (set in `field/traits.rs` by
+    // `73ec5da3` Criterion sweep). They include the per-call
     // B-transpose allocation that `gemm_axpy_into_view` /
     // `gemm_into_view` materialise via `MatView::transpose()` (which
     // is one `to_owned` + one `transpose` = **2** counter bumps per
@@ -1965,14 +1974,18 @@ mod tests {
     use serial_test::serial;
 
     /// `trsm_upper` / `trsm_lower` allocation budget at `m = 65`,
-    /// threshold = 32.
+    /// threshold = 8.
     ///
-    /// Recursion shape: top split at h=32 yields one base-case
-    /// `trsm(m=32)` (0 allocs), one gemm_axpy_into_view (2 allocs:
-    /// `MatView::transpose()` = `to_owned()` + `FieldMatrix::transpose()`),
-    /// and one inner recursive `trsm(m=33)` which itself splits at
-    /// h=16 yielding two base cases (0 each) plus one inner
-    /// gemm_axpy_into_view (2 allocs). Total: 0 + 2 + 0 + 2 + 0 = **4**.
+    /// Recursion shape: each split at level produces one
+    /// `gemm_axpy_into_view` call (2 allocs from `MatView::transpose`
+    /// = `to_owned()` + `FieldMatrix::transpose()`); leaves where
+    /// `m <= 8` allocate nothing. Tree from `m=65` (threshold=8):
+    /// - `m=65` → split at h=32: gemm(+2) + subtree(m=32) + subtree(m=33)
+    /// - `m=32` → 3 gemms × 2 = **6** (m=32 → m=16 → 2× m=8 leaves)
+    /// - `m=33` → 4 gemms × 2 = **8** (m=33 → m=17/m=16; m=17 → m=9/m=8;
+    ///   m=9 → m=5/m=4; both terminate at base)
+    ///
+    /// Total: 2 + 6 + 8 = **16**.
     ///
     /// Per the R5 amendment, the per-call B-transpose is the
     /// architectural cost inherited from the shared blocked-gemm
@@ -1983,9 +1996,9 @@ mod tests {
     fn test_trsm_zero_allocation() {
         let m = 65;
         let n = 6;
-        // Two recursion levels × 1 gemm per level × 2 alloc-counter bumps
-        // per gemm (the `MatView::transpose` path).
-        const EXPECTED: u64 = 4;
+        // 8 internal-recursion gemm calls × 2 alloc-counter bumps per gemm
+        // (the `MatView::transpose` path) at threshold = 8.
+        const EXPECTED: u64 = 16;
         let a_upper = random_upper_fp::<MERSENNE_31>(m, 0xA0FC);
         let b_upper = random_fp::<MERSENNE_31>(m, n, 0xA0FD);
         let mut x_upper = b_upper.clone();
@@ -1994,7 +2007,7 @@ mod tests {
         let allocs = fieldmatrix_new_count();
         assert_eq!(
             allocs, EXPECTED,
-            "trsm_upper at m={} expected {} FieldMatrix-class allocs (2 gemm calls × 2 \
+            "trsm_upper at m={} expected {} FieldMatrix-class allocs (8 gemm calls × 2 \
              bumps each: to_owned + transpose in `MatView::transpose`); got {}",
             m, EXPECTED, allocs
         );
@@ -2013,17 +2026,18 @@ mod tests {
     }
 
     /// `trmm_upper` / `trmm_lower` allocation budget at `m = 65`,
-    /// threshold = 32. Same recursion shape as `trsm` (one gemm per
+    /// threshold = 8. Same recursion shape as `trsm` (one gemm per
     /// recursion level via the shared
     /// [`gemm_axpy_into_view`](crate::field::matrix::gemm_axpy_into_view)
-    /// kernel) → **4** total counter bumps. trmm itself allocates
-    /// nothing on top of the gemm calls. Per the R5 amendment.
+    /// kernel): 8 internal gemm calls × 2 counter bumps each = **16**
+    /// total. trmm itself allocates nothing on top of the gemm calls.
+    /// Per the R5 amendment.
     #[test]
     #[serial]
     fn test_trmm_zero_allocation() {
         let m = 65;
         let n = 6;
-        const EXPECTED: u64 = 4;
+        const EXPECTED: u64 = 16;
         let a_upper = random_upper_fp::<MERSENNE_31>(m, 0xA1FC);
         let b = random_fp::<MERSENNE_31>(m, n, 0xA1FD);
         let mut got_upper = b.clone();
@@ -2032,7 +2046,7 @@ mod tests {
         let allocs = fieldmatrix_new_count();
         assert_eq!(
             allocs, EXPECTED,
-            "trmm_upper at m={} expected {} FieldMatrix-class allocs (2 gemm calls × 2 \
+            "trmm_upper at m={} expected {} FieldMatrix-class allocs (8 gemm calls × 2 \
              bumps each: to_owned + transpose in `MatView::transpose`); got {}",
             m, EXPECTED, allocs
         );
@@ -2049,29 +2063,32 @@ mod tests {
         );
     }
 
-    /// `trtri` allocation budget at `m = 64`, threshold = 32.
+    /// `trtri` allocation budget at `m = 64`, threshold = 8.
     ///
-    /// Recursion shape (one peel): split at h=32 → two base-case calls
-    /// (`trtri_upper_base(m=32)`) plus chain multiply `A12 := −A11 ·
-    /// A12 · A22`.
-    ///
-    /// Cost breakdown:
-    /// - 2 × base-case `inv` buffer (`FieldMatrix::new`) = **2**
+    /// `trtri` recurses by halving until `m <= 8`, where the column-
+    /// by-column back-substitution allocates exactly 1 inv buffer.
+    /// Each non-leaf level performs the chain multiply
+    /// `A12 := −A11 · A12 · A22` which costs:
     /// - 1 × outer `tmp` chain scratch (`FieldMatrix::new`) = **1**
-    /// - 2 × `gemm_into_view` (the chained multiply `A11 · A12_old`
-    ///   into `tmp`, then `tmp · A22` back into A12). Each
-    ///   gemm_into_view materialises a B-transpose via
-    ///   `MatView::transpose` = `to_owned` + `transpose` = 2 bumps.
-    ///   2 calls × 2 bumps = **4**.
+    /// - 2 × `gemm_into_view` calls × 2 transpose bumps each = **4**
     ///
-    /// Total: 2 + 1 + 4 = **7**.
+    /// Tree from `m=64` (threshold=8): 7 levels × (1 chain + 4 gemm)
+    /// counts plus 8 leaves × 1 inv buffer.
+    /// - Level (m=64): 5 allocs + recurse(m=32) + recurse(m=32)
+    /// - Level (m=32): 5 allocs + 2 × recurse(m=16)
+    /// - Level (m=16): 5 allocs + 2 × leaf(m=8) (1 each)
+    /// - Each `m=8` leaf: 1 alloc.
+    ///
+    /// Counting: 8 leaves × 1 = 8; 4 levels (m=16) × 5 = 20; 2 levels
+    /// (m=32) × 5 = 10; 1 level (m=64) × 5 = 5. Total = 8 + 20 + 10 + 5
+    /// = **43**.
     #[test]
     #[serial]
     fn test_trtri_allocation_budget() {
         let m = 64;
-        // 2 leaf inv buffers + 1 outer chain scratch + 2 gemm_into_view
-        // calls × 2 transpose bumps each.
-        const EXPECTED: u64 = 7;
+        // 8 leaf inv buffers + 7 chain levels × (1 chain scratch + 2 gemms × 2
+        // transpose bumps).
+        const EXPECTED: u64 = 43;
         let a_upper = random_upper_fp::<MERSENNE_31>(m, 0xA2FC);
         let mut a_inv = a_upper.clone();
         reset_fieldmatrix_new_count();
@@ -2080,7 +2097,7 @@ mod tests {
         assert_eq!(
             allocs, EXPECTED,
             "trtri_upper at m={} expected {} FieldMatrix-class allocs \
-             (2 leaf inv + 1 chain scratch + 2 gemm × 2 transpose bumps); got {}",
+             (8 leaf inv + 7 chain levels × (1 scratch + 2 gemms × 2 transpose bumps)); got {}",
             m, EXPECTED, allocs
         );
 
@@ -2096,7 +2113,7 @@ mod tests {
         );
     }
 
-    /// `trtri` at the base-case size (m == TRI_BASE_THRESHOLD = 32):
+    /// `trtri` at the base-case size (m == TRI_BASE_THRESHOLD = 8):
     /// the column-by-column back-substitution allocates exactly ONE
     /// `m × m` inverse-staging buffer and writes scalars in place into
     /// it. No per-column or per-row scratch.
@@ -2117,31 +2134,32 @@ mod tests {
         );
     }
 
-    /// `trtrm` allocation budget at `m = 64`, threshold = 32.
+    /// `trtrm` allocation budget at `m = 64`, threshold = 8.
     ///
-    /// Recursion shape (one peel): split at h=32. The four steps are
+    /// Per non-leaf level the four steps cost:
     ///   1. `A12 = U12 · L22` via `gemm_axpy_into_view_diag` — the
     ///      unit-diagonal kernel walks `b` cell-wise, **no** transpose →
     ///      **0** allocs.
     ///   2. `A11 = U11 · L11 + U12 · L21`:
-    ///        2a. `trtrm` recurses on the upper-left block (m=32, base
-    ///            case → 0 allocs).
-    ///        2b. `gemm_axpy_into_view` for `+ U12 · L21` → **2** allocs
-    ///            (the standard `MatView::transpose` of the b operand).
+    ///        2a. `trtrm` recurses on the upper-left block.
+    ///        2b. `gemm_axpy_into_view` for `+ U12 · L21` → **2** allocs.
     ///   3. `A21 = U22 · L21`: 1 chain scratch (1 alloc) + 1
     ///      `gemm_into_view` call (**2** allocs).
-    ///   4. `A22 = U22 · L22`: trtrm recurses on the lower-right
-    ///      block (m=32, base case → 0 allocs).
+    ///   4. `A22 = U22 · L22`: `trtrm` recurses on the lower-right block.
     ///
-    /// Total: 0 + 0 + 2 + 1 + 2 + 0 = **5**.
+    /// Per-level cost (excluding sub-recursions): 0 + 2 + 3 + 0 = **5**.
+    /// At `m=64` with threshold=8 the recursion has 7 non-leaf levels:
+    /// 1×(m=64) + 2×(m=32) + 4×(m=16). Each leaf at `m=8` allocates 0
+    /// (the `trtrm_base` schoolbook loop walks `l` cell-wise).
+    ///
+    /// Total: 7 levels × 5 allocs = **35**.
     #[test]
     #[serial]
     fn test_trtrm_allocation_budget() {
         let m = 64;
-        // 0 (step 1, gemm_axpy_into_view_diag is cell-wise) + 2 (step 2b
-        // gemm_axpy_into_view, MatView::transpose) + 1 (step 3 chain
-        // scratch) + 2 (step 3 gemm_into_view, MatView::transpose).
-        const EXPECTED: u64 = 5;
+        // 7 non-leaf levels × 5 allocs/level (step 2b gemm_axpy + step 3
+        // chain scratch + step 3 gemm_into_view's transpose).
+        const EXPECTED: u64 = 35;
         let mut l = random_fp::<MERSENNE_31>(m, m, 0xA4FC);
         for r in 0..m {
             for c in r..m {
@@ -2159,9 +2177,9 @@ mod tests {
         let allocs = fieldmatrix_new_count();
         assert_eq!(
             allocs, EXPECTED,
-            "trtrm at m={} expected {} FieldMatrix-class allocs (0 from step 1's \
-             unit-diagonal kernel + 2 from step 2b gemm_axpy + 1 chain scratch + \
-             2 from step 3 gemm_into_view); got {}",
+            "trtrm at m={} expected {} FieldMatrix-class allocs (7 non-leaf levels × \
+             5 allocs/level: step 2b gemm_axpy + step 3 chain scratch + step 3 \
+             gemm_into_view's MatView::transpose); got {}",
             m, EXPECTED, allocs
         );
     }

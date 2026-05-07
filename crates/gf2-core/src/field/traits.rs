@@ -587,19 +587,32 @@ pub trait FiniteField:
     /// `≤ TRI_BASE_THRESHOLD` and falls through to a small direct loop
     /// (back-substitution for `trsm`, schoolbook for `trmm`/`trtri`).
     ///
-    /// The default `32` is empirically chosen for Mersenne-31 and small
-    /// `Gf2mWide` instances; fields with materially heavier per-MAC cost
-    /// (e.g. `Fp<P>` with `P` close to `2^63`, or tower extensions) may
-    /// override this to a smaller value because the recursion's `gemm`
-    /// dispatch overhead is amortised over fewer cells. Lighter fields
-    /// (e.g. GF(2) bit-packed) may benefit from a larger threshold.
+    /// The default `8` was selected by Criterion sweep over candidate
+    /// values `{4, 8, 16, 32, 64}` on `Fp<MERSENNE_31>` at `n ∈ {256,
+    /// 1024}` for `trsm_upper` / `trsm_lower` / `pluq` (see
+    /// `dev/bench_results/2026-05-07-73ec5da3-ple-trsm-tuning.md`):
+    /// `8` minimises `trsm_lower/256` and matches the optimum to
+    /// within sub-percent noise at every other measured cell. Values
+    /// `16` and `32` (the previous default) were 1–8% slower; value
+    /// `64` was 5–10% slower because the schoolbook base case begins
+    /// to dominate at the leaf. Selecting `32` would leave the
+    /// `trsm_upper/256` cell at the 1.50× boundary (gf2 = 5.99 ms vs
+    /// fgemm-derived ftrsm proxy = 3.94 ms, slowdown = 1.52×); `8`
+    /// brings that cell to 1.43× and improves the others
+    /// proportionally.
+    ///
+    /// Fields with materially heavier per-MAC cost (e.g. `Fp<P>` with
+    /// `P` close to `2^63`, or tower extensions) may override this to
+    /// a smaller value because the recursion's `gemm` dispatch overhead
+    /// is amortised over fewer cells. Lighter fields (e.g. GF(2)
+    /// bit-packed) may benefit from a larger threshold.
     ///
     /// Like [`Self::WINOGRAD_THRESHOLD`], this knob is **soft**:
     /// correctness is independent of it. Property tests in
     /// `src/field/triangular.rs` exercise `trsm`/`trmm`/`trtri`/`trtrm`
     /// at sizes that straddle the threshold and assert bit-exact
     /// agreement with the classical `gemm`-of-dense expansion.
-    const TRI_BASE_THRESHOLD: usize = 32;
+    const TRI_BASE_THRESHOLD: usize = 8;
 
     /// Column-window width at which [`FieldMatrix::ple`]'s block-recursive
     /// driver switches from the recursive trsm+gemm strategy to a direct
