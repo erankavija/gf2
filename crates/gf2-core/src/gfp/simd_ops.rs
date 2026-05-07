@@ -1339,6 +1339,206 @@ pub(crate) fn fp_try_axpy<const P: u64>(_y: &mut [Fp<P>], _a: &Fp<P>, _x: &[Fp<P
     false
 }
 
+// ---------------------------------------------------------------------------
+// Packed cyclic-decomposition basis cache (issue d1dd266c)
+// ---------------------------------------------------------------------------
+
+/// Cached canonical-form basis used by the cyclic-decomposition
+/// reduce loop. Each pivot column is stored once in canonical form
+/// (`P ≤ 251`: bytes; `252 ≤ P < 65536`: u16) and reused across all
+/// reduce calls. With this cache, the inner reduce loop runs as
+/// `factor_compute → broadcast → batch_mul → batch_sub` per pivot,
+/// avoiding the per-element Montgomery REDC overhead of the scalar
+/// `axpy` path.
+#[cfg(feature = "simd")]
+pub(crate) enum PackedFpBasis<const P: u64> {
+    Small {
+        cols: Vec<Vec<u8>>,
+        n: usize,
+    },
+    Medium {
+        cols: Vec<Vec<u16>>,
+        n: usize,
+    },
+}
+
+#[cfg(feature = "simd")]
+impl<const P: u64> PackedFpBasis<P> {
+    /// Constructs an empty packed basis appropriate for the field.
+    /// Returns `None` for fields without a small or medium SIMD path.
+    pub(crate) fn try_new(n: usize) -> Option<Self> {
+        if fp_small_enabled::<P>() {
+            crate::simd::maybe_fp_small()?;
+            return Some(Self::Small {
+                cols: Vec::new(),
+                n,
+            });
+        }
+        if fp_medium_eligible::<P>() {
+            crate::simd::maybe_fp_medium()?;
+            return Some(Self::Medium {
+                cols: Vec::new(),
+                n,
+            });
+        }
+        None
+    }
+
+    /// Appends a column (as `Fp<P>`) by packing into canonical form.
+    pub(crate) fn push(&mut self, col: &[Fp<P>]) {
+        match self {
+            PackedFpBasis::Small { cols, n } => {
+                debug_assert_eq!(col.len(), *n);
+                let packed: Vec<u8> = col.iter().map(|v| v.value() as u8).collect();
+                cols.push(packed);
+            }
+            PackedFpBasis::Medium { cols, n } => {
+                debug_assert_eq!(col.len(), *n);
+                let packed: Vec<u16> = col.iter().map(|v| v.value() as u16).collect();
+                cols.push(packed);
+            }
+        }
+    }
+}
+
+/// Packed `reduce` for the cyclic-decomposition basis sweep. Computes
+/// `(residual, coeffs) = v − Σ coeffs[j] · basis[j]` where `coeffs[j]
+/// = v[pivot_row[j]] / basis[j][pivot_row[j]]`. Operates entirely in
+/// canonical form (bytes for `P ≤ 251`, u16 for `252 ≤ P < 65536`),
+/// avoiding the Montgomery REDC chain of the scalar
+/// [`crate::field::vec::FieldVec::axpy`] path.
+///
+/// Returns the residual as a `FieldVec<Fp<P>>` (re-packed to
+/// Montgomery storage) and the coefficient vector.
+#[cfg(feature = "simd")]
+pub(crate) fn fp_reduce_packed<const P: u64>(
+    v: &[Fp<P>],
+    basis: &PackedFpBasis<P>,
+    pivot_row_of_col: &[usize],
+) -> (Vec<Fp<P>>, Vec<Fp<P>>) {
+    let n = v.len();
+    let basis_len = pivot_row_of_col.len();
+    match basis {
+        PackedFpBasis::Small { cols, .. } => {
+            let fns = crate::simd::maybe_fp_small().expect("PackedFpBasis::Small requires AVX2");
+            let p_u8 = P as u8;
+            let mut residual: Vec<u8> = v.iter().map(|x| x.value() as u8).collect();
+            let mut coeffs: Vec<Fp<P>> = vec![Fp::<P>::new(0); basis_len];
+            let mut bcast: Vec<u8> = vec![0u8; n];
+            let mut tmp: Vec<u8> = vec![0u8; n];
+            let mut new_residual: Vec<u8> = vec![0u8; n];
+            for (j, col) in cols.iter().enumerate() {
+                let r = pivot_row_of_col[j];
+                let v_at_r = residual[r];
+                if v_at_r == 0 {
+                    continue;
+                }
+                let pivot_val = col[r];
+                let pivot_inv = Fp::<P>::new(pivot_val as u64)
+                    .inv()
+                    .expect("reduce: pivot must be non-zero")
+                    .value() as u8;
+                // factor = v_at_r * pivot_inv mod P (canonical scalar mul).
+                let factor =
+                    ((v_at_r as u32 * pivot_inv as u32) % P as u32) as u8;
+                bcast.iter_mut().for_each(|s| *s = factor);
+                (fns.batch_mul_fn)(&bcast, col, p_u8, &mut tmp);
+                (fns.batch_sub_fn)(&residual, &tmp, p_u8, &mut new_residual);
+                std::mem::swap(&mut residual, &mut new_residual);
+                coeffs[j] = Fp::<P>::new(factor as u64);
+            }
+            let unpacked: Vec<Fp<P>> =
+                residual.iter().map(|&b| Fp::<P>::new(b as u64)).collect();
+            (unpacked, coeffs)
+        }
+        PackedFpBasis::Medium { cols, .. } => {
+            let fns = crate::simd::maybe_fp_medium().expect("PackedFpBasis::Medium requires AVX2");
+            let p_u16 = P as u16;
+            let barrett_m = gf2_kernels_simd::fp_medium::barrett_m32(p_u16);
+            let mut residual: Vec<u16> = v.iter().map(|x| x.value() as u16).collect();
+            let mut coeffs: Vec<Fp<P>> = vec![Fp::<P>::new(0); basis_len];
+            let mut bcast: Vec<u16> = vec![0u16; n];
+            let mut tmp: Vec<u16> = vec![0u16; n];
+            let mut new_residual: Vec<u16> = vec![0u16; n];
+            for (j, col) in cols.iter().enumerate() {
+                let r = pivot_row_of_col[j];
+                let v_at_r = residual[r];
+                if v_at_r == 0 {
+                    continue;
+                }
+                let pivot_val = col[r];
+                let pivot_inv = Fp::<P>::new(pivot_val as u64)
+                    .inv()
+                    .expect("reduce: pivot must be non-zero")
+                    .value() as u16;
+                let factor =
+                    ((v_at_r as u64 * pivot_inv as u64) % P) as u16;
+                bcast.iter_mut().for_each(|s| *s = factor);
+                (fns.batch_mul_fn)(&bcast, col, p_u16, barrett_m, &mut tmp);
+                (fns.batch_sub_fn)(&residual, &tmp, p_u16, &mut new_residual);
+                std::mem::swap(&mut residual, &mut new_residual);
+                coeffs[j] = Fp::<P>::new(factor as u64);
+            }
+            let unpacked: Vec<Fp<P>> =
+                residual.iter().map(|&w| Fp::<P>::new(w as u64)).collect();
+            (unpacked, coeffs)
+        }
+    }
+}
+
+#[cfg(feature = "simd")]
+impl<const P: u64> crate::field::matrix::BasisReducer<Fp<P>> for PackedFpBasis<P> {
+    fn push_col(&mut self, col: &[Fp<P>]) {
+        self.push(col);
+    }
+
+    fn reduce(&self, v: &[Fp<P>], pivot_row_of_col: &[usize]) -> (Vec<Fp<P>>, Vec<Fp<P>>) {
+        fp_reduce_packed::<P>(v, self, pivot_row_of_col)
+    }
+
+    fn len(&self) -> usize {
+        match self {
+            PackedFpBasis::Small { cols, .. } => cols.len(),
+            PackedFpBasis::Medium { cols, .. } => cols.len(),
+        }
+    }
+}
+
+#[cfg(feature = "simd")]
+pub(crate) fn fp_try_make_basis_reducer<const P: u64>(
+    n: usize,
+) -> Option<Box<dyn crate::field::matrix::BasisReducer<Fp<P>>>> {
+    let basis = PackedFpBasis::<P>::try_new(n)?;
+    Some(Box::new(basis))
+}
+
+#[cfg(not(feature = "simd"))]
+pub(crate) struct PackedFpBasis<const P: u64>;
+
+#[cfg(not(feature = "simd"))]
+impl<const P: u64> PackedFpBasis<P> {
+    pub(crate) fn try_new(_n: usize) -> Option<Self> {
+        None
+    }
+    pub(crate) fn push(&mut self, _col: &[Fp<P>]) {}
+}
+
+#[cfg(not(feature = "simd"))]
+pub(crate) fn fp_reduce_packed<const P: u64>(
+    _v: &[Fp<P>],
+    _basis: &PackedFpBasis<P>,
+    _pivot_row_of_col: &[usize],
+) -> (Vec<Fp<P>>, Vec<Fp<P>>) {
+    unreachable!()
+}
+
+#[cfg(not(feature = "simd"))]
+pub(crate) fn fp_try_make_basis_reducer<const P: u64>(
+    _n: usize,
+) -> Option<Box<dyn crate::field::matrix::BasisReducer<Fp<P>>>> {
+    None
+}
+
 /// Pre-packs the `m × k` matrix `a` and returns it as a boxed
 /// [`crate::field::matrix::PackedMatvec`] handle. Returns `None` for
 /// fields without a SIMD fast path. The boxed handle's `matvec` method

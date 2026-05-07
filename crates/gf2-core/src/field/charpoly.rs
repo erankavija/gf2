@@ -207,7 +207,7 @@
 //! matrix `P` column by column. The architectural cost is documented
 //! per function; no bespoke kernels are introduced.
 
-use crate::field::matrix::{FieldMatrix, PackedMatvec};
+use crate::field::matrix::{BasisReducer, FieldMatrix, PackedMatvec};
 use crate::field::poly::FieldPoly;
 use crate::field::vec::FieldVec;
 use crate::field::FiniteField;
@@ -256,21 +256,6 @@ impl<'a, F: FiniteField> MatvecDriver<'a, F> {
         self.a.matvec(x)
     }
 
-    /// Computes `out = A · x` written in-place into `out`. Variant of
-    /// [`MatvecDriver::matvec`] that reuses an existing destination
-    /// buffer to avoid an allocation per call.
-    fn matvec_into(&self, x: &FieldVec<F>, out: &mut FieldVec<F>) {
-        if let Some(packed) = self.packed.as_ref() {
-            assert_eq!(x.len(), self.cols);
-            assert_eq!(out.len(), self.rows);
-            packed.matvec(x.as_slice(), out.as_mut_slice());
-            return;
-        }
-        let y = self.a.matvec(x);
-        for (slot, val) in out.as_mut_slice().iter_mut().zip(y.iter()) {
-            *slot = val.clone();
-        }
-    }
 }
 
 /// Minimum matrix size at which [`FieldMatrix::charpoly`] considers the
@@ -354,6 +339,10 @@ fn cyclic_decomposition<F: FiniteField>(a: &FieldMatrix<F>) -> Vec<CyclicBlock<F
     // Pre-pack the matrix once so all `a · chain.last()` matvec calls in
     // the loop below avoid re-packing per call (issue d1dd266c).
     let driver = MatvecDriver::new(a);
+    // Optional packed-basis cache: when present, reduce calls run on
+    // canonical-byte / canonical-u16 lanes instead of per-element
+    // Montgomery REDC chains, closing the n³ scalar reduce gap.
+    let mut packed_basis: Option<Box<dyn BasisReducer<F>>> = F::try_make_basis_reducer(n);
 
     // Running basis B in row-reduced form. We store it as a flat
     // `Vec<FieldVec<F>>` (one per column) so that appending a new
@@ -372,6 +361,25 @@ fn cyclic_decomposition<F: FiniteField>(a: &FieldMatrix<F>) -> Vec<CyclicBlock<F
     let mut blocks: Vec<CyclicBlock<F>> = Vec::new();
     let mut next_seed: usize = 0;
 
+    // Helper closure: reduce against the current basis using the packed
+    // cache when available, scalar `reduce` otherwise. Both paths
+    // produce identical (residual, coeffs) for `Fp<P>` since the
+    // packed kernel works on canonical lanes that round-trip exactly
+    // through `value()` / `Fp::new`.
+    let do_reduce = |v: &FieldVec<F>,
+                     basis: &[FieldVec<F>],
+                     pivot_row_of_col: &[usize],
+                     packed: &Option<Box<dyn BasisReducer<F>>>|
+     -> (FieldVec<F>, Vec<F>) {
+        if let Some(pb) = packed.as_ref() {
+            debug_assert_eq!(pb.len(), basis.len());
+            let (res_vec, coeffs_vec) = pb.reduce(v.as_slice(), pivot_row_of_col);
+            (FieldVec::from(res_vec), coeffs_vec)
+        } else {
+            reduce(v, basis, pivot_row_of_col)
+        }
+    };
+
     while basis.len() < n {
         // Find the next standard basis vector e_i not yet in span(B).
         // Reduce e_i = unit vector against the current basis; if its
@@ -384,7 +392,7 @@ fn cyclic_decomposition<F: FiniteField>(a: &FieldMatrix<F>) -> Vec<CyclicBlock<F
             );
             let mut e = FieldVec::<F>::zeros_from(n, &zero);
             e.set(next_seed, one.clone());
-            let (red_vec, _coeffs) = reduce(&e, &basis, &pivot_row_of_col);
+            let (red_vec, _coeffs) = do_reduce(&e, &basis, &pivot_row_of_col, &packed_basis);
             let used = next_seed;
             next_seed += 1;
             if red_vec.iter().any(|c| !c.is_zero()) {
@@ -425,6 +433,9 @@ fn cyclic_decomposition<F: FiniteField>(a: &FieldMatrix<F>) -> Vec<CyclicBlock<F
             &mut col_at_pivot_row,
             &mut pivot_row_of_col,
         );
+        if let Some(pb) = packed_basis.as_mut() {
+            pb.push_col(residual.as_slice());
+        }
         chain.push(residual);
         chain_polys.push(FieldPoly::one_like(&zero));
 
@@ -435,7 +446,8 @@ fn cyclic_decomposition<F: FiniteField>(a: &FieldMatrix<F>) -> Vec<CyclicBlock<F
             // returns (residual, coeffs) where coeffs[j] is the
             // coefficient of basis[j] in the original `next_in_v`,
             // and `residual = next_in_v − Σ coeffs[j] · basis[j]`.
-            let (residual_next, coeffs) = reduce(&next_in_v, &basis, &pivot_row_of_col);
+            let (residual_next, coeffs) =
+                do_reduce(&next_in_v, &basis, &pivot_row_of_col, &packed_basis);
 
             // The chain coefficients of this reduction:
             // α_j = coeffs[block_start + j] for j = 0..chain.len().
@@ -457,6 +469,9 @@ fn cyclic_decomposition<F: FiniteField>(a: &FieldMatrix<F>) -> Vec<CyclicBlock<F
                     &mut col_at_pivot_row,
                     &mut pivot_row_of_col,
                 );
+                if let Some(pb) = packed_basis.as_mut() {
+                    pb.push_col(residual_next.as_slice());
+                }
                 chain.push(residual_next);
                 chain_polys.push(next_poly);
             } else {
