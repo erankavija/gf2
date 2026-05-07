@@ -7,7 +7,12 @@
 //!
 //! - [`FieldMatrix::inv`] / [`inv`] — `A⁻¹ = E⁻¹ · L⁻¹ · Pᵀ` where
 //!   `(P, L, E, r) = self.ple()`. Defined iff `r == n == m`; returns
-//!   `None` on rank-deficient input.
+//!   `None` on rank-deficient input. Uses the in-place `trtrm` primitive
+//!   (issue `d1a5fea8`) to compose `E⁻¹ · L⁻¹` directly into `L⁻¹`'s
+//!   storage, replacing the prior dense `n × n` `gemm` target. This
+//!   halves the constant factor on the dense `n³` work versus the
+//!   pre-`d1a5fea8` driver and removes one full `n × n` allocation
+//!   (the `temp = E⁻¹ · L⁻¹` materialisation).
 //! - [`FieldMatrix::solve`] / [`solve`] — solve `A · x = b` for a single
 //!   column `b`. Routes through [`solve_batch`](FieldMatrix::solve_batch)
 //!   on a `n × 1` right-hand side.
@@ -24,8 +29,9 @@
 //! [`trsm_upper`](crate::field::triangular::trsm_upper); all triangular
 //! inversions through
 //! [`trtri_lower`](crate::field::triangular::trtri_lower) /
-//! [`trtri_upper`](crate::field::triangular::trtri_upper). No bespoke
-//! kernels.
+//! [`trtri_upper`](crate::field::triangular::trtri_upper); the final
+//! upper-times-unit-lower product through
+//! [`trtrm`](crate::field::triangular::trtrm). No bespoke kernels.
 //!
 //! # Allocation budget
 //!
@@ -54,8 +60,8 @@
 //! with [`crate::field::ple::FieldMatrix::nullspace`] to assemble the
 //! Moore–Penrose pseudo-inverse manually.
 
-use crate::field::matrix::{gemm_into_view, FieldMatrix};
-use crate::field::triangular::{trsm_lower, trsm_upper, trtri_lower, trtri_upper};
+use crate::field::matrix::FieldMatrix;
+use crate::field::triangular::{trsm_lower, trsm_upper, trtri_lower, trtri_upper, trtrm};
 use crate::field::vec::FieldVec;
 use crate::field::FiniteField;
 
@@ -64,15 +70,30 @@ use crate::field::FiniteField;
 impl<F: FiniteField> FieldMatrix<F> {
     /// Returns the matrix inverse `A⁻¹` if `self` is non-singular.
     ///
-    /// Implements Dumas–Pernet §2.3 Table 2. Computes the PLE
+    /// Implements Dumas–Pernet §2.3 Table 2 with the §5.2 in-place
+    /// composition variant (issue `d1a5fea8`). Computes the PLE
     /// decomposition `P · L · E = self`. If `rank < n`, returns `None`.
     /// Otherwise inverts each triangular factor in place
     /// ([`trtri_lower`](crate::field::triangular::trtri_lower) on `L`,
     /// [`trtri_upper`](crate::field::triangular::trtri_upper) on `E`),
-    /// composes `temp = E⁻¹ · L⁻¹` via
-    /// [`gemm_into_view`](crate::field::matrix::gemm_into_view), and
-    /// applies `Pᵀ` on the right by column-permuting `temp` into the
-    /// result.
+    /// then composes `M = E⁻¹ · L⁻¹` **in place into `L⁻¹`'s storage**
+    /// via [`trtrm`](crate::field::triangular::trtrm) (the upper-times-
+    /// unit-lower product kernel that exploits `L⁻¹`'s unit-lower
+    /// structure to halve the dense work versus a generic `gemm`).
+    /// Finally applies `Pᵀ` on the right by column-permuting `M` into
+    /// the result.
+    ///
+    /// **Algorithm-choice note.** Prior versions of this driver used a
+    /// full `n × n` `gemm_into_view` for the `E⁻¹ · L⁻¹` step, requiring
+    /// a fresh `n × n` allocation and ~`n³` field operations on top of
+    /// the two triangular inversions. The `trtrm` formulation reuses
+    /// `L⁻¹`'s storage (no extra `n × n` allocation) and reduces that
+    /// step's cost to ~`n³ / 2` because one operand is unit lower-
+    /// triangular. The total dense `n³` work drops from `≈ 1.33 n³`
+    /// (PLE-share excluded) to `≈ 0.83 n³`, closing the gap to
+    /// fflas-ffpack's `dgetri`-style in-place driver. See
+    /// `dev/bench_results/2026-05-07-d1a5fea8-invert-inplace.md` for
+    /// the per-cell ratios.
     ///
     /// # Arguments
     ///
@@ -90,7 +111,7 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// # Complexity
     ///
     /// `O(n³)` field operations (one PLE + two triangular inversions +
-    /// one dense gemm).
+    /// one in-place upper-times-unit-lower product via `trtrm`).
     ///
     /// # Examples
     ///
@@ -131,21 +152,32 @@ impl<F: FiniteField> FieldMatrix<F> {
         trtri_lower(l.submat_mut(.., ..));
         trtri_upper(e.submat_mut(.., ..));
 
-        // temp = E⁻¹ · L⁻¹ via the standard view-based gemm kernel.
-        let zero = self.get(0, 0).zero_like();
-        let mut temp = FieldMatrix::new(n, n, zero.clone());
-        gemm_into_view(&e, &l, temp.submat_mut(.., ..));
+        // Compose M = E⁻¹ · L⁻¹ in place into L⁻¹'s storage via the
+        // in-place upper-times-unit-lower product. `trtrm(L_mut, U)`
+        // computes `A = U · L` and writes `A` over `L`'s view; the
+        // `L`-operand is treated as unit-lower with implicit diagonal,
+        // matching `L⁻¹`'s structure (the explicit `1`s on the diagonal
+        // from `trtri_lower` are not read by `trtrm`).
+        //
+        // Algorithm-choice rationale: see method-level docs and
+        // `dev/bench_results/2026-05-07-d1a5fea8-invert-inplace.md`.
+        // Allocation budget: NO `n × n` scratch (the prior driver
+        // allocated `temp` of shape `n × n` for the `gemm` target);
+        // `trtrm`'s recursion adds the documented per-level
+        // `(m-h) × h` scratch for the `U22 · L21` chain.
+        trtrm(l.submat_mut(.., ..), e.submat(.., ..));
 
         // Apply Pᵀ on the right: (M · Pᵀ)[i, j] = M[i, perm[j]].
         // Materialise the column-permuted output. We cannot do this in
         // place (column-permutation in row-major storage would alias
         // sources and sinks within a row); a fresh allocation is the
         // standard library-style cost.
+        let zero = self.get(0, 0).zero_like();
         let mut out = FieldMatrix::new(n, n, zero);
         let perm_idx = perm.indices();
         for i in 0..n {
             for (j, &src_col) in perm_idx.iter().enumerate() {
-                out.set(i, j, temp.get(i, src_col));
+                out.set(i, j, l.get(i, src_col));
             }
         }
         Some(out)
@@ -1095,6 +1127,112 @@ mod tests {
         assert_eq!(a.solve(&b), super::solve(&a, &b));
     }
 
+    // ── d1a5fea8 — Bit-exact equivalence with prior Dumas–Pernet driver ──────
+    //
+    // Reference implementation of the prior Dumas–Pernet Table 2 driver
+    // (PLE + 2 trtri + 1 dense gemm + permutation). The production
+    // `inv()` uses the in-place trtrm composition (issue d1a5fea8). The
+    // tests below cross-check that the two drivers return bit-exact
+    // identical matrices on randomized invertible inputs across all
+    // five fields, so any future tuning of the in-place driver can be
+    // detected as a divergence (vs only correctness vs identity).
+
+    fn inv_reference_dumas_pernet<F: FiniteField>(a: &FieldMatrix<F>) -> Option<FieldMatrix<F>> {
+        use crate::field::matrix::gemm_into_view;
+        use crate::field::triangular::{trtri_lower, trtri_upper};
+        let (m, n) = a.shape();
+        assert_eq!(m, n);
+        if n == 0 {
+            return Some(a.clone());
+        }
+        let (perm, mut l, mut e, rank) = a.ple();
+        if rank < n {
+            return None;
+        }
+        trtri_lower(l.submat_mut(.., ..));
+        trtri_upper(e.submat_mut(.., ..));
+        let zero = a.get(0, 0).zero_like();
+        let mut temp = FieldMatrix::new(n, n, zero.clone());
+        gemm_into_view(&e, &l, temp.submat_mut(.., ..));
+        let mut out = FieldMatrix::new(n, n, zero);
+        let perm_idx = perm.indices();
+        for i in 0..n {
+            for (j, &src_col) in perm_idx.iter().enumerate() {
+                out.set(i, j, temp.get(i, src_col));
+            }
+        }
+        Some(out)
+    }
+
+    fn assert_inv_matches_reference<F: FiniteField>(a: &FieldMatrix<F>) {
+        let new_inv = a.inv().expect("input must be invertible");
+        let ref_inv = inv_reference_dumas_pernet(a).expect("input must be invertible");
+        assert_eq!(
+            new_inv, ref_inv,
+            "in-place inv() differs from Dumas–Pernet reference"
+        );
+    }
+
+    #[test]
+    fn test_inv_matches_reference_fp7() {
+        for n in [2usize, 4, 8, 16, 32] {
+            for seed in 0..3u64 {
+                let a = random_fp_invertible::<7>(n, seed * 13 + n as u64);
+                assert_inv_matches_reference(&a);
+            }
+        }
+    }
+
+    #[test]
+    fn test_inv_matches_reference_fp251() {
+        for n in [2usize, 4, 8, 16, 32] {
+            for seed in 0..3u64 {
+                let a = random_fp_invertible::<251>(n, seed * 17 + n as u64);
+                assert_inv_matches_reference(&a);
+            }
+        }
+    }
+
+    #[test]
+    fn test_inv_matches_reference_fp65521() {
+        for n in [2usize, 4, 8, 16, 32] {
+            for seed in 0..3u64 {
+                let a = random_fp_invertible::<65521>(n, seed * 19 + n as u64);
+                assert_inv_matches_reference(&a);
+            }
+        }
+    }
+
+    #[test]
+    fn test_inv_matches_reference_mersenne31() {
+        for n in [2usize, 4, 8, 16, 32, 64] {
+            for seed in 0..3u64 {
+                let a = random_fp_invertible::<MERSENNE_31>(n, seed * 23 + n as u64);
+                assert_inv_matches_reference(&a);
+            }
+        }
+    }
+
+    #[test]
+    fn test_inv_matches_reference_gf2m8() {
+        for n in [2usize, 4, 8, 16, 32] {
+            for seed in 0..3u64 {
+                let a = random_gf2m8_invertible(n, seed * 29 + n as u64);
+                assert_inv_matches_reference(&a);
+            }
+        }
+    }
+
+    #[test]
+    fn test_inv_matches_reference_gf2m16() {
+        for n in [2usize, 4, 8, 16, 32] {
+            for seed in 0..3u64 {
+                let a = random_gf2m16_invertible(n, seed * 31 + n as u64);
+                assert_inv_matches_reference(&a);
+            }
+        }
+    }
+
     // ── Hard SC#8 — Allocation budget ────────────────────────────────────────
 
     // Pinned allocation counts. Update only when the recursion strategy
@@ -1192,13 +1330,12 @@ mod tests {
     // reading observed for the corresponding operation:
     //
     //   inv(n × n) = ple(n × n)            // upstream PLE budget
-    //              + 1 (temp = E⁻¹ · L⁻¹)  // gemm result holder
-    //              + 2 (gemm B-transpose:  // to_owned + transpose
-    //                   one per gemm_into_view)
-    //              + 1 (column-permuted output)
     //              + (trtri's base-case `inv` scratches and outer
     //                 chain scratches at each peeled level — one
     //                 per peel for L and one for E)
+    //              + trtrm(L⁻¹, E⁻¹) recursion budget   // d1a5fea8
+    //                                                       // in-place
+    //              + 1 (column-permuted output)
     //
     //   solve_batch(n × n, n × k) = ple + 1 (perm.inverse().apply)
     //              + 2 trsm calls × kernel B-transpose tree
@@ -1214,15 +1351,25 @@ mod tests {
     // allocation counts at small n by ~4–30% versus the threshold=32
     // baseline, in exchange for 1–7% wall-time gains on the target
     // PLE/TRSM cells.
-    const EXPECTED_INV_N4: u64 = 19;
-    const EXPECTED_INV_N64: u64 = 353;
-    // EXPECTED_INV_N1024 carries an extrapolated value (4569 ×
-    // 4736/4192 ≈ 5163) because the test that pins it is
-    // `#[ignore = "slow: ..."]` and was not re-measured under
-    // threshold=8 in this rework — the agent CLAUDE.md policy
+    //
+    // d1a5fea8 (in-place compose):
+    //   - n=4 dropped 19 → 17: trtrm at base case (no scratch) replaces
+    //     the prior gemm path's 3 allocs (`temp` + 2 B-transpose).
+    //   - n=64 grew 353 → 386: trtrm's recursive (m-h)×h scratch and
+    //     per-level gemm_axpy/gemm B-transpose copies sum to ~36 allocs
+    //     above the prior single-gemm path; in exchange the n×n `temp`
+    //     allocation is gone and the dense `n³` work is halved.
+    const EXPECTED_INV_N4: u64 = 17;
+    const EXPECTED_INV_N64: u64 = 386;
+    // EXPECTED_INV_N1024 is an extrapolated estimate (5163 × 386/353
+    // ≈ 5645, scaling the d1a5fea8 n=64/old n=64 ratio onto the prior
+    // n=1024 extrapolation) because the test that pins it is
+    // `#[ignore = "slow: ..."]` and was not re-measured under the
+    // d1a5fea8 driver in this rework — the agent CLAUDE.md policy
     // forbids running the slow tier in routine work. The slow-tier
-    // CI run will refine this value if the extrapolation is off.
-    const EXPECTED_INV_N1024: u64 = 5163;
+    // CI run will refine this value if the extrapolation is off; the
+    // `#[ignore]` test below uses a ±10% tolerance band.
+    const EXPECTED_INV_N1024: u64 = 5645;
     const EXPECTED_SOLVE_N64: u64 = 294;
     const EXPECTED_DET_N64: u64 = 264;
 
