@@ -142,12 +142,13 @@ implemented:
 routes to the cubic baseline.
 
 Rationale:
-1. **Fp_M31**: KG is 31-311x slower than cubic across n in {64, 128, 256, 512}.
-   The crossover where KG would win is not visible in any of the measured sizes.
-   Extrapolating the observed ratios forward, the crossover would require KG's
-   scaling advantage to reverse the ~300x gap accumulated by n=512. Given that
-   KG's solve step is O(n^3) via PLE (same order as cubic, just with a 300x
-   larger constant), no crossover is expected within practical matrix sizes.
+1. **Fp_M31**: KG is 31-337x slower than cubic across n in {64, 128, 256, 512}
+   (and extrapolates to ~700x at n=1024). The crossover where KG would win is
+   not visible in any of the measured sizes. Extrapolating the observed ratios
+   forward, the crossover would require KG's scaling advantage to reverse the
+   ~340x gap accumulated by n=512. Given that KG's solve step is O(n^3) via PLE
+   (same order as cubic, just with a much larger constant), no crossover is
+   expected within practical matrix sizes.
 2. **Fp_65521**: KG is 49-110x slower than cubic at the only valid sizes (n<=180).
    The valid range itself caps out below where the extra GEMM calls in KG would
    even have meaningful asymptotic advantage.
@@ -246,9 +247,9 @@ PASS. The measured data (§ 1) shows no crossover within any practical size or
 field combination tested. The dispatch policy (`KG_DISPATCH_MIN_N = usize::MAX`,
 cubic always selected) directly follows this measurement. Specifically:
 
-- Fp_M31: KG/cubic ratio ranges from 31.6x (n=64) to 148.5x (n=256) and
-  extrapolates to ~311x (n=512). No size shows KG winning. Dispatch correctly
-  never selects KG.
+- Fp_M31: KG/cubic ratio ranges from 31.6x (n=64) to 148.5x (n=256) and is
+  measured at 337x (n=512); n=1024 extrapolates to ~700x. No size shows KG
+  winning. Dispatch correctly never selects KG.
 - Fp_65521: KG/cubic ratio ranges from 49.3x (n=64) to 109.8x (n=128).
   KG is invalid above n=180 anyway. Dispatch correctly never selects KG.
 - GF(2^8): KG is invalid above n=11. Dispatch cannot select KG.
@@ -261,18 +262,23 @@ No change to the dispatch policy is warranted by this data.
 
 ## 5. Bench additions to codebase
 
-Issue `4a59d1f9` adds one new Criterion bench function to the existing
-`crates/gf2-core/benches/charpoly.rs` harness:
+Issue `4a59d1f9` makes the following changes to `crates/gf2-core/benches/charpoly.rs`
+and the related charpoly module rustdoc:
 
-- `bench_dispatch_crossover_fp65521`: cubic vs KG crossover sweep for
+- Adds `bench_dispatch_crossover_fp65521`: cubic vs KG crossover sweep for
   `Fp<65521>` at n in {64, 128} (the KG-valid range). Group name
   `charpoly/dispatch_fp65521`. Documents the validity constraint inline
-  (n <= 180 for Fp_65521). The bench is additive -- it does not modify
-  any existing bench function or constant.
+  (n <= 180 for Fp_65521).
+- Adds the shared helper `bench_dispatch_arms<const P: u64>` so both
+  `bench_dispatch_crossover` (Mersenne-31) and `bench_dispatch_crossover_fp65521`
+  use a single SSOT for the cubic/KG arm bodies (introduced during R1 review
+  rework — replaces the duplicated arm bodies in the original commit).
+- Updates the docstring on `bench_dispatch_crossover` and the module rustdoc /
+  dispatch-shim doc-comment in `crates/gf2-core/src/field/charpoly.rs` so the
+  cited ratio is the post-Wave-9 ~148x at n=256 (was the pre-Wave-9 ~173x).
 
-No production code changes. The only code change is the addition of
-`bench_dispatch_crossover_fp65521` to `charpoly.rs` and its registration
-in the `criterion_group!` macro.
+No production code changes. The bench-harness changes are additive plus the
+SSOT refactor; no existing bench function was deleted.
 
 ---
 
@@ -287,7 +293,8 @@ in the `criterion_group!` macro.
 | `cargo clippy --workspace --all-targets --all-features -- -D warnings` | PASS: no warnings |
 | `cargo doc -p gf2-core --no-deps` | PASS: 76 pre-existing doc warnings (all in existing code, none from this issue) |
 
-The only code change in this issue is addition of `bench_dispatch_crossover_fp65521`
-to `crates/gf2-core/benches/charpoly.rs`. This is a bench-only addition; it
-does not affect the production library or test suite. The fmt/clippy/test
-results confirm no regression from the bench addition.
+The code changes in this issue are confined to bench-only additions / refactors
+to `crates/gf2-core/benches/charpoly.rs` plus rustdoc-only refreshes in
+`crates/gf2-core/src/field/charpoly.rs` (the `~173x` -> `~148x` post-Wave-9
+update). Neither set of changes affects the production library or test suite.
+The fmt/clippy/test results confirm no regression.
