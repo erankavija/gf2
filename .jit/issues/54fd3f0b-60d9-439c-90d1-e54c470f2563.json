@@ -2,7 +2,7 @@
   "id": "54fd3f0b-60d9-439c-90d1-e54c470f2563",
   "title": "Close sparse FieldMatrix SpMV and SpMM gaps",
   "description": "Define and close sparse FieldMatrix SpMV/SpMM performance gaps.\n\n## Background\n\nSparse PPC work produced scaffolds and negative/no-go evidence, but sparse SOTA parity needs a target corpus, comparable references, and hardware-counter-driven layout work.\n\n## Success Criteria\n\n- [hard] A sparse benchmark corpus and reference set are defined for finite-field SpMV/SpMM.\n- [hard] CPU sparse target rows are within 1.5x of accepted references where feasible.\n- [hard] Any remaining sparse gap has an explicit CPU no-go analysis and, if needed, a user-approved GPU follow-up dependency.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:project-lead",
   "dependencies": [
@@ -15,15 +15,20 @@
     "doc-review"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-07T08:34:49.953062711Z"
-    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-07T08:34:37.302584782Z"
+      "updated_at": "2026-05-07T09:57:59.790663395Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-05-07T10:06:53.928812463Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-07T10:01:51.826779691Z"
     }
   },
   "context": {},
@@ -94,5 +99,5 @@
     "story:sota-sparse-fieldmatrix"
   ],
   "created_at": "2026-04-30T06:43:02.522262388+00:00",
-  "updated_at": "2026-05-07T08:48:29.806023463+00:00"
+  "updated_at": "2026-05-07T10:06:57.477255108+00:00"
 }
