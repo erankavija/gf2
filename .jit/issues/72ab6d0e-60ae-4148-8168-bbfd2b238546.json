@@ -35,6 +35,13 @@
           "is_shared": false
         }
       ]
+    },
+    {
+      "path": "dev/bench_results/2026-05-07-4eb105f7-dense-la-parity-evidence.md",
+      "commit": null,
+      "label": "Dense LA parity evidence (story 72ab6d0e closure)",
+      "doc_type": "evidence",
+      "format": "markdown"
     }
   ],
   "labels": [
@@ -44,5 +51,5 @@
     "story:sota-dense-la"
   ],
   "created_at": "2026-04-30T06:43:02.503836063+00:00",
-  "updated_at": "2026-05-04T10:47:25.690376282+00:00"
+  "updated_at": "2026-05-07T06:11:57.663806220+00:00"
 }
