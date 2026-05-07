@@ -26,8 +26,9 @@
 //! ```
 //!
 //! All benches use the default per-field `TRI_BASE_THRESHOLD` (currently
-//! 32). The threshold is wired through the `FiniteField` trait so any
-//! future override propagates here without bench code changes.
+//! 8, selected by Criterion sweep in jit:73ec5da3). The threshold is
+//! wired through the `FiniteField` trait so any future override
+//! propagates here without bench code changes.
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use gf2_core::field::matrix::FieldMatrix;
