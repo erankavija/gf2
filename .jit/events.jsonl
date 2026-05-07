@@ -4126,3 +4126,8 @@
 {"type":"issue_claimed","id":"314a1521-4813-4c73-83a2-995c75ac697a","issue_id":"70766cb1-2d79-4194-becd-7e17984310d0","timestamp":"2026-05-07T13:19:30.799441149Z","assignee":"agent:claude"}
 {"type":"issue_state_changed","id":"01fa39a0-1e75-44b4-b3e8-6217efb33659","issue_id":"5a3dbd5b-3827-4052-9d50-8033773aa867","timestamp":"2026-05-07T13:19:30.938171689Z","from":"ready","to":"in_progress"}
 {"type":"issue_claimed","id":"f7645e11-e457-499c-999a-990d9feed319","issue_id":"5a3dbd5b-3827-4052-9d50-8033773aa867","timestamp":"2026-05-07T13:19:30.939373629Z","assignee":"agent:claude"}
+{"type":"issue_created","id":"bac0e934-1e9c-4af6-9ac9-e24164b6e83c","issue_id":"52cce970-8142-4ff9-ac19-95ed994fee38","timestamp":"2026-05-07T16:12:06.196875871Z","title":"Bespoke small-prime AVX2 kernel for GF(251) charpoly+minpoly residual cells","priority":"normal"}
+{"type":"gate_passed","id":"c198b405-94b9-4d63-bef4-4a2d9f6e3d6d","issue_id":"6c926de0-0e06-4ac5-8e9e-a394f84fc99a","timestamp":"2026-05-07T16:12:49.731790147Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"bb6b4975-4eba-4950-bd6c-eb7dba49a966","issue_id":"6c926de0-0e06-4ac5-8e9e-a394f84fc99a","timestamp":"2026-05-07T16:27:23.069872911Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"dd6e91a7-aad8-4311-9444-73491d2bc11f","issue_id":"d1dd266c-ae4a-4d9f-843c-e138618677f3","timestamp":"2026-05-07T16:29:20.007258037Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"4bab3777-4188-4997-954d-351f066241c2","issue_id":"d1dd266c-ae4a-4d9f-843c-e138618677f3","timestamp":"2026-05-07T16:36:24.750585947Z","gate_key":"code-review","updated_by":"auto:executor"}

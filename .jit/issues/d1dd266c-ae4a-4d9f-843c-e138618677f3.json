@@ -1,7 +1,7 @@
 {
   "id": "d1dd266c-ae4a-4d9f-843c-e138618677f3",
   "title": "Tune minimal polynomial path",
-  "description": "Tune the production minimal-polynomial path so the remaining SOTA target rows are closed by implementation work, not by unapproved exclusions.\n\n## Background\n\nThe first implementation added a scalar Wiedemann front-end and closed the large-field rows, but several target cells still exceed the accepted fflas-ffpack reference by more than the epic's 1.5x wall-clock contract. This task now follows the attached no-exclusions implementation plan in `dev/active/d1dd266c-minpoly-sota-plan.md`.\n\nThe accepted reference rows are from `dev/bench_results/2026-05-04-c3e79272-minpoly-reference.csv`. The hard ceilings are:\n\n| Cell | Hard ceiling |\n|---|---:|\n| `GF(2^31-1), n=64` | 2.519 ms |\n| `GF(2^31-1), n=256` | 122.298 ms |\n| `GF(65521), n=64` | 0.783 ms |\n| `GF(65521), n=256` | 25.792 ms |\n| `GF(251), n=64` | 0.202 ms |\n| `GF(251), n=256` | 2.451 ms |\n| `GF(7), n=64` | 0.854 ms |\n| `GF(7), n=256` | 30.435 ms |\n\n## Success Criteria\n\n- [hard] Every in-scope `minpoly` target row listed above meets its 1.5x wall-clock ceiling on the current Zen 3 host, with no unapproved exclusions.\n- [hard] `FieldMatrix::minpoly` uses a mathematically valid non-quartic production path for low-cardinality fields where scalar Wiedemann is unsafe.\n- [hard] Packed prime-field matvec/minpoly sequence generation is used for the small and medium prime regimes where scalar row-by-row dot products cannot meet the target rows.\n- [hard] Correctness is verified by adversarial and randomized tests: the returned minimal polynomial annihilates `A`, divides `charpoly(A)`, and matches an independent reference on small matrices.\n- [hard] Throughput normalization remains aligned with the selected algorithm class per row (`n^3` for Wiedemann/cyclic/extension/block paths, `n^4` only for legacy reference fallback if retained outside production dispatch).\n- [hard] Final evidence records raw wall times, gf2/reference ratios, algorithm class, and normalizer for every target row.\n\n## Notes\n\nThe attached implementation plan requires validating the existing `cyclic_decomposition` LCM claim before using it as the deterministic cubic fallback. If that path is not correct for all adversarial cases, the plan proceeds through extension-field Wiedemann before escalating to block Wiedemann.",
+  "description": "Tune the production minimal-polynomial path so the remaining SOTA target rows are closed by implementation work, not by unapproved exclusions.\n\n## Background\n\nThe first implementation added a scalar Wiedemann front-end and closed the large-field rows, but several target cells still exceed the accepted fflas-ffpack reference by more than the epic's 1.5x wall-clock contract. This task now follows the attached no-exclusions implementation plan in `dev/active/d1dd266c-minpoly-sota-plan.md`.\n\nThe accepted reference rows are from `dev/bench_results/2026-05-04-c3e79272-minpoly-reference.csv`. The hard ceilings are:\n\n| Cell | Hard ceiling |\n|---|---:|\n| `GF(2^31-1), n=64` | 2.519 ms |\n| `GF(2^31-1), n=256` | 122.298 ms |\n| `GF(65521), n=64` | 0.783 ms |\n| `GF(65521), n=256` | 25.792 ms |\n| `GF(251), n=64` | 0.202 ms |\n| `GF(251), n=256` | 2.451 ms |\n| `GF(7), n=64` | 0.854 ms |\n| `GF(7), n=256` | 30.435 ms |\n\n## Success Criteria\n\n- [hard] Every in-scope `minpoly` target row listed above meets its 1.5x wall-clock ceiling on the current Zen 3 host, with no unapproved exclusions, **except for `GF(251)/n=64` minpoly per the 2026-05-07 amendment below.**\n- [hard] `FieldMatrix::minpoly` uses a mathematically valid non-quartic production path for low-cardinality fields where scalar Wiedemann is unsafe.\n- [hard] Packed prime-field matvec/minpoly sequence generation is used for the small and medium prime regimes where scalar row-by-row dot products cannot meet the target rows.\n- [hard] Correctness is verified by adversarial and randomized tests: the returned minimal polynomial annihilates `A`, divides `charpoly(A)`, and matches an independent reference on small matrices.\n- [hard] Throughput normalization remains aligned with the selected algorithm class per row (`n^3` for Wiedemann/cyclic/extension/block paths, `n^4` only for legacy reference fallback if retained outside production dispatch).\n- [hard] Final evidence records raw wall times, gf2/reference ratios, algorithm class, and normalizer for every target row.\n\n## Amendment — 2026-05-07 (user-approved)\n\nPer AskUserQuestion 2026-05-07: 7 of 8 minpoly target rows close on this issue's path. `GF(251)/n=64` minpoly remains at 2.84x (was 4.04x at d1dd266c open) — sibling task `70766cb1` reduced the gap by ~30% via inline panel-kernel + Barrett-table cache, but the residual constant-factor gap requires a bespoke register-scheduled small-prime AVX2 kernel in `gf2-kernels-simd`. That work is filed as **`52cce970`** (Bespoke small-prime AVX2 kernel for GF(251) charpoly+minpoly residual cells) and tracked under the broader finite-field LA SOTA catch-up planning issue **`615db3b9`**, NOT as a blocker on this issue.\n\nEmpirical basis for the amendment: `dev/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md` § 3.1, § 6.1.\n\nRe-escalation threshold: re-evaluate the GF(251)/n=64 minpoly cell when `52cce970` closes.\n\n## Notes\n\nThe attached implementation plan requires validating the existing `cyclic_decomposition` LCM claim before using it as the deterministic cubic fallback. If that path is not correct for all adversarial cases, the plan proceeds through extension-field Wiedemann before escalating to block Wiedemann.",
   "state": "in_progress",
   "priority": "normal",
   "assignee": "agent:claude",
@@ -16,7 +16,18 @@
     "cargo-ci",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-07T16:29:13.591562491Z"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-07T16:29:22.840500737Z"
+    }
+  },
   "context": {},
   "documents": [
     {
@@ -39,6 +50,13 @@
       "label": "No-exclusions minpoly SOTA implementation plan",
       "doc_type": "design",
       "format": "markdown"
+    },
+    {
+      "path": "dev/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md",
+      "commit": null,
+      "label": "Integrated post-sibling scorecard (14/16 PASS)",
+      "doc_type": "evidence",
+      "format": "markdown"
     }
   ],
   "labels": [
@@ -48,5 +66,5 @@
     "story:sota-polynomial-invariants"
   ],
   "created_at": "2026-04-30T06:43:02.871775398+00:00",
-  "updated_at": "2026-05-07T13:19:07.739331632+00:00"
+  "updated_at": "2026-05-07T16:40:01.129539323+00:00"
 }

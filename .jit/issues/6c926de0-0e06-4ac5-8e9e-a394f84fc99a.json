@@ -11,9 +11,28 @@
     "cargo-ci",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-07T16:12:43.420756611Z"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-07T16:22:55.390124567Z"
+    }
+  },
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md",
+      "commit": null,
+      "label": "Integrated post-sibling scorecard (extension-Wiedemann closes 2 cells)",
+      "doc_type": "evidence",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:task",
     "component:gf2-core",
@@ -21,5 +40,5 @@
     "story:sota-polynomial-invariants"
   ],
   "created_at": "2026-05-07T13:18:18.091699777+00:00",
-  "updated_at": "2026-05-07T13:19:30.014452724+00:00"
+  "updated_at": "2026-05-07T16:27:23.069690471+00:00"
 }
