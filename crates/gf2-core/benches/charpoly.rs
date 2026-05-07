@@ -116,27 +116,22 @@ fn bench_frobenius(c: &mut Criterion) {
     group.finish();
 }
 
-/// Dispatch-crossover bench (issue `1454ec2d`): runs the cubic and
-/// Keller–Gehrig paths side-by-side at
-/// `n ∈ {64, 128, 256, 512, 1024}` on `Fp<MERSENNE_31>`.
-///
-/// Empirically the cubic path is currently ~173× faster than KG at
-/// `n = 256` (see `crates/gf2-core/src/field/charpoly.rs` module docs);
-/// public [`FieldMatrix::charpoly`] therefore always selects cubic
-/// under default dispatch (`KG_DISPATCH_MIN_N == usize::MAX`). The
-/// `dispatch` arm of this bench measures the public surface (i.e. the
-/// cubic baseline today) and is kept alongside the explicit `cubic`
-/// and `kg` arms so a future tuning of `KG_DISPATCH_MIN_N` can be
-/// validated against the same fixtures.
-///
-/// Compiled and skip-runnable via `--test` so the bench harness stays
-/// healthy without paying the full `n = 1024` measurement cost.
-fn bench_dispatch_crossover(c: &mut Criterion) {
-    let sizes: &[usize] = &[64, 128, 256, 512, 1024];
-    let mut group = c.benchmark_group("charpoly/dispatch");
+/// Shared helper for `charpoly/dispatch*` Criterion groups: registers
+/// `cubic` and `kg` arms (plus an optional `dispatch` arm) for each
+/// requested `n`, all timed against the same fixed seed matrix per
+/// size. Used by [`bench_dispatch_crossover`] and
+/// [`bench_dispatch_crossover_fp65521`] so the two groups stay in sync.
+fn bench_dispatch_arms<const P: u64>(
+    c: &mut Criterion,
+    group_name: &str,
+    sizes: &[usize],
+    include_dispatch: bool,
+    kg_panic_msg: &'static str,
+) {
+    let mut group = c.benchmark_group(group_name);
     group.sample_size(10);
     for &n in sizes {
-        let a = random_fp::<MERSENNE_31>(n, n, 0xDEAD_BEEF);
+        let a = random_fp::<P>(n, n, 0xDEAD_BEEF);
         group.bench_with_input(BenchmarkId::new("cubic", n), &n, |b, _| {
             b.iter(|| {
                 let r = black_box(&a).charpoly_cubic();
@@ -147,20 +142,49 @@ fn bench_dispatch_crossover(c: &mut Criterion) {
             b.iter(|| {
                 let r = black_box(&a)
                     .charpoly_keller_gehrig(0xC0FFEE)
-                    .expect("KG must converge on Fp<MERSENNE_31>");
+                    .expect(kg_panic_msg);
                 black_box(r);
             });
         });
-        // Public dispatch — picks one of the two paths above based on
-        // the runtime decision tree.
-        group.bench_with_input(BenchmarkId::new("dispatch", n), &n, |b, _| {
-            b.iter(|| {
-                let r = black_box(&a).charpoly();
-                black_box(r);
+        if include_dispatch {
+            // Public dispatch — picks one of the two paths above based on
+            // the runtime decision tree.
+            group.bench_with_input(BenchmarkId::new("dispatch", n), &n, |b, _| {
+                b.iter(|| {
+                    let r = black_box(&a).charpoly();
+                    black_box(r);
+                });
             });
-        });
+        }
     }
     group.finish();
+}
+
+/// Dispatch-crossover bench (issue `1454ec2d`, refreshed in `4a59d1f9`):
+/// runs the cubic and Keller–Gehrig paths side-by-side at
+/// `n ∈ {64, 128, 256, 512, 1024}` on `Fp<MERSENNE_31>`.
+///
+/// Post-Wave-9 measurement (2026-05-07): cubic is ~148x faster than KG
+/// at `n = 256` (37.1ms vs 5.51s) and the ratio grows monotonically
+/// with `n` (see `dev/bench_results/2026-05-07-4a59d1f9-keller-gehrig-crossover.md`
+/// and `crates/gf2-core/src/field/charpoly.rs` module docs); public
+/// [`FieldMatrix::charpoly`] therefore always selects cubic under
+/// default dispatch (`KG_DISPATCH_MIN_N == usize::MAX`). The
+/// `dispatch` arm of this bench measures the public surface (i.e. the
+/// cubic baseline today) and is kept alongside the explicit `cubic`
+/// and `kg` arms so a future tuning of `KG_DISPATCH_MIN_N` can be
+/// validated against the same fixtures.
+///
+/// Compiled and skip-runnable via `--test` so the bench harness stays
+/// healthy without paying the full `n = 1024` measurement cost.
+fn bench_dispatch_crossover(c: &mut Criterion) {
+    bench_dispatch_arms::<MERSENNE_31>(
+        c,
+        "charpoly/dispatch",
+        &[64, 128, 256, 512, 1024],
+        true,
+        "KG must converge on Fp<MERSENNE_31>",
+    );
 }
 
 /// Dispatch-crossover bench for `Fp<65521>` (issue `4a59d1f9`).
@@ -172,27 +196,13 @@ fn bench_dispatch_crossover(c: &mut Criterion) {
 ///
 /// So this sweep covers n in {64, 128} only.
 fn bench_dispatch_crossover_fp65521(c: &mut Criterion) {
-    let sizes: &[usize] = &[64, 128];
-    let mut group = c.benchmark_group("charpoly/dispatch_fp65521");
-    group.sample_size(10);
-    for &n in sizes {
-        let a = random_fp::<PRIME_65521>(n, n, 0xDEAD_BEEF);
-        group.bench_with_input(BenchmarkId::new("cubic", n), &n, |b, _| {
-            b.iter(|| {
-                let r = black_box(&a).charpoly_cubic();
-                black_box(r);
-            });
-        });
-        group.bench_with_input(BenchmarkId::new("kg", n), &n, |b, _| {
-            b.iter(|| {
-                let r = black_box(&a)
-                    .charpoly_keller_gehrig(0xC0FFEE)
-                    .expect("KG must converge on Fp<65521>");
-                black_box(r);
-            });
-        });
-    }
-    group.finish();
+    bench_dispatch_arms::<PRIME_65521>(
+        c,
+        "charpoly/dispatch_fp65521",
+        &[64, 128],
+        false,
+        "KG must converge on Fp<65521>",
+    );
 }
 
 criterion_group! {
