@@ -15,7 +15,15 @@
   ],
   "gates_status": {},
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/bench_results/2026-05-07-d1a5fea8-invert-inplace.md",
+      "commit": null,
+      "label": "In-place trtrm invert evidence (n=256 1.29x, n=1024 1.44x)",
+      "doc_type": null,
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:task",
     "component:gf2-core",
@@ -23,5 +31,5 @@
     "story:sota-dense-la"
   ],
   "created_at": "2026-05-07T05:44:09.913311383+00:00",
-  "updated_at": "2026-05-07T19:12:43.179467696+00:00"
+  "updated_at": "2026-05-07T20:52:20.053944983+00:00"
 }
