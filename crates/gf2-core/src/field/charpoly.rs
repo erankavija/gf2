@@ -512,20 +512,15 @@ fn cyclic_decomposition_inner<F: FiniteField>(
             // Scalar path: FieldPoly::mul_scalar + Sub (all other fields).
             if let Some(cpa) = packed_cpa.as_mut() {
                 // Packed canonical-byte polynomial bookkeeping (issue 5a3dbd5b).
-                // Pre-convert each `alpha` from Montgomery to canonical at this
-                // site so the trait method never pays a per-call REDC on the
-                // hot path (review feedback for the per-call Montgomery
-                // conversion previously inside `sub_scaled_into`).
+                // The packed impl converts alpha to canonical via a precomputed
+                // lookup table (no per-call REDC in the hot path).
                 let d = chain.len(); // current chain length before appending
                 let mut buf = cpa.alloc_buf(d);
                 cpa.shift_x_last_into(&mut buf);
                 for j in 0..d {
                     let alpha = &coeffs[block_start + j];
                     if !alpha.is_zero() {
-                        let alpha_canon = alpha
-                            .try_canonical_u64()
-                            .expect("packed ChainPolyArith requires F::try_canonical_u64");
-                        cpa.sub_scaled_into(&mut buf, alpha_canon, j);
+                        cpa.sub_scaled_into(&mut buf, alpha, j);
                     }
                 }
 

@@ -756,15 +756,6 @@ impl<const P: u64> FiniteField for Fp<P> {
         simd_ops::fp_chain_poly_arith_available::<P>()
     }
 
-    /// Returns the canonical (post-Montgomery-REDC) value of `self` as
-    /// a `u64`, suitable for the canonical-byte `ChainPolyArith` impl.
-    /// Used by `cyclic_decomposition` to convert scalar coefficients
-    /// once per Krylov step rather than per `sub_scaled_into` call.
-    #[inline]
-    fn try_canonical_u64(&self) -> Option<u64> {
-        Some(self.value())
-    }
-
     /// SIMD-accelerated `axpy` (`y[i] += a · x[i]`) for `Fp<P>` with
     /// `P ≤ 65521` (issue `d1dd266c`). Routes through the AVX2
     /// byte-lane (`P ≤ 251`) or u16-lane (`252 ≤ P < 65536`)

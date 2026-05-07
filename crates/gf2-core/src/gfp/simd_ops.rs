@@ -1779,6 +1779,11 @@ pub(crate) struct PackedFpChainPolys<const P: u64> {
     scratch: Vec<u8>,
     /// Current capacity per lane (scratch.len() / 3).
     scratch_cap: usize,
+    /// Per-prime conversion tables (issue 5a3dbd5b R5 review feedback):
+    /// `from_mont[raw]` maps a Montgomery storage word to its canonical
+    /// byte. Used in `sub_scaled_into` so `alpha`'s canonical value is
+    /// obtained via a single table lookup rather than a per-call REDC.
+    tables: &'static SmallPrimeTables,
 }
 
 #[cfg(feature = "simd")]
@@ -1794,6 +1799,7 @@ impl<const P: u64> PackedFpChainPolys<P> {
             polys: Vec::new(),
             scratch: Vec::new(),
             scratch_cap: 0,
+            tables: build_small_prime_tables::<P>(),
         })
     }
 
@@ -1826,12 +1832,12 @@ impl<const P: u64> crate::field::matrix::ChainPolyArith<Fp<P>> for PackedFpChain
         buf[0] = 0;
     }
 
-    fn sub_scaled_into(&mut self, buf: &mut Vec<u8>, alpha_canonical: u64, j: usize) {
-        // alpha_canonical is already in canonical [0, P) form per the
-        // ChainPolyArith contract — caller pre-converts (issue 5a3dbd5b
-        // R4 review feedback to remove the per-call Montgomery REDC).
-        debug_assert!(alpha_canonical < P, "alpha_canonical must be < P");
-        let alpha_val = alpha_canonical as u8;
+    fn sub_scaled_into(&mut self, buf: &mut Vec<u8>, alpha: &Fp<P>, j: usize) {
+        // Convert alpha from Montgomery to canonical via the per-prime
+        // lookup table built once per prime in
+        // `build_small_prime_tables::<P>()` (issue 5a3dbd5b R5 review
+        // feedback). Single byte read; no REDC inside the hot loop.
+        let alpha_val = self.tables.from_mont[alpha.raw_storage() as usize];
         if alpha_val == 0 {
             return;
         }
