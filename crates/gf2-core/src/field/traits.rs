@@ -483,6 +483,35 @@ pub trait FiniteField:
         false
     }
 
+    /// Hidden cyclic-decomposition basis reducer hook
+    /// (issue `d1dd266c`).
+    ///
+    /// Returns an opaque handle that owns a packed canonical-form
+    /// copy of the basis columns and runs the
+    /// `(residual, coeffs) = v − Σ coeffs[j] basis[j]` reduce against
+    /// it via SIMD `batch_mul + batch_sub` calls on the canonical
+    /// lanes. The `push_col` method appends a new packed column;
+    /// `reduce` does the per-call reduce sweep against all currently
+    /// stored columns.
+    ///
+    /// The win over the scalar
+    /// [`crate::field::vec::FieldVec::axpy`]-driven reduce loop is
+    /// the elimination of the per-element Montgomery REDC pass: the
+    /// packed representation lets the inner loop run in canonical
+    /// form for every pivot subtraction, paying the `Fp<P>::value()`
+    /// REDC at append time only.
+    ///
+    /// Returns `None` for fields without a SIMD fast path; the
+    /// caller falls back to the scalar `reduce` chain.
+    #[doc(hidden)]
+    #[inline]
+    fn try_make_basis_reducer(
+        n: usize,
+    ) -> Option<Box<dyn crate::field::matrix::BasisReducer<Self>>> {
+        let _ = n;
+        None
+    }
+
     /// Hidden vectorised `axpy` hook (issue `d1dd266c`).
     ///
     /// Computes `y[i] += a · x[i]` for all `i` using a SIMD kernel

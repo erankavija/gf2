@@ -41,6 +41,44 @@ use crate::matrix_like::{MatrixLike, MatrixLikeMut};
 // [`FieldMatrix`] are implemented in that module.
 pub use crate::field::ple::Permutation;
 
+/// Crate-internal trait for cyclic-decomposition basis reducers
+/// (issue `d1dd266c`).
+///
+/// `cyclic_decomposition`'s reduce loop sweeps every basis column
+/// for every chain step. Storing each basis column once in a packed
+/// canonical-byte / canonical-u16 representation lets the inner
+/// `axpy` chain run on canonical lanes via the AVX2 `batch_mul +
+/// batch_sub` kernels, eliminating the per-element Montgomery REDC
+/// overhead of the scalar
+/// [`crate::field::vec::FieldVec::axpy`] path.
+///
+/// Implementations live alongside the field-specific SIMD layer
+/// (`crate::gfp::simd_ops::PackedFpBasis`); other fields return
+/// `None` from `try_make_basis_reducer` and the iterative driver
+/// falls back to the scalar `reduce` chain.
+pub trait BasisReducer<F: FiniteField>: Send {
+    /// Appends a column to the basis. The column is packed once at
+    /// append time; subsequent `reduce` calls reuse the packed form.
+    fn push_col(&mut self, col: &[F]);
+
+    /// Computes `(residual, coeffs)` such that
+    /// `v = Σ coeffs[j] · basis[j] + residual`, with `residual` having
+    /// zeros at every pivot row. `pivot_row_of_col` must align with
+    /// the columns appended via [`Self::push_col`] (one entry per
+    /// column, in append order).
+    fn reduce(&self, v: &[F], pivot_row_of_col: &[usize]) -> (Vec<F>, Vec<F>);
+
+    /// Number of columns currently stored. Useful for invariants
+    /// shared with the parallel [`FieldVec`] basis kept by
+    /// `cyclic_decomposition`.
+    fn len(&self) -> usize;
+
+    /// Returns `true` when no columns have been appended yet.
+    fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+}
+
 /// Crate-internal trait for pre-packed matvec caches (issue `d1dd266c`).
 ///
 /// `cyclic_decomposition` and `wiedemann_minpoly_attempt` perform

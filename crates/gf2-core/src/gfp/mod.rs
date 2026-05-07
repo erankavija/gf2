@@ -725,6 +725,16 @@ impl<const P: u64> FiniteField for Fp<P> {
         simd_ops::fp_small_try_gemm_classical::<P>(a, b_t, m, k, n, out)
     }
 
+    /// Constructs a packed basis reducer for the cyclic-decomposition
+    /// reduce loop (issue `d1dd266c`). Returns `None` when no SIMD
+    /// fast path is available.
+    #[inline]
+    fn try_make_basis_reducer(
+        n: usize,
+    ) -> Option<Box<dyn crate::field::matrix::BasisReducer<Self>>> {
+        simd_ops::fp_try_make_basis_reducer::<P>(n)
+    }
+
     /// SIMD-accelerated `axpy` (`y[i] += a · x[i]`) for `Fp<P>` with
     /// `P ≤ 65521` (issue `d1dd266c`). Routes through the AVX2
     /// byte-lane (`P ≤ 251`) or u16-lane (`252 ≤ P < 65536`)
