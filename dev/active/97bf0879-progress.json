@@ -1100,6 +1100,17 @@
   "session_12_closed_at": "2026-05-07T12:10Z",
   "session_12_handoff": "dev/active/97bf0879-handoff-11.md",
   "session_12_summary": "Closed Wave 10b: 4a59d1f9 (R3 PASS), 3a37e0f6 (Path B SpMM, R1 PASS — all 8 GF(p) sparse cells PASS), 1726270d (R3 PASS — 8 docs attached to sparse story). d1dd266c implementation landed at bda98cd (Wiedemann O(n^3)) but 4/8 cells still fail 1.5x. User refused scope-narrowing/aspirational amendments per epic philosophy (catching up with SOTA, no more tech debt). Performance gap analysis dev/plans/d1dd266c-minpoly-performance-gaps.md written + attached; user will dispatch a specialist. 54fd3f0b story-closure R1 failed and rolled to next session. d1dd266c claim slip retroactively fixed.",
+  "session_13_started_at": "2026-05-07T10:00Z",
+  "session_13_progress": {
+    "wave_11_carryover_closed": [
+      {"short_id": "54fd3f0b", "verdict": "R2 PASS — lead-direct fix to sparse-layout.md § 0 ratio (1.41x → 1.71x), gates green at 35a3c44. Closed at dc503d6."},
+      {"short_id": "72ab6d0e", "verdict": "PASS — story-closure, gates green at 4d88fbe. All 4 leaf deps done."}
+    ],
+    "wave_11_in_flight": [
+      {"short_id": "d1dd266c", "agent": "ac1a667991427eeee (opus)", "branch": "worktree-agent-d1dd266c", "base_sha": "dc503d6", "plan": "dev/active/d1dd266c-minpoly-sota-plan.md (user specialist plan)", "scope": "Validate cubic cyclic_decomposition LCM as production minpoly fallback for q ≤ n; packed Fp matvec for GF(65521)/GF(251)/GF(7); extension-field Wiedemann if cyclic insufficient. Close GF(65521)/n=256, GF(251)/n=64+256, GF(7)/n=64+256."},
+      {"short_id": "b87362a3", "agent": "a82891c01843b3fbc (sonnet)", "branch": "worktree-agent-b87362a3", "base_sha": "4d88fbe", "scope": "Evidence-only — measurements + dev/bench_results/2026-05-07-b87362a3-charpoly-parity-evidence.md. KG_DISPATCH_MIN_N=usize::MAX already in place from 4a59d1f9. Worker forbidden from touching charpoly.rs (concurrent with d1dd266c)."}
+    ]
+  },
   "session_11_started_at": "2026-05-06T13:46Z",
   "session_11_summary": "Closed Wave-7 tasks 380e041a, 8e305c21, and 366dbbcd. 380e041a produced M4RI-style Gray-table scheduling evidence and showed table scheduling alone was insufficient. 8e305c21 landed the production GF(2) M4RM schedule improvement, removed the disabled two-table prefetch path after review, documented benchmark evidence in dev/bench_results/2026-05-06-8e305c21-production-m4rm.md, and passed gates. 366dbbcd landed blocked GF(2) RREF/echelon optimization, fixed right-pivot full-row compatibility after cargo-ci exposed the NR5G diagnostic regression, documented evidence in dev/bench_results/2026-05-06-366dbbcd-gf2-echelon-rank.md, and passed cargo-ci/code-review/doc-review gates. 111a3967 became ready as the next Wave-7 evidence publication task.",
   "session_11_decisions": [
