@@ -129,9 +129,11 @@ fn bench_frobenius(c: &mut Criterion) {
 /// Post-d1dd266c+siblings dispatch (2026-05-07):
 ///   GF(2^31-1)/GF(65521): scalar Wiedemann (`q > n`), `O(n³)`.
 ///   GF(251)/n=256: extension-field Wiedemann (k=2 via `gfpn`), `O(n³)`.
-///   GF(251)/n=64: small-prime Wiedemann + packed byte matvec, `O(n³)`.
+///   GF(251)/n=64: multi-seed Wiedemann + packed byte matvec, `O(n³)`
+///       (extension gate is `n ≥ q`, not engaged for `n=64 < 251`).
 ///   GF(7)/n=256: extension-field Wiedemann (k=3 via `gfpn`), `O(n³)`.
-///   GF(7)/n=64: multi-seed Wiedemann + packed byte matvec, `O(n³)`.
+///   GF(7)/n=64: extension-field Wiedemann (k=3 via `gfpn`), `O(n³)`
+///       (extension gate `n ≥ 7` and `q^3 = 343 > 64`).
 fn bench_minpoly_reference_sweep(c: &mut Criterion) {
     let mut group = c.benchmark_group("charpoly/minpoly_ref");
     group.sample_size(10);
