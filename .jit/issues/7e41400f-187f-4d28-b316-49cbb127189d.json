@@ -1,8 +1,8 @@
 {
   "id": "7e41400f-187f-4d28-b316-49cbb127189d",
   "title": "Close inversion solve determinant rows",
-  "description": "Verify derived dense operations inherit optimized primitives.\n\n## Success Criteria\n\n- [hard] invert/solve/determinant rows meet the 1.5x threshold or have approved follow-up scope, scoped per-cell by the maturity markers below.\n- [hard] Correctness tests cover singular and rank-deficient inputs.\n\n## Amendment - 2026-05-07 (user-approved, Path A)\n\nPer AskUserQuestion 2026-05-07 (7e41400f closure), criterion #1 is amended to permit per-cell maturity-marker scoping. Empirical basis is the e7e41400f evidence doc (`dev/bench_results/2026-05-07-7e41400f-invert-solve-det.md`).\n\nPer-cell maturity markers (13 cells total: 3 ops x 3 sizes x ~ 2 regimes, with rank-deficient invert returning None and contributing one verdict per size):\n\n- **solve at all (n, regime): [hard] PASS** -- 0.24x-0.60x of fflas. Direct Criterion measurements; inherits PLE/TRSM tuning wins.\n- **det at all (n, regime): [hard] PASS** -- approximately equal to PLE time; beats fflas pluq by 1.8x.\n- **invert/deficient at all sizes: [hard] PASS** -- invert returns None after PLE detects rank deficiency; ~0.18x-0.34x of fflas.\n- **invert/uniform/n=64: [hard] PASS** -- 0.67x of fflas (just inside threshold).\n- **invert/uniform/n=256: [aspirational]** -- 1.79x of fflas. Algorithm-choice gap: gf2-core uses Dumas-Pernet Table 2 driver (PLE + 2 trtri + full n^3 GEMM); fflas-ffpack uses in-place dgetrf/dgetri that reuses the LU factorization without the full GEMM. The constituent primitives are tuned (PLE alone is 0.55x of fflas pluq), but the algorithm choice multiplies algorithmic work by ~4x.\n- **invert/uniform/n=1024: [aspirational]** -- 1.98x of fflas. Same algorithm-choice cause as n=256. The gap widens with n because the full n^3 GEMM dominates.\n\nClosing the 2 invert/uniform [aspirational] cells requires replacing the Dumas-Pernet Table 2 driver with an in-place LU-reuse driver. This is a separate algorithmic work item, owned by the broader finite-field SOTA catch-up plan in issue `615db3b9` (`dev/active/615db3b9-finite-field-la-sota-plan.md`); not duplicated as a separate follow-up under this story.\n\nRe-escalation threshold: re-escalate to user when `615db3b9` breakdown lands an in-place-invert sub-issue and that closes (revisit invert/uniform cells).",
-  "state": "in_progress",
+  "description": "Verify derived dense operations inherit optimized primitives.\n\n## Success Criteria\n\n- [hard] invert/solve/determinant rows meet the 1.5x threshold or have approved follow-up scope, scoped per-cell by the maturity markers below.\n- [hard] Correctness tests cover singular and rank-deficient inputs.\n\n## Amendment - 2026-05-07 (user-approved, Path A)\n\nPer AskUserQuestion 2026-05-07 (7e41400f closure), criterion #1 is amended to permit per-cell maturity-marker scoping. Empirical basis is the e7e41400f evidence doc (`dev/bench_results/2026-05-07-7e41400f-invert-solve-det.md`).\n\nPer-cell maturity markers (13 cells total: 3 ops x 3 sizes x ~ 2 regimes, with rank-deficient invert returning None and contributing one verdict per size):\n\n- **solve at all (n, regime): [hard] PASS** -- 0.24x-0.60x of fflas. Direct Criterion measurements; inherits PLE/TRSM tuning wins.\n- **det at all (n, regime): [hard] PASS** -- approximately equal to PLE time; beats fflas pluq by 1.8x.\n- **invert/deficient at all sizes: [hard] PASS** -- invert returns None after PLE detects rank deficiency; ~0.18x-0.34x of fflas.\n- **invert/uniform/n=64: [hard] PASS** -- 0.67x of fflas (just inside threshold).\n- **invert/uniform/n=256: [aspirational]** -- 1.79x of fflas. Algorithm-choice gap: gf2-core uses Dumas-Pernet Table 2 driver (PLE + 2 trtri + full n^3 GEMM); fflas-ffpack uses in-place dgetrf/dgetri that reuses the LU factorization without the full GEMM. The constituent primitives are tuned (PLE alone is 0.55x of fflas pluq), but the algorithm choice multiplies algorithmic work by ~4x.\n- **invert/uniform/n=1024: [aspirational]** -- 1.98x of fflas. Same algorithm-choice cause as n=256. The gap widens with n because the full n^3 GEMM dominates.\n\nThe 2 invert/uniform [aspirational] cells are owned by the in-place LU-reuse follow-up issue **`d1a5fea8`** (Replace Dumas-Pernet inv() driver with in-place LU-reuse), filed 2026-05-07 as a sibling under story `72ab6d0e`. d1a5fea8 depends on 7e41400f closing.\n\nRe-escalation threshold: re-escalate to user when `d1a5fea8` closes (revisit invert/uniform cells with fresh measurements).",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:claude",
   "dependencies": [
@@ -14,7 +14,23 @@
     "cargo-ci",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-07T05:29:12.277353227Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-07T06:00:40.052641374Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-05-07T06:06:31.084183435Z"
+    }
+  },
   "context": {},
   "documents": [
     {
@@ -32,5 +48,5 @@
     "story:sota-dense-la"
   ],
   "created_at": "2026-04-30T06:43:02.826144835+00:00",
-  "updated_at": "2026-05-07T05:28:11.282319497+00:00"
+  "updated_at": "2026-05-07T06:06:31.758895168+00:00"
 }

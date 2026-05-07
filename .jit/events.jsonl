@@ -4026,3 +4026,13 @@
 {"type":"issue_state_changed","id":"e653949b-27e2-49ad-8928-2908d68d0074","issue_id":"7e41400f-187f-4d28-b316-49cbb127189d","timestamp":"2026-05-07T02:27:15.292609384Z","from":"backlog","to":"ready"}
 {"type":"issue_state_changed","id":"3f0c6b63-48f1-43c8-9717-ed22f0ec0c4c","issue_id":"7e41400f-187f-4d28-b316-49cbb127189d","timestamp":"2026-05-07T02:27:34.185385859Z","from":"ready","to":"in_progress"}
 {"type":"issue_claimed","id":"24ed2546-572e-473b-932d-17cd7ba0fecc","issue_id":"7e41400f-187f-4d28-b316-49cbb127189d","timestamp":"2026-05-07T02:27:34.188366990Z","assignee":"agent:claude"}
+{"type":"gate_passed","id":"68953944-f8f7-46a2-a485-3b9984c380d8","issue_id":"7e41400f-187f-4d28-b316-49cbb127189d","timestamp":"2026-05-07T05:33:23.462987022Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"issue_created","id":"bf6b07e9-a6cc-4406-89f4-746a441078e6","issue_id":"d1a5fea8-6277-4ce4-b433-3d32d92d509e","timestamp":"2026-05-07T05:44:09.913604483Z","title":"Replace Dumas-Pernet inv() driver with in-place LU-reuse","priority":"normal"}
+{"type":"issue_state_changed","id":"2beeef6a-ecae-4aad-8ff8-a1405a9153bd","issue_id":"d1a5fea8-6277-4ce4-b433-3d32d92d509e","timestamp":"2026-05-07T05:44:14.539658287Z","from":"ready","to":"backlog"}
+{"type":"gate_failed","id":"ae97ecb5-61ed-4295-a475-35c6213216c5","issue_id":"7e41400f-187f-4d28-b316-49cbb127189d","timestamp":"2026-05-07T05:55:10.932721872Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"dcfc0fbe-d4de-4530-8975-aacf28482efd","issue_id":"7e41400f-187f-4d28-b316-49cbb127189d","timestamp":"2026-05-07T06:06:25.387120255Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"f09c4db5-4020-49c6-9932-f7e5729c2bfd","issue_id":"7e41400f-187f-4d28-b316-49cbb127189d","timestamp":"2026-05-07T06:06:31.084404485Z","gate_key":"doc-review","updated_by":"agent:project-lead"}
+{"type":"issue_state_changed","id":"1764c6d1-4646-4ec4-94a3-4c048d7225e8","issue_id":"7e41400f-187f-4d28-b316-49cbb127189d","timestamp":"2026-05-07T06:06:31.758847388Z","from":"in_progress","to":"done"}
+{"type":"issue_completed","id":"b264b338-a122-4f75-894f-128c373ae9d4","issue_id":"7e41400f-187f-4d28-b316-49cbb127189d","timestamp":"2026-05-07T06:06:31.758878328Z"}
+{"type":"issue_state_changed","id":"8c349f6c-87f2-4adb-a436-58c93d4550cd","issue_id":"4eb105f7-ea4f-4ec9-8003-df75ef48ce15","timestamp":"2026-05-07T06:06:31.907695751Z","from":"backlog","to":"ready"}
+{"type":"issue_state_changed","id":"f1f8e639-373f-4cee-8d63-cc8057bb4758","issue_id":"d1a5fea8-6277-4ce4-b433-3d32d92d509e","timestamp":"2026-05-07T06:06:32.146702969Z","from":"backlog","to":"ready"}

@@ -2,7 +2,7 @@
   "id": "4eb105f7-ea4f-4ec9-8003-df75ef48ce15",
   "title": "Publish dense LA parity evidence",
   "description": "Publish final dense linear-algebra evidence.\n\n## Success Criteria\n\n- [hard] Raw CSVs and ratio tables are linked to the story.\n- [hard] Block-size and dispatch policy are documented.",
-  "state": "backlog",
+  "state": "ready",
   "priority": "normal",
   "assignee": null,
   "dependencies": [
@@ -23,5 +23,5 @@
     "story:sota-dense-la"
   ],
   "created_at": "2026-04-30T06:43:02.834989508+00:00",
-  "updated_at": "2026-04-30T06:43:48.645324434+00:00"
+  "updated_at": "2026-05-07T06:06:31.907518931+00:00"
 }
