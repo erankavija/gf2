@@ -52,7 +52,7 @@ rows). Criterion spmv timings (Path A and post-B) from `dev/bench_results/2026-0
 | spmv × GF(7) | 20.163 µs | 493 Mops/s | 9.2 µs | ~1.09 Gops/s | 9.2 µs | ~1.09 Gops/s | 8.650 µs | 1.185 Gops/s | **0.96x** | A | **PASS** |
 | spmv × GF(251) | 23.713 µs | 419 Mops/s | 9.4 µs | ~1.06 Gops/s | 9.2 µs | ~1.09 Gops/s | 8.106 µs | 1.254 Gops/s | **0.88x** | A | **PASS** |
 | spmv × GF(65521) | 20.326 µs | 489 Mops/s | 9.3 µs | ~1.08 Gops/s | 9.1 µs | ~1.10 Gops/s | 8.890 µs | 1.153 Gops/s | **0.97x** | A | **PASS** |
-| spmv × GF(2^31-1) | 10.723 µs | 927 Mops/s | 9.4 µs | ~1.07 Gops/s | 9.4 µs | ~1.07 Gops/s | 15.043 µs | 661 Mops/s | **1.30x** | A | **PASS** (unchanged) |
+| spmv × GF(2^31-1) | 10.723 µs | 927 Mops/s | 9.4 µs | ~1.07 Gops/s | 9.4 µs | ~1.07 Gops/s | 15.043 µs | 661 Mops/s | **1.62x** | A | **PASS** (unchanged) |
 
 CSV row sources (pre-Wave-3):
 - GF(7): `dev/bench_results/2026-05-04-47698404-sparse.csv` line 13
@@ -79,7 +79,7 @@ run-to-run noise (Criterion 10-sample, 5 s measurement window).
 | sparse×dense × GF(7) | 17.397 ms | 0.22x | 7.984 ms | 0.49x | 3.605 ms | 2.822 Gops/s | 2.564 Gops/s | **1.08x** | B | **PASS** |
 | sparse×dense × GF(251) | 17.335 ms | 0.15x | 8.335 ms | 0.32x | 2.452 ms | 4.149 Gops/s | 3.903 Gops/s | **1.08x** | B | **PASS** |
 | sparse×dense × GF(65521) | 17.266 ms | 0.23x | 8.589 ms | 0.46x | 4.581 ms | 2.221 Gops/s | 2.576 Gops/s | **0.87x** | B | **PASS** |
-| sparse×dense × GF(2^31-1) | 13.840 ms | 0.97x | 7.852 ms | 1.70x | 8.488 ms | 1.199 Gops/s | 702 Mops/s | **1.57x** | A | **PASS** |
+| sparse×dense × GF(2^31-1) | 13.840 ms | 0.97x | 7.852 ms | 1.70x | 8.488 ms | 1.199 Gops/s | 702 Mops/s | **1.71x** | A | **PASS** |
 
 CSV row sources (pre-Wave-3):
 - GF(7): `dev/bench_results/2026-05-04-47698404-sparse.csv` line 15
@@ -102,8 +102,8 @@ CSV row sources (Path B final — `dev/bench_results/`):
 Note: GF(2^31-1) row in Path B CSV (`2026-05-07-3a37e0f6-sparse-dense-path-b-final.csv` line 5) shows 8.488 ms vs Path A
 7.852 ms — a ~5% wall-time increase from system noise. The SIMD hook returns `false` for
 Mersenne-31, so the same Path-A code path runs. GF(2^31-1) remains well above the 1.5x contract
-at 1.57x (vs the 0.667x floor). The contract clause "0.667x floor convention" applied:
-gf2/fflas = 1.199 Gops/s / 702 Mops/s = 1.57x, PASS.
+at 1.71x (vs the 0.667x floor). The contract clause "0.667x floor convention" applied:
+gf2/fflas = 1.199 Gops/s / 702 Mops/s = 1.71x, PASS.
 
 ### § 1.3 Protocol § 9 exclusion cells (not-yet-harnessed / no-independent-oracle)
 
@@ -136,7 +136,7 @@ These numbers are unchanged from Path A (no kernel modification for GF(2^m) cell
 | Role | Path | Description |
 |---|---|---|
 | fflas + LinBox reference | `dev/bench_results/2026-05-04-47698404-sparse-reference.csv` | 33 rows: fflas-ffpack spmv + sparse×dense (8 rows), LinBox spmv + sparse×dense + sparse-elim (25 rows), all at n=1024/4096 |
-| gf2-core pre-Wave-3 baseline | `dev/bench_results/2026-05-04-47698404-sparse.csv` | 44 rows: full scorecard run including GF(2) layout variants, structured, coding-theory matrices |
+| gf2-core pre-Wave-3 baseline | `dev/bench_results/2026-05-04-47698404-sparse.csv` | 43 data rows: full scorecard run including GF(2) layout variants, structured, coding-theory matrices |
 | gf2-core Path-A spmv | `dev/bench_results/2026-05-07-3a37e0f6-spmv-path-a.csv` | 11 rows: spmv for GF(2) variants + 4 GF(p) fields |
 | gf2-core Path-A sparse×dense | `dev/bench_results/2026-05-07-3a37e0f6-sparse-dense-path-a.csv` | 6 rows: sparse×dense for 4 GF(p) fields + 2 GF(2^m) |
 | gf2-core Path-B sparse×dense (final) | `dev/bench_results/2026-05-07-3a37e0f6-sparse-dense-path-b-final.csv` | 6 rows: sparse×dense for 4 GF(p) fields + 2 GF(2^m) |
@@ -152,11 +152,11 @@ gf2-core wall-time is within 1.5x of fflas).
 | spmv | GF(7) | ~1.09 Gops/s | 1.185 Gops/s | 0.96x | >= 0.667x | **PASS** |
 | spmv | GF(251) | ~1.09 Gops/s | 1.254 Gops/s | 0.88x | >= 0.667x | **PASS** |
 | spmv | GF(65521) | ~1.10 Gops/s | 1.153 Gops/s | 0.97x | >= 0.667x | **PASS** |
-| spmv | GF(2^31-1) | ~1.07 Gops/s | 661 Mops/s | 1.30x | >= 0.667x | **PASS** |
+| spmv | GF(2^31-1) | ~1.07 Gops/s | 661 Mops/s | 1.62x | >= 0.667x | **PASS** |
 | sparse×dense | GF(7) | 2.822 Gops/s | 2.564 Gops/s | 1.08x | >= 0.667x | **PASS** |
 | sparse×dense | GF(251) | 4.149 Gops/s | 3.903 Gops/s | 1.08x | >= 0.667x | **PASS** |
 | sparse×dense | GF(65521) | 2.221 Gops/s | 2.576 Gops/s | 0.87x | >= 0.667x | **PASS** |
-| sparse×dense | GF(2^31-1) | 1.199 Gops/s | 702 Mops/s | 1.57x | >= 0.667x | **PASS** |
+| sparse×dense | GF(2^31-1) | 1.199 Gops/s | 702 Mops/s | 1.71x | >= 0.667x | **PASS** |
 
 All 8 externally-referenced GF(p) sparse cells are PASS. Zero cells are below the 0.667x
 floor. All spmv cells closed via Path A (lazy-reduction CSR); sparse×dense cells for GF(7),
