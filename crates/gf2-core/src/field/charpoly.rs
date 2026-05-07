@@ -3787,9 +3787,6 @@ mod tests {
             prop_assert_eq!(&mp, &ref_mp, "Wiedemann minpoly != basis-LCM reference for Fp<65521>");
         }
 
-        /// Bit-identical charpoly results: packed canonical-byte path vs scalar
-        /// Montgomery path for `Fp<7>`, sizes `n ∈ 2..=32` (issue `5a3dbd5b`).
-        ///
         /// Bit-identical charpoly results: packed canonical-byte chain-poly
         /// arithmetic vs scalar `FieldPoly` chain-poly arithmetic for `Fp<7>`,
         /// sizes `n ∈ 2..=32` (issue `5a3dbd5b`).
