@@ -512,6 +512,26 @@ pub trait FiniteField:
         None
     }
 
+    /// Hidden chain-polynomial arithmetic hook (issue `5a3dbd5b`).
+    ///
+    /// Returns a boxed [`crate::field::matrix::ChainPolyArith`] handle
+    /// that stores chain polynomial coefficients in canonical-byte form
+    /// and performs the Krylov-step polynomial update (`shift_x`,
+    /// `sub_scaled`) via AVX2 byte-lane kernels, avoiding per-element
+    /// Montgomery REDC overhead.
+    ///
+    /// Returns `None` for fields other than `Fp<P>` with `P ≤ 251`
+    /// (or when AVX2 is unavailable); the caller falls back to the
+    /// scalar `FieldPoly` path.
+    #[doc(hidden)]
+    #[inline]
+    fn try_make_chain_poly_arith(
+        n: usize,
+    ) -> Option<Box<dyn crate::field::matrix::ChainPolyArith<Self>>> {
+        let _ = n;
+        None
+    }
+
     /// Hidden vectorised `axpy` hook (issue `d1dd266c`).
     ///
     /// Computes `y[i] += a · x[i]` for all `i` using a SIMD kernel

@@ -1579,6 +1579,208 @@ pub(crate) fn fp_try_matvec<const P: u64>(
     false
 }
 
+// ---------------------------------------------------------------------------
+// PackedFpChainPolys<P> — canonical-byte chain-polynomial arithmetic
+// for `cyclic_decomposition` (issue `5a3dbd5b`).
+//
+// Each chain polynomial of degree `d` is stored as a `Vec<u8>` of length
+// `d + 1` in ascending-degree order (coeffs[i] = coeff of x^i), with all
+// entries in `[0, P)`.  The Krylov-step update
+//
+//     next[d] = x · chain[d-1]  −  Σ_j α_j · chain[j]
+//
+// is therefore:
+//   1. shift_x: prepend a zero byte → length grows by 1.
+//   2. For each j where α_j ≠ 0:
+//        broadcast(α_j) · chain[j] → tmp   (batch_mul, zero-padded)
+//        next − tmp → next                 (batch_sub)
+//
+// All arithmetic stays in canonical-byte form; the only Montgomery REDC
+// calls are at `alpha.value()` (one per non-zero α_j) and at the very
+// end when `finish_buf` converts bytes back to `FieldPoly<Fp<P>>` via
+// `Fp::new`.
+// ---------------------------------------------------------------------------
+
+/// Packed canonical-byte chain-polynomial store for small primes (`P ≤ 251`).
+///
+/// Used by `cyclic_decomposition` (issue `5a3dbd5b`) to replace the scalar
+/// `FieldPoly::mul_scalar` / `Sub` polynomial-bookkeeping with AVX2
+/// byte-lane kernels, closing the ~10x wall-clock gap on `GF(251)/n=256
+/// charpoly` reported in `dev/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md`
+/// § 6.4.
+///
+/// # Examples
+///
+/// ```
+/// // PackedFpChainPolys is a crate-internal type; external callers interact
+/// // only through the `ChainPolyArith` trait returned by
+/// // `FiniteField::try_make_chain_poly_arith`.
+/// ```
+///
+/// # Complexity
+///
+/// Each `sub_scaled_into` call costs `O(d)` byte-lane AVX2 muls + subs
+/// (where `d` is the current chain length), matching the scalar complexity
+/// but with a 16-element SIMD factor.  The total polynomial-bookkeeping cost
+/// for one Krylov block of length `d` is `O(d²)` — the same as the scalar
+/// path but with the Montgomery REDC per-element overhead eliminated.
+#[cfg(feature = "simd")]
+pub(crate) struct PackedFpChainPolys<const P: u64> {
+    /// Stored coefficients for each chain polynomial, in canonical bytes,
+    /// ascending-degree order.  `polys[j]` has length `j + 1` (degree `j`).
+    polys: Vec<Vec<u8>>,
+    /// Pre-allocated scratch buffer of 3 × max_cj_len bytes.  Layout:
+    ///   [0..n]:   broadcast (alpha repeated n times)
+    ///   [n..2n]:  scaled polynomial (alpha * chain_j)
+    ///   [2n..3n]: subtraction result (buf - scaled)
+    /// Grown lazily; never shrunk.  Using a single allocation and
+    /// `split_at_mut` gives safe non-overlapping mutable borrows.
+    scratch: Vec<u8>,
+    /// Current capacity per lane (scratch.len() / 3).
+    scratch_cap: usize,
+}
+
+#[cfg(feature = "simd")]
+impl<const P: u64> PackedFpChainPolys<P> {
+    /// Constructs an empty store.  Returns `None` for primes outside the
+    /// supported range (`P < 3` or `P > 251`) or when AVX2 is unavailable.
+    pub(crate) fn try_new() -> Option<Self> {
+        if !fp_small_enabled::<P>() {
+            return None;
+        }
+        crate::simd::maybe_fp_small()?;
+        Some(Self {
+            polys: Vec::new(),
+            scratch: Vec::new(),
+            scratch_cap: 0,
+        })
+    }
+
+    /// Ensures the scratch buffer has capacity for at least `n` bytes per
+    /// lane.  Reallocates at most once per Krylov block (monotonically
+    /// growing polynomials).
+    #[inline]
+    fn ensure_scratch(&mut self, n: usize) {
+        if n > self.scratch_cap {
+            self.scratch.resize(n * 3, 0u8);
+            self.scratch_cap = n;
+        }
+    }
+}
+
+#[cfg(feature = "simd")]
+impl<const P: u64> crate::field::matrix::ChainPolyArith<Fp<P>> for PackedFpChainPolys<P> {
+    fn push_one(&mut self) {
+        // The constant polynomial 1 has coefficients [1] (degree 0).
+        self.polys.push(vec![1u8]);
+    }
+
+    fn shift_x_last_into(&self, buf: &mut Vec<u8>) {
+        // x · p(x) prepends a zero coefficient.
+        let last = self.polys.last().expect("shift_x_last_into: empty chain");
+        let new_len = last.len() + 1;
+        buf.resize(new_len, 0u8);
+        // Copy last[0..] into buf[1..] (shift by one position).
+        buf[1..new_len].copy_from_slice(last);
+        buf[0] = 0;
+    }
+
+    fn sub_scaled_into(&mut self, buf: &mut Vec<u8>, alpha: &Fp<P>, j: usize) {
+        let alpha_val = alpha.value() as u8;
+        if alpha_val == 0 {
+            return;
+        }
+        let fns = crate::simd::maybe_fp_small()
+            .expect("PackedFpChainPolys::sub_scaled_into requires AVX2");
+        let p_u8 = P as u8;
+        let cj_len = self.polys[j].len();
+        // buf must be at least as long as chain_j.
+        debug_assert!(
+            buf.len() >= cj_len,
+            "sub_scaled_into: buf len {} < chain_j len {}",
+            buf.len(),
+            cj_len
+        );
+        // Ensure the single scratch buffer has 3 × cj_len capacity.
+        // Layout: [0..cj_len] = broadcast; [cj_len..2*cj_len] = scaled;
+        //         [2*cj_len..3*cj_len] = sub result.
+        self.ensure_scratch(cj_len);
+        // Split scratch into three non-overlapping lanes.
+        // Layout:  [0..cap]=lane0  [cap..2cap]=lane1  [2cap..3cap]=lane2
+        //
+        // Steps:
+        //  1. lane1[..cj_len] = polys[j]      (chain copy)
+        //  2. lane0[..cj_len] = alpha_val      (broadcast)
+        //  3. batch_mul(lane0, lane1) -> lane2 (scaled = alpha * chain)
+        //  4. batch_sub(buf, lane2) -> lane0   (diff = buf - scaled)
+        //  5. buf[..cj_len] = lane0[..cj_len]
+        let cap = self.scratch_cap;
+        // Step 1: copy polys[j] into lane1 (polys and scratch are separate
+        // fields, so we can borrow them simultaneously).
+        self.scratch[cap..cap + cj_len].copy_from_slice(&self.polys[j]);
+        // Step 2: fill lane0 with broadcast.
+        self.scratch[..cj_len].fill(alpha_val);
+        // Step 3: batch_mul(lane0, lane1) -> lane2.
+        // Split into (lane0+lane1) | lane2 to get mutable access to lane2
+        // while borrowing lane0 and lane1 immutably.
+        let (lo_and_l1, lane2_full) = self.scratch.split_at_mut(2 * cap);
+        let bcast = &lo_and_l1[..cj_len];
+        let chain_copy = &lo_and_l1[cap..cap + cj_len];
+        let scaled = &mut lane2_full[..cj_len];
+        (fns.batch_mul_fn)(bcast, chain_copy, p_u8, scaled);
+        // Step 4: batch_sub(buf, lane2) -> lane0.
+        // Split into lane0 | (lane1+lane2) to get mutable access to lane0
+        // while borrowing lane2 immutably.
+        let (lane0_full, l1_and_l2) = self.scratch.split_at_mut(cap);
+        let diff_out = &mut lane0_full[..cj_len];
+        let scaled_in = &l1_and_l2[cap..cap + cj_len]; // lane2[..cj_len]
+        (fns.batch_sub_fn)(&buf[..cj_len], scaled_in, p_u8, diff_out);
+        // Step 5: write result back to buf.
+        buf[..cj_len].copy_from_slice(&self.scratch[..cj_len]);
+    }
+
+    fn push_buf(&mut self, buf: &[u8]) {
+        self.polys.push(buf.to_vec());
+    }
+
+    fn finish_buf(&self, buf: &[u8], zero: &Fp<P>) -> crate::field::poly::FieldPoly<Fp<P>> {
+        let coeffs: Vec<Fp<P>> = buf.iter().map(|&b| Fp::<P>::new(b as u64)).collect();
+        let _ = zero;
+        crate::field::poly::FieldPoly::from_coeffs_trimmed(coeffs)
+    }
+
+    fn alloc_buf(&self, max_deg: usize) -> Vec<u8> {
+        vec![0u8; max_deg + 1]
+    }
+
+    fn len(&self) -> usize {
+        self.polys.len()
+    }
+}
+
+/// Returns a boxed [`crate::field::matrix::ChainPolyArith`] for
+/// `Fp<P>` with `P ≤ 251` and AVX2 available, or `None` otherwise.
+#[cfg(feature = "simd")]
+pub(crate) fn fp_try_make_chain_poly_arith<const P: u64>(
+    _n: usize,
+) -> Option<Box<dyn crate::field::matrix::ChainPolyArith<Fp<P>>>> {
+    let cpa = PackedFpChainPolys::<P>::try_new()?;
+    Some(Box::new(cpa))
+}
+
+/// Non-SIMD stub for `PackedFpChainPolys<P>`.
+#[cfg(not(feature = "simd"))]
+pub(crate) struct PackedFpChainPolys<const P: u64>;
+
+/// Non-SIMD stub that always returns `None`.
+#[cfg(not(feature = "simd"))]
+#[inline]
+pub(crate) fn fp_try_make_chain_poly_arith<const P: u64>(
+    _n: usize,
+) -> Option<Box<dyn crate::field::matrix::ChainPolyArith<Fp<P>>>> {
+    None
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

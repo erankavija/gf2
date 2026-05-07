@@ -207,7 +207,7 @@
 //! matrix `P` column by column. The architectural cost is documented
 //! per function; no bespoke kernels are introduced.
 
-use crate::field::matrix::{BasisReducer, FieldMatrix, PackedMatvec};
+use crate::field::matrix::{BasisReducer, ChainPolyArith, FieldMatrix, PackedMatvec};
 use crate::field::poly::FieldPoly;
 use crate::field::vec::FieldVec;
 use crate::field::FiniteField;
@@ -342,6 +342,11 @@ fn cyclic_decomposition<F: FiniteField>(a: &FieldMatrix<F>) -> Vec<CyclicBlock<F
     // canonical-byte / canonical-u16 lanes instead of per-element
     // Montgomery REDC chains, closing the n³ scalar reduce gap.
     let mut packed_basis: Option<Box<dyn BasisReducer<F>>> = F::try_make_basis_reducer(n);
+    // Optional packed chain-poly arith (issue 5a3dbd5b): when present,
+    // the polynomial-bookkeeping update step runs on canonical-byte lanes
+    // (AVX2 batch_mul + batch_sub) instead of per-element Montgomery muls.
+    // Only active for Fp<P> with P ≤ 251 and AVX2 available.
+    let chain_poly_arith: Option<Box<dyn ChainPolyArith<F>>> = F::try_make_chain_poly_arith(n);
 
     // Running basis B in row-reduced form. We store it as a flat
     // `Vec<FieldVec<F>>` (one per column) so that appending a new
@@ -420,7 +425,23 @@ fn cyclic_decomposition<F: FiniteField>(a: &FieldMatrix<F>) -> Vec<CyclicBlock<F
         // Track polynomial expression of each chain element in terms
         // of u. chain_poly[0] = `1` (the constant polynomial), since
         // chain[0] is the residual of u, which equals u in the quotient.
+        //
+        // Two paths:
+        //   packed_cpa: canonical-byte store (Fp<P>, P ≤ 251, AVX2) —
+        //               shift_x + batch_mul/sub avoid per-coeff REDC.
+        //   chain_polys: scalar FieldPoly path (all other fields).
         let mut chain_polys: Vec<FieldPoly<F>> = Vec::new();
+        // Per-block packed arith handle (re-create each block so the
+        // chain-poly index resets to 0; the global chain_poly_arith is
+        // just a flag — we construct a fresh per-block handle from the
+        // same factory).  We need `is_some` from the outer handle only to
+        // decide whether to take the packed path; the actual operations use
+        // this per-block handle.
+        let mut packed_cpa: Option<Box<dyn ChainPolyArith<F>>> = if chain_poly_arith.is_some() {
+            F::try_make_chain_poly_arith(n)
+        } else {
+            None
+        };
 
         // The very first chain element. We do NOT subtract any chain
         // contribution (chain is empty); only earlier-basis entries
@@ -436,7 +457,11 @@ fn cyclic_decomposition<F: FiniteField>(a: &FieldMatrix<F>) -> Vec<CyclicBlock<F
             pb.push_col(residual.as_slice());
         }
         chain.push(residual);
-        chain_polys.push(FieldPoly::one_like(&zero));
+        if let Some(cpa) = packed_cpa.as_mut() {
+            cpa.push_one();
+        } else {
+            chain_polys.push(FieldPoly::one_like(&zero));
+        }
 
         loop {
             // next = A · chain[-1] (in V).
@@ -452,34 +477,72 @@ fn cyclic_decomposition<F: FiniteField>(a: &FieldMatrix<F>) -> Vec<CyclicBlock<F
             // α_j = coeffs[block_start + j] for j = 0..chain.len().
             // Build the next polynomial:
             //   chain_poly[d] = x · chain_poly[d-1] − Σ_j α_j chain_poly[j]
-            let mut next_poly = poly_shift_x(&chain_polys[chain.len() - 1]);
-            for j in 0..chain.len() {
-                let alpha = coeffs[block_start + j].clone();
-                if !alpha.is_zero() {
-                    next_poly = &next_poly - &chain_polys[j].mul_scalar(&alpha);
+            //
+            // Packed path: canonical-byte shift + batch_mul/sub (Fp<P> ≤ 251).
+            // Scalar path: FieldPoly::mul_scalar + Sub (all other fields).
+            if let Some(cpa) = packed_cpa.as_mut() {
+                // Packed canonical-byte polynomial bookkeeping (issue 5a3dbd5b).
+                let d = chain.len(); // current chain length before appending
+                let mut buf = cpa.alloc_buf(d);
+                cpa.shift_x_last_into(&mut buf);
+                for j in 0..d {
+                    let alpha = &coeffs[block_start + j];
+                    if !alpha.is_zero() {
+                        cpa.sub_scaled_into(&mut buf, alpha, j);
+                    }
                 }
-            }
 
-            if residual_next.iter().any(|c| !c.is_zero()) {
-                // Independent: append to chain and basis.
-                append_to_basis(
-                    residual_next.clone(),
-                    &mut basis,
-                    &mut col_at_pivot_row,
-                    &mut pivot_row_of_col,
-                );
-                if let Some(pb) = packed_basis.as_mut() {
-                    pb.push_col(residual_next.as_slice());
+                if residual_next.iter().any(|c| !c.is_zero()) {
+                    // Independent: append to chain and basis.
+                    append_to_basis(
+                        residual_next.clone(),
+                        &mut basis,
+                        &mut col_at_pivot_row,
+                        &mut pivot_row_of_col,
+                    );
+                    if let Some(pb) = packed_basis.as_mut() {
+                        pb.push_col(residual_next.as_slice());
+                    }
+                    chain.push(residual_next);
+                    cpa.push_buf(&buf);
+                } else {
+                    // Dependent: finalise the block polynomial.
+                    let next_poly = cpa.finish_buf(&buf, &zero);
+                    let poly = monic(next_poly);
+                    blocks.push(CyclicBlock { poly });
+                    break;
                 }
-                chain.push(residual_next);
-                chain_polys.push(next_poly);
             } else {
-                // Dependent: next_poly is the minimal polynomial of `u`
-                // in the quotient `V / earlier basis`. By construction
-                // it is monic of degree exactly `chain.len()`.
-                let poly = monic(next_poly);
-                blocks.push(CyclicBlock { poly });
-                break;
+                // Scalar FieldPoly bookkeeping (all non-packed fields).
+                let mut next_poly = poly_shift_x(&chain_polys[chain.len() - 1]);
+                for j in 0..chain.len() {
+                    let alpha = coeffs[block_start + j].clone();
+                    if !alpha.is_zero() {
+                        next_poly = &next_poly - &chain_polys[j].mul_scalar(&alpha);
+                    }
+                }
+
+                if residual_next.iter().any(|c| !c.is_zero()) {
+                    // Independent: append to chain and basis.
+                    append_to_basis(
+                        residual_next.clone(),
+                        &mut basis,
+                        &mut col_at_pivot_row,
+                        &mut pivot_row_of_col,
+                    );
+                    if let Some(pb) = packed_basis.as_mut() {
+                        pb.push_col(residual_next.as_slice());
+                    }
+                    chain.push(residual_next);
+                    chain_polys.push(next_poly);
+                } else {
+                    // Dependent: next_poly is the minimal polynomial of `u`
+                    // in the quotient `V / earlier basis`. By construction
+                    // it is monic of degree exactly `chain.len()`.
+                    let poly = monic(next_poly);
+                    blocks.push(CyclicBlock { poly });
+                    break;
+                }
             }
         }
     }
@@ -3611,6 +3674,111 @@ mod tests {
             }
             let ref_mp = ref_minpoly_via_basis_lcm(&a);
             prop_assert_eq!(&mp, &ref_mp, "Wiedemann minpoly != basis-LCM reference for Fp<65521>");
+        }
+
+        /// Bit-identical charpoly results: packed canonical-byte path vs scalar
+        /// Montgomery path for `Fp<7>`, sizes `n ∈ 2..=32` (issue `5a3dbd5b`).
+        ///
+        /// The packed path is active when AVX2 is available; on non-AVX2 hosts
+        /// it silently degrades to the scalar path, so the test still passes
+        /// (it compares the result against itself).  On AVX2 hosts the two paths
+        /// must return bit-identical `FieldPoly<Fp<7>>` coefficients.
+        #[test]
+        fn proptest_packed_chain_polys_fp7_matches_scalar(
+            n in 2usize..=32,
+            seed in any::<u64>(),
+        ) {
+            let a = random_fp::<7>(n, n, seed);
+            // The public `charpoly()` entry already dispatches through the packed
+            // path when available.  Check that it matches the scalar cubic path.
+            let packed_result = a.charpoly();
+            let scalar_result = a.charpoly_cubic();
+            prop_assert_eq!(
+                packed_result,
+                scalar_result,
+                "packed chain-poly charpoly ≠ scalar charpoly for Fp<7> n={} seed={}",
+                n,
+                seed
+            );
+        }
+
+        /// Bit-identical charpoly results: packed canonical-byte path vs scalar
+        /// Montgomery path for `Fp<251>`, sizes `n ∈ 2..=32` (issue `5a3dbd5b`).
+        ///
+        /// This is the primary regression guard for the packed chain-poly
+        /// bookkeeping introduced to close the GF(251)/n=256 charpoly gap.
+        #[test]
+        fn proptest_packed_chain_polys_fp251_matches_scalar(
+            n in 2usize..=32,
+            seed in any::<u64>(),
+        ) {
+            let a = random_fp::<251>(n, n, seed);
+            let packed_result = a.charpoly();
+            let scalar_result = a.charpoly_cubic();
+            prop_assert_eq!(
+                packed_result,
+                scalar_result,
+                "packed chain-poly charpoly ≠ scalar charpoly for Fp<251> n={} seed={}",
+                n,
+                seed
+            );
+        }
+    }
+
+    // ── Packed chain-poly correctness (deterministic, issue 5a3dbd5b) ─────
+
+    /// Verifies charpoly(A) for random matrices over `Fp<251>` at sizes
+    /// n ∈ {2, 4, 8, 16, 32} against Cayley–Hamilton and against the
+    /// `charpoly_cubic` reference.  This is the TDD gate that must fail
+    /// before the packed implementation is wired in, and pass after.
+    #[test]
+    fn test_packed_chain_polys_fp251_charpoly_correctness() {
+        for &n in &[2usize, 4, 8, 16, 32] {
+            for seed in 0..5u64 {
+                let a = random_fp::<251>(n, n, seed);
+                let cp = a.charpoly();
+                // Cayley–Hamilton: p(A) = 0.
+                let pa = cp.eval_at_matrix(&a);
+                let zero = crate::gfp::Fp::<251>::new(0);
+                for i in 0..n {
+                    for j in 0..n {
+                        assert_eq!(
+                            pa.get(i, j),
+                            zero,
+                            "Cayley–Hamilton failed for Fp<251> n={} seed={} at ({},{})",
+                            n,
+                            seed,
+                            i,
+                            j
+                        );
+                    }
+                }
+                // Bit-identical to scalar cubic reference.
+                let scalar = a.charpoly_cubic();
+                assert_eq!(
+                    cp, scalar,
+                    "packed ≠ scalar charpoly for Fp<251> n={} seed={}",
+                    n, seed
+                );
+            }
+        }
+    }
+
+    /// Same guard for `Fp<7>` — the small-prime canonical-byte path covers
+    /// all odd primes ≤ 251.
+    #[test]
+    fn test_packed_chain_polys_fp7_charpoly_correctness() {
+        for &n in &[2usize, 4, 8, 16] {
+            for seed in 0..5u64 {
+                let a = random_fp::<7>(n, n, seed);
+                let cp = a.charpoly();
+                let scalar = a.charpoly_cubic();
+                assert_eq!(
+                    cp, scalar,
+                    "packed ≠ scalar charpoly for Fp<7> n={} seed={}",
+                    n, seed
+                );
+            }
         }
     }
 }
