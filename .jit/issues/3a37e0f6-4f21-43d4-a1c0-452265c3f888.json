@@ -13,7 +13,13 @@
     "cargo-ci",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-07T07:48:19.983903355Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -23,5 +29,5 @@
     "story:sota-sparse-fieldmatrix"
   ],
   "created_at": "2026-04-30T06:43:02.909642359+00:00",
-  "updated_at": "2026-05-07T06:23:24.925540607+00:00"
+  "updated_at": "2026-05-07T07:48:26.495716588+00:00"
 }

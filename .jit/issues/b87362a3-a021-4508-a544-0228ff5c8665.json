@@ -2,7 +2,7 @@
   "id": "b87362a3-a021-4508-a544-0228ff5c8665",
   "title": "Implement winning charpoly dispatch",
   "description": "Enable the empirically winning charpoly algorithm per target regime.\n\n## Success Criteria\n\n- [hard] charpoly target rows meet the 1.5x threshold or have approved exclusions.\n- [hard] The implementation remains deterministic where required by API contracts.",
-  "state": "backlog",
+  "state": "ready",
   "priority": "normal",
   "assignee": null,
   "dependencies": [
@@ -23,5 +23,5 @@
     "story:sota-polynomial-invariants"
   ],
   "created_at": "2026-04-30T06:43:02.862473926+00:00",
-  "updated_at": "2026-04-30T06:43:48.698938389+00:00"
+  "updated_at": "2026-05-07T07:54:33.820584270+00:00"
 }

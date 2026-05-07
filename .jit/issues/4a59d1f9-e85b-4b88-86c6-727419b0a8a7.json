@@ -2,7 +2,7 @@
   "id": "4a59d1f9-e85b-4b88-86c6-727419b0a8a7",
   "title": "Reassess Keller-Gehrig crossover",
   "description": "Re-measure deterministic cubic vs Keller-Gehrig/sub-cubic algorithms after GEMM improvements.\n\n## Success Criteria\n\n- [hard] The crossover report uses post-optimization kernels.\n- [hard] Dispatch policy follows measured crossover rather than aspiration.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "high",
   "assignee": "agent:claude",
   "dependencies": [
@@ -15,14 +15,19 @@
   ],
   "gates_status": {
     "code-review": {
-      "status": "failed",
+      "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-07T07:16:42.520872676Z"
+      "updated_at": "2026-05-07T07:52:24.479602986Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "lead:project-lead",
+      "updated_at": "2026-05-07T07:54:31.001857334Z"
     },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-07T07:12:53.846463912Z"
+      "updated_at": "2026-05-07T07:52:09.825589323Z"
     }
   },
   "context": {},
@@ -42,5 +47,5 @@
     "story:sota-polynomial-invariants"
   ],
   "created_at": "2026-04-30T06:43:02.853296803+00:00",
-  "updated_at": "2026-05-07T07:20:35.871216128+00:00"
+  "updated_at": "2026-05-07T07:54:33.506280270+00:00"
 }
