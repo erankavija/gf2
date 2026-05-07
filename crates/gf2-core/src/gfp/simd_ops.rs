@@ -1736,10 +1736,12 @@ pub(crate) fn fp_try_matvec<const P: u64>(
 //        broadcast(α_j) · chain[j] → tmp   (batch_mul, zero-padded)
 //        next − tmp → next                 (batch_sub)
 //
-// All arithmetic stays in canonical-byte form; the only Montgomery REDC
-// calls are at `alpha.value()` (one per non-zero α_j) and at the very
-// end when `finish_buf` converts bytes back to `FieldPoly<Fp<P>>` via
-// `Fp::new`.
+// All arithmetic stays in canonical-byte form. `alpha`'s canonical byte
+// is obtained from a per-prime `from_mont` lookup table (built once via
+// `build_small_prime_tables::<P>()`) — no Montgomery REDC inside the
+// `sub_scaled_into` hot loop. The only REDC remaining on this path is
+// at the very end, when `finish_buf` converts bytes back to
+// `FieldPoly<Fp<P>>` via `Fp::new`.
 // ---------------------------------------------------------------------------
 
 /// Packed canonical-byte chain-polynomial store for small primes (`P ≤ 251`).
