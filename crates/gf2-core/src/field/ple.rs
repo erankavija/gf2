@@ -2012,22 +2012,23 @@ mod tests {
     // The counter increments on FieldMatrix::new (via FieldMatrix::clone,
     // FieldMatrix::zeros, MatView::transpose, MatViewMut::to_owned, etc.).
     //
-    // The 4192 count at n=1024 is dominated by the trsm_lower's recursive
+    // The 4736 count at n=1024 is dominated by the trsm_lower's recursive
     // gemm_axpy_into_view calls (each pays 2 transpose bumps: to_owned +
     // transpose). PLE has log₂(1024)=10 column-halving levels; trsm at
-    // each level recurses log₂(rank)≈10 deep, contributing 2×10 = 20
-    // bumps. Per PLE level: ~20 (trsm) + 2 (gemm) + 2 (L1, L1_bot) ≈
-    // 24, times 10 levels ≈ 240 — but the actual cost is amplified by
-    // the trsm's own recursion at each level. The observed 4192 is the
-    // empirical reality; every byte of intermediate storage is
-    // documented and accounted for here.
-    // Counts are unchanged from the anchor commit (jit:73ec5da3 sweep
-    // confirmed PLE_BASE_COLS=1 optimal; the block-recursive trsm+gemm
-    // path at all win > 1 levels matches the original allocation profile).
+    // each level recurses deeper at threshold=8 than it did at threshold=32,
+    // contributing more bumps. The observed 4736 is the empirical reality
+    // at TRI_BASE_THRESHOLD=8 (selected by jit:73ec5da3 sweep); every
+    // byte of intermediate storage is documented and accounted for here.
+    //
+    // Counts updated 2026-05-07 from threshold=32 baseline as part of
+    // jit:73ec5da3 R1 rework: the deeper trsm recursion at threshold=8
+    // adds ~13% more allocations at n=1024 (4192 → 4736) but reduces
+    // wall-time by 1–7% on the target Mersenne-31 cells (see the sweep
+    // table in dev/bench_results/2026-05-07-73ec5da3-ple-trsm-tuning.md).
     const EXPECTED_PLE_N4: u64 = 14;
-    const EXPECTED_PLE_N64: u64 = 254;
-    const EXPECTED_PLE_N1024: u64 = 4192;
-    const EXPECTED_ROW_ECHELON_N64: u64 = 258;
-    const EXPECTED_RREF_N64: u64 = 258;
-    const EXPECTED_LU_N64: u64 = 254;
+    const EXPECTED_PLE_N64: u64 = 264;
+    const EXPECTED_PLE_N1024: u64 = 4736;
+    const EXPECTED_ROW_ECHELON_N64: u64 = 280;
+    const EXPECTED_RREF_N64: u64 = 280;
+    const EXPECTED_LU_N64: u64 = 264;
 }
