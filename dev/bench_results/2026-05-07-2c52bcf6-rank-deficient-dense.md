@@ -95,10 +95,14 @@ The optimization benefits two cases:
 2. **Deficient/small n** (n=64, rank=32): Modest saving from avoiding the
    O(32 × 64) scan; small Vec overhead limits gain to -6.5%.
 
-The +7.9% regression at uniform/64 is within acceptable tolerance: the
-issue success criterion `[aspirational]` states rank-deficient paths as the
-focus, and the uniform/64 delta is small in absolute wall time
-(+20 µs / 251 µs baseline).
+The +7.9% regression at uniform/64 is full-rank, outside the
+rank-deficient scope named by criterion #1 ("Rank-deficient benchmark
+rows are measured and analyzed"). The criterion is `[hard]` and is met
+on the rank-deficient rows (n=64, n=256, n=1024 deficient all improve).
+The full-rank uniform/64 cell is recorded here for completeness; the
++20 us / 251 us baseline absolute delta is small and reflects Vec
+overhead exceeding scan savings at n=64 rank=64 (only ~4096 comparisons
+saved vs. the heap-alloc + push cost of the rank-64 Vec).
 
 ## Correctness validation strategy
 
