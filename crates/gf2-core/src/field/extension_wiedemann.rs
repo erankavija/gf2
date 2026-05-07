@@ -7,28 +7,30 @@
 //!
 //! # Algorithm (issue `6c926de0`)
 //!
-//! Per the binding plan in `dev/active/d1dd266c-minpoly-sota-plan.md` § 4:
+//! Per the binding plan in `dev/active/d1dd266c-minpoly-sota-plan.md` § 4,
+//! refined to the **decoupled-component** formulation that lets BM stay in
+//! base arithmetic:
 //!
 //! 1. Embed the base-field matrix `A ∈ M_n(Fp<P>)` into the extension
 //!    `E = Fp<P>[α] / (f(α))` with `[E : Fp<P>] = k` chosen so `q^k > n`.
-//!    The embedding sends `a ↦ a + 0·α + 0·α² + …`.
-//! 2. Run the existing scalar Wiedemann attempt over `E`. Because
-//!    `|E| = q^k > n`, a single attempt succeeds with high probability —
-//!    no multi-seed loop, just one Wiedemann pass plus its built-in
-//!    annihilation verifier.
-//! 3. The minimal polynomial of `embed(A)` over `E` annihilates `A` over
-//!    the base field. The base-field minpoly divides the extension
-//!    minpoly. For diagonalisable / semisimple `A`, and more generally
-//!    whenever the minpoly factors over `Fp<P>` (which is the only case
-//!    in which embedding can possibly help), they coincide.
-//! 4. Descend coefficients: every coefficient of the result must lie in
-//!    the base-field embedding (zero-`α`-component). If any coefficient
-//!    is non-trivial in `α`, the extension result is not the base-field
-//!    minpoly — return `None` so the caller can fall back to the
-//!    base-field multi-seed Wiedemann.
-//! 5. As a final correctness gate, verify the descended polynomial
-//!    annihilates `A` over the base field (`p(A) · u = 0` on canonical
-//!    probes plus a fresh random vector). Return `None` on any miss.
+//!    The embedding sends `a ↦ a + 0·α + 0·α² + …`. The matrix is held
+//!    in base form throughout — extension state vectors decompose into
+//!    `k` parallel base-field component arrays.
+//! 2. Run scalar Wiedemann with a pure-base projection vector `v`
+//!    (`v.c1 = v.c2 = 0`). For each Krylov step `k = 0, …, 2n`, the
+//!    inner product `⟨v, A^k · u⟩` decomposes into `k` independent
+//!    base-field scalar sequences `s_j[k] = ⟨v.c0, (A^k · u).cj⟩`.
+//! 3. Run [`berlekamp_massey_local`] on each base sequence. Each output
+//!    `p_j` is a base-field divisor of the minimal polynomial; the LCM
+//!    `lcm(p_0, …, p_{k-1})` is itself a base-field polynomial — so
+//!    *coefficient descent is automatic*: there is no α-component to
+//!    inspect because BM never operated in extension arithmetic. The
+//!    descent contract is documented in
+//!    [`tests::test_extension_descent_helpers_reject_alpha_component`].
+//! 4. Verify the LCM annihilates `A` over the base field via
+//!    [`p_annihilates_a`] (full deterministic `eval_at_matrix == 0`
+//!    check). Return `None` on miss so the caller falls back to the
+//!    base-field multi-seed Wiedemann inside `cyclic_lcm_minpoly`.
 //!
 //! # Why this beats the multi-seed path
 //!
@@ -36,12 +38,15 @@
 //! makes up to 16 attempts at `O(n³)` per attempt because each individual
 //! `Fp<7>` / `Fp<251>` Wiedemann attempt has per-attempt success probability
 //! only `1 − n/q`. Embedding into `q^k > n` lifts the per-attempt success
-//! probability above `1 − n/q^k`, so the first attempt almost always
-//! succeeds — at the cost of a constant `k`-fold blow-up in field-op cost
-//! per matvec (3 base muls per quadratic mul, 6 per cubic mul). For
-//! `Fp<251>` n=256, k=2 makes the matvec ~3x slower but cuts seed count
-//! from 16 to 1, a 5x net win. For `Fp<7>` n=256, k=3 makes matvec ~6x
-//! slower but cuts seed count from 16 to 1, a ~2.5x net win.
+//! probability via the LCM of `k` parallel base sequences (each with
+//! independent failure probability `n/q`). The decoupled-component
+//! formulation keeps the matvec at exactly `k` base-field packed matvecs
+//! per step (no extension-arithmetic blow-up) and BM at base-field cost,
+//! so the per-attempt cost is `k · t_base_matvec` per step rather than
+//! `~k² · t_base_matvec` for naive extension Wiedemann. For
+//! `Fp<251>` n=256, k=2 makes the matvec ~2x slower but cuts seed count
+//! from 16 to 1, a ~8x net win. For `Fp<7>` n=256, k=3 makes the matvec
+//! ~3x slower but cuts seed count from 16 to 1, a ~5x net win.
 //!
 //! # Module shape
 //!
@@ -114,9 +119,7 @@ impl<'a, F: FiniteField> PackedBaseMatrix<'a, F> {
         // Fallback: use the public matvec with FieldVec wrappers.
         let xv: FieldVec<F> = x.iter().cloned().collect();
         let yv = self.a.matvec(&xv);
-        for i in 0..self.rows {
-            y[i] = yv.as_slice()[i].clone();
-        }
+        y[..self.rows].clone_from_slice(&yv.as_slice()[..self.rows]);
         y
     }
 }
@@ -142,9 +145,6 @@ impl<F: FiniteField> QuadVec<F> {
             c1: vec![zero.clone(); n],
         }
     }
-    fn len(&self) -> usize {
-        self.c0.len()
-    }
 }
 
 /// Cubic-extension state vector stored as three parallel base-field
@@ -163,37 +163,6 @@ impl<F: FiniteField> CubicVec<F> {
             c2: vec![zero.clone(); n],
         }
     }
-    fn len(&self) -> usize {
-        self.c0.len()
-    }
-}
-
-// ─── Polynomial-coefficient descent helpers ────────────────────────────────
-
-/// Descends a polynomial whose coefficients are pairs `(c0, c1)`,
-/// returning `None` if any `c1 ≠ 0`.
-fn descend_quadratic_pairs<F: FiniteField>(coeffs: Vec<(F, F)>) -> Option<FieldPoly<F>> {
-    let mut c0_vec: Vec<F> = Vec::with_capacity(coeffs.len());
-    for (c0, c1) in coeffs {
-        if !c1.is_zero() {
-            return None;
-        }
-        c0_vec.push(c0);
-    }
-    Some(FieldPoly::from_coeffs_trimmed(c0_vec))
-}
-
-/// Descends a polynomial whose coefficients are triples `(c0, c1, c2)`,
-/// returning `None` if any `c1 ≠ 0` or `c2 ≠ 0`.
-fn descend_cubic_triples<F: FiniteField>(coeffs: Vec<(F, F, F)>) -> Option<FieldPoly<F>> {
-    let mut c0_vec: Vec<F> = Vec::with_capacity(coeffs.len());
-    for (c0, c1, c2) in coeffs {
-        if !c1.is_zero() || !c2.is_zero() {
-            return None;
-        }
-        c0_vec.push(c0);
-    }
-    Some(FieldPoly::from_coeffs_trimmed(c0_vec))
 }
 
 // ─── Wiedemann attempts over a quadratic / cubic embedded extension ────────
@@ -223,14 +192,16 @@ fn descend_cubic_triples<F: FiniteField>(coeffs: Vec<(F, F, F)>) -> Option<Field
 /// This is *both* faster and more robust than running BM over the
 /// extension: BM stays in base arithmetic, and we get two-seed-
 /// equivalent Wiedemann coverage from a single matrix Krylov pass.
-fn wiedemann_attempt_quadratic<F: FiniteField, C>(
+///
+/// The `ExtConfig` `C` is no longer needed inside the body — the
+/// decoupled-component formulation reduces every operation to base-field
+/// arithmetic. We keep the call-site type hint via the `run_*_generic`
+/// trampolines so the dispatch remains explicit about which extension
+/// degree was selected.
+fn wiedemann_attempt_quadratic<F: FiniteField>(
     pa: &PackedBaseMatrix<'_, F>,
     seed: u64,
-) -> Option<FieldPoly<F>>
-where
-    C: ExtConfig<BaseField = F>,
-{
-    let _ = std::marker::PhantomData::<C>;
+) -> Option<FieldPoly<F>> {
     let n = pa.rows;
     debug_assert!(n >= 2);
     let zero: F = pa.a.get(0, 0).zero_like();
@@ -273,14 +244,10 @@ where
 /// Krylov chain. `Fp<7>` cubic: probability `1 − n/343` per attempt,
 /// which is `~25%` at `n=256` — so we may need multiple retries on
 /// adversarial inputs but typically 1–4 attempts suffice.
-fn wiedemann_attempt_cubic<F: FiniteField, C>(
+fn wiedemann_attempt_cubic<F: FiniteField>(
     pa: &PackedBaseMatrix<'_, F>,
     seed: u64,
-) -> Option<FieldPoly<F>>
-where
-    C: ExtConfig<BaseField = F>,
-{
-    let _ = std::marker::PhantomData::<C>;
+) -> Option<FieldPoly<F>> {
     let n = pa.rows;
     debug_assert!(n >= 2);
     let zero: F = pa.a.get(0, 0).zero_like();
@@ -313,7 +280,10 @@ where
 }
 
 /// `embed(A) · v`: two base matvecs for the c0/c1 components.
-fn quad_matvec_baseonly<F: FiniteField>(pa: &PackedBaseMatrix<'_, F>, v: &QuadVec<F>) -> QuadVec<F> {
+fn quad_matvec_baseonly<F: FiniteField>(
+    pa: &PackedBaseMatrix<'_, F>,
+    v: &QuadVec<F>,
+) -> QuadVec<F> {
     QuadVec {
         c0: pa.matvec(&v.c0),
         c1: pa.matvec(&v.c1),
@@ -337,14 +307,14 @@ fn cubic_matvec_baseonly<F: FiniteField>(
 fn gen_base_random_vec<F: FiniteField>(n: usize, zero: &F, one: &F, seed: u64) -> Vec<F> {
     let mut state = seed;
     let mut v: Vec<F> = vec![zero.clone(); n];
-    for i in 0..n {
+    for slot in v.iter_mut().take(n) {
         let count = (splitmix64_step(&mut state) & 0x3F) as u32;
         let mut acc = zero.clone();
         for _ in 0..count {
             acc += one.clone();
         }
         if (splitmix64_step(&mut state) & 1) == 1 {
-            v[i] = acc;
+            *slot = acc;
         }
     }
     if v.iter().all(|x| x.is_zero()) {
@@ -381,7 +351,9 @@ fn poly_lcm_local<F: FiniteField>(a: &FieldPoly<F>, b: &FieldPoly<F>) -> FieldPo
         if lead.is_one() {
             return q;
         }
-        let inv = lead.inv().expect("LCM leading coefficient must be non-zero");
+        let inv = lead
+            .inv()
+            .expect("LCM leading coefficient must be non-zero");
         let coeffs: Vec<F> = (0..=q.degree().unwrap_or(0))
             .map(|i| q.coeff(i) * inv.clone())
             .collect();
@@ -446,90 +418,6 @@ fn gen_cubic_random_vec<F: FiniteField>(n: usize, zero: &F, one: &F, seed: u64) 
         v.c0[0] = one.clone();
     }
     v
-}
-
-/// `embed(A) · v`: two independent base matvecs (one per component).
-fn quad_matvec<F: FiniteField, C: ExtConfig<BaseField = F>>(
-    pa: &PackedBaseMatrix<'_, F>,
-    v: &QuadVec<F>,
-    _zero: &F,
-) -> QuadVec<F> {
-    let _ = std::marker::PhantomData::<C>;
-    let c0 = pa.matvec(&v.c0);
-    let c1 = pa.matvec(&v.c1);
-    QuadVec { c0, c1 }
-}
-
-/// `embed(A) · v`: three independent base matvecs.
-fn cubic_matvec<F: FiniteField, C: ExtConfig<BaseField = F>>(
-    pa: &PackedBaseMatrix<'_, F>,
-    v: &CubicVec<F>,
-    _zero: &F,
-) -> CubicVec<F> {
-    let _ = std::marker::PhantomData::<C>;
-    let c0 = pa.matvec(&v.c0);
-    let c1 = pa.matvec(&v.c1);
-    let c2 = pa.matvec(&v.c2);
-    CubicVec { c0, c1, c2 }
-}
-
-/// Extension dot product for the quadratic case. Computes
-/// `⟨v, w⟩ = Σ (v_i.c0 + v_i.c1·u) · (w_i.c0 + w_i.c1·u)` and returns the
-/// resulting extension element as a `(c0, c1)` pair.
-fn quad_inner_product<F: FiniteField, C: ExtConfig<BaseField = F>>(
-    v: &QuadVec<F>,
-    w: &QuadVec<F>,
-    zero: &F,
-) -> (F, F) {
-    debug_assert_eq!(v.len(), w.len());
-    let n = v.len();
-    let mut acc0 = zero.clone();
-    let mut acc1 = zero.clone();
-    for i in 0..n {
-        // (a0 + a1·u)(b0 + b1·u) = a0·b0 + β·a1·b1 + (a0·b1 + a1·b0)·u
-        let v0 = v.c0[i].clone();
-        let v1 = v.c1[i].clone();
-        let w0 = w.c0[i].clone();
-        let w1 = w.c1[i].clone();
-        acc0 += v0.clone() * w0.clone() + C::mul_by_non_residue(v1.clone() * w1.clone());
-        acc1 += v0 * w1 + v1 * w0;
-    }
-    (acc0, acc1)
-}
-
-/// Extension dot product for the cubic case. Computes
-/// `⟨v, w⟩` over the cubic extension and returns `(c0, c1, c2)`.
-/// `(a0 + a1·v + a2·v²)(b0 + b1·v + b2·v²) =
-///   a0·b0 + β·(a1·b2 + a2·b1)
-/// + (a0·b1 + a1·b0 + β·a2·b2)·v
-/// + (a0·b2 + a1·b1 + a2·b0)·v²`.
-fn cubic_inner_product<F: FiniteField, C: ExtConfig<BaseField = F>>(
-    v: &CubicVec<F>,
-    w: &CubicVec<F>,
-    zero: &F,
-) -> (F, F, F) {
-    debug_assert_eq!(v.len(), w.len());
-    let n = v.len();
-    let mut acc0 = zero.clone();
-    let mut acc1 = zero.clone();
-    let mut acc2 = zero.clone();
-    for i in 0..n {
-        let a0 = v.c0[i].clone();
-        let a1 = v.c1[i].clone();
-        let a2 = v.c2[i].clone();
-        let b0 = w.c0[i].clone();
-        let b1 = w.c1[i].clone();
-        let b2 = w.c2[i].clone();
-        let m12 = a1.clone() * b2.clone();
-        let m21 = a2.clone() * b1.clone();
-        let m22 = a2.clone() * b2.clone();
-        let m11 = a1.clone() * b1.clone();
-        let m00 = a0.clone() * b0.clone();
-        acc0 += m00 + C::mul_by_non_residue(m12 + m21);
-        acc1 += a0.clone() * b1.clone() + a1.clone() * b0.clone() + C::mul_by_non_residue(m22);
-        acc2 += a0 * b2 + m11 + a2 * b0;
-    }
-    (acc0, acc1, acc2)
 }
 
 /// Local Berlekamp-Massey (mirrors `crate::field::charpoly::berlekamp_massey`).
@@ -625,83 +513,34 @@ fn berlekamp_massey_local<F: FiniteField>(s: &[F]) -> FieldPoly<F> {
 
 // ─── Final base-field annihilation check ────────────────────────────────────
 
-/// Verifies `p(A) · u = 0` for a deterministic probe set (`e_(n-1)`) plus a
-/// single fresh random vector. False-accept probability `≤ 1/q` per random
-/// probe; combined with the extension-side verification this is well below
-/// the bench / test noise floor.
-fn p_annihilates_a<F: FiniteField>(p: &FieldPoly<F>, a: &FieldMatrix<F>, seed: u64) -> bool {
+/// Verifies `p(A) = 0` deterministically by evaluating `p` at the matrix
+/// `A` and checking every entry of the resulting matrix is zero.
+///
+/// Uses [`FieldPoly::eval_at_matrix`] which runs Horner's rule via a
+/// sequence of `gemm` calls (cost `O(deg(p) · n^ω)`) — the same order
+/// as the Wiedemann setup itself, so verification is not the dominant
+/// cost. Deterministic verification is essential at small `n` where a
+/// single-vector random probe has false-accept probability `~1/q`
+/// (e.g. `1/7` for `Fp<7>` n=2; this previously caused
+/// `test_extension_random_cross_check_fp7` to spuriously accept a
+/// strict divisor of the minpoly).
+///
+/// The `_seed` parameter is retained for API stability with prior
+/// callers; the deterministic check ignores it.
+fn p_annihilates_a<F: FiniteField>(p: &FieldPoly<F>, a: &FieldMatrix<F>, _seed: u64) -> bool {
     let n = a.rows();
     if n == 0 {
         return true;
     }
-    let zero: F = a.get(0, 0).zero_like();
-    let one: F = zero.one_like();
-
-    // Deterministic e_(n-1) probe.
-    let mut e_last = FieldVec::<F>::zeros_from(n, &zero);
-    e_last.set(n - 1, one.clone());
-    let pe = poly_action(p, a, &e_last);
-    if pe.iter().any(|c| !c.is_zero()) {
-        return false;
-    }
-
-    // One fresh pseudo-random probe.
-    let mut state = seed;
-    let mut rng = || {
-        let mut z = state.wrapping_add(0x9E37_79B9_7F4A_7C15);
-        state = z;
-        z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
-        z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
-        z ^ (z >> 31)
-    };
-    let mut u = FieldVec::<F>::zeros_from(n, &zero);
+    let pa = p.eval_at_matrix(a);
     for i in 0..n {
-        let count = (rng() & 0x3F) as u32;
-        let mut acc = zero.clone();
-        for _ in 0..count {
-            acc += one.clone();
-        }
-        u.set(i, acc);
-    }
-    if u.iter().all(|c| c.is_zero()) {
-        u.set(0, one.clone());
-    }
-    let pu = poly_action(p, a, &u);
-    pu.iter().all(|c| c.is_zero())
-}
-
-/// Applies `p(A)` to a vector via Horner's rule on the matrix-vector
-/// pipeline. `O(deg(p) · n²)` field operations; for `deg(p) ≤ n` and
-/// the production matvec this is `O(n³)`.
-fn poly_action<F: FiniteField>(
-    p: &FieldPoly<F>,
-    a: &FieldMatrix<F>,
-    u: &FieldVec<F>,
-) -> FieldVec<F> {
-    let n = a.rows();
-    let zero: F = a.get(0, 0).zero_like();
-    let mut acc = FieldVec::<F>::zeros_from(n, &zero);
-    let d = match p.degree() {
-        Some(d) => d,
-        None => return acc, // zero polynomial
-    };
-    // Horner: y = ((p_d · I) · A + p_{d-1} · I) · A + … + p_0 · I) · u.
-    // We accumulate in `acc`; we treat `cur = u` and step `cur = A · cur`,
-    // adding `p_k · cur` to `acc` at each level.
-    let mut cur = u.clone();
-    for k in 0..=d {
-        let coeff = p.coeff(k);
-        if !coeff.is_zero() {
-            for i in 0..n {
-                let term = coeff.clone() * cur.as_slice()[i].clone();
-                acc.set(i, acc.as_slice()[i].clone() + term);
+        for j in 0..n {
+            if !pa.get(i, j).is_zero() {
+                return false;
             }
         }
-        if k < d {
-            cur = a.matvec(&cur);
-        }
     }
-    acc
+    true
 }
 
 // ─── Public entry: Fp<P>-typed dispatch ─────────────────────────────────────
@@ -711,16 +550,25 @@ fn poly_action<F: FiniteField>(
 ///
 /// Returns `Some(p)` if all of the following hold:
 ///
-/// 1. `P` and `n` admit a supported config (currently `P ∈ {7, 251}` with
-///    `q^k > n` for `k ∈ {2, 3}`).
+/// 1. `P` and `n` admit a supported config (currently `P ∈ {7, 251}`
+///    with the engagement-size threshold `n ≥ MIN_N_FOR_EXT` met).
 /// 2. The Wiedemann attempt over the extension converged within its
 ///    built-in retry budget.
-/// 3. The recovered polynomial coefficients all lie in the base-field
-///    embedding (`α`-component zero on every coefficient).
-/// 4. The descended polynomial annihilates `A` over the base field.
+/// 3. The polynomial annihilates `A` over the base field
+///    ([`p_annihilates_a`] full-matrix `eval_at_matrix` check).
+///
+/// Step 3 subsumes the "coefficient descent" check from the algorithm
+/// design doc (`dev/active/d1dd266c-minpoly-sota-plan.md` § 4): the
+/// decoupled-component formulation runs Berlekamp-Massey directly on
+/// base-field scalar sequences, so the LCM is base-field by
+/// construction (every coefficient has trivial α-component) — there is
+/// no separate descent step to fail. The descent helpers used to
+/// witness this contract live under `#[cfg(test)]` in
+/// [`tests::test_extension_descent_helpers_reject_alpha_component`].
 ///
 /// Returns `None` otherwise. The caller (`minpoly_dispatch`) treats `None`
-/// as "fall through to the base-field multi-seed Wiedemann".
+/// as "fall through to the base-field multi-seed Wiedemann inside
+/// `cyclic_lcm_minpoly`".
 ///
 /// # Type parameter
 ///
@@ -811,8 +659,14 @@ impl<const P: u64> ExtConfig for FpQuadraticTwoFiftyOne<P> {
 ///
 /// Keeps the matrix in base form, pre-packs the SIMD cache once, and runs
 /// the Wiedemann attempt over `QuadraticExt<C>` using component-wise
-/// matvecs. The result is descended back to the base field; if descent
-/// succeeds and the result annihilates `A`, return it.
+/// matvecs. The decoupled-component trick (see
+/// [`wiedemann_attempt_quadratic`]) means BM runs over the base field on
+/// each component sequence independently, so the LCM is already a
+/// base-field polynomial — no separate descent step is required. We only
+/// verify that the candidate annihilates `A` over the base field before
+/// returning it; this catches the rare case where BM converges to a
+/// proper divisor of the minpoly because both component sequences
+/// happened to underflow.
 fn run_quadratic_generic<const P: u64, C>(a: &FieldMatrix<Fp<P>>) -> Option<FieldPoly<Fp<P>>>
 where
     C: ExtConfig<BaseField = Fp<P>>,
@@ -823,13 +677,11 @@ where
 
     let pa = PackedBaseMatrix::new(a);
     for retry in 0..MAX_RETRIES {
-        if let Some(coeff_pairs) =
-            wiedemann_attempt_quadratic::<Fp<P>, C>(&pa, SEED.wrapping_add(retry as u64))
+        if let Some(base_poly) =
+            wiedemann_attempt_quadratic::<Fp<P>>(&pa, SEED.wrapping_add(retry as u64))
         {
-            if let Some(base_poly) = descend_quadratic_pairs::<Fp<P>>(coeff_pairs) {
-                if p_annihilates_a(&base_poly, a, SEED.wrapping_add(0xA1)) {
-                    return Some(base_poly);
-                }
+            if p_annihilates_a(&base_poly, a, SEED.wrapping_add(0xA1)) {
+                return Some(base_poly);
             }
         }
     }
@@ -837,6 +689,9 @@ where
 }
 
 /// Runs the cubic-extension Wiedemann path for a generic config `C`.
+///
+/// See [`run_quadratic_generic`] for the design rationale; the cubic
+/// path uses three parallel base-field sequences instead of two.
 fn run_cubic_generic<const P: u64, C>(a: &FieldMatrix<Fp<P>>) -> Option<FieldPoly<Fp<P>>>
 where
     C: ExtConfig<BaseField = Fp<P>>,
@@ -847,13 +702,11 @@ where
 
     let pa = PackedBaseMatrix::new(a);
     for retry in 0..MAX_RETRIES {
-        if let Some(coeff_triples) =
-            wiedemann_attempt_cubic::<Fp<P>, C>(&pa, SEED.wrapping_add(retry as u64))
+        if let Some(base_poly) =
+            wiedemann_attempt_cubic::<Fp<P>>(&pa, SEED.wrapping_add(retry as u64))
         {
-            if let Some(base_poly) = descend_cubic_triples::<Fp<P>>(coeff_triples) {
-                if p_annihilates_a(&base_poly, a, SEED.wrapping_add(0xA1)) {
-                    return Some(base_poly);
-                }
+            if p_annihilates_a(&base_poly, a, SEED.wrapping_add(0xA1)) {
+                return Some(base_poly);
             }
         }
     }
@@ -891,8 +744,7 @@ mod tests {
     fn test_extension_wiedemann_engages_fp251_large_n() {
         let n = 128;
         let a = make_random_fp::<251>(n, 0xC0FF_EEFB);
-        let mp =
-            try_extension_wiedemann_fp::<251>(&a).expect("extension Wiedemann should succeed");
+        let mp = try_extension_wiedemann_fp::<251>(&a).expect("extension Wiedemann should succeed");
         let d = mp.degree().expect("non-zero polynomial");
         assert!(d <= n);
         assert!(mp.leading_coeff().unwrap().is_one());
@@ -994,8 +846,7 @@ mod tests {
             for seed in [1u64, 17, 42, 1000] {
                 let a = make_random_fp::<251>(n, seed);
                 let dispatch_mp = a.minpoly();
-                if let Some(ext_mp) =
-                    run_quadratic_generic::<251, FpQuadraticTwoFiftyOne<251>>(&a)
+                if let Some(ext_mp) = run_quadratic_generic::<251, FpQuadraticTwoFiftyOne<251>>(&a)
                 {
                     assert_eq!(
                         ext_mp, dispatch_mp,
@@ -1062,6 +913,83 @@ mod tests {
             }
         }
         a
+    }
+
+    /// Coefficient-descent contract guard. The decoupled-component
+    /// algorithm in [`super::wiedemann_attempt_quadratic`] /
+    /// [`super::wiedemann_attempt_cubic`] is structurally constrained to
+    /// produce only base-field polynomials (the LCM of base-field BM
+    /// outputs is a base-field polynomial). The "descent" step is
+    /// therefore a no-op in production. This test pins the contract by
+    /// exercising helper descent functions on synthetic extension
+    /// coefficient lists — pure base coefficients descend cleanly,
+    /// non-zero α components are rejected.
+    #[test]
+    fn test_extension_descent_helpers_reject_alpha_component() {
+        // Pure base-field coefficients descend to a non-empty polynomial.
+        let pure_pairs: Vec<(Fp<7>, Fp<7>)> = vec![
+            (Fp::<7>::new(3), Fp::<7>::new(0)),
+            (Fp::<7>::new(0), Fp::<7>::new(0)),
+            (Fp::<7>::new(1), Fp::<7>::new(0)),
+        ];
+        let p = descend_quadratic_pairs::<Fp<7>>(pure_pairs)
+            .expect("pure-base coeffs must descend cleanly");
+        assert_eq!(p.degree(), Some(2));
+
+        // A single non-zero α coefficient causes descent to fail.
+        let with_alpha: Vec<(Fp<7>, Fp<7>)> = vec![
+            (Fp::<7>::new(3), Fp::<7>::new(0)),
+            (Fp::<7>::new(0), Fp::<7>::new(2)), // c1 = 2 ≠ 0
+            (Fp::<7>::new(1), Fp::<7>::new(0)),
+        ];
+        assert!(
+            descend_quadratic_pairs::<Fp<7>>(with_alpha).is_none(),
+            "non-zero α component must reject descent so caller falls back",
+        );
+
+        // Cubic case: α² component non-zero also fails.
+        let pure_triples: Vec<(Fp<7>, Fp<7>, Fp<7>)> = vec![
+            (Fp::<7>::new(3), Fp::<7>::new(0), Fp::<7>::new(0)),
+            (Fp::<7>::new(1), Fp::<7>::new(0), Fp::<7>::new(0)),
+        ];
+        let p = descend_cubic_triples::<Fp<7>>(pure_triples)
+            .expect("pure-base triples must descend cleanly");
+        assert_eq!(p.degree(), Some(1));
+
+        let with_alpha_sq: Vec<(Fp<7>, Fp<7>, Fp<7>)> = vec![
+            (Fp::<7>::new(3), Fp::<7>::new(0), Fp::<7>::new(1)), // c2 ≠ 0
+            (Fp::<7>::new(1), Fp::<7>::new(0), Fp::<7>::new(0)),
+        ];
+        assert!(
+            descend_cubic_triples::<Fp<7>>(with_alpha_sq).is_none(),
+            "non-zero α² component must reject descent",
+        );
+    }
+
+    /// Test-only descent helper for the quadratic case: rejects coefficients
+    /// with non-zero α component, mirroring the contract in the module
+    /// rustdoc § "coefficient descent".
+    fn descend_quadratic_pairs<F: FiniteField>(coeffs: Vec<(F, F)>) -> Option<FieldPoly<F>> {
+        let mut c0_vec: Vec<F> = Vec::with_capacity(coeffs.len());
+        for (c0, c1) in coeffs {
+            if !c1.is_zero() {
+                return None;
+            }
+            c0_vec.push(c0);
+        }
+        Some(FieldPoly::from_coeffs_trimmed(c0_vec))
+    }
+
+    /// Test-only descent helper for the cubic case.
+    fn descend_cubic_triples<F: FiniteField>(coeffs: Vec<(F, F, F)>) -> Option<FieldPoly<F>> {
+        let mut c0_vec: Vec<F> = Vec::with_capacity(coeffs.len());
+        for (c0, c1, c2) in coeffs {
+            if !c1.is_zero() || !c2.is_zero() {
+                return None;
+            }
+            c0_vec.push(c0);
+        }
+        Some(FieldPoly::from_coeffs_trimmed(c0_vec))
     }
 
     /// Smoke test for the BM helper: a length-2n sequence sampled from a
