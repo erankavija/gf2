@@ -44,14 +44,19 @@ Wiedemann gate fails (`q ≤ n`). The new path is **always cubic**:
    from this path; it remains in the crate to serve `FieldMatrix::frobenius_form()`,
    which is out of scope here.
 
-The verification helper `poly_annihilates_a_lasvegas` is **deterministic Las
-Vegas** with zero false-accept probability: degree-`n` candidates pass by a
-divisibility argument (minpoly | charpoly, charpoly has degree `n`); strict-divisor
-candidates are checked by an exhaustive standard-basis sweep that runs
-`p(A)·e_i = 0` for every `i ∈ 0..n`. The same Las-Vegas verifier is now used by
-the extension-field path (`crates/gf2-core/src/field/extension_wiedemann.rs:466-510`,
-function `p_annihilates_a`), replacing the prior `K_PROBES`-random-probe verifier
-that left a `≤ 1/q^K_PROBES` residual false-accept probability.
+The verification helper `poly_annihilates_a_lasvegas`
+(`crates/gf2-core/src/field/charpoly.rs::poly_annihilates_a_lasvegas`) is the
+**single source of truth** for low-cardinality Las-Vegas annihilation
+verification, with zero false-accept probability: degree-`n` candidates pass
+by a divisibility argument (minpoly | charpoly, charpoly has degree `n`);
+strict-divisor candidates are checked by an exhaustive standard-basis sweep
+that runs `p(A)·e_i = 0` for every `i ∈ 0..n`. The matrix is packed once via
+`MatvecDriver` and reused across all `n` Horner passes (R6 perf-debt fix).
+The extension-field path's `p_annihilates_a`
+(`crates/gf2-core/src/field/extension_wiedemann.rs`) is now a thin
+`#[inline]` delegation to the same shared helper, replacing the prior
+`K_PROBES`-random-probe verifier that left a `≤ 1/q^K_PROBES` residual
+false-accept probability and duplicated the basis-sweep logic.
 
 ### § 1.2 Packed-matvec cache shared between minpoly + charpoly drivers
 
