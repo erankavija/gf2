@@ -126,9 +126,12 @@ fn bench_frobenius(c: &mut Criterion) {
 ///
 /// The sweep uses the same seeds as the reference CSV
 /// (`gf2_bench_derive_seed("minpoly", ...)` from the C++ harness).
-/// Note: GF(7) at n≥4 has q ≤ 2n, so the Wiedemann path falls back to
-/// the deterministic quartic path for GF(7). For n=64: GF(7): quartic;
-/// GF(251)/GF(65521)/GF(2^31-1): Wiedemann O(n²).
+/// Post-d1dd266c+siblings dispatch (2026-05-07):
+///   GF(2^31-1)/GF(65521): scalar Wiedemann (`q > n`), `O(n³)`.
+///   GF(251)/n=256: extension-field Wiedemann (k=2 via `gfpn`), `O(n³)`.
+///   GF(251)/n=64: small-prime Wiedemann + packed byte matvec, `O(n³)`.
+///   GF(7)/n=256: extension-field Wiedemann (k=3 via `gfpn`), `O(n³)`.
+///   GF(7)/n=64: multi-seed Wiedemann + packed byte matvec, `O(n³)`.
 fn bench_minpoly_reference_sweep(c: &mut Criterion) {
     let mut group = c.benchmark_group("charpoly/minpoly_ref");
     group.sample_size(10);
