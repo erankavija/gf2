@@ -33,10 +33,13 @@ Both `[hard]` success criteria for `1726270d` are met:
 
 All measurements at n=1024, density=9.765625e-3, CSR layout unless noted.
 Pre-Wave-3 baseline from `dev/bench_results/2026-05-04-47698404-sparse.csv`.
-Path-A and Path-B measurements from `bench_results/gf2-sparse-1778136354.csv` (sparse×dense
-Path A), `bench_results/gf2-sparse-1778136375.csv` (spmv Path A), and
-`bench_results/gf2-sparse-1778138911.csv` (sparse×dense Path B — final). All three CSVs are in
-the `3a37e0f6` worktree at `.claude/worktrees/agent-3a37e0f6/bench_results/`.
+Path-A and Path-B measurements from
+`dev/bench_results/2026-05-07-3a37e0f6-sparse-dense-path-a.csv` (sparse×dense Path A),
+`dev/bench_results/2026-05-07-3a37e0f6-spmv-path-a.csv` (spmv Path A), and
+`dev/bench_results/2026-05-07-3a37e0f6-sparse-dense-path-b-final.csv` (sparse×dense Path B —
+final). The three permanent CSVs are checked into `dev/bench_results/`; their original
+session-scoped names (`gf2-sparse-1778{136354,136375,138911}.csv`) come from the
+3a37e0f6 worker's `bench_results/` runtime directory.
 
 Reference timings from `dev/bench_results/2026-05-04-47698404-sparse-reference.csv` (fflas-ffpack
 rows). Criterion spmv timings (Path A and post-B) from `dev/bench_results/2026-05-07-3a37e0f6-sparse-layout.md`
@@ -357,16 +360,11 @@ jit doc add 54fd3f0b dev/bench_results/2026-05-07-3a37e0f6-sparse-layout.md
 jit doc add 54fd3f0b dev/plans/sparse_cpu_vs_gpu_handoff.md
 ```
 
-Note: the Path-A and Path-B raw bench CSVs live under
-`.claude/worktrees/agent-3a37e0f6/bench_results/` and are not in the committed tree. If
-permanent attachment is desired, copy them to `dev/bench_results/` first:
+The Path-A and Path-B raw bench CSVs have been copied to permanent locations in
+`dev/bench_results/` (see § 1) and should also be attached to the story:
 
 ```bash
-cp .claude/worktrees/agent-3a37e0f6/bench_results/gf2-sparse-1778136354.csv \
-   dev/bench_results/2026-05-07-3a37e0f6-sparse-dense-path-a.csv
-cp .claude/worktrees/agent-3a37e0f6/bench_results/gf2-sparse-1778136375.csv \
-   dev/bench_results/2026-05-07-3a37e0f6-spmv-path-a.csv
-cp .claude/worktrees/agent-3a37e0f6/bench_results/gf2-sparse-1778138911.csv \
-   dev/bench_results/2026-05-07-3a37e0f6-sparse-dense-path-b-final.csv
-# Then: jit doc add 54fd3f0b dev/bench_results/2026-05-07-3a37e0f6-sparse-dense-path-b-final.csv
+jit doc add 54fd3f0b dev/bench_results/2026-05-07-3a37e0f6-sparse-dense-path-a.csv
+jit doc add 54fd3f0b dev/bench_results/2026-05-07-3a37e0f6-spmv-path-a.csv
+jit doc add 54fd3f0b dev/bench_results/2026-05-07-3a37e0f6-sparse-dense-path-b-final.csv
 ```
