@@ -1659,17 +1659,19 @@ fn wiedemann_minpoly_attempt<F: FiniteField>(
 const WIEDEMANN_DETERMINISTIC_VERIFY_N: usize = 32;
 
 /// Number of independent random vectors used to verify a candidate
-/// minimal polynomial `p` annihilates `A`. With `k` trials the
-/// false-positive probability (accepting a strict divisor of the true
-/// minpoly) is at most `q^(-k)` per the rank-of-kernel argument.
+/// minimal polynomial `p` annihilates `A` on the large-`n` arm of
+/// [`poly_annihilates_a_lasvegas`] (when `n > WIEDEMANN_DETERMINISTIC_VERIFY_N`).
+/// With `k = CYCLIC_LCM_VERIFY_TRIALS` trials the false-positive
+/// probability (accepting a strict divisor of the true minpoly) is at
+/// most `q^(-k)` per the rank-of-kernel argument.
 ///
-/// `k = 4` gives `7^(-4) ≈ 4e-4` for `Fp<7>`. The deterministic
-/// `e_0` and `e_(n-1)` probes added in addition catch the structured
-/// upper- and lower-Jordan adversarial cases that the random
-/// distribution may miss. The combined verification has a residual
-/// false-accept probability orders of magnitude below the bench- or
-/// test-relevant noise floor while keeping the verification cost
-/// `O(n³)` rather than `O(k · n³)` with a large `k`.
+/// `k = 2` gives `7^(-2) ≈ 2e-2` for `Fp<7>`, `251^(-2) ≈ 1.6e-5` for
+/// `Fp<251>`, and tighter still for the medium / large primes. The
+/// deterministic `e_0` and `e_(n-1)` probes added in addition catch
+/// the structured upper- and lower-Jordan adversarial cases that the
+/// random distribution may miss; for `n ≤ 32` the verifier sweeps the
+/// full standard basis (Las-Vegas, no false accepts at all). The
+/// combined verification keeps total cost at `O(n³)`.
 const CYCLIC_LCM_VERIFY_TRIALS: usize = 2;
 
 /// Verifies that the candidate polynomial `p` annihilates `A` (i.e.
