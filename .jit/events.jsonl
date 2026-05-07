@@ -4169,3 +4169,10 @@
 {"type":"gate_passed","id":"c16120ff-4160-4f55-8278-8ea8857c3853","issue_id":"5a3dbd5b-3827-4052-9d50-8033773aa867","timestamp":"2026-05-07T19:30:53.038895897Z","gate_key":"doc-review","updated_by":"agent:project-lead"}
 {"type":"issue_state_changed","id":"c8b82769-3c47-4a34-81b5-2f173f261526","issue_id":"5a3dbd5b-3827-4052-9d50-8033773aa867","timestamp":"2026-05-07T19:30:53.388747347Z","from":"in_progress","to":"done"}
 {"type":"issue_completed","id":"0a9c57c0-33ec-493c-879a-7bb48da6114f","issue_id":"5a3dbd5b-3827-4052-9d50-8033773aa867","timestamp":"2026-05-07T19:30:53.388778287Z"}
+{"type":"gate_failed","id":"36bb285f-08d8-474f-aa2f-37a86a0c2bef","issue_id":"d1dd266c-ae4a-4d9f-843c-e138618677f3","timestamp":"2026-05-07T19:31:20.259440755Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"13e74862-a54b-4d37-a6e0-54f2af1628c6","issue_id":"b87362a3-a021-4508-a544-0228ff5c8665","timestamp":"2026-05-07T19:31:21.449541815Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"7a9ee2d6-0114-4f95-9808-6c33f89cb919","issue_id":"d1dd266c-ae4a-4d9f-843c-e138618677f3","timestamp":"2026-05-07T19:32:53.217524940Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"4856c2c0-aba2-4ec0-b538-eb1257b2234c","issue_id":"b87362a3-a021-4508-a544-0228ff5c8665","timestamp":"2026-05-07T19:33:08.385746750Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"9a92dded-a782-4c2b-8be2-c907d802b884","issue_id":"d1dd266c-ae4a-4d9f-843c-e138618677f3","timestamp":"2026-05-07T19:35:53.421910957Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"8d79d463-581a-427c-8470-42a59a1e762c","issue_id":"d1dd266c-ae4a-4d9f-843c-e138618677f3","timestamp":"2026-05-07T19:46:38.408403449Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"2a850756-fe8b-46cf-8c83-2af9aaabcdd2","issue_id":"b87362a3-a021-4508-a544-0228ff5c8665","timestamp":"2026-05-07T19:49:56.654752498Z","gate_key":"code-review","updated_by":"auto:executor"}
