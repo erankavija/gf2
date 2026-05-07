@@ -735,6 +735,18 @@ impl<const P: u64> FiniteField for Fp<P> {
         simd_ops::fp_try_make_basis_reducer::<P>(n)
     }
 
+    /// Constructs a packed chain-polynomial arithmetic handle for the
+    /// `cyclic_decomposition` Krylov-step polynomial bookkeeping
+    /// (issue `5a3dbd5b`). Returns `None` when `P > 251` or when AVX2
+    /// is unavailable; the caller falls back to the scalar `FieldPoly`
+    /// path.
+    #[inline]
+    fn try_make_chain_poly_arith(
+        n: usize,
+    ) -> Option<Box<dyn crate::field::matrix::ChainPolyArith<Self>>> {
+        simd_ops::fp_try_make_chain_poly_arith::<P>(n)
+    }
+
     /// SIMD-accelerated `axpy` (`y[i] += a · x[i]`) for `Fp<P>` with
     /// `P ≤ 65521` (issue `d1dd266c`). Routes through the AVX2
     /// byte-lane (`P ≤ 251`) or u16-lane (`252 ≤ P < 65536`)

@@ -98,6 +98,71 @@ pub trait PackedMatvec<F: FiniteField>: Send {
     fn matvec(&self, x: &[F], out: &mut [F]);
 }
 
+/// Crate-internal trait for packed chain-polynomial arithmetic (issue
+/// `5a3dbd5b`).
+///
+/// `cyclic_decomposition` maintains a `chain_polys: Vec<FieldPoly<F>>`
+/// that grows degree-by-degree. At each Krylov step `d` the update is:
+///
+/// ```text
+/// next_poly = x · chain_polys[d-1]
+///           − Σ_{j=0}^{d-1} α_j · chain_polys[j]
+/// ```
+///
+/// For `Fp<P>` with `P ≤ 251` these are `O(d)` scalar multiplies and
+/// subtracts — all in `[0, P)` canonical-byte form — which can be
+/// vectorised via the AVX2 `batch_mul` + `batch_sub` kernels,
+/// eliminating the per-element Montgomery REDC overhead of the scalar
+/// `FieldPoly::mul_scalar` / `Sub` path.
+///
+/// Implementations live alongside the field-specific SIMD layer
+/// (`crate::gfp::simd_ops::PackedFpChainPolys`); other fields return
+/// `None` from `try_make_chain_poly_arith` and `cyclic_decomposition`
+/// falls back to the scalar `FieldPoly` path.
+pub trait ChainPolyArith<F: FiniteField>: Send {
+    /// Appends the constant polynomial `1` as the first chain entry
+    /// (called once before the Krylov loop starts).
+    fn push_one(&mut self);
+
+    /// Computes `x · chain_polys[last]` and stores the result into `buf`.
+    /// `buf` is an opaque scratch buffer managed by this trait; callers
+    /// pass the same value back to [`sub_scaled_into`] and then to
+    /// [`push_buf`] or [`finish_buf`].
+    fn shift_x_last_into(&self, buf: &mut Vec<u8>);
+
+    /// Subtracts `alpha · chain_polys[j]` from `buf` in-place.
+    ///
+    /// * `buf` — the running accumulator started by `shift_x_last_into`.
+    /// * `alpha` — the scalar multiplier (canonical field element).
+    /// * `j` — index into the chain (0-based).
+    ///
+    /// Takes `&mut self` to allow implementations to reuse pre-allocated
+    /// scratch buffers without per-call allocation.
+    fn sub_scaled_into(&mut self, buf: &mut Vec<u8>, alpha: &F, j: usize);
+
+    /// Appends the polynomial stored in `buf` as the next chain entry
+    /// (called when the Krylov step yields an independent vector).
+    fn push_buf(&mut self, buf: &[u8]);
+
+    /// Converts `buf` to a monic `FieldPoly<F>` and returns it (called
+    /// when the Krylov step yields a dependent vector — the terminator
+    /// polynomial of the block). The caller is responsible for making
+    /// the result monic if needed (i.e. calling `monic()` on it).
+    fn finish_buf(&self, buf: &[u8], zero: &F) -> crate::field::poly::FieldPoly<F>;
+
+    /// Allocates a fresh scratch buffer sized for polynomials of degree
+    /// up to `max_deg` (grows automatically if needed).
+    fn alloc_buf(&self, max_deg: usize) -> Vec<u8>;
+
+    /// Returns the number of chain polynomials stored so far.
+    fn len(&self) -> usize;
+
+    /// Returns `true` when no polynomials have been stored yet.
+    fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+}
+
 // ─── Test-only allocation counter ─────────────────────────────────────────────
 //
 // Exposed only under `#[cfg(test)]`; the production path is a single
