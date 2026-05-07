@@ -1826,8 +1826,12 @@ impl<const P: u64> crate::field::matrix::ChainPolyArith<Fp<P>> for PackedFpChain
         buf[0] = 0;
     }
 
-    fn sub_scaled_into(&mut self, buf: &mut Vec<u8>, alpha: &Fp<P>, j: usize) {
-        let alpha_val = alpha.value() as u8;
+    fn sub_scaled_into(&mut self, buf: &mut Vec<u8>, alpha_canonical: u64, j: usize) {
+        // alpha_canonical is already in canonical [0, P) form per the
+        // ChainPolyArith contract — caller pre-converts (issue 5a3dbd5b
+        // R4 review feedback to remove the per-call Montgomery REDC).
+        debug_assert!(alpha_canonical < P, "alpha_canonical must be < P");
+        let alpha_val = alpha_canonical as u8;
         if alpha_val == 0 {
             return;
         }

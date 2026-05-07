@@ -133,12 +133,16 @@ pub trait ChainPolyArith<F: FiniteField>: Send {
     /// Subtracts `alpha · chain_polys[j]` from `buf` in-place.
     ///
     /// * `buf` — the running accumulator started by `shift_x_last_into`.
-    /// * `alpha` — the scalar multiplier (canonical field element).
+    /// * `alpha_canonical` — the scalar multiplier as a **canonical**
+    ///   integer in `[0, q)`. The caller is responsible for converting
+    ///   from any internal representation (e.g. Montgomery form) before
+    ///   the call so the implementation never pays a per-call REDC on
+    ///   the hot path. For `Fp<P>` callers must pass `alpha.value()`.
     /// * `j` — index into the chain (0-based).
     ///
     /// Takes `&mut self` to allow implementations to reuse pre-allocated
     /// scratch buffers without per-call allocation.
-    fn sub_scaled_into(&mut self, buf: &mut Vec<u8>, alpha: &F, j: usize);
+    fn sub_scaled_into(&mut self, buf: &mut Vec<u8>, alpha_canonical: u64, j: usize);
 
     /// Appends the polynomial stored in `buf` as the next chain entry
     /// (called when the Krylov step yields an independent vector).
