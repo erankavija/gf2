@@ -2,7 +2,7 @@
   "id": "b87362a3-a021-4508-a544-0228ff5c8665",
   "title": "Implement winning charpoly dispatch",
   "description": "Enable the empirically winning charpoly algorithm per target regime.\n\n## Success Criteria\n\n- [hard] charpoly target rows meet the 1.5x threshold or have approved exclusions.\n- [hard] The implementation remains deterministic where required by API contracts.\n\n## Amendment — 2026-05-07 (user-approved)\n\nPer AskUserQuestion 2026-05-07: 7 of 8 charpoly target rows close on this issue's path with the post-d1dd266c+siblings packed cyclic_decomposition / chain_polys / Barrett-table-cache work integrated. `GF(251)/n=256` charpoly remains at 3.18x of fflas (was 9.58x at d1dd266c open) — sibling task `5a3dbd5b` reduced the gap by 3x via canonical-byte chain_polys arithmetic, but the residual constant-factor gap requires a bespoke register-scheduled small-prime AVX2 kernel in `gf2-kernels-simd`. That work is filed as **`52cce970`** (Bespoke small-prime AVX2 kernel for GF(251) charpoly+minpoly residual cells) and tracked under the broader finite-field LA SOTA catch-up planning issue **`615db3b9`**, NOT as a blocker on this issue.\n\nRe-escalation threshold: re-evaluate the GF(251)/n=256 charpoly cell when `52cce970` closes.\n\nDispatch state confirmed by integrated post-sibling scorecard at `dev/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md` § 3.2:\n- KG_DISPATCH_MIN_N = usize::MAX in `crates/gf2-core/src/field/charpoly.rs:231` (cubic always wins per 4a59d1f9 reassessment).\n- charpoly_dispatch routes to charpoly_cubic for all finite n.\n- Determinism: cyclic_decomposition uses fixed-order standard-basis seed enumeration; output bit-identical for fixed input.\n\n## Notes\n\nThe charpoly-specific evidence is the integrated post-sibling scorecard (attached). The 7 PASSing cells and the 1 FAILing cell with its amendment routing are all recorded there.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:claude",
   "dependencies": [
@@ -16,14 +16,19 @@
   ],
   "gates_status": {
     "code-review": {
-      "status": "failed",
+      "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-07T20:06:08.407056979Z"
+      "updated_at": "2026-05-07T20:55:24.078108603Z"
     },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-05-07T19:51:34.391381471Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": null,
+      "updated_at": "2026-05-07T20:59:40.741297155Z"
     }
   },
   "context": {},
@@ -43,5 +48,5 @@
     "story:sota-polynomial-invariants"
   ],
   "created_at": "2026-04-30T06:43:02.862473926+00:00",
-  "updated_at": "2026-05-07T20:09:26.284550262+00:00"
+  "updated_at": "2026-05-07T20:59:40.758550329+00:00"
 }

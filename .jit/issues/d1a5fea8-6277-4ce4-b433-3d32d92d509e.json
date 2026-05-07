@@ -13,7 +13,13 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-07T20:52:33.502140530Z"
+    }
+  },
   "context": {},
   "documents": [
     {
@@ -31,5 +37,5 @@
     "story:sota-dense-la"
   ],
   "created_at": "2026-05-07T05:44:09.913311383+00:00",
-  "updated_at": "2026-05-07T20:52:20.053944983+00:00"
+  "updated_at": "2026-05-07T20:56:20.760260220+00:00"
 }
