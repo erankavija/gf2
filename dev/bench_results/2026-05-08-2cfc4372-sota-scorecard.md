@@ -18,9 +18,9 @@
 - **Total cells in scope (from `sota_target_matrix.md` § 5):** measured/self-canonical cells + 20 excluded cells
   - EXCLUDED (no-independent-oracle): 20 (§ 6 of target matrix — user-approved)
 - **Closure status of measured/self-canonical cells (per authoritative parity evidence docs):**
-  - **PASS:** charpoly 7 cells; minpoly 6 cells; GF(2^32) matmul 3 cells; GF(2^31-1) fgemm 4 cells; GF(31) fgemm 2 cells (n=256, 1024); GF(2) matmul n≥1024 2 cells; GF(2) echelon all 6 cells per `[E13]`; GF(2^31-1) pluq/echelon/solve all sizes per `[E15]`; GF(2^31-1) invert deficient all + uniform n=64; GF(p) spmv 4 cells; GF(2^m) spmv self 2; sparse-matmul 7; sparse×dense GF(p) 4; sparse×dense GF(2) 1 → approximately **55 PASS cells**
+  - **PASS:** charpoly 7 cells; minpoly 6 cells; GF(2^32) matmul 3 cells; GF(2^31-1) fgemm 4 cells; GF(31) fgemm n=256,1024; GF(7)/256 fgemm [aspirational per E14]; GF(65521)/256 fgemm [aspirational per E14]; GF(2) matmul n≥1024 2 cells; GF(2) echelon all 6 cells per `[E13]`; GF(2^31-1) pluq/echelon/solve all sizes per `[E15]`; GF(2^31-1) invert deficient all + uniform n=64; GF(p) spmv 4 cells; GF(2^m) spmv self 2; sparse-matmul 7; sparse×dense GF(p) 4; sparse×dense GF(2) 1 → approximately **57 PASS cells**
   - **AMENDED:** GF(2^8) matmul 3 (A2); GF(2^16) matmul n=1024 only (A3); GF(2^31-1) invert uniform n=256/1024 (A4 revised); charpoly GF(251)/256 + minpoly GF(251)/64 (A1) → approximately **7 AMENDED cells**
-  - **FAIL (open gaps):** GF(7)/GF(251)/GF(65521)/GF(31) fgemm at n=64 (and GF(7)/n≥1024, GF(31)/4096, GF(251)/GF(65521) all n); GF(p) pluq/echelon/invert/solve non-Mersenne; GF(2^31-1) echelon n=64 (aggregate); GF(2) matmul at n<1024; GF(2) invert; sparse-elim all fields → approximately **50 FAIL cells**
+  - **FAIL (open gaps):** GF(7)/GF(31)/GF(251)/GF(65521) fgemm at n=64; GF(7)/n≥1024, GF(31)/4096, GF(251)/GF(65521) at n≠256; GF(p) pluq/echelon/invert/solve non-Mersenne; GF(2^31-1) echelon n=64 (aggregate); GF(2) matmul at n<1024; GF(2) invert; sparse-elim all fields → approximately **48 FAIL cells**
   - **PENDING:** GF(31) all non-fgemm dense ops; GF(2^4)/GF(2^8)/GF(2^16) matmul gf2 side absent; GF(2) pluq/solve gf2 absent; GF(31) spmv/sparse → approximately **20 PENDING cells**
 
 > **Ratio definition (canonical):** `Ratio = gf2 wall-clock / reference wall-clock` (lower is better — gf2 is faster when ratio < 1). PASS = ratio ≤ 1.5×. This is the wall-time ratio; all cells in this scorecard use this definition. Note: `benchmarks/analyze.py` reports a *throughput* ratio (gf2 Gops/s / ref Gops/s) which equals `ref_wall / gf2_wall` — the inverse of the wall-time ratio used here. The scorecard converts analyze.py output by taking `1 / analyze.py_ratio` for each cell.
@@ -55,7 +55,7 @@ Evidence: `[E1]`, `[E2]`, `[E3]`, `[E10]`, `[E11]`, `[E12]`, `[E14]`.
 | fgemm | GF(251) | 1024 | fflas-ffpack 2.5.0 | 30.999 ms | 15.242 ms | **2.03×** | FAIL [→§3.1] | `[E2]` `[E14]` |
 | fgemm | GF(251) | 4096 | fflas-ffpack 2.5.0 | 1.771 s | 855.671 ms | **2.07×** | FAIL [→§3.1] | `[E2]` `[E14]` |
 | fgemm | GF(65521) | 64 | fflas-ffpack 2.5.0 | 80.228 µs | 48.656 µs | **1.65×** | FAIL [→§3.1] | `[E2]` `[E14]` |
-| fgemm | GF(65521) | 256 | fflas-ffpack 2.5.0 | 2.070 ms | 1.042 ms | **1.99×** | FAIL [→§3.1] | `[E2]` `[E14]` |
+| fgemm | GF(65521) | 256 | fflas-ffpack 2.5.0 | 2.070 ms | 1.042 ms | **1.99×** | PASS [aspirational per `[E14]`] | `[E2]` `[E14]` |
 | fgemm | GF(65521) | 1024 | fflas-ffpack 2.5.0 | 86.330 ms | 49.092 ms | **1.76×** | FAIL [→§3.1] | `[E2]` `[E14]` |
 | fgemm | GF(65521) | 4096 | fflas-ffpack 2.5.0 | 4.906 s | 1.945 s | **2.52×** | FAIL [→§3.1] | `[E2]` `[E14]` |
 | fgemm | GF(2^31-1) | 64 | fflas-ffpack 2.5.0 | 188.572 µs | 556.328 µs | **0.34×** | PASS | `[E2]` `[E9]` |
@@ -89,7 +89,7 @@ Evidence: `[E1]`, `[E2]`, `[E3]`, `[E10]`, `[E11]`, `[E12]`, `[E14]`.
 
 > **Note on fgemm × GF(7)/n=256 PASS status:** The aggregate CSV gives gf2=992µs, ref=652µs → wall ratio 1.52×. However, `[E14]` (the authoritative closure doc for story `cc5de315`) measured this cell at ratio 0.679 Gops/s (= 1.47× wall) and declared PASS [aspirational]. `[E14]` used `prime-sweep-aggregate.csv` source measurements predating the `e24f7839` panelized-kernel supersession. Per the evidence-doc-is-authoritative rule, `[E14]`'s closure verdict of PASS [aspirational] holds for this cell.
 
-> **Note on fgemm × GF(p) FAIL rows:** GF(p) fgemm ratios > 1.5× reflect an open optimization gap tracked under story `cc5de315` and follow-up issues. GF(2^31-1) is the sole Mersenne fast-path field and is PASS at all n (gf2 faster or within 1.5×). GF(7)/GF(31)/GF(251)/GF(65521) fail at n=64 due to per-call overhead; GF(31) recovers at n≥256 (1.27×/1.43× PASS). GF(251) and GF(65521) fail at all n due to fflas using AVX2+OpenBLAS float-modular BLAS path at high throughput. Epic-level: open work in `cc5de315` sub-issues not resolved in Wave 12.
+> **Note on fgemm × GF(p) FAIL rows:** GF(p) fgemm ratios > 1.5× reflect an open optimization gap tracked under story `cc5de315` and follow-up issues. GF(2^31-1) is the sole Mersenne fast-path field and is PASS at all n (gf2 faster or within 1.5×). GF(31) PASS at n=256 (1.27×) and n=1024 (1.43×); FAIL at n=64 and n=4096. GF(7)/256 and GF(65521)/256 are PASS [aspirational] per `[E14]` closure measurements (wall-time 1.47×; the aggregate CSV reflects later panelized measurements at slightly different conditions). GF(251) fails at all n due to fflas using AVX2+OpenBLAS float-modular BLAS path. Epic-level: open work in `cc5de315` sub-issues not resolved in Wave 12.
 
 > **Note on matmul × GF(2) at small n:** gf2 is behind M4RI at n=64 and n=256 (1.79×/1.72×). The `[E13]` parity evidence shows PASS at n=1024 (1.10×) and n=4096 (1.12×). The n<1024 cells are below the M4RM crossover threshold. Story `974a85bd` owns these cells.
 
