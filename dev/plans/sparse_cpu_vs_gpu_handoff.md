@@ -161,14 +161,14 @@ The analysis in § 2 finds that every failing cell has a CPU-closure route that:
 2. Is algorithmic in nature (lazy-reduction MAC for GF(p) spmv/sparse×dense; pivot-priority RREF for sparse-elim).
 3. Has been executed by the canonical reference (fflas-ffpack, LinBox) on the same Zen-3 hardware, confirming the ISA class is sufficient.
 
-The GPU epic `806eb14e` (Prototype GPU acceleration for belief propagation) covers LDPC BP and BCH syndrome — coding-layer algorithms that are throughput-bounded at large batch sizes and that the existing HIP crate (`gf2-kernels-hip`) already prototypes. The GPU fieldmatrix sketch (`dev/plans/gpu_fieldmatrix_sketch.md`) documents a future epic for device-resident `FieldMatrix` matmul / SpMV. Neither of these GPU vehicles is the right route for the sparse GF(p) gaps:
+The GPU epic `806eb14e` (Prototype GPU acceleration for belief propagation) covers LDPC BP and BCH syndrome -- coding-layer algorithms that are throughput-bounded at large batch sizes and that the existing HIP crate (`gf2-kernels-hip`) already prototypes. The pre-filed GPU FieldMatrix epic `16283d6f` is the canonical routing target for any future device-resident `FieldMatrix` matmul / SpMV work; per its description it is gated on explicit user approval to dispatch breakdown. The companion design sketch at `dev/plans/gpu_fieldmatrix_sketch.md` is `16283d6f`'s design artifact, not the routing target itself. Neither of these GPU vehicles is the right route for the sparse GF(p) gaps:
 
 - The sparse GF(p) spmv and sparse×dense gaps are a CPU lazy-reduction problem, not a throughput-bounded problem that benefits from GPU parallelism at the small n=1024 sizes measured. GPU memory latency for sparse-random access patterns (Erdos-Renyi, density ~10/n) dominates at small-to-medium n; expected GPU wins require n ≥ 4096 minimum for dense linear algebra; sparse irregular patterns typically need n ≥ 16384 to amortize device transfer overhead.
 - The sparse-elim gap is a CPU algorithmic problem (pivot-priority strategy). GPU sparse RREF over GF(p) is not a standard operation in any existing GPU library and would require novel kernel design — a much larger scope than porting LinBox's pivot-priority strategy to gf2-core's existing Rust path.
 
 **No GPU dependency is required for story `54fd3f0b` closure.**
 
-The existing GPU epic `806eb14e` remains focused on its current scope (LDPC BP, BCH syndrome). The GPU fieldmatrix sketch remains a future-epic item, downstream of the CPU SOTA closure in `97bf0879`.
+The existing GPU epic `806eb14e` remains focused on its current scope (LDPC BP, BCH syndrome). The pre-filed GPU FieldMatrix epic `16283d6f` remains the canonical future-epic routing target, gated on explicit user approval to dispatch breakdown, downstream of the CPU SOTA closure in `97bf0879`.
 
 ---
 
@@ -178,7 +178,7 @@ The existing GPU epic `806eb14e` remains focused on its current scope (LDPC BP, 
 
 No CPU-no-go cell was identified. GPU dependency creation for the sparse story (`54fd3f0b`) would therefore have no factual basis in the evidence collected here. The two `[hard]` criteria of this issue are satisfied as follows:
 
-**Criterion #1 (CPU no-go evidence is documented before any GPU handoff):** All 13 below-threshold cells were analysed in § 2. For each cell, positive CPU-closure evidence was found: the reference itself runs on Zen-3 AVX2 without GPU, and the gap is algorithmic (lazy-reduction MAC, vectorised inner loop, or pivot-priority RREF). No cell reached the no-go threshold that would trigger a GPU handoff.
+**Criterion #1 (CPU no-go evidence is documented before any GPU handoff):** All 16 below-threshold cells were analysed in § 2. For each cell, positive CPU-closure evidence was found: the reference itself runs on Zen-3 AVX2 without GPU, and the gap is algorithmic (lazy-reduction MAC, vectorised inner loop, or pivot-priority RREF). No cell reached the no-go threshold that would trigger a GPU handoff.
 
 **Criterion #2 (Any GPU dependency is user-approved and wired to the proper GPU epic):** No GPU dependency is created. The issue's own constraint ("Per criterion #2: any GPU dependency must be user-approved BEFORE filing. If you'd recommend filing a GPU sub-issue, REPORT BACK FIRST") is satisfied by returning zero GPU sub-issues with the evidence that CPU closure is sufficient.
 
@@ -188,7 +188,7 @@ No CPU-no-go cell was identified. GPU dependency creation for the sparse story (
 
 ### [hard] Criterion 1: CPU no-go evidence is documented before any GPU handoff.
 
-Satisfied. This document produced per-cell CPU-feasibility analysis for all 13 below-threshold cells (§ 2.2–2.4). For each cell:
+Satisfied. This document produced per-cell CPU-feasibility analysis for all 16 below-threshold cells (§ 2.2–2.4). For each cell:
 
 - The ISA class of the reference was confirmed (Zen-3 AVX2 + FMA; no AVX-512 or GPU).
 - The cause of the gap was identified from the scorecard's hardware-counter analysis (Montgomery REDC per-element overhead for GF(p) spmv/sparse×dense; straight-line Gauss-Jordan for sparse-elim).
@@ -207,10 +207,10 @@ Evidence files cited:
 - `dev/plans/sparse_benchmark_corpus.md` (operations × field matrix, reference selection)
 - `dev/plans/gf2m_avx512_gfni_evaluation.md` (structural template for this document; ISA-class decision methodology)
 - `dev/plans/hip_gpu_prototype_wave.md` (GPU epic `806eb14e` scope: LDPC BP, BCH syndrome — not sparse GF(p))
-- `dev/plans/gpu_fieldmatrix_sketch.md` (future GPU FieldMatrix epic sketch — not in scope for `97bf0879`)
+- Pre-filed GPU FieldMatrix epic `16283d6f` (canonical routing target; gated on user approval to dispatch breakdown -- not in scope for `97bf0879`); design sketch at `dev/plans/gpu_fieldmatrix_sketch.md`
 
 ### [hard] Criterion 2: Any GPU dependency is user-approved and wired to the proper GPU epic.
 
 Satisfied by absence: zero GPU dependencies are created. This satisfies the criterion because the criterion applies only when a GPU dependency IS created. The lead's instruction is explicit: "If you'd recommend filing a GPU sub-issue, REPORT BACK FIRST — the lead will escalate to user." No recommendation is made here because no CPU-no-go cell exists.
 
-The relevant GPU epics (`806eb14e` for LDPC/BCH, `gpu_fieldmatrix_sketch.md` sketch for device FieldMatrix) are identified in § 3 so the routing path is documented for future reference if any new sparse gap evidence changes this assessment. Both remain outside `97bf0879`'s scope.
+The relevant GPU epics (`806eb14e` for LDPC/BCH, `16283d6f` for device-resident FieldMatrix gated on user approval to dispatch breakdown) are identified in § 3 so the routing path is documented for future reference if any new sparse gap evidence changes this assessment. Both remain outside `97bf0879`'s scope.

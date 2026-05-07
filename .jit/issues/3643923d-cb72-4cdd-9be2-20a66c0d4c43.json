@@ -2,9 +2,9 @@
   "id": "3643923d-cb72-4cdd-9be2-20a66c0d4c43",
   "title": "Decide CPU versus GPU handoff for sparse gaps",
   "description": "Escalate or wire GPU follow-up only for sparse gaps CPU cannot plausibly close.\n\n## Success Criteria\n\n- [hard] CPU no-go evidence is documented before any GPU handoff.\n- [hard] Any GPU dependency is user-approved and wired to the proper GPU epic.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [
     "47698404-edd8-4035-a4a1-9820001fc5d7"
   ],
@@ -13,9 +13,28 @@
     "cargo-ci",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-07T06:29:42.669763071Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-07T06:28:42.603075326Z"
+    }
+  },
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/plans/sparse_cpu_vs_gpu_handoff.md",
+      "commit": null,
+      "label": "Sparse CPU vs GPU handoff decision",
+      "doc_type": "design",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:task",
     "component:gf2-core",
@@ -23,5 +42,5 @@
     "story:sota-sparse-fieldmatrix"
   ],
   "created_at": "2026-04-30T06:43:02.918143442+00:00",
-  "updated_at": "2026-05-05T08:44:04.348291282+00:00"
+  "updated_at": "2026-05-07T06:37:09.117845561+00:00"
 }
