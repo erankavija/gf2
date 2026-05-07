@@ -20,9 +20,9 @@
 
 use super::Fp;
 #[cfg(feature = "simd")]
-use crate::field::FiniteField;
-#[cfg(feature = "simd")]
 use super::{montgomery::MontConsts, use_specialized_storage};
+#[cfg(feature = "simd")]
+use crate::field::FiniteField;
 
 // ---------------------------------------------------------------------------
 // SimdVecOps trait
@@ -1365,14 +1365,8 @@ pub(crate) fn fp_try_axpy<const P: u64>(_y: &mut [Fp<P>], _a: &Fp<P>, _x: &[Fp<P
 /// `axpy` path.
 #[cfg(feature = "simd")]
 pub(crate) enum PackedFpBasis<const P: u64> {
-    Small {
-        cols: Vec<Vec<u8>>,
-        n: usize,
-    },
-    Medium {
-        cols: Vec<Vec<u16>>,
-        n: usize,
-    },
+    Small { cols: Vec<Vec<u8>>, n: usize },
+    Medium { cols: Vec<Vec<u16>>, n: usize },
 }
 
 #[cfg(feature = "simd")]
@@ -1452,16 +1446,14 @@ pub(crate) fn fp_reduce_packed<const P: u64>(
                     .expect("reduce: pivot must be non-zero")
                     .value() as u8;
                 // factor = v_at_r * pivot_inv mod P (canonical scalar mul).
-                let factor =
-                    ((v_at_r as u32 * pivot_inv as u32) % P as u32) as u8;
+                let factor = ((v_at_r as u32 * pivot_inv as u32) % P as u32) as u8;
                 bcast.iter_mut().for_each(|s| *s = factor);
                 (fns.batch_mul_fn)(&bcast, col, p_u8, &mut tmp);
                 (fns.batch_sub_fn)(&residual, &tmp, p_u8, &mut new_residual);
                 std::mem::swap(&mut residual, &mut new_residual);
                 coeffs[j] = Fp::<P>::new(factor as u64);
             }
-            let unpacked: Vec<Fp<P>> =
-                residual.iter().map(|&b| Fp::<P>::new(b as u64)).collect();
+            let unpacked: Vec<Fp<P>> = residual.iter().map(|&b| Fp::<P>::new(b as u64)).collect();
             (unpacked, coeffs)
         }
         PackedFpBasis::Medium { cols, .. } => {
@@ -1484,16 +1476,14 @@ pub(crate) fn fp_reduce_packed<const P: u64>(
                     .inv()
                     .expect("reduce: pivot must be non-zero")
                     .value() as u16;
-                let factor =
-                    ((v_at_r as u64 * pivot_inv as u64) % P) as u16;
+                let factor = ((v_at_r as u64 * pivot_inv as u64) % P) as u16;
                 bcast.iter_mut().for_each(|s| *s = factor);
                 (fns.batch_mul_fn)(&bcast, col, p_u16, barrett_m, &mut tmp);
                 (fns.batch_sub_fn)(&residual, &tmp, p_u16, &mut new_residual);
                 std::mem::swap(&mut residual, &mut new_residual);
                 coeffs[j] = Fp::<P>::new(factor as u64);
             }
-            let unpacked: Vec<Fp<P>> =
-                residual.iter().map(|&w| Fp::<P>::new(w as u64)).collect();
+            let unpacked: Vec<Fp<P>> = residual.iter().map(|&w| Fp::<P>::new(w as u64)).collect();
             (unpacked, coeffs)
         }
     }
