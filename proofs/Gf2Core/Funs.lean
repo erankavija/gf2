@@ -1370,7 +1370,7 @@ def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.characteristic
 impl_def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128 (P : Std.U64) :
   field.traits.FiniteField (gfp.Fp P) Std.U64 Std.U128 := {
   WINOGRAD_THRESHOLD := ok 32#usize
-  TRI_BASE_THRESHOLD := ok 32#usize
+  TRI_BASE_THRESHOLD := ok 8#usize
   corecloneCloneInst := gfp.Fp.Insts.CoreCloneClone P
   corecmpPartialEqInst := gfp.Fp.Insts.CoreCmpPartialEqFp P
   corecmpEqInst := gfp.Fp.Insts.CoreCmpEq P
@@ -2550,7 +2550,7 @@ impl_def
   gfp.specialized.GoldilocksFp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128 :
   field.traits.FiniteField gfp.specialized.GoldilocksFp Std.U64 Std.U128 := {
   WINOGRAD_THRESHOLD := ok 32#usize
-  TRI_BASE_THRESHOLD := ok 32#usize
+  TRI_BASE_THRESHOLD := ok 8#usize
   corecloneCloneInst := gfp.specialized.GoldilocksFp.Insts.CoreCloneClone
   corecmpPartialEqInst :=
     gfp.specialized.GoldilocksFp.Insts.CoreCmpPartialEqGoldilocksFp
@@ -4310,7 +4310,7 @@ impl_def
   Clause0_Clause0_Clause0_Characteristic (gfpn.cubic.CubicExtWide
   Clause0_Clause0_Clause0_Wide) := {
   WINOGRAD_THRESHOLD := ok 32#usize
-  TRI_BASE_THRESHOLD := ok 32#usize
+  TRI_BASE_THRESHOLD := ok 8#usize
   corecloneCloneInst := gfpn.cubic.CubicExt.Insts.CoreCloneClone
     ext_configExtConfigInst
   corecmpPartialEqInst := gfpn.cubic.CubicExt.Insts.CoreCmpPartialEqCubicExt
@@ -5868,7 +5868,7 @@ impl_def
   ext_configExtConfigInst) Clause0_Clause0_Clause0_Characteristic
   (gfpn.quadratic.QuadraticExtWide Clause0_Clause0_Clause0_Wide) := {
   WINOGRAD_THRESHOLD := ok 32#usize
-  TRI_BASE_THRESHOLD := ok 32#usize
+  TRI_BASE_THRESHOLD := ok 8#usize
   corecloneCloneInst := gfpn.quadratic.QuadraticExt.Insts.CoreCloneClone
     ext_configExtConfigInst
   corecmpPartialEqInst :=
