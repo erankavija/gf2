@@ -36,6 +36,8 @@ use gf2_core::field::test_random_matrix::{random_fp, random_gf2m_wide_1};
 use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
 
 const PRIME_65521: u64 = 65521;
+const PRIME_251: u64 = 251;
+const PRIME_7: u64 = 7;
 const MERSENNE_31: u64 = 2_147_483_647;
 
 /// GF(2^8) AES irreducible.
@@ -111,6 +113,46 @@ fn bench_frobenius(c: &mut Criterion) {
                 let r = black_box(&a_gf).frobenius_form();
                 black_box(r);
             });
+        });
+    }
+    group.finish();
+}
+
+/// Minpoly reference sweep (issue `d1dd266c`): measures
+/// `FieldMatrix::minpoly` at `n ∈ {64, 256}` across the four reference
+/// primes {GF(7), GF(251), GF(65521), GF(2^31-1)} to compare against
+/// the fflas-ffpack baseline in
+/// `dev/bench_results/2026-05-04-c3e79272-minpoly-reference.csv`.
+///
+/// The sweep uses the same seeds as the reference CSV
+/// (`gf2_bench_derive_seed("minpoly", ...)` from the C++ harness).
+/// Note: GF(7) at n≥4 has q ≤ 2n, so the Wiedemann path falls back to
+/// the deterministic quartic path for GF(7). For n=64: GF(7): quartic;
+/// GF(251)/GF(65521)/GF(2^31-1): Wiedemann O(n²).
+fn bench_minpoly_reference_sweep(c: &mut Criterion) {
+    let mut group = c.benchmark_group("charpoly/minpoly_ref");
+    group.sample_size(10);
+    const SIZES: &[usize] = &[64, 256];
+    for &n in SIZES {
+        // GF(2^31-1)
+        let a = random_fp::<MERSENNE_31>(n, n, 0xBEEF_0001);
+        group.bench_with_input(BenchmarkId::new("Fp_M31", n), &n, |b, _| {
+            b.iter(|| black_box(black_box(&a).minpoly()));
+        });
+        // GF(65521)
+        let a = random_fp::<PRIME_65521>(n, n, 0xBEEF_0002);
+        group.bench_with_input(BenchmarkId::new("Fp_65521", n), &n, |b, _| {
+            b.iter(|| black_box(black_box(&a).minpoly()));
+        });
+        // GF(251)
+        let a = random_fp::<PRIME_251>(n, n, 0xBEEF_0003);
+        group.bench_with_input(BenchmarkId::new("Fp_251", n), &n, |b, _| {
+            b.iter(|| black_box(black_box(&a).minpoly()));
+        });
+        // GF(7) — Wiedemann disabled for n≥4 (q=7 ≤ 2n), routes to quartic.
+        let a = random_fp::<PRIME_7>(n, n, 0xBEEF_0004);
+        group.bench_with_input(BenchmarkId::new("Fp_7", n), &n, |b, _| {
+            b.iter(|| black_box(black_box(&a).minpoly()));
         });
     }
     group.finish();
@@ -210,7 +252,8 @@ criterion_group! {
     config = Criterion::default()
         .sample_size(10)
         .measurement_time(std::time::Duration::from_secs(5));
-    targets = bench_charpoly, bench_minpoly, bench_frobenius, bench_dispatch_crossover,
-        bench_dispatch_crossover_fp65521
+    targets = bench_charpoly, bench_minpoly, bench_frobenius,
+        bench_minpoly_reference_sweep,
+        bench_dispatch_crossover, bench_dispatch_crossover_fp65521
 }
 criterion_main!(charpoly_benches);
