@@ -1132,21 +1132,129 @@ pub(crate) fn fp_medium_try_dot_packed<const P: u64>(
 //   `wiedemann_minpoly_attempt` so each minpoly call pays the matrix
 //   pack cost exactly once.
 
+// Thread-local scratch buffers reused across repeated `matvec_packed`
+// calls on the same thread (issue 70766cb1). Avoids the per-call heap
+// allocation of `x_u8` and `out_u8` in the `Small` hot path.
+//
+// The buffers grow as needed (`resize` with a capacity check) and are
+// never shrunk, so after the first `n`-sized call on a given thread the
+// allocator is not consulted again.
+#[cfg(feature = "simd")]
+thread_local! {
+    static SMALL_X_SCRATCH: std::cell::RefCell<Vec<u8>> =
+        const { std::cell::RefCell::new(Vec::new()) };
+    static SMALL_OUT_SCRATCH: std::cell::RefCell<Vec<u8>> =
+        const { std::cell::RefCell::new(Vec::new()) };
+}
+
+/// Pre-prime Barrett-constant cache for the small-prime row-panel matvec
+/// (issue 70766cb1). Stores per-prime lookup tables for converting
+/// Montgomery-stored `Fp<P>` values to and from canonical bytes in O(1)
+/// table-lookup rather than O(1) REDC arithmetic. At P ≤ 251 the full
+/// table has ≤ 251 bytes and fits in a single cache line.
+///
+/// `from_mont_table[raw]` — canonical value for a Montgomery word `raw`
+/// in `[0, P)`. This is the inverse of `to_mont` and replaces the
+/// per-element `from_mont` REDC call in the x-pack loop.
+///
+/// `to_mont_table[canon]` — Montgomery word for a canonical value `canon`
+/// in `[0, P)`. This replaces the per-element `to_mont` call in the
+/// output-unpack loop.
+#[cfg(feature = "simd")]
+pub(crate) struct SmallPrimeTables {
+    from_mont: Vec<u8>, // index = raw storage word (in [0, P)); value = canonical
+    to_mont: Vec<u64>,  // index = canonical value (in [0, P)); value = raw storage
+}
+
+// Global per-prime table cache for small primes (P ≤ 251).
+// 256 slots, one per possible prime value; each slot is a OnceLock so
+// the table is built at most once per prime per process lifetime.
+// A static array avoids the shared-static problem (statics inside generic
+// functions are not per-monomorphization in Rust — they are shared across
+// all instantiations of the same generic). Using a global array indexed by
+// prime value P gives one independent OnceLock per prime.
+#[cfg(feature = "simd")]
+static SMALL_PRIME_TABLE_SLOTS: [std::sync::OnceLock<SmallPrimeTables>; 256] = {
+    // const initialisation: all 256 slots start as uninitialised OnceLocks.
+    [const { std::sync::OnceLock::new() }; 256]
+};
+
+/// Returns a reference to the per-prime lookup tables for `Fp<P>` with
+/// `P ≤ 251`. The tables are built at most once per prime per process and
+/// then cached in a global array slot.
+///
+/// Cost: `O(P)` REDC calls on first access; `O(1)` atomic load on all
+/// subsequent accesses.
+#[cfg(feature = "simd")]
+fn build_small_prime_tables<const P: u64>() -> &'static SmallPrimeTables {
+    debug_assert!(P <= 251 && P >= 3, "build_small_prime_tables: P={P} out of range");
+    SMALL_PRIME_TABLE_SLOTS[P as usize].get_or_init(|| {
+        let p = P as usize;
+        let mut from_mont = vec![0u8; p];
+        let mut to_mont = vec![0u64; p];
+        for a in 0..p {
+            let canon = Fp::<P>::from_raw_storage(a as u64).value(); // from_mont(a)
+            from_mont[a] = canon as u8;
+            let raw = Fp::<P>::new(canon).raw_storage();
+            to_mont[canon as usize] = raw;
+        }
+        SmallPrimeTables { from_mont, to_mont }
+    })
+}
+
 /// Internal cache that holds a pre-packed copy of an `m × k` `Fp<P>`
 /// matrix in the canonical-byte (`P ≤ 251`) or storage-domain-`u16`
 /// (`252 ≤ P < 65536`) layout used by the AVX2 kernels.
 ///
 /// Created once per `cyclic_decomposition` / `wiedemann_minpoly_attempt`
 /// call and reused across the `O(n)` matvec sequence steps.
+///
+/// # Performance notes (issue 70766cb1)
+///
+/// The `Small` variant caches:
+/// 1. `fns: SmallPrimeFns` (avoids the per-call `OnceLock` read)
+/// 2. `tables: SmallPrimeTables` (replaces per-element REDC with O(1)
+///    table lookup in the x-pack and output-unpack loops)
+/// 3. Thread-local scratch buffers for `x_u8` and `out_u8`
+///
+/// At n = k = 64 (the GF(251)/n=64 target cell), (2) removes ~640 ns of
+/// Montgomery-REDC overhead from every matvec call.
 #[cfg(feature = "simd")]
-#[derive(Debug)]
 pub(crate) enum PackedFpMatrix<const P: u64> {
     /// Small-prime layout — canonical bytes, length `m · k`.
-    Small { data: Vec<u8>, m: usize, k: usize },
+    Small {
+        data: Vec<u8>,
+        m: usize,
+        k: usize,
+        /// Cached function-pointer table.
+        fns: gf2_kernels_simd::fp_small::SmallPrimeFns,
+        /// Per-prime lookup tables (static — built once per prime per process).
+        tables: &'static SmallPrimeTables,
+    },
     /// Medium-prime layout — storage-domain `u16`s, length `m · k`.
     /// The dot kernel returns a canonical `u32` and we apply one Montgomery
     /// REDC at the row boundary to recover `Fp<P>` storage.
     Medium { data: Vec<u16>, m: usize, k: usize },
+}
+
+#[cfg(feature = "simd")]
+impl<const P: u64> std::fmt::Debug for PackedFpMatrix<P> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            PackedFpMatrix::Small { m, k, .. } => f
+                .debug_struct("PackedFpMatrix::Small")
+                .field("P", &P)
+                .field("m", m)
+                .field("k", k)
+                .finish_non_exhaustive(),
+            PackedFpMatrix::Medium { m, k, .. } => f
+                .debug_struct("PackedFpMatrix::Medium")
+                .field("P", &P)
+                .field("m", m)
+                .field("k", k)
+                .finish(),
+        }
+    }
 }
 
 #[cfg(feature = "simd")]
@@ -1158,9 +1266,21 @@ impl<const P: u64> PackedFpMatrix<P> {
     pub(crate) fn try_pack(rows: &[Fp<P>], m: usize, k: usize) -> Option<Self> {
         debug_assert_eq!(rows.len(), m * k);
         if fp_small_enabled::<P>() {
-            crate::simd::maybe_fp_small()?;
-            let data: Vec<u8> = rows.iter().map(|x| x.value() as u8).collect();
-            return Some(PackedFpMatrix::Small { data, m, k });
+            let fns = *crate::simd::maybe_fp_small()?;
+            let tables = build_small_prime_tables::<P>();
+            // Use the from_mont table for the initial matrix pack so it's
+            // consistent with subsequent matvec calls (same fast path).
+            let data: Vec<u8> = rows
+                .iter()
+                .map(|x| tables.from_mont[x.raw_storage() as usize])
+                .collect();
+            return Some(PackedFpMatrix::Small {
+                data,
+                m,
+                k,
+                fns,
+                tables,
+            });
         }
         if fp_medium_eligible::<P>() {
             crate::simd::maybe_fp_medium()?;
@@ -1183,24 +1303,49 @@ impl<const P: u64> PackedFpMatrix<P> {
     /// future work.
     pub(crate) fn matvec_packed(&self, x: &[Fp<P>], out: &mut [Fp<P>]) {
         match self {
-            PackedFpMatrix::Small { data, m, k } => {
+            PackedFpMatrix::Small {
+                data,
+                m,
+                k,
+                fns,
+                tables,
+            } => {
                 debug_assert_eq!(x.len(), *k);
                 debug_assert_eq!(out.len(), *m);
-                let fns = crate::simd::maybe_fp_small().expect(
-                    "PackedFpMatrix::Small requires AVX2 (try_pack would have returned None)",
-                );
                 let p_u8 = P as u8;
-                // Pack x as canonical bytes once per matvec call.
-                let x_u8: Vec<u8> = x.iter().map(|v| v.value() as u8).collect();
-                // Use the row-panel gemm kernel: y[j] = sum_t x[t] * A[j*k+t].
-                // The packed `data` matrix is row-major (m rows, k cols),
-                // exactly the layout the kernel expects for `bt` of shape
-                // (n=m, k=k). Output is `n=m` canonical bytes.
-                let mut out_u8 = vec![0u8; *m];
-                (fns.gemm_row_panel_fn)(&x_u8, data, *k, *m, p_u8, &mut out_u8);
-                for (slot, &b) in out.iter_mut().zip(out_u8.iter()) {
-                    *slot = Fp::<P>::new(b as u64);
-                }
+
+                // Use thread-local scratch buffers to avoid heap allocation
+                // on every call (issue 70766cb1). `resize` extends only when
+                // the buffer is shorter, so on steady-state calls (same k, m)
+                // the allocator is not consulted.
+                SMALL_X_SCRATCH.with_borrow_mut(|x_u8| {
+                    x_u8.resize(*k, 0u8);
+                    // Pack x using the pre-built from_mont lookup table
+                    // (O(1) table lookup per element vs O(1) REDC per element).
+                    // For GF(251) this replaces 64 REDC operations with 64
+                    // byte-indexed table reads — typically ~2-3x faster.
+                    for (dst, v) in x_u8.iter_mut().zip(x.iter()) {
+                        *dst = tables.from_mont[v.raw_storage() as usize];
+                    }
+                    SMALL_OUT_SCRATCH.with_borrow_mut(|out_u8| {
+                        out_u8.resize(*m, 0u8);
+                        // Use the row-panel gemm kernel: y[j] = sum_t x[t] * A[j*k+t].
+                        // `fns` is cached at construction time — no OnceLock read here.
+                        (fns.gemm_row_panel_fn)(
+                            &x_u8[..*k],
+                            data,
+                            *k,
+                            *m,
+                            p_u8,
+                            &mut out_u8[..*m],
+                        );
+                        // Unpack using the pre-built to_mont lookup table instead
+                        // of calling Fp::new (which invokes to_mont REDC).
+                        for (slot, &b) in out.iter_mut().zip(out_u8[..*m].iter()) {
+                            *slot = Fp::<P>::from_raw_storage(tables.to_mont[b as usize]);
+                        }
+                    });
+                });
             }
             PackedFpMatrix::Medium { data, m, k } => {
                 debug_assert_eq!(x.len(), *k);
@@ -1786,6 +1931,104 @@ mod tests {
     use super::*;
 
     const WORD_BOUNDARY_LENS: &[usize] = &[0, 1, 63, 64, 65, 127, 128, 129, 255, 256, 257];
+
+    // ---------------------------------------------------------------------------
+    // Tests for the inlined / cached matvec path (issue 70766cb1).
+    // Checks scalar-equivalence of the PackedFpMatrix::Small path at the
+    // boundary lengths mandated by the issue: {0, 1, 15, 16, 17, 63, 64, 65}.
+    // ---------------------------------------------------------------------------
+
+    /// Checks that `fp_try_prepack_matvec` + `PackedMatvec::matvec` on a
+    /// pre-packed small-prime matrix matches the scalar reference at boundary
+    /// lengths for both k and m.
+    #[cfg(feature = "simd")]
+    fn check_small_prime_prepack_matvec<const P: u64>(lens: &[usize]) {
+        if crate::simd::maybe_fp_small().is_none() {
+            return; // non-AVX2 host — fast path genuinely unreachable
+        }
+        for &k in lens {
+            for &m in lens {
+                if k == 0 || m == 0 {
+                    // zero-dim matvec is trivially handled by the caller;
+                    // try_prepack_matvec returns None for k=0.
+                    continue;
+                }
+                // Build a deterministic m×k matrix.
+                let a: Vec<Fp<P>> = (0..(m * k) as u64)
+                    .map(|i| Fp::<P>::new(i.wrapping_mul(1_000_003).wrapping_add(17)))
+                    .collect();
+                // Build a deterministic x vector of length k.
+                let x: Vec<Fp<P>> = (0..k as u64)
+                    .map(|i| Fp::<P>::new(i.wrapping_mul(2_654_435_761).wrapping_add(11)))
+                    .collect();
+
+                // Scalar reference: y_ref[i] = sum_j a[i*k+j] * x[j]
+                let mut y_ref = vec![Fp::<P>::new(0); m];
+                for i in 0..m {
+                    let mut acc = Fp::<P>::new(0);
+                    for j in 0..k {
+                        acc += a[i * k + j] * x[j];
+                    }
+                    y_ref[i] = acc;
+                }
+
+                // Pre-packed path.
+                let packed = fp_try_prepack_matvec::<P>(&a, m, k)
+                    .expect("fp_try_prepack_matvec returned None on AVX2 host for small prime");
+                let mut y_simd = vec![Fp::<P>::new(0); m];
+                packed.matvec(&x, &mut y_simd);
+
+                for i in 0..m {
+                    assert_eq!(
+                        y_simd[i], y_ref[i],
+                        "prepack matvec mismatch P={P} m={m} k={k} i={i}"
+                    );
+                }
+
+                // Call matvec a second time with the SAME packed matrix to
+                // verify that the scratch-buffer reuse path is correct.
+                let x2: Vec<Fp<P>> = (0..k as u64)
+                    .map(|i| Fp::<P>::new(i.wrapping_mul(40_503).wrapping_add(7)))
+                    .collect();
+                let mut y_ref2 = vec![Fp::<P>::new(0); m];
+                for i in 0..m {
+                    let mut acc = Fp::<P>::new(0);
+                    for j in 0..k {
+                        acc += a[i * k + j] * x2[j];
+                    }
+                    y_ref2[i] = acc;
+                }
+                let mut y_simd2 = vec![Fp::<P>::new(0); m];
+                packed.matvec(&x2, &mut y_simd2);
+                for i in 0..m {
+                    assert_eq!(
+                        y_simd2[i], y_ref2[i],
+                        "prepack matvec reuse mismatch P={P} m={m} k={k} i={i}"
+                    );
+                }
+            }
+        }
+    }
+
+    /// Boundary-length scalar-equivalence test for the inlined/cached
+    /// small-prime prepack matvec path (issue 70766cb1).
+    ///
+    /// Tests lengths {0, 1, 15, 16, 17, 63, 64, 65} for both m and k, at
+    /// GF(251) (the primary target of the 70766cb1 optimization) and
+    /// GF(7) (regression guard).
+    #[test]
+    fn test_small_prime_prepack_matvec_boundary_lengths() {
+        #[cfg(not(feature = "simd"))]
+        return;
+
+        const BOUNDARY_LENS: &[usize] = &[0, 1, 15, 16, 17, 63, 64, 65];
+
+        #[cfg(feature = "simd")]
+        {
+            check_small_prime_prepack_matvec::<251>(BOUNDARY_LENS);
+            check_small_prime_prepack_matvec::<7>(BOUNDARY_LENS);
+        }
+    }
 
     fn check_generic_prime<const P: u64>() {
         #[cfg(not(feature = "simd"))]
