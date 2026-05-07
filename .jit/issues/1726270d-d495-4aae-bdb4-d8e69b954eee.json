@@ -2,7 +2,7 @@
   "id": "1726270d-d495-4aae-bdb4-d8e69b954eee",
   "title": "Publish sparse parity evidence",
   "description": "Publish final sparse evidence.\n\n## Success Criteria\n\n- [hard] Raw CSVs and ratio tables are linked to the story.\n- [hard] CPU/GPU non-goal boundaries are documented.",
-  "state": "ready",
+  "state": "done",
   "priority": "normal",
   "assignee": null,
   "dependencies": [
@@ -14,7 +14,23 @@
     "cargo-ci",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-07T08:24:25.563692652Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "lead:project-lead",
+      "updated_at": "2026-05-07T08:33:46.096119752Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-07T08:24:11.306380493Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -24,5 +40,5 @@
     "story:sota-sparse-fieldmatrix"
   ],
   "created_at": "2026-04-30T06:43:02.927979274+00:00",
-  "updated_at": "2026-05-07T07:57:46.231863110+00:00"
+  "updated_at": "2026-05-07T08:33:46.113225026+00:00"
 }

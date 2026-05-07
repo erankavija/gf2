@@ -2,7 +2,7 @@
   "id": "54fd3f0b-60d9-439c-90d1-e54c470f2563",
   "title": "Close sparse FieldMatrix SpMV and SpMM gaps",
   "description": "Define and close sparse FieldMatrix SpMV/SpMM performance gaps.\n\n## Background\n\nSparse PPC work produced scaffolds and negative/no-go evidence, but sparse SOTA parity needs a target corpus, comparable references, and hardware-counter-driven layout work.\n\n## Success Criteria\n\n- [hard] A sparse benchmark corpus and reference set are defined for finite-field SpMV/SpMM.\n- [hard] CPU sparse target rows are within 1.5x of accepted references where feasible.\n- [hard] Any remaining sparse gap has an explicit CPU no-go analysis and, if needed, a user-approved GPU follow-up dependency.",
-  "state": "backlog",
+  "state": "ready",
   "priority": "normal",
   "assignee": null,
   "dependencies": [
@@ -23,6 +23,57 @@
       "label": "Sparse benchmark corpus + references (ingested by a3412e15)",
       "doc_type": "design",
       "format": "markdown"
+    },
+    {
+      "path": "dev/bench_results/2026-05-07-1726270d-sparse-parity-evidence.md",
+      "commit": null,
+      "label": null,
+      "doc_type": null,
+      "format": "markdown"
+    },
+    {
+      "path": "dev/bench_results/2026-05-04-47698404-sparse-reference.csv",
+      "commit": null,
+      "label": null,
+      "doc_type": null
+    },
+    {
+      "path": "dev/bench_results/2026-05-04-47698404-sparse.csv",
+      "commit": null,
+      "label": null,
+      "doc_type": null
+    },
+    {
+      "path": "dev/bench_results/2026-05-07-3a37e0f6-sparse-layout.md",
+      "commit": null,
+      "label": null,
+      "doc_type": null,
+      "format": "markdown"
+    },
+    {
+      "path": "dev/plans/sparse_cpu_vs_gpu_handoff.md",
+      "commit": null,
+      "label": null,
+      "doc_type": null,
+      "format": "markdown"
+    },
+    {
+      "path": "dev/bench_results/2026-05-07-3a37e0f6-sparse-dense-path-a.csv",
+      "commit": null,
+      "label": null,
+      "doc_type": null
+    },
+    {
+      "path": "dev/bench_results/2026-05-07-3a37e0f6-spmv-path-a.csv",
+      "commit": null,
+      "label": null,
+      "doc_type": null
+    },
+    {
+      "path": "dev/bench_results/2026-05-07-3a37e0f6-sparse-dense-path-b-final.csv",
+      "commit": null,
+      "label": null,
+      "doc_type": null
     }
   ],
   "labels": [
@@ -32,5 +83,5 @@
     "story:sota-sparse-fieldmatrix"
   ],
   "created_at": "2026-04-30T06:43:02.522262388+00:00",
-  "updated_at": "2026-05-04T10:38:18.233821703+00:00"
+  "updated_at": "2026-05-07T08:33:46.266010310+00:00"
 }
