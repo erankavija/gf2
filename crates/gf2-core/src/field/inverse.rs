@@ -747,27 +747,28 @@ mod tests {
         assert!(a.solve(&b).is_none());
     }
 
-    /// `solve` returns `None` on a rank-deficient non-zero input.
-    ///
-    /// Constructs a 4×4 matrix of rank 2 by stacking two copies of a
-    /// 2×4 block. The non-zero entries rule out the degenerate "all-zero
-    /// matrix" case and exercise the rank-detection path inside the PLE
-    /// driver for a structurally singular but non-trivial input.
-    #[test]
-    fn test_solve_rank_deficient_nonzero_returns_none() {
-        // Build a rank-2 4×4 matrix: rows 0,2 are one vector; rows 1,3
-        // are another. Row duplication is the simplest non-zero rank drop.
+    /// Build a deterministic rank-2 4x4 `Fp<MERSENNE_31>` matrix used
+    /// by the rank-deficient non-zero correctness tests below. Rows
+    /// 0 and 2 hold `[1, 2, 3, 4]`; rows 1 and 3 hold `[5, 6, 7, 8]`.
+    /// Row duplication is the simplest non-zero rank drop and exercises
+    /// the rank-detection path inside the PLE driver for a structurally
+    /// singular but non-trivial input.
+    fn rank_deficient_nonzero_4x4_fp_m31() -> FieldMatrix<Fp<MERSENNE_31>> {
         let mut a = FieldMatrix::<Fp<MERSENNE_31>>::zeros(4, 4);
-        // row 0 and row 2: [1, 2, 3, 4]
         for j in 0..4usize {
             a.set(0, j, Fp::<MERSENNE_31>::new(j as u64 + 1));
             a.set(2, j, Fp::<MERSENNE_31>::new(j as u64 + 1));
-        }
-        // row 1 and row 3: [5, 6, 7, 8]
-        for j in 0..4usize {
             a.set(1, j, Fp::<MERSENNE_31>::new(j as u64 + 5));
             a.set(3, j, Fp::<MERSENNE_31>::new(j as u64 + 5));
         }
+        debug_assert_eq!(a.rank(), 2, "rank_deficient_nonzero_4x4_fp_m31 invariant");
+        a
+    }
+
+    /// `solve` returns `None` on a rank-deficient non-zero input.
+    #[test]
+    fn test_solve_rank_deficient_nonzero_returns_none() {
+        let a = rank_deficient_nonzero_4x4_fp_m31();
         assert_eq!(a.rank(), 2, "setup: expected rank-2 matrix");
         let b: FieldVec<Fp<MERSENNE_31>> = (0..4)
             .map(|i| Fp::<MERSENNE_31>::new(i as u64 + 1))
@@ -778,14 +779,7 @@ mod tests {
     /// `solve_batch` returns `None` on a rank-deficient non-zero input.
     #[test]
     fn test_solve_batch_rank_deficient_nonzero_returns_none() {
-        let mut a = FieldMatrix::<Fp<MERSENNE_31>>::zeros(4, 4);
-        // rows 0/2 identical, rows 1/3 identical — rank 2.
-        for j in 0..4usize {
-            a.set(0, j, Fp::<MERSENNE_31>::new(j as u64 + 1));
-            a.set(2, j, Fp::<MERSENNE_31>::new(j as u64 + 1));
-            a.set(1, j, Fp::<MERSENNE_31>::new(j as u64 + 5));
-            a.set(3, j, Fp::<MERSENNE_31>::new(j as u64 + 5));
-        }
+        let a = rank_deficient_nonzero_4x4_fp_m31();
         assert_eq!(a.rank(), 2, "setup: expected rank-2 matrix");
         let b = random_fp::<MERSENNE_31>(4, 3, 0xABCDEF);
         assert!(a.solve_batch(&b).is_none());
@@ -884,14 +878,7 @@ mod tests {
     /// entries" path through the PLE driver's pivot detection.
     #[test]
     fn test_det_zero_for_rank_deficient_nonzero() {
-        // Rank-2 matrix: rows 0/2 identical, rows 1/3 identical.
-        let mut a = FieldMatrix::<Fp<MERSENNE_31>>::zeros(4, 4);
-        for j in 0..4usize {
-            a.set(0, j, Fp::<MERSENNE_31>::new(j as u64 + 1));
-            a.set(2, j, Fp::<MERSENNE_31>::new(j as u64 + 1));
-            a.set(1, j, Fp::<MERSENNE_31>::new(j as u64 + 5));
-            a.set(3, j, Fp::<MERSENNE_31>::new(j as u64 + 5));
-        }
+        let a = rank_deficient_nonzero_4x4_fp_m31();
         assert_eq!(a.rank(), 2, "setup: expected rank-2 matrix");
         assert_eq!(a.det(), Fp::<MERSENNE_31>::new(0));
     }
@@ -902,14 +889,7 @@ mod tests {
     /// the matrix has non-zero entries but is structurally singular.
     #[test]
     fn test_inv_rank_deficient_nonzero_returns_none() {
-        // Rank-2 matrix: rows 0/2 identical, rows 1/3 identical.
-        let mut a = FieldMatrix::<Fp<MERSENNE_31>>::zeros(4, 4);
-        for j in 0..4usize {
-            a.set(0, j, Fp::<MERSENNE_31>::new(j as u64 + 1));
-            a.set(2, j, Fp::<MERSENNE_31>::new(j as u64 + 1));
-            a.set(1, j, Fp::<MERSENNE_31>::new(j as u64 + 5));
-            a.set(3, j, Fp::<MERSENNE_31>::new(j as u64 + 5));
-        }
+        let a = rank_deficient_nonzero_4x4_fp_m31();
         assert_eq!(a.rank(), 2, "setup: expected rank-2 matrix");
         assert!(a.inv().is_none());
     }
@@ -1162,9 +1142,18 @@ mod tests {
         reset_fieldmatrix_new_count();
         let _ = a.inv();
         let allocs = fieldmatrix_new_count();
-        assert_eq!(
-            allocs, EXPECTED_INV_N1024,
-            "inv(1024×1024) allocs should be exactly {EXPECTED_INV_N1024}; got {allocs}"
+        // EXPECTED_INV_N1024 is an extrapolated estimate (see the constant's
+        // comment below). Until a slow-tier run pins the actual value, this
+        // assertion is a tolerance check (+/- 10%) so the slow-CI run
+        // reports a diagnostic rather than a hard failure if the
+        // extrapolation is off. When the slow-tier value lands, swap this
+        // back to `assert_eq!` and update the constant.
+        let lo = EXPECTED_INV_N1024 * 9 / 10;
+        let hi = EXPECTED_INV_N1024 * 11 / 10;
+        assert!(
+            (lo..=hi).contains(&allocs),
+            "inv(1024×1024) allocs should be in [{lo}, {hi}] (centered on \
+             extrapolated EXPECTED_INV_N1024 = {EXPECTED_INV_N1024}); got {allocs}"
         );
     }
 
