@@ -12,7 +12,7 @@
 | Build profile | `release` (`opt-level=3`, `lto=thin`, `codegen-units=1`) |
 | Bench harness | `crates/gf2-core/benches/charpoly.rs` (`bench_minpoly_reference_sweep`, `bench_charpoly_reference_sweep`) |
 | Reference | `dev/bench_results/2026-05-04-c3e79272-minpoly-reference.csv`, `dev/bench_results/2026-05-04-c3e79272-charpoly-reference.csv` |
-| Status | 14 of 16 cells PASS the 1.5x ceiling. 2 cells (GF(251)/64 minpoly, GF(251)/256 charpoly) covered by user-approved 2026-05-07 scope amendment routing residual closure to follow-up task `52cce970` under `615db3b9`. Detailed structural analysis in § 6 + amendment summary in § 11. |
+| Status | 14 of 16 cells PASS the 1.5x ceiling. 2 cells (GF(251)/64 minpoly, GF(251)/256 charpoly) covered by user-approved 2026-05-07 scope amendment routing residual closure to follow-up task `52cce970` under `615db3b9`. Detailed structural analysis in § 6; amendment summary in § 9. |
 
 ## § 1 Algorithm changes landed in this issue
 
@@ -224,7 +224,7 @@ canonical basis vector and takes their LCM in V). Confirms `mp(A) = 0` and
 `proptest_wiedemann_minpoly_annihilates_fp_m31`,
 `proptest_wiedemann_minpoly_annihilates_fp65521`, and
 `proptest_companion_minpoly_eq_charpoly` all pass; full workspace test
-suite reports **3272 passed, 78 skipped** (`cargo nextest run --workspace
+suite reports **3277 passed, 78 skipped** (`cargo nextest run --workspace
 --all-features --release --profile ci`) post-`jit:6c926de0`.
 
 ### § 5.4 Extension-Wiedemann SC#1 + SC#4 contract tests
@@ -310,30 +310,34 @@ matvec annihilation check.
 Algorithm reference: `crates/gf2-core/src/field/extension_wiedemann.rs`
 module rustdoc.
 
-### § 6.4 GF(251)/256 charpoly — 9.58x
+### § 6.4 GF(251)/256 charpoly — 3.18x (post-5a3dbd5b; was 9.58x)
 
 Charpoly runs `charpoly_cubic` → `cyclic_decomposition` → product of block
 polys. For random matrices the cyclic_decomposition is single-block of
 length n, and the inner loop's polynomial-bookkeeping (each
 `chain_polys[k]` update is `O(k)` field operations × `O(k)` substitutions)
-is `O(n³)` Montgomery muls. For Fp<251> n=256: ~16M Mont muls × ~10 ns =
-160 ms estimated; measured 12.6 ms because parts of the work skip via
-zero-coefficient fast paths.
+is `O(n³)` Montgomery muls in the scalar arm.
 
-fflas-ffpack at GF(251)/256 reports 1.3 ms — a 10x constant-factor gap
-attributable to (a) hand-tuned canonical-byte polynomial arithmetic
-(no Montgomery overhead) and (b) optimised SIMD inner kernels.
+`5a3dbd5b` replaced the scalar Montgomery polynomial-bookkeeping with
+canonical-byte arithmetic (`PackedFpChainPolys<P>`) using AVX2
+`batch_mul` + `batch_sub`, eliminating the ~16M Montgomery REDC
+operations per call for `Fp<P>` with `P ≤ 251`. Wall time dropped
+12.61 ms → 4.20 ms (3.18x of the 1.317 ms fflas reference). The
+remaining constant-factor gap is the per-call AVX2 byte-lane operation
+overhead at the chain_polys boundary; closing it requires hand-written
+register-scheduled `gf2-kernels-simd` kernels (architectural sibling to
+the `70766cb1` panel-kernel inline work, but for the chain_polys
+surface).
 
-Closing this gap needs the same kernel-level work as § 6.1 plus a
-canonical-byte polynomial arithmetic library — both outside this
-issue's scope.
+User-approved 2026-05-07 amendment: residual closure routed to follow-up
+task **`52cce970`** under planning issue **`615db3b9`**.
 
 ## § 7 Gate results
 
 | Gate | Command | Status |
 |---|---|---|
 | fmt | `cargo fmt --all -- --check` | PASS |
-| nextest | `cargo nextest run --workspace --all-features --release --profile ci` | PASS (3272/3272) post-`jit:6c926de0` |
+| nextest | `cargo nextest run --workspace --all-features --release --profile ci` | PASS (3277/3277) post-integration |
 | clippy | `cargo clippy --workspace --all-targets --all-features -- -D warnings` | PASS |
 
 ## § 8 Raw evidence index
@@ -366,15 +370,17 @@ gate fix engages extension Wiedemann at GF(7)/n=64 too — SC#1 contract
   extension-field Wiedemann.
 
 1 of 8 misses:
-- GF(251)/64 (4.14x): FAIL — gap dominated by per-row-panel call overhead
-  on the byte-lane kernel at small `n` (panel kernel does not amortise
-  well at n=64). Outside this issue's scope; SC#1 gate at q=251 is
-  `n ≥ 251` so n=64 explicitly does NOT engage extension Wiedemann
-  (multi-seed already runs there). Tracked under successor task for
-  canonical-byte panel-kernel tuning.
+- GF(251)/64 (4.14x): FAIL by ratio, but covered by user-approved 2026-05-07
+  scope amendment routing residual closure to follow-up task **`52cce970`**
+  under **`615db3b9`**. Gap is dominated by per-row-panel call overhead on
+  the byte-lane kernel at small `n` (panel kernel does not amortise well at
+  n=64); SC#1 gate at q=251 is `n ≥ 251` so the extension-field arm
+  explicitly does not engage there. The amendment is recorded in the
+  d1dd266c, 5a3dbd5b, and 70766cb1 issue descriptions.
 
-Plus the 8 charpoly rows added by the lead's scope expansion: 7 PASS, 1 FAIL
-(GF(251)/256 charpoly at 9.58x).
+Plus the 8 charpoly rows added by the lead's scope expansion: 7 PASS, 1
+covered by amendment (GF(251)/256 charpoly at 3.18x post-5a3dbd5b, routed
+to `52cce970`; § 6.4 has the post-5a3dbd5b numbers).
 
 ### SC#4 (per-call coefficient-descent guard): MET
 
