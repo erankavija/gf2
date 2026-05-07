@@ -818,6 +818,16 @@ impl<F: FiniteField> SparseFieldMatrix<F> {
         // vector), mirroring the structure of `matvec_transpose`. The chunked
         // `Wide` accumulator preserves the §1.2 Dumas–Pernet delayed-reduction
         // bound for prime fields where `max_unreduced_additions()` is finite.
+        //
+        // Layout optimization (jit:3a37e0f6): use `mul_product_sum_wide` +
+        // `reduce_product_sum_wide` instead of `mul_to_wide` + `reduce_wide`.
+        // For Fp<P> with Montgomery storage, `mul_to_wide` calls `from_mont`
+        // on both operands (REDC per multiply), while `mul_product_sum_wide`
+        // works directly on the storage-domain words and defers the single
+        // REDC to `reduce_product_sum_wide` at the chunk boundary. This
+        // matches the hot path used by `dot_product_slices` in field/vec.rs
+        // and eliminates ~2 REDC calls per non-zero for Montgomery primes
+        // (GF(7), GF(251), GF(65521)).
         let kmax = F::max_unreduced_additions();
         for r in 0..self.rows {
             let start = self.row_ptr[r];
@@ -831,11 +841,12 @@ impl<F: FiniteField> SparseFieldMatrix<F> {
 
             let dot: F = if kmax == usize::MAX {
                 // Fast path: no overflow possible (e.g., GF(2^m), Wide = Self).
-                let mut acc = values_row[0].mul_to_wide(&xs[cols_row[0]]);
+                // Use storage-domain mul to avoid per-element canonical conversion.
+                let mut acc = values_row[0].mul_product_sum_wide(&xs[cols_row[0]]);
                 for i in 1..n {
-                    acc += values_row[i].mul_to_wide(&xs[cols_row[i]]);
+                    acc += values_row[i].mul_product_sum_wide(&xs[cols_row[i]]);
                 }
-                F::reduce_wide(&acc)
+                F::reduce_product_sum_wide(&acc)
             } else if kmax == 0 {
                 // Degenerate: reduce after every multiply.
                 let mut acc = values_row[0].clone() * xs[cols_row[0]].clone();
@@ -846,16 +857,18 @@ impl<F: FiniteField> SparseFieldMatrix<F> {
             } else {
                 // General case: chunk by `kmax`, accumulate in `Wide`, reduce
                 // at chunk boundaries. Matches `dot_product_slices` semantics
-                // exactly, just without the gather.
+                // exactly, just without the gather. Use storage-domain mul
+                // (`mul_product_sum_wide`) to bypass per-element from_mont.
                 let mut result = zero.zero_like();
                 let mut offset = 0usize;
                 while offset < n {
                     let chunk_size = (n - offset).min(kmax);
-                    let mut acc = values_row[offset].mul_to_wide(&xs[cols_row[offset]]);
+                    let mut acc = values_row[offset].mul_product_sum_wide(&xs[cols_row[offset]]);
                     for i in 1..chunk_size {
-                        acc += values_row[offset + i].mul_to_wide(&xs[cols_row[offset + i]]);
+                        acc +=
+                            values_row[offset + i].mul_product_sum_wide(&xs[cols_row[offset + i]]);
                     }
-                    result += &F::reduce_wide(&acc);
+                    result += &F::reduce_product_sum_wide(&acc);
                     offset += chunk_size;
                 }
                 result
@@ -984,29 +997,90 @@ impl<F: FiniteField> SparseFieldMatrix<F> {
                  or supply at least one non-zero operand"
             );
         };
-        let mut out = FieldMatrix::<F>::from_raw_parts(
-            self.rows,
-            out_cols,
-            FieldVec::zeros_from(self.rows * out_cols, &zero),
-        );
-        // Scatter: for each stored (r, k, a_rk), accumulate a_rk * B[k, :]
-        // into row r of the output. This is the standard CSR-times-dense
-        // SpMM recipe; keeping B row-accessed is contiguous-friendly
-        // because FieldMatrix is row-major.
+        // Layout optimization (jit:3a37e0f6): per-row Wide accumulator.
+        //
+        // Strategy: maintain a Vec<F::Wide> of length `out_cols` for each
+        // output row. Accumulate `a_rk.mul_product_sum_wide(&b[k,j])` into
+        // wide[j] for every non-zero (k, a_rk) of A's row. Reduce each wide[j]
+        // once at the end of the row. This replaces `nnz_per_row * out_cols`
+        // full F multiplications (Montgomery REDC + modular reduction) with the
+        // same count of Wide multiplications (raw u128 muls for Fp<P>), deferring
+        // the expensive reduction to one call per output cell per row.
+        //
+        // For kmax == usize::MAX (GF(2^m), Wide = Self), Wide multiplication
+        // is the same cost as full multiplication, so there is no gain; we still
+        // use the wide-accumulator path for code uniformity.
+        //
+        // For nnz_per_row > kmax (extremely dense rows in small prime fields),
+        // we fall back to chunked reduction within the row loop.
+        let kmax = F::max_unreduced_additions();
+        // Allocate a single reusable wide-accumulator row.  Use zero.to_wide()
+        // as the zero element.
+        let zero_wide = zero.to_wide();
+        let mut wide_row: Vec<F::Wide> = vec![zero_wide.clone(); out_cols];
+        let mut out_data: Vec<F> = Vec::with_capacity(self.rows * out_cols);
+
         for r in 0..self.rows {
             let start = self.row_ptr[r];
             let end = self.row_ptr[r + 1];
-            for k_off in start..end {
-                let k = self.col_idx[k_off];
-                let a_rk = &self.values[k_off];
-                for j in 0..out_cols {
-                    let prod = a_rk.clone() * b.get(k, j);
-                    let updated = out.get(r, j) + prod;
-                    out.set(r, j, updated);
+            let nnz_r = end - start;
+
+            if nnz_r == 0 {
+                // Zero row: emit out_cols zeros.
+                for _ in 0..out_cols {
+                    out_data.push(zero.clone());
                 }
+                continue;
+            }
+
+            if kmax == usize::MAX || nnz_r <= kmax {
+                // Single-pass: accumulate all contributions in Wide, reduce once.
+                // Reset the wide accumulator for this row.
+                for w in wide_row.iter_mut() {
+                    *w = zero_wide.clone();
+                }
+                for k_off in start..end {
+                    let k = self.col_idx[k_off];
+                    let a_rk = &self.values[k_off];
+                    let b_row_k = b.row(k);
+                    for (w, bkj) in wide_row.iter_mut().zip(b_row_k.iter()) {
+                        *w += a_rk.mul_product_sum_wide(bkj);
+                    }
+                }
+                // Reduce once per output column.
+                for w in wide_row.iter() {
+                    out_data.push(F::reduce_product_sum_wide(w));
+                }
+            } else {
+                // Chunked: process kmax non-zeros at a time, accumulate into
+                // Wide, reduce into the output row between chunks. The chunks
+                // partition the CSR non-zeros [start..end).
+                let mut row_out: Vec<F> = vec![zero.clone(); out_cols];
+                let mut offset = start;
+                while offset < end {
+                    let chunk_end = (offset + kmax).min(end);
+                    // Reset wide row for this chunk.
+                    for w in wide_row.iter_mut() {
+                        *w = zero_wide.clone();
+                    }
+                    for k_off in offset..chunk_end {
+                        let k = self.col_idx[k_off];
+                        let a_rk = &self.values[k_off];
+                        let b_row_k = b.row(k);
+                        for (w, bkj) in wide_row.iter_mut().zip(b_row_k.iter()) {
+                            *w += a_rk.mul_product_sum_wide(bkj);
+                        }
+                    }
+                    for (out_cell, w) in row_out.iter_mut().zip(wide_row.iter()) {
+                        *out_cell = out_cell.clone() + F::reduce_product_sum_wide(w);
+                    }
+                    offset = chunk_end;
+                }
+                out_data.extend(row_out);
             }
         }
-        out
+
+        FieldMatrix::<F>::from_raw_parts(self.rows, out_cols, FieldVec::from(out_data))
     }
 
     /// Returns the dense transpose of this matrix as an owned
