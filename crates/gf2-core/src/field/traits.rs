@@ -586,13 +586,7 @@ pub trait FiniteField:
     /// when the caller should fall back to the per-row scalar path.
     #[doc(hidden)]
     #[inline]
-    fn try_simd_matvec(
-        a: &[Self],
-        x: &[Self],
-        m: usize,
-        k: usize,
-        out: &mut [Self],
-    ) -> bool {
+    fn try_simd_matvec(a: &[Self], x: &[Self], m: usize, k: usize, out: &mut [Self]) -> bool {
         let _ = (a, x, m, k, out);
         false
     }

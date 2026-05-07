@@ -255,7 +255,6 @@ impl<'a, F: FiniteField> MatvecDriver<'a, F> {
         }
         self.a.matvec(x)
     }
-
 }
 
 /// Minimum matrix size at which [`FieldMatrix::charpoly`] considers the

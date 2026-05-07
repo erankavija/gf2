@@ -758,13 +758,7 @@ impl<const P: u64> FiniteField for Fp<P> {
     /// public [`crate::field::matrix::FieldMatrix::matvec`]) falls back
     /// to the per-row scalar `dot_product_slices` chain.
     #[inline]
-    fn try_simd_matvec(
-        a: &[Self],
-        x: &[Self],
-        m: usize,
-        k: usize,
-        out: &mut [Self],
-    ) -> bool {
+    fn try_simd_matvec(a: &[Self], x: &[Self], m: usize, k: usize, out: &mut [Self]) -> bool {
         simd_ops::fp_try_matvec::<P>(a, x, m, k, out)
     }
 
