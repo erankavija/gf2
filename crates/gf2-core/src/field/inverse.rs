@@ -747,6 +747,50 @@ mod tests {
         assert!(a.solve(&b).is_none());
     }
 
+    /// `solve` returns `None` on a rank-deficient non-zero input.
+    ///
+    /// Constructs a 4×4 matrix of rank 2 by stacking two copies of a
+    /// 2×4 block. The non-zero entries rule out the degenerate "all-zero
+    /// matrix" case and exercise the rank-detection path inside the PLE
+    /// driver for a structurally singular but non-trivial input.
+    #[test]
+    fn test_solve_rank_deficient_nonzero_returns_none() {
+        // Build a rank-2 4×4 matrix: rows 0,2 are one vector; rows 1,3
+        // are another. Row duplication is the simplest non-zero rank drop.
+        let mut a = FieldMatrix::<Fp<MERSENNE_31>>::zeros(4, 4);
+        // row 0 and row 2: [1, 2, 3, 4]
+        for j in 0..4usize {
+            a.set(0, j, Fp::<MERSENNE_31>::new(j as u64 + 1));
+            a.set(2, j, Fp::<MERSENNE_31>::new(j as u64 + 1));
+        }
+        // row 1 and row 3: [5, 6, 7, 8]
+        for j in 0..4usize {
+            a.set(1, j, Fp::<MERSENNE_31>::new(j as u64 + 5));
+            a.set(3, j, Fp::<MERSENNE_31>::new(j as u64 + 5));
+        }
+        assert_eq!(a.rank(), 2, "setup: expected rank-2 matrix");
+        let b: FieldVec<Fp<MERSENNE_31>> = (0..4)
+            .map(|i| Fp::<MERSENNE_31>::new(i as u64 + 1))
+            .collect();
+        assert!(a.solve(&b).is_none());
+    }
+
+    /// `solve_batch` returns `None` on a rank-deficient non-zero input.
+    #[test]
+    fn test_solve_batch_rank_deficient_nonzero_returns_none() {
+        let mut a = FieldMatrix::<Fp<MERSENNE_31>>::zeros(4, 4);
+        // rows 0/2 identical, rows 1/3 identical — rank 2.
+        for j in 0..4usize {
+            a.set(0, j, Fp::<MERSENNE_31>::new(j as u64 + 1));
+            a.set(2, j, Fp::<MERSENNE_31>::new(j as u64 + 1));
+            a.set(1, j, Fp::<MERSENNE_31>::new(j as u64 + 5));
+            a.set(3, j, Fp::<MERSENNE_31>::new(j as u64 + 5));
+        }
+        assert_eq!(a.rank(), 2, "setup: expected rank-2 matrix");
+        let b = random_fp::<MERSENNE_31>(4, 3, 0xABCDEF);
+        assert!(a.solve_batch(&b).is_none());
+    }
+
     // ── Hard SC#4 — det correctness ──────────────────────────────────────────
 
     /// Brute-force determinant via cofactor expansion. Used as oracle
@@ -831,6 +875,43 @@ mod tests {
         // Random invertible => det != 0.
         let b = random_fp_invertible::<MERSENNE_31>(5, 0xC0FFEE);
         assert_ne!(b.det(), Fp::<MERSENNE_31>::new(0));
+    }
+
+    /// `det` returns the field zero for a rank-deficient non-zero matrix.
+    ///
+    /// The zero-matrix test above is the simplest singular case; this
+    /// test covers the structurally distinct "rank < n but non-zero
+    /// entries" path through the PLE driver's pivot detection.
+    #[test]
+    fn test_det_zero_for_rank_deficient_nonzero() {
+        // Rank-2 matrix: rows 0/2 identical, rows 1/3 identical.
+        let mut a = FieldMatrix::<Fp<MERSENNE_31>>::zeros(4, 4);
+        for j in 0..4usize {
+            a.set(0, j, Fp::<MERSENNE_31>::new(j as u64 + 1));
+            a.set(2, j, Fp::<MERSENNE_31>::new(j as u64 + 1));
+            a.set(1, j, Fp::<MERSENNE_31>::new(j as u64 + 5));
+            a.set(3, j, Fp::<MERSENNE_31>::new(j as u64 + 5));
+        }
+        assert_eq!(a.rank(), 2, "setup: expected rank-2 matrix");
+        assert_eq!(a.det(), Fp::<MERSENNE_31>::new(0));
+    }
+
+    /// `inv` returns `None` for a rank-deficient non-zero matrix.
+    ///
+    /// Complements `test_inv_singular_zero_matrix` for the case where
+    /// the matrix has non-zero entries but is structurally singular.
+    #[test]
+    fn test_inv_rank_deficient_nonzero_returns_none() {
+        // Rank-2 matrix: rows 0/2 identical, rows 1/3 identical.
+        let mut a = FieldMatrix::<Fp<MERSENNE_31>>::zeros(4, 4);
+        for j in 0..4usize {
+            a.set(0, j, Fp::<MERSENNE_31>::new(j as u64 + 1));
+            a.set(2, j, Fp::<MERSENNE_31>::new(j as u64 + 1));
+            a.set(1, j, Fp::<MERSENNE_31>::new(j as u64 + 5));
+            a.set(3, j, Fp::<MERSENNE_31>::new(j as u64 + 5));
+        }
+        assert_eq!(a.rank(), 2, "setup: expected rank-2 matrix");
+        assert!(a.inv().is_none());
     }
 
     #[test]
