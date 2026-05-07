@@ -535,6 +535,37 @@ mod tests {
         }
     }
 
+    /// Production-scale equivalence test for `block_size = 8`.
+    ///
+    /// `default_block_size` returns `8` only for `cols > 512`. The
+    /// boundary test above caps at `n=129` (block 4) and the proptests
+    /// cap at `cols < 20` (block 4), so neither exercises the
+    /// production `block_size = 8` path that ships at scale and that the
+    /// jit:8e305c21 / 366dbbcd target rows measure. This test covers
+    /// `n in {513, 1024}` so the `8`-wide block is asserted equal to
+    /// the unblocked baseline (`block_size = 1`) on both full-rank and
+    /// rank-deficient inputs.
+    #[test]
+    fn test_blocked_rref_block_size_8_equivalence() {
+        for n in [513usize, 1024] {
+            let full = boundary_full_rank(n);
+            let full_block_8 = rref_with_block_size_for_test(&full, false, 8);
+            let full_baseline = rref_with_block_size_for_test(&full, false, 1);
+            assert_eq!(
+                full_block_8, full_baseline,
+                "full-rank n={n} block=8 must match block=1 baseline"
+            );
+
+            let deficient = boundary_rank_deficient(n);
+            let deficient_block_8 = rref_with_block_size_for_test(&deficient, false, 8);
+            let deficient_baseline = rref_with_block_size_for_test(&deficient, false, 1);
+            assert_eq!(
+                deficient_block_8, deficient_baseline,
+                "rank-deficient n={n} block=8 must match block=1 baseline"
+            );
+        }
+    }
+
     fn boundary_full_rank(n: usize) -> BitMatrix {
         let mut matrix = BitMatrix::identity(n);
         for r in 0..n {
