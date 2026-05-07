@@ -483,6 +483,91 @@ pub trait FiniteField:
         false
     }
 
+    /// Hidden vectorised `axpy` hook (issue `d1dd266c`).
+    ///
+    /// Computes `y[i] += a · x[i]` for all `i` using a SIMD kernel
+    /// where available. Returns `true` when the kernel succeeded (and
+    /// `y` was updated), `false` (the default) when the caller should
+    /// fall back to the scalar `for (y_i, x_i) in y.zip(x): y_i += a * x_i`
+    /// loop.
+    ///
+    /// `Fp<P>` (`P ≤ 65521`) overrides this hook to dispatch to the
+    /// AVX2 byte-lane (`P ≤ 251`) or u16-lane (`252 ≤ P < 65536`)
+    /// `batch_mul` + `batch_add` kernels with the scalar `a`
+    /// broadcast across the whole vector. The pack/unpack overhead is
+    /// `O(n)` and is amortised against the `O(n)` SIMD inner loop;
+    /// callers that perform `O(n)` axpys per reduction step (such as
+    /// `cyclic_decomposition`) thus close the asymptotic gap.
+    #[doc(hidden)]
+    #[inline]
+    fn try_simd_axpy(y: &mut [Self], a: &Self, x: &[Self]) -> bool {
+        let _ = (y, a, x);
+        false
+    }
+
+    /// Hidden pre-packed matvec cache hook (issue `d1dd266c`).
+    ///
+    /// Returns an opaque boxed cache that pre-packs the row-major
+    /// `m × k` matrix `a` once and exposes a `matvec(x, out)` method.
+    /// Used by the iterative drivers in
+    /// [`crate::field::charpoly`] (`cyclic_decomposition`,
+    /// `wiedemann_minpoly_attempt`) so the per-call matrix pack cost
+    /// is paid exactly once per minpoly / charpoly call.
+    ///
+    /// Returns `None` when no SIMD fast path is available (the
+    /// caller falls back to the per-call
+    /// [`Self::try_simd_matvec`] hook or to the scalar
+    /// `dot_product_slices` chain).
+    #[doc(hidden)]
+    #[inline]
+    fn try_prepack_matvec(
+        a: &[Self],
+        m: usize,
+        k: usize,
+    ) -> Option<Box<dyn crate::field::matrix::PackedMatvec<Self>>> {
+        let _ = (a, m, k);
+        None
+    }
+
+    /// Hidden whole-matvec hook for SIMD-accelerated `Fp<P>` matrix-
+    /// vector product `y = A · x`.
+    ///
+    /// Lets `Fp<P>` (`P ≤ 65521`) bypass the per-row scalar
+    /// [`mul_product_sum_wide`](Self::mul_product_sum_wide) chain and
+    /// instead pre-pack the whole `a` matrix once, run a fully
+    /// vectorised AVX2 byte / 16-bit-lane batch-dot per row, and
+    /// unpack into `out`. The pack/unpack cost is `O(m·k + k + m)`,
+    /// amortising the per-element Montgomery REDC across the
+    /// `O(m·k)` inner kernel work — but the matrix re-pack still runs
+    /// once per call. Iterative drivers (Wiedemann, cyclic
+    /// decomposition) that perform `O(n)` matvecs on the same matrix
+    /// should reach into the pre-packed cache (`PackedFpMatrix` in
+    /// `crate::gfp::simd_ops`) directly to avoid the per-call repack.
+    ///
+    /// # Arguments
+    ///
+    /// * `a` — `m × k` flattened row-major buffer.
+    /// * `x` — length-`k` input vector.
+    /// * `m`, `k` — matrix shape; `a.len() == m * k`, `x.len() == k`.
+    /// * `out` — length-`m` destination.
+    ///
+    /// # Returns
+    ///
+    /// `true` when the kernel populated `out`, `false` (the default)
+    /// when the caller should fall back to the per-row scalar path.
+    #[doc(hidden)]
+    #[inline]
+    fn try_simd_matvec(
+        a: &[Self],
+        x: &[Self],
+        m: usize,
+        k: usize,
+        out: &mut [Self],
+    ) -> bool {
+        let _ = (a, x, m, k, out);
+        false
+    }
+
     /// Hidden sparse-times-dense whole-matmat hook for SIMD-accelerated
     /// SpMM.
     ///

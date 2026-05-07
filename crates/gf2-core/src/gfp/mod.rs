@@ -725,6 +725,55 @@ impl<const P: u64> FiniteField for Fp<P> {
         simd_ops::fp_small_try_gemm_classical::<P>(a, b_t, m, k, n, out)
     }
 
+    /// SIMD-accelerated `axpy` (`y[i] += a · x[i]`) for `Fp<P>` with
+    /// `P ≤ 65521` (issue `d1dd266c`). Routes through the AVX2
+    /// byte-lane (`P ≤ 251`) or u16-lane (`252 ≤ P < 65536`)
+    /// `batch_mul` + `batch_add` kernels with the scalar `a` broadcast
+    /// across the whole vector. Returns `false` for `P > 65535` or
+    /// when the `simd` feature / AVX2 are unavailable.
+    #[inline]
+    fn try_simd_axpy(y: &mut [Self], a: &Self, x: &[Self]) -> bool {
+        simd_ops::fp_try_axpy::<P>(y, a, x)
+    }
+
+    /// Whole-matvec fast path for `Fp<P>` with `P ≤ 65521`
+    /// (issue `d1dd266c`). Routes through the AVX2 byte-lane batch-dot
+    /// kernel for `P ≤ 251` or the u16-lane batch-dot kernel for
+    /// `252 ≤ P < 65536`. Pre-packs the matrix and the vector to the
+    /// canonical-storage layout used by the kernel; runs one `batch_dot`
+    /// per output row; reduces to `Fp<P>` storage.
+    ///
+    /// Returns `false` for `P > 65535` or when the `simd` feature is
+    /// disabled / AVX2 is unavailable, in which case the caller (the
+    /// public [`crate::field::matrix::FieldMatrix::matvec`]) falls back
+    /// to the per-row scalar `dot_product_slices` chain.
+    #[inline]
+    fn try_simd_matvec(
+        a: &[Self],
+        x: &[Self],
+        m: usize,
+        k: usize,
+        out: &mut [Self],
+    ) -> bool {
+        simd_ops::fp_try_matvec::<P>(a, x, m, k, out)
+    }
+
+    /// Pre-packs an `m × k` matrix into the AVX2 canonical-byte
+    /// (`P ≤ 251`) or storage-`u16` (`252 ≤ P < 65536`) layout used by
+    /// the matvec kernel. Returns `None` when the field is out of range
+    /// or the SIMD path is unavailable. Used by the iterative drivers
+    /// in [`crate::field::charpoly`] (`cyclic_decomposition`,
+    /// `wiedemann_minpoly_attempt`) to amortise the matrix-pack cost
+    /// across `O(n)` matvec calls per minpoly / charpoly invocation.
+    #[inline]
+    fn try_prepack_matvec(
+        a: &[Self],
+        m: usize,
+        k: usize,
+    ) -> Option<Box<dyn crate::field::matrix::PackedMatvec<Self>>> {
+        simd_ops::fp_try_prepack_matvec::<P>(a, m, k)
+    }
+
     /// Sparse-times-dense whole-matmat hook. Routes to the AVX2
     /// byte-lane SpMM kernel for `P ≤ 251` (Candidate C small-prime
     /// path) or the AVX2 16-bit-lane SpMM kernel for `P ∈ (251,

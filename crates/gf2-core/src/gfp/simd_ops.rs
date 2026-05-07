@@ -20,6 +20,8 @@
 
 use super::Fp;
 #[cfg(feature = "simd")]
+use crate::field::FiniteField;
+#[cfg(feature = "simd")]
 use super::{montgomery::MontConsts, use_specialized_storage};
 
 // ---------------------------------------------------------------------------
@@ -1112,6 +1114,266 @@ pub(crate) fn fp_medium_try_dot_packed<const P: u64>(
     _b_packed: &[u16],
 ) -> Option<Fp<P>> {
     None
+}
+
+// ---------------------------------------------------------------------------
+// Packed matvec entry points — issue d1dd266c
+// ---------------------------------------------------------------------------
+//
+// Reuses the existing AVX2 small-prime byte-lane and medium-prime u16-lane
+// kernels to compute `y = A · x` without forcing the per-cell scalar
+// `mul_product_sum_wide` chain. Two flavours:
+//
+// - One-shot per-call entry point `fp_try_matvec` — packs `A` and `x`,
+//   runs the kernel, unpacks `out`. Used by `FieldMatrix::matvec` for the
+//   case where the caller does a single matvec at a time.
+// - Pre-packed `PackedFpMatvec` cache — packs `A` once and reuses the
+//   pack across many matvec calls. Used by `cyclic_decomposition` and
+//   `wiedemann_minpoly_attempt` so each minpoly call pays the matrix
+//   pack cost exactly once.
+
+/// Internal cache that holds a pre-packed copy of an `m × k` `Fp<P>`
+/// matrix in the canonical-byte (`P ≤ 251`) or storage-domain-`u16`
+/// (`252 ≤ P < 65536`) layout used by the AVX2 kernels.
+///
+/// Created once per `cyclic_decomposition` / `wiedemann_minpoly_attempt`
+/// call and reused across the `O(n)` matvec sequence steps.
+#[cfg(feature = "simd")]
+#[derive(Debug)]
+pub(crate) enum PackedFpMatrix<const P: u64> {
+    /// Small-prime layout — canonical bytes, length `m · k`.
+    Small { data: Vec<u8>, m: usize, k: usize },
+    /// Medium-prime layout — storage-domain `u16`s, length `m · k`.
+    /// The dot kernel returns a canonical `u32` and we apply one Montgomery
+    /// REDC at the row boundary to recover `Fp<P>` storage.
+    Medium { data: Vec<u16>, m: usize, k: usize },
+}
+
+#[cfg(feature = "simd")]
+impl<const P: u64> PackedFpMatrix<P> {
+    /// Pre-packs an `m × k` row-major `Fp<P>` matrix for the AVX2
+    /// matvec kernel. Returns `None` when no fast path is available
+    /// (`P` out of range, the `simd` feature off, or AVX2 missing at
+    /// runtime).
+    pub(crate) fn try_pack(rows: &[Fp<P>], m: usize, k: usize) -> Option<Self> {
+        debug_assert_eq!(rows.len(), m * k);
+        if fp_small_enabled::<P>() {
+            crate::simd::maybe_fp_small()?;
+            let data: Vec<u8> = rows.iter().map(|x| x.value() as u8).collect();
+            return Some(PackedFpMatrix::Small { data, m, k });
+        }
+        if fp_medium_eligible::<P>() {
+            crate::simd::maybe_fp_medium()?;
+            let data: Vec<u16> = rows.iter().map(|x| x.raw_storage() as u16).collect();
+            return Some(PackedFpMatrix::Medium { data, m, k });
+        }
+        None
+    }
+
+    /// Computes `y = A · x` using the pre-packed matrix. Writes into
+    /// `out` (length `m`).
+    pub(crate) fn matvec_packed(&self, x: &[Fp<P>], out: &mut [Fp<P>]) {
+        match self {
+            PackedFpMatrix::Small { data, m, k } => {
+                debug_assert_eq!(x.len(), *k);
+                debug_assert_eq!(out.len(), *m);
+                let fns = crate::simd::maybe_fp_small().expect(
+                    "PackedFpMatrix::Small requires AVX2 (try_pack would have returned None)",
+                );
+                let p_u8 = P as u8;
+                // Pack x as canonical bytes once per matvec call.
+                let x_u8: Vec<u8> = x.iter().map(|v| v.value() as u8).collect();
+                for r in 0..*m {
+                    let row = &data[r * *k..(r + 1) * *k];
+                    let canonical = (fns.batch_dot_fn)(row, &x_u8, p_u8);
+                    out[r] = Fp::<P>::new(canonical as u64);
+                }
+            }
+            PackedFpMatrix::Medium { data, m, k } => {
+                debug_assert_eq!(x.len(), *k);
+                debug_assert_eq!(out.len(), *m);
+                let fns = crate::simd::maybe_fp_medium().expect(
+                    "PackedFpMatrix::Medium requires AVX2 (try_pack would have returned None)",
+                );
+                // Pack x storage-domain once per matvec call.
+                let x_u16: Vec<u16> = x.iter().map(|v| v.raw_storage() as u16).collect();
+                for r in 0..*m {
+                    let row = &data[r * *k..(r + 1) * *k];
+                    let r2_sum = (fns.batch_dot_fn)(row, &x_u16, P as u16) as u64;
+                    let r_sum = super::montgomery::redc::<P>(r2_sum as u128);
+                    out[r] = Fp::<P>::from_raw_storage(r_sum);
+                }
+            }
+        }
+    }
+}
+
+#[cfg(feature = "simd")]
+impl<const P: u64> crate::field::matrix::PackedMatvec<Fp<P>> for PackedFpMatrix<P> {
+    fn matvec(&self, x: &[Fp<P>], out: &mut [Fp<P>]) {
+        self.matvec_packed(x, out);
+    }
+}
+
+#[cfg(not(feature = "simd"))]
+#[derive(Debug)]
+pub(crate) struct PackedFpMatrix<const P: u64>;
+
+#[cfg(not(feature = "simd"))]
+impl<const P: u64> PackedFpMatrix<P> {
+    pub(crate) fn try_pack(_rows: &[Fp<P>], _m: usize, _k: usize) -> Option<Self> {
+        None
+    }
+    pub(crate) fn matvec_packed(&self, _x: &[Fp<P>], _out: &mut [Fp<P>]) {
+        unreachable!("PackedFpMatrix::matvec_packed called without simd feature")
+    }
+}
+
+/// One-shot SIMD matvec for `Fp<P>`. Packs `a` and `x` per call and
+/// dispatches to the AVX2 byte-lane (`P ≤ 251`) or u16-lane
+/// (`252 ≤ P < 65536`) kernel. Returns `true` on success, `false`
+/// when the field is out of range or the kernel is unavailable.
+///
+/// For repeated matvec calls on the same `a` (e.g. inside Wiedemann
+/// or `cyclic_decomposition`), use [`PackedFpMatrix`] instead so the
+/// per-row pack cost is paid exactly once.
+#[cfg(feature = "simd")]
+pub(crate) fn fp_try_matvec<const P: u64>(
+    a: &[Fp<P>],
+    x: &[Fp<P>],
+    m: usize,
+    k: usize,
+    out: &mut [Fp<P>],
+) -> bool {
+    debug_assert_eq!(a.len(), m * k);
+    debug_assert_eq!(x.len(), k);
+    debug_assert_eq!(out.len(), m);
+    if k == 0 {
+        // y = A · 0-length x is the zero vector. Caller's responsibility
+        // to populate `out` with zeros if needed; the kernel path skips.
+        return false;
+    }
+    let Some(packed) = PackedFpMatrix::<P>::try_pack(a, m, k) else {
+        return false;
+    };
+    packed.matvec_packed(x, out);
+    true
+}
+
+/// SIMD-accelerated axpy (`y[i] += a · x[i]`) for `Fp<P>` with
+/// `P ≤ 65521`. Routes through the AVX2 byte-lane (`P ≤ 251`) or
+/// u16-lane (`252 ≤ P < 65536`) `batch_mul` + `batch_add` kernels
+/// against a broadcast of the scalar `a`. Returns `true` when the
+/// kernel populated `y`, `false` to defer to the caller's scalar
+/// zip-loop.
+///
+/// # Algorithm
+///
+/// 1. Pack `y`, `x`, and the broadcast `[a; n]` to canonical bytes
+///    (`P ≤ 251`) or storage-domain `u16`s (`252 ≤ P < 65536`).
+/// 2. `tmp = batch_mul(broadcast, x)`.
+/// 3. `y_packed = batch_add(y_packed, tmp)`.
+/// 4. Unpack `y_packed` back into `y`.
+///
+/// The pack/unpack cost is `O(n)`; it is amortised against the
+/// `O(n)` SIMD inner work but adds a constant factor versus the
+/// scalar Montgomery path. The win comes from callers that do many
+/// axpys on the SAME `y` (the [`cyclic_decomposition`] reduce loop
+/// performs `O(basis_size)` axpys per chain step), where the SIMD
+/// throughput dominates the per-call pack/unpack.
+#[cfg(feature = "simd")]
+pub(crate) fn fp_try_axpy<const P: u64>(y: &mut [Fp<P>], a: &Fp<P>, x: &[Fp<P>]) -> bool {
+    debug_assert_eq!(y.len(), x.len());
+    let n = y.len();
+    if n == 0 {
+        return true;
+    }
+    if a.is_zero() {
+        return true; // y unchanged
+    }
+    if fp_small_enabled::<P>() {
+        let Some(fns) = crate::simd::maybe_fp_small() else {
+            return false;
+        };
+        let p_u8 = P as u8;
+        let a_canon = a.value() as u8;
+        let mut y_u8: Vec<u8> = y.iter().map(|v| v.value() as u8).collect();
+        let x_u8: Vec<u8> = x.iter().map(|v| v.value() as u8).collect();
+        let bcast = vec![a_canon; n];
+        let mut tmp = vec![0u8; n];
+        (fns.batch_mul_fn)(&bcast, &x_u8, p_u8, &mut tmp);
+        let mut new_y = vec![0u8; n];
+        (fns.batch_add_fn)(&y_u8, &tmp, p_u8, &mut new_y);
+        y_u8 = new_y;
+        for (slot, &b) in y.iter_mut().zip(y_u8.iter()) {
+            *slot = Fp::<P>::new(b as u64);
+        }
+        return true;
+    }
+    if fp_medium_eligible::<P>() {
+        let Some(fns) = crate::simd::maybe_fp_medium() else {
+            return false;
+        };
+        let p_u16 = P as u16;
+        let barrett_m = gf2_kernels_simd::fp_medium::barrett_m32(p_u16);
+        let a_canon = a.value() as u16;
+        let mut y_u16: Vec<u16> = y.iter().map(|v| v.value() as u16).collect();
+        let x_u16: Vec<u16> = x.iter().map(|v| v.value() as u16).collect();
+        let bcast = vec![a_canon; n];
+        let mut tmp = vec![0u16; n];
+        (fns.batch_mul_fn)(&bcast, &x_u16, p_u16, barrett_m, &mut tmp);
+        let mut new_y = vec![0u16; n];
+        (fns.batch_add_fn)(&y_u16, &tmp, p_u16, &mut new_y);
+        y_u16 = new_y;
+        for (slot, &w) in y.iter_mut().zip(y_u16.iter()) {
+            *slot = Fp::<P>::new(w as u64);
+        }
+        return true;
+    }
+    false
+}
+
+#[cfg(not(feature = "simd"))]
+#[inline]
+pub(crate) fn fp_try_axpy<const P: u64>(_y: &mut [Fp<P>], _a: &Fp<P>, _x: &[Fp<P>]) -> bool {
+    false
+}
+
+/// Pre-packs the `m × k` matrix `a` and returns it as a boxed
+/// [`crate::field::matrix::PackedMatvec`] handle. Returns `None` for
+/// fields without a SIMD fast path. The boxed handle's `matvec` method
+/// runs the full AVX2 kernel against the pre-packed buffer for every
+/// call, paying the matrix-pack cost exactly once.
+#[cfg(feature = "simd")]
+pub(crate) fn fp_try_prepack_matvec<const P: u64>(
+    a: &[Fp<P>],
+    m: usize,
+    k: usize,
+) -> Option<Box<dyn crate::field::matrix::PackedMatvec<Fp<P>>>> {
+    let packed = PackedFpMatrix::<P>::try_pack(a, m, k)?;
+    Some(Box::new(packed))
+}
+
+#[cfg(not(feature = "simd"))]
+#[inline]
+pub(crate) fn fp_try_prepack_matvec<const P: u64>(
+    _a: &[Fp<P>],
+    _m: usize,
+    _k: usize,
+) -> Option<Box<dyn crate::field::matrix::PackedMatvec<Fp<P>>>> {
+    None
+}
+
+#[cfg(not(feature = "simd"))]
+#[inline]
+pub(crate) fn fp_try_matvec<const P: u64>(
+    _a: &[Fp<P>],
+    _x: &[Fp<P>],
+    _m: usize,
+    _k: usize,
+    _out: &mut [Fp<P>],
+) -> bool {
+    false
 }
 
 #[cfg(test)]
