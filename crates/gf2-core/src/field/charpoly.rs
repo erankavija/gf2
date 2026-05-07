@@ -328,6 +328,31 @@ struct CyclicBlock<F: FiniteField> {
 /// running-basis reduction; aggregated over `n` chain steps total this
 /// is exactly `O(n³)`.
 fn cyclic_decomposition<F: FiniteField>(a: &FieldMatrix<F>) -> Vec<CyclicBlock<F>> {
+    cyclic_decomposition_inner(a, true)
+}
+
+/// Test-only wrapper that runs `cyclic_decomposition` with the packed
+/// `ChainPolyArith` path forcibly disabled (and the packed basis reducer
+/// kept on its default availability). Used by the
+/// `proptest_packed_chain_polys_*_matches_scalar` tests so the scalar
+/// `FieldPoly` chain-poly bookkeeping arm gets exercised independently
+/// of the packed canonical-byte arm.
+#[cfg(test)]
+fn cyclic_decomposition_scalar_chain_polys<F: FiniteField>(
+    a: &FieldMatrix<F>,
+) -> Vec<CyclicBlock<F>> {
+    cyclic_decomposition_inner(a, false)
+}
+
+/// Implementation backing both [`cyclic_decomposition`] (packed-arith
+/// available) and the test-only scalar-only variant. The
+/// `enable_packed_chain_polys` flag toggles the canonical-byte chain-poly
+/// arithmetic path; the packed basis reducer / packed matvec stay on
+/// their default availability.
+fn cyclic_decomposition_inner<F: FiniteField>(
+    a: &FieldMatrix<F>,
+    enable_packed_chain_polys: bool,
+) -> Vec<CyclicBlock<F>> {
     let (n, _) = a.shape();
     debug_assert_eq!(a.cols(), n, "cyclic_decomposition: A must be square");
     if n == 0 {
@@ -342,11 +367,12 @@ fn cyclic_decomposition<F: FiniteField>(a: &FieldMatrix<F>) -> Vec<CyclicBlock<F
     // canonical-byte / canonical-u16 lanes instead of per-element
     // Montgomery REDC chains, closing the n³ scalar reduce gap.
     let mut packed_basis: Option<Box<dyn BasisReducer<F>>> = F::try_make_basis_reducer(n);
-    // Optional packed chain-poly arith (issue 5a3dbd5b): when present,
-    // the polynomial-bookkeeping update step runs on canonical-byte lanes
-    // (AVX2 batch_mul + batch_sub) instead of per-element Montgomery muls.
-    // Only active for Fp<P> with P ≤ 251 and AVX2 available.
-    let chain_poly_arith: Option<Box<dyn ChainPolyArith<F>>> = F::try_make_chain_poly_arith(n);
+    // Issue 5a3dbd5b: track packed chain-poly availability with a single
+    // bool. The previous design held an outer `Box<dyn ChainPolyArith>`
+    // purely as an `is_some` flag and reallocated a fresh per-block
+    // handle below; the boxed-trait-object alloc was wasted churn.
+    let chain_poly_packed_available =
+        enable_packed_chain_polys && F::try_make_chain_poly_arith(n).is_some();
 
     // Running basis B in row-reduced form. We store it as a flat
     // `Vec<FieldVec<F>>` (one per column) so that appending a new
@@ -432,12 +458,12 @@ fn cyclic_decomposition<F: FiniteField>(a: &FieldMatrix<F>) -> Vec<CyclicBlock<F
         //   chain_polys: scalar FieldPoly path (all other fields).
         let mut chain_polys: Vec<FieldPoly<F>> = Vec::new();
         // Per-block packed arith handle (re-create each block so the
-        // chain-poly index resets to 0; the global chain_poly_arith is
-        // just a flag — we construct a fresh per-block handle from the
-        // same factory).  We need `is_some` from the outer handle only to
-        // decide whether to take the packed path; the actual operations use
-        // this per-block handle.
-        let mut packed_cpa: Option<Box<dyn ChainPolyArith<F>>> = if chain_poly_arith.is_some() {
+        // chain-poly index resets to 0). The outer
+        // `chain_poly_packed_available` flag (issue 5a3dbd5b) is what
+        // decides whether to take the packed path; we construct a fresh
+        // per-block handle from the factory only when packed is enabled,
+        // so the bookkeeping costs at most one allocation per block.
+        let mut packed_cpa: Option<Box<dyn ChainPolyArith<F>>> = if chain_poly_packed_available {
             F::try_make_chain_poly_arith(n)
         } else {
             None
@@ -2169,6 +2195,32 @@ impl<F: FiniteField> FieldMatrix<F> {
         FieldPoly::product(&polys)
     }
 
+    /// Test-only sibling of [`Self::charpoly_cubic`] that runs the
+    /// cyclic-decomposition arm with the packed canonical-byte
+    /// chain-poly arithmetic (issue 5a3dbd5b) forcibly disabled so the
+    /// scalar `FieldPoly` chain-poly bookkeeping is exercised
+    /// independently. Used only by the
+    /// `proptest_packed_chain_polys_*_matches_scalar` regression tests
+    /// to verify bit-identical equality between the packed and scalar
+    /// arms.
+    #[cfg(test)]
+    pub(crate) fn charpoly_cubic_scalar_chain_polys(&self) -> FieldPoly<F> {
+        let (m, n) = self.shape();
+        assert_eq!(
+            m, n,
+            "FieldMatrix::charpoly_cubic_scalar_chain_polys: input must be square (got {m}×{n})",
+        );
+        if n == 0 {
+            let zero = F::zero_hint().expect(
+                "FieldMatrix::charpoly_cubic_scalar_chain_polys: empty matrix needs ConstField",
+            );
+            return FieldPoly::one_like(&zero);
+        }
+        let blocks = cyclic_decomposition_scalar_chain_polys(self);
+        let polys: Vec<FieldPoly<F>> = blocks.into_iter().map(|b| b.poly).collect();
+        FieldPoly::product(&polys)
+    }
+
     /// Sub-cubic Las-Vegas charpoly via Keller–Gehrig fast exponentiation
     /// (issue `1454ec2d`, Dumas–Pernet theorem 13.4). Returns
     /// `Some(charpoly)` on success and `None` if all
@@ -3732,20 +3784,22 @@ mod tests {
         /// Bit-identical charpoly results: packed canonical-byte path vs scalar
         /// Montgomery path for `Fp<7>`, sizes `n ∈ 2..=32` (issue `5a3dbd5b`).
         ///
-        /// The packed path is active when AVX2 is available; on non-AVX2 hosts
-        /// it silently degrades to the scalar path, so the test still passes
-        /// (it compares the result against itself).  On AVX2 hosts the two paths
-        /// must return bit-identical `FieldPoly<Fp<7>>` coefficients.
+        /// Bit-identical charpoly results: packed canonical-byte chain-poly
+        /// arithmetic vs scalar `FieldPoly` chain-poly arithmetic for `Fp<7>`,
+        /// sizes `n ∈ 2..=32` (issue `5a3dbd5b`).
+        ///
+        /// `charpoly()` dispatches through the packed canonical-byte path on
+        /// AVX2 hosts (when `try_make_chain_poly_arith` returns `Some`);
+        /// `charpoly_cubic_scalar_chain_polys()` runs the same algorithm with
+        /// the packed arm forcibly disabled. The two must agree exactly.
         #[test]
         fn proptest_packed_chain_polys_fp7_matches_scalar(
             n in 2usize..=32,
             seed in any::<u64>(),
         ) {
             let a = random_fp::<7>(n, n, seed);
-            // The public `charpoly()` entry already dispatches through the packed
-            // path when available.  Check that it matches the scalar cubic path.
             let packed_result = a.charpoly();
-            let scalar_result = a.charpoly_cubic();
+            let scalar_result = a.charpoly_cubic_scalar_chain_polys();
             prop_assert_eq!(
                 packed_result,
                 scalar_result,
@@ -3760,6 +3814,9 @@ mod tests {
         ///
         /// This is the primary regression guard for the packed chain-poly
         /// bookkeeping introduced to close the GF(251)/n=256 charpoly gap.
+        /// `charpoly_cubic_scalar_chain_polys()` exercises the same
+        /// `cyclic_decomposition` algorithm with `enable_packed_chain_polys
+        /// = false`, so the scalar arm is genuinely tested.
         #[test]
         fn proptest_packed_chain_polys_fp251_matches_scalar(
             n in 2usize..=32,
@@ -3767,7 +3824,7 @@ mod tests {
         ) {
             let a = random_fp::<251>(n, n, seed);
             let packed_result = a.charpoly();
-            let scalar_result = a.charpoly_cubic();
+            let scalar_result = a.charpoly_cubic_scalar_chain_polys();
             prop_assert_eq!(
                 packed_result,
                 scalar_result,

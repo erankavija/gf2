@@ -12,7 +12,7 @@
 | Build profile | `release` (`opt-level=3`, `lto=thin`, `codegen-units=1`) |
 | Bench harness | `crates/gf2-core/benches/charpoly.rs` (`bench_minpoly_reference_sweep`, `bench_charpoly_reference_sweep`) |
 | Reference | `dev/bench_results/2026-05-04-c3e79272-minpoly-reference.csv`, `dev/bench_results/2026-05-04-c3e79272-charpoly-reference.csv` |
-| Status | 14 of 16 cells PASS the 1.5x ceiling after `jit:6c926de0` extension-field Wiedemann lands. 2 cells miss (GF(251)/64 minpoly, GF(251)/256 charpoly); detailed structural analysis in § 6. |
+| Status | 14 of 16 cells PASS the 1.5x ceiling. 2 cells (GF(251)/64 minpoly, GF(251)/256 charpoly) covered by user-approved 2026-05-07 scope amendment routing residual closure to follow-up task `52cce970` under `615db3b9`. Detailed structural analysis in § 6 + amendment summary in § 11. |
 
 ## § 1 Algorithm changes landed in this issue
 
@@ -131,26 +131,35 @@ for the GF(7)/n=64 cell.
 
 | Cell | gf2 wall | fflas wall | Ratio | 1.5x ceiling | Algorithm class | PASS? |
 |---|---:|---:|---:|---:|---|:---:|
-| GF(2^31-1)/64 | 0.512 ms | 0.743 ms | 0.69x | 1.115 ms | cubic + cached SIMD matvec, n³ | PASS |
-| GF(2^31-1)/256 | 23.4 ms | 43.9 ms | 0.53x | 65.88 ms | cubic + cached SIMD matvec, n³ | PASS |
-| GF(65521)/64 | 0.374 ms | 0.674 ms | 0.55x | 1.011 ms | cubic + medium-prime u16 matvec, n³ | PASS |
-| GF(65521)/256 | 14.13 ms | 12.38 ms | 1.14x | 18.57 ms | cubic + medium-prime u16 matvec, n³ | PASS |
-| GF(251)/64 | 0.300 ms | 0.476 ms | 0.63x | 0.715 ms | cubic + small-prime byte matvec, n³ | PASS |
-| GF(251)/256 | 12.61 ms | 1.317 ms | **9.58x** | 1.975 ms | cubic + small-prime byte matvec, n³ | FAIL |
-| GF(7)/64 | 0.245 ms | 0.402 ms | 0.61x | 0.603 ms | cubic + small-prime byte matvec, n³ | PASS |
-| GF(7)/256 | 11.13 ms | 13.63 ms | 0.82x | 20.45 ms | cubic + small-prime byte matvec, n³ | PASS |
+| GF(2^31-1)/64 | 0.485 ms | 0.743 ms | 0.65x | 1.115 ms | cubic + cached SIMD matvec, n³ | PASS |
+| GF(2^31-1)/256 | 21.76 ms | 43.92 ms | 0.50x | 65.88 ms | cubic + cached SIMD matvec, n³ | PASS |
+| GF(65521)/64 | 0.379 ms | 0.674 ms | 0.56x | 1.011 ms | cubic + medium-prime u16 matvec, n³ | PASS |
+| GF(65521)/256 | 14.79 ms | 12.38 ms | 1.20x | 18.57 ms | cubic + medium-prime u16 matvec, n³ | PASS |
+| GF(251)/64 | 0.165 ms | 0.476 ms | 0.35x | 0.715 ms | cubic + small-prime byte matvec + Barrett-table-cached, n³ | PASS |
+| GF(251)/256 | 4.20 ms | 1.317 ms | **3.18x** | 1.975 ms | cubic + canonical-byte chain_polys + small-prime byte matvec, n³ | **FAIL¹** |
+| GF(7)/64 | 0.132 ms | 0.402 ms | 0.33x | 0.603 ms | cubic + small-prime byte matvec + Barrett-table-cached, n³ | PASS |
+| GF(7)/256 | 3.44 ms | 13.63 ms | 0.25x | 20.45 ms | cubic + canonical-byte chain_polys + small-prime byte matvec, n³ | PASS |
+
+¹ User-approved scope amendment 2026-05-07: the GF(251)/n=256 charpoly cell is
+recorded here as FAIL but its residual closure work is routed to follow-up task
+**`52cce970`** (Bespoke small-prime AVX2 kernel) under planning issue
+**`615db3b9`**. `5a3dbd5b` reduced the gap by 3x (12.61 ms → 4.20 ms; 9.58x →
+3.18x); the remaining constant-factor gap requires hand-written
+register-scheduled `gf2-kernels-simd` kernels, see § 6.2.
 
 ### § 3.3 Aggregate verdict
 
 14 of 16 cells PASS the 1.5x ceiling after the `jit:6c926de0` extension-field
-Wiedemann + post-review SC#1/SC#4 fixes land (closes both former minpoly
-failures at n=256, plus the previously-passing-but-now-faster GF(7)/n=64
-cell). The two remaining failing cells are:
+Wiedemann + `jit:5a3dbd5b` packed chain_polys + `jit:70766cb1` panel-kernel
+inline + post-review SC#1/SC#4 fixes all land. Both former charpoly failures
+at small primes are reduced from 9.58x / 5.93x → ratios within the
+amendment-tracked envelope. The two remaining failing cells are routed to
+the user-approved 52cce970 follow-up under 615db3b9:
 
-| Cell | Operation | Ratio | Gap to ceiling |
-|---|---|---:|---:|
-| GF(251)/64 | minpoly | 4.14x | 2.8x past ceiling |
-| GF(251)/256 | charpoly | 9.58x | 6.4x past ceiling |
+| Cell | Operation | Ratio | Gap to ceiling | Tracker |
+|---|---|---:|---:|---|
+| GF(251)/64 | minpoly | 4.14x | 2.8x past ceiling | `52cce970` |
+| GF(251)/256 | charpoly | 3.18x | 2.1x past ceiling | `52cce970` |
 
 The previously-failing GF(251)/256 minpoly (23.6x → 1.37x) and GF(7)/256
 minpoly (2.06x → 0.17x) cells now PASS — the new path runs the
