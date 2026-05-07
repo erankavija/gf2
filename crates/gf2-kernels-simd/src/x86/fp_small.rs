@@ -465,6 +465,194 @@ pub unsafe fn fp_small_gemm_row_panel(
     }
 }
 
+/// Sparse-times-dense row kernel: writes `out[j] = (∑_h a_vals[h] *
+/// b[a_cols[h] * b_stride + j]) mod p` for `j ∈ [0, n)`.
+///
+/// `a_vals` and `a_cols` describe one row of a sparse left matrix in
+/// CSR form: `a_vals.len() == a_cols.len() == nnz_r` and `a_cols[h]`
+/// is the column index of the `h`-th non-zero into `b`. `b` is a
+/// row-major dense byte matrix of stride `b_stride`; row `k` spans
+/// `b[k * b_stride .. k * b_stride + n]`. `out` is the dense output
+/// row of length `n`.
+///
+/// The kernel iterates output blocks of 16 lanes; for each block it
+/// sweeps every non-zero of the sparse row, broadcasts `a_vals[h]` to
+/// 16 u16 lanes, multiplies element-wise with the loaded B-row block,
+/// and accumulates into two 32-bit lane vectors. After the sparse-row
+/// sweep, the 32-bit lanes are reduced modulo `p` and packed back to
+/// bytes. The accumulator overflow bound is `nnz_r · (p-1)² < 2³²`,
+/// which holds for any realistic sparse density at `p ≤ 251` (e.g.
+/// nnz_r = 10 000 at `p = 251` gives `≈ 6.25 × 10⁸`).
+///
+/// # Safety
+///
+/// Caller must ensure AVX2 is available, `p` is an odd prime in
+/// `[3, 251]`, and:
+/// - `a_vals.len() == a_cols.len()`,
+/// - every `a_cols[h] * b_stride + n` is within `b.len()`,
+/// - every `a_vals[h] < p` and each B-byte read is canonical (`< p`).
+///
+/// # Panics
+///
+/// Panics if `out.len() != n` or `a_vals.len() != a_cols.len()`.
+#[target_feature(enable = "avx2")]
+pub unsafe fn fp_small_spmm_row(
+    a_vals: &[u8],
+    a_cols: &[usize],
+    b: &[u8],
+    b_stride: usize,
+    n: usize,
+    p: u8,
+    out: &mut [u8],
+) {
+    assert_eq!(
+        a_vals.len(),
+        a_cols.len(),
+        "fp_small_spmm_row: a_vals/a_cols length mismatch"
+    );
+    assert_eq!(out.len(), n, "fp_small_spmm_row: out.len() != n");
+
+    let nnz = a_vals.len();
+    let p_u32 = p as u32;
+    let p_vec = _mm256_set1_epi32(p_u32 as i32);
+    // Use Barrett at 32-bit lane width: q = (x * mu32) >> 32, with
+    // mu32 = ⌊2³² / p⌋. We use _mm256_mul_epu32 to handle 32-bit-lane
+    // multiplication via 64-bit-lane intermediate.
+    let mu32 = ((1u64 << 32) / p_u32 as u64) as u32;
+    let mu_vec = _mm256_set1_epi64x(mu32 as i64);
+    let p_vec64 = _mm256_set1_epi64x(p_u32 as i64);
+
+    let mut j = 0;
+    while j + 16 <= n {
+        // 16 u32 accumulators split across two ymm registers (8 lo + 8 hi).
+        let mut acc_lo = _mm256_setzero_si256();
+        let mut acc_hi = _mm256_setzero_si256();
+        for h in 0..nnz {
+            let a_h = *a_vals.get_unchecked(h);
+            let col = *a_cols.get_unchecked(h);
+            let b_row_ptr = b.as_ptr().add(col * b_stride + j);
+            // Load 16 bytes from B[col, j..j+16], expand to 16 u16 lanes.
+            let bv8 = _mm_loadu_si128(b_row_ptr as *const __m128i);
+            let bv16 = _mm256_cvtepu8_epi16(bv8);
+            // Broadcast a_h to all 16 u16 lanes.
+            let av16 = _mm256_set1_epi16(a_h as i16);
+            // Element-wise u16 product (≤ 250² = 62500 fits in u16).
+            let prod = _mm256_mullo_epi16(av16, bv16);
+            // Widen 16 u16 lanes → 16 u32 lanes via two unpack-with-zero.
+            let zero = _mm256_setzero_si256();
+            let plo = _mm256_unpacklo_epi16(prod, zero);
+            let phi = _mm256_unpackhi_epi16(prod, zero);
+            acc_lo = _mm256_add_epi32(acc_lo, plo);
+            acc_hi = _mm256_add_epi32(acc_hi, phi);
+        }
+        // Reduce each u32 lane mod p via 32-bit Barrett:
+        //   q = (x * mu32) >> 32; r = x - q*p; if (r >= p) r -= p.
+        let lo_red = barrett_reduce_lane32(acc_lo, mu_vec, p_vec, p_vec64);
+        let hi_red = barrett_reduce_lane32(acc_hi, mu_vec, p_vec, p_vec64);
+        // Per-lane mapping back to output positions:
+        //   prod[0..16]  =  a_h * B[col, j..j+16]  (16 u16 lanes)
+        //   AVX2 unpacklo/unpackhi_epi16 are in-lane (per 128-bit half):
+        //     acc_lo low-half  =  prod[0..4]
+        //     acc_lo high-half =  prod[8..12]
+        //     acc_hi low-half  =  prod[4..8]
+        //     acc_hi high-half =  prod[12..16]
+        //   _mm256_packus_epi32(lo, hi) is also in-lane:
+        //     packed16 low-half  = packus(acc_lo low, acc_hi low)
+        //                        = u16 lanes [prod[0..4], prod[4..8]]
+        //     packed16 high-half = packus(acc_lo high, acc_hi high)
+        //                        = u16 lanes [prod[8..12], prod[12..16]]
+        //   So packed16 already holds prod[0..16] in order across u16
+        //   lanes 0..15 — no cross-lane permute is needed.
+        let packed16 = _mm256_packus_epi32(lo_red, hi_red);
+        // Pack 16 u16 → 16 u8. _mm256_packus_epi16 is in-lane:
+        //   low half  = packus(packed16 low half, packed16 low half)
+        //             = u8 lanes [prod[0..4], prod[4..8]] repeated
+        //   high half = packus(packed16 high, packed16 high)
+        //             = u8 lanes [prod[8..12], prod[12..16]] repeated
+        // We then need 64-bit-lane permute to fuse the low halves of
+        // each 128-bit half into a single 128-bit register holding
+        // u8 lanes [prod[0..8], prod[8..16]].
+        let packed8 = _mm256_packus_epi16(packed16, packed16);
+        // packed8 has, per 128-bit half, [prod[0..8], prod[0..8]] in
+        // low half and [prod[8..16], prod[8..16]] in high half. We
+        // want a 128-bit value [prod[0..8], prod[8..16]]. That is the
+        // 64-bit lane 0 of the low half + 64-bit lane 0 of the high
+        // half. Use permute4x64 with control (0,2,_,_) — though we
+        // only consume the low 128 bits of the result.
+        let fused = _mm256_permute4x64_epi64::<0b11_01_10_00>(packed8);
+        // After 0b11_01_10_00 = (3,1,2,0) the low 128 bits of `fused`
+        // are 64-bit lane 0 (= prod[0..8]) and 64-bit lane 2 (=
+        // prod[8..16]) — exactly the output we want.
+        let lower = _mm256_castsi256_si128(fused);
+        _mm_storeu_si128(out.as_mut_ptr().add(j) as *mut __m128i, lower);
+        j += 16;
+    }
+    // Scalar tail for j ∈ [j..n).
+    while j < n {
+        let mut total: u64 = 0;
+        for h in 0..nnz {
+            let a_h = *a_vals.get_unchecked(h) as u64;
+            let col = *a_cols.get_unchecked(h);
+            let b_kj = *b.get_unchecked(col * b_stride + j) as u64;
+            total += a_h * b_kj;
+        }
+        *out.get_unchecked_mut(j) = (total % p_u32 as u64) as u8;
+        j += 1;
+    }
+}
+
+/// 32-bit-lane Barrett reduction: `r = x mod p` for `x ∈ [0, 2³²)` and
+/// `p ≤ 251`. Returns reduced 32-bit lanes still in u32 form.
+#[inline]
+#[target_feature(enable = "avx2")]
+unsafe fn barrett_reduce_lane32(
+    x: __m256i,
+    mu_vec: __m256i,
+    p_vec: __m256i,
+    p_vec64: __m256i,
+) -> __m256i {
+    // Compute q = (x * mu32) >> 32 per 32-bit lane.
+    // _mm256_mul_epu32 multiplies the even u32 lanes of two u64-shaped
+    // vectors and produces u64 results; combining with a shift handles
+    // the odd lanes.
+    let mask32 = _mm256_set1_epi64x(0xFFFF_FFFF);
+    let x_even = _mm256_and_si256(x, mask32);
+    let x_odd = _mm256_srli_epi64::<32>(x);
+    let q_even_64 = _mm256_mul_epu32(x_even, mu_vec); // even u64 results
+    let q_odd_64 = _mm256_mul_epu32(x_odd, mu_vec); // odd u64 results
+
+    // q = high 32 bits of each 64-bit product
+    let q_even_hi = _mm256_srli_epi64::<32>(q_even_64);
+    let q_odd_hi = _mm256_srli_epi64::<32>(q_odd_64);
+    // Re-interleave into u32 lanes: q_even_hi at even slots, q_odd_hi at odd slots.
+    let q_odd_shifted = _mm256_slli_epi64::<32>(q_odd_hi);
+    let q = _mm256_or_si256(q_even_hi, q_odd_shifted);
+
+    // r = x - q * p
+    let qp = _mm256_mullo_epi32(q, p_vec);
+    let mut r = _mm256_sub_epi32(x, qp);
+    // Conditional subtract: if r >= p, r -= p. We use a single subtract
+    // followed by add-back with a mask. r2 = r - p; if r2 < 0, take r;
+    // else take r2.
+    let r2 = _mm256_sub_epi32(r, p_vec);
+    // r2 < 0 (signed) means r < p; we want r in that case.
+    // mask = (r2 < 0) ? -1 : 0
+    let mask_lt = _mm256_cmpgt_epi32(_mm256_setzero_si256(), r2);
+    // Final: blend r2 (when r >= p) with r (when r < p).
+    r = _mm256_blendv_epi8(r2, r, mask_lt);
+    // Some bounds may still leave r ≥ p if accumulator was very large
+    // (Barrett one-step bounds: r < 2p strictly only for x < p². For
+    // accumulator with nnz_r * (p-1)² up to 2³² we need a second
+    // step.)
+    // Worst case: x < 2³², q = ⌊x * mu / 2³²⌋ ≤ ⌊x / p⌋, x - q*p ∈ [0, 2p).
+    // Reference: Granlund-Möller: with mu = ⌊2³² / p⌋, x = q*p + r, r ∈ [0, p).
+    // The shift+subtract gives r ∈ [0, 2p). One conditional subtract suffices.
+    // But because mu has been truncated, r can be in [0, p + small slack); the
+    // standard form r ∈ [0, 2p) is safe.
+    let _ = p_vec64; // unused but kept for symmetry
+    r
+}
+
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn horizontal_sum_u32(v: __m256i) -> u32 {
@@ -626,6 +814,67 @@ mod tests {
                     expected %= p as u64;
                     assert_eq!(out[j] as u64, expected, "p={p} k={k} n={n} j={j}");
                 }
+            }
+        });
+    }
+
+    #[test]
+    fn spmm_row_matches_scalar() {
+        run_for_primes(|p| {
+            // Cover (nnz, n) shapes spanning the 16-lane SIMD body and
+            // the scalar tail, with sparse columns scattered across
+            // multiple B rows.
+            let cases = [
+                (1usize, 16usize, 8usize), // single nnz, exact 16
+                (5, 16, 32),               // tail-free 32
+                (7, 16, 33),               // 1-byte tail
+                (10, 16, 64),              // typical nnz at density~1%
+                (1, 16, 17),               // small tail
+                (20, 16, 100),             // mid-size n
+                (3, 8, 16),                // few B rows
+                (10, 32, 128),             // larger n
+                (15, 16, 1024),            // realistic SpMM cell
+            ];
+            for &(nnz, b_rows, n) in &cases {
+                // Build deterministic sparse row.
+                let a_vals: Vec<u8> = (0..nnz as u32)
+                    .map(|h| ((h * 13 + 1) % p as u32) as u8)
+                    .collect();
+                let a_cols: Vec<usize> = (0..nnz).map(|h| (h * 7) % b_rows).collect();
+                // Build dense B.
+                let b_stride = n;
+                let b: Vec<u8> = (0..(b_rows * n) as u32)
+                    .map(|i| ((i * 23 + 5) % p as u32) as u8)
+                    .collect();
+                let mut out = vec![0u8; n];
+                unsafe { fp_small_spmm_row(&a_vals, &a_cols, &b, b_stride, n, p, &mut out) };
+                for (j, &val) in out.iter().enumerate() {
+                    let mut expected: u64 = 0;
+                    for h in 0..nnz {
+                        let col = a_cols[h];
+                        expected += a_vals[h] as u64 * b[col * b_stride + j] as u64;
+                    }
+                    expected %= p as u64;
+                    assert_eq!(
+                        val as u64, expected,
+                        "p={p} nnz={nnz} b_rows={b_rows} n={n} j={j}"
+                    );
+                }
+            }
+        });
+    }
+
+    #[test]
+    fn spmm_row_empty_nnz() {
+        run_for_primes(|p| {
+            let n = 64;
+            let a_vals: Vec<u8> = vec![];
+            let a_cols: Vec<usize> = vec![];
+            let b: Vec<u8> = (0..n).map(|i| ((i * 7) as u8) % p).collect();
+            let mut out = vec![5u8; n];
+            unsafe { fp_small_spmm_row(&a_vals, &a_cols, &b, n, n, p, &mut out) };
+            for (j, &val) in out.iter().enumerate().take(n) {
+                assert_eq!(val, 0, "p={p} j={j}");
             }
         });
     }

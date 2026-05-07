@@ -483,6 +483,46 @@ pub trait FiniteField:
         false
     }
 
+    /// Hidden sparse-times-dense whole-matmat hook for SIMD-accelerated
+    /// SpMM.
+    ///
+    /// Lets `Fp<P>` (`P ≤ 65521`) bypass the per-row Wide-accumulator
+    /// path in [`crate::field::sparse_matrix::SparseFieldMatrix::matmat`]
+    /// and instead pack the dense `b` once, run an AVX2 byte /
+    /// 16-bit-lane SpMM kernel against each sparse row of `A`, and
+    /// unpack the output. The whole-matmat shape lets the
+    /// implementation amortise the `b` pack across all rows of `A`,
+    /// which is the SpMM throughput win over per-row dispatch.
+    ///
+    /// # Arguments
+    ///
+    /// * `a_row_ptr` — CSR row pointer for `A` (length `m + 1`).
+    /// * `a_col_idx` — CSR column indices for `A` (length `nnz`).
+    /// * `a_values` — CSR values for `A` (length `nnz`).
+    /// * `b` — dense `b_rows × n` row-major matrix of `Self`.
+    /// * `b_rows`, `n` — shape of `b`.
+    /// * `out` — destination dense `m × n` row-major buffer.
+    ///
+    /// # Returns
+    ///
+    /// `true` when the kernel populated `out`, `false` (the default)
+    /// when the caller should fall back to the per-row Wide-accumulator
+    /// path.
+    #[doc(hidden)]
+    #[inline]
+    fn try_simd_spmm(
+        a_row_ptr: &[usize],
+        a_col_idx: &[usize],
+        a_values: &[Self],
+        b: &[Self],
+        b_rows: usize,
+        n: usize,
+        out: &mut [Self],
+    ) -> bool {
+        let _ = (a_row_ptr, a_col_idx, a_values, b, b_rows, n, out);
+        false
+    }
+
     /// Maximum number of wide-type additions before reduction is required to avoid overflow.
     ///
     /// Returns `usize::MAX` if overflow is impossible (e.g., binary fields where addition is XOR).

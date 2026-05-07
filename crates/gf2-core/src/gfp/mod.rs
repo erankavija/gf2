@@ -724,6 +724,28 @@ impl<const P: u64> FiniteField for Fp<P> {
     ) -> bool {
         simd_ops::fp_small_try_gemm_classical::<P>(a, b_t, m, k, n, out)
     }
+
+    /// Sparse-times-dense whole-matmat hook. Routes to the AVX2
+    /// byte-lane SpMM kernel for `P ≤ 251` (Candidate C small-prime
+    /// path) or the AVX2 16-bit-lane SpMM kernel for `P ∈ (251,
+    /// 65535]` (medium-prime path). Returns `false` for `P > 65535` or
+    /// when the `simd` feature is disabled / AVX2 is unavailable, in
+    /// which case the caller falls back to the generic
+    /// Wide-accumulator scatter path. The hook packs `b` once
+    /// internally and reuses the canonical-byte / canonical-u16 buffer
+    /// across every row of the sparse left matrix.
+    #[inline]
+    fn try_simd_spmm(
+        a_row_ptr: &[usize],
+        a_col_idx: &[usize],
+        a_values: &[Self],
+        b: &[Self],
+        b_rows: usize,
+        n: usize,
+        out: &mut [Self],
+    ) -> bool {
+        simd_ops::fp_try_spmm::<P>(a_row_ptr, a_col_idx, a_values, b, b_rows, n, out)
+    }
 }
 
 // ---------------------------------------------------------------------------
