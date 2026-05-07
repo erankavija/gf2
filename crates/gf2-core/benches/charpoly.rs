@@ -152,7 +152,8 @@ fn bench_minpoly_reference_sweep(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::new("Fp_251", n), &n, |b, _| {
             b.iter(|| black_box(black_box(&a).minpoly()));
         });
-        // GF(7) — Wiedemann disabled for n≥4 (q=7 ≤ 2n), routes to quartic.
+        // GF(7) — extension-field Wiedemann engages for n ≥ 7 (q=7 ≤ n,
+        // q^3 = 343 > n for n ≤ 342); see issue `6c926de0`.
         let a = random_fp::<PRIME_7>(n, n, 0xBEEF_0004);
         group.bench_with_input(BenchmarkId::new("Fp_7", n), &n, |b, _| {
             b.iter(|| black_box(black_box(&a).minpoly()));
