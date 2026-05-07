@@ -163,11 +163,44 @@ fn bench_dispatch_crossover(c: &mut Criterion) {
     group.finish();
 }
 
+/// Dispatch-crossover bench for `Fp<65521>` (issue `4a59d1f9`).
+///
+/// KG Las-Vegas validity requires `q > 2n^2`. For `Fp<65521>` (q = 65521):
+/// - n = 64: 2*64^2 = 8192 < 65521. KG valid.
+/// - n = 128: 2*128^2 = 32768 < 65521. KG valid.
+/// - n = 181: 2*181^2 = 65522 > 65521. KG invalid.
+///
+/// So this sweep covers n in {64, 128} only.
+fn bench_dispatch_crossover_fp65521(c: &mut Criterion) {
+    let sizes: &[usize] = &[64, 128];
+    let mut group = c.benchmark_group("charpoly/dispatch_fp65521");
+    group.sample_size(10);
+    for &n in sizes {
+        let a = random_fp::<PRIME_65521>(n, n, 0xDEAD_BEEF);
+        group.bench_with_input(BenchmarkId::new("cubic", n), &n, |b, _| {
+            b.iter(|| {
+                let r = black_box(&a).charpoly_cubic();
+                black_box(r);
+            });
+        });
+        group.bench_with_input(BenchmarkId::new("kg", n), &n, |b, _| {
+            b.iter(|| {
+                let r = black_box(&a)
+                    .charpoly_keller_gehrig(0xC0FFEE)
+                    .expect("KG must converge on Fp<65521>");
+                black_box(r);
+            });
+        });
+    }
+    group.finish();
+}
+
 criterion_group! {
     name = charpoly_benches;
     config = Criterion::default()
         .sample_size(10)
         .measurement_time(std::time::Duration::from_secs(5));
-    targets = bench_charpoly, bench_minpoly, bench_frobenius, bench_dispatch_crossover
+    targets = bench_charpoly, bench_minpoly, bench_frobenius, bench_dispatch_crossover,
+        bench_dispatch_crossover_fp65521
 }
 criterion_main!(charpoly_benches);
