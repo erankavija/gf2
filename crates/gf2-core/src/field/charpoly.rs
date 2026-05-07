@@ -371,8 +371,13 @@ fn cyclic_decomposition_inner<F: FiniteField>(
     // bool. The previous design held an outer `Box<dyn ChainPolyArith>`
     // purely as an `is_some` flag and reallocated a fresh per-block
     // handle below; the boxed-trait-object alloc was wasted churn.
+    // `chain_poly_arith_available()` is a non-allocating mirror of
+    // `try_make_chain_poly_arith` (review feedback for the boxed-handle
+    // dummy alloc that the previous availability probe still incurred
+    // once per decomposition).
+    let _ = n; // silence unused-warning when no SIMD or non-Fp field
     let chain_poly_packed_available =
-        enable_packed_chain_polys && F::try_make_chain_poly_arith(n).is_some();
+        enable_packed_chain_polys && F::chain_poly_arith_available();
 
     // Running basis B in row-reduced form. We store it as a flat
     // `Vec<FieldVec<F>>` (one per column) so that appending a new

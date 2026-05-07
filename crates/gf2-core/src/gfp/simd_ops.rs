@@ -1909,6 +1909,16 @@ pub(crate) fn fp_try_make_chain_poly_arith<const P: u64>(
     Some(Box::new(cpa))
 }
 
+/// Non-allocating mirror of [`fp_try_make_chain_poly_arith`]:
+/// returns `true` exactly when the SIMD chain-poly path is available
+/// (`P ≤ 251` and AVX2 detected at runtime), without constructing the
+/// boxed handle.
+#[cfg(feature = "simd")]
+#[inline]
+pub(crate) fn fp_chain_poly_arith_available<const P: u64>() -> bool {
+    fp_small_enabled::<P>() && crate::simd::maybe_fp_small().is_some()
+}
+
 /// Non-SIMD stub for `PackedFpChainPolys<P>`.
 #[cfg(not(feature = "simd"))]
 pub(crate) struct PackedFpChainPolys<const P: u64>;
@@ -1920,6 +1930,13 @@ pub(crate) fn fp_try_make_chain_poly_arith<const P: u64>(
     _n: usize,
 ) -> Option<Box<dyn crate::field::matrix::ChainPolyArith<Fp<P>>>> {
     None
+}
+
+/// Non-SIMD stub that always returns `false`.
+#[cfg(not(feature = "simd"))]
+#[inline]
+pub(crate) fn fp_chain_poly_arith_available<const P: u64>() -> bool {
+    false
 }
 
 #[cfg(test)]
