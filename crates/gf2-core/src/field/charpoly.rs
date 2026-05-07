@@ -1658,7 +1658,6 @@ fn wiedemann_minpoly_attempt<F: FiniteField>(
 /// (`n = 64, 256`) keep the cubic verification cost.
 const WIEDEMANN_DETERMINISTIC_VERIFY_N: usize = 32;
 
-
 /// Verifies that the candidate polynomial `p` annihilates `A` (i.e.
 /// `p(A) = 0`) deterministically. **No false accepts.** Acceptance:
 ///
