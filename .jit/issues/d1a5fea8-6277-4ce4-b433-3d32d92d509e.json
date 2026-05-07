@@ -2,9 +2,9 @@
   "id": "d1a5fea8-6277-4ce4-b433-3d32d92d509e",
   "title": "Replace Dumas-Pernet inv() driver with in-place LU-reuse",
   "description": "Close the invert/uniform algorithm-choice gap to fflas-ffpack at n >= 256.\n\n## Background\n\nPer `dev/bench_results/2026-05-07-7e41400f-invert-solve-det.md` § 1 and § 5, gf2-core's `invert()` for full-rank matrices currently uses the Dumas-Pernet Table 2 driver (PLE + 2 trtri + 1 full n^3 GEMM + permutation). The constituent PLE and TRSM primitives are tuned (PLE alone is 0.55x of fflas pluq), but the total inv() operation does ~4x more O(n^3) work than PLE alone (2 trtri + 1 gemm), giving:\n\n- invert/uniform/n=256: 1.79x of fflas (FAIL 1.5x threshold)\n- invert/uniform/n=1024: 1.98x of fflas (FAIL 1.5x threshold)\n\nThese two cells were marked [aspirational] in 7e41400f under user-approved Path A (2026-05-07).\n\nfflas-ffpack `invert` uses `dgetrf`/`dgetri`: it computes LU in-place and then back-solves columns of the identity in-place against U and L, reusing the LU storage instead of allocating a fresh full-n GEMM target.\n\n## Algorithm\n\nIn-place LU-reuse invert for `Fp<P>` (and ideally generic `FiniteField`):\n\n1. Run PLE in place on the working matrix (already exists in `crates/gf2-core/src/field/ple.rs`).\n2. Compute U^-1 in place using a triangular invert that overwrites U with its inverse (analogue of LAPACK `dtrtri`).\n3. Compute L^-1 in place using the same triangular-invert strategy on L.\n4. Multiply A^-1 = U^-1 * L^-1 in place using the existing column-of-identity back-solve pattern from `dgetri`, avoiding the explicit n^3 GEMM that the current driver materialises.\n5. Apply the permutation to the columns of A^-1.\n\nReference: LAPACK Users' Guide § dgetri, and Dumas-Pernet § 5.2 (\"In-place inversion\") for the field-aware variant.\n\n## Success Criteria\n\n- [hard] invert/uniform/n=256 and invert/uniform/n=1024 reach <= 1.5x of fflas-ffpack on the Zen-3 host class.\n- [hard] Bit-exact equivalence with the existing Dumas-Pernet driver on randomized inputs (seed-controlled property tests).\n- [hard] No regression on invert/uniform/n=64, invert/deficient (any n), solve, or det cells from 7e41400f.\n- [hard] Singular and rank-deficient inputs continue to return None (the existing 4 tests added by 7e41400f must continue to pass).\n- [hard] No unsafe code outside `gf2-kernels-simd`. The driver may use unsafe in the kernel crate if needed; gf2-core remains `#![deny(unsafe_code)]`.\n\n## Notes\n\n- This task is non-blocking on epic 97bf0879. It is a follow-up to 7e41400f closure (Wave-9b amendment 2026-05-07). The epic closure path proceeds without this work.\n- 615db3b9 SOTA plan owns the broader finite-field LA catch-up; this issue is a sibling under story `72ab6d0e` rather than nested under 615db3b9 (which has its own Phase-5 inheritance scope, distinct from driver-replacement).\n- The constituent PLE/TRSM primitives are already tuned (Wave 9a). This issue does NOT need to re-tune them; it only needs to replace the driver that composes them into invert().",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [
     "7e41400f-187f-4d28-b316-49cbb127189d"
   ],
@@ -23,5 +23,5 @@
     "story:sota-dense-la"
   ],
   "created_at": "2026-05-07T05:44:09.913311383+00:00",
-  "updated_at": "2026-05-07T06:06:32.146531659+00:00"
+  "updated_at": "2026-05-07T19:12:43.179467696+00:00"
 }
