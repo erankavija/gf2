@@ -24,9 +24,11 @@
 //!
 //! [`FieldMatrix::charpoly`] is the public entry. It currently always
 //! selects the cubic baseline because [`KG_DISPATCH_MIN_N`] is set to
-//! [`usize::MAX`] — see the R2 amendment in issue `e47231cd` for the
-//! empirical justification (cubic is ~173× faster than KG at `n = 256`
-//! on `Fp<MERSENNE_31>` with the current PLE-based K⁻¹ pipeline).
+//! [`usize::MAX`] — see the R2 amendment in issue `e47231cd` and the
+//! 4a59d1f9 post-Wave-9 reassessment for the empirical justification
+//! (cubic is ~148x faster than KG at `n = 256` on `Fp<MERSENNE_31>`
+//! with the current PLE-based K⁻¹ pipeline; ratio grows monotonically
+//! with `n`).
 //! Callers who want to opt into the Las-Vegas Keller–Gehrig variant
 //! must call [`FieldMatrix::charpoly_keller_gehrig`] directly with an
 //! explicit seed. Bit-exact equality across paths is guaranteed by the
@@ -1146,8 +1148,8 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// matrix size. See the module rustdoc for the full decision tree
     /// and the empirical crossover; the measured crossover where KG
     /// beats cubic is well above `n = 1024` on `Fp<2^31 − 1>` with the
-    /// current PLE-based K⁻¹ pipeline (cubic is ~173× faster at
-    /// `n = 256`).
+    /// current PLE-based K⁻¹ pipeline (cubic is ~148x faster at
+    /// `n = 256` post-Wave-9; see issue `4a59d1f9`).
     ///
     /// **Bit-exactness across paths** is enforced as a `[hard]` success
     /// criterion of issue `1454ec2d`: the sub-cubic path verifies its
