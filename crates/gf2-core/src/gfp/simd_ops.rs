@@ -1187,14 +1187,17 @@ static SMALL_PRIME_TABLE_SLOTS: [std::sync::OnceLock<SmallPrimeTables>; 256] = {
 /// subsequent accesses.
 #[cfg(feature = "simd")]
 fn build_small_prime_tables<const P: u64>() -> &'static SmallPrimeTables {
-    debug_assert!(P <= 251 && P >= 3, "build_small_prime_tables: P={P} out of range");
+    debug_assert!(
+        P <= 251 && P >= 3,
+        "build_small_prime_tables: P={P} out of range"
+    );
     SMALL_PRIME_TABLE_SLOTS[P as usize].get_or_init(|| {
         let p = P as usize;
         let mut from_mont = vec![0u8; p];
         let mut to_mont = vec![0u64; p];
-        for a in 0..p {
+        for (a, slot) in from_mont.iter_mut().enumerate() {
             let canon = Fp::<P>::from_raw_storage(a as u64).value(); // from_mont(a)
-            from_mont[a] = canon as u8;
+            *slot = canon as u8;
             let raw = Fp::<P>::new(canon).raw_storage();
             to_mont[canon as usize] = raw;
         }
@@ -1331,14 +1334,7 @@ impl<const P: u64> PackedFpMatrix<P> {
                         out_u8.resize(*m, 0u8);
                         // Use the row-panel gemm kernel: y[j] = sum_t x[t] * A[j*k+t].
                         // `fns` is cached at construction time — no OnceLock read here.
-                        (fns.gemm_row_panel_fn)(
-                            &x_u8[..*k],
-                            data,
-                            *k,
-                            *m,
-                            p_u8,
-                            &mut out_u8[..*m],
-                        );
+                        (fns.gemm_row_panel_fn)(&x_u8[..*k], data, *k, *m, p_u8, &mut out_u8[..*m]);
                         // Unpack using the pre-built to_mont lookup table instead
                         // of calling Fp::new (which invokes to_mont REDC).
                         for (slot, &b) in out.iter_mut().zip(out_u8[..*m].iter()) {
