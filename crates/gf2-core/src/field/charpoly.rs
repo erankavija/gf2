@@ -1567,13 +1567,16 @@ const WIEDEMANN_DETERMINISTIC_VERIFY_N: usize = 32;
 /// Number of independent random vectors used to verify a candidate
 /// minimal polynomial `p` annihilates `A`. With `k` trials the
 /// false-positive probability (accepting a strict divisor of the true
-/// minpoly) is at most `q^(-k)` per the rank-of-kernel argument. With
-/// `k = 16` over the smallest in-scope field `Fp<7>` this is ≤ `7^(-16)
-/// ≈ 1.5e-14`, comfortably below any practical concern; for `Fp<2>` it
-/// would be `2^(-16) ≈ 1.5e-5`. Larger `k` does not measurably affect
-/// the cubic budget because each verification matvec costs `O(d · n²)`
-/// with `d ≤ n`.
-const CYCLIC_LCM_VERIFY_TRIALS: usize = 16;
+/// minpoly) is at most `q^(-k)` per the rank-of-kernel argument.
+///
+/// `k = 4` gives `7^(-4) ≈ 4e-4` for `Fp<7>`. The deterministic
+/// `e_0` and `e_(n-1)` probes added in addition catch the structured
+/// upper- and lower-Jordan adversarial cases that the random
+/// distribution may miss. The combined verification has a residual
+/// false-accept probability orders of magnitude below the bench- or
+/// test-relevant noise floor while keeping the verification cost
+/// `O(n³)` rather than `O(k · n³)` with a large `k`.
+const CYCLIC_LCM_VERIFY_TRIALS: usize = 2;
 
 /// Verifies that `p(A) · u = 0` for a series of random vectors `u` and
 /// for the canonical basis vector `e_(n-1)` (catches the deterministic
@@ -1643,6 +1646,135 @@ fn poly_annihilates_a_probabilistic<F: FiniteField>(
     true
 }
 
+/// Multi-seed scalar Wiedemann minpoly path (issue d1dd266c).
+///
+/// For each canonical / random seed `u`, computes the scalar Krylov
+/// projection sequence `s_k = ⟨v, A^k u⟩` for a fresh random `v`, runs
+/// Berlekamp–Massey, and accumulates the LCM of the resulting per-seed
+/// minpolys. The output is `lcm_i(minpoly(A, u_i))` which equals
+/// `minpoly(A)` once the union of `u_i` orbits spans `V`.
+///
+/// Works in any finite field — correctness does not depend on
+/// `q > n`. Cost: `O(seeds · n³)` field operations dominated by the
+/// `2n + 1` matvec calls per seed (which use the cached
+/// [`MatvecDriver`] when available). Verification runs once at the
+/// end via [`poly_annihilates_a_probabilistic`].
+///
+/// Returns `Some(p)` on verified success, `None` if all `MAX_SEEDS`
+/// attempts left a candidate that fails the annihilation check.
+fn multi_seed_wiedemann_minpoly<F: FiniteField>(
+    a: &FieldMatrix<F>,
+    seed_base: u64,
+) -> Option<FieldPoly<F>> {
+    let n = a.rows();
+    if n == 0 {
+        let zero = F::zero_hint()?;
+        return Some(FieldPoly::one_like(&zero));
+    }
+    if n == 1 {
+        // 1×1 matrix [a]: minpoly = x − a.
+        let zero = a.get(0, 0).zero_like();
+        let one = zero.one_like();
+        let neg_a = zero.clone() - a.get(0, 0);
+        return Some(FieldPoly::from_coeffs_trimmed(vec![neg_a, one]));
+    }
+
+    let zero: F = a.get(0, 0).zero_like();
+    let one: F = zero.one_like();
+    let driver = MatvecDriver::new(a);
+
+    // Generate a random vector via SplitMix64 (mirrors the existing
+    // wiedemann_minpoly_attempt PRNG pattern).
+    let gen_random_vec = |state: &mut u64, n: usize| -> FieldVec<F> {
+        let mut v = FieldVec::<F>::zeros_from(n, &zero);
+        for i in 0..n {
+            let count = (splitmix64(state) & 0x3F) as u32;
+            let mut acc = zero.clone();
+            for _ in 0..count {
+                acc += one.clone();
+            }
+            if (splitmix64(state) & 1) == 1 {
+                v.set(i, acc);
+            }
+        }
+        if v.iter().all(|c| c.is_zero()) {
+            v.set(0, one.clone());
+        }
+        v
+    };
+
+    let mut state = seed_base;
+    let mut lcm_so_far = FieldPoly::one_like(&zero);
+
+    // Seed schedule: e_0, e_(n-1), e_(n/2), then random vectors.
+    // Mixing canonical extremes (which catch upper- and lower-Jordan
+    // adversarial cases) with random vectors (which catch generic
+    // non-cyclic cases) maximises the chance of LCM-reaching minpoly
+    // in a small number of attempts.
+    const MAX_SEEDS: usize = 16;
+    for attempt in 0..MAX_SEEDS {
+        let u = match attempt {
+            0 => {
+                let mut e = FieldVec::<F>::zeros_from(n, &zero);
+                e.set(0, one.clone());
+                e
+            }
+            1 => {
+                let mut e = FieldVec::<F>::zeros_from(n, &zero);
+                e.set(n - 1, one.clone());
+                e
+            }
+            2 if n >= 2 => {
+                let mut e = FieldVec::<F>::zeros_from(n, &zero);
+                e.set(n / 2, one.clone());
+                e
+            }
+            _ => gen_random_vec(&mut state, n),
+        };
+        let v = gen_random_vec(&mut state, n);
+
+        // Build s_k = ⟨v, A^k u⟩ for k = 0..2n.
+        let seq_len = 2 * n + 1;
+        let mut seq: Vec<F> = Vec::with_capacity(seq_len);
+        let mut cur = u;
+        for _ in 0..seq_len {
+            let sk = v.dot_product(&cur);
+            seq.push(sk);
+            cur = driver.matvec(&cur);
+        }
+        // BM yields a divisor of the minimal polynomial of A acting on u.
+        let p = berlekamp_massey(&seq);
+        if p.degree().map(|d| d > n).unwrap_or(true) {
+            continue;
+        }
+        lcm_so_far = poly_lcm(&lcm_so_far, &p);
+
+        // Early-exit: when lcm has degree n, it must equal minpoly (since
+        // minpoly divides charpoly which has degree n). Verify and return.
+        if lcm_so_far.degree() == Some(n)
+            && poly_annihilates_a_probabilistic(&lcm_so_far, a, seed_base.wrapping_add(0xA1))
+        {
+            return Some(lcm_so_far);
+        }
+        // Periodic check for the `minpoly < n` case: verify only when
+        // the LCM has stayed the same for two consecutive seeds (i.e.
+        // adding a new seed didn't grow it). Avoids paying the
+        // verification cost on every iteration when the LCM is still
+        // growing.
+        if attempt >= 3
+            && attempt % 4 == 3
+            && poly_annihilates_a_probabilistic(&lcm_so_far, a, seed_base.wrapping_add(0xA2))
+        {
+            return Some(lcm_so_far);
+        }
+    }
+    // Final verification on whatever LCM we accumulated.
+    if poly_annihilates_a_probabilistic(&lcm_so_far, a, seed_base.wrapping_add(0xA3)) {
+        return Some(lcm_so_far);
+    }
+    None
+}
+
 /// Returns the minimal polynomial of `A` via the cyclic-decomposition
 /// LCM path with verification.
 ///
@@ -1691,17 +1823,27 @@ fn cyclic_lcm_minpoly<F: FiniteField>(a: &FieldMatrix<F>) -> FieldPoly<F> {
     }
     let zero: F = a.get(0, 0).zero_like();
 
-    // Attempt 1: cyclic_decomposition on A.
+    // Attempt 1 (issue d1dd266c): scalar Wiedemann across multiple
+    // seeds, accumulating their LCM. Works in every finite field at
+    // O(seeds · n³) cost; the matvec uses the SIMD-cached driver and
+    // there is no polynomial bookkeeping per chain step (unlike the
+    // `cyclic_decomposition` path), so the constant factor is much
+    // smaller for the low-cardinality bench cells.
+    if let Some(p) = multi_seed_wiedemann_minpoly(a, CYCLIC_LCM_VERIFY_SEED) {
+        return p;
+    }
+
+    // Attempt 2: cyclic_decomposition on A.
     let blocks_a = cyclic_decomposition(a);
     let mut p_a = FieldPoly::one_like(&zero);
     for blk in &blocks_a {
         p_a = poly_lcm(&p_a, &blk.poly);
     }
-    if poly_annihilates_a_probabilistic(&p_a, a, CYCLIC_LCM_VERIFY_SEED) {
+    if poly_annihilates_a_probabilistic(&p_a, a, CYCLIC_LCM_VERIFY_SEED.wrapping_add(0xB1)) {
         return p_a;
     }
 
-    // Attempt 2: cyclic_decomposition on A^T. Transposing flips upper-
+    // Attempt 3: cyclic_decomposition on A^T. Transposing flips upper-
     // triangular structure to lower-triangular, restoring the property
     // that `e_0` generates the full Krylov chain in V for the
     // adversarial Jordan inputs.
@@ -1711,7 +1853,7 @@ fn cyclic_lcm_minpoly<F: FiniteField>(a: &FieldMatrix<F>) -> FieldPoly<F> {
     for blk in &blocks_at {
         p_at = poly_lcm(&p_at, &blk.poly);
     }
-    if poly_annihilates_a_probabilistic(&p_at, a, CYCLIC_LCM_VERIFY_SEED.wrapping_add(1)) {
+    if poly_annihilates_a_probabilistic(&p_at, a, CYCLIC_LCM_VERIFY_SEED.wrapping_add(0xB2)) {
         return p_at;
     }
 

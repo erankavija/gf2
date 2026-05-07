@@ -158,6 +158,44 @@ fn bench_minpoly_reference_sweep(c: &mut Criterion) {
     group.finish();
 }
 
+/// `charpoly/charpoly_ref` Criterion group (issue `d1dd266c`):
+///
+/// Mirrors `bench_minpoly_reference_sweep` for the public `charpoly`
+/// dispatch. Walks `n ∈ {64, 256}` × {GF(2^31-1), GF(65521), GF(251),
+/// GF(7)} and times `FieldMatrix::charpoly` directly. The reference
+/// timings live in `dev/bench_results/2026-05-04-c3e79272-charpoly-reference.csv`.
+///
+/// Both `charpoly_dispatch` and `minpoly_dispatch` route through
+/// `cyclic_decomposition`, which now uses the SIMD-cached matvec and
+/// the packed basis reducer for `Fp<P>` with `P ≤ 65521` — measuring
+/// charpoly here closes the verification loop on the shared kernel
+/// (issue `b87362a3` runs the same sweep against the charpoly
+/// reference numbers).
+fn bench_charpoly_reference_sweep(c: &mut Criterion) {
+    let mut group = c.benchmark_group("charpoly/charpoly_ref");
+    group.sample_size(10);
+    const SIZES: &[usize] = &[64, 256];
+    for &n in SIZES {
+        let a = random_fp::<MERSENNE_31>(n, n, 0xC4F0_0001);
+        group.bench_with_input(BenchmarkId::new("Fp_M31", n), &n, |b, _| {
+            b.iter(|| black_box(black_box(&a).charpoly()));
+        });
+        let a = random_fp::<PRIME_65521>(n, n, 0xC4F0_0002);
+        group.bench_with_input(BenchmarkId::new("Fp_65521", n), &n, |b, _| {
+            b.iter(|| black_box(black_box(&a).charpoly()));
+        });
+        let a = random_fp::<PRIME_251>(n, n, 0xC4F0_0003);
+        group.bench_with_input(BenchmarkId::new("Fp_251", n), &n, |b, _| {
+            b.iter(|| black_box(black_box(&a).charpoly()));
+        });
+        let a = random_fp::<PRIME_7>(n, n, 0xC4F0_0004);
+        group.bench_with_input(BenchmarkId::new("Fp_7", n), &n, |b, _| {
+            b.iter(|| black_box(black_box(&a).charpoly()));
+        });
+    }
+    group.finish();
+}
+
 /// Shared helper for `charpoly/dispatch*` Criterion groups: registers
 /// `cubic` and `kg` arms (plus an optional `dispatch` arm) for each
 /// requested `n`, all timed against the same fixed seed matrix per
@@ -254,6 +292,7 @@ criterion_group! {
         .measurement_time(std::time::Duration::from_secs(5));
     targets = bench_charpoly, bench_minpoly, bench_frobenius,
         bench_minpoly_reference_sweep,
+        bench_charpoly_reference_sweep,
         bench_dispatch_crossover, bench_dispatch_crossover_fp65521
 }
 criterion_main!(charpoly_benches);
