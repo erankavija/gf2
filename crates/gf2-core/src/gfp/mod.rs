@@ -747,6 +747,15 @@ impl<const P: u64> FiniteField for Fp<P> {
         simd_ops::fp_try_make_chain_poly_arith::<P>(n)
     }
 
+    /// Non-allocating availability probe for `try_make_chain_poly_arith`.
+    /// Lets `cyclic_decomposition` decide whether to take the packed
+    /// canonical-byte chain-poly arithmetic path without paying a boxed
+    /// allocation per decomposition.
+    #[inline]
+    fn chain_poly_arith_available() -> bool {
+        simd_ops::fp_chain_poly_arith_available::<P>()
+    }
+
     /// SIMD-accelerated `axpy` (`y[i] += a · x[i]`) for `Fp<P>` with
     /// `P ≤ 65521` (issue `d1dd266c`). Routes through the AVX2
     /// byte-lane (`P ≤ 251`) or u16-lane (`252 ≤ P < 65536`)

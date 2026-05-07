@@ -532,6 +532,20 @@ pub trait FiniteField:
         None
     }
 
+    /// Hidden non-allocating availability probe for the chain-poly
+    /// arithmetic hook above (issue `5a3dbd5b` review feedback).
+    ///
+    /// Callers that only need to decide whether to take the packed path
+    /// (without actually constructing the handle) call this instead of
+    /// `try_make_chain_poly_arith(...).is_some()` to avoid the boxed
+    /// allocation/drop on the hot path. Default returns `false`; `Fp<P>`
+    /// overrides for `P ≤ 251` with AVX2 available.
+    #[doc(hidden)]
+    #[inline]
+    fn chain_poly_arith_available() -> bool {
+        false
+    }
+
     /// Hidden vectorised `axpy` hook (issue `d1dd266c`).
     ///
     /// Computes `y[i] += a · x[i]` for all `i` using a SIMD kernel

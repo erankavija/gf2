@@ -419,7 +419,7 @@ resort, never fires for random or Jordan adversarial inputs).
 ### SC#4 (correctness verified by adversarial + randomized tests): MET
 
 See § 5. Six new Jordan adversarial tests + four randomized small-matrix
-test functions added; all 3262 workspace tests pass.
+test functions added; all 3277 workspace tests pass post-integration.
 
 ### SC#5 (throughput normalization aligned with algorithm class per row): MET
 
