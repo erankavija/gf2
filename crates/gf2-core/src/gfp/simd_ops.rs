@@ -1172,6 +1172,15 @@ impl<const P: u64> PackedFpMatrix<P> {
 
     /// Computes `y = A · x` using the pre-packed matrix. Writes into
     /// `out` (length `m`).
+    ///
+    /// For `P ≤ 251` uses the AVX2 `gemm_row_panel_fn` kernel
+    /// (which loads each 16-byte block of `x` once against four
+    /// rows of `A` simultaneously, amortising the AVX2
+    /// lane-broadcast and constant-table overhead across four
+    /// output cells per inner pass). For medium primes
+    /// (`252 ≤ P < 65536`) the dot kernel is called per row;
+    /// extending the medium-prime kernel to a row-panel matvec is
+    /// future work.
     pub(crate) fn matvec_packed(&self, x: &[Fp<P>], out: &mut [Fp<P>]) {
         match self {
             PackedFpMatrix::Small { data, m, k } => {
@@ -1183,10 +1192,14 @@ impl<const P: u64> PackedFpMatrix<P> {
                 let p_u8 = P as u8;
                 // Pack x as canonical bytes once per matvec call.
                 let x_u8: Vec<u8> = x.iter().map(|v| v.value() as u8).collect();
-                for r in 0..*m {
-                    let row = &data[r * *k..(r + 1) * *k];
-                    let canonical = (fns.batch_dot_fn)(row, &x_u8, p_u8);
-                    out[r] = Fp::<P>::new(canonical as u64);
+                // Use the row-panel gemm kernel: y[j] = sum_t x[t] * A[j*k+t].
+                // The packed `data` matrix is row-major (m rows, k cols),
+                // exactly the layout the kernel expects for `bt` of shape
+                // (n=m, k=k). Output is `n=m` canonical bytes.
+                let mut out_u8 = vec![0u8; *m];
+                (fns.gemm_row_panel_fn)(&x_u8, data, *k, *m, p_u8, &mut out_u8);
+                for (slot, &b) in out.iter_mut().zip(out_u8.iter()) {
+                    *slot = Fp::<P>::new(b as u64);
                 }
             }
             PackedFpMatrix::Medium { data, m, k } => {
