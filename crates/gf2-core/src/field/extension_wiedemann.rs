@@ -553,17 +553,20 @@ pub fn try_extension_wiedemann_fp<const P: u64>(
     // Per-prime dispatch. The criterion (SC#1) is `q ≤ n && q^k > n`,
     // checked here per-prime against the available extension degrees.
     if P == 7 {
-        // q = 7. Try cubic first (k=3, q^3=343 > n for n ≤ 342) then
-        // quadratic (k=2, q^2=49 > n for n ≤ 48). Multi-seed already
-        // handles n < q, so our gate is `n >= q`.
+        // q = 7. Pick the smallest extension degree k that satisfies the
+        // SC#1 contract (q^k > n), per the issue's "smallest available
+        // extension degree" requirement:
+        //   - k=2 (quadratic, q^2=49) covers 7 ≤ n ≤ 48.
+        //   - k=3 (cubic,    q^3=343) covers 49 ≤ n ≤ 342.
+        // Multi-seed already handles n < q, so our gate is `n >= q`.
         if n < 7 {
             return None;
         }
-        if n <= 342 {
-            return run_cubic_generic::<P, FpCubicSeven<P>>(a);
-        }
         if n <= 48 {
             return run_quadratic_generic::<P, FpQuadraticSeven<P>>(a);
+        }
+        if n <= 342 {
+            return run_cubic_generic::<P, FpCubicSeven<P>>(a);
         }
         return None;
     }
@@ -654,7 +657,12 @@ where
             if descended.degree() == Some(n) {
                 return Some(descended);
             }
-            if p_annihilates_a(&descended, a, SEED.wrapping_add(0xA1)) {
+            // Use a per-retry verifier seed so consecutive retries get
+            // independent random probes (review feedback: previously every
+            // retry reused the same `SEED + 0xA1`, defeating the
+            // independence-based correctness story for the verifier).
+            let probe_seed = SEED.wrapping_add(0xA1).wrapping_add(retry as u64);
+            if p_annihilates_a(&descended, a, probe_seed) {
                 return Some(descended);
             }
         }
@@ -687,7 +695,10 @@ where
             if descended.degree() == Some(n) {
                 return Some(descended);
             }
-            if p_annihilates_a(&descended, a, SEED.wrapping_add(0xA1)) {
+            // Per-retry verifier seed for independent random probes
+            // across retries (mirror of run_quadratic_generic above).
+            let probe_seed = SEED.wrapping_add(0xA1).wrapping_add(retry as u64);
+            if p_annihilates_a(&descended, a, probe_seed) {
                 return Some(descended);
             }
         }
@@ -765,6 +776,22 @@ mod tests {
         let a = make_random_fp::<7>(n, 0xCAFEBABE);
         let mp =
             try_extension_wiedemann_fp::<7>(&a).expect("Fp<7> n=64 must engage extension path");
+        let d = mp.degree().expect("non-zero polynomial");
+        assert!(d <= n, "minpoly degree {} exceeds n={}", d, n);
+        assert!(p_annihilates_a(&mp, &a, 0xDEAD_BEEF));
+    }
+
+    /// **SC#1 contract test.** Engages for `Fp<7>` n=10 (q=7 ≤ 10 and
+    /// 7^2 = 49 > 10), exercising the quadratic-degree branch the
+    /// dispatcher must reach for n ≤ 48.  Catches the previous bug
+    /// where the dispatcher checked the cubic gate first and made the
+    /// quadratic branch unreachable for any n.
+    #[test]
+    fn test_extension_wiedemann_engages_fp7_n10_quadratic() {
+        let n = 10;
+        let a = make_random_fp::<7>(n, 0xC0FFEE);
+        let mp = try_extension_wiedemann_fp::<7>(&a)
+            .expect("Fp<7> n=10 must engage extension quadratic path");
         let d = mp.degree().expect("non-zero polynomial");
         assert!(d <= n, "minpoly degree {} exceeds n={}", d, n);
         assert!(p_annihilates_a(&mp, &a, 0xDEAD_BEEF));

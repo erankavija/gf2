@@ -546,25 +546,6 @@ pub trait FiniteField:
         false
     }
 
-    /// Hidden hot-path scalar-to-canonical conversion (issue `5a3dbd5b`
-    /// R4 review feedback).
-    ///
-    /// Returns `Some(value)` with `value < q` when `Self` has a canonical
-    /// integer representation that fits in `u64`; otherwise `None`. The
-    /// `cyclic_decomposition` packed-byte path uses this to convert
-    /// `coeffs[j]` once at the call site so
-    /// [`crate::field::matrix::ChainPolyArith::sub_scaled_into`] never
-    /// pays a per-call REDC.
-    ///
-    /// Default returns `None`; `Fp<P>` overrides to call `self.value()`.
-    /// Other field implementations that have a stable canonical `u64`
-    /// representation may also override.
-    #[doc(hidden)]
-    #[inline]
-    fn try_canonical_u64(&self) -> Option<u64> {
-        None
-    }
-
     /// Hidden vectorised `axpy` hook (issue `d1dd266c`).
     ///
     /// Computes `y[i] += a · x[i]` for all `i` using a SIMD kernel
