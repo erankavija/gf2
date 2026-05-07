@@ -1852,38 +1852,39 @@ fn multi_seed_wiedemann_minpoly<F: FiniteField>(
 ///
 /// # Algorithm
 ///
-/// 1. Run `cyclic_decomposition(A)` and take `p = lcm_i(block_i.poly)`.
-///    For "good" matrices (random or lower-Hessenberg), the seed `e_0`
-///    already generates the full Krylov chain in `V`, so `p` equals
-///    `minpoly(A)`.
-/// 2. **Verify** that `p` annihilates `A` (probabilistic random-vector
-///    check, plus a deterministic `e_(n-1)` probe). If the verification
-///    passes, return `p`.
-/// 3. If `p` does not annihilate `A` (the upper-Jordan adversarial
-///    case), retry with `cyclic_decomposition(A^T)`. The transpose
-///    flips upper-Hessenberg structure to lower-Hessenberg, where the
-///    seed `e_0` once again generates the full Krylov chain.
-/// 4. If both `A` and `A^T` produce candidates that fail verification,
-///    fall back to the legacy quartic
-///    [`find_max_minpoly_generator`] driver. This path is mathematically
-///    valid in every finite field but costs `O(n^4)` field operations.
-///    For random matrices and standard Jordan adversarial inputs the
-///    fallback is never reached; it exists strictly for paranoid
-///    correctness on rare degenerate matrix structures.
+/// 1. **Multi-seed Wiedemann first** — accumulate the per-seed
+///    annihilator LCM across canonical-basis seeds. Works in every
+///    finite field at `O(seeds · n³)` cost; matvec uses the SIMD-cached
+///    driver and BM operates on scalar sequences.
+/// 2. **Cyclic decomposition on `A`.** Take `p = lcm_i(block_i.poly)`
+///    and verify with [`poly_annihilates_a_lasvegas`] (degree-`n`
+///    fast-path, otherwise exhaustive standard-basis sweep — no false
+///    accepts).
+/// 3. **Cyclic decomposition on `A^T`.** Transposing flips upper-
+///    Hessenberg structure to lower-Hessenberg, where the seed `e_0`
+///    again generates the full Krylov chain. Verified the same way.
+/// 4. **Multi-seed Wiedemann retry** on a far-offset seed stream
+///    (independent random probes from step 1). Mathematically valid
+///    for every finite field. If even this exhausts, panic — the only
+///    way this branch is reached is an internal invariant violation.
 ///
 /// # Complexity
 ///
-/// Best case (cyclic-on-A succeeds): `O(n³)` decomposition plus
-/// `O(n³)` verification. Random and most adversarial matrices land
-/// here.
+/// Best case (multi-seed-on-A succeeds): `O(seeds · n³)`. Random and
+/// most adversarial matrices land here.
 ///
-/// Second case (cyclic-on-A^T succeeds): `O(n³)` total — one extra
-/// decomposition + verification.
+/// Cyclic-on-A succeeds: `O(n³)` decomposition + Las-Vegas verifier
+/// (fast-path `O(n)` on degree-`n` candidates, exhaustive sweep
+/// `O(n^4)` only on derogatory candidates).
 ///
-/// Worst case (legacy fallback): `O(n³)` for the two cyclic attempts
-/// plus `O(n⁴)` for `find_max_minpoly_generator`. Reached only on
-/// pathological structures not present in the project's test or
-/// benchmark inputs.
+/// Cyclic-on-A^T succeeds: same.
+///
+/// Multi-seed retry: `O(seeds · n³)` — bounded.
+///
+/// The legacy quartic [`find_max_minpoly_generator`] driver is **not**
+/// reached from this dispatch path. The function still exists in the
+/// crate to serve `FieldMatrix::frobenius_form()`, which is out of
+/// scope for this issue.
 fn cyclic_lcm_minpoly<F: FiniteField>(a: &FieldMatrix<F>) -> FieldPoly<F> {
     let n = a.rows();
     if n == 0 {

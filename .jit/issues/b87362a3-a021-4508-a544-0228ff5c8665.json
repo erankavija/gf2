@@ -15,15 +15,15 @@
     "doc-review"
   ],
   "gates_status": {
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-07T19:33:01.957205131Z"
-    },
     "code-review": {
       "status": "failed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-07T19:33:20.240046652Z"
+      "updated_at": "2026-05-07T20:06:08.407056979Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-07T19:51:34.391381471Z"
     }
   },
   "context": {},
@@ -43,5 +43,5 @@
     "story:sota-polynomial-invariants"
   ],
   "created_at": "2026-04-30T06:43:02.862473926+00:00",
-  "updated_at": "2026-05-07T19:51:14.392156679+00:00"
+  "updated_at": "2026-05-07T20:09:26.284550262+00:00"
 }

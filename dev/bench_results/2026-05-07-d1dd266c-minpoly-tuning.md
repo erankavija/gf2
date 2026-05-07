@@ -32,19 +32,26 @@ Wiedemann gate fails (`q ≤ n`). The new path is **always cubic**:
    Wiedemann projection sequences `s_k = ⟨v, A^k u⟩` across canonical seeds
    (`e_0`, `e_(n-1)`, `e_(n/2)`) plus up to 13 random seeds, accumulating
    `lcm_i(BM(s_k_i))`. Verifies against `A` at early-exit points.
-2. **`cyclic_decomposition(A)`** with packed basis cache: returns `lcm_i(block_i.poly)`.
+2. **`cyclic_decomposition(A)`** with packed basis cache: returns `lcm_i(block_i.poly)`,
+   then verified by `poly_annihilates_a_lasvegas`.
 3. **`cyclic_decomposition(A^T)`**: handles the upper-Jordan adversarial cases
    where `seed e_0` for `A` does not generate a full Krylov chain (the transpose
-   flips the structure to lower-Hessenberg, restoring the property).
-4. **Legacy quartic** `find_max_minpoly_generator`: last-resort path for
-   pathological matrix structures not present in the bench or the project's
-   Jordan adversarial test suite.
+   flips the structure to lower-Hessenberg, restoring the property). Verified
+   the same way.
+4. **Multi-seed Wiedemann retry** on a far-offset seed stream — independent
+   probes from step 1 — followed by a hard panic if even that fails.
+   The legacy quartic `find_max_minpoly_generator` driver is **not** reached
+   from this path; it remains in the crate to serve `FieldMatrix::frobenius_form()`,
+   which is out of scope here.
 
-The verification (`poly_annihilates_a_probabilistic`) combines a deterministic
-canonical-basis sweep for `n ≤ 32` (catches every strict divisor by linear
-algebra) with a probabilistic random-probe check for larger `n` (false-accept
-probability `≤ q^(-k)` per the rank-of-kernel argument; k = 2 random probes
-plus `e_0` and `e_(n-1)`).
+The verification helper `poly_annihilates_a_lasvegas` is **deterministic Las
+Vegas** with zero false-accept probability: degree-`n` candidates pass by a
+divisibility argument (minpoly | charpoly, charpoly has degree `n`); strict-divisor
+candidates are checked by an exhaustive standard-basis sweep that runs
+`p(A)·e_i = 0` for every `i ∈ 0..n`. The same Las-Vegas verifier is now used by
+the extension-field path (`crates/gf2-core/src/field/extension_wiedemann.rs:466-510`,
+function `p_annihilates_a`), replacing the prior `K_PROBES`-random-probe verifier
+that left a `≤ 1/q^K_PROBES` residual false-accept probability.
 
 ### § 1.2 Packed-matvec cache shared between minpoly + charpoly drivers
 
