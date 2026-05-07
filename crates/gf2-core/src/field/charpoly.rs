@@ -760,7 +760,7 @@ fn find_max_minpoly_generator<F: FiniteField>(
 /// `p` is the polynomial, `a` the matrix, `v` the input vector. Cost:
 /// `O(deg(p) · n²)` field operations using only [`FieldMatrix::matvec`]
 /// and [`FieldVec::axpy`] — no bespoke linear algebra.
-fn poly_action_on_vector<F: FiniteField>(
+pub(crate) fn poly_action_on_vector<F: FiniteField>(
     p: &FieldPoly<F>,
     a: &FieldMatrix<F>,
     v: &FieldVec<F>,
@@ -1116,7 +1116,7 @@ fn keller_gehrig_charpoly<F: FiniteField>(
 /// worker runs without the `rand` feature (the crate's `rand` is
 /// `optional = true` and we must not change that contract).
 #[inline]
-fn splitmix64(state: &mut u64) -> u64 {
+pub(crate) fn splitmix64(state: &mut u64) -> u64 {
     *state = state.wrapping_add(0x9E37_79B9_7F4A_7C15);
     let mut z = *state;
     z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
@@ -1330,7 +1330,7 @@ const WIEDEMANN_DEFAULT_SEED: u64 = 0x5769_6564_656D_616E; // ASCII "Wiedeman"
 /// # Complexity
 ///
 /// `O(n²)` field operations for a length-`2n` sequence.
-fn berlekamp_massey<F: FiniteField>(s: &[F]) -> FieldPoly<F> {
+pub(crate) fn berlekamp_massey<F: FiniteField>(s: &[F]) -> FieldPoly<F> {
     let seq_len = s.len();
     if seq_len == 0 {
         let zero = F::zero_hint().unwrap_or_else(|| {
@@ -2511,7 +2511,7 @@ impl<F: FiniteField> FieldMatrix<F> {
 // ─── Refinement to canonical Frobenius form ──────────────────────────────────
 
 /// Returns the monic `lcm(a, b) = a · b / gcd(a, b)`.
-fn poly_lcm<F: FiniteField>(a: &FieldPoly<F>, b: &FieldPoly<F>) -> FieldPoly<F> {
+pub(crate) fn poly_lcm<F: FiniteField>(a: &FieldPoly<F>, b: &FieldPoly<F>) -> FieldPoly<F> {
     if a.is_zero() || b.is_zero() {
         // Convention: lcm with zero is zero.
         let sample = if let Some(c) = a.iter().next() {
