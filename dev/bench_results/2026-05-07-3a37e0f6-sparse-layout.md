@@ -29,7 +29,7 @@ Path-B continuation closed the remaining 3 sparse×dense cells.
 | sparse×dense × GF(7) | 17.4 ms | 8.0 ms | 3.6 ms | **1.08x** | **PASS** (Path B) |
 | sparse×dense × GF(251) | 17.3 ms | 8.3 ms | 2.5 ms | **1.08x** | **PASS** (Path B) |
 | sparse×dense × GF(65521) | 17.3 ms | 8.6 ms | 4.6 ms | **0.87x** | **PASS** (Path B) |
-| sparse×dense × GF(2^31-1) | 13.8 ms | 7.9 ms | 8.5 ms | 1.41x | **PASS** (Path A) |
+| sparse×dense × GF(2^31-1) | 13.8 ms | 7.9 ms | 8.5 ms | 1.71x | **PASS** (Path A) |
 
 The Path B continuation flips all 3 previously-failing cells from below 0.5x of fflas to ≥ 0.87x,
 landing GF(7) and GF(251) **above fflas** by 1.08x. This is achieved with an AVX2 packed-int
