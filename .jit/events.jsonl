@@ -4120,3 +4120,9 @@
 {"type":"issue_created","id":"71650d4f-4bfe-4909-aacc-480b08a2d690","issue_id":"6c926de0-0e06-4ac5-8e9e-a394f84fc99a","timestamp":"2026-05-07T13:18:18.091984297Z","title":"Extension-field Wiedemann for low-cardinality minpoly","priority":"high"}
 {"type":"issue_created","id":"04b59cc1-d52c-4142-a52b-006a6d0e8198","issue_id":"70766cb1-2d79-4194-becd-7e17984310d0","timestamp":"2026-05-07T13:18:34.434022833Z","title":"Inline small-prime panel-kernel + Barrett-constant cache for n=64","priority":"normal"}
 {"type":"issue_created","id":"ff41080f-d16f-441c-a96b-96b0cf20962f","issue_id":"5a3dbd5b-3827-4052-9d50-8033773aa867","timestamp":"2026-05-07T13:18:49.509238256Z","title":"Canonical-byte polynomial arithmetic for cyclic_decomposition chain_polys","priority":"normal"}
+{"type":"issue_state_changed","id":"8ccb0025-0268-463e-957b-715a5c47c44e","issue_id":"6c926de0-0e06-4ac5-8e9e-a394f84fc99a","timestamp":"2026-05-07T13:19:30.014396984Z","from":"ready","to":"in_progress"}
+{"type":"issue_claimed","id":"ebd8ed29-15e2-476b-8983-824eb76a3756","issue_id":"6c926de0-0e06-4ac5-8e9e-a394f84fc99a","timestamp":"2026-05-07T13:19:30.014592085Z","assignee":"agent:claude"}
+{"type":"issue_state_changed","id":"83719f2d-439d-486d-8b02-f18ccf2bb076","issue_id":"70766cb1-2d79-4194-becd-7e17984310d0","timestamp":"2026-05-07T13:19:30.799277169Z","from":"ready","to":"in_progress"}
+{"type":"issue_claimed","id":"314a1521-4813-4c73-83a2-995c75ac697a","issue_id":"70766cb1-2d79-4194-becd-7e17984310d0","timestamp":"2026-05-07T13:19:30.799441149Z","assignee":"agent:claude"}
+{"type":"issue_state_changed","id":"01fa39a0-1e75-44b4-b3e8-6217efb33659","issue_id":"5a3dbd5b-3827-4052-9d50-8033773aa867","timestamp":"2026-05-07T13:19:30.938171689Z","from":"ready","to":"in_progress"}
+{"type":"issue_claimed","id":"f7645e11-e457-499c-999a-990d9feed319","issue_id":"5a3dbd5b-3827-4052-9d50-8033773aa867","timestamp":"2026-05-07T13:19:30.939373629Z","assignee":"agent:claude"}

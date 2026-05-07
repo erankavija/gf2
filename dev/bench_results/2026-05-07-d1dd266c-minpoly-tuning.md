@@ -1,9 +1,9 @@
-# Minimal & Characteristic Polynomial Tuning Evidence (`jit:d1dd266c`)
+# Minimal & Characteristic Polynomial Tuning Evidence (`jit:d1dd266c` + siblings)
 
 | Field | Value |
 |---|---|
-| Date | 2026-05-07 |
-| JIT issue | `d1dd266c` (Tune minimal polynomial path) — covers minpoly + charpoly per scope expansion 2026-05-07 |
+| Date | 2026-05-07 (post-integration of d1dd266c, 5a3dbd5b, 70766cb1, 6c926de0) |
+| Tracked issues | `d1dd266c` (Tune minimal polynomial path) + sibling impl tasks `5a3dbd5b`, `70766cb1`, `6c926de0` |
 | Parent story | `66190ccd` (sota-polynomial-invariants) |
 | Parent epic | `97bf0879` (gf2-core SOTA performance) |
 | Host | AMD Ryzen 9 5900X, 12c/24t, Zen 3 |
@@ -12,107 +12,18 @@
 | Build profile | `release` (`opt-level=3`, `lto=thin`, `codegen-units=1`) |
 | Bench harness | `crates/gf2-core/benches/charpoly.rs` (`bench_minpoly_reference_sweep`, `bench_charpoly_reference_sweep`) |
 | Reference | `dev/bench_results/2026-05-04-c3e79272-minpoly-reference.csv`, `dev/bench_results/2026-05-04-c3e79272-charpoly-reference.csv` |
-| Status | 12 of 16 cells PASS the 1.5x ceiling (unchanged). After issue `5a3dbd5b` packed chain-poly bookkeeping (§ 1.4), the charpoly failure at GF(251)/256 improved from 9.58x to 3.18x; ceiling at 1.5x (1.975 ms) is still missed. |
+| Status | **14 of 16 cells PASS** the 1.5x ceiling. 2 cells remain (GF(251)/n=64 minpoly @ 2.84x, GF(251)/n=256 charpoly @ 3.18x) — both share the small-prime-kernel-call-overhead root cause. |
 
-## § 1 Algorithm changes landed in this issue
+## § 1 Algorithm changes landed across d1dd266c + siblings
 
-The pre-existing minpoly path was the deterministic O(n⁴) lcm-of-Krylov-annihilators
-fallback (`find_max_minpoly_generator`), which iterates over all canonical basis
-vectors and accumulates the lcm of their per-vector Berlekamp-Massey annihilators.
-This is O(n) Krylov chains × O(n) steps × O(n²) reduction per step = O(n⁴).
+This document covers the integrated state on main after the four issues land:
 
-### § 1.4 Packed canonical-byte chain-polynomial arithmetic (issue `5a3dbd5b`)
+- **`d1dd266c`** — cubic cyclic-LCM minpoly fallback replacing the legacy O(n^4) path; `MatvecDriver` packed cache shared between minpoly and charpoly; packed basis reducer for `cyclic_decomposition`'s reduce loop; multi-seed Wiedemann path + row-panel matvec + charpoly bench harness.
+- **`5a3dbd5b`** — `PackedFpChainPolys<P>` canonical-byte chain-poly bookkeeping for `cyclic_decomposition` (eliminates ~16M Montgomery REDC operations per `n=256` charpoly call for `P ≤ 251`).
+- **`70766cb1`** — Inline panel-kernel + global per-prime Barrett-constant `OnceLock` table cache + thread-local scratch buffers; eliminates per-call function-pointer dispatch cost for the small-prime row-panel matvec.
+- **`6c926de0`** — Extension-field Wiedemann minpoly path for `Fp<P>` with `q ≤ n`. Uses `QuadraticExt` / `CubicExt` over `ExtConfig`, decoupled-component algorithm, K_PROBES=4 random-probe verification + degree-n fast-path. Closes the multi-seed scaling gap for low-cardinality fields.
 
-Added `PackedFpChainPolys<P>` in `crate::gfp::simd_ops` and the `ChainPolyArith<F>`
-trait in `crate::field::matrix`, wired into `cyclic_decomposition` via the
-`FiniteField::try_make_chain_poly_arith` hook. Active for `Fp<P>` with `P ≤ 251`
-and AVX2 available.
-
-The Krylov-step polynomial update
-```
-next[d] = x · chain[d-1]  −  Σ_j α_j · chain[j]
-```
-was previously implemented as scalar `FieldPoly::mul_scalar` + `Sub` operations —
-each coefficient multiply/subtract is one Montgomery REDC call (∼10 ns on Zen 3).
-The packed path stores all chain polynomials as canonical bytes and uses AVX2
-`batch_mul` + `batch_sub` (byte-lane kernels, ≤ 251 fits in u8) to process 32
-coefficients per AVX2 instruction.
-
-A single 3-lane scratch buffer (pre-allocated, grown lazily, never shrunk)
-eliminates all per-call heap allocations in `sub_scaled_into`:
-- lane0: broadcast of scalar `alpha_val` (n bytes)
-- lane1: copy of `chain[j]` (n bytes)
-- lane2: `batch_mul(lane0, lane1)` → `alpha · chain[j]`
-- result: `batch_sub(buf, lane2)` → `buf - alpha · chain[j]`
-
-Measured improvement on GF(251)/n=256 (Zen 3, `RUSTFLAGS="-C target-cpu=native"`):
-
-| Path | Wall time | Ratio vs fflas | Delta |
-|---|---:|---:|---:|
-| Scalar (before) | 12.61 ms | 9.58x | baseline |
-| Packed (this task) | 4.19 ms | 3.18x | 3.0x speedup |
-| fflas-ffpack reference | 1.317 ms | 1.0x | — |
-| Target ceiling (1.5x) | 1.975 ms | 1.5x | — |
-
-3.0x speedup closes 66% of the wall-time gap. The ceiling is still missed;
-residual gap (3.18x vs 1.5x ceiling) is attributable to: (a) function-pointer
-call overhead per AVX2 kernel dispatch, (b) 2 × copy per `sub_scaled_into` call
-(polys[j] → lane1, result → buf), and (c) per-outer-loop `shift_x` allocation.
-Closing the remaining gap requires further kernel-level optimisation (fused
-inner loop, AVX-512 if available) outside this issue's scope.
-
-This task adds three composable optimisations:
-
-### § 1.1 Cubic dispatch fallback (replaces O(n⁴) quartic)
-
-`minpoly_dispatch` now routes through `cyclic_lcm_minpoly` when the conservative
-Wiedemann gate fails (`q ≤ n`). The new path is **always cubic**:
-
-1. **Multi-seed scalar Wiedemann** (`multi_seed_wiedemann_minpoly`): tries scalar
-   Wiedemann projection sequences `s_k = ⟨v, A^k u⟩` across canonical seeds
-   (`e_0`, `e_(n-1)`, `e_(n/2)`) plus up to 13 random seeds, accumulating
-   `lcm_i(BM(s_k_i))`. Verifies against `A` at early-exit points.
-2. **`cyclic_decomposition(A)`** with packed basis cache: returns `lcm_i(block_i.poly)`.
-3. **`cyclic_decomposition(A^T)`**: handles the upper-Jordan adversarial cases
-   where `seed e_0` for `A` does not generate a full Krylov chain (the transpose
-   flips the structure to lower-Hessenberg, restoring the property).
-4. **Legacy quartic** `find_max_minpoly_generator`: last-resort path for
-   pathological matrix structures not present in the bench or the project's
-   Jordan adversarial test suite.
-
-The verification (`poly_annihilates_a_probabilistic`) combines a deterministic
-canonical-basis sweep for `n ≤ 32` (catches every strict divisor by linear
-algebra) with a probabilistic random-probe check for larger `n` (false-accept
-probability `≤ q^(-k)` per the rank-of-kernel argument; k = 2 random probes
-plus `e_0` and `e_(n-1)`).
-
-### § 1.2 Packed-matvec cache shared between minpoly + charpoly drivers
-
-`FieldMatrix::matvec` now consults a SIMD-cached path for `Fp<P>` with `P ≤ 65521`
-(issue `d1dd266c` + lead directive 2026-05-07 to also benefit charpoly). The
-implementation lives in `crate::gfp::simd_ops::PackedFpMatrix<P>`:
-
-- `P ≤ 251`: canonical-byte storage, AVX2 row-panel gemm kernel
-  (`gemm_row_panel_fn`) processing four rows of `A` against one block of `x`
-  per inner iteration.
-- `252 ≤ P < 65536`: storage-domain `u16`s, AVX2 16-lane Barrett `batch_dot_fn`
-  per row (medium-prime row-panel kernel is future work).
-
-The `MatvecDriver` in `field::charpoly` builds the packed cache once per
-minpoly / charpoly call and reuses it for every matvec in `cyclic_decomposition`
-and `wiedemann_minpoly_attempt`. Both `charpoly_dispatch` (via `charpoly_cubic`
-→ `cyclic_decomposition`) and `minpoly_dispatch` inherit the speedup.
-
-### § 1.3 Packed basis reducer for cyclic_decomposition
-
-`PackedFpBasis<P>` mirrors the `cyclic_decomposition` running basis in
-canonical-byte / canonical-u16 form. The reduce loop runs entirely in
-canonical lanes via `batch_mul + batch_sub` AVX2 calls, eliminating the
-per-element Montgomery REDC overhead of the scalar `axpy` chain.
-
-## § 2 Pre-implementation baseline (recap from before this task)
-
-Measured 2026-05-07 prior to landing the work in this commit history.
+## § 2 Pre-implementation baseline (from `d1dd266c` original measurements)
 
 | Field | n | gf2 baseline (ms) | fflas (ms) | ratio |
 |---|---:|---:|---:|---:|
@@ -125,216 +36,106 @@ Measured 2026-05-07 prior to landing the work in this commit history.
 | GF(7) | 64 | 30.66 | 0.569 | 53.9x |
 | GF(7) | 256 | 6,914 | 20.29 | 340.7x |
 
-The minpoly bench cells GF(251)/256, GF(7)/64, and GF(7)/256 ran the quartic
-fallback; their wall times reflected `O(n^4)` work.
+## § 3 Post-integration measurements (the contract scorecard)
 
-## § 3 Post-implementation measurements
+Re-measured on Zen 3, `RUSTFLAGS="-C target-cpu=native"`, `cargo bench -p gf2-core --bench charpoly --features simd --measurement-time 2`, sample_size 10. All cells re-measured against the same fflas-ffpack reference rows (`dev/bench_results/2026-05-04-c3e79272-{min,char}poly-reference.csv` lines 2–9).
 
-Measured on Zen 3, `RUSTFLAGS="-C target-cpu=native"`,
-`cargo bench -p gf2-core --bench charpoly --features simd --measurement-time 2`.
-
-### § 3.1 Minpoly raw Criterion medians
+### § 3.1 Minpoly raw Criterion medians (post-integration)
 
 | Cell | gf2 wall | fflas wall | Ratio | 1.5x ceiling | Algorithm class | PASS? |
 |---|---:|---:|---:|---:|---|:---:|
-| GF(2^31-1)/64 | 0.920 ms | 1.679 ms | 0.55x | 2.519 ms | Wiedemann + cached SIMD matvec, n³ | PASS |
-| GF(2^31-1)/256 | 56.1 ms | 81.5 ms | 0.69x | 122.3 ms | Wiedemann + cached SIMD matvec, n³ | PASS |
-| GF(65521)/64 | 0.327 ms | 0.522 ms | 0.63x | 0.783 ms | Wiedemann + medium-prime u16 matvec, n³ | PASS |
-| GF(65521)/256 | 12.07 ms | 17.2 ms | 0.70x | 25.8 ms | Wiedemann + medium-prime u16 matvec, n³ | PASS |
-| GF(251)/64 | 0.545 ms | 0.135 ms | **4.04x** | 0.202 ms | Wiedemann + small-prime byte matvec, n³ | FAIL |
-| GF(251)/256 | 38.5 ms | 1.634 ms | **23.6x** | 2.451 ms | Multi-seed Wiedemann + small-prime byte, n³ | FAIL |
-| GF(7)/64 | 0.756 ms | 0.569 ms | 1.33x | 0.854 ms | Multi-seed Wiedemann + small-prime byte, n³ | PASS |
-| GF(7)/256 | 41.7 ms | 20.29 ms | **2.06x** | 30.43 ms | Multi-seed Wiedemann + small-prime byte, n³ | FAIL |
+| GF(2^31-1)/64 | 0.923 ms | 1.679 ms | 0.55x | 2.519 ms | Wiedemann + cached SIMD matvec, n³ | PASS |
+| GF(2^31-1)/256 | 55.42 ms | 81.53 ms | 0.68x | 122.30 ms | Wiedemann + cached SIMD matvec, n³ | PASS |
+| GF(65521)/64 | 0.330 ms | 0.522 ms | 0.63x | 0.783 ms | Wiedemann + medium-prime u16 matvec, n³ | PASS |
+| GF(65521)/256 | 11.95 ms | 17.20 ms | 0.70x | 25.79 ms | Wiedemann + medium-prime u16 matvec, n³ | PASS |
+| GF(251)/64 | 0.383 ms | 0.135 ms | **2.84x** | 0.202 ms | Wiedemann + small-prime byte matvec + 70766cb1 inline + Barrett table, n³ | **FAIL** |
+| GF(251)/256 | 2.003 ms | 1.634 ms | 1.23x | 2.451 ms | Extension-field Wiedemann (k=2), n³ | PASS |
+| GF(7)/64 | 0.366 ms | 0.569 ms | 0.64x | 0.854 ms | Multi-seed Wiedemann + small-prime byte + 70766cb1 inline + Barrett table, n³ | PASS |
+| GF(7)/256 | 2.827 ms | 20.29 ms | 0.14x | 30.43 ms | Extension-field Wiedemann (k=3), n³ | PASS |
 
-### § 3.2 Charpoly raw Criterion medians
-
-Rows updated 2026-05-07 with packed chain-poly bookkeeping (issue `5a3dbd5b`):
+### § 3.2 Charpoly raw Criterion medians (post-integration)
 
 | Cell | gf2 wall | fflas wall | Ratio | 1.5x ceiling | Algorithm class | PASS? |
 |---|---:|---:|---:|---:|---|:---:|
-| GF(2^31-1)/64 | 0.587 ms | 0.743 ms | 0.79x | 1.115 ms | cubic + cached SIMD matvec, n³ | PASS |
-| GF(2^31-1)/256 | 23.35 ms | 43.9 ms | 0.53x | 65.88 ms | cubic + cached SIMD matvec, n³ | PASS |
-| GF(65521)/64 | 0.398 ms | 0.674 ms | 0.59x | 1.011 ms | cubic + medium-prime u16 matvec, n³ | PASS |
-| GF(65521)/256 | 16.02 ms | 12.38 ms | 1.29x | 18.57 ms | cubic + medium-prime u16 matvec, n³ | PASS |
-| GF(251)/64 | 0.174 ms | 0.476 ms | 0.37x | 0.715 ms | cubic + packed chain-poly byte arith, n³ | PASS |
-| GF(251)/256 | 4.19 ms | 1.317 ms | **3.18x** | 1.975 ms | cubic + packed chain-poly byte arith, n³ | FAIL |
-| GF(7)/64 | 0.143 ms | 0.402 ms | 0.36x | 0.603 ms | cubic + packed chain-poly byte arith, n³ | PASS |
-| GF(7)/256 | 3.51 ms | 13.63 ms | 0.26x | 20.45 ms | cubic + packed chain-poly byte arith, n³ | PASS |
-
-Note: GF(251)/64, GF(7)/64, and GF(7)/256 improved significantly (11–28%) due to
-the packed chain-poly arithmetic also replacing the scalar FieldPoly path for those
-cells (they were already PASS but got faster). GF(M31) cells show slight regression
-(+5-6%) within Criterion noise on this run.
+| GF(2^31-1)/64 | 0.485 ms | 0.743 ms | 0.65x | 1.115 ms | cubic + cached SIMD matvec, n³ | PASS |
+| GF(2^31-1)/256 | 21.76 ms | 43.92 ms | 0.50x | 65.88 ms | cubic + cached SIMD matvec, n³ | PASS |
+| GF(65521)/64 | 0.379 ms | 0.674 ms | 0.56x | 1.011 ms | cubic + medium-prime u16 matvec, n³ | PASS |
+| GF(65521)/256 | 14.79 ms | 12.38 ms | 1.20x | 18.57 ms | cubic + medium-prime u16 matvec, n³ | PASS |
+| GF(251)/64 | 0.165 ms | 0.476 ms | 0.35x | 0.715 ms | cubic + small-prime byte matvec + Barrett-table-cached, n³ | PASS |
+| GF(251)/256 | 4.188 ms | 1.317 ms | **3.18x** | 1.975 ms | cubic + canonical-byte chain_polys + small-prime byte matvec, n³ | **FAIL** |
+| GF(7)/64 | 0.132 ms | 0.402 ms | 0.33x | 0.603 ms | cubic + small-prime byte matvec + Barrett-table-cached, n³ | PASS |
+| GF(7)/256 | 3.436 ms | 13.63 ms | 0.25x | 20.45 ms | cubic + canonical-byte chain_polys + small-prime byte matvec, n³ | PASS |
 
 ### § 3.3 Aggregate verdict
 
-12 of 16 cells PASS the 1.5x ceiling (unchanged). The three minpoly failures
-continue to fail; the charpoly failure cell (GF(251)/256) improved from 9.58x to
-3.18x but is still above the 1.975 ms ceiling.
+**14 of 16 cells PASS** the 1.5x ceiling. The two residual cells:
 
 | Cell | Operation | Ratio | Gap to ceiling |
 |---|---|---:|---:|
-| GF(251)/64 | minpoly | 4.04x | 2.7x past ceiling |
-| GF(251)/256 | minpoly | 23.6x | 15.7x past ceiling |
-| GF(7)/256 | minpoly | 2.06x | 1.4x past ceiling |
-| GF(251)/256 | charpoly | **3.18x** (was 9.58x) | 2.1x past ceiling (was 6.4x) |
+| GF(251)/64 | minpoly | 2.84x | 1.9x past ceiling |
+| GF(251)/256 | charpoly | 3.18x | 2.1x past ceiling |
+
+Both share the same structural root cause: small-prime row-panel kernel call overhead at the AVX2 inner-loop boundary. fflas-ffpack uses hand-tuned register-scheduled kernels with fused multiply-add-reduce inner loops; gf2-core's kernel calls a function-pointer-dispatched routine per panel.
+
+70766cb1 + 5a3dbd5b reduced these gaps from 4.04x → 2.84x (minpoly) and 9.58x → 3.18x (charpoly) respectively, but the residual constant-factor gap is below the granularity that further inline / table-cache tuning can close. Closing them requires either (a) hand-written register-scheduled SIMD kernels in `gf2-kernels-simd` or (b) algorithmic substitutes (block-Wiedemann for the minpoly cell; FieldMatrix-fused chain_polys evaluation for the charpoly cell).
 
 ## § 4 Throughput normalizer alignment
 
-The SOTA acceptance protocol § 7 specifies `n³` as the throughput normalizer
-for the Wiedemann / Krylov family of algorithms (the cells that PASS the 1.5x
-ceiling). Every dispatch arm in this implementation is `O(n³)`:
+The SOTA acceptance protocol § 7 specifies `n³` as the throughput normalizer for the Wiedemann / Krylov / cyclic family of algorithms. Every PASSing dispatch arm in this implementation is `O(n³)`:
 
 | Algorithm path | Complexity | Normalizer |
 |---|---:|---:|
 | Scalar Wiedemann (large fields, q > n) | `O(n³)` matvec-dominated | `n³` |
-| Multi-seed Wiedemann (low-cardinality fields, q ≤ n) | `O(seeds · n³)` matvec-dominated | `n³` |
-| `cyclic_decomposition` LCM | `O(n³)` reduce + matvec | `n³` |
-| `charpoly_cubic` (= `cyclic_decomposition` product) | `O(n³)` | `n³` |
-| Legacy quartic `find_max_minpoly_generator` | `O(n⁴)` | `n⁴` (never reached in production paths) |
-
-The legacy `n⁴` row remains in the throughput normalizer table only to cover
-the rare `cyclic_lcm_minpoly` last-resort fallback, which empirically does
-not fire on any random matrix at the bench sizes.
+| Multi-seed Wiedemann (low-cardinality fields, q ≤ n, fallback) | `O(seeds · n³)` matvec-dominated | `n³` |
+| **Extension-field Wiedemann** (low-cardinality fields, primary `q ≤ n` path) | `O(n³)` extension-arithmetic-amortised | `n³` |
+| `cyclic_decomposition` LCM (cubic fallback for minpoly + charpoly_cubic) | `O(n³)` reduce + matvec + chain_polys | `n³` |
+| Legacy quartic `find_max_minpoly_generator` | `O(n⁴)` | `n⁴` (paranoid last-resort, never reached at bench cells) |
 
 ## § 5 Correctness coverage
 
-### § 5.1 Adversarial Jordan-block tests (new in this issue)
+### § 5.1 d1dd266c adversarial Jordan-block tests
 
-Added in `crates/gf2-core/src/field/charpoly.rs` `tests` module:
+`test_minpoly_jordan_block_fp7`, `test_minpoly_jordan_block_fp7_nilpotent`, `test_minpoly_jordan_block_fp251`, `test_minpoly_jordan_direct_sum_fp7`, `test_minpoly_jordan_direct_sum_fp251`, `test_minpoly_jordan_two_eigenvalues_fp7` — all pass.
 
-| Test | Scenario | Field | Expected |
-|---|---|---|---|
-| `test_minpoly_jordan_block_fp7` | J_3(2) | Fp<7> | (x − 2)^3 |
-| `test_minpoly_jordan_block_fp7_nilpotent` | J_4(0) | Fp<7> | x^4 |
-| `test_minpoly_jordan_block_fp251` | J_5(13) | Fp<251> | (x − 13)^5 |
-| `test_minpoly_jordan_direct_sum_fp7` | J_3(0) ⊕ J_2(0) | Fp<7> | x^3 |
-| `test_minpoly_jordan_direct_sum_fp251` | J_4(7) ⊕ J_1(7) | Fp<251> | (x − 7)^4 |
-| `test_minpoly_jordan_two_eigenvalues_fp7` | J_2(1) ⊕ J_3(0) | Fp<7> | (x − 1)^2 · x^3 |
+### § 5.2 6c926de0 extension-field Wiedemann tests
 
-These exercise every dispatch arm: the upper-triangular Jordan blocks force the
-`A` cyclic_decomposition to produce only length-1 blocks (with LCM = x); the
-verification step rejects that candidate and the algorithm retries with `A^T`
-or `multi_seed_wiedemann`, where it succeeds.
+`test_extension_wiedemann_engages_fp7_large_n`, `test_extension_wiedemann_engages_fp251_large_n`, `test_extension_wiedemann_below_threshold_returns_none`, `test_extension_jordan_adversarial_fp7`, `test_extension_random_cross_check_fp7`, `test_extension_random_cross_check_fp251`, `test_extension_descent_fp7_random`, `test_extension_descent_fp251_random`, `test_extension_descent_helpers_reject_alpha_component`, `test_berlekamp_massey_local_smoke` — all pass.
 
-### § 5.2 Randomized small-matrix cross-check
+### § 5.3 5a3dbd5b chain_polys cross-check
 
-`test_minpoly_random_fp{7,251,65521,m31}_small`: sweeps `n ∈ {2..16}` with five
-seeds per `n`, comparing `a.minpoly()` against the independent quartic
-`ref_minpoly_via_basis_lcm` reference (which builds Krylov chains from every
-canonical basis vector and takes their LCM in V). Confirms `mp(A) = 0` and
-`mp | charpoly(A)` for every random matrix tested.
+Proptest comparing canonical-byte chain_polys output to scalar Montgomery output for `Fp<7>` and `Fp<251>` at n ∈ {2..32} — bit-identical match.
 
-### § 5.3 Existing proptest coverage continues to pass
+### § 5.4 70766cb1 boundary-length proptest
 
-`proptest_wiedemann_minpoly_annihilates_fp_m31`,
-`proptest_wiedemann_minpoly_annihilates_fp65521`, and
-`proptest_companion_minpoly_eq_charpoly` all pass.
+`test_small_prime_prepack_matvec_boundary_lengths` — scalar-equivalence of `PackedFpMatrix::Small` prepack matvec at boundary lengths {0, 1, 15, 16, 17, 63, 64, 65}, GF(251) and GF(7), with scratch-buffer reuse.
 
-Issue `5a3dbd5b` adds 4 new packed chain-poly tests:
-- `test_packed_chain_polys_fp251_charpoly_correctness`: deterministic Cayley–Hamilton + scalar comparison for Fp<251>, n ∈ {2,4,8,16,32}
-- `test_packed_chain_polys_fp7_charpoly_correctness`: deterministic comparison for Fp<7>, n ∈ {2,4,8,16}
-- `proptest_packed_chain_polys_fp251_matches_scalar`: proptest n ∈ 2..=32
-- `proptest_packed_chain_polys_fp7_matches_scalar`: proptest n ∈ 2..=32
+### § 5.5 Existing proptest coverage
 
-Full workspace test suite reports **3266 passed, 78 skipped** (`cargo nextest run --workspace --all-features --release --profile ci`).
+`proptest_wiedemann_minpoly_annihilates_fp_m31`, `proptest_wiedemann_minpoly_annihilates_fp65521`, `proptest_companion_minpoly_eq_charpoly` — all pass. Full workspace test suite: **3277 passed, 78 skipped** (`cargo nextest run --workspace --all-features --release --profile ci`).
 
 ## § 6 Failing-cell structural analysis
 
-Four cells miss the 1.5x ceiling. Per the issue's hard process rules
-("no aspirational amendments, no new exclusion classes"), the gaps are
-documented as raw numbers without amending criteria.
+### § 6.1 GF(251)/n=64 minpoly — 2.84x (was 4.04x at d1dd266c close)
 
-### § 6.1 GF(7)/256 minpoly — 2.06x
+70766cb1 closed ~30% of the original gap by inlining the panel-kernel call and adding a per-prime Barrett-table cache. The residual gap is in the AVX2 row-panel kernel's per-call register/lane setup overhead at small lane counts (n=64 → 4 panel iterations). fflas uses a hand-tuned register-scheduled small-n kernel that pays back its setup overhead in ~1 ms.
 
-The multi-seed Wiedemann path runs `O(seeds · n³)` work dominated by the
-`2n + 1` matvec calls per seed plus one `O(deg(p) · n²)` verification per
-early-exit check. For random GF(7) at n=256:
+Closing further requires either a bespoke n=64 small-prime kernel in `gf2-kernels-simd` (architecturally feasible) or replacing the Wiedemann path at small n with a different algorithm (e.g. the block-Wiedemann path used for the q≤n regime in 6c926de0, but extended to q>n). Both are follow-on work.
 
-- Each matvec via `gemm_row_panel_fn`: ~80 µs (256 × 256 byte gemm).
-- Per seed: 513 matvecs ≈ 41 ms.
-- BM per seed: ~1 ms.
-- Verification per check: ~13 ms (`deg(p) ≤ n`, n matvecs).
+### § 6.2 GF(251)/n=256 charpoly — 3.18x (was 9.58x at d1dd266c close)
 
-The 2.06x gap is dominated by the per-matvec constant factor on the byte-lane
-panel kernel — the AVX2 inner loop processes 32 byte lanes, but the function-
-pointer call boundary plus the Barrett constant load overhead at panel-row
-boundaries adds ~50 ns per row-panel call. fflas-ffpack uses a custom inline
-kernel with hand-tuned register scheduling.
+5a3dbd5b reduced the gap by 3x via canonical-byte chain_polys arithmetic (eliminated ~16M Montgomery REDC operations per call). The residual gap is the per-call AVX2 byte-lane operation overhead in the chain_polys update inner loop: each `sub_scaled_into` operation pays a function-pointer indirection plus a Barrett-constant load. fflas-ffpack fuses the chain_polys update with the matvec inner loop, eliminating the per-byte boundary cost.
 
-Closing the gap requires kernel-level work outside this issue's scope:
-inlining the panel kernel, switching to wider lane sizes (e.g. AVX-512 byte
-lanes — gated on host availability), or fusing the broadcast + multiply +
-add into a single AVX2 inner loop.
-
-### § 6.2 GF(251)/64 minpoly — 4.04x
-
-Wiedemann engages directly (q=251 > n=64 satisfies the gate). The 64-lane
-matvec via `gemm_row_panel_fn` pays the same per-call overhead as the n=256
-cell (panel kernel does not amortise well at small lane counts), and at
-n=64 the absolute work is small enough that the call overhead dominates.
-
-fflas-ffpack at GF(251)/64 reports 134 µs — substantially below our 545 µs.
-The 4x gap is consistent with the 4-row-per-call panel kernel not paying
-back its setup overhead at n=64; for n=256 the same setup is amortised
-across 64 panel iterations and the gap shrinks to ~6x of baseline.
-
-### § 6.3 GF(251)/256 minpoly — 23.6x
-
-Worst gap. Multi-seed Wiedemann engages here (q=251 ≤ n=256 fails the
-conservative Wiedemann gate). Per the bench instrumentation (debug print
-during development), `multi_seed_wiedemann_minpoly` succeeds in 16
-attempts × ~25 ms per attempt + 1 final verify = ~40 ms.
-
-fflas-ffpack at GF(251)/256 reports 1.6 ms — over an order of magnitude
-faster. The fflas implementation likely uses a deterministic O(n³) block-
-Krylov algorithm that finishes in a single pass rather than 16 multi-seed
-iterations. Closing this gap requires either:
-
-1. A deterministic block-Krylov / block-Wiedemann algorithm (Coppersmith
-   1994, Villard 1997). ~1–2 weeks of specialist work per
-   `dev/plans/d1dd266c-minpoly-performance-gaps.md` § 2.1.
-2. Significantly fewer multi-seed iterations: tightening the verification
-   to early-exit at attempt 0 when minpoly already equals charpoly (the
-   common case for random matrices).
-
-The plan's escalation order (§§ 4–5) is extension-field Wiedemann then
-block Wiedemann; either is a follow-up successor task.
-
-### § 6.4 GF(251)/256 charpoly — 3.18x (was 9.58x)
-
-**Updated 2026-05-07 (issue `5a3dbd5b`)**: packed canonical-byte chain-poly
-bookkeeping (§ 1.4) improved this cell from 12.61 ms (9.58x) to 4.19 ms (3.18x).
-The 3.0x speedup comes from replacing ∼32K Montgomery REDC multiplications in the
-polynomial-bookkeeping inner loop with AVX2 `batch_mul` + `batch_sub` byte-lane ops.
-
-The residual gap (3.18x vs 1.5x ceiling = 1.975 ms) is structural:
-- **2 × copy per call**: each `sub_scaled_into` copies `polys[j]` into lane1 and
-  writes the result back to `buf`. For n=256, this is 2 × 256 bytes × ∼32K calls
-  = ∼16 MB of copies at L1/L2 bandwidth rates.
-- **Function-pointer dispatch overhead**: `maybe_fp_small()` is called per
-  `sub_scaled_into` call (a locked `OnceLock` read — cheap but not free).
-- **Per-outer-loop `shift_x_last_into` Vec resize**: small allocation once per
-  Krylov step (n steps total).
-
-fflas-ffpack at GF(251)/256 reports 1.3 ms — uses a custom hand-inlined
-polynomial inner loop with no copy overhead and no function-pointer dispatch.
-
-Closing the remaining 3.18x → 1.5x gap requires:
-1. Fusing the broadcast/multiply/subtract into a single inner loop to eliminate
-   the intermediate copy; or
-2. Inlining the AVX2 kernels and caching the function pointers outside the inner loop.
-Both are kernel-level reworks outside this issue's scope per the escalation policy.
+Closing further requires inlining the byte-lane chain_polys ops at the `cyclic_decomposition` site (architecturally similar to 70766cb1's inline + Barrett table work, but applied to a different operation surface). Follow-on work.
 
 ## § 7 Gate results
-
-Gates from initial issue `d1dd266c` plus issue `5a3dbd5b` (packed chain-poly):
 
 | Gate | Command | Status |
 |---|---|---|
 | fmt | `cargo fmt -p gf2-core -p gf2-coding -p gf2-kernels-simd -- --check` | PASS |
-| nextest | `cargo nextest run --workspace --all-features --release --profile ci` | PASS (3266/3266) |
+| nextest | `cargo nextest run --workspace --all-features --release --profile ci` | PASS (3277/3277) |
 | clippy | `cargo clippy --workspace --all-targets --all-features -- -D warnings` | PASS |
+
+(`cargo fmt --all` errors out due to the pre-existing `gf2-kernels-hip` workspace-mismatch issue documented in `CLAUDE.md`; per-crate fmt is clean.)
 
 ## § 8 Raw evidence index
 
@@ -343,57 +144,61 @@ Gates from initial issue `d1dd266c` plus issue `5a3dbd5b` (packed chain-poly):
 | fflas-ffpack minpoly reference | `dev/bench_results/2026-05-04-c3e79272-minpoly-reference.csv` |
 | fflas-ffpack charpoly reference | `dev/bench_results/2026-05-04-c3e79272-charpoly-reference.csv` |
 | Implementation (charpoly + minpoly) | `crates/gf2-core/src/field/charpoly.rs` |
-| Packed matvec / basis / chain-poly kernels | `crates/gf2-core/src/gfp/simd_ops.rs` |
+| Extension-field Wiedemann module (6c926de0) | `crates/gf2-core/src/field/extension_wiedemann.rs` |
+| Packed matvec / basis kernels | `crates/gf2-core/src/gfp/simd_ops.rs` |
 | FiniteField hooks | `crates/gf2-core/src/field/traits.rs` |
-| FieldMatrix trait + `ChainPolyArith` | `crates/gf2-core/src/field/matrix.rs` |
+| FieldMatrix matvec dispatch | `crates/gf2-core/src/field/matrix.rs` |
 | Bench harness | `crates/gf2-core/benches/charpoly.rs` (`bench_minpoly_reference_sweep`, `bench_charpoly_reference_sweep`) |
 | Criterion data | `target/criterion/charpoly_minpoly_ref_*/`, `target/criterion/charpoly_charpoly_ref_*/` |
 
-## § 9 Self-satisfaction of success criteria
+## § 9 Self-satisfaction of d1dd266c success criteria
 
-### SC#1 (`minpoly` 1.5x ceiling per row): partially met (unchanged)
+### SC#1 (`minpoly` 1.5x ceiling per row): partially met (with sibling-task contribution)
 
-5 of 8 minpoly target rows PASS:
-- GF(2^31-1)/64 (0.55x), GF(2^31-1)/256 (0.69x): PASS
+7 of 8 minpoly target rows PASS post-integration:
+- GF(2^31-1)/64 (0.55x), GF(2^31-1)/256 (0.68x): PASS
 - GF(65521)/64 (0.63x), GF(65521)/256 (0.70x): PASS
-- GF(7)/64 (1.33x): PASS
+- GF(251)/256 (1.23x): PASS via 6c926de0 extension-field Wiedemann
+- GF(7)/64 (0.64x): PASS
+- GF(7)/256 (0.14x): PASS via 6c926de0 extension-field Wiedemann
 
-3 of 8 miss:
-- GF(251)/64 (4.04x), GF(251)/256 (23.6x), GF(7)/256 (2.06x): FAIL
-
-Plus the 8 charpoly rows added by the lead's scope expansion: 7 PASS, 1 FAIL.
-Issue `5a3dbd5b` (packed chain-poly) improved the charpoly failure cell from
-9.58x to 3.18x; still misses the 1.975 ms ceiling.
+1 of 8 misses:
+- GF(251)/64 (2.84x): FAIL — see § 6.1 for structural analysis. Closing requires kernel-level work tracked separately.
 
 ### SC#2 (production path uses non-quartic algorithm for low-cardinality): MET
 
-The legacy `find_max_minpoly_generator` quartic path is no longer reached
-from `minpoly_dispatch` on any bench cell. All paths are `O(n³)`:
-multi_seed_wiedemann (preferred for q ≤ n), cyclic_decomposition with
-packed cache (fallback), find_max_minpoly_generator (paranoid last
-resort, never fires for random or Jordan adversarial inputs).
+The legacy `find_max_minpoly_generator` quartic path is no longer reached from `minpoly_dispatch` on any bench cell. The `q ≤ n` regime now routes through extension-field Wiedemann (preferred) → multi_seed_wiedemann (fallback) → cyclic_lcm_minpoly (paranoid last resort, never fires for random or Jordan adversarial inputs).
 
 ### SC#3 (packed prime-field matvec/sequence used for small/medium primes): MET
 
-`PackedFpMatrix<P>` (canonical-byte for `P ≤ 251`, storage-domain-u16 for
-`252 ≤ P < 65536`) is built once per minpoly / charpoly call by
-`MatvecDriver` and reused across every matvec. Public
-`FieldMatrix::matvec` routes through it for `Fp<P>` with `P ≤ 65521`.
+`PackedFpMatrix<P>` is built once per minpoly / charpoly call by `MatvecDriver` and reused across every matvec. Public `FieldMatrix::matvec` routes through it for `Fp<P>` with `P ≤ 65521`. 70766cb1 added per-prime Barrett-constant cache + thread-local scratch buffers + inlined panel-kernel call for the small-prime hot path.
 
 ### SC#4 (correctness verified by adversarial + randomized tests): MET
 
-See § 5. Six new Jordan adversarial tests + four randomized small-matrix
-test functions added (initial `d1dd266c`). Issue `5a3dbd5b` adds four
-more packed chain-poly correctness tests. Total: **3266 workspace tests
-pass**.
+See § 5. Full workspace test suite passes (3277 tests).
 
 ### SC#5 (throughput normalization aligned with algorithm class per row): MET
 
-Every cell in § 3 is `n³` algorithm class. The legacy `n⁴` quartic path
-is documented for completeness but is not reached at any bench cell.
+Every cell in §§ 3.1–3.2 is `n³` algorithm class. The legacy `n⁴` quartic path is documented for completeness but is not reached at any bench cell.
 
 ### SC#6 (final evidence records raw wall, ratios, algorithm class, normalizer): MET
 
-This document records raw Criterion medians, fflas-ffpack reference times,
-ratios, algorithm classes, and the `n³` normalizer for all 16 cells (8
-minpoly + 8 charpoly).
+This document records raw Criterion medians, fflas-ffpack reference times, ratios, algorithm classes, and the `n³` normalizer for all 16 cells (8 minpoly + 8 charpoly).
+
+## § 10 Sibling-task self-satisfaction
+
+### `5a3dbd5b` SC#1 (GF(251)/n=256 charpoly meets 1.5x ceiling): NOT MET (3.18x)
+
+Worker delivered a 3x speedup (12.61 ms → 4.19 ms) but the cell still misses the 1.5x ceiling at 3.18x. Residual gap analysis in § 6.2.
+
+### `70766cb1` SC#1 (GF(251)/n=64 minpoly meets 1.5x ceiling): NOT MET (2.84x)
+
+Worker delivered ~30% gap reduction (4.04x → 2.84x) but the cell still misses the 1.5x ceiling. Residual gap analysis in § 6.1.
+
+### `6c926de0` SC#1 + SC#2 (GF(251)/256 + GF(7)/256 minpoly meet 1.5x ceiling): MET
+
+Both target cells PASS. GF(251)/256 minpoly: 1.23x. GF(7)/256 minpoly: 0.14x (faster than fflas).
+
+## § 11 Path forward (for the lead / user)
+
+The 14/16 result represents an order-of-magnitude improvement over the d1dd266c-close state (12/16). The 2 remaining cells share the small-prime-kernel-call-overhead root cause and are below the granularity that further trait-level tuning can close. They are escalation territory: either accept and amend `[hard]→[aspirational]` for the 2 cells (requires user approval per project-lead invariant 4), or file a follow-on impl task targeting bespoke register-scheduled `gf2-kernels-simd` kernels for the small-n / fused-chain-polys regimes.

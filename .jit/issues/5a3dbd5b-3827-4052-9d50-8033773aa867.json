@@ -2,9 +2,9 @@
   "id": "5a3dbd5b-3827-4052-9d50-8033773aa867",
   "title": "Canonical-byte polynomial arithmetic for cyclic_decomposition chain_polys",
   "description": "Replace the scalar Montgomery polynomial-bookkeeping inside `cyclic_decomposition`'s `chain_polys` updates with canonical-byte polynomial arithmetic for `Fp<P>` with `P ≤ 251`, removing the ~16M Montgomery REDC operations that dominate `GF(251)/n=256` charpoly.\n\n## Background\n\n`d1dd266c` landed `PackedFpMatrix<P>` + `PackedFpBasis<P>` so the matvec and basis-reduce arms of `cyclic_decomposition` run in canonical-byte form. The remaining hot path is the polynomial-bookkeeping loop that updates `chain_polys[k]` after each Krylov step — each update is `O(k)` field operations × `O(k)` substitutions, totalling `O(n^3)` Montgomery muls at `n=256`. Empirically: ~16M Mont muls × ~10 ns ≈ 160 ms estimated; measured 12.6 ms (zero-coefficient skips help). fflas runs the equivalent in 1.3 ms.\n\n## Hard ceilings (fflas-ffpack reference)\n\n| Cell | fflas wall | 1.5x ceiling | Current gf2 wall | Current ratio |\n|---|---:|---:|---:|---:|\n| GF(251)/n=256 charpoly | 1.317 ms | 1.975 ms | 12.61 ms | 9.58x FAIL |\n\n## Success Criteria\n\n- [hard] `GF(251)/n=256` charpoly meets the 1.5x ceiling (≤ 1.975 ms) on the current Zen 3 host.\n- [hard] `cyclic_decomposition`'s `chain_polys` updates execute in canonical-byte arithmetic for `Fp<P>` with `P ≤ 251`, with no Montgomery REDC inside the inner update loop. Scalar Montgomery path is retained as a fallback for non-`Fp` fields and for `P > 251`.\n- [hard] No regression on any other charpoly or minpoly cell currently PASSing.\n- [hard] Correctness: existing `cyclic_decomposition` invariants continue to pass; add a proptest comparing the canonical-byte chain_polys output to the scalar Montgomery output across random matrices over `Fp<7>` and `Fp<251>`, sizes n ∈ {2..32}.\n- [hard] Final evidence updates `dev/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md` (or a successor doc) with the new GF(251)/n=256 charpoly Criterion median + before/after comparison.\n\n## Notes\n\nThe replacement should ideally also speed up `GF(7)/n=256` charpoly (currently 0.82x — already PASSing, but the same algorithmic path benefits). No regression target on that cell; just measure post-implementation.\n\n`d1dd266c` is blocked on this task.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [],
   "gates_required": [
     "code-review",
@@ -21,5 +21,5 @@
     "story:sota-polynomial-invariants"
   ],
   "created_at": "2026-05-07T13:18:49.508931656+00:00",
-  "updated_at": "2026-05-07T13:18:49.508939236+00:00"
+  "updated_at": "2026-05-07T13:19:30.938216019+00:00"
 }

@@ -2,9 +2,9 @@
   "id": "70766cb1-2d79-4194-becd-7e17984310d0",
   "title": "Inline small-prime panel-kernel + Barrett-constant cache for n=64",
   "description": "Eliminate the per-call panel-kernel function-pointer dispatch + Barrett-constant load overhead that dominates `gemm_row_panel_fn` at small `n` (≈ 50 ns per row-panel call). Closes the residual minpoly gap on `GF(251)/n=64` which the d1dd266c packed matvec landing did not amortize.\n\n## Background\n\n`d1dd266c` landed `crate::gfp::simd_ops::gemm_row_panel_fn` (canonical-byte AVX2 row-panel kernel processing four rows per iteration). At n=256 the kernel amortises across 64 panel iterations and the `GF(251)/256` charpoly cell PASSes (0.63x). At n=64 the kernel only runs 16 panel iterations and the per-call overhead (function-pointer indirection + Barrett constant load + SIMD register spill at the AVX2 boundary) dominates.\n\n## Hard ceilings (fflas-ffpack reference)\n\n| Cell | fflas wall | 1.5x ceiling | Current gf2 wall | Current ratio |\n|---|---:|---:|---:|---:|\n| GF(251)/n=64 minpoly | 0.135 ms | 0.202 ms | 0.545 ms | 4.04x FAIL |\n\n## Success Criteria\n\n- [hard] The `GF(251)/n=64` minpoly cell meets the 1.5x ceiling (≤ 0.202 ms) on the current Zen 3 host.\n- [hard] Either: (a) the panel-kernel call site is inlined at the dispatch boundary so the function-pointer indirection is removed, or (b) a per-prime Barrett-constant cache amortises the constant load across an entire matvec (rather than per row-panel call), or (c) both. The choice is implementation discretion.\n- [hard] No regression on `GF(251)/n=256` charpoly or `GF(251)/n=256` minpoly cells (already tracked by sibling tasks; verify both still pass / improve, do not regress).\n- [hard] No regression on the GF(2^31-1) and GF(65521) minpoly/charpoly cells.\n- [hard] Correctness: scalar-equivalence proptest comparing the inlined / cached path to the reference scalar matvec for boundary lengths {0, 1, 15, 16, 17, 63, 64, 65}.\n- [hard] Final evidence updates `dev/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md` (or a successor doc) with the new GF(251)/n=64 minpoly Criterion median + before/after comparison.\n\n## Notes\n\nAllowed to add a small `#[inline]` hint or a fast-path branch in `crates/gf2-core/src/gfp/simd_ops.rs` and/or `crates/gf2-core/src/gfp/mod.rs`. SIMD register-scheduling work that requires unsafe goes into `gf2-kernels-simd` per project unsafe-isolation rules.\n\n`d1dd266c` is blocked on this task.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [],
   "gates_required": [
     "code-review",
@@ -22,5 +22,5 @@
     "story:sota-polynomial-invariants"
   ],
   "created_at": "2026-05-07T13:18:34.433733503+00:00",
-  "updated_at": "2026-05-07T13:18:34.433741483+00:00"
+  "updated_at": "2026-05-07T13:19:30.799323549+00:00"
 }
