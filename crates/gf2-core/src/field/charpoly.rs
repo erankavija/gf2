@@ -376,8 +376,7 @@ fn cyclic_decomposition_inner<F: FiniteField>(
     // dummy alloc that the previous availability probe still incurred
     // once per decomposition).
     let _ = n; // silence unused-warning when no SIMD or non-Fp field
-    let chain_poly_packed_available =
-        enable_packed_chain_polys && F::chain_poly_arith_available();
+    let chain_poly_packed_available = enable_packed_chain_polys && F::chain_poly_arith_available();
 
     // Running basis B in row-reduced form. We store it as a flat
     // `Vec<FieldVec<F>>` (one per column) so that appending a new
