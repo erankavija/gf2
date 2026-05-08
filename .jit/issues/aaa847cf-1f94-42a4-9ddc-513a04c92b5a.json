@@ -1,0 +1,18 @@
+{
+  "id": "aaa847cf-1f94-42a4-9ddc-513a04c92b5a",
+  "title": "M4RI-style invert path for BitMatrix",
+  "description": "GF(2) BitMatrix invert (Gauss-Jordan over the bitwise tail-masked path) underperforms M4RI's specialised invert at n=64,256,1024. Aggregate ratios in dev/bench_results/2026-05-08-2cfc4372-sota-scorecard.md § 2.3 show 5x-15x gap depending on n.\n\n## Background\n\nThe 974a85bd (GF(2) BitMatrix story) closed at story scope but did not include invert as a hard target. Per epic 97bf0879 umbrella amendment A8 (Wave-12 close-cascade), the 3 GF(2) invert FAIL cells need a named successor. M4RI's mzd_invert_m4ri uses the M4RM gather-tables structure on the working RREF; gf2-core does plain Gauss-Jordan.\n\n## Success Criteria\n\n- [hard] Implement an M4RM-table-augmented invert path in BitMatrix (or document why gf2-core's existing invert is structurally beyond catch-up).\n- [hard] If the implementation lands, GF(2) invert at n in {64, 256, 1024} comes within 1.5x of M4RI mzd_invert_m4ri.\n- [hard] Bit-exact equality with the existing reference invert; no regression on existing tests.\n- [hard] Filed under epic 97bf0879 umbrella amendment A8 as the named follow-up for the 3 GF(2) invert FAIL cells.",
+  "state": "ready",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task"
+  ],
+  "created_at": "2026-05-08T19:12:03.098969420+00:00",
+  "updated_at": "2026-05-08T19:12:03.098980020+00:00"
+}

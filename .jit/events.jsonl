@@ -4305,3 +4305,6 @@
 {"type":"gate_failed","id":"a558b65c-6e39-48a3-bf83-16173a11e49c","issue_id":"97bf0879-357e-4151-bdeb-781987cd0902","timestamp":"2026-05-08T18:52:28.406127108Z","gate_key":"code-review","updated_by":"auto:executor"}
 {"type":"issue_created","id":"830d6085-94f1-43b3-8318-8f078e07a161","issue_id":"5ce13bae-61db-4df2-85b1-87447f643cd8","timestamp":"2026-05-08T19:11:49.303708253Z","title":"Markowitz-degree pivot selection for sparse RREF","priority":"normal"}
 {"type":"issue_created","id":"f55af328-8199-4764-8023-29c775d2dbe8","issue_id":"aaa847cf-1f94-42a4-9ddc-513a04c92b5a","timestamp":"2026-05-08T19:12:03.099307660Z","title":"M4RI-style invert path for BitMatrix","priority":"normal"}
+{"type":"gate_passed","id":"2948a1b8-1cf7-4acf-ba37-3a5333dc4164","issue_id":"97bf0879-357e-4151-bdeb-781987cd0902","timestamp":"2026-05-08T19:21:21.817739691Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"a3975f52-e854-42f1-94a6-02f5aa39c7c7","issue_id":"97bf0879-357e-4151-bdeb-781987cd0902","timestamp":"2026-05-08T19:21:21.825734733Z","gate_key":"doc-review","updated_by":"agent:project-lead"}
+{"type":"gate_failed","id":"94d388c3-7e33-4818-926b-5e41d0dd36cc","issue_id":"97bf0879-357e-4151-bdeb-781987cd0902","timestamp":"2026-05-08T19:25:52.199221737Z","gate_key":"code-review","updated_by":"auto:executor"}
