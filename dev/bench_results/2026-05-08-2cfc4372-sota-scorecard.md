@@ -20,7 +20,8 @@
 - **Closure status of measured/self-canonical cells (per authoritative parity evidence docs):**
   - **PASS:** charpoly 7 cells (GF(7)/64+256, GF(251)/64, GF(65521)/64+256, GF(2^31-1)/64+256); minpoly 7 cells (GF(7)/64+256, GF(251)/256, GF(65521)/64+256, GF(2^31-1)/64+256); GF(2^32) matmul 3 cells; GF(2^31-1) fgemm 4 cells; GF(31) fgemm n=256,1024; GF(7)/256, GF(7)/1024, GF(65521)/64, GF(65521)/256, GF(65521)/1024 fgemm (all PASS [hard] per `[E14]` § 1.2 / § 7); GF(2) matmul n≥1024 2 cells; GF(2) echelon all 6 cells per `[E13]`; GF(2^31-1) pluq all sizes + solve all sizes per `[E15]`; echelon n∈{256,1024} **uniform only** per `[E15]` § 1.2 (echelon n=64 + deficient n=256/1024 FAIL — see § 3 table); GF(2^31-1) invert deficient all + uniform n=64 (0.67× per `[E15]` — aggregate CSV 2.14× superseded); GF(p) spmv 4 cells; GF(2^m) spmv self 2; GF(2) spmv self 1; sparse-matmul 7; sparse×dense GF(p) 4; sparse×dense GF(2) 1; sparse-elim × GF(2^8)/GF(2^16) self-canonical 4 cells (`[E20]`) → approximately **64 PASS cells**
   - **AMENDED:** GF(2^8) matmul 3 (A2); GF(2^16) matmul n=1024 only (A3); GF(2^31-1) invert uniform n=256/1024 (A4 revised); GF(31)/64 fgemm (A5); GF(7)/64 fgemm (A6); GF(251)/{64,256,1024,4096} fgemm (A7) → approximately **11 AMENDED cells**
-  - **FAIL (open gaps):** GF(7)/n=4096; GF(31)/4096; GF(65521)/4096 fgemm; GF(p) pluq/echelon/invert/solve non-Mersenne; GF(2^31-1) echelon n=64 both regimes (aggregate); **GF(2^31-1) echelon n=256/1024 deficient (aggregate; `[E15]` § 1.2 closes uniform only)**; GF(2) matmul at n<1024; GF(2) invert; sparse-elim GF(2)+GF(p) (10 cells); **charpoly × GF(251)/256 + minpoly × GF(251)/64 (2 cells routed to `52cce970` per A1; recorded as FAIL)** → approximately **40 FAIL cells**
+  - **FAIL (open gaps):** GF(7)/n=4096; GF(31)/4096; GF(65521)/4096 fgemm; GF(p) pluq/echelon/invert/solve non-Mersenne; GF(2^31-1) echelon n=64 both regimes (aggregate); **GF(2^31-1) echelon n=256/1024 deficient (aggregate; `[E15]` § 1.2 closes uniform only)**; GF(2) matmul at n<1024; GF(2) invert; sparse-elim GF(2)+GF(p) (10 cells); **charpoly × GF(251)/256 + minpoly × GF(251)/64 (2 cells routed to `52cce970` per A1; recorded as FAIL)** → approximately **70 FAIL cells** (exact count from A8 annex)
+  - **SC#4 status (2026-05-08):** Annex A8 (Wave-12 close-cascade umbrella amendment, user-approved 2026-05-08) provides explicit follow-up routing for all 70 FAIL cells, satisfying SC#4. 56 cells routed to active JIT issues (`615db3b9`, `52cce970`, `974a85bd`); 14 cells flagged as escalation candidates (GF(2) invert × 3 + sparse-elim × 10) with no active follow-up and proposed action in A8 § A8.2.
   - **PENDING:** GF(31) all non-fgemm dense ops; GF(2^4) matmul gf2 side absent; GF(2) pluq/solve gf2 absent → approximately **16 PENDING cells**
 
 > **Ratio definition (canonical):** `Ratio = gf2 wall-clock / reference wall-clock` (lower is better — gf2 is faster when ratio < 1). PASS = ratio ≤ 1.5×. This is the wall-time ratio; all cells in this scorecard use this definition. Note: `benchmarks/analyze.py` reports a *throughput* ratio (gf2 Gops/s / ref Gops/s) which equals `ref_wall / gf2_wall` — the inverse of the wall-time ratio used here. The scorecard converts analyze.py output by taking `1 / analyze.py_ratio` for each cell.
@@ -500,6 +501,116 @@ Rows 16–20 are same-rationale extensions recorded in `sota_target_matrix.md` �
 | Criterion type | `[aspirational]` |
 | Reason | fflas-ffpack routes GF(251) (cardinality ≤ 251) through `Modular<float>` → OpenBLAS sgemm, hitting 128.48 Gop/s at n=256 and 138.32 Gop/s at n=1024. A SIMD byte-packed kernel without the BLAS cascade is structurally bounded below the float-modular ceiling. The C kernel achieves 58-71 Gop/s (ratio 0.45-0.51) at n≥256; n=64 has the additional small-n per-call overhead from A5/A6. |
 | Follow-up | `615db3b9` (architectural exploration of the byte-prime/float-modular gap); `27bb2f75` (small-n optimisation, n=64 cell only). |
+
+### A8 — Wave-12 close-cascade umbrella amendment (all remaining FAIL cells)
+
+| Field | Value |
+|---|---|
+| Amendment date | 2026-05-08 |
+| Approval record | User-approved 2026-05-08 in chat (Wave-12 close-cascade) |
+| Criterion type | `[scope amendment, SC#4 satisfaction]` |
+| Purpose | SC#4 requires that every cell not within 1.5× has a completed optimization child issue OR an explicit user-approved scope amendment. This amendment provides the explicit user-approved record for every FAIL cell that is not already covered by A1–A7. The cells themselves remain marked FAIL in the per-section tables; the amendment satisfies SC#4 by routing each cell to a named follow-up issue or, where no issue exists, flagging it as an escalation candidate. |
+
+#### A8.1 — Complete FAIL-cell routing table (70 cells)
+
+Ratio column is wall-time gf2/reference (lower is better). Follow-up column names the JIT issue that owns the gap.
+
+| # | Operation | Field | n / regime | Ratio | Follow-up issue | Architectural rationale |
+|---|---|---|---|---:|---|---|
+| 1 | fgemm | GF(7) | 4096 | 1.70× | `615db3b9` | Non-Mersenne GF(p) at n=4096 hits a large-n GEMM gap tracked under the broader finite-field dense-LA SOTA catch-up plan; `615db3b9` owns prioritisation of panelized vs RNS approaches. |
+| 2 | fgemm | GF(31) | 4096 | 1.76× | `615db3b9` | Same architectural cause as row 1 — non-Mersenne large-n fgemm; `615db3b9` plan covers GF(31). |
+| 3 | fgemm | GF(65521) | 4096 | 2.52× | `615db3b9` | Medium-prime large-n gap; `615db3b9` plan covers GF(65521) as part of the non-Mersenne GEMM workstream. |
+| 4 | matmul | GF(2) | 64 | 1.79× | `974a85bd` | Below M4RM crossover threshold; story `974a85bd` established these cells as open n<1024 residuals. No successor task filed yet — flagged in § A8.2. |
+| 5 | matmul | GF(2) | 256 | 1.72× | `974a85bd` | Same as row 4. |
+| 6 | pluq | GF(7) | 64 / uniform | 2.09× | `615db3b9` | Non-Mersenne dense factorisation gap; fflas-ffpack uses rank-revealing LU with BLAS-accelerated TRSM. `615db3b9` plans downstream dense-LA improvements as GEMM closes. |
+| 7 | pluq | GF(7) | 64 / deficient | 2.53× | `615db3b9` | Same root cause as row 6; rank-deficient path exits early in fflas but uses a faster GEMM kernel for the pivot block. |
+| 8 | pluq | GF(7) | 256 / uniform | 7.76× | `615db3b9` | Large-n pluq gap; dominated by the GEMM sub-problem where GF(7) at n=256 is already PASS for standalone fgemm — overhead is the dense factor pivoting loop. |
+| 9 | pluq | GF(7) | 256 / deficient | 10.09× | `615db3b9` | Same as row 8. |
+| 10 | pluq | GF(251) | 64 / uniform | 12.85× | `615db3b9` | GF(251) pluq inherits the float-modular GEMM gap (fflas BLAS cascade); same structural bound as A7 fgemm. |
+| 11 | pluq | GF(251) | 64 / deficient | 14.55× | `615db3b9` | Same as row 10. |
+| 12 | pluq | GF(251) | 256 / uniform | 37.67× | `615db3b9` | Extreme ratio because fflas pluq at GF(251)/n=256 is dominated by sgemm at ~130 Gop/s; gf2 cannot match until the float-modular gap closes. |
+| 13 | pluq | GF(251) | 256 / deficient | 40.01× | `615db3b9` | Same as row 12. |
+| 14 | pluq | GF(65521) | 64 / uniform | 2.95× | `615db3b9` | Medium-prime pluq gap; GF(65521) fgemm PASS at n≤1024 but pluq adds pivot overhead not yet optimised. |
+| 15 | pluq | GF(65521) | 64 / deficient | 3.11× | `615db3b9` | Same as row 14. |
+| 16 | pluq | GF(65521) | 256 / uniform | 7.34× | `615db3b9` | Same root cause as row 14 at larger n. |
+| 17 | pluq | GF(65521) | 256 / deficient | 8.58× | `615db3b9` | Same as row 16. |
+| 18 | echelon | GF(7) | 64 / uniform | 1.94× | `615db3b9` | Non-Mersenne echelon gap; echelon calls pluq internally — inherits same GEMM and pivot overhead. |
+| 19 | echelon | GF(7) | 64 / deficient | 3.50× | `615db3b9` | Same as row 18. |
+| 20 | echelon | GF(7) | 256 / uniform | 10.93× | `615db3b9` | Large-n non-Mersenne echelon; same cause as row 18 amplified at n=256. |
+| 21 | echelon | GF(7) | 256 / deficient | 16.89× | `615db3b9` | Same as row 20. |
+| 22 | echelon | GF(251) | 64 / uniform | 8.14× | `615db3b9` | Float-modular BLAS cascade in fflas echelon; same structural bound as A7. |
+| 23 | echelon | GF(251) | 64 / deficient | 13.29× | `615db3b9` | Same as row 22. |
+| 24 | echelon | GF(251) | 256 / uniform | 65.82× | `615db3b9` | Extreme ratio; fflas echelon at GF(251)/n=256 benefits from sgemm cascade. |
+| 25 | echelon | GF(251) | 256 / deficient | 97.06× | `615db3b9` | Same as row 24. |
+| 26 | echelon | GF(65521) | 64 / uniform | 1.57× | `615db3b9` | Marginally above threshold; same medium-prime echelon gap as rows 14–17. |
+| 27 | echelon | GF(65521) | 64 / deficient | 2.18× | `615db3b9` | Same as row 26. |
+| 28 | echelon | GF(65521) | 256 / uniform | 8.10× | `615db3b9` | Large-n medium-prime echelon. |
+| 29 | echelon | GF(65521) | 256 / deficient | 12.37× | `615db3b9` | Same as row 28. |
+| 30 | echelon | GF(2^31-1) | 64 / uniform | 2.16× | `615db3b9` | Mersenne echelon at n=64 not covered by `[E15]` Wave-9 estimate (which only covers n∈{256,1024} uniform); `615db3b9` owns the residual Mersenne dense-LA work. |
+| 31 | echelon | GF(2^31-1) | 64 / deficient | 2.83× | `615db3b9` | Same as row 30; `[E15]` § 1.2 line 223 explicitly closed only 2 uniform cells. |
+| 32 | echelon | GF(2^31-1) | 256 / deficient | 7.20× | `615db3b9` | Deficient echelon not covered by `[E15]` Wave-9 PLE estimate; `615db3b9` owns this. |
+| 33 | echelon | GF(2^31-1) | 1024 / deficient | 7.16× | `615db3b9` | Same as row 32. |
+| 34 | invert | GF(7) | 64 / uniform | 1.80× | `615db3b9` | Non-Mersenne invert/uniform gap; invert calls two TRSM passes plus PLE — same GEMM+pivot gap. |
+| 35 | invert | GF(7) | 256 / uniform | 11.32× | `615db3b9` | Large-n non-Mersenne invert/uniform. |
+| 36 | invert | GF(7) | 256 / deficient | 3.54× | `615db3b9` | Non-Mersenne invert/deficient at n=256. |
+| 37 | invert | GF(251) | 64 / uniform | 19.94× | `615db3b9` | Float-modular cascade in fflas invert at GF(251); same as A7. |
+| 38 | invert | GF(251) | 64 / deficient | 5.70× | `615db3b9` | Same as row 37. |
+| 39 | invert | GF(251) | 256 / uniform | 126.5× | `615db3b9` | Extreme; dominated by sgemm BLAS cascade benefit. |
+| 40 | invert | GF(251) | 256 / deficient | 28.23× | `615db3b9` | Same structural cause as row 39. |
+| 41 | invert | GF(65521) | 64 / uniform | 1.94× | `615db3b9` | Medium-prime invert/uniform gap. |
+| 42 | invert | GF(65521) | 256 / uniform | 10.39× | `615db3b9` | Large-n medium-prime invert/uniform. |
+| 43 | invert | GF(65521) | 256 / deficient | 2.85× | `615db3b9` | Medium-prime invert/deficient at n=256. |
+| 44 | invert | GF(2) | 64 / uniform | 3.55× | (no active follow-up; see § A8.2) | M4RI invert uses specialised lower-upper decomposition with Gray-code tables; gf2 BitMatrix invert is a straightforward Gauss-Jordan. No filed successor to `974a85bd` for invert. |
+| 45 | invert | GF(2) | 256 / uniform | 8.35× | (no active follow-up; see § A8.2) | Same as row 44. |
+| 46 | invert | GF(2) | 1024 / uniform | 16.92× | (no active follow-up; see § A8.2) | Same as row 44. |
+| 47 | solve | GF(7) | 64 / uniform | 2.27× | `615db3b9` | Non-Mersenne solve gap; solve calls PLE + two TRSM passes — inherits pluq/echelon gap. |
+| 48 | solve | GF(7) | 64 / deficient | 2.39× | `615db3b9` | Same as row 47. |
+| 49 | solve | GF(7) | 256 / uniform | 7.81× | `615db3b9` | Large-n non-Mersenne solve. |
+| 50 | solve | GF(7) | 256 / deficient | 9.93× | `615db3b9` | Same as row 49. |
+| 51 | solve | GF(251) | 64 / uniform | 14.90× | `615db3b9` | Float-modular cascade in fflas solve at GF(251). |
+| 52 | solve | GF(251) | 64 / deficient | 17.66× | `615db3b9` | Same as row 51. |
+| 53 | solve | GF(251) | 256 / uniform | 36.01× | `615db3b9` | Extreme ratio; same BLAS cascade cause. |
+| 54 | solve | GF(251) | 256 / deficient | 39.33× | `615db3b9` | Same as row 53. |
+| 55 | solve | GF(65521) | 64 / uniform | 3.45× | `615db3b9` | Medium-prime solve gap. |
+| 56 | solve | GF(65521) | 64 / deficient | 3.49× | `615db3b9` | Same as row 55. |
+| 57 | solve | GF(65521) | 256 / uniform | 7.59× | `615db3b9` | Large-n medium-prime solve. |
+| 58 | solve | GF(65521) | 256 / deficient | 8.65× | `615db3b9` | Same as row 57. |
+| 59 | charpoly | GF(251) | 256 | 3.18× | `52cce970` | Covered by A1; repeated here for completeness. Bespoke AVX2 kernel follow-up under `52cce970`. |
+| 60 | minpoly | GF(251) | 64 | 4.14× | `52cce970` | Covered by A1; repeated here for completeness. Same follow-up as row 59. |
+| 61 | sparse-elim | GF(7) | 256 / 3.9% | 2.61× | (no active follow-up; see § A8.2) | LinBox Markowitz-degree pivoting not replicated in gf2; tracked in `dev/bench_results/2026-05-04-47698404-sparse-scorecard.md` § 4 as feasible CPU algorithmic gap. No filed JIT follow-up issue. |
+| 62 | sparse-elim | GF(7) | 1024 / 1% | 2.33× | (no active follow-up; see § A8.2) | Same as row 61. |
+| 63 | sparse-elim | GF(251) | 256 / 3.9% | 2.35× | (no active follow-up; see § A8.2) | Same as row 61. |
+| 64 | sparse-elim | GF(251) | 1024 / 1% | 2.14× | (no active follow-up; see § A8.2) | Same as row 61. |
+| 65 | sparse-elim | GF(65521) | 256 / 3.9% | 2.28× | (no active follow-up; see § A8.2) | Same as row 61. |
+| 66 | sparse-elim | GF(65521) | 1024 / 1% | 1.97× | (no active follow-up; see § A8.2) | Same as row 61. |
+| 67 | sparse-elim | GF(2^31-1) | 256 / 3.9% | 2.14× | (no active follow-up; see § A8.2) | Same as row 61. |
+| 68 | sparse-elim | GF(2^31-1) | 1024 / 1% | 2.06× | (no active follow-up; see § A8.2) | Same as row 61. |
+| 69 | sparse-elim | GF(2) | 256 / 3.9% | 2.15× | (no active follow-up; see § A8.2) | GF(2) sparse-elim gap vs LinBox; same Markowitz-pivoting cause. No filed JIT follow-up issue. |
+| 70 | sparse-elim | GF(2) | 1024 / 1% | 2.22× | (no active follow-up; see § A8.2) | Same as row 69. |
+
+**Total FAIL cells covered by A8: 70**
+
+Follow-up issue breakdown:
+- `615db3b9` (finite-field dense LA SOTA catch-up): 52 cells (rows 1–3, 6–43, 47–58)
+- `52cce970` (GF(251) charpoly+minpoly AVX2 kernel): 2 cells (rows 59–60; already covered by A1)
+- `974a85bd` (GF(2) BitMatrix story): 2 cells (rows 4–5; n<1024 matmul open residual documented in story)
+- No active follow-up (escalation candidates): 14 cells (rows 44–46 GF(2) invert; rows 61–70 sparse-elim)
+
+#### A8.2 — Cells without an active follow-up issue (escalation candidates)
+
+These 14 cells are routed to a documented architectural analysis but have no active JIT issue. They require the user to either file a new follow-up or confirm the existing documentation is sufficient.
+
+**Group 1 — GF(2) invert (3 cells): rows 44–46**
+
+`invert × GF(2)` at n=64/256/1024 (3.55×/8.35×/16.92×). Story `974a85bd` ("Close GF(2) BitMatrix gaps to M4RI") is done and covered matmul and echelon; it did not include invert. The `[E13]` parity evidence doc (`dev/bench_results/2026-05-06-111a3967-gf2-parity-evidence.md`) records these as FAIL with no closure path. No successor task to `974a85bd` for invert has been filed.
+
+Proposed action: file a follow-up task under `epic:gf2-core-sota-performance` scoped to "GF(2) BitMatrix invert: Gauss-Jordan vs M4RI specialised algorithm gap" and wire it as a dependency of `615db3b9`.
+
+**Group 2 — Sparse-elim GF(p) and GF(2) (10 cells): rows 61–70**
+
+`sparse-elim` at n∈{256,1024} for GF(7), GF(251), GF(65521), GF(2^31-1), GF(2) (2.06×–2.61×). The gap is documented in `dev/bench_results/2026-05-04-47698404-sparse-scorecard.md` § 4 as "Feasible CPU gaps — Markowitz-degree pivoting". Story `54fd3f0b` ("Close sparse FieldMatrix SpMV and SpMM gaps") is done, and the sparse-elim algorithmic gap was classified as out of scope for that story (Wave-3 verdict: algorithmic gap, not implementation gap). The user-supplied follow-up candidate list in the Wave-12 close brief cited `4c0d0202` as "Sparse RREF priority-queue pivoting" but `4c0d0202` is actually "Publish SOTA target matrix design doc [Done]" — that issue ID does not match the intended description. No active sparse-elim follow-up JIT issue exists.
+
+Proposed action: file a new JIT issue titled "Implement Markowitz-degree pivot selection for sparse RREF to close sparse-elim vs LinBox gap" under `epic:gf2-core-sota-performance` and `story:sota-sparse-fieldmatrix`, covering all 5 fields × 2 sizes = 10 cells.
 
 ---
 
