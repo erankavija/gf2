@@ -2,7 +2,7 @@
   "id": "39f02525-deb4-4c58-8942-ecee42dd869a",
   "title": "Link final SOTA evidence docs",
   "description": "Link final scorecard, raw evidence, and presentation to the SOTA epic and b117c95e where appropriate.\n\n## Success Criteria\n\n- [hard] jit doc list shows the final report and deck on the epic.\n- [hard] The milestone has a checkpoint document link or clear dependency trail.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:claude",
   "dependencies": [
@@ -13,7 +13,23 @@
     "cargo-ci",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-08T16:13:17.969460327Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-05-08T16:52:24.966827668Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-08T16:13:24.352310053Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -23,5 +39,5 @@
     "story:sota-final-scorecard"
   ],
   "created_at": "2026-04-30T06:43:02.964278355+00:00",
-  "updated_at": "2026-05-08T16:12:47.317796457+00:00"
+  "updated_at": "2026-05-08T16:52:24.966828568+00:00"
 }

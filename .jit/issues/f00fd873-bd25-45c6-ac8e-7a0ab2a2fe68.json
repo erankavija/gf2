@@ -21,8 +21,8 @@
     },
     "doc-review": {
       "status": "passed",
-      "updated_by": null,
-      "updated_at": "2026-05-08T16:03:13.118254707Z"
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-05-08T16:52:24.981218342Z"
     },
     "code-review": {
       "status": "passed",
@@ -81,5 +81,5 @@
     "story:sota-final-scorecard"
   ],
   "created_at": "2026-04-30T06:43:02.955460362+00:00",
-  "updated_at": "2026-05-08T16:12:46.931340567+00:00"
+  "updated_at": "2026-05-08T16:52:24.981218972+00:00"
 }

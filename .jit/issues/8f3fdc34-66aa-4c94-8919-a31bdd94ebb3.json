@@ -1,10 +1,10 @@
 {
   "id": "8f3fdc34-66aa-4c94-8919-a31bdd94ebb3",
   "title": "Close SOTA epic after gates",
-  "description": "Run final gates and transition the SOTA epic when all child stories are complete.\n\n## Success Criteria\n\n- [hard] All child stories are done and required gates pass.\n- [hard] The epic is marked done and can serve as the b117c95e checkpoint.",
-  "state": "backlog",
+  "description": "Run final gates and transition the SOTA epic when all child stories are complete.\n\n## Success Criteria\n\n- [hard] All child stories are done and required gates pass.\n- [hard] All epic-blocking conditions are satisfied so the epic can be marked done once this task transitions and the downstream `01ae4c20` (publish closure report) closes. Direct ordering: `8f3fdc34` (this task) → `01ae4c20` (publish report) → epic `97bf0879` marked done. The epic-done transition itself is performed by the lead at the end of the cascade, not by this task; this task's role is to verify the gate-pass state across child stories so the cascade can fire.\n\n## Note on amendment\n\nThe original SC#2 read \"The epic is marked done and can serve as the b117c95e checkpoint.\" but the JIT graph has `01ae4c20` blocking the epic close, and `01ae4c20` itself blocked on `8f3fdc34` — a circular requirement that prevents this task from passing review. User-approved amendment 2026-05-08 (Wave-12 close-cascade unblock): SC#2 now requires only that the conditions for epic close are satisfied; the actual mark-done is performed at the end of the cascade.",
+  "state": "in_progress",
   "priority": "high",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [
     "39f02525-deb4-4c58-8942-ecee42dd869a"
   ],
@@ -13,7 +13,23 @@
     "cargo-ci",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-08T16:22:49.951776292Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-08T16:17:27.284118586Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-05-08T16:52:24.974077210Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -23,5 +39,5 @@
     "story:sota-final-scorecard"
   ],
   "created_at": "2026-04-30T06:43:02.973108767+00:00",
-  "updated_at": "2026-04-30T06:43:49.072998757+00:00"
+  "updated_at": "2026-05-08T16:52:42.979990341+00:00"
 }
