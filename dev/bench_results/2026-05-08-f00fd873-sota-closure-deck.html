@@ -278,7 +278,7 @@
       </table>
       <p class="small fail">10 LinBox-canonical sparse-elim cells all FAIL (2.1&ndash;2.6&times;).
       LinBox uses Markowitz-degree pivoting; gf2 uses column-sweep.
-      Follow-up: <span class="tag">4c0d0202</span>.</p>
+      Follow-up: <span class="tag">5ce13bae</span>.</p>
     </div>
   </div>
   <aside class="notes">
@@ -290,7 +290,7 @@
     sparse-elim is a uniformly open gap. LinBox's GaussDomain::NoReordering implements
     Markowitz-degree pivot selection which keeps fill-in dramatically lower than gf2's
     simple column-sweep. This is a non-trivial algorithmic change, not a constant-factor
-    optimization. Tracked in 4c0d0202.
+    optimization. Tracked in 5ce13bae (filed 2026-05-08; correctly-scoped replacement for the original 4c0d0202 misattribution).
     GF(2^8) and GF(2^16) sparse-elim are self-canonical (PASS by definition) because no
     external library exposes sparse RREF on GF(2^m) extension fields.
   </aside>
@@ -321,7 +321,7 @@
 
   <p><strong>sparse-elim algorithmic gap:</strong> 10 LinBox-canonical cells all FAIL (2.1&ndash;2.6&times;).
   <span class="small">Markowitz pivoting gap. No user-approved amendment.
-  Follow-up: <span class="tag">4c0d0202</span> (priority-queue pivoting).</span></p>
+  Follow-up: <span class="tag">5ce13bae</span> (priority-queue pivoting).</span></p>
 
   <aside class="notes">
     The 20 excluded cells are not performance failures -- they are definitional exclusions
@@ -331,7 +331,7 @@
     feature that is excluded from the default workspace build.
     The sparse-elim gap is the most consequential open algorithmic issue. Markowitz degree
     pivoting requires maintaining a priority queue by column degree, a non-trivial data
-    structure change. 4c0d0202 tracks the investigation.
+    structure change. 5ce13bae tracks the investigation (filed 2026-05-08).
   </aside>
 </section>
 
@@ -427,7 +427,7 @@
         <td>Closes A2 (GF(2^8) Newton-John algorithm) + A7 (GF(251) vs OpenBLAS sgemm ceiling). Architectural: either a float-modular kernel or a Newton-John / Gray-code table algorithm.</td>
       </tr>
       <tr>
-        <td><span class="tag">4c0d0202</span></td>
+        <td><span class="tag">5ce13bae</span></td>
         <td>Sparse RREF priority-queue pivoting</td>
         <td>Closes sparse-elim algorithmic gap (10 cells, all 2.1&ndash;2.6&times; of LinBox). LinBox uses Markowitz-degree pivoting; gf2 uses column-sweep. Requires priority-queue data structure.</td>
       </tr>
@@ -438,7 +438,7 @@
     52cce970 and 27bb2f75 are relatively well-scoped engineering tasks: writing AVX2 kernels
     and reducing dispatch overhead. 615db3b9 is a design-space exploration: the fundamental
     question is whether gf2 should implement a float-modular BLAS cascade for small primes
-    (cardinality <= 251) similar to fflas's Modular<float> path. 4c0d0202 is the most
+    (cardinality <= 251) similar to fflas's Modular<float> path. 615db3b9 is the most
     algorithmically interesting: Markowitz pivoting for sparse RREF reduces fill-in asymptotically
     and the 2x gap vs LinBox is consistent across all fields, suggesting an algorithmic
     rather than implementation-level gap.
