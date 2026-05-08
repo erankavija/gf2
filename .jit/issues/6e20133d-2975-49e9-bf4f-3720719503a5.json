@@ -2,22 +2,41 @@
   "id": "6e20133d-2975-49e9-bf4f-3720719503a5",
   "title": "Decide gf2-algebra crate boundary against gf2-core",
   "description": "Decide which crate hosts each public type the gf2-algebra-permanent epic introduces, ensuring no circular dependencies and a consistent layering across the workspace.\n\n## Background\n\nThe new `gf2-algebra` crate hosts permanent algorithms and packed small-prime field representations. This issue settles which types live where:\n\n- What stays in `gf2-core`: bedrock primitives only (`FiniteField`, `Fp<P>`, `BitVec`, `BitMatrix`, `Fp<P>::*`).\n- What moves into `gf2-algebra`: `PackedField<F>` trait, `Bipedal3`/`Bipedal5`/`Bipedal7` packed types, `permanent_*` algorithms, Gray-code enumerator, parallel and GPU dispatch glue.\n- What lives in `gf2-kernels-simd`: SIMD bipedal kernels.\n- What lives in `gf2-kernels-hip`: GPU permanent kernels.\n\nOutput: a short decision doc ($\\le 200$ lines) listing every public type the epic introduces, naming its home crate, and showing the dependency-direction graph.\n\n## Success Criteria\n\n- [ ] [hard] Decision doc exists at `dev/plans/d1a_gf2_algebra_boundary.md` and is attached via `jit doc add`.\n- [ ] [hard] No circular crate dependencies are proposed; `gf2-algebra → gf2-core` is the only forward edge required.\n- [ ] [hard] The doc enumerates every public type the linked epic design doc mentions and assigns each to exactly one crate.\n- [ ] [hard] The doc explicitly justifies why bipedal types do not live in `gf2-core` (they pack many $\\mathbb{F}_3$ elements per word and are not field elements).",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude-opus-4-7",
   "dependencies": [],
   "gates_required": [
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-08T23:05:36.115105255Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-08T22:31:37.969065727Z"
+    }
+  },
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/plans/d1a_gf2_algebra_boundary.md",
+      "commit": null,
+      "label": "D1a: gf2-algebra crate boundary",
+      "doc_type": "design",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:task",
     "epic:gf2-algebra-permanent",
     "component:gf2-algebra"
   ],
   "created_at": "2026-04-30T21:38:50.329697165+00:00",
-  "updated_at": "2026-05-01T06:29:23.811265294+00:00"
+  "updated_at": "2026-05-08T23:07:40.346662068+00:00"
 }
