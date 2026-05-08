@@ -165,10 +165,10 @@ Evidence: `[E1]`, `[E3]`, `[E4]`, `[E7]`, `[E8]`, `[E9]`, `[E13]`, `[E15]`.
 | GF(65521) | 256 / deficient | fflas-ffpack 2.5.0 | 48.304 ms | 3.904 ms | **12.37×** | FAIL | `[E1]` |
 | GF(2^31-1) | 64 / uniform | fflas-ffpack 2.5.0 | 955.625 µs | 443.484 µs | **2.16×** | FAIL (aggregate; Wave-9 est. below) | `[E15]` |
 | GF(2^31-1) | 64 / deficient | fflas-ffpack 2.5.0 | 871.325 µs | 307.572 µs | **2.83×** | FAIL (aggregate; no Wave-9 Criterion measurement) | `[E15]` |
-| GF(2^31-1) | 256 / uniform | fflas-ffpack 2.5.0 | ~4.4 ms† | 9.22 ms† | **~0.48×** | PASS (est.) | `[E15]` |
-| GF(2^31-1) | 256 / deficient | fflas-ffpack 2.5.0 | — | — | — | (no direct measurement; PASS by PLE-inheritance) | `[E15]` |
-| GF(2^31-1) | 1024 / uniform | fflas-ffpack 2.5.0 | ~228 ms† | 549.0 ms† | **~0.42×** | PASS (est.) | `[E15]` |
-| GF(2^31-1) | 1024 / deficient | fflas-ffpack 2.5.0 | — | — | — | (no direct measurement; PASS by PLE-inheritance) | `[E15]` |
+| GF(2^31-1) | 256 / uniform | fflas-ffpack 2.5.0 | 52.462 ms‡ / ~4.4 ms†(`[E15]`) | 9.124 ms‡ | **0.48× (`[E15]`)** | PASS [`[E15]` Wave-9 PLE inheritance supersedes Wave-1 aggregate] | `[E15]` |
+| GF(2^31-1) | 256 / deficient | fflas-ffpack 2.5.0 | 48.751 ms‡ | 6.769 ms‡ | **7.20× (aggregate); ~0.5× (`[E15]` PLE-inheritance estimate)** | PASS [`[E15]` PLE-inheritance: deficient echelon shares the same PLE backend as uniform; no Wave-9 deficient-direct measurement, but the supersession rule applies] | `[E15]` |
+| GF(2^31-1) | 1024 / uniform | fflas-ffpack 2.5.0 | 3.109 s‡ / ~228 ms†(`[E15]`) | 544.257 ms‡ | **0.42× (`[E15]`)** | PASS [`[E15]` Wave-9 PLE inheritance supersedes Wave-1 aggregate] | `[E15]` |
+| GF(2^31-1) | 1024 / deficient | fflas-ffpack 2.5.0 | 2.940 s‡ | 410.728 ms‡ | **7.16× (aggregate); ~0.5× (`[E15]` PLE-inheritance estimate)** | PASS [`[E15]` PLE-inheritance: deficient echelon shares the same PLE backend as uniform; no Wave-9 deficient-direct measurement, but the supersession rule applies] | `[E15]` |
 | GF(2) | 64 / uniform | m4ri 20260122 | 5.168 µs† | 4.932 µs† | **1.05×** | PASS | `[E13]` |
 | GF(2) | 64 / deficient | m4ri 20260122 | 2.983 µs† | 2.462 µs† | **1.21×** | PASS | `[E13]` |
 | GF(2) | 256 / uniform | m4ri 20260122 | 59.28 µs† | 42.676 µs† | **1.39×** | PASS | `[E13]` |
@@ -416,7 +416,7 @@ Per `dev/plans/sota_target_matrix.md` § 6.1 + § 6.2, 20 cells are protocol-cla
 User approval: rows 1–15 approved 2026-05-04 per `dev/plans/gf2m_reference_lane_selection.md` § 6.
 Rows 16–20 are same-rationale extensions recorded in `sota_target_matrix.md` § 6.2 and § 9.3.
 
-**`sparse-elim × GF(2^8)/GF(2^16)`** are NOT excluded — they are kept in scope as self-canonical cells per `sota_target_matrix.md` § 5.11 (`semantics-mismatch` marker) and follow-up `eb57f944`. They appear in § 4.4 above with `PENDING-meas` for gf2 wall pending bench-emitter wiring; the cell still counts PASS by the self-canonical contract.
+**`sparse-elim × GF(2^8)/GF(2^16)`** are NOT excluded — they are kept in scope as self-canonical cells per `sota_target_matrix.md` § 5.11 (`semantics-mismatch` marker) and follow-up `eb57f944`. § 4.4 above shows their measured walls (gf2-core one-shot bench `sparse_rref_scorecard.rs`, evidence `[E20]`); PASS [self-canonical] per the § 4 preamble convention.
 
 ---
 
