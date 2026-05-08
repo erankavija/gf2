@@ -17,12 +17,12 @@
     "code-review": {
       "status": "failed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-07T23:09:50.783378805Z"
+      "updated_at": "2026-05-08T15:22:23.165924381Z"
     },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-07T23:09:40.374374777Z"
+      "updated_at": "2026-05-08T15:22:11.364154704Z"
     }
   },
   "context": {},
@@ -49,5 +49,5 @@
     "story:sota-final-scorecard"
   ],
   "created_at": "2026-04-30T06:43:02.946758140+00:00",
-  "updated_at": "2026-05-08T15:21:44.029664304+00:00"
+  "updated_at": "2026-05-08T15:24:55.990119024+00:00"
 }
