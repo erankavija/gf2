@@ -22,7 +22,7 @@
   - **AMENDED:** GF(2^8) matmul 3 (A2); GF(2^16) matmul n=1024 only (A3); GF(2^31-1) invert uniform n=256/1024 (A4 revised); GF(31)/64 fgemm (A5); GF(7)/64 fgemm (A6); GF(251)/{64,256,1024,4096} fgemm (A7) → approximately **11 AMENDED cells**
   - **FAIL (open gaps):** GF(7)/n=4096; GF(31)/4096; GF(65521)/4096 fgemm; GF(p) pluq/echelon/invert/solve non-Mersenne; GF(2^31-1) echelon n=64 both regimes (aggregate); **GF(2^31-1) echelon n=256/1024 deficient (aggregate; `[E15]` § 1.2 closes uniform only)**; GF(2) matmul at n<1024; GF(2) invert; sparse-elim GF(2)+GF(p) (10 cells); **charpoly × GF(251)/256 + minpoly × GF(251)/64 (2 cells routed to `52cce970` per A1; recorded as FAIL)** → approximately **70 FAIL cells** (exact count from A8 annex)
   - **SC#3+SC#4 status (2026-05-08):** Annex A8 routes all 70 FAIL cells to named JIT issues (52 → `615db3b9`, 2 → `52cce970`, 2 → `974a85bd`, 3 → `aaa847cf`, 10 → `5ce13bae`). Annex A9 covers all ~16 PENDING in-scope cells as harness-scope-gaps per SC#2 with named follow-ups (`615db3b9` for GF(31) dense LA; `974a85bd` for GF(2) pluq/solve; `e24f7839` for GF(2^m) reference-emitter mismatch). Combined with A1–A7, every in-scope cell has PASS, AMENDED, or A8/A9-routed status. **Zero uncovered cells. SC#3+SC#4 conjunction satisfied.**
-  - **PENDING:** GF(31) all non-fgemm dense ops; GF(2^4) matmul gf2 side absent; GF(2) pluq/solve gf2 absent → approximately **16 PENDING cells**
+  - **PENDING (raw measurement):** Zero rows remain with PENDING in the *Status* column. The gf2 wall / ref wall / ratio numeric columns retain `PENDING` markers where the harness has no measurement; these rows are status-classified as **AMENDED [→A9]** (Wave-12 PENDING umbrella amendment, user-approved 2026-05-08), routing each cell (~16 in total) to its named follow-up issue. The classification mapping is in Annex A9.
 
 > **Ratio definition (canonical):** `Ratio = gf2 wall-clock / reference wall-clock` (lower is better — gf2 is faster when ratio < 1). PASS = ratio ≤ 1.5×. This is the wall-time ratio; all cells in this scorecard use this definition. Note: `benchmarks/analyze.py` reports a *throughput* ratio (gf2 Gops/s / ref Gops/s) which equals `ref_wall / gf2_wall` — the inverse of the wall-time ratio used here. The scorecard converts analyze.py output by taking `1 / analyze.py_ratio` for each cell.
 
@@ -63,15 +63,15 @@ Evidence: `[E1]`, `[E2]`, `[E3]`, `[E10]`, `[E11]`, `[E12]`, `[E14]`.
 | fgemm | GF(2^31-1) | 256 | fflas-ffpack 2.5.0 | 10.507 ms | 15.787 ms | **0.67×** | PASS | `[E2]` `[E9]` |
 | fgemm | GF(2^31-1) | 1024 | fflas-ffpack 2.5.0 | 648.667 ms | 906.264 ms | **0.72×** | PASS | `[E2]` `[E9]` |
 | fgemm | GF(2^31-1) | 4096 | fflas-ffpack 2.5.0 | 50.431 s | 44.974 s | **1.12×** | PASS | `[E2]` `[E9]` |
-| fgemm | GF(2^8) | 64 | m4rie 20250128 | 329.134 µs | PENDING | PENDING | PENDING | `[E11]` |
-| fgemm | GF(2^8) | 256 | m4rie 20250128 | 22.827 ms | PENDING | PENDING | PENDING | `[E11]` |
-| fgemm | GF(2^8) | 1024 | m4rie 20250128 | 1.495 s | PENDING | PENDING | PENDING | `[E11]` |
-| fgemm | GF(2^16) | 64 | m4rie 20250128 | 283.922 µs | PENDING | PENDING | PENDING | `[E11]` |
-| fgemm | GF(2^16) | 256 | m4rie 20250128 | 17.765 ms | PENDING | PENDING | PENDING | `[E11]` |
-| fgemm | GF(2^16) | 1024 | m4rie 20250128 | 1.226 s | PENDING | PENDING | PENDING | `[E11]` |
-| matmul | GF(2^4) | 64 | m4rie 20250128 | PENDING | 36.512 µs | PENDING | PENDING | `[E11]` |
-| matmul | GF(2^4) | 256 | m4rie 20250128 | PENDING | 534.494 µs | PENDING | PENDING | `[E11]` |
-| matmul | GF(2^4) | 1024 | m4rie 20250128 | PENDING | 7.043 ms | PENDING | PENDING | `[E11]` |
+| fgemm | GF(2^8) | 64 | m4rie 20250128 | 329.134 µs | PENDING | PENDING | AMENDED [→A9] | `[E11]` |
+| fgemm | GF(2^8) | 256 | m4rie 20250128 | 22.827 ms | PENDING | PENDING | AMENDED [→A9] | `[E11]` |
+| fgemm | GF(2^8) | 1024 | m4rie 20250128 | 1.495 s | PENDING | PENDING | AMENDED [→A9] | `[E11]` |
+| fgemm | GF(2^16) | 64 | m4rie 20250128 | 283.922 µs | PENDING | PENDING | AMENDED [→A9] | `[E11]` |
+| fgemm | GF(2^16) | 256 | m4rie 20250128 | 17.765 ms | PENDING | PENDING | AMENDED [→A9] | `[E11]` |
+| fgemm | GF(2^16) | 1024 | m4rie 20250128 | 1.226 s | PENDING | PENDING | AMENDED [→A9] | `[E11]` |
+| matmul | GF(2^4) | 64 | m4rie 20250128 | PENDING | 36.512 µs | PENDING | AMENDED [→A9] | `[E11]` |
+| matmul | GF(2^4) | 256 | m4rie 20250128 | PENDING | 534.494 µs | PENDING | AMENDED [→A9] | `[E11]` |
+| matmul | GF(2^4) | 1024 | m4rie 20250128 | PENDING | 7.043 ms | PENDING | AMENDED [→A9] | `[E11]` |
 | matmul | GF(2^8) | 64 | m4rie 20250128 | PENDING | 129.400 µs | PENDING | AMENDED [→A2] | `[E11]` `[E12]` |
 | matmul | GF(2^8) | 256 | m4rie 20250128 | PENDING | 1.368 ms | PENDING | AMENDED [→A2] | `[E11]` `[E12]` |
 | matmul | GF(2^8) | 1024 | m4rie 20250128 | PENDING | 22.010 ms | PENDING | AMENDED [→A2] | `[E11]` `[E12]` |
@@ -117,10 +117,10 @@ Evidence: `[E1]`, `[E3]`, `[E4]`, `[E7]`, `[E8]`, `[E9]`, `[E13]`, `[E15]`.
 | GF(7) | 64 / deficient | fflas-ffpack 2.5.0 | 395.120 µs | 156.284 µs | **2.53×** | FAIL | `[E1]` |
 | GF(7) | 256 / uniform | fflas-ffpack 2.5.0 | 23.594 ms | 3.042 ms | **7.76×** | FAIL | `[E1]` |
 | GF(7) | 256 / deficient | fflas-ffpack 2.5.0 | 20.432 ms | 2.026 ms | **10.09×** | FAIL | `[E1]` |
-| GF(31) | 64 / uniform | fflas-ffpack 2.5.0 | PENDING | 198.218 µs | PENDING | PENDING | `[E9]` |
-| GF(31) | 64 / deficient | fflas-ffpack 2.5.0 | PENDING | 155.778 µs | PENDING | PENDING | `[E9]` |
-| GF(31) | 256 / uniform | fflas-ffpack 2.5.0 | PENDING | 3.128 ms | PENDING | PENDING | `[E9]` |
-| GF(31) | 256 / deficient | fflas-ffpack 2.5.0 | PENDING | 2.078 ms | PENDING | PENDING | `[E9]` |
+| GF(31) | 64 / uniform | fflas-ffpack 2.5.0 | PENDING | 198.218 µs | PENDING | AMENDED [→A9] | `[E9]` |
+| GF(31) | 64 / deficient | fflas-ffpack 2.5.0 | PENDING | 155.778 µs | PENDING | AMENDED [→A9] | `[E9]` |
+| GF(31) | 256 / uniform | fflas-ffpack 2.5.0 | PENDING | 3.128 ms | PENDING | AMENDED [→A9] | `[E9]` |
+| GF(31) | 256 / deficient | fflas-ffpack 2.5.0 | PENDING | 2.078 ms | PENDING | AMENDED [→A9] | `[E9]` |
 | GF(251) | 64 / uniform | fflas-ffpack 2.5.0 | 404.375 µs | 31.470 µs | **12.85×** | FAIL | `[E1]` |
 | GF(251) | 64 / deficient | fflas-ffpack 2.5.0 | 345.050 µs | 23.710 µs | **14.55×** | FAIL | `[E1]` |
 | GF(251) | 256 / uniform | fflas-ffpack 2.5.0 | 21.381 ms | 567.608 µs | **37.67×** | FAIL | `[E1]` |
@@ -135,10 +135,10 @@ Evidence: `[E1]`, `[E3]`, `[E4]`, `[E7]`, `[E8]`, `[E9]`, `[E13]`, `[E15]`.
 | GF(2^31-1) | 256 / deficient | fflas-ffpack 2.5.0 | 3.73 ms† | 6.19 ms† | **0.60×** | PASS | `[E15]` |
 | GF(2^31-1) | 1024 / uniform | fflas-ffpack 2.5.0 | 227.50 ms† | 375.7 ms† | **0.61×** | PASS | `[E15]` |
 | GF(2^31-1) | 1024 / deficient | fflas-ffpack 2.5.0 | 188.91 ms† | 322.3 ms† | **0.59×** | PASS | `[E15]` |
-| GF(2) | 64 / uniform | m4ri 20260122 | PENDING | 11.133 µs | PENDING | PENDING | `[E3]` |
-| GF(2) | 64 / deficient | m4ri 20260122 | PENDING | 10.923 µs | PENDING | PENDING | `[E3]` |
-| GF(2) | 256 / uniform | m4ri 20260122 | PENDING | 68.677 µs | PENDING | PENDING | `[E3]` |
-| GF(2) | 256 / deficient | m4ri 20260122 | PENDING | 96.406 µs | PENDING | PENDING | `[E3]` |
+| GF(2) | 64 / uniform | m4ri 20260122 | PENDING | 11.133 µs | PENDING | AMENDED [→A9] | `[E3]` |
+| GF(2) | 64 / deficient | m4ri 20260122 | PENDING | 10.923 µs | PENDING | AMENDED [→A9] | `[E3]` |
+| GF(2) | 256 / uniform | m4ri 20260122 | PENDING | 68.677 µs | PENDING | AMENDED [→A9] | `[E3]` |
+| GF(2) | 256 / deficient | m4ri 20260122 | PENDING | 96.406 µs | PENDING | AMENDED [→A9] | `[E3]` |
 
 > † Wave-9 Criterion measurements from `[E15]` § 1.1 (authoritative; aggregate CSV shows pre-Wave-9 baseline which does not reflect the TRI_BASE_THRESHOLD=8 tuning). `[E15]` is authoritative per the evidence-doc-precedence rule.
 
@@ -152,10 +152,10 @@ Evidence: `[E1]`, `[E3]`, `[E4]`, `[E7]`, `[E8]`, `[E9]`, `[E13]`, `[E15]`.
 | GF(7) | 64 / deficient | fflas-ffpack 2.5.0 | 956.980 µs | 273.440 µs | **3.50×** | FAIL | `[E1]` |
 | GF(7) | 256 / uniform | fflas-ffpack 2.5.0 | 57.433 ms | 5.254 ms | **10.93×** | FAIL | `[E1]` |
 | GF(7) | 256 / deficient | fflas-ffpack 2.5.0 | 53.789 ms | 3.184 ms | **16.89×** | FAIL | `[E1]` |
-| GF(31) | 64 / uniform | fflas-ffpack 2.5.0 | PENDING | 548.088 µs | PENDING | PENDING | `[E9]` |
-| GF(31) | 64 / deficient | fflas-ffpack 2.5.0 | PENDING | 277.184 µs | PENDING | PENDING | `[E9]` |
-| GF(31) | 256 / uniform | fflas-ffpack 2.5.0 | PENDING | 5.370 ms | PENDING | PENDING | `[E9]` |
-| GF(31) | 256 / deficient | fflas-ffpack 2.5.0 | PENDING | 3.236 ms | PENDING | PENDING | `[E9]` |
+| GF(31) | 64 / uniform | fflas-ffpack 2.5.0 | PENDING | 548.088 µs | PENDING | AMENDED [→A9] | `[E9]` |
+| GF(31) | 64 / deficient | fflas-ffpack 2.5.0 | PENDING | 277.184 µs | PENDING | AMENDED [→A9] | `[E9]` |
+| GF(31) | 256 / uniform | fflas-ffpack 2.5.0 | PENDING | 5.370 ms | PENDING | AMENDED [→A9] | `[E9]` |
+| GF(31) | 256 / deficient | fflas-ffpack 2.5.0 | PENDING | 3.236 ms | PENDING | AMENDED [→A9] | `[E9]` |
 | GF(251) | 64 / uniform | fflas-ffpack 2.5.0 | 935.575 µs | 114.940 µs | **8.14×** | FAIL | `[E1]` |
 | GF(251) | 64 / deficient | fflas-ffpack 2.5.0 | 854.440 µs | 64.304 µs | **13.29×** | FAIL | `[E1]` |
 | GF(251) | 256 / uniform | fflas-ffpack 2.5.0 | 51.840 ms | 787.680 µs | **65.82×** | FAIL | `[E1]` |
@@ -191,10 +191,10 @@ Evidence: `[E1]`, `[E3]`, `[E4]`, `[E7]`, `[E8]`, `[E9]`, `[E13]`, `[E15]`.
 | GF(7) | 64 / deficient | fflas-ffpack 2.5.0 | 393.280 µs | 613.632 µs | **0.64×** | PASS | `[E1]` |
 | GF(7) | 256 / uniform | fflas-ffpack 2.5.0 | 136.022 ms | 12.018 ms | **11.32×** | FAIL | `[E1]` |
 | GF(7) | 256 / deficient | fflas-ffpack 2.5.0 | 20.159 ms | 5.691 ms | **3.54×** | FAIL | `[E1]` |
-| GF(31) | 64 / uniform | fflas-ffpack 2.5.0 | PENDING | 1.224 ms | PENDING | PENDING | `[E9]` |
-| GF(31) | 64 / deficient | fflas-ffpack 2.5.0 | PENDING | 624.572 µs | PENDING | PENDING | `[E9]` |
-| GF(31) | 256 / uniform | fflas-ffpack 2.5.0 | PENDING | 11.655 ms | PENDING | PENDING | `[E9]` |
-| GF(31) | 256 / deficient | fflas-ffpack 2.5.0 | PENDING | 5.768 ms | PENDING | PENDING | `[E9]` |
+| GF(31) | 64 / uniform | fflas-ffpack 2.5.0 | PENDING | 1.224 ms | PENDING | AMENDED [→A9] | `[E9]` |
+| GF(31) | 64 / deficient | fflas-ffpack 2.5.0 | PENDING | 624.572 µs | PENDING | AMENDED [→A9] | `[E9]` |
+| GF(31) | 256 / uniform | fflas-ffpack 2.5.0 | PENDING | 11.655 ms | PENDING | AMENDED [→A9] | `[E9]` |
+| GF(31) | 256 / deficient | fflas-ffpack 2.5.0 | PENDING | 5.768 ms | PENDING | AMENDED [→A9] | `[E9]` |
 | GF(251) | 64 / uniform | fflas-ffpack 2.5.0 | 2.213 ms | 110.988 µs | **19.94×** | FAIL | `[E1]` |
 | GF(251) | 64 / deficient | fflas-ffpack 2.5.0 | 343.745 µs | 60.354 µs | **5.70×** | FAIL | `[E1]` |
 | GF(251) | 256 / uniform | fflas-ffpack 2.5.0 | 135.897 ms | 1.074 ms | **126.5×** | FAIL | `[E1]` |
@@ -225,10 +225,10 @@ Evidence: `[E1]`, `[E3]`, `[E4]`, `[E7]`, `[E8]`, `[E9]`, `[E13]`, `[E15]`.
 | GF(7) | 64 / deficient | fflas-ffpack 2.5.0 | 379.285 µs | 159.020 µs | **2.39×** | FAIL | `[E1]` |
 | GF(7) | 256 / uniform | fflas-ffpack 2.5.0 | 23.691 ms | 3.036 ms | **7.81×** | FAIL | `[E1]` |
 | GF(7) | 256 / deficient | fflas-ffpack 2.5.0 | 22.046 ms | 2.219 ms | **9.93×** | FAIL | `[E1]` |
-| GF(31) | 64 / uniform | fflas-ffpack 2.5.0 | PENDING | 205.124 µs | PENDING | PENDING | `[E9]` |
-| GF(31) | 64 / deficient | fflas-ffpack 2.5.0 | PENDING | 158.794 µs | PENDING | PENDING | `[E9]` |
-| GF(31) | 256 / uniform | fflas-ffpack 2.5.0 | PENDING | 3.076 ms | PENDING | PENDING | `[E9]` |
-| GF(31) | 256 / deficient | fflas-ffpack 2.5.0 | PENDING | 2.119 ms | PENDING | PENDING | `[E9]` |
+| GF(31) | 64 / uniform | fflas-ffpack 2.5.0 | PENDING | 205.124 µs | PENDING | AMENDED [→A9] | `[E9]` |
+| GF(31) | 64 / deficient | fflas-ffpack 2.5.0 | PENDING | 158.794 µs | PENDING | AMENDED [→A9] | `[E9]` |
+| GF(31) | 256 / uniform | fflas-ffpack 2.5.0 | PENDING | 3.076 ms | PENDING | AMENDED [→A9] | `[E9]` |
+| GF(31) | 256 / deficient | fflas-ffpack 2.5.0 | PENDING | 2.119 ms | PENDING | AMENDED [→A9] | `[E9]` |
 | GF(251) | 64 / uniform | fflas-ffpack 2.5.0 | 425.770 µs | 28.574 µs | **14.90×** | FAIL | `[E1]` |
 | GF(251) | 64 / deficient | fflas-ffpack 2.5.0 | 342.405 µs | 19.386 µs | **17.66×** | FAIL | `[E1]` |
 | GF(251) | 256 / uniform | fflas-ffpack 2.5.0 | 21.856 ms | 606.988 µs | **36.01×** | FAIL | `[E1]` |
@@ -243,10 +243,10 @@ Evidence: `[E1]`, `[E3]`, `[E4]`, `[E7]`, `[E8]`, `[E9]`, `[E13]`, `[E15]`.
 | GF(2^31-1) | 256 / deficient | fflas-ffpack 2.5.0 | 3.489 ms† | 6.208 ms† | **0.56×** | PASS | `[E15]` |
 | GF(2^31-1) | 1024 / uniform | fflas-ffpack 2.5.0 | 229.112 ms† | 381.817 ms† | **0.60×** | PASS | `[E15]` |
 | GF(2^31-1) | 1024 / deficient | fflas-ffpack 2.5.0 | 188.462 ms† | 322.4 ms† | **0.58×** | PASS | `[E15]` |
-| GF(2) | 64 / uniform | m4ri 20260122 | PENDING | 26.943 µs | PENDING | PENDING | `[E3]` |
-| GF(2) | 64 / deficient | m4ri 20260122 | PENDING | 21.833 µs | PENDING | PENDING | `[E3]` |
-| GF(2) | 256 / uniform | m4ri 20260122 | PENDING | 208.776 µs | PENDING | PENDING | `[E3]` |
-| GF(2) | 256 / deficient | m4ri 20260122 | PENDING | 145.700 µs | PENDING | PENDING | `[E3]` |
+| GF(2) | 64 / uniform | m4ri 20260122 | PENDING | 26.943 µs | PENDING | AMENDED [→A9] | `[E3]` |
+| GF(2) | 64 / deficient | m4ri 20260122 | PENDING | 21.833 µs | PENDING | AMENDED [→A9] | `[E3]` |
+| GF(2) | 256 / uniform | m4ri 20260122 | PENDING | 208.776 µs | PENDING | AMENDED [→A9] | `[E3]` |
+| GF(2) | 256 / deficient | m4ri 20260122 | PENDING | 145.700 µs | PENDING | AMENDED [→A9] | `[E3]` |
 
 > † Wave-9 Criterion measurements from `[E15]` § 1.5 (authoritative). All six GF(2^31-1) solve cells PASS. The aggregate CSV showed pre-Wave-9 baseline values for all n; `[E15]` Wave-9 measurements supersede every row. GF(2) solve is harness-scope PENDING.
 
@@ -267,8 +267,8 @@ Evidence: `[E5]`, `[E6]`, `[E9]`, `[E16]`, `[E17]`.
 |---|---:|---|---:|---:|---:|---|---|
 | GF(7) | 64 | fflas-ffpack 2.5.0 | 132.000 µs | 576.710 µs | **0.23×** | PASS | `[E5]` `[E16]` |
 | GF(7) | 256 | fflas-ffpack 2.5.0 | 3.440 ms | 19.225 ms | **0.18×** | PASS | `[E5]` `[E16]` |
-| GF(31) | 64 | fflas-ffpack 2.5.0 | PENDING | 388.738 µs | PENDING | PENDING | `[E9]` |
-| GF(31) | 256 | fflas-ffpack 2.5.0 | PENDING | 13.517 ms | PENDING | PENDING | `[E9]` |
+| GF(31) | 64 | fflas-ffpack 2.5.0 | PENDING | 388.738 µs | PENDING | AMENDED [→A9] | `[E9]` |
+| GF(31) | 256 | fflas-ffpack 2.5.0 | PENDING | 13.517 ms | PENDING | AMENDED [→A9] | `[E9]` |
 | GF(251) | 64 | fflas-ffpack 2.5.0 | 165.000 µs | 889.983 µs | **0.19×** | PASS | `[E5]` `[E16]` |
 | GF(251) | 256 | fflas-ffpack 2.5.0 | 4.200 ms | 1.623 ms | **3.18×** | FAIL [→A1] | `[E5]` `[E16]` |
 | GF(65521) | 64 | fflas-ffpack 2.5.0 | 379.000 µs | 966.280 µs | **0.39×** | PASS | `[E5]` `[E16]` |
@@ -284,8 +284,8 @@ Evidence: `[E5]`, `[E6]`, `[E9]`, `[E16]`, `[E17]`.
 |---|---:|---|---:|---:|---:|---|---|
 | GF(7) | 64 | fflas-ffpack 2.5.0 | 159.000 µs | 569.273 µs | **0.28×** | PASS | `[E5]` `[E16]` |
 | GF(7) | 256 | fflas-ffpack 2.5.0 | 3.411 ms | 20.290 ms | **0.17×** | PASS | `[E5]` `[E16]` |
-| GF(31) | 64 | fflas-ffpack 2.5.0 | PENDING | 397.016 µs | PENDING | PENDING | `[E9]` |
-| GF(31) | 256 | fflas-ffpack 2.5.0 | PENDING | 13.500 ms | PENDING | PENDING | `[E9]` |
+| GF(31) | 64 | fflas-ffpack 2.5.0 | PENDING | 397.016 µs | PENDING | AMENDED [→A9] | `[E9]` |
+| GF(31) | 256 | fflas-ffpack 2.5.0 | PENDING | 13.500 ms | PENDING | AMENDED [→A9] | `[E9]` |
 | GF(251) | 64 | fflas-ffpack 2.5.0 | 559.000 µs | 134.866 µs | **4.14×** | FAIL [→A1] | `[E5]` `[E16]` |
 | GF(251) | 256 | fflas-ffpack 2.5.0 | 2.235 ms | 1.634 ms | **1.37×** | PASS | `[E5]` `[E16]` |
 | GF(65521) | 64 | fflas-ffpack 2.5.0 | 348.000 µs | 522.287 µs | **0.67×** | PASS | `[E5]` `[E16]` |
