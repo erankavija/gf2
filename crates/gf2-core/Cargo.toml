@@ -297,6 +297,11 @@ name = "sparse_rref"
 harness = false
 required-features = ["rand"]
 
+[[bench]]
+name = "sparse_rref_scorecard"
+harness = false
+required-features = ["rand"]
+
 # Hand-rolled CSV emitter that writes T1-compatible rows; sister of the
 # criterion suite above. Lives under `examples/` so it builds with
 # `cargo build --release --example bench_csv_emitter`.

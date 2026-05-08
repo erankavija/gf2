@@ -18,10 +18,10 @@
 - **Total cells in scope (from `sota_target_matrix.md` § 5):** measured/self-canonical cells + 20 excluded cells
   - EXCLUDED (no-independent-oracle): 20 — user-approved per target matrix § 6.1 + § 6.2.
 - **Closure status of measured/self-canonical cells (per authoritative parity evidence docs):**
-  - **PASS:** charpoly 7 cells; minpoly 6 cells; GF(2^32) matmul 3 cells; GF(2^31-1) fgemm 4 cells; GF(31) fgemm n=256,1024; GF(7)/256, GF(7)/1024, GF(65521)/64, GF(65521)/256, GF(65521)/1024 fgemm (all PASS [hard] per `[E14]` § 1.2 / § 7); GF(2) matmul n≥1024 2 cells; GF(2) echelon all 6 cells per `[E13]`; GF(2^31-1) pluq/echelon/solve all sizes per `[E15]`; GF(2^31-1) invert deficient all + uniform n=64 (0.67× per `[E15]` — aggregate CSV 2.14× superseded); GF(p) spmv 4 cells; GF(2^m) spmv self 2; GF(2) spmv self 1; sparse-matmul 7; sparse×dense GF(p) 4; sparse×dense GF(2) 1 → approximately **59 PASS cells**
+  - **PASS:** charpoly 7 cells; minpoly 6 cells; GF(2^32) matmul 3 cells; GF(2^31-1) fgemm 4 cells; GF(31) fgemm n=256,1024; GF(7)/256, GF(7)/1024, GF(65521)/64, GF(65521)/256, GF(65521)/1024 fgemm (all PASS [hard] per `[E14]` § 1.2 / § 7); GF(2) matmul n≥1024 2 cells; GF(2) echelon all 6 cells per `[E13]`; GF(2^31-1) pluq/echelon/solve all sizes per `[E15]`; GF(2^31-1) invert deficient all + uniform n=64 (0.67× per `[E15]` — aggregate CSV 2.14× superseded); GF(p) spmv 4 cells; GF(2^m) spmv self 2; GF(2) spmv self 1; sparse-matmul 7; sparse×dense GF(p) 4; sparse×dense GF(2) 1; sparse-elim × GF(2^8)/GF(2^16) self-canonical 4 cells (`[E20]`) → approximately **63 PASS cells**
   - **AMENDED:** GF(2^8) matmul 3 (A2); GF(2^16) matmul n=1024 only (A3); GF(2^31-1) invert uniform n=256/1024 (A4 revised); GF(31)/64 fgemm AMENDED [aspirational] per `[E14]` § 1.1 (A5); charpoly GF(251)/256 + minpoly GF(251)/64 (A1) → approximately **8 AMENDED cells**
   - **FAIL (open gaps):** GF(7)/GF(251) fgemm at n=64; GF(7)/n=4096; GF(31)/4096; GF(251)/n≠256 fgemm; GF(p) pluq/echelon/invert/solve non-Mersenne; GF(2^31-1) echelon n=64 (aggregate); GF(2) matmul at n<1024; GF(2) invert; sparse-elim GF(2)+GF(p) (10 cells) → approximately **41 FAIL cells**
-  - **PENDING:** GF(31) all non-fgemm dense ops; GF(2^4)/GF(2^8)/GF(2^16) matmul gf2 side absent; GF(2) pluq/solve gf2 absent; sparse-elim × GF(2^8)/GF(2^16) (4 cells, harness gap — § 4.4) → approximately **22 PENDING cells**
+  - **PENDING:** GF(31) all non-fgemm dense ops; GF(2^4)/GF(2^8)/GF(2^16) matmul gf2 side absent; GF(2) pluq/solve gf2 absent → approximately **18 PENDING cells**
 
 > **Ratio definition (canonical):** `Ratio = gf2 wall-clock / reference wall-clock` (lower is better — gf2 is faster when ratio < 1). PASS = ratio ≤ 1.5×. This is the wall-time ratio; all cells in this scorecard use this definition. Note: `benchmarks/analyze.py` reports a *throughput* ratio (gf2 Gops/s / ref Gops/s) which equals `ref_wall / gf2_wall` — the inverse of the wall-time ratio used here. The scorecard converts analyze.py output by taking `1 / analyze.py_ratio` for each cell.
 
@@ -358,7 +358,7 @@ All `sparse-matmul` cells are self-canonical (no-independent-oracle). Convention
 
 ### 4.4 `sparse-elim` (two sizes: n=256 and n=1024)
 
-The in-scope table covers GF(2), GF(7), GF(251), GF(65521), GF(2^31-1) (LinBox-canonical) plus GF(2^8) and GF(2^16) (self-canonical per `sota_target_matrix.md` § 5.11 `semantics-mismatch` marker — kept in scope per the target matrix's "0 sparse exclusions" contract).
+The in-scope table covers GF(2), GF(7), GF(251), GF(65521), GF(2^31-1) (LinBox-canonical) plus GF(2^8) and GF(2^16) (self-canonical per `sota_target_matrix.md` § 5.11 `semantics-mismatch` marker — kept in scope per the target matrix's "0 sparse exclusions" contract; gf2-side walls measured by the one-shot bench at `crates/gf2-core/benches/sparse_rref_scorecard.rs`, evidence `[E20]`).
 
 | Field | n / density | Ref owner | gf2 wall | Ref wall | Ratio (gf2/ref) | Status | Evidence |
 |---|---|---|---:|---:|---:|---|---|
@@ -372,14 +372,14 @@ The in-scope table covers GF(2), GF(7), GF(251), GF(65521), GF(2^31-1) (LinBox-c
 | GF(2^31-1) | 1024 / 1% | linbox 1.7.1 | 754.420 ms | 366.750 ms | **2.06×** | FAIL | `[E4]` |
 | GF(2) | 256 / 3.9% | linbox 1.7.1 | 9.593 ms | 4.465 ms | **2.15×** | FAIL | `[E4]` |
 | GF(2) | 1024 / 1% | linbox 1.7.1 | 505.270 ms | 228.006 ms | **2.22×** | FAIL | `[E4]` |
-| GF(2^8) | 256 / 3.9% | (self-canonical, gf2-core) | PENDING (harness gap) | (self-canonical) | PENDING | PENDING [bench emitter does not yet exercise GF(2^m) sparse-elim] | `[E4]` |
-| GF(2^8) | 1024 / 1% | (self-canonical, gf2-core) | PENDING (harness gap) | (self-canonical) | PENDING | PENDING [bench emitter does not yet exercise GF(2^m) sparse-elim] | `[E4]` |
-| GF(2^16) | 256 / 3.9% | (self-canonical, gf2-core) | PENDING (harness gap) | (self-canonical) | PENDING | PENDING [bench emitter does not yet exercise GF(2^m) sparse-elim] | `[E4]` |
-| GF(2^16) | 1024 / 1% | (self-canonical, gf2-core) | PENDING (harness gap) | (self-canonical) | PENDING | PENDING [bench emitter does not yet exercise GF(2^m) sparse-elim] | `[E4]` |
+| GF(2^8) | 256 / 3.9% | (self-canonical, gf2-core) | 189.77 ms | (self-canonical) | 1.00× | PASS [self-canonical] | `[E20]` |
+| GF(2^8) | 1024 / 1% | (self-canonical, gf2-core) | 12.751 s | (self-canonical) | 1.00× | PASS [self-canonical] | `[E20]` |
+| GF(2^16) | 256 / 3.9% | (self-canonical, gf2-core) | 219.32 ms | (self-canonical) | 1.00× | PASS [self-canonical] | `[E20]` |
+| GF(2^16) | 1024 / 1% | (self-canonical, gf2-core) | 14.647 s | (self-canonical) | 1.00× | PASS [self-canonical] | `[E20]` |
 
 > **Note on sparse-elim FAIL cells:** `sparse-elim × {GF(p), GF(2)}` are uniformly 2.1×–2.6× of LinBox (all FAIL). Per `[E18]` § 1.2 / `[E4]` § 4, the Wave-3 verdict is that sparse-elim is an open algorithmic gap. LinBox's `GaussDomain::NoReordering` uses Markowitz-degree pivoting that gf2's simple column-sweep implementation cannot match. This is tracked as future CPU algorithmic work in `47698404-sparse-scorecard.md` § 4 *Feasible CPU gaps*. No user-approved amendment exists; these are FAIL cells.
 
-> **Note on sparse-elim × GF(2^8) / GF(2^16):** Per `sota_target_matrix.md` § 5.11, these cells carry the `semantics-mismatch` marker making gf2-core itself the canonical reference (no external library exposes a comparable sparse RREF on GF(2^m) extension fields). The follow-up `eb57f944` confirms these were kept in scope specifically as self-reference cells, not as exclusions. The bench emitter does not yet exercise the GF(2^m) sparse-elim path (`SparseFieldMatrix<Gf2mWide<2^k>>::rref` exists in `crates/gf2-core/src/sparse.rs` but `bench_sparse_csv_emitter` does not call it for GF(2^m)). Status is **PENDING** — a follow-up issue under epic `97bf0879` should wire the measurement so these self-canonical cells produce a numeric `gf2 wall` and convert PENDING → PASS at the next scorecard refresh.
+> **Note on sparse-elim × GF(2^8) / GF(2^16):** Per `sota_target_matrix.md` § 5.11, these cells carry the `semantics-mismatch` marker making gf2-core itself the canonical reference (no external library exposes a comparable sparse RREF on GF(2^m) extension fields). The walls above were measured by a one-shot bench `crates/gf2-core/benches/sparse_rref_scorecard.rs` at the scorecard-canonical sizes; full evidence in `[E20]`. Status is PASS [self-canonical] per the § 4 preamble convention (self-canonical implies PASS by definition). The ~10× gap vs GF(p) at the same density is a known feasible-CPU optimization gap (`Gf2mWide` PCLMULQDQ multiplications are not SIMD-fused across rows the way the GF(p) byte-table path is) tracked under `4c0d0202`.
 
 ---
 
@@ -394,7 +394,7 @@ The following story-level parity evidence documents are the authoritative closur
 | `2c7548ae` (GF(2^m) fgemm) | matmul/fgemm × GF(2^m) | `[E12]` | GF(2^32) all n PASS; GF(2^8) AMENDED (aspirational); GF(2^16) PASS at n≤256 [hard], AMENDED at n=1024 |
 | `72ab6d0e` (Dense factorize/solve) | pluq/echelon/invert/solve × GF(p) + GF(2) | `[E15]`, `[E8]`, `[E13]` | GF(2^31-1) pluq ALL PASS; echelon n≥256 PASS (est.); invert ALL deficient PASS + n=64 uniform PASS (0.67× per `[E15]`), n=256/1024 uniform AMENDED; solve ALL PASS. GF(p) others: FAIL. GF(2) echelon ALL PASS; GF(2) invert FAIL; GF(2) solve/pluq: harness gap (PENDING). |
 | `66190ccd` (charpoly/minpoly) | charpoly/minpoly × GF(p) | `[E16]`, `[E5]` | 14/16 cells PASS; 2 cells AMENDED (routed to `52cce970`) |
-| `54fd3f0b` (Sparse) | spmv/sparse-matmul/sparse×dense/sparse-elim | `[E18]`, `[E4]` | spmv GF(p) ALL PASS; spmv GF(2) PASS (self-canonical); sparse-matmul ALL PASS (self-canonical); sparse×dense ALL PASS (including GF(2^31-1)); sparse-elim GF(2)+GF(p) (10 cells) ALL FAIL (open algorithmic gap); sparse-elim × GF(2^8)/GF(2^16) (4 cells) PENDING (bench-emitter harness gap; self-canonical contract not yet exercised) |
+| `54fd3f0b` (Sparse) | spmv/sparse-matmul/sparse×dense/sparse-elim | `[E18]`, `[E4]`, `[E20]` | spmv GF(p) ALL PASS; spmv GF(2) PASS (self-canonical); sparse-matmul ALL PASS (self-canonical); sparse×dense ALL PASS (including GF(2^31-1)); sparse-elim GF(2)+GF(p) (10 cells) ALL FAIL (open algorithmic gap); sparse-elim × GF(2^8)/GF(2^16) (4 cells) PASS [self-canonical, walls measured by `[E20]`] |
 
 ---
 
@@ -506,3 +506,4 @@ All source evidence documents cited in this scorecard. Each document is at a pat
 | `[E17]` | `dev/bench_results/2026-05-04-c3e79272-charpoly-minpoly-refs.md` | fflas-ffpack canonical designation for charpoly/minpoly × GF(p); LinBox/FLINT secondary references |
 | `[E18]` | `dev/bench_results/2026-05-07-1726270d-sparse-parity-evidence.md` | Sparse parity verdict (Wave-3 closure); spmv and sparse×dense Path-A/B measurements; GPU non-goal boundary |
 | `[E19]` | `dev/bench_results/2026-05-08-dece4e73-sota-aggregate-schema.md` | Aggregate CSV schema, supersession rules, coverage declaration; source CSV index with 22 source files |
+| `[E20]` | `dev/bench_results/2026-05-08-2cfc4372-sparse-elim-gf2m.md` | Self-canonical `sparse-elim × GF(2^8)/GF(2^16)` gf2-side wall measurements at the scorecard-canonical sizes (one-shot bench `sparse_rref_scorecard.rs`) |

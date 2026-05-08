@@ -14,10 +14,15 @@
     "doc-review"
   ],
   "gates_status": {
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-07T23:09:50.783378805Z"
+    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-07T22:15:34.025019919Z"
+      "updated_at": "2026-05-07T23:09:40.374374777Z"
     }
   },
   "context": {},
@@ -28,6 +33,13 @@
       "label": "Final SOTA scorecard",
       "doc_type": "evidence",
       "format": "markdown"
+    },
+    {
+      "path": "dev/bench_results/2026-05-08-2cfc4372-sparse-elim-gf2m.md",
+      "commit": null,
+      "label": "Self-canonical sparse-elim × GF(2^m) one-shot bench evidence",
+      "doc_type": null,
+      "format": "markdown"
     }
   ],
   "labels": [
@@ -37,5 +49,5 @@
     "story:sota-final-scorecard"
   ],
   "created_at": "2026-04-30T06:43:02.946758140+00:00",
-  "updated_at": "2026-05-07T22:15:40.343201927+00:00"
+  "updated_at": "2026-05-08T15:21:44.029664304+00:00"
 }
