@@ -4321,3 +4321,14 @@
 {"type":"gate_failed","id":"2850404f-b915-4406-a291-1e40858bbb76","issue_id":"97bf0879-357e-4151-bdeb-781987cd0902","timestamp":"2026-05-08T20:16:29.556924442Z","gate_key":"code-review","updated_by":"auto:executor"}
 {"type":"issue_created","id":"a3225b3f-f77b-4459-8840-fa0446a83960","issue_id":"8e4e19a0-a61f-4228-aec5-0dbae508fcbe","timestamp":"2026-05-08T20:59:22.207371203Z","title":"Empirical perm-vs-det uniformity comparison over F_3 / F_5 / F_7","priority":"normal"}
 {"type":"issue_state_changed","id":"e3ffe541-8450-46ce-bb13-38997f087f8e","issue_id":"8e4e19a0-a61f-4228-aec5-0dbae508fcbe","timestamp":"2026-05-08T20:59:29.798064615Z","from":"ready","to":"backlog"}
+{"type":"gate_failed","id":"7b190cc5-6b98-497d-bb11-afb05ab236b5","issue_id":"97bf0879-357e-4151-bdeb-781987cd0902","timestamp":"2026-05-08T21:28:04.612461787Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"fe890675-dc4b-40bf-9070-e10e130e3296","issue_id":"97bf0879-357e-4151-bdeb-781987cd0902","timestamp":"2026-05-08T21:39:18.705116296Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"e64a8377-c99c-410b-a8d1-1ddf861d416e","issue_id":"97bf0879-357e-4151-bdeb-781987cd0902","timestamp":"2026-05-08T21:46:13.730289706Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"e1563dba-eb82-48cf-a441-ebf434b19e4d","issue_id":"97bf0879-357e-4151-bdeb-781987cd0902","timestamp":"2026-05-08T21:48:28.205986260Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"issue_state_changed","id":"4ede80ec-d213-4ec7-baf1-edc33429de8f","issue_id":"97bf0879-357e-4151-bdeb-781987cd0902","timestamp":"2026-05-08T21:52:26.258919417Z","from":"gated","to":"done"}
+{"type":"issue_completed","id":"a6e24adb-4410-4e50-8f32-d82266c94e5d","issue_id":"97bf0879-357e-4151-bdeb-781987cd0902","timestamp":"2026-05-08T21:52:26.258952957Z"}
+{"type":"issue_state_changed","id":"62337584-3e85-4725-9f34-28b4d549e64e","issue_id":"47c1538f-14df-4f2c-9ff9-9ab90b121fa3","timestamp":"2026-05-08T21:52:26.349853933Z","from":"backlog","to":"ready"}
+{"type":"issue_state_changed","id":"c425e803-4e67-445b-945d-bc69af0ba7b5","issue_id":"b117c95e-3d65-4474-af7c-709a8c08bdc5","timestamp":"2026-05-08T21:52:26.480376981Z","from":"backlog","to":"ready"}
+{"type":"issue_created","id":"bbdf112c-148a-4ac6-84a5-d59cc4d80c98","issue_id":"026fc832-a480-4d07-8d25-47b8bfcb69a3","timestamp":"2026-05-08T21:53:15.427627085Z","title":"Continue gf2-core SOTA catch-up — close A8 + §6.3 follow-ups","priority":"normal"}
+{"type":"issue_state_changed","id":"c38af884-ff1d-4744-b41b-202c1028815f","issue_id":"026fc832-a480-4d07-8d25-47b8bfcb69a3","timestamp":"2026-05-08T21:53:27.153379539Z","from":"ready","to":"backlog"}
+{"type":"issue_state_changed","id":"c56a8d82-056b-4c51-b897-09da2155f46a","issue_id":"b117c95e-3d65-4474-af7c-709a8c08bdc5","timestamp":"2026-05-08T21:53:27.395796609Z","from":"ready","to":"backlog"}

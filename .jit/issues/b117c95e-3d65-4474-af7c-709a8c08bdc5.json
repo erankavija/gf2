@@ -7,8 +7,9 @@
   "assignee": null,
   "dependencies": [
     "babcf05e-29e8-4c81-ba77-843ec6409cfa",
+    "bb85c68a-f88e-46fb-b0ab-cddc3487cbc9",
     "97bf0879-357e-4151-bdeb-781987cd0902",
-    "bb85c68a-f88e-46fb-b0ab-cddc3487cbc9"
+    "026fc832-a480-4d07-8d25-47b8bfcb69a3"
   ],
   "gates_required": [
     "code-review"
@@ -80,5 +81,5 @@
     "milestone:gf2-core-perf"
   ],
   "created_at": "2026-04-25T15:23:54.395404062+00:00",
-  "updated_at": "2026-05-08T16:13:08.362769128+00:00"
+  "updated_at": "2026-05-08T21:53:27.395608029+00:00"
 }
