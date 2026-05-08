@@ -4313,3 +4313,5 @@
 {"type":"gate_failed","id":"9e5b60d9-58fb-4e70-a4bd-bcd742364224","issue_id":"97bf0879-357e-4151-bdeb-781987cd0902","timestamp":"2026-05-08T19:43:02.009602478Z","gate_key":"code-review","updated_by":"auto:executor"}
 {"type":"gate_failed","id":"8306afd9-962f-46c4-af16-c00a0e820b3e","issue_id":"97bf0879-357e-4151-bdeb-781987cd0902","timestamp":"2026-05-08T19:47:16.533818458Z","gate_key":"code-review","updated_by":"auto:executor"}
 {"type":"gate_failed","id":"24792a89-0d5c-49bb-b578-1b6377a69bbd","issue_id":"97bf0879-357e-4151-bdeb-781987cd0902","timestamp":"2026-05-08T19:53:45.763755748Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"cdeaa9a2-8f0a-42c5-929f-3c15953f9c54","issue_id":"97bf0879-357e-4151-bdeb-781987cd0902","timestamp":"2026-05-08T19:58:18.605547579Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"bc8510dc-a0bf-4f89-87ef-eee0ce7ca9fd","issue_id":"97bf0879-357e-4151-bdeb-781987cd0902","timestamp":"2026-05-08T20:01:45.781513032Z","gate_key":"code-review","updated_by":"auto:executor"}
