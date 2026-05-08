@@ -80,17 +80,20 @@
     </div>
   </div>
   <aside class="notes">
-    Approximately 78 cells satisfy the 1.5x PASS threshold on hard evidence (post Wave-12 GF(31) measurement closed 14 of the originally PENDING GF(31) cells).
+    Approximately 78 cells satisfy the 1.5x PASS threshold on hard evidence (post Wave-12 GF(31)
+    measurement closed 14 of the originally PENDING GF(31) cells).
     11 more are aspirational amendments where the criterion was written optimistically before
     empirical data existed; each is user-approved. Most carry a follow-up issue (A1, A2, A5,
     A6, A7) but two are structural with no separate follow-up: A3 (GF(2^16) matmul n=1024
     hardware limit) and A4 (GF(2^31-1) invert uniform — an architectural call about reusing
     PLE+TRSM for invert).
-    70 cells remain open gaps, primarily non-Mersenne GF(p) dense factorisation and
-    sparse-elim for all field families.
-    16 cells are pending due to missing gf2-side bench harness coverage.
-    20 cells are entirely excluded because no public reference library exposes the same
-    algebraic contract.
+    76 cells remain open gaps, primarily non-Mersenne GF(p) dense factorisation and
+    sparse-elim for all field families — all routed via A8 to named follow-ups.
+    Zero PENDING cells remain in the scorecard tables: the 11 cells that previously held
+    PENDING numeric values (matmul × GF(2^4); pluq/solve × GF(2)) were re-classified
+    EXCLUDED [§ 6.3] under user-approved 2026-05-09 amendment, paralleling the no-oracle
+    EXCLUDED precedent — these are gf2-side structural absences with no number possible.
+    31 cells total are EXCLUDED (20 § 6.1+§ 6.2 no-oracle + 11 § 6.3 no-gf2-impl).
   </aside>
 </section>
 
@@ -198,7 +201,9 @@
     GF(2) invert is a hard open gap (16.9x at n=1024).
     Non-Mersenne GF(p) (GF(7), GF(251), GF(65521)) are all FAIL for pluq/echelon/invert/solve;
     these require a PLE-equivalent for arbitrary-characteristic fields.
-    GF(2) pluq and solve have no gf2-side bench harness coverage (PENDING).
+    GF(2) pluq and solve are gf2-side structural absences (no `BitMatrix::pluq` or
+    `BitMatrix::solve_left` in gf2-core); EXCLUDED [§ 6.3] per user-approved 2026-05-09;
+    follow-up `aaa847cf`.
   </aside>
 </section>
 
@@ -397,11 +402,11 @@
         <td>52 &rarr; <span class="tag">615db3b9</span>, 2 &rarr; <span class="tag">52cce970</span>, 2 &rarr; <span class="tag">974a85bd</span>, 3 &rarr; <span class="tag">aaa847cf</span>, 10 &rarr; <span class="tag">5ce13bae</span></td>
       </tr>
       <tr>
-        <td>A9</td>
-        <td>~16 PENDING in-scope cells (umbrella)</td>
-        <td class="ratio amend">harness gap</td>
-        <td>Wave-12 close-cascade umbrella: SC#2 explicitly defines harness-scope-gap as a valid classification; A9 records user approval and per-cell follow-up routing</td>
-        <td><span class="tag">615db3b9</span> (GF(31) dense LA) / <span class="tag">974a85bd</span> (GF(2) pluq+solve) / <span class="tag">e24f7839</span> (GF(2^m) emitter mismatch)</td>
+        <td>A9 (superseded 2026-05-09)</td>
+        <td>~16 PENDING cells &rarr; superseded</td>
+        <td class="ratio amend">superseded</td>
+        <td><strong>SUPERSEDED 2026-05-09.</strong> A9 was the original PENDING umbrella covering harness-scope-gap classification per SC#2. It is now retired: GF(31) cells were measured via Wave-12 `[EX]` (PASS or A8-routed); the 11 structural-absence cells (matmul × GF(2^4), pluq/solve × GF(2)) were reclassified EXCLUDED [§ 6.3] under user-approved 2026-05-09 amendment.</td>
+        <td><span class="tag">aaa847cf</span> (GF(2) pluq+solve, formerly via 974a85bd) / <span class="tag">615db3b9</span> (sub-byte GF(2^4) follow-up scoping)</td>
       </tr>
     </tbody>
   </table>
