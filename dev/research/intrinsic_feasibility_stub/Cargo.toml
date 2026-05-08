@@ -1,0 +1,19 @@
+[package]
+name = "intrinsic_feasibility_stub"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "Standalone MSRV 1.95 intrinsic feasibility stub for JIT issue 4c534d31 (D4) — not part of the gf2 workspace"
+rust-version = "1.95"
+
+[lib]
+name = "intrinsic_feasibility_stub"
+path = "src/lib.rs"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+
+# Standalone research stub: deliberately not a workspace member.
+[workspace]
