@@ -509,21 +509,21 @@
       <span class="hero-label">AMENDED (aspirational)</span>
     </div>
     <div style="text-align:center; border: 1px solid #444; padding: 1em; border-radius: 6px;">
-      <span class="hero-num" style="color:#f66;">~40</span>
-      <span class="hero-label">FAIL (open gaps)</span>
+      <span class="hero-num" style="color:#f66;">~70</span>
+      <span class="hero-label">FAIL (all routed via A8)</span>
     </div>
   </div>
   <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 1em; margin-top: 1em;">
     <div style="text-align:center; border: 1px solid #333; padding: 1em; border-radius: 6px;">
       <span class="hero-num" style="color:#aaa; font-size:1.6em;">~16</span>
-      <span class="hero-label">PENDING (no gf2 measurement)</span>
+      <span class="hero-label">PENDING (status AMENDED [→A9])</span>
     </div>
     <div style="text-align:center; border: 1px solid #333; padding: 1em; border-radius: 6px;">
       <span class="hero-num" style="color:#888; font-size:1.6em;">20</span>
       <span class="hero-label">EXCLUDED (no oracle)</span>
     </div>
     <div style="text-align:center; border: 1px solid #333; padding: 1em; border-radius: 6px;">
-      <span class="hero-num" style="color:#6af; font-size:1.6em;">4</span>
+      <span class="hero-num" style="color:#6af; font-size:1.6em;">5</span>
       <span class="hero-label">Open research issues</span>
     </div>
   </div>
@@ -534,11 +534,12 @@
   <aside class="notes">
     Summary dashboard for easy reference. The approximately 64 PASS cells represent the hard
     closure achieved over Waves 1-12. The 11 amended cells have user-approved aspirational
-    amendments grounded in architectural analysis. The 40 open failures are mostly in two
+    amendments grounded in architectural analysis. The 70 open failures are mostly in two
     buckets: non-Mersenne GF(p) dense factorisation (pluq/echelon/invert/solve) and
-    sparse-elim across all fields. The 16 pending cells represent harness gaps, not
-    performance failures. The 4 follow-up issues define the research agenda for the
-    post-epic period.
+    sparse-elim across all fields. All 70 are routed via Wave-12 umbrella amendment A8 to
+    named follow-ups (615db3b9, 52cce970, 974a85bd, aaa847cf, 5ce13bae). The 16 PENDING
+    rows have status AMENDED via A9 (harness-scope gaps per SC#2). The 5 follow-up issues
+    define the research agenda for the post-epic period.
   </aside>
 </section>
 
