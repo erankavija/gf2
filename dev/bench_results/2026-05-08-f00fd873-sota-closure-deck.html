@@ -65,7 +65,7 @@
     <div>
       <p><span class="badge badge-pass">~64 PASS</span> cells</p>
       <p><span class="badge badge-amend">~11 AMENDED</span> cells (aspirational, user-approved)</p>
-      <p><span class="badge badge-fail">~40 FAIL</span> cells (open gaps)</p>
+      <p><span class="badge badge-fail">~70 FAIL</span> cells (all routed to named follow-ups via A8)</p>
       <p><span class="pend">~16 PENDING</span> (no gf2 measurement yet)</p>
       <p class="excl">20 EXCLUDED (no independent oracle)</p>
     </div>
@@ -74,8 +74,8 @@
         <li>Ratio definition: <em>gf2 wall / ref wall</em>; 1.0 = parity, &lt;1.0 = gf2 faster</li>
         <li>AMENDED = user-approved aspirational criterion; most carry a follow-up issue but some are structural with no separate follow-up</li>
         <li>EXCLUDED = definitional; no external library exposes the same algebraic API</li>
-        <li>7 amendments A1–A7 in Annex A of the scorecard</li>
-        <li>4 open research issues identified</li>
+        <li>8 amendments A1–A8 in Annex A of the scorecard (A8 = Wave-12 umbrella covering all 70 FAIL cells)</li>
+        <li>5 active follow-up issues: 615db3b9, 52cce970, 974a85bd, aaa847cf, 5ce13bae</li>
       </ul>
     </div>
   </div>
@@ -86,7 +86,7 @@
     A6, A7) but two are structural with no separate follow-up: A3 (GF(2^16) matmul n=1024
     hardware limit) and A4 (GF(2^31-1) invert uniform — an architectural call about reusing
     PLE+TRSM for invert).
-    40 cells remain open gaps, primarily non-Mersenne GF(p) dense factorisation and
+    70 cells remain open gaps, primarily non-Mersenne GF(p) dense factorisation and
     sparse-elim for all field families.
     16 cells are pending due to missing gf2-side bench harness coverage.
     20 cells are entirely excluded because no public reference library exposes the same
