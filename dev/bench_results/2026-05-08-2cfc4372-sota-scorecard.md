@@ -16,13 +16,13 @@
 
 - **Epic:** `97bf0879`
 - **Total cells in scope (from `sota_target_matrix.md` § 5):** measured/self-canonical cells + 20 excluded cells
-  - EXCLUDED (no-independent-oracle): 20 — user-approved per target matrix § 6.1 + § 6.2.
+  - EXCLUDED: 31 — 20 `no-independent-oracle` (target matrix § 6.1 + § 6.2, user-approved 2026-05-04) + 11 `no-gf2-implementation` (§ 6.3, user-approved 2026-05-09 in chat).
 - **Closure status of measured/self-canonical cells (per authoritative parity evidence docs):**
   - **PASS:** charpoly 7 cells (GF(7)/64+256, GF(251)/64, GF(65521)/64+256, GF(2^31-1)/64+256); minpoly 7 cells (GF(7)/64+256, GF(251)/256, GF(65521)/64+256, GF(2^31-1)/64+256); GF(2^32) matmul 3 cells; GF(2^31-1) fgemm 4 cells; GF(31) fgemm n=256,1024; GF(7)/256, GF(7)/1024, GF(65521)/64, GF(65521)/256, GF(65521)/1024 fgemm (all PASS [hard] per `[E14]` § 1.2 / § 7); GF(2) matmul n≥1024 2 cells; GF(2) echelon all 6 cells per `[E13]`; GF(2^31-1) pluq all sizes + solve all sizes per `[E15]`; echelon n∈{256,1024} **uniform only** per `[E15]` § 1.2 (echelon n=64 + deficient n=256/1024 FAIL — see § 3 table); GF(2^31-1) invert deficient all + uniform n=64 (0.67× per `[E15]` — aggregate CSV 2.14× superseded); GF(p) spmv 4 cells; GF(2^m) spmv self 2; GF(2) spmv self 1; sparse-matmul 7; sparse×dense GF(p) 4; sparse×dense GF(2) 1; sparse-elim × GF(2^8)/GF(2^16) self-canonical 4 cells (`[E20]`); **GF(31) Wave-12 bench extension (`[EX]`, complete 2026-05-09):** pluq 3 cells (n=64 both, n=256 uniform), echelon 2 cells (n=64 both), invert 3 cells (n=64 both, n=256 deficient), solve 3 cells (n=64 both, n=256 uniform), charpoly 1 cell (n=64), minpoly 2 cells (n=64,256) → 14 PASS cells from the `[EX]` extension → approximately **78 PASS cells**
   - **AMENDED:** GF(2^8) matmul 3 (A2); GF(2^16) matmul n=1024 only (A3); GF(2^31-1) invert uniform n=256/1024 (A4 revised); GF(31)/64 fgemm (A5); GF(7)/64 fgemm (A6); GF(251)/{64,256,1024,4096} fgemm (A7) → approximately **11 AMENDED cells**
   - **FAIL (open gaps):** GF(7)/n=4096; GF(31)/4096; GF(65521)/4096 fgemm; GF(p) pluq/echelon/invert/solve non-Mersenne; GF(2^31-1) echelon n=64 both regimes (aggregate); **GF(2^31-1) echelon n=256/1024 deficient (aggregate; `[E15]` § 1.2 closes uniform only)**; GF(2) matmul at n<1024; GF(2) invert; sparse-elim GF(2)+GF(p) (10 cells); **charpoly × GF(251)/256 + minpoly × GF(251)/64 (2 cells routed to `52cce970` per A1; recorded as FAIL)**; **GF(31) pluq deficient n=256, echelon n=256 both regimes, invert n=256 uniform, solve n=256 deficient, charpoly n=256 (6 measured FAIL cells `[EX]`)** → **76 FAIL cells** (exact count from A8 annex)
   - **SC#3+SC#4 status (2026-05-09):** Annex A8 routes all 76 FAIL cells to named JIT issues (57 → `615db3b9`, 3 → `52cce970`, 2 → `974a85bd`, 3 → `aaa847cf`, 10 → `5ce13bae`, 1 → already in `615db3b9`). Annex A9 covers remaining PENDING cells as harness-scope-gaps per SC#2 with named follow-ups. Combined with A1–A7, every in-scope cell has PASS, AMENDED, FAIL→A8-routed, or A9-classified status. **Zero uncovered cells. SC#3+SC#4 conjunction satisfied.**
-  - **PENDING (raw measurement):** GF(31) bucket fully emptied 2026-05-09 by Wave-12 bench extension (`[EX]`): all 16 dense-LA cells + 4 charpoly/minpoly cells now measured (14 PASS, 6 FAIL routed to A8 rows 71–76). GF(2) pluq/solve remain PENDING (structural implementation gap, not bench-wiring gap; `BitMatrix::pluq` and `BitMatrix::solve_left` do not exist). All remaining PENDING cells are classified AMENDED[→A9]. The classification mapping is in Annex A9.
+  - **PENDING (raw measurement):** **0 remaining in scorecard tables.** GF(31) bucket fully emptied 2026-05-09 by Wave-12 bench extension (`[EX]`): all 16 dense-LA cells + 4 charpoly/minpoly cells now measured (14 PASS, 6 FAIL routed to A8 rows 71–76). The 11 cells that previously held literal `PENDING` in numeric columns (matmul × GF(2^4) at n=64,256,1024; pluq × GF(2) at n=64,256 × {uniform,deficient}; solve × GF(2) at n=64,256 × {uniform,deficient}) are now classified EXCLUDED [§ 6.3] per user-approved 2026-05-09 amendment — these are gf2-side structural absences (no `Gf2mWide<u4>`, no `BitMatrix::pluq`, no `BitMatrix::solve_left`) where no number is possible without implementation work, paralleling the precedent of § 6.1/§ 6.2 EXCLUDED cells. The fgemm/matmul × GF(2^m) table rows have been consolidated and now show full numeric data (cross-walked from `[E12]` evidence).
 
 > **Ratio definition (canonical):** `Ratio = gf2 wall-clock / reference wall-clock` (lower is better — gf2 is faster when ratio < 1). PASS = ratio ≤ 1.5×. This is the wall-time ratio; all cells in this scorecard use this definition. Note: `benchmarks/analyze.py` reports a *throughput* ratio (gf2 Gops/s / ref Gops/s) which equals `ref_wall / gf2_wall` — the inverse of the wall-time ratio used here. The scorecard converts analyze.py output by taking `1 / analyze.py_ratio` for each cell.
 
@@ -63,21 +63,15 @@ Evidence: `[E1]`, `[E2]`, `[E3]`, `[E10]`, `[E11]`, `[E12]`, `[E14]`.
 | fgemm | GF(2^31-1) | 256 | fflas-ffpack 2.5.0 | 10.507 ms | 15.787 ms | **0.67×** | PASS | `[E2]` `[E9]` |
 | fgemm | GF(2^31-1) | 1024 | fflas-ffpack 2.5.0 | 648.667 ms | 906.264 ms | **0.72×** | PASS | `[E2]` `[E9]` |
 | fgemm | GF(2^31-1) | 4096 | fflas-ffpack 2.5.0 | 50.431 s | 44.974 s | **1.12×** | PASS | `[E2]` `[E9]` |
-| fgemm | GF(2^8) | 64 | m4rie 20250128 | 329.134 µs | PENDING | PENDING | AMENDED [→A9] | `[E11]` |
-| fgemm | GF(2^8) | 256 | m4rie 20250128 | 22.827 ms | PENDING | PENDING | AMENDED [→A9] | `[E11]` |
-| fgemm | GF(2^8) | 1024 | m4rie 20250128 | 1.495 s | PENDING | PENDING | AMENDED [→A9] | `[E11]` |
-| fgemm | GF(2^16) | 64 | m4rie 20250128 | 283.922 µs | PENDING | PENDING | AMENDED [→A9] | `[E11]` |
-| fgemm | GF(2^16) | 256 | m4rie 20250128 | 17.765 ms | PENDING | PENDING | AMENDED [→A9] | `[E11]` |
-| fgemm | GF(2^16) | 1024 | m4rie 20250128 | 1.226 s | PENDING | PENDING | AMENDED [→A9] | `[E11]` |
-| matmul | GF(2^4) | 64 | m4rie 20250128 | PENDING | 36.512 µs | PENDING | AMENDED [→A9] | `[E11]` |
-| matmul | GF(2^4) | 256 | m4rie 20250128 | PENDING | 534.494 µs | PENDING | AMENDED [→A9] | `[E11]` |
-| matmul | GF(2^4) | 1024 | m4rie 20250128 | PENDING | 7.043 ms | PENDING | AMENDED [→A9] | `[E11]` |
-| matmul | GF(2^8) | 64 | m4rie 20250128 | PENDING | 129.400 µs | PENDING | AMENDED [→A2] | `[E11]` `[E12]` |
-| matmul | GF(2^8) | 256 | m4rie 20250128 | PENDING | 1.368 ms | PENDING | AMENDED [→A2] | `[E11]` `[E12]` |
-| matmul | GF(2^8) | 1024 | m4rie 20250128 | PENDING | 22.010 ms | PENDING | AMENDED [→A2] | `[E11]` `[E12]` |
-| matmul | GF(2^16) | 64 | m4rie 20250128 | PENDING | 42.133 ms | PENDING | PASS [hard] | `[E11]` `[E12]` |
-| matmul | GF(2^16) | 256 | m4rie 20250128 | PENDING | 631.645 ms | PENDING | PASS [hard] | `[E11]` `[E12]` |
-| matmul | GF(2^16) | 1024 | m4rie 20250128 | PENDING | 752.522 ms | PENDING | AMENDED [→A3] | `[E11]` `[E12]` |
+| fgemm/matmul | GF(2^8) | 64 | m4rie 20250128 | 329.134 µs | 129.400 µs | **2.54×** | AMENDED [→A2] | `[E11]` `[E12]` |
+| fgemm/matmul | GF(2^8) | 256 | m4rie 20250128 | 22.827 ms | 1.368 ms | **16.69×** | AMENDED [→A2] | `[E11]` `[E12]` |
+| fgemm/matmul | GF(2^8) | 1024 | m4rie 20250128 | 1.495 s | 22.010 ms | **67.92×** | AMENDED [→A2] | `[E11]` `[E12]` |
+| fgemm/matmul | GF(2^16) | 64 | m4rie 20250128 | 283.922 µs | 42.133 ms | **0.0067×** | PASS [hard] | `[E11]` `[E12]` |
+| fgemm/matmul | GF(2^16) | 256 | m4rie 20250128 | 17.765 ms | 631.645 ms | **0.0281×** | PASS [hard] | `[E11]` `[E12]` |
+| fgemm/matmul | GF(2^16) | 1024 | m4rie 20250128 | 1.226 s | 752.522 ms | **1.629×** | AMENDED [→A3] | `[E11]` `[E12]` |
+| matmul | GF(2^4) | 64 | m4rie 20250128 | — (no gf2 impl) | 36.512 µs | — | EXCLUDED [§ 6.3] | `[E11]` |
+| matmul | GF(2^4) | 256 | m4rie 20250128 | — (no gf2 impl) | 534.494 µs | — | EXCLUDED [§ 6.3] | `[E11]` |
+| matmul | GF(2^4) | 1024 | m4rie 20250128 | — (no gf2 impl) | 7.043 ms | — | EXCLUDED [§ 6.3] | `[E11]` |
 | matmul | GF(2^32) | 64 | ntl 11.6.0 | 302.524 µs | 1.960 ms | **0.15×** | PASS | `[E10]` `[E12]` |
 | matmul | GF(2^32) | 256 | ntl 11.6.0 | 17.780 ms | 119.609 ms | **0.15×** | PASS | `[E10]` `[E12]` |
 | matmul | GF(2^32) | 1024 | ntl 11.6.0 | 1.337 s | 7.591 s | **0.18×** | PASS | `[E10]` `[E12]` |
@@ -86,7 +80,7 @@ Evidence: `[E1]`, `[E2]`, `[E3]`, `[E10]`, `[E11]`, `[E12]`, `[E14]`.
 | matmul | GF(2) | 1024 | m4ri 20260122 | 868.978 µs | 791.790 µs | **1.10×** | PASS | `[E3]` `[E13]` |
 | matmul | GF(2) | 4096 | m4ri 20260122 | 34.073 ms | 30.479 ms | **1.12×** | PASS | `[E3]` `[E13]` |
 
-> **Note on matmul × GF(2^8)/GF(2^16):** The `fgemm` rows in the aggregate have gf2 measurements but no m4rie reference (reference CSV emits under operation=`matmul`, not `fgemm`; the `matmul` rows above show PENDING because gf2 does not emit `matmul` for GF(2^m)). The correct measurement from `[E12]` is: GF(2^8) ratio 0.393/0.060/0.015 × (AMENDED-aspirational); GF(2^16) ratio 148×/35.6× (PASS [hard] at n=64/256); ratio 0.614× (AMENDED-aspirational at n=1024). See Annex A for the amendment record.
+> **Note on fgemm/matmul × GF(2^8)/GF(2^16):** The original aggregate had separate `fgemm` rows (gf2 only) and `matmul` rows (m4rie only) because the two emitters use different operation names for the same algebraic operation. As of 2026-05-09 these rows are **consolidated** in the table above (one row per cell, both gf2 and ref columns populated, ratio computed). The cross-walked numbers come from `[E12]`: GF(2^8) wall-time ratios 2.54/16.69/67.92 (AMENDED-aspirational [→A2]); GF(2^16) ratios 0.0067/0.0281/1.629 (PASS [hard] at n=64,256; AMENDED [→A3] at n=1024).
 
 > **Note on fgemm × GF(7)/n=256 PASS status:** The aggregate CSV gives gf2=992µs, ref=652µs → wall ratio 1.52×. However, `[E14]` § 7 line 281 measures this cell at throughput ratio 0.679 with marker MET [hard]; `[E14]` used `prime-sweep-aggregate.csv` source measurements predating the `e24f7839` panelized-kernel supersession. Per the evidence-doc-is-authoritative rule, `[E14]`'s closure verdict of PASS [hard] holds for this cell.
 
@@ -105,7 +99,7 @@ Evidence: `[E1]`, `[E3]`, `[E4]`, `[E7]`, `[E8]`, `[E9]`, `[E13]`, `[E15]`.
 
 > **Note:** Only cells where at least one of gf2 or reference is measured are shown. Excluded cells (GF(2^m) non-matmul, per `sota_target_matrix.md` § 6.1 + § 6.2) are listed in Section 6.
 
-> **Note on GF(2) pluq/solve:** The aggregate has no gf2 measurements for `pluq × GF(2)` or `solve × GF(2)`. These are harness-scope gaps: `BitMatrix::pluq` and `BitMatrix::solve_left` were never emitted by the bench harness. Status: PENDING (gf2 side absent).
+> **Note on GF(2) pluq/solve:** `BitMatrix::pluq` and `BitMatrix::solve_left` are not implemented in gf2-core (not a bench-wiring gap — a structural absence: gf2-core has `BitMatrix::invert` via Gauss-Jordan and `rref()`, but no PLE/LU factorisation for the bit-packed type, and no `solve_left/right` for `BitMatrix`). Status: **EXCLUDED [§ 6.3]** per user-approved 2026-05-09 amendment. Named follow-up: `aaa847cf` (M4RI-style bit-packed factorisation). The 8 cells (pluq × GF(2) at n=64,256 × {uniform, deficient} + solve × GF(2) same) are listed in § 6.3 rows 24–31.
 
 > **Note on GF(p) dense-LA parity:** The authoritative per-field parity evidence from Wave 9 is `[E15]` (GF(2^31-1)) and `[E8]` (rank-deficient pluq/echelon). The aggregate CSVs contain GF(p) rows for GF(7), GF(251), GF(65521), GF(2^31-1) at n=64,256 (uniform+deficient) and GF(2^31-1) at n=1024. GF(31) has reference rows but no gf2 pluq/echelon/invert/solve rows. The per-cell table below covers cells that are in the aggregate.
 
@@ -135,10 +129,10 @@ Evidence: `[E1]`, `[E3]`, `[E4]`, `[E7]`, `[E8]`, `[E9]`, `[E13]`, `[E15]`.
 | GF(2^31-1) | 256 / deficient | fflas-ffpack 2.5.0 | 3.73 ms† | 6.19 ms† | **0.60×** | PASS | `[E15]` |
 | GF(2^31-1) | 1024 / uniform | fflas-ffpack 2.5.0 | 227.50 ms† | 375.7 ms† | **0.61×** | PASS | `[E15]` |
 | GF(2^31-1) | 1024 / deficient | fflas-ffpack 2.5.0 | 188.91 ms† | 322.3 ms† | **0.59×** | PASS | `[E15]` |
-| GF(2) | 64 / uniform | m4ri 20260122 | PENDING | 11.133 µs | PENDING | AMENDED [→A9] | `[E3]` |
-| GF(2) | 64 / deficient | m4ri 20260122 | PENDING | 10.923 µs | PENDING | AMENDED [→A9] | `[E3]` |
-| GF(2) | 256 / uniform | m4ri 20260122 | PENDING | 68.677 µs | PENDING | AMENDED [→A9] | `[E3]` |
-| GF(2) | 256 / deficient | m4ri 20260122 | PENDING | 96.406 µs | PENDING | AMENDED [→A9] | `[E3]` |
+| GF(2) | 64 / uniform | m4ri 20260122 | — (no gf2 impl) | 11.133 µs | — | EXCLUDED [§ 6.3] | `[E3]` |
+| GF(2) | 64 / deficient | m4ri 20260122 | — (no gf2 impl) | 10.923 µs | — | EXCLUDED [§ 6.3] | `[E3]` |
+| GF(2) | 256 / uniform | m4ri 20260122 | — (no gf2 impl) | 68.677 µs | — | EXCLUDED [§ 6.3] | `[E3]` |
+| GF(2) | 256 / deficient | m4ri 20260122 | — (no gf2 impl) | 96.406 µs | — | EXCLUDED [§ 6.3] | `[E3]` |
 
 > † Wave-9 Criterion measurements from `[E15]` § 1.1 (authoritative; aggregate CSV shows pre-Wave-9 baseline which does not reflect the TRI_BASE_THRESHOLD=8 tuning). `[E15]` is authoritative per the evidence-doc-precedence rule.
 
@@ -249,12 +243,12 @@ Evidence: `[E1]`, `[E3]`, `[E4]`, `[E7]`, `[E8]`, `[E9]`, `[E13]`, `[E15]`.
 | GF(2^31-1) | 256 / deficient | fflas-ffpack 2.5.0 | 3.489 ms† | 6.208 ms† | **0.56×** | PASS | `[E15]` |
 | GF(2^31-1) | 1024 / uniform | fflas-ffpack 2.5.0 | 229.112 ms† | 381.817 ms† | **0.60×** | PASS | `[E15]` |
 | GF(2^31-1) | 1024 / deficient | fflas-ffpack 2.5.0 | 188.462 ms† | 322.4 ms† | **0.58×** | PASS | `[E15]` |
-| GF(2) | 64 / uniform | m4ri 20260122 | PENDING | 26.943 µs | PENDING | AMENDED [→A9] | `[E3]` |
-| GF(2) | 64 / deficient | m4ri 20260122 | PENDING | 21.833 µs | PENDING | AMENDED [→A9] | `[E3]` |
-| GF(2) | 256 / uniform | m4ri 20260122 | PENDING | 208.776 µs | PENDING | AMENDED [→A9] | `[E3]` |
-| GF(2) | 256 / deficient | m4ri 20260122 | PENDING | 145.700 µs | PENDING | AMENDED [→A9] | `[E3]` |
+| GF(2) | 64 / uniform | m4ri 20260122 | — (no gf2 impl) | 26.943 µs | — | EXCLUDED [§ 6.3] | `[E3]` |
+| GF(2) | 64 / deficient | m4ri 20260122 | — (no gf2 impl) | 21.833 µs | — | EXCLUDED [§ 6.3] | `[E3]` |
+| GF(2) | 256 / uniform | m4ri 20260122 | — (no gf2 impl) | 208.776 µs | — | EXCLUDED [§ 6.3] | `[E3]` |
+| GF(2) | 256 / deficient | m4ri 20260122 | — (no gf2 impl) | 145.700 µs | — | EXCLUDED [§ 6.3] | `[E3]` |
 
-> † Wave-9 Criterion measurements from `[E15]` § 1.5 (authoritative). All six GF(2^31-1) solve cells PASS. The aggregate CSV showed pre-Wave-9 baseline values for all n; `[E15]` Wave-9 measurements supersede every row. GF(2) solve is harness-scope PENDING.
+> † Wave-9 Criterion measurements from `[E15]` § 1.5 (authoritative). All six GF(2^31-1) solve cells PASS. The aggregate CSV showed pre-Wave-9 baseline values for all n; `[E15]` Wave-9 measurements supersede every row. GF(2) solve is **EXCLUDED [§ 6.3]** (gf2-side structural absence — no `BitMatrix::solve_left`).
 
 > **Wave 9 solve context:** `[E15]` § 1.5 shows solve × GF(2^31-1) at n=64 uniform 0.31× (PASS), n=64 deficient 0.24× (PASS), n=256 uniform 0.52× (PASS), n=256 deficient 0.56× (PASS), n=1024 uniform 0.60× (PASS), n=1024 deficient 0.58× (PASS) — all cells PASS per Wave-9 Criterion medians.
 
@@ -409,9 +403,11 @@ The following story-level parity evidence documents are the authoritative closur
 
 ---
 
-## Section 6 — Excluded Cells (`no-independent-oracle`)
+## Section 6 — Excluded Cells
 
-Per `dev/plans/sota_target_matrix.md` § 6.1 + § 6.2, 20 cells are protocol-class excluded. Total excluded: 20. These cells are not performance gaps — they are definitional exclusions where no public reference library exposes the operation under the same algebraic contract.
+### § 6.1 + § 6.2 — `no-independent-oracle` exclusions (20 cells)
+
+Per `dev/plans/sota_target_matrix.md` § 6.1 + § 6.2, 20 cells are protocol-class excluded. These cells are not performance gaps — they are definitional exclusions where no public reference library exposes the operation under the same algebraic contract.
 
 | # | Cell | Exclusion class | What unblocks promotion |
 |---|---|---|---|
@@ -426,6 +422,28 @@ Per `dev/plans/sota_target_matrix.md` § 6.1 + § 6.2, 20 cells are protocol-cla
 
 User approval: rows 1–15 approved 2026-05-04 per `dev/plans/gf2m_reference_lane_selection.md` § 6.
 Rows 16–20 are same-rationale extensions recorded in `sota_target_matrix.md` § 6.2 and § 9.3.
+
+### § 6.3 — `no-gf2-implementation` exclusions (11 cells, user-approved 2026-05-09)
+
+Cells where the gf2-core side has no implementation under any operation name. Distinct from § 6.1/§ 6.2 (which are reference-side definitional exclusions): § 6.3 cells are gf2-side structural absences. The reference-side library exists and produces a measurable wall, but gf2-core has no comparable code to bench. Without an implementation, no number is possible — so these cells do not satisfy SC#5's "raw numbers and ratio-to-reference" contract under any classification short of EXCLUDED.
+
+| # | Cell | gf2 absence | Reference (still measurable) | Named follow-up |
+|---|---|---|---|---|
+| 21 | `matmul × GF(2^4) / n=64` | No `Gf2mWide<u4>` storage type in gf2-core | m4rie 36.512 µs | `615db3b9` (sub-byte storage tracked under broader plan); follow-up scoping needed |
+| 22 | `matmul × GF(2^4) / n=256` | Same as row 21 | m4rie 534.494 µs | Same |
+| 23 | `matmul × GF(2^4) / n=1024` | Same as row 21 | m4rie 7.043 ms | Same |
+| 24 | `pluq × GF(2) / n=64 / uniform` | `BitMatrix::pluq` not implemented (gf2-core has `BitMatrix::invert` via Gauss-Jordan and `rref()`, but no PLE/LU factorisation for the bit-packed type) | m4ri 11.133 µs | `aaa847cf` (Wave-12 follow-up; M4RI-style bit-packed factorisation) |
+| 25 | `pluq × GF(2) / n=64 / deficient` | Same as row 24 | m4ri 10.923 µs | Same |
+| 26 | `pluq × GF(2) / n=256 / uniform` | Same as row 24 | m4ri 68.677 µs | Same |
+| 27 | `pluq × GF(2) / n=256 / deficient` | Same as row 24 | m4ri 96.406 µs | Same |
+| 28 | `solve × GF(2) / n=64 / uniform` | `BitMatrix::solve_left` not implemented | m4ri 26.943 µs | `aaa847cf` (sister gap; same follow-up bucket) |
+| 29 | `solve × GF(2) / n=64 / deficient` | Same as row 28 | m4ri 21.833 µs | Same |
+| 30 | `solve × GF(2) / n=256 / uniform` | Same as row 28 | m4ri 208.776 µs | Same |
+| 31 | `solve × GF(2) / n=256 / deficient` | Same as row 28 | m4ri 145.700 µs | Same |
+
+User approval: 2026-05-09 in chat; user explicitly chose "Mark as EXCLUDED §6.3 (no gf2 impl)" over alternatives ("Amend SC#5", "Implement missing pieces", "Keep PENDING + accept SC#5 fail"). The EXCLUDED §6.3 classification removes these cells from SC#5's "raw numbers" requirement (matching the existing precedent for §6.1/§6.2 EXCLUDED cells, which also have no number on one side).
+
+**Total excluded: 31 cells** (20 § 6.1+§ 6.2 + 11 § 6.3).
 
 **`sparse-elim × GF(2^8)/GF(2^16)`** are NOT excluded — they are kept in scope as self-canonical cells per `sota_target_matrix.md` § 5.11 (`semantics-mismatch` marker) and follow-up `eb57f944`. § 4.4 above shows their measured walls (gf2-core one-shot bench `sparse_rref_scorecard.rs`, evidence `[E20]`); PASS [self-canonical] per the § 4 preamble convention.
 
@@ -625,27 +643,28 @@ The R1 worker for A8 flagged 14 cells with no active follow-up. Both groups have
 
 **Group 2 — Sparse-elim GF(p) and GF(2) (10 cells)**: Filed `5ce13bae` ("Markowitz-degree pivot selection for sparse RREF") covering rows 61–70. The original Wave-12 close brief cited `4c0d0202` as the sparse-elim follow-up but that issue is "Publish SOTA target matrix design doc [Done]" — wrong ID. `5ce13bae` is the correctly-scoped replacement and is cited as the named successor in the A8 table.
 
-### A9 — PENDING cells umbrella amendment (Wave-12 close-cascade addendum)
+### A9 — PENDING cells umbrella amendment (Wave-12 close-cascade addendum, superseded 2026-05-09)
 
 | Field | Value |
 |---|---|
-| Cells | All ~16 PENDING in-scope cells (gf2-side or reference-side measurement absent from the bench harness, classified as harness-scope gap per SC#2). |
-| Amendment date | 2026-05-08 |
-| Approval record | User-approved 2026-05-08 in chat (Wave-12 close-cascade addendum to A8 covering PENDING in addition to FAIL cells, after R5 reviewer flagged that A8 alone did not include PENDING cells). |
+| Cells (original) | All ~16 PENDING in-scope cells (gf2-side or reference-side measurement absent from the bench harness, classified as harness-scope gap per SC#2). |
+| Amendment date | 2026-05-08 (superseded 2026-05-09 — see "Status" row) |
+| Approval record | User-approved 2026-05-08 in chat. **Subsequent supersession 2026-05-09 in chat:** user explicitly chose to retire A9's harness-scope-gap classification for the structural-absence cells in favour of EXCLUDED [§ 6.3]. |
 | Criterion type | `[scope amendment, SC#2 + SC#3+SC#4 satisfaction]` |
-| Reason | The epic's SC#2 explicitly defines `harness-scope gap` as a valid classification ("clearly classifies each cell as measured, out-of-scope, slow/nightly, **harness-scope gap**, or optimization gap"). PENDING cells are exactly these harness-scope gaps; they are SC#2-satisfied by classification. The SC#3+SC#4 conjunction (Wave-12 amendment 2026-05-08) accepts harness-scope-gap classification as a user-approved scope amendment. The A9 umbrella records the user approval explicitly per the no-argue contract. |
+| Status | **SUPERSEDED 2026-05-09.** The 11 cells that A9 previously covered as harness-scope-gap (matmul × GF(2^4) at n=64,256,1024; pluq × GF(2) at n=64,256 × {uniform,deficient}; solve × GF(2) at n=64,256 × {uniform,deficient}) were re-classified EXCLUDED [§ 6.3] under user-approved 2026-05-09 amendment because the strict reading of SC#5 ("raw numbers and ratio-to-reference") was incompatible with the harness-scope-gap classification — these cells have no number on one side, paralleling the precedent of § 6.1/§ 6.2 EXCLUDED. The remaining A9 entries were the GF(31) cells (Wave-12 bench extension already measured them; A8 rows 71–76 absorb the FAIL cells). **A9 is now empty of active cells.** |
+| Reason (historical) | The epic's SC#2 explicitly defines `harness-scope gap` as a valid classification ("clearly classifies each cell as measured, out-of-scope, slow/nightly, **harness-scope gap**, or optimization gap"). A9's original purpose was to record user-approved harness-scope-gap classification for cells not yet measured. The Wave-12 measurement closed the GF(31) bucket; the 2026-05-09 EXCLUDED [§ 6.3] supersession closed the GF(2) + GF(2^4) structural-gap bucket. |
 
-PENDING cells routed under A9:
+A9 historical routing (now retired):
 
-| Cell group | Cells | Named follow-up | Rationale |
+| Cell group | Cells | Final classification (2026-05-09) | Rationale |
 |---|---:|---|---|
-| GF(31) dense LA (`pluq`/`echelon`/`invert`/`solve`) at n=64,256 (uniform+deficient) | ~~16~~ ~~6 remaining~~ **0 remaining** | `615db3b9` | **Fully measured 2026-05-08/09 via Wave-12 bench extension (`[EX]`).** Of the original 16 cells: 11 PASS (pluq n=64 both, n=256 uniform; echelon n=64 both; invert n=64 both, n=256 deficient; solve n=64 both, n=256 uniform), 5 FAIL routed to A8 (pluq n=256 deficient row 71; echelon n=256 both rows 72–73; invert n=256 uniform row 74; solve n=256 deficient row 75). PENDING bucket emptied. |
-| GF(31) charpoly + minpoly at n=64,256 | ~~4~~ **0 remaining** | `52cce970` (charpoly n=256) | **Fully measured 2026-05-09 via Wave-12 bench extension (`[EX]`).** Of 4 cells: 3 PASS (charpoly n=64 1.25×; minpoly n=64 0.81×; minpoly n=256 1.38×); 1 FAIL routed to A8 row 76 (charpoly n=256 1.97×, same architectural cause as A1 GF(251)). PENDING bucket emptied. |
-| GF(2) `pluq` + `solve` at n=64,256,1024 (uniform+deficient) | up to 12 | `974a85bd` | **Structural gap confirmed 2026-05-08:** `BitMatrix::pluq` does not exist in gf2-core (no `alg/ple.rs` for `BitMatrix`); `BitMatrix::solve_left` does not exist. The A9 annotation in `3b762764-dense-la-post-gemm.md` § 3 claimed "implementations exist, only bench wiring missing" — this is incorrect. Neither function is implemented. The dense-LA bench extension added `Fp<31>` but cannot wire GF(2) pluq/solve because the implementations do not exist. Cells remain PENDING (structural implementation gap, not bench-wiring gap). `974a85bd` owns the implementation work. |
-| GF(2^4) `matmul` at n=64,256,1024 | 3 | `974a85bd` (or new follow-up if scoped separately) | gf2-core has no `Gf2mWide<u4>`; the m4rie reference rows exist for completeness but gf2-side requires either a new sub-byte storage variant or a structural amendment to scope GF(2^4) out. |
-| GF(2^8)/GF(2^16) `matmul` and `fgemm` mismatched-emitter cells | up to 6 | `e24f7839` (panelized GF(2^m) fgemm story; closed) + `[E12]` parity evidence | Already AMENDED via A2/A3 for the cells with measurements; the PENDING entries reflect that the m4rie reference emitter labels operations as `matmul` while gf2 emits `fgemm`. Reviewer-tractable evidence is in `[E12]` § 1.2 which provides the cross-walk. Closure status follows A2/A3, not PENDING. |
+| GF(31) dense LA (`pluq`/`echelon`/`invert`/`solve`) at n=64,256 (uniform+deficient) | ~~16~~ **0 remaining (all measured)** | 11 PASS, 5 FAIL via A8 rows 71–75 | Wave-12 bench extension (`[EX]`); see § 2.1–2.4 |
+| GF(31) charpoly + minpoly at n=64,256 | ~~4~~ **0 remaining (all measured)** | 3 PASS, 1 FAIL via A8 row 76 | Wave-12 bench extension (`[EX]`); see § 3.1–3.2 |
+| GF(2) `pluq` + `solve` at n=64,256 (uniform+deficient) | 8 | **EXCLUDED [§ 6.3]** rows 24–31 | gf2-side structural absence: no `BitMatrix::pluq`, no `BitMatrix::solve_left`. User-approved 2026-05-09 |
+| GF(2^4) `matmul` at n=64,256,1024 | 3 | **EXCLUDED [§ 6.3]** rows 21–23 | gf2-side structural absence: no `Gf2mWide<u4>`. User-approved 2026-05-09 |
+| GF(2^8)/GF(2^16) `matmul`/`fgemm` mismatched-emitter cells | 6 | **CONSOLIDATED INTO TABLE ROWS** (not PENDING anymore) | 2026-05-09 cross-walk: § 1 table now has full numbers per `[E12]` evidence (5 PASS [hard]/AMENDED, 0 PENDING) |
 
-The A9 amendment confirms that every PENDING cell in the scorecard is either (a) covered by an existing closed-or-active follow-up, or (b) trivially out-of-scope for `97bf0879`'s post-PPC scope (e.g. GF(2^4) is a future-research extension). Combined with A1–A8, every in-scope cell has either PASS, AMENDED, or routed via A8/A9. SC#3+SC#4 conjunction is satisfied for the entire matrix.
+A9 is preserved as a historical record only. **Combined classification (post-2026-05-09): every in-scope cell is PASS, AMENDED, FAIL→A8-routed, or EXCLUDED §6.1/§6.2/§6.3. Zero cells remain PENDING in the scorecard tables.** SC#5 contract satisfied.
 
 ---
 
