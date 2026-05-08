@@ -37,6 +37,7 @@ use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
 
 const PRIME_65521: u64 = 65521;
 const PRIME_251: u64 = 251;
+const PRIME_31: u64 = 31;
 const PRIME_7: u64 = 7;
 const MERSENNE_31: u64 = 2_147_483_647;
 
@@ -160,6 +161,12 @@ fn bench_minpoly_reference_sweep(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::new("Fp_7", n), &n, |b, _| {
             b.iter(|| black_box(black_box(&a).minpoly()));
         });
+        // GF(31) — small byte-range prime; scalar Wiedemann path (q=31 ≤ n
+        // for n=64, q^2=961 > n for n ≤ 960).
+        let a = random_fp::<PRIME_31>(n, n, 0xBEEF_0031);
+        group.bench_with_input(BenchmarkId::new("Fp_31", n), &n, |b, _| {
+            b.iter(|| black_box(black_box(&a).minpoly()));
+        });
     }
     group.finish();
 }
@@ -196,6 +203,11 @@ fn bench_charpoly_reference_sweep(c: &mut Criterion) {
         });
         let a = random_fp::<PRIME_7>(n, n, 0xC4F0_0004);
         group.bench_with_input(BenchmarkId::new("Fp_7", n), &n, |b, _| {
+            b.iter(|| black_box(black_box(&a).charpoly()));
+        });
+        // GF(31) — small byte-range prime, same path as GF(7).
+        let a = random_fp::<PRIME_31>(n, n, 0xC4F0_0031);
+        group.bench_with_input(BenchmarkId::new("Fp_31", n), &n, |b, _| {
             b.iter(|| black_box(black_box(&a).charpoly()));
         });
     }
