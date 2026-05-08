@@ -18,11 +18,11 @@
 - **Total cells in scope (from `sota_target_matrix.md` § 5):** measured/self-canonical cells + 20 excluded cells
   - EXCLUDED (no-independent-oracle): 20 — user-approved per target matrix § 6.1 + § 6.2.
 - **Closure status of measured/self-canonical cells (per authoritative parity evidence docs):**
-  - **PASS:** charpoly 7 cells (GF(7)/64+256, GF(251)/64, GF(65521)/64+256, GF(2^31-1)/64+256); minpoly 7 cells (GF(7)/64+256, GF(251)/256, GF(65521)/64+256, GF(2^31-1)/64+256); GF(2^32) matmul 3 cells; GF(2^31-1) fgemm 4 cells; GF(31) fgemm n=256,1024; GF(7)/256, GF(7)/1024, GF(65521)/64, GF(65521)/256, GF(65521)/1024 fgemm (all PASS [hard] per `[E14]` § 1.2 / § 7); GF(2) matmul n≥1024 2 cells; GF(2) echelon all 6 cells per `[E13]`; GF(2^31-1) pluq all sizes + solve all sizes per `[E15]`; echelon n∈{256,1024} **uniform only** per `[E15]` § 1.2 (echelon n=64 + deficient n=256/1024 FAIL — see § 3 table); GF(2^31-1) invert deficient all + uniform n=64 (0.67× per `[E15]` — aggregate CSV 2.14× superseded); GF(p) spmv 4 cells; GF(2^m) spmv self 2; GF(2) spmv self 1; sparse-matmul 7; sparse×dense GF(p) 4; sparse×dense GF(2) 1; sparse-elim × GF(2^8)/GF(2^16) self-canonical 4 cells (`[E20]`); **GF(31) pluq n=64,256 uniform+deficient except deficient/256 (3 cells `[EX]`); GF(31) echelon n=64 uniform+deficient (2 cells `[EX]`); GF(31) invert n=64 uniform (1 cell `[EX]`)** → approximately **70 PASS cells**
+  - **PASS:** charpoly 7 cells (GF(7)/64+256, GF(251)/64, GF(65521)/64+256, GF(2^31-1)/64+256); minpoly 7 cells (GF(7)/64+256, GF(251)/256, GF(65521)/64+256, GF(2^31-1)/64+256); GF(2^32) matmul 3 cells; GF(2^31-1) fgemm 4 cells; GF(31) fgemm n=256,1024; GF(7)/256, GF(7)/1024, GF(65521)/64, GF(65521)/256, GF(65521)/1024 fgemm (all PASS [hard] per `[E14]` § 1.2 / § 7); GF(2) matmul n≥1024 2 cells; GF(2) echelon all 6 cells per `[E13]`; GF(2^31-1) pluq all sizes + solve all sizes per `[E15]`; echelon n∈{256,1024} **uniform only** per `[E15]` § 1.2 (echelon n=64 + deficient n=256/1024 FAIL — see § 3 table); GF(2^31-1) invert deficient all + uniform n=64 (0.67× per `[E15]` — aggregate CSV 2.14× superseded); GF(p) spmv 4 cells; GF(2^m) spmv self 2; GF(2) spmv self 1; sparse-matmul 7; sparse×dense GF(p) 4; sparse×dense GF(2) 1; sparse-elim × GF(2^8)/GF(2^16) self-canonical 4 cells (`[E20]`); **GF(31) Wave-12 bench extension (`[EX]`, complete 2026-05-09):** pluq 3 cells (n=64 both, n=256 uniform), echelon 2 cells (n=64 both), invert 3 cells (n=64 both, n=256 deficient), solve 3 cells (n=64 both, n=256 uniform), charpoly 1 cell (n=64), minpoly 2 cells (n=64,256) → 14 PASS cells from the `[EX]` extension → approximately **78 PASS cells**
   - **AMENDED:** GF(2^8) matmul 3 (A2); GF(2^16) matmul n=1024 only (A3); GF(2^31-1) invert uniform n=256/1024 (A4 revised); GF(31)/64 fgemm (A5); GF(7)/64 fgemm (A6); GF(251)/{64,256,1024,4096} fgemm (A7) → approximately **11 AMENDED cells**
-  - **FAIL (open gaps):** GF(7)/n=4096; GF(31)/4096; GF(65521)/4096 fgemm; GF(p) pluq/echelon/invert/solve non-Mersenne; GF(2^31-1) echelon n=64 both regimes (aggregate); **GF(2^31-1) echelon n=256/1024 deficient (aggregate; `[E15]` § 1.2 closes uniform only)**; GF(2) matmul at n<1024; GF(2) invert; sparse-elim GF(2)+GF(p) (10 cells); **charpoly × GF(251)/256 + minpoly × GF(251)/64 (2 cells routed to `52cce970` per A1; recorded as FAIL)**; **GF(31) pluq deficient n=256, echelon n=256 both regimes, invert n=256 uniform (4 measured FAIL cells `[EX]`)** → approximately **74 FAIL cells** (exact count from A8 annex)
-  - **SC#3+SC#4 status (2026-05-08):** Annex A8 routes all 74 FAIL cells to named JIT issues (56 → `615db3b9`, 2 → `52cce970`, 2 → `974a85bd`, 3 → `aaa847cf`, 10 → `5ce13bae`, 1 → already in `615db3b9`). Annex A9 covers remaining PENDING cells as harness-scope-gaps per SC#2 with named follow-ups. Combined with A1–A7, every in-scope cell has PASS, AMENDED, FAIL→A8-routed, or A9-classified status. **Zero uncovered cells. SC#3+SC#4 conjunction satisfied.**
-  - **PENDING (raw measurement):** 6 GF(31) dense-LA cells remain PENDING in the numeric columns (invert deficient n=64,256 + solve n=64,256 uniform+deficient — bench still running). GF(2) pluq/solve remain PENDING (structural implementation gap, not bench-wiring gap; `BitMatrix::pluq` and `BitMatrix::solve_left` do not exist). GF(31) charpoly/minpoly at n=64,256 remain PENDING (charpoly bench queued after running processes complete). All remaining PENDING cells are classified AMENDED[→A9] or will be added to A8 as FAIL on measurement completion. The classification mapping is in Annex A9.
+  - **FAIL (open gaps):** GF(7)/n=4096; GF(31)/4096; GF(65521)/4096 fgemm; GF(p) pluq/echelon/invert/solve non-Mersenne; GF(2^31-1) echelon n=64 both regimes (aggregate); **GF(2^31-1) echelon n=256/1024 deficient (aggregate; `[E15]` § 1.2 closes uniform only)**; GF(2) matmul at n<1024; GF(2) invert; sparse-elim GF(2)+GF(p) (10 cells); **charpoly × GF(251)/256 + minpoly × GF(251)/64 (2 cells routed to `52cce970` per A1; recorded as FAIL)**; **GF(31) pluq deficient n=256, echelon n=256 both regimes, invert n=256 uniform, solve n=256 deficient, charpoly n=256 (6 measured FAIL cells `[EX]`)** → **76 FAIL cells** (exact count from A8 annex)
+  - **SC#3+SC#4 status (2026-05-09):** Annex A8 routes all 76 FAIL cells to named JIT issues (57 → `615db3b9`, 3 → `52cce970`, 2 → `974a85bd`, 3 → `aaa847cf`, 10 → `5ce13bae`, 1 → already in `615db3b9`). Annex A9 covers remaining PENDING cells as harness-scope-gaps per SC#2 with named follow-ups. Combined with A1–A7, every in-scope cell has PASS, AMENDED, FAIL→A8-routed, or A9-classified status. **Zero uncovered cells. SC#3+SC#4 conjunction satisfied.**
+  - **PENDING (raw measurement):** GF(31) bucket fully emptied 2026-05-09 by Wave-12 bench extension (`[EX]`): all 16 dense-LA cells + 4 charpoly/minpoly cells now measured (14 PASS, 6 FAIL routed to A8 rows 71–76). GF(2) pluq/solve remain PENDING (structural implementation gap, not bench-wiring gap; `BitMatrix::pluq` and `BitMatrix::solve_left` do not exist). All remaining PENDING cells are classified AMENDED[→A9]. The classification mapping is in Annex A9.
 
 > **Ratio definition (canonical):** `Ratio = gf2 wall-clock / reference wall-clock` (lower is better — gf2 is faster when ratio < 1). PASS = ratio ≤ 1.5×. This is the wall-time ratio; all cells in this scorecard use this definition. Note: `benchmarks/analyze.py` reports a *throughput* ratio (gf2 Gops/s / ref Gops/s) which equals `ref_wall / gf2_wall` — the inverse of the wall-time ratio used here. The scorecard converts analyze.py output by taking `1 / analyze.py_ratio` for each cell.
 
@@ -196,9 +196,9 @@ Evidence: `[E1]`, `[E3]`, `[E4]`, `[E7]`, `[E8]`, `[E9]`, `[E13]`, `[E15]`.
 | GF(7) | 256 / uniform | fflas-ffpack 2.5.0 | 136.022 ms | 12.018 ms | **11.32×** | FAIL | `[E1]` |
 | GF(7) | 256 / deficient | fflas-ffpack 2.5.0 | 20.159 ms | 5.691 ms | **3.54×** | FAIL | `[E1]` |
 | GF(31) | 64 / uniform | fflas-ffpack 2.5.0 | 556.385 µs | 1.224 ms | **0.45×** | PASS | `[E9]` `[EX]` |
-| GF(31) | 64 / deficient | fflas-ffpack 2.5.0 | PENDING | 624.572 µs | PENDING | AMENDED [→A9] | `[E9]` |
+| GF(31) | 64 / deficient | fflas-ffpack 2.5.0 | 94.010 µs | 624.572 µs | **0.15×** | PASS | `[E9]` `[EX]` |
 | GF(31) | 256 / uniform | fflas-ffpack 2.5.0 | 30.998 ms | 11.655 ms | **2.66×** | FAIL [→`615db3b9`] | `[E9]` `[EX]` |
-| GF(31) | 256 / deficient | fflas-ffpack 2.5.0 | PENDING | 5.768 ms | PENDING | AMENDED [→A9] | `[E9]` |
+| GF(31) | 256 / deficient | fflas-ffpack 2.5.0 | 3.590 ms | 5.768 ms | **0.62×** | PASS | `[E9]` `[EX]` |
 | GF(251) | 64 / uniform | fflas-ffpack 2.5.0 | 2.213 ms | 110.988 µs | **19.94×** | FAIL | `[E1]` |
 | GF(251) | 64 / deficient | fflas-ffpack 2.5.0 | 343.745 µs | 60.354 µs | **5.70×** | FAIL | `[E1]` |
 | GF(251) | 256 / uniform | fflas-ffpack 2.5.0 | 135.897 ms | 1.074 ms | **126.5×** | FAIL | `[E1]` |
@@ -221,7 +221,7 @@ Evidence: `[E1]`, `[E3]`, `[E4]`, `[E7]`, `[E8]`, `[E9]`, `[E13]`, `[E15]`.
 
 > **Wave 9 invert context:** `[E15]` § 1.4 records n=64 uniform PASS (0.67×); n=256 uniform AMENDED [aspirational] (1.79×); n=1024 uniform AMENDED [aspirational] (1.98×); all deficient cells PASS. GF(2) invert uses aggregate CSV (no Wave-7 production-blocked invert measurement in [E13]); ratios are FAIL.
 
-> **GF(31) invert direct measurement (Wave-12 `[EX]`, partial):** gf2 walls measured 2026-05-08 on AMD Ryzen 9 5900X Zen 3. Criterion medians for uniform regime: n=64 uniform 556.385 µs (0.45× PASS); n=256 uniform 30.998 ms (2.66× FAIL). Deficient-regime cells (n=64, n=256) remain PENDING (bench process still running at time of scorecard update). GF(31) invert at n=64 uniform is faster than fflas; n=256 uniform exceeds 1.5× due to two TRSM passes plus PLE (same structural cause as GF(2^31-1) invert at n=256 uniform AMENDED [→A4]).
+> **GF(31) invert direct measurement (Wave-12 `[EX]`, complete):** gf2 walls measured 2026-05-08/09 on AMD Ryzen 9 5900X Zen 3. Criterion medians: n=64 uniform 556.385 µs (0.45× PASS); n=64 deficient 94.010 µs (0.15× PASS); n=256 uniform 30.998 ms (2.66× FAIL [→`615db3b9`]); n=256 deficient 3.590 ms (0.62× PASS). Deficient regime is dramatically faster than uniform because the deficient input has rank n/2 — the LU factorization terminates early once the rank deficit is detected, halving the dense work. The n=256 uniform FAIL is structural: two TRSM passes plus PLE (same cause as GF(2^31-1) invert at n=256 uniform AMENDED [→A4]).
 
 ### 2.4 `solve`
 
@@ -231,10 +231,10 @@ Evidence: `[E1]`, `[E3]`, `[E4]`, `[E7]`, `[E8]`, `[E9]`, `[E13]`, `[E15]`.
 | GF(7) | 64 / deficient | fflas-ffpack 2.5.0 | 379.285 µs | 159.020 µs | **2.39×** | FAIL | `[E1]` |
 | GF(7) | 256 / uniform | fflas-ffpack 2.5.0 | 23.691 ms | 3.036 ms | **7.81×** | FAIL | `[E1]` |
 | GF(7) | 256 / deficient | fflas-ffpack 2.5.0 | 22.046 ms | 2.219 ms | **9.93×** | FAIL | `[E1]` |
-| GF(31) | 64 / uniform | fflas-ffpack 2.5.0 | PENDING | 205.124 µs | PENDING | AMENDED [→A9] | `[E9]` |
-| GF(31) | 64 / deficient | fflas-ffpack 2.5.0 | PENDING | 158.794 µs | PENDING | AMENDED [→A9] | `[E9]` |
-| GF(31) | 256 / uniform | fflas-ffpack 2.5.0 | PENDING | 3.076 ms | PENDING | AMENDED [→A9] | `[E9]` |
-| GF(31) | 256 / deficient | fflas-ffpack 2.5.0 | PENDING | 2.119 ms | PENDING | AMENDED [→A9] | `[E9]` |
+| GF(31) | 64 / uniform | fflas-ffpack 2.5.0 | 123.685 µs | 205.124 µs | **0.60×** | PASS | `[E9]` `[EX]` |
+| GF(31) | 64 / deficient | fflas-ffpack 2.5.0 | 93.935 µs | 158.794 µs | **0.59×** | PASS | `[E9]` `[EX]` |
+| GF(31) | 256 / uniform | fflas-ffpack 2.5.0 | 4.347 ms | 3.076 ms | **1.41×** | PASS | `[E9]` `[EX]` |
+| GF(31) | 256 / deficient | fflas-ffpack 2.5.0 | 3.591 ms | 2.119 ms | **1.69×** | FAIL [→`615db3b9`] | `[E9]` `[EX]` |
 | GF(251) | 64 / uniform | fflas-ffpack 2.5.0 | 425.770 µs | 28.574 µs | **14.90×** | FAIL | `[E1]` |
 | GF(251) | 64 / deficient | fflas-ffpack 2.5.0 | 342.405 µs | 19.386 µs | **17.66×** | FAIL | `[E1]` |
 | GF(251) | 256 / uniform | fflas-ffpack 2.5.0 | 21.856 ms | 606.988 µs | **36.01×** | FAIL | `[E1]` |
@@ -258,6 +258,8 @@ Evidence: `[E1]`, `[E3]`, `[E4]`, `[E7]`, `[E8]`, `[E9]`, `[E13]`, `[E15]`.
 
 > **Wave 9 solve context:** `[E15]` § 1.5 shows solve × GF(2^31-1) at n=64 uniform 0.31× (PASS), n=64 deficient 0.24× (PASS), n=256 uniform 0.52× (PASS), n=256 deficient 0.56× (PASS), n=1024 uniform 0.60× (PASS), n=1024 deficient 0.58× (PASS) — all cells PASS per Wave-9 Criterion medians.
 
+> **GF(31) solve direct measurement (Wave-12 `[EX]`, complete):** gf2 walls measured 2026-05-09 on AMD Ryzen 9 5900X Zen 3. Criterion medians: n=64 uniform 123.685 µs (0.60× PASS); n=64 deficient 93.935 µs (0.59× PASS); n=256 uniform 4.347 ms (1.41× PASS); n=256 deficient 3.591 ms (1.69× FAIL [→`615db3b9`]). Three of four cells PASS. The n=256 deficient cell exceeds 1.5× because GF(31) solve does the full PLE pass (no early termination on deficient input) plus one TRSM, whereas fflas-ffpack uses a Schur-complement solver that exits at the rank cliff.
+
 ---
 
 ## Section 3 — Dense `charpoly` and `minpoly`
@@ -273,8 +275,8 @@ Evidence: `[E5]`, `[E6]`, `[E9]`, `[E16]`, `[E17]`.
 |---|---:|---|---:|---:|---:|---|---|
 | GF(7) | 64 | fflas-ffpack 2.5.0 | 132.000 µs | 576.710 µs | **0.23×** | PASS | `[E5]` `[E16]` |
 | GF(7) | 256 | fflas-ffpack 2.5.0 | 3.440 ms | 19.225 ms | **0.18×** | PASS | `[E5]` `[E16]` |
-| GF(31) | 64 | fflas-ffpack 2.5.0 | PENDING | 388.738 µs | PENDING | AMENDED [→A9] | `[E9]` |
-| GF(31) | 256 | fflas-ffpack 2.5.0 | PENDING | 13.517 ms | PENDING | AMENDED [→A9] | `[E9]` |
+| GF(31) | 64 | fflas-ffpack 2.5.0 | 484.036 µs | 388.738 µs | **1.25×** | PASS | `[E9]` `[EX]` |
+| GF(31) | 256 | fflas-ffpack 2.5.0 | 26.642 ms | 13.517 ms | **1.97×** | FAIL [→`52cce970`] | `[E9]` `[EX]` |
 | GF(251) | 64 | fflas-ffpack 2.5.0 | 165.000 µs | 889.983 µs | **0.19×** | PASS | `[E5]` `[E16]` |
 | GF(251) | 256 | fflas-ffpack 2.5.0 | 4.200 ms | 1.623 ms | **3.18×** | FAIL [→A1] | `[E5]` `[E16]` |
 | GF(65521) | 64 | fflas-ffpack 2.5.0 | 379.000 µs | 966.280 µs | **0.39×** | PASS | `[E5]` `[E16]` |
@@ -290,8 +292,8 @@ Evidence: `[E5]`, `[E6]`, `[E9]`, `[E16]`, `[E17]`.
 |---|---:|---|---:|---:|---:|---|---|
 | GF(7) | 64 | fflas-ffpack 2.5.0 | 159.000 µs | 569.273 µs | **0.28×** | PASS | `[E5]` `[E16]` |
 | GF(7) | 256 | fflas-ffpack 2.5.0 | 3.411 ms | 20.290 ms | **0.17×** | PASS | `[E5]` `[E16]` |
-| GF(31) | 64 | fflas-ffpack 2.5.0 | PENDING | 397.016 µs | PENDING | AMENDED [→A9] | `[E9]` |
-| GF(31) | 256 | fflas-ffpack 2.5.0 | PENDING | 13.500 ms | PENDING | AMENDED [→A9] | `[E9]` |
+| GF(31) | 64 | fflas-ffpack 2.5.0 | 321.470 µs | 397.016 µs | **0.81×** | PASS | `[E9]` `[EX]` |
+| GF(31) | 256 | fflas-ffpack 2.5.0 | 18.676 ms | 13.500 ms | **1.38×** | PASS | `[E9]` `[EX]` |
 | GF(251) | 64 | fflas-ffpack 2.5.0 | 559.000 µs | 134.866 µs | **4.14×** | FAIL [→A1] | `[E5]` `[E16]` |
 | GF(251) | 256 | fflas-ffpack 2.5.0 | 2.235 ms | 1.634 ms | **1.37×** | PASS | `[E5]` `[E16]` |
 | GF(65521) | 64 | fflas-ffpack 2.5.0 | 348.000 µs | 522.287 µs | **0.67×** | PASS | `[E5]` `[E16]` |
@@ -302,6 +304,8 @@ Evidence: `[E5]`, `[E6]`, `[E9]`, `[E16]`, `[E17]`.
 | GF(2^m), m∈{8,16,32} | any | — | EXCLUDED | EXCLUDED | — | EXCLUDED [§6] | `[E6]` |
 
 > **Failing cell — minpoly × GF(251) / n=64:** Ratio 4.14×, significantly above the 1.5× ceiling. User-approved amendment 2026-05-07 routes residual closure to follow-up task `52cce970` under planning issue `615db3b9`. The cell is recorded as FAIL here; the AMENDED annotation in Annex A records the user approval and follow-up tracker.
+
+> **GF(31) charpoly/minpoly direct measurement (Wave-12 `[EX]`):** gf2 walls measured 2026-05-09 on AMD Ryzen 9 5900X Zen 3. Criterion medians: charpoly n=64 484.036 µs (1.25× PASS); charpoly n=256 26.642 ms (1.97× FAIL [→`52cce970`]); minpoly n=64 321.470 µs (0.81× PASS); minpoly n=256 18.676 ms (1.38× PASS). 3 of 4 cells PASS. The charpoly n=256 FAIL has the same architectural cause as GF(251) charpoly n=256 (A1): small-prime kernels need bespoke AVX2 register-scheduled paths to close the constant-factor gap. The GF(31) cell is routed directly to `52cce970` (the same follow-up issue that A1 tracks for GF(251)).
 
 ---
 
@@ -597,19 +601,21 @@ Ratio column is wall-time gf2/reference (lower is better). Follow-up column name
 | 72 | echelon | GF(31) | 256 / uniform | 1.92× | `615db3b9` | GF(31) echelon/uniform at n=256 measured 2026-05-08 (`[EX]`); echelon calls pluq internally, inherits the large-n per-prime gap. n=64 uniform PASS (0.45×). |
 | 73 | echelon | GF(31) | 256 / deficient | 2.97× | `615db3b9` | GF(31) echelon/deficient at n=256 measured 2026-05-08 (`[EX]`). n=64 deficient PASS (0.82×). |
 | 74 | invert | GF(31) | 256 / uniform | 2.66× | `615db3b9` | GF(31) invert/uniform at n=256 measured 2026-05-08 (`[EX]`); two TRSM passes + PLE add overhead. n=64 uniform PASS (0.45×). |
+| 75 | solve | GF(31) | 256 / deficient | 1.69× | `615db3b9` | GF(31) solve/deficient at n=256 measured 2026-05-09 (`[EX]`); full PLE pass + one TRSM, no early-termination on deficient input. n=64 cells PASS (0.60×/0.59×); n=256 uniform PASS (1.41×); only deficient exceeds 1.5×. |
+| 76 | charpoly | GF(31) | 256 | 1.97× | `52cce970` | GF(31) charpoly/n=256 measured 2026-05-09 (`[EX]`); same architectural cause as row 59 (small-prime bespoke AVX2 kernel needed). minpoly cells PASS (0.81×/1.38×); charpoly n=64 PASS (1.25×); only charpoly n=256 exceeds 1.5×. |
 
-> **Note:** Rows 71–74 are GF(31) dense-LA FAIL cells that were PENDING in the original A9 umbrella (Wave-12 close-cascade) and are now measured as FAIL by the Wave-12 bench extension (`[EX]`). Additional GF(31) invert-deficient (n=64, n=256) and solve (n=64, n=256 both regimes) cells remain PENDING (bench process running at scorecard update time); they are pre-routed to `615db3b9` per A9 and will be added here on completion.
+> **Note:** Rows 71–76 are GF(31) FAIL cells that were PENDING in the original A9 umbrella (Wave-12 close-cascade) and are now measured as FAIL by the Wave-12 bench extension (`[EX]`). All 16 originally-PENDING GF(31) dense-LA + 4 charpoly/minpoly cells have been measured: 14 PASS, 6 FAIL (now in A8 rows 71–76). The PENDING bucket for GF(31) cells is closed.
 
-**Total FAIL cells covered by A8: 74 (original 70 + 4 newly measured from A9 PENDING pool)**
+**Total FAIL cells covered by A8: 76 (original 70 + 6 newly measured from A9 PENDING pool)**
 
-Follow-up issue breakdown (post-2026-05-08 close-cascade + Wave-12 bench extension):
-- `615db3b9` (finite-field dense LA SOTA catch-up): 56 cells (rows 1–3, 6–43, 47–58, 71–74)
-- `52cce970` (GF(251) charpoly+minpoly AVX2 kernel): 2 cells (rows 59–60; already covered by A1)
+Follow-up issue breakdown (post-2026-05-08/09 close-cascade + Wave-12 bench extension):
+- `615db3b9` (finite-field dense LA SOTA catch-up): 57 cells (rows 1–3, 6–43, 47–58, 71–75)
+- `52cce970` (GF(251)/GF(31) charpoly+minpoly AVX2 kernel): 3 cells (rows 59–60 covered by A1; row 76 GF(31) added 2026-05-09 with same architectural cause)
 - `974a85bd` (GF(2) BitMatrix story): 2 cells (rows 4–5; n<1024 matmul open residual documented in story)
 - **`aaa847cf` (M4RI-style invert path for BitMatrix, filed 2026-05-08)**: 3 cells (rows 44–46 GF(2) invert)
 - **`5ce13bae` (Markowitz-degree pivot selection for sparse RREF, filed 2026-05-08)**: 10 cells (rows 61–70 sparse-elim × GF(p) + GF(2) at n=256,1024)
 
-**All 74 currently-known FAIL cells are routed to a named, filed follow-up JIT issue.** SC#4 is satisfied.
+**All 76 currently-known FAIL cells are routed to a named, filed follow-up JIT issue.** SC#4 is satisfied.
 
 #### A8.2 — Resolution of the original escalation candidates
 
@@ -633,7 +639,8 @@ PENDING cells routed under A9:
 
 | Cell group | Cells | Named follow-up | Rationale |
 |---|---:|---|---|
-| GF(31) dense LA (`pluq`/`echelon`/`invert`/`solve`) at n=64,256 (uniform+deficient) | ~~16~~ 6 remaining | `615db3b9` | Partially measured 2026-05-08 via Wave-12 bench extension (`[EX]`). Of the original 16 cells: pluq n=64,256 (4 cells), echelon n=64,256 (4 cells), invert n=64 uniform + n=256 uniform (2 cells) now have measurements; PASS cells promoted to PASS, FAIL cells added to A8. **Remaining PENDING (6 cells):** invert n=64 deficient, invert n=256 deficient, solve n=64 uniform+deficient, solve n=256 uniform+deficient (bench running at update time; pre-routed to `615db3b9`). |
+| GF(31) dense LA (`pluq`/`echelon`/`invert`/`solve`) at n=64,256 (uniform+deficient) | ~~16~~ ~~6 remaining~~ **0 remaining** | `615db3b9` | **Fully measured 2026-05-08/09 via Wave-12 bench extension (`[EX]`).** Of the original 16 cells: 11 PASS (pluq n=64 both, n=256 uniform; echelon n=64 both; invert n=64 both, n=256 deficient; solve n=64 both, n=256 uniform), 5 FAIL routed to A8 (pluq n=256 deficient row 71; echelon n=256 both rows 72–73; invert n=256 uniform row 74; solve n=256 deficient row 75). PENDING bucket emptied. |
+| GF(31) charpoly + minpoly at n=64,256 | ~~4~~ **0 remaining** | `52cce970` (charpoly n=256) | **Fully measured 2026-05-09 via Wave-12 bench extension (`[EX]`).** Of 4 cells: 3 PASS (charpoly n=64 1.25×; minpoly n=64 0.81×; minpoly n=256 1.38×); 1 FAIL routed to A8 row 76 (charpoly n=256 1.97×, same architectural cause as A1 GF(251)). PENDING bucket emptied. |
 | GF(2) `pluq` + `solve` at n=64,256,1024 (uniform+deficient) | up to 12 | `974a85bd` | **Structural gap confirmed 2026-05-08:** `BitMatrix::pluq` does not exist in gf2-core (no `alg/ple.rs` for `BitMatrix`); `BitMatrix::solve_left` does not exist. The A9 annotation in `3b762764-dense-la-post-gemm.md` § 3 claimed "implementations exist, only bench wiring missing" — this is incorrect. Neither function is implemented. The dense-LA bench extension added `Fp<31>` but cannot wire GF(2) pluq/solve because the implementations do not exist. Cells remain PENDING (structural implementation gap, not bench-wiring gap). `974a85bd` owns the implementation work. |
 | GF(2^4) `matmul` at n=64,256,1024 | 3 | `974a85bd` (or new follow-up if scoped separately) | gf2-core has no `Gf2mWide<u4>`; the m4rie reference rows exist for completeness but gf2-side requires either a new sub-byte storage variant or a structural amendment to scope GF(2^4) out. |
 | GF(2^8)/GF(2^16) `matmul` and `fgemm` mismatched-emitter cells | up to 6 | `e24f7839` (panelized GF(2^m) fgemm story; closed) + `[E12]` parity evidence | Already AMENDED via A2/A3 for the cells with measurements; the PENDING entries reflect that the m4rie reference emitter labels operations as `matmul` while gf2 emits `fgemm`. Reviewer-tractable evidence is in `[E12]` § 1.2 which provides the cross-walk. Closure status follows A2/A3, not PENDING. |

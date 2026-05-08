@@ -260,3 +260,16 @@ gf2,echelon,GF(31),1024,1024,1024,deficient,0,518212793,1.929709e-09,2026-05-08-
 gf2,invert,GF(31),64,64,64,uniform,0,556385,1.797317e-06,2026-05-08-pending-cell-measurement.md,2026-05-08,97bf0879
 gf2,invert,GF(31),256,256,256,uniform,0,30997951,3.226020e-08,2026-05-08-pending-cell-measurement.md,2026-05-08,97bf0879
 gf2,invert,GF(31),1024,1024,1024,uniform,0,1921369290,5.204622e-10,2026-05-08-pending-cell-measurement.md,2026-05-08,97bf0879
+gf2,invert,GF(31),64,64,64,deficient,0,94010,1.063717e-05,2026-05-08-pending-cell-measurement.md,2026-05-09,97bf0879
+gf2,invert,GF(31),256,256,256,deficient,0,3589746,2.785853e-07,2026-05-08-pending-cell-measurement.md,2026-05-09,97bf0879
+gf2,invert,GF(31),1024,1024,1024,deficient,0,188682225,5.299881e-09,2026-05-08-pending-cell-measurement.md,2026-05-09,97bf0879
+gf2,solve,GF(31),64,64,64,uniform,0,123685,8.085069e-06,2026-05-08-pending-cell-measurement.md,2026-05-09,97bf0879
+gf2,solve,GF(31),256,256,256,uniform,0,4347491,2.300166e-07,2026-05-08-pending-cell-measurement.md,2026-05-09,97bf0879
+gf2,solve,GF(31),1024,1024,1024,uniform,0,227085106,4.403661e-09,2026-05-08-pending-cell-measurement.md,2026-05-09,97bf0879
+gf2,solve,GF(31),64,64,64,deficient,0,93935,1.064567e-05,2026-05-08-pending-cell-measurement.md,2026-05-09,97bf0879
+gf2,solve,GF(31),256,256,256,deficient,0,3591343,2.784615e-07,2026-05-08-pending-cell-measurement.md,2026-05-09,97bf0879
+gf2,solve,GF(31),1024,1024,1024,deficient,0,189130815,5.287315e-09,2026-05-08-pending-cell-measurement.md,2026-05-09,97bf0879
+gf2,charpoly,GF(31),64,64,64,uniform,0,484036,2.065959e-06,2026-05-08-pending-cell-measurement.md,2026-05-09,97bf0879
+gf2,charpoly,GF(31),256,256,256,uniform,0,26641757,3.753510e-08,2026-05-08-pending-cell-measurement.md,2026-05-09,97bf0879
+gf2,minpoly,GF(31),64,64,64,uniform,0,321470,3.110709e-06,2026-05-08-pending-cell-measurement.md,2026-05-09,97bf0879
+gf2,minpoly,GF(31),256,256,256,uniform,0,18675973,5.354474e-08,2026-05-08-pending-cell-measurement.md,2026-05-09,97bf0879
