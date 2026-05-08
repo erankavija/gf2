@@ -21,7 +21,7 @@
   - **PASS:** charpoly 7 cells (GF(7)/64+256, GF(251)/64, GF(65521)/64+256, GF(2^31-1)/64+256); minpoly 7 cells (GF(7)/64+256, GF(251)/256, GF(65521)/64+256, GF(2^31-1)/64+256); GF(2^32) matmul 3 cells; GF(2^31-1) fgemm 4 cells; GF(31) fgemm n=256,1024; GF(7)/256, GF(7)/1024, GF(65521)/64, GF(65521)/256, GF(65521)/1024 fgemm (all PASS [hard] per `[E14]` § 1.2 / § 7); GF(2) matmul n≥1024 2 cells; GF(2) echelon all 6 cells per `[E13]`; GF(2^31-1) pluq all sizes + solve all sizes per `[E15]`; echelon n∈{256,1024} **uniform only** per `[E15]` § 1.2 (echelon n=64 + deficient n=256/1024 FAIL — see § 3 table); GF(2^31-1) invert deficient all + uniform n=64 (0.67× per `[E15]` — aggregate CSV 2.14× superseded); GF(p) spmv 4 cells; GF(2^m) spmv self 2; GF(2) spmv self 1; sparse-matmul 7; sparse×dense GF(p) 4; sparse×dense GF(2) 1; sparse-elim × GF(2^8)/GF(2^16) self-canonical 4 cells (`[E20]`) → approximately **64 PASS cells**
   - **AMENDED:** GF(2^8) matmul 3 (A2); GF(2^16) matmul n=1024 only (A3); GF(2^31-1) invert uniform n=256/1024 (A4 revised); GF(31)/64 fgemm (A5); GF(7)/64 fgemm (A6); GF(251)/{64,256,1024,4096} fgemm (A7) → approximately **11 AMENDED cells**
   - **FAIL (open gaps):** GF(7)/n=4096; GF(31)/4096; GF(65521)/4096 fgemm; GF(p) pluq/echelon/invert/solve non-Mersenne; GF(2^31-1) echelon n=64 both regimes (aggregate); **GF(2^31-1) echelon n=256/1024 deficient (aggregate; `[E15]` § 1.2 closes uniform only)**; GF(2) matmul at n<1024; GF(2) invert; sparse-elim GF(2)+GF(p) (10 cells); **charpoly × GF(251)/256 + minpoly × GF(251)/64 (2 cells routed to `52cce970` per A1; recorded as FAIL)** → approximately **70 FAIL cells** (exact count from A8 annex)
-  - **SC#4 status (2026-05-08):** Annex A8 (Wave-12 close-cascade umbrella amendment, user-approved 2026-05-08) provides explicit follow-up routing for all 70 FAIL cells, satisfying SC#4. 56 cells routed to active JIT issues (`615db3b9`, `52cce970`, `974a85bd`); 14 cells flagged as escalation candidates (GF(2) invert × 3 + sparse-elim × 10) with no active follow-up and proposed action in A8 § A8.2.
+  - **SC#4 status (2026-05-08):** Annex A8 (Wave-12 close-cascade umbrella amendment, user-approved 2026-05-08) provides explicit follow-up routing for all 70 FAIL cells, satisfying SC#4. All 70 cells routed to named JIT issues: 52 → `615db3b9`, 2 → `52cce970`, 2 → `974a85bd`, 3 → `aaa847cf` (filed 2026-05-08), 10 → `5ce13bae` (filed 2026-05-08). Zero uncovered cells.
   - **PENDING:** GF(31) all non-fgemm dense ops; GF(2^4) matmul gf2 side absent; GF(2) pluq/solve gf2 absent → approximately **16 PENDING cells**
 
 > **Ratio definition (canonical):** `Ratio = gf2 wall-clock / reference wall-clock` (lower is better — gf2 is faster when ratio < 1). PASS = ratio ≤ 1.5×. This is the wall-time ratio; all cells in this scorecard use this definition. Note: `benchmarks/analyze.py` reports a *throughput* ratio (gf2 Gops/s / ref Gops/s) which equals `ref_wall / gf2_wall` — the inverse of the wall-time ratio used here. The scorecard converts analyze.py output by taking `1 / analyze.py_ratio` for each cell.
@@ -560,9 +560,9 @@ Ratio column is wall-time gf2/reference (lower is better). Follow-up column name
 | 41 | invert | GF(65521) | 64 / uniform | 1.94× | `615db3b9` | Medium-prime invert/uniform gap. |
 | 42 | invert | GF(65521) | 256 / uniform | 10.39× | `615db3b9` | Large-n medium-prime invert/uniform. |
 | 43 | invert | GF(65521) | 256 / deficient | 2.85× | `615db3b9` | Medium-prime invert/deficient at n=256. |
-| 44 | invert | GF(2) | 64 / uniform | 3.55× | (no active follow-up; see § A8.2) | M4RI invert uses specialised lower-upper decomposition with Gray-code tables; gf2 BitMatrix invert is a straightforward Gauss-Jordan. No filed successor to `974a85bd` for invert. |
-| 45 | invert | GF(2) | 256 / uniform | 8.35× | (no active follow-up; see § A8.2) | Same as row 44. |
-| 46 | invert | GF(2) | 1024 / uniform | 16.92× | (no active follow-up; see § A8.2) | Same as row 44. |
+| 44 | invert | GF(2) | 64 / uniform | 3.55× | `aaa847cf` | M4RI invert uses specialised lower-upper decomposition with Gray-code tables; gf2 BitMatrix invert is a straightforward Gauss-Jordan. New successor `aaa847cf` filed 2026-05-08. |
+| 45 | invert | GF(2) | 256 / uniform | 8.35× | `aaa847cf` | Same as row 44. |
+| 46 | invert | GF(2) | 1024 / uniform | 16.92× | `aaa847cf` | Same as row 44. |
 | 47 | solve | GF(7) | 64 / uniform | 2.27× | `615db3b9` | Non-Mersenne solve gap; solve calls PLE + two TRSM passes — inherits pluq/echelon gap. |
 | 48 | solve | GF(7) | 64 / deficient | 2.39× | `615db3b9` | Same as row 47. |
 | 49 | solve | GF(7) | 256 / uniform | 7.81× | `615db3b9` | Large-n non-Mersenne solve. |
@@ -577,40 +577,35 @@ Ratio column is wall-time gf2/reference (lower is better). Follow-up column name
 | 58 | solve | GF(65521) | 256 / deficient | 8.65× | `615db3b9` | Same as row 57. |
 | 59 | charpoly | GF(251) | 256 | 3.18× | `52cce970` | Covered by A1; repeated here for completeness. Bespoke AVX2 kernel follow-up under `52cce970`. |
 | 60 | minpoly | GF(251) | 64 | 4.14× | `52cce970` | Covered by A1; repeated here for completeness. Same follow-up as row 59. |
-| 61 | sparse-elim | GF(7) | 256 / 3.9% | 2.61× | (no active follow-up; see § A8.2) | LinBox Markowitz-degree pivoting not replicated in gf2; tracked in `dev/bench_results/2026-05-04-47698404-sparse-scorecard.md` § 4 as feasible CPU algorithmic gap. No filed JIT follow-up issue. |
-| 62 | sparse-elim | GF(7) | 1024 / 1% | 2.33× | (no active follow-up; see § A8.2) | Same as row 61. |
-| 63 | sparse-elim | GF(251) | 256 / 3.9% | 2.35× | (no active follow-up; see § A8.2) | Same as row 61. |
-| 64 | sparse-elim | GF(251) | 1024 / 1% | 2.14× | (no active follow-up; see § A8.2) | Same as row 61. |
-| 65 | sparse-elim | GF(65521) | 256 / 3.9% | 2.28× | (no active follow-up; see § A8.2) | Same as row 61. |
-| 66 | sparse-elim | GF(65521) | 1024 / 1% | 1.97× | (no active follow-up; see § A8.2) | Same as row 61. |
-| 67 | sparse-elim | GF(2^31-1) | 256 / 3.9% | 2.14× | (no active follow-up; see § A8.2) | Same as row 61. |
-| 68 | sparse-elim | GF(2^31-1) | 1024 / 1% | 2.06× | (no active follow-up; see § A8.2) | Same as row 61. |
-| 69 | sparse-elim | GF(2) | 256 / 3.9% | 2.15× | (no active follow-up; see § A8.2) | GF(2) sparse-elim gap vs LinBox; same Markowitz-pivoting cause. No filed JIT follow-up issue. |
-| 70 | sparse-elim | GF(2) | 1024 / 1% | 2.22× | (no active follow-up; see § A8.2) | Same as row 69. |
+| 61 | sparse-elim | GF(7) | 256 / 3.9% | 2.61× | `5ce13bae` | LinBox Markowitz-degree pivoting not replicated in gf2; tracked in `dev/bench_results/2026-05-04-47698404-sparse-scorecard.md` § 4 as feasible CPU algorithmic gap. New successor `5ce13bae` filed 2026-05-08. |
+| 62 | sparse-elim | GF(7) | 1024 / 1% | 2.33× | `5ce13bae` | Same as row 61. |
+| 63 | sparse-elim | GF(251) | 256 / 3.9% | 2.35× | `5ce13bae` | Same as row 61. |
+| 64 | sparse-elim | GF(251) | 1024 / 1% | 2.14× | `5ce13bae` | Same as row 61. |
+| 65 | sparse-elim | GF(65521) | 256 / 3.9% | 2.28× | `5ce13bae` | Same as row 61. |
+| 66 | sparse-elim | GF(65521) | 1024 / 1% | 1.97× | `5ce13bae` | Same as row 61. |
+| 67 | sparse-elim | GF(2^31-1) | 256 / 3.9% | 2.14× | `5ce13bae` | Same as row 61. |
+| 68 | sparse-elim | GF(2^31-1) | 1024 / 1% | 2.06× | `5ce13bae` | Same as row 61. |
+| 69 | sparse-elim | GF(2) | 256 / 3.9% | 2.15× | `5ce13bae` | GF(2) sparse-elim gap vs LinBox; same Markowitz-pivoting cause; same follow-up `5ce13bae`. |
+| 70 | sparse-elim | GF(2) | 1024 / 1% | 2.22× | `5ce13bae` | Same as row 69. |
 
 **Total FAIL cells covered by A8: 70**
 
-Follow-up issue breakdown:
+Follow-up issue breakdown (post-2026-05-08 close-cascade):
 - `615db3b9` (finite-field dense LA SOTA catch-up): 52 cells (rows 1–3, 6–43, 47–58)
 - `52cce970` (GF(251) charpoly+minpoly AVX2 kernel): 2 cells (rows 59–60; already covered by A1)
 - `974a85bd` (GF(2) BitMatrix story): 2 cells (rows 4–5; n<1024 matmul open residual documented in story)
-- No active follow-up (escalation candidates): 14 cells (rows 44–46 GF(2) invert; rows 61–70 sparse-elim)
+- **`aaa847cf` (M4RI-style invert path for BitMatrix, filed 2026-05-08)**: 3 cells (rows 44–46 GF(2) invert)
+- **`5ce13bae` (Markowitz-degree pivot selection for sparse RREF, filed 2026-05-08)**: 10 cells (rows 61–70 sparse-elim × GF(p) + GF(2) at n=256,1024)
 
-#### A8.2 — Cells without an active follow-up issue (escalation candidates)
+**All 70 FAIL cells are now routed to a named, filed follow-up JIT issue.** SC#4 is satisfied.
 
-These 14 cells are routed to a documented architectural analysis but have no active JIT issue. They require the user to either file a new follow-up or confirm the existing documentation is sufficient.
+#### A8.2 — Resolution of the original escalation candidates
 
-**Group 1 — GF(2) invert (3 cells): rows 44–46**
+The R1 worker for A8 flagged 14 cells with no active follow-up. Both groups have been resolved on 2026-05-08:
 
-`invert × GF(2)` at n=64/256/1024 (3.55×/8.35×/16.92×). Story `974a85bd` ("Close GF(2) BitMatrix gaps to M4RI") is done and covered matmul and echelon; it did not include invert. The `[E13]` parity evidence doc (`dev/bench_results/2026-05-06-111a3967-gf2-parity-evidence.md`) records these as FAIL with no closure path. No successor task to `974a85bd` for invert has been filed.
+**Group 1 — GF(2) invert (3 cells)**: Filed `aaa847cf` ("M4RI-style invert path for BitMatrix") covering rows 44–46. Cited as the named successor in the A8 table.
 
-Proposed action: file a follow-up task under `epic:gf2-core-sota-performance` scoped to "GF(2) BitMatrix invert: Gauss-Jordan vs M4RI specialised algorithm gap" and wire it as a dependency of `615db3b9`.
-
-**Group 2 — Sparse-elim GF(p) and GF(2) (10 cells): rows 61–70**
-
-`sparse-elim` at n∈{256,1024} for GF(7), GF(251), GF(65521), GF(2^31-1), GF(2) (2.06×–2.61×). The gap is documented in `dev/bench_results/2026-05-04-47698404-sparse-scorecard.md` § 4 as "Feasible CPU gaps — Markowitz-degree pivoting". Story `54fd3f0b` ("Close sparse FieldMatrix SpMV and SpMM gaps") is done, and the sparse-elim algorithmic gap was classified as out of scope for that story (Wave-3 verdict: algorithmic gap, not implementation gap). The user-supplied follow-up candidate list in the Wave-12 close brief cited `4c0d0202` as "Sparse RREF priority-queue pivoting" but `4c0d0202` is actually "Publish SOTA target matrix design doc [Done]" — that issue ID does not match the intended description. No active sparse-elim follow-up JIT issue exists.
-
-Proposed action: file a new JIT issue titled "Implement Markowitz-degree pivot selection for sparse RREF to close sparse-elim vs LinBox gap" under `epic:gf2-core-sota-performance` and `story:sota-sparse-fieldmatrix`, covering all 5 fields × 2 sizes = 10 cells.
+**Group 2 — Sparse-elim GF(p) and GF(2) (10 cells)**: Filed `5ce13bae` ("Markowitz-degree pivot selection for sparse RREF") covering rows 61–70. The original Wave-12 close brief cited `4c0d0202` as the sparse-elim follow-up but that issue is "Publish SOTA target matrix design doc [Done]" — wrong ID. `5ce13bae` is the correctly-scoped replacement and is cited as the named successor in the A8 table.
 
 ---
 

@@ -2,23 +2,106 @@
   "id": "01ae4c20-aae4-4940-9889-ea7070bd4377",
   "title": "Publish final gf2-core SOTA closure report",
   "description": "Publish the final gf2-core SOTA closure report and presentation.\n\n## Background\n\nThe epic should close with a single authoritative scorecard, raw CSVs, linked evidence, and a Reveal.js presentation summarizing achieved ratios and remaining non-goal boundaries.\n\n## Success Criteria\n\n- [hard] Final raw CSVs and markdown scorecard cover every in-scope benchmark cell and reference owner.\n- [hard] A Reveal.js presentation is linked to the epic and summarizes ratios, algorithms, no-go decisions, and future research.\n- [hard] All child stories are done, gates pass, and the epic can serve as the SOTA checkpoint for b117c95e.",
-  "state": "backlog",
+  "state": "done",
   "priority": "high",
-  "assignee": null,
+  "assignee": "agent:project-lead",
   "dependencies": [
-    "8f3fdc34-66aa-4c94-8919-a31bdd94ebb3",
-    "54fd3f0b-60d9-439c-90d1-e54c470f2563",
-    "66190ccd-60aa-4675-bb59-153f1834b92e",
-    "72ab6d0e-60ae-4148-8168-bbfd2b238546"
+    "39f02525-deb4-4c58-8942-ecee42dd869a",
+    "54fd3f0b-60d9-439c-90d1-e54c470f2563"
   ],
   "gates_required": [
     "code-review",
     "cargo-ci",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-08T18:43:18.411272923Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-08T18:43:24.794308509Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-05-08T18:43:24.729019441Z"
+    }
+  },
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/bench_results/2026-05-08-2cfc4372-sota-scorecard.md",
+      "commit": null,
+      "label": "Final SOTA scorecard (16-cell summary, all matrix families)",
+      "doc_type": null,
+      "format": "markdown"
+    },
+    {
+      "path": "dev/bench_results/2026-05-08-f00fd873-sota-closure-deck.html",
+      "commit": null,
+      "label": "Final SOTA closure Reveal.js deck (13 slides)",
+      "doc_type": "presentation",
+      "format": "html",
+      "assets": [
+        {
+          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        },
+        {
+          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        },
+        {
+          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        },
+        {
+          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        },
+        {
+          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/night.css",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        }
+      ]
+    },
+    {
+      "path": "dev/bench_results/2026-05-08-dece4e73-sota-aggregate-gf2.csv",
+      "commit": null,
+      "label": "SOTA aggregate gf2 measurements",
+      "doc_type": null
+    },
+    {
+      "path": "dev/bench_results/2026-05-08-dece4e73-sota-aggregate-reference.csv",
+      "commit": null,
+      "label": "SOTA aggregate reference measurements",
+      "doc_type": null
+    }
+  ],
   "labels": [
     "type:story",
     "component:gf2-core",
@@ -26,5 +109,5 @@
     "story:sota-final-scorecard"
   ],
   "created_at": "2026-04-30T06:43:02.531571131+00:00",
-  "updated_at": "2026-04-30T06:43:49.461556198+00:00"
+  "updated_at": "2026-05-08T18:47:44.628967908+00:00"
 }
