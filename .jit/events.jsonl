@@ -4318,3 +4318,6 @@
 {"type":"gate_failed","id":"9a58c15c-6f51-4a78-9d3b-b153e15a3127","issue_id":"97bf0879-357e-4151-bdeb-781987cd0902","timestamp":"2026-05-08T20:05:18.268978825Z","gate_key":"code-review","updated_by":"auto:executor"}
 {"type":"gate_failed","id":"81123844-c457-4194-a4fb-682872286d6e","issue_id":"97bf0879-357e-4151-bdeb-781987cd0902","timestamp":"2026-05-08T20:08:26.976217545Z","gate_key":"code-review","updated_by":"auto:executor"}
 {"type":"gate_failed","id":"f934d549-a594-46fd-8365-d8ceb2584318","issue_id":"97bf0879-357e-4151-bdeb-781987cd0902","timestamp":"2026-05-08T20:11:20.374112454Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"2850404f-b915-4406-a291-1e40858bbb76","issue_id":"97bf0879-357e-4151-bdeb-781987cd0902","timestamp":"2026-05-08T20:16:29.556924442Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"issue_created","id":"a3225b3f-f77b-4459-8840-fa0446a83960","issue_id":"8e4e19a0-a61f-4228-aec5-0dbae508fcbe","timestamp":"2026-05-08T20:59:22.207371203Z","title":"Empirical perm-vs-det uniformity comparison over F_3 / F_5 / F_7","priority":"normal"}
+{"type":"issue_state_changed","id":"e3ffe541-8450-46ce-bb13-38997f087f8e","issue_id":"8e4e19a0-a61f-4228-aec5-0dbae508fcbe","timestamp":"2026-05-08T20:59:29.798064615Z","from":"ready","to":"backlog"}
