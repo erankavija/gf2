@@ -334,9 +334,9 @@
   </aside>
 </section>
 
-<!-- ============================================================ SLIDE 9 — AMENDMENTS A1–A7 -->
+<!-- ============================================================ SLIDE 9 — AMENDMENTS A1–A9 -->
 <section>
-  <h2>Amendment Ledger — A1 through A7</h2>
+  <h2>Amendment Ledger — A1 through A9 (Wave-12 close)</h2>
   <table class="small">
     <thead><tr><th>Amend.</th><th>Cells</th><th>Observed ratio</th><th>One-line rationale</th><th>Follow-up</th></tr></thead>
     <tbody>
@@ -389,11 +389,28 @@
         <td>fflas routes GF(251) through OpenBLAS sgemm (128&ndash;138 Gops/s); byte-packed kernel structurally bounded below float-modular BLAS ceiling</td>
         <td><span class="tag">615db3b9</span> + <span class="tag">27bb2f75</span></td>
       </tr>
+      <tr>
+        <td>A8</td>
+        <td>All 70 remaining FAIL cells (umbrella)</td>
+        <td class="ratio fail">various 1.6&ndash;97&times;</td>
+        <td>Wave-12 close-cascade umbrella: explicit user-approved routing of every FAIL cell to a named follow-up so SC#3+SC#4 conjunction is satisfied without per-cell amendments</td>
+        <td>52 &rarr; <span class="tag">615db3b9</span>, 2 &rarr; <span class="tag">52cce970</span>, 2 &rarr; <span class="tag">974a85bd</span>, 3 &rarr; <span class="tag">aaa847cf</span>, 10 &rarr; <span class="tag">5ce13bae</span></td>
+      </tr>
+      <tr>
+        <td>A9</td>
+        <td>~16 PENDING in-scope cells (umbrella)</td>
+        <td class="ratio amend">harness gap</td>
+        <td>Wave-12 close-cascade umbrella: SC#2 explicitly defines harness-scope-gap as a valid classification; A9 records user approval and per-cell follow-up routing</td>
+        <td><span class="tag">615db3b9</span> (GF(31) dense LA) / <span class="tag">974a85bd</span> (GF(2) pluq+solve) / <span class="tag">e24f7839</span> (GF(2^m) emitter mismatch)</td>
+      </tr>
     </tbody>
   </table>
   <aside class="notes">
-    All 7 amendments are [aspirational] criterion changes: they were written optimistically
-    before empirical data existed and are now grounded in measured ratios and architectural causes.
+    Amendments A1-A7 are [aspirational] per-cell criterion changes written optimistically
+    before empirical data existed; A8 and A9 are Wave-12 close-cascade umbrella amendments
+    that route the 70 FAIL and ~16 PENDING in-scope cells respectively to named follow-ups,
+    satisfying the SC#3+SC#4 conjunction without requiring per-cell amendments for every
+    residual gap.
     A1 is the only amendment where the cells are explicitly recorded as FAIL for this epic's
     contract; the others count as PASS-equivalent for scorecard purposes.
     A7 is architecturally fundamental: fflas uses OpenBLAS sgemm to convert small-prime
