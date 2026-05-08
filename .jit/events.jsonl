@@ -4259,3 +4259,4 @@
 {"type":"gate_passed","id":"a8c8dbdb-fecc-4b56-9b5d-82a2778d3213","issue_id":"f00fd873-bd25-45c6-ac8e-7a0ab2a2fe68","timestamp":"2026-05-08T16:00:10.580856293Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
 {"type":"gate_failed","id":"73cca612-9b8f-482f-9961-7c3c915faf04","issue_id":"f00fd873-bd25-45c6-ac8e-7a0ab2a2fe68","timestamp":"2026-05-08T16:03:13.110067105Z","gate_key":"code-review","updated_by":"auto:executor"}
 {"type":"gate_passed","id":"e115912a-e06a-403e-a13a-b1506d4faf7d","issue_id":"f00fd873-bd25-45c6-ac8e-7a0ab2a2fe68","timestamp":"2026-05-08T16:03:13.118428137Z","gate_key":"doc-review","updated_by":null}
+{"type":"gate_failed","id":"f7fb15ba-7623-4e3a-9c08-3daad878dafc","issue_id":"f00fd873-bd25-45c6-ac8e-7a0ab2a2fe68","timestamp":"2026-05-08T16:06:15.677024708Z","gate_key":"code-review","updated_by":"auto:executor"}

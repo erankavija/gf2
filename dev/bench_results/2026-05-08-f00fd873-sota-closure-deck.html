@@ -82,7 +82,10 @@
   <aside class="notes">
     Approximately 64 cells satisfy the 1.5x PASS threshold on hard evidence.
     11 more are aspirational amendments where the criterion was written optimistically before
-    empirical data existed; each has a user-approved follow-up issue.
+    empirical data existed; each is user-approved. Most carry a follow-up issue (A1, A2, A5,
+    A6, A7) but two are structural with no separate follow-up: A3 (GF(2^16) matmul n=1024
+    hardware limit) and A4 (GF(2^31-1) invert uniform — an architectural call about reusing
+    PLE+TRSM for invert).
     40 cells remain open gaps, primarily non-Mersenne GF(p) dense factorisation and
     sparse-elim for all field families.
     16 cells are pending due to missing gf2-side bench harness coverage.
