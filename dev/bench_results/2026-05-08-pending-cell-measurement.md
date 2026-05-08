@@ -5,7 +5,7 @@
 | Date | 2026-05-08 / 2026-05-09 (completed) |
 | JIT issue | `97bf0879` (epic: Close gf2-core SOTA performance gaps) |
 | Scorecard | `dev/bench_results/2026-05-08-2cfc4372-sota-scorecard.md` |
-| Purpose | Direct Criterion measurement of GF(31) PENDING cells in scorecard sections 2.1–2.4 and 3.1–3.2 |
+| Purpose | Direct Criterion measurement of GF(31) cells (originally PENDING; closed by Wave-12 bench extension) in scorecard sections 2.1–2.4 and 3.1–3.2 |
 | Evidence tag | `[EX]` in scorecard |
 | Status | **COMPLETE** — all 20 GF(31) cells measured (16 dense-LA + 4 charpoly/minpoly); 14 PASS, 6 FAIL routed to A8 |
 
@@ -146,9 +146,9 @@ The A9 amendment in the scorecard previously stated:
 - No `ple.rs`, no `alg/factorize.rs`, no `BitMatrix::pluq` function
 - No `BitMatrix::solve_left` or `solve_right` function
 
-`FieldMatrix<F>::pluq` exists in `crates/gf2-core/src/field/matrix.rs` but `BitMatrix` (the GF(2) bit-packed type) has no PLE/LU factorization or solve implementations. The GF(2) pluq/solve PENDING cells in the scorecard reflect a genuine structural implementation gap, not a bench-wiring gap.
+`FieldMatrix<F>::pluq` exists in `crates/gf2-core/src/field/matrix.rs` but `BitMatrix` (the GF(2) bit-packed type) has no PLE/LU factorization or solve implementations. The GF(2) pluq/solve cells in the scorecard reflect a genuine gf2-side structural implementation absence, not a bench-wiring gap.
 
-**Updated A9 rationale:** The GF(2) pluq+solve cells require `BitMatrix::ple` and `BitMatrix::solve_left` implementations before they can be measured. These are tracked under `974a85bd`.
+**Updated 2026-05-09:** The GF(2) pluq+solve cells (and matmul × GF(2^4) with no `Gf2mWide<u4>`) are now classified **EXCLUDED [§ 6.3]** in the scorecard per user-approved 2026-05-09 amendment, paralleling the no-oracle EXCLUDED precedent — they have no number on one side and require new implementation work to enter scope. Named follow-up: **`aaa847cf`** (M4RI-style bit-packed factorisation for `BitMatrix::pluq` + `BitMatrix::solve_left`). The earlier reference to `974a85bd` was incorrect: that story closed-done with its GF(2) matmul scope only and does not own the pluq/solve work; `aaa847cf` is the correctly-scoped successor filed 2026-05-08.
 
 ## 4. Reference Wall Times (from `[E9]`)
 
