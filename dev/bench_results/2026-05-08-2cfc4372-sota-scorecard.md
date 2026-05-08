@@ -18,10 +18,10 @@
 - **Total cells in scope (from `sota_target_matrix.md` § 5):** measured/self-canonical cells + 20 excluded cells
   - EXCLUDED (no-independent-oracle): 20 — user-approved per target matrix § 6.1 + § 6.2.
 - **Closure status of measured/self-canonical cells (per authoritative parity evidence docs):**
-  - **PASS:** charpoly 7 cells; minpoly 6 cells; GF(2^32) matmul 3 cells; GF(2^31-1) fgemm 4 cells; GF(31) fgemm n=256,1024; GF(7)/256, GF(7)/1024, GF(65521)/64, GF(65521)/256, GF(65521)/1024 fgemm (all PASS [hard] per `[E14]` § 1.2 / § 7); GF(2) matmul n≥1024 2 cells; GF(2) echelon all 6 cells per `[E13]`; GF(2^31-1) pluq/echelon/solve all sizes per `[E15]`; GF(2^31-1) invert deficient all + uniform n=64 (0.67× per `[E15]` — aggregate CSV 2.14× superseded); GF(p) spmv 4 cells; GF(2^m) spmv self 2; GF(2) spmv self 1; sparse-matmul 7; sparse×dense GF(p) 4; sparse×dense GF(2) 1; sparse-elim × GF(2^8)/GF(2^16) self-canonical 4 cells (`[E20]`) → approximately **63 PASS cells**
-  - **AMENDED:** GF(2^8) matmul 3 (A2); GF(2^16) matmul n=1024 only (A3); GF(2^31-1) invert uniform n=256/1024 (A4 revised); GF(31)/64 fgemm AMENDED [aspirational] per `[E14]` § 1.1 (A5); charpoly GF(251)/256 + minpoly GF(251)/64 (A1) → approximately **8 AMENDED cells**
-  - **FAIL (open gaps):** GF(7)/GF(251) fgemm at n=64; GF(7)/n=4096; GF(31)/4096; GF(251)/n≠256 fgemm; GF(p) pluq/echelon/invert/solve non-Mersenne; GF(2^31-1) echelon n=64 (aggregate); GF(2) matmul at n<1024; GF(2) invert; sparse-elim GF(2)+GF(p) (10 cells) → approximately **41 FAIL cells**
-  - **PENDING:** GF(31) all non-fgemm dense ops; GF(2^4)/GF(2^8)/GF(2^16) matmul gf2 side absent; GF(2) pluq/solve gf2 absent → approximately **18 PENDING cells**
+  - **PASS:** charpoly 7 cells (GF(7)/64+256, GF(251)/64, GF(65521)/64+256, GF(2^31-1)/64+256); minpoly 7 cells (GF(7)/64+256, GF(251)/256, GF(65521)/64+256, GF(2^31-1)/64+256); GF(2^32) matmul 3 cells; GF(2^31-1) fgemm 4 cells; GF(31) fgemm n=256,1024; GF(7)/256, GF(7)/1024, GF(65521)/64, GF(65521)/256, GF(65521)/1024 fgemm (all PASS [hard] per `[E14]` § 1.2 / § 7); GF(2) matmul n≥1024 2 cells; GF(2) echelon all 6 cells per `[E13]`; GF(2^31-1) pluq/echelon/solve all sizes per `[E15]`; GF(2^31-1) invert deficient all + uniform n=64 (0.67× per `[E15]` — aggregate CSV 2.14× superseded); GF(p) spmv 4 cells; GF(2^m) spmv self 2; GF(2) spmv self 1; sparse-matmul 7; sparse×dense GF(p) 4; sparse×dense GF(2) 1; sparse-elim × GF(2^8)/GF(2^16) self-canonical 4 cells (`[E20]`) → approximately **64 PASS cells**
+  - **AMENDED:** GF(2^8) matmul 3 (A2); GF(2^16) matmul n=1024 only (A3); GF(2^31-1) invert uniform n=256/1024 (A4 revised); GF(31)/64 fgemm AMENDED [aspirational] per `[E14]` § 1.1 (A5) → approximately **6 AMENDED cells**
+  - **FAIL (open gaps):** GF(7)/GF(251) fgemm at n=64; GF(7)/n=4096; GF(31)/4096; GF(251)/n≠256 fgemm; GF(p) pluq/echelon/invert/solve non-Mersenne; GF(2^31-1) echelon n=64 (aggregate); GF(2) matmul at n<1024; GF(2) invert; sparse-elim GF(2)+GF(p) (10 cells); **charpoly × GF(251)/256 + minpoly × GF(251)/64 (2 cells routed to `52cce970` per A1; recorded as FAIL)** → approximately **43 FAIL cells**
+  - **PENDING:** GF(31) all non-fgemm dense ops; GF(2^4) matmul gf2 side absent; GF(2) pluq/solve gf2 absent → approximately **16 PENDING cells**
 
 > **Ratio definition (canonical):** `Ratio = gf2 wall-clock / reference wall-clock` (lower is better — gf2 is faster when ratio < 1). PASS = ratio ≤ 1.5×. This is the wall-time ratio; all cells in this scorecard use this definition. Note: `benchmarks/analyze.py` reports a *throughput* ratio (gf2 Gops/s / ref Gops/s) which equals `ref_wall / gf2_wall` — the inverse of the wall-time ratio used here. The scorecard converts analyze.py output by taking `1 / analyze.py_ratio` for each cell.
 
@@ -269,7 +269,7 @@ Evidence: `[E5]`, `[E6]`, `[E9]`, `[E16]`, `[E17]`.
 | GF(31) | 64 | fflas-ffpack 2.5.0 | PENDING | 388.738 µs | PENDING | PENDING | `[E9]` |
 | GF(31) | 256 | fflas-ffpack 2.5.0 | PENDING | 13.517 ms | PENDING | PENDING | `[E9]` |
 | GF(251) | 64 | fflas-ffpack 2.5.0 | 165.000 µs | 889.983 µs | **0.19×** | PASS | `[E5]` `[E16]` |
-| GF(251) | 256 | fflas-ffpack 2.5.0 | 4.200 ms | 1.623 ms | **3.18×** | AMENDED [→A1] | `[E5]` `[E16]` |
+| GF(251) | 256 | fflas-ffpack 2.5.0 | 4.200 ms | 1.623 ms | **3.18×** | FAIL [→A1] | `[E5]` `[E16]` |
 | GF(65521) | 64 | fflas-ffpack 2.5.0 | 379.000 µs | 966.280 µs | **0.39×** | PASS | `[E5]` `[E16]` |
 | GF(65521) | 256 | fflas-ffpack 2.5.0 | 14.790 ms | 17.253 ms | **0.86×** | PASS | `[E5]` `[E16]` |
 | GF(2^31-1) | 64 | fflas-ffpack 2.5.0 | 485.000 µs | 974.660 µs | **0.50×** | PASS | `[E5]` `[E16]` |
@@ -393,7 +393,7 @@ The following story-level parity evidence documents are the authoritative closur
 | `cc5de315` (GF(p) fgemm) | fgemm × GF(p) | `[E14]` | GF(2^31-1) PASS [hard] all n; GF(31)/64 AMENDED [aspirational] (A5); GF(31)/256,1024 PASS [hard]; GF(31)/4096 FAIL; GF(7)/n=256,1024 PASS [hard] per `[E14]` § 7; GF(7)/n=64 FAIL; GF(7)/n=4096 FAIL; GF(65521)/n=64,256,1024 PASS [hard] per `[E14]` § 1.2 / § 7; GF(65521)/4096 FAIL; GF(251) FAIL all n |
 | `2c7548ae` (GF(2^m) fgemm) | matmul/fgemm × GF(2^m) | `[E12]` | GF(2^32) all n PASS; GF(2^8) AMENDED (aspirational); GF(2^16) PASS at n≤256 [hard], AMENDED at n=1024 |
 | `72ab6d0e` (Dense factorize/solve) | pluq/echelon/invert/solve × GF(p) + GF(2) | `[E15]`, `[E8]`, `[E13]` | GF(2^31-1) pluq ALL PASS; echelon n≥256 PASS (est.); invert ALL deficient PASS + n=64 uniform PASS (0.67× per `[E15]`), n=256/1024 uniform AMENDED; solve ALL PASS. GF(p) others: FAIL. GF(2) echelon ALL PASS; GF(2) invert FAIL; GF(2) solve/pluq: harness gap (PENDING). |
-| `66190ccd` (charpoly/minpoly) | charpoly/minpoly × GF(p) | `[E16]`, `[E5]` | 14/16 cells PASS; 2 cells AMENDED (routed to `52cce970`) |
+| `66190ccd` (charpoly/minpoly) | charpoly/minpoly × GF(p) | `[E16]`, `[E5]` | 14/16 cells PASS; 2 cells FAIL [→A1, routed to `52cce970`]: charpoly × GF(251)/256 (3.18×) + minpoly × GF(251)/64 (4.14×). The user-approved A1 amendment authorizes the routing; the cells themselves remain FAIL for epic `97bf0879`'s scorecard contract. |
 | `54fd3f0b` (Sparse) | spmv/sparse-matmul/sparse×dense/sparse-elim | `[E18]`, `[E4]`, `[E20]` | spmv GF(p) ALL PASS; spmv GF(2) PASS (self-canonical); sparse-matmul ALL PASS (self-canonical); sparse×dense ALL PASS (including GF(2^31-1)); sparse-elim GF(2)+GF(p) (10 cells) ALL FAIL (open algorithmic gap); sparse-elim × GF(2^8)/GF(2^16) (4 cells) PASS [self-canonical, walls measured by `[E20]`] |
 
 ---
