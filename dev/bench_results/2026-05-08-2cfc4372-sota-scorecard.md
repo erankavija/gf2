@@ -19,8 +19,8 @@
   - EXCLUDED (no-independent-oracle): 20 — user-approved per target matrix § 6.1 + § 6.2.
 - **Closure status of measured/self-canonical cells (per authoritative parity evidence docs):**
   - **PASS:** charpoly 7 cells (GF(7)/64+256, GF(251)/64, GF(65521)/64+256, GF(2^31-1)/64+256); minpoly 7 cells (GF(7)/64+256, GF(251)/256, GF(65521)/64+256, GF(2^31-1)/64+256); GF(2^32) matmul 3 cells; GF(2^31-1) fgemm 4 cells; GF(31) fgemm n=256,1024; GF(7)/256, GF(7)/1024, GF(65521)/64, GF(65521)/256, GF(65521)/1024 fgemm (all PASS [hard] per `[E14]` § 1.2 / § 7); GF(2) matmul n≥1024 2 cells; GF(2) echelon all 6 cells per `[E13]`; GF(2^31-1) pluq/echelon/solve all sizes per `[E15]`; GF(2^31-1) invert deficient all + uniform n=64 (0.67× per `[E15]` — aggregate CSV 2.14× superseded); GF(p) spmv 4 cells; GF(2^m) spmv self 2; GF(2) spmv self 1; sparse-matmul 7; sparse×dense GF(p) 4; sparse×dense GF(2) 1; sparse-elim × GF(2^8)/GF(2^16) self-canonical 4 cells (`[E20]`) → approximately **64 PASS cells**
-  - **AMENDED:** GF(2^8) matmul 3 (A2); GF(2^16) matmul n=1024 only (A3); GF(2^31-1) invert uniform n=256/1024 (A4 revised); GF(31)/64 fgemm AMENDED [aspirational] per `[E14]` § 1.1 (A5) → approximately **6 AMENDED cells**
-  - **FAIL (open gaps):** GF(7)/GF(251) fgemm at n=64; GF(7)/n=4096; GF(31)/4096; GF(251)/n≠256 fgemm; GF(p) pluq/echelon/invert/solve non-Mersenne; GF(2^31-1) echelon n=64 (aggregate); GF(2) matmul at n<1024; GF(2) invert; sparse-elim GF(2)+GF(p) (10 cells); **charpoly × GF(251)/256 + minpoly × GF(251)/64 (2 cells routed to `52cce970` per A1; recorded as FAIL)** → approximately **43 FAIL cells**
+  - **AMENDED:** GF(2^8) matmul 3 (A2); GF(2^16) matmul n=1024 only (A3); GF(2^31-1) invert uniform n=256/1024 (A4 revised); GF(31)/64 fgemm (A5); GF(7)/64 fgemm (A6); GF(251)/{64,256,1024,4096} fgemm (A7) → approximately **11 AMENDED cells**
+  - **FAIL (open gaps):** GF(7)/n=4096; GF(31)/4096; GF(65521)/4096 fgemm; GF(p) pluq/echelon/invert/solve non-Mersenne; GF(2^31-1) echelon n=64 (aggregate); GF(2) matmul at n<1024; GF(2) invert; sparse-elim GF(2)+GF(p) (10 cells); **charpoly × GF(251)/256 + minpoly × GF(251)/64 (2 cells routed to `52cce970` per A1; recorded as FAIL)** → approximately **38 FAIL cells**
   - **PENDING:** GF(31) all non-fgemm dense ops; GF(2^4) matmul gf2 side absent; GF(2) pluq/solve gf2 absent → approximately **16 PENDING cells**
 
 > **Ratio definition (canonical):** `Ratio = gf2 wall-clock / reference wall-clock` (lower is better — gf2 is faster when ratio < 1). PASS = ratio ≤ 1.5×. This is the wall-time ratio; all cells in this scorecard use this definition. Note: `benchmarks/analyze.py` reports a *throughput* ratio (gf2 Gops/s / ref Gops/s) which equals `ref_wall / gf2_wall` — the inverse of the wall-time ratio used here. The scorecard converts analyze.py output by taking `1 / analyze.py_ratio` for each cell.
@@ -42,7 +42,7 @@ Evidence: `[E1]`, `[E2]`, `[E3]`, `[E10]`, `[E11]`, `[E12]`, `[E14]`.
 
 | Operation | Field | n | Ref owner | gf2 wall | Ref wall | Ratio (gf2/ref) | Status | Evidence |
 |---|---|---:|---|---:|---:|---:|---|---|
-| fgemm | GF(7) | 64 | fflas-ffpack 2.5.0 | 29.370 µs | 14.344 µs | **2.05×** | FAIL [→§3.1] | `[E2]` `[E14]` |
+| fgemm | GF(7) | 64 | fflas-ffpack 2.5.0 | 29.370 µs | 14.344 µs | **2.05×** | AMENDED [aspirational] per `[E14]` § 3.3 → `27bb2f75` (A6) | `[E2]` `[E14]` |
 | fgemm | GF(7) | 256 | fflas-ffpack 2.5.0 | 992.058 µs‡ | 652.222 µs‡ | **0.679 (throughput)** | PASS [hard] per `[E14]` § 7 | `[E2]` `[E14]` |
 | fgemm | GF(7) | 1024 | fflas-ffpack 2.5.0 | 43.518 ms‡ | 21.894 ms‡ | **0.708 (throughput)** | PASS [hard] per `[E14]` § 7 | `[E2]` `[E14]` |
 | fgemm | GF(7) | 4096 | fflas-ffpack 2.5.0 | 1.692 s | 996.895 ms | **1.70×** | FAIL [→§3.1] | `[E2]` `[E14]` |
@@ -50,10 +50,10 @@ Evidence: `[E1]`, `[E2]`, `[E3]`, `[E10]`, `[E11]`, `[E12]`, `[E14]`.
 | fgemm | GF(31) | 256 | fflas-ffpack 2.5.0 | 843.096 µs | 664.728 µs | **1.27×** | PASS | `[E2]` `[E9]` |
 | fgemm | GF(31) | 1024 | fflas-ffpack 2.5.0 | 32.361 ms | 22.690 ms | **1.43×** | PASS | `[E2]` `[E9]` |
 | fgemm | GF(31) | 4096 | fflas-ffpack 2.5.0 | 1.759 s | 998.813 ms | **1.76×** | FAIL [→§3.1] | `[E2]` `[E9]` |
-| fgemm | GF(251) | 64 | fflas-ffpack 2.5.0 | 34.984 µs | 8.158 µs | **4.29×** | FAIL [→§3.1] | `[E2]` `[E14]` |
-| fgemm | GF(251) | 256 | fflas-ffpack 2.5.0 | 767.794 µs | 256.534 µs | **2.99×** | FAIL [→§3.1] | `[E2]` `[E14]` |
-| fgemm | GF(251) | 1024 | fflas-ffpack 2.5.0 | 30.999 ms | 15.242 ms | **2.03×** | FAIL [→§3.1] | `[E2]` `[E14]` |
-| fgemm | GF(251) | 4096 | fflas-ffpack 2.5.0 | 1.771 s | 855.671 ms | **2.07×** | FAIL [→§3.1] | `[E2]` `[E14]` |
+| fgemm | GF(251) | 64 | fflas-ffpack 2.5.0 | 34.984 µs | 8.158 µs | **4.29×** | AMENDED [aspirational] per `[E14]` § 3.1 + § 3.3 → `615db3b9` / `27bb2f75` (A7) | `[E2]` `[E14]` |
+| fgemm | GF(251) | 256 | fflas-ffpack 2.5.0 | 767.794 µs | 256.534 µs | **2.99×** | AMENDED [aspirational] per `[E14]` § 3.1 → `615db3b9` (A7) | `[E2]` `[E14]` |
+| fgemm | GF(251) | 1024 | fflas-ffpack 2.5.0 | 30.999 ms | 15.242 ms | **2.03×** | AMENDED [aspirational] per `[E14]` § 3.1 → `615db3b9` (A7) | `[E2]` `[E14]` |
+| fgemm | GF(251) | 4096 | fflas-ffpack 2.5.0 | 1.771 s | 855.671 ms | **2.07×** | AMENDED [aspirational] per `[E14]` § 3.1 → `615db3b9` (A7) | `[E2]` `[E14]` |
 | fgemm | GF(65521) | 64 | fflas-ffpack 2.5.0 | 80.228 µs‡ | 48.656 µs‡ | **0.700 (throughput)** | PASS [hard] per `[E14]` § 1.2 | `[E2]` `[E14]` |
 | fgemm | GF(65521) | 256 | fflas-ffpack 2.5.0 | 2.070 ms‡ | 1.042 ms‡ | **0.681 (throughput)** | PASS [hard] per `[E14]` § 7 | `[E2]` `[E14]` |
 | fgemm | GF(65521) | 1024 | fflas-ffpack 2.5.0 | 86.330 ms‡ | 49.092 ms‡ | **0.684 (throughput)** | PASS [hard] per `[E14]` § 7 | `[E2]` `[E14]` |
@@ -89,7 +89,7 @@ Evidence: `[E1]`, `[E2]`, `[E3]`, `[E10]`, `[E11]`, `[E12]`, `[E14]`.
 
 > **Note on fgemm × GF(7)/n=256 PASS status:** The aggregate CSV gives gf2=992µs, ref=652µs → wall ratio 1.52×. However, `[E14]` § 7 line 281 measures this cell at throughput ratio 0.679 with marker MET [hard]; `[E14]` used `prime-sweep-aggregate.csv` source measurements predating the `e24f7839` panelized-kernel supersession. Per the evidence-doc-is-authoritative rule, `[E14]`'s closure verdict of PASS [hard] holds for this cell.
 
-> **Note on fgemm × GF(p) FAIL rows:** GF(p) fgemm ratios > 1.5× reflect an open optimization gap tracked under story `cc5de315` and follow-up issues. GF(2^31-1) is the sole Mersenne fast-path field and is PASS at all n (gf2 faster or within 1.5×). GF(31) PASS at n=256 (1.27×) and n=1024 (1.43×); FAIL at n=4096; AMENDED [aspirational] at n=64 per `[E14]` § 1.1 (small-n per-call-overhead, follow-up `27bb2f75`). GF(7)/n∈{256,1024} and GF(65521)/n∈{64,256,1024} are all PASS [hard] per `[E14]` § 1.2 / § 7. GF(251) fails at all n due to fflas using AVX2+OpenBLAS float-modular BLAS path. Epic-level: open work in `cc5de315` sub-issues not resolved in Wave 12.
+> **Note on fgemm × GF(p) FAIL/AMENDED rows:** GF(p) fgemm ratios > 1.5× either fall under user-approved aspirational amendments (GF(7)/n=64 → A6; GF(31)/n=64 → A5; GF(251) all measured n → A7) or remain open gaps (n=4096 cells across multiple primes). GF(2^31-1) is the sole Mersenne fast-path field and is PASS at all n. GF(31) PASS at n=256 (1.27×) and n=1024 (1.43×); FAIL at n=4096. GF(7)/n∈{256,1024} and GF(65521)/n∈{64,256,1024} are all PASS [hard] per `[E14]` § 1.2 / § 7. GF(251) is structurally bounded below the float-modular BLAS ceiling (fflas routes p ≤ 251 through OpenBLAS sgemm); user-approved aspirational closure documented in `[E14]` § 3.1 / `dev/plans/small_prime_kernel_strategy.md` § 7. Follow-ups: `27bb2f75` (small-n n≤128 per-call overhead, A5+A6 + part of A7); `615db3b9` (architectural exploration of byte-prime/float-modular gap, A7).
 >
 > **‡ Footnote on `[E14]`-superseded fgemm rows:** Cells marked with `‡` show the wall numbers from the `dece4e73` aggregate (which sourced `2026-05-06-e24f7839-gf2m-panelized.csv`) but the **status is taken from `[E14]` § 7**, the authoritative parity doc for story `cc5de315`. `[E14]`'s ratio column uses the gf2/fflas throughput direction — a value `≥ 0.667` (= `1/1.5`) is the [hard] threshold and equates to wall-time ratio `≤ 1.5×`. Where the wall ratio derived from the aggregate would suggest FAIL but `[E14]` records MET, the evidence-precedence rule (this scorecard line 30) means `[E14]` wins.
 
@@ -236,8 +236,8 @@ Evidence: `[E1]`, `[E3]`, `[E4]`, `[E7]`, `[E8]`, `[E9]`, `[E13]`, `[E15]`.
 | GF(65521) | 64 / deficient | fflas-ffpack 2.5.0 | 354.020 µs | 101.434 µs | **3.49×** | FAIL | `[E1]` |
 | GF(65521) | 256 / uniform | fflas-ffpack 2.5.0 | 21.747 ms | 2.864 ms | **7.59×** | FAIL | `[E1]` |
 | GF(65521) | 256 / deficient | fflas-ffpack 2.5.0 | 18.356 ms | 2.122 ms | **8.65×** | FAIL | `[E1]` |
-| GF(2^31-1) | 64 / uniform | fflas-ffpack 2.5.0 | 460.560 µs | 454.018 µs | **1.01×** | PASS | `[E15]` |
-| GF(2^31-1) | 64 / deficient | fflas-ffpack 2.5.0 | 364.510 µs | 395.476 µs | **0.92×** | PASS | `[E15]` |
+| GF(2^31-1) | 64 / uniform | fflas-ffpack 2.5.0 | 0.138 ms† | 0.445 ms† | **0.31×** | PASS | `[E15]` |
+| GF(2^31-1) | 64 / deficient | fflas-ffpack 2.5.0 | 0.096 ms† | 0.407 ms† | **0.24×** | PASS | `[E15]` |
 | GF(2^31-1) | 256 / uniform | fflas-ffpack 2.5.0 | 4.335 ms† | 8.290 ms† | **0.52×** | PASS | `[E15]` |
 | GF(2^31-1) | 256 / deficient | fflas-ffpack 2.5.0 | 3.489 ms† | 6.208 ms† | **0.56×** | PASS | `[E15]` |
 | GF(2^31-1) | 1024 / uniform | fflas-ffpack 2.5.0 | 229.112 ms† | 381.817 ms† | **0.60×** | PASS | `[E15]` |
@@ -247,7 +247,7 @@ Evidence: `[E1]`, `[E3]`, `[E4]`, `[E7]`, `[E8]`, `[E9]`, `[E13]`, `[E15]`.
 | GF(2) | 256 / uniform | m4ri 20260122 | PENDING | 208.776 µs | PENDING | PENDING | `[E3]` |
 | GF(2) | 256 / deficient | m4ri 20260122 | PENDING | 145.700 µs | PENDING | PENDING | `[E3]` |
 
-> † Wave-9 Criterion measurements from `[E15]` § 1.5 (authoritative). All six GF(2^31-1) solve cells PASS. The aggregate CSV shows pre-Wave-9 baseline values for n=256/1024; `[E15]` Wave-9 measurements supersede. GF(2) solve is harness-scope PENDING.
+> † Wave-9 Criterion measurements from `[E15]` § 1.5 (authoritative). All six GF(2^31-1) solve cells PASS. The aggregate CSV showed pre-Wave-9 baseline values for all n; `[E15]` Wave-9 measurements supersede every row. GF(2) solve is harness-scope PENDING.
 
 > **Wave 9 solve context:** `[E15]` § 1.5 shows solve × GF(2^31-1) at n=64 uniform 0.31× (PASS), n=64 deficient 0.24× (PASS), n=256 uniform 0.52× (PASS), n=256 deficient 0.56× (PASS), n=1024 uniform 0.60× (PASS), n=1024 deficient 0.58× (PASS) — all cells PASS per Wave-9 Criterion medians.
 
@@ -390,7 +390,7 @@ The following story-level parity evidence documents are the authoritative closur
 | Story | Operation family | Authoritative parity doc | Closure verdict |
 |---|---|---|---|
 | `974a85bd` (GF(2) dense-LA) | matmul × GF(2), echelon × GF(2) | `[E13]` | matmul PASS at n≥1024; echelon ALL PASS; n<1024 matmul open |
-| `cc5de315` (GF(p) fgemm) | fgemm × GF(p) | `[E14]` | GF(2^31-1) PASS [hard] all n; GF(31)/64 AMENDED [aspirational] (A5); GF(31)/256,1024 PASS [hard]; GF(31)/4096 FAIL; GF(7)/n=256,1024 PASS [hard] per `[E14]` § 7; GF(7)/n=64 FAIL; GF(7)/n=4096 FAIL; GF(65521)/n=64,256,1024 PASS [hard] per `[E14]` § 1.2 / § 7; GF(65521)/4096 FAIL; GF(251) FAIL all n |
+| `cc5de315` (GF(p) fgemm) | fgemm × GF(p) | `[E14]` | GF(2^31-1) PASS [hard] all n; GF(31)/64 AMENDED [aspirational] (A5); GF(31)/256,1024 PASS [hard]; GF(31)/4096 FAIL; GF(7)/n=64 AMENDED [aspirational] (A6); GF(7)/n=256,1024 PASS [hard] per `[E14]` § 7; GF(7)/n=4096 FAIL; GF(65521)/n=64,256,1024 PASS [hard] per `[E14]` § 1.2 / § 7; GF(65521)/4096 FAIL; GF(251) all measured n AMENDED [aspirational] (A7, Wave-6A `5cacaec5`) |
 | `2c7548ae` (GF(2^m) fgemm) | matmul/fgemm × GF(2^m) | `[E12]` | GF(2^32) all n PASS; GF(2^8) AMENDED (aspirational); GF(2^16) PASS at n≤256 [hard], AMENDED at n=1024 |
 | `72ab6d0e` (Dense factorize/solve) | pluq/echelon/invert/solve × GF(p) + GF(2) | `[E15]`, `[E8]`, `[E13]` | GF(2^31-1) pluq ALL PASS; echelon n≥256 PASS (est.); invert ALL deficient PASS + n=64 uniform PASS (0.67× per `[E15]`), n=256/1024 uniform AMENDED; solve ALL PASS. GF(p) others: FAIL. GF(2) echelon ALL PASS; GF(2) invert FAIL; GF(2) solve/pluq: harness gap (PENDING). |
 | `66190ccd` (charpoly/minpoly) | charpoly/minpoly × GF(p) | `[E16]`, `[E5]` | 14/16 cells PASS; 2 cells FAIL [→A1, routed to `52cce970`]: charpoly × GF(251)/256 (3.18×) + minpoly × GF(251)/64 (4.14×). The user-approved A1 amendment authorizes the routing; the cells themselves remain FAIL for epic `97bf0879`'s scorecard contract. |
@@ -478,6 +478,28 @@ Rows 16–20 are same-rationale extensions recorded in `sota_target_matrix.md` �
 | Criterion type | `[aspirational]` |
 | Reason | At n=64, the C kernel's SIMD setup cost is amortised over only 64² = 4096 multiply-accumulate operations, so per-call overhead dominates. GF(7)/n=64 has the same architectural issue (also `[aspirational]`). The kernel hits ~16.8 Gop/s vs target ~24.1 Gop/s. |
 | Follow-up | `27bb2f75` ("Optimize small-n GEMM dispatch path (n≤128) to close per-call-overhead gap"). |
+
+### A6 — `fgemm × GF(7) / n=64`
+
+| Field | Value |
+|---|---|
+| Cells | `fgemm × GF(7) / n=64` (throughput ratio 0.578; wall-time 2.05× per aggregate CSV) |
+| Amendment date | 2026-05-06 |
+| Approval record | `662f7a15` issue description (small-n optimisation amendment); recorded in `[E14]` § 3.3 (`dev/bench_results/2026-05-06-7a106fe4-gfp-parity-evidence.md:206-209`) |
+| Criterion type | `[aspirational]` |
+| Reason | Same architectural cause as A5: per-call SIMD setup cost dominates at n=64 (4096 multiply-accumulate operations). The C kernel hits 19.36 Gop/s vs target 22.31 Gop/s. |
+| Follow-up | `27bb2f75` ("Optimize small-n GEMM dispatch path (n≤128) to close per-call-overhead gap"). |
+
+### A7 — `fgemm × GF(251) / all measured n`
+
+| Field | Value |
+|---|---|
+| Cells | `fgemm × GF(251)` at n=64,256,1024,4096 (throughput ratios 0.287/0.459/0.512/0.484; wall-time 4.29×/2.99×/2.03×/2.07× per aggregate CSV) |
+| Amendment date | 2026-05-06 (Wave-6A design closure) |
+| Approval record | `5cacaec5` (small-prime design); also `662f7a15` for n=64 specifically. Recorded in `[E14]` § 3.1 + § 3.3 (`dev/bench_results/2026-05-06-7a106fe4-gfp-parity-evidence.md:183-191,205-209`); also `dev/plans/small_prime_kernel_strategy.md` § 7 step 7. |
+| Criterion type | `[aspirational]` |
+| Reason | fflas-ffpack routes GF(251) (cardinality ≤ 251) through `Modular<float>` → OpenBLAS sgemm, hitting 128.48 Gop/s at n=256 and 138.32 Gop/s at n=1024. A SIMD byte-packed kernel without the BLAS cascade is structurally bounded below the float-modular ceiling. The C kernel achieves 58-71 Gop/s (ratio 0.45-0.51) at n≥256; n=64 has the additional small-n per-call overhead from A5/A6. |
+| Follow-up | `615db3b9` (architectural exploration of the byte-prime/float-modular gap); `27bb2f75` (small-n optimisation, n=64 cell only). |
 
 ---
 
