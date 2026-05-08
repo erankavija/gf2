@@ -2,7 +2,9 @@
 
 **Epic slug:** `epic:gf2-algebra-permanent`
 **Status:** design / $W_0$
-**Reference paper:** Danny Scheinerman, *Fast computation of permanents over $\mathbb{F}_3$ via $\mathbb{F}_2$ arithmetic*, arxiv 2407.20205v2 (Aug 2024).
+**Reference papers:**
+- Danny Scheinerman, *Fast computation of permanents over $\mathbb{F}_3$ via $\mathbb{F}_2$ arithmetic*, arxiv 2407.20205v2 (Aug 2024) — algorithm + headline speedup.
+- Zach Hunter, Matthew Kwan, Lisa Sauermann, *Permanents of random matrices over finite fields*, arxiv 2603.15856v1 (Mar 2026) — theoretical companion proving $\operatorname{perm}(A)$ is significantly more uniform than $\det(A)$ over $\mathbb{F}_q$.
 
 ## 1. Motivation
 
@@ -74,9 +76,14 @@ Single-thread Julia, 4.20 GHz desktop, time in seconds:
 
 Headline ratio at $n=36$: **$86.9\times$**. Parallel demo: $n=50$ in 832 CPU-hours on 128 cores (a different, large-scale benchmark not in Table 2).
 
-### 2.5 Secondary claim
+### 2.5 Secondary claim: distributional uniformity
 
-Monte Carlo evidence in the paper suggests $\operatorname{perm}(A)$ tends to the uniform distribution on $\mathbb{F}_3$ as $n \to \infty$ for random $\{-1, 0, 1\}$ matrices. This is a `type:simulation` reproduction target.
+Two distributional results sit alongside the headline algorithm:
+
+- **Scheinerman §6 (empirical):** Monte Carlo evidence that $\operatorname{perm}(A)$ tends to the uniform distribution on $\mathbb{F}_3$ as $n \to \infty$ for random $\{-1, 0, 1\}$ matrices.
+- **Hunter–Kwan–Sauermann (theoretical, arxiv 2603.15856):** $\operatorname{perm}(A)$ over $\mathbb{F}_q$ is asymptotically significantly more uniform than $\det(A)$ — quantified in their Theorem 1.2 with explicit total-variation bounds.
+
+Both are testable empirically the moment the packed kernels exist, by reusing the new `permanent_bipedal3` / `permanent_packed5` / `permanent_packed7` against `gf2_core::field::det`. Tracked as `type:simulation` child issue `8e4e19a0` ("Empirical perm-vs-det uniformity comparison over F_3 / F_5 / F_7").
 
 ## 3. Scope and non-goals
 
@@ -91,7 +98,7 @@ Monte Carlo evidence in the paper suggests $\operatorname{perm}(A)$ tends to the
 - HIP/ROCm GPU permanent kernels (gfx1030).
 - Lean4 mechanical proofs of (a) bipedal $\mathbb{F}_3$ arithmetic correctness vs `Fp<3>`, (b) Ryser's formula on `FiniteField`, scoped to the bounded $n \le 63$ single-`u64` regime.
 - Publication-grade benchmark artefact (criterion + plots + reproducible scripts).
-- Monte Carlo distribution-of-perm verification.
+- Monte Carlo distributional study: TVD-from-uniform for $\operatorname{perm}(A)$ vs $\det(A)$ over $\mathbb{F}_3 / \mathbb{F}_5 / \mathbb{F}_7$, reproducing Scheinerman §6 (perm $\to$ uniform) and testing Hunter–Kwan–Sauermann Theorem 1.2 (perm strictly more uniform than det).
 
 ### Non-goals
 
