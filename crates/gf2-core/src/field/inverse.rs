@@ -1274,24 +1274,15 @@ mod tests {
 
     #[test]
     #[serial]
-    #[ignore = "slow: inv(1024×1024) over Fp<MERSENNE_31> takes >5 s on CI hardware"]
+    #[ignore = "slow: inv(1024×1024) over Fp<MERSENNE_31>"]
     fn test_inv_allocation_budget_n1024_fp_m31() {
         let a = random_fp_invertible::<MERSENNE_31>(1024, 0xC0E0);
         reset_fieldmatrix_new_count();
         let _ = a.inv();
         let allocs = fieldmatrix_new_count();
-        // EXPECTED_INV_N1024 is an extrapolated estimate (see the constant's
-        // comment below). Until a slow-tier run pins the actual value, this
-        // assertion is a tolerance check (+/- 10%) so the slow-CI run
-        // reports a diagnostic rather than a hard failure if the
-        // extrapolation is off. When the slow-tier value lands, swap this
-        // back to `assert_eq!` and update the constant.
-        let lo = EXPECTED_INV_N1024 * 9 / 10;
-        let hi = EXPECTED_INV_N1024 * 11 / 10;
-        assert!(
-            (lo..=hi).contains(&allocs),
-            "inv(1024×1024) allocs should be in [{lo}, {hi}] (centered on \
-             extrapolated EXPECTED_INV_N1024 = {EXPECTED_INV_N1024}); got {allocs}"
+        assert_eq!(
+            allocs, EXPECTED_INV_N1024,
+            "inv(1024×1024) allocs should be exactly {EXPECTED_INV_N1024}; got {allocs}"
         );
     }
 
@@ -1361,15 +1352,13 @@ mod tests {
     //     allocation is gone and the dense `n³` work is halved.
     const EXPECTED_INV_N4: u64 = 17;
     const EXPECTED_INV_N64: u64 = 386;
-    // EXPECTED_INV_N1024 is an extrapolated estimate (5163 × 386/353
-    // ≈ 5645, scaling the d1a5fea8 n=64/old n=64 ratio onto the prior
-    // n=1024 extrapolation) because the test that pins it is
-    // `#[ignore = "slow: ..."]` and was not re-measured under the
-    // d1a5fea8 driver in this rework — the agent CLAUDE.md policy
-    // forbids running the slow tier in routine work. The slow-tier
-    // CI run will refine this value if the extrapolation is off; the
-    // `#[ignore]` test below uses a ±10% tolerance band.
-    const EXPECTED_INV_N1024: u64 = 5645;
+    // Pinned 2026-05-08 by user-authorized direct measurement under the
+    // d1a5fea8 in-place trtrm driver (slow-tier nextest run, walls 1.89s
+    // on the host pinned in `dev/bench_results/2026-05-07-d1a5fea8-
+    // invert-inplace.md`). The earlier extrapolation (5645) was 22%
+    // below the actual measurement; the test now uses `assert_eq!`
+    // against this pinned value.
+    const EXPECTED_INV_N1024: u64 = 6898;
     const EXPECTED_SOLVE_N64: u64 = 294;
     const EXPECTED_DET_N64: u64 = 264;
 
