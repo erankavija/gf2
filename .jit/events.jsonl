@@ -4308,3 +4308,4 @@
 {"type":"gate_passed","id":"2948a1b8-1cf7-4acf-ba37-3a5333dc4164","issue_id":"97bf0879-357e-4151-bdeb-781987cd0902","timestamp":"2026-05-08T19:21:21.817739691Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
 {"type":"gate_passed","id":"a3975f52-e854-42f1-94a6-02f5aa39c7c7","issue_id":"97bf0879-357e-4151-bdeb-781987cd0902","timestamp":"2026-05-08T19:21:21.825734733Z","gate_key":"doc-review","updated_by":"agent:project-lead"}
 {"type":"gate_failed","id":"94d388c3-7e33-4818-926b-5e41d0dd36cc","issue_id":"97bf0879-357e-4151-bdeb-781987cd0902","timestamp":"2026-05-08T19:25:52.199221737Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"bde5aa62-a7e9-49cc-a1a5-b0e26a805b6d","issue_id":"97bf0879-357e-4151-bdeb-781987cd0902","timestamp":"2026-05-08T19:30:52.875352772Z","gate_key":"code-review","updated_by":"auto:executor"}
