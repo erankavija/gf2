@@ -245,7 +245,7 @@ The element-type implementation is property-tested (`proptest`, 10k random pairs
 
 `Bipedal3Vec` $=$ pair of `Vec<u64>` with shared length, `mask_tail` invariant per CLAUDE.md §Key design invariants. Word-boundary tests at lengths $\{0, 1, 63, 64, 65, 127, 128, 129\}$.
 
-`Bipedal3Matrix` is row-major `Bipedal3Vec` with stride for SIMD alignment. `permanent_bipedal3` consumes a `Bipedal3Matrix` and produces an `Fp<3>` value.
+`Bipedal3Matrix` is **column-major**, with separate `mag` and `sgn` `Vec<u64>` buffers each of length `W * n` where `W = ceil(n / 64)` (column stride for SIMD alignment). This layout is finalised by R3 (`dev/plans/r3_multi_word_streaming.md` §2) so the column-walk in the Gray-code Ryser inner loop is contiguous in memory. `permanent_bipedal3` consumes a `Bipedal3Matrix` and produces an `Fp<3>` value.
 
 ### 7.3 The Gray-code Ryser inner loop (paper algorithm)
 
@@ -372,7 +372,7 @@ Dependency edges within $W_0$: $D_{1a} \to D_{1b} \to D_{1c}$, $D_{1b} \to R_4$.
 | T2  | PackedField trait + scalar reference impl over Fp<3>   |
 | T3  | Bipedal3 element with paper bitwise formulas + tests   |
 | T4  | Bipedal3Vec over Vec<u64> with mask_tail invariant     |
-| T5  | Bipedal3Matrix row-major + transpose tests             |
+| T5  | Bipedal3Matrix column-major (per R3) + transpose tests |
 | T6  | gray_code_iter shared subset enumerator                |
 
 Edges: $T_1 \to \{T_2, T_3, T_6\}$; $T_3 \to T_4 \to T_5$; $T_2 \perp T_3$ (independent).
