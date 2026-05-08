@@ -185,7 +185,7 @@ Reference walls for GF(31) dense-LA cells sourced from `dev/bench_results/2026-0
 | § 2.1 pluq | GF(31) n=64 deficient | PASS (0.63×) | Measured |
 | § 2.1 pluq | GF(31) n=256 uniform | PASS (1.42×) | Measured |
 | § 2.1 pluq | GF(31) n=256 deficient | FAIL (1.79×) [→`615db3b9`] | Measured; added to A8 row 71 |
-| § 2.1 pluq | GF(2) n=64,256 uniform+deficient | PENDING (structural gap) | No `BitMatrix::pluq` |
+| § 2.1 pluq | GF(2) n=64,256 uniform+deficient | EXCLUDED [§ 6.3] (no gf2 impl) | No `BitMatrix::pluq`; user-approved 2026-05-09; follow-up `aaa847cf` |
 | § 2.2 echelon | GF(31) n=64 uniform | PASS (0.45×) | Measured |
 | § 2.2 echelon | GF(31) n=64 deficient | PASS (0.82×) | Measured |
 | § 2.2 echelon | GF(31) n=256 uniform | FAIL (1.92×) [→`615db3b9`] | Measured; added to A8 row 72 |
@@ -198,7 +198,7 @@ Reference walls for GF(31) dense-LA cells sourced from `dev/bench_results/2026-0
 | § 2.4 solve | GF(31) n=64 deficient | PASS (0.59×) | Measured 2026-05-09 |
 | § 2.4 solve | GF(31) n=256 uniform | PASS (1.41×) | Measured 2026-05-09 |
 | § 2.4 solve | GF(31) n=256 deficient | FAIL (1.69×) [→`615db3b9`] | Measured 2026-05-09; A8 row 75 |
-| § 2.4 solve | GF(2) n=64,256 uniform+deficient | PENDING (structural gap) | No `BitMatrix::solve_left` |
+| § 2.4 solve | GF(2) n=64,256 uniform+deficient | EXCLUDED [§ 6.3] (no gf2 impl) | No `BitMatrix::solve_left`; user-approved 2026-05-09; follow-up `aaa847cf` |
 | § 3.1 charpoly | GF(31) n=64 | PASS (1.25×) | Measured 2026-05-09 |
 | § 3.1 charpoly | GF(31) n=256 | FAIL (1.97×) [→`52cce970`] | Measured 2026-05-09; A8 row 76 |
 | § 3.2 minpoly | GF(31) n=64 | PASS (0.81×) | Measured 2026-05-09 |
@@ -215,4 +215,4 @@ All originally PENDING GF(31) scorecard cells are now measured:
 
 **Total `[EX]` measurement coverage:** 20 GF(31) cells (16 dense-LA from §§2.1–2.4 + 4 charpoly/minpoly from §§3.1–3.2). 14 PASS, 6 FAIL routed to A8 (rows 71–76).
 
-The remaining scorecard PENDING entries are GF(2) pluq/solve/matmul cells, which are structural implementation gaps (no `BitMatrix::pluq`, no `BitMatrix::solve_left`, no `Gf2mWide<u4>`), tracked under separate JIT issues (`974a85bd`, `aaa847cf`) and classified AMENDED [→A9] per harness-scope-gap rule (SC#2).
+The 11 cells that previously held literal `PENDING` numeric values in the scorecard for unrelated structural reasons (matmul × GF(2^4) with no `Gf2mWide<u4>`; pluq × GF(2) and solve × GF(2) with no `BitMatrix::pluq` or `BitMatrix::solve_left`) were re-classified **EXCLUDED [§ 6.3]** under user-approved 2026-05-09 amendment. They are not part of `[EX]`'s measurement scope (no implementation to bench); they are recorded in scorecard § 6.3 rows 21–31. Follow-up: `aaa847cf` (M4RI-style bit-packed factorisation for GF(2)). Annex A9 (PENDING umbrella) is now SUPERSEDED.
