@@ -74,7 +74,7 @@
         <li>Ratio definition: <em>gf2 wall / ref wall</em>; 1.0 = parity, &lt;1.0 = gf2 faster</li>
         <li>AMENDED = user-approved aspirational criterion; most carry a follow-up issue but some are structural with no separate follow-up</li>
         <li>EXCLUDED = definitional; no external library exposes the same algebraic API</li>
-        <li>8 amendments A1–A8 in Annex A of the scorecard (A8 = Wave-12 umbrella covering all 70 FAIL cells)</li>
+        <li>9 amendments A1–A9 in Annex A of the scorecard (A8 + A9 = Wave-12 umbrellas covering 70 FAIL + ~16 PENDING in-scope cells)</li>
         <li>5 active follow-up issues: 615db3b9, 52cce970, 974a85bd, aaa847cf, 5ce13bae</li>
       </ul>
     </div>
@@ -423,7 +423,7 @@
 <!-- ============================================================ SLIDE 10 — FUTURE RESEARCH -->
 <section>
   <h2>Future Research Bucket</h2>
-  <p>Four open follow-up issues from the epic closure:</p>
+  <p>Five open follow-up issues from the epic closure (plus the structural exclusion ledger):</p>
   <table>
     <thead><tr><th>Issue</th><th>Title</th><th>Connection to closure gaps</th></tr></thead>
     <tbody>
@@ -444,13 +444,18 @@
       </tr>
       <tr>
         <td><span class="tag">5ce13bae</span></td>
-        <td>Sparse RREF priority-queue pivoting</td>
+        <td>Sparse RREF priority-queue pivoting (filed 2026-05-08)</td>
         <td>Closes sparse-elim algorithmic gap (10 cells, all 2.1&ndash;2.6&times; of LinBox). LinBox uses Markowitz-degree pivoting; gf2 uses column-sweep. Requires priority-queue data structure.</td>
+      </tr>
+      <tr>
+        <td><span class="tag">aaa847cf</span></td>
+        <td>M4RI-style invert path for BitMatrix (filed 2026-05-08)</td>
+        <td>Closes A8 group covering GF(2) invert at n=64,256,1024 (3 cells, 3.6&ndash;16.9&times; of M4RI). M4RI uses specialised lower-upper decomposition with Gray-code tables; gf2 BitMatrix invert is straightforward Gauss-Jordan.</td>
       </tr>
     </tbody>
   </table>
   <aside class="notes">
-    These four issues represent the research agenda that emerges from the epic closure.
+    These five issues represent the research agenda that emerges from the epic closure.
     52cce970 and 27bb2f75 are relatively well-scoped engineering tasks: writing AVX2 kernels
     and reducing dispatch overhead. 615db3b9 is a design-space exploration: the fundamental
     question is whether gf2 should implement a float-modular BLAS cascade for small primes
