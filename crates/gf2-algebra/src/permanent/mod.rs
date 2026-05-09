@@ -9,13 +9,25 @@
 //!
 //! # Status
 //!
-//! W1-T1 skeleton — only the module tree is present. The Ryser driver
-//! and reference impl land in W1 (T4-T6); the bipedal fast paths in W3
-//! (T8-T11) and W4 (T16-T21).
+//! W1 in progress — the module tree plus `gray_code_iter` (W1-T6) are
+//! present. The Ryser driver and reference impl land in W2 (T7-T8); the
+//! bipedal fast paths in W3 (T8-T11) and W4 (T16-T21).
+//!
+//! # Re-exports
+//!
+//! [`gray`] is re-exported from [`crate::gray`] so callers can use the
+//! permanent-grouped path `gf2_algebra::permanent::gray::gray_code_iter`
+//! that the W1-T6 contract names, while the underlying module also
+//! remains reachable as `gf2_algebra::gray` per
+//! `dev/plans/d1a_gf2_algebra_boundary.md` §4.2.
 
 pub mod bipedal3;
 pub mod reference;
 pub mod ryser;
+
+/// Re-export of [`crate::gray`] so the canonical W1-T6 API
+/// `gf2_algebra::permanent::gray::gray_code_iter` resolves.
+pub use crate::gray;
 
 #[cfg(feature = "f5")]
 pub mod bipedal5;
