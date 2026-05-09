@@ -62,6 +62,15 @@ use crate::gray::gray_code_iter;
 ///
 /// Panics if `matrix.len() != n * n`.
 ///
+/// Also panics when `n == 0` if `F::zero_hint()` returns `None`. All
+/// `ConstField` types (every concrete `FiniteField` impl in this
+/// workspace, including `Fp<P>`, `QuadraticExt`, `CubicExt`, `Gf2mElement`,
+/// `Gf2mWide`) return `Some` from `zero_hint`, so the `n == 0` branch
+/// works for every shipped field. The panic is reachable only for
+/// hypothetical runtime-context `FiniteField` types whose zero element
+/// is not derivable without a field-context handle. For such fields,
+/// callers should special-case `n == 0` upstream.
+///
 /// # Complexity
 ///
 /// `O(n · 2^n)` field operations, `O(n)` extra space for the column-sum
@@ -383,5 +392,168 @@ mod tests {
         let ryser = permanent_ryser::<Fp<7>>(&mat, 4);
         let naive = naive_permanent_factorial::<Fp<7>>(&mat, 4);
         assert_eq!(ryser, naive, "ryser != naive for diagonal-zero 4×4 Fp<7>");
+    }
+
+    // -----------------------------------------------------------------------
+    // Non-ConstField path: RuntimeFp7 newtype wrapper
+    // -----------------------------------------------------------------------
+
+    /// Test-only wrapper around `Fp<7>` that impls `FiniteField` but NOT
+    /// `ConstField`, used to verify `permanent_ryser`'s `<F: FiniteField>`
+    /// generalisation against a non-`ConstField` `FiniteField` instance.
+    ///
+    /// The wrapper delegates every `FiniteField` method to the inner `Fp<7>`
+    /// but does not provide `ConstField::zero()` / `ConstField::one()`.
+    /// Functionally identical to `Fp<7>` for permanent computation; if
+    /// `permanent_ryser::<RuntimeFp7>` returns the same value as
+    /// `permanent_ryser::<Fp<7>>` on the same matrix, the FiniteField
+    /// generality is proven by demonstration.
+    #[derive(Clone, Debug, PartialEq, Eq, Hash)]
+    struct RuntimeFp7(Fp<7>);
+
+    impl RuntimeFp7 {
+        fn new(v: u64) -> Self {
+            Self(Fp::<7>::new(v))
+        }
+    }
+
+    impl core::ops::Add for RuntimeFp7 {
+        type Output = Self;
+        fn add(self, rhs: Self) -> Self {
+            Self(self.0 + rhs.0)
+        }
+    }
+    impl core::ops::Add<&RuntimeFp7> for RuntimeFp7 {
+        type Output = Self;
+        fn add(self, rhs: &Self) -> Self {
+            Self(self.0 + rhs.0)
+        }
+    }
+    impl core::ops::Sub for RuntimeFp7 {
+        type Output = Self;
+        fn sub(self, rhs: Self) -> Self {
+            Self(self.0 - rhs.0)
+        }
+    }
+    impl core::ops::Sub<&RuntimeFp7> for RuntimeFp7 {
+        type Output = Self;
+        fn sub(self, rhs: &Self) -> Self {
+            Self(self.0 - rhs.0)
+        }
+    }
+    impl core::ops::Mul for RuntimeFp7 {
+        type Output = Self;
+        fn mul(self, rhs: Self) -> Self {
+            Self(self.0 * rhs.0)
+        }
+    }
+    impl core::ops::Mul<&RuntimeFp7> for RuntimeFp7 {
+        type Output = Self;
+        fn mul(self, rhs: &Self) -> Self {
+            Self(self.0 * rhs.0)
+        }
+    }
+    impl core::ops::Div for RuntimeFp7 {
+        type Output = Self;
+        fn div(self, rhs: Self) -> Self {
+            Self(self.0 / rhs.0)
+        }
+    }
+    impl core::ops::Div<&RuntimeFp7> for RuntimeFp7 {
+        type Output = Self;
+        fn div(self, rhs: &Self) -> Self {
+            Self(self.0 / rhs.0)
+        }
+    }
+    impl core::ops::Neg for RuntimeFp7 {
+        type Output = Self;
+        fn neg(self) -> Self {
+            Self(-self.0)
+        }
+    }
+    impl core::ops::AddAssign for RuntimeFp7 {
+        fn add_assign(&mut self, rhs: Self) {
+            self.0 += rhs.0;
+        }
+    }
+    impl core::ops::AddAssign<&RuntimeFp7> for RuntimeFp7 {
+        fn add_assign(&mut self, rhs: &Self) {
+            self.0 += &rhs.0;
+        }
+    }
+
+    impl gf2_core::field::FiniteField for RuntimeFp7 {
+        type Characteristic = u64;
+        type Wide = u128;
+
+        fn characteristic(&self) -> u64 {
+            self.0.characteristic()
+        }
+        fn extension_degree(&self) -> usize {
+            self.0.extension_degree()
+        }
+        fn is_zero(&self) -> bool {
+            self.0.is_zero()
+        }
+        fn is_one(&self) -> bool {
+            self.0.is_one()
+        }
+        fn inv(&self) -> Option<Self> {
+            self.0.inv().map(Self)
+        }
+        fn zero_like(&self) -> Self {
+            Self(self.0.zero_like())
+        }
+        fn one_like(&self) -> Self {
+            Self(self.0.one_like())
+        }
+        // Crucially: do NOT override `zero_hint()`. Default impl returns None.
+        fn to_wide(&self) -> u128 {
+            self.0.to_wide()
+        }
+        fn mul_to_wide(&self, rhs: &Self) -> u128 {
+            self.0.mul_to_wide(&rhs.0)
+        }
+        fn reduce_wide(wide: &u128) -> Self {
+            Self(<Fp<7> as gf2_core::field::FiniteField>::reduce_wide(wide))
+        }
+        fn max_unreduced_additions() -> usize {
+            <Fp<7> as gf2_core::field::FiniteField>::max_unreduced_additions()
+        }
+    }
+
+    /// Cross-check `permanent_ryser` against `Fp<7>` using the `RuntimeFp7`
+    /// newtype that impls `FiniteField` but NOT `ConstField`.
+    ///
+    /// Verifies that the `<F: FiniteField>` generalisation introduced in
+    /// cycle 1 is exercised by a non-`ConstField` type: both computations
+    /// must agree for the same 3×3 matrix.
+    #[test]
+    fn test_permanent_ryser_runtime_field_3x3() {
+        let entries: Vec<u64> = vec![1, 2, 3, 4, 5, 6, 0, 1, 2];
+        let m_const: Vec<Fp<7>> = entries.iter().map(|&v| Fp::<7>::new(v)).collect();
+        let m_runtime: Vec<RuntimeFp7> = entries.iter().map(|&v| RuntimeFp7::new(v)).collect();
+        let p_const = permanent_ryser::<Fp<7>>(&m_const, 3);
+        let p_runtime = permanent_ryser::<RuntimeFp7>(&m_runtime, 3);
+        assert_eq!(
+            p_const,
+            p_runtime.0,
+            "permanent_ryser must produce identical results for ConstField and FiniteField-only types"
+        );
+    }
+
+    /// Verifies the documented `n == 0` panic for `RuntimeFp7`, which returns
+    /// `None` from `zero_hint()` (the default impl).
+    ///
+    /// `Fp<7>` (a `ConstField`) does NOT panic here because its `zero_hint()`
+    /// returns `Some`. This test specifically exercises the non-`ConstField`
+    /// branch to confirm the documented panic fires.
+    #[test]
+    fn test_permanent_ryser_runtime_field_n0_panics() {
+        let result = std::panic::catch_unwind(|| permanent_ryser::<RuntimeFp7>(&[], 0));
+        assert!(
+            result.is_err(),
+            "permanent_ryser must panic when n=0 and F::zero_hint() is None"
+        );
     }
 }
