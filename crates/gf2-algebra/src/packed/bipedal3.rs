@@ -1281,6 +1281,41 @@ impl Bipedal3Vec {
         }
         result
     }
+
+    /// Lane-wise in-place additive inverse: `self[i] = -self[i]` for every `i`.
+    ///
+    /// Applies the bipedal `neg` formula per word: `mag' = mag; sgn' = sgn ^ mag`.
+    /// `neg_assign` is **inherent on `Bipedal3Vec`**, not on `PackedFieldVec`,
+    /// because the frozen `PackedFieldVec` trait surface (D1b §2.2) does not
+    /// include a `neg_assign` method — the trait carries `add_assign`,
+    /// `sub_assign`, `mul_assign`, and `all_zero` only, with negation expressed
+    /// at the element level via `PackedField::neg`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{PackedFieldVec, Bipedal3Vec};
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let mut v = Bipedal3Vec::from_field_slice(&[
+    ///     Fp::<3>::new(0), Fp::<3>::new(1), Fp::<3>::new(2),
+    /// ]);
+    /// v.neg_assign();
+    /// assert_eq!(v.get(0), Fp::<3>::new(0));
+    /// assert_eq!(v.get(1), Fp::<3>::new(2)); // -1 ≡ 2 mod 3
+    /// assert_eq!(v.get(2), Fp::<3>::new(1)); // -2 ≡ 1 mod 3
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(ceil(self.len() / 64))` word-level XOR operations.
+    pub fn neg_assign(&mut self) {
+        for w in 0..self.mag.len() {
+            // Paper neg formula: mag stays, sgn XORed with mag.
+            self.sgn[w] ^= self.mag[w];
+        }
+        self.mask_tail();
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -1915,6 +1950,62 @@ mod vec_tests {
     test_mul_assign!(test_mul_assign_129, 129);
 
     // -----------------------------------------------------------------------
+    // neg_assign — truth table + word-boundary cross-check vs negation formula
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn test_neg_assign_truth_table() {
+        // Build vec [0, 1, 2], negate, assert [0, 2, 1].
+        let mut v =
+            Bipedal3Vec::from_field_slice(&[Fp::<3>::new(0), Fp::<3>::new(1), Fp::<3>::new(2)]);
+        v.neg_assign();
+        assert_eq!(v.get(0), Fp::<3>::new(0)); // -0 = 0
+        assert_eq!(v.get(1), Fp::<3>::new(2)); // -1 ≡ 2 mod 3
+        assert_eq!(v.get(2), Fp::<3>::new(1)); // -2 ≡ 1 mod 3
+    }
+
+    macro_rules! test_neg_assign {
+        ($name:ident, $len:expr) => {
+            #[test]
+            fn $name() {
+                // Deterministic pattern: lane i = (i * 7 + 3) % 3.
+                let vals: Vec<Fp<3>> = (0..$len)
+                    .map(|i| Fp::<3>::new(((i * 7 + 3) % 3) as u64))
+                    .collect();
+                let mut v = Bipedal3Vec::from_field_slice(&vals);
+                v.neg_assign();
+                for i in 0..$len {
+                    let orig = vals[i].value();
+                    let expected = if orig == 0 { 0 } else { 3 - orig };
+                    assert_eq!(
+                        v.get(i).value(),
+                        expected,
+                        "neg_assign({}) lane {} mismatch (orig={})",
+                        $len,
+                        i,
+                        orig
+                    );
+                }
+            }
+        };
+    }
+
+    #[test]
+    fn test_neg_assign_0() {
+        // len=0: must not panic.
+        let mut v = Bipedal3Vec::zeros(0);
+        v.neg_assign();
+        assert_eq!(v.len(), 0);
+    }
+    test_neg_assign!(test_neg_assign_1, 1);
+    test_neg_assign!(test_neg_assign_63, 63);
+    test_neg_assign!(test_neg_assign_64, 64);
+    test_neg_assign!(test_neg_assign_65, 65);
+    test_neg_assign!(test_neg_assign_127, 127);
+    test_neg_assign!(test_neg_assign_128, 128);
+    test_neg_assign!(test_neg_assign_129, 129);
+
+    // -----------------------------------------------------------------------
     // mask_tail invariant — non-multiple-of-64 lengths
     // -----------------------------------------------------------------------
 
@@ -1973,6 +2064,16 @@ mod vec_tests {
             (e.mag[last] | e.sgn[last]) & padding_mask,
             0,
             "mask_tail violated after mul_assign (len={len})"
+        );
+
+        // After neg_assign
+        let mut g = Bipedal3Vec::from_field_slice(&xs);
+        g.neg_assign();
+        let last = g.mag.len() - 1;
+        assert_eq!(
+            (g.mag[last] | g.sgn[last]) & padding_mask,
+            0,
+            "mask_tail violated after neg_assign (len={len})"
         );
     }
 
@@ -2162,6 +2263,164 @@ mod vec_tests {
             let v = Bipedal3Vec::from_field_slice(&vals);
             let expected = (0..len).fold(Fp::<3>::new(1), |acc, i| acc * v.get(i));
             prop_assert_eq!(v.fold_mul(), expected, "fold_mul mismatch (len={})", len);
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Helpers for per-chunk (Bipedal3) cross-check proptests
+    // -----------------------------------------------------------------------
+
+    /// Decompose a `Bipedal3Vec` into per-word `(Bipedal3, used_lanes)` pairs.
+    ///
+    /// Each element is a `(Bipedal3, usize)` where the `usize` is the number
+    /// of valid lanes in that chunk (always 64 except possibly the final chunk).
+    fn chunks_of(v: &Bipedal3Vec) -> Vec<(Bipedal3, usize)> {
+        let n_words = v.mag.len();
+        if n_words == 0 {
+            return Vec::new();
+        }
+        let mut chunks = Vec::with_capacity(n_words);
+        for w in 0..n_words {
+            let used = if w + 1 == n_words {
+                // Last word: may be partial.
+                v.len_lanes - 64 * w
+            } else {
+                64
+            };
+            chunks.push((Bipedal3::from_raw(v.mag[w], v.sgn[w]), used));
+        }
+        chunks
+    }
+
+    /// Recompose a sequence of `(Bipedal3, used_lanes)` chunks back into a
+    /// `Vec<Fp<3>>` of length `total_len`.
+    fn compose_chunks(chunks: &[(Bipedal3, usize)], total_len: usize) -> Vec<Fp<3>> {
+        let mut out = Vec::with_capacity(total_len);
+        for (chunk, used) in chunks {
+            for lane in 0..*used {
+                out.push(chunk.lane(lane));
+            }
+        }
+        debug_assert_eq!(out.len(), total_len);
+        out
+    }
+
+    // -----------------------------------------------------------------------
+    // Proptest per-chunk cross-checks vs Bipedal3 chunk operations
+    // -----------------------------------------------------------------------
+
+    proptest! {
+        #![proptest_config(ProptestConfig { cases: 200, .. ProptestConfig::default() })]
+
+        /// add_assign: Bipedal3Vec direct path matches per-chunk Bipedal3::add.
+        #[test]
+        fn test_proptest_add_chunked_matches_vec(
+            len in 0usize..200,
+            a_vals in prop::collection::vec((0u64..3).prop_map(Fp::<3>::new), 0..200),
+            b_vals in prop::collection::vec((0u64..3).prop_map(Fp::<3>::new), 0..200),
+        ) {
+            let a_vals: Vec<Fp<3>> = a_vals.into_iter().chain(core::iter::repeat(Fp::<3>::new(0))).take(len).collect();
+            let b_vals: Vec<Fp<3>> = b_vals.into_iter().chain(core::iter::repeat(Fp::<3>::new(0))).take(len).collect();
+
+            // Direct Bipedal3Vec path.
+            let mut a_vec = Bipedal3Vec::from_field_slice(&a_vals);
+            let b_vec = Bipedal3Vec::from_field_slice(&b_vals);
+            a_vec.add_assign(&b_vec);
+            let direct: Vec<Fp<3>> = (0..len).map(|i| a_vec.get(i)).collect();
+
+            // Chunked Bipedal3 path.
+            let a_chunks = chunks_of(&Bipedal3Vec::from_field_slice(&a_vals));
+            let b_chunks = chunks_of(&Bipedal3Vec::from_field_slice(&b_vals));
+            let chunked_pairs: Vec<(Bipedal3, usize)> = a_chunks
+                .into_iter()
+                .zip(b_chunks.into_iter())
+                .map(|((ac, used), (bc, _))| (ac.add(bc), used))
+                .collect();
+            let chunked_decoded = compose_chunks(&chunked_pairs, len);
+
+            prop_assert_eq!(direct, chunked_decoded, "add chunked vs vec mismatch (len={})", len);
+        }
+
+        /// sub_assign: Bipedal3Vec direct path matches per-chunk Bipedal3::sub.
+        #[test]
+        fn test_proptest_sub_chunked_matches_vec(
+            len in 0usize..200,
+            a_vals in prop::collection::vec((0u64..3).prop_map(Fp::<3>::new), 0..200),
+            b_vals in prop::collection::vec((0u64..3).prop_map(Fp::<3>::new), 0..200),
+        ) {
+            let a_vals: Vec<Fp<3>> = a_vals.into_iter().chain(core::iter::repeat(Fp::<3>::new(0))).take(len).collect();
+            let b_vals: Vec<Fp<3>> = b_vals.into_iter().chain(core::iter::repeat(Fp::<3>::new(0))).take(len).collect();
+
+            // Direct Bipedal3Vec path.
+            let mut a_vec = Bipedal3Vec::from_field_slice(&a_vals);
+            let b_vec = Bipedal3Vec::from_field_slice(&b_vals);
+            a_vec.sub_assign(&b_vec);
+            let direct: Vec<Fp<3>> = (0..len).map(|i| a_vec.get(i)).collect();
+
+            // Chunked Bipedal3 path.
+            let a_chunks = chunks_of(&Bipedal3Vec::from_field_slice(&a_vals));
+            let b_chunks = chunks_of(&Bipedal3Vec::from_field_slice(&b_vals));
+            let chunked_pairs: Vec<(Bipedal3, usize)> = a_chunks
+                .into_iter()
+                .zip(b_chunks.into_iter())
+                .map(|((ac, used), (bc, _))| (ac.sub(bc), used))
+                .collect();
+            let chunked_decoded = compose_chunks(&chunked_pairs, len);
+
+            prop_assert_eq!(direct, chunked_decoded, "sub chunked vs vec mismatch (len={})", len);
+        }
+
+        /// mul_assign: Bipedal3Vec direct path matches per-chunk Bipedal3::mul.
+        #[test]
+        fn test_proptest_mul_chunked_matches_vec(
+            len in 0usize..200,
+            a_vals in prop::collection::vec((0u64..3).prop_map(Fp::<3>::new), 0..200),
+            b_vals in prop::collection::vec((0u64..3).prop_map(Fp::<3>::new), 0..200),
+        ) {
+            let a_vals: Vec<Fp<3>> = a_vals.into_iter().chain(core::iter::repeat(Fp::<3>::new(0))).take(len).collect();
+            let b_vals: Vec<Fp<3>> = b_vals.into_iter().chain(core::iter::repeat(Fp::<3>::new(0))).take(len).collect();
+
+            // Direct Bipedal3Vec path.
+            let mut a_vec = Bipedal3Vec::from_field_slice(&a_vals);
+            let b_vec = Bipedal3Vec::from_field_slice(&b_vals);
+            a_vec.mul_assign(&b_vec);
+            let direct: Vec<Fp<3>> = (0..len).map(|i| a_vec.get(i)).collect();
+
+            // Chunked Bipedal3 path.
+            let a_chunks = chunks_of(&Bipedal3Vec::from_field_slice(&a_vals));
+            let b_chunks = chunks_of(&Bipedal3Vec::from_field_slice(&b_vals));
+            let chunked_pairs: Vec<(Bipedal3, usize)> = a_chunks
+                .into_iter()
+                .zip(b_chunks.into_iter())
+                .map(|((ac, used), (bc, _))| (ac.mul(bc), used))
+                .collect();
+            let chunked_decoded = compose_chunks(&chunked_pairs, len);
+
+            prop_assert_eq!(direct, chunked_decoded, "mul chunked vs vec mismatch (len={})", len);
+        }
+
+        /// neg_assign: Bipedal3Vec direct path matches per-chunk Bipedal3::neg.
+        #[test]
+        fn test_proptest_neg_chunked_matches_vec(
+            len in 0usize..200,
+            a_vals in prop::collection::vec((0u64..3).prop_map(Fp::<3>::new), 0..200),
+        ) {
+            let a_vals: Vec<Fp<3>> = a_vals.into_iter().chain(core::iter::repeat(Fp::<3>::new(0))).take(len).collect();
+
+            // Direct Bipedal3Vec path.
+            let mut a_vec = Bipedal3Vec::from_field_slice(&a_vals);
+            a_vec.neg_assign();
+            let direct: Vec<Fp<3>> = (0..len).map(|i| a_vec.get(i)).collect();
+
+            // Chunked Bipedal3 path.
+            let a_chunks = chunks_of(&Bipedal3Vec::from_field_slice(&a_vals));
+            let chunked_pairs: Vec<(Bipedal3, usize)> = a_chunks
+                .into_iter()
+                .map(|(c, used)| (c.neg(), used))
+                .collect();
+            let chunked_decoded = compose_chunks(&chunked_pairs, len);
+
+            prop_assert_eq!(direct, chunked_decoded, "neg chunked vs vec mismatch (len={})", len);
         }
     }
 }
