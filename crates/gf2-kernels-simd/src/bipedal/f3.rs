@@ -177,494 +177,518 @@ unsafe fn transmute_lane<From: Copy, To: Copy>(x: From) -> To {
 }
 
 // =============================================================================
-// Tests: SIMD-vs-scalar parity and a synthetic non-F_3 config for genericity
+// Tests: SIMD-vs-scalar parity against the SSOT `Bipedal3` reference
+// (dev/research/f3_bipedal::Bipedal3) and a synthetic non-F_3 config for
+// genericity demonstration.
 // =============================================================================
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    // ---- Scalar oracle (test-only reference; T3 will land production scalar
-    //      Bipedal3 in gf2-algebra; this oracle covers SIMD parity until then) ----
+    // The canonical scalar reference is the standalone `Bipedal3` prototype
+    // at dev/research/f3_bipedal::Bipedal3 (paper Theorem 2.1, six-op
+    // formula). Per b17bec62 success criterion 3 and the SSOT rule
+    // ("no custom implementations of what already exists"), the AVX2
+    // parity tests below cross-check against that one reference rather
+    // than carrying a duplicate inline oracle.
+    use f3_bipedal_prototype::{Bipedal3, F3Encoding};
 
-    /// Word-wise scalar bipedal F_3 add. One u64 word = 64 lanes; each lane
-    /// applies the paper Theorem 2.1 6-op formula.
+    // ---- Encoding helpers (canonical Vec<u8> ↔ packed (mag, sgn) words) ----
+
+    /// Encode a canonical F_3 element vector as parallel `mag` / `sgn` u64
+    /// word streams.
     ///
-    /// The formulas operate on `u64`s directly because each F_3 lane is one
-    /// bit, so the bitwise ops apply to all 64 lanes in parallel without any
-    /// loop. The output `(mag, sgn)` satisfies the canonical invariant
-    /// `sgn & !mag == 0` provided the inputs do.
-    fn bipedal3_scalar_add(m1: u64, s1: u64, m2: u64, s2: u64) -> (u64, u64) {
-        let t = m1 ^ s1 ^ s2;
-        let u = m2 & t;
-        let m_plus = u | (m1 ^ m2);
-        let s_plus = u ^ s1;
-        (m_plus, s_plus)
-    }
-
-    /// Word-wise scalar bipedal F_3 sub. See [`bipedal3_scalar_add`] for shape.
-    fn bipedal3_scalar_sub(m1: u64, s1: u64, m2: u64, s2: u64) -> (u64, u64) {
-        let t = s1 ^ s2;
-        let u = m1 & t;
-        let m_minus = u | (m1 ^ m2);
-        let s_minus = u ^ (m2 ^ s2);
-        (m_minus, s_minus)
-    }
-
-    /// Word-wise scalar bipedal F_3 mul.
-    fn bipedal3_scalar_mul(m1: u64, s1: u64, m2: u64, s2: u64) -> (u64, u64) {
-        let m_x = m1 & m2;
-        let s_x = s1 ^ s2;
-        (m_x, s_x)
-    }
-
-    /// Word-wise scalar bipedal F_3 neg.
-    fn bipedal3_scalar_neg(m: u64, s: u64) -> (u64, u64) {
-        (m, s ^ m)
-    }
-
-    // ---- Decode helper for sanity-check truth tables ----
-
-    /// Decode a single bit pair to its canonical 0/1/2 value.
-    fn decode_lane(mag: u8, sgn: u8) -> u8 {
-        if mag == 0 {
-            0
-        } else if sgn == 0 {
-            1
-        } else {
-            2
+    /// Each `u64` carries 64 lanes (bit `s` of word `w` = element `64*w+s`).
+    /// The layout matches both [`Bipedal3`]'s internal pack and the AVX2
+    /// kernel's slice ABI; the canonical invariant `sgn & !mag == 0` falls
+    /// out of the encoding (`0 -> (0, 0); 1 -> (1, 0); 2 -> (1, 1)`).
+    ///
+    /// `canonical.len()` must be a multiple of 64 (so the result is a whole
+    /// number of `u64` words). The tests here use multiples of 64 to keep
+    /// the AVX2 mod-4-words contract trivially satisfied without any
+    /// sub-word bookkeeping.
+    fn encode_to_words(canonical: &[u8]) -> (Vec<u64>, Vec<u64>) {
+        assert!(
+            canonical.len().is_multiple_of(64),
+            "test must use 64-aligned lengths"
+        );
+        let n_words = canonical.len() / 64;
+        let mut mag = vec![0u64; n_words];
+        let mut sgn = vec![0u64; n_words];
+        for (i, &v) in canonical.iter().enumerate() {
+            debug_assert!(v < 3);
+            let w = i / 64;
+            let s = i % 64;
+            let m = if v != 0 { 1u64 } else { 0 };
+            let g = if v == 2 { 1u64 } else { 0 };
+            mag[w] |= m << s;
+            sgn[w] |= g << s;
         }
+        (mag, sgn)
     }
 
-    /// Truth-table sanity check (3x3 grid) for the scalar add oracle.
+    /// Decode parallel `(mag, sgn)` word streams back to a canonical F_3
+    /// element vector. Inverse of [`encode_to_words`]. Used by the AVX2
+    /// parity tests to compare against the canonical-decoded `Bipedal3`
+    /// output.
+    fn decode_from_words(mag: &[u64], sgn: &[u64], len_elems: usize) -> Vec<u8> {
+        assert_eq!(mag.len(), sgn.len());
+        let mut out = Vec::with_capacity(len_elems);
+        for i in 0..len_elems {
+            let w = i / 64;
+            let s = i % 64;
+            let m = (mag[w] >> s) & 1;
+            let g = (sgn[w] >> s) & 1;
+            out.push(if m == 0 {
+                0
+            } else if g == 0 {
+                1
+            } else {
+                2
+            });
+        }
+        out
+    }
+
+    // ---- Truth-table sanity checks (3x3 grid) against `Bipedal3` ----
+    //
+    // Each test packs a single-element vector with the canonical reference,
+    // applies the op, and asserts the unpacked result matches the F_3
+    // ground-truth table. These run quickly and serve as smoke tests
+    // independent of the SIMD path.
+
     #[test]
-    fn test_bipedal3_scalar_add_truth_table() {
-        let enc = [(0u64, 0u64), (1, 0), (1, 1)];
-        for a in 0..3 {
-            for b in 0..3 {
-                let (m1, s1) = enc[a];
-                let (m2, s2) = enc[b];
-                let (m, s) = bipedal3_scalar_add(m1, s1, m2, s2);
-                assert_eq!(
-                    decode_lane(m as u8, s as u8),
-                    ((a as u8) + (b as u8)) % 3,
-                    "scalar add {a} + {b}"
-                );
+    fn test_bipedal3_reference_add_truth_table() {
+        for a in 0u8..3 {
+            for b in 0u8..3 {
+                let mut va = Bipedal3::pack(&[a]);
+                let vb = Bipedal3::pack(&[b]);
+                va.add_assign(&vb);
+                assert_eq!(va.unpack()[0], (a + b) % 3, "Bipedal3 add {a} + {b}");
             }
         }
     }
 
-    /// Truth-table sanity check for the scalar sub oracle.
     #[test]
-    fn test_bipedal3_scalar_sub_truth_table() {
-        let enc = [(0u64, 0u64), (1, 0), (1, 1)];
-        for a in 0..3 {
-            for b in 0..3 {
-                let (m1, s1) = enc[a];
-                let (m2, s2) = enc[b];
-                let (m, s) = bipedal3_scalar_sub(m1, s1, m2, s2);
-                assert_eq!(
-                    decode_lane(m as u8, s as u8),
-                    ((a as u8) + 3 - (b as u8)) % 3,
-                    "scalar sub {a} - {b}"
-                );
+    fn test_bipedal3_reference_sub_truth_table() {
+        for a in 0u8..3 {
+            for b in 0u8..3 {
+                let mut va = Bipedal3::pack(&[a]);
+                let vb = Bipedal3::pack(&[b]);
+                va.sub_assign(&vb);
+                assert_eq!(va.unpack()[0], (a + 3 - b) % 3, "Bipedal3 sub {a} - {b}");
             }
         }
     }
 
-    /// Truth-table sanity check for the scalar mul oracle.
     #[test]
-    fn test_bipedal3_scalar_mul_truth_table() {
-        let enc = [(0u64, 0u64), (1, 0), (1, 1)];
-        for a in 0..3 {
-            for b in 0..3 {
-                let (m1, s1) = enc[a];
-                let (m2, s2) = enc[b];
-                let (m, s) = bipedal3_scalar_mul(m1, s1, m2, s2);
-                assert_eq!(
-                    decode_lane(m as u8, s as u8),
-                    ((a as u8) * (b as u8)) % 3,
-                    "scalar mul {a} * {b}"
-                );
+    fn test_bipedal3_reference_mul_truth_table() {
+        for a in 0u8..3 {
+            for b in 0u8..3 {
+                let mut va = Bipedal3::pack(&[a]);
+                let vb = Bipedal3::pack(&[b]);
+                va.mul_assign(&vb);
+                assert_eq!(va.unpack()[0], (a * b) % 3, "Bipedal3 mul {a} * {b}");
             }
         }
     }
 
-    /// Truth-table sanity check for the scalar neg oracle.
     #[test]
-    fn test_bipedal3_scalar_neg_truth_table() {
-        let enc = [(0u64, 0u64), (1, 0), (1, 1)];
-        for (a, &(m, s)) in enc.iter().enumerate() {
-            let (mn, sn) = bipedal3_scalar_neg(m, s);
-            assert_eq!(
-                decode_lane(mn as u8, sn as u8),
-                (3 - (a as u8)) % 3,
-                "scalar neg -{a}"
-            );
+    fn test_bipedal3_reference_neg_truth_table() {
+        // Bipedal3 has no neg_assign; the framework's neg(a) = sub(0, a)
+        // by definition. Use sub against zero to exercise neg semantics.
+        for a in 0u8..3 {
+            let zero = Bipedal3::pack(&[0]);
+            let mut va = zero.clone();
+            va.sub_assign(&Bipedal3::pack(&[a]));
+            assert_eq!(va.unpack()[0], (3 - a) % 3, "Bipedal3 neg -{a}");
         }
     }
 
-    // ---- AVX2 SIMD parity tests vs scalar oracle ----
+    // ---- AVX2 SIMD parity tests vs the SSOT `Bipedal3` reference ----
 
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     mod simd_parity {
         use super::*;
         use crate::x86::bipedal_avx2 as avx2;
 
-        /// Helper: alloc same-size streams and run an op via the AVX2 batch
-        /// entry point, then run the same op via the scalar oracle and assert
-        /// pointwise equality.
+        /// Run AVX2 add on the bit-packed encoding of `a`/`b`, decode the
+        /// result, and compare against `Bipedal3::pack(a).add_assign(b).unpack()`.
         ///
-        /// `n_words` is the number of u64 words per stream; must be a multiple
-        /// of 4 (one AVX2 lane = 4 u64). `n_words = 0` is also allowed and
-        /// must not segfault.
-        fn run_parity_add(m1: &[u64], s1: &[u64], m2: &[u64], s2: &[u64]) {
-            let n = m1.len();
-            assert_eq!(n % 4, 0);
-            let mut out_m = vec![0u64; n];
-            let mut out_s = vec![0u64; n];
-            // SAFETY: AVX2 verified by the calling test; lengths all equal n
-            // and divisible by 4.
+        /// Equivalence is at the canonical-decoded level (the alt-zero
+        /// `(mag=0, sgn=1)` codeword decodes to the same canonical 0 as
+        /// `(0, 0)`); both inputs are produced canonical so the AVX2 path
+        /// stays in canonical space too.
+        fn run_parity_add(a: &[u8], b: &[u8]) {
+            assert_eq!(a.len(), b.len());
+            let n_elems = a.len();
+            let n_words = n_elems / 64;
+            assert_eq!(
+                n_words % 4,
+                0,
+                "n_words must be a multiple of 4 (AVX2 lane)"
+            );
+
+            let (m1, s1) = encode_to_words(a);
+            let (m2, s2) = encode_to_words(b);
+            let mut out_m = vec![0u64; n_words];
+            let mut out_s = vec![0u64; n_words];
+            // SAFETY: AVX2 verified by the calling test; lengths all equal
+            // n_words and divisible by 4.
             unsafe {
-                avx2::run_add_batch(m1, s1, m2, s2, &mut out_m, &mut out_s);
+                avx2::run_add_batch::<Config3>(&m1, &s1, &m2, &s2, &mut out_m, &mut out_s);
             }
-            for i in 0..n {
-                let (em, es) = bipedal3_scalar_add(m1[i], s1[i], m2[i], s2[i]);
-                assert_eq!(out_m[i], em, "add mag mismatch at i={i}");
-                assert_eq!(out_s[i], es, "add sgn mismatch at i={i}");
-            }
+            let avx2_decoded = decode_from_words(&out_m, &out_s, n_elems);
+
+            let mut va = Bipedal3::pack(a);
+            va.add_assign(&Bipedal3::pack(b));
+            let scalar_decoded = va.unpack();
+
+            assert_eq!(
+                avx2_decoded, scalar_decoded,
+                "AVX2 add diverged from Bipedal3 scalar reference (n_elems={n_elems})"
+            );
         }
 
-        fn run_parity_sub(m1: &[u64], s1: &[u64], m2: &[u64], s2: &[u64]) {
-            let n = m1.len();
-            assert_eq!(n % 4, 0);
-            let mut out_m = vec![0u64; n];
-            let mut out_s = vec![0u64; n];
-            // SAFETY: AVX2 verified by the calling test; lengths all equal n.
+        fn run_parity_sub(a: &[u8], b: &[u8]) {
+            assert_eq!(a.len(), b.len());
+            let n_elems = a.len();
+            let n_words = n_elems / 64;
+            assert_eq!(n_words % 4, 0);
+
+            let (m1, s1) = encode_to_words(a);
+            let (m2, s2) = encode_to_words(b);
+            let mut out_m = vec![0u64; n_words];
+            let mut out_s = vec![0u64; n_words];
+            // SAFETY: AVX2 verified; lengths all equal n_words and divisible by 4.
             unsafe {
-                avx2::run_sub_batch(m1, s1, m2, s2, &mut out_m, &mut out_s);
+                avx2::run_sub_batch::<Config3>(&m1, &s1, &m2, &s2, &mut out_m, &mut out_s);
             }
-            for i in 0..n {
-                let (em, es) = bipedal3_scalar_sub(m1[i], s1[i], m2[i], s2[i]);
-                assert_eq!(out_m[i], em, "sub mag mismatch at i={i}");
-                assert_eq!(out_s[i], es, "sub sgn mismatch at i={i}");
-            }
+            let avx2_decoded = decode_from_words(&out_m, &out_s, n_elems);
+
+            let mut va = Bipedal3::pack(a);
+            va.sub_assign(&Bipedal3::pack(b));
+            let scalar_decoded = va.unpack();
+
+            assert_eq!(
+                avx2_decoded, scalar_decoded,
+                "AVX2 sub diverged from Bipedal3 scalar reference (n_elems={n_elems})"
+            );
         }
 
-        fn run_parity_mul(m1: &[u64], s1: &[u64], m2: &[u64], s2: &[u64]) {
-            let n = m1.len();
-            assert_eq!(n % 4, 0);
-            let mut out_m = vec![0u64; n];
-            let mut out_s = vec![0u64; n];
-            // SAFETY: AVX2 verified by the calling test; lengths all equal n.
+        fn run_parity_mul(a: &[u8], b: &[u8]) {
+            assert_eq!(a.len(), b.len());
+            let n_elems = a.len();
+            let n_words = n_elems / 64;
+            assert_eq!(n_words % 4, 0);
+
+            let (m1, s1) = encode_to_words(a);
+            let (m2, s2) = encode_to_words(b);
+            let mut out_m = vec![0u64; n_words];
+            let mut out_s = vec![0u64; n_words];
+            // SAFETY: AVX2 verified; lengths all equal n_words and divisible by 4.
             unsafe {
-                avx2::run_mul_batch(m1, s1, m2, s2, &mut out_m, &mut out_s);
+                avx2::run_mul_batch::<Config3>(&m1, &s1, &m2, &s2, &mut out_m, &mut out_s);
             }
-            for i in 0..n {
-                let (em, es) = bipedal3_scalar_mul(m1[i], s1[i], m2[i], s2[i]);
-                assert_eq!(out_m[i], em, "mul mag mismatch at i={i}");
-                assert_eq!(out_s[i], es, "mul sgn mismatch at i={i}");
-            }
+            let avx2_decoded = decode_from_words(&out_m, &out_s, n_elems);
+
+            let mut va = Bipedal3::pack(a);
+            va.mul_assign(&Bipedal3::pack(b));
+            let scalar_decoded = va.unpack();
+
+            assert_eq!(
+                avx2_decoded, scalar_decoded,
+                "AVX2 mul diverged from Bipedal3 scalar reference (n_elems={n_elems})"
+            );
         }
 
-        fn run_parity_neg(m: &[u64], s: &[u64]) {
-            let n = m.len();
-            assert_eq!(n % 4, 0);
-            let mut out_m = vec![0u64; n];
-            let mut out_s = vec![0u64; n];
-            // SAFETY: AVX2 verified by the calling test; lengths all equal n.
+        fn run_parity_neg(a: &[u8]) {
+            let n_elems = a.len();
+            let n_words = n_elems / 64;
+            assert_eq!(n_words % 4, 0);
+
+            let (m, s) = encode_to_words(a);
+            let mut out_m = vec![0u64; n_words];
+            let mut out_s = vec![0u64; n_words];
+            // SAFETY: AVX2 verified; lengths all equal n_words and divisible by 4.
             unsafe {
-                avx2::run_neg_batch(m, s, &mut out_m, &mut out_s);
+                avx2::run_neg_batch::<Config3>(&m, &s, &mut out_m, &mut out_s);
             }
-            for i in 0..n {
-                let (em, es) = bipedal3_scalar_neg(m[i], s[i]);
-                assert_eq!(out_m[i], em, "neg mag mismatch at i={i}");
-                assert_eq!(out_s[i], es, "neg sgn mismatch at i={i}");
-            }
+            let avx2_decoded = decode_from_words(&out_m, &out_s, n_elems);
+
+            // `Bipedal3` has no public `neg_assign`; neg(a) = 0 - a.
+            let zero = vec![0u8; n_elems];
+            let mut va = Bipedal3::pack(&zero);
+            va.sub_assign(&Bipedal3::pack(a));
+            let scalar_decoded = va.unpack();
+
+            assert_eq!(
+                avx2_decoded, scalar_decoded,
+                "AVX2 neg diverged from Bipedal3 scalar reference (n_elems={n_elems})"
+            );
         }
 
-        /// Generate a canonical (mag, sgn) word-pair from a deterministic LCG
-        /// seeded by the supplied state. The canonical invariant
-        /// `sgn & !mag == 0` is enforced by AND'ing sgn with mag.
-        fn lcg_canonical_pair(state: &mut u64) -> (u64, u64) {
-            // 64-bit LCG (numerical recipes Knuth).
-            *state = state
-                .wrapping_mul(6_364_136_223_846_793_005)
-                .wrapping_add(1_442_695_040_888_963_407);
-            let mag = *state;
-            *state = state
-                .wrapping_mul(6_364_136_223_846_793_005)
-                .wrapping_add(1_442_695_040_888_963_407);
-            let sgn_raw = *state;
-            (mag, sgn_raw & mag)
-        }
-
-        fn make_canonical_streams(
-            n_words: usize,
-            seed: u64,
-        ) -> (Vec<u64>, Vec<u64>, Vec<u64>, Vec<u64>) {
+        /// Deterministic LCG-driven canonical F_3 vector of length `n_elems`
+        /// (multiple of 64). Uses two-bit rejection sampling on a 64-bit
+        /// LCG state to draw uniform 0..=2.
+        fn make_canonical_vec(n_elems: usize, seed: u64) -> Vec<u8> {
+            assert_eq!(n_elems % 64, 0);
             let mut state = seed;
-            let mut m1 = Vec::with_capacity(n_words);
-            let mut s1 = Vec::with_capacity(n_words);
-            let mut m2 = Vec::with_capacity(n_words);
-            let mut s2 = Vec::with_capacity(n_words);
-            for _ in 0..n_words {
-                let (a, b) = lcg_canonical_pair(&mut state);
-                m1.push(a);
-                s1.push(b);
-                let (a, b) = lcg_canonical_pair(&mut state);
-                m2.push(a);
-                s2.push(b);
+            let mut out = Vec::with_capacity(n_elems);
+            while out.len() < n_elems {
+                state = state
+                    .wrapping_mul(6_364_136_223_846_793_005)
+                    .wrapping_add(1_442_695_040_888_963_407);
+                let mut x = state;
+                for _ in 0..30 {
+                    let r = (x & 0x3) as u8;
+                    x >>= 2;
+                    if r < 3 && out.len() < n_elems {
+                        out.push(r);
+                    }
+                }
             }
-            (m1, s1, m2, s2)
+            out
         }
 
-        // ---- Word-boundary explicit tests at L = {0, 1, 4, 16, 64} ----
+        // ---- Word-boundary explicit tests at n_elems = {0, 256, 1024, 4096} ----
+        //
+        // 0 = empty, 256 = 4 words = one AVX2 lane, 1024 = 16 words = four
+        // AVX2 lanes, 4096 = 64 words = sixteen AVX2 lanes (loop iteration
+        // coverage). All multiples of 64 (one Bipedal3 word).
 
-        /// L = 0: empty streams must not segfault.
         #[test]
-        fn test_bipedal3_avx2_add_matches_scalar_l0() {
+        fn test_bipedal3_avx2_add_matches_reference_l0() {
             if !is_x86_feature_detected!("avx2") {
                 return;
             }
-            let (m1, s1, m2, s2) = make_canonical_streams(0, 0xDEAD_BEEF);
-            run_parity_add(&m1, &s1, &m2, &s2);
+            let a = make_canonical_vec(0, 0xDEAD_BEEF);
+            let b = make_canonical_vec(0, 0xCAFE_F00D);
+            run_parity_add(&a, &b);
         }
 
         #[test]
-        fn test_bipedal3_avx2_sub_matches_scalar_l0() {
+        fn test_bipedal3_avx2_sub_matches_reference_l0() {
             if !is_x86_feature_detected!("avx2") {
                 return;
             }
-            let (m1, s1, m2, s2) = make_canonical_streams(0, 0xDEAD_BEEF);
-            run_parity_sub(&m1, &s1, &m2, &s2);
+            let a = make_canonical_vec(0, 0xDEAD_BEEF);
+            let b = make_canonical_vec(0, 0xCAFE_F00D);
+            run_parity_sub(&a, &b);
         }
 
         #[test]
-        fn test_bipedal3_avx2_mul_matches_scalar_l0() {
+        fn test_bipedal3_avx2_mul_matches_reference_l0() {
             if !is_x86_feature_detected!("avx2") {
                 return;
             }
-            let (m1, s1, m2, s2) = make_canonical_streams(0, 0xDEAD_BEEF);
-            run_parity_mul(&m1, &s1, &m2, &s2);
+            let a = make_canonical_vec(0, 0xDEAD_BEEF);
+            let b = make_canonical_vec(0, 0xCAFE_F00D);
+            run_parity_mul(&a, &b);
         }
 
         #[test]
-        fn test_bipedal3_avx2_neg_matches_scalar_l0() {
+        fn test_bipedal3_avx2_neg_matches_reference_l0() {
             if !is_x86_feature_detected!("avx2") {
                 return;
             }
-            let (m1, s1, _, _) = make_canonical_streams(0, 0xDEAD_BEEF);
-            run_parity_neg(&m1, &s1);
-        }
-
-        /// L = 4 (one AVX2 lane).
-        #[test]
-        fn test_bipedal3_avx2_add_matches_scalar_l4() {
-            if !is_x86_feature_detected!("avx2") {
-                return;
-            }
-            let (m1, s1, m2, s2) = make_canonical_streams(4, 1);
-            run_parity_add(&m1, &s1, &m2, &s2);
+            let a = make_canonical_vec(0, 0xDEAD_BEEF);
+            run_parity_neg(&a);
         }
 
         #[test]
-        fn test_bipedal3_avx2_sub_matches_scalar_l4() {
+        fn test_bipedal3_avx2_add_matches_reference_l256() {
             if !is_x86_feature_detected!("avx2") {
                 return;
             }
-            let (m1, s1, m2, s2) = make_canonical_streams(4, 2);
-            run_parity_sub(&m1, &s1, &m2, &s2);
+            let a = make_canonical_vec(256, 1);
+            let b = make_canonical_vec(256, 2);
+            run_parity_add(&a, &b);
         }
 
         #[test]
-        fn test_bipedal3_avx2_mul_matches_scalar_l4() {
+        fn test_bipedal3_avx2_sub_matches_reference_l256() {
             if !is_x86_feature_detected!("avx2") {
                 return;
             }
-            let (m1, s1, m2, s2) = make_canonical_streams(4, 3);
-            run_parity_mul(&m1, &s1, &m2, &s2);
+            let a = make_canonical_vec(256, 3);
+            let b = make_canonical_vec(256, 4);
+            run_parity_sub(&a, &b);
         }
 
         #[test]
-        fn test_bipedal3_avx2_neg_matches_scalar_l4() {
+        fn test_bipedal3_avx2_mul_matches_reference_l256() {
             if !is_x86_feature_detected!("avx2") {
                 return;
             }
-            let (m1, s1, _, _) = make_canonical_streams(4, 4);
-            run_parity_neg(&m1, &s1);
-        }
-
-        /// L = 16 (four AVX2 lanes).
-        #[test]
-        fn test_bipedal3_avx2_add_matches_scalar_l16() {
-            if !is_x86_feature_detected!("avx2") {
-                return;
-            }
-            let (m1, s1, m2, s2) = make_canonical_streams(16, 5);
-            run_parity_add(&m1, &s1, &m2, &s2);
+            let a = make_canonical_vec(256, 5);
+            let b = make_canonical_vec(256, 6);
+            run_parity_mul(&a, &b);
         }
 
         #[test]
-        fn test_bipedal3_avx2_sub_matches_scalar_l16() {
+        fn test_bipedal3_avx2_neg_matches_reference_l256() {
             if !is_x86_feature_detected!("avx2") {
                 return;
             }
-            let (m1, s1, m2, s2) = make_canonical_streams(16, 6);
-            run_parity_sub(&m1, &s1, &m2, &s2);
+            let a = make_canonical_vec(256, 7);
+            run_parity_neg(&a);
         }
 
         #[test]
-        fn test_bipedal3_avx2_mul_matches_scalar_l16() {
+        fn test_bipedal3_avx2_add_matches_reference_l1024() {
             if !is_x86_feature_detected!("avx2") {
                 return;
             }
-            let (m1, s1, m2, s2) = make_canonical_streams(16, 7);
-            run_parity_mul(&m1, &s1, &m2, &s2);
+            let a = make_canonical_vec(1024, 11);
+            let b = make_canonical_vec(1024, 12);
+            run_parity_add(&a, &b);
         }
 
         #[test]
-        fn test_bipedal3_avx2_neg_matches_scalar_l16() {
+        fn test_bipedal3_avx2_sub_matches_reference_l1024() {
             if !is_x86_feature_detected!("avx2") {
                 return;
             }
-            let (m1, s1, _, _) = make_canonical_streams(16, 8);
-            run_parity_neg(&m1, &s1);
-        }
-
-        /// L = 64 (sixteen AVX2 lanes — covers loop iteration count).
-        #[test]
-        fn test_bipedal3_avx2_add_matches_scalar_l64() {
-            if !is_x86_feature_detected!("avx2") {
-                return;
-            }
-            let (m1, s1, m2, s2) = make_canonical_streams(64, 9);
-            run_parity_add(&m1, &s1, &m2, &s2);
+            let a = make_canonical_vec(1024, 13);
+            let b = make_canonical_vec(1024, 14);
+            run_parity_sub(&a, &b);
         }
 
         #[test]
-        fn test_bipedal3_avx2_sub_matches_scalar_l64() {
+        fn test_bipedal3_avx2_mul_matches_reference_l1024() {
             if !is_x86_feature_detected!("avx2") {
                 return;
             }
-            let (m1, s1, m2, s2) = make_canonical_streams(64, 10);
-            run_parity_sub(&m1, &s1, &m2, &s2);
+            let a = make_canonical_vec(1024, 15);
+            let b = make_canonical_vec(1024, 16);
+            run_parity_mul(&a, &b);
         }
 
         #[test]
-        fn test_bipedal3_avx2_mul_matches_scalar_l64() {
+        fn test_bipedal3_avx2_neg_matches_reference_l1024() {
             if !is_x86_feature_detected!("avx2") {
                 return;
             }
-            let (m1, s1, m2, s2) = make_canonical_streams(64, 11);
-            run_parity_mul(&m1, &s1, &m2, &s2);
+            let a = make_canonical_vec(1024, 17);
+            run_parity_neg(&a);
         }
 
         #[test]
-        fn test_bipedal3_avx2_neg_matches_scalar_l64() {
+        fn test_bipedal3_avx2_add_matches_reference_l4096() {
             if !is_x86_feature_detected!("avx2") {
                 return;
             }
-            let (m1, s1, _, _) = make_canonical_streams(64, 12);
-            run_parity_neg(&m1, &s1);
+            let a = make_canonical_vec(4096, 21);
+            let b = make_canonical_vec(4096, 22);
+            run_parity_add(&a, &b);
         }
 
-        // ---- Proptest cross-checks (1000 cases per op, per spec) ----
+        #[test]
+        fn test_bipedal3_avx2_sub_matches_reference_l4096() {
+            if !is_x86_feature_detected!("avx2") {
+                return;
+            }
+            let a = make_canonical_vec(4096, 23);
+            let b = make_canonical_vec(4096, 24);
+            run_parity_sub(&a, &b);
+        }
+
+        #[test]
+        fn test_bipedal3_avx2_mul_matches_reference_l4096() {
+            if !is_x86_feature_detected!("avx2") {
+                return;
+            }
+            let a = make_canonical_vec(4096, 25);
+            let b = make_canonical_vec(4096, 26);
+            run_parity_mul(&a, &b);
+        }
+
+        #[test]
+        fn test_bipedal3_avx2_neg_matches_reference_l4096() {
+            if !is_x86_feature_detected!("avx2") {
+                return;
+            }
+            let a = make_canonical_vec(4096, 27);
+            run_parity_neg(&a);
+        }
+
+        // ---- Proptest cross-checks (1000 cases per op) vs `Bipedal3` ----
 
         use proptest::prelude::*;
 
-        /// Strategy: fixed-width canonical (mag, sgn) word streams. The
-        /// `n_words` stays small so 1000 cases run well under the 5 s
-        /// per-test limit.
-        fn canonical_streams_strategy(
-        ) -> impl Strategy<Value = (Vec<u64>, Vec<u64>, Vec<u64>, Vec<u64>)> {
-            // n_words ∈ {0, 4, 8, 16, 32}; multiple of 4 honours the AVX2 lane
-            // contract. `0` exercises the empty-input boundary.
+        /// Canonical F_3 element-pair strategy at SIMD-aligned lengths.
+        ///
+        /// `n_elems` is one of `{0, 256, 512, 1024, 2048}`; all multiples
+        /// of 64 (= one Bipedal3 word) AND yield a `n_words` that is a
+        /// multiple of 4 (one AVX2 lane). `0` exercises the empty-input
+        /// boundary. Length stays small so 1000 cases run well under the
+        /// 5 s per-test limit.
+        fn canonical_pair_strategy() -> impl Strategy<Value = (Vec<u8>, Vec<u8>)> {
             (
-                prop_oneof![Just(0usize), Just(4), Just(8), Just(16), Just(32)],
-                any::<u64>(),
-                any::<u64>(),
+                prop_oneof![Just(0usize), Just(256), Just(512), Just(1024), Just(2048),],
                 any::<u64>(),
                 any::<u64>(),
             )
-                .prop_map(|(n_words, seed_a, seed_b, seed_c, seed_d)| {
-                    let mut sa = seed_a;
-                    let mut sb = seed_b;
-                    let mut sc = seed_c;
-                    let mut sd = seed_d;
-                    let mut m1 = Vec::with_capacity(n_words);
-                    let mut s1 = Vec::with_capacity(n_words);
-                    let mut m2 = Vec::with_capacity(n_words);
-                    let mut s2 = Vec::with_capacity(n_words);
-                    for _ in 0..n_words {
-                        // Each lane's mag & sgn pulled from independent LCGs;
-                        // canonical invariant enforced by `sgn & mag`.
-                        sa = sa.wrapping_mul(6_364_136_223_846_793_005).wrapping_add(1);
-                        sb = sb.wrapping_mul(6_364_136_223_846_793_005).wrapping_add(1);
-                        sc = sc.wrapping_mul(6_364_136_223_846_793_005).wrapping_add(1);
-                        sd = sd.wrapping_mul(6_364_136_223_846_793_005).wrapping_add(1);
-                        m1.push(sa);
-                        s1.push(sb & sa);
-                        m2.push(sc);
-                        s2.push(sd & sc);
-                    }
-                    (m1, s1, m2, s2)
+                .prop_map(|(n, seed_a, seed_b)| {
+                    (make_canonical_vec(n, seed_a), make_canonical_vec(n, seed_b))
                 })
         }
 
         proptest! {
             #![proptest_config(ProptestConfig::with_cases(1000))]
 
-            /// Cross-check AVX2 add against the scalar oracle on 1000 random
-            /// canonical-form (mag, sgn) word streams of varying length.
+            /// Cross-check AVX2 add against `dev/research/f3_bipedal::Bipedal3`
+            /// on 1000 random canonical-form F_3 vectors of varying length.
             #[test]
-            fn test_bipedal3_avx2_add_matches_scalar_proptest(
-                streams in canonical_streams_strategy(),
+            fn test_bipedal3_avx2_add_matches_reference_proptest(
+                pair in canonical_pair_strategy(),
             ) {
                 if !is_x86_feature_detected!("avx2") {
                     return Ok(());
                 }
-                let (m1, s1, m2, s2) = streams;
-                run_parity_add(&m1, &s1, &m2, &s2);
+                let (a, b) = pair;
+                run_parity_add(&a, &b);
             }
 
-            /// Cross-check AVX2 sub against the scalar oracle on 1000 random
-            /// canonical-form (mag, sgn) word streams.
+            /// Cross-check AVX2 sub against `dev/research/f3_bipedal::Bipedal3`
+            /// on 1000 random canonical-form F_3 vectors.
             #[test]
-            fn test_bipedal3_avx2_sub_matches_scalar_proptest(
-                streams in canonical_streams_strategy(),
+            fn test_bipedal3_avx2_sub_matches_reference_proptest(
+                pair in canonical_pair_strategy(),
             ) {
                 if !is_x86_feature_detected!("avx2") {
                     return Ok(());
                 }
-                let (m1, s1, m2, s2) = streams;
-                run_parity_sub(&m1, &s1, &m2, &s2);
+                let (a, b) = pair;
+                run_parity_sub(&a, &b);
             }
 
-            /// Cross-check AVX2 mul against the scalar oracle on 1000 random
-            /// canonical-form (mag, sgn) word streams.
+            /// Cross-check AVX2 mul against `dev/research/f3_bipedal::Bipedal3`
+            /// on 1000 random canonical-form F_3 vectors.
             #[test]
-            fn test_bipedal3_avx2_mul_matches_scalar_proptest(
-                streams in canonical_streams_strategy(),
+            fn test_bipedal3_avx2_mul_matches_reference_proptest(
+                pair in canonical_pair_strategy(),
             ) {
                 if !is_x86_feature_detected!("avx2") {
                     return Ok(());
                 }
-                let (m1, s1, m2, s2) = streams;
-                run_parity_mul(&m1, &s1, &m2, &s2);
+                let (a, b) = pair;
+                run_parity_mul(&a, &b);
             }
 
-            /// Cross-check AVX2 neg against the scalar oracle on 1000 random
-            /// canonical-form (mag, sgn) word streams.
+            /// Cross-check AVX2 neg against `dev/research/f3_bipedal::Bipedal3`
+            /// on 1000 random canonical-form F_3 vectors.
             #[test]
-            fn test_bipedal3_avx2_neg_matches_scalar_proptest(
-                streams in canonical_streams_strategy(),
+            fn test_bipedal3_avx2_neg_matches_reference_proptest(
+                pair in canonical_pair_strategy(),
             ) {
                 if !is_x86_feature_detected!("avx2") {
                     return Ok(());
                 }
-                let (m1, s1, _, _) = streams;
-                run_parity_neg(&m1, &s1);
+                let (a, _) = pair;
+                run_parity_neg(&a);
             }
         }
     }
@@ -724,10 +748,11 @@ mod tests {
 
     /// Demonstrates that `BatchedBipedalLike` is generic over the config
     /// parameter — instantiating with a fresh `BipedalLikeConfig` impl
-    /// requires zero kernel-code changes (success criterion 4).
-    ///
-    /// We only need the type to resolve and the const PRIME to be
-    /// reachable; we don't actually issue an AVX2 op.
+    /// requires zero kernel-code changes (success criterion 4). The
+    /// generic AVX2 entry points `run_*_batch::<C>` in
+    /// `crate::x86::bipedal_avx2` accept the new config without
+    /// modification; the type-level check below proves the trait machinery
+    /// resolves end-to-end.
     #[test]
     fn test_framework_is_generic_over_config() {
         type _Mock5x4 = super::super::framework::BatchedBipedalLike<
@@ -735,8 +760,17 @@ mod tests {
             super::super::lanes::Avx2Lane,
             super::super::lanes::Avx2Lane,
         >;
-        // The fact that the type alias above resolved already proves
-        // genericity; the assertion here just ties the const through.
+        // Reference the generic entry points monomorphised over the new
+        // config to prove they accept it without source changes. The
+        // `unsafe fn` pointer cast below is sound because the AVX2 entry
+        // points share a uniform shape across configs.
+        type BinaryKernel = unsafe fn(&[u64], &[u64], &[u64], &[u64], &mut [u64], &mut [u64]);
+        let _add: BinaryKernel = crate::x86::bipedal_avx2::run_add_batch::<MockConfig>;
+        let _sub: BinaryKernel = crate::x86::bipedal_avx2::run_sub_batch::<MockConfig>;
+        let _mul: BinaryKernel = crate::x86::bipedal_avx2::run_mul_batch::<MockConfig>;
+        // The fact that the type alias and the generic-fn pointers above
+        // resolved already proves genericity; the assertions here just tie
+        // the const through.
         assert_eq!(<MockConfig as BipedalLikeConfig>::PRIME, 5);
         assert_eq!(<Config3 as BipedalLikeConfig>::PRIME, 3);
     }

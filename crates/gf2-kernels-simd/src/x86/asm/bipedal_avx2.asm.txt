@@ -8,8 +8,8 @@
 ; host triple   : x86_64-unknown-linux-gnu
 ; target-cpu    : <unset; rely on #[target_feature]>
 ; RUSTFLAGS     : <empty>
-; commit        : f1fdb613
-; regenerated   : 2026-05-09T12:29:43Z
+; commit        : 8afc48ad
+; regenerated   : 2026-05-09T13:18:24Z
 ; tool          : cargo-show-asm
 ; ---------------------------------------------------------
 
@@ -18,8 +18,9 @@
 ; symbol: gf2_kernels_simd::x86::bipedal_avx2::run_add_batch
 ;==========================================================
 
-    Finished `release` profile [optimized] target(s) in 0.02s
+   Compiling gf2-kernels-simd v0.1.0 (/home/vkaskivuo/Projects/gf2/.claude/worktrees/agent-b17bec62-rw1/crates/gf2-kernels-simd)
 
+    Finished `release` profile [optimized] target(s) in 3.32s
 gf2_kernels_simd::x86::bipedal_avx2::run_add_batch:
 	test rsi, rsi
 	je .LBB26_3
@@ -48,8 +49,8 @@ gf2_kernels_simd::x86::bipedal_avx2::run_add_batch:
 ; symbol: gf2_kernels_simd::x86::bipedal_avx2::run_sub_batch
 ;==========================================================
 
-    Finished `release` profile [optimized] target(s) in 0.02s
 
+    Finished `release` profile [optimized] target(s) in 0.07s
 gf2_kernels_simd::x86::bipedal_avx2::run_sub_batch:
 	test rsi, rsi
 	je .LBB29_3
@@ -78,7 +79,7 @@ gf2_kernels_simd::x86::bipedal_avx2::run_sub_batch:
 ; symbol: gf2_kernels_simd::x86::bipedal_avx2::run_mul_batch
 ;==========================================================
 
-    Finished `release` profile [optimized] target(s) in 0.02s
+    Finished `release` profile [optimized] target(s) in 0.04s
 
 gf2_kernels_simd::x86::bipedal_avx2::run_mul_batch:
 	test rsi, rsi
