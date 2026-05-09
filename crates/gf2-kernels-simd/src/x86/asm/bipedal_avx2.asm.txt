@@ -1,0 +1,141 @@
+; gf2-core PPC-spiral asm artefact
+; ---------------------------------------------------------
+; crate         : gf2-kernels-simd
+; primary       : gf2_kernels_simd::x86::bipedal_avx2::run_add_batch
+; extra symbols : gf2_kernels_simd::x86::bipedal_avx2::run_sub_batch gf2_kernels_simd::x86::bipedal_avx2::run_mul_batch gf2_kernels_simd::x86::bipedal_avx2::run_neg_batch
+; output        : crates/gf2-kernels-simd/src/x86/asm/bipedal_avx2.asm.txt
+; rustc         : rustc 1.95.0 (59807616e 2026-04-14)
+; host triple   : x86_64-unknown-linux-gnu
+; target-cpu    : <unset; rely on #[target_feature]>
+; RUSTFLAGS     : <empty>
+; commit        : f1fdb613
+; regenerated   : 2026-05-09T12:29:43Z
+; tool          : cargo-show-asm
+; ---------------------------------------------------------
+
+
+;==========================================================
+; symbol: gf2_kernels_simd::x86::bipedal_avx2::run_add_batch
+;==========================================================
+
+    Finished `release` profile [optimized] target(s) in 0.02s
+
+gf2_kernels_simd::x86::bipedal_avx2::run_add_batch:
+	test rsi, rsi
+	je .LBB26_3
+	mov rax, qword ptr [rsp + 8]
+	xor r10d, r10d
+.LBB26_2:
+	vmovups ymm0, ymmword ptr [rdi + 8*r10]
+	vmovups ymm1, ymmword ptr [rdx + 8*r10]
+	vmovups ymm2, ymmword ptr [rcx + 8*r10]
+	vxorps ymm3, ymm0, ymmword ptr [r8 + 8*r10]
+	vxorps ymm3, ymm3, ymm1
+	vandps ymm3, ymm3, ymm2
+	vxorps ymm0, ymm2, ymm0
+	vorps ymm0, ymm3, ymm0
+	vxorps ymm1, ymm3, ymm1
+	vmovups ymmword ptr [r9 + 8*r10], ymm0
+	vmovups ymmword ptr [rax + 8*r10], ymm1
+	add r10, 4
+	cmp r10, rsi
+	jb .LBB26_2
+.LBB26_3:
+	vzeroupper
+	ret
+
+;==========================================================
+; symbol: gf2_kernels_simd::x86::bipedal_avx2::run_sub_batch
+;==========================================================
+
+    Finished `release` profile [optimized] target(s) in 0.02s
+
+gf2_kernels_simd::x86::bipedal_avx2::run_sub_batch:
+	test rsi, rsi
+	je .LBB29_3
+	mov rax, qword ptr [rsp + 8]
+	xor r10d, r10d
+.LBB29_2:
+	vmovups ymm0, ymmword ptr [rdi + 8*r10]
+	vmovups ymm1, ymmword ptr [rcx + 8*r10]
+	vmovups ymm2, ymmword ptr [r8 + 8*r10]
+	vxorps ymm3, ymm2, ymmword ptr [rdx + 8*r10]
+	vandps ymm3, ymm3, ymm0
+	vxorps ymm0, ymm1, ymm0
+	vorps ymm0, ymm3, ymm0
+	vxorps ymm1, ymm2, ymm1
+	vxorps ymm1, ymm1, ymm3
+	vmovups ymmword ptr [r9 + 8*r10], ymm0
+	vmovups ymmword ptr [rax + 8*r10], ymm1
+	add r10, 4
+	cmp r10, rsi
+	jb .LBB29_2
+.LBB29_3:
+	vzeroupper
+	ret
+
+;==========================================================
+; symbol: gf2_kernels_simd::x86::bipedal_avx2::run_mul_batch
+;==========================================================
+
+    Finished `release` profile [optimized] target(s) in 0.02s
+
+gf2_kernels_simd::x86::bipedal_avx2::run_mul_batch:
+	test rsi, rsi
+	je .LBB27_3
+	mov rax, qword ptr [rsp + 8]
+	xor r10d, r10d
+.LBB27_2:
+	vmovups ymm0, ymmword ptr [rcx + 8*r10]
+	vmovups ymm1, ymmword ptr [r8 + 8*r10]
+	vandps ymm0, ymm0, ymmword ptr [rdi + 8*r10]
+	vxorps ymm1, ymm1, ymmword ptr [rdx + 8*r10]
+	vmovups ymmword ptr [r9 + 8*r10], ymm0
+	vmovups ymmword ptr [rax + 8*r10], ymm1
+	add r10, 4
+	cmp r10, rsi
+	jb .LBB27_2
+.LBB27_3:
+	vzeroupper
+	ret
+
+;==========================================================
+; symbol: gf2_kernels_simd::x86::bipedal_avx2::run_neg_batch
+;==========================================================
+
+    Finished `release` profile [optimized] target(s) in 0.02s
+
+gf2_kernels_simd::x86::bipedal_avx2::run_neg_batch:
+	test rsi, rsi
+	je .LBB28_4
+	push r15
+	push r14
+	push r12
+	push rbx
+	push rax
+	mov rbx, r8
+	mov r14, rdx
+	mov r15, rsi
+	mov r12, rdi
+	lea rdx, [8*rsi - 8]
+	and rdx, -32
+	add rdx, 32
+	mov rdi, rcx
+	mov rsi, r12
+	call qword ptr [rip + memcpy@GOTPCREL]
+	xor eax, eax
+.LBB28_2:
+	vmovups ymm0, ymmword ptr [r14 + 8*rax]
+	vxorps ymm0, ymm0, ymmword ptr [r12 + 8*rax]
+	vmovups ymmword ptr [rbx + 8*rax], ymm0
+	add rax, 4
+	cmp rax, r15
+	jb .LBB28_2
+	add rsp, 8
+	pop rbx
+	pop r12
+	pop r14
+	pop r15
+.LBB28_4:
+	vzeroupper
+	ret

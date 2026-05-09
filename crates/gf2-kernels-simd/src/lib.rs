@@ -12,6 +12,7 @@
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 mod x86;
 
+pub mod bipedal;
 pub mod clmul_scalar;
 pub mod fp65537;
 pub mod fp_generic;
