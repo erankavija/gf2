@@ -4515,3 +4515,10 @@
 {"type":"issue_claimed","id":"a2915e48-dbe7-4783-80eb-1af3e6e9e8b2","issue_id":"1aa0cb99-9918-4910-9c7e-7a11f746822a","timestamp":"2026-05-09T13:07:33.015015522Z","assignee":"agent:claude"}
 {"type":"issue_state_changed","id":"66b5c25b-a0da-4b48-af3d-86e9135c0867","issue_id":"94870b84-6772-49eb-849a-2d1a5256edc2","timestamp":"2026-05-09T13:07:33.397592891Z","from":"ready","to":"in_progress"}
 {"type":"issue_claimed","id":"249a4a69-d388-4297-bd13-17a748109669","issue_id":"94870b84-6772-49eb-849a-2d1a5256edc2","timestamp":"2026-05-09T13:07:33.400461912Z","assignee":"agent:claude"}
+{"type":"gate_passed","id":"de5f033a-1d6c-4c17-9581-8ed65460ccfc","issue_id":"1aa0cb99-9918-4910-9c7e-7a11f746822a","timestamp":"2026-05-09T13:16:49.842910511Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"426cbee8-0ab3-487e-a1ea-6861779366db","issue_id":"94870b84-6772-49eb-849a-2d1a5256edc2","timestamp":"2026-05-09T13:16:57.497439791Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"88b63c7c-3efb-423a-b65c-9f69ce5cb559","issue_id":"1aa0cb99-9918-4910-9c7e-7a11f746822a","timestamp":"2026-05-09T13:17:57.654750513Z","gate_key":"tests","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"862fac66-4996-4296-a68c-56e2113a036b","issue_id":"94870b84-6772-49eb-849a-2d1a5256edc2","timestamp":"2026-05-09T13:18:29.173396800Z","gate_key":"tests","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"8276274e-464e-4ab7-8fa7-608dd182fc86","issue_id":"1aa0cb99-9918-4910-9c7e-7a11f746822a","timestamp":"2026-05-09T13:21:57.559801710Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"3c11d124-9f83-48de-9511-e401d4eac6a5","issue_id":"b17bec62-138a-4fa4-85a2-dfc60e329327","timestamp":"2026-05-09T13:28:57.928779548Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"1af1bba9-f321-4cc3-ab38-388748178eda","issue_id":"b17bec62-138a-4fa4-85a2-dfc60e329327","timestamp":"2026-05-09T13:28:58.049692923Z","gate_key":"asm-artefact-present","updated_by":"auto:executor"}
