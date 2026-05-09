@@ -13,8 +13,8 @@
 //!
 //! # Status
 //!
-//! W1 sub-wave 1d in progress. T2/T3/T4/T6 landed (PackedField + Vec trait +
-//! scalar oracles + Bipedal3 element + Bipedal3Vec + gray_code_iter):
+//! W1 sub-wave 1e (T5 closing). T2/T3/T4/T5/T6 landed (PackedField + Vec trait +
+//! scalar oracles + Bipedal3 element + Bipedal3Vec + Bipedal3Matrix column-major + gray_code_iter):
 //!
 //! - [`packed::PackedField`] / [`packed::PackedFieldVec`] traits and the
 //!   [`packed::ScalarPackedFp3`] / [`packed::ScalarPackedFp3Vec`] scalar
@@ -26,6 +26,11 @@
 //!   `Vec<u64>` with mask-tail invariant) is landed; cross-checked via proptest
 //!   (200 cases) against [`packed::ScalarPackedFp3Vec`]. Includes `fold_mul`
 //!   inherent method (T4 deliverable).
+//! - [`packed::Bipedal3Matrix`] rectangular `rows × cols` column-major matrix
+//!   (`Vec<Bipedal3Vec>`, one per column) is landed; includes `from_row_major`,
+//!   `to_row_major`, `column`, `row`, `get`, and `transpose`. Covered by
+//!   unit tests (word-boundary shapes) and proptest (100 random shapes,
+//!   double-transpose roundtrip) (T5 deliverable).
 //! - [`gray::gray_code_iter`] is landed.
 //! - `permanent::ryser`, `permanent::reference`, `permanent::bipedal3` (and
 //!   the W4 F_5/F_7 analogues) are still placeholder modules; bodies land in
