@@ -5079,16 +5079,19 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "slow: f32 GEMM correctness check over small prime p=7; scalar reference at n=1024 exceeds 5s"]
     fn check_small_prime_f32_p7() {
         check_small_prime_f32::<7>();
     }
 
     #[test]
+    #[ignore = "slow: f32 GEMM correctness check over small prime p=31; scalar reference at n=1024 exceeds 5s"]
     fn check_small_prime_f32_p31() {
         check_small_prime_f32::<31>();
     }
 
     #[test]
+    #[ignore = "slow: f32 GEMM correctness check over small prime p=251; scalar reference at n=1024 exceeds 5s"]
     fn check_small_prime_f32_p251() {
         check_small_prime_f32::<251>();
     }

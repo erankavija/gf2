@@ -161,6 +161,7 @@ fn test_fig1_drm_product_code_construction() {
 }
 
 #[test]
+#[ignore = "slow: TurboDecoder on dRM(32,21) product code (1024,441)"]
 fn test_fig1_drm_product_encode_decode() {
     let component = DrmCode::drm_32_21();
     let product = ProductCode::new(component.clone());

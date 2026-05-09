@@ -18,7 +18,7 @@ fn load_cache() -> EncodingCache {
 }
 
 #[test]
-#[ignore]
+#[ignore = "external: requires precomputed LDPC DVB-T2 cache at crates/gf2-coding/data/ldpc/dvb_t2"]
 fn test_cached_parity_matrix_property() {
     let cache = load_cache();
     let code = LdpcCode::dvb_t2_normal(CodeRate::Rate3_5);
@@ -99,7 +99,7 @@ fn test_cached_parity_matrix_property() {
 }
 
 #[test]
-#[ignore]
+#[ignore = "external: requires precomputed LDPC DVB-T2 cache at crates/gf2-coding/data/ldpc/dvb_t2"]
 fn test_problematic_parity_bits_property() {
     let cache = load_cache();
     let code = LdpcCode::dvb_t2_normal(CodeRate::Rate3_5);
@@ -171,7 +171,7 @@ fn test_problematic_parity_bits_property() {
 }
 
 #[test]
-#[ignore]
+#[ignore = "external: requires precomputed LDPC DVB-T2 cache at crates/gf2-coding/data/ldpc/dvb_t2"]
 fn test_full_generator_orthogonality() {
     let cache = load_cache();
     let code = LdpcCode::dvb_t2_normal(CodeRate::Rate3_5);

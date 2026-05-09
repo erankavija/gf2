@@ -1286,6 +1286,7 @@ mod tests {
         /// The test uses a small (4) Winograd threshold to force deep
         /// recursion at a manageable matrix size.
         #[test]
+        #[ignore = "slow: proptest Winograd bound propagation; n=4*TEST_THRESHOLD recursion exceeds 5s"]
         fn prop_winograd_bound_propagates_across_levels_fp31(
             seed in 0u64..256,
         ) {

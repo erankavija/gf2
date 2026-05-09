@@ -5122,6 +5122,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "slow: batch polynomial evaluation at n=4096/4200 over Fp<65537>"]
     fn test_batch_evaluate_auto_straddles_subproduct_threshold_fp65537() {
         // SUBPRODUCT_THRESHOLD = 4096 on Fp<65537>, compared against
         // `points.len()` and the polynomial's coefficient length

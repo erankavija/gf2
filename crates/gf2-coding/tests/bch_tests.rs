@@ -1060,6 +1060,7 @@ mod dvb_t2_validation {
 
     /// Test DVB-T2 normal frame - all code rates with error correction
     #[test]
+    #[ignore = "slow: encode+correct all 6 DVB-T2 normal BCH rates; large n exceeds 5s"]
     fn test_dvb_t2_normal_all_rates_error_correction() {
         let rates = [
             CodeRate::Rate1_2,

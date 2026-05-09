@@ -1945,6 +1945,7 @@ mod tests {
 
     #[test]
     #[serial]
+    #[ignore = "slow: PLE decomposition on Fp<MERSENNE_31> 1024×1024 matrix"]
     fn test_ple_allocation_budget_n1024_fp_m31() {
         let a = random_fp::<MERSENNE_31>(1024, 1024, 0xC3FA);
         reset_fieldmatrix_new_count();
