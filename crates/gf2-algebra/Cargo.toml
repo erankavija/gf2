@@ -1,0 +1,69 @@
+[package]
+name = "gf2-algebra"
+version = "0.1.0"
+edition = "2021"
+authors = ["Vesa Kaskivuo <vesa.kaskivuo@iki.fi>"]
+description = "Packed-field abstractions and permanent algorithms over small primes (F_3, F_5, F_7) on top of gf2-core"
+license = "MIT"
+keywords = ["finite-field", "permanent", "packed", "gf2", "algebra"]
+categories = ["algorithms", "mathematics"]
+rust-version = "1.95"
+
+[dependencies]
+# Always linked: provides the FiniteField / Fp<P> / BitVec primitives the
+# packed types and permanent algorithms operate over. See D1a §3 for the
+# dependency-edge graph.
+gf2-core = { path = "../gf2-core" }
+# Rayon dispatch is gated behind the `parallel` feature; the rayon crate
+# itself is therefore an optional dep. See D1c §2 row `parallel`.
+rayon = { workspace = true, optional = true }
+# HIP/ROCm GPU device-kernel handles. The crate is in workspace `exclude`
+# (root `Cargo.toml` lines 9-11) and is opt-in via `--features hip`. The
+# path-dep is therefore optional. See D1c §5.2.
+gf2-kernels-hip = { path = "../gf2-kernels-hip", optional = true }
+# Serde Serialize/Deserialize derives on the packed types. Off by default;
+# users who need round-trip serialisation opt in via `--features serde`.
+serde = { version = "1", features = ["derive"], optional = true }
+
+[dev-dependencies]
+proptest = { workspace = true }
+
+[features]
+default = ["simd", "parallel"]
+
+# Enable runtime SIMD dispatch hooks. Mirrors gf2-coding's pattern: the
+# gf2-kernels-simd rlib is always linked (gf2-core needs it for the SSOT
+# scalar `clmul_u64_scalar`), so this feature only flips the runtime
+# detection wiring in gf2-core. On hosts without AVX2, runtime
+# `is_x86_feature_detected!` returns false and the scalar fallback is
+# selected — no functional change with this flag off, just a slightly
+# smaller compiled-out detection table.
+simd = ["gf2-core/simd"]
+
+# Rayon-based parallel permanent. Pulls in rayon and the parallel
+# helpers in gf2-core. On by default because the headline workload
+# (permanent_bipedal3 at n=36) is a 2^36-step Gray-code walk where
+# parallel scaling is the entire point of W3.
+parallel = ["dep:rayon", "gf2-core/parallel"]
+
+# HIP/ROCm GPU dispatch (gfx1030+). Off by default — matches
+# gf2-coding's "hip" feature, since hipcc/ROCm is not present on most
+# developer hosts. Pulls in the gf2-kernels-hip crate (which is in
+# workspace `exclude`).
+hip = ["dep:gf2-kernels-hip"]
+
+# F_5 packed permanent. Off until W4 lands the encoding (per R1 outcome
+# in dev/plans/r1_f5_encoding_decision.md). Compiling the modules
+# without this flag means the public surface omits the F_5 types
+# entirely — callers see no API.
+f5 = []
+
+# F_7 packed permanent. Off until W4 lands the encoding (per R2 outcome
+# in dev/plans/r2_f7_encoding_decision.md). Same lifecycle as `f5`.
+f7 = []
+
+# Serde Serialize/Deserialize for packed types. Off by default because
+# permanent computation does not typically involve serialisation; users
+# who need it (e.g. caching matrices for reproducibility benchmarks) opt
+# in. Pulls in serde with the derive feature.
+serde = ["dep:serde"]
