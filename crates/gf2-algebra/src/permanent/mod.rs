@@ -24,6 +24,7 @@ pub mod bipedal3;
 pub mod reference;
 pub mod ryser;
 
+pub use reference::permanent_mod3_reference;
 pub use ryser::permanent_ryser;
 
 /// Re-export of [`crate::gray`] so the canonical W1-T6 API
