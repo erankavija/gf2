@@ -13,13 +13,20 @@
 //!
 //! # Status
 //!
-//! This crate is the W1-T1 skeleton. The module tree exists but the
-//! public types listed in
+//! W1 sub-wave 1b in progress. As of T2 (`PackedField` + scalar oracle)
+//! and T6 (`gray_code_iter`):
+//!
+//! - [`packed::PackedField`] / [`packed::PackedFieldVec`] traits and the
+//!   [`packed::ScalarPackedFp3`] / [`packed::ScalarPackedFp3Vec`] scalar
+//!   reference impls are landed.
+//! - [`gray::gray_code_iter`] is landed.
+//! - `packed::bipedal3`, `permanent::ryser`, `permanent::reference`,
+//!   `permanent::bipedal3` (and the W4 F_5/F_7 analogues) are still
+//!   placeholder modules; bodies land in W1 (T3-T5) and W2-W4.
+//!
+//! The full type → crate map this crate satisfies on completion is in
 //! [`dev/plans/d1a_gf2_algebra_boundary.md`](../../../dev/plans/d1a_gf2_algebra_boundary.md)
-//! §2 are landed by the W1 (T2-T6) and later W3-W5 issues. Building this
-//! crate at the skeleton stage produces a library with no functional
-//! surface; doc-tests and unit tests are added by downstream issues as
-//! the modules fill in.
+//! §2.
 //!
 //! # Module map (D1a §2)
 //!
