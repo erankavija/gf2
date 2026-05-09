@@ -1,16 +1,18 @@
-//! Generic `BatchedBipedalLike<C, Mag, Sgn>` framework.
+//! Generic `BatchedBipedalLike<C>` framework.
 //!
-//! The framework abstracts the bipedal-like `(mag, sgn)` arithmetic over
-//! three type-parameters:
+//! The framework abstracts the bipedal-like `(mag, sgn)` arithmetic over a
+//! single type parameter `C: BipedalLikeConfig`. The configuration trait
+//! exposes the per-prime arithmetic plug-in points as **associated types**
+//! ([`BipedalLikeConfig::MagLane`] and [`BipedalLikeConfig::SgnLane`]) and
+//! **associated `const`s** ([`BipedalLikeConfig::PRIME`] and
+//! [`BipedalLikeConfig::U64_PER_LANE_PAIR`]); the lane-level formulas
+//! ([`BipedalLikeConfig::add_lane`] etc.) operate on those associated types.
 //!
-//! 1. `C: BipedalLikeConfig` — the per-prime arithmetic recipe (paper §2.2
-//!    formulas for F_3 today; F_5 D-bit-sliced and F_7 LUT-A in W4).
-//! 2. `Mag: BipedalLogicalLanes` — the lane type carrying magnitude bits.
-//! 3. `Sgn: BipedalLogicalLanes` — the lane type carrying sign bits.
-//!
-//! For F_3 both lane types are [`crate::bipedal::Avx2Lane`]. For F_5
-//! D-bit-sliced (W4) the lane types may differ (three planes vs single
-//! plane), and the per-prime config impl supplies the appropriate formula.
+//! For F_3 ([`crate::bipedal::Config3`]) both lane types are
+//! [`crate::bipedal::Avx2Lane`]. The W4 F_5 D-bit-sliced encoding will pick
+//! a different lane shape (three magnitude planes + one sign plane), and the
+//! W4 F_7 LUT-A encoding may differ again — in each case the per-prime
+//! `BipedalLikeConfig` impl is the source of truth for the lane shape.
 //!
 //! The `BatchedBipedalLike::{add, sub, mul, neg}` methods delegate to the
 //! config's `add_lane / sub_lane / mul_lane / neg_lane` recipes; this is
@@ -29,14 +31,16 @@ use super::lanes::BipedalLogicalLanes;
 
 /// Per-prime arithmetic recipe for the bipedal-like framework.
 ///
-/// An impl supplies the lane-level add/sub/mul/neg formula for one
-/// prime. The framework dispatches to these methods with whatever lane
-/// type the kernel is instantiated over (typically [`crate::bipedal::Avx2Lane`]
-/// today, future AVX-512 / AArch64 lanes once those backends land).
+/// An impl supplies the lane shape and the lane-level add/sub/mul/neg
+/// formula for one prime. The framework dispatches to the impl's methods
+/// over the impl's chosen lane types.
 ///
-/// The methods are generic over the two lane types `Mag` and `Sgn` rather
-/// than nailing them to a single type so a single config impl can drive
-/// every backend.
+/// The plug-in points the issue's success criterion 1 requires are split
+/// across associated types (`MagLane`, `SgnLane`) and associated `const`s
+/// (`PRIME`, `U64_PER_LANE_PAIR`); the methods (`add_lane`, ...) are the
+/// implementation that uses those types and consts. This split is what
+/// lets F_5 D-bit-sliced (W4) pick a different `MagLane` from `SgnLane`
+/// without duplicating the framework body.
 ///
 /// # Safety
 ///
@@ -45,13 +49,42 @@ use super::lanes::BipedalLogicalLanes;
 /// precondition (typically by calling through a `#[target_feature]`-attributed
 /// kernel entry point).
 pub trait BipedalLikeConfig {
+    /// Lane type carrying the magnitude bits.
+    ///
+    /// For F_3 today this is [`crate::bipedal::Avx2Lane`] (one 256-bit
+    /// AVX2 vector covering 4 × `u64`). Future F_5 D-bit-sliced (W4) is
+    /// expected to use a wider or differently-shaped lane covering three
+    /// magnitude planes; the per-prime config selects the shape.
+    type MagLane: BipedalLogicalLanes;
+
+    /// Lane type carrying the sign bits.
+    ///
+    /// For F_3 today this is [`crate::bipedal::Avx2Lane`] (same as
+    /// [`Self::MagLane`]). For an F_5 D-bit-sliced encoding the sign plane
+    /// may be a single u64 register while the magnitude is a 3-plane wide
+    /// lane — picking different `MagLane` and `SgnLane` lets the framework
+    /// describe both shapes with one trait.
+    type SgnLane: BipedalLogicalLanes;
+
     /// The prime characteristic this configuration encodes.
     ///
-    /// Used only for documentation / debugging today; future codegen-time
-    /// dispatch may use it to select between formula variants.
+    /// Used for documentation and diagnostics today; future codegen-time
+    /// dispatch may select between formula variants on this value.
     const PRIME: u64;
 
-    /// Lane-level add formula.
+    /// Number of `u64` words spanned by one `(MagLane, SgnLane)` pair —
+    /// the framework's iteration step over the `&[u64]` slice ABI.
+    ///
+    /// For F_3 today: `4` (one 256-bit `Avx2Lane` covers 4 × `u64`). For
+    /// shape-uniform encodings this equals `<MagLane as
+    /// BipedalLogicalLanes>::U64_PER_LANE`. For shape-non-uniform encodings
+    /// (e.g. future F_5 D-bit-sliced where magnitude and sign use different
+    /// lane shapes) this records the framework's per-iteration u64 step
+    /// directly and may differ from either lane's individual stride.
+    const U64_PER_LANE_PAIR: usize;
+
+    /// Lane-level add formula, operating on the impl's [`Self::MagLane`] /
+    /// [`Self::SgnLane`].
     ///
     /// For F_3: `t = m1 ^ s1 ^ s2; u = m2 & t; m_+ = u | (m1 ^ m2); s_+ = u ^ s1`
     /// (Scheinerman 2024 §2.2).
@@ -65,18 +98,22 @@ pub trait BipedalLikeConfig {
     ///
     /// # Safety
     ///
-    /// Hardware feature underlying `Mag` / `Sgn` must be available.
+    /// Hardware feature underlying [`Self::MagLane`] / [`Self::SgnLane`]
+    /// must be available.
     ///
     /// # Complexity
     ///
     /// `O(1)`: a small constant number of lane-level logical ops
     /// (six for F_3).
-    unsafe fn add_lane<Mag, Sgn>(m1: Mag, s1: Sgn, m2: Mag, s2: Sgn) -> (Mag, Sgn)
-    where
-        Mag: BipedalLogicalLanes,
-        Sgn: BipedalLogicalLanes;
+    unsafe fn add_lane(
+        m1: Self::MagLane,
+        s1: Self::SgnLane,
+        m2: Self::MagLane,
+        s2: Self::SgnLane,
+    ) -> (Self::MagLane, Self::SgnLane);
 
-    /// Lane-level sub formula.
+    /// Lane-level sub formula, operating on the impl's [`Self::MagLane`] /
+    /// [`Self::SgnLane`].
     ///
     /// For F_3: `t = s1 ^ s2; u = m1 & t; m_- = u | (m1 ^ m2); s_- = u ^ (m2 ^ s2)`
     /// (Scheinerman 2024 §2.2).
@@ -90,17 +127,21 @@ pub trait BipedalLikeConfig {
     ///
     /// # Safety
     ///
-    /// Hardware feature underlying `Mag` / `Sgn` must be available.
+    /// Hardware feature underlying [`Self::MagLane`] / [`Self::SgnLane`]
+    /// must be available.
     ///
     /// # Complexity
     ///
     /// `O(1)`: a small constant number of lane-level logical ops.
-    unsafe fn sub_lane<Mag, Sgn>(m1: Mag, s1: Sgn, m2: Mag, s2: Sgn) -> (Mag, Sgn)
-    where
-        Mag: BipedalLogicalLanes,
-        Sgn: BipedalLogicalLanes;
+    unsafe fn sub_lane(
+        m1: Self::MagLane,
+        s1: Self::SgnLane,
+        m2: Self::MagLane,
+        s2: Self::SgnLane,
+    ) -> (Self::MagLane, Self::SgnLane);
 
-    /// Lane-level mul formula.
+    /// Lane-level mul formula, operating on the impl's [`Self::MagLane`] /
+    /// [`Self::SgnLane`].
     ///
     /// For F_3: `m_x = m1 & m2; s_x = s1 ^ s2` (Scheinerman 2024 §2.2).
     ///
@@ -113,17 +154,21 @@ pub trait BipedalLikeConfig {
     ///
     /// # Safety
     ///
-    /// Hardware feature underlying `Mag` / `Sgn` must be available.
+    /// Hardware feature underlying [`Self::MagLane`] / [`Self::SgnLane`]
+    /// must be available.
     ///
     /// # Complexity
     ///
     /// `O(1)`: a small constant number of lane-level logical ops.
-    unsafe fn mul_lane<Mag, Sgn>(m1: Mag, s1: Sgn, m2: Mag, s2: Sgn) -> (Mag, Sgn)
-    where
-        Mag: BipedalLogicalLanes,
-        Sgn: BipedalLogicalLanes;
+    unsafe fn mul_lane(
+        m1: Self::MagLane,
+        s1: Self::SgnLane,
+        m2: Self::MagLane,
+        s2: Self::SgnLane,
+    ) -> (Self::MagLane, Self::SgnLane);
 
-    /// Lane-level negation formula.
+    /// Lane-level negation formula, operating on the impl's
+    /// [`Self::MagLane`] / [`Self::SgnLane`].
     ///
     /// For F_3 the canonical `(mag, sgn)` invariant is `sgn & !mag == 0`
     /// (a sgn bit is meaningful only in a non-zero magnitude lane). Under
@@ -139,54 +184,43 @@ pub trait BipedalLikeConfig {
     ///
     /// # Safety
     ///
-    /// Hardware feature underlying `Mag` / `Sgn` must be available.
+    /// Hardware feature underlying [`Self::MagLane`] / [`Self::SgnLane`]
+    /// must be available.
     ///
     /// # Complexity
     ///
     /// `O(1)`: a small constant number of lane-level logical ops.
-    unsafe fn neg_lane<Mag, Sgn>(m: Mag, s: Sgn) -> (Mag, Sgn)
-    where
-        Mag: BipedalLogicalLanes,
-        Sgn: BipedalLogicalLanes;
+    unsafe fn neg_lane(m: Self::MagLane, s: Self::SgnLane) -> (Self::MagLane, Self::SgnLane);
 }
 
 /// Generic batched bipedal-like SIMD framework.
 ///
-/// `C` is the per-prime arithmetic recipe ([`BipedalLikeConfig`]).
-/// `Mag` is the magnitude lane type, `Sgn` the sign lane type — both
-/// implementing [`BipedalLogicalLanes`]. For the F_3 instantiation
-/// [`crate::bipedal::Bipedal3x4`] both lane types are
-/// [`crate::bipedal::Avx2Lane`] and `C = Config3`.
+/// `C` is the per-prime arithmetic recipe ([`BipedalLikeConfig`]). The
+/// magnitude and sign lane shapes come from `C::MagLane` / `C::SgnLane`,
+/// not from extra type parameters — adding a new prime is a single new
+/// [`BipedalLikeConfig`] impl.
 ///
 /// The struct is zero-sized — it carries only a `PhantomData` to mention
-/// the type parameters. All operations are associated functions; callers
+/// the type parameter. All operations are associated functions; callers
 /// invoke them by spelling out the type, e.g.
-/// `Bipedal3x4::run_add_batch(...)`.
+/// `Bipedal3x4::add(...)` (where `Bipedal3x4 = BatchedBipedalLike<Config3>`).
 ///
 /// # Type parameters
 ///
 /// * `C` — per-prime arithmetic recipe implementing [`BipedalLikeConfig`].
-/// * `Mag` — magnitude lane type implementing [`BipedalLogicalLanes`].
-/// * `Sgn` — sign lane type implementing [`BipedalLogicalLanes`].
+///   The lane shape is determined by `C::MagLane` and `C::SgnLane`.
 ///
 /// # Safety
 ///
 /// All `unsafe fn` callers must runtime-detect the hardware feature
-/// underlying `Mag` and `Sgn` before invoking any method.
-pub struct BatchedBipedalLike<
-    C: BipedalLikeConfig,
-    Mag: BipedalLogicalLanes,
-    Sgn: BipedalLogicalLanes,
-> {
-    #[allow(clippy::type_complexity)]
-    _phantom: PhantomData<fn() -> (C, Mag, Sgn)>,
+/// underlying `C::MagLane` and `C::SgnLane` before invoking any method.
+pub struct BatchedBipedalLike<C: BipedalLikeConfig> {
+    _phantom: PhantomData<fn() -> C>,
 }
 
-impl<C, Mag, Sgn> BatchedBipedalLike<C, Mag, Sgn>
+impl<C> BatchedBipedalLike<C>
 where
     C: BipedalLikeConfig,
-    Mag: BipedalLogicalLanes,
-    Sgn: BipedalLogicalLanes,
 {
     /// Lane-level add — delegates to `C::add_lane`.
     ///
@@ -197,15 +231,21 @@ where
     ///
     /// # Safety
     ///
-    /// Hardware feature underlying `Mag` and `Sgn` must be available.
+    /// Hardware feature underlying `C::MagLane` and `C::SgnLane` must be
+    /// available.
     ///
     /// # Complexity
     ///
     /// `O(1)`: dispatched to `C::add_lane` which is itself constant-op-count.
     #[inline(always)]
-    pub unsafe fn add(m1: Mag, s1: Sgn, m2: Mag, s2: Sgn) -> (Mag, Sgn) {
+    pub unsafe fn add(
+        m1: C::MagLane,
+        s1: C::SgnLane,
+        m2: C::MagLane,
+        s2: C::SgnLane,
+    ) -> (C::MagLane, C::SgnLane) {
         // SAFETY: forwarded precondition — hardware feature available.
-        unsafe { C::add_lane::<Mag, Sgn>(m1, s1, m2, s2) }
+        unsafe { C::add_lane(m1, s1, m2, s2) }
     }
 
     /// Lane-level sub — delegates to `C::sub_lane`.
@@ -217,15 +257,21 @@ where
     ///
     /// # Safety
     ///
-    /// Hardware feature underlying `Mag` and `Sgn` must be available.
+    /// Hardware feature underlying `C::MagLane` and `C::SgnLane` must be
+    /// available.
     ///
     /// # Complexity
     ///
     /// `O(1)`: dispatched to `C::sub_lane`.
     #[inline(always)]
-    pub unsafe fn sub(m1: Mag, s1: Sgn, m2: Mag, s2: Sgn) -> (Mag, Sgn) {
+    pub unsafe fn sub(
+        m1: C::MagLane,
+        s1: C::SgnLane,
+        m2: C::MagLane,
+        s2: C::SgnLane,
+    ) -> (C::MagLane, C::SgnLane) {
         // SAFETY: forwarded precondition — hardware feature available.
-        unsafe { C::sub_lane::<Mag, Sgn>(m1, s1, m2, s2) }
+        unsafe { C::sub_lane(m1, s1, m2, s2) }
     }
 
     /// Lane-level mul — delegates to `C::mul_lane`.
@@ -237,15 +283,21 @@ where
     ///
     /// # Safety
     ///
-    /// Hardware feature underlying `Mag` and `Sgn` must be available.
+    /// Hardware feature underlying `C::MagLane` and `C::SgnLane` must be
+    /// available.
     ///
     /// # Complexity
     ///
     /// `O(1)`: dispatched to `C::mul_lane`.
     #[inline(always)]
-    pub unsafe fn mul(m1: Mag, s1: Sgn, m2: Mag, s2: Sgn) -> (Mag, Sgn) {
+    pub unsafe fn mul(
+        m1: C::MagLane,
+        s1: C::SgnLane,
+        m2: C::MagLane,
+        s2: C::SgnLane,
+    ) -> (C::MagLane, C::SgnLane) {
         // SAFETY: forwarded precondition — hardware feature available.
-        unsafe { C::mul_lane::<Mag, Sgn>(m1, s1, m2, s2) }
+        unsafe { C::mul_lane(m1, s1, m2, s2) }
     }
 
     /// Lane-level neg — delegates to `C::neg_lane`.
@@ -256,14 +308,15 @@ where
     ///
     /// # Safety
     ///
-    /// Hardware feature underlying `Mag` and `Sgn` must be available.
+    /// Hardware feature underlying `C::MagLane` and `C::SgnLane` must be
+    /// available.
     ///
     /// # Complexity
     ///
     /// `O(1)`: dispatched to `C::neg_lane`.
     #[inline(always)]
-    pub unsafe fn neg(m: Mag, s: Sgn) -> (Mag, Sgn) {
+    pub unsafe fn neg(m: C::MagLane, s: C::SgnLane) -> (C::MagLane, C::SgnLane) {
         // SAFETY: forwarded precondition — hardware feature available.
-        unsafe { C::neg_lane::<Mag, Sgn>(m, s) }
+        unsafe { C::neg_lane(m, s) }
     }
 }
