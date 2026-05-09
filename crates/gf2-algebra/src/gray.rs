@@ -31,11 +31,13 @@
 /// # Arguments
 ///
 /// * `n` — universe size; the iterator yields `2^n - 1` items. Must
-///   satisfy `n <= 64` so the subset register fits in a `u64`. The
-///   permanent inner loop targets `n <= 16` exhaustively per W1-T6
-///   success criteria, but larger `n` works correctly up to the `u64`
-///   limit; iteration cost is `O(2^n)` so callers will rarely exceed
-///   `n = 36` in practice (epic doc §7.3).
+///   satisfy `n <= 63` because the implementation uses `1u64 << n` to
+///   bound the iteration, and `1u64 << 64` is undefined behaviour per
+///   the Rust reference (shift by the full type width). The permanent
+///   inner loop targets `n <= 16` exhaustively per W1-T6 success
+///   criteria, but larger `n` works correctly up to `n = 63`; iteration
+///   cost is `O(2^n)` so callers will rarely exceed `n = 36` in practice
+///   (epic doc §7.3).
 ///
 /// # Examples
 ///
@@ -55,12 +57,12 @@
 ///
 /// # Panics
 ///
-/// Does not panic. For `n == 0` the iterator yields zero items
-/// (the empty universe has only the empty subset, which is excluded).
-/// For `n > 64` the `1u64 << n` shift would overflow; callers MUST
-/// guarantee `n <= 64`. This is documented but not asserted because
-/// the permanent driver enforces `n <= 64` upstream via matrix
-/// dimension checks.
+/// Panics in debug builds (and is undefined behaviour in release) if
+/// `n >= 64`, because the bound `1u64 << n` shifts by ≥ the type width.
+/// For `n == 0` the iterator yields zero items (the empty universe has
+/// only the empty subset, which is excluded). Callers MUST guarantee
+/// `n <= 63`. The permanent driver enforces `n <= 63` upstream via
+/// matrix dimension checks (epic doc §7.3).
 ///
 /// # Complexity
 ///
@@ -86,9 +88,10 @@
 pub fn gray_code_iter(n: usize) -> impl Iterator<Item = (usize, i8)> {
     // For n == 0 the upper bound `1u64 << 0 == 1` makes the range
     // `1..1` empty, which is the desired behaviour (no non-empty
-    // subsets of the empty universe). For n in 1..=64 the bound
-    // `1u64 << n` is well-defined; the issue contract restricts the
-    // iterator to `n <= 64`.
+    // subsets of the empty universe). For n in 1..=63 the bound
+    // `1u64 << n` is well-defined; `1u64 << 64` is UB per the Rust
+    // reference, so the issue contract restricts the iterator to
+    // `n <= 63`.
     let upper = 1u64 << n;
     (1u64..upper).map(|k| {
         let flip = k.trailing_zeros() as usize;
