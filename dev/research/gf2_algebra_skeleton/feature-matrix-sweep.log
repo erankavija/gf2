@@ -1,0 +1,71 @@
+# gf2-algebra feature-matrix sweep (D1c §6.1)
+# host hipcc available: 1
+# repo root: /home/vkaskivuo/Projects/gf2/.claude/worktrees/agent-e6b1216a
+# date: 2026-05-09T15:24:41+03:00
+
+PASS cell=0 bitmap=000000 args=check -p gf2-algebra --no-default-features 
+PASS cell=1 bitmap=000001 args=check -p gf2-algebra --no-default-features --features serde 
+PASS cell=2 bitmap=000010 args=check -p gf2-algebra --no-default-features --features f7 
+PASS cell=3 bitmap=000011 args=check -p gf2-algebra --no-default-features --features f7\,serde 
+PASS cell=4 bitmap=000100 args=check -p gf2-algebra --no-default-features --features f5 
+PASS cell=5 bitmap=000101 args=check -p gf2-algebra --no-default-features --features f5\,serde 
+PASS cell=6 bitmap=000110 args=check -p gf2-algebra --no-default-features --features f5\,f7 
+PASS cell=7 bitmap=000111 args=check -p gf2-algebra --no-default-features --features f5\,f7\,serde 
+PASS cell=8 bitmap=001000 args=check -p gf2-algebra --no-default-features --features hip 
+PASS cell=9 bitmap=001001 args=check -p gf2-algebra --no-default-features --features hip\,serde 
+PASS cell=10 bitmap=001010 args=check -p gf2-algebra --no-default-features --features hip\,f7 
+PASS cell=11 bitmap=001011 args=check -p gf2-algebra --no-default-features --features hip\,f7\,serde 
+PASS cell=12 bitmap=001100 args=check -p gf2-algebra --no-default-features --features hip\,f5 
+PASS cell=13 bitmap=001101 args=check -p gf2-algebra --no-default-features --features hip\,f5\,serde 
+PASS cell=14 bitmap=001110 args=check -p gf2-algebra --no-default-features --features hip\,f5\,f7 
+PASS cell=15 bitmap=001111 args=check -p gf2-algebra --no-default-features --features hip\,f5\,f7\,serde 
+PASS cell=16 bitmap=010000 args=check -p gf2-algebra --no-default-features --features parallel 
+PASS cell=17 bitmap=010001 args=check -p gf2-algebra --no-default-features --features parallel\,serde 
+PASS cell=18 bitmap=010010 args=check -p gf2-algebra --no-default-features --features parallel\,f7 
+PASS cell=19 bitmap=010011 args=check -p gf2-algebra --no-default-features --features parallel\,f7\,serde 
+PASS cell=20 bitmap=010100 args=check -p gf2-algebra --no-default-features --features parallel\,f5 
+PASS cell=21 bitmap=010101 args=check -p gf2-algebra --no-default-features --features parallel\,f5\,serde 
+PASS cell=22 bitmap=010110 args=check -p gf2-algebra --no-default-features --features parallel\,f5\,f7 
+PASS cell=23 bitmap=010111 args=check -p gf2-algebra --no-default-features --features parallel\,f5\,f7\,serde 
+PASS cell=24 bitmap=011000 args=check -p gf2-algebra --no-default-features --features parallel\,hip 
+PASS cell=25 bitmap=011001 args=check -p gf2-algebra --no-default-features --features parallel\,hip\,serde 
+PASS cell=26 bitmap=011010 args=check -p gf2-algebra --no-default-features --features parallel\,hip\,f7 
+PASS cell=27 bitmap=011011 args=check -p gf2-algebra --no-default-features --features parallel\,hip\,f7\,serde 
+PASS cell=28 bitmap=011100 args=check -p gf2-algebra --no-default-features --features parallel\,hip\,f5 
+PASS cell=29 bitmap=011101 args=check -p gf2-algebra --no-default-features --features parallel\,hip\,f5\,serde 
+PASS cell=30 bitmap=011110 args=check -p gf2-algebra --no-default-features --features parallel\,hip\,f5\,f7 
+PASS cell=31 bitmap=011111 args=check -p gf2-algebra --no-default-features --features parallel\,hip\,f5\,f7\,serde 
+PASS cell=32 bitmap=100000 args=check -p gf2-algebra --no-default-features --features simd 
+PASS cell=33 bitmap=100001 args=check -p gf2-algebra --no-default-features --features simd\,serde 
+PASS cell=34 bitmap=100010 args=check -p gf2-algebra --no-default-features --features simd\,f7 
+PASS cell=35 bitmap=100011 args=check -p gf2-algebra --no-default-features --features simd\,f7\,serde 
+PASS cell=36 bitmap=100100 args=check -p gf2-algebra --no-default-features --features simd\,f5 
+PASS cell=37 bitmap=100101 args=check -p gf2-algebra --no-default-features --features simd\,f5\,serde 
+PASS cell=38 bitmap=100110 args=check -p gf2-algebra --no-default-features --features simd\,f5\,f7 
+PASS cell=39 bitmap=100111 args=check -p gf2-algebra --no-default-features --features simd\,f5\,f7\,serde 
+PASS cell=40 bitmap=101000 args=check -p gf2-algebra --no-default-features --features simd\,hip 
+PASS cell=41 bitmap=101001 args=check -p gf2-algebra --no-default-features --features simd\,hip\,serde 
+PASS cell=42 bitmap=101010 args=check -p gf2-algebra --no-default-features --features simd\,hip\,f7 
+PASS cell=43 bitmap=101011 args=check -p gf2-algebra --no-default-features --features simd\,hip\,f7\,serde 
+PASS cell=44 bitmap=101100 args=check -p gf2-algebra --no-default-features --features simd\,hip\,f5 
+PASS cell=45 bitmap=101101 args=check -p gf2-algebra --no-default-features --features simd\,hip\,f5\,serde 
+PASS cell=46 bitmap=101110 args=check -p gf2-algebra --no-default-features --features simd\,hip\,f5\,f7 
+PASS cell=47 bitmap=101111 args=check -p gf2-algebra --no-default-features --features simd\,hip\,f5\,f7\,serde 
+PASS cell=48 bitmap=110000 args=check -p gf2-algebra --no-default-features --features simd\,parallel 
+PASS cell=49 bitmap=110001 args=check -p gf2-algebra --no-default-features --features simd\,parallel\,serde 
+PASS cell=50 bitmap=110010 args=check -p gf2-algebra --no-default-features --features simd\,parallel\,f7 
+PASS cell=51 bitmap=110011 args=check -p gf2-algebra --no-default-features --features simd\,parallel\,f7\,serde 
+PASS cell=52 bitmap=110100 args=check -p gf2-algebra --no-default-features --features simd\,parallel\,f5 
+PASS cell=53 bitmap=110101 args=check -p gf2-algebra --no-default-features --features simd\,parallel\,f5\,serde 
+PASS cell=54 bitmap=110110 args=check -p gf2-algebra --no-default-features --features simd\,parallel\,f5\,f7 
+PASS cell=55 bitmap=110111 args=check -p gf2-algebra --no-default-features --features simd\,parallel\,f5\,f7\,serde 
+PASS cell=56 bitmap=111000 args=check -p gf2-algebra --no-default-features --features simd\,parallel\,hip 
+PASS cell=57 bitmap=111001 args=check -p gf2-algebra --no-default-features --features simd\,parallel\,hip\,serde 
+PASS cell=58 bitmap=111010 args=check -p gf2-algebra --no-default-features --features simd\,parallel\,hip\,f7 
+PASS cell=59 bitmap=111011 args=check -p gf2-algebra --no-default-features --features simd\,parallel\,hip\,f7\,serde 
+PASS cell=60 bitmap=111100 args=check -p gf2-algebra --no-default-features --features simd\,parallel\,hip\,f5 
+PASS cell=61 bitmap=111101 args=check -p gf2-algebra --no-default-features --features simd\,parallel\,hip\,f5\,serde 
+PASS cell=62 bitmap=111110 args=check -p gf2-algebra --no-default-features --features simd\,parallel\,hip\,f5\,f7 
+PASS cell=63 bitmap=111111 args=check -p gf2-algebra --no-default-features --features simd\,parallel\,hip\,f5\,f7\,serde 
+
+# summary: 64 pass, 0 fail (out of 64)
