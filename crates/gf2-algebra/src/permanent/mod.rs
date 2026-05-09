@@ -24,6 +24,7 @@ pub mod bipedal3;
 pub mod reference;
 pub mod ryser;
 
+pub use bipedal3::permanent_bipedal3;
 pub use reference::permanent_mod3_reference;
 pub use ryser::permanent_ryser;
 
