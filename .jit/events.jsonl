@@ -4522,3 +4522,4 @@
 {"type":"gate_failed","id":"8276274e-464e-4ab7-8fa7-608dd182fc86","issue_id":"1aa0cb99-9918-4910-9c7e-7a11f746822a","timestamp":"2026-05-09T13:21:57.559801710Z","gate_key":"code-review","updated_by":"auto:executor"}
 {"type":"gate_passed","id":"3c11d124-9f83-48de-9511-e401d4eac6a5","issue_id":"b17bec62-138a-4fa4-85a2-dfc60e329327","timestamp":"2026-05-09T13:28:57.928779548Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
 {"type":"gate_passed","id":"1af1bba9-f321-4cc3-ab38-388748178eda","issue_id":"b17bec62-138a-4fa4-85a2-dfc60e329327","timestamp":"2026-05-09T13:28:58.049692923Z","gate_key":"asm-artefact-present","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"025a9cc7-ccbd-4f07-bb01-135d542b9558","issue_id":"b17bec62-138a-4fa4-85a2-dfc60e329327","timestamp":"2026-05-09T13:52:24.540168563Z","gate_key":"code-review","updated_by":"auto:executor"}
