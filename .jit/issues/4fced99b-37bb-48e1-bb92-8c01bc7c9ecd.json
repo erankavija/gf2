@@ -2,9 +2,9 @@
   "id": "4fced99b-37bb-48e1-bb92-8c01bc7c9ecd",
   "title": "Define gf2-algebra Cargo feature-gate matrix",
   "description": "Specify the Cargo feature-gate matrix for `gf2-algebra` — feature names, defaults, and combination compatibility — and produce the CI check matrix recommendation.\n\n## Background\n\n`gf2-algebra` carries multiple feature-gated paths. This issue settles the feature names, defaults, and combination compatibility rules.\n\nProposed feature set (input strawman, may be refined here):\n\n- `simd` — turns on `gf2-kernels-simd` SIMD dispatch (default-on)\n- `parallel` — turns on `rayon` parallel permanent (default-on)\n- `hip` — turns on HIP/ROCm GPU dispatch (default-off; opt-in like `gf2-kernels-hip`)\n- `f5` — compile $\\mathbb{F}_5$ types and permanent (default-on once $\\mathbb{F}_5$ work lands)\n- `f7` — compile $\\mathbb{F}_7$ types and permanent (default-on once $\\mathbb{F}_7$ work lands)\n- `serde` — Serde de/serialization for packed types (default-off)\n\nCross-feature compatibility: every combination of $\\{$`simd`, `parallel`, `hip`, `f5`, `f7`, `serde`$\\}$ must build cleanly.\n\nOutput: an updated `Cargo.toml` skeleton fragment in `dev/plans/d1c_feature_matrix.md` plus a CI check matrix recommendation.\n\n## Success Criteria\n\n- [ ] [hard] `dev/plans/d1c_feature_matrix.md` exists and is attached via `jit doc add`.\n- [ ] [hard] Every feature is named, defaulted, and described in one line.\n- [ ] [hard] A $2^N$-cell compatibility matrix lists every feature combination, with the verification approach stated (running `cargo check` over the matrix at the crate-skeleton stage).\n- [ ] [hard] The doc explicitly resolves: `simd` propagation to `gf2-kernels-simd`'s own `simd` feature; whether `hip` requires `simd`; default-on status of `f5`/`f7` once that work lands.",
-  "state": "ready",
+  "state": "done",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude-opus-4-7",
   "dependencies": [
     "9fe275d3-0b8d-49ed-99bf-42142d63d5d9"
   ],
@@ -12,14 +12,33 @@
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-09T09:52:15.820999667Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-09T09:52:05.861192927Z"
+    }
+  },
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/plans/d1c_feature_matrix.md",
+      "commit": null,
+      "label": "D1c: gf2-algebra feature-gate matrix",
+      "doc_type": "design",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:task",
     "epic:gf2-algebra-permanent",
     "component:gf2-algebra"
   ],
   "created_at": "2026-04-30T21:39:12.935543942+00:00",
-  "updated_at": "2026-05-09T09:06:45.628090372+00:00"
+  "updated_at": "2026-05-09T09:56:07.009540310+00:00"
 }
