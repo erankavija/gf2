@@ -94,6 +94,10 @@ pub trait PackedField<F: FiniteField>: Copy + Eq + core::fmt::Debug {
 
     /// All-lanes-zero constant.
     ///
+    /// # Complexity
+    ///
+    /// `O(1)`: returns a constant-width all-zero encoding.
+    ///
     /// # Examples
     ///
     /// ```
@@ -104,6 +108,10 @@ pub trait PackedField<F: FiniteField>: Copy + Eq + core::fmt::Debug {
     fn zero() -> Self;
 
     /// All-lanes-one constant.
+    ///
+    /// # Complexity
+    ///
+    /// `O(1)`: returns a constant-width all-one encoding.
     ///
     /// # Examples
     ///
@@ -120,6 +128,12 @@ pub trait PackedField<F: FiniteField>: Copy + Eq + core::fmt::Debug {
     /// # Arguments
     ///
     /// * `x` — scalar to be replicated across all `LANES` lanes.
+    ///
+    /// # Complexity
+    ///
+    /// `O(1)`: a fixed-width broadcast irrespective of `LANES`, since
+    /// `LANES` is a compile-time constant and the encoded result is one
+    /// machine value (or a fixed-tuple of machine values).
     ///
     /// # Examples
     ///
@@ -138,6 +152,12 @@ pub trait PackedField<F: FiniteField>: Copy + Eq + core::fmt::Debug {
     ///
     /// * `rhs` — the other operand; lanes are added pointwise.
     ///
+    /// # Complexity
+    ///
+    /// `O(1)`: a fixed number of word-level bitwise ops, independent of
+    /// `LANES` (the per-lane work is implicit in the encoding's
+    /// bit-parallel formulas).
+    ///
     /// # Examples
     ///
     /// ```
@@ -154,6 +174,11 @@ pub trait PackedField<F: FiniteField>: Copy + Eq + core::fmt::Debug {
     ///
     /// * `rhs` — the operand subtracted from `self` lane-by-lane.
     ///
+    /// # Complexity
+    ///
+    /// `O(1)`: a fixed number of word-level bitwise ops, independent of
+    /// `LANES`.
+    ///
     /// # Examples
     ///
     /// ```
@@ -165,6 +190,11 @@ pub trait PackedField<F: FiniteField>: Copy + Eq + core::fmt::Debug {
     fn sub(self, rhs: Self) -> Self;
 
     /// Lane-wise additive inverse.
+    ///
+    /// # Complexity
+    ///
+    /// `O(1)`: a fixed number of word-level bitwise ops, independent of
+    /// `LANES`.
     ///
     /// # Examples
     ///
@@ -180,6 +210,11 @@ pub trait PackedField<F: FiniteField>: Copy + Eq + core::fmt::Debug {
     /// # Arguments
     ///
     /// * `rhs` — the other operand; lanes are multiplied pointwise.
+    ///
+    /// # Complexity
+    ///
+    /// `O(1)`: a fixed number of word-level bitwise ops, independent of
+    /// `LANES`.
     ///
     /// # Examples
     ///
@@ -201,6 +236,10 @@ pub trait PackedField<F: FiniteField>: Copy + Eq + core::fmt::Debug {
     ///
     /// Panics if `i >= Self::LANES`.
     ///
+    /// # Complexity
+    ///
+    /// `O(1)`: bit-extract at a fixed index plus a constant decode.
+    ///
     /// # Examples
     ///
     /// ```
@@ -221,6 +260,10 @@ pub trait PackedField<F: FiniteField>: Copy + Eq + core::fmt::Debug {
     ///
     /// Panics if `i >= Self::LANES`.
     ///
+    /// # Complexity
+    ///
+    /// `O(1)`: a constant number of bit-mask updates at a fixed index.
+    ///
     /// # Examples
     ///
     /// ```
@@ -236,6 +279,11 @@ pub trait PackedField<F: FiniteField>: Copy + Eq + core::fmt::Debug {
     ///
     /// Implementations MUST canonicalise: a redundant non-canonical
     /// "zero" codeword (e.g. bipedal `(0, 1)`) still answers `true`.
+    ///
+    /// # Complexity
+    ///
+    /// `O(1)`: a constant-width comparison against the all-zero encoding,
+    /// independent of `LANES`.
     ///
     /// # Examples
     ///
@@ -290,6 +338,11 @@ pub trait PackedFieldVec<F: FiniteField>: Clone + Eq + core::fmt::Debug {
     ///
     /// * `len` — number of `F`-elements (lanes) the vector holds.
     ///
+    /// # Complexity
+    ///
+    /// `O(len / Self::Element::LANES)` word-level allocations and zero
+    /// writes. For `len = 0` no heap memory is reserved.
+    ///
     /// # Examples
     ///
     /// ```
@@ -306,6 +359,12 @@ pub trait PackedFieldVec<F: FiniteField>: Clone + Eq + core::fmt::Debug {
     ///
     /// * `xs` — slice of field elements; index `i` becomes element `i`.
     ///
+    /// # Complexity
+    ///
+    /// `O(xs.len())` element-level encodes. The implementation MAY use
+    /// word-level packing internally, but the asymptotic bound is
+    /// linear in the input length.
+    ///
     /// # Examples
     ///
     /// ```
@@ -318,6 +377,10 @@ pub trait PackedFieldVec<F: FiniteField>: Clone + Eq + core::fmt::Debug {
 
     /// Number of `F`-elements stored.
     ///
+    /// # Complexity
+    ///
+    /// `O(1)`: a stored length field is returned directly.
+    ///
     /// # Examples
     ///
     /// ```
@@ -328,6 +391,10 @@ pub trait PackedFieldVec<F: FiniteField>: Clone + Eq + core::fmt::Debug {
     fn len(&self) -> usize;
 
     /// `true` iff `len() == 0`.
+    ///
+    /// # Complexity
+    ///
+    /// `O(1)`: a single comparison against zero.
     ///
     /// # Examples
     ///
@@ -350,6 +417,11 @@ pub trait PackedFieldVec<F: FiniteField>: Clone + Eq + core::fmt::Debug {
     ///
     /// Panics if `i >= self.len()`.
     ///
+    /// # Complexity
+    ///
+    /// `O(1)`: a single word index plus a constant-width bit-extract and
+    /// decode.
+    ///
     /// # Examples
     ///
     /// ```
@@ -368,6 +440,12 @@ pub trait PackedFieldVec<F: FiniteField>: Clone + Eq + core::fmt::Debug {
     /// # Panics
     ///
     /// Panics if `self.len() != rhs.len()`.
+    ///
+    /// # Complexity
+    ///
+    /// `O(self.len() / Self::Element::LANES)` word-level adds, i.e.
+    /// `O(self.len())` lane-equivalent work, plus a final tail-mask
+    /// step that is amortised `O(1)`.
     ///
     /// # Examples
     ///
@@ -390,6 +468,12 @@ pub trait PackedFieldVec<F: FiniteField>: Clone + Eq + core::fmt::Debug {
     ///
     /// Panics if `self.len() != rhs.len()`.
     ///
+    /// # Complexity
+    ///
+    /// `O(self.len() / Self::Element::LANES)` word-level subtracts, i.e.
+    /// `O(self.len())` lane-equivalent work, plus a final tail-mask
+    /// step that is amortised `O(1)`.
+    ///
     /// # Examples
     ///
     /// ```
@@ -411,6 +495,12 @@ pub trait PackedFieldVec<F: FiniteField>: Clone + Eq + core::fmt::Debug {
     ///
     /// Panics if `self.len() != rhs.len()`.
     ///
+    /// # Complexity
+    ///
+    /// `O(self.len() / Self::Element::LANES)` word-level multiplies,
+    /// i.e. `O(self.len())` lane-equivalent work, plus a final
+    /// tail-mask step that is amortised `O(1)`.
+    ///
     /// # Examples
     ///
     /// ```
@@ -423,6 +513,11 @@ pub trait PackedFieldVec<F: FiniteField>: Clone + Eq + core::fmt::Debug {
     fn mul_assign(&mut self, rhs: &Self);
 
     /// `true` iff every element is the additive identity of `F`.
+    ///
+    /// # Complexity
+    ///
+    /// `O(self.len() / Self::Element::LANES)` word-level checks; early
+    /// exit on the first non-zero word is permitted but not required.
     ///
     /// # Examples
     ///
@@ -561,6 +656,11 @@ pub mod bipedal3 {
         ///
         /// * `r` — second operand; lanes added pointwise mod 3.
         ///
+        /// # Complexity
+        ///
+        /// `O(1)`: exactly six bitwise ops on a fixed pair of `u64`s,
+        /// independent of the 64 lanes packed inside.
+        ///
         /// # Examples
         ///
         /// ```
@@ -584,6 +684,11 @@ pub mod bipedal3 {
         /// # Arguments
         ///
         /// * `r` — second operand; lanes subtracted pointwise mod 3.
+        ///
+        /// # Complexity
+        ///
+        /// `O(1)`: exactly six bitwise ops on a fixed pair of `u64`s,
+        /// independent of the 64 lanes packed inside.
         ///
         /// # Examples
         ///
@@ -609,6 +714,11 @@ pub mod bipedal3 {
         ///
         /// * `r` — second operand; lanes multiplied pointwise mod 3.
         ///
+        /// # Complexity
+        ///
+        /// `O(1)`: exactly two bitwise ops on a fixed pair of `u64`s,
+        /// independent of the 64 lanes packed inside.
+        ///
         /// # Examples
         ///
         /// ```
@@ -626,6 +736,11 @@ pub mod bipedal3 {
         }
 
         /// Negation: zero stays zero; nonzero flips sign.
+        ///
+        /// # Complexity
+        ///
+        /// `O(1)`: a single bitwise XOR on a fixed pair of `u64`s,
+        /// independent of the 64 lanes packed inside.
         ///
         /// # Examples
         ///
@@ -675,10 +790,7 @@ pub mod bipedal3 {
             match x.value() {
                 0 => Self::ZERO,
                 1 => Self::ONE,
-                _ => Self {
-                    mag: !0,
-                    sgn: !0,
-                }, // 2 ≡ −1
+                _ => Self { mag: !0, sgn: !0 }, // 2 ≡ −1
             }
         }
 
@@ -785,7 +897,7 @@ pub mod bipedal3 {
         }
 
         fn mask_tail(&mut self) {
-            if self.len % Self::ELEMS_PER_WORD == 0 {
+            if self.len.is_multiple_of(Self::ELEMS_PER_WORD) {
                 return;
             }
             if let Some(last) = self.mag.last_mut() {
@@ -806,6 +918,14 @@ pub mod bipedal3 {
         /// This stub returns `Fp<3>::ZERO` unconditionally — the real
         /// implementation lives in W2 / W3. The signature is what
         /// matters for the trait surface.
+        ///
+        /// # Complexity
+        ///
+        /// Real implementation (W2 / W3): `O(self.len() / 64)`
+        /// word-level multiplies plus an `O(log 64)` lane-fold to
+        /// reduce the surviving pair of `u64` planes to a single F_3
+        /// element. The stub body is `O(1)` because it short-circuits
+        /// to `F3::new(0)`.
         ///
         /// # Examples
         ///
@@ -967,6 +1087,12 @@ pub mod bipedal3 {
         ///
         /// * `n` — side length of the square matrix.
         ///
+        /// # Complexity
+        ///
+        /// `O(n^2 / 64)` word-level zero writes (`n` columns each with
+        /// `n` lanes packed into `⌈n / 64⌉` words), i.e. `O(n^2)`
+        /// lane-equivalent work.
+        ///
         /// # Examples
         ///
         /// ```
@@ -982,6 +1108,10 @@ pub mod bipedal3 {
         }
 
         /// Side length.
+        ///
+        /// # Complexity
+        ///
+        /// `O(1)`: returns the stored side-length field directly.
         ///
         /// # Examples
         ///
@@ -1004,6 +1134,12 @@ pub mod bipedal3 {
         ///
         /// Panics if `j >= self.n()`.
         ///
+        /// # Complexity
+        ///
+        /// `O(1)`: a single slice index returns a borrow of the
+        /// pre-stored column. (The column itself owns `O(n / 64)` words
+        /// of storage, but the borrow is constant-time.)
+        ///
         /// # Examples
         ///
         /// ```
@@ -1025,6 +1161,12 @@ pub mod bipedal3 {
         /// `permanent_bipedal3_multi` (W3/T14) will live in `gf2-algebra`
         /// per D1a §2 and replace this shell. The stub exists only to
         /// confirm the trait surface compiles.
+        ///
+        /// # Complexity
+        ///
+        /// Stub body: `O(1)` — short-circuits to `F3::new(0)`. The real
+        /// implementation will be Gray-code Ryser at `O(n · 2^n)` field
+        /// operations, matching the `Permanent::permanent` contract.
         ///
         /// # Examples
         ///
@@ -1197,7 +1339,9 @@ mod tests {
 
     fn build_pair(len: usize) -> (Vec<F3>, Vec<F3>, Bipedal3Vec, Bipedal3Vec) {
         let xs: Vec<F3> = (0..len).map(|i| F3::new((i as u64) % 3)).collect();
-        let ys: Vec<F3> = (0..len).map(|i| F3::new(((i as u64) * 2 + 1) % 3)).collect();
+        let ys: Vec<F3> = (0..len)
+            .map(|i| F3::new(((i as u64) * 2 + 1) % 3))
+            .collect();
         let a = Bipedal3Vec::from_field_slice(&xs);
         let b = Bipedal3Vec::from_field_slice(&ys);
         (xs, ys, a, b)
@@ -1329,19 +1473,18 @@ mod tests {
     }
 
     fn arb_bipedal3() -> impl Strategy<Value = (Bipedal3, [F3; 64])> {
-        prop::array::uniform32(arb_fp3())
-            .prop_flat_map(|first32| {
-                prop::array::uniform32(arb_fp3()).prop_map(move |last32| {
-                    let mut lanes = [F3::new(0); 64];
-                    lanes[..32].copy_from_slice(&first32);
-                    lanes[32..].copy_from_slice(&last32);
-                    let mut v = <Bipedal3 as PackedField<F3>>::zero();
-                    for (i, x) in lanes.iter().enumerate() {
-                        v = v.with_lane(i, *x);
-                    }
-                    (v, lanes)
-                })
+        prop::array::uniform32(arb_fp3()).prop_flat_map(|first32| {
+            prop::array::uniform32(arb_fp3()).prop_map(move |last32| {
+                let mut lanes = [F3::new(0); 64];
+                lanes[..32].copy_from_slice(&first32);
+                lanes[32..].copy_from_slice(&last32);
+                let mut v = <Bipedal3 as PackedField<F3>>::zero();
+                for (i, x) in lanes.iter().enumerate() {
+                    v = v.with_lane(i, *x);
+                }
+                (v, lanes)
             })
+        })
     }
 
     fn arb_bipedal3_vec(max_len: usize) -> impl Strategy<Value = (Bipedal3Vec, Vec<F3>)> {

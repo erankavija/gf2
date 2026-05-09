@@ -2,7 +2,7 @@
   "id": "9fe275d3-0b8d-49ed-99bf-42142d63d5d9",
   "title": "Specify PackedField and Permanent trait surface",
   "description": "Specify the exact Rust trait surface for `PackedField<F: FiniteField>` and `Permanent<F>` in `gf2-algebra`, then prove out the API by demonstrating `Bipedal3` $:$ `PackedField<Fp<3>>` against a stub crate.\n\n## Background\n\n⚠ **User approval required before this issue can close** — the trait surface chosen here freezes the public API for the entire epic; downstream foundation/algorithm/SIMD work depends on it.\n\nA `Bipedal3` value packs 64 $\\mathbb{F}_3$ elements into two `u64`s; it is **not** a single field element and must not implement `FiniteField`. The epic introduces a new trait `PackedField<F: FiniteField>` for lane-parallel arithmetic over an underlying scalar field, plus a companion `Permanent<F>` trait. The strawman is in §6 of the linked epic design doc.\n\nThis issue produces:\n\n1. The exact Rust signatures for `PackedField<F>` and `PackedFieldVec<F>` (variable-length packed vectors, used for matrix rows/columns).\n2. The exact Rust signature for `Permanent<F>`.\n3. A demonstration that `Bipedal3` $:$ `PackedField<Fp<3>>` and `Bipedal3Vec` $:$ `PackedFieldVec<Fp<3>>` compile cleanly against the proposed traits, in a stub crate under `dev/research/packed_field_stub/`.\n4. An explicit decision on whether `splat`, `with_lane`, `all_zero`, `fold_mul` belong in the trait or as inherent methods.\n\nOutput: an updated trait-surface section in `dev/plans/d1b_packed_field_api.md`, plus a stub crate under `dev/research/`.\n\n## Success Criteria\n\n- [ ] [hard] `dev/plans/d1b_packed_field_api.md` exists and is attached via `jit doc add`.\n- [ ] [hard] `dev/research/packed_field_stub/` builds with `cd dev/research/packed_field_stub && cargo check --release` and demonstrates `Bipedal3` $:$ `PackedField<Fp<3>>`. (Amended 2026-05-09 to use the `cd` form because the stub is a standalone non-workspace crate per the project's `dev/research/<crate>/` convention; the original wording `cargo check -p packed_field_stub --release` would have required workspace membership, which contradicts CLAUDE.md's amended unsafe-isolation rule that scopes such stubs to standalone non-workspace status. Same pattern as `dev/research/rns_prototype/`, `dev/research/f5_packing/`, etc.)\n- [ ] [hard] The doc explicitly resolves: `LANES` const vs runtime; `splat` placement; `fold_mul` placement; `Eq` vs `PartialEq`; lane-extraction semantics on the alternative-zero $(0, 1)$ codeword.\n- [ ] [hard] User approval is recorded in this issue's description as a `## Approval` section before transitioning to `done`. (Amended 2026-05-09 to use the project's actual sketch-approval convention; matches the precedent set by D2 — `a0c0a45f` — and D3 — `4aaa6e4d` — earlier the same session. JIT has no comment primitive; description-edit is the canonical mechanism.)\n\n## Approval\n\nUser approved the trait surface on 2026-05-09 via the project-lead session-1 escalation (recommended option: \"Approve\").\n\nApproved decisions:\n- `LANES` is a `const usize`. Must be positive; power-of-two preferred for SIMD friendliness but not required (so future `Bipedal5` can use `LANES = 21`).\n- `splat` is a trait method on `PackedField<F>`.\n- `fold_mul` is inherent on each concrete `PackedFieldVec` impl (encoding-specific reduction tree); NOT a trait method.\n- `Eq` is required (not just `PartialEq`); semantics is canonical-decode equality so the alternative-zero `(mag=0, sgn=1)` codeword compares equal to canonical zero.\n- `lane(i)` canonicalises (alt-zero returns `Fp<3>::ZERO`); `with_lane` only ever writes the canonical encoding; `all_zero` is true for both alt-zero and canonical zero.\n- `Permanent` trait: associated `type Field` (not generic `<F>` parameter), single method `fn permanent(&self) -> Self::Field`; matrix storage is the implementor.\n\nThe trait-dispatch layer is a thin forwarder over inherent methods on the concrete types (e.g., `Bipedal3::add_const`), so V1 Lean extraction can target the inherent methods without trait-dispatch indirection per D2 §5–§6.\n\nThis trait surface is locked at the W6 `gate:api-freeze` per epic §13.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:claude-opus-4-7",
   "dependencies": [
@@ -14,14 +14,14 @@
   ],
   "gates_status": {
     "code-review": {
-      "status": "failed",
+      "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-09T08:34:54.768013751Z"
+      "updated_at": "2026-05-09T09:03:16.894874693Z"
     },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-09T08:30:38.571770063Z"
+      "updated_at": "2026-05-09T09:03:07.532784525Z"
     }
   },
   "context": {},
@@ -40,5 +40,5 @@
     "component:gf2-algebra"
   ],
   "created_at": "2026-04-30T21:39:02.975070273+00:00",
-  "updated_at": "2026-05-09T08:37:42.620325714+00:00"
+  "updated_at": "2026-05-09T09:06:45.519979501+00:00"
 }
