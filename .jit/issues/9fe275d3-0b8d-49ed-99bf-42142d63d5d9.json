@@ -2,7 +2,7 @@
   "id": "9fe275d3-0b8d-49ed-99bf-42142d63d5d9",
   "title": "Specify PackedField and Permanent trait surface",
   "description": "Specify the exact Rust trait surface for `PackedField<F: FiniteField>` and `Permanent<F>` in `gf2-algebra`, then prove out the API by demonstrating `Bipedal3` $:$ `PackedField<Fp<3>>` against a stub crate.\n\n## Background\n\n⚠ **User approval required before this issue can close** — the trait surface chosen here freezes the public API for the entire epic; downstream foundation/algorithm/SIMD work depends on it.\n\nA `Bipedal3` value packs 64 $\\mathbb{F}_3$ elements into two `u64`s; it is **not** a single field element and must not implement `FiniteField`. The epic introduces a new trait `PackedField<F: FiniteField>` for lane-parallel arithmetic over an underlying scalar field, plus a companion `Permanent<F>` trait. The strawman is in §6 of the linked epic design doc.\n\nThis issue produces:\n\n1. The exact Rust signatures for `PackedField<F>` and `PackedFieldVec<F>` (variable-length packed vectors, used for matrix rows/columns).\n2. The exact Rust signature for `Permanent<F>`.\n3. A demonstration that `Bipedal3` $:$ `PackedField<Fp<3>>` and `Bipedal3Vec` $:$ `PackedFieldVec<Fp<3>>` compile cleanly against the proposed traits, in a stub crate under `dev/research/packed_field_stub/`.\n4. An explicit decision on whether `splat`, `with_lane`, `all_zero`, `fold_mul` belong in the trait or as inherent methods.\n\nOutput: an updated trait-surface section in `dev/plans/d1b_packed_field_api.md`, plus a stub crate under `dev/research/`.\n\n## Success Criteria\n\n- [ ] [hard] `dev/plans/d1b_packed_field_api.md` exists and is attached via `jit doc add`.\n- [ ] [hard] `dev/research/packed_field_stub/` builds with `cargo check -p packed_field_stub --release` and demonstrates `Bipedal3` $:$ `PackedField<Fp<3>>`.\n- [ ] [hard] The doc explicitly resolves: `LANES` const vs runtime; `splat` placement; `fold_mul` placement; `Eq` vs `PartialEq`; lane-extraction semantics on the alternative-zero $(0, 1)$ codeword.\n- [ ] [hard] The user has signed off on the trait surface (recorded as a comment / approval note on this issue) before transitioning to `done`.",
-  "state": "backlog",
+  "state": "ready",
   "priority": "normal",
   "assignee": null,
   "dependencies": [
@@ -21,5 +21,5 @@
     "component:gf2-algebra"
   ],
   "created_at": "2026-04-30T21:39:02.975070273+00:00",
-  "updated_at": "2026-05-01T06:29:37.848918941+00:00"
+  "updated_at": "2026-05-09T07:13:57.166187950+00:00"
 }

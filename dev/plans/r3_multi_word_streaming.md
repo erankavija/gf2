@@ -384,7 +384,12 @@ and the bit that just changed is `g(k) ^ g(k-1) = 1 << flip(k)`. ADD when
 that bit is now set in `g(k)` (the column has just entered the subset),
 SUBTRACT when it is now clear (the column has just left).
 
-The shared `gray_code_iter` (W1-T6) yields `(k, flip)` pairs; this issue
+The shared `gray_code_iter` (W1-T6) yields just the `flip` index per step,
+in the order `k = 1, 2, ...`; the step counter `k` is recovered at the call
+site via `.enumerate()` (which numbers the yielded items starting at `0`,
+matching the empty-subset / `k = 0` convention discussed below). This
+matches the contract used throughout the epic doc; see
+`dev/plans/gf2_algebra_permanent.md` §7.3 (line 258) and §16. This R3 issue
 assumes that interface and does not redesign it.
 
 ---
@@ -559,12 +564,19 @@ fn fold_mul_words(mag: &[u64], sgn: &[u64]) -> Bipedal3 {
 
 Notes on the pseudocode for the W3-T14 implementer:
 
-- The `gray_code_iter` interface in W1-T6 yields the *empty subset first*
-  (k = 0, flip undefined), then `k = 1, 2, ...`. The `.skip(1)` here pairs
-  with the explicit empty-subset accumulation above. If W1-T6 chooses a
-  different convention, adjust accordingly — the *only* consequence is
-  whether the `k = 0` term goes through the explicit `add_signed` or
-  through the loop body's first iteration.
+- The `gray_code_iter` interface in W1-T6 yields a stream of `flip` indices
+  only (not `(k, flip)` pairs); the step counter `k` is recovered at the
+  call site via `.enumerate()`. The first yielded item corresponds to the
+  empty subset (`k = 0` after `.enumerate()`, with `flip` undefined / a
+  sentinel; the loop body never reads it), then `k = 1, 2, ...` give the
+  real flip indices. The `.skip(1)` here drops the sentinel and pairs with
+  the explicit empty-subset accumulation above. If W1-T6 chooses a
+  different convention (e.g. starting the stream at `k = 1` so no
+  `.skip(1)` is needed, or yielding `(k, flip)` pairs directly), adjust
+  accordingly. The *only* consequences are (a) whether `.skip(1)` is
+  needed and (b) whether the `k = 0` term goes through the explicit
+  `add_signed` above or through the loop body's first iteration. The shape
+  used here matches the epic doc §7.3.
 - The `Bipedal3::lane_fold_mul` referenced above does not exist yet at
   design time; W2-T9 ships it as part of the single-word fast path. T14
   reuses that primitive verbatim.

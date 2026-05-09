@@ -2,7 +2,7 @@
   "id": "60c30e2d-f332-4ef5-bad3-548fa7753b6f",
   "title": "Multi-word streaming column-sum cache-blocking design",
   "description": "Design the cache-blocking and memory-layout strategy for the multi-word streaming column-sum used by the permanent algorithm at $n > 64$.\n\n## Background\n\nFor $n > 64$ the permanent's column-sum vector spans multiple `u64`-pairs and the Ryser inner loop walks down a column at each Gray-code step. Without cache blocking, large-$n$ permanents will be memory-bound. This issue produces the cache-blocking and layout design that the multi-word implementation issue consumes directly.\n\nInputs:\n\n- Matrix layout: column-major bipedal pairs (uniform with the $n \\le 64$ single-word path).\n- Inner loop: `column_sum[w] ±= A.col(flip)[w]` for `w in 0..ceil(n/64)`, then `prod = fold_mul(column_sum)`.\n- L1 footprint target: column_sum + touched column $\\le 32$ KiB (Zen 3 L1d).\n- Roofline analysis: peak bytes/sec from L1 vs the inner loop's bytes/iteration.\n\nOutput: `dev/plans/r3_multi_word_streaming.md`, including:\n\n1. Memory layout diagram for `Bipedal3Matrix` row-major vs column-major (column-major; justify).\n2. Cache-blocking strategy for $n > 64$ (e.g., chunk size for inner loop iteration).\n3. Roofline estimate (bytes/iteration, expected GB/s).\n4. The exact Rust pseudocode for the multi-word streaming inner loop.\n\n## Success Criteria\n\n- [ ] [hard] `dev/plans/r3_multi_word_streaming.md` exists and is attached via `jit doc add`.\n- [ ] [hard] The doc includes a memory-layout decision (column-major vs row-major) with rationale.\n- [ ] [hard] The doc includes a roofline estimate citing Zen 3 L1/L2/L3 and DRAM bandwidth numbers.\n- [ ] [hard] The doc presents Rust pseudocode for the streaming inner loop precise enough for direct implementation.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:claude-opus-4-7",
   "dependencies": [],
@@ -11,15 +11,15 @@
     "code-review"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-08T23:16:44.938337247Z"
-    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-08T22:36:40.799471547Z"
+      "updated_at": "2026-05-09T07:04:00.281558390Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-09T07:12:18.489643389Z"
     }
   },
   "context": {},
@@ -38,5 +38,5 @@
     "component:gf2-algebra"
   ],
   "created_at": "2026-04-30T21:40:17.463505824+00:00",
-  "updated_at": "2026-05-08T23:18:30.438323070+00:00"
+  "updated_at": "2026-05-09T07:15:03.539289240+00:00"
 }
