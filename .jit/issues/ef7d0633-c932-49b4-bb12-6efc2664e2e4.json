@@ -2,7 +2,7 @@
   "id": "ef7d0633-c932-49b4-bb12-6efc2664e2e4",
   "title": "Bipedal3Matrix column-major + transpose tests",
   "description": "Implement `Bipedal3Matrix` in column-major layout (per the R3 design SSOT) with row/column accessors and transpose tests.\n\n## Background\n\nThe R3 multi-word streaming column-sum design (issue `60c30e2d`) chose column-major layout for `Bipedal3Matrix` because Ryser's inner loop walks down a column at each Gray-code step. Storing matrices column-major aligns each column with a contiguous `Bipedal3Vec`, which the streaming inner loop processes word-at-a-time without strided access.\n\nThis is the SSOT layout choice for the entire epic. T7's generic `permanent_ryser` and T9's `permanent_bipedal3` both consume this layout.\n\n## Success Criteria\n\n- [ ] [hard] `Bipedal3Matrix` stores rows × cols as a single `Bipedal3Vec` per column (column-major).\n- [ ] [hard] Constructor from a row-major `&[Fp<3>]` slice exists, plus the inverse round-trip accessor (lane-by-lane decode to row-major).\n- [ ] [hard] `column(i) -> &Bipedal3Vec` and `row(i) -> Bipedal3Vec` accessors exist; row access reconstructs by gather-decode.\n- [ ] [hard] Transpose round-trip: `M.transpose().transpose()` is bit-equal to `M` on 100 random matrices for shapes covering rectangular non-multiples-of-64.\n- [ ] [hard] Word-boundary tests cover dimensions where rows or cols hit {1, 63, 64, 65}.\n- [ ] [hard] `cargo nextest run -p gf2-algebra --release --profile ci` passes.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:claude",
   "dependencies": [
@@ -20,9 +20,9 @@
       "updated_at": "2026-05-09T21:28:23.206544008Z"
     },
     "code-review": {
-      "status": "failed",
+      "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-09T21:28:58.178093394Z"
+      "updated_at": "2026-05-09T22:40:29.321130759Z"
     },
     "cargo-ci": {
       "status": "passed",
@@ -38,5 +38,5 @@
     "component:gf2-algebra"
   ],
   "created_at": "2026-05-09T09:42:51.010454583+00:00",
-  "updated_at": "2026-05-09T21:32:34.578828136+00:00"
+  "updated_at": "2026-05-09T22:44:37.641075424+00:00"
 }

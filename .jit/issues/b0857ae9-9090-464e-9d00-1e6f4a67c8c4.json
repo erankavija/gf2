@@ -6,8 +6,8 @@
   "priority": "normal",
   "assignee": null,
   "dependencies": [
-    "ef7d0633-c932-49b4-bb12-6efc2664e2e4",
-    "94870b84-6772-49eb-849a-2d1a5256edc2"
+    "93e5a5e8-3ee6-43b8-9c93-41332f9626ae",
+    "ef7d0633-c932-49b4-bb12-6efc2664e2e4"
   ],
   "gates_required": [
     "cargo-ci",
@@ -23,5 +23,5 @@
     "component:gf2-algebra"
   ],
   "created_at": "2026-05-09T09:43:37.190776575+00:00",
-  "updated_at": "2026-05-09T09:49:31.899127028+00:00"
+  "updated_at": "2026-05-09T22:45:43.574505658+00:00"
 }
