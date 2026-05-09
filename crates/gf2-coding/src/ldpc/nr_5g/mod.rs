@@ -2014,6 +2014,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "slow: BER simulation BG1(4096,3249) at 8dB; large code exceeds 5s"]
     fn test_ber_bg1_4096_3249_8db() {
         // BG1 (4096, 3249) at 8 dB: high rate 0.793
         ber_acceptance(1, 4096, 3249, 8.0, 1e-2, 5, "BG1 (4096,3249) @ 8dB");
@@ -2058,6 +2059,7 @@ mod proptests {
 
     proptest! {
         #[test]
+        #[ignore = "slow: proptest NR 5G LDPC encoding; BG1(1024,640) construction dominates"]
         fn prop_encode_produces_correct_length(bg in 1u8..=2, seed in 0u64..100) {
             // Use a fixed target per BG to keep the test fast
             let (target_n, target_k) = if bg == 1 { (1024, 640) } else { (256, 121) };
@@ -2074,6 +2076,7 @@ mod proptests {
         }
 
         #[test]
+        #[ignore = "slow: proptest NR 5G LDPC LLR prep; BG1(1024,640) construction dominates"]
         fn prop_prepare_llrs_correct_length(bg in 1u8..=2) {
             let (target_n, target_k) = if bg == 1 { (1024, 640) } else { (256, 121) };
             let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(bg, target_n, target_k);

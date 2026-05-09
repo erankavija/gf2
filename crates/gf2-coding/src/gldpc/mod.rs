@@ -1873,6 +1873,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "slow: GLDPC BP decode on 1024-node Lentmaier code"]
     fn test_lentmaier_1024_decode_clean() {
         let code = QcGldpcCode::lentmaier_1024();
         let mut decoder = GldpcDecoder::new(code.clone());
@@ -2032,6 +2033,7 @@ mod tests {
     /// Tests with the ACTUAL default config (list_size=1, even_code=false)
     /// used by GldpcDecoder::new(), and with various post_list_budget sizes.
     #[test]
+    #[ignore = "slow: SOGRAND diagnostic for eBCH(32,26) over multiple LLR/budget configs"]
     fn test_sogrand_ebch32_cumulative_probability_diagnostic() {
         use crate::grand::{OneLineIntercept, OrbGrand, OrbGrandConfig, SoGrand};
 

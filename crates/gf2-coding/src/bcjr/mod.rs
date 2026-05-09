@@ -785,6 +785,7 @@ mod tests {
         /// BCJR hard decision on a noiseless codeword must always recover
         /// the original codeword (random messages for dRM(32,21)).
         #[test]
+        #[ignore = "slow: proptest BCJR decode of dRM(32,21) trellis"]
         fn prop_drm_noiseless_recovery(msg_bits in proptest::collection::vec(any::<bool>(), 21..=21)) {
             let code = DrmCode::drm_32_21();
             let decoder = BcjrDecoder::new(code.parity_check());

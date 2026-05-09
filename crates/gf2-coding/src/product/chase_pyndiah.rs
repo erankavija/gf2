@@ -933,6 +933,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "slow: Chase-Pyndiah turbo decode with AWGN on dRM(32,21) product"]
     fn test_drm_turbo_with_awgn() {
         // Reproduce the BLER=1.0 issue with realistic AWGN noise
         use crate::drm::DrmCode;

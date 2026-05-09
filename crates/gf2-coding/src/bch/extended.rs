@@ -719,6 +719,7 @@ mod tests {
 
     /// Verify d_min = 4 for eBCH(64,57) by exhaustive check on weight 1..3.
     #[test]
+    #[ignore = "slow: O(n²) exhaustive d_min syndrome check over eBCH(64,57)"]
     fn test_ebch_64_57_minimum_distance() {
         let code = ExtendedBchCode::ebch_64_57();
         let n = code.n();

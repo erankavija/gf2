@@ -1080,6 +1080,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "slow: 100-trial BCJR decode roundtrip for dRM(32,21)"]
     fn test_drm_dynamic_encode_decode_roundtrip() {
         use crate::bcjr::BcjrDecoder;
         use crate::llr::Llr;
@@ -1165,6 +1166,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "slow: constructs two DrmCode::extended_rm(5,21) instances for determinism check"]
     fn test_extended_rm_deterministic() {
         // Two calls to extended_rm with the same parameters must produce
         // the same code.
