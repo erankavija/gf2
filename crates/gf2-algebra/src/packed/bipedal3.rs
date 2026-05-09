@@ -2424,3 +2424,742 @@ mod vec_tests {
         }
     }
 }
+
+// ===========================================================================
+// Bipedal3Matrix — column-major rectangular matrix of packed F_3 values
+// ===========================================================================
+
+/// Rectangular `rows × cols` matrix of packed `F_3` values, stored
+/// **column-major** as one [`Bipedal3Vec`] per column.
+///
+/// Each column `j` is a [`Bipedal3Vec`] of length `rows`; the entry at
+/// row `i`, column `j` is `self.column(j).get(i)`.
+///
+/// # Column-major rationale
+///
+/// Ryser's formula (T7) and the single-word permanent path (T9) iterate
+/// over columns in the inner loop, accumulating row-wise products.
+/// Storing each column as a contiguous [`Bipedal3Vec`] allows those
+/// algorithms to `column(j)` without scatter-gather, matching the access
+/// pattern of the R3 multi-word streaming design
+/// (`dev/plans/r3_multi_word_streaming.md` §2.1).
+///
+/// # Mask-tail invariant
+///
+/// Each column is a [`Bipedal3Vec`] and inherits its mask-tail invariant:
+/// bits beyond `rows` in the last `u64` word of both `mag` and `sgn`
+/// vectors are always zero (CLAUDE.md §Key design invariants #1).
+///
+/// # Examples
+///
+/// ```
+/// use gf2_algebra::packed::Bipedal3Matrix;
+/// use gf2_core::gfp::Fp;
+///
+/// let data: Vec<Fp<3>> = (0..6u64).map(|v| Fp::<3>::new(v % 3)).collect();
+/// let m = Bipedal3Matrix::from_row_major(&data, 2, 3);
+/// assert_eq!(m.rows(), 2);
+/// assert_eq!(m.cols(), 3);
+/// assert_eq!(m.get(0, 0), Fp::<3>::new(0));
+/// assert_eq!(m.get(1, 2), Fp::<3>::new(2));
+/// ```
+///
+/// # Complexity
+///
+/// Construction is `O(rows * cols)`; column access is `O(1)`;
+/// row reconstruction is `O(cols)`; transpose is `O(rows * cols)`.
+#[derive(Clone)]
+pub struct Bipedal3Matrix {
+    /// One `Bipedal3Vec` per column, each of length `rows`.
+    columns: Vec<Bipedal3Vec>,
+    rows: usize,
+    cols: usize,
+}
+
+// ---------------------------------------------------------------------------
+// Manual PartialEq / Eq — shape + per-column canonical-decode equality
+// ---------------------------------------------------------------------------
+
+impl PartialEq for Bipedal3Matrix {
+    /// Shape-equal and per-column canonical-decode equal.
+    ///
+    /// Two matrices are equal iff they have the same `rows` and `cols`,
+    /// and every column pair compares equal under [`Bipedal3Vec`]'s
+    /// canonical-decode `PartialEq` (which handles alternative-zero
+    /// codewords transparently).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::Bipedal3Matrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let data: Vec<Fp<3>> = (0..4u64).map(|v| Fp::<3>::new(v % 3)).collect();
+    /// let a = Bipedal3Matrix::from_row_major(&data, 2, 2);
+    /// let b = Bipedal3Matrix::from_row_major(&data, 2, 2);
+    /// assert_eq!(a, b);
+    ///
+    /// let c = Bipedal3Matrix::from_row_major(&data, 4, 1);
+    /// assert_ne!(a, c); // different shape
+    /// ```
+    fn eq(&self, other: &Self) -> bool {
+        self.rows == other.rows && self.cols == other.cols && self.columns == other.columns
+    }
+}
+
+impl Eq for Bipedal3Matrix {}
+
+// ---------------------------------------------------------------------------
+// Manual Debug — print row-by-row for human readability
+// ---------------------------------------------------------------------------
+
+impl core::fmt::Debug for Bipedal3Matrix {
+    /// Formats as `Bipedal3Matrix { rows, cols, data: [[row 0], [row 1], ...] }`
+    /// with each row printed as a `Vec<u64>` of decoded lane values (`{0, 1, 2}`).
+    ///
+    /// Rows are listed top-to-bottom for human readability, even though the
+    /// internal storage is column-major.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::Bipedal3Matrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let data: Vec<Fp<3>> = vec![Fp::<3>::new(1), Fp::<3>::new(2)];
+    /// let m = Bipedal3Matrix::from_row_major(&data, 1, 2);
+    /// let s = format!("{:?}", m);
+    /// assert!(s.contains("rows"));
+    /// assert!(s.contains("cols"));
+    /// ```
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        // Decode row by row so the output is human-readable top-to-bottom.
+        let data: Vec<Vec<u64>> = (0..self.rows)
+            .map(|i| {
+                (0..self.cols)
+                    .map(|j| self.columns[j].get(i).value())
+                    .collect()
+            })
+            .collect();
+        f.debug_struct("Bipedal3Matrix")
+            .field("rows", &self.rows)
+            .field("cols", &self.cols)
+            .field("data", &data)
+            .finish()
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Bipedal3Matrix inherent methods
+// ---------------------------------------------------------------------------
+
+impl Bipedal3Matrix {
+    /// Construct a matrix from a row-major `Fp<3>` slice.
+    ///
+    /// The entry at row `i`, column `j` is `data[i * cols + j]`. The slice
+    /// is re-encoded in column-major order: each column `j` becomes a
+    /// [`Bipedal3Vec`] of length `rows` containing `data[0*cols+j]`,
+    /// `data[1*cols+j]`, ..., `data[(rows-1)*cols+j]`.
+    ///
+    /// Empty matrices (`rows == 0` or `cols == 0`) are allowed: they
+    /// produce zero columns or zero-length columns respectively.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` — row-major source slice of length `rows * cols`.
+    /// * `rows` — number of rows.
+    /// * `cols` — number of columns.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `data.len() != rows * cols`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::Bipedal3Matrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// // 2×3 matrix: [[0,1,2],[2,0,1]]
+    /// let data: Vec<Fp<3>> = vec![
+    ///     Fp::<3>::new(0), Fp::<3>::new(1), Fp::<3>::new(2),
+    ///     Fp::<3>::new(2), Fp::<3>::new(0), Fp::<3>::new(1),
+    /// ];
+    /// let m = Bipedal3Matrix::from_row_major(&data, 2, 3);
+    /// assert_eq!(m.rows(), 2);
+    /// assert_eq!(m.cols(), 3);
+    /// assert_eq!(m.get(0, 1), Fp::<3>::new(1));
+    /// assert_eq!(m.get(1, 0), Fp::<3>::new(2));
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(rows * cols)`.
+    pub fn from_row_major(data: &[Fp<3>], rows: usize, cols: usize) -> Self {
+        assert_eq!(
+            data.len(),
+            rows * cols,
+            "Bipedal3Matrix::from_row_major: data.len() ({}) != rows ({}) * cols ({})",
+            data.len(),
+            rows,
+            cols
+        );
+        // Build each column as a Bipedal3Vec.
+        let columns: Vec<Bipedal3Vec> = (0..cols)
+            .map(|j| {
+                let col_data: Vec<Fp<3>> = (0..rows).map(|i| data[i * cols + j]).collect();
+                Bipedal3Vec::from_field_slice(&col_data)
+            })
+            .collect();
+        Self {
+            columns,
+            rows,
+            cols,
+        }
+    }
+
+    /// Inverse of [`from_row_major`][Self::from_row_major]: returns a row-major
+    /// decoded `Vec<Fp<3>>` of length `rows * cols`.
+    ///
+    /// The entry at output index `i * cols + j` corresponds to matrix position
+    /// `(i, j)`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::Bipedal3Matrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let data: Vec<Fp<3>> = (0..6u64).map(|v| Fp::<3>::new(v % 3)).collect();
+    /// let m = Bipedal3Matrix::from_row_major(&data, 2, 3);
+    /// let out = m.to_row_major();
+    /// assert_eq!(out, data);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(rows * cols)`.
+    pub fn to_row_major(&self) -> Vec<Fp<3>> {
+        let mut out = Vec::with_capacity(self.rows * self.cols);
+        for i in 0..self.rows {
+            for j in 0..self.cols {
+                out.push(self.columns[j].get(i));
+            }
+        }
+        out
+    }
+
+    /// Number of rows.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::Bipedal3Matrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let m = Bipedal3Matrix::from_row_major(&[], 0, 5);
+    /// assert_eq!(m.rows(), 0);
+    /// let m2 = Bipedal3Matrix::from_row_major(
+    ///     &(0..10u64).map(|v| Fp::<3>::new(v % 3)).collect::<Vec<_>>(), 2, 5
+    /// );
+    /// assert_eq!(m2.rows(), 2);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(1)`.
+    #[inline]
+    pub fn rows(&self) -> usize {
+        self.rows
+    }
+
+    /// Number of columns.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::Bipedal3Matrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let m = Bipedal3Matrix::from_row_major(&[], 5, 0);
+    /// assert_eq!(m.cols(), 0);
+    /// let m2 = Bipedal3Matrix::from_row_major(
+    ///     &(0..10u64).map(|v| Fp::<3>::new(v % 3)).collect::<Vec<_>>(), 2, 5
+    /// );
+    /// assert_eq!(m2.cols(), 5);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(1)`.
+    #[inline]
+    pub fn cols(&self) -> usize {
+        self.cols
+    }
+
+    /// Borrow the `j`-th column as a `&Bipedal3Vec` of length `rows`.
+    ///
+    /// This is the primary access pattern for column-major algorithms
+    /// (Ryser T7, single-word permanent T9): iterating `column(j)` for
+    /// `j` in `0..cols` is zero-copy.
+    ///
+    /// # Arguments
+    ///
+    /// * `j` — column index in `0..self.cols()`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `j >= self.cols()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{Bipedal3Matrix, PackedFieldVec};
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let data: Vec<Fp<3>> = vec![
+    ///     Fp::<3>::new(1), Fp::<3>::new(2),
+    ///     Fp::<3>::new(0), Fp::<3>::new(1),
+    /// ];
+    /// let m = Bipedal3Matrix::from_row_major(&data, 2, 2);
+    /// // Column 1: entries (0,1)=2 and (1,1)=1.
+    /// assert_eq!(m.column(1).get(0), Fp::<3>::new(2));
+    /// assert_eq!(m.column(1).get(1), Fp::<3>::new(1));
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(1)`.
+    #[inline]
+    pub fn column(&self, j: usize) -> &Bipedal3Vec {
+        assert!(
+            j < self.cols,
+            "Bipedal3Matrix::column: index {} out of range (cols = {})",
+            j,
+            self.cols
+        );
+        &self.columns[j]
+    }
+
+    /// Reconstruct the `i`-th row as an owned `Bipedal3Vec` of length `cols`.
+    ///
+    /// Lane `j` of the returned vector equals `self.column(j).get(i)`.
+    /// Row access requires reading from each column, so it is `O(cols)`.
+    ///
+    /// # Arguments
+    ///
+    /// * `i` — row index in `0..self.rows()`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `i >= self.rows()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{Bipedal3Matrix, PackedFieldVec};
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let data: Vec<Fp<3>> = vec![
+    ///     Fp::<3>::new(1), Fp::<3>::new(2), Fp::<3>::new(0),
+    ///     Fp::<3>::new(2), Fp::<3>::new(0), Fp::<3>::new(1),
+    /// ];
+    /// let m = Bipedal3Matrix::from_row_major(&data, 2, 3);
+    /// // Row 1: [2, 0, 1]
+    /// let row1 = m.row(1);
+    /// assert_eq!(row1.get(0), Fp::<3>::new(2));
+    /// assert_eq!(row1.get(1), Fp::<3>::new(0));
+    /// assert_eq!(row1.get(2), Fp::<3>::new(1));
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(cols)`.
+    pub fn row(&self, i: usize) -> Bipedal3Vec {
+        assert!(
+            i < self.rows,
+            "Bipedal3Matrix::row: index {} out of range (rows = {})",
+            i,
+            self.rows
+        );
+        let row_data: Vec<Fp<3>> = (0..self.cols).map(|j| self.columns[j].get(i)).collect();
+        Bipedal3Vec::from_field_slice(&row_data)
+    }
+
+    /// Read the entry at row `i`, column `j`.
+    ///
+    /// # Arguments
+    ///
+    /// * `i` — row index in `0..self.rows()`.
+    /// * `j` — column index in `0..self.cols()`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `i >= self.rows()` or `j >= self.cols()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::Bipedal3Matrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let data: Vec<Fp<3>> = vec![
+    ///     Fp::<3>::new(0), Fp::<3>::new(1),
+    ///     Fp::<3>::new(2), Fp::<3>::new(0),
+    /// ];
+    /// let m = Bipedal3Matrix::from_row_major(&data, 2, 2);
+    /// assert_eq!(m.get(0, 0), Fp::<3>::new(0));
+    /// assert_eq!(m.get(0, 1), Fp::<3>::new(1));
+    /// assert_eq!(m.get(1, 0), Fp::<3>::new(2));
+    /// assert_eq!(m.get(1, 1), Fp::<3>::new(0));
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(1)`.
+    pub fn get(&self, i: usize, j: usize) -> Fp<3> {
+        assert!(
+            i < self.rows,
+            "Bipedal3Matrix::get: row index {} out of range (rows = {})",
+            i,
+            self.rows
+        );
+        assert!(
+            j < self.cols,
+            "Bipedal3Matrix::get: col index {} out of range (cols = {})",
+            j,
+            self.cols
+        );
+        self.columns[j].get(i)
+    }
+
+    /// Transpose: returns a `cols × rows` matrix where `transposed.get(j, i) == self.get(i, j)`.
+    ///
+    /// The result is built by materialising a row-major `Vec<Fp<3>>` buffer
+    /// via [`to_row_major`][Self::to_row_major] and then transposing the
+    /// index mapping before calling [`from_row_major`][Self::from_row_major]
+    /// with swapped dimensions. This is obviously correct and `O(rows * cols)`.
+    ///
+    /// A performance-optimised path (direct column-to-row scatter) may be
+    /// added in a later task if profiling identifies the `to_row_major`
+    /// intermediary as a bottleneck.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::Bipedal3Matrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let data: Vec<Fp<3>> = vec![
+    ///     Fp::<3>::new(1), Fp::<3>::new(2), Fp::<3>::new(0),
+    ///     Fp::<3>::new(2), Fp::<3>::new(0), Fp::<3>::new(1),
+    /// ];
+    /// let m = Bipedal3Matrix::from_row_major(&data, 2, 3);
+    /// let t = m.transpose();
+    /// assert_eq!(t.rows(), 3);
+    /// assert_eq!(t.cols(), 2);
+    /// // t.get(j, i) == m.get(i, j)
+    /// assert_eq!(t.get(2, 0), m.get(0, 2));
+    /// assert_eq!(t.get(0, 1), m.get(1, 0));
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(rows * cols)`.
+    pub fn transpose(&self) -> Self {
+        let rm = self.to_row_major();
+        let mut tm = Vec::with_capacity(self.cols * self.rows);
+        for j in 0..self.cols {
+            for i in 0..self.rows {
+                tm.push(rm[i * self.cols + j]);
+            }
+        }
+        Self::from_row_major(&tm, self.cols, self.rows)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Bipedal3Matrix tests
+// ---------------------------------------------------------------------------
+
+#[cfg(test)]
+mod matrix_tests {
+    use super::*;
+    use proptest::prelude::*;
+
+    // -----------------------------------------------------------------------
+    // Deterministic entry pattern helper
+    // -----------------------------------------------------------------------
+
+    /// Build a deterministic `Vec<Fp<3>>` of `rows * cols` values.
+    /// Entry `(i, j)` = `((i * 7 + j * 11 + 5) as u64) % 3`.
+    fn det_data(rows: usize, cols: usize) -> Vec<Fp<3>> {
+        (0..rows)
+            .flat_map(|i| (0..cols).map(move |j| Fp::<3>::new(((i * 7 + j * 11 + 5) as u64) % 3)))
+            .collect()
+    }
+
+    // -----------------------------------------------------------------------
+    // from_row_major / to_row_major round-trip
+    // -----------------------------------------------------------------------
+
+    macro_rules! test_roundtrip {
+        ($name:ident, $rows:expr, $cols:expr) => {
+            #[test]
+            fn $name() {
+                let data = det_data($rows, $cols);
+                let m = Bipedal3Matrix::from_row_major(&data, $rows, $cols);
+                assert_eq!(m.rows(), $rows);
+                assert_eq!(m.cols(), $cols);
+                let out = m.to_row_major();
+                assert_eq!(out, data, "roundtrip mismatch for {}x{}", $rows, $cols);
+            }
+        };
+    }
+
+    #[test]
+    fn test_from_row_major_to_row_major_roundtrip_0x0() {
+        let m = Bipedal3Matrix::from_row_major(&[], 0, 0);
+        assert_eq!(m.rows(), 0);
+        assert_eq!(m.cols(), 0);
+        assert!(m.to_row_major().is_empty());
+    }
+
+    #[test]
+    fn test_from_row_major_to_row_major_roundtrip_0x5() {
+        let m = Bipedal3Matrix::from_row_major(&[], 0, 5);
+        assert_eq!(m.rows(), 0);
+        assert_eq!(m.cols(), 5);
+        assert!(m.to_row_major().is_empty());
+    }
+
+    #[test]
+    fn test_from_row_major_to_row_major_roundtrip_5x0() {
+        let m = Bipedal3Matrix::from_row_major(&[], 5, 0);
+        assert_eq!(m.rows(), 5);
+        assert_eq!(m.cols(), 0);
+        assert!(m.to_row_major().is_empty());
+    }
+
+    test_roundtrip!(test_from_row_major_to_row_major_roundtrip_1x1, 1, 1);
+    test_roundtrip!(test_from_row_major_to_row_major_roundtrip_1x64, 1, 64);
+    test_roundtrip!(test_from_row_major_to_row_major_roundtrip_64x1, 64, 1);
+    test_roundtrip!(test_from_row_major_to_row_major_roundtrip_63x63, 63, 63);
+    test_roundtrip!(test_from_row_major_to_row_major_roundtrip_63x64, 63, 64);
+    test_roundtrip!(test_from_row_major_to_row_major_roundtrip_64x63, 64, 63);
+    test_roundtrip!(test_from_row_major_to_row_major_roundtrip_64x64, 64, 64);
+    test_roundtrip!(test_from_row_major_to_row_major_roundtrip_64x65, 64, 65);
+    test_roundtrip!(test_from_row_major_to_row_major_roundtrip_65x64, 65, 64);
+    test_roundtrip!(test_from_row_major_to_row_major_roundtrip_65x65, 65, 65);
+
+    // -----------------------------------------------------------------------
+    // get — per-entry accessor
+    // -----------------------------------------------------------------------
+
+    macro_rules! test_get {
+        ($name:ident, $rows:expr, $cols:expr) => {
+            #[test]
+            fn $name() {
+                let data = det_data($rows, $cols);
+                let m = Bipedal3Matrix::from_row_major(&data, $rows, $cols);
+                for i in 0..$rows {
+                    for j in 0..$cols {
+                        assert_eq!(
+                            m.get(i, j),
+                            data[i * $cols + j],
+                            "get({},{}) mismatch for {}x{}",
+                            i,
+                            j,
+                            $rows,
+                            $cols
+                        );
+                    }
+                }
+            }
+        };
+    }
+
+    test_get!(test_get_1x1, 1, 1);
+    test_get!(test_get_1x64, 1, 64);
+    test_get!(test_get_64x1, 64, 1);
+    test_get!(test_get_63x63, 63, 63);
+    test_get!(test_get_63x64, 63, 64);
+    test_get!(test_get_64x63, 64, 63);
+    test_get!(test_get_64x64, 64, 64);
+    test_get!(test_get_65x65, 65, 65);
+
+    // -----------------------------------------------------------------------
+    // column and row accessor consistency
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn test_column_returns_correct_vec() {
+        let data = det_data(5, 3);
+        let m = Bipedal3Matrix::from_row_major(&data, 5, 3);
+        for j in 0..3 {
+            for i in 0..5 {
+                assert_eq!(
+                    m.column(j).get(i),
+                    m.get(i, j),
+                    "column({}).get({}) != get({}, {})",
+                    j,
+                    i,
+                    i,
+                    j
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_row_returns_correct_vec() {
+        let data = det_data(5, 3);
+        let m = Bipedal3Matrix::from_row_major(&data, 5, 3);
+        for i in 0..5 {
+            let row_vec = m.row(i);
+            for j in 0..3 {
+                assert_eq!(
+                    row_vec.get(j),
+                    m.get(i, j),
+                    "row({}).get({}) != get({}, {})",
+                    i,
+                    j,
+                    i,
+                    j
+                );
+            }
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Panic tests
+    // -----------------------------------------------------------------------
+
+    #[test]
+    #[should_panic(expected = "out of range")]
+    fn test_get_panics_out_of_range_row() {
+        let m = Bipedal3Matrix::from_row_major(&det_data(3, 4), 3, 4);
+        let _ = m.get(3, 0);
+    }
+
+    #[test]
+    #[should_panic(expected = "out of range")]
+    fn test_get_panics_out_of_range_col() {
+        let m = Bipedal3Matrix::from_row_major(&det_data(3, 4), 3, 4);
+        let _ = m.get(0, 4);
+    }
+
+    #[test]
+    #[should_panic(expected = "out of range")]
+    fn test_column_panics_out_of_range() {
+        let m = Bipedal3Matrix::from_row_major(&det_data(3, 4), 3, 4);
+        let _ = m.column(4);
+    }
+
+    #[test]
+    #[should_panic(expected = "out of range")]
+    fn test_row_panics_out_of_range() {
+        let m = Bipedal3Matrix::from_row_major(&det_data(3, 4), 3, 4);
+        let _ = m.row(3);
+    }
+
+    #[test]
+    #[should_panic(expected = "rows")]
+    fn test_from_row_major_panics_on_length_mismatch() {
+        // data.len() = 5 != 2*3 = 6
+        let data: Vec<Fp<3>> = (0..5u64).map(|v| Fp::<3>::new(v % 3)).collect();
+        let _ = Bipedal3Matrix::from_row_major(&data, 2, 3);
+    }
+
+    // -----------------------------------------------------------------------
+    // Transpose tests
+    // -----------------------------------------------------------------------
+
+    macro_rules! test_transpose_roundtrip {
+        ($name:ident, $rows:expr, $cols:expr) => {
+            #[test]
+            fn $name() {
+                let data = det_data($rows, $cols);
+                let m = Bipedal3Matrix::from_row_major(&data, $rows, $cols);
+                let tt = m.transpose().transpose();
+                assert_eq!(
+                    m, tt,
+                    "transpose().transpose() != self for {}x{}",
+                    $rows, $cols
+                );
+            }
+        };
+    }
+
+    test_transpose_roundtrip!(test_transpose_roundtrip_1x1, 1, 1);
+    test_transpose_roundtrip!(test_transpose_roundtrip_5x7, 5, 7);
+    test_transpose_roundtrip!(test_transpose_roundtrip_63x65, 63, 65);
+    test_transpose_roundtrip!(test_transpose_roundtrip_64x64, 64, 64);
+    test_transpose_roundtrip!(test_transpose_roundtrip_64x100, 64, 100);
+    test_transpose_roundtrip!(test_transpose_roundtrip_130x17, 130, 17);
+
+    #[test]
+    fn test_transpose_value_check_5x3() {
+        let data = det_data(5, 3);
+        let m = Bipedal3Matrix::from_row_major(&data, 5, 3);
+        let t = m.transpose();
+        assert_eq!(t.rows(), 3);
+        assert_eq!(t.cols(), 5);
+        for i in 0..5 {
+            for j in 0..3 {
+                assert_eq!(
+                    t.get(j, i),
+                    m.get(i, j),
+                    "transpose value mismatch at (i={}, j={}): t.get({},{})={:?}, m.get({},{})={:?}",
+                    i, j, j, i, t.get(j, i), i, j, m.get(i, j)
+                );
+            }
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Proptest: double-transpose roundtrip with random shapes (100 cases)
+    // -----------------------------------------------------------------------
+
+    proptest! {
+        #![proptest_config(ProptestConfig { cases: 100, .. ProptestConfig::default() })]
+
+        /// transpose().transpose() == self for random shapes and random data.
+        ///
+        /// Generates `rows ∈ 0..130`, `cols ∈ 0..130`, and a random seed to
+        /// build a deterministic `Vec<Fp<3>>` of `rows * cols` values.
+        /// The double-transpose must equal the original matrix.
+        #[test]
+        fn test_proptest_transpose_roundtrip_random_shapes(
+            rows in 0usize..130,
+            cols in 0usize..130,
+            seed in 0u64..u64::MAX,
+        ) {
+            // Build a seeded-deterministic data vector.
+            let n = rows * cols;
+            let data: Vec<Fp<3>> = (0..n)
+                .map(|k| {
+                    // Mix seed with index using a simple hash.
+                    let h = seed.wrapping_mul(6364136223846793005)
+                        .wrapping_add(k as u64)
+                        .wrapping_mul(6364136223846793005)
+                        .wrapping_add(1442695040888963407);
+                    Fp::<3>::new(h % 3)
+                })
+                .collect();
+            let m = Bipedal3Matrix::from_row_major(&data, rows, cols);
+            let tt = m.transpose().transpose();
+            prop_assert_eq!(m, tt, "transpose roundtrip failed for {}x{}", rows, cols);
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Word-boundary coverage confirmation
+    //
+    // The round-trip macro tests above already cover all word-boundary
+    // leg values {1, 63, 64, 65} for both rows and cols via the combinations:
+    //   1×1, 1×64, 64×1, 63×63, 63×64, 64×63, 64×64, 64×65, 65×64, 65×65.
+    // The transpose tests add: 63×65, 64×100, 130×17.
+    // No additional tests are needed to satisfy criterion 5.
+    // -----------------------------------------------------------------------
+}
