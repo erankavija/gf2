@@ -39,47 +39,88 @@ the layout invariant for `Bipedal3Matrix` (epic §7.2 strawman is updated in
 
 ### 2.1 Decision
 
-`Bipedal3Matrix` stores its entries in **column-major** order, with the magnitude
-and sign legs as two separate contiguous `Vec<u64>` buffers of length
-`W * n` each, where `W = ceil(n / 64)`.
+`Bipedal3Matrix` stores its entries in **column-major** order, with each
+column owning its own `Bipedal3Vec` (which itself holds two contiguous
+`Vec<u64>` of length `W = ceil(rows / 64)`, one for the `mag` leg and one
+for the `sgn` leg). The matrix is therefore a `Vec<Bipedal3Vec>` of length
+`cols`.
 
 ```rust
 pub struct Bipedal3Matrix {
-    n: usize,
-    w: usize,                  // = ceil(n / 64), words per column-leg
-    mag: Vec<u64>,             // length W * n, column-major
-    sgn: Vec<u64>,             // length W * n, column-major
+    columns: Vec<Bipedal3Vec>, // cols entries; each is a contiguous mag/sgn pair
+    rows: usize,
+    cols: usize,
 }
 
 impl Bipedal3Matrix {
-    #[inline] fn col_mag(&self, j: usize) -> &[u64] {
-        &self.mag[j * self.w .. (j + 1) * self.w]
-    }
-    #[inline] fn col_sgn(&self, j: usize) -> &[u64] {
-        &self.sgn[j * self.w .. (j + 1) * self.w]
+    /// Borrow the j-th column. The returned `Bipedal3Vec` exposes its
+    /// internal `mag`/`sgn` words via `Bipedal3Vec::raw_mag()` /
+    /// `raw_sgn()` (added by W3-T12/T14 if not already public).
+    #[inline] pub fn column(&self, j: usize) -> &Bipedal3Vec {
+        &self.columns[j]
     }
 }
 ```
 
-Diagrammatically (column-major, with `n = 130`, `W = 3`):
+Diagrammatically (column-major, with `rows = 130`, `W = 3`, `cols = n`):
 
 ```
-            col 0          col 1                  col n-1 = col 129
-mag:    [ w0 w1 w2 ] [ w0 w1 w2 ] [ w0 w1 w2 ] ... [ w0 w1 w2 ]
-sgn:    [ w0 w1 w2 ] [ w0 w1 w2 ] [ w0 w1 w2 ] ... [ w0 w1 w2 ]
-        ^---- 24 B ---^---- 24 B ---^                          ^
-         contiguous     contiguous                              contiguous
+            col 0 (Bipedal3Vec)            col 1 (Bipedal3Vec)             col n-1
+            mag = [ w0 w1 w2 ]             mag = [ w0 w1 w2 ]              ...
+            sgn = [ w0 w1 w2 ]             sgn = [ w0 w1 w2 ]              ...
+                  ^---- 24 B ---^                ^---- 24 B ---^
+                   contiguous                     contiguous
+                   per leg                        per leg
 
-byte offset within mag for column j, word w:  (j * W + w) * 8
+within column j: byte offset for word w of mag = w * 8 (similarly sgn)
 ```
 
-The two legs are kept as **separate** `Vec<u64>` (not interleaved
-`(mag, sgn)` pairs). Rationale: the bipedal add/sub formulas read `mag` and
-`sgn` independently (paper §2.2: `t = m1 ^ s1 ^ s2`, `u = m2 & t`, etc.), and
-per-leg-contiguous storage lets a SIMD kernel issue one wide load per leg per
-cache line without shuffling. This matches the layout of the existing
-`gf2-kernels-simd::LogicalFns` AVX2 paths, which all operate on flat
-`&mut [u64]` rather than on tuple-packed AoS.
+Each column is a separate heap allocation, but each leg within a column
+remains a single contiguous `Vec<u64>`. The bipedal add/sub formulas read
+`mag` and `sgn` independently (paper §2.2: `t = m1 ^ s1 ^ s2`,
+`u = m2 & t`, etc.), and per-leg-contiguous storage WITHIN A COLUMN lets a
+SIMD kernel issue one wide load per leg per cache line without shuffling
+— which is what the inner loop actually needs (one column per Gray step).
+This matches the layout of the existing `gf2-kernels-simd::LogicalFns`
+AVX2 paths, which all operate on flat `&mut [u64]` rather than on
+tuple-packed AoS.
+
+#### 2.1.1 Layout amendment (2026-05-10, T5 SSOT resolution)
+
+The original R3 design (2026-05-09) declared a single flat `mag: Vec<u64>`
+plus a flat `sgn: Vec<u64>` of length `W * cols` each, with `col_mag(j)` /
+`col_sgn(j)` returning `&[u64]` slices. T5's `[hard]` API criterion 3
+("`column(i) -> &Bipedal3Vec`") and the W6 V1 verification path
+(`crates/gf2-algebra/src/packed/bipedal3.rs::Bipedal3Vec` is the unit of
+extraction) force a `Bipedal3Vec`-shaped column borrow. Two layouts can
+satisfy that: (a) flat storage with an owned-cloning `column(j)` accessor
+(adds a 2*W-word allocation per access, fatal for the 2^n inner loop), or
+(b) `Vec<Bipedal3Vec>` with `&Bipedal3Vec` borrow.
+
+Option (b) wins on every dimension that matters:
+
+- **Hot-path performance:** identical assembly (one cache line per leg per
+  column read) because each column's mag/sgn are still contiguous
+  `Vec<u64>`. R3's "wide SIMD load per leg" rationale is satisfied at the
+  per-column level, which is the loop's actual access pattern. Gray-code
+  flips do not exhibit consecutive-column locality, so flat-buffer
+  prefetching gains zero in practice.
+- **Construction cost:** flat is 2 allocations vs `2 * cols + 1` for
+  per-column; for typical `n ≤ 256` the construction is amortised over
+  the `2^n` outer loop and is irrelevant.
+- **TLB pressure:** flat uses one TLB entry per leg; per-column uses one
+  per column allocation. For `cols ≤ 256` and modern x86 TLBs (≥64
+  L1-dTLB entries, ≥1024 L2-dTLB), both fit comfortably.
+- **Implementation churn:** option (b) is what landed for T5 and passed
+  all gates; option (a) requires a rework cycle plus a T5 criterion-3
+  amendment.
+
+The resolution chosen on **2026-05-10** by user direction (epic
+`ae82bd73` session 3): keep the `Vec<Bipedal3Vec>` storage (option b) as
+the SSOT layout, and amend this section + epic §7.2 to declare it. T9 /
+T14 perf paths consume `M.column(j) -> &Bipedal3Vec` and read
+`Bipedal3Vec::raw_mag()` / `raw_sgn()` for SIMD wide-load access; the
+SIMD-friendly contiguous-per-leg property holds within each column.
 
 ### 2.2 Why column-major (not row-major)
 
@@ -188,8 +229,8 @@ Per Gray step at width `W = ceil(n / 64)`:
 
 | Action                                  | Bytes read | Bytes written |
 |-----------------------------------------|------------|---------------|
-| Load `mat.col_mag(flip)`, `W` words     | `8 W`      | -             |
-| Load `mat.col_sgn(flip)`, `W` words     | `8 W`      | -             |
+| Load `mat.column(flip).raw_mag()`, `W` words | `8 W`  | -             |
+| Load `mat.column(flip).raw_sgn()`, `W` words | `8 W`  | -             |
 | Load `col_sum_mag` (in-register if `W` small) | `8 W` | -             |
 | Load `col_sum_sgn` (in-register if `W` small) | `8 W` | -             |
 | Store updated `col_sum_mag`             | -          | `8 W`         |
@@ -483,8 +524,9 @@ pub fn permanent_bipedal3_multi_word(mat: &Bipedal3Matrix) -> Fp<3> {
     acc.add_signed(Fp::<3>::ONE, 0);
 
     for (k, flip) in gray_code_iter(n).enumerate().skip(1) {
-        let col_mag = mat.col_mag(flip);   // &[u64; w]
-        let col_sgn = mat.col_sgn(flip);   // &[u64; w]
+        let col = mat.column(flip);        // &Bipedal3Vec
+        let col_mag = col.raw_mag();       // &[u64; w]
+        let col_sgn = col.raw_sgn();       // &[u64; w]
 
         // Bit (flip) of the active subset just toggled. The new value of
         // that bit in the Gray-code register `g(k) = k ^ (k >> 1)` (the
