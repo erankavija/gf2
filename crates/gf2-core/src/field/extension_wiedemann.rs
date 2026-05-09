@@ -538,7 +538,13 @@ pub fn try_extension_wiedemann_fp<const P: u64>(
 struct FpQuadraticSeven<const P: u64>;
 impl<const P: u64> ExtConfig for FpQuadraticSeven<P> {
     type BaseField = Fp<P>;
+    #[cfg(not(verify_lean))]
     const NON_RESIDUE: Fp<P> = Fp::<P>::new(6); // −1 mod 7 (sound only when P==7)
+    #[cfg(verify_lean)]
+    #[allow(non_snake_case)]
+    fn NON_RESIDUE() -> Fp<P> {
+        Fp::<P>::new(6)
+    }
     #[inline]
     fn mul_by_non_residue(x: Fp<P>) -> Fp<P> {
         -x
@@ -551,7 +557,13 @@ impl<const P: u64> ExtConfig for FpQuadraticSeven<P> {
 struct FpCubicSeven<const P: u64>;
 impl<const P: u64> ExtConfig for FpCubicSeven<P> {
     type BaseField = Fp<P>;
+    #[cfg(not(verify_lean))]
     const NON_RESIDUE: Fp<P> = Fp::<P>::new(2);
+    #[cfg(verify_lean)]
+    #[allow(non_snake_case)]
+    fn NON_RESIDUE() -> Fp<P> {
+        Fp::<P>::new(2)
+    }
 }
 
 /// Generic quadratic-extension config over `Fp<P>` where the runtime
@@ -559,7 +571,13 @@ impl<const P: u64> ExtConfig for FpCubicSeven<P> {
 struct FpQuadraticTwoFiftyOne<const P: u64>;
 impl<const P: u64> ExtConfig for FpQuadraticTwoFiftyOne<P> {
     type BaseField = Fp<P>;
+    #[cfg(not(verify_lean))]
     const NON_RESIDUE: Fp<P> = Fp::<P>::new(250); // −1 mod 251 (sound only when P==251)
+    #[cfg(verify_lean)]
+    #[allow(non_snake_case)]
+    fn NON_RESIDUE() -> Fp<P> {
+        Fp::<P>::new(250)
+    }
     #[inline]
     fn mul_by_non_residue(x: Fp<P>) -> Fp<P> {
         -x
