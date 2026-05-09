@@ -1,7 +1,7 @@
 {
   "id": "1aa0cb99-9918-4910-9c7e-7a11f746822a",
   "title": "Implement PackedField trait scalar reference impl over Fp&lt;3&gt;",
-  "description": "Implement the `PackedField<F>` trait surface fixed by D1b, plus a scalar reference implementation over `Fp<3>` that other W1 packed types can be cross-checked against.\n\n## Background\n\nThe trait surface (signatures, `LANES` const, splat / lane / fold_mul placement, alternative-zero canonicalisation semantics) is locked in the D1b approval section. This issue lands those signatures into `gf2-algebra::packed`, plus a trivial scalar reference type `ScalarPackedFp3` whose implementation is one `Fp<3>` per lane (no packing); the reference type exists so T3's bipedal3 implementation has a known-good lane-by-lane cross-check via proptest.\n\nThe scalar reference impl is intentionally slow — it is the correctness oracle, not a perf path.\n\n## Success Criteria\n\n- [ ] [hard] `gf2-algebra::packed::PackedField` trait exists with the signatures fixed in D1b (LANES, splat, lane, with_lane, all_zero, add, sub, mul, neg).\n- [ ] [hard] `gf2-algebra::packed::scalar::ScalarPackedFp3` implements `PackedField<Fp<3>>` via one `Fp<3>` per lane.\n- [ ] [hard] Unit tests cover `add`, `sub`, `mul`, `neg`, lane round-trip, splat, with_lane, all_zero on lane counts of 1, 16, 63, 64, 65 elements.\n- [ ] [hard] `cargo nextest run -p gf2-algebra --release --profile ci` passes.\n- [ ] [hard] No `#[ignore]` slow tests added in this issue; everything completes under the 5 s per-test limit.",
+  "description": "Implement the `PackedField<F>` trait surface fixed by D1b, plus a scalar reference implementation over `Fp<3>` that other W1 packed types can be cross-checked against.\n\n## Background\n\nThe trait surface (signatures, `LANES` const, splat / lane / fold_mul placement, alternative-zero canonicalisation semantics) is locked in the D1b approval section. This issue lands those signatures into `gf2-algebra::packed`, plus a trivial scalar reference type `ScalarPackedFp3` whose implementation is one `Fp<3>` per lane (no packing); the reference type exists so T3's bipedal3 implementation has a known-good lane-by-lane cross-check via proptest.\n\nThe scalar reference impl is intentionally slow — it is the correctness oracle, not a perf path.\n\n## Success Criteria\n\n- [ ] [hard] `gf2-algebra::packed::PackedField` trait exists with the signatures fixed in D1b (LANES, splat, lane, with_lane, all_zero, add, sub, mul, neg).\n- [ ] [hard] `gf2-algebra::packed::scalar::ScalarPackedFp3` implements `PackedField<Fp<3>>` via one `Fp<3>` per lane.\n- [ ] [hard] Unit tests cover `add`, `sub`, `mul`, `neg`, lane round-trip, splat, with_lane, all_zero on lane counts of 1, 16, 63, 64, 65 elements. **(See ## Amendment 2026-05-09 below for the user-approved scope clarification.)**\n- [ ] [hard] `cargo nextest run -p gf2-algebra --release --profile ci` passes.\n- [ ] [hard] No `#[ignore]` slow tests added in this issue; everything completes under the 5 s per-test limit.\n\n## Amendment 2026-05-09 (user-approved, Option C)\n\n**Criterion 3 clarification.** As originally written, criterion 3 enumerates lane counts `1, 16, 63, 64, 65` to test `add`, `sub`, `mul`, `neg`, lane round-trip, splat, with_lane, all_zero against. The criterion is incoherent for a fixed-LANES type: `ScalarPackedFp3` has `LANES = 64` (chosen to match `Bipedal3`'s 64 F_3 lanes per `(mag, sgn)` u64-pair, so T3's proptest cross-check is 1:1), making \"65 elements\" literally infeasible on the `PackedField` surface alone.\n\nPer the `[hard]` criterion amendment path in `CLAUDE.md` §Success-criterion maturity markers, the lead escalated the ambiguity to the user during the W1 sub-wave 1b dispatch. **User decision (2026-05-09): Option C — expand T2 scope to also implement `PackedFieldVec<Fp<3>>` from D1b §2.2, and treat criterion 3's element-count list as `PackedFieldVec` lengths.**\n\nThis amendment is satisfied by:\n\n- `ScalarPackedFp3Vec` impl of `PackedFieldVec<Fp<3>>` at `crates/gf2-algebra/src/packed/scalar.rs`.\n- Test coverage at PackedFieldVec lengths `{1, 16, 63, 64, 65}` for `add_assign` / `sub_assign` / `mul_assign` / `all_zero` (the in-place ops on the vec trait).\n- The `PackedField` ops (`splat`, `with_lane`, `lane`, `neg`) are tested against `ScalarPackedFp3` (LANES=64) at lane indices `{0, 1, 16, 31, 32, 63}` plus boundary panic at index 64+ (`lane(65)`, `with_lane(65)`).\n- `ScalarPackedFp3Vec` derived ops (`splat`-via-`from_field_slice`, `with_lane`-via-add_assign-of-delta, `neg`-via-zero-minus-self, lane round-trip via `from_field_slice` → `get`) are tested at the same `{1, 16, 63, 64, 65}` lengths.\n\nThis is a scope expansion (T2 now lands `PackedFieldVec` + `ScalarPackedFp3Vec` in addition to the original `PackedField` + `ScalarPackedFp3`), not a weakening of correctness coverage.",
   "state": "in_progress",
   "priority": "normal",
   "assignee": "agent:claude",
@@ -17,7 +17,7 @@
     "code-review": {
       "status": "failed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-09T13:18:34.532374643Z"
+      "updated_at": "2026-05-09T14:07:01.875012671Z"
     },
     "tests": {
       "status": "passed",
@@ -27,7 +27,7 @@
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-09T13:16:45.732694516Z"
+      "updated_at": "2026-05-09T14:02:10.061016402Z"
     }
   },
   "context": {},
@@ -38,5 +38,5 @@
     "component:gf2-algebra"
   ],
   "created_at": "2026-05-09T09:42:15.068867710+00:00",
-  "updated_at": "2026-05-09T13:21:57.559624470+00:00"
+  "updated_at": "2026-05-09T14:12:30.607907352+00:00"
 }
