@@ -3,11 +3,15 @@
   "epic_short_id": "ae82bd73",
   "epic_title": "Fast matrix permanents over F_3 / F_5 / F_7 via packed bipedal arithmetic",
   "current_wave": 1,
-  "current_subwave": "1c (T3 ready to dispatch)",
-  "current_status": "W1 sub-wave 1b CLOSED — T1, T2, T6, T16 done; T3/T4/T5 sequential",
+  "current_subwave": "1c (T3 in_progress, rework cycle 1 dispatched)",
+  "current_status": "W1 sub-wave 1c — T3 rw0 PASSED tests + cargo-ci, FAILED code-review on sub-criterion (7 ops vs paper 6); rw1 dispatched with direct 6-op CSE form",
   "started_at": "2026-05-09T01:30:00+03:00",
-  "session_count": 2,
+  "session_count": 3,
+  "session_3_open_time": "2026-05-09T20:35:00+03:00",
   "session_2_close_time": "2026-05-09T17:30:00+03:00",
+  "rework_counts": {
+    "46330802": 1
+  },
   "issue_count": {
     "epic": 1,
     "done": 15,
