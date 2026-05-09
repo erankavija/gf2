@@ -32,9 +32,13 @@
 //!   unit tests (word-boundary shapes) and proptest (100 random shapes,
 //!   double-transpose roundtrip) (T5 deliverable).
 //! - [`gray::gray_code_iter`] is landed.
-//! - `permanent::ryser`, `permanent::reference`, `permanent::bipedal3` (and
-//!   the W4 F_5/F_7 analogues) are still placeholder modules; bodies land in
-//!   W1 (T5) and W2-W4.
+//! - [`permanent::ryser::permanent_ryser`] is landed (W2-T7); the generic
+//!   Ryser-formula permanent over any `FiniteField`, used as the
+//!   correctness oracle for every packed permanent kernel.
+//! - `permanent::reference` (W2-T8 — faithful Rust port of the paper's
+//!   Julia mod-3 reference) and `permanent::bipedal3` (W2-T9 — single-word
+//!   `n ≤ 64` fast path) are still placeholder modules; W4 F_5/F_7
+//!   analogues land in W4-T18/T20.
 //!
 //! The full type → crate map this crate satisfies on completion is in
 //! [`dev/plans/d1a_gf2_algebra_boundary.md`](../../../dev/plans/d1a_gf2_algebra_boundary.md)
