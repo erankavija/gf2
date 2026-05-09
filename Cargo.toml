@@ -7,8 +7,15 @@ members = [
 ]
 # HIP crate excluded from default workspace — requires ROCm/hipcc.
 # Build explicitly: cargo build --manifest-path crates/gf2-kernels-hip/Cargo.toml
+#
+# `dev/research/f3_bipedal` is a standalone non-workspace prototype with
+# its own `[workspace]` table; it is consumed as a path dev-dependency by
+# `gf2-kernels-simd` for the b17bec62 SSOT-scalar-reference proptests
+# (success criterion 3) and must be excluded here so Cargo does not flag
+# it as a nested workspace root when resolving the dev-dep path.
 exclude = [
 	"crates/gf2-kernels-hip",
+	"dev/research/f3_bipedal",
 ]
 resolver = "2"
 

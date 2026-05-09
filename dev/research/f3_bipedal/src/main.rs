@@ -11,12 +11,10 @@
 //! Test:    `cargo test --release`
 //! Bench:   `cargo run --release`
 
-mod bipedal;
-mod common;
-mod lut;
-mod naive;
-
-use common::{bench_op_ns_per_elem, F3Encoding, Lcg, N_BENCH, REPEATS};
+use f3_bipedal_prototype::bipedal;
+use f3_bipedal_prototype::common::{bench_op_ns_per_elem, F3Encoding, Lcg, N_BENCH, REPEATS};
+use f3_bipedal_prototype::lut;
+use f3_bipedal_prototype::naive;
 
 /// Run all four ops on a single encoding and return `(add, sub, mul, div)`
 /// median ns/element.
