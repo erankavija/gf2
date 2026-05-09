@@ -1,7 +1,7 @@
 //! Generic `permanent_ryser<F>` driver — field-generic Ryser-formula permanent.
 //!
 //! Implements Ryser's inclusion-exclusion formula in Gray-code subset order,
-//! giving an `O(n · 2^n)` algorithm that is exact over any `ConstField`. The
+//! giving an `O(n · 2^n)` algorithm that is exact over any `FiniteField`. The
 //! Gray-code walk reduces each subset's column-sum update to a single element
 //! add or subtract per row, matching the pseudocode in
 //! `dev/plans/gf2_algebra_permanent.md` §6 / §7.3.
@@ -11,11 +11,11 @@
 //! in later waves. Performance is intentionally secondary: no SIMD, no rayon,
 //! no specialisation.
 
-use gf2_core::field::ConstField;
+use gf2_core::field::FiniteField;
 
 use crate::gray::gray_code_iter;
 
-/// Compute the permanent of an `n × n` matrix over any [`ConstField`] using
+/// Compute the permanent of an `n × n` matrix over any [`FiniteField`] using
 /// Ryser's formula in Gray-code subset order.
 ///
 /// The permanent of an `n × n` matrix `A` is
@@ -45,17 +45,16 @@ use crate::gray::gray_code_iter;
 /// ```
 /// use gf2_algebra::permanent::permanent_ryser;
 /// use gf2_core::gfp::Fp;
-/// use gf2_core::field::ConstField;
 ///
 /// // 2×2 identity over F_7: permanent = 1·1 + 0·0 = 1
 /// let id: Vec<Fp<7>> = vec![
-///     Fp::<7>::one(),  Fp::<7>::zero(),
-///     Fp::<7>::zero(), Fp::<7>::one(),
+///     Fp::<7>::new(1), Fp::<7>::new(0),
+///     Fp::<7>::new(0), Fp::<7>::new(1),
 /// ];
-/// assert_eq!(permanent_ryser::<Fp<7>>(&id, 2), Fp::<7>::one());
+/// assert_eq!(permanent_ryser::<Fp<7>>(&id, 2), Fp::<7>::new(1));
 ///
 /// // 2×2 all-ones over F_5: permanent = 1+1 = 2 = 2! mod 5
-/// let ones: Vec<Fp<5>> = vec![Fp::<5>::one(); 4];
+/// let ones: Vec<Fp<5>> = vec![Fp::<5>::new(1); 4];
 /// assert_eq!(permanent_ryser::<Fp<5>>(&ones, 2), Fp::<5>::new(2));
 /// ```
 ///
@@ -69,7 +68,7 @@ use crate::gray::gray_code_iter;
 /// accumulators. No heap allocation beyond the `col_sum` vector. Intended
 /// for `n ≤ 16` exhaustive cross-checks; larger `n` (up to 63) are
 /// mathematically correct but require `2^n` Gray steps.
-pub fn permanent_ryser<F: ConstField>(matrix: &[F], n: usize) -> F {
+pub fn permanent_ryser<F: FiniteField>(matrix: &[F], n: usize) -> F {
     assert_eq!(
         matrix.len(),
         n * n,
@@ -81,14 +80,31 @@ pub fn permanent_ryser<F: ConstField>(matrix: &[F], n: usize) -> F {
 
     // Edge case: the 0×0 matrix has exactly one permutation (the empty one),
     // whose product over an empty index set is the vacuous product 1.
+    //
+    // For n == 0, the matrix slice is empty so we cannot bootstrap a field
+    // element from it.  `FiniteField::zero_hint()` returns `Some(zero)` for
+    // every `ConstField` (all prime fields and GF(2^m) constant fields), which
+    // covers every realistic caller.  Runtime-context fields (e.g. a
+    // dynamically-configured `Gf2mElement`) cannot produce a zero without a
+    // field witness and should pass n ≥ 1 matrices.
     if n == 0 {
-        return F::one();
+        return F::zero_hint()
+            .expect(
+                "permanent_ryser: n == 0 requires a field with a static zero (ConstField or \
+                 FiniteField::zero_hint returning Some); runtime-context fields must pass n ≥ 1",
+            )
+            .one_like();
     }
+
+    // Bootstrap identity elements from the first matrix entry.  For n ≥ 1 the
+    // slice is non-empty, so no ConstField bound is needed.
+    let zero = matrix[0].zero_like();
+    let one = matrix[0].one_like();
 
     // col_sum[i] accumulates sum_{j ∈ S} A[i, j] for the current subset S.
     // Starts at zero (empty subset, which is excluded from the Ryser sum).
-    let mut col_sum: Vec<F> = vec![F::zero(); n];
-    let mut total = F::zero();
+    let mut col_sum: Vec<F> = (0..n).map(|_| zero.clone()).collect();
+    let mut total = zero;
 
     // Track |S| (popcount of the current Gray-code subset register) as a
     // plain usize. The gray_code_iter parity invariant guarantees that the
@@ -110,17 +126,22 @@ pub fn permanent_ryser<F: ConstField>(matrix: &[F], n: usize) -> F {
         if parity == 1 {
             subset_size += 1;
             for i in 0..n {
-                col_sum[i] += matrix[i * n + flip];
+                // AddAssign<&F> avoids cloning matrix entries.
+                col_sum[i] += &matrix[i * n + flip];
             }
         } else {
             subset_size -= 1;
             for i in 0..n {
-                col_sum[i] = col_sum[i] - matrix[i * n + flip];
+                // FiniteField provides Sub<&F>; clone col_sum[i] by value so
+                // we can pass a borrow of matrix entry on the right-hand side.
+                // One clone per inner-loop iteration; for Fp<P> this is a u64 copy.
+                col_sum[i] = col_sum[i].clone() - &matrix[i * n + flip];
             }
         }
 
         // Compute term = prod_{i=0}^{n-1} col_sum[i].
-        let term = col_sum.iter().fold(F::one(), |p, &x| p * x);
+        // Use Mul<&F> to avoid consuming col_sum entries; x is &F from the iterator.
+        let term = col_sum.iter().fold(one.clone(), |p, x| p * x);
 
         // Ryser sign for this subset: (-1)^|S|.
         // Odd |S| → contribution is -term; even |S| → +term.
@@ -146,7 +167,7 @@ pub fn permanent_ryser<F: ConstField>(matrix: &[F], n: usize) -> F {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use gf2_core::field::ConstField;
+    use gf2_core::field::{ConstField, FiniteField};
     use gf2_core::gfp::Fp;
 
     // -----------------------------------------------------------------------
@@ -159,20 +180,25 @@ mod tests {
     /// amortised time per swap, accumulating `prod_{i} A[i, sigma(i)]` into a
     /// running field sum. For `n ≤ 8` this is at most 40 320 permutations —
     /// trivially fast in release mode. Not intended for `n > 10`.
-    fn naive_permanent_factorial<F: ConstField>(matrix: &[F], n: usize) -> F {
+    fn naive_permanent_factorial<F: FiniteField>(matrix: &[F], n: usize) -> F {
         assert_eq!(matrix.len(), n * n);
         if n == 0 {
-            return F::one();
+            return F::zero_hint()
+                .expect("naive_permanent_factorial: n==0 needs zero_hint")
+                .one_like();
         }
 
+        let zero = matrix[0].zero_like();
+        let one = matrix[0].one_like();
+
         let mut perm: Vec<usize> = (0..n).collect();
-        let mut total = F::zero();
+        let mut total = zero;
         let mut c = vec![0usize; n]; // Heap's control vector
 
         // Evaluate the initial permutation (identity).
-        let mut term = F::one();
+        let mut term = one.clone();
         for i in 0..n {
-            term = term * matrix[i * n + perm[i]];
+            term = term * &matrix[i * n + perm[i]];
         }
         total += term;
 
@@ -185,9 +211,9 @@ mod tests {
                     perm.swap(c[i], i);
                 }
                 // Evaluate this permutation.
-                let mut term = F::one();
+                let mut term = one.clone();
                 for row in 0..n {
-                    term = term * matrix[row * n + perm[row]];
+                    term = term * &matrix[row * n + perm[row]];
                 }
                 total += term;
                 c[i] += 1;
