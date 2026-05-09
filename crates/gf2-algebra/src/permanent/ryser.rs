@@ -62,6 +62,15 @@ use crate::gray::gray_code_iter;
 ///
 /// Panics if `matrix.len() != n * n`.
 ///
+/// Panics if `n > 63`. The Gray-code subset enumerator
+/// [`crate::gray::gray_code_iter`] uses a single-`u64` register and is
+/// only well-defined for `n ≤ 63` (Rust's shift-by-full-type-width
+/// `1u64 << 64` is undefined behaviour). The `n` range that this driver
+/// is intended to serve — exhaustive cross-checks for `n ≤ 16` plus
+/// up-to-`n = 32` correctness comparisons against bipedal kernels — sits
+/// well within the 63 bound; multi-word streaming for `n > 63` is the
+/// scope of W3-T14 and uses a separate driver.
+///
 /// Also panics when `n == 0` if `F::zero_hint()` returns `None`. All
 /// `ConstField` types (every concrete `FiniteField` impl in this
 /// workspace, including `Fp<P>`, `QuadraticExt`, `CubicExt`, `Gf2mElement`,
@@ -78,6 +87,12 @@ use crate::gray::gray_code_iter;
 /// for `n ≤ 16` exhaustive cross-checks; larger `n` (up to 63) are
 /// mathematically correct but require `2^n` Gray steps.
 pub fn permanent_ryser<F: FiniteField>(matrix: &[F], n: usize) -> F {
+    assert!(
+        n <= 63,
+        "permanent_ryser: n = {} exceeds the single-u64 Gray-code register's n <= 63 bound; \
+         use multi-word streaming (W3-T14) for n > 63",
+        n,
+    );
     assert_eq!(
         matrix.len(),
         n * n,
@@ -260,6 +275,14 @@ mod tests {
     // -----------------------------------------------------------------------
     // Unit tests
     // -----------------------------------------------------------------------
+
+    /// `permanent_ryser` panics when `n > 63` (Gray-code register bound).
+    #[test]
+    #[should_panic(expected = "exceeds the single-u64 Gray-code register's n <= 63 bound")]
+    fn test_permanent_ryser_panics_on_n_exceeding_63() {
+        let matrix: Vec<Fp<3>> = vec![Fp::<3>::new(0); 64 * 64];
+        let _ = permanent_ryser::<Fp<3>>(&matrix, 64);
+    }
 
     /// The 0×0 matrix has permanent = 1 (vacuous product over the empty permutation).
     #[test]
