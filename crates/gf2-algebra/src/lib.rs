@@ -13,7 +13,7 @@
 //!
 //! # Status
 //!
-//! W1 sub-wave 1e (T5 closing). T2/T3/T4/T5/T6 landed (PackedField + Vec trait +
+//! W2 sub-wave 2a (T7 Ryser driver landed). T2/T3/T4/T5/T6 landed (PackedField + Vec trait +
 //! scalar oracles + Bipedal3 element + Bipedal3Vec + Bipedal3Matrix column-major + gray_code_iter):
 //!
 //! - [`packed::PackedField`] / [`packed::PackedFieldVec`] traits and the

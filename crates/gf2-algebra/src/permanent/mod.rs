@@ -9,9 +9,8 @@
 //!
 //! # Status
 //!
-//! W1 in progress — the module tree plus `gray_code_iter` (W1-T6) are
-//! present. The Ryser driver and reference impl land in W2 (T7-T8); the
-//! bipedal fast paths in W3 (T8-T11) and W4 (T16-T21).
+//! W2 in progress — Ryser driver landed (W2-T7); reference port and
+//! bipedal fast paths follow in T8/T9 and W3.
 //!
 //! # Re-exports
 //!
@@ -24,6 +23,8 @@
 pub mod bipedal3;
 pub mod reference;
 pub mod ryser;
+
+pub use ryser::permanent_ryser;
 
 /// Re-export of [`crate::gray`] so the canonical W1-T6 API
 /// `gf2_algebra::permanent::gray::gray_code_iter` resolves.
