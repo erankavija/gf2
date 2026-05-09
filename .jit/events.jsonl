@@ -4506,3 +4506,8 @@
 {"type":"gate_passed","id":"a8654e66-a5be-4f38-a358-406c92020b8f","issue_id":"b17bec62-138a-4fa4-85a2-dfc60e329327","timestamp":"2026-05-09T12:54:31.986288208Z","gate_key":"asm-artefact-present","updated_by":"auto:executor"}
 {"type":"gate_passed","id":"6190124a-2e68-4ffd-b41d-e9d29822da7d","issue_id":"e6b1216a-045d-4bcd-b269-877dd94361a7","timestamp":"2026-05-09T12:57:35.061500006Z","gate_key":"code-review","updated_by":"auto:executor"}
 {"type":"gate_failed","id":"d291816b-907a-47ec-8dfe-5f7e6a663d8a","issue_id":"b17bec62-138a-4fa4-85a2-dfc60e329327","timestamp":"2026-05-09T13:02:03.891847049Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"issue_state_changed","id":"9705e84c-d956-4183-a9d4-2385fab8b452","issue_id":"e6b1216a-045d-4bcd-b269-877dd94361a7","timestamp":"2026-05-09T13:07:19.500260615Z","from":"in_progress","to":"done"}
+{"type":"issue_completed","id":"94d63dba-ba70-4a3e-a64d-02e701dc9a5f","issue_id":"e6b1216a-045d-4bcd-b269-877dd94361a7","timestamp":"2026-05-09T13:07:19.500296505Z"}
+{"type":"issue_state_changed","id":"92fd50a8-9a2a-4ea0-9ed5-8c70ae825516","issue_id":"1aa0cb99-9918-4910-9c7e-7a11f746822a","timestamp":"2026-05-09T13:07:19.610126187Z","from":"backlog","to":"ready"}
+{"type":"issue_state_changed","id":"1535c103-5c15-4c58-8f0d-303c2f4757de","issue_id":"46330802-6688-45dc-bdd4-920226c695f4","timestamp":"2026-05-09T13:07:19.747106166Z","from":"backlog","to":"ready"}
+{"type":"issue_state_changed","id":"60c0a8b0-6c63-492f-b243-5e24850022e8","issue_id":"94870b84-6772-49eb-849a-2d1a5256edc2","timestamp":"2026-05-09T13:07:19.958340336Z","from":"backlog","to":"ready"}
