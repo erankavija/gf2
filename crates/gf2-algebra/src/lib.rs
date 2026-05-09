@@ -13,9 +13,8 @@
 //!
 //! # Status
 //!
-//! W1 sub-wave 1c in progress. T2/T3/T6 landed (PackedField trait +
-//! ScalarPackedFp3/ScalarPackedFp3Vec oracle + gray_code_iter +
-//! Bipedal3 element):
+//! W1 sub-wave 1d in progress. T2/T3/T4/T6 landed (PackedField + Vec trait +
+//! scalar oracles + Bipedal3 element + Bipedal3Vec + gray_code_iter):
 //!
 //! - [`packed::PackedField`] / [`packed::PackedFieldVec`] traits and the
 //!   [`packed::ScalarPackedFp3`] / [`packed::ScalarPackedFp3Vec`] scalar
@@ -23,10 +22,14 @@
 //! - [`packed::Bipedal3`] fixed-width packed `F_3` element (64 lanes, bitwise
 //!   Scheinerman 2024 formulas) is landed; cross-checked via proptest (1000
 //!   cases) against [`packed::ScalarPackedFp3`].
+//! - [`packed::Bipedal3Vec`] variable-length packed `F_3` vector (two parallel
+//!   `Vec<u64>` with mask-tail invariant) is landed; cross-checked via proptest
+//!   (200 cases) against [`packed::ScalarPackedFp3Vec`]. Includes `fold_mul`
+//!   inherent method (T4 deliverable).
 //! - [`gray::gray_code_iter`] is landed.
 //! - `permanent::ryser`, `permanent::reference`, `permanent::bipedal3` (and
 //!   the W4 F_5/F_7 analogues) are still placeholder modules; bodies land in
-//!   W1 (T4-T5) and W2-W4.
+//!   W1 (T5) and W2-W4.
 //!
 //! The full type → crate map this crate satisfies on completion is in
 //! [`dev/plans/d1a_gf2_algebra_boundary.md`](../../../dev/plans/d1a_gf2_algebra_boundary.md)
