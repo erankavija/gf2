@@ -24,3 +24,7 @@ avx512 = []
 # dependency cycle.
 gf2-core = { path = "../gf2-core" }
 proptest = { workspace = true }
+# Standalone F_3 bipedal prototype — used as the SSOT scalar `Bipedal3`
+# reference for proptest cross-checks per b17bec62 success criterion 3.
+# Path-only dev-dep (the prototype is a non-workspace crate).
+f3-bipedal-prototype = { path = "../../dev/research/f3_bipedal" }

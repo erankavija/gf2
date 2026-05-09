@@ -25,16 +25,28 @@
 //!
 //! ## Adding a new prime
 //!
-//! 1. Implement [`framework::BipedalLikeConfig`] for a new zero-sized struct.
-//! 2. Pick (or define) lane types implementing [`lanes::BipedalLogicalLanes`].
-//! 3. Define a type alias `pub type ... = BatchedBipedalLike<NewConfig, NewMag, NewSgn>;`.
-//! 4. Add `#[target_feature]`-attributed batch entry points in
-//!    `crates/gf2-kernels-simd/src/x86/<new_module>.rs` mirroring
-//!    `bipedal_avx2.rs`.
+//! Adding a new prime requires only a new [`framework::BipedalLikeConfig`]
+//! impl in `crates/gf2-kernels-simd/src/bipedal/<prime>.rs`. The generic
+//! AVX2 entry points in [`crate::x86::bipedal_avx2`]
+//! (`run_add_batch::<C>`, `run_sub_batch::<C>`, `run_mul_batch::<C>`,
+//! `run_neg_batch::<C>`) automatically monomorphise over the new config;
+//! no kernel code changes are required.
 //!
-//! No changes to the framework or lane traits should be needed unless the
-//! new prime introduces a new lane primitive (e.g. byte-shuffle for F_7's
-//! LUT-A table lookup).
+//! Concrete steps:
+//!
+//! 1. Implement [`framework::BipedalLikeConfig`] for a new zero-sized struct.
+//! 2. Pick (or define) lane types implementing [`lanes::BipedalLogicalLanes`]
+//!    (today only [`lanes::Avx2Lane`] is provided; future AVX-512 / AArch64
+//!    backends each contribute a new lane impl).
+//! 3. (Optional) Define a type alias
+//!    `pub type ... = BatchedBipedalLike<NewConfig, NewMag, NewSgn>;` for
+//!    ergonomics.
+//! 4. Call the existing generic `run_*_batch::<NewConfig>` entry points
+//!    from your safe wrapper / runtime-detection bundle.
+//!
+//! No changes to the framework, the lane traits, or the AVX2 entry-point
+//! definitions are needed unless the new prime introduces a new lane
+//! primitive (e.g. byte-shuffle for F_7's LUT-A table lookup).
 
 pub mod f3;
 pub mod framework;
@@ -51,10 +63,17 @@ pub use lanes::Avx2Lane;
 
 /// AVX2 batch entry points for the F_3 instantiation.
 ///
-/// Re-exported from `crate::x86::bipedal_avx2` to give callers a stable
-/// path that does not depend on the private `x86` module layout. Each
-/// function is `#[target_feature(enable = "avx2")]`-attributed; callers
-/// must runtime-detect AVX2 before invoking them.
+/// The four functions in this module are thin `Config3`-monomorphised
+/// shims over the generic [`crate::x86::bipedal_avx2::run_add_batch`]
+/// (and its `sub` / `mul` / `neg` siblings). The generic entry points
+/// are already `#[target_feature(enable = "avx2")]`; this module gives
+/// F_3 callers a stable, non-generic path that does not depend on the
+/// private `x86` module layout. Callers must runtime-detect AVX2 before
+/// invoking these functions.
+///
+/// To target a different prime in the future, call the generic entry
+/// point in [`crate::x86::bipedal_avx2`] directly with the appropriate
+/// `BipedalLikeConfig` — no per-prime shim module is required.
 ///
 /// # Examples
 ///
@@ -77,9 +96,101 @@ pub use lanes::Avx2Lane;
 /// ```
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub mod avx2 {
-    pub use crate::x86::bipedal_avx2::{
-        run_add_batch, run_mul_batch, run_neg_batch, run_sub_batch,
-    };
+    use crate::bipedal::Config3;
+
+    /// `Config3`-monomorphised wrapper over
+    /// [`crate::x86::bipedal_avx2::run_add_batch`].
+    ///
+    /// # Safety
+    ///
+    /// AVX2 must be available at runtime; all six slices share length
+    /// divisible by 4. See the generic entry point for the full contract.
+    #[inline]
+    #[target_feature(enable = "avx2")]
+    pub unsafe fn run_add_batch(
+        mag1: &[u64],
+        sgn1: &[u64],
+        mag2: &[u64],
+        sgn2: &[u64],
+        out_mag: &mut [u64],
+        out_sgn: &mut [u64],
+    ) {
+        // SAFETY: AVX2 + slice-shape are caller's preconditions; forwarded.
+        unsafe {
+            crate::x86::bipedal_avx2::run_add_batch::<Config3>(
+                mag1, sgn1, mag2, sgn2, out_mag, out_sgn,
+            )
+        }
+    }
+
+    /// `Config3`-monomorphised wrapper over
+    /// [`crate::x86::bipedal_avx2::run_sub_batch`].
+    ///
+    /// # Safety
+    ///
+    /// AVX2 must be available at runtime; all six slices share length
+    /// divisible by 4.
+    #[inline]
+    #[target_feature(enable = "avx2")]
+    pub unsafe fn run_sub_batch(
+        mag1: &[u64],
+        sgn1: &[u64],
+        mag2: &[u64],
+        sgn2: &[u64],
+        out_mag: &mut [u64],
+        out_sgn: &mut [u64],
+    ) {
+        // SAFETY: AVX2 + slice-shape are caller's preconditions; forwarded.
+        unsafe {
+            crate::x86::bipedal_avx2::run_sub_batch::<Config3>(
+                mag1, sgn1, mag2, sgn2, out_mag, out_sgn,
+            )
+        }
+    }
+
+    /// `Config3`-monomorphised wrapper over
+    /// [`crate::x86::bipedal_avx2::run_mul_batch`].
+    ///
+    /// # Safety
+    ///
+    /// AVX2 must be available at runtime; all six slices share length
+    /// divisible by 4.
+    #[inline]
+    #[target_feature(enable = "avx2")]
+    pub unsafe fn run_mul_batch(
+        mag1: &[u64],
+        sgn1: &[u64],
+        mag2: &[u64],
+        sgn2: &[u64],
+        out_mag: &mut [u64],
+        out_sgn: &mut [u64],
+    ) {
+        // SAFETY: AVX2 + slice-shape are caller's preconditions; forwarded.
+        unsafe {
+            crate::x86::bipedal_avx2::run_mul_batch::<Config3>(
+                mag1, sgn1, mag2, sgn2, out_mag, out_sgn,
+            )
+        }
+    }
+
+    /// `Config3`-monomorphised wrapper over
+    /// [`crate::x86::bipedal_avx2::run_neg_batch`].
+    ///
+    /// # Safety
+    ///
+    /// AVX2 must be available at runtime; all four slices share length
+    /// divisible by 4.
+    #[inline]
+    #[target_feature(enable = "avx2")]
+    pub unsafe fn run_neg_batch(
+        mag: &[u64],
+        sgn: &[u64],
+        out_mag: &mut [u64],
+        out_sgn: &mut [u64],
+    ) {
+        // SAFETY: AVX2 + slice-shape are caller's preconditions; forwarded.
+        unsafe { crate::x86::bipedal_avx2::run_neg_batch::<Config3>(mag, sgn, out_mag, out_sgn) }
+    }
 }
 
 /// Two-operand bipedal binary kernel: `(m1, s1) op (m2, s2) -> (out_mag, out_sgn)`.
@@ -157,23 +268,23 @@ pub fn detect_avx2() -> Option<BipedalAvx2Fns> {
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn add_safe(m1: &[u64], s1: &[u64], m2: &[u64], s2: &[u64], om: &mut [u64], os: &mut [u64]) {
     // SAFETY: `detect_avx2` only returns these pointers when AVX2 is available.
-    unsafe { crate::x86::bipedal_avx2::run_add_batch(m1, s1, m2, s2, om, os) }
+    unsafe { crate::x86::bipedal_avx2::run_add_batch::<Config3>(m1, s1, m2, s2, om, os) }
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn sub_safe(m1: &[u64], s1: &[u64], m2: &[u64], s2: &[u64], om: &mut [u64], os: &mut [u64]) {
     // SAFETY: `detect_avx2` only returns these pointers when AVX2 is available.
-    unsafe { crate::x86::bipedal_avx2::run_sub_batch(m1, s1, m2, s2, om, os) }
+    unsafe { crate::x86::bipedal_avx2::run_sub_batch::<Config3>(m1, s1, m2, s2, om, os) }
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn mul_safe(m1: &[u64], s1: &[u64], m2: &[u64], s2: &[u64], om: &mut [u64], os: &mut [u64]) {
     // SAFETY: `detect_avx2` only returns these pointers when AVX2 is available.
-    unsafe { crate::x86::bipedal_avx2::run_mul_batch(m1, s1, m2, s2, om, os) }
+    unsafe { crate::x86::bipedal_avx2::run_mul_batch::<Config3>(m1, s1, m2, s2, om, os) }
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn neg_safe(m: &[u64], s: &[u64], om: &mut [u64], os: &mut [u64]) {
     // SAFETY: `detect_avx2` only returns these pointers when AVX2 is available.
-    unsafe { crate::x86::bipedal_avx2::run_neg_batch(m, s, om, os) }
+    unsafe { crate::x86::bipedal_avx2::run_neg_batch::<Config3>(m, s, om, os) }
 }

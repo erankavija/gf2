@@ -1,11 +1,12 @@
-//! AVX2 batch entry points for the F_3 instantiation
-//! [`crate::bipedal::Bipedal3x4`] of the generic
+//! Generic AVX2 batch entry points for the bipedal-like
 //! [`crate::bipedal::framework::BatchedBipedalLike`] framework.
 //!
-//! The functions in this file carry `#[target_feature(enable = "avx2")]`,
-//! which is the static contract required by rustc to fully inline the
-//! trait-method-emitted AVX2 intrinsics. R4 §4.1 documents the 12-34x
-//! regression that occurs without this discipline.
+//! Each `run_*_batch::<C>` function is `#[target_feature(enable = "avx2")]`
+//! and generic over the per-prime [`BipedalLikeConfig`] impl `C`. The F_3
+//! instantiation `C = Config3` is the only one wired today; F_5 / F_7
+//! consume the same entry points by supplying their own config impls,
+//! per b17bec62 success criterion 4. R4 §4.1 documents the 12-34x
+//! regression that occurs without the `#[target_feature]` discipline.
 //!
 //! All `pub unsafe fn` here carry a top-of-function `// SAFETY:` comment.
 //! AVX2 availability is the dynamic precondition every caller must
@@ -15,15 +16,21 @@
 //! instructions; everything in `crate::bipedal::*` is plumbing that
 //! inlines into them.
 
-use crate::bipedal::framework::BatchedBipedalLike;
+use crate::bipedal::framework::{BatchedBipedalLike, BipedalLikeConfig};
 use crate::bipedal::lanes::{Avx2Lane, BipedalLogicalLanes};
-use crate::bipedal::Config3;
 
-/// Apply F_3 add over canonical `(mag, sgn)` u64-word streams via AVX2.
+/// Apply a bipedal-like add over canonical `(mag, sgn)` u64-word streams via AVX2.
 ///
-/// One AVX2 lane consumes 4 × `u64` (256 bits = 256 logical F_3 lanes).
-/// All six slices must be the same length and a multiple of 4. An empty
-/// input (length 0) is allowed and is a no-op.
+/// Generic over the per-prime [`BipedalLikeConfig`] `C`. One AVX2 lane
+/// consumes 4 × `u64` (256 bits = 256 logical lanes). All six slices
+/// must be the same length and a multiple of 4. An empty input
+/// (length 0) is allowed and is a no-op.
+///
+/// # Type parameters
+///
+/// * `C` — per-prime arithmetic recipe. Today only [`crate::bipedal::Config3`]
+///   is instantiated; adding F_5 or F_7 only needs a new `BipedalLikeConfig`
+///   impl, not a new entry point.
 ///
 /// # Arguments
 ///
@@ -40,13 +47,14 @@ use crate::bipedal::Config3;
 /// # Examples
 ///
 /// ```no_run
-/// use gf2_kernels_simd::bipedal::avx2::run_add_batch;
+/// use gf2_kernels_simd::bipedal::Config3;
+/// use gf2_kernels_simd::x86::bipedal_avx2::run_add_batch;
 /// if is_x86_feature_detected!("avx2") {
 ///     let v = vec![0u64; 4];
 ///     let mut out_m = vec![0u64; 4];
 ///     let mut out_s = vec![0u64; 4];
 ///     // SAFETY: AVX2 verified, slices length 4 (= one AVX2 lane).
-///     unsafe { run_add_batch(&v, &v, &v, &v, &mut out_m, &mut out_s); }
+///     unsafe { run_add_batch::<Config3>(&v, &v, &v, &v, &mut out_m, &mut out_s); }
 /// }
 /// ```
 ///
@@ -55,7 +63,7 @@ use crate::bipedal::Config3;
 /// `O(n / 4)` AVX2 ops, where `n = mag1.len()`.
 #[inline]
 #[target_feature(enable = "avx2")]
-pub unsafe fn run_add_batch(
+pub unsafe fn run_add_batch<C: BipedalLikeConfig>(
     mag1: &[u64],
     sgn1: &[u64],
     mag2: &[u64],
@@ -78,8 +86,7 @@ pub unsafe fn run_add_batch(
             let v_s1 = Avx2Lane::loadu(sgn1, i);
             let v_m2 = Avx2Lane::loadu(mag2, i);
             let v_s2 = Avx2Lane::loadu(sgn2, i);
-            let (m, s) =
-                BatchedBipedalLike::<Config3, Avx2Lane, Avx2Lane>::add(v_m1, v_s1, v_m2, v_s2);
+            let (m, s) = BatchedBipedalLike::<C, Avx2Lane, Avx2Lane>::add(v_m1, v_s1, v_m2, v_s2);
             Avx2Lane::storeu(out_mag, i, m);
             Avx2Lane::storeu(out_sgn, i, s);
             i += 4;
@@ -87,9 +94,14 @@ pub unsafe fn run_add_batch(
     }
 }
 
-/// Apply F_3 sub over canonical `(mag, sgn)` u64-word streams via AVX2.
+/// Apply a bipedal-like sub over canonical `(mag, sgn)` u64-word streams via AVX2.
 ///
-/// See [`run_add_batch`] for the slice-shape contract.
+/// Generic over [`BipedalLikeConfig`] `C`. See [`run_add_batch`] for the
+/// slice-shape contract.
+///
+/// # Type parameters
+///
+/// * `C` — per-prime arithmetic recipe.
 ///
 /// # Arguments
 ///
@@ -103,13 +115,14 @@ pub unsafe fn run_add_batch(
 /// # Examples
 ///
 /// ```no_run
-/// use gf2_kernels_simd::bipedal::avx2::run_sub_batch;
+/// use gf2_kernels_simd::bipedal::Config3;
+/// use gf2_kernels_simd::x86::bipedal_avx2::run_sub_batch;
 /// if is_x86_feature_detected!("avx2") {
 ///     let v = vec![0u64; 4];
 ///     let mut out_m = vec![0u64; 4];
 ///     let mut out_s = vec![0u64; 4];
 ///     // SAFETY: AVX2 verified, slices length 4.
-///     unsafe { run_sub_batch(&v, &v, &v, &v, &mut out_m, &mut out_s); }
+///     unsafe { run_sub_batch::<Config3>(&v, &v, &v, &v, &mut out_m, &mut out_s); }
 /// }
 /// ```
 ///
@@ -118,7 +131,7 @@ pub unsafe fn run_add_batch(
 /// `O(n / 4)` AVX2 ops.
 #[inline]
 #[target_feature(enable = "avx2")]
-pub unsafe fn run_sub_batch(
+pub unsafe fn run_sub_batch<C: BipedalLikeConfig>(
     mag1: &[u64],
     sgn1: &[u64],
     mag2: &[u64],
@@ -141,8 +154,7 @@ pub unsafe fn run_sub_batch(
             let v_s1 = Avx2Lane::loadu(sgn1, i);
             let v_m2 = Avx2Lane::loadu(mag2, i);
             let v_s2 = Avx2Lane::loadu(sgn2, i);
-            let (m, s) =
-                BatchedBipedalLike::<Config3, Avx2Lane, Avx2Lane>::sub(v_m1, v_s1, v_m2, v_s2);
+            let (m, s) = BatchedBipedalLike::<C, Avx2Lane, Avx2Lane>::sub(v_m1, v_s1, v_m2, v_s2);
             Avx2Lane::storeu(out_mag, i, m);
             Avx2Lane::storeu(out_sgn, i, s);
             i += 4;
@@ -150,9 +162,14 @@ pub unsafe fn run_sub_batch(
     }
 }
 
-/// Apply F_3 mul over canonical `(mag, sgn)` u64-word streams via AVX2.
+/// Apply a bipedal-like mul over canonical `(mag, sgn)` u64-word streams via AVX2.
 ///
-/// See [`run_add_batch`] for the slice-shape contract.
+/// Generic over [`BipedalLikeConfig`] `C`. See [`run_add_batch`] for the
+/// slice-shape contract.
+///
+/// # Type parameters
+///
+/// * `C` — per-prime arithmetic recipe.
 ///
 /// # Arguments
 ///
@@ -166,13 +183,14 @@ pub unsafe fn run_sub_batch(
 /// # Examples
 ///
 /// ```no_run
-/// use gf2_kernels_simd::bipedal::avx2::run_mul_batch;
+/// use gf2_kernels_simd::bipedal::Config3;
+/// use gf2_kernels_simd::x86::bipedal_avx2::run_mul_batch;
 /// if is_x86_feature_detected!("avx2") {
 ///     let v = vec![0u64; 4];
 ///     let mut out_m = vec![0u64; 4];
 ///     let mut out_s = vec![0u64; 4];
 ///     // SAFETY: AVX2 verified, slices length 4.
-///     unsafe { run_mul_batch(&v, &v, &v, &v, &mut out_m, &mut out_s); }
+///     unsafe { run_mul_batch::<Config3>(&v, &v, &v, &v, &mut out_m, &mut out_s); }
 /// }
 /// ```
 ///
@@ -181,7 +199,7 @@ pub unsafe fn run_sub_batch(
 /// `O(n / 4)` AVX2 ops.
 #[inline]
 #[target_feature(enable = "avx2")]
-pub unsafe fn run_mul_batch(
+pub unsafe fn run_mul_batch<C: BipedalLikeConfig>(
     mag1: &[u64],
     sgn1: &[u64],
     mag2: &[u64],
@@ -204,8 +222,7 @@ pub unsafe fn run_mul_batch(
             let v_s1 = Avx2Lane::loadu(sgn1, i);
             let v_m2 = Avx2Lane::loadu(mag2, i);
             let v_s2 = Avx2Lane::loadu(sgn2, i);
-            let (m, s) =
-                BatchedBipedalLike::<Config3, Avx2Lane, Avx2Lane>::mul(v_m1, v_s1, v_m2, v_s2);
+            let (m, s) = BatchedBipedalLike::<C, Avx2Lane, Avx2Lane>::mul(v_m1, v_s1, v_m2, v_s2);
             Avx2Lane::storeu(out_mag, i, m);
             Avx2Lane::storeu(out_sgn, i, s);
             i += 4;
@@ -213,10 +230,14 @@ pub unsafe fn run_mul_batch(
     }
 }
 
-/// Apply F_3 neg over canonical `(mag, sgn)` u64-word streams via AVX2.
+/// Apply a bipedal-like neg over canonical `(mag, sgn)` u64-word streams via AVX2.
 ///
-/// Two input slices and two output slices, all the same length and a
-/// multiple of 4.
+/// Generic over [`BipedalLikeConfig`] `C`. Two input slices and two
+/// output slices, all the same length and a multiple of 4.
+///
+/// # Type parameters
+///
+/// * `C` — per-prime arithmetic recipe.
 ///
 /// # Arguments
 ///
@@ -231,13 +252,14 @@ pub unsafe fn run_mul_batch(
 /// # Examples
 ///
 /// ```no_run
-/// use gf2_kernels_simd::bipedal::avx2::run_neg_batch;
+/// use gf2_kernels_simd::bipedal::Config3;
+/// use gf2_kernels_simd::x86::bipedal_avx2::run_neg_batch;
 /// if is_x86_feature_detected!("avx2") {
 ///     let v = vec![0u64; 4];
 ///     let mut out_m = vec![0u64; 4];
 ///     let mut out_s = vec![0u64; 4];
 ///     // SAFETY: AVX2 verified, slices length 4.
-///     unsafe { run_neg_batch(&v, &v, &mut out_m, &mut out_s); }
+///     unsafe { run_neg_batch::<Config3>(&v, &v, &mut out_m, &mut out_s); }
 /// }
 /// ```
 ///
@@ -246,7 +268,12 @@ pub unsafe fn run_mul_batch(
 /// `O(n / 4)` AVX2 ops.
 #[inline]
 #[target_feature(enable = "avx2")]
-pub unsafe fn run_neg_batch(mag: &[u64], sgn: &[u64], out_mag: &mut [u64], out_sgn: &mut [u64]) {
+pub unsafe fn run_neg_batch<C: BipedalLikeConfig>(
+    mag: &[u64],
+    sgn: &[u64],
+    out_mag: &mut [u64],
+    out_sgn: &mut [u64],
+) {
     debug_assert_eq!(mag.len() % 4, 0);
     debug_assert_eq!(mag.len(), sgn.len());
     debug_assert_eq!(mag.len(), out_mag.len());
@@ -258,7 +285,7 @@ pub unsafe fn run_neg_batch(mag: &[u64], sgn: &[u64], out_mag: &mut [u64], out_s
         while i < n {
             let v_m = Avx2Lane::loadu(mag, i);
             let v_s = Avx2Lane::loadu(sgn, i);
-            let (m, s) = BatchedBipedalLike::<Config3, Avx2Lane, Avx2Lane>::neg(v_m, v_s);
+            let (m, s) = BatchedBipedalLike::<C, Avx2Lane, Avx2Lane>::neg(v_m, v_s);
             Avx2Lane::storeu(out_mag, i, m);
             Avx2Lane::storeu(out_sgn, i, s);
             i += 4;
