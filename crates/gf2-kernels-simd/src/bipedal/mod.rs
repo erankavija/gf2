@@ -82,6 +82,20 @@ pub mod avx2 {
     };
 }
 
+/// Two-operand bipedal binary kernel: `(m1, s1) op (m2, s2) -> (out_mag, out_sgn)`.
+///
+/// Used by [`BipedalAvx2Fns::add_fn`], [`BipedalAvx2Fns::sub_fn`], and
+/// [`BipedalAvx2Fns::mul_fn`]. All six slices share length divisible by 4.
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+pub type BipedalBinaryKernelFn = fn(&[u64], &[u64], &[u64], &[u64], &mut [u64], &mut [u64]);
+
+/// Single-operand bipedal unary kernel: `(mag, sgn) -> (out_mag, out_sgn)`.
+///
+/// Used by [`BipedalAvx2Fns::neg_fn`]. All four slices share length
+/// divisible by 4.
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+pub type BipedalUnaryKernelFn = fn(&[u64], &[u64], &mut [u64], &mut [u64]);
+
 /// Function-pointer bundle for the F_3 bipedal AVX2 batch kernels.
 ///
 /// Mirrors the [`crate::LogicalFns`] / [`crate::fp65537::Fp65537Fns`] pattern:
@@ -92,24 +106,9 @@ pub mod avx2 {
 ///
 /// All four operations (`add`, `sub`, `mul`, `neg`) take same-length
 /// `&[u64]` streams (input) and `&mut [u64]` buffers (output) where the
-/// length is divisible by 4 (one AVX2 lane = 4 × u64). Both `add` / `sub`
-/// / `mul` are 6-tuple arity (two `(mag, sgn)` operands + two outputs);
+/// length is divisible by 4 (one AVX2 lane = 4 × u64). `add` / `sub` / `mul`
+/// are 6-tuple arity (two `(mag, sgn)` operands + two outputs);
 /// `neg` is 2-input + 2-output.
-/// Two-operand bipedal binary kernel: `(m1, s1) op (m2, s2) -> (out_mag, out_sgn)`.
-///
-/// Used by [`BipedalAvx2Fns::add_fn`], [`BipedalAvx2Fns::sub_fn`], and
-/// [`BipedalAvx2Fns::mul_fn`]. All six slices share length divisible by 4.
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-pub type BipedalBinaryKernelFn =
-    fn(&[u64], &[u64], &[u64], &[u64], &mut [u64], &mut [u64]);
-
-/// Single-operand bipedal unary kernel: `(mag, sgn) -> (out_mag, out_sgn)`.
-///
-/// Used by [`BipedalAvx2Fns::neg_fn`]. All four slices share length
-/// divisible by 4.
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-pub type BipedalUnaryKernelFn = fn(&[u64], &[u64], &mut [u64], &mut [u64]);
-
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 #[derive(Copy, Clone)]
 pub struct BipedalAvx2Fns {
