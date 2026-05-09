@@ -3,72 +3,170 @@
   "epic_short_id": "ae82bd73",
   "epic_title": "Fast matrix permanents over F_3 / F_5 / F_7 via packed bipedal arithmetic",
   "current_wave": 0,
-  "current_sub_wave": "0b",
+  "current_status": "W0_CLOSED — W1 ready to dispatch (T1 + T16 in parallel)",
   "started_at": "2026-05-09T01:30:00+03:00",
   "session_count": 1,
-  "waves": [
-    {
-      "wave_number": 0,
-      "wave_name": "W0 — Decisions and sketches",
-      "sub_waves": {
-        "0a": "CLOSED — D1a, D2, D3, D4, R3 all done",
-        "0b": "READY — D1b (9fe275d3) unblocked by D1a closing",
-        "0c": "PENDING — D1c (4fced99b) + R4 (c7542983) blocked on D1b closing"
-      },
-      "issues": [
-        {"short_id": "6e20133d", "title": "D1a crate boundary",            "status": "done", "rework_count": 1},
-        {"short_id": "a0c0a45f", "title": "D2 Lean F_3 bipedal sketch",    "status": "done", "rework_count": 1},
-        {"short_id": "4aaa6e4d", "title": "D3 Lean Ryser bounded sketch",  "status": "done", "rework_count": 1},
-        {"short_id": "4c534d31", "title": "D4 MSRV intrinsic feasibility", "status": "done", "rework_count": 0},
-        {"short_id": "60c30e2d", "title": "R3 multi-word streaming",       "status": "done", "rework_count": 2},
-        {"short_id": "9fe275d3", "title": "D1b PackedField trait surface", "status": "ready", "rework_count": 0,
-          "note": "D1a closed; can be claimed and dispatched. Has ⚠ user-approval criterion."},
-        {"short_id": "4fced99b", "title": "D1c feature-gate matrix",       "status": "pending", "rework_count": 0,
-          "blocker": "D1b must close first."},
-        {"short_id": "c7542983", "title": "R4 SIMD batching strategy",     "status": "pending", "rework_count": 0,
-          "blocker": "D1b must close first."},
-        {"short_id": "8e4e19a0", "title": "Empirical perm-vs-det uniformity", "status": "pending-deferred-to-W7", "rework_count": 0,
-          "note": "Mis-wired as direct epic dep; should be downstream of W2-W4 implementations. Rewire pending."},
-        {"short_id": "6b3f6054", "title": "F_5 packed encoding research",  "status": "done", "rework_count": 0,
-          "completed_in_prior_session": true},
-        {"short_id": "f10152f6", "title": "F_7 packed encoding research",  "status": "done", "rework_count": 0,
-          "completed_in_prior_session": true}
+  "session_1_close_time": "2026-05-09T13:00:00+03:00",
+  "issue_count": {
+    "epic": 1,
+    "done": 11,
+    "ready": 2,
+    "backlog": 39,
+    "rejected": 0,
+    "total": 53
+  },
+  "wave_status": {
+    "W0": {
+      "name": "Decisions and sketches",
+      "status": "CLOSED",
+      "issues_done": 11,
+      "issues_total": 11,
+      "completion_date": "2026-05-09",
+      "list": [
+        "6e20133d (D1a crate boundary)",
+        "a0c0a45f (D2 Lean F_3 sketch)",
+        "4aaa6e4d (D3 Lean Ryser sketch)",
+        "4c534d31 (D4 MSRV intrinsic feasibility)",
+        "60c30e2d (R3 multi-word streaming)",
+        "9fe275d3 (D1b PackedField trait surface)",
+        "4fced99b (D1c feature-gate matrix)",
+        "c7542983 (R4 SIMD batching - generic framework)",
+        "6b3f6054 (R1 F_5 packed encoding - prior session)",
+        "f10152f6 (R2 F_7 packed encoding - prior session)"
+      ],
+      "deferred_to_W7": ["8e4e19a0 (perm-vs-det uniformity - rewired to depend on T9/T18/T20)"]
+    },
+    "W1": {
+      "name": "Foundation",
+      "status": "READY",
+      "issues_total": 6,
+      "ready_now": ["e6b1216a (T1 crate skeleton)", "b17bec62 (T16 BatchedBipedalLike framework — actually W4, but unblocked since R4 closed)"],
+      "list": [
+        "e6b1216a (T1 crate skeleton)",
+        "1aa0cb99 (T2 PackedField scalar impl)",
+        "46330802 (T3 Bipedal3 element)",
+        "053e4016 (T4 Bipedal3Vec)",
+        "ef7d0633 (T5 Bipedal3Matrix)",
+        "94870b84 (T6 gray_code_iter)"
       ]
+    },
+    "W2": {
+      "name": "Reference implementations + reproduction harness",
+      "status": "PENDING",
+      "issues_total": 6,
+      "list": [
+        "93e5a5e8 (T7 generic permanent_ryser)",
+        "632d92ad (T8 permanent_mod3_reference)",
+        "b0857ae9 (T9 permanent_bipedal3 single-word)",
+        "b315564a (T10 criterion bench)",
+        "1cd3eb09 (T11 test-vectors)",
+        "96dcbec4 (Sa reproduce paper Table 2 slope)"
+      ]
+    },
+    "W3": {
+      "name": "SIMD + multi-word + parallel",
+      "status": "PENDING",
+      "issues_total": 7,
+      "list": [
+        "d181e95b (T12 SIMD bipedal3 kernel via BatchedBipedalLike)",
+        "686ee1b5 (T13 SIMD dispatch wiring)",
+        "a7886bd8 (T14 multi-word streaming)",
+        "05250df5 (T15 rayon parallel)",
+        "c98ed603 (S1 50x speedup vs T8 at n=36)",
+        "4513209c (S2 parallel scaling 0.85x linear)",
+        "363556e6 (S3 cross-CPU portability)"
+      ]
+    },
+    "W4": {
+      "name": "F_5 / F_7",
+      "status": "PARTIAL_READY (T16 ready)",
+      "issues_total": 7,
+      "list": [
+        "b17bec62 (T16 BatchedBipedalLike framework) [READY now]",
+        "6917eb85 (T17 F_5 packed type)",
+        "684a6715 (T18 permanent_bipedal5)",
+        "56c5dabc (T19 F_7 packed type)",
+        "063f49bb (T20 permanent_bipedal7)",
+        "1f769232 (T21 SIMD F_5+F_7 kernels)",
+        "333028c1 (S4 cross-CAS validation)"
+      ]
+    },
+    "W5": {
+      "name": "GPU",
+      "status": "PENDING",
+      "issues_total": 6,
+      "list": [
+        "b62c86d8 (T22 hip permanent scaffold)",
+        "ad55b777 (T23 F_3 HIP kernel)",
+        "b43cdf33 (T24 F_5 HIP kernel)",
+        "5c0505b2 (T25 F_7 HIP kernel)",
+        "2fbbdfa5 (T26 host-side GPU dispatcher)",
+        "a9e461de (S5 GPU vs CPU crossover [aspirational])"
+      ]
+    },
+    "W6": {
+      "name": "Lean verification",
+      "status": "PENDING",
+      "issues_total": 4,
+      "list": [
+        "8c902184 (Gf api-freeze)",
+        "f05ffbe1 (V1 Lean F_3 correctness)",
+        "0606186a (V2 Lean Ryser bounded)",
+        "30e98ef1 (V3 Lean F_5/F_7 [aspirational])"
+      ]
+    },
+    "W7": {
+      "name": "Reporting",
+      "status": "PENDING",
+      "issues_total": 5,
+      "list": [
+        "424aa94f (T27 plot scripts)",
+        "7cd9afdb (S6 publication-grade artefact)",
+        "c90db5a4 (T28 permanent-repro.sh)",
+        "16f03734 (T29 README + doc-tests)",
+        "8808b051 (T30 update CLAUDE.md + ROADMAP)"
+      ],
+      "additional_in_W7": ["8e4e19a0 (perm-vs-det uniformity - rewired)"]
     }
-  ],
-  "rework_counts": {
-    "6e20133d": 1, "a0c0a45f": 1, "4aaa6e4d": 1, "4c534d31": 0, "60c30e2d": 2
   },
   "session_1_summary": {
-    "issues_closed": ["6e20133d (D1a)", "a0c0a45f (D2)", "4aaa6e4d (D3)", "4c534d31 (D4)", "60c30e2d (R3)"],
-    "user_decisions_applied": [
-      "D1a criterion 2 amended to permit feature-gated edges to gf2-kernels-{simd,hip}.",
-      "D2 sketch user-approved; recorded as ## Approval section in issue description.",
-      "D3 sketch user-approved; criterion 6 amended to use ## Approval section convention (matches D2 pattern, no JIT comment primitive exists).",
-      "D4 unsafe-isolation policy: CLAUDE.md amended to permit dev/research/<crate>/ stubs with SAFETY-commented `pub unsafe fn`s."
+    "issues_closed": [
+      "6e20133d (D1a) - 1 rework",
+      "a0c0a45f (D2) - 1 rework",
+      "4aaa6e4d (D3) - 1 rework + criterion 6 amendment",
+      "4c534d31 (D4) - 0 rework",
+      "60c30e2d (R3) - 2 reworks",
+      "9fe275d3 (D1b) - 4 reworks (full doc-standards pass on round 5)",
+      "4fced99b (D1c) - 1 rework (verification-approach reading)",
+      "c7542983 (R4) - 1 rework (bench input methodology + run count)"
     ],
-    "key_lessons_for_next_sessions": [
-      "Pre-amend ⚠-user-approval criteria from 'recorded as a comment' to 'recorded in description as ## Approval section' BEFORE dispatching the issue. Saves a rework cycle.",
-      "Reviewer LLM is stochastic on the comment-vs-description-edit reading: D2 accepted same-pattern fix; D3 rejected 3 times. Pre-amendment removes the ambiguity.",
-      "dev/research/<crate>/ stubs need a .gitignore for `target/` and `Cargo.lock` BEFORE the first commit. Otherwise build artefacts pollute history (also captured in feedback_dev_research_target_gitignore memory).",
-      "The strict-reading reviewer pattern: when criterion uses 'the only X required' or 'X is THE Y', expect strict-not-permissive interpretation. Reword criterion or escalate amendment."
+    "issues_created_session_1": 41,
+    "user_decisions_applied": [
+      "D1a criterion 2 amended to permit feature-gated edges to gf2-kernels-{simd,hip}",
+      "D2/D3 sketch user-approved; recorded as ## Approval section in issue description",
+      "D3 criterion 6 amended to use ## Approval description-edit (no JIT comment primitive exists)",
+      "D4 unsafe-isolation: CLAUDE.md amended to permit dev/research/<crate>/ stubs with SAFETY-commented `pub unsafe fn`s",
+      "D1b trait surface user-approved (LANES const, splat trait method, fold_mul inherent, Eq canonical-decode equality, Permanent associated Field type)",
+      "D1b doc-standards pass: every public item has description + Arguments + Examples + Panics + Complexity per CLAUDE.md"
+    ],
+    "key_lessons": [
+      "Reviewer LLM is stochastic on similar findings; pre-amend criteria proactively when wording is ambiguous (e.g., 'recorded as a comment' → '## Approval section').",
+      "CLAUDE.md doc-standards (description + Arguments + Examples + Panics + Complexity) MUST be complete on every public item before submitting; reviewer cycles through them across rounds otherwise.",
+      "dev/research/<crate>/ stubs need .gitignore (target/ + Cargo.lock) BEFORE first commit; this is captured in feedback_dev_research_target_gitignore memory.",
+      "Strict-reading reviewer pattern on 'X is the only Y required' wording: phrase explicitly as 'mandatory non-feature-gated' or escalate amendment.",
+      "Bench/microbench docs: claims about run count, methodology, input distribution must MATCH the actual bench code; reviewer reads the harness and the doc."
     ]
   },
   "next_session_priorities": [
-    "1. Claim and dispatch D1b (9fe275d3 - PackedField + Permanent trait surface). Pre-amend criterion 4 to use ## Approval description-edit convention. Worker produces dev/plans/d1b_packed_field_api.md + dev/research/packed_field_stub/ demonstrating Bipedal3 : PackedField<Fp<3>>.",
-    "2. After D1b deliverable lands, escalate trait surface to user for approval (the actual API surface must be reviewed). Run gates. Transition to done.",
-    "3. Claim and dispatch D1c (4fced99b feature-gate matrix) + R4 (c7542983 SIMD batching strategy) in parallel after D1b closes.",
-    "4. Rewire 8e4e19a0 to be downstream of W2-W4 implementation; remove from current W0 dep edge on the epic.",
-    "5. After W0 fully closes (D1c + R4 done), plan W1 (~6 tasks: T1 crate skeleton, T2 PackedField scalar impl, T3 Bipedal3 element, T4 Bipedal3Vec, T5 Bipedal3Matrix, T6 gray_code_iter)."
+    "1. Claim and dispatch T1 (e6b1216a — gf2-algebra crate skeleton) and T16 (b17bec62 — BatchedBipedalLike framework) in parallel. They are file-disjoint (T1 in crates/gf2-algebra/, T16 in crates/gf2-kernels-simd/).",
+    "2. After T1 closes, dispatch T2 + T3 + T6 in parallel (W1 sub-wave 1b).",
+    "3. After T3 closes, dispatch T4 (which depends on T3); after T4 closes, T5.",
+    "4. After T6 closes (gray_code_iter), W2 unblocks: dispatch T7 + T9 in parallel.",
+    "5. Continue down the wave plan per dev/plans/gf2_algebra_permanent.md §13.",
+    "6. Pre-flight every dispatch with a CLAUDE.md doc-standards checklist embedded in the prompt (lessons from D1b's 4-cycle review)."
   ],
-  "wave_plan_remaining": {
-    "W0_remaining": "D1b → {D1c, R4} sub-waves; ~3 issues",
-    "W1": "Crate skeleton, PackedField trait scalar impl, Bipedal3 element + Vec + Matrix, gray_code_iter (~6 tasks)",
-    "W2": "permanent_ryser, permanent_mod3_reference, permanent_bipedal3 single-word, criterion bench, test-vectors, Sa reproduction-slope sim (~6 tasks)",
-    "W3": "SIMD bipedal3 kernel (T12), dispatch wiring (T13), multi-word streaming (T14), parallel (T15), S1 50x sim, S2 parallel-scale, S3 portability (~7 tasks)",
-    "W4": "BatchedBipedalLike framework (T16), F_5 type+ops (T17), permanent_bipedal5 (T18), F_7 type+ops (T19), permanent_bipedal7 (T20), SIMD F_5/F_7 kernels (T21), S4 cross-CAS (~7 tasks)",
-    "W5": "GPU permanent — HIP scaffold, F_3/F_5/F_7 device kernels, host dispatcher, S5 GPU vs CPU (~6 tasks)",
-    "W6": "Lean V1 implementation, V2 implementation, gate api-freeze, V3 aspirational (~3-4 tasks)",
-    "W7": "Plot scripts, S6 publication-grade artefact, scripts/permanent-repro.sh, README + doc-tests, CLAUDE.md + ROADMAP updates (~5 tasks)"
-  }
+  "ready_to_dispatch_now": [
+    {"short_id": "e6b1216a", "title": "T1 gf2-algebra crate skeleton + workspace member"},
+    {"short_id": "b17bec62", "title": "T16 BatchedBipedalLike framework for SIMD batching"}
+  ]
 }
