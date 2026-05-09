@@ -45,7 +45,7 @@ use core::fmt;
 
 use gf2_core::gfp::Fp;
 
-use super::PackedField;
+use super::{PackedField, PackedFieldVec};
 
 /// Fixed-width packed `F_3` element encoding 64 lanes in a `(mag, sgn)`
 /// `u64` pair using the bitwise formulas of Scheinerman 2024.
@@ -1110,6 +1110,1058 @@ mod tests {
                     "neg (alt-zero) lane {} mismatch", i
                 );
             }
+        }
+    }
+}
+
+// ===========================================================================
+// Bipedal3Vec — variable-length packed F_3 vector
+// ===========================================================================
+
+/// Variable-length packed `F_3` vector storing `len_lanes` elements as
+/// two parallel `Vec<u64>` words (`mag` and `sgn`), each of length
+/// `ceil(len_lanes / 64)`.
+///
+/// The encoding of each element matches [`Bipedal3`]: element at logical
+/// position `i` lives in word `i >> 6` at bit `i & 63` of both `mag` and
+/// `sgn`.
+///
+/// # Mask-tail invariant
+///
+/// Bits beyond `len_lanes` in the last word of both `mag` and `sgn` must
+/// always be zero. Every mutating operation calls [`Bipedal3Vec::mask_tail`]
+/// to enforce this invariant — it is the most critical correctness invariant
+/// in this codebase (CLAUDE.md §Key design invariants #1).
+///
+/// # Encoding summary
+///
+/// | `F_3` value | `mag` bit | `sgn` bit |
+/// |-------------|-----------|-----------|
+/// |      0      |     0     |     0     |
+/// |      1      |     1     |     0     |
+/// |      2      |     1     |     1     |
+///
+/// The alternative-zero codeword `(mag=0, sgn=1)` is treated as canonical
+/// zero in [`get`][`Bipedal3Vec::get`], [`all_zero`][`PackedFieldVec::all_zero`],
+/// and [`PartialEq`].
+///
+/// # Examples
+///
+/// ```
+/// use gf2_algebra::packed::{PackedFieldVec, Bipedal3Vec};
+/// use gf2_core::gfp::Fp;
+///
+/// let v = Bipedal3Vec::zeros(5);
+/// assert_eq!(v.len(), 5);
+/// assert!(v.all_zero());
+/// ```
+///
+/// # Complexity
+///
+/// Construction and lane-wise operations are `O(ceil(len_lanes / 64))`.
+/// Individual lane access ([`get`][`Bipedal3Vec::get`]) is `O(1)`.
+#[derive(Clone)]
+pub struct Bipedal3Vec {
+    mag: Vec<u64>,
+    sgn: Vec<u64>,
+    len_lanes: usize,
+}
+
+// ---------------------------------------------------------------------------
+// mask_tail
+// ---------------------------------------------------------------------------
+
+impl Bipedal3Vec {
+    /// Zero out all bits beyond `self.len_lanes` in the last word of both
+    /// `mag` and `sgn`.
+    ///
+    /// **This invariant must hold after every mutation.** Failing to call
+    /// `mask_tail` after any write violates the project's key correctness
+    /// invariant (CLAUDE.md §Key design invariants #1). Arithmetic
+    /// operations use word-parallel formulas over the full word including
+    /// padding bits; without masking, stray padding bits silently corrupt
+    /// `all_zero`, `add_assign`, `sub_assign`, `mul_assign`, and `fold_mul`.
+    ///
+    /// # Complexity
+    ///
+    /// `O(1)`.
+    fn mask_tail(&mut self) {
+        let n_words = self.mag.len();
+        if n_words == 0 {
+            return;
+        }
+        let used = self.len_lanes - 64 * (n_words - 1);
+        if used == 64 {
+            return; // full word; no padding to mask
+        }
+        let mask = (1u64 << used) - 1;
+        let last = n_words - 1;
+        self.mag[last] &= mask;
+        self.sgn[last] &= mask;
+    }
+
+    /// Reduce all `len_lanes` packed `F_3` elements to a single `Fp<3>` via
+    /// the bipedal multiplication tree.
+    ///
+    /// The reduction applies the bipedal `mul` formula
+    /// (`mag' = am & bm; sgn' = asg ^ bsg`) word-by-word to accumulate a
+    /// 64-lane running product, then horizontally reduces those 64 lanes to
+    /// a single scalar. Padding bits in the last word are set to the
+    /// multiplicative identity `(mag=1, sgn=0)` so they do not perturb the
+    /// result.
+    ///
+    /// An empty vector (`len_lanes == 0`) returns the multiplicative identity
+    /// `Fp::<3>::new(1)`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{PackedFieldVec, Bipedal3Vec};
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// // Product of [1, 2, 1] = 1*2*1 = 2 mod 3.
+    /// let v = Bipedal3Vec::from_field_slice(&[
+    ///     Fp::<3>::new(1), Fp::<3>::new(2), Fp::<3>::new(1),
+    /// ]);
+    /// assert_eq!(v.fold_mul(), Fp::<3>::new(2));
+    ///
+    /// // Empty product = multiplicative identity = 1.
+    /// let empty = Bipedal3Vec::zeros(0);
+    /// assert_eq!(empty.fold_mul(), Fp::<3>::new(1));
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(ceil(len_lanes / 64))` word-level ops for the cross-word reduction,
+    /// plus `O(64)` scalar lane decodes for the final horizontal reduction.
+    pub fn fold_mul(&self) -> Fp<3> {
+        if self.len_lanes == 0 {
+            // Empty product = multiplicative identity.
+            return Fp::<3>::new(1);
+        }
+        let n_words = self.mag.len();
+        // Identity for paper mul: (mag=1, sgn=0) decodes to F_3 element 1.
+        let mut acc_mag = u64::MAX;
+        let mut acc_sgn = 0u64;
+
+        // Full words (all 64 bits are active).
+        for w in 0..n_words - 1 {
+            acc_mag &= self.mag[w];
+            acc_sgn ^= self.sgn[w];
+        }
+
+        // Last (possibly partial) word: set padding lanes to identity (mag=1, sgn=0).
+        let used = self.len_lanes - 64 * (n_words - 1);
+        let used_mask = if used == 64 {
+            u64::MAX
+        } else {
+            (1u64 << used) - 1
+        };
+        // Padding lanes contribute mag=1 (identity) so they don't zero out acc_mag.
+        let last_m = self.mag[n_words - 1] | !used_mask;
+        // Padding lanes contribute sgn=0 (identity) so they don't perturb acc_sgn.
+        let last_s = self.sgn[n_words - 1] & used_mask;
+        acc_mag &= last_m;
+        acc_sgn ^= last_s;
+
+        // Horizontal reduce 64-lane (acc_mag, acc_sgn) to single Fp<3>.
+        // Each lane contributes its decoded value to the running product.
+        let mut result = Fp::<3>::new(1);
+        for lane in 0..64u64 {
+            let m = (acc_mag >> lane) & 1;
+            let s = (acc_sgn >> lane) & 1;
+            let v = if m == 0 {
+                Fp::<3>::new(0)
+            } else if s == 0 {
+                Fp::<3>::new(1)
+            } else {
+                Fp::<3>::new(2)
+            };
+            result = result * v;
+        }
+        result
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Manual PartialEq / Eq — canonical-decode equality
+// ---------------------------------------------------------------------------
+
+impl PartialEq for Bipedal3Vec {
+    /// Canonical-decode equality: two vectors are equal iff they have the
+    /// same `len_lanes` and every decoded lane is equal.
+    ///
+    /// Because the alternative-zero codeword `(mag=0, sgn=1)` decodes to 0,
+    /// the `sgn` bit of a lane is irrelevant when its `mag` bit is 0.
+    /// Concretely, per word `w`:
+    ///   equal iff `self.mag[w] == other.mag[w]`
+    ///          and `(self.sgn[w] ^ other.sgn[w]) & self.mag[w] == 0`
+    ///
+    /// The mask-tail invariant ensures padding bits are 0 on both sides,
+    /// so the per-word test is safe.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{PackedFieldVec, Bipedal3Vec};
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let a = Bipedal3Vec::from_field_slice(&[Fp::<3>::new(1), Fp::<3>::new(2)]);
+    /// let b = Bipedal3Vec::from_field_slice(&[Fp::<3>::new(1), Fp::<3>::new(2)]);
+    /// assert_eq!(a, b);
+    ///
+    /// let c = Bipedal3Vec::from_field_slice(&[Fp::<3>::new(0)]);
+    /// assert_ne!(a, c); // different len_lanes
+    /// ```
+    fn eq(&self, other: &Self) -> bool {
+        if self.len_lanes != other.len_lanes {
+            return false;
+        }
+        for w in 0..self.mag.len() {
+            if self.mag[w] != other.mag[w] {
+                return false;
+            }
+            if (self.sgn[w] ^ other.sgn[w]) & self.mag[w] != 0 {
+                return false;
+            }
+        }
+        true
+    }
+}
+
+impl Eq for Bipedal3Vec {}
+
+// ---------------------------------------------------------------------------
+// Manual Debug — print decoded lane values
+// ---------------------------------------------------------------------------
+
+impl fmt::Debug for Bipedal3Vec {
+    /// Formats the value as a `Vec` of decoded lane values (each `0`, `1`,
+    /// or `2`), matching the style of [`ScalarPackedFp3Vec`]'s `Debug`
+    /// impl for stable `assert_eq!` messages.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{PackedFieldVec, Bipedal3Vec};
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let v = Bipedal3Vec::from_field_slice(&[Fp::<3>::new(1), Fp::<3>::new(2)]);
+    /// let s = format!("{:?}", v);
+    /// assert!(s.contains("lanes"));
+    /// ```
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let lanes: Vec<u64> = (0..self.len_lanes)
+            .map(|i| {
+                let w = i >> 6;
+                let b = i & 63;
+                let m = (self.mag[w] >> b) & 1;
+                let g = (self.sgn[w] >> b) & 1;
+                if m == 0 {
+                    0u64
+                } else if g == 0 {
+                    1u64
+                } else {
+                    2u64
+                }
+            })
+            .collect();
+        f.debug_struct("Bipedal3Vec")
+            .field("lanes", &lanes)
+            .finish()
+    }
+}
+
+// ---------------------------------------------------------------------------
+// PackedFieldVec<Fp<3>>
+// ---------------------------------------------------------------------------
+
+impl PackedFieldVec<Fp<3>> for Bipedal3Vec {
+    type Element = Bipedal3;
+
+    /// Construct a vector of `len` zero `F_3` elements.
+    ///
+    /// # Arguments
+    ///
+    /// * `len` — number of logical `F_3` positions in the result.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{PackedFieldVec, Bipedal3Vec};
+    ///
+    /// let v = Bipedal3Vec::zeros(65);
+    /// assert_eq!(v.len(), 65);
+    /// assert!(v.all_zero());
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(ceil(len / 64))`.
+    fn zeros(len: usize) -> Self {
+        let n_words = len.div_ceil(64);
+        Self {
+            mag: vec![0u64; n_words],
+            sgn: vec![0u64; n_words],
+            len_lanes: len,
+        }
+    }
+
+    /// Construct a vector by encoding every element of `xs`.
+    ///
+    /// Position `i` is set to the canonical bipedal encoding of `xs[i]`.
+    /// `mask_tail` is called defensively at the end to enforce the
+    /// zero-padding invariant.
+    ///
+    /// # Arguments
+    ///
+    /// * `xs` — source slice; the result has `xs.len()` logical positions
+    ///   and `get(i) == xs[i]` for every `i`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{PackedFieldVec, Bipedal3Vec};
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let xs = [Fp::<3>::new(0), Fp::<3>::new(1), Fp::<3>::new(2)];
+    /// let v = Bipedal3Vec::from_field_slice(&xs);
+    /// for i in 0..3 {
+    ///     assert_eq!(v.get(i), xs[i]);
+    /// }
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(xs.len())`.
+    fn from_field_slice(xs: &[Fp<3>]) -> Self {
+        let len = xs.len();
+        let n_words = len.div_ceil(64);
+        let mut mag = vec![0u64; n_words];
+        let mut sgn = vec![0u64; n_words];
+        for (i, &x) in xs.iter().enumerate() {
+            let v = x.value();
+            let w = i >> 6;
+            let b = i & 63;
+            if v != 0 {
+                mag[w] |= 1u64 << b;
+            }
+            if v == 2 {
+                sgn[w] |= 1u64 << b;
+            }
+        }
+        let mut result = Self {
+            mag,
+            sgn,
+            len_lanes: len,
+        };
+        result.mask_tail();
+        result
+    }
+
+    /// Number of logical `F_3` positions held by this vector.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{PackedFieldVec, Bipedal3Vec};
+    ///
+    /// assert_eq!(Bipedal3Vec::zeros(100).len(), 100);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(1)`.
+    fn len(&self) -> usize {
+        self.len_lanes
+    }
+
+    /// Decode logical position `i` to a canonical `F_3` value.
+    ///
+    /// The alternative-zero codeword `(mag=0, sgn=1)` is canonicalised to
+    /// `Fp::<3>::new(0)`.
+    ///
+    /// # Arguments
+    ///
+    /// * `i` — logical position index in `0..self.len()`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `i >= self.len()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{PackedFieldVec, Bipedal3Vec};
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let v = Bipedal3Vec::from_field_slice(&[Fp::<3>::new(2)]);
+    /// assert_eq!(v.get(0), Fp::<3>::new(2));
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(1)`.
+    fn get(&self, i: usize) -> Fp<3> {
+        assert!(
+            i < self.len_lanes,
+            "Bipedal3Vec::get: index {} out of range (len = {})",
+            i,
+            self.len_lanes
+        );
+        let w = i >> 6;
+        let b = i & 63;
+        let m = (self.mag[w] >> b) & 1;
+        let g = (self.sgn[w] >> b) & 1;
+        if m == 0 {
+            Fp::<3>::new(0)
+        } else if g == 0 {
+            Fp::<3>::new(1)
+        } else {
+            Fp::<3>::new(2)
+        }
+    }
+
+    /// Lane-wise in-place sum: `self[i] += rhs[i]` for every `i`.
+    ///
+    /// Applies the Scheinerman 2024 Algorithm 2 add formula per word:
+    /// `t = am ^ asg ^ bsg; u = bm & t; mag' = u | (am ^ bm); sgn' = u ^ asg`
+    ///
+    /// # Arguments
+    ///
+    /// * `rhs` — operand of equal length; positions are added pointwise.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `self.len() != rhs.len()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{PackedFieldVec, Bipedal3Vec};
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let mut a = Bipedal3Vec::from_field_slice(&[Fp::<3>::new(1), Fp::<3>::new(2)]);
+    /// let b = Bipedal3Vec::from_field_slice(&[Fp::<3>::new(2), Fp::<3>::new(2)]);
+    /// a.add_assign(&b);
+    /// assert_eq!(a.get(0), Fp::<3>::new(0)); // 1 + 2 = 0 mod 3
+    /// assert_eq!(a.get(1), Fp::<3>::new(1)); // 2 + 2 = 1 mod 3
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(ceil(self.len() / 64))`.
+    fn add_assign(&mut self, rhs: &Self) {
+        assert_eq!(
+            self.len_lanes, rhs.len_lanes,
+            "Bipedal3Vec::add_assign: length mismatch ({} vs {})",
+            self.len_lanes, rhs.len_lanes
+        );
+        for w in 0..self.mag.len() {
+            let am = self.mag[w];
+            let asg = self.sgn[w];
+            let bm = rhs.mag[w];
+            let bsg = rhs.sgn[w];
+            // Scheinerman 2024 Algorithm 2 — 6 bitwise ops per word.
+            let t = am ^ asg ^ bsg;
+            let u = bm & t;
+            self.mag[w] = u | (am ^ bm);
+            self.sgn[w] = u ^ asg;
+        }
+        self.mask_tail();
+    }
+
+    /// Lane-wise in-place difference: `self[i] -= rhs[i]` for every `i`.
+    ///
+    /// Applies the canonical paper §2.2 sub formula per word:
+    /// `t = asg ^ bsg; u = am & t; mag' = u | (am ^ bm); sgn' = u ^ (bm ^ bsg)`
+    ///
+    /// # Arguments
+    ///
+    /// * `rhs` — operand of equal length; subtracted pointwise from `self`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `self.len() != rhs.len()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{PackedFieldVec, Bipedal3Vec};
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let mut a = Bipedal3Vec::from_field_slice(&[Fp::<3>::new(0)]);
+    /// let b = Bipedal3Vec::from_field_slice(&[Fp::<3>::new(1)]);
+    /// a.sub_assign(&b);
+    /// assert_eq!(a.get(0), Fp::<3>::new(2)); // 0 - 1 = 2 mod 3
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(ceil(self.len() / 64))`.
+    fn sub_assign(&mut self, rhs: &Self) {
+        assert_eq!(
+            self.len_lanes, rhs.len_lanes,
+            "Bipedal3Vec::sub_assign: length mismatch ({} vs {})",
+            self.len_lanes, rhs.len_lanes
+        );
+        for w in 0..self.mag.len() {
+            let am = self.mag[w];
+            let asg = self.sgn[w];
+            let bm = rhs.mag[w];
+            let bsg = rhs.sgn[w];
+            // Canonical paper §2.2 sub transliteration — 6 bitwise ops per word.
+            let t = asg ^ bsg; // op 1
+            let u = am & t; // op 2
+            self.mag[w] = u | (am ^ bm); // ops 3+4
+            self.sgn[w] = u ^ (bm ^ bsg); // ops 5+6
+        }
+        self.mask_tail();
+    }
+
+    /// Lane-wise in-place product: `self[i] *= rhs[i]` for every `i`.
+    ///
+    /// Applies the bipedal mul formula per word:
+    /// `mag' = am & bm; sgn' = asg ^ bsg`
+    ///
+    /// # Arguments
+    ///
+    /// * `rhs` — operand of equal length; multiplied pointwise into `self`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `self.len() != rhs.len()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{PackedFieldVec, Bipedal3Vec};
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let mut a = Bipedal3Vec::from_field_slice(&[Fp::<3>::new(2)]);
+    /// let b = Bipedal3Vec::from_field_slice(&[Fp::<3>::new(2)]);
+    /// a.mul_assign(&b);
+    /// assert_eq!(a.get(0), Fp::<3>::new(1)); // 2 * 2 = 1 mod 3
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(ceil(self.len() / 64))`.
+    fn mul_assign(&mut self, rhs: &Self) {
+        assert_eq!(
+            self.len_lanes, rhs.len_lanes,
+            "Bipedal3Vec::mul_assign: length mismatch ({} vs {})",
+            self.len_lanes, rhs.len_lanes
+        );
+        for w in 0..self.mag.len() {
+            // Paper mul: 2 bitwise ops per word.
+            self.mag[w] &= rhs.mag[w];
+            self.sgn[w] ^= rhs.sgn[w];
+        }
+        self.mask_tail();
+    }
+
+    /// Returns `true` iff every logical position decodes to `F_3`'s
+    /// additive identity (0).
+    ///
+    /// Implemented as `self.mag.iter().all(|&w| w == 0)`: a lane's value
+    /// is zero iff its `mag` bit is 0 (the `sgn` bit is irrelevant when
+    /// `mag=0`), so testing `mag` alone suffices. The alternative-zero
+    /// codeword `(mag=0, sgn=1)` is correctly reported as zero.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{PackedFieldVec, Bipedal3Vec};
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// assert!(Bipedal3Vec::zeros(10).all_zero());
+    /// let nz = Bipedal3Vec::from_field_slice(&[Fp::<3>::new(1)]);
+    /// assert!(!nz.all_zero());
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(ceil(self.len() / 64))`.
+    fn all_zero(&self) -> bool {
+        self.mag.iter().all(|&w| w == 0)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Bipedal3Vec tests
+// ---------------------------------------------------------------------------
+
+#[cfg(test)]
+mod vec_tests {
+    use super::super::ScalarPackedFp3Vec;
+    use super::*;
+    use proptest::prelude::*;
+
+    // (No shared helpers needed — proptest strategies are inlined below.)
+
+    // -----------------------------------------------------------------------
+    // zeros / all_zero / len — word-boundary lengths
+    // -----------------------------------------------------------------------
+
+    macro_rules! test_zeros {
+        ($name:ident, $len:expr) => {
+            #[test]
+            fn $name() {
+                let v = Bipedal3Vec::zeros($len);
+                assert_eq!(v.len(), $len, "len mismatch for zeros({})", $len);
+                assert!(v.all_zero(), "zeros({}) should be all_zero", $len);
+                for i in 0..$len {
+                    assert_eq!(v.get(i), Fp::<3>::new(0), "zeros({}).get({}) != 0", $len, i);
+                }
+            }
+        };
+    }
+
+    #[test]
+    fn test_zeros_0() {
+        let v = Bipedal3Vec::zeros(0);
+        assert_eq!(v.len(), 0);
+        assert!(v.all_zero());
+    }
+    test_zeros!(test_zeros_1, 1);
+    test_zeros!(test_zeros_63, 63);
+    test_zeros!(test_zeros_64, 64);
+    test_zeros!(test_zeros_65, 65);
+    test_zeros!(test_zeros_127, 127);
+    test_zeros!(test_zeros_128, 128);
+    test_zeros!(test_zeros_129, 129);
+
+    // -----------------------------------------------------------------------
+    // from_field_slice round-trip
+    // -----------------------------------------------------------------------
+
+    macro_rules! test_from_field_slice {
+        ($name:ident, $len:expr) => {
+            #[test]
+            fn $name() {
+                // Build a deterministic test vector: lane i = (i * 7) % 3
+                let xs: Vec<Fp<3>> = (0..$len)
+                    .map(|i| Fp::<3>::new((i * 7 % 3) as u64))
+                    .collect();
+                let v = Bipedal3Vec::from_field_slice(&xs);
+                assert_eq!(v.len(), $len);
+                for i in 0..$len {
+                    assert_eq!(
+                        v.get(i),
+                        xs[i],
+                        "from_field_slice({}).get({}) mismatch",
+                        $len,
+                        i
+                    );
+                }
+            }
+        };
+    }
+
+    #[test]
+    fn test_from_field_slice_0() {
+        let v = Bipedal3Vec::from_field_slice(&[]);
+        assert_eq!(v.len(), 0);
+        assert!(v.all_zero());
+    }
+    test_from_field_slice!(test_from_field_slice_1, 1);
+    test_from_field_slice!(test_from_field_slice_63, 63);
+    test_from_field_slice!(test_from_field_slice_64, 64);
+    test_from_field_slice!(test_from_field_slice_65, 65);
+    test_from_field_slice!(test_from_field_slice_127, 127);
+    test_from_field_slice!(test_from_field_slice_128, 128);
+    test_from_field_slice!(test_from_field_slice_129, 129);
+
+    // -----------------------------------------------------------------------
+    // add_assign — cross-check vs ScalarPackedFp3Vec
+    // -----------------------------------------------------------------------
+
+    macro_rules! test_add_assign {
+        ($name:ident, $len:expr) => {
+            #[test]
+            fn $name() {
+                let a_vals: Vec<Fp<3>> = (0..$len)
+                    .map(|i| Fp::<3>::new((i * 3 % 3) as u64))
+                    .collect();
+                let b_vals: Vec<Fp<3>> = (0..$len)
+                    .map(|i| Fp::<3>::new(((i + 1) % 3) as u64))
+                    .collect();
+                let mut a = Bipedal3Vec::from_field_slice(&a_vals);
+                let b = Bipedal3Vec::from_field_slice(&b_vals);
+                let mut sa = ScalarPackedFp3Vec::from_field_slice(&a_vals);
+                let sb = ScalarPackedFp3Vec::from_field_slice(&b_vals);
+                a.add_assign(&b);
+                sa.add_assign(&sb);
+                for i in 0..$len {
+                    assert_eq!(
+                        a.get(i),
+                        sa.get(i),
+                        "add_assign({}) lane {} mismatch",
+                        $len,
+                        i
+                    );
+                }
+            }
+        };
+    }
+
+    #[test]
+    fn test_add_assign_0() {
+        // len=0: both sides empty, no lanes to check, must not panic.
+        let mut a = Bipedal3Vec::zeros(0);
+        let b = Bipedal3Vec::zeros(0);
+        a.add_assign(&b);
+        assert_eq!(a.len(), 0);
+    }
+    test_add_assign!(test_add_assign_1, 1);
+    test_add_assign!(test_add_assign_63, 63);
+    test_add_assign!(test_add_assign_64, 64);
+    test_add_assign!(test_add_assign_65, 65);
+    test_add_assign!(test_add_assign_127, 127);
+    test_add_assign!(test_add_assign_128, 128);
+    test_add_assign!(test_add_assign_129, 129);
+
+    // -----------------------------------------------------------------------
+    // sub_assign — cross-check vs ScalarPackedFp3Vec
+    // -----------------------------------------------------------------------
+
+    macro_rules! test_sub_assign {
+        ($name:ident, $len:expr) => {
+            #[test]
+            fn $name() {
+                let a_vals: Vec<Fp<3>> = (0..$len).map(|i| Fp::<3>::new((i % 3) as u64)).collect();
+                let b_vals: Vec<Fp<3>> = (0..$len)
+                    .map(|i| Fp::<3>::new(((i + 2) % 3) as u64))
+                    .collect();
+                let mut a = Bipedal3Vec::from_field_slice(&a_vals);
+                let b = Bipedal3Vec::from_field_slice(&b_vals);
+                let mut sa = ScalarPackedFp3Vec::from_field_slice(&a_vals);
+                let sb = ScalarPackedFp3Vec::from_field_slice(&b_vals);
+                a.sub_assign(&b);
+                sa.sub_assign(&sb);
+                for i in 0..$len {
+                    assert_eq!(
+                        a.get(i),
+                        sa.get(i),
+                        "sub_assign({}) lane {} mismatch",
+                        $len,
+                        i
+                    );
+                }
+            }
+        };
+    }
+
+    #[test]
+    fn test_sub_assign_0() {
+        let mut a = Bipedal3Vec::zeros(0);
+        let b = Bipedal3Vec::zeros(0);
+        a.sub_assign(&b);
+        assert_eq!(a.len(), 0);
+    }
+    test_sub_assign!(test_sub_assign_1, 1);
+    test_sub_assign!(test_sub_assign_63, 63);
+    test_sub_assign!(test_sub_assign_64, 64);
+    test_sub_assign!(test_sub_assign_65, 65);
+    test_sub_assign!(test_sub_assign_127, 127);
+    test_sub_assign!(test_sub_assign_128, 128);
+    test_sub_assign!(test_sub_assign_129, 129);
+
+    // -----------------------------------------------------------------------
+    // mul_assign — cross-check vs ScalarPackedFp3Vec
+    // -----------------------------------------------------------------------
+
+    macro_rules! test_mul_assign {
+        ($name:ident, $len:expr) => {
+            #[test]
+            fn $name() {
+                let a_vals: Vec<Fp<3>> = (0..$len).map(|i| Fp::<3>::new((i % 3) as u64)).collect();
+                let b_vals: Vec<Fp<3>> = (0..$len)
+                    .map(|i| Fp::<3>::new(((i + 1) % 3) as u64))
+                    .collect();
+                let mut a = Bipedal3Vec::from_field_slice(&a_vals);
+                let b = Bipedal3Vec::from_field_slice(&b_vals);
+                let mut sa = ScalarPackedFp3Vec::from_field_slice(&a_vals);
+                let sb = ScalarPackedFp3Vec::from_field_slice(&b_vals);
+                a.mul_assign(&b);
+                sa.mul_assign(&sb);
+                for i in 0..$len {
+                    assert_eq!(
+                        a.get(i),
+                        sa.get(i),
+                        "mul_assign({}) lane {} mismatch",
+                        $len,
+                        i
+                    );
+                }
+            }
+        };
+    }
+
+    #[test]
+    fn test_mul_assign_0() {
+        let mut a = Bipedal3Vec::zeros(0);
+        let b = Bipedal3Vec::zeros(0);
+        a.mul_assign(&b);
+        assert_eq!(a.len(), 0);
+    }
+    test_mul_assign!(test_mul_assign_1, 1);
+    test_mul_assign!(test_mul_assign_63, 63);
+    test_mul_assign!(test_mul_assign_64, 64);
+    test_mul_assign!(test_mul_assign_65, 65);
+    test_mul_assign!(test_mul_assign_127, 127);
+    test_mul_assign!(test_mul_assign_128, 128);
+    test_mul_assign!(test_mul_assign_129, 129);
+
+    // -----------------------------------------------------------------------
+    // mask_tail invariant — non-multiple-of-64 lengths
+    // -----------------------------------------------------------------------
+
+    /// Helper: check mask_tail invariant for a given partial-word length.
+    fn check_mask_tail(len: usize) {
+        assert!(
+            !len.is_multiple_of(64),
+            "only partial-word lengths have padding"
+        );
+        let used = len % 64;
+        let used_mask: u64 = (1u64 << used) - 1;
+        let padding_mask: u64 = !used_mask;
+
+        let xs: Vec<Fp<3>> = (0..len).map(|i| Fp::<3>::new((i % 3) as u64)).collect();
+        let ys: Vec<Fp<3>> = (0..len)
+            .map(|i| Fp::<3>::new(((i + 1) % 3) as u64))
+            .collect();
+
+        // After from_field_slice
+        let v = Bipedal3Vec::from_field_slice(&xs);
+        let last = v.mag.len() - 1;
+        assert_eq!(
+            (v.mag[last] | v.sgn[last]) & padding_mask,
+            0,
+            "mask_tail violated after from_field_slice (len={len})"
+        );
+
+        // After add_assign
+        let mut a = v.clone();
+        let b = Bipedal3Vec::from_field_slice(&ys);
+        a.add_assign(&b);
+        let last = a.mag.len() - 1;
+        assert_eq!(
+            (a.mag[last] | a.sgn[last]) & padding_mask,
+            0,
+            "mask_tail violated after add_assign (len={len})"
+        );
+
+        // After sub_assign
+        let mut c = Bipedal3Vec::from_field_slice(&xs);
+        let d = Bipedal3Vec::from_field_slice(&ys);
+        c.sub_assign(&d);
+        let last = c.mag.len() - 1;
+        assert_eq!(
+            (c.mag[last] | c.sgn[last]) & padding_mask,
+            0,
+            "mask_tail violated after sub_assign (len={len})"
+        );
+
+        // After mul_assign
+        let mut e = Bipedal3Vec::from_field_slice(&xs);
+        let f = Bipedal3Vec::from_field_slice(&ys);
+        e.mul_assign(&f);
+        let last = e.mag.len() - 1;
+        assert_eq!(
+            (e.mag[last] | e.sgn[last]) & padding_mask,
+            0,
+            "mask_tail violated after mul_assign (len={len})"
+        );
+    }
+
+    #[test]
+    fn test_mask_tail_invariant_1() {
+        check_mask_tail(1);
+    }
+    #[test]
+    fn test_mask_tail_invariant_63() {
+        check_mask_tail(63);
+    }
+    #[test]
+    fn test_mask_tail_invariant_65() {
+        check_mask_tail(65);
+    }
+    #[test]
+    fn test_mask_tail_invariant_127() {
+        check_mask_tail(127);
+    }
+    #[test]
+    fn test_mask_tail_invariant_129() {
+        check_mask_tail(129);
+    }
+
+    // -----------------------------------------------------------------------
+    // fold_mul
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn test_fold_mul_empty() {
+        let v = Bipedal3Vec::zeros(0);
+        assert_eq!(
+            v.fold_mul(),
+            Fp::<3>::new(1),
+            "fold_mul of empty vec must be 1 (multiplicative identity)"
+        );
+    }
+
+    macro_rules! test_fold_mul {
+        ($name:ident, $len:expr) => {
+            #[test]
+            fn $name() {
+                let xs: Vec<Fp<3>> = (0..$len).map(|i| Fp::<3>::new((i % 3) as u64)).collect();
+                let v = Bipedal3Vec::from_field_slice(&xs);
+                let expected = (0..$len).fold(Fp::<3>::new(1), |acc, i| acc * v.get(i));
+                assert_eq!(v.fold_mul(), expected, "fold_mul({}) mismatch", $len);
+            }
+        };
+    }
+
+    test_fold_mul!(test_fold_mul_1, 1);
+    test_fold_mul!(test_fold_mul_7, 7);
+    test_fold_mul!(test_fold_mul_64, 64);
+    test_fold_mul!(test_fold_mul_100, 100);
+    test_fold_mul!(test_fold_mul_200, 200);
+
+    // -----------------------------------------------------------------------
+    // Eq: alt-zero == canonical zero
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn test_eq_alt_zero_vs_canonical() {
+        // Length-5 vec: canonical zero
+        let canon = Bipedal3Vec::zeros(5);
+        // Manually construct alt-zero in lane 2: mag=0, sgn=1<<2
+        // (mag is 0, sgn has bit 2 set — this is the alt-zero codeword)
+        let mut alt = Bipedal3Vec::zeros(5);
+        alt.sgn[0] = 1 << 2; // inject alt-zero at lane 2
+        assert_eq!(canon, alt, "canonical zero and alt-zero must compare equal");
+    }
+
+    // -----------------------------------------------------------------------
+    // get panics out of range
+    // -----------------------------------------------------------------------
+
+    #[test]
+    #[should_panic(expected = "out of range")]
+    fn test_get_panics_out_of_range_0() {
+        let v = Bipedal3Vec::zeros(0);
+        let _ = v.get(0);
+    }
+
+    #[test]
+    #[should_panic(expected = "out of range")]
+    fn test_get_panics_out_of_range_1() {
+        let v = Bipedal3Vec::zeros(1);
+        let _ = v.get(1);
+    }
+
+    #[test]
+    #[should_panic(expected = "out of range")]
+    fn test_get_panics_out_of_range_64() {
+        let v = Bipedal3Vec::zeros(64);
+        let _ = v.get(64);
+    }
+
+    // -----------------------------------------------------------------------
+    // add_assign panics on length mismatch
+    // -----------------------------------------------------------------------
+
+    #[test]
+    #[should_panic(expected = "length mismatch")]
+    fn test_add_assign_panics_on_length_mismatch() {
+        let mut a = Bipedal3Vec::zeros(3);
+        let b = Bipedal3Vec::zeros(4);
+        a.add_assign(&b);
+    }
+
+    // -----------------------------------------------------------------------
+    // Proptest cross-checks vs ScalarPackedFp3Vec
+    // -----------------------------------------------------------------------
+
+    proptest! {
+        #![proptest_config(ProptestConfig { cases: 200, .. ProptestConfig::default() })]
+
+        /// add_assign: Bipedal3Vec agrees with ScalarPackedFp3Vec lane-by-lane.
+        #[test]
+        fn test_proptest_add_assign_matches_scalar(
+            len in 0usize..200,
+            a_vals in prop::collection::vec((0u64..3).prop_map(Fp::<3>::new), 0..200),
+            b_vals in prop::collection::vec((0u64..3).prop_map(Fp::<3>::new), 0..200),
+        ) {
+            // Truncate / extend to exactly `len`.
+            let a_vals: Vec<Fp<3>> = a_vals.into_iter().chain(core::iter::repeat(Fp::<3>::new(0))).take(len).collect();
+            let b_vals: Vec<Fp<3>> = b_vals.into_iter().chain(core::iter::repeat(Fp::<3>::new(0))).take(len).collect();
+
+            let mut a = Bipedal3Vec::from_field_slice(&a_vals);
+            let b = Bipedal3Vec::from_field_slice(&b_vals);
+            let mut sa = ScalarPackedFp3Vec::from_field_slice(&a_vals);
+            let sb = ScalarPackedFp3Vec::from_field_slice(&b_vals);
+            a.add_assign(&b);
+            sa.add_assign(&sb);
+            for i in 0..len {
+                prop_assert_eq!(a.get(i), sa.get(i), "add_assign lane {} mismatch (len={})", i, len);
+            }
+        }
+
+        /// sub_assign: Bipedal3Vec agrees with ScalarPackedFp3Vec lane-by-lane.
+        #[test]
+        fn test_proptest_sub_assign_matches_scalar(
+            len in 0usize..200,
+            a_vals in prop::collection::vec((0u64..3).prop_map(Fp::<3>::new), 0..200),
+            b_vals in prop::collection::vec((0u64..3).prop_map(Fp::<3>::new), 0..200),
+        ) {
+            let a_vals: Vec<Fp<3>> = a_vals.into_iter().chain(core::iter::repeat(Fp::<3>::new(0))).take(len).collect();
+            let b_vals: Vec<Fp<3>> = b_vals.into_iter().chain(core::iter::repeat(Fp::<3>::new(0))).take(len).collect();
+
+            let mut a = Bipedal3Vec::from_field_slice(&a_vals);
+            let b = Bipedal3Vec::from_field_slice(&b_vals);
+            let mut sa = ScalarPackedFp3Vec::from_field_slice(&a_vals);
+            let sb = ScalarPackedFp3Vec::from_field_slice(&b_vals);
+            a.sub_assign(&b);
+            sa.sub_assign(&sb);
+            for i in 0..len {
+                prop_assert_eq!(a.get(i), sa.get(i), "sub_assign lane {} mismatch (len={})", i, len);
+            }
+        }
+
+        /// mul_assign: Bipedal3Vec agrees with ScalarPackedFp3Vec lane-by-lane.
+        #[test]
+        fn test_proptest_mul_assign_matches_scalar(
+            len in 0usize..200,
+            a_vals in prop::collection::vec((0u64..3).prop_map(Fp::<3>::new), 0..200),
+            b_vals in prop::collection::vec((0u64..3).prop_map(Fp::<3>::new), 0..200),
+        ) {
+            let a_vals: Vec<Fp<3>> = a_vals.into_iter().chain(core::iter::repeat(Fp::<3>::new(0))).take(len).collect();
+            let b_vals: Vec<Fp<3>> = b_vals.into_iter().chain(core::iter::repeat(Fp::<3>::new(0))).take(len).collect();
+
+            let mut a = Bipedal3Vec::from_field_slice(&a_vals);
+            let b = Bipedal3Vec::from_field_slice(&b_vals);
+            let mut sa = ScalarPackedFp3Vec::from_field_slice(&a_vals);
+            let sb = ScalarPackedFp3Vec::from_field_slice(&b_vals);
+            a.mul_assign(&b);
+            sa.mul_assign(&sb);
+            for i in 0..len {
+                prop_assert_eq!(a.get(i), sa.get(i), "mul_assign lane {} mismatch (len={})", i, len);
+            }
+        }
+
+        /// fold_mul: Bipedal3Vec::fold_mul agrees with scalar per-lane product.
+        #[test]
+        fn test_proptest_fold_mul_matches_scalar_fold(
+            len in 0usize..200,
+            vals in prop::collection::vec((0u64..3).prop_map(Fp::<3>::new), 0..200),
+        ) {
+            let vals: Vec<Fp<3>> = vals.into_iter().chain(core::iter::repeat(Fp::<3>::new(0))).take(len).collect();
+            let v = Bipedal3Vec::from_field_slice(&vals);
+            let expected = (0..len).fold(Fp::<3>::new(1), |acc, i| acc * v.get(i));
+            prop_assert_eq!(v.fold_mul(), expected, "fold_mul mismatch (len={})", len);
         }
     }
 }
