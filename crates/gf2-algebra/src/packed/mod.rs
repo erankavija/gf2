@@ -9,12 +9,12 @@
 //! (user-approved 2026-05-09; see JIT issue `9fe275d3`'s description
 //! `## Approval` section) and frozen at the W6 `gate:api-freeze`. The
 //! W1-T1 skeleton declared the module tree only; this module (W1-T2)
-//! lands the [`PackedField`] trait and the [`scalar::ScalarPackedFp3`]
-//! reference implementation. The concrete `Bipedal3` impl lands in
-//! W1-T3, and the `PackedFieldVec` companion trait lands in a later
-//! wave (parent §13). Until that point, the
-//! [`scalar::ScalarPackedFp3`] oracle is the only [`PackedField`]
-//! implementor in the workspace.
+//! lands the [`PackedField`] and [`PackedFieldVec`] traits and the
+//! [`scalar::ScalarPackedFp3`] / [`scalar::ScalarPackedFp3Vec`]
+//! reference implementations. The concrete `Bipedal3` impl lands in
+//! W1-T3 with its companion `Bipedal3Vec`. Until that point, the
+//! `scalar::*` types are the only [`PackedField`] / [`PackedFieldVec`]
+//! implementors in the workspace.
 //!
 //! # Cross-checking strategy
 //!
@@ -36,7 +36,7 @@ pub mod bipedal5;
 #[cfg(feature = "f7")]
 pub mod bipedal7;
 
-pub use scalar::ScalarPackedFp3;
+pub use scalar::{ScalarPackedFp3, ScalarPackedFp3Vec};
 
 /// Fixed-LANES lane-parallel arithmetic over an underlying scalar field `F`.
 ///
@@ -319,4 +319,282 @@ pub trait PackedField<F: FiniteField>: Copy + Eq + core::fmt::Debug {
     /// assert!(!o.all_zero());
     /// ```
     fn all_zero(self) -> bool;
+}
+
+/// Variable-length lane-parallel container of `F`-elements.
+///
+/// Where [`PackedField<F>`] is a fixed-`LANES` packed value (one Rust
+/// value, no allocation), `PackedFieldVec<F>` is a heap-allocated
+/// sequence of `F`-elements with element-wise lane semantics. Each
+/// logical position `0..len()` holds one `F`; the [`Self::Element`]
+/// associated type points at the matching fixed-width packed type that
+/// SIMD-batched implementations may use under the hood — the scalar
+/// reference [`scalar::ScalarPackedFp3Vec`] does not require this hook
+/// and stores one `F` per logical position directly.
+///
+/// The trait surface is fixed verbatim by
+/// `dev/plans/d1b_packed_field_api.md` §2.2, user-approved 2026-05-09
+/// (JIT issue `9fe275d3`'s description `## Approval` section). The
+/// signatures are frozen at the W6 `gate:api-freeze` of the
+/// `gf2-algebra-permanent` epic; in-loop amendment is permitted only
+/// before that gate fires.
+///
+/// # Trait bounds
+///
+/// `Clone + Eq + Debug` — heap-backed (so not `Copy`), value-equal on
+/// canonical-decode (D1b §3.4), and printable for `assert_eq!` panic
+/// messages.
+///
+/// # Length semantics
+///
+/// All in-place operators ([`Self::add_assign`], [`Self::sub_assign`],
+/// [`Self::mul_assign`]) require `self.len() == rhs.len()`; passing
+/// mismatched lengths panics. D1b §2.2 leaves the convention to each
+/// impl; this trait fixes it as `length-equal-or-panic` so callers
+/// have a uniform contract across all impls.
+///
+/// # No `unsafe`
+///
+/// This trait is `#![deny(unsafe_code)]`-compatible; SIMD intrinsics
+/// live behind safe function-pointer bundles in `gf2-kernels-simd`.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_algebra::packed::{PackedFieldVec, ScalarPackedFp3Vec};
+/// use gf2_core::gfp::Fp;
+///
+/// let xs = [Fp::<3>::new(1), Fp::<3>::new(2), Fp::<3>::new(0)];
+/// let v = ScalarPackedFp3Vec::from_field_slice(&xs);
+/// assert_eq!(v.len(), 3);
+/// assert_eq!(v.get(1), Fp::<3>::new(2));
+/// ```
+pub trait PackedFieldVec<F: FiniteField>: Clone + Eq + core::fmt::Debug {
+    /// Fixed-LANES packed companion type used by SIMD-batched impls.
+    ///
+    /// The scalar reference does not need this hook (it stores one
+    /// `F` per logical position directly), but `Bipedal3Vec` and
+    /// future SIMD-batched impls will store internal data in
+    /// `Self::Element` chunks. Carrying the bound on the trait makes
+    /// the relationship visible to downstream generic code without
+    /// committing the scalar reference to actually use it.
+    type Element: PackedField<F>;
+
+    /// Construct a vector of `len` zeros.
+    ///
+    /// # Arguments
+    ///
+    /// * `len` — number of logical `F`-positions in the result.
+    ///
+    /// # Complexity
+    ///
+    /// `O(len)` for scalar-array encodings; `O(ceil(len / Element::LANES))`
+    /// for fixed-width-chunked encodings.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{PackedFieldVec, ScalarPackedFp3Vec};
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let z = ScalarPackedFp3Vec::zeros(5);
+    /// assert_eq!(z.len(), 5);
+    /// assert!(z.all_zero());
+    /// ```
+    fn zeros(len: usize) -> Self;
+
+    /// Construct a vector by copying every element of `xs` into a
+    /// fresh logical position.
+    ///
+    /// # Arguments
+    ///
+    /// * `xs` — source slice; the result has `xs.len()` logical
+    ///   positions and `get(i) == xs[i]` for every `i`.
+    ///
+    /// # Complexity
+    ///
+    /// `O(xs.len())`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{PackedFieldVec, ScalarPackedFp3Vec};
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let xs = [Fp::<3>::new(1), Fp::<3>::new(2)];
+    /// let v = ScalarPackedFp3Vec::from_field_slice(&xs);
+    /// assert_eq!(v.get(0), Fp::<3>::new(1));
+    /// assert_eq!(v.get(1), Fp::<3>::new(2));
+    /// ```
+    fn from_field_slice(xs: &[F]) -> Self;
+
+    /// Number of logical `F`-positions held by this vector.
+    ///
+    /// # Complexity
+    ///
+    /// `O(1)`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{PackedFieldVec, ScalarPackedFp3Vec};
+    /// let v = ScalarPackedFp3Vec::zeros(7);
+    /// assert_eq!(v.len(), 7);
+    /// ```
+    fn len(&self) -> usize;
+
+    /// Returns `true` iff `self.len() == 0`.
+    ///
+    /// The default implementation is the natural one; concrete impls
+    /// rarely need to override it.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{PackedFieldVec, ScalarPackedFp3Vec};
+    /// assert!(ScalarPackedFp3Vec::zeros(0).is_empty());
+    /// assert!(!ScalarPackedFp3Vec::zeros(1).is_empty());
+    /// ```
+    fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
+    /// Decode logical position `i` to a canonical `F` value.
+    ///
+    /// # Arguments
+    ///
+    /// * `i` — logical position index in `0..self.len()`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `i >= self.len()`.
+    ///
+    /// # Complexity
+    ///
+    /// `O(1)`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{PackedFieldVec, ScalarPackedFp3Vec};
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let xs = [Fp::<3>::new(2)];
+    /// let v = ScalarPackedFp3Vec::from_field_slice(&xs);
+    /// assert_eq!(v.get(0), Fp::<3>::new(2));
+    /// ```
+    fn get(&self, i: usize) -> F;
+
+    /// Lane-wise in-place sum: `self[i] += rhs[i]` for every `i`.
+    ///
+    /// # Arguments
+    ///
+    /// * `rhs` — operand of equal length; positions are added pointwise.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `self.len() != rhs.len()` (D1b §2.2 leaves the
+    /// convention open; this trait fixes it as strict-equal-or-panic
+    /// so callers have a uniform contract).
+    ///
+    /// # Complexity
+    ///
+    /// `O(self.len())` for scalar-array encodings;
+    /// `O(self.len() / Element::LANES)` for fixed-width-chunked encodings.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{PackedFieldVec, ScalarPackedFp3Vec};
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let mut a = ScalarPackedFp3Vec::from_field_slice(&[Fp::<3>::new(1), Fp::<3>::new(2)]);
+    /// let b = ScalarPackedFp3Vec::from_field_slice(&[Fp::<3>::new(2), Fp::<3>::new(2)]);
+    /// a.add_assign(&b);
+    /// assert_eq!(a.get(0), Fp::<3>::new(0)); // 1 + 2 == 0 mod 3
+    /// assert_eq!(a.get(1), Fp::<3>::new(1)); // 2 + 2 == 1 mod 3
+    /// ```
+    fn add_assign(&mut self, rhs: &Self);
+
+    /// Lane-wise in-place difference: `self[i] -= rhs[i]` for every `i`.
+    ///
+    /// # Arguments
+    ///
+    /// * `rhs` — operand of equal length; subtracted pointwise from `self`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `self.len() != rhs.len()` (same convention as
+    /// [`Self::add_assign`]).
+    ///
+    /// # Complexity
+    ///
+    /// `O(self.len())` for scalar-array encodings;
+    /// `O(self.len() / Element::LANES)` for fixed-width-chunked encodings.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{PackedFieldVec, ScalarPackedFp3Vec};
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let mut a = ScalarPackedFp3Vec::from_field_slice(&[Fp::<3>::new(0)]);
+    /// let b = ScalarPackedFp3Vec::from_field_slice(&[Fp::<3>::new(1)]);
+    /// a.sub_assign(&b);
+    /// assert_eq!(a.get(0), Fp::<3>::new(2)); // 0 - 1 == 2 mod 3
+    /// ```
+    fn sub_assign(&mut self, rhs: &Self);
+
+    /// Lane-wise in-place product: `self[i] *= rhs[i]` for every `i`.
+    ///
+    /// # Arguments
+    ///
+    /// * `rhs` — operand of equal length; multiplied pointwise into `self`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `self.len() != rhs.len()` (same convention as
+    /// [`Self::add_assign`]).
+    ///
+    /// # Complexity
+    ///
+    /// `O(self.len())` for scalar-array encodings;
+    /// `O(self.len() / Element::LANES)` for fixed-width-chunked encodings.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{PackedFieldVec, ScalarPackedFp3Vec};
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let mut a = ScalarPackedFp3Vec::from_field_slice(&[Fp::<3>::new(2)]);
+    /// let b = ScalarPackedFp3Vec::from_field_slice(&[Fp::<3>::new(2)]);
+    /// a.mul_assign(&b);
+    /// assert_eq!(a.get(0), Fp::<3>::new(1)); // 2 * 2 == 1 mod 3
+    /// ```
+    fn mul_assign(&mut self, rhs: &Self);
+
+    /// Returns `true` iff every logical position decodes to `F`'s
+    /// additive identity.
+    ///
+    /// Implementations MUST canonicalise: a redundant non-canonical
+    /// "zero" codeword (e.g. bipedal `(0, 1)`) still answers `true`
+    /// (D1b §3.5). The empty vector trivially answers `true`.
+    ///
+    /// # Complexity
+    ///
+    /// `O(self.len())` for scalar-array encodings;
+    /// `O(self.len() / Element::LANES)` for fixed-width-chunked encodings.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{PackedFieldVec, ScalarPackedFp3Vec};
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// assert!(ScalarPackedFp3Vec::zeros(5).all_zero());
+    /// let nz = ScalarPackedFp3Vec::from_field_slice(&[Fp::<3>::new(1)]);
+    /// assert!(!nz.all_zero());
+    /// ```
+    fn all_zero(&self) -> bool;
 }
