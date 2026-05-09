@@ -19,6 +19,14 @@
 use crate::bipedal::framework::{BatchedBipedalLike, BipedalLikeConfig};
 use crate::bipedal::lanes::{Avx2Lane, BipedalLogicalLanes};
 
+// The `where C: BipedalLikeConfig<MagLane = Avx2Lane, SgnLane = Avx2Lane>`
+// bound on each entry point spells out the lane-shape contract: both lane
+// types of the per-prime config must resolve to `Avx2Lane`. Encodings whose
+// magnitude and sign lane shapes are not both 256-bit AVX2 registers (e.g.
+// a future F_5 D-bit-sliced configuration may pick a 3-plane magnitude lane
+// and a single u64 sign lane) will consume different entry points; today
+// every wired config picks `Avx2Lane` for both.
+
 /// Apply a bipedal-like add over canonical `(mag, sgn)` u64-word streams via AVX2.
 ///
 /// Generic over the per-prime [`BipedalLikeConfig`] `C`. One AVX2 lane
@@ -63,14 +71,16 @@ use crate::bipedal::lanes::{Avx2Lane, BipedalLogicalLanes};
 /// `O(n / 4)` AVX2 ops, where `n = mag1.len()`.
 #[inline]
 #[target_feature(enable = "avx2")]
-pub unsafe fn run_add_batch<C: BipedalLikeConfig>(
+pub unsafe fn run_add_batch<C>(
     mag1: &[u64],
     sgn1: &[u64],
     mag2: &[u64],
     sgn2: &[u64],
     out_mag: &mut [u64],
     out_sgn: &mut [u64],
-) {
+) where
+    C: BipedalLikeConfig<MagLane = Avx2Lane, SgnLane = Avx2Lane>,
+{
     debug_assert_eq!(mag1.len() % 4, 0);
     debug_assert_eq!(mag1.len(), sgn1.len());
     debug_assert_eq!(mag1.len(), mag2.len());
@@ -86,7 +96,7 @@ pub unsafe fn run_add_batch<C: BipedalLikeConfig>(
             let v_s1 = Avx2Lane::loadu(sgn1, i);
             let v_m2 = Avx2Lane::loadu(mag2, i);
             let v_s2 = Avx2Lane::loadu(sgn2, i);
-            let (m, s) = BatchedBipedalLike::<C, Avx2Lane, Avx2Lane>::add(v_m1, v_s1, v_m2, v_s2);
+            let (m, s) = BatchedBipedalLike::<C>::add(v_m1, v_s1, v_m2, v_s2);
             Avx2Lane::storeu(out_mag, i, m);
             Avx2Lane::storeu(out_sgn, i, s);
             i += 4;
@@ -131,14 +141,16 @@ pub unsafe fn run_add_batch<C: BipedalLikeConfig>(
 /// `O(n / 4)` AVX2 ops.
 #[inline]
 #[target_feature(enable = "avx2")]
-pub unsafe fn run_sub_batch<C: BipedalLikeConfig>(
+pub unsafe fn run_sub_batch<C>(
     mag1: &[u64],
     sgn1: &[u64],
     mag2: &[u64],
     sgn2: &[u64],
     out_mag: &mut [u64],
     out_sgn: &mut [u64],
-) {
+) where
+    C: BipedalLikeConfig<MagLane = Avx2Lane, SgnLane = Avx2Lane>,
+{
     debug_assert_eq!(mag1.len() % 4, 0);
     debug_assert_eq!(mag1.len(), sgn1.len());
     debug_assert_eq!(mag1.len(), mag2.len());
@@ -154,7 +166,7 @@ pub unsafe fn run_sub_batch<C: BipedalLikeConfig>(
             let v_s1 = Avx2Lane::loadu(sgn1, i);
             let v_m2 = Avx2Lane::loadu(mag2, i);
             let v_s2 = Avx2Lane::loadu(sgn2, i);
-            let (m, s) = BatchedBipedalLike::<C, Avx2Lane, Avx2Lane>::sub(v_m1, v_s1, v_m2, v_s2);
+            let (m, s) = BatchedBipedalLike::<C>::sub(v_m1, v_s1, v_m2, v_s2);
             Avx2Lane::storeu(out_mag, i, m);
             Avx2Lane::storeu(out_sgn, i, s);
             i += 4;
@@ -199,14 +211,16 @@ pub unsafe fn run_sub_batch<C: BipedalLikeConfig>(
 /// `O(n / 4)` AVX2 ops.
 #[inline]
 #[target_feature(enable = "avx2")]
-pub unsafe fn run_mul_batch<C: BipedalLikeConfig>(
+pub unsafe fn run_mul_batch<C>(
     mag1: &[u64],
     sgn1: &[u64],
     mag2: &[u64],
     sgn2: &[u64],
     out_mag: &mut [u64],
     out_sgn: &mut [u64],
-) {
+) where
+    C: BipedalLikeConfig<MagLane = Avx2Lane, SgnLane = Avx2Lane>,
+{
     debug_assert_eq!(mag1.len() % 4, 0);
     debug_assert_eq!(mag1.len(), sgn1.len());
     debug_assert_eq!(mag1.len(), mag2.len());
@@ -222,7 +236,7 @@ pub unsafe fn run_mul_batch<C: BipedalLikeConfig>(
             let v_s1 = Avx2Lane::loadu(sgn1, i);
             let v_m2 = Avx2Lane::loadu(mag2, i);
             let v_s2 = Avx2Lane::loadu(sgn2, i);
-            let (m, s) = BatchedBipedalLike::<C, Avx2Lane, Avx2Lane>::mul(v_m1, v_s1, v_m2, v_s2);
+            let (m, s) = BatchedBipedalLike::<C>::mul(v_m1, v_s1, v_m2, v_s2);
             Avx2Lane::storeu(out_mag, i, m);
             Avx2Lane::storeu(out_sgn, i, s);
             i += 4;
@@ -268,12 +282,10 @@ pub unsafe fn run_mul_batch<C: BipedalLikeConfig>(
 /// `O(n / 4)` AVX2 ops.
 #[inline]
 #[target_feature(enable = "avx2")]
-pub unsafe fn run_neg_batch<C: BipedalLikeConfig>(
-    mag: &[u64],
-    sgn: &[u64],
-    out_mag: &mut [u64],
-    out_sgn: &mut [u64],
-) {
+pub unsafe fn run_neg_batch<C>(mag: &[u64], sgn: &[u64], out_mag: &mut [u64], out_sgn: &mut [u64])
+where
+    C: BipedalLikeConfig<MagLane = Avx2Lane, SgnLane = Avx2Lane>,
+{
     debug_assert_eq!(mag.len() % 4, 0);
     debug_assert_eq!(mag.len(), sgn.len());
     debug_assert_eq!(mag.len(), out_mag.len());
@@ -285,7 +297,7 @@ pub unsafe fn run_neg_batch<C: BipedalLikeConfig>(
         while i < n {
             let v_m = Avx2Lane::loadu(mag, i);
             let v_s = Avx2Lane::loadu(sgn, i);
-            let (m, s) = BatchedBipedalLike::<C, Avx2Lane, Avx2Lane>::neg(v_m, v_s);
+            let (m, s) = BatchedBipedalLike::<C>::neg(v_m, v_s);
             Avx2Lane::storeu(out_mag, i, m);
             Avx2Lane::storeu(out_sgn, i, s);
             i += 4;

@@ -17,19 +17,30 @@
 //! - mul: `m_x = m1 & m2; s_x = s1 ^ s2`  (2 ops)
 //! - neg: `(m', s') = (m, s ^ m)`  (1 op; flips sgn on every nonzero lane)
 //!
+//! For F_3 the magnitude and sign lane shapes coincide (both are
+//! [`super::lanes::Avx2Lane`]); the per-prime config selects this via the
+//! `MagLane` / `SgnLane` associated types on
+//! [`super::framework::BipedalLikeConfig`]. Future F_5 D-bit-sliced (W4)
+//! is expected to pick a wider magnitude lane and a narrower sign lane
+//! through the same trait — no framework-body changes will be needed.
+//!
 //! The actual AVX2 batch entry points (`run_add_batch`, etc.) live in
 //! [`crate::x86::bipedal_avx2`] so the asm-artefact-present gate fires on
 //! source changes — see the W4 wave plan and `dev/plans/r4_simd_batching_decision.md`.
 
 use super::framework::BipedalLikeConfig;
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+use super::lanes::Avx2Lane;
 use super::lanes::BipedalLogicalLanes;
 
 /// F_3 arithmetic recipe for the generic bipedal-like framework.
 ///
 /// Implements [`BipedalLikeConfig`] using the Scheinerman 2024 §2.2
-/// formulas. Each `*_lane` method is `#[inline(always)]` so it inlines
-/// cleanly into the AVX2-feature-enabled batch entry points
-/// (`run_*_batch`) defined in [`crate::x86::bipedal_avx2`].
+/// formulas. The associated types `MagLane` and `SgnLane` both pick
+/// [`Avx2Lane`] (the only lane shape currently wired); each `*_lane`
+/// method is `#[inline(always)]` so it inlines cleanly into the
+/// AVX2-feature-enabled batch entry points (`run_*_batch`) defined in
+/// [`crate::x86::bipedal_avx2`].
 ///
 /// This struct is zero-sized — it is a type-level tag only.
 ///
@@ -40,98 +51,90 @@ use super::lanes::BipedalLogicalLanes;
 /// use gf2_kernels_simd::bipedal::Config3;
 /// // PRIME is 3 for F_3.
 /// assert_eq!(<Config3 as BipedalLikeConfig>::PRIME, 3);
+/// // U64_PER_LANE_PAIR is 4 (256-bit Avx2Lane = 4 × u64).
+/// assert_eq!(<Config3 as BipedalLikeConfig>::U64_PER_LANE_PAIR, 4);
 /// ```
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Config3;
 
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 impl BipedalLikeConfig for Config3 {
+    type MagLane = Avx2Lane;
+    type SgnLane = Avx2Lane;
     const PRIME: u64 = 3;
+    const U64_PER_LANE_PAIR: usize = 4;
 
     #[inline(always)]
-    unsafe fn add_lane<Mag, Sgn>(m1: Mag, s1: Sgn, m2: Mag, s2: Sgn) -> (Mag, Sgn)
-    where
-        Mag: BipedalLogicalLanes,
-        Sgn: BipedalLogicalLanes,
-    {
+    unsafe fn add_lane(
+        m1: Self::MagLane,
+        s1: Self::SgnLane,
+        m2: Self::MagLane,
+        s2: Self::SgnLane,
+    ) -> (Self::MagLane, Self::SgnLane) {
         // SAFETY: hardware feature is the caller's precondition.
-        // The framework is shape-uniform: for the F_3 instantiation
-        // `Mag = Sgn = Avx2Lane`, so the byte-level transmute is a
-        // strict no-op (size_of and align_of match by construction).
-        // For future encodings (F_5 D-bit-sliced, F_7 LUT-A) the lane
-        // types may differ and the per-prime config will pick its own
-        // shape — the `transmute_lane` indirection is what makes the F_3
-        // body type-naturally generic.
         unsafe {
-            let s1_as_m: Mag = transmute_lane(s1);
-            let s2_as_m: Mag = transmute_lane(s2);
-            let t = Mag::xor(Mag::xor(m1, s1_as_m), s2_as_m);
-            let u = Mag::and(m2, t);
-            let m_plus = Mag::or(u, Mag::xor(m1, m2));
-            let s_plus_m: Mag = Mag::xor(u, s1_as_m);
-            let s_plus: Sgn = transmute_lane(s_plus_m);
+            // F_3 add: t = m1^s1^s2; u = m2&t; m_+ = u | (m1^m2); s_+ = u^s1
+            let t = Avx2Lane::xor(Avx2Lane::xor(m1, s1), s2);
+            let u = Avx2Lane::and(m2, t);
+            let m_plus = Avx2Lane::or(u, Avx2Lane::xor(m1, m2));
+            let s_plus = Avx2Lane::xor(u, s1);
             (m_plus, s_plus)
         }
     }
 
     #[inline(always)]
-    unsafe fn sub_lane<Mag, Sgn>(m1: Mag, s1: Sgn, m2: Mag, s2: Sgn) -> (Mag, Sgn)
-    where
-        Mag: BipedalLogicalLanes,
-        Sgn: BipedalLogicalLanes,
-    {
+    unsafe fn sub_lane(
+        m1: Self::MagLane,
+        s1: Self::SgnLane,
+        m2: Self::MagLane,
+        s2: Self::SgnLane,
+    ) -> (Self::MagLane, Self::SgnLane) {
         // SAFETY: hardware feature is the caller's precondition.
         unsafe {
-            let s1_as_m: Mag = transmute_lane(s1);
-            let s2_as_m: Mag = transmute_lane(s2);
-            let m2_as_s: Sgn = transmute_lane(m2);
-            let t_m = Mag::xor(s1_as_m, s2_as_m);
-            let u = Mag::and(m1, t_m);
-            let m_minus = Mag::or(u, Mag::xor(m1, m2));
-            // s_- = u ^ (m2 ^ s2) — done in the Sgn type to mirror the
-            // per-prime kernel's instruction order (R4 reference).
-            let m2_xor_s2: Sgn = Sgn::xor(m2_as_s, s2);
-            let u_as_s: Sgn = transmute_lane(u);
-            let s_minus = Sgn::xor(u_as_s, m2_xor_s2);
+            // F_3 sub: t = s1^s2; u = m1&t; m_- = u | (m1^m2); s_- = u ^ (m2^s2)
+            let t = Avx2Lane::xor(s1, s2);
+            let u = Avx2Lane::and(m1, t);
+            let m_minus = Avx2Lane::or(u, Avx2Lane::xor(m1, m2));
+            let m2_xor_s2 = Avx2Lane::xor(m2, s2);
+            let s_minus = Avx2Lane::xor(u, m2_xor_s2);
             (m_minus, s_minus)
         }
     }
 
     #[inline(always)]
-    unsafe fn mul_lane<Mag, Sgn>(m1: Mag, s1: Sgn, m2: Mag, s2: Sgn) -> (Mag, Sgn)
-    where
-        Mag: BipedalLogicalLanes,
-        Sgn: BipedalLogicalLanes,
-    {
+    unsafe fn mul_lane(
+        m1: Self::MagLane,
+        s1: Self::SgnLane,
+        m2: Self::MagLane,
+        s2: Self::SgnLane,
+    ) -> (Self::MagLane, Self::SgnLane) {
         // SAFETY: hardware feature is the caller's precondition.
         unsafe {
-            let m_x = Mag::and(m1, m2);
-            let s_x = Sgn::xor(s1, s2);
+            // F_3 mul: m_x = m1 & m2; s_x = s1 ^ s2
+            let m_x = Avx2Lane::and(m1, m2);
+            let s_x = Avx2Lane::xor(s1, s2);
             (m_x, s_x)
         }
     }
 
     #[inline(always)]
-    unsafe fn neg_lane<Mag, Sgn>(m: Mag, s: Sgn) -> (Mag, Sgn)
-    where
-        Mag: BipedalLogicalLanes,
-        Sgn: BipedalLogicalLanes,
-    {
+    unsafe fn neg_lane(m: Self::MagLane, s: Self::SgnLane) -> (Self::MagLane, Self::SgnLane) {
         // SAFETY: hardware feature is the caller's precondition.
         // F_3 canonical-form invariant `sgn & !mag == 0` => `sgn ^ mag`
         // flips sgn on nonzero lanes, leaves zero lanes invariant.
         // Equivalent to `sub(0, x)` but cheaper (1 op vs 6).
         unsafe {
-            let m_as_s: Sgn = transmute_lane(m);
-            let s_neg = Sgn::xor(s, m_as_s);
+            let s_neg = Avx2Lane::xor(s, m);
             (m, s_neg)
         }
     }
 }
 
-/// Concrete F_3 instantiation: 256-lane batched AVX2 over [`crate::bipedal::Avx2Lane`].
+/// Concrete F_3 instantiation: 256-lane batched AVX2 over [`Avx2Lane`].
 ///
 /// 4 × `u64` × 64 bits = 256 logical F_3 lanes per `(mag, sgn)` word-pair.
-/// Both magnitude and sign use the AVX2 256-bit lane.
+/// Both magnitude and sign use the AVX2 256-bit lane via the
+/// [`Config3::MagLane`] / [`Config3::SgnLane`] associated types.
 ///
 /// The associated batch entry points (`run_add_batch`, `run_sub_batch`,
 /// `run_mul_batch`, `run_neg_batch`) live in [`crate::x86::bipedal_avx2`]
@@ -151,30 +154,7 @@ impl BipedalLikeConfig for Config3 {
 /// };
 /// ```
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-pub type Bipedal3x4 =
-    super::framework::BatchedBipedalLike<Config3, super::lanes::Avx2Lane, super::lanes::Avx2Lane>;
-
-/// Reinterpret one lane type as another of the same byte size.
-///
-/// For the F_3 instantiation `Mag = Sgn = Avx2Lane`, so this is a no-op.
-/// In a future F_5 framework where `Mag != Sgn` the framework would
-/// supply a domain-specific conversion instead; this helper exists
-/// to keep the F_3 code path generic-looking.
-///
-/// # Safety
-///
-/// `From` and `To` must have the same memory layout. For the only
-/// instantiated call site (`Mag = Sgn = Avx2Lane`) this is trivially true.
-/// `debug_assert_eq!` on size_of/align_of guards against future misuse.
-#[inline(always)]
-unsafe fn transmute_lane<From: Copy, To: Copy>(x: From) -> To {
-    debug_assert_eq!(core::mem::size_of::<From>(), core::mem::size_of::<To>());
-    debug_assert_eq!(core::mem::align_of::<From>(), core::mem::align_of::<To>());
-    // SAFETY: caller asserts From and To have the same layout. For the
-    // only instantiated call site (Mag = Sgn = Avx2Lane) this is a true
-    // no-op; the debug_asserts above check at runtime in debug builds.
-    unsafe { core::mem::transmute_copy::<From, To>(&x) }
-}
+pub type Bipedal3x4 = super::framework::BatchedBipedalLike<Config3>;
 
 // =============================================================================
 // Tests: SIMD-vs-scalar parity against the SSOT `Bipedal3` reference
@@ -703,45 +683,54 @@ mod tests {
     /// The "arithmetic" here is intentionally trivial — `add_lane` returns
     /// the first operand unchanged; we are only checking that the trait
     /// bound machinery resolves and the body type-checks.
+    ///
+    /// Picks the same lane shape as F_3 (`Avx2Lane` for both `MagLane` and
+    /// `SgnLane`) so the existing AVX2 entry points monomorphise without
+    /// any per-config kernel code; a real F_5 / F_7 config can pick a
+    /// different shape via the same associated-type machinery.
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     #[derive(Clone, Copy, Debug, Default)]
     struct MockConfig;
 
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     impl BipedalLikeConfig for MockConfig {
+        type MagLane = Avx2Lane;
+        type SgnLane = Avx2Lane;
         const PRIME: u64 = 5;
+        const U64_PER_LANE_PAIR: usize = 4;
 
         #[inline(always)]
-        unsafe fn add_lane<Mag, Sgn>(m1: Mag, s1: Sgn, _m2: Mag, _s2: Sgn) -> (Mag, Sgn)
-        where
-            Mag: BipedalLogicalLanes,
-            Sgn: BipedalLogicalLanes,
-        {
+        unsafe fn add_lane(
+            m1: Self::MagLane,
+            s1: Self::SgnLane,
+            _m2: Self::MagLane,
+            _s2: Self::SgnLane,
+        ) -> (Self::MagLane, Self::SgnLane) {
             (m1, s1)
         }
 
         #[inline(always)]
-        unsafe fn sub_lane<Mag, Sgn>(m1: Mag, s1: Sgn, _m2: Mag, _s2: Sgn) -> (Mag, Sgn)
-        where
-            Mag: BipedalLogicalLanes,
-            Sgn: BipedalLogicalLanes,
-        {
+        unsafe fn sub_lane(
+            m1: Self::MagLane,
+            s1: Self::SgnLane,
+            _m2: Self::MagLane,
+            _s2: Self::SgnLane,
+        ) -> (Self::MagLane, Self::SgnLane) {
             (m1, s1)
         }
 
         #[inline(always)]
-        unsafe fn mul_lane<Mag, Sgn>(m1: Mag, s1: Sgn, _m2: Mag, _s2: Sgn) -> (Mag, Sgn)
-        where
-            Mag: BipedalLogicalLanes,
-            Sgn: BipedalLogicalLanes,
-        {
+        unsafe fn mul_lane(
+            m1: Self::MagLane,
+            s1: Self::SgnLane,
+            _m2: Self::MagLane,
+            _s2: Self::SgnLane,
+        ) -> (Self::MagLane, Self::SgnLane) {
             (m1, s1)
         }
 
         #[inline(always)]
-        unsafe fn neg_lane<Mag, Sgn>(m: Mag, s: Sgn) -> (Mag, Sgn)
-        where
-            Mag: BipedalLogicalLanes,
-            Sgn: BipedalLogicalLanes,
-        {
+        unsafe fn neg_lane(m: Self::MagLane, s: Self::SgnLane) -> (Self::MagLane, Self::SgnLane) {
             (m, s)
         }
     }
@@ -753,25 +742,25 @@ mod tests {
     /// `crate::x86::bipedal_avx2` accept the new config without
     /// modification; the type-level check below proves the trait machinery
     /// resolves end-to-end.
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     #[test]
     fn test_framework_is_generic_over_config() {
-        type _Mock5x4 = super::super::framework::BatchedBipedalLike<
-            MockConfig,
-            super::super::lanes::Avx2Lane,
-            super::super::lanes::Avx2Lane,
-        >;
+        type _Mock5x4 = super::super::framework::BatchedBipedalLike<MockConfig>;
         // Reference the generic entry points monomorphised over the new
         // config to prove they accept it without source changes. The
         // `unsafe fn` pointer cast below is sound because the AVX2 entry
-        // points share a uniform shape across configs.
+        // points share a uniform shape across configs whose `MagLane` and
+        // `SgnLane` resolve to the same lane type (`Avx2Lane` here).
         type BinaryKernel = unsafe fn(&[u64], &[u64], &[u64], &[u64], &mut [u64], &mut [u64]);
         let _add: BinaryKernel = crate::x86::bipedal_avx2::run_add_batch::<MockConfig>;
         let _sub: BinaryKernel = crate::x86::bipedal_avx2::run_sub_batch::<MockConfig>;
         let _mul: BinaryKernel = crate::x86::bipedal_avx2::run_mul_batch::<MockConfig>;
         // The fact that the type alias and the generic-fn pointers above
         // resolved already proves genericity; the assertions here just tie
-        // the const through.
+        // the constants through.
         assert_eq!(<MockConfig as BipedalLikeConfig>::PRIME, 5);
+        assert_eq!(<MockConfig as BipedalLikeConfig>::U64_PER_LANE_PAIR, 4);
         assert_eq!(<Config3 as BipedalLikeConfig>::PRIME, 3);
+        assert_eq!(<Config3 as BipedalLikeConfig>::U64_PER_LANE_PAIR, 4);
     }
 }
