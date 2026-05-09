@@ -25,7 +25,7 @@
 //! # Op cost (per `Bipedal3` = 64 `F_3` elements)
 //!
 //! - **add**: 6 word-level ops (CSE: 2 temporaries).
-//! - **sub**: 7 word-level ops (`neg(b)` costs 1 extra XOR).
+//! - **sub**: 6 word-level ops (CSE on `(am ^ bm)`).
 //! - **mul**: 2 word-level ops.
 //! - **neg**: 1 word-level op.
 //!
@@ -380,8 +380,8 @@ impl PackedField<Fp<3>> for Bipedal3 {
 
     /// Lane-wise difference: `self - rhs` pointwise mod 3.
     ///
-    /// Implemented as `add(self, neg(rhs))` (7 ops total: 1 for neg, 6
-    /// for add).
+    /// Direct Scheinerman 2024 Theorem 2.1 / Algorithm 2 subtraction
+    /// formula with CSE on `(am ^ bm)` — 6 word-level bitwise operations.
     ///
     /// # Arguments
     ///
@@ -400,20 +400,20 @@ impl PackedField<Fp<3>> for Bipedal3 {
     ///
     /// # Complexity
     ///
-    /// `O(1)`: 7 word-level bitwise operations.
+    /// `O(1)`: 6 word-level bitwise operations.
     #[inline]
     fn sub(self, rhs: Self) -> Self {
         let am = self.mag;
         let asg = self.sgn;
         let bm = rhs.mag;
-        // neg(b): mag stays, sgn XORed with mag.
-        let bsg = rhs.sgn ^ bm;
-        // Then add(a, neg(b)).
-        let t = am ^ asg ^ bsg;
-        let u = bm & t;
+        let bsg = rhs.sgn;
+        // Direct paper-Theorem-2.1 sub formula with CSE on (am ^ bm). 6 ops total.
+        let xm = am ^ bm; // op 1
+        let t = xm ^ asg ^ bsg; // ops 2-3 (two XORs)
+        let u = bm & t; // op 4
         Self {
-            mag: u | (am ^ bm),
-            sgn: u ^ asg,
+            mag: u | xm,  // op 5
+            sgn: u ^ asg, // op 6
         }
     }
 
