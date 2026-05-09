@@ -10,7 +10,18 @@
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-09T12:54:35.468084114Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-09T12:54:11.328140607Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -19,5 +30,5 @@
     "component:gf2-algebra"
   ],
   "created_at": "2026-05-09T09:42:04.316090794+00:00",
-  "updated_at": "2026-05-09T12:15:59.970051755+00:00"
+  "updated_at": "2026-05-09T12:57:35.061318686+00:00"
 }
