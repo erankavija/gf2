@@ -41,6 +41,8 @@ pub mod avx2_stub {
     #[inline]
     #[target_feature(enable = "avx2")]
     pub unsafe fn storeu(dst: &mut [u64], offset: usize, v: __m256i) {
+        // SAFETY: caller must ensure offset + 4 <= dst.len() (debug-asserted)
+        // and that AVX2 is available (precondition of `target_feature`).
         debug_assert!(offset + 4 <= dst.len());
         unsafe { _mm256_storeu_si256(dst.as_mut_ptr().add(offset) as *mut __m256i, v) }
     }
@@ -49,6 +51,7 @@ pub mod avx2_stub {
     #[inline]
     #[target_feature(enable = "avx2")]
     pub unsafe fn bipedal_and(a: __m256i, b: __m256i) -> __m256i {
+        // SAFETY: caller must ensure AVX2 is available (precondition of `target_feature`).
         unsafe { _mm256_and_si256(a, b) }
     }
 
@@ -57,6 +60,7 @@ pub mod avx2_stub {
     #[inline]
     #[target_feature(enable = "avx2")]
     pub unsafe fn bipedal_xor(a: __m256i, b: __m256i) -> __m256i {
+        // SAFETY: caller must ensure AVX2 is available (precondition of `target_feature`).
         unsafe { _mm256_xor_si256(a, b) }
     }
 
@@ -64,6 +68,7 @@ pub mod avx2_stub {
     #[inline]
     #[target_feature(enable = "avx2")]
     pub unsafe fn bipedal_or(a: __m256i, b: __m256i) -> __m256i {
+        // SAFETY: caller must ensure AVX2 is available (precondition of `target_feature`).
         unsafe { _mm256_or_si256(a, b) }
     }
 
@@ -79,6 +84,7 @@ pub mod avx2_stub {
         m2: __m256i,
         s2: __m256i,
     ) -> (__m256i, __m256i) {
+        // SAFETY: caller must ensure AVX2 is available (precondition of `target_feature`).
         unsafe {
             let t = _mm256_xor_si256(_mm256_xor_si256(m1, s1), s2);
             let u = _mm256_and_si256(m2, t);
@@ -155,6 +161,8 @@ pub mod avx512_stub {
     #[inline]
     #[target_feature(enable = "avx512f")]
     pub unsafe fn loadu(src: &[u64], offset: usize) -> __m512i {
+        // SAFETY: caller must ensure offset + 8 <= src.len() (debug-asserted)
+        // and that AVX-512F is available (precondition of `target_feature`).
         debug_assert!(offset + 8 <= src.len());
         unsafe { _mm512_loadu_si512(src.as_ptr().add(offset) as *const __m512i) }
     }
@@ -163,6 +171,8 @@ pub mod avx512_stub {
     #[inline]
     #[target_feature(enable = "avx512f")]
     pub unsafe fn storeu(dst: &mut [u64], offset: usize, v: __m512i) {
+        // SAFETY: caller must ensure offset + 8 <= dst.len() (debug-asserted)
+        // and that AVX-512F is available (precondition of `target_feature`).
         debug_assert!(offset + 8 <= dst.len());
         unsafe { _mm512_storeu_si512(dst.as_mut_ptr().add(offset) as *mut __m512i, v) }
     }
@@ -171,6 +181,7 @@ pub mod avx512_stub {
     #[inline]
     #[target_feature(enable = "avx512f")]
     pub unsafe fn bipedal_and(a: __m512i, b: __m512i) -> __m512i {
+        // SAFETY: caller must ensure AVX-512F is available (precondition of `target_feature`).
         unsafe { _mm512_and_si512(a, b) }
     }
 
@@ -178,6 +189,7 @@ pub mod avx512_stub {
     #[inline]
     #[target_feature(enable = "avx512f")]
     pub unsafe fn bipedal_xor(a: __m512i, b: __m512i) -> __m512i {
+        // SAFETY: caller must ensure AVX-512F is available (precondition of `target_feature`).
         unsafe { _mm512_xor_si512(a, b) }
     }
 
@@ -185,6 +197,7 @@ pub mod avx512_stub {
     #[inline]
     #[target_feature(enable = "avx512f")]
     pub unsafe fn bipedal_or(a: __m512i, b: __m512i) -> __m512i {
+        // SAFETY: caller must ensure AVX-512F is available (precondition of `target_feature`).
         unsafe { _mm512_or_si512(a, b) }
     }
 
@@ -197,6 +210,7 @@ pub mod avx512_stub {
         m2: __m512i,
         s2: __m512i,
     ) -> (__m512i, __m512i) {
+        // SAFETY: caller must ensure AVX-512F is available (precondition of `target_feature`).
         unsafe {
             let t = _mm512_xor_si512(_mm512_xor_si512(m1, s1), s2);
             let u = _mm512_and_si512(m2, t);

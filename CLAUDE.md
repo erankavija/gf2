@@ -84,7 +84,7 @@ This is a Cargo workspace with three crates:
 - **`gf2-kernels-simd`** (`crates/gf2-kernels-simd/`) — Isolated unsafe SIMD kernels (AVX2/AVX512/AARCH64).
 - **`gf2-kernels-hip`** (`crates/gf2-kernels-hip/`) — Isolated unsafe HIP/ROCm GPU kernels (device FFI, gfx1030; currently BCJR batch decode + Gray-QAM soft demap prototype). Excluded from the default workspace so non-ROCm hosts still build cleanly; opt in via `--features hip` on `gf2-coding` or by building the crate with its own manifest.
 
-Unsafe code lives exclusively in these two kernel crates; everything else uses `#![deny(unsafe_code)]`.
+Unsafe code lives exclusively in these two kernel crates; everything else uses `#![deny(unsafe_code)]`. Standalone `dev/research/<crate>/` stubs (non-workspace prototypes) are exempt: they may contain `unsafe` if necessary to exercise the surface they prototype, provided each `pub unsafe fn` carries a top-of-function `// SAFETY:` comment explaining the preconditions the caller must uphold. Production crates remain bound by the kernel-crates-only rule.
 - **`proofs/`** — Lean4 formal verification of `gfp/` and `gfpn/` field arithmetic, auto-generated via Charon/Aeneas. See `proofs/README.md`. Covers `Fp<P>` (Montgomery arithmetic), `QuadraticExt`, and `CubicExt` (tower extensions).
 
 ### gf2-core module map
@@ -123,7 +123,7 @@ Unsafe code lives exclusively in these two kernel crates; everything else uses `
 
 2. **Bit numbering** — Bit `i` lives in `word = i >> 6`, `mask = 1u64 << (i & 63)`.
 
-3. **Unsafe isolation** — All `unsafe` code lives exclusively in the two accelerator kernel crates: `gf2-kernels-simd` (CPU SIMD) and `gf2-kernels-hip` (HIP/ROCm GPU FFI). SIMD is detected at runtime via `OnceLock` in `gf2-core/src/lib.rs`; call path is `simd::maybe_simd()` → optional `LogicalFns`. The HIP crate is opt-in via Cargo feature and excluded from the default workspace build.
+3. **Unsafe isolation** — All `unsafe` code in production crates lives exclusively in the two accelerator kernel crates: `gf2-kernels-simd` (CPU SIMD) and `gf2-kernels-hip` (HIP/ROCm GPU FFI). SIMD is detected at runtime via `OnceLock` in `gf2-core/src/lib.rs`; call path is `simd::maybe_simd()` → optional `LogicalFns`. The HIP crate is opt-in via Cargo feature and excluded from the default workspace build. Standalone `dev/research/<crate>/` prototype stubs (not workspace members) are exempt from this rule when their purpose is to exercise an unsafe surface (e.g., intrinsic feasibility checks); each `pub unsafe fn` in a stub must carry a top-of-function `// SAFETY:` comment.
 
 4. **Functional at API level, imperative allowed in kernels** — High-level code (outside `kernels/`) prefers pure functions, iterator combinators, and immutability. `kernels/` uses mutation and loops for speed.
 
