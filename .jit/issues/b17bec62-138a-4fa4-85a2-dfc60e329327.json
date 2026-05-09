@@ -2,9 +2,9 @@
   "id": "b17bec62-138a-4fa4-85a2-dfc60e329327",
   "title": "Generic BatchedBipedalLike framework for SIMD batching",
   "description": "Land the generic `BatchedBipedalLike<P, MagLanes, SgnLanes>` framework in `gf2-kernels-simd`, with a single AVX2 instantiation point that the F_3, F_5, and F_7 kernels all consume.\n\n## Background\n\nR4 (`c7542983`) chose the generic framework over per-prime hand-rolled kernels. The framework abstracts over: (a) the lane-batch storage type (e.g., `(__m256i, __m256i)` for AVX2 over 256-bit pairs), (b) the per-prime `add` / `sub` / `mul` formulas which are encoded as `const fn` on the `BipedalLikeConfig` trait. This issue lands the trait + AVX2 instantiation; T12 (F_3 kernel), T17 (F_5 packed type), T19 (F_7 packed type), and T21 (SIMD F_5/F_7 kernels) all build on top.\n\nSub-issue independence: T12 may land before this if R4's outcome justifies inlining the F_3 kernel directly; otherwise this is a strict prerequisite. Per the W4 wave plan, this issue is the gate for T17 and T19.\n\n## Success Criteria\n\n- [ ] [hard] `gf2-kernels-simd::bipedal::framework::BipedalLikeConfig` trait exists with associated types/`const`s for the per-prime arithmetic plug-in points.\n- [ ] [hard] `BatchedBipedalLike<C: BipedalLikeConfig>` generic struct exists with AVX2 lane-batch implementations of `add`, `sub`, `mul`, `neg`.\n- [ ] [hard] An F_3 instantiation `BatchedBipedalLike<Config3>` exists (for T12 to consume); proptest cross-checks against the scalar `Bipedal3` reference on 1000 random inputs.\n- [ ] [hard] No code duplication between F_3 / F_5 / F_7 — adding a new prime requires only a new `BipedalLikeConfig` impl, not new kernel code.\n- [ ] [hard] `cargo nextest run -p gf2-kernels-simd --release --profile ci` passes.\n- [ ] [hard] `asm-artefact-present` gate passes.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [],
   "gates_required": [
     "cargo-ci",
@@ -20,5 +20,5 @@
     "component:gf2-kernels-simd"
   ],
   "created_at": "2026-05-09T09:45:53.662836700+00:00",
-  "updated_at": "2026-05-09T09:45:53.662845290+00:00"
+  "updated_at": "2026-05-09T12:16:00.260563798+00:00"
 }
