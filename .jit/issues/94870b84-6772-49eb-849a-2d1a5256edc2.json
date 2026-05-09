@@ -1,0 +1,26 @@
+{
+  "id": "94870b84-6772-49eb-849a-2d1a5256edc2",
+  "title": "gray_code_iter shared subset enumerator",
+  "description": "Implement the Gray-code subset enumerator that the Ryser permanent inner loop walks; shared by T7 (`permanent_ryser`) and T9 (`permanent_bipedal3`).\n\n## Background\n\nRyser's permanent formula iterates over all $2^n - 1$ non-empty subsets of $[n]$. Walking subsets in Gray-code order means consecutive iterations differ by exactly one bit (one element added or removed), which lets the column-sum vector update in a single column add/sub instead of recomputing from scratch.\n\nThe enumerator yields `(flip_index: usize, parity: i8)` tuples where `flip_index` is the bit toggled at this step and `parity` is +1 (added) or -1 (removed). Both T7 (generic over `FiniteField`) and T9 (bipedal3 fast path) reuse this iterator; placing it in `gf2-algebra::permanent::gray` shares the implementation and the correctness tests.\n\n## Success Criteria\n\n- [ ] [hard] `gf2-algebra::permanent::gray::gray_code_iter(n: usize) -> impl Iterator<Item = (usize, i8)>` exists.\n- [ ] [hard] The iterator yields exactly $2^n - 1$ items for $n \\in \\{1, \\ldots, 16\\}$ and the cumulative XOR of the bit-vector indexed by `flip_index` traverses every non-empty subset of $[n]$ exactly once.\n- [ ] [hard] Sum of `parity` values across the full iteration equals the running popcount of the current subset; verified via running-state assertion in tests.\n- [ ] [hard] Tests cover $n \\in \\{1, 2, 3, 4, 8, 16\\}$ exhaustively.\n- [ ] [hard] `cargo nextest run -p gf2-algebra --release --profile ci` passes; total runtime < 1 s.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "e6b1216a-045d-4bcd-b269-877dd94361a7"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "tests"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "epic:gf2-algebra-permanent",
+    "component:gf2-algebra"
+  ],
+  "created_at": "2026-05-09T09:43:00.129158642+00:00",
+  "updated_at": "2026-05-09T09:49:26.681224805+00:00"
+}

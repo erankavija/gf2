@@ -1,0 +1,26 @@
+{
+  "id": "b62c86d8-8b46-4219-abdf-4b665243c4fa",
+  "title": "gf2-kernels-hip permanent module scaffold",
+  "description": "Create the `gf2-kernels-hip/hip/permanent/` directory scaffold and Rust FFI surface that the per-prime HIP device kernels (T23-T25) will populate.\n\n## Background\n\n`gf2-kernels-hip` is opt-in via Cargo feature `hip` and excluded from the default workspace build per the project's HIP conventions. This issue lands the directory structure, the C++/HIP source layout convention, and the Rust FFI shim that the host-side dispatcher (T26) will call into.\n\nNo device kernels are implemented in this issue — only the build infrastructure (HIP bindgen, build.rs invocation of `hipcc`, conditional compilation under the `hip` feature). The downstream T23/T24/T25 lands the actual kernels.\n\n## Success Criteria\n\n- [ ] [hard] `crates/gf2-kernels-hip/hip/permanent/` directory exists with placeholder `.hip` source files and the build-system entry points.\n- [ ] [hard] `crates/gf2-kernels-hip/build.rs` is updated to compile the new module under feature `hip`; non-`hip` builds remain unaffected.\n- [ ] [hard] Rust FFI surface `crates/gf2-kernels-hip/src/permanent/mod.rs` declares `extern \"C\"` shims (no implementation yet) for the per-prime entry points.\n- [ ] [hard] On a non-ROCm host, `cargo build -p gf2-algebra --release --all-features` (without `hip`) still succeeds.\n- [ ] [hard] On a ROCm host, `cargo build -p gf2-kernels-hip --release --features hip` succeeds.\n- [ ] [hard] `cargo fmt --all -- --check` and `cargo clippy --workspace --all-targets --all-features -- -D warnings` pass.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "686ee1b5-6ac8-4547-9b66-d472b2753676",
+    "b17bec62-138a-4fa4-85a2-dfc60e329327"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "epic:gf2-algebra-permanent",
+    "component:gf2-kernels-hip"
+  ],
+  "created_at": "2026-05-09T09:47:03.268969625+00:00",
+  "updated_at": "2026-05-09T09:49:57.735176380+00:00"
+}

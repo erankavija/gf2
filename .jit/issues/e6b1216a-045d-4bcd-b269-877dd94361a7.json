@@ -1,0 +1,23 @@
+{
+  "id": "e6b1216a-045d-4bcd-b269-877dd94361a7",
+  "title": "Create gf2-algebra crate skeleton + workspace member",
+  "description": "Create the new `gf2-algebra` crate with the directory layout, MSRV pin, and workspace registration that downstream W1-W7 issues consume.\n\n## Background\n\nThe epic introduces a new top-level workspace crate `gf2-algebra` that hosts the `PackedField<F>` trait, packed bipedal types, and permanent algorithms. The crate boundary and dependency-direction graph were settled by D1a; the trait surface was settled by D1b; this issue creates the actual crate skeleton that those decisions describe.\n\nThe skeleton must compile clean as an empty crate so the rest of W1 (T2-T6) can land code into it without redoing wiring. Per `dev/plans/d1a_gf2_algebra_boundary.md`, the crate depends on `gf2-core` (mandatory) and feature-gates `gf2-kernels-simd` (default-on `simd`) and `gf2-kernels-hip` (default-off `hip`).\n\n## Success Criteria\n\n- [ ] [hard] `crates/gf2-algebra/Cargo.toml` exists, registers MSRV 1.95, declares dependency on `gf2-core`, and feature-gates `simd` (default on) and `hip` (default off) per the D1c feature-gate matrix.\n- [ ] [hard] `crates/gf2-algebra/` is registered as a workspace member in the root `Cargo.toml`.\n- [ ] [hard] `cargo build -p gf2-algebra --release --all-features` succeeds.\n- [ ] [hard] `cargo nextest run -p gf2-algebra --release --profile ci` succeeds (zero tests is acceptable at this stage).\n- [ ] [hard] The crate carries `#![deny(unsafe_code)]` at the lib root, matching the project's unsafe-isolation invariant.\n- [ ] [hard] `cargo fmt --all -- --check` and `cargo clippy --workspace --all-targets --all-features -- -D warnings` pass.",
+  "state": "ready",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "epic:gf2-algebra-permanent",
+    "component:gf2-algebra"
+  ],
+  "created_at": "2026-05-09T09:42:04.316090794+00:00",
+  "updated_at": "2026-05-09T09:42:04.316099824+00:00"
+}

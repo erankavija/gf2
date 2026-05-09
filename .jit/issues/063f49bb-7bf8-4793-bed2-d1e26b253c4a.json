@@ -1,0 +1,26 @@
+{
+  "id": "063f49bb-7bf8-4793-bed2-d1e26b253c4a",
+  "title": "permanent_bipedal7 implementation",
+  "description": "Implement `permanent_bipedal7` over the F_7 packed type (T19) using `gray_code_iter` and `Packed7Vec::fold_mul`.\n\n## Background\n\nMirrors the F_3 / F_5 paths: Gray-code walk, packed column-sum updates, fold via the F_7 multiplication tree at each step. Function lives at `gf2-algebra::permanent::permanent_bipedal7`.\n\n## Success Criteria\n\n- [ ] [hard] `gf2-algebra::permanent::permanent_bipedal7(matrix: &Packed7Matrix) -> Fp<7>` exists.\n- [ ] [hard] Single-word matrix-size bound documented and matches `Packed7::LANES`.\n- [ ] [hard] Output bit-identical to `permanent_ryser<Fp<7>>` (T7) on 1000 random matrices for each $n \\in \\{1, \\ldots, 14\\}$ — covers epic success criterion 6.\n- [ ] [hard] `cargo nextest run -p gf2-algebra --release --profile ci` passes.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "56c5dabc-9391-4057-a49d-2b327c6213f4"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "tests"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "epic:gf2-algebra-permanent",
+    "component:gf2-algebra"
+  ],
+  "created_at": "2026-05-09T09:46:24.470468134+00:00",
+  "updated_at": "2026-05-09T09:49:51.265432279+00:00"
+}

@@ -1,0 +1,26 @@
+{
+  "id": "16f03734-51ca-42e6-8fb3-e2d3ad9aba24",
+  "title": "gf2-algebra README plus doc-test examples",
+  "description": "Write the `gf2-algebra` README with usage examples, and add doc-test examples to all public APIs (per the project's documentation standards in CLAUDE.md).\n\n## Background\n\nCLAUDE.md §Documentation standards: every public item needs a doc comment with description, `# Arguments`, `# Examples` (tested), `# Panics`, and `# Complexity` (for non-trivial operations). The doc-test examples are exercised by `cargo test --doc`; they must compile and pass.\n\nThis issue covers both the crate-level `README.md` and the per-item doc comments for the public surface (`PackedField`, `Bipedal3`, `permanent_ryser`, `permanent_bipedal3`, `permanent_bipedal5`, `permanent_bipedal7`, `gpu::*`).\n\n## Success Criteria\n\n- [ ] [hard] `crates/gf2-algebra/README.md` exists with: motivation, basic usage example, perf headline numbers (post-S1), feature flags table, and link to the epic design doc.\n- [ ] [hard] Every public item in `gf2-algebra::packed::*`, `gf2-algebra::permanent::*`, and `gf2-algebra::gpu::*` (when `hip` feature on) has a doc-comment per CLAUDE.md standards.\n- [ ] [hard] `cargo test --doc -p gf2-algebra --all-features` passes (every `# Examples` block compiles and runs).\n- [ ] [hard] At least one runnable example under `crates/gf2-algebra/examples/permanent_demo.rs` reproduces the headline benchmark within $\\pm 5\\%$ (epic success criterion 12).\n- [ ] [hard] `cargo run -p gf2-algebra --example permanent_demo --release` succeeds.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "686ee1b5-6ac8-4547-9b66-d472b2753676",
+    "05250df5-495a-462e-bd04-aacd6bfb4505"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "epic:gf2-algebra-permanent",
+    "component:gf2-algebra"
+  ],
+  "created_at": "2026-05-09T09:48:59.148834418+00:00",
+  "updated_at": "2026-05-09T09:50:18.938390936+00:00"
+}

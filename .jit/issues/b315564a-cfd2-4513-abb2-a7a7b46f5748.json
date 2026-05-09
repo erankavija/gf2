@@ -1,0 +1,26 @@
+{
+  "id": "b315564a-cfd2-4513-abb2-a7a7b46f5748",
+  "title": "Criterion benchmark suite skeleton for permanent",
+  "description": "Add a criterion benchmark suite under `crates/gf2-algebra/benches/permanent.rs` that exercises `permanent_mod3_reference` (T8) and `permanent_bipedal3` (T9) at a defined size sweep, with deterministic seeded inputs.\n\n## Background\n\nCriterion benches are the SSOT for the perf claims. This issue lands the skeleton (size sweep, seeded RNG, Criterion group structure) so that S1 and S6 can extend the existing harness rather than redefine it. The bench targets `permanent_mod3_reference` and `permanent_bipedal3` initially; later issues add SIMD (T12), parallel (T15), F_5 (T18), F_7 (T20) groups.\n\nDefault bench sweep $n \\in \\{8, 12, 16, 20, 24, 28, 32, 36\\}$ — 36 is the headline S1 size; smaller sizes give scaling slope. A seeded `StdRng` ensures reproducibility across runs.\n\n## Success Criteria\n\n- [ ] [hard] `crates/gf2-algebra/benches/permanent.rs` exists; `cargo bench -p gf2-algebra` runs end-to-end and produces criterion JSONs under `target/criterion/`.\n- [ ] [hard] Two benchmark groups exist: `permanent_mod3_reference` and `permanent_bipedal3`, both swept across $n \\in \\{8, 12, 16, 20, 24, 28, 32, 36\\}$.\n- [ ] [hard] Inputs are generated from a fixed seeded `StdRng` so consecutive runs on the same hardware produce reproducible numbers.\n- [ ] [hard] Benchmark file uses `Criterion::default().sample_size(...)` tuned so each cell completes in under 60 s on the dev host.\n- [ ] [hard] `cargo bench -p gf2-algebra --no-run` succeeds in CI.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "b0857ae9-9090-464e-9d00-1e6f4a67c8c4",
+    "632d92ad-bfcc-4e95-9df5-471c15b9f788"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "epic:gf2-algebra-permanent",
+    "component:gf2-algebra"
+  ],
+  "created_at": "2026-05-09T09:43:50.236523308+00:00",
+  "updated_at": "2026-05-09T09:49:33.837857663+00:00"
+}

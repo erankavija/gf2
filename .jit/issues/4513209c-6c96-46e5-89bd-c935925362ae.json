@@ -1,0 +1,25 @@
+{
+  "id": "4513209c-6c96-46e5-89bd-c935925362ae",
+  "title": "Parallel scaling 1..N cores at 0.85x linear at n greater equal 28",
+  "description": "Measure parallel scaling of `permanent_bipedal3_parallel` (T15) on the dev host across rayon thread counts 1..N (N = physical core count); scaling factor $\\ge 0.85\\times$ per physical core for $n \\ge 28$.\n\n## Background\n\nCLAUDE.md success criterion 5 / epic success criterion 5: parallel scaling is $\\ge 0.85\\times$ per physical core up to the host's physical core count, for $n \\ge 28$ (the regime where work-per-subset overcomes scheduler overhead). The dev host is AMD Ryzen 9 5900X with 12 physical cores.\n\nThis sim sweeps thread counts $T \\in \\{1, 2, 4, 8, 12\\}$ at $n \\in \\{28, 32, 36\\}$ and reports speedup ratios.\n\n## Success Criteria\n\n- [ ] [hard] CSV at `dev/benchmarks/gf2_algebra_permanent/s2_parallel_scaling-YYYY-MM-DD.csv` records mean wall-clock vs thread count for $n \\in \\{28, 32, 36\\}$ on the dev host.\n- [ ] [hard] For $n \\in \\{28, 32, 36\\}$ and $T \\in \\{2, 4, 8, 12\\}$: scaling factor $\\frac{T_1}{T \\cdot T_T} \\ge 0.85$ (within 95% CI).\n- [ ] [hard] Hardware fingerprint, rayon thread pool config, and RNG seed are recorded.\n- [ ] [hard] Writeup at `dev/plans/s2_parallel_scaling.md` exists, attached via `jit doc add`.\n- [ ] [hard] Determinism: output value across thread counts is bit-identical (same RNG seed).",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "05250df5-495a-462e-bd04-aacd6bfb4505"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:simulation",
+    "epic:gf2-algebra-permanent",
+    "component:gf2-algebra"
+  ],
+  "created_at": "2026-05-09T09:45:24.252299956+00:00",
+  "updated_at": "2026-05-09T09:49:44.254279813+00:00"
+}

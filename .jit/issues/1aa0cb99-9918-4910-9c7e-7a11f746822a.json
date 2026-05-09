@@ -1,0 +1,26 @@
+{
+  "id": "1aa0cb99-9918-4910-9c7e-7a11f746822a",
+  "title": "Implement PackedField trait scalar reference impl over Fp&lt;3&gt;",
+  "description": "Implement the `PackedField<F>` trait surface fixed by D1b, plus a scalar reference implementation over `Fp<3>` that other W1 packed types can be cross-checked against.\n\n## Background\n\nThe trait surface (signatures, `LANES` const, splat / lane / fold_mul placement, alternative-zero canonicalisation semantics) is locked in the D1b approval section. This issue lands those signatures into `gf2-algebra::packed`, plus a trivial scalar reference type `ScalarPackedFp3` whose implementation is one `Fp<3>` per lane (no packing); the reference type exists so T3's bipedal3 implementation has a known-good lane-by-lane cross-check via proptest.\n\nThe scalar reference impl is intentionally slow — it is the correctness oracle, not a perf path.\n\n## Success Criteria\n\n- [ ] [hard] `gf2-algebra::packed::PackedField` trait exists with the signatures fixed in D1b (LANES, splat, lane, with_lane, all_zero, add, sub, mul, neg).\n- [ ] [hard] `gf2-algebra::packed::scalar::ScalarPackedFp3` implements `PackedField<Fp<3>>` via one `Fp<3>` per lane.\n- [ ] [hard] Unit tests cover `add`, `sub`, `mul`, `neg`, lane round-trip, splat, with_lane, all_zero on lane counts of 1, 16, 63, 64, 65 elements.\n- [ ] [hard] `cargo nextest run -p gf2-algebra --release --profile ci` passes.\n- [ ] [hard] No `#[ignore]` slow tests added in this issue; everything completes under the 5 s per-test limit.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "e6b1216a-045d-4bcd-b269-877dd94361a7"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "tests"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "epic:gf2-algebra-permanent",
+    "component:gf2-algebra"
+  ],
+  "created_at": "2026-05-09T09:42:15.068867710+00:00",
+  "updated_at": "2026-05-09T09:49:25.656531382+00:00"
+}

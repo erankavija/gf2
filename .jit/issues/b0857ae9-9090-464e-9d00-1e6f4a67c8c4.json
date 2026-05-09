@@ -1,0 +1,27 @@
+{
+  "id": "b0857ae9-9090-464e-9d00-1e6f4a67c8c4",
+  "title": "permanent_bipedal3 single-u64 fast path",
+  "description": "Implement `permanent_bipedal3` for $n \\le 64$: the single-`u64`-pair fast path that uses `Bipedal3` arithmetic, walks `gray_code_iter`, and updates a single `Bipedal3` column-sum word in-place per step.\n\n## Background\n\nFor $n \\le 64$, the column-sum vector fits in a single `Bipedal3` (one `u64` pair). Each Gray-code step is then a single `Bipedal3::add` or `Bipedal3::sub` against the toggled column (also a single `Bipedal3`). The reduction at each step is `Bipedal3::fold_mul` (inherent on the value, paper Theorem 2.1).\n\nThis is the headline single-thread fast path. SIMD batching across multiple matrices (T12) and multi-word streaming for $n > 64$ (T14) extend this baseline; both consume `permanent_bipedal3` as the inner kernel.\n\n## Success Criteria\n\n- [ ] [hard] `gf2-algebra::permanent::permanent_bipedal3(matrix: &Bipedal3Matrix) -> Fp<3>` exists, requires `matrix.cols() == matrix.rows()` and `matrix.cols() <= 64`.\n- [ ] [hard] Implementation walks `gray_code_iter(n)`, updates a single `Bipedal3` column-sum in-place via `add`/`sub`, and folds via the bipedal multiplication tree.\n- [ ] [hard] Output bit-identical to `permanent_ryser<Fp<3>>` (T7) on 1000 random matrices for each $n \\in \\{1, \\ldots, 16\\}$ and 100 random matrices for $n \\in \\{20, 24, 28, 32\\}$.\n- [ ] [hard] No `unsafe` (per the crate's `#![deny(unsafe_code)]`).\n- [ ] [hard] `cargo nextest run -p gf2-algebra --release --profile ci` passes; large-$n$ correctness tests complete under 5 s each (the 32 case at ~$2^{32}$ ops fits the budget on the dev host without `--ignored`).",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "ef7d0633-c932-49b4-bb12-6efc2664e2e4",
+    "94870b84-6772-49eb-849a-2d1a5256edc2"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "tests"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "epic:gf2-algebra-permanent",
+    "component:gf2-algebra"
+  ],
+  "created_at": "2026-05-09T09:43:37.190776575+00:00",
+  "updated_at": "2026-05-09T09:49:31.899127028+00:00"
+}

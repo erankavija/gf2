@@ -1,0 +1,26 @@
+{
+  "id": "686ee1b5-6ac8-4547-9b66-d472b2753676",
+  "title": "gf2-algebra SIMD dispatch wiring + scalar fallback test",
+  "description": "Wire `gf2-algebra::permanent::permanent_bipedal3` to dispatch into the SIMD bipedal3 kernel (T12) at runtime, with a scalar fallback when AVX2 is absent, and add a forced-fallback test path.\n\n## Background\n\nT12 lands the SIMD primitive in `gf2-kernels-simd`. This issue wires the `gf2-algebra` permanent path to consume it: at runtime, `permanent_bipedal3` checks whether the SIMD backend is available (via the project's existing `OnceLock`-based detection) and dispatches accordingly. A `scalar_fallback` build flag forces the scalar path for testing on AVX2-capable hosts.\n\nThe crate-level `simd` feature controls compile-time inclusion of the kernel; runtime detection adds the per-CPU branch.\n\n## Success Criteria\n\n- [ ] [hard] `gf2-algebra::permanent::permanent_bipedal3` consumes the SIMD bipedal3 kernel when the `simd` feature is on AND AVX2 is detected at runtime.\n- [ ] [hard] Without the `simd` feature OR without AVX2, the function dispatches to the pure-Rust `permanent_bipedal3` (T9).\n- [ ] [hard] A test forces the scalar fallback path (e.g., via a `#[cfg(test)]` knob on the dispatcher) and verifies output equality between SIMD and scalar on 100 random matrices for $n \\in \\{8, 16, 24, 32\\}$.\n- [ ] [hard] No regression in the existing T9/T11 test suites; correctness unchanged.\n- [ ] [hard] `cargo nextest run -p gf2-algebra --release --profile ci` passes both with and without the `simd` feature.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "d181e95b-7b84-436e-8011-97f7c2e1976d"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "tests"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "epic:gf2-algebra-permanent",
+    "component:gf2-algebra"
+  ],
+  "created_at": "2026-05-09T09:44:39.016469744+00:00",
+  "updated_at": "2026-05-09T09:49:40.654983773+00:00"
+}

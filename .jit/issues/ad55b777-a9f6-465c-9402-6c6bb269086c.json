@@ -1,0 +1,25 @@
+{
+  "id": "ad55b777-a9f6-465c-9402-6c6bb269086c",
+  "title": "F_3 HIP device kernel",
+  "description": "Implement the F_3 HIP device kernel for `permanent_bipedal3` on gfx1030, exposed via the FFI shim from T22.\n\n## Background\n\nThe kernel is a HIP/ROCm implementation of the bipedal F_3 permanent for $n \\le 64$ matrices, suitable for batch-permanent workloads where many independent matrices are computed in parallel on-device. The single-matrix Ryser walk is inherently sequential at the subset level; the GPU win comes from batching across matrices.\n\nBlock / grid sizing: one matrix per HIP block; threads within a block cooperate on fold_mul reduction. Bipedal `add`/`sub`/`mul` map directly to wavefront-wide `__ballot`/AND/XOR primitives.\n\n## Success Criteria\n\n- [ ] [hard] `crates/gf2-kernels-hip/hip/permanent/permanent_bipedal3.hip` exists with the device kernel.\n- [ ] [hard] On gfx1030, the kernel produces `permanent_bipedal3` values bit-identical to the CPU reference on 100 random matrices for each $n \\in \\{16, 24, 32, 40\\}$.\n- [ ] [hard] Kernel signature accepts a batch of `M` matrices and outputs `M` permanents in a single launch.\n- [ ] [hard] Tests gated `#[cfg(feature = \"hip\")]` and `#[ignore = \"external: gfx1030 device required\"]` (per CLAUDE.md test-tier conventions).\n- [ ] [hard] `cargo build -p gf2-kernels-hip --release --features hip` succeeds.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "b62c86d8-8b46-4219-abdf-4b665243c4fa"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "epic:gf2-algebra-permanent",
+    "component:gf2-kernels-hip"
+  ],
+  "created_at": "2026-05-09T09:47:14.184922128+00:00",
+  "updated_at": "2026-05-09T09:49:58.380410435+00:00"
+}

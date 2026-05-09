@@ -1,0 +1,27 @@
+{
+  "id": "30e98ef1-09f1-47d0-91d2-82d0153671c3",
+  "title": "Lean F_5 and F_7 packed correctness",
+  "description": "Aspirational Lean4 proof of $\\mathbb{F}_5$ and $\\mathbb{F}_7$ packed arithmetic correctness against the canonical `Fp<5>` / `Fp<7>` fields, building on V1's bipedal F_3 pattern and the R1/R2 encoding decisions.\n\n## Background\n\nThis issue is `[aspirational]` because the F_5 / F_7 encodings (R1 / R2 outcomes) may use bit-sliced or LUT-based arithmetic that is harder to formalise than the F_3 bipedal formulas. V1 establishes the proof pattern; whether it transfers cleanly to F_5/F_7 depends on R1/R2's specific choices.\n\nA new proof sketch may be required before this issue is dispatched (per the verification-work conventions). If R1/R2's encodings are tractable, this issue lands the proofs; if not, the criterion is amended via the standard escalation path.\n\n## Success Criteria\n\n- [ ] [aspirational] `proofs/Gf2Algebra/Proofs/Packed5Correctness.lean` and `Packed7Correctness.lean` exist with the corresponding `add`/`sub`/`mul`/`neg` correctness theorems.\n- [ ] [aspirational] `cd proofs && lake build` succeeds with no `sorry` in either new file.\n- [ ] [aspirational] Proofs target Rust production code (not stubs).\n- [ ] [aspirational] `lake-build` gate passes.\n- [ ] [hard] If the encodings turn out infeasible to verify in the timeframe, the issue is amended with a written justification explaining why and is closed without sorrys (rather than left half-proved).",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "f05ffbe1-5590-44cc-8974-1b55a8b0b3b9",
+    "f10152f6-8a80-4626-b8df-d3f989df2a4b",
+    "6b3f6054-fc5a-4ba9-8636-115144283e6e"
+  ],
+  "gates_required": [
+    "lake-build",
+    "code-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "epic:gf2-algebra-permanent",
+    "component:proofs"
+  ],
+  "created_at": "2026-05-09T09:48:24.828210449+00:00",
+  "updated_at": "2026-05-09T09:50:09.149657436+00:00"
+}

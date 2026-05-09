@@ -1,0 +1,26 @@
+{
+  "id": "632d92ad-bfcc-4e95-9df5-471c15b9f788",
+  "title": "permanent_mod3_reference faithful Rust port of paper Julia",
+  "description": "Implement `permanent_mod3_reference` as a faithful line-by-line port of the paper's published Julia algorithm; this is the in-tree baseline against which the headline 50× speedup is measured.\n\n## Background\n\nThe reference paper publishes Julia source for `permanent_mod3` (Algorithm in §3 / Appendix A of arxiv:2407.20205v2). This issue ports it to Rust with no substantive algorithmic changes — only the minimum needed to compile in the project's `Fp<3>` field. The port is the in-tree perf baseline for criterion S1 (T9 must beat this by $\\ge 50\\times$ at $n=36$).\n\nThis is **not** the SIMD or bipedal-packed path (those are T9 and T12). It is the literal Rust counterpart to the published Julia, so the 50× claim has a defensible per-machine baseline that doesn't depend on Julia toolchain mood.\n\n## Success Criteria\n\n- [ ] [hard] `gf2-algebra::permanent::permanent_mod3_reference(matrix: &[Fp<3>], n: usize) -> Fp<3>` exists.\n- [ ] [hard] Implementation is a line-by-line port of the paper's Julia `permanent_mod3` listing, with comment markers calling out each port-section against the paper's pseudocode.\n- [ ] [hard] Output bit-identical to `permanent_ryser<Fp<3>>` (T7) on 1000 random matrices for each $n \\in \\{1, \\ldots, 12\\}$.\n- [ ] [hard] No SIMD, no rayon, no bipedal-packing; this is the unoptimised reference.\n- [ ] [hard] `cargo nextest run -p gf2-algebra --release --profile ci` passes.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "93e5a5e8-3ee6-43b8-9c93-41332f9626ae"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "tests"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "epic:gf2-algebra-permanent",
+    "component:gf2-algebra"
+  ],
+  "created_at": "2026-05-09T09:43:26.710471567+00:00",
+  "updated_at": "2026-05-09T09:49:32.672866660+00:00"
+}

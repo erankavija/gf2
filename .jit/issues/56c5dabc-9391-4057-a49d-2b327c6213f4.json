@@ -1,0 +1,27 @@
+{
+  "id": "56c5dabc-9391-4057-a49d-2b327c6213f4",
+  "title": "F_7 packed type plus ops per R2 outcome",
+  "description": "Implement the F_7 packed type chosen by R2 (`f10152f6`), with the per-op formulas from the R2 decision doc and proptest cross-checks against scalar `Fp<7>`.\n\n## Background\n\nR2's decision doc (`dev/plans/r2_f7_encoding_decision.md`) names the winning F_7 encoding and documents the bitwise op count. The R2 outcome chose a multiplication via LUT table approach (per the prompt's hint). This issue lands the packed type at `gf2-algebra::packed::packed7` with the implementation directly transliterating the formulas from the R2 doc.\n\nThe LUT table, if used, is a `static` const initialised at compile time so no `OnceLock` is involved (per Kani-friendliness from the lessons in `feedback_jit_doc_links.md` and the verification-work conventions).\n\n## Success Criteria\n\n- [ ] [hard] `gf2-algebra::packed::packed7::Packed7` exists with the encoding chosen by R2.\n- [ ] [hard] `Packed7` implements `PackedField<Fp<7>>` per the D1b trait surface.\n- [ ] [hard] `add`, `sub`, `mul`, `neg` use formulas (and LUT if applicable) from R2; the LUT is a `static` const, not `OnceLock`-initialised.\n- [ ] [hard] Proptest cross-checks all four ops against scalar `Fp<7>` per-lane on 1000 random pairs.\n- [ ] [hard] `Packed7Vec` companion exists with `mask_tail` invariant; word-boundary tests on the same set as Packed5Vec.\n- [ ] [hard] `cargo nextest run -p gf2-algebra --release --profile ci` passes.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "b17bec62-138a-4fa4-85a2-dfc60e329327",
+    "f10152f6-8a80-4626-b8df-d3f989df2a4b"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "tests"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "epic:gf2-algebra-permanent",
+    "component:gf2-algebra"
+  ],
+  "created_at": "2026-05-09T09:46:20.634533047+00:00",
+  "updated_at": "2026-05-09T09:49:50.532115489+00:00"
+}

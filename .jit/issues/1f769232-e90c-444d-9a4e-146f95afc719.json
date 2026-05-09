@@ -1,0 +1,27 @@
+{
+  "id": "1f769232-e90c-444d-9a4e-146f95afc719",
+  "title": "SIMD F_5 plus F_7 kernels in gf2-kernels-simd",
+  "description": "Instantiate the generic `BatchedBipedalLike` framework (T16) for F_5 and F_7 in `gf2-kernels-simd`, with proptest cross-checks against the scalar packed types.\n\n## Background\n\nOnce T16 (the generic framework) and T17/T19 (per-prime packed types and op formulas) are in place, the SIMD kernels are a small wiring task: define `BipedalLikeConfig` impls for F_5 and F_7, instantiate `BatchedBipedalLike` for each, expose lane-batch primitives that `gf2-algebra` dispatches to.\n\nSame `unsafe` and asm-artefact rules as T12.\n\n## Success Criteria\n\n- [ ] [hard] `gf2-kernels-simd::bipedal::packed5` and `gf2-kernels-simd::bipedal::packed7` modules exist with `BipedalLikeConfig` impls and AVX2 instantiations.\n- [ ] [hard] Lane-batch `add`, `sub`, `mul`, `neg` proptest-match scalar `Packed5`/`Packed7` ops on 1000 random inputs each.\n- [ ] [hard] Runtime AVX2 detection wires through; scalar fallback when absent.\n- [ ] [hard] `cargo nextest run -p gf2-kernels-simd --release --profile ci` passes.\n- [ ] [hard] `asm-artefact-present` gate passes for both kernels.\n- [ ] [aspirational] AVX-512 paths exist for both primes, gated behind `cfg(target_feature = \"avx512f\")`.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "6917eb85-d2f1-483c-8fd4-387fd565343e",
+    "56c5dabc-9391-4057-a49d-2b327c6213f4"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "asm-artefact-present"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "epic:gf2-algebra-permanent",
+    "component:gf2-kernels-simd"
+  ],
+  "created_at": "2026-05-09T09:46:32.458128880+00:00",
+  "updated_at": "2026-05-09T09:49:52.169130958+00:00"
+}

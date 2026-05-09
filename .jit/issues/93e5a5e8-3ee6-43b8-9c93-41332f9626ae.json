@@ -1,0 +1,26 @@
+{
+  "id": "93e5a5e8-3ee6-43b8-9c93-41332f9626ae",
+  "title": "Generic permanent_ryser over FiniteField",
+  "description": "Implement the generic `permanent_ryser<F: FiniteField>` over arbitrary `FiniteField`, using the shared `gray_code_iter`. This is the correctness oracle for every packed permanent kernel.\n\n## Background\n\nRyser's formula computes the permanent of an $n \\times n$ matrix $A$ over a field as\n\n$$\n\\operatorname{perm}(A) = (-1)^n \\sum_{S \\subseteq [n], S \\ne \\emptyset} (-1)^{|S|} \\prod_{i=1}^n \\sum_{j \\in S} a_{i,j}\n$$\n\nWalked in Gray-code subset order, the inner column-sum vector updates by a single column add/sub per step. This issue implements the generic version directly over the project's `FiniteField` trait, using `gray_code_iter` (T6). It serves as the correctness oracle for `permanent_mod3_reference` (T8), `permanent_bipedal3` (T9), `permanent_bipedal5` (T18), and `permanent_bipedal7` (T20).\n\nThe implementation is intentionally not specialised — clarity over speed. Performance lives in T9/T18/T20.\n\n## Success Criteria\n\n- [ ] [hard] `gf2-algebra::permanent::permanent_ryser<F: FiniteField>(matrix: &[F], n: usize) -> F` exists.\n- [ ] [hard] Implementation walks `gray_code_iter(n)` and updates a column-sum `Vec<F>` in-place; the inner loop uses one `F::add` or `F::sub` per Gray-code step plus one `fold` of `F::mul` over the column sum.\n- [ ] [hard] Correctness tested against direct $n!$-summation for $n \\in \\{1, 2, 3, 4, 5\\}$ over `Fp<3>`, `Fp<5>`, `Fp<7>` on 100 random matrices each.\n- [ ] [hard] Hand-checked test vectors: identity matrix permanent = 1; all-ones matrix permanent = $n!$ over the field.\n- [ ] [hard] `cargo nextest run -p gf2-algebra --release --profile ci` passes; bounded $n \\le 5$ keeps each test under 5 s.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "94870b84-6772-49eb-849a-2d1a5256edc2"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "tests"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "epic:gf2-algebra-permanent",
+    "component:gf2-algebra"
+  ],
+  "created_at": "2026-05-09T09:43:17.002437019+00:00",
+  "updated_at": "2026-05-09T09:49:31.148120663+00:00"
+}

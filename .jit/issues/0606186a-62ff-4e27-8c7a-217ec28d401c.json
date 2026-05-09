@@ -1,0 +1,25 @@
+{
+  "id": "0606186a-62ff-4e27-8c7a-217ec28d401c",
+  "title": "Lean proof — Ryser bounded n less equal 63 per D3 sketch",
+  "description": "Implement the Lean4 proof of Ryser's permanent formula correctness on the project's `FiniteField` trait, scoped to bounded $n \\le 63$, per the approved D3 proof sketch.\n\n## Background\n\nD3's approved proof sketch (`4aaa6e4d`) bounds $n \\le 63$ to fit within the single-`u64` subset enumeration regime; this avoids formalising arbitrary-arity sums (per the epic non-goal). The proof shows the in-tree `permanent_ryser<F>` matches the standard Ryser permanent definition, with the Gray-code walk preserving the running column-sum invariant.\n\nSame pipeline as V1; same verification-work conventions.\n\n## Success Criteria\n\n- [ ] [hard] `proofs/Gf2Algebra/Proofs/RyserBounded.lean` exists with the bounded-$n$ Ryser correctness theorem and the Gray-code-walk loop invariant.\n- [ ] [hard] `cd proofs && lake build` succeeds with no `sorry` in the new file.\n- [ ] [hard] The proof targets the Rust production `permanent_ryser` (T7) generic over `FiniteField`, not a copied stub.\n- [ ] [hard] Bound $n \\le 63$ is explicit in the theorem statement.\n- [ ] [hard] `scripts/verify-lean.sh` regenerates LLBC + Lean from current Rust successfully.\n- [ ] [hard] `lake-build` gate passes.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "8c902184-682c-4360-b6dc-aed09cf22c93"
+  ],
+  "gates_required": [
+    "lake-build",
+    "code-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "epic:gf2-algebra-permanent",
+    "component:proofs"
+  ],
+  "created_at": "2026-05-09T09:48:15.886764151+00:00",
+  "updated_at": "2026-05-09T09:50:08.007223009+00:00"
+}

@@ -1,0 +1,25 @@
+{
+  "id": "5c0505b2-c790-46ad-addd-f0d7e9086d55",
+  "title": "F_7 HIP device kernel",
+  "description": "Implement the F_7 HIP device kernel mirroring T23/T24, using the F_7 packed encoding chosen by R2.\n\n## Background\n\nSame shape as T23/T24. The F_7 mul-via-LUT (per R2's outcome) lives in `__constant__` device memory; the LUT initialiser is identical to the host-side static const.\n\n## Success Criteria\n\n- [ ] [hard] `crates/gf2-kernels-hip/hip/permanent/permanent_bipedal7.hip` exists with the device kernel.\n- [ ] [hard] On gfx1030, kernel output bit-identical to CPU `permanent_bipedal7` on 100 random matrices for $n \\in \\{8, 12\\}$.\n- [ ] [hard] LUT in `__constant__` memory is populated identically to the host static const (verified by a runtime checksum on the CPU/GPU pair).\n- [ ] [hard] Tests gated `#[cfg(feature = \"hip\")]` and `#[ignore = \"external: gfx1030 device required\"]`.\n- [ ] [hard] `cargo build -p gf2-kernels-hip --release --features hip` succeeds.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "b62c86d8-8b46-4219-abdf-4b665243c4fa"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "epic:gf2-algebra-permanent",
+    "component:gf2-kernels-hip"
+  ],
+  "created_at": "2026-05-09T09:47:22.088994039+00:00",
+  "updated_at": "2026-05-09T09:49:59.895411198+00:00"
+}

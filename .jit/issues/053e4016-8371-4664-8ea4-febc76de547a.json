@@ -1,0 +1,26 @@
+{
+  "id": "053e4016-8371-4664-8ea4-febc76de547a",
+  "title": "Bipedal3Vec over Vec&lt;u64&gt; pair with mask_tail invariant",
+  "description": "Implement `Bipedal3Vec` (variable-length packed $\\mathbb{F}_3$ vector backed by a pair of `Vec<u64>`) with the project's `mask_tail` invariant strictly enforced on every mutation.\n\n## Background\n\n`Bipedal3Vec` is the variable-length companion to `Bipedal3`. It stores a packed $\\mathbb{F}_3$ vector of length `len_lanes` as two `Vec<u64>` (mag and sgn) of length `ceil(len_lanes / 64)`, with padding bits beyond `len_lanes` in the last word kept zero on both vectors. This matches the project's foundational invariant from `gf2-core::bitvec` (CLAUDE.md §Key design invariants).\n\nPer D1b, `fold_mul` is inherent on `Bipedal3Vec` (encoding-specific reduction tree), not a trait method. This issue defines `fold_mul` as the first inherent method.\n\n## Success Criteria\n\n- [ ] [hard] `gf2-algebra::packed::bipedal3::Bipedal3Vec` exists with backing `Vec<u64>` pair and `len_lanes: usize`.\n- [ ] [hard] Every mutating operation calls `mask_tail()`; padding bits beyond `len_lanes` are always zero on both `mag` and `sgn`.\n- [ ] [hard] Element-wise `add`, `sub`, `mul`, `neg` implement `PackedFieldVec<Fp<3>>` and cross-check against per-lane `Bipedal3` ops via proptest.\n- [ ] [hard] Inherent `fold_mul` reduces all lanes to a single `Fp<3>` via the bipedal multiplication tree.\n- [ ] [hard] Word-boundary tests cover `len_lanes` $\\in$ {0, 1, 63, 64, 65, 127, 128, 129}.\n- [ ] [hard] `cargo nextest run -p gf2-algebra --release --profile ci` passes.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "46330802-6688-45dc-bdd4-920226c695f4"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "tests"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "epic:gf2-algebra-permanent",
+    "component:gf2-algebra"
+  ],
+  "created_at": "2026-05-09T09:42:40.609005017+00:00",
+  "updated_at": "2026-05-09T09:49:27.450037755+00:00"
+}

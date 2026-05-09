@@ -1,0 +1,26 @@
+{
+  "id": "c98ed603-2eb3-443b-9905-a6a7a5337168",
+  "title": "50x single-thread speedup vs reference at n=36",
+  "description": "Measure single-thread `permanent_bipedal3` (SIMD path, T13) against `permanent_mod3_reference` (T8) at $n=36$ on the dev host; the speedup must be $\\ge 50\\times$.\n\n## Background\n\nThis is the headline perf claim of the epic (CLAUDE.md success criterion 3 + the epic's success criterion 3). The in-tree reference (T8 — faithful Julia port) provides the per-machine baseline; the SIMD-dispatched bipedal3 path (T13) is the contender. The criterion is `[hard]` because a per-machine in-tree baseline exists (T8 measures itself on the same hardware that runs T13).\n\nThe aspirational comparison vs the paper's published Julia number on a Zen 4/5 host is `[aspirational]` because the paper's hardware is different and the Julia toolchain version drifts.\n\n## Success Criteria\n\n- [ ] [hard] Criterion benchmark in T10 includes `permanent_mod3_reference` and `permanent_bipedal3` (SIMD path) at $n=36$; both run end-to-end with the same seeded inputs.\n- [ ] [hard] Measured speedup $\\frac{T_{\\text{reference}}}{T_{\\text{bipedal3-simd}}} \\ge 50$ at $n=36$ on the dev host.\n- [ ] [hard] CSV at `dev/benchmarks/gf2_algebra_permanent/s1_speedup-YYYY-MM-DD.csv` records mean wall-clock and ratio at $n \\in \\{24, 28, 32, 36\\}$ for both implementations.\n- [ ] [hard] Hardware fingerprint and seed are recorded in the CSV header.\n- [ ] [hard] Writeup at `dev/plans/s1_speedup_results.md` exists, attached via `jit doc add`.\n- [ ] [aspirational] Same comparison vs the paper's published Julia number ($86.9\\times$ from a 4.20 GHz desktop) — comparable speedup at $n=36$ would mean $\\ge 50\\times$ vs a Zen 4/5 reference Julia run.\n- [ ] [hard] `criterion-1.5x` gate passes (the SIMD path is at least 1.5× faster than the previous baseline).",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "686ee1b5-6ac8-4547-9b66-d472b2753676"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "criterion-1.5x"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:simulation",
+    "epic:gf2-algebra-permanent",
+    "component:gf2-algebra"
+  ],
+  "created_at": "2026-05-09T09:45:15.047337692+00:00",
+  "updated_at": "2026-05-09T09:49:41.489592422+00:00"
+}
