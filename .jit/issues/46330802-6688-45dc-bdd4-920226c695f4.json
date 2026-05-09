@@ -2,7 +2,7 @@
   "id": "46330802-6688-45dc-bdd4-920226c695f4",
   "title": "Bipedal3 element with paper bitwise formulas + proptest tests",
   "description": "Implement `Bipedal3` (a single-`u64`-pair value packing 64 $\\mathbb{F}_3$ elements) with the paper's bitwise add / sub / mul / neg formulas and proptest cross-checks against the scalar reference.\n\n## Background\n\nTheorem 2.1 of the reference paper gives bitwise formulas for $\\mathbb{F}_3$ ops on the 4-state $(mag, sgn)$ representation: `mul = (m1 & m2, s1 ^ s2)` (2 ops); `add` and `sub` use 6 ops each with CSE. This issue lands a `Bipedal3` type at `gf2-algebra::packed::bipedal3` whose semantics match those formulas exactly, with proptest cross-checks against `ScalarPackedFp3` (T2) on every lane index.\n\nPer the D1b approval, `Eq` is canonical-decode equality so the alternative-zero codeword `(mag=0, sgn=1)` compares equal to canonical zero. `lane(i)` canonicalises; `with_lane` only ever writes the canonical encoding; `all_zero` is true for both alt-zero and canonical zero.\n\n## Success Criteria\n\n- [ ] [hard] `Bipedal3` packs exactly 64 $\\mathbb{F}_3$ elements into two `u64`s (mag and sgn) and implements `PackedField<Fp<3>>`.\n- [ ] [hard] `add`, `sub`, `mul`, `neg` use the bitwise formulas from the paper's Theorem 2.1; the implementation is a direct transliteration with CSE.\n- [ ] [hard] Proptest cross-checks `add`, `sub`, `mul`, `neg` against `ScalarPackedFp3` on 1000 random pairs; the alternative-zero codeword is included in the input distribution.\n- [ ] [hard] Lane semantics: `lane(i)` canonicalises the alt-zero codeword to `Fp<3>::ZERO`; `with_lane` writes only canonical encoding; `Eq` compares decoded values so alt-zero == canonical zero.\n- [ ] [hard] `cargo nextest run -p gf2-algebra --release --profile ci` passes.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:claude",
   "dependencies": [
@@ -14,20 +14,20 @@
     "tests"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-09T20:38:55.771985308Z"
-    },
     "tests": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-09T20:38:13.489209921Z"
+      "updated_at": "2026-05-09T20:48:31.872192062Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-09T20:49:16.020890573Z"
     },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-09T20:38:01.263458923Z"
+      "updated_at": "2026-05-09T20:48:20.043260998Z"
     }
   },
   "context": {},
@@ -38,5 +38,5 @@
     "component:gf2-algebra"
   ],
   "created_at": "2026-05-09T09:42:26.899884595+00:00",
-  "updated_at": "2026-05-09T20:43:56.306445712+00:00"
+  "updated_at": "2026-05-09T20:50:41.229486651+00:00"
 }
