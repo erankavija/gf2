@@ -1,0 +1,29 @@
+[package]
+name = "packed_field_stub"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "Standalone PackedField + Permanent trait-surface stub for JIT issue 9fe275d3 (D1b) — not part of the gf2 workspace"
+rust-version = "1.95"
+
+[lib]
+name = "packed_field_stub"
+path = "src/lib.rs"
+
+# Path-dep to the real gf2-core so the stub exercises the actual
+# `FiniteField` and `Fp<P>` types this epic will bound `PackedField<F>`
+# against. Default features are disabled to keep the dependency surface
+# small for a research stub; only what the trait demonstration needs.
+[dependencies]
+gf2-core = { path = "../../../crates/gf2-core", default-features = false }
+
+[dev-dependencies]
+proptest = "1"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+
+# Standalone research stub: deliberately not a workspace member.
+[workspace]
