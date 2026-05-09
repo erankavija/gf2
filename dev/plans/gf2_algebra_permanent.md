@@ -245,7 +245,7 @@ The element-type implementation is property-tested (`proptest`, 10k random pairs
 
 `Bipedal3Vec` $=$ pair of `Vec<u64>` with shared length, `mask_tail` invariant per CLAUDE.md §Key design invariants. Word-boundary tests at lengths $\{0, 1, 63, 64, 65, 127, 128, 129\}$.
 
-`Bipedal3Matrix` is **column-major**, with separate `mag` and `sgn` `Vec<u64>` buffers each of length `W * n` where `W = ceil(n / 64)` (column stride for SIMD alignment). This layout is finalised by R3 (`dev/plans/r3_multi_word_streaming.md` §2) so the column-walk in the Gray-code Ryser inner loop is contiguous in memory. `permanent_bipedal3` consumes a `Bipedal3Matrix` and produces an `Fp<3>` value.
+`Bipedal3Matrix` is **column-major**, stored as `Vec<Bipedal3Vec>` with one `Bipedal3Vec` per column (each `Bipedal3Vec` keeps its `mag` and `sgn` legs as separate contiguous `Vec<u64>` of length `W = ceil(rows / 64)`). The Gray-code Ryser inner loop reads `mat.column(flip)` once per step and the per-leg-contiguous storage within that column delivers the SIMD wide-load behaviour the kernel needs. The accessor surface is `column(j) -> &Bipedal3Vec`, `row(i) -> Bipedal3Vec` (gather-decode), plus `Bipedal3Vec::raw_mag()` / `raw_sgn()` for SIMD perf paths. This layout is finalised by R3 §2.1 (`dev/plans/r3_multi_word_streaming.md`, amended 2026-05-10 per T5 SSOT resolution). `permanent_bipedal3` consumes a `Bipedal3Matrix` and produces an `Fp<3>` value.
 
 ### 7.3 The Gray-code Ryser inner loop (paper algorithm)
 
