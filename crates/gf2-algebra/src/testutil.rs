@@ -23,10 +23,13 @@ use gf2_core::rng::Lcg;
 ///
 /// # Examples
 ///
-/// ```ignore
-/// // Test-only helper — usage example for crate-internal tests:
-/// // let mat = crate::testutil::random_matrix::<3>(4, 0xdead_beef);
-/// // assert_eq!(mat.len(), 16);
+/// ```
+/// use gf2_algebra::testutil::random_matrix;
+///
+/// let mat = random_matrix::<3>(4, 0xdead_beef);
+/// assert_eq!(mat.len(), 16);
+/// // Same seed reproduces bit-identical output.
+/// assert_eq!(mat, random_matrix::<3>(4, 0xdead_beef));
 /// ```
 ///
 /// # Complexity
@@ -50,12 +53,14 @@ pub fn random_matrix<const P: u64>(n: usize, seed: u64) -> Vec<Fp<P>> {
 ///
 /// # Examples
 ///
-/// ```ignore
-/// // Test-only helper — usage example for crate-internal tests:
-/// // let mut rng = gf2_core::rng::Lcg::new(0xfeed_face);
-/// // let m1 = crate::testutil::random_matrix_with_rng::<3>(&mut rng, 4);
-/// // let m2 = crate::testutil::random_matrix_with_rng::<3>(&mut rng, 4);
-/// // assert_ne!(m1, m2); // independent draws
+/// ```
+/// use gf2_algebra::testutil::random_matrix_with_rng;
+/// use gf2_core::rng::Lcg;
+///
+/// let mut rng = Lcg::new(0xfeed_face);
+/// let m1 = random_matrix_with_rng::<3>(&mut rng, 4);
+/// let m2 = random_matrix_with_rng::<3>(&mut rng, 4);
+/// assert_ne!(m1, m2); // independent draws from the same stream
 /// ```
 ///
 /// # Complexity
