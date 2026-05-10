@@ -191,6 +191,7 @@ pub fn permanent_ryser<F: FiniteField>(matrix: &[F], n: usize) -> F {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::testutil::random_matrix;
     use gf2_core::field::{ConstField, FiniteField};
     use gf2_core::gfp::Fp;
 
@@ -251,21 +252,9 @@ mod tests {
         total
     }
 
-    // -----------------------------------------------------------------------
-    // Deterministic pseudo-random matrix generator
-    // -----------------------------------------------------------------------
-
-    /// Generate a deterministic pseudo-random `n×n` matrix of `Fp<P>` elements.
-    ///
-    /// Uses the workspace SSOT RNG `gf2_core::rng::Lcg`. Seed → `Lcg::new(seed)`,
-    /// then `n*n` calls to `next_u64() % P` produce the matrix entries
-    /// row-major.
-    fn random_matrix<const P: u64>(n: usize, seed: u64) -> Vec<Fp<P>> {
-        let mut rng = gf2_core::rng::Lcg::new(seed);
-        (0..n * n)
-            .map(|_| Fp::<P>::new(rng.next_u64() % P))
-            .collect()
-    }
+    // Deterministic pseudo-random matrix generator lives in
+    // `crate::testutil::random_matrix` (SSOT for all permanent_* cross-check
+    // tests in this crate); imported above.
 
     // -----------------------------------------------------------------------
     // Unit tests

@@ -82,6 +82,9 @@ pub mod parallel;
 pub mod gpu;
 
 #[cfg(test)]
+pub(crate) mod testutil;
+
+#[cfg(test)]
 mod tests {
     //! W1-T1 skeleton smoke test. Exists only so
     //! `cargo nextest run -p gf2-algebra --profile ci` finds at least

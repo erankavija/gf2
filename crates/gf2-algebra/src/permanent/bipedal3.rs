@@ -176,21 +176,11 @@ mod tests {
     use crate::packed::Bipedal3Matrix;
     use crate::permanent::reference::permanent_mod3_reference;
     use crate::permanent::ryser::permanent_ryser;
+    use crate::testutil::random_matrix;
     use gf2_core::gfp::Fp;
-    use gf2_core::rng::Lcg;
 
-    // -----------------------------------------------------------------------
-    // Deterministic pseudo-random matrix generator using gf2_core::rng::Lcg
-    // -----------------------------------------------------------------------
-
-    /// Generate a deterministic pseudo-random `n×n` matrix of `Fp<3>` elements
-    /// as a flat row-major Vec, using `gf2_core::rng::Lcg` (Knuth MMIX constants).
-    fn random_matrix_fp3(n: usize, seed: u64) -> Vec<Fp<3>> {
-        let mut rng = Lcg::new(seed);
-        (0..n * n)
-            .map(|_| Fp::<3>::new(rng.next_u64() % 3))
-            .collect()
-    }
+    // Deterministic pseudo-random matrix generation lives in
+    // `crate::testutil::random_matrix` — the workspace SSOT for these tests.
 
     /// Wrap a row-major `Vec<Fp<3>>` into a `Bipedal3Matrix`.
     fn to_bipedal3_matrix(row_major: &[Fp<3>], n: usize) -> Bipedal3Matrix {
@@ -311,7 +301,7 @@ mod tests {
                     0xb085_7ae9_0000_0000_u64.wrapping_add(n as u64);
                 for trial in 0u64..1000 {
                     let seed = seed_base.wrapping_add(trial.wrapping_mul(1_000_003));
-                    let row_major = random_matrix_fp3(n, seed);
+                    let row_major = random_matrix::<3>(n, seed);
                     let mat = to_bipedal3_matrix(&row_major, n);
                     let expected = permanent_ryser::<Fp<3>>(&row_major, n);
                     let actual = permanent_bipedal3(&mat);
@@ -331,7 +321,7 @@ mod tests {
                     0xb085_7ae9_0000_0000_u64.wrapping_add(n as u64);
                 for trial in 0u64..1000 {
                     let seed = seed_base.wrapping_add(trial.wrapping_mul(1_000_003));
-                    let row_major = random_matrix_fp3(n, seed);
+                    let row_major = random_matrix::<3>(n, seed);
                     let mat = to_bipedal3_matrix(&row_major, n);
                     let expected = permanent_ryser::<Fp<3>>(&row_major, n);
                     let actual = permanent_bipedal3(&mat);
@@ -390,7 +380,7 @@ mod tests {
                     .wrapping_add($seed_salt);
                 for trial in 0u64..$trials {
                     let seed = seed_base.wrapping_add(trial.wrapping_mul(1_000_003));
-                    let row_major = random_matrix_fp3(n, seed);
+                    let row_major = random_matrix::<3>(n, seed);
                     let mat = to_bipedal3_matrix(&row_major, n);
                     // Use permanent_mod3_reference as oracle: ~10× faster than
                     // generic Ryser at large n. Correctness of the reference vs
