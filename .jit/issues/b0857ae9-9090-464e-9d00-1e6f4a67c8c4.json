@@ -2,7 +2,7 @@
   "id": "b0857ae9-9090-464e-9d00-1e6f4a67c8c4",
   "title": "permanent_bipedal3 single-u64 fast path",
   "description": "Implement `permanent_bipedal3` for $n \\le 64$: the single-`u64`-pair fast path that uses `Bipedal3` arithmetic, walks `gray_code_iter`, and updates a single `Bipedal3` column-sum word in-place per step.\n\n## Background\n\nFor $n \\le 64$, the column-sum vector fits in a single `Bipedal3` (one `u64` pair). Each Gray-code step is then a single `Bipedal3::add` or `Bipedal3::sub` against the toggled column (also a single `Bipedal3`). The reduction at each step is `Bipedal3::fold_mul` (inherent on the value, paper Theorem 2.1).\n\nThis is the headline single-thread fast path. SIMD batching across multiple matrices (T12) and multi-word streaming for $n > 64$ (T14) extend this baseline; both consume `permanent_bipedal3` as the inner kernel.\n\n## Success Criteria\n\n- [ ] [hard] `gf2-algebra::permanent::permanent_bipedal3(matrix: &Bipedal3Matrix) -> Fp<3>` exists, requires `matrix.cols() == matrix.rows()` and `matrix.cols() <= 64`.\n- [ ] [hard] Implementation walks `gray_code_iter(n)`, updates a single `Bipedal3` column-sum in-place via `add`/`sub`, and folds via the bipedal multiplication tree.\n- [ ] [hard] Output bit-identical to `permanent_ryser<Fp<3>>` (T7) on 1000 random matrices for each $n \\in \\{1, \\ldots, 16\\}$ and 100 random matrices for $n \\in \\{20, 24, 28, 32\\}$.\n- [ ] [hard] No `unsafe` (per the crate's `#![deny(unsafe_code)]`).\n- [ ] [hard] `cargo nextest run -p gf2-algebra --release --profile ci` passes; large-$n$ correctness tests complete under 5 s each (the 32 case at ~$2^{32}$ ops fits the budget on the dev host without `--ignored`).\n\n## Amendment 2026-05-10 (user-approved, Option A — trim large-n cross-check)\n\nCriterion 3 originally required cross-checks at `n ∈ {20, 24, 28, 32}` × 100 matrices each. Computational reality (measured during T9 review on the dev host, AMD Ryzen 9 5900X):\n\n| n  | per-matrix wall-clock vs `permanent_ryser` | 100-matrix budget |\n|----|---------------------------------------------|--------------------|\n| 20 | ~5 s (slow tier OK)                         | ~500 s             |\n| 24 | ~80 s (slow tier OK)                        | ~8000 s (split needed) |\n| 28 | ~1300 s                                     | infeasible         |\n| 32 | ~2 hr                                       | ~8 days, infeasible |\n\nBoth `permanent_ryser` and `permanent_bipedal3` are O(n · 2^n); the bipedal path is O(50×) faster on the inner constant but n=32 still costs ~2 hours per matrix because of the 4.3·10^9 Gray-walk iterations. The 5 s/test default-tier and 120 s/test slow-tier limits cannot be met for n ≥ 28.\n\n**Amended criterion 3:** Output bit-identical to `permanent_ryser<Fp<3>>` (T7) on 1000 random matrices for each $n ∈ \\{1, ..., 16\\}$ (default tier where each `n` fits the 5 s budget; slow tier for the rest) **and** 100 random matrices for $n ∈ \\{20, 24\\}$ (slow tier, `#[ignore = \"sim: ...\"]`). The original `n ∈ \\{28, 32\\}` cross-check at 100 matrices is dropped as computationally infeasible against any in-process Rust oracle on commodity hardware. Spot correctness at `n ∈ \\{28, 32\\}` is delegated to the SIMD batch path (T12) and the multi-word streaming kernel (T14), which use independent inner-loop strategies and therefore provide an algorithmic cross-check at those sizes once they land.\n\n**Amended criterion 5:** the large-n cross-check tests live in the slow tier (`#[ignore = \"sim: ...\"]`); `cargo nextest run -p gf2-algebra --release --profile ci` (default tier) passes the n=1..16 default-tier subset under the 5 s/test limit. The original criterion-5 claim that \"the 32 case at ~2^32 ops fits the budget on the dev host without --ignored\" is contradicted by measurement and amended out.\n\nReason: epic criterion 2 (parent `ae82bd73` description) is amended in tandem with the same wording.\nApproved by user 2026-05-10 (epic ae82bd73 session 3, AskUserQuestion option A).\n\n## Amendment 2026-05-11 (user-approved, Option A — n bound + oracle for large-n cross-check)\n\nTwo surgical clarifications to align the criteria with `gray_code_iter`'s precondition and the slow-tier per-test budget. Both items were surfaced by the T9 rework-cycle-1 code review on 2026-05-10.\n\n**Amended criterion 1:** `gf2-algebra::permanent::permanent_bipedal3(matrix: &Bipedal3Matrix) -> Fp<3>` exists, requires `matrix.cols() == matrix.rows()` and `matrix.cols() <= 63` (was `<= 64`). Reason: `gray_code_iter(n)` walks $2^n - 1$ transitions and is bounded by `1u64 << n` for the toggled-bit lookup; `1u64 << 64` is undefined behaviour in Rust. The single-word fast path is by definition bounded by what fits in a single `u64` of column-sum, and `n = 64` would require either a `u128` walk (out of scope; that's the multi-word streaming kernel T14's job) or a special-cased branch that does not compose with `gray_code_iter`. No known consumer demands `n = 64`; the SIMD batch path (T12) and multi-word kernel (T14) cover larger sizes.\n\n**Amended criterion 3 (oracle for large-$n$ cross-check):** For $n \\in \\{1, \\ldots, 16\\}$ the oracle remains `permanent_ryser<Fp<3>>` (T7). For $n \\in \\{20, 24\\}$ the cross-check may use `permanent_mod3_reference` (T8) as the oracle, via transitivity through T8's own bit-identical cross-check vs `permanent_ryser<Fp<3>>` at $n \\le 12$ (12000 matrices, T8 criterion). T8 is the paper-faithful Julia port; it is `O(50\\times)` slower than the bipedal fast path but `O(10\\times)` faster than the generic `permanent_ryser<Fp<3>>` (which pays a trait-call cost per Gray step). Wall-clock at $n = 24$: `permanent_ryser` ~80 s/matrix (8000 s for 100 matrices, exceeds slow-tier per-test budget) vs `permanent_mod3_reference` ~8 s/matrix (~800 s, fits with per-$n$ test split). The transitivity argument: T8 ↔ T7 holds by T8 criterion's 12000-matrix bit-identical cross-check; T9 ↔ T8 at $n \\in \\{20, 24\\}$ then implies T9 ↔ T7 at those sizes.\n\nApproved by user 2026-05-11 (epic ae82bd73 session 4, AskUserQuestion option A on both questions).",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:claude",
   "dependencies": [
@@ -15,15 +15,15 @@
     "tests"
   ],
   "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-10T21:33:26.784849484Z"
+    },
     "tests": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-05-10T21:11:20.050845982Z"
-    },
-    "code-review": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-10T21:12:10.078680425Z"
     },
     "cargo-ci": {
       "status": "passed",
@@ -39,5 +39,5 @@
     "component:gf2-algebra"
   ],
   "created_at": "2026-05-09T09:43:37.190776575+00:00",
-  "updated_at": "2026-05-10T21:15:22.215066836+00:00"
+  "updated_at": "2026-05-10T21:37:57.051639488+00:00"
 }

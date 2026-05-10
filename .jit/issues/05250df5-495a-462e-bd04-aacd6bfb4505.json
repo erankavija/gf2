@@ -2,7 +2,7 @@
   "id": "05250df5-495a-462e-bd04-aacd6bfb4505",
   "title": "Rayon parallel permanent_bipedal3 with chunk-size sweep",
   "description": "Add a rayon parallel implementation of `permanent_bipedal3` that splits the Gray-code subset enumeration across worker threads, with a documented chunk-size sweep on the dev host.\n\n## Background\n\nRyser's outer loop walks $2^n - 1$ subsets. Parallelising splits the subset range across rayon workers; each worker maintains its own column-sum and combines partial permanents at the end. Chunk-size affects cache locality and load balance: too small wastes scheduler overhead, too large under-utilises workers near the tail.\n\nThis issue lands `permanent_bipedal3_parallel` behind the `parallel` Cargo feature (default on per D1c) and documents the chunk-size choice via a microbench in `dev/benchmarks/gf2_algebra_permanent/parallel_chunk_sweep-YYYY-MM-DD.csv`.\n\nPer CLAUDE.md, the Gray-code split must be deterministic — same seed and same $n$ produce identical output regardless of thread schedule.\n\n## Success Criteria\n\n- [ ] [hard] `gf2-algebra::permanent::permanent_bipedal3_parallel(matrix: &Bipedal3Matrix) -> Fp<3>` exists behind the `parallel` feature.\n- [ ] [hard] Output bit-identical to `permanent_bipedal3` (T9) on 100 random matrices for each $n \\in \\{20, 24, 28, 32\\}$, regardless of thread count.\n- [ ] [hard] CSV at `dev/benchmarks/gf2_algebra_permanent/parallel_chunk_sweep-YYYY-MM-DD.csv` records throughput vs chunk-size on $n=28$ for chunk sizes spanning 4 orders of magnitude; the chosen default is justified in a comment.\n- [ ] [hard] Determinism test: same RNG seed and same $n=24$ produce the same `Fp<3>` output across 10 repeated runs with rayon thread count varied 1, 2, 4, 8, 12.\n- [ ] [hard] `cargo nextest run -p gf2-algebra --release --profile ci --features parallel` passes.",
-  "state": "backlog",
+  "state": "ready",
   "priority": "normal",
   "assignee": null,
   "dependencies": [
@@ -22,5 +22,5 @@
     "component:gf2-algebra"
   ],
   "created_at": "2026-05-09T09:45:01.971014471+00:00",
-  "updated_at": "2026-05-09T09:49:43.787709850+00:00"
+  "updated_at": "2026-05-10T21:37:57.097562171+00:00"
 }
