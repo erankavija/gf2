@@ -3,10 +3,12 @@
   "epic_short_id": "ae82bd73",
   "epic_title": "Fast matrix permanents over F_3 / F_5 / F_7 via packed bipedal arithmetic",
   "current_wave": 2,
-  "current_subwave": "2c (T9 in_progress with open findings; T10/T11/Sa not yet dispatched)",
-  "current_status": "W1 fully closed; W2 sub-waves 2a (T7) + 2b (T8) closed; T9 in_progress with 3 unresolved code-review findings (n=63 vs 64 contract, SSOT in inline arithmetic, cross-check oracle); needs user input on 2 criterion amendments",
+  "current_subwave": "2c (T10 + T11 in_progress: code-review re-run pending after SSOT test-support refactor)",
+  "current_status": "W1 fully closed (7 issues); W2 sub-waves 2a + 2b closed (T7, T8); 2c T9 closed; 2c T10 + T11 awaiting code-review re-run after lead-direct test-support feature refactor + criterion-3 RNG amendment",
   "started_at": "2026-05-09T01:30:00+03:00",
-  "session_count": 3,
+  "session_count": 4,
+  "session_4_open_time": "2026-05-10T22:30:00+03:00",
+  "session_4_close_time": "2026-05-11T01:30:00+03:00",
   "session_3_close_time": "2026-05-10T00:30:00+03:00",
   "session_2_close_time": "2026-05-09T17:30:00+03:00",
   "rework_counts": {
@@ -15,53 +17,52 @@
     "ef7d0633": 0,
     "93e5a5e8": 2,
     "632d92ad": 1,
-    "b0857ae9": 1
+    "b0857ae9": 2,
+    "b315564a": 1,
+    "1cd3eb09": 1
   },
   "issue_count": {
     "epic": 1,
-    "done_in_epic_subgraph": 23,
-    "in_progress": 1,
-    "ready": 4,
-    "backlog": 25,
-    "total_with_epic": 53
+    "done_in_epic_subgraph": 24,
+    "in_progress": 2,
+    "ready": 0,
+    "backlog": 24,
+    "total_with_epic": 51
   },
   "wave_status": {
     "W0": {
       "name": "Decisions and sketches",
       "status": "CLOSED",
-      "issues_done": 11,
-      "completion_date": "2026-05-09 (session 1+2)"
+      "issues_done": 11
     },
     "W1": {
       "name": "Foundation",
       "status": "CLOSED",
-      "issues_done": 7,
-      "completion_date": "2026-05-10 (session 3)",
-      "list": ["e6b1216a (T1)", "1aa0cb99 (T2)", "94870b84 (T6)", "b17bec62 (T16)", "46330802 (T3)", "053e4016 (T4)", "ef7d0633 (T5)"]
+      "issues_done": 7
     },
     "W2": {
       "name": "Reference implementations + reproduction harness",
-      "status": "PARTIAL — sub-waves 2a (T7) + 2b (T8) closed; 2c in flight (T9 in_progress)",
-      "issues_done": 2,
+      "status": "PARTIAL — sub-waves 2a (T7), 2b (T8), 2c first stage (T9) closed; T10 + T11 in flight (re-review pending); Sa not yet dispatched",
+      "issues_done": 3,
       "issues_total": 6,
       "list": [
-        "93e5a5e8 (T7) DONE 2026-05-10 — 2 reworks + 1 lead-direct (n<=63 assert)",
-        "632d92ad (T8) DONE 2026-05-10 — 1 rework + 1 lead-direct (T7 LCG SSOT refactor)",
-        "b0857ae9 (T9) IN_PROGRESS — 1 rework done, 3 findings unresolved",
-        "b315564a (T10 criterion bench) BACKLOG (deps T9)",
-        "1cd3eb09 (T11 test-vectors) BACKLOG (deps T7, T9)",
+        "93e5a5e8 (T7) DONE 2026-05-10",
+        "632d92ad (T8) DONE 2026-05-10",
+        "b0857ae9 (T9) DONE 2026-05-11 — 2 reworks + 2 lead-direct (n<=63 + Lcg SSOT refactor + halving-fold SSOT)",
+        "b315564a (T10) IN_PROGRESS — code-review re-run pending after test-support refactor + n=24 drop + criterion-3 RNG amendment",
+        "1cd3eb09 (T11) IN_PROGRESS — code-review re-run pending after test-support refactor (same lead-direct as T10)",
         "96dcbec4 (Sa paper Table 2) BACKLOG (deps T9, T10)"
       ]
     },
     "W3": {
       "name": "SIMD + multi-word + parallel",
-      "status": "PARTIAL — T16 (BatchedBipedalLike framework) closed early as W4-prereq",
+      "status": "PARTIAL — T16 (BatchedBipedalLike) closed early",
       "issues_done": 1,
       "issues_total": 7
     },
     "W4": {
       "name": "F_5 / F_7",
-      "status": "PARTIAL — T16 framework closed (was W3 originally)",
+      "status": "PARTIAL — T16 framework closed",
       "issues_done": 1,
       "issues_total": 7
     },
@@ -81,43 +82,46 @@
       "issues_total": 5
     }
   },
-  "session_3_summary": {
+  "session_4_summary": {
     "issues_closed": [
-      "46330802 (T3) — 2 reworks (sub canonical paper §2.2 form)",
-      "053e4016 (T4) — 1 rework (neg_assign + per-chunk cross-check)",
-      "ef7d0633 (T5) — 0 reworks + 1 lead-direct (R3 + epic §7.2 SSOT amendment)",
-      "93e5a5e8 (T7) — 2 reworks + 1 lead-direct (FiniteField generic + n<=63 assert)",
-      "632d92ad (T8) — 1 rework + 1 lead-direct (paper port markers + Lcg SSOT in T7)"
+      "b0857ae9 (T9) — 1 rework cycle (Sonnet, mechanical SSOT refactor: Bipedal3 add/sub/fold_mul_first_n) + 1 lead-direct (random_matrix helper -> crate::testutil SSOT)"
+    ],
+    "issues_in_flight": [
+      "b315564a (T10) — code-review re-run pending after lead-direct test-support refactor + n=24 drop + criterion-3 RNG amendment; first review FAIL on 3 findings (Lcg vs StdRng contract mismatch, ref n=24 over 60s/cell budget, SSOT duplication of random_matrix_fp3)",
+      "1cd3eb09 (T11) — code-review re-run pending after same test-support refactor; first review FAIL on 1 finding (SSOT duplication of random_matrix_fp3); criteria otherwise PASS"
     ],
     "user_escalations_resolved": [
-      "T5 SSOT contract conflict (Vec<Bipedal3Vec> vs flat mag/sgn) — Option A: amend R3 §2.1 + epic §7.2",
-      "T9/epic large-n cross-check infeasibility (n in {28,32} ~8 days/100 matrices) — Option A: trim to n in {20, 24}"
+      "T9 criterion 1 amendment: matrix.cols() <= 63 (was <= 64) — gray_code_iter precondition",
+      "T9 + epic criterion 3 amendment: permit permanent_mod3_reference oracle for n in {20, 24} via transitivity through T8",
+      "T11 criterion 3 amendment: default-tier n in {4, 8, 12}, slow-tier n=16 (with #[ignore = sim:])",
+      "T11 criterion 4 amendment: large-n oracle = permanent_mod3_reference (mirror T9 amendment)",
+      "T11 criterion 6 amendment: default-tier 5s/test only; slow-tier under --profile slow",
+      "T10 criterion 2 amendment: ref n=8..24 (later trimmed to n=8..20), bipedal n=8..36",
+      "T10 criterion 3 amendment: StdRng -> gf2_core::rng::Lcg via gf2_algebra::testutil (workspace SSOT; reasons: committed-seed reproducibility, Charon/Aeneas extractability, dep minimalism, statistical adequacy for P in {3, 5, 7})"
     ],
     "lead_direct_fixes": [
-      "T5: R3 §2.1.1 + epic §7.2 amendment (Vec<Bipedal3Vec> SSOT)",
-      "T7: 12-line n <= 63 assert + # Panics doc bullet + #[should_panic] regression test",
-      "T7 LCG SSOT: refactor random_matrix helper to use gf2_core::rng::Lcg (surfaced by T8 reviewer)"
+      "T9 finding 2 (post-rework-2): random_matrix helpers consolidated into crate::testutil (commit fcbaa003)",
+      "T10 + T11 SSOT: lift testutil from #[cfg(test)] pub(crate) -> pub mod testutil under #[cfg(any(test, feature = test-support))]; add test-support feature + self-dev-dep; delete duplicated random_matrix_fp3 from benches/permanent.rs and tests/permanent_vectors.rs; drop n=24 from T10 reference sweep"
     ],
-    "memories_written": [
-      "feedback_sonnet_for_planned_dispatches",
-      "feedback_quote_ssot_formulas_verbatim",
-      "feedback_quote_jit_criteria_verbatim"
+    "memories_potentially_to_write": [
+      "When the project has a `test-support`-style feature pattern (or similar workspace convention), check it BEFORE dispatching a worker so the worker doesn't reintroduce known-bad inline helpers. Memory candidate: `feedback_check_workspace_test_support_pattern`."
     ],
     "key_lessons": [
-      "Quote JIT criteria verbatim — 2x burned cycles (T7 ConstField vs FiniteField, T8 100 vs 1000 matrices) due to paraphrasing.",
-      "Quote SSOT formulas verbatim — T3-rw1 burned a cycle on bit-identical-but-shape-different sub formula.",
-      "Pre-flight feasibility check on `[hard]` criteria with computational thresholds — T9/epic n in {28,32} infeasibility should have been caught at breakdown, not mid-flight.",
-      "Reviewer cross-issue SSOT scans can flag prior-issue debt — T8's reviewer flagged T7's old test helper. Audit prior subsystem code at close-out.",
-      "Lead-direct mechanical fixes appropriate for narrowly-scoped Tier 2.5/2.75 corrections (n<=63 assert, doc amendments, trivial refactor surfaced by reviewer)."
+      "Reviewers enforce the LITERAL text of `[hard]` criteria — paraphrased dispatch prompts override the criterion; if the worker complies with the paraphrase, the reviewer will fail it. Memory `feedback_quote_jit_criteria_verbatim` already covers this but the StdRng vs Lcg case shows it again.",
+      "Lead's pre-dispatch criterion audit must check the existing workspace conventions (gf2-core's `test-support` feature) — would have caught the SSOT duplication BEFORE T10 + T11 were dispatched.",
+      "Lead-direct fixes are still cheap when the rework is mechanical and the dispatched workers don't have memory of the cross-issue fix. Don't redispatch for cosmetic / structural refactors that are 50 LOC and trivially verifiable."
     ]
   },
   "next_session_priorities": [
-    "1. Open T9 with AskUserQuestion bundling: (a) amend T9 criterion 1 to mat.cols() <= 63; (b) amend T9 criterion 3 to permit permanent_mod3_reference as slow-tier oracle for n in {20, 24}.",
-    "2. After amendments, dispatch T9 rework cycle 2 addressing all three findings (n bound, SSOT in halving fold, oracle change). LAST cycle before MAX_REWORK_ATTEMPTS=2 escalation.",
-    "3. After T9 closes, dispatch T10 + T11 + Sa for W2 sub-wave 2c.",
-    "4. After W2 fully closed, plan W3 sub-wave 3a (T12 SIMD bipedal3 kernel + T13 SIMD dispatch + T14 multi-word streaming + T15 rayon parallel)."
+    "1. Wait for T10 code-review re-run verdict (currently in cargo bench --bench permanent loop; ~10 min ETA).",
+    "2. Run T11 code-review re-run (same lead-direct SSOT fix; verdict likely PASS, ~3-5 min).",
+    "3. Close T10 + T11 to done.",
+    "4. Dispatch Sa (96dcbec4 paper Table 2 repro). Single Sonnet worker. Deps: T9 + T10. Output: csv + dev/plans/sa_paper_repro_slope.md.",
+    "5. After W2 fully closed, plan W3 sub-wave 3a (T12 SIMD bipedal3 kernel + T13 SIMD dispatch + T14 multi-word streaming + T15 rayon parallel).",
+    "6. W3 dispatch will be parallel via worktree. T12 and T14 are file-disjoint (gf2-kernels-simd vs gf2-algebra/permanent/). T13 and T15 add small wiring to gf2-algebra."
   ],
-  "ready_to_dispatch_after_amendments": [
-    {"short_id": "b0857ae9", "title": "T9 permanent_bipedal3 single-word — rework cycle 2"}
+  "ready_to_dispatch_immediately": [],
+  "ready_to_dispatch_after_T10_T11_close": [
+    {"short_id": "96dcbec4", "title": "Reproduce paper Table 2 scaling slope within +/- 10 percent"}
   ]
 }
