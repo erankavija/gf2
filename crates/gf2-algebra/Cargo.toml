@@ -27,6 +27,12 @@ serde = { version = "1", features = ["derive"], optional = true }
 
 [dev-dependencies]
 proptest = { workspace = true }
+criterion = { workspace = true }
+
+# ── Issue `b315564a` (epic `ae82bd73`) — Criterion bench suite for permanent ──
+[[bench]]
+name = "permanent"
+harness = false
 
 [features]
 default = ["simd", "parallel"]
