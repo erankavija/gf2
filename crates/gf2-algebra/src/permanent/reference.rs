@@ -88,6 +88,7 @@ use gf2_core::gfp::Fp;
 /// prevent accumulating several additions before reducing, unlike the
 /// Montgomery-form `Fp<3>` ops used by the generic driver.
 pub fn permanent_mod3_reference(matrix: &[Fp<3>], n: usize) -> Fp<3> {
+    // Paper Listing 1, line 1-2: signature and shape assertion.
     assert!(
         n <= 63,
         "permanent_mod3_reference: n = {} exceeds the single-u64 Gray-code register's \
@@ -103,30 +104,43 @@ pub fn permanent_mod3_reference(matrix: &[Fp<3>], n: usize) -> Fp<3> {
         n
     );
 
+    // Paper Listing 1, line 3: empty matrix — permanent of empty product = 1.
     if n == 0 {
         return Fp::<3>::new(1);
     }
 
+    // Paper Listing 1, line 4: column-sum vector cs initialised to zero.
     // Internal scalar state — i32 arithmetic per paper Listing 1, NOT Fp<3>
     // Montgomery-form ops. The whole point of this baseline is to mirror the
     // paper's "naive Julia Int" implementation. Reduce to Fp<3> only at exit.
     let mut cs = vec![0i32; n];
+
+    // Paper Listing 1, line 5: total = 0 accumulator.
     let mut total: i32 = 0;
 
+    // Paper Listing 1, line 6 ("for k in 1:(2^n - 1)"): Gray-code subset walk.
     let upper: u64 = 1u64 << n;
     for k in 1..upper {
+        // Paper Listing 1, line 7 ("flip = trailing_zeros(k)"):
         // flip: the index of the column that toggles in Gray(k) vs Gray(k-1).
         let flip = k.trailing_zeros() as usize;
-        // g_k: the current Gray code word.
+
+        // Paper Listing 1, line 8 ("g_k = k ⊻ (k >> 1)"): Gray-code register.
         let g_k = k ^ (k >> 1);
+
+        // Paper Listing 1, line 9 ("if (g_k >> flip) & 1 == 1"): ADD vs SUB.
         // added: true if column `flip` just entered the subset (bit is 1 in g_k).
         let added = ((g_k >> flip) & 1) == 1;
 
         if added {
+            // Paper Listing 1, lines 10-12
+            // ("for i in 1:n: cs[i] = (cs[i] + A[i, flip+1]) % 3"):
             for i in 0..n {
                 cs[i] = (cs[i] + matrix[i * n + flip].value() as i32) % 3;
             }
         } else {
+            // Paper Listing 1, lines 13-15
+            // ("for i in 1:n: cs[i] = ((cs[i] + 3) - A[i, flip+1]) % 3"):
             // Use (cs[i] - val + 3) % 3 to stay non-negative, mirroring the
             // paper's `((cs[i] + 3) - A[i, flip+1]) % 3`.
             for i in 0..n {
@@ -134,27 +148,34 @@ pub fn permanent_mod3_reference(matrix: &[Fp<3>], n: usize) -> Fp<3> {
             }
         }
 
+        // Paper Listing 1, lines 16-18
+        // ("prod = 1; for i in 1:n: prod = (prod * cs[i]) % 3"):
         // Compute prod_{i=0}^{n-1} cs[i] mod 3.
         let mut prod: i32 = 1;
         for &c in &cs {
             prod = (prod * c) % 3;
         }
 
+        // Paper Listing 1, line 19 ("popcount(g_k) % 2"): Ryser sign for this subset.
         // Ryser sign: (-1)^|S| where |S| = popcount(g_k).
         // Odd |S| → subtract; even |S| → add.
         let card = g_k.count_ones() as usize;
         if card % 2 == 1 {
+            // Paper Listing 1, line 20 ("total = (total - prod + 3) % 3"):
             total = ((total - prod) + 3) % 3;
         } else {
+            // Paper Listing 1, line 21 ("total = (total + prod) % 3"):
             total = (total + prod) % 3;
         }
     }
 
+    // Paper Listing 1, lines 23-25 ("if n is odd: total = (3 - total) % 3"):
     // Apply the outer (-1)^n factor from Ryser's formula.
     if n % 2 == 1 {
         total = (3 - total) % 3;
     }
 
+    // Paper Listing 1, line 26 ("return total"): cast i32 → Fp<3>.
     Fp::<3>::new(total as u64)
 }
 
@@ -166,27 +187,38 @@ pub fn permanent_mod3_reference(matrix: &[Fp<3>], n: usize) -> Fp<3> {
 mod tests {
     use super::*;
     use gf2_core::gfp::Fp;
+    use gf2_core::rng::Lcg;
 
     use crate::permanent::permanent_ryser;
 
     // -----------------------------------------------------------------------
-    // LCG pseudo-random matrix generator (mirrors the one in ryser.rs)
+    // Cross-check helpers using gf2_core::rng::Lcg (project SSOT RNG)
     // -----------------------------------------------------------------------
 
-    /// Generate a deterministic pseudo-random `n×n` matrix of `Fp<3>` elements.
+    /// Generate a deterministic pseudo-random `n×n` matrix of `Fp<3>` elements
+    /// using the project-standard [`Lcg`] RNG.
+    fn random_matrix_fp3(rng: &mut Lcg, n: usize) -> Vec<Fp<3>> {
+        (0..n * n)
+            .map(|_| Fp::<3>::new(rng.next_u64() % 3))
+            .collect()
+    }
+
+    /// Run `n_matrices` cross-checks of `permanent_mod3_reference` vs
+    /// `permanent_ryser::<Fp<3>>` for matrices of dimension `n`.
     ///
-    /// Uses Knuth's MMIX LCG: `x_{k+1} = a * x_k + c mod 2^64`, then takes
-    /// `x mod 3` as the element value. Reproducible across runs.
-    fn random_fp3_matrix(n: usize, seed: u64) -> Vec<Fp<3>> {
-        let mut state = seed;
-        let mut out = Vec::with_capacity(n * n);
-        for _ in 0..n * n {
-            state = state
-                .wrapping_mul(6_364_136_223_846_793_005)
-                .wrapping_add(1_442_695_040_888_963_407);
-            out.push(Fp::<3>::new(state % 3));
+    /// Seed is derived from `n` so each dimension gets an independent RNG
+    /// stream, making failures from a given `n` reproducible.
+    fn run_cross_check(n: usize, n_matrices: usize) {
+        let mut rng = Lcg::new(0xBA5E_BA11_DEC0_DE57u64.wrapping_add(n as u64));
+        for trial in 0..n_matrices {
+            let m = random_matrix_fp3(&mut rng, n);
+            let expected = permanent_ryser::<Fp<3>>(&m, n);
+            let actual = permanent_mod3_reference(&m, n);
+            assert_eq!(
+                actual, expected,
+                "permanent_mod3_reference != permanent_ryser for n={n} trial={trial}"
+            );
         }
-        out
     }
 
     // -----------------------------------------------------------------------
@@ -277,27 +309,68 @@ mod tests {
 
     // -----------------------------------------------------------------------
     // Cross-check: permanent_mod3_reference vs permanent_ryser::<Fp<3>>
+    //
+    // Criterion 3 (hard): output bit-identical to permanent_ryser::<Fp<3>>
+    // on 1000 random matrices for each n in {1, ..., 12} = 12,000 total.
     // -----------------------------------------------------------------------
 
-    /// Cross-check `permanent_mod3_reference` against `permanent_ryser::<Fp<3>>`
-    /// for 100 random matrices at each n in {1, 2, 3, 4, 5}.
-    ///
-    /// This is the primary correctness criterion for T8: if the two ever differ,
-    /// the reference port has a bug. Seeds are derived deterministically from n.
     #[test]
-    fn test_reference_cross_check_random_small() {
-        for n in 1usize..=5 {
-            let seed_base: u64 = 0xA5B6_0000u64.wrapping_add(n as u64);
-            for trial in 0..100u64 {
-                let seed = seed_base.wrapping_add(trial.wrapping_mul(1_000_003));
-                let mat = random_fp3_matrix(n, seed);
-                let reference = permanent_mod3_reference(&mat, n);
-                let ryser = permanent_ryser::<Fp<3>>(&mat, n);
-                assert_eq!(
-                    reference, ryser,
-                    "permanent_mod3_reference != permanent_ryser for n={n} trial={trial}"
-                );
-            }
-        }
+    fn test_reference_cross_check_random_n1() {
+        run_cross_check(1, 1000);
+    }
+
+    #[test]
+    fn test_reference_cross_check_random_n2() {
+        run_cross_check(2, 1000);
+    }
+
+    #[test]
+    fn test_reference_cross_check_random_n3() {
+        run_cross_check(3, 1000);
+    }
+
+    #[test]
+    fn test_reference_cross_check_random_n4() {
+        run_cross_check(4, 1000);
+    }
+
+    #[test]
+    fn test_reference_cross_check_random_n5() {
+        run_cross_check(5, 1000);
+    }
+
+    #[test]
+    fn test_reference_cross_check_random_n6() {
+        run_cross_check(6, 1000);
+    }
+
+    #[test]
+    fn test_reference_cross_check_random_n7() {
+        run_cross_check(7, 1000);
+    }
+
+    #[test]
+    fn test_reference_cross_check_random_n8() {
+        run_cross_check(8, 1000);
+    }
+
+    #[test]
+    fn test_reference_cross_check_random_n9() {
+        run_cross_check(9, 1000);
+    }
+
+    #[test]
+    fn test_reference_cross_check_random_n10() {
+        run_cross_check(10, 1000);
+    }
+
+    #[test]
+    fn test_reference_cross_check_random_n11() {
+        run_cross_check(11, 1000);
+    }
+
+    #[test]
+    fn test_reference_cross_check_random_n12() {
+        run_cross_check(12, 1000);
     }
 }
