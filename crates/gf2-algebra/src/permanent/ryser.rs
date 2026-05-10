@@ -252,24 +252,19 @@ mod tests {
     }
 
     // -----------------------------------------------------------------------
-    // Deterministic pseudo-random matrix generator (LCG)
+    // Deterministic pseudo-random matrix generator
     // -----------------------------------------------------------------------
 
     /// Generate a deterministic pseudo-random `n×n` matrix of `Fp<P>` elements.
     ///
-    /// Uses Knuth's MMIX LCG: `x_{k+1} = a * x_k + c mod 2^64`, then takes
-    /// `x mod P` as the element value. The seed is consumed left-to-right,
-    /// row-major. Reproducible across runs on the same platform.
+    /// Uses the workspace SSOT RNG `gf2_core::rng::Lcg`. Seed → `Lcg::new(seed)`,
+    /// then `n*n` calls to `next_u64() % P` produce the matrix entries
+    /// row-major.
     fn random_matrix<const P: u64>(n: usize, seed: u64) -> Vec<Fp<P>> {
-        let mut state = seed;
-        let mut out = Vec::with_capacity(n * n);
-        for _ in 0..n * n {
-            state = state
-                .wrapping_mul(6_364_136_223_846_793_005)
-                .wrapping_add(1_442_695_040_888_963_407);
-            out.push(Fp::<P>::new(state % P));
-        }
-        out
+        let mut rng = gf2_core::rng::Lcg::new(seed);
+        (0..n * n)
+            .map(|_| Fp::<P>::new(rng.next_u64() % P))
+            .collect()
     }
 
     // -----------------------------------------------------------------------
