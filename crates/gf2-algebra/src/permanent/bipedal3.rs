@@ -2,10 +2,11 @@
 //! `F_3`, restricted to matrices with `n ≤ 63`.
 //!
 //! For `n ≤ 63` the column-sum vector fits in a single Bipedal3 word (one
-//! `u64` mag + one `u64` sgn pair).  Each Gray-code step is a single
-//! Bipedal3 add or sub against the toggled column, followed by a horizontal
-//! fold via the **bipedal multiplication tree** — a shift-halving reduce
-//! over 64 lanes using the Scheinerman 2024 `mul` formula (~6 steps).
+//! `u64` mag + one `u64` sgn pair).  Each Gray-code step updates a single
+//! `Bipedal3` column-sum in-place via `Bipedal3::add` or `Bipedal3::sub`
+//! (the canonical paper §2.2 SSOT lives once in those methods), followed by
+//! a horizontal fold via `Bipedal3::fold_mul_first_n` — the bipedal
+//! multiplication tree halving lives once in that method.
 //!
 //! This module is the **headline single-thread fast path** of the
 //! permanent epic; the 50× speedup target is measured against
@@ -15,24 +16,12 @@
 //! # Algorithm reference
 //!
 //! `dev/plans/gf2_algebra_permanent.md` §7.3 (single-word path).
-//!
-//! # Implementation note — raw u64 tracking
-//!
-//! `Bipedal3`'s `mag`/`sgn` fields are private (encapsulated inside
-//! `gf2-algebra::packed::bipedal3`).  The bipedal-mul-tree horizontal fold
-//! requires shifting those raw words right by 32, 16, 8, 4, 2, 1 bits and
-//! multiplying (AND for mag, XOR for sgn per the Scheinerman 2024 paper
-//! formula).  Rather than adding new public API to `Bipedal3`, we maintain
-//! the column-sum state as a pair of plain `u64` scalars (`cs_mag`,
-//! `cs_sgn`) and inline the six-operation add/sub formulas verbatim from
-//! the paper.  `Bipedal3::from_raw` is used only when computing the matrix
-//! prep (column extraction), where the trait's `lane` / `with_lane` APIs
-//! suffice without raw-field access.
 
 use gf2_core::gfp::Fp;
 
 use crate::gray::gray_code_iter;
-use crate::packed::bipedal3::Bipedal3Matrix;
+use crate::packed::bipedal3::{Bipedal3, Bipedal3Matrix};
+use crate::packed::PackedField;
 use crate::packed::PackedFieldVec;
 
 /// Compute the permanent of an `n × n` matrix over `F_3` using the
@@ -93,10 +82,10 @@ use crate::packed::PackedFieldVec;
 ///
 /// `O(n · 2^n)` field operations over `Fp<3>`:
 /// - Matrix prep: `O(n^2)` one-time lane-by-lane column extraction.
-/// - Gray walk: `2^n - 1` steps, each with 1 Bipedal3 add/sub (6 word-level
-///   bitwise ops) plus 1 bipedal-multiplication-tree fold (~6 Bipedal3::mul
-///   word-pairs, 2 ops each).
-/// - Space: `O(n)` extra (the `columns` Vec plus raw col-sum pair).
+/// - Gray walk: `2^n - 1` steps, each with 1 `Bipedal3::add` or `sub`
+///   (6 word-level bitwise ops) plus 1 `Bipedal3::fold_mul_first_n`
+///   (~6 halving steps, 2 word ops each).
+/// - Space: `O(n)` extra (the `columns` Vec plus one `Bipedal3` col-sum word).
 pub fn permanent_bipedal3(mat: &Bipedal3Matrix) -> Fp<3> {
     let n = mat.cols();
     assert_eq!(
@@ -118,42 +107,26 @@ pub fn permanent_bipedal3(mat: &Bipedal3Matrix) -> Fp<3> {
         return Fp::<3>::new(1);
     }
 
-    // One-time matrix-prep: extract each column into a raw (mag, sgn) pair.
-    //
-    // The Bipedal3 encoding of an Fp<3> element v is:
-    //   v = 0 → (mag_bit = 0, sgn_bit = 0)
-    //   v = 1 → (mag_bit = 1, sgn_bit = 0)
-    //   v = 2 → (mag_bit = 1, sgn_bit = 1)
-    //
-    // We pack the n rows of each column j into two u64 words.  Bit i of
-    // `col_mag[j]` holds the mag_bit for row i; bit i of `col_sgn[j]`
-    // holds sgn_bit for row i.  Bits n..63 remain 0.
+    // One-time matrix-prep: extract each column j into a Bipedal3 word.
+    // Lane i of columns[j] holds A[i,j] for i in 0..n; lanes n..63 are 0
+    // (the additive identity, i.e. (mag=0, sgn=0)).
     //
     // Cost: O(n^2) — dominated by the O(n · 2^n) Gray walk for n ≥ 4.
-    let mut col_mag = vec![0u64; n];
-    let mut col_sgn = vec![0u64; n];
+    let mut columns: Vec<Bipedal3> = Vec::with_capacity(n);
     for j in 0..n {
         let col_vec = mat.column(j);
+        let mut col = Bipedal3::zero();
         for i in 0..n {
-            let v = col_vec.get(i).value(); // 0, 1, or 2
-            let mag_bit = if v != 0 { 1u64 } else { 0u64 };
-            let sgn_bit = if v == 2 { 1u64 } else { 0u64 };
-            col_mag[j] |= mag_bit << i;
-            col_sgn[j] |= sgn_bit << i;
+            col = col.with_lane(i, col_vec.get(i));
         }
+        columns.push(col);
     }
 
-    // Column-sum accumulator as raw u64 pair.
-    // cs_mag / cs_sgn encode sum_{j ∈ S} A[i,j] for each row i (bit i).
-    // Lanes n..63 remain 0 throughout.
-    let mut cs_mag: u64 = 0;
-    let mut cs_sgn: u64 = 0;
-
-    // Mask covering the n active lanes (bits 0..n-1).
-    // Bits n..63 will be forced to the multiplicative identity (mag=1, sgn=0)
-    // before each halving fold, so they contribute 1 and do not zero the product.
-    let used_mask: u64 = (1u64 << n) - 1; // n <= 63, so no UB here
-    let id_mag_for_unused = !used_mask; // mag=1 for bits n..63
+    // Column-sum accumulator as a single Bipedal3 word.
+    // Lane i of col_sum holds sum_{j ∈ S} A[i,j] mod 3.
+    // Lanes n..63 stay 0 throughout (add/sub leave them at 0, and
+    // fold_mul_first_n pads inactive lanes to the mul-identity before folding).
+    let mut col_sum = Bipedal3::zero();
 
     // Running Ryser accumulator and subset-size counter.
     let mut total = Fp::<3>::new(0);
@@ -164,67 +137,18 @@ pub fn permanent_bipedal3(mat: &Bipedal3Matrix) -> Fp<3> {
     //   flip   — which column just entered or left S
     //   parity — +1 (entered, ADD) or -1 (left, SUB)
     for (flip, parity) in gray_code_iter(n) {
-        let bm = col_mag[flip];
-        let bsg = col_sgn[flip];
-
         if parity == 1 {
-            // cs += col[flip]: Scheinerman 2024 Algorithm 2 (6 bitwise ops).
+            // col_sum += columns[flip]: paper §2.2 SSOT lives in Bipedal3::add.
             subset_size += 1;
-            let am = cs_mag;
-            let asg = cs_sgn;
-            let t = am ^ asg ^ bsg;
-            let u = bm & t;
-            cs_mag = u | (am ^ bm);
-            cs_sgn = u ^ asg;
+            col_sum = col_sum.add(columns[flip]);
         } else {
-            // cs -= col[flip]: Scheinerman 2024 sub formula (6 bitwise ops).
+            // col_sum -= columns[flip]: paper §2.2 SSOT lives in Bipedal3::sub.
             subset_size -= 1;
-            let am = cs_mag;
-            let asg = cs_sgn;
-            let t = asg ^ bsg;
-            let u = am & t;
-            cs_mag = u | (am ^ bm);
-            cs_sgn = u ^ (bm ^ bsg);
+            col_sum = col_sum.sub(columns[flip]);
         }
 
-        // Horizontal fold via bipedal multiplication tree.
-        //
-        // Goal: compute the product of the n active lanes (bits 0..n-1) in
-        // the (cs_mag, cs_sgn) word pair.
-        //
-        // Strategy: identity-pad the inactive lanes (n..63) to mul-identity
-        // (mag=1, sgn=0), then halve-and-mul six times.  Each halving step
-        // uses the Scheinerman 2024 paper-mul formula:
-        //   mul(a, b).mag = a.mag AND b.mag
-        //   mul(a, b).sgn = a.sgn XOR b.sgn
-        // which holds lane-wise in packed form.
-        //
-        // After 6 halvings (32→16→8→4→2→1), bit 0 holds the product of
-        // all 64 logical lanes.  Because inactive lanes were padded to the
-        // identity, bit 0 equals the product of the n active lanes.
-        let mut acc_m = cs_mag | id_mag_for_unused; // identity for bits n..63
-        let mut acc_s = cs_sgn & used_mask; // zero sgn for bits n..63
-
-        // log2(64) = 6 halving steps.
-        let mut step: u32 = 32;
-        while step > 0 {
-            // Scheinerman 2024 paper-mul: mag = AND, sgn = XOR.
-            acc_m &= acc_m >> step;
-            acc_s ^= acc_s >> step;
-            step >>= 1;
-        }
-        // Bit 0 of (acc_m, acc_s) encodes the product of the n active lanes.
-        // Decode via the canonical Bipedal3 mapping:
-        //   acc_m=0 → 0 (regardless of acc_s)
-        //   acc_m=1, acc_s=0 → 1
-        //   acc_m=1, acc_s=1 → 2
-        let term = if acc_m & 1 == 0 {
-            Fp::<3>::new(0)
-        } else if acc_s & 1 == 0 {
-            Fp::<3>::new(1)
-        } else {
-            Fp::<3>::new(2)
-        };
+        // Horizontal fold via bipedal multiplication tree SSOT in fold_mul_first_n.
+        let term = col_sum.fold_mul_first_n(n);
 
         // Ryser sign: (-1)^|S|.
         if subset_size % 2 == 1 {
@@ -335,116 +259,6 @@ mod tests {
                 "all-ones permanent for n={n} must be {} (= n! mod 3)",
                 expected[n - 1]
             );
-        }
-    }
-
-    // -----------------------------------------------------------------------
-    // Bipedal mul tree spot-check: verify tree fold == scalar lane decode
-    //
-    // This test directly exercises the halving-fold kernel used inside
-    // `permanent_bipedal3` on a range of known (mag, sgn) patterns,
-    // confirming it equals an explicit scalar per-lane decode.
-    // -----------------------------------------------------------------------
-
-    /// Verify the bipedal multiplication tree fold (used in `permanent_bipedal3`)
-    /// produces the same result as explicit scalar per-lane decode.
-    #[test]
-    fn test_bipedal_mul_tree_matches_scalar_fold() {
-        // Patterns: (mag, sgn, n, expected_product)
-        // where expected_product = product of lanes 0..n over F_3.
-        //
-        // Case 1: all lanes = 2 (mag=all1s, sgn=all1s) for n=1..8.
-        // Product = 2^n mod 3; period-2: n=1→2, n=2→1, n=3→2, ...
-        for n in 1usize..=8 {
-            let mag = (1u64 << n) - 1; // bits 0..n all set
-            let sgn = mag; // all lanes = 2 (mag=1, sgn=1)
-            let expected = if n % 2 == 1 {
-                Fp::<3>::new(2)
-            } else {
-                Fp::<3>::new(1)
-            };
-
-            let used_mask: u64 = (1u64 << n) - 1;
-            let id_mag_for_unused = !used_mask;
-            let mut acc_m = mag | id_mag_for_unused;
-            let mut acc_s = sgn & used_mask;
-            let mut step: u32 = 32;
-            while step > 0 {
-                acc_m &= acc_m >> step;
-                acc_s ^= acc_s >> step;
-                step >>= 1;
-            }
-            let tree_prod = if acc_m & 1 == 0 {
-                Fp::<3>::new(0)
-            } else if acc_s & 1 == 0 {
-                Fp::<3>::new(1)
-            } else {
-                Fp::<3>::new(2)
-            };
-            assert_eq!(
-                tree_prod, expected,
-                "all-2s product mismatch at n={n}: got {tree_prod:?} want {expected:?}"
-            );
-        }
-
-        // Case 2: mixed {0,1,2} pattern — any zero lane makes product zero.
-        // n=4, pattern: lane0=1, lane1=2, lane2=0, lane3=2 → product=0.
-        {
-            let n = 4usize;
-            // lane0=1: mag0=1,sgn0=0 → mag bit 0 set; lane1=2: mag1=1,sgn1=1;
-            // lane2=0: mag2=0,sgn2=0; lane3=2: mag3=1,sgn3=1.
-            let mag: u64 = 0b1011; // bits 0,1,3 set
-            let sgn: u64 = 0b1010; // bits 1,3 set
-            let expected = Fp::<3>::new(0); // zero lane kills product
-
-            let used_mask: u64 = (1u64 << n) - 1;
-            let id_mag_for_unused = !used_mask;
-            let mut acc_m = mag | id_mag_for_unused;
-            let mut acc_s = sgn & used_mask;
-            let mut step: u32 = 32;
-            while step > 0 {
-                acc_m &= acc_m >> step;
-                acc_s ^= acc_s >> step;
-                step >>= 1;
-            }
-            let tree_prod = if acc_m & 1 == 0 {
-                Fp::<3>::new(0)
-            } else if acc_s & 1 == 0 {
-                Fp::<3>::new(1)
-            } else {
-                Fp::<3>::new(2)
-            };
-            assert_eq!(
-                tree_prod, expected,
-                "mixed pattern: zero-lane product should be 0"
-            );
-        }
-
-        // Case 3: all lanes = 1 (mag=all1s, sgn=0) for n=4 → product=1.
-        {
-            let n = 4usize;
-            let mag: u64 = (1u64 << n) - 1;
-            let sgn: u64 = 0;
-            let expected = Fp::<3>::new(1);
-
-            let used_mask: u64 = (1u64 << n) - 1;
-            let id_mag_for_unused = !used_mask;
-            let mut acc_m = mag | id_mag_for_unused;
-            let mut acc_s = sgn & used_mask;
-            let mut step: u32 = 32;
-            while step > 0 {
-                acc_m &= acc_m >> step;
-                acc_s ^= acc_s >> step;
-                step >>= 1;
-            }
-            let tree_prod = if acc_m & 1 == 0 {
-                Fp::<3>::new(0)
-            } else if acc_s & 1 == 0 {
-                Fp::<3>::new(1)
-            } else {
-                Fp::<3>::new(2)
-            };
-            assert_eq!(tree_prod, expected, "all-1s product should be 1 for n={n}");
         }
     }
 
