@@ -190,18 +190,10 @@ mod tests {
     use gf2_core::rng::Lcg;
 
     use crate::permanent::permanent_ryser;
+    use crate::testutil::random_matrix_with_rng;
 
-    // -----------------------------------------------------------------------
-    // Cross-check helpers using gf2_core::rng::Lcg (project SSOT RNG)
-    // -----------------------------------------------------------------------
-
-    /// Generate a deterministic pseudo-random `n×n` matrix of `Fp<3>` elements
-    /// using the project-standard [`Lcg`] RNG.
-    fn random_matrix_fp3(rng: &mut Lcg, n: usize) -> Vec<Fp<3>> {
-        (0..n * n)
-            .map(|_| Fp::<3>::new(rng.next_u64() % 3))
-            .collect()
-    }
+    // Cross-check helpers (deterministic-RNG matrix generation) live in
+    // `crate::testutil` — the workspace SSOT — and are imported above.
 
     /// Run `n_matrices` cross-checks of `permanent_mod3_reference` vs
     /// `permanent_ryser::<Fp<3>>` for matrices of dimension `n`.
@@ -211,7 +203,7 @@ mod tests {
     fn run_cross_check(n: usize, n_matrices: usize) {
         let mut rng = Lcg::new(0xBA5E_BA11_DEC0_DE57u64.wrapping_add(n as u64));
         for trial in 0..n_matrices {
-            let m = random_matrix_fp3(&mut rng, n);
+            let m = random_matrix_with_rng::<3>(&mut rng, n);
             let expected = permanent_ryser::<Fp<3>>(&m, n);
             let actual = permanent_mod3_reference(&m, n);
             assert_eq!(
