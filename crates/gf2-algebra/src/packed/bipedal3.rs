@@ -251,6 +251,78 @@ impl Bipedal3 {
             sgn: 0u64.wrapping_sub(sgn_bit & 1),
         }
     }
+
+    /// Product of the first `n` lanes via the bipedal-multiplication-tree
+    /// halving fold (Scheinerman 2024 §3.3).
+    ///
+    /// Inactive lanes (indices `n..64`) are padded with the multiplicative
+    /// identity (`mag=1`, `sgn=0`) before the fold, so they contribute 1
+    /// and do not perturb the product.  The fold then halves the 64-lane
+    /// word pair six times (32, 16, 8, 4, 2, 1) using the paper's mul
+    /// formula `mag' = mag & (mag >> step)`, `sgn' = sgn ^ (sgn >> step)`.
+    /// Bit 0 of the result encodes the product of all `n` active lanes;
+    /// it is decoded to a canonical `Fp<3>` via the standard mapping.
+    ///
+    /// # Arguments
+    ///
+    /// * `n` — number of active lanes (must satisfy `1 <= n <= 64`).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{Bipedal3, PackedField};
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// // Three lanes set to 2; product over F_3 = 2^3 mod 3 = 2.
+    /// let v = <Bipedal3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(2));
+    /// assert_eq!(v.fold_mul_first_n(3), Fp::<3>::new(2));
+    ///
+    /// // Single lane set to 1; product = 1.
+    /// let one = <Bipedal3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(1));
+    /// assert_eq!(one.fold_mul_first_n(1), Fp::<3>::new(1));
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics if `n == 0` or `n > 64`.
+    ///
+    /// # Complexity
+    ///
+    /// `O(1)`: 6 halving-fold steps (12 word-level bitwise ops), plus a
+    /// constant-time bit-0 decode.
+    #[inline]
+    pub fn fold_mul_first_n(self, n: usize) -> Fp<3> {
+        assert!(
+            (1..=64).contains(&n),
+            "Bipedal3::fold_mul_first_n: n must satisfy 1 <= n <= 64; got n = {n}"
+        );
+        // `used_mask` has bits 0..n-1 set; for n==64 all 64 bits are set.
+        let used_mask: u64 = if n < 64 { (1u64 << n) - 1 } else { u64::MAX };
+        // Pad inactive lanes (n..63) to multiplicative identity: mag=1, sgn=0.
+        let mut acc_m = self.mag | !used_mask; // set mag=1 for bits n..63
+        let mut acc_s = self.sgn & used_mask; // clear sgn for bits n..63
+                                              // Six halving-fold steps.  Each step uses the paper's mul formula:
+                                              //   mag' = mag & (mag >> step)
+                                              //   sgn' = sgn ^ (sgn >> step)
+        let mut step: u32 = 32;
+        while step > 0 {
+            acc_m &= acc_m >> step;
+            acc_s ^= acc_s >> step;
+            step >>= 1;
+        }
+        // Bit 0 of (acc_m, acc_s) encodes the product of the n active lanes.
+        // Decode via the canonical Bipedal3 mapping:
+        //   acc_m bit 0 = 0 → Fp<3>(0)
+        //   acc_m bit 0 = 1, acc_s bit 0 = 0 → Fp<3>(1)
+        //   acc_m bit 0 = 1, acc_s bit 0 = 1 → Fp<3>(2)
+        if acc_m & 1 == 0 {
+            Fp::<3>::new(0)
+        } else if acc_s & 1 == 0 {
+            Fp::<3>::new(1)
+        } else {
+            Fp::<3>::new(2)
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -1111,6 +1183,134 @@ mod tests {
                 );
             }
         }
+    }
+
+    // -----------------------------------------------------------------------
+    // fold_mul_first_n — bipedal multiplication tree halving fold
+    // -----------------------------------------------------------------------
+
+    /// All lanes equal to 2 for n=1..=8: product = 2^n mod 3 (period-2).
+    ///
+    /// n=1 → 2, n=2 → 1, n=3 → 2, n=4 → 1, etc.
+    #[test]
+    fn test_fold_mul_first_n_all_twos() {
+        for n in 1usize..=8 {
+            let v = Bipedal3::splat(Fp::<3>::new(2));
+            let expected = if n % 2 == 1 {
+                Fp::<3>::new(2)
+            } else {
+                Fp::<3>::new(1)
+            };
+            let got = v.fold_mul_first_n(n);
+            assert_eq!(
+                got, expected,
+                "all-2s product at n={n}: expected {expected:?}, got {got:?}"
+            );
+        }
+    }
+
+    /// A zero in any active lane forces the product to zero.
+    #[test]
+    fn test_fold_mul_first_n_zero_lane_kills_product() {
+        // Lane 2 = 0; all others = 1.  Product over n=4 active lanes = 0.
+        let v = Bipedal3::zero()
+            .with_lane(0, Fp::<3>::new(1))
+            .with_lane(1, Fp::<3>::new(1))
+            .with_lane(2, Fp::<3>::new(0)) // zero lane
+            .with_lane(3, Fp::<3>::new(1));
+        let got = v.fold_mul_first_n(4);
+        assert_eq!(
+            got,
+            Fp::<3>::new(0),
+            "zero-lane product must be 0, got {got:?}"
+        );
+    }
+
+    /// Mixed pattern: lanes 0..=2 = {1, 2, 1} → product = 1*2*1 = 2.
+    #[test]
+    fn test_fold_mul_first_n_mixed_pattern() {
+        let v = Bipedal3::zero()
+            .with_lane(0, Fp::<3>::new(1))
+            .with_lane(1, Fp::<3>::new(2))
+            .with_lane(2, Fp::<3>::new(1));
+        let got = v.fold_mul_first_n(3);
+        assert_eq!(got, Fp::<3>::new(2), "1*2*1 must be 2, got {got:?}");
+    }
+
+    /// Single lane n=1: only lane 0 participates.
+    #[test]
+    fn test_fold_mul_first_n_single_lane() {
+        for v in 0u64..3 {
+            let b = Bipedal3::zero().with_lane(0, Fp::<3>::new(v));
+            let got = b.fold_mul_first_n(1);
+            assert_eq!(
+                got,
+                Fp::<3>::new(v),
+                "1-lane fold of {v} must return {v}, got {got:?}"
+            );
+        }
+    }
+
+    /// Full 64-lane fold: all lanes = 1 → product = 1.
+    #[test]
+    fn test_fold_mul_first_n_full_64_lanes_all_ones() {
+        let v = Bipedal3::splat(Fp::<3>::new(1));
+        let got = v.fold_mul_first_n(64);
+        assert_eq!(got, Fp::<3>::new(1), "all-1s fold over 64 lanes must be 1");
+    }
+
+    /// Migrated from permanent/bipedal3.rs: verify that fold via
+    /// `Bipedal3::fold_mul_first_n` matches the expected per-lane scalar product.
+    #[test]
+    fn test_bipedal_mul_tree_matches_scalar_fold() {
+        // Case 1: all lanes = 2 for n=1..=8 (period-2: 2,1,2,1,...).
+        for n in 1usize..=8 {
+            let v = Bipedal3::from_raw((1u64 << n) - 1, (1u64 << n) - 1);
+            let expected = if n % 2 == 1 {
+                Fp::<3>::new(2)
+            } else {
+                Fp::<3>::new(1)
+            };
+            let got = v.fold_mul_first_n(n);
+            assert_eq!(
+                got, expected,
+                "all-2s product mismatch at n={n}: got {got:?} want {expected:?}"
+            );
+        }
+
+        // Case 2: n=4, pattern lane0=1, lane1=2, lane2=0, lane3=2 → product=0.
+        {
+            let n = 4usize;
+            let v = Bipedal3::from_raw(0b1011, 0b1010);
+            let got = v.fold_mul_first_n(n);
+            assert_eq!(
+                got,
+                Fp::<3>::new(0),
+                "mixed pattern: zero-lane product should be 0"
+            );
+        }
+
+        // Case 3: n=4, all lanes = 1 (mag=all1s, sgn=0) → product=1.
+        {
+            let n = 4usize;
+            let v = Bipedal3::from_raw((1u64 << n) - 1, 0);
+            let got = v.fold_mul_first_n(n);
+            assert_eq!(got, Fp::<3>::new(1), "all-1s product should be 1 for n={n}");
+        }
+    }
+
+    /// Panic test: n=0 is rejected.
+    #[test]
+    #[should_panic(expected = "n must satisfy 1 <= n <= 64")]
+    fn test_fold_mul_first_n_panics_on_zero() {
+        let _ = Bipedal3::zero().fold_mul_first_n(0);
+    }
+
+    /// Panic test: n=65 is rejected.
+    #[test]
+    #[should_panic(expected = "n must satisfy 1 <= n <= 64")]
+    fn test_fold_mul_first_n_panics_on_65() {
+        let _ = Bipedal3::zero().fold_mul_first_n(65);
     }
 }
 
