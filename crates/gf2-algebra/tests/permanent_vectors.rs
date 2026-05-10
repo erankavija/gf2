@@ -38,11 +38,8 @@ use gf2_core::gfp::Fp;
 
 // random_matrix_fp3 is `gf2_algebra::testutil::random_matrix::<3>` (the
 // workspace SSOT). No local helper is needed.
-
-/// Convert a row-major `Fp<3>` slice to a [`Bipedal3Matrix`].
-fn to_bipedal(row_major: &[Fp<3>], n: usize) -> Bipedal3Matrix {
-    Bipedal3Matrix::from_row_major(row_major, n, n)
-}
+// Row-major-to-Bipedal3 conversion is `Bipedal3Matrix::from_row_major` — call it
+// at use sites directly rather than wrapping it.
 
 /// Assert all three implementations return `expected` for the given flat
 /// row-major matrix of dimension `n`.
@@ -50,7 +47,7 @@ fn to_bipedal(row_major: &[Fp<3>], n: usize) -> Bipedal3Matrix {
 /// Prints a diagnostic label on mismatch for easy bisection.
 fn assert_all_three(label: &str, row_major: &[Fp<3>], n: usize, expected: u64) {
     let exp = Fp::<3>::new(expected);
-    let mat = to_bipedal(row_major, n);
+    let mat = Bipedal3Matrix::from_row_major(row_major, n, n);
 
     let r = permanent_ryser::<Fp<3>>(row_major, n);
     let m = permanent_mod3_reference(row_major, n);
@@ -310,7 +307,7 @@ fn test_cross_check_random_n4_three_way() {
     for trial in 0u64..1000 {
         let seed = seed_base.wrapping_add(trial.wrapping_mul(1_000_003));
         let row_major = random_matrix::<3>(n, seed);
-        let mat = to_bipedal(&row_major, n);
+        let mat = Bipedal3Matrix::from_row_major(&row_major, n, n);
         let r = permanent_ryser::<Fp<3>>(&row_major, n);
         let m = permanent_mod3_reference(&row_major, n);
         let b = permanent_bipedal3(&mat);
@@ -335,7 +332,7 @@ fn test_cross_check_random_n8_three_way() {
     for trial in 0u64..1000 {
         let seed = seed_base.wrapping_add(trial.wrapping_mul(1_000_003));
         let row_major = random_matrix::<3>(n, seed);
-        let mat = to_bipedal(&row_major, n);
+        let mat = Bipedal3Matrix::from_row_major(&row_major, n, n);
         let r = permanent_ryser::<Fp<3>>(&row_major, n);
         let m = permanent_mod3_reference(&row_major, n);
         let b = permanent_bipedal3(&mat);
@@ -362,7 +359,7 @@ fn test_cross_check_random_n12_three_way() {
     for trial in 0u64..1000 {
         let seed = seed_base.wrapping_add(trial.wrapping_mul(1_000_003));
         let row_major = random_matrix::<3>(n, seed);
-        let mat = to_bipedal(&row_major, n);
+        let mat = Bipedal3Matrix::from_row_major(&row_major, n, n);
         let r = permanent_ryser::<Fp<3>>(&row_major, n);
         let m = permanent_mod3_reference(&row_major, n);
         let b = permanent_bipedal3(&mat);
@@ -394,7 +391,7 @@ fn test_cross_check_random_n16_three_way_slow() {
     for trial in 0u64..1000 {
         let seed = seed_base.wrapping_add(trial.wrapping_mul(1_000_003));
         let row_major = random_matrix::<3>(n, seed);
-        let mat = to_bipedal(&row_major, n);
+        let mat = Bipedal3Matrix::from_row_major(&row_major, n, n);
         let r = permanent_ryser::<Fp<3>>(&row_major, n);
         let m = permanent_mod3_reference(&row_major, n);
         let b = permanent_bipedal3(&mat);
@@ -438,7 +435,7 @@ fn cross_check_n_chunk(n: usize, seed_salt: u64, trials: u64) {
     for trial in 0..trials {
         let seed = seed_base.wrapping_add(trial.wrapping_mul(1_000_003));
         let row_major = random_matrix::<3>(n, seed);
-        let mat = to_bipedal(&row_major, n);
+        let mat = Bipedal3Matrix::from_row_major(&row_major, n, n);
         let expected = permanent_mod3_reference(&row_major, n);
         let actual = permanent_bipedal3(&mat);
         assert_eq!(
