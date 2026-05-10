@@ -28,6 +28,12 @@ serde = { version = "1", features = ["derive"], optional = true }
 [dev-dependencies]
 proptest = { workspace = true }
 criterion = { workspace = true }
+# Self-dev-dependency exposing the `test-support` feature so integration
+# tests and benches can use `gf2_algebra::testutil::random_matrix` —
+# the workspace SSOT for deterministic mod-P matrix generation via
+# `gf2_core::rng::Lcg`. Mirrors the `gf2-core` pattern (see
+# `crates/gf2-core/Cargo.toml` lines 28-31, 53-56).
+gf2-algebra = { path = ".", features = ["test-support"] }
 
 # ── Issue `b315564a` (epic `ae82bd73`) — Criterion bench suite for permanent ──
 [[bench]]
@@ -73,3 +79,9 @@ f7 = []
 # who need it (e.g. caching matrices for reproducibility benchmarks) opt
 # in. Pulls in serde with the derive feature.
 serde = ["dep:serde"]
+
+# Exposes the canonical test-only matrix generators (`testutil::random_matrix`,
+# `testutil::random_matrix_with_rng`) to integration tests, benchmarks, and
+# downstream crates. Off by default; auto-enabled under `cargo test` via the
+# self-dev-dependency above. Mirrors the `gf2-core::test-support` pattern.
+test-support = []

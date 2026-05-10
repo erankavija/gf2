@@ -26,30 +26,18 @@
 //!
 //! # Integration-test boundary
 //!
-//! This file compiles as a **separate crate** (Cargo integration test), so it
-//! cannot import `#[cfg(test)] mod testutil` from `gf2_algebra::lib`. The
-//! `random_matrix_fp3` helper below is a local copy of the same logic — see
-//! `testutil.rs` in the library for the canonical version.
+//! This file compiles as a separate Cargo integration-test crate, so it reaches
+//! the workspace SSOT matrix generator via the `test-support` feature gate that
+//! exposes [`gf2_algebra::testutil`] publicly. See `crates/gf2-algebra/Cargo.toml`
+//! for the self-dev-dependency that auto-enables this feature under `cargo test`.
 
 use gf2_algebra::packed::Bipedal3Matrix;
 use gf2_algebra::permanent::{permanent_bipedal3, permanent_mod3_reference, permanent_ryser};
+use gf2_algebra::testutil::random_matrix;
 use gf2_core::gfp::Fp;
-use gf2_core::rng::Lcg;
 
-// ---------------------------------------------------------------------------
-// Local matrix generator — mirrors testutil::random_matrix (SSOT in lib.rs)
-// but is inlined here because integration tests are a separate compilation
-// unit and cannot reach `#[cfg(test)] mod testutil`.
-// ---------------------------------------------------------------------------
-
-/// Generate a deterministic pseudo-random `n × n` matrix of [`Fp<3>`] elements,
-/// row-major, using the workspace SSOT [`Lcg`] RNG seeded with `seed`.
-fn random_matrix_fp3(n: usize, seed: u64) -> Vec<Fp<3>> {
-    let mut rng = Lcg::new(seed);
-    (0..n * n)
-        .map(|_| Fp::<3>::new(rng.next_u64() % 3))
-        .collect()
-}
+// random_matrix_fp3 is `gf2_algebra::testutil::random_matrix::<3>` (the
+// workspace SSOT). No local helper is needed.
 
 /// Convert a row-major `Fp<3>` slice to a [`Bipedal3Matrix`].
 fn to_bipedal(row_major: &[Fp<3>], n: usize) -> Bipedal3Matrix {
@@ -321,7 +309,7 @@ fn test_cross_check_random_n4_three_way() {
     let seed_base: u64 = 0x1cd3_eb09_0000_0000_u64.wrapping_add(n as u64);
     for trial in 0u64..1000 {
         let seed = seed_base.wrapping_add(trial.wrapping_mul(1_000_003));
-        let row_major = random_matrix_fp3(n, seed);
+        let row_major = random_matrix::<3>(n, seed);
         let mat = to_bipedal(&row_major, n);
         let r = permanent_ryser::<Fp<3>>(&row_major, n);
         let m = permanent_mod3_reference(&row_major, n);
@@ -346,7 +334,7 @@ fn test_cross_check_random_n8_three_way() {
     let seed_base: u64 = 0x1cd3_eb09_0000_0000_u64.wrapping_add(n as u64);
     for trial in 0u64..1000 {
         let seed = seed_base.wrapping_add(trial.wrapping_mul(1_000_003));
-        let row_major = random_matrix_fp3(n, seed);
+        let row_major = random_matrix::<3>(n, seed);
         let mat = to_bipedal(&row_major, n);
         let r = permanent_ryser::<Fp<3>>(&row_major, n);
         let m = permanent_mod3_reference(&row_major, n);
@@ -373,7 +361,7 @@ fn test_cross_check_random_n12_three_way() {
     let seed_base: u64 = 0x1cd3_eb09_0000_0000_u64.wrapping_add(n as u64);
     for trial in 0u64..1000 {
         let seed = seed_base.wrapping_add(trial.wrapping_mul(1_000_003));
-        let row_major = random_matrix_fp3(n, seed);
+        let row_major = random_matrix::<3>(n, seed);
         let mat = to_bipedal(&row_major, n);
         let r = permanent_ryser::<Fp<3>>(&row_major, n);
         let m = permanent_mod3_reference(&row_major, n);
@@ -405,7 +393,7 @@ fn test_cross_check_random_n16_three_way_slow() {
     let seed_base: u64 = 0x1cd3_eb09_0000_0000_u64.wrapping_add(n as u64);
     for trial in 0u64..1000 {
         let seed = seed_base.wrapping_add(trial.wrapping_mul(1_000_003));
-        let row_major = random_matrix_fp3(n, seed);
+        let row_major = random_matrix::<3>(n, seed);
         let mat = to_bipedal(&row_major, n);
         let r = permanent_ryser::<Fp<3>>(&row_major, n);
         let m = permanent_mod3_reference(&row_major, n);
@@ -449,7 +437,7 @@ fn cross_check_n_chunk(n: usize, seed_salt: u64, trials: u64) {
         .wrapping_add(seed_salt);
     for trial in 0..trials {
         let seed = seed_base.wrapping_add(trial.wrapping_mul(1_000_003));
-        let row_major = random_matrix_fp3(n, seed);
+        let row_major = random_matrix::<3>(n, seed);
         let mat = to_bipedal(&row_major, n);
         let expected = permanent_mod3_reference(&row_major, n);
         let actual = permanent_bipedal3(&mat);

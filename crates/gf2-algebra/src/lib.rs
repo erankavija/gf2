@@ -81,8 +81,12 @@ pub mod parallel;
 #[cfg(feature = "hip")]
 pub mod gpu;
 
-#[cfg(test)]
-pub(crate) mod testutil;
+/// Test-only helpers exposed for integration tests, benchmarks, and downstream
+/// crates via the `test-support` feature. The module is also compiled under
+/// `cfg(test)` for internal unit tests in this crate; the dual gate mirrors the
+/// `gf2-core::test-support` workspace pattern.
+#[cfg(any(test, feature = "test-support"))]
+pub mod testutil;
 
 #[cfg(test)]
 mod tests {
