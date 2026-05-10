@@ -2,128 +2,122 @@
   "epic_id": "ae82bd73-741d-4007-811f-914dac00bae8",
   "epic_short_id": "ae82bd73",
   "epic_title": "Fast matrix permanents over F_3 / F_5 / F_7 via packed bipedal arithmetic",
-  "current_wave": 1,
-  "current_subwave": "1c (T3 in_progress, rework cycle 1 dispatched)",
-  "current_status": "W1 sub-wave 1c — T3 rw0 PASSED tests + cargo-ci, FAILED code-review on sub-criterion (7 ops vs paper 6); rw1 dispatched with direct 6-op CSE form",
+  "current_wave": 2,
+  "current_subwave": "2c (T9 in_progress with open findings; T10/T11/Sa not yet dispatched)",
+  "current_status": "W1 fully closed; W2 sub-waves 2a (T7) + 2b (T8) closed; T9 in_progress with 3 unresolved code-review findings (n=63 vs 64 contract, SSOT in inline arithmetic, cross-check oracle); needs user input on 2 criterion amendments",
   "started_at": "2026-05-09T01:30:00+03:00",
   "session_count": 3,
-  "session_3_open_time": "2026-05-09T20:35:00+03:00",
+  "session_3_close_time": "2026-05-10T00:30:00+03:00",
   "session_2_close_time": "2026-05-09T17:30:00+03:00",
   "rework_counts": {
-    "46330802": 1
+    "46330802": 2,
+    "053e4016": 1,
+    "ef7d0633": 0,
+    "93e5a5e8": 2,
+    "632d92ad": 1,
+    "b0857ae9": 1
   },
   "issue_count": {
     "epic": 1,
-    "done": 15,
-    "ready": 6,
-    "backlog": 31,
-    "rejected": 0,
-    "total": 53
+    "done_in_epic_subgraph": 23,
+    "in_progress": 1,
+    "ready": 4,
+    "backlog": 25,
+    "total_with_epic": 53
   },
   "wave_status": {
     "W0": {
       "name": "Decisions and sketches",
       "status": "CLOSED",
       "issues_done": 11,
-      "issues_total": 11,
-      "completion_date": "2026-05-09",
-      "list": ["6e20133d (D1a)", "a0c0a45f (D2)", "4aaa6e4d (D3)", "4c534d31 (D4)", "60c30e2d (R3)", "9fe275d3 (D1b)", "4fced99b (D1c)", "c7542983 (R4)", "6b3f6054 (R1)", "f10152f6 (R2)"],
-      "deferred_to_W7": ["8e4e19a0 (perm-vs-det uniformity)"]
+      "completion_date": "2026-05-09 (session 1+2)"
     },
     "W1": {
       "name": "Foundation",
-      "status": "PARTIAL — sub-waves 1a + 1b CLOSED, 1c (T3) ready",
-      "issues_done": 4,
-      "issues_total": 6,
-      "list": [
-        "e6b1216a (T1 crate skeleton) DONE 2026-05-09 — 0 rework",
-        "1aa0cb99 (T2 PackedField scalar impl) DONE 2026-05-09 — 1 rework + 2 lead-direct fixes",
-        "94870b84 (T6 gray_code_iter) DONE 2026-05-09 — 0 rework + 1 lead-direct doc fix",
-        "46330802 (T3 Bipedal3 element) READY",
-        "053e4016 (T4 Bipedal3Vec) BACKLOG (deps T3)",
-        "ef7d0633 (T5 Bipedal3Matrix column-major) BACKLOG (deps T4)"
-      ]
+      "status": "CLOSED",
+      "issues_done": 7,
+      "completion_date": "2026-05-10 (session 3)",
+      "list": ["e6b1216a (T1)", "1aa0cb99 (T2)", "94870b84 (T6)", "b17bec62 (T16)", "46330802 (T3)", "053e4016 (T4)", "ef7d0633 (T5)"]
     },
     "W2": {
       "name": "Reference implementations + reproduction harness",
-      "status": "PENDING",
+      "status": "PARTIAL — sub-waves 2a (T7) + 2b (T8) closed; 2c in flight (T9 in_progress)",
+      "issues_done": 2,
       "issues_total": 6,
-      "list": ["93e5a5e8 (T7 generic permanent_ryser)", "632d92ad (T8 permanent_mod3_reference)", "b0857ae9 (T9 permanent_bipedal3 single-word)", "b315564a (T10 criterion bench)", "1cd3eb09 (T11 test-vectors)", "96dcbec4 (Sa reproduce paper Table 2)"]
+      "list": [
+        "93e5a5e8 (T7) DONE 2026-05-10 — 2 reworks + 1 lead-direct (n<=63 assert)",
+        "632d92ad (T8) DONE 2026-05-10 — 1 rework + 1 lead-direct (T7 LCG SSOT refactor)",
+        "b0857ae9 (T9) IN_PROGRESS — 1 rework done, 3 findings unresolved",
+        "b315564a (T10 criterion bench) BACKLOG (deps T9)",
+        "1cd3eb09 (T11 test-vectors) BACKLOG (deps T7, T9)",
+        "96dcbec4 (Sa paper Table 2) BACKLOG (deps T9, T10)"
+      ]
     },
     "W3": {
       "name": "SIMD + multi-word + parallel",
       "status": "PARTIAL — T16 (BatchedBipedalLike framework) closed early as W4-prereq",
-      "issues_done_in_W3": 0,
-      "issues_total": 7,
-      "list": ["d181e95b (T12 SIMD bipedal3 kernel via BatchedBipedalLike)", "686ee1b5 (T13 SIMD dispatch)", "a7886bd8 (T14 multi-word streaming)", "05250df5 (T15 rayon parallel)", "c98ed603 (S1 50x speedup)", "4513209c (S2 0.85x parallel)", "363556e6 (S3 cross-CPU)"]
+      "issues_done": 1,
+      "issues_total": 7
     },
     "W4": {
       "name": "F_5 / F_7",
-      "status": "T16 BatchedBipedalLike framework DONE (was originally W4 but unblocked early)",
+      "status": "PARTIAL — T16 framework closed (was W3 originally)",
       "issues_done": 1,
-      "issues_total": 7,
-      "list": [
-        "b17bec62 (T16 BatchedBipedalLike framework) DONE 2026-05-09 — 2 reworks + final lead-direct doc refresh",
-        "6917eb85 (T17 F_5 packed type)",
-        "684a6715 (T18 permanent_bipedal5)",
-        "56c5dabc (T19 F_7 packed type)",
-        "063f49bb (T20 permanent_bipedal7)",
-        "1f769232 (T21 SIMD F_5+F_7 kernels)",
-        "333028c1 (S4 cross-CAS validation)"
-      ]
+      "issues_total": 7
     },
     "W5": {
       "name": "GPU",
       "status": "PENDING",
-      "issues_total": 6,
-      "list": ["b62c86d8 (T22)", "ad55b777 (T23)", "b43cdf33 (T24)", "5c0505b2 (T25)", "2fbbdfa5 (T26)", "a9e461de (S5 [aspirational])"]
+      "issues_total": 6
     },
     "W6": {
       "name": "Lean verification",
       "status": "PENDING",
-      "issues_total": 4,
-      "list": ["8c902184 (Gf api-freeze)", "f05ffbe1 (V1 Lean F_3)", "0606186a (V2 Lean Ryser)", "30e98ef1 (V3 Lean F_5/F_7 [aspirational])"]
+      "issues_total": 4
     },
     "W7": {
       "name": "Reporting",
       "status": "PENDING",
-      "issues_total": 5,
-      "list": ["424aa94f (T27 plot scripts)", "7cd9afdb (S6 publication-grade)", "c90db5a4 (T28 permanent-repro.sh)", "16f03734 (T29 README + doc-tests)", "8808b051 (T30 update CLAUDE.md + ROADMAP)"],
-      "additional_in_W7": ["8e4e19a0 (perm-vs-det uniformity)"]
+      "issues_total": 5
     }
   },
-  "session_2_summary": {
+  "session_3_summary": {
     "issues_closed": [
-      "e6b1216a (T1) - 0 rework",
-      "94870b84 (T6) - 0 rework + 1 lead-direct doc fix (n <= 63)",
-      "1aa0cb99 (T2) - 1 rework + 2 lead-direct fixes (issue description amendment + lib.rs Status refresh)",
-      "b17bec62 (T16) - 2 reworks (rw1 closed scalar-oracle + Config3 hard-coded findings; rw2 closed assoc-types finding)"
+      "46330802 (T3) — 2 reworks (sub canonical paper §2.2 form)",
+      "053e4016 (T4) — 1 rework (neg_assign + per-chunk cross-check)",
+      "ef7d0633 (T5) — 0 reworks + 1 lead-direct (R3 + epic §7.2 SSOT amendment)",
+      "93e5a5e8 (T7) — 2 reworks + 1 lead-direct (FiniteField generic + n<=63 assert)",
+      "632d92ad (T8) — 1 rework + 1 lead-direct (paper port markers + Lcg SSOT in T7)"
     ],
-    "user_escalations": [
-      "T2 (1aa0cb99) '65 elements' criterion infeasible for fixed-LANES=64 — user chose Option C: expand T2 scope to also implement PackedFieldVec; recorded as ## Amendment 2026-05-09 in issue description"
+    "user_escalations_resolved": [
+      "T5 SSOT contract conflict (Vec<Bipedal3Vec> vs flat mag/sgn) — Option A: amend R3 §2.1 + epic §7.2",
+      "T9/epic large-n cross-check infeasibility (n in {28,32} ~8 days/100 matrices) — Option A: trim to n in {20, 24}"
     ],
     "lead_direct_fixes": [
-      "T6 docs: n <= 64 → n <= 63 (3 locations) — 1u64 << 64 is UB",
-      "T2 issue description: appended ## Amendment 2026-05-09 (user-approved, Option C) block",
-      "T2 lib.rs Status section: 'W1-T1 skeleton with no functional surface' → 'W1 sub-wave 1b in progress; T2/T6 landed'"
+      "T5: R3 §2.1.1 + epic §7.2 amendment (Vec<Bipedal3Vec> SSOT)",
+      "T7: 12-line n <= 63 assert + # Panics doc bullet + #[should_panic] regression test",
+      "T7 LCG SSOT: refactor random_matrix helper to use gf2_core::rng::Lcg (surfaced by T8 reviewer)"
+    ],
+    "memories_written": [
+      "feedback_sonnet_for_planned_dispatches",
+      "feedback_quote_ssot_formulas_verbatim",
+      "feedback_quote_jit_criteria_verbatim"
     ],
     "key_lessons": [
-      "Verify factual claims in dispatch prompts. T16 round-1 told the worker dev/research/f3_bipedal::Bipedal3 didn't exist — wrong, cost a rework cycle.",
-      "[hard] criterion amendments must be visible in JIT issue description, NOT just source-code comments. Reviewer LLM reads the description's literal text.",
-      "Pre-amend incoherent criteria (e.g. 'N elements' where N > LANES_const) BEFORE dispatch. Don't punt to worker interpretation.",
-      "When making AVX2 entry points generic over per-prime config, lane shape (Mag/Sgn) belongs as associated types on the config trait, not as separate generics on the generic struct. Reviewer's reading of 'plug-in points' included lane selection.",
-      "Lead-direct mechanical fixes (doc bound corrections, narrative refreshes, criterion amendment recording) are appropriate for narrowly scoped Tier 2.5/2.75 fixes where dispatching a worker would burn 10+ min for a 30-second edit. NOT appropriate for code changes that should iterate.",
-      "Worktree+excluded-hip cargo metadata error is environmental: `cargo fmt --all` from a worktree fails. Use `cargo fmt -p <crate> -- --check` from worktree, or run `cargo fmt --all` from main."
+      "Quote JIT criteria verbatim — 2x burned cycles (T7 ConstField vs FiniteField, T8 100 vs 1000 matrices) due to paraphrasing.",
+      "Quote SSOT formulas verbatim — T3-rw1 burned a cycle on bit-identical-but-shape-different sub formula.",
+      "Pre-flight feasibility check on `[hard]` criteria with computational thresholds — T9/epic n in {28,32} infeasibility should have been caught at breakdown, not mid-flight.",
+      "Reviewer cross-issue SSOT scans can flag prior-issue debt — T8's reviewer flagged T7's old test helper. Audit prior subsystem code at close-out.",
+      "Lead-direct mechanical fixes appropriate for narrowly-scoped Tier 2.5/2.75 corrections (n<=63 assert, doc amendments, trivial refactor surfaced by reviewer)."
     ]
   },
   "next_session_priorities": [
-    "1. Dispatch T3 (46330802 — Bipedal3 element with paper formulas + proptest tests). Worktree single-worker. T3's tests can reference gf2_algebra::packed::ScalarPackedFp3 (T2 landed).",
-    "2. After T3 closes, dispatch T4 (053e4016 — Bipedal3Vec). Sequential.",
-    "3. After T4 closes, dispatch T5 (ef7d0633 — Bipedal3Matrix column-major). CRITICAL: column-major per R3/D1a session-1 SSOT fix.",
-    "4. After W1 fully closed: dispatch W2 sub-wave (T7 + T9 in parallel — generic permanent_ryser and permanent_bipedal3 single-word).",
-    "5. Continue down wave plan per dev/plans/gf2_algebra_permanent.md §13."
+    "1. Open T9 with AskUserQuestion bundling: (a) amend T9 criterion 1 to mat.cols() <= 63; (b) amend T9 criterion 3 to permit permanent_mod3_reference as slow-tier oracle for n in {20, 24}.",
+    "2. After amendments, dispatch T9 rework cycle 2 addressing all three findings (n bound, SSOT in halving fold, oracle change). LAST cycle before MAX_REWORK_ATTEMPTS=2 escalation.",
+    "3. After T9 closes, dispatch T10 + T11 + Sa for W2 sub-wave 2c.",
+    "4. After W2 fully closed, plan W3 sub-wave 3a (T12 SIMD bipedal3 kernel + T13 SIMD dispatch + T14 multi-word streaming + T15 rayon parallel)."
   ],
-  "ready_to_dispatch_now": [
-    {"short_id": "46330802", "title": "T3 Bipedal3 element with paper bitwise formulas + proptest tests"}
+  "ready_to_dispatch_after_amendments": [
+    {"short_id": "b0857ae9", "title": "T9 permanent_bipedal3 single-word — rework cycle 2"}
   ]
 }
