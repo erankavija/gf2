@@ -13,33 +13,36 @@
 //!
 //! # Status
 //!
-//! W2 sub-wave 2a (T7 Ryser driver landed). T2/T3/T4/T5/T6 landed (PackedField + Vec trait +
-//! scalar oracles + Bipedal3 element + Bipedal3Vec + Bipedal3Matrix column-major + gray_code_iter):
+//! W2 complete. T2/T3/T4/T5/T6/T7/T8/T9 all landed:
 //!
 //! - [`packed::PackedField`] / [`packed::PackedFieldVec`] traits and the
 //!   [`packed::ScalarPackedFp3`] / [`packed::ScalarPackedFp3Vec`] scalar
-//!   reference impls are landed.
+//!   reference impls are landed (W1-T2/T3).
 //! - [`packed::Bipedal3`] fixed-width packed `F_3` element (64 lanes, bitwise
 //!   Scheinerman 2024 formulas) is landed; cross-checked via proptest (1000
-//!   cases) against [`packed::ScalarPackedFp3`].
+//!   cases) against [`packed::ScalarPackedFp3`] (W1-T3).
 //! - [`packed::Bipedal3Vec`] variable-length packed `F_3` vector (two parallel
 //!   `Vec<u64>` with mask-tail invariant) is landed; cross-checked via proptest
 //!   (200 cases) against [`packed::ScalarPackedFp3Vec`]. Includes `fold_mul`
-//!   inherent method (T4 deliverable).
+//!   inherent method (W1-T4 deliverable).
 //! - [`packed::Bipedal3Matrix`] rectangular `rows × cols` column-major matrix
 //!   (`Vec<Bipedal3Vec>`, one per column) is landed; includes `from_row_major`,
 //!   `to_row_major`, `column`, `row`, `get`, and `transpose`. Covered by
 //!   unit tests (word-boundary shapes) and proptest (100 random shapes,
-//!   double-transpose roundtrip) (T5 deliverable).
-//! - [`gray::gray_code_iter`] is landed.
+//!   double-transpose roundtrip) (W1-T5 deliverable).
+//! - [`gray::gray_code_iter`] is landed (W1-T6).
 //! - [`permanent::ryser::permanent_ryser`] is landed (W2-T7); the generic
 //!   Ryser-formula permanent over any `FiniteField`, used as the
 //!   correctness oracle for every packed permanent kernel.
-//! - [`permanent::reference::permanent_mod3_reference`] (W2-T8 — faithful Rust
-//!   port of Scheinerman 2024 Algorithm 1 / Listing 1) and
-//!   [`permanent::bipedal3::permanent_bipedal3`] (W2-T9 — single-word `n ≤ 64`
-//!   fast path) both landed in W2 alongside T7. W4 F_5/F_7 analogues land
-//!   in W4-T18/T20.
+//! - [`permanent::reference::permanent_mod3_reference`] is landed (W2-T8);
+//!   faithful Rust port of Scheinerman 2024 Algorithm 1 / Listing 1, serving
+//!   as the 50× speedup denominator and fast oracle for large-n cross-checks.
+//! - [`permanent::bipedal3::permanent_bipedal3`] is landed (W2-T9);
+//!   single-word `n ≤ 63` fast path with bipedal-multiplication-tree
+//!   horizontal fold. Per-n cross-checks: 1000 matrices for each `n ∈ 1..=12`
+//!   (default tier) and `n ∈ 13..=16` (slow tier); 100 matrices for `n ∈
+//!   {20, 24}` (slow tier, split sub-tests). W4 F_5/F_7 analogues land in
+//!   W4-T18/T20.
 //!
 //! The full type → crate map this crate satisfies on completion is in
 //! [`dev/plans/d1a_gf2_algebra_boundary.md`](../../../dev/plans/d1a_gf2_algebra_boundary.md)
