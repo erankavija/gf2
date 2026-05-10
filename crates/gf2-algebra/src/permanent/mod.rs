@@ -9,8 +9,9 @@
 //!
 //! # Status
 //!
-//! W2 in progress — Ryser driver landed (W2-T7); reference port and
-//! bipedal fast paths follow in T8/T9 and W3.
+//! W2 complete — Ryser driver (T7), reference port (T8), and single-word
+//! bipedal fast path (T9) all landed in W2. W4 F_5/F_7 analogues land in
+//! W4-T18/T20.
 //!
 //! # Re-exports
 //!

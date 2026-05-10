@@ -35,10 +35,11 @@
 //! - [`permanent::ryser::permanent_ryser`] is landed (W2-T7); the generic
 //!   Ryser-formula permanent over any `FiniteField`, used as the
 //!   correctness oracle for every packed permanent kernel.
-//! - `permanent::reference` (W2-T8 — faithful Rust port of the paper's
-//!   Julia mod-3 reference) and `permanent::bipedal3` (W2-T9 — single-word
-//!   `n ≤ 64` fast path) are still placeholder modules; W4 F_5/F_7
-//!   analogues land in W4-T18/T20.
+//! - [`permanent::reference::permanent_mod3_reference`] (W2-T8 — faithful Rust
+//!   port of Scheinerman 2024 Algorithm 1 / Listing 1) and
+//!   [`permanent::bipedal3::permanent_bipedal3`] (W2-T9 — single-word `n ≤ 64`
+//!   fast path) both landed in W2 alongside T7. W4 F_5/F_7 analogues land
+//!   in W4-T18/T20.
 //!
 //! The full type → crate map this crate satisfies on completion is in
 //! [`dev/plans/d1a_gf2_algebra_boundary.md`](../../../dev/plans/d1a_gf2_algebra_boundary.md)
