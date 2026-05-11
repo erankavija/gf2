@@ -149,8 +149,7 @@ fn main() {
             let mat = Bipedal3Matrix::from_row_major(&row_major, SWEEP_N, SWEEP_N);
 
             let t0 = Instant::now();
-            let _result =
-                std::hint::black_box(permanent_bipedal3_parallel_with_chunk(&mat, chunk));
+            let _result = std::hint::black_box(permanent_bipedal3_parallel_with_chunk(&mat, chunk));
             let elapsed_us = t0.elapsed().as_secs_f64() * 1_000_000.0;
             samples.push(elapsed_us);
         }
