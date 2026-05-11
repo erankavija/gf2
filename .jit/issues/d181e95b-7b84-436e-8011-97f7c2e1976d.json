@@ -2,7 +2,7 @@
   "id": "d181e95b-7b84-436e-8011-97f7c2e1976d",
   "title": "SIMD bipedal3 kernel via generic BatchedBipedalLike framework",
   "description": "Implement the AVX2 SIMD bipedal3 kernel inside `gf2-kernels-simd`, instantiated via the generic `BatchedBipedalLike<P>` framework chosen by the R4 microbench outcome.\n\n## Background\n\nR4 (`c7542983`) selected the generic `BatchedBipedalLike<P, MagLanes, SgnLanes>` framework over per-prime hand-rolled kernels — see the R4 decision doc once that issue closes. This issue lands the AVX2 instantiation for $\\mathbb{F}_3$ ($P=3$) at `gf2-kernels-simd/src/bipedal/`, exposing the lane-batch `add`, `sub`, `mul`, `neg` primitives that T13 wires to.\n\nD4 (`4c534d31`) confirmed the AVX2 intrinsics needed (`_mm256_and_si256`, `_mm256_xor_si256`, `_mm256_or_si256`, load/store) are stable on MSRV 1.95. The dev host has AVX2 only; AVX-512 paths in this issue are `[aspirational]` and gated behind `cfg(target_feature = \"avx512f\")` with a scalar fallback.\n\n`unsafe` is allowed in this crate per the project's unsafe-isolation rule. The kernel must produce an asm artefact under `target/release/deps/` that the `asm-artefact-present` gate can detect.\n\n## Success Criteria\n\n- [ ] [hard] `gf2-kernels-simd/src/bipedal/bipedal3.rs` exists with the generic framework instantiated for $\\mathbb{F}_3$ on AVX2.\n- [ ] [hard] Lane-batch `add`, `sub`, `mul`, `neg` primitives match `Bipedal3` ops bitwise on 1000 random inputs (proptest cross-check).\n- [ ] [hard] AVX2 path uses runtime feature detection via `OnceLock` per the project's existing `simd::maybe_simd()` pattern; scalar fallback when AVX2 is absent.\n- [ ] [aspirational] AVX-512 path exists behind `cfg(target_feature = \"avx512f\")`; on the dev host (5900X, no AVX-512) the path is compiled but never exercised.\n- [ ] [hard] `cargo nextest run -p gf2-kernels-simd --release --profile ci` passes.\n- [ ] [hard] `asm-artefact-present` gate passes (kernel produces inspectable AVX2 ops in `objdump -d`).",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:claude",
   "dependencies": [
@@ -16,20 +16,20 @@
     "asm-artefact-present"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "failed",
+    "asm-artefact-present": {
+      "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-11T13:29:00.041392935Z"
+      "updated_at": "2026-05-11T13:12:06.421948167Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-11T13:36:06.986818505Z"
     },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-05-11T13:11:20.181324057Z"
-    },
-    "asm-artefact-present": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-11T13:12:06.421948167Z"
     }
   },
   "context": {},
@@ -40,5 +40,5 @@
     "component:gf2-kernels-simd"
   ],
   "created_at": "2026-05-09T09:44:29.498586741+00:00",
-  "updated_at": "2026-05-11T13:33:19.475666540+00:00"
+  "updated_at": "2026-05-11T13:41:41.892405063+00:00"
 }
