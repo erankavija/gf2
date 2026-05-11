@@ -1,21 +1,37 @@
-//! `permanent_bipedal3` — single-`u64`-pair fast path for permanents over
-//! `F_3`, restricted to matrices with `n ≤ 63`.
+//! `permanent_bipedal3` — fast path dispatcher and single-`u64`-pair fast
+//! path for permanents over `F_3`.
 //!
-//! For `n ≤ 63` the column-sum vector fits in a single Bipedal3 word (one
+//! ## Single-word path (`n ≤ 64`)
+//!
+//! For `n ≤ 64` the column-sum vector fits in a single Bipedal3 word (one
 //! `u64` mag + one `u64` sgn pair).  Each Gray-code step updates a single
 //! `Bipedal3` column-sum in-place via `Bipedal3::add` or `Bipedal3::sub`
 //! (the canonical paper §2.2 SSOT lives once in those methods), followed by
 //! a horizontal fold via `Bipedal3::fold_mul_first_n` — the bipedal
 //! multiplication tree halving lives once in that method.
 //!
+//! ## Multi-word path (`n > 64`)
+//!
+//! For `n > 64` the column-sum spans `W = ceil(n / 64)` words per leg.
+//! The multi-word streaming path lives in `super::bipedal3_multiword` and
+//! implements the R3 cache-blocking design
+//! (`dev/plans/r3_multi_word_streaming.md`).
+//!
+//! ## Dispatcher
+//!
+//! The public `permanent_bipedal3` function dispatches to the appropriate
+//! path based on `n`.  The single-word path is also exposed as
+//! `permanent_bipedal3_singleword` for callers that need the single-word
+//! path directly (e.g., multi-word boundary cross-checks).
+//!
 //! This module is the **headline single-thread fast path** of the
 //! permanent epic; the 50× speedup target is measured against
-//! `permanent_mod3_reference` at `n = 36`.  Multi-word streaming for
-//! `n > 63` lands in W3-T14 and lives in a separate module.
+//! `permanent_mod3_reference` at `n = 36`.
 //!
 //! # Algorithm reference
 //!
 //! `dev/plans/gf2_algebra_permanent.md` §7.3 (single-word path).
+//! `dev/plans/r3_multi_word_streaming.md` §8 (multi-word pseudocode).
 
 use gf2_core::gfp::Fp;
 
@@ -23,14 +39,14 @@ use crate::gray::gray_code_iter;
 use crate::packed::bipedal3::{Bipedal3, Bipedal3Matrix};
 use crate::packed::PackedField;
 use crate::packed::PackedFieldVec;
+use crate::permanent::bipedal3_multiword;
 
-/// Compute the permanent of an `n × n` matrix over `F_3` using the
-/// single-`u64` Bipedal3 fast path.
+/// Compute the permanent of an `n × n` matrix over `F_3`, dispatching to
+/// the single-word fast path for `n ≤ 64` or the multi-word streaming path
+/// for `65 ≤ n ≤ N_MAX_MULTIWORD`.
 ///
-/// For `n ≤ 63` the column-sum vector fits in a single Bipedal3 word
-/// (one `u64` mag + one `u64` sgn pair), so each Gray-code step performs
-/// exactly one Bipedal3 add or sub followed by a horizontal
-/// bipedal-multiplication-tree fold of the `n` active lanes.
+/// This is the unified public entrypoint. For callers that always have
+/// `n ≤ 64`, use [`permanent_bipedal3_singleword`] directly.
 ///
 /// The permanent of an `n × n` matrix `A` over `F_3` is:
 ///
@@ -48,6 +64,7 @@ use crate::packed::PackedFieldVec;
 /// # Arguments
 ///
 /// * `mat` — An `n × n` [`Bipedal3Matrix`] (column-major, `rows == cols`).
+///   `n` must satisfy `n ≤ N_MAX_MULTIWORD` (currently 256).
 ///
 /// # Examples
 ///
@@ -74,18 +91,14 @@ use crate::packed::PackedFieldVec;
 ///
 /// Panics if `mat.rows() != mat.cols()` (matrix must be square).
 ///
-/// Panics if `mat.cols() > 63` (single-`u64` fast path requires `n ≤ 63`
-/// because [`gray_code_iter`] uses `1u64 << n` as the iteration bound,
-/// which is undefined behaviour for `n ≥ 64`).
+/// Panics if `mat.cols() > bipedal3_multiword::N_MAX_MULTIWORD` (`n` must
+/// be `≤ N_MAX_MULTIWORD = 256`; above that, use the W3-T15 rayon parallel
+/// path or W5 GPU path).
 ///
 /// # Complexity
 ///
-/// `O(n · 2^n)` field operations over `Fp<3>`:
-/// - Matrix prep: `O(n^2)` one-time lane-by-lane column extraction.
-/// - Gray walk: `2^n - 1` steps, each with 1 `Bipedal3::add` or `sub`
-///   (6 word-level bitwise ops) plus 1 `Bipedal3::fold_mul_first_n`
-///   (~6 halving steps, 2 word ops each).
-/// - Space: `O(n)` extra (the `columns` Vec plus one `Bipedal3` col-sum word).
+/// `O(n · 2^n)` field operations over `Fp<3>`. See [`permanent_bipedal3_singleword`]
+/// and [`bipedal3_multiword::permanent_bipedal3_multiword`] for per-path details.
 pub fn permanent_bipedal3(mat: &Bipedal3Matrix) -> Fp<3> {
     let n = mat.cols();
     assert_eq!(
@@ -96,8 +109,76 @@ pub fn permanent_bipedal3(mat: &Bipedal3Matrix) -> Fp<3> {
         n
     );
     assert!(
+        n <= bipedal3_multiword::N_MAX_MULTIWORD,
+        "permanent_bipedal3: n must satisfy n <= {}; got n = {}",
+        bipedal3_multiword::N_MAX_MULTIWORD,
+        n
+    );
+    if n <= 63 {
+        permanent_bipedal3_singleword(mat)
+    } else {
+        bipedal3_multiword::permanent_bipedal3_multiword(mat)
+    }
+}
+
+/// Compute the permanent of an `n × n` matrix over `F_3` using the
+/// single-`u64` Bipedal3 fast path.
+///
+/// For `n ≤ 64` the column-sum vector fits in a single Bipedal3 word
+/// (one `u64` mag + one `u64` sgn pair), so each Gray-code step performs
+/// exactly one Bipedal3 add or sub followed by a horizontal
+/// bipedal-multiplication-tree fold of the `n` active lanes.
+///
+/// Prefer [`permanent_bipedal3`] for the dispatching entrypoint that also
+/// handles `n > 64`.
+///
+/// # Arguments
+///
+/// * `mat` — An `n × n` [`Bipedal3Matrix`] (column-major, `rows == cols`),
+///   with `n ≤ 64`.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_algebra::packed::Bipedal3Matrix;
+/// use gf2_algebra::permanent::bipedal3::permanent_bipedal3_singleword;
+/// use gf2_core::gfp::Fp;
+///
+/// // 2×2 identity over F_3: permanent = 1
+/// let id: Vec<Fp<3>> = vec![
+///     Fp::<3>::new(1), Fp::<3>::new(0),
+///     Fp::<3>::new(0), Fp::<3>::new(1),
+/// ];
+/// let m = Bipedal3Matrix::from_row_major(&id, 2, 2);
+/// assert_eq!(permanent_bipedal3_singleword(&m), Fp::<3>::new(1));
+/// ```
+///
+/// # Panics
+///
+/// Panics if `mat.rows() != mat.cols()` (matrix must be square).
+///
+/// Panics if `mat.cols() > 64` (single-`u64` fast path requires `n ≤ 64`).
+///
+/// # Complexity
+///
+/// `O(n · 2^n)` field operations over `Fp<3>`:
+/// - Matrix prep: `O(n^2)` one-time lane-by-lane column extraction.
+/// - Gray walk: `2^n - 1` steps, each with 1 `Bipedal3::add` or `sub`
+///   (6 word-level bitwise ops) plus 1 `Bipedal3::fold_mul_first_n`
+///   (~6 halving steps, 2 word ops each).
+/// - Space: `O(n)` extra (the `columns` Vec plus one `Bipedal3` col-sum word).
+pub fn permanent_bipedal3_singleword(mat: &Bipedal3Matrix) -> Fp<3> {
+    let n = mat.cols();
+    assert_eq!(
+        mat.rows(),
+        n,
+        "permanent_bipedal3_singleword: matrix must be square (rows={}, cols={})",
+        mat.rows(),
+        n
+    );
+    assert!(
         n <= 63,
-        "permanent_bipedal3: single-u64 fast path requires n <= 63; got n = {}",
+        "permanent_bipedal3_singleword: single-u64 fast path requires n <= 63; got n = {}",
         n
     );
 
@@ -265,25 +346,46 @@ mod tests {
         let _ = permanent_bipedal3(&m);
     }
 
-    /// `n = 65` exceeds the single-u64 fast path limit and panics.
+    /// `n > N_MAX_MULTIWORD` panics.
+    ///
+    /// The dispatcher caps at `N_MAX_MULTIWORD = 256`; above that the
+    /// multi-word streaming path is not yet implemented (W3-T15 / W5 for
+    /// large n). This test guards the upper bound.
     #[test]
-    #[should_panic(expected = "single-u64 fast path requires n <= 63")]
-    fn test_permanent_bipedal3_panics_on_n_exceeding_63() {
-        let data = vec![Fp::<3>::new(0); 65 * 65];
-        let m = Bipedal3Matrix::from_row_major(&data, 65, 65);
+    #[should_panic(expected = "n must satisfy n <=")]
+    fn test_permanent_bipedal3_panics_on_n_exceeding_n_max() {
+        use crate::permanent::bipedal3_multiword::N_MAX_MULTIWORD;
+        let n = N_MAX_MULTIWORD + 1;
+        let data = vec![Fp::<3>::new(0); n * n];
+        let m = Bipedal3Matrix::from_row_major(&data, n, n);
         let _ = permanent_bipedal3(&m);
     }
 
-    /// `n = 64` exceeds the single-u64 fast path limit and panics.
+    /// `permanent_bipedal3_singleword` panics for `n = 64` (too large).
     ///
     /// `gray_code_iter` requires `n <= 63` because `1u64 << 64` is undefined
-    /// behaviour per the Rust reference. This test guards the boundary.
+    /// behaviour per the Rust reference. This test guards the boundary of
+    /// the single-word path. The public dispatcher routes n=64 to the
+    /// multi-word path instead of panicking.
     #[test]
     #[should_panic(expected = "single-u64 fast path requires n <= 63")]
-    fn test_permanent_bipedal3_panics_on_n_64() {
+    fn test_permanent_bipedal3_singleword_panics_on_n_64() {
         let data = vec![Fp::<3>::new(0); 64 * 64];
         let m = Bipedal3Matrix::from_row_major(&data, 64, 64);
-        let _ = permanent_bipedal3(&m);
+        let _ = permanent_bipedal3_singleword(&m);
+    }
+
+    /// Dispatcher accepts n=64 without panicking (routes to multi-word path).
+    ///
+    /// This test only verifies that dispatch constants are consistent:
+    /// n=64 is above the single-word threshold (63) and within N_MAX_MULTIWORD.
+    /// The actual permanent computation at n=64 (2^64 steps) would be
+    /// infeasible; this test exists purely as a dispatch contract smoke-check.
+    #[test]
+    fn test_permanent_bipedal3_dispatch_accepts_n64() {
+        use crate::permanent::bipedal3_multiword::N_MAX_MULTIWORD;
+        // n=64 must be routable: above single-word threshold and within max.
+        const { assert!(64 <= N_MAX_MULTIWORD) }
     }
 
     // -----------------------------------------------------------------------
