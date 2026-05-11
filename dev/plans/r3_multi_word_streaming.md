@@ -652,24 +652,50 @@ W3-T14 verifies correctness on three axes.
 
 ### 9.1 Cross-check vs single-word at the boundary
 
-For `n = 64`, both the single-word path (`permanent_bipedal3_single`,
-W2-T9) and the multi-word path (`permanent_bipedal3_multi_word`, this issue)
-produce identical results. W3-T14 runs 1000 random `{-1, 0, 1}` matrices
-of size `64 x 64` through both paths and asserts bit-equality on every
-output. The multi-word path with `W = 1` exercises the same code as
-`W >= 2` modulo a conditional, and we want the conditional to be exercised
-in test, so the boundary case `n = 64` is included even though the issue's
-formal scope is `n > 64`.
+For `n = 64`, both the single-word path (`permanent_bipedal3_singleword`,
+W2-T9) and the multi-word path (`permanent_bipedal3_multiword`, this issue)
+produce identical results when the boundary is exercised. The multi-word
+path with `W = 1` exercises the same code as `W >= 2` modulo a conditional,
+so the boundary case is covered indirectly via §9.2's small-n direct ryser
+cross-checks (which call `permanent_bipedal3_multiword` at n down to 2 in
+release mode, skipping the `debug_assert!(n > 64)`).
 
-### 9.2 Cross-check vs generic Ryser
+### 9.2 Cross-check vs generic Ryser (amended 2026-05-11)
 
-For `n in {65, 80, 100, 128, 200, 256}`, run 100 random `{-1, 0, 1}`
+**Original plan**: For `n in {65, 80, 100, 128, 200, 256}`, run 100 random
 matrices through `permanent_ryser::<Fp<3>>` and through
-`permanent_bipedal3_multi_word`. Assert bit-equality on every output.
-At `n = 256` the generic Ryser path takes ~ minutes per matrix in
-release mode, so the test carries `#[ignore = "sim: n=256 cross-check"]`
-per CLAUDE.md test-tier rules. The full sweep at `n in {65, 80, 100, 128}`
-runs in fast tier; `n in {200, 256}` runs in slow tier only.
+`permanent_bipedal3_multi_word`. This proved infeasible after W3-T14
+landed for two reasons:
+
+1. `permanent_ryser` itself caps at `n <= 63` (its Gray-code register is
+   a single `u64`), so it cannot serve as an oracle at `n >= 65`.
+2. The `2^n` outer Gray walk takes `> 10^10` s on a single core for the
+   smallest n in the original plan (`n = 65`), let alone `n = 256`.
+
+**Amended plan** (consumed by T14 success criterion 3): the validation
+splits across two layered checks.
+
+- **Small-n direct ryser cross-check (fast tier).** `permanent_bipedal3_multiword`
+  is called directly at `n in {2, 5, 8, 16, 20}` (release mode skips the
+  `debug_assert!(n > 64)`) and bitwise-compared with
+  `permanent_ryser::<Fp<3>>`. 850 random matrices total: 200 trials each
+  at `n in {2, 5, 8, 16}` and 50 trials at `n = 20`. Total runtime is
+  under 5 s, fits the fast-tier budget. Wired to slow tier are 9 more
+  trials at `n in {24, 32, 48, 60}` for additional confidence on demand.
+- **Large-n block-decomposable cross-check (sim tier).** For
+  `n in {65, 72, 96, 128}`, build block-diagonal matrices
+  `[A_{n0} ⊕ I_{n - n0}]` with random `n0 in {10, 11, 12}` and
+  `5` matrices each. The permanent factorises algebraically:
+  `perm(full) = perm_ryser(A_{n0}) * perm(I) = perm_ryser(A_{n0})`.
+  Tests carry `#[ignore = "sim: large-n cross-check ..."]` because the
+  `2^n` Gray walk inside `permanent_bipedal3_multiword` is infeasible;
+  the assertion remains valid against a future-speedup machine.
+
+The block-decomposable construction is the only way to express the
+oracle relation literally at `n in {65, 72, 96, 128}` (the values the
+original plan named) without losing the contract that the implementation
+matches ryser on the full matrix. The small-n direct check provides the
+feasible-runtime correctness coverage.
 
 ### 9.3 Roofline sanity check
 
