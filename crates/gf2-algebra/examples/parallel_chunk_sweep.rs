@@ -1,9 +1,10 @@
 //! T15 (jit:05250df5): Chunk-size sweep for `permanent_bipedal3_parallel`.
 //!
 //! Measures throughput of the rayon parallel permanent at n=28 across chunk
-//! sizes spanning four orders of magnitude: {2^10, 2^12, 2^14, 2^16, 2^18,
-//! 2^20}. For each chunk size, times SAMPLES_PER_CHUNK independent matrices
-//! and records mean throughput in subsets/second.
+//! sizes spanning four orders of magnitude: {2^7, 2^10, 2^12, 2^14, 2^16,
+//! 2^18, 2^20, 2^22} — 128 → 4_194_304 ≈ 32 768x dynamic range (>10^4).
+//! For each chunk size, times SAMPLES_PER_CHUNK independent matrices and
+//! records mean throughput in subsets/second.
 //!
 //! # CSV columns
 //!
@@ -60,8 +61,18 @@ const SAMPLES_PER_CHUNK: usize = 3;
 /// Base seed derived from the JIT issue ID `05250df5`.
 const SEED_BASE: u64 = 0x0525_0df5_0000_0000;
 
-/// Chunk sizes to sweep, spanning ~4 orders of magnitude.
-const CHUNK_SIZES: &[usize] = &[1 << 10, 1 << 12, 1 << 14, 1 << 16, 1 << 18, 1 << 20];
+/// Chunk sizes to sweep, spanning >10^4 in dynamic range
+/// (128 ≤ chunk ≤ 4_194_304 = `2^7 .. 2^22`, ratio 32 768x).
+const CHUNK_SIZES: &[usize] = &[
+    1 << 7,  // 128 — far below the typical L1d-friendly band; checks scheduler overhead floor
+    1 << 10, // 1024
+    1 << 12, // 4096
+    1 << 14, // 16_384
+    1 << 16, // 65_536  — current CHUNK_SUBSETS default
+    1 << 18, // 262_144
+    1 << 20, // 1_048_576
+    1 << 22, // 4_194_304 — well above where rayon load-balance starves tail threads
+];
 
 /// Convert Unix epoch seconds to a `YYYY-MM-DD` UTC date string.
 /// (Inlined to avoid pulling `chrono`/`time` as a dep for an example.)

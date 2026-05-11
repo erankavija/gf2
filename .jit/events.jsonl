@@ -4701,3 +4701,4 @@
 {"type":"issue_state_changed","id":"1c23178d-b7a2-4903-9a30-6f0b077aae87","issue_id":"a7886bd8-e4e1-45e6-8b5c-1fc15a530de1","timestamp":"2026-05-11T18:53:57.072646799Z","from":"in_progress","to":"done"}
 {"type":"issue_completed","id":"ef7a4b3d-d66f-4446-97bd-055d6dc6cdfe","issue_id":"a7886bd8-e4e1-45e6-8b5c-1fc15a530de1","timestamp":"2026-05-11T18:53:57.072675229Z"}
 {"type":"gate_failed","id":"9e755c44-e34f-4182-8540-eb48c3c407d3","issue_id":"05250df5-495a-462e-bd04-aacd6bfb4505","timestamp":"2026-05-11T18:59:17.461657023Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"0da56fb3-0347-40ff-a544-cf06f1ae2d84","issue_id":"05250df5-495a-462e-bd04-aacd6bfb4505","timestamp":"2026-05-11T19:07:52.278761543Z","gate_key":"code-review","updated_by":"auto:executor"}

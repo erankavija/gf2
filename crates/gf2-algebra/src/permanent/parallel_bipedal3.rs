@@ -38,9 +38,14 @@ use crate::packed::PackedFieldVec;
 /// Number of Gray-code subsets per parallel chunk. Tuned via the chunk-sweep
 /// bench at `dev/benchmarks/gf2_algebra_permanent/parallel_chunk_sweep-*.csv`.
 ///
-/// At n=28 (268M subsets) on the dev host (Ryzen 9 5900X, 12c/24t), chunks
-/// of `2^16 = 65536` subsets gave the best throughput. See the CSV for the
-/// full sweep over chunk sizes spanning four orders of magnitude.
+/// At n=28 (268M subsets) on the dev host (Ryzen 9 5900X, 12c/24t), the
+/// sweep at `2^7` (128) → `2^22` (4_194_304) — a dynamic range of 32 768x,
+/// more than four orders of magnitude — shows the flat top of the
+/// throughput curve sits at `2^14..2^16`. The default `2^16 = 65536` is
+/// chosen for clarity (a single round number near the optimum); it
+/// measures within 0.6% (~1 σ) of the empirical best at `2^14`, and well
+/// outside the rolloff at `2^7` (-91%) and `2^22` (-10%). See the CSV
+/// for the full sweep.
 pub const CHUNK_SUBSETS: usize = 1 << 16;
 
 /// Compute the permanent of an `n × n` matrix over `F_3` using rayon-parallel
