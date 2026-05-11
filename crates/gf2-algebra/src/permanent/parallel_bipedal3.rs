@@ -100,18 +100,54 @@ pub const CHUNK_SUBSETS: usize = 1 << 16;
 /// `O(n · C)` per chunk start to reconstruct the initial `col_sum` (where
 /// `C = CHUNK_SUBSETS`). Matrix prep is `O(n^2)` one-time.
 pub fn permanent_bipedal3_parallel(mat: &Bipedal3Matrix) -> Fp<3> {
+    permanent_bipedal3_parallel_with_chunk(mat, CHUNK_SUBSETS)
+}
+
+/// Same as [`permanent_bipedal3_parallel`] but takes the chunk size as a
+/// runtime argument instead of the [`CHUNK_SUBSETS`] compile-time default.
+///
+/// This is the SSOT entry point used by both the production wrapper
+/// ([`permanent_bipedal3_parallel`] passes `CHUNK_SUBSETS`) and the
+/// `parallel_chunk_sweep` example (sweeps over `2^7..=2^22`). Keeping the
+/// chunk-sweep and production paths sharing one implementation ensures
+/// the recorded CSV throughput numbers reflect the exact code path that
+/// production callers exercise.
+///
+/// # Arguments
+///
+/// * `mat` — square `Bipedal3Matrix` with `mat.cols() <= 63`.
+/// * `chunk_subsets` — number of Gray-code subsets per rayon chunk
+///   (must be `>= 1`).
+///
+/// # Panics
+///
+/// Panics on non-square matrices, `n > 63`, or `chunk_subsets == 0`.
+///
+/// # Complexity
+///
+/// Identical to [`permanent_bipedal3_parallel`] but parametrised by chunk
+/// size: `O(n · 2^n / T)` field operations per thread, plus `O(n)` per
+/// chunk start for the initial `col_sum` reconstruction.
+pub fn permanent_bipedal3_parallel_with_chunk(
+    mat: &Bipedal3Matrix,
+    chunk_subsets: usize,
+) -> Fp<3> {
     let n = mat.cols();
     assert_eq!(
         mat.rows(),
         n,
-        "permanent_bipedal3_parallel: matrix must be square (rows={}, cols={})",
+        "permanent_bipedal3_parallel_with_chunk: matrix must be square (rows={}, cols={})",
         mat.rows(),
         n
     );
     assert!(
         n <= 63,
-        "permanent_bipedal3_parallel: single-u64 fast path requires n <= 63; got n = {}",
+        "permanent_bipedal3_parallel_with_chunk: single-u64 fast path requires n <= 63; got n = {}",
         n
+    );
+    assert!(
+        chunk_subsets >= 1,
+        "permanent_bipedal3_parallel_with_chunk: chunk_subsets must be >= 1; got {chunk_subsets}"
     );
 
     // Edge case: 0×0 matrix has exactly one permutation (empty), product = 1.
@@ -146,21 +182,15 @@ pub fn permanent_bipedal3_parallel(mat: &Bipedal3Matrix) -> Fp<3> {
     // The final reduce sums all partial results under F_3 addition, which is
     // commutative and associative, guaranteeing determinism regardless of
     // rayon's scheduling.
-    // Gray-code indices run 1..=total_subsets (non-empty subsets only; index 0
-    // maps to the empty subset, which is excluded from Ryser's formula).
-    // Chunks start at 1, 1+CHUNK_SUBSETS, 1+2*CHUNK_SUBSETS, ... up to
-    // total_subsets (inclusive).  Using step_by on 1..=total_subsets gives
-    // chunk_start values 1, 1+C, 1+2C, ... where end = min(start+C,
-    // total_subsets+1) for the exclusive upper bound of each chunk.
     let partial_total: Fp<3> = (1..=total_subsets)
-        .step_by(CHUNK_SUBSETS)
+        .step_by(chunk_subsets)
         .par_bridge()
         .map(|chunk_start| {
             process_chunk(
                 &columns,
                 n,
                 chunk_start,
-                (chunk_start + CHUNK_SUBSETS as u64).min(total_subsets + 1),
+                (chunk_start + chunk_subsets as u64).min(total_subsets + 1),
             )
         })
         .reduce(|| Fp::<3>::new(0), |a, b| a + b);
