@@ -149,13 +149,20 @@ const _: () = {
 ///   length `W` each, plus a 256-bit Gray counter).
 pub fn permanent_bipedal3_multiword(mat: &Bipedal3Matrix) -> Fp<3> {
     let n = mat.cols();
+    assert_eq!(
+        mat.rows(),
+        n,
+        "permanent_bipedal3_multiword: matrix must be square (rows={}, cols={})",
+        mat.rows(),
+        n
+    );
+    assert!(
+        n <= N_MAX_MULTIWORD,
+        "permanent_bipedal3_multiword: n = {n} exceeds N_MAX_MULTIWORD = {N_MAX_MULTIWORD}"
+    );
     debug_assert!(
         n > 64,
         "permanent_bipedal3_multiword: n = {n} should use single-word fast path (n <= 64)"
-    );
-    debug_assert!(
-        n <= N_MAX_MULTIWORD,
-        "permanent_bipedal3_multiword: n = {n} exceeds N_MAX_MULTIWORD = {N_MAX_MULTIWORD}"
     );
 
     // W = ceil(n / 64): number of u64 words per column-sum leg.
@@ -606,6 +613,32 @@ mod tests {
     #[test]
     fn test_multiword_vs_ryser_n2() {
         run_multiword_vs_ryser_at_n(2, 200, 0x0002);
+    }
+
+    /// Regression: `permanent_bipedal3_multiword` must panic on non-square
+    /// inputs even in release builds (the documented contract). Without an
+    /// upfront square-matrix assertion the function would otherwise size
+    /// the active-lane mask off `cols()` and silently discard extra rows.
+    #[test]
+    #[should_panic(expected = "matrix must be square")]
+    fn test_multiword_panics_on_non_square() {
+        let n_rows = 66usize;
+        let n_cols = 65usize;
+        let data = vec![Fp::<3>::new(0); n_rows * n_cols];
+        let m = Bipedal3Matrix::from_row_major(&data, n_rows, n_cols);
+        let _ = permanent_bipedal3_multiword(&m);
+    }
+
+    /// Regression: `permanent_bipedal3_multiword` must panic on `n` above
+    /// `N_MAX_MULTIWORD` even in release builds. The previous
+    /// `debug_assert!` would have been silently dropped in `--release`.
+    #[test]
+    #[should_panic(expected = "exceeds N_MAX_MULTIWORD")]
+    fn test_multiword_panics_above_n_max() {
+        let n = N_MAX_MULTIWORD + 1;
+        let data = vec![Fp::<3>::new(0); n * n];
+        let m = Bipedal3Matrix::from_row_major(&data, n, n);
+        let _ = permanent_bipedal3_multiword(&m);
     }
 
     #[test]
