@@ -36,6 +36,12 @@ pub use ryser::permanent_ryser;
 /// `gf2_algebra::permanent::gray::gray_code_iter` resolves.
 pub use crate::gray;
 
+#[cfg(feature = "parallel")]
+pub mod parallel_bipedal3;
+
+#[cfg(feature = "parallel")]
+pub use parallel_bipedal3::permanent_bipedal3_parallel;
+
 #[cfg(feature = "f5")]
 pub mod bipedal5;
 

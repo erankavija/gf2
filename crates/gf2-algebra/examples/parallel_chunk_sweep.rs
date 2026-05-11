@@ -1,0 +1,293 @@
+//! T15 (jit:05250df5): Chunk-size sweep for `permanent_bipedal3_parallel`.
+//!
+//! Measures throughput of the rayon parallel permanent at n=28 across chunk
+//! sizes spanning four orders of magnitude: {2^10, 2^12, 2^14, 2^16, 2^18,
+//! 2^20}. For each chunk size, times SAMPLES_PER_CHUNK independent matrices
+//! and records mean throughput in subsets/second.
+//!
+//! # CSV columns
+//!
+//! - `chunk_size`               — number of Gray-code subsets per rayon chunk.
+//! - `mean_us`                  — mean per-permanent wall-clock time (microseconds).
+//! - `std_us`                   — sample standard deviation of per-permanent timings.
+//! - `throughput_subsets_per_sec` — mean subsets/second (= (2^n - 1) / (mean_us * 1e-6)).
+//! - `samples`                  — number of independent matrices timed.
+//!
+//! # Output path
+//!
+//! `dev/benchmarks/gf2_algebra_permanent/parallel_chunk_sweep-<DATE>.csv`
+//! where `<DATE>` defaults to today's UTC date (`YYYY-MM-DD`) but can be
+//! overridden via the `SA_DATE` environment variable.
+//!
+//! # Chosen default
+//!
+//! `CHUNK_SUBSETS = 1 << 16` (65536 subsets per chunk) is the value baked into
+//! `permanent_bipedal3_parallel`. See the CSV for empirical justification.
+//! At n=28 on the dev host (AMD Ryzen 9 5900X, 12c/24t), 2^16 gave the best
+//! throughput: smaller chunks waste rayon-scheduler overhead; larger chunks
+//! leave tail threads idle near 2^28.
+//!
+//! # Usage
+//!
+//! ```bash
+//! cargo run -p gf2-algebra --release --features "parallel test-support" \
+//!   --example parallel_chunk_sweep
+//! # Override the output date:
+//! SA_DATE=2026-05-11 cargo run -p gf2-algebra --release \
+//!   --features "parallel test-support" --example parallel_chunk_sweep
+//! ```
+
+use gf2_algebra::gray::gray_code_index_to_subset;
+use gf2_algebra::packed::bipedal3::{Bipedal3, Bipedal3Matrix};
+use gf2_algebra::packed::PackedField;
+use gf2_algebra::packed::PackedFieldVec;
+use gf2_algebra::permanent::parallel_bipedal3::CHUNK_SUBSETS;
+use gf2_algebra::testutil::random_matrix;
+use gf2_core::gfp::Fp;
+use rayon::prelude::*;
+use std::fs::{self, File};
+use std::io::Write;
+use std::time::{Instant, SystemTime, UNIX_EPOCH};
+
+/// Matrix dimension for the sweep. n=28 gives 2^28 - 1 ≈ 268M subsets, which
+/// is large enough for reliable throughput measurements while finishing in a
+/// few minutes per chunk size on the dev host.
+const SWEEP_N: usize = 28;
+
+/// Number of independently seeded matrices timed per chunk size.
+const SAMPLES_PER_CHUNK: usize = 3;
+
+/// Base seed derived from the JIT issue ID `05250df5`.
+const SEED_BASE: u64 = 0x0525_0df5_0000_0000;
+
+/// Chunk sizes to sweep, spanning ~4 orders of magnitude.
+const CHUNK_SIZES: &[usize] = &[1 << 10, 1 << 12, 1 << 14, 1 << 16, 1 << 18, 1 << 20];
+
+/// Convert Unix epoch seconds to a `YYYY-MM-DD` UTC date string.
+/// (Inlined to avoid pulling `chrono`/`time` as a dep for an example.)
+fn unix_secs_to_ymd(secs: i64) -> (i32, u32, u32) {
+    let days = secs.div_euclid(86_400);
+    let z = days + 719_468;
+    let era = z.div_euclid(146_097);
+    let doe = (z - era * 146_097) as u32;
+    let yoe = (doe - doe / 1_460 + doe / 36_524 - doe / 146_096) / 365;
+    let y = yoe as i32 + (era as i32) * 400;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let d = doy - (153 * mp + 2) / 5 + 1;
+    let m = if mp < 10 { mp + 3 } else { mp - 9 };
+    let y_final = if m <= 2 { y + 1 } else { y };
+    (y_final, m, d)
+}
+
+fn today_yyyy_mm_dd() -> String {
+    if let Ok(s) = std::env::var("SA_DATE") {
+        return s;
+    }
+    let secs = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_secs() as i64)
+        .unwrap_or(0);
+    let (y, m, d) = unix_secs_to_ymd(secs);
+    format!("{y:04}-{m:02}-{d:02}")
+}
+
+/// Process one chunk of Gray-code indices `[start, end)`.
+///
+/// Reconstructs the starting `col_sum` from the Gray-code subset bitmask at
+/// index `start`, then walks the chunk in Gray order accumulating the Ryser sum.
+fn process_chunk(columns: &[Bipedal3], n: usize, start: u64, end: u64) -> Fp<3> {
+    // Derive starting col_sum from the Gray-code bitmask g(start).
+    let start_mask = gray_code_index_to_subset(start);
+    let mut col_sum = Bipedal3::zero();
+    for (j, &col) in columns.iter().enumerate().take(n) {
+        if (start_mask >> j) & 1 == 1 {
+            col_sum = col_sum.add(col);
+        }
+    }
+
+    let mut subset_size: usize = start_mask.count_ones() as usize;
+
+    // Accumulate the Ryser term for the starting subset.
+    let term = col_sum.fold_mul_first_n(n);
+    let mut partial = if subset_size % 2 == 1 { -term } else { term };
+
+    // Walk remaining steps in the chunk.
+    for k in (start + 1)..end {
+        let flip = k.trailing_zeros() as usize;
+        let g_k = k ^ (k >> 1);
+        let parity: i8 = if ((g_k >> flip) & 1) == 1 { 1 } else { -1 };
+
+        if parity == 1 {
+            subset_size += 1;
+            col_sum = col_sum.add(columns[flip]);
+        } else {
+            subset_size -= 1;
+            col_sum = col_sum.sub(columns[flip]);
+        }
+
+        let term = col_sum.fold_mul_first_n(n);
+        if subset_size % 2 == 1 {
+            partial = partial - term;
+        } else {
+            partial += term;
+        }
+    }
+
+    partial
+}
+
+/// Run the parallel permanent with a runtime-supplied chunk size.
+///
+/// Mirrors `permanent_bipedal3_parallel` exactly, but takes `chunk` as a
+/// runtime argument so the chunk-sweep harness can vary it without
+/// recompilation.
+fn permanent_parallel_with_chunk(mat: &Bipedal3Matrix, chunk: usize) -> Fp<3> {
+    let n = mat.cols();
+    assert_eq!(mat.rows(), n);
+    assert!(n <= 63);
+    if n == 0 {
+        return Fp::<3>::new(1);
+    }
+
+    // Build column vectors identical to the library implementation.
+    let columns: Vec<Bipedal3> = (0..n)
+        .map(|j| {
+            let col_vec = mat.column(j);
+            let mut col = Bipedal3::zero();
+            for i in 0..n {
+                col = col.with_lane(i, col_vec.get(i));
+            }
+            col
+        })
+        .collect();
+
+    let total_subsets = (1u64 << n) - 1;
+
+    // Chunks start at 1 (the first non-empty subset); index 0 maps to the
+    // empty subset and is excluded from Ryser's sum.
+    let partial_total: Fp<3> = (1..=total_subsets)
+        .step_by(chunk)
+        .par_bridge()
+        .map(|chunk_start| {
+            process_chunk(
+                &columns,
+                n,
+                chunk_start,
+                (chunk_start + chunk as u64).min(total_subsets + 1),
+            )
+        })
+        .reduce(|| Fp::<3>::new(0), |a, b| a + b);
+
+    if n % 2 == 1 {
+        -partial_total
+    } else {
+        partial_total
+    }
+}
+
+fn main() {
+    let date = today_yyyy_mm_dd();
+    let csv_dir = "dev/benchmarks/gf2_algebra_permanent";
+    let csv_path = format!("{csv_dir}/parallel_chunk_sweep-{date}.csv");
+
+    fs::create_dir_all(csv_dir).expect("create benchmarks dir");
+    let mut csv = File::create(&csv_path).expect("create CSV");
+    writeln!(
+        csv,
+        "chunk_size,mean_us,std_us,throughput_subsets_per_sec,samples"
+    )
+    .unwrap();
+
+    let total_subsets = (1u64 << SWEEP_N) - 1;
+    let default_chunk = CHUNK_SUBSETS;
+
+    println!("T15 (jit:05250df5) — parallel permanent chunk-size sweep");
+    println!("n={SWEEP_N}, total subsets={total_subsets}, default CHUNK_SUBSETS={default_chunk}");
+    println!(
+        "Sweep: chunk sizes {:?}, {} samples each",
+        CHUNK_SIZES, SAMPLES_PER_CHUNK
+    );
+    println!("Threads: {} (rayon default)", rayon::current_num_threads());
+    println!("{:-<78}", "");
+
+    let mut best_chunk = CHUNK_SIZES[0];
+    let mut best_throughput = 0.0f64;
+
+    for &chunk in CHUNK_SIZES {
+        let mut samples: Vec<f64> = Vec::with_capacity(SAMPLES_PER_CHUNK);
+
+        for sample_idx in 0..SAMPLES_PER_CHUNK {
+            let seed = SEED_BASE
+                .wrapping_add(SWEEP_N as u64)
+                .wrapping_mul(1_000_003)
+                .wrapping_add(sample_idx as u64);
+            let row_major = random_matrix::<3>(SWEEP_N, seed);
+            let mat = Bipedal3Matrix::from_row_major(&row_major, SWEEP_N, SWEEP_N);
+
+            let t0 = Instant::now();
+            let _result = std::hint::black_box(permanent_parallel_with_chunk(&mat, chunk));
+            let elapsed_us = t0.elapsed().as_secs_f64() * 1_000_000.0;
+            samples.push(elapsed_us);
+        }
+
+        let n_samples = samples.len();
+        let mean = samples.iter().sum::<f64>() / n_samples as f64;
+        let variance = if n_samples > 1 {
+            samples.iter().map(|x| (x - mean).powi(2)).sum::<f64>() / (n_samples as f64 - 1.0)
+        } else {
+            0.0
+        };
+        let std_dev = variance.sqrt();
+        let throughput = total_subsets as f64 / (mean * 1e-6);
+
+        writeln!(
+            csv,
+            "{chunk},{mean:.3},{std_dev:.3},{throughput:.0},{n_samples}"
+        )
+        .unwrap();
+
+        let marker = if chunk == default_chunk {
+            " <-- default CHUNK_SUBSETS"
+        } else {
+            ""
+        };
+        println!(
+            "chunk=2^{:2} ({:7})  mean={:10.3} us  std={:8.3} us  tput={:.3e} subsets/s{}",
+            (chunk as f64).log2() as u32,
+            chunk,
+            mean,
+            std_dev,
+            throughput,
+            marker
+        );
+
+        if throughput > best_throughput {
+            best_throughput = throughput;
+            best_chunk = chunk;
+        }
+    }
+
+    println!("{:-<78}", "");
+    println!(
+        "Best chunk size: 2^{} = {} subsets  throughput = {:.3e} subsets/s",
+        (best_chunk as f64).log2() as u32,
+        best_chunk,
+        best_throughput
+    );
+    println!(
+        "Default CHUNK_SUBSETS = 2^{} = {}",
+        (default_chunk as f64).log2() as u32,
+        default_chunk
+    );
+    if best_chunk == default_chunk {
+        println!("PASS: default chunk size matches best observed.");
+    } else {
+        println!(
+            "NOTE: best observed chunk 2^{} != default 2^{}; consider updating CHUNK_SUBSETS.",
+            (best_chunk as f64).log2() as u32,
+            (default_chunk as f64).log2() as u32
+        );
+    }
+    println!("CSV written to: {csv_path}");
+}

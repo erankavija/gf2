@@ -48,6 +48,11 @@ harness = false
 name = "paper_repro_slope"
 required-features = ["test-support"]
 
+# ── Issue `05250df5` (epic `ae82bd73`) — T15 parallel chunk-size sweep bench ──
+[[example]]
+name = "parallel_chunk_sweep"
+required-features = ["parallel", "test-support"]
+
 [features]
 default = ["simd", "parallel"]
 
