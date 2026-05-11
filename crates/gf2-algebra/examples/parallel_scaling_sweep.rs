@@ -135,18 +135,18 @@ fn main() {
     writeln!(csv, "# S2 (jit:4513209c) parallel scaling sweep").unwrap();
     writeln!(csv, "# date: {date}").unwrap();
     writeln!(csv, "# host: {HW_MODEL}").unwrap();
-    writeln!(
-        csv,
-        "# physical_cores: {HW_PHYSICAL_CORES}, smt: {HW_SMT}"
-    )
-    .unwrap();
+    writeln!(csv, "# physical_cores: {HW_PHYSICAL_CORES}, smt: {HW_SMT}").unwrap();
     writeln!(csv, "# avx2: {HW_AVX2}, avx512: {HW_AVX512}").unwrap();
     writeln!(csv, "# rayon: {RAYON_VERSION}").unwrap();
     writeln!(csv, "# rng: gf2_core::rng::Lcg").unwrap();
     for &(n, seed) in RNG_SEEDS {
         writeln!(csv, "# seed_n{n}: {seed:#018x}").unwrap();
     }
-    writeln!(csv, "# samples_n28: {SAMPLES_N28}, samples_n32: {SAMPLES_N32}, samples_n36: {SAMPLES_N36}").unwrap();
+    writeln!(
+        csv,
+        "# samples_n28: {SAMPLES_N28}, samples_n32: {SAMPLES_N32}, samples_n36: {SAMPLES_N36}"
+    )
+    .unwrap();
     writeln!(csv, "# thread_counts: {THREAD_COUNTS:?}").unwrap();
     writeln!(
         csv,
@@ -193,9 +193,8 @@ fn main() {
 
             for _ in 0..n_samples {
                 let t0 = Instant::now();
-                let result = pool.install(|| {
-                    std::hint::black_box(permanent_bipedal3_parallel(&mat))
-                });
+                let result =
+                    pool.install(|| std::hint::black_box(permanent_bipedal3_parallel(&mat)));
                 let elapsed_us = t0.elapsed().as_secs_f64() * 1_000_000.0;
                 timings.push(elapsed_us);
                 fp3_val = result.value(); // Fp<3>.value() returns the canonical u64 (0, 1, or 2)
@@ -230,11 +229,18 @@ fn main() {
         }
 
         // Compute scaling factors relative to T=1.
-        let mean_t1 = results.iter().find(|(t, _, _, _)| *t == 1).map(|(_, m, _, _)| *m).unwrap();
+        let mean_t1 = results
+            .iter()
+            .find(|(t, _, _, _)| *t == 1)
+            .map(|(_, m, _, _)| *m)
+            .unwrap();
 
         println!();
         println!("  Scaling factors (criterion: ≥ 0.85 for T ∈ {{2,4,8,12}}):");
-        println!("  {:>4}  {:>12}  {:>10}  {:>14}  {:>7}  {:>4}", "T", "mean_us", "std_us", "scaling_factor", "fp3", "PASS?");
+        println!(
+            "  {:>4}  {:>12}  {:>10}  {:>14}  {:>7}  {:>4}",
+            "T", "mean_us", "std_us", "scaling_factor", "fp3", "PASS?"
+        );
 
         let mut all_pass = true;
         for &(t, mean, std_dev, fp3_val) in &results {
@@ -247,7 +253,13 @@ fn main() {
             if !pass {
                 all_pass = false;
             }
-            let pass_str = if t == 1 { "  —  " } else if pass { " PASS" } else { " FAIL" };
+            let pass_str = if t == 1 {
+                "  —  "
+            } else if pass {
+                " PASS"
+            } else {
+                " FAIL"
+            };
             println!(
                 "  {:>4}  {:>12.1}  {:>10.1}  {:>14.4}  {:>7}  {:>5}",
                 t, mean, std_dev, scaling, fp3_val, pass_str
