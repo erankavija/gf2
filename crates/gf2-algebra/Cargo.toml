@@ -47,6 +47,12 @@ gf2-algebra = { path = ".", features = ["test-support"] }
 name = "permanent"
 harness = false
 
+# ── Issue `c98ed603` (epic `ae82bd73`) — S1 n=36 dedicated speedup bench ──
+[[bench]]
+name = "s1_n36_speedup"
+harness = false
+required-features = ["simd", "test-support"]
+
 # ── Issue `96dcbec4` (epic `ae82bd73`) — paper Table 2 slope reproduction ──
 [[example]]
 name = "paper_repro_slope"
