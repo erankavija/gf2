@@ -1,9 +1,17 @@
 //! Criterion benchmark suite for the permanent algorithm family
 //! (epic gf2-algebra-permanent / ae82bd73).
 //!
-//! Per-group sweep ranges per T10 (b315564a) Amendment 2026-05-11b:
+//! Per-group sweep ranges per T10 (b315564a) Amendment 2026-05-11c:
 //!   permanent_mod3_reference: n in {8, 12, 16, 20}
-//!   permanent_bipedal3:       n in {8, 12, 16, 20, 24, 28, 32, 36}
+//!   permanent_bipedal3:       n in {8, 12, 16, 20, 24, 28}
+//!
+//! n=32 (~9.4 s/call) and n=36 (~150 s/call) were dropped from the bipedal
+//! sweep on 2026-05-11 because Criterion's hard minimum sample_size of 10
+//! would push each of those cells past the criterion-4 60 s/cell budget on
+//! the dev host (10 * 9.4 s = 94 s and 10 * 150 s = 1500 s respectively).
+//! The headline n=36 speedup measurement instead lands in S1's dedicated
+//! perf-criterion cell, which uses an iter_custom-style single-iteration
+//! timing where multi-hour wall-clock is acceptable.
 //!
 //! Inputs come from the workspace SSOT helper
 //! [`gf2_algebra::testutil::random_matrix`], which uses [`gf2_core::rng::Lcg`]
@@ -14,20 +22,19 @@
 //!
 //! Per-cell wall-clock budget: criterion 4 contracts each cell under 60 s on
 //! the dev host. We use `sample_size(10)` (Criterion's minimum) and tune
-//! `warm_up_time(1s)` + `measurement_time(45s)` so warm-up + measurement +
-//! Criterion overhead stays under 60 s total, even for the largest cells.
+//! `warm_up_time(1 s)` + `measurement_time(45 s)` so warm-up + measurement +
+//! Criterion overhead stays under 60 s total for every cell in the sweep.
 //! Sample timing on AMD Ryzen 9 5900X (release build) measured 2026-05-11:
-//!   permanent_mod3_reference n=8/12/16: sub-second to ~10 s — well inside
+//!   permanent_mod3_reference n=8/12/16: sub-second to ~10 s — well inside.
 //!   permanent_mod3_reference n=20:      ~77 ms mean × ~78 iters × 10 samples
-//!                                       ≈ 50 s measurement + 1 s warm-up.
-//!   permanent_bipedal3 n=28/32/36:      adaptive iteration counts; the 45 s
-//!                                       measurement cap drives Criterion to
-//!                                       reduce iterations per sample until
-//!                                       the total fits.
+//!                                       ≈ 46 s measurement + 1 s warm-up.
+//!   permanent_bipedal3 n=8..24:         microseconds to seconds — well inside.
+//!   permanent_bipedal3 n=28:            ~0.59 s mean × 10 samples ≈ 6 s.
 //!
-//! The headline `permanent_mod3_reference` at n=36 (paper's reference workload)
-//! is *not* in this sweep — it lands in S1's separate perf-criterion cell where
-//! a multi-hour single-iteration measurement is acceptable.
+//! The headline `permanent_mod3_reference` n=36 (paper's reference workload)
+//! and the matching `permanent_bipedal3` n=36 50× speedup measurement land in
+//! S1's separate perf-criterion cell, which uses a single-iteration timing
+//! where multi-hour wall-clock is acceptable.
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use std::time::Duration;
@@ -62,7 +69,7 @@ fn bench_permanent_bipedal3(c: &mut Criterion) {
     group.warm_up_time(Duration::from_secs(1));
     group.measurement_time(Duration::from_secs(45));
 
-    for n in [8usize, 12, 16, 20, 24, 28, 32, 36] {
+    for n in [8usize, 12, 16, 20, 24, 28] {
         let seed = BENCH_SEED
             .wrapping_add(0xbeef_0000u64)
             .wrapping_add(n as u64);
