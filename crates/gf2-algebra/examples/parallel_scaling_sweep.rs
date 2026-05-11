@@ -2,49 +2,47 @@
 //!
 //! Measures wall-clock time of `permanent_bipedal3_parallel` across rayon thread
 //! counts T ∈ {1, 2, 4, 8, 12} and matrix dimensions n ∈ {28, 32, 36}, computing
-//! the scaling factor `T_1 / (T × T_T)` per (n, T) cell.
+//! the per-matrix scaling factor `T_1[k] / (T × T_T[k])` for each independent
+//! matrix `k`, then aggregating to a mean and a two-sided 95% CI per (n, T).
 //!
 //! # Success criterion (verbatim from JIT 4513209c)
 //!
-//! For n ∈ {28, 32, 36} and T ∈ {2, 4, 8, 12}: scaling factor `T_1 / (T × T_T) ≥ 0.85`.
+//! For n ∈ {28, 32, 36} and T ∈ {2, 4, 8, 12}: scaling factor `T_1 / (T × T_T) ≥
+//! 0.85` *within 95% CI*. The harness implements this by checking that the
+//! **lower bound** of the per-cell two-sided 95% CI on the scaling factor is
+//! ≥ 0.85.
 //!
 //! # Determinism
 //!
-//! A fixed seed per n is used so the same matrix is timed across all thread
-//! counts. The `fp3_result_hex` column records the Fp<3> value (canonical int
-//! 0..2) across all T; they must be identical. The code confirms this at runtime
-//! and panics if they diverge.
+//! For each n we draw K matrices from a deterministic LCG seeded by the JIT
+//! issue ID. The SAME K matrices are timed at every thread count so the
+//! per-matrix `Fp<3>` output can be compared bit-for-bit across T values.
+//! The harness asserts equality at runtime and panics on mismatch.
 //!
 //! # CSV output
 //!
 //! `dev/benchmarks/gf2_algebra_permanent/s2_parallel_scaling-<DATE>.csv`
-//! where `<DATE>` defaults to today's UTC date but can be overridden with
-//! the `SA_DATE` environment variable.
+//! (overridable via `SA_DATE`). Columns:
+//!   n, threads, mean_us, std_us, k_matrices, scaling_factor, scaling_ci_lo,
+//!   scaling_ci_hi, fp3_result_hex
 //!
 //! # Hardware fingerprint
 //!
-//! Recorded in the CSV header block:
-//!   - `# host: AMD Ryzen 9 5900X, 12 physical cores, 24 threads (SMT 2x)`
-//!   - `# avx2: yes, avx512: no`
-//!   - `# rayon: 1.11.0`
-//!   - `# rng: gf2_core::rng::Lcg, seed per n (see RNG_SEEDS below)`
+//! Recorded in the CSV header block.
 //!
 //! # Usage
 //!
 //! ```bash
 //! cargo run -p gf2-algebra --release --features "parallel test-support" \
 //!   --example parallel_scaling_sweep
-//! # Override the output date:
-//! SA_DATE=2026-05-11 cargo run -p gf2-algebra --release \
-//!   --features "parallel test-support" --example parallel_scaling_sweep
 //! ```
 
 use gf2_algebra::packed::bipedal3::Bipedal3Matrix;
 use gf2_algebra::permanent::parallel_bipedal3::permanent_bipedal3_parallel;
-use gf2_algebra::testutil::random_matrix;
+use gf2_algebra::testutil::{random_matrix, today_yyyy_mm_dd};
 use std::fs::{self, File};
 use std::io::Write;
-use std::time::{Instant, SystemTime, UNIX_EPOCH};
+use std::time::Instant;
 
 /// Thread counts to sweep.
 const THREAD_COUNTS: &[usize] = &[1, 2, 4, 8, 12];
@@ -52,16 +50,16 @@ const THREAD_COUNTS: &[usize] = &[1, 2, 4, 8, 12];
 /// Matrix dimensions to sweep.
 const N_VALUES: &[usize] = &[28, 32, 36];
 
-/// Number of samples per (n, T) cell.
-/// n=36 at T=1 is ~167 s/sample; budget only allows 1-2 samples there.
-/// Use 5 samples for n ∈ {28, 32} and 3 samples for n=36 to stay ≤ 25 min total.
-const SAMPLES_N28: usize = 5;
-const SAMPLES_N32: usize = 5;
-const SAMPLES_N36: usize = 3;
+/// Number of independent matrices per (n) bucket. The same K matrices are
+/// reused at every thread count so per-matrix scaling factors stay paired.
+/// n=36 T=1 is ~150 s/matrix; K=3 keeps n=36 inside ~12 min.
+const K_N28: usize = 5;
+const K_N32: usize = 5;
+const K_N36: usize = 3;
 
-/// Fixed RNG seed per n. Same matrix used across all thread counts (determinism).
+/// Fixed RNG base seed per n. Per-matrix seed is `base ^ (k as u64)`.
 /// Seeds derived from the JIT issue ID `4513209c`.
-const RNG_SEEDS: &[(usize, u64)] = &[
+const SEED_BASES: &[(usize, u64)] = &[
     (28, 0x4513_209c_0000_001c),
     (32, 0x4513_209c_0000_0020),
     (36, 0x4513_209c_0000_0024),
@@ -77,50 +75,31 @@ const HW_SMT: &str = "2x (24 logical CPUs)";
 const HW_AVX2: &str = "yes";
 const HW_AVX512: &str = "no";
 
-/// Convert Unix epoch seconds to a `YYYY-MM-DD` UTC date string.
-/// (Inlined to avoid pulling `chrono`/`time` as a dep for an example.)
-fn unix_secs_to_ymd(secs: i64) -> (i32, u32, u32) {
-    let days = secs.div_euclid(86_400);
-    let z = days + 719_468;
-    let era = z.div_euclid(146_097);
-    let doe = (z - era * 146_097) as u32;
-    let yoe = (doe - doe / 1_460 + doe / 36_524 - doe / 146_096) / 365;
-    let y = yoe as i32 + (era as i32) * 400;
-    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
-    let mp = (5 * doy + 2) / 153;
-    let d = doy - (153 * mp + 2) / 5 + 1;
-    let m = if mp < 10 { mp + 3 } else { mp - 9 };
-    let y_final = if m <= 2 { y + 1 } else { y };
-    (y_final, m, d)
-}
-
-fn today_yyyy_mm_dd() -> String {
-    if let Ok(s) = std::env::var("SA_DATE") {
-        return s;
-    }
-    let secs = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map(|d| d.as_secs() as i64)
-        .unwrap_or(0);
-    let (y, m, d) = unix_secs_to_ymd(secs);
-    format!("{y:04}-{m:02}-{d:02}")
-}
-
-fn samples_for_n(n: usize) -> usize {
+fn k_for_n(n: usize) -> usize {
     match n {
-        28 => SAMPLES_N28,
-        32 => SAMPLES_N32,
-        36 => SAMPLES_N36,
+        28 => K_N28,
+        32 => K_N32,
+        36 => K_N36,
         _ => 3,
     }
 }
 
-fn seed_for_n(n: usize) -> u64 {
-    RNG_SEEDS
+fn seed_base_for_n(n: usize) -> u64 {
+    SEED_BASES
         .iter()
         .find(|(k, _)| *k == n)
         .map(|(_, s)| *s)
         .unwrap_or(0x4513_209c_0000_0000u64.wrapping_add(n as u64))
+}
+
+/// Two-sided 95% Student's-t critical value for `df` degrees of freedom.
+/// Hand-coded for the small df values the harness uses (`K - 1 ∈ {2, 4}`).
+fn t_critical_95(df: usize) -> f64 {
+    match df {
+        2 => 4.302653,
+        4 => 2.776445,
+        _ => panic!("t_critical_95: unsupported df={df}; add the value to the lookup table"),
+    }
 }
 
 fn main() {
@@ -138,118 +117,146 @@ fn main() {
     writeln!(csv, "# physical_cores: {HW_PHYSICAL_CORES}, smt: {HW_SMT}").unwrap();
     writeln!(csv, "# avx2: {HW_AVX2}, avx512: {HW_AVX512}").unwrap();
     writeln!(csv, "# rayon: {RAYON_VERSION}").unwrap();
-    writeln!(csv, "# rng: gf2_core::rng::Lcg").unwrap();
-    for &(n, seed) in RNG_SEEDS {
-        writeln!(csv, "# seed_n{n}: {seed:#018x}").unwrap();
-    }
     writeln!(
         csv,
-        "# samples_n28: {SAMPLES_N28}, samples_n32: {SAMPLES_N32}, samples_n36: {SAMPLES_N36}"
+        "# rng: gf2_core::rng::Lcg (per-matrix seed = base ^ k)"
     )
     .unwrap();
+    for &(n, seed) in SEED_BASES {
+        writeln!(csv, "# seed_base_n{n}: {seed:#018x}").unwrap();
+    }
+    writeln!(csv, "# K_n28: {K_N28}, K_n32: {K_N32}, K_n36: {K_N36}").unwrap();
     writeln!(csv, "# thread_counts: {THREAD_COUNTS:?}").unwrap();
     writeln!(
         csv,
-        "n,threads,mean_us,std_us,samples,scaling_factor,fp3_result_hex"
+        "n,threads,mean_us,std_us,k_matrices,scaling_factor,scaling_ci_lo,scaling_ci_hi,fp3_result_hex"
     )
     .unwrap();
 
     println!("S2 (jit:4513209c) — parallel permanent scaling sweep");
     println!("Host: {HW_MODEL}");
     println!("Physical cores: {HW_PHYSICAL_CORES}, SMT: {HW_SMT}");
-    println!("AVX2: {HW_AVX2}, AVX-512: {HW_AVX512}");
-    println!("Rayon: {RAYON_VERSION}");
     println!("Thread counts: {THREAD_COUNTS:?}");
     println!("n values: {N_VALUES:?}");
     println!();
 
     for &n in N_VALUES {
-        let seed = seed_for_n(n);
-        let n_samples = samples_for_n(n);
+        let base_seed = seed_base_for_n(n);
+        let k = k_for_n(n);
         let total_subsets = (1u64 << n).saturating_sub(1);
 
-        println!("=== n={n} (seed={seed:#018x}, {n_samples} samples per thread count) ===");
+        println!("=== n={n}: K={k} independent matrices, base seed={base_seed:#018x} ===");
 
-        // Build matrix once; it is the same across all thread counts.
-        let row_major = random_matrix::<3>(n, seed);
-        let mat = Bipedal3Matrix::from_row_major(&row_major, n, n);
+        // Build K independent matrices once; the same K matrices are timed at
+        // every thread count so per-matrix scaling factors stay paired.
+        let matrices: Vec<Bipedal3Matrix> = (0..k)
+            .map(|i| {
+                let seed = base_seed ^ (i as u64);
+                let row_major = random_matrix::<3>(n, seed);
+                Bipedal3Matrix::from_row_major(&row_major, n, n)
+            })
+            .collect();
 
-        // Collect (T, mean_us) pairs so we can compute scaling factors after
-        // all threads are measured.
-        let mut results: Vec<(usize, f64, f64, u64)> = Vec::new(); // (threads, mean_us, std_us, fp3_val)
+        // Reference fp3 values per matrix (computed at T=1 to check determinism).
+        let mut ref_fp3: Option<Vec<u64>> = None;
 
-        // Reference fp3 value (computed at T=1 to check determinism).
-        let mut reference_fp3: Option<u64> = None;
+        // timings[k][t_idx] = wall-clock microseconds for matrix k, thread count t.
+        let mut timings_per_matrix: Vec<Vec<f64>> =
+            vec![Vec::with_capacity(THREAD_COUNTS.len()); k];
 
         for &t in THREAD_COUNTS {
-            // Build a dedicated thread pool for this T.
             let pool = rayon::ThreadPoolBuilder::new()
                 .num_threads(t)
                 .build()
                 .expect("failed to build rayon thread pool");
 
-            let mut timings: Vec<f64> = Vec::with_capacity(n_samples);
-            let mut fp3_val: u64 = 0;
+            let mut fp3_this_t: Vec<u64> = Vec::with_capacity(k);
+            let mut elapsed_this_t: Vec<f64> = Vec::with_capacity(k);
 
-            for _ in 0..n_samples {
+            for (i, mat) in matrices.iter().enumerate() {
                 let t0 = Instant::now();
                 let result =
-                    pool.install(|| std::hint::black_box(permanent_bipedal3_parallel(&mat)));
+                    pool.install(|| std::hint::black_box(permanent_bipedal3_parallel(mat)));
                 let elapsed_us = t0.elapsed().as_secs_f64() * 1_000_000.0;
-                timings.push(elapsed_us);
-                fp3_val = result.value(); // Fp<3>.value() returns the canonical u64 (0, 1, or 2)
+                elapsed_this_t.push(elapsed_us);
+                fp3_this_t.push(result.value());
+                timings_per_matrix[i].push(elapsed_us);
             }
 
-            let ns = timings.len();
-            let mean = timings.iter().sum::<f64>() / ns as f64;
-            let variance = if ns > 1 {
-                timings.iter().map(|x| (x - mean).powi(2)).sum::<f64>() / (ns as f64 - 1.0)
-            } else {
-                0.0
-            };
-            let std_dev = variance.sqrt();
-
-            // Determinism check.
-            match reference_fp3 {
-                None => reference_fp3 = Some(fp3_val),
-                Some(ref_val) => {
-                    assert_eq!(
-                        fp3_val, ref_val,
-                        "DETERMINISM FAILURE: n={n}, T={t}: got fp3={fp3_val}, expected {ref_val}"
-                    );
+            // Determinism: each matrix must produce the same Fp<3> across all T.
+            match ref_fp3 {
+                None => ref_fp3 = Some(fp3_this_t.clone()),
+                Some(ref refv) => {
+                    for (i, &v) in fp3_this_t.iter().enumerate() {
+                        assert_eq!(
+                            v, refv[i],
+                            "DETERMINISM FAILURE: n={n}, T={t}, matrix={i}: got fp3={v}, expected {}",
+                            refv[i]
+                        );
+                    }
                 }
             }
 
-            let throughput = total_subsets as f64 / (mean * 1e-6);
+            let mean_us = elapsed_this_t.iter().sum::<f64>() / k as f64;
+            let throughput = total_subsets as f64 / (mean_us * 1e-6);
             println!(
-                "  T={t:2}  mean={mean:>12.1} us  std={std_dev:>10.1} us  tput={throughput:.3e} subsets/s  fp3={fp3_val}"
+                "  T={t:2}  mean={mean_us:>12.1} us  tput={throughput:.3e} subsets/s  K={k} matrices"
             );
-
-            results.push((t, mean, std_dev, fp3_val));
         }
-
-        // Compute scaling factors relative to T=1.
-        let mean_t1 = results
-            .iter()
-            .find(|(t, _, _, _)| *t == 1)
-            .map(|(_, m, _, _)| *m)
-            .unwrap();
-
         println!();
-        println!("  Scaling factors (criterion: ≥ 0.85 for T ∈ {{2,4,8,12}}):");
+
+        // Now compute per-cell scaling factor with 95% CI using paired
+        // per-matrix timings: scaling[k][t_idx] = t1[k] / (t · t_t[k]).
+        let df = k - 1;
+        let t_crit = t_critical_95(df);
+
+        // T=1 is the reference column.
+        let t1_idx = THREAD_COUNTS.iter().position(|&t| t == 1).unwrap();
+
+        println!("  Scaling factors (criterion: lower 95% CI bound ≥ 0.85 for T ∈ {{2,4,8,12}}):");
         println!(
-            "  {:>4}  {:>12}  {:>10}  {:>14}  {:>7}  {:>4}",
-            "T", "mean_us", "std_us", "scaling_factor", "fp3", "PASS?"
+            "  {:>4}  {:>12}  {:>10}  {:>10}  {:>10}  {:>10}  {:>4}",
+            "T", "mean_us", "std_us", "scaling", "ci_lo_95", "ci_hi_95", "PASS?"
         );
 
         let mut all_pass = true;
-        for &(t, mean, std_dev, fp3_val) in &results {
-            let scaling = if t == 1 {
-                1.0
-            } else {
-                mean_t1 / (t as f64 * mean)
-            };
-            let pass = t == 1 || scaling >= 0.85;
+        for (t_idx, &t) in THREAD_COUNTS.iter().enumerate() {
+            // Per-cell mean + std of raw timings (for reporting).
+            let timings_at_t: Vec<f64> = timings_per_matrix.iter().map(|row| row[t_idx]).collect();
+            let mean_us = timings_at_t.iter().sum::<f64>() / k as f64;
+            let std_us = (timings_at_t
+                .iter()
+                .map(|x| (x - mean_us).powi(2))
+                .sum::<f64>()
+                / df as f64)
+                .sqrt();
+
+            // Per-matrix scaling factor; aggregate to mean + 95% CI on the mean.
+            let per_matrix_scaling: Vec<f64> = (0..k)
+                .map(|i| {
+                    let t1 = timings_per_matrix[i][t1_idx];
+                    let tt = timings_per_matrix[i][t_idx];
+                    if t == 1 {
+                        1.0
+                    } else {
+                        t1 / (t as f64 * tt)
+                    }
+                })
+                .collect();
+
+            let scaling_mean = per_matrix_scaling.iter().sum::<f64>() / k as f64;
+            let scaling_var = per_matrix_scaling
+                .iter()
+                .map(|x| (x - scaling_mean).powi(2))
+                .sum::<f64>()
+                / df as f64;
+            let scaling_std = scaling_var.sqrt();
+            let se = scaling_std / (k as f64).sqrt();
+            let margin = t_crit * se;
+            let ci_lo = scaling_mean - margin;
+            let ci_hi = scaling_mean + margin;
+
+            let pass = t == 1 || ci_lo >= 0.85;
             if !pass {
                 all_pass = false;
             }
@@ -261,23 +268,26 @@ fn main() {
                 " FAIL"
             };
             println!(
-                "  {:>4}  {:>12.1}  {:>10.1}  {:>14.4}  {:>7}  {:>5}",
-                t, mean, std_dev, scaling, fp3_val, pass_str
+                "  {:>4}  {:>12.1}  {:>10.1}  {:>10.4}  {:>10.4}  {:>10.4}  {:>5}",
+                t, mean_us, std_us, scaling_mean, ci_lo, ci_hi, pass_str
             );
 
-            // Write CSV row.
+            // Determine the canonical fp3 across all matrices for this n.
+            // (Already determinism-checked; we report the first matrix's value.)
+            let fp3_val = ref_fp3.as_ref().unwrap()[0];
+
             writeln!(
                 csv,
-                "{n},{t},{mean:.3},{std_dev:.3},{n_samples},{scaling:.6},{fp3_val:#x}"
+                "{n},{t},{mean_us:.3},{std_us:.3},{k},{scaling_mean:.6},{ci_lo:.6},{ci_hi:.6},{fp3_val:#x}"
             )
             .unwrap();
         }
 
         println!();
         if all_pass {
-            println!("  n={n}: ALL scaling criteria PASS.");
+            println!("  n={n}: ALL scaling-CI criteria PASS (lower 95% CI ≥ 0.85).");
         } else {
-            println!("  n={n}: SOME scaling criteria FAIL — check individual rows.");
+            println!("  n={n}: SOME scaling-CI criteria FAIL — check individual rows.");
         }
         println!();
     }

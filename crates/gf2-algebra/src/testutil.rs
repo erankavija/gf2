@@ -71,3 +71,81 @@ pub fn random_matrix_with_rng<const P: u64>(rng: &mut Lcg, n: usize) -> Vec<Fp<P
         .map(|_| Fp::<P>::new(rng.next_u64() % P))
         .collect()
 }
+
+/// Convert Unix epoch seconds to a `(year, month, day)` UTC tuple via the
+/// Howard Hinnant civil-from-days algorithm.
+///
+/// Inlined to avoid pulling `chrono`/`time` into `gf2-algebra` for the
+/// benchmark/repro examples (`paper_repro_slope`, `parallel_chunk_sweep`,
+/// `parallel_scaling_sweep`) that need a date string for the CSV filename.
+///
+/// # Arguments
+///
+/// * `secs` — Unix epoch seconds (signed; pre-1970 dates produce
+///   correct historical UTC dates).
+///
+/// # Examples
+///
+/// ```
+/// use gf2_algebra::testutil::unix_secs_to_ymd;
+///
+/// assert_eq!(unix_secs_to_ymd(0), (1970, 1, 1));
+/// assert_eq!(unix_secs_to_ymd(946_684_800), (2000, 1, 1));
+/// // 2026-05-11 UTC midnight = 1_778_457_600 seconds.
+/// assert_eq!(unix_secs_to_ymd(1_778_457_600), (2026, 5, 11));
+/// // Leap-day handling
+/// assert_eq!(unix_secs_to_ymd(951_782_400), (2000, 2, 29));
+/// ```
+///
+/// # Complexity
+///
+/// `O(1)` — fixed-shape integer arithmetic per call.
+pub fn unix_secs_to_ymd(secs: i64) -> (i32, u32, u32) {
+    let days = secs.div_euclid(86_400);
+    let z = days + 719_468;
+    let era = z.div_euclid(146_097);
+    let doe = (z - era * 146_097) as u32;
+    let yoe = (doe - doe / 1_460 + doe / 36_524 - doe / 146_096) / 365;
+    let y = yoe as i32 + (era as i32) * 400;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let d = doy - (153 * mp + 2) / 5 + 1;
+    let m = if mp < 10 { mp + 3 } else { mp - 9 };
+    let y_final = if m <= 2 { y + 1 } else { y };
+    (y_final, m, d)
+}
+
+/// Format today's UTC date as `YYYY-MM-DD`. Respects the `SA_DATE` env
+/// variable for reproducible benchmark output paths.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_algebra::testutil::today_yyyy_mm_dd;
+///
+/// // Override via env var:
+/// std::env::set_var("SA_DATE", "2026-05-11");
+/// assert_eq!(today_yyyy_mm_dd(), "2026-05-11");
+/// std::env::remove_var("SA_DATE");
+/// // Without override returns today's UTC date; format invariant verified.
+/// let today = today_yyyy_mm_dd();
+/// assert_eq!(today.len(), 10);
+/// assert_eq!(&today[4..5], "-");
+/// assert_eq!(&today[7..8], "-");
+/// ```
+///
+/// # Complexity
+///
+/// `O(1)` plus one `SystemTime::now()` syscall.
+pub fn today_yyyy_mm_dd() -> String {
+    use std::time::{SystemTime, UNIX_EPOCH};
+    if let Ok(s) = std::env::var("SA_DATE") {
+        return s;
+    }
+    let secs = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_secs() as i64)
+        .unwrap_or(0);
+    let (y, m, d) = unix_secs_to_ymd(secs);
+    format!("{y:04}-{m:02}-{d:02}")
+}

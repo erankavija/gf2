@@ -1,6 +1,6 @@
 # S2 (jit:4513209c) — Parallel scaling 1..N cores at ≥ 0.85x linear, n ≥ 28
 
-**Status:** measured 2026-05-11. All scaling criteria pass.
+**Status:** measured 2026-05-11 (with two-sided 95% CI). All scaling criteria pass at the lower CI bound.
 **Sibling:** S1 (50× single-thread speedup at n=36), S3 (cross-CPU portability).
 **Consumes:** T15 (`permanent_bipedal3_parallel`).
 
@@ -8,14 +8,15 @@ This document records the parallel-scaling measurement required by T15-S2 succes
 
 ## Methodology
 
-- **Function under test:** `gf2_algebra::permanent::permanent_bipedal3_parallel`, which is the rayon-parallel Ryser permanent over F_3 built on the bipedal3 packed encoding (paper §2.2 / Theorem 2.1). The chunk-size default is `CHUNK_SUBSETS = 1 << 16` (justified by the T15 chunk-sweep CSV).
-- **Harness:** `crates/gf2-algebra/examples/parallel_scaling_sweep.rs`. For each `n ∈ {28, 32, 36}` and `T ∈ {1, 2, 4, 8, 12}` the harness:
-  1. Builds a per-(n, T) `rayon::ThreadPoolBuilder::new().num_threads(T).build()` pool.
-  2. Generates `K` independent matrices via `gf2_algebra::testutil::random_matrix::<3>(n, seed)` where the seed varies per sample but is a deterministic function of `n` plus the JIT short ID (so same n produces same matrix sequence regardless of thread count).
-  3. Times each `pool.install(|| permanent_bipedal3_parallel(&mat))` call via `std::time::Instant`.
-  4. Records the resulting `Fp<3>` value alongside the timing so determinism can be cross-checked across thread counts.
-- **Sample counts:** `K = 5` for `n ∈ {28, 32}`, `K = 3` for `n = 36` (n=36 T=1 is ~148 s/sample; 5 samples × 167 s would exceed the slow-tier budget envelope; 3 samples is enough for the worst-case ratio + standard-deviation bound).
-- **Statistics:** mean and (Bessel-corrected) sample standard deviation are reported per (n, T) cell. The scaling factor reported per (n, T) is `T_1 / (T × T_T)` where `T_T` is the mean wall-clock at `T` threads.
+- **Function under test:** `gf2_algebra::permanent::permanent_bipedal3_parallel`, the rayon-parallel Ryser permanent over `F_3` built on the bipedal3 packed encoding (paper §2.2 / Theorem 2.1). The chunk-size default is `CHUNK_SUBSETS = 1 << 16` (justified by the T15 chunk-sweep CSV).
+- **Harness:** `crates/gf2-algebra/examples/parallel_scaling_sweep.rs`. For each `n ∈ {28, 32, 36}` and `T ∈ {1, 2, 4, 8, 12}`:
+  1. Draw `K` independent matrices from a deterministic LCG seeded by `seed_base_n ^ k` (`k = 0..K-1`). The SAME K matrices are timed at every thread count, so per-matrix scaling factors stay paired.
+  2. Build a per-`T` `rayon::ThreadPoolBuilder::new().num_threads(T).build()` pool.
+  3. Time each `pool.install(|| permanent_bipedal3_parallel(&mat))` call via `std::time::Instant`. Record the `Fp<3>` value alongside the timing for the determinism cross-check.
+  4. Per-matrix scaling factor at `(n, T)`: `f[k][T] = T_1[k] / (T × T_T[k])`. Aggregate across the K matrices to a mean and a two-sided 95% CI on the mean, using Student's t with `df = K - 1`.
+- **Sample counts (K):** `K = 5` for `n ∈ {28, 32}`, `K = 3` for `n = 36` (n=36 T=1 is ~150 s/matrix; K=3 keeps the n=36 sweep inside ~12 minutes).
+- **Acceptance contract:** for each `(n ≥ 28, T ∈ {2, 4, 8, 12})` cell, the **lower** 95% CI bound of the scaling factor must be `≥ 0.85`. Point estimate alone is insufficient; the contract is "within 95% CI" per JIT issue 4513209c success criterion 2.
+- **Determinism:** each of the K matrices produces an `Fp<3>` permanent that must be byte-for-byte identical across all thread counts. The harness asserts this at runtime and panics on mismatch.
 
 ## Hardware fingerprint
 
@@ -35,55 +36,55 @@ This document records the parallel-scaling measurement required by T15-S2 succes
 
 CSV: `dev/benchmarks/gf2_algebra_permanent/s2_parallel_scaling-2026-05-11.csv`.
 
-### n = 28 — total subsets ≈ 268 M
+### n = 28 — total subsets ≈ 268 M, K = 5
 
-| T | mean (ms) | std (ms) | scaling factor | criterion ≥ 0.85 |
-|---:|---:|---:|---:|:---:|
-| 1  | 577.12 | 4.07 | 1.0000 | — |
-| 2  | 290.47 | 1.63 | 0.9934 | ✓ |
-| 4  | 149.91 | 1.70 | 0.9624 | ✓ |
-| 8  |  78.99 | 1.68 | 0.9133 | ✓ |
-| 12 |  53.70 | 0.11 | 0.8956 | ✓ |
+| T  | mean (ms) | scaling factor | 95% CI lo | 95% CI hi | criterion ≥ 0.85 (lo) |
+|---:|---:|---:|---:|---:|:---:|
+| 1  | 574.95 | 1.0000 | 1.0000 | 1.0000 | — |
+| 2  | 291.38 | 0.9866 | 0.9786 | 0.9946 | ✓ |
+| 4  | 151.16 | 0.9510 | 0.9383 | 0.9638 | ✓ |
+| 8  |  78.57 | 0.9150 | 0.8953 | 0.9347 | ✓ |
+| 12 |  54.25 | 0.8833 | 0.8665 | 0.9001 | ✓ |
 
-All five thread-count samples produced `Fp<3>(0x1)`; determinism holds.
+All 5 matrices' `Fp<3>` output was `0x1` at every thread count; determinism holds.
 
-### n = 32 — total subsets ≈ 4.29 G
+### n = 32 — total subsets ≈ 4.29 G, K = 5
 
-| T | mean (ms) | std (ms) | scaling factor | criterion ≥ 0.85 |
-|---:|---:|---:|---:|:---:|
-| 1  | 9183.20 | 19.00 | 1.0000 | — |
-| 2  | 4608.12 |  7.19 | 0.9964 | ✓ |
-| 4  | 2383.11 |  2.63 | 0.9634 | ✓ |
-| 8  | 1242.55 |  0.42 | 0.9238 | ✓ |
-| 12 |  860.11 |  2.49 | 0.8897 | ✓ |
+| T  | mean (ms) | scaling factor | 95% CI lo | 95% CI hi | criterion ≥ 0.85 (lo) |
+|---:|---:|---:|---:|---:|:---:|
+| 1  | 9201.44 | 1.0000 | 1.0000 | 1.0000 | — |
+| 2  | 4616.96 | 0.9965 | 0.9924 | 1.0006 | ✓ |
+| 4  | 2384.14 | 0.9649 | 0.9606 | 0.9691 | ✓ |
+| 8  | 1244.15 | 0.9245 | 0.9204 | 0.9286 | ✓ |
+| 12 |  858.65 | 0.8930 | 0.8892 | 0.8969 | ✓ |
 
-All five thread-count samples produced `Fp<3>(0x2)`; determinism holds.
+All 5 matrices' `Fp<3>` output was `0x2` at every thread count; determinism holds.
 
-### n = 36 — total subsets ≈ 68.7 G
+### n = 36 — total subsets ≈ 68.7 G, K = 3
 
-| T | mean (s) | std (s) | scaling factor | criterion ≥ 0.85 |
-|---:|---:|---:|---:|:---:|
-| 1  | 147.029 | 0.048 | 1.0000 | — |
-| 2  |  73.975 | 0.025 | 0.9938 | ✓ |
-| 4  |  38.279 | 0.029 | 0.9602 | ✓ |
-| 8  |  19.980 | 0.029 | 0.9199 | ✓ |
-| 12 |  13.903 | 0.023 | 0.8813 | ✓ |
+| T  | mean (s) | scaling factor | 95% CI lo | 95% CI hi | criterion ≥ 0.85 (lo) |
+|---:|---:|---:|---:|---:|:---:|
+| 1  | 147.005 | 1.0000 | 1.0000 | 1.0000 | — |
+| 2  |  73.949 | 0.9940 | 0.9924 | 0.9955 | ✓ |
+| 4  |  38.281 | 0.9600 | 0.9579 | 0.9622 | ✓ |
+| 8  |  19.969 | 0.9202 | 0.9165 | 0.9238 | ✓ |
+| 12 |  13.891 | 0.8819 | 0.8784 | 0.8854 | ✓ |
 
-All three thread-count samples produced `Fp<3>(0x1)`; determinism holds.
+All 3 matrices' `Fp<3>` output was `0x1` at every thread count; determinism holds.
 
 ## Worst-case scaling
 
-| n | worst T | worst scaling factor | criterion ≥ 0.85 |
-|---:|---:|---:|:---:|
-| 28 | 12 | 0.8956 | ✓ |
-| 32 | 12 | 0.8897 | ✓ |
-| 36 | 12 | 0.8813 | ✓ |
+| n  | worst T | scaling factor | 95% CI lo | margin over 0.85 |
+|---:|---:|---:|---:|---:|
+| 28 | 12 | 0.8833 | 0.8665 | +0.0165 |
+| 32 | 12 | 0.8930 | 0.8892 | +0.0392 |
+| 36 | 12 | 0.8819 | 0.8784 | +0.0284 |
 
-Across the entire (n ∈ {28, 32, 36}) × (T ∈ {2, 4, 8, 12}) grid the worst observed factor is **0.8813** at the n=36, T=12 cell — comfortably above the 0.85 contract.
+Across the entire `(n ∈ {28, 32, 36}) × (T ∈ {2, 4, 8, 12})` grid the **lowest lower-95%-CI bound** is **0.8665** at the n=28, T=12 cell — still **above** the 0.85 contract by 0.0165 (~ 2σ on the per-cell estimator).
 
 ## Determinism
 
-Per the methodology above, the same `(n, seed)` produces the same matrix regardless of thread count. The harness records the `Fp<3>` output of every call. Within each `n`-row block of the CSV all `fp3_result_hex` columns are identical:
+Per the methodology above, each of the K matrices is timed at every T, and the per-matrix `Fp<3>` output is asserted equal across T at runtime. Within each `n`-row block of the CSV all `fp3_result_hex` columns are identical:
 
 - n=28: every cell `0x1`.
 - n=32: every cell `0x2`.
@@ -95,26 +96,26 @@ This satisfies criterion 5 (determinism: output across thread counts is bit-iden
 
 The observed efficiency drop is gradual and tracks Amdahl's law plus shared-cache contention rather than parallel-algorithm overhead:
 
-- **T = 2** retains ≥ 0.993 efficiency at all three n. Two threads fully fit in the L3 + LLC slice budget; the chunk default `2^16` is large enough that rayon scheduler overhead is amortised.
-- **T = 4 → T = 8** efficiency drops from ~0.96 to ~0.92 — consistent with crossing one CCX boundary on Zen 3 (each CCX has 6 cores with shared L3).
+- **T = 2** retains ≥ 0.987 efficiency at all three n. Two threads fully fit in the L3 + LLC slice budget; the chunk default `2^16` is large enough that rayon scheduler overhead is amortised.
+- **T = 4 → T = 8** efficiency drops from ~0.96 to ~0.92, consistent with crossing one CCX boundary on Zen 3 (each CCX has 6 cores with shared L3).
 - **T = 12** loses an extra ~0.03–0.04 of efficiency, attributable to two CCX boundaries plus SMT-adjacent threads competing for the same execution port.
 
-None of this approaches the 0.85 floor, so the contract holds at the physical-core ceiling. SMT scaling beyond T=12 (i.e. T=16, T=24) is not measured here — the criterion is "up to the host's physical core count", which is exactly 12 on Zen 3 5900X.
+The CI widths are smallest at n=32 (~0.005) and widest at n=28 (~0.017), as expected: smaller `n` has shorter wall-clock and a larger fraction of timing noise. None of the lower bounds approach the 0.85 floor at any T ≤ 12. SMT scaling beyond T=12 (i.e. T=16, T=24) is not measured here — the criterion is "up to the host's physical core count", which is exactly 12 on Zen 3 5900X.
 
 ## Conclusion
 
-**PASS** for criterion 1 (CSV at the named path with n ∈ {28,32,36} × T ∈ {1,2,4,8,12}),
-**PASS** for criterion 2 (worst-case factor 0.8813 > 0.85 at every required cell),
-**PASS** for criterion 3 (hardware/rayon/seed recorded in CSV header),
-**PASS** for criterion 4 (this writeup attached via `jit doc add`),
-**PASS** for criterion 5 (bit-identical output across thread counts at the same seed).
+**PASS** for criterion 1 (CSV at the named path with `n ∈ {28,32,36} × T ∈ {1,2,4,8,12}` and 95%-CI columns).
+**PASS** for criterion 2 (lower 95% CI bound ≥ 0.85 at every `(n ≥ 28, T ∈ {2,4,8,12})` cell; worst case 0.8665 at n=28, T=12).
+**PASS** for criterion 3 (hardware/rayon/seed-base recorded in CSV header).
+**PASS** for criterion 4 (this writeup attached via `jit doc add`).
+**PASS** for criterion 5 (bit-identical output across thread counts at the same per-matrix seed; verified at runtime by the harness, recorded in the CSV).
 
-All five hard criteria are met.
+All five hard criteria are met **within 95% CI** as the issue text requires.
 
 ## Reproduce
 
 ```bash
-# Run the sweep (≈ 15 min on the dev host):
+# Run the K-matrix sweep (≈ 15 min on the dev host):
 cargo run -p gf2-algebra --release --features "parallel test-support" \
   --example parallel_scaling_sweep
 
@@ -126,4 +127,4 @@ SA_DATE=2026-05-11 cargo run -p gf2-algebra --release \
   --features "parallel test-support" --example parallel_scaling_sweep
 ```
 
-The harness is deterministic at the LCG seed level (`gf2_core::rng::Lcg`); identical reruns produce identical timings up to wall-clock noise.
+The harness is deterministic at the LCG seed level (`gf2_core::rng::Lcg`); identical reruns produce identical timings up to wall-clock noise. The 95%-CI lookup table `t_critical_95` covers the supported `K - 1 ∈ {2, 4}` degrees of freedom; adding more `n` cells with different K requires extending it.

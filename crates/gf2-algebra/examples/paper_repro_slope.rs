@@ -51,11 +51,11 @@
 //! ```
 
 use gf2_algebra::permanent::permanent_mod3_reference;
-use gf2_algebra::testutil::random_matrix;
+use gf2_algebra::testutil::{random_matrix, today_yyyy_mm_dd};
 use sha2::{Digest, Sha256};
 use std::fs::{self, File};
 use std::io::Write;
-use std::time::{Instant, SystemTime, UNIX_EPOCH};
+use std::time::Instant;
 
 /// Number of independently seeded matrices timed per `n`.
 const SAMPLES_PER_N: usize = 5;
@@ -80,36 +80,6 @@ const SLOPE_TOLERANCE: f64 = 0.10;
 
 /// Convert Unix epoch seconds to a `YYYY-MM-DD` UTC date string.
 ///
-/// Inline implementation to avoid pulling `chrono` or `time` as deps for a
-/// test-time example. Algorithm from Howard Hinnant's date library
-/// (<https://howardhinnant.github.io/date_algorithms.html>): civil-from-days.
-fn unix_secs_to_ymd(secs: i64) -> (i32, u32, u32) {
-    let days = secs.div_euclid(86_400);
-    let z = days + 719_468; // shift to civil epoch (0000-03-01)
-    let era = z.div_euclid(146_097);
-    let doe = (z - era * 146_097) as u32; // day-of-era [0..146096]
-    let yoe = (doe - doe / 1_460 + doe / 36_524 - doe / 146_096) / 365; // year-of-era
-    let y = yoe as i32 + (era as i32) * 400;
-    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100); // day-of-year (Mar = 0)
-    let mp = (5 * doy + 2) / 153; // month-of-year (Mar = 0)
-    let d = doy - (153 * mp + 2) / 5 + 1; // day-of-month
-    let m = if mp < 10 { mp + 3 } else { mp - 9 };
-    let y_final = if m <= 2 { y + 1 } else { y };
-    (y_final, m, d)
-}
-
-fn today_yyyy_mm_dd() -> String {
-    if let Ok(s) = std::env::var("SA_DATE") {
-        return s;
-    }
-    let secs = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map(|d| d.as_secs() as i64)
-        .unwrap_or(0);
-    let (y, m, d) = unix_secs_to_ymd(secs);
-    format!("{y:04}-{m:02}-{d:02}")
-}
-
 fn main() {
     // n sweep: 9 points in {8, 10, …, 24}.
     // - n=24 is the bottom of the paper's Table 2 range; included so the
@@ -261,35 +231,7 @@ fn hex_lower(bytes: &[u8]) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{hex_lower, today_yyyy_mm_dd, unix_secs_to_ymd};
-
-    /// `unix_secs_to_ymd` matches known anchor dates spanning multiple eras.
-    #[test]
-    fn test_unix_secs_to_ymd_anchors() {
-        // Unix epoch itself.
-        assert_eq!(unix_secs_to_ymd(0), (1970, 1, 1));
-        // Y2K, midnight UTC.
-        assert_eq!(unix_secs_to_ymd(946_684_800), (2000, 1, 1));
-        // 2026-05-11 midnight UTC.
-        // Verified via `date -u -d "2026-05-11" +%s` = 1778457600.
-        assert_eq!(unix_secs_to_ymd(1_778_457_600), (2026, 5, 11));
-        // Leap-year boundary: 2000-02-29 midnight UTC.
-        assert_eq!(unix_secs_to_ymd(951_782_400), (2000, 2, 29));
-        // Pre-epoch (negative seconds): 1969-12-31 23:00 UTC.
-        assert_eq!(unix_secs_to_ymd(-3600), (1969, 12, 31));
-    }
-
-    /// `today_yyyy_mm_dd` honours the `SA_DATE` env override and produces the
-    /// `YYYY-MM-DD` format expected by the CSV filename pattern.
-    #[test]
-    fn test_today_yyyy_mm_dd_env_override() {
-        // SAFETY-EQUIVALENT: set_var is `unsafe` on the 2024 edition; here in
-        // the 2021 edition crate it is the standard test-only override.
-        std::env::set_var("SA_DATE", "1999-12-31");
-        let got = today_yyyy_mm_dd();
-        std::env::remove_var("SA_DATE");
-        assert_eq!(got, "1999-12-31");
-    }
+    use super::hex_lower;
 
     /// `hex_lower` produces the canonical lowercase-hex SHA-256 encoding.
     #[test]

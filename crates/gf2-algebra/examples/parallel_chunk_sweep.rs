@@ -44,10 +44,10 @@ use gf2_algebra::packed::bipedal3::Bipedal3Matrix;
 use gf2_algebra::permanent::parallel_bipedal3::{
     permanent_bipedal3_parallel_with_chunk, CHUNK_SUBSETS,
 };
-use gf2_algebra::testutil::random_matrix;
+use gf2_algebra::testutil::{random_matrix, today_yyyy_mm_dd};
 use std::fs::{self, File};
 use std::io::Write;
-use std::time::{Instant, SystemTime, UNIX_EPOCH};
+use std::time::Instant;
 
 /// Matrix dimension for the sweep. n=28 gives 2^28 - 1 ≈ 268M subsets, which
 /// is large enough for reliable throughput measurements while finishing in a
@@ -72,35 +72,6 @@ const CHUNK_SIZES: &[usize] = &[
     1 << 20, // 1_048_576
     1 << 22, // 4_194_304 — well above where rayon load-balance starves tail threads
 ];
-
-/// Convert Unix epoch seconds to a `YYYY-MM-DD` UTC date string.
-/// (Inlined to avoid pulling `chrono`/`time` as a dep for an example.)
-fn unix_secs_to_ymd(secs: i64) -> (i32, u32, u32) {
-    let days = secs.div_euclid(86_400);
-    let z = days + 719_468;
-    let era = z.div_euclid(146_097);
-    let doe = (z - era * 146_097) as u32;
-    let yoe = (doe - doe / 1_460 + doe / 36_524 - doe / 146_096) / 365;
-    let y = yoe as i32 + (era as i32) * 400;
-    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
-    let mp = (5 * doy + 2) / 153;
-    let d = doy - (153 * mp + 2) / 5 + 1;
-    let m = if mp < 10 { mp + 3 } else { mp - 9 };
-    let y_final = if m <= 2 { y + 1 } else { y };
-    (y_final, m, d)
-}
-
-fn today_yyyy_mm_dd() -> String {
-    if let Ok(s) = std::env::var("SA_DATE") {
-        return s;
-    }
-    let secs = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map(|d| d.as_secs() as i64)
-        .unwrap_or(0);
-    let (y, m, d) = unix_secs_to_ymd(secs);
-    format!("{y:04}-{m:02}-{d:02}")
-}
 
 // SSOT: the algorithm body lives in
 // `gf2_algebra::permanent::parallel_bipedal3::permanent_bipedal3_parallel_with_chunk`.
