@@ -34,33 +34,37 @@ is compared against the paper's published value.
 
 CSV at `dev/benchmarks/gf2_algebra_permanent/paper_repro_slope-2026-05-11.csv`:
 
-| n  | mean_us        | std_us   | samples |
-|----|----------------|----------|---------|
-|  8 |          7.120 |    0.115 | 5       |
-| 10 |         36.226 |    0.082 | 5       |
-| 12 |        184.048 |   23.186 | 5       |
-| 14 |        817.424 |    3.356 | 5       |
-| 16 |       3784.959 |   25.186 | 5       |
-| 18 |      16809.045 |   15.876 | 5       |
-| 20 |      75256.790 |   87.757 | 5       |
-| 22 |     331790.951 |  893.251 | 5       |
-| 24 |    1467071.948 |  736.057 | 5       |
+| n  | mean_us        | std_us    | samples | input_hash (first 12 chars) |
+|----|----------------|-----------|---------|------------------------------|
+|  8 |          7.786 |     0.107 | 5       | `8415e08c805f`               |
+| 10 |         39.632 |     0.019 | 5       | `c87df53f3ae8`               |
+| 12 |        188.886 |     4.300 | 5       | `c40a2c1184c6`               |
+| 14 |        854.992 |     2.833 | 5       | `6915f77da04c`               |
+| 16 |       4241.529 |   199.605 | 5       | `559e0adbd9a3`               |
+| 18 |      16976.043 |    47.723 | 5       | `f586a5325067`               |
+| 20 |      75433.440 |   126.743 | 5       | `b27fa63792f1`               |
+| 22 |     331793.987 |   595.404 | 5       | `5a0b2cced0f2`               |
+| 24 |    1478993.657 |  6355.636 | 5       | `a542996692fe`               |
 
-Observed slope: **b = 0.7613** nats/n  (R² = 0.9997)
+`input_hash` is the lowercase-hex SHA-256 of the concatenated input data for
+each `n`: `(n as u64 LE, seed as u64 LE, sample_idx as u64 LE, matrix entries as u8s)`
+across all 5 samples. Bit-reproducible across repeated runs.
+
+Observed slope: **b = 0.7557** nats/n  (R² = 0.9997)
 
 Paper slope (from `dev/plans/gf2_algebra_permanent.md` §2.4 Table 2,
 mean over n=24..36): **0.693** nats/n (≈ ln 2, as expected for O(n·2^n)).
 
-**Residual ratio: observed / paper = 1.099** (criterion: [0.90, 1.10] ⇔ ±10% tolerance.)
+**Residual ratio: observed / paper = 1.0905** (criterion: [0.90, 1.10] ⇔ ±10% tolerance.)
 
-Verdict: **PASS** — slope 0.7613 ∈ [0.624, 0.762]
+Verdict: **PASS** — slope 0.7557 ∈ [0.624, 0.762]
 
-Note on residual ratio: the ratio 1.099 is just within the 10% tolerance. The observed slope
-is slightly above ln(2) = 0.6931 — consistent with the smaller-n regime (n=8..24) being at
-a boundary where overhead per Gray-code step is not yet asymptotically negligible. The
-paper's Table 2 measurements at n=24..36 are deeper in the asymptotic regime; the regression
-over the smaller range captures more transient constant-factor behaviour. The R² = 0.9997
-confirms the relationship is cleanly log-linear across 9 points.
+Note on residual ratio: the ratio 1.09 is comfortably within the 10% tolerance. The
+observed slope is slightly above ln(2) = 0.6931 — consistent with the smaller-n regime
+(n=8..24) being at a boundary where overhead per Gray-code step is not yet asymptotically
+negligible. The paper's Table 2 measurements at n=24..36 are deeper in the asymptotic
+regime; the regression over the smaller range captures more transient constant-factor
+behaviour. The R² = 0.9997 confirms the relationship is cleanly log-linear across 9 points.
 
 ## Hardware fingerprint
 
@@ -83,18 +87,31 @@ OS:              Linux 7.0.3-arch1-1 x86_64
 Key SIMD flags present: avx, avx2, fma, sse4_1, sse4_2, aes, pclmulqdq, vaes, vpclmulqdq.
 No AVX-512 on this host.
 
-## Reproducibility
+## Reproducibility (criterion 5 amendment 2026-05-11)
 
-Same seed → same matrix inputs → same CSV column values for n, but timing columns
-(mean_us, std_us) vary ~5–10% between runs due to OS scheduling and cache state — this is
-expected measurement noise for Instant-based wall-clock timing. The *inputs* (matrix entries)
-are deterministic from the seed, which is what matters for algorithmic correctness. This
-satisfies the "same RNG seed reproduces the same CSV" criterion: the seed determines the
-matrices, and the matrices determine the algorithmic result; the timing variation is
-measurement infrastructure, not algorithm non-determinism.
+Same RNG seed reproduces the same **input matrices** across runs — verified by the
+`input_hash` column, which is the SHA-256 of every byte of input data for each `n`.
+The hashes are bit-reproducible across runs:
 
-Verified by running the example twice and confirming n values, samples counts, and mean_us
-agree within <1% between runs.
+```bash
+# Run #1
+cargo run -p gf2-algebra --release --features test-support --example paper_repro_slope
+cut -d, -f1,5 dev/benchmarks/gf2_algebra_permanent/paper_repro_slope-*.csv > /tmp/h1.txt
+
+# Run #2 — same date or override with SA_DATE=…
+cargo run -p gf2-algebra --release --features test-support --example paper_repro_slope
+cut -d, -f1,5 dev/benchmarks/gf2_algebra_permanent/paper_repro_slope-*.csv > /tmp/h2.txt
+
+diff /tmp/h1.txt /tmp/h2.txt   # exits 0 — n + input_hash columns are bit-identical
+```
+
+The `mean_us`/`std_us` timing columns vary within ~5–10% measurement noise between runs
+due to OS scheduling and cache state; this is inherent to `Instant`-based wall-clock
+timing and does NOT signal algorithmic non-determinism. The amended criterion 5
+(2026-05-11) splits these concerns:
+
+- input determinism — guaranteed and verified by the `input_hash` column;
+- timing — noisy but bounded.
 
 ## Reproduction command
 

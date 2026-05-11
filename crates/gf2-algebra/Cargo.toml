@@ -28,6 +28,9 @@ serde = { version = "1", features = ["derive"], optional = true }
 [dev-dependencies]
 proptest = { workspace = true }
 criterion = { workspace = true }
+# SHA-256 for the `paper_repro_slope` example's input-fingerprint column
+# (criterion 5 amendment 2026-05-11). Test-time only.
+sha2 = "0.10"
 # Self-dev-dependency exposing the `test-support` feature so integration
 # tests and benches can use `gf2_algebra::testutil::random_matrix` —
 # the workspace SSOT for deterministic mod-P matrix generation via
