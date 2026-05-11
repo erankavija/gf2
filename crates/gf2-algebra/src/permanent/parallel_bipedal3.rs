@@ -145,10 +145,7 @@ pub fn permanent_bipedal3_parallel(mat: &Bipedal3Matrix) -> Fp<3> {
 /// Identical to [`permanent_bipedal3_parallel`] but parametrised by chunk
 /// size: `O(n · 2^n / T)` field operations per thread, plus `O(n)` per
 /// chunk start for the initial `col_sum` reconstruction.
-pub fn permanent_bipedal3_parallel_with_chunk(
-    mat: &Bipedal3Matrix,
-    chunk_subsets: usize,
-) -> Fp<3> {
+pub fn permanent_bipedal3_parallel_with_chunk(mat: &Bipedal3Matrix, chunk_subsets: usize) -> Fp<3> {
     let n = mat.cols();
     assert_eq!(
         mat.rows(),
