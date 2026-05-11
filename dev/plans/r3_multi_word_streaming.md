@@ -3,7 +3,7 @@
 **Epic:** `epic:gf2-algebra-permanent`
 **Issue:** `60c30e2d` (R3 — Multi-word streaming column-sum cache-blocking design)
 **Consumed by:** W3-T14 (multi-word streaming permanent implementation)
-**Status:** design
+**Status:** design (amended 2026-05-11)
 
 This document is the streaming + memory-layout strategy for the bipedal-3 Ryser
 permanent at `n > 64`. It fixes the matrix layout, defines the cache-blocking
@@ -11,13 +11,28 @@ plan, computes a Zen 3 roofline estimate, and gives implementation-grade Rust
 pseudocode that W3-T14 transcribes directly.
 
 The single-word fast path (`n <= 64`) is already covered by W2-T9 (see epic
-doc §7.3) and is **out of scope** for this design.
+doc §7.3). The W2-T9 boundary was widened to `n <= 64` (was `n <= 63`) via
+a u128-widened `gray_code_iter`; the design here picks up at `n = 65`.
+
+## Amendments
+
+- **2026-05-11** — The implemented cap is `N_MAX_MULTIWORD = 255`, not the
+  original `n <= 256` written below. The `[u64; 4]` Gray counter holds at most
+  `2^256 - 1` distinct values; for the iteration to terminate cleanly via
+  `gray_counter_is_zero_above` reading 4 in-bounds words, we need `n <= 255`.
+  Cache budgets and roofline analyses below remain valid (the matrix
+  footprint at `n = 255` is `2 * 4 * 255 * 8 = 16320 B`, slightly below the
+  `n = 256` table entry). References to `n = 256` and `n <= 256` in
+  the sections that follow should be read as inclusive upper-bound shorthand
+  for the design window; the actual cap is `n = 255`.
 
 ---
 
 ## 1. Scope
 
-- Input: `Bipedal3Matrix` of size `n x n`, with `n in {65, 66, ..., 256}`.
+- Input: `Bipedal3Matrix` of size `n x n`, with `n in {65, 66, ..., 255}`
+  (originally documented as `{65, ..., 256}`; capped at 255 per the
+  Amendments note above so the `[u64; 4]` Gray counter stays in bounds).
 - Output: `permanent_bipedal3_multi_word(mat) -> Fp<3>`, bit-identical to
   `permanent_ryser::<Fp<3>>` (epic success criterion 2).
 - Algorithm: Ryser's formula in Gray-code order, paper Theorem 2.1 / epic §2.3.
@@ -25,9 +40,9 @@ doc §7.3) and is **out of scope** for this design.
   buffer of `W = ceil(n / 64)` words per leg, then fold over the buffer.
 - Hardware envelope: AMD Ryzen 9 5900X (Zen 3) dev host, single thread for this
   issue. Multithread (`W3-T15`) and GPU (`W5`) are downstream.
-- Above `n = 256`, single-thread time is dominated by the `2^n` outer
+- Above `n = 255`, single-thread time is dominated by the `2^n` outer
   enumeration regardless of cache behaviour; that regime is the parallel and
-  GPU phase. The roofline below therefore bounds the analysis at `n <= 256`.
+  GPU phase. The roofline below therefore bounds the analysis at `n <= 255`.
 
 The single-word path uses the same column-major layout, so this design is also
 the layout invariant for `Bipedal3Matrix` (epic §7.2 strawman is updated in
@@ -356,19 +371,19 @@ prefetcher learns the access set within the first few hundred Gray steps.
 
 The implementation has two paths chosen by a runtime check:
 
-1. **`n <= 256` (the design-window path).** No blocking. Column-sum legs live
+1. **`n <= 255` (the design-window path).** No blocking. Column-sum legs live
    in YMM registers (`W <= 4` words per leg = `<=4` `u64` = `<=32 B` per leg
    = 1 YMM register per leg, fitting in 2 of 16 ymm regs total). Matrix
    streamed from L1.
 
-2. **`n > 256` fallback (out of scope but cheap to implement).** No special
+2. **`n > 255` fallback (out of scope but cheap to implement).** No special
    blocking either: column-sum spills to L1, matrix lives in L2. The
    per-Gray-step cost goes up by the L2 latency factor (~3x in the worst
    case; AMD-published `lat_mem_rd` benchmarks show ~12 cycles L2-hit vs
    ~4 cycles L1-hit), but the code path is identical. This regime is not a
    performance target — it exists so the function does not panic.
 
-The runtime check is a single `if mat.n() <= 256` branch that picks between
+The runtime check is a single `if mat.n() <= 255` branch that picks between
 "register-resident column-sum" and "stack-resident column-sum" specialisations.
 At higher `n` the SIMD kernel can no longer keep the column-sum in registers
 (`W = 16` for `n = 1024` = 4 YMM regs per leg = 8/16 of the AVX2 register
@@ -497,9 +512,11 @@ use gf2_core::gfp::Fp;
 ///
 /// # Panics
 ///
-/// Debug-asserts `mat.n() <= 256`; above that, dispatch to the rayon
-/// parallel path (W3-T15). No correctness panic above 256 - just
-/// performance regression as the matrix spills out of L1.
+/// Asserts `mat.n() <= 255` in release builds (see Amendments at the
+/// top of this doc); above that, dispatch to the rayon parallel path
+/// (W3-T15). The hard cap is fixed by the `[u64; 4]` Gray counter
+/// (`n = 256` would require a fifth counter word); cache analysis
+/// remains the same as the original n=256 table entry.
 pub fn permanent_bipedal3_multi_word(mat: &Bipedal3Matrix) -> Fp<3> {
     debug_assert!(mat.n() > 64, "n <= 64 should use single-word fast path");
 
@@ -743,8 +760,10 @@ document overhead:
 
 1. **Layout:** column-major, separate `mag` and `sgn` `Vec<u64>` buffers,
    per-leg-contiguous, length `W * n` each, `W = ceil(n / 64)`.
-2. **Cache blocking:** none required for `n <= 256` (matrix fits L1d).
-   Above 256, no special blocking either; the column-major layout +
+2. **Cache blocking:** none required for `n <= 255` (matrix fits L1d; the
+   hard cap is the `[u64; 4]` Gray counter, not cache size — `n = 256`
+   would require a fifth counter word). Above 255, no special blocking
+   either; the column-major layout +
    stride-1 prefetcher handles the L2-resident regime up to `n ~= 5800`,
    far past the practical `2^n` ceiling.
 3. **Roofline:** L1d at 128 GB/s/core x ~1.0 op/byte = 130 G u64-ops/s/core
