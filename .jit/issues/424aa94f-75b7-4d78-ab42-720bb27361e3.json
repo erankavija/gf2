@@ -2,7 +2,7 @@
   "id": "424aa94f-75b7-4d78-ab42-720bb27361e3",
   "title": "Plot generation scripts for permanent benchmarks",
   "description": "Add plot generation scripts that turn the criterion JSON outputs (T10, S1, S2, S3, S4, S5) into publication-grade figures.\n\n## Background\n\nThe reproducible benchmark artefact (S6) needs PNG/SVG plots of: (a) log-time vs $n$ for the F_3 permanent paths (reference, bipedal, SIMD, parallel), (b) parallel scaling vs core count, (c) AVX2-vs-AVX-512 cross-CPU bars, (d) GPU vs CPU crossover. This issue lands the plotting scripts under `scripts/plot_permanent_*.py` (matplotlib) or `scripts/plot_permanent_*.rs` (plotters), reading from the criterion JSON paths in `target/criterion/` or the simulation CSVs in `dev/benchmarks/gf2_algebra_permanent/`.\n\nThe choice of matplotlib vs plotters is left to the implementer; the constraint is that the script must be deterministically reproducible.\n\n## Success Criteria\n\n- [ ] [hard] `scripts/plot_permanent_*` scripts exist (matplotlib or plotters; document the choice in the script header).\n- [ ] [hard] At least four figure types are produced: log-time vs $n$, parallel-scaling, cross-CPU comparison, GPU-vs-CPU.\n- [ ] [hard] Figures are written to `dev/benchmarks/gf2_algebra_permanent/figures/` with deterministic file names.\n- [ ] [hard] Running the scripts twice produces bit-identical output (after timestamp normalisation, if any).\n- [ ] [hard] Scripts read from the conventional CSV locations recorded in S1/S2/S3/S4/S5; missing input data produces a clear error, not a partial figure.",
-  "state": "backlog",
+  "state": "ready",
   "priority": "normal",
   "assignee": null,
   "dependencies": [
@@ -21,5 +21,5 @@
     "component:gf2-algebra"
   ],
   "created_at": "2026-05-09T09:48:33.594996107+00:00",
-  "updated_at": "2026-05-09T09:50:15.508339395+00:00"
+  "updated_at": "2026-05-11T09:03:49.877684802+00:00"
 }
