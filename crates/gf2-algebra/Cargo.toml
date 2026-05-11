@@ -40,6 +40,11 @@ gf2-algebra = { path = ".", features = ["test-support"] }
 name = "permanent"
 harness = false
 
+# ── Issue `96dcbec4` (epic `ae82bd73`) — paper Table 2 slope reproduction ──
+[[example]]
+name = "paper_repro_slope"
+required-features = ["test-support"]
+
 [features]
 default = ["simd", "parallel"]
 
