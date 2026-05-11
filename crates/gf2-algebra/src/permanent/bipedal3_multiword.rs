@@ -63,6 +63,42 @@ use crate::packed::PackedField;
 /// reads only the 4 in-bounds counter words.
 pub const N_MAX_MULTIWORD: usize = 255;
 
+/// Target L1 data-cache size assumed by the R3 sizing analysis, in bytes.
+///
+/// Set to 32 KiB (Zen 3, the development host). The actual cache size is
+/// detected only implicitly via the criterion derived below
+/// ([`MAX_MATRIX_BYTES_FOR_L1`]); this constant exposes the assumption
+/// to readers, downstream `cfg`-specific tuning, and the cross-CPU
+/// portability tests planned in W3-T16/W5.
+pub const L1D_BYTES: usize = 32 * 1024;
+
+/// Maximum matrix footprint (in bytes) the design budgets for L1d
+/// residency: half of [`L1D_BYTES`].
+///
+/// The matrix occupies `2 * W * n * 8` bytes (mag + sgn legs, each
+/// `W * 8` bytes per column, `n` columns). With the column-sum and
+/// outer iteration metadata, half of L1d is a comfortable upper bound
+/// before the matrix begins to spill. At `n = N_MAX_MULTIWORD = 255`
+/// the matrix uses `2 * 4 * 255 * 8 = 16320` bytes — below this
+/// 16 KiB budget, so no explicit cache blocking is needed in the
+/// supported range.
+pub const MAX_MATRIX_BYTES_FOR_L1: usize = L1D_BYTES / 2;
+
+/// Bipedal3 column footprint in bytes given an `n × n` matrix.
+///
+/// Each column carries `ceil(n / 64) * 8` bytes per leg (mag + sgn),
+/// so the whole matrix is `2 * ceil(n / 64) * 8 * n` bytes.
+#[inline]
+pub const fn matrix_bytes_for_n(n: usize) -> usize {
+    let w = n.div_ceil(64);
+    2 * w * 8 * n
+}
+
+const _: () = {
+    // Static sanity check: the cap fits within the L1d budget.
+    assert!(matrix_bytes_for_n(N_MAX_MULTIWORD) <= MAX_MATRIX_BYTES_FOR_L1);
+};
+
 /// Compute the permanent of `mat` over `F_3` for `n ∈ (64, N_MAX_MULTIWORD]`
 /// using the multi-word streaming column-sum.
 ///

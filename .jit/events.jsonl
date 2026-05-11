@@ -4688,3 +4688,4 @@
 {"type":"issue_completed","id":"a705ba50-a2df-47ce-aa04-7b583cc4e3d0","issue_id":"d181e95b-7b84-436e-8011-97f7c2e1976d","timestamp":"2026-05-11T13:41:41.892390083Z"}
 {"type":"issue_state_changed","id":"04601b9c-af38-4685-8dd4-026ff74d2add","issue_id":"686ee1b5-6ac8-4547-9b66-d472b2753676","timestamp":"2026-05-11T13:41:42.125077419Z","from":"backlog","to":"ready"}
 {"type":"gate_failed","id":"80726877-d391-4eb7-a5c9-da58e794af61","issue_id":"a7886bd8-e4e1-45e6-8b5c-1fc15a530de1","timestamp":"2026-05-11T13:44:08.781824968Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"8c1e69ba-754f-44fc-b20c-a4d7cd08ddbb","issue_id":"a7886bd8-e4e1-45e6-8b5c-1fc15a530de1","timestamp":"2026-05-11T18:10:50.305629019Z","gate_key":"code-review","updated_by":"auto:executor"}
