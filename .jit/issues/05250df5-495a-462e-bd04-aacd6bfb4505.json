@@ -14,11 +14,6 @@
     "tests"
   ],
   "gates_status": {
-    "tests": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-11T13:12:56.991221644Z"
-    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
@@ -27,7 +22,12 @@
     "code-review": {
       "status": "failed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-11T19:10:08.985804316Z"
+      "updated_at": "2026-05-11T19:19:32.226064380Z"
+    },
+    "tests": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-11T13:12:56.991221644Z"
     }
   },
   "context": {},
@@ -38,5 +38,5 @@
     "component:gf2-algebra"
   ],
   "created_at": "2026-05-09T09:45:01.971014471+00:00",
-  "updated_at": "2026-05-11T19:17:56.104051839+00:00"
+  "updated_at": "2026-05-11T19:22:29.195579411+00:00"
 }

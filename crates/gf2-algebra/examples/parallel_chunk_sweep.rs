@@ -40,14 +40,11 @@
 //!   --features "parallel test-support" --example parallel_chunk_sweep
 //! ```
 
-use gf2_algebra::gray::gray_code_index_to_subset;
-use gf2_algebra::packed::bipedal3::{Bipedal3, Bipedal3Matrix};
-use gf2_algebra::packed::PackedField;
-use gf2_algebra::packed::PackedFieldVec;
-use gf2_algebra::permanent::parallel_bipedal3::CHUNK_SUBSETS;
+use gf2_algebra::packed::bipedal3::Bipedal3Matrix;
+use gf2_algebra::permanent::parallel_bipedal3::{
+    permanent_bipedal3_parallel_with_chunk, CHUNK_SUBSETS,
+};
 use gf2_algebra::testutil::random_matrix;
-use gf2_core::gfp::Fp;
-use rayon::prelude::*;
 use std::fs::{self, File};
 use std::io::Write;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
@@ -105,99 +102,12 @@ fn today_yyyy_mm_dd() -> String {
     format!("{y:04}-{m:02}-{d:02}")
 }
 
-/// Process one chunk of Gray-code indices `[start, end)`.
-///
-/// Reconstructs the starting `col_sum` from the Gray-code subset bitmask at
-/// index `start`, then walks the chunk in Gray order accumulating the Ryser sum.
-fn process_chunk(columns: &[Bipedal3], n: usize, start: u64, end: u64) -> Fp<3> {
-    // Derive starting col_sum from the Gray-code bitmask g(start).
-    let start_mask = gray_code_index_to_subset(start);
-    let mut col_sum = Bipedal3::zero();
-    for (j, &col) in columns.iter().enumerate().take(n) {
-        if (start_mask >> j) & 1 == 1 {
-            col_sum = col_sum.add(col);
-        }
-    }
-
-    let mut subset_size: usize = start_mask.count_ones() as usize;
-
-    // Accumulate the Ryser term for the starting subset.
-    let term = col_sum.fold_mul_first_n(n);
-    let mut partial = if subset_size % 2 == 1 { -term } else { term };
-
-    // Walk remaining steps in the chunk.
-    for k in (start + 1)..end {
-        let flip = k.trailing_zeros() as usize;
-        let g_k = k ^ (k >> 1);
-        let parity: i8 = if ((g_k >> flip) & 1) == 1 { 1 } else { -1 };
-
-        if parity == 1 {
-            subset_size += 1;
-            col_sum = col_sum.add(columns[flip]);
-        } else {
-            subset_size -= 1;
-            col_sum = col_sum.sub(columns[flip]);
-        }
-
-        let term = col_sum.fold_mul_first_n(n);
-        if subset_size % 2 == 1 {
-            partial = partial - term;
-        } else {
-            partial += term;
-        }
-    }
-
-    partial
-}
-
-/// Run the parallel permanent with a runtime-supplied chunk size.
-///
-/// Mirrors `permanent_bipedal3_parallel` exactly, but takes `chunk` as a
-/// runtime argument so the chunk-sweep harness can vary it without
-/// recompilation.
-fn permanent_parallel_with_chunk(mat: &Bipedal3Matrix, chunk: usize) -> Fp<3> {
-    let n = mat.cols();
-    assert_eq!(mat.rows(), n);
-    assert!(n <= 63);
-    if n == 0 {
-        return Fp::<3>::new(1);
-    }
-
-    // Build column vectors identical to the library implementation.
-    let columns: Vec<Bipedal3> = (0..n)
-        .map(|j| {
-            let col_vec = mat.column(j);
-            let mut col = Bipedal3::zero();
-            for i in 0..n {
-                col = col.with_lane(i, col_vec.get(i));
-            }
-            col
-        })
-        .collect();
-
-    let total_subsets = (1u64 << n) - 1;
-
-    // Chunks start at 1 (the first non-empty subset); index 0 maps to the
-    // empty subset and is excluded from Ryser's sum.
-    let partial_total: Fp<3> = (1..=total_subsets)
-        .step_by(chunk)
-        .par_bridge()
-        .map(|chunk_start| {
-            process_chunk(
-                &columns,
-                n,
-                chunk_start,
-                (chunk_start + chunk as u64).min(total_subsets + 1),
-            )
-        })
-        .reduce(|| Fp::<3>::new(0), |a, b| a + b);
-
-    if n % 2 == 1 {
-        -partial_total
-    } else {
-        partial_total
-    }
-}
+// SSOT: the algorithm body lives in
+// `gf2_algebra::permanent::parallel_bipedal3::permanent_bipedal3_parallel_with_chunk`.
+// This example only varies the `chunk_subsets` parameter and times the
+// call; it does NOT duplicate the production code path. That guarantee
+// keeps the recorded chunk-sweep CSV trustworthy as the empirical basis
+// for the `CHUNK_SUBSETS` default constant.
 
 fn main() {
     let date = today_yyyy_mm_dd();
@@ -239,7 +149,8 @@ fn main() {
             let mat = Bipedal3Matrix::from_row_major(&row_major, SWEEP_N, SWEEP_N);
 
             let t0 = Instant::now();
-            let _result = std::hint::black_box(permanent_parallel_with_chunk(&mat, chunk));
+            let _result =
+                std::hint::black_box(permanent_bipedal3_parallel_with_chunk(&mat, chunk));
             let elapsed_us = t0.elapsed().as_secs_f64() * 1_000_000.0;
             samples.push(elapsed_us);
         }
