@@ -57,6 +57,11 @@ required-features = ["test-support"]
 name = "parallel_chunk_sweep"
 required-features = ["parallel", "test-support"]
 
+# ── Issue `4513209c` (epic `ae82bd73`) — S2 parallel scaling sweep ──
+[[example]]
+name = "parallel_scaling_sweep"
+required-features = ["parallel", "test-support"]
+
 [features]
 default = ["simd", "parallel"]
 
