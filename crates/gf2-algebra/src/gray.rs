@@ -15,6 +15,40 @@
 //! Re-exported as [`crate::permanent::gray`] for callers that want the
 //! permanent-grouped path.
 
+/// Convert a Gray-code sequential index to the corresponding subset bitmask.
+///
+/// The binary-reflected Gray code maps index `k` to the subset bitmask
+/// `g(k) = k ^ (k >> 1)`. Bit `j` set in the result means column `j` is
+/// present in the `k`-th non-empty subset visited by [`gray_code_iter`].
+///
+/// # Arguments
+///
+/// * `k` — Gray-code step index in `1..2^n`. For `k = 0` the result is `0`
+///   (the empty subset, which is excluded from [`gray_code_iter`]).
+///
+/// # Examples
+///
+/// ```
+/// use gf2_algebra::gray::gray_code_index_to_subset;
+///
+/// // k=1 maps to subset {0} (bit 0 set), g(1) = 1 ^ 0 = 1.
+/// assert_eq!(gray_code_index_to_subset(1), 0b001);
+/// // k=2 maps to subset {0,1} (bits 0 and 1 set), g(2) = 2 ^ 1 = 3.
+/// assert_eq!(gray_code_index_to_subset(2), 0b011);
+/// // k=3 maps to subset {1} (bit 1 set only), g(3) = 3 ^ 1 = 2.
+/// assert_eq!(gray_code_index_to_subset(3), 0b010);
+/// // k=4 maps to subset {1,2}, g(4) = 4 ^ 2 = 6.
+/// assert_eq!(gray_code_index_to_subset(4), 0b110);
+/// ```
+///
+/// # Complexity
+///
+/// `O(1)` — two arithmetic operations on a `u64`.
+#[inline]
+pub fn gray_code_index_to_subset(k: u64) -> u64 {
+    k ^ (k >> 1)
+}
+
 /// Gray-code subset enumerator yielding `(flip_index, parity)` for
 /// `k` in `1..2^n`.
 ///
@@ -288,5 +322,53 @@ mod tests {
     #[test]
     fn test_gray_code_iter_yields_zero_items_n_0() {
         assert_eq!(gray_code_iter(0).count(), 0);
+    }
+
+    // -----------------------------------------------------------------------
+    // gray_code_index_to_subset tests
+    // -----------------------------------------------------------------------
+
+    /// `gray_code_index_to_subset(0)` returns `0` (the empty subset).
+    #[test]
+    fn test_gray_code_index_to_subset_k0() {
+        assert_eq!(gray_code_index_to_subset(0), 0);
+    }
+
+    /// Hand-verified values matching the canonical BRGC formula `g(k) = k ^ (k>>1)`.
+    #[test]
+    fn test_gray_code_index_to_subset_hand_checked() {
+        // g(1) = 1^0 = 1 = 0b001  (subset {0})
+        assert_eq!(gray_code_index_to_subset(1), 0b001);
+        // g(2) = 2^1 = 3 = 0b011  (subset {0,1})
+        assert_eq!(gray_code_index_to_subset(2), 0b011);
+        // g(3) = 3^1 = 2 = 0b010  (subset {1})
+        assert_eq!(gray_code_index_to_subset(3), 0b010);
+        // g(4) = 4^2 = 6 = 0b110  (subset {1,2})
+        assert_eq!(gray_code_index_to_subset(4), 0b110);
+        // g(5) = 5^2 = 7 = 0b111  (subset {0,1,2})
+        assert_eq!(gray_code_index_to_subset(5), 0b111);
+        // g(6) = 6^3 = 5 = 0b101  (subset {0,2})
+        assert_eq!(gray_code_index_to_subset(6), 0b101);
+        // g(7) = 7^3 = 4 = 0b100  (subset {2})
+        assert_eq!(gray_code_index_to_subset(7), 0b100);
+    }
+
+    /// `gray_code_index_to_subset` is consistent with the cumulative XOR of
+    /// `gray_code_iter` flips: after walking `k` steps, the running subset
+    /// register equals `gray_code_index_to_subset(k)`.
+    #[test]
+    fn test_gray_code_index_to_subset_consistent_with_iter_n4() {
+        let n = 4;
+        let mut register: u64 = 0;
+        for (step, (flip, _parity)) in gray_code_iter(n).enumerate() {
+            let k = (step + 1) as u64;
+            register ^= 1u64 << flip;
+            assert_eq!(
+                gray_code_index_to_subset(k),
+                register,
+                "mismatch at k={k}: gray_code_index_to_subset={:#06b}, register={register:#06b}",
+                gray_code_index_to_subset(k)
+            );
+        }
     }
 }
