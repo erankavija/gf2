@@ -369,25 +369,22 @@ prefetcher learns the access set within the first few hundred Gray steps.
 
 ### 5.2 What W3-T14 actually implements
 
-The implementation has two paths chosen by a runtime check:
+The shipped implementation has a single path, gated by an assertion:
 
-1. **`n <= 255` (the design-window path).** No blocking. Column-sum legs live
-   in YMM registers (`W <= 4` words per leg = `<=4` `u64` = `<=32 B` per leg
-   = 1 YMM register per leg, fitting in 2 of 16 ymm regs total). Matrix
-   streamed from L1.
+- **`n <= 255` (the design-window path).** No blocking. Column-sum legs live
+  in YMM registers (`W <= 4` words per leg = `<=4` `u64` = `<=32 B` per leg
+  = 1 YMM register per leg, fitting in 2 of 16 ymm regs total). Matrix
+  streamed from L1.
 
-2. **`n > 255` fallback (out of scope but cheap to implement).** No special
-   blocking either: column-sum spills to L1, matrix lives in L2. The
-   per-Gray-step cost goes up by the L2 latency factor (~3x in the worst
-   case; AMD-published `lat_mem_rd` benchmarks show ~12 cycles L2-hit vs
-   ~4 cycles L1-hit), but the code path is identical. This regime is not a
-   performance target — it exists so the function does not panic.
-
-The runtime check is a single `if mat.n() <= 255` branch that picks between
-"register-resident column-sum" and "stack-resident column-sum" specialisations.
-At higher `n` the SIMD kernel can no longer keep the column-sum in registers
-(`W = 16` for `n = 1024` = 4 YMM regs per leg = 8/16 of the AVX2 register
-file just for column-sum), but the *layout and access pattern stay the same*.
+`permanent_bipedal3_multiword` hard-asserts `n <= N_MAX_MULTIWORD = 255`
+in release builds. The earlier sketch of an `n > 255` fallback path is
+not implemented: the `[u64; 4]` Gray counter cannot represent `2^n` for
+`n >= 256`, so widening the path would require widening the counter to
+`[u64; 5]` first. The original justification ("matrix spills to L1 / L2;
+code path is identical") still holds *cache-wise*, but the dispatch
+contract is single-path with the assert, not a panic-free fallback.
+Cross-CPU and very-large-`n` workloads are instead routed to W3-T15
+(rayon parallel) and W5 (HIP/ROCm GPU).
 
 ### 5.3 Why no column-blocking is needed
 
@@ -784,14 +781,22 @@ document overhead:
 
 ## 12. Summary of decisions
 
-1. **Layout:** column-major, separate `mag` and `sgn` `Vec<u64>` buffers,
-   per-leg-contiguous, length `W * n` each, `W = ceil(n / 64)`.
+1. **Layout:** column-major. Original sketch suggested two flat
+   `Vec<u64>` buffers (`mag`, `sgn`) of length `W * n` each. As shipped
+   in `Bipedal3Matrix` the columns are stored as a `Vec<Bipedal3Vec>`
+   (one packed column per `n` columns; each `Bipedal3Vec` carries its
+   own `mag` and `sgn` `Vec<u64>` of length `W = ceil(n / 64)`). The
+   per-column-contiguous, leg-contiguous-within-column shape is
+   identical in access pattern; the encapsulation change keeps each
+   column's `Bipedal3Vec` invariants self-contained.
 2. **Cache blocking:** none required for `n <= 255` (matrix fits L1d; the
    hard cap is the `[u64; 4]` Gray counter, not cache size — `n = 256`
-   would require a fifth counter word). Above 255, no special blocking
-   either; the column-major layout +
-   stride-1 prefetcher handles the L2-resident regime up to `n ~= 5800`,
-   far past the practical `2^n` ceiling.
+   would require a fifth counter word). Above 255 the path
+   `permanent_bipedal3_multiword` asserts; very-large-`n` workloads are
+   instead routed to W3-T15 (rayon parallel) and W5 (GPU). The
+   column-major layout + stride-1 prefetcher would handle an L2-resident
+   regime up to `n ~= 5800` *if* the path were extended; the cache
+   geometry already covers that case if/when the counter widens.
 3. **Roofline:** L1d at 128 GB/s/core x ~1.0 op/byte = 130 G u64-ops/s/core
    ceiling; integer-pipe ceiling at ~16 G u64-ops/s/core dominates. The
    inner loop is **compute-bound, not memory-bound**, on Zen 3 in the
@@ -799,6 +804,16 @@ document overhead:
 4. **Pseudocode:** §8, transcribable directly by W3-T14.
 5. **`fold_mul`:** sequential reduction; log-tree variant reserved as a
    SIMD-internal option for W3-T12.
-6. **Validation:** cross-check vs single-word at `n = 64`, vs generic
-   Ryser at `n in {65, 80, 100, 128, 200, 256}`, plus a roofline-sanity
-   microbench at `n = 65`.
+6. **Validation (amended):** layered cross-check, as detailed in §9.2.
+   - Fast tier: 850 random matrices through both
+     `permanent_bipedal3_multiword` and `permanent_ryser::<Fp<3>>` across
+     `n in {2, 5, 8, 16, 20}`. Release mode skips the `debug_assert!(n > 64)`
+     so the multi-word path is exercised directly.
+   - Sim tier: block-diagonal cross-check at `n in {65, 72, 96, 128}`
+     (5 matrices each) with the small block oracled by ryser. Tests
+     `#[ignore]` because the multi-word `2^n` Gray walk remains
+     infeasible at those n.
+   - The original validation plan (direct ryser at
+     `n in {65, 80, 100, 128, 200, 256}`) was infeasible because (a)
+     ryser caps at `n <= 63` and (b) the `2^n` Gray walk at the named n
+     exceeds `10^10` s on a single core.
