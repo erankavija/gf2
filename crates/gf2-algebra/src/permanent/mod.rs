@@ -22,10 +22,13 @@
 //! `dev/plans/d1a_gf2_algebra_boundary.md` §4.2.
 
 pub mod bipedal3;
+pub mod bipedal3_multiword;
 pub mod reference;
 pub mod ryser;
 
 pub use bipedal3::permanent_bipedal3;
+pub use bipedal3::permanent_bipedal3_singleword;
+pub use bipedal3_multiword::permanent_bipedal3_multiword;
 pub use reference::permanent_mod3_reference;
 pub use ryser::permanent_ryser;
 
