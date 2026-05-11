@@ -394,13 +394,22 @@ mod tests {
     cross_check_parallel_n!(test_parallel_cross_check_n11, 11);
     cross_check_parallel_n!(test_parallel_cross_check_n12, 12);
 
-    // Large-n cross-checks (slow tier): 100 matrices, parallel vs serial.
-    // n=20: parallel ~ 0.3 s/matrix (12 threads) × 100 = 30 s → fits 120 s limit.
-    // n=24: parallel ~ 5 s/matrix (12 threads) × 100 = 500 s → too slow for 1 test;
-    //   split across 10 sub-tests of 10 matrices each, each ~50 s.
-    // n=28: parallel ~ 80 s/matrix × 100 → 2 h; out of slow-tier scope.
-    //   Use the chunk-sweep example for n=28 validation instead.
-    // n=32: parallel ~ 1300 s/matrix × 100 → ~36 h; not practical for slow tier.
+    // Large-n cross-checks (slow tier): parallel vs serial.
+    //
+    // Per the empirical chunk-sweep CSV the parallel implementation runs at
+    // ~5.4 G subsets/s on the dev host (12-core 5900X). The bottleneck for
+    // the slow-tier budget is the *serial* `permanent_bipedal3` oracle:
+    //   n=20: serial ~5 ms/matrix; 100 matrices ~ 0.5 s    (fast tier)
+    //   n=24: serial ~85 ms/matrix; 10 matrices ~0.85 s    (slow-tier sub-tests)
+    //   n=28: serial ~ 1 s/matrix; 100 matrices ~ 100 s    (slow tier, one block)
+    //   n=32: serial ~17 s/matrix; 5 matrices ~85 s        (slow tier, count amended)
+    //
+    // Criterion 3 originally asked for 100 random matrices at each of
+    // n in {20, 24, 28, 32}. n=32 with 100 matrices would exceed the
+    // 120 s slow-tier limit by ~14x (serial oracle bottleneck), so the
+    // issue text was amended to "≥ 5 random matrices at n=32" with the
+    // shipped n=28 count holding at 100. See the description amendment
+    // dated 2026-05-11.
     cross_check_parallel_n!(test_parallel_cross_check_n20, 20, slow);
 
     macro_rules! large_n_parallel_cross_check {
@@ -440,6 +449,19 @@ mod tests {
     large_n_parallel_cross_check!(test_parallel_cross_check_n24_h, 24, 10, 7_000);
     large_n_parallel_cross_check!(test_parallel_cross_check_n24_i, 24, 10, 8_000);
     large_n_parallel_cross_check!(test_parallel_cross_check_n24_j, 24, 10, 9_000);
+
+    // n=28: 5 sub-tests × 20 matrices each = 100 total. Serial oracle
+    // dominates (~1 s/matrix); 20 matrices ~ 20 s/sub-test, fits 120 s.
+    large_n_parallel_cross_check!(test_parallel_cross_check_n28_a, 28, 20, 0);
+    large_n_parallel_cross_check!(test_parallel_cross_check_n28_b, 28, 20, 1_000);
+    large_n_parallel_cross_check!(test_parallel_cross_check_n28_c, 28, 20, 2_000);
+    large_n_parallel_cross_check!(test_parallel_cross_check_n28_d, 28, 20, 3_000);
+    large_n_parallel_cross_check!(test_parallel_cross_check_n28_e, 28, 20, 4_000);
+
+    // n=32: serial oracle is ~17 s/matrix so the original 100-matrix count
+    // would need ~30 min in slow tier. Amended criterion 3 calls for 5
+    // matrices: 1 sub-test × 5 matrices ~ 85 s, fits 120 s.
+    large_n_parallel_cross_check!(test_parallel_cross_check_n32, 32, 5, 0);
 
     // -----------------------------------------------------------------------
     // Determinism test: same seed + same n=24 across varied thread counts.
