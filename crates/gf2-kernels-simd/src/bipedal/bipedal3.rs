@@ -33,6 +33,27 @@ use super::framework::BipedalLikeConfig;
 use super::lanes::Avx2Lane;
 use super::lanes::BipedalLogicalLanes;
 
+/// Returns `true` when the CPU supports AVX2, `false` otherwise.
+///
+/// The result is cached in a `OnceLock<bool>` so CPUID is queried at most
+/// once per process — matching the project's `simd::maybe_simd()` pattern
+/// from `gf2-core` (CLAUDE.md §Architecture point 3). Callers in this module
+/// use this instead of bare `is_x86_feature_detected!("avx2")` to make the
+/// caching visible and auditable.
+///
+/// # Complexity
+///
+/// `O(1)` after the first call (CPUID result is cached).
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+pub fn has_avx2() -> bool {
+    use std::sync::OnceLock;
+    static AVX2: OnceLock<bool> = OnceLock::new();
+    *AVX2.get_or_init(|| {
+        use std::arch::is_x86_feature_detected;
+        is_x86_feature_detected!("avx2")
+    })
+}
+
 /// F_3 arithmetic recipe for the generic bipedal-like framework.
 ///
 /// Implements [`BipedalLikeConfig`] using the Scheinerman 2024 §2.2
@@ -440,7 +461,7 @@ mod tests {
 
         #[test]
         fn test_bipedal3_avx2_add_matches_reference_l0() {
-            if !is_x86_feature_detected!("avx2") {
+            if !has_avx2() {
                 return;
             }
             let a = make_canonical_vec(0, 0xDEAD_BEEF);
@@ -450,7 +471,7 @@ mod tests {
 
         #[test]
         fn test_bipedal3_avx2_sub_matches_reference_l0() {
-            if !is_x86_feature_detected!("avx2") {
+            if !has_avx2() {
                 return;
             }
             let a = make_canonical_vec(0, 0xDEAD_BEEF);
@@ -460,7 +481,7 @@ mod tests {
 
         #[test]
         fn test_bipedal3_avx2_mul_matches_reference_l0() {
-            if !is_x86_feature_detected!("avx2") {
+            if !has_avx2() {
                 return;
             }
             let a = make_canonical_vec(0, 0xDEAD_BEEF);
@@ -470,7 +491,7 @@ mod tests {
 
         #[test]
         fn test_bipedal3_avx2_neg_matches_reference_l0() {
-            if !is_x86_feature_detected!("avx2") {
+            if !has_avx2() {
                 return;
             }
             let a = make_canonical_vec(0, 0xDEAD_BEEF);
@@ -479,7 +500,7 @@ mod tests {
 
         #[test]
         fn test_bipedal3_avx2_add_matches_reference_l256() {
-            if !is_x86_feature_detected!("avx2") {
+            if !has_avx2() {
                 return;
             }
             let a = make_canonical_vec(256, 1);
@@ -489,7 +510,7 @@ mod tests {
 
         #[test]
         fn test_bipedal3_avx2_sub_matches_reference_l256() {
-            if !is_x86_feature_detected!("avx2") {
+            if !has_avx2() {
                 return;
             }
             let a = make_canonical_vec(256, 3);
@@ -499,7 +520,7 @@ mod tests {
 
         #[test]
         fn test_bipedal3_avx2_mul_matches_reference_l256() {
-            if !is_x86_feature_detected!("avx2") {
+            if !has_avx2() {
                 return;
             }
             let a = make_canonical_vec(256, 5);
@@ -509,7 +530,7 @@ mod tests {
 
         #[test]
         fn test_bipedal3_avx2_neg_matches_reference_l256() {
-            if !is_x86_feature_detected!("avx2") {
+            if !has_avx2() {
                 return;
             }
             let a = make_canonical_vec(256, 7);
@@ -518,7 +539,7 @@ mod tests {
 
         #[test]
         fn test_bipedal3_avx2_add_matches_reference_l1024() {
-            if !is_x86_feature_detected!("avx2") {
+            if !has_avx2() {
                 return;
             }
             let a = make_canonical_vec(1024, 11);
@@ -528,7 +549,7 @@ mod tests {
 
         #[test]
         fn test_bipedal3_avx2_sub_matches_reference_l1024() {
-            if !is_x86_feature_detected!("avx2") {
+            if !has_avx2() {
                 return;
             }
             let a = make_canonical_vec(1024, 13);
@@ -538,7 +559,7 @@ mod tests {
 
         #[test]
         fn test_bipedal3_avx2_mul_matches_reference_l1024() {
-            if !is_x86_feature_detected!("avx2") {
+            if !has_avx2() {
                 return;
             }
             let a = make_canonical_vec(1024, 15);
@@ -548,7 +569,7 @@ mod tests {
 
         #[test]
         fn test_bipedal3_avx2_neg_matches_reference_l1024() {
-            if !is_x86_feature_detected!("avx2") {
+            if !has_avx2() {
                 return;
             }
             let a = make_canonical_vec(1024, 17);
@@ -557,7 +578,7 @@ mod tests {
 
         #[test]
         fn test_bipedal3_avx2_add_matches_reference_l4096() {
-            if !is_x86_feature_detected!("avx2") {
+            if !has_avx2() {
                 return;
             }
             let a = make_canonical_vec(4096, 21);
@@ -567,7 +588,7 @@ mod tests {
 
         #[test]
         fn test_bipedal3_avx2_sub_matches_reference_l4096() {
-            if !is_x86_feature_detected!("avx2") {
+            if !has_avx2() {
                 return;
             }
             let a = make_canonical_vec(4096, 23);
@@ -577,7 +598,7 @@ mod tests {
 
         #[test]
         fn test_bipedal3_avx2_mul_matches_reference_l4096() {
-            if !is_x86_feature_detected!("avx2") {
+            if !has_avx2() {
                 return;
             }
             let a = make_canonical_vec(4096, 25);
@@ -587,7 +608,7 @@ mod tests {
 
         #[test]
         fn test_bipedal3_avx2_neg_matches_reference_l4096() {
-            if !is_x86_feature_detected!("avx2") {
+            if !has_avx2() {
                 return;
             }
             let a = make_canonical_vec(4096, 27);
@@ -625,7 +646,7 @@ mod tests {
             fn test_bipedal3_avx2_add_matches_reference_proptest(
                 pair in canonical_pair_strategy(),
             ) {
-                if !is_x86_feature_detected!("avx2") {
+                if !has_avx2() {
                     return Ok(());
                 }
                 let (a, b) = pair;
@@ -638,7 +659,7 @@ mod tests {
             fn test_bipedal3_avx2_sub_matches_reference_proptest(
                 pair in canonical_pair_strategy(),
             ) {
-                if !is_x86_feature_detected!("avx2") {
+                if !has_avx2() {
                     return Ok(());
                 }
                 let (a, b) = pair;
@@ -651,7 +672,7 @@ mod tests {
             fn test_bipedal3_avx2_mul_matches_reference_proptest(
                 pair in canonical_pair_strategy(),
             ) {
-                if !is_x86_feature_detected!("avx2") {
+                if !has_avx2() {
                     return Ok(());
                 }
                 let (a, b) = pair;
@@ -664,7 +685,7 @@ mod tests {
             fn test_bipedal3_avx2_neg_matches_reference_proptest(
                 pair in canonical_pair_strategy(),
             ) {
-                if !is_x86_feature_detected!("avx2") {
+                if !has_avx2() {
                     return Ok(());
                 }
                 let (a, _) = pair;

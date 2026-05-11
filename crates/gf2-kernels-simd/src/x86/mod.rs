@@ -8,6 +8,11 @@ mod avx2;
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub(crate) mod bipedal_avx2;
+#[cfg(all(
+    any(target_arch = "x86", target_arch = "x86_64"),
+    target_feature = "avx512f"
+))]
+pub(crate) mod bipedal_avx512;
 pub(crate) mod clmul;
 pub(crate) mod fp65537;
 pub(crate) mod fp_generic;

@@ -15,9 +15,9 @@
 //!
 //! | Module | Purpose |
 //! |--------|---------|
-//! | [`framework`] | The `BipedalLikeConfig` trait + `BatchedBipedalLike` generic struct. |
-//! | [`lanes`]     | The `BipedalLogicalLanes` trait + `Avx2Lane` impl. |
-//! | [`f3`]        | F_3 instantiation: `Config3` + `Bipedal3x4` type alias. |
+//! | [`framework`]  | The `BipedalLikeConfig` trait + `BatchedBipedalLike` generic struct. |
+//! | [`lanes`]      | The `BipedalLogicalLanes` trait + `Avx2Lane` impl. |
+//! | [`bipedal3`]   | F_3 instantiation: `Config3` + `Bipedal3x4` type alias. |
 //!
 //! The actual AVX2 batch entry points (`run_*_batch`) live in
 //! [`crate::x86::bipedal_avx2`] so the asm-artefact-present gate fires on
@@ -26,7 +26,7 @@
 //! ## Adding a new prime
 //!
 //! Adding a new prime requires only a new [`framework::BipedalLikeConfig`]
-//! impl in `crates/gf2-kernels-simd/src/bipedal/<prime>.rs`. The new impl
+//! impl in `crates/gf2-kernels-simd/src/bipedal/bipedal<prime>.rs`. The new impl
 //! supplies the `MagLane` / `SgnLane` associated types (typically
 //! [`lanes::Avx2Lane`] for both today; future F_5 D-bit-sliced may diverge),
 //! the `PRIME` and `U64_PER_LANE_PAIR` constants, and the lane-level
@@ -57,16 +57,16 @@
 //! primitive (e.g. byte-shuffle for F_7's LUT-A table lookup) or picks a
 //! lane shape other than `(Avx2Lane, Avx2Lane)`.
 
-pub mod f3;
+pub mod bipedal3;
 pub mod framework;
 pub mod lanes;
 
-pub use f3::Config3;
+pub use bipedal3::Config3;
 pub use framework::{BatchedBipedalLike, BipedalLikeConfig};
 pub use lanes::BipedalLogicalLanes;
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-pub use f3::Bipedal3x4;
+pub use bipedal3::Bipedal3x4;
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub use lanes::Avx2Lane;
 
