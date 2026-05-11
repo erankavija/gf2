@@ -12,14 +12,18 @@
 //! amendment in JIT issue `b315564a` for the rationale (committed-seed
 //! reproducibility, Charon/Aeneas extractability, dep minimalism).
 //!
-//! Per-cell wall-clock expectations (AMD Ryzen 9 5900X, release build):
-//!   permanent_mod3_reference n=8:  < 1 ms    => well inside 60 s budget
-//!   permanent_mod3_reference n=12: ~10 ms    => well inside 60 s budget
-//!   permanent_mod3_reference n=16: ~1 s      => ~10 s per cell at sample_size=10
-//!   permanent_mod3_reference n=20: ~30 s     => measurement_time=60s cap exits
-//!                                               after a few samples (within budget).
-//!   permanent_bipedal3 n=36:       ~10-30 s  => at sample_size=10 fits ~60 s
-//!                                               with measurement_time cap.
+//! Per-cell wall-clock budget: criterion 4 contracts each cell under 60 s on
+//! the dev host. We use `sample_size(10)` (Criterion's minimum) and tune
+//! `warm_up_time(1s)` + `measurement_time(45s)` so warm-up + measurement +
+//! Criterion overhead stays under 60 s total, even for the largest cells.
+//! Sample timing on AMD Ryzen 9 5900X (release build) measured 2026-05-11:
+//!   permanent_mod3_reference n=8/12/16: sub-second to ~10 s — well inside
+//!   permanent_mod3_reference n=20:      ~77 ms mean × ~78 iters × 10 samples
+//!                                       ≈ 50 s measurement + 1 s warm-up.
+//!   permanent_bipedal3 n=28/32/36:      adaptive iteration counts; the 45 s
+//!                                       measurement cap drives Criterion to
+//!                                       reduce iterations per sample until
+//!                                       the total fits.
 //!
 //! The headline `permanent_mod3_reference` at n=36 (paper's reference workload)
 //! is *not* in this sweep — it lands in S1's separate perf-criterion cell where
@@ -38,8 +42,9 @@ const BENCH_SEED: u64 = 0xb315_564a_0000_0000_u64;
 
 fn bench_permanent_mod3_reference(c: &mut Criterion) {
     let mut group = c.benchmark_group("permanent_mod3_reference");
-    group.sample_size(10); // criterion-min
-    group.measurement_time(Duration::from_secs(60)); // criterion-4 budget cap
+    group.sample_size(10); // Criterion's hard minimum.
+    group.warm_up_time(Duration::from_secs(1)); // trimmed from the 3 s default
+    group.measurement_time(Duration::from_secs(45)); // 45 + 1 warm-up + overhead < 60 s/cell
 
     for n in [8usize, 12, 16, 20] {
         let seed = BENCH_SEED.wrapping_add(n as u64);
@@ -54,7 +59,8 @@ fn bench_permanent_mod3_reference(c: &mut Criterion) {
 fn bench_permanent_bipedal3(c: &mut Criterion) {
     let mut group = c.benchmark_group("permanent_bipedal3");
     group.sample_size(10);
-    group.measurement_time(Duration::from_secs(60));
+    group.warm_up_time(Duration::from_secs(1));
+    group.measurement_time(Duration::from_secs(45));
 
     for n in [8usize, 12, 16, 20, 24, 28, 32, 36] {
         let seed = BENCH_SEED
