@@ -24,9 +24,11 @@
 //!
 //! `CHUNK_SUBSETS = 1 << 16` (65536 subsets per chunk) is the value baked into
 //! `permanent_bipedal3_parallel`. See the CSV for empirical justification.
-//! At n=28 on the dev host (AMD Ryzen 9 5900X, 12c/24t), 2^16 gave the best
-//! throughput: smaller chunks waste rayon-scheduler overhead; larger chunks
-//! leave tail threads idle near 2^28.
+//! At n=28 on the dev host (AMD Ryzen 9 5900X, 12c/24t), the throughput plateau
+//! sits across `2^14 .. 2^16` (within ~1 σ of each other); `2^16` is chosen
+//! as a single round number near the empirical optimum at `2^14`. Smaller
+//! chunks (`2^7 = 128`) waste rayon-scheduler overhead (-91% throughput);
+//! larger chunks (`2^22 = 4_194_304`) leave tail threads idle near `2^28` (-10%).
 //!
 //! # Usage
 //!
