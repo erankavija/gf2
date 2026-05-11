@@ -415,7 +415,7 @@ mod tests {
     // issue text was amended to "≥ 5 random matrices at n=32" with the
     // shipped n=28 count holding at 100. See the description amendment
     // dated 2026-05-11.
-    cross_check_parallel_n!(test_parallel_cross_check_n20, 20, slow);
+    cross_check_parallel_n!(test_parallel_cross_check_n20, 20);
 
     macro_rules! large_n_parallel_cross_check {
         ($name:ident, $n:expr, $trials:expr, $seed_salt:expr) => {
@@ -443,7 +443,8 @@ mod tests {
     }
 
     // n=24: 10 sub-tests × 10 matrices each = 100 total.
-    // Parallel at n=24 on 12c: ~5 s/matrix × 10 = 50 s/sub-test — fits 120 s.
+    // Serial oracle is the bottleneck at ~85 ms/matrix; 10 matrices
+    // ~ 0.85 s/sub-test — well under the 120 s slow-tier limit.
     large_n_parallel_cross_check!(test_parallel_cross_check_n24_a, 24, 10, 0);
     large_n_parallel_cross_check!(test_parallel_cross_check_n24_b, 24, 10, 1_000);
     large_n_parallel_cross_check!(test_parallel_cross_check_n24_c, 24, 10, 2_000);
@@ -472,11 +473,14 @@ mod tests {
     // Determinism test: same seed + same n=24 across varied thread counts.
     //
     // Uses rayon::ThreadPoolBuilder to pin the thread count per run. Ten runs
-    // per thread count {1, 2, 4, 8, 12} = 50 permanent evaluations at n=24.
-    // At ~5 s/matrix on 12c (worst case 1-thread ~60 s/matrix), budget easily
-    // fits in the 120 s slow-tier limit per sub-test.
+    // per thread count {1, 2, 4, 8, 12} = 10 permanent evaluations per sub-test
+    // at n=24. Serial oracle is ~85 ms/matrix; with the parallel-side scaling
+    // factor across thread counts, the worst case (1-thread parallel) is on the
+    // order of ~85 ms × 10 ≈ 1 s; default (12-thread) is sub-second. All
+    // sub-tests fit comfortably within the 120 s slow-tier limit.
     //
-    // Split into one sub-test per thread count to keep each within 120 s.
+    // Split into one sub-test per thread count to keep each within 120 s and
+    // to make per-thread-count failures obvious.
     // -----------------------------------------------------------------------
 
     macro_rules! determinism_test {
