@@ -518,7 +518,9 @@ use gf2_core::gfp::Fp;
 /// (`n = 256` would require a fifth counter word); cache analysis
 /// remains the same as the original n=256 table entry.
 pub fn permanent_bipedal3_multi_word(mat: &Bipedal3Matrix) -> Fp<3> {
-    debug_assert!(mat.n() > 64, "n <= 64 should use single-word fast path");
+    // No lower-bound assert: dispatch from `permanent_bipedal3` routes
+    // `n <= 64` to the singleword path for perf, but calling here at
+    // small `n` is correctness-preserving (§9.2 validation depends on it).
 
     let n = mat.n();
     let w = mat.words_per_col();           // = ceil(n / 64)
@@ -657,8 +659,9 @@ W2-T9) and the multi-word path (`permanent_bipedal3_multiword`, this issue)
 produce identical results when the boundary is exercised. The multi-word
 path with `W = 1` exercises the same code as `W >= 2` modulo a conditional,
 so the boundary case is covered indirectly via §9.2's small-n direct ryser
-cross-checks (which call `permanent_bipedal3_multiword` at n down to 2 in
-release mode, skipping the `debug_assert!(n > 64)`).
+cross-checks (which call `permanent_bipedal3_multiword` at n down to 2;
+the function has no lower-bound `n > 64` assert, so the call works in
+both debug and release builds).
 
 ### 9.2 Cross-check vs generic Ryser (amended 2026-05-11)
 
@@ -676,8 +679,9 @@ landed for two reasons:
 splits across two layered checks.
 
 - **Small-n direct ryser cross-check (fast tier).** `permanent_bipedal3_multiword`
-  is called directly at `n in {2, 5, 8, 16, 20}` (release mode skips the
-  `debug_assert!(n > 64)`) and bitwise-compared with
+  is called directly at `n in {2, 5, 8, 16, 20}` (the function carries no
+  `n > 64` lower-bound assert, so this is correctness-preserving in both
+  debug and release builds) and bitwise-compared with
   `permanent_ryser::<Fp<3>>`. 850 random matrices total: 200 trials each
   at `n in {2, 5, 8, 16}` and 50 trials at `n = 20`. Total runtime is
   under 5 s, fits the fast-tier budget. Wired to slow tier are 9 more
@@ -810,8 +814,8 @@ document overhead:
 6. **Validation (amended):** layered cross-check, as detailed in §9.2.
    - Fast tier: 850 random matrices through both
      `permanent_bipedal3_multiword` and `permanent_ryser::<Fp<3>>` across
-     `n in {2, 5, 8, 16, 20}`. Release mode skips the `debug_assert!(n > 64)`
-     so the multi-word path is exercised directly.
+     `n in {2, 5, 8, 16, 20}`. The multi-word entry point has no lower-bound
+     `n > 64` assert, so small-n calls run identically in debug and release.
    - Sim tier: block-diagonal cross-check at `n in {65, 72, 96, 128}`
      (5 matrices each) with the small block oracled by ryser. Tests
      `#[ignore]` because the multi-word `2^n` Gray walk remains
