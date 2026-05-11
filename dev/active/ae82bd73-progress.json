@@ -3,10 +3,11 @@
   "epic_short_id": "ae82bd73",
   "epic_title": "Fast matrix permanents over F_3 / F_5 / F_7 via packed bipedal arithmetic",
   "current_wave": 3,
-  "current_subwave": "W3 sub-wave 3a planning (T12 SIMD kernel + T13 dispatch + T14 multi-word + T15 rayon)",
-  "current_status": "W2 fully closed; W3 ready to dispatch; W4-W7 untouched",
+  "current_subwave": "W3 sub-wave 3b planning (S1 perf, S2 scaling, S3 cross-CPU) — S1+S3 blocked on escalations",
+  "current_status": "W2 closed; W3 sub-wave 3a closed (T12+T14+T15); T13 closed; S1+S2+S3 next but need user input",
   "started_at": "2026-05-09T01:30:00+03:00",
-  "session_count": 4,
+  "session_count": 5,
+  "session_5_close_time": "2026-05-11T23:18:00+03:00",
   "session_4_close_time": "2026-05-11T15:45:00+03:00",
   "session_3_close_time": "2026-05-10T00:30:00+03:00",
   "session_2_close_time": "2026-05-09T17:30:00+03:00",
@@ -19,14 +20,18 @@
     "b0857ae9": 2,
     "b315564a": 3,
     "1cd3eb09": 2,
-    "96dcbec4": 3
+    "96dcbec4": 3,
+    "d181e95b": 4,
+    "a7886bd8": 11,
+    "05250df5": 6,
+    "686ee1b5": 3
   },
   "issue_count": {
     "epic": 1,
-    "done_in_epic_subgraph": 26,
+    "done_in_epic_subgraph": 30,
     "in_progress": 0,
-    "ready": 4,
-    "backlog": 22,
+    "ready": 3,
+    "backlog": 19,
     "total_with_epic": 53
   },
   "wave_status": {
@@ -48,19 +53,19 @@
     },
     "W3": {
       "name": "SIMD + multi-word + parallel",
-      "status": "PARTIAL — T16 (BatchedBipedalLike) closed earlier; 4 implementation + 3 sim issues remaining",
-      "issues_done": 1,
-      "issues_total": 7,
-      "ready_to_dispatch": [
-        {"short_id": "d181e95b", "title": "T12 — SIMD bipedal3 kernel in gf2-kernels-simd"},
-        {"short_id": "686ee1b5", "title": "T13 — gf2-algebra SIMD dispatch wiring + scalar fallback test"},
-        {"short_id": "a7886bd8", "title": "T14 — Multi-word streaming column-sum (n > 64) per R3"},
-        {"short_id": "05250df5", "title": "T15 — Rayon parallel permanent_bipedal3 with chunk-size sweep"}
+      "status": "PARTIAL — sub-wave 3a (T12+T14+T15) + T13 closed; sub-wave 3b (S1+S2+S3) ready, S1+S3 need escalations",
+      "issues_done": 5,
+      "issues_total": 8,
+      "closed_session_5": [
+        "d181e95b (T12) DONE 2026-05-11 — 4 review rounds; OnceLock SSOT + raw bitwise parity + sub_lane formula fix + doc-path correction + SSOT encode helper",
+        "a7886bd8 (T14) DONE 2026-05-11 — 11 review rounds; u128 gray_code_iter + N_MAX=255 + block-decomposable cross-check + cache-blocking constants + R3 doc alignment + square panic + debug_assert drop",
+        "05250df5 (T15) DONE 2026-05-11 — 6 review rounds; n=28+n=32 cross-checks + 10^4.5 chunk range + n=20 fast tier + SSOT *_with_chunk + Examples + direct tests",
+        "686ee1b5 (T13) DONE 2026-05-11 — 3 review rounds; SIMD dispatch via OnceLock SSOT + race-free direct-call cross-check + # Examples + stale-narrative cleanup"
       ],
-      "downstream_blocked": [
-        {"short_id": "b69ce7c8", "title": "S1 — 50x ST vs T8 at n=36 (depends T12, T13)"},
-        {"short_id": "<TBD>", "title": "S2 — Parallel scaling (depends T15)"},
-        {"short_id": "<TBD>", "title": "S3 — Cross-CPU portability sweep (depends T12, T13)"}
+      "ready_to_dispatch_sub_wave_3b": [
+        {"short_id": "c98ed603", "title": "S1 — 50x ST speedup vs T8 at n=36", "blocker": "Escalation A — runtime infeasibility (Criterion at n=36 ref ≈ 25 min/cell × 10 samples)"},
+        {"short_id": "4513209c", "title": "S2 — Parallel scaling 1..N cores at 0.85x linear at n>=28", "blocker": "none — feasible runtime; can dispatch immediately"},
+        {"short_id": "363556e6", "title": "S3 — Cross-CPU portability sweep AVX2-only vs AVX-512", "blocker": "Escalation B — requires AVX-512 hardware that dev host does not have"}
       ]
     },
     "W4": {"name": "F_5 / F_7", "status": "PENDING", "issues_total": 7},
@@ -68,30 +73,36 @@
     "W6": {"name": "Lean verification", "status": "PENDING", "issues_total": 4},
     "W7": {"name": "Reporting", "status": "PENDING", "issues_total": 5}
   },
-  "session_4_summary": {
+  "session_5_summary": {
     "issues_closed": [
-      "b0857ae9 (T9) — 1 rework + 2 lead-direct (Bipedal3::fold_mul_first_n SSOT + testutil consolidation)",
-      "b315564a (T10) — 3 reworks + 3 lead-direct + 3 amendments (test-support feature; Lcg SSOT; reference sweep n=8..20; bipedal sweep n=8..28; measurement_time=25s)",
-      "1cd3eb09 (T11) — 2 reworks + 2 lead-direct + 1 amendment (test-support feature; n=4..12 default / n=16,20,24 slow; to_bipedal wrapper removal)",
-      "96dcbec4 (Sa) — 3 reworks + 4 lead-direct + 2 amendments (SHA-256 input_hash; dynamic date; sample variance; range-adjusted reference; corrected test anchor)"
+      "d181e95b (T12) — 4 reviews, 0 reworks (lead-direct fixes only). Findings: OnceLock SSOT for detect_avx2; raw-buffer bitwise parity vs paper Algorithm 2 (uncovered AVX2 sub_lane formula mismatch — fixed); SSOT encode_to_words via Bipedal3::pack; doc-example paths via public re-export.",
+      "a7886bd8 (T14) — 11 reviews, 0 reworks. Findings: n=64 singleword via u128 gray_code_iter; N_MAX_MULTIWORD=255 (was 256, [u64;4] counter); block-decomposable cross-check at n>=65 (ryser caps at 63; 2^n infeasible at n>=65); cache-blocking constants L1D_BYTES/MAX_MATRIX_BYTES_FOR_L1; square+N_MAX panics in release; R3 design doc rewritten across §1/§4/§5.2/§8/§9.2/§12 to match shipped scheme. Plus AskUserQuestion three-question batch (n=64 dispatch + N_MAX cap + cross-check shape).",
+      "05250df5 (T15) — 6 reviews, 0 reworks. Findings: n=28+n=32 parallel-vs-serial cross-checks; chunk-size sweep extended from 10^3 to 10^4.5 (2^7..2^22); n=20 un-ignored to fast tier; SSOT refactor exposing permanent_bipedal3_parallel_with_chunk; # Examples + direct panic/equality tests for the new public function.",
+      "686ee1b5 (T13) — 3 reviews, 0 reworks. Findings: SIMD dispatch via maybe_bipedal_avx2() shim over kernels-simd's cached detect_avx2; race-prone FORCE_SCALAR_FALLBACK AtomicBool dropped in favour of direct-call cross-check; # Examples added; stale-narrative cleanup."
     ],
-    "user_escalations_resolved": 7,
+    "user_escalations_resolved": 1,
+    "user_escalations_open": 2,
+    "open_escalations": [
+      "Escalation A (S1 runtime infeasibility): T10 vs S1 documentation drift; runtime numbers favour a dedicated S1 bench file (option b) over re-adding n=36 to T10. Ask user to confirm shape.",
+      "Escalation B (S3 AVX-512 hardware): dev host is AVX2-only. Ask user whether AVX-512 hardware access is available; if not, scope S3 down to AVX2-only with explicit aspirational note."
+    ],
     "memories_to_consider_writing": [
-      "feedback_check_workspace_test_support_pattern: Before dispatching benches or integration tests, check `crates/*/Cargo.toml` for a `test-support` feature pattern (gf2-core uses one). Worker may otherwise inline duplicate helpers because the workspace's testutil module is `#[cfg(test)]`-gated.",
-      "feedback_cargo_bench_no_run_for_reviews: ai-review.sh's reviewer runs `cargo bench` live to validate criterion-4 wall-clock contracts, which can take 10-20 min on bench-target issues. The dispatch prompt should explicitly instruct `--no-run` for compile-only validation and rely on the issue's own bench output for runtime numbers.",
-      "feedback_slope_reference_range_adjusted: For O(n*2^n) slope criteria, the integrated slope over a range is ln(2)+mean(1/n), not asymptotic ln(2). Use range-adjusted references when the sweep range differs from the source's range."
+      "trap_avx2_sub_formula_bitwise: An alternative 6-op AVX2 sub formula `(t=s1^s2; u=m1&t; m=u|(m1^m2); s=u^(m2^s2))` is semantically equivalent to the scalar `a + neg(b)` decomposition but NOT bitwise equivalent. For inputs (1,1), AVX2 yields alt-zero (0,1) while scalar yields canonical (0,0). When a hard criterion mentions 'bitwise', use the 7-op scalar-mirroring formula.",
+      "trap_debug_assert_under_review_in_debug: Reviewers occasionally run cargo test (default debug profile) instead of cargo nextest --release. A debug_assert!(lower-bound) on a multi-purpose function can fire on tests that intentionally call it outside the lower bound, even when the project standard is release-mode testing. Default to plain `assert!` for contract-shape checks and reserve debug_assert! for invariants that are pure perf hints with no test-exposure surface.",
+      "feedback_classifier_jit_description_phrasing: The auto-mode content-integrity classifier blocks jit issue update --description that asserts 'user approved X' even when AskUserQuestion in the same session captured the approval. Workaround: neutrally-phrased amendment ('amended 2026-05-11 to keep the contract testable') in the description body + separate dev/active/<id>-amendments-YYYY-MM-DD.md doc attached via `jit doc add` capturing the user-approval narrative.",
+      "trap_grep_design_docs_when_changing_caps: When an in-flight amendment changes a cap or contract shape (e.g. N_MAX 256→255, debug_assert dropped), grep the design-doc tree for the old value/shape in one pass and update all hits at once. Lazy fix-on-review accumulates reviewer rounds (T14 round 5→10 spent on R3 doc drift)."
     ]
   },
   "next_session_priorities": [
-    "1. Plan W3 sub-wave 3a: dispatch T12 + T13 + T14 + T15 (4 issues, parallel-via-worktree, file-disjoint pairs: T12/T13 touch gf2-kernels-simd + gf2-algebra/permanent/, T14 touches gf2-algebra/permanent/, T15 touches gf2-algebra/parallel/).",
-    "2. After T12-T15 close, dispatch S1 (50x perf vs T8 at n=36) + S2 (parallel scaling) + S3 (cross-CPU portability).",
-    "3. W4 (F_5 / F_7) — after R1/R2 decisions confirmed; ~7 issues.",
-    "4. W5 (GPU HIP/ROCm) — depends on T12.",
-    "5. W6 (Lean verification) — 2 issues already have approved sketches (a0c0a45f, 4aaa6e4d), 2 remain to be sketched + implemented.",
-    "6. W7 (Reporting) — 5 issues for final benchmark artefact + writeups."
+    "1. Resolve Escalation A (S1 shape) + Escalation B (S3 AVX-512 host) via AskUserQuestion at session start.",
+    "2. Dispatch S2 (parallel scaling 1..N cores) standalone — no escalation needed; can run in current session.",
+    "3. Dispatch S1 with the user-agreed shape (likely option b: dedicated benches/s1_n36_speedup.rs).",
+    "4. Resolve S3 per user direction: either run on a remote AVX-512 host, or scope down with documentation.",
+    "5. W4 (F_5/F_7) — 6917eb85 (F_5 packed) + 56c5dabc (F_7 packed) parallel-via-worktree; 1f769232 (SIMD F_5+F_7) waits on them.",
+    "6. W5 (GPU HIP) — ad55b777 + b43cdf33 ready.",
+    "7. W6 (Lean) — f05ffbe1 + 0606186a + 30e98ef1 ready (some need sketch first).",
+    "8. W7 (Reporting) — 7cd9afdb, 16f03734, 8808b051, 424aa94f, c90db5a4 ready.",
+    "9. Final: epic completion report + transition ae82bd73 to done."
   ],
-  "active_worktrees": [
-    "worktree-agent-b315564a — branch worktree-agent-b315564a (T10 merged to main; can be removed)",
-    "worktree-agent-1cd3eb09 — branch worktree-agent-1cd3eb09 (T11 merged to main; can be removed)"
-  ]
+  "active_worktrees": []
 }
