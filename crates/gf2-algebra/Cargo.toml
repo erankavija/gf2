@@ -21,6 +21,10 @@ rayon = { workspace = true, optional = true }
 # (root `Cargo.toml` lines 9-11) and is opt-in via `--features hip`. The
 # path-dep is therefore optional. See D1c §5.2.
 gf2-kernels-hip = { path = "../gf2-kernels-hip", optional = true }
+# SIMD kernel bundle for the bipedal3 SIMD dispatch path (T13). Optional:
+# only pulled in when the `simd` feature is active; the crate is always in
+# the workspace so no build-config friction. See D1c §2 row `simd`.
+gf2-kernels-simd = { path = "../gf2-kernels-simd", optional = true }
 # Serde Serialize/Deserialize derives on the packed types. Off by default;
 # users who need round-trip serialisation opt in via `--features serde`.
 serde = { version = "1", features = ["derive"], optional = true }
@@ -63,7 +67,7 @@ default = ["simd", "parallel"]
 # `is_x86_feature_detected!` returns false and the scalar fallback is
 # selected — no functional change with this flag off, just a slightly
 # smaller compiled-out detection table.
-simd = ["gf2-core/simd"]
+simd = ["gf2-core/simd", "dep:gf2-kernels-simd"]
 
 # Rayon-based parallel permanent. Pulls in rayon and the parallel
 # helpers in gf2-core. On by default because the headline workload
