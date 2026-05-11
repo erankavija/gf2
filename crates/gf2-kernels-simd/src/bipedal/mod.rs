@@ -247,6 +247,12 @@ pub struct BipedalAvx2Fns {
 /// Returns `None` on non-x86 targets, or when the runtime CPU lacks AVX2.
 /// Callers must then fall back to scalar arithmetic.
 ///
+/// Mirrors the project's `gf2_core::simd::maybe_simd()` SSOT pattern: the
+/// detection result is cached in a `OnceLock` so the first call performs
+/// CPUID, all subsequent calls are a cheap atomic load. Returning a value
+/// rather than `&'static` keeps the function-pointer fields `Copy`-friendly
+/// for callers that want to bind locally.
+///
 /// # Examples
 ///
 /// ```
@@ -258,9 +264,17 @@ pub struct BipedalAvx2Fns {
 ///
 /// # Complexity
 ///
-/// `O(1)` after the first call (CPUID is cached by the standard library).
+/// `O(1)`; the first call performs CPUID + `OnceLock` initialisation,
+/// subsequent calls return the cached value.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub fn detect_avx2() -> Option<BipedalAvx2Fns> {
+    use std::sync::OnceLock;
+    static FNS: OnceLock<Option<BipedalAvx2Fns>> = OnceLock::new();
+    *FNS.get_or_init(detect_avx2_uncached)
+}
+
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+fn detect_avx2_uncached() -> Option<BipedalAvx2Fns> {
     use std::arch::is_x86_feature_detected;
     if is_x86_feature_detected!("avx2") {
         Some(BipedalAvx2Fns {
