@@ -21,15 +21,20 @@
 //! reproducibility, Charon/Aeneas extractability, dep minimalism).
 //!
 //! Per-cell wall-clock budget: criterion 4 contracts each cell under 60 s on
-//! the dev host. We use `sample_size(10)` (Criterion's minimum) and tune
-//! `warm_up_time(1 s)` + `measurement_time(45 s)` so warm-up + measurement +
-//! Criterion overhead stays under 60 s total for every cell in the sweep.
-//! Sample timing on AMD Ryzen 9 5900X (release build) measured 2026-05-11:
-//!   permanent_mod3_reference n=8/12/16: sub-second to ~10 s — well inside.
-//!   permanent_mod3_reference n=20:      ~77 ms mean × ~78 iters × 10 samples
-//!                                       ≈ 46 s measurement + 1 s warm-up.
-//!   permanent_bipedal3 n=8..24:         microseconds to seconds — well inside.
-//!   permanent_bipedal3 n=28:            ~0.59 s mean × 10 samples ≈ 6 s.
+//! the dev host. Criterion's linear-mode sampling at `sample_size(10)` (its
+//! hard minimum) runs `iters = [d, 2d, ..., 10d]` = 55·d total iterations per
+//! cell, where `d` is auto-chosen so 55·d·mean_iter ≈ measurement_time.
+//! Setting `warm_up_time(1 s)` + `measurement_time(25 s)` keeps every cell
+//! under 60 s on the dev host:
+//!   permanent_mod3_reference n=8/12/16: ~µs–ms mean — Criterion scales d up;
+//!                                       total ≈ 25 s.
+//!   permanent_mod3_reference n=20:      ~77 ms mean — d ≈ 6, total ≈ 25 s.
+//!   permanent_bipedal3 n=8..24:         ~ns–ms mean — Criterion scales d up;
+//!                                       total ≈ 25 s.
+//!   permanent_bipedal3 n=28:            ~0.59 s mean — d = 1, total ≈ 32.5 s.
+//!
+//! With 1 s warm-up + ~2 s Criterion overhead, every cell finishes inside the
+//! 60 s/cell criterion-4 budget.
 //!
 //! The headline `permanent_mod3_reference` n=36 (paper's reference workload)
 //! and the matching `permanent_bipedal3` n=36 50× speedup measurement land in
@@ -51,7 +56,7 @@ fn bench_permanent_mod3_reference(c: &mut Criterion) {
     let mut group = c.benchmark_group("permanent_mod3_reference");
     group.sample_size(10); // Criterion's hard minimum.
     group.warm_up_time(Duration::from_secs(1)); // trimmed from the 3 s default
-    group.measurement_time(Duration::from_secs(45)); // 45 + 1 warm-up + overhead < 60 s/cell
+    group.measurement_time(Duration::from_secs(25)); // 45 + 1 warm-up + overhead < 60 s/cell
 
     for n in [8usize, 12, 16, 20] {
         let seed = BENCH_SEED.wrapping_add(n as u64);
@@ -67,7 +72,7 @@ fn bench_permanent_bipedal3(c: &mut Criterion) {
     let mut group = c.benchmark_group("permanent_bipedal3");
     group.sample_size(10);
     group.warm_up_time(Duration::from_secs(1));
-    group.measurement_time(Duration::from_secs(45));
+    group.measurement_time(Duration::from_secs(25));
 
     for n in [8usize, 12, 16, 20, 24, 28] {
         let seed = BENCH_SEED
