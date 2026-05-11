@@ -111,13 +111,17 @@ impl BipedalLikeConfig for Config3 {
         s2: Self::SgnLane,
     ) -> (Self::MagLane, Self::SgnLane) {
         // SAFETY: hardware feature is the caller's precondition.
+        // F_3 sub computed as `a + neg(b)`, matching the scalar reference
+        // (`dev/research/f3_bipedal::Bipedal3::sub_assign`) bit-for-bit so
+        // the SIMD parity tests can assert raw-word equality, not just
+        // canonical-decoded equality. The 7-op sequence is the same paper
+        // Algorithm 2 add formula applied with `bsg = s2 ^ m2` (neg(b)).
         unsafe {
-            // F_3 sub: t = s1^s2; u = m1&t; m_- = u | (m1^m2); s_- = u ^ (m2^s2)
-            let t = Avx2Lane::xor(s1, s2);
-            let u = Avx2Lane::and(m1, t);
+            let bsg = Avx2Lane::xor(s2, m2);
+            let t = Avx2Lane::xor(Avx2Lane::xor(m1, s1), bsg);
+            let u = Avx2Lane::and(m2, t);
             let m_minus = Avx2Lane::or(u, Avx2Lane::xor(m1, m2));
-            let m2_xor_s2 = Avx2Lane::xor(m2, s2);
-            let s_minus = Avx2Lane::xor(u, m2_xor_s2);
+            let s_minus = Avx2Lane::xor(u, s1);
             (m_minus, s_minus)
         }
     }
@@ -229,29 +233,6 @@ mod tests {
         (mag, sgn)
     }
 
-    /// Decode parallel `(mag, sgn)` word streams back to a canonical F_3
-    /// element vector. Inverse of [`encode_to_words`]. Used by the AVX2
-    /// parity tests to compare against the canonical-decoded `Bipedal3`
-    /// output.
-    fn decode_from_words(mag: &[u64], sgn: &[u64], len_elems: usize) -> Vec<u8> {
-        assert_eq!(mag.len(), sgn.len());
-        let mut out = Vec::with_capacity(len_elems);
-        for i in 0..len_elems {
-            let w = i / 64;
-            let s = i % 64;
-            let m = (mag[w] >> s) & 1;
-            let g = (sgn[w] >> s) & 1;
-            out.push(if m == 0 {
-                0
-            } else if g == 0 {
-                1
-            } else {
-                2
-            });
-        }
-        out
-    }
-
     // ---- Truth-table sanity checks (3x3 grid) against `Bipedal3` ----
     //
     // Each test packs a single-element vector with the canonical reference,
@@ -314,13 +295,16 @@ mod tests {
         use super::*;
         use crate::x86::bipedal_avx2 as avx2;
 
-        /// Run AVX2 add on the bit-packed encoding of `a`/`b`, decode the
-        /// result, and compare against `Bipedal3::pack(a).add_assign(b).unpack()`.
+        /// Run AVX2 add on the bit-packed encoding of `a`/`b` and assert
+        /// bitwise equality of the resulting `(mag, sgn)` word streams
+        /// against `Bipedal3::pack(a).add_assign(b)`'s internal raw words.
         ///
-        /// Equivalence is at the canonical-decoded level (the alt-zero
-        /// `(mag=0, sgn=1)` codeword decodes to the same canonical 0 as
-        /// `(0, 0)`); both inputs are produced canonical so the AVX2 path
-        /// stays in canonical space too.
+        /// Raw-word comparison is required: comparing only canonical-decoded
+        /// outputs would let alt-zero divergences (`(mag=0, sgn=1)` vs
+        /// `(mag=0, sgn=0)`) slip through even though they decode to the
+        /// same F_3 value. Both implementations follow paper Algorithm 2
+        /// (same six XOR/AND/OR sequence), so the raw `(mag, sgn)` buffers
+        /// must agree word-for-word.
         fn run_parity_add(a: &[u8], b: &[u8]) {
             assert_eq!(a.len(), b.len());
             let n_elems = a.len();
@@ -340,15 +324,19 @@ mod tests {
             unsafe {
                 avx2::run_add_batch::<Config3>(&m1, &s1, &m2, &s2, &mut out_m, &mut out_s);
             }
-            let avx2_decoded = decode_from_words(&out_m, &out_s, n_elems);
 
             let mut va = Bipedal3::pack(a);
             va.add_assign(&Bipedal3::pack(b));
-            let scalar_decoded = va.unpack();
 
             assert_eq!(
-                avx2_decoded, scalar_decoded,
-                "AVX2 add diverged from Bipedal3 scalar reference (n_elems={n_elems})"
+                out_m.as_slice(),
+                va.raw_mag(),
+                "AVX2 add diverged from Bipedal3 scalar reference (mag, n_elems={n_elems})"
+            );
+            assert_eq!(
+                out_s.as_slice(),
+                va.raw_sgn(),
+                "AVX2 add diverged from Bipedal3 scalar reference (sgn, n_elems={n_elems})"
             );
         }
 
@@ -366,15 +354,19 @@ mod tests {
             unsafe {
                 avx2::run_sub_batch::<Config3>(&m1, &s1, &m2, &s2, &mut out_m, &mut out_s);
             }
-            let avx2_decoded = decode_from_words(&out_m, &out_s, n_elems);
 
             let mut va = Bipedal3::pack(a);
             va.sub_assign(&Bipedal3::pack(b));
-            let scalar_decoded = va.unpack();
 
             assert_eq!(
-                avx2_decoded, scalar_decoded,
-                "AVX2 sub diverged from Bipedal3 scalar reference (n_elems={n_elems})"
+                out_m.as_slice(),
+                va.raw_mag(),
+                "AVX2 sub diverged from Bipedal3 scalar reference (mag, n_elems={n_elems})"
+            );
+            assert_eq!(
+                out_s.as_slice(),
+                va.raw_sgn(),
+                "AVX2 sub diverged from Bipedal3 scalar reference (sgn, n_elems={n_elems})"
             );
         }
 
@@ -392,15 +384,19 @@ mod tests {
             unsafe {
                 avx2::run_mul_batch::<Config3>(&m1, &s1, &m2, &s2, &mut out_m, &mut out_s);
             }
-            let avx2_decoded = decode_from_words(&out_m, &out_s, n_elems);
 
             let mut va = Bipedal3::pack(a);
             va.mul_assign(&Bipedal3::pack(b));
-            let scalar_decoded = va.unpack();
 
             assert_eq!(
-                avx2_decoded, scalar_decoded,
-                "AVX2 mul diverged from Bipedal3 scalar reference (n_elems={n_elems})"
+                out_m.as_slice(),
+                va.raw_mag(),
+                "AVX2 mul diverged from Bipedal3 scalar reference (mag, n_elems={n_elems})"
+            );
+            assert_eq!(
+                out_s.as_slice(),
+                va.raw_sgn(),
+                "AVX2 mul diverged from Bipedal3 scalar reference (sgn, n_elems={n_elems})"
             );
         }
 
@@ -416,17 +412,21 @@ mod tests {
             unsafe {
                 avx2::run_neg_batch::<Config3>(&m, &s, &mut out_m, &mut out_s);
             }
-            let avx2_decoded = decode_from_words(&out_m, &out_s, n_elems);
 
             // `Bipedal3` has no public `neg_assign`; neg(a) = 0 - a.
             let zero = vec![0u8; n_elems];
             let mut va = Bipedal3::pack(&zero);
             va.sub_assign(&Bipedal3::pack(a));
-            let scalar_decoded = va.unpack();
 
             assert_eq!(
-                avx2_decoded, scalar_decoded,
-                "AVX2 neg diverged from Bipedal3 scalar reference (n_elems={n_elems})"
+                out_m.as_slice(),
+                va.raw_mag(),
+                "AVX2 neg diverged from Bipedal3 scalar reference (mag, n_elems={n_elems})"
+            );
+            assert_eq!(
+                out_s.as_slice(),
+                va.raw_sgn(),
+                "AVX2 neg diverged from Bipedal3 scalar reference (sgn, n_elems={n_elems})"
             );
         }
 
