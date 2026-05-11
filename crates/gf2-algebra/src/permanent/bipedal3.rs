@@ -349,6 +349,30 @@ pub fn permanent_bipedal3_singleword(mat: &Bipedal3Matrix) -> Fp<3> {
 ///
 /// Panics if `mat.rows() != mat.cols()` or `mat.cols() > 64`.
 ///
+/// # Examples
+///
+/// ```
+/// # #[cfg(all(feature = "simd", any(target_arch = "x86", target_arch = "x86_64")))]
+/// # {
+/// use gf2_algebra::packed::Bipedal3Matrix;
+/// use gf2_algebra::permanent::bipedal3::permanent_bipedal3_singleword_simd;
+/// use gf2_core::gfp::Fp;
+/// use gf2_kernels_simd::bipedal::detect_avx2;
+///
+/// // 2x2 identity over F_3: permanent = 1. On non-AVX2 hosts the call is
+/// // skipped (the public dispatcher `permanent_bipedal3` falls back to the
+/// // scalar path when `detect_avx2()` returns `None`).
+/// if let Some(fns) = detect_avx2() {
+///     let id: Vec<Fp<3>> = vec![
+///         Fp::<3>::new(1), Fp::<3>::new(0),
+///         Fp::<3>::new(0), Fp::<3>::new(1),
+///     ];
+///     let m = Bipedal3Matrix::from_row_major(&id, 2, 2);
+///     assert_eq!(permanent_bipedal3_singleword_simd(&m, &fns), Fp::<3>::new(1));
+/// }
+/// # }
+/// ```
+///
 /// # Complexity
 ///
 /// `O(n · 2^n)` — same asymptotic cost as the scalar path.  Per-step
@@ -483,11 +507,14 @@ mod tests {
     // T13 SIMD-vs-scalar cross-checks.
     //
     // These tests verify that the SIMD dispatch path produces the same output
-    // as the pure-Rust scalar path. They use the `force_scalar_fallback` test
-    // knob to drive both paths on the same matrix and assert equality.
+    // as the pure-Rust scalar path. They call the two pub entry points
+    // (`permanent_bipedal3_singleword_simd` and `permanent_bipedal3_singleword`)
+    // directly, side-by-side on the same matrix, and assert raw equality.
     //
-    // On hosts without AVX2 (or without the `simd` feature), the SIMD path
-    // is silently identical to the scalar path, so the tests still pass.
+    // On hosts without AVX2 (or without the `simd` feature), the SIMD entry
+    // point is compile-time gated out and the helper degrades to a
+    // scalar-vs-scalar comparison (always equal); the criterion-3
+    // requirement is vacuous in that case, which is the intended behaviour.
     //
     // Tier assignment (each matrix requires 2 bipedal3_singleword calls):
     //   n=8:  100 matrices — fast tier (2^8 = 256 steps; trivially fast).
@@ -495,18 +522,17 @@ mod tests {
     //   n=24: 10 matrices  — fast tier (2^24 ~16M steps; ≈ 0.5 s total).
     //   n=24: 100 matrices — slow tier (≈ 5 s total, fits 120 s slow budget).
     //   n=32: 1 matrix     — slow tier (2^32 ~4B steps ≈ 6 s/matrix; criterion
-    //     originally stated 100 matrices, reduced to 1 per timing constraints;
-    //     the project-lead will record the JIT amendment per escalation policy).
+    //     originally stated 100 matrices, reduced to ≥1 per the JIT
+    //     amendment dated 2026-05-11 — the slow-tier budget caps the count).
     // -----------------------------------------------------------------------
 
     /// Cross-check SIMD vs scalar for `trials` random `n × n` matrices.
     ///
     /// Calls `permanent_bipedal3_singleword_simd` and
-    /// `permanent_bipedal3_singleword` directly, bypassing the dispatcher
-    /// and the test-only `FORCE_SCALAR_FALLBACK` knob.  Direct calls are
-    /// race-safe under cargo's parallel test execution: no global state is
-    /// flipped between the two paths, so concurrent invocations from
-    /// sibling tests cannot make this comparison vacuous.
+    /// `permanent_bipedal3_singleword` directly. Direct calls are
+    /// race-safe under cargo's parallel test execution: no shared mutable
+    /// state participates in the cross-check, so concurrent invocations
+    /// from sibling tests cannot make this comparison vacuous.
     ///
     /// On non-x86 hosts or when the `simd` feature is off, the SIMD path
     /// is not callable at compile time and this helper is also gated out
