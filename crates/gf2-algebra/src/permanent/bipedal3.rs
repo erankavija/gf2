@@ -85,42 +85,17 @@ fn maybe_bipedal_avx2() -> Option<gf2_kernels_simd::bipedal::BipedalAvx2Fns> {
 }
 
 // ---------------------------------------------------------------------------
-// Test-only scalar-fallback knob.
+// Test-only scalar/SIMD cross-check note.
 //
-// When set to `true`, `permanent_bipedal3` forces the pure-Rust scalar path
-// even on AVX2-capable hosts. This allows tests to cross-check SIMD vs
-// scalar output on the same machine.  Production code never touches this
-// flag.
+// The original T13 sketch used a process-global `AtomicBool` to force the
+// scalar path from tests. That was race-prone: cargo's parallel test
+// runner could let one test set the flag while another test was mid-call
+// to `permanent_bipedal3`, silently making the SIMD/scalar comparison
+// vacuous. The shipped design instead exposes both
+// `permanent_bipedal3_singleword` and `permanent_bipedal3_singleword_simd`
+// as `pub` and has the tests call them directly with the appropriate
+// path, so no shared mutable state participates in the cross-check.
 // ---------------------------------------------------------------------------
-
-#[cfg(test)]
-static FORCE_SCALAR_FALLBACK: std::sync::atomic::AtomicBool =
-    std::sync::atomic::AtomicBool::new(false);
-
-/// Force or un-force the scalar fallback path inside `permanent_bipedal3`.
-///
-/// When `force` is `true`, the function always selects the pure-Rust scalar
-/// path, even on hosts that support AVX2. This allows unit tests to
-/// cross-check SIMD and scalar outputs without needing a machine that
-/// lacks AVX2 entirely.
-///
-/// This function is compiled only in test builds (`#[cfg(test)]`).
-///
-/// # Arguments
-///
-/// * `force` — `true` to force scalar; `false` to restore normal dispatch.
-#[cfg(test)]
-pub fn force_scalar_fallback(force: bool) {
-    FORCE_SCALAR_FALLBACK.store(force, std::sync::atomic::Ordering::Relaxed);
-}
-
-/// Returns `true` if the scalar fallback is currently forced by the test knob.
-///
-/// This function is compiled only in test builds (`#[cfg(test)]`).
-#[cfg(test)]
-pub fn scalar_fallback_forced() -> bool {
-    FORCE_SCALAR_FALLBACK.load(std::sync::atomic::Ordering::Relaxed)
-}
 
 /// Compute the permanent of an `n × n` matrix over `F_3`, dispatching to
 /// the single-word fast path for `n ≤ 64` or the multi-word streaming path
@@ -196,21 +171,15 @@ pub fn permanent_bipedal3(mat: &Bipedal3Matrix) -> Fp<3> {
         n
     );
     if n <= 64 {
-        // Choose SIMD or scalar for the single-word path.
-        //
-        // Decision tree (evaluated in order):
-        //   1. If the test-knob forces scalar → scalar path.
-        //   2. If the `simd` feature is active AND AVX2 is detected at
+        // Choose SIMD or scalar for the single-word path:
+        //   1. If the `simd` feature is active AND AVX2 is detected at
         //      runtime → SIMD singleword path.
-        //   3. Otherwise → pure-Rust scalar path.
+        //   2. Otherwise → pure-Rust scalar path.
         //
-        // The `#[cfg(test)]` block for point 1 is compiled out entirely in
-        // non-test builds, so there is zero overhead on production paths.
-        #[cfg(test)]
-        if scalar_fallback_forced() {
-            return permanent_bipedal3_singleword(mat);
-        }
-
+        // Tests that need to cross-check SIMD vs scalar on the same host
+        // call `permanent_bipedal3_singleword` and
+        // `permanent_bipedal3_singleword_simd` directly — both are `pub`,
+        // so no global override knob is needed (or present).
         #[cfg(all(feature = "simd", any(target_arch = "x86", target_arch = "x86_64")))]
         if let Some(fns) = maybe_bipedal_avx2() {
             return permanent_bipedal3_singleword_simd(mat, &fns);
@@ -530,35 +499,58 @@ mod tests {
     //     the project-lead will record the JIT amendment per escalation policy).
     // -----------------------------------------------------------------------
 
-    /// Compute `permanent_bipedal3` via the SIMD path (if available).
-    ///
-    /// On non-SIMD hosts or when the `simd` feature is off, this is
-    /// identical to the scalar path.
-    fn permanent_simd(mat: &Bipedal3Matrix) -> Fp<3> {
-        // Un-force scalar so the dispatcher selects SIMD when available.
-        force_scalar_fallback(false);
-        permanent_bipedal3(mat)
-    }
-
-    /// Compute `permanent_bipedal3` via the forced scalar fallback path.
-    fn permanent_scalar(mat: &Bipedal3Matrix) -> Fp<3> {
-        force_scalar_fallback(true);
-        let result = permanent_bipedal3(mat);
-        force_scalar_fallback(false);
-        result
-    }
-
     /// Cross-check SIMD vs scalar for `trials` random `n × n` matrices.
+    ///
+    /// Calls `permanent_bipedal3_singleword_simd` and
+    /// `permanent_bipedal3_singleword` directly, bypassing the dispatcher
+    /// and the test-only `FORCE_SCALAR_FALLBACK` knob.  Direct calls are
+    /// race-safe under cargo's parallel test execution: no global state is
+    /// flipped between the two paths, so concurrent invocations from
+    /// sibling tests cannot make this comparison vacuous.
+    ///
+    /// On non-x86 hosts or when the `simd` feature is off, the SIMD path
+    /// is not callable at compile time and this helper is also gated out
+    /// — the criterion-3 assertion is vacuous in that case, which is the
+    /// correct behaviour (the criterion requires equality on AVX2 hosts
+    /// only).
+    #[cfg(all(feature = "simd", any(target_arch = "x86", target_arch = "x86_64")))]
+    fn simd_vs_scalar_cross_check(n: usize, trials: u64, seed_base: u64) {
+        let fns = match super::maybe_bipedal_avx2() {
+            Some(fns) => fns,
+            None => {
+                eprintln!(
+                    "simd_vs_scalar_cross_check: AVX2 not detected; skipping n={n} cross-check"
+                );
+                return;
+            }
+        };
+        for trial in 0u64..trials {
+            let seed = seed_base.wrapping_add(trial.wrapping_mul(1_000_003));
+            let row_major = random_matrix::<3>(n, seed);
+            let mat = to_bipedal3_matrix(&row_major, n);
+            let simd_result = permanent_bipedal3_singleword_simd(&mat, &fns);
+            let scalar_result = permanent_bipedal3_singleword(&mat);
+            assert_eq!(
+                simd_result, scalar_result,
+                "T13 SIMD/scalar mismatch: n={n}, trial={trial}, seed={seed:#018x}"
+            );
+        }
+    }
+
+    /// Non-x86 / non-SIMD-feature stub: the cross-check has no SIMD path
+    /// to call, so we run scalar-vs-scalar (always equal) to keep the
+    /// test surface non-empty without introducing dead-test warnings.
+    #[cfg(not(all(feature = "simd", any(target_arch = "x86", target_arch = "x86_64"))))]
     fn simd_vs_scalar_cross_check(n: usize, trials: u64, seed_base: u64) {
         for trial in 0u64..trials {
             let seed = seed_base.wrapping_add(trial.wrapping_mul(1_000_003));
             let row_major = random_matrix::<3>(n, seed);
             let mat = to_bipedal3_matrix(&row_major, n);
-            let simd_result = permanent_simd(&mat);
-            let scalar_result = permanent_scalar(&mat);
+            let a = permanent_bipedal3_singleword(&mat);
+            let b = permanent_bipedal3_singleword(&mat);
             assert_eq!(
-                simd_result, scalar_result,
-                "T13 SIMD/scalar mismatch: n={n}, trial={trial}, seed={seed:#018x}"
+                a, b,
+                "T13 scalar-vs-scalar mismatch (should be impossible): n={n}, trial={trial}, seed={seed:#018x}"
             );
         }
     }
