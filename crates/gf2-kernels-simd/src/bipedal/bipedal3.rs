@@ -199,38 +199,20 @@ mod tests {
     // than carrying a duplicate inline oracle.
     use f3_bipedal_prototype::{Bipedal3, F3Encoding};
 
-    // ---- Encoding helpers (canonical Vec<u8> ↔ packed (mag, sgn) words) ----
-
-    /// Encode a canonical F_3 element vector as parallel `mag` / `sgn` u64
-    /// word streams.
-    ///
-    /// Each `u64` carries 64 lanes (bit `s` of word `w` = element `64*w+s`).
-    /// The layout matches both [`Bipedal3`]'s internal pack and the AVX2
-    /// kernel's slice ABI; the canonical invariant `sgn & !mag == 0` falls
-    /// out of the encoding (`0 -> (0, 0); 1 -> (1, 0); 2 -> (1, 1)`).
-    ///
-    /// `canonical.len()` must be a multiple of 64 (so the result is a whole
-    /// number of `u64` words). The tests here use multiples of 64 to keep
-    /// the AVX2 mod-4-words contract trivially satisfied without any
-    /// sub-word bookkeeping.
+    // ---- Encoding helper: derive packed (mag, sgn) word streams via SSOT ----
+    //
+    // Per the SSOT rule we route every encoding through `Bipedal3::pack`
+    // (paper Theorem 2.1 reference) and read its raw word arrays back via
+    // `raw_mag()` / `raw_sgn()` rather than carrying a duplicate packing loop
+    // here. The tests below use 64-aligned lengths so the AVX2 mod-4-words
+    // contract is trivially satisfied without any sub-word bookkeeping.
     fn encode_to_words(canonical: &[u8]) -> (Vec<u64>, Vec<u64>) {
         assert!(
             canonical.len().is_multiple_of(64),
             "test must use 64-aligned lengths"
         );
-        let n_words = canonical.len() / 64;
-        let mut mag = vec![0u64; n_words];
-        let mut sgn = vec![0u64; n_words];
-        for (i, &v) in canonical.iter().enumerate() {
-            debug_assert!(v < 3);
-            let w = i / 64;
-            let s = i % 64;
-            let m = if v != 0 { 1u64 } else { 0 };
-            let g = if v == 2 { 1u64 } else { 0 };
-            mag[w] |= m << s;
-            sgn[w] |= g << s;
-        }
-        (mag, sgn)
+        let v = Bipedal3::pack(canonical);
+        (v.raw_mag().to_vec(), v.raw_sgn().to_vec())
     }
 
     // ---- Truth-table sanity checks (3x3 grid) against `Bipedal3` ----

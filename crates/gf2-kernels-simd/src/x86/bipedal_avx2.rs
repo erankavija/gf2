@@ -54,15 +54,19 @@ use crate::bipedal::lanes::{Avx2Lane, BipedalLogicalLanes};
 ///
 /// # Examples
 ///
+/// The generic entry point itself is crate-internal (the parent `x86` module
+/// is private to the crate); F_3 callers reach it through the
+/// `Config3`-monomorphised public re-export at
+/// [`crate::bipedal::avx2::run_add_batch`]:
+///
 /// ```no_run
-/// use gf2_kernels_simd::bipedal::Config3;
-/// use gf2_kernels_simd::x86::bipedal_avx2::run_add_batch;
+/// use gf2_kernels_simd::bipedal::avx2::run_add_batch;
 /// if is_x86_feature_detected!("avx2") {
 ///     let v = vec![0u64; 4];
 ///     let mut out_m = vec![0u64; 4];
 ///     let mut out_s = vec![0u64; 4];
 ///     // SAFETY: AVX2 verified, slices length 4 (= one AVX2 lane).
-///     unsafe { run_add_batch::<Config3>(&v, &v, &v, &v, &mut out_m, &mut out_s); }
+///     unsafe { run_add_batch(&v, &v, &v, &v, &mut out_m, &mut out_s); }
 /// }
 /// ```
 ///
@@ -124,15 +128,17 @@ pub unsafe fn run_add_batch<C>(
 ///
 /// # Examples
 ///
+/// Reach the AVX2 sub batch via the `Config3`-monomorphised public
+/// re-export at [`crate::bipedal::avx2::run_sub_batch`]:
+///
 /// ```no_run
-/// use gf2_kernels_simd::bipedal::Config3;
-/// use gf2_kernels_simd::x86::bipedal_avx2::run_sub_batch;
+/// use gf2_kernels_simd::bipedal::avx2::run_sub_batch;
 /// if is_x86_feature_detected!("avx2") {
 ///     let v = vec![0u64; 4];
 ///     let mut out_m = vec![0u64; 4];
 ///     let mut out_s = vec![0u64; 4];
 ///     // SAFETY: AVX2 verified, slices length 4.
-///     unsafe { run_sub_batch::<Config3>(&v, &v, &v, &v, &mut out_m, &mut out_s); }
+///     unsafe { run_sub_batch(&v, &v, &v, &v, &mut out_m, &mut out_s); }
 /// }
 /// ```
 ///
@@ -194,15 +200,17 @@ pub unsafe fn run_sub_batch<C>(
 ///
 /// # Examples
 ///
+/// Reach the AVX2 mul batch via the `Config3`-monomorphised public
+/// re-export at [`crate::bipedal::avx2::run_mul_batch`]:
+///
 /// ```no_run
-/// use gf2_kernels_simd::bipedal::Config3;
-/// use gf2_kernels_simd::x86::bipedal_avx2::run_mul_batch;
+/// use gf2_kernels_simd::bipedal::avx2::run_mul_batch;
 /// if is_x86_feature_detected!("avx2") {
 ///     let v = vec![0u64; 4];
 ///     let mut out_m = vec![0u64; 4];
 ///     let mut out_s = vec![0u64; 4];
 ///     // SAFETY: AVX2 verified, slices length 4.
-///     unsafe { run_mul_batch::<Config3>(&v, &v, &v, &v, &mut out_m, &mut out_s); }
+///     unsafe { run_mul_batch(&v, &v, &v, &v, &mut out_m, &mut out_s); }
 /// }
 /// ```
 ///
@@ -265,15 +273,17 @@ pub unsafe fn run_mul_batch<C>(
 ///
 /// # Examples
 ///
+/// Reach the AVX2 neg batch via the `Config3`-monomorphised public
+/// re-export at [`crate::bipedal::avx2::run_neg_batch`]:
+///
 /// ```no_run
-/// use gf2_kernels_simd::bipedal::Config3;
-/// use gf2_kernels_simd::x86::bipedal_avx2::run_neg_batch;
+/// use gf2_kernels_simd::bipedal::avx2::run_neg_batch;
 /// if is_x86_feature_detected!("avx2") {
 ///     let v = vec![0u64; 4];
 ///     let mut out_m = vec![0u64; 4];
 ///     let mut out_s = vec![0u64; 4];
 ///     // SAFETY: AVX2 verified, slices length 4.
-///     unsafe { run_neg_batch::<Config3>(&v, &v, &mut out_m, &mut out_s); }
+///     unsafe { run_neg_batch(&v, &v, &mut out_m, &mut out_s); }
 /// }
 /// ```
 ///

@@ -15,7 +15,23 @@
     "code-review",
     "asm-artefact-present"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-11T13:29:00.041392935Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-11T13:11:20.181324057Z"
+    },
+    "asm-artefact-present": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-11T13:12:06.421948167Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -24,5 +40,5 @@
     "component:gf2-kernels-simd"
   ],
   "created_at": "2026-05-09T09:44:29.498586741+00:00",
-  "updated_at": "2026-05-11T12:48:13.477640728+00:00"
+  "updated_at": "2026-05-11T13:33:19.475666540+00:00"
 }
