@@ -160,10 +160,13 @@ pub fn permanent_bipedal3_multiword(mat: &Bipedal3Matrix) -> Fp<3> {
         n <= N_MAX_MULTIWORD,
         "permanent_bipedal3_multiword: n = {n} exceeds N_MAX_MULTIWORD = {N_MAX_MULTIWORD}"
     );
-    debug_assert!(
-        n > 64,
-        "permanent_bipedal3_multiword: n = {n} should use single-word fast path (n <= 64)"
-    );
+    // Note: no lower-bound assert. The dispatcher routes `n <= 64` to the
+    // singleword fast path for perf, but calling this function directly at
+    // small `n` is correctness-preserving — the `[u64; 4]` Gray counter
+    // and word-wise loops handle `n` in `1..=N_MAX_MULTIWORD` uniformly.
+    // The §9.2 validation plan relies on this property: small-`n` direct
+    // ryser cross-checks exercise the multi-word code path under both
+    // debug and release builds without `debug_assert!` divergence.
 
     // W = ceil(n / 64): number of u64 words per column-sum leg.
     let w = n.div_ceil(64);
@@ -578,16 +581,18 @@ mod tests {
     // -----------------------------------------------------------------------
     // Multi-word fast-tier cross-check vs `permanent_ryser<Fp<3>>`.
     //
-    // The release-mode `debug_assert!(n > 64)` is skipped, so we can run
-    // permanent_bipedal3_multiword directly at small n where the 2^n Gray
-    // walk is feasible. This concretely validates the multi-word machinery
-    // against the canonical ryser oracle in the fast tier.
+    // permanent_bipedal3_multiword has no lower-bound assertion (the
+    // singleword dispatch is a perf hint, not a correctness invariant),
+    // so we can run it directly at small n where the 2^n Gray walk is
+    // feasible. This concretely validates the multi-word machinery
+    // against the canonical ryser oracle in the fast tier under both
+    // debug and release builds.
     //
     // Per the in-session amendment recorded in
     // `dev/active/a7886bd8-amendments-2026-05-11.md` (criterion 3, option
-    // "Block-decomposable cross-check"). 1000 trials total spans n ∈
-    // {2, 5, 8, 16, 24}; the larger n ∈ {32, 48, 60} cases live in the
-    // slow tier via `#[ignore = "slow: ..."]`.
+    // "Block-decomposable cross-check"). 850 trials total spans n ∈
+    // {2, 5, 8, 16, 20}; the larger n ∈ {24, 32, 48, 60} cases live in
+    // the slow tier via `#[ignore = "slow: ..."]`.
     // -----------------------------------------------------------------------
 
     fn run_multiword_vs_ryser_at_n(n: usize, n_trials: u64, seed_tag: u64) {
@@ -598,9 +603,9 @@ mod tests {
             let seed = seed_base.wrapping_add(trial.wrapping_mul(1_000_003));
             let row_major = random_matrix::<3>(n, seed);
             let mat = Bipedal3Matrix::from_row_major(&row_major, n, n);
-            // Release build skips the `debug_assert!(n > 64)` in
-            // permanent_bipedal3_multiword, so we can exercise the
-            // multi-word code path at small feasible n.
+            // permanent_bipedal3_multiword has no lower-bound assertion;
+            // the singleword dispatch is a perf hint, not a correctness
+            // invariant, so this call works at any feasible n.
             let actual = permanent_bipedal3_multiword(&mat);
             let expected = permanent_ryser::<Fp<3>>(&row_major, n);
             assert_eq!(
@@ -630,8 +635,9 @@ mod tests {
     }
 
     /// Regression: `permanent_bipedal3_multiword` must panic on `n` above
-    /// `N_MAX_MULTIWORD` even in release builds. The previous
-    /// `debug_assert!` would have been silently dropped in `--release`.
+    /// `N_MAX_MULTIWORD` even in release builds. A `debug_assert!` here
+    /// would be silently dropped in `--release` and let the function
+    /// index past the `[u64; 4]` Gray counter.
     #[test]
     #[should_panic(expected = "exceeds N_MAX_MULTIWORD")]
     fn test_multiword_panics_above_n_max() {
