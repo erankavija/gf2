@@ -54,6 +54,22 @@ impl Bipedal3 {
         len.div_ceil(ELEMS_PER_WORD)
     }
 
+    /// Borrow the raw magnitude word slice (`mag` leg of the bipedal pair).
+    ///
+    /// Exposes the internal packed representation so SIMD parity tests can
+    /// assert bitwise agreement against the AVX2 kernel output rather than
+    /// going through `unpack()` (which would only check canonical-decoded
+    /// equality and miss alt-zero divergences).
+    pub fn raw_mag(&self) -> &[u64] {
+        &self.mag
+    }
+
+    /// Borrow the raw sign word slice (`sgn` leg of the bipedal pair).
+    /// See [`Bipedal3::raw_mag`] for the test-parity rationale.
+    pub fn raw_sgn(&self) -> &[u64] {
+        &self.sgn
+    }
+
     /// Mask used to clear bits at positions `>= len % 64` in the last word.
     /// Mirrors the project-wide tail-mask invariant from CLAUDE.md, applied
     /// after every mutating op so out-of-range slots stay canonical zero.
