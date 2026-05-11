@@ -270,9 +270,9 @@ mod tests {
         assert_eq!(unix_secs_to_ymd(0), (1970, 1, 1));
         // Y2K, midnight UTC.
         assert_eq!(unix_secs_to_ymd(946_684_800), (2000, 1, 1));
-        // 2026-05-11 midnight UTC (epoch +56 years, 5 months, 11 days).
-        // Computed via `date -u -d "2026-05-11" +%s` = 1778803200.
-        assert_eq!(unix_secs_to_ymd(1_778_803_200), (2026, 5, 11));
+        // 2026-05-11 midnight UTC.
+        // Verified via `date -u -d "2026-05-11" +%s` = 1778457600.
+        assert_eq!(unix_secs_to_ymd(1_778_457_600), (2026, 5, 11));
         // Leap-year boundary: 2000-02-29 midnight UTC.
         assert_eq!(unix_secs_to_ymd(951_782_400), (2000, 2, 29));
         // Pre-epoch (negative seconds): 1969-12-31 23:00 UTC.
