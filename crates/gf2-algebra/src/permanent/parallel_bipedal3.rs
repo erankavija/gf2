@@ -123,6 +123,23 @@ pub fn permanent_bipedal3_parallel(mat: &Bipedal3Matrix) -> Fp<3> {
 ///
 /// Panics on non-square matrices, `n > 63`, or `chunk_subsets == 0`.
 ///
+/// # Examples
+///
+/// ```
+/// use gf2_algebra::packed::Bipedal3Matrix;
+/// use gf2_algebra::permanent::parallel_bipedal3::permanent_bipedal3_parallel_with_chunk;
+/// use gf2_core::gfp::Fp;
+///
+/// // 2×2 identity over F_3 with chunk_subsets = 2 (covers the full 2^2 - 1 = 3
+/// // non-empty subsets in 2 chunks of 2/1 entries).
+/// let id: Vec<Fp<3>> = vec![
+///     Fp::<3>::new(1), Fp::<3>::new(0),
+///     Fp::<3>::new(0), Fp::<3>::new(1),
+/// ];
+/// let m = Bipedal3Matrix::from_row_major(&id, 2, 2);
+/// assert_eq!(permanent_bipedal3_parallel_with_chunk(&m, 2), Fp::<3>::new(1));
+/// ```
+///
 /// # Complexity
 ///
 /// Identical to [`permanent_bipedal3_parallel`] but parametrised by chunk
@@ -367,6 +384,56 @@ mod tests {
         let data = vec![Fp::<3>::new(0); 64 * 64];
         let m = Bipedal3Matrix::from_row_major(&data, 64, 64);
         let _ = permanent_bipedal3_parallel(&m);
+    }
+
+    // -----------------------------------------------------------------------
+    // Direct coverage for permanent_bipedal3_parallel_with_chunk.
+    //
+    // The public chunk-parametrised entrypoint is the SSOT used by both the
+    // default wrapper and the chunk-sweep example, so it needs explicit tests
+    // for its own contract: it must accept varying chunk sizes, panic on
+    // chunk_subsets == 0, and produce the same answer as the wrapper.
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn test_parallel_with_chunk_matches_default_wrapper() {
+        // Several chunk sizes, including 1 (every Gray index in its own chunk)
+        // and a value larger than 2^n (a single chunk).
+        let n = 6;
+        let data: Vec<Fp<3>> = (0..n * n).map(|i| Fp::<3>::new((i as u64) % 3)).collect();
+        let mat = Bipedal3Matrix::from_row_major(&data, n, n);
+        let expected = permanent_bipedal3_parallel(&mat);
+        for &chunk in &[1usize, 2, 4, 8, 64, 1024, 1 << 20] {
+            let actual = permanent_bipedal3_parallel_with_chunk(&mat, chunk);
+            assert_eq!(
+                actual, expected,
+                "chunk-parametrised result diverged from wrapper at chunk={chunk}"
+            );
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "chunk_subsets must be >= 1")]
+    fn test_parallel_with_chunk_panics_on_zero() {
+        let data = vec![Fp::<3>::new(0); 4 * 4];
+        let m = Bipedal3Matrix::from_row_major(&data, 4, 4);
+        let _ = permanent_bipedal3_parallel_with_chunk(&m, 0);
+    }
+
+    #[test]
+    #[should_panic(expected = "matrix must be square")]
+    fn test_parallel_with_chunk_panics_on_non_square() {
+        let data = vec![Fp::<3>::new(0); 3 * 5];
+        let m = Bipedal3Matrix::from_row_major(&data, 3, 5);
+        let _ = permanent_bipedal3_parallel_with_chunk(&m, 4);
+    }
+
+    #[test]
+    #[should_panic(expected = "single-u64 fast path requires n <= 63")]
+    fn test_parallel_with_chunk_panics_on_n_64() {
+        let data = vec![Fp::<3>::new(0); 64 * 64];
+        let m = Bipedal3Matrix::from_row_major(&data, 64, 64);
+        let _ = permanent_bipedal3_parallel_with_chunk(&m, 1024);
     }
 
     // -----------------------------------------------------------------------
