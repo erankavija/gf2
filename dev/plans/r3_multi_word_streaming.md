@@ -329,9 +329,12 @@ The single-thread expected throughput target for W3-T14 is therefore set by
 the integer-pipe ceiling: ~16 G u64-ops/s, divided by the ~65 ops per Gray
 step, gives **~250 M Gray steps / s / core**. For `n = 36` (the headline
 size) that is `2^36 / 250e6 = 275 s / core` — but `n = 36` lives in the
-single-word path (W2-T9), so the multi-word streaming target is `n in
-{65, 80, 100, 128, 200, 256}` validation runs (see §8), which use small frame
-counts and do not need full enumeration.
+single-word path (W2-T9), so the multi-word streaming target n grid is set
+by validation (see §9.2, layered cross-check). The roofline applies to the
+fast-tier feasible-runtime cells `n ∈ {2, 5, 8, 16, 20}`; the originally
+listed `{65, 80, 100, 128, 200, 256}` direct-ryser sweep was infeasible
+(see §9.2 amendment) and is replaced by the block-decomposable construction
+at `n ∈ {65, 72, 96, 128}`.
 
 The roofline matters mainly to bound the scaling constant when W3-T15 (rayon)
 and W5 (GPU) take over for production-size enumerations.
