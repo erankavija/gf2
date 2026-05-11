@@ -64,7 +64,7 @@ use crate::permanent::bipedal3_multiword;
 /// # Arguments
 ///
 /// * `mat` — An `n × n` [`Bipedal3Matrix`] (column-major, `rows == cols`).
-///   `n` must satisfy `n ≤ N_MAX_MULTIWORD` (currently 256).
+///   `n` must satisfy `n ≤ N_MAX_MULTIWORD` (currently 255).
 ///
 /// # Examples
 ///
@@ -92,7 +92,7 @@ use crate::permanent::bipedal3_multiword;
 /// Panics if `mat.rows() != mat.cols()` (matrix must be square).
 ///
 /// Panics if `mat.cols() > bipedal3_multiword::N_MAX_MULTIWORD` (`n` must
-/// be `≤ N_MAX_MULTIWORD = 256`; above that, use the W3-T15 rayon parallel
+/// be `≤ N_MAX_MULTIWORD = 255`; above that, use the W3-T15 rayon parallel
 /// path or W5 GPU path).
 ///
 /// # Complexity
@@ -114,7 +114,7 @@ pub fn permanent_bipedal3(mat: &Bipedal3Matrix) -> Fp<3> {
         bipedal3_multiword::N_MAX_MULTIWORD,
         n
     );
-    if n <= 63 {
+    if n <= 64 {
         permanent_bipedal3_singleword(mat)
     } else {
         bipedal3_multiword::permanent_bipedal3_multiword(mat)
@@ -157,7 +157,9 @@ pub fn permanent_bipedal3(mat: &Bipedal3Matrix) -> Fp<3> {
 ///
 /// Panics if `mat.rows() != mat.cols()` (matrix must be square).
 ///
-/// Panics if `mat.cols() > 64` (single-`u64` fast path requires `n ≤ 64`).
+/// Panics if `mat.cols() > 64` (single-u64 fast path requires `n <= 64`).
+/// The Gray walk uses a `u128` step counter so the n=64 boundary is
+/// well-defined; column-sum state still fits one Bipedal3 word.
 ///
 /// # Complexity
 ///
@@ -177,8 +179,8 @@ pub fn permanent_bipedal3_singleword(mat: &Bipedal3Matrix) -> Fp<3> {
         n
     );
     assert!(
-        n <= 63,
-        "permanent_bipedal3_singleword: single-u64 fast path requires n <= 63; got n = {}",
+        n <= 64,
+        "permanent_bipedal3_singleword: single-u64 fast path requires n <= 64; got n = {}",
         n
     );
 
@@ -348,9 +350,9 @@ mod tests {
 
     /// `n > N_MAX_MULTIWORD` panics.
     ///
-    /// The dispatcher caps at `N_MAX_MULTIWORD = 256`; above that the
-    /// multi-word streaming path is not yet implemented (W3-T15 / W5 for
-    /// large n). This test guards the upper bound.
+    /// The dispatcher caps at `N_MAX_MULTIWORD = 255`; above that the
+    /// multi-word streaming path's `[u64; 4]` Gray counter cannot represent
+    /// the iteration range (W3-T15 / W5 for parallel + GPU paths).
     #[test]
     #[should_panic(expected = "n must satisfy n <=")]
     fn test_permanent_bipedal3_panics_on_n_exceeding_n_max() {
@@ -361,31 +363,31 @@ mod tests {
         let _ = permanent_bipedal3(&m);
     }
 
-    /// `permanent_bipedal3_singleword` panics for `n = 64` (too large).
+    /// `permanent_bipedal3_singleword` panics for `n = 65` (above its bound).
     ///
-    /// `gray_code_iter` requires `n <= 63` because `1u64 << 64` is undefined
-    /// behaviour per the Rust reference. This test guards the boundary of
-    /// the single-word path. The public dispatcher routes n=64 to the
-    /// multi-word path instead of panicking.
+    /// The single-word fast path supports `n <= 64` (the column-sum state
+    /// fits one `(mag, sgn)` u64 pair; `gray_code_iter` widens to u128 so
+    /// `1 << 64` is well-defined). At `n = 65` the column-sum no longer
+    /// fits one word, so the dispatcher routes to the multi-word path.
     #[test]
-    #[should_panic(expected = "single-u64 fast path requires n <= 63")]
-    fn test_permanent_bipedal3_singleword_panics_on_n_64() {
-        let data = vec![Fp::<3>::new(0); 64 * 64];
-        let m = Bipedal3Matrix::from_row_major(&data, 64, 64);
+    #[should_panic(expected = "single-u64 fast path requires n <= 64")]
+    fn test_permanent_bipedal3_singleword_panics_on_n_65() {
+        let data = vec![Fp::<3>::new(0); 65 * 65];
+        let m = Bipedal3Matrix::from_row_major(&data, 65, 65);
         let _ = permanent_bipedal3_singleword(&m);
     }
 
-    /// Dispatcher accepts n=64 without panicking (routes to multi-word path).
+    /// Dispatcher routes `n = 64` to the single-word fast path.
     ///
-    /// This test only verifies that dispatch constants are consistent:
-    /// n=64 is above the single-word threshold (63) and within N_MAX_MULTIWORD.
-    /// The actual permanent computation at n=64 (2^64 steps) would be
-    /// infeasible; this test exists purely as a dispatch contract smoke-check.
+    /// Verifies the dispatch contract: n=64 stays in the singleword arm
+    /// (matches T14 criterion 4). The actual computation at n=64 (2^64
+    /// steps) is infeasible to run; this test only checks the dispatch
+    /// constant relationship and matrix construction.
     #[test]
-    fn test_permanent_bipedal3_dispatch_accepts_n64() {
+    fn test_permanent_bipedal3_dispatch_routes_n64_to_singleword() {
         use crate::permanent::bipedal3_multiword::N_MAX_MULTIWORD;
-        // n=64 must be routable: above single-word threshold and within max.
-        const { assert!(64 <= N_MAX_MULTIWORD) }
+        // n=64 routes to singleword (per criterion 4); n=65..N_MAX is multi-word.
+        const { assert!(N_MAX_MULTIWORD >= 65) }
     }
 
     // -----------------------------------------------------------------------

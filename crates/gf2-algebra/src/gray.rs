@@ -65,13 +65,15 @@ pub fn gray_code_index_to_subset(k: u64) -> u64 {
 /// # Arguments
 ///
 /// * `n` — universe size; the iterator yields `2^n - 1` items. Must
-///   satisfy `n <= 63` because the implementation uses `1u64 << n` to
-///   bound the iteration, and `1u64 << 64` is undefined behaviour per
-///   the Rust reference (shift by the full type width). The permanent
-///   inner loop targets `n <= 16` exhaustively per W1-T6 success
-///   criteria, but larger `n` works correctly up to `n = 63`; iteration
-///   cost is `O(2^n)` so callers will rarely exceed `n = 36` in practice
-///   (epic doc §7.3).
+///   satisfy `n <= 64`. Internally the iterator widens to `u128` so the
+///   bound `(1u128 << n)` is well-defined for `n` up to and including
+///   64 (the singleword permanent boundary). The permanent inner loop
+///   targets `n <= 16` exhaustively per W1-T6 success criteria, but
+///   larger `n` works correctly up to `n = 64`; iteration cost is
+///   `O(2^n)` so callers will rarely exceed `n = 36` in practice
+///   (epic doc §7.3). For `n >= 65` use the multi-word path
+///   (`permanent_bipedal3_multiword`) which carries its own 256-bit
+///   counter.
 ///
 /// # Examples
 ///
@@ -91,12 +93,11 @@ pub fn gray_code_index_to_subset(k: u64) -> u64 {
 ///
 /// # Panics
 ///
-/// Panics in debug builds (and is undefined behaviour in release) if
-/// `n >= 64`, because the bound `1u64 << n` shifts by ≥ the type width.
-/// For `n == 0` the iterator yields zero items (the empty universe has
-/// only the empty subset, which is excluded). Callers MUST guarantee
-/// `n <= 63`. The permanent driver enforces `n <= 63` upstream via
-/// matrix dimension checks (epic doc §7.3).
+/// Panics if `n >= 65`. The bound `(1u128 << n)` would overflow at
+/// `n = 128`; before reaching that limit the singleword permanent
+/// boundary (`n <= 64`) gates upstream callers. For `n == 0` the
+/// iterator yields zero items (the empty universe has only the empty
+/// subset, which is excluded).
 ///
 /// # Complexity
 ///
@@ -120,14 +121,15 @@ pub fn gray_code_index_to_subset(k: u64) -> u64 {
 /// `dev/plans/r3_multi_word_streaming.md` §6 for the worked derivation.
 #[inline]
 pub fn gray_code_iter(n: usize) -> impl Iterator<Item = (usize, i8)> {
-    // For n == 0 the upper bound `1u64 << 0 == 1` makes the range
-    // `1..1` empty, which is the desired behaviour (no non-empty
-    // subsets of the empty universe). For n in 1..=63 the bound
-    // `1u64 << n` is well-defined; `1u64 << 64` is UB per the Rust
-    // reference, so the issue contract restricts the iterator to
-    // `n <= 63`.
-    let upper = 1u64 << n;
-    (1u64..upper).map(|k| {
+    assert!(
+        n <= 64,
+        "gray_code_iter: n must satisfy n <= 64; got n = {n}"
+    );
+    // u128 bound covers the full n=64 case (`1u128 << 64` is well-defined,
+    // = 2^64). For n < 64 the iteration fits comfortably in u128 and
+    // monomorphises to the same code shape the u64 version emitted.
+    let upper: u128 = 1u128 << n;
+    (1u128..upper).map(|k| {
         let flip = k.trailing_zeros() as usize;
         let g_k = k ^ (k >> 1);
         // Bit `flip` of `g_k` is the new state of that bit in the
