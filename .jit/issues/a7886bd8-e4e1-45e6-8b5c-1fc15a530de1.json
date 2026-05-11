@@ -2,9 +2,9 @@
   "id": "a7886bd8-e4e1-45e6-8b5c-1fc15a530de1",
   "title": "Multi-word streaming column-sum for n greater than 64",
   "description": "Implement the multi-word streaming column-sum path that extends `permanent_bipedal3` to $n > 64$, per the R3 cache-blocking design.\n\n## Background\n\nFor $n > 64$ the column-sum vector spans multiple `u64` pairs. The R3 design doc (`60c30e2d`, attached) prescribes cache-blocked streaming over chunks tuned to fit Zen 3 L1d (32 KiB), with the inner loop walking down the toggled column word-by-word and updating each `column_sum[w]` chunk via `Bipedal3::add`/`sub`.\n\nThis issue lands `permanent_bipedal3_multiword` covering $n \\in \\{65, \\ldots, 256\\}$ (or higher; document the upper bound). The single-word path (T9) remains the fast path for $n \\le 64$; dispatch to multi-word kicks in only when needed.\n\n## Success Criteria\n\n- [ ] [hard] `gf2-algebra::permanent::permanent_bipedal3_multiword(matrix: &Bipedal3Matrix) -> Fp<3>` exists and supports $64 < n \\le N_{\\max}$ with $N_{\\max}$ documented in the function doc-comment.\n- [ ] [hard] Memory layout matches the R3 doc (column-major); cache-blocking parameters are documented constants tied to the L1d size.\n- [ ] [hard] Output bit-identical to `permanent_ryser<Fp<3>>` (T7) on 50 random matrices for each $n \\in \\{65, 72, 96, 128\\}$. These cases use `#[ignore = \"sim: large-n cross-check\"]` if any single test exceeds 5 s.\n- [ ] [hard] `permanent_bipedal3` dispatches to the single-word path for $n \\le 64$ and the multi-word path otherwise; the dispatch is transparent to callers.\n- [ ] [hard] `cargo nextest run -p gf2-algebra --release --profile ci` passes (the unignored fast tests remain under 5 s each).",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [
     "b0857ae9-9090-464e-9d00-1e6f4a67c8c4",
     "60c30e2d-f332-4ef5-bad3-548fa7753b6f"
@@ -23,5 +23,5 @@
     "component:gf2-algebra"
   ],
   "created_at": "2026-05-09T09:44:51.611930397+00:00",
-  "updated_at": "2026-05-10T21:37:57.460276435+00:00"
+  "updated_at": "2026-05-11T12:48:14.123303193+00:00"
 }
