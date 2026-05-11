@@ -214,6 +214,58 @@ impl Bipedal3 {
         Self { mag, sgn }
     }
 
+    /// Return the raw magnitude word.
+    ///
+    /// Bit `i` of the returned `u64` is the `mag_bit` of lane `i`.
+    /// Used by the multi-word streaming permanent kernel
+    /// (`permanent_bipedal3_multiword`) to extract the word-level result
+    /// of a `Bipedal3::add` or `sub` back into the column-sum buffer.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::Bipedal3;
+    /// use gf2_algebra::packed::PackedField;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let b = Bipedal3::from_raw(0xABCD, 0x1234);
+    /// assert_eq!(b.mag(), 0xABCD);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(1)`.
+    #[inline]
+    pub fn mag(self) -> u64 {
+        self.mag
+    }
+
+    /// Return the raw sign word.
+    ///
+    /// Bit `i` of the returned `u64` is the `sgn_bit` of lane `i`.
+    /// Used by the multi-word streaming permanent kernel
+    /// (`permanent_bipedal3_multiword`) to extract the word-level result
+    /// of a `Bipedal3::add` or `sub` back into the column-sum buffer.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::Bipedal3;
+    /// use gf2_algebra::packed::PackedField;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let b = Bipedal3::from_raw(0xABCD, 0x1234);
+    /// assert_eq!(b.sgn(), 0x1234);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(1)`.
+    #[inline]
+    pub fn sgn(self) -> u64 {
+        self.sgn
+    }
+
     /// Broadcast a single `(mag_bit, sgn_bit)` pair to all 64 lanes.
     ///
     /// A helper for internal tests; `splat_raw(1, 0)` gives all-1s,
@@ -1515,6 +1567,66 @@ impl Bipedal3Vec {
             self.sgn[w] ^= self.mag[w];
         }
         self.mask_tail();
+    }
+
+    /// Borrow the raw magnitude word slice (`mag` leg).
+    ///
+    /// Each `u64` in the returned slice packs 64 `F_3` element magnitude bits
+    /// (`mag_bit` per lane), following the bipedal encoding in the module-level
+    /// docs. The last word may be partially filled; bits at positions
+    /// `self.len() % 64 .. 63` are zero (the tail-masking invariant).
+    ///
+    /// This method exists for the multi-word streaming permanent
+    /// (`permanent_bipedal3_multiword`) and SIMD kernels that need direct
+    /// word-level access without per-lane decoding overhead.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{PackedFieldVec, Bipedal3Vec};
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let v = Bipedal3Vec::from_field_slice(&[Fp::<3>::new(1), Fp::<3>::new(2)]);
+    /// // Lane 0 = 1 → mag bit 0 = 1; lane 1 = 2 → mag bit 1 = 1.
+    /// assert_eq!(v.raw_mag()[0] & 0b11, 0b11);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(1)`.
+    #[inline]
+    pub fn raw_mag(&self) -> &[u64] {
+        &self.mag
+    }
+
+    /// Borrow the raw sign word slice (`sgn` leg).
+    ///
+    /// Each `u64` in the returned slice packs 64 `F_3` element sign bits
+    /// (`sgn_bit` per lane), following the bipedal encoding in the module-level
+    /// docs. The last word may be partially filled; bits at positions
+    /// `self.len() % 64 .. 63` are zero (the tail-masking invariant).
+    ///
+    /// This method exists for the multi-word streaming permanent
+    /// (`permanent_bipedal3_multiword`) and SIMD kernels that need direct
+    /// word-level access without per-lane decoding overhead.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{PackedFieldVec, Bipedal3Vec};
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let v = Bipedal3Vec::from_field_slice(&[Fp::<3>::new(1), Fp::<3>::new(2)]);
+    /// // Lane 0 = 1 → sgn bit 0 = 0; lane 1 = 2 → sgn bit 1 = 1.
+    /// assert_eq!(v.raw_sgn()[0] & 0b11, 0b10);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(1)`.
+    #[inline]
+    pub fn raw_sgn(&self) -> &[u64] {
+        &self.sgn
     }
 }
 
