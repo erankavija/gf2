@@ -2,7 +2,7 @@
   "id": "05250df5-495a-462e-bd04-aacd6bfb4505",
   "title": "Rayon parallel permanent_bipedal3 with chunk-size sweep",
   "description": "Add a rayon parallel implementation of `permanent_bipedal3` that splits the Gray-code subset enumeration across worker threads, with a documented chunk-size sweep on the dev host.\n\n## Background\n\nRyser's outer loop walks $2^n - 1$ subsets. Parallelising splits the subset range across rayon workers; each worker maintains its own column-sum and combines partial permanents at the end. Chunk-size affects cache locality and load balance: too small wastes scheduler overhead, too large under-utilises workers near the tail.\n\nThis issue lands `permanent_bipedal3_parallel` behind the `parallel` Cargo feature (default on per D1c) and documents the chunk-size choice via a microbench in `dev/benchmarks/gf2_algebra_permanent/parallel_chunk_sweep-YYYY-MM-DD.csv`.\n\nPer CLAUDE.md, the Gray-code split must be deterministic — same seed and same $n$ produce identical output regardless of thread schedule.\n\n## Success Criteria\n\n- [ ] [hard] `gf2-algebra::permanent::permanent_bipedal3_parallel(matrix: &Bipedal3Matrix) -> Fp<3>` exists behind the `parallel` feature.\n- [ ] [hard] Output bit-identical to `permanent_bipedal3` (T9) across the following n values, regardless of thread count: 100 random matrices at each of $n \\in \\{20, 24, 28\\}$, and 5 random matrices at $n = 32$. The $n=32$ count was reduced from the original 100 because the serial `permanent_bipedal3` oracle takes ~17 s/matrix; 100 matrices at $n=32$ would require ~30 min, far exceeding the 120 s slow-tier budget. All n=24/28/32 tests carry `#[ignore = \"sim: ...\"]` per CLAUDE.md tier rules; n=20 runs in fast tier.\n- [ ] [hard] CSV at `dev/benchmarks/gf2_algebra_permanent/parallel_chunk_sweep-YYYY-MM-DD.csv` records throughput vs chunk-size on $n=28$ for chunk sizes spanning 4 orders of magnitude; the chosen default is justified in a comment.\n- [ ] [hard] Determinism test: same RNG seed and same $n=24$ produce the same `Fp<3>` output across 10 repeated runs with rayon thread count varied 1, 2, 4, 8, 12.\n- [ ] [hard] `cargo nextest run -p gf2-algebra --release --profile ci --features parallel` passes.\n\n## Amendment history (2026-05-11)\n\n- Criterion 2 reduced the n=32 matrix count from 100 to 5 because of the serial oracle bottleneck (`permanent_bipedal3` at n=32 takes ~17 s/matrix). 100 matrices at n=32 would need ~30 min, exceeding the 120 s slow-tier limit by 14x; 5 matrices fit in ~85 s, well under the limit. The n=20/24/28 counts of 100 matrices each were preserved. The full grid was shipped: n=20 (fast tier, 100), n=24 (slow tier, 10 sub-tests × 10 each = 100), n=28 (slow tier, 5 sub-tests × 20 each = 100), n=32 (slow tier, 5).",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:claude",
   "dependencies": [
@@ -14,11 +14,6 @@
     "tests"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-11T19:24:50.157930631Z"
-    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
@@ -28,6 +23,11 @@
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-05-11T13:12:56.991221644Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-11T19:31:45.226790543Z"
     }
   },
   "context": {},
@@ -38,5 +38,5 @@
     "component:gf2-algebra"
   ],
   "created_at": "2026-05-09T09:45:01.971014471+00:00",
-  "updated_at": "2026-05-11T19:30:18.931895824+00:00"
+  "updated_at": "2026-05-11T19:35:08.210135047+00:00"
 }
