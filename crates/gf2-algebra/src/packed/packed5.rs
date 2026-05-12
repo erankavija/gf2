@@ -92,59 +92,68 @@ fn encode5(r: [u64; 5]) -> (u64, u64, u64) {
     (c0, c1, c2)
 }
 
-/// Apply F_5 binary op `op_table[i][j] = (i op j) mod 5` bit-sliced.
+/// F_5 addition Boolean circuit — direct transliteration of R1 §5 ADD cells.
 ///
-/// Returns `(c0, c1, c2)` as output bit-planes for the 64-lane result.
+/// Cross-product cells (i + j) mod 5 == k for k ∈ {1,2,3,4}:
+/// - r[1]: (0,1),(1,0),(2,4),(3,3),(4,2) — 5 ANDs + 4 ORs
+/// - r[2]: (0,2),(1,1),(2,0),(3,4),(4,3) — 5 ANDs + 4 ORs
+/// - r[3]: (0,3),(1,2),(2,1),(3,0),(4,4) — 5 ANDs + 4 ORs
+/// - r[4]: (0,4),(1,3),(2,2),(3,1),(4,0) — 5 ANDs + 4 ORs
+///
+/// Total: 22 decode + 20 ANDs + 16 ORs + 2 encode ORs = **60 ops** per u64-triple.
 #[inline]
-fn apply_table(ea: [u64; 5], eb: [u64; 5], op_table: &[[u8; 5]; 5]) -> (u64, u64, u64) {
-    let mut r = [0u64; 5];
-    for (i, row) in op_table.iter().enumerate() {
-        for (j, &v) in row.iter().enumerate() {
-            r[v as usize] |= ea[i] & eb[j];
-        }
-    }
-    encode5(r)
+fn add_circuit(ea: [u64; 5], eb: [u64; 5]) -> (u64, u64, u64) {
+    let r1 =
+        (ea[0] & eb[1]) | (ea[1] & eb[0]) | (ea[2] & eb[4]) | (ea[3] & eb[3]) | (ea[4] & eb[2]);
+    let r2 =
+        (ea[0] & eb[2]) | (ea[1] & eb[1]) | (ea[2] & eb[0]) | (ea[3] & eb[4]) | (ea[4] & eb[3]);
+    let r3 =
+        (ea[0] & eb[3]) | (ea[1] & eb[2]) | (ea[2] & eb[1]) | (ea[3] & eb[0]) | (ea[4] & eb[4]);
+    let r4 =
+        (ea[0] & eb[4]) | (ea[1] & eb[3]) | (ea[2] & eb[2]) | (ea[3] & eb[1]) | (ea[4] & eb[0]);
+    encode5([0, r1, r2, r3, r4])
 }
 
-/// Build a 5×5 op table from a closure `op(a, b) -> (a op b) % 5`.
-#[cfg(test)]
+/// F_5 subtraction Boolean circuit — direct transliteration of R1 §5 SUB cells.
+///
+/// Cross-product cells (i - j + 5) mod 5 == k for k ∈ {1,2,3,4}:
+/// - r[1]: (0,4),(1,0),(2,1),(3,2),(4,3) — 5 ANDs + 4 ORs
+/// - r[2]: (0,3),(1,4),(2,0),(3,1),(4,2) — 5 ANDs + 4 ORs
+/// - r[3]: (0,2),(1,3),(2,4),(3,0),(4,1) — 5 ANDs + 4 ORs
+/// - r[4]: (0,1),(1,2),(2,3),(3,4),(4,0) — 5 ANDs + 4 ORs
+///
+/// Total: 22 decode + 20 ANDs + 16 ORs + 2 encode ORs = **60 ops** per u64-triple.
 #[inline]
-fn make_table(op: impl Fn(u8, u8) -> u8) -> [[u8; 5]; 5] {
-    let mut t = [[0u8; 5]; 5];
-    for (i, row) in t.iter_mut().enumerate() {
-        for (j, cell) in row.iter_mut().enumerate() {
-            *cell = op(i as u8, j as u8);
-        }
-    }
-    t
+fn sub_circuit(ea: [u64; 5], eb: [u64; 5]) -> (u64, u64, u64) {
+    let r1 =
+        (ea[0] & eb[4]) | (ea[1] & eb[0]) | (ea[2] & eb[1]) | (ea[3] & eb[2]) | (ea[4] & eb[3]);
+    let r2 =
+        (ea[0] & eb[3]) | (ea[1] & eb[4]) | (ea[2] & eb[0]) | (ea[3] & eb[1]) | (ea[4] & eb[2]);
+    let r3 =
+        (ea[0] & eb[2]) | (ea[1] & eb[3]) | (ea[2] & eb[4]) | (ea[3] & eb[0]) | (ea[4] & eb[1]);
+    let r4 =
+        (ea[0] & eb[1]) | (ea[1] & eb[2]) | (ea[2] & eb[3]) | (ea[3] & eb[4]) | (ea[4] & eb[0]);
+    encode5([0, r1, r2, r3, r4])
 }
 
-/// F_5 addition table — precomputed at compile time.
-const ADD_TABLE: [[u8; 5]; 5] = [
-    [0, 1, 2, 3, 4],
-    [1, 2, 3, 4, 0],
-    [2, 3, 4, 0, 1],
-    [3, 4, 0, 1, 2],
-    [4, 0, 1, 2, 3],
-];
-
-/// F_5 subtraction table — precomputed at compile time.
-const SUB_TABLE: [[u8; 5]; 5] = [
-    [0, 4, 3, 2, 1],
-    [1, 0, 4, 3, 2],
-    [2, 1, 0, 4, 3],
-    [3, 2, 1, 0, 4],
-    [4, 3, 2, 1, 0],
-];
-
-/// F_5 multiplication table — precomputed at compile time.
-const MUL_TABLE: [[u8; 5]; 5] = [
-    [0, 0, 0, 0, 0],
-    [0, 1, 2, 3, 4],
-    [0, 2, 4, 1, 3],
-    [0, 3, 1, 4, 2],
-    [0, 4, 3, 2, 1],
-];
+/// F_5 multiplication Boolean circuit — direct transliteration of R1 §5 MUL cells.
+///
+/// Cross-product cells (i * j) mod 5 == k for k ∈ {1,2,3,4}
+/// (cells with i=0 or j=0 always yield 0, so they go to r[0] which is unused):
+/// - r[1]: (1,1),(2,3),(3,2),(4,4) — 4 ANDs + 3 ORs
+/// - r[2]: (1,2),(2,1),(3,4),(4,3) — 4 ANDs + 3 ORs
+/// - r[3]: (1,3),(2,4),(3,1),(4,2) — 4 ANDs + 3 ORs
+/// - r[4]: (1,4),(2,2),(3,3),(4,1) — 4 ANDs + 3 ORs
+///
+/// Total: 22 decode + 16 ANDs + 12 ORs + 2 encode ORs = **52 ops** per u64-triple.
+#[inline]
+fn mul_circuit(ea: [u64; 5], eb: [u64; 5]) -> (u64, u64, u64) {
+    let r1 = (ea[1] & eb[1]) | (ea[2] & eb[3]) | (ea[3] & eb[2]) | (ea[4] & eb[4]);
+    let r2 = (ea[1] & eb[2]) | (ea[2] & eb[1]) | (ea[3] & eb[4]) | (ea[4] & eb[3]);
+    let r3 = (ea[1] & eb[3]) | (ea[2] & eb[4]) | (ea[3] & eb[1]) | (ea[4] & eb[2]);
+    let r4 = (ea[1] & eb[4]) | (ea[2] & eb[2]) | (ea[3] & eb[3]) | (ea[4] & eb[1]);
+    encode5([0, r1, r2, r3, r4])
+}
 
 // ---------------------------------------------------------------------------
 // Packed5 — fixed-width 64-lane F_5 encoding
@@ -202,19 +211,9 @@ pub struct Packed5 {
 // Manual PartialEq / Eq — canonical-decode equality.
 //
 // Two `Packed5` values are equal iff every lane decodes to the same F_5
-// value. Since codepoints 5..=7 are never produced by canonical ops, we
-// can compare element-wise: two `Packed5` are equal iff all three planes
-// are identical AND no codepoint is in 5..=7 (which canonical ops never
-// produce). The simplest safe comparison: decode lane by lane.
-// However for efficiency: canonical ops always produce canonical codepoints,
-// so (b0 == ob0) && (b1 == ob1) && (b2 == ob2) is correct for canonically-
-// produced values. We define equality as per-plane word equality (exact bit
-// equality), which matches canonical-decode equality for all values that
-// could appear from `splat`/`with_lane`/arithmetic.
-//
-// The trait doc says "equal iff every decoded lane is equal in F, regardless
-// of internal redundancy" — we handle this by comparing decoded values
-// when any non-canonical bits might be present.
+// value. We compare decoded selector arrays: `decode5` maps all redundant
+// codepoints (5..=7) to the same all-zeros result, so two words have equal
+// decoded lanes iff their selector arrays match.
 // ---------------------------------------------------------------------------
 
 impl PartialEq for Packed5 {
@@ -222,8 +221,8 @@ impl PartialEq for Packed5 {
     /// lane is equal.
     ///
     /// Non-canonical codepoints (5..=7) in either operand are decoded to 0
-    /// before comparison. For canonically-produced values this reduces to
-    /// exact bit-plane equality.
+    /// before comparison via `decode5`, satisfying the trait contract
+    /// (D1b §3.4 and mod.rs §PackedField::eq).
     ///
     /// # Examples
     ///
@@ -240,24 +239,17 @@ impl PartialEq for Packed5 {
     /// ```
     #[inline]
     fn eq(&self, other: &Self) -> bool {
-        // For canonical values (produced by splat / with_lane / arithmetic),
-        // exact plane equality is sufficient and equivalent to per-lane equality.
-        // Mask out non-canonical bits before comparing (bits set in b2 & (b1|b0)
-        // are redundant codewords 5,6,7 — never produced canonically).
-        // We use the canonical mask: a value is non-canonical when b2=1 AND
-        // (b1 OR b0) = 1. Those bits should be ignored.
-        let canon_mask = |b0: u64, b1: u64, b2: u64| {
-            // bits that are non-canonical: b2 & (b1 | b0)
-            let redundant = b2 & (b1 | b0);
-            // canonical mask = NOT redundant
-            !redundant
-        };
-        let self_mask = canon_mask(self.b0, self.b1, self.b2);
-        let other_mask = canon_mask(other.b0, other.b1, other.b2);
-        // Apply masks and compare
-        (self.b0 & self_mask) == (other.b0 & other_mask)
-            && (self.b1 & self_mask) == (other.b1 & other_mask)
-            && (self.b2 & self_mask) == (other.b2 & other_mask)
+        // Canonical-decode equality: two lanes are equal iff they decode to
+        // the same F_5 value (0..=4). Redundant codepoints (5..=7) decode to 0.
+        //
+        // decode5 maps redundant codepoints to all-zero selectors (e[0..4] = 0),
+        // whereas canonical 0 gives e[0]=1, e[1..4]=0. So we cannot compare the
+        // full selector array. Instead, we compare only e[1..4]: two lanes are
+        // equal iff they agree on which of {1,2,3,4} is selected. Zero (canonical
+        // or redundant) has e[1..4]=0 in both cases.
+        let sa = decode5(self.b0, self.b1, self.b2);
+        let sb = decode5(other.b0, other.b1, other.b2);
+        sa[1] == sb[1] && sa[2] == sb[2] && sa[3] == sb[3] && sa[4] == sb[4]
     }
 }
 
@@ -436,7 +428,7 @@ impl PackedField<Fp<5>> for Packed5 {
     fn add(self, rhs: Self) -> Self {
         let ea = decode5(self.b0, self.b1, self.b2);
         let eb = decode5(rhs.b0, rhs.b1, rhs.b2);
-        let (c0, c1, c2) = apply_table(ea, eb, &ADD_TABLE);
+        let (c0, c1, c2) = add_circuit(ea, eb);
         Self {
             b0: c0,
             b1: c1,
@@ -468,7 +460,7 @@ impl PackedField<Fp<5>> for Packed5 {
     fn sub(self, rhs: Self) -> Self {
         let ea = decode5(self.b0, self.b1, self.b2);
         let eb = decode5(rhs.b0, rhs.b1, rhs.b2);
-        let (c0, c1, c2) = apply_table(ea, eb, &SUB_TABLE);
+        let (c0, c1, c2) = sub_circuit(ea, eb);
         Self {
             b0: c0,
             b1: c1,
@@ -532,7 +524,7 @@ impl PackedField<Fp<5>> for Packed5 {
     fn mul(self, rhs: Self) -> Self {
         let ea = decode5(self.b0, self.b1, self.b2);
         let eb = decode5(rhs.b0, rhs.b1, rhs.b2);
-        let (c0, c1, c2) = apply_table(ea, eb, &MUL_TABLE);
+        let (c0, c1, c2) = mul_circuit(ea, eb);
         Self {
             b0: c0,
             b1: c1,
@@ -634,8 +626,10 @@ impl PackedField<Fp<5>> for Packed5 {
 
     /// Returns `true` iff every lane decodes to `F_5`'s additive identity (0).
     ///
-    /// A lane is zero iff `b0 = b1 = b2 = 0`. Since canonical zero is
-    /// the all-zero codepoint, all three planes must be zero simultaneously.
+    /// A lane decodes to a non-zero value iff one of `e[1]`, `e[2]`, `e[3]`,
+    /// or `e[4]` from `decode5` is set. Redundant codepoints 5..=7 have all
+    /// selectors zero (decode to 0), so checking `e[1]|e[2]|e[3]|e[4] == 0`
+    /// correctly canonicalizes them as zero (D1b §3.5).
     ///
     /// # Examples
     ///
@@ -650,10 +644,13 @@ impl PackedField<Fp<5>> for Packed5 {
     ///
     /// # Complexity
     ///
-    /// `O(1)`: three 64-bit ORs and one comparison.
+    /// `O(1)`: 11 decode ops and one OR + comparison.
     #[inline]
     fn all_zero(self) -> bool {
-        (self.b0 | self.b1 | self.b2) == 0
+        // A lane is non-zero iff e[1]|e[2]|e[3]|e[4] != 0.
+        // Redundant codepoints produce all-zero selectors, correctly treated as 0.
+        let e = decode5(self.b0, self.b1, self.b2);
+        (e[1] | e[2] | e[3] | e[4]) == 0
     }
 }
 
@@ -823,8 +820,18 @@ impl PartialEq for Packed5Vec {
         if self.len_lanes != other.len_lanes {
             return false;
         }
+        // Per-lane canonical-decode equality: two lanes are equal iff they decode
+        // to the same F_5 value (0..=4). Redundant codepoints (5..=7) decode to 0.
+        //
+        // decode5 maps redundant codepoints to all-zero selectors (e[0..4] = 0),
+        // while canonical 0 gives e[0]=1. We compare only e[1..4] — both canonical
+        // and redundant zeros give e[1..4]=0, so they compare equal.
+        // mask_tail ensures padding bits are zero; padding lanes have e[1..4]=0
+        // on both sides, so full-word comparison is safe.
         for w in 0..self.b0.len() {
-            if self.b0[w] != other.b0[w] || self.b1[w] != other.b1[w] || self.b2[w] != other.b2[w] {
+            let sa = decode5(self.b0[w], self.b1[w], self.b2[w]);
+            let sb = decode5(other.b0[w], other.b1[w], other.b2[w]);
+            if sa[1] != sb[1] || sa[2] != sb[2] || sa[3] != sb[3] || sa[4] != sb[4] {
                 return false;
             }
         }
@@ -1046,7 +1053,7 @@ impl PackedFieldVec<Fp<5>> for Packed5Vec {
         for w in 0..self.b0.len() {
             let ea = decode5(self.b0[w], self.b1[w], self.b2[w]);
             let eb = decode5(rhs.b0[w], rhs.b1[w], rhs.b2[w]);
-            let (c0, c1, c2) = apply_table(ea, eb, &ADD_TABLE);
+            let (c0, c1, c2) = add_circuit(ea, eb);
             self.b0[w] = c0;
             self.b1[w] = c1;
             self.b2[w] = c2;
@@ -1088,7 +1095,7 @@ impl PackedFieldVec<Fp<5>> for Packed5Vec {
         for w in 0..self.b0.len() {
             let ea = decode5(self.b0[w], self.b1[w], self.b2[w]);
             let eb = decode5(rhs.b0[w], rhs.b1[w], rhs.b2[w]);
-            let (c0, c1, c2) = apply_table(ea, eb, &SUB_TABLE);
+            let (c0, c1, c2) = sub_circuit(ea, eb);
             self.b0[w] = c0;
             self.b1[w] = c1;
             self.b2[w] = c2;
@@ -1130,7 +1137,7 @@ impl PackedFieldVec<Fp<5>> for Packed5Vec {
         for w in 0..self.b0.len() {
             let ea = decode5(self.b0[w], self.b1[w], self.b2[w]);
             let eb = decode5(rhs.b0[w], rhs.b1[w], rhs.b2[w]);
-            let (c0, c1, c2) = apply_table(ea, eb, &MUL_TABLE);
+            let (c0, c1, c2) = mul_circuit(ea, eb);
             self.b0[w] = c0;
             self.b1[w] = c1;
             self.b2[w] = c2;
@@ -1141,8 +1148,9 @@ impl PackedFieldVec<Fp<5>> for Packed5Vec {
     /// Returns `true` iff every logical position decodes to `F_5`'s
     /// additive identity (0).
     ///
-    /// A lane is zero iff `b0 = b1 = b2 = 0` at that bit position. Implemented
-    /// as `(b0[w] | b1[w] | b2[w]) == 0` for every word.
+    /// Uses `decode5` per word and checks `e[0] == !0u64`, which handles
+    /// both canonical zero codepoints and redundant non-canonical codepoints
+    /// that decode to 0 (D1b §3.5 canonicalization contract).
     ///
     /// # Examples
     ///
@@ -1159,11 +1167,20 @@ impl PackedFieldVec<Fp<5>> for Packed5Vec {
     ///
     /// `O(ceil(self.len() / 64))`.
     fn all_zero(&self) -> bool {
+        // A lane is non-zero iff e[1]|e[2]|e[3]|e[4] != 0.
+        // Redundant codepoints (5..=7) produce all-zero selectors, correctly
+        // treated as zero (D1b §3.5 canonicalization contract).
+        // mask_tail guarantees padding bits are zero, so padding lanes produce
+        // all-zero selectors, contributing nothing to the OR — safe to test
+        // full words including the partial last word.
         self.b0
             .iter()
             .zip(self.b1.iter())
             .zip(self.b2.iter())
-            .all(|((b0, b1), b2)| (b0 | b1 | b2) == 0)
+            .all(|((&b0, &b1), &b2)| {
+                let e = decode5(b0, b1, b2);
+                (e[1] | e[2] | e[3] | e[4]) == 0
+            })
     }
 }
 
@@ -1640,24 +1657,152 @@ mod tests {
     }
 
     // -----------------------------------------------------------------------
-    // make_table helper test
+    // Canonicalization contract tests (Finding 2 rework)
+    //
+    // Redundant codepoints 5..=7: decode5 produces all-zero selectors for them
+    // (none of e[0..4] is hot), so they decode to 0 semantically. The
+    // all_zero and eq implementations check e[1]|e[2]|e[3]|e[4] == 0 to
+    // canonicalize redundant zero codepoints correctly.
     // -----------------------------------------------------------------------
 
+    /// Build a Packed5 directly from raw bit-plane values (test-only).
+    /// Used to inject redundant codepoints without going through the public API.
+    fn packed5_raw(b0: u64, b1: u64, b2: u64) -> Packed5 {
+        Packed5 { b0, b1, b2 }
+    }
+
+    /// Build a single-word Packed5Vec directly from raw bit-plane values (test-only).
+    fn packed5vec_raw(b0: u64, b1: u64, b2: u64, len_lanes: usize) -> Packed5Vec {
+        Packed5Vec {
+            b0: vec![b0],
+            b1: vec![b1],
+            b2: vec![b2],
+            len_lanes,
+        }
+    }
+
+    // --- Packed5::all_zero ---
+
     #[test]
-    fn test_make_table_matches_add_table() {
-        let t = make_table(|a, b| ((a as u64 + b as u64) % 5) as u8);
-        assert_eq!(t, ADD_TABLE);
+    fn test_all_zero_canonical_zero() {
+        assert!(
+            Packed5::zero().all_zero(),
+            "canonical zero must report all_zero"
+        );
     }
 
     #[test]
-    fn test_make_table_matches_sub_table() {
-        let t = make_table(|a, b| ((a as u64 + 5 - b as u64) % 5) as u8);
-        assert_eq!(t, SUB_TABLE);
+    fn test_all_zero_redundant_codepoint_5() {
+        // Lane 0 = codepoint 5 (b0=1, b1=0, b2=1). Decodes to 0.
+        let raw = packed5_raw(1u64, 0u64, 1u64);
+        assert!(raw.all_zero(), "redundant codepoint 5 must report all_zero");
     }
 
     #[test]
-    fn test_make_table_matches_mul_table() {
-        let t = make_table(|a, b| ((a as u64 * b as u64) % 5) as u8);
-        assert_eq!(t, MUL_TABLE);
+    fn test_all_zero_redundant_codepoint_6() {
+        // Lane 0 = codepoint 6 (b0=0, b1=1, b2=1). Decodes to 0.
+        let raw = packed5_raw(0u64, 1u64, 1u64);
+        assert!(raw.all_zero(), "redundant codepoint 6 must report all_zero");
+    }
+
+    #[test]
+    fn test_all_zero_redundant_codepoint_7() {
+        // Lane 0 = codepoint 7 (b0=1, b1=1, b2=1). Decodes to 0.
+        let raw = packed5_raw(1u64, 1u64, 1u64);
+        assert!(raw.all_zero(), "redundant codepoint 7 must report all_zero");
+    }
+
+    #[test]
+    fn test_all_zero_canonical_one_not_zero() {
+        // Lane 0 = canonical 1 (b0=1, b1=0, b2=0). Not zero.
+        let raw = packed5_raw(1u64, 0u64, 0u64);
+        assert!(!raw.all_zero(), "canonical 1 must not report all_zero");
+    }
+
+    // --- Packed5::eq canonicalization ---
+
+    #[test]
+    fn test_packed5_eq_redundant_codepoint_5_equals_canonical_zero() {
+        // Lane 0 = codepoint 5 (redundant zero) vs. canonical zero.
+        let lhs = packed5_raw(1u64, 0u64, 1u64);
+        let rhs = Packed5::zero();
+        assert_eq!(lhs, rhs, "codepoint 5 must equal canonical zero");
+    }
+
+    #[test]
+    fn test_packed5_eq_redundant_codepoint_6_equals_canonical_zero() {
+        let lhs = packed5_raw(0u64, 1u64, 1u64);
+        let rhs = Packed5::zero();
+        assert_eq!(lhs, rhs, "codepoint 6 must equal canonical zero");
+    }
+
+    #[test]
+    fn test_packed5_eq_canonical_values_equal() {
+        let a = Packed5::splat(Fp::<5>::new(3));
+        let b = Packed5::splat(Fp::<5>::new(3));
+        assert_eq!(a, b);
+    }
+
+    #[test]
+    fn test_packed5_eq_different_values_not_equal() {
+        let a = Packed5::splat(Fp::<5>::new(2));
+        let b = Packed5::splat(Fp::<5>::new(3));
+        assert_ne!(a, b);
+    }
+
+    // --- Packed5Vec::all_zero ---
+
+    #[test]
+    fn test_packed5vec_all_zero_zeros_is_zero() {
+        assert!(Packed5Vec::zeros(1).all_zero());
+        assert!(Packed5Vec::zeros(64).all_zero());
+        assert!(Packed5Vec::zeros(65).all_zero());
+    }
+
+    #[test]
+    fn test_packed5vec_all_zero_redundant_codepoint_5() {
+        // Lane 0 = codepoint 5 (b0=1, b1=0, b2=1), rest canonical 0.
+        let raw = packed5vec_raw(1u64, 0u64, 1u64, 64);
+        assert!(
+            raw.all_zero(),
+            "Packed5Vec: codepoint 5 must report all_zero"
+        );
+    }
+
+    #[test]
+    fn test_packed5vec_all_zero_canonical_one_not_zero() {
+        // Lane 0 = canonical 1.
+        let raw = packed5vec_raw(1u64, 0u64, 0u64, 64);
+        assert!(
+            !raw.all_zero(),
+            "Packed5Vec: canonical 1 must not report all_zero"
+        );
+    }
+
+    // --- Packed5Vec::eq canonicalization ---
+
+    #[test]
+    fn test_packed5vec_eq_redundant_zero_equals_canonical_zero() {
+        // Lane 0 = codepoint 5 (redundant zero) vs. full canonical zero vec.
+        let lhs = packed5vec_raw(1u64, 0u64, 1u64, 64);
+        let rhs = Packed5Vec::zeros(64);
+        assert_eq!(
+            lhs, rhs,
+            "Packed5Vec: codepoint 5 must equal canonical zero"
+        );
+    }
+
+    #[test]
+    fn test_packed5vec_eq_same_canonical_values() {
+        let a = Packed5Vec::from_field_slice(&[Fp::<5>::new(1), Fp::<5>::new(3)]);
+        let b = Packed5Vec::from_field_slice(&[Fp::<5>::new(1), Fp::<5>::new(3)]);
+        assert_eq!(a, b);
+    }
+
+    #[test]
+    fn test_packed5vec_eq_different_values_not_equal() {
+        let a = Packed5Vec::from_field_slice(&[Fp::<5>::new(1)]);
+        let b = Packed5Vec::from_field_slice(&[Fp::<5>::new(2)]);
+        assert_ne!(a, b);
     }
 }
