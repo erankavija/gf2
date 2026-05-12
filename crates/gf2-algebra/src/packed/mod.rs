@@ -34,13 +34,16 @@ pub mod scalar;
 pub mod packed5;
 
 #[cfg(feature = "f7")]
-pub mod bipedal7;
+pub mod packed7;
 
 pub use bipedal3::{Bipedal3, Bipedal3Matrix, Bipedal3Vec};
 pub use scalar::{ScalarPackedFp3, ScalarPackedFp3Vec};
 
 #[cfg(feature = "f5")]
 pub use packed5::{Packed5, Packed5Vec};
+
+#[cfg(feature = "f7")]
+pub use packed7::{Packed7, Packed7Vec};
 
 /// Fixed-LANES lane-parallel arithmetic over an underlying scalar field `F`.
 ///
