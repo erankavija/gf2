@@ -63,7 +63,9 @@
 //!
 //! See [`dev/plans/d1c_feature_matrix.md`](../../../dev/plans/d1c_feature_matrix.md)
 //! for the authoritative feature catalogue and the 64-cell compatibility
-//! matrix. Defaults are `["simd", "parallel"]`.
+//! matrix. Defaults are `["simd", "parallel", "f5", "f7"]`; `f5` and
+//! `f7` were flipped default-on as the W4 closing edit after the
+//! per-prime encodings landed in `packed5` / `packed7`.
 //!
 //! # See also
 //!
