@@ -90,8 +90,9 @@ pub trait PackedField<F: FiniteField>: Copy + Eq + core::fmt::Debug {
     ///
     /// Must be positive. A power-of-two is preferred for SIMD-friendly
     /// mapping where feasible, but non-power-of-two values are
-    /// permitted (the future `Bipedal5` encoding packs 21 lanes per
-    /// `u64`, for example).
+    /// permitted (e.g. `Packed7` packs 16 lanes per `u64`, and other
+    /// future per-prime encodings may pack non-power-of-two lane
+    /// counts).
     ///
     /// # Examples
     ///
