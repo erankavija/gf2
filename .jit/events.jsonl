@@ -4737,3 +4737,11 @@
 {"type":"issue_claimed","id":"8d064e9c-9815-4532-8bf3-b2c4a882b0d8","issue_id":"c98ed603-2eb3-443b-9905-a6a7a5337168","timestamp":"2026-05-11T21:58:16.808204804Z","assignee":"agent:claude"}
 {"type":"issue_created","id":"432b6c3a-3ff7-4225-8bb2-320b53a0c29e","issue_id":"9480f8a6-3dc0-4d1f-aa4a-fcc13e1755b5","timestamp":"2026-05-12T05:31:09.624818527Z","title":"S1g: 50x GPU speedup vs T8 at n=36","priority":"normal"}
 {"type":"issue_state_changed","id":"d7f68aab-a3a2-4710-95ee-0a072e9dab07","issue_id":"9480f8a6-3dc0-4d1f-aa4a-fcc13e1755b5","timestamp":"2026-05-12T05:31:14.685409485Z","from":"ready","to":"backlog"}
+{"type":"issue_created","id":"fa072f75-4e09-471a-b621-a49cae2cdf58","issue_id":"f8d230ef-a204-40b0-9471-729053e46d60","timestamp":"2026-05-12T05:34:39.888655894Z","title":"AVX-512 zmm bipedal-3 kernel for permanent_bipedal3","priority":"low"}
+{"type":"gate_passed","id":"8615e5b0-5c7a-484d-b312-216c2f7ada07","issue_id":"c98ed603-2eb3-443b-9905-a6a7a5337168","timestamp":"2026-05-12T05:34:57.914061481Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"e095765f-7eb3-4920-acf8-6a8a70e8bf51","issue_id":"c98ed603-2eb3-443b-9905-a6a7a5337168","timestamp":"2026-05-12T05:38:39.950895156Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"22e409be-2991-4356-b4c8-5deda8e342b4","issue_id":"c98ed603-2eb3-443b-9905-a6a7a5337168","timestamp":"2026-05-12T05:42:38.757660609Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"c4c2c6cd-8d3e-40ef-8a05-d3f98585a3a4","issue_id":"c98ed603-2eb3-443b-9905-a6a7a5337168","timestamp":"2026-05-12T05:42:42.434004741Z","gate_key":"criterion-1.5x","updated_by":"auto:executor"}
+{"type":"gate_removed","id":"34b8fd92-dc69-4868-8292-24de708a747b","issue_id":"c98ed603-2eb3-443b-9905-a6a7a5337168","timestamp":"2026-05-12T05:52:18.147978904Z","gate_key":"criterion-1.5x"}
+{"type":"issue_state_changed","id":"b6cd2faa-534f-47df-a6e1-692ade495008","issue_id":"c98ed603-2eb3-443b-9905-a6a7a5337168","timestamp":"2026-05-12T05:52:39.876249321Z","from":"in_progress","to":"done"}
+{"type":"issue_completed","id":"7c4b4b00-7ae5-447b-bf12-a5f85fed6ff5","issue_id":"c98ed603-2eb3-443b-9905-a6a7a5337168","timestamp":"2026-05-12T05:52:39.876280171Z"}

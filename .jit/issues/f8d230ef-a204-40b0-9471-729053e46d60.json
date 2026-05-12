@@ -1,0 +1,22 @@
+{
+  "id": "f8d230ef-a204-40b0-9471-729053e46d60",
+  "title": "AVX-512 zmm bipedal-3 kernel for permanent_bipedal3",
+  "description": "Implement an AVX-512 (512-bit zmm, 8×u64 lanes) backend for the bipedal-3 `Config3` kernel in `gf2-kernels-simd::bipedal`, mirroring the existing AVX2 `Config3Avx2` path but doubling the SIMD width and unlocking ~2× lane throughput on AVX-512-capable hosts. Continuation of the bipedal-3 F_3 permanent SIMD work landed under epic `ae82bd73` (T12 `686ee1b5`, T13 SIMD dispatch wiring, S1 c98ed603 measurement).\n\n## Background\n\nThe AVX2 path achieves a 10.643× speedup over `permanent_mod3_reference` at n=36 on the dev host (Ryzen 9 5900X, AVX2-only) — see `dev/plans/s1_speedup_results.md` and `dev/benchmarks/gf2_algebra_permanent/s1_speedup-2026-05-11.csv`. AVX-512 zmm doubles the packed lane count (4×u64 → 8×u64) and is the natural CPU-side continuation. The bipedal-3 `add_lane` / `sub_lane` formulas are pure bitwise and translate directly from `_mm256_*` to `_mm512_*` intrinsics.\n\nThis was originally scoped inside S3 (`363556e6`) and the user's direction on 2026-05-11 was \"Defer AVX-512 to 7f809931. We can only do AVX2 at the moment.\" This issue is the concrete child of `7f809931` that the S3 amendment will point at.\n\n## Hardware availability\n\nThe dev host has no AVX-512 hardware (Zen 3 5900X). Implementation work can compile + unit-test via QEMU or a remote AVX-512-capable host (Zen 4 / Ice Lake / Sapphire Rapids); throughput validation requires real hardware.\n\n## Success Criteria\n\n- [ ] [hard] `gf2-kernels-simd::bipedal::Config3Avx512` (or equivalent) implements the same trait surface as `Config3Avx2`, using `__m512i` lanes with `_mm512_*` intrinsics for `pack`, `unpack`, `add_lane`, `sub_lane`, `neg_lane`.\n- [ ] [hard] Runtime detection via `OnceLock<Option<BipedalAvx512Fns>>`, mirroring `detect_avx2`. `permanent_bipedal3_singleword` dispatcher selects AVX-512 → AVX-2 → scalar in that order.\n- [ ] [hard] Bit-identical output against the AVX2 path on the project's existing bipedal3 cross-check suite (seeded LCG matrices at n ∈ {8, 16, 32, 48, 63}).\n- [ ] [hard] Compile-gated behind `#[cfg(all(target_arch = \"x86_64\", target_feature = \"avx512f\"))]` plus `#[target_feature(enable = \"avx512f,avx512bw,avx512vl\")]` on the kernel functions; default workspace build still succeeds on AVX2-only hosts.\n- [ ] [hard] MSRV 1.95 compatibility verified per `CLAUDE.md` \"Breakdown-time feasibility check\" — the specific `_mm512_*` intrinsics used must be stable on 1.95.\n- [ ] [hard] Unit tests at the kernel level (parity vs scalar `Config3` on small inputs) compile and pass on AVX-512 hosts; on AVX2-only hosts they are gated out (no false-positive PASS via scalar fallback).\n- [ ] [aspirational] AVX-512 throughput is ≥ 1.5× the AVX2 throughput on the same matrix at n ∈ {28, 32, 36} (this is the criterion that S3 deferred here).\n\n## Out of scope\n\n- HIP/ROCm GPU path — that's `ad55b777` and the GPU follow-up `9480f8a6`.\n- AVX-512 IFMA prime-field batch (separate issue `b59fa661`).\n- AVX-512 VPCLMULQDQ / GFNI for GF(2^m) (separate issue `c7c0e991`).\n\n## Cross-references\n\n- Parent epic: `7f809931` SIMD and platform expansion.\n- Source SIMD path: `gf2-kernels-simd/src/bipedal/bipedal3.rs` (AVX2 `Config3Avx2`).\n- Dispatcher: `gf2-algebra/src/permanent/bipedal3.rs` (`maybe_bipedal_avx2()` shim).\n- Originating epic: `ae82bd73` Fast matrix permanents over F_3 / F_5 / F_7.\n- Original scope-down: S3 `363556e6` (cross-CPU portability), now AVX2-only on the dev host.",
+  "state": "ready",
+  "priority": "low",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-kernels-simd"
+  ],
+  "created_at": "2026-05-12T05:34:39.888361764+00:00",
+  "updated_at": "2026-05-12T05:34:39.888367094+00:00"
+}

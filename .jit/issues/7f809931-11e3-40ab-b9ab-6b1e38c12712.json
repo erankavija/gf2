@@ -8,8 +8,9 @@
   "dependencies": [
     "2037941f-852c-4d94-9d49-ad06a364dca8",
     "b3766524-f893-48b5-b380-ce38a8bf5467",
-    "194b902a-5fcb-4b37-bb19-8d5c80d5c279",
-    "c7c0e991-4480-4c23-bdfd-6c781352a1fe"
+    "c7c0e991-4480-4c23-bdfd-6c781352a1fe",
+    "f8d230ef-a204-40b0-9471-729053e46d60",
+    "194b902a-5fcb-4b37-bb19-8d5c80d5c279"
   ],
   "gates_required": [],
   "gates_status": {},
@@ -21,5 +22,5 @@
     "component:gf2-kernels-simd"
   ],
   "created_at": "2026-02-21T19:35:51.570386512+00:00",
-  "updated_at": "2026-04-05T18:50:06.127041753+00:00"
+  "updated_at": "2026-05-12T05:34:45.803271876+00:00"
 }
