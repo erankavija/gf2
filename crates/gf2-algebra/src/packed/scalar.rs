@@ -43,9 +43,11 @@ use super::{PackedField, PackedFieldVec};
 /// fixed `LANES = 64` array of `Fp<3>` elements.
 ///
 /// One `Fp<3>` per lane. No bit-packing, no SIMD, no encoding tricks.
-/// This is the correctness oracle for the optimised `Bipedal3` impl
-/// (W1-T3) and the F_5 / F_7 impls (W4); all of those are
-/// cross-checked against this type via per-lane equality.
+/// This is the F_3 correctness oracle for the optimised `Bipedal3`
+/// impl; it is cross-checked via per-lane equality. F_5 / F_7 impls
+/// (`Packed5` / `Packed7`) are F_3-incompatible by type and cross-
+/// check against their own scalar `Fp<5>` / `Fp<7>` per-lane oracles,
+/// not against this type.
 ///
 /// `LANES = 64` is fixed to match the `Bipedal3` lane count from the
 /// parent epic design (`dev/plans/gf2_algebra_permanent.md` §7.1) and
