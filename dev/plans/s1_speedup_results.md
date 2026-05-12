@@ -33,12 +33,12 @@ CSV: `dev/benchmarks/gf2_algebra_permanent/s1_speedup-2026-05-11.csv`
   1 sample (Criterion's 10-sample minimum would require ~83 min/cell for
   n=32 ref at ~500 s/call).
 
-- **n=36**: not yet measured.  The reference implementation at n=36 requires
-  ~2.5 hours per call (extrapolated from the n=32 measurement: n=36 ref ≈
-  501 s × 18 = ~9000 s).  This exceeds the session budget for this dispatch.
-  The background timing process was started (`S1_OFFLINE=1 S1_OFFLINE_MAX_N=36`)
-  and will append the n=36 row to the CSV when it completes.  The CSV
-  placeholder rows for n=36 have `samples=0` and `mean_us=N/A`.
+- **n=36**: timed offline in a 2.5-hour background run (`S1_OFFLINE=1
+  S1_OFFLINE_MAX_N=36`). One sample of each implementation. Measured
+  `permanent_mod3_reference` = 9030.741 s (~2.51 hr), `permanent_bipedal3`
+  (SIMD) = 848.484 s (~14.1 min). Same seed (`0xc98ed603_0000_0024`) as
+  used by the harness's matrix-generation step. Result bit checked
+  (`Fp<3>` value = 0x1 for both implementations).
 
 ---
 
@@ -48,20 +48,20 @@ CSV: `dev/benchmarks/gf2_algebra_permanent/s1_speedup-2026-05-11.csv`
 |----|--------------------------|---------------------------|--------------------------|
 | 24 | 1,473.8 ms (10 samples)  | 213.97 ms (10 samples)    | **6.888x**               |
 | 28 | 27,360 ms (10 samples)   | 3,414.6 ms (10 samples)   | **8.013x**               |
-| 32 | 501,385 ms (1 sample)    | 55,086 ms (1 sample)      | **9.102x**               |
-| 36 | N/A (pending)            | N/A (pending)             | N/A (pending)            |
+| 32 | 500,028 ms (1 sample)    | 53,065 ms (1 sample)      | **9.423x**               |
+| 36 | 9,030,741 ms (1 sample)  | 848,484 ms (1 sample)     | **10.643x**              |
 
 ### Speedup trend analysis
 
 The measured speedup ratio grows monotonically with n, but slowly:
 
-| Step              | Ratio increase | Per-4-bits multiplier |
-|-------------------|----------------|-----------------------|
-| n=24 → n=28       | 6.888 → 8.013  | 1.163x                |
-| n=28 → n=32       | 8.013 → 9.102  | 1.136x                |
-| n=32 → n=36 (est) | 9.102 → ~10.3x | ~1.135x (projected)   |
+| Step              | Ratio increase  | Per-4-bits multiplier |
+|-------------------|-----------------|------------------------|
+| n=24 → n=28       | 6.888 → 8.013   | 1.163x                 |
+| n=28 → n=32       | 8.013 → 9.423   | 1.176x                 |
+| n=32 → n=36       | 9.423 → 10.643  | 1.130x                 |
 
-**Extrapolated n=36 speedup: ~10.3x (FAIL — far below 50x criterion).**
+**Measured n=36 speedup: 10.643x (FAIL by ~5x — far below the 50x criterion).**
 
 ---
 
@@ -104,46 +104,58 @@ the language-toolchain gap.
 | CSV at `dev/benchmarks/.../s1_speedup-*.csv`  | PASS        |
 | Hardware fingerprint in CSV header            | PASS        |
 | Writeup `dev/plans/s1_speedup_results.md`     | PASS        |
-| Speedup >= 50x at n=36                        | **PENDING** (n=36 not yet measured; extrapolated ~10x — FAIL expected) |
+| Speedup >= 50x at n=36                        | **MEASURED 10.643x — FAIL by ~5x** (criterion amendment in progress, see below) |
 | Aspirational: speedup comparable to 86.9x (Julia) | NOT MET (by design — Rust reference is faster than Julia reference) |
 
 ---
 
-## Escalation
+## Resolution: criterion amendment + GPU follow-up
 
-The `[hard]` criterion "speedup >= 50x at n=36" will likely NOT be met once
-n=36 is measured.  The extrapolated ratio is ~10x.  This requires lead
-escalation to either:
+The 50x figure on the CPU SIMD path was empirically falsified by the n=36
+measurement (actual 10.643x). The 50x and the paper's 86.9x are
+Julia-vs-bipedal numbers; the Rust `permanent_mod3_reference` is ~5–8x
+faster than the Julia reference by virtue of no JIT/GC overhead, leaving
+only the bipedal encoding's pure ~10x constant-factor advantage on the
+Rust-vs-Rust comparison.
 
-1. **Amend the criterion** to the measured value (e.g., "speedup >= 10x at
-   n=36") with the explanation that the Rust reference is ~5–8x faster than
-   the Julia reference the paper measured against.
+Per the user direction on 2026-05-12 ("How about GPU?"), the 50x target
+pivots to a GPU contender. The bipedal-3 algorithm has substantially more
+headroom on a HIP/ROCm GPU than on AVX2 CPU, and the 50x speedup vs the
+in-tree Rust reference is realistic with massive thread-level parallelism
+plus full-register SIMD packed lanes.
 
-2. **Accept the current status** as a finding that the 50x criterion was
-   calibrated against the Julia-to-Rust speedup rather than the
-   Rust-to-Rust speedup.
+**S1 (this issue) amendment**:
+- Criterion 2 amended to record the **measured** CPU SIMD ratio at n=36
+  with explicit acknowledgement that the original 50x target was
+  calibrated against the Julia reference, not the Rust reference. The
+  measured 10.643x is the honest Rust-vs-Rust speedup.
+- 50x criterion is **moved to a follow-up issue** that depends on the
+  W5 HIP F_3 kernel (`ad55b777`). When the GPU contender lands, the
+  follow-up issue re-runs the same benchmark with the GPU as the
+  contender and verifies the 50x target.
 
-3. **Implement a further optimization** that closes the gap (e.g., the
-   multi-word bipedal path with wider SIMD registers, or a different
-   algorithmic approach such as the two-leg halving trick).
-
-The bench and CSV are complete and honestly document the measurement.
-Lead should NOT pass criterion-2 (`[hard] speedup >= 50x at n=36`) until
-the n=36 measurement is confirmed and/or the criterion is amended.
+S1 is closed on the CPU measurement. The headline epic-level 50x claim
+will be substantiated by the GPU follow-up, not the CPU SIMD path.
 
 ---
 
 ## Background process note
 
-The n=36 offline timing process was launched in background with:
+The n=36 offline timing process completed in ~178 min wall-clock on the
+dev host (n=32 re-run + n=36 single-sample timing for both implementations):
 
 ```bash
 S1_OFFLINE=1 S1_OFFLINE_MAX_N=36 cargo bench -p gf2-algebra \
   --features "simd test-support" --bench s1_n36_speedup -- --nocapture
 ```
 
-Expected completion: ~176 min from launch (n=32 re-run ~9 min + n=36 ~167 min).
-The process will append two rows to the CSV when it completes.
+The CSV row for n=36 records:
+- `permanent_mod3_reference`: 9030.741 s (1 sample)
+- `permanent_bipedal3_simd`:    848.484 s (1 sample)
+- Ratio: 10.6434x
+
+Result equality across both implementations confirmed at runtime (Fp<3>
+output = 0x1 for both at n=36 with the harness seed).
 
 ---
 
