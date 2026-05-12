@@ -12,7 +12,7 @@
 //!
 //! [`ScalarPackedFp3Vec`] is the matching variable-length oracle for
 //! [`PackedFieldVec<Fp<3>>`]: a `Vec<Fp<3>>` with one `Fp<3>` per
-//! logical position. It is used by W1-T3's `Bipedal3Vec` cross-check
+//! logical position. It is used by [`super::Bipedal3Vec`]'s cross-check
 //! tests in the same way `ScalarPackedFp3` is used for the fixed-width
 //! `Bipedal3` element. Both types satisfy the literal-element-wise
 //! semantics of the trait, which is why they are useful as oracles.
@@ -30,8 +30,8 @@
 //!
 //! [`ScalarPackedFp3`] is **not** a perf path. It exists exclusively
 //! to anchor correctness. Production callers (Ryser, the `permanent_*`
-//! family) reach for `Bipedal3` once W1-T3 lands; this oracle is only
-//! reached through unit tests and `proptest` cross-checks.
+//! family) reach for `Bipedal3`; this oracle is only reached through
+//! unit tests and `proptest` cross-checks.
 
 use core::fmt;
 
@@ -169,8 +169,8 @@ impl PackedField<Fp<3>> for ScalarPackedFp3 {
 /// This is the variable-length companion of [`ScalarPackedFp3`]:
 /// where the fixed-width oracle anchors `PackedField` correctness for
 /// SIMD-batched packed types, this variable-length oracle anchors
-/// `PackedFieldVec` correctness for sequence-shaped impls such as the
-/// future `Bipedal3Vec` (W1-T3). The storage is the simplest possible
+/// `PackedFieldVec` correctness for sequence-shaped impls such as
+/// [`super::Bipedal3Vec`]. The storage is the simplest possible
 /// representation — no bit-packing, no SIMD, no chunking — so that
 /// cross-check tests can route the same input through both impls and
 /// compare element-by-element via [`PackedFieldVec::get`].
@@ -178,8 +178,9 @@ impl PackedField<Fp<3>> for ScalarPackedFp3 {
 /// `Self::Element` is set to [`ScalarPackedFp3`] purely to satisfy
 /// the trait's `type Element: PackedField<Fp<3>>` bound; the storage
 /// is `Vec<Fp<3>>` directly and never materialises an `Element`
-/// internally. Optimised impls (e.g. `Bipedal3Vec`) will store
-/// `Vec<Bipedal3>` chunks and use the associated type seriously.
+/// internally. The optimised [`super::Bipedal3Vec`] stores two
+/// parallel `Vec<u64>` bit-planes and uses the associated type
+/// seriously.
 ///
 /// # Examples
 ///
