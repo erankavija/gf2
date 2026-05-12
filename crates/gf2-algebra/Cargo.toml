@@ -68,6 +68,11 @@ required-features = ["parallel", "test-support"]
 name = "parallel_scaling_sweep"
 required-features = ["parallel", "test-support"]
 
+# ── Issue `363556e6` (epic `ae82bd73`) — S3 scalar-vs-AVX2 sanity sweep ──
+[[example]]
+name = "s3_scalar_vs_avx2_sanity"
+required-features = ["simd", "test-support"]
+
 [features]
 default = ["simd", "parallel"]
 

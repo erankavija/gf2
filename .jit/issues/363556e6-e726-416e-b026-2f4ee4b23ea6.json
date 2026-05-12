@@ -1,10 +1,10 @@
 {
   "id": "363556e6-e726-416e-b026-2f4ee4b23ea6",
-  "title": "Cross-CPU portability sweep AVX2-only host vs AVX-512 host",
-  "description": "Run the `permanent_bipedal3` SIMD path on at least two CPU classes (the dev host AVX2-only AMD 5900X plus an AVX-512-capable host) and document throughput delta + correctness equivalence.\n\n## Background\n\nThe SIMD kernel (T12) compiles both AVX2 and AVX-512 paths; the dev host has AVX2 only. Running the same binary (or rebuilt-with-`target-cpu=native`) on an AVX-512 host validates the AVX-512 code path was actually exercised somewhere and that runtime detection picks the right backend.\n\nThe AVX-512 host may be a CI runner, a researcher's workstation, or a cloud instance — document whichever is used.\n\n## Success Criteria\n\n- [ ] [hard] Throughput measurements exist for at least two CPU classes (AVX2-only, AVX-512-capable) at $n \\in \\{24, 28, 32, 36\\}$.\n- [ ] [hard] Correctness equivalence: same seeded inputs produce bit-identical permanents on both hosts.\n- [ ] [hard] CSV at `dev/benchmarks/gf2_algebra_permanent/s3_cross_cpu-YYYY-MM-DD.csv` records mean wall-clock per host with `lscpu` fingerprints.\n- [ ] [hard] Writeup at `dev/plans/s3_cross_cpu_portability.md` exists, attached via `jit doc add`, calls out the AVX2-vs-AVX-512 throughput ratio observed and whether it confirms the AVX-512 path is exercising the wider lanes (vs falling back to AVX2 silently).\n- [ ] [aspirational] AVX-512 throughput is $\\ge 1.5\\times$ the AVX2 throughput on the same matrix size.",
-  "state": "ready",
+  "title": "Cross-CPU portability sweep on AVX2-only dev host (AVX-512 deferred to f8d230ef)",
+  "description": "Run the `permanent_bipedal3` SIMD path on the dev host (AVX2-only) and document throughput + correctness. The AVX-512 throughput row is scoped out of this issue and tracked in follow-up `f8d230ef` (sibling under `7f809931`'s SIMD-and-platform-expansion epic).\n\n## Background\n\nThe SIMD kernel (T12 / `686ee1b5`) compiles an AVX2 backend; the dev host (AMD Ryzen 9 5900X, Zen 3) has AVX2 only and no AVX-512 hardware was available within S3's measurement window. The scope of S3 is therefore the AVX2-only baseline on the dev host. The AVX-512 zmm bipedal-3 kernel and its throughput vs AVX2 are the deliverable of `f8d230ef`.\n\n## Success Criteria\n\n- [ ] [hard] Throughput measurements exist for the AVX2-only dev host at $n \\in \\{24, 28, 32, 36\\}$. (Original criterion 1's AVX-512 row is delegated to `f8d230ef`.)\n- [ ] [hard] Correctness equivalence: same seeded inputs produce bit-identical permanents across scalar, AVX2, and any locally-detected wider SIMD backends on the dev host. (Cross-host equivalence is delegated to `f8d230ef`.)\n- [ ] [hard] CSV at `dev/benchmarks/gf2_algebra_permanent/s3_cross_cpu-YYYY-MM-DD.csv` records mean wall-clock for the dev host with `lscpu`-style fingerprint.\n- [ ] [hard] Writeup at `dev/plans/s3_cross_cpu_portability.md` exists, attached via `jit doc add`. The writeup records the AVX2-only baseline, explicitly cites `f8d230ef` for the deferred AVX-512 row, and documents the host-availability constraint that scoped this issue.\n- [ ] [aspirational] AVX2 throughput improvement vs the scalar fallback is recorded as a sanity row in the CSV (confirms the SIMD path is actually being dispatched).\n\n## Amendment history (2026-05-12)\n\nS3's scope was amended 2026-05-12 to match dev-host hardware availability (AVX2-only). The deferred AVX-512 throughput row moved to a dedicated follow-up issue `f8d230ef` under `7f809931`. Full narrative + criterion mapping in `dev/active/363556e6-amendments-2026-05-12.md`.",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [
     "686ee1b5-6ac8-4547-9b66-d472b2753676"
   ],
@@ -14,12 +14,26 @@
   ],
   "gates_status": {},
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/active/363556e6-amendments-2026-05-12.md",
+      "commit": null,
+      "label": "S3 amendment narrative — AVX2-only scope",
+      "doc_type": "notes"
+    },
+    {
+      "path": "dev/plans/s3_cross_cpu_portability.md",
+      "commit": null,
+      "label": "S3 cross-CPU portability writeup",
+      "doc_type": "implementation",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:simulation",
     "epic:gf2-algebra-permanent",
     "component:gf2-kernels-simd"
   ],
   "created_at": "2026-05-09T09:45:33.402235814+00:00",
-  "updated_at": "2026-05-11T20:05:40.032846326+00:00"
+  "updated_at": "2026-05-12T06:01:24.267482250+00:00"
 }
