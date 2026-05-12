@@ -1526,11 +1526,7 @@ mod tests {
             "neg" => {
                 a.neg_assign();
                 for (i, &av) in a_vals.iter().enumerate() {
-                    assert_eq!(
-                        a.get(i).value(),
-                        scalar_neg(av),
-                        "neg len={len} lane {i}"
-                    );
+                    assert_eq!(a.get(i).value(), scalar_neg(av), "neg len={len} lane {i}");
                 }
             }
             _ => panic!("unknown op"),
