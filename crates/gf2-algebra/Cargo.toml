@@ -74,7 +74,11 @@ name = "s3_scalar_vs_avx2_sanity"
 required-features = ["simd", "test-support"]
 
 [features]
-default = ["simd", "parallel"]
+# `f5` and `f7` flipped to default-on as the W4 closing edit per
+# R1 §1 and dev/plans/d1c_feature_gate_matrix.md §8.1 — the encodings
+# have landed (jit:6917eb85, jit:56c5dabc) and the default-on flip
+# ensures the standard `cargo test` and `tests` gates exercise them.
+default = ["simd", "parallel", "f5", "f7"]
 
 # Enable runtime SIMD dispatch hooks. Mirrors gf2-coding's pattern: the
 # gf2-kernels-simd rlib is always linked (gf2-core needs it for the SSOT
@@ -97,14 +101,17 @@ parallel = ["dep:rayon", "gf2-core/parallel"]
 # workspace `exclude`).
 hip = ["dep:gf2-kernels-hip"]
 
-# F_5 packed permanent. Off until W4 lands the encoding (per R1 outcome
-# in dev/plans/r1_f5_encoding_decision.md). Compiling the modules
-# without this flag means the public surface omits the F_5 types
-# entirely — callers see no API.
+# F_5 packed permanent. Default-on as of W4 closing edit; the W4
+# implementation landed `packed5::Packed5` (jit:6917eb85) per R1
+# outcome in dev/plans/r1_f5_encoding_decision.md. Opt out via
+# `--no-default-features` (or by selecting features explicitly without
+# `f5`) if the F_5 surface is unwanted.
 f5 = []
 
-# F_7 packed permanent. Off until W4 lands the encoding (per R2 outcome
-# in dev/plans/r2_f7_encoding_decision.md). Same lifecycle as `f5`.
+# F_7 packed permanent. Default-on as of W4 closing edit; the W4
+# implementation landed `packed7::Packed7` (jit:56c5dabc) per R2
+# outcome in dev/plans/r2_f7_encoding_decision.md. Same opt-out
+# semantics as `f5`.
 f7 = []
 
 # Serde Serialize/Deserialize for packed types. Off by default because
