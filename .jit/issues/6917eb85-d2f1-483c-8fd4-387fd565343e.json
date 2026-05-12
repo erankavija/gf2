@@ -2,9 +2,9 @@
   "id": "6917eb85-d2f1-483c-8fd4-387fd565343e",
   "title": "F_5 packed type plus ops per R1 outcome",
   "description": "Implement the F_5 packed type chosen by R1 (`6b3f6054`), with bitwise add / sub / mul / neg ops and proptest cross-checks against the scalar `Fp<5>` reference.\n\n## Background\n\nR1's decision doc (`dev/plans/r1_f5_encoding_decision.md`) names the winning F_5 encoding and documents the bitwise op count per op. The R1 design landed a bit-sliced D representation (per the prompt's hint). This issue lands the packed type at `gf2-algebra::packed::packed5` with the implementation directly transliterating the formulas from the R1 doc.\n\n`unsafe` is not allowed here (`#![deny(unsafe_code)]`); the type uses pure Rust bitwise ops on `[u64; K]` for some `K` chosen by R1.\n\n## Success Criteria\n\n- [ ] [hard] `gf2-algebra::packed::packed5::Packed5` exists, packs the lane-count chosen by R1 into the storage layout chosen by R1.\n- [ ] [hard] `Packed5` implements `PackedField<Fp<5>>` per the D1b trait surface.\n- [ ] [hard] `add`, `sub`, `mul`, `neg` use the bitwise formulas from R1; the implementation is a direct transliteration.\n- [ ] [hard] Proptest cross-checks all four ops against scalar `Fp<5>` per-lane on 1000 random pairs.\n- [ ] [hard] `Packed5Vec` companion type exists for variable-length vectors with `mask_tail` invariant; word-boundary tests on len $\\in$ {0, 1, 63, 64, 65, 127, 128, 129}.\n- [ ] [hard] `cargo nextest run -p gf2-algebra --release --profile ci` passes.",
-  "state": "ready",
+  "state": "done",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude-wt-6917eb85",
   "dependencies": [
     "b17bec62-138a-4fa4-85a2-dfc60e329327",
     "6b3f6054-fc5a-4ba9-8636-115144283e6e"
@@ -14,7 +14,23 @@
     "code-review",
     "tests"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-12T06:46:01.460192981Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-12T07:56:44.614020347Z"
+    },
+    "tests": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-12T06:46:28.784852859Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -23,5 +39,5 @@
     "component:gf2-algebra"
   ],
   "created_at": "2026-05-09T09:46:04.322024400+00:00",
-  "updated_at": "2026-05-09T14:28:37.187939332+00:00"
+  "updated_at": "2026-05-12T07:58:48.605069021+00:00"
 }
