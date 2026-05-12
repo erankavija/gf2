@@ -30,10 +30,14 @@
 //! `r_0..r_4` into output bit-planes `(c0, c1, c2)`.
 //!
 //! - Decode (per operand): 11 ops (3 NOTs + 8 ANDs). 22 for both.
-//! - Cross-product: 20 ANDs for add/sub, 16 for mul (negation maps to sub).
+//! - Cross-product: 20 ANDs for add/sub, 16 for mul.
 //! - Result-tree ORs: 16 for add/sub, 12 for mul.
 //! - Encode: 2 ORs (`c0 = r1 | r3`, `c1 = r2 | r3`, `c2 = r4`).
 //! - Total: 60 ops/`u64`-triple for add/sub, 52 for mul.
+//!
+//! `neg` is a unary op (single-operand 1×5 remap, not a cross-product)
+//! implemented as decode → permute selectors `(e_0, e_1, e_2, e_3, e_4)`
+//! → `(e_0, e_4, e_3, e_2, e_1)` for the `(5 − x) mod 5` table → encode.
 //!
 //! # Transliteration source
 //!
