@@ -47,10 +47,10 @@ use super::{PackedField, PackedFieldVec};
 
 /// Build the `ADD_LUT` at compile time.
 ///
-/// `ADD_LUT[(a_byte as u16) << 8 | b_byte as u16]` returns a byte whose
-/// low nibble is `(a_lo + b_lo) % 7` and high nibble is `(a_hi + b_hi) % 7`,
-/// where `a_lo = a_byte & 0xf`, `a_hi = (a_byte >> 4) & 0xf`, etc.
-/// Non-canonical nibbles (≥ 7) produce 0.
+/// `ADD_LUT[a_byte as usize | ((b_byte as usize) << 8)]` returns a byte
+/// whose low nibble is `(a_lo + b_lo) % 7` and high nibble is
+/// `(a_hi + b_hi) % 7`, where `a_lo = a_byte & 0xf`, `a_hi = (a_byte >> 4) & 0xf`,
+/// etc. Non-canonical nibbles (≥ 7) produce 0.
 const fn build_add_lut() -> [u8; 65536] {
     let mut lut = [0u8; 65536];
     let mut ap: usize = 0;
@@ -76,8 +76,8 @@ const fn build_add_lut() -> [u8; 65536] {
 
 /// Build the `SUB_LUT` at compile time.
 ///
-/// `SUB_LUT[(a_byte as u16) << 8 | b_byte as u16]` returns a byte whose
-/// low nibble is `(a_lo - b_lo + 7) % 7` and high nibble is
+/// `SUB_LUT[a_byte as usize | ((b_byte as usize) << 8)]` returns a byte
+/// whose low nibble is `(a_lo - b_lo + 7) % 7` and high nibble is
 /// `(a_hi - b_hi + 7) % 7`. Non-canonical nibbles (≥ 7) produce 0.
 const fn build_sub_lut() -> [u8; 65536] {
     let mut lut = [0u8; 65536];
@@ -104,9 +104,9 @@ const fn build_sub_lut() -> [u8; 65536] {
 
 /// Build the `MUL_LUT` at compile time.
 ///
-/// `MUL_LUT[(a_byte as u16) << 8 | b_byte as u16]` returns a byte whose
-/// low nibble is `(a_lo * b_lo) % 7` and high nibble is `(a_hi * b_hi) % 7`.
-/// Non-canonical nibbles (≥ 7) produce 0.
+/// `MUL_LUT[a_byte as usize | ((b_byte as usize) << 8)]` returns a byte
+/// whose low nibble is `(a_lo * b_lo) % 7` and high nibble is
+/// `(a_hi * b_hi) % 7`. Non-canonical nibbles (≥ 7) produce 0.
 const fn build_mul_lut() -> [u8; 65536] {
     let mut lut = [0u8; 65536];
     let mut ap: usize = 0;

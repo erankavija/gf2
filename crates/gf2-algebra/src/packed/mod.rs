@@ -2,28 +2,22 @@
 //!
 //! Hosts the [`PackedField`] trait that abstracts lane-parallel
 //! arithmetic over a small prime field, plus the concrete
-//! `Bipedal{3,5,7}` element / vector / matrix types that implement it,
+//! `Bipedal3` (F_3), `packed5::Packed5` (F_5, R1 Candidate D),
+//! `packed7::Packed7` (F_7, R2 Candidate A) element / vector types,
 //! and the [`scalar::ScalarPackedFp3`] correctness oracle.
 //!
 //! The trait surface is fixed by `dev/plans/d1b_packed_field_api.md`
 //! (user-approved 2026-05-09; see JIT issue `9fe275d3`'s description
-//! `## Approval` section) and frozen at the W6 `gate:api-freeze`. The
-//! W1-T1 skeleton declared the module tree only; this module (W1-T2)
-//! lands the [`PackedField`] and [`PackedFieldVec`] traits and the
-//! [`scalar::ScalarPackedFp3`] / [`scalar::ScalarPackedFp3Vec`]
-//! reference implementations. The concrete `Bipedal3` impl lands in
-//! W1-T3 with its companion `Bipedal3Vec`. Until that point, the
-//! `scalar::*` types are the only [`PackedField`] / [`PackedFieldVec`]
-//! implementors in the workspace.
+//! `## Approval` section) and frozen at the W6 `gate:api-freeze`.
 //!
 //! # Cross-checking strategy
 //!
-//! Other `PackedField<Fp<3>>` impls (notably `bipedal3::Bipedal3` in
-//! W1-T3 and `bipedal5::Bipedal5` / `bipedal7::Bipedal7` later) are
-//! validated against [`scalar::ScalarPackedFp3`] by routing the same
-//! random inputs through both impls and asserting `lane(i)` agrees
-//! across all 64 lanes. The oracle has no SIMD or bit-packing
-//! optimisations — it is intentionally one `Fp<3>` per lane.
+//! Each concrete `PackedField` impl validates against the scalar
+//! `Fp<P>` reference (and, for F_3, against [`scalar::ScalarPackedFp3`])
+//! by routing the same random inputs through both implementations and
+//! asserting per-lane decoded equality. The reference impls have no
+//! SIMD or bit-packing optimisations — they exist purely as a
+//! correctness oracle.
 
 use gf2_core::field::FiniteField;
 
