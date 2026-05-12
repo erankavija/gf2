@@ -173,7 +173,8 @@ fn main() {
         writeln!(progress).unwrap();
 
         // Emit CSV rows to stdout.
-        // Scalar row: ratio_vs_avx2 = scalar_mean / avx2_mean (> 1 confirms dispatch).
+        // Scalar row: ratio_vs_avx2 = scalar_mean / avx2_mean. At W=1 word this is
+        // < 1 (scalar faster; SIMD lane-padding overhead); see module doc.
         println!(
             "{n},permanent_bipedal3_scalar,{scalar_mean:.3},{scalar_std:.3},{SAMPLES},{ratio:.4},{HW_FINGERPRINT}"
         );
