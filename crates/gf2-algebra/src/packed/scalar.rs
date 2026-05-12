@@ -1,9 +1,11 @@
 //! Scalar reference implementations of [`PackedField<Fp<3>>`] and
 //! [`PackedFieldVec<Fp<3>>`].
 //!
-//! [`ScalarPackedFp3`] is the *correctness oracle* against which the
-//! optimised `Bipedal3` (W1-T3) and the future `Bipedal5` / `Bipedal7`
-//! impls are cross-checked. The implementation is intentionally
+//! [`ScalarPackedFp3`] is the F_3 *correctness oracle* against which the
+//! optimised `Bipedal3` impl is cross-checked. (F_5 and F_7 packed types
+//! `Packed5` / `Packed7` use their own scalar `Fp<5>` / `Fp<7>` oracles
+//! per-lane rather than going through `ScalarPackedFp3`, which is F_3-
+//! specific by name and trait signature.) The implementation is intentionally
 //! one-`Fp<3>`-per-lane: no SIMD, no bit-packing, no popcount tricks.
 //! Every method is the literal lane-wise composition of the underlying
 //! `Fp<3>` operator.

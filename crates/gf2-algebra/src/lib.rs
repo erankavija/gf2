@@ -3,8 +3,9 @@
 //! Packed finite-field abstractions and permanent algorithms.
 //!
 //! `gf2-algebra` is the workspace home for the `PackedField<F>` trait,
-//! the `Bipedal{3,5,7}` packed types, and the `permanent_*` algorithm
-//! family that the **gf2-algebra-permanent** epic introduces. It sits on
+//! the per-prime packed types (`Bipedal3` for F_3, `Packed5` for F_5,
+//! `Packed7` for F_7), and the `permanent_*` algorithm family that the
+//! **gf2-algebra-permanent** epic introduces. It sits on
 //! top of [`gf2_core`] (for `FiniteField`, `Fp<P>`, `BitVec`) and stays
 //! `#![deny(unsafe_code)]` — every SIMD or GPU path it dispatches through
 //! lives in the dedicated `gf2-kernels-simd` and `gf2-kernels-hip`
@@ -52,7 +53,7 @@
 //!
 //! | Module       | Purpose                                                                           |
 //! |--------------|-----------------------------------------------------------------------------------|
-//! | [`packed`]   | `PackedField` / `PackedFieldVec` traits and `Bipedal{3,5,7}` impls.               |
+//! | [`packed`]   | `PackedField` / `PackedFieldVec` traits and `Bipedal3` (F_3) / `Packed5` (F_5) / `Packed7` (F_7) impls. |
 //! | [`permanent`]| `Permanent` trait, `permanent_ryser`, and per-prime `permanent_bipedal*` family.  |
 //! | [`gray`]     | Gray-code subset enumerator used by Ryser's formula and the bipedal kernels.      |
 //! | `parallel`   | Rayon-based work-stealing dispatch (cfg `feature = "parallel"`, default on).      |
