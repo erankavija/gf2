@@ -1,0 +1,26 @@
+{
+  "id": "9480f8a6-3dc0-4d1f-aa4a-fcc13e1755b5",
+  "title": "S1g: 50x GPU speedup vs T8 at n=36",
+  "description": "Re-run the S1 speedup measurement with a HIP/ROCm GPU contender (W5 `ad55b777`) instead of the AVX2 SIMD contender. The 50× headline target from the original S1 criterion moves here; on the GPU the bipedal-3 algorithm has substantially more headroom than on AVX2 CPU (massive thread-level parallelism plus full-register packed lanes).\n\n## Background\n\nS1 (`c98ed603`) measured the CPU SIMD path at n=36 and recorded a 10.643× speedup vs `permanent_mod3_reference` on the dev host (Ryzen 9 5900X, AVX2-only). The original 50× target was empirically falsified on the Rust-vs-Rust CPU comparison: the 50× and the paper's 86.9× figures both reflect a Julia baseline (which has JIT/GC overhead the Rust reference does not have).\n\nPer the project lead's user escalation on 2026-05-12, the 50× target was approved to move here. The GPU contender is the W5 HIP F_3 kernel (`ad55b777`) which is currently in backlog; this issue blocks on its completion.\n\nThe dev host (AMD Ryzen 9 5900X) has a HIP/ROCm-capable AMD GPU available (/opt/rocm/bin/hipcc installed, gfx1030 target). Once `ad55b777` lands its F_3 device kernel, this issue runs the equivalent timing harness as S1 but with the GPU implementation as the contender.\n\n## Success Criteria\n\n- [ ] [hard] GPU contender exists: `gf2-algebra` exposes a `permanent_bipedal3_gpu` (or equivalent) entry that delegates to the HIP F_3 device kernel from `ad55b777`. The host-side wrapper bundles `hipLaunchKernel` + `hipMemcpy` with the same `Bipedal3Matrix` input shape S1 used.\n- [ ] [hard] Measured speedup $\\frac{T_{\\text{permanent\\_mod3\\_reference}}}{T_{\\text{permanent\\_bipedal3\\_gpu}}} \\ge 50$ at $n=36$ on the dev host. The reference baseline is the same `permanent_mod3_reference` S1 timed (9030.741 s at n=36 on the dev host); the contender is the new GPU implementation.\n- [ ] [hard] CSV at `dev/benchmarks/gf2_algebra_permanent/s1g_gpu_speedup-YYYY-MM-DD.csv` records mean wall-clock and ratio at $n \\in \\{24, 28, 32, 36\\}$ for the GPU contender. Reference timings can be re-used from S1's CSV (cite the row + date).\n- [ ] [hard] Hardware fingerprint (`hipinfo` device, `lscpu`, kernel + driver versions) and seed are recorded in the CSV header.\n- [ ] [hard] Writeup at `dev/plans/s1g_gpu_speedup_results.md` exists, attached via `jit doc add`.\n- [ ] [hard] Determinism: the GPU contender produces the same `Fp<3>` output as `permanent_bipedal3` (SIMD path) on the same seeded matrix at $n=36$ (sanity-check that the device kernel is correct).\n- [ ] [aspirational] Speedup $\\ge 86.9\\times$ at $n=36$ (the paper's Julia-vs-bipedal target — comparable host-class).",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "c98ed603-2eb3-443b-9905-a6a7a5337168",
+    "ad55b777-a9f6-465c-9402-6c6bb269086c"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "criterion-1.5x"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:simulation",
+    "epic:gf2-algebra-permanent"
+  ],
+  "created_at": "2026-05-12T05:31:09.621472666+00:00",
+  "updated_at": "2026-05-12T05:31:14.707790821+00:00"
+}
