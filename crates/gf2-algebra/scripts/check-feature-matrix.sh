@@ -7,8 +7,11 @@
 #
 # Cell encoding: a 6-bit bitmap (b5..b0) where the bits map to features
 # in the order (simd, parallel, hip, f5, f7, serde) — same order as the
-# table at D1c §4. Cell `110000` (`b5=simd`, `b4=parallel`) is the
-# crate's `default = ["simd", "parallel"]` set.
+# table at D1c §4. Cell `110110` (`b5=simd`, `b4=parallel`, `b2=f5`,
+# `b1=f7`) is the crate's
+# `default = ["simd", "parallel", "f5", "f7"]` set as of the W4 closing
+# edit; `f5` and `f7` were flipped default-on once `packed5` / `packed7`
+# landed (jit:6917eb85 / jit:56c5dabc).
 #
 # `hip` substitution rule (D1c §6.1, "Hosts without hipcc / ROCm"): on a
 # host that lacks hipcc, the 32 cells carrying `hip` substitute the same
@@ -109,8 +112,8 @@ for ((cell=0; cell<64; cell++)); do
 
     # Build the cargo argv. `--no-default-features` is always passed so
     # the bitmap fully determines the feature set; the default cell
-    # `110000` matches `cargo check` with no flags only because we then
-    # append `--features simd,parallel`.
+    # `110110` matches `cargo check` with no flags only because we then
+    # append `--features simd,parallel,f5,f7`.
     args=(check -p gf2-algebra --no-default-features)
     if (( ${#enabled[@]} > 0 )); then
         joined="$(IFS=,; printf '%s' "${enabled[*]}")"
