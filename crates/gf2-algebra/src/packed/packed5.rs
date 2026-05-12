@@ -1148,9 +1148,10 @@ impl PackedFieldVec<Fp<5>> for Packed5Vec {
     /// Returns `true` iff every logical position decodes to `F_5`'s
     /// additive identity (0).
     ///
-    /// Uses `decode5` per word and checks `e[0] == !0u64`, which handles
-    /// both canonical zero codepoints and redundant non-canonical codepoints
-    /// that decode to 0 (D1b §3.5 canonicalization contract).
+    /// Uses `decode5` per word and checks that no non-zero result selector
+    /// is set, i.e. `(e[1] | e[2] | e[3] | e[4]) == 0`. This handles both
+    /// canonical zero codepoints and redundant non-canonical codepoints
+    /// (5..=7) that decode to 0 (D1b §3.5 canonicalization contract).
     ///
     /// # Examples
     ///
