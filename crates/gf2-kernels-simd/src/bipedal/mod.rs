@@ -26,9 +26,11 @@
 //! | [`packed5`]    | F_5 scalar word ops + AVX2 batch entry points + `F5AvxFns` detection bundle (R1 Candidate D). |
 //! | [`packed7`]    | F_7 scalar word ops + AVX2 batch entry points + `F7AvxFns` detection bundle (R2 Candidate A). |
 //!
-//! The actual AVX2 batch entry points (`run_*_batch`) live in
-//! [`crate::x86::bipedal_avx2`] so the asm-artefact-present gate fires on
-//! source changes.
+//! The actual AVX2 batch entry points live in
+//! [`crate::x86::bipedal_avx2`] (F_3, generic over `BipedalLikeConfig`),
+//! [`crate::x86::bipedal_avx2_packed5`] (F_5, dedicated 3-plane shape), and
+//! [`crate::x86::bipedal_avx2_packed7`] (F_7, dedicated 1-plane LUT shape).
+//! All three trigger the asm-artefact-present gate on source changes.
 //!
 //! ## Adding a new prime
 //!
