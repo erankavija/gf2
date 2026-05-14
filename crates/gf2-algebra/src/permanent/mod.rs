@@ -11,7 +11,8 @@
 //!
 //! W2 complete — T7 (Ryser driver), T8 (mod-3 reference port), and T9
 //! (bipedal3 single-word fast path) all landed in W2. W4 F_5/F_7
-//! analogues land in W4-T18/T20.
+//! analogues — `permanent_bipedal5` and `permanent_bipedal7` —
+//! landed in W4-T18/T20 (single-word path, `n ≤ 64`).
 //!
 //! # Re-exports
 //!

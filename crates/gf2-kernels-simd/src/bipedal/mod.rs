@@ -2,9 +2,11 @@
 //!
 //! This module hosts the [`framework::BatchedBipedalLike`] template plus the
 //! [`lanes::BipedalLogicalLanes`] lane abstraction that lets a single body
-//! serve every `(prime, ISA)` instantiation. F_3 is the only encoding wired
-//! today (via [`f3::Config3`] / [`f3::Bipedal3x4`]); F_5 D-bit-sliced and F_7
-//! LUT-A land on top of this same scaffolding in W4.
+//! serve every `(prime, ISA)` instantiation. F_3 ships via
+//! [`bipedal3::Config3`] / [`bipedal3::Bipedal3x4`] on top of the generic
+//! framework; F_5 (R1 Candidate D, 3-plane bit-sliced) ships via
+//! [`packed5::Config5`]; F_7 (R2 Candidate A, 3-bit + 2^16 LUT) ships via
+//! [`packed7::Config7`] / [`packed7::Bipedal7x4`].
 //!
 //! Architectural decision recorded in `dev/plans/r4_simd_batching_decision.md`:
 //! the generic framework wins over per-prime hand-rolled kernels by tie-break
@@ -18,6 +20,8 @@
 //! | [`framework`]  | The `BipedalLikeConfig` trait + `BatchedBipedalLike` generic struct. |
 //! | [`lanes`]      | The `BipedalLogicalLanes` trait + `Avx2Lane` impl. |
 //! | [`bipedal3`]   | F_3 instantiation: `Config3` + `Bipedal3x4` type alias. |
+//! | [`packed5`]    | F_5 instantiation: `Config5` + scalar/AVX2 batch entry points (R1 Candidate D). |
+//! | [`packed7`]    | F_7 instantiation: `Config7` + `Bipedal7x4` + LUT-driven batch entry points (R2 Candidate A). |
 //!
 //! The actual AVX2 batch entry points (`run_*_batch`) live in
 //! [`crate::x86::bipedal_avx2`] so the asm-artefact-present gate fires on
