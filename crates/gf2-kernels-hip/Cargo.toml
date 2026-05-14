@@ -20,6 +20,7 @@ gf2-core = { path = "../gf2-core" }
 cc = "1"
 
 [dev-dependencies]
+gf2-algebra = { path = "../gf2-algebra" }
 gf2-coding = { path = "../gf2-coding", features = ["hip"] }
 proptest = "1.0"
 criterion = "0.5"
