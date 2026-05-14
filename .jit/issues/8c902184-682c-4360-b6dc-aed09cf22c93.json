@@ -23,7 +23,7 @@
   "documents": [
     {
       "path": "dev/plans/gf_api_freeze_w6.md",
-      "commit": null,
+      "commit": "b07361ae",
       "label": "gf2-algebra public-API freeze for W6 Lean verification",
       "doc_type": "design",
       "format": "markdown"
@@ -35,5 +35,5 @@
     "component:gf2-algebra"
   ],
   "created_at": "2026-05-09T09:47:57.770038638+00:00",
-  "updated_at": "2026-05-14T19:52:39.260638688+00:00"
+  "updated_at": "2026-05-14T19:53:23.361466416+00:00"
 }
