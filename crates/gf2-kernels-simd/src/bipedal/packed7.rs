@@ -1,5 +1,4 @@
-//! F_7 instantiation of the generic [`super::framework::BatchedBipedalLike`]
-//! framework.
+//! F_7 SIMD batch kernels (R2 Candidate A 3-bit + 2^16 LUT).
 //!
 //! The F_7 encoding follows R2 Candidate A (`dev/plans/r2_f7_encoding_decision.md`):
 //! each `u64` packs **16 elements** at 4-bit-aligned slots. Slot `i` occupies
@@ -13,28 +12,26 @@
 //!
 //! # SIMD strategy
 //!
-//! [`Config7`] implements [`BipedalLikeConfig`] with `MagLane = Avx2Lane` and
-//! `SgnLane = Avx2Lane`. Convention: the `mag` stream carries the actual packed
-//! F_7 word data for one operand; the `sgn` stream carries the second operand
-//! (or zero for unary neg). The lane-level ops compute the byte-pair LUT lookup
-//! scalar-per-u64 inside each AVX2 lane (extract 4 u64s, look them up, reassemble).
-//!
-//! The per-lane scalar LUT approach is the "per-lane scalar LUT fallback inside
-//! a SIMD wrapper" option mentioned in the issue: it batches by lane count (4
-//! u64s per AVX2 register) while using the existing 64 KiB LUT for correctness.
-//! A gather-based approach could improve throughput but is deferred; the scalar
+//! AVX2 batch entry points live in [`crate::x86::bipedal_avx2_packed7`]; they
+//! batch byte-pair LUT lookups per u64 within each AVX2 register. A gather-based
+//! approach could improve throughput but is deferred; the scalar-LUT-inside-SIMD
 //! path already benefits from register-widened loop overhead reduction.
 //!
-//! AVX2 batch entry points live in [`crate::x86::bipedal_avx2_packed7`].
+//! # No `BipedalLikeConfig` integration
+//!
+//! The generic [`super::framework::BipedalLikeConfig`] trait imposes a 2-stream
+//! `(mag, sgn)` shape per operand. The F_7 LUT encoding fits in 1 plane per
+//! operand, so a `Config7: BipedalLikeConfig` impl that zeroed the unused `sgn`
+//! stream would be technically faithful but dead code, since the production F_7
+//! path already uses the dedicated single-plane LUT batch entry points. F_7
+//! therefore ships *only* via [`crate::x86::bipedal_avx2_packed7`], the
+//! runtime-detection bundle [`F7AvxFns`], and the scalar fallbacks below.
+//! See JIT issue `1f769232`'s `## Amendment 2026-05-14` for the rationale.
 //!
 //! # Runtime detection
 //!
 //! [`has_avx2_f7`] caches the CPUID result in a `OnceLock<bool>`. [`detect_avx2_f7`]
 //! returns a [`F7AvxFns`] bundle when the host supports AVX2.
-
-use super::framework::BipedalLikeConfig;
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-use super::lanes::Avx2Lane;
 
 // ---------------------------------------------------------------------------
 // Compile-time LUT construction (mirrored from gf2-algebra::packed::packed7)
@@ -255,141 +252,6 @@ pub fn scalar_neg7_batch(a: &[u64], out: &mut [u64]) {
         out[i] = neg7_word(a[i]);
     }
 }
-
-// ---------------------------------------------------------------------------
-// BipedalLikeConfig impl for F_7
-// ---------------------------------------------------------------------------
-
-/// F_7 arithmetic recipe for the generic bipedal-like framework.
-///
-/// Implements [`BipedalLikeConfig`] using the R2 Candidate A LUT approach.
-/// The `(mag, sgn)` ABI convention for F_7:
-/// - Binary ops: `mag1` = operand A packed words, `mag2` = operand B packed
-///   words; `sgn1` and `sgn2` are unused (zero).
-/// - Unary neg: `mag` = input packed words; `sgn` is unused (zero).
-/// - Output: `mag` = result packed words, `sgn` = zero.
-///
-/// This means the generic `run_add_batch::<Config7>` / `run_neg_batch::<Config7>`
-/// entry points from [`crate::x86::bipedal_avx2`] work correctly for F_7 with
-/// the zero-sgn convention. The dedicated entry points in
-/// [`crate::x86::bipedal_avx2_packed7`] use a simpler 2-stream API (a, b, out).
-///
-/// This struct is zero-sized — it is a type-level tag only.
-///
-/// # Examples
-///
-/// ```no_run
-/// use gf2_kernels_simd::bipedal::framework::BipedalLikeConfig;
-/// use gf2_kernels_simd::bipedal::Config7;
-/// assert_eq!(<Config7 as BipedalLikeConfig>::PRIME, 7);
-/// assert_eq!(<Config7 as BipedalLikeConfig>::U64_PER_LANE_PAIR, 4);
-/// ```
-#[derive(Clone, Copy, Debug, Default)]
-pub struct Config7;
-
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-#[allow(clippy::missing_transmute_annotations)]
-impl BipedalLikeConfig for Config7 {
-    type MagLane = Avx2Lane;
-    type SgnLane = Avx2Lane;
-    const PRIME: u64 = 7;
-    /// Each AVX2 register carries 4 × u64 = 64 F_7 elements (4-bit packed).
-    const U64_PER_LANE_PAIR: usize = 4;
-
-    #[inline(always)]
-    unsafe fn add_lane(
-        m1: Self::MagLane,
-        _s1: Self::SgnLane,
-        m2: Self::MagLane,
-        _s2: Self::SgnLane,
-    ) -> (Self::MagLane, Self::SgnLane) {
-        // SAFETY: hardware feature is the caller's precondition.
-        // Convention: m1 = operand A words, m2 = operand B words; sgn streams ignored.
-        unsafe {
-            use core::mem::transmute;
-            let a_raw: [u64; 4] = transmute(m1.0);
-            let b_raw: [u64; 4] = transmute(m2.0);
-            let mut out = [0u64; 4];
-            for i in 0..4 {
-                out[i] = binary7_op_word(a_raw[i], b_raw[i], &ADD7_LUT);
-            }
-            let zero = [0u64; 4];
-            (Avx2Lane(transmute(out)), Avx2Lane(transmute(zero)))
-        }
-    }
-
-    #[inline(always)]
-    unsafe fn sub_lane(
-        m1: Self::MagLane,
-        _s1: Self::SgnLane,
-        m2: Self::MagLane,
-        _s2: Self::SgnLane,
-    ) -> (Self::MagLane, Self::SgnLane) {
-        // SAFETY: hardware feature is the caller's precondition.
-        unsafe {
-            use core::mem::transmute;
-            let a_raw: [u64; 4] = transmute(m1.0);
-            let b_raw: [u64; 4] = transmute(m2.0);
-            let mut out = [0u64; 4];
-            for i in 0..4 {
-                out[i] = binary7_op_word(a_raw[i], b_raw[i], &SUB7_LUT);
-            }
-            let zero = [0u64; 4];
-            (Avx2Lane(transmute(out)), Avx2Lane(transmute(zero)))
-        }
-    }
-
-    #[inline(always)]
-    unsafe fn mul_lane(
-        m1: Self::MagLane,
-        _s1: Self::SgnLane,
-        m2: Self::MagLane,
-        _s2: Self::SgnLane,
-    ) -> (Self::MagLane, Self::SgnLane) {
-        // SAFETY: hardware feature is the caller's precondition.
-        unsafe {
-            use core::mem::transmute;
-            let a_raw: [u64; 4] = transmute(m1.0);
-            let b_raw: [u64; 4] = transmute(m2.0);
-            let mut out = [0u64; 4];
-            for i in 0..4 {
-                out[i] = binary7_op_word(a_raw[i], b_raw[i], &MUL7_LUT);
-            }
-            let zero = [0u64; 4];
-            (Avx2Lane(transmute(out)), Avx2Lane(transmute(zero)))
-        }
-    }
-
-    #[inline(always)]
-    unsafe fn neg_lane(m: Self::MagLane, _s: Self::SgnLane) -> (Self::MagLane, Self::SgnLane) {
-        // SAFETY: hardware feature is the caller's precondition.
-        // neg(a) = 0 - a via SUB7_LUT.
-        unsafe {
-            use core::mem::transmute;
-            let a_raw: [u64; 4] = transmute(m.0);
-            let mut out = [0u64; 4];
-            for i in 0..4 {
-                out[i] = neg7_word(a_raw[i]);
-            }
-            let zero = [0u64; 4];
-            (Avx2Lane(transmute(out)), Avx2Lane(transmute(zero)))
-        }
-    }
-}
-
-// ---------------------------------------------------------------------------
-// Concrete F_7 type alias
-// ---------------------------------------------------------------------------
-
-/// Concrete F_7 instantiation: 64-lane batched AVX2 over [`Avx2Lane`].
-///
-/// 4 × `u64` × 16 elements = 64 logical F_7 lanes per AVX2 register.
-/// The `mag` stream carries the packed data; `sgn` is always zero.
-///
-/// Dedicated batch entry points (2-stream binary, 1-stream unary) live in
-/// [`crate::x86::bipedal_avx2_packed7`].
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-pub type Bipedal7x4 = super::framework::BatchedBipedalLike<Config7>;
 
 // ---------------------------------------------------------------------------
 // Runtime AVX2 detection for F_7
