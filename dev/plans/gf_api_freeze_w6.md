@@ -44,10 +44,10 @@ re-export.
 | `Packed7` (struct) | `packed/packed7.rs:211` | F_7 packed type (R2 Candidate A); feature-gated `f7`. |
 | `Packed7Vec` (struct) | `packed/packed7.rs:773` | |
 | `Packed7Matrix` (struct) | `packed/packed7.rs:1252` | |
-| `Packed7::LANES` (const) | `packed/packed7.rs:216` | `= 16`. |
-| `packed7::ADD_LUT` (static) | `packed/packed7.rs:137` | 64 KiB byte-pair LUT for F_7 add; consumed by SIMD path and Lean proof of LUT-correctness. |
-| `packed7::SUB_LUT` (static) | `packed/packed7.rs:143` | 64 KiB byte-pair LUT for F_7 sub. |
-| `packed7::MUL_LUT` (static) | `packed/packed7.rs:149` | 64 KiB byte-pair LUT for F_7 mul. |
+| `packed::packed7::LANES` (const) | `packed/packed7.rs:216` | Module-level `pub const LANES: usize = 16;` (not an inherent associated const on `Packed7`). The canonical public path is the `packed::packed7` module, not the struct. |
+| `packed::packed7::ADD_LUT` (static) | `packed/packed7.rs:137` | 64 KiB byte-pair LUT for F_7 add; consumed by SIMD path and Lean proof of LUT-correctness. |
+| `packed::packed7::SUB_LUT` (static) | `packed/packed7.rs:143` | 64 KiB byte-pair LUT for F_7 sub. |
+| `packed::packed7::MUL_LUT` (static) | `packed/packed7.rs:149` | 64 KiB byte-pair LUT for F_7 mul. |
 | inherent methods on each of the above | various | All `pub fn` methods directly on the struct (e.g. `Bipedal3::add`, `Packed5::sub`, `Packed7::fold_mul_first_n`). |
 
 ### `gf2_algebra::permanent::*`
@@ -83,6 +83,19 @@ time of this freeze. When it lands, the public surface of
 `gf2_algebra::gpu::*` should be added to this freeze in a follow-up
 amendment (or, alternatively, the W5 work itself can be deferred past W6 —
 no W6 proof currently consumes GPU code).
+
+## Explicitly out of scope of this freeze
+
+These public items exist in the crate but are **not** part of the frozen
+verification surface. The W6 Lean proofs do not consume them, and they
+remain free to evolve without invoking the change-control protocol below.
+
+| Item | Why excluded |
+|---|---|
+| `gf2_algebra::parallel` (top-level module, `cfg(feature = "parallel")`) | Doc-only placeholder; the parallel `permanent_bipedal3_parallel` work lives in `permanent::parallel_bipedal3` and is frozen via the `permanent::*` table above. |
+| `gf2_algebra::gpu` (top-level module, `cfg(feature = "hip")`) | Empty placeholder; the GPU dispatch surface is the subject of the "Not yet frozen" entry above. |
+| `gf2_algebra::testutil::{random_matrix, random_matrix_with_rng, unix_secs_to_ymd, today_yyyy_mm_dd}` (`cfg(any(test, feature = "test-support"))`) | Test-only helpers gated behind `test-support`. The W6 proofs run against production code paths only; test fixtures are out of the verification scope. |
+| Inherent methods marked `#[doc(hidden)]` (none currently) | Not part of the stable surface. |
 
 ## W6 consumers — what each issue proves against the frozen surface
 
