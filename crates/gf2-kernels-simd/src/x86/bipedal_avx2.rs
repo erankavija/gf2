@@ -3,10 +3,14 @@
 //!
 //! Each `run_*_batch::<C>` function is `#[target_feature(enable = "avx2")]`
 //! and generic over the per-prime [`BipedalLikeConfig`] impl `C`. The F_3
-//! instantiation `C = Config3` is the only one wired today; F_5 / F_7
-//! consume the same entry points by supplying their own config impls,
-//! per b17bec62 success criterion 4. R4 §4.1 documents the 12-34x
-//! regression that occurs without the `#[target_feature]` discipline.
+//! instantiation `C = Config3` is the only one wired here; F_5 and F_7
+//! ship via dedicated, non-generic AVX2 entry points in
+//! [`crate::x86::bipedal_avx2_packed5`] and
+//! [`crate::x86::bipedal_avx2_packed7`] because their R1 Candidate D
+//! (3-plane) and R2 Candidate A (LUT) encodings do not fit the 2-stream
+//! `(MagLane, SgnLane)` framework shape (see JIT issue `1f769232`'s
+//! `## Amendment 2026-05-14`). R4 §4.1 documents the 12-34x regression
+//! that occurs without the `#[target_feature]` discipline.
 //!
 //! All `pub unsafe fn` here carry a top-of-function `// SAFETY:` comment.
 //! AVX2 availability is the dynamic precondition every caller must
@@ -21,11 +25,10 @@ use crate::bipedal::lanes::{Avx2Lane, BipedalLogicalLanes};
 
 // The `where C: BipedalLikeConfig<MagLane = Avx2Lane, SgnLane = Avx2Lane>`
 // bound on each entry point spells out the lane-shape contract: both lane
-// types of the per-prime config must resolve to `Avx2Lane`. Encodings whose
-// magnitude and sign lane shapes are not both 256-bit AVX2 registers (e.g.
-// a future F_5 D-bit-sliced configuration may pick a 3-plane magnitude lane
-// and a single u64 sign lane) will consume different entry points; today
-// every wired config picks `Avx2Lane` for both.
+// types of the per-prime config must resolve to `Avx2Lane`. F_3's
+// `Config3` satisfies this; F_5 / F_7 do not (their encodings need a
+// different shape — see this module's top-of-file note) and ship through
+// `bipedal_avx2_packed5` / `bipedal_avx2_packed7` instead.
 
 /// Apply a bipedal-like add over canonical `(mag, sgn)` u64-word streams via AVX2.
 ///
@@ -37,8 +40,9 @@ use crate::bipedal::lanes::{Avx2Lane, BipedalLogicalLanes};
 /// # Type parameters
 ///
 /// * `C` — per-prime arithmetic recipe. Today only [`crate::bipedal::Config3`]
-///   is instantiated; adding F_5 or F_7 only needs a new `BipedalLikeConfig`
-///   impl, not a new entry point.
+///   is instantiated through this generic entry point; F_5 / F_7 use
+///   dedicated entry points in [`crate::x86::bipedal_avx2_packed5`] /
+///   [`crate::x86::bipedal_avx2_packed7`].
 ///
 /// # Arguments
 ///

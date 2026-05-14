@@ -15,20 +15,20 @@
     "asm-artefact-present"
   ],
   "gates_status": {
-    "asm-artefact-present": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-14T14:47:37.568702324Z"
-    },
     "code-review": {
       "status": "failed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-14T16:51:52.359139686Z"
+      "updated_at": "2026-05-14T17:33:50.949406210Z"
     },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-05-14T14:47:31.434350499Z"
+    },
+    "asm-artefact-present": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-14T14:47:37.568702324Z"
     }
   },
   "context": {},
@@ -39,5 +39,5 @@
     "component:gf2-kernels-simd"
   ],
   "created_at": "2026-05-09T09:46:32.458128880+00:00",
-  "updated_at": "2026-05-14T17:22:36.866357434+00:00"
+  "updated_at": "2026-05-14T17:36:15.593194113+00:00"
 }
