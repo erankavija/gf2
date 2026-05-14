@@ -18,7 +18,7 @@
     "code-review": {
       "status": "failed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-14T17:33:50.949406210Z"
+      "updated_at": "2026-05-14T17:37:07.604727824Z"
     },
     "cargo-ci": {
       "status": "passed",
@@ -39,5 +39,5 @@
     "component:gf2-kernels-simd"
   ],
   "created_at": "2026-05-09T09:46:32.458128880+00:00",
-  "updated_at": "2026-05-14T17:36:15.593194113+00:00"
+  "updated_at": "2026-05-14T17:39:17.951529756+00:00"
 }

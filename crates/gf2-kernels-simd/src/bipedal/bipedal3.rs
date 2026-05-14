@@ -20,9 +20,10 @@
 //! For F_3 the magnitude and sign lane shapes coincide (both are
 //! [`super::lanes::Avx2Lane`]); the per-prime config selects this via the
 //! `MagLane` / `SgnLane` associated types on
-//! [`super::framework::BipedalLikeConfig`]. Future F_5 D-bit-sliced (W4)
-//! is expected to pick a wider magnitude lane and a narrower sign lane
-//! through the same trait — no framework-body changes will be needed.
+//! [`super::framework::BipedalLikeConfig`]. F_5 and F_7 do not use this
+//! framework — their R1 / R2 encodings do not fit the 2-stream
+//! `(MagLane, SgnLane)` shape, and they ship via dedicated AVX2 batch
+//! entry points instead (see JIT issue `1f769232` amendment).
 //!
 //! The actual AVX2 batch entry points (`run_add_batch`, etc.) live in
 //! [`crate::x86::bipedal_avx2`] so the asm-artefact-present gate fires on
