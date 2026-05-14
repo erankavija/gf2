@@ -1,12 +1,486 @@
-//! `permanent_bipedal5` fast path over `F_5`.
+//! `permanent_bipedal5` — Gray-code Ryser permanent over `F_5`.
 //!
-//! Will host the F_5 packed permanent driver per the epic design §6 and
-//! the encoding pinned by R1 (`dev/plans/r1_f5_encoding_decision.md`).
+//! Mirrors the F_3 path in `permanent_bipedal3`: walks the Gray-code subset
+//! order, updates the packed column-sum [`Packed5Vec`] by a single
+//! [`PackedFieldVec::add_assign`] or [`PackedFieldVec::sub_assign`] per step,
+//! and folds via [`Packed5::fold_mul_first_n`] at each step.
+//!
+//! ## Single-word path (`n ≤ LANES = 64`)
+//!
+//! For `n ≤ 64` the column-sum vector fits in a single `Packed5Vec` word
+//! (one `u64`-triple per bit-plane). Each Gray-code step updates the
+//! column-sum in-place via `add_assign` or `sub_assign`, followed by a
+//! horizontal fold via `Packed5::fold_mul_first_n` — the F_5 multiplication
+//! tree lives once in that method.
+//!
+//! ## Multi-word path (`n > 64`)
+//!
+//! **Out of scope for this issue.** For `n > LANES = 64` a multi-word
+//! streaming path is required. Until that path lands, callers must use
+//! `permanent_ryser::<Fp<5>>` or wait for future F_5 multi-word work.
+//! `permanent_bipedal5` panics for `n > 64`.
+//!
+//! ## Matrix-size upper bound
+//!
+//! The single-word path is limited to `n ≤ Packed5::LANES = 64`. This bound
+//! is imposed by the [`Packed5`] encoding: one `u64`-triple holds exactly 64
+//! F_5 lanes, and `fold_mul_first_n` operates on the first `n` of those
+//! lanes. Matrices larger than 64 × 64 require a multi-word extension that is
+//! not yet implemented; call `permanent_ryser::<Fp<5>>` for those sizes.
 //!
 //! # Feature gating
 //!
-//! Compiled only when the `f5` Cargo feature is enabled (D1c §2).
-//!
-//! # Status
-//!
-//! W1-T1 skeleton — empty placeholder. Body lands in W4.
+//! Compiled only when the `f5` Cargo feature is enabled.
+
+use gf2_core::gfp::Fp;
+
+use crate::gray::gray_code_iter;
+use crate::packed::packed5::{Packed5, Packed5Matrix};
+use crate::packed::{PackedField, PackedFieldVec};
+
+/// Compute the permanent of an `n × n` matrix over `F_5`, using the single-word
+/// Gray-code Ryser fast path.
+///
+/// For `n ≤ 64` the column-sum vector fits in a single [`Packed5Vec`] word
+/// (one `u64`-triple per bit-plane). Each Gray-code step performs exactly one
+/// `add_assign` or `sub_assign` on the column-sum accumulator, followed by a
+/// horizontal fold via [`Packed5::fold_mul_first_n`] on the first `n` lanes.
+///
+/// **Matrix-size upper bound for the single-word path:** `n ≤ Packed5::LANES = 64`.
+/// For `n > 64`, call `permanent_ryser::<Fp<5>>` or wait for future multi-word
+/// F_5 work. This function panics if `n > 64`.
+///
+/// The permanent of an `n × n` matrix `A` over `F_5` is:
+///
+/// ```text
+/// perm(A) = sum over all permutations sigma of prod_{i=0}^{n-1} A[i, sigma(i)]
+/// ```
+///
+/// Evaluated via Ryser's inclusion-exclusion formula in Gray-code order:
+///
+/// ```text
+/// perm(A) = (-1)^n * sum_{S ⊆ [n], S ≠ ∅} (-1)^|S| * prod_{i=0}^{n-1} sum_{j ∈ S} A[i,j]
+/// ```
+///
+/// # Arguments
+///
+/// * `mat` — An `n × n` [`Packed5Matrix`] (column-major, `rows == cols`),
+///   with `n ≤ 64`.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_algebra::packed::Packed5Matrix;
+/// use gf2_algebra::permanent::permanent_bipedal5;
+/// use gf2_core::gfp::Fp;
+///
+/// // 2×2 identity over F_5: permanent = 1
+/// let id: Vec<Fp<5>> = vec![
+///     Fp::<5>::new(1), Fp::<5>::new(0),
+///     Fp::<5>::new(0), Fp::<5>::new(1),
+/// ];
+/// let m = Packed5Matrix::from_row_major(&id, 2, 2);
+/// assert_eq!(permanent_bipedal5(&m), Fp::<5>::new(1));
+///
+/// // 2×2 all-ones over F_5: permanent = 2! mod 5 = 2
+/// let ones: Vec<Fp<5>> = vec![Fp::<5>::new(1); 4];
+/// let m2 = Packed5Matrix::from_row_major(&ones, 2, 2);
+/// assert_eq!(permanent_bipedal5(&m2), Fp::<5>::new(2));
+/// ```
+///
+/// # Panics
+///
+/// Panics if `mat.rows() != mat.cols()` (matrix must be square).
+///
+/// Panics if `mat.cols() > 64` (single-word path requires `n ≤ 64`; for
+/// `n > 64` use `permanent_ryser::<Fp<5>>` or wait for future multi-word work).
+///
+/// # Complexity
+///
+/// `O(n · 2^n)` field operations over `Fp<5>`:
+/// - Matrix prep: `O(n^2)` one-time lane-by-lane column extraction.
+/// - Gray walk: `2^n - 1` steps, each with 1 `add_assign` or `sub_assign`
+///   (O(1) per `Packed5Vec` word) plus 1 `Packed5::fold_mul_first_n` (O(n)
+///   lane-decode passes, bounded constant at n ≤ 64).
+/// - Space: `O(n)` extra (the `columns` Vec plus one `Packed5Vec` col-sum word).
+pub fn permanent_bipedal5(mat: &Packed5Matrix) -> Fp<5> {
+    let n = mat.cols();
+    assert_eq!(
+        mat.rows(),
+        n,
+        "permanent_bipedal5: matrix must be square (rows={}, cols={})",
+        mat.rows(),
+        n
+    );
+    assert!(
+        n <= <Packed5 as PackedField<Fp<5>>>::LANES,
+        "permanent_bipedal5: single-word path requires n <= {} (Packed5::LANES); \
+         got n = {}. For n > {} use permanent_ryser::<Fp<5>> or wait for future \
+         multi-word F_5 work.",
+        <Packed5 as PackedField<Fp<5>>>::LANES,
+        n,
+        <Packed5 as PackedField<Fp<5>>>::LANES,
+    );
+
+    permanent_bipedal5_singleword(mat)
+}
+
+/// Compute the permanent of an `n × n` matrix over `F_5` using the
+/// single-`Packed5Vec` fast path.
+///
+/// This is the inner implementation called by [`permanent_bipedal5`].
+/// It is also exposed as `pub` so callers that are certain of `n ≤ 64` can
+/// call it directly (e.g., for cross-checks that bypass the dispatcher).
+///
+/// The algorithm mirrors `permanent_bipedal3_singleword`:
+/// 1. Extract each column `j` into a `Packed5Vec` of length `n`.
+/// 2. Walk Gray-code subsets: each step adds or subtracts one column into
+///    the running column-sum `Packed5Vec`.
+/// 3. At each step, fold the first `n` lanes of the column-sum into a
+///    scalar `Fp<5>` via `Packed5::fold_mul_first_n` and accumulate into
+///    the Ryser running total with the appropriate sign.
+/// 4. Apply the outer `(-1)^n` factor.
+///
+/// # Arguments
+///
+/// * `mat` — An `n × n` [`Packed5Matrix`], with `n ≤ 64`.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_algebra::packed::Packed5Matrix;
+/// use gf2_algebra::permanent::bipedal5::permanent_bipedal5_singleword;
+/// use gf2_core::gfp::Fp;
+///
+/// let id: Vec<Fp<5>> = vec![
+///     Fp::<5>::new(1), Fp::<5>::new(0),
+///     Fp::<5>::new(0), Fp::<5>::new(1),
+/// ];
+/// let m = Packed5Matrix::from_row_major(&id, 2, 2);
+/// assert_eq!(permanent_bipedal5_singleword(&m), Fp::<5>::new(1));
+/// ```
+///
+/// # Panics
+///
+/// Panics if `mat.rows() != mat.cols()` or `mat.cols() > 64`.
+///
+/// # Complexity
+///
+/// `O(n · 2^n)` — same as [`permanent_bipedal5`].
+pub fn permanent_bipedal5_singleword(mat: &Packed5Matrix) -> Fp<5> {
+    let n = mat.cols();
+    assert_eq!(
+        mat.rows(),
+        n,
+        "permanent_bipedal5_singleword: matrix must be square (rows={}, cols={})",
+        mat.rows(),
+        n
+    );
+    assert!(
+        n <= <Packed5 as PackedField<Fp<5>>>::LANES,
+        "permanent_bipedal5_singleword: single-word path requires n <= {}; got n = {}",
+        <Packed5 as PackedField<Fp<5>>>::LANES,
+        n
+    );
+
+    // Edge case: the 0×0 matrix has exactly one permutation (the empty
+    // one), whose product over an empty index set is the vacuous product 1.
+    if n == 0 {
+        return Fp::<5>::new(1);
+    }
+
+    // One-time matrix-prep: extract each column j into a Packed5 word.
+    // Lane i of columns[j] holds A[i,j] for i in 0..n; lanes n..63 are 0
+    // (the additive identity, i.e. all bit-planes zero).
+    //
+    // Cost: O(n^2) — dominated by the O(n · 2^n) Gray walk for n ≥ 4.
+    let mut columns: Vec<Packed5> = Vec::with_capacity(n);
+    for j in 0..n {
+        let col_vec = mat.column(j);
+        let mut col = Packed5::zero();
+        for i in 0..n {
+            col = col.with_lane(i, col_vec.get(i));
+        }
+        columns.push(col);
+    }
+
+    // Column-sum accumulator as a single Packed5 word.
+    // Lane i of col_sum holds sum_{j ∈ S} A[i,j] mod 5.
+    // Lanes n..63 stay 0 throughout (add/sub leave them at 0, and
+    // fold_mul_first_n only reads lanes 0..n-1).
+    //
+    // We use a Packed5Vec of length n as the accumulator so that we can
+    // use the add_assign / sub_assign trait methods. Internally it stores
+    // one full Packed5 word (n <= 64 fits in one word).
+    use crate::packed::Packed5Vec;
+    let mut col_sum = Packed5Vec::zeros(n);
+
+    // Running Ryser accumulator and subset-size counter.
+    let mut total = Fp::<5>::new(0);
+    let mut subset_size: usize = 0;
+
+    // Gray walk: enumerate all 2^n - 1 non-empty subsets of [n].
+    // At each step (flip, parity):
+    //   flip   — which column just entered or left S
+    //   parity — +1 (entered, ADD) or -1 (left, SUB)
+    for (flip, parity) in gray_code_iter(n) {
+        // Build a Packed5Vec of length n from the precomputed Packed5 word.
+        // We need to call add_assign/sub_assign on Packed5Vec objects of equal length.
+        let col_as_vec = col_as_packed5vec(&columns[flip], n);
+
+        if parity == 1 {
+            // col_sum += columns[flip]
+            subset_size += 1;
+            col_sum.add_assign(&col_as_vec);
+        } else {
+            // col_sum -= columns[flip]
+            subset_size -= 1;
+            col_sum.sub_assign(&col_as_vec);
+        }
+
+        // Horizontal fold via F_5 multiplication of the first n lanes.
+        // Extract the single underlying Packed5 word from col_sum and fold.
+        let col_sum_word = packed5vec_to_word(&col_sum);
+        let term = col_sum_word.fold_mul_first_n(n);
+
+        // Ryser sign: (-1)^|S| in F_5 means +1 for even |S|, -1 (= 4 in F_5) for odd.
+        if subset_size % 2 == 1 {
+            total = total - term;
+        } else {
+            total += term;
+        }
+    }
+
+    // Apply the outer (-1)^n factor from Ryser's formula.
+    // In F_5, -1 == 4, so (-1)^n == 4^n mod 5, which cycles: 1, 4, 1, 4, ...
+    // i.e. if n is even, factor = 1; if n is odd, factor = -1 = 4.
+    if n % 2 == 1 {
+        -total
+    } else {
+        total
+    }
+}
+
+/// Convert a `Packed5` word into a `Packed5Vec` of length `n` (n ≤ 64).
+///
+/// This helper is used internally to call `add_assign`/`sub_assign` on the
+/// column-sum accumulator (a `Packed5Vec`) with the column data (stored as a
+/// `Packed5` word, but needing to match the accumulator's `len_lanes`).
+#[inline]
+fn col_as_packed5vec(col: &Packed5, n: usize) -> crate::packed::Packed5Vec {
+    // Build a Packed5Vec by extracting all n lanes from the Packed5 word.
+    // This is O(n) and bounded by n <= 64.
+    let lanes: Vec<Fp<5>> = (0..n).map(|i| col.lane(i)).collect();
+    crate::packed::Packed5Vec::from_field_slice(&lanes)
+}
+
+/// Extract the single `Packed5` word from a `Packed5Vec` of length ≤ 64.
+///
+/// For single-word vecs (n ≤ 64), this just re-encodes the lane values
+/// back into a `Packed5` word so that `fold_mul_first_n` can be called.
+/// This is O(n) and bounded by n <= 64.
+#[inline]
+fn packed5vec_to_word(v: &crate::packed::Packed5Vec) -> Packed5 {
+    let n = v.len();
+    let mut word = Packed5::zero();
+    for i in 0..n {
+        word = word.with_lane(i, v.get(i));
+    }
+    word
+}
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::packed::Packed5Matrix;
+    use crate::permanent::ryser::permanent_ryser;
+    use crate::testutil::random_matrix;
+    use gf2_core::gfp::Fp;
+
+    /// Wrap a row-major `Vec<Fp<5>>` into a `Packed5Matrix`.
+    fn to_packed5_matrix(row_major: &[Fp<5>], n: usize) -> Packed5Matrix {
+        Packed5Matrix::from_row_major(row_major, n, n)
+    }
+
+    // -----------------------------------------------------------------------
+    // Hand-checked test vectors
+    // -----------------------------------------------------------------------
+
+    /// `permanent_bipedal5` of the 0×0 matrix is `Fp::<5>::new(1)` (vacuous product).
+    #[test]
+    fn test_permanent5_empty_matrix() {
+        let m = Packed5Matrix::from_row_major(&[], 0, 0);
+        assert_eq!(
+            permanent_bipedal5(&m),
+            Fp::<5>::new(1),
+            "0×0 permanent must be 1"
+        );
+    }
+
+    /// A 1×1 matrix `[v]` has permanent = `v`.
+    #[test]
+    fn test_permanent5_1x1() {
+        for v in 0u64..5 {
+            let row = vec![Fp::<5>::new(v)];
+            let m = Packed5Matrix::from_row_major(&row, 1, 1);
+            assert_eq!(
+                permanent_bipedal5(&m),
+                Fp::<5>::new(v),
+                "1×1 permanent of [{v}] must be {v}"
+            );
+        }
+    }
+
+    /// `I_n` has permanent = 1 for `n ∈ {1, 2, 3, 4}`.
+    #[test]
+    fn test_permanent5_identity_n() {
+        for n in 1..=4usize {
+            let mut id = vec![Fp::<5>::new(0); n * n];
+            for i in 0..n {
+                id[i * n + i] = Fp::<5>::new(1);
+            }
+            let m = Packed5Matrix::from_row_major(&id, n, n);
+            assert_eq!(
+                permanent_bipedal5(&m),
+                Fp::<5>::new(1),
+                "identity permanent must be 1 for n={n}"
+            );
+        }
+    }
+
+    /// All-ones `n×n` matrix: permanent = `n! mod 5` for `n ∈ {1, 2, 3, 4}`.
+    ///
+    /// n! mod 5: n=1 → 1, n=2 → 2, n=3 → 6 ≡ 1, n=4 → 24 ≡ 4.
+    #[test]
+    fn test_permanent5_all_ones_n() {
+        // n! mod 5: {1, 2, 1, 4}
+        let expected = [1u64, 2, 1, 4];
+        for n in 1..=4usize {
+            let ones = vec![Fp::<5>::new(1); n * n];
+            let m = Packed5Matrix::from_row_major(&ones, n, n);
+            assert_eq!(
+                permanent_bipedal5(&m),
+                Fp::<5>::new(expected[n - 1]),
+                "all-ones permanent for n={n} must be {} (= n! mod 5)",
+                expected[n - 1]
+            );
+        }
+    }
+
+    /// 2×2 explicit test vector from direct calculation.
+    ///
+    /// Matrix: [[1,2],[3,4]], perm = 1*4 + 2*3 = 4 + 6 = 10 ≡ 0 mod 5.
+    #[test]
+    fn test_permanent5_2x2_known_vector() {
+        let data: Vec<Fp<5>> = vec![
+            Fp::<5>::new(1),
+            Fp::<5>::new(2),
+            Fp::<5>::new(3),
+            Fp::<5>::new(4),
+        ];
+        let m = Packed5Matrix::from_row_major(&data, 2, 2);
+        // perm = 1*4 + 2*3 = 4 + 6 = 10 mod 5 = 0
+        assert_eq!(permanent_bipedal5(&m), Fp::<5>::new(0));
+    }
+
+    // -----------------------------------------------------------------------
+    // Panic tests
+    // -----------------------------------------------------------------------
+
+    /// Non-square matrix panics.
+    #[test]
+    #[should_panic(expected = "matrix must be square")]
+    fn test_permanent5_panics_on_non_square() {
+        let data = vec![Fp::<5>::new(0); 3 * 5];
+        let m = Packed5Matrix::from_row_major(&data, 3, 5);
+        let _ = permanent_bipedal5(&m);
+    }
+
+    /// `n > 64` panics.
+    #[test]
+    #[should_panic(expected = "single-word path requires n <=")]
+    fn test_permanent5_panics_on_n_65() {
+        let data = vec![Fp::<5>::new(0); 65 * 65];
+        let m = Packed5Matrix::from_row_major(&data, 65, 65);
+        let _ = permanent_bipedal5(&m);
+    }
+
+    // -----------------------------------------------------------------------
+    // Cross-checks: permanent_bipedal5 vs permanent_ryser<Fp<5>>
+    // Per-n tests with 1000 random matrices each.
+    //
+    // Timing budget (release mode):
+    //   n=1..12  — fast tier: 2^n <= 4096 Gray steps; 1000 matrices well
+    //              within 5 s (each matrix: sub-millisecond).
+    //   n=13..14 — fast tier: 2^13=8192, 2^14=16384 steps; 1000 matrices
+    //              x ~1 ms each = ~1-2 s total — within 5 s.
+    //              (The issue criterion requires n ∈ {1,...,14}.)
+    //
+    // Ryser oracle at n=14: 16384 steps × ~5 ns/step ≈ 82 µs/matrix,
+    // × 1000 = 82 ms total — safely within 5 s.
+    // -----------------------------------------------------------------------
+
+    macro_rules! cross_check_n {
+        ($name:ident, $n:expr) => {
+            #[test]
+            fn $name() {
+                let n = $n;
+                let seed_base: u64 =
+                    0xc6d5_b4a3_0000_0000_u64.wrapping_add(n as u64);
+                for trial in 0u64..1000 {
+                    let seed = seed_base.wrapping_add(trial.wrapping_mul(1_000_003));
+                    let row_major = random_matrix::<5>(n, seed);
+                    let mat = to_packed5_matrix(&row_major, n);
+                    let expected = permanent_ryser::<Fp<5>>(&row_major, n);
+                    let actual = permanent_bipedal5(&mat);
+                    assert_eq!(
+                        actual, expected,
+                        "permanent mismatch: n={n}, trial={trial}, seed={seed:#018x}"
+                    );
+                }
+            }
+        };
+        ($name:ident, $n:expr, slow) => {
+            #[test]
+            #[ignore = "sim: per-n cross-check (n>14, 1000 matrices) — slow oracle, multi-second runtime"]
+            fn $name() {
+                let n = $n;
+                let seed_base: u64 =
+                    0xc6d5_b4a3_0000_0000_u64.wrapping_add(n as u64);
+                for trial in 0u64..1000 {
+                    let seed = seed_base.wrapping_add(trial.wrapping_mul(1_000_003));
+                    let row_major = random_matrix::<5>(n, seed);
+                    let mat = to_packed5_matrix(&row_major, n);
+                    let expected = permanent_ryser::<Fp<5>>(&row_major, n);
+                    let actual = permanent_bipedal5(&mat);
+                    assert_eq!(
+                        actual, expected,
+                        "permanent mismatch: n={n}, trial={trial}, seed={seed:#018x}"
+                    );
+                }
+            }
+        };
+    }
+
+    cross_check_n!(test_cross_check_n1, 1);
+    cross_check_n!(test_cross_check_n2, 2);
+    cross_check_n!(test_cross_check_n3, 3);
+    cross_check_n!(test_cross_check_n4, 4);
+    cross_check_n!(test_cross_check_n5, 5);
+    cross_check_n!(test_cross_check_n6, 6);
+    cross_check_n!(test_cross_check_n7, 7);
+    cross_check_n!(test_cross_check_n8, 8);
+    cross_check_n!(test_cross_check_n9, 9);
+    cross_check_n!(test_cross_check_n10, 10);
+    cross_check_n!(test_cross_check_n11, 11);
+    cross_check_n!(test_cross_check_n12, 12);
+    cross_check_n!(test_cross_check_n13, 13);
+    cross_check_n!(test_cross_check_n14, 14);
+    // n=15..16: 2^15=32768, 2^16=65536 steps; 1000 matrices may push past 5 s.
+    cross_check_n!(test_cross_check_n15, 15, slow);
+    cross_check_n!(test_cross_check_n16, 16, slow);
+}

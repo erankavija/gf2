@@ -34,7 +34,7 @@ pub use bipedal3::{Bipedal3, Bipedal3Matrix, Bipedal3Vec};
 pub use scalar::{ScalarPackedFp3, ScalarPackedFp3Vec};
 
 #[cfg(feature = "f5")]
-pub use packed5::{Packed5, Packed5Vec};
+pub use packed5::{Packed5, Packed5Matrix, Packed5Vec};
 
 #[cfg(feature = "f7")]
 pub use packed7::{Packed7, Packed7Vec};

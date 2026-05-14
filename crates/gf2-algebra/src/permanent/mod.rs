@@ -45,5 +45,8 @@ pub use parallel_bipedal3::permanent_bipedal3_parallel;
 #[cfg(feature = "f5")]
 pub mod bipedal5;
 
+#[cfg(feature = "f5")]
+pub use bipedal5::permanent_bipedal5;
+
 #[cfg(feature = "f7")]
 pub mod bipedal7;
