@@ -41,10 +41,11 @@ use crate::packed::{PackedField, PackedFieldVec};
 /// Compute the permanent of an `n × n` matrix over `F_5`, using the single-word
 /// Gray-code Ryser fast path.
 ///
-/// For `n ≤ 64` the column-sum vector fits in a single [`Packed5Vec`] word
-/// (one `u64`-triple per bit-plane). Each Gray-code step performs exactly one
-/// `add_assign` or `sub_assign` on the column-sum accumulator, followed by a
-/// horizontal fold via [`Packed5::fold_mul_first_n`] on the first `n` lanes.
+/// For `n ≤ 64` the column-sum fits in a single [`Packed5`] word (one
+/// `u64`-triple per bit-plane). Each Gray-code step performs exactly one
+/// O(1) [`Packed5::add`] or [`Packed5::sub`] on the column-sum accumulator,
+/// followed by a horizontal fold via [`Packed5::fold_mul_first_n`] on the
+/// first `n` lanes.
 ///
 /// **Matrix-size upper bound for the single-word path:** `n ≤ Packed5::LANES = 64`.
 /// For `n > 64`, call `permanent_ryser::<Fp<5>>` or wait for future multi-word
