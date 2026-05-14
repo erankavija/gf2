@@ -1270,9 +1270,11 @@ impl Packed5 {
 ///
 /// The column-major layout is the primary access pattern for the Gray-code
 /// Ryser permanent kernel ([`crate::permanent::permanent_bipedal5`]):
-/// storing each column as a contiguous `Packed5Vec` allows the per-step
-/// column-sum update (`col_sum.add_assign(columns[flip])` or `sub_assign`)
-/// to operate on the column data without scatter-gather.
+/// each column is pre-extracted into a single [`Packed5`] word once at
+/// matrix-prep time, and the per-step column-sum update is then an O(1)
+/// [`Packed5::add`] or [`Packed5::sub`] on the running accumulator (also a
+/// `Packed5` word) — no scatter-gather over the `Packed5Vec` column
+/// storage in the hot loop.
 ///
 /// # Mask-tail invariant
 ///
