@@ -2,7 +2,7 @@
   "id": "333028c1-c0e5-44f5-b20c-bb79fd540457",
   "title": "F_5 and F_7 cross-validation vs external CAS",
   "description": "Cross-validate `permanent_bipedal5` (T18) and `permanent_bipedal7` (T20) against an external computer algebra system (Sage or Magma) on a small test-vector suite, generated offline and committed.\n\n## Background\n\nThe in-tree oracle (`permanent_ryser<Fp<P>>`, T7) is sufficient for the epic's `[hard]` correctness criterion — but agreement with an external CAS gives independent confidence that even the oracle is right. Sage's `Matrix.permanent()` over `GF(5)` and `GF(7)` is the canonical second opinion.\n\nThis issue commits a CAS-generated test vector file at `crates/gf2-algebra/tests/data/cas_permanent_f5_f7.csv` (rows: `q, n, matrix_serialised, expected_permanent`) and an integration test that consumes it. The CSV is generated offline by a Sage script committed at `scripts/generate-cas-permanent-vectors.sage`; the script's reproducibility is verified manually before the data is committed.\n\n## Success Criteria\n\n- [ ] [hard] `crates/gf2-algebra/tests/data/cas_permanent_f5_f7.csv` exists with at least 100 vectors per $(q, n)$ cell for $q \\in \\{5, 7\\}$ and $n \\in \\{4, 6, 8, 10, 12\\}$.\n- [ ] [hard] `crates/gf2-algebra/tests/cas_cross_validation.rs` integration test reads the CSV and checks `permanent_bipedal5` / `permanent_bipedal7` match the CAS-recorded value bit-for-bit on every vector.\n- [ ] [hard] `scripts/generate-cas-permanent-vectors.sage` exists, is documented, and was run with a fixed RNG seed; running it again produces the same CSV.\n- [ ] [hard] `cargo nextest run -p gf2-algebra --release --profile ci` passes.",
-  "state": "backlog",
+  "state": "ready",
   "priority": "normal",
   "assignee": null,
   "dependencies": [
@@ -22,5 +22,5 @@
     "component:gf2-algebra"
   ],
   "created_at": "2026-05-09T09:46:42.902276838+00:00",
-  "updated_at": "2026-05-09T09:49:52.699554759+00:00"
+  "updated_at": "2026-05-14T17:42:36.644750813+00:00"
 }

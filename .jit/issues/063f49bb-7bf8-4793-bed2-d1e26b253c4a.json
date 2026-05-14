@@ -2,7 +2,7 @@
   "id": "063f49bb-7bf8-4793-bed2-d1e26b253c4a",
   "title": "permanent_bipedal7 implementation",
   "description": "Implement `permanent_bipedal7` over the F_7 packed type (T19) using `gray_code_iter` and `Packed7Vec::fold_mul`.\n\n## Background\n\nMirrors the F_3 / F_5 paths: Gray-code walk, packed column-sum updates, fold via the F_7 multiplication tree at each step. Function lives at `gf2-algebra::permanent::permanent_bipedal7`.\n\n## Success Criteria\n\n- [ ] [hard] `gf2-algebra::permanent::permanent_bipedal7(matrix: &Packed7Matrix) -> Fp<7>` exists.\n- [ ] [hard] Single-word matrix-size bound documented and matches `Packed7::LANES`.\n- [ ] [hard] Output bit-identical to `permanent_ryser<Fp<7>>` (T7) on 1000 random matrices for each $n \\in \\{1, \\ldots, 14\\}$ — covers epic success criterion 6.\n- [ ] [hard] `cargo nextest run -p gf2-algebra --release --profile ci` passes.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:claude-wt-063f49bb",
   "dependencies": [
@@ -14,15 +14,15 @@
     "tests"
   ],
   "gates_status": {
-    "tests": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-14T14:45:47.683230605Z"
-    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-05-14T14:45:41.557526873Z"
+    },
+    "tests": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-14T14:45:47.683230605Z"
     },
     "code-review": {
       "status": "passed",
@@ -38,5 +38,5 @@
     "component:gf2-algebra"
   ],
   "created_at": "2026-05-09T09:46:24.470468134+00:00",
-  "updated_at": "2026-05-14T16:51:48.800863078+00:00"
+  "updated_at": "2026-05-14T17:42:36.518407777+00:00"
 }

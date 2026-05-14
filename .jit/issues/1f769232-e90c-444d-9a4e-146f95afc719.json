@@ -2,7 +2,7 @@
   "id": "1f769232-e90c-444d-9a4e-146f95afc719",
   "title": "SIMD F_5 plus F_7 kernels in gf2-kernels-simd",
   "description": "Instantiate the generic `BatchedBipedalLike` framework (T16) for F_5 and F_7 in `gf2-kernels-simd`, with proptest cross-checks against the scalar packed types.\n\n## Background\n\nOnce T16 (the generic framework) and T17/T19 (per-prime packed types and op formulas) are in place, the SIMD kernels are a small wiring task: define `BipedalLikeConfig` impls for F_5 and F_7, instantiate `BatchedBipedalLike` for each, expose lane-batch primitives that `gf2-algebra` dispatches to.\n\nSame `unsafe` and asm-artefact rules as T12.\n\n## Success Criteria\n\n- [ ] [hard] `gf2-kernels-simd::bipedal::packed5` and `gf2-kernels-simd::bipedal::packed7` modules exist ~~with `BipedalLikeConfig` impls and AVX2 instantiations~~ **with AVX2-backed runtime-detection bundles + scalar fallbacks** (see Amendment 2026-05-14).\n- [ ] [hard] Lane-batch `add`, `sub`, `mul`, `neg` proptest-match scalar `Packed5`/`Packed7` ops on 1000 random inputs each.\n- [ ] [hard] Runtime AVX2 detection wires through; scalar fallback when absent.\n- [ ] [hard] `cargo nextest run -p gf2-kernels-simd --release --profile ci` passes.\n- [ ] [hard] `asm-artefact-present` gate passes for both kernels.\n- [ ] [aspirational] AVX-512 paths exist for both primes, gated behind `cfg(target_feature = \"avx512f\")`. **Deferred — not implemented in this issue (see Amendment 2026-05-14).**\n\n## Amendment 2026-05-14 (user-approved — drop BipedalLikeConfig requirement for F_5/F_7)\n\nThe original criterion 1 required `BipedalLikeConfig` impls for both F_5 and F_7. The post-R1 / post-R2 encoding decisions made this infeasible:\n\n- **F_5 (R1 Candidate D)** uses a 3-plane bit-sliced encoding `(b0, b1, b2)` per operand. The `BipedalLikeConfig` trait's `MagLane` / `SgnLane` associated types impose a 2-plane `(mag, sgn)` shape per operand, which cannot losslessly represent F_5 value 4 (which requires `b2 = 1`). A `Config5: BipedalLikeConfig` impl that zeroes `b2` silently corrupts results for any input containing value 4 — a correctness violation.\n- **F_7 (R2 Candidate A)** uses a 3-bit-per-lane LUT encoding (`ADD7_LUT`, `SUB7_LUT`, `MUL7_LUT`), which fits in 1 plane per operand. A `Config7: BipedalLikeConfig` impl that ignores the `sgn` plane is technically faithful but dead code, since the production F_7 path already uses dedicated single-plane LUT batch entry points.\n\n**Resolution:** F_5 and F_7 ship via dedicated AVX2 batch entry points (`run_add5_batch`, `run_sub5_batch`, `run_mul5_batch`, `run_neg5_batch` in `x86/bipedal_avx2_packed5.rs`; same family for F_7 in `x86/bipedal_avx2_packed7.rs`) plus runtime-detection bundles (`F5AvxFns`, `F7AvxFns`) and scalar fallbacks. The `BipedalLikeConfig` framework integration is dropped — it cannot honestly support the post-R1 / post-R2 encodings without an architectural extension (3-plane `BipedalLikeConfig` variant), which is out of scope for this issue.\n\nThe criterion text above is amended to read \"AVX2-backed runtime-detection bundles + scalar fallbacks\" instead of \"BipedalLikeConfig impls and AVX2 instantiations\". All other criteria (proptest cross-checks, runtime detection, `cargo nextest`, `asm-artefact-present`) are unchanged.\n\nThe aspirational AVX-512 criterion is recorded as deferred (no implementation in this issue). A future SIMD-platform-expansion issue (`f8d230ef` and siblings in epic `7f809931`) is the natural home for AVX-512 F_5/F_7 work.\n\nApproved by user 2026-05-14 (epic ae82bd73 session 8, AskUserQuestion option A: \"Amend criterion: drop BipedalLikeConfig requirement for F_5/F_7\").",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:claude-wt-1f769232",
   "dependencies": [
@@ -15,20 +15,20 @@
     "asm-artefact-present"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "failed",
+    "asm-artefact-present": {
+      "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-14T17:37:07.604727824Z"
+      "updated_at": "2026-05-14T14:47:37.568702324Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-14T17:40:27.389854423Z"
     },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-05-14T14:47:31.434350499Z"
-    },
-    "asm-artefact-present": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-14T14:47:37.568702324Z"
     }
   },
   "context": {},
@@ -39,5 +39,5 @@
     "component:gf2-kernels-simd"
   ],
   "created_at": "2026-05-09T09:46:32.458128880+00:00",
-  "updated_at": "2026-05-14T17:39:17.951529756+00:00"
+  "updated_at": "2026-05-14T17:42:37.014959529+00:00"
 }
