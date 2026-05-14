@@ -3,7 +3,7 @@
 **Issue:** `8c902184` — Freeze gf2-algebra public API surface for verification
 **Epic:** `ae82bd73` — Fast matrix permanents over F_3 / F_5 / F_7
 **Drafted:** 2026-05-14 (session 8)
-**Status:** Awaiting user sign-off (see `## Approval` section)
+**Status:** Approved 2026-05-14 (see `## Approval` section)
 
 ## Why this freeze
 
@@ -71,6 +71,7 @@ re-export.
 | Symbol | Defined in | Notes |
 |---|---|---|
 | `gray_code_iter` | `gray.rs` | Used by every `permanent_bipedal*` impl; signature consumed by V1 + V2 + V3. |
+| `gray_code_index_to_subset` | `gray.rs` | Direct subset-from-index oracle; consumed by Lean proofs that need a closed-form Gray indexing. |
 
 ### GPU dispatch surface
 
@@ -82,11 +83,11 @@ no W6 proof currently consumes GPU code).
 
 ## W6 consumers — what each issue proves against the frozen surface
 
-| W6 issue | Targets the frozen symbols | Proof sketch |
-|---|---|---|
-| `f05ffbe1` — Lean proof, bipedal F_3 correctness per D2 sketch | `permanent::bipedal3::permanent_bipedal3_singleword` (via `Bipedal3::{add,sub,mul,neg}` underlying op formulas) | Approved sketch: `a0c0a45f` |
-| `0606186a` — Lean proof, Ryser bounded n ≤ 63 per D3 sketch | `permanent::ryser::permanent_ryser` generic over `FiniteField`; bounded `n ≤ 63` | Approved sketch: `4aaa6e4d` |
-| `30e98ef1` — Lean proof, F_5 / F_7 packed correctness (aspirational) | `permanent::bipedal5::permanent_bipedal5_singleword` and `permanent::bipedal7::permanent_bipedal7_singleword`; underlying `Packed5::{add,sub,mul,neg}` and `Packed7::{add,sub,mul,neg}` | New sketch required (R1 Candidate D 3-plane proof shape; R2 Candidate A LUT proof shape). If sketch proves intractable, criterion is amended per the `[aspirational]` marker. |
+| W6 issue | Targets the frozen symbols | Upstream W1–W5 sources | Proof sketch |
+|---|---|---|---|
+| `f05ffbe1` — Lean proof, bipedal F_3 correctness per D2 sketch | `permanent::bipedal3::permanent_bipedal3_singleword` (via `Bipedal3::{add,sub,mul,neg}` underlying op formulas) | T13 (`053e4016` Bipedal3Vec) + T15 (`05250df5` parallel) | Approved sketch: `a0c0a45f` |
+| `0606186a` — Lean proof, Ryser bounded n ≤ 63 per D3 sketch | `permanent::ryser::permanent_ryser` generic over `FiniteField`; bounded `n ≤ 63` | T13 (`053e4016`) for the trait surface | Approved sketch: `4aaa6e4d` |
+| `30e98ef1` — Lean proof, F_5 / F_7 packed correctness (aspirational) | `permanent::bipedal5::permanent_bipedal5_singleword` and `permanent::bipedal7::permanent_bipedal7_singleword`; underlying `Packed5::{add,sub,mul,neg}` and `Packed7::{add,sub,mul,neg}` | T18 (`684a6715` permanent_bipedal5) + T20 (`063f49bb` permanent_bipedal7) + T26 (`2fbbdfa5` future host-side dispatcher — deferred until 2fbbdfa5 lands) | New sketch required (R1 Candidate D 3-plane proof shape; R2 Candidate A LUT proof shape). If sketch proves intractable, criterion is amended per the `[aspirational]` marker. |
 
 ## Change-control protocol (post-freeze)
 
