@@ -25,6 +25,13 @@
 
 mod ffi;
 
+/// Per-prime permanent computation kernels (placeholder scaffold).
+///
+/// Populated by downstream issues ad55b777, b43cdf33, and 5c0505b2.
+/// Only compiled when the `hip` Cargo feature is enabled.
+#[cfg(feature = "hip")]
+pub mod permanent;
+
 use std::ffi::c_void;
 use std::ptr;
 
@@ -292,6 +299,7 @@ impl GpuBcjrBatch {
     /// let (app, ext) = gpu.decode_batch(&inputs).unwrap();
     /// assert_eq!(app.len(), 4);
     /// ```
+    #[allow(clippy::type_complexity)]
     pub fn decode_batch(
         &self,
         inputs: &[Vec<f32>],
