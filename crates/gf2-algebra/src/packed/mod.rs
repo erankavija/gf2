@@ -37,7 +37,7 @@ pub use scalar::{ScalarPackedFp3, ScalarPackedFp3Vec};
 pub use packed5::{Packed5, Packed5Matrix, Packed5Vec};
 
 #[cfg(feature = "f7")]
-pub use packed7::{Packed7, Packed7Vec};
+pub use packed7::{Packed7, Packed7Matrix, Packed7Vec};
 
 /// Fixed-LANES lane-parallel arithmetic over an underlying scalar field `F`.
 ///
