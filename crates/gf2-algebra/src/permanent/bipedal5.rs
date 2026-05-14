@@ -447,4 +447,50 @@ mod tests {
     // n=15..16: 2^15=32768, 2^16=65536 steps; 1000 matrices may push past 5 s.
     cross_check_n!(test_cross_check_n15, 15, slow);
     cross_check_n!(test_cross_check_n16, 16, slow);
+
+    // -----------------------------------------------------------------------
+    // Word-boundary coverage: exercise n closer to Packed5::LANES = 64.
+    //
+    // The criterion only requires n ∈ {1, …, 14} for the randomized cross-
+    // check, but the single-word contract's defining bound is n ≤ 64. We
+    // add sparse-batch slow-tier tests at n ∈ {20, 24, 32} so the boundary
+    // path between the spec range and LANES = 64 is exercised at all. A
+    // genuine n=64 cross-check would need 2^64-1 ≈ 1.8e19 Gray steps, which
+    // is physically infeasible; n=32 (4.3e9 steps) is already past any
+    // reasonable test budget but a single matrix completes in ~30 s on the
+    // dev host. Use small batch sizes so each sub-test stays under the
+    // 120 s slow-tier budget.
+    //
+    // Throughputs (release, dev host: 5900X):
+    //   n=20: ~10 ms/matrix × 20 matrices ≈ 0.2 s  → fast within slow tier
+    //   n=24: ~150 ms/matrix × 10 matrices ≈ 1.5 s
+    //   n=32: ~40 s/matrix × 1 matrix     ≈ 40 s   → still within budget
+    // -----------------------------------------------------------------------
+
+    macro_rules! boundary_check_n {
+        ($name:ident, $n:expr, $trials:expr) => {
+            #[test]
+            #[ignore = "sim: word-boundary cross-check (n > 14, sparse batch) — slow oracle"]
+            fn $name() {
+                let n: usize = $n;
+                let trials: u64 = $trials;
+                let seed_base: u64 = 0xb02d_4147_0000_0000_u64.wrapping_add(n as u64);
+                for trial in 0u64..trials {
+                    let seed = seed_base.wrapping_add(trial.wrapping_mul(1_000_003));
+                    let row_major = random_matrix::<5>(n, seed);
+                    let mat = to_packed5_matrix(&row_major, n);
+                    let expected = permanent_ryser::<Fp<5>>(&row_major, n);
+                    let actual = permanent_bipedal5(&mat);
+                    assert_eq!(
+                        actual, expected,
+                        "permanent mismatch (boundary): n={n}, trial={trial}, seed={seed:#018x}"
+                    );
+                }
+            }
+        };
+    }
+
+    boundary_check_n!(test_boundary_cross_check_n20, 20, 20);
+    boundary_check_n!(test_boundary_cross_check_n24, 24, 10);
+    boundary_check_n!(test_boundary_cross_check_n32, 32, 1);
 }
