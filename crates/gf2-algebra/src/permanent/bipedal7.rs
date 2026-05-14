@@ -351,13 +351,12 @@ mod tests {
     // Per the issue success criteria: 1000 random matrices for each
     // n ∈ {1, …, 14} (covers epic success criterion 6).
     //
-    // Timing analysis (release mode):
+    // Timing analysis (release mode, dev host: 5900X):
     //   Each Ryser call: O(n · 2^n) ops.
-    //   n=1..12: 2^12 = 4096 steps × 1000 matrices — fast tier (well < 5 s).
-    //   n=13:    2^13 = 8192 steps × 1000 matrices — borderline; in practice
-    //            the Ryser scalar oracle dominates. Kept in fast tier; if it
-    //            exceeds 5 s, split to slow tier.
-    //   n=14:    2^14 = 16384 steps × 1000 matrices — slow tier.
+    //   n=1..12: 2^12 = 4096 steps × 1000 matrices — well under 5 s.
+    //   n=13:    2^13 = 8192 steps × 1000 matrices — 0.64 s measured.
+    //   n=14:    2^14 = 16384 steps × 1000 matrices — 1.57 s measured.
+    //   All of n=1..14 fit the 5 s fast-tier budget.
     // -----------------------------------------------------------------------
 
     macro_rules! cross_check_n {
@@ -414,7 +413,6 @@ mod tests {
     cross_check_n!(test_cross_check_n10, 10);
     cross_check_n!(test_cross_check_n11, 11);
     cross_check_n!(test_cross_check_n12, 12);
-    // n=13..14: slow tier (1000 matrices × Ryser O(n·2^n) > 5 s per test).
-    cross_check_n!(test_cross_check_n13, 13, slow);
-    cross_check_n!(test_cross_check_n14, 14, slow);
+    cross_check_n!(test_cross_check_n13, 13);
+    cross_check_n!(test_cross_check_n14, 14);
 }
