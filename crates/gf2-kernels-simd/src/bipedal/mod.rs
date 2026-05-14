@@ -60,15 +60,21 @@
 pub mod bipedal3;
 pub mod framework;
 pub mod lanes;
+pub mod packed5;
+pub mod packed7;
 
 pub use bipedal3::Config3;
 pub use framework::{BatchedBipedalLike, BipedalLikeConfig};
 pub use lanes::BipedalLogicalLanes;
+pub use packed5::Config5;
+pub use packed7::Config7;
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub use bipedal3::Bipedal3x4;
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub use lanes::Avx2Lane;
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+pub use packed7::Bipedal7x4;
 
 /// AVX2 batch entry points for the F_3 instantiation.
 ///

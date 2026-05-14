@@ -8,6 +8,10 @@ mod avx2;
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub(crate) mod bipedal_avx2;
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+pub(crate) mod bipedal_avx2_packed5;
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+pub(crate) mod bipedal_avx2_packed7;
 #[cfg(all(
     any(target_arch = "x86", target_arch = "x86_64"),
     target_feature = "avx512f"
