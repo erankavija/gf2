@@ -28,3 +28,7 @@ proptest = { workspace = true }
 # reference for proptest cross-checks per b17bec62 success criterion 3.
 # Path-only dev-dep (the prototype is a non-workspace crate).
 f3-bipedal-prototype = { path = "../../dev/research/f3_bipedal" }
+# gf2-algebra provides the scalar Packed5 / Packed7 reference types used for
+# proptest cross-checks in src/bipedal/packed5.rs and packed7.rs
+# (issue 1f769232 success criterion 2).
+gf2-algebra = { path = "../gf2-algebra" }
