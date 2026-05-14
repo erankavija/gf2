@@ -7,10 +7,25 @@ fn main() {
 
     // Compile HIP kernels to a single static library. Both kernels share
     // the same hipcc flags; adding more kernels is a one-liner here.
-    cc::Build::new()
+    let mut build = cc::Build::new();
+    build
         .compiler(&hipcc)
         .file("hip/bcjr_kernel.hip")
-        .file("hip/gray_qam_demapper.hip")
+        .file("hip/gray_qam_demapper.hip");
+
+    // Compile per-prime permanent kernels when the `hip` feature is enabled.
+    // Non-`hip` builds (i.e., the crate built without `--features hip`) skip
+    // these files entirely so the build remains host-agnostic for the
+    // baseline kernel set.
+    let hip_feature = env::var("CARGO_FEATURE_HIP").is_ok();
+    if hip_feature {
+        build
+            .file("hip/permanent/permanent_bipedal3.hip")
+            .file("hip/permanent/permanent_bipedal5.hip")
+            .file("hip/permanent/permanent_bipedal7.hip");
+    }
+
+    build
         .flag("--offload-arch=gfx1030")
         .flag("-fPIC")
         .flag("-O3")
@@ -25,6 +40,11 @@ fn main() {
     // Rerun if kernel source changes
     println!("cargo:rerun-if-changed=hip/bcjr_kernel.hip");
     println!("cargo:rerun-if-changed=hip/gray_qam_demapper.hip");
+    if hip_feature {
+        println!("cargo:rerun-if-changed=hip/permanent/permanent_bipedal3.hip");
+        println!("cargo:rerun-if-changed=hip/permanent/permanent_bipedal5.hip");
+        println!("cargo:rerun-if-changed=hip/permanent/permanent_bipedal7.hip");
+    }
     println!("cargo:rerun-if-env-changed=ROCM_PATH");
 
     // Export the ROCm path for runtime library resolution
