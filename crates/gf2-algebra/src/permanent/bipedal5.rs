@@ -451,18 +451,28 @@ mod tests {
     // -----------------------------------------------------------------------
     // Word-boundary coverage: exercise n closer to Packed5::LANES = 64.
     //
-    // The criterion only requires n ∈ {1, …, 14} for the randomized cross-
-    // check, but the single-word contract's defining bound is n ≤ 64. We
-    // add sparse-batch slow-tier tests at n ∈ {20, 24, 32} so the boundary
-    // path between the spec range and LANES = 64 is exercised at all. A
-    // genuine n=64 cross-check would need 2^64-1 ≈ 1.8e19 Gray steps, which
-    // is physically infeasible; n=32 (4.3e9 steps) is already past any
-    // reasonable test budget but a single matrix completes in ~30 s on the
-    // dev host. Use small batch sizes so each sub-test stays under the
-    // 120 s slow-tier budget.
+    // CLAUDE.md:149 prescribes word-boundary coverage at 0, 1, 63, 64, 65.
+    // For permanent_bipedal5, literal positive cross-check at n = 63 / 64
+    // would need 2^n - 1 Gray steps — 9.2e18 / 1.8e19 respectively, both
+    // physically infeasible. n=32 (4.3e9 steps, ~30 s/matrix on the 5900X)
+    // is the largest dimension where even a single cross-check completes
+    // within the 120 s slow-tier budget; n ≥ 33 exceeds it.
+    //
+    // The boundary contract is covered as follows (full rationale in the
+    // issue's `## Amendment 2026-05-14` block, user-approved):
+    //   n = 0      → test_permanent5_empty_matrix (vacuous-product = 1)
+    //   n = 1      → test_permanent5_1x1
+    //   n = 65     → test_permanent5_panics_on_n_65 (panic boundary)
+    //   n = 15, 16 → cross_check_n!(_, _, slow), 1000 matrices each
+    //   n = 20/24/32 → sparse boundary cross-check below
+    //
+    // Bit-level word boundaries (bit 63 / 64 / 65 inside the u64-triple
+    // storage) are covered by the Packed5 / Packed5Vec type's own tests
+    // in `packed5.rs`; permanent_bipedal5 consumes Packed5 via its trait
+    // surface and inherits that coverage.
     //
     // Throughputs (release, dev host: 5900X):
-    //   n=20: ~10 ms/matrix × 20 matrices ≈ 0.2 s  → fast within slow tier
+    //   n=20: ~10 ms/matrix × 20 matrices ≈ 0.2 s
     //   n=24: ~150 ms/matrix × 10 matrices ≈ 1.5 s
     //   n=32: ~40 s/matrix × 1 matrix     ≈ 40 s   → still within budget
     // -----------------------------------------------------------------------
