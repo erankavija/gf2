@@ -28,7 +28,10 @@ extern "C" {
     ///
     /// - `matrix_ptr` — device pointer to an n×n row-major array of `u8`
     ///   elements in GF(3) (values 0, 1, 2).
-    /// - `n` — matrix dimension (n×n); must satisfy `1 <= n <= 64`.
+    /// - `n` — matrix dimension (n×n); must satisfy `1 <= n <= 63`. This is
+    ///   a GPU-specific limit: the sequential Gray walk at n=64 would require
+    ///   2^64 ≈ 1.8×10^19 steps (~600 years on gfx1030). The CPU reference
+    ///   `permanent_bipedal3_singleword` supports n=64 via a u128 counter.
     /// - `out_ptr` — device pointer to a single `u64` output that receives
     ///   the permanent value modulo 3 (in `{0, 1, 2}`).
     ///
@@ -49,7 +52,10 @@ extern "C" {
     /// - `matrices_ptr` — device pointer to `M` consecutive n×n row-major
     ///   arrays of `u8` elements in GF(3) (values 0, 1, 2). Matrix `i`
     ///   starts at `matrices_ptr + i * n * n`.
-    /// - `n` — matrix dimension (n×n); must satisfy `1 <= n <= 64`.
+    /// - `n` — matrix dimension (n×n); must satisfy `1 <= n <= 63`. This is
+    ///   a GPU-specific limit: the sequential Gray walk at n=64 would require
+    ///   2^64 ≈ 1.8×10^19 steps (~600 years on gfx1030). The CPU reference
+    ///   `permanent_bipedal3_singleword` supports n=64 via a u128 counter.
     /// - `m` — number of matrices (batch size); must be `>= 1`.
     /// - `out_ptr` — device pointer to `M` consecutive `u64` outputs. On
     ///   success, `out_ptr[i]` receives the permanent of matrix `i` modulo 3
@@ -116,7 +122,10 @@ extern "C" {
 ///
 /// - `matrix_ptr` — device pointer to an `n × n` row-major array of `u8`
 ///   elements in GF(3) (values `0`, `1`, `2`).
-/// - `n` — matrix dimension (`n × n`); must satisfy `1 <= n <= 64`.
+/// - `n` — matrix dimension (`n × n`); must satisfy `1 <= n <= 63`. This is
+///   a GPU-specific limit: the sequential Gray walk at n=64 would require
+///   2^64 steps (~600 years on gfx1030). The CPU reference
+///   `permanent_bipedal3_singleword` supports n=64 via a u128 counter.
 /// - `out_ptr` — device pointer to a single `u64` that receives the permanent
 ///   value modulo 3 (value in `{0, 1, 2}`).
 ///
@@ -125,7 +134,7 @@ extern "C" {
 /// - `matrix_ptr` must be a valid device allocation of at least `n * n` bytes,
 ///   containing GF(3) element values (`0`, `1`, `2`).
 /// - `out_ptr` must be a valid device allocation of at least 8 bytes.
-/// - `n` must satisfy `1 <= n <= 64`.
+/// - `n` must satisfy `1 <= n <= 63`.
 /// - The HIP runtime must be initialised and a device context must be active.
 ///
 /// # Examples
@@ -168,7 +177,10 @@ pub unsafe fn compute_permanent_gf3(matrix_ptr: *const u8, n: c_int, out_ptr: *m
 /// - `matrices_ptr` — device pointer to `m` consecutive n×n row-major arrays of
 ///   `u8` elements in GF(3) (values `0`, `1`, `2`). Matrix `i` starts at
 ///   `matrices_ptr + i * n * n`.
-/// - `n` — matrix dimension (`n × n`); must satisfy `1 <= n <= 64`.
+/// - `n` — matrix dimension (`n × n`); must satisfy `1 <= n <= 63`. This is
+///   a GPU-specific limit: the sequential Gray walk at n=64 would require
+///   2^64 steps (~600 years on gfx1030). The CPU reference
+///   `permanent_bipedal3_singleword` supports n=64 via a u128 counter.
 /// - `m` — batch size (number of matrices); must be `>= 1`.
 /// - `out_ptr` — device pointer to `m` consecutive `u64` outputs. On success,
 ///   `out_ptr[i]` receives the permanent of matrix `i` modulo 3 (value in
@@ -179,7 +191,7 @@ pub unsafe fn compute_permanent_gf3(matrix_ptr: *const u8, n: c_int, out_ptr: *m
 /// - `matrices_ptr` must be a valid device allocation of at least `m * n * n` bytes.
 /// - Each element must be a valid GF(3) value (`0`, `1`, or `2`).
 /// - `out_ptr` must be a valid device allocation of at least `m * 8` bytes.
-/// - `n` must satisfy `1 <= n <= 64`.
+/// - `n` must satisfy `1 <= n <= 63`.
 /// - `m` must be `>= 1`.
 /// - The HIP runtime must be initialised and a device context must be active.
 ///

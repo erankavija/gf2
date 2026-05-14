@@ -2,7 +2,7 @@
 //!
 //! Verifies that `permanent_bipedal3_hip_batch` produces results
 //! bit-identical to the CPU reference `permanent_bipedal3_singleword` on
-//! random matrices for each n ∈ {16, 24, 32, 40}.
+//! random matrices for each n ∈ {16, 24, 32, 40, 63}.
 //!
 //! All tests carry `#[ignore = "external: gfx1030 device required"]` per
 //! CLAUDE.md test-tier conventions.  Run them only on the dev host with ROCm
@@ -15,24 +15,24 @@
 //!     -E 'test(gpu_f3_bit_identity)'
 //! ```
 //!
-//! # Matrix counts per n
+//! # Matrix counts per n (contractual — Amendment 2026-05-15, option A)
 //!
-//! The n=40 case requires 2^40 ≈ 1T Gray steps per matrix.  Even at GPU
-//! clock speeds this takes ~30 minutes per matrix.  The counts below are
-//! chosen to keep the *total* test time under 10 minutes on a real gfx1030:
+//! The per-n counts below are the contractual values recorded in the
+//! ad55b777 issue description (Amendment 2026-05-15).  They reflect the
+//! wallclock cost of the sequential Gray walk on a single GPU block (gfx1030)
+//! and are not provisional:
 //!
 //! | n  | matrices | 2^n ops/matrix | estimated wall-clock |
 //! |----|----------|----------------|---------------------|
 //! | 16 | 100      | ~65K           | < 1 s               |
 //! | 24 | 100      | ~16M           | ~seconds            |
 //! | 32 | 10       | ~4G            | ~minutes            |
-//! | 40 | 1        | ~1T            | ~30 min (borderline)|
+//! | 40 | 1        | ~1T            | ~30 min             |
+//! | 63 | 1        | ~9.2×10^18     | infeasible in CI    |
 //!
-//! **Note for lead (criterion 2 amendment):** The n=32 cell (10 matrices,
-//! ~40G ops total) and n=40 cell (1 matrix, ~1T ops) may exceed 5 minutes
-//! wallclock on a single GPU block.  The lead should run these manually and
-//! amend criterion 2 if needed, replacing "100 random matrices for each n" with
-//! the counts documented above.
+//! The n=63 test documents the upper boundary of the GPU-supported range
+//! (1 ≤ n ≤ 63).  It must be run manually on gfx1030; it is not expected to
+//! complete in automated CI.
 
 #![cfg(feature = "hip")]
 
@@ -98,7 +98,7 @@ fn rand_fp3(state: &mut u64) -> u8 {
 /// This function allocates and frees device memory. It must only be called on
 /// a host with a live ROCm/HIP context (gfx1030 device present).
 unsafe fn run_bit_identity_check(n: usize, m_count: usize, seed: u64) {
-    assert!((1..=64).contains(&n), "n must be in 1..=64");
+    assert!((1..=63).contains(&n), "n must be in 1..=63");
     assert!(m_count >= 1, "m_count must be >= 1");
 
     let mat_bytes = n * n; // bytes per matrix (one u8 per GF(3) element)
@@ -189,7 +189,7 @@ unsafe fn run_bit_identity_check(n: usize, m_count: usize, seed: u64) {
 }
 
 // ---------------------------------------------------------------------------
-// Tests — one per n ∈ {16, 24, 32, 40}.
+// Tests — one per n ∈ {16, 24, 32, 40, 63}.
 // All gated on `#[cfg(feature = "hip")]` (inherited from the module-level
 // cfg) and `#[ignore = "external: gfx1030 device required"]`.
 // ---------------------------------------------------------------------------
@@ -210,11 +210,11 @@ fn gpu_f3_bit_identity_n24() {
     unsafe { run_bit_identity_check(24, 100, 0xDEAD_BEEF_CAFE_2400u64) }
 }
 
-/// n=32: 10 matrices (reduced from 100), ~4G ops each.
+/// n=32: 10 matrices, ~4G ops each — contractual count per Amendment 2026-05-15.
 ///
-/// Note for lead: 10 matrices × 4G ops ≈ 40G total operations. This may
-/// exceed 5 minutes on a single block per matrix. If wallclock exceeds 5
-/// minutes, criterion 2 should be amended to reflect these reduced counts.
+/// 10 matrices × ~4G ops ≈ 40G total operations. Estimated wall-clock is on
+/// the order of minutes on gfx1030. Run manually; not expected to complete in
+/// automated CI within the 5-second per-test budget.
 #[test]
 #[ignore = "external: gfx1030 device required"]
 fn gpu_f3_bit_identity_n32() {
@@ -222,16 +222,29 @@ fn gpu_f3_bit_identity_n32() {
     unsafe { run_bit_identity_check(32, 10, 0xDEAD_BEEF_CAFE_3200u64) }
 }
 
-/// n=40: 1 matrix (reduced from 100), ~1T ops.
+/// n=40: 1 matrix, ~1T ops — contractual count per Amendment 2026-05-15.
 ///
-/// Note for lead: 2^40 ≈ 1T Gray steps on a single GPU block at ~1 GHz
-/// compute throughput ≈ 30 minutes. This is borderline for an automated test.
-/// Criterion 2 should be amended to allow 1 matrix for n=40. The test code is
-/// present so the bit-identity contract is enforced when the lead runs it
-/// manually on gfx1030.
+/// 2^40 ≈ 1T Gray steps on a single GPU block; estimated ~30 minutes on
+/// gfx1030. Run manually on the dev host with ROCm installed; not suitable
+/// for automated CI.
 #[test]
 #[ignore = "external: gfx1030 device required"]
 fn gpu_f3_bit_identity_n40() {
     // SAFETY: requires a live HIP device context with gfx1030 support.
     unsafe { run_bit_identity_check(40, 1, 0xDEAD_BEEF_CAFE_4000u64) }
+}
+
+/// n=63: 1 matrix — documents the upper boundary of the GPU-supported range.
+///
+/// n=63 is the maximum supported by the GPU kernel (`1 <= n <= 63`). At n=64
+/// the sequential Gray walk would require 2^64 ≈ 1.8×10^19 steps (~600 years
+/// on gfx1030); that dimension is excluded from the GPU path. The CPU
+/// reference (`permanent_bipedal3_singleword`) handles n=64 via a u128
+/// Gray-code counter. This test catches any future regression at the
+/// boundary.
+#[test]
+#[ignore = "external: gfx1030 device required"]
+fn gpu_f3_bit_identity_n63() {
+    // SAFETY: requires a live HIP device context with gfx1030 support.
+    unsafe { run_bit_identity_check(63, 1, 0xDEAD_BEEF_CAFE_6300u64) }
 }
