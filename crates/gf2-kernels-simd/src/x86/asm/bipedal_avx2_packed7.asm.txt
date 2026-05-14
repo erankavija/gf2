@@ -1,0 +1,1499 @@
+; gf2-core PPC-spiral asm artefact
+; ---------------------------------------------------------
+; crate         : gf2-kernels-simd
+; primary       : gf2_kernels_simd::x86::bipedal_avx2_packed7::run_add7_batch
+; extra symbols : gf2_kernels_simd::x86::bipedal_avx2_packed7::run_sub7_batch gf2_kernels_simd::x86::bipedal_avx2_packed7::run_mul7_batch gf2_kernels_simd::x86::bipedal_avx2_packed7::run_neg7_batch
+; output        : crates/gf2-kernels-simd/src/x86/asm/bipedal_avx2_packed7.asm.txt
+; rustc         : rustc 1.95.0 (59807616e 2026-04-14)
+; host triple   : x86_64-unknown-linux-gnu
+; target-cpu    : <unset; rely on #[target_feature]>
+; RUSTFLAGS     : <empty>
+; commit        : 5c35cf9f
+; regenerated   : 2026-05-14T14:30:04Z
+; tool          : cargo-show-asm
+; ---------------------------------------------------------
+
+
+;==========================================================
+; symbol: gf2_kernels_simd::x86::bipedal_avx2_packed7::run_add7_batch
+;==========================================================
+
+    Finished `release` profile [optimized] target(s) in 0.02s
+
+gf2_kernels_simd::x86::bipedal_avx2_packed7::run_add7_batch:
+	test rsi, rsi
+	je .LBB35_4
+	push rbp
+	push r15
+	push r14
+	push r13
+	push r12
+	push rbx
+	sub rsp, 312
+	mov r8, rdi
+	xor eax, eax
+	mov qword ptr [rsp - 56], rcx
+	mov qword ptr [rsp - 80], rdx
+	mov qword ptr [rsp - 64], rsi
+	mov qword ptr [rsp - 72], rdi
+	mov r14, qword ptr [rip + gf2_kernels_simd::bipedal::packed7::ADD7_LUT@GOTPCREL]
+.LBB35_2:
+	mov qword ptr [rsp - 128], rax
+	mov rcx, qword ptr [r8 + 8*rax + 24]
+	mov rax, qword ptr [rsp - 128]
+	mov rax, qword ptr [rdx + 8*rax + 24]
+	movzx esi, cl
+	mov qword ptr [rsp + 304], rsi
+	mov dword ptr [rsp - 84], eax
+	movzx esi, ch
+	mov qword ptr [rsp + 296], rsi
+	mov esi, eax
+	mov qword ptr [rsp + 288], rsi
+	mov dword ptr [rsp - 88], ecx
+	mov qword ptr [rsp + 280], rsi
+	mov esi, ecx
+	mov qword ptr [rsp + 272], rsi
+	mov esi, eax
+	mov qword ptr [rsp + 264], rsi
+	mov qword ptr [rsp + 256], rcx
+	mov qword ptr [rsp + 248], rax
+	mov qword ptr [rsp + 240], rcx
+	mov qword ptr [rsp + 232], rax
+	mov qword ptr [rsp + 224], rcx
+	shr rcx, 56
+	mov qword ptr [rsp + 216], rax
+	shr rax, 48
+	and eax, 65280
+	add rcx, r14
+	movzx eax, byte ptr [rax + rcx]
+	mov qword ptr [rsp + 200], rax
+	mov rax, qword ptr [rsp - 128]
+	mov rax, qword ptr [r8 + 8*rax + 16]
+	movzx ecx, al
+	mov qword ptr [rsp - 112], rcx
+	movzx ecx, ah
+	mov qword ptr [rsp + 96], rcx
+	mov ecx, eax
+	mov dword ptr [rsp - 92], eax
+	mov qword ptr [rsp + 208], rcx
+	mov qword ptr [rsp + 120], rax
+	mov qword ptr [rsp + 152], rax
+	mov qword ptr [rsp + 160], rax
+	shr rax, 56
+	mov rcx, qword ptr [rsp - 128]
+	mov rcx, qword ptr [rdx + 8*rcx + 16]
+	mov esi, ecx
+	mov dword ptr [rsp - 96], ecx
+	mov qword ptr [rsp + 72], rsi
+	mov qword ptr [rsp + 80], rsi
+	mov qword ptr [rsp + 192], rsi
+	mov qword ptr [rsp + 88], rcx
+	mov qword ptr [rsp + 112], rcx
+	mov qword ptr [rsp + 136], rcx
+	shr rcx, 48
+	and ecx, 65280
+	add rax, r14
+	movzx eax, byte ptr [rcx + rax]
+	mov qword ptr [rsp + 176], rax
+	mov rax, qword ptr [rsp - 128]
+	mov rax, qword ptr [r8 + 8*rax + 8]
+	movzx ecx, al
+	mov qword ptr [rsp - 120], rcx
+	movzx ecx, ah
+	mov qword ptr [rsp - 24], rcx
+	mov ecx, eax
+	mov dword ptr [rsp - 100], eax
+	mov qword ptr [rsp + 184], rcx
+	mov qword ptr [rsp - 8], rax
+	mov qword ptr [rsp + 8], rax
+	mov qword ptr [rsp + 16], rax
+	shr rax, 56
+	mov rcx, qword ptr [rsp - 128]
+	mov rcx, qword ptr [rdx + 8*rcx + 8]
+	mov edx, ecx
+	mov dword ptr [rsp - 104], ecx
+	mov qword ptr [rsp - 48], rdx
+	mov qword ptr [rsp - 40], rdx
+	mov qword ptr [rsp + 168], rdx
+	mov qword ptr [rsp - 32], rcx
+	mov qword ptr [rsp - 16], rcx
+	mov qword ptr [rsp], rcx
+	shr rcx, 48
+	and ecx, 65280
+	add rax, r14
+	movzx eax, byte ptr [rcx + rax]
+	mov qword ptr [rsp + 128], rax
+	mov rax, qword ptr [rsp - 128]
+	mov rax, qword ptr [r8 + 8*rax]
+	movzx r11d, al
+	movzx ebp, ah
+	mov r12d, eax
+	mov ecx, eax
+	mov qword ptr [rsp + 144], rcx
+	mov rbx, rax
+	mov r15, rax
+	mov r13, rax
+	shr rax, 56
+	mov rcx, qword ptr [rsp - 80]
+	mov rdx, qword ptr [rsp - 128]
+	mov r8, qword ptr [rcx + 8*rdx]
+	mov edi, r8d
+	mov r9d, r8d
+	mov ecx, r8d
+	mov edx, r8d
+	mov qword ptr [rsp + 104], rdx
+	mov rdx, r8
+	mov rsi, r8
+	mov r10, r8
+	shr r8, 48
+	and r8d, 65280
+	add rax, r14
+	movzx eax, byte ptr [r8 + rax]
+	mov qword ptr [rsp + 64], rax
+	shl edi, 8
+	movzx eax, di
+	add r11, r14
+	movzx eax, byte ptr [rax + r11]
+	mov qword ptr [rsp + 56], rax
+	and r9d, 65280
+	add rbp, r14
+	movzx eax, byte ptr [r9 + rbp]
+	mov qword ptr [rsp + 48], rax
+	shr r12d, 16
+	movzx eax, r12b
+	shr ecx, 8
+	and ecx, 65280
+	add rax, r14
+	movzx eax, byte ptr [rcx + rax]
+	mov qword ptr [rsp + 32], rax
+	shr rbx, 32
+	movzx eax, bl
+	shr rdx, 24
+	and edx, 65280
+	add rax, r14
+	movzx eax, byte ptr [rdx + rax]
+	mov qword ptr [rsp + 40], rax
+	shr r15, 40
+	movzx eax, r15b
+	shr rsi, 32
+	and esi, 65280
+	add rax, r14
+	movzx eax, byte ptr [rsi + rax]
+	mov qword ptr [rsp + 24], rax
+	shr r13, 48
+	movzx eax, r13b
+	shr r10, 40
+	and r10d, 65280
+	add rax, r14
+	movzx ebp, byte ptr [r10 + rax]
+	mov eax, dword ptr [rsp - 104]
+	shl eax, 8
+	movzx eax, ax
+	mov rcx, qword ptr [rsp - 120]
+	add rcx, r14
+	movzx eax, byte ptr [rax + rcx]
+	mov qword ptr [rsp - 120], rax
+	mov rcx, qword ptr [rsp - 48]
+	and ecx, 65280
+	mov rax, qword ptr [rsp - 24]
+	add rax, r14
+	movzx r11d, byte ptr [rcx + rax]
+	mov eax, dword ptr [rsp - 100]
+	shr eax, 16
+	movzx eax, al
+	mov rcx, qword ptr [rsp - 40]
+	shr ecx, 8
+	and ecx, 65280
+	add rax, r14
+	movzx r12d, byte ptr [rcx + rax]
+	mov rax, qword ptr [rsp - 8]
+	shr rax, 32
+	movzx eax, al
+	mov rcx, qword ptr [rsp - 32]
+	shr rcx, 24
+	and ecx, 65280
+	add rax, r14
+	movzx r10d, byte ptr [rcx + rax]
+	mov rax, qword ptr [rsp + 8]
+	shr rax, 40
+	movzx eax, al
+	mov rcx, qword ptr [rsp - 16]
+	shr rcx, 32
+	and ecx, 65280
+	add rax, r14
+	movzx r9d, byte ptr [rcx + rax]
+	mov rax, qword ptr [rsp + 16]
+	shr rax, 48
+	movzx eax, al
+	mov rcx, qword ptr [rsp]
+	shr rcx, 40
+	and ecx, 65280
+	add rax, r14
+	movzx r8d, byte ptr [rcx + rax]
+	mov eax, dword ptr [rsp - 96]
+	shl eax, 8
+	movzx eax, ax
+	mov rcx, qword ptr [rsp - 112]
+	add rcx, r14
+	movzx eax, byte ptr [rax + rcx]
+	mov qword ptr [rsp - 112], rax
+	mov rcx, qword ptr [rsp + 72]
+	and ecx, 65280
+	mov rax, qword ptr [rsp + 96]
+	add rax, r14
+	movzx edi, byte ptr [rcx + rax]
+	mov eax, dword ptr [rsp - 92]
+	shr eax, 16
+	movzx eax, al
+	mov rcx, qword ptr [rsp + 80]
+	shr ecx, 8
+	and ecx, 65280
+	add rax, r14
+	movzx r15d, byte ptr [rcx + rax]
+	mov rax, qword ptr [rsp + 120]
+	shr rax, 32
+	movzx eax, al
+	mov rcx, qword ptr [rsp + 88]
+	shr rcx, 24
+	and ecx, 65280
+	add rax, r14
+	movzx r13d, byte ptr [rcx + rax]
+	mov rax, qword ptr [rsp + 152]
+	shr rax, 40
+	movzx eax, al
+	mov rcx, qword ptr [rsp + 112]
+	shr rcx, 32
+	and ecx, 65280
+	add rax, r14
+	movzx esi, byte ptr [rcx + rax]
+	mov rax, qword ptr [rsp + 160]
+	shr rax, 48
+	movzx eax, al
+	mov rcx, qword ptr [rsp + 136]
+	shr rcx, 40
+	and ecx, 65280
+	add rax, r14
+	movzx edx, byte ptr [rcx + rax]
+	mov eax, dword ptr [rsp - 84]
+	shl eax, 8
+	movzx ebx, ax
+	mov rax, qword ptr [rsp + 304]
+	add rax, r14
+	movzx ebx, byte ptr [rbx + rax]
+	mov rcx, qword ptr [rsp + 288]
+	and ecx, 65280
+	mov rax, qword ptr [rsp + 296]
+	add rax, r14
+	movzx eax, byte ptr [rcx + rax]
+	shl eax, 8
+	or rax, rbx
+	mov ecx, dword ptr [rsp - 88]
+	shr ecx, 16
+	movzx ebx, cl
+	mov rcx, qword ptr [rsp + 280]
+	shr ecx, 8
+	and ecx, 65280
+	add rbx, r14
+	movzx ebx, byte ptr [rcx + rbx]
+	shl ebx, 16
+	or rbx, rax
+	mov rax, qword ptr [rsp + 272]
+	shr eax, 24
+	mov rcx, qword ptr [rsp + 264]
+	shr ecx, 16
+	and ecx, 65280
+	add rax, r14
+	movzx eax, byte ptr [rcx + rax]
+	shl eax, 24
+	or rax, rbx
+	mov rcx, qword ptr [rsp + 256]
+	shr rcx, 32
+	movzx ebx, cl
+	mov rcx, qword ptr [rsp + 248]
+	shr rcx, 24
+	and ecx, 65280
+	add rbx, r14
+	movzx ebx, byte ptr [rcx + rbx]
+	shl rbx, 32
+	or rbx, rax
+	mov rax, qword ptr [rsp + 240]
+	shr rax, 40
+	movzx eax, al
+	mov rcx, qword ptr [rsp + 232]
+	shr rcx, 32
+	and ecx, 65280
+	add rax, r14
+	movzx eax, byte ptr [rcx + rax]
+	shl rax, 40
+	or rax, rbx
+	mov rcx, qword ptr [rsp + 224]
+	shr rcx, 48
+	movzx ebx, cl
+	mov rcx, qword ptr [rsp + 216]
+	shr rcx, 40
+	and ecx, 65280
+	add rbx, r14
+	movzx ebx, byte ptr [rcx + rbx]
+	shl rbx, 48
+	or rbx, rax
+	mov rax, qword ptr [rsp + 200]
+	shl rax, 56
+	or rax, rbx
+	mov rbx, rax
+	shl edi, 8
+	add rdi, qword ptr [rsp - 112]
+	shl r15d, 16
+	or r15, rdi
+	mov rdi, qword ptr [rsp - 64]
+	mov rax, qword ptr [rsp + 208]
+	shr eax, 24
+	mov rcx, qword ptr [rsp + 192]
+	shr ecx, 16
+	and ecx, 65280
+	add rax, r14
+	movzx eax, byte ptr [rcx + rax]
+	shl eax, 24
+	or rax, r15
+	shl r13, 32
+	or r13, rax
+	shl rsi, 40
+	or rsi, r13
+	shl rdx, 48
+	or rdx, rsi
+	mov rsi, qword ptr [rsp + 176]
+	shl rsi, 56
+	or rsi, rdx
+	mov rcx, qword ptr [rsp - 56]
+	shl r11d, 8
+	add r11, qword ptr [rsp - 120]
+	shl r12d, 16
+	or r12, r11
+	mov rax, qword ptr [rsp + 184]
+	shr eax, 24
+	mov rdx, qword ptr [rsp + 168]
+	shr edx, 16
+	and edx, 65280
+	add rax, r14
+	movzx eax, byte ptr [rdx + rax]
+	shl eax, 24
+	or rax, r12
+	shl r10, 32
+	or r10, rax
+	shl r9, 40
+	or r9, r10
+	shl r8, 48
+	or r8, r9
+	mov rdx, qword ptr [rsp - 80]
+	mov rax, qword ptr [rsp + 128]
+	shl rax, 56
+	or rax, r8
+	mov r9, rax
+	mov r8, qword ptr [rsp - 72]
+	mov r10, qword ptr [rsp + 48]
+	shl r10d, 8
+	add r10, qword ptr [rsp + 56]
+	mov rax, qword ptr [rsp + 32]
+	shl eax, 16
+	or rax, r10
+	mov r11, rax
+	mov rax, qword ptr [rsp + 144]
+	shr eax, 24
+	mov r10, qword ptr [rsp + 104]
+	shr r10d, 16
+	and r10d, 65280
+	add rax, r14
+	movzx eax, byte ptr [r10 + rax]
+	shl eax, 24
+	or rax, r11
+	mov r10, qword ptr [rsp + 40]
+	shl r10, 32
+	or r10, rax
+	mov rax, qword ptr [rsp - 128]
+	mov r11, qword ptr [rsp + 24]
+	shl r11, 40
+	or r11, r10
+	shl rbp, 48
+	or rbp, r11
+	mov r10, qword ptr [rsp + 64]
+	shl r10, 56
+	or r10, rbp
+	vmovq xmm0, r9
+	vmovq xmm1, r10
+	vmovq xmm2, rbx
+	vmovq xmm3, rsi
+	vpunpcklqdq xmm0, xmm1, xmm0
+	vpunpcklqdq xmm1, xmm3, xmm2
+	vmovdqu xmmword ptr [rcx + 8*rax + 16], xmm1
+	vmovdqu xmmword ptr [rcx + 8*rax], xmm0
+	add rax, 4
+	cmp rax, rdi
+	jb .LBB35_2
+	add rsp, 312
+	pop rbx
+	pop r12
+	pop r13
+	pop r14
+	pop r15
+	pop rbp
+.LBB35_4:
+	ret
+
+;==========================================================
+; symbol: gf2_kernels_simd::x86::bipedal_avx2_packed7::run_sub7_batch
+;==========================================================
+
+    Finished `release` profile [optimized] target(s) in 0.02s
+
+gf2_kernels_simd::x86::bipedal_avx2_packed7::run_sub7_batch:
+	test rsi, rsi
+	je .LBB38_4
+	push rbp
+	push r15
+	push r14
+	push r13
+	push r12
+	push rbx
+	sub rsp, 312
+	mov r8, rdi
+	xor eax, eax
+	mov qword ptr [rsp - 56], rcx
+	mov qword ptr [rsp - 80], rdx
+	mov qword ptr [rsp - 64], rsi
+	mov qword ptr [rsp - 72], rdi
+	mov r14, qword ptr [rip + gf2_kernels_simd::bipedal::packed7::SUB7_LUT@GOTPCREL]
+.LBB38_2:
+	mov qword ptr [rsp - 128], rax
+	mov rcx, qword ptr [r8 + 8*rax + 24]
+	mov rax, qword ptr [rsp - 128]
+	mov rax, qword ptr [rdx + 8*rax + 24]
+	movzx esi, cl
+	mov qword ptr [rsp + 304], rsi
+	mov dword ptr [rsp - 84], eax
+	movzx esi, ch
+	mov qword ptr [rsp + 296], rsi
+	mov esi, eax
+	mov qword ptr [rsp + 288], rsi
+	mov dword ptr [rsp - 88], ecx
+	mov qword ptr [rsp + 280], rsi
+	mov esi, ecx
+	mov qword ptr [rsp + 272], rsi
+	mov esi, eax
+	mov qword ptr [rsp + 264], rsi
+	mov qword ptr [rsp + 256], rcx
+	mov qword ptr [rsp + 248], rax
+	mov qword ptr [rsp + 240], rcx
+	mov qword ptr [rsp + 232], rax
+	mov qword ptr [rsp + 224], rcx
+	shr rcx, 56
+	mov qword ptr [rsp + 216], rax
+	shr rax, 48
+	and eax, 65280
+	add rcx, r14
+	movzx eax, byte ptr [rax + rcx]
+	mov qword ptr [rsp + 200], rax
+	mov rax, qword ptr [rsp - 128]
+	mov rax, qword ptr [r8 + 8*rax + 16]
+	movzx ecx, al
+	mov qword ptr [rsp - 112], rcx
+	movzx ecx, ah
+	mov qword ptr [rsp + 96], rcx
+	mov ecx, eax
+	mov dword ptr [rsp - 92], eax
+	mov qword ptr [rsp + 208], rcx
+	mov qword ptr [rsp + 120], rax
+	mov qword ptr [rsp + 152], rax
+	mov qword ptr [rsp + 160], rax
+	shr rax, 56
+	mov rcx, qword ptr [rsp - 128]
+	mov rcx, qword ptr [rdx + 8*rcx + 16]
+	mov esi, ecx
+	mov dword ptr [rsp - 96], ecx
+	mov qword ptr [rsp + 72], rsi
+	mov qword ptr [rsp + 80], rsi
+	mov qword ptr [rsp + 192], rsi
+	mov qword ptr [rsp + 88], rcx
+	mov qword ptr [rsp + 112], rcx
+	mov qword ptr [rsp + 136], rcx
+	shr rcx, 48
+	and ecx, 65280
+	add rax, r14
+	movzx eax, byte ptr [rcx + rax]
+	mov qword ptr [rsp + 176], rax
+	mov rax, qword ptr [rsp - 128]
+	mov rax, qword ptr [r8 + 8*rax + 8]
+	movzx ecx, al
+	mov qword ptr [rsp - 120], rcx
+	movzx ecx, ah
+	mov qword ptr [rsp - 24], rcx
+	mov ecx, eax
+	mov dword ptr [rsp - 100], eax
+	mov qword ptr [rsp + 184], rcx
+	mov qword ptr [rsp - 8], rax
+	mov qword ptr [rsp + 8], rax
+	mov qword ptr [rsp + 16], rax
+	shr rax, 56
+	mov rcx, qword ptr [rsp - 128]
+	mov rcx, qword ptr [rdx + 8*rcx + 8]
+	mov edx, ecx
+	mov dword ptr [rsp - 104], ecx
+	mov qword ptr [rsp - 48], rdx
+	mov qword ptr [rsp - 40], rdx
+	mov qword ptr [rsp + 168], rdx
+	mov qword ptr [rsp - 32], rcx
+	mov qword ptr [rsp - 16], rcx
+	mov qword ptr [rsp], rcx
+	shr rcx, 48
+	and ecx, 65280
+	add rax, r14
+	movzx eax, byte ptr [rcx + rax]
+	mov qword ptr [rsp + 128], rax
+	mov rax, qword ptr [rsp - 128]
+	mov rax, qword ptr [r8 + 8*rax]
+	movzx r11d, al
+	movzx ebp, ah
+	mov r12d, eax
+	mov ecx, eax
+	mov qword ptr [rsp + 144], rcx
+	mov rbx, rax
+	mov r15, rax
+	mov r13, rax
+	shr rax, 56
+	mov rcx, qword ptr [rsp - 80]
+	mov rdx, qword ptr [rsp - 128]
+	mov r8, qword ptr [rcx + 8*rdx]
+	mov edi, r8d
+	mov r9d, r8d
+	mov ecx, r8d
+	mov edx, r8d
+	mov qword ptr [rsp + 104], rdx
+	mov rdx, r8
+	mov rsi, r8
+	mov r10, r8
+	shr r8, 48
+	and r8d, 65280
+	add rax, r14
+	movzx eax, byte ptr [r8 + rax]
+	mov qword ptr [rsp + 64], rax
+	shl edi, 8
+	movzx eax, di
+	add r11, r14
+	movzx eax, byte ptr [rax + r11]
+	mov qword ptr [rsp + 56], rax
+	and r9d, 65280
+	add rbp, r14
+	movzx eax, byte ptr [r9 + rbp]
+	mov qword ptr [rsp + 48], rax
+	shr r12d, 16
+	movzx eax, r12b
+	shr ecx, 8
+	and ecx, 65280
+	add rax, r14
+	movzx eax, byte ptr [rcx + rax]
+	mov qword ptr [rsp + 32], rax
+	shr rbx, 32
+	movzx eax, bl
+	shr rdx, 24
+	and edx, 65280
+	add rax, r14
+	movzx eax, byte ptr [rdx + rax]
+	mov qword ptr [rsp + 40], rax
+	shr r15, 40
+	movzx eax, r15b
+	shr rsi, 32
+	and esi, 65280
+	add rax, r14
+	movzx eax, byte ptr [rsi + rax]
+	mov qword ptr [rsp + 24], rax
+	shr r13, 48
+	movzx eax, r13b
+	shr r10, 40
+	and r10d, 65280
+	add rax, r14
+	movzx ebp, byte ptr [r10 + rax]
+	mov eax, dword ptr [rsp - 104]
+	shl eax, 8
+	movzx eax, ax
+	mov rcx, qword ptr [rsp - 120]
+	add rcx, r14
+	movzx eax, byte ptr [rax + rcx]
+	mov qword ptr [rsp - 120], rax
+	mov rcx, qword ptr [rsp - 48]
+	and ecx, 65280
+	mov rax, qword ptr [rsp - 24]
+	add rax, r14
+	movzx r11d, byte ptr [rcx + rax]
+	mov eax, dword ptr [rsp - 100]
+	shr eax, 16
+	movzx eax, al
+	mov rcx, qword ptr [rsp - 40]
+	shr ecx, 8
+	and ecx, 65280
+	add rax, r14
+	movzx r12d, byte ptr [rcx + rax]
+	mov rax, qword ptr [rsp - 8]
+	shr rax, 32
+	movzx eax, al
+	mov rcx, qword ptr [rsp - 32]
+	shr rcx, 24
+	and ecx, 65280
+	add rax, r14
+	movzx r10d, byte ptr [rcx + rax]
+	mov rax, qword ptr [rsp + 8]
+	shr rax, 40
+	movzx eax, al
+	mov rcx, qword ptr [rsp - 16]
+	shr rcx, 32
+	and ecx, 65280
+	add rax, r14
+	movzx r9d, byte ptr [rcx + rax]
+	mov rax, qword ptr [rsp + 16]
+	shr rax, 48
+	movzx eax, al
+	mov rcx, qword ptr [rsp]
+	shr rcx, 40
+	and ecx, 65280
+	add rax, r14
+	movzx r8d, byte ptr [rcx + rax]
+	mov eax, dword ptr [rsp - 96]
+	shl eax, 8
+	movzx eax, ax
+	mov rcx, qword ptr [rsp - 112]
+	add rcx, r14
+	movzx eax, byte ptr [rax + rcx]
+	mov qword ptr [rsp - 112], rax
+	mov rcx, qword ptr [rsp + 72]
+	and ecx, 65280
+	mov rax, qword ptr [rsp + 96]
+	add rax, r14
+	movzx edi, byte ptr [rcx + rax]
+	mov eax, dword ptr [rsp - 92]
+	shr eax, 16
+	movzx eax, al
+	mov rcx, qword ptr [rsp + 80]
+	shr ecx, 8
+	and ecx, 65280
+	add rax, r14
+	movzx r15d, byte ptr [rcx + rax]
+	mov rax, qword ptr [rsp + 120]
+	shr rax, 32
+	movzx eax, al
+	mov rcx, qword ptr [rsp + 88]
+	shr rcx, 24
+	and ecx, 65280
+	add rax, r14
+	movzx r13d, byte ptr [rcx + rax]
+	mov rax, qword ptr [rsp + 152]
+	shr rax, 40
+	movzx eax, al
+	mov rcx, qword ptr [rsp + 112]
+	shr rcx, 32
+	and ecx, 65280
+	add rax, r14
+	movzx esi, byte ptr [rcx + rax]
+	mov rax, qword ptr [rsp + 160]
+	shr rax, 48
+	movzx eax, al
+	mov rcx, qword ptr [rsp + 136]
+	shr rcx, 40
+	and ecx, 65280
+	add rax, r14
+	movzx edx, byte ptr [rcx + rax]
+	mov eax, dword ptr [rsp - 84]
+	shl eax, 8
+	movzx ebx, ax
+	mov rax, qword ptr [rsp + 304]
+	add rax, r14
+	movzx ebx, byte ptr [rbx + rax]
+	mov rcx, qword ptr [rsp + 288]
+	and ecx, 65280
+	mov rax, qword ptr [rsp + 296]
+	add rax, r14
+	movzx eax, byte ptr [rcx + rax]
+	shl eax, 8
+	or rax, rbx
+	mov ecx, dword ptr [rsp - 88]
+	shr ecx, 16
+	movzx ebx, cl
+	mov rcx, qword ptr [rsp + 280]
+	shr ecx, 8
+	and ecx, 65280
+	add rbx, r14
+	movzx ebx, byte ptr [rcx + rbx]
+	shl ebx, 16
+	or rbx, rax
+	mov rax, qword ptr [rsp + 272]
+	shr eax, 24
+	mov rcx, qword ptr [rsp + 264]
+	shr ecx, 16
+	and ecx, 65280
+	add rax, r14
+	movzx eax, byte ptr [rcx + rax]
+	shl eax, 24
+	or rax, rbx
+	mov rcx, qword ptr [rsp + 256]
+	shr rcx, 32
+	movzx ebx, cl
+	mov rcx, qword ptr [rsp + 248]
+	shr rcx, 24
+	and ecx, 65280
+	add rbx, r14
+	movzx ebx, byte ptr [rcx + rbx]
+	shl rbx, 32
+	or rbx, rax
+	mov rax, qword ptr [rsp + 240]
+	shr rax, 40
+	movzx eax, al
+	mov rcx, qword ptr [rsp + 232]
+	shr rcx, 32
+	and ecx, 65280
+	add rax, r14
+	movzx eax, byte ptr [rcx + rax]
+	shl rax, 40
+	or rax, rbx
+	mov rcx, qword ptr [rsp + 224]
+	shr rcx, 48
+	movzx ebx, cl
+	mov rcx, qword ptr [rsp + 216]
+	shr rcx, 40
+	and ecx, 65280
+	add rbx, r14
+	movzx ebx, byte ptr [rcx + rbx]
+	shl rbx, 48
+	or rbx, rax
+	mov rax, qword ptr [rsp + 200]
+	shl rax, 56
+	or rax, rbx
+	mov rbx, rax
+	shl edi, 8
+	add rdi, qword ptr [rsp - 112]
+	shl r15d, 16
+	or r15, rdi
+	mov rdi, qword ptr [rsp - 64]
+	mov rax, qword ptr [rsp + 208]
+	shr eax, 24
+	mov rcx, qword ptr [rsp + 192]
+	shr ecx, 16
+	and ecx, 65280
+	add rax, r14
+	movzx eax, byte ptr [rcx + rax]
+	shl eax, 24
+	or rax, r15
+	shl r13, 32
+	or r13, rax
+	shl rsi, 40
+	or rsi, r13
+	shl rdx, 48
+	or rdx, rsi
+	mov rsi, qword ptr [rsp + 176]
+	shl rsi, 56
+	or rsi, rdx
+	mov rcx, qword ptr [rsp - 56]
+	shl r11d, 8
+	add r11, qword ptr [rsp - 120]
+	shl r12d, 16
+	or r12, r11
+	mov rax, qword ptr [rsp + 184]
+	shr eax, 24
+	mov rdx, qword ptr [rsp + 168]
+	shr edx, 16
+	and edx, 65280
+	add rax, r14
+	movzx eax, byte ptr [rdx + rax]
+	shl eax, 24
+	or rax, r12
+	shl r10, 32
+	or r10, rax
+	shl r9, 40
+	or r9, r10
+	shl r8, 48
+	or r8, r9
+	mov rdx, qword ptr [rsp - 80]
+	mov rax, qword ptr [rsp + 128]
+	shl rax, 56
+	or rax, r8
+	mov r9, rax
+	mov r8, qword ptr [rsp - 72]
+	mov r10, qword ptr [rsp + 48]
+	shl r10d, 8
+	add r10, qword ptr [rsp + 56]
+	mov rax, qword ptr [rsp + 32]
+	shl eax, 16
+	or rax, r10
+	mov r11, rax
+	mov rax, qword ptr [rsp + 144]
+	shr eax, 24
+	mov r10, qword ptr [rsp + 104]
+	shr r10d, 16
+	and r10d, 65280
+	add rax, r14
+	movzx eax, byte ptr [r10 + rax]
+	shl eax, 24
+	or rax, r11
+	mov r10, qword ptr [rsp + 40]
+	shl r10, 32
+	or r10, rax
+	mov rax, qword ptr [rsp - 128]
+	mov r11, qword ptr [rsp + 24]
+	shl r11, 40
+	or r11, r10
+	shl rbp, 48
+	or rbp, r11
+	mov r10, qword ptr [rsp + 64]
+	shl r10, 56
+	or r10, rbp
+	vmovq xmm0, r9
+	vmovq xmm1, r10
+	vmovq xmm2, rbx
+	vmovq xmm3, rsi
+	vpunpcklqdq xmm0, xmm1, xmm0
+	vpunpcklqdq xmm1, xmm3, xmm2
+	vmovdqu xmmword ptr [rcx + 8*rax + 16], xmm1
+	vmovdqu xmmword ptr [rcx + 8*rax], xmm0
+	add rax, 4
+	cmp rax, rdi
+	jb .LBB38_2
+	add rsp, 312
+	pop rbx
+	pop r12
+	pop r13
+	pop r14
+	pop r15
+	pop rbp
+.LBB38_4:
+	ret
+
+;==========================================================
+; symbol: gf2_kernels_simd::x86::bipedal_avx2_packed7::run_mul7_batch
+;==========================================================
+
+    Finished `release` profile [optimized] target(s) in 0.03s
+
+gf2_kernels_simd::x86::bipedal_avx2_packed7::run_mul7_batch:
+	test rsi, rsi
+	je .LBB36_4
+	push rbp
+	push r15
+	push r14
+	push r13
+	push r12
+	push rbx
+	sub rsp, 312
+	mov r8, rdi
+	xor eax, eax
+	mov qword ptr [rsp - 56], rcx
+	mov qword ptr [rsp - 80], rdx
+	mov qword ptr [rsp - 64], rsi
+	mov qword ptr [rsp - 72], rdi
+	mov r14, qword ptr [rip + gf2_kernels_simd::bipedal::packed7::MUL7_LUT@GOTPCREL]
+.LBB36_2:
+	mov qword ptr [rsp - 128], rax
+	mov rcx, qword ptr [r8 + 8*rax + 24]
+	mov rax, qword ptr [rsp - 128]
+	mov rax, qword ptr [rdx + 8*rax + 24]
+	movzx esi, cl
+	mov qword ptr [rsp + 304], rsi
+	mov dword ptr [rsp - 84], eax
+	movzx esi, ch
+	mov qword ptr [rsp + 296], rsi
+	mov esi, eax
+	mov qword ptr [rsp + 288], rsi
+	mov dword ptr [rsp - 88], ecx
+	mov qword ptr [rsp + 280], rsi
+	mov esi, ecx
+	mov qword ptr [rsp + 272], rsi
+	mov esi, eax
+	mov qword ptr [rsp + 264], rsi
+	mov qword ptr [rsp + 256], rcx
+	mov qword ptr [rsp + 248], rax
+	mov qword ptr [rsp + 240], rcx
+	mov qword ptr [rsp + 232], rax
+	mov qword ptr [rsp + 224], rcx
+	shr rcx, 56
+	mov qword ptr [rsp + 216], rax
+	shr rax, 48
+	and eax, 65280
+	add rcx, r14
+	movzx eax, byte ptr [rax + rcx]
+	mov qword ptr [rsp + 200], rax
+	mov rax, qword ptr [rsp - 128]
+	mov rax, qword ptr [r8 + 8*rax + 16]
+	movzx ecx, al
+	mov qword ptr [rsp - 112], rcx
+	movzx ecx, ah
+	mov qword ptr [rsp + 96], rcx
+	mov ecx, eax
+	mov dword ptr [rsp - 92], eax
+	mov qword ptr [rsp + 208], rcx
+	mov qword ptr [rsp + 120], rax
+	mov qword ptr [rsp + 152], rax
+	mov qword ptr [rsp + 160], rax
+	shr rax, 56
+	mov rcx, qword ptr [rsp - 128]
+	mov rcx, qword ptr [rdx + 8*rcx + 16]
+	mov esi, ecx
+	mov dword ptr [rsp - 96], ecx
+	mov qword ptr [rsp + 72], rsi
+	mov qword ptr [rsp + 80], rsi
+	mov qword ptr [rsp + 192], rsi
+	mov qword ptr [rsp + 88], rcx
+	mov qword ptr [rsp + 112], rcx
+	mov qword ptr [rsp + 136], rcx
+	shr rcx, 48
+	and ecx, 65280
+	add rax, r14
+	movzx eax, byte ptr [rcx + rax]
+	mov qword ptr [rsp + 176], rax
+	mov rax, qword ptr [rsp - 128]
+	mov rax, qword ptr [r8 + 8*rax + 8]
+	movzx ecx, al
+	mov qword ptr [rsp - 120], rcx
+	movzx ecx, ah
+	mov qword ptr [rsp - 24], rcx
+	mov ecx, eax
+	mov dword ptr [rsp - 100], eax
+	mov qword ptr [rsp + 184], rcx
+	mov qword ptr [rsp - 8], rax
+	mov qword ptr [rsp + 8], rax
+	mov qword ptr [rsp + 16], rax
+	shr rax, 56
+	mov rcx, qword ptr [rsp - 128]
+	mov rcx, qword ptr [rdx + 8*rcx + 8]
+	mov edx, ecx
+	mov dword ptr [rsp - 104], ecx
+	mov qword ptr [rsp - 48], rdx
+	mov qword ptr [rsp - 40], rdx
+	mov qword ptr [rsp + 168], rdx
+	mov qword ptr [rsp - 32], rcx
+	mov qword ptr [rsp - 16], rcx
+	mov qword ptr [rsp], rcx
+	shr rcx, 48
+	and ecx, 65280
+	add rax, r14
+	movzx eax, byte ptr [rcx + rax]
+	mov qword ptr [rsp + 128], rax
+	mov rax, qword ptr [rsp - 128]
+	mov rax, qword ptr [r8 + 8*rax]
+	movzx r11d, al
+	movzx ebp, ah
+	mov r12d, eax
+	mov ecx, eax
+	mov qword ptr [rsp + 144], rcx
+	mov rbx, rax
+	mov r15, rax
+	mov r13, rax
+	shr rax, 56
+	mov rcx, qword ptr [rsp - 80]
+	mov rdx, qword ptr [rsp - 128]
+	mov r8, qword ptr [rcx + 8*rdx]
+	mov edi, r8d
+	mov r9d, r8d
+	mov ecx, r8d
+	mov edx, r8d
+	mov qword ptr [rsp + 104], rdx
+	mov rdx, r8
+	mov rsi, r8
+	mov r10, r8
+	shr r8, 48
+	and r8d, 65280
+	add rax, r14
+	movzx eax, byte ptr [r8 + rax]
+	mov qword ptr [rsp + 64], rax
+	shl edi, 8
+	movzx eax, di
+	add r11, r14
+	movzx eax, byte ptr [rax + r11]
+	mov qword ptr [rsp + 56], rax
+	and r9d, 65280
+	add rbp, r14
+	movzx eax, byte ptr [r9 + rbp]
+	mov qword ptr [rsp + 48], rax
+	shr r12d, 16
+	movzx eax, r12b
+	shr ecx, 8
+	and ecx, 65280
+	add rax, r14
+	movzx eax, byte ptr [rcx + rax]
+	mov qword ptr [rsp + 32], rax
+	shr rbx, 32
+	movzx eax, bl
+	shr rdx, 24
+	and edx, 65280
+	add rax, r14
+	movzx eax, byte ptr [rdx + rax]
+	mov qword ptr [rsp + 40], rax
+	shr r15, 40
+	movzx eax, r15b
+	shr rsi, 32
+	and esi, 65280
+	add rax, r14
+	movzx eax, byte ptr [rsi + rax]
+	mov qword ptr [rsp + 24], rax
+	shr r13, 48
+	movzx eax, r13b
+	shr r10, 40
+	and r10d, 65280
+	add rax, r14
+	movzx ebp, byte ptr [r10 + rax]
+	mov eax, dword ptr [rsp - 104]
+	shl eax, 8
+	movzx eax, ax
+	mov rcx, qword ptr [rsp - 120]
+	add rcx, r14
+	movzx eax, byte ptr [rax + rcx]
+	mov qword ptr [rsp - 120], rax
+	mov rcx, qword ptr [rsp - 48]
+	and ecx, 65280
+	mov rax, qword ptr [rsp - 24]
+	add rax, r14
+	movzx r11d, byte ptr [rcx + rax]
+	mov eax, dword ptr [rsp - 100]
+	shr eax, 16
+	movzx eax, al
+	mov rcx, qword ptr [rsp - 40]
+	shr ecx, 8
+	and ecx, 65280
+	add rax, r14
+	movzx r12d, byte ptr [rcx + rax]
+	mov rax, qword ptr [rsp - 8]
+	shr rax, 32
+	movzx eax, al
+	mov rcx, qword ptr [rsp - 32]
+	shr rcx, 24
+	and ecx, 65280
+	add rax, r14
+	movzx r10d, byte ptr [rcx + rax]
+	mov rax, qword ptr [rsp + 8]
+	shr rax, 40
+	movzx eax, al
+	mov rcx, qword ptr [rsp - 16]
+	shr rcx, 32
+	and ecx, 65280
+	add rax, r14
+	movzx r9d, byte ptr [rcx + rax]
+	mov rax, qword ptr [rsp + 16]
+	shr rax, 48
+	movzx eax, al
+	mov rcx, qword ptr [rsp]
+	shr rcx, 40
+	and ecx, 65280
+	add rax, r14
+	movzx r8d, byte ptr [rcx + rax]
+	mov eax, dword ptr [rsp - 96]
+	shl eax, 8
+	movzx eax, ax
+	mov rcx, qword ptr [rsp - 112]
+	add rcx, r14
+	movzx eax, byte ptr [rax + rcx]
+	mov qword ptr [rsp - 112], rax
+	mov rcx, qword ptr [rsp + 72]
+	and ecx, 65280
+	mov rax, qword ptr [rsp + 96]
+	add rax, r14
+	movzx edi, byte ptr [rcx + rax]
+	mov eax, dword ptr [rsp - 92]
+	shr eax, 16
+	movzx eax, al
+	mov rcx, qword ptr [rsp + 80]
+	shr ecx, 8
+	and ecx, 65280
+	add rax, r14
+	movzx r15d, byte ptr [rcx + rax]
+	mov rax, qword ptr [rsp + 120]
+	shr rax, 32
+	movzx eax, al
+	mov rcx, qword ptr [rsp + 88]
+	shr rcx, 24
+	and ecx, 65280
+	add rax, r14
+	movzx r13d, byte ptr [rcx + rax]
+	mov rax, qword ptr [rsp + 152]
+	shr rax, 40
+	movzx eax, al
+	mov rcx, qword ptr [rsp + 112]
+	shr rcx, 32
+	and ecx, 65280
+	add rax, r14
+	movzx esi, byte ptr [rcx + rax]
+	mov rax, qword ptr [rsp + 160]
+	shr rax, 48
+	movzx eax, al
+	mov rcx, qword ptr [rsp + 136]
+	shr rcx, 40
+	and ecx, 65280
+	add rax, r14
+	movzx edx, byte ptr [rcx + rax]
+	mov eax, dword ptr [rsp - 84]
+	shl eax, 8
+	movzx ebx, ax
+	mov rax, qword ptr [rsp + 304]
+	add rax, r14
+	movzx ebx, byte ptr [rbx + rax]
+	mov rcx, qword ptr [rsp + 288]
+	and ecx, 65280
+	mov rax, qword ptr [rsp + 296]
+	add rax, r14
+	movzx eax, byte ptr [rcx + rax]
+	shl eax, 8
+	or rax, rbx
+	mov ecx, dword ptr [rsp - 88]
+	shr ecx, 16
+	movzx ebx, cl
+	mov rcx, qword ptr [rsp + 280]
+	shr ecx, 8
+	and ecx, 65280
+	add rbx, r14
+	movzx ebx, byte ptr [rcx + rbx]
+	shl ebx, 16
+	or rbx, rax
+	mov rax, qword ptr [rsp + 272]
+	shr eax, 24
+	mov rcx, qword ptr [rsp + 264]
+	shr ecx, 16
+	and ecx, 65280
+	add rax, r14
+	movzx eax, byte ptr [rcx + rax]
+	shl eax, 24
+	or rax, rbx
+	mov rcx, qword ptr [rsp + 256]
+	shr rcx, 32
+	movzx ebx, cl
+	mov rcx, qword ptr [rsp + 248]
+	shr rcx, 24
+	and ecx, 65280
+	add rbx, r14
+	movzx ebx, byte ptr [rcx + rbx]
+	shl rbx, 32
+	or rbx, rax
+	mov rax, qword ptr [rsp + 240]
+	shr rax, 40
+	movzx eax, al
+	mov rcx, qword ptr [rsp + 232]
+	shr rcx, 32
+	and ecx, 65280
+	add rax, r14
+	movzx eax, byte ptr [rcx + rax]
+	shl rax, 40
+	or rax, rbx
+	mov rcx, qword ptr [rsp + 224]
+	shr rcx, 48
+	movzx ebx, cl
+	mov rcx, qword ptr [rsp + 216]
+	shr rcx, 40
+	and ecx, 65280
+	add rbx, r14
+	movzx ebx, byte ptr [rcx + rbx]
+	shl rbx, 48
+	or rbx, rax
+	mov rax, qword ptr [rsp + 200]
+	shl rax, 56
+	or rax, rbx
+	mov rbx, rax
+	shl edi, 8
+	add rdi, qword ptr [rsp - 112]
+	shl r15d, 16
+	or r15, rdi
+	mov rdi, qword ptr [rsp - 64]
+	mov rax, qword ptr [rsp + 208]
+	shr eax, 24
+	mov rcx, qword ptr [rsp + 192]
+	shr ecx, 16
+	and ecx, 65280
+	add rax, r14
+	movzx eax, byte ptr [rcx + rax]
+	shl eax, 24
+	or rax, r15
+	shl r13, 32
+	or r13, rax
+	shl rsi, 40
+	or rsi, r13
+	shl rdx, 48
+	or rdx, rsi
+	mov rsi, qword ptr [rsp + 176]
+	shl rsi, 56
+	or rsi, rdx
+	mov rcx, qword ptr [rsp - 56]
+	shl r11d, 8
+	add r11, qword ptr [rsp - 120]
+	shl r12d, 16
+	or r12, r11
+	mov rax, qword ptr [rsp + 184]
+	shr eax, 24
+	mov rdx, qword ptr [rsp + 168]
+	shr edx, 16
+	and edx, 65280
+	add rax, r14
+	movzx eax, byte ptr [rdx + rax]
+	shl eax, 24
+	or rax, r12
+	shl r10, 32
+	or r10, rax
+	shl r9, 40
+	or r9, r10
+	shl r8, 48
+	or r8, r9
+	mov rdx, qword ptr [rsp - 80]
+	mov rax, qword ptr [rsp + 128]
+	shl rax, 56
+	or rax, r8
+	mov r9, rax
+	mov r8, qword ptr [rsp - 72]
+	mov r10, qword ptr [rsp + 48]
+	shl r10d, 8
+	add r10, qword ptr [rsp + 56]
+	mov rax, qword ptr [rsp + 32]
+	shl eax, 16
+	or rax, r10
+	mov r11, rax
+	mov rax, qword ptr [rsp + 144]
+	shr eax, 24
+	mov r10, qword ptr [rsp + 104]
+	shr r10d, 16
+	and r10d, 65280
+	add rax, r14
+	movzx eax, byte ptr [r10 + rax]
+	shl eax, 24
+	or rax, r11
+	mov r10, qword ptr [rsp + 40]
+	shl r10, 32
+	or r10, rax
+	mov rax, qword ptr [rsp - 128]
+	mov r11, qword ptr [rsp + 24]
+	shl r11, 40
+	or r11, r10
+	shl rbp, 48
+	or rbp, r11
+	mov r10, qword ptr [rsp + 64]
+	shl r10, 56
+	or r10, rbp
+	vmovq xmm0, r9
+	vmovq xmm1, r10
+	vmovq xmm2, rbx
+	vmovq xmm3, rsi
+	vpunpcklqdq xmm0, xmm1, xmm0
+	vpunpcklqdq xmm1, xmm3, xmm2
+	vmovdqu xmmword ptr [rcx + 8*rax + 16], xmm1
+	vmovdqu xmmword ptr [rcx + 8*rax], xmm0
+	add rax, 4
+	cmp rax, rdi
+	jb .LBB36_2
+	add rsp, 312
+	pop rbx
+	pop r12
+	pop r13
+	pop r14
+	pop r15
+	pop rbp
+.LBB36_4:
+	ret
+
+;==========================================================
+; symbol: gf2_kernels_simd::x86::bipedal_avx2_packed7::run_neg7_batch
+;==========================================================
+
+    Finished `release` profile [optimized] target(s) in 0.02s
+
+gf2_kernels_simd::x86::bipedal_avx2_packed7::run_neg7_batch:
+	test rsi, rsi
+	je .LBB37_4
+	push rbp
+	push r14
+	push rbx
+	xor eax, eax
+	mov rcx, qword ptr [rip + gf2_kernels_simd::bipedal::packed7::SUB7_LUT@GOTPCREL]
+.LBB37_2:
+	mov r8, qword ptr [rdi + 8*rax]
+	mov r9, qword ptr [rdi + 8*rax + 8]
+	mov r11, qword ptr [rdi + 8*rax + 24]
+	mov r10, qword ptr [rdi + 8*rax + 16]
+	mov ebx, r11d
+	shl ebx, 8
+	movzx ebx, bx
+	movzx ebx, byte ptr [rcx + rbx]
+	mov r14d, r11d
+	and r14d, 65280
+	movzx r14d, byte ptr [rcx + r14]
+	shl r14d, 8
+	or r14, rbx
+	mov ebx, r11d
+	shr ebx, 8
+	and ebx, 65280
+	movzx ebx, byte ptr [rcx + rbx]
+	shl ebx, 16
+	or rbx, r14
+	mov r14d, r11d
+	shr r14d, 16
+	and r14d, 65280
+	movzx r14d, byte ptr [rcx + r14]
+	shl r14d, 24
+	or r14, rbx
+	mov rbx, r11
+	shr rbx, 24
+	and ebx, 65280
+	movzx ebx, byte ptr [rcx + rbx]
+	shl rbx, 32
+	or rbx, r14
+	mov r14, r11
+	shr r14, 32
+	and r14d, 65280
+	movzx r14d, byte ptr [rcx + r14]
+	shl r14, 40
+	or r14, rbx
+	mov rbx, r11
+	shr rbx, 40
+	and ebx, 65280
+	movzx ebx, byte ptr [rcx + rbx]
+	shl rbx, 48
+	or rbx, r14
+	mov ebp, r10d
+	shl ebp, 8
+	movzx r14d, bp
+	movzx r14d, byte ptr [rcx + r14]
+	shr r11, 48
+	and r11d, 65280
+	movzx r11d, byte ptr [rcx + r11]
+	shl r11, 56
+	or r11, rbx
+	mov ebx, r10d
+	and ebx, 65280
+	movzx ebx, byte ptr [rcx + rbx]
+	shl ebx, 8
+	or rbx, r14
+	mov r14d, r10d
+	shr r14d, 8
+	and r14d, 65280
+	movzx r14d, byte ptr [rcx + r14]
+	shl r14d, 16
+	or r14, rbx
+	mov ebx, r10d
+	shr ebx, 16
+	and ebx, 65280
+	movzx ebx, byte ptr [rcx + rbx]
+	shl ebx, 24
+	or rbx, r14
+	mov r14, r10
+	shr r14, 24
+	and r14d, 65280
+	movzx r14d, byte ptr [rcx + r14]
+	shl r14, 32
+	or r14, rbx
+	mov rbx, r10
+	shr rbx, 32
+	and ebx, 65280
+	movzx ebx, byte ptr [rcx + rbx]
+	shl rbx, 40
+	or rbx, r14
+	mov r14, r10
+	shr r14, 40
+	and r14d, 65280
+	movzx r14d, byte ptr [rcx + r14]
+	shl r14, 48
+	or r14, rbx
+	mov ebx, r9d
+	shl ebx, 8
+	movzx ebx, bx
+	movzx ebx, byte ptr [rcx + rbx]
+	shr r10, 48
+	and r10d, 65280
+	movzx r10d, byte ptr [rcx + r10]
+	shl r10, 56
+	or r10, r14
+	mov r14d, r9d
+	and r14d, 65280
+	movzx r14d, byte ptr [rcx + r14]
+	shl r14d, 8
+	or r14, rbx
+	mov ebx, r9d
+	shr ebx, 8
+	and ebx, 65280
+	movzx ebx, byte ptr [rcx + rbx]
+	shl ebx, 16
+	or rbx, r14
+	mov r14d, r9d
+	shr r14d, 16
+	and r14d, 65280
+	movzx r14d, byte ptr [rcx + r14]
+	shl r14d, 24
+	or r14, rbx
+	mov rbx, r9
+	shr rbx, 24
+	and ebx, 65280
+	movzx ebx, byte ptr [rcx + rbx]
+	shl rbx, 32
+	or rbx, r14
+	mov r14, r9
+	shr r14, 32
+	and r14d, 65280
+	movzx r14d, byte ptr [rcx + r14]
+	shl r14, 40
+	or r14, rbx
+	mov rbx, r9
+	shr rbx, 40
+	and ebx, 65280
+	movzx ebx, byte ptr [rcx + rbx]
+	shl rbx, 48
+	or rbx, r14
+	mov ebp, r8d
+	shl ebp, 8
+	movzx r14d, bp
+	movzx r14d, byte ptr [rcx + r14]
+	shr r9, 48
+	and r9d, 65280
+	movzx r9d, byte ptr [rcx + r9]
+	shl r9, 56
+	or r9, rbx
+	mov ebx, r8d
+	and ebx, 65280
+	movzx ebx, byte ptr [rcx + rbx]
+	shl ebx, 8
+	or rbx, r14
+	mov r14d, r8d
+	shr r14d, 8
+	and r14d, 65280
+	movzx r14d, byte ptr [rcx + r14]
+	shl r14d, 16
+	or r14, rbx
+	mov ebx, r8d
+	shr ebx, 16
+	and ebx, 65280
+	movzx ebx, byte ptr [rcx + rbx]
+	shl ebx, 24
+	or rbx, r14
+	mov r14, r8
+	shr r14, 24
+	and r14d, 65280
+	movzx r14d, byte ptr [rcx + r14]
+	shl r14, 32
+	or r14, rbx
+	mov rbx, r8
+	shr rbx, 32
+	and ebx, 65280
+	movzx ebx, byte ptr [rcx + rbx]
+	shl rbx, 40
+	or rbx, r14
+	mov r14, r8
+	shr r14, 40
+	and r14d, 65280
+	movzx r14d, byte ptr [rcx + r14]
+	shl r14, 48
+	or r14, rbx
+	shr r8, 48
+	and r8d, 65280
+	movzx r8d, byte ptr [rcx + r8]
+	shl r8, 56
+	or r8, r14
+	vmovq xmm0, r9
+	vmovq xmm1, r8
+	vmovq xmm2, r11
+	vmovq xmm3, r10
+	vpunpcklqdq xmm0, xmm1, xmm0
+	vpunpcklqdq xmm1, xmm3, xmm2
+	vmovdqu xmmword ptr [rdx + 8*rax + 16], xmm1
+	vmovdqu xmmword ptr [rdx + 8*rax], xmm0
+	add rax, 4
+	cmp rax, rsi
+	jb .LBB37_2
+	pop rbx
+	pop r14
+	pop rbp
+.LBB37_4:
+	ret
