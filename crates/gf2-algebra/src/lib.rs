@@ -42,8 +42,8 @@
 //!   single-word `n ≤ 63` fast path with bipedal-multiplication-tree
 //!   horizontal fold. Per-n cross-checks: 1000 matrices for each `n ∈ 1..=12`
 //!   (default tier) and `n ∈ 13..=16` (slow tier); 100 matrices for `n ∈
-//!   {20, 24}` (slow tier, split sub-tests). W4 F_5/F_7 analogues land in
-//!   W4-T18/T20.
+//!   {20, 24}` (slow tier, split sub-tests). F_5/F_7 single-word analogues —
+//!   `permanent_bipedal5` and `permanent_bipedal7` — landed in W4-T18/T20.
 //!
 //! The full type → crate map this crate satisfies on completion is in
 //! [`dev/plans/d1a_gf2_algebra_boundary.md`](../../../dev/plans/d1a_gf2_algebra_boundary.md)

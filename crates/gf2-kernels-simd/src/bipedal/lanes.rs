@@ -4,8 +4,8 @@
 //! A lane impl supplies the lane-wise AND, XOR, OR, AND-NOT, plus loads and
 //! stores, for one register width. The framework's per-prime arithmetic
 //! ([`crate::bipedal::framework`]) is written entirely in terms of this trait,
-//! which is what allows a single body to serve every encoding (F_3 today,
-//! F_5 / F_7 once their kernel work in W4 lands).
+//! which is what allows a single body to serve every encoding currently
+//! shipping (F_3, F_5, F_7).
 //!
 //! ## Inlining contract
 //!

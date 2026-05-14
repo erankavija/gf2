@@ -9,9 +9,10 @@
 //! ([`BipedalLikeConfig::add_lane`] etc.) operate on those associated types.
 //!
 //! For F_3 ([`crate::bipedal::Config3`]) both lane types are
-//! [`crate::bipedal::Avx2Lane`]. The W4 F_5 D-bit-sliced encoding will pick
-//! a different lane shape (three magnitude planes + one sign plane), and the
-//! W4 F_7 LUT-A encoding may differ again — in each case the per-prime
+//! [`crate::bipedal::Avx2Lane`]. F_5 ([`crate::bipedal::packed5::Config5`])
+//! uses the R1 Candidate D bit-sliced 3-plane shape, and F_7
+//! ([`crate::bipedal::packed7::Config7`]) uses the R2 Candidate A 3-bit
+//! per-lane + 2^16 LUT shape — in each case the per-prime
 //! `BipedalLikeConfig` impl is the source of truth for the lane shape.
 //!
 //! The `BatchedBipedalLike::{add, sub, mul, neg}` methods delegate to the
