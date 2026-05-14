@@ -178,9 +178,13 @@ __global__ void permanent_bipedal3_kernel(const unsigned char* __restrict__ matr
 
     const unsigned char* mat = matrices_ptr + (size_t)mat_idx * (size_t)n * (size_t)n;
 
-    // Assertion: n must be <= 64. If violated, write 0 and return early so
-    // the kernel does not read out of bounds. (The host wrapper checks this.)
-    if (n <= 0 || n > 64) {
+    // Assertion: n must be in [1, 63]. The GPU sequential Gray walk at n=64
+    // would take ~600 years on gfx1030 (2^64 ≈ 1.8×10^19 steps), so n=64 is
+    // computationally infeasible and is excluded from the supported range.
+    // The CPU reference (permanent_bipedal3_singleword) supports n=64 via a
+    // u128 Gray-code counter; the GPU kernel does not need that range.
+    // If violated, write 0 and return early. (The host wrapper checks this too.)
+    if (n <= 0 || n > 63) {
         out_ptr[mat_idx] = 0ULL;
         return;
     }
@@ -244,15 +248,10 @@ __global__ void permanent_bipedal3_kernel(const unsigned char* __restrict__ matr
     uint64_t total = 0ULL;
     int subset_size = 0;
 
-    // Step counter. For n == 64 the upper bound is 2^64, which wraps around
-    // as uint64_t; we detect termination via k == 0 (all-bits-set + 1 = 0).
-    // For n < 64 the upper bound fits in uint64_t.
-    uint64_t upper;
-    if (n < 64) {
-        upper = UINT64_C(1) << n;
-    } else {
-        upper = UINT64_MAX; // walk k = 1 .. 2^64-1, then the loop exits
-    }
+    // Step counter. For n <= 63, upper = 2^n fits in uint64_t (max 2^63).
+    // n=64 is excluded (see the range check above), so no u64 wraparound
+    // can occur and the loop termination condition k != upper is always safe.
+    uint64_t upper = UINT64_C(1) << n;
 
     for (uint64_t k = 1ULL; k != upper; k++) {
         // Count trailing zeros to find the flipped bit.
@@ -308,7 +307,10 @@ __global__ void permanent_bipedal3_kernel(const unsigned char* __restrict__ matr
 // Parameters:
 //   matrices_ptr — host-mapped or device pointer to M row-major n×n matrices
 //                  of uint8 values in GF(3) (0, 1, 2).
-//   n            — matrix dimension (square, n×n); must satisfy 1 <= n <= 64.
+//   n            — matrix dimension (square, n×n); must satisfy 1 <= n <= 63.
+//                  n=64 is excluded: the GPU sequential Gray walk at n=64 would
+//                  take ~600 years on gfx1030 (2^64 ≈ 1.8×10^19 steps).
+//                  The CPU reference supports n=64 via a u128 Gray counter.
 //   m            — batch size (number of matrices).
 //   out_ptr      — device pointer to M uint64_t outputs.
 //
@@ -319,7 +321,7 @@ extern "C" int permanent_bipedal3_hip_batch(const unsigned char* matrices_ptr,
                                              int m,
                                              unsigned long long* out_ptr) {
     if (m <= 0) return 0; // hipSuccess — nothing to do
-    if (n <= 0 || n > 64) return 1; // hipErrorInvalidValue
+    if (n <= 0 || n > 63) return 1; // hipErrorInvalidValue
 
     // One block per matrix, one thread per block.
     // Thread 0 of each block executes the Gray walk; all other threads return
