@@ -43,9 +43,11 @@ use super::lanes::BipedalLogicalLanes;
 /// The plug-in points the issue's success criterion 1 requires are split
 /// across associated types (`MagLane`, `SgnLane`) and associated `const`s
 /// (`PRIME`, `U64_PER_LANE_PAIR`); the methods (`add_lane`, ...) are the
-/// implementation that uses those types and consts. This split is what
-/// lets F_5 D-bit-sliced (W4) pick a different `MagLane` from `SgnLane`
-/// without duplicating the framework body.
+/// implementation that uses those types and consts. This split keeps the
+/// framework body monomorphic in the per-prime lane shape — F_3 ships
+/// through this trait today. (F_5 and F_7 do not — their encodings need
+/// a shape this 2-stream trait cannot describe; see this module's
+/// top-of-file note.)
 ///
 /// # Safety
 ///
@@ -57,18 +59,14 @@ pub trait BipedalLikeConfig {
     /// Lane type carrying the magnitude bits.
     ///
     /// For F_3 today this is [`crate::bipedal::Avx2Lane`] (one 256-bit
-    /// AVX2 vector covering 4 × `u64`). Future F_5 D-bit-sliced (W4) is
-    /// expected to use a wider or differently-shaped lane covering three
-    /// magnitude planes; the per-prime config selects the shape.
+    /// AVX2 vector covering 4 × `u64`). A future prime that fits a
+    /// 2-stream `(MagLane, SgnLane)` shape may pick a different lane.
     type MagLane: BipedalLogicalLanes;
 
     /// Lane type carrying the sign bits.
     ///
     /// For F_3 today this is [`crate::bipedal::Avx2Lane`] (same as
-    /// [`Self::MagLane`]). For an F_5 D-bit-sliced encoding the sign plane
-    /// may be a single u64 register while the magnitude is a 3-plane wide
-    /// lane — picking different `MagLane` and `SgnLane` lets the framework
-    /// describe both shapes with one trait.
+    /// [`Self::MagLane`]).
     type SgnLane: BipedalLogicalLanes;
 
     /// The prime characteristic this configuration encodes.
@@ -82,10 +80,7 @@ pub trait BipedalLikeConfig {
     ///
     /// For F_3 today: `4` (one 256-bit `Avx2Lane` covers 4 × `u64`). For
     /// shape-uniform encodings this equals `<MagLane as
-    /// BipedalLogicalLanes>::U64_PER_LANE`. For shape-non-uniform encodings
-    /// (e.g. future F_5 D-bit-sliced where magnitude and sign use different
-    /// lane shapes) this records the framework's per-iteration u64 step
-    /// directly and may differ from either lane's individual stride.
+    /// BipedalLogicalLanes>::U64_PER_LANE`.
     const U64_PER_LANE_PAIR: usize;
 
     /// Lane-level add formula, operating on the impl's [`Self::MagLane`] /

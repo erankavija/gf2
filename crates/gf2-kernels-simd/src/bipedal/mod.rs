@@ -34,37 +34,27 @@
 //!
 //! ## Adding a new prime
 //!
-//! Adding a new prime requires only a new [`framework::BipedalLikeConfig`]
-//! impl in `crates/gf2-kernels-simd/src/bipedal/bipedal<prime>.rs`. The new impl
-//! supplies the `MagLane` / `SgnLane` associated types (typically
-//! [`lanes::Avx2Lane`] for both today; future F_5 D-bit-sliced may diverge),
-//! the `PRIME` and `U64_PER_LANE_PAIR` constants, and the lane-level
-//! `add_lane / sub_lane / mul_lane / neg_lane` formulas.
+//! There are two integration paths, depending on whether the prime's
+//! encoding fits the 2-stream `(MagLane, SgnLane)` framework shape.
 //!
-//! For configs whose `MagLane` and `SgnLane` both resolve to
-//! [`lanes::Avx2Lane`], the generic AVX2 entry points in
-//! [`crate::x86::bipedal_avx2`] (`run_add_batch::<C>`, `run_sub_batch::<C>`,
-//! `run_mul_batch::<C>`, `run_neg_batch::<C>`) automatically monomorphise
-//! over the new config; no kernel code changes are required. (The where
-//! clause `C: BipedalLikeConfig<MagLane = Avx2Lane, SgnLane = Avx2Lane>`
-//! enforces the lane-shape contract.)
+//! **(a) Encoding fits the framework — e.g. another 2-stream
+//! bipedal-like prime.** Implement [`framework::BipedalLikeConfig`] for
+//! a new zero-sized struct. Pick `MagLane` / `SgnLane` from existing
+//! lane impls (today only [`lanes::Avx2Lane`]; future AVX-512 / AArch64
+//! backends each contribute a new lane impl). Supply `PRIME`,
+//! `U64_PER_LANE_PAIR`, and the lane-level `add_lane / sub_lane /
+//! mul_lane / neg_lane` formulas. The generic AVX2 entry points in
+//! [`crate::x86::bipedal_avx2`] then monomorphise over the new config;
+//! no kernel code changes are required.
 //!
-//! Concrete steps:
-//!
-//! 1. Implement [`framework::BipedalLikeConfig`] for a new zero-sized struct.
-//!    Pick `MagLane` / `SgnLane` from existing lane impls (today only
-//!    [`lanes::Avx2Lane`]; future AVX-512 / AArch64 backends each
-//!    contribute a new lane impl).
-//! 2. (Optional) Define a type alias
-//!    `pub type ... = BatchedBipedalLike<NewConfig>;` for ergonomics.
-//! 3. Call the existing generic `run_*_batch::<NewConfig>` entry points
-//!    from your safe wrapper / runtime-detection bundle (provided your
-//!    `MagLane` and `SgnLane` are both `Avx2Lane`).
-//!
-//! No changes to the framework, the lane traits, or the AVX2 entry-point
-//! definitions are needed unless the new prime introduces a new lane
-//! primitive (e.g. byte-shuffle for F_7's LUT-A table lookup) or picks a
-//! lane shape other than `(Avx2Lane, Avx2Lane)`.
+//! **(b) Encoding does not fit the framework — e.g. F_5's R1 Candidate D
+//! 3-plane bit-sliced or F_7's R2 Candidate A LUT.** Add a new module
+//! under `crates/gf2-kernels-simd/src/bipedal/packed<prime>.rs` with the
+//! scalar word ops, runtime-detection bundle, and scalar fallbacks; add
+//! a dedicated AVX2 batch entry-point file under
+//! `crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed<prime>.rs` so
+//! the asm-artefact-present gate fires; commit a sibling `.asm.txt`
+//! artefact. This is how F_5 and F_7 ship today.
 
 pub mod bipedal3;
 pub mod framework;
