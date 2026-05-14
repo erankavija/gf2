@@ -1,7 +1,7 @@
 {
   "id": "684a6715-b61f-4c04-9ac3-aea3d6367399",
   "title": "permanent_bipedal5 implementation",
-  "description": "Implement `permanent_bipedal5` over the F_5 packed type (T17), using `gray_code_iter` (T6) and `Packed5Vec::fold_mul`.\n\n## Background\n\nMirrors the F_3 path: walk Gray-code subset order, update the packed column-sum vector by a single `Packed5::add`/`sub` per step, fold via the F_5 multiplication tree at each step. The function lives in `gf2-algebra::permanent::permanent_bipedal5`.\n\nThe lane-count of `Packed5` (chosen by R1) determines the matrix-size limit before multi-word streaming kicks in. Document that limit clearly.\n\n## Success Criteria\n\n- [ ] [hard] `gf2-algebra::permanent::permanent_bipedal5(matrix: &Packed5Matrix) -> Fp<5>` exists.\n- [ ] [hard] Matrix-size upper bound for the single-word path is documented in the function doc-comment, and matches `Packed5::LANES`.\n- [ ] [hard] Output bit-identical to `permanent_ryser<Fp<5>>` (T7) on 1000 random matrices for each $n \\in \\{1, \\ldots, 14\\}$ — covers epic success criterion 6.\n- [ ] [hard] No `unsafe` in the gf2-algebra path.\n- [ ] [hard] `cargo nextest run -p gf2-algebra --release --profile ci` passes.",
+  "description": "Implement `permanent_bipedal5` over the F_5 packed type (T17), using `gray_code_iter` (T6) and `Packed5Vec::fold_mul`.\n\n## Background\n\nMirrors the F_3 path: walk Gray-code subset order, update the packed column-sum vector by a single `Packed5::add`/`sub` per step, fold via the F_5 multiplication tree at each step. The function lives in `gf2-algebra::permanent::permanent_bipedal5`.\n\nThe lane-count of `Packed5` (chosen by R1) determines the matrix-size limit before multi-word streaming kicks in. Document that limit clearly.\n\n## Success Criteria\n\n- [ ] [hard] `gf2-algebra::permanent::permanent_bipedal5(matrix: &Packed5Matrix) -> Fp<5>` exists.\n- [ ] [hard] Matrix-size upper bound for the single-word path is documented in the function doc-comment, and matches `Packed5::LANES`.\n- [ ] [hard] Output bit-identical to `permanent_ryser<Fp<5>>` (T7) on 1000 random matrices for each $n \\in \\{1, \\ldots, 14\\}$ — covers epic success criterion 6.\n- [ ] [hard] No `unsafe` in the gf2-algebra path.\n- [ ] [hard] `cargo nextest run -p gf2-algebra --release --profile ci` passes.\n\n## Amendment 2026-05-14 (user-approved — n=63/64 boundary infeasibility)\n\nCLAUDE.md:149 prescribes word-boundary coverage at `0, 1, 63, 64, 65 bits` for primitives that allocate storage in `u64` words. For `permanent_bipedal5(matrix: &Packed5Matrix)`, a literal positive cross-check at `n = 63` or `n = 64` would require walking `2^n - 1` Gray-code subsets — `2^63 ≈ 9.2 × 10^18` and `2^64 ≈ 1.8 × 10^19` steps respectively, both physically infeasible (decades of single-thread CPU time even at one cycle per step). The Ryser oracle (`permanent_ryser<Fp<5>>`) is `O(n · 2^n)` as well and has the same wall-clock cost.\n\nThe single-word boundary is therefore covered as follows, in lieu of literal `n ∈ {63, 64}` positive cross-checks:\n\n- **n = 0** — Vacuous-product = 1, covered by `test_permanent5_empty_matrix`.\n- **n = 1** — Trivial single-lane path, covered by `test_permanent5_1x1`.\n- **n = 65** — Panic at `Packed5::LANES = 64` boundary, covered by `test_permanent5_panics_on_n_65`.\n- **n ∈ {15, 16}** — Slow-tier 1000-matrix cross-checks at `test_cross_check_n15` / `test_cross_check_n16` (exceed the criterion-required `n ∈ {1, …, 14}` range while still feasible).\n- **n ∈ {20, 24, 32}** — Slow-tier sparse-batch cross-checks at `test_boundary_cross_check_n20` (20 matrices), `test_boundary_cross_check_n24` (10), and `test_boundary_cross_check_n32` (1). `n = 32` is the largest matrix dimension where a single random cross-check completes within the 120 s slow-tier budget; `n ≥ 33` exceeds it.\n\nPer-lane storage-word correctness at the `bit 63 / bit 64 / bit 65` BitVec-level boundary is already covered by the `Packed5` / `Packed5Vec` type's own word-boundary tests at `crates/gf2-algebra/src/packed/packed5.rs` (committed in W4 sub-4a, issue `6917eb85`). `permanent_bipedal5` only consumes `Packed5` via its trait surface and inherits that coverage.\n\nApproved by user 2026-05-14 (epic ae82bd73 session 8, AskUserQuestion option C: \"Amend 684a6715 to document the infeasibility\").",
   "state": "in_progress",
   "priority": "normal",
   "assignee": "agent:claude-wt-684a6715",
@@ -13,7 +13,23 @@
     "code-review",
     "tests"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-14T15:07:47.528885836Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-14T14:39:10.880715069Z"
+    },
+    "tests": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-14T14:43:44.649326525Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -22,5 +38,5 @@
     "component:gf2-algebra"
   ],
   "created_at": "2026-05-09T09:46:13.226592758+00:00",
-  "updated_at": "2026-05-14T14:06:41.015624949+00:00"
+  "updated_at": "2026-05-14T16:35:37.034527153+00:00"
 }
