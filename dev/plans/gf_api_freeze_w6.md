@@ -45,6 +45,9 @@ re-export.
 | `Packed7Vec` (struct) | `packed/packed7.rs:773` | |
 | `Packed7Matrix` (struct) | `packed/packed7.rs:1252` | |
 | `Packed7::LANES` (const) | `packed/packed7.rs:216` | `= 16`. |
+| `packed7::ADD_LUT` (static) | `packed/packed7.rs:137` | 64 KiB byte-pair LUT for F_7 add; consumed by SIMD path and Lean proof of LUT-correctness. |
+| `packed7::SUB_LUT` (static) | `packed/packed7.rs:143` | 64 KiB byte-pair LUT for F_7 sub. |
+| `packed7::MUL_LUT` (static) | `packed/packed7.rs:149` | 64 KiB byte-pair LUT for F_7 mul. |
 | inherent methods on each of the above | various | All `pub fn` methods directly on the struct (e.g. `Bipedal3::add`, `Packed5::sub`, `Packed7::fold_mul_first_n`). |
 
 ### `gf2_algebra::permanent::*`
