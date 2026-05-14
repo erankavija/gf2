@@ -58,15 +58,19 @@ fn test_gpu_cpu_hamming74_crosscheck() {
         let cpu_input: Vec<Llr> = llrs.iter().map(|&v| Llr::new(v)).collect();
         let cpu_result = cpu.decode_siso(&cpu_input);
 
-        for j in 0..7 {
-            let diff = (gpu_app[idx][j] - cpu_result.app_llrs[j].value()).abs();
+        for (j, (gpu_val, cpu_llr)) in gpu_app[idx]
+            .iter()
+            .zip(cpu_result.app_llrs.iter())
+            .enumerate()
+        {
+            let diff = (gpu_val - cpu_llr.value()).abs();
             assert!(
                 diff < 0.01,
                 "Hamming(7,4) vector {}, bit {}: GPU={:.4}, CPU={:.4}, diff={:.4}",
                 idx,
                 j,
-                gpu_app[idx][j],
-                cpu_result.app_llrs[j].value(),
+                gpu_val,
+                cpu_llr.value(),
                 diff
             );
         }
@@ -101,23 +105,25 @@ fn test_gpu_cpu_drm32_noiseless_crosscheck() {
         let cpu_input: Vec<Llr> = llrs.iter().map(|&v| Llr::new(v)).collect();
         let cpu_result = cpu.decode_siso(&cpu_input);
 
-        for j in 0..32 {
-            let diff = (gpu_app[idx][j] - cpu_result.app_llrs[j].value()).abs();
+        for (j, (gpu_val, cpu_llr)) in gpu_app[idx]
+            .iter()
+            .zip(cpu_result.app_llrs.iter())
+            .enumerate()
+        {
+            let diff = (gpu_val - cpu_llr.value()).abs();
             assert!(
                 diff < 0.2,
                 "dRM(32,21) vector {}, bit {}: GPU={:.4}, CPU={:.4}, diff={:.4}",
                 idx,
                 j,
-                gpu_app[idx][j],
-                cpu_result.app_llrs[j].value(),
+                gpu_val,
+                cpu_llr.value(),
                 diff
             );
-        }
 
-        // Hard decisions must match
-        for j in 0..32 {
-            let gpu_hard = gpu_app[idx][j] < 0.0;
-            let cpu_hard = cpu_result.app_llrs[j].hard_decision();
+            // Hard decisions must match
+            let gpu_hard = *gpu_val < 0.0;
+            let cpu_hard = cpu_llr.hard_decision();
             assert_eq!(
                 gpu_hard, cpu_hard,
                 "dRM(32,21) vector {}, bit {}: hard decision mismatch",
@@ -163,15 +169,19 @@ fn test_gpu_cpu_drm32_noisy_crosscheck() {
         let cpu_input: Vec<Llr> = llrs.iter().map(|&v| Llr::new(v)).collect();
         let cpu_result = cpu.decode_siso(&cpu_input);
 
-        for j in 0..32 {
-            let diff = (gpu_app[idx][j] - cpu_result.app_llrs[j].value()).abs();
+        for (j, (gpu_val, cpu_llr)) in gpu_app[idx]
+            .iter()
+            .zip(cpu_result.app_llrs.iter())
+            .enumerate()
+        {
+            let diff = (gpu_val - cpu_llr.value()).abs();
             assert!(
                 diff < 0.2,
                 "noisy dRM vector {}, bit {}: GPU={:.4}, CPU={:.4}, diff={:.4}",
                 idx,
                 j,
-                gpu_app[idx][j],
-                cpu_result.app_llrs[j].value(),
+                gpu_val,
+                cpu_llr.value(),
                 diff
             );
         }
@@ -204,15 +214,19 @@ fn test_gpu_batch64_matches_serial_cpu() {
         let cpu_input: Vec<Llr> = llrs.iter().map(|&v| Llr::new(v)).collect();
         let cpu_result = cpu.decode_siso(&cpu_input);
 
-        for j in 0..32 {
-            let diff = (gpu_app[idx][j] - cpu_result.app_llrs[j].value()).abs();
+        for (j, (gpu_val, cpu_llr)) in gpu_app[idx]
+            .iter()
+            .zip(cpu_result.app_llrs.iter())
+            .enumerate()
+        {
+            let diff = (gpu_val - cpu_llr.value()).abs();
             assert!(
                 diff < 0.2,
                 "batch64 idx {}, bit {}: GPU={:.4}, CPU={:.4}, diff={:.4}",
                 idx,
                 j,
-                gpu_app[idx][j],
-                cpu_result.app_llrs[j].value(),
+                gpu_val,
+                cpu_llr.value(),
                 diff
             );
         }
@@ -274,12 +288,19 @@ proptest! {
         let cpu_result = cpu.decode_siso(&cpu_input);
         let (gpu_app, _) = gpu.decode_batch(&[llrs]).unwrap();
 
-        for j in 0..7 {
-            let diff = (gpu_app[0][j] - cpu_result.app_llrs[j].value()).abs();
+        for (j, (gpu_val, cpu_llr)) in gpu_app[0]
+            .iter()
+            .zip(cpu_result.app_llrs.iter())
+            .enumerate()
+        {
+            let diff = (gpu_val - cpu_llr.value()).abs();
             prop_assert!(
                 diff < 0.01,
                 "bit {}: GPU={:.4}, CPU={:.4}, diff={:.4}",
-                j, gpu_app[0][j], cpu_result.app_llrs[j].value(), diff
+                j,
+                gpu_val,
+                cpu_llr.value(),
+                diff
             );
         }
     }
@@ -310,12 +331,20 @@ proptest! {
             let cpu_input: Vec<Llr> = llrs.iter().map(|&v| Llr::new(v)).collect();
             let cpu_result = cpu.decode_siso(&cpu_input);
 
-            for j in 0..32 {
-                let diff = (gpu_app[idx][j] - cpu_result.app_llrs[j].value()).abs();
+            for (j, (gpu_val, cpu_llr)) in gpu_app[idx]
+                .iter()
+                .zip(cpu_result.app_llrs.iter())
+                .enumerate()
+            {
+                let diff = (gpu_val - cpu_llr.value()).abs();
                 prop_assert!(
                     diff < 0.2,
                     "batch={}, idx={}, bit {}: GPU={:.4}, CPU={:.4}",
-                    batch_size, idx, j, gpu_app[idx][j], cpu_result.app_llrs[j].value()
+                    batch_size,
+                    idx,
+                    j,
+                    gpu_val,
+                    cpu_llr.value()
                 );
             }
         }

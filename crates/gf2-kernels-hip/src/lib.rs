@@ -787,7 +787,7 @@ mod tests {
 
         // All-zero codeword, high-confidence LLRs
         let input = vec![5.0f32; 7];
-        let (app, ext) = gpu.decode_batch(&[input.clone()]).unwrap();
+        let (app, ext) = gpu.decode_batch(std::slice::from_ref(&input)).unwrap();
 
         assert_eq!(app.len(), 1);
         assert_eq!(app[0].len(), 7);
