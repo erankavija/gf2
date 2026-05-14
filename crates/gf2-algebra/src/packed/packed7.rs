@@ -427,6 +427,58 @@ impl Packed7 {
     pub fn all_zero(self) -> bool {
         self.w == 0
     }
+
+    /// Reduce the first `n` lanes to a single `F_7` element via the
+    /// multiplication tree.
+    ///
+    /// Lanes `n..LANES` are treated as the multiplicative identity (1) and
+    /// do not contribute to the result. An empty prefix (`n == 0`) is not
+    /// allowed; use `n >= 1`.
+    ///
+    /// This is the F_7 analogue of `Bipedal3::fold_mul_first_n`, used by
+    /// `permanent_bipedal7` at each Gray-code step to compute the row product
+    /// term.
+    ///
+    /// # Arguments
+    ///
+    /// * `n` — number of active lanes, in `1..=LANES`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `n == 0` or `n > LANES`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::Packed7;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// // [3, 2, 1, ...] → 3 * 2 * 1 = 6 mod 7
+    /// let mut p = Packed7::one();
+    /// p = p.with_lane(0, Fp::<7>::new(3));
+    /// p = p.with_lane(1, Fp::<7>::new(2));
+    /// assert_eq!(p.fold_mul_first_n(2), Fp::<7>::new(6));
+    ///
+    /// // all-ones, first 3 lanes: 1 * 1 * 1 = 1
+    /// assert_eq!(Packed7::one().fold_mul_first_n(3), Fp::<7>::new(1));
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(n)` LUT lookups (at most `LANES` = 16 iterations).
+    pub fn fold_mul_first_n(self, n: usize) -> Fp<7> {
+        assert!(
+            (1..=LANES).contains(&n),
+            "Packed7::fold_mul_first_n: n must satisfy 1 <= n <= {LANES}; got n = {n}"
+        );
+        let mut acc = Fp::<7>::new(1);
+        for i in 0..n {
+            let nibble = (self.w >> (4 * i)) & 0xf;
+            let v = Fp::<7>::new(nibble);
+            acc = acc * v;
+        }
+        acc
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -1147,6 +1199,297 @@ impl PackedFieldVec<Fp<7>> for Packed7Vec {
     /// `O(ceil(self.len() / 16))`.
     fn all_zero(&self) -> bool {
         self.words.iter().all(|&w| w == 0)
+    }
+}
+
+// ===========================================================================
+// Packed7Matrix — column-major rectangular matrix of packed F_7 values
+// ===========================================================================
+
+/// Rectangular `rows × cols` matrix of packed `F_7` values, stored
+/// **column-major** as one [`Packed7Vec`] per column.
+///
+/// Each column `j` is a [`Packed7Vec`] of length `rows`; the entry at
+/// row `i`, column `j` is `self.column(j).get(i)`.
+///
+/// # Single-word size bound
+///
+/// `permanent_bipedal7` only supports the single-word path (`n ≤ LANES = 16`),
+/// so it accepts matrices up to 16 × 16. The column-sum accumulator for n
+/// rows fits in one `Packed7` word when `n ≤ LANES`.
+///
+/// # Column-major rationale
+///
+/// Ryser's formula and the single-word permanent path iterate over columns
+/// in the inner loop, accumulating row-wise products. Storing each column
+/// as a contiguous [`Packed7Vec`] allows zero-copy `column(j)` access,
+/// matching the access pattern of `Bipedal3Matrix`.
+///
+/// # Mask-tail invariant
+///
+/// Each column is a [`Packed7Vec`] and inherits its mask-tail invariant:
+/// nibble slots beyond `rows` in the last `u64` word of each column are
+/// always zero (CLAUDE.md §Key design invariants #1).
+///
+/// # Examples
+///
+/// ```
+/// use gf2_algebra::packed::Packed7Matrix;
+/// use gf2_core::gfp::Fp;
+///
+/// let data: Vec<Fp<7>> = (0..6u64).map(|v| Fp::<7>::new(v % 7)).collect();
+/// let m = Packed7Matrix::from_row_major(&data, 2, 3);
+/// assert_eq!(m.rows(), 2);
+/// assert_eq!(m.cols(), 3);
+/// assert_eq!(m.get(0, 0), Fp::<7>::new(0));
+/// assert_eq!(m.get(1, 2), Fp::<7>::new(5));
+/// ```
+///
+/// # Complexity
+///
+/// Construction is `O(rows * cols)`; column access is `O(1)`.
+#[derive(Clone)]
+pub struct Packed7Matrix {
+    /// One `Packed7Vec` per column, each of length `rows`.
+    columns: Vec<Packed7Vec>,
+    rows: usize,
+    cols: usize,
+}
+
+impl PartialEq for Packed7Matrix {
+    /// Shape-equal and per-column canonical-decode equal.
+    ///
+    /// Two matrices are equal iff they have the same `rows` and `cols`,
+    /// and every column pair compares equal under [`Packed7Vec`]'s
+    /// canonical-decode `PartialEq`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::Packed7Matrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let data: Vec<Fp<7>> = (0..4u64).map(|v| Fp::<7>::new(v % 7)).collect();
+    /// let a = Packed7Matrix::from_row_major(&data, 2, 2);
+    /// let b = Packed7Matrix::from_row_major(&data, 2, 2);
+    /// assert_eq!(a, b);
+    ///
+    /// let c = Packed7Matrix::from_row_major(&data, 4, 1);
+    /// assert_ne!(a, c); // different shape
+    /// ```
+    fn eq(&self, other: &Self) -> bool {
+        self.rows == other.rows && self.cols == other.cols && self.columns == other.columns
+    }
+}
+
+impl Eq for Packed7Matrix {}
+
+impl core::fmt::Debug for Packed7Matrix {
+    /// Formats as `Packed7Matrix { rows, cols, data: [[row 0], [row 1], ...] }`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::Packed7Matrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let data = vec![Fp::<7>::new(1), Fp::<7>::new(2)];
+    /// let m = Packed7Matrix::from_row_major(&data, 1, 2);
+    /// let s = format!("{:?}", m);
+    /// assert!(s.contains("rows"));
+    /// assert!(s.contains("cols"));
+    /// ```
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let data: Vec<Vec<u64>> = (0..self.rows)
+            .map(|i| {
+                (0..self.cols)
+                    .map(|j| self.columns[j].get(i).value())
+                    .collect()
+            })
+            .collect();
+        f.debug_struct("Packed7Matrix")
+            .field("rows", &self.rows)
+            .field("cols", &self.cols)
+            .field("data", &data)
+            .finish()
+    }
+}
+
+impl Packed7Matrix {
+    /// Construct a matrix from a row-major `Fp<7>` slice.
+    ///
+    /// The entry at row `i`, column `j` is `data[i * cols + j]`. The slice
+    /// is re-encoded in column-major order: each column `j` becomes a
+    /// [`Packed7Vec`] of length `rows`.
+    ///
+    /// Empty matrices (`rows == 0` or `cols == 0`) are allowed.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` — row-major source slice of length `rows * cols`.
+    /// * `rows` — number of rows.
+    /// * `cols` — number of columns.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `data.len() != rows * cols`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::Packed7Matrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// // 2×3 matrix
+    /// let data: Vec<Fp<7>> = (0..6u64).map(|v| Fp::<7>::new(v % 7)).collect();
+    /// let m = Packed7Matrix::from_row_major(&data, 2, 3);
+    /// assert_eq!(m.rows(), 2);
+    /// assert_eq!(m.cols(), 3);
+    /// assert_eq!(m.get(0, 1), Fp::<7>::new(1));
+    /// assert_eq!(m.get(1, 0), Fp::<7>::new(3));
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(rows * cols)`.
+    pub fn from_row_major(data: &[Fp<7>], rows: usize, cols: usize) -> Self {
+        assert_eq!(
+            data.len(),
+            rows * cols,
+            "Packed7Matrix::from_row_major: data.len() ({}) != rows ({}) * cols ({})",
+            data.len(),
+            rows,
+            cols
+        );
+        let columns: Vec<Packed7Vec> = (0..cols)
+            .map(|j| {
+                let col_data: Vec<Fp<7>> = (0..rows).map(|i| data[i * cols + j]).collect();
+                Packed7Vec::from_field_slice(&col_data)
+            })
+            .collect();
+        Self {
+            columns,
+            rows,
+            cols,
+        }
+    }
+
+    /// Number of rows.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::Packed7Matrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let m = Packed7Matrix::from_row_major(&[], 0, 5);
+    /// assert_eq!(m.rows(), 0);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(1)`.
+    #[inline]
+    pub fn rows(&self) -> usize {
+        self.rows
+    }
+
+    /// Number of columns.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::Packed7Matrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let m = Packed7Matrix::from_row_major(&[], 5, 0);
+    /// assert_eq!(m.cols(), 0);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(1)`.
+    #[inline]
+    pub fn cols(&self) -> usize {
+        self.cols
+    }
+
+    /// Decode the element at row `i`, column `j`.
+    ///
+    /// # Arguments
+    ///
+    /// * `i` — row index in `0..self.rows()`.
+    /// * `j` — column index in `0..self.cols()`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `i >= self.rows()` or `j >= self.cols()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::Packed7Matrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let data = vec![Fp::<7>::new(3), Fp::<7>::new(5)];
+    /// let m = Packed7Matrix::from_row_major(&data, 1, 2);
+    /// assert_eq!(m.get(0, 0), Fp::<7>::new(3));
+    /// assert_eq!(m.get(0, 1), Fp::<7>::new(5));
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(1)`.
+    #[inline]
+    pub fn get(&self, i: usize, j: usize) -> Fp<7> {
+        assert!(
+            j < self.cols,
+            "Packed7Matrix::get: column index {j} out of range (cols = {})",
+            self.cols
+        );
+        self.columns[j].get(i)
+    }
+
+    /// Borrow the `j`-th column as a `&Packed7Vec` of length `rows`.
+    ///
+    /// This is the primary access pattern for column-major algorithms
+    /// (`permanent_bipedal7`): iterating `column(j)` for `j` in `0..cols`
+    /// is zero-copy.
+    ///
+    /// # Arguments
+    ///
+    /// * `j` — column index in `0..self.cols()`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `j >= self.cols()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{PackedFieldVec, Packed7Matrix};
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let data: Vec<Fp<7>> = vec![
+    ///     Fp::<7>::new(1), Fp::<7>::new(2),
+    ///     Fp::<7>::new(3), Fp::<7>::new(4),
+    /// ];
+    /// let m = Packed7Matrix::from_row_major(&data, 2, 2);
+    /// assert_eq!(m.column(1).get(0), Fp::<7>::new(2));
+    /// assert_eq!(m.column(1).get(1), Fp::<7>::new(4));
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(1)`.
+    #[inline]
+    pub fn column(&self, j: usize) -> &Packed7Vec {
+        assert!(
+            j < self.cols,
+            "Packed7Matrix::column: index {j} out of range (cols = {})",
+            self.cols
+        );
+        &self.columns[j]
     }
 }
 

@@ -47,3 +47,6 @@ pub mod bipedal5;
 
 #[cfg(feature = "f7")]
 pub mod bipedal7;
+
+#[cfg(feature = "f7")]
+pub use bipedal7::permanent_bipedal7;
