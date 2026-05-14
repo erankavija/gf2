@@ -1,17 +1,17 @@
 //! `permanent_bipedal5` — Gray-code Ryser permanent over `F_5`.
 //!
 //! Mirrors the F_3 path in `permanent_bipedal3`: walks the Gray-code subset
-//! order, updates the packed column-sum [`Packed5Vec`] by a single
-//! [`PackedFieldVec::add_assign`] or [`PackedFieldVec::sub_assign`] per step,
-//! and folds via [`Packed5::fold_mul_first_n`] at each step.
+//! order, updates a single `Packed5` column-sum word by one [`Packed5::add`]
+//! or [`Packed5::sub`] per step, and folds via [`Packed5::fold_mul_first_n`]
+//! at each step.
 //!
 //! ## Single-word path (`n ≤ LANES = 64`)
 //!
-//! For `n ≤ 64` the column-sum vector fits in a single `Packed5Vec` word
-//! (one `u64`-triple per bit-plane). Each Gray-code step updates the
-//! column-sum in-place via `add_assign` or `sub_assign`, followed by a
-//! horizontal fold via `Packed5::fold_mul_first_n` — the F_5 multiplication
-//! tree lives once in that method.
+//! For `n ≤ 64` the column-sum fits in a single `Packed5` word (one
+//! `u64`-triple per bit-plane). Each Gray-code step performs an O(1)
+//! [`Packed5::add`] or [`Packed5::sub`] on the running column-sum, followed
+//! by a horizontal fold via [`Packed5::fold_mul_first_n`] — the F_5
+//! multiplication tree lives once in that method.
 //!
 //! ## Multi-word path (`n > 64`)
 //!
@@ -99,10 +99,11 @@ use crate::packed::{PackedField, PackedFieldVec};
 ///
 /// `O(n · 2^n)` field operations over `Fp<5>`:
 /// - Matrix prep: `O(n^2)` one-time lane-by-lane column extraction.
-/// - Gray walk: `2^n - 1` steps, each with 1 `add_assign` or `sub_assign`
-///   (O(1) per `Packed5Vec` word) plus 1 `Packed5::fold_mul_first_n` (O(n)
-///   lane-decode passes, bounded constant at n ≤ 64).
-/// - Space: `O(n)` extra (the `columns` Vec plus one `Packed5Vec` col-sum word).
+/// - Gray walk: `2^n - 1` steps, each with 1 [`Packed5::add`] or
+///   [`Packed5::sub`] (O(1), pure bit-plane logic on a single `u64`-triple)
+///   plus 1 [`Packed5::fold_mul_first_n`] (O(n) lane-decode passes,
+///   bounded constant at n ≤ 64).
+/// - Space: `O(n)` extra (the `columns` Vec plus one `Packed5` col-sum word).
 pub fn permanent_bipedal5(mat: &Packed5Matrix) -> Fp<5> {
     let n = mat.cols();
     assert_eq!(
@@ -126,18 +127,19 @@ pub fn permanent_bipedal5(mat: &Packed5Matrix) -> Fp<5> {
 }
 
 /// Compute the permanent of an `n × n` matrix over `F_5` using the
-/// single-`Packed5Vec` fast path.
+/// single-`Packed5`-word fast path.
 ///
 /// This is the inner implementation called by [`permanent_bipedal5`].
 /// It is also exposed as `pub` so callers that are certain of `n ≤ 64` can
 /// call it directly (e.g., for cross-checks that bypass the dispatcher).
 ///
 /// The algorithm mirrors `permanent_bipedal3_singleword`:
-/// 1. Extract each column `j` into a `Packed5Vec` of length `n`.
+/// 1. Extract each column `j` into a `Packed5` word.
 /// 2. Walk Gray-code subsets: each step adds or subtracts one column into
-///    the running column-sum `Packed5Vec`.
+///    the running column-sum `Packed5` word via [`Packed5::add`] /
+///    [`Packed5::sub`] — O(1) per step.
 /// 3. At each step, fold the first `n` lanes of the column-sum into a
-///    scalar `Fp<5>` via `Packed5::fold_mul_first_n` and accumulate into
+///    scalar `Fp<5>` via [`Packed5::fold_mul_first_n`] and accumulate into
 ///    the Ryser running total with the appropriate sign.
 /// 4. Apply the outer `(-1)^n` factor.
 ///
@@ -205,15 +207,10 @@ pub fn permanent_bipedal5_singleword(mat: &Packed5Matrix) -> Fp<5> {
     }
 
     // Column-sum accumulator as a single Packed5 word.
-    // Lane i of col_sum holds sum_{j ∈ S} A[i,j] mod 5.
-    // Lanes n..63 stay 0 throughout (add/sub leave them at 0, and
-    // fold_mul_first_n only reads lanes 0..n-1).
-    //
-    // We use a Packed5Vec of length n as the accumulator so that we can
-    // use the add_assign / sub_assign trait methods. Internally it stores
-    // one full Packed5 word (n <= 64 fits in one word).
-    use crate::packed::Packed5Vec;
-    let mut col_sum = Packed5Vec::zeros(n);
+    // Lane i of col_sum holds Σ_{j ∈ S} A[i,j] mod 5.
+    // Lanes n..63 stay 0 throughout (add/sub on the packed bit-planes
+    // leave them at 0; fold_mul_first_n only reads lanes 0..n-1).
+    let mut col_sum = Packed5::zero();
 
     // Running Ryser accumulator and subset-size counter.
     let mut total = Fp::<5>::new(0);
@@ -224,24 +221,18 @@ pub fn permanent_bipedal5_singleword(mat: &Packed5Matrix) -> Fp<5> {
     //   flip   — which column just entered or left S
     //   parity — +1 (entered, ADD) or -1 (left, SUB)
     for (flip, parity) in gray_code_iter(n) {
-        // Build a Packed5Vec of length n from the precomputed Packed5 word.
-        // We need to call add_assign/sub_assign on Packed5Vec objects of equal length.
-        let col_as_vec = col_as_packed5vec(&columns[flip], n);
-
         if parity == 1 {
-            // col_sum += columns[flip]
+            // col_sum += columns[flip] — O(1) packed bit-plane add.
             subset_size += 1;
-            col_sum.add_assign(&col_as_vec);
+            col_sum = col_sum.add(columns[flip]);
         } else {
-            // col_sum -= columns[flip]
+            // col_sum -= columns[flip] — O(1) packed bit-plane sub.
             subset_size -= 1;
-            col_sum.sub_assign(&col_as_vec);
+            col_sum = col_sum.sub(columns[flip]);
         }
 
         // Horizontal fold via F_5 multiplication of the first n lanes.
-        // Extract the single underlying Packed5 word from col_sum and fold.
-        let col_sum_word = packed5vec_to_word(&col_sum);
-        let term = col_sum_word.fold_mul_first_n(n);
+        let term = col_sum.fold_mul_first_n(n);
 
         // Ryser sign: (-1)^|S| in F_5 means +1 for even |S|, -1 (= 4 in F_5) for odd.
         if subset_size % 2 == 1 {
@@ -259,34 +250,6 @@ pub fn permanent_bipedal5_singleword(mat: &Packed5Matrix) -> Fp<5> {
     } else {
         total
     }
-}
-
-/// Convert a `Packed5` word into a `Packed5Vec` of length `n` (n ≤ 64).
-///
-/// This helper is used internally to call `add_assign`/`sub_assign` on the
-/// column-sum accumulator (a `Packed5Vec`) with the column data (stored as a
-/// `Packed5` word, but needing to match the accumulator's `len_lanes`).
-#[inline]
-fn col_as_packed5vec(col: &Packed5, n: usize) -> crate::packed::Packed5Vec {
-    // Build a Packed5Vec by extracting all n lanes from the Packed5 word.
-    // This is O(n) and bounded by n <= 64.
-    let lanes: Vec<Fp<5>> = (0..n).map(|i| col.lane(i)).collect();
-    crate::packed::Packed5Vec::from_field_slice(&lanes)
-}
-
-/// Extract the single `Packed5` word from a `Packed5Vec` of length ≤ 64.
-///
-/// For single-word vecs (n ≤ 64), this just re-encodes the lane values
-/// back into a `Packed5` word so that `fold_mul_first_n` can be called.
-/// This is O(n) and bounded by n <= 64.
-#[inline]
-fn packed5vec_to_word(v: &crate::packed::Packed5Vec) -> Packed5 {
-    let n = v.len();
-    let mut word = Packed5::zero();
-    for i in 0..n {
-        word = word.with_lane(i, v.get(i));
-    }
-    word
 }
 
 // ---------------------------------------------------------------------------
