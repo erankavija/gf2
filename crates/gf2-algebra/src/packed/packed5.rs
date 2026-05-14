@@ -1190,6 +1190,347 @@ impl PackedFieldVec<Fp<5>> for Packed5Vec {
 }
 
 // ---------------------------------------------------------------------------
+// Packed5 — fold_mul_first_n
+// ---------------------------------------------------------------------------
+
+impl Packed5 {
+    /// Reduce the first `n` lanes of `self` to a single `Fp<5>` via
+    /// lane-wise multiplication.
+    ///
+    /// Lanes `n..63` are treated as the multiplicative identity (`1`) and do
+    /// not contribute to the result. An all-zero column-sum (any active lane
+    /// is 0) yields `Fp::<5>::new(0)`.
+    ///
+    /// This is the F_5 analogue of `Bipedal3::fold_mul_first_n`; both are used
+    /// by the single-word Ryser permanent kernels to fold the per-step
+    /// column-sum vector into a scalar product.
+    ///
+    /// # Arguments
+    ///
+    /// * `n` — number of active lanes to fold (must satisfy `1 <= n <= 64`).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{PackedField, Packed5};
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// // Three lanes set to 2; product over F_5 = 2^3 mod 5 = 3.
+    /// let v = <Packed5 as PackedField<Fp<5>>>::splat(Fp::<5>::new(2));
+    /// assert_eq!(v.fold_mul_first_n(3), Fp::<5>::new(3)); // 2*2*2 = 8 mod 5 = 3
+    ///
+    /// // Single lane set to 3; product = 3.
+    /// let w = <Packed5 as PackedField<Fp<5>>>::zero().with_lane(0, Fp::<5>::new(3));
+    /// assert_eq!(w.fold_mul_first_n(1), Fp::<5>::new(3));
+    ///
+    /// // Any zero lane collapses the product to 0.
+    /// let z = <Packed5 as PackedField<Fp<5>>>::zero();
+    /// assert_eq!(z.fold_mul_first_n(2), Fp::<5>::new(0));
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics if `n == 0` or `n > 64`.
+    ///
+    /// # Complexity
+    ///
+    /// `O(n)` — decodes each of the `n` active lanes and multiplies them
+    /// into a running `Fp<5>` accumulator. At `n <= 64` this is a bounded
+    /// constant in the asymptotic sense.
+    pub fn fold_mul_first_n(self, n: usize) -> Fp<5> {
+        assert!(
+            (1..=64).contains(&n),
+            "Packed5::fold_mul_first_n: n must satisfy 1 <= n <= 64; got n = {n}"
+        );
+        // There is no bit-sliced halving-fold for F_5 analogous to the Bipedal3
+        // trick (which exploits the fact that F_3 mul is XOR on sgn and AND on
+        // mag). F_5 multiplication requires a full decode-cross-product-encode
+        // circuit, so we decode each active lane and multiply them one by one.
+        //
+        // This is still O(1) in the asymptotic sense because n <= 64 is a fixed
+        // bound, and the 64 individual lane decodes are all in-register bit ops.
+        let mut acc = Fp::<5>::new(1); // multiplicative identity
+        for i in 0..n {
+            let lane_val = self.lane(i);
+            acc = acc * lane_val;
+        }
+        acc
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Packed5Matrix — column-major rectangular matrix of packed F_5 values
+// ---------------------------------------------------------------------------
+
+/// Column-major rectangular matrix of `F_5` elements, stored as one
+/// [`Packed5Vec`] per column.
+///
+/// Each column `j` is a [`Packed5Vec`] of length `rows`; the entry at
+/// row `i`, column `j` is `self.column(j).get(i)`.
+///
+/// The column-major layout is the primary access pattern for the Gray-code
+/// Ryser permanent kernel ([`crate::permanent::permanent_bipedal5`]):
+/// storing each column as a contiguous `Packed5Vec` allows the per-step
+/// column-sum update (`col_sum.add_assign(columns[flip])` or `sub_assign`)
+/// to operate on the column data without scatter-gather.
+///
+/// # Mask-tail invariant
+///
+/// Each column is a [`Packed5Vec`] and inherits its mask-tail invariant:
+/// padding bits beyond `rows` in the last word of each column's planes
+/// are always zero.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_algebra::packed::Packed5Matrix;
+/// use gf2_core::gfp::Fp;
+///
+/// let data: Vec<Fp<5>> = vec![
+///     Fp::<5>::new(1), Fp::<5>::new(2),
+///     Fp::<5>::new(3), Fp::<5>::new(4),
+/// ];
+/// let m = Packed5Matrix::from_row_major(&data, 2, 2);
+/// assert_eq!(m.rows(), 2);
+/// assert_eq!(m.cols(), 2);
+/// assert_eq!(m.get(0, 1), Fp::<5>::new(2));
+/// assert_eq!(m.get(1, 0), Fp::<5>::new(3));
+/// ```
+///
+/// # Complexity
+///
+/// Construction is `O(rows * cols)`; column access is `O(1)`;
+/// individual element access is `O(1)`.
+pub struct Packed5Matrix {
+    /// One `Packed5Vec` per column, each of length `rows`.
+    columns: Vec<Packed5Vec>,
+    rows: usize,
+    cols: usize,
+}
+
+// ---------------------------------------------------------------------------
+// Manual PartialEq / Eq for Packed5Matrix
+// ---------------------------------------------------------------------------
+
+impl PartialEq for Packed5Matrix {
+    /// Shape-equal and per-column canonical-decode equal.
+    fn eq(&self, other: &Self) -> bool {
+        self.rows == other.rows && self.cols == other.cols && self.columns == other.columns
+    }
+}
+
+impl Eq for Packed5Matrix {}
+
+// ---------------------------------------------------------------------------
+// Manual Debug for Packed5Matrix
+// ---------------------------------------------------------------------------
+
+impl fmt::Debug for Packed5Matrix {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let rows: Vec<Vec<u64>> = (0..self.rows)
+            .map(|i| {
+                (0..self.cols)
+                    .map(|j| self.columns[j].get(i).value())
+                    .collect()
+            })
+            .collect();
+        f.debug_struct("Packed5Matrix")
+            .field("rows", &self.rows)
+            .field("cols", &self.cols)
+            .field("data", &rows)
+            .finish()
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Packed5Matrix inherent methods
+// ---------------------------------------------------------------------------
+
+impl Packed5Matrix {
+    /// Construct a matrix from a row-major `Fp<5>` slice.
+    ///
+    /// The entry at row `i`, column `j` is `data[i * cols + j]`. The slice
+    /// is re-encoded in column-major order: each column `j` becomes a
+    /// [`Packed5Vec`] of length `rows` containing `data[0*cols+j]`,
+    /// `data[1*cols+j]`, ..., `data[(rows-1)*cols+j]`.
+    ///
+    /// Empty matrices (`rows == 0` or `cols == 0`) are allowed.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` — row-major source slice of length `rows * cols`.
+    /// * `rows` — number of rows.
+    /// * `cols` — number of columns.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `data.len() != rows * cols`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::Packed5Matrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let data: Vec<Fp<5>> = vec![
+    ///     Fp::<5>::new(0), Fp::<5>::new(1), Fp::<5>::new(2),
+    ///     Fp::<5>::new(3), Fp::<5>::new(4), Fp::<5>::new(0),
+    /// ];
+    /// let m = Packed5Matrix::from_row_major(&data, 2, 3);
+    /// assert_eq!(m.rows(), 2);
+    /// assert_eq!(m.cols(), 3);
+    /// assert_eq!(m.get(0, 2), Fp::<5>::new(2));
+    /// assert_eq!(m.get(1, 1), Fp::<5>::new(4));
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(rows * cols)`.
+    pub fn from_row_major(data: &[Fp<5>], rows: usize, cols: usize) -> Self {
+        assert_eq!(
+            data.len(),
+            rows * cols,
+            "Packed5Matrix::from_row_major: data.len() ({}) != rows ({}) * cols ({})",
+            data.len(),
+            rows,
+            cols
+        );
+        let columns: Vec<Packed5Vec> = (0..cols)
+            .map(|j| {
+                let col_data: Vec<Fp<5>> = (0..rows).map(|i| data[i * cols + j]).collect();
+                Packed5Vec::from_field_slice(&col_data)
+            })
+            .collect();
+        Self {
+            columns,
+            rows,
+            cols,
+        }
+    }
+
+    /// Number of rows.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::Packed5Matrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let m = Packed5Matrix::from_row_major(&[], 0, 3);
+    /// assert_eq!(m.rows(), 0);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(1)`.
+    #[inline]
+    pub fn rows(&self) -> usize {
+        self.rows
+    }
+
+    /// Number of columns.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::Packed5Matrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let m = Packed5Matrix::from_row_major(&[], 3, 0);
+    /// assert_eq!(m.cols(), 0);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(1)`.
+    #[inline]
+    pub fn cols(&self) -> usize {
+        self.cols
+    }
+
+    /// Borrow the `j`-th column as a `&Packed5Vec` of length `rows`.
+    ///
+    /// This is the primary access pattern for the Gray-code Ryser permanent
+    /// kernel: iterating `column(j)` for `j` in `0..cols` is zero-copy.
+    ///
+    /// # Arguments
+    ///
+    /// * `j` — column index in `0..self.cols()`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `j >= self.cols()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{Packed5Matrix, PackedFieldVec};
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let data: Vec<Fp<5>> = vec![
+    ///     Fp::<5>::new(1), Fp::<5>::new(2),
+    ///     Fp::<5>::new(3), Fp::<5>::new(4),
+    /// ];
+    /// let m = Packed5Matrix::from_row_major(&data, 2, 2);
+    /// assert_eq!(m.column(1).get(0), Fp::<5>::new(2));
+    /// assert_eq!(m.column(1).get(1), Fp::<5>::new(4));
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(1)`.
+    #[inline]
+    pub fn column(&self, j: usize) -> &Packed5Vec {
+        assert!(
+            j < self.cols,
+            "Packed5Matrix::column: index {} out of range (cols = {})",
+            j,
+            self.cols
+        );
+        &self.columns[j]
+    }
+
+    /// Decode entry at row `i`, column `j` to a canonical `F_5` value.
+    ///
+    /// # Arguments
+    ///
+    /// * `i` — row index in `0..self.rows()`.
+    /// * `j` — column index in `0..self.cols()`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `i >= self.rows()` or `j >= self.cols()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::Packed5Matrix;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let data: Vec<Fp<5>> = vec![
+    ///     Fp::<5>::new(1), Fp::<5>::new(2),
+    ///     Fp::<5>::new(3), Fp::<5>::new(4),
+    /// ];
+    /// let m = Packed5Matrix::from_row_major(&data, 2, 2);
+    /// assert_eq!(m.get(0, 0), Fp::<5>::new(1));
+    /// assert_eq!(m.get(1, 1), Fp::<5>::new(4));
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(1)`.
+    pub fn get(&self, i: usize, j: usize) -> Fp<5> {
+        assert!(
+            i < self.rows,
+            "Packed5Matrix::get: row index {} out of range (rows = {})",
+            i,
+            self.rows
+        );
+        self.column(j).get(i)
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
