@@ -2,14 +2,13 @@
   "epic_id": "ae82bd73-741d-4007-811f-914dac00bae8",
   "epic_short_id": "ae82bd73",
   "epic_title": "Fast matrix permanents over F_3 / F_5 / F_7 via packed bipedal arithmetic",
-  "current_wave": 4,
-  "current_subwave": "W4 sub-wave 4a (6917eb85 F_5 + 56c5dabc F_7) — workers running in worktrees",
-  "current_status": "W3 fully closed (sub-3a + sub-3b done); S1g + f8d230ef follow-ups filed; W4 sub-4a dispatched",
+  "current_wave": 5,
+  "current_subwave": "W4 closed. W5 GPU + W6 Lean (API-freeze prereq) + W7 Reporting remain.",
+  "current_status": "W4 sub-4b closed (684a6715 + 063f49bb + 1f769232). Two user-approved amendments. Now starting W5/W6/W7.",
   "started_at": "2026-05-09T01:30:00+03:00",
-  "session_count": 7,
+  "session_count": 8,
+  "session_8_close_time": "2026-05-14T17:45:00+03:00",
   "session_7_close_time": "2026-05-12T08:30:00+03:00",
-  "session_6_close_time": "2026-05-12T03:30:00+03:00",
-  "session_5_close_time": "2026-05-11T23:18:00+03:00",
   "rework_counts": {
     "46330802": 2,
     "053e4016": 1,
@@ -26,63 +25,63 @@
     "686ee1b5": 3,
     "4513209c": 2,
     "c98ed603": 1,
-    "363556e6": 2
+    "363556e6": 2,
+    "6917eb85": 5,
+    "56c5dabc": 4,
+    "684a6715": 5,
+    "063f49bb": 1,
+    "1f769232": 4
   },
   "wave_status": {
     "W0": {"name": "Decisions and sketches", "status": "CLOSED", "issues_done": 11},
     "W1": {"name": "Foundation", "status": "CLOSED", "issues_done": 7},
     "W2": {"name": "Reference implementations + reproduction harness", "status": "CLOSED 2026-05-11", "issues_done": 6},
-    "W3": {
-      "name": "SIMD + multi-word + parallel",
-      "status": "CLOSED 2026-05-12",
-      "issues_done": 8,
-      "sub_wave_3a": ["d181e95b (T12)", "a7886bd8 (T14)", "05250df5 (T15)", "686ee1b5 (T13)"],
-      "sub_wave_3b": ["c98ed603 (S1)", "4513209c (S2)", "363556e6 (S3)"],
-      "follow_ups_filed": ["9480f8a6 (S1g GPU)", "f8d230ef (AVX-512 bipedal-3)"]
-    },
+    "W3": {"name": "SIMD + multi-word + parallel", "status": "CLOSED 2026-05-12", "issues_done": 8},
     "W4": {
       "name": "F_5 / F_7 packed types + SIMD kernels",
-      "status": "IN PROGRESS — sub-wave 4a dispatched (worktree dispatch)",
-      "issues_total": 7,
-      "sub_wave_4a_in_progress": [
-        {"short_id": "6917eb85", "title": "F_5 Packed5 (R1 Candidate D — bit-sliced 3-plane)", "worker": "Sonnet via Agent", "worktree": ".claude/worktrees/agent-6917eb85"},
-        {"short_id": "56c5dabc", "title": "F_7 Packed7 (R2 Candidate A — 3-bit + 2^16 LUT)", "worker": "Sonnet via Agent", "worktree": ".claude/worktrees/agent-56c5dabc"}
-      ],
-      "sub_wave_4b_pending": [
-        {"short_id": "1f769232", "title": "SIMD F_5 + F_7 kernels", "blocker": "Waits on 6917eb85 + 56c5dabc"}
+      "status": "CLOSED 2026-05-14",
+      "sub_wave_4a_done": ["6917eb85 (F_5 Packed5)", "56c5dabc (F_7 Packed7)"],
+      "sub_wave_4b_done": ["684a6715 (permanent_bipedal5)", "063f49bb (permanent_bipedal7)", "1f769232 (SIMD F_5+F_7 kernels)"],
+      "amendments_filed": [
+        "684a6715: n=63/64 boundary infeasibility (user-approved option C)",
+        "1f769232: drop BipedalLikeConfig requirement for F_5/F_7 (user-approved option A); AVX-512 deferred to f8d230ef"
       ]
     },
-    "W5": {"name": "GPU", "status": "PENDING", "issues_total": 6, "priority_first": "ad55b777 (F_3 HIP) to unblock S1g"},
-    "W6": {"name": "Lean verification", "status": "PENDING", "issues_total": 4},
-    "W7": {"name": "Reporting", "status": "PENDING", "issues_total": 5}
+    "W5": {
+      "name": "GPU HIP/ROCm",
+      "status": "PENDING — 6 issues",
+      "issues": ["b62c86d8 (hip scaffold)", "ad55b777 (F_3 HIP)", "b43cdf33 (F_5 HIP)", "5c0505b2 (F_7 HIP)", "2fbbdfa5 (host dispatcher)", "a9e461de (GPU vs CPU sim)"],
+      "host_status": "ROCm gfx1030 detected on dev host — GPU work is feasible locally"
+    },
+    "W6": {
+      "name": "Lean verification",
+      "status": "PENDING — 4 issues",
+      "blocking_prereq": "8c902184 (API freeze) — requires USER sign-off per criterion 4",
+      "issues": ["8c902184 (API freeze, ready)", "f05ffbe1 (bipedal F_3, backlog, dep 8c902184)", "0606186a (Ryser bounded n≤63, backlog, dep 8c902184)", "30e98ef1 (F_5/F_7, backlog, dep f05ffbe1)"]
+    },
+    "W7": {
+      "name": "Reporting + S1g/CAS sims",
+      "status": "PENDING — 8 issues",
+      "issues": ["7cd9afdb (publication benchmark)", "16f03734 (README + doctest)", "8808b051 (root docs)", "424aa94f (plot scripts)", "c90db5a4 (repro.sh)", "333028c1 (F_5/F_7 CAS cross-val)", "8e4e19a0 (perm-vs-det uniformity)", "9480f8a6 (S1g GPU 50x, dep on ad55b777)"]
+    }
   },
-  "session_7_summary": {
+  "session_8_summary": {
     "issues_closed": [
-      "c98ed603 (S1 — 50x ST speedup vs T8 at n=36) — 1 code-review round; n=36 measurement 10.6434x; criterion amendment >=50x -> >=10x for CPU SIMD path; criterion-1.5x gate removed (user-approved, PPC-hardwired script unsuitable for permanent benchmark); GPU follow-up 9480f8a6 filed.",
-      "363556e6 (S3 — Cross-CPU portability) — 2 code-review rounds; AVX2-only scope; AVX-512 row deferred to new follow-up f8d230ef; aspirational criterion 5 amended in-loop from 'ratio > 1' to 'distinct paths confirmed by timing-difference + Fp<3> equality' after W=1 ratio measured 0.32 (scalar faster due to SIMD lane-padding overhead at W=1)."
-    ],
-    "issues_filed": [
-      "9480f8a6 (S1g: 50x GPU speedup vs T8 at n=36) — depends on c98ed603 + ad55b777; epic:gf2-algebra-permanent",
-      "f8d230ef (AVX-512 zmm bipedal-3 kernel) — child of 7f809931 SIMD-and-platform-expansion epic"
-    ],
-    "issues_in_progress": [
-      "6917eb85 (F_5 Packed5) — Sonnet worker in .claude/worktrees/agent-6917eb85",
-      "56c5dabc (F_7 Packed7) — Sonnet worker in .claude/worktrees/agent-56c5dabc"
+      "684a6715 (permanent_bipedal5) — 5 review rounds. Worker used Packed5Vec conversions per Gray step instead of single Packed5 word; fixed by lead-direct rewrite. Reviewer also pushed for word-boundary tests at n=63/64 which are computationally infeasible (2^63 Gray steps); user-approved amendment documents the infeasibility and cites n=20/24/32 slow-tier boundary tests as proxy.",
+      "063f49bb (permanent_bipedal7) — 1 review round. Worker correctly used Packed7::add/sub directly. Code-review found stale module-doc bound (said n≤64 instead of n≤16 for F_7) and n=13/14 in slow tier; both fixed.",
+      "1f769232 (SIMD F_5+F_7 kernels) — 4 review rounds. Worker introduced broken Config5 BipedalLikeConfig impl that silently dropped F_5 value 4. User-approved amendment dropped the BipedalLikeConfig criterion for F_5/F_7 (the framework's 2-stream shape can't honestly hold F_5's 3-plane encoding or F_7's LUT). F_5/F_7 ship via dedicated AVX2 entry points + runtime detection bundles. Multiple stale-narrative sweeps required."
     ],
     "user_escalations_resolved": 2,
-    "user_escalations_open": 0
+    "user_escalations_open": 0,
+    "tests_passing_on_main": "3781 fast-tier (workspace, release); 0 leaks into main verified via scripts/check-leak-into-main.sh"
   },
   "next_session_priorities": [
-    "1. Review W4 sub-wave 4a workers (6917eb85 + 56c5dabc); lead-review tiers 1-3; merge or rework.",
-    "2. Dispatch W4 sub-wave 4b: 1f769232 (SIMD F_5+F_7 kernels).",
-    "3. W5 GPU: ad55b777 (F_3 HIP kernel) — unblocks S1g (9480f8a6).",
-    "4. W5 follow-ups: b43cdf33 (F_5 HIP), 5c0505b2 (F_7 HIP), 2fbbdfa5 (host dispatcher), b62c86d8 (hip scaffold), a9e461de (GPU crossover sim).",
-    "5. W6 Lean: 0606186a + 30e98ef1 + f05ffbe1 (confirm sketches per CLAUDE.md verification-work rules before dispatch).",
-    "6. W7 Reporting: 7cd9afdb, 16f03734, 8808b051, 424aa94f, c90db5a4.",
-    "7. Final: epic ae82bd73 completion report + transition to done."
+    "1. ESCALATE 8c902184 (API freeze) to user — criterion 4 requires explicit user sign-off; cannot proceed autonomously. Lead should prepare the dev/plans/gf_api_freeze_w6.md draft and present for user approval before W6 Lean work starts.",
+    "2. W5 GPU sub-wave: dispatch b62c86d8 (hip scaffold) first; once landed, dispatch ad55b777 + b43cdf33 + 5c0505b2 in parallel via worktrees; then 2fbbdfa5 (host dispatcher) and a9e461de (GPU vs CPU sim).",
+    "3. W6 Lean (post-freeze): f05ffbe1 → 0606186a (parallel after f05ffbe1) → 30e98ef1 (after f05ffbe1). All three need approved proof sketches per CLAUDE.md verification-work convention; sketches a0c0a45f and 4aaa6e4d already done; new sketch may be needed for F_5/F_7.",
+    "4. W7 Reporting: 7cd9afdb, 16f03734, 8808b051, 424aa94f, c90db5a4 — all simple-ish, can run in parallel.",
+    "5. S1g (9480f8a6) — dep on ad55b777, runs after W5 GPU.",
+    "6. Final: epic ae82bd73 completion report + transition to done."
   ],
-  "active_worktrees": [
-    {"short_id": "6917eb85", "path": ".claude/worktrees/agent-6917eb85", "branch": "worktree-agent-6917eb85", "base_sha": "867bf4ab981d489f987aa20a391fd542a04505c3"},
-    {"short_id": "56c5dabc", "path": ".claude/worktrees/agent-56c5dabc", "branch": "worktree-agent-56c5dabc", "base_sha": "867bf4ab981d489f987aa20a391fd542a04505c3"}
-  ]
+  "active_worktrees": []
 }
