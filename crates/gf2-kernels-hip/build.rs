@@ -14,9 +14,12 @@ fn main() {
         .file("hip/gray_qam_demapper.hip");
 
     // Compile per-prime permanent kernels when the `hip` feature is enabled.
-    // Non-`hip` builds (i.e., the crate built without `--features hip`) skip
-    // these files entirely so the build remains host-agnostic for the
-    // baseline kernel set.
+    // Non-`hip` builds of this crate still require hipcc + ROCm (the BCJR
+    // and Gray-QAM kernels above are unconditional and link against
+    // `amdhip64`); the `hip` feature gate adds the new permanent_bipedal*
+    // sources on top so they only compile when the user explicitly opts in.
+    // For consumers without ROCm, the whole `gf2-kernels-hip` crate is
+    // excluded from the default workspace (see root `Cargo.toml`).
     let hip_feature = env::var("CARGO_FEATURE_HIP").is_ok();
     if hip_feature {
         build
