@@ -9,20 +9,24 @@
 //! ([`BipedalLikeConfig::add_lane`] etc.) operate on those associated types.
 //!
 //! For F_3 ([`crate::bipedal::Config3`]) both lane types are
-//! [`crate::bipedal::Avx2Lane`]. F_5 ([`crate::bipedal::packed5::Config5`])
-//! uses the R1 Candidate D bit-sliced 3-plane shape, and F_7
-//! ([`crate::bipedal::packed7::Config7`]) uses the R2 Candidate A 3-bit
-//! per-lane + 2^16 LUT shape — in each case the per-prime
-//! `BipedalLikeConfig` impl is the source of truth for the lane shape.
+//! [`crate::bipedal::Avx2Lane`]. F_5 and F_7 do **not** plug into this
+//! framework — their R1 Candidate D 3-plane and R2 Candidate A LUT
+//! encodings respectively do not fit the 2-stream `(MagLane, SgnLane)`
+//! shape, so they ship via dedicated AVX2 batch entry points in
+//! [`crate::x86::bipedal_avx2_packed5`] and
+//! [`crate::x86::bipedal_avx2_packed7`] (see JIT issue `1f769232`'s
+//! `## Amendment 2026-05-14`).
 //!
 //! The `BatchedBipedalLike::{add, sub, mul, neg}` methods delegate to the
 //! config's `add_lane / sub_lane / mul_lane / neg_lane` recipes; this is
-//! the single point of customisation when a new prime joins.
+//! the single point of customisation when a new prime joins via the
+//! framework path.
 //!
 //! ## Inlining contract
 //!
 //! All methods on this struct are `#[inline(always)]`. The `run_*_batch`
-//! entry points (defined per-instantiation, see [`crate::bipedal::f3`])
+//! entry points (defined per-instantiation, see
+//! [`crate::x86::bipedal_avx2`] for the F_3 generic monomorphisations)
 //! carry `#[target_feature(enable = "avx2")]`. R4 §4.1 documents the
 //! 12-34x regression that occurs without this discipline.
 
