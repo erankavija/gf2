@@ -4,9 +4,12 @@
 //! [`lanes::BipedalLogicalLanes`] lane abstraction that lets a single body
 //! serve every `(prime, ISA)` instantiation. F_3 ships via
 //! [`bipedal3::Config3`] / [`bipedal3::Bipedal3x4`] on top of the generic
-//! framework; F_5 (R1 Candidate D, 3-plane bit-sliced) ships via
-//! [`packed5::Config5`]; F_7 (R2 Candidate A, 3-bit + 2^16 LUT) ships via
-//! [`packed7::Config7`] / [`packed7::Bipedal7x4`].
+//! framework. F_5 (R1 Candidate D, 3-plane bit-sliced) and F_7 (R2
+//! Candidate A, 3-bit + 2^16 LUT) ship via **dedicated AVX2 batch entry
+//! points** instead — the framework's 2-stream `(mag, sgn)` shape cannot
+//! losslessly carry F_5 value 4 (which needs `b2 = 1`), and F_7's LUT
+//! encoding fits naturally in 1 plane per operand. See JIT issue
+//! `1f769232`'s `## Amendment 2026-05-14` for the rationale.
 //!
 //! Architectural decision recorded in `dev/plans/r4_simd_batching_decision.md`:
 //! the generic framework wins over per-prime hand-rolled kernels by tie-break
@@ -17,11 +20,11 @@
 //!
 //! | Module | Purpose |
 //! |--------|---------|
-//! | [`framework`]  | The `BipedalLikeConfig` trait + `BatchedBipedalLike` generic struct. |
+//! | [`framework`]  | The `BipedalLikeConfig` trait + `BatchedBipedalLike` generic struct (used by F_3 only). |
 //! | [`lanes`]      | The `BipedalLogicalLanes` trait + `Avx2Lane` impl. |
-//! | [`bipedal3`]   | F_3 instantiation: `Config3` + `Bipedal3x4` type alias. |
-//! | [`packed5`]    | F_5 instantiation: `Config5` + scalar/AVX2 batch entry points (R1 Candidate D). |
-//! | [`packed7`]    | F_7 instantiation: `Config7` + `Bipedal7x4` + LUT-driven batch entry points (R2 Candidate A). |
+//! | [`bipedal3`]   | F_3 instantiation: `Config3` + `Bipedal3x4` type alias (uses the framework). |
+//! | [`packed5`]    | F_5 scalar word ops + AVX2 batch entry points + `F5AvxFns` detection bundle (R1 Candidate D). |
+//! | [`packed7`]    | F_7 scalar word ops + AVX2 batch entry points + `F7AvxFns` detection bundle (R2 Candidate A). |
 //!
 //! The actual AVX2 batch entry points (`run_*_batch`) live in
 //! [`crate::x86::bipedal_avx2`] so the asm-artefact-present gate fires on
@@ -70,15 +73,11 @@ pub mod packed7;
 pub use bipedal3::Config3;
 pub use framework::{BatchedBipedalLike, BipedalLikeConfig};
 pub use lanes::BipedalLogicalLanes;
-pub use packed5::Config5;
-pub use packed7::Config7;
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub use bipedal3::Bipedal3x4;
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub use lanes::Avx2Lane;
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-pub use packed7::Bipedal7x4;
 
 /// AVX2 batch entry points for the F_3 instantiation.
 ///

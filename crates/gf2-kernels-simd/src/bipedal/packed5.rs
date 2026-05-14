@@ -1,5 +1,4 @@
-//! F_5 instantiation of the generic [`super::framework::BatchedBipedalLike`]
-//! framework.
+//! F_5 SIMD batch kernels (R1 Candidate D 3-plane bit-sliced).
 //!
 //! The F_5 encoding follows R1 Candidate D (`dev/plans/r1_f5_encoding_decision.md`):
 //! each `F_5` element is stored as a 3-bit canonical value in three parallel
@@ -21,26 +20,22 @@
 //! 4 × u64) processes 4 independent 64-lane word units simultaneously, giving
 //! 256 F_5 lanes per register. Binary ops require 3 registers per operand
 //! (one per plane), so the batch entry points use a 6-input / 3-output stream
-//! API rather than the generic 2-stream `run_*_batch`. Custom AVX2 entry points
-//! live in [`crate::x86::bipedal_avx2_packed5`].
+//! API. Custom AVX2 entry points live in [`crate::x86::bipedal_avx2_packed5`].
 //!
-//! # Framework wiring
+//! # No `BipedalLikeConfig` integration
 //!
-//! [`Config5`] implements [`BipedalLikeConfig`] with `MagLane = Avx2Lane` and
-//! `SgnLane = Avx2Lane`. Because the 3-plane encoding does not fit into the
-//! 2-stream generic `run_*_batch` entry points, this impl is used for
-//! type-level machinery and testing only. The actual AVX2 batch loops live in
-//! [`crate::x86::bipedal_avx2_packed5`].
+//! The generic [`super::framework::BipedalLikeConfig`] trait imposes a 2-stream
+//! `(mag, sgn)` shape per operand, which cannot losslessly represent F_5
+//! value 4 (which needs `b2 = 1`). F_5 therefore ships *only* via the
+//! dedicated 3-plane AVX2 entry points in [`crate::x86::bipedal_avx2_packed5`],
+//! the runtime-detection bundle [`F5AvxFns`], and the scalar fallbacks below.
+//! See JIT issue `1f769232`'s `## Amendment 2026-05-14` for the rationale.
 //!
 //! # Runtime detection
 //!
 //! [`has_avx2_f5`] caches the CPUID result in a `OnceLock<bool>` (same pattern
 //! as [`super::bipedal3::has_avx2`]). [`detect_avx2_f5`] returns a
 //! [`F5AvxFns`] bundle when the host supports AVX2.
-
-use super::framework::BipedalLikeConfig;
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-use super::lanes::Avx2Lane;
 
 // ---------------------------------------------------------------------------
 // Scalar word-level helpers (shared with AVX2 entry points via re-export)
@@ -340,159 +335,6 @@ pub fn scalar_neg5_batch(
         out_b0[i] = c0;
         out_b1[i] = c1;
         out_b2[i] = c2;
-    }
-}
-
-// ---------------------------------------------------------------------------
-// BipedalLikeConfig impl for F_5
-// ---------------------------------------------------------------------------
-
-/// F_5 arithmetic recipe for the generic bipedal-like framework.
-///
-/// Implements [`BipedalLikeConfig`] using the R1 Candidate D 3-plane
-/// bit-sliced Boolean circuit. The associated types `MagLane` and `SgnLane`
-/// both pick [`Avx2Lane`] for framework type-level compatibility; the actual
-/// AVX2 batch entry points (which need 3 planes per operand, not 2) live in
-/// [`crate::x86::bipedal_avx2_packed5`].
-///
-/// The `add_lane / sub_lane / mul_lane / neg_lane` methods here operate on
-/// single Avx2Lane values (4 u64 words) using scalar fallback internally,
-/// because the proper 3-plane AVX2 batch requires a separate calling
-/// convention. These methods are primarily used by the proptest scalar-parity
-/// tests and the genericity type check.
-///
-/// This struct is zero-sized — it is a type-level tag only.
-///
-/// # Examples
-///
-/// ```no_run
-/// use gf2_kernels_simd::bipedal::framework::BipedalLikeConfig;
-/// use gf2_kernels_simd::bipedal::Config5;
-/// assert_eq!(<Config5 as BipedalLikeConfig>::PRIME, 5);
-/// assert_eq!(<Config5 as BipedalLikeConfig>::U64_PER_LANE_PAIR, 4);
-/// ```
-#[derive(Clone, Copy, Debug, Default)]
-pub struct Config5;
-
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-#[allow(clippy::missing_transmute_annotations)]
-impl BipedalLikeConfig for Config5 {
-    type MagLane = Avx2Lane;
-    type SgnLane = Avx2Lane;
-    const PRIME: u64 = 5;
-    /// U64_PER_LANE_PAIR for the framework compatibility path.
-    /// The actual AVX2 batch entry points in `bipedal_avx2_packed5` use a
-    /// 3-plane-per-operand convention with a stride of 4 words per plane;
-    /// this constant reflects the framework's 2-stream step for the
-    /// compatibility entry points only.
-    const U64_PER_LANE_PAIR: usize = 4;
-
-    #[inline(always)]
-    unsafe fn add_lane(
-        m1: Self::MagLane,
-        s1: Self::SgnLane,
-        m2: Self::MagLane,
-        s2: Self::SgnLane,
-    ) -> (Self::MagLane, Self::SgnLane) {
-        // SAFETY: hardware feature is the caller's precondition.
-        // This compatibility path treats m as the b0 plane (most significant
-        // usage) and s as the b1 plane, with b2 set to zero. Binary ops with
-        // zero b2 (values 0..=3 only) use the 3-plane circuit. The proper
-        // 3-plane batch path is in `crate::x86::bipedal_avx2_packed5`.
-        unsafe {
-            use core::mem::transmute;
-            // Extract 4 u64 words from each lane, apply scalar add5_word per
-            // word, reassemble. b2 is zero in this compatibility path.
-            let m1_raw: [u64; 4] = transmute(m1.0);
-            let s1_raw: [u64; 4] = transmute(s1.0);
-            let m2_raw: [u64; 4] = transmute(m2.0);
-            let s2_raw: [u64; 4] = transmute(s2.0);
-            let mut out_m = [0u64; 4];
-            let mut out_s = [0u64; 4];
-            for i in 0..4 {
-                // Treat m as b0, s as b1, b2=0 for both operands.
-                let (c0, c1, _c2) = add5_word(m1_raw[i], s1_raw[i], 0, m2_raw[i], s2_raw[i], 0);
-                out_m[i] = c0;
-                out_s[i] = c1;
-            }
-            let out_m_lane = Avx2Lane(transmute(out_m));
-            let out_s_lane = Avx2Lane(transmute(out_s));
-            (out_m_lane, out_s_lane)
-        }
-    }
-
-    #[inline(always)]
-    unsafe fn sub_lane(
-        m1: Self::MagLane,
-        s1: Self::SgnLane,
-        m2: Self::MagLane,
-        s2: Self::SgnLane,
-    ) -> (Self::MagLane, Self::SgnLane) {
-        // SAFETY: hardware feature is the caller's precondition.
-        unsafe {
-            use core::mem::transmute;
-            let m1_raw: [u64; 4] = transmute(m1.0);
-            let s1_raw: [u64; 4] = transmute(s1.0);
-            let m2_raw: [u64; 4] = transmute(m2.0);
-            let s2_raw: [u64; 4] = transmute(s2.0);
-            let mut out_m = [0u64; 4];
-            let mut out_s = [0u64; 4];
-            for i in 0..4 {
-                let (c0, c1, _c2) = sub5_word(m1_raw[i], s1_raw[i], 0, m2_raw[i], s2_raw[i], 0);
-                out_m[i] = c0;
-                out_s[i] = c1;
-            }
-            let out_m_lane = Avx2Lane(transmute(out_m));
-            let out_s_lane = Avx2Lane(transmute(out_s));
-            (out_m_lane, out_s_lane)
-        }
-    }
-
-    #[inline(always)]
-    unsafe fn mul_lane(
-        m1: Self::MagLane,
-        s1: Self::SgnLane,
-        m2: Self::MagLane,
-        s2: Self::SgnLane,
-    ) -> (Self::MagLane, Self::SgnLane) {
-        // SAFETY: hardware feature is the caller's precondition.
-        unsafe {
-            use core::mem::transmute;
-            let m1_raw: [u64; 4] = transmute(m1.0);
-            let s1_raw: [u64; 4] = transmute(s1.0);
-            let m2_raw: [u64; 4] = transmute(m2.0);
-            let s2_raw: [u64; 4] = transmute(s2.0);
-            let mut out_m = [0u64; 4];
-            let mut out_s = [0u64; 4];
-            for i in 0..4 {
-                let (c0, c1, _c2) = mul5_word(m1_raw[i], s1_raw[i], 0, m2_raw[i], s2_raw[i], 0);
-                out_m[i] = c0;
-                out_s[i] = c1;
-            }
-            let out_m_lane = Avx2Lane(transmute(out_m));
-            let out_s_lane = Avx2Lane(transmute(out_s));
-            (out_m_lane, out_s_lane)
-        }
-    }
-
-    #[inline(always)]
-    unsafe fn neg_lane(m: Self::MagLane, s: Self::SgnLane) -> (Self::MagLane, Self::SgnLane) {
-        // SAFETY: hardware feature is the caller's precondition.
-        unsafe {
-            use core::mem::transmute;
-            let m_raw: [u64; 4] = transmute(m.0);
-            let s_raw: [u64; 4] = transmute(s.0);
-            let mut out_m = [0u64; 4];
-            let mut out_s = [0u64; 4];
-            for i in 0..4 {
-                let (c0, c1, _c2) = neg5_word(m_raw[i], s_raw[i], 0);
-                out_m[i] = c0;
-                out_s[i] = c1;
-            }
-            let out_m_lane = Avx2Lane(transmute(out_m));
-            let out_s_lane = Avx2Lane(transmute(out_s));
-            (out_m_lane, out_s_lane)
-        }
     }
 }
 
