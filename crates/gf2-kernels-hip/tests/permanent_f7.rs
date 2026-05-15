@@ -10,11 +10,15 @@
 //! installed:
 //!
 //! ```text
-//! cargo nextest run -p gf2-kernels-hip \
-//!     --features hip \
+//! cargo nextest run --manifest-path crates/gf2-kernels-hip/Cargo.toml \
+//!     --features hip --release \
 //!     --run-ignored ignored-only \
 //!     -E 'test(test_permanent_bipedal7_)'
 //! ```
+//!
+//! (The `--manifest-path` form is required because `gf2-kernels-hip` is
+//! excluded from the default workspace; `cargo`'s `-p` selector cannot
+//! resolve workspace-excluded packages.)
 //!
 //! # Algorithm note
 //!
