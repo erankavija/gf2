@@ -49,26 +49,21 @@ import numpy as np
 # ---------------------------------------------------------------------------
 
 def _resolve_csv(input_dir: Path, filename: str) -> Path:
-    """Return the absolute path to *filename* under *input_dir*.
+    """Return the absolute path to *filename* under *input_dir*, or raise.
 
-    Raises FileNotFoundError with the absolute path if the file is missing.
-    If the exact dated filename is absent but a date-suffix glob match exists,
-    log the substitution to stderr so the audit trail records which file was
-    actually consumed.
+    Strict: the script only consumes the conventional dated CSV recorded by
+    its naming constant (S1_FILENAME / S2_FILENAME / S3_FILENAME / S5_FILENAME).
+    A missing file is a hard error — silent substitution of a different-dated
+    CSV would break the reproducibility audit trail (the figure would silently
+    render from data the constant does not name).
+
+    If a future benchmark suite produces a CSV under a different date, the
+    fix is to update the *FILENAME constant in this script in the same commit
+    that adds the new CSV — not to silently fall back.
     """
     path = input_dir / filename
     if path.exists():
         return path
-    stem = filename.split("-")[0]  # e.g. "s1_speedup"
-    candidates = sorted(input_dir.glob(f"{stem}-*.csv"))
-    if candidates:
-        substitute = candidates[-1]  # most recent date suffix wins
-        print(
-            f"  [warn] {filename!r} not found in {input_dir}; "
-            f"using {substitute.name!r} instead (most recent match)",
-            file=sys.stderr,
-        )
-        return substitute
     raise FileNotFoundError(f"missing input CSV: {path.resolve()}")
 
 
@@ -146,28 +141,30 @@ def plot_speedup(input_dir: Path, output_dir: Path) -> Path:
         paired = sorted(zip(ns, ts))
         data[impl] = ([p[0] for p in paired], [p[1] for p in paired])
 
-    # Overlay S2 max-thread parallel data if present.
+    # Overlay S2 max-thread parallel data. S2 is a mandatory input for figure (a)
+    # per epic criterion: figure (a) covers reference + bipedal-SIMD + parallel.
+    # A missing S2 CSV is a hard error rather than a degraded figure.
+    s2_path = _resolve_csv(input_dir, S2_FILENAME)
+    s2_rows = _read_csv(s2_path)
     parallel_ns: list[int] = []
     parallel_ts: list[float] = []
-    try:
-        s2_path = _resolve_csv(input_dir, S2_FILENAME)
-        s2_rows = _read_csv(s2_path)
-        # Group by n, pick the max-thread row per n.
-        per_n: dict[int, tuple[int, float]] = {}
-        for row in s2_rows:
-            n = int(row["n"])
-            t = int(row["threads"])
-            mean_s = float(row["mean_us"]) / 1e6
-            prev = per_n.get(n)
-            if prev is None or t > prev[0]:
-                per_n[n] = (t, mean_s)
-        for n in sorted(per_n.keys()):
-            parallel_ns.append(n)
-            parallel_ts.append(per_n[n][1])
-    except FileNotFoundError:
-        # S2 absent: emit a clear info line; the figure still renders reference + SIMD.
-        print("  [info] S2 CSV missing; parallel curve omitted from figure (a)",
-              file=sys.stderr)
+    # Group by n, pick the max-thread row per n.
+    per_n: dict[int, tuple[int, float]] = {}
+    for row in s2_rows:
+        n = int(row["n"])
+        t = int(row["threads"])
+        mean_s = float(row["mean_us"]) / 1e6
+        prev = per_n.get(n)
+        if prev is None or t > prev[0]:
+            per_n[n] = (t, mean_s)
+    for n in sorted(per_n.keys()):
+        parallel_ns.append(n)
+        parallel_ts.append(per_n[n][1])
+    if not parallel_ns:
+        raise ValueError(
+            f"S2 CSV at {s2_path} has no usable rows; cannot draw the parallel "
+            f"curve required for figure (a)."
+        )
 
     _apply_style()
     fig, ax = plt.subplots()
