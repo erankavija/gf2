@@ -124,6 +124,58 @@ runtime bound) extracts cleanly.
 Aeneas translates `P` as a Lean4 parameter `(P : Std.U64)`. No monomorphization
 wrappers were needed.
 
+## gf2-algebra bipedal F_3 extraction (D2 / JIT f05ffbe1)
+
+The `Gf2Algebra/` Lean library is a second Aeneas extraction covering only the
+bipedal F_3 packed arithmetic at `gf2_algebra::packed::bipedal3::Bipedal3`,
+needed for the D2 V1 correctness proof
+(`dev/plans/d2_lean_bipedal3_sketch.md`). It is verified in lock-step with the
+existing `Gf2Core/` extraction via the same `scripts/verify-lean.sh`. The
+Bipedal3 V1 proofs (`proofs/Gf2Algebra/Proofs/Bipedal3Correctness.lean`)
+target the four inherent wrappers
+`Bipedal3::{add,sub,mul,neg}_inherent` defined in
+`crates/gf2-algebra/src/packed/bipedal3.rs`. Each wrapper is a single tail-call
+into the corresponding `PackedField<Fp<3>>` trait method on `Bipedal3`; the
+arithmetic formula lives in the trait impl. Targeting the inherent wrappers
+gives a stable, non-dispatch-indirected proof target (D2 sketch §5, Option A).
+
+`scripts/fix-aeneas-gf2algebra.py` rewrites the transitively-extracted
+`gf2_core::gfp::Fp` trait-impl wrappers as `axiom`s. These impls are pulled in
+by Charon because `PackedField<Fp<3>>` has `Fp<3> : FiniteField` as a parent
+bound, but they are never elaborated at runtime by the bipedal3 ops (which are
+pure bitwise on `Std.U64`). Without this rewrite, Aeneas produces unresolvable
+references in two ways:
+
+1. The `FiniteField` impl on `Fp<P>` uses `*.default` field values that refer
+   recursively to the impl itself
+   (`WINOGRAD_THRESHOLD.default (… P)`), surfacing as
+   `impl_def: could not resolve recursive fields`.
+2. The per-trait `add/sub/mul/…` Fp impls reference body-defs
+   (`gf2_core.gfp.Fp.Insts.CoreOpsArithAddFpFp.add`) that are opaque in our
+   narrow extraction, surfacing as `Unknown constant`.
+
+Both are eliminated by axiomatising the impl wrappers — the bipedal3 proofs
+never project them.
+
+The gf2-algebra `FunsExternal.lean` is always regenerated from the
+auto-generated template (no hand-edits are needed: bipedal3 uses only `&&&`,
+`|||`, `^^^` on `Std.U64`, never any wrapping arithmetic or U128 ops).
+
+### V1 Proof divergence: `neg` in place of `div`
+
+The D2 sketch §1 states the V1 contract over `{add, sub, mul, div}`. The
+production code at `crates/gf2-algebra/src/packed/bipedal3.rs` exposes
+`{add, sub, mul, neg}` — the `PackedField` trait surface
+(`packed/mod.rs:185–224`) has no `div` method, so there is no production
+function to verify against for `div`. Per the verification-work convention
+(sketch supersedes the JIT description, but production code supersedes both
+when the sketch names a function that does not exist), V1 proves `neg`
+instead. The substitution is benign: the sketch §3.4 already factors `div` as
+"the easy op, dispatched by the same `decide` truth table" — `neg` plays the
+same role (one truth table, no Result-monad branching). The four `*_correct`
+theorems plus the headline `bipedal3_correct_vs_canonical_F3` corollary cover
+the same four ops as the production trait surface.
+
 ## Tool versions
 
 | Tool | Version | Pin |

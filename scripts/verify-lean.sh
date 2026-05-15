@@ -15,8 +15,9 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PROOFS_DIR="$REPO_ROOT/proofs"
 LLBC_FILE="$REPO_ROOT/target/charon/gf2_core.llbc"
+LLBC_FILE_ALGEBRA="$REPO_ROOT/target/charon/gf2_algebra.llbc"
 
-echo "=== Step 1: Charon extraction ==="
+echo "=== Step 1: Charon extraction (gf2-core) ==="
 mkdir -p "$(dirname "$LLBC_FILE")"
 
 # Extract gf2-core with gfp/ and gfpn/ transparent; everything else opaque or excluded.
@@ -61,7 +62,50 @@ fi
 echo "Charon extraction succeeded: $LLBC_FILE"
 
 echo ""
-echo "=== Step 2: Aeneas translation ==="
+echo "=== Step 1b: Charon extraction (gf2-algebra) ==="
+#
+# Extract gf2-algebra::packed::bipedal3 for the D2 bipedal F_3 correctness
+# proof (JIT issue f05ffbe1; sketch at dev/plans/d2_lean_bipedal3_sketch.md).
+# Everything else in the crate is opaque — the proofs target only the
+# inherent Bipedal3::{add,sub,mul,neg}_inherent wrappers. gf2_core::* is
+# opaque too: the bipedal3 arithmetic does not reach into Fp / FiniteField
+# machinery at runtime, but Charon would otherwise transitively extract
+# those trait impls and surface unresolvable recursive defaults.
+charon cargo \
+  --preset aeneas \
+  --rustc-arg=--cfg=verify_lean \
+  --start-from 'gf2_algebra::packed::bipedal3' \
+  --opaque 'gf2_algebra::permanent' \
+  --opaque 'gf2_algebra::gray' \
+  --opaque 'gf2_algebra::packed::scalar' \
+  --opaque 'gf2_algebra::packed::packed5' \
+  --opaque 'gf2_algebra::packed::packed7' \
+  --opaque 'gf2_algebra::testutil' \
+  --opaque 'gf2_core::gfp' \
+  --opaque 'gf2_core::gfpn' \
+  --opaque 'gf2_core::field' \
+  --opaque 'gf2_core::gf2m' \
+  --opaque 'gf2_core::bitvec' \
+  --opaque 'gf2_core::bitslice' \
+  --opaque 'gf2_core::matrix' \
+  --opaque 'gf2_core::sparse' \
+  --opaque 'gf2_core::alg' \
+  --opaque 'gf2_core::compute' \
+  --opaque 'gf2_core::kernels' \
+  --opaque 'gf2_core::primitive_polys' \
+  --opaque 'gf2_core::io' \
+  --opaque 'gf2_core::macros' \
+  --dest-file "$LLBC_FILE_ALGEBRA" \
+  -- --manifest-path "$REPO_ROOT/crates/gf2-algebra/Cargo.toml" --no-default-features
+
+if [ ! -f "$LLBC_FILE_ALGEBRA" ]; then
+  echo "ERROR: Charon did not produce $LLBC_FILE_ALGEBRA"
+  exit 1
+fi
+echo "Charon extraction succeeded: $LLBC_FILE_ALGEBRA"
+
+echo ""
+echo "=== Step 2: Aeneas translation (gf2-core) ==="
 LEAN_DIR="$PROOFS_DIR/Gf2Core"
 mkdir -p "$LEAN_DIR"
 
@@ -166,6 +210,62 @@ if [ ! -f "$LEAN_DIR/FunsExternal.lean" ]; then
 fi
 
 echo "Post-processing done"
+
+echo ""
+echo "=== Step 2b: Aeneas translation (gf2-algebra) ==="
+LEAN_DIR_ALGEBRA="$PROOFS_DIR/Gf2Algebra"
+mkdir -p "$LEAN_DIR_ALGEBRA"
+
+AENEAS_EXIT_ALGEBRA=0
+aeneas \
+  -backend lean \
+  -dest "$LEAN_DIR_ALGEBRA" \
+  -split-files \
+  "$LLBC_FILE_ALGEBRA" || AENEAS_EXIT_ALGEBRA=$?
+
+MISSING_ALGEBRA=0
+for f in Types.lean Funs.lean FunsExternal_Template.lean TypesExternal_Template.lean; do
+  if [ ! -f "$LEAN_DIR_ALGEBRA/$f" ]; then
+    echo "ERROR: Aeneas did not produce $LEAN_DIR_ALGEBRA/$f"
+    MISSING_ALGEBRA=1
+  fi
+done
+if [ "$MISSING_ALGEBRA" -eq 1 ]; then
+  echo "ERROR: Aeneas failed to generate gf2-algebra files (exit code $AENEAS_EXIT_ALGEBRA)"
+  exit 1
+fi
+if [ "$AENEAS_EXIT_ALGEBRA" -ne 0 ]; then
+  echo "WARNING: Aeneas exited with code $AENEAS_EXIT_ALGEBRA on gf2-algebra (partial files generated — Debug::fmt impls are opaque)"
+fi
+echo "Aeneas translation (gf2-algebra) completed"
+
+echo ""
+echo "=== Step 3b: Post-processing (gf2-algebra) ==="
+# Same duplicate-field workaround as gf2-core. The Aeneas extraction of
+# gf2-algebra transitively pulls in the FiniteField trait declaration,
+# which has the multi-associated-type field-name collisions
+# fix-aeneas-dupes.py resolves.
+python3 "$REPO_ROOT/scripts/fix-aeneas-dupes.py" \
+  "$LEAN_DIR_ALGEBRA/Types.lean" "$LEAN_DIR_ALGEBRA/Funs.lean"
+
+# Replace the transitively-extracted but unresolvable gf2_core::gfp::Fp
+# trait-impl wrappers with axioms. The bipedal3 V1 proofs never project
+# these instances; axiomatising them eliminates `Unknown constant` /
+# `could not resolve recursive fields` errors on the imports. See the
+# script's docstring for the full reasoning.
+python3 "$REPO_ROOT/scripts/fix-aeneas-gf2algebra.py" "$LEAN_DIR_ALGEBRA/Funs.lean"
+
+# TypesExternal / FunsExternal seed (no hand-edits required for the
+# bipedal3 V1 — the four bitwise ops do not exercise any U128 /
+# wrapping_neg / overflowing_sub external).
+if [ -f "$LEAN_DIR_ALGEBRA/TypesExternal_Template.lean" ]; then
+  cp "$LEAN_DIR_ALGEBRA/TypesExternal_Template.lean" "$LEAN_DIR_ALGEBRA/TypesExternal.lean"
+fi
+# Unlike gf2-core, the gf2-algebra FunsExternal has no hand-edits (the
+# bipedal3 ops use only bitwise primitives, no wrapping arithmetic), so we
+# always regenerate from the template.
+cp "$LEAN_DIR_ALGEBRA/FunsExternal_Template.lean" "$LEAN_DIR_ALGEBRA/FunsExternal.lean"
+echo "Post-processing (gf2-algebra) done"
 
 echo ""
 echo "=== Step 4: Lake build ==="
