@@ -62,9 +62,13 @@ Median of three repetitions is reported per cell.
 
 ### CSV path
 
-Single canonical CSV: `dev/benchmarks/gf2_algebra_permanent/s5_gpu_crossover-2026-05-15.csv`
-— recorded fresh on commit `13b9143a` (i.e., the commit that immediately preceded the
-fixed-M=256 harness reduction); rerun-on-rerun reproducible given the same seed.
+Single canonical CSV: `dev/benchmarks/gf2_algebra_permanent/s5_gpu_crossover-2026-05-15.csv`.
+The CSV header records `commit: 13b9143a` because that was tip-of-`main` when the sim
+binary launched and called `git rev-parse --short HEAD` at runtime. The fixed-`M=256`
+harness changes (`N_VALUES = [24, 28]`, `BATCH_SIZE = 256`, removal of the per-`n` batch
+scaling) were in the working tree but had not yet been committed; they landed in
+`9da0d7fe`. Either commit reproduces the same CSV given the same seed because the
+src/main.rs state at runtime equals the src/main.rs state at `9da0d7fe`.
 
 ---
 
@@ -203,5 +207,6 @@ is exceeded, but the specific n≥40 framing does not match the actual physics o
 ---
 
 *Cite CSV:* `dev/benchmarks/gf2_algebra_permanent/s5_gpu_crossover-2026-05-15.csv`
-(canonical; fixed M=256 at n ∈ {24, 28}; reproducible from the harness at
-`dev/research/permanent_gpu_crossover/src/main.rs` on commit `9da0d7fe` or later).
+(canonical; fixed M=256 at n ∈ {24, 28}; CSV header records sim-startup HEAD =
+`13b9143a` per harness `git rev-parse` at runtime; identical src/main.rs state
+committed in `9da0d7fe` — see §1 "CSV path" for the provenance note).
