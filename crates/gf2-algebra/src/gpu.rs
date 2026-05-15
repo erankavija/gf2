@@ -61,6 +61,7 @@
 //! preserves the workspace invariant that `unsafe` lives only in the kernel
 //! crates (CLAUDE.md §Architecture, point 3).
 
+#[cfg(feature = "f7")]
 use std::sync::OnceLock;
 
 use gf2_core::gfp::Fp;
@@ -76,12 +77,13 @@ use crate::packed::packed7::Packed7Matrix;
 #[cfg(feature = "f7")]
 use crate::packed::packed7::{ADD_LUT, MUL_LUT, SUB_LUT};
 
-use gf2_kernels_hip::permanent::{
-    permanent_gf3_batch_dispatch, permanent_gf5_batch_dispatch, permanent_gf7_batch_dispatch,
-};
+use gf2_kernels_hip::permanent::permanent_gf3_batch_dispatch;
+
+#[cfg(feature = "f5")]
+use gf2_kernels_hip::permanent::permanent_gf5_batch_dispatch;
 
 #[cfg(feature = "f7")]
-use gf2_kernels_hip::permanent::init_permanent_gf7_from_slices;
+use gf2_kernels_hip::permanent::{init_permanent_gf7_from_slices, permanent_gf7_batch_dispatch};
 
 // ---------------------------------------------------------------------------
 // F_7 one-shot LUT init
@@ -95,6 +97,7 @@ use gf2_kernels_hip::permanent::init_permanent_gf7_from_slices;
 /// once per process. Stores the HIP return code from `init_permanent_gf7`:
 /// 0 on success, non-zero on a HIP error. Failures are re-panicked on every
 /// subsequent [`permanent_batch_bipedal7`] call.
+#[cfg(feature = "f7")]
 static GF7_ONCE: OnceLock<i32> = OnceLock::new();
 
 /// Ensure the F_7 device LUTs have been uploaded. Invokes
