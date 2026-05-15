@@ -113,7 +113,12 @@ See [crates/gf2-coding/README.md](crates/gf2-coding/README.md) for the full menu
 | `gf2-coding` | `simd` | ✅ | Propagates to `gf2-core/simd` |
 | `gf2-coding` | `parallel` | — | Rayon batch encode/decode |
 | `gf2-coding` | `llr-f64` | — | f64 LLRs (default f32) |
-| `gf2-coding` | `hip` | — | HIP/ROCm GPU kernels (requires hipcc) |
+| `gf2-coding` | `hip` | — | HIP/ROCm GPU kernels (BCJR, Gray-QAM demap; requires hipcc) |
+| `gf2-algebra` | `simd` | ✅ | AVX2 bipedal3 path (default on) |
+| `gf2-algebra` | `parallel` | ✅ | Rayon batch permanents (default on) |
+| `gf2-algebra` | `f5` | ✅ | F_5 packed types + permanent (default on) |
+| `gf2-algebra` | `f7` | ✅ | F_7 packed types + permanent (default on) |
+| `gf2-algebra` | `hip` | — | HIP/ROCm GPU batch permanent dispatcher (requires hipcc) |
 
 Runtime SIMD dispatch: the first call probes CPU features via `OnceLock` and binds the best available backend for the process's lifetime.
 
