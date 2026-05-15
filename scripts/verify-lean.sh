@@ -11,19 +11,37 @@
 #
 # Usage: ./scripts/verify-lean.sh
 #
-# Known gf2-core extraction blocker (as of 2026-05-15):
-# Charon panics in `src/pretty/fmt_with_ctx.rs:416` when extracting
-# `gf2_core::gfp` because recent perf work
-# (commits e927ea83, fc3e2cf2, 8d71d62c — `--gfp::simd_ops` SSOT for
-# packed kernels) introduced `Option<Box<dyn Trait>>` return types
-# (`gfp/mod.rs:734`, `:746`, `:798`) that crash Charon's pretty
-# printer during the `simplify_output::filter_trivial_drops` transform.
-# The Step 1 extraction below will fail on a clean rebuild until this
-# is resolved (either by extending the local Charon build or by
-# guarding those `dyn` returns behind `cfg(not(verify_lean))`).  The
-# Gf2Core/* Lean files in the proofs tree are still good (last
-# successful extraction predates the regression); skip Step 1 to
-# re-use them as-is.
+# Toolchain (as of issue 2e544a34, 2026-05-15):
+#   * Charon: upstream HEAD `1ec8d4bb` (2026-05-13) + 3 project-local
+#     patches (HRTB-erase, SelfClause/Local(0,0) fallback in
+#     `lookup_type_replacement`, implied-clause constraint propagation)
+#     + 1 obsolete-asserts removal in `pretty/fmt_with_ctx.rs`
+#     `DynPredicate::fmt_with_ctx`. Patches preserved at
+#     `dev/active/charon-patch-backup-2026-05-15/`.
+#   * Aeneas: upstream HEAD `5fc8fdf2` (2026-05-15), unmodified.
+#   * Lean: v4.30.0-rc2; Mathlib: v4.30.0-rc2 (see `proofs/lean-toolchain`,
+#     `proofs/lakefile.lean`).
+#
+# Workarounds in place (issue 9efd9c39):
+#   * `crates/gf2-core/src/gfp/mod.rs` — 11 SIMD-fast-path overrides on the
+#     `Fp::FiniteField` impl wrapped in `#[cfg(not(verify_lean))]` so the
+#     trait defaults are used during extraction. Same pattern as the
+#     existing `verify_lean` cfg for `ExtConfig::NON_RESIDUE`.
+#   * `--opaque 'gf2_core::gfp::simd_ops'` below: keeps the SIMD-ops
+#     module out of the LLBC.
+#   * `scripts/fix-aeneas-dupes.py` `inline_default_methods()` pass:
+#     post-processes Aeneas-generated `Funs.lean` files to inline trait
+#     defaults at instance-dictionary call sites (Aeneas at upstream HEAD
+#     does not emit sibling defs for default trait methods; tracked by
+#     9efd9c39's aspirational criterion for upstream resolution).
+#   * `scripts/fix-aeneas-dupes.py` `silence_extraction_sorry()` pass:
+#     injects `set_option warn.sorry false` into generated `Funs.lean`
+#     so Aeneas extraction-artefact sorrys do not trip the strict
+#     `lake-build` gate (added in issue 2e544a34).
+#
+# This script runs end-to-end clean on the toolchain above. If a step
+# fails on `main`, file an issue rather than reverting the workarounds —
+# they are load-bearing for the current Charon/Aeneas/Lean trio.
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
