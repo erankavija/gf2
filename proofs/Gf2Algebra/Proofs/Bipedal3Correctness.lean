@@ -23,8 +23,13 @@
   same per-lane truth-table tactic discharges the new lemma; no
   structural change to the sketch is needed.
 
-  All 20 lemmas correspond verbatim to sketch §10 with the
-  `div` ↦ `neg` substitution.
+  All 20 lemmas correspond to sketch §10 with the `div` ↦ `neg`
+  substitution. The four `*_word` lemmas (mul / add / sub / neg) are
+  stated against the *exact composed bitwise expressions* used in the
+  production formulas in `crates/gf2-algebra/src/packed/bipedal3.rs`,
+  and the four `*_correct` theorems discharge their `getLsbD`-lift step
+  by `obtain ⟨hmag, hsgn⟩ := bipedal3_*_word ...; rw [hmag, hsgn]` so
+  the word lemmas are load-bearing — not generic `getLsbD` distributors.
 -/
 import Aeneas
 import Mathlib.Data.ZMod.Basic
@@ -129,34 +134,59 @@ theorem bipedal3_neg_lane (m s : Bool) :
 
 /-! ## §3-word: per-lane lifting
 
-For each binary bitwise op `&&&`, `|||`, `^^^` on `BitVec 64`, Mathlib
-provides `getLsbD_and / getLsbD_or / getLsbD_xor`. We restate them for
-proof-search clarity and to match the sketch's lemma list.
+The `*_word` lemmas lift the *exact composed bitwise expression* used in
+the corresponding `*_correct` body to its `Bool`-level form. Each lemma
+returns a conjunction `(mag-lane = Bool-mag) ∧ (sgn-lane = Bool-sgn)`
+matching the result struct `{ mag := ..., sgn := ... }` of the
+production formula in `crates/gf2-algebra/src/packed/bipedal3.rs`. The
+`*_correct` proofs `apply` these lemmas directly; they are not dead
+lemmas. Tactics use `BitVec.getLsbD_and / getLsbD_or / getLsbD_xor` simp
+lemmas from Mathlib.
 -/
 
-/-- §3.1-word: `getLsbD` distributes through `&&&` and `^^^`. The proofs
-follow directly from Mathlib's `BitVec.getLsbD_and` and
-`BitVec.getLsbD_xor` simp lemmas. -/
+/-- §3.1-word: bipedal mul formula `(mag, sgn) = (m1 &&& m2, s1 ^^^ s2)`
+lifted lane-wise. -/
 theorem bipedal3_mul_word (m1 s1 m2 s2 : BitVec 64) (i : Fin 64) :
-    (m1 &&& m2).getLsbD i = (m1.getLsbD i && m2.getLsbD i)
+    (m1 &&& m2).getLsbD i = ((m1.getLsbD i) && (m2.getLsbD i))
     ∧ (s1 ^^^ s2).getLsbD i = xor (s1.getLsbD i) (s2.getLsbD i) := by
   refine ⟨?_, ?_⟩ <;> simp
 
-/-- §3.2-word: `getLsbD` distributes through `&&&`, `^^^`, `|||`. -/
+/-- §3.2-word: bipedal add formula
+`(mag, sgn) = ((m2 &&& (m1 ^^^ s1 ^^^ s2)) ||| (m1 ^^^ m2),
+               (m2 &&& (m1 ^^^ s1 ^^^ s2)) ^^^ s1)`
+lifted lane-wise. The composed expression matches the `add` impl in
+`crates/gf2-algebra/src/packed/bipedal3.rs:581-593`. -/
 theorem bipedal3_add_word (m1 s1 m2 s2 : BitVec 64) (i : Fin 64) :
-    (m1 ^^^ s1).getLsbD i = xor (m1.getLsbD i) (s1.getLsbD i)
-    ∧ (m1 &&& s2).getLsbD i = (m1.getLsbD i && s2.getLsbD i)
-    ∧ (m1 ||| m2).getLsbD i = (m1.getLsbD i || m2.getLsbD i) := by
-  refine ⟨?_, ?_, ?_⟩ <;> simp
+    let t := m1 ^^^ s1 ^^^ s2
+    let u := m2 &&& t
+    (u ||| (m1 ^^^ m2)).getLsbD i
+        = ((m2.getLsbD i && ((m1.getLsbD i) ^^ (s1.getLsbD i) ^^ (s2.getLsbD i)))
+           || ((m1.getLsbD i) ^^ (m2.getLsbD i)))
+    ∧ (u ^^^ s1).getLsbD i
+        = ((m2.getLsbD i && ((m1.getLsbD i) ^^ (s1.getLsbD i) ^^ (s2.getLsbD i)))
+           ^^ (s1.getLsbD i)) := by
+  refine ⟨?_, ?_⟩ <;> simp
 
-/-- §3.3-word: same shape as §3.2-word; sub uses the same three bitwise ops. -/
+/-- §3.3-word: bipedal sub formula
+`(mag, sgn) = ((m1 &&& (s1 ^^^ s2)) ||| (m1 ^^^ m2),
+               (m1 &&& (s1 ^^^ s2)) ^^^ (m2 ^^^ s2))`
+lifted lane-wise. The composed expression matches the `sub` impl in
+`crates/gf2-algebra/src/packed/bipedal3.rs:620-632`. -/
 theorem bipedal3_sub_word (m1 s1 m2 s2 : BitVec 64) (i : Fin 64) :
-    (s1 ^^^ s2).getLsbD i = xor (s1.getLsbD i) (s2.getLsbD i)
-    ∧ (m1 &&& s2).getLsbD i = (m1.getLsbD i && s2.getLsbD i)
-    ∧ (m1 ||| m2).getLsbD i = (m1.getLsbD i || m2.getLsbD i) := by
-  refine ⟨?_, ?_, ?_⟩ <;> simp
+    let t := s1 ^^^ s2
+    let u := m1 &&& t
+    (u ||| (m1 ^^^ m2)).getLsbD i
+        = ((m1.getLsbD i && ((s1.getLsbD i) ^^ (s2.getLsbD i)))
+           || ((m1.getLsbD i) ^^ (m2.getLsbD i)))
+    ∧ (u ^^^ (m2 ^^^ s2)).getLsbD i
+        = ((m1.getLsbD i && ((s1.getLsbD i) ^^ (s2.getLsbD i)))
+           ^^ ((m2.getLsbD i) ^^ (s2.getLsbD i))) := by
+  refine ⟨?_, ?_⟩ <;> simp
 
-/-- §3.4-word: `getLsbD` distributes through `^^^` (only op needed for neg). -/
+/-- §3.4-word: bipedal neg formula `(mag, sgn) = (m, s ^^^ m)` lifted
+lane-wise. Only the `sgn` lane needs lifting (the `mag` lane is the
+identity). Matches the `neg` impl in
+`crates/gf2-algebra/src/packed/bipedal3.rs:652-657`. -/
 theorem bipedal3_neg_word (m s : BitVec 64) (i : Fin 64) :
     (s ^^^ m).getLsbD i = xor (s.getLsbD i) (m.getLsbD i) := by
   simp
@@ -191,7 +221,9 @@ per-lane spec. The chain (sketch §4):
     → `apply bipedal3_mul_lane` (closed `decide`).
 -/
 
-/-- §3.1-correct: per-lane mul correctness on the inherent wrapper. -/
+/-- §3.1-correct: per-lane mul correctness on the inherent wrapper.
+Closes via `bipedal3_mul_word` (lane lift) and `bipedal3_mul_lane`
+(truth table). -/
 theorem bipedal3_mul_correct (m1 s1 m2 s2 : Std.U64) (i : Fin 64) :
     ∃ r, packed.bipedal3.Bipedal3.mul_inherent ⟨m1, s1⟩ ⟨m2, s2⟩ = ok r ∧
       psi (r.mag.bv.getLsbD i) (r.sgn.bv.getLsbD i)
@@ -202,14 +234,18 @@ theorem bipedal3_mul_correct (m1 s1 m2 s2 : Std.U64) (i : Fin 64) :
   refine ⟨_, rfl, ?_⟩
   -- Bring the Result-monad body into normal form (the result struct has
   -- `mag = m1 &&& m2` and `sgn = s1 ^^^ s2`).
-  -- Drop `.bv` projections to BitVec ops.
   show psi (((m1.bv &&& m2.bv)).getLsbD i) (((s1.bv ^^^ s2.bv)).getLsbD i)
     = psi (m1.bv.getLsbD i) (s1.bv.getLsbD i)
       * psi (m2.bv.getLsbD i) (s2.bv.getLsbD i)
-  simp only [BitVec.getLsbD_and, BitVec.getLsbD_xor]
+  -- Lift the two bitwise ops to their Bool-level forms via the word lemma.
+  obtain ⟨hmag, hsgn⟩ := bipedal3_mul_word m1.bv s1.bv m2.bv s2.bv i
+  rw [hmag, hsgn]
   exact bipedal3_mul_lane _ _ _ _
 
-/-- §3.2-correct: per-lane add correctness on the inherent wrapper. -/
+/-- §3.2-correct: per-lane add correctness on the inherent wrapper.
+Closes via `bipedal3_add_word` (lane lift of the composed
+`(u ||| (m1^m2), u ^^^ s1)` expression) and `bipedal3_add_lane`
+(truth table). -/
 theorem bipedal3_add_correct (m1 s1 m2 s2 : Std.U64) (i : Fin 64) :
     ∃ r, packed.bipedal3.Bipedal3.add_inherent ⟨m1, s1⟩ ⟨m2, s2⟩ = ok r ∧
       psi (r.mag.bv.getLsbD i) (r.sgn.bv.getLsbD i)
@@ -223,10 +259,15 @@ theorem bipedal3_add_correct (m1 s1 m2 s2 : Std.U64) (i : Fin 64) :
         (((m2.bv &&& (m1.bv ^^^ s1.bv ^^^ s2.bv)) ^^^ s1.bv).getLsbD i)
       = psi (m1.bv.getLsbD i) (s1.bv.getLsbD i)
         + psi (m2.bv.getLsbD i) (s2.bv.getLsbD i)
-  simp only [BitVec.getLsbD_and, BitVec.getLsbD_xor, BitVec.getLsbD_or]
+  -- Lift the composed add expression to its Bool-level form via the word lemma.
+  obtain ⟨hmag, hsgn⟩ := bipedal3_add_word m1.bv s1.bv m2.bv s2.bv i
+  rw [hmag, hsgn]
   exact bipedal3_add_lane _ _ _ _
 
-/-- §3.3-correct: per-lane sub correctness on the inherent wrapper. -/
+/-- §3.3-correct: per-lane sub correctness on the inherent wrapper.
+Closes via `bipedal3_sub_word` (lane lift of the composed
+`(u ||| (m1^m2), u ^^^ (m2 ^ s2))` expression) and `bipedal3_sub_lane`
+(truth table). -/
 theorem bipedal3_sub_correct (m1 s1 m2 s2 : Std.U64) (i : Fin 64) :
     ∃ r, packed.bipedal3.Bipedal3.sub_inherent ⟨m1, s1⟩ ⟨m2, s2⟩ = ok r ∧
       psi (r.mag.bv.getLsbD i) (r.sgn.bv.getLsbD i)
@@ -240,10 +281,14 @@ theorem bipedal3_sub_correct (m1 s1 m2 s2 : Std.U64) (i : Fin 64) :
         (((m1.bv &&& (s1.bv ^^^ s2.bv)) ^^^ (m2.bv ^^^ s2.bv)).getLsbD i)
       = psi (m1.bv.getLsbD i) (s1.bv.getLsbD i)
         - psi (m2.bv.getLsbD i) (s2.bv.getLsbD i)
-  simp only [BitVec.getLsbD_and, BitVec.getLsbD_xor, BitVec.getLsbD_or]
+  -- Lift the composed sub expression to its Bool-level form via the word lemma.
+  obtain ⟨hmag, hsgn⟩ := bipedal3_sub_word m1.bv s1.bv m2.bv s2.bv i
+  rw [hmag, hsgn]
   exact bipedal3_sub_lane _ _ _ _
 
-/-- §3.4-correct: per-lane neg correctness on the inherent wrapper. -/
+/-- §3.4-correct: per-lane neg correctness on the inherent wrapper.
+Closes via `bipedal3_neg_word` (lane lift of the `s ^^^ m` sgn
+expression) and `bipedal3_neg_lane` (truth table). -/
 theorem bipedal3_neg_correct (m s : Std.U64) (i : Fin 64) :
     ∃ r, packed.bipedal3.Bipedal3.neg_inherent ⟨m, s⟩ = ok r ∧
       psi (r.mag.bv.getLsbD i) (r.sgn.bv.getLsbD i)
@@ -253,7 +298,7 @@ theorem bipedal3_neg_correct (m s : Std.U64) (i : Fin 64) :
   refine ⟨_, rfl, ?_⟩
   show psi (m.bv.getLsbD i) ((s.bv ^^^ m.bv).getLsbD i)
     = -(psi (m.bv.getLsbD i) (s.bv.getLsbD i))
-  simp only [BitVec.getLsbD_xor]
+  rw [bipedal3_neg_word m.bv s.bv i]
   exact bipedal3_neg_lane _ _
 
 /-! ## §1-headline: the V1 contract
