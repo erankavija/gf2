@@ -1,0 +1,143 @@
+# Final LLBC before serialization:
+
+// Full name: core::marker::MetaSized
+#[lang_item("meta_sized")]
+pub trait MetaSized<Self>
+
+// Full name: core::marker::Sized
+#[lang_item("sized")]
+pub trait Sized<Self>
+{
+    parent_clause0 : [@TraitClause0]: MetaSized<Self>
+    non-dyn-compatible
+}
+
+// Full name: core::clone::Clone
+#[lang_item("clone")]
+pub trait Clone<Self>
+{
+    parent_clause0 : [@TraitClause0]: Sized<Self>
+    fn clone<'_0_1> = clone<'_0_1, Self>[Self]
+    non-dyn-compatible
+}
+
+// Full name: core::clone::Clone::clone
+#[lang_item("clone_fn")]
+pub fn clone<'_0, Self>(_1: &'_0 Self) -> Self
+where
+    [@TraitClause0]: Clone<Self>,
+= <opaque>
+
+// Full name: core::default::Default
+#[lang_item("Default")]
+pub trait Default<Self>
+{
+    parent_clause0 : [@TraitClause0]: Sized<Self>
+    fn default = default<Self>[Self]
+    non-dyn-compatible
+}
+
+// Full name: core::default::Default::default
+#[lang_item("default_fn")]
+pub fn default<Self>() -> Self
+where
+    [@TraitClause0]: Default<Self>,
+= <opaque>
+
+// Full name: core::marker::Destruct
+#[lang_item("destruct")]
+pub trait Destruct<Self>
+{
+    fn drop_in_place = drop_in_place<Self>
+    non-dyn-compatible
+}
+
+// Full name: core::marker::Destruct::drop_in_place
+unsafe fn drop_in_place<Self>(_1: *mut Self)
+= <opaque>
+
+// Full name: core::ops::arith::Mul
+#[lang_item("mul")]
+pub trait Mul<Self, Rhs, Self_Output>
+{
+    parent_clause0 : [@TraitClause0]: MetaSized<Self>
+    parent_clause1 : [@TraitClause1]: Sized<Rhs>
+    parent_clause2 : [@TraitClause2]: Sized<Self_Output>
+    fn mul = mul<Self, Rhs, Self_Output>[Self]
+    vtable: core::ops::arith::Mul::{vtable}<Rhs, Self_Output>
+}
+
+// Full name: core::ops::arith::Mul::mul
+#[lang_item("mul")]
+pub fn mul<Self, Rhs, Clause0_Output>(_1: Self, _2: Rhs) -> Clause0_Output
+where
+    [@TraitClause0]: Mul<Self, Rhs, Clause0_Output>,
+= <opaque>
+
+fn UNIT_METADATA()
+{
+    let _0: (); // return
+
+    _0 = ()
+    return
+}
+
+const UNIT_METADATA: () = @Fun0()
+
+// Full name: test_crate::Config
+trait Config<Self, Self_Field>
+where
+    Self : 'static,
+{
+    parent_clause0 : [@TraitClause0]: MetaSized<Self>
+    parent_clause1 : [@TraitClause1]: Sized<Self_Field>
+    parent_clause2 : [@TraitClause2]: Default<Self_Field>
+    parent_clause3 : [@TraitClause3]: Clone<Self_Field>
+    parent_clause4 : [@TraitClause4]: Mul<Self_Field, Self_Field, Self_Field>
+    fn double = double<Self, Self_Field>[Self]
+    non-dyn-compatible
+}
+
+// Full name: test_crate::Config::double
+fn double<Self, Clause0_Field>(_1: Clause0_Field) -> Clause0_Field
+where
+    [@TraitClause0]: Config<Self, Clause0_Field>,
+{
+    let _0: Clause0_Field; // return
+    let x_1: Clause0_Field; // arg #1
+    let _2: Clause0_Field; // anonymous local
+    let _3: &'1 Clause0_Field; // anonymous local
+    let _4: Clause0_Field; // anonymous local
+
+    storage_live(_2)
+    storage_live(_3)
+    _3 = &x_1
+    _2 = @TraitClause0::parent_clause3::clone<'3>(move _3)
+    storage_dead(_3)
+    storage_live(_4)
+    _4 = move x_1
+    _0 = @TraitClause0::parent_clause4::mul(move _2, move _4)
+    storage_dead(_4)
+    storage_dead(_2)
+    conditional_drop[{built_in impl Destruct for Clause0_Field}] x_1
+    return
+}
+
+// Full name: test_crate::use_config
+fn use_config<C, Clause1_Field>() -> Clause1_Field
+where
+    [@TraitClause0]: Sized<C>,
+    [@TraitClause1]: Config<C, Clause1_Field>,
+{
+    let _0: Clause1_Field; // return
+    let _1: Clause1_Field; // anonymous local
+
+    storage_live(_1)
+    _1 = @TraitClause1::parent_clause2::default()
+    _0 = @TraitClause1::double(move _1)
+    storage_dead(_1)
+    return
+}
+
+
+

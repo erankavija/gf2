@@ -1,0 +1,112 @@
+# Final LLBC before serialization:
+
+// Full name: core::marker::MetaSized
+#[lang_item("meta_sized")]
+pub trait MetaSized<Self>
+
+// Full name: core::marker::Sized
+#[lang_item("sized")]
+pub trait Sized<Self>
+{
+    parent_clause0 : [@TraitClause0]: MetaSized<Self>
+    non-dyn-compatible
+}
+
+// Full name: core::default::Default
+#[lang_item("Default")]
+pub trait Default<Self>
+{
+    parent_clause0 : [@TraitClause0]: Sized<Self>
+    fn default = default<Self>[Self]
+    non-dyn-compatible
+}
+
+// Full name: core::default::Default::default
+#[lang_item("default_fn")]
+pub fn default<Self>() -> Self
+where
+    [@TraitClause0]: Default<Self>,
+= <opaque>
+
+// Full name: core::ops::arith::Add
+#[lang_item("add")]
+pub trait Add<Self, Rhs, Self_Output>
+{
+    parent_clause0 : [@TraitClause0]: MetaSized<Self>
+    parent_clause1 : [@TraitClause1]: Sized<Rhs>
+    parent_clause2 : [@TraitClause2]: Sized<Self_Output>
+    fn add = add<Self, Rhs, Self_Output>[Self]
+    vtable: core::ops::arith::Add::{vtable}<Rhs, Self_Output>
+}
+
+// Full name: core::ops::arith::Add::add
+#[lang_item("add")]
+pub fn add<Self, Rhs, Clause0_Output>(_1: Self, _2: Rhs) -> Clause0_Output
+where
+    [@TraitClause0]: Add<Self, Rhs, Clause0_Output>,
+= <opaque>
+
+// Full name: core::ops::arith::Sub
+#[lang_item("sub")]
+pub trait Sub<Self, Rhs, Self_Output>
+{
+    parent_clause0 : [@TraitClause0]: MetaSized<Self>
+    parent_clause1 : [@TraitClause1]: Sized<Rhs>
+    parent_clause2 : [@TraitClause2]: Sized<Self_Output>
+    fn sub = sub<Self, Rhs, Self_Output>[Self]
+    vtable: core::ops::arith::Sub::{vtable}<Rhs, Self_Output>
+}
+
+// Full name: core::ops::arith::Sub::sub
+#[lang_item("sub")]
+pub fn sub<Self, Rhs, Clause0_Output>(_1: Self, _2: Rhs) -> Clause0_Output
+where
+    [@TraitClause0]: Sub<Self, Rhs, Clause0_Output>,
+= <opaque>
+
+// Full name: test_crate::FiniteField
+trait FiniteField<Self, Self_Characteristic>
+{
+    parent_clause0 : [@TraitClause0]: Sized<Self>
+    parent_clause1 : [@TraitClause1]: Add<Self, Self, Self>
+    parent_clause2 : [@TraitClause2]: for<'a> Add<Self, &'a Self, Self>
+    parent_clause3 : [@TraitClause3]: Sub<Self, Self, Self>
+    parent_clause4 : [@TraitClause4]: for<'a> Sub<Self, &'a Self, Self>
+    parent_clause5 : [@TraitClause5]: Sized<Self_Characteristic>
+    non-dyn-compatible
+}
+
+// Full name: test_crate::ConstField
+trait ConstField<Self, Self_Clause1_Characteristic>
+{
+    parent_clause0 : [@TraitClause0]: MetaSized<Self>
+    parent_clause1 : [@TraitClause1]: FiniteField<Self, Self_Clause1_Characteristic>
+    non-dyn-compatible
+}
+
+// Full name: test_crate::ExtConfig
+trait ExtConfig<Self, Self_BaseField, Self_Clause2_Clause1_Characteristic>
+where
+    Self : 'static,
+{
+    parent_clause0 : [@TraitClause0]: MetaSized<Self>
+    parent_clause1 : [@TraitClause1]: Sized<Self_BaseField>
+    parent_clause2 : [@TraitClause2]: ConstField<Self_BaseField, Self_Clause2_Clause1_Characteristic>
+    vtable: test_crate::ExtConfig::{vtable}<Self_BaseField>
+}
+
+// Full name: test_crate::use_base_field
+fn use_base_field<C, Clause1_BaseField, Clause1_Clause2_Clause1_Characteristic>() -> Clause1_BaseField
+where
+    [@TraitClause0]: Sized<C>,
+    [@TraitClause1]: ExtConfig<C, Clause1_BaseField, Clause1_Clause2_Clause1_Characteristic>,
+    [@TraitClause2]: Default<Clause1_BaseField>,
+{
+    let _0: Clause1_BaseField; // return
+
+    _0 = @TraitClause2::default()
+    return
+}
+
+
+
