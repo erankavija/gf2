@@ -1,19 +1,13 @@
 # S5 (jit:a9e461de) GPU-vs-CPU-SIMD crossover for permanent_bipedal3 (F_3)
-# commit: 521da541 (v1: n=24,n=28 M=256), f105e4be (v3: n=32 M=4)
+# commit: 13b9143a
 # rustc: rustc 1.95.0 (59807616e 2026-04-14)
 # cpu: AMD Ryzen 9 5900X 12-Core Processor
 # gpu: AMD Radeon RX 6950 XT
 # gfx_target: gfx1030
 # rocm_version: 7.2.3
 # seed: 0x00c0ffee00000000
-# n=24: M=256 reps=3 (median of wall-clock reps); source=v1 run (commit 521da541)
-# n=28: M=256 reps=3 (median); source=v1 run (commit 521da541)
-# n=32: M=4   reps=1; source=v3 run (commit f105e4be)
-# n=36: cpu_simd skipped (estimated ~848s/mat from S1 data); gpu_wallclock 0 = not completed (kernel ran >37 min before process was killed; single-matrix n=36 GPU estimated ~40 min)
-# note: GPU/CPU ratio > 1 means GPU is faster. For n=36 ratio and gpu_wins are na (no usable GPU measurement).
-# note: crossover is batch-size-M dependent, not purely n-dependent. See dev/plans/s5_gpu_crossover.md.
+# sweep: n ∈ [24, 28], fixed M=256, reps=3 (median wall-clock)
+# note: GPU-vs-CPU ratio > 1 means GPU is faster (higher perm/s than CPU SIMD)
 n,m,cpu_simd_wallclock_s,cpu_simd_perm_per_s,gpu_wallclock_s,gpu_perm_per_s,gpu_cpu_ratio,gpu_wins
-24,256,52.899487,4.839,1.859381,137.680,28.450054,true
-28,256,849.021892,0.302,29.247317,8.753,29.029052,true
-32,4,219.298440,0.018,446.821208,0.009,0.490797,false
-36,1,0.000000,0.000,0.000000,0.000,na,na
+24,256,53.443008,4.790,1.865208,137.250,28.652574,true
+28,256,914.088860,0.280,30.151625,8.490,30.316405,true

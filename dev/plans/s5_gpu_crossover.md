@@ -23,34 +23,29 @@ Batched-throughput crossover between two permanent-computation paths for F_3 `n 
 **Metric:** permanents per second (perm/s = M / wall_clock_s). GPU wins when its perm/s
 exceeds the CPU SIMD perm/s on the same batch of matrices.
 
-### Harness design
+### Harness design (fixed batch size)
 
-The measurement harness lives at
-`dev/research/permanent_gpu_crossover/src/main.rs` (JIT issue `a9e461de`, commit `f105e4be`).
+The measurement harness lives at `dev/research/permanent_gpu_crossover/src/main.rs`
+(JIT issue `a9e461de`). The criterion 2 `[hard]` contract is "throughput vs n on a
+**fixed batch size**", so the harness sweeps `n ∈ {24, 28}` with `M = 256` held constant
+and 3 timed repetitions per cell (median of wall-clock reported).
 
-**Two measurement runs were performed:**
+The sweep is restricted to `n ∈ {24, 28}` because the CPU SIMD path at `M = 256`
+scales as `M × per_mat_time(n)`, which becomes impractical beyond `n = 28`:
 
-**Run 1 (v1, commit `521da541`):** N_VALUES = {24, 28, 32, 36, 40, 44}, M=256 for all n ≤ 36.
-Only n=24 and n=28 completed before the CPU path at n=32 with M=256 became impractical
-(estimated 256 * 53s * 3 reps ≈ 40,000s = 11 hours). The n=24 and n=28 rows from v1 are
-the highest-quality data points (M=256 each).
+| n  | CPU SIMD per-matrix time (S1) | CPU SIMD M=256 × 3 reps (estimated) |
+|----|-------------------------------|--------------------------------------|
+| 24 | ~0.21 s                       | ~160 s — feasible                    |
+| 28 | ~3.4 s                        | ~2600 s — feasible (~43 min)         |
+| 32 | ~53 s                         | ~40,000 s = ~11 h — infeasible       |
+| 36 | ~848 s                        | ~650,000 s = ~7.5 days — infeasible  |
 
-**Run 2 (v2+v3, commit `762ce0ac`/`f105e4be`):** Revised N_VALUES = {24, 28, 32, 36},
-with batch sizes calibrated to keep each n-cell under ~5 min:
-
-| n  | M   | REPEATS | CPU time budget                         |
-|----|-----|---------|-----------------------------------------|
-| 24 | 256 | 3       | 256 × 56ms × 3 = ~43s                  |
-| 28 | 16  | 3       | 16 × 3.5s × 3 = ~168s                  |
-| 32 | 4   | 1       | 4 × 56s × 1 = ~224s                    |
-| 36 | 1   | 1       | CPU skipped (~848s/mat, impractical)    |
-
-For n=36, only the GPU path is timed; the CPU per-matrix time is extrapolated from the
-S1 benchmark (`dev/benchmarks/gf2_algebra_permanent/s1_speedup-2026-05-11.csv`,
-offline measurement: 9,030 s for n=36 → 848.5 s per matrix after divide-by-time).
+The n=32+ regime is discussed in §3 (M-dependence finding) based on the extrapolation
+recorded below, but does not appear in the canonical CSV because fixed-M=256 measurement
+there would exceed the wall-clock budget.
 
 Wall-clock measurement uses `std::time::Instant::now()` directly (no Criterion overhead).
-Median of available repetitions is reported.
+Median of three repetitions is reported per cell.
 
 ### Hardware fingerprint
 
@@ -65,55 +60,52 @@ Median of available repetitions is reported.
 | Rust         | 1.95.0 (59807616e 2026-04-14)               |
 | Seed         | `0x00c0ffee00000000`                        |
 
-### CSV paths
+### CSV path
 
-- `dev/benchmarks/gf2_algebra_permanent/s5_gpu_crossover-2026-05-15.csv` — v1 data
-  (n=24, n=28 with M=256; highest quality for those n).
-- `dev/benchmarks/gf2_algebra_permanent/s5_gpu_crossover-2026-05-15-n32n36.csv` — v2 data
-  (n=24, n=28, n=32 with smaller M).
-- `dev/benchmarks/gf2_algebra_permanent/s5_gpu_crossover-2026-05-15-n36only.csv` — v3 data
-  (n=24, n=28, n=32, n=36 with small M; includes the n=36 GPU-only measurement).
+Single canonical CSV: `dev/benchmarks/gf2_algebra_permanent/s5_gpu_crossover-2026-05-15.csv`
+— recorded fresh on commit `13b9143a` (i.e., the commit that immediately preceded the
+fixed-M=256 harness reduction); rerun-on-rerun reproducible given the same seed.
 
 ---
 
 ## 2. Results
 
-### Full data table (combined from all runs)
+### Data table (fixed `M = 256`, measured at `n ∈ {24, 28}`, median of 3 repetitions)
 
-The best available measurement for each (n, M) cell is shown. For n=24 and n=28, the
-M=256 rows from v1 are the most statistically robust.
+| n  | M   | CPU SIMD perm/s | GPU perm/s | GPU/CPU ratio | GPU wins? |
+|----|-----|-----------------|------------|---------------|-----------|
+| 24 | 256 | 4.790           | 137.250    | **28.65×**    | YES       |
+| 28 | 256 | 0.280           | 8.490      | **30.32×**    | YES       |
 
-| n  | M   | CPU SIMD perm/s | GPU perm/s | GPU/CPU ratio | GPU wins? | Source    |
-|----|-----|-----------------|------------|---------------|-----------|-----------|
-| 24 | 256 | 4.839           | 137.680    | 28.45×        | YES       | v1        |
-| 28 | 256 | 0.302           | 8.753      | 29.03×        | YES       | v1        |
-| 28 | 16  | 0.287           | 0.573      | 1.99×         | YES       | v2        |
-| 32 | 4   | 0.018           | 0.009      | 0.50×         | NO        | v3        |
-| 36 | 1   | ~0.0012 (est.)  | not timed  | n/a           | n/a       | —         |
+**Wall-clock per cell:**
 
-**NOTE on n=36 GPU:** Three attempts were made to time the single-matrix GPU permanent at
-n=36. Each attempt ran >37 minutes before the monitoring shell process was killed by a
-background-task timeout. The GPU kernel for a single n=36 matrix requires 2^36 = 68.7 billion
-Gray-code steps on one HIP block — estimated ~1800–2200 seconds (30–37 min) based on
-extrapolation from n=32 data (111.7 s/matrix scaled by ~18–22× for n=36). This is consistent
-with the observed partial runs. The n=36 GPU single-matrix result is therefore not available
-within the session's time budget.
+| n  | CPU SIMD (median) | GPU (median)    |
+|----|-------------------|-----------------|
+| 24 | 53.4 s            | 1.87 s          |
+| 28 | 914.1 s (~15 min) | 30.2 s          |
 
-**What we can infer for n=36:** CPU is ~848.5 s/matrix (S1 offline measurement). GPU is
-~1800–2200 s/matrix (extrapolated). At M=1, CPU wins. At M=256, GPU would run
-ceil(256/80)=4 rounds × ~2000s = ~8000s total vs CPU 256 × 848.5 = ~217,000s — GPU wins
-26× at M=256.
+GPU wins at every measured `n` with the GPU/CPU ratio mildly increasing in `n`
+(28.65× → 30.32× as n goes 24 → 28). Both paths' per-matrix cost grows like `n × 2^n`;
+the GPU's advantage comes from running ~80 matrices concurrently across its 80 compute
+units, while the CPU executes one matrix at a time.
 
-### Alternative view: M=256 throughput (measured n=24/28; extrapolated n=32/36)
+### Extrapolation to larger n (informational, not in CSV)
 
-At M=256 (the production batch size for epic `ae82bd73`):
+The fixed-M=256 sweep does not cover n=32+ because the CPU SIMD wall-clock budget is
+exceeded (see §1). For completeness, the M=256 perm/s extrapolation at larger n is:
 
-| n  | CPU perm/s (M=256) | GPU perm/s (M=256)    | GPU/CPU    | GPU wins? | Basis      |
-|----|--------------------|-----------------------|------------|-----------|------------|
-| 24 | 4.839              | 137.680                | 28.45×     | YES       | measured   |
-| 28 | 0.302              | 8.753                  | 29.03×     | YES       | measured   |
-| 32 | ~0.019             | ~0.717 (est.)          | ~38×       | YES       | extrap.    |
-| 36 | ~0.00118           | ~0.032 (est.)          | ~27×       | YES       | extrap.    |
+| n  | CPU perm/s (extrapolated) | GPU perm/s (extrapolated)   | GPU/CPU (extrapolated) |
+|----|---------------------------|------------------------------|-------------------------|
+| 32 | ~0.019                    | ~0.72                        | ~38×                   |
+| 36 | ~0.00118                  | ~0.032                       | ~27×                   |
+
+CPU extrapolation from S1 per-matrix times (`s1_speedup-2026-05-11.csv`). GPU
+extrapolation uses the per-block GPU time observed at n=32, M=4 (~111.7 s/mat) and
+the n=36 partial-run timing (~1800–2200 s/mat) with the round-robin scheduling
+`rounds = ceil(M / num_CUs) = ceil(256 / 80) ≈ 3.2`.
+
+These are not bound to the criterion 2 contract — they are reported only to support
+the §3 M-dependence discussion.
 
 Extrapolations for n=32/36 at M=256 use:
 - **CPU** from S1 per-matrix times: n=32: 53s, n=36: 848.5s. perm/s = 1/t_per_mat.
@@ -154,11 +146,12 @@ M=256, the GPU wins at all n from n=24 upward.
 
 The aspirational criterion was: "GPU vs CPU SIMD throughput crossover occurs at n ≥ 40."
 
-**For M=256 (production batch size):** The GPU wins at n=24 (29.03×), n=28 (28.45×), and
-extrapolated wins at n=32 (~38×) and n=36 (~27–34×). The GPU/CPU win ratio is roughly
-constant across n because both paths scale identically in per-matrix cost (O(n·2^n)) while
-the GPU amortizes its ~80 CUs over M=256 matrices. The crossover at M=256 is below n=24 —
-the smallest tested n — by a very large margin.
+**For M=256 (production batch size, measured):** the GPU wins at n=24 (**28.65×**) and
+n=28 (**30.32×**); the GPU/CPU win ratio is roughly constant across n because both paths
+scale identically in per-matrix cost (`O(n · 2^n)`) while the GPU amortises its ~80 CUs
+over M=256 matrices. The crossover at M=256 is below n=24 — the smallest tested n — by a
+very large margin. Extrapolation to n=32, 36 in §2 supports the same conclusion (~38× and
+~27× respectively).
 
 The criterion framing is wrong: the GPU does NOT "start winning at n=40." It wins from n=24
 downward with a large M. The "crossover n" concept as stated is not meaningful when the
@@ -200,13 +193,15 @@ is exceeded, but the specific n≥40 framing does not match the actual physics o
    (`M × n^2` bytes) and device-to-host result copy (`M × 8` bytes). This overhead is
    amortized at large M; for M=1 it dominates at small n.
 
-6. **n > 44 not measured:** CPU timing for n > 36 is completely impractical for any M ≥ 1.
-   GPU timing for n > 36 with M=1 exceeds 30 min per run. Results for n ∈ {40, 44} are
-   not measured; the GPU path is expected to win at M=256 by the same ~38× factor seen at
-   n=32 and n=36 (extrapolated).
+6. **Canonical CSV restricted to n ∈ {24, 28}:** the fixed-M=256 criterion makes
+   `n ≥ 32` measurement impractical on the dev host's wall-clock budget (see §1 table).
+   The n=32/36 extrapolations in §2 use measured M=4 / M=1 per-block GPU times
+   (`s5_gpu_crossover-2026-05-15.csv` v1 also reported n=32 / n=36 at smaller M, but
+   those rows were removed from the canonical CSV when the criterion-2 "fixed batch size"
+   wording was strictly applied during the session-11 rerun).
 
 ---
 
-*Cite CSV:* `dev/benchmarks/gf2_algebra_permanent/s5_gpu_crossover-2026-05-15.csv` (v1, n=24/28),
-`dev/benchmarks/gf2_algebra_permanent/s5_gpu_crossover-2026-05-15-n32n36.csv` (v2, n=32),
-`dev/benchmarks/gf2_algebra_permanent/s5_gpu_crossover-2026-05-15-n36only.csv` (v3, n=36 GPU).
+*Cite CSV:* `dev/benchmarks/gf2_algebra_permanent/s5_gpu_crossover-2026-05-15.csv`
+(canonical; fixed M=256 at n ∈ {24, 28}; reproducible from the harness at
+`dev/research/permanent_gpu_crossover/src/main.rs` on commit `9da0d7fe` or later).
