@@ -132,11 +132,19 @@ assert_eq!(permanent_bipedal3_parallel(&mat), Fp::<3>::new(0));
 
 ## Examples
 
-Run with `cargo run --release -p gf2-algebra --features test-support --example <name>`:
+`permanent_demo` is self-contained (inline deterministic LCG) and runs with the
+default feature set:
+
+```bash
+cargo run --release -p gf2-algebra --example permanent_demo
+```
+
+The other examples below use the `test-support`-gated `testutil` generators, so
+run them with `cargo run --release -p gf2-algebra --features test-support --example <name>`:
 
 | Example                  | What it shows                                                                |
 |--------------------------|------------------------------------------------------------------------------|
-| `permanent_demo`         | Headline benchmark: times `permanent_bipedal3` at n=24 vs `permanent_mod3_reference` at n=20; prints throughput and ±5% check against S1 CSV. |
+| `permanent_demo`         | Headline benchmark: times `permanent_bipedal3` at n=24 vs `permanent_mod3_reference` at n=20; prints throughput and ±5% check against S1 CSV. Self-contained — no `test-support` feature needed. |
 | `paper_repro_slope`      | Reproduces the paper's Table 2 `O(n * 2^n)` scaling slope at n = 8..24.     |
 | `parallel_chunk_sweep`   | Sweep chunk-size parameter for `permanent_bipedal3_parallel`.                |
 | `parallel_scaling_sweep` | Measure parallel scaling over 1..N_CPUS threads at fixed n.                 |
