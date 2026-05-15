@@ -521,6 +521,20 @@ pub unsafe fn compute_permanent_gf5_batch(
 ///
 /// 0 on success (`hipSuccess`), a non-zero HIP error code otherwise.
 ///
+/// # Examples
+///
+/// ```ignore
+/// // Skipped under `cargo test` (requires ROCm + gfx1030):
+/// # #[cfg(feature = "hip")] {
+/// use gf2_algebra::packed::packed7::{ADD_LUT, SUB_LUT, MUL_LUT};
+/// use gf2_kernels_hip::permanent::init_permanent_gf7;
+/// // SAFETY: ADD_LUT, SUB_LUT, MUL_LUT are 'static [u8; 65536].
+/// let rc = unsafe { init_permanent_gf7(
+///     ADD_LUT.as_ptr(), SUB_LUT.as_ptr(), MUL_LUT.as_ptr()) };
+/// assert_eq!(rc, 0, "hipSuccess");
+/// # }
+/// ```
+///
 /// # Panics
 ///
 /// Never panics from Rust — all error reporting flows through the `c_int`
@@ -770,6 +784,21 @@ pub unsafe fn compute_permanent_gf7_batch(
 /// # Returns
 ///
 /// 0 on success (`hipSuccess`), a non-zero HIP error code otherwise.
+///
+/// # Examples
+///
+/// ```ignore
+/// // Skipped under `cargo test` (requires ROCm + gfx1030 + device memory):
+/// # #[cfg(feature = "hip")] {
+/// use gf2_kernels_hip::permanent::compute_lut_checksum_gpu;
+/// // out_ptr is a device pointer obtained from hipMalloc; the caller is
+/// // responsible for managing it. init_permanent_gf7 must have been
+/// // called first so d_MUL_LUT is populated.
+/// // SAFETY: see the function-level safety contract.
+/// let rc = unsafe { compute_lut_checksum_gpu(out_ptr) };
+/// assert_eq!(rc, 0, "hipSuccess");
+/// # }
+/// ```
 ///
 /// # Panics
 ///
