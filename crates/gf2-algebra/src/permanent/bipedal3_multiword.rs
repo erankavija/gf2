@@ -160,10 +160,11 @@ pub fn permanent_bipedal3_multiword(mat: &Bipedal3Matrix) -> Fp<3> {
         n <= N_MAX_MULTIWORD,
         "permanent_bipedal3_multiword: n = {n} exceeds N_MAX_MULTIWORD = {N_MAX_MULTIWORD}"
     );
-    // Note: no lower-bound assert. The dispatcher routes `n <= 64` to the
-    // singleword fast path for perf, but calling this function directly at
-    // small `n` is correctness-preserving — the `[u64; 4]` Gray counter
-    // and word-wise loops handle `n` in `1..=N_MAX_MULTIWORD` uniformly.
+    // Note: no lower-bound assert. The dispatcher routes `n <= 63` to the
+    // singleword fast path for perf (post 2026-05-15 CPU/GPU consistency
+    // narrowing), but calling this function directly at small `n` is
+    // correctness-preserving — the `[u64; 4]` Gray counter and word-wise
+    // loops handle `n` in `1..=N_MAX_MULTIWORD` uniformly.
     // The §9.2 validation plan relies on this property: small-`n` direct
     // ryser cross-checks exercise the multi-word code path under both
     // debug and release builds without `debug_assert!` divergence.
