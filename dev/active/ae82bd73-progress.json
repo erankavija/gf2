@@ -3,12 +3,12 @@
   "epic_short_id": "ae82bd73",
   "epic_title": "Fast matrix permanents over F_3 / F_5 / F_7 via packed bipedal arithmetic",
   "current_wave": 5,
-  "current_subwave": "W4 closed. W5 b62c86d8 scaffold merged + in code-review cycles; W5 kernels (ad55b777, b43cdf33, 5c0505b2) pending; W6 8c902184 (API freeze) approved by user + in code-review cycles. W6 Lean + W7 Reporting fully pending.",
-  "current_status": "Mid-W5 scaffold + freeze close cycle. b62c86d8 and 8c902184 both have code committed and merged into main, but their code-review gates have not yet converged; the substantive findings are addressed but each round surfaces a new doc-precision finding.",
+  "current_subwave": "W5 GPU kernels (b62c86d8, ad55b777, b43cdf33, 5c0505b2) closed. W5 remaining: 2fbbdfa5 (host dispatcher) + a9e461de (GPU-vs-CPU crossover sim).",
+  "current_status": "W5 4-of-6 closed. W6 unblocked by 8c902184 close. CPU/GPU consistency narrowing (n ≤ 63) landed across gf2-algebra single-word paths. HIP test SSOT refactored, init state machine has unit-test coverage, gfx1030 GPU evidence captured in versioned verification doc.",
   "started_at": "2026-05-09T01:30:00+03:00",
-  "session_count": 8,
+  "session_count": 9,
+  "session_9_close_time": "2026-05-15T12:25:00+03:00",
   "session_8_close_time": "2026-05-14T20:05:00+03:00",
-  "session_7_close_time": "2026-05-12T08:30:00+03:00",
   "rework_counts": {
     "46330802": 2,
     "053e4016": 1,
@@ -31,8 +31,11 @@
     "684a6715": 5,
     "063f49bb": 1,
     "1f769232": 4,
-    "b62c86d8": 4,
-    "8c902184": 4
+    "b62c86d8": 5,
+    "8c902184": 6,
+    "ad55b777": 2,
+    "b43cdf33": 2,
+    "5c0505b2": 5
   },
   "wave_status": {
     "W0": {"name": "Decisions and sketches", "status": "CLOSED", "issues_done": 11},
@@ -42,25 +45,25 @@
     "W4": {"name": "F_5/F_7 packed + SIMD", "status": "CLOSED 2026-05-14", "issues_done": 5},
     "W5": {
       "name": "GPU HIP/ROCm",
-      "status": "IN PROGRESS",
+      "status": "IN PROGRESS (4 of 6 closed)",
       "issues": {
-        "b62c86d8": "MERGED but code-review failing (round 4); HIP scaffold + FFI shims correct; failing on iterative doc-precision findings",
-        "ad55b777": "PENDING (F_3 HIP kernel, dep b62c86d8)",
-        "b43cdf33": "PENDING (F_5 HIP kernel, dep b62c86d8)",
-        "5c0505b2": "PENDING (F_7 HIP kernel, dep b62c86d8)",
-        "2fbbdfa5": "PENDING (host dispatcher)",
-        "a9e461de": "PENDING (GPU vs CPU crossover sim)"
+        "b62c86d8": "DONE 2026-05-14 — HIP scaffold (placeholder .hip + extern shims, build.rs wiring).",
+        "ad55b777": "DONE 2026-05-15 — F_3 HIP kernel; bipedal arithmetic + sequential Gray walk; batched FFI; tests at n=16,24,32,40,63. Amendments: per-n test counts (criterion 2) + n ≤ 63 narrowing.",
+        "b43cdf33": "DONE 2026-05-15 — F_5 HIP kernel; direct byte-arithmetic Ryser walk (amendment: encoding may diverge from CPU Packed5 bit-plane); tests at n=8,12; criterion 5 wording fix.",
+        "5c0505b2": "DONE 2026-05-15 — F_7 HIP kernel; LUT-based (MUL_LUT in __constant__, ADD/SUB in __device__); explicit caller-driven init via init_permanent_gf7; CAS-loop memoise_init_outcome state machine with 6 unit tests; LUT-checksum test; tests at n=8,12.",
+        "2fbbdfa5": "PENDING (host-side dispatcher; routes to CPU singleword / CPU multiword / GPU based on M/n).",
+        "a9e461de": "PENDING (GPU vs CPU crossover sim — measure M/n where GPU pays off)."
       },
-      "host_status": "ROCm gfx1030 confirmed on dev host; --features hip builds clean"
+      "host_status": "ROCm gfx1030 confirmed on dev host; --features hip builds clean. All three F_3/F_5/F_7 GPU bit-identity tests pass on hardware (evidence: dev/active/ae82bd73-w5-gpu-verification.md)."
     },
     "W6": {
       "name": "Lean verification",
-      "status": "BLOCKED on 8c902184 close",
+      "status": "UNBLOCKED 2026-05-15 (8c902184 closed); awaiting dispatch",
       "issues": {
-        "8c902184": "MERGED freeze doc; user-approved 2026-05-14 as-is; doc attached commit-pinned; code-review failing (round 4); failing on iterative doc-completeness findings (latest: Packed7 LUT statics now added, next round will surface something else likely)",
-        "f05ffbe1": "PENDING bipedal F_3 Lean (dep 8c902184)",
-        "0606186a": "PENDING Ryser n<=63 Lean (dep 8c902184)",
-        "30e98ef1": "PENDING F_5/F_7 Lean aspirational (dep f05ffbe1)"
+        "8c902184": "DONE 2026-05-15 — API freeze doc attached commit-pinned; user-approved.",
+        "f05ffbe1": "PENDING bipedal F_3 Lean (sketch a0c0a45f approved).",
+        "0606186a": "PENDING Ryser n ≤ 63 Lean (sketch 4aaa6e4d approved).",
+        "30e98ef1": "PENDING F_5/F_7 Lean aspirational (NEW sketch required)."
       }
     },
     "W7": {
@@ -74,33 +77,29 @@
         "c90db5a4": "permanent-repro.sh",
         "333028c1": "F_5/F_7 CAS cross-validation",
         "8e4e19a0": "perm-vs-det uniformity sim",
-        "9480f8a6": "S1g GPU 50x (dep ad55b777)"
+        "9480f8a6": "S1g GPU 50x (dep ad55b777 — now unblocked, plus crossover sim a9e461de)"
       }
     }
   },
-  "session_8_summary": {
+  "session_9_summary": {
     "issues_closed": [
-      "684a6715 (permanent_bipedal5) — 5 review rounds; user-approved amendment for n=63/64 infeasibility (option C)",
-      "063f49bb (permanent_bipedal7) — 1 review round; moved n=13/14 to fast tier, fixed mod-doc bound",
-      "1f769232 (SIMD F_5+F_7 kernels) — 4 review rounds; user-approved amendment dropping BipedalLikeConfig criterion (option A); removed broken Config5 impl; F_5/F_7 ship via dedicated AVX2 entry points only"
+      "8c902184 (API freeze) — 6 review rounds; closed via holistic doc audit (Packed7::LANES fix + out-of-scope section)",
+      "b62c86d8 (HIP scaffold) — closed after criterion 4 wording amendment (Option A, AskUserQuestion 2026-05-15)",
+      "ad55b777 (F_3 HIP kernel) — 2 review rounds; amendments for per-n test counts + n ≤ 63 narrowing",
+      "b43cdf33 (F_5 HIP kernel) — 2 review rounds; byte-arithmetic encoding amendment + criterion 5 wording fix + dead n=0 branch fix",
+      "5c0505b2 (F_7 HIP kernel) — 5 review rounds; explicit caller-driven init pattern; CAS-loop state machine with unit tests; LUT-checksum test; doc-narrative sweep"
     ],
-    "issues_in_review_loop": [
-      "b62c86d8 (HIP scaffold) — code is correct (builds + tests + clippy + fmt all clean; ROCm path verified on gfx1030); 4 code-review rounds; latest finding: criterion 4 ambiguity around 'gf2-algebra --all-features' (clarification amendment now in description, may need user approval to close)",
-      "8c902184 (API freeze) — doc approved by user; commit-pinned attachment; 4 code-review rounds; iterative reviewer keeps surfacing one missing symbol per round (latest: Packed7 LUT statics added; likely next round surfaces something else from gray.rs or simd_ops.rs)"
-    ],
-    "user_escalations_resolved": 3,
+    "issues_in_review_loop": [],
+    "user_escalations_resolved": 7,
     "user_escalations_open": 0,
-    "tests_passing_on_main": "3783 fast-tier (workspace --all-features --release --profile ci); ROCm --features hip builds clean on gfx1030"
+    "tests_passing_on_main": "3783 fast-tier (workspace --all-features --release --profile ci) + 6 init-state-machine unit tests under --features hip + 9 gfx1030-only tests verified manually."
   },
   "next_session_priorities": [
-    "1. CLOSE b62c86d8 and 8c902184 — both have correct code; the iterative-reviewer pattern needs holistic-audit-before-gate-pass per `feedback_post_amendment_sweep`. Sweep BOTH issues' doc surfaces in one pass before re-running gates. For b62c86d8: confirm criterion 4 amendment is acceptable as a lead-direct clarification (or escalate). For 8c902184: enumerate ALL public symbols (re-grep packed::*, permanent::*, gray::*, simd_ops::*) and ensure every one is in the freeze doc.",
-    "2. W5 GPU kernel sub-wave: dispatch ad55b777 + b43cdf33 + 5c0505b2 in parallel via worktrees (file-disjoint; each gets its own .hip + tests). Sonnet is appropriate; the placeholder shims in b62c86d8 establish the interface.",
-    "3. W5 dispatcher (2fbbdfa5) + simulator (a9e461de) — sequential after kernels.",
-    "4. W6 Lean (post 8c902184 close): f05ffbe1 → 0606186a (parallel after f05ffbe1) → 30e98ef1 (after f05ffbe1). All three need approved proof sketches per CLAUDE.md verification-work convention.",
-    "5. W7 Reporting: 7cd9afdb, 16f03734, 8808b051, 424aa94f, c90db5a4 — all simple-ish, parallel.",
-    "6. S1g (9480f8a6) — after ad55b777 lands.",
-    "7. CAS cross-val (333028c1), perm-vs-det (8e4e19a0) — after CAS / sim infrastructure is in place.",
-    "8. Final: epic ae82bd73 completion report + transition to done."
+    "1. W5 dispatcher (2fbbdfa5) — host-side router CPU/GPU based on M/n. Use crossover from a9e461de (or stub initial threshold).",
+    "2. W5 crossover sim (a9e461de) — measure M/n product where GPU pays off; produce CSV + curve.",
+    "3. W6 Lean chain: f05ffbe1 (V1 with approved sketch a0c0a45f) → parallel 0606186a (V2 with sketch 4aaa6e4d) + 30e98ef1 (V3 needs NEW sketch). All three need approved sketches before implementation dispatch.",
+    "4. W7 Reporting: 7cd9afdb, 16f03734, 8808b051, 424aa94f, c90db5a4 — parallelisable. Plus 333028c1 (CAS cross-val), 8e4e19a0 (perm-vs-det sim), 9480f8a6 (S1g GPU 50× after a9e461de).",
+    "5. Final: epic ae82bd73 completion report + transition to done."
   ],
   "active_worktrees": []
 }
