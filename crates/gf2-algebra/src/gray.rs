@@ -65,15 +65,19 @@ pub fn gray_code_index_to_subset(k: u64) -> u64 {
 /// # Arguments
 ///
 /// * `n` — universe size; the iterator yields `2^n - 1` items. Must
-///   satisfy `n <= 64`. Internally the iterator widens to `u128` so the
-///   bound `(1u128 << n)` is well-defined for `n` up to and including
-///   64 (the singleword permanent boundary). The permanent inner loop
-///   targets `n <= 16` exhaustively per W1-T6 success criteria, but
-///   larger `n` works correctly up to `n = 64`; iteration cost is
-///   `O(2^n)` so callers will rarely exceed `n = 36` in practice
-///   (epic doc §7.3). For `n >= 65` use the multi-word path
+///   satisfy `n <= 63` (per the 2026-05-15 user-approved CPU/GPU
+///   consistency narrowing). Internally the iterator widens to `u128` so
+///   the bound `(1u128 << n)` is well-defined; the historical u128 is
+///   retained because the same widening shape is used downstream. The
+///   permanent inner loop targets `n <= 16` exhaustively per W1-T6
+///   success criteria, but larger `n` works correctly up to `n = 63`;
+///   iteration cost is `O(2^n)` so callers will rarely exceed `n = 36`
+///   in practice (epic doc §7.3). For `n >= 64` use the multi-word path
 ///   (`permanent_bipedal3_multiword`) which carries its own 256-bit
-///   counter.
+///   counter. The narrowing from the prior `n <= 64` to `n <= 63` is
+///   wallclock-driven: 2^64 Gray steps is computationally infeasible on
+///   either CPU or GPU; the contract was always implicitly bounded by
+///   feasibility, and is now bounded explicitly.
 ///
 /// # Examples
 ///
@@ -93,9 +97,9 @@ pub fn gray_code_index_to_subset(k: u64) -> u64 {
 ///
 /// # Panics
 ///
-/// Panics if `n >= 65`. The bound `(1u128 << n)` would overflow at
-/// `n = 128`; before reaching that limit the singleword permanent
-/// boundary (`n <= 64`) gates upstream callers. For `n == 0` the
+/// Panics if `n >= 64`. The singleword permanent boundary (`n <= 63`)
+/// gates upstream callers, and the 2026-05-15 CPU/GPU consistency
+/// narrowing fixed the upper bound at `n = 63`. For `n == 0` the
 /// iterator yields zero items (the empty universe has only the empty
 /// subset, which is excluded).
 ///
@@ -122,12 +126,15 @@ pub fn gray_code_index_to_subset(k: u64) -> u64 {
 #[inline]
 pub fn gray_code_iter(n: usize) -> impl Iterator<Item = (usize, i8)> {
     assert!(
-        n <= 64,
-        "gray_code_iter: n must satisfy n <= 64; got n = {n}"
+        n <= 63,
+        "gray_code_iter: n must satisfy n <= 63; got n = {n}"
     );
-    // u128 bound covers the full n=64 case (`1u128 << 64` is well-defined,
-    // = 2^64). For n < 64 the iteration fits comfortably in u128 and
-    // monomorphises to the same code shape the u64 version emitted.
+    // u128 bound is retained from the pre-2026-05-15 implementation; the
+    // narrowing to n <= 63 makes `1u128 << n` always fit in u64, but the
+    // u128 shape avoids touching dependent code that already monomorphises
+    // against `u128` arithmetic. The 2026-05-15 narrowing is wallclock-
+    // driven (n=64 takes ~600 years on either CPU or GPU), not a
+    // correctness fix at the u128 widening.
     let upper: u128 = 1u128 << n;
     (1u128..upper).map(|k| {
         let flip = k.trailing_zeros() as usize;
