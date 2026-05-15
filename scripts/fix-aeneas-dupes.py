@@ -138,6 +138,164 @@ def dedup_fields(filepath):
         f.write('\n'.join(result))
 
 
+# Map of FiniteField default methods to (arg_names, body) for inlining.
+# Aeneas (as of upstream 5fc8fdf2) emits references like
+#   `<ImplNamespace>.<MethodName> <ext_configExtConfigInst>`
+# in instance dictionaries even when the impl uses the trait default. Those
+# references resolve to non-existent sibling defs, so `lake build` errors with
+# "Invalid field <MethodName>". Inline the trait default body at the call site.
+#
+# Each entry: method_name -> (list of arg_names, body expression).
+# `&mut` slice / Vec args become *return-tuple components* in the Aeneas
+# extraction (Charon converts `&mut T -> bool` to `-> Result (Bool × T)`),
+# so the body must thread the unmodified arg back into the result tuple.
+DEFAULT_METHOD_BODIES = {
+    'try_simd_dot_product':            (['a', 'b'], 'ok none'),
+    'try_simd_gemm_classical':         (['a', 'b_t', 'm', 'k', 'n', 'out'],
+                                        'ok (false, out)'),
+    'chain_poly_arith_available':      ([], 'ok false'),
+    'try_simd_axpy':                   (['y', 'a', 'x'], 'ok (false, y)'),
+    'try_simd_matvec':                 (['a', 'x', 'm', 'k', 'out'],
+                                        'ok (false, out)'),
+    'try_simd_spmm':                   (['a_row_ptr', 'a_col_idx', 'a_values',
+                                         'b', 'b_rows', 'n', 'out'],
+                                        'ok (false, out)'),
+    'try_extension_wiedemann_minpoly': (['a'], 'ok none'),
+    'try_fp_simd_dot_product':         (['a', 'b', 'scratch_a', 'scratch_b'],
+                                        'ok (none, scratch_a, scratch_b)'),
+    'try_pack_fp_medium_u16':          (['xs', 'out'], 'ok (none, out)'),
+    'try_fp_simd_dot_packed_u16':      (['a_packed', 'b_packed'], 'ok none'),
+    # SimdVecOps trait methods (vector-level versions); &mut return shape unknown
+    # to this script, defaults are conservative.
+    'try_simd_dot_vec':                (['a', 'b'], 'ok none'),
+    'try_simd_add_vec':                (['a', 'b'], 'ok none'),
+    'try_simd_sub_vec':                (['a', 'b'], 'ok none'),
+    'try_simd_mul_vec':                (['a', 'b'], 'ok none'),
+}
+
+# Map of associated-const defaults that Aeneas references via `.default` suffix.
+# Each entry: const_name -> literal default value.
+DEFAULT_CONST_BODIES = {
+    'PLE_BASE_COLS': 'ok 1#usize',
+}
+
+
+def _lambda(arg_names: list, body: str) -> str:
+    """Build `fun <names> => <body>` or just `<body>` if no args."""
+    if not arg_names:
+        return body
+    return 'fun ' + ' '.join(arg_names) + ' => ' + body
+
+
+def inline_default_methods(filepath):
+    """Replace references to non-existent default-method sibling defs with the
+    inline default body. See DEFAULT_METHOD_BODIES for the catalogue.
+
+    Pattern (3-line, in instance dictionary):
+        <method_name> :=
+          <ImplNs>.<method_name>
+          ext_configExtConfigInst         -- or some other receiver line(s)
+
+    Pattern (1-line):
+        <method_name> := <ImplNs>.<method_name> <receiver>
+
+    For each known default method, replace with `<method_name> := <inline_body>`
+    where `<inline_body>` is `fun _ _ ... => ok none` (or false).
+    """
+    with open(filepath) as f:
+        text = f.read()
+
+    # Build the set of fully-qualified `def` names so we can check, per
+    # specific impl namespace, whether a referenced sibling def exists.
+    # Aeneas may define `<NsA>.method` but not `<NsB>.method`; the rewrite
+    # must fire only for the missing namespaces.
+    defined_qualnames = set()
+    for m in re.finditer(
+        r'^def\s*\n\s*([\w.]+)',
+        text,
+        re.MULTILINE,
+    ):
+        defined_qualnames.add(m.group(1))
+    for m in re.finditer(r'^def\s+([\w.]+)', text, re.MULTILINE):
+        defined_qualnames.add(m.group(1))
+
+    lines = text.split('\n')
+    out = []
+    i = 0
+    n = len(lines)
+    while i < n:
+        line = lines[i]
+        # Match field assignment opening "  <method_name> :=" with empty or
+        # non-empty trailing.
+        m = re.match(r'^(\s+)(\w+)\s*:=\s*(.*)$', line)
+        if not m:
+            out.append(line)
+            i += 1
+            continue
+
+        indent, name, rest = m.group(1), m.group(2), m.group(3)
+
+        # Const-default rewrite: `PLE_BASE_COLS := field.traits.FiniteField.PLE_BASE_COLS.default`
+        if name in DEFAULT_CONST_BODIES and 'field.traits.FiniteField.' in rest \
+                and rest.endswith('.default'):
+            out.append(f'{indent}{name} := {DEFAULT_CONST_BODIES[name]}')
+            # Skip the receiver continuation line(s) until next field
+            # assignment, comma, or block-closing brace.
+            i += 1
+            while i < n:
+                nxt = lines[i]
+                # Stop at next field-assignment-looking line, or '}' close.
+                if re.match(r'^\s+\w+\s*:=', nxt) or re.match(r'^\s*\}', nxt):
+                    break
+                i += 1
+            continue
+
+        # Method-default rewrite: fire if the method is in our table AND the
+        # rhs references a specific `<Ns>.<method>` whose qualified form is
+        # NOT in `defined_qualnames`. Pure name-based check is too broad
+        # (Fp impl may define try_simd_dot_product while QuadraticExt impl
+        # doesn't — both share the unqualified name).
+        if name in DEFAULT_METHOD_BODIES:
+            arg_names, body = DEFAULT_METHOD_BODIES[name]
+            rhs_first = rest
+            j = i
+            if rhs_first == '':
+                # Look at next non-empty line for the qualified ref.
+                k = i + 1
+                while k < n and lines[k].strip() == '':
+                    k += 1
+                if k < n:
+                    rhs_first = lines[k].strip()
+                    j = k
+
+            # Extract the qualified name from rhs_first, check if it dangles.
+            qm = re.match(r'^([\w.]+)\b', rhs_first)
+            if qm:
+                qualname = qm.group(1)
+                if (qualname.endswith('.' + name)
+                        and qualname not in defined_qualnames):
+                    out.append(f'{indent}{name} := {_lambda(arg_names, body)}')
+                    i = j + 1
+                    # Skip extra continuation lines (additional receivers/args)
+                    # until next field assignment or close brace.
+                    while i < n:
+                        nxt = lines[i]
+                        if re.match(r'^\s+\w+\s*:=', nxt) or re.match(r'^\s*\}', nxt):
+                            break
+                        if nxt.strip() == '':
+                            i += 1
+                            break
+                        i += 1
+                    continue
+
+        out.append(line)
+        i += 1
+
+    with open(filepath, 'w') as f:
+        f.write('\n'.join(out))
+
+
 if __name__ == '__main__':
     for path in sys.argv[1:]:
         dedup_fields(path)
+        inline_default_methods(path)
