@@ -144,8 +144,17 @@ unsafe fn run_bit_identity_check(n: usize, m_count: usize, seed: u64) {
     );
     assert_eq!(rc, 0, "hipMemcpy H2D failed: code {rc}");
 
-    // Launch GPU kernel (init is handled inside compute_permanent_gf7_batch
-    // via the Once guard on the first call).
+    // Init LUTs explicitly before the first compute call (the lib cannot
+    // auto-init because gf2-algebra is a dev-dep, not a regular dep, to avoid
+    // a circular workspace dependency). Idempotent — calling it once per
+    // process is sufficient, but calling it per test is cheap and keeps
+    // each test self-contained.
+    use gf2_algebra::packed::packed7::{ADD_LUT, MUL_LUT, SUB_LUT};
+    // SAFETY: ADD_LUT, SUB_LUT, MUL_LUT are 'static [u8; 65536].
+    let rc = unsafe { init_permanent_gf7(ADD_LUT.as_ptr(), SUB_LUT.as_ptr(), MUL_LUT.as_ptr()) };
+    assert_eq!(rc, 0, "init_permanent_gf7 failed: code {rc}");
+
+    // Launch GPU kernel.
     // SAFETY: d_matrices and d_out are valid device allocations with the sizes
     // documented above. n and m_count are validated at function entry.
     let rc = compute_permanent_gf7_batch(
