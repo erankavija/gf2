@@ -220,17 +220,46 @@ The monotonicity check uses CI overlap semantics: a violation would require the
 current cell's CI lower bound to strictly exceed the previous cell's CI upper bound
 (i.e., no overlap). No such violation occurs in the data.
 
-### Criterion 6: TVD_perm <= TVD_det
+### Criterion 6: TVD_perm <= TVD_det (corrected statistic — D1 fix)
 
 **Criterion**: TVD_perm(n) <= TVD_det(n) at 95% confidence for all (q,n) with n >= 8.
 
+**Statistic (corrected)**: The 95th-percentile of the bootstrap distribution of
+(TVD_perm - TVD_det).  Both perm and det streams are resampled independently on each
+bootstrap iteration (1000 resamples, seed = `cell_seed(q, n, 4)`).  The test PASSES
+when `diff_q95 < 0`, i.e., even the 95th-percentile bootstrap outcome of the
+difference is negative.
+
+This replaces the previous statistic (`tvd_perm_ci_hi < tvd_det`) which compared the
+upper CI of perm against the point estimate of det, failing to account for sampling
+uncertainty in TVD_det.
+
 **Result**: PASS for all cells with adequate N (not noise-dominated).
 
-- q=3, n=8-20: CI_hi of TVD_perm < TVD_det (95%-confident). Margin is large (factor 2-50x).
+| q | n | TVD_perm | TVD_det | diff_q95 | verdict |
+|---|---|----------|---------|----------|---------|
+| 3 | 8  | 0.002609 | 0.106493 | -0.102730 | PASS |
+| 3 | 10 | 0.000683 | 0.106539 | -0.105824 | PASS |
+| 3 | 12 | 0.000447 | 0.110747 | -0.101920 | PASS |
+| 3 | 16 | 0.007267 | 0.110767 | -0.092800 | PASS |
+| 3 | 20 | 0.015833 | 0.120167 | -0.090000 | PASS |
+| 3 | 24 | 0.036667 | 0.086667 | -0.005333 | NOISE (N=500) |
+| 3 | 28 | 0.041667 | 0.126667 | +0.040000 | NOISE (N=200) |
+| 3 | 32 | 0.133333 | 0.093333 | +0.133333 | NOISE (N=50) |
+| 5 | 8  | 0.001740 | 0.042640 | -0.032640 | PASS |
+| 5 | 10 | 0.003120 | 0.039460 | -0.026400 | PASS |
+| 5 | 12 | 0.005500 | 0.041500 | -0.030460 | PASS |
+| 5 | 14 | 0.003420 | 0.039840 | -0.032060 | PASS |
+| 7 | 8  | 0.005391 | 0.019683 | -0.006374 | PASS |
+| 7 | 10 | 0.004769 | 0.019463 | -0.011420 | PASS |
+| 7 | 12 | 0.004489 | 0.019723 | -0.007917 | PASS |
+| 7 | 14 | 0.006609 | 0.020583 | -0.007711 | PASS |
+
 - q=3, n=24,28,32: Noise-dominated (sampling noise floor exceeds TVD_det/2 at N=50-500).
   These cells cannot provide a 95%-confident comparison; excluded from verdict.
-- q=5, n=8-14: CI_hi of TVD_perm < TVD_det (95%-confident). TVD_perm < 1/5 of TVD_det.
-- q=7, n=8-14: CI_hi of TVD_perm < TVD_det (95%-confident). TVD_perm < 1/2 of TVD_det.
+  Note: for n=28 and n=32, diff_q95 is positive due to noise-dominated TVD_perm estimates
+  at N=200 and N=50.  This is expected noise behaviour, not a genuine signal.
+- All other cells: PASS with comfortable margin.
 
 The determinant's TVD stabilises near 1/q * (1 - (1-1/q)^n + correction) reflecting
 the excess probability of singular matrices. The permanent converges to uniform much
@@ -250,8 +279,10 @@ cell_seed(q, n, which) = SEED
     + which * 0x1234567890abcdef0
 ```
 
-where `which=0` is the perm stream, `which=1` is the det stream, and
-`which=2,3` are the bootstrap seeds. All arithmetic is wrapping u64.
+where `which=0` is the perm stream, `which=1` is the det stream,
+`which=2,3` are the independent TVD bootstrap seeds, and `which=4` is the
+seed for the paired-difference bootstrap (criterion 6).  All arithmetic is
+wrapping u64.
 
 **Determinism verification**: Two independent runs on the same host produce
 bit-identical values for all statistical columns (q, n, samples, tvd_perm,
