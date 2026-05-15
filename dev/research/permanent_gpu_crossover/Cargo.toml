@@ -1,0 +1,32 @@
+[package]
+name = "permanent-gpu-crossover"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.95"
+authors = ["Vesa Kaskivuo <vesa.kaskivuo@iki.fi>"]
+publish = false
+description = "S5 GPU-vs-CPU-SIMD crossover measurement for permanent_bipedal3 (F_3) — JIT issue a9e461de. Standalone non-workspace prototype."
+
+[[bin]]
+name = "permanent_gpu_crossover"
+path = "src/main.rs"
+
+[[test]]
+name = "smoke"
+path = "tests/smoke.rs"
+
+[features]
+default = []
+hip = ["gf2-algebra/hip"]
+
+[dependencies]
+gf2-algebra = { path = "../../../crates/gf2-algebra", features = ["simd", "parallel", "f5", "f7", "test-support"] }
+gf2-core = { path = "../../../crates/gf2-core" }
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+
+# This standalone research prototype is intentionally not a workspace member.
+[workspace]

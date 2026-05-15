@@ -16,6 +16,7 @@ members = [
 exclude = [
 	"crates/gf2-kernels-hip",
 	"dev/research/f3_bipedal",
+	"dev/research/permanent_gpu_crossover",
 ]
 resolver = "2"
 
