@@ -295,7 +295,67 @@ def inline_default_methods(filepath):
         f.write('\n'.join(out))
 
 
+def silence_extraction_sorry(filepath):
+    """Inject `set_option warn.sorry false` into Aeneas-generated files.
+
+    `proofs/lakefile.lean` enables `warningAsError=true` on the project's
+    `lean_lib`s, which turns the elaborator-emitted `declaration uses 'sorry'`
+    warning into a build error. That gate is what catches masked proof debt
+    in hand-written `Proofs/` files (issue 2e544a34).
+
+    Aeneas-generated `Funs.lean` files (and occasionally `FunsExternal.lean`)
+    contain extraction-artefact sorrys for items Aeneas could not translate.
+    Those are not proof debt; they are translator gaps. Silence the sorry
+    warning at file scope so the strict gate fires only on hand-written
+    proofs.
+
+    Idempotent: skips if the option is already set.
+    """
+    with open(filepath) as f:
+        text = f.read()
+
+    if 'set_option warn.sorry false' in text:
+        return
+
+    # Skip files that have no sorrys; adding the option there would be
+    # misleading future-readers about why it's there.
+    if 'sorry' not in text:
+        return
+
+    # Slot the option in next to the other Aeneas-emitted `set_option` lines
+    # so it inherits their position above the imports/body.
+    target = 'set_option linter.unusedVariables false\n'
+    if target not in text:
+        # Older Aeneas output may not have this line; fall back to inserting
+        # after the open Aeneas... line.
+        target = 'open Aeneas Aeneas.Std Result ControlFlow Error\n'
+    if target not in text:
+        # Last-resort: prepend at the very top after the auto-gen banner.
+        text = (
+            '-- Strict-build carve-out: Aeneas extraction artefacts may carry\n'
+            '-- `sorry` placeholders for items it could not translate.\n'
+            'set_option warn.sorry false\n'
+            + text
+        )
+    else:
+        text = text.replace(
+            target,
+            target
+            + '-- Strict-build carve-out (issue 2e544a34): Aeneas extraction\n'
+              '-- artefacts may carry `sorry` placeholders for items the\n'
+              '-- translator could not handle. Silence the elaborator warning\n'
+              '-- at file scope so the project lakefile\'s warningAsError=true\n'
+              '-- fires only on hand-written Proofs/ files.\n'
+              'set_option warn.sorry false\n',
+            1,
+        )
+
+    with open(filepath, 'w') as f:
+        f.write(text)
+
+
 if __name__ == '__main__':
     for path in sys.argv[1:]:
         dedup_fields(path)
         inline_default_methods(path)
+        silence_extraction_sorry(path)
