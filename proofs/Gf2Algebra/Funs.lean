@@ -11,6 +11,9 @@ set_option linter.unusedVariables false
 /- You can set the `maxHeartbeats` value with the `-max-heartbeats` CLI option -/
 set_option maxHeartbeats 1000000
 
+/- You can set the `maxRecDepth` value with the `-max-recdepth` CLI option -/
+set_option maxRecDepth 2048
+
 /- You can remove the following line by using the CLI option `-all-computable`: -/
 noncomputable section
 
@@ -509,7 +512,8 @@ def packed.bipedal3.Bipedal3.fold_mul_first_n
   then
     let used_mask ←
       if n < 64#usize
-      then let i ← 1#u64 <<< n
+      then do
+           let i ← 1#u64 <<< n
            i - 1#u64
       else ok core.num.U64.MAX
     let i ← lift (~~~ used_mask)
@@ -901,9 +905,11 @@ def packed.bipedal3.Bipedal3Vec.fold_mul_loop1.body
     let s ← lift (i1 &&& 1#u64)
     let (iter2, v) ←
       if m = 0#u64
-      then let v1 ← gf2_core.gfp.Fp.new 3#u64 0#u64
+      then do
+           let v1 ← gf2_core.gfp.Fp.new 3#u64 0#u64
            ok (iter1, v1)
       else
+        do
         let f ←
           if s = 0#u64
           then ok result
@@ -946,7 +952,8 @@ def packed.bipedal3.Bipedal3Vec.fold_mul
     let used_mask ←
       if used = 64#usize
       then ok core.num.U64.MAX
-      else let i3 ← 1#u64 <<< used
+      else do
+           let i3 ← 1#u64 <<< used
            i3 - 1#u64
     let i3 ←
       alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSlice Std.U64)
@@ -1602,6 +1609,7 @@ def
     let mag1 ←
       if v != 0#u64
       then
+        do
         let i1 ← 1#u64 <<< b
         let (i2, index_mut_back) ←
           alloc.vec.Vec.index_mut (core.slice.index.SliceIndexUsizeSlice

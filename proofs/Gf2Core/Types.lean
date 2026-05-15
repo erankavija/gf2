@@ -10,16 +10,10 @@ set_option linter.unusedVariables false
 /- You can set the `maxHeartbeats` value with the `-max-heartbeats` CLI option -/
 set_option maxHeartbeats 1000000
 
-namespace gf2_core
+/- You can set the `maxRecDepth` value with the `-max-recdepth` CLI option -/
+set_option maxRecDepth 2048
 
-/-- Trait declaration: [core::fmt::Binary]
-    Source: '/rustc/library/core/src/fmt/mod.rs', lines 1321:0-1321:30
-    Name pattern: [core::fmt::Binary]
-    Visibility: public -/
-@[rust_trait "core::fmt::Binary"]
-structure core.fmt.Binary (Self : Type) where
-  fmt : Self → core.fmt.Formatter → Result ((core.result.Result Unit
-    core.fmt.Error) × core.fmt.Formatter)
+namespace gf2_core
 
 /-- Trait declaration: [core::ops::arith::Add]
     Source: '/rustc/library/core/src/ops/arith.rs', lines 77:0-77:31
@@ -73,57 +67,14 @@ structure core.ops.arith.Neg (Self : Type) (Self_Output : Type) where
 structure core.ops.arith.AddAssign (Self : Type) (Rhs : Type) where
   add_assign : Self → Rhs → Result Self
 
-/-- Trait declaration: [core::ops::bit::BitOr]
-    Source: '/rustc/library/core/src/ops/bit.rs', lines 254:0-254:33
-    Name pattern: [core::ops::bit::BitOr]
-    Visibility: public -/
-@[rust_trait "core::ops::bit::BitOr"]
-structure core.ops.bit.BitOr (Self : Type) (Rhs : Type) (Self_Output : Type)
-  where
-  bitor : Self → Rhs → Result Self_Output
-
-/-- Trait declaration: [core::ops::bit::BitXor]
-    Source: '/rustc/library/core/src/ops/bit.rs', lines 358:0-358:34
-    Name pattern: [core::ops::bit::BitXor]
-    Visibility: public -/
-@[rust_trait "core::ops::bit::BitXor"]
-structure core.ops.bit.BitXor (Self : Type) (Rhs : Type) (Self_Output : Type)
-  where
-  bitxor : Self → Rhs → Result Self_Output
-
-/-- Trait declaration: [core::ops::bit::Shl]
-    Source: '/rustc/library/core/src/ops/bit.rs', lines 461:0-461:31
-    Name pattern: [core::ops::bit::Shl]
-    Visibility: public -/
-@[rust_trait "core::ops::bit::Shl"]
-structure core.ops.bit.Shl (Self : Type) (Rhs : Type) (Self_Output : Type)
-  where
-  shl : Self → Rhs → Result Self_Output
-
-/-- Trait declaration: [core::ops::bit::Shr]
-    Source: '/rustc/library/core/src/ops/bit.rs', lines 583:0-583:31
-    Name pattern: [core::ops::bit::Shr]
-    Visibility: public -/
-@[rust_trait "core::ops::bit::Shr"]
-structure core.ops.bit.Shr (Self : Type) (Rhs : Type) (Self_Output : Type)
-  where
-  shr : Self → Rhs → Result Self_Output
-
-/-- Trait declaration: [core::ops::bit::BitXorAssign]
-    Source: '/rustc/library/core/src/ops/bit.rs', lines 864:0-864:40
-    Name pattern: [core::ops::bit::BitXorAssign]
-    Visibility: public -/
-@[rust_trait "core::ops::bit::BitXorAssign"]
-structure core.ops.bit.BitXorAssign (Self : Type) (Rhs : Type) where
-  bitxor_assign : Self → Rhs → Result Self
-
 /-- Trait declaration: [gf2_core::field::traits::FiniteField]
-    Source: 'crates/gf2-core/src/field/traits.rs', lines 44:0-468:1
+    Source: 'crates/gf2-core/src/field/traits.rs', lines 44:0-865:1
     Visibility: public -/
 structure field.traits.FiniteField (Self : Type) (Self_Characteristic : Type)
   (Self_Wide : Type) where
   WINOGRAD_THRESHOLD : Result Std.Usize
   TRI_BASE_THRESHOLD : Result Std.Usize
+  PLE_BASE_COLS : Result Std.Usize
   corecloneCloneInst : core.clone.Clone Self
   corecmpPartialEqInst : core.cmp.PartialEq Self Self
   corecmpEqInst : core.cmp.Eq Self
@@ -166,7 +117,7 @@ structure field.traits.FiniteField (Self : Type) (Self_Characteristic : Type)
   theorem_4_operand_bound : Result Std.U128
 
 /-- Trait declaration: [gf2_core::field::traits::ConstField]
-    Source: 'crates/gf2-core/src/field/traits.rs', lines 474:0-513:1
+    Source: 'crates/gf2-core/src/field/traits.rs', lines 871:0-910:1
     Visibility: public -/
 structure field.traits.ConstField (Self : Type) (Self_Clause0_Characteristic :
   Type) (Self_Clause0_Wide : Type) where
@@ -198,17 +149,6 @@ def gfp.Fp (P : Std.U64) := Std.U64
 @[reducible]
 def gfp.montgomery.MontConsts (P : Std.U64) := Unit
 
-/-- Trait declaration: [gf2_core::gfp::simd_ops::SimdVecOps]
-    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 58:0-104:1
-    Visibility: public -/
-structure gfp.simd_ops.SimdVecOps (Self : Type) where
-  try_simd_mul_vec : Slice Self → Slice Self → Result (Option (alloc.vec.Vec
-    Self))
-  try_simd_add_vec : Slice Self → Slice Self → Result (Option (alloc.vec.Vec
-    Self))
-  try_simd_sub_vec : Slice Self → Slice Self → Result (Option (alloc.vec.Vec
-    Self))
-
 /-- [gf2_core::gfp::specialized::GoldilocksFp]
     Source: 'crates/gf2-core/src/gfp/specialized.rs', lines 780:0-780:29
     Visibility: public -/
@@ -223,6 +163,16 @@ structure gfpn.cubic.CubicExtWide (W : Type) where
   c1 : W
   c2 : W
 
+/-- [gf2_core::gfpn::cubic::CubicExt]
+    Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 250:0-254:1
+    Visibility: public -/
+structure gfpn.cubic.CubicExt (C : Type) (Clause0_BaseField : Type)
+  (Clause0_Clause0_Clause0_Characteristic : Type) (Clause0_Clause0_Clause0_Wide
+  : Type) where
+  c0 : Clause0_BaseField
+  c1 : Clause0_BaseField
+  c2 : Clause0_BaseField
+
 /-- Trait declaration: [gf2_core::gfpn::ext_config::ExtConfig]
     Source: 'crates/gf2-core/src/gfpn/ext_config.rs', lines 62:0-110:1
     Visibility: public -/
@@ -234,35 +184,19 @@ structure gfpn.ext_config.ExtConfig (Self : Type) (Self_BaseField : Type)
   NON_RESIDUE : Result Self_BaseField
   mul_by_non_residue : Self_BaseField → Result Self_BaseField
 
-/-- [gf2_core::gfpn::cubic::CubicExt]
-    Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 250:0-254:1
-    Visibility: public -/
-structure gfpn.cubic.CubicExt {C : Type} {Clause0_BaseField : Type}
-  {Clause0_Clause0_Clause0_Characteristic : Type} {Clause0_Clause0_Clause0_Wide
-  : Type} (ext_configExtConfigInst : gfpn.ext_config.ExtConfig C
-  Clause0_BaseField Clause0_Clause0_Clause0_Characteristic
-  Clause0_Clause0_Clause0_Wide) where
-  c0 : Clause0_BaseField
-  c1 : Clause0_BaseField
-  c2 : Clause0_BaseField
-
-/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::inv::closure]
+/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::inv::closure]
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 674:17-674:82 -/
 def gfpn.cubic.FiniteFieldCubicExtClause0_Clause0_Clause0_CharacteristicCubicExtWide.inv.closure
-  {C : Type} {Clause0_BaseField : Type} {Clause0_Clause0_Clause0_Characteristic
-  : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
-  gfpn.ext_config.ExtConfig C Clause0_BaseField
-  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :=
+  (C : Type) (Clause0_BaseField : Type) (Clause0_Clause0_Clause0_Characteristic
+  : Type) (Clause0_Clause0_Clause0_Wide : Type) :=
   Clause0_BaseField × Clause0_BaseField × Clause0_BaseField
 
-/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::cardinality_log2_hint::closure]
+/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::cardinality_log2_hint::closure]
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 700:55-700:75 -/
 @[reducible]
 def gfpn.cubic.FiniteFieldCubicExtClause0_Clause0_Clause0_CharacteristicCubicExtWide.cardinality_log2_hint.closure
-  {C : Type} {Clause0_BaseField : Type} {Clause0_Clause0_Clause0_Characteristic
-  : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
-  gfpn.ext_config.ExtConfig C Clause0_BaseField
-  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :=
+  (C : Type) (Clause0_BaseField : Type) (Clause0_Clause0_Clause0_Characteristic
+  : Type) (Clause0_Clause0_Clause0_Wide : Type) :=
 Unit
 
 /-- [gf2_core::gfpn::quadratic::QuadraticExtWide]
@@ -275,32 +209,27 @@ structure gfpn.quadratic.QuadraticExtWide (W : Type) where
 /-- [gf2_core::gfpn::quadratic::QuadraticExt]
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 229:0-232:1
     Visibility: public -/
-structure gfpn.quadratic.QuadraticExt {C : Type} {Clause0_BaseField : Type}
-  {Clause0_Clause0_Clause0_Characteristic : Type} {Clause0_Clause0_Clause0_Wide
-  : Type} (ext_configExtConfigInst : gfpn.ext_config.ExtConfig C
-  Clause0_BaseField Clause0_Clause0_Clause0_Characteristic
-  Clause0_Clause0_Clause0_Wide) where
+structure gfpn.quadratic.QuadraticExt (C : Type) (Clause0_BaseField : Type)
+  (Clause0_Clause0_Clause0_Characteristic : Type) (Clause0_Clause0_Clause0_Wide
+  : Type) where
   c0 : Clause0_BaseField
   c1 : Clause0_BaseField
 
-/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::inv::closure]
+/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::inv::closure]
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 616:17-616:80 -/
 @[reducible]
 def gfpn.quadratic.FiniteFieldQuadraticExtClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.inv.closure
-  {C : Type} {Clause0_BaseField : Type} {Clause0_Clause0_Clause0_Characteristic
-  : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
-  gfpn.ext_config.ExtConfig C Clause0_BaseField
-  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :=
-  gfpn.quadratic.QuadraticExt ext_configExtConfigInst
+  (C : Type) (Clause0_BaseField : Type) (Clause0_Clause0_Clause0_Characteristic
+  : Type) (Clause0_Clause0_Clause0_Wide : Type) :=
+  gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide
 
-/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::cardinality_log2_hint::closure]
+/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::cardinality_log2_hint::closure]
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 642:55-642:75 -/
 @[reducible]
 def gfpn.quadratic.FiniteFieldQuadraticExtClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.cardinality_log2_hint.closure
-  {C : Type} {Clause0_BaseField : Type} {Clause0_Clause0_Clause0_Characteristic
-  : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
-  gfpn.ext_config.ExtConfig C Clause0_BaseField
-  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :=
+  (C : Type) (Clause0_BaseField : Type) (Clause0_Clause0_Clause0_Characteristic
+  : Type) (Clause0_Clause0_Clause0_Wide : Type) :=
 Unit
 
 end gf2_core

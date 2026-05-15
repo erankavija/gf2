@@ -10,6 +10,9 @@ set_option linter.unusedVariables false
 
 /- You can set the `maxHeartbeats` value with the `-max-heartbeats` CLI option -/
 set_option maxHeartbeats 1000000
+
+/- You can set the `maxRecDepth` value with the `-max-recdepth` CLI option -/
+set_option maxRecDepth 2048
 open gf2_core
 
 /-- [core::cmp::impls::{core::cmp::Eq for u64}::assert_receiver_is_total_eq]:
@@ -113,12 +116,6 @@ axiom core.iter.traits.iterator.Iterator.zip.default
   Self Clause0_Item) (collectIntoIteratorInst :
   core.iter.traits.collect.IntoIterator U Clause1_Item Clause1_IntoIter) :
   Self → U → Result (core.iter.adapters.zip.Zip Self Clause1_IntoIter)
-
-/-- [core::num::{u64}::BITS]
-    Source: '/rustc/library/core/src/num/uint_macros.rs', lines 58:8-58:27
-    Name pattern: [core::num::{u64}::BITS]
-    Visibility: public -/
-@[rust_const "core::num::{u64}::BITS"] axiom core.num.U64.BITS : Result Std.U32
 
 /-- [core::num::{u64}::trailing_zeros]:
     Source: '/rustc/library/core/src/num/uint_macros.rs', lines 174:8-174:48
@@ -280,7 +277,7 @@ axiom field.traits.FiniteField.reduce_product_sum_wide.default
   Clause0_Wide → Result Self
 
 /-- [gf2_core::field::traits::FiniteField::theorem_4_operand_bound]:
-    Source: 'crates/gf2-core/src/field/traits.rs', lines 425:4-427:5
+    Source: 'crates/gf2-core/src/field/traits.rs', lines 775:4-777:5
     Visibility: public -/
 axiom field.traits.FiniteField.theorem_4_operand_bound.default
   {Self : Type} {Clause0_Characteristic : Type} {Clause0_Wide : Type}
@@ -289,7 +286,7 @@ axiom field.traits.FiniteField.theorem_4_operand_bound.default
   Result Std.U128
 
 /-- [gf2_core::field::traits::FiniteField::WINOGRAD_THRESHOLD]
-    Source: 'crates/gf2-core/src/field/traits.rs', lines 447:4-447:42
+    Source: 'crates/gf2-core/src/field/traits.rs', lines 797:4-797:42
     Visibility: public -/
 @[trait_default]
 axiom field.traits.FiniteField.WINOGRAD_THRESHOLD.default {Self : Type}
@@ -298,10 +295,19 @@ axiom field.traits.FiniteField.WINOGRAD_THRESHOLD.default {Self : Type}
   : Result Std.Usize
 
 /-- [gf2_core::field::traits::FiniteField::TRI_BASE_THRESHOLD]
-    Source: 'crates/gf2-core/src/field/traits.rs', lines 467:4-467:41
+    Source: 'crates/gf2-core/src/field/traits.rs', lines 830:4-830:40
     Visibility: public -/
 @[trait_default]
 axiom field.traits.FiniteField.TRI_BASE_THRESHOLD.default {Self : Type}
+  {Clause0_Characteristic : Type} {Clause0_Wide : Type} (FiniteFieldInst :
+  field.traits.FiniteField Self Clause0_Characteristic Clause0_Wide)
+  : Result Std.Usize
+
+/-- [gf2_core::field::traits::FiniteField::PLE_BASE_COLS]
+    Source: 'crates/gf2-core/src/field/traits.rs', lines 864:4-864:35
+    Visibility: public -/
+@[trait_default]
+axiom field.traits.FiniteField.PLE_BASE_COLS.default {Self : Type}
   {Clause0_Characteristic : Type} {Clause0_Wide : Type} (FiniteFieldInst :
   field.traits.FiniteField Self Clause0_Characteristic Clause0_Wide)
   : Result Std.Usize
@@ -313,7 +319,7 @@ axiom gfpn.cubic.CubicExtWide.Insts.CoreCmpEq.assert_receiver_is_total_eq
   {W : Type} (corecmpEqInst : core.cmp.Eq W) :
   gfpn.cubic.CubicExtWide W → Result Unit
 
-/-- [gf2_core::gfpn::cubic::{core::cmp::Eq for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::assert_receiver_is_total_eq]:
+/-- [gf2_core::gfpn::cubic::{core::cmp::Eq for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::assert_receiver_is_total_eq]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 275:0-275:40
     Visibility: public -/
 axiom gfpn.cubic.CubicExt.Insts.CoreCmpEq.assert_receiver_is_total_eq
@@ -321,9 +327,11 @@ axiom gfpn.cubic.CubicExt.Insts.CoreCmpEq.assert_receiver_is_total_eq
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  gfpn.cubic.CubicExt ext_configExtConfigInst → Result Unit
+  gfpn.cubic.CubicExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide →
+    Result Unit
 
-/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::theorem_4_operand_bound]:
+/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::theorem_4_operand_bound]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 633:0-751:1
     Visibility: public -/
 axiom
@@ -342,7 +350,7 @@ axiom
   {W : Type} (corecmpEqInst : core.cmp.Eq W) :
   gfpn.quadratic.QuadraticExtWide W → Result Unit
 
-/-- [gf2_core::gfpn::quadratic::{core::cmp::Eq for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::assert_receiver_is_total_eq]:
+/-- [gf2_core::gfpn::quadratic::{core::cmp::Eq for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::assert_receiver_is_total_eq]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 253:0-253:44
     Visibility: public -/
 axiom gfpn.quadratic.QuadraticExt.Insts.CoreCmpEq.assert_receiver_is_total_eq
@@ -350,9 +358,11 @@ axiom gfpn.quadratic.QuadraticExt.Insts.CoreCmpEq.assert_receiver_is_total_eq
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  gfpn.quadratic.QuadraticExt ext_configExtConfigInst → Result Unit
+  gfpn.quadratic.QuadraticExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide →
+    Result Unit
 
-/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::theorem_4_operand_bound]:
+/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::theorem_4_operand_bound]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 582:0-696:1
     Visibility: public -/
 axiom
