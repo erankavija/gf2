@@ -2,9 +2,9 @@
   "id": "b43cdf33-ab2f-47ee-9f50-d575d15ace1f",
   "title": "F_5 HIP device kernel",
   "description": "Implement the F_5 HIP device kernel mirroring T23's structure, using the F_5 packed encoding chosen by R1.\n\n## Background\n\nSame shape as the F_3 device kernel (T23): batched matrix-permanent on gfx1030, one matrix per block, wavefront-wide reductions. The F_5 ops use the bitwise formulas from R1's chosen encoding (`6917eb85`).\n\n## Success Criteria\n\n- [ ] [hard] `crates/gf2-kernels-hip/hip/permanent/permanent_bipedal5.hip` exists with the device kernel.\n- [ ] [hard] On gfx1030, kernel output bit-identical to CPU `permanent_bipedal5` on 100 random matrices for $n \\in \\{8, 12\\}$ (bounded by `Packed5::LANES`).\n- [ ] [hard] Tests gated `#[cfg(feature = \"hip\")]` and `#[ignore = \"external: gfx1030 device required\"]`.\n- [ ] [hard] `cargo build -p gf2-kernels-hip --release --features hip` succeeds.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [
     "b62c86d8-8b46-4219-abdf-4b665243c4fa"
   ],
@@ -21,5 +21,5 @@
     "component:gf2-kernels-hip"
   ],
   "created_at": "2026-05-09T09:47:17.161898440+00:00",
-  "updated_at": "2026-05-14T21:33:25.156099493+00:00"
+  "updated_at": "2026-05-15T07:12:54.678415140+00:00"
 }
