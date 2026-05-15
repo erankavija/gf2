@@ -2,7 +2,7 @@
   "id": "b43cdf33-ab2f-47ee-9f50-d575d15ace1f",
   "title": "F_5 HIP device kernel",
   "description": "Implement the F_5 HIP device kernel mirroring T23's structure.\n\n## Background\n\nSame shape as the F_3 device kernel (T23): batched matrix-permanent on gfx1030, one matrix per block, sequential Gray walk per block. The kernel ops use direct byte mod-5 arithmetic per Amendment 2026-05-15 (encoding); results remain bit-identical to the CPU `permanent_bipedal5` reference that uses the R1 `Packed5` bit-plane encoding.\n\n## Success Criteria\n\n- [ ] [hard] `crates/gf2-kernels-hip/hip/permanent/permanent_bipedal5.hip` exists with the device kernel.\n- [ ] [hard] On gfx1030, kernel output bit-identical to CPU `permanent_bipedal5` on 100 random matrices for $n \\in \\{8, 12\\}$ (bounded by `Packed5::LANES`).\n- [ ] [hard] Tests gated `#[cfg(feature = \\\"hip\\\")]` and `#[ignore = \\\"external: gfx1030 device required\\\"]`.\n- [ ] [hard] `cargo build --manifest-path crates/gf2-kernels-hip/Cargo.toml --features hip --release` succeeds (the HIP crate is workspace-excluded; the `--manifest-path` invocation is the correct way to build it). **See Amendment 2026-05-15 (build-invocation).**\n\n## Amendment 2026-05-15 (encoding) — user-approved GPU byte-arithmetic representation\n\nThe original Background read \\\"using the F_5 packed encoding chosen by R1 (`6917eb85`)\\\" — i.e. the `Packed5` bit-plane triple `(b0, b1, b2)` with `decode5`/`encode5`/`add_circuit`/`mul_circuit` (~60 word ops per add/mul). Porting this bit-plane circuit verbatim to HIP is intricate (GPU SIMD instructions do not have the same shape as the CPU bit-plane circuit) and offers no benefit over direct byte mod-5 arithmetic at the per-block level (one matrix per block, sequential Gray walk in thread 0).\n\n**Replacement (user-approved via AskUserQuestion option A, 2026-05-15):** the GPU kernel uses direct byte mod-5 arithmetic — each F_5 element is stored as a `uint8_t` in `0..=4`, add/sub are `(a + b) % 5` / `(a + 5 - b) % 5`, mul is `(a * b) % 5`. Bit-identity vs the CPU `Packed5` SSOT is the contract; the kernel internal representation is GPU-friendly without changing the input/output contract (matrix bytes and `u64` permanent value).\n\nThe CPU SSOT (`Packed5`) is unchanged; bit-plane encoding remains the CPU representation for SIMD friendliness.\n\n## Amendment 2026-05-15 (build-invocation) — criterion 5 wording\n\nThe original criterion 5 read `cargo build -p gf2-kernels-hip --release --features hip succeeds`. Because the `gf2-kernels-hip` crate is excluded from the workspace (root `Cargo.toml`), `cargo` rejects this invocation with `error: cannot specify features for packages outside of workspace`. The correct invocation is `cargo build --manifest-path crates/gf2-kernels-hip/Cargo.toml --features hip --release`. The criterion now uses the correct invocation; intent is unchanged (HIP crate must build clean on a ROCm host with the `hip` feature).",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:claude",
   "dependencies": [
@@ -13,15 +13,15 @@
     "code-review"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-15T07:19:50.145564086Z"
-    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-15T07:19:43.951278784Z"
+      "updated_at": "2026-05-15T08:22:56.733732067Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-15T08:23:10.423474154Z"
     }
   },
   "context": {},
@@ -32,5 +32,5 @@
     "component:gf2-kernels-hip"
   ],
   "created_at": "2026-05-09T09:47:17.161898440+00:00",
-  "updated_at": "2026-05-15T08:22:33.037282628+00:00"
+  "updated_at": "2026-05-15T08:26:03.989991062+00:00"
 }
