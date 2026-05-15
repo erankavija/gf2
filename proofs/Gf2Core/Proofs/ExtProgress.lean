@@ -97,12 +97,17 @@ theorem qconj_progress (hv : ValidExtConfig inst)
   simp [spec, theta, wp_return]
 
 /-- The closure for quadratic inv: given norm_inv, produces conjugate/norm -/
+@[progress]
 theorem qinv_closure_progress (hv : ValidExtConfig inst)
     (self : gfpn.quadratic.QuadraticExt C BF Char Wide) (norm_inv : BF) :
     gfpn.quadratic.FiniteFieldQuadraticExtClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.inv.closure.Insts.CoreOpsFunctionFnOnceTupleClause0_BaseFieldQuadraticExt.call_once
       inst self norm_inv ⦃ fun r =>
         r.c0 = self.c0 * norm_inv ∧ r.c1 = -(self.c1 * norm_inv) ⦄ := by
-  sorry
+  simp only [
+    gfpn.quadratic.FiniteFieldQuadraticExtClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.inv.closure.Insts.CoreOpsFunctionFnOnceTupleClause0_BaseFieldQuadraticExt.call_once,
+    hv.mul_ok, hv.neg_ok, bind_tc_ok,
+    gfpn.quadratic.QuadraticExt.new]
+  simp [spec, theta, wp_return]
 /-- QuadraticExt.inv: computes norm, inverts, maps closure -/
 @[progress]
 theorem qinv_progress (hv : ValidExtConfig inst)
@@ -112,7 +117,45 @@ theorem qinv_progress (hv : ValidExtConfig inst)
       (¬(self.c0 = 0 ∧ self.c1 = 0) → ∃ r, o = some r ∧
         r.c0 = self.c0 * (self.c0 ^ 2 - hv.getNonResidue * self.c1 ^ 2)⁻¹ ∧
         r.c1 = -(self.c1 * (self.c0 ^ 2 - hv.getNonResidue * self.c1 ^ 2)⁻¹)) ⦄ := by
-  sorry
+  simp only [ExtAbbrev.QInv,
+    gfpn.quadratic.QuadraticExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.inv,
+    hv.mul_ok, hv.sub_ok, hv.mul_nr_eq, bind_tc_ok]
+  set β := hv.getNonResidue with hβ
+  set norm_val := self.c0 ^ 2 - β * self.c1 ^ 2 with hnorm_def
+  -- The monadic norm computation reduces to norm_val
+  simp only [show self.c0 * self.c0 - β * (self.c1 * self.c1) = norm_val from by
+    rw [hnorm_def]; ring]
+  -- Get the inv of norm using hv.inv_ok
+  obtain ⟨o, ho_eq, ho_ne, ho_zero⟩ := hv.inv_ok norm_val
+  simp only [ho_eq, bind_tc_ok]
+  -- Case analysis on norm_val = 0
+  by_cases hn0 : norm_val = 0
+  · -- norm = 0
+    have ho_none := ho_zero hn0
+    simp only [ho_none, core.option.Option.map, bind_tc_ok, spec, theta, wp_return]
+    constructor
+    · -- if self = 0 then norm = 0 (trivially from above); return none OK
+      intro _; trivial
+    · -- if self ≠ 0, we still get none: this follows from nr_irred
+      intro hne
+      -- nr_irred says if norm = 0 and self ≠ 0, contradiction
+      exfalso; apply hne
+      have : self.c0 = 0 ∧ self.c1 = 0 :=
+        hv.nr_irred β hv.mul_nr_ok.choose_spec self.c0 self.c1 (by
+          rw [← hn0, hnorm_def])
+      exact this
+  · -- norm ≠ 0
+    obtain ⟨r_inv, hr_inv_eq, hr_inv_mul⟩ := ho_ne hn0
+    -- r_inv * norm_val = 1, so r_inv = norm_val⁻¹
+    have hr_inv_val : r_inv = norm_val⁻¹ :=
+      mul_right_cancel₀ hn0 (by rw [hr_inv_mul, inv_mul_cancel₀ hn0])
+    simp only [hr_inv_eq, core.option.Option.map, bind_tc_ok]
+    -- Progress through closure call_once
+    progress as ⟨closure_r, hclosure_c0, hclosure_c1⟩
+    exact ⟨fun h => (hn0 (by rw [hnorm_def, h.1, h.2]; simp [sq])).elim,
+      fun _ => ⟨closure_r, rfl,
+        by rw [hclosure_c0, hr_inv_val],
+        by rw [hclosure_c1, hr_inv_val]⟩⟩
 /-- QuadraticExt.order = base_order² (given base order succeeds and no U128 overflow) -/
 theorem qorder_progress (bo : Std.U128)
     (h_ord : inst.fieldtraitsConstFieldInst.order = ok bo)
@@ -201,6 +244,19 @@ theorem cnorm_progress (hv : ValidExtConfig inst)
     hv.mul_ok, hv.add_ok, hv.sub_ok, hv.mul_nr_eq, bind_tc_ok]
   simp only [spec, theta, wp_return, sq]
 
+/-- Helper: closure for cubic inv — given (s0,s1,s2) and norm_inv, produces
+    (s0·norm_inv, s1·norm_inv, s2·norm_inv) as a CubicExt. -/
+@[progress]
+theorem cinv_closure_progress (hv : ValidExtConfig inst)
+    (s0 s1 s2 : BF) (norm_inv : BF) :
+    gfpn.cubic.FiniteFieldCubicExtClause0_Clause0_Clause0_CharacteristicCubicExtWide.inv.closure.Insts.CoreOpsFunctionFnOnceTupleClause0_BaseFieldCubicExt.call_once
+      inst (s0, s1, s2) norm_inv ⦃ fun r =>
+        r.c0 = s0 * norm_inv ∧ r.c1 = s1 * norm_inv ∧ r.c2 = s2 * norm_inv ⦄ := by
+  simp only [
+    gfpn.cubic.FiniteFieldCubicExtClause0_Clause0_Clause0_CharacteristicCubicExtWide.inv.closure.Insts.CoreOpsFunctionFnOnceTupleClause0_BaseFieldCubicExt.call_once,
+    hv.mul_ok, bind_tc_ok, gfpn.cubic.CubicExt.new]
+  simp [spec, theta, wp_return]
+
 /-- CubicExt.inv: computes cofactors, norm, base inv, maps closure -/
 @[progress]
 theorem cinv_progress (hv : ValidExtConfig inst)
@@ -216,7 +272,44 @@ theorem cinv_progress (hv : ValidExtConfig inst)
         r.c0 = s0 * norm_val⁻¹ ∧
         r.c1 = s1 * norm_val⁻¹ ∧
         r.c2 = s2 * norm_val⁻¹) ⦄ := by
-  sorry
+  simp only [ExtAbbrev.CInv,
+    gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicCubicExtWide.inv,
+    hv.mul_ok, hv.sub_ok, hv.mul_nr_eq, hv.add_ok, bind_tc_ok]
+  set β := hv.getNonResidue with hβ
+  set s0 := self.c0 ^ 2 - β * (self.c1 * self.c2) with hs0_def
+  set s1 := β * self.c2 ^ 2 - self.c0 * self.c1 with hs1_def
+  set s2 := self.c1 ^ 2 - self.c0 * self.c2 with hs2_def
+  set norm_val := self.c0 * s0 + β * (self.c2 * s1 + self.c1 * s2) with hnorm_def
+  -- Collapse intermediate arithmetic to s0, s1, s2, norm_val
+  simp only [show self.c0 * self.c0 - β * (self.c1 * self.c2) = s0 from by
+    rw [hs0_def]; ring]
+  simp only [show β * (self.c2 * self.c2) - self.c0 * self.c1 = s1 from by
+    rw [hs1_def]; ring]
+  simp only [show self.c1 * self.c1 - self.c0 * self.c2 = s2 from by
+    rw [hs2_def]; ring]
+  simp only [show self.c0 * s0 + β * (self.c2 * s1 + self.c1 * s2) = norm_val from by
+    rw [hnorm_def]]
+  -- Get the base inv of norm_val
+  obtain ⟨o, ho_eq, ho_ne, ho_zero⟩ := hv.inv_ok norm_val
+  simp only [ho_eq, bind_tc_ok]
+  -- Case split on norm_val = 0
+  by_cases hn0 : norm_val = 0
+  · -- norm = 0: inv returns None
+    have ho_none := ho_zero hn0
+    simp only [ho_none, core.option.Option.map, spec, theta, wp_return]
+    exact ⟨fun _ => True.intro, fun hne => (hne hn0).elim⟩
+  · -- norm ≠ 0: inv returns Some r_inv, r_inv = norm_val⁻¹
+    obtain ⟨r_inv, hr_inv_eq, hr_inv_mul⟩ := ho_ne hn0
+    have hr_inv_val : r_inv = norm_val⁻¹ :=
+      mul_right_cancel₀ hn0 (by rw [hr_inv_mul, inv_mul_cancel₀ hn0])
+    simp only [hr_inv_eq, core.option.Option.map]
+    -- Progress through the cubic closure call (cinv_closure_progress is @[progress])
+    progress as ⟨closure_r, hcr0, hcr1, hcr2⟩
+    exact ⟨fun h => (hn0 h).elim,
+      fun _ => ⟨closure_r, rfl,
+        by rw [hcr0, hr_inv_val],
+        by rw [hcr1, hr_inv_val],
+        by rw [hcr2, hr_inv_val]⟩⟩
 /-- CubicExt.order = base_order³ (given base order succeeds and no U128 overflow) -/
 theorem corder_progress (bo : Std.U128)
     (h_ord : inst.fieldtraitsConstFieldInst.order = ok bo)
